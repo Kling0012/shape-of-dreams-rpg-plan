@@ -83,8 +83,21 @@ dotnet run --project tools/BalanceSim -c Release -- --mode v132stars --runs 10 -
 DOTNET_ROLL_FORWARD=LatestMajor dotnet run --project tools/BalanceSim -c Release -- --mode star-efficiency --metrics-json /tmp/star-efficiency.json
 ```
 
-調整の唯一原本は `tools/balance/stars.json`。生成・全検証・鍛冶／記憶効率／遠征の前回成功比較は
+調整の唯一原本は `tools/balance/stars.json`。生成・全検証・鍛冶／記憶効率／種類別星値／遠征の前回成功比較は
 [tools/balance/run](../balance/README.md) を使う。下の #120 表は当時の変更記録で、現行表ではない。
+
+### その他の星の軽量比較（Issue #149 段階2）
+
+`--mode star-values` はMemoryHaste・GimmickBoost・GimmickParam・Notable・Keystone・Statの
+採用済み型付き定義を、旅人×all-A/all-B×private/shared×星×意味×欄×単位で列挙する。
+Choiceは各構成で1択、同IDの旧星は重複計上しない。秒・距離・個数・率・Powerなどは合算しない。
+rank表はrank別。費用／段数はJSONのメタデータで、位階・GB合成・DPS・発動頻度・成長の模型ではない。
+
+```sh
+DOTNET_ROLL_FORWARD=LatestMajor dotnet run --project tools/BalanceSim -c Release -- \
+  --mode star-values --out /tmp/star-values.md --metrics-json /tmp/star-values.json
+```
+
 
 ### #120：記憶ダメージのポイント効率
 
@@ -143,7 +156,7 @@ $dotnet = if ($env:DOTNET_ROOT) {
 | `--lesser` | `10` | 部屋あたりの Lesser 撃破数（0以上） |
 | `--normal` | `8` | 部屋あたりの Normal 撃破数（0以上） |
 | `--miniboss` | `0.25` | 部屋ごとに MiniBoss を1体倒す確率（0〜1） |
-| `--mode` | `expeditions` | `expeditions`（遠征）/ `forge`（鍛冶）/ `star-efficiency`（記憶別%/点）/ `infinity` / `stars`（星振り）/ `sets` / `v132stars` |
+| `--mode` | `expeditions` | `expeditions`（遠征）/ `forge`（鍛冶）/ `star-efficiency`（記憶別%/点）/ `star-values`（種類・意味・単位別の星値）/ `infinity` / `stars`（星振り）/ `sets` / `v132stars` |
 | `--dream-level` | `30` | stars: 夢の圧に仮定する夢レベル（1〜30） |
 | `--policy` | `secure` | `secure` / `delve1` / `greedy` |
 | `--wipe` | `0.15` | 遠征ごとの全滅確率（0〜1） |

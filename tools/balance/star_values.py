@@ -15,6 +15,159 @@ INT_MIN, INT_MAX = -(1 << 31), (1 << 31) - 1
 # FNV-1a identity of the original adopted key/milli content, not a file hash.
 # Keeping one identity avoids a second numeric original beside stars.json.
 INITIAL_CONTENT_IDENTITY = 14722834479925839058
+KINDS = frozenset(("MemoryDamage", "MemoryHaste", "GimmickBoost", "GimmickParam", "Notable", "Keystone", "Stat"))
+EXAMPLE_KINDS = {
+    "h.cetus.cluster.icy-veins/2/amount": "GimmickBoost",
+    "h.cetus.cluster.icy-veins/3/amount": "GimmickParam",
+    "h.cetus.cluster.icy-veins/4/amount": "GimmickParam",
+    "h.cetus.cluster.icy-veins/5/options/2/amount": "Notable",
+    "h.cetus.cluster.icy-veins/6/amount": "GimmickBoost",
+    "h.cetus.cluster.frozen-recall/1/amount": "MemoryHaste",
+    "h.cetus.cluster.frozen-recall/3/amount": "GimmickParam",
+    "h.cetus.cluster.abyssal-shell/1/amount": "Stat",
+    "h.cetus.cluster.abyssal-shell/3/amount": "GimmickParam",
+    "h.cetus.cluster.abyssal-shell/4/options/1/amount": "Stat",
+    "h.cetus.cluster.abyssal-shell/4/options/2/amount": "Notable",
+}
+
+
+def legacy_metadata(key):
+    """Typed schema for generated legacy factory fields; contains no numeric originals."""
+    path = key.removeprefix("legacy/")
+    owner = "Hero_Cetus" if path.startswith("example/cetus/") else "shared" if path.startswith("t.") else "Hero_" + path.split(".")[1].title()
+    unit = "float" if path.endswith(("/cooldown", "/windowDuration")) else "int"
+    if "/native/" in path:
+        field = path.rsplit("/", 1)[1]
+        return "Keystone", owner, "float" if field in ("duration", "cooldown") else "hundredth" if path == "h.cetus.key2/native/value" else "decimal"
+    if path.startswith("example/cetus/"):
+        kind = EXAMPLE_KINDS.get(path.removeprefix("example/cetus/"), "Notable")
+    elif "/stat/" in path:
+        kind = "Stat"
+    elif "/link/" in path:
+        kind = "MemoryHaste"
+    elif re.match(r"h\.\w+\.key2?/", path) or re.match(r"t\.\w+\.key/", path):
+        kind = "Keystone"
+    else:
+        kind = "Notable"
+    return kind, owner, unit
+
+
+def legacy_fields(table, root=ROOT):
+    # References are the schema boundary. No literal numeric value is recovered.
+    paths = ("src/SodRpg.Core/Game/HeroStarRoutes.cs", "src/SodRpg.Core/Game/HeroSigils.cs",
+             "src/SodRpg.Core/Game/Content.cs", "src/SodRpg.Core/Game/StarClusters.cs",
+             "src/SodRpg.Core/Game/StarClusters/Cetus.Example.cs",
+             "src/SodRpg.Core/Game/PairCombos.cs",
+             "src/SodRpg.Core/Game/Mechanisms/SacrificeShield.cs", "src/SodRpg.Core/Game/Mechanisms/StunSourceFilter.cs",
+             "src/SodRpg.Core/Game/Mechanisms/AuthoredKeystoneCompiler.cs")
+    fields = {field_name(key): key for key in table["effects"] if key.startswith("legacy/")}
+    result = {}
+    for path in paths:
+        text = (Path(root) / path).read_text(encoding="utf-8")
+        for field in re.findall(r"MemoryDamageBalance\.(Effect_legacy_\w+)", text):
+            if field not in fields:
+                raise ValueError(f"{path}: missing balance original for {field}")
+            key = fields[field]
+            result[key] = legacy_metadata(key)
+    return result
+
+
+def migrated_ids(manifests):
+    return {s["id"] for data in manifests.values() for s in data["stars"]
+            if s.get("region") == "migration" and s.get("kind") is not None}
+
+
+def legacy_adopted(key, manifests):
+    if "/native/" in key or "/example/" in key:
+        return True
+    sid = key.removeprefix("legacy/").split("/", 1)[0]
+    if sid not in migrated_ids(manifests):
+        return True
+    # These keys' typed upside is explicitly their existing baseline Power.
+    return any(s["id"] == sid and s.get("kind") == "Keystone"
+               and s["keystone"]["upsideSpec"] is None and not s.get("power")
+               for data in manifests.values() for s in data["stars"])
+
+
+def legacy_numeric_source(path, table=None):
+    """Feed legacy topology parsers resolved factory arguments, never stale literals."""
+    table = load_table() if table is None else table
+    manifests = load_manifests()
+    fields = {field_name(key): key for key in table["effects"] if key.startswith("legacy/")}
+    def replacement(match):
+        field = match[1]
+        if field not in fields:
+            raise ValueError(f"{path}: missing numeric original for {field}")
+        key = fields[field]
+        kind, owner, unit = legacy_metadata(key)
+        value = effective_value(table, key, owner, key, kind, unit) if legacy_adopted(key, manifests) else number(table["effects"][key], key)
+        return format(number(value, key), "f") + ("f" if unit == "float" else "")
+    text = (ROOT / path).read_text(encoding="utf-8")
+    return re.sub(r"MemoryDamageBalance\.(Effect_legacy_\w+)", replacement, text)
+
+# Identity of the stage2 adopted semantic payloads at the initial cutover.
+INITIAL_STAGE2_IDENTITY = 13790957529443898316
+
+
+def integer(value, path):
+    value = number(value, path)
+    if value != value.to_integral_value() or not INT_MIN <= value <= INT_MAX:
+        raise ValueError(f"{path}: requires an exact Int32; fractional quantities cannot be rounded")
+    return int(value)
+
+
+def semantic_fields(obj):
+    """Yield only authored quantities, with their existing consumer's precision."""
+    kind = obj.get("kind")
+    if kind in ("MemoryDamage", "MemoryHaste", "GimmickBoost", "GimmickParam"):
+        unit = "milli" if kind == "MemoryDamage" else "int" if kind == "MemoryHaste" or obj.get("param") == "ExtraTargets" else "hundredth"
+        yield obj, "value", "value", unit
+    if kind in ("Notable", "Stat", "Keystone"):
+        for field in ("power", "stat"):
+            if obj.get(field):
+                yield obj[field], "perRank", field + "/perRank", "int"
+        if obj.get("gimmick"):
+            yield from gimmick_fields(obj["gimmick"], "gimmick")
+    if kind == "Keystone" and obj.get("keystone"):
+        for i, spec in enumerate(obj["keystone"].get("upsideSpec") or []):
+            prefix = f"keystone/upsideSpec/{i}"
+            # Arg is a recipient/element enum except Ricochet's explicit count.
+            structural = spec.get("field") == "Arg" and spec.get("effect") != "Ricochet"
+            for field in ("pct", "from", "to", "delta", "max"):
+                if field in spec and not structural:
+                    unit = "hundredth" if field == "pct" else "int" if spec.get("field") in ("Arg", "ExtraTargets", "EveryN") else "decimal"
+                    yield spec, field, prefix + "/" + field, unit
+            if spec.get("gimmick"):
+                g = spec["gimmick"]
+                if g.get("effect") in ("SacrificeShield", "StunSourceFilter"):
+                    sid = "h.aurena.key2" if g["effect"] == "SacrificeShield" else "h.cetus.key2"
+                    yield g, "value", f"legacy/{sid}/native/value", "decimal"
+                    if g["effect"] == "StunSourceFilter":
+                        yield g, "cooldown", f"legacy/{sid}/native/cooldown", "float"
+                else:
+                    yield from gimmick_fields(g, prefix + "/gimmick")
+
+
+def gimmick_fields(g, prefix):
+    effect = g.get("effect")
+    # Flag-only native adapters and no-amount modes carry no quantity in Value.
+    flag = effect in ("SacrificeShield", "StunSourceFilter") or effect == "IdentityStrike" and g.get("strike", {}).get("mode") == "DashBonusAsMemory" or effect == "MemoryTuning" and g.get("tuning", {}).get("kind") == "StanceSwordQiAttackBasis"
+    if not flag and "valuesByRank" not in g:
+        ordinary = effect in ("Element", "ElementEdge", "Echo", "Burst", "Sap", "Wound", "Shield", "Rampart", "Heal", "PackMend", "Expose", "Ricochet", "Crescendo", "Daze", "Empower", "Quicken", "Weakspot", "Siphon", "Reload")
+        yield g, "value", prefix + "/value", "precise" if ordinary else "hundredth"
+    if g.get("cooldown") != 0 and effect not in ("IdentityStrike", "MemoryTuning", "StunSourceFilter"):
+        yield g, "cooldown", prefix + "/cooldown", "float"
+    if effect in ("Ricochet", "Reload"):
+        yield g, "arg", prefix + "/arg", "int"
+    if "everyN" in g:
+        yield g, "everyN", prefix + "/everyN", "int"
+    for i in range(len(g.get("valuesByRank", []))):
+        yield g["valuesByRank"], i, prefix + f"/valuesByRank/{i}", "hundredth"
+    strike = g.get("strike")
+    if strike:
+        for field in ("range", "width", "windowSeconds", "bonusSpeed", "maxTargets"):
+            if field in strike:
+                yield strike, field, prefix + "/strike/" + field, "int" if field == "maxTargets" else "hundredth" if field == "bonusSpeed" else "float"
 
 
 def unique_object(pairs):
@@ -71,15 +224,15 @@ def validate_table(table, path=TABLE_PATH):
     if not isinstance(multipliers, dict) or set(multipliers) - {"byKind", "byHero"}:
         raise ValueError(f"{path}/multipliers: only byKind and byHero are supported")
     by_kind, by_hero = multipliers.get("byKind", {}), multipliers.get("byHero", {})
-    if not isinstance(by_kind, dict) or set(by_kind) - {"MemoryDamage"}:
-        raise ValueError(f"{path}/multipliers/byKind: only MemoryDamage is supported")
+    if not isinstance(by_kind, dict) or set(by_kind) - KINDS:
+        raise ValueError(f"{path}/multipliers/byKind: unknown adopted star kind")
     if not isinstance(by_hero, dict):
         raise ValueError(f"{path}/multipliers/byHero: expected an object")
     for hero, kinds in by_hero.items():
         if hero not in HERO_KEYS:
             raise ValueError(f"{path}/multipliers/byHero/{hero}: unknown Hero_* owner")
-        if not isinstance(kinds, dict) or set(kinds) - {"MemoryDamage"}:
-            raise ValueError(f"{path}/multipliers/byHero/{hero}: only MemoryDamage is supported")
+        if not isinstance(kinds, dict) or set(kinds) - KINDS:
+            raise ValueError(f"{path}/multipliers/byHero/{hero}: unknown adopted star kind")
     for owner, kinds in [("byKind", by_kind)] + [("byHero/" + h, k) for h, k in by_hero.items()]:
         for kind, value in kinds.items():
             if number(value, f"{path}/multipliers/{owner}/{kind}") < 0:
@@ -140,29 +293,50 @@ def legacy_components(root=ROOT):
     return result
 
 
-def effective_value(table, key, owner, path):
+def effective_value(table, key, owner, path, kind="MemoryDamage", unit="milli"):
     if key not in table["effects"]:
         raise ValueError(f"{path}: missing reference tools/balance/stars.json/effects/{key}")
     base = number(table["effects"][key], f"tools/balance/stars.json/effects/{key}")
     multipliers = table["multipliers"]
-    kind = number(multipliers.get("byKind", {}).get("MemoryDamage", 1), "multipliers/byKind/MemoryDamage")
-    hero = number(multipliers.get("byHero", {}).get(owner, {}).get("MemoryDamage", 1),
-                  f"multipliers/byHero/{owner}/MemoryDamage") if owner != "shared" else Decimal(1)
-    # Enough coefficient digits for all three operands means no implicit rounding.
+    by_kind = number(multipliers.get("byKind", {}).get(kind, 1), f"multipliers/byKind/{kind}")
+    by_hero = number(multipliers.get("byHero", {}).get(owner, {}).get(kind, 1),
+                     f"multipliers/byHero/{owner}/{kind}") if owner != "shared" else Decimal(1)
     try:
         with localcontext() as context:
-            operands = (base, kind, hero)
+            operands = (base, by_kind, by_hero)
             context.prec = max(28, sum(len(v.as_tuple().digits) for v in operands))
             context.Emax = max(context.Emax, sum(max(0, v.adjusted()) for v in operands) + 1)
             context.Emin = min(context.Emin, sum(min(0, v.as_tuple().exponent) for v in operands))
-            effective = base * kind * hero
-            if kind * hero != 1:
+            effective = base * by_kind * by_hero
+            # Stage1's established MemoryDamage policy is unchanged.
+            if kind == "MemoryDamage" and by_kind * by_hero != 1:
                 effective = effective.quantize(Decimal("0.001"), rounding=ROUND_HALF_EVEN)
     except (DecimalException, ValueError, OverflowError) as error:
-        raise ValueError(f"{path}: MemoryDamage decimal product is not representable") from error
-    if effective <= 0:
-        raise ValueError(f"{path}: MemoryDamage amount must be positive")
-    milli(effective, path)
+        raise ValueError(f"{path}: {kind} decimal product is not representable") from error
+    if kind == "MemoryDamage":
+        if effective <= 0:
+            raise ValueError(f"{path}: MemoryDamage amount must be positive")
+        milli(effective, path)
+    elif unit == "int":
+        return integer(effective, path)
+    elif unit == "hundredth":
+        scaled = Decimal((effective.as_tuple().sign, effective.as_tuple().digits, effective.as_tuple().exponent + 2))
+        integer(scaled, path + " (hundredth units)")
+    elif unit == "precise":
+        scaled = Decimal((effective.as_tuple().sign, effective.as_tuple().digits, effective.as_tuple().exponent + 7))
+        if scaled != scaled.to_integral_value() or not -(1 << 63) <= scaled < (1 << 63):
+            raise ValueError(f"{path}: Gimmick value requires exact 0.0000001 units fitting Int64")
+    elif unit == "decimal":
+        digits = effective.as_tuple().digits
+        exponent = effective.as_tuple().exponent
+        while digits and digits[-1] == 0 and exponent < 0:
+            digits, exponent = digits[:-1], exponent + 1
+        coefficient = int("".join(map(str, digits)) or "0") * 10 ** max(0, exponent)
+        if exponent < -28 or coefficient >= 1 << 96:
+            raise ValueError(f"{path}: quantity must fit an exact System.Decimal")
+    elif unit == "float":
+        if abs(effective) > Decimal("3.4028234663852886e38"):
+            raise ValueError(f"{path}: quantity must fit a finite Single")
     return effective
 
 
@@ -201,26 +375,42 @@ def resolve_manifest(name, raw, table):
                 container[field] = value
                 references[key] = value
         for effect_path, obj, path in objects:
-            if obj.get("kind") != "MemoryDamage":
+            kind = obj.get("kind")
+            if kind not in KINDS:
                 if "valueRef" in obj:
-                    raise ValueError(f"{path}/valueRef: only MemoryDamage may reference the balance table")
+                    raise ValueError(f"{path}/valueRef: kind does not support numeric references")
                 continue
-            if "value" in obj:
-                raise ValueError(f"{path}/value: MemoryDamage requires valueRef only; literal/mixed values are forbidden")
-            key = f"{sid}/{effect_path}"
-            if "valueRef" not in obj:
-                raise ValueError(f"{path}/valueRef: missing MemoryDamage reference {key}")
-            if obj["valueRef"] != key:
-                raise ValueError(f"{path}/valueRef: expected canonical reference {key}, found {obj['valueRef']!r}")
-            if key in references:
-                raise ValueError(f"{path}/valueRef: duplicate reference {key}")
-            value = effective_value(table, key, owner, f"{path}/valueRef ({key})")
-            references[key] = value
-            # Retain canonical ordered schema for all downstream graph/payload checks.
-            replacement = {("value" if k == "valueRef" else k): (value if k == "valueRef" else v)
-                           for k, v in obj.items()}
-            obj.clear()
-            obj.update(replacement)
+            prefix = effect_path.removesuffix("value")
+            for container, field, field_path, unit in semantic_fields(obj):
+                key = field_path if field_path.startswith("legacy/") else f"{sid}/{prefix}{field_path}"
+                top = container is obj and field == "value"
+                reference = container.get("valueRef") if top else container[field]
+                if top and "value" in container:
+                    raise ValueError(f"{path}/value: {kind} requires valueRef only; literal/mixed values are forbidden")
+                expected = key if top else {"valueRef": key}
+                if reference != expected:
+                    raise ValueError(f"{path}/{field_path}: expected canonical valueRef {key}")
+                if key in references:
+                    raise ValueError(f"{path}/{field_path}: duplicate reference {key}")
+                value = effective_value(table, key, owner, f"{path}/{field_path} ({key})", kind, unit)
+                references[key] = value
+                if top:
+                    replacement = {("value" if k == "valueRef" else k): (value if k == "valueRef" else v)
+                                   for k, v in obj.items()}
+                    obj.clear()
+                    obj.update(replacement)
+                else:
+                    container[field] = value
+            gimmicks = [("gimmick", obj["gimmick"])] if obj.get("gimmick") else []
+            if kind == "Keystone":
+                gimmicks.extend((f"keystone/upsideSpec/{i}/gimmick", s["gimmick"])
+                                for i, s in enumerate(obj.get("keystone", {}).get("upsideSpec") or []) if s.get("gimmick"))
+            for gpath, gimmick in gimmicks:
+                if gimmick.get("valuesByRank"):
+                    key = f"{sid}/{prefix}{gpath}/valuesByRank/0"
+                    if gimmick["value"] != {"valueRef": key}:
+                        raise ValueError(f"{path}/{gpath}/value: rank-one payload must reference {key}")
+                    gimmick["value"] = gimmick["valuesByRank"][0]
     return data, references
 
 
@@ -238,23 +428,67 @@ def resolve_all(table=None, manifests=None, root=ROOT):
     legacy = legacy_components(root)
     for key, owner in legacy.items():
         effective[key] = effective_value(table, key, owner, f"tools/balance/stars.json/effects/{key}")
+    for key, (kind, owner, unit) in legacy_fields(table, root).items():
+        # Obsolete same-ID effects exist only in the baseline construction path.
+        effective[key] = (effective_value(table, key, owner, key, kind, unit)
+                          if legacy_adopted(key, resolved) else number(table["effects"][key], key))
     extra = (table["effects"].keys() | table["runGrowth"].keys()) - effective.keys()
     if extra:
         raise ValueError(f"tools/balance/stars.json/effects/{sorted(extra)[0]}: extra unreferenced effect")
     return resolved, effective
 
 
-def fingerprint_record(manifests, effective):
-    replaced = {s["id"] for data in manifests.values() for s in data["stars"]
-                if s.get("region") == "migration" and s.get("kind") is not None}
-    adopted = {key: value for key, value in effective.items()
-               if "/growth/" not in key and (not key.endswith("/link/value") or key[:-len("/link/value")] not in replaced)}
-    record = "balance:stars:MemoryDamage:v1|" + "|".join(
-        f"{key}:milli:{milli(value, key)}" for key, value in sorted(adopted.items()))
+def effect_schema(manifests, effective):
+    result = {}
+    for data in manifests.values():
+        for star in data["stars"]:
+            for prefix, obj in [("", star)] + [(f"options/{i}/", o) for i, o in enumerate(star.get("options") or [])]:
+                for _, _, path, unit in semantic_fields(obj):
+                    key = path if path.startswith("legacy/") else f"{star['id']}/{prefix}{path}"
+                    result[key] = (obj["kind"], unit)
+    for key in effective:
+        if key.startswith("legacy/"):
+            kind, _, unit = legacy_metadata(key)
+            result[key] = kind, unit
+        elif key.endswith("/link/value"):
+            result[key] = "MemoryDamage", "milli"
+    return result
+
+
+def content_identity(record):
     identity = 14695981039346656037
     for byte in record.encode("utf-8"):
         identity = ((identity ^ byte) * 1099511628211) & ((1 << 64) - 1)
-    return None if identity == INITIAL_CONTENT_IDENTITY else record
+    return identity
+
+
+def canonical_number(value):
+    text = format(number(value, "fingerprint"), "f")
+    return (text.rstrip("0").rstrip(".") if "." in text else text) or "0"
+
+
+def stage2_record(manifests, effective):
+    schema = effect_schema(manifests, effective)
+    return "balance:stars:semantic:v2|" + "|".join(
+        f"{key}:{schema[key][0]}:{schema[key][1]}:{canonical_number(value)}"
+        for key, value in sorted(effective.items())
+        if key in schema and schema[key][0] != "MemoryDamage"
+        and (not key.startswith("legacy/") or legacy_adopted(key, manifests)))
+
+
+def fingerprint_record(manifests, effective):
+    replaced = migrated_ids(manifests)
+    schema = effect_schema(manifests, effective)
+    adopted = {key: value for key, value in effective.items()
+               if key in schema and schema[key][0] == "MemoryDamage"
+               and (not key.endswith("/link/value") or key[:-len("/link/value")] not in replaced)}
+    record = "balance:stars:MemoryDamage:v1|" + "|".join(
+        f"{key}:milli:{milli(value, key)}" for key, value in sorted(adopted.items()))
+    records = [] if content_identity(record) == INITIAL_CONTENT_IDENTITY else [record]
+    semantic = stage2_record(manifests, effective)
+    if content_identity(semantic) != INITIAL_STAGE2_IDENTITY:
+        records.append(semantic)
+    return "\n".join(records) or None
 
 
 def decimal_literal(value):
@@ -268,7 +502,14 @@ def render_balance(manifests, effective):
              "namespace SodRpg.Core.Game", "{", "    internal static class MemoryDamageBalance", "    {"]
     # Manifest amounts are emitted by the star compiler; only legacy routes need fields.
     lines.extend(f"        internal static readonly decimal {field_name(key)} = {decimal_literal(value)};"
-                 for key, value in sorted(effective.items()) if key.endswith("/link/value"))
+                 for key, value in sorted(effective.items()) if key.endswith("/link/value") and not key.startswith("legacy/"))
+    for key, value in sorted(effective.items()):
+        if not key.startswith("legacy/"):
+            continue
+        _, _, unit = legacy_metadata(key)
+        cstype = "int" if unit == "int" else "float" if unit == "float" else "decimal"
+        literal = str(integer(value, key)) if unit == "int" else format(number(value, key), "f") + ("f" if unit == "float" else "m")
+        lines.append(f"        internal const {cstype} {field_name(key)} = {literal};")
     lines.extend(["        // Original adopted effective content adds no record, preserving existing fingerprints.",
                   "        internal static readonly string ContentFingerprintRecord = " +
                   ("null" if record is None else json.dumps(record)) + ";", "    }", "}", ""])

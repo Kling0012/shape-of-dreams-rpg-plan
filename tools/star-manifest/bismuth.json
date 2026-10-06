@@ -51,7 +51,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_PrismaticEyes",
-      "value": 2,
+      "valueRef": "bismuth.mem.prismatic-eyes.c1.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -122,7 +122,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_PrismaticEyes",
-      "value": 2,
+      "valueRef": "bismuth.mem.prismatic-eyes.c1.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -194,7 +194,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_PrismaticEyes",
-      "value": 2,
+      "valueRef": "bismuth.mem.prismatic-eyes.c1.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -239,7 +239,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Echo",
-        "value": 12,
+        "value": {
+          "valueRef": "bismuth.mem.prismatic-eyes.c1.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -281,7 +283,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Wound",
-        "value": 24,
+        "value": {
+          "valueRef": "bismuth.mem.prismatic-eyes.c1.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -316,7 +320,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_PrismaticEyes",
-      "value": 3,
+      "valueRef": "bismuth.mem.prismatic-eyes.c1.a1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -388,7 +392,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_PrismaticEyes",
-      "value": 3,
+      "valueRef": "bismuth.mem.prismatic-eyes.c1.a3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -460,7 +464,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_PrismaticEyes",
-      "value": 3,
+      "valueRef": "bismuth.mem.prismatic-eyes.c1.b1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -532,7 +536,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_PrismaticEyes",
-      "value": 3,
+      "valueRef": "bismuth.mem.prismatic-eyes.c1.b3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -629,7 +633,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_D_PrismaticEyes",
-          "value": 4,
+          "valueRef": "bismuth.mem.prismatic-eyes.c1.q/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -703,7 +707,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_PrismaticEyes",
-      "value": 2,
+      "valueRef": "bismuth.mem.prismatic-eyes.c2.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -774,7 +778,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_PrismaticEyes",
-      "value": 2,
+      "valueRef": "bismuth.mem.prismatic-eyes.c2.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -846,7 +850,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_PrismaticEyes",
-      "value": 2,
+      "valueRef": "bismuth.mem.prismatic-eyes.c2.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -891,7 +895,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Element",
-        "value": 35,
+        "value": {
+          "valueRef": "bismuth.mem.prismatic-eyes.c2.n1/gimmick/value"
+        },
         "arg": 1,
         "cooldown": 0,
         "target": null
@@ -933,7 +939,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Element",
-        "value": 35,
+        "value": {
+          "valueRef": "bismuth.mem.prismatic-eyes.c2.n2/gimmick/value"
+        },
         "arg": 3,
         "cooldown": 0,
         "target": null
@@ -968,7 +976,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_PrismaticEyes",
-      "value": 3,
+      "valueRef": "bismuth.mem.prismatic-eyes.c2.a1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -1006,7 +1014,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_PrismaticEyes",
-      "value": 2,
+      "valueRef": "bismuth.mem.prismatic-eyes.c2.a2/value",
       "param": "Chance",
       "receiver": null,
       "target": {
@@ -1044,7 +1052,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_PrismaticEyes",
-      "value": 3,
+      "valueRef": "bismuth.mem.prismatic-eyes.c2.a3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -1082,7 +1090,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_PrismaticEyes",
-      "value": 2,
+      "valueRef": "bismuth.mem.prismatic-eyes.c2.a4/value",
       "param": "Chance",
       "receiver": null,
       "target": {
@@ -1120,7 +1128,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_PrismaticEyes",
-      "value": 3,
+      "valueRef": "bismuth.mem.prismatic-eyes.c2.b1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -1158,7 +1166,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_PrismaticEyes",
-      "value": 2,
+      "valueRef": "bismuth.mem.prismatic-eyes.c2.b2/value",
       "param": "Chance",
       "receiver": null,
       "target": {
@@ -1196,7 +1204,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_PrismaticEyes",
-      "value": 3,
+      "valueRef": "bismuth.mem.prismatic-eyes.c2.b3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -1234,7 +1242,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_PrismaticEyes",
-      "value": 2,
+      "valueRef": "bismuth.mem.prismatic-eyes.c2.b4/value",
       "param": "Chance",
       "receiver": null,
       "target": {
@@ -1297,7 +1305,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_D_PrismaticEyes",
-          "value": 4,
+          "valueRef": "bismuth.mem.prismatic-eyes.c2.q/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -1371,7 +1379,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_PrismaticEyes",
-      "value": 2,
+      "valueRef": "bismuth.mem.prismatic-eyes.c3.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -1442,7 +1450,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_PrismaticEyes",
-      "value": 2,
+      "valueRef": "bismuth.mem.prismatic-eyes.c3.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -1514,7 +1522,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_PrismaticEyes",
-      "value": 2,
+      "valueRef": "bismuth.mem.prismatic-eyes.c3.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -1559,7 +1567,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Sap",
-        "value": 5,
+        "value": {
+          "valueRef": "bismuth.mem.prismatic-eyes.c3.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -1601,7 +1611,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Daze",
-        "value": 2,
+        "value": {
+          "valueRef": "bismuth.mem.prismatic-eyes.c3.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -1636,7 +1648,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_PrismaticEyes",
-      "value": 3,
+      "valueRef": "bismuth.mem.prismatic-eyes.c3.a1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -1674,7 +1686,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_PrismaticEyes",
-      "value": 5,
+      "valueRef": "bismuth.mem.prismatic-eyes.c3.a2/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -1712,7 +1724,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_PrismaticEyes",
-      "value": 3,
+      "valueRef": "bismuth.mem.prismatic-eyes.c3.a3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -1750,7 +1762,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_PrismaticEyes",
-      "value": 5,
+      "valueRef": "bismuth.mem.prismatic-eyes.c3.a4/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -1788,7 +1800,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_PrismaticEyes",
-      "value": 3,
+      "valueRef": "bismuth.mem.prismatic-eyes.c3.b1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -1826,7 +1838,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_PrismaticEyes",
-      "value": 5,
+      "valueRef": "bismuth.mem.prismatic-eyes.c3.b2/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -1864,7 +1876,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_PrismaticEyes",
-      "value": 3,
+      "valueRef": "bismuth.mem.prismatic-eyes.c3.b3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -1902,7 +1914,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_PrismaticEyes",
-      "value": 5,
+      "valueRef": "bismuth.mem.prismatic-eyes.c3.b4/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -1965,7 +1977,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_D_PrismaticEyes",
-          "value": 4,
+          "valueRef": "bismuth.mem.prismatic-eyes.c3.q/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -2039,7 +2051,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_PrismaticEyes",
-      "value": 2,
+      "valueRef": "bismuth.mem.prismatic-eyes.c4.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -2110,7 +2122,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_PrismaticEyes",
-      "value": 2,
+      "valueRef": "bismuth.mem.prismatic-eyes.c4.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -2182,7 +2194,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_PrismaticEyes",
-      "value": 2,
+      "valueRef": "bismuth.mem.prismatic-eyes.c4.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -2227,7 +2239,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Burst",
-        "value": 50,
+        "value": {
+          "valueRef": "bismuth.mem.prismatic-eyes.c4.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -2269,7 +2283,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Shield",
-        "value": 2,
+        "value": {
+          "valueRef": "bismuth.mem.prismatic-eyes.c4.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -2305,7 +2321,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_PrismaticEyes",
-      "value": 3,
+      "valueRef": "bismuth.mem.prismatic-eyes.c4.a1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -2343,7 +2359,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_PrismaticEyes",
-      "value": 5,
+      "valueRef": "bismuth.mem.prismatic-eyes.c4.a2/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -2381,7 +2397,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_PrismaticEyes",
-      "value": 3,
+      "valueRef": "bismuth.mem.prismatic-eyes.c4.a3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -2419,7 +2435,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_PrismaticEyes",
-      "value": 5,
+      "valueRef": "bismuth.mem.prismatic-eyes.c4.a4/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -2457,7 +2473,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_PrismaticEyes",
-      "value": 3,
+      "valueRef": "bismuth.mem.prismatic-eyes.c4.b1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -2495,7 +2511,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_PrismaticEyes",
-      "value": 5,
+      "valueRef": "bismuth.mem.prismatic-eyes.c4.b2/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -2533,7 +2549,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_PrismaticEyes",
-      "value": 3,
+      "valueRef": "bismuth.mem.prismatic-eyes.c4.b3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -2571,7 +2587,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_PrismaticEyes",
-      "value": 5,
+      "valueRef": "bismuth.mem.prismatic-eyes.c4.b4/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -2634,7 +2650,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_D_PrismaticEyes",
-          "value": 4,
+          "valueRef": "bismuth.mem.prismatic-eyes.c4.q/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -2708,7 +2724,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_Innocence",
-      "value": 2,
+      "valueRef": "bismuth.mem.innocence.c1.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -2746,7 +2762,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_QR_Innocence",
-      "value": 1,
+      "valueRef": "bismuth.mem.innocence.c1.e3/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -2779,7 +2795,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_Innocence",
-      "value": 2,
+      "valueRef": "bismuth.mem.innocence.c1.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -2851,7 +2867,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_Innocence",
-      "value": 2,
+      "valueRef": "bismuth.mem.innocence.c1.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -2896,9 +2912,15 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Ricochet",
-        "value": 12,
-        "arg": 1,
-        "cooldown": 0.3,
+        "value": {
+          "valueRef": "bismuth.mem.innocence.c1.n1/gimmick/value"
+        },
+        "arg": {
+          "valueRef": "bismuth.mem.innocence.c1.n1/gimmick/arg"
+        },
+        "cooldown": {
+          "valueRef": "bismuth.mem.innocence.c1.n1/gimmick/cooldown"
+        },
         "target": null
       },
       "power": null,
@@ -2938,7 +2960,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Echo",
-        "value": 12,
+        "value": {
+          "valueRef": "bismuth.mem.innocence.c1.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -2973,7 +2997,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_Innocence",
-      "value": 3,
+      "valueRef": "bismuth.mem.innocence.c1.a1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -3011,7 +3035,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_QR_Innocence",
-      "value": 5,
+      "valueRef": "bismuth.mem.innocence.c1.a2/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -3049,7 +3073,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_QR_Innocence",
-      "value": 1,
+      "valueRef": "bismuth.mem.innocence.c1.a3/value",
       "param": "ExtraTargets",
       "receiver": null,
       "target": {
@@ -3087,7 +3111,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_Innocence",
-      "value": 3,
+      "valueRef": "bismuth.mem.innocence.c1.a4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -3125,7 +3149,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_Innocence",
-      "value": 3,
+      "valueRef": "bismuth.mem.innocence.c1.b1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -3197,7 +3221,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_Innocence",
-      "value": 3,
+      "valueRef": "bismuth.mem.innocence.c1.b3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -3294,7 +3318,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_QR_Innocence",
-          "value": 4,
+          "valueRef": "bismuth.mem.innocence.c1.q/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -3368,7 +3392,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_Innocence",
-      "value": 2,
+      "valueRef": "bismuth.mem.innocence.c2.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -3406,7 +3430,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_QR_Innocence",
-      "value": 1,
+      "valueRef": "bismuth.mem.innocence.c2.e3/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -3439,7 +3463,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_Innocence",
-      "value": 2,
+      "valueRef": "bismuth.mem.innocence.c2.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -3511,7 +3535,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_Innocence",
-      "value": 2,
+      "valueRef": "bismuth.mem.innocence.c2.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -3556,7 +3580,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Element",
-        "value": 35,
+        "value": {
+          "valueRef": "bismuth.mem.innocence.c2.n1/gimmick/value"
+        },
         "arg": 1,
         "cooldown": 0,
         "target": null
@@ -3598,7 +3624,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Element",
-        "value": 35,
+        "value": {
+          "valueRef": "bismuth.mem.innocence.c2.n2/gimmick/value"
+        },
         "arg": 3,
         "cooldown": 0,
         "target": null
@@ -3633,7 +3661,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_Innocence",
-      "value": 3,
+      "valueRef": "bismuth.mem.innocence.c2.a1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -3671,7 +3699,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_QR_Innocence",
-      "value": 2,
+      "valueRef": "bismuth.mem.innocence.c2.a2/value",
       "param": "Chance",
       "receiver": null,
       "target": {
@@ -3709,7 +3737,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_Innocence",
-      "value": 3,
+      "valueRef": "bismuth.mem.innocence.c2.a3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -3747,7 +3775,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_QR_Innocence",
-      "value": 2,
+      "valueRef": "bismuth.mem.innocence.c2.a4/value",
       "param": "Chance",
       "receiver": null,
       "target": {
@@ -3785,7 +3813,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_Innocence",
-      "value": 3,
+      "valueRef": "bismuth.mem.innocence.c2.b1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -3823,7 +3851,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_QR_Innocence",
-      "value": 2,
+      "valueRef": "bismuth.mem.innocence.c2.b2/value",
       "param": "Chance",
       "receiver": null,
       "target": {
@@ -3861,7 +3889,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_Innocence",
-      "value": 3,
+      "valueRef": "bismuth.mem.innocence.c2.b3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -3899,7 +3927,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_QR_Innocence",
-      "value": 2,
+      "valueRef": "bismuth.mem.innocence.c2.b4/value",
       "param": "Chance",
       "receiver": null,
       "target": {
@@ -3962,7 +3990,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_QR_Innocence",
-          "value": 4,
+          "valueRef": "bismuth.mem.innocence.c2.q/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -4036,7 +4064,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_Innocence",
-      "value": 2,
+      "valueRef": "bismuth.mem.innocence.c3.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -4074,7 +4102,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_QR_Innocence",
-      "value": 1,
+      "valueRef": "bismuth.mem.innocence.c3.e3/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -4107,7 +4135,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_Innocence",
-      "value": 2,
+      "valueRef": "bismuth.mem.innocence.c3.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -4179,7 +4207,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_Innocence",
-      "value": 2,
+      "valueRef": "bismuth.mem.innocence.c3.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -4224,7 +4252,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Sap",
-        "value": 5,
+        "value": {
+          "valueRef": "bismuth.mem.innocence.c3.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -4266,7 +4296,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Wound",
-        "value": 24,
+        "value": {
+          "valueRef": "bismuth.mem.innocence.c3.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -4301,7 +4333,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_Innocence",
-      "value": 3,
+      "valueRef": "bismuth.mem.innocence.c3.a1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -4339,7 +4371,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_QR_Innocence",
-      "value": 5,
+      "valueRef": "bismuth.mem.innocence.c3.a2/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -4377,7 +4409,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_Innocence",
-      "value": 3,
+      "valueRef": "bismuth.mem.innocence.c3.a3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -4415,7 +4447,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_QR_Innocence",
-      "value": 5,
+      "valueRef": "bismuth.mem.innocence.c3.a4/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -4453,7 +4485,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_Innocence",
-      "value": 3,
+      "valueRef": "bismuth.mem.innocence.c3.b1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -4525,7 +4557,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_Innocence",
-      "value": 3,
+      "valueRef": "bismuth.mem.innocence.c3.b3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -4622,7 +4654,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_QR_Innocence",
-          "value": 4,
+          "valueRef": "bismuth.mem.innocence.c3.q/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -4696,7 +4728,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_Innocence",
-      "value": 2,
+      "valueRef": "bismuth.mem.innocence.c4.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -4734,7 +4766,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_QR_Innocence",
-      "value": 1,
+      "valueRef": "bismuth.mem.innocence.c4.e3/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -4767,7 +4799,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_Innocence",
-      "value": 2,
+      "valueRef": "bismuth.mem.innocence.c4.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -4839,7 +4871,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_Innocence",
-      "value": 2,
+      "valueRef": "bismuth.mem.innocence.c4.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -4884,7 +4916,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Recharge",
-        "value": 12,
+        "value": {
+          "valueRef": "bismuth.mem.innocence.c4.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": "St_QR_Innocence"
@@ -4926,7 +4960,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Shield",
-        "value": 2,
+        "value": {
+          "valueRef": "bismuth.mem.innocence.c4.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -4962,7 +4998,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_Innocence",
-      "value": 3,
+      "valueRef": "bismuth.mem.innocence.c4.a1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -5000,7 +5036,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_QR_Innocence",
-      "value": 1,
+      "valueRef": "bismuth.mem.innocence.c4.a2/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -5034,7 +5070,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_Innocence",
-      "value": 3,
+      "valueRef": "bismuth.mem.innocence.c4.a3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -5072,7 +5108,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_QR_Innocence",
-      "value": 1,
+      "valueRef": "bismuth.mem.innocence.c4.a4/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -5106,7 +5142,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_Innocence",
-      "value": 3,
+      "valueRef": "bismuth.mem.innocence.c4.b1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -5144,7 +5180,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_QR_Innocence",
-      "value": 5,
+      "valueRef": "bismuth.mem.innocence.c4.b2/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -5182,7 +5218,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_Innocence",
-      "value": 3,
+      "valueRef": "bismuth.mem.innocence.c4.b3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -5220,7 +5256,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_QR_Innocence",
-      "value": 5,
+      "valueRef": "bismuth.mem.innocence.c4.b4/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -5283,7 +5319,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_QR_Innocence",
-          "value": 4,
+          "valueRef": "bismuth.mem.innocence.c4.q/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -5323,7 +5359,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 2,
+      "valueRef": "bismuth.mem.distorting-sprint.c1.e1/value",
       "param": null,
       "receiver": "St_M_Sprint",
       "target": {
@@ -5361,7 +5397,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": null,
-      "value": 1,
+      "valueRef": "bismuth.mem.distorting-sprint.c1.e2/value",
       "param": "Chance",
       "receiver": "St_M_Sprint",
       "target": {
@@ -5399,7 +5435,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 2,
+      "valueRef": "bismuth.mem.distorting-sprint.c1.e3/value",
       "param": null,
       "receiver": "St_M_Sprint",
       "target": {
@@ -5436,7 +5472,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": null,
-      "value": 1,
+      "valueRef": "bismuth.mem.distorting-sprint.c1.e4/value",
       "param": "Chance",
       "receiver": "St_M_Sprint",
       "target": {
@@ -5474,7 +5510,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 2,
+      "valueRef": "bismuth.mem.distorting-sprint.c1.e5/value",
       "param": null,
       "receiver": "St_M_Sprint",
       "target": {
@@ -5512,7 +5548,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 2,
+      "valueRef": "bismuth.mem.distorting-sprint.c1.e6/value",
       "param": null,
       "receiver": "St_M_Sprint",
       "target": {
@@ -5557,7 +5593,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "ReceiverRecharge",
-        "value": 1,
+        "value": {
+          "valueRef": "bismuth.mem.distorting-sprint.c1.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": "St_M_Sprint"
@@ -5600,7 +5638,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "ReceiverRecharge",
-        "value": 10,
+        "value": {
+          "valueRef": "bismuth.mem.distorting-sprint.c1.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": "St_M_Sprint"
@@ -5636,7 +5676,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 2,
+      "valueRef": "bismuth.mem.distorting-sprint.c1.a1/value",
       "param": null,
       "receiver": "St_M_Sprint",
       "target": {
@@ -5674,7 +5714,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": null,
-      "value": 1,
+      "valueRef": "bismuth.mem.distorting-sprint.c1.a2/value",
       "param": "Chance",
       "receiver": "St_M_Sprint",
       "target": {
@@ -5712,7 +5752,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 2,
+      "valueRef": "bismuth.mem.distorting-sprint.c1.a3/value",
       "param": null,
       "receiver": "St_M_Sprint",
       "target": {
@@ -5750,7 +5790,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 2,
+      "valueRef": "bismuth.mem.distorting-sprint.c1.a4/value",
       "param": null,
       "receiver": "St_M_Sprint",
       "target": {
@@ -5788,7 +5828,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 2,
+      "valueRef": "bismuth.mem.distorting-sprint.c1.b1/value",
       "param": null,
       "receiver": "St_M_Sprint",
       "target": {
@@ -5826,7 +5866,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": null,
-      "value": 1,
+      "valueRef": "bismuth.mem.distorting-sprint.c1.b2/value",
       "param": "Chance",
       "receiver": "St_M_Sprint",
       "target": {
@@ -5864,7 +5904,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 2,
+      "valueRef": "bismuth.mem.distorting-sprint.c1.b3/value",
       "param": null,
       "receiver": "St_M_Sprint",
       "target": {
@@ -5902,7 +5942,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 2,
+      "valueRef": "bismuth.mem.distorting-sprint.c1.b4/value",
       "param": null,
       "receiver": "St_M_Sprint",
       "target": {
@@ -5952,7 +5992,7 @@
         {
           "kind": "GimmickBoost",
           "memory": null,
-          "value": 4,
+          "valueRef": "bismuth.mem.distorting-sprint.c1.q/options/0/value",
           "param": null,
           "receiver": "St_M_Sprint",
           "target": {
@@ -5968,7 +6008,7 @@
         {
           "kind": "GimmickParam",
           "memory": null,
-          "value": 2,
+          "valueRef": "bismuth.mem.distorting-sprint.c1.q/options/1/value",
           "param": "Chance",
           "receiver": "St_M_Sprint",
           "target": {
@@ -6008,7 +6048,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 2,
+      "valueRef": "bismuth.mem.distorting-sprint.c2.e1/value",
       "param": null,
       "receiver": "St_M_Sprint",
       "target": {
@@ -6046,7 +6086,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": null,
-      "value": 1,
+      "valueRef": "bismuth.mem.distorting-sprint.c2.e2/value",
       "param": "Chance",
       "receiver": "St_M_Sprint",
       "target": {
@@ -6084,7 +6124,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 2,
+      "valueRef": "bismuth.mem.distorting-sprint.c2.e3/value",
       "param": null,
       "receiver": "St_M_Sprint",
       "target": {
@@ -6121,7 +6161,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": null,
-      "value": 1,
+      "valueRef": "bismuth.mem.distorting-sprint.c2.e4/value",
       "param": "Chance",
       "receiver": "St_M_Sprint",
       "target": {
@@ -6159,7 +6199,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 2,
+      "valueRef": "bismuth.mem.distorting-sprint.c2.e5/value",
       "param": null,
       "receiver": "St_M_Sprint",
       "target": {
@@ -6197,7 +6237,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 2,
+      "valueRef": "bismuth.mem.distorting-sprint.c2.e6/value",
       "param": null,
       "receiver": "St_M_Sprint",
       "target": {
@@ -6242,7 +6282,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "ReceiverRecharge",
-        "value": 2,
+        "value": {
+          "valueRef": "bismuth.mem.distorting-sprint.c2.n1/gimmick/value"
+        },
         "arg": 1,
         "cooldown": 0,
         "target": "St_M_Sprint"
@@ -6285,7 +6327,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "ReceiverRecharge",
-        "value": 12,
+        "value": {
+          "valueRef": "bismuth.mem.distorting-sprint.c2.n2/gimmick/value"
+        },
         "arg": 1,
         "cooldown": 0,
         "target": "St_M_Sprint"
@@ -6321,7 +6365,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 2,
+      "valueRef": "bismuth.mem.distorting-sprint.c2.a1/value",
       "param": null,
       "receiver": "St_M_Sprint",
       "target": {
@@ -6359,7 +6403,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": null,
-      "value": 1,
+      "valueRef": "bismuth.mem.distorting-sprint.c2.a2/value",
       "param": "Chance",
       "receiver": "St_M_Sprint",
       "target": {
@@ -6397,7 +6441,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 2,
+      "valueRef": "bismuth.mem.distorting-sprint.c2.a3/value",
       "param": null,
       "receiver": "St_M_Sprint",
       "target": {
@@ -6435,7 +6479,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 2,
+      "valueRef": "bismuth.mem.distorting-sprint.c2.a4/value",
       "param": null,
       "receiver": "St_M_Sprint",
       "target": {
@@ -6473,7 +6517,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 2,
+      "valueRef": "bismuth.mem.distorting-sprint.c2.b1/value",
       "param": null,
       "receiver": "St_M_Sprint",
       "target": {
@@ -6511,7 +6555,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": null,
-      "value": 1,
+      "valueRef": "bismuth.mem.distorting-sprint.c2.b2/value",
       "param": "Chance",
       "receiver": "St_M_Sprint",
       "target": {
@@ -6549,7 +6593,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 2,
+      "valueRef": "bismuth.mem.distorting-sprint.c2.b3/value",
       "param": null,
       "receiver": "St_M_Sprint",
       "target": {
@@ -6587,7 +6631,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 2,
+      "valueRef": "bismuth.mem.distorting-sprint.c2.b4/value",
       "param": null,
       "receiver": "St_M_Sprint",
       "target": {
@@ -6637,7 +6681,7 @@
         {
           "kind": "GimmickBoost",
           "memory": null,
-          "value": 4,
+          "valueRef": "bismuth.mem.distorting-sprint.c2.q/options/0/value",
           "param": null,
           "receiver": "St_M_Sprint",
           "target": {
@@ -6653,7 +6697,7 @@
         {
           "kind": "GimmickParam",
           "memory": null,
-          "value": 2,
+          "valueRef": "bismuth.mem.distorting-sprint.c2.q/options/1/value",
           "param": "Chance",
           "receiver": "St_M_Sprint",
           "target": {
@@ -6693,7 +6737,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 2,
+      "valueRef": "bismuth.mem.distorting-sprint.c3.e1/value",
       "param": null,
       "receiver": "St_M_Sprint",
       "target": {
@@ -6731,7 +6775,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": null,
-      "value": 1,
+      "valueRef": "bismuth.mem.distorting-sprint.c3.e2/value",
       "param": "Chance",
       "receiver": "St_M_Sprint",
       "target": {
@@ -6769,7 +6813,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 2,
+      "valueRef": "bismuth.mem.distorting-sprint.c3.e3/value",
       "param": null,
       "receiver": "St_M_Sprint",
       "target": {
@@ -6806,7 +6850,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": null,
-      "value": 1,
+      "valueRef": "bismuth.mem.distorting-sprint.c3.e4/value",
       "param": "Chance",
       "receiver": "St_M_Sprint",
       "target": {
@@ -6844,7 +6888,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 2,
+      "valueRef": "bismuth.mem.distorting-sprint.c3.e5/value",
       "param": null,
       "receiver": "St_M_Sprint",
       "target": {
@@ -6882,7 +6926,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 2,
+      "valueRef": "bismuth.mem.distorting-sprint.c3.e6/value",
       "param": null,
       "receiver": "St_M_Sprint",
       "target": {
@@ -6927,7 +6971,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "ReceiverRecharge",
-        "value": 2,
+        "value": {
+          "valueRef": "bismuth.mem.distorting-sprint.c3.n1/gimmick/value"
+        },
         "arg": 2,
         "cooldown": 0,
         "target": "St_M_Sprint"
@@ -6970,7 +7016,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "ReceiverRecharge",
-        "value": 12,
+        "value": {
+          "valueRef": "bismuth.mem.distorting-sprint.c3.n2/gimmick/value"
+        },
         "arg": 2,
         "cooldown": 0,
         "target": "St_M_Sprint"
@@ -7006,7 +7054,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 2,
+      "valueRef": "bismuth.mem.distorting-sprint.c3.a1/value",
       "param": null,
       "receiver": "St_M_Sprint",
       "target": {
@@ -7044,7 +7092,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": null,
-      "value": 1,
+      "valueRef": "bismuth.mem.distorting-sprint.c3.a2/value",
       "param": "Chance",
       "receiver": "St_M_Sprint",
       "target": {
@@ -7082,7 +7130,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 2,
+      "valueRef": "bismuth.mem.distorting-sprint.c3.a3/value",
       "param": null,
       "receiver": "St_M_Sprint",
       "target": {
@@ -7120,7 +7168,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 2,
+      "valueRef": "bismuth.mem.distorting-sprint.c3.a4/value",
       "param": null,
       "receiver": "St_M_Sprint",
       "target": {
@@ -7158,7 +7206,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 2,
+      "valueRef": "bismuth.mem.distorting-sprint.c3.b1/value",
       "param": null,
       "receiver": "St_M_Sprint",
       "target": {
@@ -7196,7 +7244,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": null,
-      "value": 1,
+      "valueRef": "bismuth.mem.distorting-sprint.c3.b2/value",
       "param": "Chance",
       "receiver": "St_M_Sprint",
       "target": {
@@ -7234,7 +7282,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 2,
+      "valueRef": "bismuth.mem.distorting-sprint.c3.b3/value",
       "param": null,
       "receiver": "St_M_Sprint",
       "target": {
@@ -7272,7 +7320,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 2,
+      "valueRef": "bismuth.mem.distorting-sprint.c3.b4/value",
       "param": null,
       "receiver": "St_M_Sprint",
       "target": {
@@ -7322,7 +7370,7 @@
         {
           "kind": "GimmickBoost",
           "memory": null,
-          "value": 4,
+          "valueRef": "bismuth.mem.distorting-sprint.c3.q/options/0/value",
           "param": null,
           "receiver": "St_M_Sprint",
           "target": {
@@ -7338,7 +7386,7 @@
         {
           "kind": "GimmickParam",
           "memory": null,
-          "value": 2,
+          "valueRef": "bismuth.mem.distorting-sprint.c3.q/options/1/value",
           "param": "Chance",
           "receiver": "St_M_Sprint",
           "target": {
@@ -7378,7 +7426,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 2,
+      "valueRef": "bismuth.mem.distorting-sprint.c4.e1/value",
       "param": null,
       "receiver": "St_M_Sprint",
       "target": {
@@ -7416,7 +7464,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": null,
-      "value": 1,
+      "valueRef": "bismuth.mem.distorting-sprint.c4.e2/value",
       "param": "Chance",
       "receiver": "St_M_Sprint",
       "target": {
@@ -7454,7 +7502,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 2,
+      "valueRef": "bismuth.mem.distorting-sprint.c4.e3/value",
       "param": null,
       "receiver": "St_M_Sprint",
       "target": {
@@ -7491,7 +7539,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": null,
-      "value": 1,
+      "valueRef": "bismuth.mem.distorting-sprint.c4.e4/value",
       "param": "Chance",
       "receiver": "St_M_Sprint",
       "target": {
@@ -7529,7 +7577,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 2,
+      "valueRef": "bismuth.mem.distorting-sprint.c4.e5/value",
       "param": null,
       "receiver": "St_M_Sprint",
       "target": {
@@ -7567,7 +7615,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 2,
+      "valueRef": "bismuth.mem.distorting-sprint.c4.e6/value",
       "param": null,
       "receiver": "St_M_Sprint",
       "target": {
@@ -7612,7 +7660,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "ReceiverRecharge",
-        "value": 3,
+        "value": {
+          "valueRef": "bismuth.mem.distorting-sprint.c4.n1/gimmick/value"
+        },
         "arg": 3,
         "cooldown": 0,
         "target": "St_M_Sprint"
@@ -7655,7 +7705,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "ReceiverRecharge",
-        "value": 15,
+        "value": {
+          "valueRef": "bismuth.mem.distorting-sprint.c4.n2/gimmick/value"
+        },
         "arg": 3,
         "cooldown": 0,
         "target": "St_M_Sprint"
@@ -7691,7 +7743,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 2,
+      "valueRef": "bismuth.mem.distorting-sprint.c4.a1/value",
       "param": null,
       "receiver": "St_M_Sprint",
       "target": {
@@ -7729,7 +7781,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": null,
-      "value": 1,
+      "valueRef": "bismuth.mem.distorting-sprint.c4.a2/value",
       "param": "Chance",
       "receiver": "St_M_Sprint",
       "target": {
@@ -7767,7 +7819,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 2,
+      "valueRef": "bismuth.mem.distorting-sprint.c4.a3/value",
       "param": null,
       "receiver": "St_M_Sprint",
       "target": {
@@ -7805,7 +7857,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 2,
+      "valueRef": "bismuth.mem.distorting-sprint.c4.a4/value",
       "param": null,
       "receiver": "St_M_Sprint",
       "target": {
@@ -7843,7 +7895,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 2,
+      "valueRef": "bismuth.mem.distorting-sprint.c4.b1/value",
       "param": null,
       "receiver": "St_M_Sprint",
       "target": {
@@ -7881,7 +7933,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": null,
-      "value": 1,
+      "valueRef": "bismuth.mem.distorting-sprint.c4.b2/value",
       "param": "Chance",
       "receiver": "St_M_Sprint",
       "target": {
@@ -7919,7 +7971,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 2,
+      "valueRef": "bismuth.mem.distorting-sprint.c4.b3/value",
       "param": null,
       "receiver": "St_M_Sprint",
       "target": {
@@ -7957,7 +8009,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 2,
+      "valueRef": "bismuth.mem.distorting-sprint.c4.b4/value",
       "param": null,
       "receiver": "St_M_Sprint",
       "target": {
@@ -8007,7 +8059,7 @@
         {
           "kind": "GimmickBoost",
           "memory": null,
-          "value": 4,
+          "valueRef": "bismuth.mem.distorting-sprint.c4.q/options/0/value",
           "param": null,
           "receiver": "St_M_Sprint",
           "target": {
@@ -8023,7 +8075,7 @@
         {
           "kind": "GimmickParam",
           "memory": null,
-          "value": 2,
+          "valueRef": "bismuth.mem.distorting-sprint.c4.q/options/1/value",
           "param": "Chance",
           "receiver": "St_M_Sprint",
           "target": {
@@ -8097,7 +8149,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_InfernalTales",
-      "value": 2,
+      "valueRef": "bismuth.mem.infernal-tales.c1.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -8135,7 +8187,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_QR_InfernalTales",
-      "value": 1,
+      "valueRef": "bismuth.mem.infernal-tales.c1.e3/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -8168,7 +8220,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_InfernalTales",
-      "value": 2,
+      "valueRef": "bismuth.mem.infernal-tales.c1.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -8240,7 +8292,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_InfernalTales",
-      "value": 2,
+      "valueRef": "bismuth.mem.infernal-tales.c1.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -8285,7 +8337,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Wound",
-        "value": 24,
+        "value": {
+          "valueRef": "bismuth.mem.infernal-tales.c1.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -8327,7 +8381,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Sap",
-        "value": 4,
+        "value": {
+          "valueRef": "bismuth.mem.infernal-tales.c1.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -8362,7 +8418,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_InfernalTales",
-      "value": 3,
+      "valueRef": "bismuth.mem.infernal-tales.c1.a1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -8434,7 +8490,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_InfernalTales",
-      "value": 3,
+      "valueRef": "bismuth.mem.infernal-tales.c1.a3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -8506,7 +8562,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_InfernalTales",
-      "value": 3,
+      "valueRef": "bismuth.mem.infernal-tales.c1.b1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -8544,7 +8600,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_QR_InfernalTales",
-      "value": 5,
+      "valueRef": "bismuth.mem.infernal-tales.c1.b2/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -8582,7 +8638,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_InfernalTales",
-      "value": 3,
+      "valueRef": "bismuth.mem.infernal-tales.c1.b3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -8620,7 +8676,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_QR_InfernalTales",
-      "value": 5,
+      "valueRef": "bismuth.mem.infernal-tales.c1.b4/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -8683,7 +8739,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_QR_InfernalTales",
-          "value": 4,
+          "valueRef": "bismuth.mem.infernal-tales.c1.q/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -8757,7 +8813,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_InfernalTales",
-      "value": 2,
+      "valueRef": "bismuth.mem.infernal-tales.c2.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -8795,7 +8851,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_QR_InfernalTales",
-      "value": 1,
+      "valueRef": "bismuth.mem.infernal-tales.c2.e3/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -8828,7 +8884,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_InfernalTales",
-      "value": 2,
+      "valueRef": "bismuth.mem.infernal-tales.c2.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -8900,7 +8956,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_InfernalTales",
-      "value": 2,
+      "valueRef": "bismuth.mem.infernal-tales.c2.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -8945,7 +9001,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Element",
-        "value": 25,
+        "value": {
+          "valueRef": "bismuth.mem.infernal-tales.c2.n1/gimmick/value"
+        },
         "arg": 1,
         "cooldown": 0,
         "target": null
@@ -8987,7 +9045,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Element",
-        "value": 25,
+        "value": {
+          "valueRef": "bismuth.mem.infernal-tales.c2.n2/gimmick/value"
+        },
         "arg": 3,
         "cooldown": 0,
         "target": null
@@ -9022,7 +9082,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_InfernalTales",
-      "value": 3,
+      "valueRef": "bismuth.mem.infernal-tales.c2.a1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -9060,7 +9120,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_QR_InfernalTales",
-      "value": 2,
+      "valueRef": "bismuth.mem.infernal-tales.c2.a2/value",
       "param": "Chance",
       "receiver": null,
       "target": {
@@ -9098,7 +9158,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_InfernalTales",
-      "value": 3,
+      "valueRef": "bismuth.mem.infernal-tales.c2.a3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -9136,7 +9196,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_QR_InfernalTales",
-      "value": 2,
+      "valueRef": "bismuth.mem.infernal-tales.c2.a4/value",
       "param": "Chance",
       "receiver": null,
       "target": {
@@ -9174,7 +9234,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_InfernalTales",
-      "value": 3,
+      "valueRef": "bismuth.mem.infernal-tales.c2.b1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -9212,7 +9272,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_QR_InfernalTales",
-      "value": 2,
+      "valueRef": "bismuth.mem.infernal-tales.c2.b2/value",
       "param": "Chance",
       "receiver": null,
       "target": {
@@ -9250,7 +9310,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_InfernalTales",
-      "value": 3,
+      "valueRef": "bismuth.mem.infernal-tales.c2.b3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -9288,7 +9348,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_QR_InfernalTales",
-      "value": 2,
+      "valueRef": "bismuth.mem.infernal-tales.c2.b4/value",
       "param": "Chance",
       "receiver": null,
       "target": {
@@ -9351,7 +9411,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_QR_InfernalTales",
-          "value": 4,
+          "valueRef": "bismuth.mem.infernal-tales.c2.q/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -9425,7 +9485,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_InfernalTales",
-      "value": 2,
+      "valueRef": "bismuth.mem.infernal-tales.c3.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -9463,7 +9523,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_QR_InfernalTales",
-      "value": 1,
+      "valueRef": "bismuth.mem.infernal-tales.c3.e3/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -9496,7 +9556,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_InfernalTales",
-      "value": 2,
+      "valueRef": "bismuth.mem.infernal-tales.c3.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -9568,7 +9628,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_InfernalTales",
-      "value": 2,
+      "valueRef": "bismuth.mem.infernal-tales.c3.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -9613,7 +9673,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Rampart",
-        "value": 1,
+        "value": {
+          "valueRef": "bismuth.mem.infernal-tales.c3.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -9655,7 +9717,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Sap",
-        "value": 5,
+        "value": {
+          "valueRef": "bismuth.mem.infernal-tales.c3.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -9690,7 +9754,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_InfernalTales",
-      "value": 3,
+      "valueRef": "bismuth.mem.infernal-tales.c3.a1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -9728,7 +9792,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_QR_InfernalTales",
-      "value": 5,
+      "valueRef": "bismuth.mem.infernal-tales.c3.a2/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -9766,7 +9830,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_InfernalTales",
-      "value": 3,
+      "valueRef": "bismuth.mem.infernal-tales.c3.a3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -9804,7 +9868,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_QR_InfernalTales",
-      "value": 5,
+      "valueRef": "bismuth.mem.infernal-tales.c3.a4/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -9842,7 +9906,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_InfernalTales",
-      "value": 3,
+      "valueRef": "bismuth.mem.infernal-tales.c3.b1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -9880,7 +9944,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_QR_InfernalTales",
-      "value": 5,
+      "valueRef": "bismuth.mem.infernal-tales.c3.b2/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -9918,7 +9982,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_InfernalTales",
-      "value": 3,
+      "valueRef": "bismuth.mem.infernal-tales.c3.b3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -9956,7 +10020,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_QR_InfernalTales",
-      "value": 5,
+      "valueRef": "bismuth.mem.infernal-tales.c3.b4/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -10019,7 +10083,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_QR_InfernalTales",
-          "value": 4,
+          "valueRef": "bismuth.mem.infernal-tales.c3.q/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -10093,7 +10157,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_InfernalTales",
-      "value": 2,
+      "valueRef": "bismuth.mem.infernal-tales.c4.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -10131,7 +10195,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_QR_InfernalTales",
-      "value": 1,
+      "valueRef": "bismuth.mem.infernal-tales.c4.e3/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -10164,7 +10228,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_InfernalTales",
-      "value": 2,
+      "valueRef": "bismuth.mem.infernal-tales.c4.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -10236,7 +10300,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_InfernalTales",
-      "value": 2,
+      "valueRef": "bismuth.mem.infernal-tales.c4.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -10281,7 +10345,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Burst",
-        "value": 50,
+        "value": {
+          "valueRef": "bismuth.mem.infernal-tales.c4.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -10323,7 +10389,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Recharge",
-        "value": 12,
+        "value": {
+          "valueRef": "bismuth.mem.infernal-tales.c4.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": "St_QR_InfernalTales"
@@ -10358,7 +10426,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_InfernalTales",
-      "value": 3,
+      "valueRef": "bismuth.mem.infernal-tales.c4.a1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -10396,7 +10464,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_QR_InfernalTales",
-      "value": 5,
+      "valueRef": "bismuth.mem.infernal-tales.c4.a2/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -10434,7 +10502,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_InfernalTales",
-      "value": 3,
+      "valueRef": "bismuth.mem.infernal-tales.c4.a3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -10472,7 +10540,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_QR_InfernalTales",
-      "value": 5,
+      "valueRef": "bismuth.mem.infernal-tales.c4.a4/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -10510,7 +10578,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_InfernalTales",
-      "value": 3,
+      "valueRef": "bismuth.mem.infernal-tales.c4.b1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -10548,7 +10616,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_QR_InfernalTales",
-      "value": 1,
+      "valueRef": "bismuth.mem.infernal-tales.c4.b2/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -10582,7 +10650,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_InfernalTales",
-      "value": 3,
+      "valueRef": "bismuth.mem.infernal-tales.c4.b3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -10620,7 +10688,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_QR_InfernalTales",
-      "value": 1,
+      "valueRef": "bismuth.mem.infernal-tales.c4.b4/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -10679,7 +10747,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_QR_InfernalTales",
-          "value": 4,
+          "valueRef": "bismuth.mem.infernal-tales.c4.q/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -10753,7 +10821,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_ValiantHeart",
-      "value": 2,
+      "valueRef": "bismuth.mem.valiant-heart.c1.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -10791,7 +10859,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_QR_ValiantHeart",
-      "value": 1,
+      "valueRef": "bismuth.mem.valiant-heart.c1.e3/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -10824,7 +10892,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_ValiantHeart",
-      "value": 2,
+      "valueRef": "bismuth.mem.valiant-heart.c1.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -10896,7 +10964,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_ValiantHeart",
-      "value": 2,
+      "valueRef": "bismuth.mem.valiant-heart.c1.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -10941,7 +11009,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Burst",
-        "value": 35,
+        "value": {
+          "valueRef": "bismuth.mem.valiant-heart.c1.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -10983,9 +11053,15 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Ricochet",
-        "value": 12,
-        "arg": 1,
-        "cooldown": 0.3,
+        "value": {
+          "valueRef": "bismuth.mem.valiant-heart.c1.n2/gimmick/value"
+        },
+        "arg": {
+          "valueRef": "bismuth.mem.valiant-heart.c1.n2/gimmick/arg"
+        },
+        "cooldown": {
+          "valueRef": "bismuth.mem.valiant-heart.c1.n2/gimmick/cooldown"
+        },
         "target": null
       },
       "power": null,
@@ -11018,7 +11094,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_ValiantHeart",
-      "value": 3,
+      "valueRef": "bismuth.mem.valiant-heart.c1.a1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -11056,7 +11132,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_QR_ValiantHeart",
-      "value": 5,
+      "valueRef": "bismuth.mem.valiant-heart.c1.a2/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -11094,7 +11170,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_ValiantHeart",
-      "value": 3,
+      "valueRef": "bismuth.mem.valiant-heart.c1.a3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -11132,7 +11208,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_QR_ValiantHeart",
-      "value": 5,
+      "valueRef": "bismuth.mem.valiant-heart.c1.a4/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -11170,7 +11246,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_ValiantHeart",
-      "value": 3,
+      "valueRef": "bismuth.mem.valiant-heart.c1.b1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -11208,7 +11284,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_QR_ValiantHeart",
-      "value": 5,
+      "valueRef": "bismuth.mem.valiant-heart.c1.b2/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -11246,7 +11322,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_QR_ValiantHeart",
-      "value": 1,
+      "valueRef": "bismuth.mem.valiant-heart.c1.b3/value",
       "param": "ExtraTargets",
       "receiver": null,
       "target": {
@@ -11284,7 +11360,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_ValiantHeart",
-      "value": 3,
+      "valueRef": "bismuth.mem.valiant-heart.c1.b4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -11347,7 +11423,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_QR_ValiantHeart",
-          "value": 4,
+          "valueRef": "bismuth.mem.valiant-heart.c1.q/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -11421,7 +11497,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_ValiantHeart",
-      "value": 2,
+      "valueRef": "bismuth.mem.valiant-heart.c2.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -11459,7 +11535,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_QR_ValiantHeart",
-      "value": 1,
+      "valueRef": "bismuth.mem.valiant-heart.c2.e3/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -11492,7 +11568,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_ValiantHeart",
-      "value": 2,
+      "valueRef": "bismuth.mem.valiant-heart.c2.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -11564,7 +11640,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_ValiantHeart",
-      "value": 2,
+      "valueRef": "bismuth.mem.valiant-heart.c2.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -11609,7 +11685,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Rampart",
-        "value": 1,
+        "value": {
+          "valueRef": "bismuth.mem.valiant-heart.c2.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -11651,7 +11729,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Sap",
-        "value": 5,
+        "value": {
+          "valueRef": "bismuth.mem.valiant-heart.c2.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -11686,7 +11766,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_ValiantHeart",
-      "value": 3,
+      "valueRef": "bismuth.mem.valiant-heart.c2.a1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -11724,7 +11804,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_QR_ValiantHeart",
-      "value": 5,
+      "valueRef": "bismuth.mem.valiant-heart.c2.a2/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -11762,7 +11842,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_ValiantHeart",
-      "value": 3,
+      "valueRef": "bismuth.mem.valiant-heart.c2.a3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -11800,7 +11880,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_QR_ValiantHeart",
-      "value": 5,
+      "valueRef": "bismuth.mem.valiant-heart.c2.a4/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -11838,7 +11918,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_ValiantHeart",
-      "value": 3,
+      "valueRef": "bismuth.mem.valiant-heart.c2.b1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -11876,7 +11956,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_QR_ValiantHeart",
-      "value": 5,
+      "valueRef": "bismuth.mem.valiant-heart.c2.b2/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -11914,7 +11994,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_ValiantHeart",
-      "value": 3,
+      "valueRef": "bismuth.mem.valiant-heart.c2.b3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -11952,7 +12032,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_QR_ValiantHeart",
-      "value": 5,
+      "valueRef": "bismuth.mem.valiant-heart.c2.b4/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -12015,7 +12095,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_QR_ValiantHeart",
-          "value": 4,
+          "valueRef": "bismuth.mem.valiant-heart.c2.q/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -12089,7 +12169,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_ValiantHeart",
-      "value": 2,
+      "valueRef": "bismuth.mem.valiant-heart.c3.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -12127,7 +12207,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_QR_ValiantHeart",
-      "value": 1,
+      "valueRef": "bismuth.mem.valiant-heart.c3.e3/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -12160,7 +12240,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_ValiantHeart",
-      "value": 2,
+      "valueRef": "bismuth.mem.valiant-heart.c3.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -12232,7 +12312,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_ValiantHeart",
-      "value": 2,
+      "valueRef": "bismuth.mem.valiant-heart.c3.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -12277,7 +12357,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Element",
-        "value": 35,
+        "value": {
+          "valueRef": "bismuth.mem.valiant-heart.c3.n1/gimmick/value"
+        },
         "arg": 1,
         "cooldown": 0,
         "target": null
@@ -12319,7 +12401,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Element",
-        "value": 35,
+        "value": {
+          "valueRef": "bismuth.mem.valiant-heart.c3.n2/gimmick/value"
+        },
         "arg": 2,
         "cooldown": 0,
         "target": null
@@ -12354,7 +12438,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_ValiantHeart",
-      "value": 3,
+      "valueRef": "bismuth.mem.valiant-heart.c3.a1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -12392,7 +12476,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_QR_ValiantHeart",
-      "value": 2,
+      "valueRef": "bismuth.mem.valiant-heart.c3.a2/value",
       "param": "Chance",
       "receiver": null,
       "target": {
@@ -12430,7 +12514,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_ValiantHeart",
-      "value": 3,
+      "valueRef": "bismuth.mem.valiant-heart.c3.a3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -12468,7 +12552,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_QR_ValiantHeart",
-      "value": 2,
+      "valueRef": "bismuth.mem.valiant-heart.c3.a4/value",
       "param": "Chance",
       "receiver": null,
       "target": {
@@ -12506,7 +12590,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_ValiantHeart",
-      "value": 3,
+      "valueRef": "bismuth.mem.valiant-heart.c3.b1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -12544,7 +12628,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_QR_ValiantHeart",
-      "value": 2,
+      "valueRef": "bismuth.mem.valiant-heart.c3.b2/value",
       "param": "Chance",
       "receiver": null,
       "target": {
@@ -12582,7 +12666,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_ValiantHeart",
-      "value": 3,
+      "valueRef": "bismuth.mem.valiant-heart.c3.b3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -12620,7 +12704,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_QR_ValiantHeart",
-      "value": 2,
+      "valueRef": "bismuth.mem.valiant-heart.c3.b4/value",
       "param": "Chance",
       "receiver": null,
       "target": {
@@ -12683,7 +12767,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_QR_ValiantHeart",
-          "value": 4,
+          "valueRef": "bismuth.mem.valiant-heart.c3.q/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -12757,7 +12841,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_ValiantHeart",
-      "value": 2,
+      "valueRef": "bismuth.mem.valiant-heart.c4.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -12795,7 +12879,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_QR_ValiantHeart",
-      "value": 1,
+      "valueRef": "bismuth.mem.valiant-heart.c4.e3/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -12828,7 +12912,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_ValiantHeart",
-      "value": 2,
+      "valueRef": "bismuth.mem.valiant-heart.c4.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -12900,7 +12984,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_ValiantHeart",
-      "value": 2,
+      "valueRef": "bismuth.mem.valiant-heart.c4.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -12945,7 +13029,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Recharge",
-        "value": 12,
+        "value": {
+          "valueRef": "bismuth.mem.valiant-heart.c4.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": "St_QR_ValiantHeart"
@@ -12987,7 +13073,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Heal",
-        "value": 2,
+        "value": {
+          "valueRef": "bismuth.mem.valiant-heart.c4.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -13022,7 +13110,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_ValiantHeart",
-      "value": 3,
+      "valueRef": "bismuth.mem.valiant-heart.c4.a1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -13060,7 +13148,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_QR_ValiantHeart",
-      "value": 1,
+      "valueRef": "bismuth.mem.valiant-heart.c4.a2/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -13094,7 +13182,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_ValiantHeart",
-      "value": 3,
+      "valueRef": "bismuth.mem.valiant-heart.c4.a3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -13132,7 +13220,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_QR_ValiantHeart",
-      "value": 1,
+      "valueRef": "bismuth.mem.valiant-heart.c4.a4/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -13166,7 +13254,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_ValiantHeart",
-      "value": 3,
+      "valueRef": "bismuth.mem.valiant-heart.c4.b1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -13238,7 +13326,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_ValiantHeart",
-      "value": 3,
+      "valueRef": "bismuth.mem.valiant-heart.c4.b3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -13276,7 +13364,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_ValiantHeart",
-      "value": 3,
+      "valueRef": "bismuth.mem.valiant-heart.c4.b4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -13339,7 +13427,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_QR_ValiantHeart",
-          "value": 4,
+          "valueRef": "bismuth.mem.valiant-heart.c4.q/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -13413,7 +13501,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_DistortedMind",
-      "value": 2,
+      "valueRef": "bismuth.mem.distorted-mind.c1.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -13451,7 +13539,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_QR_DistortedMind",
-      "value": 1,
+      "valueRef": "bismuth.mem.distorted-mind.c1.e3/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -13484,7 +13572,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_DistortedMind",
-      "value": 2,
+      "valueRef": "bismuth.mem.distorted-mind.c1.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -13556,7 +13644,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_DistortedMind",
-      "value": 2,
+      "valueRef": "bismuth.mem.distorted-mind.c1.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -13601,7 +13689,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Echo",
-        "value": 12,
+        "value": {
+          "valueRef": "bismuth.mem.distorted-mind.c1.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -13643,7 +13733,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Wound",
-        "value": 24,
+        "value": {
+          "valueRef": "bismuth.mem.distorted-mind.c1.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -13678,7 +13770,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_DistortedMind",
-      "value": 3,
+      "valueRef": "bismuth.mem.distorted-mind.c1.a1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -13750,7 +13842,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_DistortedMind",
-      "value": 3,
+      "valueRef": "bismuth.mem.distorted-mind.c1.a3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -13822,7 +13914,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_DistortedMind",
-      "value": 3,
+      "valueRef": "bismuth.mem.distorted-mind.c1.b1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -13894,7 +13986,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_DistortedMind",
-      "value": 3,
+      "valueRef": "bismuth.mem.distorted-mind.c1.b3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -13991,7 +14083,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_QR_DistortedMind",
-          "value": 4,
+          "valueRef": "bismuth.mem.distorted-mind.c1.q/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -14065,7 +14157,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_DistortedMind",
-      "value": 2,
+      "valueRef": "bismuth.mem.distorted-mind.c2.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -14103,7 +14195,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_QR_DistortedMind",
-      "value": 1,
+      "valueRef": "bismuth.mem.distorted-mind.c2.e3/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -14136,7 +14228,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_DistortedMind",
-      "value": 2,
+      "valueRef": "bismuth.mem.distorted-mind.c2.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -14208,7 +14300,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_DistortedMind",
-      "value": 2,
+      "valueRef": "bismuth.mem.distorted-mind.c2.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -14253,9 +14345,15 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Ricochet",
-        "value": 12,
-        "arg": 1,
-        "cooldown": 0.3,
+        "value": {
+          "valueRef": "bismuth.mem.distorted-mind.c2.n1/gimmick/value"
+        },
+        "arg": {
+          "valueRef": "bismuth.mem.distorted-mind.c2.n1/gimmick/arg"
+        },
+        "cooldown": {
+          "valueRef": "bismuth.mem.distorted-mind.c2.n1/gimmick/cooldown"
+        },
         "target": null
       },
       "power": null,
@@ -14295,7 +14393,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Burst",
-        "value": 35,
+        "value": {
+          "valueRef": "bismuth.mem.distorted-mind.c2.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -14330,7 +14430,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_DistortedMind",
-      "value": 3,
+      "valueRef": "bismuth.mem.distorted-mind.c2.a1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -14368,7 +14468,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_QR_DistortedMind",
-      "value": 5,
+      "valueRef": "bismuth.mem.distorted-mind.c2.a2/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -14406,7 +14506,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_QR_DistortedMind",
-      "value": 1,
+      "valueRef": "bismuth.mem.distorted-mind.c2.a3/value",
       "param": "ExtraTargets",
       "receiver": null,
       "target": {
@@ -14444,7 +14544,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_DistortedMind",
-      "value": 3,
+      "valueRef": "bismuth.mem.distorted-mind.c2.a4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -14482,7 +14582,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_DistortedMind",
-      "value": 3,
+      "valueRef": "bismuth.mem.distorted-mind.c2.b1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -14520,7 +14620,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_QR_DistortedMind",
-      "value": 5,
+      "valueRef": "bismuth.mem.distorted-mind.c2.b2/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -14558,7 +14658,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_DistortedMind",
-      "value": 3,
+      "valueRef": "bismuth.mem.distorted-mind.c2.b3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -14596,7 +14696,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_QR_DistortedMind",
-      "value": 5,
+      "valueRef": "bismuth.mem.distorted-mind.c2.b4/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -14659,7 +14759,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_QR_DistortedMind",
-          "value": 4,
+          "valueRef": "bismuth.mem.distorted-mind.c2.q/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -14733,7 +14833,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_DistortedMind",
-      "value": 2,
+      "valueRef": "bismuth.mem.distorted-mind.c3.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -14771,7 +14871,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_QR_DistortedMind",
-      "value": 1,
+      "valueRef": "bismuth.mem.distorted-mind.c3.e3/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -14804,7 +14904,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_DistortedMind",
-      "value": 2,
+      "valueRef": "bismuth.mem.distorted-mind.c3.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -14876,7 +14976,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_DistortedMind",
-      "value": 2,
+      "valueRef": "bismuth.mem.distorted-mind.c3.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -14921,7 +15021,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Element",
-        "value": 35,
+        "value": {
+          "valueRef": "bismuth.mem.distorted-mind.c3.n1/gimmick/value"
+        },
         "arg": 2,
         "cooldown": 0,
         "target": null
@@ -14963,7 +15065,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Element",
-        "value": 35,
+        "value": {
+          "valueRef": "bismuth.mem.distorted-mind.c3.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -14998,7 +15102,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_DistortedMind",
-      "value": 3,
+      "valueRef": "bismuth.mem.distorted-mind.c3.a1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -15036,7 +15140,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_QR_DistortedMind",
-      "value": 2,
+      "valueRef": "bismuth.mem.distorted-mind.c3.a2/value",
       "param": "Chance",
       "receiver": null,
       "target": {
@@ -15074,7 +15178,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_DistortedMind",
-      "value": 3,
+      "valueRef": "bismuth.mem.distorted-mind.c3.a3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -15112,7 +15216,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_QR_DistortedMind",
-      "value": 2,
+      "valueRef": "bismuth.mem.distorted-mind.c3.a4/value",
       "param": "Chance",
       "receiver": null,
       "target": {
@@ -15150,7 +15254,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_DistortedMind",
-      "value": 3,
+      "valueRef": "bismuth.mem.distorted-mind.c3.b1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -15188,7 +15292,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_QR_DistortedMind",
-      "value": 2,
+      "valueRef": "bismuth.mem.distorted-mind.c3.b2/value",
       "param": "Chance",
       "receiver": null,
       "target": {
@@ -15226,7 +15330,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_DistortedMind",
-      "value": 3,
+      "valueRef": "bismuth.mem.distorted-mind.c3.b3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -15264,7 +15368,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_QR_DistortedMind",
-      "value": 2,
+      "valueRef": "bismuth.mem.distorted-mind.c3.b4/value",
       "param": "Chance",
       "receiver": null,
       "target": {
@@ -15327,7 +15431,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_QR_DistortedMind",
-          "value": 4,
+          "valueRef": "bismuth.mem.distorted-mind.c3.q/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -15401,7 +15505,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_DistortedMind",
-      "value": 2,
+      "valueRef": "bismuth.mem.distorted-mind.c4.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -15439,7 +15543,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_QR_DistortedMind",
-      "value": 1,
+      "valueRef": "bismuth.mem.distorted-mind.c4.e3/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -15472,7 +15576,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_DistortedMind",
-      "value": 2,
+      "valueRef": "bismuth.mem.distorted-mind.c4.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -15544,7 +15648,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_DistortedMind",
-      "value": 2,
+      "valueRef": "bismuth.mem.distorted-mind.c4.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -15589,7 +15693,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Sap",
-        "value": 5,
+        "value": {
+          "valueRef": "bismuth.mem.distorted-mind.c4.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -15631,7 +15737,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Shield",
-        "value": 2,
+        "value": {
+          "valueRef": "bismuth.mem.distorted-mind.c4.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -15667,7 +15775,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_DistortedMind",
-      "value": 3,
+      "valueRef": "bismuth.mem.distorted-mind.c4.a1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -15705,7 +15813,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_QR_DistortedMind",
-      "value": 5,
+      "valueRef": "bismuth.mem.distorted-mind.c4.a2/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -15743,7 +15851,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_DistortedMind",
-      "value": 3,
+      "valueRef": "bismuth.mem.distorted-mind.c4.a3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -15781,7 +15889,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_QR_DistortedMind",
-      "value": 5,
+      "valueRef": "bismuth.mem.distorted-mind.c4.a4/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -15819,7 +15927,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_DistortedMind",
-      "value": 3,
+      "valueRef": "bismuth.mem.distorted-mind.c4.b1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -15857,7 +15965,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_QR_DistortedMind",
-      "value": 5,
+      "valueRef": "bismuth.mem.distorted-mind.c4.b2/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -15895,7 +16003,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_DistortedMind",
-      "value": 3,
+      "valueRef": "bismuth.mem.distorted-mind.c4.b3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -15933,7 +16041,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_QR_DistortedMind",
-      "value": 5,
+      "valueRef": "bismuth.mem.distorted-mind.c4.b4/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -15996,7 +16104,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_QR_DistortedMind",
-          "value": 4,
+          "valueRef": "bismuth.mem.distorted-mind.c4.q/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -16036,7 +16144,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_PrismaticEyes",
-      "value": 2,
+      "valueRef": "bismuth.bridge.b1.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -16075,7 +16183,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_Innocence",
-      "value": 2,
+      "valueRef": "bismuth.bridge.b1.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -16190,7 +16298,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Element",
-        "value": 30,
+        "value": {
+          "valueRef": "bismuth.bridge.b1.n1/gimmick/value"
+        },
         "arg": 3,
         "cooldown": 0,
         "target": null,
@@ -16234,7 +16344,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Sap",
-        "value": 4,
+        "value": {
+          "valueRef": "bismuth.bridge.b1.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null,
@@ -16271,7 +16383,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_PrismaticEyes",
-      "value": 2,
+      "valueRef": "bismuth.bridge.b1.a1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -16310,7 +16422,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_Innocence",
-      "value": 2,
+      "valueRef": "bismuth.bridge.b1.a2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -16349,7 +16461,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_PrismaticEyes",
-      "value": 2,
+      "valueRef": "bismuth.bridge.b1.a3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -16388,7 +16500,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_Innocence",
-      "value": 2,
+      "valueRef": "bismuth.bridge.b1.a4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -16427,7 +16539,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_Innocence",
-      "value": 2,
+      "valueRef": "bismuth.bridge.b1.a5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -16491,7 +16603,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_QR_Innocence",
-          "value": 4,
+          "valueRef": "bismuth.bridge.b1.q/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -16532,7 +16644,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_Innocence",
-      "value": 2,
+      "valueRef": "bismuth.bridge.b2.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -16571,7 +16683,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 2,
+      "valueRef": "bismuth.bridge.b2.e2/value",
       "param": null,
       "receiver": "St_M_Sprint",
       "target": {
@@ -16644,7 +16756,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 2,
+      "valueRef": "bismuth.bridge.b2.e4/value",
       "param": null,
       "receiver": "St_M_Sprint",
       "target": {
@@ -16690,7 +16802,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "ReceiverRecharge",
-        "value": 10,
+        "value": {
+          "valueRef": "bismuth.bridge.b2.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": "St_M_Sprint",
@@ -16735,7 +16849,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "ReceiverRecharge",
-        "value": 2,
+        "value": {
+          "valueRef": "bismuth.bridge.b2.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": "St_M_Sprint",
@@ -16773,7 +16889,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_Innocence",
-      "value": 2,
+      "valueRef": "bismuth.bridge.b2.a1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -16812,7 +16928,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 2,
+      "valueRef": "bismuth.bridge.b2.a2/value",
       "param": null,
       "receiver": "St_M_Sprint",
       "target": {
@@ -16851,7 +16967,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_Innocence",
-      "value": 2,
+      "valueRef": "bismuth.bridge.b2.a3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -16890,7 +17006,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 2,
+      "valueRef": "bismuth.bridge.b2.a4/value",
       "param": null,
       "receiver": "St_M_Sprint",
       "target": {
@@ -16929,7 +17045,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 2,
+      "valueRef": "bismuth.bridge.b2.a5/value",
       "param": null,
       "receiver": "St_M_Sprint",
       "target": {
@@ -16980,7 +17096,7 @@
         {
           "kind": "GimmickBoost",
           "memory": null,
-          "value": 4,
+          "valueRef": "bismuth.bridge.b2.q/options/0/value",
           "param": null,
           "receiver": "St_M_Sprint",
           "target": {
@@ -16996,7 +17112,7 @@
         {
           "kind": "GimmickParam",
           "memory": null,
-          "value": 2,
+          "valueRef": "bismuth.bridge.b2.q/options/1/value",
           "param": "Chance",
           "receiver": "St_M_Sprint",
           "target": {
@@ -17037,7 +17153,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 2,
+      "valueRef": "bismuth.bridge.b3.e1/value",
       "param": null,
       "receiver": "St_M_Sprint",
       "target": {
@@ -17076,7 +17192,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_InfernalTales",
-      "value": 2,
+      "valueRef": "bismuth.bridge.b3.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -17114,7 +17230,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 2,
+      "valueRef": "bismuth.bridge.b3.e3/value",
       "param": null,
       "receiver": "St_M_Sprint",
       "target": {
@@ -17195,7 +17311,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "ReceiverRecharge",
-        "value": 10,
+        "value": {
+          "valueRef": "bismuth.bridge.b3.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": "St_M_Sprint",
@@ -17240,7 +17358,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "ReceiverRecharge",
-        "value": 2,
+        "value": {
+          "valueRef": "bismuth.bridge.b3.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": "St_M_Sprint",
@@ -17279,7 +17399,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 2,
+      "valueRef": "bismuth.bridge.b3.a1/value",
       "param": null,
       "receiver": "St_M_Sprint",
       "target": {
@@ -17318,7 +17438,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_InfernalTales",
-      "value": 2,
+      "valueRef": "bismuth.bridge.b3.a2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -17357,7 +17477,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 2,
+      "valueRef": "bismuth.bridge.b3.a3/value",
       "param": null,
       "receiver": "St_M_Sprint",
       "target": {
@@ -17396,7 +17516,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_InfernalTales",
-      "value": 2,
+      "valueRef": "bismuth.bridge.b3.a4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -17435,7 +17555,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_InfernalTales",
-      "value": 2,
+      "valueRef": "bismuth.bridge.b3.a5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -17486,7 +17606,7 @@
         {
           "kind": "GimmickBoost",
           "memory": null,
-          "value": 4,
+          "valueRef": "bismuth.bridge.b3.q/options/0/value",
           "param": null,
           "receiver": "St_M_Sprint",
           "target": {
@@ -17502,7 +17622,7 @@
         {
           "kind": "GimmickParam",
           "memory": null,
-          "value": 2,
+          "valueRef": "bismuth.bridge.b3.q/options/1/value",
           "param": "Chance",
           "receiver": "St_M_Sprint",
           "target": {
@@ -17543,7 +17663,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_InfernalTales",
-      "value": 2,
+      "valueRef": "bismuth.bridge.b4.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -17582,7 +17702,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_ValiantHeart",
-      "value": 2,
+      "valueRef": "bismuth.bridge.b4.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -17697,7 +17817,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Element",
-        "value": 30,
+        "value": {
+          "valueRef": "bismuth.bridge.b4.n1/gimmick/value"
+        },
         "arg": 3,
         "cooldown": 0,
         "target": null,
@@ -17742,7 +17864,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Shield",
-        "value": 2,
+        "value": {
+          "valueRef": "bismuth.bridge.b4.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null,
@@ -17781,7 +17905,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_InfernalTales",
-      "value": 2,
+      "valueRef": "bismuth.bridge.b4.a1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -17820,7 +17944,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_ValiantHeart",
-      "value": 2,
+      "valueRef": "bismuth.bridge.b4.a2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -17859,7 +17983,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_InfernalTales",
-      "value": 2,
+      "valueRef": "bismuth.bridge.b4.a3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -17898,7 +18022,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_ValiantHeart",
-      "value": 2,
+      "valueRef": "bismuth.bridge.b4.a4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -17937,7 +18061,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_ValiantHeart",
-      "value": 2,
+      "valueRef": "bismuth.bridge.b4.a5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -18001,7 +18125,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_QR_ValiantHeart",
-          "value": 4,
+          "valueRef": "bismuth.bridge.b4.q/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -18042,7 +18166,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_ValiantHeart",
-      "value": 2,
+      "valueRef": "bismuth.bridge.b5.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -18081,7 +18205,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_DistortedMind",
-      "value": 2,
+      "valueRef": "bismuth.bridge.b5.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -18196,7 +18320,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Shield",
-        "value": 2,
+        "value": {
+          "valueRef": "bismuth.bridge.b5.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null,
@@ -18242,7 +18368,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Element",
-        "value": 30,
+        "value": {
+          "valueRef": "bismuth.bridge.b5.n2/gimmick/value"
+        },
         "arg": 2,
         "cooldown": 0,
         "target": null,
@@ -18280,7 +18408,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_ValiantHeart",
-      "value": 2,
+      "valueRef": "bismuth.bridge.b5.a1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -18319,7 +18447,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_DistortedMind",
-      "value": 2,
+      "valueRef": "bismuth.bridge.b5.a2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -18358,7 +18486,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_ValiantHeart",
-      "value": 2,
+      "valueRef": "bismuth.bridge.b5.a3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -18397,7 +18525,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_DistortedMind",
-      "value": 2,
+      "valueRef": "bismuth.bridge.b5.a4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -18436,7 +18564,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_DistortedMind",
-      "value": 2,
+      "valueRef": "bismuth.bridge.b5.a5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -18500,7 +18628,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_QR_DistortedMind",
-          "value": 4,
+          "valueRef": "bismuth.bridge.b5.q/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -18541,7 +18669,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_DistortedMind",
-      "value": 2,
+      "valueRef": "bismuth.bridge.b6.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -18580,7 +18708,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_PrismaticEyes",
-      "value": 2,
+      "valueRef": "bismuth.bridge.b6.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -18695,7 +18823,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Heal",
-        "value": 2,
+        "value": {
+          "valueRef": "bismuth.bridge.b6.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null,
@@ -18739,7 +18869,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Burst",
-        "value": 40,
+        "value": {
+          "valueRef": "bismuth.bridge.b6.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null,
@@ -18776,7 +18908,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_DistortedMind",
-      "value": 2,
+      "valueRef": "bismuth.bridge.b6.a1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -18815,7 +18947,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_PrismaticEyes",
-      "value": 2,
+      "valueRef": "bismuth.bridge.b6.a2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -18854,7 +18986,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_DistortedMind",
-      "value": 2,
+      "valueRef": "bismuth.bridge.b6.a3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -18893,7 +19025,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_PrismaticEyes",
-      "value": 2,
+      "valueRef": "bismuth.bridge.b6.a4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -18932,7 +19064,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_PrismaticEyes",
-      "value": 2,
+      "valueRef": "bismuth.bridge.b6.a5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -18996,7 +19128,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_D_PrismaticEyes",
-          "value": 4,
+          "valueRef": "bismuth.bridge.b6.q/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -19037,7 +19169,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_PrismaticEyes",
-      "value": 2,
+      "valueRef": "bismuth.bridge.b7.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -19076,7 +19208,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_Innocence",
-      "value": 2,
+      "valueRef": "bismuth.bridge.b7.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -19191,7 +19323,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Wound",
-        "value": 20,
+        "value": {
+          "valueRef": "bismuth.bridge.b7.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null,
@@ -19236,7 +19370,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Daze",
-        "value": 2,
+        "value": {
+          "valueRef": "bismuth.bridge.b7.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null,
@@ -19274,7 +19410,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_PrismaticEyes",
-      "value": 2,
+      "valueRef": "bismuth.bridge.b7.a1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -19313,7 +19449,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_Innocence",
-      "value": 2,
+      "valueRef": "bismuth.bridge.b7.a2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -19352,7 +19488,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_PrismaticEyes",
-      "value": 2,
+      "valueRef": "bismuth.bridge.b7.a3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -19391,7 +19527,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_Innocence",
-      "value": 2,
+      "valueRef": "bismuth.bridge.b7.a4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -19430,7 +19566,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_Innocence",
-      "value": 2,
+      "valueRef": "bismuth.bridge.b7.a5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -19494,7 +19630,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_QR_Innocence",
-          "value": 4,
+          "valueRef": "bismuth.bridge.b7.q/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -19535,7 +19671,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_Innocence",
-      "value": 2,
+      "valueRef": "bismuth.bridge.b8.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -19574,7 +19710,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 2,
+      "valueRef": "bismuth.bridge.b8.e2/value",
       "param": null,
       "receiver": "St_M_Sprint",
       "target": {
@@ -19647,7 +19783,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 2,
+      "valueRef": "bismuth.bridge.b8.e4/value",
       "param": null,
       "receiver": "St_M_Sprint",
       "target": {
@@ -19693,7 +19829,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "ReceiverRecharge",
-        "value": 2,
+        "value": {
+          "valueRef": "bismuth.bridge.b8.n1/gimmick/value"
+        },
         "arg": 1,
         "cooldown": 0,
         "target": "St_M_Sprint",
@@ -19739,7 +19877,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "ReceiverRecharge",
-        "value": 10,
+        "value": {
+          "valueRef": "bismuth.bridge.b8.n2/gimmick/value"
+        },
         "arg": 1,
         "cooldown": 0,
         "target": "St_M_Sprint"
@@ -19776,7 +19916,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_Innocence",
-      "value": 2,
+      "valueRef": "bismuth.bridge.b8.a1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -19815,7 +19955,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 2,
+      "valueRef": "bismuth.bridge.b8.a2/value",
       "param": null,
       "receiver": "St_M_Sprint",
       "target": {
@@ -19854,7 +19994,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_QR_Innocence",
-      "value": 2,
+      "valueRef": "bismuth.bridge.b8.a3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -19893,7 +20033,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 2,
+      "valueRef": "bismuth.bridge.b8.a4/value",
       "param": null,
       "receiver": "St_M_Sprint",
       "target": {
@@ -19932,7 +20072,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 2,
+      "valueRef": "bismuth.bridge.b8.a5/value",
       "param": null,
       "receiver": "St_M_Sprint",
       "target": {
@@ -19983,7 +20123,7 @@
         {
           "kind": "GimmickBoost",
           "memory": null,
-          "value": 4,
+          "valueRef": "bismuth.bridge.b8.q/options/0/value",
           "param": null,
           "receiver": "St_M_Sprint",
           "target": {
@@ -19999,7 +20139,7 @@
         {
           "kind": "GimmickParam",
           "memory": null,
-          "value": 2,
+          "valueRef": "bismuth.bridge.b8.q/options/1/value",
           "param": "Chance",
           "receiver": "St_M_Sprint",
           "target": {
@@ -20056,7 +20196,9 @@
             "gimmick": {
               "trigger": "OnHit",
               "effect": "Sap",
-              "value": 15,
+              "value": {
+                "valueRef": "bismuth.key.light-jury/keystone/upsideSpec/0/gimmick/value"
+              },
               "arg": 0,
               "cooldown": 0,
               "target": null
@@ -20069,7 +20211,9 @@
             "gimmick": {
               "trigger": "OnHit",
               "effect": "Daze",
-              "value": 8,
+              "value": {
+                "valueRef": "bismuth.key.light-jury/keystone/upsideSpec/1/gimmick/value"
+              },
               "arg": 0,
               "cooldown": 0,
               "target": null
@@ -20120,7 +20264,9 @@
             "gimmick": {
               "trigger": "OnKill",
               "effect": "Burst",
-              "value": 160,
+              "value": {
+                "valueRef": "bismuth.key.ash-ending/keystone/upsideSpec/0/gimmick/value"
+              },
               "arg": 0,
               "cooldown": 0,
               "target": null
@@ -20130,7 +20276,9 @@
             "memory": "St_QR_InfernalTales",
             "effect": "Burst",
             "field": "Radius",
-            "to": 6
+            "to": {
+              "valueRef": "bismuth.key.ash-ending/keystone/upsideSpec/1/to"
+            }
           }
         ]
       },
@@ -20177,7 +20325,9 @@
             "gimmick": {
               "trigger": "OnHit",
               "effect": "Rampart",
-              "value": 2,
+              "value": {
+                "valueRef": "bismuth.key.sword-cover/keystone/upsideSpec/0/gimmick/value"
+              },
               "arg": 0,
               "cooldown": 0,
               "target": null
@@ -20228,7 +20378,9 @@
             "gimmick": {
               "trigger": "OnHit",
               "effect": "Wound",
-              "value": 45,
+              "value": {
+                "valueRef": "bismuth.key.unfinished-arrows/keystone/upsideSpec/0/gimmick/value"
+              },
               "arg": 0,
               "cooldown": 0,
               "target": null
@@ -20238,7 +20390,9 @@
             "memory": "St_QR_DistortedMind",
             "effect": "Wound",
             "field": "Duration",
-            "pct": 100
+            "pct": {
+              "valueRef": "bismuth.key.unfinished-arrows/keystone/upsideSpec/1/pct"
+            }
           }
         ]
       },
@@ -20286,7 +20440,9 @@
             "gimmick": {
               "trigger": "OnHit",
               "effect": "ElementEdge",
-              "value": 40,
+              "value": {
+                "valueRef": "bismuth.key.four-color-reading/keystone/upsideSpec/0/gimmick/value"
+              },
               "arg": 0,
               "cooldown": 0,
               "target": null
@@ -20338,7 +20494,9 @@
             "gimmick": {
               "trigger": "OnHit",
               "effect": "ReceiverRecharge",
-              "value": 8,
+              "value": {
+                "valueRef": "bismuth.key.open-exit/keystone/upsideSpec/0/gimmick/value"
+              },
               "arg": 0,
               "cooldown": 0,
               "target": "St_M_Sprint"
@@ -20348,7 +20506,9 @@
             "memory": "St_D_PrismaticEyes",
             "effect": "ReceiverRecharge",
             "field": "Chance",
-            "to": 100,
+            "to": {
+              "valueRef": "bismuth.key.open-exit/keystone/upsideSpec/1/to"
+            },
             "receiver": "St_M_Sprint"
           }
         ]
@@ -20396,7 +20556,7 @@
       "region": "migration",
       "kind": "GimmickBoost",
       "memory": "St_QR_Innocence",
-      "value": 4,
+      "valueRef": "h.bismuth.light/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -20435,7 +20595,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Shield",
-        "value": 1,
+        "value": {
+          "valueRef": "h.bismuth.dark/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -20510,7 +20672,7 @@
       "region": "migration",
       "kind": "GimmickBoost",
       "memory": "St_QR_DistortedMind",
-      "value": 4,
+      "valueRef": "h.bismuth.deep.power/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -20542,7 +20704,7 @@
       "region": "migration",
       "kind": "GimmickBoost",
       "memory": "St_QR_Innocence",
-      "value": 4,
+      "valueRef": "h.bismuth.deep.crit/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -20574,7 +20736,7 @@
       "region": "migration",
       "kind": "GimmickBoost",
       "memory": "St_QR_ValiantHeart",
-      "value": 4,
+      "valueRef": "h.bismuth.deep.life/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -20613,7 +20775,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Shield",
-        "value": 1,
+        "value": {
+          "valueRef": "h.bismuth.deep.ember/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -20645,7 +20809,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Element",
-        "value": 10,
+        "value": {
+          "valueRef": "h.bismuth.deep.frost/gimmick/value"
+        },
         "arg": 1,
         "cooldown": 0,
         "target": null
@@ -20677,7 +20843,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Element",
-        "value": 15,
+        "value": {
+          "valueRef": "h.bismuth.deep.umbra/gimmick/value"
+        },
         "arg": 3,
         "cooldown": 0,
         "target": null
@@ -20702,7 +20870,7 @@
       "region": "migration",
       "kind": "GimmickBoost",
       "memory": "St_D_PrismaticEyes",
-      "value": 3,
+      "valueRef": "h.bismuth.route.prismatic-eyes.6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -20759,7 +20927,7 @@
       "region": "migration",
       "kind": "GimmickBoost",
       "memory": "St_QR_Innocence",
-      "value": 3,
+      "valueRef": "h.bismuth.route.innocence.6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -20816,7 +20984,7 @@
       "region": "migration",
       "kind": "GimmickBoost",
       "memory": "St_QR_InfernalTales",
-      "value": 3,
+      "valueRef": "h.bismuth.route.infernal-tales.6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -20873,7 +21041,7 @@
       "region": "migration",
       "kind": "GimmickBoost",
       "memory": "St_QR_ValiantHeart",
-      "value": 3,
+      "valueRef": "h.bismuth.route.valiant-heart.6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -20930,7 +21098,7 @@
       "region": "migration",
       "kind": "GimmickBoost",
       "memory": "St_QR_DistortedMind",
-      "value": 3,
+      "valueRef": "h.bismuth.route.distorted-mind.6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -20969,7 +21137,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "ReceiverRecharge",
-        "value": 1,
+        "value": {
+          "valueRef": "h.bismuth.route.distorting-sprint.1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": "St_M_Sprint"
@@ -20995,7 +21165,7 @@
       "region": "migration",
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 2,
+      "valueRef": "h.bismuth.route.distorting-sprint.2/value",
       "param": null,
       "receiver": "St_M_Sprint",
       "target": {
@@ -21027,7 +21197,7 @@
       "region": "migration",
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 2,
+      "valueRef": "h.bismuth.route.distorting-sprint.3/value",
       "param": null,
       "receiver": "St_M_Sprint",
       "target": {
@@ -21059,7 +21229,7 @@
       "region": "migration",
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 2,
+      "valueRef": "h.bismuth.route.distorting-sprint.5/value",
       "param": null,
       "receiver": "St_M_Sprint",
       "target": {
@@ -21091,7 +21261,7 @@
       "region": "migration",
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 2,
+      "valueRef": "h.bismuth.route.distorting-sprint.6/value",
       "param": null,
       "receiver": "St_M_Sprint",
       "target": {
@@ -21130,7 +21300,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "ReceiverRecharge",
-        "value": 5,
+        "value": {
+          "valueRef": "h.bismuth.route.distorting-sprint.4/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": "St_M_Sprint"
@@ -21163,7 +21335,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "ReceiverRecharge",
-        "value": 2,
+        "value": {
+          "valueRef": "h.bismuth.route.distorting-sprint.7/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": "St_M_Sprint",
@@ -21197,18 +21371,30 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Sap",
-        "value": 1,
+        "value": {
+          "valueRef": "h.bismuth.ring.resolve/gimmick/valuesByRank/0"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null,
         "condition": "BridgeMark:h.bismuth.ring.resolve",
         "once": true,
         "valuesByRank": [
-          1,
-          2,
-          3,
-          4,
-          5
+          {
+            "valueRef": "h.bismuth.ring.resolve/gimmick/valuesByRank/0"
+          },
+          {
+            "valueRef": "h.bismuth.ring.resolve/gimmick/valuesByRank/1"
+          },
+          {
+            "valueRef": "h.bismuth.ring.resolve/gimmick/valuesByRank/2"
+          },
+          {
+            "valueRef": "h.bismuth.ring.resolve/gimmick/valuesByRank/3"
+          },
+          {
+            "valueRef": "h.bismuth.ring.resolve/gimmick/valuesByRank/4"
+          }
         ]
       },
       "power": null,
@@ -21239,17 +21425,29 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "ReceiverRecharge",
-        "value": 1,
+        "value": {
+          "valueRef": "h.bismuth.ring.renewal/gimmick/valuesByRank/0"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": "St_M_Sprint",
         "once": true,
         "valuesByRank": [
-          1,
-          2,
-          3,
-          4,
-          5
+          {
+            "valueRef": "h.bismuth.ring.renewal/gimmick/valuesByRank/0"
+          },
+          {
+            "valueRef": "h.bismuth.ring.renewal/gimmick/valuesByRank/1"
+          },
+          {
+            "valueRef": "h.bismuth.ring.renewal/gimmick/valuesByRank/2"
+          },
+          {
+            "valueRef": "h.bismuth.ring.renewal/gimmick/valuesByRank/3"
+          },
+          {
+            "valueRef": "h.bismuth.ring.renewal/gimmick/valuesByRank/4"
+          }
         ]
       },
       "power": null,
@@ -21319,9 +21517,15 @@
             "gimmick": {
               "trigger": "OnHit",
               "effect": "Ricochet",
-              "value": 30,
-              "arg": 2,
-              "cooldown": 0.3,
+              "value": {
+                "valueRef": "h.bismuth.key2/keystone/upsideSpec/0/gimmick/value"
+              },
+              "arg": {
+                "valueRef": "h.bismuth.key2/keystone/upsideSpec/0/gimmick/arg"
+              },
+              "cooldown": {
+                "valueRef": "h.bismuth.key2/keystone/upsideSpec/0/gimmick/cooldown"
+              },
               "target": null
             }
           }

@@ -104,6 +104,22 @@ internal static class Metrics
         });
     }
 
+    public static void WriteStarValues(string path, StarValuesMeasurement measurement) => Write(path, new
+    {
+        modelVersion = 1, mode = "star-values", contentFingerprint = ContentFingerprint.Value,
+        conditions = new
+        {
+            runtime = RuntimeIdentity(), registeredHeroes = RegisteredHeroes(),
+            kinds = StarValuesReport.Kinds, origins = StarValuesReport.Origins,
+            scenarios = StarEfficiencyReport.Scenarios, choicePolicy = StarEfficiencyReport.ChoicePolicy,
+            valuePolicy = StarValuesReport.ValuePolicy, replacementPolicy = StarValuesReport.ReplacementPolicy,
+            keystonePolicy = "each keystone is an independent definition projection, not all keys in a legal build",
+            fieldPolicy = "explicit typed numeric fields and boolean flags (0/1); enum identities in semantics; absent fields are absent, not zero",
+        },
+        metrics = measurement.Entries.Select(e => new StarEfficiencyMetricValue(e.Id, e.Label, e.Value, e.Unit, e.Status)).ToArray(),
+        entries = measurement.Entries, configurations = measurement.Configurations,
+    });
+
     public static void WriteExpeditions(string path, Options options, Simulation simulation)
     {
         var metrics = new List<MetricValue>();

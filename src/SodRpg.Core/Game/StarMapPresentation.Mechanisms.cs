@@ -241,15 +241,15 @@ namespace SodRpg.Core.Game
                 case AuthoredMechanismKind.MemoryTuning: lines.Add(DescribeMemoryTuning(spec.Tuning)); break;
                 case AuthoredMechanismKind.IdentityStrike: lines.Add(DescribeIdentityStrike(spec.IdentityStrike)); break;
                 case AuthoredMechanismKind.SacrificeShield:
-                    lines.Add(Loc.T("障壁 +実際に支払ったHPの50%（4秒間・1回の付与は最大HPの10%まで）。",
-                        "Shield +50% of HP actually paid (4s; each award capped at 10% maximum HP)."));
+                    lines.Add(Loc.T($"障壁 +実際に支払ったHPの{Number(MemoryDamageBalance.Effect_legacy_h_aurena_key2_native_value)}%（{Number(MemoryDamageBalance.Effect_legacy_h_aurena_key2_native_duration)}秒間・1回の付与は最大HPの{Number(MemoryDamageBalance.Effect_legacy_h_aurena_key2_native_newAwardCap)}%まで）。",
+                        $"Shield +{Number(MemoryDamageBalance.Effect_legacy_h_aurena_key2_native_value)}% of HP actually paid ({Number(MemoryDamageBalance.Effect_legacy_h_aurena_key2_native_duration)}s; each award capped at {Number(MemoryDamageBalance.Effect_legacy_h_aurena_key2_native_newAwardCap)}% maximum HP)."));
                     lines.Add(Loc.T(Links.ItemName("St_Q_GoldenBurst") + "または" + Links.ItemName("St_Q_Reduction") + "の元々のHP支払いが対象。通常の被ダメージは対象外。HP支払い自体は減らさない。間隔制限なし。",
                         "Applies only to the original HP payment of " + Links.ItemName("St_Q_GoldenBurst") + " or " + Links.ItemName("St_Q_Reduction") + ", not ordinary damage taken. Does not reduce the HP cost. No cooldown."));
                     lines.Add(PoolText(ModShieldPoolKind.Ordinary));
                     break;
                 case AuthoredMechanismKind.StunSourceFilter:
-                    lines.Add(Loc.T("障壁 +最大HPの6%（3秒間）。装備中のQまたはRの記憶が元々持つ効果で敵をスタンさせたとき、自分に付与。星による追加スタンは対象外。再発動まで2秒。",
-                        "Shield +6% maximum HP for 3s. Gain it when the original effect of your equipped Q or R memory stuns an enemy, excluding star-generated stuns. Cooldown: 2s."));
+                    lines.Add(Loc.T($"障壁 +最大HPの{Number(MemoryDamageBalance.Effect_legacy_h_cetus_key2_native_value)}%（{Number(MemoryDamageBalance.Effect_legacy_h_cetus_key2_native_duration)}秒間）。装備中のQまたはRの記憶が元々持つ効果で敵をスタンさせたとき、自分に付与。星による追加スタンは対象外。再発動まで{Number(MemoryDamageBalance.Effect_legacy_h_cetus_key2_native_cooldown)}秒。",
+                        $"Shield +{Number(MemoryDamageBalance.Effect_legacy_h_cetus_key2_native_value)}% maximum HP for {Number(MemoryDamageBalance.Effect_legacy_h_cetus_key2_native_duration)}s. Gain it when the original effect of your equipped Q or R memory stuns an enemy, excluding star-generated stuns. Cooldown: {Number(MemoryDamageBalance.Effect_legacy_h_cetus_key2_native_cooldown)}s."));
                     lines.Add(PoolText(ModShieldPoolKind.Ordinary));
                     break;
                 case AuthoredMechanismKind.BridgeSuccess:

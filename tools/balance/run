@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate, validate, measure and compare stage1 balance snapshots."""
+"""Generate, validate, measure and compare balance snapshots."""
 from __future__ import annotations
 
 import argparse
@@ -62,7 +62,7 @@ def shown(entry: dict | None) -> str:
 
 def comparison(current: dict, previous: dict | None) -> str:
     validated = current["validation"]["testsPassed"]
-    lines = ["# stage1 バランス比較", "",
+    lines = ["# バランス比較", "",
              "検証: " + ("全通常テスト成功（--slow 指定時のみ低速も実行）" if validated else
                          "レポート専用・テスト未実行（検証済み基準には使いません）"), "",
              "現在: " + current["createdAt"],
@@ -70,7 +70,8 @@ def comparison(current: dict, previous: dict | None) -> str:
              "Git revision 現在: `" + (current.get("gitRevision") or "unknown") + "`",
              "Git revision 前回: " + ("`" + (previous.get("gitRevision") or "unknown") + "`" if previous else "—"), "",
              "数値はJSONの未丸め値。相対差は (現在−前回)/前回 ×100%。前回0・未到達・比較不可は —。",
-             "率 (%) の絶対差は percentage points (pp)、効率の差は %/点。未到達割合の差はfractionのまま。型・単位が異なる行は比較しません。", ""]
+             "率 (%) の絶対差は percentage points (pp)、効率の差は %/点。未到達割合の差はfractionのまま。型・単位が異なる行は比較しません。",
+             "star-values は実登録された星の種類・効果・欄・単位別の定義値。異種量は合算せず、DPS・発動頻度・実戦Buildの模型ではありません。追加/削除と実測0を区別します。", ""]
     if "tableMetadata" in current:
         lines.extend(["調整表メタデータ 現在: `" + json_text(current["tableMetadata"], sort_keys=True) + "`",
                       "調整表メタデータ 前回: " + ("`" + json_text(previous["tableMetadata"], sort_keys=True) + "`"
@@ -107,6 +108,8 @@ def comparison(current: dict, previous: dict | None) -> str:
                     delta += " 点"
                 elif entry.get("unit") == "nodes":
                     delta += " 星"
+                elif entry.get("unit") is not None:
+                    delta += " " + entry["unit"]
                 if old_value != 0:
                     relative = number(difference / old_value * 100) + "%"
             label = (entry or old)["label"].replace("|", "\\|").replace("\n", " ")
@@ -144,7 +147,7 @@ def git_revision() -> str | None:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="stage1 鍛冶＋記憶ダメージ効率＋小規模遠征の生成・検証・前回成功比較")
+    parser = argparse.ArgumentParser(description="鍛冶＋記憶ダメージ効率＋星の意味別実登録値＋小規模遠征の生成・検証・前回成功比較")
     parser.add_argument("--no-tests", action="store_true", help="テストなし。検証済み基準とは別のレポート専用基準を使用")
     parser.add_argument("--slow", action="store_true", help="既存の低速テストも実行（既定は通常全テスト）")
     parser.add_argument("--out-dir", type=Path, default=HERE / "results", help="結果・基準の保存先")
@@ -193,7 +196,7 @@ def main() -> int:
             staging = Path(pending)
             dll = ROOT / "tools/BalanceSim/bin/Release/net8.0/BalanceSim.dll"
             snapshots = []
-            for mode in ("forge", "star-efficiency", "expeditions"):
+            for mode in ("forge", "star-efficiency", "star-values", "expeditions"):
                 # Each invocation starts a separate process, isolating static Core state.
                 command = [dotnet, str(dll), "--mode", mode, "--out", str(staging / f"{mode}.md"),
                            "--metrics-json", str(staging / f"{mode}.json")]

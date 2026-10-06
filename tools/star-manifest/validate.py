@@ -136,7 +136,7 @@ RINGS = {'force', 'insight', 'vessel', 'armor', 'recall', 'rhythm', 'resolve', '
 def legacy_data():
     """(legacy ID の集合, 旧ルート星 ID -> (種別, 引数, 記憶), GimmickEffect 名の集合)。"""
     def rd(p):
-        return open(os.path.join(GAME, p), encoding='utf-8').read()
+        return star_values.legacy_numeric_source("src/SodRpg.Core/Game/" + p)
     ids = set()
     for m in re.finditer(r'(?:Node|DeepNode|DeepPower|DeepCostly|Key|PowerNode)\("Hero_\w+",\s*"([^"]+)"', rd('HeroSigils.cs')):
         ids.add('h.' + m.group(1))
@@ -340,8 +340,7 @@ def check_effect_obj(o, ctx, kind_rule, legacy, hero, refs, errors, S, effects):
         gt = g.get('target') if isinstance(g, dict) else None
         if gt and rec != gt:
             errors.append(f'{ctx}: receiver {rec!r} must equal gimmick.target {gt!r}')
-    if kind in ('MemoryDamage', 'MemoryHaste', 'GimmickBoost', 'GimmickParam', 'Stat') and (not isinstance(o.get('value'), (int, float, Decimal)) or isinstance(o.get('value'), bool)) \
-            and not (kind_rule == 'migration' and o.get('stat')):
+    if kind in ('MemoryDamage', 'MemoryHaste', 'GimmickBoost', 'GimmickParam') and (not isinstance(o.get('value'), (int, float, Decimal)) or isinstance(o.get('value'), bool)):
         errors.append(f'{ctx}: {kind} needs numeric value')
     if kind == 'MemoryHaste' and isinstance(o.get('value'), (int, float, Decimal)):
         value = Decimal(str(o['value']))

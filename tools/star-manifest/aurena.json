@@ -52,7 +52,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_DisintegratingClaw",
-      "value": 2,
+      "valueRef": "aurena.mem.claw.c1.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -90,7 +90,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_DisintegratingClaw",
-      "value": 2,
+      "valueRef": "aurena.mem.claw.c1.e3/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -128,7 +128,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_DisintegratingClaw",
-      "value": 2,
+      "valueRef": "aurena.mem.claw.c1.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -166,7 +166,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_DisintegratingClaw",
-      "value": 2,
+      "valueRef": "aurena.mem.claw.c1.e5/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -204,7 +204,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_DisintegratingClaw",
-      "value": 2,
+      "valueRef": "aurena.mem.claw.c1.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -249,7 +249,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Wound",
-        "value": 11,
+        "value": {
+          "valueRef": "aurena.mem.claw.c1.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -291,7 +293,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Echo",
-        "value": 12,
+        "value": {
+          "valueRef": "aurena.mem.claw.c1.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -326,7 +330,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_DisintegratingClaw",
-      "value": 2,
+      "valueRef": "aurena.mem.claw.c1.l1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -364,7 +368,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_DisintegratingClaw",
-      "value": 2,
+      "valueRef": "aurena.mem.claw.c1.l2/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -402,7 +406,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_DisintegratingClaw",
-      "value": 2,
+      "valueRef": "aurena.mem.claw.c1.l3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -440,7 +444,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_DisintegratingClaw",
-      "value": 2,
+      "valueRef": "aurena.mem.claw.c1.l4/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -478,7 +482,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_DisintegratingClaw",
-      "value": 2,
+      "valueRef": "aurena.mem.claw.c1.l5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -528,7 +532,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_D_DisintegratingClaw",
-          "value": 8,
+          "valueRef": "aurena.mem.claw.c1.q/options/0/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -544,7 +548,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_D_DisintegratingClaw",
-          "value": 8,
+          "valueRef": "aurena.mem.claw.c1.q/options/1/value",
           "param": "Duration",
           "receiver": null,
           "target": {
@@ -619,7 +623,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_DisintegratingClaw",
-      "value": 2,
+      "valueRef": "aurena.mem.claw.c2.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -657,7 +661,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_DisintegratingClaw",
-      "value": 2,
+      "valueRef": "aurena.mem.claw.c2.e3/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -695,7 +699,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_DisintegratingClaw",
-      "value": 2,
+      "valueRef": "aurena.mem.claw.c2.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -733,7 +737,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_DisintegratingClaw",
-      "value": 2,
+      "valueRef": "aurena.mem.claw.c2.e5/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -771,7 +775,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_DisintegratingClaw",
-      "value": 2,
+      "valueRef": "aurena.mem.claw.c2.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -816,7 +820,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "ElementEdge",
-        "value": 8,
+        "value": {
+          "valueRef": "aurena.mem.claw.c2.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -858,7 +864,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Element",
-        "value": 25,
+        "value": {
+          "valueRef": "aurena.mem.claw.c2.n2/gimmick/value"
+        },
         "arg": 3,
         "cooldown": 0,
         "target": null
@@ -893,7 +901,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_DisintegratingClaw",
-      "value": 2,
+      "valueRef": "aurena.mem.claw.c2.l1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -931,7 +939,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_DisintegratingClaw",
-      "value": 2,
+      "valueRef": "aurena.mem.claw.c2.l2/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -969,7 +977,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_DisintegratingClaw",
-      "value": 2,
+      "valueRef": "aurena.mem.claw.c2.l3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -1007,7 +1015,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_DisintegratingClaw",
-      "value": 2,
+      "valueRef": "aurena.mem.claw.c2.l4/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -1045,7 +1053,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_DisintegratingClaw",
-      "value": 2,
+      "valueRef": "aurena.mem.claw.c2.l5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -1095,7 +1103,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_D_DisintegratingClaw",
-          "value": 8,
+          "valueRef": "aurena.mem.claw.c2.q/options/0/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -1111,7 +1119,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_D_DisintegratingClaw",
-          "value": 8,
+          "valueRef": "aurena.mem.claw.c2.q/options/1/value",
           "param": "Duration",
           "receiver": null,
           "target": {
@@ -1186,7 +1194,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_DisintegratingClaw",
-      "value": 2,
+      "valueRef": "aurena.mem.claw.c3.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -1224,7 +1232,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_DisintegratingClaw",
-      "value": 2,
+      "valueRef": "aurena.mem.claw.c3.e3/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -1262,7 +1270,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_DisintegratingClaw",
-      "value": 2,
+      "valueRef": "aurena.mem.claw.c3.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -1300,7 +1308,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_DisintegratingClaw",
-      "value": 2,
+      "valueRef": "aurena.mem.claw.c3.e5/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -1338,7 +1346,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_DisintegratingClaw",
-      "value": 2,
+      "valueRef": "aurena.mem.claw.c3.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -1383,7 +1391,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Rampart",
-        "value": 1,
+        "value": {
+          "valueRef": "aurena.mem.claw.c3.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -1425,7 +1435,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Sap",
-        "value": 5,
+        "value": {
+          "valueRef": "aurena.mem.claw.c3.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -1460,7 +1472,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_DisintegratingClaw",
-      "value": 2,
+      "valueRef": "aurena.mem.claw.c3.l1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -1498,7 +1510,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_DisintegratingClaw",
-      "value": 2,
+      "valueRef": "aurena.mem.claw.c3.l2/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -1536,7 +1548,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_DisintegratingClaw",
-      "value": 2,
+      "valueRef": "aurena.mem.claw.c3.l3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -1574,7 +1586,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_DisintegratingClaw",
-      "value": 2,
+      "valueRef": "aurena.mem.claw.c3.l4/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -1612,7 +1624,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_DisintegratingClaw",
-      "value": 2,
+      "valueRef": "aurena.mem.claw.c3.l5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -1662,7 +1674,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_D_DisintegratingClaw",
-          "value": 8,
+          "valueRef": "aurena.mem.claw.c3.q/options/0/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -1678,7 +1690,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_D_DisintegratingClaw",
-          "value": 8,
+          "valueRef": "aurena.mem.claw.c3.q/options/1/value",
           "param": "Duration",
           "receiver": null,
           "target": {
@@ -1753,7 +1765,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_DisintegratingClaw",
-      "value": 2,
+      "valueRef": "aurena.mem.claw.c4.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -1791,7 +1803,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_DisintegratingClaw",
-      "value": 2,
+      "valueRef": "aurena.mem.claw.c4.e3/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -1829,7 +1841,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_DisintegratingClaw",
-      "value": 2,
+      "valueRef": "aurena.mem.claw.c4.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -1867,7 +1879,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_DisintegratingClaw",
-      "value": 2,
+      "valueRef": "aurena.mem.claw.c4.e5/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -1905,7 +1917,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_DisintegratingClaw",
-      "value": 2,
+      "valueRef": "aurena.mem.claw.c4.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -1950,7 +1962,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Burst",
-        "value": 30,
+        "value": {
+          "valueRef": "aurena.mem.claw.c4.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -1992,7 +2006,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Element",
-        "value": 100,
+        "value": {
+          "valueRef": "aurena.mem.claw.c4.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -2027,7 +2043,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_DisintegratingClaw",
-      "value": 2,
+      "valueRef": "aurena.mem.claw.c4.l1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -2065,7 +2081,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_DisintegratingClaw",
-      "value": 5,
+      "valueRef": "aurena.mem.claw.c4.l2/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -2103,7 +2119,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_DisintegratingClaw",
-      "value": 2,
+      "valueRef": "aurena.mem.claw.c4.l3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -2141,7 +2157,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_DisintegratingClaw",
-      "value": 5,
+      "valueRef": "aurena.mem.claw.c4.l4/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -2179,7 +2195,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_DisintegratingClaw",
-      "value": 2,
+      "valueRef": "aurena.mem.claw.c4.l5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -2229,7 +2245,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_D_DisintegratingClaw",
-          "value": 20,
+          "valueRef": "aurena.mem.claw.c4.q/options/0/value",
           "param": "Radius",
           "receiver": null,
           "target": {
@@ -2245,7 +2261,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_D_DisintegratingClaw",
-          "value": 8,
+          "valueRef": "aurena.mem.claw.c4.q/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -2320,7 +2336,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_BeautifulThreat",
-      "value": 2,
+      "valueRef": "aurena.mem.beautiful-threat.c1.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -2358,7 +2374,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_BeautifulThreat",
-      "value": 2,
+      "valueRef": "aurena.mem.beautiful-threat.c1.e3/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -2396,7 +2412,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_BeautifulThreat",
-      "value": 2,
+      "valueRef": "aurena.mem.beautiful-threat.c1.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -2434,7 +2450,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_BeautifulThreat",
-      "value": 2,
+      "valueRef": "aurena.mem.beautiful-threat.c1.e5/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -2472,7 +2488,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_BeautifulThreat",
-      "value": 2,
+      "valueRef": "aurena.mem.beautiful-threat.c1.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -2519,9 +2535,15 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Ricochet",
-        "value": 15,
-        "arg": 1,
-        "cooldown": 0.3,
+        "value": {
+          "valueRef": "aurena.mem.beautiful-threat.c1.n1/gimmick/value"
+        },
+        "arg": {
+          "valueRef": "aurena.mem.beautiful-threat.c1.n1/gimmick/arg"
+        },
+        "cooldown": {
+          "valueRef": "aurena.mem.beautiful-threat.c1.n1/gimmick/cooldown"
+        },
         "target": null
       },
       "power": null,
@@ -2561,7 +2583,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Wound",
-        "value": 20,
+        "value": {
+          "valueRef": "aurena.mem.beautiful-threat.c1.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -2596,7 +2620,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_BeautifulThreat",
-      "value": 2,
+      "valueRef": "aurena.mem.beautiful-threat.c1.l1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -2634,7 +2658,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_BeautifulThreat",
-      "value": 5,
+      "valueRef": "aurena.mem.beautiful-threat.c1.l2/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -2672,7 +2696,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_BeautifulThreat",
-      "value": 2,
+      "valueRef": "aurena.mem.beautiful-threat.c1.l3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -2712,7 +2736,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_BeautifulThreat",
-      "value": 5,
+      "valueRef": "aurena.mem.beautiful-threat.c1.l4/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -2750,7 +2774,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_BeautifulThreat",
-      "value": 2,
+      "valueRef": "aurena.mem.beautiful-threat.c1.l5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -2803,7 +2827,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_D_BeautifulThreat",
-          "value": 1,
+          "valueRef": "aurena.mem.beautiful-threat.c1.q/options/0/value",
           "param": "ExtraTargets",
           "receiver": null,
           "target": {
@@ -2819,7 +2843,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_D_BeautifulThreat",
-          "value": 20,
+          "valueRef": "aurena.mem.beautiful-threat.c1.q/options/1/value",
           "param": "Radius",
           "receiver": null,
           "target": {
@@ -2894,7 +2918,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_BeautifulThreat",
-      "value": 2,
+      "valueRef": "aurena.mem.beautiful-threat.c2.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -2932,7 +2956,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_BeautifulThreat",
-      "value": 2,
+      "valueRef": "aurena.mem.beautiful-threat.c2.e3/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -2970,7 +2994,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_BeautifulThreat",
-      "value": 2,
+      "valueRef": "aurena.mem.beautiful-threat.c2.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -3008,7 +3032,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_BeautifulThreat",
-      "value": 2,
+      "valueRef": "aurena.mem.beautiful-threat.c2.e5/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -3046,7 +3070,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_BeautifulThreat",
-      "value": 2,
+      "valueRef": "aurena.mem.beautiful-threat.c2.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -3091,7 +3115,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Element",
-        "value": 25,
+        "value": {
+          "valueRef": "aurena.mem.beautiful-threat.c2.n1/gimmick/value"
+        },
         "arg": 1,
         "cooldown": 0,
         "target": null
@@ -3133,7 +3159,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "ElementEdge",
-        "value": 8,
+        "value": {
+          "valueRef": "aurena.mem.beautiful-threat.c2.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -3168,7 +3196,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_BeautifulThreat",
-      "value": 2,
+      "valueRef": "aurena.mem.beautiful-threat.c2.l1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -3206,7 +3234,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_BeautifulThreat",
-      "value": 2,
+      "valueRef": "aurena.mem.beautiful-threat.c2.l2/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -3244,7 +3272,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_BeautifulThreat",
-      "value": 2,
+      "valueRef": "aurena.mem.beautiful-threat.c2.l3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -3282,7 +3310,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_BeautifulThreat",
-      "value": 2,
+      "valueRef": "aurena.mem.beautiful-threat.c2.l4/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -3320,7 +3348,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_BeautifulThreat",
-      "value": 2,
+      "valueRef": "aurena.mem.beautiful-threat.c2.l5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -3370,7 +3398,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_D_BeautifulThreat",
-          "value": 8,
+          "valueRef": "aurena.mem.beautiful-threat.c2.q/options/0/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -3386,7 +3414,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_D_BeautifulThreat",
-          "value": 8,
+          "valueRef": "aurena.mem.beautiful-threat.c2.q/options/1/value",
           "param": "Duration",
           "receiver": null,
           "target": {
@@ -3461,7 +3489,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_BeautifulThreat",
-      "value": 2,
+      "valueRef": "aurena.mem.beautiful-threat.c3.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -3499,7 +3527,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_BeautifulThreat",
-      "value": 2,
+      "valueRef": "aurena.mem.beautiful-threat.c3.e3/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -3537,7 +3565,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_BeautifulThreat",
-      "value": 2,
+      "valueRef": "aurena.mem.beautiful-threat.c3.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -3575,7 +3603,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_BeautifulThreat",
-      "value": 2,
+      "valueRef": "aurena.mem.beautiful-threat.c3.e5/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -3613,7 +3641,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_BeautifulThreat",
-      "value": 2,
+      "valueRef": "aurena.mem.beautiful-threat.c3.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -3658,7 +3686,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Sap",
-        "value": 5,
+        "value": {
+          "valueRef": "aurena.mem.beautiful-threat.c3.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -3700,7 +3730,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Rampart",
-        "value": 1,
+        "value": {
+          "valueRef": "aurena.mem.beautiful-threat.c3.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -3735,7 +3767,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_BeautifulThreat",
-      "value": 2,
+      "valueRef": "aurena.mem.beautiful-threat.c3.l1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -3773,7 +3805,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_BeautifulThreat",
-      "value": 2,
+      "valueRef": "aurena.mem.beautiful-threat.c3.l2/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -3811,7 +3843,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_BeautifulThreat",
-      "value": 2,
+      "valueRef": "aurena.mem.beautiful-threat.c3.l3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -3849,7 +3881,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_BeautifulThreat",
-      "value": 2,
+      "valueRef": "aurena.mem.beautiful-threat.c3.l4/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -3887,7 +3919,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_BeautifulThreat",
-      "value": 2,
+      "valueRef": "aurena.mem.beautiful-threat.c3.l5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -3937,7 +3969,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_D_BeautifulThreat",
-          "value": 8,
+          "valueRef": "aurena.mem.beautiful-threat.c3.q/options/0/value",
           "param": "Duration",
           "receiver": null,
           "target": {
@@ -3953,7 +3985,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_D_BeautifulThreat",
-          "value": 8,
+          "valueRef": "aurena.mem.beautiful-threat.c3.q/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -4028,7 +4060,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_BeautifulThreat",
-      "value": 2,
+      "valueRef": "aurena.mem.beautiful-threat.c4.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -4066,7 +4098,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_BeautifulThreat",
-      "value": 2,
+      "valueRef": "aurena.mem.beautiful-threat.c4.e3/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -4104,7 +4136,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_BeautifulThreat",
-      "value": 2,
+      "valueRef": "aurena.mem.beautiful-threat.c4.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -4142,7 +4174,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_BeautifulThreat",
-      "value": 2,
+      "valueRef": "aurena.mem.beautiful-threat.c4.e5/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -4180,7 +4212,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_BeautifulThreat",
-      "value": 2,
+      "valueRef": "aurena.mem.beautiful-threat.c4.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -4227,7 +4259,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Burst",
-        "value": 25,
+        "value": {
+          "valueRef": "aurena.mem.beautiful-threat.c4.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -4269,7 +4303,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Element",
-        "value": 25,
+        "value": {
+          "valueRef": "aurena.mem.beautiful-threat.c4.n2/gimmick/value"
+        },
         "arg": 3,
         "cooldown": 0,
         "target": null
@@ -4304,7 +4340,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_BeautifulThreat",
-      "value": 2,
+      "valueRef": "aurena.mem.beautiful-threat.c4.l1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -4342,7 +4378,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_BeautifulThreat",
-      "value": 5,
+      "valueRef": "aurena.mem.beautiful-threat.c4.l2/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -4380,7 +4416,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_BeautifulThreat",
-      "value": 2,
+      "valueRef": "aurena.mem.beautiful-threat.c4.l3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -4420,7 +4456,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_BeautifulThreat",
-      "value": 5,
+      "valueRef": "aurena.mem.beautiful-threat.c4.l4/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -4458,7 +4494,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_BeautifulThreat",
-      "value": 2,
+      "valueRef": "aurena.mem.beautiful-threat.c4.l5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -4511,7 +4547,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_D_BeautifulThreat",
-          "value": 20,
+          "valueRef": "aurena.mem.beautiful-threat.c4.q/options/0/value",
           "param": "Radius",
           "receiver": null,
           "target": {
@@ -4527,7 +4563,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_D_BeautifulThreat",
-          "value": 8,
+          "valueRef": "aurena.mem.beautiful-threat.c4.q/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -4602,7 +4638,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_GoldenBurst",
-      "value": 2,
+      "valueRef": "aurena.mem.golden-burst.c1.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -4640,7 +4676,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_GoldenBurst",
-      "value": 2,
+      "valueRef": "aurena.mem.golden-burst.c1.e3/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -4678,7 +4714,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_GoldenBurst",
-      "value": 2,
+      "valueRef": "aurena.mem.golden-burst.c1.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -4716,7 +4752,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_GoldenBurst",
-      "value": 2,
+      "valueRef": "aurena.mem.golden-burst.c1.e5/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -4754,7 +4790,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_GoldenBurst",
-      "value": 2,
+      "valueRef": "aurena.mem.golden-burst.c1.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -4799,7 +4835,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Wound",
-        "value": 12,
+        "value": {
+          "valueRef": "aurena.mem.golden-burst.c1.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -4841,7 +4879,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Echo",
-        "value": 15,
+        "value": {
+          "valueRef": "aurena.mem.golden-burst.c1.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -4876,7 +4916,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_GoldenBurst",
-      "value": 2,
+      "valueRef": "aurena.mem.golden-burst.c1.l1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -4914,7 +4954,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_GoldenBurst",
-      "value": 2,
+      "valueRef": "aurena.mem.golden-burst.c1.l2/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -4952,7 +4992,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_GoldenBurst",
-      "value": 2,
+      "valueRef": "aurena.mem.golden-burst.c1.l3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -4990,7 +5030,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_GoldenBurst",
-      "value": 2,
+      "valueRef": "aurena.mem.golden-burst.c1.l4/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -5028,7 +5068,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_GoldenBurst",
-      "value": 2,
+      "valueRef": "aurena.mem.golden-burst.c1.l5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -5078,7 +5118,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_Q_GoldenBurst",
-          "value": 8,
+          "valueRef": "aurena.mem.golden-burst.c1.q/options/0/value",
           "param": "Duration",
           "receiver": null,
           "target": {
@@ -5094,7 +5134,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_Q_GoldenBurst",
-          "value": 8,
+          "valueRef": "aurena.mem.golden-burst.c1.q/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -5169,7 +5209,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_GoldenBurst",
-      "value": 2,
+      "valueRef": "aurena.mem.golden-burst.c2.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -5207,7 +5247,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_GoldenBurst",
-      "value": 2,
+      "valueRef": "aurena.mem.golden-burst.c2.e3/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -5245,7 +5285,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_GoldenBurst",
-      "value": 2,
+      "valueRef": "aurena.mem.golden-burst.c2.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -5283,7 +5323,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_GoldenBurst",
-      "value": 2,
+      "valueRef": "aurena.mem.golden-burst.c2.e5/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -5321,7 +5361,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_GoldenBurst",
-      "value": 2,
+      "valueRef": "aurena.mem.golden-burst.c2.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -5366,7 +5406,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Rampart",
-        "value": 1,
+        "value": {
+          "valueRef": "aurena.mem.golden-burst.c2.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -5408,7 +5450,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Sap",
-        "value": 5,
+        "value": {
+          "valueRef": "aurena.mem.golden-burst.c2.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -5443,7 +5487,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_GoldenBurst",
-      "value": 2,
+      "valueRef": "aurena.mem.golden-burst.c2.l1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -5481,7 +5525,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_GoldenBurst",
-      "value": 2,
+      "valueRef": "aurena.mem.golden-burst.c2.l2/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -5519,7 +5563,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_GoldenBurst",
-      "value": 2,
+      "valueRef": "aurena.mem.golden-burst.c2.l3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -5557,7 +5601,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_GoldenBurst",
-      "value": 2,
+      "valueRef": "aurena.mem.golden-burst.c2.l4/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -5595,7 +5639,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_GoldenBurst",
-      "value": 2,
+      "valueRef": "aurena.mem.golden-burst.c2.l5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -5645,7 +5689,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_Q_GoldenBurst",
-          "value": 8,
+          "valueRef": "aurena.mem.golden-burst.c2.q/options/0/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -5661,7 +5705,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_Q_GoldenBurst",
-          "value": 8,
+          "valueRef": "aurena.mem.golden-burst.c2.q/options/1/value",
           "param": "Duration",
           "receiver": null,
           "target": {
@@ -5736,7 +5780,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_GoldenBurst",
-      "value": 2,
+      "valueRef": "aurena.mem.golden-burst.c3.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -5774,7 +5818,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_GoldenBurst",
-      "value": 2,
+      "valueRef": "aurena.mem.golden-burst.c3.e3/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -5812,7 +5856,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_GoldenBurst",
-      "value": 2,
+      "valueRef": "aurena.mem.golden-burst.c3.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -5850,7 +5894,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_GoldenBurst",
-      "value": 2,
+      "valueRef": "aurena.mem.golden-burst.c3.e5/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -5888,7 +5932,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_GoldenBurst",
-      "value": 2,
+      "valueRef": "aurena.mem.golden-burst.c3.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -5933,7 +5977,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Element",
-        "value": 25,
+        "value": {
+          "valueRef": "aurena.mem.golden-burst.c3.n1/gimmick/value"
+        },
         "arg": 3,
         "cooldown": 0,
         "target": null
@@ -5975,7 +6021,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "ElementEdge",
-        "value": 8,
+        "value": {
+          "valueRef": "aurena.mem.golden-burst.c3.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -6010,7 +6058,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_GoldenBurst",
-      "value": 2,
+      "valueRef": "aurena.mem.golden-burst.c3.l1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -6048,7 +6096,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_GoldenBurst",
-      "value": 2,
+      "valueRef": "aurena.mem.golden-burst.c3.l2/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -6086,7 +6134,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_GoldenBurst",
-      "value": 2,
+      "valueRef": "aurena.mem.golden-burst.c3.l3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -6124,7 +6172,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_GoldenBurst",
-      "value": 2,
+      "valueRef": "aurena.mem.golden-burst.c3.l4/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -6162,7 +6210,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_GoldenBurst",
-      "value": 2,
+      "valueRef": "aurena.mem.golden-burst.c3.l5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -6212,7 +6260,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_Q_GoldenBurst",
-          "value": 8,
+          "valueRef": "aurena.mem.golden-burst.c3.q/options/0/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -6228,7 +6276,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_Q_GoldenBurst",
-          "value": 8,
+          "valueRef": "aurena.mem.golden-burst.c3.q/options/1/value",
           "param": "Duration",
           "receiver": null,
           "target": {
@@ -6303,7 +6351,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_GoldenBurst",
-      "value": 2,
+      "valueRef": "aurena.mem.golden-burst.c4.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -6341,7 +6389,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_GoldenBurst",
-      "value": 2,
+      "valueRef": "aurena.mem.golden-burst.c4.e3/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -6379,7 +6427,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_GoldenBurst",
-      "value": 2,
+      "valueRef": "aurena.mem.golden-burst.c4.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -6417,7 +6465,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_GoldenBurst",
-      "value": 2,
+      "valueRef": "aurena.mem.golden-burst.c4.e5/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -6455,7 +6503,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_GoldenBurst",
-      "value": 2,
+      "valueRef": "aurena.mem.golden-burst.c4.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -6500,7 +6548,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Burst",
-        "value": 30,
+        "value": {
+          "valueRef": "aurena.mem.golden-burst.c4.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -6542,7 +6592,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "AlliedWard",
-        "value": 8,
+        "value": {
+          "valueRef": "aurena.mem.golden-burst.c4.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null,
@@ -6579,7 +6631,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_GoldenBurst",
-      "value": 2,
+      "valueRef": "aurena.mem.golden-burst.c4.l1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -6617,7 +6669,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_GoldenBurst",
-      "value": 5,
+      "valueRef": "aurena.mem.golden-burst.c4.l2/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -6655,7 +6707,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_GoldenBurst",
-      "value": 2,
+      "valueRef": "aurena.mem.golden-burst.c4.l3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -6693,7 +6745,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_GoldenBurst",
-      "value": 5,
+      "valueRef": "aurena.mem.golden-burst.c4.l4/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -6731,7 +6783,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_GoldenBurst",
-      "value": 2,
+      "valueRef": "aurena.mem.golden-burst.c4.l5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -6781,7 +6833,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_Q_GoldenBurst",
-          "value": 20,
+          "valueRef": "aurena.mem.golden-burst.c4.q/options/0/value",
           "param": "Radius",
           "receiver": null,
           "target": {
@@ -6797,7 +6849,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_Q_GoldenBurst",
-          "value": 8,
+          "valueRef": "aurena.mem.golden-burst.c4.q/options/1/value",
           "param": "Duration",
           "receiver": null,
           "target": {
@@ -6872,7 +6924,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_Reduction",
-      "value": 2,
+      "valueRef": "aurena.mem.reduction.c1.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -6910,7 +6962,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_Reduction",
-      "value": 2,
+      "valueRef": "aurena.mem.reduction.c1.e3/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -6948,7 +7000,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_Reduction",
-      "value": 2,
+      "valueRef": "aurena.mem.reduction.c1.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -6986,7 +7038,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_Reduction",
-      "value": 2,
+      "valueRef": "aurena.mem.reduction.c1.e5/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -7024,7 +7076,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_Reduction",
-      "value": 2,
+      "valueRef": "aurena.mem.reduction.c1.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -7069,9 +7121,15 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Ricochet",
-        "value": 15,
-        "arg": 1,
-        "cooldown": 0.3,
+        "value": {
+          "valueRef": "aurena.mem.reduction.c1.n1/gimmick/value"
+        },
+        "arg": {
+          "valueRef": "aurena.mem.reduction.c1.n1/gimmick/arg"
+        },
+        "cooldown": {
+          "valueRef": "aurena.mem.reduction.c1.n1/gimmick/cooldown"
+        },
         "target": null
       },
       "power": null,
@@ -7111,7 +7169,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Wound",
-        "value": 12,
+        "value": {
+          "valueRef": "aurena.mem.reduction.c1.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -7146,7 +7206,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_Reduction",
-      "value": 2,
+      "valueRef": "aurena.mem.reduction.c1.l1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -7184,7 +7244,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_Reduction",
-      "value": 5,
+      "valueRef": "aurena.mem.reduction.c1.l2/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -7222,7 +7282,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_Reduction",
-      "value": 2,
+      "valueRef": "aurena.mem.reduction.c1.l3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -7260,7 +7320,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_Reduction",
-      "value": 5,
+      "valueRef": "aurena.mem.reduction.c1.l4/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -7298,7 +7358,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_Reduction",
-      "value": 2,
+      "valueRef": "aurena.mem.reduction.c1.l5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -7348,7 +7408,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_Q_Reduction",
-          "value": 1,
+          "valueRef": "aurena.mem.reduction.c1.q/options/0/value",
           "param": "ExtraTargets",
           "receiver": null,
           "target": {
@@ -7364,7 +7424,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_Q_Reduction",
-          "value": 20,
+          "valueRef": "aurena.mem.reduction.c1.q/options/1/value",
           "param": "Radius",
           "receiver": null,
           "target": {
@@ -7439,7 +7499,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_Reduction",
-      "value": 2,
+      "valueRef": "aurena.mem.reduction.c2.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -7477,7 +7537,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_Reduction",
-      "value": 2,
+      "valueRef": "aurena.mem.reduction.c2.e3/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -7515,7 +7575,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_Reduction",
-      "value": 2,
+      "valueRef": "aurena.mem.reduction.c2.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -7553,7 +7613,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_Reduction",
-      "value": 2,
+      "valueRef": "aurena.mem.reduction.c2.e5/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -7591,7 +7651,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_Reduction",
-      "value": 2,
+      "valueRef": "aurena.mem.reduction.c2.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -7636,7 +7696,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Rampart",
-        "value": 1,
+        "value": {
+          "valueRef": "aurena.mem.reduction.c2.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -7678,7 +7740,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Sap",
-        "value": 5,
+        "value": {
+          "valueRef": "aurena.mem.reduction.c2.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -7713,7 +7777,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_Reduction",
-      "value": 2,
+      "valueRef": "aurena.mem.reduction.c2.l1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -7751,7 +7815,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_Reduction",
-      "value": 2,
+      "valueRef": "aurena.mem.reduction.c2.l2/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -7789,7 +7853,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_Reduction",
-      "value": 2,
+      "valueRef": "aurena.mem.reduction.c2.l3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -7827,7 +7891,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_Reduction",
-      "value": 2,
+      "valueRef": "aurena.mem.reduction.c2.l4/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -7865,7 +7929,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_Reduction",
-      "value": 2,
+      "valueRef": "aurena.mem.reduction.c2.l5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -7915,7 +7979,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_Q_Reduction",
-          "value": 8,
+          "valueRef": "aurena.mem.reduction.c2.q/options/0/value",
           "param": "Duration",
           "receiver": null,
           "target": {
@@ -7931,7 +7995,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_Q_Reduction",
-          "value": 8,
+          "valueRef": "aurena.mem.reduction.c2.q/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -8006,7 +8070,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_Reduction",
-      "value": 2,
+      "valueRef": "aurena.mem.reduction.c3.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -8044,7 +8108,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_Reduction",
-      "value": 2,
+      "valueRef": "aurena.mem.reduction.c3.e3/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -8082,7 +8146,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_Reduction",
-      "value": 2,
+      "valueRef": "aurena.mem.reduction.c3.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -8120,7 +8184,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_Reduction",
-      "value": 2,
+      "valueRef": "aurena.mem.reduction.c3.e5/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -8158,7 +8222,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_Reduction",
-      "value": 2,
+      "valueRef": "aurena.mem.reduction.c3.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -8203,7 +8267,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Element",
-        "value": 25,
+        "value": {
+          "valueRef": "aurena.mem.reduction.c3.n1/gimmick/value"
+        },
         "arg": 1,
         "cooldown": 0,
         "target": null
@@ -8245,7 +8311,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "ElementEdge",
-        "value": 8,
+        "value": {
+          "valueRef": "aurena.mem.reduction.c3.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -8280,7 +8348,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_Reduction",
-      "value": 2,
+      "valueRef": "aurena.mem.reduction.c3.l1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -8318,7 +8386,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_Reduction",
-      "value": 2,
+      "valueRef": "aurena.mem.reduction.c3.l2/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -8356,7 +8424,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_Reduction",
-      "value": 2,
+      "valueRef": "aurena.mem.reduction.c3.l3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -8394,7 +8462,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_Reduction",
-      "value": 2,
+      "valueRef": "aurena.mem.reduction.c3.l4/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -8432,7 +8500,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_Reduction",
-      "value": 2,
+      "valueRef": "aurena.mem.reduction.c3.l5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -8482,7 +8550,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_Q_Reduction",
-          "value": 8,
+          "valueRef": "aurena.mem.reduction.c3.q/options/0/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -8498,7 +8566,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_Q_Reduction",
-          "value": 8,
+          "valueRef": "aurena.mem.reduction.c3.q/options/1/value",
           "param": "Duration",
           "receiver": null,
           "target": {
@@ -8573,7 +8641,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_Reduction",
-      "value": 2,
+      "valueRef": "aurena.mem.reduction.c4.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -8611,7 +8679,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_Reduction",
-      "value": 2,
+      "valueRef": "aurena.mem.reduction.c4.e3/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -8649,7 +8717,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_Reduction",
-      "value": 2,
+      "valueRef": "aurena.mem.reduction.c4.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -8687,7 +8755,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_Reduction",
-      "value": 2,
+      "valueRef": "aurena.mem.reduction.c4.e5/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -8725,7 +8793,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_Reduction",
-      "value": 2,
+      "valueRef": "aurena.mem.reduction.c4.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -8770,7 +8838,9 @@
       "gimmick": {
         "trigger": "OnUse",
         "effect": "AlliedWard",
-        "value": 8,
+        "value": {
+          "valueRef": "aurena.mem.reduction.c4.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -8813,7 +8883,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Burst",
-        "value": 30,
+        "value": {
+          "valueRef": "aurena.mem.reduction.c4.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -8848,7 +8920,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_Reduction",
-      "value": 2,
+      "valueRef": "aurena.mem.reduction.c4.l1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -8886,7 +8958,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_Reduction",
-      "value": 5,
+      "valueRef": "aurena.mem.reduction.c4.l2/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -8924,7 +8996,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_Reduction",
-      "value": 2,
+      "valueRef": "aurena.mem.reduction.c4.l3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -8962,7 +9034,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_Reduction",
-      "value": 5,
+      "valueRef": "aurena.mem.reduction.c4.l4/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -9000,7 +9072,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_Reduction",
-      "value": 2,
+      "valueRef": "aurena.mem.reduction.c4.l5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -9050,7 +9122,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_Q_Reduction",
-          "value": 20,
+          "valueRef": "aurena.mem.reduction.c4.q/options/0/value",
           "param": "Radius",
           "receiver": null,
           "target": {
@@ -9066,7 +9138,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_Q_Reduction",
-          "value": 8,
+          "valueRef": "aurena.mem.reduction.c4.q/options/1/value",
           "param": "Duration",
           "receiver": null,
           "target": {
@@ -9141,7 +9213,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_DangerousTheory",
-      "value": 2,
+      "valueRef": "aurena.mem.dangerous-theory.c1.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -9179,7 +9251,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_DangerousTheory",
-      "value": 2,
+      "valueRef": "aurena.mem.dangerous-theory.c1.e3/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -9217,7 +9289,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_DangerousTheory",
-      "value": 2,
+      "valueRef": "aurena.mem.dangerous-theory.c1.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -9255,7 +9327,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_DangerousTheory",
-      "value": 2,
+      "valueRef": "aurena.mem.dangerous-theory.c1.e5/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -9293,7 +9365,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_DangerousTheory",
-      "value": 2,
+      "valueRef": "aurena.mem.dangerous-theory.c1.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -9338,7 +9410,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Echo",
-        "value": 15,
+        "value": {
+          "valueRef": "aurena.mem.dangerous-theory.c1.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -9380,7 +9454,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Wound",
-        "value": 20,
+        "value": {
+          "valueRef": "aurena.mem.dangerous-theory.c1.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -9415,7 +9491,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_DangerousTheory",
-      "value": 2,
+      "valueRef": "aurena.mem.dangerous-theory.c1.l1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -9453,7 +9529,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_DangerousTheory",
-      "value": 2,
+      "valueRef": "aurena.mem.dangerous-theory.c1.l2/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -9491,7 +9567,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_DangerousTheory",
-      "value": 2,
+      "valueRef": "aurena.mem.dangerous-theory.c1.l3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -9529,7 +9605,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_DangerousTheory",
-      "value": 2,
+      "valueRef": "aurena.mem.dangerous-theory.c1.l4/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -9567,7 +9643,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_DangerousTheory",
-      "value": 2,
+      "valueRef": "aurena.mem.dangerous-theory.c1.l5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -9617,7 +9693,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_R_DangerousTheory",
-          "value": 8,
+          "valueRef": "aurena.mem.dangerous-theory.c1.q/options/0/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -9633,7 +9709,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_R_DangerousTheory",
-          "value": 8,
+          "valueRef": "aurena.mem.dangerous-theory.c1.q/options/1/value",
           "param": "Duration",
           "receiver": null,
           "target": {
@@ -9708,7 +9784,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_DangerousTheory",
-      "value": 2,
+      "valueRef": "aurena.mem.dangerous-theory.c2.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -9746,7 +9822,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_DangerousTheory",
-      "value": 2,
+      "valueRef": "aurena.mem.dangerous-theory.c2.e3/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -9784,7 +9860,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_DangerousTheory",
-      "value": 2,
+      "valueRef": "aurena.mem.dangerous-theory.c2.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -9822,7 +9898,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_DangerousTheory",
-      "value": 2,
+      "valueRef": "aurena.mem.dangerous-theory.c2.e5/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -9860,7 +9936,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_DangerousTheory",
-      "value": 2,
+      "valueRef": "aurena.mem.dangerous-theory.c2.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -9905,7 +9981,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Element",
-        "value": 25,
+        "value": {
+          "valueRef": "aurena.mem.dangerous-theory.c2.n1/gimmick/value"
+        },
         "arg": 3,
         "cooldown": 0,
         "target": null
@@ -9947,7 +10025,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "ElementEdge",
-        "value": 8,
+        "value": {
+          "valueRef": "aurena.mem.dangerous-theory.c2.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -9982,7 +10062,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_DangerousTheory",
-      "value": 2,
+      "valueRef": "aurena.mem.dangerous-theory.c2.l1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -10020,7 +10100,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_DangerousTheory",
-      "value": 2,
+      "valueRef": "aurena.mem.dangerous-theory.c2.l2/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -10058,7 +10138,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_DangerousTheory",
-      "value": 2,
+      "valueRef": "aurena.mem.dangerous-theory.c2.l3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -10096,7 +10176,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_DangerousTheory",
-      "value": 2,
+      "valueRef": "aurena.mem.dangerous-theory.c2.l4/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -10134,7 +10214,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_DangerousTheory",
-      "value": 2,
+      "valueRef": "aurena.mem.dangerous-theory.c2.l5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -10184,7 +10264,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_R_DangerousTheory",
-          "value": 8,
+          "valueRef": "aurena.mem.dangerous-theory.c2.q/options/0/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -10200,7 +10280,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_R_DangerousTheory",
-          "value": 8,
+          "valueRef": "aurena.mem.dangerous-theory.c2.q/options/1/value",
           "param": "Duration",
           "receiver": null,
           "target": {
@@ -10275,7 +10355,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_DangerousTheory",
-      "value": 2,
+      "valueRef": "aurena.mem.dangerous-theory.c3.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -10313,7 +10393,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_DangerousTheory",
-      "value": 2,
+      "valueRef": "aurena.mem.dangerous-theory.c3.e3/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -10351,7 +10431,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_DangerousTheory",
-      "value": 2,
+      "valueRef": "aurena.mem.dangerous-theory.c3.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -10389,7 +10469,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_DangerousTheory",
-      "value": 2,
+      "valueRef": "aurena.mem.dangerous-theory.c3.e5/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -10427,7 +10507,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_DangerousTheory",
-      "value": 2,
+      "valueRef": "aurena.mem.dangerous-theory.c3.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -10472,7 +10552,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Element",
-        "value": 25,
+        "value": {
+          "valueRef": "aurena.mem.dangerous-theory.c3.n1/gimmick/value"
+        },
         "arg": 1,
         "cooldown": 0,
         "target": null
@@ -10514,7 +10596,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Rampart",
-        "value": 1,
+        "value": {
+          "valueRef": "aurena.mem.dangerous-theory.c3.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -10549,7 +10633,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_DangerousTheory",
-      "value": 2,
+      "valueRef": "aurena.mem.dangerous-theory.c3.l1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -10587,7 +10671,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_DangerousTheory",
-      "value": 2,
+      "valueRef": "aurena.mem.dangerous-theory.c3.l2/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -10625,7 +10709,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_DangerousTheory",
-      "value": 2,
+      "valueRef": "aurena.mem.dangerous-theory.c3.l3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -10663,7 +10747,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_DangerousTheory",
-      "value": 2,
+      "valueRef": "aurena.mem.dangerous-theory.c3.l4/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -10701,7 +10785,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_DangerousTheory",
-      "value": 2,
+      "valueRef": "aurena.mem.dangerous-theory.c3.l5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -10751,7 +10835,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_R_DangerousTheory",
-          "value": 8,
+          "valueRef": "aurena.mem.dangerous-theory.c3.q/options/0/value",
           "param": "Duration",
           "receiver": null,
           "target": {
@@ -10767,7 +10851,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_R_DangerousTheory",
-          "value": 8,
+          "valueRef": "aurena.mem.dangerous-theory.c3.q/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -10842,7 +10926,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_DangerousTheory",
-      "value": 2,
+      "valueRef": "aurena.mem.dangerous-theory.c4.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -10880,7 +10964,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_DangerousTheory",
-      "value": 2,
+      "valueRef": "aurena.mem.dangerous-theory.c4.e3/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -10918,7 +11002,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_DangerousTheory",
-      "value": 2,
+      "valueRef": "aurena.mem.dangerous-theory.c4.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -10956,7 +11040,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_DangerousTheory",
-      "value": 2,
+      "valueRef": "aurena.mem.dangerous-theory.c4.e5/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -10994,7 +11078,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_DangerousTheory",
-      "value": 2,
+      "valueRef": "aurena.mem.dangerous-theory.c4.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -11039,7 +11123,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Burst",
-        "value": 40,
+        "value": {
+          "valueRef": "aurena.mem.dangerous-theory.c4.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -11081,7 +11167,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Element",
-        "value": 100,
+        "value": {
+          "valueRef": "aurena.mem.dangerous-theory.c4.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -11116,7 +11204,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_DangerousTheory",
-      "value": 2,
+      "valueRef": "aurena.mem.dangerous-theory.c4.l1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -11154,7 +11242,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_DangerousTheory",
-      "value": 5,
+      "valueRef": "aurena.mem.dangerous-theory.c4.l2/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -11192,7 +11280,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_DangerousTheory",
-      "value": 2,
+      "valueRef": "aurena.mem.dangerous-theory.c4.l3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -11230,7 +11318,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_DangerousTheory",
-      "value": 5,
+      "valueRef": "aurena.mem.dangerous-theory.c4.l4/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -11268,7 +11356,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_DangerousTheory",
-      "value": 2,
+      "valueRef": "aurena.mem.dangerous-theory.c4.l5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -11318,7 +11406,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_R_DangerousTheory",
-          "value": 20,
+          "valueRef": "aurena.mem.dangerous-theory.c4.q/options/0/value",
           "param": "Radius",
           "receiver": null,
           "target": {
@@ -11334,7 +11422,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_R_DangerousTheory",
-          "value": 8,
+          "valueRef": "aurena.mem.dangerous-theory.c4.q/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -11409,7 +11497,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_ChainReaction",
-      "value": 2,
+      "valueRef": "aurena.mem.chain-reaction.c1.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -11447,7 +11535,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_ChainReaction",
-      "value": 2,
+      "valueRef": "aurena.mem.chain-reaction.c1.e3/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -11485,7 +11573,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_ChainReaction",
-      "value": 2,
+      "valueRef": "aurena.mem.chain-reaction.c1.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -11523,7 +11611,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_ChainReaction",
-      "value": 2,
+      "valueRef": "aurena.mem.chain-reaction.c1.e5/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -11561,7 +11649,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_ChainReaction",
-      "value": 2,
+      "valueRef": "aurena.mem.chain-reaction.c1.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -11606,7 +11694,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Wound",
-        "value": 12,
+        "value": {
+          "valueRef": "aurena.mem.chain-reaction.c1.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -11648,7 +11738,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Echo",
-        "value": 10,
+        "value": {
+          "valueRef": "aurena.mem.chain-reaction.c1.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -11683,7 +11775,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_ChainReaction",
-      "value": 2,
+      "valueRef": "aurena.mem.chain-reaction.c1.l1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -11721,7 +11813,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_ChainReaction",
-      "value": 2,
+      "valueRef": "aurena.mem.chain-reaction.c1.l2/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -11759,7 +11851,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_ChainReaction",
-      "value": 2,
+      "valueRef": "aurena.mem.chain-reaction.c1.l3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -11797,7 +11889,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_ChainReaction",
-      "value": 2,
+      "valueRef": "aurena.mem.chain-reaction.c1.l4/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -11835,7 +11927,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_ChainReaction",
-      "value": 2,
+      "valueRef": "aurena.mem.chain-reaction.c1.l5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -11885,7 +11977,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_R_ChainReaction",
-          "value": 8,
+          "valueRef": "aurena.mem.chain-reaction.c1.q/options/0/value",
           "param": "Duration",
           "receiver": null,
           "target": {
@@ -11901,7 +11993,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_R_ChainReaction",
-          "value": 8,
+          "valueRef": "aurena.mem.chain-reaction.c1.q/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -11976,7 +12068,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_ChainReaction",
-      "value": 2,
+      "valueRef": "aurena.mem.chain-reaction.c2.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -12014,7 +12106,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_ChainReaction",
-      "value": 2,
+      "valueRef": "aurena.mem.chain-reaction.c2.e3/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -12052,7 +12144,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_ChainReaction",
-      "value": 2,
+      "valueRef": "aurena.mem.chain-reaction.c2.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -12090,7 +12182,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_ChainReaction",
-      "value": 2,
+      "valueRef": "aurena.mem.chain-reaction.c2.e5/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -12128,7 +12220,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_ChainReaction",
-      "value": 2,
+      "valueRef": "aurena.mem.chain-reaction.c2.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -12173,7 +12265,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Sap",
-        "value": 5,
+        "value": {
+          "valueRef": "aurena.mem.chain-reaction.c2.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -12215,7 +12309,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Rampart",
-        "value": 1,
+        "value": {
+          "valueRef": "aurena.mem.chain-reaction.c2.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -12250,7 +12346,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_ChainReaction",
-      "value": 2,
+      "valueRef": "aurena.mem.chain-reaction.c2.l1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -12288,7 +12384,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_ChainReaction",
-      "value": 2,
+      "valueRef": "aurena.mem.chain-reaction.c2.l2/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -12326,7 +12422,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_ChainReaction",
-      "value": 2,
+      "valueRef": "aurena.mem.chain-reaction.c2.l3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -12364,7 +12460,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_ChainReaction",
-      "value": 2,
+      "valueRef": "aurena.mem.chain-reaction.c2.l4/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -12402,7 +12498,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_ChainReaction",
-      "value": 2,
+      "valueRef": "aurena.mem.chain-reaction.c2.l5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -12452,7 +12548,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_R_ChainReaction",
-          "value": 8,
+          "valueRef": "aurena.mem.chain-reaction.c2.q/options/0/value",
           "param": "Duration",
           "receiver": null,
           "target": {
@@ -12468,7 +12564,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_R_ChainReaction",
-          "value": 8,
+          "valueRef": "aurena.mem.chain-reaction.c2.q/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -12543,7 +12639,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_ChainReaction",
-      "value": 2,
+      "valueRef": "aurena.mem.chain-reaction.c3.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -12581,7 +12677,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_ChainReaction",
-      "value": 2,
+      "valueRef": "aurena.mem.chain-reaction.c3.e3/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -12619,7 +12715,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_ChainReaction",
-      "value": 2,
+      "valueRef": "aurena.mem.chain-reaction.c3.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -12657,7 +12753,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_ChainReaction",
-      "value": 2,
+      "valueRef": "aurena.mem.chain-reaction.c3.e5/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -12695,7 +12791,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_ChainReaction",
-      "value": 2,
+      "valueRef": "aurena.mem.chain-reaction.c3.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -12740,7 +12836,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Element",
-        "value": 25,
+        "value": {
+          "valueRef": "aurena.mem.chain-reaction.c3.n1/gimmick/value"
+        },
         "arg": 3,
         "cooldown": 0,
         "target": null
@@ -12782,7 +12880,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "ElementEdge",
-        "value": 8,
+        "value": {
+          "valueRef": "aurena.mem.chain-reaction.c3.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -12817,7 +12917,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_ChainReaction",
-      "value": 2,
+      "valueRef": "aurena.mem.chain-reaction.c3.l1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -12855,7 +12955,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_ChainReaction",
-      "value": 2,
+      "valueRef": "aurena.mem.chain-reaction.c3.l2/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -12893,7 +12993,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_ChainReaction",
-      "value": 2,
+      "valueRef": "aurena.mem.chain-reaction.c3.l3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -12931,7 +13031,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_ChainReaction",
-      "value": 2,
+      "valueRef": "aurena.mem.chain-reaction.c3.l4/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -12969,7 +13069,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_ChainReaction",
-      "value": 2,
+      "valueRef": "aurena.mem.chain-reaction.c3.l5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -13019,7 +13119,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_R_ChainReaction",
-          "value": 8,
+          "valueRef": "aurena.mem.chain-reaction.c3.q/options/0/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -13035,7 +13135,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_R_ChainReaction",
-          "value": 8,
+          "valueRef": "aurena.mem.chain-reaction.c3.q/options/1/value",
           "param": "Duration",
           "receiver": null,
           "target": {
@@ -13110,7 +13210,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_ChainReaction",
-      "value": 2,
+      "valueRef": "aurena.mem.chain-reaction.c4.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -13148,7 +13248,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_ChainReaction",
-      "value": 2,
+      "valueRef": "aurena.mem.chain-reaction.c4.e3/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -13186,7 +13286,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_ChainReaction",
-      "value": 2,
+      "valueRef": "aurena.mem.chain-reaction.c4.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -13224,7 +13324,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_ChainReaction",
-      "value": 2,
+      "valueRef": "aurena.mem.chain-reaction.c4.e5/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -13262,7 +13362,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_ChainReaction",
-      "value": 2,
+      "valueRef": "aurena.mem.chain-reaction.c4.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -13307,7 +13407,9 @@
       "gimmick": {
         "trigger": "OnUse",
         "effect": "AlliedWard",
-        "value": 8,
+        "value": {
+          "valueRef": "aurena.mem.chain-reaction.c4.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -13350,7 +13452,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Burst",
-        "value": 35,
+        "value": {
+          "valueRef": "aurena.mem.chain-reaction.c4.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -13385,7 +13489,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_ChainReaction",
-      "value": 2,
+      "valueRef": "aurena.mem.chain-reaction.c4.l1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -13423,7 +13527,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_ChainReaction",
-      "value": 5,
+      "valueRef": "aurena.mem.chain-reaction.c4.l2/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -13461,7 +13565,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_ChainReaction",
-      "value": 2,
+      "valueRef": "aurena.mem.chain-reaction.c4.l3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -13499,7 +13603,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_ChainReaction",
-      "value": 5,
+      "valueRef": "aurena.mem.chain-reaction.c4.l4/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -13537,7 +13641,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_ChainReaction",
-      "value": 2,
+      "valueRef": "aurena.mem.chain-reaction.c4.l5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -13587,7 +13691,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_R_ChainReaction",
-          "value": 20,
+          "valueRef": "aurena.mem.chain-reaction.c4.q/options/0/value",
           "param": "Radius",
           "receiver": null,
           "target": {
@@ -13603,7 +13707,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_R_ChainReaction",
-          "value": 8,
+          "valueRef": "aurena.mem.chain-reaction.c4.q/options/1/value",
           "param": "Duration",
           "receiver": null,
           "target": {
@@ -13643,7 +13747,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 2,
+      "valueRef": "aurena.mem.feathery-dash.c1.e1/value",
       "param": null,
       "receiver": "St_M_FeatheryDash",
       "target": {
@@ -13681,7 +13785,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 2,
+      "valueRef": "aurena.mem.feathery-dash.c1.e2/value",
       "param": null,
       "receiver": "St_M_FeatheryDash",
       "target": {
@@ -13720,7 +13824,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 2,
+      "valueRef": "aurena.mem.feathery-dash.c1.e3/value",
       "param": null,
       "receiver": "St_M_FeatheryDash",
       "target": {
@@ -13758,7 +13862,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 2,
+      "valueRef": "aurena.mem.feathery-dash.c1.e4/value",
       "param": null,
       "receiver": "St_M_FeatheryDash",
       "target": {
@@ -13796,7 +13900,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 2,
+      "valueRef": "aurena.mem.feathery-dash.c1.e5/value",
       "param": null,
       "receiver": "St_M_FeatheryDash",
       "target": {
@@ -13834,7 +13938,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 2,
+      "valueRef": "aurena.mem.feathery-dash.c1.e6/value",
       "param": null,
       "receiver": "St_M_FeatheryDash",
       "target": {
@@ -13879,7 +13983,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Recharge",
-        "value": 3,
+        "value": {
+          "valueRef": "aurena.mem.feathery-dash.c1.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": "St_M_FeatheryDash",
@@ -13923,7 +14029,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Recharge",
-        "value": 8,
+        "value": {
+          "valueRef": "aurena.mem.feathery-dash.c1.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": "St_M_FeatheryDash"
@@ -13959,7 +14067,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 2,
+      "valueRef": "aurena.mem.feathery-dash.c1.l1/value",
       "param": null,
       "receiver": "St_M_FeatheryDash",
       "target": {
@@ -13997,7 +14105,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 2,
+      "valueRef": "aurena.mem.feathery-dash.c1.l2/value",
       "param": null,
       "receiver": "St_M_FeatheryDash",
       "target": {
@@ -14035,7 +14143,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 2,
+      "valueRef": "aurena.mem.feathery-dash.c1.l3/value",
       "param": null,
       "receiver": "St_M_FeatheryDash",
       "target": {
@@ -14073,7 +14181,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 2,
+      "valueRef": "aurena.mem.feathery-dash.c1.l4/value",
       "param": null,
       "receiver": "St_M_FeatheryDash",
       "target": {
@@ -14111,7 +14219,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 2,
+      "valueRef": "aurena.mem.feathery-dash.c1.l5/value",
       "param": null,
       "receiver": "St_M_FeatheryDash",
       "target": {
@@ -14168,7 +14276,9 @@
           "gimmick": {
             "trigger": "OnHit",
             "effect": "Recharge",
-            "value": 2,
+            "value": {
+              "valueRef": "aurena.mem.feathery-dash.c1.q/options/0/gimmick/value"
+            },
             "arg": 0,
             "cooldown": 0,
             "target": "St_M_FeatheryDash",
@@ -14189,7 +14299,9 @@
           "gimmick": {
             "trigger": "OnKill",
             "effect": "Recharge",
-            "value": 5,
+            "value": {
+              "valueRef": "aurena.mem.feathery-dash.c1.q/options/1/gimmick/value"
+            },
             "arg": 0,
             "cooldown": 0,
             "target": "St_M_FeatheryDash"
@@ -14227,7 +14339,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 2,
+      "valueRef": "aurena.mem.feathery-dash.c2.e1/value",
       "param": null,
       "receiver": "St_M_FeatheryDash",
       "target": {
@@ -14265,7 +14377,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 2,
+      "valueRef": "aurena.mem.feathery-dash.c2.e2/value",
       "param": null,
       "receiver": "St_M_FeatheryDash",
       "target": {
@@ -14304,7 +14416,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 2,
+      "valueRef": "aurena.mem.feathery-dash.c2.e3/value",
       "param": null,
       "receiver": "St_M_FeatheryDash",
       "target": {
@@ -14342,7 +14454,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 2,
+      "valueRef": "aurena.mem.feathery-dash.c2.e4/value",
       "param": null,
       "receiver": "St_M_FeatheryDash",
       "target": {
@@ -14380,7 +14492,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 2,
+      "valueRef": "aurena.mem.feathery-dash.c2.e5/value",
       "param": null,
       "receiver": "St_M_FeatheryDash",
       "target": {
@@ -14418,7 +14530,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 2,
+      "valueRef": "aurena.mem.feathery-dash.c2.e6/value",
       "param": null,
       "receiver": "St_M_FeatheryDash",
       "target": {
@@ -14463,7 +14575,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Recharge",
-        "value": 4,
+        "value": {
+          "valueRef": "aurena.mem.feathery-dash.c2.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": "St_M_FeatheryDash",
@@ -14507,7 +14621,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Recharge",
-        "value": 3,
+        "value": {
+          "valueRef": "aurena.mem.feathery-dash.c2.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": "St_M_FeatheryDash"
@@ -14543,7 +14659,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 2,
+      "valueRef": "aurena.mem.feathery-dash.c2.l1/value",
       "param": null,
       "receiver": "St_M_FeatheryDash",
       "target": {
@@ -14581,7 +14697,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 2,
+      "valueRef": "aurena.mem.feathery-dash.c2.l2/value",
       "param": null,
       "receiver": "St_M_FeatheryDash",
       "target": {
@@ -14619,7 +14735,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 2,
+      "valueRef": "aurena.mem.feathery-dash.c2.l3/value",
       "param": null,
       "receiver": "St_M_FeatheryDash",
       "target": {
@@ -14657,7 +14773,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 2,
+      "valueRef": "aurena.mem.feathery-dash.c2.l4/value",
       "param": null,
       "receiver": "St_M_FeatheryDash",
       "target": {
@@ -14695,7 +14811,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 2,
+      "valueRef": "aurena.mem.feathery-dash.c2.l5/value",
       "param": null,
       "receiver": "St_M_FeatheryDash",
       "target": {
@@ -14752,7 +14868,9 @@
           "gimmick": {
             "trigger": "OnHit",
             "effect": "Recharge",
-            "value": 3,
+            "value": {
+              "valueRef": "aurena.mem.feathery-dash.c2.q/options/0/gimmick/value"
+            },
             "arg": 0,
             "cooldown": 0,
             "target": "St_M_FeatheryDash",
@@ -14773,7 +14891,9 @@
           "gimmick": {
             "trigger": "OnKill",
             "effect": "Recharge",
-            "value": 2,
+            "value": {
+              "valueRef": "aurena.mem.feathery-dash.c2.q/options/1/gimmick/value"
+            },
             "arg": 0,
             "cooldown": 0,
             "target": "St_M_FeatheryDash"
@@ -14811,7 +14931,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 2,
+      "valueRef": "aurena.mem.feathery-dash.c3.e1/value",
       "param": null,
       "receiver": "St_M_FeatheryDash",
       "target": {
@@ -14849,7 +14969,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 2,
+      "valueRef": "aurena.mem.feathery-dash.c3.e2/value",
       "param": null,
       "receiver": "St_M_FeatheryDash",
       "target": {
@@ -14888,7 +15008,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 2,
+      "valueRef": "aurena.mem.feathery-dash.c3.e3/value",
       "param": null,
       "receiver": "St_M_FeatheryDash",
       "target": {
@@ -14926,7 +15046,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 2,
+      "valueRef": "aurena.mem.feathery-dash.c3.e4/value",
       "param": null,
       "receiver": "St_M_FeatheryDash",
       "target": {
@@ -14964,7 +15084,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 2,
+      "valueRef": "aurena.mem.feathery-dash.c3.e5/value",
       "param": null,
       "receiver": "St_M_FeatheryDash",
       "target": {
@@ -15002,7 +15122,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 2,
+      "valueRef": "aurena.mem.feathery-dash.c3.e6/value",
       "param": null,
       "receiver": "St_M_FeatheryDash",
       "target": {
@@ -15047,7 +15167,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Recharge",
-        "value": 1,
+        "value": {
+          "valueRef": "aurena.mem.feathery-dash.c3.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": "St_M_FeatheryDash",
@@ -15091,7 +15213,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Recharge",
-        "value": 2,
+        "value": {
+          "valueRef": "aurena.mem.feathery-dash.c3.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": "St_M_FeatheryDash"
@@ -15127,7 +15251,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 2,
+      "valueRef": "aurena.mem.feathery-dash.c3.l1/value",
       "param": null,
       "receiver": "St_M_FeatheryDash",
       "target": {
@@ -15165,7 +15289,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 2,
+      "valueRef": "aurena.mem.feathery-dash.c3.l2/value",
       "param": null,
       "receiver": "St_M_FeatheryDash",
       "target": {
@@ -15203,7 +15327,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 2,
+      "valueRef": "aurena.mem.feathery-dash.c3.l3/value",
       "param": null,
       "receiver": "St_M_FeatheryDash",
       "target": {
@@ -15241,7 +15365,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 2,
+      "valueRef": "aurena.mem.feathery-dash.c3.l4/value",
       "param": null,
       "receiver": "St_M_FeatheryDash",
       "target": {
@@ -15279,7 +15403,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 2,
+      "valueRef": "aurena.mem.feathery-dash.c3.l5/value",
       "param": null,
       "receiver": "St_M_FeatheryDash",
       "target": {
@@ -15336,7 +15460,9 @@
           "gimmick": {
             "trigger": "OnHit",
             "effect": "Recharge",
-            "value": 1,
+            "value": {
+              "valueRef": "aurena.mem.feathery-dash.c3.q/options/0/gimmick/value"
+            },
             "arg": 0,
             "cooldown": 0,
             "target": "St_M_FeatheryDash",
@@ -15357,7 +15483,9 @@
           "gimmick": {
             "trigger": "OnKill",
             "effect": "Recharge",
-            "value": 1,
+            "value": {
+              "valueRef": "aurena.mem.feathery-dash.c3.q/options/1/gimmick/value"
+            },
             "arg": 0,
             "cooldown": 0,
             "target": "St_M_FeatheryDash"
@@ -15395,7 +15523,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 2,
+      "valueRef": "aurena.mem.feathery-dash.c4.e1/value",
       "param": null,
       "receiver": "St_M_FeatheryDash",
       "target": {
@@ -15433,7 +15561,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 2,
+      "valueRef": "aurena.mem.feathery-dash.c4.e2/value",
       "param": null,
       "receiver": "St_M_FeatheryDash",
       "target": {
@@ -15472,7 +15600,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 2,
+      "valueRef": "aurena.mem.feathery-dash.c4.e3/value",
       "param": null,
       "receiver": "St_M_FeatheryDash",
       "target": {
@@ -15510,7 +15638,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 2,
+      "valueRef": "aurena.mem.feathery-dash.c4.e4/value",
       "param": null,
       "receiver": "St_M_FeatheryDash",
       "target": {
@@ -15548,7 +15676,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 2,
+      "valueRef": "aurena.mem.feathery-dash.c4.e5/value",
       "param": null,
       "receiver": "St_M_FeatheryDash",
       "target": {
@@ -15586,7 +15714,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 2,
+      "valueRef": "aurena.mem.feathery-dash.c4.e6/value",
       "param": null,
       "receiver": "St_M_FeatheryDash",
       "target": {
@@ -15631,7 +15759,9 @@
       "gimmick": {
         "trigger": "OnUse",
         "effect": "Recharge",
-        "value": 1,
+        "value": {
+          "valueRef": "aurena.mem.feathery-dash.c4.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": "St_M_FeatheryDash"
@@ -15674,7 +15804,9 @@
       "gimmick": {
         "trigger": "OnUse",
         "effect": "Recharge",
-        "value": 8,
+        "value": {
+          "valueRef": "aurena.mem.feathery-dash.c4.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": "St_M_FeatheryDash"
@@ -15710,7 +15842,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 2,
+      "valueRef": "aurena.mem.feathery-dash.c4.l1/value",
       "param": null,
       "receiver": "St_M_FeatheryDash",
       "target": {
@@ -15748,7 +15880,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 2,
+      "valueRef": "aurena.mem.feathery-dash.c4.l2/value",
       "param": null,
       "receiver": "St_M_FeatheryDash",
       "target": {
@@ -15786,7 +15918,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 2,
+      "valueRef": "aurena.mem.feathery-dash.c4.l3/value",
       "param": null,
       "receiver": "St_M_FeatheryDash",
       "target": {
@@ -15824,7 +15956,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 2,
+      "valueRef": "aurena.mem.feathery-dash.c4.l4/value",
       "param": null,
       "receiver": "St_M_FeatheryDash",
       "target": {
@@ -15862,7 +15994,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 2,
+      "valueRef": "aurena.mem.feathery-dash.c4.l5/value",
       "param": null,
       "receiver": "St_M_FeatheryDash",
       "target": {
@@ -15919,7 +16051,9 @@
           "gimmick": {
             "trigger": "OnUse",
             "effect": "Recharge",
-            "value": 1,
+            "value": {
+              "valueRef": "aurena.mem.feathery-dash.c4.q/options/0/gimmick/value"
+            },
             "arg": 0,
             "cooldown": 0,
             "target": "St_M_FeatheryDash"
@@ -15939,7 +16073,9 @@
           "gimmick": {
             "trigger": "OnUse",
             "effect": "Recharge",
-            "value": 5,
+            "value": {
+              "valueRef": "aurena.mem.feathery-dash.c4.q/options/1/gimmick/value"
+            },
             "arg": 0,
             "cooldown": 0,
             "target": "St_M_FeatheryDash"
@@ -16012,7 +16148,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_DisintegratingClaw",
-      "value": 2,
+      "valueRef": "aurena.bridge.claw-golden.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -16051,7 +16187,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_DisintegratingClaw",
-      "value": 2,
+      "valueRef": "aurena.bridge.claw-golden.e3/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -16124,7 +16260,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_GoldenBurst",
-      "value": 2,
+      "valueRef": "aurena.bridge.claw-golden.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -16163,7 +16299,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_GoldenBurst",
-      "value": 2,
+      "valueRef": "aurena.bridge.claw-golden.e6/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -16209,7 +16345,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "AlliedWard",
-        "value": 5,
+        "value": {
+          "valueRef": "aurena.bridge.claw-golden.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null,
@@ -16255,7 +16393,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Daze",
-        "value": 4,
+        "value": {
+          "valueRef": "aurena.bridge.claw-golden.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null,
@@ -16292,7 +16432,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_DisintegratingClaw",
-      "value": 2,
+      "valueRef": "aurena.bridge.claw-golden.l1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -16331,7 +16471,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_GoldenBurst",
-      "value": 2,
+      "valueRef": "aurena.bridge.claw-golden.l2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -16370,7 +16510,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_DisintegratingClaw",
-      "value": 2,
+      "valueRef": "aurena.bridge.claw-golden.l3/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -16409,7 +16549,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_GoldenBurst",
-      "value": 2,
+      "valueRef": "aurena.bridge.claw-golden.l4/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -16448,7 +16588,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_GoldenBurst",
-      "value": 2,
+      "valueRef": "aurena.bridge.claw-golden.l5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -16499,7 +16639,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_D_DisintegratingClaw",
-          "value": 8,
+          "valueRef": "aurena.bridge.claw-golden.q/options/0/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -16515,7 +16655,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_Q_GoldenBurst",
-          "value": 8,
+          "valueRef": "aurena.bridge.claw-golden.q/options/1/value",
           "param": "Duration",
           "receiver": null,
           "target": {
@@ -16591,7 +16731,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_GoldenBurst",
-      "value": 2,
+      "valueRef": "aurena.bridge.golden-theory.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -16630,7 +16770,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_GoldenBurst",
-      "value": 2,
+      "valueRef": "aurena.bridge.golden-theory.e3/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -16703,7 +16843,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_DangerousTheory",
-      "value": 2,
+      "valueRef": "aurena.bridge.golden-theory.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -16742,7 +16882,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_DangerousTheory",
-      "value": 2,
+      "valueRef": "aurena.bridge.golden-theory.e6/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -16788,7 +16928,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Daze",
-        "value": 4,
+        "value": {
+          "valueRef": "aurena.bridge.golden-theory.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null,
@@ -16832,7 +16974,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Element",
-        "value": 25,
+        "value": {
+          "valueRef": "aurena.bridge.golden-theory.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null,
@@ -16869,7 +17013,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_GoldenBurst",
-      "value": 2,
+      "valueRef": "aurena.bridge.golden-theory.l1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -16908,7 +17052,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_DangerousTheory",
-      "value": 2,
+      "valueRef": "aurena.bridge.golden-theory.l2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -16947,7 +17091,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_GoldenBurst",
-      "value": 2,
+      "valueRef": "aurena.bridge.golden-theory.l3/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -16986,7 +17130,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_DangerousTheory",
-      "value": 2,
+      "valueRef": "aurena.bridge.golden-theory.l4/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -17025,7 +17169,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_DangerousTheory",
-      "value": 2,
+      "valueRef": "aurena.bridge.golden-theory.l5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -17076,7 +17220,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_Q_GoldenBurst",
-          "value": 8,
+          "valueRef": "aurena.bridge.golden-theory.q/options/0/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -17092,7 +17236,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_R_DangerousTheory",
-          "value": 8,
+          "valueRef": "aurena.bridge.golden-theory.q/options/1/value",
           "param": "Duration",
           "receiver": null,
           "target": {
@@ -17133,7 +17277,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 2,
+      "valueRef": "aurena.bridge.theory-feather.e1/value",
       "param": null,
       "receiver": "St_M_FeatheryDash",
       "target": {
@@ -17172,7 +17316,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_DangerousTheory",
-      "value": 2,
+      "valueRef": "aurena.bridge.theory-feather.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -17211,7 +17355,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_DangerousTheory",
-      "value": 2,
+      "valueRef": "aurena.bridge.theory-feather.e3/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -17249,7 +17393,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 2,
+      "valueRef": "aurena.bridge.theory-feather.e4/value",
       "param": null,
       "receiver": "St_M_FeatheryDash",
       "target": {
@@ -17288,7 +17432,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_DangerousTheory",
-      "value": 2,
+      "valueRef": "aurena.bridge.theory-feather.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -17327,7 +17471,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_DangerousTheory",
-      "value": 2,
+      "valueRef": "aurena.bridge.theory-feather.e6/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -17373,7 +17517,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Recharge",
-        "value": 1,
+        "value": {
+          "valueRef": "aurena.bridge.theory-feather.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": "St_M_FeatheryDash",
@@ -17418,7 +17564,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Recharge",
-        "value": 1,
+        "value": {
+          "valueRef": "aurena.bridge.theory-feather.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": "St_M_FeatheryDash",
@@ -17456,7 +17604,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 2,
+      "valueRef": "aurena.bridge.theory-feather.l1/value",
       "param": null,
       "receiver": "St_M_FeatheryDash",
       "target": {
@@ -17495,7 +17643,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_DangerousTheory",
-      "value": 2,
+      "valueRef": "aurena.bridge.theory-feather.l2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -17534,7 +17682,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_DangerousTheory",
-      "value": 2,
+      "valueRef": "aurena.bridge.theory-feather.l3/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -17573,7 +17721,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 2,
+      "valueRef": "aurena.bridge.theory-feather.l4/value",
       "param": null,
       "receiver": "St_M_FeatheryDash",
       "target": {
@@ -17612,7 +17760,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_DangerousTheory",
-      "value": 2,
+      "valueRef": "aurena.bridge.theory-feather.l5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -17663,7 +17811,7 @@
         {
           "kind": "GimmickBoost",
           "memory": null,
-          "value": 8,
+          "valueRef": "aurena.bridge.theory-feather.q/options/0/value",
           "param": null,
           "receiver": "St_M_FeatheryDash",
           "target": {
@@ -17679,7 +17827,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_R_DangerousTheory",
-          "value": 8,
+          "valueRef": "aurena.bridge.theory-feather.q/options/1/value",
           "param": "Duration",
           "receiver": null,
           "target": {
@@ -17720,7 +17868,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 2,
+      "valueRef": "aurena.bridge.feather-threat.e1/value",
       "param": null,
       "receiver": "St_M_FeatheryDash",
       "target": {
@@ -17759,7 +17907,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_BeautifulThreat",
-      "value": 2,
+      "valueRef": "aurena.bridge.feather-threat.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -17798,7 +17946,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_BeautifulThreat",
-      "value": 2,
+      "valueRef": "aurena.bridge.feather-threat.e3/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -17836,7 +17984,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 2,
+      "valueRef": "aurena.bridge.feather-threat.e4/value",
       "param": null,
       "receiver": "St_M_FeatheryDash",
       "target": {
@@ -17875,7 +18023,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_BeautifulThreat",
-      "value": 2,
+      "valueRef": "aurena.bridge.feather-threat.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -17914,7 +18062,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_BeautifulThreat",
-      "value": 2,
+      "valueRef": "aurena.bridge.feather-threat.e6/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -17960,7 +18108,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Recharge",
-        "value": 1,
+        "value": {
+          "valueRef": "aurena.bridge.feather-threat.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": "St_M_FeatheryDash",
@@ -18005,7 +18155,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Recharge",
-        "value": 1,
+        "value": {
+          "valueRef": "aurena.bridge.feather-threat.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": "St_M_FeatheryDash",
@@ -18043,7 +18195,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 2,
+      "valueRef": "aurena.bridge.feather-threat.l1/value",
       "param": null,
       "receiver": "St_M_FeatheryDash",
       "target": {
@@ -18082,7 +18234,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_BeautifulThreat",
-      "value": 2,
+      "valueRef": "aurena.bridge.feather-threat.l2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -18121,7 +18273,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_BeautifulThreat",
-      "value": 2,
+      "valueRef": "aurena.bridge.feather-threat.l3/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -18160,7 +18312,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 2,
+      "valueRef": "aurena.bridge.feather-threat.l4/value",
       "param": null,
       "receiver": "St_M_FeatheryDash",
       "target": {
@@ -18199,7 +18351,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_BeautifulThreat",
-      "value": 2,
+      "valueRef": "aurena.bridge.feather-threat.l5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -18250,7 +18402,7 @@
         {
           "kind": "GimmickBoost",
           "memory": null,
-          "value": 8,
+          "valueRef": "aurena.bridge.feather-threat.q/options/0/value",
           "param": null,
           "receiver": "St_M_FeatheryDash",
           "target": {
@@ -18266,7 +18418,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_D_BeautifulThreat",
-          "value": 8,
+          "valueRef": "aurena.bridge.feather-threat.q/options/1/value",
           "param": "Duration",
           "receiver": null,
           "target": {
@@ -18342,7 +18494,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_BeautifulThreat",
-      "value": 2,
+      "valueRef": "aurena.bridge.threat-reduction.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -18381,7 +18533,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_BeautifulThreat",
-      "value": 2,
+      "valueRef": "aurena.bridge.threat-reduction.e3/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -18454,7 +18606,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_Reduction",
-      "value": 2,
+      "valueRef": "aurena.bridge.threat-reduction.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -18493,7 +18645,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_Reduction",
-      "value": 2,
+      "valueRef": "aurena.bridge.threat-reduction.e6/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -18539,7 +18691,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Daze",
-        "value": 4,
+        "value": {
+          "valueRef": "aurena.bridge.threat-reduction.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null,
@@ -18583,7 +18737,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "AlliedWard",
-        "value": 5,
+        "value": {
+          "valueRef": "aurena.bridge.threat-reduction.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null,
@@ -18622,7 +18778,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_BeautifulThreat",
-      "value": 2,
+      "valueRef": "aurena.bridge.threat-reduction.l1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -18661,7 +18817,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_Reduction",
-      "value": 2,
+      "valueRef": "aurena.bridge.threat-reduction.l2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -18700,7 +18856,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_BeautifulThreat",
-      "value": 2,
+      "valueRef": "aurena.bridge.threat-reduction.l3/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -18739,7 +18895,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_Reduction",
-      "value": 2,
+      "valueRef": "aurena.bridge.threat-reduction.l4/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -18778,7 +18934,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_Reduction",
-      "value": 2,
+      "valueRef": "aurena.bridge.threat-reduction.l5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -18829,7 +18985,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_D_BeautifulThreat",
-          "value": 8,
+          "valueRef": "aurena.bridge.threat-reduction.q/options/0/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -18845,7 +19001,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_Q_Reduction",
-          "value": 8,
+          "valueRef": "aurena.bridge.threat-reduction.q/options/1/value",
           "param": "Duration",
           "receiver": null,
           "target": {
@@ -18921,7 +19077,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_Reduction",
-      "value": 2,
+      "valueRef": "aurena.bridge.reduction-array.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -18960,7 +19116,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_Reduction",
-      "value": 2,
+      "valueRef": "aurena.bridge.reduction-array.e3/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -19033,7 +19189,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_ChainReaction",
-      "value": 2,
+      "valueRef": "aurena.bridge.reduction-array.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -19072,7 +19228,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_ChainReaction",
-      "value": 2,
+      "valueRef": "aurena.bridge.reduction-array.e6/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -19118,7 +19274,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Daze",
-        "value": 4,
+        "value": {
+          "valueRef": "aurena.bridge.reduction-array.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null,
@@ -19162,7 +19320,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Element",
-        "value": 25,
+        "value": {
+          "valueRef": "aurena.bridge.reduction-array.n2/gimmick/value"
+        },
         "arg": 3,
         "cooldown": 0,
         "target": null,
@@ -19199,7 +19359,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_Reduction",
-      "value": 2,
+      "valueRef": "aurena.bridge.reduction-array.l1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -19238,7 +19398,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_ChainReaction",
-      "value": 2,
+      "valueRef": "aurena.bridge.reduction-array.l2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -19277,7 +19437,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_Reduction",
-      "value": 2,
+      "valueRef": "aurena.bridge.reduction-array.l3/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -19316,7 +19476,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_ChainReaction",
-      "value": 2,
+      "valueRef": "aurena.bridge.reduction-array.l4/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -19355,7 +19515,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_ChainReaction",
-      "value": 2,
+      "valueRef": "aurena.bridge.reduction-array.l5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -19406,7 +19566,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_Q_Reduction",
-          "value": 8,
+          "valueRef": "aurena.bridge.reduction-array.q/options/0/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -19422,7 +19582,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_R_ChainReaction",
-          "value": 8,
+          "valueRef": "aurena.bridge.reduction-array.q/options/1/value",
           "param": "Duration",
           "receiver": null,
           "target": {
@@ -19498,7 +19658,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_ChainReaction",
-      "value": 2,
+      "valueRef": "aurena.bridge.array-claw.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -19537,7 +19697,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_ChainReaction",
-      "value": 2,
+      "valueRef": "aurena.bridge.array-claw.e3/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -19610,7 +19770,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_DisintegratingClaw",
-      "value": 2,
+      "valueRef": "aurena.bridge.array-claw.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -19649,7 +19809,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_DisintegratingClaw",
-      "value": 2,
+      "valueRef": "aurena.bridge.array-claw.e6/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -19695,7 +19855,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Burst",
-        "value": 25,
+        "value": {
+          "valueRef": "aurena.bridge.array-claw.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null,
@@ -19739,7 +19901,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Element",
-        "value": 100,
+        "value": {
+          "valueRef": "aurena.bridge.array-claw.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null,
@@ -19776,7 +19940,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_ChainReaction",
-      "value": 2,
+      "valueRef": "aurena.bridge.array-claw.l1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -19815,7 +19979,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_DisintegratingClaw",
-      "value": 2,
+      "valueRef": "aurena.bridge.array-claw.l2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -19854,7 +20018,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_ChainReaction",
-      "value": 2,
+      "valueRef": "aurena.bridge.array-claw.l3/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -19893,7 +20057,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_DisintegratingClaw",
-      "value": 2,
+      "valueRef": "aurena.bridge.array-claw.l4/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -19932,7 +20096,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_DisintegratingClaw",
-      "value": 2,
+      "valueRef": "aurena.bridge.array-claw.l5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -19983,7 +20147,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_R_ChainReaction",
-          "value": 8,
+          "valueRef": "aurena.bridge.array-claw.q/options/0/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -19999,7 +20163,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_D_DisintegratingClaw",
-          "value": 8,
+          "valueRef": "aurena.bridge.array-claw.q/options/1/value",
           "param": "Duration",
           "receiver": null,
           "target": {
@@ -20075,7 +20239,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_DisintegratingClaw",
-      "value": 2,
+      "valueRef": "aurena.bridge.renewal.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -20114,7 +20278,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_DisintegratingClaw",
-      "value": 2,
+      "valueRef": "aurena.bridge.renewal.e3/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -20187,7 +20351,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_GoldenBurst",
-      "value": 2,
+      "valueRef": "aurena.bridge.renewal.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -20226,7 +20390,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_GoldenBurst",
-      "value": 2,
+      "valueRef": "aurena.bridge.renewal.e6/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -20272,7 +20436,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Echo",
-        "value": 5,
+        "value": {
+          "valueRef": "aurena.bridge.renewal.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null,
@@ -20316,7 +20482,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Element",
-        "value": 25,
+        "value": {
+          "valueRef": "aurena.bridge.renewal.n2/gimmick/value"
+        },
         "arg": 1,
         "cooldown": 0,
         "target": null,
@@ -20353,7 +20521,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_DisintegratingClaw",
-      "value": 2,
+      "valueRef": "aurena.bridge.renewal.l1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -20392,7 +20560,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_GoldenBurst",
-      "value": 2,
+      "valueRef": "aurena.bridge.renewal.l2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -20431,7 +20599,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_DisintegratingClaw",
-      "value": 2,
+      "valueRef": "aurena.bridge.renewal.l3/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -20470,7 +20638,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_GoldenBurst",
-      "value": 2,
+      "valueRef": "aurena.bridge.renewal.l4/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -20509,7 +20677,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_GoldenBurst",
-      "value": 2,
+      "valueRef": "aurena.bridge.renewal.l5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -20560,7 +20728,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_D_DisintegratingClaw",
-          "value": 8,
+          "valueRef": "aurena.bridge.renewal.q/options/0/value",
           "param": "Duration",
           "receiver": null,
           "target": {
@@ -20576,7 +20744,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_Q_GoldenBurst",
-          "value": 8,
+          "valueRef": "aurena.bridge.renewal.q/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -20630,13 +20798,17 @@
             "memory": "St_D_DisintegratingClaw",
             "effect": "Wound",
             "field": "Value",
-            "pct": 100
+            "pct": {
+              "valueRef": "aurena.key.claw-wound/keystone/upsideSpec/0/pct"
+            }
           },
           {
             "memory": "St_D_DisintegratingClaw",
             "effect": "Wound",
             "field": "Duration",
-            "pct": 50
+            "pct": {
+              "valueRef": "aurena.key.claw-wound/keystone/upsideSpec/1/pct"
+            }
           }
         ]
       },
@@ -20680,14 +20852,20 @@
             "memory": "St_D_BeautifulThreat",
             "effect": "Ricochet",
             "field": "ExtraTargets",
-            "delta": 1,
-            "max": 2
+            "delta": {
+              "valueRef": "aurena.key.feather-fan/keystone/upsideSpec/0/delta"
+            },
+            "max": {
+              "valueRef": "aurena.key.feather-fan/keystone/upsideSpec/0/max"
+            }
           },
           {
             "memory": "St_D_BeautifulThreat",
             "effect": "Ricochet",
             "field": "Radius",
-            "pct": 50
+            "pct": {
+              "valueRef": "aurena.key.feather-fan/keystone/upsideSpec/1/pct"
+            }
           }
         ]
       },
@@ -20735,7 +20913,9 @@
             ],
             "effect": "Wound",
             "field": "Value",
-            "pct": 80
+            "pct": {
+              "valueRef": "aurena.key.quiet-reaction/keystone/upsideSpec/0/pct"
+            }
           },
           {
             "memories": [
@@ -20745,7 +20925,9 @@
             ],
             "effect": "Wound",
             "field": "Duration",
-            "pct": 100
+            "pct": {
+              "valueRef": "aurena.key.quiet-reaction/keystone/upsideSpec/1/pct"
+            }
           }
         ]
       },
@@ -20789,7 +20971,9 @@
             "memory": "St_R_DangerousTheory",
             "effect": "Burst",
             "field": "Radius",
-            "pct": 100
+            "pct": {
+              "valueRef": "aurena.key.wide-conclusion/keystone/upsideSpec/0/pct"
+            }
           }
         ]
       },
@@ -20834,12 +21018,16 @@
           {
             "effect": "AlliedWard",
             "field": "Value",
-            "pct": 100
+            "pct": {
+              "valueRef": "aurena.key.shared-gold/keystone/upsideSpec/0/pct"
+            }
           },
           {
             "effect": "AlliedWard",
             "field": "Duration",
-            "pct": 50
+            "pct": {
+              "valueRef": "aurena.key.shared-gold/keystone/upsideSpec/1/pct"
+            }
           }
         ]
       },
@@ -20883,7 +21071,9 @@
             "memory": "St_M_FeatheryDash",
             "effect": "Recharge",
             "field": "Value",
-            "pct": 100,
+            "pct": {
+              "valueRef": "aurena.key.return-path/keystone/upsideSpec/0/pct"
+            },
             "scope": "all new Recv; excludes B3/B4 b0"
           }
         ]
@@ -21477,7 +21667,7 @@
       "region": "migration",
       "kind": "GimmickBoost",
       "memory": "St_D_DisintegratingClaw",
-      "value": 2,
+      "valueRef": "h.aurena.route.claw.6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -21505,7 +21695,7 @@
       "region": "migration",
       "kind": "GimmickBoost",
       "memory": "St_D_BeautifulThreat",
-      "value": 2,
+      "valueRef": "h.aurena.route.beautiful-threat.6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -21533,7 +21723,7 @@
       "region": "migration",
       "kind": "GimmickBoost",
       "memory": "St_Q_GoldenBurst",
-      "value": 2,
+      "valueRef": "h.aurena.route.golden-burst.6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -21561,7 +21751,7 @@
       "region": "migration",
       "kind": "GimmickBoost",
       "memory": "St_Q_Reduction",
-      "value": 2,
+      "valueRef": "h.aurena.route.reduction.6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -21589,7 +21779,7 @@
       "region": "migration",
       "kind": "GimmickBoost",
       "memory": "St_R_DangerousTheory",
-      "value": 2,
+      "valueRef": "h.aurena.route.dangerous-theory.6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -21617,7 +21807,7 @@
       "region": "migration",
       "kind": "GimmickBoost",
       "memory": "St_R_ChainReaction",
-      "value": 2,
+      "valueRef": "h.aurena.route.chain-reaction.6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -21645,7 +21835,7 @@
       "region": "migration",
       "kind": "GimmickBoost",
       "memory": "St_Q_GoldenBurst",
-      "value": 2,
+      "valueRef": "h.aurena.route.golden-burst.3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -21673,7 +21863,7 @@
       "region": "migration",
       "kind": "GimmickBoost",
       "memory": "St_Q_Reduction",
-      "value": 2,
+      "valueRef": "h.aurena.route.reduction.3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -21701,7 +21891,7 @@
       "region": "migration",
       "kind": "GimmickBoost",
       "memory": "St_R_DangerousTheory",
-      "value": 2,
+      "valueRef": "h.aurena.route.dangerous-theory.3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -21729,7 +21919,7 @@
       "region": "migration",
       "kind": "GimmickBoost",
       "memory": "St_R_ChainReaction",
-      "value": 2,
+      "valueRef": "h.aurena.route.chain-reaction.3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -21764,7 +21954,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Sap",
-        "value": 2,
+        "value": {
+          "valueRef": "h.aurena.route.dangerous-theory.4/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -21796,7 +21988,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Element",
-        "value": 30,
+        "value": {
+          "valueRef": "h.aurena.route.dangerous-theory.2/gimmick/value"
+        },
         "arg": 2,
         "cooldown": 0,
         "target": null
@@ -21828,7 +22022,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Burst",
-        "value": 110,
+        "value": {
+          "valueRef": "h.aurena.route.dangerous-theory.7/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -21860,7 +22056,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Recharge",
-        "value": 1,
+        "value": {
+          "valueRef": "h.aurena.route.feathery-dash.1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": "St_M_FeatheryDash",
@@ -21887,7 +22085,7 @@
       "region": "migration",
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 2,
+      "valueRef": "h.aurena.route.feathery-dash.2/value",
       "param": null,
       "receiver": "St_M_FeatheryDash",
       "target": {
@@ -21917,7 +22115,7 @@
       "region": "migration",
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 2,
+      "valueRef": "h.aurena.route.feathery-dash.3/value",
       "param": null,
       "receiver": "St_M_FeatheryDash",
       "target": {
@@ -21947,7 +22145,7 @@
       "region": "migration",
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 2,
+      "valueRef": "h.aurena.route.feathery-dash.5/value",
       "param": null,
       "receiver": "St_M_FeatheryDash",
       "target": {
@@ -21977,7 +22175,7 @@
       "region": "migration",
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 2,
+      "valueRef": "h.aurena.route.feathery-dash.6/value",
       "param": null,
       "receiver": "St_M_FeatheryDash",
       "target": {
@@ -22014,7 +22212,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Recharge",
-        "value": 2,
+        "value": {
+          "valueRef": "h.aurena.route.feathery-dash.4/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": "St_M_FeatheryDash",
@@ -22048,7 +22248,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Recharge",
-        "value": 5,
+        "value": {
+          "valueRef": "h.aurena.route.feathery-dash.7/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": "St_M_FeatheryDash"
@@ -22081,16 +22283,24 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Burst",
-        "value": 40,
+        "value": {
+          "valueRef": "h.aurena.ring.force/gimmick/valuesByRank/0"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null,
         "condition": "BridgeSuccess:h.aurena.ring.force",
         "once": true,
         "valuesByRank": [
-          40,
-          70,
-          100
+          {
+            "valueRef": "h.aurena.ring.force/gimmick/valuesByRank/0"
+          },
+          {
+            "valueRef": "h.aurena.ring.force/gimmick/valuesByRank/1"
+          },
+          {
+            "valueRef": "h.aurena.ring.force/gimmick/valuesByRank/2"
+          }
         ]
       },
       "power": null,
@@ -22121,16 +22331,24 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Element",
-        "value": 100,
+        "value": {
+          "valueRef": "h.aurena.ring.insight/gimmick/valuesByRank/0"
+        },
         "arg": 2,
         "cooldown": 0,
         "target": null,
         "condition": "BridgeSuccess:h.aurena.ring.insight",
         "once": true,
         "valuesByRank": [
-          100,
-          150,
-          200
+          {
+            "valueRef": "h.aurena.ring.insight/gimmick/valuesByRank/0"
+          },
+          {
+            "valueRef": "h.aurena.ring.insight/gimmick/valuesByRank/1"
+          },
+          {
+            "valueRef": "h.aurena.ring.insight/gimmick/valuesByRank/2"
+          }
         ]
       },
       "power": null,
@@ -22161,16 +22379,24 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Recharge",
-        "value": 30,
+        "value": {
+          "valueRef": "h.aurena.ring.vessel/gimmick/valuesByRank/0"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": "St_M_FeatheryDash",
         "condition": "BridgeSuccess:h.aurena.ring.vessel",
         "once": true,
         "valuesByRank": [
-          30,
-          40,
-          50
+          {
+            "valueRef": "h.aurena.ring.vessel/gimmick/valuesByRank/0"
+          },
+          {
+            "valueRef": "h.aurena.ring.vessel/gimmick/valuesByRank/1"
+          },
+          {
+            "valueRef": "h.aurena.ring.vessel/gimmick/valuesByRank/2"
+          }
         ]
       },
       "power": null,
@@ -22202,16 +22428,24 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Recharge",
-        "value": 30,
+        "value": {
+          "valueRef": "h.aurena.ring.armor/gimmick/valuesByRank/0"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": "St_M_FeatheryDash",
         "condition": "BridgeSuccess:h.aurena.ring.armor",
         "once": true,
         "valuesByRank": [
-          30,
-          40,
-          50
+          {
+            "valueRef": "h.aurena.ring.armor/gimmick/valuesByRank/0"
+          },
+          {
+            "valueRef": "h.aurena.ring.armor/gimmick/valuesByRank/1"
+          },
+          {
+            "valueRef": "h.aurena.ring.armor/gimmick/valuesByRank/2"
+          }
         ]
       },
       "power": null,
@@ -22243,16 +22477,24 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Echo",
-        "value": 15,
+        "value": {
+          "valueRef": "h.aurena.ring.recall/gimmick/valuesByRank/0"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null,
         "condition": "BridgeSuccess:h.aurena.ring.recall",
         "once": true,
         "valuesByRank": [
-          15,
-          25,
-          35
+          {
+            "valueRef": "h.aurena.ring.recall/gimmick/valuesByRank/0"
+          },
+          {
+            "valueRef": "h.aurena.ring.recall/gimmick/valuesByRank/1"
+          },
+          {
+            "valueRef": "h.aurena.ring.recall/gimmick/valuesByRank/2"
+          }
         ]
       },
       "power": null,
@@ -22283,16 +22525,24 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Echo",
-        "value": 15,
+        "value": {
+          "valueRef": "h.aurena.ring.rhythm/gimmick/valuesByRank/0"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null,
         "condition": "BridgeSuccess:h.aurena.ring.rhythm",
         "once": true,
         "valuesByRank": [
-          15,
-          25,
-          35
+          {
+            "valueRef": "h.aurena.ring.rhythm/gimmick/valuesByRank/0"
+          },
+          {
+            "valueRef": "h.aurena.ring.rhythm/gimmick/valuesByRank/1"
+          },
+          {
+            "valueRef": "h.aurena.ring.rhythm/gimmick/valuesByRank/2"
+          }
         ]
       },
       "power": null,
@@ -22323,16 +22573,24 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Shield",
-        "value": 3,
+        "value": {
+          "valueRef": "h.aurena.ring.resolve/gimmick/valuesByRank/0"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null,
         "condition": "BridgeSuccess:h.aurena.ring.resolve",
         "once": true,
         "valuesByRank": [
-          3,
-          5,
-          7
+          {
+            "valueRef": "h.aurena.ring.resolve/gimmick/valuesByRank/0"
+          },
+          {
+            "valueRef": "h.aurena.ring.resolve/gimmick/valuesByRank/1"
+          },
+          {
+            "valueRef": "h.aurena.ring.resolve/gimmick/valuesByRank/2"
+          }
         ]
       },
       "power": null,
@@ -22364,18 +22622,30 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "AlliedWard",
-        "value": 4,
+        "value": {
+          "valueRef": "h.aurena.ring.renewal/gimmick/valuesByRank/0"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null,
         "condition": "BridgeSuccess:h.aurena.ring.renewal",
         "once": true,
         "valuesByRank": [
-          4,
-          5,
-          6,
-          7,
-          8
+          {
+            "valueRef": "h.aurena.ring.renewal/gimmick/valuesByRank/0"
+          },
+          {
+            "valueRef": "h.aurena.ring.renewal/gimmick/valuesByRank/1"
+          },
+          {
+            "valueRef": "h.aurena.ring.renewal/gimmick/valuesByRank/2"
+          },
+          {
+            "valueRef": "h.aurena.ring.renewal/gimmick/valuesByRank/3"
+          },
+          {
+            "valueRef": "h.aurena.ring.renewal/gimmick/valuesByRank/4"
+          }
         ]
       },
       "power": null,
@@ -22407,7 +22677,9 @@
       "gimmick": {
         "trigger": "OnUse",
         "effect": "Shield",
-        "value": 2,
+        "value": {
+          "valueRef": "h.aurena.route.golden-burst.2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -22439,7 +22711,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Shield",
-        "value": 1,
+        "value": {
+          "valueRef": "h.aurena.route.reduction.4/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -22471,7 +22745,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Element",
-        "value": 30,
+        "value": {
+          "valueRef": "h.aurena.route.chain-reaction.2/gimmick/value"
+        },
         "arg": 2,
         "cooldown": 0,
         "target": null
@@ -22511,7 +22787,9 @@
             "memory": "@Q",
             "effect": "AlliedWard/Burst/Daze/Echo/Element/ElementEdge/Expose/Rampart/Ricochet/Sap/Shield/Wound",
             "field": "Value",
-            "pct": 100
+            "pct": {
+              "valueRef": "h.aurena.key/keystone/upsideSpec/0/pct"
+            }
           }
         ]
       },
@@ -22550,7 +22828,9 @@
             "gimmick": {
               "trigger": "OnUse",
               "effect": "SacrificeShield",
-              "value": 50,
+              "value": {
+                "valueRef": "legacy/h.aurena.key2/native/value"
+              },
               "arg": 0,
               "cooldown": 0,
               "target": null

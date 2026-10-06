@@ -62,7 +62,7 @@ namespace SodRpg.Core.Game
     {
         public static readonly IReadOnlyList<TalentDef> OuterAnchors = Array.AsReadOnly(new[]
         {
-            new TalentDef("h.cetus.outer.abyssal-shell", Line.Guard, new Txt("深海の外殻", "Abyssal Shell"), Stat.MaxHealthPct, 2, 1)
+            new TalentDef("h.cetus.outer.abyssal-shell", Line.Guard, new Txt("深海の外殻", "Abyssal Shell"), Stat.MaxHealthPct, MemoryDamageBalance.Effect_legacy_h_cetus_outer_abyssal_shell_stat_perRank, 1)
                 { HeroKey = "Hero_Cetus", Tier = 2, IsOuterAnchor = true }
         });
         public static readonly IReadOnlyList<StarClusterDef> All = CreateExamples();

@@ -63,7 +63,15 @@ class MemoryDamageBalanceTests(unittest.TestCase):
         identity = star_values.fingerprint_record(resolved, values)
         changed = copy.deepcopy(original)
         changed["multipliers"]["byKind"] = {"MemoryDamage": 2}
-        for key in changed["effects"]:
+        damage_keys = {key for key in changed["effects"]
+                       if key.endswith("/link/value") and not key.startswith("legacy/")}
+        for data in resolved.values():
+            for star in data["stars"]:
+                for prefix, effect in [("", star)] + [
+                        (f"options/{i}/", option) for i, option in enumerate(star.get("options") or [])]:
+                    if effect.get("kind") == "MemoryDamage":
+                        damage_keys.add(f"{star['id']}/{prefix}value")
+        for key in damage_keys:
             changed["effects"][key] = Decimal(changed["effects"][key]) / 2
         compensated, effective = star_values.resolve_all(changed, manifests)
         self.assertEqual(identity, star_values.fingerprint_record(compensated, effective))
@@ -98,6 +106,65 @@ class MemoryDamageBalanceTests(unittest.TestCase):
         values = [Decimal(cell.strip().split()[0].rstrip("%")) for cell in row.split("|")[2:6]]
         difference = current_value - original
         self.assertEqual([current_value, original, difference, difference / original * 100], values)
+
+    def test_stage2_choice_quantities_use_child_kind_once_without_scaling_structural_args(self):
+        table = {"multipliers": {
+            "byKind": {"GimmickBoost": Decimal("1.25"), "Notable": 2},
+            "byHero": {"Hero_Yubar": {"GimmickBoost": 2, "Notable": 3}}},
+            "effects": {"choice/options/0/value": 4, "choice/options/1/gimmick/value": 2,
+                        "choice/options/1/gimmick/cooldown": Decimal("0.5")}}
+        raw = {"hero": "Hero_Yubar", "stars": [{"id": "choice", "kind": "Choice", "options": [
+            {"kind": "GimmickBoost", "valueRef": "choice/options/0/value"},
+            {"kind": "Notable", "gimmick": {
+                "effect": "Element", "arg": 3,
+                "value": {"valueRef": "choice/options/1/gimmick/value"},
+                "cooldown": {"valueRef": "choice/options/1/gimmick/cooldown"}}}]}]}
+        private, _ = star_values.resolve_manifest("yubar", raw, table)
+        shared, _ = star_values.resolve_manifest("outer", raw, table)
+        self.assertEqual(10, private["stars"][0]["options"][0]["value"])
+        self.assertEqual(5, shared["stars"][0]["options"][0]["value"])
+        private_gimmick = private["stars"][0]["options"][1]["gimmick"]
+        shared_gimmick = shared["stars"][0]["options"][1]["gimmick"]
+        self.assertEqual((12, 3, 3), (private_gimmick["value"], private_gimmick["cooldown"],
+                                     private_gimmick["arg"]))
+        self.assertEqual((4, 1, 3), (shared_gimmick["value"], shared_gimmick["cooldown"],
+                                    shared_gimmick["arg"]))
+        self.assertIn("valueRef", raw["stars"][0]["options"][0])
+
+    def test_stage2_integer_and_fixed_precision_quantities_are_never_silently_rounded(self):
+        cases = [
+            ("MemoryHaste", None, Decimal("1.1")),
+            ("GimmickParam", "ExtraTargets", Decimal("0.5")),
+            ("GimmickBoost", None, Decimal("0.001")),
+        ]
+        for kind, param, amount in cases:
+            with self.subTest(kind=kind, param=param):
+                raw = {"hero": "Hero_Yubar", "stars": [
+                    {"id": "quantity", "kind": kind, "param": param, "valueRef": "quantity/value"}]}
+                table = {"multipliers": {}, "effects": {"quantity/value": amount}}
+                with self.assertRaisesRegex(ValueError, "quantity/value"):
+                    star_values.resolve_manifest("yubar", raw, table)
+
+    def test_all_kinds_preserve_content_identity_when_base_and_multiplier_changes_cancel(self):
+        original = star_values.load_table()
+        manifests = star_values.load_manifests()
+        resolved, values = star_values.resolve_all(original, manifests)
+        changed = copy.deepcopy(original)
+        by_kind = changed["multipliers"].setdefault("byKind", {})
+        for kind in star_values.KINDS:
+            by_kind[kind] = Decimal(by_kind.get(kind, 1)) * 2
+        for key in changed["effects"]:
+            changed["effects"][key] = Decimal(changed["effects"][key]) / 2
+        compensated, effective = star_values.resolve_all(changed, manifests)
+        self.assertEqual(star_values.fingerprint_record(resolved, values),
+                         star_values.fingerprint_record(compensated, effective))
+        raw = manifests["yubar"]
+        boost = next(star for star in raw["stars"] if star.get("kind") == "GimmickBoost")
+        changed = copy.deepcopy(original)
+        changed["effects"][boost["valueRef"]] += 1
+        adjusted, effective = star_values.resolve_all(changed, manifests)
+        self.assertNotEqual(star_values.fingerprint_record(resolved, values),
+                            star_values.fingerprint_record(adjusted, effective))
 
 
 if __name__ == "__main__":

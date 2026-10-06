@@ -15,7 +15,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_SalamanderPowder",
-      "value": 1,
+      "valueRef": "lacerta.mem.powder.c1.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -51,7 +51,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_SalamanderPowder",
-      "value": 1,
+      "valueRef": "lacerta.mem.powder.c1.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -88,7 +88,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_SalamanderPowder",
-      "value": 1,
+      "valueRef": "lacerta.mem.powder.c1.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -124,7 +124,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_SalamanderPowder",
-      "value": 1,
+      "valueRef": "lacerta.mem.powder.c1.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -160,7 +160,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_SalamanderPowder",
-      "value": 1,
+      "valueRef": "lacerta.mem.powder.c1.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -196,7 +196,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_SalamanderPowder",
-      "value": 1,
+      "valueRef": "lacerta.mem.powder.c1.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -244,7 +244,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Element",
-        "value": 25,
+        "value": {
+          "valueRef": "lacerta.mem.powder.c1.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -292,7 +294,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "ElementEdge",
-        "value": 6,
+        "value": {
+          "valueRef": "lacerta.mem.powder.c1.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -352,7 +356,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_D_SalamanderPowder",
-          "value": 2,
+          "valueRef": "lacerta.mem.powder.c1.x1/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -393,7 +397,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_SalamanderPowder",
-      "value": 1,
+      "valueRef": "lacerta.mem.powder.c1.s1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -431,7 +435,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_SalamanderPowder",
-      "value": 1,
+      "valueRef": "lacerta.mem.powder.c1.s2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -466,7 +470,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_SalamanderPowder",
-      "value": 1,
+      "valueRef": "lacerta.mem.powder.c1.s3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -504,7 +508,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_SalamanderPowder",
-      "value": 1,
+      "valueRef": "lacerta.mem.powder.c1.s4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -542,7 +546,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_SalamanderPowder",
-      "value": 1,
+      "valueRef": "lacerta.mem.powder.c1.s5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -577,7 +581,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_SalamanderPowder",
-      "value": 1,
+      "valueRef": "lacerta.mem.powder.c1.s6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -612,7 +616,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_SalamanderPowder",
-      "value": 1,
+      "valueRef": "lacerta.mem.powder.c2.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -648,7 +652,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_SalamanderPowder",
-      "value": 1,
+      "valueRef": "lacerta.mem.powder.c2.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -685,7 +689,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_SalamanderPowder",
-      "value": 1,
+      "valueRef": "lacerta.mem.powder.c2.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -721,7 +725,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_SalamanderPowder",
-      "value": 1,
+      "valueRef": "lacerta.mem.powder.c2.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -757,7 +761,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_SalamanderPowder",
-      "value": 1,
+      "valueRef": "lacerta.mem.powder.c2.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -793,7 +797,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_SalamanderPowder",
-      "value": 1,
+      "valueRef": "lacerta.mem.powder.c2.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -841,9 +845,15 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Ricochet",
-        "value": 10,
-        "arg": 1,
-        "cooldown": 0.3,
+        "value": {
+          "valueRef": "lacerta.mem.powder.c2.n1/gimmick/value"
+        },
+        "arg": {
+          "valueRef": "lacerta.mem.powder.c2.n1/gimmick/arg"
+        },
+        "cooldown": {
+          "valueRef": "lacerta.mem.powder.c2.n1/gimmick/cooldown"
+        },
         "target": null
       },
       "power": null,
@@ -889,7 +899,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Echo",
-        "value": 10,
+        "value": {
+          "valueRef": "lacerta.mem.powder.c2.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -949,7 +961,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_D_SalamanderPowder",
-          "value": 4,
+          "valueRef": "lacerta.mem.powder.c2.x1/options/1/value",
           "param": "Radius",
           "receiver": null,
           "target": {
@@ -990,7 +1002,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_SalamanderPowder",
-      "value": 1,
+      "valueRef": "lacerta.mem.powder.c2.s1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -1028,7 +1040,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_SalamanderPowder",
-      "value": 2,
+      "valueRef": "lacerta.mem.powder.c2.s2/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -1063,7 +1075,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_SalamanderPowder",
-      "value": 1,
+      "valueRef": "lacerta.mem.powder.c2.s3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -1101,7 +1113,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_SalamanderPowder",
-      "value": 1,
+      "valueRef": "lacerta.mem.powder.c2.s4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -1139,7 +1151,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_SalamanderPowder",
-      "value": 2,
+      "valueRef": "lacerta.mem.powder.c2.s5/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -1174,7 +1186,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_SalamanderPowder",
-      "value": 1,
+      "valueRef": "lacerta.mem.powder.c2.s6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -1209,7 +1221,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_SalamanderPowder",
-      "value": 1,
+      "valueRef": "lacerta.mem.powder.c3.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -1245,7 +1257,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_SalamanderPowder",
-      "value": 1,
+      "valueRef": "lacerta.mem.powder.c3.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -1282,7 +1294,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_SalamanderPowder",
-      "value": 1,
+      "valueRef": "lacerta.mem.powder.c3.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -1318,7 +1330,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_SalamanderPowder",
-      "value": 1,
+      "valueRef": "lacerta.mem.powder.c3.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -1354,7 +1366,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_SalamanderPowder",
-      "value": 1,
+      "valueRef": "lacerta.mem.powder.c3.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -1390,7 +1402,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_SalamanderPowder",
-      "value": 1,
+      "valueRef": "lacerta.mem.powder.c3.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -1438,7 +1450,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Sap",
-        "value": 6,
+        "value": {
+          "valueRef": "lacerta.mem.powder.c3.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -1486,7 +1500,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Rampart",
-        "value": 1,
+        "value": {
+          "valueRef": "lacerta.mem.powder.c3.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -1546,7 +1562,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_D_SalamanderPowder",
-          "value": 4,
+          "valueRef": "lacerta.mem.powder.c3.x1/options/1/value",
           "param": "Duration",
           "receiver": null,
           "target": {
@@ -1587,7 +1603,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_SalamanderPowder",
-      "value": 1,
+      "valueRef": "lacerta.mem.powder.c3.s1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -1625,7 +1641,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_SalamanderPowder",
-      "value": 2,
+      "valueRef": "lacerta.mem.powder.c3.s2/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -1660,7 +1676,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_SalamanderPowder",
-      "value": 1,
+      "valueRef": "lacerta.mem.powder.c3.s3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -1698,7 +1714,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_SalamanderPowder",
-      "value": 1,
+      "valueRef": "lacerta.mem.powder.c3.s4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -1736,7 +1752,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_SalamanderPowder",
-      "value": 2,
+      "valueRef": "lacerta.mem.powder.c3.s5/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -1771,7 +1787,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_SalamanderPowder",
-      "value": 1,
+      "valueRef": "lacerta.mem.powder.c3.s6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -1806,7 +1822,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_SalamanderPowder",
-      "value": 1,
+      "valueRef": "lacerta.mem.powder.c4.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -1842,7 +1858,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_SalamanderPowder",
-      "value": 1,
+      "valueRef": "lacerta.mem.powder.c4.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -1879,7 +1895,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_SalamanderPowder",
-      "value": 1,
+      "valueRef": "lacerta.mem.powder.c4.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -1915,7 +1931,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_SalamanderPowder",
-      "value": 1,
+      "valueRef": "lacerta.mem.powder.c4.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -1951,7 +1967,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_SalamanderPowder",
-      "value": 1,
+      "valueRef": "lacerta.mem.powder.c4.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -1987,7 +2003,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_SalamanderPowder",
-      "value": 1,
+      "valueRef": "lacerta.mem.powder.c4.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -2035,7 +2051,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Expose",
-        "value": 4,
+        "value": {
+          "valueRef": "lacerta.mem.powder.c4.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -2083,7 +2101,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Wound",
-        "value": 20,
+        "value": {
+          "valueRef": "lacerta.mem.powder.c4.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -2130,7 +2150,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_D_SalamanderPowder",
-          "value": 2,
+          "valueRef": "lacerta.mem.powder.c4.x1/options/0/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -2146,7 +2166,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_D_SalamanderPowder",
-          "value": 4,
+          "valueRef": "lacerta.mem.powder.c4.x1/options/1/value",
           "param": "Duration",
           "receiver": null,
           "target": {
@@ -2187,7 +2207,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_SalamanderPowder",
-      "value": 1,
+      "valueRef": "lacerta.mem.powder.c4.s1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -2225,7 +2245,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_SalamanderPowder",
-      "value": 2,
+      "valueRef": "lacerta.mem.powder.c4.s2/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -2260,7 +2280,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_SalamanderPowder",
-      "value": 1,
+      "valueRef": "lacerta.mem.powder.c4.s3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -2298,7 +2318,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_SalamanderPowder",
-      "value": 1,
+      "valueRef": "lacerta.mem.powder.c4.s4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -2336,7 +2356,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_SalamanderPowder",
-      "value": 2,
+      "valueRef": "lacerta.mem.powder.c4.s5/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -2371,7 +2391,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_SalamanderPowder",
-      "value": 1,
+      "valueRef": "lacerta.mem.powder.c4.s6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -2406,7 +2426,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_Q_HandCannon",
-      "value": 1,
+      "valueRef": "lacerta.mem.hand-cannon.c1.e1/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -2439,7 +2459,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_HandCannon",
-      "value": 1,
+      "valueRef": "lacerta.mem.hand-cannon.c1.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -2476,7 +2496,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_HandCannon",
-      "value": 1,
+      "valueRef": "lacerta.mem.hand-cannon.c1.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -2512,7 +2532,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_Q_HandCannon",
-      "value": 1,
+      "valueRef": "lacerta.mem.hand-cannon.c1.e4/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -2545,7 +2565,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_HandCannon",
-      "value": 1,
+      "valueRef": "lacerta.mem.hand-cannon.c1.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -2581,7 +2601,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_HandCannon",
-      "value": 1,
+      "valueRef": "lacerta.mem.hand-cannon.c1.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -2629,7 +2649,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Element",
-        "value": 25,
+        "value": {
+          "valueRef": "lacerta.mem.hand-cannon.c1.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -2677,7 +2699,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "ElementEdge",
-        "value": 6,
+        "value": {
+          "valueRef": "lacerta.mem.hand-cannon.c1.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -2737,7 +2761,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_Q_HandCannon",
-          "value": 2,
+          "valueRef": "lacerta.mem.hand-cannon.c1.x1/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -2778,7 +2802,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_HandCannon",
-      "value": 1,
+      "valueRef": "lacerta.mem.hand-cannon.c1.s1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -2816,7 +2840,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_HandCannon",
-      "value": 1,
+      "valueRef": "lacerta.mem.hand-cannon.c1.s2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -2851,7 +2875,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_HandCannon",
-      "value": 1,
+      "valueRef": "lacerta.mem.hand-cannon.c1.s3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -2889,7 +2913,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_HandCannon",
-      "value": 1,
+      "valueRef": "lacerta.mem.hand-cannon.c1.s4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -2927,7 +2951,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_HandCannon",
-      "value": 1,
+      "valueRef": "lacerta.mem.hand-cannon.c1.s5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -2962,7 +2986,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_HandCannon",
-      "value": 1,
+      "valueRef": "lacerta.mem.hand-cannon.c1.s6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -2997,7 +3021,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_Q_HandCannon",
-      "value": 1,
+      "valueRef": "lacerta.mem.hand-cannon.c2.e1/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -3030,7 +3054,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_HandCannon",
-      "value": 1,
+      "valueRef": "lacerta.mem.hand-cannon.c2.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -3067,7 +3091,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_HandCannon",
-      "value": 1,
+      "valueRef": "lacerta.mem.hand-cannon.c2.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -3103,7 +3127,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_Q_HandCannon",
-      "value": 1,
+      "valueRef": "lacerta.mem.hand-cannon.c2.e4/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -3136,7 +3160,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_HandCannon",
-      "value": 1,
+      "valueRef": "lacerta.mem.hand-cannon.c2.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -3172,7 +3196,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_HandCannon",
-      "value": 1,
+      "valueRef": "lacerta.mem.hand-cannon.c2.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -3220,7 +3244,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Rampart",
-        "value": 1,
+        "value": {
+          "valueRef": "lacerta.mem.hand-cannon.c2.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -3268,7 +3294,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Sap",
-        "value": 6,
+        "value": {
+          "valueRef": "lacerta.mem.hand-cannon.c2.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -3328,7 +3356,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_Q_HandCannon",
-          "value": 4,
+          "valueRef": "lacerta.mem.hand-cannon.c2.x1/options/1/value",
           "param": "Duration",
           "receiver": null,
           "target": {
@@ -3369,7 +3397,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_HandCannon",
-      "value": 1,
+      "valueRef": "lacerta.mem.hand-cannon.c2.s1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -3407,7 +3435,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_HandCannon",
-      "value": 2,
+      "valueRef": "lacerta.mem.hand-cannon.c2.s2/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -3442,7 +3470,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_HandCannon",
-      "value": 1,
+      "valueRef": "lacerta.mem.hand-cannon.c2.s3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -3480,7 +3508,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_HandCannon",
-      "value": 1,
+      "valueRef": "lacerta.mem.hand-cannon.c2.s4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -3518,7 +3546,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_HandCannon",
-      "value": 2,
+      "valueRef": "lacerta.mem.hand-cannon.c2.s5/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -3553,7 +3581,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_HandCannon",
-      "value": 1,
+      "valueRef": "lacerta.mem.hand-cannon.c2.s6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -3588,7 +3616,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_Q_HandCannon",
-      "value": 1,
+      "valueRef": "lacerta.mem.hand-cannon.c3.e1/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -3621,7 +3649,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_HandCannon",
-      "value": 1,
+      "valueRef": "lacerta.mem.hand-cannon.c3.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -3658,7 +3686,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_HandCannon",
-      "value": 1,
+      "valueRef": "lacerta.mem.hand-cannon.c3.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -3694,7 +3722,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_Q_HandCannon",
-      "value": 1,
+      "valueRef": "lacerta.mem.hand-cannon.c3.e4/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -3727,7 +3755,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_HandCannon",
-      "value": 1,
+      "valueRef": "lacerta.mem.hand-cannon.c3.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -3763,7 +3791,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_HandCannon",
-      "value": 1,
+      "valueRef": "lacerta.mem.hand-cannon.c3.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -3811,7 +3839,9 @@
       "gimmick": {
         "trigger": "OnUse",
         "effect": "Primed",
-        "value": 20,
+        "value": {
+          "valueRef": "lacerta.mem.hand-cannon.c3.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -3860,7 +3890,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Echo",
-        "value": 10,
+        "value": {
+          "valueRef": "lacerta.mem.hand-cannon.c3.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -3920,7 +3952,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_Q_HandCannon",
-          "value": 4,
+          "valueRef": "lacerta.mem.hand-cannon.c3.x1/options/1/value",
           "param": "Duration",
           "receiver": null,
           "target": {
@@ -3961,7 +3993,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_HandCannon",
-      "value": 1,
+      "valueRef": "lacerta.mem.hand-cannon.c3.s1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -3999,7 +4031,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_HandCannon",
-      "value": 2,
+      "valueRef": "lacerta.mem.hand-cannon.c3.s2/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -4034,7 +4066,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_HandCannon",
-      "value": 1,
+      "valueRef": "lacerta.mem.hand-cannon.c3.s3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -4072,7 +4104,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_HandCannon",
-      "value": 1,
+      "valueRef": "lacerta.mem.hand-cannon.c3.s4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -4110,7 +4142,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_HandCannon",
-      "value": 2,
+      "valueRef": "lacerta.mem.hand-cannon.c3.s5/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -4145,7 +4177,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_HandCannon",
-      "value": 1,
+      "valueRef": "lacerta.mem.hand-cannon.c3.s6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -4180,7 +4212,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_Q_HandCannon",
-      "value": 1,
+      "valueRef": "lacerta.mem.hand-cannon.c4.e1/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -4213,7 +4245,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_HandCannon",
-      "value": 1,
+      "valueRef": "lacerta.mem.hand-cannon.c4.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -4250,7 +4282,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_HandCannon",
-      "value": 1,
+      "valueRef": "lacerta.mem.hand-cannon.c4.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -4286,7 +4318,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_Q_HandCannon",
-      "value": 1,
+      "valueRef": "lacerta.mem.hand-cannon.c4.e4/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -4319,7 +4351,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_HandCannon",
-      "value": 1,
+      "valueRef": "lacerta.mem.hand-cannon.c4.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -4355,7 +4387,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_HandCannon",
-      "value": 1,
+      "valueRef": "lacerta.mem.hand-cannon.c4.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -4403,7 +4435,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Recharge",
-        "value": 8,
+        "value": {
+          "valueRef": "lacerta.mem.hand-cannon.c4.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -4451,7 +4485,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Heal",
-        "value": 1,
+        "value": {
+          "valueRef": "lacerta.mem.hand-cannon.c4.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -4498,7 +4534,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_Q_HandCannon",
-          "value": 2,
+          "valueRef": "lacerta.mem.hand-cannon.c4.x1/options/0/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -4514,7 +4550,7 @@
         {
           "kind": "MemoryHaste",
           "memory": "St_Q_HandCannon",
-          "value": 2,
+          "valueRef": "lacerta.mem.hand-cannon.c4.x1/options/1/value",
           "param": null,
           "receiver": null,
           "target": null,
@@ -4552,7 +4588,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_HandCannon",
-      "value": 1,
+      "valueRef": "lacerta.mem.hand-cannon.c4.s1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -4590,7 +4626,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_HandCannon",
-      "value": 1,
+      "valueRef": "lacerta.mem.hand-cannon.c4.s2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -4625,7 +4661,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_HandCannon",
-      "value": 1,
+      "valueRef": "lacerta.mem.hand-cannon.c4.s3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -4663,7 +4699,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_HandCannon",
-      "value": 1,
+      "valueRef": "lacerta.mem.hand-cannon.c4.s4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -4701,7 +4737,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_HandCannon",
-      "value": 1,
+      "valueRef": "lacerta.mem.hand-cannon.c4.s5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -4736,7 +4772,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_HandCannon",
-      "value": 1,
+      "valueRef": "lacerta.mem.hand-cannon.c4.s6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -4771,7 +4807,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_R_QuickTrigger",
-      "value": 1,
+      "valueRef": "lacerta.mem.quick-trigger.c1.e1/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -4804,7 +4840,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_QuickTrigger",
-      "value": 1,
+      "valueRef": "lacerta.mem.quick-trigger.c1.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -4841,7 +4877,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_QuickTrigger",
-      "value": 1,
+      "valueRef": "lacerta.mem.quick-trigger.c1.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -4877,7 +4913,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_R_QuickTrigger",
-      "value": 1,
+      "valueRef": "lacerta.mem.quick-trigger.c1.e4/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -4910,7 +4946,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_QuickTrigger",
-      "value": 1,
+      "valueRef": "lacerta.mem.quick-trigger.c1.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -4946,7 +4982,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_QuickTrigger",
-      "value": 1,
+      "valueRef": "lacerta.mem.quick-trigger.c1.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -4994,7 +5030,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Wound",
-        "value": 20,
+        "value": {
+          "valueRef": "lacerta.mem.quick-trigger.c1.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -5042,7 +5080,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "ElementEdge",
-        "value": 6,
+        "value": {
+          "valueRef": "lacerta.mem.quick-trigger.c1.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -5102,7 +5142,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_R_QuickTrigger",
-          "value": 4,
+          "valueRef": "lacerta.mem.quick-trigger.c1.x1/options/1/value",
           "param": "Duration",
           "receiver": null,
           "target": {
@@ -5143,7 +5183,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_QuickTrigger",
-      "value": 1,
+      "valueRef": "lacerta.mem.quick-trigger.c1.s1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -5181,7 +5221,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_QuickTrigger",
-      "value": 2,
+      "valueRef": "lacerta.mem.quick-trigger.c1.s2/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -5216,7 +5256,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_QuickTrigger",
-      "value": 1,
+      "valueRef": "lacerta.mem.quick-trigger.c1.s3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -5254,7 +5294,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_QuickTrigger",
-      "value": 1,
+      "valueRef": "lacerta.mem.quick-trigger.c1.s4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -5292,7 +5332,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_QuickTrigger",
-      "value": 2,
+      "valueRef": "lacerta.mem.quick-trigger.c1.s5/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -5327,7 +5367,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_QuickTrigger",
-      "value": 1,
+      "valueRef": "lacerta.mem.quick-trigger.c1.s6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -5362,7 +5402,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_R_QuickTrigger",
-      "value": 1,
+      "valueRef": "lacerta.mem.quick-trigger.c2.e1/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -5395,7 +5435,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_QuickTrigger",
-      "value": 1,
+      "valueRef": "lacerta.mem.quick-trigger.c2.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -5432,7 +5472,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_QuickTrigger",
-      "value": 1,
+      "valueRef": "lacerta.mem.quick-trigger.c2.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -5468,7 +5508,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_R_QuickTrigger",
-      "value": 1,
+      "valueRef": "lacerta.mem.quick-trigger.c2.e4/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -5501,7 +5541,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_QuickTrigger",
-      "value": 1,
+      "valueRef": "lacerta.mem.quick-trigger.c2.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -5537,7 +5577,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_QuickTrigger",
-      "value": 1,
+      "valueRef": "lacerta.mem.quick-trigger.c2.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -5585,9 +5625,15 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Ricochet",
-        "value": 10,
-        "arg": 1,
-        "cooldown": 0.3,
+        "value": {
+          "valueRef": "lacerta.mem.quick-trigger.c2.n1/gimmick/value"
+        },
+        "arg": {
+          "valueRef": "lacerta.mem.quick-trigger.c2.n1/gimmick/arg"
+        },
+        "cooldown": {
+          "valueRef": "lacerta.mem.quick-trigger.c2.n1/gimmick/cooldown"
+        },
         "target": null
       },
       "power": null,
@@ -5633,7 +5679,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Burst",
-        "value": 15,
+        "value": {
+          "valueRef": "lacerta.mem.quick-trigger.c2.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -5693,7 +5741,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_R_QuickTrigger",
-          "value": 4,
+          "valueRef": "lacerta.mem.quick-trigger.c2.x1/options/1/value",
           "param": "Radius",
           "receiver": null,
           "target": {
@@ -5734,7 +5782,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_QuickTrigger",
-      "value": 1,
+      "valueRef": "lacerta.mem.quick-trigger.c2.s1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -5772,7 +5820,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_QuickTrigger",
-      "value": 2,
+      "valueRef": "lacerta.mem.quick-trigger.c2.s2/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -5807,7 +5855,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_QuickTrigger",
-      "value": 1,
+      "valueRef": "lacerta.mem.quick-trigger.c2.s3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -5845,7 +5893,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_QuickTrigger",
-      "value": 1,
+      "valueRef": "lacerta.mem.quick-trigger.c2.s4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -5883,7 +5931,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_QuickTrigger",
-      "value": 2,
+      "valueRef": "lacerta.mem.quick-trigger.c2.s5/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -5918,7 +5966,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_QuickTrigger",
-      "value": 1,
+      "valueRef": "lacerta.mem.quick-trigger.c2.s6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -5953,7 +6001,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_R_QuickTrigger",
-      "value": 1,
+      "valueRef": "lacerta.mem.quick-trigger.c3.e1/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -5986,7 +6034,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_QuickTrigger",
-      "value": 1,
+      "valueRef": "lacerta.mem.quick-trigger.c3.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -6023,7 +6071,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_QuickTrigger",
-      "value": 1,
+      "valueRef": "lacerta.mem.quick-trigger.c3.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -6059,7 +6107,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_R_QuickTrigger",
-      "value": 1,
+      "valueRef": "lacerta.mem.quick-trigger.c3.e4/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -6092,7 +6140,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_QuickTrigger",
-      "value": 1,
+      "valueRef": "lacerta.mem.quick-trigger.c3.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -6128,7 +6176,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_QuickTrigger",
-      "value": 1,
+      "valueRef": "lacerta.mem.quick-trigger.c3.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -6176,7 +6224,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Rampart",
-        "value": 1,
+        "value": {
+          "valueRef": "lacerta.mem.quick-trigger.c3.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -6224,7 +6274,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Sap",
-        "value": 6,
+        "value": {
+          "valueRef": "lacerta.mem.quick-trigger.c3.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -6284,7 +6336,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_R_QuickTrigger",
-          "value": 4,
+          "valueRef": "lacerta.mem.quick-trigger.c3.x1/options/1/value",
           "param": "Duration",
           "receiver": null,
           "target": {
@@ -6325,7 +6377,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_QuickTrigger",
-      "value": 1,
+      "valueRef": "lacerta.mem.quick-trigger.c3.s1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -6363,7 +6415,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_QuickTrigger",
-      "value": 2,
+      "valueRef": "lacerta.mem.quick-trigger.c3.s2/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -6398,7 +6450,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_QuickTrigger",
-      "value": 1,
+      "valueRef": "lacerta.mem.quick-trigger.c3.s3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -6436,7 +6488,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_QuickTrigger",
-      "value": 1,
+      "valueRef": "lacerta.mem.quick-trigger.c3.s4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -6474,7 +6526,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_QuickTrigger",
-      "value": 2,
+      "valueRef": "lacerta.mem.quick-trigger.c3.s5/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -6509,7 +6561,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_QuickTrigger",
-      "value": 1,
+      "valueRef": "lacerta.mem.quick-trigger.c3.s6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -6544,7 +6596,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_R_QuickTrigger",
-      "value": 1,
+      "valueRef": "lacerta.mem.quick-trigger.c4.e1/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -6577,7 +6629,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_QuickTrigger",
-      "value": 1,
+      "valueRef": "lacerta.mem.quick-trigger.c4.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -6614,7 +6666,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_QuickTrigger",
-      "value": 1,
+      "valueRef": "lacerta.mem.quick-trigger.c4.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -6650,7 +6702,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_R_QuickTrigger",
-      "value": 1,
+      "valueRef": "lacerta.mem.quick-trigger.c4.e4/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -6683,7 +6735,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_QuickTrigger",
-      "value": 1,
+      "valueRef": "lacerta.mem.quick-trigger.c4.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -6719,7 +6771,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_QuickTrigger",
-      "value": 1,
+      "valueRef": "lacerta.mem.quick-trigger.c4.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -6767,7 +6819,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Heal",
-        "value": 1,
+        "value": {
+          "valueRef": "lacerta.mem.quick-trigger.c4.n1/gimmick/value"
+        },
         "arg": 1,
         "cooldown": 0,
         "target": null
@@ -6815,7 +6869,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Element",
-        "value": 25,
+        "value": {
+          "valueRef": "lacerta.mem.quick-trigger.c4.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -6862,7 +6918,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_R_QuickTrigger",
-          "value": 2,
+          "valueRef": "lacerta.mem.quick-trigger.c4.x1/options/0/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -6878,7 +6934,7 @@
         {
           "kind": "MemoryHaste",
           "memory": "St_R_QuickTrigger",
-          "value": 2,
+          "valueRef": "lacerta.mem.quick-trigger.c4.x1/options/1/value",
           "param": null,
           "receiver": null,
           "target": null,
@@ -6916,7 +6972,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_QuickTrigger",
-      "value": 1,
+      "valueRef": "lacerta.mem.quick-trigger.c4.s1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -6954,7 +7010,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_QuickTrigger",
-      "value": 2,
+      "valueRef": "lacerta.mem.quick-trigger.c4.s2/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -6989,7 +7045,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_QuickTrigger",
-      "value": 1,
+      "valueRef": "lacerta.mem.quick-trigger.c4.s3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -7027,7 +7083,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_QuickTrigger",
-      "value": 1,
+      "valueRef": "lacerta.mem.quick-trigger.c4.s4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -7065,7 +7121,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_QuickTrigger",
-      "value": 2,
+      "valueRef": "lacerta.mem.quick-trigger.c4.s5/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -7100,7 +7156,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_QuickTrigger",
-      "value": 1,
+      "valueRef": "lacerta.mem.quick-trigger.c4.s6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -7138,7 +7194,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 1,
+      "valueRef": "lacerta.mem.nimble-dodge.c1.e1/value",
       "param": null,
       "receiver": "St_M_NimbleDodge",
       "target": {
@@ -7178,7 +7234,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 1,
+      "valueRef": "lacerta.mem.nimble-dodge.c1.e2/value",
       "param": null,
       "receiver": "St_M_NimbleDodge",
       "target": {
@@ -7219,7 +7275,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 1,
+      "valueRef": "lacerta.mem.nimble-dodge.c1.e3/value",
       "param": null,
       "receiver": "St_M_NimbleDodge",
       "target": {
@@ -7259,7 +7315,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 1,
+      "valueRef": "lacerta.mem.nimble-dodge.c1.e4/value",
       "param": null,
       "receiver": "St_M_NimbleDodge",
       "target": {
@@ -7299,7 +7355,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 1,
+      "valueRef": "lacerta.mem.nimble-dodge.c1.e5/value",
       "param": null,
       "receiver": "St_M_NimbleDodge",
       "target": {
@@ -7339,7 +7395,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 1,
+      "valueRef": "lacerta.mem.nimble-dodge.c1.e6/value",
       "param": null,
       "receiver": "St_M_NimbleDodge",
       "target": {
@@ -7388,7 +7444,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Recharge",
-        "value": 1,
+        "value": {
+          "valueRef": "lacerta.mem.nimble-dodge.c1.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": "St_M_NimbleDodge"
@@ -7437,7 +7495,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Recharge",
-        "value": 8,
+        "value": {
+          "valueRef": "lacerta.mem.nimble-dodge.c1.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": "St_M_NimbleDodge"
@@ -7485,7 +7545,7 @@
         {
           "kind": "GimmickBoost",
           "memory": null,
-          "value": 2,
+          "valueRef": "lacerta.mem.nimble-dodge.c1.x1/options/0/value",
           "param": null,
           "receiver": "St_M_NimbleDodge",
           "target": {
@@ -7508,7 +7568,9 @@
           "gimmick": {
             "trigger": "OnKill",
             "effect": "Recharge",
-            "value": 2,
+            "value": {
+              "valueRef": "lacerta.mem.nimble-dodge.c1.x1/options/1/gimmick/value"
+            },
             "arg": 0,
             "cooldown": 0,
             "target": "St_M_NimbleDodge"
@@ -7548,7 +7610,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 1,
+      "valueRef": "lacerta.mem.nimble-dodge.c1.s1/value",
       "param": null,
       "receiver": "St_M_NimbleDodge",
       "target": {
@@ -7587,7 +7649,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 1,
+      "valueRef": "lacerta.mem.nimble-dodge.c1.s2/value",
       "param": null,
       "receiver": "St_M_NimbleDodge",
       "target": {
@@ -7623,7 +7685,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 1,
+      "valueRef": "lacerta.mem.nimble-dodge.c1.s3/value",
       "param": null,
       "receiver": "St_M_NimbleDodge",
       "target": {
@@ -7662,7 +7724,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 1,
+      "valueRef": "lacerta.mem.nimble-dodge.c1.s4/value",
       "param": null,
       "receiver": "St_M_NimbleDodge",
       "target": {
@@ -7701,7 +7763,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 1,
+      "valueRef": "lacerta.mem.nimble-dodge.c1.s5/value",
       "param": null,
       "receiver": "St_M_NimbleDodge",
       "target": {
@@ -7737,7 +7799,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 1,
+      "valueRef": "lacerta.mem.nimble-dodge.c1.s6/value",
       "param": null,
       "receiver": "St_M_NimbleDodge",
       "target": {
@@ -7776,7 +7838,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 1,
+      "valueRef": "lacerta.mem.nimble-dodge.c2.e1/value",
       "param": null,
       "receiver": "St_M_NimbleDodge",
       "target": {
@@ -7816,7 +7878,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 1,
+      "valueRef": "lacerta.mem.nimble-dodge.c2.e2/value",
       "param": null,
       "receiver": "St_M_NimbleDodge",
       "target": {
@@ -7857,7 +7919,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 1,
+      "valueRef": "lacerta.mem.nimble-dodge.c2.e3/value",
       "param": null,
       "receiver": "St_M_NimbleDodge",
       "target": {
@@ -7897,7 +7959,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 1,
+      "valueRef": "lacerta.mem.nimble-dodge.c2.e4/value",
       "param": null,
       "receiver": "St_M_NimbleDodge",
       "target": {
@@ -7937,7 +7999,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 1,
+      "valueRef": "lacerta.mem.nimble-dodge.c2.e5/value",
       "param": null,
       "receiver": "St_M_NimbleDodge",
       "target": {
@@ -7977,7 +8039,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 1,
+      "valueRef": "lacerta.mem.nimble-dodge.c2.e6/value",
       "param": null,
       "receiver": "St_M_NimbleDodge",
       "target": {
@@ -8026,7 +8088,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Recharge",
-        "value": 1,
+        "value": {
+          "valueRef": "lacerta.mem.nimble-dodge.c2.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": "St_M_NimbleDodge"
@@ -8075,7 +8139,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Recharge",
-        "value": 6,
+        "value": {
+          "valueRef": "lacerta.mem.nimble-dodge.c2.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": "St_M_NimbleDodge"
@@ -8123,7 +8189,7 @@
         {
           "kind": "GimmickBoost",
           "memory": null,
-          "value": 2,
+          "valueRef": "lacerta.mem.nimble-dodge.c2.x1/options/0/value",
           "param": null,
           "receiver": "St_M_NimbleDodge",
           "target": {
@@ -8146,7 +8212,9 @@
           "gimmick": {
             "trigger": "OnKill",
             "effect": "Recharge",
-            "value": 2,
+            "value": {
+              "valueRef": "lacerta.mem.nimble-dodge.c2.x1/options/1/gimmick/value"
+            },
             "arg": 0,
             "cooldown": 0,
             "target": "St_M_NimbleDodge"
@@ -8186,7 +8254,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 1,
+      "valueRef": "lacerta.mem.nimble-dodge.c2.s1/value",
       "param": null,
       "receiver": "St_M_NimbleDodge",
       "target": {
@@ -8225,7 +8293,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 1,
+      "valueRef": "lacerta.mem.nimble-dodge.c2.s2/value",
       "param": null,
       "receiver": "St_M_NimbleDodge",
       "target": {
@@ -8261,7 +8329,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 1,
+      "valueRef": "lacerta.mem.nimble-dodge.c2.s3/value",
       "param": null,
       "receiver": "St_M_NimbleDodge",
       "target": {
@@ -8300,7 +8368,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 1,
+      "valueRef": "lacerta.mem.nimble-dodge.c2.s4/value",
       "param": null,
       "receiver": "St_M_NimbleDodge",
       "target": {
@@ -8339,7 +8407,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 1,
+      "valueRef": "lacerta.mem.nimble-dodge.c2.s5/value",
       "param": null,
       "receiver": "St_M_NimbleDodge",
       "target": {
@@ -8375,7 +8443,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 1,
+      "valueRef": "lacerta.mem.nimble-dodge.c2.s6/value",
       "param": null,
       "receiver": "St_M_NimbleDodge",
       "target": {
@@ -8414,7 +8482,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 1,
+      "valueRef": "lacerta.mem.nimble-dodge.c3.e1/value",
       "param": null,
       "receiver": "St_M_NimbleDodge",
       "target": {
@@ -8454,7 +8522,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 1,
+      "valueRef": "lacerta.mem.nimble-dodge.c3.e2/value",
       "param": null,
       "receiver": "St_M_NimbleDodge",
       "target": {
@@ -8495,7 +8563,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 1,
+      "valueRef": "lacerta.mem.nimble-dodge.c3.e3/value",
       "param": null,
       "receiver": "St_M_NimbleDodge",
       "target": {
@@ -8535,7 +8603,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 1,
+      "valueRef": "lacerta.mem.nimble-dodge.c3.e4/value",
       "param": null,
       "receiver": "St_M_NimbleDodge",
       "target": {
@@ -8575,7 +8643,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 1,
+      "valueRef": "lacerta.mem.nimble-dodge.c3.e5/value",
       "param": null,
       "receiver": "St_M_NimbleDodge",
       "target": {
@@ -8615,7 +8683,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 1,
+      "valueRef": "lacerta.mem.nimble-dodge.c3.e6/value",
       "param": null,
       "receiver": "St_M_NimbleDodge",
       "target": {
@@ -8664,7 +8732,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Recharge",
-        "value": 1,
+        "value": {
+          "valueRef": "lacerta.mem.nimble-dodge.c3.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": "St_M_NimbleDodge"
@@ -8713,7 +8783,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Recharge",
-        "value": 8,
+        "value": {
+          "valueRef": "lacerta.mem.nimble-dodge.c3.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": "St_M_NimbleDodge"
@@ -8761,7 +8833,7 @@
         {
           "kind": "GimmickBoost",
           "memory": null,
-          "value": 2,
+          "valueRef": "lacerta.mem.nimble-dodge.c3.x1/options/0/value",
           "param": null,
           "receiver": "St_M_NimbleDodge",
           "target": {
@@ -8784,7 +8856,9 @@
           "gimmick": {
             "trigger": "OnKill",
             "effect": "Recharge",
-            "value": 2,
+            "value": {
+              "valueRef": "lacerta.mem.nimble-dodge.c3.x1/options/1/gimmick/value"
+            },
             "arg": 0,
             "cooldown": 0,
             "target": "St_M_NimbleDodge"
@@ -8824,7 +8898,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 1,
+      "valueRef": "lacerta.mem.nimble-dodge.c3.s1/value",
       "param": null,
       "receiver": "St_M_NimbleDodge",
       "target": {
@@ -8863,7 +8937,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 1,
+      "valueRef": "lacerta.mem.nimble-dodge.c3.s2/value",
       "param": null,
       "receiver": "St_M_NimbleDodge",
       "target": {
@@ -8899,7 +8973,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 1,
+      "valueRef": "lacerta.mem.nimble-dodge.c3.s3/value",
       "param": null,
       "receiver": "St_M_NimbleDodge",
       "target": {
@@ -8938,7 +9012,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 1,
+      "valueRef": "lacerta.mem.nimble-dodge.c3.s4/value",
       "param": null,
       "receiver": "St_M_NimbleDodge",
       "target": {
@@ -8977,7 +9051,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 1,
+      "valueRef": "lacerta.mem.nimble-dodge.c3.s5/value",
       "param": null,
       "receiver": "St_M_NimbleDodge",
       "target": {
@@ -9013,7 +9087,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 1,
+      "valueRef": "lacerta.mem.nimble-dodge.c3.s6/value",
       "param": null,
       "receiver": "St_M_NimbleDodge",
       "target": {
@@ -9052,7 +9126,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 1,
+      "valueRef": "lacerta.mem.nimble-dodge.c4.e1/value",
       "param": null,
       "receiver": "St_M_NimbleDodge",
       "target": {
@@ -9092,7 +9166,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 1,
+      "valueRef": "lacerta.mem.nimble-dodge.c4.e2/value",
       "param": null,
       "receiver": "St_M_NimbleDodge",
       "target": {
@@ -9133,7 +9207,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 1,
+      "valueRef": "lacerta.mem.nimble-dodge.c4.e3/value",
       "param": null,
       "receiver": "St_M_NimbleDodge",
       "target": {
@@ -9173,7 +9247,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 1,
+      "valueRef": "lacerta.mem.nimble-dodge.c4.e4/value",
       "param": null,
       "receiver": "St_M_NimbleDodge",
       "target": {
@@ -9213,7 +9287,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 1,
+      "valueRef": "lacerta.mem.nimble-dodge.c4.e5/value",
       "param": null,
       "receiver": "St_M_NimbleDodge",
       "target": {
@@ -9253,7 +9327,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 1,
+      "valueRef": "lacerta.mem.nimble-dodge.c4.e6/value",
       "param": null,
       "receiver": "St_M_NimbleDodge",
       "target": {
@@ -9302,7 +9376,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Recharge",
-        "value": 2,
+        "value": {
+          "valueRef": "lacerta.mem.nimble-dodge.c4.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": "St_M_NimbleDodge"
@@ -9351,7 +9427,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Recharge",
-        "value": 12,
+        "value": {
+          "valueRef": "lacerta.mem.nimble-dodge.c4.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": "St_M_NimbleDodge"
@@ -9399,7 +9477,7 @@
         {
           "kind": "GimmickBoost",
           "memory": null,
-          "value": 2,
+          "valueRef": "lacerta.mem.nimble-dodge.c4.x1/options/0/value",
           "param": null,
           "receiver": "St_M_NimbleDodge",
           "target": {
@@ -9422,7 +9500,9 @@
           "gimmick": {
             "trigger": "OnKill",
             "effect": "Recharge",
-            "value": 2,
+            "value": {
+              "valueRef": "lacerta.mem.nimble-dodge.c4.x1/options/1/gimmick/value"
+            },
             "arg": 0,
             "cooldown": 0,
             "target": "St_M_NimbleDodge"
@@ -9462,7 +9542,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 1,
+      "valueRef": "lacerta.mem.nimble-dodge.c4.s1/value",
       "param": null,
       "receiver": "St_M_NimbleDodge",
       "target": {
@@ -9501,7 +9581,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 1,
+      "valueRef": "lacerta.mem.nimble-dodge.c4.s2/value",
       "param": null,
       "receiver": "St_M_NimbleDodge",
       "target": {
@@ -9537,7 +9617,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 1,
+      "valueRef": "lacerta.mem.nimble-dodge.c4.s3/value",
       "param": null,
       "receiver": "St_M_NimbleDodge",
       "target": {
@@ -9576,7 +9656,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 1,
+      "valueRef": "lacerta.mem.nimble-dodge.c4.s4/value",
       "param": null,
       "receiver": "St_M_NimbleDodge",
       "target": {
@@ -9615,7 +9695,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 1,
+      "valueRef": "lacerta.mem.nimble-dodge.c4.s5/value",
       "param": null,
       "receiver": "St_M_NimbleDodge",
       "target": {
@@ -9651,7 +9731,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 1,
+      "valueRef": "lacerta.mem.nimble-dodge.c4.s6/value",
       "param": null,
       "receiver": "St_M_NimbleDodge",
       "target": {
@@ -9687,7 +9767,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_DoubleTap",
-      "value": 1,
+      "valueRef": "lacerta.mem.double-tap.c1.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -9723,7 +9803,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_DoubleTap",
-      "value": 1,
+      "valueRef": "lacerta.mem.double-tap.c1.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -9760,7 +9840,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_DoubleTap",
-      "value": 1,
+      "valueRef": "lacerta.mem.double-tap.c1.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -9796,7 +9876,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_DoubleTap",
-      "value": 1,
+      "valueRef": "lacerta.mem.double-tap.c1.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -9832,7 +9912,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_DoubleTap",
-      "value": 1,
+      "valueRef": "lacerta.mem.double-tap.c1.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -9868,7 +9948,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_DoubleTap",
-      "value": 1,
+      "valueRef": "lacerta.mem.double-tap.c1.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -9916,7 +9996,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Primed",
-        "value": 20,
+        "value": {
+          "valueRef": "lacerta.mem.double-tap.c1.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -9965,7 +10047,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "ElementEdge",
-        "value": 6,
+        "value": {
+          "valueRef": "lacerta.mem.double-tap.c1.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -10025,7 +10109,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_D_DoubleTap",
-          "value": 4,
+          "valueRef": "lacerta.mem.double-tap.c1.x1/options/1/value",
           "param": "Duration",
           "receiver": null,
           "target": {
@@ -10066,7 +10150,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_DoubleTap",
-      "value": 1,
+      "valueRef": "lacerta.mem.double-tap.c1.s1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -10104,7 +10188,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_DoubleTap",
-      "value": 2,
+      "valueRef": "lacerta.mem.double-tap.c1.s2/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -10139,7 +10223,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_DoubleTap",
-      "value": 1,
+      "valueRef": "lacerta.mem.double-tap.c1.s3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -10177,7 +10261,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_DoubleTap",
-      "value": 1,
+      "valueRef": "lacerta.mem.double-tap.c1.s4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -10215,7 +10299,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_DoubleTap",
-      "value": 2,
+      "valueRef": "lacerta.mem.double-tap.c1.s5/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -10250,7 +10334,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_DoubleTap",
-      "value": 1,
+      "valueRef": "lacerta.mem.double-tap.c1.s6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -10285,7 +10369,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_DoubleTap",
-      "value": 1,
+      "valueRef": "lacerta.mem.double-tap.c2.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -10321,7 +10405,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_DoubleTap",
-      "value": 1,
+      "valueRef": "lacerta.mem.double-tap.c2.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -10358,7 +10442,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_DoubleTap",
-      "value": 1,
+      "valueRef": "lacerta.mem.double-tap.c2.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -10394,7 +10478,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_DoubleTap",
-      "value": 1,
+      "valueRef": "lacerta.mem.double-tap.c2.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -10430,7 +10514,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_DoubleTap",
-      "value": 1,
+      "valueRef": "lacerta.mem.double-tap.c2.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -10466,7 +10550,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_DoubleTap",
-      "value": 1,
+      "valueRef": "lacerta.mem.double-tap.c2.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -10514,7 +10598,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Element",
-        "value": 25,
+        "value": {
+          "valueRef": "lacerta.mem.double-tap.c2.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -10562,7 +10648,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Burst",
-        "value": 15,
+        "value": {
+          "valueRef": "lacerta.mem.double-tap.c2.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -10622,7 +10710,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_D_DoubleTap",
-          "value": 4,
+          "valueRef": "lacerta.mem.double-tap.c2.x1/options/1/value",
           "param": "Radius",
           "receiver": null,
           "target": {
@@ -10663,7 +10751,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_DoubleTap",
-      "value": 1,
+      "valueRef": "lacerta.mem.double-tap.c2.s1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -10701,7 +10789,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_DoubleTap",
-      "value": 2,
+      "valueRef": "lacerta.mem.double-tap.c2.s2/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -10736,7 +10824,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_DoubleTap",
-      "value": 1,
+      "valueRef": "lacerta.mem.double-tap.c2.s3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -10774,7 +10862,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_DoubleTap",
-      "value": 1,
+      "valueRef": "lacerta.mem.double-tap.c2.s4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -10812,7 +10900,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_DoubleTap",
-      "value": 2,
+      "valueRef": "lacerta.mem.double-tap.c2.s5/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -10847,7 +10935,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_DoubleTap",
-      "value": 1,
+      "valueRef": "lacerta.mem.double-tap.c2.s6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -10882,7 +10970,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_DoubleTap",
-      "value": 1,
+      "valueRef": "lacerta.mem.double-tap.c3.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -10918,7 +11006,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_DoubleTap",
-      "value": 1,
+      "valueRef": "lacerta.mem.double-tap.c3.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -10955,7 +11043,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_DoubleTap",
-      "value": 1,
+      "valueRef": "lacerta.mem.double-tap.c3.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -10991,7 +11079,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_DoubleTap",
-      "value": 1,
+      "valueRef": "lacerta.mem.double-tap.c3.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -11027,7 +11115,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_DoubleTap",
-      "value": 1,
+      "valueRef": "lacerta.mem.double-tap.c3.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -11063,7 +11151,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_DoubleTap",
-      "value": 1,
+      "valueRef": "lacerta.mem.double-tap.c3.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -11111,7 +11199,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Sap",
-        "value": 6,
+        "value": {
+          "valueRef": "lacerta.mem.double-tap.c3.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -11159,7 +11249,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Rampart",
-        "value": 1,
+        "value": {
+          "valueRef": "lacerta.mem.double-tap.c3.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -11219,7 +11311,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_D_DoubleTap",
-          "value": 4,
+          "valueRef": "lacerta.mem.double-tap.c3.x1/options/1/value",
           "param": "Duration",
           "receiver": null,
           "target": {
@@ -11260,7 +11352,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_DoubleTap",
-      "value": 1,
+      "valueRef": "lacerta.mem.double-tap.c3.s1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -11298,7 +11390,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_DoubleTap",
-      "value": 2,
+      "valueRef": "lacerta.mem.double-tap.c3.s2/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -11333,7 +11425,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_DoubleTap",
-      "value": 1,
+      "valueRef": "lacerta.mem.double-tap.c3.s3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -11371,7 +11463,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_DoubleTap",
-      "value": 1,
+      "valueRef": "lacerta.mem.double-tap.c3.s4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -11409,7 +11501,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_DoubleTap",
-      "value": 2,
+      "valueRef": "lacerta.mem.double-tap.c3.s5/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -11444,7 +11536,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_DoubleTap",
-      "value": 1,
+      "valueRef": "lacerta.mem.double-tap.c3.s6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -11479,7 +11571,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_DoubleTap",
-      "value": 1,
+      "valueRef": "lacerta.mem.double-tap.c4.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -11515,7 +11607,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_DoubleTap",
-      "value": 1,
+      "valueRef": "lacerta.mem.double-tap.c4.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -11552,7 +11644,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_DoubleTap",
-      "value": 1,
+      "valueRef": "lacerta.mem.double-tap.c4.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -11588,7 +11680,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_DoubleTap",
-      "value": 1,
+      "valueRef": "lacerta.mem.double-tap.c4.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -11624,7 +11716,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_DoubleTap",
-      "value": 1,
+      "valueRef": "lacerta.mem.double-tap.c4.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -11660,7 +11752,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_DoubleTap",
-      "value": 1,
+      "valueRef": "lacerta.mem.double-tap.c4.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -11708,7 +11800,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Heal",
-        "value": 1,
+        "value": {
+          "valueRef": "lacerta.mem.double-tap.c4.n1/gimmick/value"
+        },
         "arg": 1,
         "cooldown": 0,
         "target": null
@@ -11756,7 +11850,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Element",
-        "value": 25,
+        "value": {
+          "valueRef": "lacerta.mem.double-tap.c4.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -11803,7 +11899,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_D_DoubleTap",
-          "value": 2,
+          "valueRef": "lacerta.mem.double-tap.c4.x1/options/0/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -11819,7 +11915,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_D_DoubleTap",
-          "value": 4,
+          "valueRef": "lacerta.mem.double-tap.c4.x1/options/1/value",
           "param": "Radius",
           "receiver": null,
           "target": {
@@ -11860,7 +11956,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_DoubleTap",
-      "value": 1,
+      "valueRef": "lacerta.mem.double-tap.c4.s1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -11898,7 +11994,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_DoubleTap",
-      "value": 2,
+      "valueRef": "lacerta.mem.double-tap.c4.s2/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -11933,7 +12029,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_DoubleTap",
-      "value": 1,
+      "valueRef": "lacerta.mem.double-tap.c4.s3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -11971,7 +12067,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_DoubleTap",
-      "value": 1,
+      "valueRef": "lacerta.mem.double-tap.c4.s4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -12009,7 +12105,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_DoubleTap",
-      "value": 2,
+      "valueRef": "lacerta.mem.double-tap.c4.s5/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -12044,7 +12140,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_DoubleTap",
-      "value": 1,
+      "valueRef": "lacerta.mem.double-tap.c4.s6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -12079,7 +12175,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_Q_IncendiaryRounds",
-      "value": 1,
+      "valueRef": "lacerta.mem.incendiary.c1.e1/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -12112,7 +12208,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_IncendiaryRounds",
-      "value": 1,
+      "valueRef": "lacerta.mem.incendiary.c1.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -12149,7 +12245,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_IncendiaryRounds",
-      "value": 1,
+      "valueRef": "lacerta.mem.incendiary.c1.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -12185,7 +12281,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_Q_IncendiaryRounds",
-      "value": 1,
+      "valueRef": "lacerta.mem.incendiary.c1.e4/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -12218,7 +12314,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_IncendiaryRounds",
-      "value": 1,
+      "valueRef": "lacerta.mem.incendiary.c1.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -12254,7 +12350,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_IncendiaryRounds",
-      "value": 1,
+      "valueRef": "lacerta.mem.incendiary.c1.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -12302,7 +12398,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Element",
-        "value": 25,
+        "value": {
+          "valueRef": "lacerta.mem.incendiary.c1.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -12350,7 +12448,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Wound",
-        "value": 20,
+        "value": {
+          "valueRef": "lacerta.mem.incendiary.c1.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -12410,7 +12510,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_Q_IncendiaryRounds",
-          "value": 4,
+          "valueRef": "lacerta.mem.incendiary.c1.x1/options/1/value",
           "param": "Duration",
           "receiver": null,
           "target": {
@@ -12451,7 +12551,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_IncendiaryRounds",
-      "value": 1,
+      "valueRef": "lacerta.mem.incendiary.c1.s1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -12489,7 +12589,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_IncendiaryRounds",
-      "value": 2,
+      "valueRef": "lacerta.mem.incendiary.c1.s2/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -12524,7 +12624,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_IncendiaryRounds",
-      "value": 1,
+      "valueRef": "lacerta.mem.incendiary.c1.s3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -12562,7 +12662,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_IncendiaryRounds",
-      "value": 1,
+      "valueRef": "lacerta.mem.incendiary.c1.s4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -12600,7 +12700,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_IncendiaryRounds",
-      "value": 2,
+      "valueRef": "lacerta.mem.incendiary.c1.s5/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -12635,7 +12735,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_IncendiaryRounds",
-      "value": 1,
+      "valueRef": "lacerta.mem.incendiary.c1.s6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -12670,7 +12770,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_Q_IncendiaryRounds",
-      "value": 1,
+      "valueRef": "lacerta.mem.incendiary.c2.e1/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -12703,7 +12803,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_IncendiaryRounds",
-      "value": 1,
+      "valueRef": "lacerta.mem.incendiary.c2.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -12740,7 +12840,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_IncendiaryRounds",
-      "value": 1,
+      "valueRef": "lacerta.mem.incendiary.c2.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -12776,7 +12876,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_Q_IncendiaryRounds",
-      "value": 1,
+      "valueRef": "lacerta.mem.incendiary.c2.e4/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -12809,7 +12909,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_IncendiaryRounds",
-      "value": 1,
+      "valueRef": "lacerta.mem.incendiary.c2.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -12845,7 +12945,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_IncendiaryRounds",
-      "value": 1,
+      "valueRef": "lacerta.mem.incendiary.c2.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -12893,7 +12993,9 @@
       "gimmick": {
         "trigger": "OnUse",
         "effect": "Primed",
-        "value": 20,
+        "value": {
+          "valueRef": "lacerta.mem.incendiary.c2.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -12942,7 +13044,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "ElementEdge",
-        "value": 6,
+        "value": {
+          "valueRef": "lacerta.mem.incendiary.c2.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -13002,7 +13106,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_Q_IncendiaryRounds",
-          "value": 4,
+          "valueRef": "lacerta.mem.incendiary.c2.x1/options/1/value",
           "param": "Duration",
           "receiver": null,
           "target": {
@@ -13043,7 +13147,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_IncendiaryRounds",
-      "value": 1,
+      "valueRef": "lacerta.mem.incendiary.c2.s1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -13081,7 +13185,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_IncendiaryRounds",
-      "value": 2,
+      "valueRef": "lacerta.mem.incendiary.c2.s2/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -13116,7 +13220,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_IncendiaryRounds",
-      "value": 1,
+      "valueRef": "lacerta.mem.incendiary.c2.s3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -13154,7 +13258,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_IncendiaryRounds",
-      "value": 1,
+      "valueRef": "lacerta.mem.incendiary.c2.s4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -13192,7 +13296,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_IncendiaryRounds",
-      "value": 2,
+      "valueRef": "lacerta.mem.incendiary.c2.s5/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -13227,7 +13331,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_IncendiaryRounds",
-      "value": 1,
+      "valueRef": "lacerta.mem.incendiary.c2.s6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -13262,7 +13366,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_Q_IncendiaryRounds",
-      "value": 1,
+      "valueRef": "lacerta.mem.incendiary.c3.e1/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -13295,7 +13399,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_IncendiaryRounds",
-      "value": 1,
+      "valueRef": "lacerta.mem.incendiary.c3.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -13332,7 +13436,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_IncendiaryRounds",
-      "value": 1,
+      "valueRef": "lacerta.mem.incendiary.c3.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -13368,7 +13472,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_Q_IncendiaryRounds",
-      "value": 1,
+      "valueRef": "lacerta.mem.incendiary.c3.e4/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -13401,7 +13505,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_IncendiaryRounds",
-      "value": 1,
+      "valueRef": "lacerta.mem.incendiary.c3.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -13437,7 +13541,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_IncendiaryRounds",
-      "value": 1,
+      "valueRef": "lacerta.mem.incendiary.c3.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -13485,7 +13589,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Rampart",
-        "value": 1,
+        "value": {
+          "valueRef": "lacerta.mem.incendiary.c3.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -13533,7 +13639,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Sap",
-        "value": 6,
+        "value": {
+          "valueRef": "lacerta.mem.incendiary.c3.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -13593,7 +13701,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_Q_IncendiaryRounds",
-          "value": 4,
+          "valueRef": "lacerta.mem.incendiary.c3.x1/options/1/value",
           "param": "Duration",
           "receiver": null,
           "target": {
@@ -13634,7 +13742,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_IncendiaryRounds",
-      "value": 1,
+      "valueRef": "lacerta.mem.incendiary.c3.s1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -13672,7 +13780,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_IncendiaryRounds",
-      "value": 2,
+      "valueRef": "lacerta.mem.incendiary.c3.s2/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -13707,7 +13815,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_IncendiaryRounds",
-      "value": 1,
+      "valueRef": "lacerta.mem.incendiary.c3.s3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -13745,7 +13853,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_IncendiaryRounds",
-      "value": 1,
+      "valueRef": "lacerta.mem.incendiary.c3.s4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -13783,7 +13891,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_IncendiaryRounds",
-      "value": 2,
+      "valueRef": "lacerta.mem.incendiary.c3.s5/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -13818,7 +13926,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_IncendiaryRounds",
-      "value": 1,
+      "valueRef": "lacerta.mem.incendiary.c3.s6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -13853,7 +13961,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_Q_IncendiaryRounds",
-      "value": 1,
+      "valueRef": "lacerta.mem.incendiary.c4.e1/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -13886,7 +13994,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_IncendiaryRounds",
-      "value": 1,
+      "valueRef": "lacerta.mem.incendiary.c4.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -13923,7 +14031,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_IncendiaryRounds",
-      "value": 1,
+      "valueRef": "lacerta.mem.incendiary.c4.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -13959,7 +14067,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_Q_IncendiaryRounds",
-      "value": 1,
+      "valueRef": "lacerta.mem.incendiary.c4.e4/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -13992,7 +14100,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_IncendiaryRounds",
-      "value": 1,
+      "valueRef": "lacerta.mem.incendiary.c4.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -14028,7 +14136,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_IncendiaryRounds",
-      "value": 1,
+      "valueRef": "lacerta.mem.incendiary.c4.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -14076,7 +14184,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Heal",
-        "value": 1,
+        "value": {
+          "valueRef": "lacerta.mem.incendiary.c4.n1/gimmick/value"
+        },
         "arg": 1,
         "cooldown": 0,
         "target": null
@@ -14124,7 +14234,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Element",
-        "value": 25,
+        "value": {
+          "valueRef": "lacerta.mem.incendiary.c4.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -14171,7 +14283,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_Q_IncendiaryRounds",
-          "value": 2,
+          "valueRef": "lacerta.mem.incendiary.c4.x1/options/0/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -14187,7 +14299,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_Q_IncendiaryRounds",
-          "value": 4,
+          "valueRef": "lacerta.mem.incendiary.c4.x1/options/1/value",
           "param": "Radius",
           "receiver": null,
           "target": {
@@ -14228,7 +14340,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_IncendiaryRounds",
-      "value": 1,
+      "valueRef": "lacerta.mem.incendiary.c4.s1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -14266,7 +14378,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_IncendiaryRounds",
-      "value": 2,
+      "valueRef": "lacerta.mem.incendiary.c4.s2/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -14301,7 +14413,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_IncendiaryRounds",
-      "value": 1,
+      "valueRef": "lacerta.mem.incendiary.c4.s3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -14339,7 +14451,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_IncendiaryRounds",
-      "value": 1,
+      "valueRef": "lacerta.mem.incendiary.c4.s4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -14377,7 +14489,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_IncendiaryRounds",
-      "value": 2,
+      "valueRef": "lacerta.mem.incendiary.c4.s5/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -14412,7 +14524,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_IncendiaryRounds",
-      "value": 1,
+      "valueRef": "lacerta.mem.incendiary.c4.s6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -14447,7 +14559,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_R_PrecisionShot",
-      "value": 1,
+      "valueRef": "lacerta.mem.precision.c1.e1/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -14480,7 +14592,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_PrecisionShot",
-      "value": 1,
+      "valueRef": "lacerta.mem.precision.c1.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -14517,7 +14629,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_PrecisionShot",
-      "value": 1,
+      "valueRef": "lacerta.mem.precision.c1.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -14553,7 +14665,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_R_PrecisionShot",
-      "value": 1,
+      "valueRef": "lacerta.mem.precision.c1.e4/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -14586,7 +14698,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_PrecisionShot",
-      "value": 1,
+      "valueRef": "lacerta.mem.precision.c1.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -14622,7 +14734,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_PrecisionShot",
-      "value": 1,
+      "valueRef": "lacerta.mem.precision.c1.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -14670,7 +14782,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Echo",
-        "value": 15,
+        "value": {
+          "valueRef": "lacerta.mem.precision.c1.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -14718,7 +14832,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "ElementEdge",
-        "value": 8,
+        "value": {
+          "valueRef": "lacerta.mem.precision.c1.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -14778,7 +14894,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_R_PrecisionShot",
-          "value": 2,
+          "valueRef": "lacerta.mem.precision.c1.x1/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -14819,7 +14935,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_PrecisionShot",
-      "value": 1,
+      "valueRef": "lacerta.mem.precision.c1.s1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -14857,7 +14973,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_PrecisionShot",
-      "value": 1,
+      "valueRef": "lacerta.mem.precision.c1.s2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -14892,7 +15008,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_PrecisionShot",
-      "value": 1,
+      "valueRef": "lacerta.mem.precision.c1.s3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -14930,7 +15046,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_PrecisionShot",
-      "value": 1,
+      "valueRef": "lacerta.mem.precision.c1.s4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -14968,7 +15084,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_PrecisionShot",
-      "value": 1,
+      "valueRef": "lacerta.mem.precision.c1.s5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -15003,7 +15119,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_PrecisionShot",
-      "value": 1,
+      "valueRef": "lacerta.mem.precision.c1.s6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -15038,7 +15154,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_R_PrecisionShot",
-      "value": 1,
+      "valueRef": "lacerta.mem.precision.c2.e1/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -15071,7 +15187,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_PrecisionShot",
-      "value": 1,
+      "valueRef": "lacerta.mem.precision.c2.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -15108,7 +15224,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_PrecisionShot",
-      "value": 1,
+      "valueRef": "lacerta.mem.precision.c2.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -15144,7 +15260,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_R_PrecisionShot",
-      "value": 1,
+      "valueRef": "lacerta.mem.precision.c2.e4/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -15177,7 +15293,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_PrecisionShot",
-      "value": 1,
+      "valueRef": "lacerta.mem.precision.c2.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -15213,7 +15329,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_PrecisionShot",
-      "value": 1,
+      "valueRef": "lacerta.mem.precision.c2.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -15261,7 +15377,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Wound",
-        "value": 30,
+        "value": {
+          "valueRef": "lacerta.mem.precision.c2.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -15309,7 +15427,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Element",
-        "value": 25,
+        "value": {
+          "valueRef": "lacerta.mem.precision.c2.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -15369,7 +15489,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_R_PrecisionShot",
-          "value": 4,
+          "valueRef": "lacerta.mem.precision.c2.x1/options/1/value",
           "param": "Duration",
           "receiver": null,
           "target": {
@@ -15410,7 +15530,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_PrecisionShot",
-      "value": 1,
+      "valueRef": "lacerta.mem.precision.c2.s1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -15448,7 +15568,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_PrecisionShot",
-      "value": 2,
+      "valueRef": "lacerta.mem.precision.c2.s2/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -15483,7 +15603,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_PrecisionShot",
-      "value": 1,
+      "valueRef": "lacerta.mem.precision.c2.s3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -15521,7 +15641,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_PrecisionShot",
-      "value": 1,
+      "valueRef": "lacerta.mem.precision.c2.s4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -15559,7 +15679,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_PrecisionShot",
-      "value": 2,
+      "valueRef": "lacerta.mem.precision.c2.s5/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -15594,7 +15714,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_PrecisionShot",
-      "value": 1,
+      "valueRef": "lacerta.mem.precision.c2.s6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -15629,7 +15749,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_R_PrecisionShot",
-      "value": 1,
+      "valueRef": "lacerta.mem.precision.c3.e1/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -15662,7 +15782,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_PrecisionShot",
-      "value": 1,
+      "valueRef": "lacerta.mem.precision.c3.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -15699,7 +15819,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_PrecisionShot",
-      "value": 1,
+      "valueRef": "lacerta.mem.precision.c3.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -15735,7 +15855,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_R_PrecisionShot",
-      "value": 1,
+      "valueRef": "lacerta.mem.precision.c3.e4/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -15768,7 +15888,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_PrecisionShot",
-      "value": 1,
+      "valueRef": "lacerta.mem.precision.c3.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -15804,7 +15924,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_PrecisionShot",
-      "value": 1,
+      "valueRef": "lacerta.mem.precision.c3.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -15852,7 +15972,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Rampart",
-        "value": 1,
+        "value": {
+          "valueRef": "lacerta.mem.precision.c3.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -15900,7 +16022,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Sap",
-        "value": 6,
+        "value": {
+          "valueRef": "lacerta.mem.precision.c3.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -15960,7 +16084,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_R_PrecisionShot",
-          "value": 4,
+          "valueRef": "lacerta.mem.precision.c3.x1/options/1/value",
           "param": "Duration",
           "receiver": null,
           "target": {
@@ -16001,7 +16125,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_PrecisionShot",
-      "value": 1,
+      "valueRef": "lacerta.mem.precision.c3.s1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -16039,7 +16163,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_PrecisionShot",
-      "value": 2,
+      "valueRef": "lacerta.mem.precision.c3.s2/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -16074,7 +16198,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_PrecisionShot",
-      "value": 1,
+      "valueRef": "lacerta.mem.precision.c3.s3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -16112,7 +16236,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_PrecisionShot",
-      "value": 1,
+      "valueRef": "lacerta.mem.precision.c3.s4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -16150,7 +16274,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_PrecisionShot",
-      "value": 2,
+      "valueRef": "lacerta.mem.precision.c3.s5/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -16185,7 +16309,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_PrecisionShot",
-      "value": 1,
+      "valueRef": "lacerta.mem.precision.c3.s6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -16220,7 +16344,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_R_PrecisionShot",
-      "value": 1,
+      "valueRef": "lacerta.mem.precision.c4.e1/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -16253,7 +16377,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_PrecisionShot",
-      "value": 1,
+      "valueRef": "lacerta.mem.precision.c4.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -16290,7 +16414,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_PrecisionShot",
-      "value": 1,
+      "valueRef": "lacerta.mem.precision.c4.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -16326,7 +16450,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_R_PrecisionShot",
-      "value": 1,
+      "valueRef": "lacerta.mem.precision.c4.e4/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -16359,7 +16483,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_PrecisionShot",
-      "value": 1,
+      "valueRef": "lacerta.mem.precision.c4.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -16395,7 +16519,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_PrecisionShot",
-      "value": 1,
+      "valueRef": "lacerta.mem.precision.c4.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -16443,7 +16567,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Heal",
-        "value": 1,
+        "value": {
+          "valueRef": "lacerta.mem.precision.c4.n1/gimmick/value"
+        },
         "arg": 1,
         "cooldown": 0,
         "target": null
@@ -16491,7 +16617,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Element",
-        "value": 25,
+        "value": {
+          "valueRef": "lacerta.mem.precision.c4.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -16538,7 +16666,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_R_PrecisionShot",
-          "value": 2,
+          "valueRef": "lacerta.mem.precision.c4.x1/options/0/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -16554,7 +16682,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_R_PrecisionShot",
-          "value": 4,
+          "valueRef": "lacerta.mem.precision.c4.x1/options/1/value",
           "param": "Radius",
           "receiver": null,
           "target": {
@@ -16595,7 +16723,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_PrecisionShot",
-      "value": 1,
+      "valueRef": "lacerta.mem.precision.c4.s1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -16633,7 +16761,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_PrecisionShot",
-      "value": 2,
+      "valueRef": "lacerta.mem.precision.c4.s2/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -16668,7 +16796,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_PrecisionShot",
-      "value": 1,
+      "valueRef": "lacerta.mem.precision.c4.s3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -16706,7 +16834,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_PrecisionShot",
-      "value": 1,
+      "valueRef": "lacerta.mem.precision.c4.s4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -16744,7 +16872,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_PrecisionShot",
-      "value": 2,
+      "valueRef": "lacerta.mem.precision.c4.s5/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -16779,7 +16907,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_PrecisionShot",
-      "value": 1,
+      "valueRef": "lacerta.mem.precision.c4.s6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -16818,7 +16946,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_SalamanderPowder",
-      "value": 1,
+      "valueRef": "lacerta.bridge.b1.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -16858,7 +16986,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_SalamanderPowder",
-      "value": 1,
+      "valueRef": "lacerta.bridge.b1.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -16899,7 +17027,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_SalamanderPowder",
-      "value": 1,
+      "valueRef": "lacerta.bridge.b1.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -16939,7 +17067,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_HandCannon",
-      "value": 1,
+      "valueRef": "lacerta.bridge.b1.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -16979,7 +17107,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_HandCannon",
-      "value": 1,
+      "valueRef": "lacerta.bridge.b1.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -17019,7 +17147,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_HandCannon",
-      "value": 1,
+      "valueRef": "lacerta.bridge.b1.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -17070,7 +17198,9 @@
       "gimmick": {
         "trigger": "OnCrit",
         "effect": "Element",
-        "value": 25,
+        "value": {
+          "valueRef": "lacerta.bridge.b1.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null,
@@ -17123,7 +17253,9 @@
       "gimmick": {
         "trigger": "OnCrit",
         "effect": "Echo",
-        "value": 5,
+        "value": {
+          "valueRef": "lacerta.bridge.b1.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null,
@@ -17175,7 +17307,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_D_SalamanderPowder",
-          "value": 2,
+          "valueRef": "lacerta.bridge.b1.x1/options/0/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -17191,7 +17323,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_Q_HandCannon",
-          "value": 2,
+          "valueRef": "lacerta.bridge.b1.x1/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -17235,7 +17367,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_SalamanderPowder",
-      "value": 1,
+      "valueRef": "lacerta.bridge.b1.s1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -17274,7 +17406,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_SalamanderPowder",
-      "value": 1,
+      "valueRef": "lacerta.bridge.b1.s2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -17314,7 +17446,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_HandCannon",
-      "value": 1,
+      "valueRef": "lacerta.bridge.b1.s3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -17353,7 +17485,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_HandCannon",
-      "value": 1,
+      "valueRef": "lacerta.bridge.b1.s4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -17392,7 +17524,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_HandCannon",
-      "value": 1,
+      "valueRef": "lacerta.bridge.b2.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -17432,7 +17564,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_HandCannon",
-      "value": 1,
+      "valueRef": "lacerta.bridge.b2.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -17473,7 +17605,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_HandCannon",
-      "value": 1,
+      "valueRef": "lacerta.bridge.b2.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -17513,7 +17645,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_QuickTrigger",
-      "value": 1,
+      "valueRef": "lacerta.bridge.b2.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -17553,7 +17685,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_QuickTrigger",
-      "value": 1,
+      "valueRef": "lacerta.bridge.b2.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -17593,7 +17725,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_QuickTrigger",
-      "value": 1,
+      "valueRef": "lacerta.bridge.b2.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -17644,7 +17776,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Burst",
-        "value": 10,
+        "value": {
+          "valueRef": "lacerta.bridge.b2.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null,
@@ -17697,7 +17831,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Element",
-        "value": 25,
+        "value": {
+          "valueRef": "lacerta.bridge.b2.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null,
@@ -17749,7 +17885,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_Q_HandCannon",
-          "value": 2,
+          "valueRef": "lacerta.bridge.b2.x1/options/0/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -17765,7 +17901,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_R_QuickTrigger",
-          "value": 2,
+          "valueRef": "lacerta.bridge.b2.x1/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -17809,7 +17945,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_HandCannon",
-      "value": 1,
+      "valueRef": "lacerta.bridge.b2.s1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -17848,7 +17984,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_HandCannon",
-      "value": 1,
+      "valueRef": "lacerta.bridge.b2.s2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -17888,7 +18024,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_QuickTrigger",
-      "value": 1,
+      "valueRef": "lacerta.bridge.b2.s3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -17927,7 +18063,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_QuickTrigger",
-      "value": 1,
+      "valueRef": "lacerta.bridge.b2.s4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -17966,7 +18102,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_QuickTrigger",
-      "value": 1,
+      "valueRef": "lacerta.bridge.b3.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -18006,7 +18142,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_QuickTrigger",
-      "value": 1,
+      "valueRef": "lacerta.bridge.b3.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -18047,7 +18183,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_QuickTrigger",
-      "value": 1,
+      "valueRef": "lacerta.bridge.b3.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -18087,7 +18223,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 1,
+      "valueRef": "lacerta.bridge.b3.e4/value",
       "param": null,
       "receiver": "St_M_NimbleDodge",
       "target": {
@@ -18128,7 +18264,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 1,
+      "valueRef": "lacerta.bridge.b3.e5/value",
       "param": null,
       "receiver": "St_M_NimbleDodge",
       "target": {
@@ -18169,7 +18305,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 1,
+      "valueRef": "lacerta.bridge.b3.e6/value",
       "param": null,
       "receiver": "St_M_NimbleDodge",
       "target": {
@@ -18221,7 +18357,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Recharge",
-        "value": 2,
+        "value": {
+          "valueRef": "lacerta.bridge.b3.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": "St_M_NimbleDodge",
@@ -18275,7 +18413,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Recharge",
-        "value": 1,
+        "value": {
+          "valueRef": "lacerta.bridge.b3.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": "St_M_NimbleDodge"
@@ -18327,7 +18467,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_R_QuickTrigger",
-          "value": 2,
+          "valueRef": "lacerta.bridge.b3.x1/options/0/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -18343,7 +18483,7 @@
         {
           "kind": "GimmickBoost",
           "memory": null,
-          "value": 2,
+          "valueRef": "lacerta.bridge.b3.x1/options/1/value",
           "param": null,
           "receiver": "St_M_NimbleDodge",
           "target": {
@@ -18388,7 +18528,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_QuickTrigger",
-      "value": 1,
+      "valueRef": "lacerta.bridge.b3.s1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -18427,7 +18567,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_QuickTrigger",
-      "value": 1,
+      "valueRef": "lacerta.bridge.b3.s2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -18467,7 +18607,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 1,
+      "valueRef": "lacerta.bridge.b3.s3/value",
       "param": null,
       "receiver": "St_M_NimbleDodge",
       "target": {
@@ -18507,7 +18647,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 1,
+      "valueRef": "lacerta.bridge.b3.s4/value",
       "param": null,
       "receiver": "St_M_NimbleDodge",
       "target": {
@@ -18547,7 +18687,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 1,
+      "valueRef": "lacerta.bridge.b4.e1/value",
       "param": null,
       "receiver": "St_M_NimbleDodge",
       "target": {
@@ -18588,7 +18728,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 1,
+      "valueRef": "lacerta.bridge.b4.e2/value",
       "param": null,
       "receiver": "St_M_NimbleDodge",
       "target": {
@@ -18630,7 +18770,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 1,
+      "valueRef": "lacerta.bridge.b4.e3/value",
       "param": null,
       "receiver": "St_M_NimbleDodge",
       "target": {
@@ -18671,7 +18811,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_DoubleTap",
-      "value": 1,
+      "valueRef": "lacerta.bridge.b4.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -18711,7 +18851,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_DoubleTap",
-      "value": 1,
+      "valueRef": "lacerta.bridge.b4.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -18751,7 +18891,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_DoubleTap",
-      "value": 1,
+      "valueRef": "lacerta.bridge.b4.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -18802,7 +18942,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Recharge",
-        "value": 2,
+        "value": {
+          "valueRef": "lacerta.bridge.b4.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": "St_M_NimbleDodge",
@@ -18856,7 +18998,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Recharge",
-        "value": 1,
+        "value": {
+          "valueRef": "lacerta.bridge.b4.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": "St_M_NimbleDodge"
@@ -18908,7 +19052,7 @@
         {
           "kind": "GimmickBoost",
           "memory": null,
-          "value": 2,
+          "valueRef": "lacerta.bridge.b4.x1/options/0/value",
           "param": null,
           "receiver": "St_M_NimbleDodge",
           "target": {
@@ -18924,7 +19068,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_D_DoubleTap",
-          "value": 2,
+          "valueRef": "lacerta.bridge.b4.x1/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -18969,7 +19113,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 1,
+      "valueRef": "lacerta.bridge.b4.s1/value",
       "param": null,
       "receiver": "St_M_NimbleDodge",
       "target": {
@@ -19009,7 +19153,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 1,
+      "valueRef": "lacerta.bridge.b4.s2/value",
       "param": null,
       "receiver": "St_M_NimbleDodge",
       "target": {
@@ -19050,7 +19194,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_DoubleTap",
-      "value": 1,
+      "valueRef": "lacerta.bridge.b4.s3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -19089,7 +19233,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_DoubleTap",
-      "value": 1,
+      "valueRef": "lacerta.bridge.b4.s4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -19128,7 +19272,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_DoubleTap",
-      "value": 1,
+      "valueRef": "lacerta.bridge.b5.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -19168,7 +19312,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_DoubleTap",
-      "value": 1,
+      "valueRef": "lacerta.bridge.b5.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -19209,7 +19353,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_DoubleTap",
-      "value": 1,
+      "valueRef": "lacerta.bridge.b5.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -19249,7 +19393,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_IncendiaryRounds",
-      "value": 1,
+      "valueRef": "lacerta.bridge.b5.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -19289,7 +19433,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_IncendiaryRounds",
-      "value": 1,
+      "valueRef": "lacerta.bridge.b5.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -19329,7 +19473,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_IncendiaryRounds",
-      "value": 1,
+      "valueRef": "lacerta.bridge.b5.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -19380,7 +19524,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Echo",
-        "value": 5,
+        "value": {
+          "valueRef": "lacerta.bridge.b5.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null,
@@ -19433,7 +19579,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Element",
-        "value": 25,
+        "value": {
+          "valueRef": "lacerta.bridge.b5.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null,
@@ -19485,7 +19633,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_D_DoubleTap",
-          "value": 2,
+          "valueRef": "lacerta.bridge.b5.x1/options/0/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -19501,7 +19649,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_Q_IncendiaryRounds",
-          "value": 2,
+          "valueRef": "lacerta.bridge.b5.x1/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -19545,7 +19693,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_DoubleTap",
-      "value": 1,
+      "valueRef": "lacerta.bridge.b5.s1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -19584,7 +19732,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_DoubleTap",
-      "value": 1,
+      "valueRef": "lacerta.bridge.b5.s2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -19624,7 +19772,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_IncendiaryRounds",
-      "value": 1,
+      "valueRef": "lacerta.bridge.b5.s3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -19663,7 +19811,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_IncendiaryRounds",
-      "value": 1,
+      "valueRef": "lacerta.bridge.b5.s4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -19702,7 +19850,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_IncendiaryRounds",
-      "value": 1,
+      "valueRef": "lacerta.bridge.b6.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -19742,7 +19890,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_IncendiaryRounds",
-      "value": 1,
+      "valueRef": "lacerta.bridge.b6.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -19783,7 +19931,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_IncendiaryRounds",
-      "value": 1,
+      "valueRef": "lacerta.bridge.b6.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -19823,7 +19971,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_PrecisionShot",
-      "value": 1,
+      "valueRef": "lacerta.bridge.b6.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -19863,7 +20011,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_PrecisionShot",
-      "value": 1,
+      "valueRef": "lacerta.bridge.b6.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -19903,7 +20051,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_PrecisionShot",
-      "value": 1,
+      "valueRef": "lacerta.bridge.b6.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -19954,7 +20102,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Heal",
-        "value": 1,
+        "value": {
+          "valueRef": "lacerta.bridge.b6.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null,
@@ -20007,7 +20157,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Element",
-        "value": 25,
+        "value": {
+          "valueRef": "lacerta.bridge.b6.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null,
@@ -20059,7 +20211,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_Q_IncendiaryRounds",
-          "value": 2,
+          "valueRef": "lacerta.bridge.b6.x1/options/0/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -20075,7 +20227,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_R_PrecisionShot",
-          "value": 2,
+          "valueRef": "lacerta.bridge.b6.x1/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -20119,7 +20271,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_IncendiaryRounds",
-      "value": 1,
+      "valueRef": "lacerta.bridge.b6.s1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -20158,7 +20310,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_IncendiaryRounds",
-      "value": 1,
+      "valueRef": "lacerta.bridge.b6.s2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -20198,7 +20350,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_PrecisionShot",
-      "value": 1,
+      "valueRef": "lacerta.bridge.b6.s3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -20237,7 +20389,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_PrecisionShot",
-      "value": 1,
+      "valueRef": "lacerta.bridge.b6.s4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -20276,7 +20428,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_PrecisionShot",
-      "value": 1,
+      "valueRef": "lacerta.bridge.b7.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -20316,7 +20468,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_PrecisionShot",
-      "value": 1,
+      "valueRef": "lacerta.bridge.b7.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -20357,7 +20509,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_PrecisionShot",
-      "value": 1,
+      "valueRef": "lacerta.bridge.b7.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -20397,7 +20549,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_SalamanderPowder",
-      "value": 1,
+      "valueRef": "lacerta.bridge.b7.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -20437,7 +20589,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_SalamanderPowder",
-      "value": 1,
+      "valueRef": "lacerta.bridge.b7.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -20477,7 +20629,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_SalamanderPowder",
-      "value": 1,
+      "valueRef": "lacerta.bridge.b7.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -20528,7 +20680,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Echo",
-        "value": 5,
+        "value": {
+          "valueRef": "lacerta.bridge.b7.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null,
@@ -20581,7 +20735,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Element",
-        "value": 25,
+        "value": {
+          "valueRef": "lacerta.bridge.b7.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null,
@@ -20633,7 +20789,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_R_PrecisionShot",
-          "value": 2,
+          "valueRef": "lacerta.bridge.b7.x1/options/0/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -20649,7 +20805,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_D_SalamanderPowder",
-          "value": 2,
+          "valueRef": "lacerta.bridge.b7.x1/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -20693,7 +20849,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_PrecisionShot",
-      "value": 1,
+      "valueRef": "lacerta.bridge.b7.s1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -20732,7 +20888,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_PrecisionShot",
-      "value": 1,
+      "valueRef": "lacerta.bridge.b7.s2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -20772,7 +20928,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_SalamanderPowder",
-      "value": 1,
+      "valueRef": "lacerta.bridge.b7.s3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -20811,7 +20967,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_SalamanderPowder",
-      "value": 1,
+      "valueRef": "lacerta.bridge.b7.s4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -20846,7 +21002,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_SalamanderPowder",
-      "value": 1,
+      "valueRef": "lacerta.outer.powder-watch.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -20882,7 +21038,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_SalamanderPowder",
-      "value": 1,
+      "valueRef": "lacerta.outer.powder-watch.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -20918,7 +21074,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_SalamanderPowder",
-      "value": 1,
+      "valueRef": "lacerta.outer.powder-watch.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -20953,7 +21109,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_SalamanderPowder",
-      "value": 1,
+      "valueRef": "lacerta.outer.powder-watch.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -20989,7 +21145,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_SalamanderPowder",
-      "value": 1,
+      "valueRef": "lacerta.outer.powder-watch.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -21025,7 +21181,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_SalamanderPowder",
-      "value": 1,
+      "valueRef": "lacerta.outer.powder-watch.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -21073,7 +21229,9 @@
       "gimmick": null,
       "power": {
         "name": "Ember",
-        "perRank": 4
+        "perRank": {
+          "valueRef": "lacerta.outer.powder-watch.n1/power/perRank"
+        }
       },
       "stat": null,
       "options": null,
@@ -21113,7 +21271,9 @@
       "gimmick": null,
       "power": {
         "name": "Blaze",
-        "perRank": 4
+        "perRank": {
+          "valueRef": "lacerta.outer.powder-watch.n2/power/perRank"
+        }
       },
       "stat": null,
       "options": null,
@@ -21156,7 +21316,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_D_SalamanderPowder",
-          "value": 2,
+          "valueRef": "lacerta.outer.powder-watch.x1/options/0/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -21179,7 +21339,9 @@
           "gimmick": null,
           "power": {
             "name": "Ember",
-            "perRank": 2
+            "perRank": {
+              "valueRef": "lacerta.outer.powder-watch.x1/options/1/power/perRank"
+            }
           },
           "stat": null,
           "nameJa": "散らす火種",
@@ -21211,7 +21373,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_SalamanderPowder",
-      "value": 1,
+      "valueRef": "lacerta.outer.powder-watch.s1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -21247,7 +21409,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_SalamanderPowder",
-      "value": 1,
+      "valueRef": "lacerta.outer.powder-watch.s2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -21282,7 +21444,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_SalamanderPowder",
-      "value": 1,
+      "valueRef": "lacerta.outer.powder-watch.s3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -21318,7 +21480,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_SalamanderPowder",
-      "value": 1,
+      "valueRef": "lacerta.outer.powder-watch.s4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -21354,7 +21516,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_SalamanderPowder",
-      "value": 1,
+      "valueRef": "lacerta.outer.powder-watch.s5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -21389,7 +21551,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_SalamanderPowder",
-      "value": 1,
+      "valueRef": "lacerta.outer.powder-watch.s6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -21425,7 +21587,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_SalamanderPowder",
-      "value": 1,
+      "valueRef": "lacerta.outer.powder-watch.s7/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -21461,7 +21623,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_SalamanderPowder",
-      "value": 1,
+      "valueRef": "lacerta.outer.powder-watch.s8/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -21496,7 +21658,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_SalamanderPowder",
-      "value": 1,
+      "valueRef": "lacerta.outer.powder-watch.s9/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -21531,7 +21693,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_DoubleTap",
-      "value": 1,
+      "valueRef": "lacerta.outer.twin-pressure.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -21567,7 +21729,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_DoubleTap",
-      "value": 1,
+      "valueRef": "lacerta.outer.twin-pressure.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -21603,7 +21765,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_DoubleTap",
-      "value": 1,
+      "valueRef": "lacerta.outer.twin-pressure.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -21638,7 +21800,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_DoubleTap",
-      "value": 1,
+      "valueRef": "lacerta.outer.twin-pressure.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -21674,7 +21836,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_DoubleTap",
-      "value": 1,
+      "valueRef": "lacerta.outer.twin-pressure.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -21710,7 +21872,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_DoubleTap",
-      "value": 1,
+      "valueRef": "lacerta.outer.twin-pressure.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -21758,7 +21920,9 @@
       "gimmick": null,
       "power": {
         "name": "FocusFire",
-        "perRank": 4
+        "perRank": {
+          "valueRef": "lacerta.outer.twin-pressure.n1/power/perRank"
+        }
       },
       "stat": null,
       "options": null,
@@ -21798,7 +21962,9 @@
       "gimmick": null,
       "power": {
         "name": "Executioner",
-        "perRank": 4
+        "perRank": {
+          "valueRef": "lacerta.outer.twin-pressure.n2/power/perRank"
+        }
       },
       "stat": null,
       "options": null,
@@ -21841,7 +22007,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_D_DoubleTap",
-          "value": 2,
+          "valueRef": "lacerta.outer.twin-pressure.x1/options/0/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -21864,7 +22030,9 @@
           "gimmick": null,
           "power": {
             "name": "FocusFire",
-            "perRank": 2
+            "perRank": {
+              "valueRef": "lacerta.outer.twin-pressure.x1/options/1/power/perRank"
+            }
           },
           "stat": null,
           "nameJa": "照準の一点",
@@ -21896,7 +22064,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_DoubleTap",
-      "value": 1,
+      "valueRef": "lacerta.outer.twin-pressure.s1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -21932,7 +22100,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_DoubleTap",
-      "value": 1,
+      "valueRef": "lacerta.outer.twin-pressure.s2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -21967,7 +22135,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_DoubleTap",
-      "value": 1,
+      "valueRef": "lacerta.outer.twin-pressure.s3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -22003,7 +22171,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_DoubleTap",
-      "value": 1,
+      "valueRef": "lacerta.outer.twin-pressure.s4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -22039,7 +22207,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_DoubleTap",
-      "value": 1,
+      "valueRef": "lacerta.outer.twin-pressure.s5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -22074,7 +22242,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_DoubleTap",
-      "value": 1,
+      "valueRef": "lacerta.outer.twin-pressure.s6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -22110,7 +22278,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_DoubleTap",
-      "value": 1,
+      "valueRef": "lacerta.outer.twin-pressure.s7/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -22146,7 +22314,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_DoubleTap",
-      "value": 1,
+      "valueRef": "lacerta.outer.twin-pressure.s8/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -22181,7 +22349,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_DoubleTap",
-      "value": 1,
+      "valueRef": "lacerta.outer.twin-pressure.s9/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -22216,7 +22384,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_HandCannon",
-      "value": 1,
+      "valueRef": "lacerta.outer.cannon-finish.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -22252,7 +22420,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_HandCannon",
-      "value": 1,
+      "valueRef": "lacerta.outer.cannon-finish.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -22288,7 +22456,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_HandCannon",
-      "value": 1,
+      "valueRef": "lacerta.outer.cannon-finish.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -22323,7 +22491,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_HandCannon",
-      "value": 1,
+      "valueRef": "lacerta.outer.cannon-finish.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -22359,7 +22527,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_HandCannon",
-      "value": 1,
+      "valueRef": "lacerta.outer.cannon-finish.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -22395,7 +22563,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_HandCannon",
-      "value": 1,
+      "valueRef": "lacerta.outer.cannon-finish.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -22443,7 +22611,9 @@
       "gimmick": null,
       "power": {
         "name": "Shatter",
-        "perRank": 4
+        "perRank": {
+          "valueRef": "lacerta.outer.cannon-finish.n1/power/perRank"
+        }
       },
       "stat": null,
       "options": null,
@@ -22483,7 +22653,9 @@
       "gimmick": null,
       "power": {
         "name": "OpeningStrike",
-        "perRank": 4
+        "perRank": {
+          "valueRef": "lacerta.outer.cannon-finish.n2/power/perRank"
+        }
       },
       "stat": null,
       "options": null,
@@ -22526,7 +22698,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_Q_HandCannon",
-          "value": 2,
+          "valueRef": "lacerta.outer.cannon-finish.x1/options/0/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -22549,7 +22721,9 @@
           "gimmick": null,
           "power": {
             "name": "Shatter",
-            "perRank": 2
+            "perRank": {
+              "valueRef": "lacerta.outer.cannon-finish.x1/options/1/power/perRank"
+            }
           },
           "stat": null,
           "nameJa": "砕く追撃",
@@ -22581,7 +22755,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_HandCannon",
-      "value": 1,
+      "valueRef": "lacerta.outer.cannon-finish.s1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -22617,7 +22791,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_HandCannon",
-      "value": 1,
+      "valueRef": "lacerta.outer.cannon-finish.s2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -22652,7 +22826,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_HandCannon",
-      "value": 1,
+      "valueRef": "lacerta.outer.cannon-finish.s3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -22688,7 +22862,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_HandCannon",
-      "value": 1,
+      "valueRef": "lacerta.outer.cannon-finish.s4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -22724,7 +22898,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_HandCannon",
-      "value": 1,
+      "valueRef": "lacerta.outer.cannon-finish.s5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -22759,7 +22933,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_HandCannon",
-      "value": 1,
+      "valueRef": "lacerta.outer.cannon-finish.s6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -22795,7 +22969,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_HandCannon",
-      "value": 1,
+      "valueRef": "lacerta.outer.cannon-finish.s7/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -22831,7 +23005,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_HandCannon",
-      "value": 1,
+      "valueRef": "lacerta.outer.cannon-finish.s8/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -22866,7 +23040,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_HandCannon",
-      "value": 1,
+      "valueRef": "lacerta.outer.cannon-finish.s9/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -22901,7 +23075,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_IncendiaryRounds",
-      "value": 1,
+      "valueRef": "lacerta.outer.ammo-ward.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -22937,7 +23111,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_IncendiaryRounds",
-      "value": 1,
+      "valueRef": "lacerta.outer.ammo-ward.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -22973,7 +23147,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_IncendiaryRounds",
-      "value": 1,
+      "valueRef": "lacerta.outer.ammo-ward.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -23008,7 +23182,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_IncendiaryRounds",
-      "value": 1,
+      "valueRef": "lacerta.outer.ammo-ward.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -23044,7 +23218,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_IncendiaryRounds",
-      "value": 1,
+      "valueRef": "lacerta.outer.ammo-ward.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -23080,7 +23254,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_IncendiaryRounds",
-      "value": 1,
+      "valueRef": "lacerta.outer.ammo-ward.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -23128,7 +23302,9 @@
       "gimmick": null,
       "power": {
         "name": "ShieldBash",
-        "perRank": 2
+        "perRank": {
+          "valueRef": "lacerta.outer.ammo-ward.n1/power/perRank"
+        }
       },
       "stat": null,
       "options": null,
@@ -23168,7 +23344,9 @@
       "gimmick": null,
       "power": {
         "name": "SharedWard",
-        "perRank": 4
+        "perRank": {
+          "valueRef": "lacerta.outer.ammo-ward.n2/power/perRank"
+        }
       },
       "stat": null,
       "options": null,
@@ -23211,7 +23389,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_Q_IncendiaryRounds",
-          "value": 2,
+          "valueRef": "lacerta.outer.ammo-ward.x1/options/0/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -23234,7 +23412,9 @@
           "gimmick": null,
           "power": {
             "name": "ShieldBash",
-            "perRank": 1
+            "perRank": {
+              "valueRef": "lacerta.outer.ammo-ward.x1/options/1/power/perRank"
+            }
           },
           "stat": null,
           "nameJa": "壁の打ち出し",
@@ -23266,7 +23446,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_IncendiaryRounds",
-      "value": 1,
+      "valueRef": "lacerta.outer.ammo-ward.s1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -23302,7 +23482,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_IncendiaryRounds",
-      "value": 1,
+      "valueRef": "lacerta.outer.ammo-ward.s2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -23337,7 +23517,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_IncendiaryRounds",
-      "value": 1,
+      "valueRef": "lacerta.outer.ammo-ward.s3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -23373,7 +23553,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_IncendiaryRounds",
-      "value": 1,
+      "valueRef": "lacerta.outer.ammo-ward.s4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -23409,7 +23589,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_IncendiaryRounds",
-      "value": 1,
+      "valueRef": "lacerta.outer.ammo-ward.s5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -23444,7 +23624,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_IncendiaryRounds",
-      "value": 1,
+      "valueRef": "lacerta.outer.ammo-ward.s6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -23480,7 +23660,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_IncendiaryRounds",
-      "value": 1,
+      "valueRef": "lacerta.outer.ammo-ward.s7/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -23516,7 +23696,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_IncendiaryRounds",
-      "value": 1,
+      "valueRef": "lacerta.outer.ammo-ward.s8/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -23551,7 +23731,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_IncendiaryRounds",
-      "value": 1,
+      "valueRef": "lacerta.outer.ammo-ward.s9/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -23586,7 +23766,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_QuickTrigger",
-      "value": 1,
+      "valueRef": "lacerta.outer.barrage-line.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -23622,7 +23802,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_QuickTrigger",
-      "value": 1,
+      "valueRef": "lacerta.outer.barrage-line.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -23658,7 +23838,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_QuickTrigger",
-      "value": 1,
+      "valueRef": "lacerta.outer.barrage-line.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -23693,7 +23873,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_QuickTrigger",
-      "value": 1,
+      "valueRef": "lacerta.outer.barrage-line.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -23729,7 +23909,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_QuickTrigger",
-      "value": 1,
+      "valueRef": "lacerta.outer.barrage-line.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -23765,7 +23945,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_QuickTrigger",
-      "value": 1,
+      "valueRef": "lacerta.outer.barrage-line.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -23813,7 +23993,9 @@
       "gimmick": null,
       "power": {
         "name": "Shatter",
-        "perRank": 4
+        "perRank": {
+          "valueRef": "lacerta.outer.barrage-line.n1/power/perRank"
+        }
       },
       "stat": null,
       "options": null,
@@ -23853,7 +24035,9 @@
       "gimmick": null,
       "power": {
         "name": "Executioner",
-        "perRank": 4
+        "perRank": {
+          "valueRef": "lacerta.outer.barrage-line.n2/power/perRank"
+        }
       },
       "stat": null,
       "options": null,
@@ -23896,7 +24080,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_R_QuickTrigger",
-          "value": 2,
+          "valueRef": "lacerta.outer.barrage-line.x1/options/0/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -23919,7 +24103,9 @@
           "gimmick": null,
           "power": {
             "name": "Executioner",
-            "perRank": 2
+            "perRank": {
+              "valueRef": "lacerta.outer.barrage-line.x1/options/1/power/perRank"
+            }
           },
           "stat": null,
           "nameJa": "突き止める弾",
@@ -23951,7 +24137,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_QuickTrigger",
-      "value": 1,
+      "valueRef": "lacerta.outer.barrage-line.s1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -23987,7 +24173,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_QuickTrigger",
-      "value": 1,
+      "valueRef": "lacerta.outer.barrage-line.s2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -24022,7 +24208,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_QuickTrigger",
-      "value": 1,
+      "valueRef": "lacerta.outer.barrage-line.s3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -24058,7 +24244,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_QuickTrigger",
-      "value": 1,
+      "valueRef": "lacerta.outer.barrage-line.s4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -24094,7 +24280,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_QuickTrigger",
-      "value": 1,
+      "valueRef": "lacerta.outer.barrage-line.s5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -24129,7 +24315,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_QuickTrigger",
-      "value": 1,
+      "valueRef": "lacerta.outer.barrage-line.s6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -24165,7 +24351,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_QuickTrigger",
-      "value": 1,
+      "valueRef": "lacerta.outer.barrage-line.s7/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -24201,7 +24387,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_QuickTrigger",
-      "value": 1,
+      "valueRef": "lacerta.outer.barrage-line.s8/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -24236,7 +24422,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_QuickTrigger",
-      "value": 1,
+      "valueRef": "lacerta.outer.barrage-line.s9/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -24271,7 +24457,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_PrecisionShot",
-      "value": 1,
+      "valueRef": "lacerta.outer.sniper-watch.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -24307,7 +24493,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_PrecisionShot",
-      "value": 1,
+      "valueRef": "lacerta.outer.sniper-watch.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -24343,7 +24529,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_PrecisionShot",
-      "value": 1,
+      "valueRef": "lacerta.outer.sniper-watch.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -24378,7 +24564,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_PrecisionShot",
-      "value": 1,
+      "valueRef": "lacerta.outer.sniper-watch.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -24414,7 +24600,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_PrecisionShot",
-      "value": 1,
+      "valueRef": "lacerta.outer.sniper-watch.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -24450,7 +24636,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_PrecisionShot",
-      "value": 1,
+      "valueRef": "lacerta.outer.sniper-watch.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -24498,7 +24684,9 @@
       "gimmick": null,
       "power": {
         "name": "OpeningStrike",
-        "perRank": 4
+        "perRank": {
+          "valueRef": "lacerta.outer.sniper-watch.n1/power/perRank"
+        }
       },
       "stat": null,
       "options": null,
@@ -24538,7 +24726,9 @@
       "gimmick": null,
       "power": {
         "name": "FocusFire",
-        "perRank": 4
+        "perRank": {
+          "valueRef": "lacerta.outer.sniper-watch.n2/power/perRank"
+        }
       },
       "stat": null,
       "options": null,
@@ -24581,7 +24771,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_R_PrecisionShot",
-          "value": 2,
+          "valueRef": "lacerta.outer.sniper-watch.x1/options/0/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -24604,7 +24794,9 @@
           "gimmick": null,
           "power": {
             "name": "OpeningStrike",
-            "perRank": 2
+            "perRank": {
+              "valueRef": "lacerta.outer.sniper-watch.x1/options/1/power/perRank"
+            }
           },
           "stat": null,
           "nameJa": "初手の重み",
@@ -24636,7 +24828,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_PrecisionShot",
-      "value": 1,
+      "valueRef": "lacerta.outer.sniper-watch.s1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -24672,7 +24864,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_PrecisionShot",
-      "value": 1,
+      "valueRef": "lacerta.outer.sniper-watch.s2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -24707,7 +24899,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_PrecisionShot",
-      "value": 1,
+      "valueRef": "lacerta.outer.sniper-watch.s3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -24743,7 +24935,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_PrecisionShot",
-      "value": 1,
+      "valueRef": "lacerta.outer.sniper-watch.s4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -24779,7 +24971,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_PrecisionShot",
-      "value": 1,
+      "valueRef": "lacerta.outer.sniper-watch.s5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -24814,7 +25006,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_PrecisionShot",
-      "value": 1,
+      "valueRef": "lacerta.outer.sniper-watch.s6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -24850,7 +25042,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_PrecisionShot",
-      "value": 1,
+      "valueRef": "lacerta.outer.sniper-watch.s7/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -24886,7 +25078,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_PrecisionShot",
-      "value": 1,
+      "valueRef": "lacerta.outer.sniper-watch.s8/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -24921,7 +25113,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_PrecisionShot",
-      "value": 1,
+      "valueRef": "lacerta.outer.sniper-watch.s9/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -24959,7 +25151,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 1,
+      "valueRef": "lacerta.outer.reserve-footing.e1/value",
       "param": null,
       "receiver": "St_M_NimbleDodge",
       "target": {
@@ -24996,7 +25188,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 1,
+      "valueRef": "lacerta.outer.reserve-footing.e2/value",
       "param": null,
       "receiver": "St_M_NimbleDodge",
       "target": {
@@ -25033,7 +25225,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 1,
+      "valueRef": "lacerta.outer.reserve-footing.e3/value",
       "param": null,
       "receiver": "St_M_NimbleDodge",
       "target": {
@@ -25072,7 +25264,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 1,
+      "valueRef": "lacerta.outer.reserve-footing.e4/value",
       "param": null,
       "receiver": "St_M_NimbleDodge",
       "target": {
@@ -25109,7 +25301,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 1,
+      "valueRef": "lacerta.outer.reserve-footing.e5/value",
       "param": null,
       "receiver": "St_M_NimbleDodge",
       "target": {
@@ -25146,7 +25338,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 1,
+      "valueRef": "lacerta.outer.reserve-footing.e6/value",
       "param": null,
       "receiver": "St_M_NimbleDodge",
       "target": {
@@ -25195,7 +25387,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Recharge",
-        "value": 2,
+        "value": {
+          "valueRef": "lacerta.outer.reserve-footing.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": "St_M_NimbleDodge"
@@ -25241,7 +25435,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Recharge",
-        "value": 2,
+        "value": {
+          "valueRef": "lacerta.outer.reserve-footing.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": "St_M_NimbleDodge"
@@ -25290,7 +25486,7 @@
         {
           "kind": "GimmickBoost",
           "memory": null,
-          "value": 2,
+          "valueRef": "lacerta.outer.reserve-footing.x1/options/0/value",
           "param": null,
           "receiver": "St_M_NimbleDodge",
           "target": {
@@ -25313,7 +25509,9 @@
           "gimmick": {
             "trigger": "OnKill",
             "effect": "Recharge",
-            "value": 2,
+            "value": {
+              "valueRef": "lacerta.outer.reserve-footing.x1/options/1/gimmick/value"
+            },
             "arg": 0,
             "cooldown": 0,
             "target": "St_M_NimbleDodge"
@@ -25351,7 +25549,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 1,
+      "valueRef": "lacerta.outer.reserve-footing.s1/value",
       "param": null,
       "receiver": "St_M_NimbleDodge",
       "target": {
@@ -25388,7 +25586,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 1,
+      "valueRef": "lacerta.outer.reserve-footing.s2/value",
       "param": null,
       "receiver": "St_M_NimbleDodge",
       "target": {
@@ -25424,7 +25622,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 1,
+      "valueRef": "lacerta.outer.reserve-footing.s3/value",
       "param": null,
       "receiver": "St_M_NimbleDodge",
       "target": {
@@ -25461,7 +25659,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 1,
+      "valueRef": "lacerta.outer.reserve-footing.s4/value",
       "param": null,
       "receiver": "St_M_NimbleDodge",
       "target": {
@@ -25498,7 +25696,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 1,
+      "valueRef": "lacerta.outer.reserve-footing.s5/value",
       "param": null,
       "receiver": "St_M_NimbleDodge",
       "target": {
@@ -25534,7 +25732,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 1,
+      "valueRef": "lacerta.outer.reserve-footing.s6/value",
       "param": null,
       "receiver": "St_M_NimbleDodge",
       "target": {
@@ -25571,7 +25769,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 1,
+      "valueRef": "lacerta.outer.reserve-footing.s7/value",
       "param": null,
       "receiver": "St_M_NimbleDodge",
       "target": {
@@ -25608,7 +25806,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 1,
+      "valueRef": "lacerta.outer.reserve-footing.s8/value",
       "param": null,
       "receiver": "St_M_NimbleDodge",
       "target": {
@@ -25644,7 +25842,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 1,
+      "valueRef": "lacerta.outer.reserve-footing.s9/value",
       "param": null,
       "receiver": "St_M_NimbleDodge",
       "target": {
@@ -25693,7 +25891,9 @@
             "memory": "St_D_SalamanderPowder",
             "effect": "Burst/Echo/Ricochet",
             "field": "Value",
-            "pct": 100
+            "pct": {
+              "valueRef": "lacerta.key.powder-keg/keystone/upsideSpec/0/pct"
+            }
           }
         ]
       },
@@ -25733,7 +25933,9 @@
             "memory": "St_D_DoubleTap",
             "effect": "Echo/Burst",
             "field": "Value",
-            "pct": 100
+            "pct": {
+              "valueRef": "lacerta.key.twin-afterimage/keystone/upsideSpec/0/pct"
+            }
           }
         ]
       },
@@ -25773,13 +25975,17 @@
             "memory": "St_Q_HandCannon",
             "effect": "Burst",
             "field": "Radius",
-            "pct": 100
+            "pct": {
+              "valueRef": "lacerta.key.wide-cannon/keystone/upsideSpec/0/pct"
+            }
           },
           {
             "memory": "St_Q_HandCannon",
             "effect": "Echo",
             "field": "Value",
-            "pct": 80
+            "pct": {
+              "valueRef": "lacerta.key.wide-cannon/keystone/upsideSpec/1/pct"
+            }
           }
         ]
       },
@@ -25819,13 +26025,17 @@
             "memory": "St_Q_IncendiaryRounds",
             "effect": "Rampart",
             "field": "Value",
-            "to": 2
+            "to": {
+              "valueRef": "lacerta.key.loaded-bastion/keystone/upsideSpec/0/to"
+            }
           },
           {
             "memory": "St_Q_IncendiaryRounds",
             "effect": "Rampart",
             "field": "Duration",
-            "pct": 100
+            "pct": {
+              "valueRef": "lacerta.key.loaded-bastion/keystone/upsideSpec/1/pct"
+            }
           }
         ]
       },
@@ -25865,14 +26075,20 @@
             "memory": "St_R_QuickTrigger",
             "effect": "Ricochet",
             "field": "Arg",
-            "delta": 1,
-            "max": 2
+            "delta": {
+              "valueRef": "lacerta.key.side-fire/keystone/upsideSpec/0/delta"
+            },
+            "max": {
+              "valueRef": "lacerta.key.side-fire/keystone/upsideSpec/0/max"
+            }
           },
           {
             "memory": "St_R_QuickTrigger",
             "effect": "Ricochet",
             "field": "Value",
-            "pct": 50
+            "pct": {
+              "valueRef": "lacerta.key.side-fire/keystone/upsideSpec/1/pct"
+            }
           }
         ]
       },
@@ -25912,7 +26128,9 @@
             "memory": "St_R_PrecisionShot",
             "effect": "Echo",
             "field": "Value",
-            "pct": 120
+            "pct": {
+              "valueRef": "lacerta.key.late-shot/keystone/upsideSpec/0/pct"
+            }
           }
         ]
       },
@@ -25951,7 +26169,9 @@
           {
             "effect": "Recharge",
             "field": "Value",
-            "pct": 100,
+            "pct": {
+              "valueRef": "lacerta.key.reserved-exit/keystone/upsideSpec/0/pct"
+            },
             "receiver": "St_M_NimbleDodge"
           }
         ]
@@ -26000,13 +26220,17 @@
           {
             "effect": "Heal",
             "field": "Value",
-            "pct": 200,
+            "pct": {
+              "valueRef": "lacerta.key.field-aid/keystone/upsideSpec/1/pct"
+            },
             "scope": "HIQS"
           },
           {
             "effect": "Heal",
             "field": "Radius",
-            "pct": 100,
+            "pct": {
+              "valueRef": "lacerta.key.field-aid/keystone/upsideSpec/2/pct"
+            },
             "scope": "HIQS"
           }
         ]
@@ -26037,7 +26261,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_D_SalamanderPowder",
-          "value": 1,
+          "valueRef": "h.lacerta.powder/options/0/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -26053,7 +26277,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_D_DoubleTap",
-          "value": 1,
+          "valueRef": "h.lacerta.powder/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -26095,7 +26319,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_Q_HandCannon",
-          "value": 1,
+          "valueRef": "h.lacerta.range/options/0/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -26111,7 +26335,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_Q_IncendiaryRounds",
-          "value": 1,
+          "valueRef": "h.lacerta.range/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -26153,7 +26377,7 @@
         {
           "kind": "MemoryHaste",
           "memory": "St_Q_HandCannon",
-          "value": 1,
+          "valueRef": "h.lacerta.rapid/options/0/value",
           "param": null,
           "receiver": null,
           "target": null,
@@ -26166,7 +26390,7 @@
         {
           "kind": "MemoryHaste",
           "memory": "St_Q_IncendiaryRounds",
-          "value": 1,
+          "valueRef": "h.lacerta.rapid/options/1/value",
           "param": null,
           "receiver": null,
           "target": null,
@@ -26204,7 +26428,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_R_QuickTrigger",
-          "value": 1,
+          "valueRef": "h.lacerta.crit/options/0/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -26220,7 +26444,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_R_PrecisionShot",
-          "value": 1,
+          "valueRef": "h.lacerta.crit/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -26262,7 +26486,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_D_SalamanderPowder",
-          "value": 1,
+          "valueRef": "h.lacerta.deep.atk/options/0/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -26278,7 +26502,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_D_DoubleTap",
-          "value": 1,
+          "valueRef": "h.lacerta.deep.atk/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -26320,7 +26544,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_Q_HandCannon",
-          "value": 1,
+          "valueRef": "h.lacerta.deep.crit/options/0/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -26336,7 +26560,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_Q_IncendiaryRounds",
-          "value": 1,
+          "valueRef": "h.lacerta.deep.crit/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -26378,7 +26602,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_R_QuickTrigger",
-          "value": 1,
+          "valueRef": "h.lacerta.deep.haste/options/0/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -26394,7 +26618,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_R_PrecisionShot",
-          "value": 1,
+          "valueRef": "h.lacerta.deep.haste/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -26425,7 +26649,7 @@
       "region": "migration",
       "kind": "GimmickBoost",
       "memory": "St_D_DoubleTap",
-      "value": 1,
+      "valueRef": "h.lacerta.route.double-tap.6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -26453,7 +26677,7 @@
       "region": "migration",
       "kind": "GimmickBoost",
       "memory": "St_D_SalamanderPowder",
-      "value": 1,
+      "valueRef": "h.lacerta.route.powder.6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -26481,7 +26705,7 @@
       "region": "migration",
       "kind": "GimmickBoost",
       "memory": "St_Q_HandCannon",
-      "value": 1,
+      "valueRef": "h.lacerta.route.hand-cannon.6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -26509,7 +26733,7 @@
       "region": "migration",
       "kind": "GimmickBoost",
       "memory": "St_Q_IncendiaryRounds",
-      "value": 1,
+      "valueRef": "h.lacerta.route.incendiary.6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -26537,7 +26761,7 @@
       "region": "migration",
       "kind": "GimmickBoost",
       "memory": "St_R_QuickTrigger",
-      "value": 1,
+      "valueRef": "h.lacerta.route.quick-trigger.6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -26565,7 +26789,7 @@
       "region": "migration",
       "kind": "GimmickBoost",
       "memory": "St_Q_HandCannon",
-      "value": 1,
+      "valueRef": "h.lacerta.route.hand-cannon.1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -26593,7 +26817,7 @@
       "region": "migration",
       "kind": "GimmickBoost",
       "memory": "St_Q_IncendiaryRounds",
-      "value": 1,
+      "valueRef": "h.lacerta.route.incendiary.3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -26621,7 +26845,7 @@
       "region": "migration",
       "kind": "GimmickBoost",
       "memory": "St_R_PrecisionShot",
-      "value": 1,
+      "valueRef": "h.lacerta.route.precision.1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -26649,7 +26873,7 @@
       "region": "migration",
       "kind": "GimmickBoost",
       "memory": "St_R_QuickTrigger",
-      "value": 1,
+      "valueRef": "h.lacerta.route.quick-trigger.3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -26677,7 +26901,7 @@
       "region": "migration",
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 1,
+      "valueRef": "h.lacerta.route.nimble-dodge.1/value",
       "param": null,
       "receiver": "St_M_NimbleDodge",
       "target": {
@@ -26709,7 +26933,7 @@
       "region": "migration",
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 1,
+      "valueRef": "h.lacerta.route.nimble-dodge.2/value",
       "param": null,
       "receiver": "St_M_NimbleDodge",
       "target": {
@@ -26741,7 +26965,7 @@
       "region": "migration",
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 1,
+      "valueRef": "h.lacerta.route.nimble-dodge.3/value",
       "param": null,
       "receiver": "St_M_NimbleDodge",
       "target": {
@@ -26773,7 +26997,7 @@
       "region": "migration",
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 1,
+      "valueRef": "h.lacerta.route.nimble-dodge.5/value",
       "param": null,
       "receiver": "St_M_NimbleDodge",
       "target": {
@@ -26805,7 +27029,7 @@
       "region": "migration",
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 1,
+      "valueRef": "h.lacerta.route.nimble-dodge.6/value",
       "param": null,
       "receiver": "St_M_NimbleDodge",
       "target": {
@@ -26844,7 +27068,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Recharge",
-        "value": 1,
+        "value": {
+          "valueRef": "h.lacerta.route.nimble-dodge.4/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": "St_M_NimbleDodge"
@@ -26876,7 +27102,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Recharge",
-        "value": 1,
+        "value": {
+          "valueRef": "h.lacerta.route.nimble-dodge.7/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": "St_M_NimbleDodge"
@@ -26919,7 +27147,9 @@
           "gimmick": {
             "trigger": "OnKill",
             "effect": "Heal",
-            "value": 1,
+            "value": {
+              "valueRef": "h.lacerta.ring.renewal/options/0/gimmick/value"
+            },
             "arg": 1,
             "cooldown": 0,
             "target": null
@@ -26939,7 +27169,9 @@
           "gimmick": {
             "trigger": "OnKill",
             "effect": "Heal",
-            "value": 1,
+            "value": {
+              "valueRef": "h.lacerta.ring.renewal/options/1/gimmick/value"
+            },
             "arg": 1,
             "cooldown": 0,
             "target": null
