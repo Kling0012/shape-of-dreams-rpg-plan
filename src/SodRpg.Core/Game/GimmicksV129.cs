@@ -56,7 +56,7 @@ namespace SodRpg.Core.Game
             switch (def.Effect)
             {
                 case GimmickEffect.Wound:
-                    text = ja ? "継続ダメージ +攻撃力か魔力の高い方の" + n + "%（3秒ごと）：当てた敵に" + woundDuration + "秒間与える（重ならず、強い方で時間を延長）"
+                    text = ja ? "継続ダメージ +攻撃力・魔力の高い方の" + n + "%（3秒ごと）：当てた敵に" + woundDuration + "秒間与える（重ならず、強い方で時間を延長）"
                         : "Damage over time +" + n + "% of the higher of attack damage or ability power per 3 seconds: damage the hit enemy for " + woundDuration + " seconds (does not stack; refreshes the stronger wound)"; break;
                 case GimmickEffect.Daze:
                     string seconds = Duration(def, (float)value / 10f).ToString("0.#######", CultureInfo.InvariantCulture);
@@ -74,7 +74,7 @@ namespace SodRpg.Core.Game
                     text = ja ? "障壁 +命中した敵1体につき最大HPの" + n + "%：同じ発動で当たった別々の敵を数え、" + duration + "秒間張る（" + targets + "体まで、1体につき最大2%。この障壁は通常の星の障壁とは別に1つまで。残量と新しい量の大きい方を保って時間を更新。増幅後も最大HPの10%が上限）"
                         : "Shield +" + n + "% of maximum health per distinct enemy hit by this cast: lasts " + duration + " seconds (up to " + targets + " enemies and 2% per enemy; one pool separate from ordinary star shields, keeping the larger remaining or new amount and refreshing duration; capped at 10% of maximum health after amplification)"; break;
                 case GimmickEffect.Primed:
-                    text = ja ? "次の通常攻撃の追加ダメージ +攻撃力か魔力の高い方の" + n + "%（重ならず" + primedDuration + "秒で消える。次の通常攻撃への上乗せが複数あっても最大の1つだけ使い、残りは消費しない）"
+                    text = ja ? "次の通常攻撃の追加ダメージ +攻撃力・魔力の高い方の" + n + "%（重ならず" + primedDuration + "秒で消える。次の通常攻撃への上乗せが複数あっても最大の1つだけ使い、残りは消費しない）"
                         : "Next basic attack extra damage +" + n + "% of the higher of attack damage or ability power (does not stack; expires after " + primedDuration + " seconds; consumes only the largest next-basic-attack bonus and leaves the others ready)"; break;
                 case GimmickEffect.Crescendo:
                     string minimum = Duration(def, 8f).ToString("0.#######", CultureInfo.InvariantCulture);
@@ -82,7 +82,7 @@ namespace SodRpg.Core.Game
                     text = ja ? "記憶ダメージ +" + n + "%：その記憶が対象（同じ発動では1回、5回まで、最大40%。" + minimum + "秒かその記憶のクールダウンの" + factor + "倍の長い方だけ続く。ほかの記憶を使っても保持。記憶ダメージ増加との合計は最大120%）"
                         : "Memory damage +" + n + "%: affects that memory (once per cast, up to 5 stacks and 40%; lasts the longer of " + minimum + " seconds or " + factor + " times that memory's cooldown; retained when using other memories; combined memory damage bonuses are capped at 120%)"; break;
                 case GimmickEffect.ElementEdge:
-                    text = ja ? "追加ダメージ +属性1種類につき攻撃力か魔力の高い方の" + n + "%：当てた敵の火・冷気・光・闇を数える（4種類まで、最大160%。属性は消費しない）"
+                    text = ja ? "追加ダメージ +属性1種類につき攻撃力・魔力の高い方の" + n + "%：当てた敵の火・冷気・光・闇を数える（4種類まで、最大160%。属性は消費しない）"
                         : "Extra damage +" + n + "% of the higher of attack damage or ability power per element: count Fire, Cold, Light and Dark on the hit enemy (up to 4 types and 160%; does not consume elements)"; break;
                 case GimmickEffect.PackMend:
                     text = ja ? "召喚獣のHP回復 +各自の最大HPの" + n + "%：自分の生存する召喚獣すべてが対象（旅人は対象外）"

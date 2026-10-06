@@ -120,7 +120,7 @@ namespace SodRpg.Core.Game
         Umbra = 19,
         /// <summary>敵に火・冷気・光・闇がすべて乗った瞬間、攻撃力X%の純粋ダメージ（同じ敵へは6秒に1回）。「四元の共鳴」</summary>
         Convergence = 20,
-        /// <summary>回避（Movement）の後3秒以内の次の通常攻撃に、攻撃力か魔力の高い方の X% を上乗せ（v1.27）。「回避の残響」</summary>
+        /// <summary>回避（Movement）の後3秒以内の次の通常攻撃に、攻撃力・魔力の高い方の X% を上乗せ（v1.27）。「回避の残響」</summary>
         EchoingDodge = 21,
         /// <summary>Ultimate（R）を使うと5秒間 攻撃力・魔力+X%。「終の昂り」</summary>
         UltimateSurge = 22,
@@ -164,7 +164,7 @@ namespace SodRpg.Core.Game
         PerfectRead = 41,
         /// <summary>Evilの明晰夢1つにつき攻撃力・魔力+X%（6つまで、合計18%まで）。「明晰」</summary>
         LucidBoon = 42,
-        /// <summary>回避・ダッシュ・瞬間移動の後3秒以内の次の通常攻撃に、攻撃力か魔力の高い方のX%を上乗せ（重ならず時間を延長）。「瞬歩の刃」</summary>
+        /// <summary>回避・ダッシュ・瞬間移動の後3秒以内の次の通常攻撃に、攻撃力・魔力の高い方のX%を上乗せ（重ならず時間を延長）。「瞬歩の刃」</summary>
         ShadowStep = 43,
         /// <summary>火＋冷気で周囲3mに鈍足と追加ダメージ。属性は消費しない。</summary>
         Steam = 44,

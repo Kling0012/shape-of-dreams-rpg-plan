@@ -25,15 +25,15 @@ namespace SodRpg.Core.Game
             {
                 var names = new List<string>();
                 foreach (var pw in BoostedPowers) names.Add(Content.PowerName(pw));
-                parts.Add(ja ? $"{string.Join("・", names)}の効果が{PowerBoostPct}%強くなります" : $"{string.Join(", ", names)} are {PowerBoostPct}% stronger");
+                parts.Add(ja ? $"{string.Join("・", names)}の効果が{PowerBoostPct}%強くなる" : $"{string.Join(", ", names)} are {PowerBoostPct}% stronger");
             }
             if (FeaturedLine.HasValue)
-                parts.Add(ja ? $"{Content.LineName(FeaturedLine.Value)}の遺物が出やすくなります（狙い系統が「なし」のとき）" : $"{Content.LineName(FeaturedLine.Value)} relics drop more often (when Focus is None)");
-            if (DropBonus > 0) parts.Add(ja ? $"遺物が{(int)Math.Round(DropBonus * 100)}%多く落ちます" : $"{(int)Math.Round(DropBonus * 100)}% more relic drops");
-            if (ShardMult > 1.0) parts.Add(ja ? $"敵を倒して得る欠片が{M(ShardMult)}倍になります" : $"x{M(ShardMult)} shards from kills");
-            if (XpMult > 1.0) parts.Add(ja ? $"敵を倒して得る経験値が{M(XpMult)}倍になります" : $"x{M(XpMult)} experience from kills");
-            if (BountyMult > 1.0) parts.Add(ja ? $"依頼の報酬が{M(BountyMult)}倍になります" : $"x{M(BountyMult)} bounty rewards");
-            if (NightmareMult > 1.0) parts.Add(ja ? $"悪夢化する敵が{M(NightmareMult)}倍に増えます" : $"x{M(NightmareMult)} nightmares");
+                parts.Add(ja ? $"{Content.LineName(FeaturedLine.Value)}の遺物が出やすくなる（狙い系統が「なし」のとき）" : $"{Content.LineName(FeaturedLine.Value)} relics drop more often (when Focus is None)");
+            if (DropBonus > 0) parts.Add(ja ? $"遺物が{(int)Math.Round(DropBonus * 100)}%多く落ちる" : $"{(int)Math.Round(DropBonus * 100)}% more relic drops");
+            if (ShardMult > 1.0) parts.Add(ja ? $"敵を倒して得る欠片が{M(ShardMult)}倍になる" : $"x{M(ShardMult)} shards from kills");
+            if (XpMult > 1.0) parts.Add(ja ? $"敵を倒して得る経験値が{M(XpMult)}倍になる" : $"x{M(XpMult)} experience from kills");
+            if (BountyMult > 1.0) parts.Add(ja ? $"依頼の報酬が{M(BountyMult)}倍になる" : $"x{M(BountyMult)} bounty rewards");
+            if (NightmareMult > 1.0) parts.Add(ja ? $"悪夢化する敵が{M(NightmareMult)}倍に増える" : $"x{M(NightmareMult)} nightmares");
             return ja ? string.Join("。", parts) + "。" : string.Join("; ", parts) + ".";
         }
         /// <summary>狙い系統を選んでいないときに代わりに使う系統。</summary>

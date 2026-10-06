@@ -41,8 +41,8 @@ namespace SodRpg.Core.Game
             Def("feat.kills.2", FeatKind.Kills, 500, 2, "夢の狩人", "Dream Hunter"),
             Def("feat.kills.6", FeatKind.Kills, 1000, 3, "夢の大群を払う者", "Dream Horde Sweeper"),
             Def("feat.kills.3", FeatKind.Kills, 2000, 3, "悪夢を払う者", "Nightmare Sweeper"),
-            Def("feat.kills.7", FeatKind.Kills, 5000, 4, "万の夢を越えて", "Beyond Ten Thousand Dreams"),
-            Def("feat.kills.4", FeatKind.Kills, 10000, 4, "千の夢を斬る者", "Slayer of a Thousand Dreams"),
+            Def("feat.kills.7", FeatKind.Kills, 5000, 4, "五千の夢を越えて", "Beyond Five Thousand Dreams"),
+            Def("feat.kills.4", FeatKind.Kills, 10000, 4, "万の夢を斬る者", "Slayer of Ten Thousand Dreams"),
             Def("feat.kills.8", FeatKind.Kills, 20000, 4, "夢の向こうがわ", "The Far Side of Dreams"),
             Def("feat.runs.1", FeatKind.Runs, 1, 1, "最初の一歩", "First Step"),
             Def("feat.runs.5", FeatKind.Runs, 3, 1, "足慣らし", "Warming Up"),
@@ -238,7 +238,7 @@ namespace SodRpg.Core.Game
             switch (f.Kind)
             {
                 case FeatKind.Kills: return Loc.T($"敵を合計{n}体倒す", $"Defeat {n} enemies in total");
-                case FeatKind.Runs: return Loc.T($"遠征に{n}回出る", $"Go on {n} expeditions");
+                case FeatKind.Runs: return n == 1 ? Loc.T("遠征に1回出る", "Go on 1 expedition") : Loc.T($"遠征に{n}回出る", $"Go on {n} expeditions");
                 case FeatKind.Victories: return Loc.T($"夢を{n}回踏破する", $"Conquer the dream {n} times");
                 case FeatKind.Legendaries: return Loc.T($"固有品を合計{n}個見つける", $"Find {n} legendaries in total");
                 case FeatKind.Relics: return Loc.T($"遺物を合計{n}個見つける", $"Find {n} relics in total");

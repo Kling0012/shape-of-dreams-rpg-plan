@@ -24,7 +24,7 @@ namespace SodRpg.Core.Game
         None = 0,
         /// <summary>属性を付ける。Arg：0 火・1 冷気・2 光・3 闇。Value：100 ごとに1つ、残りは%の確率でもう1つ。</summary>
         Element = 1,
-        /// <summary>周り4mに、攻撃力か魔力の高い方の Value% の追加ダメージ。</summary>
+        /// <summary>周り4mに、攻撃力・魔力の高い方の Value% の追加ダメージ。</summary>
         Burst = 2,
         /// <summary>自分に最大HPの Value% の障壁（4秒）。</summary>
         Shield = 3,
@@ -330,7 +330,7 @@ namespace SodRpg.Core.Game
                 case GimmickEffect.Burst:
                     string center = def.Trigger == GimmickTrigger.OnUse ? (ja ? "自分" : "yourself")
                         : def.Trigger == GimmickTrigger.OnKill ? (ja ? "倒した敵" : "the killed enemy") : (ja ? "当てた敵" : "the hit enemy");
-                    effect = ja ? "範囲追加ダメージ +攻撃力か魔力の高い方の" + n + "%：" + center + "の周り" + radius + "mの敵に与える（魔力が高ければ魔法）"
+                    effect = ja ? "範囲追加ダメージ +攻撃力・魔力の高い方の" + n + "%：" + center + "の周り" + radius + "mの敵に与える（魔力が高ければ魔法）"
                         : "Area damage +" + n + "% of the higher of attack damage or ability power: damage enemies within " + radius + "m of "
                             + center + " (magic damage if ability power is higher)";
                     break;

@@ -423,7 +423,7 @@ namespace SodRpg.Core.Game
             return r;
         }
 
-        /// <summary>守護霊：大きな一撃を受けたら障壁量を返す（クールダウン20秒）。</summary>
+        /// <summary>守護霊：大きな一撃を受けたら障壁量を返す（間隔は AegisCooldown 秒）。</summary>
         public float TakeAegis(float now, float amount, float maxHealth)
         {
             int aegis = Build.Get(Power.Aegis);

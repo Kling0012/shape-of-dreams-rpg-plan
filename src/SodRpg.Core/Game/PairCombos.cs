@@ -141,7 +141,7 @@ namespace SodRpg.Core.Game
                         : "heal yourself" + (def.Arg == 1 ? " and allies within 10m" : "") + " for " + n + "% of maximum health";
                     break;
                 case GimmickEffect.Burst:
-                    effect = ja ? "当てた敵の周り4mに、攻撃力か魔力の高い方の" + n + "%の追加ダメージを与える（魔力が高ければ魔法）"
+                    effect = ja ? "当てた敵の周り4mに、攻撃力・魔力の高い方の" + n + "%の追加ダメージを与える（魔力が高ければ魔法）"
                         : "deal " + n + "% of the higher of attack damage or ability power as extra damage within 4m of the hit enemy (magic damage if ability power is higher)";
                     break;
                 case GimmickEffect.Element:
@@ -176,6 +176,12 @@ namespace SodRpg.Core.Game
                 : def.Effect == GimmickEffect.Burst ? Loc.T($"範囲追加ダメージ +攻撃力・魔力の高い方の{n}%", $"Area bonus damage +{n}% of the higher of attack damage or ability power")
                 : def.Effect == GimmickEffect.Echo ? Loc.T($"追撃ダメージ +与ダメージの{n}%", $"Follow-up damage +{n}% of damage dealt")
                 : Loc.T($"属性付与 +{entry.Value / 100}つ", $"Element application +{entry.Value / 100} stacks");
+            var notes = new List<string>();
+            if (disabled.Length > 0) notes.Add(disabled.TrimEnd());
+            if (summon.Length > 0) notes.Add(summon.TrimEnd());
+            string restrictions = Restrictions(def, ja);
+            if (restrictions.Length > 0) notes.Add(restrictions);
+            string tail = notes.Count == 0 ? "" : "\n・" + string.Join("\n・", notes);
             return headline + Loc.T("：", ": ") + steps + (ja ? "、" : ", ") + effect
                 + (ja ? "（" + interval + limit + "。追加ダメージは属性なし・連鎖なし。星の追加ダメージでは連携を開始・成立させられない）"
                     : " (" + interval + limit + "; extra damage is elementless and cannot chain; star-generated damage cannot start or complete the combo).")
@@ -185,12 +191,12 @@ namespace SodRpg.Core.Game
                 + (def.Effect == GimmickEffect.Element
                     ? string.Join("/", def.TableRankValues.Select(v => (v / 100m).ToString(CultureInfo.InvariantCulture))) + Loc.T("つ（小数部分は追加1つの確率）", " stacks (fractional part is the chance of one extra stack)")
                     : string.Join("/", def.TableRankValues) + "%")
-                + disabled + summon + Restrictions(def, ja);
+                + tail;
         }
         private static string Restrictions(PairComboDef def, bool ja)
         {
             if (def.HeroKey == "Hero_Vesper" && (def.BridgeIndex == 6 || def.BridgeIndex == 7))
-                return ja ? "洗礼の最初の爆発だけが受け手。6秒間の追加火炎では発動しない。" : "Only Baptism's initial explosion completes the combo, never its six seconds of additional fire damage.";
+                return ja ? "洗礼の最初の爆発だけが受け手。6秒間の追加火炎では発動しない。" : "Only Baptism's initial explosion completes the combo, never its 6 seconds of additional fire damage.";
             if (def.HeroKey == "Hero_Cetus" && def.BridgeIndex == 2)
                 return ja ? "領域の持続終了時の爆発だけが受け手。継続ダメージでは発動せず、爆発しない選択では働かない。" : "Only the domain's terminal explosion completes the combo, not ongoing damage; non-exploding variants cannot trigger it.";
             if (def.HeroKey == "Hero_Husk" && def.BridgeIndex == 3)

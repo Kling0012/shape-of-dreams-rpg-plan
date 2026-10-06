@@ -1090,7 +1090,7 @@ namespace SodRpg.Mod
             "<b>装備の育て方</b>\n" +
             "・装備：旅人ごとに6つの枠（主装備・頭・防具・手・足・装飾品）に装着します。\n" +
             $"・鍛冶：欠片で強化し（+{Content.EnhanceMilestoneFirst}と+{Content.EnhanceMilestoneSecond}で特性や固有効果が増えます）、調律石で特性を{Content.RetuneChoices}つの候補から選び直します。エピック以上は強化・再調律・限界突破・特性の洗い直しの素材費用が基本の{Content.ForgeMaterialCostMultiplier(Rarity.Epic)}倍です。いらない物は分解して欠片に戻せます。\n" +
-            $"・覚醒：固有品は、装着した旅人で敵を倒すと覚醒の力が溜まり、{Content.AwakenThresholdFor(1)}・{Content.AwakenThresholdFor(2)}・{Content.AwakenThresholdFor(3)}で覚醒Ⅰ・Ⅱ・Ⅲになります（固有効果は{Content.AwakenPowerPctAt(1) / 100m:0.##}・{Content.AwakenPowerPctAt(2) / 100m:0.##}・{Content.AwakenPowerPctAt(3) / 100m:0.##}倍）。気に入った1本を使い込みましょう。\n" +
+            $"・覚醒：固有品は、装着した旅人で敵を倒すと覚醒の力が溜まり、{Content.AwakenThresholdFor(1)}・{Content.AwakenThresholdFor(2)}・{Content.AwakenThresholdFor(3)}で覚醒Ⅰ・Ⅱ・Ⅲになります（固有効果は{Content.AwakenPowerPctAt(1) / 100m:0.##}・{Content.AwakenPowerPctAt(2) / 100m:0.##}・{Content.AwakenPowerPctAt(3) / 100m:0.##}倍、特性は{Content.AwakenAffixPctAt(1) / 100m:0.##}・{Content.AwakenAffixPctAt(2) / 100m:0.##}・{Content.AwakenAffixPctAt(3) / 100m:0.##}倍）。気に入った1本を使い込みましょう。\n" +
             "・星図：旅人ごとの星の経験で最大" + StarProgression.MaxPoints + "ポイントを得ます。図鑑・テスト用の追加分は別枠です。始まりの星から線でつながる星へ伸ばし、到達刻印は星のレベルに応じて最大3つまで選べます。夢のレベルは星のポイントではなく、工房や夢の圧に関わります。夢の圧が高まると敵が強くなり、各ウェーブの戦闘中に敵の数も増えます。追加分の報酬は増加幅に応じて調整します。ボスの数は増えません。\n" +
             "・工房：余った素材で、鞄や保管庫の拡張など、ずっと続く便利な強化を解放します。\n" +
             "・依頼：遠征ごとに3つ出ます。達成すると、欠片と経験値（依頼によっては調律石も）がもらえます。",
@@ -1106,7 +1106,7 @@ namespace SodRpg.Mod
             "<b>Growing your gear</b>\n" +
             "- Gear: each Traveler has six slots: weapon, head, armor, hands, feet and charm.\n" +
             $"- Forge: enhance with shards (+{Content.EnhanceMilestoneFirst} and +{Content.EnhanceMilestoneSecond} add an affix or a power), reroll an affix with tuning stones and pick from {Content.RetuneChoices} options. Epics and legendaries pay x{Content.ForgeMaterialCostMultiplier(Rarity.Epic)} the base materials for enhancement, retuning, limit breaks and affix rerolls. Salvage the rest into shards.\n" +
-            $"- Awakening: legendaries gather power as the Traveler wearing them defeats enemies; at {Content.AwakenThresholdFor(1)}, {Content.AwakenThresholdFor(2)} and {Content.AwakenThresholdFor(3)} they reach Awakening I, II and III (powers x{Content.AwakenPowerPctAt(1) / 100m:0.##}, x{Content.AwakenPowerPctAt(2) / 100m:0.##}, x{Content.AwakenPowerPctAt(3) / 100m:0.##}). Pick a favourite and keep using it.\n" +
+            $"- Awakening: legendaries gather power as the Traveler wearing them defeats enemies; at {Content.AwakenThresholdFor(1)}, {Content.AwakenThresholdFor(2)} and {Content.AwakenThresholdFor(3)} they reach Awakening I, II and III (powers x{Content.AwakenPowerPctAt(1) / 100m:0.##}, x{Content.AwakenPowerPctAt(2) / 100m:0.##}, x{Content.AwakenPowerPctAt(3) / 100m:0.##}; affixes x{Content.AwakenAffixPctAt(1) / 100m:0.##}, x{Content.AwakenAffixPctAt(2) / 100m:0.##}, x{Content.AwakenAffixPctAt(3) / 100m:0.##}). Pick a favourite and keep using it.\n" +
             "- Star Map: each Traveler earns up to " + StarProgression.MaxPoints + " points from their own star XP, plus separate codex/test bonuses. Grow along connections from the starting star; choose up to three keystones as your star level rises. Dream Level affects workshop access and dream pressure, not star points. Higher pressure strengthens enemies and mixes additional enemies into each combat wave. Their rewards scale with added density; bosses are never added.\n" +
             "- Workshop: unlock permanent upgrades shared by all Travelers.\n" +
             "- Bounties: 3 per expedition, rewarding shards, tuning stones and experience.");
@@ -1507,7 +1507,7 @@ namespace SodRpg.Mod
                 GUILayout.Label(UiStyles.Colored(Loc.T($"限界突破 {r.LimitBreaks}/{Content.MaxLimitBreaks(r.Rarity)}（上限 +{Content.MaxEnhanceFor(r)}）",
                     $"Limit breaks {r.LimitBreaks}/{Content.MaxLimitBreaks(r.Rarity)} (cap +{Content.MaxEnhanceFor(r)})"), "#ffd36e"), _st.Small);
             var imp = r.Implicit;
-            GUILayout.Label(UiStyles.Colored(Content.FormatStat(imp.Stat, imp.Value), "#c8c8ff") + Loc.T("  <color=#aaa>（この種類が必ず持つ性能）</color>", "  <color=#aaa>(always on this type)</color>"), _st.Label);
+            GUILayout.Label(UiStyles.Colored(Content.FormatStat(imp.Stat, imp.Value), "#c8c8ff") + Loc.T("  <color=#aaa>（この土台が必ず持つ性能）</color>", "  <color=#aaa>(always on this base)</color>"), _st.Label);
             // 固有効果は遺物の個性なので、特性より先に見せる。
             foreach (var pw in r.EffectivePowers()) GUILayout.Label(UiStyles.Colored(Content.FormatPowerBullets(pw.Power, pw.Value), "#e0b0ff"), _st.Label);
             if (r.BossMove != null)
@@ -1528,6 +1528,17 @@ namespace SodRpg.Mod
                 }
                 else
                     GUILayout.Label("<i>" + UiStyles.Colored(u.Lore.ToString(), "#c9a86a") + "</i>", _st.Small);
+            }
+            else if (r.NamedId != null)
+            {
+                // 銘品（v1.32）：一言と組も、固有品と同じ位置に出す（図鑑の詳細と揃える）。
+                string lore = NamedItems.LoreLine(r);
+                if (!string.IsNullOrEmpty(lore)) GUILayout.Label("<i>" + UiStyles.Colored(lore, "#c9a86a") + "</i>", _st.Small);
+                int worn = 0;
+                if (NamedItems.TryGetNamed(r.NamedId, out var namedDef) && namedDef.MiniSetId != null)
+                    _s.CurrentBuild(HeroKey).MiniSets.TryGetValue(namedDef.MiniSetId, out worn);
+                string mini = NamedItems.MiniSetLine(r, worn);
+                if (!string.IsNullOrEmpty(mini)) GUILayout.Label(UiStyles.Colored(mini, "#7fd8ff"), _st.Small);
             }
         }
 
@@ -1560,7 +1571,7 @@ namespace SodRpg.Mod
             string next = Content.AwakenNumeral(level + 1);
             int nextPower = Content.AwakenPowerPctAt(level + 1), nextAffix = Content.AwakenAffixPctAt(level + 1);
             return done + Loc.T(
-                $"覚醒{next}まで {bar} {now}/{to}\n<color=#8a8aa0>装着した旅人で敵を倒すと溜まります（エリート{Content.AwakenPoints(MonsterTier.MiniBoss, false)}・ボス{Content.AwakenPoints(MonsterTier.Boss, false)}・悪夢化は{Content.AwakenNightmareMultiplier}倍）。覚醒{next}で固有効果が{nextPower / 100f:0.##}倍、特性が{nextAffix / 100f:0.##}倍になります（全{Content.MaxAwakenLevel}段）。</color>",
+                $"覚醒{next}まで {bar} {now}/{to}\n<color=#8a8aa0>装着した旅人で敵を倒すと溜まる（エリート{Content.AwakenPoints(MonsterTier.MiniBoss, false)}・ボス{Content.AwakenPoints(MonsterTier.Boss, false)}・悪夢化は{Content.AwakenNightmareMultiplier}倍）。覚醒{next}で固有効果が{nextPower / 100f:0.##}倍、特性が{nextAffix / 100f:0.##}倍になる（全{Content.MaxAwakenLevel}段）。</color>",
                 $"Awakening {next} {bar} {now}/{to}\n<color=#8a8aa0>Fills as the Traveler wearing it defeats enemies (elite {Content.AwakenPoints(MonsterTier.MiniBoss, false)}, boss {Content.AwakenPoints(MonsterTier.Boss, false)}, nightmares x{Content.AwakenNightmareMultiplier}). Awakening {next}: powers x{nextPower / 100f:0.##}, affixes x{nextAffix / 100f:0.##} ({Content.MaxAwakenLevel} levels).</color>");
         }
 
@@ -2920,8 +2931,8 @@ namespace SodRpg.Mod
             GUILayout.Label(Loc.T($"<color=#8a8aa0>次は {DailyRollover()} に切り替わります。</color>", $"<color=#8a8aa0>Changes at {DailyRollover()}.</color>"), _st.Small);
             GUILayout.Label(Loc.T("記録", "Records"), _st.Header);
             GUILayout.Label(Loc.T(
-                $"夢のレベル {p.DreamLevel}（{p.DreamXp}/{need}）\n遠征 {st.Runs}回　踏破 {st.Victories}　全滅 {st.Defeats}\n撃破 {st.Kills}　遺物 {st.RelicsFound}個（固有品 {st.LegendariesFound}）\n確保した最高潜行 {st.BestHeatSecured}　図鑑 {p.Codex.Count}/{Content.Bases.Count + Content.Uniques.Count}",
-                $"Dream Level {p.DreamLevel} ({p.DreamXp}/{need})\nRuns {st.Runs}  Victories {st.Victories}  Defeats {st.Defeats}\nKills {st.Kills}  Relics {st.RelicsFound} (legendary {st.LegendariesFound})\nBest secured depth {st.BestHeatSecured}  Codex {p.Codex.Count}/{Content.Bases.Count + Content.Uniques.Count}"), _st.Small);
+                $"夢のレベル {p.DreamLevel}（{p.DreamXp}/{need}）\n遠征 {st.Runs}回　踏破 {st.Victories}　全滅 {st.Defeats}\n撃破 {st.Kills}　遺物 {st.RelicsFound}個（固有品 {st.LegendariesFound}）\n確保した最高潜行 {st.BestHeatSecured}　図鑑 {p.Codex.Count}/{Content.Bases.Count + Content.Uniques.Count + NamedItems.All.Count}",
+                $"Dream Level {p.DreamLevel} ({p.DreamXp}/{need})\nRuns {st.Runs}  Victories {st.Victories}  Defeats {st.Defeats}\nKills {st.Kills}  Relics {st.RelicsFound} (legendary {st.LegendariesFound})\nBest secured depth {st.BestHeatSecured}  Codex {p.Codex.Count}/{Content.Bases.Count + Content.Uniques.Count + NamedItems.All.Count}"), _st.Small);
             DrawInfinityRecords(p);
             if (p.Run != null)
             {

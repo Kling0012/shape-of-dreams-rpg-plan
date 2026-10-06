@@ -349,7 +349,7 @@ namespace SodRpg.Core.Game
 
         private static string Mult(double m) => m.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
         private static readonly string DepthBonusJa =
-            $"確保したときの潜行ボーナスが{PactBalance.DoubleDepthBonusMultiplier}倍になります";
+            $"確保したときの潜行ボーナスが{PactBalance.DoubleDepthBonusMultiplier}倍になる";
         private static readonly string DepthBonusEn =
             (PactBalance.DoubleDepthBonusMultiplier == 2 ? "double" : $"x{PactBalance.DoubleDepthBonusMultiplier}") + " delve bonus when you secure";
 
@@ -358,21 +358,21 @@ namespace SodRpg.Core.Game
         {
             bool ja = Loc.Japanese;
             var gains = new List<string>();
-            if (d.DropBonus > 0) gains.Add(ja ? $"遺物が{(int)Math.Round(d.DropBonus * 100)}%多く落ちます" : $"{(int)Math.Round(d.DropBonus * 100)}% more relic drops");
-            if (d.Luck > 0) gains.Add(ja ? $"レア度の高い遺物が{LuckWord(d.Luck, true)}出やすくなります" : $"{LuckWord(d.Luck, false)}better relic rarity");
-            if (d.ShardMult > 1.0) gains.Add(ja ? $"敵を倒して得る欠片が{Mult(d.ShardMult)}倍になります" : $"x{Mult(d.ShardMult)} shards from kills");
-            if (d.XpMult > 1.0) gains.Add(ja ? $"敵を倒して得る経験値が{Mult(d.XpMult)}倍になります" : $"x{Mult(d.XpMult)} experience from kills");
-            if (d.TuningOnElite > 0) gains.Add(ja ? $"エリートとボスが調律石を{d.TuningOnElite}つ多く落とします" : $"elites and bosses drop {d.TuningOnElite} extra tuning stone(s)");
+            if (d.DropBonus > 0) gains.Add(ja ? $"遺物が{(int)Math.Round(d.DropBonus * 100)}%多く落ちる" : $"{(int)Math.Round(d.DropBonus * 100)}% more relic drops");
+            if (d.Luck > 0) gains.Add(ja ? $"レア度の高い遺物が{LuckWord(d.Luck, true)}出やすくなる" : $"{LuckWord(d.Luck, false)}better relic rarity");
+            if (d.ShardMult > 1.0) gains.Add(ja ? $"敵を倒して得る欠片が{Mult(d.ShardMult)}倍になる" : $"x{Mult(d.ShardMult)} shards from kills");
+            if (d.XpMult > 1.0) gains.Add(ja ? $"敵を倒して得る経験値が{Mult(d.XpMult)}倍になる" : $"x{Mult(d.XpMult)} experience from kills");
+            if (d.TuningOnElite > 0) gains.Add(ja ? $"エリートとボスが調律石を{d.TuningOnElite}つ多く落とす" : $"elites and bosses drop {d.TuningOnElite} extra tuning stone{(d.TuningOnElite == 1 ? "" : "s")}");
             if (d.DoubleDepthBonus) gains.Add(ja ? DepthBonusJa : DepthBonusEn);
             foreach (var b in d.Boons) gains.Add(Content.FormatStat(b.Stat, b.Value));
             string curse = PactDef.StrengthName(d.CurseStrength);
             if (ja)
             {
                 string cost = d.CurseStrength >= 3 ? "強い" : d.CurseStrength == 2 ? "中くらいの" : "弱い";
-                string echo = d.NoEcho ? $"。全滅したときに戻るはずの欠片（{Workshop.EchoPercent(null)}%）も戻らなくなります" : "";
-                return $"代償：{cost}呪いを1つ受けます{echo}。見返り：{string.Join("。", gains)}。";
+                string echo = d.NoEcho ? $"。全滅したときに戻るはずの欠片（{Workshop.EchoPercent(null)}%）も戻らない" : "";
+                return $"代償：{cost}呪いを1つ受ける{echo}。見返り：{string.Join("。", gains)}。";
             }
-            string echoEn = d.NoEcho ? ", and no shard echoes if your party falls" : "";
+            string echoEn = d.NoEcho ? $", and the {Workshop.EchoPercent(null)}% shard echoes you would recover on a party wipe are lost instead" : "";
             return $"Cost: a {curse.ToLowerInvariant()} curse{echoEn}. Reward: {string.Join("; ", gains)}.";
         }
 

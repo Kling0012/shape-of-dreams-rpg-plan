@@ -15,8 +15,8 @@ Turns every run into part of a long RPG journey: relics you keep, a risky "secur
 [*] 本体の仕組みに反応する固有効果：Q・W・Eの使い分け、会心、スタンやスロウ、超過回復、エッセンスの品質、ハンター、聖堂、燃え広がる火。
 [*] Sets help you complete what you have started: the missing pieces of a set you own drop more often.
 [*] すでに持っているセットの、まだ持っていない部位は出やすくなります。
-[*] Legendaries awaken with use: the Traveler wearing one fills its awakening as they defeat enemies (elites and bosses count more, nightmares double). Awakened, its powers become 1.5x and its affixes 1.2x.
-[*] 固有品は使い込むほど目覚めます。装着した旅人で敵を倒すと覚醒の力が溜まり（エリートやボスは多く、悪夢化した敵は2倍）、覚醒すると固有効果が1.5倍、特性が1.2倍になります。
+[*] Legendaries awaken with use: the Traveler wearing one fills its awakening as they defeat enemies (elites and bosses count more, nightmares double). Awakening has 3 levels; powers grow to 1.25x, 1.5x and 1.8x, and affixes to 1.1x, 1.2x and 1.3x.
+[*] 固有品は使い込むほど目覚めます。装着した旅人で敵を倒すと覚醒の力が溜まり（エリートやボスは多く、悪夢化した敵は2倍）、覚醒は3段階で、固有効果は1.25・1.5・1.8倍、特性は1.1・1.2・1.3倍になります。
 [/list]
 
 [h2]Secure or Delve / 確保か、深く潜るか[/h2]

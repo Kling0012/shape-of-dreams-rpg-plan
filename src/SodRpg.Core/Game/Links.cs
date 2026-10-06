@@ -334,8 +334,9 @@ namespace SodRpg.Core.Game
                     limitEn = " (Only the strongest active link applies. It refreshes the duration without stacking, and ends when its equip requirements are removed.)";
                     break;
                 default:
-                    limitJa = "（同種の連携は加算。合計の上限なし）";
-                    limitEn = " (Links of the same kind add together, with no total cap.)";
+                    int linkCap = Cap(link.Kind, link.Requires.Length);
+                    limitJa = linkCap > 0 ? $"（同種の連携は加算。元の値の合計は最大{linkCap}%）" : "（同種の連携は加算。合計の上限なし）";
+                    limitEn = linkCap > 0 ? $" (Links of the same kind add together, capped at {linkCap}% of the original values.)" : " (Links of the same kind add together, with no total cap.)";
                     break;
             }
             return Loc.Japanese ? DescribeJa(link, isSatisfied, value) + limitJa : DescribeEn(link, isSatisfied, value) + limitEn;

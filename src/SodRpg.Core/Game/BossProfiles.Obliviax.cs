@@ -51,8 +51,8 @@ namespace SodRpg.Core.Game
             return new[] { new BossRewardProfile(ObliviaxRewardId,ObliviaxSetId,"St_U_ShoutOfOblivion",BossRewardAdapter.ShoutOfOblivion,new[]
             {
                 new BossRewardStage(1,new Txt("自身のシャウトスキルの狩猟倍率に、現在の狩猟レベル（0〜5）1ごとに0.03を加算する（最大ボーナス+0.15、狩猟レベル0では加算なし。会心発生条件や他の記憶は変化しない）。", "Increase your Shout skill's hunting multiplier by 0.03 per current hunting level (0–5), up to a +0.15 bonus. Hunting level 0 grants no bonus. Critical hit conditions and other memories remain unchanged."),new[] { hunt }),
-                new BossRewardStage(2,new Txt("2部位効果に加えて、シャウトスキルの後退距離を4mから5mへ延長する（追加上限1m。所要時間0.4秒、地形を貫通しない挙動は維持される）。", "In addition to the 2-piece effect, extend your Shout skill's backward movement from 4m to 5m, adding at most 1m. It still takes 0.4 seconds and cannot pass through terrain."),new[] { hunt,step }),
-                new BossRewardStage(3,new Txt("4部位効果に加えて、シャウトスキル命中時のスタン時間を0.4秒延長する（ボスと行動妨害が効かない敵を除く敵に対し、1回の発動につき1体あたり1回のみ有効。無敵時間は延長されない）。", "In addition to the 4-piece effect, extend the stun inflicted by your Shout skill by 0.4 seconds. This applies once per enemy per use, except bosses and enemies immune to crowd control. Invulnerability duration is not extended."),new[] { hunt,step,stun }),
+                new BossRewardStage(2,new Txt("固有報酬の段階1の効果に加え、シャウトスキルの後退距離を4mから5mへ延長する（追加上限1m。所要時間0.4秒、地形を貫通しない挙動は維持される）。", "In addition to boss reward stage 1, extend your Shout skill's backward movement from 4m to 5m, adding at most 1m. It still takes 0.4 seconds and cannot pass through terrain."),new[] { hunt,step }),
+                new BossRewardStage(3,new Txt("固有報酬の段階2の効果に加え、シャウトスキル命中時のスタン時間を0.4秒延長する（ボスと行動妨害が効かない敵を除く敵に対し、1回の発動につき1体あたり1回のみ有効。無敵時間は延長されない）。", "In addition to boss reward stage 2, extend the stun inflicted by your Shout skill by 0.4 seconds. This applies once per enemy per use, except bosses and enemies immune to crowd control. Invulnerability duration is not extended."),new[] { hunt,step,stun }),
             }) };
         }
         public static UniqueDef[] CreateObliviaxPieces() => new[]
