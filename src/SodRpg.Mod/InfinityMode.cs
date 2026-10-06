@@ -23,6 +23,7 @@ namespace SodRpg.Mod
         internal static void StopExpedition(string reason)
         {
             if (!NetworkServer.active || ExpeditionHalted) return;
+            ClearPendingTravel();
             var settings = NetworkedManagerBase<GameSettingsManager>.softInstance;
             if (settings == null) return;
             settings.customData[RosterHaltKey] = reason;
@@ -83,6 +84,7 @@ namespace SodRpg.Mod
         internal static void DisableFeature(string reason, Exception error)
         {
             Available = false;
+            ClearPendingTravel();
             _restoring = false;
             _refresh = false;
             _newInfinity = false;
@@ -232,6 +234,7 @@ namespace SodRpg.Mod
         internal static void StartNewGame()
         {
             if (!Available) return;
+            ClearPendingTravel();
             _restoring = false; _refresh = false;
             _newInfinity = ClientSession.HostChosenInfinityEnabled;
             _initial = null; _runId = null;
@@ -251,6 +254,7 @@ namespace SodRpg.Mod
         internal static void BeginRestore()
         {
             _restoring = true; _initial = null; _newInfinity = false; _refresh = false;
+            ClearPendingTravel();
             Acks.Clear(); _choice = null; _choiceText = null;
         }
         internal static void FinishRestore()
@@ -394,6 +398,7 @@ namespace SodRpg.Mod
             try
             {
                 HostAuthority.CheckInfinityRunCompatibility();
+                TickPendingTravel();
                 TickNative();
             }
             catch (Exception ex) { InterceptionFailed(nameof(Tick), ex); }
@@ -464,18 +469,18 @@ namespace SodRpg.Mod
             }
         }
 
-        internal static bool RouteTravel(ZoneManager zone, ref int to, bool isSidetrackTransition)
+        internal static bool RouteTravel(ZoneManager zone, ref int to, bool isSidetrackTransition,
+            bool advanceTurn, bool ignoreInterrupts)
         {
             if (!Enabled || !NetworkServer.active) return true;
             var state = State;
-            if (state == null || !CanAdvance || !ClientSession.HostInfinityRewardsSettled
-                || zone.isInAnyTransition || to < 0 || to >= zone.nodes.Count || isSidetrackTransition) return false;
-            if (CurrentChoice != null && CurrentChoice.GraphEpoch == state.GraphEpoch) return false;
-            if (state.Phase != InfinityPhase.Exploring && state.Phase != InfinityPhase.BossDue) return false;
-            var room = SingletonDewNetworkBehaviour<Room>.softInstance;
-            if (room == null || !room.didClearRoom) return false;
-            if (!IsRevealDestination(zone, to)) return false;
-            if (zone.nodes[to].type == WorldNodeType.ExitBoss && state.Phase != InfinityPhase.BossDue) return false;
+            if (isSidetrackTransition || !IsTravelRequestValid(zone, state, to)) return false;
+            if (!CanAdvance || !ClientSession.HostInfinityRewardsSettled)
+            {
+                HoldTravel(zone, state, to, advanceTurn, ignoreInterrupts);
+                return false;
+            }
+            ClearPendingTravel();
             if (state.Phase == InfinityPhase.BossDue && zone.nodes[to].type == WorldNodeType.ExitBoss)
             {
                 if (!state.TryEnterBoss()) return false;
@@ -687,11 +692,12 @@ namespace SodRpg.Mod
     [HarmonyPatch(typeof(ZoneManager), nameof(ZoneManager.TravelToNode))]
     internal static class InfinityTravel
     {
-        private static bool Prefix(ZoneManager __instance, ref int to, bool isSidetrackTransition)
+        private static bool Prefix(ZoneManager __instance, ref int to, bool isSidetrackTransition,
+            bool advanceTurn, bool ignoreInterrupts)
         {
             if (!InfinityMode.Available) return true;
             int original = to;
-            try { return InfinityMode.RouteTravel(__instance, ref to, isSidetrackTransition); }
+            try { return InfinityMode.RouteTravel(__instance, ref to, isSidetrackTransition, advanceTurn, ignoreInterrupts); }
             catch (Exception ex)
             {
                 to = original;

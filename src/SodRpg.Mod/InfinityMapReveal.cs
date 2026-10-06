@@ -193,7 +193,7 @@ namespace SodRpg.Mod
                 // even when it is not adjacent (scheduled boss or a finite-graph dead end).
                 // Do not patch IsNodeConnected: generation and hunters need the real graph.
                 if (!NetworkServer.active || __instance.isInAnyTransition || __instance.isVoting
-                    || sender == null || !InfinityMode.CanAdvance || !InfinityMode.IsRevealDestination(__instance, index)) return false;
+                    || sender == null || InfinityMode.Restoring || !InfinityMode.IsRevealDestination(__instance, index)) return false;
                 var player = sender.GetPlayer();
                 if (player == null) return false;
                 if (__instance.ShouldVoteOnTravel()) __instance.StartVoteNextNode(player, index);

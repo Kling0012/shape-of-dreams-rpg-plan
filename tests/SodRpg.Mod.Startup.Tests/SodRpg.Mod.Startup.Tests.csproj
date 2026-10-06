@@ -21,6 +21,7 @@
   <Compile Include="../../src/SodRpg.Mod/InfinityMode.cs" Link="ModUnderTest/InfinityMode.cs" />
   <Compile Include="../../src/SodRpg.Mod/InfinityMapReveal.cs" Link="ModUnderTest/InfinityMapReveal.cs" />
   <Compile Include="../../src/SodRpg.Mod/InfinityMapPresentation.cs" Link="ModUnderTest/InfinityMapPresentation.cs" />
+  <Compile Include="../../src/SodRpg.Mod/InfinityTravelRequest.cs" Link="ModUnderTest/InfinityTravelRequest.cs" />
   <Compile Include="../../src/SodRpg.Mod/ClientSession.InfinitySettings.cs" Link="ModUnderTest/ClientSession.InfinitySettings.cs" />
   <Compile Include="../../src/SodRpg.Mod/HostAuthority.Infinity.cs" Link="ModUnderTest/HostAuthority.Infinity.cs" />
   <Compile Include="../../src/SodRpg.Mod/HostAuthority.Hello.cs" Link="ModUnderTest/HostAuthority.Hello.cs" />
