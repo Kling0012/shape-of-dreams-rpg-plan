@@ -687,6 +687,7 @@ namespace SodRpg.Mod
                 var e = run.OfferedEvent;
                 bool merchant = e == DreamEvent.Merchant;
                 bool ok = DreamEvents.CanUse(_s.Profile, e, merchant, out string why, _s.Trades);
+                if (_s.CoopTradeLocked) { ok = false; why = Loc.T("交換を確認中です。", "A trade is being confirmed."); }
                 if (merchant && ok && _s.LocalGold < _s.MerchantPrice()) { ok = false; why = Loc.T($"ゴールドが足りません（{_s.MerchantPrice()}G）", $"Not enough gold ({_s.MerchantPrice()}G)"); }
                 GUILayout.BeginHorizontal();
                 var art = GUILayoutUtility.GetRect(64, 64, GUILayout.Width(64), GUILayout.Height(64));
@@ -1196,6 +1197,8 @@ namespace SodRpg.Mod
                     "Earn star XP per Traveler and grow along connections from the starting star. Respec is free. Dream Level and spent stars raise dream pressure: stronger enemies, with additions mixed into each combat wave. Their rewards scale with added density; bosses are never added.");
                 case 3: return Loc.T("余った欠片と調律石で、鞄や保管庫の拡張など、ずっと続く便利な強化を解放します。強さは上がりませんが、遠征がぐっと楽になります。",
                     "Spend spare shards and tuning stones on permanent conveniences such as a bigger satchel and stash. They don't make you stronger, but they make expeditions much easier.");
+                case 5: return Loc.T("同じセッションの相手と、未装着の保管庫・鞄の遺物、所持している欠片・調律石（鞄の所持分を含む）を交換します。双方が内容を確認した後、ホストが確定します。",
+                    "Trade unequipped stash/satchel relics and owned shards/tuning stones, including satchel balances, with a player in this session. The host commits after both players confirm the offers.");
                 default: return Loc.T("遊び方の確認、遠征の状態、これまでの記録と図鑑を見られます。",
                     "Read how to play, check expedition status, and browse your records and codex.");
             }

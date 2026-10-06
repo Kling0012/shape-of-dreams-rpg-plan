@@ -35,11 +35,30 @@ namespace SodRpg.Core.Game
         public Profile Restore(Profile current, Profile lobbyBaseline = null, List<string> notes = null)
         {
             if (current == null) throw new ArgumentNullException(nameof(current));
-            var restored = ProfileCodec.ReadCheckpointProfile(Snapshot, notes, current);
+            // Trades replace immutable snapshots in the retained list. A caller may still hold the old object.
+            var latest = current.ContinueCheckpoints.Find(checkpoint => checkpoint.Id == Id && checkpoint.RunId == RunId);
+            var restored = ProfileCodec.ReadCheckpointProfile(latest?.Snapshot ?? Snapshot, notes, current);
             if (restored.Run?.RunId != RunId) throw new LedgerFormatException("Checkpoint expedition does not match its ID.");
             if (lobbyBaseline == null && !string.IsNullOrEmpty(current.ContinueLobbyBaseline))
                 // The baseline is only a comparison input, not the profile being restored.
                 lobbyBaseline = ProfileCodec.ReadCheckpointProfile(current.ContinueLobbyBaseline);
+            if (!string.IsNullOrEmpty(current.CoopTradeEconomy))
+            {
+                var economyNotes = new List<string>();
+                var economy = ProfileCodec.ReadCheckpointProfile(current.CoopTradeEconomy, economyNotes);
+                if (economy.CoopTradeEconomy != null || economyNotes.Count != 0
+                    || ProfileCodec.WriteCheckpointProfile(economy.Clone()) != current.CoopTradeEconomy)
+                    throw new LedgerFormatException(Loc.T("協力取引の経済保存情報が不正です。", "Cooperative trade economic checkpoint is invalid."));
+                if (restored.CoopTradeEconomy != current.CoopTradeEconomy)
+                    CoopTradeRules.CopyEconomics(restored, economy);
+                if (lobbyBaseline != null && lobbyBaseline.CoopTradeEconomy != current.CoopTradeEconomy)
+                {
+                    lobbyBaseline = lobbyBaseline.Clone();
+                    CoopTradeRules.CopyEconomics(lobbyBaseline, economy);
+                    CoopTradeRules.CopyDurableState(lobbyBaseline, current);
+                }
+            }
+            CoopTradeRules.CopyDurableState(restored, current);
             if (lobbyBaseline != null)
             {
                 if (!ReplayLobbyEconomy(restored, lobbyBaseline, current))
@@ -47,6 +66,8 @@ namespace SodRpg.Core.Game
                         "Lobby crafting and trade changes were reverted because their relics or materials are not available at the continue point."));
                 ReplayLobbyHeroes(restored, lobbyBaseline, current);
             }
+            // Never erase durable reservation or receipt deduplication through native Continue.
+            CoopTradeRules.CopyDurableState(restored, current);
             // Preferences are not expedition earnings. Revision remains monotonic for disk reconciliation.
             restored.Revision = current.Revision;
             restored.Japanese = current.Japanese;

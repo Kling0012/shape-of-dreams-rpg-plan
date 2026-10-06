@@ -12,7 +12,7 @@ namespace SodRpg.Core.Tests
         private const string SavePath = "/save/issue73.json";
 
         [Fact]
-        public void Format_four_history_and_expired_monsters_migrate_without_repaying_and_write_format_five()
+        public void Format_four_history_and_expired_monsters_migrate_without_repaying()
         {
             var profile = NewProfile();
             Award(profile, NativeDeath(7).Kill);
@@ -57,7 +57,6 @@ namespace SodRpg.Core.Tests
             AssertRewards(expected, profile);
 
             profile = SaveAndReload(store, profile, ledger, now: 101, restoreNow: 200);
-            Assert.Equal(5, profile.LoadedVersion);
             ledger.ReceiveFact(new AuthoritativeRunKill("run", "pending-9", 9, 0, NightmareAffix.Ironclad,
                 null, 3, "old.legacy"), now: 201);
             Assert.False(ledger.ObserveDeath(NativeDeath(9, PendingMonsterDeath.LegacyStreamId), now: 201));

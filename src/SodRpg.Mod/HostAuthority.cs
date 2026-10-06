@@ -313,8 +313,9 @@ namespace SodRpg.Mod
                 if (_pressurePlayerCount >= 0 || _registeredOn != null || _cem != null || _am != null || _zone != null) Detach();
                 return;
             }
-            EnsureRegistered();
             NativeInstance = this;
+            TickCoopTrade();
+            EnsureRegistered();
             if (_registeredOn == null) return;
             if (_tickStages == null) BuildTickStages();
             // #161: ダメージイベントごとの全走査をやめ、ティックごとに1回だけ判定する。
@@ -1202,6 +1203,7 @@ namespace SodRpg.Mod
         /// <summary>全キャラから補正を外し、登録を解除する（MODの再読み込み・終了時）。</summary>
         public void Detach()
         {
+            DetachCoopTrade();
             ClearAssignedMechanismSession();
             if (NativeInstance == this) NativeInstance = null;
             ReleasePowerShields();
