@@ -208,9 +208,11 @@ def select_tests(changed, files, diffs=None) -> Selection:
             continue
         if path in ("tools/balance/forge.json", "tools/balance/stars.json",
                     "tools/balance/run-growth.json", "tools/balance/star-progression.json",
-                    "tools/balance/star_progression_values.py",
+                    "tools/balance/star_progression_values.py", "tools/balance/powers.json",
+                    "tools/balance/powers_values.py",
                     "tools/balance/gen_cs.py", "tools/balance/star_values.py",
                     "src/SodRpg.Core/Game/Balance/Forge.Generated.cs",
+                    "src/SodRpg.Core/Game/Balance/Powers.Generated.cs",
                     "src/SodRpg.Core/Game/Balance/Stars.Generated.cs"):
             selection.run_all = True
             selection.reasons.append(f"balance input changed: {path}")

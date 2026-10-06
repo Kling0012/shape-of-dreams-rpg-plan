@@ -16,6 +16,7 @@ import pressure_values
 import monster_values
 import infinity_values
 import equipment_items_values
+import powers_values
 import equipment_pools_values
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -55,6 +56,7 @@ def generate(check=False):
     outputs.update(monsters)
     outputs.update(infinity)
     outputs.update(equipment_items_values.render_outputs())
+    outputs.update(powers_values.render_outputs())
     outputs.update(equipment_pools_values.render_outputs())
     return stars.publish_outputs(outputs, check=check)
 

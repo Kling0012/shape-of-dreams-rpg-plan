@@ -5,9 +5,9 @@
 `star-progression.json` の星XP曲線・費用・報酬・刻印枠の解放、
 `gear.json` の装備レベル成長・固定攻魔上限、`sets.json` の通常セット2/3/6部位効果、
 `pressure.json` の夢の圧・深度、`monsters.json` の悪夢・変種・敵行動、
-`infinity.json` の供給予算・周期・圧段階上限を型付きC#へ生成します。
-記憶ダメージはmanifestの480親＋258選択肢と旧ルート98成分、計836欄を移行済みです。
-星ID・段数・費用・選択肢・保存形式5・Protocol 23は維持し、調整した有効値を内容照合に含めます。
+`infinity.json` の供給予算・周期・圧段階上限、`powers.json` のPowerの時間・距離・条件（127欄）を
+型付きC#へ生成します。記憶ダメージはmanifestの480親＋258選択肢と旧ルート98成分、計836欄を移行済みです。
+星ID・段数・費用・選択肢・保存形式5・Protocol 23は維持し、調整した有効値（装備・セット・Powerを含む）を内容照合に含めます。
 段階2ではMemoryHaste・GimmickBoost・GimmickParam・Notable・Keystone・Statの
 明示的な効果欄と旧星・汎用星・sampleの数値を追加しました。今回の切替ではゲーム値を変更せず、
 生成後の採用済み定義と内容指紋を維持します。実行時のJSON読込はありません。
@@ -519,3 +519,34 @@ JSONの空白／キー順・比較条件・ファイルハッシュは新しい�
 別の一時ビルドでWeapon / Momentumの `max` だけを5→6にした実動確認では、
 Core抽選上限が6、上の派生銘品が4となり、内容指紋も変わることを確認しました。
 この一時変更はチェックインした表・生成物には反映していません。
+
+## Powerの時間・距離・条件（Issue #149 段階8・前半）
+
+Power側の調整数値の原本は `tools/balance/powers.json` です。
+1効果の「表・Core計算・Mod適用・説明表示」が同じ生成定数を参照します。
+生成先は `src/SodRpg.Core/Game/Balance/Powers.Generated.cs`（`PowersBalance`）で、
+`PowerRuntime` の公開定数は同クラスへのエイリアスとして維持します。
+
+| セクション | 対象 | 例 |
+| --- | --- | --- |
+| `runtime` | `PowerRuntime.cs` の公開定数55＋障壁の最初の遅延 | `MomentumDuration`、`ChainChance`（double） |
+| `newPowers` | `PowerRuntime.NewPowers.cs` の定数3と式内の調整値、新Power44種の適用時間・距離 | `RunUpDistance`、`TollOfGrudgeThreshold`（比率） |
+| `host` | Mod側だけで適用する値 | `AegisShieldDuration`、`BulwarkRange` / `FrenzyRange` |
+| `lastStarlight` | `HostAuthority.BossLastStarlight.cs` の適応delta | `LastStarlightDelayReductionMax`、`LastStarlightAttractionCap` |
+
+- 単位はキーごとに固定です。`seconds`／`meters`／`count`／`percent`／`gold` は正、
+  `ratio` は0より大きく1未満。しきい値は従来のfloat比率（0.3＝30%）のまま保存し、
+  表示は `:0%` で整数パーセントへ出します。intとfloat/doubleの区別もキーごとに固定です。
+- 同じ数字でも別の効果・別の意味のセルは統合しません（例: `BasicSplashRadius` は
+  会心の飛沫と詠唱の薙ぎの共有適用半径、`ConditionalPowerCap` と `PrimedPercentCap` は別原本）。
+  本体由来の属性スタック上限（光5・闇5）、Q/W/Eの3枠、報酬段階番号は調整対象外です。
+- Core式内の値（45秒ゲート、3体→4体、60%蓄積など）は生成定数へ置き換え、
+  Mod側の適用（半径・障壁時間・スロウ30%・2秒など）も同じ定数を使います。
+  `lastStarlight` の段階番号（stage 1/2/3の境界）はBossProfiles側の報酬構造なので
+  この表では扱いません。BossProfiles本体の数値は段階8ボス側の担当範囲です。
+- 移行は無調整です。初期表は追加の指紋レコードを出さず、ContentFingerprintは
+  移行前と同じ `10579-ab35d865a569c87b` を維持します（検証時点）。
+  1セル変更すると採用値の正準レコードが `balance:powers:v1:` 接頭辞で内容照合へ加わります。
+- 説明文（`Content.FormatPower` と `NewPowersV129.Describe` の日英両文）は生成定数を
+  補間します。移行時に2言語×全Power×代表値の全文が移行前と一致することを確認しました。
+  ゲーム実行時のJSON読込・Protocol・保存形式の変更はありません。
