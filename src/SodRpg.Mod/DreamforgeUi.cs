@@ -873,8 +873,8 @@ namespace SodRpg.Mod
                     ? (japanese ? "高難度・遺物多め" : "Hard · more relics")
                     : (japanese ? "最高難度・遺物さらに多め" : "Hardest · most relics");
             return japanese
-                ? $"<b>{interval}部屋 · {difficulty}</b>\n圧段階 +{pressure} · 敵数 +{countBonus * 100:0}%\n通常遺物の抽選 ×{relics:0.##}"
-                : $"<b>{interval} rooms · {difficulty}</b>\nPressure +{pressure} · enemies +{countBonus * 100:0}%\nOrdinary relic rolls ×{relics:0.##}";
+                ? $"<b>{interval}部屋 · {difficulty}</b>\n圧段階 +{pressure} · 敵数 +{countBonus * 100:0}%\n通常遺物の抽選・予算 ×{relics:0.##}"
+                : $"<b>{interval} rooms · {difficulty}</b>\nPressure +{pressure} · enemies +{countBonus * 100:0}%\nOrdinary rolls & budgets ×{relics:0.##}";
         }
 
         private void DrawInfinityChoice()
@@ -911,8 +911,8 @@ namespace SodRpg.Mod
                 GUILayout.Label(effects[i], _st.Small, _infinityEffectsSize);
             GUILayout.EndHorizontal();
             GUILayout.Label(Loc.T(
-                "敵数は圧による増加に加算。通常遺物＝エピック以下（上限適用前）。伝説・限定品・道標の固定保証の確率と枠は変更なし。",
-                "Enemies add to pressure's count bonus. Ordinary = Epic or below, before caps. Legendary, limited items and fixed waypoint guarantees unchanged."), _st.Small);
+                "敵数は圧の増加に加算。通常＝エピック以下で、抽選・出力・エピック予算を増幅。伝説・限定品・道標の固定保証は据え置き。",
+                "Enemies add to pressure. Ordinary = Epic or below: rolls, output & Epic budgets scale. Legendary, limited items & fixed waypoint guarantees unchanged."), _st.Small);
             // #144: host/solo judge only their own availability; a participant without the host's
             // answer yet sees "waiting for the host's setting", not an unexplained "disabled".
             string lobbySupportNotice = ClientSession.InfinitySupportNotice(_s.CanChooseRunRules);

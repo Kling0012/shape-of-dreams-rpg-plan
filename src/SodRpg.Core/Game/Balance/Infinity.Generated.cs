@@ -50,12 +50,15 @@ namespace SodRpg.Core.Game
         internal const int ShortPressureOffset = 4;
         internal const double ShortEnemyCountBonus = 4;
         internal const double ShortRelicMultiplier = 2;
+        internal const double ShortOrdinaryBudgetMultiplier = 2;
         internal const int MiddlePressureOffset = 2;
         internal const double MiddleEnemyCountBonus = 2;
         internal const double MiddleRelicMultiplier = 1.5;
+        internal const double MiddleOrdinaryBudgetMultiplier = 1.5;
         internal const int LongPressureOffset = 0;
         internal const double LongEnemyCountBonus = 0;
         internal const double LongRelicMultiplier = 1;
-        internal static readonly string ContentFingerprintRecord = "balance:infinity:v1:rates/relicsPerHour:double:credits/hour:30;rates/shardsPerHour:double:credits/hour:360;rates/tuningPerHour:double:credits/hour:10;rates/xpPerHour:double:credits/hour:1800;rates/starXpPerHour:double:credits/hour:1200;bursts/starXp:double:credits:40;rooms/lesser/increment:double:credits/room:10;rooms/normal/increment:double:credits/room:8;rooms/miniBoss/increment:double:credits/room:0.25;intervalScaling/short/pressureOffset:int:stages:4;intervalScaling/short/enemyCountBonus:double:multiplier:4;intervalScaling/short/relicMultiplier:double:multiplier:2;intervalScaling/middle/pressureOffset:int:stages:2;intervalScaling/middle/enemyCountBonus:double:multiplier:2;intervalScaling/middle/relicMultiplier:double:multiplier:1.5;intervalScaling/long/pressureOffset:int:stages:0;intervalScaling/long/enemyCountBonus:double:multiplier:0;intervalScaling/long/relicMultiplier:double:multiplier:1";
+        internal const double LongOrdinaryBudgetMultiplier = 1;
+        internal static readonly string ContentFingerprintRecord = "balance:infinity:v1:rates/relicsPerHour:double:credits/hour:30;rates/shardsPerHour:double:credits/hour:360;rates/tuningPerHour:double:credits/hour:10;rates/xpPerHour:double:credits/hour:1800;rates/starXpPerHour:double:credits/hour:1200;bursts/starXp:double:credits:40;rooms/lesser/increment:double:credits/room:10;rooms/normal/increment:double:credits/room:8;rooms/miniBoss/increment:double:credits/room:0.25;intervalScaling/short/pressureOffset:int:stages:4;intervalScaling/short/enemyCountBonus:double:multiplier:4;intervalScaling/short/relicMultiplier:double:multiplier:2;intervalScaling/short/ordinaryBudgetMultiplier:double:multiplier:2;intervalScaling/middle/pressureOffset:int:stages:2;intervalScaling/middle/enemyCountBonus:double:multiplier:2;intervalScaling/middle/relicMultiplier:double:multiplier:1.5;intervalScaling/middle/ordinaryBudgetMultiplier:double:multiplier:1.5;intervalScaling/long/pressureOffset:int:stages:0;intervalScaling/long/enemyCountBonus:double:multiplier:0;intervalScaling/long/relicMultiplier:double:multiplier:1;intervalScaling/long/ordinaryBudgetMultiplier:double:multiplier:1";
     }
 }

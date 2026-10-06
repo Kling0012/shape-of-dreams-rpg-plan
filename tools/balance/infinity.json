@@ -28,8 +28,8 @@
   },
   "run": { "defaultInterval": 10, "shortInterval": 10, "middleInterval": 15, "longInterval": 20, "maximumPressureStage": 100 },
   "intervalScaling": {
-    "short": { "pressureOffset": 4, "enemyCountBonus": 4, "relicMultiplier": 2 },
-    "middle": { "pressureOffset": 2, "enemyCountBonus": 2, "relicMultiplier": 1.5 },
-    "long": { "pressureOffset": 0, "enemyCountBonus": 0, "relicMultiplier": 1 }
+    "short": { "pressureOffset": 4, "enemyCountBonus": 4, "relicMultiplier": 2, "ordinaryBudgetMultiplier": 2 },
+    "middle": { "pressureOffset": 2, "enemyCountBonus": 2, "relicMultiplier": 1.5, "ordinaryBudgetMultiplier": 1.5 },
+    "long": { "pressureOffset": 0, "enemyCountBonus": 0, "relicMultiplier": 1, "ordinaryBudgetMultiplier": 1 }
   }
 }

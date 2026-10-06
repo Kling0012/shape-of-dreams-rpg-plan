@@ -177,7 +177,7 @@ namespace SodRpg.Core.Game
             int killHeat = heat ?? run.Heat;
             Waypoint killWaypoint = waypoint ?? run.ActiveWaypoint;
             var focus = p.Focus ?? DailyDream.Get(run.DailyId)?.FeaturedLine;
-            bool rareAllowed = InfinityRewards.AdmitKill(p, tier, rollTier, killHeat, killWaypoint, isNightmare, bossTypeName, bossDropNightmare, bossDropDepth);
+            bool rareAllowed = InfinityRewards.AdmitKill(p, tier, rollTier, killHeat, killWaypoint, isNightmare, bossTypeName, bossDropNightmare, bossDropDepth, rewardScale);
             var reward = Loot.RollKill(rng, rollTier, itemLevel, killHeat, focus, KillModifiers(run, killWaypoint), p.Stash, run.Satchel, p.Codex,
                 rareAllowed ? Rarity.Legendary : Rarity.Rare, InfinityRewards.OrdinaryRelicMultiplier(run, killWaypoint, tier));
             if (variant != null && variant.ShardBonusPct != 100) reward.Shards = (int)Math.Min(int.MaxValue, (long)reward.Shards * variant.ShardBonusPct / 100 + LootBalance.VariantAdditiveShards);
@@ -189,9 +189,14 @@ namespace SodRpg.Core.Game
                 var bossPiece = BossSets.RollDrop(rng, bossTypeName, bossDropNightmare, bossDropDepth, itemLevel);
                 if (bossPiece != null)
                 {
-                    if (!InfinityRewards.Active(p) || p.InfinityRewardBudget.Relics + 1e-9 >= 1)
+                    bool separateOrdinaryBudget = InfinityRewards.OrdinaryBudgetMultiplier(run, killWaypoint, tier) > 1;
+                    if (!InfinityRewards.Active(p) || separateOrdinaryBudget || p.InfinityRewardBudget.Relics + 1e-9 >= 1)
                     {
-                        if (InfinityRewards.Active(p)) { p.InfinityRewardBudget.Relics = Math.Max(0, p.InfinityRewardBudget.Relics - 1); bossPiece.InfinityFreeSupply = true; }
+                        if (InfinityRewards.Active(p))
+                        {
+                            if (!separateOrdinaryBudget) p.InfinityRewardBudget.Relics = Math.Max(0, p.InfinityRewardBudget.Relics - 1);
+                            bossPiece.InfinityFreeSupply = true;
+                        }
                         reward.Relics.Add(bossPiece);
                     }
                 }

@@ -24,7 +24,7 @@ LEGACY = {
 
 # Separate from the frozen legacy comparator: new tuning has no historical fallback.
 SCALING_SHAPE = {
-    key: dict(pressureOffset=0, enemyCountBonus=0, relicMultiplier=1)
+    key: dict(pressureOffset=0, enemyCountBonus=0, relicMultiplier=1, ordinaryBudgetMultiplier=1)
     for key in ("short", "middle", "long")
 }
 
@@ -83,6 +83,8 @@ def validate(data):
     for interval, row in data["intervalScaling"].items():
         if row["pressureOffset"] > 100 or row["enemyCountBonus"] > 4 or not 1 <= row["relicMultiplier"] <= 2:
             raise ValueError(f"infinity.intervalScaling.{interval}: require offset <=100, bonus <=4, multiplier 1..2")
+        if row["ordinaryBudgetMultiplier"] != row["relicMultiplier"]:
+            raise ValueError(f"infinity.intervalScaling.{interval}: ordinary budget multiplier must match relic multiplier")
     return data
 
 

@@ -235,7 +235,7 @@ namespace SodRpg.Core.Game
             if (waypoint == Waypoint.None)
             {
                 PressureCountRewards.ScaleLoot(rng, reward, rewardScale);
-                InfinityRewards.LimitReward(p, reward);
+                InfinityRewards.LimitReward(p, reward, ordinaryMultiplier: InfinityRewards.OrdinaryBudgetMultiplier(run, waypoint, tier));
                 return;
             }
             var t = Sum(waypoint);
@@ -297,7 +297,8 @@ namespace SodRpg.Core.Game
                 reward.Shards = 0;
             }
             PressureCountRewards.ScaleLoot(rng, reward, rewardScale);
-            InfinityRewards.LimitReward(p, reward, t.DelayDropsUntilBoss ? WaypointBalance.HoardRewardMultiplier : 1);
+            InfinityRewards.LimitReward(p, reward, t.DelayDropsUntilBoss ? WaypointBalance.HoardRewardMultiplier : 1,
+                InfinityRewards.OrdinaryBudgetMultiplier(run, waypoint, tier));
             if (!t.DelayDropsUntilBoss) return;
             if (!run.WaypointHoardReleased)
             {

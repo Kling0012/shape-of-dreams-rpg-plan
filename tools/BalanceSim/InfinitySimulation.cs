@@ -45,6 +45,10 @@ internal sealed class InfinityRow
     public long Shards, Tuning, DreamXp, StarXp, Awakening;
     public long Accepted, Rejected;
     public double OutputReserved, Guaranteed, GuaranteeOpportunities, HighRareSpent, LegendarySpent, CombatSeconds;
+    public long AcceptedOriginals, AcceptedExtras, AcceptedBosses;
+    public double AcceptedOriginalLegendaryEv, AcceptedExtraLegendaryEv, AcceptedBossLegendaryEv;
+    public double AcceptedOriginalRawLegendaryEv, AcceptedExtraRawLegendaryEv;
+    public double AcceptedHighRareEv, RejectedLegendaryEv, RemainingLegendaryCredit;
     public int PeakHeat, Pressure;
     public InfinitySupply CombatSupply, BossSupply;
     public double Hours => Players * Minutes / 60.0;
@@ -263,6 +267,15 @@ internal sealed class InfinitySimulation
         double rareBefore = budget.HighRare, relicsBefore = budget.Relics;
         double legendaryBefore = budget.Legendary;
         double guaranteeBefore = budget.GuaranteedRelics, opportunityBefore = budget.GuaranteeOpportunities;
+        long acceptedBefore = budget.AcceptedKills;
+        bool isNightmare = nightmare != NightmareAffix.None;
+        var rollTier = isNightmare ? Nightmares.RewardTier(tier) : tier;
+        string? bossType = tier == MonsterTier.Boss && bossSetEligible ? BossTypeName : null;
+        var run = profile.Run;
+        double legendaryEv = run.Infinity == null ? 0 : InfinityRewards.ExpectedKillLegendaryCost(run, rollTier, run.Heat, run.ActiveWaypoint,
+            isNightmare, bossType, bossDropDepth: run.DreamDepth);
+        double highRareEv = run.Infinity == null ? 0 : InfinityRewards.ExpectedKillHighRareCost(run, rollTier, run.Heat, run.ActiveWaypoint,
+            isNightmare, bossType, bossDropDepth: run.DreamDepth);
         Observe(Rules.OnKill(profile, tier, options.ItemLevel, nightmare, Hero,
             bossTypeName: tier == MonsterTier.Boss && bossSetEligible ? BossTypeName : null, bossDropDepth: profile.Run.DreamDepth,
             rewardScale: rewardScale), row, profile);
@@ -271,6 +284,31 @@ internal sealed class InfinitySimulation
         row.OutputReserved += Math.Max(0, relicsBefore - budget.Relics);
         row.Guaranteed += Math.Max(0, guaranteeBefore - budget.GuaranteedRelics);
         row.GuaranteeOpportunities += Math.Max(0, opportunityBefore - budget.GuaranteeOpportunities);
+        if (run.Infinity != null)
+        {
+            if (budget.AcceptedKills > acceptedBefore)
+            {
+                row.AcceptedHighRareEv += highRareEv * rewardScale;
+                if (bonusKill)
+                {
+                    row.AcceptedExtras++;
+                    row.AcceptedExtraRawLegendaryEv += legendaryEv;
+                    row.AcceptedExtraLegendaryEv += legendaryEv * rewardScale;
+                }
+                else
+                {
+                    row.AcceptedOriginals++;
+                    row.AcceptedOriginalRawLegendaryEv += legendaryEv;
+                    row.AcceptedOriginalLegendaryEv += legendaryEv * rewardScale;
+                }
+                if (tier == MonsterTier.Boss)
+                {
+                    row.AcceptedBosses++;
+                    row.AcceptedBossLegendaryEv += legendaryEv * rewardScale;
+                }
+            }
+            else row.RejectedLegendaryEv += legendaryEv * rewardScale;
+        }
     }
 
     private static void FinishBoss(Profile profile)
@@ -304,6 +342,7 @@ internal sealed class InfinitySimulation
         if (budget == null) return;
         row.Accepted += budget.AcceptedKills;
         row.Rejected += budget.RejectedKills;
+        row.RemainingLegendaryCredit += budget.Legendary;
     }
 
     private InfinityRow ObserveFundedBoss()

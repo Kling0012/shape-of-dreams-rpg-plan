@@ -208,6 +208,14 @@ internal static class Metrics
         Add("infinity/parameters/room/miniBossIncrement", "MiniBoss room-credit increment", InfinityRewards.MiniBossRoomIncrement, "kills/room");
         Add("infinity/parameters/room/bossCap", "Boss room-credit cap", InfinityRewards.BossRoomCap, "kills");
         Add("infinity/parameters/room/bossIncrement", "Boss room-credit increment", InfinityRewards.BossRoomIncrement, "kills/room");
+        foreach (var interval in InfinitySimulation.Intervals)
+        {
+            string id = $"infinity/parameters/intervalScaling/{interval.Key}";
+            Add(id + "/pressureOffset", "Interval pressure offset", InfinityIntervalScaling.PressureOffset(interval.Value), "stages");
+            Add(id + "/enemyCountBonus", "Independent interval enemy bonus", InfinityIntervalScaling.EnemyCountBonus(interval.Value), "ratio");
+            Add(id + "/relicMultiplier", "Ordinary relic-roll multiplier", InfinityIntervalScaling.RelicMultiplier(interval.Value), "multiplier");
+            Add(id + "/ordinaryBudgetMultiplier", "Ordinary output/Epic budget multiplier", InfinityIntervalScaling.OrdinaryBudgetMultiplier(interval.Value), "multiplier");
+        }
         foreach (int depth in new[] { 0, 5 })
         {
             string id = $"infinity/budget/depth/{depth}";
@@ -215,12 +223,12 @@ internal static class Metrics
                 InfinityRewards.NormalHighRarePerHour(depth), "expected-relics/hour");
             Add(id + "/normalLegendary", $"Normal depth{depth} non-set Legendary budget/hour",
                 InfinityRewards.NormalLegendaryPerHour(depth), "expected-relics/hour");
-            Add(id + "/infinityEpicPlus", $"Infinity depth{depth} Epic+ authorization/hour",
-                InfinityRewards.NormalHighRarePerHour(0), "expected-relics/hour");
+            Add(id + "/infinityEpicPlus", $"Infinity depth{depth} HighRare baseline-credit refill/hour",
+                InfinityRewards.NormalHighRarePerHour(0), "baseline-credits/hour");
             Add(id + "/infinityLegendary", $"Infinity depth{depth} Legendary authorization/hour",
                 InfinityRewards.NormalLegendaryPerHour(0), "expected-relics/hour");
         }
-        Add("infinity/budget/relics", "Free relic authorization/hour", InfinityRewards.RelicsPerHour, "relics/hour");
+        Add("infinity/budget/relics", "Free-output baseline-credit refill/hour", InfinityRewards.RelicsPerHour, "baseline-credits/hour");
         Add("infinity/budget/guarantees", "Guaranteed output authorization/hour", InfinityRewards.GuaranteesPerHour, "credits/hour");
         Add("infinity/budget/shards", "Shard authorization/hour", InfinityRewards.ShardsPerHour, "shards/hour");
         Add("infinity/budget/tuning", "Tuning authorization/hour", InfinityRewards.TuningPerHour, "tuning/hour");
@@ -264,11 +272,23 @@ internal static class Metrics
             if (row.Interval == 0) continue; // Ordinary kills have no Infinity authorization ledger.
             Supply("acceptedKills", row.Accepted, "kills");
             Supply("rejectedKills", row.Rejected, "kills");
-            Supply("highRareReserved", row.HighRareSpent, "expected-relics");
-            Supply("legendaryReserved", row.LegendarySpent, "expected-relics");
-            Supply("outputReserved", row.OutputReserved, "credits");
+            Supply("highRareReserved", row.HighRareSpent, "baseline-credits");
+            Supply("legendaryReserved", row.LegendarySpent, "expected-Legendary");
+            Supply("outputReserved", row.OutputReserved, "baseline-credits");
             Supply("guaranteedReserved", row.Guaranteed, "credits");
             Supply("guaranteeOpportunitiesReserved", row.GuaranteeOpportunities, "opportunities");
+            Supply("acceptedOriginalKills", row.AcceptedOriginals, "kills");
+            Supply("acceptedExtraKills", row.AcceptedExtras, "kills");
+            Supply("acceptedBossKills", row.AcceptedBosses, "kills");
+            Supply("acceptedOriginalRawLegendaryEv", row.AcceptedOriginalRawLegendaryEv, "expected-Legendary");
+            Supply("acceptedExtraRawLegendaryEv", row.AcceptedExtraRawLegendaryEv, "expected-Legendary");
+            Supply("acceptedOriginalFinalLegendaryEv", row.AcceptedOriginalLegendaryEv, "expected-Legendary");
+            Supply("acceptedExtraFinalLegendaryEv", row.AcceptedExtraLegendaryEv, "expected-Legendary");
+            Supply("acceptedBossFinalLegendaryEv", row.AcceptedBossLegendaryEv, "expected-Legendary");
+            Supply("acceptedFinalLegendaryEv", row.AcceptedOriginalLegendaryEv + row.AcceptedExtraLegendaryEv, "expected-Legendary");
+            Supply("acceptedFinalHighRareEv", row.AcceptedHighRareEv, "expected-EpicPlus");
+            Supply("rejectedFinalLegendaryEv", row.RejectedLegendaryEv, "expected-Legendary");
+            Supply("remainingLegendaryCredit", row.RemainingLegendaryCredit, "expected-Legendary");
         }
         Write(path, new
         {
@@ -295,7 +315,7 @@ internal static class Metrics
                     rewardsPolicy = "actual Drop events including overflow; boss sets subset of Legendary; held and secured resources included; no forced final return",
                     pressurePolicy = "profile DreamLevel, zero spent stars, DreamDepth, active waypoint pressure, actual Infinity PressureStage; capped pressure count plus independent interval bonus",
                     bonusPolicy = "one synthetic wave per Combat room; uniformly initialized fractional credit, bonus accrued per original actor, same-tier replicas; only extras use Core ScaleForBonus through actual Rules.OnKill; bosses not replicated",
-                    intervalRelicsPolicy = "Core independent ordinary Epic-or-below bonus rolls; multiplier is pre-budget EV, not found/hour; Legendary, limited and guaranteed authorizations unchanged",
+                    intervalRelicsPolicy = "Core independent ordinary Epic-or-below bonus rolls; ordinary output/Epic admission use scaled capacities via baseline credits; multiplier is pre-budget EV, not found/hour; Legendary, limited and guaranteed capacities unchanged",
                     exclusions = "no travel, idle, paid merchant/events, crafting, old-item recovery, discretionary bounty; no winrate or measured clear speed",
                     fundedBoss = "default-interval room entries sharing2700 combat seconds without admissions, then one registered Boss over5400 seconds; default interval is current Core content",
                     epicMirage = "300 minute 4x session at current Core default interval, depth0",
@@ -305,7 +325,7 @@ internal static class Metrics
                     r.ScenarioKey, r.Minutes, r.IntervalKey, r.Speed, r.Depth, r.NightmareMultiplier,
                     waypoint = r.Waypoint.ToString(),
                 }).ToArray(),
-                budgetPolicy = "Core normal non-set lower reference; infinity always depth0; expectation authorization, not finite-sample bound",
+                budgetPolicy = "Core normal non-set lower reference; infinity always depth0; HighRare/free-output ledger debits and refill are baseline credits, not amplified actual EV/output; accepted opportunity EV is raw Core cost times actor rewardScale; Legendary credits remain full-cost; expectation authorization, not finite-sample bound",
             },
             metrics,
             resolvedIntervals = simulation.Rows.Select(r => new { r.ScenarioKey, r.Minutes, r.IntervalKey, r.Interval }).ToArray(),
