@@ -273,7 +273,7 @@ int powersListed = 0;
     }
     sb.Append("\n固有品は名前付きの固定装備です。基礎と固有効果が決まっており、特性は抽選されます。\n\n");
     sb.Append(H2("アイテムレベル"));
-    sb.Append($"固定値の能力（攻撃力・魔力・最大HP・防御・HP回復・記憶加速・行動妨害耐性）は、アイテムレベルに応じて伸びます（レベル1で100%、1上がるごとに+3%、レベル{Content.ItemLevelScalingCap}以上で{Content.LevelScalePct(Content.ItemLevelScalingCap)}%）。%の能力値はレベルでは伸びません。最大レベルは{Content.MaxItemLevel}です。\n\n");
+    sb.Append($"固定値の攻撃力・魔力はレベル1で100%、1上がるごとに+{GearBalance.FlatDamageGrowthPct}%、レベル{Content.ItemLevelScalingCap}以上で{Content.LevelScalePct(Stat.AttackFlat, Content.ItemLevelScalingCap)}%。他の固定値（最大HP・防御・HP回復・記憶加速・行動妨害耐性）は1上がるごとに+{GearBalance.OtherFixedGrowthPct}%、レベル{Content.ItemLevelScalingCap}以上で{Content.LevelScalePct(Stat.MaxHealthFlat, Content.ItemLevelScalingCap)}%です。%の能力値はレベルでは伸びません。最大レベルは{Content.MaxItemLevel}です。保存済みの特性値は再抽選せず、基礎能力は現在の倍率で再計算します。\n\n");
     sb.Append(H2("強化 (Enhancement)"));
     sb.Append($"通常は+{Content.MaxEnhance}まで強化できます。+{Content.MaxEnhance}までは強化1段ごとに特性が+6%、固有効果が+5%。限界突破後の+{Content.MaxEnhance + 1}以降は特性が+4%、固有効果が+3%ずつ伸びます。\n\n");
     sb.Append("^ 強化 ^ 特性の倍率 ^ 固有効果の倍率 ^ 夢の欠片（レア以下） ^ 夢の欠片（エピック以上） ^\n");
