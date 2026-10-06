@@ -113,6 +113,11 @@ namespace SodRpg.Core.Game
                 + KillMixBoss * Loot.DropChance(MonsterTier.Boss, 0) * (1 + Loot.BossExtraRelicChance) * (legendaryOnly ? bossLegend : boss);
             return ev * 3600 / ReferenceSeconds;
         }
+        /// <summary>Fixed guaranteed/limited sources retain their separate authorization and output count.</summary>
+        public static double OrdinaryRelicMultiplier(RunState run, Waypoint waypoint, MonsterTier tier) =>
+            run?.Infinity == null || GuaranteedWaypoint(waypoint, tier) ? 1 : InfinityIntervalScaling.RelicMultiplier(run.Infinity.Interval);
+        public static double OrdinaryBudgetMultiplier(RunState run, Waypoint waypoint, MonsterTier tier) =>
+            run?.Infinity == null || GuaranteedWaypoint(waypoint, tier) ? 1 : InfinityIntervalScaling.OrdinaryBudgetMultiplier(run.Infinity.Interval);
         public static double ExpectedKillHighRareCost(RunState run, MonsterTier rollTier, int heat, Waypoint waypoint,
             bool nightmare, string bossTypeName = null, bool bossDropNightmare = false, int bossDropDepth = 0)
             => ExpectedKillCosts(run, rollTier, heat, waypoint, nightmare, bossTypeName, bossDropNightmare, bossDropDepth, out _);
@@ -139,6 +144,7 @@ namespace SodRpg.Core.Game
             double factor = chance * (rollTier == MonsterTier.Boss ? 1 + Loot.BossExtraRelicChance : 1);
             double ev = factor * probability;
             legendary = factor * legendaryProbability;
+            ev += factor * (probability - legendaryProbability) * (OrdinaryRelicMultiplier(run, waypoint, rollTier) - 1);
             if ((t.ForcedRarity.HasValue && t.ForcedRarity.Value < Rarity.Epic) || t.RelicSalvageMultiplier > 0 || t.AwakeningPerRelic > 0)
             { ev = 0; legendary = 0; }
             double copies = t.TwinRelics ? 2 : nightmare ? t.NightmareRewardMultiplier : 1;
@@ -167,7 +173,7 @@ namespace SodRpg.Core.Game
         }
         /// <summary>Admit the full rare opportunity before rolling; ordinary supply has independent output budgets.</summary>
         internal static bool AdmitKill(Profile p, MonsterTier tier, MonsterTier rollTier, int heat, Waypoint waypoint, bool nightmare,
-            string bossTypeName, bool bossDropNightmare, int bossDropDepth)
+            string bossTypeName, bool bossDropNightmare, int bossDropDepth, double rewardScale = 1)
         {
             if (!Active(p)) return true;
             var b = p.InfinityRewardBudget;
@@ -175,18 +181,27 @@ namespace SodRpg.Core.Game
             double room = rollTier == MonsterTier.Lesser ? b.LesserRoom : rollTier == MonsterTier.Normal ? b.NormalRoom : rollTier == MonsterTier.MiniBoss ? b.MiniBossRoom : b.BossRoom;
             bool guaranteed = GuaranteedWaypoint(waypoint, tier);
             int guaranteedOutputs = guaranteed ? (rollTier == MonsterTier.Boss ? 2 : 1) : 0;
-            if (time + 1e-9 < 1 || room + 1e-9 < 1 || (guaranteed && (b.GuaranteeOpportunities + 1e-9 < 1
+            // Extra actors are thinned before delivery: reserve their final EV, not a full
+            // opportunity later mostly discarded. Whole guarantees and true bosses stay fixed.
+            double scale = guaranteed || tier == MonsterTier.Boss ? 1 : PressureCountRewards.ScaleDouble(1, rewardScale);
+            if (time + 1e-9 < scale || room + 1e-9 < scale || (guaranteed && (b.GuaranteeOpportunities + 1e-9 < 1
                 || b.GuaranteedRelics + 1e-9 < guaranteedOutputs || b.Relics + 1e-9 < guaranteedOutputs)))
             { if (b.RejectedKills < long.MaxValue) b.RejectedKills++; return false; }
             double ev = ExpectedKillCosts(p.Run, rollTier, heat, waypoint, nightmare, tier == MonsterTier.Boss ? bossTypeName : null, bossDropNightmare, bossDropDepth, out double legendary);
             // The guarantee covers the Epic floor, not random Legendary rolls; legendary already includes the boss set once.
             if (guaranteed) ev = tier == MonsterTier.Boss && BossSets.TryGetSet(bossTypeName, out _) ? BossSets.DropChance(bossDropNightmare, bossDropDepth) : 0;
+            // Existing saved HighRare credit remains in baseline units. Epic supply grows
+            // with the interval budget; Legendary/set supply still costs its full EV.
+            double multiplier = OrdinaryBudgetMultiplier(p.Run, waypoint, rollTier);
+            if (!guaranteed) ev = legendary + Math.Max(0, ev - legendary) / multiplier;
+            ev *= scale;
+            legendary *= scale;
             if (b.HighRare + 1e-12 < ev || b.Legendary + 1e-12 < legendary)
             { if (b.RejectedKills < long.MaxValue) b.RejectedKills++; return false; }
-            if (rollTier == MonsterTier.Lesser) { b.LesserTime = Math.Max(0, b.LesserTime - 1); b.LesserRoom = Math.Max(0, b.LesserRoom - 1); }
-            else if (rollTier == MonsterTier.Normal) { b.NormalTime = Math.Max(0, b.NormalTime - 1); b.NormalRoom = Math.Max(0, b.NormalRoom - 1); }
-            else if (rollTier == MonsterTier.MiniBoss) { b.MiniBossTime = Math.Max(0, b.MiniBossTime - 1); b.MiniBossRoom = Math.Max(0, b.MiniBossRoom - 1); }
-            else { b.BossTime = Math.Max(0, b.BossTime - 1); b.BossRoom = Math.Max(0, b.BossRoom - 1); }
+            if (rollTier == MonsterTier.Lesser) { b.LesserTime = Math.Max(0, b.LesserTime - scale); b.LesserRoom = Math.Max(0, b.LesserRoom - scale); }
+            else if (rollTier == MonsterTier.Normal) { b.NormalTime = Math.Max(0, b.NormalTime - scale); b.NormalRoom = Math.Max(0, b.NormalRoom - scale); }
+            else if (rollTier == MonsterTier.MiniBoss) { b.MiniBossTime = Math.Max(0, b.MiniBossTime - scale); b.MiniBossRoom = Math.Max(0, b.MiniBossRoom - scale); }
+            else { b.BossTime = Math.Max(0, b.BossTime - scale); b.BossRoom = Math.Max(0, b.BossRoom - scale); }
             b.Legendary = Math.Max(0, b.Legendary - legendary);
             b.HighRare = Math.Max(0, b.HighRare - ev);
             if (guaranteed)
@@ -198,13 +213,35 @@ namespace SodRpg.Core.Game
             return true;
         }
         /// <summary>Reserve final free output, including Hoard amplification, before deferral; no charge on release.</summary>
-        internal static void LimitReward(Profile p, KillReward reward, int amplification = 1)
+        internal static void LimitReward(Profile p, KillReward reward, int amplification = 1, double ordinaryMultiplier = 1)
         {
             if (!Active(p)) return;
             var b = p.InfinityRewardBudget;
-            int keep = (int)Math.Min(reward.Relics.Count, Math.Floor(b.Relics / amplification + 1e-9));
-            if (keep < reward.Relics.Count) reward.Relics.RemoveRange(keep, reward.Relics.Count - keep);
-            b.Relics = Math.Max(0, b.Relics - keep * amplification);
+            if (ordinaryMultiplier == 1)
+            {
+                int keep = (int)Math.Min(reward.Relics.Count, Math.Floor(b.Relics / amplification + 1e-9));
+                if (keep < reward.Relics.Count) reward.Relics.RemoveRange(keep, reward.Relics.Count - keep);
+                b.Relics = Math.Max(0, b.Relics - keep * amplification);
+            }
+            else
+            {
+                // Legendary was already authorized at full cost in the separate rare
+                // ledgers. The amplified ordinary output cap must not veto it again.
+                // Compact in place, retaining relative order.
+                double ordinaryCost = amplification / ordinaryMultiplier;
+                int kept = 0;
+                for (int i = 0; i < reward.Relics.Count; i++)
+                {
+                    var relic = reward.Relics[i];
+                    if (relic.Rarity != Rarity.Legendary)
+                    {
+                        if (b.Relics + 1e-9 < ordinaryCost) continue;
+                        b.Relics = Math.Max(0, b.Relics - ordinaryCost);
+                    }
+                    reward.Relics[kept++] = relic;
+                }
+                if (kept < reward.Relics.Count) reward.Relics.RemoveRange(kept, reward.Relics.Count - kept);
+            }
             foreach (var relic in reward.Relics) relic.InfinityFreeSupply = true;
             reward.Shards = TakeAmplified(ref b.Shards, reward.Shards, amplification);
             reward.Tuning = TakeAmplified(ref b.Tuning, reward.Tuning, amplification);

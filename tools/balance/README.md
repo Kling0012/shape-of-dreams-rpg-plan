@@ -5,7 +5,7 @@
 `star-progression.json` の星XP曲線・費用・報酬・刻印枠の解放、
 `gear.json` の装備レベル成長・固定攻魔上限、`sets.json` の通常セット2/3/6部位効果、
 `pressure.json` の夢の圧・深度、`monsters.json` の悪夢・変種・敵行動、
-`infinity.json` の供給予算・周期・圧段階上限、`powers.json` のPowerの時間・距離・条件（127欄）を
+`infinity.json` の供給予算・周期・圧段階上限・周期別補正、`powers.json` のPowerの時間・距離・条件（127欄）を
 型付きC#へ生成します。記憶ダメージはmanifestの480親＋258選択肢と旧ルート98成分、計836欄を移行済みです。
 星ID・段数・費用・選択肢・保存形式5・Protocol 23は維持し、調整した有効値（装備・セット・Powerを含む）を内容照合に含めます。
 段階2ではMemoryHaste・GimmickBoost・GimmickParam・Notable・Keystone・Statの
@@ -169,18 +169,57 @@ DOTNET_ROLL_FORWARD=LatestMajor /usr/bin/dotnet run --project tools/BalanceSim -
 | --- | --- | --- |
 | `pressure.json` | `dreamPressure` の無料夢レベル・HP／damageの夢レベル／星点／Infinity段係数7欄、敵数のHP換算幅／段ごとの増分／最大増分／追加報酬予算4欄、`dreamDepth` の最大深度・HP／damage／幸運／覚醒／星XP／追加部屋7欄 | `Game/Balance/Pressure.Generated.cs` |
 | `monsters.json` | `behavior` 27欄、`nightmare` 39欄、`variants` の確率・性質・欠片9欄、`variantStats` の30種47能力値 | `Game/Balance/Monsters.Generated.cs` |
-| `infinity.json` | `rates` 10欄、共通 `killMix` 4欄、`bursts` 16欄、`rooms` の4種cap／increment8欄、`run` の既定／3周期／圧上限5欄 | `Game/Balance/Infinity.Generated.cs` |
+| `infinity.json` | `rates` 10欄、共通 `killMix` 4欄、`bursts` 16欄、`rooms` の4種cap／increment8欄、`run` の既定／3周期／圧上限5欄、`intervalScaling` の3周期×圧加算／敵数加算／通常遺物倍率／通常予算倍率12欄 | `Game/Balance/Infinity.Generated.cs` |
 
 `pressure` は夢Lv1/5/10/20/30×使用星点0/50/250/500×深度0〜5×道標なし／儚い記憶
 ×Infinity段0/1/10/100を `DreamPressure` の実式で列挙します。潜行Heatは夢の深度とは別軸です。
 敵数の原本は `dreamPressure.enemyCountHealthPerStage=0.10`、`enemyCountPerStage=0.08`、`enemyCountMaximumBonus=0.60`、`enemyCountAdditionalRewardBudget=0.20`。
 `DreamPressure.EnemyCountMultiplier` は最終HPから圧段階を換算し、ホストは各ウェーブで実際に出た非ボスの増分を偏りのない整数体数へ丸めて、その出現処理へ混ぜる。global／section同時人口上限と元のウェーブ数は据え置き、満員ならそのウェーブ内で空きを待つ。
 追加体の係数は `min(1, enemyCountAdditionalRewardBudget / 敵数増加率)`。通常／Infinityとも通常の撃破報酬経路へ通し、変換後の通貨・遺物を係数処理してから既存Infinity出力予算を消費する。整数は確率丸め、分割できない遺物・Chaos・配当・回復は確率を調整する。追加の直接報酬は元敵比で期待値+20%までであり、抽選結果・戦闘時間クレジット・依頼達成時期まで含む部屋総収入の決定的上限ではない。
+Issue #270の `intervalScaling` は20部屋を基準、15部屋を圧+2段・敵数+200%・通常遺物×1.5、10部屋を圧+4段・敵数+400%・通常遺物×2とする。圧の敵数上限とは別に加算し、追加報酬係数の分母には合計増加率を使う。追加抽選はEpic以下で、生成済み係数を使う `InfinityIntervalScaling.OrdinaryBudgetMultiplier` が通常遺物の出力とEpic期待値の実効予算にも同じ倍率を適用する。Legendary・ボス限定セット・固定保証の抽選と予算は増やさない。`--infinity-scope intervals` は固定部屋時間の実Core経済模型であり、実機のクリア速度予測ではない。
+
+### Issue #270：同一模型の修正前後比較
+
+既存の保存済みcredit・補充rate・burstは基準周期の単位を維持する。通常遺物の出力消費は1個につき `1 / ordinaryBudgetMultiplier`、固定保証は1。倍率を増やす周期では、Legendary・ボス限定品は抽選前に専用の高レア・Legendary台帳で満額認可済みのため、通常出力credit不足による再抑止を行わない。追加抽選・確率・専用rate／burstの増幅はない。高レア台帳の消費は `LegendaryEV + (actualEpicPlusEV − LegendaryEV) / ordinaryBudgetMultiplier` であり、通常分の実効容量だけが増える。`ExpectedKillHighRareCost` は正規化creditではなく実際に要求するEpic以上期待値を返す。固定保証の実行機会、20周期の従来出力規則、新規保存フィールド・保存形式・Protocolは変更しない。
+
+| 周期 | 通常倍率 | 通常遺物の実効補充／時 | 通常遺物の実効burst | Epic分の認可credit消費 | Legendary補充／時・burst |
+|---:|---:|---:|---:|---:|---:|
+| 20 | 1 | 30 | 24 | 実期待値×1 | 0.052875 EV／時・7 EV |
+| 15 | 1.5 | 45 | 36 | 実期待値÷1.5 | 0.052875 EV／時・7 EV |
+| 10 | 2 | 60 | 48 | 実期待値÷2 | 0.052875 EV／時・7 EV |
+
+Legendary・限定品の認可は実期待値を満額消費する。高レア共通台帳の基準補充は0.586805 credit／時・burst7 creditで、Epic分の実効容量だけを倍率で増やす。保証は0.25／時、機会burst1・出力burst2のまま。EV予算は抽選期待値の認可上限であり、ランダムな発見個数の確定上限ではない。
+
+追加体の時間・部屋・高レア認可には、後段の道標変換・増幅を含む最終報酬係数を織り込んだ期待消費量を使う。最終出力を間引く前の全機会を予約することで希少品の認可を過剰に消費していた経路を修正する。固定保証の機会は係数で割り引かず、全1回分を予約する。
+
+初期実装の300プロフィール×戦闘60分・seed1ではLegendary発見数が10／15／20周期で4→2、7→1、6→6だった。この少数観測は予算維持の証明でも減少原因の特定でもないため、当時の表を現行結果として掲載しない。基準実装を固定した同一模型で認可・抑止・実際の発見数を比較し、実期待値と正規化台帳消費を別々に評価する。固定部屋時間の経済模型からUnity内の踏破速度・勝率・FPS・実coopは推定しない。
+
+追補の修正前はCore `8ebb85c` と機会EV計測を修正前にビルドして凍結。修正後も同じ計測・戦闘時間模型を使用した。seed270で各周期10,000プロフィール、seed271で各周期5,000プロフィール、各60分、初期credit0、深度0・itemLevel1・未配分星点0、1ノード87.5秒固定、.NET10.0.11。各周期15,000プロフィール時間、前後それぞれ合計45,000時間の露出を合算した。値は実 `Rules.OnKill` のDropで、容量あふれ前の発見数を数える。
+
+| 周期 | 遺物／時：修正前→後 | Epic／時：修正前→後 | Legendary／時：修正前→後 | Legendary総数：前→後 | 最終係数適用後の認可Legendary EV／時：前→後 |
+|---:|---:|---:|---:|---:|---:|
+| 10 | 28.984267 → 58.856200 | 0.048867 → 0.432067 | 0.001667 → 0.029000 | 25 → 435 | 0.003687 → 0.028288 |
+| 15 | 28.892533 → 43.324133 | 0.100933 → 0.310133 | 0.006067 → 0.017733 | 91 → 266 | 0.011255 → 0.018769 |
+| 20 | 24.460267 → 24.460267 | 0.181933 → 0.181933 | 0.011133 → 0.011133 | 167 → 167 | 0.011505 → 0.011505 |
+
+両seedで通常供給が増え、Legendaryの認可期待値も20周期を下回らない。修正後のLegendary／時の記述的95% Poisson MC誤差は10／15／20で±0.002725／±0.002131／±0.001689。独立同分布の証明ではなく、実機予測区間でもない。限定セットはこの1時間模型では前後とも認可実ボス0・発見0で、これを確率維持の証明とはしない。
+
+減少は乱数順だけの問題ではなかった。修正前の10／15周期はLegendary台帳消費0.011972／0.023495 EV／時に対し、間引き後に残る認可EVは0.003687／0.011255であり、追加体の満額予約が実機会を圧迫していた。Epic追加分の共通台帳消費を正規化しても、通常出力枠による最終抑止が残った中間計測では10周期の認可EV0.028288に対し発見0.009867／時だった。最終修正では認可済みLegendary・限定品をその通常枠から分離し、専用予算と抽選確率は増やさず、発見0.029000／時まで復旧した。追加通常抽選によるRNG順の変化・有限標本の揺れもあるが、それだけで減少を説明しない。
+
+実行例（修正前DLLは上記の凍結ビルド。seed271は `--players 5000 --seed 271` へ変更）：
+
+```sh
+DOTNET_ROLL_FORWARD=LatestMajor /usr/bin/dotnet /tmp/issue270-followup-before-bin/BalanceSim.dll --mode infinity --infinity-scope intervals --players 10000 --seed 270 --out /tmp/issue270-followup-before.md --metrics-json /tmp/issue270-followup-before.metrics.json
+DOTNET_ROLL_FORWARD=LatestMajor /usr/bin/dotnet /tmp/issue270-followup-separated-bin/BalanceSim.dll --mode infinity --infinity-scope intervals --players 10000 --seed 270 --out /tmp/issue270-followup-final.md --metrics-json /tmp/issue270-followup-final.json
+```
+
+既存の `full` 診断も100プロフィール・seed270で実行。135分の実戦闘creditを蓄積した実ボス100機会を認可、限定セット5個を観測。300分のEpicMirageでは保証機会100・保証出力credit100を予約し、clone／codec往復に注記はなかった。これは経路の動作観測であり、5／100から新しい限定品確率を推定しない。Native Releaseはエラー0・警告5、生成チェック成功、既存全テストは2694 passed・0 failed・4 skipped。追補ではテストの追加・変更を行っていない。
+
 悪夢の出現確率・接頭効果数・能力値、30変種の能力値・欠片倍率、行動係数も独立した単位で比較します。
 単独接頭効果の投影であり、ランダムな複合結果・勝率・実クリア時間を予測しません。
 
 `infinity` はEpic+／Legendaryの解析認可予算と、実 `Rules.OnKill` を通った認可／抑止、
-遺物・欠片・調律石・夢XP・星XP・覚醒の供給／時を保存します。全43係数も直接比較できるので、
+遺物・欠片・調律石・夢XP・星XP・覚醒の供給／時を保存します。全55係数も直接比較できるので、
 模型の条件で拘束しないburst／cap変更を見落としません。期間・撃破構成・時間・装備・乱数・人数等の模型条件を記録します。
 周期はshort/middle/long/defaultの選択役割を固定条件とし、その時点の数値を指標と `resolvedIntervals` に記録します。
 内容指紋が異なるだけでは比較を拒否せず、模型・外生条件・型・単位の違いで比較可否を判断します。

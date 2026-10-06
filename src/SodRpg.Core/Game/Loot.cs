@@ -75,23 +75,22 @@ namespace SodRpg.Core.Game
         public static Rarity RollRarity(Rng rng, double luck, bool allowLegendary, Rarity floor = Rarity.Common, Rarity ceiling = Rarity.Legendary)
         {
             double f = 1.0 + LootBalance.RarityLuckCoefficient * Math.Max(0, luck);
-            var w = new double[BaseRarityWeights.Length];
-            double total = 0;
-            for (int i = 0; i < w.Length; i++)
-            {
-                if (i < (int)floor || i > (int)ceiling || (!allowLegendary && i == (int)Rarity.Legendary)) continue;
-                w[i] = BaseRarityWeights[i] * Math.Pow(f, i);
-                total += w[i];
-            }
+            // Five scalar weights: no heap array or Span dependency in the netstandard2.0 Core.
+            double common = Weight(0), uncommon = Weight(1), rare = Weight(2), epic = Weight(3), legendary = Weight(4);
+            double total = common + uncommon + rare + epic + legendary;
+            double Weight(int i) => i < (int)floor || i > (int)ceiling || (!allowLegendary && i == (int)Rarity.Legendary)
+                ? 0 : BaseRarityWeights[i] * Math.Pow(f, i);
+            double At(int i) => i == 0 ? common : i == 1 ? uncommon : i == 2 ? rare : i == 3 ? epic : legendary;
             double x = rng.NextDouble() * total;
-            for (int i = 0; i < w.Length; i++)
+            for (int i = 0; i < BaseRarityWeights.Length; i++)
             {
-                if (w[i] <= 0) continue;
-                if (x < w[i]) return (Rarity)i;
-                x -= w[i];
+                double weight = At(i);
+                if (weight <= 0) continue;
+                if (x < weight) return (Rarity)i;
+                x -= weight;
             }
-            for (int i = w.Length - 1; i >= 0; i--)
-                if (w[i] > 0) return (Rarity)i;
+            for (int i = BaseRarityWeights.Length - 1; i >= 0; i--)
+                if (At(i) > 0) return (Rarity)i;
             return floor;
         }
 
@@ -400,7 +399,8 @@ namespace SodRpg.Core.Game
         /// （計画書 第14章「確保と損失は個人ごと」）。天井（救済）はなく、主報酬は通常抽選のみ。
         /// </summary>
         public static KillReward RollKill(Rng rng, MonsterTier tier, int itemLevel, int heat, Line? focus = null, Pacts.Totals mods = null,
-            IReadOnlyList<Relic> ownedRelics = null, IReadOnlyList<Relic> unsecuredRelics = null, ISet<string> codex = null, Rarity ceiling = Rarity.Legendary)
+            IReadOnlyList<Relic> ownedRelics = null, IReadOnlyList<Relic> unsecuredRelics = null, ISet<string> codex = null,
+            Rarity ceiling = Rarity.Legendary, double ordinaryRelicMultiplier = 1)
         {
             heat = ClampHeat(heat);
             var reward = new KillReward { Xp = Content.KillXp(tier) };
@@ -415,6 +415,22 @@ namespace SodRpg.Core.Game
                 reward.Relics.Add(RollRelic(rng, rarity, itemLevel, null, focus, ownedRelics, unsecuredRelics, codex));
                 if (tier == MonsterTier.Boss && rng.Chance(BossExtraRelicChance))
                     reward.Relics.Add(RollRelic(rng, RollRarity(rng, luck, true, Rarity.Uncommon, ceiling), itemLevel, null, focus, ownedRelics, unsecuredRelics, codex));
+            }
+            if (ordinaryRelicMultiplier > 1)
+            {
+                // Independent ordinary rolls preserve the native Legendary opportunity exactly.
+                // Exclude its probability mass rather than converting Legendary into extra Epic.
+                Rarity floor = tier == MonsterTier.Boss ? Rarity.Uncommon : Rarity.Common;
+                HighRarityProbability(luck, allowLegendary, floor, out double legendary);
+                if (ceiling < Rarity.Legendary) legendary = 0;
+                double extra = chance * (1 - legendary) * (tier == MonsterTier.Boss ? 1 + BossExtraRelicChance : 1)
+                    * (ordinaryRelicMultiplier - 1);
+                int count = (int)extra;
+                if (rng.Chance(extra - count)) count++;
+                Rarity extraCeiling = (Rarity)Math.Min((int)ceiling, (int)Rarity.Epic);
+                for (int i = 0; i < count; i++)
+                    reward.Relics.Add(RollRelic(rng, RollRarity(rng, luck, false, floor, extraCeiling),
+                        itemLevel, null, focus, ownedRelics, unsecuredRelics, codex));
             }
 
             switch (tier)

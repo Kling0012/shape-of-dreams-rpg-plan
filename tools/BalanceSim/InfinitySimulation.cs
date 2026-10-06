@@ -41,10 +41,14 @@ internal sealed class InfinityRow
     public double NightmareMultiplier;
     public Waypoint Waypoint;
     public int Minutes, Interval, Players;
-    public long Rooms, Bosses, Nightmares, Attempts, Epic, Legendary, BossSet, Relics;
+    public long Rooms, Bosses, Nightmares, Attempts, BonusKills, Epic, Legendary, BossSet, Relics;
     public long Shards, Tuning, DreamXp, StarXp, Awakening;
     public long Accepted, Rejected;
     public double OutputReserved, Guaranteed, GuaranteeOpportunities, HighRareSpent, LegendarySpent, CombatSeconds;
+    public long AcceptedOriginals, AcceptedExtras, AcceptedBosses;
+    public double AcceptedOriginalLegendaryEv, AcceptedExtraLegendaryEv, AcceptedBossLegendaryEv;
+    public double AcceptedOriginalRawLegendaryEv, AcceptedExtraRawLegendaryEv;
+    public double AcceptedHighRareEv, RejectedLegendaryEv, RemainingLegendaryCredit;
     public int PeakHeat, Pressure;
     public InfinitySupply CombatSupply, BossSupply;
     public double Hours => Players * Minutes / 60.0;
@@ -85,19 +89,23 @@ internal sealed class InfinitySimulation
         StarClusters.RegisterAllGenerated();
         BossTypeName = Content.Sets.First(s => s.BossTypeName != null).BossTypeName;
         bool comparison = options.InfinityScope == "comparison";
-        var durations = comparison ? ComparisonDurations : Durations;
+        bool intervalComparison = options.InfinityScope == "intervals";
+        int[] durations = intervalComparison ? [60] : comparison ? ComparisonDurations : Durations;
         var intervals = comparison ? ComparisonIntervals : Intervals;
-        foreach (int depth in new[] { 0, 5 })
+        if (!intervalComparison)
+        {
+            foreach (int depth in new[] { 0, 5 })
+                foreach (int minutes in durations)
+                    Rows.Add(Simulate(new InfinityScenario($"normal-depth{depth}", $"normal depth{depth}", 1, depth, 1, Waypoint.None, Normal: true), minutes, 0, "normal"));
             foreach (int minutes in durations)
-                Rows.Add(Simulate(new InfinityScenario($"normal-depth{depth}", $"normal depth{depth}", 1, depth, 1, Waypoint.None, Normal: true), minutes, 0, "normal"));
-        foreach (int minutes in durations)
-            Rows.Add(Simulate(new InfinityScenario("normal-matched", "normal matched room/boss count", 1, 0, 1, Waypoint.None, Normal: true),
-                minutes, InfinityRunState.DefaultInterval, "default"));
-        foreach (var scenario in Scenarios)
+                Rows.Add(Simulate(new InfinityScenario("normal-matched", "normal matched room/boss count", 1, 0, 1, Waypoint.None, Normal: true),
+                    minutes, InfinityRunState.DefaultInterval, "default"));
+        }
+        foreach (var scenario in intervalComparison ? Scenarios.Take(1) : Scenarios)
             foreach (int minutes in durations)
                 foreach (var interval in intervals)
                     Rows.Add(Simulate(scenario, minutes, interval.Value, interval.Key));
-        if (!comparison)
+        if (!comparison && !intervalComparison)
         {
             Rows.Add(Simulate(new InfinityScenario("epic-mirage", "EpicMirage authorization / 4x", 4, 0, 1, Waypoint.EpicMirage), 300, InfinityRunState.DefaultInterval, "default"));
             Rows.Add(ObserveFundedBoss());
@@ -119,6 +127,8 @@ internal sealed class InfinitySimulation
             var profile = Profile.CreateNew(seeds.NextULong());
             var encounterRng = new Rng(seeds.NextULong());
             var equipmentRng = new Rng(seeds.NextULong());
+            // Separate synthetic wave RNG preserves the original fixture's encounter stream.
+            var waveRng = new Rng(unchecked(options.Seed + (ulong)player * 0x9E3779B97F4A7C15UL));
             // An existing equipped relic lets the real awakening route run; it is not counted as new supply.
             var equipped = Loot.RollUnique(equipmentRng, Content.Uniques[0], options.ItemLevel);
             profile.Stash.Add(equipped);
@@ -173,14 +183,35 @@ internal sealed class InfinitySimulation
                     InfinityRewards.EnterRoom(profile, run.Infinity.GraphEpoch, run.Infinity.RoomEpoch);
                 }
                 bool mini = encounterRng.Chance(MiniBossChance);
-                int kills = LesserPerRoom + NormalPerRoom + (mini ? 1 : 0);
-                for (int kill = 0; kill < kills; kill++)
+                int originalKills = LesserPerRoom + NormalPerRoom + (mini ? 1 : 0);
+                var effects = Waypoints.Sum(run.ActiveWaypoint);
+                // This fixture never allocates star points; earned unspent XP is not spent pressure.
+                var pressure = DreamPressure.ForPlayer(profile.DreamLevel, 0)
+                    .WithRunModifiers(run.DreamDepth, effects.PressureMultiplier)
+                    .WithInfinityPressure(run.Infinity?.PressureStage ?? 0);
+                double bonus = InfinityIntervalScaling.EnemyCountMultiplier(pressure, run.Infinity?.Interval ?? 0) - 1;
+                double rewardScale = PressureCountRewards.ScaleForBonus(bonus);
+                // Native waves start with random fractional credit and accrue bonus per original.
+                // The synthetic room is one wave; replicas inherit the original actor's tier.
+                double credit = bonus > 0 ? waveRng.NextDouble() : 0;
+                int kills = originalKills + (int)Math.Floor(credit + originalKills * bonus);
+                for (int kill = 0; kill < originalKills; kill++)
                 {
                     var tier = kill < LesserPerRoom ? MonsterTier.Lesser : kill < LesserPerRoom + NormalPerRoom ? MonsterTier.Normal : MonsterTier.MiniBoss;
-                    var effects = Waypoints.Sum(run.ActiveWaypoint);
                     var nightmare = effects.AllNightmares ? NightmareAffix.Ironclad
                         : Nightmares.Roll(encounterRng, tier, run.Heat, scenario.NightmareMultiplier * effects.NightmareChanceMultiplier);
                     AdvanceAndKill(profile, tier, nightmare, nodeSeconds / kills, ref elapsed, minutes, row);
+                    if (elapsed > minutes * 60) break;
+                    credit += bonus;
+                    while (credit >= 1)
+                    {
+                        credit -= 1;
+                        nightmare = effects.AllNightmares ? NightmareAffix.Ironclad
+                            : Nightmares.Roll(waveRng, tier, run.Heat, scenario.NightmareMultiplier * effects.NightmareChanceMultiplier);
+                        AdvanceAndKill(profile, tier, nightmare, nodeSeconds / kills, ref elapsed, minutes, row,
+                            rewardScale: rewardScale, bonusKill: true);
+                        if (elapsed > minutes * 60) break;
+                    }
                     if (elapsed > minutes * 60) break;
                 }
                 if (elapsed > minutes * 60) break;
@@ -219,7 +250,7 @@ internal sealed class InfinitySimulation
     }
 
     private void AdvanceAndKill(Profile profile, MonsterTier tier, NightmareAffix nightmare, double seconds,
-        ref double elapsed, int minutes, InfinityRow row, bool bossSetEligible = false)
+        ref double elapsed, int minutes, InfinityRow row, bool bossSetEligible = false, double rewardScale = 1, bool bonusKill = false)
     {
         double remaining = minutes * 60 - elapsed;
         double actual = Math.Min(seconds, remaining);
@@ -230,18 +261,54 @@ internal sealed class InfinitySimulation
         elapsed += seconds;
         if (seconds > remaining + 1e-8) return;
         row.Attempts++;
+        if (bonusKill) row.BonusKills++;
         if (nightmare != NightmareAffix.None) row.Nightmares++;
         var budget = profile.InfinityRewardBudget;
         double rareBefore = budget.HighRare, relicsBefore = budget.Relics;
         double legendaryBefore = budget.Legendary;
         double guaranteeBefore = budget.GuaranteedRelics, opportunityBefore = budget.GuaranteeOpportunities;
+        long acceptedBefore = budget.AcceptedKills;
+        bool isNightmare = nightmare != NightmareAffix.None;
+        var rollTier = isNightmare ? Nightmares.RewardTier(tier) : tier;
+        string? bossType = tier == MonsterTier.Boss && bossSetEligible ? BossTypeName : null;
+        var run = profile.Run;
+        double legendaryEv = run.Infinity == null ? 0 : InfinityRewards.ExpectedKillLegendaryCost(run, rollTier, run.Heat, run.ActiveWaypoint,
+            isNightmare, bossType, bossDropDepth: run.DreamDepth);
+        double highRareEv = run.Infinity == null ? 0 : InfinityRewards.ExpectedKillHighRareCost(run, rollTier, run.Heat, run.ActiveWaypoint,
+            isNightmare, bossType, bossDropDepth: run.DreamDepth);
         Observe(Rules.OnKill(profile, tier, options.ItemLevel, nightmare, Hero,
-            bossTypeName: tier == MonsterTier.Boss && bossSetEligible ? BossTypeName : null, bossDropDepth: profile.Run.DreamDepth), row, profile);
+            bossTypeName: tier == MonsterTier.Boss && bossSetEligible ? BossTypeName : null, bossDropDepth: profile.Run.DreamDepth,
+            rewardScale: rewardScale), row, profile);
         row.HighRareSpent += Math.Max(0, rareBefore - budget.HighRare);
         row.LegendarySpent += Math.Max(0, legendaryBefore - budget.Legendary);
         row.OutputReserved += Math.Max(0, relicsBefore - budget.Relics);
         row.Guaranteed += Math.Max(0, guaranteeBefore - budget.GuaranteedRelics);
         row.GuaranteeOpportunities += Math.Max(0, opportunityBefore - budget.GuaranteeOpportunities);
+        if (run.Infinity != null)
+        {
+            if (budget.AcceptedKills > acceptedBefore)
+            {
+                row.AcceptedHighRareEv += highRareEv * rewardScale;
+                if (bonusKill)
+                {
+                    row.AcceptedExtras++;
+                    row.AcceptedExtraRawLegendaryEv += legendaryEv;
+                    row.AcceptedExtraLegendaryEv += legendaryEv * rewardScale;
+                }
+                else
+                {
+                    row.AcceptedOriginals++;
+                    row.AcceptedOriginalRawLegendaryEv += legendaryEv;
+                    row.AcceptedOriginalLegendaryEv += legendaryEv * rewardScale;
+                }
+                if (tier == MonsterTier.Boss)
+                {
+                    row.AcceptedBosses++;
+                    row.AcceptedBossLegendaryEv += legendaryEv * rewardScale;
+                }
+            }
+            else row.RejectedLegendaryEv += legendaryEv * rewardScale;
+        }
     }
 
     private static void FinishBoss(Profile profile)
@@ -275,6 +342,7 @@ internal sealed class InfinitySimulation
         if (budget == null) return;
         row.Accepted += budget.AcceptedKills;
         row.Rejected += budget.RejectedKills;
+        row.RemainingLegendaryCredit += budget.Legendary;
     }
 
     private InfinityRow ObserveFundedBoss()

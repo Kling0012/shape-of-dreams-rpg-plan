@@ -61,7 +61,9 @@ namespace SodRpg.Core.Game
             return true;
         }
 
-        internal static int Pressure(long rooms, int interval) => (int)Math.Min((long)MaximumRecordedPressureStage, rooms / interval);
+        // Accept both historical unboosted receipts and current interval-adjusted receipts.
+        internal static int Pressure(long rooms, int interval) => (int)Math.Min((long)MaximumRecordedPressureStage,
+            rooms / interval + InfinityIntervalScaling.PressureOffset(interval));
 
         /// <summary>Called only from the committed secured-return path, before Secure mutates or clears the run.</summary>
         public static bool RecordReturn(Profile profile, RunState run)

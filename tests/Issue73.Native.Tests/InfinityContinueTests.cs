@@ -62,7 +62,7 @@ namespace Issue73.Native.Tests
             Assert.Equal(2, infinity.RoomEpoch);
             Assert.Equal(InfinityPhase.Exploring, infinity.Phase);
             Assert.Equal(new HashSet<int> { 1, 2 }, infinity.ClearedNodes);
-            Assert.Equal(0, infinity.PressureStage); // 圧は累計10部屋ごとに上がる
+            Assert.Equal(InfinityIntervalScaling.PressureOffset(infinity.Interval), infinity.PressureStage); // 保存した周期の開始時補正も復元
             var savedBudget = atSave.InfinityRewardBudget;
             Assert.Equal(savedBudget.RoomRunId, profile.InfinityRewardBudget.RoomRunId); // 入場receipt
             Assert.Equal(savedBudget.RoomGraph, profile.InfinityRewardBudget.RoomGraph);

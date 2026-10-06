@@ -172,11 +172,11 @@ namespace SodRpg.Mod
             // Random initial credit gives unbiased integer counts without a list or a per-enemy lottery.
             wave.Credit += wave.Bonus;
             if (wave.Credit < 1) return;
-            wave.Credit -= 1;
-            wave.PendingBonus = true;
+            wave.PendingBonusCount = (int)wave.Credit;
+            wave.Credit -= wave.PendingBonusCount;
             wave.Prefab = monster;
             wave.Cost = popCost;
-            wave.ReserveQueued(popCost);
+            wave.ReserveQueued(popCost * wave.PendingBonusCount);
             wave.WaitStarted = Time.time;
         }
 
@@ -218,7 +218,8 @@ namespace SodRpg.Mod
             internal float Cost, Reserved, WaitStarted;
             private float _queuedPopulation;
             internal Entity Prefab;
-            internal bool PendingBonus, PendingOriginal, DeferredOriginal, Canceled;
+            internal int PendingBonusCount;
+            internal bool PendingOriginal, DeferredOriginal, Canceled;
             private readonly IEnumerator _original;
             private readonly Action<Entity> _before, _beforeWrapper;
             private readonly string _scale;
@@ -287,18 +288,26 @@ namespace SodRpg.Mod
                     ReleaseQueued();
                     if (capacity != Capacity.Canceled) Spawn(false);
                 }
-                if (!_enabled && PendingBonus) { PendingBonus = false; ReleaseQueued(); }
-                if (PendingBonus)
+                while (PendingBonusCount > 0)
                 {
+                    if (!_enabled) { PendingBonusCount = 0; ReleaseQueued(); break; }
                     var capacity = TryCapacity(this, Cost);
                     if (capacity == Capacity.Full)
                     {
                         if (Time.time - WaitStarted < Settings.rule.stallCancelTimeout) { Current = Poll; return true; }
                         DisableFeature(new InvalidOperationException("Additional enemy population wait timed out."));
                     }
-                    PendingBonus = false;
-                    ReleaseQueued();
-                    if (_enabled && capacity == Capacity.Ready) Spawn(true);
+                    if (!_enabled || capacity != Capacity.Ready)
+                    {
+                        PendingBonusCount = 0;
+                        ReleaseQueued();
+                        break;
+                    }
+                    PendingBonusCount--;
+                    Settings.monsterSpawnData.remainingPopulation -= Cost;
+                    _queuedPopulation -= Cost;
+                    Spawn(true);
+                    WaitStarted = Time.time;
                 }
                 if (!_nativeAlive)
                 {

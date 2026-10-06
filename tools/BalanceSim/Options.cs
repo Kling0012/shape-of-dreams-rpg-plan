@@ -87,8 +87,8 @@ public sealed class Options
                     o.Mode = value;
                     break;
                 case "--infinity-scope":
-                    if (value is not ("full" or "comparison"))
-                        throw new ArgumentException("--infinity-scope は full / comparison です。");
+                    if (value is not ("full" or "comparison" or "intervals"))
+                        throw new ArgumentException("--infinity-scope は full / comparison / intervals です。");
                     o.InfinityScope = value;
                     break;
                 case "--dream-level":
@@ -156,7 +156,7 @@ public sealed class Options
           --mode expeditions  expeditions / stars / sets / equipment / v132stars / infinity / forge / star-efficiency / star-values / star-progression / pressure
           段階6モード       loot-economy / pact-daily-waypoints / events（--metrics-json 対応）
           --star-max-points 500  stars の最終節目（50〜500、50刻み。軽量実行は50）
-          --infinity-scope full  infinity の full（全周期）/ comparison（30分、Core既定周期、通常深度0/5＋4構成）
+          --infinity-scope full  infinity の full（全周期）/ comparison（30分、Core既定周期、通常深度0/5＋4構成）/ intervals（60分、baseline、10/15/20周期）
           --out <path>       標準出力に加えてUTF-8のMarkdownファイルに保存
           --metrics-json <path>  expeditions / sets / equipment / forge / star-efficiency / star-values / star-progression / v132stars / pressure / infinity の生データと未丸め集計をJSONに保存
           --help             この説明を表示

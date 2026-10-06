@@ -39,7 +39,7 @@ namespace SodRpg.Mod.Startup.Tests
             Assert.Equal(selected, session.Profile.Run.Infinity.FixedZoneId);
             Assert.Equal(1, session.Profile.Run.Infinity.GraphEpoch);
             Assert.Equal(20, session.Profile.Run.Infinity.ClearedCombatTotal);
-            Assert.Equal(2, session.Profile.Run.Infinity.PressureStage);
+            Assert.Equal(2 + InfinityIntervalScaling.PressureOffset(session.Profile.Run.Infinity.Interval), session.Profile.Run.Infinity.PressureStage);
             Assert.Equal(0, zone.currentZoneIndex);
             Assert.Equal(1, NetworkedManagerBase<GameManager>.softInstance.ambientLevel);
             Assert.True(zone.LastTravelNoAdvance);

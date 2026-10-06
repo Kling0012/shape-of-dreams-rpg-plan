@@ -174,7 +174,7 @@ namespace SodRpg.Core.Tests
             for (int room = 1; room <= InfinityRunState.DefaultInterval; room++)
                 FightRoom(p, node: room, StandardRoomKills);
             Assert.Equal(2L * InfinityRunState.DefaultInterval, infinity.ClearedCombatTotal);
-            Assert.Equal(Math.Min(2, InfinityRunState.MaximumPressureStage), infinity.PressureStage);
+            Assert.Equal(Math.Min(2 + InfinityIntervalScaling.PressureOffset(infinity.Interval), InfinityRunState.MaximumPressureStage), infinity.PressureStage);
             Assert.True(infinity.BossDue);
 
             FinishBossCycle(p);
@@ -184,7 +184,7 @@ namespace SodRpg.Core.Tests
             for (int room = 1; room <= InfinityRunState.DefaultInterval; room++)
                 FightRoom(p, node: room, StandardRoomKills);
             Assert.Equal(3L * InfinityRunState.DefaultInterval, infinity.ClearedCombatTotal);
-            Assert.Equal(Math.Min(3, InfinityRunState.MaximumPressureStage), infinity.PressureStage);
+            Assert.Equal(Math.Min(3 + InfinityIntervalScaling.PressureOffset(infinity.Interval), InfinityRunState.MaximumPressureStage), infinity.PressureStage);
             Assert.NotNull(p.Run);
         }
 
@@ -213,7 +213,7 @@ namespace SodRpg.Core.Tests
             Assert.Single(p.InfinityRecords);
             var first = p.InfinityRecords.Values.Single();
             Assert.Equal(InfinityRunState.DefaultInterval, first.BestReturnedRooms);
-            Assert.Equal(Math.Min(1, InfinityRunState.MaximumPressureStage), first.PressureAtBestReturn);
+            Assert.Equal(Math.Min(1 + InfinityIntervalScaling.PressureOffset(first.Interval), InfinityRunState.MaximumPressureStage), first.PressureAtBestReturn);
             Assert.Equal(1, first.ReturnCount);
 
             // 同じreceiptの再受信・再開では二度出ない
@@ -258,7 +258,7 @@ namespace SodRpg.Core.Tests
             Assert.Equal(4, infinity.RoomEpoch);
             Assert.Equal(InfinityPhase.Exploring, infinity.Phase);
             Assert.Equal(new HashSet<int> { 1, 2, 3, 4 }, infinity.ClearedNodes);
-            Assert.Equal(Math.Min(4 / infinity.Interval, InfinityRunState.MaximumPressureStage), infinity.PressureStage);
+            Assert.Equal(Math.Min(4 / infinity.Interval + InfinityIntervalScaling.PressureOffset(infinity.Interval), InfinityRunState.MaximumPressureStage), infinity.PressureStage);
             var savedBudget = atSave.InfinityRewardBudget;
             var budget = p.InfinityRewardBudget;
             Assert.Equal(savedBudget.RoomRunId, budget.RoomRunId); // 入場receipt
@@ -419,7 +419,7 @@ namespace SodRpg.Core.Tests
             Assert.Single(reloaded.InfinityRecords);
             var record = reloaded.InfinityRecords.Values.Single();
             Assert.Equal(InfinityRunState.DefaultInterval, record.BestReturnedRooms);
-            Assert.Equal(Math.Min(1, InfinityRunState.MaximumPressureStage), record.PressureAtBestReturn);
+            Assert.Equal(Math.Min(1 + InfinityIntervalScaling.PressureOffset(record.Interval), InfinityRunState.MaximumPressureStage), record.PressureAtBestReturn);
             Assert.Equal("run-104", reloaded.CompletedRunId);
             Assert.True(reloaded.CompletedRunSecuredReturn);
         }
