@@ -8,10 +8,28 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
-- 中断した遠征を「続きから」で再開すると、ゾーン終了後の「確保／深く潜る」が開かなくなる問題を修正しました。再開通知の待ちは30秒で警告し、安全に復元できる場合は解除します。
+---
 
-- 図鑑まわりの説明文を見直しました。覚醒の特性倍率の追記、ボス装備の段階表現と星の連携説明の区切りの統一、道標・出来事・契約・今日の夢の文末を常体にそろえ、日英で数値や内容が食い違っていた数か所（契約の残欠片25%、不撓の心の英語に障壁時間、英語の "a 80%" 冠詞など）を直しました。
-- 偉業「図鑑をN%埋める」の数え方を図鑑の実勢（土台・固有品・銘品）に合わせ、全部見つけないと100%に届かないようにしました。達成済みの偉業は取り消しません。
+## v2.8.0 — 協力プレイのトレード（2026-10-07）
+
+協力プレイのトレードを追加し、「続きから」で再開すると確保の画面が開かない問題を直しました。 / Adds co-op trading and fixes the secure choice not opening after Continue.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。ただし、この版で一度保存すると、以前の版では読み込めなくなります（保存形式を更新しました）。 / Saves carry over. Once saved with this version, they can no longer be loaded by older versions (the save format was updated).
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 新しい要素 / New
+
+- **協力プレイのトレード**：MOD 画面の「交換」タブから相手を選んで申し込み、承諾されたら、お互いに出すもの（装備していない遺物・欠片・調律石）を並べます。双方が確認すると成立します。ロビーと、遠征中の戦闘外で使えます。ホストがまとめて入れ替えるので、片方だけ渡ったり、増えたり消えたりしません。どちらかが内容を変えると確認はやり直しになり、取り消し・切断・2分間の無操作では安全に中止します。 / **Co-op trading**: open the "Trade" tab, pick a player and send a request. Once accepted, both sides lay out what they offer (unequipped relics, shards, tuning stones), and the trade completes when both confirm. Available in the lobby and outside combat during an expedition. The host swaps everything at once, so nothing is half-delivered, duplicated or lost. Changing the offer resets both confirmations; cancelling, disconnecting or 2 minutes of inactivity safely cancels the trade.
+
+### 不具合の修正 / Bug fixes
+
+- 「続きから」で再開した遠征で、ゾーンの終わりに確保の画面（確保するか、深く潜るか）が開かない問題を修正しました。 / The secure choice (secure or delve deeper) now opens at the end of a zone after resuming with Continue.
+- 図鑑まわりの説明文を見直しました。日本語と英語で数値や内容が違っていた箇所、実際の効果と違っていた説明、用語や書き方のばらつきを直しました。記録タブの「図鑑」の数と、偉業「図鑑をN%埋める」は、銘品も含めた同じ数え方にそろえました（達成済みの偉業はそのままです）。 / Reviewed codex descriptions: fixed Japanese/English mismatches in numbers or details, descriptions that did not match the real effect, and inconsistent wording. The codex count on the Records tab and the "Fill N% of the codex" feats now count named items the same way (feats you already earned stay earned).
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
 
 ---
 
