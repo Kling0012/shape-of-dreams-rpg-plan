@@ -1,5 +1,5 @@
-[b]v2.6.0: gear and star descriptions are bulleted and easier to read (main effect first, then conditions and caps). Saves carry over. Update all co-op players and restart the game.[/b]
-[b]v2.6.0：装備と星の説明を、効果の要点のあとに条件・上限を箇条書きで並べる形にし、読みやすくしました。セーブデータはそのまま引き継げます。協力プレイでは参加者全員がこのバージョンに更新し、ゲームを再起動してください。[/b]
+[b]v2.7.0: Infinity now picks a random next zone (and boss) after each boss, plus many Infinity fixes: boss soul drops, room-clear hitch, travel button, hunter, event rooms and scarce rewards. Saves carry over. Update all co-op players and restart the game.[/b]
+[b]v2.7.0：インフィニティでボスを倒すと、次のゾーン（とボス）がランダムに選ばれるようにしました。ボスの魂の後のドロップ、部屋クリア時の引っかかり、移動ボタン、ハンター、イベント部屋、報酬の少なさも修正しました。セーブデータはそのまま引き継げます。協力プレイでは参加者全員がこのバージョンに更新し、ゲームを再起動してください。[/b]
 
 [h1]Dreamforge RPG[/h1]
 Turns every run into part of a long RPG journey: relics you keep, a risky "secure or delve" choice at every zone, a star map per Traveler, a forge, and long-term goals. Co-op ready.
