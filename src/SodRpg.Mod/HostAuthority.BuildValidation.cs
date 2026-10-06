@@ -11,6 +11,19 @@ namespace SodRpg.Mod
         private readonly HashSet<DewPlayer> _buildRejectionsLogged = new HashSet<DewPlayer>();
         private readonly List<DewPlayer> _buildUpdatePlayers = new List<DewPlayer>();
 
+        internal void BeginNativeContinueRestore()
+        {
+            // The native coroutine replaces heroes before the matching MOD profile is rewound.
+            // Neither queued nor previously accepted source inputs belong to that saved world.
+            _builds.Clear();
+            _incomingBuilds.Clear();
+            ClearBuildValidationPeers();
+            _applyRetryAt.Clear();
+            foreach (var runtime in _runtimes.Values) runtime.AppliedBuild = null;
+            _nextGemSlotCheck = 0f;
+            _pressureDirty = true;
+        }
+
         private void ReceiveBuildUpdate(DreamforgeBuildMsg msg, DewPlayer caller)
         {
             try
@@ -22,6 +35,7 @@ namespace SodRpg.Mod
                     return;
                 }
                 Protocol.WarnMismatch(msg.protocol, nameof(DreamforgeBuildMsg));
+                if (ClientSession.NativeContinueRestoring) return;
                 if (!_incomingBuilds.TryGetValue(caller, out var transfer))
                     _incomingBuilds.Add(caller, transfer = new BuildTransferReceiver());
                 if (!transfer.TryAccept(msg.ToPart(), out string encoded))
@@ -30,6 +44,19 @@ namespace SodRpg.Mod
                     return;
                 }
                 if (encoded == null) return;
+                if (GemContinueSources.QueueFreshBuild(caller.guid, caller, ClientSession.ContinueRunId))
+                {
+                    // This complete packet follows the successful rewind receipt on the ordered
+                    // native channel. Earlier cached/coalesced input must not win or deduplicate it.
+                    _builds.Remove(caller);
+                    RemoveBuildValidationPeer(caller);
+                    var hero = caller.hero;
+                    if (hero != null)
+                    {
+                        _applyRetryAt.Remove(hero);
+                        if (_runtimes.TryGetValue(hero, out var runtime)) runtime.AppliedBuild = null;
+                    }
+                }
                 if (!_buildUpdates.TryGetValue(caller, out var updates))
                     _buildUpdates.Add(caller, updates = new BuildUpdateCoalescer());
                 // Parsing, reconstruction, native application and acknowledgments all run at the
@@ -44,6 +71,7 @@ namespace SodRpg.Mod
 
         private void ProcessBuildUpdates(double now)
         {
+            if (ClientSession.NativeContinueRestoring) return;
             _buildUpdatePlayers.Clear();
             foreach (var player in _buildUpdates.Keys) _buildUpdatePlayers.Add(player);
             foreach (var player in _buildUpdatePlayers)
@@ -79,6 +107,7 @@ namespace SodRpg.Mod
                         SendApplied(player, hero, previous);
                         continue;
                     }
+                    GemContinueSources.CommitFreshBuild(player.guid, player, ClientSession.ContinueRunId);
                     var received = new ReceivedBuild { Build = build, Encoded = encoded, Summary = summary, HeroKey = heroKey };
                     if (!ApplyValidatedBuild(player, hero, received)) continue;
                     _builds[player] = received;

@@ -31,6 +31,7 @@ namespace SodRpg.Mod
         {
             if (skill == null || !GemSlotLedgers.TryGetValue(skill, out var ledger)) return;
             ledger.Identity.ObserveNativeReplacement(skill.GetMaxGemCount(HeroSkillLocation.Identity));
+            if (ClientSession.NativeContinueRestoring) return;
             var host = NativeInstance;
             var hero = skill.hero;
             if (host == null || hero == null || !hero.isActive || hero.Skill != skill

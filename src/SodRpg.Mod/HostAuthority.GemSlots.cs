@@ -33,16 +33,12 @@ namespace SodRpg.Mod
 
         private void ApplyGemSlots(HeroRuntime rt, Build build)
         {
+            if (ClientSession.NativeContinueRestoring) return;
             var skill = rt.Hero != null && rt.Hero.isActive ? rt.Hero.Skill : null;
             if (skill == null) return;
             if (rt.GemSlotOwner != null && rt.GemSlotOwner != skill) RestoreGemSlots(rt);
             rt.GemSlotOwner = skill;
-            var ledger = GemSlotLedgers.GetValue(skill, s => new NativeGemSlotLedger(s));
-            if (!_trackedGemSkills.TryGetValue(skill, out _))
-            {
-                _trackedGemSkills.Add(skill, ledger);
-                _gemSkills.Add(new WeakReference<HeroSkill>(skill));
-            }
+            var ledger = TrackGemSkill(skill);
             UpdateGemSlot(skill, ledger.Identity, HeroSkillLocation.Identity,
                 EssenceSlots.AddedFrom(build, Stat.EssenceSlotIdentity), false);
             UpdateGemSlot(skill, ledger.Movement, HeroSkillLocation.Movement,
@@ -50,13 +46,46 @@ namespace SodRpg.Mod
             ClearGemSlotConflict(rt.Hero);
         }
 
+        private NativeGemSlotLedger TrackGemSkill(HeroSkill skill)
+        {
+            var ledger = GemSlotLedgers.GetValue(skill, s => new NativeGemSlotLedger(s));
+            if (!_trackedGemSkills.TryGetValue(skill, out _))
+            {
+                _trackedGemSkills.Add(skill, ledger);
+                _gemSkills.Add(new WeakReference<HeroSkill>(skill));
+            }
+            return ledger;
+        }
+
+        private static bool PendingNativeContinueGemSource(HeroSkill skill)
+        {
+            var player = skill.hero != null ? skill.hero.owner : null;
+            return player != null && player != DewPlayer.local
+                && GemContinueSources.IsPending(player.guid, player, ClientSession.ContinueRunId);
+        }
+
+        private void ProtectNativeContinueGemSlots()
+        {
+            foreach (var player in DewPlayer.gamePlayers)
+            {
+                var hero = player != null ? player.hero : null;
+                var skill = hero != null && hero.isActive ? hero.Skill : null;
+                if (skill == null || !PendingNativeContinueGemSource(skill)) continue;
+                var ledger = TrackGemSkill(skill);
+                UpdateGemSlot(skill, ledger.Identity, HeroSkillLocation.Identity, ledger.Identity.OurContribution, false);
+                UpdateGemSlot(skill, ledger.Movement, HeroSkillLocation.Movement, ledger.Movement.OurContribution, false);
+            }
+        }
+
         private void TickGemSlots()
         {
+            if (ClientSession.NativeContinueRestoring) return;
             float now = Time.unscaledTime;
             if (now < _nextGemSlotCheck) return;
             _nextGemSlotCheck = now + 1f;
             bool notify = now >= _nextGemSlotNotice;
             if (notify) _nextGemSlotNotice = now + 5f;
+            if (GemContinueSources.HasParticipants) ProtectNativeContinueGemSlots();
             foreach (var rt in _runtimes.Values)
             {
                 var hero = rt.Hero;
@@ -87,6 +116,7 @@ namespace SodRpg.Mod
 
         private void RestoreSkillGemSlots(HeroSkill skill)
         {
+            if (ClientSession.NativeContinueRestoring) return;
             if (skill == null || !GemSlotLedgers.TryGetValue(skill, out var ledger)) return;
             // Inactive components cannot be written, but retain ownership if this exact
             // component becomes active again. Never capture our applied slot as a new baseline.
@@ -97,6 +127,7 @@ namespace SodRpg.Mod
 
         private void DetachGemSlots()
         {
+            GemContinueSources.Reset();
             foreach (var weak in _gemSkills)
                 if (weak.TryGetTarget(out var skill))
                 {
@@ -107,12 +138,41 @@ namespace SodRpg.Mod
             _nextGemSlotCheck = _nextGemSlotNotice = 0f;
         }
 
+        private static int NativeGemSlotMinimum(HeroSkill skill, HeroSkillLocation loc)
+        {
+            var hero = skill.hero;
+            if (loc != HeroSkillLocation.Identity || hero == null || hero.Status == null) return 0;
+            // Saved native counters are authoritative even if the optional rewrite hook failed.
+            return hero.Status.TryGetStatusEffect<Se_Shrine_Chaos_StatBonus>(out var effect)
+                && effect != null && effect.victim == hero ? Math.Max(0, effect.currentAddedGemSlotIdentity) : 0;
+        }
+
         private void UpdateGemSlot(HeroSkill skill, GemSlotLedger ledger, HeroSkillLocation loc, int desired, bool removing)
         {
             try
             {
                 int current = skill.GetMaxGemCount(loc);
-                var decision = removing ? ledger.DecideRemoval(current) : ledger.Decide(current, desired);
+                int minimumNative = NativeGemSlotMinimum(skill, loc);
+                if (PendingNativeContinueGemSource(skill))
+                {
+                    int nativeOnly = ledger.DecideRemoval(current, minimumNative).Target;
+                    int budget = EssenceSlots.MaxAdded;
+                    if (loc == HeroSkillLocation.Movement && GemSlotLedgers.TryGetValue(skill, out var pair))
+                        budget -= pair.Identity.OurContribution;
+                    budget = Math.Min(EssenceSlots.MaxPerLocation, Math.Min(Math.Max(0, budget), int.MaxValue - nativeOnly));
+                    int pending = Math.Min(budget, Math.Max(0, Math.Max(0, current) - nativeOnly));
+                    // Save files retain exact gem locations, not caps. Preserve only the bounded
+                    // possible MOD tail until a successfully rewound source has been validated.
+                    for (int extra = pending; extra < budget; extra++)
+                        if (skill.gems.TryGetValue(new GemLocation { skill = loc, index = nativeOnly + extra }, out var gem) && gem != null)
+                            pending = extra + 1;
+                    if (pending > 0)
+                    {
+                        desired = Math.Max(removing ? 0 : desired, pending);
+                        removing = false;
+                    }
+                }
+                var decision = removing ? ledger.DecideRemoval(current, minimumNative) : ledger.Decide(current, desired, minimumNative);
                 int observed;
                 try
                 {

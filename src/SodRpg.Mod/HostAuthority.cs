@@ -1092,7 +1092,8 @@ namespace SodRpg.Mod
                     try { _registeredOn.CustomRpc_UnregisterServerMessageHandler<DreamforgeDreamEventStartedMsg>(_onPersonalDreamEvent); } catch (Exception) { }
                     try { _registeredOn.CustomRpc_UnregisterServerMessageHandler<DreamforgeKillReceiptMsg>(OnKillReceipt); } catch (Exception) { }
                 }
-                foreach (var rt in _runtimes.Values) { RemoveBonuses(rt); Unhook(rt); }
+                // RPC transport replacement is not removal of the surviving hero's loadout.
+                foreach (var rt in _runtimes.Values) { RemoveBonuses(rt); Unhook(rt, restoreGemSlots: false); }
                 _runtimes.Clear();
                 ReleaseCurrency();
                 _builds.Clear();
@@ -1207,7 +1208,7 @@ namespace SodRpg.Mod
             foreach (var rt in _runtimes.Values)
             {
                 RemoveBonuses(rt);
-                Unhook(rt);
+                Unhook(rt, restoreGemSlots: true);
             }
             _runtimes.Clear();
             ReleaseCurrency();
@@ -1368,11 +1369,12 @@ namespace SodRpg.Mod
                 if (kv.Key == null || !kv.Key.isActive) _scratch.Add(kv.Key);
             foreach (var h in _scratch)
             {
-                try { Unhook(_runtimes[h]); }
+                try { Unhook(_runtimes[h], restoreGemSlots: true); }
                 catch (Exception ex) { Log.Error("Host: unhook " + ex); }
                 _runtimes.Remove(h);
             }
 
+            if (ClientSession.NativeContinueRestoring) return;
             // 新しく生まれたキャラ（ラン開始・復帰）へ、届いている Build を付け直す。
             // 1人の Build で例外が出ても、ほかの全員のホスト処理は止めない（mp-ui-save #6）。失敗した人は5秒おきに再試行する。
             float now = Time.time;
@@ -1391,7 +1393,7 @@ namespace SodRpg.Mod
                     _applyRetryAt[hero] = now + 5f;
                     if (_runtimes.TryGetValue(hero, out var partial))
                     {
-                        try { Unhook(partial); } catch (Exception) { }
+                        try { Unhook(partial, restoreGemSlots: true); } catch (Exception) { }
                         _runtimes.Remove(hero);
                     }
                     Log.Error("Host: could not apply a player's build (retrying in 5 s): " + ex);
@@ -1565,13 +1567,13 @@ namespace SodRpg.Mod
             summon.dealtDamageProcessor.Add(processor);
         }
 
-        private void Unhook(HeroRuntime rt)
+        private void Unhook(HeroRuntime rt, bool restoreGemSlots)
         {
             // #161: 外す直前までに貯まった報告を落とさない。
             FlushGimmickReports(rt);
             ClearBossEffects(rt);
             ForgetAssignedMechanismOwner(rt.Hero);
-            RestoreGemSlots(rt);
+            if (restoreGemSlots) RestoreGemSlots(rt);
             UnhookNewPowers(rt);
             UnhookGimmicksV129(rt);
             UnhookGoldSpend(rt);

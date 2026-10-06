@@ -57,6 +57,8 @@ namespace SodRpg.Mod
                 // Hello reports diagnostics, not authorization. Bind the observation session
                 // even when a readable peer advertises another version or content registry.
                 BindKillObservationSession(caller, msg.killObservationSessionId);
+                GemContinueSources.ObserveReceipt(caller.guid, caller, ClientSession.ContinueRunId,
+                    msg.continueRunId, msg.continueCheckpointId, msg.continueResumeSession);
                 bool sameProtocol = msg.protocol == Protocol.Version;
                 bool sameContent = string.Equals(msg.content, ContentFingerprint.Value, StringComparison.Ordinal);
                 bool sameVersion = string.Equals(msg.modVer, ModVersion, StringComparison.Ordinal);

@@ -41,19 +41,19 @@ namespace SodRpg.Core.Game
             LastWritten = Math.Max(0, current);
         }
 
-        public GemSlotDecision Decide(int current, int desired)
+        public GemSlotDecision Decide(int current, int desired, int minimumNative = 0)
         {
             int cap = Math.Max(0, current);
-            int withoutOwn = cap - RemainingContribution(cap);
+            int withoutOwn = Math.Max(Math.Max(0, minimumNative), cap - RemainingContribution(cap));
             int contribution = Math.Min(EssenceSlots.ClampAdded(desired), int.MaxValue - withoutOwn);
             return new GemSlotDecision(current, withoutOwn + contribution, contribution);
         }
 
-        /// <summary>Unload from the current cap only; never restore a historical baseline or re-add slots.</summary>
-        public GemSlotDecision DecideRemoval(int current)
+        /// <summary>Remove only remaining MOD ownership, never below a reported native saved counter.</summary>
+        public GemSlotDecision DecideRemoval(int current, int minimumNative = 0)
         {
             int cap = Math.Max(0, current);
-            return new GemSlotDecision(current, cap - RemainingContribution(cap), 0);
+            return new GemSlotDecision(current, Math.Max(Math.Max(0, minimumNative), cap - RemainingContribution(cap)), 0);
         }
 
         // Absolute native rewrites may already have removed some or all of our contribution.

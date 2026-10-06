@@ -51,6 +51,22 @@
     </ItemGroup>
   </Target>
 
+  <Target Name="CompileGuestContinueReceipt" BeforeTargets="CoreCompile">
+    <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/ClientSession.Hello.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)GuestContinueReceipt.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="ClientSession" Methods="RememberContinueReceipt;HasCurrentContinueReceipt;CreateHelloMessage;SendContinueReceiptBeforeBuild;ResetHello" />
+    <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/ClientSession.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)GuestContinueBuild.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="ClientSession" Methods="CurrentBuild;SendBuildIfNeeded" />
+    <ItemGroup>
+      <Compile Include="$(IntermediateOutputPath)GuestContinueReceipt.g.cs" />
+      <Compile Include="$(IntermediateOutputPath)GuestContinueBuild.g.cs" />
+    </ItemGroup>
+  </Target>
+
+  <Target Name="CompileNativeBuildRestore" BeforeTargets="CoreCompile">
+    <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/HostAuthority.BuildValidation.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)NativeBuildRestore.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="HostAuthority" Methods="BeginNativeContinueRestore;ClearBuildValidationPeers" />
+    <ItemGroup>
+      <Compile Include="$(IntermediateOutputPath)NativeBuildRestore.g.cs" />
+    </ItemGroup>
+  </Target>
+
   <Target Name="CompileInfinityContinue" BeforeTargets="CoreCompile">
     <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/ClientSession.Infinity.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)InfinityContinue.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="ClientSession" Methods="InfinityStateDurable;HostInfinityStateDurable;InfinitySaveHoldReleased;InfinitySaveHoldSatisfied;HostInfinitySaveHoldSatisfied;PersistHostInfinityState;SaveInfinityState;SaveInfinityReceipt;BeginInfinitySaveHold;ResetInfinitySaveHold;CompleteInfinityStateSave;CountHostInfinityRoom;SyncInfinityContinueSnapshot;ObserveInfinityRoomTotal;TickInfinity;TryOpenInfinityChoice;AdvanceInfinityIdentity;ResetInfinityContinueState" />
     <ItemGroup>

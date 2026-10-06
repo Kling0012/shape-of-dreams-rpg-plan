@@ -16,6 +16,9 @@ namespace SodRpg.Mod
         private bool _helloAnswered;
         private bool _hostCompatibilityWarned;
         private bool _hostInfinityAvailable;
+        private string _continueReceiptRunId, _continueReceiptCheckpointId, _continueReceiptResumeSession;
+        private string _sentContinueReceiptRunId, _sentContinueReceiptCheckpointId, _sentContinueReceiptResumeSession;
+        private Actor _sentContinueReceiptActor;
         internal static bool RemoteHostInfinityAvailable => _hostSession?._hostInfinityAvailable == true;
         // #144: a participant with no host answer yet is "waiting", not "disabled".
         internal static bool RemoteHostHelloAnswered => _hostSession?._helloAnswered == true;
@@ -46,6 +49,68 @@ namespace SodRpg.Mod
             _hostInfinityAvailable = false;
             HostVersionWarning = null;
             ResetOverflowBonusConnection();
+            _sentContinueReceiptActor = null;
+            _sentContinueReceiptRunId = _sentContinueReceiptCheckpointId = _sentContinueReceiptResumeSession = null;
+        }
+
+        private void RememberContinueReceipt(DreamforgeHelloMsg msg, string runId)
+        {
+            if (_continueCheckpointBlocked || string.IsNullOrEmpty(msg.continueCheckpointId)
+                || string.IsNullOrEmpty(msg.continueResumeSession)
+                || msg.continueResumeSession == Protocol.LobbyReturnedResumeSession
+                || NetworkedManagerBase<GameManager>.softInstance?.runId != runId
+                || Profile.Run?.RunId != runId || Profile.ContinueResumeSession != msg.continueResumeSession) return;
+            if (_continueReceiptRunId == runId && _continueReceiptCheckpointId == msg.continueCheckpointId
+                && _continueReceiptResumeSession == msg.continueResumeSession) return;
+            _continueReceiptRunId = runId;
+            _continueReceiptCheckpointId = msg.continueCheckpointId;
+            _continueReceiptResumeSession = msg.continueResumeSession;
+            _buildDirty = true;
+            _buildCacheFrame = -1;
+        }
+
+        private bool HasCurrentContinueReceipt()
+        {
+            return !_nativeContinueRestoring && _nativeContinueCheckpoint == null && !_continueCheckpointBlocked
+                && !string.IsNullOrEmpty(_continueReceiptCheckpointId)
+                && NetworkedManagerBase<GameManager>.softInstance?.runId == _continueReceiptRunId
+                && Profile.Run?.RunId == _continueReceiptRunId
+                && Profile.ContinueResumeSession == _continueReceiptResumeSession;
+        }
+
+        private DreamforgeHelloMsg CreateHelloMessage()
+        {
+            bool receipt = HasCurrentContinueReceipt();
+            return new DreamforgeHelloMsg
+            {
+                protocol = Protocol.Version, modVer = HostAuthority.ModVersion, content = ContentFingerprint.Value,
+                killObservationSessionId = KillObservationSessionId(_clientRpcOn),
+                continueCheckpoints = true,
+                infinityAvailable = InfinityMode.Available,
+                continueRunId = receipt ? _continueReceiptRunId : null,
+                continueCheckpointId = receipt ? _continueReceiptCheckpointId : null,
+                continueResumeSession = receipt ? _continueReceiptResumeSession : null,
+            };
+        }
+
+        private void SendContinueReceiptBeforeBuild()
+        {
+            if (NetworkServer.active || !HasCurrentContinueReceipt()) return;
+            if (ReferenceEquals(_sentContinueReceiptActor, _clientRpcOn)
+                && _sentContinueReceiptRunId == _continueReceiptRunId
+                && _sentContinueReceiptCheckpointId == _continueReceiptCheckpointId
+                && _sentContinueReceiptResumeSession == _continueReceiptResumeSession) return;
+            // Record transport success before sending Build; failed receipts remain retryable.
+            _clientRpcOn.CustomRpc_SendMessageToServer(CreateHelloMessage());
+            float now = Time.unscaledTime;
+            if (_helloFirstSent < 0) _helloFirstSent = now;
+            _nextHello = now + 5f;
+            _sentContinueReceiptActor = _clientRpcOn;
+            _sentContinueReceiptRunId = _continueReceiptRunId;
+            _sentContinueReceiptCheckpointId = _continueReceiptCheckpointId;
+            _sentContinueReceiptResumeSession = _continueReceiptResumeSession;
+            _buildDirty = true;
+            _buildCacheFrame = -1;
         }
 
         private void TickHello()
@@ -55,13 +120,7 @@ namespace SodRpg.Mod
             float now = Time.unscaledTime;
             if (now >= _nextHello)
             {
-                _clientRpcOn.CustomRpc_SendMessageToServer(new DreamforgeHelloMsg
-                {
-                    protocol = Protocol.Version, modVer = HostAuthority.ModVersion, content = ContentFingerprint.Value,
-                    killObservationSessionId = KillObservationSessionId(_clientRpcOn),
-                    continueCheckpoints = true,
-                    infinityAvailable = InfinityMode.Available,
-                });
+                _clientRpcOn.CustomRpc_SendMessageToServer(CreateHelloMessage());
                 if (_helloFirstSent < 0) _helloFirstSent = now;
                 _nextHello = now + 5f;
             }

@@ -305,6 +305,7 @@ namespace SodRpg.Mod
     // the instance kill-ledger surface they touch is modeled in HostAuthorityLobbyHarness.cs.
     internal sealed partial class HostAuthority
     {
+        internal static readonly GemSlotContinueSources GemContinueSources = new GemSlotContinueSources();
         public bool IsActive;
         public HostAuthority(Func<int> daily) { }
         public static void PrewarmBossVisualTransport() { }

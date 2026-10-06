@@ -1210,8 +1210,10 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
 
         private void SendBuildIfNeeded()
         {
+            if (_nativeContinueRestoring || _nativeContinueCheckpoint != null || _continueCheckpointBlocked) return;
             var hero = LocalHero;
             if (hero == null || _clientRpcOn == null || !NetworkClient.active) return;
+            SendContinueReceiptBeforeBuild();
             if (_sentDreamLevel != Profile.DreamLevel)
             {
                 _buildDirty = true;

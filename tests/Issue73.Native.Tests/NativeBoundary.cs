@@ -184,6 +184,7 @@ namespace SodRpg.Mod
         public bool isGameConcluded, isGameTimePaused;
         public double elapsedGameTime;
         public Zone difficulty;
+        public readonly Dictionary<string, DewPersistence.PlayerData> playerRejoinData = new Dictionary<string, DewPersistence.PlayerData>();
         public float GetAdjustedGoldAmount_Cost(float amount) => 1f;
         public void WrapUpAndShowResult(DewGameResult.ResultType type) => throw new NotSupportedException();
     }
@@ -213,7 +214,9 @@ namespace SodRpg.Mod
         internal sealed class GameData
         {
             public readonly Dictionary<string, string> serverActorData = new Dictionary<string, string>();
+            public readonly List<PlayerData> players = new List<PlayerData>();
         }
+        internal sealed class PlayerData { public string playerGuid; }
         public static GameData SerializeGameData() => new GameData();
         public static void ApplyGameData(GameData data, Action onFinish = null) => onFinish?.Invoke();
     }
@@ -249,6 +252,7 @@ namespace SodRpg.Mod
     internal sealed partial class HostAuthority
     {
         internal static HostAuthority NativeInstance;
+        internal const string ModVersion = "native-test";
         internal static readonly RunGrowthLedger RunGrowthLedger = new RunGrowthLedger();
         private Actor _registeredOn;
         private ZoneManager _zone;
@@ -310,6 +314,15 @@ namespace SodRpg.Mod
         }
         private readonly Dictionary<int, MemoryActivationIdentity> _nativeBaptismEndings = new Dictionary<int, MemoryActivationIdentity>();
         private readonly Dictionary<Hero, HeroRuntime> _runtimes = new Dictionary<Hero, HeroRuntime>();
+        private readonly Dictionary<DewPlayer, ReceivedBuild> _builds = new Dictionary<DewPlayer, ReceivedBuild>();
+        private readonly Dictionary<DewPlayer, BuildTransferReceiver> _incomingBuilds = new Dictionary<DewPlayer, BuildTransferReceiver>();
+        private readonly Dictionary<DewPlayer, BuildUpdateCoalescer> _buildUpdates = new Dictionary<DewPlayer, BuildUpdateCoalescer>();
+        private readonly HashSet<DewPlayer> _buildRejectionsLogged = new HashSet<DewPlayer>();
+        private readonly List<DewPlayer> _buildUpdatePlayers = new List<DewPlayer>();
+        private readonly Dictionary<Hero, float> _applyRetryAt = new Dictionary<Hero, float>();
+        private float _nextGemSlotCheck;
+        private bool _pressureDirty;
+        internal sealed class ReceivedBuild { public Build Build; }
         private readonly Dictionary<Hero, AuthoredState> _authoredMechanisms = new Dictionary<Hero, AuthoredState>();
         private readonly Dictionary<HeroRuntime, object> _gimmickV129 = new Dictionary<HeroRuntime, object>();
         private readonly Dictionary<Hero, BridgeState> _bridgeSuccessEffects = new Dictionary<Hero, BridgeState>();
@@ -318,6 +331,7 @@ namespace SodRpg.Mod
         private KeystonePayload TransformAuthoredPayload(Hero hero, KeystonePayload payload, string source, string receiver, KeystoneSourceKind kind) => throw new NotSupportedException();
         internal sealed class HeroRuntime
         {
+            public ReceivedBuild AppliedBuild;
             public readonly List<PendingGimmick> PendingGimmicks = new List<PendingGimmick>();
             public readonly Prunable Gimmicks = new Prunable(), PairCombos = new Prunable();
         }
@@ -366,6 +380,7 @@ namespace SodRpg.Mod
             public RunChoiceSnapshot Before;
         }
     }
+    internal static class ContentFingerprint { internal const string Value = "native-test-content"; }
     internal sealed partial class ClientSession
     {
         public Profile Profile;
@@ -380,6 +395,17 @@ namespace SodRpg.Mod
         private float _nextSave = float.MaxValue;
         private bool _buildDirty;
         private Actor _clientRpcOn;
+        private string _continueReceiptRunId, _continueReceiptCheckpointId, _continueReceiptResumeSession;
+        private string _sentContinueReceiptRunId, _sentContinueReceiptCheckpointId, _sentContinueReceiptResumeSession;
+        private Actor _sentContinueReceiptActor;
+        private float _helloFirstSent = -1f, _nextHello;
+        private bool _helloAnswered, _hostCompatibilityWarned, _hostInfinityAvailable;
+        public string HostVersionWarning { get; private set; }
+        private Build _buildCache;
+        private string _buildCacheHero;
+        private Hero _lastHero;
+        private int _sentDreamLevel;
+        private float _nextBuildSend;
         private ZoneManager _zone;
         private AsyncProfileWriter _writer;
         private ProfileStore _store;

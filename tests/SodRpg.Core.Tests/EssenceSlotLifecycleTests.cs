@@ -47,9 +47,18 @@ namespace SodRpg.Mod
             for (int i = 0; i < GetMaxGemCount(location); i++) gems[new GemLocation { skill = location, index = i }] = new Gem();
         }
     }
+    internal sealed class Se_Shrine_Chaos_StatBonus : StatusEffect
+    {
+        public int currentAddedGemSlotIdentity;
+    }
+    internal sealed partial class ClientSession
+    {
+        internal static bool NativeContinueRestoring;
+    }
     internal static partial class Log { public static void Info(string text) { } public static void Error(string text) { } }
     internal sealed partial class HostAuthority
     {
+        internal static readonly GemSlotContinueSources GemContinueSources = new GemSlotContinueSources();
         internal sealed partial class HeroRuntime
         {
             public Hero Hero;
@@ -264,6 +273,166 @@ namespace SodRpg.Core.Tests
             Assert.Single(hero.Skill.Dropped);
             host.RestoreForTest(rt);
             Assert.Equal(new[] { 2, 2 }, hero.Skill.Caps); Assert.Equal(2, hero.Skill.Dropped.Count);
+        }
+
+        [Fact]
+        public void Saved_native_counter_survives_refund_without_a_rewrite_notification()
+        {
+            var hero = new Hero(); var host = new HostAuthority(); var rt = Runtime(hero);
+            hero.Skill.Caps[0] = 0;
+            host.ApplyForTest(rt, Both());
+            var native = new Se_Shrine_Chaos_StatBonus { victim = hero, isActive = true, currentAddedGemSlotIdentity = 1 };
+            EntityStatus.LiveStatusEffects.Add(native);
+            try
+            {
+                // The optional observer did not run after the native absolute assignment.
+                hero.Skill.Caps[0] = native.currentAddedGemSlotIdentity;
+                var gem = new Gem();
+                hero.Skill.gems[new GemLocation { skill = HeroSkillLocation.Identity, index = 0 }] = gem;
+                host.ApplyForTest(rt, new Build());
+                host.RestoreForTest(rt);
+                Assert.Equal(1, hero.Skill.Caps[0]);
+                Assert.True(hero.Skill.gems.ContainsValue(gem));
+                Assert.Empty(hero.Skill.Dropped);
+            }
+            finally { EntityStatus.LiveStatusEffects.Remove(native); }
+        }
+
+        [Fact]
+        public void Native_restore_keeps_saved_gems_until_the_matching_profile_build_is_available()
+        {
+            var hero = new Hero(); var host = new HostAuthority(); var rt = Runtime(hero);
+            hero.Skill.Caps[0] = hero.Skill.Caps[1] = 0;
+            var gem = new Gem();
+            hero.Skill.gems[new GemLocation { skill = HeroSkillLocation.Identity, index = 0 }] = gem;
+            ClientSession.NativeContinueRestoring = true;
+            try
+            {
+                host.ApplyForTest(rt, new Build());
+                UnityEngine.Time.unscaledTime = 1;
+                host.TickGemSlotsForTest();
+                host.RestoreForTest(rt);
+                Assert.True(hero.Skill.gems.ContainsValue(gem));
+                Assert.Empty(hero.Skill.Dropped);
+            }
+            finally { ClientSession.NativeContinueRestoring = false; }
+            host.ApplyForTest(rt, Both());
+            Assert.Equal(new[] { 1, 1 }, hero.Skill.Caps);
+            Assert.True(hero.Skill.gems.ContainsValue(gem));
+            Assert.Empty(hero.Skill.Dropped);
+        }
+
+        [Fact]
+        public void Unconfirmed_guest_source_preserves_saved_gems_until_validated_reconciliation()
+        {
+            var hero = new Hero(); var peer = new DewPlayer { guid = "slot-resume-guest", hero = hero };
+            hero.owner = peer;
+            var host = new HostAuthority(); var rt = Runtime(hero);
+            hero.Skill.Caps[0] = 1; hero.Skill.Caps[1] = 0;
+            var native = new Se_Shrine_Chaos_StatBonus { victim = hero, isActive = true, currentAddedGemSlotIdentity = 1 };
+            var nativeGem = new Gem(); var identityGem = new Gem(); var movementGem = new Gem(); var legacyGem = new Gem();
+            hero.Skill.gems[new GemLocation { skill = HeroSkillLocation.Identity, index = 0 }] = nativeGem;
+            hero.Skill.gems[new GemLocation { skill = HeroSkillLocation.Identity, index = 1 }] = identityGem;
+            hero.Skill.gems[new GemLocation { skill = HeroSkillLocation.Movement, index = 0 }] = movementGem;
+            hero.Skill.gems[new GemLocation { skill = HeroSkillLocation.Identity, index = 3 }] = legacyGem;
+            string previousRun = ClientSession.ContinueRunId;
+            EntityStatus.LiveStatusEffects.Add(native);
+            DewPlayer.gamePlayers.Add(peer);
+            HostAuthority.GemContinueSources.Begin("slot-run", "slot-checkpoint", "slot-resume");
+            HostAuthority.GemContinueSources.Include(peer.guid);
+            ClientSession.ContinueRunId = "slot-run";
+            try
+            {
+                host.RegisterNegotiation();
+                host.ApplyForTest(rt, new Build());
+                Assert.Equal(new[] { 2, 1 }, hero.Skill.Caps);
+                Assert.True(hero.Skill.gems.ContainsValue(nativeGem));
+                Assert.True(hero.Skill.gems.ContainsValue(identityGem));
+                Assert.True(hero.Skill.gems.ContainsValue(movementGem));
+                Assert.Same(legacyGem, Assert.Single(hero.Skill.Dropped));
+                var receipt = new DreamforgeHelloMsg
+                {
+                    protocol = Protocol.Version + 1, modVer = "different", content = "different",
+                    continueRunId = "slot-run", continueCheckpointId = "slot-checkpoint", continueResumeSession = "wrong-resume",
+                };
+                host.ReceiveNegotiation(receipt, peer);
+                host.RestoreForTest(rt);
+                Assert.Equal(new[] { 2, 1 }, hero.Skill.Caps);
+                receipt.continueResumeSession = "slot-resume";
+                host.ReceiveNegotiation(receipt, peer);
+                host.ApplyForTest(rt, new Build());
+                Assert.Equal(new[] { 2, 1 }, hero.Skill.Caps); // Receipt alone must not apply the old zero-slot input.
+                Assert.True(HostAuthority.GemContinueSources.QueueFreshBuild(peer.guid, peer, "slot-run"));
+                Assert.False(HostBuildValidation.TryAccept("invalid", "Hero_Cetus", out _, out _));
+                host.ApplyForTest(rt, new Build());
+                Assert.True(hero.Skill.gems.ContainsValue(identityGem));
+                Assert.True(hero.Skill.gems.ContainsValue(movementGem));
+                var profile = Profile.CreateNew(248);
+                var computed = Build.Compute(profile, "Hero_Cetus", 0);
+                string encoded = HostBuildValidation.Encode(computed, profile, "Hero_Cetus", 0);
+                Assert.True(HostBuildValidation.TryAccept(encoded, "Hero_Cetus", out var accepted, out var reason), reason);
+                HostAuthority.GemContinueSources.CommitFreshBuild(peer.guid, peer, "slot-run");
+                host.ApplyForTest(rt, accepted);
+                host.ApplyForTest(rt, accepted);
+                host.RestoreForTest(rt);
+                Assert.Equal(new[] { 1, 0 }, hero.Skill.Caps);
+                Assert.Same(nativeGem, Assert.Single(hero.Skill.gems).Value);
+                Assert.Equal(new[] { legacyGem, identityGem, movementGem }, hero.Skill.Dropped);
+            }
+            finally
+            {
+                host.DetachNegotiation();
+                HostAuthority.GemContinueSources.Reset();
+                ClientSession.ContinueRunId = previousRun;
+                DewPlayer.gamePlayers.Remove(peer);
+                EntityStatus.LiveStatusEffects.Remove(native);
+            }
+        }
+
+        [Fact]
+        public void Reconnected_saved_guid_cannot_reuse_the_previous_peer_source_receipt()
+        {
+            var first = new DewPlayer { guid = "slot-rejoin-guest" };
+            var next = new DewPlayer { guid = first.guid };
+            var hero = new Hero { owner = next }; next.hero = hero;
+            hero.Skill.Caps[0] = hero.Skill.Caps[1] = 0;
+            var gem = new Gem();
+            hero.Skill.gems[new GemLocation { skill = HeroSkillLocation.Identity, index = 0 }] = gem;
+            var host = new HostAuthority(); var rt = Runtime(hero);
+            string previousRun = ClientSession.ContinueRunId;
+            ClientSession.ContinueRunId = "slot-rejoin-run";
+            var sources = HostAuthority.GemContinueSources;
+            sources.Begin("slot-rejoin-run", "checkpoint", "resume");
+            sources.Include(first.guid);
+            try
+            {
+                sources.ObserveReceipt(first.guid, first, "slot-rejoin-run", "slot-rejoin-run", "checkpoint", "resume");
+                Assert.True(sources.QueueFreshBuild(first.guid, first, "slot-rejoin-run"));
+                sources.CommitFreshBuild(first.guid, first, "slot-rejoin-run");
+                // Native reconnect creates a new peer/skill but retains the saved GUID.
+                host.ApplyForTest(rt, new Build());
+                Assert.Equal(new[] { 1, 0 }, hero.Skill.Caps);
+                Assert.True(hero.Skill.gems.ContainsValue(gem));
+                Assert.Empty(hero.Skill.Dropped);
+                sources.CommitFreshBuild(next.guid, next, "slot-rejoin-run");
+                host.ApplyForTest(rt, new Build());
+                Assert.True(hero.Skill.gems.ContainsValue(gem));
+                sources.ObserveReceipt(next.guid, next, "stale-run", "slot-rejoin-run", "checkpoint", "resume");
+                Assert.False(sources.QueueFreshBuild(next.guid, next, "slot-rejoin-run"));
+                sources.ObserveReceipt(next.guid, next, "slot-rejoin-run", "slot-rejoin-run", "checkpoint", "resume");
+                Assert.True(sources.QueueFreshBuild(next.guid, next, "slot-rejoin-run"));
+                sources.CommitFreshBuild(next.guid, next, "slot-rejoin-run");
+                host.ApplyForTest(rt, new Build());
+                host.RestoreForTest(rt);
+                Assert.Equal(new[] { 0, 0 }, hero.Skill.Caps);
+                Assert.Same(gem, Assert.Single(hero.Skill.Dropped));
+                Assert.Empty(hero.Skill.gems);
+            }
+            finally
+            {
+                sources.Reset();
+                ClientSession.ContinueRunId = previousRun;
+            }
         }
 
         [Fact]

@@ -1,8 +1,11 @@
+using SodRpg.Core.Game;
+
 namespace SodRpg.Mod
 {
     internal sealed partial class HostAuthority
     {
         private static string _pendingContinueTrades;
+        internal static readonly GemSlotContinueSources GemContinueSources = new GemSlotContinueSources();
 
         internal string CaptureContinueTrades()
         {
