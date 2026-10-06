@@ -73,11 +73,13 @@ internal sealed class StarSimulation
     private const int MasteryKills = 1_000_000;
     private readonly Options options;
     public List<string> Heroes { get; } = [];
+    public IReadOnlyList<int> Checkpoints { get; }
     public List<StarHeroResult> Results { get; } = [];
 
     public StarSimulation(Options options)
     {
         this.options = options;
+        Checkpoints = StarBalance.Checkpoints.Where(p => p <= options.StarMaxPoints).ToArray();
         foreach (var talent in HeroStarRoutes.All)
             if (Links.IsTraveler(talent.HeroKey) && !Heroes.Contains(talent.HeroKey))
                 Heroes.Add(talent.HeroKey);
@@ -122,7 +124,7 @@ internal sealed class StarSimulation
         h.StarXp = StarProgression.TotalXpForPoints(StarProgression.MaxPoints);
         h.Kills = MasteryKills;
 
-        foreach (int target in StarBalance.Checkpoints)
+        foreach (int target in Checkpoints)
         {
             if (target > 0) AllocateTo(profile, hero, tree, layout, engine, strategy, result.Focus, target);
             result.Checkpoints.Add(Snapshot(profile, hero, tree, target));
@@ -241,10 +243,11 @@ internal sealed class StarSimulation
                 int first = rank > 0 && h.TalentChoices.TryGetValue(t.Id, out int chosen) ? chosen : 0;
                 int last = rank > 0 ? first : t.Choices.Count - 1;
                 for (int option = first; option <= last; option++)
-                    candidates.Add(Evaluate(profile, hero, tree, layout, h, t, i, rank + 1, option, currentScore, currentBreadth));
+                    if (Evaluate(profile, hero, tree, layout, h, t, i, rank + 1, option, currentScore, currentBreadth) is Candidate candidate)
+                        candidates.Add(candidate);
             }
-            else
-                candidates.Add(Evaluate(profile, hero, tree, layout, h, t, i, rank + 1, null, currentScore, currentBreadth));
+            else if (Evaluate(profile, hero, tree, layout, h, t, i, rank + 1, null, currentScore, currentBreadth) is Candidate candidate)
+                candidates.Add(candidate);
         }
         if (h.Keystone == null)
             for (int i = 0; i < tree.Count; i++)
@@ -263,15 +266,23 @@ internal sealed class StarSimulation
         return candidates;
     }
 
-    private Candidate Evaluate(Profile profile, string hero, IReadOnlyList<TalentDef> tree, HeroTreeLayout layout,
+    private Candidate? Evaluate(Profile profile, string hero, IReadOnlyList<TalentDef> tree, HeroTreeLayout layout,
         HeroState h, TalentDef t, int ordinal, int rank, int? option, double currentScore, int currentBreadth)
     {
         var draft = h.Clone();
         draft.Talents[t.Id] = rank;
         if (option.HasValue) draft.TalentChoices[t.Id] = option.Value;
-        var build = Build.ComputeForTree(profile, hero, 0, tree, draft, null, layout);
-        return new Candidate(t.Id, option, false, t.RankCost, ordinal * 2 + (option ?? 0),
-            StarBalance.GearScore(build) - currentScore, StarBalance.EffectBreadth(build));
+        try
+        {
+            var build = Build.ComputeForTree(profile, hero, 0, tree, draft, null, layout);
+            return new Candidate(t.Id, option, false, t.RankCost, ordinal * 2 + (option ?? 0),
+                StarBalance.GearScore(build) - currentScore, StarBalance.EffectBreadth(build));
+        }
+        catch (InvalidStarCombinationException)
+        {
+            // Allocation validation rejects this combination too; never score or buy the illegal draft.
+            return null;
+        }
     }
 
     /// <summary>戦略ごとの購入順。全同点のときは手続き的に一意（星→選択肢→核の登録順）。</summary>

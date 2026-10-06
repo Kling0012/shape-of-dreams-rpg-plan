@@ -25,6 +25,10 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 - **説明の箇条書き**：装備の固有効果・ボス装備・星の説明は、1行目に効果の要点、続けて条件・間隔・上限を「・」で1つずつ並べるようにしました。 / **Bulleted descriptions**: unique gear effects, boss gear and stars show the main effect on the first line, followed by conditions, intervals and caps as one bullet each.
 - **説明文の書き方をそろえる**：上限には単位を付け（例: 上限36%）、言い回し・記号・文末をそろえました。ボス装備の「段階」は「固有報酬の段階」と書くようにしました。数値や効果は説明のために変えていません。 / **Consistent wording**: caps always have units (e.g. "up to 36%"), and phrasing, symbols and sentence endings are unified. Boss gear "stages" now say which reward stage they mean. No numbers or effects were changed for the wording.
 
+### 不具合の修正 / Fixed
+
+- **BalanceSim の stars モード**：購入候補の仮評価が発信側・受信側の二重強化の禁止組合せで停止する問題を修正。禁止候補だけを除外し、ゲームの数値・割当規則は維持します。全旅人・3戦略を指定節目で止める軽量オプション `--star-max-points`（50〜500、50刻み、既定500）を追加しました。 / **BalanceSim stars mode**: skip illegal source/receiver double-boost drafts during candidate scoring without changing game values or allocation rules; add `--star-max-points` for shorter runs across all heroes and strategies.
+
 ---
 
 ## v2.5.0 — インフィニティの地図と、鞄あふれの軽量化（2026-10-06）
