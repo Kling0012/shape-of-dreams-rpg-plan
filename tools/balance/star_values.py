@@ -251,8 +251,8 @@ def validate_growth_table(table, path=GROWTH_TABLE_PATH):
 
 
 def validate_table(table, path=TABLE_PATH):
-    if not isinstance(table, dict) or set(table) != {"schemaVersion", "multipliers", "effects", "rankScaling"}:
-        raise ValueError(f"{path}: expected exactly schemaVersion, multipliers, effects, rankScaling")
+    if not isinstance(table, dict) or set(table) != {"schemaVersion", "multipliers", "effects", "rankScaling", "essenceSlots"}:
+        raise ValueError(f"{path}: expected exactly schemaVersion, multipliers, effects, rankScaling, essenceSlots")
     if type(table["schemaVersion"]) is not int or table["schemaVersion"] != 1:
         raise ValueError(f"{path}/schemaVersion: expected integer 1")
     multipliers = table["multipliers"]
@@ -293,6 +293,12 @@ def validate_table(table, path=TABLE_PATH):
     for key in ("pointDenominator", "maxPoints"):
         if type(rank[key]) is not int or rank[key] <= 0:
             raise ValueError(f"{path}/rankScaling/{key}: expected positive integer")
+    slots = table["essenceSlots"]
+    if not isinstance(slots, dict) or set(slots) != {"maxAdded", "maxPerLocation", "starAmount"}:
+        raise ValueError(f"{path}/essenceSlots: expected maxAdded, maxPerLocation and starAmount")
+    for key in ("maxAdded", "maxPerLocation", "starAmount"):
+        if type(slots[key]) is not int or not 0 <= slots[key] <= INT_MAX:
+            raise ValueError(f"{path}/essenceSlots/{key}: expected nonnegative int32")
     return table
 
 
@@ -581,5 +587,8 @@ def render_rank_balance(table=None, growth_table=None):
         f"        internal const decimal DamagePerPoint = {decimal_literal(gain)};",
         f"        internal const decimal MaxMultiplier = {decimal_literal(maximum)};",
         f"        internal const int MaxPoints = {rank['maxPoints']};",
+        f"        internal const int EssenceSlotsMaxAdded = {table['essenceSlots']['maxAdded']};",
+        f"        internal const int EssenceSlotsMaxPerLocation = {table['essenceSlots']['maxPerLocation']};",
+        f"        internal const int EssenceSlotStarAmount = {table['essenceSlots']['starAmount']};",
         "        internal static readonly string ContentFingerprintRecord = " + json.dumps(record) + ";",
         "    }", "}", ""])

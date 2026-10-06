@@ -733,3 +733,181 @@ Power側の調整数値の原本は `tools/balance/powers.json` です。
 - 説明文（`Content.FormatPower` と `NewPowersV129.Describe` の日英両文）は生成定数を
   補間します。移行時に2言語×全Power×代表値の全文が移行前と一致することを確認しました。
   ゲーム実行時のJSON読込・Protocol・保存形式の変更はありません。
+
+## 本体の追加枠上限と復帰時の整理（Issue #248）
+
+`stars.json.essenceSlots` を原本として、`StarRankBalance.g.cs` に
+星1つの追加量・場所ごとの上限・旅人ごとの合計上限を生成します。
+星・鍵石／刻印・遺物・セットなど、Buildへ入るすべての出所を集計した後、
+アイデンティティ記憶と移動の記憶のエッセンス枠をそれぞれ最大+1、合計最大+2へ丸めます。
+通信から復元したBuildにも同じ制限を適用します。保存形式・Protocol・星IDは変更しません。
+本体の祠などによる元の枠数はMODの追加量ではなく、取り除きません。
+
+### 追加枠を持つ星の全一覧と最大値
+
+各セルは `h.<旅人の英小文字>.route.<下記の名前>.slot` の星IDです。
+すべて1段・追加量+1。アイデンティティは「記憶の器を広げる」、
+移動は「回避の器を広げる」。鍵石／刻印・装備／セット・生成manifestの追加効果には、
+現行定義で本体の枠数を増やすものはありません。記憶の装着枠・遺物の装備枠も増やしません。
+
+| 旅人 | アイデンティティの星 | 移動の星 | 星の素の合計 | 修正前の実効上限 | 修正後の実効上限 |
+| --- | --- | --- | ---: | ---: | ---: |
+| Aurena | `claw`、`beautiful-threat` | `feathery-dash` | +3 | +2 | +2 |
+| Bismuth | `prismatic-eyes` | `distorting-sprint` | +2 | +2 | +2 |
+| Cetus | `icy-veins`、`charged` | `frost-charge` | +3 | +2 | +2 |
+| Husk | `killing-flow`、`wind-scar` | `flash-step` | +3 | +2 | +2 |
+| Lacerta | `double-tap`、`powder` | `nimble-dodge` | +3 | +2 | +2 |
+| Mist | `en-garde`、`priorite` | `fast-feet` | +3 | +2 | +2 |
+| Nachia | `pack-heart`、`circle-life` | `dreamy-waltz` | +3 | +2 | +2 |
+| Vesper | `resolve`、`mercy` | `charge` | +3 | +2 | +2 |
+| Yubar | `converging-stars`、`exotic-matter` | `flicker` | +3 | +2 | +2 |
+
+素の合計は重複するアイデンティティの星も数えた理論値で、星点予算を超えて
+星図全体を同時取得できるという意味ではありません。修正前も場所ごとの能力値上限と
+`EssenceSlots.ClampAdded` が実効量を抑えており、設計値だけで実効追加量が+2を超える経路はありません。
+
+### 出所別の修正前→修正後（全旅人）
+
+エッセンス枠の**追加量**を比較します。「前」は修正前の定義・集計上限で、
+報告された実機や既存セーブの異常値の最大値ではありません。
+星の素の合計は上の一覧、下表の星は場所別上限を適用した実効上限です。
+鍵石と刻印は同じ定義を二重加算せず、装備には遺物・セットを含みます。
+
+| 旅人 | 星 | 鍵石 | 刻印 | 装備 | MOD合計 | 本体の正規追加枠 |
+| --- | ---: | ---: | ---: | ---: | ---: | --- |
+| Aurena | +2→+2 | 0→0 | 0→0 | 0→0 | +2→+2 | N→N（下記） |
+| Bismuth | +2→+2 | 0→0 | 0→0 | 0→0 | +2→+2 | N→N（下記） |
+| Cetus | +2→+2 | 0→0 | 0→0 | 0→0 | +2→+2 | N→N（下記） |
+| Husk（空殻） | +2→+2 | 0→0 | 0→0 | 0→0 | +2→+2 | N→N（下記） |
+| Lacerta | +2→+2 | 0→0 | 0→0 | 0→0 | +2→+2 | N→N（下記） |
+| Mist | +2→+2 | 0→0 | 0→0 | 0→0 | +2→+2 | N→N（下記） |
+| Nachia | +2→+2 | 0→0 | 0→0 | 0→0 | +2→+2 | N→N（下記） |
+| Vesper | +2→+2 | 0→0 | 0→0 | 0→0 | +2→+2 | N→N（下記） |
+| Yubar | +2→+2 | 0→0 | 0→0 | 0→0 | +2→+2 | N→N（下記） |
+
+本体側は9旅人共通の `HeroSkill.GetMaxGemCount` に旅人固有の倍率がなく、
+追加処理は `Se_Shrine_Chaos_StatBonus.AddEssenceSlotBonus` とその絶対値反映です。
+本体の初期フィールドはQ/W/E/R各3、Identity・Movement各0。
+汚染された混沌の祠のコード既定値は追加量1、取得判定上限4で、
+MODなし・既定設定・全対象と報酬が取得可能なら、
+Q/W/E/R各+1、Identity+4、Movement+0、合計**+8**が取得判定から導けます。
+ただし実際の上限・報酬候補・旅人prefabを持つUnity assetsは供給されておらず、
+実設定と到達可能な最大Nは未確定です。MOD枠も祠の取得判定には含まれるため、
+取得順によって本体の取得可能量が変わり、常に「本体+8とMOD+2」を同時取得できるとは限りません。
+保存された本体カウンタ自体にはこの取得上限の丸めがないので、4を超える値を
+MOD由来と決めつけて引いたり、MOD共通+2へ丸めたりしません。
+
+本体の星座装着枠は別単位です。`HeroConstellationSettings` の既定は
+各系統3→5（+2）、4系統すべて既定なら合計+8ですが、旅人ごとの実設定は未確定です。
+これはエッセンス枠でもMODの星図点でもなく、今回の制限では変更しません。
+
+根拠は本体 `HeroSkill.cs:201-287,1166-1204`、
+`Se_Shrine_Chaos_StatBonus.cs:38,60-78,404-466`、
+`Shrine_CorruptedChaos.cs:149-156,183-187`、`EditSkillShrine.cs:189-199`、
+`HeroConstellationSettings.cs:6-8`、`Hero.cs:109-115`、
+`HeroLoadoutData.cs:182-232`、`DewProfile.cs:1313-1329`。
+`Dew.Contents.dll` の全ILを調べた枠参照も、祠の上限読取と本体カウンタ追加だけでした。
+調査用のIL走査は起動時検査や本体API依存を増やすものではありません。
+
+### 空殻の専用経路・返金・協力プレイ
+
+- `Hero_Husk` の枠追加は上の3星だけです。`killing-flow` と `wind-scar` は
+  Identityに各+1、`flash-step` はMovementに+1。Identityの重複は+1へ、
+  MOD全出所の合計は+2へ制限します。
+- v2.4の#169は専用の3記憶間連携・仕掛け・鍵石の再設計です。
+  `docs/specs/v2.4-husk-trio-starmap.md`、Husk manifestと生成定義の
+  10鍵石・Choice・Mechanismに追加枠はありません。旧ルートの `.slot` は維持され、
+  revision 2の返金対象26星や2リング中心を別の枠追加として数えません。
+- 本体の `Hero_Husk` は剣の表示状態、`Se_D_TheKillingFlow` は攻撃速度から攻撃力への変換、
+  `St_D_ScarOfTheWind` は移動後の攻撃効果です。本体星
+  `Se_Star_Husk_L_DodgeChargesAndRangeWithPenalty` の `addedCharge=1` は回避回数で、
+  エッセンス枠を増やしません。
+- 個別返金・全振り直し・鍵石解除・依存関係の一括返金はいずれも
+  `ClientSession.MarkDirty(true)` から新しいProfileの `Build.Compute` を送ります。
+  #202の変更は移行通知の重複抑制で、通知表示を追加枠や返金差分として適用しません。
+  `ProfileCodec` / `AuthoredStarMigration` の移行後にBuildを計算します。
+- ホストは `HostBuildValidation` で出所から再計算し、同じ完全Buildの再送をまとめます。
+  本体枠への書込はサーバーだけ。クライアントの `OnApplied` は要約を保持するだけで、
+  本体のSyncVarも絶対値を同期し、参加者ごとの追加加算はありません。
+- 本体の混沌の祠は通常報酬でもIdentityを保存された本体カウンタへ書き戻します。
+  本体0+MOD1の状態へ本体カウンタ1が書かれると、数値が同じ1なので従来の台帳は
+  本体分をMOD分と誤認しました。そのまま返金すると本体1も0へ減りました。
+  既知の公開 `NotifyUpdate` が正常終了した時だけIdentityの旧MOD所有量を破棄し、
+  現在のBuildのMOD分を再適用します。Movementや任意の `SetMaxGemCount` は対象外です。
+  このHarmonyパッチの失敗は既存のクラス単位の隔離に従い、MOD全体を停止しません。
+- ビルド済みDLLの診断実行では、この同値書き戻しを100回反復して、
+  修正前は本体1+MOD1が1、返金後0。修正後は2を維持し、返金後も本体1を保持しました。
+  これは正規枠の誤減算の再現であり、報告された増殖の原因の断定ではありません。
+
+### 確認した不具合と安全な復帰
+
+- 本体の `DewPersistence.GemData` は装着場所を保存し、`ApplyPlayerData` は枠番号を
+  そのまま `HeroSkill.EquipGem` へ渡します。本体のこの復元経路には枠上限の確認がありません。
+- 修正前の `HostAuthority.UpdateGemSlot` は枠数が減った時しか溢れを調べなかったため、
+  既存セーブの高い枠番号のエッセンスが、枠数の維持・増加時には残りました。
+  修正後は正常に読み戻せた本体枠数に対し、毎回装着場所を整理します。
+  `HeroSkill.UnequipGem` の既存経路で元のエッセンスを所有者付きで足元へ戻し、
+  破壊・再生成しません。取り外しに失敗したものは次回に再試行します。
+- 本体が追加枠を既に取り消した後のMOD解除で、その枠をもう一度引かないようにしました。
+  枠数の不一致回数による機能停止は廃止し、部品単位の台帳を再適用・ホスト再生成でも共有します。
+
+原本の場所は `HeroStarRoutes.AddEssenceSlots`、集計は `Build.ComputeTree`、
+通信の丸めは `Build.Decode`、本体への反映は `HostAuthority.GemSlots.cs` です。
+本体側の根拠はローカルの `DewPersistence.cs:272,277,1214-1218,1333`、
+`HeroSkill.cs:926-969,998-1012,1180-1200`（r1.4.0.13の逆コンパイル）です。
+通常の反復適用は修正前も増殖せず、報告された実機でのすべての発生条件まで特定したわけではありません。
+本体UIは `GetMaxGemCount`、操作は `EditSkillManager` の同じ上限を使います。
+Q/W/E/Rや装着記憶数を増やさず、MOD由来の追加量を既存範囲に保ちます。
+実機・協力プレイの表示と操作は未確認です。
+
+### v2.7.2の枠消失経路と追加修正
+
+比較対象は公開タグ `v2.7.2` と `fix/star-slots`。ホストでの報告は受領済みですが、
+枠の出所と消失のタイミングは未着で、下記の再現が実際の報告原因だったとは断定しません。
+本体側の調査範囲は提供されたr1.4.0.13のDLL・逆コンパイルです。
+
+| 経路 | v2.7.2の状態 | ブランチの状態・根拠 |
+| --- | --- | --- |
+| 部屋・通常ゾーン移動 | 本体は人間の同じHero/HeroSkillを保持。移動だけで台帳が入れ替わる経路は確認できない | 本体 `Hero.cs:142-151`、`ZoneManager.cs:1284-1289,1485-1501`。非活性化で台帳を永久退役させる旧処理は既に修正済み（下記） |
+| #232ランダムゾーン・Infinity地図再生成 | `TravelToZone(..., noAdvance:true)` で移動し、別の遠征や旅人を生成しない | `src/SodRpg.Mod/InfinityMode.cs:570-594`、本体 `ZoneManager.cs:1299-1333,2372-2376,2523-2561`。ゾーン用効果のリセットと枠の所有台帳は別 |
+| 保存・読み込み・「続きから」 | 本体は枠数を保存せず、装着場所と祠のカウンタを先に復元。待機中や完了時に巻き戻し前のBuildを適用できる | 今回修正：既存・待機中のBuildを破棄し、本体復元中は枠変更・取り外しを保留。Profileの巻き戻し後に開く。本体 `DewPersistence.cs:810-816,915-961,1317-1383`、`src/SodRpg.Mod/ClientSession.Continue.cs:131-186`、`HostAuthority.BuildValidation.cs:14-25` |
+| 再接続・途中参加 | 再接続はGUID別の本体保存から新しい旅人を復元。初回途中参加で他人の汚染された祠の枠カウンタを複製する処理はない | 本体 `GameManager.cs:657-684`、`DewPersistence.cs:1388-1399`、`DewPlayer.cs:4293-4320`。今回修正：再開した保存プレイヤー・オフライン再参加の出所を追跡し、同じGUIDでも別の接続オブジェクトは復元証明を再取得。`src/SodRpg.Core/Game/GemSlotContinueSources.cs:48-103` |
+| ホスト／参加者 | 本体枠の変更はホストだけ。参加者の再開ProfileはHello受信で後から巻き戻るので、合法だが別の遠征由来のゼロ枠Buildが先に届き得る | 今回修正：既存Helloのrun/checkpoint/resume識別子で成功した巻き戻しを返答し、その後の完全Buildを検証して初めて削減を解放。古い集約・キャッシュを破棄するので、同じencoded Buildでも新しい出所を処理。`ClientSession.Hello.cs:53-111`、`HostAuthority.Hello.cs:58-59`、`HostAuthority.BuildValidation.cs:47-59,110` |
+| 本体の祠・他の追加枠 | 本体の絶対値書き戻しと旧MOD所有量が混同され、返金で本体分を減らし得る | 公開NotifyUpdateの観測は既に修正済み。今回さらに保存された本体Identityカウンタを下限にして、任意パッチの失敗時も本体分を減らさない。`src/SodRpg.Core/Game/GemSlotLedger.cs:44-56`、`src/SodRpg.Mod/HostAuthority.GemSlots.cs:141-175`。提供DLLでの本体ゲームプレイ書込は混沌の祠のみ。Q/W/E/R、星座枠や本体カウンタの上限は変更しない |
+| 遠征中の星取得・振り直し | 通常の星購入・返金UIは遠征中にロック。依存条件の一括返金などは新しいProfileからBuildを送る | `src/SodRpg.Mod/ClientSession.cs:181,183-190`、`DreamforgeUi.cs:2256,2602`。今回の制限は同じ旅人の正規の振り直しを止めず、削るのは確認済みMOD所有量だけ。前の変更で台帳の再適用・削減済み枠の二重減算を修正済み |
+| #246の不一致警告 | バージョン・内容・Helloの遅延は警告のみ。ただし旧枠競合ラッチは別に残る | ラッチ・旧disabled通知による枠非表示は既に撤去済み。今回の出所確認にも版・Protocol・内容の一致を条件にしない。`src/SodRpg.Mod/ClientSession.GemSlotConflict.cs:23-26`、`HostAuthority.Hello.cs:58-86` |
+| RPCだけの再登録 | 旅人が生存したままserverActorが交換されると旧Unhookが枠を削減できる。本体の上記移動ではserverActor交換は確認できない | 条件付き経路も今回修正：RPC再登録では枠を戻さず、部品の台帳と装着物を保持。実際の解除・非活性旅人の片付けとは分離。`src/SodRpg.Mod/HostAuthority.cs:1092-1093,1567-1573` |
+
+**v2.7.2から既に直っていた部分**：
+`GemSlotLedger.cs:38-39,61-87` の「10秒に3回の変化で停止」、
+`HostAuthority.GemSlots.cs:120-132` の両場所停止、
+同 `143-149` の非活性部品の永久退役、
+`GemSlotLedger.cs:91-94` の盲目的な旧所有量減算、
+同値・増加する本体の絶対値書き戻しの誤認、
+`HostAuthority.GemSlots.cs:183-185` の縮小時だけの溢れ整理です。
+これらは本ブランチの前2コミットで修正済みで、今回の新規修正と区別します。
+
+**互換性と安全側の制限**：
+復元証明はバージョン認証ではなく、既知の保存地点の出所確認です。
+通常の遠征・初回途中参加・本体枠・他のMOD機能はHelloなしでも続行します。
+復元済みの参加者が返答を送らない旧版などでは、保存済みエッセンスを支える
+可能性のあるMOD末尾と既存MOD所有量だけを、共有+2・場所別+1以内で保護し、
+その部品の未確認の縮小を保留します。高い旧バグ枠を本体分と決めつけて残しません。
+返答だけでは古いBuildを適用せず、返答後の完全Buildの検証成功が必要です。
+不正Build・別保存地点の返答では保護を解放せず、同じ接続の再返答で二重巻き戻しもしません。
+Protocol 24・保存形式5・既存メッセージの形式は変更していません。
+
+**実行した確認**：
+追加修正前のブランチで、本体カウンタ1が返金で0になるケースと、
+本体復元中のゼロ枠Buildで保存エッセンスが外れるケースの2件が失敗することを確認。
+修正後は枠アダプタの回帰20件と再開処理の回帰14件が成功しました。
+実際のホスト受信・集約・検証・枠反映ソースをコンソールで実行し、
+本体1＋未確認MOD2と元の3エッセンスを保持、
+互換性情報が異なる一致返答だけでは削減しない、不正Buildでも保持、
+返答後に同じencodedの正規ゼロ枠Buildを検証するとMOD2だけを元の物のまま戻し、
+本体1とその装着物は保持、再送でも二重取り外しなし、を観測しました。
+この実行は本体API境界のダブルを使った診断です。Unity実機・実際の協力プレイの表示は未確認です。
+Releaseビルドは警告5・エラー0、`python tools/balance/gen_cs.py --check` は成功。
+`DOTNET=/usr/bin/dotnet DOTNET_ROLL_FORWARD=LatestMajor python tools/test_changed.py --all` は
+**2587成功・0失敗・既存4スキップ**（Native 91、Core 2426＋4スキップ、Startup 70）。
+今回の最小回帰は8ケースです。

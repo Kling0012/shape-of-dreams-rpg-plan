@@ -45,6 +45,7 @@ namespace SodRpg.Mod
         private string _pendingContinueId, _confirmedContinueId;
         private bool _continueCheckpointBlocked;
         private bool _nativeContinueRestoring;
+        internal static bool NativeContinueRestoring => _hostSession?._nativeContinueRestoring == true;
         private GameManager _continueGame;
         private bool ContinueReady => !_nativeContinueRestoring && (LobbyReturnPending
             || (_blockedContinueRunId == null && !_continueCheckpointBlocked));
@@ -132,6 +133,8 @@ namespace SodRpg.Mod
             var session = _hostSession;
             if (!NetworkServer.active || session == null || data?.serverActorData == null) return;
             session._nativeContinueRestoring = true;
+            HostAuthority.GemContinueSources.Reset();
+            HostAuthority.NativeInstance?.BeginNativeContinueRestore();
             session._nativeContinueCheckpoint = null;
             session._continueCheckpointId = session._continueResumeSession = null;
             if (!data.serverActorData.TryGetValue(ContinueIdKey, out string id)
@@ -145,6 +148,11 @@ namespace SodRpg.Mod
             session._nativeContinueCheckpoint = new RunCheckpoint(id, runId, snapshot);
             session._continueCheckpointId = id;
             session._continueResumeSession = Guid.NewGuid().ToString("N");
+            HostAuthority.GemContinueSources.Begin(runId, id, session._continueResumeSession);
+            if (data.players != null)
+                foreach (var player in data.players)
+                    if (player != null && player.playerGuid != DewPlayer.local?.guid)
+                        HostAuthority.GemContinueSources.Include(player.playerGuid);
             data.serverActorData.TryGetValue(ContinueTradesKey, out string trades);
             HostAuthority.RestoreContinueTrades(trades);
         }
@@ -153,13 +161,27 @@ namespace SodRpg.Mod
         {
             var session = _hostSession;
             if (!NetworkServer.active || session == null) return;
-            session._nativeContinueRestoring = false;
-            var checkpoint = session._nativeContinueCheckpoint;
-            if (checkpoint != null)
+            try
             {
-                if (checkpoint.RunId != NetworkedManagerBase<GameManager>.softInstance?.runId) return;
-                session.RestoreContinueCheckpoint(checkpoint, session._continueResumeSession);
-                session._nativeContinueCheckpoint = null;
+                var checkpoint = session._nativeContinueCheckpoint;
+                if (checkpoint != null)
+                {
+                    var game = NetworkedManagerBase<GameManager>.softInstance;
+                    if (checkpoint.RunId != game?.runId) return;
+                    // Offline players can rejoin from this native dictionary after the load.
+                    if (game.playerRejoinData != null)
+                        foreach (string guid in game.playerRejoinData.Keys)
+                            if (guid != DewPlayer.local?.guid) HostAuthority.GemContinueSources.Include(guid);
+                    session.RestoreContinueCheckpoint(checkpoint, session._continueResumeSession);
+                    session._nativeContinueCheckpoint = null;
+                }
+            }
+            finally
+            {
+                // ProfileChanged/save callbacks must not expose the pre-rewind build.
+                session._nativeContinueRestoring = false;
+                session._buildDirty = true;
+                session._buildCacheFrame = -1;
             }
             ValidateHostInfinityContinue();
         }
@@ -233,6 +255,7 @@ namespace SodRpg.Mod
             if (gm != null) return;
             CaptureContinueLobbyBaseline();
             _continueCheckpointId = _continueResumeSession = null;
+            if (NetworkServer.active) HostAuthority.GemContinueSources.Reset();
         }
 
         private void CaptureContinueLobbyBaseline()
@@ -271,6 +294,7 @@ namespace SodRpg.Mod
                 RestoreContinueCheckpoint(checkpoint, msg.continueResumeSession);
             }
             _continueCheckpointBlocked = false;
+            RememberContinueReceipt(msg, runId);
         }
 
         private void RestoreContinueCheckpoint(RunCheckpoint checkpoint, string resumeSession)

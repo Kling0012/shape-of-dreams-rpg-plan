@@ -1,5 +1,10 @@
 {
   "schemaVersion": 1,
+  "essenceSlots": {
+    "maxAdded": 2,
+    "maxPerLocation": 1,
+    "starAmount": 1
+  },
   "multipliers": {
     "byKind": {
       "MemoryDamage": 1,

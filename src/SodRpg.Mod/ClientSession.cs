@@ -201,8 +201,8 @@ namespace SodRpg.Mod
         {
             if (_tickSteps == null)
             {
-                _tickSteps = new Action[] { TickProfileSlots, Wire, TickInfinitySettings, TickGemSlotConflict, UpdateVariantVisuals, UpdateMonsterCues, TickBossDisplay, TrackRun, TickKillClassification, TickRunChoices, TickInfinityRewards, TickCurseResync, TickSalvageExpiry, TickSatchelOverflow, SendBuildIfNeeded, TickHello, TickPeriodicSave, TickKillSync };
-                _tickStepNames = new[] { "profile slots", "wire", "infinity settings", "gem slot conflict", "variant visuals", "monster cues", "boss effects", "track run", "kill classification", "run choices", "infinity rewards", "curse resync", "salvage expiry", "satchel overflow", "send build", "hello", "periodic save", "kill sync" };
+                _tickSteps = new Action[] { TickProfileSlots, Wire, TickInfinitySettings, UpdateVariantVisuals, UpdateMonsterCues, TickBossDisplay, TrackRun, TickKillClassification, TickRunChoices, TickInfinityRewards, TickCurseResync, TickSalvageExpiry, TickSatchelOverflow, SendBuildIfNeeded, TickHello, TickPeriodicSave, TickKillSync };
+                _tickStepNames = new[] { "profile slots", "wire", "infinity settings", "variant visuals", "monster cues", "boss effects", "track run", "kill classification", "run choices", "infinity rewards", "curse resync", "salvage expiry", "satchel overflow", "send build", "hello", "periodic save", "kill sync" };
                 _tickStepNextLog = new float[_tickSteps.Length];
             }
             for (int i = 0; i < _tickSteps.Length; i++)
@@ -405,7 +405,6 @@ namespace SodRpg.Mod
                 HostConfirmed = false;
                 HostSummary = null;
                 ResetHello();
-                ResetGemSlotConflict();
                 ResetRunGrowthDisplay();
                 _appliedTransfer.Reset();
                 PressureHealthMultiplier = PressureDamageMultiplier = 1f;
@@ -488,7 +487,6 @@ namespace SodRpg.Mod
             _clientRpcOn = null;
             HostConfirmed = false;
             HostSummary = null;
-            ResetGemSlotConflict();
             _appliedTransfer.Reset();
             PressureHealthMultiplier = PressureDamageMultiplier = 1f;
             ResetRunChoiceConnection(resetHistory: true);
@@ -1212,8 +1210,10 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
 
         private void SendBuildIfNeeded()
         {
+            if (_nativeContinueRestoring || _nativeContinueCheckpoint != null || _continueCheckpointBlocked) return;
             var hero = LocalHero;
             if (hero == null || _clientRpcOn == null || !NetworkClient.active) return;
+            SendContinueReceiptBeforeBuild();
             if (_sentDreamLevel != Profile.DreamLevel)
             {
                 _buildDirty = true;

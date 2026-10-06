@@ -85,7 +85,9 @@ namespace SodRpg.Core.Tests
             // including the whole pair registry. Every legitimate allocation is smaller.
             var build = new Build { DreamLevel = Content.MaxDreamLevel, SpentStarPoints = StarProgression.MaxPoints,
                 Heat = Loot.ClampHeat(int.MaxValue) };
-            foreach (Stat stat in Enum.GetValues(typeof(Stat))) build.Stats.Add(stat, -Content.StatCap(stat));
+            foreach (Stat stat in Enum.GetValues(typeof(Stat)))
+                build.Stats.Add(stat, stat == Stat.EssenceSlotIdentity || stat == Stat.EssenceSlotMovement
+                    ? Content.StatCap(stat) : -Content.StatCap(stat));
             foreach (Power power in Enum.GetValues(typeof(Power)))
             {
                 if (power == Power.None) continue;

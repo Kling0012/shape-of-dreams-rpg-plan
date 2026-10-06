@@ -89,6 +89,31 @@ namespace Issue73.Native.Tests
             Assert.Equal(atSave.Material(Materials.Shard), profile.Material(Materials.Shard));
         }
 
+        [Fact]
+        public void Matching_profile_is_restored_before_native_build_and_slot_barrier_opens()
+        {
+            var session = HostSession();
+            HostAuthority.NativeInstance = new HostAuthority();
+            Fight(session.Profile, MonsterTier.Boss, 1);
+            var save = new DewPersistence.GameData();
+            SaveContinue(save);
+            int savedKills = session.Profile.Run.Kills;
+            Fight(session.Profile, MonsterTier.Boss, 2);
+            int callbacks = 0;
+            session.ProfileChanged += () =>
+            {
+                callbacks++;
+                Assert.True(ClientSession.NativeContinueRestoring);
+                Assert.Equal(savedKills, session.Profile.Run.Kills);
+            };
+            LoadContinue(save);
+            Assert.True(ClientSession.NativeContinueRestoring);
+            ResumeFromNativeCheckpoint(session);
+            Assert.Equal(1, callbacks);
+            Assert.Equal(savedKills, session.Profile.Run.Kills);
+            Assert.False(ClientSession.NativeContinueRestoring);
+        }
+
         /// <summary>巻き戻りのない再開（保存後そのまま再開）では、遠征が今までどおり続く。</summary>
         [Fact]
         public void Resume_without_rollback_continues_the_expedition_as_before()
@@ -255,6 +280,88 @@ namespace Issue73.Native.Tests
             int killsAfterResume = guest.Profile.Run.Kills;
             Call(guest, "ReceiveContinueHandshake", resumeHello);
             Assert.Equal(killsAfterResume, guest.Profile.Run.Kills);
+        }
+
+        [Fact]
+        public void Guest_rewind_receipt_precedes_build_retries_failed_transport_and_rebinds()
+        {
+            var guest = GuestInGame("run");
+            var actor = new Actor();
+            Set(guest, "_clientRpcOn", actor);
+            Call(guest, "OnContinueCheckpoint", new DreamforgeContinueCheckpointMsg
+            {
+                protocol = Protocol.Version, runId = "run", checkpointId = "source",
+            });
+            int savedKills = guest.Profile.Run.Kills;
+            Fight(guest.Profile, MonsterTier.Boss, 2);
+            var hello = Hello("run", "source", "resume-source");
+            hello.protocol = Protocol.Version - 1; // Compatibility warnings never authorize the receipt.
+            Call(guest, "ReceiveContinueHandshake", hello);
+            Assert.Equal(savedKills, guest.Profile.Run.Kills);
+            Assert.Equal("resume-source", guest.Profile.ContinueResumeSession);
+
+            actor.BeforeSendToServer = message =>
+            {
+                if (message is DreamforgeHelloMsg) throw new IOException("receipt transport failed");
+            };
+            Assert.Throws<IOException>(() => Call(guest, "SendBuildIfNeeded"));
+            Assert.Empty(actor.Sent);
+            actor.BeforeSendToServer = null;
+            Set(guest, "_buildDirty", false);
+            Set(guest, "_nextBuildSend", float.MaxValue);
+            Call(guest, "SendBuildIfNeeded");
+            var receipt = Assert.IsType<DreamforgeHelloMsg>(actor.Sent[0].Message);
+            Assert.Equal("source", receipt.continueCheckpointId);
+            Assert.Equal("resume-source", receipt.continueResumeSession);
+            Assert.All(actor.Sent.Skip(1), sent => Assert.IsType<DreamforgeBuildMsg>(sent.Message));
+            Assert.Contains(actor.Sent, sent => sent.Message is DreamforgeBuildMsg);
+
+            actor.Sent.Clear();
+            Fight(guest.Profile, MonsterTier.Boss, 1);
+            int advancedKills = guest.Profile.Run.Kills;
+            Call(guest, "ReceiveContinueHandshake", hello);
+            Assert.Equal(advancedKills, guest.Profile.Run.Kills);
+            Set(guest, "_buildDirty", true);
+            Call(guest, "SendBuildIfNeeded");
+            Assert.DoesNotContain(actor.Sent, sent => sent.Message is DreamforgeHelloMsg);
+            var rebound = new Actor();
+            Set(guest, "_clientRpcOn", rebound);
+            Call(guest, "SendBuildIfNeeded");
+            Assert.IsType<DreamforgeHelloMsg>(rebound.Sent[0].Message);
+            Assert.Contains(rebound.Sent, sent => sent.Message is DreamforgeBuildMsg);
+            rebound.Sent.Clear();
+            Call(guest, "ResetHello");
+            Call(guest, "SendBuildIfNeeded");
+            Assert.IsType<DreamforgeHelloMsg>(rebound.Sent[0].Message);
+            NetworkedManagerBase<GameManager>.softInstance.runId = "other-run";
+            Assert.False((bool)Call(guest, "HasCurrentContinueReceipt"));
+            Assert.Null(((DreamforgeHelloMsg)Call(guest, "CreateHelloMessage")).continueCheckpointId);
+        }
+
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public void Missing_or_failed_guest_rewind_never_advertises_source_or_sends_build(bool callbackFails)
+        {
+            var guest = GuestInGame("run");
+            var actor = new Actor();
+            Set(guest, "_clientRpcOn", actor);
+            if (callbackFails)
+            {
+                Call(guest, "OnContinueCheckpoint", new DreamforgeContinueCheckpointMsg
+                {
+                    protocol = Protocol.Version, runId = "run", checkpointId = "source",
+                });
+                Fight(guest.Profile, MonsterTier.Boss, 1);
+                guest.ProfileChanged += () => throw new InvalidOperationException("rewind consumer failed");
+                Assert.Throws<InvalidOperationException>(() =>
+                    Call(guest, "ReceiveContinueHandshake", Hello("run", "source", "resume-source")));
+            }
+            else Call(guest, "ReceiveContinueHandshake", Hello("run", "missing-source", "resume-source"));
+            Assert.False((bool)Call(guest, "HasCurrentContinueReceipt"));
+            Call(guest, "SendBuildIfNeeded");
+            Assert.Empty(actor.Sent);
+            Assert.Null(((DreamforgeHelloMsg)Call(guest, "CreateHelloMessage")).continueCheckpointId);
         }
 
         [Theory]

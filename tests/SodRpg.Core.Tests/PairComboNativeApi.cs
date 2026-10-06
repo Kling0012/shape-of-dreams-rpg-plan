@@ -163,6 +163,7 @@ namespace SodRpg.Mod
         public static DewPlayer local;
         public bool isHumanPlayer = true;
         public string playerName = "";
+        public string guid;
     }
     internal sealed class ActorManager
     {

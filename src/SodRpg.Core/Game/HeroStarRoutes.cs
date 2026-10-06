@@ -675,8 +675,8 @@ namespace SodRpg.Core.Game
             {
                 bool identity = cap.RouteMemory.StartsWith("St_D_", System.StringComparison.Ordinal);
                 var node = identity
-                    ? new TalentDef(cap.RouteId + ".slot", Line.Offense, new Txt("記憶の器を広げる", "Widen the Memory's Vessel"), Stat.EssenceSlotIdentity, 1, 1)
-                    : new TalentDef(cap.RouteId + ".slot", Line.Offense, new Txt("回避の器を広げる", "Widen the Dodge's Vessel"), Stat.EssenceSlotMovement, 1, 1);
+                    ? new TalentDef(cap.RouteId + ".slot", Line.Offense, new Txt("記憶の器を広げる", "Widen the Memory's Vessel"), Stat.EssenceSlotIdentity, StarRankBalance.EssenceSlotStarAmount, 1)
+                    : new TalentDef(cap.RouteId + ".slot", Line.Offense, new Txt("回避の器を広げる", "Widen the Dodge's Vessel"), Stat.EssenceSlotMovement, StarRankBalance.EssenceSlotStarAmount, 1);
                 node.HeroKey = cap.HeroKey;
                 node.Tier = 2;
                 node.RouteId = cap.RouteId;
