@@ -1,7 +1,7 @@
 """Resolve star numeric references before canonical validation or C# rendering."""
 
 from copy import deepcopy
-from decimal import Decimal, DecimalException, localcontext
+from decimal import Decimal, DecimalException, ROUND_HALF_EVEN, localcontext
 import json
 from pathlib import Path
 import re
@@ -156,8 +156,10 @@ def effective_value(table, key, owner, path):
             context.Emax = max(context.Emax, sum(max(0, v.adjusted()) for v in operands) + 1)
             context.Emin = min(context.Emin, sum(min(0, v.as_tuple().exponent) for v in operands))
             effective = base * kind * hero
+            if kind * hero != 1:
+                effective = effective.quantize(Decimal("0.001"), rounding=ROUND_HALF_EVEN)
     except (DecimalException, ValueError, OverflowError) as error:
-        raise ValueError(f"{path}: MemoryDamage decimal product is not representable exactly") from error
+        raise ValueError(f"{path}: MemoryDamage decimal product is not representable") from error
     if effective <= 0:
         raise ValueError(f"{path}: MemoryDamage amount must be positive")
     milli(effective, path)

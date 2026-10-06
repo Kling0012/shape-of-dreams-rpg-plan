@@ -84,8 +84,9 @@ Protocol 23 remain unchanged; co-op content matching includes the generated gear
 - manifestのMemoryDamage欄は `value` を持たず、`valueRef` で表を参照します。
   原本の併存、参照漏れ、余分な表キー、未知の種類・旅人を生成時に拒否します。
 - PythonはDecimalで計算し、MemoryDamageを既存 `LinkDef.Value` → `ValueMilli` へ通します。
-  有効値は正の0.001刻み、ValueMilliはInt32の範囲内。表現不能な結果は該当pathを示して失敗し、
-  丸め・切捨て・上限拡大はしません。MemoryHaste、Stat、Power、旧仕掛けのAmountは整数のままです。
+  倍率の積が1以外なら適用後の値を0.001刻みへ最近接・偶数丸めします。倍率の積が1なら丸めません。
+  有効値は正、ValueMilliはInt32の範囲内。表現不能な結果は該当pathを示して失敗し、
+  切捨て・上限拡大はしません。MemoryHaste、Stat、Power、旧仕掛けのAmountは整数のままです。
 - `run` / `gen_cs.py --check` は鍛冶・装備・通常セット・星定数・全9星図・登録ファイルをまとめて扱います。
   全入力の検証・renderが成功してから変更のある生成物だけを書きます。
   `python tools/star-manifest/validate.py` と単体の星生成も同じ解決済み値を検証します。
