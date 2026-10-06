@@ -227,7 +227,7 @@ namespace SodRpg.Core.Game
 
         /// <summary>Transform only newly rolled enemy rewards; existing inventory and event rewards are untouched.
         /// waypoint is the one active when the kill happened (#71); pass run.ActiveWaypoint for immediate kills.</summary>
-        internal static void ApplyKill(Profile p, MonsterTier tier, bool nightmare, Rng rng, KillReward reward, int itemLevel, Line? focus, int roomIndex, Waypoint waypoint, out int starXp, out int awakening, bool admitted = true)
+        internal static void ApplyKill(Profile p, MonsterTier tier, bool nightmare, Rng rng, KillReward reward, int itemLevel, Line? focus, int roomIndex, Waypoint waypoint, out int starXp, out int awakening, bool rareAllowed = true)
         {
             starXp = 0;
             awakening = 0;
@@ -239,7 +239,7 @@ namespace SodRpg.Core.Game
                 run.WaypointRoom = roomIndex;
                 run.WaypointRelicsInRoom = run.WaypointLootRooms.Contains(roomIndex) ? 1 : 0;
             }
-            if (admitted && t.FirstKillRelic && run.WaypointRelicsInRoom == 0 && reward.Relics.Count == 0)
+            if (t.FirstKillRelic && run.WaypointRelicsInRoom == 0 && reward.Relics.Count == 0)
                 reward.Relics.Add(Loot.RollRelic(rng, Rarity.Rare, itemLevel, null, focus, p.Stash, run.Satchel));
             if (t.MaxRelicsPerRoom != int.MaxValue)
             {
@@ -259,6 +259,8 @@ namespace SodRpg.Core.Game
                 }
                 Rarity rarity = t.ForcedRarity ?? (Rarity)Math.Max((int)r.Rarity, (int)t.MinimumRarity);
                 if (t.NonBossRelicsToTuning && tier == MonsterTier.Boss) rarity = (Rarity)Math.Max((int)rarity, (int)Rarity.Epic);
+                // Decide the ceiling before any replacement roll; guarantees cannot bypass rare admission.
+                if (!rareAllowed) rarity = (Rarity)Math.Min((int)rarity, (int)Rarity.Rare);
                 if (rarity != r.Rarity || (slot.HasValue && r.Slot != slot.Value))
                     r = reward.Relics[i] = Loot.RollRelic(rng, rarity, r.ItemLevel, slot, focus, p.Stash, run.Satchel);
                 r.Enhance = Math.Min(Content.MaxEnhanceFor(r.Rarity, r.LimitBreaks), Math.Max(r.Enhance, t.Enhancement));
