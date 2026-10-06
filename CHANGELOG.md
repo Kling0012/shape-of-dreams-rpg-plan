@@ -8,9 +8,24 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
-- 協力プレイで同じ版でもインフィニティが互換性判定で無効になる問題を修正し、版・Protocol・内容の差や確認通信の遅れは警告だけで機能を続け、本体連携の不一致も該当機能だけを停止するようにしました（#246）。
+---
 
-- 起動ログに出ていたボス移動パッチの例外を止め、ボスセットの移動トリガー（ポラリスの踏みつけなど）が機能しないままだった問題を修正しました。 / Fixed the boss movement patch class being skipped at startup with an exception, which had silently disabled boss-set movement triggers such as Polaris stomps. (#247)
+## v2.7.2 — インフィニティの互換判定とボス装備の修正（2026-10-06）
+
+同じバージョン同士なのにインフィニティが無効になる問題と、ボス装備の移動トリガーが働いていなかった問題を直しました。 / Fixes Infinity being disabled between players on the same version, and boss-gear movement triggers that never fired.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- 協力プレイで、全員が同じバージョンなのに「Protocol・MOD内容・インフィニティ対応が一致しない」としてインフィニティが通常モードになる問題を修正しました。今後はバージョンや内容の違い、確認の遅れがあっても警告だけを出し、機能は止めません。 / Co-op: Infinity no longer falls back to normal mode with a "Protocol / content / Infinity support mismatch" when everyone runs the same version. Version or content differences and slow handshakes now only warn; features keep running.
+- ボス装備の「移動したとき」に働く効果（ポラリスの踏みつけ、プリムスの刻印設置、シーカーの再突進、オブリビアクスの待ち伏せ解除、ライトの移動チャージなど）が一度も働いていなかった問題を修正しました。起動時の長いエラー表示も出なくなります。 / Boss-gear effects that trigger on movement (Polaris stomp, Primus mark, Seeker re-dash, Obliviax ambush release, Light movement charge, etc.) never fired; fixed. The long startup error is gone too.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
 
 ---
 

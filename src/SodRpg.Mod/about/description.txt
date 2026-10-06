@@ -1,5 +1,5 @@
-[b]v2.7.1: loading, saving and resuming are much lighter (profile load and save check ~160x faster). No gameplay changes. Saves carry over. Update all co-op players and restart the game.[/b]
-[b]v2.7.1：セーブデータの読み込みと保存後の確認が約160倍速くなり、読み込み・保存・続きの再開が軽くなりました。ゲームの挙動は変わりません。セーブデータはそのまま引き継げます。協力プレイでは参加者全員がこのバージョンに更新し、ゲームを再起動してください。[/b]
+[b]v2.7.2: fixes Infinity falling back to normal mode between players on the same version (mismatches now only warn), and boss-gear movement triggers that never fired. Saves carry over. Update all co-op players and restart the game.[/b]
+[b]v2.7.2：同じバージョン同士なのにインフィニティが通常モードになる問題（今後は違いがあっても警告だけ）と、ボス装備の移動トリガーが働いていなかった問題を修正しました。セーブデータはそのまま引き継げます。協力プレイでは参加者全員がこのバージョンに更新し、ゲームを再起動してください。[/b]
 
 [h1]Dreamforge RPG[/h1]
 Turns every run into part of a long RPG journey: relics you keep, a risky "secure or delve" choice at every zone, a star map per Traveler, a forge, and long-term goals. Co-op ready.
