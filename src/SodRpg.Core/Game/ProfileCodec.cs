@@ -120,6 +120,9 @@ namespace SodRpg.Core.Game
                     .Add("eventLuck", r.EventLuck.ToString("R", CultureInfo.InvariantCulture))
                     .Add("bounties", WriteBounties(r.Bounties))
                     .Add("pacts", WritePacts(r.Pacts)).Add("offeredPacts", WritePacts(r.OfferedPacts)).Add("awaitingChoice", r.AwaitingChoice).Add("gearWindow", r.GearWindow);
+                // Old/default runs carry no optional bonus payload.
+                if (r.OverflowDreamDustTotal != 0) run.Add("overflowDreamDustTotal", r.OverflowDreamDustTotal);
+                if (r.OverflowDreamDustLedgerId != 0) run.Add("overflowDreamDustLedgerId", r.OverflowDreamDustLedgerId);
             }
 
             var body = new JsonObject()
@@ -162,6 +165,10 @@ namespace SodRpg.Core.Game
                 .Add("runRecovery", WriteRunRecovery(p.RunRecovery))
                 .Add("killClassification", WriteKillClassification(p.KillClassification))
                 .Add("run", run);
+            if (p.OverflowBonusPendingRunId != null)
+                body.Add("overflowBonusPendingRunId", p.OverflowBonusPendingRunId)
+                    .Add("overflowBonusPendingLedgerId", p.OverflowBonusPendingLedgerId)
+                    .Add("overflowBonusPendingTotal", p.OverflowBonusPendingTotal);
             if (includeContinue) WriteContinueState(body, p);
             return body;
         }
@@ -275,6 +282,9 @@ namespace SodRpg.Core.Game
                 BestItemLevel = Clamp(Long(b, "bestItemLevel"), 1, Content.MaxItemLevel),
                 Japanese = Bool(b, "japanese", true),
             };
+            p.OverflowBonusPendingRunId = Str(b, "overflowBonusPendingRunId");
+            p.OverflowBonusPendingLedgerId = Long(b, "overflowBonusPendingLedgerId");
+            p.OverflowBonusPendingTotal = Long(b, "overflowBonusPendingTotal");
             p.StartDepth = Clamp(Long(b, "startDepth"), 0, Content.MaxHeat);
             p.LastDreamDepth = Clamp(Long(b, "lastDreamDepth"), 0, DreamDepth.Maximum);
             ReadInfinitySettings(p, b);
@@ -457,6 +467,8 @@ namespace SodRpg.Core.Game
                 {
                     RunId = Str(rj, "runId"),
                     Infinity = ReadInfinity(rj),
+                    OverflowDreamDustTotal = Long(rj, "overflowDreamDustTotal"),
+                    OverflowDreamDustLedgerId = Long(rj, "overflowDreamDustLedgerId"),
                     HeroKey = Str(rj, "heroKey"),
                     StarSecureRewarded = Bool(rj, "starSecureRewarded", false),
                     Heat = Loot.ClampHeat(Clamp(Long(rj, "heat"), 0, Content.MaxHeat)),

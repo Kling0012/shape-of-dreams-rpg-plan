@@ -1241,6 +1241,7 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
         {
             var summary = Rules.FlushSatchelOverflow(Profile);
             if (summary != null) Emit(summary);
+            TickOverflowBonus();
         }
 
         /// <summary>旧あふれ取引の回復結果などを定期保存へまとめる。</summary>

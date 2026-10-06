@@ -27,12 +27,14 @@ namespace SodRpg.Mod
         {
             if (_onHello == null) _onHello = OnHello;
             actor.CustomRpc_RegisterClientMessageHandler<DreamforgeHelloMsg>(_onHello);
+            RegisterOverflowBonus(actor);
         }
 
         private void UnregisterHello(Actor actor)
         {
             if (_onHello != null)
                 try { actor.CustomRpc_UnregisterClientMessageHandler<DreamforgeHelloMsg>(_onHello); } catch (Exception) { }
+            UnregisterOverflowBonus(actor);
         }
 
         private void ResetHello()
@@ -43,6 +45,7 @@ namespace SodRpg.Mod
             _hostCompatibilityWarned = false;
             _hostInfinityAvailable = false;
             HostVersionWarning = null;
+            ResetOverflowBonusConnection();
         }
 
         private void TickHello()

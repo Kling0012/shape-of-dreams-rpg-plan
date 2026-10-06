@@ -20,6 +20,8 @@
     <Compile Include="../../src/SodRpg.Mod/HostAuthority.DirectedRecharge.cs" Link="ModUnderTest/HostAuthority.DirectedRecharge.cs" />
     <Compile Include="../../src/SodRpg.Mod/HostAuthority.Continue.cs" Link="ModUnderTest/HostAuthority.Continue.cs" />
     <Compile Include="../../src/SodRpg.Mod/HostAuthority.Trades.cs" Link="ModUnderTest/HostAuthority.Trades.cs" />
+    <Compile Include="../../src/SodRpg.Mod/HostAuthority.OverflowBonus.cs" Link="ModUnderTest/HostAuthority.OverflowBonus.cs" />
+    <Compile Include="../../src/SodRpg.Mod/ClientSession.OverflowBonus.cs" Link="ModUnderTest/ClientSession.OverflowBonus.cs" />
     <Compile Include="../../src/SodRpg.Mod/ClientSession.KillSync.cs" Link="ModUnderTest/ClientSession.KillSync.cs" />
     <Compile Include="../../src/SodRpg.Mod/ClientSession.RunChoices.cs" Link="ModUnderTest/ClientSession.RunChoices.cs" />
     <Compile Include="../../src/SodRpg.Mod/ClientSession.Continue.cs" Link="ModUnderTest/ClientSession.Continue.cs" />

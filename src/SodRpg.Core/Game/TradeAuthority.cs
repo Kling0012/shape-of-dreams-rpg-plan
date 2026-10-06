@@ -229,6 +229,13 @@ namespace SodRpg.Core.Game
             public readonly Dictionary<int, long> Floors = new Dictionary<int, long>();
             public bool FloorOverflow;
             public string RunId;
+            /// <summary>Cumulative optional overflow bonus paid in this run; independent of legacy trade receipts.</summary>
+            public long OverflowBonusPaid;
+            /// <summary>Uncertain native mutation disables only optional overflow bonus for this run.</summary>
+            public bool OverflowBonusBlocked;
+            /// <summary>One completed run receipt lets a lost final acknowledgement resolve without granting old-run dust.</summary>
+            public string PreviousOverflowBonusRunId;
+            public long PreviousOverflowBonusPaid;
             public readonly Queue<long> Order = new Queue<long>();
             public readonly Dictionary<long, TradeDecision> Executed = new Dictionary<long, TradeDecision>();
             /// <summary>実行済みの取引idの要求の中身（種別・引数）。同じidで別の要求が来たときに、過去の成功を流用しないための照合に使う。</summary>
@@ -492,10 +499,17 @@ namespace SodRpg.Core.Game
             }
             if (ledger.RunId != runId)
             {
-                // ランが変わったら分解の重複排除だけ初めから（トークンの台帳はランをまたいで保持する）。
+                // ランが変わったら分解の重複排除と追加ダストの支払状態を初めから（トークンの台帳はランをまたいで保持する）。
+                if (ledger.RunId != null && (ledger.OverflowBonusPaid > 0 || ledger.OverflowBonusBlocked))
+                {
+                    ledger.PreviousOverflowBonusRunId = ledger.RunId;
+                    ledger.PreviousOverflowBonusPaid = ledger.OverflowBonusPaid;
+                }
                 ledger.RunId = runId;
                 ledger.SalvageOrder.Clear();
                 ledger.SalvagedUids.Clear();
+                ledger.OverflowBonusPaid = 0;
+                ledger.OverflowBonusBlocked = false;
             }
             return ledger;
         }

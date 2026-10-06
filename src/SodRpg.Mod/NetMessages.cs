@@ -217,6 +217,25 @@ namespace SodRpg.Mod
         }
     }
 
+    // Optional extension: Hello and every existing packet remain unchanged (Protocol 24).
+    [Serializable]
+    public class DreamforgeOverflowBonusMsg
+    {
+        public int version = 1;
+        public bool enabled;
+        public string runId;
+        public long ledgerId, total;
+    }
+
+    [Serializable]
+    public class DreamforgeOverflowBonusResultMsg
+    {
+        public int version = 1;
+        public bool available;
+        public string runId;
+        public long ledgerId, paid;
+    }
+
     [Serializable]
     public class DreamforgeDreamEventStartedMsg
     {

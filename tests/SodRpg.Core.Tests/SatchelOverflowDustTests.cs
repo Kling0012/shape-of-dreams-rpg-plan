@@ -6,7 +6,7 @@ using Xunit;
 
 namespace SodRpg.Core.Tests
 {
-    /// <summary>Local overflow shard rewards and compatibility with persisted legacy dust obligations.</summary>
+    /// <summary>Local overflow shards, optional cumulative dust, and persisted legacy dust obligations.</summary>
     public class SatchelOverflowDustTests
     {
         private static Relic Rolled(Rarity rarity, int itemLevel, ulong seed) =>
@@ -54,6 +54,115 @@ namespace SodRpg.Core.Tests
             Assert.True(p.Run.Satchel.Count <= Workshop.SatchelCapacity(p));
             Assert.Null(Rules.FlushSatchelOverflow(p));
             Assert.Contains(dropped, p.Run.Satchel);
+        }
+
+        [Theory]
+        [InlineData(Rarity.Common)]
+        [InlineData(Rarity.Uncommon)]
+        [InlineData(Rarity.Rare)]
+        [InlineData(Rarity.Epic)]
+        [InlineData(Rarity.Legendary)]
+        public void Optional_dust_is_additional_unenhanced_and_only_accrues_while_enabled(Rarity rarity)
+        {
+            var p = Profile.CreateNew(252);
+            Rules.BeginRun(p, "overflow-bonus");
+            for (int i = 0; i < Workshop.SatchelCapacity(p); i++)
+                p.Run.Satchel.Add(Rolled(Rarity.Legendary, 100, (ulong)(5000 + i)));
+            var dropped = Rolled(rarity, 1, 6000);
+            dropped.Enhance = 1;
+            var trades = new TradeLedger(generation: 1);
+
+            OverflowByPickup(p, dropped, trades);
+            Assert.Equal(0, p.Run.OverflowDreamDustTotal);
+            int shards = Content.SalvageShards(rarity);
+            Assert.Equal(shards, Rules.FlushSatchelOverflow(p).SatchelOverflowShards);
+
+            p.ReceiveOverflowDreamDust = true;
+            OverflowByPickup(p, dropped.Clone(), trades);
+            Assert.Equal(Economy.SatchelOverflowDust(rarity), p.Run.OverflowDreamDustTotal);
+            Assert.Equal(shards, Rules.FlushSatchelOverflow(p).SatchelOverflowShards);
+
+            p.ReceiveOverflowDreamDust = false;
+            OverflowByPickup(p, dropped.Clone(), trades);
+            Assert.Equal(Economy.SatchelOverflowDust(rarity), p.Run.OverflowDreamDustTotal);
+            Assert.Equal(shards, Rules.FlushSatchelOverflow(p).SatchelOverflowShards);
+            Assert.Equal(3 * shards, p.Material(Materials.Shard));
+            Assert.Empty(trades.Snapshot());
+            Assert.Empty(p.PendingTrades);
+        }
+
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public void Continue_restores_bonus_total_and_ledger_without_rolling_back_current_configuration(bool enabledAtSave)
+        {
+            var p = Profile.CreateNew(253);
+            Rules.BeginRun(p, "overflow-checkpoint");
+            p.ReceiveOverflowDreamDust = enabledAtSave;
+            p.Run.OverflowDreamDustTotal = (long)int.MaxValue + 42;
+            p.Run.OverflowDreamDustLedgerId = (long)int.MaxValue + 17;
+            p.OverflowBonusPendingRunId = p.Run.RunId;
+            p.OverflowBonusPendingLedgerId = p.Run.OverflowDreamDustLedgerId;
+            p.OverflowBonusPendingTotal = p.Run.OverflowDreamDustTotal;
+            var checkpoint = RunCheckpoint.Capture(p, "overflow-save");
+            var loaded = ProfileCodec.Read(ProfileCodec.Write(p), new List<string>());
+            Assert.Equal(p.Run.OverflowDreamDustTotal, loaded.Run.OverflowDreamDustTotal);
+            Assert.Equal(p.Run.OverflowDreamDustLedgerId, loaded.Run.OverflowDreamDustLedgerId);
+            Assert.Equal(p.OverflowBonusPendingRunId, loaded.OverflowBonusPendingRunId);
+            Assert.Equal(p.OverflowBonusPendingLedgerId, loaded.OverflowBonusPendingLedgerId);
+            Assert.Equal(p.OverflowBonusPendingTotal, loaded.OverflowBonusPendingTotal);
+            Assert.False(loaded.ReceiveOverflowDreamDust);
+
+            p.Run.OverflowDreamDustTotal += 100;
+            p.Run.OverflowDreamDustLedgerId += 100;
+            p.OverflowBonusPendingRunId = "later-obligation";
+            p.OverflowBonusPendingLedgerId += 100;
+            p.OverflowBonusPendingTotal += 100;
+            p.ReceiveOverflowDreamDust = !enabledAtSave;
+            checkpoint.Restore(p);
+
+            Assert.Equal((long)int.MaxValue + 42, p.Run.OverflowDreamDustTotal);
+            Assert.Equal((long)int.MaxValue + 17, p.Run.OverflowDreamDustLedgerId);
+            Assert.Equal("overflow-checkpoint", p.OverflowBonusPendingRunId);
+            Assert.Equal((long)int.MaxValue + 17, p.OverflowBonusPendingLedgerId);
+            Assert.Equal((long)int.MaxValue + 42, p.OverflowBonusPendingTotal);
+            Assert.Equal(!enabledAtSave, p.ReceiveOverflowDreamDust);
+        }
+
+        [Fact]
+        public void Final_bonus_survives_run_end_and_reload_without_being_overwritten_by_a_new_run()
+        {
+            var p = Profile.CreateNew(254);
+            Rules.BeginRun(p, "overflow-final");
+            p.Run.OverflowDreamDustLedgerId = 17;
+            p.ReceiveOverflowDreamDust = true;
+            for (int i = 0; i < Workshop.SatchelCapacity(p); i++)
+                p.Run.Satchel.Add(Rolled(Rarity.Legendary, 20, (ulong)(7000 + i)));
+            OverflowByPickup(p, Rolled(Rarity.Common, 1, 8000));
+            long expected = Economy.SatchelOverflowDust(Rarity.Common);
+            Assert.Equal(expected, p.Run.OverflowDreamDustTotal);
+            Rules.EndRun(p, victory: false);
+
+            p = ProfileCodec.Read(ProfileCodec.Write(p.Clone()), new List<string>());
+            Assert.Null(p.Run);
+            Assert.Equal("overflow-final", p.OverflowBonusPendingRunId);
+            Assert.Equal(17, p.OverflowBonusPendingLedgerId);
+            Assert.Equal(expected, p.OverflowBonusPendingTotal);
+
+            Rules.BeginRun(p, "overflow-next");
+            p.ReceiveOverflowDreamDust = true;
+            p.Run.OverflowDreamDustLedgerId = 19;
+            for (int i = 0; i < Workshop.SatchelCapacity(p); i++)
+                p.Run.Satchel.Add(Rolled(Rarity.Legendary, 20, (ulong)(9000 + i)));
+            int shardsBefore = p.Material(Materials.Shard);
+            OverflowByPickup(p, Rolled(Rarity.Common, 1, 10000));
+
+            Assert.Equal(Content.SalvageShards(Rarity.Common), Rules.FlushSatchelOverflow(p).SatchelOverflowShards);
+            Assert.Equal(shardsBefore + Content.SalvageShards(Rarity.Common), p.Material(Materials.Shard));
+            Assert.Equal(0, p.Run.OverflowDreamDustTotal);
+            Assert.Equal("overflow-final", p.OverflowBonusPendingRunId);
+            Assert.Equal(17, p.OverflowBonusPendingLedgerId);
+            Assert.Equal(expected, p.OverflowBonusPendingTotal);
         }
 
         // 受け入れ条件：予約中の遺物は外れない（予約対象の保護を容量より優先）。
@@ -109,6 +218,7 @@ namespace SodRpg.Core.Tests
         {
             var p = Profile.CreateNew(126);
             Rules.BeginRun(p, "overflow-suppressed");
+            p.ReceiveOverflowDreamDust = true;
             p.Run.Satchel.AddRange(Enumerable.Range(10, 30).Select(i => Rolled(Rarity.Uncommon, 1, (ulong)i)));
 
             var dropped = Rolled(Rarity.Common, 1, 777UL);
@@ -119,6 +229,7 @@ namespace SodRpg.Core.Tests
             Assert.Equal(0, summary.SatchelOverflowShards);
             Assert.Equal(0, p.Run.SatchelShards);
             Assert.Equal(0, p.Material(Materials.Shard));
+            Assert.Equal(0, p.Run.OverflowDreamDustTotal);
             Assert.Empty(p.PendingTrades);
             Assert.True(p.Run.Satchel.Count <= Workshop.SatchelCapacity(p));
             Assert.DoesNotContain(dropped, p.Run.Satchel);
@@ -419,12 +530,13 @@ namespace SodRpg.Core.Tests
         [InlineData(0, 0)]
         [InlineData(2, 2)]
         [InlineData(10, 3)]
-        public void Infinity_free_supply_overflow_banks_only_available_shard_credit(int credit, int expected)
+        public void Infinity_free_supply_overflow_caps_shards_but_preserves_the_old_dust_conversion(int credit, int expected)
         {
             var p = Profile.CreateNew(131);
             Rules.BeginRun(p, "infinity-overflow");
             p.Run.Infinity = new InfinityRunState();
             p.InfinityRewardBudget.Shards = credit;
+            p.ReceiveOverflowDreamDust = true;
             for (int i = 0; i < Workshop.SatchelCapacity(p); i++)
                 p.Run.Satchel.Add(Rolled(Rarity.Legendary, 20, (ulong)(3000 + i)));
             var dropped = Rolled(Rarity.Common, 1, 4000);
@@ -435,6 +547,7 @@ namespace SodRpg.Core.Tests
             Assert.Equal(expected, overflow.SatchelOverflowShards);
             Assert.Equal(expected, p.Material(Materials.Shard));
             Assert.Equal((double)(credit - expected), p.InfinityRewardBudget.Shards);
+            Assert.Equal(Economy.SatchelOverflowDust(Rarity.Common), p.Run.OverflowDreamDustTotal);
             Assert.Equal(0, p.Run.SatchelShards);
             Assert.Empty(p.PendingTrades);
         }

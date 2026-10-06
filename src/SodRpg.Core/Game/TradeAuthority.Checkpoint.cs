@@ -32,7 +32,10 @@ namespace SodRpg.Core.Game
                 foreach (ulong uid in ledger.SalvageOrder) salvage.Add(uid.ToString(CultureInfo.InvariantCulture));
                 players.Add(new JsonObject().Add("key", pair.Key).Add("id", ledger.Id).Add("runId", ledger.RunId)
                     .Add("floors", floors).Add("floorOverflow", ledger.FloorOverflow).Add("executed", executed)
-                    .Add("cancelled", cancelled).Add("salvage", salvage));
+                    .Add("cancelled", cancelled).Add("salvage", salvage).Add("overflowBonusPaid", ledger.OverflowBonusPaid)
+                    .Add("overflowBonusBlocked", ledger.OverflowBonusBlocked)
+                    .Add("overflowBonusPreviousRunId", ledger.PreviousOverflowBonusRunId)
+                    .Add("overflowBonusPreviousPaid", ledger.PreviousOverflowBonusPaid));
             }
             return Json.Write(new JsonObject().Add("version", 1L).Add("generation", (long)Generation)
                 .Add("serial", (long)_ledgerSerial).Add("players", players));
@@ -59,7 +62,16 @@ namespace SodRpg.Core.Game
                     Id = id,
                     RunId = player.TryGet("runId", out object run) ? run as string : null,
                     FloorOverflow = CheckpointBool(player, "floorOverflow"),
+                    OverflowBonusPaid = player.TryGet("overflowBonusPaid", out _)
+                        ? CheckpointLong(player, "overflowBonusPaid", 0, long.MaxValue) : 0,
+                    OverflowBonusBlocked = player.TryGet("overflowBonusBlocked", out _) && CheckpointBool(player, "overflowBonusBlocked"),
+                    PreviousOverflowBonusRunId = player.TryGet("overflowBonusPreviousRunId", out object previousRun) ? previousRun as string : null,
+                    PreviousOverflowBonusPaid = player.TryGet("overflowBonusPreviousPaid", out _)
+                        ? CheckpointLong(player, "overflowBonusPreviousPaid", 0, long.MaxValue) : 0,
                 };
+                if ((previousRun != null && !(previousRun is string))
+                    || (ledger.PreviousOverflowBonusPaid > 0 && ledger.PreviousOverflowBonusRunId == null))
+                    throw new LedgerFormatException("Invalid previous overflow bonus receipt.");
                 foreach (var entry in CheckpointArray(player, "floors", MaxFloorGenerations))
                 {
                     var floor = CheckpointObject(entry);

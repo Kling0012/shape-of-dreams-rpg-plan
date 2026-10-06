@@ -33,12 +33,14 @@ namespace SodRpg.Mod
             if (actor == null) return;
             if (_onHello == null) _onHello = OnHello;
             actor.CustomRpc_RegisterServerMessageHandler<DreamforgeHelloMsg>(nameof(DreamforgeHelloMsg), _onHello);
+            RegisterOverflowBonus(actor);
         }
 
         private void UnregisterHello(Actor actor)
         {
             if (actor != null && _onHello != null)
                 try { actor.CustomRpc_UnregisterServerMessageHandler<DreamforgeHelloMsg>(_onHello); } catch (Exception) { }
+            UnregisterOverflowBonus(actor);
             _helloActor = null;
             _versionMismatches.Clear();
             _helloPeers.Clear();

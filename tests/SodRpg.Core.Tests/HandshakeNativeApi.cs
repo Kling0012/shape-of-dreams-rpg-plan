@@ -40,6 +40,9 @@ namespace SodRpg.Mod
         }
         // Kill-sync peers live in HostAuthority.KillSync.cs, which is not linked here.
         private void BindKillObservationSession(DewPlayer player, string observationSessionId) { }
+        // Optional overflow transport is exercised by Issue73.Native.Tests.
+        private void RegisterOverflowBonus(Actor actor) { }
+        private void UnregisterOverflowBonus(Actor actor) { }
         // Infinity's game-scene lifecycle is exercised by SodRpg.Mod.Startup.Tests.
         internal static void CheckInfinityRunCompatibility() { }
         internal void ReceiveNegotiation(DreamforgeHelloMsg message, DewPlayer player)
