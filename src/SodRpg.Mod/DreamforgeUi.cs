@@ -416,6 +416,9 @@ namespace SodRpg.Mod
                     .Append(Loc.T(" · 圧段階 ", " · pressure stage ")).Append(infinity.PressureStage);
                 if (infinity.PressureStage == InfinityRunState.MaximumPressureStage) sb.Append(Loc.T("（上限）", " (cap)"));
                 sb.Append("</size>");
+                string choiceNotice = _s.InfinityChoiceNotice;
+                if (choiceNotice != null)
+                    sb.Append("\n<color=#ffd27f>").Append(choiceNotice).Append("</color>");
                 // #144: host/solo judge only their own Infinity availability; participants wait
                 // for the host's answer instead of being told "disabled" without a reason.
                 string supportNotice = ClientSession.InfinitySupportNotice(_s.CanChooseRunRules);
@@ -557,13 +560,18 @@ namespace SodRpg.Mod
         {
             CacheSecureButtons(cfg);
             bool infinity = _s.Profile.Run?.Infinity != null;
-            var rect = infinity ? new Rect(w / 2 - 280, 12, 560, 76) : new Rect(w / 2 - 190, 12, 380, 44);
+            var rect = infinity ? new Rect(w / 2 - 280, 12, 560, 112) : new Rect(w / 2 - 190, 12, 380, 44);
             if (rect.Contains(Event.current.mousePosition)) MouseOverPanel = true;
             GUILayout.BeginArea(rect, _st.Window);
             if (infinity)
-                GUILayout.Label(Loc.T("記憶・エッセンスを拾ってから開いてください。進行はホストが決定します。",
-                    "Collect memories and essences first. The host decides when to proceed."), _st.Small);
-            if (GUILayout.Button(infinity ? _infinityOpenButton : _secureOpenButton, _st.Button, GUILayout.Height(28)))
+            {
+                GUILayout.Label(Loc.T("記憶・エッセンスを拾ってから開いてください。移動・帰還はホスト、契約・道標は各自が選びます。",
+                    "Collect memories and essences first. The host decides travel / return; each player chooses their pact and waypoint."), _st.Small);
+                DrawInfinityChoiceNotice();
+            }
+            if (GUILayout.Button(infinity && !_s.CanChooseRunRules
+                    ? Loc.T($"自分の選択を開く [{cfg.securePanelKey}]", $"Open your choices [{cfg.securePanelKey}]")
+                    : infinity ? _infinityOpenButton : _secureOpenButton, _st.Button, GUILayout.Height(28)))
                 _secureHidden = false;
             GUILayout.EndArea();
         }
@@ -620,8 +628,9 @@ namespace SodRpg.Mod
             DrawWaypointPicker(run);
             if (run.Infinity != null)
             {
-                GUILayout.Label(Loc.T("インフィニティ：確保は全員帰還して終了、潜行は全員続行。ホストが決定します。",
-                    "Infinity: Secure returns everyone and ends the run; Delve continues for everyone. The host decides."), _st.Warn);
+                GUILayout.Label(Loc.T("インフィニティ：帰還・潜行はホスト、契約・道標・出来事は各自が選びます。全員の完了かスキップを待って進みます（最大60秒）。",
+                    "Infinity: the host chooses Return / Delve; each player chooses their pact, waypoint and event. Progress waits for everyone to finish or skip (up to 60 seconds)."), _st.Warn);
+                DrawInfinityChoiceNotice();
                 DrawInfinityCaps();
             }
             int bonus = run.SatchelShards * run.Heat / EconomyBalance.SecureBonusDivisor;
@@ -647,9 +656,20 @@ namespace SodRpg.Mod
             GUILayout.Label(_secureDelveText, _st.Small);
             GUILayout.Label(_secureNightmareText, _st.Small);
             GUILayout.BeginHorizontal();
-            GUI.enabled = _s.CanResolveSecureChoice;
-            if (GUILayout.Button(_secureButton, _st.Button, GUILayout.Height(34))) SetStatus(_s.Secure());
-            if (GUILayout.Button(_delveButton, _st.Button, GUILayout.Height(34))) SetStatus(_s.Delve());
+            GUI.enabled = _s.CanResolveSecureChoice && (run.Infinity == null || !InfinityMode.PersonalIntentPending);
+            if (run.Infinity == null || _s.CanChooseRunRules)
+            {
+                if (GUILayout.Button(_secureButton, _st.Button, GUILayout.Height(34))) SetStatus(_s.Secure());
+                if (GUILayout.Button(_delveButton, _st.Button, GUILayout.Height(34))) SetStatus(_s.Delve());
+            }
+            else
+            {
+                GUI.enabled = _s.CanChooseInfinityPersonal;
+                if (GUILayout.Button(Loc.T("契約なしで選択を完了", "Finish without a pact"), _st.Button, GUILayout.Height(34)))
+                    SetStatus(_s.CompleteInfinityPersonalChoice());
+                if (GUILayout.Button(Loc.T("スキップ（選ばない）", "Skip (no choices)"), _st.Button, GUILayout.Height(34)))
+                    SetStatus(_s.CompleteInfinityPersonalChoice(skip: true));
+            }
             GUI.enabled = true;
             if (GUILayout.Button(_gearButton, _st.Button, GUILayout.Height(34)))
             {
@@ -665,7 +685,7 @@ namespace SodRpg.Mod
                 GUILayout.Label(Loc.T("ホストが確認できない取引があります。遅れて届く応答を待っています（対価も返却も保留中。確保・潜行は続けられます）。手放すにはコンソールで dreamforge_trades_giveup。", "Some trades cannot be confirmed by the host and are on hold (you can still secure or delve). To give them up, run dreamforge_trades_giveup in the console."), _st.Small);
             else if (_s.HasHeldTrades)
                 GUILayout.Label(Loc.T("取引の結果をホストに確認中です（確保・潜行は続けられます）。", "Checking a trade result with the host (you can still secure or delve)."), _st.Small);
-            else if (!_s.CanResolveSecureChoice)
+            else if (run.Infinity == null && !_s.CanResolveSecureChoice)
                 GUILayout.Label(Loc.T("ホストが道標を決めて確保または潜行を選ぶまでお待ちください。", "Waiting for the host to confirm a waypoint and choose Secure or Delve."), _st.Small);
             {
                 int dust = _s.LocalDust;
@@ -688,6 +708,12 @@ namespace SodRpg.Mod
                 bool merchant = e == DreamEvent.Merchant;
                 bool ok = DreamEvents.CanUse(_s.Profile, e, merchant, out string why, _s.Trades);
                 if (_s.CoopTradeLocked) { ok = false; why = Loc.T("交換を確認中です。", "A trade is being confirmed."); }
+                if (run.Infinity != null && (InfinityMode.PersonalIntentPending
+                    || !_s.CanChooseRunRules && !_s.CanChooseInfinityPersonal))
+                {
+                    ok = false;
+                    why = Loc.T("自分の選択は完了しました。", "Your choices are complete.");
+                }
                 if (merchant && ok && _s.LocalGold < _s.MerchantPrice()) { ok = false; why = Loc.T($"ゴールドが足りません（{_s.MerchantPrice()}G）", $"Not enough gold ({_s.MerchantPrice()}G)"); }
                 GUILayout.BeginHorizontal();
                 var art = GUILayoutUtility.GetRect(64, 64, GUILayout.Width(64), GUILayout.Height(64));
@@ -727,7 +753,8 @@ namespace SodRpg.Mod
             if (run.OfferedPacts.Count > 0)
             {
                 GUILayout.Label(Loc.T("または、悪夢の契約を結んで潜ることもできます。代償を受ける代わりに見返りが増え、次に確保するまで効果が重なります。代償の呪いは本体の呪いと同じもので、契約した人の旅人にだけ付きます。", "Or delve with a nightmare pact: accept a drawback for a bigger reward. Pacts stack until you secure. The curse is one of the game's own curses and only affects the Traveler of whoever swore the pact."), _st.Small);
-                GUI.enabled = _s.CanResolveSecureChoice;
+                GUI.enabled = run.Infinity != null && !_s.CanChooseRunRules
+                    ? _s.CanChooseInfinityPersonal : _s.CanResolveSecureChoice && (run.Infinity == null || !InfinityMode.PersonalIntentPending);
                 for (int i = 0; i < run.OfferedPacts.Count; i++)
                 {
                     var id = run.OfferedPacts[i];
@@ -735,7 +762,8 @@ namespace SodRpg.Mod
                     if (d == null) continue;
                     if (GUILayout.Button($"<b>{d.Name}</b>\n<color=#ffb0a0>{d.Description}</color>", _st.RowWrap, GUILayout.Height(52)))
                     {
-                        SetStatus(_s.Delve(id));
+                        SetStatus(run.Infinity != null && !_s.CanChooseRunRules
+                            ? _s.CompleteInfinityPersonalChoice(id) : _s.Delve(id));
                         break; // Delve can replace the offered collection during this GUI event.
                     }
                 }
@@ -761,9 +789,16 @@ namespace SodRpg.Mod
                 GUILayout.Label(Loc.T("ホストから道標の候補を受け取っています。", "Waiting for the host's waypoint cards."), _st.Small);
                 return;
             }
-            GUILayout.Label(Loc.T("ホストが1枚選びます。「選ばない」こともできます。次の確保地点に着くと効果が終わります。", "The host may choose one card or skip. Its effect ends at the next secure point."), _st.Small);
             GUILayout.Label(run.Infinity != null
-                ? Loc.T("ボス後の選択はホストが全員分を確定します。戦闘で自動潜行しません。", "The host confirms the post-boss choice for everyone. Combat does not auto-delve.")
+                ? Loc.T("各自が1枚選びます。「選ばない」こともできます。戦利品・旅人への効果は各自の選択を使い、次のボス後の選択で終わります。",
+                    "Each player may choose one card or skip. Loot and Traveler effects use your own choice until the next post-boss choice.")
+                : Loc.T("ホストが1枚選びます。「選ばない」こともできます。次の確保地点に着くと効果が終わります。", "The host may choose one card or skip. Its effect ends at the next secure point."), _st.Small);
+            GUILayout.Label(run.Infinity != null
+                ? _s.CanChooseRunRules
+                    ? Loc.T("道標・出来事を選んでから帰還か潜行を決めてください。ゲストの選択中は進行を保留します。",
+                        "Choose your waypoint and event, then Return or Delve. Progress waits while guests finish their choices.")
+                    : Loc.T("道標・出来事を選んだら、契約を選ぶか「契約なしで選択を完了」を押してください。",
+                        "After choosing your waypoint and event, pick a pact or press Finish without a pact.")
                 : Loc.T("選択を終えずに戦闘を続けると、選択中の道標で潜行します。契約は結びません。", "Continuing combat commits the selected waypoint and delves without a pact."), _st.Small);
             if (_waypointCardsJapanese != Loc.Japanese)
             {
@@ -778,7 +813,8 @@ namespace SodRpg.Mod
                 if (!_waypointCards.TryGetValue(id, out var label))
                     _waypointCards[id] = label = $"<b>{def.Name}</b>\n<color=#a8e9cd>{def.Description}</color>";
                 bool rewardAvailable = InfinityRewards.CanChooseWaypoint(_s.Profile, id, out string unavailableReason);
-                GUI.enabled = _s.CanChooseRunRules && rewardAvailable;
+                GUI.enabled = (_s.CanChooseRunRules || _s.CanChooseInfinityPersonal) && rewardAvailable
+                    && (run.Infinity == null || !InfinityMode.PersonalIntentPending);
                 if (GUILayout.Button(label, _st.RowWrap, GUILayout.MinHeight(56)))
                     SetStatus(_s.ChooseWaypoint(id));
                 GUI.enabled = true;
@@ -786,7 +822,8 @@ namespace SodRpg.Mod
             }
             if (run.OfferedWaypoints.Count > 0)
             {
-                GUI.enabled = _s.CanChooseRunRules;
+                GUI.enabled = (_s.CanChooseRunRules || _s.CanChooseInfinityPersonal)
+                    && (run.Infinity == null || !InfinityMode.PersonalIntentPending);
                 if (GUILayout.Button(Loc.T("道標を選ばない", "Skip the waypoint"), _st.Button, GUILayout.Height(28)))
                     SetStatus(_s.ChooseWaypoint(Waypoint.None));
                 GUI.enabled = true;

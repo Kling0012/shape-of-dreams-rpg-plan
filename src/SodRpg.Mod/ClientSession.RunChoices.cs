@@ -42,7 +42,8 @@ namespace SodRpg.Mod
         public int ChosenDreamDepth => RunActive ? Profile.Run.DreamDepth
             : CanChooseRunRules ? DreamDepth.Clamp(Profile.LastDreamDepth) : _receivedRunChoices?.Depth ?? 0;
         public bool HasHostRunChoices => CanChooseRunRules || _receivedRunChoices != null;
-        public bool WaypointChoicesReady => CanChooseRunRules || _runChoiceProgress.ChoicesReady(Profile.Run, ChoiceZoneIndex);
+        public bool WaypointChoicesReady => CanChooseRunRules || Profile.Run?.Infinity != null && Profile.Run.AwaitingChoice
+            || _runChoiceProgress.ChoicesReady(Profile.Run, ChoiceZoneIndex);
         private int ChoiceZoneIndex => LobbyReturnPending
             && NetworkedManagerBase<GameManager>.softInstance?.runId != _pendingResultRunId
                 ? _runChoiceProgress.ZoneIndex : _zone != null ? _zone.currentZoneIndex : -1;
@@ -78,7 +79,9 @@ namespace SodRpg.Mod
 
         public string ChooseWaypoint(Waypoint waypoint)
         {
-            if (!CanChooseRunRules) return Loc.T("道標はホストが選びます。", "The host chooses the waypoint.");
+            if (!CanChooseRunRules && !CanChooseInfinityPersonal) return Loc.T("道標はホストが選びます。", "The host chooses the waypoint.");
+            if (Profile.Run?.Infinity != null && (InfinityPersonalSelectionMatchesCurrent || InfinityMode.PersonalIntentPending))
+                return Loc.T("個人の選択はすでに完了しています。", "Personal choices are already complete.");
             if (!RunActive || !Profile.Run.AwaitingChoice) return Loc.T("道標は確保地点で選べます。", "Choose a waypoint at a secure point.");
             try { Emit(Rules.PickWaypoint(Profile, waypoint)); }
             catch (InvalidOperationException ex) { return ex.Message; }
@@ -298,7 +301,8 @@ namespace SodRpg.Mod
 
         private void ApplyHostRunChoices()
         {
-            if (Profile.Run?.Infinity != null && !InfinityMode.NativeSaveAgreement) return;
+            // Infinity waypoints belong to the individual player, never the shared host snapshot.
+            if (Profile.Run?.Infinity != null) return;
             if (!RunActive || (_zone != null && _zone.isInAnyTransition)) return;
             if (!_runChoiceProgress.ApplyCurrent(Profile, ChoiceZoneIndex)) return;
             MarkDirty(true);
@@ -308,6 +312,7 @@ namespace SodRpg.Mod
         private void ResetRunChoiceConnection(bool resetHistory = false)
         {
             _runChoiceProgress.ResetConnection(resetHistory);
+            if (resetHistory) ResetInfinityPersonalChoice();
             _choicePublisher.Invalidate();
             _encodedRunChoices = null;
             _nextChoicesSync = 0;

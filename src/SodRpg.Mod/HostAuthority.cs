@@ -1568,7 +1568,7 @@ namespace SodRpg.Mod
                     || summon.FindFirstAncestorOfType<Hero>() != rt.Hero) return;
                 damage.ApplyAmplification(SupportStats.AmplifySummonDamage(1f,
                     rt.Powers.Build.Get(Stat.SummonPower) + GrowthSupport(rt, Stat.SummonPower)) - 1f);
-                damage.ApplyAmplification((float)ActiveWaypointTotals.SummonPowerMultiplier - 1f);
+                damage.ApplyAmplification((float)WaypointTotalsForHero(rt.Hero).SummonPowerMultiplier - 1f);
                 if (_gimmickDamageDepth == 0 && !damage.IsAmountModifiedBy(typeof(GimmickRuntime)))
                     damage.ApplyAmplification(rt.Powers.OutgoingDamageAmplification(Time.time, false, true));
             };

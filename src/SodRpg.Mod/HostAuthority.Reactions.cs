@@ -42,7 +42,7 @@ namespace SodRpg.Mod
             var result = rt.Reactions.Apply(rt.Powers.Build, victim.GetInstanceID(),
                 new ElementSnapshot(status.fireStack, status.hasCold, status.lightStack, status.darkStack),
                 Time.time, rt.Hero.Status.attackDamage, rt.Hero.Status.abilityPower, rt.Hero.maxHealth,
-                (float)ActiveWaypointTotals.ReactionMultiplier, _gimmickDamageDepth != 0 || _reactionEffectDepth != 0);
+                (float)WaypointTotalsForHero(rt.Hero).ReactionMultiplier, _gimmickDamageDepth != 0 || _reactionEffectDepth != 0);
             if (result.Steam || result.ExposePercent > 0 || result.CinderStacks > 0 || result.Shield > 0)
                 rt.ReactionVictims[victim.GetInstanceID()] = victim;
             if (result.Steam || result.Shield > 0)

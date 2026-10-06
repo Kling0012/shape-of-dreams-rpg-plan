@@ -58,6 +58,7 @@ namespace SodRpg.Mod
         internal bool HasInterruptedRelics => InGame && Profile.Run != null && Profile.InterruptedRelics.Count != 0;
         internal bool CanClaimInterruptedRelics => HasInterruptedRelics && !CoopTradeLocked && Rules.CanClaimInterruptedRelics(Profile);
         internal string ClaimInterruptedRelics() => throw new NotSupportedException("Interrupted relic persistence is outside the refund fixture.");
+        internal string InfinityChoiceNotice => null; // Ordinary-mode refund fixture; Infinity uses the native session harness.
         internal readonly List<GameEvent> Notices = new List<GameEvent>();
         internal void MarkDirty(bool build) => Dirty |= build;
         internal void Emit(GameEvent notice) => Notices.Add(notice);

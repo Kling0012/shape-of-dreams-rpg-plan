@@ -113,6 +113,9 @@ namespace SodRpg.Mod
         public static readonly List<(string name, Delegate handler)> ServerHandlers = new List<(string, Delegate)>();
         public void CustomRpc_SendMessageToServer<T>(T message) { }
         public void CustomRpc_SendMessageToClient<T>(DewPlayer player, T message) => SentToClients.Add((player, message));
+        public void CustomRpc_SendMessageToAllClients<T>(T message) => SentToClients.Add((null, message));
+        public void CustomRpc_RegisterClientMessageHandler<T>(Action<T> handler) { }
+        public void CustomRpc_UnregisterClientMessageHandler<T>(Action<T> handler) { }
         public void CustomRpc_RegisterServerMessageHandler<T>(string name, Action<T, DewPlayer> handler)
             => ServerHandlers.Add((name, handler));
         public void CustomRpc_UnregisterServerMessageHandler<T>(Action<T, DewPlayer> handler) { }
@@ -323,6 +326,7 @@ namespace SodRpg.Mod
         internal static void CountHostInfinityRoom() { }
         internal static void OpenHostInfinityChoice() { }
         internal static void FinishNativeContinueRestore() { }
+        internal static void ReceiveInfinityPersonalChoiceAck(DreamforgeInfinityPersonalChoiceAckMsg message) { }
     }
     internal sealed class EncodableBuild { public string Encode() => ""; }
     // The real HostAuthority.Infinity.cs / HostAuthority.Hello.cs compile into this partial;
