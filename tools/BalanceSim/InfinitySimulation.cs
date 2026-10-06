@@ -2,11 +2,16 @@ using SodRpg.Core.Game;
 
 namespace BalanceSim;
 
-internal sealed record InfinityScenario(string Name, int Speed, int Depth, double NightmareMultiplier, Waypoint Waypoint);
+internal sealed record InfinityScenario(string Key, string Name, int Speed, int Depth, double NightmareMultiplier, Waypoint Waypoint);
 
 internal sealed class InfinityRow
 {
     public required string Scenario;
+    public required string ScenarioKey;
+    public required string IntervalKey;
+    public int Speed, Depth;
+    public double NightmareMultiplier;
+    public Waypoint Waypoint;
     public int Minutes, Interval, Players;
     public long Rooms, Bosses, Nightmares, Attempts, Epic, Legendary, BossSet, Relics;
     public long Shards, Tuning, DreamXp, StarXp, Awakening;
@@ -20,10 +25,10 @@ internal sealed class InfinitySimulation
 {
     internal static readonly InfinityScenario[] Scenarios =
     [
-        new("baseline 1x", 1, 0, 1, Waypoint.None),
-        new("fast 4x", 4, 0, 1, Waypoint.None),
-        new("promotion 4x / depth5 / gear1.5", 4, 5, 1.5, Waypoint.None),
-        new("Hoard 4x / depth5 / gear1.5", 4, 5, 1.5, Waypoint.BossHoard),
+        new("baseline", "baseline 1x", 1, 0, 1, Waypoint.None),
+        new("fast", "fast 4x", 4, 0, 1, Waypoint.None),
+        new("promotion", "promotion 4x / depth5 / gear1.5", 4, 5, 1.5, Waypoint.None),
+        new("hoard", "Hoard 4x / depth5 / gear1.5", 4, 5, 1.5, Waypoint.BossHoard),
     ];
     internal readonly List<InfinityRow> Rows = new();
     internal readonly List<string> PersistenceNotes = new();
@@ -31,8 +36,18 @@ internal sealed class InfinitySimulation
     internal string BossTypeName = "";
     private readonly Options options;
     // Twenty combat rooms plus four boss encounters take 35 minutes in the reference model.
-    private const double NodeSeconds = 35 * 60.0 / 24;
-    private const string Hero = "Hero_Vesper";
+    internal const double NodeSeconds = 35 * 60.0 / 24;
+    internal const string Hero = "Hero_Vesper";
+    internal static readonly int[] Durations = [30, 60, 120];
+    internal static readonly (string Key, int Value)[] Intervals =
+        [("short", InfinityRunState.ShortInterval), ("middle", InfinityRunState.MiddleInterval), ("long", InfinityRunState.LongInterval)];
+    internal const int NormalCombatRoomsPerZone = 5;
+    internal const int NormalZonesPerRun = 4;
+    internal const int LesserPerRoom = 10;
+    internal const int NormalPerRoom = 8;
+    internal const double MiniBossChance = .25;
+    private static readonly int[] ComparisonDurations = [30];
+    private static readonly (string Key, int Value)[] ComparisonIntervals = [("default", InfinityRunState.DefaultInterval)];
 
     internal InfinitySimulation(Options options) => this.options = options;
 
@@ -40,21 +55,32 @@ internal sealed class InfinitySimulation
     {
         StarClusters.RegisterAllGenerated();
         BossTypeName = Content.Sets.First(s => s.BossTypeName != null).BossTypeName;
+        bool comparison = options.InfinityScope == "comparison";
+        var durations = comparison ? ComparisonDurations : Durations;
+        var intervals = comparison ? ComparisonIntervals : Intervals;
         foreach (int depth in new[] { 0, 5 })
-            foreach (int minutes in new[] { 30, 60, 120 })
-                Rows.Add(Simulate(new InfinityScenario($"normal depth{depth}", 1, depth, 1, Waypoint.None), minutes, 0));
+            foreach (int minutes in durations)
+                Rows.Add(Simulate(new InfinityScenario($"normal-depth{depth}", $"normal depth{depth}", 1, depth, 1, Waypoint.None), minutes, 0, "normal"));
         foreach (var scenario in Scenarios)
-            foreach (int minutes in new[] { 30, 60, 120 })
-                foreach (int interval in new[] { 10, 15, 20 })
-                    Rows.Add(Simulate(scenario, minutes, interval));
-        Rows.Add(Simulate(new InfinityScenario("EpicMirage authorization / 4x", 4, 0, 1, Waypoint.EpicMirage), 300, 10));
-        Rows.Add(ObserveFundedBoss());
+            foreach (int minutes in durations)
+                foreach (var interval in intervals)
+                    Rows.Add(Simulate(scenario, minutes, interval.Value, interval.Key));
+        if (!comparison)
+        {
+            Rows.Add(Simulate(new InfinityScenario("epic-mirage", "EpicMirage authorization / 4x", 4, 0, 1, Waypoint.EpicMirage), 300, InfinityRunState.DefaultInterval, "default"));
+            Rows.Add(ObserveFundedBoss());
+        }
         ObservePersistence();
     }
 
-    private InfinityRow Simulate(InfinityScenario scenario, int minutes, int interval)
+    private InfinityRow Simulate(InfinityScenario scenario, int minutes, int interval, string intervalKey)
     {
-        var row = new InfinityRow { Scenario = scenario.Name, Minutes = minutes, Interval = interval, Players = options.Players };
+        var row = new InfinityRow
+        {
+            ScenarioKey = scenario.Key, Scenario = scenario.Name, Speed = scenario.Speed, Depth = scenario.Depth,
+            NightmareMultiplier = scenario.NightmareMultiplier, Waypoint = scenario.Waypoint,
+            Minutes = minutes, Interval = interval, IntervalKey = intervalKey, Players = options.Players,
+        };
         var seeds = new Rng(options.Seed);
         for (int player = 0; player < options.Players; player++)
         {
@@ -72,7 +98,7 @@ internal sealed class InfinitySimulation
             while (elapsed < minutes * 60)
             {
                 var run = profile.Run;
-                bool boss = interval == 0 ? combatSinceBoss == 5 : run.Infinity.BossDue;
+                bool boss = interval == 0 ? combatSinceBoss == NormalCombatRoomsPerZone : run.Infinity.BossDue;
                 if (boss)
                 {
                     run.Infinity?.TryEnterBoss();
@@ -92,7 +118,7 @@ internal sealed class InfinitySimulation
                     else
                     {
                         normalZone++;
-                        if (normalZone == 4)
+                        if (normalZone == NormalZonesPerRun)
                         {
                             Observe(Rules.EndRun(profile, victory: true), row, profile);
                             Begin(profile, scenario, interval, ++runNumber);
@@ -112,11 +138,11 @@ internal sealed class InfinitySimulation
                     run.Infinity.RoomEpoch++;
                     InfinityRewards.EnterRoom(profile, run.Infinity.GraphEpoch, run.Infinity.RoomEpoch);
                 }
-                bool mini = encounterRng.Chance(.25);
-                int kills = 18 + (mini ? 1 : 0);
+                bool mini = encounterRng.Chance(MiniBossChance);
+                int kills = LesserPerRoom + NormalPerRoom + (mini ? 1 : 0);
                 for (int kill = 0; kill < kills; kill++)
                 {
-                    var tier = kill < 10 ? MonsterTier.Lesser : kill < 18 ? MonsterTier.Normal : MonsterTier.MiniBoss;
+                    var tier = kill < LesserPerRoom ? MonsterTier.Lesser : kill < LesserPerRoom + NormalPerRoom ? MonsterTier.Normal : MonsterTier.MiniBoss;
                     var effects = Waypoints.Sum(run.ActiveWaypoint);
                     var nightmare = effects.AllNightmares ? NightmareAffix.Ironclad
                         : Nightmares.Roll(encounterRng, tier, run.Heat, scenario.NightmareMultiplier * effects.NightmareChanceMultiplier);
@@ -222,22 +248,25 @@ internal sealed class InfinitySimulation
         // This is a stored-credit sensitivity case, not the ordinary throughput fixture.
         var row = new InfinityRow
         {
-            Scenario = "funded native boss / stored combat credit", Minutes = 135, Interval = 10, Players = options.Players
+            ScenarioKey = "funded-boss", Scenario = "funded native boss / stored combat credit",
+            Speed = 1, Depth = 0, NightmareMultiplier = 1, Waypoint = Waypoint.None,
+            Minutes = 135, Interval = InfinityRunState.DefaultInterval, IntervalKey = "default", Players = options.Players
         };
         var seeds = new Rng(options.Seed);
         for (int player = 0; player < options.Players; player++)
         {
             var profile = Profile.CreateNew(seeds.NextULong());
-            Begin(profile, Scenarios[0], 10, 1);
+            Begin(profile, Scenarios[0], InfinityRunState.DefaultInterval, 1);
             var infinity = profile.Run.Infinity;
             double elapsed = 0;
-            for (int room = 0; room < 10; room++)
+            double roomSeconds = 2700.0 / InfinityRunState.DefaultInterval;
+            for (int room = 0; room < InfinityRunState.DefaultInterval; room++)
             {
                 infinity.RoomEpoch++;
                 InfinityRewards.EnterRoom(profile, infinity.GraphEpoch, infinity.RoomEpoch);
-                InfinityRewards.AdvanceCombat(profile, 270);
-                row.CombatSeconds += 270;
-                elapsed += 270;
+                InfinityRewards.AdvanceCombat(profile, roomSeconds);
+                row.CombatSeconds += roomSeconds;
+                elapsed += roomSeconds;
                 infinity.TryCountCombatClear(infinity.GraphEpoch, room, true, false, false);
                 row.Rooms++;
             }
@@ -260,8 +289,8 @@ internal sealed class InfinitySimulation
     {
         var profile = Profile.CreateNew(options.Seed);
         var scenario = Scenarios[1];
-        Begin(profile, scenario, 10, 1);
-        for (int room = 0; room < 10; room++)
+        Begin(profile, scenario, InfinityRunState.DefaultInterval, 1);
+        for (int room = 0; room < InfinityRunState.DefaultInterval; room++)
         {
             var infinity = profile.Run.Infinity;
             infinity.RoomEpoch++;

@@ -9,10 +9,15 @@ namespace SodRpg.Core.Game
     public sealed class InfinityRunState
     {
         public const int MaximumGraphNodes = 4096;
+        public const int DefaultInterval = InfinityBalance.DefaultInterval;
+        public const int ShortInterval = InfinityBalance.ShortInterval;
+        public const int MiddleInterval = InfinityBalance.MiddleInterval;
+        public const int LongInterval = InfinityBalance.LongInterval;
+        public const int MaximumPressureStage = InfinityBalance.MaximumPressureStage;
         public bool Enabled => true;
         public string FixedZoneId { get; set; }
         public string DifficultyId { get; set; }
-        public int Interval { get; set; } = 10;
+        public int Interval { get; set; } = DefaultInterval;
         public long ClearedCombatTotal { get; set; }
         public int ClearsInCycle { get; set; }
         public long GraphEpoch { get; set; }
@@ -26,9 +31,9 @@ namespace SodRpg.Core.Game
         public long SettledGraphEpoch { get; set; } = -1;
         public long SettledSegmentEpoch { get; set; } = -1;
         public HashSet<int> ClearedNodes { get; } = new HashSet<int>();
-        public int PressureStage => ValidInterval(Interval) ? (int)Math.Min(100L, ClearedCombatTotal / Interval) : 0;
+        public int PressureStage => ValidInterval(Interval) ? (int)Math.Min((long)MaximumPressureStage, ClearedCombatTotal / Interval) : 0;
         public bool BossDue => ClearsInCycle >= Interval;
-        public static bool ValidInterval(int interval) => interval == 10 || interval == 15 || interval == 20;
+        public static bool ValidInterval(int interval) => interval == ShortInterval || interval == MiddleInterval || interval == LongInterval;
 
         public bool TryCountCombatClear(long graph, int node, bool active, bool transitioning, bool revisit)
         {

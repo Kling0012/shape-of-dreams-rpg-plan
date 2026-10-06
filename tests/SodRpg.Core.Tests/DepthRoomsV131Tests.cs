@@ -6,26 +6,28 @@ namespace SodRpg.Core.Tests
     public class DepthRoomsV131Tests
     {
         [Theory]
-        [InlineData(0, 0)]
-        [InlineData(1, 2)]
-        [InlineData(2, 4)]
-        [InlineData(3, 6)]
-        [InlineData(4, 8)]
-        [InlineData(5, 10)]
-        [InlineData(-1, 0)]
-        [InlineData(-100, 0)]
-        [InlineData(6, 10)]
-        [InlineData(int.MaxValue, 10)]
-        [InlineData(int.MinValue, 0)]
-        public void Extra_rooms_are_two_per_depth_step_and_clamp(int depth, int expected)
+        [InlineData(0)]
+        [InlineData(1)]
+        [InlineData(2)]
+        [InlineData(3)]
+        [InlineData(4)]
+        [InlineData(5)]
+        [InlineData(-1)]
+        [InlineData(-100)]
+        [InlineData(6)]
+        [InlineData(int.MaxValue)]
+        [InlineData(int.MinValue)]
+        public void Extra_rooms_follow_the_table_per_depth_step_and_clamp(int depth)
         {
-            Assert.Equal(expected, DreamDepth.ExtraZoneNodes(depth));
+            Assert.Equal((int)PressureBalanceTests.Number("dreamDepth", "extraNodesPerDepth") *
+                PressureBalanceTests.Depth(depth), DreamDepth.ExtraZoneNodes(depth));
         }
 
         [Fact]
         public void Offset_applies_only_on_the_server_during_normal_generation_of_an_active_run()
         {
-            Assert.Equal(10, DreamDepth.ZoneNodeOffset(5, isServer: true, specialGeneration: false, runActive: true));
+            Assert.Equal((int)PressureBalanceTests.Number("dreamDepth", "extraNodesPerDepth") *
+                PressureBalanceTests.Depth(5), DreamDepth.ZoneNodeOffset(5, isServer: true, specialGeneration: false, runActive: true));
         }
 
         [Fact]

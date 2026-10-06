@@ -25,6 +25,7 @@ public sealed class Options
     public string Mode { get; internal set; } = "expeditions";
     public int DreamLevel { get; private set; } = Content.MaxDreamLevel;
     public int StarMaxPoints { get; private set; } = StarProgression.MaxPoints;
+    public string InfinityScope { get; private set; } = "full";
     public bool Stars => Mode == "stars";
     public bool Sets => Mode == "sets";
     public bool V132Stars => Mode == "v132stars";
@@ -33,6 +34,7 @@ public sealed class Options
     public bool StarEfficiency => Mode == "star-efficiency";
     public bool StarValues => Mode == "star-values";
     public bool StarProgressionMode => Mode == "star-progression";
+    public bool Pressure => Mode == "pressure";
 
     public int SecureHeat => Policy switch { "delve1" => 1, "greedy" => 3, _ => 0 };
 
@@ -78,9 +80,14 @@ public sealed class Options
                     o.MetricsJson = value;
                     break;
                 case "--mode":
-                    if (value is not ("expeditions" or "stars" or "sets" or "v132stars" or "infinity" or "forge" or "star-efficiency" or "star-values" or "star-progression"))
-                        throw new ArgumentException("--mode は expeditions / stars / sets / v132stars / infinity / forge / star-efficiency / star-values / star-progression です。");
+                    if (value is not ("expeditions" or "stars" or "sets" or "v132stars" or "infinity" or "forge" or "star-efficiency" or "star-values" or "star-progression" or "pressure"))
+                        throw new ArgumentException("--mode は expeditions / stars / sets / v132stars / infinity / forge / star-efficiency / star-values / star-progression / pressure です。");
                     o.Mode = value;
+                    break;
+                case "--infinity-scope":
+                    if (value is not ("full" or "comparison"))
+                        throw new ArgumentException("--infinity-scope は full / comparison です。");
+                    o.InfinityScope = value;
                     break;
                 case "--dream-level":
                     o.DreamLevel = Integer(key, value, 1);
@@ -97,8 +104,8 @@ public sealed class Options
         }
         if ((long)o.Zones * o.Rooms > int.MaxValue)
             throw new ArgumentException("ゾーン数×部屋数は32ビット整数の範囲にしてください。");
-        if (o.MetricsJson != null && o.Mode is not ("expeditions" or "forge" or "star-efficiency" or "star-values" or "star-progression" or "v132stars"))
-            throw new ArgumentException("--metrics-json は expeditions / forge / star-efficiency / star-values / star-progression / v132stars のみ対応しています。");
+        if (o.MetricsJson != null && o.Mode is not ("expeditions" or "forge" or "star-efficiency" or "star-values" or "star-progression" or "v132stars" or "pressure" or "infinity"))
+            throw new ArgumentException("--metrics-json は expeditions / forge / star-efficiency / star-values / star-progression / v132stars / pressure / infinity のみ対応しています。");
         return o;
     }
 
@@ -108,7 +115,7 @@ public sealed class Options
         Runs = Runs, Players = Players, Seed = Seed, Zones = Zones, Rooms = Rooms, Lesser = Lesser, Normal = Normal,
         MiniBoss = MiniBoss, Bosses = Bosses, Policy = Policy, Wipe = Wipe, Bounty = Bounty, ItemLevel = ItemLevel,
         ItemLevelPerZone = ItemLevelPerZone, Out = Out, MetricsJson = MetricsJson, Mode = Mode, DreamLevel = DreamLevel,
-        StarMaxPoints = StarMaxPoints,
+        StarMaxPoints = StarMaxPoints, InfinityScope = InfinityScope,
     };
 
     private static int Integer(string key, string value, int min)
@@ -143,10 +150,11 @@ public sealed class Options
           --bounty 0.6       本体行動に依存する依頼の達成確率
           --item-level 1     最初のゾーンのアイテムレベル
           --item-level-per-zone 1  次のゾーンで増えるアイテムレベル
-          --mode expeditions  expeditions / stars / sets / v132stars / infinity / forge / star-efficiency / star-values / star-progression
+          --mode expeditions  expeditions / stars / sets / v132stars / infinity / forge / star-efficiency / star-values / star-progression / pressure
           --star-max-points 500  stars の最終節目（50〜500、50刻み。軽量実行は50）
+          --infinity-scope full  infinity の full（全周期）/ comparison（30分、Core既定周期、通常深度0/5＋4構成）
           --out <path>       標準出力に加えてUTF-8のMarkdownファイルに保存
-          --metrics-json <path>  expeditions / forge / star-efficiency / star-values / star-progression / v132stars の生データと未丸め集計をJSONに保存
+          --metrics-json <path>  expeditions / forge / star-efficiency / star-values / star-progression / v132stars / pressure / infinity の生データと未丸め集計をJSONに保存
           --help             この説明を表示
         """;
 }

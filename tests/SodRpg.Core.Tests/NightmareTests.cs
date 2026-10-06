@@ -20,33 +20,37 @@ namespace SodRpg.Core.Tests
         }
 
         [Theory]
-        [InlineData(MonsterTier.Normal, 1, 0.02)]
-        [InlineData(MonsterTier.MiniBoss, 5, 0.52)]
-        public void Nightmare_rate_matches_depth(MonsterTier tier, int depth, double expected)
+        [InlineData(MonsterTier.Normal, 1)]
+        [InlineData(MonsterTier.MiniBoss, 5)]
+        public void Nightmare_rate_matches_depth(MonsterTier tier, int depth)
         {
             var rng = new Rng(7);
+            double expected = tier == MonsterTier.Normal ? MonsterBalanceTableTests.Double("nightmare", "NormalChancePerDepth") * depth
+                : MonsterBalanceTableTests.Double("nightmare", "MiniBossBaseChance") + MonsterBalanceTableTests.Double("nightmare", "MiniBossChancePerDepth") * (depth - 1);
             int n = 40000, hits = 0;
             for (int i = 0; i < n; i++)
                 if (Nightmares.Roll(rng, tier, depth) != NightmareAffix.None) hits++;
-            Assert.InRange((double)hits / n, expected * 0.85, expected * 1.15);
+            Assert.InRange((double)hits / n, Math.Max(0, expected - 0.01), Math.Min(1, expected + 0.01));
         }
 
         [Theory]
-        [InlineData(1, 1)]
-        [InlineData(3, 2)]
-        [InlineData(5, 3)]
-        public void Deeper_nightmares_have_more_affixes(int depth, int affixes)
+        [InlineData(1)]
+        [InlineData(3)]
+        [InlineData(5)]
+        public void Deeper_nightmares_have_more_affixes(int depth)
         {
             var rng = new Rng(3);
+            int affixes = MonsterBalanceTableTests.AffixCount(depth);
+            double chance = MonsterBalanceTableTests.Double("nightmare", "MiniBossBaseChance") + MonsterBalanceTableTests.Double("nightmare", "MiniBossChancePerDepth") * (depth - 1);
             int seen = 0;
             for (int i = 0; i < 4000 && seen < 50; i++)
             {
-                var a = Nightmares.Roll(rng, MonsterTier.MiniBoss, depth);
+                var a = Nightmares.Roll(rng, MonsterTier.MiniBoss, depth, chance > 0 ? 1 / chance : 1);
                 if (a == NightmareAffix.None) continue;
                 Assert.Equal(affixes, Nightmares.Count(a));
                 seen++;
             }
-            Assert.Equal(50, seen);
+            Assert.Equal(chance == 0 ? 0 : 50, seen);
         }
 
         [Fact]
@@ -56,7 +60,7 @@ namespace SodRpg.Core.Tests
             {
                 var stats = Nightmares.MonsterStats(a, out float regen);
                 Assert.Contains(stats, s => s.Stat == Stat.MaxHealthPct && s.Value == Nightmares.BaseHealthPct);
-                if (a == NightmareAffix.Regenerating) Assert.True(regen > 0);
+                if (a == NightmareAffix.Regenerating) Assert.Equal(MonsterBalanceTableTests.Float("nightmare", "RegenerationPctPerSecond"), regen);
             }
         }
 

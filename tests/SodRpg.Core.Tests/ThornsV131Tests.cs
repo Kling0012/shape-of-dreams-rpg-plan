@@ -7,10 +7,12 @@ namespace SodRpg.Core.Tests
     public class ThornsV131Tests
     {
         [Theory]
-        [InlineData(100f, 1000f, 15f)]      // small hit: 15% of damage
-        [InlineData(10000f, 1000f, 15f)]    // huge hit: capped at 1.5% of max HP
-        public void Reflect_is_a_share_of_damage_capped_by_attacker_max_health(float damage, float maxHp, float expected)
+        [InlineData(100f, 1000f)]
+        [InlineData(10000f, 1000f)]
+        public void Reflect_is_a_share_of_damage_capped_by_attacker_max_health(float damage, float maxHp)
         {
+            float expected = System.Math.Min(damage * MonsterBalanceTableTests.Int("nightmare", "ThornsReflectPct") / 100f,
+                maxHp * MonsterBalanceTableTests.Float("nightmare", "ThornsReflectMaxHealthPct") / 100f);
             Assert.Equal(expected, Nightmares.ThornsReflectAmount(damage, maxHp), 3);
         }
 

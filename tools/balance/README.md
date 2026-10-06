@@ -3,10 +3,11 @@
 `forge.json` の鍛冶・覚醒・合成・分解・現行工房・イベント保証強化、`stars.json` の7種類の星の基準値・倍率・星ダメージの位階係数、
 `run-growth.json` の鍛錬の閾値・上限・1スタック量・上限増分・効果増分、
 `star-progression.json` の星XP曲線・費用・報酬・刻印枠の解放、
-`gear.json` の装備レベル成長・固定攻魔上限、`sets.json` の通常セット2/3/6部位効果を
-型付きC#へ生成します。記憶ダメージはmanifestの480親＋258選択肢と旧ルート98成分、
-計836欄を移行済みです。星ID・段数・費用・選択肢・保存形式5・Protocol 23は維持し、
-装備・セットの調整数値を内容照合に含めます。
+`gear.json` の装備レベル成長・固定攻魔上限、`sets.json` の通常セット2/3/6部位効果、
+`pressure.json` の夢の圧・深度、`monsters.json` の悪夢・変種・敵行動、
+`infinity.json` の供給予算・周期・圧段階上限を型付きC#へ生成します。
+記憶ダメージはmanifestの480親＋258選択肢と旧ルート98成分、計836欄を移行済みです。
+星ID・段数・費用・選択肢・保存形式5・Protocol 23は維持し、調整した有効値を内容照合に含めます。
 段階2ではMemoryHaste・GimmickBoost・GimmickParam・Notable・Keystone・Statの
 明示的な効果欄と旧星・汎用星・sampleの数値を追加しました。今回の切替ではゲーム値を変更せず、
 生成後の採用済み定義と内容指紋を維持します。実行時のJSON読込はありません。
@@ -40,11 +41,13 @@ python tools/balance/gen_cs.py --check
 `run` は実行可能です。任意の作業ディレクトリから絶対パスでも呼び出せます。
 入力検証→生成→生成鮮度確認→BalanceSim Releaseビルド（1回）→
 `python tools/test_changed.py --all`（`--slow` 時は同オプション追加）→
-`python -m unittest discover -s tools/tests -p 'test_*.py'`→鍛冶→記憶効率→種類別星値→星XP→鍛錬・感度→遠征→比較の順です。
+`python -m unittest discover -s tools/tests -p 'test_*.py'`→鍛冶→記憶効率→種類別星値→星XP→鍛錬・感度→圧・敵→Infinity→遠征→比較の順です。
 `--no-tests` は2つのテスト実行を省略し、生成・ビルド・実測は実行します。
-6モードは別プロセスで起動し、Coreの静的状態を共有しません。
+8モードは別プロセスで起動し、Coreの静的状態を共有しません。
 既定の遠征は新規プロフィール3遠征×8人、seed=1、2ゾーン×2部屋。鍛錬の `v132stars` は同じ人数・遠征数・seedで4ゾーン×5部屋、
 4旅人×深度0〜5×secure/greedy×6構成と入口のみの3感度条件を測定します。その他は既存モード既定です。
+Infinityの常用比較は `--infinity-scope comparison`：30分×通常深度0/5と4構成の6行、
+人数・seedはrunの指定値、周期は現在の既定周期。長時間の保証・蓄積予算感度は単体の `--infinity-scope full` で測ります。
 500pt星図の長時間シミュレーションは実行しません。
 
 ## 鍛冶の調整（Issue #149 段階3）
@@ -149,6 +152,65 @@ DOTNET_ROLL_FORWARD=LatestMajor /usr/bin/dotnet run --project tools/BalanceSim -
 移行回帰はコンパイルされた46欄と原本の一致、旧XP曲線・報酬・解放境界、
 旧鍛錬指紋レコードの完全一致を確認します。有効値の調整は既存FNV内容照合へ流れ、
 空白・キー順・比較条件やファイルのSHA検証は指紋に持ち込みません。
+
+## 圧・悪夢・敵種・Infinityの調整（Issue #149 段階5）
+
+179係数を無調整で移行しました。表の1セルを編集して `tools/balance/run` を実行すると、
+生成・全通常テスト・Coreの実測・前回成功との比較まで実行します。ゲーム実行中のJSON読込はありません。
+
+| 原本 | 調整欄 | 生成先 |
+| --- | --- | --- |
+| `pressure.json` | `dreamPressure` の無料夢レベル・HP／damageの夢レベル／星点／Infinity段係数7欄、`dreamDepth` の最大深度・HP／damage／幸運／覚醒／星XP／追加部屋7欄 | `Game/Balance/Pressure.Generated.cs` |
+| `monsters.json` | `behavior` 27欄、`nightmare` 39欄、`variants` の確率・性質・欠片9欄、`variantStats` の30種47能力値 | `Game/Balance/Monsters.Generated.cs` |
+| `infinity.json` | `rates` 10欄、共通 `killMix` 4欄、`bursts` 16欄、`rooms` の4種cap／increment8欄、`run` の既定／3周期／圧上限5欄 | `Game/Balance/Infinity.Generated.cs` |
+
+`pressure` は夢Lv1/5/10/20/30×使用星点0/50/250/500×深度0〜5×道標なし／儚い記憶
+×Infinity段0/1/10/100を `DreamPressure` の実式で列挙します。潜行Heatは夢の深度とは別軸です。
+悪夢の出現確率・接頭効果数・能力値、30変種の能力値・欠片倍率、行動係数も独立した単位で比較します。
+単独接頭効果の投影であり、ランダムな複合結果・勝率・実クリア時間を予測しません。
+
+`infinity` はEpic+／Legendaryの解析認可予算と、実 `Rules.OnKill` を通った認可／抑止、
+遺物・欠片・調律石・夢XP・星XP・覚醒の供給／時を保存します。全43係数も直接比較できるので、
+模型の条件で拘束しないburst／cap変更を見落としません。期間・撃破構成・時間・装備・乱数・人数等の模型条件を記録します。
+周期はshort/middle/long/defaultの選択役割を固定条件とし、その時点の数値を指標と `resolvedIntervals` に記録します。
+内容指紋が異なるだけでは比較を拒否せず、模型・外生条件・型・単位の違いで比較可否を判断します。
+全セッションを戦闘時間とする経済模型であり、通信性能・実機の戦闘速度の測定ではありません。
+
+表は欠落／未知キー・bool・非有限値・整数欄の小数・受理範囲外を生成前に拒否します。
+連続係数は最大6桁の小数精度で既存float/doubleへ生成し、演算型・順序・丸めを維持します。
+深度は既存の5、圧段階は100、周期は固定graph容量4096を超えられません。
+秒換算3600・epsilon・graph容量・enum／bit値・変種の色／見た目Scaleは調整表に移しません。
+数値入りの悪夢／変種説明とInfinity予算説明は同じCore値を使用します。
+帰還記録の過去の周期・深度・圧は現在の上限で書き換えず、固定した保存受理境界で保持します。
+保存フィールド・保存形式5・Protocol 23・既存の機能単位の内容不一致ゲートは変更しません。
+
+```sh
+# 通常の全検証＋前回成功比較
+DOTNET=/usr/bin/dotnet DOTNET_ROLL_FORWARD=LatestMajor python tools/balance/run
+
+# 直接計測（先に生成とReleaseビルド）
+DOTNET_ROLL_FORWARD=LatestMajor /usr/bin/dotnet run --project tools/BalanceSim -c Release -- \
+  --mode pressure --metrics-json /tmp/pressure.json --out /tmp/pressure.md
+DOTNET_ROLL_FORWARD=LatestMajor /usr/bin/dotnet run --project tools/BalanceSim -c Release -- \
+  --mode infinity --infinity-scope comparison --players 1 --seed 149 \
+  --metrics-json /tmp/infinity.json --out /tmp/infinity.md
+```
+
+無調整移行の内容指紋は変更前後とも `10579-ab35d865a569c87b`。
+最小限の移行回帰は旧式の圧・深度・敵定義・供給結果と、段階5追加前の内容指紋計算との完全一致を確認します。
+悪夢20種・変種30種の日本語／英語説明も、throwaway実行で移行前と完全一致しました。
+以下は隔離した一時生成物で実測した調整例（チェックインした表は無変更、表示のみ丸め）：
+
+| セル／指標 | 前 | 後 | 差 | 相対差 |
+| --- | ---: | ---: | --- | ---: |
+| `dreamPressure.healthPerLevel` 0.025→0.030：Lv30・星0・深度0のHP倍率 | 1.625 | 1.75 | +0.125倍 | +7.6923% |
+| `nightmare.BerserkAttackPct` 40→44：狂暴の攻撃力 | 40% | 44% | +4 pp | +10% |
+| `rates.shardsPerHour` 180→198：欠片の認可予算／時 | 180 | 198 | +18 shards/hour | +10% |
+| `run.defaultInterval`／`shortInterval` 10→11：既定周期 | 10 | 11 | +1 rooms | +10% |
+
+調整した有効数値だけを型・単位・安定key付きレコードで既存FNV内容照合へ追加します。
+凍結した旧値は互換比較専用で、欠落セルのfallbackには使いません。ファイルSHAやJSONの空白・キー順は使いません。
+
 
 ## 装備・通常セットの調整（#119・#121）
 

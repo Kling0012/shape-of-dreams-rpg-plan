@@ -12,6 +12,9 @@ import set_values
 import forge_values
 import star_progression_values
 import star_values
+import pressure_values
+import monster_values
+import infinity_values
 
 ROOT = Path(__file__).resolve().parents[2]
 FORGE_PATH = ROOT / "tools" / "balance" / "forge.json"
@@ -37,12 +40,18 @@ def generate(check=False):
     gear = gear_values.render_outputs()
     sets = set_values.render_outputs()
     progression = star_progression_values.render_outputs()
+    pressure = pressure_values.render_outputs()
+    monsters = monster_values.render_outputs()
+    infinity = infinity_values.render_outputs()
     stars = _star_generator()
     outputs = stars.render_outputs()
     outputs[OUTPUT_PATH] = forge
     outputs.update(gear)
     outputs.update(sets)
     outputs.update(progression)
+    outputs.update(pressure)
+    outputs.update(monsters)
+    outputs.update(infinity)
     return stars.publish_outputs(outputs, check=check)
 
 

@@ -1,0 +1,424 @@
+{
+  "schemaVersion": 1,
+  "behavior": {
+    "Range": 6.0,
+    "InnerRange": 3.0,
+    "AllyRadius": 5.0,
+    "GuardReduction": 0.3,
+    "MaxGuardReduction": 0.4,
+    "BossGuardReduction": 0.2,
+    "WarmupSeconds": 2.0,
+    "PulseHalfPeriod": 3.0,
+    "RecoverySeconds": 1.5,
+    "HitSlowSeconds": 2.0,
+    "HealDelaySeconds": 4.0,
+    "HealPctPerSecond": 1.0,
+    "HealBudgetPct": 10.0,
+    "ShieldPct": 15.0,
+    "ShieldSeconds": 6.0,
+    "PhaseOpeningSeconds": 3.0,
+    "WeaknessTakenBonus": 0.3,
+    "MaxTagResistance": 0.3,
+    "TagHunterDealtBonus": 0.5,
+    "LightEaterMinStacks": 3,
+    "OpeningIncomingMultiplier": 1.2,
+    "FacingDot": 0.5,
+    "HitMovementPct": -15.0,
+    "UnhitMovementPct": 20.0,
+    "LastStandHealthRatio": 0.35,
+    "FirstPhaseHealthRatio": 0.7,
+    "SecondPhaseHealthRatio": 0.4
+  },
+  "nightmare": {
+    "BaseHealthPct": 40,
+    "WardShieldPct": 25,
+    "ThornsReflectPct": 15,
+    "ThornsReflectMaxHealthPct": 1.5,
+    "ThornsReflectInterval": 0.4,
+    "RavenousLeechPct": 15,
+    "SunderArmor": 20,
+    "SunderSeconds": 4.0,
+    "BossDepthMinimum": 4,
+    "BossHealthPctPerDepth": 10,
+    "HealthPctPerDepth": 8,
+    "AttackPctPerDepth": 4,
+    "ArmorDepthMinimum": 3,
+    "DepthArmor": 10,
+    "GearHealthDivisor": 2,
+    "GearMaximumChanceBonus": 0.5,
+    "GearScoreDivisor": 400.0,
+    "LesserChancePerDepth": 0.01,
+    "NormalChancePerDepth": 0.02,
+    "MiniBossBaseChance": 0.2,
+    "MiniBossChancePerDepth": 0.08,
+    "TwoAffixDepth": 3,
+    "ThreeAffixDepth": 5,
+    "BaseAffixCount": 1,
+    "TwoAffixCount": 2,
+    "ThreeAffixCount": 3,
+    "IroncladArmor": 60,
+    "BerserkAttackPct": 40,
+    "BerserkAttackSpeedPct": 30,
+    "ColossalHealthPct": 150,
+    "SwiftMoveSpeedPct": 35,
+    "SwiftAttackSpeedPct": 20,
+    "RegenerationPctPerSecond": 2.0,
+    "ArcanePowerPct": 50,
+    "ArcaneHaste": 40,
+    "WardedArmor": 20,
+    "ThornedArmor": 30,
+    "RavenousAttackPct": 15,
+    "SunderingAttackPct": 10
+  },
+  "variants": {
+    "MinDepth": 2,
+    "HitCapPct": 8,
+    "DeathBurstPct": 20,
+    "DeathBurstRadius": 4.0,
+    "BaseChance": 0.06,
+    "ChancePerDepth": 0.02,
+    "DefaultShardBonusPct": 100,
+    "DevourerShardBonusPct": 300,
+    "BonusShards": 10
+  },
+  "variantStats": [
+    {
+      "id": "var.corroding_hound",
+      "stats": [
+        {
+          "stat": "MaxHealthPct",
+          "value": 60
+        },
+        {
+          "stat": "MoveSpeedPct",
+          "value": 50
+        },
+        {
+          "stat": "AttackSpeedPct",
+          "value": 30
+        }
+      ]
+    },
+    {
+      "id": "var.mirror_scarab",
+      "stats": [
+        {
+          "stat": "MaxHealthPct",
+          "value": 80
+        },
+        {
+          "stat": "Armor",
+          "value": 40
+        }
+      ]
+    },
+    {
+      "id": "var.elder_treant",
+      "stats": [
+        {
+          "stat": "MaxHealthPct",
+          "value": 250
+        },
+        {
+          "stat": "Armor",
+          "value": 30
+        }
+      ]
+    },
+    {
+      "id": "var.blood_bat",
+      "stats": [
+        {
+          "stat": "MaxHealthPct",
+          "value": 80
+        },
+        {
+          "stat": "AttackSpeedPct",
+          "value": 40
+        },
+        {
+          "stat": "MoveSpeedPct",
+          "value": 30
+        }
+      ]
+    },
+    {
+      "id": "var.abyss_oppressor",
+      "stats": [
+        {
+          "stat": "MaxHealthPct",
+          "value": 200
+        },
+        {
+          "stat": "AttackPct",
+          "value": 30
+        }
+      ]
+    },
+    {
+      "id": "var.hollow_gunner",
+      "stats": [
+        {
+          "stat": "MaxHealthPct",
+          "value": 200
+        },
+        {
+          "stat": "AttackPct",
+          "value": 40
+        }
+      ]
+    },
+    {
+      "id": "var.blazing_martyr",
+      "stats": [
+        {
+          "stat": "MaxHealthPct",
+          "value": 60
+        },
+        {
+          "stat": "MoveSpeedPct",
+          "value": 40
+        }
+      ]
+    },
+    {
+      "id": "var.ink_scholar",
+      "stats": [
+        {
+          "stat": "MaxHealthPct",
+          "value": 80
+        },
+        {
+          "stat": "AttackPct",
+          "value": 25
+        }
+      ]
+    },
+    {
+      "id": "var.thousand_arrows",
+      "stats": [
+        {
+          "stat": "MaxHealthPct",
+          "value": 60
+        },
+        {
+          "stat": "AttackSpeedPct",
+          "value": 50
+        },
+        {
+          "stat": "AttackPct",
+          "value": 20
+        }
+      ]
+    },
+    {
+      "id": "var.molten_core",
+      "stats": [
+        {
+          "stat": "MaxHealthPct",
+          "value": 120
+        }
+      ]
+    },
+    {
+      "id": "var.star_stalker",
+      "stats": [
+        {
+          "stat": "MaxHealthPct",
+          "value": 80
+        },
+        {
+          "stat": "MoveSpeedPct",
+          "value": 40
+        },
+        {
+          "stat": "AttackPct",
+          "value": 30
+        }
+      ]
+    },
+    {
+      "id": "var.frost_alpha",
+      "stats": [
+        {
+          "stat": "MaxHealthPct",
+          "value": 150
+        },
+        {
+          "stat": "AttackPct",
+          "value": 30
+        },
+        {
+          "stat": "MoveSpeedPct",
+          "value": 20
+        }
+      ]
+    },
+    {
+      "id": "var.shard_devourer",
+      "stats": [
+        {
+          "stat": "MaxHealthPct",
+          "value": 200
+        },
+        {
+          "stat": "MoveSpeedPct",
+          "value": 30
+        }
+      ]
+    },
+    {
+      "id": "var.mist_spitter",
+      "stats": [
+        {
+          "stat": "MaxHealthPct",
+          "value": 60
+        }
+      ]
+    },
+    {
+      "id": "var.brood_warden",
+      "stats": [
+        {
+          "stat": "MaxHealthPct",
+          "value": 70
+        }
+      ]
+    },
+    {
+      "id": "var.hollow_elemental",
+      "stats": [
+        {
+          "stat": "MaxHealthPct",
+          "value": 60
+        }
+      ]
+    },
+    {
+      "id": "var.flicker_olm",
+      "stats": [
+        {
+          "stat": "MaxHealthPct",
+          "value": 50
+        }
+      ]
+    },
+    {
+      "id": "var.timorous_displacer",
+      "stats": [
+        {
+          "stat": "MaxHealthPct",
+          "value": 60
+        }
+      ]
+    },
+    {
+      "id": "var.overreaching_bug",
+      "stats": [
+        {
+          "stat": "MaxHealthPct",
+          "value": 60
+        }
+      ]
+    },
+    {
+      "id": "var.last_thaw",
+      "stats": [
+        {
+          "stat": "MaxHealthPct",
+          "value": 60
+        }
+      ]
+    },
+    {
+      "id": "var.rime_sentinel",
+      "stats": [
+        {
+          "stat": "MaxHealthPct",
+          "value": 60
+        }
+      ]
+    },
+    {
+      "id": "var.furnace_ram",
+      "stats": [
+        {
+          "stat": "MaxHealthPct",
+          "value": 70
+        }
+      ]
+    },
+    {
+      "id": "var.ember_mender",
+      "stats": [
+        {
+          "stat": "MaxHealthPct",
+          "value": 50
+        }
+      ]
+    },
+    {
+      "id": "var.mist_tiger",
+      "stats": [
+        {
+          "stat": "MaxHealthPct",
+          "value": 60
+        }
+      ]
+    },
+    {
+      "id": "var.lantern_seed",
+      "stats": [
+        {
+          "stat": "MaxHealthPct",
+          "value": 40
+        }
+      ]
+    },
+    {
+      "id": "var.eclipse_demon",
+      "stats": [
+        {
+          "stat": "MaxHealthPct",
+          "value": 20
+        }
+      ]
+    },
+    {
+      "id": "var.rust_scavenger",
+      "stats": [
+        {
+          "stat": "MaxHealthPct",
+          "value": 60
+        }
+      ]
+    },
+    {
+      "id": "var.broodfly",
+      "stats": [
+        {
+          "stat": "MaxHealthPct",
+          "value": 50
+        }
+      ]
+    },
+    {
+      "id": "var.stardust_shell",
+      "stats": [
+        {
+          "stat": "MaxHealthPct",
+          "value": 60
+        }
+      ]
+    },
+    {
+      "id": "var.web_ripper",
+      "stats": [
+        {
+          "stat": "MaxHealthPct",
+          "value": 50
+        }
+      ]
+    }
+  ]
+}

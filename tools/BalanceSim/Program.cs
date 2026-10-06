@@ -77,10 +77,26 @@ internal static class Program
                 Console.Write(progressionReport);
                 return 0;
             }
+            if (options.Pressure)
+            {
+                var entries = PressureReport.Measure();
+                string pressureReport = PressureReport.Render(entries);
+                if (options.Out != null)
+                {
+                    string path = Path.GetFullPath(options.Out);
+                    string? directory = Path.GetDirectoryName(path);
+                    if (directory != null) Directory.CreateDirectory(directory);
+                    File.WriteAllText(path, pressureReport, new UTF8Encoding(false));
+                }
+                if (options.MetricsJson != null) Metrics.WritePressure(options.MetricsJson, entries);
+                Console.Write(pressureReport);
+                return 0;
+            }
             if (options.Infinity)
             {
                 var infinity = new InfinitySimulation(options);
                 infinity.Run();
+                if (options.MetricsJson != null) Metrics.WriteInfinity(options.MetricsJson, options, infinity);
                 timer.Stop();
                 string infinityReport = InfinityReport.Render(options, infinity, timer.Elapsed);
                 if (options.Out != null)

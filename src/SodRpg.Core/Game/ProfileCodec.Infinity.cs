@@ -34,7 +34,7 @@ namespace SodRpg.Core.Game
             if (!(value is JsonObject j) || InfinityLong(j, "version", 1, 1) != 1)
                 throw new LedgerFormatException("Unknown infinity state format");
             string zone = Str(j, "fixedZone");
-            int interval = (int)InfinityLong(j, "interval", 10, 20);
+            int interval = (int)InfinityLong(j, "interval", InfinityRunState.ShortInterval, InfinityRunState.LongInterval);
             if (string.IsNullOrEmpty(zone) || zone.Length > 256 || !InfinityRunState.ValidInterval(interval))
                 throw new LedgerFormatException("Invalid infinity zone or interval");
             if (!j.TryGet("intent", out object intent) || (intent != null && !(intent is string)))

@@ -8,17 +8,21 @@ namespace SodRpg.Core.Tests
     public class DreamPressureTests
     {
         [Theory]
-        [InlineData(1, 0, 1, 1)]
-        [InlineData(11, 30, 1.3, 1.147)]
-        [InlineData(30, 150, 2.375, 1.675)]
-        [InlineData(30, 300, 3.125, 2.05)]
-        [InlineData(30, 500, 4.125, 2.55)] // v1.31：星の係数は据え置き。500星はそのぶん比例して圧が増える
-        [InlineData(-9, -100, 1, 1)]
-        [InlineData(int.MinValue, int.MinValue, 1, 1)]
-        [InlineData(int.MaxValue, int.MaxValue, 4.125, 2.55)]
-        public void Formula_clamps_each_player(int level, int spent, double health, double damage)
+        [InlineData(1, 0)]
+        [InlineData(11, 30)]
+        [InlineData(30, 150)]
+        [InlineData(30, 300)]
+        [InlineData(30, 500)]
+        [InlineData(-9, -100)]
+        [InlineData(int.MinValue, int.MinValue)]
+        [InlineData(int.MaxValue, int.MaxValue)]
+        public void Formula_clamps_each_player(int level, int spent)
         {
             var pressure = DreamPressure.ForPlayer(level, spent);
+            double health = PressureBalanceTests.Health(Math.Max(1, Math.Min(Content.MaxDreamLevel, level)),
+                Math.Max(0, Math.Min(StarProgression.MaxPoints, spent)));
+            double damage = PressureBalanceTests.Damage(Math.Max(1, Math.Min(Content.MaxDreamLevel, level)),
+                Math.Max(0, Math.Min(StarProgression.MaxPoints, spent)));
             Assert.Equal(health, pressure.HealthMultiplier, 10);
             Assert.Equal(damage, pressure.DamageMultiplier, 10);
         }
@@ -50,8 +54,8 @@ namespace SodRpg.Core.Tests
             var lowJoiner = DreamPressure.Average(new[] { veteran, new Build { DreamLevel = 1, SpentStarPoints = 0 } });
             Assert.Equal(15.5, pressure.AverageDreamLevel);
             Assert.Equal(75, pressure.AverageSpentStarPoints);
-            Assert.Equal(1.6375, pressure.HealthMultiplier, 10);
-            Assert.Equal(1.3135, pressure.DamageMultiplier, 10);
+            Assert.Equal(PressureBalanceTests.Health(15.5, 75), pressure.HealthMultiplier, 10);
+            Assert.Equal(PressureBalanceTests.Damage(15.5, 75), pressure.DamageMultiplier, 10);
             Assert.Equal(pressure.HealthMultiplier, lowJoiner.HealthMultiplier);
         }
 
@@ -66,7 +70,7 @@ namespace SodRpg.Core.Tests
             });
             Assert.Equal(11, pressure.AverageDreamLevel);
             Assert.Equal(501.0 / 3, pressure.AverageSpentStarPoints, 10);
-            Assert.Equal(1.15 + 0.005 * 501 / 3, pressure.HealthMultiplier, 10); // 夢のレベルは5を超えた分だけ数える
+            Assert.Equal(PressureBalanceTests.Health(11, 501.0 / 3), pressure.HealthMultiplier, 10);
         }
 
         [Fact]
@@ -76,8 +80,8 @@ namespace SodRpg.Core.Tests
             var pressure = DreamPressure.Average(Enumerable.Repeat(extreme, 100000).ToArray());
             Assert.Equal(30, pressure.AverageDreamLevel);
             Assert.Equal(500, pressure.AverageSpentStarPoints);
-            Assert.Equal(4.125, pressure.HealthMultiplier, 10);
-            Assert.Equal(2.55, pressure.DamageMultiplier, 10);
+            Assert.Equal(PressureBalanceTests.Health(30, 500), pressure.HealthMultiplier, 10);
+            Assert.Equal(PressureBalanceTests.Damage(30, 500), pressure.DamageMultiplier, 10);
         }
     }
 }

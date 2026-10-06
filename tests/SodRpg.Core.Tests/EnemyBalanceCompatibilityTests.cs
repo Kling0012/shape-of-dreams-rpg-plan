@@ -1,52 +1,33 @@
 using System;
 using System.Collections.Generic;
+using SodRpg.Core.Game;
+using Xunit;
 
-namespace SodRpg.Core.Game
+namespace SodRpg.Core.Tests
 {
-    /// <summary>
-    /// 遊びの内容（星・遺物・固有効果など）の指紋。同じ通信の版でも内容が違う MOD どうしを見分けるために使う
-    /// 内容のIDと機構・上限・検証済み記憶属性から決まる。登録が変われば同じ通信の版でも再交渉する。
-    /// </summary>
-    public static class ContentFingerprint
+    public sealed class EnemyBalanceCompatibilityTests
     {
-        private static string _value;
-        private static string _capIdentity, _authoredIdentity;
-        private static readonly object Gate = new object();
-
-        public static string Value
+        [Fact]
+        public void Unadjusted_enemy_tables_preserve_the_entire_previous_content_fingerprint()
         {
-            get
-            {
-                string caps = FractionalScopedModifiers.CapRegistryFingerprint;
-                string authored = StarClusters.AuthoredRegistryFingerprint;
-                lock (Gate)
-                {
-                    if (_value == null || _capIdentity != caps || _authoredIdentity != authored)
-                    {
-                        _value = Compute(caps, authored);
-                        _capIdentity = caps;
-                        _authoredIdentity = authored;
-                    }
-                    return _value;
-                }
-            }
+            // Intentional tuning adds a record; this regression protects only the no-adjustment cutover.
+            if (PressureBalance.ContentFingerprintRecord != null || MonstersBalance.ContentFingerprintRecord != null
+                || InfinityBalance.ContentFingerprintRecord != null) return;
+            // Use current registry identities: other full-suite tests legitimately register new caps/heroes.
+            string caps = FractionalScopedModifiers.CapRegistryFingerprint;
+            string authored = StarClusters.AuthoredRegistryFingerprint;
+            Assert.Equal(LegacyFingerprint(caps, authored), ContentFingerprint.Value);
         }
 
-        private static string Compute(string caps, string authored)
+        // Frozen pre-stage5 algorithm, not a pinned fingerprint or a second game tuning source.
+        private static string LegacyFingerprint(string caps, string authored)
         {
             var ids = new List<string>();
-            // Default forge values contribute no new records; stage0 tuple identity remains compatible.
             ids.AddRange(ForgeBalance.ContentFingerprintRecords);
             if (MemoryDamageBalance.ContentFingerprintRecord != null)
                 ids.Add(MemoryDamageBalance.ContentFingerprintRecord);
             if (StarProgressionBalance.ContentFingerprintRecord != null)
                 ids.Add(StarProgressionBalance.ContentFingerprintRecord);
-            if (PressureBalance.ContentFingerprintRecord != null)
-                ids.Add(PressureBalance.ContentFingerprintRecord);
-            if (MonstersBalance.ContentFingerprintRecord != null)
-                ids.Add(MonstersBalance.ContentFingerprintRecord);
-            if (InfinityBalance.ContentFingerprintRecord != null)
-                ids.Add(InfinityBalance.ContentFingerprintRecord);
             ids.Add(GearBalance.ContentFingerprintRecord);
             ids.Add(SetBalanceValues.ContentFingerprintRecord);
             foreach (var b in Content.Bases) ids.Add("b:" + b.Id);
@@ -71,7 +52,6 @@ namespace SodRpg.Core.Game
             ids.Add("power:" + Enum.GetValues(typeof(Power)).Length);
             ids.Add("stat:" + Enum.GetValues(typeof(Stat)).Length);
             ids.Add("gimmick:" + Enum.GetValues(typeof(GimmickEffect)).Length);
-            // v1.32: currency stars and RunGrowth. Registered growth definitions are part of the authored-registry fingerprint.
             ids.Add("run-growth:v1:" + Enum.GetValues(typeof(RunGrowthTrigger)).Length + ":" + RunGrowth.MaxEntries);
             ids.Add(StarRankBalance.ContentFingerprintRecord);
             ids.Add("currency-stars:v1:" + Content.PowerCap(Power.KillGoldPct) + "/" + Content.PowerCap(Power.EliteKillGoldPct)
@@ -87,22 +67,13 @@ namespace SodRpg.Core.Game
             ids.Add("mechanisms:v13:" + caps + "/" + authored);
             ids.Add("mechanism-memory-facts:" + VerifiedMechanismSlots.Fingerprint);
             ids.Sort(StringComparer.Ordinal);
-            ulong hash = 1469598103934665603UL; // FNV-1a 64
+            ulong hash = 1469598103934665603UL;
             foreach (string id in ids)
             {
-                foreach (char c in id)
-                {
-                    hash ^= c;
-                    hash *= 1099511628211UL;
-                }
-                hash ^= '\n';
-                hash *= 1099511628211UL;
+                foreach (char c in id) { hash ^= c; hash *= 1099511628211UL; }
+                hash ^= '\n'; hash *= 1099511628211UL;
             }
             return ids.Count + "-" + hash.ToString("x16");
         }
-
-        /// <summary>相手の版と内容が自分と同じか。null（相手が古い版で送ってこない）は一致とみなさない。</summary>
-        public static bool Matches(int protocol, string content, int expectedProtocol) =>
-            protocol == expectedProtocol && string.Equals(content, Value, StringComparison.Ordinal);
     }
 }

@@ -14,19 +14,25 @@ namespace SodRpg.Core.Game
         private readonly double _waypointPressureAboveOne;
         public double WaypointMultiplier => 1 + _waypointPressureAboveOne;
         /// <summary>夢のレベルはこの値を超えた分だけ数える（序盤は夢のレベルがすぐ上がるため。v1.27 のバランス調整）。</summary>
-        public const int FreeDreamLevels = 5;
+        public const int FreeDreamLevels = PressureBalance.FreeDreamLevels;
+        public const double HealthPerLevel = PressureBalance.HealthPerLevel;
+        public const double HealthPerStarPoint = PressureBalance.HealthPerStarPoint;
+        public const double HealthPerInfinityStage = PressureBalance.HealthPerInfinityStage;
+        public const double DamagePerLevel = PressureBalance.DamagePerLevel;
+        public const double DamagePerStarPoint = PressureBalance.DamagePerStarPoint;
+        public const double DamagePerInfinityStage = PressureBalance.DamagePerInfinityStage;
         private double LevelsOverFree => Math.Max(0, AverageDreamLevel - FreeDreamLevels);
-        public double HealthMultiplier => (1 + 0.025 * LevelsOverFree + 0.005 * AverageSpentStarPoints)
-            * DreamDepth.HealthMultiplier(Depth) * WaypointMultiplier * (1 + 0.10 * InfinityStage);
-        public double DamageMultiplier => (1 + 0.012 * LevelsOverFree + 0.0025 * AverageSpentStarPoints)
-            * DreamDepth.DamageMultiplier(Depth) * WaypointMultiplier * (1 + 0.04 * InfinityStage);
+        public double HealthMultiplier => (1 + HealthPerLevel * LevelsOverFree + HealthPerStarPoint * AverageSpentStarPoints)
+            * DreamDepth.HealthMultiplier(Depth) * WaypointMultiplier * (1 + HealthPerInfinityStage * InfinityStage);
+        public double DamageMultiplier => (1 + DamagePerLevel * LevelsOverFree + DamagePerStarPoint * AverageSpentStarPoints)
+            * DreamDepth.DamageMultiplier(Depth) * WaypointMultiplier * (1 + DamagePerInfinityStage * InfinityStage);
 
         private DreamPressure(double dreamLevel, double spentStarPoints, int depth = 0, double waypointMultiplier = 1, int infinityStage = 0)
         {
             _averageLevelAboveOne = dreamLevel - 1;
             AverageSpentStarPoints = spentStarPoints;
             Depth = DreamDepth.Clamp(depth);
-            InfinityStage = Math.Max(0, Math.Min(100, infinityStage));
+            InfinityStage = Math.Max(0, Math.Min(InfinityRunState.MaximumPressureStage, infinityStage));
             _waypointPressureAboveOne = (double.IsNaN(waypointMultiplier) || double.IsInfinity(waypointMultiplier)
                 ? 1 : Math.Max(1, waypointMultiplier)) - 1;
         }

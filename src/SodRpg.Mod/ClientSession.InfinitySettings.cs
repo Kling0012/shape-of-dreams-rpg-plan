@@ -10,7 +10,7 @@ namespace SodRpg.Mod
         internal const string InfinityIntervalKey = "dreamforge.infinity.interval";
         internal static bool HostChosenInfinityEnabled => NetworkServer.active && _hostSession != null
             && _hostSession.Profile.LastInfinityEnabled;
-        internal static int HostChosenInfinityInterval => _hostSession?.Profile.LastInfinityInterval ?? 10;
+        internal static int HostChosenInfinityInterval => _hostSession?.Profile.LastInfinityInterval ?? InfinityRunState.DefaultInterval;
         internal static bool HostInfinityCanAdvance => HostAuthority.InfinityCanAdvance;
         internal static bool HostInfinityBoundarySettled => HostAuthority.InfinityBoundarySettled;
         internal static long HostInfinityRetireBeforeSegment(long current) => HostAuthority.InfinityRetireBeforeSegment(current);
@@ -62,18 +62,18 @@ namespace SodRpg.Mod
         {
             get
             {
-                if (RunActive) return Profile.Run.Infinity?.Interval ?? 10;
+                if (RunActive) return Profile.Run.Infinity?.Interval ?? InfinityRunState.DefaultInterval;
                 if (CanChooseRunRules) return Profile.LastInfinityInterval;
                 var settings = NetworkedManagerBase<GameSettingsManager>.softInstance;
                 return settings != null && settings.customData.TryGetValue(InfinityIntervalKey, out var value)
-                    && int.TryParse(value, out int interval) && (interval == 10 || interval == 15 || interval == 20) ? interval : 10;
+                    && int.TryParse(value, out int interval) && InfinityRunState.ValidInterval(interval) ? interval : InfinityRunState.DefaultInterval;
             }
         }
 
         public string ChooseInfinity(bool enabled, int interval)
         {
             if (!CanChooseDepth) return Loc.T("モードと周期は遠征前にホストが選びます。", "The host chooses the mode and interval before the expedition.");
-            if (interval != 10 && interval != 15 && interval != 20) return Loc.T("周期は10・15・20部屋です。", "The interval must be 10, 15 or 20 rooms.");
+            if (!InfinityRunState.ValidInterval(interval)) return Loc.T($"周期は{InfinityRunState.ShortInterval}・{InfinityRunState.MiddleInterval}・{InfinityRunState.LongInterval}部屋です。", $"The interval must be {InfinityRunState.ShortInterval}, {InfinityRunState.MiddleInterval} or {InfinityRunState.LongInterval} rooms.");
             if (enabled && !InfinityMode.Available) return InfinityMode.UnavailableNotice;
             Profile.LastInfinityEnabled = enabled;
             Profile.LastInfinityInterval = interval;
@@ -116,7 +116,7 @@ namespace SodRpg.Mod
             string enabled = Profile.LastInfinityEnabled ? "1" : "0";
             if (!settings.customData.TryGetValue(InfinityEnabledKey, out var oldEnabled) || oldEnabled != enabled)
                 settings.customData[InfinityEnabledKey] = enabled;
-            string interval = Profile.LastInfinityInterval == 15 ? "15" : Profile.LastInfinityInterval == 20 ? "20" : "10";
+            string interval = (InfinityRunState.ValidInterval(Profile.LastInfinityInterval) ? Profile.LastInfinityInterval : InfinityRunState.DefaultInterval).ToString(System.Globalization.CultureInfo.InvariantCulture);
             if (!settings.customData.TryGetValue(InfinityIntervalKey, out var oldInterval) || oldInterval != interval)
                 settings.customData[InfinityIntervalKey] = interval;
         }

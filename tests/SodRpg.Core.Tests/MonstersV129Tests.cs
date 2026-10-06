@@ -45,7 +45,7 @@ namespace SodRpg.Core.Tests
             }
             foreach (var variant in Variants.All.Where(Variants.IsExpanded))
             {
-                Assert.Equal(100, variant.ShardBonusPct);
+                Assert.Equal(MonsterBalanceTableTests.Int("variants", "DefaultShardBonusPct"), variant.ShardBonusPct);
                 Assert.DoesNotContain(variant.Stats, s => s.Stat == Stat.AttackPct || s.Stat == Stat.PowerPct);
             }
         }
@@ -70,13 +70,15 @@ namespace SodRpg.Core.Tests
         }
 
         [Theory]
-        [InlineData(MonsterTier.Normal, MonsterTier.MiniBoss, 2)]
-        [InlineData(MonsterTier.MiniBoss, MonsterTier.Boss, 10)]
-        [InlineData(MonsterTier.Boss, MonsterTier.Boss, 40)]
+        [InlineData(MonsterTier.Normal, MonsterTier.MiniBoss)]
+        [InlineData(MonsterTier.MiniBoss, MonsterTier.Boss)]
+        [InlineData(MonsterTier.Boss, MonsterTier.Boss)]
         public void Expanded_kills_keep_original_tier_double_rewards_and_persist_accounting(
-            MonsterTier tier, MonsterTier rewardTier, int awakenPoints)
+            MonsterTier tier, MonsterTier rewardTier)
         {
             Assert.Equal(rewardTier, Nightmares.RewardTier(tier));
+            string awakeningKey = tier == MonsterTier.Boss ? "bossPoints" : tier == MonsterTier.MiniBoss ? "miniBossPoints" : "normalPoints";
+            int awakenPoints = ForgeBalanceTests.Number("awakening", awakeningKey) * ForgeBalanceTests.Number("awakening", "nightmareMultiplier");
             int starXp = StarProgressionBalanceTests.KillXp(tier, true);
             var variant = Variants.All.First(Variants.IsExpanded);
             var boss = Variants.All.Single(v => v.MonsterType == "Mon_Forest_BossDemon");
@@ -106,16 +108,18 @@ namespace SodRpg.Core.Tests
         }
 
         [Theory]
-        [InlineData(3, 2)]
-        [InlineData(5, 3)]
-        public void Regeneration_and_recuperation_never_roll_together_or_reduce_affix_count(int depth, int count)
+        [InlineData(3)]
+        [InlineData(5)]
+        public void Regeneration_and_recuperation_never_roll_together_or_reduce_affix_count(int depth)
         {
             var rng = new Rng(129);
+            int count = MonsterBalanceTableTests.AffixCount(depth);
+            double chance = MonsterBalanceTableTests.Double("nightmare", "MiniBossBaseChance") + MonsterBalanceTableTests.Double("nightmare", "MiniBossChancePerDepth") * (depth - 1);
             var excludedPair = NightmareAffix.Regenerating | NightmareAffix.Recuperating;
             for (int i = 0; i < 2000; i++)
             {
-                var affixes = Nightmares.Roll(rng, MonsterTier.MiniBoss, depth, 100);
-                Assert.Equal(count, Nightmares.Count(affixes));
+                var affixes = Nightmares.Roll(rng, MonsterTier.MiniBoss, depth, chance > 0 ? 1 / chance : 1);
+                Assert.Equal(chance == 0 ? 0 : count, Nightmares.Count(affixes));
                 Assert.NotEqual(excludedPair, affixes & excludedPair);
             }
         }
@@ -140,7 +144,11 @@ namespace SodRpg.Core.Tests
                 Rules.OnKill(actual, originalTier, 10,
                     mode == 1 ? NightmareAffix.None : NightmareAffix.Hollow,
                     variantId: mode == 0 ? null : variant.Id);
-                Assert.Equal(expected.Run.SatchelShards, actual.Run.SatchelShards);
+                int bonusPct = MonsterBalanceTableTests.Int("variants", "DefaultShardBonusPct");
+                int expectedShards = mode != 0 && bonusPct != 100
+                    ? (int)Math.Min(int.MaxValue, (long)expected.Run.SatchelShards * bonusPct / 100 + MonsterBalanceTableTests.Int("variants", "BonusShards"))
+                    : expected.Run.SatchelShards;
+                Assert.Equal(expectedShards, actual.Run.SatchelShards);
                 Assert.Equal(expected.Run.SatchelTuning, actual.Run.SatchelTuning);
                 Assert.Equal(expected.DreamXp, actual.DreamXp);
                 Assert.Equal(expected.DreamLevel, actual.DreamLevel);
@@ -150,15 +158,21 @@ namespace SodRpg.Core.Tests
             }
         }
 
+        public static IEnumerable<object[]> GuardBoundaries()
+        {
+            float range = B("Range"), inner = B("InnerRange"), dot = B("FacingDot");
+            float guarded = 1f - Math.Min(B("GuardReduction"), B("MaxGuardReduction"));
+            yield return new object[] { NightmareAffix.Veiled, range, 0f, 1f };
+            yield return new object[] { NightmareAffix.Veiled, MathF.BitIncrement(range), 0f, guarded };
+            yield return new object[] { NightmareAffix.Hollow, inner, 0f, 1f };
+            yield return new object[] { NightmareAffix.Hollow, MathF.BitDecrement(inner), 0f, inner > 0 ? guarded : 1f };
+            yield return new object[] { NightmareAffix.Facing, 4f, dot, guarded };
+            yield return new object[] { NightmareAffix.Facing, 4f, MathF.BitDecrement(dot), 1f };
+            yield return new object[] { NightmareAffix.Veiled | NightmareAffix.Hollow | NightmareAffix.Facing, -1f, 1f, 1f };
+        }
+
         [Theory]
-        [InlineData(NightmareAffix.Veiled, 6f, 0f, 1f)]
-        [InlineData(NightmareAffix.Veiled, 6.001f, 0f, 0.7f)]
-        [InlineData(NightmareAffix.Hollow, 3f, 0f, 1f)]
-        [InlineData(NightmareAffix.Hollow, 2.999f, 0f, 0.7f)]
-        [InlineData(NightmareAffix.Facing, 4f, 0.5f, 0.7f)]
-        [InlineData(NightmareAffix.Facing, 4f, 0.499f, 1f)]
-        [InlineData(NightmareAffix.Facing, 4f, -1f, 1f)]
-        [InlineData(NightmareAffix.Veiled | NightmareAffix.Hollow | NightmareAffix.Facing, -1f, 1f, 1f)]
+        [MemberData(nameof(GuardBoundaries))]
         public void Distance_and_cone_guards_have_exact_counterplay_boundaries(
             NightmareAffix affixes, float distance, float dot, float expected)
         {
@@ -169,42 +183,49 @@ namespace SodRpg.Core.Tests
         public void Allied_and_channel_guards_require_their_state_and_total_reduction_is_capped()
         {
             Assert.Equal(1f, Incoming(NightmareAffix.Packbound));
-            Assert.Equal(0.7f, Incoming(NightmareAffix.Packbound, ally: true), 5);
+            Assert.Equal(1f - Math.Min(B("GuardReduction"), B("MaxGuardReduction")), Incoming(NightmareAffix.Packbound, ally: true), 5);
             Assert.Equal(1f, Incoming(NightmareAffix.Committed));
-            Assert.Equal(0.7f, Incoming(NightmareAffix.Committed, channeling: true), 5);
+            Assert.Equal(1f - Math.Min(B("GuardReduction"), B("MaxGuardReduction")), Incoming(NightmareAffix.Committed, channeling: true), 5);
             var guards = NightmareAffix.Veiled | NightmareAffix.Facing | NightmareAffix.Packbound | NightmareAffix.Pulsing | NightmareAffix.Committed;
-            Assert.Equal(0.6f, Incoming(guards, 7, 1, true, true, age: 2), 5);
-            Assert.Equal(0.8f, Incoming(guards, 7, 1, true, true, age: 2, boss: true), 5);
-            Assert.Equal(1.2f, Incoming(guards, 7, 1, true, true, recovering: true, age: 2), 5);
-            Assert.Equal(1.2f, Incoming(guards, 7, 1, true, true, age: 2, boss: true, opening: true), 5);
-            Assert.Equal(0.7f, Incoming(NightmareAffix.Veiled, 7, recovering: true), 5);
+            Assert.Equal(1f - Math.Min(B("GuardReduction") * 5f, B("MaxGuardReduction")), Incoming(guards, B("Range") + 1f, 1, true, true, age: B("WarmupSeconds")), 5);
+            Assert.Equal(1f - Math.Min(B("GuardReduction") * 5f, B("BossGuardReduction")), Incoming(guards, B("Range") + 1f, 1, true, true, age: B("WarmupSeconds"), boss: true), 5);
+            Assert.Equal(B("OpeningIncomingMultiplier"), Incoming(guards, 7, 1, true, true, recovering: true, age: 2), 5);
+            Assert.Equal(B("OpeningIncomingMultiplier"), Incoming(guards, 7, 1, true, true, age: 2, boss: true, opening: true), 5);
+            Assert.Equal(1f - Math.Min(B("GuardReduction"), B("MaxGuardReduction")), Incoming(NightmareAffix.Veiled, B("Range") + 1f, recovering: true), 5);
         }
 
         [Theory]
-        [InlineData(1.999f, false)]
-        [InlineData(2f, true)]
-        [InlineData(5f, false)]
-        public void Pulse_warmup_and_repeated_open_windows_are_damage_windows(float age, bool guarded)
+        [InlineData(-0.001f, false)]
+        [InlineData(0f, true)]
+        [InlineData(1f, false)]
+        public void Pulse_warmup_and_repeated_open_windows_are_damage_windows(float offset, bool guarded)
         {
+            float age = B("WarmupSeconds") + (offset > 0 ? B("PulseHalfPeriod") : offset);
             Assert.Equal(guarded, MonsterBehavior.PulseGuarded(age));
-            Assert.Equal(guarded ? 0.7f : 1f, Incoming(NightmareAffix.Pulsing, age: age), 5);
+            Assert.Equal(guarded ? 1f - Math.Min(B("GuardReduction"), B("MaxGuardReduction")) : 1f, Incoming(NightmareAffix.Pulsing, age: age), 5);
         }
 
         [Fact]
         public void Skittish_hit_slow_changes_movement_without_affecting_other_affixes()
         {
-            Assert.Equal(20f, MonsterBehavior.MovementPct(NightmareAffix.Skittish, false));
-            Assert.Equal(-15f, MonsterBehavior.MovementPct(NightmareAffix.Skittish | NightmareAffix.Veiled, true));
+            Assert.Equal(B("UnhitMovementPct"), MonsterBehavior.MovementPct(NightmareAffix.Skittish, false));
+            Assert.Equal(B("HitMovementPct"), MonsterBehavior.MovementPct(NightmareAffix.Skittish | NightmareAffix.Veiled, true));
             Assert.Equal(0f, MonsterBehavior.MovementPct(NightmareAffix.Veiled, true));
         }
 
+        public static IEnumerable<object[]> HealingRequests()
+        {
+            float delay = B("HealDelaySeconds"), rate = B("HealPctPerSecond"), budget = B("HealBudgetPct");
+            yield return new object[] { delay - 0.001f, 1f, budget, 0f };
+            yield return new object[] { delay, 0.5f, budget, Math.Min(rate * 0.5f, budget) };
+            yield return new object[] { delay, 100f, budget, Math.Min(rate * 100f, budget) };
+            yield return new object[] { delay, 1f, 0.25f, Math.Min(rate, 0.25f) };
+            yield return new object[] { delay, -1f, budget, 0f };
+            yield return new object[] { delay, 1f, -1f, 0f };
+        }
+
         [Theory]
-        [InlineData(3.999f, 1f, 10f, 0f)]
-        [InlineData(4f, 0.5f, 10f, 0.5f)]
-        [InlineData(4f, 100f, 10f, 10f)]
-        [InlineData(4f, 1f, 0.25f, 0.25f)]
-        [InlineData(4f, -1f, 10f, 0f)]
-        [InlineData(4f, 1f, -1f, 0f)]
+        [MemberData(nameof(HealingRequests))]
         public void Healing_waits_for_quiet_and_never_exceeds_elapsed_time_or_budget(
             float quiet, float elapsed, float budget, float expected)
         {
@@ -214,32 +235,40 @@ namespace SodRpg.Core.Tests
         [Fact]
         public void Repeated_healing_requests_exhaust_one_life_budget()
         {
-            float remaining = 10f, healed = 0f;
+            float budget = B("HealBudgetPct"), rate = B("HealPctPerSecond");
+            float remaining = budget, healed = 0f;
+            float elapsed = (budget + 1f) / Math.Max(rate, 0.001f);
             for (int i = 0; i < 30; i++)
             {
-                float amount = MonsterBehavior.HealingPct(4 + i * 0.75f, 0.75f, remaining);
+                float amount = MonsterBehavior.HealingPct(B("HealDelaySeconds") + i * elapsed, elapsed, remaining);
                 remaining -= amount;
                 healed += amount;
             }
-            Assert.Equal(10f, healed, 5);
-            Assert.Equal(0f, remaining);
+            Assert.Equal(rate == 0f ? 0f : budget, healed, 5);
+            Assert.Equal(rate == 0f ? budget : 0f, remaining);
             Assert.Equal(0f, MonsterBehavior.HealingPct(100, 100, remaining));
         }
 
         [Fact]
         public void Last_stand_warning_requires_threshold_affix_and_unused_life_trigger()
         {
-            Assert.False(MonsterBehavior.ShouldWarnLastStand(NightmareAffix.LastStand, 0.351f, false));
-            Assert.True(MonsterBehavior.ShouldWarnLastStand(NightmareAffix.LastStand, 0.35f, false));
-            Assert.True(MonsterBehavior.ShouldWarnLastStand(NightmareAffix.LastStand, 0.1f, false));
-            Assert.False(MonsterBehavior.ShouldWarnLastStand(NightmareAffix.LastStand, 0.1f, true));
-            Assert.False(MonsterBehavior.ShouldWarnLastStand(NightmareAffix.Beacon, 0.1f, false));
+            Assert.False(MonsterBehavior.ShouldWarnLastStand(NightmareAffix.LastStand, B("LastStandHealthRatio") + 0.001f, false));
+            Assert.True(MonsterBehavior.ShouldWarnLastStand(NightmareAffix.LastStand, B("LastStandHealthRatio"), false));
+            Assert.True(MonsterBehavior.ShouldWarnLastStand(NightmareAffix.LastStand, B("LastStandHealthRatio") / 2f, false));
+            Assert.False(MonsterBehavior.ShouldWarnLastStand(NightmareAffix.LastStand, B("LastStandHealthRatio") / 2f, true));
+            Assert.False(MonsterBehavior.ShouldWarnLastStand(NightmareAffix.Beacon, B("LastStandHealthRatio") / 2f, false));
+        }
+
+        public static IEnumerable<object[]> PhaseBoundaries()
+        {
+            float first = B("FirstPhaseHealthRatio"), second = B("SecondPhaseHealthRatio");
+            yield return new object[] { first + 0.01f, first, 1 };
+            yield return new object[] { first + 0.01f, first + 0.005f, 0 };
+            yield return new object[] { first + 0.01f, second, 3 };
         }
 
         [Theory]
-        [InlineData(1f, 0.7f, 1)]
-        [InlineData(0.71f, 0.701f, 0)]
-        [InlineData(1f, 0.2f, 3)]
+        [MemberData(nameof(PhaseBoundaries))]
         public void Phase_crossings_report_each_downward_threshold_including_large_hits(float previous, float current, int expected)
         {
             Assert.Equal(expected, MonsterBehavior.CrossedHealthPhases(previous, current));
@@ -251,16 +280,18 @@ namespace SodRpg.Core.Tests
             var player = new Build { DreamLevel = 25, SpentStarPoints = 40 };
             var solo = DreamPressure.Average(new[] { player });
             var party = DreamPressure.Average(new[] { player, player, player, player });
-            Assert.Equal(1.7, solo.HealthMultiplier, 8);
-            Assert.Equal(1.34, solo.DamageMultiplier, 8);
+            Assert.Equal(PressureBalanceTests.Health(25, 40), solo.HealthMultiplier, 8);
+            Assert.Equal(PressureBalanceTests.Damage(25, 40), solo.DamageMultiplier, 8);
             Assert.Equal(solo.HealthMultiplier, party.HealthMultiplier);
             Assert.Equal(solo.DamageMultiplier, party.DamageMultiplier);
             var joining = DreamPressure.Average(new Build[] { player, null });
             Assert.Equal(13, joining.AverageDreamLevel);
             Assert.Equal(20, joining.AverageSpentStarPoints);
-            Assert.Equal(1.3, joining.HealthMultiplier, 8);
-            Assert.Equal(1.146, joining.DamageMultiplier, 8);
+            Assert.Equal(PressureBalanceTests.Health(13, 20), joining.HealthMultiplier, 8);
+            Assert.Equal(PressureBalanceTests.Damage(13, 20), joining.DamageMultiplier, 8);
         }
+
+        private static float B(string field) => MonsterBalanceTableTests.Float("behavior", field);
 
         private static float Incoming(NightmareAffix affixes, float distance = 4, float dot = 0,
             bool ally = false, bool channeling = false, bool recovering = false, float age = 0,

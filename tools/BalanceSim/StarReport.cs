@@ -81,12 +81,14 @@ internal static class StarReport
 
         text.AppendLine($"## 夢の圧（深度0〜{DreamDepth.Maximum}、夢Lv={o.DreamLevel}）");
         text.AppendLine();
-        text.AppendLine($"`DreamPressure.ForPlayer` の実式。星項は 0.0025×使用ポイント（被ダメージは 0.00125×）、レベル項は夢Lv{DreamPressure.FreeDreamLevels}を超えた分 ×0.025（同 0.012）、深度項は DreamDepth.HealthMultiplier / DamageMultiplier。");
+        text.AppendLine($"`DreamPressure.ForPlayer` の実式。星項は {DreamPressure.HealthPerStarPoint.ToString("G", CultureInfo.InvariantCulture)}×使用ポイント（被ダメージは {DreamPressure.DamagePerStarPoint.ToString("G", CultureInfo.InvariantCulture)}×）、レベル項は夢Lv{DreamPressure.FreeDreamLevels}を超えた分 ×{DreamPressure.HealthPerLevel.ToString("G", CultureInfo.InvariantCulture)}（同 {DreamPressure.DamagePerLevel.ToString("G", CultureInfo.InvariantCulture)}）、深度項は DreamDepth.HealthMultiplier / DamageMultiplier。");
         text.AppendLine();
         text.AppendLine("敵HP倍率（深度ごと）。");
         text.AppendLine();
-        text.AppendLine("| 節目 | 必要星XP | 換算確保数 | 深度0 | 深度1 | 深度2 | 深度3 | 深度4 | 深度5 |");
-        text.AppendLine("| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |");
+        string depthHeaders = string.Concat(Enumerable.Range(0, DreamDepth.Maximum + 1).Select(d => $" 深度{d} |"));
+        string depthSeparators = string.Concat(Enumerable.Repeat(" ---: |", DreamDepth.Maximum + 1));
+        text.AppendLine("| 節目 | 必要星XP | 換算確保数 |" + depthHeaders);
+        text.AppendLine("| --- | ---: | ---: |" + depthSeparators);
         foreach (int points in sim.Checkpoints)
         {
             int xp = StarProgression.TotalXpForPoints(points);
@@ -100,8 +102,8 @@ internal static class StarReport
         text.AppendLine();
         text.AppendLine("敵与ダメージ倍率（深度ごと）。");
         text.AppendLine();
-        text.AppendLine("| 節目 | 深度0 | 深度1 | 深度2 | 深度3 | 深度4 | 深度5 |");
-        text.AppendLine("| --- | ---: | ---: | ---: | ---: | ---: | ---: |");
+        text.AppendLine("| 節目 |" + depthHeaders);
+        text.AppendLine("| --- |" + depthSeparators);
         foreach (int points in sim.Checkpoints)
         {
             var row = new StringBuilder($"| {points} ");
@@ -118,7 +120,8 @@ internal static class StarReport
         foreach (int points in sim.Checkpoints)
         {
             var p = DreamPressure.ForPlayer(o.DreamLevel, points);
-            text.AppendLine($"| {points} | {Plus(0.0025 * points)} | {Plus(0.00125 * points)} | {Plus(0.025 * (p.AverageDreamLevel - DreamPressure.FreeDreamLevels))} | {Plus(0.012 * (p.AverageDreamLevel - DreamPressure.FreeDreamLevels))} | {Number(p.HealthMultiplier)} | {Number(p.DamageMultiplier)} |");
+            double levelsOverFree = Math.Max(0, p.AverageDreamLevel - DreamPressure.FreeDreamLevels);
+            text.AppendLine($"| {points} | {Plus(DreamPressure.HealthPerStarPoint * p.AverageSpentStarPoints)} | {Plus(DreamPressure.DamagePerStarPoint * p.AverageSpentStarPoints)} | {Plus(DreamPressure.HealthPerLevel * levelsOverFree)} | {Plus(DreamPressure.DamagePerLevel * levelsOverFree)} | {Number(p.HealthMultiplier)} | {Number(p.DamageMultiplier)} |");
         }
         text.AppendLine();
         text.AppendLine("夢レベルの感度（深度0、節目ごとの敵HP倍率 / 被ダメージ倍率）。");
@@ -138,7 +141,7 @@ internal static class StarReport
 
         text.AppendLine("## 深度の圧と悪夢化（実式）");
         text.AppendLine();
-        text.AppendLine("`DreamDepth` の倍率と `Nightmares` の深度ボーナス・悪夢化率。ボスは深度4から最大HP+10%/深度。");
+        text.AppendLine("`DreamDepth` の倍率と `Nightmares.DepthBonus` / `Nightmares.Chance` の実式を列挙します。");
         text.AppendLine();
         text.AppendLine("| 深度 | 敵HP倍率 | 敵与DMG倍率 | 通常敵追加HP% | 通常敵追加攻% | 追加防御 | ボス追加HP% | レア運 | 覚醒倍率 | 星XP倍率 | 追加部屋 | Lesser悪夢率 | Normal悪夢率 | MiniBoss悪夢率 | 接辞数 |");
         text.AppendLine("| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |");
@@ -150,12 +153,12 @@ internal static class StarReport
             int armor = Line(bonus, Stat.Armor);
             var boss = Nightmares.DepthBonus(MonsterTier.Boss, depth);
             int bossHp = Line(boss, Stat.MaxHealthPct);
-            int affixes = depth >= 5 ? 3 : depth >= 3 ? 2 : depth >= 1 ? 1 : 0;
+            int affixes = Nightmares.AffixCount(depth);
             text.AppendLine($"| {depth} | {Number(DreamDepth.HealthMultiplier(depth))} | {Number(DreamDepth.DamageMultiplier(depth))} | {Plus(hp)} | {Plus(attack)} | {Plus(armor)} | {Plus(bossHp)} | {Number(DreamDepth.RarityLuck(depth))} | {Number(DreamDepth.AwakeningMultiplier(depth))} | {Number(DreamDepth.StarXpMultiplier(depth))} | {DreamDepth.ExtraZoneNodes(depth)} | {Percent(Nightmares.Chance(MonsterTier.Lesser, depth))} | {Percent(Nightmares.Chance(MonsterTier.Normal, depth))} | {Percent(Nightmares.Chance(MonsterTier.MiniBoss, depth))} | {affixes} |");
         }
         text.AppendLine();
         var final = sim.Results.Select(r => r.Checkpoints.Last()).ToList();
-        text.AppendLine($"{o.StarMaxPoints}ポイントの節目での `Nightmares.GearChanceMult`（悪夢化率の装備強さ倍率、1.0〜1.5）は全旅人・全戦略で {Number(final.Min(c => c.GearChanceMult))}〜{Number(final.Max(c => c.GearChanceMult))}。");
+        text.AppendLine($"{o.StarMaxPoints}ポイントの節目での `Nightmares.GearChanceMult`（悪夢化率の装備強さ倍率）は全旅人・全戦略で {Number(final.Min(c => c.GearChanceMult))}〜{Number(final.Max(c => c.GearChanceMult))}。");
         text.AppendLine();
 
         text.AppendLine("## コアAPIの不足と測定の限界");
