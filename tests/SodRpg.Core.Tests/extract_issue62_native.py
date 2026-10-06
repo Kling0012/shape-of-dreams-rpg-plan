@@ -6,7 +6,7 @@ import sys
 root = Path(__file__).resolve().parents[2]
 
 def block(path, declaration):
-    source = (root / path).read_text()
+    source = (root / path).read_text(encoding="utf-8")
     match = re.search(declaration, source)
     if match is None:
         raise ValueError(f"Missing native declaration: {declaration}")
