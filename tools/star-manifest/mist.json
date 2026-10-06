@@ -28928,7 +28928,9 @@
         "capBonus": {
           "valueRef": "mist.run.m1/growth/capBonus"
         },
-        "effectPct": 0,
+        "effectPct": {
+          "valueRef": "mist.run.m1/growth/effectPct"
+        },
         "doubleGain": false
       },
       "stat": null,
@@ -28970,7 +28972,9 @@
         "capBonus": {
           "valueRef": "mist.run.m2/growth/capBonus"
         },
-        "effectPct": 0,
+        "effectPct": {
+          "valueRef": "mist.run.m2/growth/effectPct"
+        },
         "doubleGain": false
       },
       "stat": null,
@@ -29022,7 +29026,9 @@
             "capBonus": {
               "valueRef": "mist.run.choice/options/0/growth/capBonus"
             },
-            "effectPct": 50,
+            "effectPct": {
+              "valueRef": "mist.run.choice/options/0/growth/effectPct"
+            },
             "doubleGain": false
           },
           "stat": null,
@@ -29043,7 +29049,9 @@
             "capBonus": {
               "valueRef": "mist.run.choice/options/1/growth/capBonus"
             },
-            "effectPct": 0,
+            "effectPct": {
+              "valueRef": "mist.run.choice/options/1/growth/effectPct"
+            },
             "doubleGain": true
           },
           "stat": null,

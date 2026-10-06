@@ -85,18 +85,18 @@ namespace SodRpg.Core.Tests
             return profile;
         }
 
-        [Theory]
-        [InlineData(199, 1)]
-        [InlineData(200, 2)]
-        [InlineData(400, 3)]
-        public void Slot_counts_follow_the_star_level_thresholds(int level, int slots)
+        [Fact]
+        public void Slot_counts_follow_the_star_level_thresholds()
         {
-            Assert.Equal(slots, KeystoneSlots.CountFor(level));
-            Assert.Equal(KeystoneSlots.CountFor(level),
-                KeystoneSlots.CountFor(StarProgression.Points(StarProgression.TotalXpForPoints(level))));
-            int next = KeystoneSlots.NextUnlockLevel(level);
-            if (slots < KeystoneSlots.Max) Assert.True(next > level);
-            else Assert.Equal(-1, next);
+            int[] unlocks = StarProgressionBalanceTests.Unlocks;
+            foreach (int level in new[] { 0, StarProgressionBalanceTests.MaxPoints }
+                .Concat(unlocks.SelectMany(level => new[] { level - 1, level })))
+            {
+                int expected = 1 + unlocks.Count(unlock => level >= unlock);
+                Assert.Equal(expected, KeystoneSlots.CountFor(level));
+                Assert.Equal(expected, KeystoneSlots.CountFor(StarProgression.Points(StarProgression.TotalXpForPoints(level))));
+                Assert.Equal(unlocks.Where(unlock => level < unlock).DefaultIfEmpty(-1).First(), KeystoneSlots.NextUnlockLevel(level));
+            }
         }
 
         [Fact]
@@ -104,7 +104,7 @@ namespace SodRpg.Core.Tests
         {
             try
             {
-                var p = ProfileAt(500, Key1(), Key2(), Key3());
+                var p = ProfileAt(StarProgressionBalanceTests.MaxPoints, Key1(), Key2(), Key3());
                 var state = p.Hero(Hero);
                 int before = Rules.SpentPoints(state, Hero);
                 Rules.SetKeystone(p, Hero, "test.multi.key1");
@@ -123,17 +123,17 @@ namespace SodRpg.Core.Tests
             try
             {
                 var key1 = Key1(); var key2 = Key2(); var refund = Key3();
-                var p = ProfileAt(199, key1, key2, refund);
+                var p = ProfileAt(StarProgressionBalanceTests.Unlocks[0] - 1, key1, key2, refund);
                 var state = p.Hero(Hero);
                 Rules.SetKeystone(p, Hero, key1.KeystoneId);
                 Assert.Throws<InvalidOperationException>(() => Rules.SetKeystone(p, Hero, key2.KeystoneId));
 
-                state.StarXp = StarProgression.TotalXpForPoints(200);
+                state.StarXp = StarProgression.TotalXpForPoints(StarProgressionBalanceTests.Unlocks[0]);
                 Rules.SetKeystone(p, Hero, key2.KeystoneId);
                 Assert.Throws<InvalidOperationException>(() => Rules.SetKeystone(p, Hero, refund.KeystoneId));
                 Assert.Throws<InvalidOperationException>(() => Rules.SetKeystone(p, Hero, key1.KeystoneId));
 
-                state.StarXp = StarProgression.TotalXpForPoints(400);
+                state.StarXp = StarProgression.TotalXpForPoints(StarProgressionBalanceTests.Unlocks[1]);
                 Rules.SetKeystone(p, Hero, refund.KeystoneId);
                 Assert.Equal(3, state.KeystoneCount);
             }
@@ -146,7 +146,7 @@ namespace SodRpg.Core.Tests
             try
             {
                 var key1 = Key1(); var key2 = Key2(); var refund = Key3();
-                var p = ProfileAt(500, key1, key2, refund);
+                var p = ProfileAt(StarProgressionBalanceTests.MaxPoints, key1, key2, refund);
                 var state = p.Hero(Hero);
                 Rules.SetKeystone(p, Hero, key1.KeystoneId);
                 Rules.SetKeystone(p, Hero, key2.KeystoneId);
@@ -172,7 +172,7 @@ namespace SodRpg.Core.Tests
             try
             {
                 var key1 = Key1(); var key2 = Key2();
-                var p = ProfileAt(400, key1, key2);
+                var p = ProfileAt(StarProgressionBalanceTests.MaxPoints, key1, key2);
                 var state = p.Hero(Hero);
                 TreeTestPaths.Connect(p, Hero, "outer.multi.echo");
                 Assert.True(state.Talents.TryGetValue("outer.multi.echo", out int echoRanks) && echoRanks > 0);
@@ -193,7 +193,7 @@ namespace SodRpg.Core.Tests
                 // 従来のPower刻印（ケトゥスの2つ）は、それぞれの保持Powerを1回ずつ入れる。
                 var legacy = new Profile();
                 var legacyState = legacy.Hero(Hero);
-                legacyState.StarXp = StarProgression.TotalXpForPoints(400);
+                legacyState.StarXp = StarProgression.TotalXpForPoints(StarProgressionBalanceTests.MaxPoints);
                 legacyState.Kills = 1000000;
                 foreach (var node in HeroSigils.TreeFor(Hero).Where(t => !t.IsKeystone && t.Tier == 1))
                     for (int i = 0; i < node.MaxRank; i++)
@@ -219,7 +219,7 @@ namespace SodRpg.Core.Tests
             try
             {
                 var key1 = Key1(); var key2 = Key2(); var refund = Key3();
-                var p = ProfileAt(500, key1, key2, refund);
+                var p = ProfileAt(StarProgressionBalanceTests.MaxPoints, key1, key2, refund);
                 var state = p.Hero(Hero);
                 Rules.SetKeystone(p, Hero, key1.KeystoneId);
                 Rules.SetKeystone(p, Hero, key2.KeystoneId);
@@ -251,14 +251,14 @@ namespace SodRpg.Core.Tests
             try
             {
                 var key1 = Key1(); var key2 = Key2(); var refund = Key3();
-                var p = ProfileAt(500, key1, key2, refund);
+                var p = ProfileAt(StarProgressionBalanceTests.MaxPoints, key1, key2, refund);
                 var state = p.Hero(Hero);
                 Rules.SetKeystone(p, Hero, key1.KeystoneId);
                 Rules.SetKeystone(p, Hero, key2.KeystoneId);
                 Rules.SetKeystone(p, Hero, refund.KeystoneId);
                 int spent = Rules.SpentPoints(state, Hero);
 
-                state.StarXp = StarProgression.TotalXpForPoints(200); // データの都合で星のレベルが下がった
+                state.StarXp = StarProgression.TotalXpForPoints(StarProgressionBalanceTests.Unlocks[0]); // データの都合で星のレベルが下がった
                 var result = AuthoredStarMigration.Apply(state, HeroSigils.TreeFor(Hero), StarClusters.MigrationsFor(Hero));
                 Assert.Equal(2, state.KeystoneCount);
                 Assert.Equal(key1.KeystoneId, state.Keystones[0]);
@@ -276,7 +276,7 @@ namespace SodRpg.Core.Tests
             try
             {
                 var key1 = Key1(); var key2 = Key2(); var refund = Key3();
-                var p = ProfileAt(500, key1, key2, refund);
+                var p = ProfileAt(StarProgressionBalanceTests.MaxPoints, key1, key2, refund);
                 var state = p.Hero(Hero);
                 Rules.SetKeystone(p, Hero, key1.KeystoneId);
                 Rules.SetKeystone(p, Hero, key2.KeystoneId);
@@ -288,12 +288,12 @@ namespace SodRpg.Core.Tests
                 Assert.Equal(3, accepted.SelectedKeystones.Count);
 
                 // 声明した星のレベルに対して枠が足りなければ拒否する。
-                string cheated = submission.Replace(";S:500;", ";S:199;");
+                string cheated = submission.Replace(";S:" + StarProgressionBalanceTests.MaxPoints + ";", ";S:" + (StarProgressionBalanceTests.Unlocks[0] - 1) + ";");
                 Assert.NotEqual(submission, cheated);
                 Assert.False(HostBuildValidation.TryAccept(cheated, Hero, out _, out string rejected));
                 Assert.Equal("keystone-slots", rejected);
 
-                string twoClaimed = submission.Replace(";S:500;", ";S:399;");
+                string twoClaimed = submission.Replace(";S:" + StarProgressionBalanceTests.MaxPoints + ";", ";S:" + (StarProgressionBalanceTests.Unlocks[1] - 1) + ";");
                 Assert.False(HostBuildValidation.TryAccept(twoClaimed, Hero, out _, out string rejectedTwo));
                 Assert.Equal("keystone-slots", rejectedTwo);
             }

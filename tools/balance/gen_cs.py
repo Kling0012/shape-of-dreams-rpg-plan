@@ -10,6 +10,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import gear_values
 import set_values
 import forge_values
+import star_progression_values
+import star_values
 
 ROOT = Path(__file__).resolve().parents[2]
 FORGE_PATH = ROOT / "tools" / "balance" / "forge.json"
@@ -34,11 +36,13 @@ def generate(check=False):
     forge = render_forge(load_forge())
     gear = gear_values.render_outputs()
     sets = set_values.render_outputs()
+    progression = star_progression_values.render_outputs()
     stars = _star_generator()
     outputs = stars.render_outputs()
     outputs[OUTPUT_PATH] = forge
     outputs.update(gear)
     outputs.update(sets)
+    outputs.update(progression)
     return stars.publish_outputs(outputs, check=check)
 
 

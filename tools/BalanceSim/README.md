@@ -71,6 +71,12 @@ dotnet run --project tools/BalanceSim -c Release -- --mode sets --out tools/Bala
 ```powershell
 dotnet run --project tools/BalanceSim -c Release -- --mode v132stars --runs 10 --players 100 --seed 3 --out tools/BalanceSim/result-v1.32-stars.md
 ```
+`--metrics-json <path>` はこのモードでも利用できます。最終stack/cap・各ゾーンのstack・
+初到達zone・最終stat・感度・遠征星XPを未丸め値で保存し、未到達zoneはnullです。
+鍛錬の原本は `tools/balance/run-growth.json`、星XPの原本は `tools/balance/star-progression.json`。
+`--mode star-progression --metrics-json <path>` で全点の費用・累計XP・基本報酬・刻印解放を別に列挙します。
+生成・検証・前回比較は [tools/balance/run](../balance/README.md) に統合しています。
+
 
 ### 記憶ダメージの軽量比較（Issue #149 段階1）
 
@@ -83,7 +89,7 @@ dotnet run --project tools/BalanceSim -c Release -- --mode v132stars --runs 10 -
 DOTNET_ROLL_FORWARD=LatestMajor dotnet run --project tools/BalanceSim -c Release -- --mode star-efficiency --metrics-json /tmp/star-efficiency.json
 ```
 
-調整の唯一原本は `tools/balance/stars.json`。生成・全検証・鍛冶／記憶効率／種類別星値／遠征の前回成功比較は
+記憶効果の唯一原本は `tools/balance/stars.json`。生成・全検証・鍛冶／記憶効率／種類別星値／星XP／鍛錬／遠征の前回成功比較は
 [tools/balance/run](../balance/README.md) を使う。下の #120 表は当時の変更記録で、現行表ではない。
 
 ### その他の星の軽量比較（Issue #149 段階2）

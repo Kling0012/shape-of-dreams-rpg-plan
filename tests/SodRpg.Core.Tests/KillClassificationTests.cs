@@ -34,7 +34,7 @@ namespace SodRpg.Core.Tests
             Rules.OnKill(expected, MonsterTier.Normal, 4, fact.Nightmare, "hero", variantId: fact.VariantId, roomIndex: 2);
 
             Assert.Equal(1, profile.Run.Kills);
-            Assert.Equal(2, profile.Hero("hero").StarXp);
+            Assert.Equal(StarProgressionBalanceTests.KillXp(MonsterTier.Normal, true), profile.Hero("hero").StarXp);
             Assert.Equal(2, profile.Stash.Single().AwakenPoints);
             Assert.Equal(1, profile.Run.Bounties.Single().Progress);
             Assert.Equal(variant ? 1 : 0, profile.Stats.VariantsSlain);
@@ -52,7 +52,7 @@ namespace SodRpg.Core.Tests
             ledger.ObserveDeath(native, now: 0.0);
             Assert.False(ledger.TryResolve(out _, now: 0.0));
             Assert.Equal(1, profile.Run.Kills);
-            Assert.Equal(2, profile.Hero("hero").StarXp);
+            Assert.Equal(StarProgressionBalanceTests.KillXp(MonsterTier.Normal, true), profile.Hero("hero").StarXp);
             Assert.Equal(2, profile.Stash.Single().AwakenPoints);
         }
 

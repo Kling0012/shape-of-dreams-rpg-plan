@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "maxPoints": 500,
+  "pointCost": {
+    "perPoint": 6,
+    "offset": 50
+  },
+  "rewards": {
+    "secureXp": 20,
+    "victoryXp": 100,
+    "normalKillXp": 1,
+    "miniBossKillXp": 5,
+    "bossKillXp": 20,
+    "nightmareMultiplier": 2
+  },
+  "keystone": {
+    "maxSlots": 3,
+    "unlockLevels": [200, 400]
+  }
+}

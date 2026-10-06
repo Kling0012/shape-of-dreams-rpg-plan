@@ -70,13 +70,14 @@ namespace SodRpg.Core.Tests
         }
 
         [Theory]
-        [InlineData(MonsterTier.Normal, MonsterTier.MiniBoss, 2, 2)]
-        [InlineData(MonsterTier.MiniBoss, MonsterTier.Boss, 10, 10)]
-        [InlineData(MonsterTier.Boss, MonsterTier.Boss, 40, 40)]
+        [InlineData(MonsterTier.Normal, MonsterTier.MiniBoss, 2)]
+        [InlineData(MonsterTier.MiniBoss, MonsterTier.Boss, 10)]
+        [InlineData(MonsterTier.Boss, MonsterTier.Boss, 40)]
         public void Expanded_kills_keep_original_tier_double_rewards_and_persist_accounting(
-            MonsterTier tier, MonsterTier rewardTier, int starXp, int awakenPoints)
+            MonsterTier tier, MonsterTier rewardTier, int awakenPoints)
         {
             Assert.Equal(rewardTier, Nightmares.RewardTier(tier));
+            int starXp = StarProgressionBalanceTests.KillXp(tier, true);
             var variant = Variants.All.First(Variants.IsExpanded);
             var boss = Variants.All.Single(v => v.MonsterType == "Mon_Forest_BossDemon");
             foreach (int mode in new[] { 0, 1, 2 })

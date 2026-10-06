@@ -1,7 +1,8 @@
 # バランス外部定義・比較（Issue #149、#117・#119・#120・#121）
 
-`forge.json` の鍛冶・覚醒・合成・分解・現行工房・イベント保証強化、`stars.json` の7種類の星の基準値・倍率、
-鍛錬の閾値・上限・1スタック量・上限増分、星ダメージの位階係数、
+`forge.json` の鍛冶・覚醒・合成・分解・現行工房・イベント保証強化、`stars.json` の7種類の星の基準値・倍率・星ダメージの位階係数、
+`run-growth.json` の鍛錬の閾値・上限・1スタック量・上限増分・効果増分、
+`star-progression.json` の星XP曲線・費用・報酬・刻印枠の解放、
 `gear.json` の装備レベル成長・固定攻魔上限、`sets.json` の通常セット2/3/6部位効果を
 型付きC#へ生成します。記憶ダメージはmanifestの480親＋258選択肢と旧ルート98成分、
 計836欄を移行済みです。星ID・段数・費用・選択肢・保存形式5・Protocol 23は維持し、
@@ -39,10 +40,11 @@ python tools/balance/gen_cs.py --check
 `run` は実行可能です。任意の作業ディレクトリから絶対パスでも呼び出せます。
 入力検証→生成→生成鮮度確認→BalanceSim Releaseビルド（1回）→
 `python tools/test_changed.py --all`（`--slow` 時は同オプション追加）→
-`python -m unittest discover -s tools/tests -p 'test_*.py'`→鍛冶→記憶効率→種類別星値→遠征→比較の順です。
+`python -m unittest discover -s tools/tests -p 'test_*.py'`→鍛冶→記憶効率→種類別星値→星XP→鍛錬・感度→遠征→比較の順です。
 `--no-tests` は2つのテスト実行を省略し、生成・ビルド・実測は実行します。
-4モードは別プロセスで起動し、Coreの静的状態を共有しません。
-既定の遠征は新規プロフィール3遠征×8人、seed=1、2ゾーン×2部屋、その他は既存の遠征モード既定です。
+6モードは別プロセスで起動し、Coreの静的状態を共有しません。
+既定の遠征は新規プロフィール3遠征×8人、seed=1、2ゾーン×2部屋。鍛錬の `v132stars` は同じ人数・遠征数・seedで4ゾーン×5部屋、
+4旅人×深度0〜5×secure/greedy×6構成と入口のみの3感度条件を測定します。その他は既存モード既定です。
 500pt星図の長時間シミュレーションは実行しません。
 
 ## 鍛冶の調整（Issue #149 段階3）
@@ -91,6 +93,62 @@ WikiGenの鍛冶説明・BalanceSimは同じ生成済み値を使い、実行時
 移行前の値は生成器内の凍結した互換参照との比較にのみ使い、欠落セルの既定値には使いません。
 従来値は追加の鍛冶指紋レコードを生成せず、採用値が変わった欄だけ安定key・型・単位・値を
 既存ContentFingerprint入力へ追加します。保存形式5・Protocol 23は維持します。
+
+## 鍛錬・星XPの調整（Issue #149 段階4）
+
+数値は無調整で移行しました。表の1セルを編集して `tools/balance/run` を実行すると、
+型付き生成・全通常テスト・実測・前回成功との比較をまとめて実行します。
+
+| 原本 | セルと単位 | 生成・実行先 |
+| --- | --- | --- |
+| `run-growth.json` / `effects` | `<星ID>/growth/threshold`、`cap`、`effects/<番号>/amount`、`capBonus`、`effectPct`。Choice子は `options/<番号>/growth/` | 既存の4旅人の `StarClusters/*.Generated.cs`。Compose・説明・ホスト帳簿は同じ定義を使用 |
+| `star-progression.json` / `maxPoints`、`pointCost` | XPによる獲得点上限、`perPoint × k + offset` がk点目の必要XP。累計は同じ曲線の総和 | `Game/Balance/StarProgression.Generated.cs` → `StarProgression` |
+| 同表 / `rewards` | 確保・踏破・通常／中ボス／ボス撃破の基本星XP、悪夢倍率。夢XP・覚醒点とは別原本 | 実際の撃破・確保・踏破経路 |
+| 同表 / `keystone.unlockLevels` | 2・3枠目を解放する獲得星レベル | `KeystoneSlots` と既存表示 |
+
+鍛錬は4入口・8親修飾・8選択肢の46欄を独立原本にしました。manifestはcanonical `valueRef`だけを持ち、
+旧 `stars.json.runGrowth` とeffectPctのliteralは残しません。`amount` は表示単位で0.001刻み、
+生成時に既存AmountMilliへ変換します。閾値はHP系なら最大HPの百分率、他は出来事の回数、
+`cap` / `capBonus` はスタック数、`effectPct` は1スタック効果への上乗せ百分率です。
+同じ数字でも別の星・選択肢のセルは統合せず、旅人／種類倍率を鍛錬へ掛けません。
+
+不正な型・精度・欠落／余分な参照、既存受理範囲外は生成段階で拒否し、全入力のrender成功前には公開しません。
+RunGrowthの通信受理上限・MaxEntries、保存済み履歴は表へ移さず固定です。
+星点上限は既存の500を超えられず、XP総和・撃破XPの積はInt32内を要求します。
+刻印の `maxSlots` は保存／通信の3枠構造なので3に固定、解放レベルは正・昇順・獲得点上限以内です。
+旧保存移行の `LegacyXp`、星ダメージ位階の `stars.json.rankScaling` は別の意味なので変更しません。
+実行時JSON読込・Protocol変更・保存形式変更・起動時の新しい必須検査はありません。
+
+`star-progression` は全点の費用・累計XP・刻印枠と基本撃破／確保／踏破XPをCoreから取得します。
+`v132stars` は既存の実BuildとRunGrowthLedgerから最終stack/cap、各ゾーンのstack、初到達zone、
+最終stat、行動仮定への感度、遠征の星XPを構造化します。被ダメージ・障壁・パリィ・会心どめの頻度は模型の仮定であり、
+実戦の勝率・踏破時間の予測ではありません。比較条件に模型値・感度条件・構成・runtimeを記録します。
+未到達zoneはnull＋`not-reached`で保存し、到達／未到達の遷移は数値0からの差にしません。
+
+```sh
+# 星XPだけを直接出力（先に生成とReleaseビルド）
+DOTNET_ROLL_FORWARD=LatestMajor /usr/bin/dotnet run --project tools/BalanceSim -c Release -- \\
+  --mode star-progression --metrics-json /tmp/star-progression.json
+
+# 到達zone・能力値・感度を含む既存模型
+DOTNET_ROLL_FORWARD=LatestMajor /usr/bin/dotnet run --project tools/BalanceSim -c Release -- \\
+  --mode v132stars --runs 1 --players 1 --seed 149 --metrics-json /tmp/v132stars.json
+```
+
+無調整移行の実測では、変更前後の `v132stars` の136表行の数値と内容指紋
+`10579-ab35d865a569c87b` が一致しました。同条件の無変更比較は差0になります。
+隔離した一時生成物で確認した調整例（リポジトリの表は無変更）：
+
+| セル／指標 | 前 | 後 | 差 |
+| --- | ---: | ---: | --- |
+| `pointCost.perPoint` 6→7：1点目の必要XP | 56 | 57 | +1 xp |
+| 同：500点の累計必要XP | 776500 | 901750 | +125250 xp |
+| Vesper閾値11→12：深度0・secure・入口のみの最終stack | 60 | 58 | −2 stacks |
+| 同：初到達zone | 4 | 未到達 | 4 → 未到達（相対差なし） |
+
+移行回帰はコンパイルされた46欄と原本の一致、旧XP曲線・報酬・解放境界、
+旧鍛錬指紋レコードの完全一致を確認します。有効値の調整は既存FNV内容照合へ流れ、
+空白・キー順・比較条件やファイルのSHA検証は指紋に持ち込みません。
 
 ## 装備・通常セットの調整（#119・#121）
 
@@ -195,10 +253,10 @@ Choice子にも親星の費用を使い、実ツリーが採用した旧ルー�
 
 ### #120 F2 の遠征の鍛錬
 
-manifestの `growth.threshold/cap/effects/*/amount/capBonus` は正準 `valueRef` だけを持ち、
-数値は `stars.json.runGrowth` の `<星ID>/growth/<欄>`（Choice子は `options/<番号>/growth/<欄>`）。
+manifestの `growth.threshold/cap/effects/*/amount/capBonus/effectPct` は正準 `valueRef` だけを持ち、
+数値は `run-growth.json.effects` の `<星ID>/growth/<欄>`（Choice子は `options/<番号>/growth/<欄>`）。
 解決済みの数値を既存schema検証・星生成へ渡すので、日本語／英語の効果説明も生成値を使います。
-RunGrowthのtrigger・stat・target・effectPct・doubleGainはmanifestの既存形式を維持します。
+RunGrowthのtrigger・stat・target・doubleGainはmanifestの既存形式を維持します。
 
 F2はVesper閾値11%HP、Cetus閾値9%HP、Mist入口cap60、
 空殻入口cap45・攻撃力+1.38/stack・上限星各+12。入口gain1と速度Choiceのgain2は据置です。

@@ -35,24 +35,28 @@ namespace SodRpg.Core.Tests
             .OrderBy(t => t.RouteOrder).ToArray();
 
         [Fact]
-        public void Every_curve_boundary_charges_the_next_point_and_caps_at_500()
+        public void Every_curve_boundary_charges_the_next_point_and_caps_at_the_table_maximum()
         {
             int total = 0;
+            var raw = StarProgressionBalanceTests.Raw();
+            int maximum = raw.GetProperty("maxPoints").GetInt32();
+            int slope = raw.GetProperty("pointCost").GetProperty("perPoint").GetInt32();
+            int offset = raw.GetProperty("pointCost").GetProperty("offset").GetInt32();
             Assert.Equal(0, StarProgression.Points(-1));
             Assert.Equal(0, StarProgression.Points(0));
-            for (int k = 1; k <= 500; k++)
+            for (int k = 1; k <= maximum; k++)
             {
-                Assert.Equal(6 * k + 50, StarProgression.CostForPoint(k));
-                total += 6 * k + 50;
+                Assert.Equal(slope * k + offset, StarProgression.CostForPoint(k));
+                total += slope * k + offset;
                 Assert.Equal(total, StarProgression.TotalXpForPoints(k));
                 Assert.Equal(k - 1, StarProgression.Points(total - 1));
                 Assert.Equal(k, StarProgression.Points(total));
             }
-            Assert.Equal(776500, total);
-            Assert.Equal(500, StarProgression.Points(int.MaxValue));
-            Assert.Equal(776500, StarProgression.TotalXpForPoints(int.MaxValue));
+            Assert.Equal(maximum, StarProgression.Points(int.MaxValue));
+            Assert.Equal(total, StarProgression.TotalXpForPoints(int.MaxValue));
+            Assert.Equal(0, StarProgression.TotalXpForPoints(int.MinValue));
             Assert.Throws<ArgumentOutOfRangeException>(() => StarProgression.CostForPoint(0));
-            Assert.Throws<ArgumentOutOfRangeException>(() => StarProgression.CostForPoint(501));
+            Assert.Throws<ArgumentOutOfRangeException>(() => StarProgression.CostForPoint(maximum + 1));
         }
 
         [Fact]
@@ -70,7 +74,7 @@ namespace SodRpg.Core.Tests
                 Profile.TestBonusPoints = 9;
                 Assert.Equal(21, p.TalentPoints(Hero));
                 Assert.Equal(13, p.TalentPoints(Other));
-                StarProgression.AddXp(p.Hero(Other), 56);
+                StarProgression.AddXp(p.Hero(Other), StarProgressionBalanceTests.Number("pointCost", "perPoint") + StarProgressionBalanceTests.Number("pointCost", "offset"));
                 Assert.Equal(14, p.TalentPoints(Other));
                 Assert.Equal(21, p.TalentPoints(Hero));
                 Profile.TestBonusPoints = int.MaxValue;
@@ -82,11 +86,11 @@ namespace SodRpg.Core.Tests
         }
 
         [Theory]
-        [InlineData(MonsterTier.Lesser, 1)]
-        [InlineData(MonsterTier.Normal, 1)]
-        [InlineData(MonsterTier.MiniBoss, 5)]
-        [InlineData(MonsterTier.Boss, 20)]
-        public void Kill_rewards_use_original_tier_and_double_once_for_nightmare_or_variant(MonsterTier tier, int expected)
+        [InlineData(MonsterTier.Lesser)]
+        [InlineData(MonsterTier.Normal)]
+        [InlineData(MonsterTier.MiniBoss)]
+        [InlineData(MonsterTier.Boss)]
+        public void Kill_rewards_use_original_tier_and_multiply_once_for_nightmare_or_variant(MonsterTier tier)
         {
             foreach (var mode in new[] { 0, 1, 2, 3 })
             {
@@ -95,7 +99,7 @@ namespace SodRpg.Core.Tests
                 p.Run.Bounties.Clear();
                 Rules.OnKill(p, tier, 1, (mode & 1) != 0 ? NightmareAffix.Ironclad : NightmareAffix.None,
                     Hero, variantId: (mode & 2) != 0 ? Variants.All[0].Id : null);
-                Assert.Equal(expected * (mode == 0 ? 1 : 2), p.Hero(Hero).StarXp);
+                Assert.Equal(StarProgressionBalanceTests.KillXp(tier, mode != 0), p.Hero(Hero).StarXp);
                 Assert.Equal(1, p.Hero(Hero).Kills);
                 Assert.Equal(0, p.Hero(Other).StarXp);
             }
@@ -109,8 +113,8 @@ namespace SodRpg.Core.Tests
             Rules.OnKill(p, MonsterTier.Boss, 1, heroKey: Other);
             Rules.OnKill(p, MonsterTier.Normal, 1); // falls back to the recorded run Traveler
             Rules.EndRun(p, true);
-            Assert.Equal(101, p.Hero(Hero).StarXp);
-            Assert.Equal(20, p.Hero(Other).StarXp);
+            Assert.Equal(StarProgressionBalanceTests.KillXp(MonsterTier.Normal) + StarProgressionBalanceTests.Number("rewards", "victoryXp"), p.Hero(Hero).StarXp);
+            Assert.Equal(StarProgressionBalanceTests.KillXp(MonsterTier.Boss), p.Hero(Other).StarXp);
         }
 
         [Fact]
@@ -120,33 +124,33 @@ namespace SodRpg.Core.Tests
             Rules.BeginRun(p, "run", heroKey: Hero);
             Rules.ReachSecurePoint(p);
             Rules.Secure(p);
-            Assert.Equal(20, p.Hero(Hero).StarXp);
+            Assert.Equal(StarProgressionBalanceTests.Number("rewards", "secureXp"), p.Hero(Hero).StarXp);
             var q = ProfileCodec.Read(ProfileCodec.Write(p), new List<string>());
             Rules.Secure(q);
-            Assert.Equal(20, q.Hero(Hero).StarXp);
+            Assert.Equal(StarProgressionBalanceTests.Number("rewards", "secureXp"), q.Hero(Hero).StarXp);
             Rules.ReachSecurePoint(q);
             Rules.Secure(q);
-            Assert.Equal(40, q.Hero(Hero).StarXp);
+            Assert.Equal(2 * StarProgressionBalanceTests.Number("rewards", "secureXp"), q.Hero(Hero).StarXp);
             Rules.EndRun(q, true);
             Rules.EndRun(q, true);
             Rules.Secure(q);
-            Assert.Equal(140, q.Hero(Hero).StarXp);
+            Assert.Equal(2 * StarProgressionBalanceTests.Number("rewards", "secureXp") + StarProgressionBalanceTests.Number("rewards", "victoryXp"), q.Hero(Hero).StarXp);
             Assert.Equal(0, q.Hero(Other).StarXp);
         }
 
         [Fact]
-        public void Victory_is_100_not_an_extra_secure_and_defeat_keeps_only_earned_xp()
+        public void Victory_does_not_award_an_extra_secure_and_defeat_keeps_only_earned_xp()
         {
             var p = Profile.CreateNew(17);
             Rules.BeginRun(p, "victory", heroKey: Hero);
             Rules.EndRun(p, true);
-            Assert.Equal(100, p.Hero(Hero).StarXp);
+            Assert.Equal(StarProgressionBalanceTests.Number("rewards", "victoryXp"), p.Hero(Hero).StarXp);
             Rules.BeginRun(p, "defeat", heroKey: Other);
             Rules.OnKill(p, MonsterTier.MiniBoss, 1);
             Rules.EndRun(p, false);
-            Assert.Equal(5, p.Hero(Other).StarXp);
+            Assert.Equal(StarProgressionBalanceTests.KillXp(MonsterTier.MiniBoss), p.Hero(Other).StarXp);
             Rules.OnKill(p, MonsterTier.Boss, 1, heroKey: Other);
-            Assert.Equal(5, p.Hero(Other).StarXp);
+            Assert.Equal(StarProgressionBalanceTests.KillXp(MonsterTier.MiniBoss), p.Hero(Other).StarXp);
         }
 
         [Fact]
@@ -159,7 +163,7 @@ namespace SodRpg.Core.Tests
             Rules.BeginRun(p, "old", heroKey: Other);
             Assert.Equal(Hero, p.Run.HeroKey);
             Rules.EndRun(p, true);
-            Assert.Equal(100, p.Hero(Hero).StarXp);
+            Assert.Equal(StarProgressionBalanceTests.Number("rewards", "victoryXp"), p.Hero(Hero).StarXp);
             Assert.Equal(0, p.Hero(Other).StarXp);
         }
 
@@ -173,9 +177,14 @@ namespace SodRpg.Core.Tests
             Assert.DoesNotContain((int)Hint.TalentPoints, p.SeenHints);
             Assert.Contains(events, e => e.Kind == EventKind.LevelUp);
             Rules.BeginRun(p, "run", heroKey: Hero);
-            for (int i = 0; i < 3; i++) Rules.OnKill(p, MonsterTier.Boss, 1);
-            Assert.Contains((int)Hint.TalentPoints, p.SeenHints);
-            Assert.Equal(1, StarProgression.Points(p.Hero(Hero).StarXp));
+            int firstCost = StarProgressionBalanceTests.Number("pointCost", "perPoint") + StarProgressionBalanceTests.Number("pointCost", "offset");
+            int reward = StarProgressionBalanceTests.KillXp(MonsterTier.Boss);
+            p.Hero(Hero).StarXp = firstCost - 1;
+            Rules.OnKill(p, MonsterTier.Boss, 1);
+            if (reward > 0) Assert.Contains((int)Hint.TalentPoints, p.SeenHints);
+            else Assert.DoesNotContain((int)Hint.TalentPoints, p.SeenHints);
+            int expectedXp = (int)Math.Min(int.MaxValue, (long)firstCost - 1 + reward);
+            Assert.Equal(StarProgressionBalanceTests.ExpectedPoints(expectedXp), StarProgression.Points(p.Hero(Hero).StarXp));
         }
 
         [Fact]

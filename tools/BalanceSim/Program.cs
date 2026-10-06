@@ -62,6 +62,21 @@ internal static class Program
                 Console.Write(valuesReport);
                 return 0;
             }
+            if (options.StarProgressionMode)
+            {
+                var entries = StarProgressionReport.Measure();
+                string progressionReport = StarProgressionReport.Render(entries);
+                if (options.Out != null)
+                {
+                    string path = Path.GetFullPath(options.Out);
+                    string? directory = Path.GetDirectoryName(path);
+                    if (directory != null) Directory.CreateDirectory(directory);
+                    File.WriteAllText(path, progressionReport, new UTF8Encoding(false));
+                }
+                if (options.MetricsJson != null) Metrics.WriteStarProgression(options.MetricsJson, entries);
+                Console.Write(progressionReport);
+                return 0;
+            }
             if (options.Infinity)
             {
                 var infinity = new InfinitySimulation(options);
@@ -100,6 +115,7 @@ internal static class Program
                 economy.AddRange(V132Simulation.RunEconomy(options, "greedy"));
                 var growth = V132Simulation.RunGrowth(options);
                 var sensitivity = V132Simulation.RunGrowthSensitivity(options, V132Report.SensitivityScenarios);
+                if (options.MetricsJson != null) Metrics.WriteV132Stars(options.MetricsJson, options, economy, growth, sensitivity);
                 timer.Stop();
                 string v132Report = V132Report.Render(options, economy, growth, sensitivity, timer.Elapsed);
                 if (options.Out != null)

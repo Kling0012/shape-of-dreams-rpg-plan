@@ -10,6 +10,7 @@ internal sealed record MetricValue(string Id, string Label, double? Value, strin
 internal sealed record StarEfficiencyMetricValue(string Id, string Label, decimal? Value, string Unit,
     string Status = "measured");
 internal sealed record ForgeMetricValue(string Id, string Label, decimal? Value, string Unit, string Status);
+internal sealed record QuantityMetricValue(string Id, string Label, double? Value, string Unit, string Status = "measured");
 
 internal static class Metrics
 {
@@ -121,6 +122,82 @@ internal static class Metrics
         metrics = measurement.Entries.Select(e => new StarEfficiencyMetricValue(e.Id, e.Label, e.Value, e.Unit, e.Status)).ToArray(),
         entries = measurement.Entries, configurations = measurement.Configurations,
     });
+
+    public static void WriteStarProgression(string path, IReadOnlyList<ProgressionEntry> entries) => Write(path, new
+    {
+        modelVersion = 1, mode = "star-progression", contentFingerprint = ContentFingerprint.Value,
+        conditions = new
+        {
+            runtime = RuntimeIdentity(), registeredHeroes = RegisteredHeroes(),
+            valuePolicy = "Core point curve and base XP rewards before depth modifiers; historical migration excluded",
+        },
+        metrics = entries.Select(e => new StarEfficiencyMetricValue(e.Id, e.Label, e.Value, e.Unit)).ToArray(),
+    });
+
+    public static void WriteV132Stars(string path, Options options, IReadOnlyList<EconomyResult> economy,
+        IReadOnlyList<GrowthResult> growth, IReadOnlyList<GrowthResult> sensitivity)
+    {
+        var metrics = new List<QuantityMetricValue>();
+        string StatUnit(Stat stat) => stat switch
+        {
+            Stat.AttackFlat => "attack", Stat.MaxHealthFlat => "health", Stat.Armor => "armor",
+            _ => "percent",
+        };
+        void AddGrowth(GrowthResult entry, string scenario)
+        {
+            string id = $"v132stars/growth/{scenario}/{entry.HeroKey}/{entry.Depth}/{entry.Policy}";
+            string label = $"{entry.HeroKey} 深度{entry.Depth} {entry.Policy} {scenario}";
+            metrics.Add(new(id + "/cap", label + " 上限", entry.Cap, "stacks"));
+            metrics.Add(new(id + "/threshold", label + " 閾値", entry.Threshold,
+                RunGrowthDef.IsHealthTrigger(entry.Trigger) ? "percent-max-hp" : "events"));
+            metrics.Add(new(id + "/finalStacks", label + " 最終スタック", entry.FinalStacks, "stacks"));
+            metrics.Add(new(id + "/capZone", label + " 上限到達zone", entry.CapZone == 0 ? null : entry.CapZone,
+                "zones", entry.CapZone == 0 ? "not-reached" : "measured"));
+            for (int zone = 0; zone < entry.StacksAfterZone.Length; zone++)
+                metrics.Add(new(id + $"/zone/{zone + 1}/stacks", label + $" Z{zone + 1} スタック", entry.StacksAfterZone[zone], "stacks"));
+            metrics.Add(new(id + "/stat/" + entry.EffectStat, label + " 最終" + entry.EffectName,
+                entry.EffectText, StatUnit(entry.EffectStat)));
+            if (entry.EffectStat2 is { } second)
+                metrics.Add(new(id + "/stat/" + second, label + " 最終" + entry.EffectName2,
+                    entry.EffectText2, StatUnit(second)));
+        }
+        foreach (var entry in growth) AddGrowth(entry, "build/" + entry.Variant);
+        foreach (var entry in sensitivity)
+            AddGrowth(entry, "sensitivity/" + entry.SensitivityScenario);
+        foreach (var entry in economy)
+        {
+            string id = $"v132stars/economy/{entry.Depth}/{entry.Policy}/{(entry.WithStars ? "stars" : "none")}";
+            string label = $"深度{entry.Depth} {entry.Policy} 星={entry.WithStars}";
+            metrics.Add(new(id + "/starXp", label + " 星XP/遠征", entry.StarXp, "xp"));
+            metrics.Add(new(id + "/gold", label + " gold/遠征", entry.Gold, "gold"));
+            metrics.Add(new(id + "/shardsNet", label + " 欠片純増/遠征", entry.ShardsNet, "shards"));
+            metrics.Add(new(id + "/tuningNet", label + " 調律石純増/遠征", entry.TuningNet, "tuning"));
+        }
+        Write(path, new
+        {
+            modelVersion = 1, mode = "v132stars", contentFingerprint = ContentFingerprint.Value,
+            conditions = new
+            {
+                runtime = RuntimeIdentity(), registeredHeroes = RegisteredHeroes(),
+                options.Runs, options.Players, seed = options.Seed.ToString(CultureInfo.InvariantCulture),
+                options.Zones, options.Rooms, options.Lesser, options.Normal, options.MiniBoss, options.Bosses,
+                options.Wipe, options.Bounty, options.ItemLevel, options.ItemLevelPerZone,
+                policies = new[] { "secure", "greedy" }, heroes = V132Simulation.GrowthHeroes,
+                variants = V132Simulation.GrowthVariants.Select(v => new { v.Key, v.PurchasesKind }).ToArray(),
+                growthModel = new
+                {
+                    V132Model.DamageTakenPerRoomPct, V132Model.ShieldAbsorbedPerRoomPct,
+                    V132Model.BossRoomFactor, V132Model.ParriesPerRoom, V132Model.ParriesPerBoss,
+                    V132Model.BasicAttackKillShare, V132Model.CritChance,
+                    policy = "deterministic mean events through Core Build and RunGrowthLedger; not combat outcomes",
+                },
+                sensitivityScenarios = V132Report.SensitivityScenarios.Select((s, i) => new
+                    { id = i, s.Damage, s.Shield, s.Parries, s.CritShare }).ToArray(),
+                allocationPolicy = "same existing V132Builds path; rejected effective allocations written directly",
+            },
+            metrics,
+        });
+    }
 
     public static void WriteExpeditions(string path, Options options, Simulation simulation)
     {

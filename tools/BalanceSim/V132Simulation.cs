@@ -170,6 +170,7 @@ internal sealed class GrowthResult
     public string Policy = "";
     public int Cap;
     public int Threshold;
+    public RunGrowthTrigger Trigger;
     public int[] StacksAfterZone = Array.Empty<int>();
     public int FinalStacks;
     public int CapZone;
@@ -177,6 +178,9 @@ internal sealed class GrowthResult
     public double EffectText2; // 2つ目の能力値の合計（あれば）。
     public string EffectName = "";
     public string EffectName2 = "";
+    public Stat EffectStat;
+    public Stat? EffectStat2;
+    public int SensitivityScenario = -1;
 }
 
 /// <summary>v1.32 の計測（--mode v132stars）。経済は実際の遠征ループ（Simulation）に通貨を重ね、
@@ -193,7 +197,7 @@ internal static class V132Simulation
         ("entry-double", "入口のみ＋速さ2倍", "g1+double"),
         ("cap1", "上限星1つ", "g1+m1"),
         ("cap2", "上限星2つ", "g1+m1+m2"),
-        ("cap2-effect", "上限2＋効果+50%", "g1+m1+m2+effect"),
+        ("cap2-effect", "上限2＋効果増加", "g1+m1+m2+effect"),
         ("cap2-double", "上限2＋速さ2倍", "g1+m1+m2+double"),
     };
 
@@ -290,14 +294,16 @@ internal static class V132Simulation
     {
         StarClusters.RegisterAllGenerated();
         var results = new List<GrowthResult>();
-        foreach (var s in scenarios)
+        for (int scenario = 0; scenario < scenarios.Length; scenario++)
             foreach (string policy in new[] { "secure", "greedy" })
                 for (int depth = 0; depth <= DreamDepth.Maximum; depth++)
                     foreach (string heroKey in GrowthHeroes)
                     {
                         var r = SimulateGrowth(options, heroKey, GrowthVariants[0], depth, policy,
-                            s.Damage, s.Shield, s.Parries, s.CritShare);
-                        r.Variant = s.Label;
+                            scenarios[scenario].Damage, scenarios[scenario].Shield,
+                            scenarios[scenario].Parries, scenarios[scenario].CritShare);
+                        r.Variant = scenarios[scenario].Label;
+                        r.SensitivityScenario = scenario;
                         results.Add(r);
                     }
         return results;
@@ -364,6 +370,7 @@ internal static class V132Simulation
             Depth = depth,
             Policy = policy,
             Cap = entry.Cap,
+            Trigger = entry.Trigger,
             Threshold = entry.Threshold,
             StacksAfterZone = stacks,
             FinalStacks = final,
@@ -372,6 +379,8 @@ internal static class V132Simulation
             EffectText2 = entry.Effects.Count > 1 ? global::SodRpg.Core.Game.RunGrowth.StatTotal(entry, entry.Effects[1], final) : 0,
             EffectName = StatShort(entry.Effects[0].Stat),
             EffectName2 = entry.Effects.Count > 1 ? StatShort(entry.Effects[1].Stat) : "",
+            EffectStat = entry.Effects[0].Stat,
+            EffectStat2 = entry.Effects.Count > 1 ? entry.Effects[1].Stat : null,
         };
     }
 
