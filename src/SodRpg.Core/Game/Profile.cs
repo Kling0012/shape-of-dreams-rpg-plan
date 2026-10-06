@@ -303,11 +303,11 @@ namespace SodRpg.Core.Game
         public RetuneOffer RetuneOffer { get; set; }
 
         /// <summary>
-        /// 保存の版。v1.27 で 2、v1.28 で 3、v1.31 で 4、撃破受領フロンティアの保存で 5 に上げた。
+        /// 保存の版。v1.27 で 2、v1.28 で 3、v1.31 で 4、撃破受領フロンティアで 5、協力取引の預かり品で 6。
         /// 古いMODは新しい版を読み取り専用で開き（LedgerVersionException）、知らない星や遺物を捨てて上書きしない。
-        /// 3→4→5 はリセットしない（ResetBeforeVersion は 3 のまま）。
+        /// 3→4→5→6 はリセットしない（ResetBeforeVersion は 3 のまま）。
         /// </summary>
-        public const int CurrentVersion = 5;
+        public const int CurrentVersion = 6;
 
         /// <summary>この版より古い保存は読み込まず、写しを残して新しいプロフィールで始める。</summary>
         public const int ResetBeforeVersion = 3;
@@ -346,6 +346,12 @@ namespace SodRpg.Core.Game
         /// 支払い済みの対価・返却を取りこぼさないために保存する。起動後にホストへ照会して解決する。
         /// </summary>
         public List<PendingTrade> PendingTrades { get; } = new List<PendingTrade>();
+        /// <summary>Durable outgoing assets, removed before acknowledging a cooperative trade prepare.</summary>
+        public CoopTradeReservation CoopTradePending { get; set; }
+        /// <summary>Never evicted: replaying a host receipt cannot grant the incoming assets twice.</summary>
+        public SortedSet<string> CoopTradeExecuted { get; } = new SortedSet<string>(StringComparer.Ordinal);
+        /// <summary>Last irreversible trade economy, without nested Continue or trade economy snapshots.</summary>
+        public string CoopTradeEconomy { get; set; }
         /// <summary>Transient per-user configuration; never serialized or rolled back by a checkpoint.</summary>
         public bool ReceiveOverflowDreamDust { get; set; }
         /// <summary>One outstanding cumulative overflow bonus, retained when its expedition ends.</summary>
@@ -538,6 +544,10 @@ namespace SodRpg.Core.Game
             PendingSalvage.AddRange(source.PendingSalvage);
             PendingTrades.Clear();
             PendingTrades.AddRange(source.PendingTrades);
+            CoopTradePending = source.CoopTradePending;
+            CoopTradeExecuted.Clear();
+            CoopTradeExecuted.UnionWith(source.CoopTradeExecuted);
+            CoopTradeEconomy = source.CoopTradeEconomy;
             UncreditedSatchelOverflowShards = source.UncreditedSatchelOverflowShards;
             SatchelOverflowShards = source.SatchelOverflowShards;
             SatchelOverflowCount = source.SatchelOverflowCount;
@@ -595,6 +605,8 @@ namespace SodRpg.Core.Game
                 Focus = Focus,
                 LastReport = LastReport,
                 RetuneOffer = RetuneOffer?.Clone(),
+                CoopTradePending = CoopTradePending?.Clone(),
+                CoopTradeEconomy = CoopTradeEconomy,
                 UncreditedSatchelOverflowShards = UncreditedSatchelOverflowShards,
                 SatchelOverflowShards = SatchelOverflowShards,
                 SatchelOverflowCount = SatchelOverflowCount,
@@ -607,6 +619,7 @@ namespace SodRpg.Core.Game
             foreach (var r in LostAndFound) c.LostAndFound.Add(r.Clone());
             foreach (var pending in PendingSalvage) c.PendingSalvage.Add(pending.Clone());
             foreach (var trade in PendingTrades) c.PendingTrades.Add(trade.Clone());
+            c.CoopTradeExecuted.UnionWith(CoopTradeExecuted);
             foreach (var kv in Heroes) c.Heroes[kv.Key] = kv.Value.Clone();
             foreach (var s in Codex) c.Codex.Add(s);
             foreach (var f in Feats) c.Feats.Add(f);

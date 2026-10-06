@@ -146,6 +146,9 @@ namespace SodRpg.Core.Game
                 .Add("lostAndFound", WriteRelics(p.LostAndFound))
                 .Add("pendingSalvage", pendingSalvage)
                 .Add("pendingTrades", p.PendingTrades.Select(WriteTrade).ToList())
+                .Add("coopTradePending", WriteCoopTradeReservation(p.CoopTradePending))
+                .Add("coopTradeExecuted", p.CoopTradeExecuted.Select(id => (object)id).ToList())
+                .Add("coopTradeEconomy", p.CoopTradeEconomy)
                 .Add("retuneOffer", WriteRetuneOffer(p.RetuneOffer))
                 .Add("heroes", heroes)
                 .Add("codex", codex)
@@ -318,6 +321,7 @@ namespace SodRpg.Core.Game
             ReadRelics(b, "lostAndFound", p.LostAndFound, notes);
             ReadPendingSalvage(b, p.PendingSalvage, notes);
             ReadPendingTrades(b, p.PendingTrades, notes);
+            ReadCoopTradeState(b, p);
             p.RetuneOffer = ReadRetuneOffer(b, notes);
             if (b.TryGet("heroes", out object ho) && ho is JsonObject heroes)
             {

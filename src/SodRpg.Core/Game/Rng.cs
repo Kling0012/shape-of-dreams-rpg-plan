@@ -50,8 +50,16 @@ namespace SodRpg.Core.Game
             // A restored cursor must never recreate an ID still owned by this profile.
             // Check only when generating an ID; no per-frame index or extra collection is needed.
             do { uid = "r" + NextULong().ToString("x16"); }
-            while (_profile != null && _profile.ContainsRelicUid(uid));
+            while (_profile != null && (_profile.ContainsRelicUid(uid) || HasEscrowUid(uid)));
             return uid;
+        }
+
+        private bool HasEscrowUid(string uid)
+        {
+            if (_profile.CoopTradePending == null) return false;
+            foreach (var reserved in _profile.CoopTradePending.Relics)
+                if (reserved.Relic.Uid == uid) return true;
+            return false;
         }
 
         public static ulong SeedFrom(string text)

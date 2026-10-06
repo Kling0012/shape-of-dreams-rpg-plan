@@ -36,6 +36,7 @@ namespace UnityEngine
         internal static GUILayoutOption Height(float height) => new GUILayoutOption { Height = height };
         internal static GUILayoutOption Width(float width) => new GUILayoutOption { Width = width };
         internal static GUILayoutOption ExpandHeight(bool expand) => new GUILayoutOption();
+        internal static GUILayoutOption ExpandWidth(bool expand) => new GUILayoutOption();
         internal static bool Button(string text, object style) => Button(text, style, null);
         internal static bool Button(string text, object style, params GUILayoutOption[] options)
         { Ops.Add("button:" + text); int index = ButtonIndex++; return GUI.enabled && index == PressButton; }
@@ -53,6 +54,7 @@ namespace SodRpg.Mod
         internal readonly TradeLedger Trades = new TradeLedger();
         internal bool CanEditTalents = true, CanEditLoadout = true, Dirty, InGame;
         internal object LocalHero;
+        internal bool CoopTradeLocked => Profile.CoopTradePending != null;
         internal readonly List<GameEvent> Notices = new List<GameEvent>();
         internal void MarkDirty(bool build) => Dirty |= build;
         internal void Emit(GameEvent notice) => Notices.Add(notice);
@@ -123,5 +125,7 @@ namespace SodRpg.Mod
         private void DrawForgeTab() { UnityEngine.GUILayout.Ops.Add("tab-content:1"); }
         private void DrawTalentTab() { UnityEngine.GUILayout.Ops.Add("tab-content:2"); }
         private void DrawRecordsTab(DreamforgeConfig cfg) { UnityEngine.GUILayout.Ops.Add("tab-content:4"); }
+        private static string CoopTradeTabLabel() => Loc.T("交換", "Trade");
+        private void DrawCoopTradeTab() => throw new NotSupportedException("Cooperative trade rendering is outside the refund fixture.");
     }
 }

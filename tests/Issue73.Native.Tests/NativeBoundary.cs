@@ -396,7 +396,9 @@ namespace SodRpg.Mod
             && Profile.Run != null && ActiveRunId != null && Profile.Run.RunId == ActiveRunId
             && (!Profile.LobbyReturnedRunIds.Contains(ActiveRunId) || LobbyReturnPending);
         public string ActiveRunId { get; internal set; }
-        public bool HasPendingTrades => _trades.PendingCount > 0;
+        public bool HasPendingTrades => _trades.PendingCount > 0 || CoopTradeLocked;
+        private bool CoopTradeLocked => Profile.CoopTradePending != null;
+        private string CoopUnavailable() => Loc.T("トレードは安全な時・保存完了後のみ利用できます。", "Trade is available only at a safe moment, after saving completes.");
         public bool InGame => NetworkedManagerBase<GameManager>.softInstance != null;
         private float _nextSave = float.MaxValue;
         private bool _buildDirty;

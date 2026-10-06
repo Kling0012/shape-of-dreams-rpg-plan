@@ -42,7 +42,7 @@ namespace SodRpg.Mod
         private readonly List<PendingTrade> _dueTradeQueries = new List<PendingTrade>();
         private readonly TradeLedger _trades = new TradeLedger();
         public TradeLedger Trades => _trades;
-        public bool HasPendingTrades => _trades.PendingCount > 0;
+        public bool HasPendingTrades => _trades.PendingCount > 0 || CoopTradeLocked;
         /// <summary>応答待ちに加えて、期限切れで結果不明のまま残っている取引もあるか。プロフィールの切り替えなど、対価の行き先が変わる操作を止めるのに使う。</summary>
         public bool HasHeldTrades => _trades.HeldCount > 0;
         /// <summary>ホストが記録の有無を確かめられないと答えた取引の数（遅れて届く応答か、利用者の明示的な放棄でしか片付かない）。</summary>
@@ -98,6 +98,9 @@ namespace SodRpg.Mod
         public ClientSession(string saveDir, Action<GameEvent> notify)
         {
             _notify = notify;
+            CoopTradeJournalPath = Path.Combine(saveDir, "coop-trades.json");
+            DewSave.onSaveStarted += CoopSaveStarted;
+            DewSave.onSaveEnded += CoopSaveEnded;
             _lobbyReturnWarning = Log.Warn;
             InitializeProfiles(saveDir);
             RestoreRunDurability();
@@ -201,8 +204,8 @@ namespace SodRpg.Mod
         {
             if (_tickSteps == null)
             {
-                _tickSteps = new Action[] { TickProfileSlots, Wire, TickInfinitySettings, UpdateVariantVisuals, UpdateMonsterCues, TickBossDisplay, TrackRun, TickKillClassification, TickRunChoices, TickInfinityRewards, TickCurseResync, TickSalvageExpiry, TickSatchelOverflow, SendBuildIfNeeded, TickHello, TickPeriodicSave, TickKillSync };
-                _tickStepNames = new[] { "profile slots", "wire", "infinity settings", "variant visuals", "monster cues", "boss effects", "track run", "kill classification", "run choices", "infinity rewards", "curse resync", "salvage expiry", "satchel overflow", "send build", "hello", "periodic save", "kill sync" };
+                _tickSteps = new Action[] { TickProfileSlots, Wire, TickInfinitySettings, UpdateVariantVisuals, UpdateMonsterCues, TickBossDisplay, TrackRun, TickKillClassification, TickRunChoices, TickInfinityRewards, TickCurseResync, TickSalvageExpiry, TickSatchelOverflow, SendBuildIfNeeded, TickHello, TickPeriodicSave, TickKillSync, TickCoopTrade };
+                _tickStepNames = new[] { "profile slots", "wire", "infinity settings", "variant visuals", "monster cues", "boss effects", "track run", "kill classification", "run choices", "infinity rewards", "curse resync", "salvage expiry", "satchel overflow", "send build", "hello", "periodic save", "kill sync", "coop trade" };
                 _tickStepNextLog = new float[_tickSteps.Length];
             }
             for (int i = 0; i < _tickSteps.Length; i++)
@@ -446,6 +449,9 @@ namespace SodRpg.Mod
 
         public void Unwire()
         {
+            DewSave.onSaveStarted -= CoopSaveStarted;
+            DewSave.onSaveEnded -= CoopSaveEnded;
+            if (NetworkClient.active) NetworkClient.ReplaceHandler<DreamforgeCoopTradeDown>(packet => { });
             if (ReferenceEquals(_hostSession, this)) _hostSession = null;
             _runDurabilityDetached = true;
             try { SaveNow(); } catch (Exception ex) { Log.Error("Session save during shutdown: " + ex); }
@@ -766,6 +772,7 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
         /// </summary>
         private string TradeUnavailable()
         {
+            if (CoopTradeLocked) return CoopUnavailable();
             if (!_trades.CanBegin)
                 return Loc.T($"未確定の取引が{TradeLedger.MaxHeld}件に達しています。結果が確認できるまで、新しい取引はできません。",
                     $"There are already {TradeLedger.MaxHeld} unresolved trades. New trades are paused until their results are confirmed.");
