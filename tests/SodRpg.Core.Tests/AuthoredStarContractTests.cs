@@ -35,12 +35,14 @@ namespace SodRpg.Core.Tests
             var profile = new Profile();
             AllocatePath(profile.Hero(Hero), tree, anchor.LocalStarId, node.LocalStarId);
             profile.Hero(Hero).Talents[anchor.LocalStarId] = 1;
-            decimal before = Build.ComputeForTree(profile, Hero, 0, tree).Links
-                .Where(x => x.Kind == LinkKind.MemoryDamage && x.Requires.Contains(Memory)).Sum(x => x.Value);
             profile.Hero(Hero).Talents[node.LocalStarId] = 1;
-            decimal after = Build.ComputeForTree(profile, Hero, 0, tree).Links
+            var purchased = Build.ComputeForTree(profile, Hero, 0, tree);
+            decimal after = purchased.Links
                 .Where(x => x.Kind == LinkKind.MemoryDamage && x.Requires.Contains(Memory)).Sum(x => x.Value);
-            Assert.Equal(4.4m, after - before);
+            decimal expected = tree.Where(t => t.LinkPerRank?.Kind == LinkKind.MemoryDamage && t.LinkPerRank.Requires.Contains(Memory))
+                .Sum(t => decimal.Round(t.LinkPerRank.Value * (profile.Hero(Hero).Talents.TryGetValue(t.Id, out int ranks) ? ranks : 0)
+                    * (1m + 1.5m * purchased.SpentStarPoints / 500), 3, MidpointRounding.AwayFromZero));
+            Assert.Equal(expected, after);
             Assert.Equal(4400, tree.Single(t => t.Id == node.LocalStarId).LinkPerRank.ValueMilli);
             Assert.Null(tree.Single(t => t.Id == node.LocalStarId).NativeModifier);
 

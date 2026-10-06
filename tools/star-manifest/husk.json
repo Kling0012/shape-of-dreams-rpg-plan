@@ -27110,12 +27110,18 @@
       "power": null,
       "growth": {
         "trigger": "CritBasicAttackKill",
-        "threshold": 1,
-        "cap": 92,
+        "threshold": {
+          "valueRef": "husk.run.g1/growth/threshold"
+        },
+        "cap": {
+          "valueRef": "husk.run.g1/growth/cap"
+        },
         "effects": [
           {
             "stat": "AttackFlat",
-            "amount": 0.69
+            "amount": {
+              "valueRef": "husk.run.g1/growth/effects/0/amount"
+            }
           }
         ]
       },
@@ -27155,7 +27161,9 @@
       "power": null,
       "growth": {
         "target": "husk.run.g1",
-        "capBonus": 23,
+        "capBonus": {
+          "valueRef": "husk.run.m1/growth/capBonus"
+        },
         "effectPct": 0,
         "doubleGain": false
       },
@@ -27169,7 +27177,7 @@
       "rankCost": 1,
       "nameJa": "研がれ続ける殺意",
       "nameEn": "Ever-Honed Intent",
-      "notes": "上限 +20"
+      "notes": "上限増分はバランス表から生成。 / Cap increase is generated from the balance table."
     },
     {
       "id": "husk.run.m2",
@@ -27195,7 +27203,9 @@
       "power": null,
       "growth": {
         "target": "husk.run.g1",
-        "capBonus": 23,
+        "capBonus": {
+          "valueRef": "husk.run.m2/growth/capBonus"
+        },
         "effectPct": 0,
         "doubleGain": false
       },
@@ -27209,7 +27219,7 @@
       "rankCost": 1,
       "nameJa": "尽きぬ殺意",
       "nameEn": "Inexhaustible Intent",
-      "notes": "上限 +20"
+      "notes": "上限増分はバランス表から生成。 / Cap increase is generated from the balance table."
     },
     {
       "id": "husk.run.choice",
@@ -27245,7 +27255,9 @@
           "power": null,
           "growth": {
             "target": "husk.run.g1",
-            "capBonus": 0,
+            "capBonus": {
+              "valueRef": "husk.run.choice/options/0/growth/capBonus"
+            },
             "effectPct": 58,
             "doubleGain": false
           },
@@ -27264,7 +27276,9 @@
           "power": null,
           "growth": {
             "target": "husk.run.g1",
-            "capBonus": 0,
+            "capBonus": {
+              "valueRef": "husk.run.choice/options/1/growth/capBonus"
+            },
             "effectPct": 0,
             "doubleGain": true
           },

@@ -56,6 +56,15 @@ internal static class Metrics
             metrics.Add(new(id + "/pointCost", label + " 費用 (点)", entry.PointCost, "points"));
             metrics.Add(new(id + "/percentPerPoint", label + " 効率 (%/点)", entry.PercentPerPoint,
                 "percent/point", entry.PercentPerPoint.HasValue ? "measured" : "no-damage-nodes"));
+            string status = entry.PercentPerPoint.HasValue ? "measured" : "no-damage-nodes";
+            metrics.Add(new(id + "/minimumRankDamagePercent", label + " 最小購入点ダメージ (%)",
+                entry.MinimumRankDamagePercent, "percent"));
+            metrics.Add(new(id + "/minimumRankPercentPerPoint", label + " 最小購入点効率 (%/点)",
+                entry.MinimumRankPercentPerPoint, "percent/point", status));
+            metrics.Add(new(id + "/at500PointsDamagePercent", label + " 500点ダメージ (%)",
+                entry.At500PointsDamagePercent, "percent"));
+            metrics.Add(new(id + "/at500PointsPercentPerPoint", label + " 500点効率 (%/点)",
+                entry.At500PointsPercentPerPoint, "percent/point", status));
         }
         foreach (var range in measurement.Ranges)
         {
@@ -65,6 +74,12 @@ internal static class Metrics
                 "percent/point", range.MinPercentPerPoint.HasValue ? "measured" : "no-damage-nodes"));
             metrics.Add(new(id + "/maxPercentPerPoint", label + " max (%/点)", range.MaxPercentPerPoint,
                 "percent/point", range.MaxPercentPerPoint.HasValue ? "measured" : "no-damage-nodes"));
+            metrics.Add(new(id + "/at500PointsMinPercentPerPoint", label + " 500点min (%/点)",
+                range.At500PointsMinPercentPerPoint, "percent/point",
+                range.MinPercentPerPoint.HasValue ? "measured" : "no-damage-nodes"));
+            metrics.Add(new(id + "/at500PointsMaxPercentPerPoint", label + " 500点max (%/点)",
+                range.At500PointsMaxPercentPerPoint, "percent/point",
+                range.MaxPercentPerPoint.HasValue ? "measured" : "no-damage-nodes"));
         }
         Write(path, new
         {
@@ -79,6 +94,13 @@ internal static class Metrics
             },
             metrics, heroes = measurement.Heroes, configurations = measurement.Configurations,
             entries = measurement.Entries, ranges = measurement.Ranges, choiceOptions = measurement.ChoiceOptions,
+            rankProjections = new
+            {
+                minimumRank = "each effect independently at its parent RankCost; excludes connection costs",
+                fixedSpentPoints = 500, fixedMultiplier = StarDamageScaling.Multiplier(500),
+                baseMetrics = "existing damagePercent/percentPerPoint/min/max remain unscaled",
+                quantization = "Core ScaleMilli per effect per rank before summing; independent projection, not aggregate Build rounding",
+            },
         });
     }
 

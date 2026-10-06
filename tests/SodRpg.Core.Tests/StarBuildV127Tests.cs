@@ -48,10 +48,14 @@ namespace SodRpg.Core.Tests
             for (int i = 0; i < ranks; i++) Rules.AddTalentRank(p, Hero, star.Id);
             var build = Build.Compute(p, Hero, 0);
             Assert.Equal(before.Stats.ToArray(), build.Stats.ToArray());
-            Assert.Equal(before.Powers.ToArray(), build.Powers.ToArray());
+            Assert.Equal(before.Powers.Keys, build.Powers.Keys);
+            foreach (var power in before.Powers.Keys.Where(power => !StarDamageScaling.IsDamage(power)))
+                Assert.Equal(before.Get(power), build.Get(power));
             var link = Assert.Single(build.Links, l => l.Kind == star.LinkPerRank.Kind
                 && l.Requires.SequenceEqual(star.LinkPerRank.Requires));
-            Assert.Equal(star.LinkPerRank.Value * ranks, link.Value);
+            Assert.Equal(StarDamageScaling.IsDamage(link.Kind)
+                ? StarDamageScaling.ScaleMilli(star.LinkPerRank.ValueMilli * ranks, build.SpentStarPoints)
+                : star.LinkPerRank.ValueMilli * ranks, link.ValueMilli);
             Assert.True(Links.Satisfied(link, Hero, new[] { Memory }, null));
             Assert.False(Links.Satisfied(link, Hero, new[] { "St_Q_Lunge" }, null));
             Assert.False(Links.Satisfied(link, Hero, Array.Empty<string>(), null));
@@ -69,7 +73,10 @@ namespace SodRpg.Core.Tests
             Assert.Equal(star.MaxRank, h.Talents[star.Id]);
             TreeTestPaths.Connect(p, Hero, route[0].Id);
             foreach (var previous in route.Where(t => t.RouteOrder < star.RouteOrder)) h.Talents[previous.Id] = 1;
-            Assert.Contains(Build.Compute(p, Hero, 0).Links, l => l.Kind == star.LinkPerRank.Kind && l.Value == star.LinkPerRank.Value * star.MaxRank);
+            var reached = Build.Compute(p, Hero, 0);
+            Assert.Contains(reached.Links, l => l.Kind == star.LinkPerRank.Kind && l.ValueMilli ==
+                (StarDamageScaling.IsDamage(l.Kind) ? StarDamageScaling.ScaleMilli(star.LinkPerRank.ValueMilli * star.MaxRank, reached.SpentStarPoints)
+                    : star.LinkPerRank.ValueMilli * star.MaxRank));
             p.Hero("Hero_Cetus").Talents[star.Id] = star.MaxRank;
             Assert.Empty(Build.Compute(p, "Hero_Cetus", 0).Links);
         }

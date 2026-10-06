@@ -10,7 +10,7 @@ namespace SodRpg.Core.Tests.Testing
     /// Only used by the equivalence tests as the oracle: the production class must make the same decisions.
     /// Deliberately unoptimized (every RankEffective runs two full Build computations). Its algorithm stays frozen,
     /// except for deliberate rule changes: keystone slots (v2.0.2), pending movement receivers (#174/#199),
-    /// owned replacement retention (#199), and native-damage keystone eligibility (#187).
+    /// owned replacement retention (#199), native-damage keystone eligibility (#187), and paid damage rank (#117/#120).
     /// These eligibility rules are evaluated here independently; no production validation/optimization helpers are called.
     /// C15 production build evaluation, reusable with generated or synthetic trees and explicit disable policies.
     /// </summary>
@@ -344,8 +344,8 @@ namespace SodRpg.Core.Tests.Testing
             return false;
         }
 
-        // Native-memory damage is transformed by the host rather than represented in allocation channels.
-        // Keep this semantic exception independent of the production validator and its optimization helpers.
+        // Preserve attainable native-source eligibility independently of the production validator;
+        // ordinary baseline uplifts are projected below for actual paid-rank marginal checks.
         private static bool HasNativeDamageUpside(TalentDef talent)
         {
             var definition = talent?.KeystoneDefinition;
@@ -358,6 +358,12 @@ namespace SodRpg.Core.Tests.Testing
         private bool RankEffective(Profile profile, string heroKey, HeroState hero, TalentDef talent, int rank,
             List<AllocationSaturation> details = null, IReadOnlyList<EffectiveAllocationChannel> fullSnapshot = null)
         {
+            if (DisabledIds(hero).Contains(talent.Id))
+            {
+                if (details != null)
+                    DescribeInert(hero, talent, rank, Array.Empty<EffectiveAllocationChannel>(), Array.Empty<EffectiveAllocationChannel>(), details);
+                return false;
+            }
             var marginal = hero.Clone();
             marginal.Talents[talent.Id] = rank;
             var with = fullSnapshot != null && hero.Talents.TryGetValue(talent.Id, out int allocatedRank) && allocatedRank == rank
@@ -444,10 +450,13 @@ namespace SodRpg.Core.Tests.Testing
                     effective.RemoveKeystone(id);
                 }
             }
-            var build = Build.ComputeForTree(profile, heroKey, 0, tree, effective, reachability, layout);
+            FractionalScopedModifiers.ValidateTree(tree);
+            var build = Build.ComputeForValidatedTree(profile, heroKey, tree, effective, reachability, layout,
+                definitions, layout.ReachabilitySnapshot(reachability), paidPoints: SpentPoints(allocation));
             var result = new List<EffectiveAllocationChannel>();
             foreach (var stat in build.Stats) result.Add(Scalar("stat:" + (int)stat.Key, stat.Value, Content.StatCap(stat.Key)));
-            foreach (var power in build.Powers) result.Add(Scalar("power:" + (int)power.Key, power.Value, Content.PowerCap(power.Key)));
+            foreach (var power in build.Powers) result.Add(Scalar("power:" + (int)power.Key, power.Value,
+                StarDamageScaling.PowerCeiling(build, power.Key)));
             foreach (var link in build.Links)
             {
                 if (link.Kind != LinkKind.MemoryHaste)
@@ -460,11 +469,33 @@ namespace SodRpg.Core.Tests.Testing
                     {
                         Key = "native:" + native.Memory + "@" + sourceSlot + ":" + (int)native.Kind + ":" + native.CapProfileId,
                         Memory = native.Memory, ValueMilli = AuthoredKeystoneComposer.TransformAllocationPayload(build,
-                            new KeystonePayload(KeystoneLayer.StarMemoryDamage, native.ValueMilli / 1000m,
+                            new KeystonePayload(KeystoneLayer.StarMemoryDamage, native.ValueMilli / 1000m / StarDamageScaling.Multiplier(build.SpentStarPoints),
                                 new KeystoneCaps(FractionalScopedModifiers.NativeCapValueMilli(native.CapProfileId) / 1000m)), native.Memory,
                             sourceSlot: sourceSlot, heroKey: heroKey).Value * 1000m,
-                        ValueCeiling = FractionalScopedModifiers.NativeCapValueMilli(native.CapProfileId), CapProfileId = native.CapProfileId,
+                        ValueCeiling = (long)decimal.Ceiling(FractionalScopedModifiers.NativeCapValueMilli(native.CapProfileId)
+                            * StarDamageScaling.Multiplier(build.SpentStarPoints)), CapProfileId = native.CapProfileId,
                     });
+            bool nativeUplift = false;
+            foreach (var key in build.SelectedKeystones)
+                foreach (var transform in key.Upside)
+                    if (transform.TargetLayer == KeystoneLayer.NativeDamage) { nativeUplift = true; break; }
+            if (nativeUplift)
+            {
+                var baseline = new KeystonePayload(KeystoneLayer.NativeDamage, 1m, new KeystoneCaps(decimal.MaxValue));
+                foreach (string memory in VerifiedMechanismSlots.ForHero(heroKey))
+                    foreach (var sourceSlot in VerifiedMechanismSlots.ForMemory(heroKey, memory))
+                    {
+                        if (sourceSlot == MechanismMemorySlot.Movement) continue;
+                        var transformed = AuthoredKeystoneComposer.TransformAllocationPayload(build, baseline, memory,
+                            sourceSlot: sourceSlot, heroKey: heroKey);
+                        if (transformed.Value <= baseline.Value) continue;
+                        result.Add(new EffectiveAllocationChannel
+                        {
+                            Key = "native-uplift:" + memory + "@" + sourceSlot, Memory = memory,
+                            ValueMilli = (transformed.Value - baseline.Value) * BuildPrecision.Scale,
+                        });
+                    }
+            }
             CaptureHaste(build, result);
             foreach (var entry in build.Gimmicks)
                 foreach (var sourceSlot in VerifiedMechanismSlots.ForMemory(heroKey, entry.Memory))
@@ -496,14 +527,15 @@ namespace SodRpg.Core.Tests.Testing
                 }
                 decimal duration = transformed.DurationSeconds * 100m;
                 if (def.Effect == GimmickEffect.Wound && build.SelectedKeystones.Count == 0 && !entry.Def.EffectiveWoundTotal)
-                    duration = Math.Min(duration, 36000m / entry.Def.EffectiveValueOrAuthored);
+                    duration = Math.Min(duration, 36000m / entry.Def.Value);
                 result.Add(new EffectiveAllocationChannel
                 {
                     Key = key, StarId = entry.StarId, ValueMilli = value, Strongest = strongest,
                     Effect = def.Effect,
                     PredicateKey = predicate, Cooldown = def.Cooldown,
                     Memory = entry.Memory, ContributorIds = entry.ContributorIds.Length == 0 ? new[] { entry.StarId } : entry.ContributorIds,
-                    ValueCeiling = (long)Gimmicks.Cap(def.Effect) * BuildPrecision.Scale,
+                    ValueCeiling = (long)decimal.Ceiling(Gimmicks.Cap(def.Effect) * BuildPrecision.Scale
+                        * (StarDamageScaling.IsDamage(def.Effect) ? StarDamageScaling.Multiplier(build.SpentStarPoints) : 1m)),
                     DurationCeilingUnits = payload.Caps.DurationSeconds * 100m,
                     RadiusCeilingUnits = payload.Caps.RadiusMetres * 100m, TargetCeiling = payload.Caps.TargetCount,
                     ChanceUnits = def.Effect == GimmickEffect.Element ? Math.Min(10000m, def.EffectiveValueOrAuthored * BuildPrecision.Scale % (100 * BuildPrecision.Scale) / 10m + Gimmicks.ChanceProbabilityUnits(def)) : 0,
@@ -515,7 +547,7 @@ namespace SodRpg.Core.Tests.Testing
                 });
             }
             foreach (var pair in build.PairCombos)
-                result.Add(Scalar("pair:" + BuildAggregation.PairKey(pair), pair.Value));
+                result.Add(Scalar("pair:" + BuildAggregation.PairKey(pair), (long)decimal.Floor(pair.EffectiveValue * BuildPrecision.Scale)));
             foreach (var growth in build.RunGrowths)
                 result.Add(Scalar("growth:" + growth.StarId, (long)growth.Cap * (100 + growth.EffectPercent) * growth.GainMultiplier,
                     (long)RunGrowthDef.MaxCap * (100 + RunGrowthModifierDef.MaxEffectPercent) * 2));

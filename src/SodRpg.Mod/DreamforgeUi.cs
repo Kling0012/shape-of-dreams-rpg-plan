@@ -2113,8 +2113,11 @@ namespace SodRpg.Mod
             _starDirty = false;
             _starSumDirty = true;
             int earned = StarProgression.Points(hs.StarXp);
-            _starPoints.text = Loc.T($"使えるポイント：残り {_starFree} / 合計 {p.TalentPoints(hero)}",
-                $"Available points: {_starFree} remaining / {p.TalentPoints(hero)} total");
+            string damageRank = StarDamageScaling.Multiplier(spent).ToString("0.###", System.Globalization.CultureInfo.InvariantCulture);
+            _starPoints.text = Loc.T($"使えるポイント：残り {_starFree} / 合計 {p.TalentPoints(hero)}　星ダメージ ×{damageRank}",
+                $"Available points: {_starFree} remaining / {p.TalentPoints(hero)} total   Star damage ×{damageRank}");
+            _starPoints.tooltip = Loc.T("使用済み1点ごとに星由来のダメージ量+0.3%。500点で2.5倍、504点で2.512倍。装備・加速・CD・軽減・発動条件は対象外。星の記憶ダメージはCrescendoの合計上限120%の外へ加える。",
+                "Star damage quantities gain 0.3% per spent point: ×2.5 at 500, ×2.512 at 504. Equipment, haste, cooldowns, reduction and activation conditions are unchanged. Star memory damage is added outside Crescendo's combined 120% cap.");
             _starProgress.text = Loc.T($"星のレベル {earned}/{StarProgression.MaxPoints}　", $"Star level {earned}/{StarProgression.MaxPoints}   ")
                 + (earned >= StarProgression.MaxPoints ? Loc.T("ポイント上限", "Point cap reached")
                 : Loc.T($"次まで {hs.StarXp - StarProgression.TotalXpForPoints(earned)}/{StarProgression.CostForPoint(earned + 1)} XP",
@@ -2163,7 +2166,8 @@ namespace SodRpg.Mod
                 {
                     description = StarMapPresentation.ChoiceDescription(t, n.Choice, n.Rank);
                     for (int optionIndex = 0; optionIndex < 2; optionIndex++)
-                        n.ChoiceOptions[optionIndex].text = StarMapPresentation.ChoiceOptionBody(t, optionIndex);
+                        n.ChoiceOptions[optionIndex].text = StarMapPresentation.ChoiceOptionBody(t, optionIndex)
+                            + "\n" + StarMapPresentation.DamageRankNote(t, optionIndex, spent);
                     n.EffectSummary = StarMapPresentation.EffectSummary(t, n.Choice);
                 }
                 n.SearchDescription = StarMapPresentation.PresentationLabel(t) + "\n" + description;
@@ -2179,6 +2183,7 @@ namespace SodRpg.Mod
                 string readyColor = !unlocked || slotsFull ? "#ffb090" : n.Rank >= t.MaxRank ? "#ffc952" : _starFree < cost ? "#ffb090" : "#9fe0ff";
                 n.Tooltip.text = "<b>" + title + "</b>  " + n.RankLabel.text + "\n<color=#d2d2e6>" + StarMapPresentation.PresentationLabel(t) + "</color>"
                     + "\n" + description
+                    + "\n" + StarMapPresentation.DamageRankNote(t, n.Choice, spent)
                     + (costInBody ? "" : Loc.T($"\n必要ポイント：{(t.IsKeystone ? keyCost : t.RankCost)}", $"\nPoint cost: {(t.IsKeystone ? keyCost : t.RankCost)}"))
                     + (condition.Length == 0 ? "" : "\n" + condition)
                     + "\n<color=" + readyColor + ">" + state + "</color>"

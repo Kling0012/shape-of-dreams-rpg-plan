@@ -407,7 +407,8 @@ namespace SodRpg.Core.Tests
                 var entry = Assert.Single(build.Gimmicks, e => e.StarId == star.Id);
                 Assert.Equal(Memory, entry.Memory);
                 Assert.Equal(expectedValue, entry.Def.Value);
-                Assert.Contains(build.Links, l => l.Kind == LinkKind.MemoryDamage && l.Value == 15);
+                decimal rankedLink = decimal.Round(15m * (1m + 1.5m * build.SpentStarPoints / 500), 3, MidpointRounding.AwayFromZero);
+                Assert.Contains(build.Links, l => l.Kind == LinkKind.MemoryDamage && l.Value == rankedLink);
                 Assert.Equal(perRank, star.Gimmick.Value);
                 Assert.DoesNotContain(Build.Compute(p, "Hero_Cetus", 0).Gimmicks, e => e.StarId == star.Id);
                 Rules.ResetTalents(p, Hero);

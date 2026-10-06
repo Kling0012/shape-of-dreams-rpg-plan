@@ -26345,12 +26345,18 @@
       "power": null,
       "growth": {
         "trigger": "ShieldAbsorbedMaxHpPct",
-        "threshold": 16,
-        "cap": 60,
+        "threshold": {
+          "valueRef": "cetus.run.g1/growth/threshold"
+        },
+        "cap": {
+          "valueRef": "cetus.run.g1/growth/cap"
+        },
         "effects": [
           {
             "stat": "ShieldPower",
-            "amount": 0.5
+            "amount": {
+              "valueRef": "cetus.run.g1/growth/effects/0/amount"
+            }
           }
         ]
       },
@@ -26390,7 +26396,9 @@
       "power": null,
       "growth": {
         "target": "cetus.run.g1",
-        "capBonus": 20,
+        "capBonus": {
+          "valueRef": "cetus.run.m1/growth/capBonus"
+        },
         "effectPct": 0,
         "doubleGain": false
       },
@@ -26404,7 +26412,7 @@
       "rankCost": 1,
       "nameJa": "凍てつく層",
       "nameEn": "Frozen Layers",
-      "notes": "上限 +20"
+      "notes": "上限増分はバランス表から生成。 / Cap increase is generated from the balance table."
     },
     {
       "id": "cetus.run.m2",
@@ -26430,7 +26438,9 @@
       "power": null,
       "growth": {
         "target": "cetus.run.g1",
-        "capBonus": 20,
+        "capBonus": {
+          "valueRef": "cetus.run.m2/growth/capBonus"
+        },
         "effectPct": 0,
         "doubleGain": false
       },
@@ -26444,7 +26454,7 @@
       "rankCost": 1,
       "nameJa": "砕けぬ氷膜",
       "nameEn": "Unbroken Ice Film",
-      "notes": "上限 +20"
+      "notes": "上限増分はバランス表から生成。 / Cap increase is generated from the balance table."
     },
     {
       "id": "cetus.run.choice",
@@ -26480,7 +26490,9 @@
           "power": null,
           "growth": {
             "target": "cetus.run.g1",
-            "capBonus": 0,
+            "capBonus": {
+              "valueRef": "cetus.run.choice/options/0/growth/capBonus"
+            },
             "effectPct": 50,
             "doubleGain": false
           },
@@ -26499,7 +26511,9 @@
           "power": null,
           "growth": {
             "target": "cetus.run.g1",
-            "capBonus": 0,
+            "capBonus": {
+              "valueRef": "cetus.run.choice/options/1/growth/capBonus"
+            },
             "effectPct": 0,
             "doubleGain": true
           },

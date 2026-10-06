@@ -162,8 +162,8 @@ namespace SodRpg.Core.Tests
         {
             var decoded = Build.Decode(All(999, 999, 999, 999).Encode());
             Assert.NotNull(decoded);
-            Assert.Equal(300, decoded.Get(Power.Steam));
-            Assert.Equal(62, decoded.Get(Power.Eclipse));
+            Assert.Equal((int)decimal.Ceiling(120m * (2.5m + 1m + 1.5m * 504 / 500)), decoded.Get(Power.Steam));
+            Assert.Equal((int)decimal.Ceiling(25m * (2.5m + 1m + 1.5m * 504 / 500)), decoded.Get(Power.Eclipse));
             Assert.Equal(2, decoded.Get(Power.Cinder));
             Assert.Equal(30, decoded.Get(Power.FrostCrystal));
             Assert.Equal(43, (int)Power.ShadowStep);

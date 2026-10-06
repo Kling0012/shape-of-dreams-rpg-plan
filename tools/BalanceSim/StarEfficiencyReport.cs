@@ -9,18 +9,37 @@ internal sealed record StarEfficiencyConfiguration(string Id, string Hero, strin
     IReadOnlyList<StarEfficiencySelection> Selections);
 internal sealed record StarEfficiencyChoiceOption(string Hero, string StarId, int Option, string OptionKey,
     string Origin, string Kind, IReadOnlyList<string> Memories, decimal? PerRankPercent,
-    int MaxRank, int RankCost, decimal? DamagePercent, int PointCost);
+    int MaxRank, int RankCost, decimal? DamagePercent, int PointCost)
+{
+    public decimal? MinimumRankPerRankPercent => PerRankPercent.HasValue
+        ? StarEfficiencyReport.RankedPercent(PerRankPercent.Value, RankCost) : null;
+    public decimal? At500PointsPerRankPercent => PerRankPercent.HasValue
+        ? StarEfficiencyReport.RankedPercent(PerRankPercent.Value, 500) : null;
+}
 internal sealed record StarEfficiencyContribution(string StarId, int? Option, decimal PerRankPercent,
-    int MaxRank, int RankCost, decimal DamagePercent, int PointCost);
+    int MaxRank, int RankCost, decimal DamagePercent, int PointCost)
+{
+    // Each effect is evaluated at its earliest conservative purchase: p = parent RankCost.
+    // These independent projections are not the rank of a simultaneously purchased build.
+    public decimal MinimumRankPerRankPercent => StarEfficiencyReport.RankedPercent(PerRankPercent, RankCost);
+    public decimal MinimumRankDamagePercent => MinimumRankPerRankPercent * MaxRank;
+    public decimal At500PointsPerRankPercent => StarEfficiencyReport.RankedPercent(PerRankPercent, 500);
+    public decimal At500PointsDamagePercent => At500PointsPerRankPercent * MaxRank;
+}
 internal sealed record StarEfficiencyEntry(string Hero, string Memory, string Scenario, string Origin,
     string ConfigurationId, decimal DamagePercent, int PointCost,
     IReadOnlyList<StarEfficiencyContribution> Contributions)
 {
     public decimal? PercentPerPoint => PointCost > 0 ? DamagePercent / PointCost : null;
+    public decimal MinimumRankDamagePercent => Contributions.Sum(c => c.MinimumRankDamagePercent);
+    public decimal? MinimumRankPercentPerPoint => PointCost > 0 ? MinimumRankDamagePercent / PointCost : null;
+    public decimal At500PointsDamagePercent => Contributions.Sum(c => c.At500PointsDamagePercent);
+    public decimal? At500PointsPercentPerPoint => PointCost > 0 ? At500PointsDamagePercent / PointCost : null;
 }
 internal sealed record StarEfficiencyRange(string Hero, string Scenario, string Origin,
     decimal? MinPercentPerPoint, decimal? MaxPercentPerPoint, IReadOnlyList<string> MinMemories,
-    IReadOnlyList<string> MaxMemories);
+    IReadOnlyList<string> MaxMemories, decimal? At500PointsMinPercentPerPoint,
+    decimal? At500PointsMaxPercentPerPoint);
 internal sealed record StarEfficiencyHero(string Hero, bool Registered, int TreeNodes, int ChoiceNodes,
     int DirectDamageNodes, int DamageChoiceNodes);
 internal sealed record StarEfficiencyMeasurement(IReadOnlyList<StarEfficiencyHero> Heroes,
@@ -32,6 +51,10 @@ internal static class StarEfficiencyReport
     public const string ChoicePolicy = "all-A/all-B projections; one fixed option per choice across all memory/origin rows";
     public static readonly string[] Scenarios = ["all-A", "all-B"];
     public static readonly string[] Origins = ["private", "shared", "total"];
+
+    // Quantize each per-rank effect through Core before summing independent projections.
+    internal static decimal RankedPercent(decimal basePercent, int spentPoints) =>
+        StarDamageScaling.ScaleMilli(checked((int)(basePercent * 1000m)), spentPoints) / 1000m;
 
     public static StarEfficiencyMeasurement Measure()
     {
@@ -113,7 +136,9 @@ internal static class StarEfficiencyReport
                     decimal? max = measured.Length > 0 ? measured.Max(e => e.PercentPerPoint!.Value) : null;
                     ranges.Add(new StarEfficiencyRange(hero, scenario, origin, min, max,
                         measured.Where(e => e.PercentPerPoint == min).Select(e => e.Memory).ToArray(),
-                        measured.Where(e => e.PercentPerPoint == max).Select(e => e.Memory).ToArray()));
+                        measured.Where(e => e.PercentPerPoint == max).Select(e => e.Memory).ToArray(),
+                        measured.Length > 0 ? measured.Min(e => e.At500PointsPercentPerPoint!.Value) : null,
+                        measured.Length > 0 ? measured.Max(e => e.At500PointsPercentPerPoint!.Value) : null));
                 }
             }
         }
@@ -156,6 +181,9 @@ internal static class StarEfficiencyReport
         text.AppendLine();
         text.AppendLine("all-A は各Choiceの選択肢0、all-Bは選択肢1。同じ構成の全記憶・由来行で選択を固定し、同記憶のA/Bも排他的に計上します。記憶行は構成の独立した投影であり、費用・効果を記憶間または構成間で足しません。JSON configurations に星IDごとの選択を記録。2構成は厳密な集計ですが、混合選択の全探索・最適化や接続込みの実戦ビルドではありません。");
         text.AppendLine();
+        text.AppendLine("既存のダメージ・効率・min/maxは基礎値のまま比較可能です。位階の別列は各効果を親星RankCost点で個別評価した保守的下限と、全効果を同じ500点で評価した投影。費用・Choice・構成条件は変更せず、接続星込みの実戦ビルドや全火力ではありません。");
+        text.AppendLine("投影は各段・各効果をCoreのScaleMilliで0.001%単位へ丸めてから合計。Buildの記憶ごとの合算後の丸めとは順序が異なるため、実Buildそのものの出力値とは扱いません。");
+        text.AppendLine();
         text.AppendLine("## 登録統計");
         text.AppendLine();
         text.AppendLine("| 旅人 | 登録 | ツリー星 | Choice | 通常ダメージ星 | ダメージ選択星 |");
@@ -167,17 +195,17 @@ internal static class StarEfficiencyReport
         text.AppendLine();
         text.AppendLine("各構成・由来内の費用>0の記憶行だけを比較。選択を最適化した下限/上限ではありません。費用0の効率は未定義（—）。");
         text.AppendLine();
-        text.AppendLine("| 旅人 | 構成 | 由来 | min | 記憶 | max | 記憶 |");
-        text.AppendLine("| --- | --- | --- | ---: | --- | ---: | --- |");
+        text.AppendLine("| 旅人 | 構成 | 由来 | 基礎min | 記憶 | 基礎max | 記憶 | 500点min | 500点max |");
+        text.AppendLine("| --- | --- | --- | ---: | --- | ---: | --- | ---: | ---: |");
         foreach (var range in measurement.Ranges)
-            text.AppendLine($"| {range.Hero} | {range.Scenario} | {range.Origin} | {Number(range.MinPercentPerPoint)} | {string.Join(", ", range.MinMemories)} | {Number(range.MaxPercentPerPoint)} | {string.Join(", ", range.MaxMemories)} |");
+            text.AppendLine($"| {range.Hero} | {range.Scenario} | {range.Origin} | {Number(range.MinPercentPerPoint)} | {string.Join(", ", range.MinMemories)} | {Number(range.MaxPercentPerPoint)} | {string.Join(", ", range.MaxMemories)} | {Number(range.At500PointsMinPercentPerPoint)} | {Number(range.At500PointsMaxPercentPerPoint)} |");
         text.AppendLine();
         text.AppendLine("## 旅人×記憶×構成×由来");
         text.AppendLine();
-        text.AppendLine("| 旅人 | 記憶 | 構成 | 由来 | ダメージ (%) | 費用 (点) | 効率 (%/点) | ダメージ星数 |");
-        text.AppendLine("| --- | --- | --- | --- | ---: | ---: | ---: | ---: |");
+        text.AppendLine("| 旅人 | 記憶 | 構成 | 由来 | 基礎ダメージ (%) | 費用 (点) | 基礎効率 (%/点) | 最小購入点での効率 | 500点効率 | ダメージ星数 |");
+        text.AppendLine("| --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |");
         foreach (var entry in measurement.Entries)
-            text.AppendLine($"| {entry.Hero} | {entry.Memory} | {entry.Scenario} | {entry.Origin} | {Number(entry.DamagePercent)} | {entry.PointCost} | {Number(entry.PercentPerPoint)} | {entry.Contributions.Count} |");
+            text.AppendLine($"| {entry.Hero} | {entry.Memory} | {entry.Scenario} | {entry.Origin} | {Number(entry.DamagePercent)} | {entry.PointCost} | {Number(entry.PercentPerPoint)} | {Number(entry.MinimumRankPercentPerPoint)} | {Number(entry.At500PointsPercentPerPoint)} | {entry.Contributions.Count} |");
         return text.ToString();
     }
 

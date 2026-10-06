@@ -49,12 +49,18 @@ namespace SodRpg.Core.Tests
         {
             var p = Funded();
             TreeTestPaths.Connect(p, Hero, id);
-            decimal before = LinkValue(Build.Compute(p, Hero, 0), memory, kind);
+            var previous = Build.Compute(p, Hero, 0);
+            decimal before = LinkValue(previous, memory, kind);
             Rules.AddTalentRank(p, Hero, id);
             var build = Build.Compute(p, Hero, 0);
-            Assert.Equal(before + amount, LinkValue(build, memory, kind));
+            decimal expected = kind == LinkKind.MemoryDamage
+                ? HeroSigils.TreeFor(Hero).Where(t => t.LinkPerRank?.Kind == kind && t.LinkPerRank.Requires.Contains(memory))
+                    .Sum(t => decimal.Round(t.LinkPerRank.Value * (p.Hero(Hero).Talents.TryGetValue(t.Id, out int ranks) ? ranks : 0)
+                        * (1m + 1.5m * build.SpentStarPoints / 500), 3, MidpointRounding.AwayFromZero))
+                : before + amount;
+            Assert.Equal(expected, LinkValue(build, memory, kind));
             var decoded = Build.Decode(build.Encode());
-            Assert.Equal(before + amount, LinkValue(decoded, memory, kind));
+            Assert.Equal(expected, LinkValue(decoded, memory, kind));
             Assert.DoesNotContain(decoded.Links.Where(l => l.Kind == kind), l => l.Requires.Contains("St_R_FrozenFists"));
         }
 

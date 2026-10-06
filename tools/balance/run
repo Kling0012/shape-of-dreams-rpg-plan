@@ -166,7 +166,9 @@ def main() -> int:
         stars_data = json.loads((HERE / "stars.json").read_text(encoding="utf-8"), parse_float=Decimal)
         table_metadata = {"forge": forge_data,
                           "stars": {"schemaVersion": stars_data["schemaVersion"],
-                                    "multipliers": stars_data["multipliers"]}}
+                                    "multipliers": stars_data["multipliers"],
+                                    "rankScaling": stars_data["rankScaling"],
+                                    "runGrowth": stars_data["runGrowth"]}}
         requested_dotnet = os.environ.get("DOTNET")
         dotnet = shutil.which(requested_dotnet or "dotnet")
         if dotnet is None:

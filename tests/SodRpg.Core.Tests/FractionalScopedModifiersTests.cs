@@ -199,8 +199,9 @@ namespace SodRpg.Core.Tests
             var scenario = Tree(Native(100.25m), Native(30m));
             var build = Build.Decode(Compute(scenario).Encode());
             var native = Assert.Single(build.NativeModifiers);
-            Assert.Equal(120000, native.ValueMilli);
-            Assert.Equal(120f, FractionalScopedModifiers.NativePercent(build.NativeModifiers, Memory, LinkKind.MemoryDamage));
+            Assert.Equal(StarDamageScaling.ScaleMilli(120000, build.SpentStarPoints), native.ValueMilli);
+            Assert.Equal(120f * (float)StarDamageScaling.Multiplier(build.SpentStarPoints),
+                FractionalScopedModifiers.NativePercent(build.NativeModifiers, Memory, LinkKind.MemoryDamage), 4);
             Assert.True(Links.EquippedCap(LinkKind.MemoryDamage, 1) < 120);
             Assert.DoesNotContain(build.Links, l => l.ValueMilli >= 120000);
         }

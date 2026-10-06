@@ -179,16 +179,20 @@ namespace SodRpg.Mod
             KeystoneSourceKind sourceKind, KeystoneRecipientKind recipient = KeystoneRecipientKind.Self)
         {
             RefreshAuthoredKeystone(hero);
-            if (!_authoredKeystones.TryGetValue(hero, out var binding) || !binding.Runtime.Active)
-                return ScopedKeystoneModifiers.ApplyUnmodified(payload);
-            return binding.Runtime.Apply(payload, new KeystoneContext(binding.Epoch, source, sourceKind, receiver, recipient,
-                binding.Equipment));
+            var result = !_authoredKeystones.TryGetValue(hero, out var binding) || !binding.Runtime.Active
+                ? ScopedKeystoneModifiers.ApplyUnmodified(payload)
+                : binding.Runtime.Apply(payload, new KeystoneContext(binding.Epoch, source, sourceKind, receiver, recipient,
+                    binding.Equipment));
+            return StarDamageScaling.ScaleResult(binding?.Build
+                ?? (hero != null && _runtimes.TryGetValue(hero, out var owner) ? owner.Powers.Build : null), payload, result);
         }
 
         internal float TransformAuthoredMemoryDamage(Hero hero, string memory, float percent)
         {
-            if (percent <= 0 || memory == null || !_authoredKeystones.ContainsKey(hero)) return percent;
-            return (float)TransformAuthoredPayload(hero, new KeystonePayload(KeystoneLayer.StarMemoryDamage, (decimal)percent,
+            if (percent <= 0 || memory == null) return percent;
+            var build = hero != null && _runtimes.TryGetValue(hero, out var owner) ? owner.Powers.Build : null;
+            decimal basis = (decimal)percent / StarDamageScaling.Multiplier(build?.SpentStarPoints ?? 0);
+            return (float)TransformAuthoredPayload(hero, new KeystonePayload(KeystoneLayer.StarMemoryDamage, basis,
                 new KeystoneCaps(decimal.MaxValue)), memory, null, KeystoneSourceKind.NativeMemory).Value;
         }
 
@@ -218,7 +222,6 @@ namespace SodRpg.Mod
         internal GimmickDef TransformAuthoredGimmick(Hero hero, GimmickDef def, string source, string receiver,
             KeystoneSourceKind sourceKind, string effectId = null, float sourceCooldown = 0f)
         {
-            if (!_authoredKeystones.ContainsKey(hero)) return def;
             return TransformAuthoredGimmickPayload(hero, def, AuthoredKeystoneComposer.GimmickPayload(def, effectId,
                 durationBaseOverride: AuthoredGimmickDurationBase(def, sourceCooldown)),
                 source, receiver, sourceKind);
@@ -228,7 +231,6 @@ namespace SodRpg.Mod
             KeystoneSourceKind sourceKind, float sourceCooldown = 0f)
         {
             if (spec?.Gimmick == null) throw new ArgumentException("A concrete gimmick mechanism is required.");
-            if (!_authoredKeystones.ContainsKey(hero)) return spec.Gimmick;
             return TransformAuthoredGimmickPayload(hero, spec.Gimmick, AuthoredKeystoneComposer.MechanismPayload(spec,
                 durationBaseOverride: AuthoredGimmickDurationBase(spec.Gimmick, sourceCooldown)),
                 source, receiver, sourceKind);

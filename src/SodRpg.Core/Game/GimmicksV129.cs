@@ -123,10 +123,10 @@ namespace SodRpg.Core.Game
         }
 
         public static int ElementEdgePercent(int value, bool fire, bool cold, bool light, bool dark) =>
-            Math.Max(0, Math.Min(Cap(GimmickEffect.ElementEdge), value)) * ((fire ? 1 : 0) + (cold ? 1 : 0) + (light ? 1 : 0) + (dark ? 1 : 0));
+            Math.Max(0, Math.Min((int)decimal.Ceiling(StarDamageScaling.EffectCeiling(GimmickEffect.ElementEdge)), value)) * ((fire ? 1 : 0) + (cold ? 1 : 0) + (light ? 1 : 0) + (dark ? 1 : 0));
 
         public static float ElementEdgePercent(float value, bool fire, bool cold, bool light, bool dark) => !Finite(value) ? 0f :
-            Math.Max(0, Math.Min(Cap(GimmickEffect.ElementEdge), value)) * ((fire ? 1 : 0) + (cold ? 1 : 0) + (light ? 1 : 0) + (dark ? 1 : 0));
+            Math.Max(0, Math.Min((float)StarDamageScaling.EffectCeiling(GimmickEffect.ElementEdge), value)) * ((fire ? 1 : 0) + (cold ? 1 : 0) + (light ? 1 : 0) + (dark ? 1 : 0));
     }
 
     public sealed partial class GimmickRuntime
@@ -181,12 +181,13 @@ namespace SodRpg.Core.Game
             return (float)result;
         }
 
-        public float CombinedMemoryDamagePercent(string memory, float now, float otherPercent)
+        public float CombinedMemoryDamagePercent(string memory, float now, float otherPercent, float starPercent = 0f)
         {
             float crescendo = CrescendoPercent(memory, now);
-            // Existing awakened links keep their established caps when Crescendo contributes nothing.
+            float stars = Math.Max(0, starPercent);
+            // Only equipment/Crescendo belongs to the historical 120% aggregate cap.
             return crescendo == 0 ? Math.Max(0, otherPercent)
-                : Math.Min(Math.Min(120f, (float)Links.EquippedCap(LinkKind.MemoryDamage, 3)), Math.Max(0, otherPercent) + crescendo);
+                : stars + Math.Min(120f, Math.Max(0, otherPercent - stars) + crescendo);
         }
 
         public float WeakspotPercent(int victimId, float now) => TargetPercent(GimmickEffect.Weakspot, victimId, now);

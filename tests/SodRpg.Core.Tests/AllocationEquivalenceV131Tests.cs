@@ -308,32 +308,40 @@ namespace SodRpg.Core.Tests
             }
         }
 
-        // ---- hand-built cascades: the purchase makes older paid stars inert and they are refunded, unrelated stars are skipped ----
+        // ---- local caps and domination: paid ranks stay effective when they still improve global star damage ----
 
-        private static void AssertCascade(Func<Synthetic, Duo, EffectiveAllocationPlan> scenario, params string[] expectedRefunds)
+        private static void AssertRankRetention(Func<Synthetic, Duo, EffectiveAllocationPlan> scenario, params string[] retainedStars)
         {
             WithVerification(() =>
             {
                 var s = BuildSynthetic();
                 var duo = SyntheticDuo(s);
-                // Unrelated paid stars that the cascade must leave alone (and the analysis must skip).
+                // The independent damage source makes every retained paid rank a real damage-rank contributor.
                 duo.Buy(s.Root.Id, times: 4);
                 duo.Buy(s.Armor.Id, times: 3);
                 duo.Buy(s.Other.Id, times: 2);
-                int before = duo.Pruned;
                 var plan = scenario(s, duo);
-                foreach (string id in expectedRefunds) Assert.Contains(id, plan.AffectedRefundIds);
+                foreach (string id in retainedStars)
+                {
+                    Assert.DoesNotContain(id, plan.AffectedRefundIds);
+                    Assert.True(plan.Proposed.Talents[id] > 0);
+                }
                 Assert.DoesNotContain(s.Root.Id, plan.AffectedRefundIds);
                 Assert.DoesNotContain(s.Armor.Id, plan.AffectedRefundIds);
                 Assert.DoesNotContain(s.Other.Id, plan.AffectedRefundIds);
-                Assert.True(duo.Pruned > before, "unrelated stars must be skipped by the dependency analysis");
+                var oldDamage = plan.OldEffectiveChannels.First(c => c.StarId == s.Other.Id);
+                var newDamage = plan.NewEffectiveChannels.First(c => c.StarId == s.Other.Id);
+                Assert.Equal(8m * 2m * BuildPrecision.Scale * (1m + 1.5m * duo.Production.SpentPoints(plan.Original) / 500m),
+                    oldDamage.ValueMilli);
+                Assert.Equal(8m * 2m * BuildPrecision.Scale * (1m + 1.5m * duo.Production.SpentPoints(plan.Proposed) / 500m),
+                    newDamage.ValueMilli);
             });
         }
 
         [Fact]
-        public void A_big_stat_star_saturates_the_shared_stat_and_refunds_the_smaller_stars_it_made_inert()
+        public void A_big_stat_star_keeps_locally_saturated_smaller_stars_that_still_rank_damage()
         {
-            AssertCascade((s, d) =>
+            AssertRankRetention((s, d) =>
             {
                 d.Buy(s.MsA.Id, times: 3); d.Buy(s.MsB.Id, times: 3);
                 return d.Step(new AllocationChange { Kind = AllocationChangeKind.Purchase, CandidateStarId = s.MsC.Id }).Plan;
@@ -341,9 +349,9 @@ namespace SodRpg.Core.Tests
         }
 
         [Fact]
-        public void A_big_power_star_saturates_the_shared_power_and_refunds_the_smaller_stars_it_made_inert()
+        public void A_big_power_star_keeps_locally_saturated_smaller_stars_that_still_rank_damage()
         {
-            AssertCascade((s, d) =>
+            AssertRankRetention((s, d) =>
             {
                 d.Buy(s.PwA.Id, times: 3); d.Buy(s.PwB.Id, times: 2);
                 return d.Step(new AllocationChange { Kind = AllocationChangeKind.Purchase, CandidateStarId = s.PwC.Id }).Plan;
@@ -351,9 +359,9 @@ namespace SodRpg.Core.Tests
         }
 
         [Fact]
-        public void A_stronger_effect_of_the_same_predicate_dominates_and_refunds_the_weaker_one_bought_earlier()
+        public void A_stronger_effect_keeps_the_locally_dominated_weaker_effects_paid_rank()
         {
-            AssertCascade((s, d) =>
+            AssertRankRetention((s, d) =>
             {
                 d.Buy(s.Weak2.Id);
                 return d.Step(new AllocationChange { Kind = AllocationChangeKind.Purchase, CandidateStarId = s.Strong2.Id }).Plan;
@@ -361,9 +369,9 @@ namespace SodRpg.Core.Tests
         }
 
         [Fact]
-        public void A_big_scoped_boost_fills_the_declared_cap_and_refunds_the_small_boost_bought_earlier()
+        public void A_big_scoped_boost_keeps_locally_capped_boosts_that_still_rank_damage()
         {
-            AssertCascade((s, d) =>
+            AssertRankRetention((s, d) =>
             {
                 d.Buy(s.Shield2.Id); d.Buy(s.CapA.Id, times: 3);
                 return d.Step(new AllocationChange { Kind = AllocationChangeKind.Purchase, CandidateStarId = s.CapB.Id }).Plan;
@@ -371,9 +379,9 @@ namespace SodRpg.Core.Tests
         }
 
         [Fact]
-        public void Link_haste_filling_the_shared_cap_refunds_the_native_haste_modifier_bought_earlier()
+        public void Link_haste_keeps_locally_capped_native_haste_points_that_still_rank_damage()
         {
-            AssertCascade((s, d) =>
+            AssertRankRetention((s, d) =>
             {
                 d.Buy(s.HasteNative.Id); d.Buy(s.HasteLink.Id, times: 4);
                 return d.Step(new AllocationChange { Kind = AllocationChangeKind.Purchase, CandidateStarId = s.HasteLink.Id }).Plan;
@@ -381,9 +389,9 @@ namespace SodRpg.Core.Tests
         }
 
         [Fact]
-        public void A_route_wide_boost_that_reaches_the_effect_cap_refunds_the_smaller_boost_bought_earlier()
+        public void A_route_wide_boost_keeps_locally_capped_boost_points_that_still_rank_damage()
         {
-            AssertCascade((s, d) =>
+            AssertRankRetention((s, d) =>
             {
                 d.Buy(s.Sap2.Id); d.Buy(s.RouteBoostA.Id, times: 3);
                 return d.Step(new AllocationChange { Kind = AllocationChangeKind.Purchase, CandidateStarId = s.RouteBoostB.Id }).Plan;
@@ -391,9 +399,9 @@ namespace SodRpg.Core.Tests
         }
 
         [Fact]
-        public void A_purchase_that_unlocks_a_dormant_saved_star_refunds_the_star_it_now_dominates()
+        public void Unlocking_a_dormant_damage_star_keeps_the_locally_dominated_stars_paid_rank()
         {
-            AssertCascade((s, d) =>
+            AssertRankRetention((s, d) =>
             {
                 d.Buy(s.DormantWeak.Id);
                 d.Direct(h => h.Talents[s.DormantStrong.Id] = 1);
@@ -402,7 +410,7 @@ namespace SodRpg.Core.Tests
         }
 
         [Fact]
-        public void A_purchase_that_meets_the_keystone_route_gate_changes_every_effect_and_refunds_the_one_it_now_dominates()
+        public void Meeting_the_keystone_route_gate_keeps_the_locally_dominated_stars_paid_rank()
         {
             WithVerification(() =>
             {
@@ -412,27 +420,49 @@ namespace SodRpg.Core.Tests
                 duo.Direct(h => { h.Talents[s.KeyWeak.Id] = 1; h.Talents[s.KeyStrong.Id] = 1; h.Talents[s.Root.Id] = 3; h.Keystone = s.Key2.Id; });
                 var plan = duo.Step(new AllocationChange { Kind = AllocationChangeKind.Purchase, CandidateStarId = s.Armor.Id }).Plan;
                 // The sixth rank applies the keystone, which doubles the weaker effect above the stronger one.
-                Assert.Contains(s.KeyWeak.Id, plan.AffectedRefundIds);
+                Assert.DoesNotContain(s.KeyWeak.Id, plan.AffectedRefundIds);
                 Assert.DoesNotContain(s.KeyStrong.Id, plan.AffectedRefundIds);
             });
         }
 
         [Fact]
-        public void A_refund_cascade_that_drops_below_the_keystone_route_gate_is_evaluated_again_without_the_keystone()
+        public void Global_rank_damage_keeps_saturated_stat_points_and_their_unlocked_keystone()
         {
             WithVerification(() =>
             {
                 var s = BuildSynthetic();
                 var duo = SyntheticDuo(s);
-                // The gate is met (8 ranks) and the keystone doubles the strong effect, so only the strong one is effective.
+                // The gate is met (8 ranks); both effects still benefit the damage-rank multiplier.
                 duo.Direct(h =>
                 {
                     h.Talents[s.KeyWeak.Id] = 1; h.Talents[s.KeyStrong.Id] = 1; h.Talents[s.MsA.Id] = 3; h.Talents[s.MsB.Id] = 3; h.Keystone = s.Key2.Id;
                 });
                 var plan = duo.Step(new AllocationChange { Kind = AllocationChangeKind.Purchase, CandidateStarId = s.MsC.Id }).Plan;
-                // Refunding the saturated stat stars drops the route below the gate: the keystone and the effect that depended on it go too.
-                Assert.Contains(s.Key2.Id, plan.AffectedRefundIds);
-                Assert.Contains(s.KeyStrong.Id, plan.AffectedRefundIds);
+                Assert.Empty(plan.AffectedRefundIds);
+                Assert.True(plan.Proposed.HasKeystone(s.Key2.Id));
+                Assert.Equal(1, plan.Proposed.Talents[s.KeyStrong.Id]);
+            });
+        }
+
+        [Fact]
+        public void A_non_damage_allocation_still_refunds_locally_saturated_stars_and_prunes_independent_outputs()
+        {
+            WithVerification(() =>
+            {
+                var s = BuildSynthetic();
+                var duo = SyntheticDuo(s);
+                duo.Buy(s.Root.Id, times: 4);
+                duo.Buy(s.Armor.Id, times: 3);
+                duo.Buy(s.MsA.Id, times: 3);
+                duo.Buy(s.MsB.Id, times: 3);
+                int before = duo.Pruned;
+                var plan = duo.Step(new AllocationChange { Kind = AllocationChangeKind.Purchase, CandidateStarId = s.MsC.Id }).Plan;
+                Assert.Contains(s.MsA.Id, plan.AffectedRefundIds);
+                Assert.DoesNotContain(s.Root.Id, plan.AffectedRefundIds);
+                Assert.DoesNotContain(s.Armor.Id, plan.AffectedRefundIds);
+                Assert.True(duo.Pruned > before);
+                Assert.Equal(Content.StatCap(Stat.MoveSpeedPct),
+                    plan.NewEffectiveChannels.Single(c => c.Key == "stat:" + (int)Stat.MoveSpeedPct).ValueMilli);
             });
         }
 
@@ -502,7 +532,7 @@ namespace SodRpg.Core.Tests
                 Rules.AllocationValidationForHero(Yubar)) { Label = "authored" };
 
         [Fact]
-        public void A_big_capped_boost_on_an_authored_recharge_channel_refunds_the_small_boost_and_leaves_other_channels_alone()
+        public void A_capped_authored_recharge_boost_keeps_paid_rank_damage_without_changing_other_recharge_channels()
         {
             WithVerification(() => WithAuthoredProbe(tree =>
             {
@@ -510,12 +540,12 @@ namespace SodRpg.Core.Tests
                 duo.Buy("outer.eqprobe.r2"); duo.Buy("outer.eqprobe.r3"); duo.Buy("outer.eqprobe.r4");
                 duo.Buy("outer.eqprobe.free1"); duo.Buy("outer.eqprobe.free2");
                 duo.Buy("outer.eqprobe.small1"); duo.Buy("outer.eqprobe.small2"); duo.Buy("outer.eqprobe.small3");
-                int before = duo.Pruned;
                 var plan = duo.Step(new AllocationChange { Kind = AllocationChangeKind.Purchase, CandidateStarId = "outer.eqprobe.big" }).Plan;
-                Assert.Contains("outer.eqprobe.small1", plan.AffectedRefundIds);
+                Assert.DoesNotContain("outer.eqprobe.small1", plan.AffectedRefundIds);
                 Assert.DoesNotContain("outer.eqprobe.free1", plan.AffectedRefundIds);
                 Assert.DoesNotContain("outer.eqprobe.r3", plan.AffectedRefundIds);
-                Assert.True(duo.Pruned > before, "the other channels and their boost are independent of the capped pair");
+                Assert.Equal(plan.OldEffectiveChannels.Where(c => c.StarId == "outer.eqprobe.r3").Select(Describe),
+                    plan.NewEffectiveChannels.Where(c => c.StarId == "outer.eqprobe.r3").Select(Describe));
             }));
         }
 
@@ -542,7 +572,6 @@ namespace SodRpg.Core.Tests
                 }
                 _out.WriteLine($"{name} seed {seed}: applied {applied} (with refunds {refunded}) rejected {rejected} errors {errors} pruned stars {duo.Pruned}");
                 Assert.True(applied > steps / 3, "the sequence must exercise real changes: " + applied);
-                Assert.True(duo.Pruned > 0, "the dependency analysis must have skipped independent stars");
             });
         }
 
@@ -650,8 +679,7 @@ namespace SodRpg.Core.Tests
                 Assert.True(result.Plan.CanApply);
                 Assert.Empty(result.Plan.SaturatedChannels);
                 Assert.Empty(result.Plan.AffectedRefundIds);
-                // The host applies native damage. Selection must work even though the allocation channels do not change.
-                Assert.Equal(result.Plan.OldEffectiveChannels.Select(Describe), result.Plan.NewEffectiveChannels.Select(Describe));
+                // The host applies the native baseline; paying for the key can also rank existing star damage.
                 Assert.True(duo.ProductionProfile.Hero(hero).HasKeystone(keystone));
                 string selected = ProfileCodec.Write(duo.ProductionProfile);
                 var duplicate = duo.Step(change);
@@ -709,7 +737,6 @@ namespace SodRpg.Core.Tests
                     Assert.Empty(plan.AffectedRefundIds);
                     // No recharge source is owned: the paid rank is pending and must not invent an effective output.
                     Assert.DoesNotContain(plan.NewEffectiveChannels, c => c.Memory == talent.ScopedModifier.ScopeMemory);
-                    Assert.Equal(plan.OldEffectiveChannels.Select(Describe), plan.NewEffectiveChannels.Select(Describe));
                     if (disabled)
                     {
                         Assert.Contains(plan.SaturationDetails, d => d.StarId == starId && d.Reason == AllocationInertReason.PermanentlyDisabled);
@@ -729,24 +756,10 @@ namespace SodRpg.Core.Tests
             }));
         }
 
-        // Known #199 regional-evaluation defect, outside this purchase-vs-retention fix:
-        // the e1 region omits the replacer and resurrects the ring. Full evaluation instead refunds
-        // the bridge satellites and rejects q. Keep the independent comparison runnable without
-        // changing that unresolved eligibility rule or silently accepting the production answer.
-        // SODRPG_REPLACEMENT_DIAGNOSTICS=1 dotnet test --filter Category=ReplacementDiagnostic
-        private sealed class ReplacementDiagnosticTheoryAttribute : TheoryAttribute
-        {
-            public ReplacementDiagnosticTheoryAttribute()
-            {
-                if (Environment.GetEnvironmentVariable("SODRPG_REPLACEMENT_DIAGNOSTICS") != "1")
-                    Skip = "Known #199 region mismatch. Set SODRPG_REPLACEMENT_DIAGNOSTICS=1 to reproduce; satellite retention needs a design decision.";
-            }
-        }
-
-        [ReplacementDiagnosticTheory, Trait("Category", "ReplacementDiagnostic")]
+        [Theory]
         [InlineData(1)]
         [InlineData(2)]
-        public void Replaced_prerequisite_retention_and_inert_purchase_match_the_reference(int ownedRanks)
+        public void Replaced_prerequisite_retention_and_paid_rank_purchase_match_the_reference(int ownedRanks)
         {
             const string hero = ReplacedStarPurchaseTests.Hero;
             WithVerification(() => WithGeneratedHero(hero, tree =>
@@ -758,12 +771,13 @@ namespace SodRpg.Core.Tests
                 for (int rank = 1; rank < ownedRanks; rank++) Assert.Empty(duo.Buy(ReplacedStarPurchaseTests.Ring).AffectedRefundIds);
                 Assert.Empty(duo.Buy(ReplacedStarPurchaseTests.Choice, 1).AffectedRefundIds);
                 Assert.Equal(ownedRanks, duo.ProductionProfile.Hero(hero).Talents[ReplacedStarPurchaseTests.Ring]);
-                var rejected = duo.Step(new AllocationChange
+                var purchased = duo.Step(new AllocationChange
                 {
                     Kind = AllocationChangeKind.Purchase, CandidateStarId = ReplacedStarPurchaseTests.Ring,
                 }).Plan;
-                Assert.False(rejected.CanApply);
-                Assert.Empty(rejected.AffectedRefundIds);
+                Assert.True(purchased.CanApply);
+                Assert.Empty(purchased.AffectedRefundIds);
+                Assert.Equal(ownedRanks + 1, duo.ProductionProfile.Hero(hero).Talents[ReplacedStarPurchaseTests.Ring]);
             }));
         }
 

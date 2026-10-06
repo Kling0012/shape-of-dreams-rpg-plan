@@ -15,6 +15,9 @@ namespace SodRpg.Core.Game
         public SortedDictionary<Power, int> Powers { get; } = new SortedDictionary<Power, int>();
         /// <summary>Conditional power values before awakening, used for the shared 120% budget. Missing means unawakened.</summary>
         public SortedDictionary<Power, int> ConditionalBasePowers { get; } = new SortedDictionary<Power, int>();
+        /// <summary>Host-computed ranked star damage, separate from equipment and never accepted from the wire.</summary>
+        public SortedDictionary<Power, int> StarPowers { get; } = new SortedDictionary<Power, int>();
+        internal SortedDictionary<Power, int> UnrankedStarPowers { get; } = new SortedDictionary<Power, int>();
         /// <summary>系統ごとの装着数（2以上でセット効果）。表示用で、通信には含めない。</summary>
         public SortedDictionary<Line, int> Lines { get; } = new SortedDictionary<Line, int>();
         /// <summary>セット遺物の装着数（表示用）。</summary>
@@ -96,13 +99,14 @@ namespace SodRpg.Core.Game
         /// </summary>
         internal static Build ComputeForValidatedTree(Profile p, string heroKey, IReadOnlyList<TalentDef> tree,
             HeroState allocation, HeroState reachability, HeroTreeLayout layout,
-            Dictionary<string, TalentDef> definitions, bool[] reachabilitySnapshot, StarDependencies dependencies = null)
-            => ComputeTree(p, heroKey, 0, tree, layout, null, 0, allocation, reachability, definitions, reachabilitySnapshot, dependencies);
+            Dictionary<string, TalentDef> definitions, bool[] reachabilitySnapshot, StarDependencies dependencies = null,
+            int? paidPoints = null)
+            => ComputeTree(p, heroKey, 0, tree, layout, null, 0, allocation, reachability, definitions, reachabilitySnapshot, dependencies, paidPoints);
 
         private static Build ComputeTree(Profile p, string heroKey, int heat, IReadOnlyList<TalentDef> tree,
             HeroTreeLayout layout, IEnumerable<Pact> pacts, int dailyId, HeroState allocation = null, HeroState reachability = null,
             Dictionary<string, TalentDef> validatedDefinitions = null, bool[] reachabilitySnapshot = null,
-            StarDependencies dependencies = null)
+            StarDependencies dependencies = null, int? paidPoints = null)
         {
             var h = allocation ?? p.Hero(heroKey);
             Dictionary<string, TalentDef> definitions = validatedDefinitions;
@@ -115,13 +119,16 @@ namespace SodRpg.Core.Game
             var reachabilityState = reachability ?? h;
             var reachable = reachabilitySnapshot ?? layout.ReachabilitySnapshot(reachabilityState);
             bool Unlocked(TalentDef talent) => Rules.BelongsTo(talent, heroKey) && layout.CanReach(reachabilityState, talent, reachable);
-            long spent = 0;
-            foreach (string keystoneId in h.Keystones)
-                if (keystoneId != null && definitions.TryGetValue(keystoneId, out var selectedKey))
-                    spent += selectedKey.KeystoneDefinition?.Cost ?? Content.KeystoneCost;
-            foreach (var allocated in h.Talents)
-                if (definitions.TryGetValue(allocated.Key, out var talent))
-                    spent += (long)Math.Max(0, allocated.Value) * talent.RankCost;
+            long spent = paidPoints ?? 0;
+            if (!paidPoints.HasValue)
+            {
+                foreach (string keystoneId in h.Keystones)
+                    if (keystoneId != null && definitions.TryGetValue(keystoneId, out var selectedKey))
+                        spent += selectedKey.KeystoneDefinition?.Cost ?? Content.KeystoneCost;
+                foreach (var allocated in h.Talents)
+                    if (definitions.TryGetValue(allocated.Key, out var talent))
+                        spent += (long)Math.Max(0, allocated.Value) * talent.RankCost;
+            }
             if (spent > StarProgression.MaxSpendablePoints)
                 throw new InvalidOperationException("The build exceeds the star point budget.");
             var b = new Build
@@ -133,6 +140,7 @@ namespace SodRpg.Core.Game
             };
             var rawStats = new Dictionary<Stat, int>();
             var rawPowers = new Dictionary<Power, int>();
+            var starPowers = new Dictionary<Power, int>();
             var awakenGains = new Dictionary<Power, int>();
             var basePowers = new Dictionary<Power, decimal>();
             var equippedLinks = new Dictionary<string, (LinkDef Link, decimal Base, decimal Scaled)>(StringComparer.Ordinal);
@@ -142,6 +150,11 @@ namespace SodRpg.Core.Game
                 Add(rawPowers, power, value);
                 basePowers.TryGetValue(power, out decimal current);
                 basePowers[power] = current + value;
+            }
+            void AddStarPower(Power power, int value)
+            {
+                if (StarDamageScaling.IsDamage(power)) Add(starPowers, power, value);
+                else AddPower(power, value);
             }
             var selectedTalents = new List<KeyValuePair<TalentDef, int>>();
             foreach (var kv in h.Talents)
@@ -323,8 +336,11 @@ namespace SodRpg.Core.Game
                     {
                         Requires = t.LinkPerRank.Requires,
                         Kind = t.LinkPerRank.Kind,
-                        ValueMilli = checked(t.LinkPerRank.ValueMilli * rank),
+                        ValueMilli = StarDamageScaling.IsDamage(t.LinkPerRank.Kind)
+                            ? StarDamageScaling.ScaleMilli(checked(t.LinkPerRank.ValueMilli * rank), b.SpentStarPoints)
+                            : checked(t.LinkPerRank.ValueMilli * rank),
                     };
+                    link.StarValueMilli = link.ValueMilli;
                     if (global::SodRpg.Core.Game.Links.Validate(link))
                     {
                         b.Links.Add(link);
@@ -339,7 +355,7 @@ namespace SodRpg.Core.Game
                 }
                 else if (t.IsPowerNode)
                 {
-                    AddPower(t.RankPower, t.PerRank * rank);
+                    AddStarPower(t.RankPower, t.PerRank * rank);
                     dependencies?.Touch("P:" + ((int)t.RankPower).ToString(CultureInfo.InvariantCulture), t.Id);
                 }
                 else if (t.PerRank != 0)
@@ -373,7 +389,7 @@ namespace SodRpg.Core.Game
                     foreach (var grant in key.KeystoneDefinition.Grants)
                         if (grant.Kind == AuthoredMechanismKind.StunSourceFilter) { migratedStillWater = true; break; }
                 // 各刻印の保持Powerは1回ずつ入れる（刻印の数だけ重なる。上限は通常の能力上限）。
-                if (key.Power != Power.None && !migratedStillWater) AddPower(key.Power, key.PowerValue);
+                if (key.Power != Power.None && !migratedStillWater) AddStarPower(key.Power, key.PowerValue);
             }
             if (dependencies != null) dependencies.AppliedKeystones = b.SelectedKeystones;
             AuthoredKeystoneComposer.Apply(b);
@@ -392,6 +408,9 @@ namespace SodRpg.Core.Game
                             awakenGains[pw] = rawPowers[pw] - (before + before * DailyDream.PowerBoostPct / 100);
                         }
                     }
+                foreach (var pw in daily.BoostedPowers)
+                    if (starPowers.TryGetValue(pw, out int value))
+                        starPowers[pw] = value + value * DailyDream.PowerBoostPct / 100;
             }
             var pactList = pacts != null ? new List<Pact>(pacts) : new List<Pact>();
             foreach (var id in pactList)
@@ -412,6 +431,14 @@ namespace SodRpg.Core.Game
                 if (NewPowersV129.IsConditionalAttribute(kv.Key) && awakenGains.TryGetValue(kv.Key, out int gain))
                     b.ConditionalBasePowers[kv.Key] = Math.Min(b.Powers[kv.Key], Math.Max(0, kv.Value - gain));
             }
+            foreach (var kv in starPowers)
+            {
+                int basis = Math.Min(Math.Max(0, kv.Value), Content.PowerCap(kv.Key));
+                int ranked = (int)(basis * StarDamageScaling.Multiplier(b.SpentStarPoints));
+                b.UnrankedStarPowers[kv.Key] = basis;
+                b.StarPowers[kv.Key] = ranked;
+                b.Powers[kv.Key] = checked(b.Get(kv.Key) + ranked);
+            }
             foreach (var id in pactList)
             {
                 var d = Game.Pacts.Get(id);
@@ -421,6 +448,7 @@ namespace SodRpg.Core.Game
             var links = AggregateLinks(b.Links);
             b.Links.Clear();
             b.Links.AddRange(links);
+            StarDamageScaling.ApplyEffectiveGimmicks(b);
             return b;
         }
 
@@ -680,8 +708,7 @@ namespace SodRpg.Core.Game
                                 var power = (Power)id;
                                 var target = kind == "u" ? b.ConditionalBasePowers : b.Powers;
                                 if (target.ContainsKey(power) || kind == "u" && !NewPowersV129.IsConditionalAttribute(power)) return null;
-                                int cap = Content.PowerCap(power);
-                                target.Add(power, Math.Max(0, Math.Min((int)(cap * 2.5m), value)));
+                                target.Add(power, Math.Max(0, Math.Min(StarDamageScaling.MaxPowerValue(power), value)));
                             }
                         }
                     }
@@ -696,6 +723,7 @@ namespace SodRpg.Core.Game
                 b.Links.Clear();
                 b.Links.AddRange(links);
                 ScopedBuildCodec.Apply(b);
+                StarDamageScaling.ApplyEffectiveGimmicks(b);
                 b.ValidateCounts();
                 return b;
             }

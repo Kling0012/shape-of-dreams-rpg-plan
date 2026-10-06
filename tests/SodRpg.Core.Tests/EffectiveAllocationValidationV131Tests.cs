@@ -101,7 +101,7 @@ namespace SodRpg.Core.Tests
         }
 
         [Fact]
-        public void Mandatory_stronger_predecessor_rejects_permanently_dominated_expose()
+        public void Mandatory_stronger_predecessor_keeps_a_locally_dominated_expose_effective_through_paid_rank()
         {
             var strong = Effect("test.expose.strong", GimmickEffect.Expose, 10m);
             var weak = Requires(Effect("test.expose.weak", GimmickEffect.Expose, 5m), strong.Id);
@@ -109,16 +109,18 @@ namespace SodRpg.Core.Tests
             var engine = Engine(strong, weak);
             Add(p, engine, strong.Id);
             var plan = engine.Preview(p, Hero, Purchase(weak.Id));
-            Assert.False(plan.CanApply);
-            var detail = plan.SaturationDetails.First(d => d.StarId == weak.Id && d.Field == AllocationEffectiveField.Value);
-            Assert.Equal(AllocationInertReason.StrongestDominated, detail.Reason);
-            Assert.Equal(10000m, detail.DominatingValue);
-            Assert.Equal(5000m, detail.EffectiveValue);
-            Assert.DoesNotContain(weak.Id, p.Hero(Hero).Talents.Keys);
+            Assert.True(plan.CanApply);
+            Assert.Empty(plan.SaturationDetails);
+            Assert.Equal(10m * 1000m * (1m + 1.5m * 1m / 500m),
+                plan.OldEffectiveChannels.First(c => c.StarId == strong.Id).ValueMilli);
+            Assert.Equal(10m * 1000m * (1m + 1.5m * 2m / 500m),
+                plan.NewEffectiveChannels.First(c => c.StarId == strong.Id).ValueMilli);
+            engine.Commit(p, plan);
+            Assert.Equal(1, p.Hero(Hero).Talents[weak.Id]);
         }
 
         [Fact]
-        public void Always_available_stronger_source_dominates_a_weaker_source_with_an_additional_interval()
+        public void An_interval_on_a_locally_dominated_damage_source_does_not_remove_its_paid_rank_benefit()
         {
             var strong = Effect("test.clock.strong", GimmickEffect.Expose, 10m);
             var weak = Requires(Effect("test.clock.weak", GimmickEffect.Expose, 5m), strong.Id);
@@ -127,9 +129,10 @@ namespace SodRpg.Core.Tests
             var engine = Engine(strong, weak);
             Add(p, engine, strong.Id);
             var plan = engine.Preview(p, Hero, Purchase(weak.Id));
-            Assert.False(plan.CanApply);
-            Assert.Contains(plan.SaturationDetails, d => d.StarId == weak.Id && d.EffectiveValue == 5000m &&
-                d.DominatingValue == 10000m && d.Reason == AllocationInertReason.StrongestDominated);
+            Assert.True(plan.CanApply);
+            Assert.Empty(plan.SaturationDetails);
+            Assert.Equal(10m * 1000m * (1m + 1.5m * 2m / 500m),
+                plan.NewEffectiveChannels.First(c => c.StarId == strong.Id).ValueMilli);
         }
 
         [Fact]
@@ -249,11 +252,13 @@ namespace SodRpg.Core.Tests
             Assert.True(engine.AllocationsConnected(p.Hero(Hero)));
         }
 
-        [Fact]
-        public void Choice_change_refunds_lost_parameter_recipient_and_dependent_route_without_auto_selection()
+        [Theory]
+        [InlineData(GimmickEffect.Expose, true)]
+        [InlineData(GimmickEffect.Sap, false)]
+        public void Choice_change_keeps_lost_recipient_points_only_when_they_still_rank_damage(GimmickEffect alternative, bool ranksDamage)
         {
             const string id = "test.receiver.choice";
-            var choice = Choice(id, Effect(id, GimmickEffect.Shield, 1m), Effect(id, GimmickEffect.Expose, 5m));
+            var choice = Choice(id, Effect(id, GimmickEffect.Shield, 1m), Effect(id, alternative, 5m));
             var duration = Modifier("test.receiver.duration", id, GimmickParam.Duration, 10m, 3, 2);
             duration.ScopedModifier.TargetEffects = new[] { GimmickEffect.Shield };
             var leaf = Requires(StatStar("test.receiver.leaf", 1, cost: 4), duration.Id);
@@ -265,15 +270,28 @@ namespace SodRpg.Core.Tests
             string before = State(p);
             var change = new AllocationChange { Kind = AllocationChangeKind.Choice, CandidateStarId = id, SelectedOption = 1 };
             var plan = engine.Preview(p, Hero, change);
-            Assert.Equal(10, plan.RefundCost);
-            Assert.Equal(new[] { duration.Id, leaf.Id }, plan.AffectedRefundIds);
-            Assert.Throws<AllocationValidationException>(() => engine.Commit(p, plan));
-            Assert.Equal(before, State(p));
-            engine.Commit(p, plan, plan.AffectedRefundIds);
+            Assert.True(plan.CanApply);
+            if (ranksDamage)
+            {
+                Assert.Empty(plan.AffectedRefundIds);
+                engine.Commit(p, plan);
+                Assert.Equal(3, p.Hero(Hero).Talents[duration.Id]);
+                Assert.Equal(1, p.Hero(Hero).Talents[leaf.Id]);
+                Assert.Equal(5m * 1000m * (1m + 1.5m * 11m / 500m),
+                    plan.NewEffectiveChannels.First(c => c.StarId == id).ValueMilli);
+            }
+            else
+            {
+                Assert.Equal(10, plan.RefundCost);
+                Assert.Equal(new[] { duration.Id, leaf.Id }, plan.AffectedRefundIds);
+                Assert.Throws<AllocationValidationException>(() => engine.Commit(p, plan));
+                Assert.Equal(before, State(p));
+                engine.Commit(p, plan, plan.AffectedRefundIds);
+                Assert.False(p.Hero(Hero).Talents.ContainsKey(duration.Id));
+                Assert.False(p.Hero(Hero).Talents.ContainsKey(leaf.Id));
+            }
             Assert.Equal(1, p.Hero(Hero).TalentChoices[id]);
             Assert.Equal(1, p.Hero(Hero).Talents[id]);
-            Assert.False(p.Hero(Hero).Talents.ContainsKey(duration.Id));
-            Assert.False(p.Hero(Hero).Talents.ContainsKey(leaf.Id));
         }
 
         [Fact]
@@ -381,7 +399,7 @@ namespace SodRpg.Core.Tests
         }
 
         [Fact]
-        public void Wound_duration_above_final_lifetime_total_has_no_marginal_output()
+        public void Wound_duration_above_the_lifetime_cap_still_has_a_real_paid_rank_damage_benefit()
         {
             var wound = Effect("test.wound", GimmickEffect.Wound, 80m);
             wound.Gimmick.DurationUnits = 5000;
@@ -390,9 +408,11 @@ namespace SodRpg.Core.Tests
             var p = Funded();
             Add(p, engine, wound.Id);
             var plan = engine.Preview(p, Hero, Purchase(duration.Id));
-            Assert.False(plan.CanApply);
-            var detail = plan.SaturationDetails.First(d => d.StarId == duration.Id && d.Field == AllocationEffectiveField.Duration);
-            Assert.Equal(AllocationEffectiveField.Duration, detail.Field);
+            Assert.True(plan.CanApply);
+            var before = plan.OldEffectiveChannels.First(c => c.StarId == wound.Id);
+            var after = plan.NewEffectiveChannels.First(c => c.StarId == wound.Id);
+            Assert.Equal(before.DurationUnits, after.DurationUnits);
+            Assert.Equal(before.ValueMilli / (1m + 1.5m / 500m) * (1m + 1.5m * 2m / 500m), after.ValueMilli);
         }
 
         [Fact]
@@ -413,7 +433,7 @@ namespace SodRpg.Core.Tests
 
 
         [Fact]
-        public void Longer_weaker_wound_cannot_bypass_mandatory_stronger_wounds_exhausted_lifetime_budget()
+        public void A_locally_dominated_wound_still_ranks_the_mandatory_stronger_wound()
         {
             var strong = Effect("test.budget.strong", GimmickEffect.Wound, 100m);
             strong.Gimmick.DurationUnits = 2000;
@@ -423,8 +443,12 @@ namespace SodRpg.Core.Tests
             var p = Funded();
             Add(p, engine, strong.Id);
             var plan = engine.Preview(p, Hero, Purchase(weak.Id));
-            Assert.False(plan.CanApply);
-            Assert.False(p.Hero(Hero).Talents.ContainsKey(weak.Id));
+            Assert.True(plan.CanApply);
+            var before = plan.OldEffectiveChannels.First(c => c.StarId == strong.Id);
+            var after = plan.NewEffectiveChannels.First(c => c.StarId == strong.Id);
+            Assert.Equal(before.ValueMilli / (1m + 1.5m / 500m) * (1m + 1.5m * 2m / 500m), after.ValueMilli);
+            engine.Commit(p, plan);
+            Assert.Equal(1, p.Hero(Hero).Talents[weak.Id]);
         }
 
         [Theory]

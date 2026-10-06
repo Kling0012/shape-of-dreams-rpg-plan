@@ -42,6 +42,20 @@ class MemoryDamageBalanceTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "valueRef only"):
             star_values.resolve_manifest("yubar", manifest, table)
 
+    def test_growth_references_reject_literals_missing_values_and_wrong_paths(self):
+        table = star_values.load_table()
+        manifest = copy.deepcopy(star_values.load_manifests()["husk"])
+        entry = next(row for row in manifest["stars"] if row["kind"] == "RunGrowth")
+        key = entry["growth"]["threshold"]["valueRef"]
+        for invalid in (1, {"valueRef": key + "-wrong"}, {"valueRef": key, "value": 1}):
+            entry["growth"]["threshold"] = invalid
+            with self.subTest(invalid=invalid), self.assertRaisesRegex(ValueError, "canonical valueRef"):
+                star_values.resolve_manifest("husk", manifest, table)
+        entry["growth"]["threshold"] = {"valueRef": key}
+        del table["runGrowth"][key]
+        with self.assertRaisesRegex(ValueError, "missing runGrowth reference"):
+            star_values.resolve_manifest("husk", manifest, table)
+
     def test_content_identity_uses_effective_values_not_multiplier_shape_or_replaced_legacy(self):
         original = star_values.load_table()
         manifests = star_values.load_manifests()

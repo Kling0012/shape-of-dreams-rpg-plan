@@ -20,7 +20,7 @@ namespace SodRpg.Core.Game
             public ConditionalWeakTable<object, State> FiredActivations;
             public HashSet<long> FiredSerials;
         }
-        private struct Mark { public int Victim; public float Until; public int Expose; public bool Paid; }
+        private struct Mark { public int Victim; public float Until; public decimal Expose; public bool Paid; }
         private List<State> _states = new List<State>();
 
         public void SetBuild(IReadOnlyList<PairComboEntry> entries)
@@ -43,7 +43,7 @@ namespace SodRpg.Core.Game
                     foreach (var old in _states)
                     {
                         if (old.Entry.Def.Id != entry.Def.Id) continue;
-                        if (old.Entry.Ranks == entry.Ranks) state = old;
+                        if (old.Entry.Ranks == entry.Ranks && old.Entry.DamageMultiplier == entry.DamageMultiplier) state = old;
                         else
                         {
                             state = Create(entry, old.HasFired, old.LastFired);
@@ -81,7 +81,8 @@ namespace SodRpg.Core.Game
                     Def = new GimmickDef
                     {
                         Trigger = trigger == PairComboTrigger.OnBasicAttack ? GimmickTrigger.OnHit : (GimmickTrigger)trigger,
-                        Effect = def.Effect, Value = entry.Value, Arg = def.Arg, Cooldown = def.Cooldown
+                        Effect = def.Effect, Value = entry.Value, EffectiveValue = entry.EffectiveValue,
+                        Arg = def.Arg, Cooldown = def.Cooldown
                     }
                 }
             };
@@ -154,11 +155,11 @@ namespace SodRpg.Core.Game
         }
 
         /// <summary>Maximum live pair-mark vulnerability owned by this hero, in percentage points.</summary>
-        public int ExposePercent(int victimId, float now)
+        public float ExposePercent(int victimId, float now)
         {
             if (!_canExpose || victimId == 0 || !Gimmicks.Finite(now)) return 0;
             PruneExpired(now);
-            int max = 0;
+            decimal max = 0;
             foreach (var state in _states)
             {
                 if (state.Marks == null) continue;
@@ -166,7 +167,7 @@ namespace SodRpg.Core.Game
                     if (mark.Victim == victimId && mark.Expose > max)
                         max = mark.Expose;
             }
-            return max;
+            return (float)max;
         }
 
         /// <summary>
@@ -219,7 +220,7 @@ namespace SodRpg.Core.Game
                         var mark = new Mark
                         {
                             Victim = victimId, Until = now + PairCombos.Duration,
-                            Expose = state.Entry.Ranks + 1,
+                            Expose = (state.Entry.Ranks + 1) * state.Entry.DamageMultiplier,
                             Paid = found >= 0 && state.Marks[found].Paid
                         };
                         if (found < 0) state.Marks.Add(mark); else state.Marks[found] = mark;

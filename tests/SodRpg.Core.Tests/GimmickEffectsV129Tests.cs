@@ -267,7 +267,8 @@ namespace SodRpg.Core.Tests
         {
             Assert.Equal(0, Gimmicks.ElementEdgePercent(40, false, false, false, false));
             Assert.Equal(40, Gimmicks.ElementEdgePercent(40, false, true, false, false));
-            Assert.Equal(160, Gimmicks.ElementEdgePercent(int.MaxValue, true, true, true, true));
+            Assert.Equal((int)decimal.Ceiling(40m * (1m + 1.5m * 504 / 500)) * 4,
+                Gimmicks.ElementEdgePercent(int.MaxValue, true, true, true, true));
             Assert.Equal(0.25f, Gimmicks.AddedCritProbability(0, 25));
             Assert.Equal(0.5f, Gimmicks.AddedCritProbability(0.5f, 25));
             Assert.Equal(1f, Gimmicks.AddedCritProbability(0.9f, 25));

@@ -62,6 +62,17 @@ LastStarlight の捕捉はホスト上の生存中・登録済みの旅人が正
 
 装備の変更は遠征の外か確保地点でのみ、星図は遠征の外でのみ変更できる。
 
+### 星の位階と鍛錬（Issue #117・#120）
+
+- 星由来のダメージ量・増幅量に `r(p)=1+1.5×p/500`（pは使用済み星点）を適用する。125/250/500/504点で1.375/1.75/2.5/2.512倍。装備由来の量、能力値、加速・CD・回復・軽減・無敵・確率・対象数・範囲・持続・発動条件は変えない。属性付与の値はnativeのスタック数と確率で、ダメージ係数ではないため据置。星の記憶ダメージはCrescendoの合計120%上限の外へ加え、Crescendo自身の最大40%は維持する。
+- 個別のMemoryDamageは位階適用後に2.5%/点以上。購入費用cに対して `ceil(2.5×c/r(c), 0.001)` を基礎値の下限とし、最小の購入時点でも満たす。費用1の不足成分524件は1または2→2.493、実出力は1点時2.500%。接続星の費用を含む実戦ビルド全体の効率保証ではない。
+- 割当の有効性にも、使用済み点で他の星ダメージが増える実出力を含める。局所的に上限へ達した星でも、その増幅が実際に増えるなら購入・保持できる。整数切捨て／千分率丸めでダメージが増えない場合は、その位階だけで有効とは扱わない。明示的な永久無効化は引き続き購入不可。返還では位階も減り、既存の一括返還承認を必要とする。
+- 鍛錬F2：Vesperの閾値20→11%HP、Cetus16→9%HP、Mistの入口上限80→60、空殻の入口上限92→45・攻撃力/スタック0.69→1.38・上限星の増分各23→12。獲得1つと速度Choiceの2倍は維持。空殻の上限星2つでの素の最大攻撃力は95.22のまま。既定行動モデルの入口のみでは深度0は全4種Z4、深度1は全4種Z3（行動による差があり、全プレイヤーへの保証ではない）。
+- 星図の本文は基礎値を示し、現在の位階倍率とダメージ係数を別表示する。数値は `tools/balance/stars.json` から生成する。星ID・rank・choice・費用・保存形式5・Protocol 23は維持し、ホストは取得内容から再計算する。内容が変わるため協力する全員を同じ版に揃え、鍛錬の更新は帰還後・次の遠征開始から適用する（遠征中の更新を推奨しない）。
+- **EN:** Star damage quantities/amplification use `r(p)=1+1.5×p/500`, where p is spent points: ×1.375/1.75/2.5/2.512 at 125/250/500/504 points. Equipment, stats, haste, cooldowns, healing, reduction, immunity, chances, targets, radius, duration and activation conditions stay unchanged; native elemental stack/chance values are not damage coefficients. Star memory damage sits outside Crescendo's combined 120% cap; Crescendo retains its own 40% maximum. Each MemoryDamage effect meets 2.5%/point after rank even at conservative purchase cost c, using a base floor `ceil(2.5×c/r(c),0.001)`; 524 cost-1 components change 1 or 2→2.493, yielding 2.500% at 1 point. This excludes connector costs, not a whole-build guarantee.
+- **EN:** F2 changes Vesper/Cetus thresholds 20→11%/16→9% HP, Mist entrance cap80→60, and Husk cap92→45, attack per stack0.69→1.38 and each cap-star bonus23→12. Gain1/double-gain choices remain; Husk's two-cap-star base maximum stays95.22. Under the default action model all four entrances cap at Z4/Z3 for depth0/1, not for every player. Descriptions separate base and current-ranked values. The balance table generates numerics; IDs/ranks/choices/costs, save format5 and Protocol23 stay unchanged, with authoritative host recomputation and existing content matching. Everyone in co-op must use the same build. Update after returning, before the next expedition, not mid-run.
+- **EN:** Allocation validity includes real damage gained through total spent points. A locally capped star can remain purchasable if it increases another star's ranked damage; unchanged output after integer/thousandth quantization is not sufficient. Explicit permanent disables still prevent purchase. Refunds reduce rank and retain the existing atomic-refund approval.
+
 ### 鞄のあふれと欠片（Issue #200）
 
 - 容量を超えると、レア度の低い遺物から外し、同レア度ではスコアの低いものを先に外す。取引予約中の遺物は対象外。保管庫・遺失物のあふれも従来どおり欠片。

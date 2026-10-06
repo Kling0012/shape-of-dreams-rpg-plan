@@ -109,6 +109,11 @@ namespace SodRpg.Core.Game
             foreach (string group in groups) into.UnionWith(groupMembers[group]);
         }
 
+        internal void AddOutputMembers(string group, HashSet<string> into)
+        {
+            if (groupMembers.TryGetValue(group, out var stars)) into.UnionWith(stars);
+        }
+
         internal string Find(string id)
         {
             if (!parent.TryGetValue(id, out string up)) { parent.Add(id, id); return id; }

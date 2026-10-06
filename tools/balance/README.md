@@ -1,9 +1,10 @@
-# バランス外部定義・比較（Issue149 段階0・1）
+# バランス外部定義・比較
 
-`forge.json` の強化失敗率3係数と、`stars.json` の `MemoryDamage` 基準値・倍率を
-型付きC#へ生成します。記憶ダメージはmanifestの480親＋258選択肢と旧ルート98成分、
-計836欄を移行済みです。基準値と初期倍率1は従来どおりで、数値バランス、
-保存形式・Protocol・内容指紋は変更しません。MemoryHasteや仕掛けの調整数値は対象外です。
+`forge.json` の強化失敗率3係数と、`stars.json` の `MemoryDamage` 基準値・倍率、
+鍛錬の閾値・上限・1スタック量・上限増分、星ダメージの位階係数を型付きC#へ生成します。
+記憶ダメージはmanifestの480親＋258選択肢と旧ルート98成分、計836欄を移行済みです。
+#117/#120は効果量を更新しますが、星ID・段数・費用・選択肢・保存形式・Protocolは変更しません。
+MemoryHasteや仕掛けの基準調整数値はこの表の対象外です。
 
 ## コマンド
 
@@ -65,9 +66,39 @@ python tools/balance/gen_cs.py --check
   全入力の検証・renderが成功してから変更のある生成物だけを書きます。
   `python tools/star-manifest/validate.py` と単体の星生成も同じ解決済み値を検証します。
 
+### #117/#120 の位階と個別下限
+
+`rankScaling` は `damageGain: 1.5`、`pointDenominator: 500`、`maxPoints: 504`。
+`StarRankBalance.g.cs` に点あたり0.003、最大倍率2.512を生成し、Coreが消費します。
+星由来のダメージ量・増幅量だけが `r(p)=1+0.003p` 倍されます。
+能力値、回復、加速、CD、確率、対象数、継続時間は対象外です。
+
+固有星の各MemoryDamage効果は、位階適用**後**の効率2.5%/点を保守的に満たすよう、
+親星のRankCostを `c` として基礎値 `ceil(2.5*c/(1+0.003*c), 0.001)` を採用します。
+既存の有効基礎値で既に満たす効果は据置。1点星の必要基礎値は2.493%、3点星は7.434%です。
+取得には少なくとも `p>=c` の支払いが必要なため、接続専用星を数えなくても下限を保証できます。
+Choice子にも親星の費用を使い、実ツリーが採用した旧ルートの記憶成分も同じ条件で確認します。
+表の数値は基礎値であり、500点の値を基礎値として再度位階倍するものではありません。
+
+### #120 F2 の遠征の鍛錬
+
+manifestの `growth.threshold/cap/effects/*/amount/capBonus` は正準 `valueRef` だけを持ち、
+数値は `stars.json.runGrowth` の `<星ID>/growth/<欄>`（Choice子は `options/<番号>/growth/<欄>`）。
+解決済みの数値を既存schema検証・星生成へ渡すので、日本語／英語の効果説明も生成値を使います。
+RunGrowthのtrigger・stat・target・effectPct・doubleGainはmanifestの既存形式を維持します。
+
+F2はVesper閾値11%HP、Cetus閾値9%HP、Mist入口cap60、
+空殻入口cap45・攻撃力+1.38/stack・上限星各+12。入口gain1と速度Choiceのgain2は据置です。
+空殻の上限星2つの素の最大は `(45+12+12)*1.38=95.22` で旧値 `138*0.69` と同じ。
+既定のBalanceSim行動では入口のみ・深度0は4種Z4、深度1は4種Z3に揃える案です。
+全プレイヤー・全深度の到達保証ではなく、守り重視など行動仮定を変えると結果は変わります。
+鍛錬は遠征ごとにリセットされるため、更新は帰還後・次遠征から適用してください。
+旧スタックを新定義へ復元する遠征中更新は安全な移行とは扱いません。
+
 ゲーム起動時にJSON・Python・ファイルハッシュは使いません。値は生成済み定数／星定義で、
-戦闘中の倍率再計算や文字列キー検索はありません。MOD起動時の登録失敗は警告し、
-その旅人の生成星図・移行規則だけを外します。開発ツール側は失敗を非ゼロで伝えます。
+戦闘中の文字列キー検索はありません。位階はBuildの再集計時に計算します。
+MOD起動時の登録失敗は警告し、その旅人の生成星図・移行規則だけを外します。
+開発ツール側は失敗を非ゼロで伝えます。
 
 ## 軽量な記憶効率
 
@@ -82,6 +113,15 @@ Choiceは全A（option 0）／全B（option 1）の2構成を別集計し、同�
 `private` / `shared` / `total` を分け、旅人×構成×由来ごとの記憶効率min/maxも出します。
 費用0の効率は `null`／`—`。このmin/maxは表示構成内の記憶間比較で、選択最適化の上下限ではありません。
 
+従来の `damagePercent` / `percentPerPoint` / `minPercentPerPoint` / `maxPercentPerPoint` は
+基礎値のまま維持し、同じmodelVersion・conditionsで前後比較できます。
+位階を考慮する別指標は `minimumRank*`（効果ごとに親RankCost点）と
+`at500Points*`（すべて同じ500点）。JSONの各contributionとentryにも両者を保存します。
+位階投影metadataは比較条件ではなく、既存基準にない指標は「追加/なし」と表示します。
+最小購入点は個々の効果の独立した下限、500点は固定条件の投影であり、全星を同時購入したBuildではありません。
+各段の各効果をCoreの `StarDamageScaling.ScaleMilli` で0.001%単位へ丸めてから合計します。
+同じ記憶の全星をまとめて位階倍するBuildの集計とは丸め順序が異なる独立投影です。
+
 ## 出力と前回成功基準
 
 既定の出力先は `tools/balance/results/`（gitignore対象）。成功した実行ごとに
@@ -90,7 +130,7 @@ Choiceは全A（option 0）／全B（option 1）の2構成を別集計し、同�
 - `forge.md` / `forge.json`: 全レア度・合法な限界突破回数・現在強化値の一覧。
 - `star-efficiency.md` / `star-efficiency.json`: 旅人×記憶×全A/全B×由来の効果量・費用・%/点と旅人別min/max。
 - `expeditions.md` / `expeditions.json`: 既存Simulationの遠征・節目・容量計測。
-- `current.json`: 3モードのスナップショット、検証状態、日時、生成入力の `tableMetadata.forge`（schemaVersionと3係数）／`tableMetadata.stars`（schemaVersionと倍率）、既存Gitコミットの `gitRevision`（取得不能時null、比較表示はunknown）。
+- `current.json`: 3モードのスナップショット、検証状態、日時、生成入力の `tableMetadata.forge`（schemaVersionと3係数）／`tableMetadata.stars`（schemaVersionと倍率・位階係数・鍛錬数値）、既存Gitコミットの `gitRevision`（取得不能時null、比較表示はunknown）。
 - `comparison.md`: 現在／前回成功／差／相対差。
 
 検証済み基準は `last-success.json`。`--no-tests` は独立した
@@ -115,8 +155,6 @@ Git取得は開発ツールのみで行い、ゲーム起動の依存を追加�
 失敗率・記憶ダメージ (%) の絶対差は percentage points (`pp`)、効率の差は `%/点`、
 相対差は `%` です。未到達割合は0〜1のfractionで、差もfractionのまま表示します。
 小数は `Decimal` で読み込み・差分計算し、成功基準にもJSONの数値として保存します。
-例えばユバール倍率を1→1.10にすると、全Aの `St_Q_SuperNova` は2.36→2.596 %/点（差0.236、+10%）、
-共有の `St_C_FlashFreeze` は4→4 %/点です（既定表で実測）。
 
 ## 実測JSONの契約
 
@@ -146,10 +184,12 @@ System.Text.Jsonで直接数値を書き出し、Markdownの丸め値や文言�
 `--metrics-json` は forge / star-efficiency / expeditions に対応し、他モードは重い計測前に引数エラーになります。
 JSON出力を指定しない既存モードの挙動は維持します（setsの既存問題はstage0対象外）。
 
-初期表の星図登録後ContentFingerprintは `10575-81dd841870386d98` のままです。
+旧初期表の星図登録後ContentFingerprint `10575-81dd841870386d98` は、元の数値内容を表す互換情報です。
 初期の採用済み記憶成分の既存FNV-1a内容identityは凍結した互換情報で、編集可能な既定値ではありません。
 有効数値を変更すると正準key/milliレコードがContentFingerprintへ追加されます。
 相殺された基準値・倍率が同じ有効内容を作る場合や、移行行で置換された旧成分だけを変える場合は指紋を変えません。
+位階のgain・分母・最大点と鍛錬の解決済み数値も正準レコードを生成し、
+既存のContentFingerprint通信照合に含めます。別のファイルハッシュ検証は追加しません。
 既存の鍛冶期待値テストは原本 `forge.json` から独立計算する期待値へ移行し、実際の失敗率・固定seedでの成功失敗結果を検証します。
 これは安全性、形式、契約の検証を緩めたり、任意の係数で全テストが常に成功すると保証したりするものではありません。
 本レポートは実際のCore呼出と固定条件のシミュレーションであり、実ゲームの勝率や経済の保証ではありません。

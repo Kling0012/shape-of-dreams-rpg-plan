@@ -261,7 +261,7 @@ namespace SodRpg.Core.Game
                     UncappedRadiusUnits = entry.Def.UncappedRadiusUnits,
                     UncappedExtraTargets = entry.Def.UncappedExtraTargets,
                     UncappedChanceUnits = entry.Def.UncappedChanceUnits,
-                    EffectiveValue = Math.Min(entry.Def.EffectiveValueOrAuthored, Cap(entry.Def.Effect)),
+                    EffectiveValue = Math.Min(entry.Def.EffectiveValueOrAuthored, StarDamageScaling.EffectCeiling(entry.Def.Effect)),
                     Arg = entry.Def.Arg,
                     Cooldown = Math.Max(MinimumCooldown(entry.Def.Effect), Math.Min(entry.Def.Cooldown, MaxCooldown)),
                     DurationUnits = SupportsParameter(entry.Def, GimmickParam.Duration) ? Math.Min(entry.Def.DurationUnits, MaxParameterPercent * 100) : 0,
@@ -568,25 +568,25 @@ namespace SodRpg.Core.Game
         {
             if (!Gimmicks.Finite(now)) return 0;
             PruneExpired(now);
-            long strongest = 0;
+            decimal strongest = 0;
             foreach (var state in ActiveStates())
                 if (state.BuffActive && state.Entry.Def.Effect == effect)
-                    strongest = Math.Max(strongest, state.Entry.Def.ValuePrecise);
-            return strongest / (float)Gimmicks.PreciseValueScale;
+                    strongest = Math.Max(strongest, state.Entry.Def.EffectiveValueOrAuthored);
+            return (float)strongest;
         }
 
         public float ExposePercent(int victimId, float now)
         {
             if (!_hasExposeEntries || !Gimmicks.Finite(now)) return 0;
             PruneExpired(now);
-            long strongest = 0;
+            decimal strongest = 0;
             foreach (ActiveEntry state in ActiveStates())
             {
                 if (state.Entry.Def.Effect != GimmickEffect.Expose || state.Victims == null) continue;
                 for (int j = 0; j < state.Victims.Count; j++)
-                    if (state.Victims[j].VictimId == victimId) strongest = Math.Max(strongest, state.Entry.Def.ValuePrecise);
+                    if (state.Victims[j].VictimId == victimId) strongest = Math.Max(strongest, state.Entry.Def.EffectiveValueOrAuthored);
             }
-            return strongest / (float)Gimmicks.PreciseValueScale;
+            return (float)strongest;
         }
     }
 }

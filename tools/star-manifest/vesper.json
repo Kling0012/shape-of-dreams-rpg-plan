@@ -27282,16 +27282,24 @@
       "power": null,
       "growth": {
         "trigger": "DamageTakenMaxHpPct",
-        "threshold": 20,
-        "cap": 60,
+        "threshold": {
+          "valueRef": "vesper.run.g1/growth/threshold"
+        },
+        "cap": {
+          "valueRef": "vesper.run.g1/growth/cap"
+        },
         "effects": [
           {
             "stat": "Armor",
-            "amount": 1
+            "amount": {
+              "valueRef": "vesper.run.g1/growth/effects/0/amount"
+            }
           },
           {
             "stat": "MaxHealthFlat",
-            "amount": 4
+            "amount": {
+              "valueRef": "vesper.run.g1/growth/effects/1/amount"
+            }
           }
         ]
       },
@@ -27331,7 +27339,9 @@
       "power": null,
       "growth": {
         "target": "vesper.run.g1",
-        "capBonus": 20,
+        "capBonus": {
+          "valueRef": "vesper.run.m1/growth/capBonus"
+        },
         "effectPct": 0,
         "doubleGain": false
       },
@@ -27345,7 +27355,7 @@
       "rankCost": 1,
       "nameJa": "積もる傷痕",
       "nameEn": "Deepening Scars",
-      "notes": "上限 +20"
+      "notes": "上限増分はバランス表から生成。 / Cap increase is generated from the balance table."
     },
     {
       "id": "vesper.run.m2",
@@ -27371,7 +27381,9 @@
       "power": null,
       "growth": {
         "target": "vesper.run.g1",
-        "capBonus": 20,
+        "capBonus": {
+          "valueRef": "vesper.run.m2/growth/capBonus"
+        },
         "effectPct": 0,
         "doubleGain": false
       },
@@ -27385,7 +27397,7 @@
       "rankCost": 1,
       "nameJa": "耐え抜いた証",
       "nameEn": "Mark of Endurance",
-      "notes": "上限 +20"
+      "notes": "上限増分はバランス表から生成。 / Cap increase is generated from the balance table."
     },
     {
       "id": "vesper.run.choice",
@@ -27421,7 +27433,9 @@
           "power": null,
           "growth": {
             "target": "vesper.run.g1",
-            "capBonus": 0,
+            "capBonus": {
+              "valueRef": "vesper.run.choice/options/0/growth/capBonus"
+            },
             "effectPct": 50,
             "doubleGain": false
           },
@@ -27440,7 +27454,9 @@
           "power": null,
           "growth": {
             "target": "vesper.run.g1",
-            "capBonus": 0,
+            "capBonus": {
+              "valueRef": "vesper.run.choice/options/1/growth/capBonus"
+            },
             "effectPct": 0,
             "doubleGain": true
           },

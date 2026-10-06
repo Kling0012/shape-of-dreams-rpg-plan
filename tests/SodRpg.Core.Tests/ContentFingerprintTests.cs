@@ -29,7 +29,7 @@ namespace SodRpg.Core.Tests
             Assert.True(ContentFingerprint.Matches(13, ContentFingerprint.Value, 13));
             var entry = new NativeMemoryModifierEntry {
                 Memory = "St_D_IcyVeins", Kind = LinkKind.MemoryDamage,
-                ValueMilli = 120000, CapProfileId = "integration.negotiation.native"
+                ValueMilli = (int)(120000m * (1m + 1.5m * 504m / 500m)), CapProfileId = "integration.negotiation.native"
             };
             Assert.True(FractionalScopedModifiers.ValidNativeEntry(entry));
             entry.ValueMilli++;
