@@ -9,16 +9,7 @@
     "base": "head.tidal_circlet",
     "nameJa": "潮鳴りの額冠",
     "nameEn": "Tidecaller's Circlet",
-    "powers": [
-     {
-      "power": "Fetters",
-      "value": 15
-     },
-     {
-      "power": "Barrier",
-      "value": 10
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.tide.head/powers",
     "flavorJa": "満ち引きの音が、冷えた思考を静かに運ぶ。",
     "flavorEn": "The rhythm of the tide carries cold thoughts quietly in."
    },
@@ -28,16 +19,7 @@
     "base": "hands.tide_gloves",
     "nameJa": "潮鳴りの手袋",
     "nameEn": "Tidecaller's Gloves",
-    "powers": [
-     {
-      "power": "Aegis",
-      "value": 18
-     },
-     {
-      "power": "Frost",
-      "value": 20
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.tide.hands/powers",
     "flavorJa": "掬った潮水は、指の間で薄い氷になる。",
     "flavorEn": "Scooped seawater turns to thin ice between the fingers."
    },
@@ -47,21 +29,12 @@
     "base": "feet.tide_sandals",
     "nameJa": "潮鳴りの渚履",
     "nameEn": "Tidecaller's Sandals",
-    "powers": [
-     {
-      "power": "Frost",
-      "value": 25
-     },
-     {
-      "power": "Tailwind",
-      "value": 20
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.tide.feet/powers",
     "flavorJa": "波打ち際に残る足跡は、すぐ凍って砕ける。",
     "flavorEn": "Footprints at the waterline freeze, then shatter."
    }
   ],
-  "sixPieceRef": "tools/balance/sets.json#set.tide/sixPiece"
+  "sixPieceRef": "tools/balance/equipment/sets.json#set.tide/sixPiece"
  },
  {
   "set": "set.lamp",
@@ -73,16 +46,7 @@
     "base": "head.lantern_hat",
     "nameJa": "灯守の笠",
     "nameEn": "Lampkeeper's Hat",
-    "powers": [
-     {
-      "power": "Radiance",
-      "value": 40
-     },
-     {
-      "power": "Barrier",
-      "value": 10
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.lamp.head/powers",
     "flavorJa": "雨の夜でも、笠の下の灯だけは消えない。",
     "flavorEn": "Beneath the hat, the lamp never goes out, even in rain."
    },
@@ -92,16 +56,7 @@
     "base": "hands.lantern_fingerless",
     "nameJa": "灯守の指抜き",
     "nameEn": "Lampkeeper's Fingerless Gloves",
-    "powers": [
-     {
-      "power": "StardustCycle",
-      "value": 12
-     },
-     {
-      "power": "ReadyGuard",
-      "value": 8
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.lamp.hands/powers",
     "flavorJa": "灯芯を整える指先は、いつも静かで温かい。",
     "flavorEn": "Fingers that trim the wick are always quiet and warm."
    },
@@ -111,21 +66,12 @@
     "base": "feet.dawn_steps",
     "nameJa": "灯守の長靴",
     "nameEn": "Lampkeeper's Boots",
-    "powers": [
-     {
-      "power": "Tailwind",
-      "value": 20
-     },
-     {
-      "power": "SecondWind",
-      "value": 20
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.lamp.feet/powers",
     "flavorJa": "灯を掲げて歩く足は、夜道で迷わない。",
     "flavorEn": "Feet that walk holding a lamp never lose the night road."
    }
   ],
-  "sixPieceRef": "tools/balance/sets.json#set.lamp/sixPiece"
+  "sixPieceRef": "tools/balance/equipment/sets.json#set.lamp/sixPiece"
  },
  {
   "set": "set.cinder",
@@ -137,16 +83,7 @@
     "base": "head.ember_crown",
     "nameJa": "残火の冠",
     "nameEn": "Cinder Crown",
-    "powers": [
-     {
-      "power": "Thorns",
-      "value": 25
-     },
-     {
-      "power": "Ember",
-      "value": 15
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.cinder.head/powers",
     "flavorJa": "消えかけの火ほど、触れた者に長く残る。",
     "flavorEn": "A dying flame lingers longest on whoever touches it."
    },
@@ -156,16 +93,7 @@
     "base": "hands.ember_gauntlets",
     "nameJa": "残火の手甲",
     "nameEn": "Cinder Gauntlets",
-    "powers": [
-     {
-      "power": "Shatter",
-      "value": 50
-     },
-     {
-      "power": "Blaze",
-      "value": 30
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.cinder.hands/powers",
     "flavorJa": "握った拳の中で、火の粉が静かに爆ぜる。",
     "flavorEn": "Sparks burst quietly inside the clenched fist."
    },
@@ -175,21 +103,12 @@
     "base": "feet.ember_treads",
     "nameJa": "残火の足甲",
     "nameEn": "Cinder Treads",
-    "powers": [
-     {
-      "power": "Tailwind",
-      "value": 20
-     },
-     {
-      "power": "Ember",
-      "value": 15
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.cinder.feet/powers",
     "flavorJa": "踏みしめた地面に、赤い足跡が残る。",
     "flavorEn": "Red footprints glow where the ground was trodden."
    }
   ],
-  "sixPieceRef": "tools/balance/sets.json#set.cinder/sixPiece"
+  "sixPieceRef": "tools/balance/equipment/sets.json#set.cinder/sixPiece"
  },
  {
   "set": "set.dusk",
@@ -201,16 +120,7 @@
     "base": "head.raven_mask",
     "nameJa": "黄昏の鴉面",
     "nameEn": "Dusk Raven Mask",
-    "powers": [
-     {
-      "power": "Umbra",
-      "value": 30
-     },
-     {
-      "power": "OpeningStrike",
-      "value": 40
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.dusk.head/powers",
     "flavorJa": "鴉の目は、日が落ちる直前の獲物を逃さない。",
     "flavorEn": "The raven's eye never loses prey at the edge of dusk."
    },
@@ -220,16 +130,7 @@
     "base": "hands.shadow_gloves",
     "nameJa": "黄昏の影手袋",
     "nameEn": "Dusk Shadowgloves",
-    "powers": [
-     {
-      "power": "Umbra",
-      "value": 30
-     },
-     {
-      "power": "CriticalEcho",
-      "value": 4
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.dusk.hands/powers",
     "flavorJa": "夕影を縫い込んだ指が、獲物の急所をなぞる。",
     "flavorEn": "Fingers stitched with evening shadow trace the prey's weak point."
    },
@@ -239,21 +140,12 @@
     "base": "feet.duskstep_boots",
     "nameJa": "黄昏の足甲",
     "nameEn": "Duskstep Greaves",
-    "powers": [
-     {
-      "power": "Executioner",
-      "value": 30
-     },
-     {
-      "power": "Tailwind",
-      "value": 20
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.dusk.feet/powers",
     "flavorJa": "影が伸びる速さで、獲物との距離を詰める。",
     "flavorEn": "They close the gap as fast as shadows lengthen."
    }
   ],
-  "sixPieceRef": "tools/balance/sets.json#set.dusk/sixPiece"
+  "sixPieceRef": "tools/balance/equipment/sets.json#set.dusk/sixPiece"
  },
  {
   "set": "set.winter",
@@ -265,16 +157,7 @@
     "base": "head.icewall_helm",
     "nameJa": "冬枯れの氷壁兜",
     "nameEn": "Winterbound Icewall Helm",
-    "powers": [
-     {
-      "power": "Fetters",
-      "value": 15
-     },
-     {
-      "power": "Aegis",
-      "value": 18
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.winter.head/powers",
     "flavorJa": "氷の壁は、吹雪の中でも一歩も退かない。",
     "flavorEn": "A wall of ice does not yield a single step to the blizzard."
    },
@@ -284,16 +167,7 @@
     "base": "hands.snowmelt_mitts",
     "nameJa": "冬枯れの雪解け手袋",
     "nameEn": "Winterbound Snowmelt Mitts",
-    "powers": [
-     {
-      "power": "Thorns",
-      "value": 28
-     },
-     {
-      "power": "Frost",
-      "value": 25
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.winter.hands/powers",
     "flavorJa": "溶けかけの氷は、刃のように鋭い。",
     "flavorEn": "Half-melted ice is sharp as a blade."
    },
@@ -303,21 +177,12 @@
     "base": "feet.winterhide_boots",
     "nameJa": "冬枯れの毛皮靴",
     "nameEn": "Winterbound Hideboots",
-    "powers": [
-     {
-      "power": "Bulwark",
-      "value": 20
-     },
-     {
-      "power": "Barrier",
-      "value": 10
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.winter.feet/powers",
     "flavorJa": "冬毛の靴は、雪を踏んでも音を立てない。",
     "flavorEn": "Winter-fur boots make no sound on the snow."
    }
   ],
-  "sixPieceRef": "tools/balance/sets.json#set.winter/sixPiece"
+  "sixPieceRef": "tools/balance/equipment/sets.json#set.winter/sixPiece"
  },
  {
   "set": "set.starsong",
@@ -329,16 +194,7 @@
     "base": "head.comet_diadem",
     "nameJa": "星詠みの冠",
     "nameEn": "Starsinger's Diadem",
-    "powers": [
-     {
-      "power": "StarShield",
-      "value": 18
-     },
-     {
-      "power": "StardustCycle",
-      "value": 12
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.starsong.head/powers",
     "flavorJa": "彗星の尾が、詠み手の額で静かに揺れる。",
     "flavorEn": "A comet's tail sways quietly upon the singer's brow."
    },
@@ -348,16 +204,7 @@
     "base": "hands.star_rings",
     "nameJa": "星詠みの指環",
     "nameEn": "Starsinger's Rings",
-    "powers": [
-     {
-      "power": "Overload",
-      "value": 18
-     },
-     {
-      "power": "CriticalEcho",
-      "value": 4
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.starsong.hands/powers",
     "flavorJa": "指環が触れ合うたび、星座が一つ目を覚ます。",
     "flavorEn": "Each chime of the rings wakes another constellation."
    },
@@ -367,21 +214,12 @@
     "base": "feet.star_slippers",
     "nameJa": "星詠みの靴",
     "nameEn": "Starsinger's Slippers",
-    "powers": [
-     {
-      "power": "UltimateSurge",
-      "value": 15
-     },
-     {
-      "power": "Tailwind",
-      "value": 20
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.starsong.feet/powers",
     "flavorJa": "星座の上を歩くように、足取りが軽い。",
     "flavorEn": "Each step feels like walking across a constellation."
    }
   ],
-  "sixPieceRef": "tools/balance/sets.json#set.starsong/sixPiece"
+  "sixPieceRef": "tools/balance/equipment/sets.json#set.starsong/sixPiece"
  },
  {
   "set": "set.hunt",
@@ -393,16 +231,7 @@
     "base": "head.hunter_hood",
     "nameJa": "狩猟団の頭巾",
     "nameEn": "Huntmaster's Hood",
-    "powers": [
-     {
-      "power": "OpeningStrike",
-      "value": 40
-     },
-     {
-      "power": "Executioner",
-      "value": 25
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.hunt.head/powers",
     "flavorJa": "獲物の目に映るのは、頭巾の影だけ。",
     "flavorEn": "All the prey ever sees is the shadow of the hood."
    },
@@ -412,16 +241,7 @@
     "base": "hands.hunting_sinew",
     "nameJa": "狩猟団の筋帯",
     "nameEn": "Huntmaster's Sinew Wraps",
-    "powers": [
-     {
-      "power": "CritSplash",
-      "value": 26
-     },
-     {
-      "power": "CriticalEcho",
-      "value": 4
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.hunt.hands/powers",
     "flavorJa": "弓弦と同じ筋で編んだ帯は、引く手を決して滑らせない。",
     "flavorEn": "Wraps braided from bowstring sinew never let the drawing hand slip."
    },
@@ -431,21 +251,12 @@
     "base": "feet.hunter_boots",
     "nameJa": "狩猟団の長靴",
     "nameEn": "Huntmaster's Boots",
-    "powers": [
-     {
-      "power": "Tailwind",
-      "value": 22
-     },
-     {
-      "power": "Lifesteal",
-      "value": 8
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.hunt.feet/powers",
     "flavorJa": "追跡の足跡は浅く、帰りの足取りは軽い。",
     "flavorEn": "Shallow tracks out, a light step home."
    }
   ],
-  "sixPieceRef": "tools/balance/sets.json#set.hunt/sixPiece"
+  "sixPieceRef": "tools/balance/equipment/sets.json#set.hunt/sixPiece"
  },
  {
   "set": "set.bastion",
@@ -457,16 +268,7 @@
     "base": "head.sentry_visor",
     "nameJa": "不落城の面頬",
     "nameEn": "Bastion Visor",
-    "powers": [
-     {
-      "power": "Bulwark",
-      "value": 25
-     },
-     {
-      "power": "ReadyGuard",
-      "value": 8
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.bastion.head/powers",
     "flavorJa": "歩哨の目は、城壁が破られる夜を知っている。",
     "flavorEn": "The sentry's eyes know the night the walls will fall."
    },
@@ -476,16 +278,7 @@
     "base": "hands.ironvein_gauntlets",
     "nameJa": "不落城の籠手",
     "nameEn": "Bastion Gauntlets",
-    "powers": [
-     {
-      "power": "Thorns",
-      "value": 30
-     },
-     {
-      "power": "Barrier",
-      "value": 10
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.bastion.hands/powers",
     "flavorJa": "鉄脈の拳に触れた者は、自分の力で傷つく。",
     "flavorEn": "Those who strike the ironvein fist are hurt by their own strength."
    },
@@ -495,21 +288,12 @@
     "base": "feet.bastion_sabatons",
     "nameJa": "不落城の鉄鞋",
     "nameEn": "Bastion Sabatons",
-    "powers": [
-     {
-      "power": "Aegis",
-      "value": 15
-     },
-     {
-      "power": "Barrier",
-      "value": 8
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.bastion.feet/powers",
     "flavorJa": "城壁の基礎のように、一度踏んだ地は譲らない。",
     "flavorEn": "Like the foundation of a wall, they never give up ground once trodden."
    }
   ],
-  "sixPieceRef": "tools/balance/sets.json#set.bastion/sixPiece"
+  "sixPieceRef": "tools/balance/equipment/sets.json#set.bastion/sixPiece"
  },
  {
   "set": "set.wildfire",
@@ -521,16 +305,7 @@
     "base": "head.magma_band",
     "nameJa": "燎原の熔岩鉢巻",
     "nameEn": "Wildfire Magma Band",
-    "powers": [
-     {
-      "power": "Blaze",
-      "value": 50
-     },
-     {
-      "power": "Executioner",
-      "value": 30
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.wildfire.head/powers",
     "flavorJa": "額に巻いた熔岩の色が、戦の合図になる。",
     "flavorEn": "The magma-red band on the brow is the sign of battle."
    },
@@ -540,16 +315,7 @@
     "base": "hands.blazeknit_gloves",
     "nameJa": "燎原の火織り手袋",
     "nameEn": "Wildfire Blazeknit Gloves",
-    "powers": [
-     {
-      "power": "Ember",
-      "value": 25
-     },
-     {
-      "power": "Wildfire",
-      "value": 28
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.wildfire.hands/powers",
     "flavorJa": "編み目の隙間から、火の粉が絶えず漏れる。",
     "flavorEn": "Sparks leak endlessly through the weave."
    },
@@ -559,21 +325,12 @@
     "base": "feet.emberdash_boots",
     "nameJa": "燎原の火駆け靴",
     "nameEn": "Wildfire Embertreads",
-    "powers": [
-     {
-      "power": "Tailwind",
-      "value": 22
-     },
-     {
-      "power": "Shatter",
-      "value": 40
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.wildfire.feet/powers",
     "flavorJa": "駆けた跡に、火が走る。",
     "flavorEn": "Wherever they run, the fire runs after."
    }
   ],
-  "sixPieceRef": "tools/balance/sets.json#set.wildfire/sixPiece"
+  "sixPieceRef": "tools/balance/equipment/sets.json#set.wildfire/sixPiece"
  },
  {
   "set": "set.grove",
@@ -585,16 +342,7 @@
     "base": "head.moss_crown",
     "nameJa": "古森の苔冠",
     "nameEn": "Grove Moss Crown",
-    "powers": [
-     {
-      "power": "Barrier",
-      "value": 8
-     },
-     {
-      "power": "ShardBoon",
-      "value": 8
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.grove.head/powers",
     "flavorJa": "苔は、倒れた古木のために静かに生える。",
     "flavorEn": "Moss grows quietly for the sake of fallen ancient trees."
    },
@@ -604,16 +352,7 @@
     "base": "hands.bark_knuckles",
     "nameJa": "古森の樹皮手",
     "nameEn": "Grove Barkgrips",
-    "powers": [
-     {
-      "power": "Thorns",
-      "value": 28
-     },
-     {
-      "power": "Apothecary",
-      "value": 14
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.grove.hands/powers",
     "flavorJa": "樹皮の下には、ゆっくり脈打つ命がある。",
     "flavorEn": "Beneath the bark, a slow pulse of life."
    },
@@ -623,21 +362,12 @@
     "base": "feet.deeproot_boots",
     "nameJa": "古森の深根靴",
     "nameEn": "Grove Deeprootboots",
-    "powers": [
-     {
-      "power": "SecondWind",
-      "value": 20
-     },
-     {
-      "power": "Lifesteal",
-      "value": 8
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.grove.feet/powers",
     "flavorJa": "深く根を張った靴は、傷ついても倒れない。",
     "flavorEn": "Boots with deep roots do not fall even when wounded."
    }
   ],
-  "sixPieceRef": "tools/balance/sets.json#set.grove/sixPiece"
+  "sixPieceRef": "tools/balance/equipment/sets.json#set.grove/sixPiece"
  },
  {
   "set": "set.reverie",
@@ -649,16 +379,7 @@
     "base": "head.moonlace_hood",
     "nameJa": "夢想の月紗頭巾",
     "nameEn": "Reverie Moonlace Hood",
-    "powers": [
-     {
-      "power": "Radiance",
-      "value": 40
-     },
-     {
-      "power": "Medley",
-      "value": 5
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.reverie.head/powers",
     "flavorJa": "月の紗の向こうで、旋律が夢に変わる。",
     "flavorEn": "Behind the moon-lace, melody turns into dream."
    },
@@ -668,16 +389,7 @@
     "base": "hands.chime_bracers",
     "nameJa": "夢想の鈴腕輪",
     "nameEn": "Reverie Chime Bracers",
-    "powers": [
-     {
-      "power": "Overload",
-      "value": 18
-     },
-     {
-      "power": "CoStar",
-      "value": 12
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.reverie.hands/powers",
     "flavorJa": "腕輪の鈴が、次の曲の拍を数えている。",
     "flavorEn": "The bracer's bells are counting the beat of the next piece."
    },
@@ -687,21 +399,12 @@
     "base": "feet.whisperweave_shoes",
     "nameJa": "夢想の囁き靴",
     "nameEn": "Reverie Whisperweave Shoes",
-    "powers": [
-     {
-      "power": "Radiance",
-      "value": 30
-     },
-     {
-      "power": "Tailwind",
-      "value": 20
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.reverie.feet/powers",
     "flavorJa": "囁くように床を滑り、拍だけを残す。",
     "flavorEn": "They glide over the floor in whispers, leaving only the beat."
    }
   ],
-  "sixPieceRef": "tools/balance/sets.json#set.reverie/sixPiece"
+  "sixPieceRef": "tools/balance/equipment/sets.json#set.reverie/sixPiece"
  },
  {
   "set": "set.phantom",
@@ -713,16 +416,7 @@
     "base": "head.starless_veil",
     "nameJa": "幻影の黒面紗",
     "nameEn": "Phantom Blackveil",
-    "powers": [
-     {
-      "power": "Umbra",
-      "value": 40
-     },
-     {
-      "power": "Fetters",
-      "value": 15
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.phantom.head/powers",
     "flavorJa": "星のない夜の布は、幕のように顔を隠す。",
     "flavorEn": "Night without stars hangs over the face like a curtain."
    },
@@ -732,16 +426,7 @@
     "base": "hands.void_claws",
     "nameJa": "幻影の虚爪",
     "nameEn": "Phantom Voidclaws",
-    "powers": [
-     {
-      "power": "Umbra",
-      "value": 40
-     },
-     {
-      "power": "CritSplash",
-      "value": 26
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.phantom.hands/powers",
     "flavorJa": "爪痕だけを残し、爪の主は舞台から消える。",
     "flavorEn": "Only claw marks remain; their owner has left the stage."
    },
@@ -751,21 +436,12 @@
     "base": "feet.nightveil_slippers",
     "nameJa": "幻影の夜履",
     "nameEn": "Phantom Nightslippers",
-    "powers": [
-     {
-      "power": "Tailwind",
-      "value": 20
-     },
-     {
-      "power": "Executioner",
-      "value": 30
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.phantom.feet/powers",
     "flavorJa": "舞台の上で足音を立てない者だけが、一座に残る。",
     "flavorEn": "Only those who make no sound on stage remain in the troupe."
    }
   ],
-  "sixPieceRef": "tools/balance/sets.json#set.phantom/sixPiece"
+  "sixPieceRef": "tools/balance/equipment/sets.json#set.phantom/sixPiece"
  },
  {
   "set": "set.permafrost",
@@ -777,16 +453,7 @@
     "base": "weapon.glacier_spear",
     "nameJa": "凍土の氷槍",
     "nameEn": "Permafrost Spear",
-    "powers": [
-     {
-      "power": "Frost",
-      "value": 25
-     },
-     {
-      "power": "Aegis",
-      "value": 18
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.permafrost.weapon/powers",
     "flavorJa": "凍土の槍は、突く前にまず相手を凍らせる。",
     "flavorEn": "A permafrost spear freezes its target before it strikes."
    },
@@ -796,16 +463,7 @@
     "base": "armor.frost_robe",
     "nameJa": "凍土の霜衣",
     "nameEn": "Permafrost Robe",
-    "powers": [
-     {
-      "power": "Thorns",
-      "value": 28
-     },
-     {
-      "power": "Barrier",
-      "value": 10
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.permafrost.armor/powers",
     "flavorJa": "霜の衣は、触れた手から体温を奪う。",
     "flavorEn": "The frost robe draws warmth from any hand that touches it."
    },
@@ -815,21 +473,12 @@
     "base": "charm.frost_pendant",
     "nameJa": "凍土の霜飾り",
     "nameEn": "Permafrost Frostpendant",
-    "powers": [
-     {
-      "power": "Frost",
-      "value": 20
-     },
-     {
-      "power": "Fetters",
-      "value": 16
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.permafrost.charm/powers",
     "flavorJa": "飾りの中の霜は、千年溶けていない。",
     "flavorEn": "The frost inside the pendant has not melted in a thousand years."
    }
   ],
-  "sixPieceRef": "tools/balance/sets.json#set.permafrost/sixPiece"
+  "sixPieceRef": "tools/balance/equipment/sets.json#set.permafrost/sixPiece"
  },
  {
   "set": "set.asura",
@@ -841,16 +490,7 @@
     "base": "weapon.severing_axe",
     "nameJa": "修羅道の大斧",
     "nameEn": "Carnage Greataxe",
-    "powers": [
-     {
-      "power": "Executioner",
-      "value": 40
-     },
-     {
-      "power": "Lifesteal",
-      "value": 8
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.asura.weapon/powers",
     "flavorJa": "振るうたび、血の匂いが道を示す。",
     "flavorEn": "With every swing, the scent of blood marks the path."
    },
@@ -860,16 +500,7 @@
     "base": "armor.skirmisher_coat",
     "nameJa": "修羅道の胴着",
     "nameEn": "Carnage Vest",
-    "powers": [
-     {
-      "power": "Bloodlust",
-      "value": 15
-     },
-     {
-      "power": "SoulSiphon",
-      "value": 15
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.asura.armor/powers",
     "flavorJa": "破れた布の下で、傷が次の力に変わる。",
     "flavorEn": "Beneath the torn cloth, wounds turn into the next surge of strength."
    },
@@ -879,21 +510,12 @@
     "base": "charm.hunter_tooth",
     "nameJa": "修羅道の牙飾り",
     "nameEn": "Carnage Fangcharm",
-    "powers": [
-     {
-      "power": "Momentum",
-      "value": 4
-     },
-     {
-      "power": "Thorns",
-      "value": 28
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.asura.charm/powers",
     "flavorJa": "牙に刻まれた傷の数が、そのまま道のりになる。",
     "flavorEn": "The nicks on the fang are a count of the road traveled."
    }
   ],
-  "sixPieceRef": "tools/balance/sets.json#set.asura/sixPiece"
+  "sixPieceRef": "tools/balance/equipment/sets.json#set.asura/sixPiece"
  },
  {
   "set": "set.gale",
@@ -905,16 +527,7 @@
     "base": "weapon.storm_glaive",
     "nameJa": "風舞の薙刀",
     "nameEn": "Galedancer's Glaive",
-    "powers": [
-     {
-      "power": "Tailwind",
-      "value": 22
-     },
-     {
-      "power": "OpeningStrike",
-      "value": 40
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.gale.weapon/powers",
     "flavorJa": "薙ぎ払う刃の後ろで、風がもう一度回る。",
     "flavorEn": "Behind the sweeping blade, the wind turns once more."
    },
@@ -924,16 +537,7 @@
     "base": "armor.swiftstep_coat",
     "nameJa": "風舞の疾歩衣",
     "nameEn": "Galedancer's Swiftcoat",
-    "powers": [
-     {
-      "power": "Momentum",
-      "value": 4
-     },
-     {
-      "power": "Lifesteal",
-      "value": 8
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.gale.armor/powers",
     "flavorJa": "風を孕んだ裾は、止まることを知らない。",
     "flavorEn": "A hem full of wind never learns to stand still."
    },
@@ -943,21 +547,12 @@
     "base": "charm.zephyr_ring",
     "nameJa": "風舞の指輪",
     "nameEn": "Galedancer's Ring",
-    "powers": [
-     {
-      "power": "StrafeShot",
-      "value": 22
-     },
-     {
-      "power": "RunUp",
-      "value": 45
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.gale.charm/powers",
     "flavorJa": "指輪を回すたび、風向きが変わる。",
     "flavorEn": "Each turn of the ring changes the direction of the wind."
    }
   ],
-  "sixPieceRef": "tools/balance/sets.json#set.gale/sixPiece"
+  "sixPieceRef": "tools/balance/equipment/sets.json#set.gale/sixPiece"
  },
  {
   "set": "set.firmament",
@@ -969,16 +564,7 @@
     "base": "weapon.astral_staff",
     "nameJa": "天穹の儀杖",
     "nameEn": "Firmament Ritual Staff",
-    "powers": [
-     {
-      "power": "Overload",
-      "value": 18
-     },
-     {
-      "power": "Finale",
-      "value": 20
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.firmament.weapon/powers",
     "flavorJa": "杖を掲げれば、空が儀式の幕を開く。",
     "flavorEn": "Raise the staff and the sky opens the curtain on the rite."
    },
@@ -988,16 +574,7 @@
     "base": "armor.star_mantle",
     "nameJa": "天穹の星衣",
     "nameEn": "Firmament Starmantle",
-    "powers": [
-     {
-      "power": "UltimateSurge",
-      "value": 15
-     },
-     {
-      "power": "Barrier",
-      "value": 10
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.firmament.armor/powers",
     "flavorJa": "星屑の肩掛けが、夜空と同じ速さで瞬く。",
     "flavorEn": "The stardust mantle twinkles as fast as the night sky."
    },
@@ -1007,21 +584,12 @@
     "base": "charm.comet_pendant",
     "nameJa": "天穹の彗星垂飾",
     "nameEn": "Firmament Comet Pendant",
-    "powers": [
-     {
-      "power": "StarShield",
-      "value": 14
-     },
-     {
-      "power": "TriumphSong",
-      "value": 5
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.firmament.charm/powers",
     "flavorJa": "垂飾の彗星は、誓いの日だけ尾を引く。",
     "flavorEn": "The pendant's comet trails its tail only on the day of the vow."
    }
   ],
-  "sixPieceRef": "tools/balance/sets.json#set.firmament/sixPiece"
+  "sixPieceRef": "tools/balance/equipment/sets.json#set.firmament/sixPiece"
  },
  {
   "set": "set.ambush",
@@ -1033,16 +601,7 @@
     "base": "weapon.gloaming_dagger",
     "nameJa": "闇討ちの宵短剣",
     "nameEn": "Nightstrike Gloamdagger",
-    "powers": [
-     {
-      "power": "OpeningStrike",
-      "value": 40
-     },
-     {
-      "power": "Executioner",
-      "value": 30
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.ambush.weapon/powers",
     "flavorJa": "宵闇に溶ける刃は、鞘走りの音すら残さない。",
     "flavorEn": "A blade melting into the gloaming leaves not even the sound of the draw."
    },
@@ -1052,16 +611,7 @@
     "base": "armor.duskweave_jacket",
     "nameJa": "闇討ちの黄昏上着",
     "nameEn": "Nightstrike Duskjacket",
-    "powers": [
-     {
-      "power": "Umbra",
-      "value": 30
-     },
-     {
-      "power": "Tailwind",
-      "value": 20
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.ambush.armor/powers",
     "flavorJa": "影を織り込んだ上着は、背後に回る足を軽くする。",
     "flavorEn": "A jacket woven of shadow lightens the feet that circle behind."
    },
@@ -1071,21 +621,12 @@
     "base": "charm.keeneye_charm",
     "nameJa": "闇討ちの鋭眼御守",
     "nameEn": "Nightstrike Keeneye Charm",
-    "powers": [
-     {
-      "power": "Umbra",
-      "value": 25
-     },
-     {
-      "power": "CriticalEcho",
-      "value": 4
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.ambush.charm/powers",
     "flavorJa": "暗闇でも、御守の眼だけが的を見失わない。",
     "flavorEn": "In the dark, only the charm's eye never loses the mark."
    }
   ],
-  "sixPieceRef": "tools/balance/sets.json#set.ambush/sixPiece"
+  "sixPieceRef": "tools/balance/equipment/sets.json#set.ambush/sixPiece"
  },
  {
   "set": "set.ashrunner",
@@ -1097,16 +638,7 @@
     "base": "weapon.ember_katar",
     "nameJa": "灰走りの短刃",
     "nameEn": "Ashrunner Katar",
-    "powers": [
-     {
-      "power": "Ember",
-      "value": 20
-     },
-     {
-      "power": "Blaze",
-      "value": 45
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.ashrunner.weapon/powers",
     "flavorJa": "走りながら振る刃から、灰が舞い上がる。",
     "flavorEn": "Ash rises from a blade swung at a run."
    },
@@ -1116,16 +648,7 @@
     "base": "armor.ember_jacket",
     "nameJa": "灰走りの外衣",
     "nameEn": "Ashrunner Jacket",
-    "powers": [
-     {
-      "power": "Ember",
-      "value": 15
-     },
-     {
-      "power": "Thorns",
-      "value": 25
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.ashrunner.armor/powers",
     "flavorJa": "外衣の裾が焦げるほど、走りは速くなる。",
     "flavorEn": "The more the hem scorches, the faster the run."
    },
@@ -1135,21 +658,12 @@
     "base": "charm.hearthstone",
     "nameJa": "灰走りの炉石",
     "nameEn": "Ashrunner Hearthstone",
-    "powers": [
-     {
-      "power": "Tailwind",
-      "value": 20
-     },
-     {
-      "power": "Shatter",
-      "value": 45
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.ashrunner.charm/powers",
     "flavorJa": "懐の炉石は、走るほどに熱を帯びる。",
     "flavorEn": "The hearthstone in the pocket grows hotter the faster you run."
    }
   ],
-  "sixPieceRef": "tools/balance/sets.json#set.ashrunner/sixPiece"
+  "sixPieceRef": "tools/balance/equipment/sets.json#set.ashrunner/sixPiece"
  },
  {
   "set": "set.mercy",
@@ -1161,16 +675,7 @@
     "base": "head.kindly_circlet",
     "nameJa": "施療の額冠",
     "nameEn": "Healer's Circlet",
-    "powers": [
-     {
-      "power": "KindnessReturns",
-      "value": 22
-     },
-     {
-      "power": "WatchfulHand",
-      "value": 18
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.mercy.head/powers",
     "flavorJa": "差し出した手の温もりは、いつか自分にも返る。",
     "flavorEn": "The warmth of an offered hand comes back to you one day."
    },
@@ -1180,16 +685,7 @@
     "base": "armor.healing_sash",
     "nameJa": "施療の飾り帯",
     "nameEn": "Healer's Sash",
-    "powers": [
-     {
-      "power": "OverflowingLife",
-      "value": 35
-     },
-     {
-      "power": "Resonance",
-      "value": 8
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.mercy.armor/powers",
     "flavorJa": "帯の結び目は、誰かの傷を縛った数だけ増える。",
     "flavorEn": "The sash gains a knot for every wound it has bound."
    },
@@ -1199,21 +695,12 @@
     "base": "feet.mender_shoes",
     "nameJa": "施療の靴",
     "nameEn": "Healer's Shoes",
-    "powers": [
-     {
-      "power": "Barrier",
-      "value": 8
-     },
-     {
-      "power": "SecondWind",
-      "value": 25
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.mercy.feet/powers",
     "flavorJa": "癒し手の足は、倒れた者のそばでだけ速くなる。",
     "flavorEn": "A healer's feet quicken only beside the fallen."
    }
   ],
-  "sixPieceRef": "tools/balance/sets.json#set.mercy/sixPiece"
+  "sixPieceRef": "tools/balance/equipment/sets.json#set.mercy/sixPiece"
  },
  {
   "set": "set.ironknight",
@@ -1225,16 +712,7 @@
     "base": "weapon.gatehouse_maul",
     "nameJa": "鉄騎の城門槌",
     "nameEn": "Ironknight Gatemaul",
-    "powers": [
-     {
-      "power": "Aegis",
-      "value": 15
-     },
-     {
-      "power": "Retaliation",
-      "value": 22
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.ironknight.weapon/powers",
     "flavorJa": "城門を砕いた槌は、いま城門を守る。",
     "flavorEn": "The maul that broke the gate now guards it."
    },
@@ -1244,16 +722,7 @@
     "base": "hands.ironvein_gauntlets",
     "nameJa": "鉄騎の鉄脈籠手",
     "nameEn": "Ironknight Ironvein Gauntlets",
-    "powers": [
-     {
-      "power": "Bulwark",
-      "value": 28
-     },
-     {
-      "power": "Thorns",
-      "value": 25
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.ironknight.hands/powers",
     "flavorJa": "鉄脈を通した籠手は、盾そのもののように重い。",
     "flavorEn": "Gauntlets threaded with iron veins are as heavy as a shield."
    },
@@ -1263,21 +732,12 @@
     "base": "charm.iron_seal",
     "nameJa": "鉄騎の印章",
     "nameEn": "Ironknight Seal",
-    "powers": [
-     {
-      "power": "Barrier",
-      "value": 10
-     },
-     {
-      "power": "ReadyGuard",
-      "value": 8
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.ironknight.charm/powers",
     "flavorJa": "印章の押された盟約は、錆びても破れない。",
     "flavorEn": "A pact stamped with the seal does not break even when rusted."
    }
   ],
-  "sixPieceRef": "tools/balance/sets.json#set.ironknight/sixPiece"
+  "sixPieceRef": "tools/balance/equipment/sets.json#set.ironknight/sixPiece"
  },
  {
   "set": "set.eclipse",
@@ -1289,16 +749,7 @@
     "base": "armor.shadow_cloak",
     "nameJa": "月蝕の影外套",
     "nameEn": "Eclipse Shadowcloak",
-    "powers": [
-     {
-      "power": "Umbra",
-      "value": 30
-     },
-     {
-      "power": "Retaliation",
-      "value": 22
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.eclipse.armor/powers",
     "flavorJa": "外套に落ちた月影は、欠けるたびに濃くなる。",
     "flavorEn": "The moon's shadow on the cloak deepens with every phase it loses."
    },
@@ -1308,16 +759,7 @@
     "base": "hands.void_claws",
     "nameJa": "月蝕の虚爪",
     "nameEn": "Eclipse Voidclaws",
-    "powers": [
-     {
-      "power": "Umbra",
-      "value": 30
-     },
-     {
-      "power": "CriticalEcho",
-      "value": 4
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.eclipse.hands/powers",
     "flavorJa": "欠けた月の縁は、爪よりも鋭い。",
     "flavorEn": "The rim of a waning moon is sharper than any claw."
    },
@@ -1327,21 +769,12 @@
     "base": "feet.shadow_slippers",
     "nameJa": "月蝕の影履",
     "nameEn": "Eclipse Shadowslippers",
-    "powers": [
-     {
-      "power": "Executioner",
-      "value": 30
-     },
-     {
-      "power": "SoulSiphon",
-      "value": 15
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.eclipse.feet/powers",
     "flavorJa": "月が隠れるたび、足音も影に呑まれる。",
     "flavorEn": "Whenever the moon hides, footsteps are swallowed by shadow."
    }
   ],
-  "sixPieceRef": "tools/balance/sets.json#set.eclipse/sixPiece"
+  "sixPieceRef": "tools/balance/equipment/sets.json#set.eclipse/sixPiece"
  },
  {
   "set": "set.thunderclap",
@@ -1353,16 +786,7 @@
     "base": "head.thunderveil_hood",
     "nameJa": "迅雷の頭巾",
     "nameEn": "Thunderclap Hood",
-    "powers": [
-     {
-      "power": "ChainLightning",
-      "value": 30
-     },
-     {
-      "power": "Tailwind",
-      "value": 20
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.thunderclap.head/powers",
     "flavorJa": "雷鳴より先に、頭巾が揺れる。",
     "flavorEn": "The hood sways before the thunder arrives."
    },
@@ -1372,16 +796,7 @@
     "base": "hands.storm_knuckles",
     "nameJa": "迅雷の嵐拳",
     "nameEn": "Thunderclap Knuckles",
-    "powers": [
-     {
-      "power": "Momentum",
-      "value": 4
-     },
-     {
-      "power": "Frenzy",
-      "value": 2
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.thunderclap.hands/powers",
     "flavorJa": "拳が閃くたび、空気が割れる音が遅れて届く。",
     "flavorEn": "The crack of the air arrives a beat after every strike."
    },
@@ -1391,21 +806,12 @@
     "base": "charm.stormcloud_locket",
     "nameJa": "迅雷の雷雲飾り",
     "nameEn": "Thunderclap Cloudlocket",
-    "powers": [
-     {
-      "power": "ChainLightning",
-      "value": 25
-     },
-     {
-      "power": "CriticalEcho",
-      "value": 4
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.thunderclap.charm/powers",
     "flavorJa": "ロケットの中で、小さな雷雲が鳴っている。",
     "flavorEn": "A tiny thundercloud rumbles inside the locket."
    }
   ],
-  "sixPieceRef": "tools/balance/sets.json#set.thunderclap/sixPiece"
+  "sixPieceRef": "tools/balance/equipment/sets.json#set.thunderclap/sixPiece"
  },
  {
   "set": "set.myriad",
@@ -1417,16 +823,7 @@
     "base": "weapon.chanting_wand",
     "nameJa": "万象の詠唱杖",
     "nameEn": "Myriad Chanting Wand",
-    "powers": [
-     {
-      "power": "Convergence",
-      "value": 40
-     },
-     {
-      "power": "Fetters",
-      "value": 15
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.myriad.weapon/powers",
     "flavorJa": "詠唱のたびに、杖の先の色が変わる。",
     "flavorEn": "The color at the wand's tip changes with every incantation."
    },
@@ -1436,16 +833,7 @@
     "base": "head.sage_hat",
     "nameJa": "万象の賢者帽",
     "nameEn": "Myriad Sage Hat",
-    "powers": [
-     {
-      "power": "Convergence",
-      "value": 40
-     },
-     {
-      "power": "Medley",
-      "value": 5
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.myriad.head/powers",
     "flavorJa": "帽子の影には、四つの属性が眠っている。",
     "flavorEn": "Four elements sleep in the shadow of the hat."
    },
@@ -1455,21 +843,12 @@
     "base": "feet.cometstride_shoes",
     "nameJa": "万象の彗星靴",
     "nameEn": "Myriad Cometshoes",
-    "powers": [
-     {
-      "power": "Overload",
-      "value": 18
-     },
-     {
-      "power": "PrismShift",
-      "value": 2
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.myriad.feet/powers",
     "flavorJa": "一歩ごとに、色の違う火花が散る。",
     "flavorEn": "Every step scatters sparks of a different color."
    }
   ],
-  "sixPieceRef": "tools/balance/sets.json#set.myriad/sixPiece"
+  "sixPieceRef": "tools/balance/equipment/sets.json#set.myriad/sixPiece"
  },
  {
   "set": "set.daybreak",
@@ -1481,16 +860,7 @@
     "base": "armor.sun_plate",
     "nameJa": "払暁の胸甲",
     "nameEn": "Daybreak Breastplate",
-    "powers": [
-     {
-      "power": "Vigor",
-      "value": 12
-     },
-     {
-      "power": "Barrier",
-      "value": 10
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.daybreak.armor/powers",
     "flavorJa": "夜明けとともに、胸甲の曇りが晴れる。",
     "flavorEn": "The breastplate clears as the night gives way to day."
    },
@@ -1500,16 +870,7 @@
     "base": "hands.sunfire_grips",
     "nameJa": "払暁の陽炎手",
     "nameEn": "Daybreak Sunfire Grips",
-    "powers": [
-     {
-      "power": "Radiance",
-      "value": 40
-     },
-     {
-      "power": "OpeningStrike",
-      "value": 40
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.daybreak.hands/powers",
     "flavorJa": "暁の最初の光が、握った手の中で燃える。",
     "flavorEn": "The first light of dawn burns within a closed hand."
    },
@@ -1519,21 +880,12 @@
     "base": "charm.halo_charm",
     "nameJa": "払暁の光環御守",
     "nameEn": "Daybreak Halo Charm",
-    "powers": [
-     {
-      "power": "Radiance",
-      "value": 30
-     },
-     {
-      "power": "StardustCycle",
-      "value": 12
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.daybreak.charm/powers",
     "flavorJa": "御守の光環は、朝の最初の鐘に合わせて満ちる。",
     "flavorEn": "The charm's halo fills with the first bell of morning."
    }
   ],
-  "sixPieceRef": "tools/balance/sets.json#set.daybreak/sixPiece"
+  "sixPieceRef": "tools/balance/equipment/sets.json#set.daybreak/sixPiece"
  },
  {
   "set": "set.steamweave",
@@ -1545,16 +897,7 @@
     "base": "head.coral_crown",
     "nameJa": "湯気の珊瑚冠",
     "nameEn": "Steamweave Coral Crown",
-    "powers": [
-     {
-      "power": "Fetters",
-      "value": 15
-     },
-     {
-      "power": "Tailwind",
-      "value": 20
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.steamweave.head/powers",
     "flavorJa": "珊瑚の枝の間から、白い湯気が立ち上る。",
     "flavorEn": "White steam rises between the branches of coral."
    },
@@ -1564,16 +907,7 @@
     "base": "hands.cinderthread_wraps",
     "nameJa": "湯糸の手巻き",
     "nameEn": "Steamthread Wraps",
-    "powers": [
-     {
-      "power": "Ember",
-      "value": 20
-     },
-     {
-      "power": "Frost",
-      "value": 20
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.steamweave.hands/powers",
     "flavorJa": "熱い糸と冷たい糸が、交互に指を巻く。",
     "flavorEn": "Hot thread and cold thread wind in turn about the fingers."
    },
@@ -1583,21 +917,12 @@
     "base": "feet.firebloom_slippers",
     "nameJa": "湯気の火華靴",
     "nameEn": "Steamweave Fireblooms",
-    "powers": [
-     {
-      "power": "Steam",
-      "value": 30
-     },
-     {
-      "power": "Barrier",
-      "value": 10
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.steamweave.feet/powers",
     "flavorJa": "歩くたびに、足元で白い花が咲く。",
     "flavorEn": "A white blossom opens underfoot with every step."
    }
   ],
-  "sixPieceRef": "tools/balance/sets.json#set.steamweave/sixPiece"
+  "sixPieceRef": "tools/balance/equipment/sets.json#set.steamweave/sixPiece"
  },
  {
   "set": "set.eclipserite",
@@ -1609,16 +934,7 @@
     "base": "armor.moon_silk",
     "nameJa": "蝕の儀の月絹衣",
     "nameEn": "Eclipse-Rite Moonsilk",
-    "powers": [
-     {
-      "power": "Barrier",
-      "value": 10
-     },
-     {
-      "power": "Fetters",
-      "value": 15
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.eclipserite.armor/powers",
     "flavorJa": "月絹は、儀式の間だけ光を通さない。",
     "flavorEn": "Moonsilk blocks all light, but only during the rite."
    },
@@ -1628,16 +944,7 @@
     "base": "hands.duskstitch_gloves",
     "nameJa": "蝕の儀の黄昏手袋",
     "nameEn": "Eclipse-Rite Gloves",
-    "powers": [
-     {
-      "power": "Radiance",
-      "value": 35
-     },
-     {
-      "power": "Umbra",
-      "value": 35
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.eclipserite.hands/powers",
     "flavorJa": "光と闇の糸が、一つの手袋の中で縫い合わされる。",
     "flavorEn": "Threads of light and dark are stitched into a single glove."
    },
@@ -1647,21 +954,12 @@
     "base": "feet.dawnmist_shoes",
     "nameJa": "蝕の儀の暁霧靴",
     "nameEn": "Eclipse-Rite Mist Shoes",
-    "powers": [
-     {
-      "power": "Eclipse",
-      "value": 8
-     },
-     {
-      "power": "Tailwind",
-      "value": 20
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.eclipserite.feet/powers",
     "flavorJa": "暁の霧が晴れる瞬間に、月は完全に隠れる。",
     "flavorEn": "The moon hides completely just as the dawn mist clears."
    }
   ],
-  "sixPieceRef": "tools/balance/sets.json#set.eclipserite/sixPiece"
+  "sixPieceRef": "tools/balance/equipment/sets.json#set.eclipserite/sixPiece"
  },
  {
   "set": "set.cinderfall",
@@ -1673,16 +971,7 @@
     "base": "head.ash_hood",
     "nameJa": "降り灰の頭巾",
     "nameEn": "Ashfall Hood",
-    "powers": [
-     {
-      "power": "Ember",
-      "value": 20
-     },
-     {
-      "power": "Umbra",
-      "value": 30
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.cinderfall.head/powers",
     "flavorJa": "頭巾に積もった灰は、振り払っても降り止まない。",
     "flavorEn": "The ash settled on the hood keeps falling however it is shaken off."
    },
@@ -1692,16 +981,7 @@
     "base": "hands.nightpalm_gloves",
     "nameJa": "降り灰の夜掌手袋",
     "nameEn": "Ashfall Nightpalm Gloves",
-    "powers": [
-     {
-      "power": "Wildfire",
-      "value": 28
-     },
-     {
-      "power": "Executioner",
-      "value": 30
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.cinderfall.hands/powers",
     "flavorJa": "夜の掌から、火の灰がこぼれ落ちる。",
     "flavorEn": "Fiery ash spills from the palm of night."
    },
@@ -1711,21 +991,12 @@
     "base": "charm.cindercore_locket",
     "nameJa": "降り灰の火芯飾り",
     "nameEn": "Ashfall Cindercore Locket",
-    "powers": [
-     {
-      "power": "Ember",
-      "value": 20
-     },
-     {
-      "power": "Tailwind",
-      "value": 20
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.cinderfall.charm/powers",
     "flavorJa": "火芯のロケットは、灰の中でだけ温かい。",
     "flavorEn": "The cindercore locket is warm only amid the ash."
    }
   ],
-  "sixPieceRef": "tools/balance/sets.json#set.cinderfall/sixPiece"
+  "sixPieceRef": "tools/balance/equipment/sets.json#set.cinderfall/sixPiece"
  },
  {
   "set": "set.icicanticle",
@@ -1737,16 +1008,7 @@
     "base": "weapon.conch_scepter",
     "nameJa": "氷晶の聖杖",
     "nameEn": "Icicrystal Scepter",
-    "powers": [
-     {
-      "power": "Frost",
-      "value": 20
-     },
-     {
-      "power": "Fetters",
-      "value": 15
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.icicanticle.weapon/powers",
     "flavorJa": "聖杖を鳴らすと、法螺の音が霜の結晶になる。",
     "flavorEn": "Sounding the scepter turns the conch's note into frost crystals."
    },
@@ -1756,16 +1018,7 @@
     "base": "armor.seafoam_gown",
     "nameJa": "氷晶の聖衣",
     "nameEn": "Icicrystal Vestment",
-    "powers": [
-     {
-      "power": "Radiance",
-      "value": 35
-     },
-     {
-      "power": "Barrier",
-      "value": 10
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.icicanticle.armor/powers",
     "flavorJa": "氷の聖衣は、祈りの光をそのまま通す。",
     "flavorEn": "The icy vestment lets the light of prayer pass through intact."
    },
@@ -1775,21 +1028,12 @@
     "base": "feet.froststride_shoes",
     "nameJa": "聖氷の霜踏み靴",
     "nameEn": "Canticle Froststriders",
-    "powers": [
-     {
-      "power": "FrostCrystal",
-      "value": 4
-     },
-     {
-      "power": "Frost",
-      "value": 25
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.icicanticle.feet/powers",
     "flavorJa": "聖句を唱えるたび、足元の氷に光が灯る。",
     "flavorEn": "Each verse chanted lights the ice beneath the feet."
    }
   ],
-  "sixPieceRef": "tools/balance/sets.json#set.icicanticle/sixPiece"
+  "sixPieceRef": "tools/balance/equipment/sets.json#set.icicanticle/sixPiece"
  },
  {
   "set": "set.shardknight",
@@ -1801,16 +1045,7 @@
     "base": "weapon.shield_maul",
     "nameJa": "砕盾騎士の大槌",
     "nameEn": "Shardshield Maul",
-    "powers": [
-     {
-      "power": "Barrier",
-      "value": 8
-     },
-     {
-      "power": "Aegis",
-      "value": 18
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.shardknight.weapon/powers",
     "flavorJa": "砕けるまで使い尽くした盾の分だけ、槌は重くなる。",
     "flavorEn": "The maul grows heavier with every shield used until it broke."
    },
@@ -1820,16 +1055,7 @@
     "base": "hands.oathpalm_gloves",
     "nameJa": "砕盾騎士の籠手",
     "nameEn": "Shardshield Gauntlets",
-    "powers": [
-     {
-      "power": "ShieldbreakBurst",
-      "value": 7
-     },
-     {
-      "power": "Thorns",
-      "value": 25
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.shardknight.hands/powers",
     "flavorJa": "砕けた盾の欠片は、籠手に誓いとして埋められる。",
     "flavorEn": "Shards of a broken shield are set into the gauntlets as an oath."
    },
@@ -1839,21 +1065,12 @@
     "base": "charm.snowbloom_charm",
     "nameJa": "砕盾騎士の雪華御守",
     "nameEn": "Shardshield Snowbloom Charm",
-    "powers": [
-     {
-      "power": "ReadyGuard",
-      "value": 8
-     },
-     {
-      "power": "Bulwark",
-      "value": 25
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.shardknight.charm/powers",
     "flavorJa": "雪華の御守は、砕けた盾の跡に咲く。",
     "flavorEn": "The snowbloom charm blossoms where a shield was broken."
    }
   ],
-  "sixPieceRef": "tools/balance/sets.json#set.shardknight/sixPiece"
+  "sixPieceRef": "tools/balance/equipment/sets.json#set.shardknight/sixPiece"
  },
  {
   "set": "set.bashbound",
@@ -1865,16 +1082,7 @@
     "base": "head.warden_visor",
     "nameJa": "盾誓いの面頬",
     "nameEn": "Bashbound Visor",
-    "powers": [
-     {
-      "power": "Barrier",
-      "value": 10
-     },
-     {
-      "power": "ReadyGuard",
-      "value": 8
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.bashbound.head/powers",
     "flavorJa": "面頬の奥で、盾を構える合図を待つ。",
     "flavorEn": "Behind the visor, waiting for the signal to raise the shield."
    },
@@ -1884,16 +1092,7 @@
     "base": "armor.wardsigil_vest",
     "nameJa": "盾誓いの加護胴衣",
     "nameEn": "Bashbound Wardvest",
-    "powers": [
-     {
-      "power": "Aegis",
-      "value": 15
-     },
-     {
-      "power": "Thorns",
-      "value": 25
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.bashbound.armor/powers",
     "flavorJa": "胴衣の加護印が、打たれるたびに熱を持つ。",
     "flavorEn": "The ward sigil on the vest warms with every blow."
    },
@@ -1903,21 +1102,12 @@
     "base": "feet.wardstep_sandals",
     "nameJa": "盾誓いの草鞋",
     "nameEn": "Bashbound Sandals",
-    "powers": [
-     {
-      "power": "VanguardsOath",
-      "value": 20
-     },
-     {
-      "power": "ShieldbreakBurst",
-      "value": 8
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.bashbound.feet/powers",
     "flavorJa": "草鞋の足取りは、常に盾より半歩前にある。",
     "flavorEn": "The sandals' stride stays half a step ahead of the shield."
    }
   ],
-  "sixPieceRef": "tools/balance/sets.json#set.bashbound/sixPiece"
+  "sixPieceRef": "tools/balance/equipment/sets.json#set.bashbound/sixPiece"
  },
  {
   "set": "set.vanguardline",
@@ -1929,16 +1119,7 @@
     "base": "weapon.gatehouse_maul",
     "nameJa": "陣頭の城門槌",
     "nameEn": "Frontline Gatemaul",
-    "powers": [
-     {
-      "power": "Aegis",
-      "value": 18
-     },
-     {
-      "power": "TollOfGrudge",
-      "value": 16
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.vanguardline.weapon/powers",
     "flavorJa": "隊列の先頭で振るう槌は、すべての視線を受け止める。",
     "flavorEn": "A maul swung at the head of the line takes every gaze."
    },
@@ -1948,16 +1129,7 @@
     "base": "hands.bulwark_wraps",
     "nameJa": "陣頭の壁手巻",
     "nameEn": "Frontline Wallwraps",
-    "powers": [
-     {
-      "power": "Bulwark",
-      "value": 22
-     },
-     {
-      "power": "Thorns",
-      "value": 28
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.vanguardline.hands/powers",
     "flavorJa": "手巻きの下の拳は、壁のように動かない。",
     "flavorEn": "The fists beneath the wraps do not move, like a wall."
    },
@@ -1967,21 +1139,12 @@
     "base": "charm.bulwark_seal",
     "nameJa": "陣頭の壁印章",
     "nameEn": "Frontline Wallseal",
-    "powers": [
-     {
-      "power": "Barrier",
-      "value": 10
-     },
-     {
-      "power": "ShieldbreakBurst",
-      "value": 8
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.vanguardline.charm/powers",
     "flavorJa": "壁の印章は、隊列が崩れるまで外されない。",
     "flavorEn": "The wallseal stays on until the line itself breaks."
    }
   ],
-  "sixPieceRef": "tools/balance/sets.json#set.vanguardline/sixPiece"
+  "sixPieceRef": "tools/balance/equipment/sets.json#set.vanguardline/sixPiece"
  },
  {
   "set": "set.rearmarks",
@@ -1993,16 +1156,7 @@
     "base": "hands.bowmaster_bracers",
     "nameJa": "後陣の弓手腕当",
     "nameEn": "Rearline Bowbracers",
-    "powers": [
-     {
-      "power": "PileOn",
-      "value": 28
-     },
-     {
-      "power": "Overload",
-      "value": 18
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.rearmarks.hands/powers",
     "flavorJa": "弦を引く腕は、長い待ちの間も震えない。",
     "flavorEn": "The string-drawing arm does not tremble during a long wait."
    },
@@ -2012,16 +1166,7 @@
     "base": "feet.starlit_moccasins",
     "nameJa": "後陣の星履",
     "nameEn": "Rearline Starmoccasins",
-    "powers": [
-     {
-      "power": "StrafeShot",
-      "value": 22
-     },
-     {
-      "power": "ReturningBlade",
-      "value": 14
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.rearmarks.feet/powers",
     "flavorJa": "星明かりの靴は、後陣でも足音を立てない。",
     "flavorEn": "Starlit shoes make no sound even at the rear."
    },
@@ -2031,21 +1176,12 @@
     "base": "charm.longshot_charm",
     "nameJa": "後陣の遠当て御守",
     "nameEn": "Rearline Longshot Charm",
-    "powers": [
-     {
-      "power": "OpeningSalvo",
-      "value": 18
-     },
-     {
-      "power": "Medley",
-      "value": 4
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.rearmarks.charm/powers",
     "flavorJa": "遠くを見る御守は、合図の旗を最初に見つける。",
     "flavorEn": "A charm that sees afar is first to spot the signal flag."
    }
   ],
-  "sixPieceRef": "tools/balance/sets.json#set.rearmarks/sixPiece"
+  "sixPieceRef": "tools/balance/equipment/sets.json#set.rearmarks/sixPiece"
  },
  {
   "set": "set.watchcircle",
@@ -2057,16 +1193,7 @@
     "base": "weapon.dewclear_wand",
     "nameJa": "輪守りの細杖",
     "nameEn": "Ringwarden Wand",
-    "powers": [
-     {
-      "power": "SharedWard",
-      "value": 25
-     },
-     {
-      "power": "SecondWind",
-      "value": 25
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.watchcircle.weapon/powers",
     "flavorJa": "細杖の先で描いた輪は、朝まで消えない。",
     "flavorEn": "A circle drawn with the wand's tip lasts until morning."
    },
@@ -2076,16 +1203,7 @@
     "base": "head.kindly_circlet",
     "nameJa": "輪守りの額冠",
     "nameEn": "Ringwarden Circlet",
-    "powers": [
-     {
-      "power": "Barrier",
-      "value": 10
-     },
-     {
-      "power": "KindnessReturns",
-      "value": 22
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.watchcircle.head/powers",
     "flavorJa": "輪の内側にいる限り、誰も一人にはならない。",
     "flavorEn": "No one is ever alone within the circle."
    },
@@ -2095,21 +1213,12 @@
     "base": "feet.mender_shoes",
     "nameJa": "輪守りの靴",
     "nameEn": "Ringwarden Shoes",
-    "powers": [
-     {
-      "power": "Apothecary",
-      "value": 14
-     },
-     {
-      "power": "Tailwind",
-      "value": 20
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.watchcircle.feet/powers",
     "flavorJa": "輪の外へ駆け出す足も、輪を守るために速い。",
     "flavorEn": "Even the feet that dash outside the circle are quick to protect it."
    }
   ],
-  "sixPieceRef": "tools/balance/sets.json#set.watchcircle/sixPiece"
+  "sixPieceRef": "tools/balance/equipment/sets.json#set.watchcircle/sixPiece"
  },
  {
   "set": "set.relaychoir",
@@ -2121,16 +1230,7 @@
     "base": "weapon.dream_wand",
     "nameJa": "継ぎ歌の細杖",
     "nameEn": "Relaysong Wand",
-    "powers": [
-     {
-      "power": "WatchfulHand",
-      "value": 18
-     },
-     {
-      "power": "CoStar",
-      "value": 12
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.relaychoir.weapon/powers",
     "flavorJa": "指揮の杖は、次の歌い手を指して振り下ろされる。",
     "flavorEn": "The conductor's wand falls, pointing to the next singer."
    },
@@ -2140,16 +1240,7 @@
     "base": "armor.healing_sash",
     "nameJa": "継ぎ歌の飾り帯",
     "nameEn": "Relaysong Sash",
-    "powers": [
-     {
-      "power": "TriumphSong",
-      "value": 5
-     },
-     {
-      "power": "Barrier",
-      "value": 10
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.relaychoir.armor/powers",
     "flavorJa": "帯の結び目に、次の歌い手の名が縫われている。",
     "flavorEn": "The next singer's name is sewn into the knot of the sash."
    },
@@ -2159,21 +1250,12 @@
     "base": "feet.cometstride_shoes",
     "nameJa": "継ぎ歌の靴",
     "nameEn": "Relaysong Shoes",
-    "powers": [
-     {
-      "power": "Tailwind",
-      "value": 20
-     },
-     {
-      "power": "Apothecary",
-      "value": 14
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.relaychoir.feet/powers",
     "flavorJa": "歌をつなぐ者は、歩みを途切れさせない。",
     "flavorEn": "One who carries a song onward never breaks stride."
    }
   ],
-  "sixPieceRef": "tools/balance/sets.json#set.relaychoir/sixPiece"
+  "sixPieceRef": "tools/balance/equipment/sets.json#set.relaychoir/sixPiece"
  },
  {
   "set": "set.packfeast",
@@ -2185,16 +1267,7 @@
     "base": "weapon.bone_flute",
     "nameJa": "宴の骨笛",
     "nameEn": "Feastpack Flute",
-    "powers": [
-     {
-      "power": "DeathBloom",
-      "value": 30
-     },
-     {
-      "power": "Barrier",
-      "value": 10
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.packfeast.weapon/powers",
     "flavorJa": "骨笛の音で、群れは宴の始まりを知る。",
     "flavorEn": "The bone flute tells the pack the feast has begun."
    },
@@ -2204,16 +1277,7 @@
     "base": "hands.summoner_bands",
     "nameJa": "宴の群れ腕輪",
     "nameEn": "Feastpack Bands",
-    "powers": [
-     {
-      "power": "DeathBloom",
-      "value": 35
-     },
-     {
-      "power": "Lifeline",
-      "value": 4
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.packfeast.hands/powers",
     "flavorJa": "呼び手の腕輪が鳴ると、群れが宴の席に着く。",
     "flavorEn": "When the caller's bands ring, the pack takes its seat at the feast."
    },
@@ -2223,21 +1287,12 @@
     "base": "feet.beastpaw_boots",
     "nameJa": "宴の群れ獣靴",
     "nameEn": "Feastpack Pawboots",
-    "powers": [
-     {
-      "power": "PackFeast",
-      "value": 3
-     },
-     {
-      "power": "Tailwind",
-      "value": 20
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.packfeast.feet/powers",
     "flavorJa": "獣趾の靴で、群れの先頭を駆ける。",
     "flavorEn": "In pawed boots, run at the head of the pack."
    }
   ],
-  "sixPieceRef": "tools/balance/sets.json#set.packfeast/sixPiece"
+  "sixPieceRef": "tools/balance/equipment/sets.json#set.packfeast/sixPiece"
  },
  {
   "set": "set.lastblooms",
@@ -2249,16 +1304,7 @@
     "base": "head.leaf_wreath",
     "nameJa": "弔い花の花冠",
     "nameEn": "Funeral-Bloom Wreath",
-    "powers": [
-     {
-      "power": "DeathBloom",
-      "value": 45
-     },
-     {
-      "power": "Barrier",
-      "value": 10
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.lastblooms.head/powers",
     "flavorJa": "花冠は枯れたあとも、倒れた者の名を覚えている。",
     "flavorEn": "The wreath remembers the fallen's names even after it withers."
    },
@@ -2268,16 +1314,7 @@
     "base": "armor.summoners_vest",
     "nameJa": "弔い花の胸衣",
     "nameEn": "Funeral-Bloom Vest",
-    "powers": [
-     {
-      "power": "Thorns",
-      "value": 25
-     },
-     {
-      "power": "Aegis",
-      "value": 18
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.lastblooms.armor/powers",
     "flavorJa": "胸衣の刺繍が、死者の数だけ花を増やす。",
     "flavorEn": "The embroidery adds a flower for every one that has died."
    },
@@ -2287,21 +1324,12 @@
     "base": "charm.beasttongue_charm",
     "nameJa": "弔い花の獣語護符",
     "nameEn": "Funeral-Bloom Beastcharm",
-    "powers": [
-     {
-      "power": "PackFeast",
-      "value": 3
-     },
-     {
-      "power": "SoulSiphon",
-      "value": 15
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.lastblooms.charm/powers",
     "flavorJa": "護符の花は、倒れた獣の声を最後まで聞く。",
     "flavorEn": "The charm's flower listens to a fallen beast's voice to the very end."
    }
   ],
-  "sixPieceRef": "tools/balance/sets.json#set.lastblooms/sixPiece"
+  "sixPieceRef": "tools/balance/equipment/sets.json#set.lastblooms/sixPiece"
  },
  {
   "set": "set.pinpoint",
@@ -2313,16 +1341,7 @@
     "base": "armor.hunter_vest",
     "nameJa": "一点狙いの胴衣",
     "nameEn": "Single-Mark Vest",
-    "powers": [
-     {
-      "power": "WeakPointWound",
-      "value": 40
-     },
-     {
-      "power": "OpeningStrike",
-      "value": 40
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.pinpoint.armor/powers",
     "flavorJa": "胴衣の内側には、的の寸法が縫い込まれている。",
     "flavorEn": "The target's exact dimensions are sewn inside the vest."
    },
@@ -2332,16 +1351,7 @@
     "base": "feet.deadeye_leggings",
     "nameJa": "一点狙いの脚絆",
     "nameEn": "Single-Mark Leggings",
-    "powers": [
-     {
-      "power": "FocusFire",
-      "value": 40
-     },
-     {
-      "power": "Executioner",
-      "value": 30
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.pinpoint.feet/powers",
     "flavorJa": "一点を狙う足は、狙いの間、地を離れない。",
     "flavorEn": "Feet that aim at one mark do not leave the ground while aiming."
    },
@@ -2351,21 +1361,12 @@
     "base": "charm.keeneye_charm",
     "nameJa": "一点狙いの鋭眼御守",
     "nameEn": "Single-Mark Keeneye Charm",
-    "powers": [
-     {
-      "power": "DuelistsWay",
-      "value": 20
-     },
-     {
-      "power": "CriticalEcho",
-      "value": 4
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.pinpoint.charm/powers",
     "flavorJa": "御守の眼は、的の中心だけを覚えている。",
     "flavorEn": "The charm's eye remembers only the center of the mark."
    }
   ],
-  "sixPieceRef": "tools/balance/sets.json#set.pinpoint/sixPiece"
+  "sixPieceRef": "tools/balance/equipment/sets.json#set.pinpoint/sixPiece"
  },
  {
   "set": "set.wanderblades",
@@ -2377,16 +1378,7 @@
     "base": "head.gale_hood",
     "nameJa": "渡り鳥の疾風頭巾",
     "nameEn": "Migrant Galehood",
-    "powers": [
-     {
-      "power": "Tailwind",
-      "value": 22
-     },
-     {
-      "power": "StrafeShot",
-      "value": 22
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.wanderblades.head/powers",
     "flavorJa": "風を受けた頭巾が、渡りの方角を示す。",
     "flavorEn": "The windswept hood points the direction of migration."
    },
@@ -2396,16 +1388,7 @@
     "base": "armor.dancer_garb",
     "nameJa": "渡り鳥の舞衣",
     "nameEn": "Migrant Dancewear",
-    "powers": [
-     {
-      "power": "WanderersEdge",
-      "value": 15
-     },
-     {
-      "power": "ReturningBlade",
-      "value": 12
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.wanderblades.armor/powers",
     "flavorJa": "羽ばたくように翻る衣が、刃の軌跡を隠す。",
     "flavorEn": "Garb that flutters like wings hides the path of the blade."
    },
@@ -2415,21 +1398,12 @@
     "base": "charm.skirmish_ring",
     "nameJa": "渡り鳥の遊撃指輪",
     "nameEn": "Migrant Skirmish Ring",
-    "powers": [
-     {
-      "power": "CritSplash",
-      "value": 20
-     },
-     {
-      "power": "Momentum",
-      "value": 4
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.wanderblades.charm/powers",
     "flavorJa": "指輪の羽根が、群れの先頭を示す。",
     "flavorEn": "The feather on the ring marks the lead of the flock."
    }
   ],
-  "sixPieceRef": "tools/balance/sets.json#set.wanderblades/sixPiece"
+  "sixPieceRef": "tools/balance/equipment/sets.json#set.wanderblades/sixPiece"
  },
  {
   "set": "set.fortuneedge",
@@ -2441,16 +1415,7 @@
     "base": "armor.ambush_vest",
     "nameJa": "運刃の奇襲胴衣",
     "nameEn": "Fortune-Edge Ambushvest",
-    "powers": [
-     {
-      "power": "CritSplash",
-      "value": 26
-     },
-     {
-      "power": "OpeningStrike",
-      "value": 40
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.fortuneedge.armor/powers",
     "flavorJa": "賭けの最初の一手を、胴衣は決して外さない。",
     "flavorEn": "The vest never misses the first move of a wager."
    },
@@ -2460,16 +1425,7 @@
     "base": "feet.hunter_striders",
     "nameJa": "運刃の追撃脚当",
     "nameEn": "Fortune-Edge Striders",
-    "powers": [
-     {
-      "power": "WeakPointWound",
-      "value": 40
-     },
-     {
-      "power": "Tailwind",
-      "value": 20
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.fortuneedge.feet/powers",
     "flavorJa": "賭けに勝った足は、次の賭けへ先に走り出す。",
     "flavorEn": "Feet that won the wager are already running to the next."
    },
@@ -2479,21 +1435,12 @@
     "base": "charm.garnet_ring",
     "nameJa": "運刃の紅玉指輪",
     "nameEn": "Fortune-Edge Garnet Ring",
-    "powers": [
-     {
-      "power": "BrittleIce",
-      "value": 35
-     },
-     {
-      "power": "Executioner",
-      "value": 30
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.fortuneedge.charm/powers",
     "flavorJa": "紅玉の傷は、当たりの数だけ増えていく。",
     "flavorEn": "The garnet gains a flaw for every win."
    }
   ],
-  "sixPieceRef": "tools/balance/sets.json#set.fortuneedge/sixPiece"
+  "sixPieceRef": "tools/balance/equipment/sets.json#set.fortuneedge/sixPiece"
  },
  {
   "set": "set.runupcharge",
@@ -2505,16 +1452,7 @@
     "base": "head.horned_helm",
     "nameJa": "突撃隊の角兜",
     "nameEn": "Charge-Corps Horned Helm",
-    "powers": [
-     {
-      "power": "Tailwind",
-      "value": 22
-     },
-     {
-      "power": "OpeningStrike",
-      "value": 40
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.runupcharge.head/powers",
     "flavorJa": "角兜の先端が、突撃の合図を一番に受ける。",
     "flavorEn": "The tip of the horn is first to catch the signal to charge."
    },
@@ -2524,16 +1462,7 @@
     "base": "armor.stormfront_vest",
     "nameJa": "突撃隊の嵐胴衣",
     "nameEn": "Charge-Corps Stormvest",
-    "powers": [
-     {
-      "power": "RunUp",
-      "value": 40
-     },
-     {
-      "power": "Barrier",
-      "value": 10
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.runupcharge.armor/powers",
     "flavorJa": "嵐の前線を胴衣に染め、駆け抜ける。",
     "flavorEn": "Dyed with the storm front, it runs straight through."
    },
@@ -2543,21 +1472,12 @@
     "base": "charm.skirmish_ring",
     "nameJa": "突撃隊の遊撃指輪",
     "nameEn": "Charge-Corps Skirmish Ring",
-    "powers": [
-     {
-      "power": "SpilloverStrike",
-      "value": 30
-     },
-     {
-      "power": "Momentum",
-      "value": 4
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.runupcharge.charm/powers",
     "flavorJa": "指輪の傷は、先頭を駆けた証になる。",
     "flavorEn": "The nicks on the ring are proof of having run at the front."
    }
   ],
-  "sixPieceRef": "tools/balance/sets.json#set.runupcharge/sixPiece"
+  "sixPieceRef": "tools/balance/equipment/sets.json#set.runupcharge/sixPiece"
  },
  {
   "set": "set.medleyband",
@@ -2569,16 +1489,7 @@
     "base": "armor.ink_robe",
     "nameJa": "楽団の墨染め衣",
     "nameEn": "Ensemble Inkrobe",
-    "powers": [
-     {
-      "power": "OpeningSalvo",
-      "value": 18
-     },
-     {
-      "power": "PileOn",
-      "value": 24
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.medleyband.armor/powers",
     "flavorJa": "墨で書かれた音符が、衣の上で拍を刻む。",
     "flavorEn": "Notes written in ink keep time upon the robe."
    },
@@ -2588,16 +1499,7 @@
     "base": "hands.manuscript_gloves",
     "nameJa": "楽団の楽譜手袋",
     "nameEn": "Ensemble Scorekeeper Gloves",
-    "powers": [
-     {
-      "power": "Medley",
-      "value": 4
-     },
-     {
-      "power": "CrystalCircuit",
-      "value": 10
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.medleyband.hands/powers",
     "flavorJa": "楽譜をめくる指は、次の和音をすでに知っている。",
     "flavorEn": "Fingers turning the score already know the next chord."
    },
@@ -2607,21 +1509,12 @@
     "base": "feet.star_slippers",
     "nameJa": "楽団の舞台靴",
     "nameEn": "Ensemble Stagesteps",
-    "powers": [
-     {
-      "power": "Overload",
-      "value": 18
-     },
-     {
-      "power": "Tailwind",
-      "value": 20
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.medleyband.feet/powers",
     "flavorJa": "舞台の板を踏む音が、拍子になる。",
     "flavorEn": "The sound of steps on the stage becomes the beat."
    }
   ],
-  "sixPieceRef": "tools/balance/sets.json#set.medleyband/sixPiece"
+  "sixPieceRef": "tools/balance/equipment/sets.json#set.medleyband/sixPiece"
  },
  {
   "set": "set.gamblertrump",
@@ -2633,16 +1526,7 @@
     "base": "armor.traveler_coat",
     "nameJa": "勝負師の旅外套",
     "nameEn": "Gambler's Travelcoat",
-    "powers": [
-     {
-      "power": "ReturningBlade",
-      "value": 12
-     },
-     {
-      "power": "UltimateSurge",
-      "value": 15
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.gamblertrump.armor/powers",
     "flavorJa": "外套の裏には、いつも一枚余分な札が縫われている。",
     "flavorEn": "One extra card is always sewn inside the coat."
    },
@@ -2652,16 +1536,7 @@
     "base": "hands.spell_gloves",
     "nameJa": "勝負師の呪文手袋",
     "nameEn": "Gambler's Spellgloves",
-    "powers": [
-     {
-      "power": "AceInHand",
-      "value": 10
-     },
-     {
-      "power": "Overload",
-      "value": 18
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.gamblertrump.hands/powers",
     "flavorJa": "手袋の下で、切り札が静かに入れ替わる。",
     "flavorEn": "Beneath the gloves, the trump card quietly changes places."
    },
@@ -2671,21 +1546,12 @@
     "base": "feet.star_slippers",
     "nameJa": "勝負師の星靴",
     "nameEn": "Gambler's Starshoes",
-    "powers": [
-     {
-      "power": "Finale",
-      "value": 20
-     },
-     {
-      "power": "StardustCycle",
-      "value": 12
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.gamblertrump.feet/powers",
     "flavorJa": "星の靴は、勝負どころでだけ軽くなる。",
     "flavorEn": "Starshoes grow light only at the decisive moment."
    }
   ],
-  "sixPieceRef": "tools/balance/sets.json#set.gamblertrump/sixPiece"
+  "sixPieceRef": "tools/balance/equipment/sets.json#set.gamblertrump/sixPiece"
  },
  {
   "set": "set.barehand",
@@ -2697,16 +1563,7 @@
     "base": "head.berserker_mask",
     "nameJa": "無手の誇りの面",
     "nameEn": "Bare-Hand Mask",
-    "powers": [
-     {
-      "power": "Executioner",
-      "value": 30
-     },
-     {
-      "power": "Momentum",
-      "value": 4
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.barehand.head/powers",
     "flavorJa": "素手の者は、面だけを武具として許された。",
     "flavorEn": "The bare-handed were permitted only a mask as armor."
    },
@@ -2716,16 +1573,7 @@
     "base": "armor.monk_garb",
     "nameJa": "無手の誇りの道着",
     "nameEn": "Bare-Hand Gi",
-    "powers": [
-     {
-      "power": "Spellsweep",
-      "value": 30
-     },
-     {
-      "power": "CriticalEcho",
-      "value": 4
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.barehand.armor/powers",
     "flavorJa": "帯一本で締めた道着は、拳の動きを遮らない。",
     "flavorEn": "A gi tied with a single sash never hinders the fist."
    },
@@ -2735,21 +1583,12 @@
     "base": "feet.stalker_boots",
     "nameJa": "無手の誇りの足袋",
     "nameEn": "Bare-Hand Tabi",
-    "powers": [
-     {
-      "power": "Tailwind",
-      "value": 22
-     },
-     {
-      "power": "Lifesteal",
-      "value": 8
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.barehand.feet/powers",
     "flavorJa": "足袋の底は薄く、地面の声をよく聞く。",
     "flavorEn": "Thin soles hear the voice of the ground well."
    }
   ],
-  "sixPieceRef": "tools/balance/sets.json#set.barehand/sixPiece"
+  "sixPieceRef": "tools/balance/equipment/sets.json#set.barehand/sixPiece"
  },
  {
   "set": "set.crystalcircuit",
@@ -2761,16 +1600,7 @@
     "base": "weapon.windhowl_staff",
     "nameJa": "回路の導杖",
     "nameEn": "Circuit Conductor Staff",
-    "powers": [
-     {
-      "power": "CrystalResonance",
-      "value": 2
-     },
-     {
-      "power": "Finale",
-      "value": 20
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.crystalcircuit.weapon/powers",
     "flavorJa": "導杖の先で、結晶が順に光を受け渡す。",
     "flavorEn": "At the tip of the staff, crystals pass the light along in turn."
    },
@@ -2780,16 +1610,7 @@
     "base": "armor.mirrorsilk_robe",
     "nameJa": "回路の鏡絹衣",
     "nameEn": "Circuit Mirrorsilk",
-    "powers": [
-     {
-      "power": "DreamOmen",
-      "value": 16
-     },
-     {
-      "power": "AceInHand",
-      "value": 10
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.crystalcircuit.armor/powers",
     "flavorJa": "鏡絹は、結晶の光を何度でも跳ね返す。",
     "flavorEn": "Mirrorsilk reflects the crystals' light again and again."
    },
@@ -2799,21 +1620,12 @@
     "base": "feet.whisperweave_shoes",
     "nameJa": "回路の囁き靴",
     "nameEn": "Circuit Whisperweave Shoes",
-    "powers": [
-     {
-      "power": "CrystalCircuit",
-      "value": 10
-     },
-     {
-      "power": "Overload",
-      "value": 18
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.crystalcircuit.feet/powers",
     "flavorJa": "靴底を走る回路が、一歩ごとに小さく鳴る。",
     "flavorEn": "A circuit running through the sole hums softly with each step."
    }
   ],
-  "sixPieceRef": "tools/balance/sets.json#set.crystalcircuit/sixPiece"
+  "sixPieceRef": "tools/balance/equipment/sets.json#set.crystalcircuit/sixPiece"
  },
  {
   "set": "set.dreamvigil",
@@ -2825,16 +1637,7 @@
     "base": "weapon.pilgrim_staff",
     "nameJa": "寝ずの番の巡礼杖",
     "nameEn": "Vigil Pilgrim Staff",
-    "powers": [
-     {
-      "power": "Apothecary",
-      "value": 14
-     },
-     {
-      "power": "Aegis",
-      "value": 18
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.dreamvigil.weapon/powers",
     "flavorJa": "夜通し突いた杖の先が、夜明けに磨り減っている。",
     "flavorEn": "The staff's tip, planted all night, is worn thin by dawn."
    },
@@ -2844,16 +1647,7 @@
     "base": "hands.healer_hands",
     "nameJa": "寝ずの番の手袋",
     "nameEn": "Vigil Gloves",
-    "powers": [
-     {
-      "power": "ShardBoon",
-      "value": 6
-     },
-     {
-      "power": "UnbowedMind",
-      "value": 6
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.dreamvigil.hands/powers",
     "flavorJa": "夜通し握った手の中に、夢の欠片が残る。",
     "flavorEn": "Fragments of dreams remain in hands that gripped all night."
    },
@@ -2863,21 +1657,12 @@
     "base": "feet.pilgrim_boots",
     "nameJa": "寝ずの番の巡礼靴",
     "nameEn": "Vigil Pilgrim Boots",
-    "powers": [
-     {
-      "power": "DreamOmen",
-      "value": 16
-     },
-     {
-      "power": "Barrier",
-      "value": 10
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.dreamvigil.feet/powers",
     "flavorJa": "夢の境を歩く靴は、眠らない者にだけ道を譲る。",
     "flavorEn": "Shoes that walk the edge of dreams yield the road only to the sleepless."
    }
   ],
-  "sixPieceRef": "tools/balance/sets.json#set.dreamvigil/sixPiece"
+  "sixPieceRef": "tools/balance/equipment/sets.json#set.dreamvigil/sixPiece"
  },
  {
   "set": "set.tithebound",
@@ -2889,16 +1674,7 @@
     "base": "head.thorn_circlet",
     "nameJa": "供犠の茨冠",
     "nameEn": "Tithe Thorn Crown",
-    "powers": [
-     {
-      "power": "Thorns",
-      "value": 28
-     },
-     {
-      "power": "Aegis",
-      "value": 18
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.tithebound.head/powers",
     "flavorJa": "茨の冠の痛みが、血盟の証になる。",
     "flavorEn": "The pain of the thorn crown is the proof of the blood pact."
    },
@@ -2908,16 +1684,7 @@
     "base": "hands.thorn_wraps",
     "nameJa": "供犠の棘手巻",
     "nameEn": "Tithe Barbwraps",
-    "powers": [
-     {
-      "power": "Lifesteal",
-      "value": 8
-     },
-     {
-      "power": "Bloodlust",
-      "value": 8
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.tithebound.hands/powers",
     "flavorJa": "棘の巻き布は、捧げた血を少しずつ取り戻す。",
     "flavorEn": "Barbed wraps slowly reclaim the blood that was offered."
    },
@@ -2927,21 +1694,12 @@
     "base": "feet.chain_greaves",
     "nameJa": "供犠の鎖脛当",
     "nameEn": "Tithe Chaingreaves",
-    "powers": [
-     {
-      "power": "SecondWind",
-      "value": 20
-     },
-     {
-      "power": "Tailwind",
-      "value": 20
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.tithebound.feet/powers",
     "flavorJa": "鎖の音が、血盟の誓いを歩くたびに唱える。",
     "flavorEn": "The chain's clink recites the pact's vow with every step."
    }
   ],
-  "sixPieceRef": "tools/balance/sets.json#set.tithebound/sixPiece"
+  "sixPieceRef": "tools/balance/equipment/sets.json#set.tithebound/sixPiece"
  },
  {
   "set": "set.prismdance",
@@ -2953,16 +1711,7 @@
     "base": "weapon.evening_fan",
     "nameJa": "舞い星の夕扇",
     "nameEn": "Dancing-Star Fan",
-    "powers": [
-     {
-      "power": "Convergence",
-      "value": 40
-     },
-     {
-      "power": "CrystalCircuit",
-      "value": 10
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.prismdance.weapon/powers",
     "flavorJa": "扇を返すたび、夕空の色が一つ変わる。",
     "flavorEn": "Each turn of the fan changes one color of the evening sky."
    },
@@ -2972,16 +1721,7 @@
     "base": "armor.aurora_wrap",
     "nameJa": "舞い星の羽衣",
     "nameEn": "Dancing-Star Aurora",
-    "powers": [
-     {
-      "power": "PrismShift",
-      "value": 2
-     },
-     {
-      "power": "Overload",
-      "value": 18
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.prismdance.armor/powers",
     "flavorJa": "羽衣が描く極光は、舞い手の足跡をなぞる。",
     "flavorEn": "The aurora the wrap draws traces the dancer's footprints."
    },
@@ -2991,21 +1731,12 @@
     "base": "charm.halo_charm",
     "nameJa": "舞い星の光環御守",
     "nameEn": "Dancing-Star Halo Charm",
-    "powers": [
-     {
-      "power": "StardustCycle",
-      "value": 10
-     },
-     {
-      "power": "ElementalHarvest",
-      "value": 24
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.prismdance.charm/powers",
     "flavorJa": "光環の御守が、舞いの終わりの一拍を示す。",
     "flavorEn": "The halo charm marks the last beat of the dance."
    }
   ],
-  "sixPieceRef": "tools/balance/sets.json#set.prismdance/sixPiece"
+  "sixPieceRef": "tools/balance/equipment/sets.json#set.prismdance/sixPiece"
  },
  {
   "set": "set.breakoutcorps",
@@ -3017,16 +1748,7 @@
     "base": "weapon.gatehouse_maul",
     "nameJa": "突破隊の破城槌",
     "nameEn": "Breakout Ram",
-    "powers": [
-     {
-      "power": "Aegis",
-      "value": 18
-     },
-     {
-      "power": "Thorns",
-      "value": 25
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.breakoutcorps.weapon/powers",
     "flavorJa": "囲みの壁を、一撃で城門に変える。",
     "flavorEn": "One blow turns a wall of enemies into an open gate."
    },
@@ -3036,16 +1758,7 @@
     "base": "hands.ironvein_gauntlets",
     "nameJa": "突破隊の鉄手",
     "nameEn": "Breakout Ironhands",
-    "powers": [
-     {
-      "power": "Bulwark",
-      "value": 25
-     },
-     {
-      "power": "Tailwind",
-      "value": 20
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.breakoutcorps.hands/powers",
     "flavorJa": "囲みを割る拳は、味方の道を拓くためにある。",
     "flavorEn": "The fist that splits the encirclement exists to open a path for the others."
    },
@@ -3055,20 +1768,11 @@
     "base": "charm.iron_feather",
     "nameJa": "突破隊の鉄羽根",
     "nameEn": "Breakout Ironfeather",
-    "powers": [
-     {
-      "power": "Breakout",
-      "value": 8
-     },
-     {
-      "power": "ImmovableStance",
-      "value": 8
-     }
-    ],
+    "powersRef": "tools/balance/equipment/uniques.json#set.breakoutcorps.charm/powers",
     "flavorJa": "鉄の羽根は、囲みの外へ向かう風を知っている。",
     "flavorEn": "The iron feather knows the wind that blows toward the outside of the siege."
    }
   ],
-  "sixPieceRef": "tools/balance/sets.json#set.breakoutcorps/sixPiece"
+  "sixPieceRef": "tools/balance/equipment/sets.json#set.breakoutcorps/sixPiece"
  }
 ]

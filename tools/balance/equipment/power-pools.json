@@ -1,0 +1,845 @@
+{
+  "schemaVersion": 1,
+  "pools": {
+    "Weapon": {
+      "ShieldBash": {
+        "min": 30,
+        "max": 60
+      },
+      "WanderersEdge": {
+        "min": 15,
+        "max": 30
+      },
+      "FocusFire": {
+        "min": 40,
+        "max": 80
+      },
+      "DuelistsWay": {
+        "min": 20,
+        "max": 40
+      },
+      "RunUp": {
+        "min": 40,
+        "max": 80
+      },
+      "BrittleIce": {
+        "min": 30,
+        "max": 60
+      },
+      "ElementalHarvest": {
+        "min": 20,
+        "max": 35
+      },
+      "Medley": {
+        "min": 3,
+        "max": 6
+      },
+      "Spellsweep": {
+        "min": 30,
+        "max": 60
+      },
+      "BareHandedPride": {
+        "min": 1,
+        "max": 2
+      },
+      "OpeningSalvo": {
+        "min": 15,
+        "max": 30
+      },
+      "PileOn": {
+        "min": 20,
+        "max": 40
+      },
+      "AceInHand": {
+        "min": 8,
+        "max": 16
+      },
+      "PilingLuck": {
+        "min": 1,
+        "max": 2
+      },
+      "WeakPointWound": {
+        "min": 60,
+        "max": 120
+      },
+      "CritSplash": {
+        "min": 20,
+        "max": 40
+      },
+      "ReturningBlade": {
+        "min": 10,
+        "max": 20
+      },
+      "SpilloverStrike": {
+        "min": 40,
+        "max": 80
+      },
+      "Momentum": {
+        "min": 3,
+        "max": 5
+      },
+      "Lifesteal": {
+        "min": 5,
+        "max": 10
+      },
+      "Executioner": {
+        "min": 25,
+        "max": 45
+      },
+      "Blaze": {
+        "min": 40,
+        "max": 70
+      },
+      "ChainLightning": {
+        "min": 30,
+        "max": 50
+      },
+      "Bloodlust": {
+        "min": 12,
+        "max": 20
+      },
+      "Ember": {
+        "min": 25,
+        "max": 50
+      },
+      "Radiance": {
+        "min": 40,
+        "max": 80
+      },
+      "UltimateSurge": {
+        "min": 15,
+        "max": 25
+      },
+      "SoulSiphon": {
+        "min": 10,
+        "max": 20
+      },
+      "Frenzy": {
+        "min": 1,
+        "max": 2
+      },
+      "OpeningStrike": {
+        "min": 25,
+        "max": 50
+      },
+      "Vigor": {
+        "min": 8,
+        "max": 16
+      },
+      "Overload": {
+        "min": 10,
+        "max": 20
+      },
+      "Fetters": {
+        "min": 8,
+        "max": 15
+      },
+      "CriticalEcho": {
+        "min": 2,
+        "max": 4
+      },
+      "Wildfire": {
+        "min": 15,
+        "max": 30
+      }
+    },
+    "Armor": {
+      "UnbowedMind": {
+        "min": 4,
+        "max": 8
+      },
+      "ShieldbreakBurst": {
+        "min": 6,
+        "max": 12
+      },
+      "SharedWard": {
+        "min": 20,
+        "max": 40
+      },
+      "TriumphSong": {
+        "min": 4,
+        "max": 8
+      },
+      "WatchfulHand": {
+        "min": 15,
+        "max": 25
+      },
+      "Breakout": {
+        "min": 6,
+        "max": 12
+      },
+      "ImmovableStance": {
+        "min": 6,
+        "max": 12
+      },
+      "VanguardsOath": {
+        "min": 15,
+        "max": 30
+      },
+      "DeathBloom": {
+        "min": 60,
+        "max": 120
+      },
+      "DreamOmen": {
+        "min": 15,
+        "max": 30
+      },
+      "RearguardsWay": {
+        "min": 6,
+        "max": 12
+      },
+      "TollOfGrudge": {
+        "min": 15,
+        "max": 30
+      },
+      "ReadyGuard": {
+        "min": 6,
+        "max": 12
+      },
+      "Apothecary": {
+        "min": 10,
+        "max": 20
+      },
+      "Retaliation": {
+        "min": 15,
+        "max": 25
+      },
+      "Bulwark": {
+        "min": 15,
+        "max": 30
+      },
+      "Thorns": {
+        "min": 15,
+        "max": 30
+      },
+      "Barrier": {
+        "min": 6,
+        "max": 10
+      },
+      "Aegis": {
+        "min": 10,
+        "max": 20
+      },
+      "EchoingDodge": {
+        "min": 40,
+        "max": 80
+      },
+      "Whirlwind": {
+        "min": 40,
+        "max": 80
+      },
+      "Frenzy": {
+        "min": 1,
+        "max": 2
+      },
+      "StarShield": {
+        "min": 10,
+        "max": 20
+      },
+      "Sprint": {
+        "min": 10,
+        "max": 25
+      },
+      "OverflowingLife": {
+        "min": 20,
+        "max": 40
+      },
+      "Fetters": {
+        "min": 8,
+        "max": 15
+      },
+      "StillWater": {
+        "min": 4,
+        "max": 8
+      }
+    },
+    "Charm": {
+      "ShieldbreakBurst": {
+        "min": 6,
+        "max": 12
+      },
+      "SharedWard": {
+        "min": 20,
+        "max": 40
+      },
+      "GleamingWard": {
+        "min": 6,
+        "max": 12
+      },
+      "CoStar": {
+        "min": 10,
+        "max": 20
+      },
+      "TriumphSong": {
+        "min": 4,
+        "max": 8
+      },
+      "WatchfulHand": {
+        "min": 15,
+        "max": 25
+      },
+      "KindnessReturns": {
+        "min": 15,
+        "max": 30
+      },
+      "RelayHand": {
+        "min": 5,
+        "max": 10
+      },
+      "UmbralHeritage": {
+        "min": 40,
+        "max": 80
+      },
+      "ElementalHarvest": {
+        "min": 20,
+        "max": 35
+      },
+      "PackFeast": {
+        "min": 2,
+        "max": 5
+      },
+      "VanguardsOath": {
+        "min": 15,
+        "max": 30
+      },
+      "Medley": {
+        "min": 3,
+        "max": 6
+      },
+      "BareHandedPride": {
+        "min": 1,
+        "max": 2
+      },
+      "AceInHand": {
+        "min": 8,
+        "max": 16
+      },
+      "CrystalCircuit": {
+        "min": 8,
+        "max": 15
+      },
+      "ShardBoon": {
+        "min": 5,
+        "max": 10
+      },
+      "Lifeline": {
+        "min": 3,
+        "max": 6
+      },
+      "DreamOmen": {
+        "min": 15,
+        "max": 30
+      },
+      "RearguardsWay": {
+        "min": 6,
+        "max": 12
+      },
+      "ReadyGuard": {
+        "min": 6,
+        "max": 12
+      },
+      "Apothecary": {
+        "min": 10,
+        "max": 20
+      },
+      "SpilloverStrike": {
+        "min": 40,
+        "max": 80
+      },
+      "Resonance": {
+        "min": 5,
+        "max": 9
+      },
+      "Tailwind": {
+        "min": 15,
+        "max": 25
+      },
+      "SecondWind": {
+        "min": 20,
+        "max": 30
+      },
+      "Shatter": {
+        "min": 30,
+        "max": 60
+      },
+      "Frost": {
+        "min": 30,
+        "max": 55
+      },
+      "Umbra": {
+        "min": 40,
+        "max": 80
+      },
+      "Convergence": {
+        "min": 80,
+        "max": 140
+      },
+      "Steam": {
+        "min": 35,
+        "max": 60
+      },
+      "Eclipse": {
+        "min": 8,
+        "max": 12
+      },
+      "Cinder": {
+        "min": 1,
+        "max": 1
+      },
+      "FrostCrystal": {
+        "min": 3,
+        "max": 5
+      },
+      "SoulSiphon": {
+        "min": 10,
+        "max": 20
+      },
+      "Whirlwind": {
+        "min": 40,
+        "max": 80
+      },
+      "StarShield": {
+        "min": 10,
+        "max": 20
+      },
+      "Sprint": {
+        "min": 10,
+        "max": 25
+      },
+      "Vigor": {
+        "min": 8,
+        "max": 16
+      },
+      "Overload": {
+        "min": 10,
+        "max": 20
+      },
+      "Devotion": {
+        "min": 2,
+        "max": 4
+      },
+      "CrystalResonance": {
+        "min": 1,
+        "max": 2
+      },
+      "PreyPride": {
+        "min": 3,
+        "max": 5
+      },
+      "SpendersWard": {
+        "min": 5,
+        "max": 10
+      },
+      "LucidBoon": {
+        "min": 1,
+        "max": 3
+      }
+    },
+    "Head": {
+      "GleamingWard": {
+        "min": 6,
+        "max": 12
+      },
+      "CoStar": {
+        "min": 10,
+        "max": 20
+      },
+      "FocusFire": {
+        "min": 40,
+        "max": 80
+      },
+      "DuelistsWay": {
+        "min": 20,
+        "max": 40
+      },
+      "ImmovableStance": {
+        "min": 6,
+        "max": 12
+      },
+      "StardustCycle": {
+        "min": 10,
+        "max": 20
+      },
+      "PrismShift": {
+        "min": 1,
+        "max": 3
+      },
+      "PackFeast": {
+        "min": 2,
+        "max": 5
+      },
+      "Medley": {
+        "min": 3,
+        "max": 6
+      },
+      "OpeningSalvo": {
+        "min": 15,
+        "max": 30
+      },
+      "PileOn": {
+        "min": 20,
+        "max": 40
+      },
+      "AceInHand": {
+        "min": 8,
+        "max": 16
+      },
+      "CrystalCircuit": {
+        "min": 8,
+        "max": 15
+      },
+      "Lifeline": {
+        "min": 3,
+        "max": 6
+      },
+      "DreamOmen": {
+        "min": 15,
+        "max": 30
+      },
+      "RearguardsWay": {
+        "min": 6,
+        "max": 12
+      },
+      "PilingLuck": {
+        "min": 1,
+        "max": 2
+      },
+      "ReturningBlade": {
+        "min": 10,
+        "max": 20
+      },
+      "Eclipse": {
+        "min": 8,
+        "max": 12
+      },
+      "FrostCrystal": {
+        "min": 3,
+        "max": 5
+      },
+      "Overload": {
+        "min": 10,
+        "max": 20
+      },
+      "UltimateSurge": {
+        "min": 15,
+        "max": 25
+      },
+      "StarShield": {
+        "min": 10,
+        "max": 20
+      },
+      "Resonance": {
+        "min": 5,
+        "max": 9
+      },
+      "SecondWind": {
+        "min": 20,
+        "max": 30
+      },
+      "Radiance": {
+        "min": 40,
+        "max": 80
+      },
+      "Umbra": {
+        "min": 40,
+        "max": 80
+      },
+      "Barrier": {
+        "min": 6,
+        "max": 10
+      },
+      "Vigor": {
+        "min": 8,
+        "max": 16
+      },
+      "Bloodlust": {
+        "min": 12,
+        "max": 20
+      },
+      "Finale": {
+        "min": 10,
+        "max": 20
+      },
+      "CrystalResonance": {
+        "min": 1,
+        "max": 2
+      },
+      "Devotion": {
+        "min": 2,
+        "max": 4
+      },
+      "LucidBoon": {
+        "min": 1,
+        "max": 3
+      }
+    },
+    "Hands": {
+      "ShieldBash": {
+        "min": 30,
+        "max": 60
+      },
+      "KindnessReturns": {
+        "min": 15,
+        "max": 30
+      },
+      "WanderersEdge": {
+        "min": 15,
+        "max": 30
+      },
+      "FocusFire": {
+        "min": 40,
+        "max": 80
+      },
+      "DuelistsWay": {
+        "min": 20,
+        "max": 40
+      },
+      "RunUp": {
+        "min": 40,
+        "max": 80
+      },
+      "StrafeShot": {
+        "min": 15,
+        "max": 30
+      },
+      "RelayHand": {
+        "min": 5,
+        "max": 10
+      },
+      "StardustCycle": {
+        "min": 10,
+        "max": 20
+      },
+      "UmbralHeritage": {
+        "min": 40,
+        "max": 80
+      },
+      "BrittleIce": {
+        "min": 30,
+        "max": 60
+      },
+      "ElementalHarvest": {
+        "min": 20,
+        "max": 35
+      },
+      "PrismShift": {
+        "min": 1,
+        "max": 3
+      },
+      "DeathBloom": {
+        "min": 60,
+        "max": 120
+      },
+      "Spellsweep": {
+        "min": 30,
+        "max": 60
+      },
+      "BareHandedPride": {
+        "min": 1,
+        "max": 2
+      },
+      "PileOn": {
+        "min": 20,
+        "max": 40
+      },
+      "PilingLuck": {
+        "min": 1,
+        "max": 2
+      },
+      "WeakPointWound": {
+        "min": 60,
+        "max": 120
+      },
+      "CritSplash": {
+        "min": 20,
+        "max": 40
+      },
+      "ReturningBlade": {
+        "min": 10,
+        "max": 20
+      },
+      "Apothecary": {
+        "min": 10,
+        "max": 20
+      },
+      "SpilloverStrike": {
+        "min": 40,
+        "max": 80
+      },
+      "Steam": {
+        "min": 35,
+        "max": 60
+      },
+      "Cinder": {
+        "min": 1,
+        "max": 1
+      },
+      "Executioner": {
+        "min": 25,
+        "max": 45
+      },
+      "Blaze": {
+        "min": 40,
+        "max": 70
+      },
+      "ChainLightning": {
+        "min": 30,
+        "max": 50
+      },
+      "Ember": {
+        "min": 25,
+        "max": 50
+      },
+      "Frost": {
+        "min": 30,
+        "max": 55
+      },
+      "Frenzy": {
+        "min": 1,
+        "max": 2
+      },
+      "Lifesteal": {
+        "min": 5,
+        "max": 10
+      },
+      "OpeningStrike": {
+        "min": 25,
+        "max": 50
+      },
+      "Shatter": {
+        "min": 30,
+        "max": 60
+      },
+      "Momentum": {
+        "min": 3,
+        "max": 5
+      },
+      "CriticalEcho": {
+        "min": 2,
+        "max": 4
+      },
+      "Fetters": {
+        "min": 8,
+        "max": 15
+      },
+      "Wildfire": {
+        "min": 15,
+        "max": 30
+      },
+      "StillWater": {
+        "min": 4,
+        "max": 8
+      },
+      "Overload": {
+        "min": 10,
+        "max": 20
+      },
+      "Finale": {
+        "min": 10,
+        "max": 20
+      }
+    },
+    "Feet": {
+      "UnbowedMind": {
+        "min": 4,
+        "max": 8
+      },
+      "ShieldbreakBurst": {
+        "min": 6,
+        "max": 12
+      },
+      "WatchfulHand": {
+        "min": 15,
+        "max": 25
+      },
+      "Breakout": {
+        "min": 6,
+        "max": 12
+      },
+      "ImmovableStance": {
+        "min": 6,
+        "max": 12
+      },
+      "RunUp": {
+        "min": 40,
+        "max": 80
+      },
+      "StrafeShot": {
+        "min": 15,
+        "max": 30
+      },
+      "VanguardsOath": {
+        "min": 15,
+        "max": 30
+      },
+      "DeathBloom": {
+        "min": 60,
+        "max": 120
+      },
+      "ShardBoon": {
+        "min": 5,
+        "max": 10
+      },
+      "TollOfGrudge": {
+        "min": 15,
+        "max": 30
+      },
+      "ReadyGuard": {
+        "min": 6,
+        "max": 12
+      },
+      "Sprint": {
+        "min": 10,
+        "max": 25
+      },
+      "Tailwind": {
+        "min": 15,
+        "max": 25
+      },
+      "Whirlwind": {
+        "min": 40,
+        "max": 80
+      },
+      "EchoingDodge": {
+        "min": 40,
+        "max": 80
+      },
+      "Momentum": {
+        "min": 3,
+        "max": 5
+      },
+      "Aegis": {
+        "min": 10,
+        "max": 20
+      },
+      "Bulwark": {
+        "min": 15,
+        "max": 30
+      },
+      "Thorns": {
+        "min": 15,
+        "max": 30
+      },
+      "SoulSiphon": {
+        "min": 10,
+        "max": 20
+      },
+      "Retaliation": {
+        "min": 15,
+        "max": 25
+      },
+      "PreyPride": {
+        "min": 3,
+        "max": 5
+      },
+      "OverflowingLife": {
+        "min": 20,
+        "max": 40
+      },
+      "PerfectRead": {
+        "min": 10,
+        "max": 20
+      }
+    }
+  }
+}

@@ -56,27 +56,31 @@ def load_reference():
     fams = open(FAMS, encoding="utf-8").read()
     newp = open(NEWP, encoding="utf-8").read()
 
+    from pathlib import Path
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "balance"))
+    from equipment_items_values import load_bases
+    canonical_bases = load_bases()
+    original_ids = set(json.load(open(BASEFAM, encoding="utf-8")))
     base_pat = re.compile(
         r'new BaseDef\("([^"]+)", Slot\.(\w+), Line\.(\w+), new Txt\("([^"]*)", "([^"]*)"\), '
-        r"Stat\.(\w+), (-?\d+)(?:, Family\.(\w+))?\)")
+        r"Stat\.(\w+), EquipmentItemsBalanceValues\.(\w+)(?:, Family\.(\w+))?\)")
     bases = collections.defaultdict(list)
     for m in base_pat.finditer(src):
+        if m.group(1) not in original_ids:
+            continue
         bases[m.group(2)].append(dict(id=m.group(1), line=m.group(3), ja=m.group(4),
-                                      en=m.group(5), stat=m.group(6), val=int(m.group(7)),
+                                      en=m.group(5), stat=m.group(6), val=canonical_bases[m.group(1)]["implicitValue"],
                                       family=m.group(8) or "Plain"))
     assert sum(len(v) for v in bases.values()) == 360
 
-    pool_m = re.search(r"PowerPools = new Dictionary<Slot, PowerRange\[\]>\s*\{(.*?)\n        \};", src, re.S)
-    pools = collections.defaultdict(dict)
-    for slot, chunk in re.findall(r"\[Slot\.(\w+)\] = new\[\]\s*\{(.*?)\n            \}", pool_m.group(1), re.S):
-        for p, mn, mx in re.findall(r"PowerRange\(Power\.(\w+), (\d+), (\d+)\)", chunk):
-            pools[slot][p] = (int(mn), int(mx))
+    from equipment_pools_values import load_affixes, load_power_pools
+    pools = {slot: {power: (row["min"], row["max"]) for power, row in rows.items()}
+             for slot, rows in load_power_pools()["pools"].items()}
 
     affixes = collections.defaultdict(list)
-    affix_m = re.search(r"AffixPools = new Dictionary<Slot, AffixDef\[\]>\s*\{(.*?)\n        \};", src, re.S)
-    for _slot, chunk in re.findall(r"\[Slot\.(\w+)\] = new\[\]\s*\{(.*?)\n            \}", affix_m.group(1), re.S):
-        for st, mn, mx in re.findall(r"AffixDef\(Stat\.(\w+), (\d+), (\d+)", chunk):
-            affixes[st].append((int(mn), int(mx)))
+    for rows in load_affixes()["pools"].values():
+        for stat, row in rows.items():
+            affixes[stat].append((row["min"], row["max"]))
 
     enum_order = {name: int(val) for name, val in re.findall(r"^\s*(\w+)\s*=\s*(\d+),", ids, re.M)}
     enum_names = set(enum_order)
@@ -1131,7 +1135,11 @@ def main():
                             errs.append("epic second band %s" % nid)
                         if i == 1 and p in conditional:
                             errs.append("epic second power conditional %s" % nid)
-                    powers.append({"power": p, "band": band})
+                    power_entry = {"power": p}
+                    if p not in pools[slot]:
+                        power_entry["rangeSlot"] = next(source for source in SLOTS if p in pools[source])
+                    power_entry["band"] = band
+                    powers.append(power_entry)
                     combo[slot].add(tuple(sorted([q["power"] for q in powers])))
                     prefs = fampref.get(fam) or PLAINPREF
                     prefstat[(fam, p in prefs)] += 1
@@ -1187,7 +1195,9 @@ def main():
         sets_out.append({
             "id": sid, "nameJa": ja, "nameEn": en, "pieces": pieces,
             "twoPiece": {"stat": stat, "value": val},
-            "threePiece": {"power": three[0], "band": three[1]} if three else None,
+            "threePiece": {"power": three[0],
+                           "rangeSlot": next(source for source in SLOTS if three[0] in pools[source]),
+                           "band": three[1]} if three else None,
             "titleJa": tja, "titleEn": ten,
         })
     if (n2, n3) != (18, 12):

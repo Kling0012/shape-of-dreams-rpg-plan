@@ -444,3 +444,78 @@ JSON出力を指定しない既存モードの挙動は維持します（setsの
 既存の鍛冶期待値テストは原本 `forge.json` から独立計算する期待値へ移行し、実際の失敗率・固定seedでの成功失敗結果を検証します。
 これは安全性、形式、契約の検証を緩めたり、任意の係数で全テストが常に成功すると保証したりするものではありません。
 本レポートは実際のCore呼出と固定条件のシミュレーションであり、実ゲームの勝率や経済の保証ではありません。
+
+## 装備の種類別原本（Issue #149 段階7）
+
+この節が装備の最新の操作手順です。上の過去段階の記載にある `sets.json` は
+`equipment/sets.json` へ移動済みです。`gear.json` は装備レベル成長だけを担当し、
+固定攻撃力・魔力の上限は `equipment/caps.json` に集約しました。
+
+| 原本（`tools/balance/` 以下） | 対象 | 編集する数値 |
+| --- | --- | --- |
+| `equipment/bases.json` | 土台600種 | IDごとの `implicitValue` |
+| `equipment/uniques.json` | 固有品1,418定義（参照だけの部品も収録） | `powers[].value` 2,092欄、`link.value` 357欄 |
+| `equipment/sets.json` | 通常セット48組 | `twoPiece` / `threePiece` / `sixPiece` の307欄 |
+| `equipment/affixes.json` | 6枠・98特性 | `pools[枠][Stat]` の `min` / `max` / `weight` |
+| `equipment/power-pools.json` | 6枠・207固有効果候補 | `pools[枠][Power]` の `min` / `max` |
+| `equipment/caps.json` | 固有効果95・能力値26の上限 | `power[Power]` / `stat[Stat]` |
+
+名前・lore・土台／セット／効果の関係は既存の定義を維持します。通常セットの
+既存表にある名前も据え置きです。ボス14セットの技・報酬payloadは段階8の対象で、
+2/3/6部位の技参照や報酬段階番号は調整数値にしません。
+保存形式・Protocol・既存の機能ゲートは変更しません。
+
+表の1セルを編集し、次の1コマンドで生成・全通常テスト・実測・前回成功比較を行います。
+
+```sh
+DOTNET=/usr/bin/dotnet DOTNET_ROLL_FORWARD=LatestMajor python tools/balance/run
+
+# 生成だけ／書込なしの生成鮮度確認
+python tools/balance/gen_cs.py
+python tools/balance/gen_cs.py --check
+
+# 装備定義／既存セット予算の個別実測（先に生成・Releaseビルドを行う）
+DOTNET_ROLL_FORWARD=LatestMajor /usr/bin/dotnet tools/BalanceSim/bin/Release/net8.0/BalanceSim.dll --mode equipment --metrics-json /tmp/equipment.json
+DOTNET_ROLL_FORWARD=LatestMajor /usr/bin/dotnet tools/BalanceSim/bin/Release/net8.0/BalanceSim.dll --mode sets --metrics-json /tmp/sets.json
+```
+
+従来の6モードに `equipment` と `sets` を追加し、それぞれ別プロセスで取得します。
+`equipment` は実際のCore定義の値・型・単位を列挙し、相対重みを確率と混同しません。
+土台・固有品・通常セット・抽選範囲・上限に加えて、PowerPoolsから派生する銘品も比較します。
+通貨上限は戦闘能力の上限と別のID・単位です。値を持たないセット部品・ボス参照は
+`null` と参照状態を記録し、実測0に置き換えません。型または単位が異なる行の差は出しません。
+
+`sets` は既存 `SetBalance` の48組・同枠代替品とのPowerScore比較を実行します。
+2/3/6点の予算、代替との差、6点ボーナス自体の利得・占有率、中央値と既存許容帯判定を
+未丸めのJSONで保存します。アイテムレベル10、強化／覚醒なし、各枠Epic／Legendary各64抽選、
+既存の固定seedを条件に記録します。通常連携・ボス技・戦闘DPS・勝率は模型に含めません。
+
+銘品の `{power, band}` は実数値の原本ではありません。名前付き遺物は土台の枠の範囲から、
+旧来の別枠候補を持つものは明示的な `rangeSlot` から値を生成します。小セットの3点効果も
+明示的な `rangeSlot` を使います。low=1/6、mid=2/5、high=13/20の帯をDecimalで
+四捨五入（half-up）し、範囲内に収める従来値を維持します。
+1枠だけの範囲変更でも、他枠の一致を必須条件にせず、その参照元の派生品だけを再生成します。
+`NamedItems.Data.cs` と240土台の `new-bases.json` 参照メタデータも共通生成の出力に含め、
+全入力の検証・render成功後に一括publishします。
+
+低レア度ツールの旧240土台の数値コピー、C#抽選表を読む経路、set5の旧数値提案は廃止しました。
+`tools/import_v129_content.py` は過去MarkdownのID対応を監査するだけで、数値を書き戻しません。
+旧 `--write` は廃止しました。新土台のメタデータは `valueRef` で原本を参照します。
+ゲーム実行時には生成済みint／decimal定数・既存型付き配列だけを使用し、JSONを読みません。
+
+新しく移した数値の初期有効内容は、既存FNV-1aの意味付きレコードidentityを互換参照として
+凍結しています。初期値は追加の内容照合レコードを出さず、移行前のContentFingerprintを維持します。
+採用済み値が変われば、安定ID・型・値のレコードを既存内容照合へ追加します。
+通常セットは既存の指紋レコードをそのまま使います。互換参照は数値のフォールバックではなく、
+JSONの空白／キー順・比較条件・ファイルハッシュは新しい内容照合に含めません。
+
+移行前後の実行時定義を直接比較した例（無調整）：
+
+| 指標 | 単位 | 移行前 | 移行後 | 差 | 相対差 |
+| --- | --- | ---: | ---: | ---: | ---: |
+| Weapon / Momentum 抽選上限 | percent | 5 | 5 | 0 pp | 0% |
+| `named.armor.001` Momentum（派生値） | percent | 3 | 3 | 0 pp | 0% |
+
+別の一時ビルドでWeapon / Momentumの `max` だけを5→6にした実動確認では、
+Core抽選上限が6、上の派生銘品が4となり、内容指紋も変わることを確認しました。
+この一時変更はチェックインした表・生成物には反映していません。

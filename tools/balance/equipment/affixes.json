@@ -1,0 +1,507 @@
+{
+  "schemaVersion": 1,
+  "pools": {
+    "Weapon": {
+      "AttackFlat": {
+        "min": 2,
+        "max": 5,
+        "weight": 14
+      },
+      "AttackPct": {
+        "min": 2,
+        "max": 4,
+        "weight": 4
+      },
+      "PowerFlat": {
+        "min": 2,
+        "max": 5,
+        "weight": 14
+      },
+      "PowerPct": {
+        "min": 2,
+        "max": 4,
+        "weight": 4
+      },
+      "AttackSpeedPct": {
+        "min": 3,
+        "max": 6,
+        "weight": 12
+      },
+      "CritChancePct": {
+        "min": 2,
+        "max": 4,
+        "weight": 10
+      },
+      "CritDamagePct": {
+        "min": 6,
+        "max": 12,
+        "weight": 10
+      },
+      "Haste": {
+        "min": 3,
+        "max": 6,
+        "weight": 6
+      },
+      "FireAmp": {
+        "min": 6,
+        "max": 12,
+        "weight": 5
+      },
+      "LightAmp": {
+        "min": 6,
+        "max": 12,
+        "weight": 5
+      },
+      "DarkAmp": {
+        "min": 6,
+        "max": 12,
+        "weight": 5
+      },
+      "AttackRangePct": {
+        "min": 4,
+        "max": 8,
+        "weight": 5
+      },
+      "ColdAmp": {
+        "min": 6,
+        "max": 12,
+        "weight": 5
+      },
+      "MaxHealthPct": {
+        "min": 4,
+        "max": 8,
+        "weight": 7
+      },
+      "Tenacity": {
+        "min": 6,
+        "max": 12,
+        "weight": 4
+      }
+    },
+    "Armor": {
+      "MaxHealthPct": {
+        "min": 4,
+        "max": 8,
+        "weight": 14
+      },
+      "MaxHealthFlat": {
+        "min": 15,
+        "max": 30,
+        "weight": 12
+      },
+      "Armor": {
+        "min": 4,
+        "max": 9,
+        "weight": 14
+      },
+      "HealthRegen": {
+        "min": 1,
+        "max": 3,
+        "weight": 8
+      },
+      "Tenacity": {
+        "min": 6,
+        "max": 12,
+        "weight": 8
+      },
+      "MoveSpeedPct": {
+        "min": 2,
+        "max": 4,
+        "weight": 6
+      },
+      "Haste": {
+        "min": 3,
+        "max": 6,
+        "weight": 6
+      },
+      "LightAmp": {
+        "min": 5,
+        "max": 10,
+        "weight": 4
+      },
+      "PowerFlat": {
+        "min": 2,
+        "max": 5,
+        "weight": 7
+      },
+      "PowerPct": {
+        "min": 2,
+        "max": 4,
+        "weight": 2
+      },
+      "AttackFlat": {
+        "min": 2,
+        "max": 5,
+        "weight": 7
+      },
+      "AttackPct": {
+        "min": 2,
+        "max": 4,
+        "weight": 2
+      },
+      "ColdAmp": {
+        "min": 6,
+        "max": 12,
+        "weight": 4
+      },
+      "DarkAmp": {
+        "min": 6,
+        "max": 12,
+        "weight": 4
+      },
+      "FireAmp": {
+        "min": 6,
+        "max": 12,
+        "weight": 4
+      },
+      "HealPower": {
+        "min": 3,
+        "max": 6,
+        "weight": 3
+      },
+      "ShieldPower": {
+        "min": 3,
+        "max": 6,
+        "weight": 3
+      }
+    },
+    "Charm": {
+      "Haste": {
+        "min": 4,
+        "max": 8,
+        "weight": 12
+      },
+      "MoveSpeedPct": {
+        "min": 2,
+        "max": 5,
+        "weight": 8
+      },
+      "CritChancePct": {
+        "min": 2,
+        "max": 4,
+        "weight": 10
+      },
+      "AttackFlat": {
+        "min": 2,
+        "max": 5,
+        "weight": 10
+      },
+      "AttackPct": {
+        "min": 2,
+        "max": 4,
+        "weight": 3
+      },
+      "PowerFlat": {
+        "min": 2,
+        "max": 5,
+        "weight": 10
+      },
+      "PowerPct": {
+        "min": 2,
+        "max": 4,
+        "weight": 3
+      },
+      "MaxHealthPct": {
+        "min": 3,
+        "max": 6,
+        "weight": 10
+      },
+      "HealthRegen": {
+        "min": 1,
+        "max": 2,
+        "weight": 6
+      },
+      "ColdAmp": {
+        "min": 6,
+        "max": 12,
+        "weight": 5
+      },
+      "FireAmp": {
+        "min": 6,
+        "max": 12,
+        "weight": 4
+      },
+      "LightAmp": {
+        "min": 6,
+        "max": 12,
+        "weight": 4
+      },
+      "DarkAmp": {
+        "min": 6,
+        "max": 12,
+        "weight": 4
+      },
+      "Tenacity": {
+        "min": 6,
+        "max": 12,
+        "weight": 6
+      },
+      "CritDamagePct": {
+        "min": 5,
+        "max": 10,
+        "weight": 8
+      },
+      "HealPower": {
+        "min": 3,
+        "max": 6,
+        "weight": 3
+      },
+      "ShieldPower": {
+        "min": 3,
+        "max": 6,
+        "weight": 3
+      }
+    },
+    "Head": {
+      "PowerFlat": {
+        "min": 2,
+        "max": 5,
+        "weight": 14
+      },
+      "PowerPct": {
+        "min": 2,
+        "max": 4,
+        "weight": 4
+      },
+      "Haste": {
+        "min": 3,
+        "max": 6,
+        "weight": 6
+      },
+      "CritChancePct": {
+        "min": 2,
+        "max": 4,
+        "weight": 10
+      },
+      "MaxHealthPct": {
+        "min": 4,
+        "max": 8,
+        "weight": 14
+      },
+      "Armor": {
+        "min": 4,
+        "max": 9,
+        "weight": 14
+      },
+      "Tenacity": {
+        "min": 6,
+        "max": 12,
+        "weight": 8
+      },
+      "LightAmp": {
+        "min": 6,
+        "max": 12,
+        "weight": 5
+      },
+      "DarkAmp": {
+        "min": 6,
+        "max": 12,
+        "weight": 5
+      },
+      "HealthRegen": {
+        "min": 1,
+        "max": 3,
+        "weight": 8
+      },
+      "AttackFlat": {
+        "min": 2,
+        "max": 5,
+        "weight": 14
+      },
+      "AttackPct": {
+        "min": 2,
+        "max": 4,
+        "weight": 4
+      },
+      "MoveSpeedPct": {
+        "min": 2,
+        "max": 4,
+        "weight": 4
+      },
+      "ColdAmp": {
+        "min": 6,
+        "max": 12,
+        "weight": 4
+      },
+      "FireAmp": {
+        "min": 6,
+        "max": 12,
+        "weight": 4
+      },
+      "HealPower": {
+        "min": 3,
+        "max": 6,
+        "weight": 3
+      },
+      "ShieldPower": {
+        "min": 3,
+        "max": 6,
+        "weight": 3
+      }
+    },
+    "Hands": {
+      "AttackFlat": {
+        "min": 2,
+        "max": 5,
+        "weight": 14
+      },
+      "AttackPct": {
+        "min": 2,
+        "max": 4,
+        "weight": 4
+      },
+      "AttackSpeedPct": {
+        "min": 3,
+        "max": 6,
+        "weight": 12
+      },
+      "CritChancePct": {
+        "min": 2,
+        "max": 4,
+        "weight": 10
+      },
+      "CritDamagePct": {
+        "min": 6,
+        "max": 12,
+        "weight": 10
+      },
+      "PowerFlat": {
+        "min": 2,
+        "max": 5,
+        "weight": 14
+      },
+      "PowerPct": {
+        "min": 2,
+        "max": 4,
+        "weight": 4
+      },
+      "FireAmp": {
+        "min": 6,
+        "max": 12,
+        "weight": 5
+      },
+      "ColdAmp": {
+        "min": 6,
+        "max": 12,
+        "weight": 5
+      },
+      "AttackRangePct": {
+        "min": 4,
+        "max": 8,
+        "weight": 5
+      },
+      "Armor": {
+        "min": 4,
+        "max": 9,
+        "weight": 14
+      },
+      "MaxHealthFlat": {
+        "min": 15,
+        "max": 30,
+        "weight": 12
+      },
+      "LightAmp": {
+        "min": 6,
+        "max": 12,
+        "weight": 4
+      },
+      "DarkAmp": {
+        "min": 6,
+        "max": 12,
+        "weight": 4
+      },
+      "Haste": {
+        "min": 3,
+        "max": 6,
+        "weight": 4
+      }
+    },
+    "Feet": {
+      "MoveSpeedPct": {
+        "min": 2,
+        "max": 4,
+        "weight": 6
+      },
+      "Tenacity": {
+        "min": 6,
+        "max": 12,
+        "weight": 8
+      },
+      "Armor": {
+        "min": 4,
+        "max": 9,
+        "weight": 14
+      },
+      "MaxHealthPct": {
+        "min": 4,
+        "max": 8,
+        "weight": 14
+      },
+      "MaxHealthFlat": {
+        "min": 15,
+        "max": 30,
+        "weight": 12
+      },
+      "HealthRegen": {
+        "min": 1,
+        "max": 3,
+        "weight": 8
+      },
+      "AttackSpeedPct": {
+        "min": 3,
+        "max": 6,
+        "weight": 12
+      },
+      "Haste": {
+        "min": 3,
+        "max": 6,
+        "weight": 6
+      },
+      "ColdAmp": {
+        "min": 6,
+        "max": 12,
+        "weight": 5
+      },
+      "FireAmp": {
+        "min": 6,
+        "max": 12,
+        "weight": 5
+      },
+      "CritChancePct": {
+        "min": 2,
+        "max": 4,
+        "weight": 5
+      },
+      "LightAmp": {
+        "min": 6,
+        "max": 12,
+        "weight": 4
+      },
+      "DarkAmp": {
+        "min": 6,
+        "max": 12,
+        "weight": 4
+      },
+      "AttackFlat": {
+        "min": 2,
+        "max": 5,
+        "weight": 8
+      },
+      "AttackPct": {
+        "min": 2,
+        "max": 4,
+        "weight": 2
+      },
+      "PowerFlat": {
+        "min": 2,
+        "max": 5,
+        "weight": 8
+      },
+      "PowerPct": {
+        "min": 2,
+        "max": 4,
+        "weight": 2
+      }
+    }
+  }
+}

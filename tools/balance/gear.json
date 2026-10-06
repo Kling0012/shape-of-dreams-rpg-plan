@@ -4,7 +4,5 @@
   "ItemLevelScalingCap": 40,
   "BaseLevelScalePct": 100,
   "FlatDamageGrowthPct": 5,
-  "OtherFixedGrowthPct": 3,
-  "AttackFlatCap": 250,
-  "PowerFlatCap": 250
+  "OtherFixedGrowthPct": 3
 }

@@ -15,6 +15,8 @@ import star_values
 import pressure_values
 import monster_values
 import infinity_values
+import equipment_items_values
+import equipment_pools_values
 
 ROOT = Path(__file__).resolve().parents[2]
 FORGE_PATH = ROOT / "tools" / "balance" / "forge.json"
@@ -52,6 +54,8 @@ def generate(check=False):
     outputs.update(pressure)
     outputs.update(monsters)
     outputs.update(infinity)
+    outputs.update(equipment_items_values.render_outputs())
+    outputs.update(equipment_pools_values.render_outputs())
     return stars.publish_outputs(outputs, check=check)
 
 

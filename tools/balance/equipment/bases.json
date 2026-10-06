@@ -1,0 +1,2405 @@
+{
+  "schemaVersion": 1,
+  "bases": {
+    "weapon.chain_sword": {
+      "stat": "AttackSpeedPct",
+      "implicitValue": 4
+    },
+    "weapon.twin_fang": {
+      "stat": "CritChancePct",
+      "implicitValue": 3
+    },
+    "weapon.calming_staff": {
+      "stat": "PowerFlat",
+      "implicitValue": 6
+    },
+    "weapon.longspike_bow": {
+      "stat": "CritDamagePct",
+      "implicitValue": 10
+    },
+    "weapon.shield_maul": {
+      "stat": "MaxHealthPct",
+      "implicitValue": 5
+    },
+    "weapon.blaze_greatsword": {
+      "stat": "AttackFlat",
+      "implicitValue": 6
+    },
+    "armor.counter_gauntlets": {
+      "stat": "Armor",
+      "implicitValue": 6
+    },
+    "armor.flowing_cloak": {
+      "stat": "MoveSpeedPct",
+      "implicitValue": 3
+    },
+    "armor.guardian_plate": {
+      "stat": "Armor",
+      "implicitValue": 10
+    },
+    "armor.resonant_robe": {
+      "stat": "Haste",
+      "implicitValue": 5
+    },
+    "armor.thorn_mail": {
+      "stat": "MaxHealthFlat",
+      "implicitValue": 25
+    },
+    "armor.lampkeeper_mantle": {
+      "stat": "HealthRegen",
+      "implicitValue": 2
+    },
+    "charm.resonance_amulet": {
+      "stat": "Haste",
+      "implicitValue": 4
+    },
+    "charm.tailwind_ring": {
+      "stat": "MoveSpeedPct",
+      "implicitValue": 4
+    },
+    "charm.hunters_seal": {
+      "stat": "CritChancePct",
+      "implicitValue": 3
+    },
+    "charm.pulsing_core": {
+      "stat": "MaxHealthFlat",
+      "implicitValue": 20
+    },
+    "charm.chain_necklace": {
+      "stat": "Tenacity",
+      "implicitValue": 10
+    },
+    "charm.old_clock": {
+      "stat": "Haste",
+      "implicitValue": 6
+    },
+    "weapon.frost_spear": {
+      "stat": "AttackRangePct",
+      "implicitValue": 8
+    },
+    "weapon.dusk_scythe": {
+      "stat": "CritDamagePct",
+      "implicitValue": 14
+    },
+    "weapon.lantern_rod": {
+      "stat": "LightAmp",
+      "implicitValue": 10
+    },
+    "armor.frost_coat": {
+      "stat": "Tenacity",
+      "implicitValue": 15
+    },
+    "armor.dancer_garb": {
+      "stat": "AttackSpeedPct",
+      "implicitValue": 4
+    },
+    "armor.star_cloak": {
+      "stat": "PowerFlat",
+      "implicitValue": 5
+    },
+    "charm.ember_locket": {
+      "stat": "FireAmp",
+      "implicitValue": 10
+    },
+    "charm.moon_bell": {
+      "stat": "ColdAmp",
+      "implicitValue": 10
+    },
+    "charm.iron_feather": {
+      "stat": "Armor",
+      "implicitValue": 6
+    },
+    "weapon.hunting_bow": {
+      "stat": "AttackSpeedPct",
+      "implicitValue": 5
+    },
+    "weapon.war_axe": {
+      "stat": "AttackFlat",
+      "implicitValue": 7
+    },
+    "weapon.tower_lance": {
+      "stat": "Armor",
+      "implicitValue": 6
+    },
+    "weapon.oath_mace": {
+      "stat": "MaxHealthFlat",
+      "implicitValue": 25
+    },
+    "weapon.dream_wand": {
+      "stat": "Haste",
+      "implicitValue": 6
+    },
+    "weapon.star_harp": {
+      "stat": "PowerFlat",
+      "implicitValue": 7
+    },
+    "armor.hunter_leather": {
+      "stat": "CritChancePct",
+      "implicitValue": 3
+    },
+    "armor.ember_plate": {
+      "stat": "FireAmp",
+      "implicitValue": 10
+    },
+    "armor.root_mail": {
+      "stat": "HealthRegen",
+      "implicitValue": 3
+    },
+    "armor.bastion_shell": {
+      "stat": "MaxHealthPct",
+      "implicitValue": 6
+    },
+    "armor.mist_robe": {
+      "stat": "MoveSpeedPct",
+      "implicitValue": 4
+    },
+    "armor.prayer_shawl": {
+      "stat": "Haste",
+      "implicitValue": 5
+    },
+    "charm.fang_necklace": {
+      "stat": "CritDamagePct",
+      "implicitValue": 10
+    },
+    "charm.war_drum": {
+      "stat": "AttackSpeedPct",
+      "implicitValue": 4
+    },
+    "charm.guardian_seal": {
+      "stat": "MaxHealthPct",
+      "implicitValue": 5
+    },
+    "charm.stone_heart": {
+      "stat": "Tenacity",
+      "implicitValue": 12
+    },
+    "charm.dream_lens": {
+      "stat": "PowerFlat",
+      "implicitValue": 5
+    },
+    "charm.shadow_mask": {
+      "stat": "DarkAmp",
+      "implicitValue": 10
+    },
+    "head.iron_helm": {
+      "stat": "Armor",
+      "implicitValue": 6
+    },
+    "head.dream_circlet": {
+      "stat": "Haste",
+      "implicitValue": 5
+    },
+    "head.hunter_hood": {
+      "stat": "CritChancePct",
+      "implicitValue": 3
+    },
+    "head.horned_helm": {
+      "stat": "AttackFlat",
+      "implicitValue": 5
+    },
+    "head.sage_hat": {
+      "stat": "PowerFlat",
+      "implicitValue": 5
+    },
+    "head.mist_veil": {
+      "stat": "MoveSpeedPct",
+      "implicitValue": 3
+    },
+    "head.warden_visor": {
+      "stat": "Tenacity",
+      "implicitValue": 8
+    },
+    "head.ember_crown": {
+      "stat": "FireAmp",
+      "implicitValue": 6
+    },
+    "head.moon_hood": {
+      "stat": "DarkAmp",
+      "implicitValue": 6
+    },
+    "head.healer_band": {
+      "stat": "HealthRegen",
+      "implicitValue": 2
+    },
+    "hands.leather_gloves": {
+      "stat": "AttackSpeedPct",
+      "implicitValue": 4
+    },
+    "hands.iron_gauntlets": {
+      "stat": "Armor",
+      "implicitValue": 6
+    },
+    "hands.archer_bracers": {
+      "stat": "CritDamagePct",
+      "implicitValue": 10
+    },
+    "hands.spell_gloves": {
+      "stat": "PowerFlat",
+      "implicitValue": 5
+    },
+    "hands.claw_gauntlets": {
+      "stat": "AttackFlat",
+      "implicitValue": 5
+    },
+    "hands.frost_mitts": {
+      "stat": "ColdAmp",
+      "implicitValue": 6
+    },
+    "hands.radiant_wraps": {
+      "stat": "LightAmp",
+      "implicitValue": 6
+    },
+    "hands.vigor_grips": {
+      "stat": "MaxHealthFlat",
+      "implicitValue": 25
+    },
+    "hands.quick_fingers": {
+      "stat": "Haste",
+      "implicitValue": 5
+    },
+    "hands.reach_bracers": {
+      "stat": "AttackRangePct",
+      "implicitValue": 5
+    },
+    "feet.travel_boots": {
+      "stat": "MoveSpeedPct",
+      "implicitValue": 4
+    },
+    "feet.iron_greaves": {
+      "stat": "Armor",
+      "implicitValue": 6
+    },
+    "feet.dancer_shoes": {
+      "stat": "AttackSpeedPct",
+      "implicitValue": 3
+    },
+    "feet.wind_sandals": {
+      "stat": "Haste",
+      "implicitValue": 4
+    },
+    "feet.stalker_boots": {
+      "stat": "CritChancePct",
+      "implicitValue": 3
+    },
+    "feet.rooted_boots": {
+      "stat": "Tenacity",
+      "implicitValue": 10
+    },
+    "feet.ember_treads": {
+      "stat": "FireAmp",
+      "implicitValue": 6
+    },
+    "feet.pilgrim_boots": {
+      "stat": "HealthRegen",
+      "implicitValue": 2
+    },
+    "feet.stone_boots": {
+      "stat": "MaxHealthPct",
+      "implicitValue": 5
+    },
+    "feet.star_steps": {
+      "stat": "LightAmp",
+      "implicitValue": 6
+    },
+    "head.thorn_circlet": {
+      "stat": "MaxHealthFlat",
+      "implicitValue": 25
+    },
+    "head.frost_helm": {
+      "stat": "ColdAmp",
+      "implicitValue": 6
+    },
+    "head.radiant_halo": {
+      "stat": "LightAmp",
+      "implicitValue": 6
+    },
+    "head.scout_goggles": {
+      "stat": "AttackRangePct",
+      "implicitValue": 5
+    },
+    "head.berserker_mask": {
+      "stat": "AttackSpeedPct",
+      "implicitValue": 4
+    },
+    "hands.ember_gauntlets": {
+      "stat": "FireAmp",
+      "implicitValue": 6
+    },
+    "hands.shadow_gloves": {
+      "stat": "DarkAmp",
+      "implicitValue": 6
+    },
+    "hands.healer_hands": {
+      "stat": "HealthRegen",
+      "implicitValue": 2
+    },
+    "hands.stone_fists": {
+      "stat": "MaxHealthPct",
+      "implicitValue": 5
+    },
+    "hands.duelist_gloves": {
+      "stat": "CritChancePct",
+      "implicitValue": 3
+    },
+    "feet.frost_boots": {
+      "stat": "ColdAmp",
+      "implicitValue": 6
+    },
+    "feet.shadow_slippers": {
+      "stat": "DarkAmp",
+      "implicitValue": 6
+    },
+    "feet.spiked_boots": {
+      "stat": "AttackFlat",
+      "implicitValue": 5
+    },
+    "feet.sage_slippers": {
+      "stat": "PowerFlat",
+      "implicitValue": 5
+    },
+    "feet.guard_sabatons": {
+      "stat": "MaxHealthFlat",
+      "implicitValue": 25
+    },
+    "weapon.moon_sickle": {
+      "stat": "DarkAmp",
+      "implicitValue": 6
+    },
+    "weapon.ember_whip": {
+      "stat": "FireAmp",
+      "implicitValue": 6
+    },
+    "weapon.glacier_spear": {
+      "stat": "ColdAmp",
+      "implicitValue": 6
+    },
+    "weapon.dawn_scepter": {
+      "stat": "LightAmp",
+      "implicitValue": 6
+    },
+    "weapon.iron_halberd": {
+      "stat": "Armor",
+      "implicitValue": 8
+    },
+    "weapon.dream_tome": {
+      "stat": "Haste",
+      "implicitValue": 5
+    },
+    "weapon.bone_cleaver": {
+      "stat": "CritDamagePct",
+      "implicitValue": 10
+    },
+    "weapon.twin_rapier": {
+      "stat": "AttackSpeedPct",
+      "implicitValue": 4
+    },
+    "weapon.pilgrim_staff": {
+      "stat": "HealthRegen",
+      "implicitValue": 2
+    },
+    "weapon.thunder_hammer": {
+      "stat": "AttackFlat",
+      "implicitValue": 6
+    },
+    "head.wolf_pelt": {
+      "stat": "AttackSpeedPct",
+      "implicitValue": 4
+    },
+    "head.star_diadem": {
+      "stat": "PowerFlat",
+      "implicitValue": 5
+    },
+    "head.plague_mask": {
+      "stat": "Tenacity",
+      "implicitValue": 8
+    },
+    "head.coral_crown": {
+      "stat": "ColdAmp",
+      "implicitValue": 6
+    },
+    "head.knight_helm": {
+      "stat": "MaxHealthPct",
+      "implicitValue": 5
+    },
+    "head.ash_hood": {
+      "stat": "FireAmp",
+      "implicitValue": 6
+    },
+    "head.eye_patch": {
+      "stat": "CritChancePct",
+      "implicitValue": 3
+    },
+    "head.leaf_wreath": {
+      "stat": "HealthRegen",
+      "implicitValue": 2
+    },
+    "head.void_helm": {
+      "stat": "DarkAmp",
+      "implicitValue": 6
+    },
+    "head.sun_mask": {
+      "stat": "LightAmp",
+      "implicitValue": 6
+    },
+    "armor.ember_cuirass": {
+      "stat": "FireAmp",
+      "implicitValue": 6
+    },
+    "armor.frost_robe": {
+      "stat": "ColdAmp",
+      "implicitValue": 6
+    },
+    "armor.scale_coat": {
+      "stat": "Armor",
+      "implicitValue": 9
+    },
+    "armor.hunter_vest": {
+      "stat": "CritChancePct",
+      "implicitValue": 3
+    },
+    "armor.star_mantle": {
+      "stat": "PowerFlat",
+      "implicitValue": 5
+    },
+    "armor.monk_garb": {
+      "stat": "AttackSpeedPct",
+      "implicitValue": 4
+    },
+    "armor.shadow_cloak": {
+      "stat": "DarkAmp",
+      "implicitValue": 6
+    },
+    "armor.sun_plate": {
+      "stat": "LightAmp",
+      "implicitValue": 6
+    },
+    "armor.bark_mail": {
+      "stat": "HealthRegen",
+      "implicitValue": 2
+    },
+    "armor.traveler_coat": {
+      "stat": "Haste",
+      "implicitValue": 5
+    },
+    "hands.thorn_wraps": {
+      "stat": "Armor",
+      "implicitValue": 6
+    },
+    "hands.alchemist_gloves": {
+      "stat": "Haste",
+      "implicitValue": 5
+    },
+    "hands.bone_knuckles": {
+      "stat": "CritDamagePct",
+      "implicitValue": 10
+    },
+    "hands.star_rings": {
+      "stat": "LightAmp",
+      "implicitValue": 6
+    },
+    "hands.oath_gauntlets": {
+      "stat": "Tenacity",
+      "implicitValue": 8
+    },
+    "hands.tide_gloves": {
+      "stat": "ColdAmp",
+      "implicitValue": 6
+    },
+    "hands.flame_grips": {
+      "stat": "FireAmp",
+      "implicitValue": 6
+    },
+    "hands.void_claws": {
+      "stat": "DarkAmp",
+      "implicitValue": 6
+    },
+    "hands.sling_bracers": {
+      "stat": "AttackRangePct",
+      "implicitValue": 5
+    },
+    "hands.prayer_beads": {
+      "stat": "MaxHealthPct",
+      "implicitValue": 5
+    },
+    "feet.wolf_boots": {
+      "stat": "AttackSpeedPct",
+      "implicitValue": 3
+    },
+    "feet.tide_sandals": {
+      "stat": "ColdAmp",
+      "implicitValue": 6
+    },
+    "feet.knight_sabatons": {
+      "stat": "Armor",
+      "implicitValue": 6
+    },
+    "feet.dawn_steps": {
+      "stat": "LightAmp",
+      "implicitValue": 6
+    },
+    "feet.ash_boots": {
+      "stat": "FireAmp",
+      "implicitValue": 6
+    },
+    "feet.root_sandals": {
+      "stat": "HealthRegen",
+      "implicitValue": 2
+    },
+    "feet.mist_shoes": {
+      "stat": "MoveSpeedPct",
+      "implicitValue": 4
+    },
+    "feet.hunter_boots": {
+      "stat": "CritChancePct",
+      "implicitValue": 3
+    },
+    "feet.iron_clogs": {
+      "stat": "Tenacity",
+      "implicitValue": 10
+    },
+    "feet.star_slippers": {
+      "stat": "Haste",
+      "implicitValue": 4
+    },
+    "charm.hearthstone": {
+      "stat": "FireAmp",
+      "implicitValue": 6
+    },
+    "charm.frost_pendant": {
+      "stat": "ColdAmp",
+      "implicitValue": 6
+    },
+    "charm.sun_brooch": {
+      "stat": "LightAmp",
+      "implicitValue": 6
+    },
+    "charm.shadow_ring": {
+      "stat": "DarkAmp",
+      "implicitValue": 6
+    },
+    "charm.hunter_tooth": {
+      "stat": "CritDamagePct",
+      "implicitValue": 10
+    },
+    "charm.oak_amulet": {
+      "stat": "MaxHealthPct",
+      "implicitValue": 5
+    },
+    "charm.clockwork_charm": {
+      "stat": "Haste",
+      "implicitValue": 5
+    },
+    "charm.iron_seal": {
+      "stat": "Armor",
+      "implicitValue": 6
+    },
+    "charm.feather_token": {
+      "stat": "MoveSpeedPct",
+      "implicitValue": 3
+    },
+    "charm.war_horn": {
+      "stat": "AttackFlat",
+      "implicitValue": 5
+    },
+    "weapon.storm_glaive": {
+      "stat": "AttackSpeedPct",
+      "implicitValue": 4
+    },
+    "weapon.bone_flute": {
+      "stat": "Haste",
+      "implicitValue": 5
+    },
+    "weapon.ember_katar": {
+      "stat": "FireAmp",
+      "implicitValue": 6
+    },
+    "weapon.tide_trident": {
+      "stat": "ColdAmp",
+      "implicitValue": 6
+    },
+    "weapon.vow_mace": {
+      "stat": "MaxHealthPct",
+      "implicitValue": 5
+    },
+    "head.raven_mask": {
+      "stat": "DarkAmp",
+      "implicitValue": 6
+    },
+    "head.lantern_hat": {
+      "stat": "LightAmp",
+      "implicitValue": 6
+    },
+    "head.iron_coif": {
+      "stat": "Armor",
+      "implicitValue": 6
+    },
+    "head.dream_veil": {
+      "stat": "Haste",
+      "implicitValue": 5
+    },
+    "head.antler_crown": {
+      "stat": "AttackFlat",
+      "implicitValue": 5
+    },
+    "armor.ink_robe": {
+      "stat": "PowerFlat",
+      "implicitValue": 5
+    },
+    "armor.chain_hauberk": {
+      "stat": "Armor",
+      "implicitValue": 9
+    },
+    "armor.ember_jacket": {
+      "stat": "FireAmp",
+      "implicitValue": 6
+    },
+    "armor.moon_silk": {
+      "stat": "DarkAmp",
+      "implicitValue": 6
+    },
+    "armor.spiked_plate": {
+      "stat": "Tenacity",
+      "implicitValue": 10
+    },
+    "hands.ice_bracers": {
+      "stat": "ColdAmp",
+      "implicitValue": 6
+    },
+    "hands.chain_wraps": {
+      "stat": "AttackFlat",
+      "implicitValue": 5
+    },
+    "hands.sun_gauntlets": {
+      "stat": "LightAmp",
+      "implicitValue": 6
+    },
+    "hands.thief_gloves": {
+      "stat": "CritChancePct",
+      "implicitValue": 3
+    },
+    "hands.monk_wraps": {
+      "stat": "HealthRegen",
+      "implicitValue": 2
+    },
+    "feet.raven_boots": {
+      "stat": "DarkAmp",
+      "implicitValue": 6
+    },
+    "feet.sun_sandals": {
+      "stat": "LightAmp",
+      "implicitValue": 6
+    },
+    "feet.chain_greaves": {
+      "stat": "MaxHealthFlat",
+      "implicitValue": 25
+    },
+    "feet.storm_boots": {
+      "stat": "MoveSpeedPct",
+      "implicitValue": 4
+    },
+    "feet.ember_slippers": {
+      "stat": "FireAmp",
+      "implicitValue": 6
+    },
+    "charm.raven_feather": {
+      "stat": "CritDamagePct",
+      "implicitValue": 10
+    },
+    "charm.lotus_seal": {
+      "stat": "HealthRegen",
+      "implicitValue": 2
+    },
+    "charm.storm_bell": {
+      "stat": "Haste",
+      "implicitValue": 5
+    },
+    "charm.ice_heart": {
+      "stat": "ColdAmp",
+      "implicitValue": 6
+    },
+    "charm.ink_stone": {
+      "stat": "PowerFlat",
+      "implicitValue": 5
+    },
+    "weapon.tide_cutter": {
+      "stat": "AttackFlat",
+      "implicitValue": 6
+    },
+    "weapon.rockbreaker": {
+      "stat": "AttackFlat",
+      "implicitValue": 7
+    },
+    "weapon.swallow_kodachi": {
+      "stat": "AttackSpeedPct",
+      "implicitValue": 4
+    },
+    "weapon.hooked_falchion": {
+      "stat": "CritChancePct",
+      "implicitValue": 3
+    },
+    "weapon.severing_axe": {
+      "stat": "CritDamagePct",
+      "implicitValue": 12
+    },
+    "weapon.starlit_knives": {
+      "stat": "AttackRangePct",
+      "implicitValue": 6
+    },
+    "weapon.whiteheat_estoc": {
+      "stat": "FireAmp",
+      "implicitValue": 8
+    },
+    "weapon.northwind_axe": {
+      "stat": "ColdAmp",
+      "implicitValue": 8
+    },
+    "weapon.sunlit_blade": {
+      "stat": "LightAmp",
+      "implicitValue": 8
+    },
+    "weapon.gloaming_dagger": {
+      "stat": "DarkAmp",
+      "implicitValue": 8
+    },
+    "weapon.lightning_pair": {
+      "stat": "AttackSpeedPct",
+      "implicitValue": 5
+    },
+    "weapon.evilbreaker_lance": {
+      "stat": "AttackFlat",
+      "implicitValue": 6
+    },
+    "weapon.maelstrom_sword": {
+      "stat": "CritDamagePct",
+      "implicitValue": 10
+    },
+    "weapon.gatehouse_maul": {
+      "stat": "Armor",
+      "implicitValue": 8
+    },
+    "weapon.lighthouse_cudgel": {
+      "stat": "LightAmp",
+      "implicitValue": 6
+    },
+    "weapon.tortoise_bokken": {
+      "stat": "MaxHealthFlat",
+      "implicitValue": 30
+    },
+    "weapon.thaw_hammer": {
+      "stat": "HealthRegen",
+      "implicitValue": 3
+    },
+    "weapon.anchor_cleaver": {
+      "stat": "Tenacity",
+      "implicitValue": 10
+    },
+    "weapon.granite_cosh": {
+      "stat": "MaxHealthPct",
+      "implicitValue": 5
+    },
+    "weapon.stillwater_blade": {
+      "stat": "Armor",
+      "implicitValue": 6
+    },
+    "weapon.chanting_wand": {
+      "stat": "PowerFlat",
+      "implicitValue": 6
+    },
+    "weapon.astral_staff": {
+      "stat": "Haste",
+      "implicitValue": 5
+    },
+    "weapon.windhowl_staff": {
+      "stat": "PowerFlat",
+      "implicitValue": 7
+    },
+    "weapon.conch_scepter": {
+      "stat": "ColdAmp",
+      "implicitValue": 6
+    },
+    "weapon.firefly_staff": {
+      "stat": "LightAmp",
+      "implicitValue": 6
+    },
+    "weapon.evening_fan": {
+      "stat": "Haste",
+      "implicitValue": 6
+    },
+    "weapon.starchart_scroll": {
+      "stat": "PowerFlat",
+      "implicitValue": 5
+    },
+    "weapon.dewclear_wand": {
+      "stat": "HealPower",
+      "implicitValue": 5
+    },
+    "weapon.starsinger_bow": {
+      "stat": "Haste",
+      "implicitValue": 5
+    },
+    "weapon.moonlit_cane": {
+      "stat": "DarkAmp",
+      "implicitValue": 6
+    },
+    "armor.stormfront_vest": {
+      "stat": "AttackSpeedPct",
+      "implicitValue": 4
+    },
+    "armor.quicksilver_jacket": {
+      "stat": "CritChancePct",
+      "implicitValue": 3
+    },
+    "armor.volcanic_coat": {
+      "stat": "FireAmp",
+      "implicitValue": 8
+    },
+    "armor.glacier_harness": {
+      "stat": "ColdAmp",
+      "implicitValue": 8
+    },
+    "armor.dawnlight_corset": {
+      "stat": "LightAmp",
+      "implicitValue": 8
+    },
+    "armor.duskweave_jacket": {
+      "stat": "DarkAmp",
+      "implicitValue": 8
+    },
+    "armor.ambush_vest": {
+      "stat": "CritDamagePct",
+      "implicitValue": 10
+    },
+    "armor.skirmisher_coat": {
+      "stat": "AttackFlat",
+      "implicitValue": 5
+    },
+    "armor.citadel_plate": {
+      "stat": "Armor",
+      "implicitValue": 10
+    },
+    "armor.rampart_jacket": {
+      "stat": "Armor",
+      "implicitValue": 7
+    },
+    "armor.deeproot_vest": {
+      "stat": "HealthRegen",
+      "implicitValue": 3
+    },
+    "armor.tidebound_mail": {
+      "stat": "MaxHealthFlat",
+      "implicitValue": 30
+    },
+    "armor.basalt_cuirass": {
+      "stat": "Tenacity",
+      "implicitValue": 12
+    },
+    "armor.buckler_vest": {
+      "stat": "Armor",
+      "implicitValue": 6
+    },
+    "armor.oathplate_cuirass": {
+      "stat": "MaxHealthPct",
+      "implicitValue": 6
+    },
+    "armor.winterwool_coat": {
+      "stat": "MaxHealthFlat",
+      "implicitValue": 25
+    },
+    "armor.ironbark_vest": {
+      "stat": "Armor",
+      "implicitValue": 8
+    },
+    "armor.twistedchain_ply": {
+      "stat": "Tenacity",
+      "implicitValue": 10
+    },
+    "armor.mirrorsilk_robe": {
+      "stat": "PowerFlat",
+      "implicitValue": 5
+    },
+    "armor.aurora_wrap": {
+      "stat": "Haste",
+      "implicitValue": 5
+    },
+    "armor.seafoam_gown": {
+      "stat": "ColdAmp",
+      "implicitValue": 6
+    },
+    "armor.emberweave_shawl": {
+      "stat": "FireAmp",
+      "implicitValue": 6
+    },
+    "armor.candlelight_robe": {
+      "stat": "LightAmp",
+      "implicitValue": 6
+    },
+    "armor.nightloom_robe": {
+      "stat": "DarkAmp",
+      "implicitValue": 6
+    },
+    "armor.swiftstep_coat": {
+      "stat": "MoveSpeedPct",
+      "implicitValue": 4
+    },
+    "armor.healing_sash": {
+      "stat": "HealPower",
+      "implicitValue": 5
+    },
+    "armor.wardsigil_vest": {
+      "stat": "ShieldPower",
+      "implicitValue": 5
+    },
+    "armor.summoners_vest": {
+      "stat": "SummonPower",
+      "implicitValue": 8
+    },
+    "armor.zephyr_robe": {
+      "stat": "Haste",
+      "implicitValue": 6
+    },
+    "armor.morningdew_robe": {
+      "stat": "PowerFlat",
+      "implicitValue": 6
+    },
+    "head.talon_crown": {
+      "stat": "AttackFlat",
+      "implicitValue": 5
+    },
+    "head.gale_hood": {
+      "stat": "AttackSpeedPct",
+      "implicitValue": 4
+    },
+    "head.magma_band": {
+      "stat": "FireAmp",
+      "implicitValue": 8
+    },
+    "head.rimebloom_hood": {
+      "stat": "ColdAmp",
+      "implicitValue": 8
+    },
+    "head.noonlight_circlet": {
+      "stat": "LightAmp",
+      "implicitValue": 8
+    },
+    "head.eclipse_mask": {
+      "stat": "DarkAmp",
+      "implicitValue": 8
+    },
+    "head.hawkeye_band": {
+      "stat": "CritChancePct",
+      "implicitValue": 3
+    },
+    "head.longshot_cap": {
+      "stat": "AttackRangePct",
+      "implicitValue": 5
+    },
+    "head.crimsonlotus_hood": {
+      "stat": "CritDamagePct",
+      "implicitValue": 12
+    },
+    "head.thunderveil_hood": {
+      "stat": "AttackSpeedPct",
+      "implicitValue": 5
+    },
+    "head.vulture_hood": {
+      "stat": "AttackFlat",
+      "implicitValue": 6
+    },
+    "head.sentry_visor": {
+      "stat": "Armor",
+      "implicitValue": 7
+    },
+    "head.boulder_helm": {
+      "stat": "MaxHealthPct",
+      "implicitValue": 6
+    },
+    "head.moss_crown": {
+      "stat": "HealthRegen",
+      "implicitValue": 3
+    },
+    "head.icewall_helm": {
+      "stat": "Armor",
+      "implicitValue": 8
+    },
+    "head.oathring_circlet": {
+      "stat": "MaxHealthFlat",
+      "implicitValue": 30
+    },
+    "head.sunkenbell_helm": {
+      "stat": "Tenacity",
+      "implicitValue": 12
+    },
+    "head.pillar_crown": {
+      "stat": "MaxHealthFlat",
+      "implicitValue": 25
+    },
+    "head.fortress_coif": {
+      "stat": "Armor",
+      "implicitValue": 6
+    },
+    "head.comet_diadem": {
+      "stat": "PowerFlat",
+      "implicitValue": 5
+    },
+    "head.whisper_veil": {
+      "stat": "Haste",
+      "implicitValue": 5
+    },
+    "head.tidal_circlet": {
+      "stat": "ColdAmp",
+      "implicitValue": 6
+    },
+    "head.emberbloom_crown": {
+      "stat": "FireAmp",
+      "implicitValue": 6
+    },
+    "head.sunbeam_hood": {
+      "stat": "LightAmp",
+      "implicitValue": 6
+    },
+    "head.starless_veil": {
+      "stat": "DarkAmp",
+      "implicitValue": 6
+    },
+    "head.meditation_band": {
+      "stat": "Haste",
+      "implicitValue": 6
+    },
+    "head.kindly_circlet": {
+      "stat": "HealPower",
+      "implicitValue": 5
+    },
+    "head.wardband": {
+      "stat": "ShieldPower",
+      "implicitValue": 5
+    },
+    "head.beastcaller_antlers": {
+      "stat": "SummonPower",
+      "implicitValue": 8
+    },
+    "head.moonlace_hood": {
+      "stat": "PowerFlat",
+      "implicitValue": 6
+    },
+    "hands.ripgrip_gloves": {
+      "stat": "AttackFlat",
+      "implicitValue": 6
+    },
+    "hands.swiftpalm_gloves": {
+      "stat": "AttackSpeedPct",
+      "implicitValue": 5
+    },
+    "hands.hunting_sinew": {
+      "stat": "CritDamagePct",
+      "implicitValue": 12
+    },
+    "hands.blazeknit_gloves": {
+      "stat": "FireAmp",
+      "implicitValue": 8
+    },
+    "hands.frostbite_knuckles": {
+      "stat": "ColdAmp",
+      "implicitValue": 8
+    },
+    "hands.sunfire_grips": {
+      "stat": "LightAmp",
+      "implicitValue": 8
+    },
+    "hands.nightpalm_gloves": {
+      "stat": "DarkAmp",
+      "implicitValue": 8
+    },
+    "hands.precise_fingerless": {
+      "stat": "CritChancePct",
+      "implicitValue": 3
+    },
+    "hands.bowmaster_bracers": {
+      "stat": "AttackRangePct",
+      "implicitValue": 6
+    },
+    "hands.storm_knuckles": {
+      "stat": "AttackSpeedPct",
+      "implicitValue": 4
+    },
+    "hands.riven_fists": {
+      "stat": "AttackFlat",
+      "implicitValue": 5
+    },
+    "hands.duelist_bracers": {
+      "stat": "CritDamagePct",
+      "implicitValue": 10
+    },
+    "hands.viperfang_claws": {
+      "stat": "CritChancePct",
+      "implicitValue": 3
+    },
+    "hands.wardens_grips": {
+      "stat": "Armor",
+      "implicitValue": 7
+    },
+    "hands.bark_knuckles": {
+      "stat": "HealthRegen",
+      "implicitValue": 3
+    },
+    "hands.ironvein_gauntlets": {
+      "stat": "Armor",
+      "implicitValue": 9
+    },
+    "hands.heavypalm_gloves": {
+      "stat": "MaxHealthFlat",
+      "implicitValue": 30
+    },
+    "hands.bulwark_wraps": {
+      "stat": "Tenacity",
+      "implicitValue": 12
+    },
+    "hands.reef_gauntlets": {
+      "stat": "Armor",
+      "implicitValue": 6
+    },
+    "hands.rootgrip_gloves": {
+      "stat": "MaxHealthPct",
+      "implicitValue": 6
+    },
+    "hands.snowmelt_mitts": {
+      "stat": "HealthRegen",
+      "implicitValue": 2
+    },
+    "hands.oathpalm_gloves": {
+      "stat": "ShieldPower",
+      "implicitValue": 5
+    },
+    "hands.manuscript_gloves": {
+      "stat": "PowerFlat",
+      "implicitValue": 6
+    },
+    "hands.chime_bracers": {
+      "stat": "Haste",
+      "implicitValue": 6
+    },
+    "hands.tidecaller_wraps": {
+      "stat": "ColdAmp",
+      "implicitValue": 6
+    },
+    "hands.cinderthread_wraps": {
+      "stat": "FireAmp",
+      "implicitValue": 6
+    },
+    "hands.lantern_fingerless": {
+      "stat": "LightAmp",
+      "implicitValue": 6
+    },
+    "hands.duskstitch_gloves": {
+      "stat": "DarkAmp",
+      "implicitValue": 6
+    },
+    "hands.mender_palms": {
+      "stat": "HealPower",
+      "implicitValue": 5
+    },
+    "hands.summoner_bands": {
+      "stat": "SummonPower",
+      "implicitValue": 8
+    },
+    "feet.blitz_treads": {
+      "stat": "AttackSpeedPct",
+      "implicitValue": 4
+    },
+    "feet.emberdash_boots": {
+      "stat": "FireAmp",
+      "implicitValue": 8
+    },
+    "feet.froststride_shoes": {
+      "stat": "ColdAmp",
+      "implicitValue": 8
+    },
+    "feet.sunspur_boots": {
+      "stat": "LightAmp",
+      "implicitValue": 8
+    },
+    "feet.duskstep_boots": {
+      "stat": "DarkAmp",
+      "implicitValue": 8
+    },
+    "feet.hunter_striders": {
+      "stat": "CritChancePct",
+      "implicitValue": 3
+    },
+    "feet.quicksilver_greaves": {
+      "stat": "MoveSpeedPct",
+      "implicitValue": 4
+    },
+    "feet.deadeye_leggings": {
+      "stat": "CritDamagePct",
+      "implicitValue": 10
+    },
+    "feet.wolfstride_boots": {
+      "stat": "AttackFlat",
+      "implicitValue": 5
+    },
+    "feet.gale_greaves": {
+      "stat": "AttackSpeedPct",
+      "implicitValue": 5
+    },
+    "feet.thorntread_sabatons": {
+      "stat": "AttackRangePct",
+      "implicitValue": 5
+    },
+    "feet.bastion_sabatons": {
+      "stat": "Armor",
+      "implicitValue": 8
+    },
+    "feet.deeproot_boots": {
+      "stat": "HealthRegen",
+      "implicitValue": 3
+    },
+    "feet.stoneguard_sabatons": {
+      "stat": "MaxHealthPct",
+      "implicitValue": 6
+    },
+    "feet.tortoiseshell_greaves": {
+      "stat": "MaxHealthFlat",
+      "implicitValue": 30
+    },
+    "feet.ironwave_greaves": {
+      "stat": "Armor",
+      "implicitValue": 6
+    },
+    "feet.ballast_boots": {
+      "stat": "Tenacity",
+      "implicitValue": 12
+    },
+    "feet.rampart_greaves": {
+      "stat": "Armor",
+      "implicitValue": 7
+    },
+    "feet.winterhide_boots": {
+      "stat": "MaxHealthFlat",
+      "implicitValue": 25
+    },
+    "feet.wardstep_sandals": {
+      "stat": "ShieldPower",
+      "implicitValue": 5
+    },
+    "feet.mistral_sandals": {
+      "stat": "MoveSpeedPct",
+      "implicitValue": 4
+    },
+    "feet.starlit_moccasins": {
+      "stat": "Haste",
+      "implicitValue": 5
+    },
+    "feet.tidepool_sandals": {
+      "stat": "ColdAmp",
+      "implicitValue": 6
+    },
+    "feet.firebloom_slippers": {
+      "stat": "FireAmp",
+      "implicitValue": 6
+    },
+    "feet.dawnmist_shoes": {
+      "stat": "LightAmp",
+      "implicitValue": 6
+    },
+    "feet.nightveil_slippers": {
+      "stat": "DarkAmp",
+      "implicitValue": 6
+    },
+    "feet.mender_shoes": {
+      "stat": "HealPower",
+      "implicitValue": 5
+    },
+    "feet.cometstride_shoes": {
+      "stat": "Haste",
+      "implicitValue": 6
+    },
+    "feet.whisperweave_shoes": {
+      "stat": "PowerFlat",
+      "implicitValue": 5
+    },
+    "feet.beastpaw_boots": {
+      "stat": "SummonPower",
+      "implicitValue": 8
+    },
+    "charm.talon_pendant": {
+      "stat": "AttackFlat",
+      "implicitValue": 5
+    },
+    "charm.blaze_brooch": {
+      "stat": "FireAmp",
+      "implicitValue": 8
+    },
+    "charm.glacier_charm": {
+      "stat": "ColdAmp",
+      "implicitValue": 8
+    },
+    "charm.sunspoke_pin": {
+      "stat": "LightAmp",
+      "implicitValue": 8
+    },
+    "charm.duskbead_necklace": {
+      "stat": "DarkAmp",
+      "implicitValue": 8
+    },
+    "charm.keeneye_charm": {
+      "stat": "CritChancePct",
+      "implicitValue": 3
+    },
+    "charm.stormcloud_locket": {
+      "stat": "AttackSpeedPct",
+      "implicitValue": 5
+    },
+    "charm.pursuit_badge": {
+      "stat": "CritDamagePct",
+      "implicitValue": 12
+    },
+    "charm.skirmish_ring": {
+      "stat": "AttackFlat",
+      "implicitValue": 6
+    },
+    "charm.longshot_charm": {
+      "stat": "AttackRangePct",
+      "implicitValue": 6
+    },
+    "charm.garnet_ring": {
+      "stat": "CritDamagePct",
+      "implicitValue": 10
+    },
+    "charm.hearthside_ring": {
+      "stat": "HealthRegen",
+      "implicitValue": 3
+    },
+    "charm.bulwark_seal": {
+      "stat": "Armor",
+      "implicitValue": 7
+    },
+    "charm.deeproot_charm": {
+      "stat": "MaxHealthPct",
+      "implicitValue": 6
+    },
+    "charm.tidewarden_brooch": {
+      "stat": "Armor",
+      "implicitValue": 6
+    },
+    "charm.boulder_pendant": {
+      "stat": "MaxHealthFlat",
+      "implicitValue": 30
+    },
+    "charm.ironknot_ring": {
+      "stat": "Tenacity",
+      "implicitValue": 12
+    },
+    "charm.snowbloom_charm": {
+      "stat": "ShieldPower",
+      "implicitValue": 5
+    },
+    "charm.winteroak_charm": {
+      "stat": "MaxHealthFlat",
+      "implicitValue": 25
+    },
+    "charm.comet_pendant": {
+      "stat": "PowerFlat",
+      "implicitValue": 6
+    },
+    "charm.seafoam_ring": {
+      "stat": "ColdAmp",
+      "implicitValue": 6
+    },
+    "charm.cindercore_locket": {
+      "stat": "FireAmp",
+      "implicitValue": 6
+    },
+    "charm.halo_charm": {
+      "stat": "LightAmp",
+      "implicitValue": 6
+    },
+    "charm.eclipse_ring": {
+      "stat": "DarkAmp",
+      "implicitValue": 6
+    },
+    "charm.windchime_charm": {
+      "stat": "Haste",
+      "implicitValue": 5
+    },
+    "charm.mender_locket": {
+      "stat": "HealPower",
+      "implicitValue": 5
+    },
+    "charm.beasttongue_charm": {
+      "stat": "SummonPower",
+      "implicitValue": 8
+    },
+    "charm.zephyr_ring": {
+      "stat": "MoveSpeedPct",
+      "implicitValue": 3
+    },
+    "charm.dawnsilk_band": {
+      "stat": "Haste",
+      "implicitValue": 6
+    },
+    "charm.stardust_pendant": {
+      "stat": "PowerFlat",
+      "implicitValue": 5
+    },
+    "weapon.plain_edge": {
+      "stat": "AttackFlat",
+      "implicitValue": 5
+    },
+    "weapon.soldier_saber": {
+      "stat": "AttackFlat",
+      "implicitValue": 6
+    },
+    "weapon.rough_cleaver": {
+      "stat": "CritDamagePct",
+      "implicitValue": 12
+    },
+    "weapon.apprentice_wand": {
+      "stat": "PowerFlat",
+      "implicitValue": 5
+    },
+    "weapon.icevein_blade": {
+      "stat": "ColdAmp",
+      "implicitValue": 10
+    },
+    "weapon.hoarfrost_dirk": {
+      "stat": "CritChancePct",
+      "implicitValue": 3
+    },
+    "weapon.winterbrand_mace": {
+      "stat": "MaxHealthFlat",
+      "implicitValue": 20
+    },
+    "weapon.frozen_oath_blade": {
+      "stat": "Tenacity",
+      "implicitValue": 8
+    },
+    "weapon.inferno_lash": {
+      "stat": "FireAmp",
+      "implicitValue": 10
+    },
+    "weapon.firedance_saber": {
+      "stat": "AttackSpeedPct",
+      "implicitValue": 5
+    },
+    "weapon.phoenix_plume_sword": {
+      "stat": "AttackRangePct",
+      "implicitValue": 5
+    },
+    "weapon.cauterizing_estoc": {
+      "stat": "CritDamagePct",
+      "implicitValue": 14
+    },
+    "weapon.daybreak_blade": {
+      "stat": "PowerFlat",
+      "implicitValue": 5
+    },
+    "weapon.halo_blade": {
+      "stat": "CritChancePct",
+      "implicitValue": 3
+    },
+    "weapon.seraph_rod": {
+      "stat": "HealPower",
+      "implicitValue": 5
+    },
+    "weapon.lamplighter_sword": {
+      "stat": "ShieldPower",
+      "implicitValue": 5
+    },
+    "weapon.shadowfang_knife": {
+      "stat": "DarkAmp",
+      "implicitValue": 10
+    },
+    "weapon.nightreaver_axe": {
+      "stat": "AttackFlat",
+      "implicitValue": 5
+    },
+    "weapon.eclipsed_rapier": {
+      "stat": "CritDamagePct",
+      "implicitValue": 12
+    },
+    "weapon.shadowstitch_kodachi": {
+      "stat": "AttackSpeedPct",
+      "implicitValue": 3
+    },
+    "weapon.sentry_halberd": {
+      "stat": "Armor",
+      "implicitValue": 7
+    },
+    "weapon.bulwark_greatsword": {
+      "stat": "Armor",
+      "implicitValue": 9
+    },
+    "weapon.oakheart_club": {
+      "stat": "HealthRegen",
+      "implicitValue": 2
+    },
+    "weapon.vanguard_hammer": {
+      "stat": "MaxHealthPct",
+      "implicitValue": 6
+    },
+    "weapon.whirlwind_naginata": {
+      "stat": "AttackRangePct",
+      "implicitValue": 6
+    },
+    "weapon.gale_tossed_blades": {
+      "stat": "AttackSpeedPct",
+      "implicitValue": 3
+    },
+    "weapon.stormstring_bow": {
+      "stat": "AttackFlat",
+      "implicitValue": 5
+    },
+    "weapon.tailwind_saber": {
+      "stat": "Haste",
+      "implicitValue": 4
+    },
+    "weapon.mercy_staff": {
+      "stat": "HealthRegen",
+      "implicitValue": 3
+    },
+    "weapon.herbalist_sickle": {
+      "stat": "PowerFlat",
+      "implicitValue": 5
+    },
+    "weapon.soothing_chime_staff": {
+      "stat": "MaxHealthFlat",
+      "implicitValue": 20
+    },
+    "weapon.dewdrop_wand": {
+      "stat": "Haste",
+      "implicitValue": 4
+    },
+    "weapon.callers_greatsword": {
+      "stat": "SummonPower",
+      "implicitValue": 8
+    },
+    "weapon.beast_tamer_whip": {
+      "stat": "AttackFlat",
+      "implicitValue": 7
+    },
+    "weapon.pact_dagger": {
+      "stat": "CritDamagePct",
+      "implicitValue": 10
+    },
+    "weapon.spirit_call_lance": {
+      "stat": "AttackRangePct",
+      "implicitValue": 5
+    },
+    "weapon.remembrance_blade": {
+      "stat": "PowerFlat",
+      "implicitValue": 6
+    },
+    "weapon.yesteryear_staff": {
+      "stat": "PowerFlat",
+      "implicitValue": 7
+    },
+    "weapon.dusk_memory_scythe": {
+      "stat": "DarkAmp",
+      "implicitValue": 8
+    },
+    "weapon.relic_hunter_blade": {
+      "stat": "MoveSpeedPct",
+      "implicitValue": 3
+    },
+    "armor.sturdy_jerkin": {
+      "stat": "Armor",
+      "implicitValue": 6
+    },
+    "armor.militia_cuirass": {
+      "stat": "MaxHealthPct",
+      "implicitValue": 5
+    },
+    "armor.roadworn_jacket": {
+      "stat": "AttackSpeedPct",
+      "implicitValue": 3
+    },
+    "armor.padded_vest": {
+      "stat": "HealthRegen",
+      "implicitValue": 2
+    },
+    "armor.hoarfrost_mail": {
+      "stat": "ColdAmp",
+      "implicitValue": 10
+    },
+    "armor.frozen_rampart": {
+      "stat": "Armor",
+      "implicitValue": 7
+    },
+    "armor.snowdrift_coat": {
+      "stat": "HealthRegen",
+      "implicitValue": 3
+    },
+    "armor.iceskimmer_wrap": {
+      "stat": "MoveSpeedPct",
+      "implicitValue": 3
+    },
+    "armor.cinderplate": {
+      "stat": "AttackFlat",
+      "implicitValue": 6
+    },
+    "armor.furnace_guard": {
+      "stat": "MaxHealthPct",
+      "implicitValue": 6
+    },
+    "armor.ember_flare_jacket": {
+      "stat": "CritDamagePct",
+      "implicitValue": 12
+    },
+    "armor.slowfire_bandolier": {
+      "stat": "HealthRegen",
+      "implicitValue": 2
+    },
+    "armor.dawnweave_harness": {
+      "stat": "LightAmp",
+      "implicitValue": 10
+    },
+    "armor.sanctum_vest": {
+      "stat": "HealPower",
+      "implicitValue": 5
+    },
+    "armor.clearsky_corset": {
+      "stat": "CritChancePct",
+      "implicitValue": 3
+    },
+    "armor.lamplight_sash": {
+      "stat": "Haste",
+      "implicitValue": 4
+    },
+    "armor.midnight_hauberk": {
+      "stat": "DarkAmp",
+      "implicitValue": 10
+    },
+    "armor.wraithweave_coat": {
+      "stat": "CritDamagePct",
+      "implicitValue": 14
+    },
+    "armor.nightprowler_jacket": {
+      "stat": "AttackFlat",
+      "implicitValue": 7
+    },
+    "armor.shadowstep_cloak": {
+      "stat": "MoveSpeedPct",
+      "implicitValue": 4
+    },
+    "armor.keepers_plate": {
+      "stat": "Armor",
+      "implicitValue": 9
+    },
+    "armor.deepwell_cuirass": {
+      "stat": "MaxHealthFlat",
+      "implicitValue": 30
+    },
+    "armor.unyielding_ply": {
+      "stat": "Tenacity",
+      "implicitValue": 12
+    },
+    "armor.warden_sigil_vest": {
+      "stat": "ShieldPower",
+      "implicitValue": 5
+    },
+    "armor.windcutter_vest": {
+      "stat": "AttackSpeedPct",
+      "implicitValue": 5
+    },
+    "armor.skyclad_sash": {
+      "stat": "Haste",
+      "implicitValue": 4
+    },
+    "armor.darting_wrap": {
+      "stat": "AttackFlat",
+      "implicitValue": 5
+    },
+    "armor.cyclone_cloak": {
+      "stat": "CritDamagePct",
+      "implicitValue": 10
+    },
+    "armor.herb_pouch_vest": {
+      "stat": "PowerFlat",
+      "implicitValue": 5
+    },
+    "armor.gentle_rain_jacket": {
+      "stat": "Haste",
+      "implicitValue": 4
+    },
+    "armor.bandage_wrap": {
+      "stat": "ShieldPower",
+      "implicitValue": 5
+    },
+    "armor.longevity_coat": {
+      "stat": "MoveSpeedPct",
+      "implicitValue": 3
+    },
+    "armor.whistle_call_vest": {
+      "stat": "AttackFlat",
+      "implicitValue": 5
+    },
+    "armor.lair_woven_mail": {
+      "stat": "MaxHealthFlat",
+      "implicitValue": 25
+    },
+    "armor.familiars_shawl": {
+      "stat": "Haste",
+      "implicitValue": 5
+    },
+    "armor.pack_leader_wrap": {
+      "stat": "CritChancePct",
+      "implicitValue": 3
+    },
+    "armor.annals_robe": {
+      "stat": "PowerFlat",
+      "implicitValue": 6
+    },
+    "armor.afterglow_vest": {
+      "stat": "DarkAmp",
+      "implicitValue": 8
+    },
+    "armor.keepsake_cloak": {
+      "stat": "Haste",
+      "implicitValue": 6
+    },
+    "armor.lingering_image_coat": {
+      "stat": "MaxHealthFlat",
+      "implicitValue": 20
+    },
+    "charm.copper_band": {
+      "stat": "AttackFlat",
+      "implicitValue": 7
+    },
+    "charm.rough_hewn_charm": {
+      "stat": "CritDamagePct",
+      "implicitValue": 12
+    },
+    "charm.simple_sigil": {
+      "stat": "PowerFlat",
+      "implicitValue": 5
+    },
+    "charm.journeythread_ring": {
+      "stat": "MoveSpeedPct",
+      "implicitValue": 3
+    },
+    "charm.glacier_locket": {
+      "stat": "MaxHealthPct",
+      "implicitValue": 5
+    },
+    "charm.frostlock_ring": {
+      "stat": "Tenacity",
+      "implicitValue": 12
+    },
+    "charm.frost_breath_charm": {
+      "stat": "HealthRegen",
+      "implicitValue": 2
+    },
+    "charm.north_sky_charm": {
+      "stat": "Haste",
+      "implicitValue": 4
+    },
+    "charm.sparkcase_pendant": {
+      "stat": "AttackFlat",
+      "implicitValue": 5
+    },
+    "charm.melt_ore_locket": {
+      "stat": "CritDamagePct",
+      "implicitValue": 14
+    },
+    "charm.flarewheel_brooch": {
+      "stat": "AttackRangePct",
+      "implicitValue": 5
+    },
+    "charm.tinder_band": {
+      "stat": "AttackSpeedPct",
+      "implicitValue": 5
+    },
+    "charm.sunrise_locket": {
+      "stat": "LightAmp",
+      "implicitValue": 10
+    },
+    "charm.kindness_beads": {
+      "stat": "HealPower",
+      "implicitValue": 5
+    },
+    "charm.sanctuary_seal": {
+      "stat": "ShieldPower",
+      "implicitValue": 5
+    },
+    "charm.broad_day_charm": {
+      "stat": "PowerFlat",
+      "implicitValue": 6
+    },
+    "charm.night_owl_charm": {
+      "stat": "CritChancePct",
+      "implicitValue": 3
+    },
+    "charm.grave_bell_ring": {
+      "stat": "CritDamagePct",
+      "implicitValue": 12
+    },
+    "charm.funeral_band": {
+      "stat": "AttackFlat",
+      "implicitValue": 6
+    },
+    "charm.dusk_mist_band": {
+      "stat": "MoveSpeedPct",
+      "implicitValue": 4
+    },
+    "charm.heavy_chain_charm": {
+      "stat": "Armor",
+      "implicitValue": 8
+    },
+    "charm.immovable_ring": {
+      "stat": "MaxHealthFlat",
+      "implicitValue": 25
+    },
+    "charm.wellspring_amulet": {
+      "stat": "HealthRegen",
+      "implicitValue": 3
+    },
+    "charm.watchpost_badge": {
+      "stat": "ShieldPower",
+      "implicitValue": 5
+    },
+    "charm.tailwind_plume": {
+      "stat": "AttackSpeedPct",
+      "implicitValue": 4
+    },
+    "charm.skylark_bell": {
+      "stat": "Haste",
+      "implicitValue": 6
+    },
+    "charm.far_flight_charm": {
+      "stat": "AttackRangePct",
+      "implicitValue": 6
+    },
+    "charm.gust_band": {
+      "stat": "AttackFlat",
+      "implicitValue": 5
+    },
+    "charm.healing_sachet": {
+      "stat": "PowerFlat",
+      "implicitValue": 5
+    },
+    "charm.restful_heart_ring": {
+      "stat": "Haste",
+      "implicitValue": 5
+    },
+    "charm.lotus_bloom_seal": {
+      "stat": "MaxHealthFlat",
+      "implicitValue": 20
+    },
+    "charm.salve_case_charm": {
+      "stat": "ShieldPower",
+      "implicitValue": 5
+    },
+    "charm.packfang_pendant": {
+      "stat": "AttackFlat",
+      "implicitValue": 6
+    },
+    "charm.bone_whistle_charm": {
+      "stat": "Haste",
+      "implicitValue": 4
+    },
+    "charm.wildheart_locket": {
+      "stat": "CritChancePct",
+      "implicitValue": 3
+    },
+    "charm.rein_ring": {
+      "stat": "AttackSpeedPct",
+      "implicitValue": 3
+    },
+    "charm.unaddressed_letter": {
+      "stat": "DarkAmp",
+      "implicitValue": 8
+    },
+    "charm.old_coin_charm": {
+      "stat": "DarkAmp",
+      "implicitValue": 10
+    },
+    "charm.forgotten_name_charm": {
+      "stat": "PowerFlat",
+      "implicitValue": 6
+    },
+    "charm.memory_bookmark": {
+      "stat": "PowerFlat",
+      "implicitValue": 7
+    },
+    "head.broad_brim_hat": {
+      "stat": "AttackFlat",
+      "implicitValue": 5
+    },
+    "head.cotton_hood": {
+      "stat": "CritDamagePct",
+      "implicitValue": 10
+    },
+    "head.straw_hat": {
+      "stat": "AttackSpeedPct",
+      "implicitValue": 3
+    },
+    "head.sweatband": {
+      "stat": "HealthRegen",
+      "implicitValue": 2
+    },
+    "head.aurora_circlet": {
+      "stat": "ColdAmp",
+      "implicitValue": 10
+    },
+    "head.snowlight_hood": {
+      "stat": "MaxHealthPct",
+      "implicitValue": 5
+    },
+    "head.everfrost_hood": {
+      "stat": "HealthRegen",
+      "implicitValue": 3
+    },
+    "head.icicle_crown": {
+      "stat": "Armor",
+      "implicitValue": 6
+    },
+    "head.brazier_crown": {
+      "stat": "FireAmp",
+      "implicitValue": 10
+    },
+    "head.flashfire_band": {
+      "stat": "AttackSpeedPct",
+      "implicitValue": 5
+    },
+    "head.scorched_mask": {
+      "stat": "CritChancePct",
+      "implicitValue": 3
+    },
+    "head.forge_hood": {
+      "stat": "MaxHealthPct",
+      "implicitValue": 5
+    },
+    "head.hope_circlet": {
+      "stat": "LightAmp",
+      "implicitValue": 10
+    },
+    "head.nurses_veil": {
+      "stat": "HealPower",
+      "implicitValue": 5
+    },
+    "head.first_light_band": {
+      "stat": "Haste",
+      "implicitValue": 5
+    },
+    "head.clear_gaze_glasses": {
+      "stat": "CritChancePct",
+      "implicitValue": 3
+    },
+    "head.nightmare_visage": {
+      "stat": "DarkAmp",
+      "implicitValue": 10
+    },
+    "head.funeral_crown": {
+      "stat": "CritDamagePct",
+      "implicitValue": 14
+    },
+    "head.shroud_hood": {
+      "stat": "AttackSpeedPct",
+      "implicitValue": 4
+    },
+    "head.moth_wing_mask": {
+      "stat": "MoveSpeedPct",
+      "implicitValue": 3
+    },
+    "head.siege_helm": {
+      "stat": "Armor",
+      "implicitValue": 8
+    },
+    "head.locked_visor": {
+      "stat": "Tenacity",
+      "implicitValue": 12
+    },
+    "head.patrol_hood": {
+      "stat": "HealthRegen",
+      "implicitValue": 2
+    },
+    "head.heartwood_circlet": {
+      "stat": "MaxHealthFlat",
+      "implicitValue": 20
+    },
+    "head.sprinting_veil": {
+      "stat": "Haste",
+      "implicitValue": 6
+    },
+    "head.kite_mask": {
+      "stat": "AttackSpeedPct",
+      "implicitValue": 3
+    },
+    "head.wind_crest_band": {
+      "stat": "AttackFlat",
+      "implicitValue": 6
+    },
+    "head.far_horizon_cap": {
+      "stat": "CritDamagePct",
+      "implicitValue": 10
+    },
+    "head.pilgrim_doctor_hat": {
+      "stat": "MaxHealthPct",
+      "implicitValue": 5
+    },
+    "head.balm_band": {
+      "stat": "PowerFlat",
+      "implicitValue": 5
+    },
+    "head.soothing_wreath": {
+      "stat": "ShieldPower",
+      "implicitValue": 5
+    },
+    "head.quiet_prayer_veil": {
+      "stat": "MaxHealthFlat",
+      "implicitValue": 20
+    },
+    "head.beast_ear_hood": {
+      "stat": "AttackFlat",
+      "implicitValue": 6
+    },
+    "head.falconers_hood": {
+      "stat": "CritDamagePct",
+      "implicitValue": 10
+    },
+    "head.den_mother_circlet": {
+      "stat": "MaxHealthPct",
+      "implicitValue": 5
+    },
+    "head.calling_whistle_band": {
+      "stat": "Haste",
+      "implicitValue": 5
+    },
+    "head.nostalgia_band": {
+      "stat": "PowerFlat",
+      "implicitValue": 6
+    },
+    "head.old_tales_hood": {
+      "stat": "DarkAmp",
+      "implicitValue": 8
+    },
+    "head.star_calendar_cap": {
+      "stat": "Haste",
+      "implicitValue": 6
+    },
+    "head.relic_eye_monocle": {
+      "stat": "CritChancePct",
+      "implicitValue": 3
+    },
+    "hands.work_gloves": {
+      "stat": "AttackFlat",
+      "implicitValue": 5
+    },
+    "hands.tumblers_gloves": {
+      "stat": "AttackSpeedPct",
+      "implicitValue": 5
+    },
+    "hands.iron_thumb_gauntlet": {
+      "stat": "CritDamagePct",
+      "implicitValue": 12
+    },
+    "hands.cotton_wraps": {
+      "stat": "PowerFlat",
+      "implicitValue": 5
+    },
+    "hands.rimeguard_gauntlets": {
+      "stat": "ColdAmp",
+      "implicitValue": 10
+    },
+    "hands.frozen_grip": {
+      "stat": "Tenacity",
+      "implicitValue": 10
+    },
+    "hands.snow_weight_gloves": {
+      "stat": "AttackFlat",
+      "implicitValue": 6
+    },
+    "hands.winter_ready_gloves": {
+      "stat": "HealthRegen",
+      "implicitValue": 3
+    },
+    "hands.volcanic_grips": {
+      "stat": "FireAmp",
+      "implicitValue": 10
+    },
+    "hands.fire_tong_mitts": {
+      "stat": "AttackSpeedPct",
+      "implicitValue": 4
+    },
+    "hands.slag_knuckles": {
+      "stat": "CritDamagePct",
+      "implicitValue": 14
+    },
+    "hands.brand_iron_fingerless": {
+      "stat": "CritChancePct",
+      "implicitValue": 3
+    },
+    "hands.morninglight_gloves": {
+      "stat": "LightAmp",
+      "implicitValue": 8
+    },
+    "hands.first_aid_mitts": {
+      "stat": "HealPower",
+      "implicitValue": 5
+    },
+    "hands.gospel_gloves": {
+      "stat": "PowerFlat",
+      "implicitValue": 5
+    },
+    "hands.sunhold_bands": {
+      "stat": "Haste",
+      "implicitValue": 5
+    },
+    "hands.gravediggers_claws": {
+      "stat": "DarkAmp",
+      "implicitValue": 10
+    },
+    "hands.assassins_fingerless": {
+      "stat": "CritDamagePct",
+      "implicitValue": 12
+    },
+    "hands.gloomfang_knuckles": {
+      "stat": "AttackSpeedPct",
+      "implicitValue": 5
+    },
+    "hands.night_rose_gloves": {
+      "stat": "MoveSpeedPct",
+      "implicitValue": 3
+    },
+    "hands.bastion_mitts": {
+      "stat": "Armor",
+      "implicitValue": 8
+    },
+    "hands.anvil_gauntlets": {
+      "stat": "Armor",
+      "implicitValue": 10
+    },
+    "hands.steadfast_grips": {
+      "stat": "MaxHealthFlat",
+      "implicitValue": 25
+    },
+    "hands.iron_will_wraps": {
+      "stat": "Tenacity",
+      "implicitValue": 15
+    },
+    "hands.quicksilver_bands": {
+      "stat": "AttackSpeedPct",
+      "implicitValue": 3
+    },
+    "hands.galefinger_gloves": {
+      "stat": "AttackFlat",
+      "implicitValue": 6
+    },
+    "hands.hawking_gloves": {
+      "stat": "CritChancePct",
+      "implicitValue": 3
+    },
+    "hands.windstep_wraps": {
+      "stat": "MoveSpeedPct",
+      "implicitValue": 4
+    },
+    "hands.repair_gloves": {
+      "stat": "PowerFlat",
+      "implicitValue": 6
+    },
+    "hands.supporting_gloves": {
+      "stat": "ShieldPower",
+      "implicitValue": 5
+    },
+    "hands.splint_wraps": {
+      "stat": "MaxHealthFlat",
+      "implicitValue": 20
+    },
+    "hands.spring_breeze_grips": {
+      "stat": "Haste",
+      "implicitValue": 4
+    },
+    "hands.beasthide_gloves": {
+      "stat": "AttackFlat",
+      "implicitValue": 6
+    },
+    "hands.tamers_mitts": {
+      "stat": "AttackSpeedPct",
+      "implicitValue": 4
+    },
+    "hands.alpha_grips": {
+      "stat": "CritDamagePct",
+      "implicitValue": 14
+    },
+    "hands.kennel_keeper_gloves": {
+      "stat": "MaxHealthPct",
+      "implicitValue": 5
+    },
+    "hands.palimpsest_gloves": {
+      "stat": "PowerFlat",
+      "implicitValue": 7
+    },
+    "hands.keepsake_bands": {
+      "stat": "Haste",
+      "implicitValue": 5
+    },
+    "hands.tale_teller_gloves": {
+      "stat": "CritChancePct",
+      "implicitValue": 3
+    },
+    "hands.duskthread_wraps": {
+      "stat": "DarkAmp",
+      "implicitValue": 8
+    },
+    "feet.hobnail_boots": {
+      "stat": "Armor",
+      "implicitValue": 6
+    },
+    "feet.everyday_shoes": {
+      "stat": "AttackFlat",
+      "implicitValue": 6
+    },
+    "feet.work_boots": {
+      "stat": "CritDamagePct",
+      "implicitValue": 10
+    },
+    "feet.earth_stained_sandals": {
+      "stat": "Haste",
+      "implicitValue": 4
+    },
+    "feet.blizzard_gaiters": {
+      "stat": "ColdAmp",
+      "implicitValue": 10
+    },
+    "feet.floe_skimmer_shoes": {
+      "stat": "MaxHealthPct",
+      "implicitValue": 5
+    },
+    "feet.ice_road_boots": {
+      "stat": "HealthRegen",
+      "implicitValue": 2
+    },
+    "feet.frostwind_slippers": {
+      "stat": "MoveSpeedPct",
+      "implicitValue": 3
+    },
+    "feet.scorching_footwear": {
+      "stat": "FireAmp",
+      "implicitValue": 10
+    },
+    "feet.firewalk_sandals": {
+      "stat": "AttackSpeedPct",
+      "implicitValue": 4
+    },
+    "feet.cinder_trail_shoes": {
+      "stat": "AttackFlat",
+      "implicitValue": 5
+    },
+    "feet.smelter_boots": {
+      "stat": "CritDamagePct",
+      "implicitValue": 12
+    },
+    "feet.sunpath_sandals": {
+      "stat": "LightAmp",
+      "implicitValue": 10
+    },
+    "feet.pilgrim_light_shoes": {
+      "stat": "HealPower",
+      "implicitValue": 5
+    },
+    "feet.morningstar_shoes": {
+      "stat": "Haste",
+      "implicitValue": 5
+    },
+    "feet.beacon_steps": {
+      "stat": "MoveSpeedPct",
+      "implicitValue": 3
+    },
+    "feet.graveshade_boots": {
+      "stat": "DarkAmp",
+      "implicitValue": 10
+    },
+    "feet.soundless_shoes": {
+      "stat": "AttackFlat",
+      "implicitValue": 6
+    },
+    "feet.shadowstrider_boots": {
+      "stat": "CritDamagePct",
+      "implicitValue": 14
+    },
+    "feet.torchless_shoes": {
+      "stat": "Tenacity",
+      "implicitValue": 12
+    },
+    "feet.gatehouse_sabatons": {
+      "stat": "Armor",
+      "implicitValue": 9
+    },
+    "feet.mountain_boots": {
+      "stat": "Armor",
+      "implicitValue": 10
+    },
+    "feet.night_watch_boots": {
+      "stat": "MaxHealthPct",
+      "implicitValue": 5
+    },
+    "feet.patrol_sandals": {
+      "stat": "HealthRegen",
+      "implicitValue": 3
+    },
+    "feet.updraft_greaves": {
+      "stat": "Haste",
+      "implicitValue": 5
+    },
+    "feet.breeze_runners": {
+      "stat": "Haste",
+      "implicitValue": 6
+    },
+    "feet.swallow_flight_boots": {
+      "stat": "AttackFlat",
+      "implicitValue": 5
+    },
+    "feet.long_stride_boots": {
+      "stat": "AttackRangePct",
+      "implicitValue": 5
+    },
+    "feet.hospice_slippers": {
+      "stat": "PowerFlat",
+      "implicitValue": 5
+    },
+    "feet.comfort_sandals": {
+      "stat": "ShieldPower",
+      "implicitValue": 5
+    },
+    "feet.herb_garden_shoes": {
+      "stat": "Haste",
+      "implicitValue": 4
+    },
+    "feet.night_nurse_boots": {
+      "stat": "MaxHealthFlat",
+      "implicitValue": 20
+    },
+    "feet.pack_trot_boots": {
+      "stat": "AttackSpeedPct",
+      "implicitValue": 4
+    },
+    "feet.beast_path_shoes": {
+      "stat": "AttackFlat",
+      "implicitValue": 6
+    },
+    "feet.howling_greaves": {
+      "stat": "CritDamagePct",
+      "implicitValue": 10
+    },
+    "feet.den_warden_sabatons": {
+      "stat": "MaxHealthPct",
+      "implicitValue": 5
+    },
+    "feet.old_road_boots": {
+      "stat": "PowerFlat",
+      "implicitValue": 6
+    },
+    "feet.twilight_stroll_shoes": {
+      "stat": "DarkAmp",
+      "implicitValue": 8
+    },
+    "feet.remembered_steps": {
+      "stat": "Haste",
+      "implicitValue": 6
+    },
+    "feet.once_worn_sandals": {
+      "stat": "MoveSpeedPct",
+      "implicitValue": 3
+    }
+  }
+}

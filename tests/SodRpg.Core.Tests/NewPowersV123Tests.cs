@@ -217,21 +217,23 @@ namespace SodRpg.Core.Tests
         }
 
         [Theory]
-        [InlineData(Power.Finale, 31, 50)]
-        [InlineData(Power.CriticalEcho, 32, 12)]
-        [InlineData(Power.Fetters, 33, 40)]
-        [InlineData(Power.CrystalResonance, 34, 6)]
-        [InlineData(Power.PreyPride, 35, 12)]
-        [InlineData(Power.OverflowingLife, 36, 100)]
-        [InlineData(Power.Devotion, 37, 10)]
-        [InlineData(Power.Wildfire, 38, 60)]
-        public void New_power_ids_round_trip_and_clamp_received_and_equipped_values(Power power, int id, int cap)
+        [InlineData(Power.Finale, 31)]
+        [InlineData(Power.CriticalEcho, 32)]
+        [InlineData(Power.Fetters, 33)]
+        [InlineData(Power.CrystalResonance, 34)]
+        [InlineData(Power.PreyPride, 35)]
+        [InlineData(Power.OverflowingLife, 36)]
+        [InlineData(Power.Devotion, 37)]
+        [InlineData(Power.Wildfire, 38)]
+        public void New_power_ids_round_trip_and_clamp_received_and_equipped_values(Power power, int id)
         {
+            int cap = EquipmentBalanceInputs.Cap(power);
             Assert.Equal(id, (int)power);
             Assert.Equal(cap, Content.PowerCap(power));
-            var valid = Build.Decode(With((power, cap - 1)).Encode());
+            int belowCap = System.Math.Max(0, cap - 1);
+            var valid = Build.Decode(With((power, belowCap)).Encode());
             Assert.NotNull(valid);
-            Assert.Equal(cap - 1, valid.Get(power));
+            Assert.Equal(belowCap, valid.Get(power));
             int wireCap = StarDamageScaling.IsDamage(power)
                 ? (int)decimal.Ceiling(cap * (2.5m + 1m + 1.5m * 504 / 500))
                 : (int)(cap * 2.5m);

@@ -9,8 +9,6 @@ namespace SodRpg.Core.Game
         public const int BaseLevelScalePct = 100;
         public const int FlatDamageGrowthPct = 5;
         public const int OtherFixedGrowthPct = 3;
-        public const int AttackFlatCap = 250;
-        public const int PowerFlatCap = 250;
         public const string ContentFingerprintRecord = "balance:gear:v1:{\"AttackFlatCap\":250,\"BaseLevelScalePct\":100,\"FlatDamageGrowthPct\":5,\"ItemLevelScalingCap\":40,\"MaxItemLevel\":60,\"OtherFixedGrowthPct\":3,\"PowerFlatCap\":250,\"schemaVersion\":1}";
     }
 }

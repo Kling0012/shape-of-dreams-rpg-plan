@@ -52,6 +52,7 @@ public static class SetBalance
 
     private const ulong AlternativeSeed = 0x5E7A_0000_0000_0001;
     private const ulong PieceSeedBase = 0x5E7B_0000_0000_0002;
+    internal static string SeedIdentity => $"{AlternativeSeed:x16}/{PieceSeedBase:x16}";
 
     /// <summary>
     /// 力の代理値。Build が届けた能力値・固有効果を、それぞれの上限（Content.StatCap / PowerCap）で

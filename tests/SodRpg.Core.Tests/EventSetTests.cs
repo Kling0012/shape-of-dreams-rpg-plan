@@ -106,11 +106,21 @@ namespace SodRpg.Core.Tests
         }
 
         [Theory]
-        [InlineData("set.runupcharge", Stat.AttackFlat, Power.RunUp, 88, Power.StrafeShot, 25)]
-        [InlineData("set.crystalcircuit", Stat.PowerFlat, Power.Finale, 22, Power.CrystalResonance, 2)]
+        [InlineData("set.runupcharge", Stat.AttackFlat, Power.RunUp, Power.StrafeShot)]
+        [InlineData("set.crystalcircuit", Stat.PowerFlat, Power.Finale, Power.CrystalResonance)]
         public void Ordinary_set_fixed_stats_and_bonuses_activate_only_at_their_thresholds(
-            string setId, Stat flat, Power damage, int damageValue, Power unchanged, int unchangedValue)
+            string setId, Stat flat, Power damage, Power unchanged)
         {
+            using var canonical = System.Text.Json.JsonDocument.Parse(System.IO.File.ReadAllText(
+                System.IO.Path.Combine(AppContext.BaseDirectory, "EquipmentSets.json")));
+            var definition = canonical.RootElement.GetProperty("sets").EnumerateArray()
+                .Single(x => x.GetProperty("id").GetString() == setId);
+            int flatValue = definition.GetProperty("twoPiece").EnumerateArray()
+                .Single(x => x.GetProperty("stat").GetString() == flat.ToString()).GetProperty("value").GetInt32();
+            int PowerValue(Power power) => definition.GetProperty("threePiece").EnumerateArray()
+                .Single(x => x.GetProperty("power").GetString() == power.ToString()).GetProperty("value").GetInt32();
+            int damageValue = Math.Min(Content.PowerCap(damage), PowerValue(damage));
+            int unchangedValue = Math.Min(Content.PowerCap(unchanged), PowerValue(unchanged));
             var p = Profile.CreateNew(1);
             var ids = Content.Uniques.Where(u => u.SetId == setId).Select(u => u.Id).ToArray();
             var stages = new List<Build>();
@@ -127,18 +137,18 @@ namespace SodRpg.Core.Tests
                 stages.Add(Build.Compute(p, "H", 0));
             }
             Assert.Equal(implicitFlats[0], stages[0].Get(flat));
-            Assert.Equal(implicitFlats[1] + 15, stages[1].Get(flat));
+            Assert.Equal(Math.Min(Content.StatCap(flat), implicitFlats[1] + flatValue), stages[1].Get(flat));
             Assert.Equal(0, stages[1].Get(damage));
             Assert.Equal(damageValue, stages[2].Get(damage));
             Assert.Equal(unchangedValue, stages[2].Get(unchanged));
             Assert.Equal(damageValue, stages[5].Get(damage));
-            Assert.Equal(implicitFlats[5] + 15, stages[5].Get(flat));
+            Assert.Equal(Math.Min(Content.StatCap(flat), implicitFlats[5] + flatValue), stages[5].Get(flat));
             if (damage == Power.Finale)
             {
                 var runtime = new PowerRuntime(stages[2], 0);
                 Assert.Equal(0f, runtime.TakeFinale(0f, 0));
                 Assert.Equal(0f, runtime.TakeFinale(1f, 1));
-                Assert.Equal(0.22f, runtime.TakeFinale(2f, 2));
+                Assert.Equal(damageValue / 100f, runtime.TakeFinale(2f, 2));
                 Assert.Equal(0f, runtime.TakeFinale(3f, 2));
             }
         }

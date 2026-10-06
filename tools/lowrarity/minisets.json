@@ -302,6 +302,7 @@
     },
     "threePiece": {
       "power": "Frost",
+      "rangeSlot": "Charm",
       "band": "low"
     },
     "titleJa": "霜道の先導者",
@@ -322,6 +323,7 @@
     },
     "threePiece": {
       "power": "Ember",
+      "rangeSlot": "Weapon",
       "band": "low"
     },
     "titleJa": "三炎の鍛冶職人",
@@ -342,6 +344,7 @@
     },
     "threePiece": {
       "power": "Radiance",
+      "rangeSlot": "Weapon",
       "band": "low"
     },
     "titleJa": "陽の運び手",
@@ -362,6 +365,7 @@
     },
     "threePiece": {
       "power": "Umbra",
+      "rangeSlot": "Charm",
       "band": "low"
     },
     "titleJa": "闇に歌う者",
@@ -382,6 +386,7 @@
     },
     "threePiece": {
       "power": "Bulwark",
+      "rangeSlot": "Armor",
       "band": "low"
     },
     "titleJa": "動かぬ壁",
@@ -402,6 +407,7 @@
     },
     "threePiece": {
       "power": "Sprint",
+      "rangeSlot": "Armor",
       "band": "low"
     },
     "titleJa": "風の三本足",
@@ -422,6 +428,7 @@
     },
     "threePiece": {
       "power": "Lifesteal",
+      "rangeSlot": "Weapon",
       "band": "low"
     },
     "titleJa": "三手の癒し手",
@@ -442,6 +449,7 @@
     },
     "threePiece": {
       "power": "PackFeast",
+      "rangeSlot": "Charm",
       "band": "low"
     },
     "titleJa": "群れの同志",
@@ -462,6 +470,7 @@
     },
     "threePiece": {
       "power": "CriticalEcho",
+      "rangeSlot": "Weapon",
       "band": "low"
     },
     "titleJa": "星霜の記録者",
@@ -482,6 +491,7 @@
     },
     "threePiece": {
       "power": "Momentum",
+      "rangeSlot": "Weapon",
       "band": "low"
     },
     "titleJa": "道具箱の達人",
@@ -502,6 +512,7 @@
     },
     "threePiece": {
       "power": "Steam",
+      "rangeSlot": "Charm",
       "band": "low"
     },
     "titleJa": "湯気の幻想家",
@@ -522,6 +533,7 @@
     },
     "threePiece": {
       "power": "Eclipse",
+      "rangeSlot": "Charm",
       "band": "low"
     },
     "titleJa": "蝕を見る者",

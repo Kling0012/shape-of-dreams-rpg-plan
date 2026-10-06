@@ -3,8 +3,9 @@
 
 Reads tools/lowrarity/named.json (360 銘品) and tools/lowrarity/minisets.json (30 組) and
 converts every {power, band} pair into a FIXED integer value using the production power
-range (Content.PowerPools). A power's Min-Max is identical in every slot pool that
-contains it (checked here), so the range is looked up across all slot pools.
+range (tools/balance/equipment/power-pools.json) for the named item's base slot unless
+an authored rangeSlot explicitly selects a cross-slot power. Mini-set bands always
+select their authored rangeSlot explicitly.
 
 Band -> value (round half up, exact integer arithmetic; clamped to [min, max]):
   low  = round(min + (max - min) * 1/6)   = (5*min +   max +  3) // 6
@@ -23,10 +24,15 @@ the script exits non-zero. Entries are never skipped.
 
 Run:  python tools/lowrarity/gen_named_cs.py
 """
-import collections
-import json
 import re
 import sys
+from decimal import Decimal, ROUND_HALF_UP
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / "tools/balance"))
+from equipment_common import load_json
+from equipment_pools_values import load_power_pools, validate_pool
 
 SRC = "src/SodRpg.Core/Game/Content.cs"
 IDS = "src/SodRpg.Core/Game/Ids.cs"
@@ -41,14 +47,14 @@ BAND_T = {"low": (1, 6), "mid": (2, 5), "high": (13, 20)}  # value = min + (max-
 def band_value(mn, mx, band):
     """Round-half-up of mn + (mx-mn)*num/den in exact integer arithmetic, clamped to [mn, mx]."""
     num, den = BAND_T[band]
-    value = (mn * (den - num) + mx * num + den // 2) // den
+    value = int(((Decimal(mn) * (den - num) + Decimal(mx) * num) / den).to_integral_value(rounding=ROUND_HALF_UP))
     return max(mn, min(mx, value))
 
 
-def load_reference():
-    src = open(SRC, encoding="utf-8").read()
-    ids = open(IDS, encoding="utf-8").read()
-    newp = open(NEWP, encoding="utf-8").read()
+def load_reference(power_pools=None):
+    src = (ROOT / SRC).read_text(encoding="utf-8")
+    ids = (ROOT / IDS).read_text(encoding="utf-8")
+    newp = (ROOT / NEWP).read_text(encoding="utf-8")
 
     def enum_names(name):
         m = re.search(r"enum %s\s*\{(.*?)\n    \}" % name, ids, re.S)
@@ -60,27 +66,16 @@ def load_reference():
     rarities = enum_names("Rarity")
     power_set, stat_set, rarity_rank = set(powers), set(stats), {r: i for i, r in enumerate(rarities)}
 
-    pool_m = re.search(r"PowerPools = new Dictionary<Slot, PowerRange\[\]>\s*\{(.*?)\n        \};", src, re.S)
-    pools = collections.defaultdict(dict)
-    for slot, chunk in re.findall(r"\[Slot\.(\w+)\] = new\[\]\s*\{(.*?)\n            \}", pool_m.group(1), re.S):
-        for p, mn, mx in re.findall(r"PowerRange\(Power\.(\w+), (\d+), (\d+)\)", chunk):
-            if p in pools[slot]:
-                raise SystemExit("duplicate PowerRange in slot %s: %s" % (slot, p))
-            pools[slot][p] = (int(mn), int(mx))
-    # A power's range must be identical in every slot pool that carries it.
-    ranges = {}
-    for slot, ps in pools.items():
-        for p, rng in ps.items():
-            if p in ranges and ranges[p] != rng:
-                raise SystemExit("power %s has different ranges across slot pools: %s vs %s" % (p, ranges[p], rng))
-            ranges[p] = rng
+    table = load_power_pools() if power_pools is None else validate_pool(power_pools, "power-pools", "named power pools")
+    pools = {slot: {power: (row["min"], row["max"]) for power, row in rows.items()}
+             for slot, rows in table["pools"].items()}
+    ranges = {power for rows in pools.values() for power in rows}
 
     bases = {}
-    base_pat = re.compile(r'new BaseDef\("([^"]+)", Slot\.(\w+), Line\.\w+, new Txt\("[^"]*", "[^"]*"\), '
-                          r"Stat\.\w+, -?\d+(?:, Family\.(\w+))?\)")
+    base_pat = re.compile(r'new BaseDef\("([^"]+)", Slot\.(\w+),')
     for m in base_pat.finditer(src):
         if m.group(1) in bases:
-            raise SystemExit("duplicate BaseDef id: " + m.group(1))
+            raise ValueError("duplicate BaseDef id: " + m.group(1))
         bases[m.group(1)] = m.group(2)
 
     conditional = set(re.findall(r"case Power\.(\w+):", re.search(
@@ -108,10 +103,10 @@ def cs(text):
     return '"' + text.replace("\\", "\\\\").replace('"', '\\"') + '"'
 
 
-def main():
-    bases, pools, ranges, power_set, stat_set, rarity_rank, conditional, currency = load_reference()
-    named_json = json.load(open(IN_NAMED, encoding="utf-8"))
-    sets_json = json.load(open(IN_SETS, encoding="utf-8"))
+def render_outputs(power_pools=None):
+    bases, pools, ranges, power_set, stat_set, rarity_rank, conditional, currency = load_reference(power_pools)
+    named_json = load_json(ROOT / IN_NAMED)
+    sets_json = load_json(ROOT / IN_SETS)
     errs = []
 
     def check(cond, msg):
@@ -137,12 +132,18 @@ def main():
         values = []
         for q in e.get("powers", []):
             power, band = q.get("power"), q.get("band")
+            range_slot = q.get("rangeSlot", bases.get(base_id))
+            if not isinstance(range_slot, str) or range_slot not in pools:
+                errs.append("%s: unknown rangeSlot %r" % (nid, range_slot))
+                values.append(None)
+                continue
+            slot_ranges = pools.get(range_slot, {})
             if power not in power_set:
                 errs.append("%s: unknown power %r" % (nid, power))
                 values.append(None)
                 continue
-            if power not in ranges:
-                errs.append("%s: power %s has no PowerRange in any slot pool" % (nid, power))
+            if power not in slot_ranges:
+                errs.append("%s: power %s has no PowerRange in range slot %r" % (nid, power, range_slot))
                 values.append(None)
                 continue
             if rarity in rarity_rank and not allowed_for_rarity(
@@ -152,7 +153,7 @@ def main():
                 errs.append("%s: unknown band %r for power %s" % (nid, band, power))
                 values.append(None)
                 continue
-            mn, mx = ranges[power]
+            mn, mx = slot_ranges[power]
             values.append(band_value(mn, mx, band))
         if len(values) not in (1, 2) or any(v is None for v in values):
             continue  # already reported; do not emit a broken def
@@ -187,13 +188,14 @@ def main():
             ok = False
         three = s.get("threePiece")
         power, band = (three or {}).get("power"), (three or {}).get("band")
+        range_slot = (three or {}).get("rangeSlot")
         three_line = None
         if three is not None:
             if power not in power_set:
                 errs.append("%s: unknown threePiece power %r" % (sid, power))
                 ok = False
-            elif power not in ranges:
-                errs.append("%s: threePiece power %s has no PowerRange in any slot pool" % (sid, power))
+            elif not isinstance(range_slot, str) or range_slot not in pools or power not in pools[range_slot]:
+                errs.append("%s: threePiece rangeSlot %r has no PowerRange for %s" % (sid, range_slot, power))
                 ok = False
             else:
                 # 設計 3.2: 条件付き攻撃力・魔力は全部位がエピックの組だけ（= 最低レア度で判定）。
@@ -204,7 +206,7 @@ def main():
                 if band != "low":
                     errs.append("%s: threePiece band must be low, got %r" % (sid, band))
                 else:
-                    mn, mx = ranges[power]
+                    mn, mx = pools[range_slot][power]
                     three_line = ("Power." + power, band_value(mn, mx, "low"))
         if not ok:
             continue
@@ -216,10 +218,7 @@ def main():
         sets_out.append(args)
 
     if errs:
-        print("ERRORS (%d):" % len(errs))
-        for e in errs:
-            print(" -", e)
-        sys.exit(1)
+        raise ValueError("named definitions: " + "\n".join(errs))
 
     lines = []
     w = lines.append
@@ -253,9 +252,17 @@ def main():
     w("        };")
     w("    }")
     w("}")
-    with open(OUT, "w", encoding="utf-8", newline="\n") as f:
-        f.write("\n".join(lines) + "\n")
-    print("OK: %s (%d named, %d mini sets)" % (OUT, len(named_out), len(sets_out)))
+    return {ROOT / OUT: "\n".join(lines) + "\n"}
+
+
+def main():
+    try:
+        outputs = render_outputs()
+    except ValueError as error:
+        raise SystemExit(str(error)) from error
+    for path, content in outputs.items():
+        path.write_text(content, encoding="utf-8", newline="\n")
+        print("OK:", path.relative_to(ROOT))
 
 
 if __name__ == "__main__":
