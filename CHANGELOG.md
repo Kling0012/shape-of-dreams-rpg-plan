@@ -8,14 +8,22 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
-### 変更 / Changed
+---
 
-- **星の位階と鍛錬（Issue #117・#120）**：星由来のダメージ量に使用済み1点ごと+0.3%（500点で2.5倍）を適用し、Crescendoの合計120%上限から分離。個別記憶効率は位階適用後2.5%/点以上、鍛錬はF2（Vesper/Cetus閾値11%/9%HP、Mist上限60、空殻上限45・攻撃力1.38/スタック・上限星各+12）へ変更。加速・CD・発動条件・保存形式・Protocolは据置。更新は帰還後・次遠征前に。 / **Star rank and training (Issues #117/#120)**: star damage gains +0.3% per spent point (×2.5 at 500), outside Crescendo's combined 120% cap; individual memory efficiency is at least2.5%/point after rank. F2 uses Vesper/Cetus11%/9% HP thresholds, Mist cap60 and Husk cap45, attack1.38/stack and +12 per cap star. Haste, cooldowns, activation conditions, saves and Protocol stay unchanged; update after returning, before the next expedition.
-- **装備バランス（#119・#121）**：通常セット3/6部位の純ダメージ係数を1.25倍（四捨五入）、装備の固定攻撃力・魔力を+5%/レベル（Lv40で295%）・上限250、助走／結晶の2部位固定値を15へ調整し、表から生成します。終曲のCD短縮・他の固定能力・個別ダメージcap・A/B計画値・ボス効果は据え置き、保存済み特性を再抽選せず保存形式5・Protocol 23を維持します。 / **Equipment balance (#119, #121)**: generate normal-set 3/6-piece pure-damage coefficients at 1.25× (half-up rounding), flat Attack/Power growth at +5% per level (295% at Lv40), cap250 and Run-Up/Crystal 2-piece flat bonuses15 from tables; Finale cooldown reduction, other flat stats, individual damage caps, A/B plans and boss effects remain unchanged, without rerolling saved affixes or changing save format5/Protocol23.
-- **装備と星の効果を箇条書きで表示**：1行目に効果の要点、続けて条件・間隔・上限を「・」で1項目ずつ並べます。ボス装備や固有効果の長い一文が読みやすくなります（数値や効果は変わりません）。 / **Effects are shown as bullet points**: the gist comes first, then each condition, interval and cap on its own line. Long boss-set and unique effect sentences are easier to read; no numbers or effects changed.
-- **記憶ダメージの調整表と軽量比較（Issue #149 段階1）**：記憶ダメージ836成分をJSON原本から生成し、0.001刻みの小数と旅人別倍率、記憶別%/点・Choice構成・共有外縁の前回比較に対応しました。初期数値・内容指紋・保存形式・Protocolは変更しません。 / **Memory-damage balance table and lightweight comparison (Issue #149 stage1)**: generate 836 components from canonical JSON, supporting exact thousandths, hero multipliers and per-memory efficiency/Choice/shared-outer comparisons; initial values, content identity, save format and Protocol are unchanged.
-- **鍛冶バランス定義の外部化（Issue #149 段階0）**：強化失敗率の3係数をJSON原本からC#定数へ生成し、生成鮮度確認と鍛冶・遠征の前回比較を追加しました。数値・保存形式・Protocol・現行の内容指紋は変更しません。 / **Externalized forge balance definitions (Issue #149 stage0)**: generate three failure-rate coefficients from canonical JSON into C# constants, with freshness checks and previous-run forge/expedition comparisons; balance values, save format, Protocol and current content identity are unchanged.
-- **装備と星図の説明文の見直し**：数値や効果は変えず、読み間違えやすかった書き方だけを直しました。上限の数値に単位（%）を付け、ボス装備の「段階」を「固有報酬の段階」と明記し、星の連携・追加効果・刻印の説明を条件と対象がたどりやすい順に整えました。「+」「-」は半角にそろえ、「です・ます」を常体にそろえています。 / **Reviewed equipment and star-map descriptions**: wording only, no numbers or effects changed. Caps now carry units, boss-set stages are called boss reward stages, and link, extra-effect and keystone texts now read condition first, then target. Symbols and tone are unified.
+## v2.6.0 — 説明文を読みやすく（2026-10-06）
+
+装備と星の説明を、効果と条件が一目で分かる形に整えました。 / Gear and star descriptions are now easier to read at a glance.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください（内容の一致確認があります）。 / Everyone in co-op should update (content is checked for a match).
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 新しい要素・変更 / New and changed
+
+- **説明の箇条書き**：装備の固有効果・ボス装備・星の説明は、1行目に効果の要点、続けて条件・間隔・上限を「・」で1つずつ並べるようにしました。 / **Bulleted descriptions**: unique gear effects, boss gear and stars show the main effect on the first line, followed by conditions, intervals and caps as one bullet each.
+- **説明文の書き方をそろえる**：上限には単位を付け（例: 上限36%）、言い回し・記号・文末をそろえました。ボス装備の「段階」は「固有報酬の段階」と書くようにしました。数値や効果は説明のために変えていません。 / **Consistent wording**: caps always have units (e.g. "up to 36%"), and phrasing, symbols and sentence endings are unified. Boss gear "stages" now say which reward stage they mean. No numbers or effects were changed for the wording.
 
 ---
 
