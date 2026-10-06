@@ -1,5 +1,5 @@
-[b]v2.8.0: co-op trading (Trade tab: unequipped relics, shards, tuning stones), and the secure choice now opens after Continue. Saves carry over, but once saved they cannot be loaded by older versions. Update all co-op players and restart the game.[/b]
-[b]v2.8.0：協力プレイのトレード（「交換」タブ。装備していない遺物・欠片・調律石）を追加し、「続きから」で再開すると確保の画面が開かない問題を修正しました。セーブデータは引き継げますが、この版で保存すると以前の版では読み込めなくなります。協力プレイでは参加者全員がこのバージョンに更新し、ゲームを再起動してください。[/b]
+[b]v2.9.0: random Infinity bosses (special bosses included), shorter boss intervals are harder but drop more relics, a guaranteed well and shop before each boss, a one-time claim for an interrupted expedition's relics, and guests can make their own choices in co-op. Saves carry over, but once saved they cannot be loaded by older versions. Update all co-op players and restart the game.[/b]
+[b]v2.9.0：インフィニティのボスが特殊ボスを含めてランダムに。ボスまでの部屋数が少ないほど難しく遺物が出やすくなり、ボスまでに井戸とショップを必ず訪れられます。中断した遠征の遺物を1回だけ受け取るボタンを追加し、協力プレイでゲストが自分の選択をできない問題を修正しました。セーブデータは引き継げますが、この版で保存すると以前の版では読み込めなくなります。協力プレイでは参加者全員がこのバージョンに更新し、ゲームを再起動してください。[/b]
 
 [h1]Dreamforge RPG[/h1]
 Turns every run into part of a long RPG journey: relics you keep, a risky "secure or delve" choice at every zone, a star map per Traveler, a forge, and long-term goals. Co-op ready.
