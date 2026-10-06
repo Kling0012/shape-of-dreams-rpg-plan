@@ -58,7 +58,8 @@ namespace SodRpg.Mod
             typeof(InfinityMapClosestNode), typeof(InfinityMapHover), typeof(InfinityMapNodeTooltip),
             typeof(InfinityMapTooltip), typeof(InfinityMapTravelTooltip), typeof(InfinityMapDescription),
             typeof(InfinityMapPingPosition), typeof(InfinityMapCacheChanged), typeof(InfinityMapEdgeStatus),
-        };
+            typeof(InfinityHunterAdvance),
+         };
 
         internal static bool Available { get; private set; }
         internal static string UnavailableReason { get; private set; }
@@ -399,6 +400,9 @@ namespace SodRpg.Mod
             foreach (var pair in zone.modifierServerData)
                 if (!ReferencedModifiers.Contains(pair.Key)) RetiredModifiers.Add(pair.Key);
             foreach (int idToRemove in RetiredModifiers) zone.modifierServerData.Remove(idToRemove);
+            // #229: restart the hunt from the far side of the entry instead of the native
+            // exit-farthest (entry-side) start that spawns on top of the one-room reveal path.
+            RelocateHunterStart(zone);
             ReferencedModifiers.Clear(); RetiredModifiers.Clear();
             RefreshReveal(zone, 0);
             WriteEnvelope();

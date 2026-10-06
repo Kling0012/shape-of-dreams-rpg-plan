@@ -369,6 +369,8 @@ namespace SodRpg.Mod
         public readonly List<object> visitedNodesSaveData = new List<object>();
         public readonly Mirror.SyncList<int> nodeDistanceMatrix = new Mirror.SyncList<int>();
         public int GetNodeDistance(int a, int b) => nodeDistanceMatrix[nodes.Count * a + b];
+        public void AdvanceHunterTurn(bool forceMove = false) { AdvanceHunterTurnCalls++; }
+        public int AdvanceHunterTurnCalls;
         public bool IsNodeConnected(int from, int to)
             => GetNodeDistance(from, to) == 1 || GetNodeDistance(to, from) == 1;
         public void CmdTravelToNode(int index, Mirror.NetworkConnectionToClient sender = null)

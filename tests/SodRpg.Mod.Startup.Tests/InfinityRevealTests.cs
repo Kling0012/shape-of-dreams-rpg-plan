@@ -103,6 +103,40 @@ namespace SodRpg.Mod.Startup.Tests
             Assert.Equal(zone.GeneratedDistances, zone.nodeDistanceMatrix);
         }
 
+        [Fact]
+        public void HunterStaysPressureWithoutSwallowingTheOneRevealedForwardRoom()
+        {
+            var (_, zone, _) = StartRevealGraph();
+            // The hunt restarts on the far side of the entry, not on the native entry-side start.
+            Assert.Equal(4, zone.hunterStartNodeIndex);
+
+            // A hunt advance onto the revealed next room keeps only the native warning level.
+            zone.hunterStatuses[1] = HunterStatus.Level3;
+            zone.hunterStatuses[3] = HunterStatus.Level2;
+            zone.AdvanceHunterTurn();
+            Assert.Equal(HunterStatus.AboutToBeTaken, zone.hunterStatuses[1]);
+            Assert.Equal(HunterStatus.Level2, zone.hunterStatuses[3]);
+
+            // The reveal prefers a hunter-free room over closer hunted ones (2 and 3 are taken).
+            zone.hunterStatuses[2] = HunterStatus.Level1;
+            zone.SetCurrentNodeIndexAndRevealAdjacent(1);
+            Assert.Equal(4, InfinityMode.RevealedNext(zone));
+
+            // A hunter-taken retained next room is capped back to the warning level.
+            zone.hunterStatuses[4] = HunterStatus.Level2;
+            zone.SetCurrentNodeIndexAndRevealAdjacent(1);
+            Assert.Equal(4, InfinityMode.RevealedNext(zone));
+            Assert.Equal(HunterStatus.AboutToBeTaken, zone.hunterStatuses[4]);
+
+            // With no hunter-free fresh room left the closest one is chosen and capped.
+            var retired = zone.nodes[4];
+            retired.status = WorldNodeStatus.HasVisited;
+            zone.nodes[4] = retired;
+            zone.SetCurrentNodeIndexAndRevealAdjacent(1);
+            Assert.Equal(3, InfinityMode.RevealedNext(zone));
+            Assert.Equal(HunterStatus.AboutToBeTaken, zone.hunterStatuses[3]);
+        }
+
         [Theory]
         [InlineData(false)]
         [InlineData(true)]

@@ -57,8 +57,16 @@ namespace SodRpg.Mod
             else if (state.Phase == InfinityPhase.Exploring)
             {
                 if (IsFreshRevealRoom(zone, retained, current)) next = retained;
-                else next = ChooseNextRevealRoom(zone, current);
+                else
+                {
+                    // #229: prefer a route the hunt has not claimed; the unfiltered #228
+                    // event-paced ordering runs (and is capped) when every fresh room is taken.
+                    next = ChooseNextRevealRoom(zone, current, hunterFreeOnly: true);
+                    if (next < 0) next = ChooseNextRevealRoom(zone, current, hunterFreeOnly: false);
+                }
             }
+            // #229: the single forward option never loads as hunter territory; a warning mark is fine.
+            CapHunterWarning(zone, next);
             for (int i = 0; i < zone.nodes.Count; i++)
             {
                 var node = zone.nodes[i];
@@ -73,7 +81,7 @@ namespace SodRpg.Mod
         // Match the native graph's Event/Combat mix, but bring a distant event forward after
         // at most three combat visits per event. BossDue still takes precedence in RefreshReveal.
         // Only saved native statuses are used: revisits and Continue cannot reset the pacing.
-        private static int ChooseNextRevealRoom(ZoneManager zone, int current)
+        private static int ChooseNextRevealRoom(ZoneManager zone, int current, bool hunterFreeOnly)
         {
             int combats = 0, events = 0, visitedCombats = 0, visitedEvents = 0;
             int next = -1, nextEvent = -1, distance = int.MaxValue, eventDistance = int.MaxValue;
@@ -91,7 +99,9 @@ namespace SodRpg.Mod
                     events++;
                     if (visited) visitedEvents++;
                 }
-                if (!IsFreshRevealRoom(zone, i, current)) continue;
+                // #229: the hunter-free pass skips claimed rooms; the graph-wide mix counters
+                // above stay unfiltered so the event pacing itself is unchanged.
+                if (hunterFreeOnly && !IsHunterFree(zone, i)) continue;
                 int candidate = zone.GetNodeDistance(current, i);
                 if (candidate <= 0) continue;
                 if (candidate < distance) { next = i; distance = candidate; }
