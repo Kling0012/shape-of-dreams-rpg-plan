@@ -272,13 +272,18 @@ namespace SodRpg.Core.Game
             var result = AuthoredMechanismCodec.DecodeSpec(AuthoredMechanismCodec.EncodeSpec(spec));
             if (result.PairId != null)
             {
-                var existingPair = PairCombos.ForBridge(result.PairId);
-                if (existingPair != null) result.PairId = existingPair.Id;
-                else if (definitions != null)
+                // A replacement dataset owns its bridge bindings. The installed registry
+                // still describes the old dataset until RegisterAuthored commits the new one.
+                if (definitions != null)
                     foreach (var node in definitions)
                         if (node?.Region?.Kind == ClusterRegionKind.Bridge && node.Region.Id == result.PairId
                             && (node.Mechanism ?? node.Effect?.Mechanism)?.Bridge != null)
-                        { result.PairId = (node.Mechanism ?? node.Effect.Mechanism).Bridge.PairId; break; }
+                        {
+                            result.PairId = (node.Mechanism ?? node.Effect.Mechanism).Bridge.PairId;
+                            return result;
+                        }
+                var existingPair = PairCombos.ForBridge(result.PairId);
+                if (existingPair != null) result.PairId = existingPair.Id;
             }
             return result;
         }
