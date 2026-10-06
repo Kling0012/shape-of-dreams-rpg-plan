@@ -19,6 +19,7 @@
     <Compile Include="../../src/SodRpg.Mod/NativePatchPreflight.cs" Link="ModUnderTest/NativePatchPreflight.cs" />
   <Compile Include="../../src/SodRpg.Mod/DreamforgeMod.cs" Link="ModUnderTest/DreamforgeMod.cs" />
   <Compile Include="../../src/SodRpg.Mod/InfinityMode.cs" Link="ModUnderTest/InfinityMode.cs" />
+  <Compile Include="../../src/SodRpg.Mod/InfinityBosses.cs" Link="ModUnderTest/InfinityBosses.cs" />
   <Compile Include="../../src/SodRpg.Mod/InfinityMapReveal.cs" Link="ModUnderTest/InfinityMapReveal.cs" />
   <Compile Include="../../src/SodRpg.Mod/InfinityServiceRooms.cs" Link="ModUnderTest/InfinityServiceRooms.cs" />
   <Compile Include="../../src/SodRpg.Mod/InfinityHunter.cs" Link="ModUnderTest/InfinityHunter.cs" />
