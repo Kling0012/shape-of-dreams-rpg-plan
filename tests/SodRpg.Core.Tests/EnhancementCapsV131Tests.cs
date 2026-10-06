@@ -39,24 +39,6 @@ namespace SodRpg.Core.Tests
         }
 
         [Fact]
-        public void Many_unenhanced_sources_remain_capped_at_the_base_cap()
-        {
-            var p = Profile.CreateNew(132);
-            int cap = Content.PowerCap(Power.Momentum);
-            foreach (var slot in Content.SlotOrder)
-            {
-                var relic = new Relic
-                {
-                    Uid = "base" + (int)slot, BaseId = Content.Bases.First(b => b.Slot == slot).Id,
-                    Rarity = Rarity.Rare, ItemLevel = 1,
-                };
-                relic.Powers.Add(new PowerLine(Power.Momentum, cap));
-                Equip(p, relic);
-            }
-            Assert.Equal(cap, Build.Compute(p, Hero, 0).Get(Power.Momentum));
-        }
-
-        [Fact]
         public void Capped_base_shares_keep_each_relic_own_multiplier()
         {
             var p = Profile.CreateNew(133);
@@ -78,25 +60,6 @@ namespace SodRpg.Core.Tests
             int enhanced = (int)(((cap * 120L + 50) / 100) * 180 / 100);
             int expected = (int)((enhanced + cap / 2) * (decimal)cap / (cap + cap / 2));
             Assert.Equal(expected, Build.Compute(p, Hero, 0).Get(Power.Blaze));
-        }
-
-        [Fact]
-        public void Milestone_multiplier_survives_a_reset_without_consuming_extra_base_budget()
-        {
-            var p = Profile.CreateNew(134);
-            int cap = Content.PowerCap(Power.Blaze);
-            var relic = new Relic
-            {
-                Uid = "milestone", BaseId = Content.Bases.First(b => b.Slot == Slot.Weapon).Id,
-                Rarity = Rarity.Legendary, ItemLevel = 1, LimitBreaks = 3,
-                EnhanceMilestones = 5, MilestonePowerApplied = true,
-            };
-            relic.Powers.Add(new PowerLine(Power.Blaze, cap * 120 / 100));
-            Equip(p, relic);
-            Assert.Equal(cap * 120 / 100, Build.Compute(p, Hero, 0).Get(Power.Blaze));
-            relic.Enhance = 20;
-            relic.AwakenLevel = 3;
-            Assert.Equal((int)(cap * 2.5m), Build.Compute(p, Hero, 0).Get(Power.Blaze));
         }
 
         [Fact]

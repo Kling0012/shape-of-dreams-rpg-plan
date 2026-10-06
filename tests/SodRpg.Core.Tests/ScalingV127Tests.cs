@@ -29,37 +29,6 @@ namespace SodRpg.Core.Tests
         }
 
         [Fact]
-        public void Executioner_and_opening_strike_stay_on_attack_damage()
-        {
-            var rt = new PowerRuntime(With((Power.Executioner, 50), (Power.OpeningStrike, 80)), 0);
-            // 魔力が高くても攻撃力100のまま計算する（通常攻撃への上乗せ）
-            Assert.Equal(50f, rt.OnAttackHit(1, 500, 100, 900, 0.2f).ExecuteDamage, 3);
-            Assert.Equal(80f, rt.OnAttackHit(2, 500, 100, 900, 1f).OpeningDamage, 3);
-        }
-
-        [Fact]
-        public void Retaliation_raises_both_attack_and_power_after_damage()
-        {
-            var rt = new PowerRuntime(With((Power.Retaliation, 20)), 0);
-            Assert.Equal(0, rt.Current(1).PowerPct);
-            rt.OnDamaged(1, 10, true);
-            Assert.Equal(20, rt.Current(2).AttackPct);
-            Assert.Equal(20, rt.Current(2).PowerPct);
-            Assert.Equal(0, rt.Current(4.1f).PowerPct); // 被弾から3秒で切れる
-        }
-
-        [Fact]
-        public void Vigor_raises_both_attack_and_power_while_healthy()
-        {
-            var rt = new PowerRuntime(With((Power.Vigor, 16)), 0);
-            rt.HealthRatio = 0.9f;
-            Assert.Equal(16, rt.Current(1).AttackPct);
-            Assert.Equal(16, rt.Current(1).PowerPct);
-            rt.HealthRatio = 0.5f;
-            Assert.Equal(0, rt.Current(1).PowerPct); // HP80%未満では出ない
-        }
-
-        [Fact]
         public void Element_stacks_are_exact_for_whole_hundreds_and_zero()
         {
             var rt = new PowerRuntime(With((Power.Ember, 100), (Power.Frost, 200)), 0, 12345);
@@ -110,18 +79,6 @@ namespace SodRpg.Core.Tests
             Assert.Equal(0f, rt.OnAttackHit(11.5f, 500, 100, 200, 1).EchoDamage);   // 1回の命中で消費
             rt.OnSkillUsed(20, isMovement: true, isUltimate: false);
             Assert.Equal(0f, rt.OnAttackHit(23.1f, 500, 100, 200, 1).EchoDamage);   // 3秒を過ぎると出ない
-        }
-
-        [Fact]
-        public void Echoing_dodge_needs_a_dodge_and_a_new_dodge_refreshes_the_window()
-        {
-            var rt = new PowerRuntime(With((Power.EchoingDodge, 80)), 0);
-            Assert.Equal(0f, rt.OnAttackHit(1, 500, 100, 200, 1).EchoDamage);      // 回避していなければ出ない
-            rt.OnSkillUsed(10, isMovement: false, isUltimate: false);
-            Assert.Equal(0f, rt.OnAttackHit(11, 500, 100, 200, 1).EchoDamage);     // 回避以外では始まらない
-            rt.OnSkillUsed(10, isMovement: true, isUltimate: false);
-            rt.OnSkillUsed(12, isMovement: true, isUltimate: false);               // 新しい回避で3秒延びる
-            Assert.Equal(160f, rt.OnAttackHit(14.5f, 500, 100, 200, 1).EchoDamage, 3);
         }
 
         [Fact]

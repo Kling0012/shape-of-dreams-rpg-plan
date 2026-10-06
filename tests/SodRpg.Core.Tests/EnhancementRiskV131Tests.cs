@@ -30,59 +30,9 @@ namespace SodRpg.Core.Tests
             return (level, failed, rng.State);
         }
 
-        [Fact]
-        public void Gains_rise_at_every_level_with_non_increasing_increments()
-        {
-            foreach (var scale in new System.Func<int, int>[] { Content.EnhanceScalePct, Content.EnhancePowerScalePct })
-            {
-                Assert.Equal(100, scale(0));
-                Assert.Equal(100, scale(-1));
-                int previousIncrement = int.MaxValue;
-                for (int level = 1; level <= 20; level++)
-                {
-                    int increment = scale(level) - scale(level - 1);
-                    Assert.InRange(increment, 1, previousIncrement);
-                    previousIncrement = increment;
-                }
-                Assert.Equal(scale(20), scale(21));
-            }
-        }
-
-        [Fact]
-        public void Seeded_forge_spends_shards_and_preserves_previously_earned_progress()
-        {
-            var (p, r) = Legendary();
-            r.Enhance = 20;
-            Rules.GrantEnhanceMilestones(new Rng(131), r);
-            r.Enhance = 19;
-            r.AwakenLevel = 2;
-            r.AwakenPoints = Content.AwakenThresholdFor(2);
-            var affixes = r.Affixes.Select(a => (a.Stat, a.Value)).ToArray();
-            var powers = r.Powers.Select(a => (a.Power, a.Value)).ToArray();
-            int shards = p.Material(Materials.Shard);
-            const int cost = 1760; // Legendary +20 costs twice the base enhancement fee.
-            var expected = ForecastForge(r, 7);
-            p.StoreRng(new Rng(7));
-            var result = Rules.Enhance(p, r.Uid);
-            Assert.Equal(EventKind.Info, result.Kind);
-            Assert.Same(r, p.FindStash(r.Uid));
-            Assert.Equal(expected.Level, r.Enhance);
-            Assert.Equal(shards - cost, p.Material(Materials.Shard));
-            Assert.Equal(3, r.LimitBreaks);
-            Assert.Equal(2, r.AwakenLevel);
-            Assert.Equal(Content.AwakenThresholdFor(2), r.AwakenPoints);
-            Assert.Equal(5, r.EnhanceMilestones);
-            Assert.True(r.MilestonePowerApplied);
-            Assert.Equal(affixes, r.Affixes.Select(a => (a.Stat, a.Value)));
-            Assert.Equal(powers, r.Powers.Select(a => (a.Power, a.Value)));
-            Assert.Equal(expected.RngState, p.RngState);
-        }
-
         [Theory]
         [InlineData(19, 7UL)]
         [InlineData(19, 3UL)]
-        [InlineData(4, 120UL)]
-        [InlineData(4, 10UL)]
         [InlineData(3, 120UL)]
         public void Seeded_forge_follows_raw_failure_curve_and_never_loses_earned_history(int start, ulong seed)
         {

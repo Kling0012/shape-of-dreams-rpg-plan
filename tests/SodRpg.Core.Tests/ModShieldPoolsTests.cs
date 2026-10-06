@@ -29,43 +29,6 @@ namespace SodRpg.Core.Tests
             public void Refresh(Handle handle, float seconds) => handle.Seconds = seconds;
             public void Destroy(Handle handle) { Destroys++; handle.Alive = false; }
         }
-        [Theory]
-        [InlineData(8, 6, 8)]
-        [InlineData(2, 6, 6)]
-        public void ReapplicationUsesActualRemainingAndRefreshes(int remaining, int award, int expected)
-        {
-            var pools = new ModShieldPools<Handle>(); var adapter = new Adapter();
-            var key = new ModShieldPoolKey(1, 2, ModShieldPoolKind.Ordinary);
-            pools.Apply(key, adapter, 10, 100, 0, 4, 1);
-            adapter.Last.Amount = remaining;
-            pools.Apply(key, adapter, award, 100, 3, 4, 1);
-            Assert.Equal(expected, adapter.Last.Amount); Assert.Equal(1, adapter.Creates); Assert.Equal(2, adapter.Processes);
-            pools.Maintain(key, 100, 5, 1, true); Assert.True(adapter.Last.Alive);
-            pools.Maintain(key, 100, 7, 1, true); Assert.False(adapter.Last.Alive);
-        }
-        [Theory]
-        [InlineData(ModShieldPoolKind.Ordinary, 15)]
-        [InlineData(ModShieldPoolKind.Rampart, 10)]
-        [InlineData(ModShieldPoolKind.Allied, 3)]
-        public void ReceiverProcessesOnceAndFinalCapPrecedesPublication(ModShieldPoolKind kind, float cap)
-        {
-            var pools = new ModShieldPools<Handle>(); var adapter = new Adapter { Multiplier = 1.5f };
-            var key = new ModShieldPoolKey(1, 2, kind);
-            pools.Apply(key, adapter, 20, 100, 0, 4, 1);
-            Assert.Equal(cap, adapter.Published, 4);
-            for (int i = 0; i < 20; i++) pools.Apply(key, adapter, 20, 100, 0, 4, 1);
-            Assert.Equal(cap, adapter.Last.Amount, 4); Assert.Equal(21, adapter.Processes);
-            Assert.Equal(1, adapter.Creates);
-        }
-        [Fact]
-        public void FractionalAmountsSurviveAndAreNotAmplifiedTwice()
-        {
-            var pools = new ModShieldPools<Handle>(); var adapter = new Adapter { Multiplier = 1.5f };
-            var key = new ModShieldPoolKey(1, 2, ModShieldPoolKind.Ordinary);
-            pools.Apply(key, adapter, 1.02f, 100, 0, 4, 1);
-            pools.Apply(key, adapter, 1.02f, 100, 0, 4, 1);
-            Assert.Equal(1.53f, adapter.Last.Amount, 5); Assert.Equal(2, adapter.Processes);
-        }
         [Fact]
         public void SacrificeLowerAwardCapPreservesStrongerOrdinaryPool()
         {
@@ -92,20 +55,6 @@ namespace SodRpg.Core.Tests
             Assert.Equal(4, pools.Count); pools.RemoveOwner(1); Assert.Equal(1, pools.Count);
             Assert.True(adapters[3].Last.Alive); Assert.True(unrelated.Alive); Assert.Equal(90, unrelated.Amount);
             pools.Clear(); Assert.Equal(0, pools.Count); Assert.True(unrelated.Alive);
-        }
-        [Fact]
-        public void MaxHealthDeathEpochAndDestroyedHandleAreRealLifecycleBoundaries()
-        {
-            var pools = new ModShieldPools<Handle>(); var adapter = new Adapter();
-            var key = new ModShieldPoolKey(1, 2, ModShieldPoolKind.Ordinary);
-            pools.Apply(key, adapter, 15, 100, 0, 4, 1);
-            pools.Maintain(key, 50, 1, 1, true); Assert.Equal(7.5f, adapter.Last.Amount, 4);
-            var broken = adapter.Last; broken.Alive = false;
-            pools.Apply(key, adapter, 6, 100, 2, 4, 1);
-            Assert.NotSame(broken, adapter.Last); Assert.False(broken.Alive);
-            pools.Maintain(key, 100, 2, 2, true); Assert.Equal(0, pools.Count);
-            pools.Apply(key, adapter, 6, 100, 3, 4, 2);
-            pools.Maintain(key, 100, 3, 2, false); Assert.Equal(0, pools.Count);
         }
         [Theory]
         [InlineData(ModShieldPoolKind.Ordinary, 15f)]

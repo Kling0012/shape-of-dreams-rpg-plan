@@ -33,10 +33,6 @@ namespace SodRpg.Core.Tests
         }
         [Theory]
         [InlineData(Stat.AttackFlat, 1, 7, 14)]
-        [InlineData(Stat.PowerFlat, 1, 7, 14)]
-        [InlineData(Stat.AttackFlat, 10, 9, 18)]
-        [InlineData(Stat.PowerFlat, 10, 9, 18)]
-        [InlineData(Stat.AttackFlat, 40, 19, 39)]
         [InlineData(Stat.PowerFlat, 60, 19, 39)]
         public void Rolled_flat_damage_reaches_effective_build_with_existing_rounding(Stat stat, int level, int raw, int effective)
         {

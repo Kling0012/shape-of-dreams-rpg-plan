@@ -6,17 +6,6 @@ namespace SodRpg.Core.Tests
     public class VolumeTests
     {
         [Fact]
-        public void Every_base_traveler_has_a_signature_legendary()
-        {
-            foreach (var hero in new[] { "vesper", "lacerta", "cetus", "yubar", "husk", "mist", "nachia", "aurena", "bismuth" })
-            {
-                Assert.True(Content.TryGetUnique("unique.sig." + hero, out var u), hero);
-                Assert.Equal(2, u.Powers.Count);
-                Assert.True(Content.TryGetBase(u.BaseId, out _));
-            }
-        }
-
-        [Fact]
         public void Swearing_a_pact_advances_the_pact_bounty()
         {
             var p = Profile.CreateNew(2);

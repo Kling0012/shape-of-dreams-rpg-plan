@@ -45,17 +45,6 @@ namespace SodRpg.Core.Tests
         }
 
         [Fact]
-        public void Plus_five_on_an_epic_adds_an_affix_instead_of_a_second_power()
-        {
-            var (p, r) = WithRelic(Rarity.Epic);
-            int affixes = r.Affixes.Count, powers = r.Powers.Count;
-            r.Enhance = 5;
-            Rules.GrantEnhanceMilestones(new Rng(7), r);
-            Assert.Equal(powers, r.Powers.Count);
-            Assert.Equal(affixes + 2, r.Affixes.Count);
-        }
-
-        [Fact]
         public void Old_enhanced_relics_get_their_milestones_once()
         {
             var (p, r) = WithRelic(Rarity.Uncommon);
@@ -124,33 +113,5 @@ namespace SodRpg.Core.Tests
             Assert.NotSame(p.RetuneOffer, copy.RetuneOffer);
         }
 
-        [Fact]
-        public void Offered_relic_is_not_used_as_transmute_material()
-        {
-            var p = Profile.CreateNew(3);
-            for (int i = 0; i < Content.TransmuteInputs(Rarity.Common) + 1; i++) p.Stash.Add(Loot.RollRelic(new Rng((ulong)(40 + i)), Rarity.Common, 2));
-            p.AddMaterial(Materials.Tuning, 10);
-            var weakest = Rules.TransmuteCandidates(p, Rarity.Common).First();
-            Rules.Retune(p, weakest.Uid, 0);
-            Assert.DoesNotContain(Rules.TransmuteCandidates(p, Rarity.Common), x => x.Uid == weakest.Uid);
-        }
-
-        [Fact]
-        public void Targeted_transmute_lands_in_the_chosen_slot_and_costs_more()
-        {
-            foreach (var slot in new[] { Slot.Weapon, Slot.Armor, Slot.Charm })
-            {
-                var p = Profile.CreateNew(11);
-                for (int i = 0; i < Content.TransmuteInputs(Rarity.Uncommon); i++) p.Stash.Add(Loot.RollRelic(new Rng((ulong)(60 + i)), Rarity.Uncommon, 2));
-                p.AddMaterial(Materials.Shard, 1000);
-                int before = p.Material(Materials.Shard);
-                Rules.Transmute(p, Rarity.Uncommon, target: slot);
-                Assert.Equal(before - Rules.TransmuteCost(Rarity.Uncommon, true), p.Material(Materials.Shard));
-                Assert.Equal(Rules.TransmuteCost(Rarity.Uncommon) * Content.TransmuteTargetCostPct / 100, Rules.TransmuteCost(Rarity.Uncommon, true));
-                var made = Assert.Single(p.Stash);
-                Assert.Equal(slot, made.Slot);
-                Assert.Equal(Rarity.Rare, made.Rarity);
-            }
-        }
     }
 }

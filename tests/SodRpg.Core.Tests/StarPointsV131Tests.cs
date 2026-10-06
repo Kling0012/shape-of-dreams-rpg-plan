@@ -8,25 +8,6 @@ namespace SodRpg.Core.Tests
     public class StarPointsV131Tests
     {
 
-        [Fact]
-        public void Points_is_monotone_and_capped_across_transitions()
-        {
-            foreach (int k in new[] { 1, 150, 151, 299, 300, 301, 499, 500 })
-            {
-                int start = Math.Max(0, StarProgression.TotalXpForPoints(k - 1));
-                int end = StarProgression.TotalXpForPoints(k);
-                int last = StarProgression.Points(start);
-                for (int xp = start; xp <= end; xp++)
-                {
-                    int earned = StarProgression.Points(xp);
-                    Assert.True(earned >= last);
-                    Assert.True(earned <= 500);
-                    last = earned;
-                }
-                Assert.Equal(k, last);
-            }
-            Assert.Equal(500, StarProgression.Points(int.MaxValue));
-        }
 
         [Fact]
         public void Talent_points_allow_500_and_stop_there()

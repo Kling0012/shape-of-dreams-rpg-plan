@@ -43,52 +43,6 @@ namespace SodRpg.Core.Tests
         }
 
         [Fact]
-        public void Break_limits_follow_rarity_and_extend_the_cap_in_steps_of_five()
-        {
-            Assert.Equal(0, Content.MaxLimitBreaks(Rarity.Common));
-            Assert.Equal(0, Content.MaxLimitBreaks(Rarity.Uncommon));
-            Assert.Equal(1, Content.MaxLimitBreaks(Rarity.Rare));
-            Assert.Equal(2, Content.MaxLimitBreaks(Rarity.Epic));
-            Assert.Equal(3, Content.MaxLimitBreaks(Rarity.Legendary));
-
-            Assert.Equal(5, Content.MaxEnhanceFor(Rarity.Rare, 0));
-            Assert.Equal(10, Content.MaxEnhanceFor(Rarity.Rare, 1));
-            Assert.Equal(10, Content.MaxEnhanceFor(Rarity.Rare, 3)); // レアの回数上限で切れる
-            Assert.Equal(15, Content.MaxEnhanceFor(Rarity.Epic, 2));
-            Assert.Equal(20, Content.MaxEnhanceFor(Rarity.Legendary, 3));
-            Assert.Equal(5, Content.MaxEnhanceFor(Rarity.Legendary, -1)); // 負の回数は0扱い
-
-            var (p, r) = WithRelic(Rarity.Rare, 61);
-            Assert.Equal(5, Content.MaxEnhanceFor(r));
-            r.LimitBreaks = 1;
-            Assert.Equal(10, Content.MaxEnhanceFor(r));
-        }
-
-        [Fact]
-        public void Break_costs_tuning_and_shards_per_attempt()
-        {
-            Assert.Equal(5, Content.LimitBreakTuningCost(1));
-            Assert.Equal(10, Content.LimitBreakTuningCost(2));
-            Assert.Equal(20, Content.LimitBreakTuningCost(3));
-            Assert.Equal(200, Content.LimitBreakShardCost(1));
-            Assert.Equal(400, Content.LimitBreakShardCost(2));
-            Assert.Equal(800, Content.LimitBreakShardCost(3));
-
-            // +6以降の強化の費用（+6〜+10。+11〜+15は1.5倍、+16〜+20は2倍）
-            int[] base5 = { 180, 230, 290, 360, 440 };
-            for (int i = 0; i < 5; i++)
-            {
-                Assert.Equal(base5[i], Content.EnhanceCost(5 + i));
-                Assert.Equal(base5[i] * 3 / 2, Content.EnhanceCost(10 + i));
-                Assert.Equal(base5[i] * 2, Content.EnhanceCost(15 + i));
-            }
-            Assert.Equal(int.MaxValue, Content.EnhanceCost(20));
-            Assert.Equal(int.MaxValue, Content.EnhanceCost(99));
-            // +5までの費用は変わらない
-            Assert.Equal(20 + 35 + 60 + 90 + 130, Enumerable.Range(0, 5).Sum(i => Content.EnhanceCost(i)));
-        }
-
-        [Fact]
         public void Break_consumes_the_material_and_charges_both_currencies()
         {
             var (p, r) = WithRelic(Rarity.Epic, 11);
@@ -169,41 +123,6 @@ namespace SodRpg.Core.Tests
         }
 
         [Fact]
-        public void Enhancement_checkpoints_scale_relic_stats_and_powers()
-        {
-            Assert.Equal(126, Content.EnhanceScalePct(5));
-            Assert.Equal(140, Content.EnhanceScalePct(10));
-            Assert.Equal(150, Content.EnhanceScalePct(15));
-            Assert.Equal(156, Content.EnhanceScalePct(20));
-            Assert.Equal(156, Content.EnhanceScalePct(99));
-
-            Assert.Equal(120, Content.EnhancePowerScalePct(5));
-            Assert.Equal(132, Content.EnhancePowerScalePct(10));
-            Assert.Equal(140, Content.EnhancePowerScalePct(15));
-            Assert.Equal(145, Content.EnhancePowerScalePct(20));
-            Assert.Equal(145, Content.EnhancePowerScalePct(99));
-
-            // 遺物を通した伸びも同じ式
-            var (p, lg) = WithRelic(Rarity.Legendary, 51);
-            lg.Enhance = 20;
-            lg.LimitBreaks = 3;
-            var aff = lg.Affixes[0];
-            var stat = lg.EffectiveStats().First(s => s.Stat == aff.Stat);
-            Assert.Equal((aff.Value * 156 + 50) / 100, stat.Value);
-            var pw = lg.Powers[0];
-            var power = lg.EffectivePowers().First(x => x.Power == pw.Power);
-            Assert.Equal((pw.Value * 145 + 50) / 100, power.Value);
-
-            // 強化は限界突破後の上限まで進み、そこで止まる
-            var (p2, r2) = WithRelic(Rarity.Rare, 52);
-            MaxOut(p2, r2);
-            Rules.LimitBreak(p2, r2.Uid, AddRelic(p2, Rarity.Rare, Slot.Weapon, 53).Uid);
-            MaxOut(p2, r2);
-            Assert.Equal(10, r2.Enhance);
-            Assert.Throws<InvalidOperationException>(() => Rules.Enhance(p2, r2.Uid));
-        }
-
-        [Fact]
         public void Plus_ten_and_fifteen_add_affixes_and_twenty_boosts_one_power()
         {
             // レアは1回突破して +10。節目3で特性が1行増える
@@ -247,39 +166,6 @@ namespace SodRpg.Core.Tests
             // The source boost is applied before the aggregate cap. The second power is unchanged.
             Assert.Equal((power0 * 120 + 50) / 100, lg.Powers[0].Value);
             Assert.Equal(power1, lg.Powers[1].Value);
-        }
-
-        [Fact]
-        public void Fountain_and_forge_shrine_enhance_to_the_relics_own_cap()
-        {
-            var p = Profile.CreateNew(71);
-            Rules.BeginRun(p, "lb");
-            p.Run.Bounties.Clear();
-            Rules.ReachSecurePoint(p);
-            var target = Loot.RollRelic(new Rng(71), Rarity.Rare, 5, Slot.Weapon);
-            target.Enhance = 5;
-            target.LimitBreaks = 1;
-            target.EnhanceMilestones = 2;
-            var filler = Loot.RollRelic(new Rng(72), Rarity.Common, 1, Slot.Charm);
-            p.Run.Satchel.Add(target);
-            p.Run.Satchel.Add(filler);
-            p.Run.SatchelShards = 100;
-
-            p.Run.OfferedEvent = DreamEvent.ForgeShrine;
-            Assert.True(DreamEvents.CanUse(p, DreamEvent.ForgeShrine, out _));
-            Rules.UseEvent(p, DreamEvent.ForgeShrine);
-            Assert.Equal(6, target.Enhance); // その遺物の今の上限（+10）まで強化できる
-
-            p.Run.OfferedEvent = DreamEvent.Fountain;
-            target.Enhance = 9;
-            Assert.True(DreamEvents.CanUse(p, DreamEvent.Fountain, out _));
-            Rules.UseEvent(p, DreamEvent.Fountain);
-            Assert.Equal(10, target.Enhance);
-            Assert.Equal(3, target.EnhanceMilestones); // +10 の節目
-
-            // 上限に達したら、どちらの出来事も使えない
-            Assert.False(DreamEvents.CanUse(p, DreamEvent.ForgeShrine, out _));
-            Assert.False(DreamEvents.CanUse(p, DreamEvent.Fountain, out _));
         }
 
         [Fact]

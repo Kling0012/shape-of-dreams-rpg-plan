@@ -145,59 +145,7 @@ namespace SodRpg.Core.Tests
             finally { Restore(Bismuth); }
         }
 
-        [Fact]
-        public void Bismuth_renewal_gate_is_a_direct_receiver_with_no_mark_and_needs_both_memories_both_endpoints_and_the_real_hit()
-        {
-            try
-            {
-                var build = BuildFor(5);
-                var bridge = build.Mechanisms.Single(e => e.Spec.Bridge != null).Spec.Bridge;
-                var runtime = new PairComboRuntime(); runtime.SetSuccessEffects(new[] { bridge });
-                var ranks = build.MechanismEndpointRanks;
-                List<BridgeSuccessTransaction> Fire(MemoryActivationEvent value, MechanismEquipment equipment, IReadOnlyDictionary<string, int> endpointRanks)
-                { var list = new List<BridgeSuccessTransaction>(); runtime.FireAttributed(value, 0, 100, equipment, endpointRanks, list); return list; }
-                Assert.Empty(Fire(Event(Innocence, 1, MemoryEventKind.Kill), Equipment(), ranks));          // kill is not the opening
-                Assert.Empty(Fire(Event(Sprint, 2), Equipment(), ranks));                                    // the receiver is never a sender
-                Assert.Empty(Fire(Event(Innocence, 3), Equipment(movement: false), ranks));                  // one memory missing
-                var noEndpoint = new Dictionary<string, int>(ranks) { [SprintStar] = 0 };
-                Assert.Empty(Fire(Event(Innocence, 4), Equipment(), noEndpoint));                            // endpoint star not allocated
-                var success = Assert.Single(Fire(Event(Innocence, 5), Equipment(), ranks));
-                Assert.Empty(Fire(Event(Innocence, 5), Equipment(), ranks));                                 // once per activation
-                Assert.Single(Fire(Event(Innocence, 6), Equipment(), ranks));                                // a new activation succeeds again
-                Assert.Equal(0, runtime.BridgeExposeUnits(101, 0, Equipment(), ranks));                      // no invented mark
-                Assert.False(runtime.HasBridgeMark(BismuthPair, 101, 0, Equipment(), ranks));
-                Assert.Equal(BismuthPair, success.PairId);
-            }
-            finally { Restore(Bismuth); }
-        }
 
-        [Fact]
-        public void Bismuth_renewal_extra_is_only_emitted_with_its_pair_and_names_the_registered_pair()
-        {
-            try
-            {
-                var build = BuildFor(3);
-                var extra = build.Mechanisms.Single(e => e.StarId == "bismuth.bridge.b8.n1").Spec;
-                Assert.Equal(AuthoredMechanismCondition.BridgeSuccess, extra.Condition);
-                Assert.Equal(BismuthPair, extra.PairId); Assert.Equal(MemoryEventKind.Hit, extra.Trigger);
-                var bridge = build.Mechanisms.Single(e => e.Spec.Bridge != null).Spec.Bridge;
-                var runtime = new PairComboRuntime(); runtime.SetSuccessEffects(new[] { bridge });
-                var results = new List<BridgeSuccessTransaction>();
-                runtime.FireAttributed(Event(Innocence, 1), 0, 100, Equipment(), build.MechanismEndpointRanks, results);
-                var transaction = Assert.Single(results);
-                // The host dispatches a conditioned channel only from this transaction and only for the same pair and event kind.
-                Assert.Equal(extra.PairId, transaction.PairId); Assert.Equal(extra.Trigger, transaction.Notification.EventKind);
-            }
-            finally { Restore(Bismuth); }
-            try
-            {
-                // Without an endpoint star the pair is unavailable: neither its base nor its conditioned extra is emitted.
-                var build = BuildFor(3, dropEndpointAfterPurchase: true);
-                Assert.DoesNotContain(build.Mechanisms, e => e.Spec.Bridge != null);
-                Assert.DoesNotContain(build.Mechanisms, e => e.Spec.Condition != AuthoredMechanismCondition.Always);
-            }
-            finally { Restore(Bismuth); }
-        }
 
         [Fact]
         public void Bismuth_renewal_runs_through_the_real_host_dispatch()

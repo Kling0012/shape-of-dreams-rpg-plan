@@ -56,23 +56,6 @@ namespace SodRpg.Core.Tests
 
         private static void Restore() => StarClusters.RegisterAuthored(Nachia, Array.Empty<AuthoredStarDef>());
 
-        [Fact]
-        public void The_contract_supports_each_gate_duration_only_on_a_pair_with_that_gate()
-        {
-            try
-            {
-                Compute(Definitions());
-                var window = Bridge(Compute(Definitions()), Insight); var mark = Bridge(Compute(Definitions()), Force);
-                Assert.Equal(BridgeGateKind.Window, window.GateKind); Assert.Equal(BridgeGateKind.Mark, mark.GateKind);
-                var windowSpec = new AuthoredMechanismSpec { Kind = AuthoredMechanismKind.BridgeSuccess, Bridge = window };
-                var markSpec = new AuthoredMechanismSpec { Kind = AuthoredMechanismKind.BridgeSuccess, Bridge = mark };
-                Assert.True(AuthoredMechanisms.Supports(windowSpec, GimmickParam.WindowDuration));
-                Assert.False(AuthoredMechanisms.Supports(windowSpec, GimmickParam.MarkDuration));
-                Assert.True(AuthoredMechanisms.Supports(markSpec, GimmickParam.MarkDuration));
-                Assert.False(AuthoredMechanisms.Supports(markSpec, GimmickParam.WindowDuration));
-            }
-            finally { Restore(); }
-        }
 
         [Fact]
         public void A_gate_duration_star_on_a_pair_without_that_gate_is_rejected_at_registration()

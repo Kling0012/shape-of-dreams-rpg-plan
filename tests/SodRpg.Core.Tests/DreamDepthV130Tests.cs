@@ -7,12 +7,7 @@ namespace SodRpg.Core.Tests
     public class DreamDepthV130Tests
     {
         [Theory]
-        [InlineData(0, 1, 1, 0, 1, 1)]
-        [InlineData(1, 1.15, 1.08, 0.25, 1.25, 1.2)]
         [InlineData(2, 1.30, 1.16, 0.50, 1.50, 1.4)]
-        [InlineData(3, 1.45, 1.24, 0.75, 1.75, 1.6)]
-        [InlineData(4, 1.60, 1.32, 1, 2, 1.8)]
-        [InlineData(5, 1.75, 1.40, 1.25, 2.25, 2)]
         [InlineData(int.MinValue, 1, 1, 0, 1, 1)]
         [InlineData(int.MaxValue, 1.75, 1.40, 1.25, 2.25, 2)]
         public void Every_depth_formula_and_bound_is_explicit(int depth, double hp, double damage, double luck, double awakening, double stars)

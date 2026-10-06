@@ -19,23 +19,6 @@ namespace SodRpg.Core.Tests
         }
 
         [Fact]
-        public void Daily_dream_ids_are_unique_and_texts_exist()
-        {
-            Assert.Equal(DailyDream.All.Count, DailyDream.All.Select(x => x.Id).Distinct().Count());
-            Assert.DoesNotContain(DailyDream.All, x => x.Id == 0);
-            foreach (bool ja in new[] { true, false })
-            {
-                Loc.Japanese = ja;
-                foreach (var x in DailyDream.All)
-                {
-                    Assert.False(string.IsNullOrWhiteSpace(x.Name.ToString()));
-                    Assert.False(string.IsNullOrWhiteSpace(x.Description.ToString()));
-                }
-            }
-            Loc.Japanese = true;
-        }
-
-        [Fact]
         public void Run_remembers_the_dream_it_started_with()
         {
             var p = Profile.CreateNew(1);
@@ -49,14 +32,6 @@ namespace SodRpg.Core.Tests
             Assert.Equal(5, p.Run.DailyId); // 同じランの再開では変わらない
         }
 
-        [Fact]
-        public void No_daily_by_default()
-        {
-            var p = Profile.CreateNew(1);
-            Rules.BeginRun(p, "n");
-            Assert.Equal(0, p.Run.DailyId);
-            Assert.Equal(1.0, Rules.KillModifiers(p.Run).ShardMult);
-        }
 
         [Fact]
         public void Golden_dream_multiplies_kill_shards()
@@ -90,29 +65,6 @@ namespace SodRpg.Core.Tests
         }
 
         [Fact]
-        public void Featured_line_applies_only_without_a_focus()
-        {
-            var p = Profile.CreateNew(3);
-            Rules.BeginRun(p, "f", DailyDream.Get(2)); // 鋼の日：守勢
-            p.Run.Bounties.Clear();
-            var rng = new Rng(p.RngState);
-            var expected = Loot.RollKill(rng, MonsterTier.Boss, 10, 0, Line.Guard, Rules.KillModifiers(p.Run),
-                p.Stash, p.Run.Satchel, p.Codex); // Rules.OnKill と同じ引数（銘品の重みは図鑑・所持で変わる）
-            Rules.OnKill(p, MonsterTier.Boss, 10);
-            Assert.Equal(expected.Relics.Select(r => r.Uid + r.BaseId), p.Run.Satchel.Select(r => r.Uid + r.BaseId));
-
-            var q = Profile.CreateNew(3);
-            q.Focus = Line.Offense;
-            Rules.BeginRun(q, "f", DailyDream.Get(2));
-            q.Run.Bounties.Clear();
-            rng = new Rng(q.RngState);
-            expected = Loot.RollKill(rng, MonsterTier.Boss, 10, 0, Line.Offense, Rules.KillModifiers(q.Run),
-                q.Stash, q.Run.Satchel, q.Codex);
-            Rules.OnKill(q, MonsterTier.Boss, 10);
-            Assert.Equal(expected.Relics.Select(r => r.Uid + r.BaseId), q.Run.Satchel.Select(r => r.Uid + r.BaseId));
-        }
-
-        [Fact]
         public void Boosted_powers_grow_by_half_in_the_build()
         {
             var p = Profile.CreateNew(1);
@@ -125,21 +77,6 @@ namespace SodRpg.Core.Tests
             Assert.Equal(60, Build.Compute(p, "H", 0, null, 2).Get(Power.Blaze)); // 別の日
         }
 
-        [Theory]
-        [InlineData(0, 0)]
-        [InlineData(99, 0)]
-        [InlineData(100, 1)]
-        [InlineData(599, 2)]
-        [InlineData(600, 3)]
-        [InlineData(5500, 10)]
-        [InlineData(99999, 10)]
-        public void Mastery_levels_follow_thresholds(int kills, int level)
-        {
-            Assert.Equal(level, Mastery.Level(kills));
-            if (level < Mastery.MaxLevel) Assert.True(Mastery.ToNext(kills) > 0);
-            else Assert.Equal(0, Mastery.ToNext(kills));
-            Assert.False(string.IsNullOrWhiteSpace(Mastery.Title(level)));
-        }
 
         [Fact]
         public void Kills_raise_hero_mastery()

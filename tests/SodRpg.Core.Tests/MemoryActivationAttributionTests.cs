@@ -14,23 +14,6 @@ namespace SodRpg.Core.Tests
         }
 
         [Fact]
-        public void SiblingDischargeTargetsShareOneBatchAndTheNextDischargeHasANewBatch()
-        {
-            var runtime = Runtime();
-            runtime.RegisterAdapter(new NativeMemoryAdapter("test.discharge", "test.identity", NativePayloadKind.PassiveBatch));
-            var batch = runtime.BeginNativeActivation(7, "test.discharge");
-            for (int i = 1; i <= 3; i++) runtime.BindInstance(i, batch);
-            Assert.True(runtime.TryGetInstance(1, out var first));
-            Assert.True(runtime.TryGetInstance(2, out var second));
-            Assert.Equal(first.ActivationId, second.ActivationId);
-            Assert.True(runtime.TrySpend("test.once", AttributionBudget.PerActivation, first.Event(MemoryEventKind.Hit, runtime.NewPacketId(), 20), true));
-            Assert.False(runtime.TrySpend("test.once", AttributionBudget.PerActivation, second.Event(MemoryEventKind.Hit, runtime.NewPacketId(), 21), true));
-            var next = runtime.BeginNativeActivation(7, "test.discharge");
-            Assert.NotEqual(batch.ActivationId, next.ActivationId);
-            Assert.True(runtime.TrySpend("test.once", AttributionBudget.PerActivation, next.Event(MemoryEventKind.Hit, runtime.NewPacketId(), 20), true));
-        }
-
-        [Fact]
         public void AreaTicksUseCastVictimBudgetWhileTwoImmediateCastsRemainIndependent()
         {
             var runtime = Runtime();
@@ -53,33 +36,6 @@ namespace SodRpg.Core.Tests
             Assert.True(runtime.TrySpend("test.independent", AttributionBudget.PerActivation, notification, true));
         }
 
-        [Fact]
-        public void AncestorPropagationDeduplicatesPacketsButPreservesDistinctEventKindsAndConsumers()
-        {
-            var runtime = Runtime();
-            var activation = runtime.BeginActivation(7, "test.q");
-            var hit = activation.Event(MemoryEventKind.Hit, 100, 9);
-            Assert.True(runtime.TryAdmitNotification("test.a", hit));
-            Assert.False(runtime.TryAdmitNotification("test.a", hit));
-            Assert.True(runtime.TryAdmitNotification("test.b", hit));
-            Assert.True(runtime.TryAdmitNotification("test.a", activation.Event(MemoryEventKind.CriticalHit, 100, 9)));
-            Assert.True(runtime.TryAdmitNotification("test.a", activation.Event(MemoryEventKind.Hit, 101, 9)));
-        }
-
-        [Fact]
-        public void ExactNativeChainAdapterAdmitsOnlyItsRegisteredNativeScope()
-        {
-            var runtime = Runtime();
-            runtime.RegisterAdapter(new NativeMemoryAdapter("test.native.chain", "test.q", NativePayloadKind.AdditionalNative, true));
-            var native = runtime.BeginNativeActivation(7, "test.native.chain", "test.q");
-            Assert.True(runtime.CanAdmit(native, false, false, true));
-            Assert.False(runtime.CanAdmit(native, true, false, true));
-            Assert.False(runtime.CanAdmit(native, false, true, true));
-            Assert.False(runtime.CanAdmit(runtime.BeginActivation(7, "test.q"), false, false, true));
-            Assert.Throws<InvalidOperationException>(() => runtime.BeginNativeActivation(7, "unregistered"));
-            Assert.Throws<InvalidOperationException>(() => runtime.BeginNativeActivation(7, "test.native.chain", "test.r"));
-        }
-
         [Theory]
         [InlineData(GeneratedOrigin.Gimmick)]
         [InlineData(GeneratedOrigin.Bridge)]
@@ -96,76 +52,6 @@ namespace SodRpg.Core.Tests
             Assert.False(runtime.TrySpend("test.a", AttributionBudget.PerActivation, notification, true));
         }
 
-        [Fact]
-        public void RecycledInstanceCannotRetainItsOldNativeTag()
-        {
-            var runtime = Runtime();
-            var first = runtime.BeginActivation(7, "test.q");
-            runtime.BindInstance(42, first);
-            runtime.EndInstanceLifetime(42);
-            Assert.False(runtime.TryGetInstance(42, out _));
-            var next = runtime.BeginActivation(7, "test.q");
-            runtime.BindInstance(42, next);
-            Assert.True(runtime.TryGetInstance(42, out var actual));
-            Assert.NotEqual(first.ActivationId, actual.ActivationId);
-        }
-
-        [Fact]
-        public void OwnedFiredMissCountsOnceOnlyWhenSummonAndSourceConditionsSucceed()
-        {
-            var runtime = Runtime();
-            var basic = runtime.BeginActivation(7, null, NativePayloadKind.MainBasicAttack);
-            var fired = basic.Event(MemoryEventKind.OwnedBasicAttackFired);
-            Assert.False(runtime.TrySpend("test.owned.fired", AttributionBudget.PerOwnedBasicAttack, fired, false));
-            Assert.True(runtime.TrySpend("test.owned.fired", AttributionBudget.PerOwnedBasicAttack, fired, true));
-            Assert.False(runtime.TrySpend("test.owned.fired", AttributionBudget.PerOwnedBasicAttack, fired, true));
-            Assert.False(runtime.TryAdmitNotification("test.hit", basic.Event(MemoryEventKind.OwnedBasicAttackHit)));
-            var skill = runtime.BeginActivation(7, "test.q").Event(MemoryEventKind.ConfirmedUse);
-            Assert.False(runtime.TrySpend("test.owned.fired", AttributionBudget.PerOwnedBasicAttack, skill, true));
-        }
-
-        [Fact]
-        public void OwnedBasicAttackHitUsesOneSerialAcrossTargetsAndExcludesSummonPackets()
-        {
-            var runtime = Runtime();
-            var basic = runtime.BeginActivation(7, null, NativePayloadKind.MainBasicAttack);
-            Assert.True(runtime.TrySpend("test.primed", AttributionBudget.PerOwnedBasicAttack, basic.Event(MemoryEventKind.OwnedBasicAttackHit, 101, 10), true));
-            Assert.False(runtime.TrySpend("test.primed", AttributionBudget.PerOwnedBasicAttack, basic.Event(MemoryEventKind.OwnedBasicAttackHit, 102, 11), true));
-            var summon = runtime.BeginActivation(7, "test.identity", NativePayloadKind.SummonAttack);
-            Assert.False(runtime.TrySpend("test.primed", AttributionBudget.PerOwnedBasicAttack, summon.Event(MemoryEventKind.OwnedBasicAttackHit, 103, 12), true));
-        }
-
-        [Fact]
-        public void SeparateSummonAttacksReceiveSeparateSerialsAndCannotSpendOwnedBasicQuota()
-        {
-            var runtime = Runtime();
-            var first = runtime.BeginActivation(7, "test.q", NativePayloadKind.SummonAttack);
-            var next = runtime.BeginActivation(7, "test.q", NativePayloadKind.SummonAttack);
-            Assert.NotEqual(first.ActivationId, next.ActivationId);
-            Assert.True(runtime.TrySpend("test.summon", AttributionBudget.PerActivation,
-                first.Event(MemoryEventKind.Hit, 201, 20), true));
-            Assert.False(runtime.TrySpend("test.summon", AttributionBudget.PerActivation,
-                first.Event(MemoryEventKind.Hit, 202, 21), true));
-            Assert.True(runtime.TrySpend("test.summon", AttributionBudget.PerActivation,
-                next.Event(MemoryEventKind.Hit, 203, 20), true));
-            Assert.False(runtime.TrySpend("test.owned", AttributionBudget.PerOwnedBasicAttack,
-                next.Event(MemoryEventKind.OwnedBasicAttackFired), true));
-        }
-
-        [Fact]
-        public void ProjectedMainPacketKeepsTheAttackBudgetWithoutRelabelingOtherPackets()
-        {
-            var runtime = Runtime();
-            runtime.RegisterAdapter(new NativeMemoryAdapter("test.primary", "test.identity", NativePayloadKind.MainBasicAttack));
-            var original = runtime.BeginActivation(7, null, NativePayloadKind.MainBasicAttack);
-            var main = runtime.ProjectOwnedBasicSource(original, "test.primary");
-            Assert.Equal(string.Empty, original.SourceMemory);
-            Assert.Equal("test.identity", main.SourceMemory);
-            Assert.Equal(original.ActivationId, main.ActivationId);
-            Assert.True(runtime.TrySpend("test.memory", AttributionBudget.PerActivation, main.Event(MemoryEventKind.Hit, 301, 20), true));
-            Assert.True(runtime.TrySpend("test.owned", AttributionBudget.PerOwnedBasicAttack, main.Event(MemoryEventKind.OwnedBasicAttackHit, 301, 20), true));
-            Assert.False(runtime.TrySpend("test.memory", AttributionBudget.PerActivation, main.Event(MemoryEventKind.CriticalHit, 301, 20), true));
-        }
 
         [Fact]
         public void EquipmentRetransmissionPreservesQuotasButUnequipInvalidatesPendingEpoch()

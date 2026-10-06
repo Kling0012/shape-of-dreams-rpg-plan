@@ -39,20 +39,6 @@ namespace SodRpg.Core.Tests
         }
 
         [Fact]
-        public void Bigger_targets_pay_more()
-        {
-            var rng = new Rng(1);
-            var all = new List<Bounty>();
-            for (int i = 0; i < 500; i++) all.AddRange(Bounties.Roll(rng, 7));
-            foreach (var g in all.GroupBy(b => b.Kind))
-            {
-                var lo = g.Where(b => b.Target == g.Min(x => x.Target)).Max(b => b.RewardShards);
-                var hi = g.Where(b => b.Target == g.Max(x => x.Target)).Min(b => b.RewardShards);
-                Assert.True(hi >= lo, g.Key.ToString());
-            }
-        }
-
-        [Fact]
         public void Kill_bounties_progress_by_tier_and_pay_into_satchel()
         {
             var p = StartWith(B(BountyKind.Slayer, 3), B(BountyKind.EliteHunter, 1), B(BountyKind.Bossbane, 1));
@@ -108,27 +94,6 @@ namespace SodRpg.Core.Tests
             Rules.Secure(p);
             Assert.True(p.Run.Bounties[1].Done);
             Assert.Equal(2, p.Material(Materials.Tuning));
-        }
-
-        [Fact]
-        public void Treasure_counts_rare_or_better_finds()
-        {
-            var p = StartWith(B(BountyKind.Treasure, 1));
-            for (int i = 0; i < 60 && !p.Run.Bounties[0].Done; i++) Rules.OnKill(p, MonsterTier.Boss, 10);
-            Assert.True(p.Run.Bounties[0].Done);
-            Assert.Contains(p.Run.Satchel.Concat(p.Stash), r => r.Rarity >= Rarity.Rare);
-        }
-
-        [Fact]
-        public void Pathfinder_counts_room_increments()
-        {
-            var p = StartWith(B(BountyKind.Pathfinder, 4));
-            Rules.OnRoomsCleared(p, 2);
-            Assert.Equal(2, p.Run.Bounties[0].Progress);
-            Rules.OnRoomsCleared(p, 2); // 変化なし
-            Assert.Equal(2, p.Run.Bounties[0].Progress);
-            Rules.OnRoomsCleared(p, 5);
-            Assert.True(p.Run.Bounties[0].Done);
         }
 
         [Fact]

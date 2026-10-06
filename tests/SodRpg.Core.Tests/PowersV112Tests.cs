@@ -83,19 +83,5 @@ namespace SodRpg.Core.Tests
             Assert.Equal(0, rt.Current(5f).AttackPct);
         }
 
-        [Fact]
-        public void New_powers_have_caps_and_items()
-        {
-            var fresh = new[] { Power.SoulSiphon, Power.Whirlwind, Power.Frenzy, Power.OpeningStrike, Power.StarShield, Power.Sprint, Power.Vigor, Power.Overload };
-            foreach (var p in fresh)
-            {
-                Assert.True(Content.PowerCap(p) > 0, p.ToString());
-                Assert.Contains(Content.Uniques, u => u.Powers.Any(x => x.Power == p));
-                foreach (var u in Content.Uniques)
-                    foreach (var pl in u.Powers)
-                        Assert.True(pl.Value <= Content.PowerCap(pl.Power), u.Id);
-            }
-            Assert.Equal(1046, Content.Uniques.Count(u => u.SetId == null)); // Includes all reviewed P37 content.
-        }
     }
 }

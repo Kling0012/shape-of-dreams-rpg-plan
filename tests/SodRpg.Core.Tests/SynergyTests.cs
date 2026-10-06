@@ -15,26 +15,6 @@ namespace SodRpg.Core.Tests
             return b;
         }
 
-        [Theory]
-        [InlineData(Power.Ember)]
-        [InlineData(Power.Frost)]
-        [InlineData(Power.Radiance)]
-        [InlineData(Power.Umbra)]
-        public void Element_powers_stack_their_element_at_the_listed_amount(Power power)
-        {
-            var rt = new PowerRuntime(With((power, 30)), 0, 77);
-            int n = 20000, total = 0;
-            for (int i = 0; i < n; i++)
-            {
-                var r = rt.OnAttackHit(i, 500, 100, 0, 1);
-                int applied = power == Power.Ember ? r.FireStacks : power == Power.Frost ? r.ColdStacks
-                    : power == Power.Radiance ? r.LightStacks : r.DarkStacks;
-                Assert.Equal(0, r.FireStacks + r.ColdStacks + r.LightStacks + r.DarkStacks - applied);
-                total += applied;
-            }
-            Assert.InRange(total / (double)n, 0.27, 0.33); // 30は平均0.3つ
-        }
-
         [Fact]
         public void Convergence_needs_all_four_and_has_a_per_enemy_cooldown()
         {
@@ -60,54 +40,9 @@ namespace SodRpg.Core.Tests
             Assert.Equal(0, rt.Current(15.1f).AttackPct);
         }
 
-        [Fact]
-        public void Elemental_amp_affixes_roll_and_convert_to_game_units()
-        {
-            var rng = new Rng(5);
-            var seen = new HashSet<Stat>();
-            for (int i = 0; i < 6000; i++)
-                foreach (var a in Loot.RollRelic(rng, Rarity.Rare, 10).Affixes) seen.Add(a.Stat);
-            foreach (var s in new[] { Stat.FireAmp, Stat.ColdAmp, Stat.LightAmp, Stat.DarkAmp }) Assert.Contains(s, seen);
-            Assert.Equal(0.1f, StatUnits.ToGame(Stat.LightAmp, 10), 4);
-        }
-
-        [Fact]
-        public void New_synergy_powers_roll_on_epics_and_have_text()
-        {
-            var rng = new Rng(6);
-            var seen = new HashSet<Power>();
-            for (int i = 0; i < 12000; i++) seen.Add(Loot.RollRelic(rng, Rarity.Epic, 10).Powers[0].Power);
-            var synergy = new[] { Power.Ember, Power.Frost, Power.Radiance, Power.Umbra, Power.Convergence, Power.EchoingDodge, Power.UltimateSurge };
-            foreach (var p in synergy)
-            {
-                Assert.Contains(p, seen);
-                Assert.True(Content.PowerCap(p) > 0);
-                foreach (bool ja in new[] { true, false })
-                {
-                    Loc.Japanese = ja;
-                    Assert.NotEqual("-", Content.FormatPower(p, 10));
-                }
-            }
-            Loc.Japanese = true;
-        }
-
-        [Fact]
-        public void Synergy_uniques_exist()
-        {
-            foreach (var id in new[] { "unique.prism_clock", "unique.afterimage_cloak", "unique.dawnbreaker" })
-            {
-                Assert.True(Content.TryGetUnique(id, out var u), id);
-                Assert.Equal(2, u.Powers.Count);
-            }
-        }
-
         [Theory]
         [InlineData(BountyKind.ChaosSeeker)]
-        [InlineData(BountyKind.Patron)]
-        [InlineData(BountyKind.Refiner)]
-        [InlineData(BountyKind.Alchemist)]
         [InlineData(BountyKind.Recycler)]
-        [InlineData(BountyKind.HunterBait)]
         public void Game_actions_progress_their_bounties_only(BountyKind kind)
         {
             var p = Profile.CreateNew(3);
@@ -130,15 +65,5 @@ namespace SodRpg.Core.Tests
             Assert.Empty(Rules.OnGameAction(p, BountyKind.Patron));
         }
 
-        [Fact]
-        public void Daily_boosts_include_elemental_powers()
-        {
-            var p = Profile.CreateNew(1);
-            var r = new Relic { Uid = "u", BaseId = "weapon.blaze_greatsword", Rarity = Rarity.Epic, ItemLevel = 1 };
-            r.Powers.Add(new PowerLine(Power.Ember, 30));
-            p.Stash.Add(r);
-            Rules.Equip(p, "H", r.Uid);
-            Assert.Equal(45, Build.Compute(p, "H", 0, null, 1).Get(Power.Ember)); // 烈火の日
-        }
     }
 }

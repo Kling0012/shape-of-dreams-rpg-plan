@@ -61,40 +61,5 @@ namespace SodRpg.Core.Tests
             Assert.True(q.Run.Bounties[0].Done);
         }
 
-        [Fact]
-        public void Event_taker_advances_when_an_event_is_used()
-        {
-            var p = Run(BountyKind.EventTaker, 1);
-            Rules.ReachSecurePoint(p);
-            p.Run.OfferedEvent = DreamEvent.Archive;
-            Rules.UseEvent(p, DreamEvent.Archive);
-            Assert.True(p.Run.Bounties[0].Done);
-        }
-
-        [Fact]
-        public void Pact_keeper_is_reached_by_securing_with_pacts()
-        {
-            var p = Run(BountyKind.PactKeeper, 1);
-            Rules.ReachSecurePoint(p);
-            var pact = p.Run.OfferedPacts.FirstOrDefault();
-            if (pact == Pact.None) p.Run.OfferedPacts.Add(pact = Pact.GlassHeart);
-            Rules.Delve(p, pact);
-            Rules.ReachSecurePoint(p);
-            Rules.Secure(p);
-            Assert.True(p.Run.Bounties[0].Done);
-        }
-
-        [Fact]
-        public void New_bounties_have_text_and_can_be_rolled()
-        {
-            var seen = new HashSet<BountyKind>();
-            var rng = new Rng(3);
-            for (int i = 0; i < 2000; i++) foreach (var b in Bounties.Roll(rng)) seen.Add(b.Kind);
-            foreach (var k in new[] { BountyKind.LegendFinder, BountyKind.EpicFinder, BountyKind.EventTaker, BountyKind.Securer, BountyKind.Delver, BountyKind.SetHunter, BountyKind.PactKeeper })
-            {
-                Assert.Contains(k, seen);
-                Assert.False(string.IsNullOrWhiteSpace(new Bounty { Kind = k, Target = 1 }.Describe()));
-            }
-        }
     }
 }

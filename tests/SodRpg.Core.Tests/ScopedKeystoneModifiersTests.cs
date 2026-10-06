@@ -69,30 +69,6 @@ namespace SodRpg.Core.Tests
             Assert.Equal("test.key.new", runtime.SelectedKeystoneId);
         }
 
-        [Fact]
-        public void Upside_deactivates_when_required_equipment_is_removed_without_changing_native_damage()
-        {
-            var runtime = Runtime(Definition(required: new[] { Source, Receiver }));
-            var native = new KeystonePayload(KeystoneLayer.NativeDamage, 100, new KeystoneCaps(1000));
-            Assert.Equal(100m, runtime.Apply(native, Context()).Value);
-            Assert.Equal(80m, runtime.Apply(Payload(), Context()).Value);
-            Configure(runtime, "test.key", 2, equipment: new[] { Source });
-            Assert.False(runtime.Active);
-            Assert.Equal("test.key", runtime.SelectedKeystoneId);
-            Assert.Equal(100m, runtime.Apply(native, Context(2)).Value);
-            Assert.Equal(40m, runtime.Apply(Payload(), Context(2)).Value);
-        }
-
-        [Fact]
-        public void Removing_selection_removes_upside_without_automatic_substitution()
-        {
-            var runtime = Runtime(Definition(), Definition(id: "test.key.other"));
-            Configure(runtime, null, 2);
-            Assert.Null(runtime.SelectedKeystoneId);
-            Assert.False(runtime.Active);
-            Assert.Equal(0, runtime.SelectedCost);
-            Assert.Equal(40m, runtime.Apply(Payload(), Context(2)).Value);
-        }
 
         [Fact]
         public void Invalid_reconfiguration_is_atomic_and_identical_retransmission_keeps_epoch()
@@ -116,28 +92,6 @@ namespace SodRpg.Core.Tests
             Assert.True(runtime.Active);
         }
 
-        [Fact]
-        public void Final_native_damage_and_star_memory_damage_are_distinct_layers()
-        {
-            var runtime = Runtime(Definition(up: new[] { Scale(KeystoneLayer.StarMemoryDamage, 50) }));
-            Assert.Equal(30m, runtime.Apply(new KeystonePayload(KeystoneLayer.StarMemoryDamage, 20,
-                new KeystoneCaps(120)), Context()).Value);
-            Assert.Equal(120m, runtime.Apply(new KeystonePayload(KeystoneLayer.NativeDamage, 120,
-                new KeystoneCaps(1000)), Context()).Value);
-            Assert.Equal(100m, runtime.Apply(new KeystonePayload(KeystoneLayer.GeneratedDamage, 100,
-                new KeystoneCaps(1000)), Context(source: KeystoneSourceKind.Generated)).Value);
-        }
-
-        [Fact]
-        public void Echo_uses_unchanged_native_hit_and_applies_its_upside_once()
-        {
-            var runtime = Runtime();
-            var hit = runtime.Apply(new KeystonePayload(KeystoneLayer.NativeDamage, 100, new KeystoneCaps(1000)), Context());
-            var echo = runtime.Apply(Payload(), Context());
-            Assert.Equal(100m, hit.Value);
-            Assert.Equal(80m, echo.Value);
-            Assert.Equal(80m, ScopedKeystoneModifiers.EchoDamage(hit.Value, echo));
-        }
 
         [Fact]
         public void Explicit_provenance_prevents_crossing_native_and_generated_layers()
@@ -211,8 +165,6 @@ namespace SodRpg.Core.Tests
 
         [Theory]
         [InlineData(GimmickEffect.Wound, 120)]
-        [InlineData(GimmickEffect.Sap, 15)]
-        [InlineData(GimmickEffect.ElementEdge, 40)]
         [InlineData(GimmickEffect.Ricochet, 50)]
         [InlineData(GimmickEffect.Primed, 120)]
         public void Canonical_caps_follow_keystone_upside(GimmickEffect effect, int expected)
@@ -221,12 +173,6 @@ namespace SodRpg.Core.Tests
             Assert.Equal(expected, runtime.Apply(Payload(effect, 200, duration: 3), Context()).Value);
         }
 
-        [Fact]
-        public void Explicit_consumer_lower_caps_are_retained()
-        {
-            var runtime = Runtime();
-            Assert.Equal(50m, runtime.Apply(Payload(value: 40, cap: 50), Context()).Value);
-        }
 
         [Fact]
         public void Echo_delay_radius_and_integer_targets_are_distinct_fields()

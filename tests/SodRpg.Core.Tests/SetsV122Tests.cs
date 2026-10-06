@@ -25,21 +25,5 @@ namespace SodRpg.Core.Tests
             Assert.Equal(48, usesNew); // 6部位化で全セットが頭・手・足を含む
         }
 
-        [Fact]
-        public void A_new_slot_set_completes_and_grants_its_three_piece_powers()
-        {
-            var p = Profile.CreateNew(22);
-            var set = Content.Sets.First(s => s.Id == "set.gale");
-            ulong seed = 1;
-            foreach (var u in Content.Uniques.Where(u => u.SetId == set.Id))
-            {
-                var r = Loot.RollUnique(new Rng(seed++), u, 5); // 部位ごとに別の乱数（Uid が重ならないように）
-                p.Stash.Add(r);
-                Rules.Equip(p, "Hero_A", r.Uid);
-            }
-            var b = Build.Compute(p, "Hero_A", 0);
-            foreach (var pw in set.ThreePiece) Assert.True(b.Get(pw.Power) >= pw.Value, pw.Power.ToString());
-            Assert.Equal(1, Feats.Progress(p, Feats.All.First(f => f.Kind == FeatKind.SetsCompleted)));
-        }
     }
 }

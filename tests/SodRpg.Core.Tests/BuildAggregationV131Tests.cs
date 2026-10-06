@@ -198,37 +198,6 @@ namespace SodRpg.Core.Tests
             Assert.Equal(0f, runtime.Current(8).AttackPct);
         }
 
-        [Fact]
-        public void Canonical_keys_preserve_memory_trigger_argument_cooldown_modifiers_and_state_identity()
-        {
-            var anchor = Anchor;
-            var first = new GimmickEntry { StarId = "test.first", Memory = anchor.RouteMemory,
-                Def = new GimmickDef { Effect = GimmickEffect.Heal, Trigger = GimmickTrigger.OnHit, Value = 1.02m } };
-            var second = new GimmickEntry { StarId = "test.second", Memory = first.Memory,
-                Def = new GimmickDef { Effect = GimmickEffect.Heal, Trigger = GimmickTrigger.OnHit, Value = 2.04m } };
-            Assert.Equal(BuildAggregation.GimmickKey(first), BuildAggregation.GimmickKey(second));
-            Assert.NotEqual(BuildAggregation.GimmickStateKey(first), BuildAggregation.GimmickStateKey(second));
-            foreach (Action<GimmickEntry> change in new Action<GimmickEntry>[]
-            {
-                e => e.Memory = HeroSigils.All.First(t => t.RouteMemory != null && t.RouteMemory != first.Memory).RouteMemory,
-                e => e.Def.Trigger = GimmickTrigger.OnUse,
-                e => e.Def.Arg = 1,
-                e => e.Def.Cooldown = 0.5f,
-                e => e.Def.RadiusPercent = 10,
-                e => e.Def.Effect = GimmickEffect.Shield
-            })
-            {
-                var changed = Gimmicks.Clamp(first);
-                change(changed);
-                Assert.NotEqual(BuildAggregation.GimmickKey(first), BuildAggregation.GimmickKey(changed));
-            }
-            var link = new LinkDef { Kind = LinkKind.Attune, Value = 1, Requires = new[] { first.Memory, Links.Compass } };
-            var reversed = new LinkDef { Kind = link.Kind, Value = 2, Requires = new[] { "Gem_U_GuidingCompass_Charged", first.Memory } };
-            Assert.Equal(BuildAggregation.LinkKey(link), BuildAggregation.LinkKey(reversed));
-            Assert.Equal(3m, Assert.Single(BuildAggregation.LinksForBuild(new[] { link, reversed })).Value);
-            Assert.Equal(PairCombos.All.Count, PairCombos.All.Select(d => BuildAggregation.PairKey(
-                new PairComboEntry { Def = d, Ranks = 1 })).Distinct().Count());
-        }
 
         private static bool HasSource(TalentDef talent) => talent.Gimmick != null || talent.LinkPerRank != null
             || talent.IsChoice && talent.Choices.Any(HasSource);

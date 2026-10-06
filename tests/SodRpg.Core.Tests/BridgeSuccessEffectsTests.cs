@@ -45,17 +45,6 @@ namespace SodRpg.Core.Tests
                 damageTargetReady: damageTargetReady);
             return results;
         }
-        [Fact] public void BaseAndExtrasShareOneRealSuccessTransactionAndQuota()
-        {
-            var runtime = Runtime(Definition());
-            Assert.Empty(Fire(runtime, Event("second", 1)));
-            Assert.Empty(Fire(runtime, Event("first", 2)));
-            var success = Assert.Single(Fire(runtime, Event("second", 3)));
-            Assert.Equal("test.pair", success.PairId); Assert.Equal(2, success.Payloads.Count);
-            Assert.Equal("base", success.Payloads[0].ChannelId); Assert.Equal("extra", success.Payloads[1].ChannelId);
-            Assert.Empty(Fire(runtime, Event("second", 3)));
-            Assert.Equal(200, runtime.BridgeExposeUnits(10, 0, Equipment(), Ranks()));
-        }
         [Fact] public void MultiTargetCastPaysOnlyOnceAndKeepsNonconsumingMarks()
         {
             var runtime = Runtime(Definition());
@@ -66,15 +55,6 @@ namespace SodRpg.Core.Tests
             Assert.Equal(200, runtime.BridgeExposeUnits(10, 1, Equipment(), Ranks()));
             Assert.Equal(200, runtime.BridgeExposeUnits(11, 1, Equipment(), Ranks()));
         }
-        [Fact] public void MissingEndpointRankOrEquipmentCannotOpenOrPay()
-        {
-            var runtime = Runtime(Definition()); var ranks = Ranks(); ranks.Remove("endpoint.b");
-            Assert.Empty(Fire(runtime, Event("first", 1), ranks: ranks));
-            Assert.Empty(Fire(runtime, Event("second", 2)));
-            Fire(runtime, Event("first", 3));
-            Assert.Empty(Fire(runtime, Event("second", 4), equipment: Equipment(second: false)));
-            Assert.Empty(Fire(runtime, Event("second", 5)));
-        }
         [Fact] public void NamedKillRequiresThePayoffMemoryAndOwner()
         {
             var runtime = Runtime(Definition(payoff: MemoryEventKind.Kill));
@@ -82,39 +62,6 @@ namespace SodRpg.Core.Tests
             Assert.Empty(Fire(runtime, Event("unrelated", 2, kind: MemoryEventKind.Kill)));
             Assert.Empty(Fire(runtime, Event("second", 3, kind: MemoryEventKind.Kill, owner: 2)));
             Assert.Single(Fire(runtime, Event("second", 4, kind: MemoryEventKind.Kill)));
-        }
-        [Fact] public void GeneratedPayoffCannotMarkOpenOrSpendQuota()
-        {
-            var runtime = Runtime(Definition());
-            Fire(runtime, Event("first", 1, generated: GeneratedOrigin.Bridge));
-            Assert.Empty(Fire(runtime, Event("second", 2)));
-            Fire(runtime, Event("first", 3));
-            Assert.Empty(Fire(runtime, Event("second", 4, generated: GeneratedOrigin.Gimmick)));
-            Assert.Single(Fire(runtime, Event("second", 4)));
-        }
-        [Fact] public void MarkRefreshNeverStacksAndExpiresAtFourSeconds()
-        {
-            var runtime = Runtime(Definition(rank: 3));
-            Fire(runtime, Event("first", 1), now: 0);
-            Fire(runtime, Event("first", 2), now: 2);
-            Assert.Equal(400, runtime.BridgeExposeUnits(10, 5.9f, Equipment(), Ranks()));
-            Assert.Equal(0, runtime.BridgeExposeUnits(10, 6f, Equipment(), Ranks()));
-            Assert.Empty(Fire(runtime, Event("second", 3), now: 6f));
-        }
-        [Fact] public void PairExposeUsesStrongestAndNeverAddsToAnExistingStrongerSource()
-        {
-            var runtime = Runtime(Definition(rank: 1), Definition(rank: 3, id: "test.strong"));
-            Fire(runtime, Event("first", 1));
-            Assert.Equal(400, runtime.BridgeExposeUnits(10, 0, Equipment(), Ranks()));
-            Assert.Equal(800, Math.Max(800, runtime.BridgeExposeUnits(10, 0, Equipment(), Ranks())));
-        }
-        [Fact] public void FourSecondWindowIsOneWindowAndCanBeRefreshed()
-        {
-            var runtime = Runtime(Definition(BridgeGateKind.Window));
-            Fire(runtime, Event("first", 1), now: 0);
-            Fire(runtime, Event("first", 2), now: 2);
-            Assert.Single(Fire(runtime, Event("second", 3), now: 5.9f));
-            Assert.Empty(Fire(runtime, Event("second", 4), now: 6f));
         }
         [Fact] public void NativeUltimateLifetimeRequiresExactExpiryAndCanCloseEarly()
         {
@@ -132,31 +79,6 @@ namespace SodRpg.Core.Tests
             Assert.Empty(Fire(runtime, Event("second", 2)));
             Assert.Empty(Fire(runtime, Event("second", 2), phase: BridgeSourcePhase.EndingExplosion));
             Assert.Single(Fire(runtime, Event("second", 2), phase: BridgeSourcePhase.InitialExplosion));
-        }
-        [Fact] public void QrSwapPreservesExplicitPairIdentityAndRequiresDistinctInstances()
-        {
-            var runtime = Runtime(Definition());
-            Fire(runtime, Event("first", 1), equipment: Equipment(swap: true));
-            Assert.Equal("test.pair", Assert.Single(Fire(runtime, Event("second", 2), equipment: Equipment(swap: true))).PairId);
-        }
-        [Fact] public void DirectReceiverNeedsNoArtificialMarkAndUnregisteredPairNeverFires()
-        {
-            var runtime = Runtime();
-            Assert.Empty(Fire(runtime, Event("second", 1)));
-            runtime.SetSuccessEffects(new[] { Definition(BridgeGateKind.DirectReceiver) });
-            Assert.Single(Fire(runtime, Event("second", 1)));
-            Assert.Equal(0, runtime.BridgeExposeUnits(10, 0, Equipment(), Ranks()));
-        }
-        [Fact] public void PayoffScopeOnlyBoostsTheNamedChannelAndRechargeDelegatesToC04()
-        {
-            var definition = new BridgeSuccessDefinition("scope", new[] { new BridgeEndpointRequirement("endpoint.a", "first"), new BridgeEndpointRequirement("endpoint.b", "second") }, 1,
-                BridgeGateKind.DirectReceiver, new MemorySelector(MemorySelectorKind.Memory, "first"), MemoryEventKind.Hit,
-                new MemorySelector(MemorySelectorKind.Memory, "second"), MemoryEventKind.Hit,
-                new BridgePayload("base", BridgePayloadKind.Recharge, new[] { 100, 25 }, 200,
-                    recipient: new MemorySelector(MemorySelectorKind.EquippedMovement)), new[] { Recharge("extra", 500) });
-            var transaction = Assert.Single(Fire(Runtime(definition), Event("second", 1)));
-            var requests = new List<DirectedRechargeRequest>(); transaction.CreateRechargeRequests(Equipment(), requests);
-            Assert.Equal(127.5m, requests[0].ValueUnits); Assert.Equal(500m, requests[1].ValueUnits);
         }
         [Fact] public void EpochChangesInvalidateMarksWindowsAndDeferredTransactions()
         {
@@ -184,12 +106,6 @@ namespace SodRpg.Core.Tests
                 new BridgePayload("base", BridgePayloadKind.Recharge, new[] { 100 }, recipient: new MemorySelector(MemorySelectorKind.EquippedIdentity)), Array.Empty<BridgePayload>());
             Assert.Empty(Fire(Runtime(definition), Event("second", 1)));
         }
-        [Fact] public void ShieldPayloadRetainsTypedPoolAmountAndLifetimeForC06Binding()
-        {
-            var payload = new BridgePayload("shield", BridgePayloadKind.OrdinaryShield, new[] { 600 }, capUnits: 1500, durationSeconds: 3);
-            Assert.Equal(600m, payload.ValueUnits); Assert.Equal(3, payload.DurationSeconds);
-            Assert.Throws<ArgumentException>(() => new BridgePayload("bad", BridgePayloadKind.OrdinaryShield, new[] { 600 }, durationSeconds: 3));
-        }
         [Fact] public void OwnedFiredDirectBridgeDoesNotInventAnOnHitForAMissedAttack()
         {
             var equipment = new MechanismEquipment(1, 1, new[]
@@ -209,13 +125,6 @@ namespace SodRpg.Core.Tests
             Assert.Empty(results);
             runtime.FireAttributed(notification, 0, 0, equipment, Ranks(), results, hasOwnedSummon: true);
             Assert.Single(results);
-        }
-        [Fact] public void ReplayedOpeningNotificationDoesNotRefreshMarkExpiry()
-        {
-            var runtime = Runtime(Definition());
-            Fire(runtime, Event("first", 1), now: 0);
-            Fire(runtime, Event("first", 1), now: 3);
-            Assert.Equal(0, runtime.BridgeExposeUnits(10, 4, Equipment(), Ranks()));
         }
         [Fact] public void ARealPairCannotBeRegisteredTwiceAcrossLegacyAndSuccessBindings()
         {
@@ -237,19 +146,6 @@ namespace SodRpg.Core.Tests
             Assert.Throws<ArgumentException>(() => Definition(BridgeGateKind.DirectReceiver, payoff, budget: budget, withDamage: false));
         }
         [Theory]
-        [InlineData(MemoryEventKind.ConfirmedUse)]
-        [InlineData(MemoryEventKind.OwnedBasicAttackFired)]
-        public void VictimlessEventsCannotOpenOrReceiveMarksOrDealDamage(MemoryEventKind trigger)
-        {
-            Assert.Throws<ArgumentException>(() => Definition(opening: trigger));
-            Assert.Throws<ArgumentException>(() => Definition(payoff: trigger, withDamage: false));
-            Assert.Throws<ArgumentException>(() => Definition(BridgeGateKind.DirectReceiver, payoff: trigger));
-            var damage = new BridgePayload("damage", BridgePayloadKind.Damage, new[] { 100 });
-            Assert.Throws<ArgumentException>(() => new BridgeSuccessDefinition("invalid", Definition().Endpoints, 1,
-                BridgeGateKind.DirectReceiver, new MemorySelector(MemorySelectorKind.Memory, "first"), MemoryEventKind.Hit,
-                new MemorySelector(MemorySelectorKind.Memory, "second"), trigger, damage, Array.Empty<BridgePayload>()));
-        }
-        [Theory]
         [InlineData(BridgeGateKind.Mark)]
         [InlineData(BridgeGateKind.Window)]
         public void EndpointRankRefreshClearsGateWithoutAnEventAndCannotResurrectIt(BridgeGateKind gate)
@@ -263,17 +159,6 @@ namespace SodRpg.Core.Tests
             Fire(runtime, Event("first", 3), now: 1);
             Assert.Single(Fire(runtime, Event("second", 4), now: 1));
         }
-        [Theory]
-        [InlineData(BridgeGateKind.Mark)]
-        [InlineData(BridgeGateKind.Window)]
-        public void ExposeQueryWithMissingRankClearsGateBeforeTheNextEvent(BridgeGateKind gate)
-        {
-            var runtime = Runtime(Definition(gate)); Fire(runtime, Event("first", 1));
-            var missing = Ranks(); missing["endpoint.b"] = 0;
-            Assert.Equal(0, runtime.BridgeExposeUnits(10, 1, Equipment(), missing));
-            Assert.Equal(0, runtime.BridgeExposeUnits(10, 1, Equipment(), Ranks()));
-            Assert.Empty(Fire(runtime, Event("second", 2), now: 1));
-        }
         [Fact] public void RankRemovalInvalidatesTransactionsAndAlreadyCreatedRechargeRequests()
         {
             var runtime = Runtime(Definition(BridgeGateKind.DirectReceiver));
@@ -285,15 +170,6 @@ namespace SodRpg.Core.Tests
             runtime.RefreshSuccessPrerequisites(Equipment(), Ranks());
             Assert.False(transaction.IsCurrent(Equipment())); Assert.False(request.IsCurrent(Equipment()));
             requests.Clear(); transaction.CreateRechargeRequests(Equipment(), Ranks(), requests); Assert.Empty(requests);
-        }
-        [Fact] public void RechargeRequestCreationRevalidatesEndpointRanksBeforeEmission()
-        {
-            var runtime = Runtime(Definition(BridgeGateKind.DirectReceiver));
-            var transaction = Assert.Single(Fire(runtime, Event("second", 1)));
-            var missing = Ranks(); missing["endpoint.b"] = 0;
-            var requests = new List<DirectedRechargeRequest>(); transaction.CreateRechargeRequests(Equipment(), missing, requests);
-            Assert.Empty(requests);
-            transaction.CreateRechargeRequests(Equipment(), Ranks(), requests); Assert.Empty(requests);
         }
         [Fact] public void EqualDefinitionRefreshPreservesTransactionsButChangedDefinitionInvalidatesThem()
         {
@@ -316,14 +192,6 @@ namespace SodRpg.Core.Tests
             runtime.SetSuccessEffects(new[] { Definition(BridgeGateKind.DirectReceiver) });
             Assert.False(transaction.IsCurrent(runtime, Equipment(), Ranks()));
             Assert.False(Assert.Single(requests).IsCurrent(Equipment()));
-        }
-        [Fact] public void ExplicitLifecycleResetAndForeignRuntimeRejectDeferredTransactions()
-        {
-            var runtime = Runtime(Definition(BridgeGateKind.DirectReceiver));
-            var transaction = Assert.Single(Fire(runtime, Event("second", 1)));
-            Assert.False(transaction.IsCurrent(Runtime(Definition(BridgeGateKind.DirectReceiver)), Equipment(), Ranks()));
-            runtime.ClearSuccessEffectsTransient();
-            Assert.False(transaction.IsCurrent(runtime, Equipment(), Ranks()));
         }
         [Fact] public void DeadFirstVictimDoesNotSpendAoEQuotaBeforeALiveVictim()
         {

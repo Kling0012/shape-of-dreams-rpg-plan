@@ -101,15 +101,6 @@ namespace SodRpg.Core.Tests
             Assert.Equal(0, rt.Current(7.1f).MoveSpeedPct);
         }
 
-        [Fact]
-        public void Bulwark_needs_three_enemies()
-        {
-            var rt = new PowerRuntime(With((Power.Bulwark, 30)), 0);
-            rt.NearbyEnemies = 2;
-            Assert.Equal(0, rt.Current(1).Armor);
-            rt.NearbyEnemies = 3;
-            Assert.Equal(30, rt.Current(1).Armor);
-        }
 
         [Fact]
         public void Barrier_first_after_three_seconds_then_every_twelve()
@@ -165,12 +156,9 @@ namespace SodRpg.Core.Tests
         }
 
         [Theory]
-        [InlineData(Stat.AttackPct, 12, 12f)]
-        [InlineData(Stat.Armor, 10, 10f)]
         [InlineData(Stat.CritChancePct, 5, 0.05f)]
         [InlineData(Stat.CritDamagePct, 20, 0.2f)]
         [InlineData(Stat.FireAmp, 10, 0.1f)]
-        [InlineData(Stat.MaxHealthFlat, 45, 45f)]
         public void Stat_units_convert_to_game_scale(Stat s, int v, float expected)
         {
             Assert.Equal(expected, StatUnits.ToGame(s, v), 4);

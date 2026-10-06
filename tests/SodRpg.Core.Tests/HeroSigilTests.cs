@@ -8,25 +8,6 @@ namespace SodRpg.Core.Tests
 {
     public class HeroSigilTests
     {
-        private static readonly string[] Heroes =
-        {
-            "Hero_Vesper", "Hero_Lacerta", "Hero_Cetus", "Hero_Yubar", "Hero_Husk", "Hero_Mist", "Hero_Nachia", "Hero_Aurena", "Hero_Bismuth",
-        };
-
-        [Fact]
-        public void Every_base_traveler_has_an_unlockable_tree_and_keystones()
-        {
-            foreach (var h in Heroes)
-            {
-                Assert.True(HeroSigils.HasTree(h), h);
-                var tree = HeroSigils.TreeFor(h).ToList();
-                Assert.Equal(2, tree.Count(t => t.IsKeystone)); // v1.13：到達刻印は2つから1つを選ぶ
-                Assert.True(tree.Where(t => !t.IsKeystone).Sum(t => t.MaxRank) >= Content.KeystoneRouteRequirement, h);
-                Assert.All(tree, t => Assert.Equal(h, t.HeroKey));
-            }
-            Assert.Equal(HeroSigils.All.Count, HeroSigils.All.Select(t => t.Id).Distinct().Count());
-        }
-
         [Fact]
         public void Unknown_travelers_keep_the_generic_tree()
         {

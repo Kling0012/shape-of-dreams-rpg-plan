@@ -39,19 +39,6 @@ namespace SodRpg.Core.Tests
             Assert.Equal(0, Rules.KillModifiers(plain.Run).DropBonus);
         }
 
-        [Fact]
-        public void Securing_returns_delve_to_zero()
-        {
-            var p = Profile.CreateNew(1);
-            Rules.BeginRun(p, "a");
-            p.Run.Bounties.Clear();
-            Rules.ReachSecurePoint(p);
-            Rules.Delve(p);
-            Rules.Delve(p);
-            Assert.Equal(2, p.Run.Heat);
-            Rules.Secure(p);
-            Assert.Equal(0, p.Run.Heat);
-        }
 
         private static Build With(Power p, int v)
         {
@@ -97,36 +84,5 @@ namespace SodRpg.Core.Tests
             Assert.Equal(30, rt.Current(1).AttackSpeedPct);
         }
 
-        [Fact]
-        public void New_powers_appear_on_epics_of_their_slot()
-        {
-            var rng = new Rng(45);
-            var seen = new HashSet<(Slot, Power)>();
-            for (int i = 0; i < 6000; i++)
-            {
-                var r = Loot.RollRelic(rng, Rarity.Epic, 10);
-                seen.Add((r.Slot, r.Powers[0].Power));
-            }
-            Assert.Contains((Slot.Weapon, Power.ChainLightning), seen);
-            Assert.Contains((Slot.Weapon, Power.Bloodlust), seen);
-            Assert.Contains((Slot.Armor, Power.Aegis), seen);
-            Assert.Contains((Slot.Charm, Power.Shatter), seen);
-            Assert.Contains((Slot.Head, Power.StarShield), seen);
-            Assert.Contains((Slot.Hands, Power.OpeningStrike), seen);
-            Assert.Contains((Slot.Feet, Power.Sprint), seen);
-        }
-
-        [Fact]
-        public void Bounty_notification_shows_multiplied_rewards()
-        {
-            var p = Profile.CreateNew(8);
-            Rules.BeginRun(p, "q", DailyDream.Get(8)); // 静かな夢 ×2
-            p.Run.Bounties.Clear();
-            p.Run.Bounties.Add(new Bounty { Kind = BountyKind.Slayer, Target = 1, RewardShards = 15, RewardXp = 30 });
-            var ev = Rules.OnKill(p, MonsterTier.Normal, 1);
-            var msg = ev.First(e => e.Kind == EventKind.Bounty).Text;
-            Assert.Contains("30", msg);
-            Assert.Contains("60", msg);
-        }
     }
 }

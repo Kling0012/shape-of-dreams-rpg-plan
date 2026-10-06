@@ -72,83 +72,9 @@ namespace SodRpg.Core.Tests
             Assert.False(Gimmicks.CanRechargeOther("St_X_Unknown", target, isNormalSkill, isIdentity));
         }
 
-        [Theory]
-        [InlineData(GimmickTrigger.OnHit)]
-        [InlineData(GimmickTrigger.OnKill)]
-        public void Zero_cooldown_allows_multiple_targets_and_repeated_events_at_the_same_time(GimmickTrigger trigger)
-        {
-            var runtime = new GimmickRuntime();
-            runtime.SetBuild(new[]
-            {
-                Entry("h.mist.unlimited", GimmickEffect.RechargeOther, trigger: trigger),
-                Entry("h.mist.throttled", GimmickEffect.RechargeOther, cooldown: 1, trigger: trigger)
-            });
-            var requests = new List<GimmickRequest>();
-            runtime.Fire(trigger, Memory, 5, 11, 10, true, requests);
-            Assert.Empty(requests);
-            runtime.Fire(trigger, Memory, 5, 11, 10, false, requests);
-            Assert.Equal(new[] { "h.mist.unlimited", "h.mist.throttled" }, requests.Select(r => r.Entry.StarId));
-            requests.Clear();
-            runtime.Fire(trigger, Memory, 5, 22, 10, false, requests);
-            runtime.Fire(trigger, Memory, 5, 22, 10, false, requests);
-            Assert.Equal(new[] { 22, 22 }, requests.Select(r => r.VictimId));
-            Assert.All(requests, r => Assert.Equal("h.mist.unlimited", r.Entry.StarId));
-        }
 
-        [Theory]
-        [InlineData(GimmickTrigger.OnKill, -42, 4f, false)]
-        [InlineData(GimmickTrigger.OnUse, 0, 4f, true)]
-        [InlineData(GimmickTrigger.OnHit, -42, 0f, false)]
-        [InlineData(GimmickTrigger.OnCrit, -42, 0f, false)]
-        public void Element_requests_preserve_dead_victim_id_and_distinguish_area_from_direct_targets(
-            GimmickTrigger trigger, int victim, float radius, bool aroundHero)
-        {
-            var runtime = new GimmickRuntime();
-            runtime.SetBuild(new[] { Entry(effect: GimmickEffect.Element, value: 100, cooldown: 1, trigger: trigger) });
-            var requests = new List<GimmickRequest>();
-            runtime.Fire(trigger, Memory, 5, victim, 0, true, requests);
-            Assert.Empty(requests);
-            runtime.Fire(trigger, Memory, 5, victim, 0, false, requests);
-            var request = Assert.Single(requests);
-            Assert.Equal(victim, request.VictimId);
-            Assert.Equal(radius, request.AreaRadius);
-            Assert.Equal(aroundHero, request.AreaAroundHero);
-        }
 
-        [Theory]
-        [InlineData(GimmickTrigger.OnUse)]
-        [InlineData(GimmickTrigger.OnKill)]
-        public void Generated_events_never_request_reload_or_consume_its_positive_cooldown(GimmickTrigger trigger)
-        {
-            var runtime = new GimmickRuntime();
-            runtime.SetBuild(new[] { Entry(effect: GimmickEffect.Reload, value: 1, cooldown: 1, trigger: trigger) });
-            var requests = new List<GimmickRequest>();
-            runtime.Fire(trigger, Memory, 5, 11, 10, true, requests);
-            Assert.Empty(requests);
-            runtime.Fire(trigger, Memory, 5, 11, 10, false, requests);
-            Assert.Equal(GimmickEffect.Reload, Assert.Single(requests).Entry.Def.Effect);
-            requests.Clear();
-            runtime.Fire(trigger, Memory, 5.5f, 22, 10, false, requests);
-            Assert.Empty(requests);
-        }
 
-        [Theory]
-        [InlineData(GimmickEffect.Reload)]
-        [InlineData(GimmickEffect.RechargeOther)]
-        public void New_effects_reject_invalid_arguments_in_local_and_described_definitions(GimmickEffect effect)
-        {
-            var entry = Entry(effect: effect, value: 1);
-            entry.Def.Arg = 1;
-            Assert.Null(Gimmicks.Clamp(entry));
-            Assert.Equal("", Gimmicks.Describe(entry.Def, Memory));
-            entry.Def.Arg = 0;
-            entry.Def.Value = 0;
-            Assert.Null(Gimmicks.Clamp(entry));
-            Assert.Equal("", Gimmicks.Describe(entry.Def, Memory));
-            entry.Def.Value = 1;
-            Assert.Equal("", Gimmicks.Describe(entry.Def, Memory, 0));
-            Assert.Equal("", Gimmicks.Describe(entry.Def, Memory, -1));
-        }
 
         [Fact]
         public void Star_identifier_boundary_is_preserved_and_invalid_local_entries_are_rejected()
@@ -189,37 +115,6 @@ namespace SodRpg.Core.Tests
             Assert.Equal(2, requests.Count);
         }
 
-        [Theory]
-        [InlineData(GimmickEffect.Quicken)]
-        [InlineData(GimmickEffect.Empower)]
-        [InlineData(GimmickEffect.Expose)]
-        public void Buffs_use_strongest_active_star_refresh_and_expire_independently(GimmickEffect effect)
-        {
-            var strong = Entry("h.mist.strong", effect, 20, trigger: GimmickTrigger.OnHit);
-            var weak = Entry("h.mist.weak", effect, 8, trigger: GimmickTrigger.OnCrit);
-            var runtime = new GimmickRuntime();
-            runtime.SetBuild(new[] { strong, weak });
-            var requests = new List<GimmickRequest>();
-            float Percent(float now, int victim = 11) => effect == GimmickEffect.Quicken ? runtime.QuickenPercent(now)
-                : effect == GimmickEffect.Empower ? runtime.EmpowerPercent(now) : runtime.ExposePercent(victim, now);
-            runtime.Fire(GimmickTrigger.OnHit, Memory, 0, 11, 10, false, requests);
-            runtime.Fire(GimmickTrigger.OnCrit, Memory, 1, 11, 10, false, requests);
-            Assert.Equal(20, Percent(1));
-            runtime.Fire(GimmickTrigger.OnHit, Memory, 2, 11, 10, true, requests);
-            Assert.Equal(8, Percent(4));
-            runtime.Fire(GimmickTrigger.OnCrit, Memory, 4, 11, 10, false, requests);
-            Assert.Equal(8, Percent(5));
-            if (effect == GimmickEffect.Expose)
-            {
-                Assert.Equal(0, Percent(5, 22));
-                runtime.Fire(GimmickTrigger.OnHit, Memory, 5, 22, 10, false, requests);
-                Assert.Equal(8, Percent(5, 11));
-                Assert.Equal(20, Percent(5, 22));
-            }
-            runtime.PruneExpired(9);
-            Assert.Equal(0, Percent(9));
-            Assert.Equal(0, Percent(9, 22));
-        }
 
         [Fact]
         public void Negative_entity_ids_are_valid_but_missing_targets_do_not_consume_cooldown()

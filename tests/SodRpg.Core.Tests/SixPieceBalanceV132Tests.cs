@@ -32,17 +32,6 @@ namespace SodRpg.Core.Tests
         }
 
         [Fact]
-        public void Measurement_is_deterministic()
-        {
-            var first = SetBalance.MeasureAll();
-            var second = SetBalance.MeasureAll();
-            Assert.Equal(first.Select(r => r.Id), second.Select(r => r.Id));
-            Assert.Equal(
-                first.Select(r => r.SixBonusGain.ToString("R", CultureInfo.InvariantCulture)),
-                second.Select(r => r.SixBonusGain.ToString("R", CultureInfo.InvariantCulture)));
-        }
-
-        [Fact]
         public void Every_six_piece_bonus_stays_within_the_agreed_band()
         {
             var results = SetBalance.MeasureAll();

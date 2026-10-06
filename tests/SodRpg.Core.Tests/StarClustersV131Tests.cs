@@ -194,17 +194,8 @@ namespace SodRpg.Core.Tests
 
         [Theory]
         [InlineData("duplicate-cluster")]
-        [InlineData("generated-id")]
         [InlineData("anchor")]
-        [InlineData("hero")]
-        [InlineData("region")]
-        [InlineData("stat")]
-        [InlineData("choice-count")]
         [InlineData("nested-choice")]
-        [InlineData("param")]
-        [InlineData("unknown-memory")]
-        [InlineData("gimmick")]
-        [InlineData("power")]
         public void Invalid_design_fails_loudly(string failure)
         {
             var def = Definition();
@@ -212,17 +203,8 @@ namespace SodRpg.Core.Tests
             switch (failure)
             {
                 case "duplicate-cluster": defs.Add(Definition()); break;
-                case "generated-id": def.Id = "h.cetus.route.icy-veins"; break;
                 case "anchor": def.Anchor = "missing.anchor"; break;
-                case "hero": def.HeroKey = "Hero_Vesper"; break;
-                case "region": def.Region = ClusterRegion.Memory("h.cetus.route.charged"); break;
-                case "stat": def.Stars = new[] { new ClusterStarDef { Kind = ClusterStarKind.Stat, Name = new Txt("守り", "Guard"), Stat = Stat.Armor, Amount = 2 } }; break;
-                case "choice-count": def.Stars = new[] { new ClusterStarDef { Kind = ClusterStarKind.Choice, Name = new Txt("選択", "Choice"), Options = new[] { Damage() } } }; break;
                 case "nested-choice": def.Stars = new[] { new ClusterStarDef { Kind = ClusterStarKind.Choice, Name = new Txt("選択", "Choice"), Options = new[] { Damage(), new ClusterStarDef { Kind = ClusterStarKind.Choice, Name = new Txt("選択", "Choice"), Options = new[] { Damage(), Damage() } } } } }; break;
-                case "param": def.Stars = new[] { new ClusterStarDef { Kind = ClusterStarKind.GimmickParam, Name = new Txt("対象", "Targets"), Memory = Memory, Param = GimmickParam.ExtraTargets, Amount = 1 } }; break;
-                case "unknown-memory": def.Stars = new[] { Damage("St_X_Unknown") }; break;
-                case "gimmick": def.Stars = new[] { new ClusterStarDef { Kind = ClusterStarKind.Notable, Name = new Txt("仕掛け", "Gimmick"), Memory = Memory, Gimmick = new GimmickDef { Trigger = GimmickTrigger.None, Effect = GimmickEffect.Shield, Value = 2 } } }; break;
-                case "power": def.Stars = new[] { new ClusterStarDef { Kind = ClusterStarKind.Notable, Name = new Txt("力", "Power"), Power = Power.None, Amount = 2 } }; break;
             }
             Assert.Throws<InvalidOperationException>(() => StarClusters.Generate(defs, BaseTree()));
         }

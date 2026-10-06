@@ -18,19 +18,6 @@ namespace SodRpg.Core.Tests
             return filter;
         }
 
-        [Theory]
-        [InlineData("native.q", StunSourceSlot.Q)]
-        [InlineData("native.r", StunSourceSlot.R)]
-        public void ActualEquippedQrStunRequestsOneOrdinarySixPercentThreeSecondShield(string memory, StunSourceSlot slot)
-        {
-            var filter = Filter();
-            Assert.True(filter.TryApply(Stun(memory: memory, slot: slot), 0, out var grant));
-            Assert.Equal(1, grant.OwnerId);
-            Assert.Equal(1, grant.EquipmentEpoch);
-            Assert.Equal(600, CalmShieldGrant.ValueUnits);
-            Assert.Equal(3f, CalmShieldGrant.DurationSeconds);
-            Assert.False(filter.TryApply(Stun(memory: memory, slot: slot), 3, out _));
-        }
 
         [Theory]
         [InlineData(StunSourceSlot.Unknown)]
@@ -84,13 +71,6 @@ namespace SodRpg.Core.Tests
             Assert.True(filter.TryApply(Stun(serial: 2, epoch: 2, memory: "replacement.q"), 1, out _));
         }
 
-        [Fact]
-        public void SelectingGenericStillWaterDoesNotEnableCalm()
-        {
-            var filter = Filter();
-            filter.Configure(1, "native.q", "native.r", false);
-            Assert.False(filter.TryApply(Stun(), 0, out _));
-        }
 
         [Fact]
         public void DeathOrZoneResetRejectsDelayedAdmissionUntilFreshEpoch()

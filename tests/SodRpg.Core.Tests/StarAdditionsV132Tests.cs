@@ -105,23 +105,6 @@ namespace SodRpg.Core.Tests
             finally { Restore(); }
         }
 
-        [Fact]
-        public void A_partial_selection_sums_below_the_caps()
-        {
-            try
-            {
-                var (profile, tree) = Register();
-                Allocate(profile, tree, "outer.v132.kg1"); Allocate(profile, tree, "outer.v132.kg2");
-                Allocate(profile, tree, "outer.v132.dd1"); Allocate(profile, tree, "outer.v132.basket");
-                var build = Compute(profile);
-                Assert.Equal(8, build.Get(Power.KillGoldPct));
-                Assert.Equal(0, build.Get(Power.EliteKillGoldPct));
-                Assert.Equal(4, build.Get(Power.DreamDustPct));
-                Assert.Equal(4 + 10, CurrencyStars.DreamDustPercent(build, false));
-                Assert.Equal(4 + 10 + 10, CurrencyStars.DreamDustPercent(build, true));
-            }
-            finally { Restore(); }
-        }
 
         [Fact]
         public void Currency_powers_never_drop_from_gear()

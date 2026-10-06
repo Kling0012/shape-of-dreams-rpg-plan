@@ -9,39 +9,6 @@ namespace SodRpg.Core.Tests
     public class GearVolumeV121Tests
     {
         [Fact]
-        public void Every_slot_has_25_bases_and_at_least_40_general_uniques()
-        {
-            foreach (var slot in Content.SlotOrder)
-            {
-                Assert.Equal(100, Content.BasesFor(slot).Count());
-                int uniques = Content.Uniques.Count(u => u.SetId == null && Content.GetBase(u.BaseId).Slot == slot);
-                Assert.True(uniques >= 40, $"{slot}: {uniques}");
-            }
-        }
-
-        [Fact]
-        public void Every_slot_has_13_affix_kinds()
-        {
-            foreach (var slot in Content.SlotOrder)
-            {
-                var pool = Content.AffixPool(slot);
-                Assert.True(pool.Count >= 13, slot.ToString());
-                Assert.Equal(pool.Count, pool.Select(a => a.Stat).Distinct().Count());
-                // v1.27：どの枠でも攻撃力・魔力の両方を引ける（魔力で伸びる旅人が多いため）
-                Assert.Contains(pool, a => a.Stat == Stat.AttackPct);
-                Assert.Contains(pool, a => a.Stat == Stat.PowerPct);
-            }
-        }
-
-        [Fact]
-        public void Every_base_has_at_least_one_unique()
-        {
-            var used = new HashSet<string>(Content.Uniques.Where(u => u.SetId == null).Select(u => u.BaseId));
-            // v1.29 の2段目で新しい土台にも固有品が付く。それまでは v1.28 までの土台に保証する。
-            foreach (var b in Content.Bases.Take(Content.PreV129BaseCount)) Assert.True(used.Contains(b.Id), b.Id);
-        }
-
-        [Fact]
         public void Names_ids_and_power_pairs_are_distinct_and_within_caps()
         {
             Assert.Equal(Content.Uniques.Count, Content.Uniques.Select(u => u.Id).Distinct().Count());

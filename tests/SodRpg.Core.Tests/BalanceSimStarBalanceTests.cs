@@ -8,12 +8,6 @@ namespace SodRpg.Core.Tests
     /// <summary>v1.31：BalanceSim の星振り純粋補助（tools/BalanceSim/StarBalance.cs）。</summary>
     public class BalanceSimStarBalanceTests
     {
-        [Fact]
-        public void Checkpoints_cover_the_v131_grid_up_to_MaxPoints()
-        {
-            Assert.Equal(new[] { 0, 50, 100, 150, 200, 250, 300, 350, 400, 450, 500 }, StarBalance.Checkpoints);
-            Assert.Equal(StarProgression.MaxPoints, StarBalance.Checkpoints[StarBalance.Checkpoints.Length - 1]);
-        }
 
         [Fact]
         public void GearScore_uses_the_nightmare_gear_formula_unclamped()
@@ -38,23 +32,6 @@ namespace SodRpg.Core.Tests
             Assert.Equal(0.0, StarBalance.GearScore(null));
         }
 
-        [Fact]
-        public void EffectBreadth_counts_every_carried_effect_list()
-        {
-            var b = new Build();
-            b.Gimmicks.Add(new GimmickEntry());
-            b.Gimmicks.Add(new GimmickEntry());
-            b.Links.Add(new LinkDef());
-            b.Powers[Power.Ember] = 1;
-            b.Powers[Power.Frost] = 2;
-            b.Powers[Power.Blaze] = 3;
-            b.NativeModifiers.Add(new NativeMemoryModifierEntry());
-            b.Mechanisms.Add(new AuthoredMechanismEntry());
-            b.PairCombos.Add(new PairComboEntry());
-            b.PairCombos.Add(new PairComboEntry());
-            Assert.Equal(10, StarBalance.EffectBreadth(b));
-            Assert.Equal(0, StarBalance.EffectBreadth(new Build()));
-        }
 
         [Fact]
         public void FitsBudget_rejects_overruns_and_nonpositive_cost()

@@ -28,33 +28,7 @@ namespace SodRpg.Core.Tests
         }
 
 
-        [Theory]
-        [InlineData(1, 6)]
-        [InlineData(2, 12)]
-        [InlineData(3, 18)]
-        public void Ranked_power_nodes_add_power_without_adding_a_stat(int rank, int value)
-        {
-            var p = NewProfile();
-            TreeTestPaths.Connect(p, Hero, DeepPower);
-            var before = Build.Compute(p, Hero, 0);
-            AddRanks(p, DeepPower, rank);
-            var b = Build.Compute(p, Hero, 0);
-            Assert.Equal(value, b.Get(Power.Bulwark));
-            Assert.Equal(before.Stats, b.Stats);
-        }
 
-        [Theory]
-        [InlineData(1, 8)]
-        [InlineData(2, 16)]
-        [InlineData(3, 24)]
-        public void Deep_stat_nodes_keep_stat_rank_scaling(int rank, int value)
-        {
-            var p = NewProfile();
-            AddRanks(p, DeepStat, rank);
-            var b = Build.Compute(p, Hero, 0);
-            Assert.Equal(value, b.Get(Stat.CritDamagePct));
-            Assert.Equal(0, b.Get(Power.Bulwark));
-        }
 
         [Theory]
         [InlineData(DeepStat)]
@@ -83,7 +57,6 @@ namespace SodRpg.Core.Tests
         }
 
         [Theory]
-        [InlineData(0, 3, 2, 27)]
         [InlineData(10, 2, 2, 33)]
         [InlineData(70, 3, 0, 80)]
         [InlineData(40, 3, 2, 80)]

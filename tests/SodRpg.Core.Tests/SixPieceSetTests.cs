@@ -152,16 +152,5 @@ namespace SodRpg.Core.Tests
             }
         }
 
-        [Fact]
-        public void Every_set_has_six_piece_data_once_the_flag_is_set()
-        {
-            if (!Content.SixPieceSetsComplete) return; // データ入力中は未入力を許容する（Content.SixPieceSetsComplete）
-            foreach (var set in Content.Sets)
-            {
-                Assert.True(set.HasSixPiece, set.Id + " lacks SixPiece");
-                Assert.Equal(6, Content.SetPieceCount(set.Id));
-                foreach (var pw in set.SixPiece) Assert.True(pw.Value <= Content.PowerCap(pw.Power), set.Id);
-            }
-        }
     }
 }

@@ -102,6 +102,25 @@ python tools/test_changed.py --base origin/release/v2.0.1
 python tools/test_changed.py --all
 ```
 
+## テスト削減（2回目）の記録
+
+版別のデータ転記、細かい内部API確認、文言固定、Theoryの総当たりを削減し、
+既存の代表シナリオへ集約した。新規テスト・ケース・製品コードの変更はない。
+通信混乱・ホスト停止・再作成の `GrantSimulationTests` はシナリオ本体を維持し、
+各60seedから既存の0／29／59の3seedだけを残した。
+
+issue番号つき回帰、保存形式・互換・Protocol・内容指紋、取引・鞄あふれ・
+続きから・Infinity・協力プレイ整合、全星到達性・参照購入等価性、fail-soft・
+生成鮮度を保持。`Issue73.Native.Tests` と `SodRpg.Mod.Startup.Tests` は変更していない。
+実装時の仕様書にある旧テスト名・実行件数は当時の検証記録として扱う。
+
+`DOTNET=/usr/bin/dotnet DOTNET_ROLL_FORWARD=LatestMajor python tools/test_changed.py --all`
+の実測は成功3,416→2,532、失敗0→0、既定skipのSlowFact4→4。
+restore/build込みの実時間193.66→157.39秒（各1回の観測）。
+884件、25.9%削減で、約4割の目安より必須保持を優先した。
+このコマンドは.NETのみを対象とし、変更していないPythonテストや実ゲームは今回実行していない。
+
+
 ## #200 ローカル欠片化と旧取引の互換復旧
 
 `tests/Issue73.Native.Tests` の現行回帰ケース：

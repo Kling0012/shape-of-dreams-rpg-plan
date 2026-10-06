@@ -44,14 +44,6 @@ namespace SodRpg.Core.Tests
         }
 
         [Fact]
-        public void Rng_is_deterministic_for_same_state()
-        {
-            var a = new Rng(123);
-            var b = new Rng(123);
-            for (int i = 0; i < 100; i++) Assert.Equal(a.NextULong(), b.NextULong());
-        }
-
-        [Fact]
         public void Higher_heat_increases_drop_rate_and_rarity()
         {
             int Count(int heat, out int epics)
@@ -84,27 +76,6 @@ namespace SodRpg.Core.Tests
                 var rw = Loot.RollKill(rng, MonsterTier.Normal, 10, 5);
                 Assert.DoesNotContain(rw.Relics, r => r.Rarity == Rarity.Legendary);
             }
-        }
-
-        [Fact]
-        public void Boss_main_rewards_have_no_epic_pity_ceiling()
-        {
-            // 天井（救済）撤廃後：主報酬のエピック以上は通常抽選のみで、連続未取得が113体を超えても確定しない。
-            var rng = new Rng(11);
-            const int kills = 20000;
-            int epics = 0, streak = 0, bestStreak = 0;
-            for (int i = 0; i < kills; i++)
-            {
-                var rw = Loot.RollKill(rng, MonsterTier.Boss, 10, 0);
-                if (rw.Relics[0].Rarity >= Rarity.Epic)
-                {
-                    epics++;
-                    streak = 0;
-                }
-                else bestStreak = Math.Max(bestStreak, ++streak);
-            }
-            Assert.True(bestStreak > 113, $"pity is gone; expected a dry streak beyond 113 boss kills, got {bestStreak}");
-            Assert.InRange((double)epics / kills, 0.03, 0.06); // 通常抽選どおり（理論値は主報酬エピック以上 約4.28%）
         }
 
         [Fact]
@@ -195,29 +166,6 @@ namespace SodRpg.Core.Tests
             Assert.Single(p.LostAndFound);
         }
 
-        [Fact]
-        public void Victory_secures_everything()
-        {
-            var p = NewProfile();
-            Rules.BeginRun(p, "v");
-            p.Run.Satchel.Add(Loot.RollRelic(new Rng(1), Rarity.Rare, 5));
-            Rules.EndRun(p, victory: true);
-            Assert.Single(p.Stash);
-            Assert.Equal(1, p.Stats.Victories);
-            Assert.Null(p.Run);
-        }
-
-        [Fact]
-        public void Kills_grant_xp_and_level_ups()
-        {
-            var p = NewProfile();
-            Rules.BeginRun(p, "x");
-            var events = new List<GameEvent>();
-            for (int i = 0; i < 10; i++) events.AddRange(Rules.OnKill(p, MonsterTier.Boss, 10));
-            Assert.True(p.DreamLevel > 1);
-            Assert.Contains(events, e => e.Kind == EventKind.LevelUp);
-            Assert.Equal(10, p.Run.Kills);
-        }
 
         [Fact]
         public void Satchel_overflow_turns_worst_into_shards()
@@ -230,42 +178,6 @@ namespace SodRpg.Core.Tests
             for (int i = 0; i < 30 && p.Run.Satchel.Count <= Content.SatchelCapacity && p.Run.SatchelShards == before; i++)
                 Rules.OnKill(p, MonsterTier.Boss, 5);
             Assert.True(p.Run.Satchel.Count <= Content.SatchelCapacity);
-        }
-
-        [Fact]
-        public void Enhance_costs_shards_and_scales_stats()
-        {
-            var p = NewProfile();
-            var r = Give(p, Rarity.Rare, Slot.Weapon);
-            int before = r.EffectiveStats().Sum(s => s.Value);
-            Assert.Throws<InvalidOperationException>(() => Rules.Enhance(p, r.Uid));
-            p.AddMaterial(Materials.Shard, 1000);
-            for (int i = 0; i < Content.MaxEnhance; i++)
-            {
-                p.StoreRng(new Rng(0)); // This seed succeeds even at the highest forge risk.
-                Rules.Enhance(p, r.Uid);
-            }
-            Assert.Equal(5, r.Enhance);
-            Assert.Equal(1000 - (20 + 35 + 60 + 90 + 130), p.Material(Materials.Shard));
-            Assert.True(r.EffectiveStats().Sum(s => s.Value) > before);
-            Assert.Throws<InvalidOperationException>(() => Rules.Enhance(p, r.Uid));
-        }
-
-        [Fact]
-        public void Retune_replaces_one_affix_up_to_three_times()
-        {
-            var p = NewProfile();
-            var r = Give(p, Rarity.Rare, Slot.Charm);
-            p.AddMaterial(Materials.Tuning, 10);
-            for (int i = 0; i < Content.MaxRetunes; i++)
-            {
-                Rules.Retune(p, r.Uid, 0);
-                Rules.ChooseRetune(p, 0);
-                var stats = r.Affixes.Select(a => a.Stat).Append(r.Base.ImplicitStat).ToList();
-                Assert.Equal(stats.Count, stats.Distinct().Count());
-            }
-            Assert.Equal(10 - (1 + 2 + 3), p.Material(Materials.Tuning));
-            Assert.Throws<InvalidOperationException>(() => Rules.Retune(p, r.Uid, 0));
         }
 
         [Fact]
@@ -283,22 +195,6 @@ namespace SodRpg.Core.Tests
             Assert.False(p.IsEquippedAnywhere(r.Uid));
             Assert.Equal(Content.SalvageShards(Rarity.Epic), p.Material(Materials.Shard));
             Assert.Equal(1, p.Material(Materials.Tuning));
-        }
-
-        [Fact]
-        public void Craft_produces_requested_slot_with_rarity_floor()
-        {
-            var p = NewProfile();
-            p.AddMaterial(Materials.Shard, 10000);
-            p.AddMaterial(Materials.Tuning, 100);
-            for (int i = 0; i < 30; i++)
-            {
-                Rules.Craft(p, Slot.Charm, fine: i % 2 == 1);
-                var r = p.Stash.Last();
-                Assert.Equal(Slot.Charm, r.Slot);
-                Assert.True(r.Rarity >= (i % 2 == 1 ? Rarity.Rare : Rarity.Uncommon));
-                Assert.NotEqual(Rarity.Legendary, r.Rarity);
-            }
         }
 
         [Fact]

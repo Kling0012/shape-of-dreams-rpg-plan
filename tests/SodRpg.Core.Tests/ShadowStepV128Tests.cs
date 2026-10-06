@@ -52,7 +52,6 @@ namespace SodRpg.Core.Tests
         [Theory]
         [InlineData(12.999f, 120f)]
         [InlineData(13f, 0f)]
-        [InlineData(13.001f, 0f)]
         public void The_three_second_expiry_boundary_is_exclusive(float hitTime, float expected)
         {
             var runtime = new PowerRuntime(With((Power.ShadowStep, 60)), 0);
@@ -90,18 +89,6 @@ namespace SodRpg.Core.Tests
             Assert.Equal(140f, runtime.OnSkillUsed(11, true, false, 200, 500).WhirlwindDamage);
         }
 
-        [Fact]
-        public void Movement_skills_arm_both_powers_and_each_bonus_is_consumed_once()
-        {
-            var runtime = new PowerRuntime(With((Power.ShadowStep, 60), (Power.EchoingDodge, 80)), 0);
-            runtime.OnSkillUsed(10, isMovement: true, isUltimate: false);
-            var hit = runtime.OnAttackHit(11, 500, 100, 200, 1);
-            Assert.Equal(0f, hit.ShadowStepDamage);
-            Assert.Equal(160f, hit.EchoDamage);
-            var next = runtime.OnAttackHit(11.1f, 500, 100, 200, 1);
-            Assert.Equal(120f, next.ShadowStepDamage);
-            Assert.Equal(0f, next.EchoDamage);
-        }
 
         [Fact]
         public void Self_movement_refreshes_only_shadow_step_not_echoing_dodge()
@@ -156,19 +143,6 @@ namespace SodRpg.Core.Tests
             Assert.Equal(115, alternate.Get(Power.Umbra));
         }
 
-        [Fact]
-        public void Shadow_step_is_exclusive_to_the_husk_keystone_not_shared_loot_or_talents()
-        {
-            var source = Assert.Single(HeroSigils.All, t => t.Power == Power.ShadowStep || t.RankPower == Power.ShadowStep);
-            Assert.Equal("Hero_Husk", source.HeroKey);
-            Assert.Equal("h.husk.key2", source.Id);
-            Assert.True(source.IsKeystone);
-            Assert.Equal(69, source.PowerValue);
-            Assert.Equal(150, Content.PowerCap(Power.ShadowStep));
-            Assert.DoesNotContain(Content.Talents, t => t.Power == Power.ShadowStep || t.RankPower == Power.ShadowStep);
-            Assert.DoesNotContain(Content.SlotOrder.SelectMany(Content.PowerPool), p => p.Power == Power.ShadowStep);
-            Assert.DoesNotContain(Content.Uniques.SelectMany(u => u.Powers), p => p.Power == Power.ShadowStep);
-        }
 
     }
 }

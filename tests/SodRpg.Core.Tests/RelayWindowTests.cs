@@ -21,20 +21,6 @@ namespace SodRpg.Core.Tests
             return runtime;
         }
 
-        [Theory]
-        [InlineData(0, false, 4f)]
-        [InlineData(10000, false, 8f)]
-        [InlineData(10000, true, 16f)]
-        public void Duration_layers_apply_once_and_expiry_is_exclusive(int modifier, bool quiet, float duration)
-        {
-            var definition = new RelayWindowDefinition("relay", Q, 1200, modifier, quiet);
-            var runtime = Runtime(definition);
-            Assert.Equal(duration, definition.DurationSeconds);
-            Assert.True(runtime.OnSourceEvent(Use(), 0));
-            Assert.Equal(.12f, runtime.DamageAmplification(Hit(), duration - .001f), 5);
-            Assert.Equal(0f, runtime.DamageAmplification(Hit(), duration));
-            Assert.Equal(0f, runtime.DamageAmplification(Hit(), 32));
-        }
 
         [Fact]
         public void Contributions_add_with_fractional_precision_and_final_forty_percent_cap()
@@ -106,16 +92,6 @@ namespace SodRpg.Core.Tests
             Assert.Equal(0, runtime.DamageAmplification(noPacket, 1));
         }
 
-        [Fact]
-        public void Window_is_hit_time_semantics_not_projectile_launch_time()
-        {
-            var runtime = Runtime(new RelayWindowDefinition("relay", Q, 1000));
-            var projectile = Hit();
-            Assert.Equal(0f, runtime.DamageAmplification(projectile, 0));
-            runtime.OnSourceEvent(Use(), 1);
-            Assert.Equal(.1f, runtime.DamageAmplification(projectile, 2), 5);
-            Assert.Equal(0f, runtime.DamageAmplification(projectile, 5));
-        }
 
         [Fact]
         public void Same_configuration_preserves_window_but_unequip_death_and_zone_clear()

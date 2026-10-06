@@ -38,7 +38,6 @@ namespace SodRpg.Core.Tests
         }
 
         [Theory]
-        [InlineData(1)]
         [InlineData(3)]
         public void Linked_ranks_are_conditional_not_unconditional_stats_or_powers(int ranks)
         {

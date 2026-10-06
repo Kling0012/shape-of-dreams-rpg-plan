@@ -206,18 +206,6 @@ namespace SodRpg.Core.Tests
             Assert.Equal(5, p.Material(Materials.Tuning));
         }
 
-        [Fact]
-        public void Uniques_keep_their_fixed_powers()
-        {
-            var (p, r) = WithRelic(Rarity.Legendary, seed: 9, shards: 100000, tuning: 10000);
-            Assert.NotNull(r.UniqueId);
-            var powers = r.Powers.Select(x => (x.Power, x.Value)).ToList();
-            for (int i = 0; i < 3; i++) Rules.AffixReroll(p, r.Uid);
-            Assert.Equal(powers, r.Powers.Select(x => (x.Power, x.Value)).ToList());
-            Assert.Equal(Content.AffixCount(Rarity.Legendary), r.Affixes.Count);
-            Assert.Equal(3, r.AffixRerolls);
-        }
-
         private static string Sha256(string text)
         {
             using (var sha = SHA256.Create())

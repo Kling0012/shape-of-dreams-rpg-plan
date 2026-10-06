@@ -38,41 +38,5 @@ namespace SodRpg.Core.Tests
             var award = Assert.Single(AlliedWard.Select(definition, 1, true, 1000, 5000, candidates));
             Assert.Equal(2, award.RecipientId); Assert.Equal(4, award.RawAmount);
         }
-        [Fact]
-        public void HpTravelerVariantRetainsOrdinaryPoolAndFractionalValue()
-        {
-            var definition = new AlliedWardDefinition("ward.hp", WardRecipientKind.AlliedTravelers,
-                WardAmountBasis.RecipientMaxHP, ModShieldPoolKind.Ordinary, 102, true);
-            Assert.Equal(ModShieldPoolKind.Ordinary, definition.PoolKind);
-            var award = Assert.Single(AlliedWard.Select(definition, 1, true, 1000, 2000, new[] { Traveler(1) }));
-            Assert.Equal(1.02f, award.RawAmount, 5);
-        }
-        [Fact]
-        public void ExplicitProfilesEnforceModeSpecificCaps()
-        {
-            Assert.Equal(4, Standard(extra: 100).Targets);
-            var summon = new AlliedWardDefinition("ward.s", WardRecipientKind.OwnedSummons,
-                WardAmountBasis.CasterMaxOffense, ModShieldPoolKind.Allied, 10000, false, 15, 8, 3, 99, 5);
-            Assert.Equal(5, summon.Targets);
-            Assert.Throws<ArgumentOutOfRangeException>(() => new AlliedWardDefinition("ward.bad", WardRecipientKind.AlliedTravelers,
-                WardAmountBasis.CasterMaxOffense, ModShieldPoolKind.Allied, 100, true, 16));
-            Assert.Throws<ArgumentException>(() => new AlliedWardDefinition("ward.bad", WardRecipientKind.OwnedSummons,
-                WardAmountBasis.CasterMaxOffense, ModShieldPoolKind.Allied, 100, false, limits: WardLimitProfile.SummonRecipientHealth));
-            var health = new AlliedWardDefinition("ward.s", WardRecipientKind.OwnedSummons, WardAmountBasis.RecipientMaxHP,
-                ModShieldPoolKind.Allied, 100, false, 15, 9, 1, 99, 3, WardLimitProfile.SummonRecipientHealth);
-            Assert.Equal(3, health.Targets); Assert.Equal(9, health.DurationSeconds);
-        }
-        [Fact]
-        public void AdmissionUsesRealActivationAndOnlyCountsSuccess()
-        {
-            var runtime = new AlliedWardRuntime(); var definition = Standard();
-            Assert.False(runtime.TryAdmit(definition, 1, 1, 3, 2, false));
-            Assert.True(runtime.TryAdmit(definition, 1, 1, 3, 2, true));
-            Assert.False(runtime.TryAdmit(definition, 1, 1, 3, 9, true));
-            Assert.True(runtime.TryAdmit(definition, 1, 1, 4, 2, true));
-            Assert.True(runtime.TryAdmit(definition, 2, 1, 3, 2, true));
-            runtime.Reset(1); Assert.True(runtime.TryAdmit(definition, 1, 2, 3, 2, true));
-            Assert.Throws<ArgumentException>(() => runtime.TryAdmit(definition, 1, 1, 0, 2, true));
-        }
     }
 }

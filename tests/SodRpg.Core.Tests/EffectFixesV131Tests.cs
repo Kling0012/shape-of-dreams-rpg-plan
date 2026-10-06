@@ -59,14 +59,6 @@ namespace SodRpg.Core.Tests
             Assert.True(PactCurseSync.ShouldApply(2, 1));
         }
 
-        [Fact]
-        public void Owned_registry_counts_only_live_effects()
-        {
-            var r = new OwnedEffectRegistry<string, string>();
-            r.Add("a", "x"); r.Add("a", "dead");
-            Assert.Equal(1, r.CountLive("a", s => s == "x"));
-            Assert.Equal(0, r.CountLive("b", s => true));
-        }
 
         [Fact]
         public void First_zone_uses_chosen_depth_before_the_run_exists()

@@ -36,34 +36,7 @@ namespace SodRpg.Core.Tests
         private static readonly Catalog Cat = PrototypeCatalog.Create();
         private static readonly ModifierSpec Charm = Cat.TryGetItem(PrototypeCatalog.CharmItemId, out var d) ? d.Modifiers[0] : null;
 
-        [Fact]
-        public void A1_ApplyChangesTheStatAndRemoveRestoresIt()
-        {
-            var stats = new FakeStats();
-            var tracker = new ModifierTracker(stats);
 
-            tracker.Apply(Charm);
-            Assert.Equal(110, stats.Stat(PrototypeCatalog.TestStatKey, 100));
-
-            tracker.Remove(Charm.Id);
-            Assert.Equal(100, stats.Stat(PrototypeCatalog.TestStatKey, 100));
-        }
-
-        [Fact]
-        public void A2_ApplyingTwiceDoesNotStackAndRemovingTwiceIsHarmless()
-        {
-            var stats = new FakeStats();
-            var tracker = new ModifierTracker(stats);
-
-            tracker.Apply(Charm);
-            tracker.Apply(Charm);
-            Assert.Equal(110, stats.Stat(PrototypeCatalog.TestStatKey, 100));
-            Assert.Equal(1, stats.ApplyCalls);
-
-            tracker.Remove(Charm.Id);
-            tracker.Remove(Charm.Id);
-            Assert.Equal(1, stats.RemoveCalls);
-        }
 
         [Fact]
         public void A2_ChangedValueForTheSameIdReplacesTheOldOne()
@@ -138,18 +111,5 @@ namespace SodRpg.Core.Tests
             Assert.Single(stats.Active);
         }
 
-        [Fact]
-        public void Reconcile_RemovesModifiersThatAreNoLongerWanted()
-        {
-            var ledger = new LedgerState("p1");
-            ledger.AddItem(new ItemRecord(PrototypeCatalog.CharmItemId, "i1", ""));
-            var stats = new FakeStats();
-            var tracker = new ModifierTracker(stats);
-            tracker.Reconcile(CharmRules.DesiredModifiers(ledger, new[] { PrototypeCatalog.CharmItemId }, Cat));
-
-            tracker.Reconcile(CharmRules.DesiredModifiers(ledger, new string[0], Cat)); // 装着解除
-
-            Assert.Empty(stats.Active);
-        }
     }
 }

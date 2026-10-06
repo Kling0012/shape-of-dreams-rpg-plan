@@ -103,28 +103,6 @@ namespace SodRpg.Core.Tests
         }
 
         [Fact]
-        public void Uncommon_and_rare_never_roll_percent_attributes_or_conditional_attribute_powers()
-        {
-            var families = (Family[])Enum.GetValues(typeof(Family));
-            var slots = (Slot[])Enum.GetValues(typeof(Slot));
-            int checkedRelics = 0;
-            foreach (var family in families)
-                foreach (var slot in slots)
-                    foreach (var rarity in new[] { Rarity.Uncommon, Rarity.Rare })
-                    {
-                        var b = new BaseDef("test." + family + "." + slot, slot, Line.Offense, new Txt("試験", "Test"), Stat.Haste, 4, family);
-                        for (int seed = 0; seed < 150; seed++)
-                        {
-                            var r = Loot.RollBaseRelic(new Rng((ulong)(seed * 31 + 5)), b, rarity, 1 + seed % Content.MaxItemLevel);
-                            Assert.DoesNotContain(r.Affixes, a => a.Stat == Stat.AttackPct || a.Stat == Stat.PowerPct);
-                            Assert.DoesNotContain(r.Powers, p => NewPowersV129.IsConditionalAttribute(p.Power));
-                            checkedRelics++;
-                        }
-                    }
-            Assert.Equal(families.Length * slots.Length * 2 * 150, checkedRelics);
-        }
-
-        [Fact]
         public void Preferred_stats_and_powers_appear_noticeably_more_often_for_a_coloured_family()
         {
             foreach (var family in new[] { Family.Frost, Family.Flame, Family.Guard, Family.Gale })
