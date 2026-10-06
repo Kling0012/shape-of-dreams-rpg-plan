@@ -446,6 +446,104 @@ namespace SodRpg.Mod.Startup.Tests
             Assert.True(InfinityMode.Available, string.Join(" | ", Log.Warnings));
         }
 
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public void ConfirmedTravelWaitsForRewardsWithoutAnotherClickOrVote(bool voteRequired)
+        {
+            var (_, zone, _) = StartRevealGraph();
+            zone.VoteRequired = voteRequired;
+            ClientSession.HostInfinityRewardsSettled = false;
+            zone.CmdTravelToNode(1, new NetworkConnectionToClient { Player = DewPlayer.local });
+            if (voteRequired)
+            {
+                Assert.True(zone.isVoting);
+                zone.CompleteVote();
+            }
+            InfinityMode.Tick();
+            Assert.Equal(0, zone.TravelToNodeCalls);
+            ClientSession.HostInfinityRewardsSettled = true;
+            InfinityMode.Tick();
+            InfinityMode.Tick();
+            Assert.Equal(1, zone.TravelToNodeCalls);
+            Assert.Equal(1, zone.LastTravelTo);
+            Assert.False(zone.isVoting);
+        }
+
+        [Fact]
+        public void ConfirmedVoteWaitsForGuestCompatibilityAndNativeTravelReasonWithoutVotingAgain()
+        {
+            var (_, zone, authority) = StartRevealGraph();
+            var guest = JoinLobbyParticipant("pending-travel-guest");
+            DewPlayer.gamePlayers.Add(guest);
+            zone.VoteRequired = true;
+            Assert.False(InfinityMode.CanAdvance);
+            zone.CmdTravelToNode(1, new NetworkConnectionToClient { Player = DewPlayer.local });
+            Assert.True(zone.isVoting);
+            zone.CompleteVote();
+            Assert.False(zone.isVoting);
+            InfinityMode.Tick();
+            Assert.Equal(0, zone.TravelToNodeCalls);
+            FeedHello(authority, guest, Protocol.Version, ContentFingerprint.Value, true);
+            zone.CannotTravelReason = ("holding an item", false);
+            InfinityMode.Tick();
+            Assert.Equal(0, zone.TravelToNodeCalls);
+            zone.CannotTravelReason = default;
+            UnityEngine.Time.unscaledTime += 0.25f;
+            InfinityMode.Tick();
+            Assert.Equal(1, zone.TravelToNodeCalls);
+            Assert.Equal(1, zone.LastTravelTo);
+            Assert.False(zone.isVoting);
+        }
+
+        [Theory]
+        [InlineData("graph")]
+        [InlineData("seed")]
+        [InlineData("room")]
+        [InlineData("run")]
+        [InlineData("transition")]
+        [InlineData("vote")]
+        [InlineData("destination")]
+        [InlineData("restore")]
+        [InlineData("native-cancel")]
+        public void PendingTravelCannotEscapeItsConfirmedContext(string invalidation)
+        {
+            var (_, zone, _) = StartRevealGraph();
+            ClientSession.HostInfinityRewardsSettled = false;
+            zone.CmdTravelToNode(1, new NetworkConnectionToClient { Player = DewPlayer.local });
+            var state = InfinityMode.State;
+            switch (invalidation)
+            {
+                case "graph": state.GraphEpoch++; break;
+                case "seed": zone.worldSeed++; break;
+                case "room": state.RoomEpoch++; break;
+                case "run": NetworkedManagerBase<GameManager>.softInstance.runId = "other-run"; break;
+                case "transition": zone.isInAnyTransition = true; break;
+                case "vote": zone.isVoting = true; break;
+                case "destination":
+                    var hidden = zone.nodes[1];
+                    hidden.status = WorldNodeStatus.Unexplored;
+                    zone.nodes[1] = hidden;
+                    break;
+                case "restore": InfinityMode.BeginRestore(); break;
+                case "native-cancel": zone.CannotTravelReason = ("boss alive", true); break;
+                default: throw new ArgumentOutOfRangeException(nameof(invalidation));
+            }
+            ClientSession.HostInfinityRewardsSettled = true;
+            InfinityMode.Tick();
+            // Restore the old context too: invalidation consumes, rather than suspends, intent.
+            state.GraphEpoch = 0;
+            state.RoomEpoch = 0;
+            zone.worldSeed = 123;
+            NetworkedManagerBase<GameManager>.softInstance.runId = "reveal-run";
+            zone.isInAnyTransition = zone.isVoting = false;
+            zone.CannotTravelReason = default;
+            InfinityMode.FinishRestore();
+            zone.SetCurrentNodeIndexAndRevealAdjacent(0);
+            InfinityMode.Tick();
+            Assert.Equal(0, zone.TravelToNodeCalls);
+        }
+
         private static int[] CachedIds(List<UnityEngine.RectTransform> cache)
             => Enumerable.Range(0, cache.Count).Where(i => cache[i] != null && cache[i].gameObject.activeInHierarchy).ToArray();
     }

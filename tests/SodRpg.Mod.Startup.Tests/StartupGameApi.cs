@@ -357,9 +357,12 @@ namespace SodRpg.Mod
         { isVoting = true; voteData = nextNodeIndex; VoteInitiator = player; }
         public void CompleteVote()
         {
-            isVoting = false;
+            if (GetCannotTravelReason().reasonText != null) return;
             TravelToNode(voteData);
+            isVoting = false;
         }
+        public (string reasonText, bool shouldCancel) CannotTravelReason;
+        public (string reasonText, bool shouldCancel) GetCannotTravelReason() => CannotTravelReason;
         public int? LastTravelTo;
         public int TravelToNodeCalls, GenerateWorldAutoCalls, TravelToZoneCalls;
         public Zone LastTravelToZone;
