@@ -1,12 +1,14 @@
 # バランス外部定義・比較（Issue #149、#117・#119・#120・#121）
 
-`forge.json` の強化失敗率3係数、`stars.json` の `MemoryDamage` 基準値・倍率、
+`forge.json` の強化失敗率3係数、`stars.json` の7種類の星の基準値・倍率、
 鍛錬の閾値・上限・1スタック量・上限増分、星ダメージの位階係数、
 `gear.json` の装備レベル成長・固定攻魔上限、`sets.json` の通常セット2/3/6部位効果を
 型付きC#へ生成します。記憶ダメージはmanifestの480親＋258選択肢と旧ルート98成分、
 計836欄を移行済みです。星ID・段数・費用・選択肢・保存形式5・Protocol 23は維持し、
 装備・セットの調整数値を内容照合に含めます。
-MemoryHasteや仕掛けの基準調整数値はこの表の対象外です。
+段階2ではMemoryHaste・GimmickBoost・GimmickParam・Notable・Keystone・Statの
+明示的な効果欄と旧星・汎用星・sampleの数値を追加しました。今回の切替ではゲーム値を変更せず、
+生成後の採用済み定義と内容指紋を維持します。実行時のJSON読込はありません。
 
 ## コマンド
 
@@ -35,9 +37,9 @@ python tools/balance/gen_cs.py --check
 `run` は実行可能です。任意の作業ディレクトリから絶対パスでも呼び出せます。
 入力検証→生成→生成鮮度確認→BalanceSim Releaseビルド（1回）→
 `python tools/test_changed.py --all`（`--slow` 時は同オプション追加）→
-`python -m unittest discover -s tools/tests -p 'test_*.py'`→鍛冶→記憶効率→遠征→比較の順です。
+`python -m unittest discover -s tools/tests -p 'test_*.py'`→鍛冶→記憶効率→種類別星値→遠征→比較の順です。
 `--no-tests` は2つのテスト実行を省略し、生成・ビルド・実測は実行します。
-3モードは別プロセスで起動し、Coreの静的状態を共有しません。
+4モードは別プロセスで起動し、Coreの静的状態を共有しません。
 既定の遠征は新規プロフィール3遠征×8人、seed=1、2ゾーン×2部屋、その他は既存の遠征モード既定です。
 500pt星図の長時間シミュレーションは実行しません。
 
@@ -90,6 +92,43 @@ Protocol 23 remain unchanged; co-op content matching includes the generated gear
 - `run` / `gen_cs.py --check` は鍛冶・装備・通常セット・星定数・全9星図・登録ファイルをまとめて扱います。
   全入力の検証・renderが成功してから変更のある生成物だけを書きます。
   `python tools/star-manifest/validate.py` と単体の星生成も同じ解決済み値を検証します。
+
+## その他の星の調整（Issue #149 段階2）
+
+`effects` に移したmanifestの独立数値欄は次のとおりです。Choice子もそのkindに含め、
+shared外縁を旅人数倍には数えません。旧factory・汎用星・sample・保持する橋の数値は別に638欄です。
+
+| 種類 | 独立数値欄 | 対象 |
+| --- | ---: | --- |
+| MemoryHaste | 262 | 記憶の加速量（整数） |
+| GimmickBoost | 3,367 | 仕掛けの量の増加率 |
+| GimmickParam | 813 | 時間・半径の増加率、確率のポイント、追加対象数 |
+| Notable | 1,246 | Power、仕掛けの量・CD・rank表、回数、IdentityStrikeの距離・時間・対象数 |
+| Keystone | 99 | typed変換のpct/from/to/delta/max、Grant、保持するPower |
+| Stat | 36 | stat.perRank（整数） |
+
+例えば `multipliers.byHero.Hero_Yubar.GimmickBoost` を `1.10` にすると、
+固有の増加量2%は2.2%になります。共有外縁は変わりません。
+全体倍率は `multipliers.byKind.<kind>`。基準値そのものは `effects` の該当1セルを変更します。
+有効値は各効果の `base × byKind[kind] × byHero[owner][kind]`、Choice子は子のkindで1回だけ解決します。
+
+- MemoryHaste／Boost／Paramのmanifest欄はMemoryDamage同様の `valueRef`。
+  nested欄は `{"valueRef":"<星ID>/gimmick/value"}`、Choiceなら `options/<番号>/` を挟みます。
+  Power／Statは `power/perRank`／`stat/perRank`、刻印は `keystone/upsideSpec/<番号>/<欄>`。
+- 段ごとの仕掛け量があるとき `gimmick.value` は `valuesByRank/0` を参照し、原本を重複させません。
+  nativeの生贄の盾／静水の数値は `legacy/<刻印ID>/native/<欄>` に集約し、Grantからも同じ原本を参照します。
+  旧手書き定義は `legacy/` キーの生成済み型付き定数を使います。
+- 同IDの移行前効果は倍率・指紋から除外します。移行後も保持する旧Powerは採用側として1回だけ適用します。
+  未使用だったNotable／Statのtop-level `value` コピーはnullにし、typed payloadだけを原本にします。
+- 整数の個数・回数・Power・Stat・旧Amountは整数のまま。小数倍率で端数が出れば該当pathを示して生成失敗します。
+  scoped率・確率とtyped機構の量／rank表は0.01刻み、通常GimmickDefの量は0.0000001刻み、
+  刻印の連続Set/Addは既存decimal、既存の秒／距離はfloat。新しい種類では黙って丸めません。
+  異なる単位を持つNotable／Keystoneの倍率は複数欄に作用するため、個数まで変更したくない場合は個別セルを使います。
+- enum／受け手条件のarg、ID・費用・段数・接続、無量のflag／0 sentinelは倍率対象外です。
+  鍛錬／進行、共通の橋受付時間・盾の既定値・Powerの実行規則や安全上限は別ドメインで、この段階では移しません。
+- 内容照合は採用済み有効値の正準レコードと既存FNV方式を使います。表の空白・キー順・倍率の書き方は指紋に入りません。
+  初期切替は従来の内容指紋を維持し、有効値が同じになる基準値／倍率の相殺も同内容として扱います。
+
 
 ### #117/#120 の位階と個別下限
 
@@ -147,6 +186,21 @@ Choiceは全A（option 0）／全B（option 1）の2構成を別集計し、同�
 各段の各効果をCoreの `StarDamageScaling.ScaleMilli` で0.001%単位へ丸めてから合計します。
 同じ記憶の全星をまとめて位階倍するBuildの集計とは丸め順序が異なる独立投影です。
 
+## 種類別・意味単位別の星値
+
+`star-values` は実登録 `HeroSigils.TreeFor` の6種類を、旅人・all-A/all-B・private/shared・星ID・
+意味・欄・単位ごとに列挙します。秒・距離・個数・率・Power・Statをまとめて足しません。
+段ごとの表はrank別の行、保持するPowerは1回、選択された `Mechanism.Replaces` は旧機構成分だけを除外します。
+費用／MaxRankはメタデータで、値は採用された定義量です。位階・GB合成・発動頻度・DPS・成長は模型化しません。
+
+```sh
+DOTNET_ROLL_FORWARD=LatestMajor /usr/bin/dotnet tools/BalanceSim/bin/Release/net8.0/BalanceSim.dll \
+  --mode star-values --out /tmp/star-values.md --metrics-json /tmp/star-values.json
+```
+
+比較表の列は既存どおり現在／前回成功／差／相対差。星の追加・削除・未観測を0に置き換えません。
+例えば同条件でYubarのBoostを1.10倍にした場合、2%→2.2%の差は0.2 pp、相対差は10%です。
+
 ## 出力と前回成功基準
 
 既定の出力先は `tools/balance/results/`（gitignore対象）。成功した実行ごとに
@@ -154,8 +208,9 @@ Choiceは全A（option 0）／全B（option 1）の2構成を別集計し、同�
 
 - `forge.md` / `forge.json`: 全レア度・合法な限界突破回数・現在強化値の一覧。
 - `star-efficiency.md` / `star-efficiency.json`: 旅人×記憶×全A/全B×由来の効果量・費用・%/点と旅人別min/max。
+- `star-values.md` / `star-values.json`: 6種類の旅人×構成×由来×星×意味×欄×単位別の採用済み値。
 - `expeditions.md` / `expeditions.json`: 既存Simulationの遠征・節目・容量計測。
-- `current.json`: 3モードのスナップショット、検証状態、日時、生成入力の `tableMetadata.forge`（schemaVersionと3係数）／`tableMetadata.stars`（schemaVersionと倍率・位階係数・鍛錬数値）／`tableMetadata.gear`・`tableMetadata.sets`（装備・通常セットの原本）、既存Gitコミットの `gitRevision`（取得不能時null、比較表示はunknown）。
+- `current.json`: 4モードのスナップショット、検証状態、日時、生成入力の `tableMetadata.forge`（schemaVersionと3係数）／`tableMetadata.stars`（schemaVersionと倍率・位階係数・鍛錬数値）／`tableMetadata.gear`・`tableMetadata.sets`（装備・通常セットの原本）、既存Gitコミットの `gitRevision`（取得不能時null、比較表示はunknown）。
 - `comparison.md`: 現在／前回成功／差／相対差。
 
 検証済み基準は `last-success.json`。`--no-tests` は独立した

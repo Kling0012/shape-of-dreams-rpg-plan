@@ -14,17 +14,17 @@ namespace SodRpg.Core.Game
         public long NestedCallToken { get; internal set; }
         public long AwardEpoch { get; internal set; }
         public float PaidHp { get; internal set; }
-        public float RawAmount => PaidHp * 0.5f;
-        public float DurationSeconds => 4f;
-        public float NewAwardCapRatio => 0.1f;
+        public float RawAmount => PaidHp * (float)(MemoryDamageBalance.Effect_legacy_h_aurena_key2_native_value / 100m);
+        public float DurationSeconds => MemoryDamageBalance.Effect_legacy_h_aurena_key2_native_duration;
+        public float NewAwardCapRatio => (float)(MemoryDamageBalance.Effect_legacy_h_aurena_key2_native_newAwardCap / 100m);
         public string SourceMemory => Source == SacrificeShieldSource.GoldenBurst
             ? "St_Q_GoldenBurst" : "St_Q_Reduction";
     }
 
     /// <summary>
     /// Captures only adapter-verified native payments. This runtime never spends HP or estimates a cost.
-    /// The host passes RawAmount through receiver processors once, then caps the new award at 10%
-    /// before updating the existing C06 Ordinary maximum-remaining pool (15% cap).
+    /// The host passes RawAmount through receiver processors once, then caps the new award
+    /// before updating the existing C06 Ordinary maximum-remaining pool.
     /// </summary>
     public sealed class SacrificeShieldRuntime
     {

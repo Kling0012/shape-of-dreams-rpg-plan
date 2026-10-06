@@ -4985,25 +4985,25 @@ namespace SodRpg.Core.Game
 
         public static readonly IReadOnlyList<TalentDef> Talents = new[]
         {
-            new TalentDef("t.off.edge", Line.Offense, new Txt("鋭刃", "Keen Edge"), Stat.AttackPct, 3, 3),
-            new TalentDef("t.off.mind", Line.Offense, new Txt("魔力", "Arcane Mind"), Stat.PowerPct, 3, 3),
-            new TalentDef("t.off.swift", Line.Offense, new Txt("迅速", "Swiftness"), Stat.AttackSpeedPct, 3, 3),
-            new TalentDef("t.off.vital", Line.Offense, new Txt("急所", "Vital Points"), Stat.CritChancePct, 2, 3),
-            new TalentDef("t.off.key", Line.Offense, new Txt("舞い続ける者", "Ceaseless Dancer"), Power.Momentum, 4,
+            new TalentDef("t.off.edge", Line.Offense, new Txt("鋭刃", "Keen Edge"), Stat.AttackPct, MemoryDamageBalance.Effect_legacy_t_off_edge_stat_perRank, 3),
+            new TalentDef("t.off.mind", Line.Offense, new Txt("魔力", "Arcane Mind"), Stat.PowerPct, MemoryDamageBalance.Effect_legacy_t_off_mind_stat_perRank, 3),
+            new TalentDef("t.off.swift", Line.Offense, new Txt("迅速", "Swiftness"), Stat.AttackSpeedPct, MemoryDamageBalance.Effect_legacy_t_off_swift_stat_perRank, 3),
+            new TalentDef("t.off.vital", Line.Offense, new Txt("急所", "Vital Points"), Stat.CritChancePct, MemoryDamageBalance.Effect_legacy_t_off_vital_stat_perRank, 3),
+            new TalentDef("t.off.key", Line.Offense, new Txt("舞い続ける者", "Ceaseless Dancer"), Power.Momentum, MemoryDamageBalance.Effect_legacy_t_off_key_power_perRank,
                 new Txt("敵を次々に倒す戦い方に向いています。", "Suits fights where you chain kills.")),
 
-            new TalentDef("t.grd.hearty", Line.Guard, new Txt("頑健", "Hearty"), Stat.MaxHealthPct, 4, 3),
-            new TalentDef("t.grd.iron", Line.Guard, new Txt("鉄皮", "Ironhide"), Stat.Armor, 5, 3),
-            new TalentDef("t.grd.regen", Line.Guard, new Txt("再生", "Regrowth"), Stat.HealthRegen, 1, 3),
-            new TalentDef("t.grd.steady", Line.Guard, new Txt("不屈", "Unyielding"), Stat.Tenacity, 8, 3),
-            new TalentDef("t.grd.key", Line.Guard, new Txt("逆襲の構え", "Counterstance"), Power.Retaliation, 20,
+            new TalentDef("t.grd.hearty", Line.Guard, new Txt("頑健", "Hearty"), Stat.MaxHealthPct, MemoryDamageBalance.Effect_legacy_t_grd_hearty_stat_perRank, 3),
+            new TalentDef("t.grd.iron", Line.Guard, new Txt("鉄皮", "Ironhide"), Stat.Armor, MemoryDamageBalance.Effect_legacy_t_grd_iron_stat_perRank, 3),
+            new TalentDef("t.grd.regen", Line.Guard, new Txt("再生", "Regrowth"), Stat.HealthRegen, MemoryDamageBalance.Effect_legacy_t_grd_regen_stat_perRank, 3),
+            new TalentDef("t.grd.steady", Line.Guard, new Txt("不屈", "Unyielding"), Stat.Tenacity, MemoryDamageBalance.Effect_legacy_t_grd_steady_stat_perRank, 3),
+            new TalentDef("t.grd.key", Line.Guard, new Txt("逆襲の構え", "Counterstance"), Power.Retaliation, MemoryDamageBalance.Effect_legacy_t_grd_key_power_perRank,
                 new Txt("敵の攻撃を受け止めて反撃する戦い方に向いています。", "Suits a tank that strikes back.")),
 
-            new TalentDef("t.res.focus", Line.Resonance, new Txt("集中", "Focus"), Stat.Haste, 5, 3),
-            new TalentDef("t.res.light", Line.Resonance, new Txt("軽歩", "Lightstep"), Stat.MoveSpeedPct, 3, 3),
-            new TalentDef("t.res.tune", Line.Resonance, new Txt("共振", "Attunement"), Stat.AttackPct, 2, 3),
-            new TalentDef("t.res.ward", Line.Resonance, new Txt("守護", "Warding"), Stat.MaxHealthFlat, 12, 3),
-            new TalentDef("t.res.key", Line.Resonance, new Txt("共鳴の環", "Ring of Resonance"), Power.Resonance, 8,
+            new TalentDef("t.res.focus", Line.Resonance, new Txt("集中", "Focus"), Stat.Haste, MemoryDamageBalance.Effect_legacy_t_res_focus_stat_perRank, 3),
+            new TalentDef("t.res.light", Line.Resonance, new Txt("軽歩", "Lightstep"), Stat.MoveSpeedPct, MemoryDamageBalance.Effect_legacy_t_res_light_stat_perRank, 3),
+            new TalentDef("t.res.tune", Line.Resonance, new Txt("共振", "Attunement"), Stat.AttackPct, MemoryDamageBalance.Effect_legacy_t_res_tune_stat_perRank, 3),
+            new TalentDef("t.res.ward", Line.Resonance, new Txt("守護", "Warding"), Stat.MaxHealthFlat, MemoryDamageBalance.Effect_legacy_t_res_ward_stat_perRank, 3),
+            new TalentDef("t.res.key", Line.Resonance, new Txt("共鳴の環", "Ring of Resonance"), Power.Resonance, MemoryDamageBalance.Effect_legacy_t_res_key_power_perRank,
                 new Txt("味方の近くで戦うほど活きます。", "Best when fighting close to allies.")),
         };
 

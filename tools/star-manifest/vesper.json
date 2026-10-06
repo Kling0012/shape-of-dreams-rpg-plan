@@ -17,7 +17,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_Resolve",
-      "value": 1,
+      "valueRef": "vesper.mem.resolve.c1.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -55,7 +55,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_Resolve",
-      "value": 1,
+      "valueRef": "vesper.mem.resolve.c1.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -95,7 +95,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_Resolve",
-      "value": 1,
+      "valueRef": "vesper.mem.resolve.c1.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -134,7 +134,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_Resolve",
-      "value": 1,
+      "valueRef": "vesper.mem.resolve.c1.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -173,7 +173,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_Resolve",
-      "value": 1,
+      "valueRef": "vesper.mem.resolve.c1.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -212,7 +212,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_Resolve",
-      "value": 1,
+      "valueRef": "vesper.mem.resolve.c1.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -270,7 +270,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Sap",
-        "value": 3,
+        "value": {
+          "valueRef": "vesper.mem.resolve.c1.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -322,7 +324,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Wound",
-        "value": 12,
+        "value": {
+          "valueRef": "vesper.mem.resolve.c1.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -369,7 +373,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_D_Resolve",
-          "value": 10,
+          "valueRef": "vesper.mem.resolve.c1.x/options/0/value",
           "param": "Duration",
           "receiver": null,
           "target": {
@@ -385,7 +389,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_D_Resolve",
-          "value": 3,
+          "valueRef": "vesper.mem.resolve.c1.x/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -425,7 +429,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_Resolve",
-      "value": 5,
+      "valueRef": "vesper.mem.resolve.c1.s1/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -462,7 +466,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_Resolve",
-      "value": 5,
+      "valueRef": "vesper.mem.resolve.c1.s2/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -499,7 +503,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_Resolve",
-      "value": 5,
+      "valueRef": "vesper.mem.resolve.c1.s3/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -538,7 +542,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_D_Resolve",
-      "value": 1,
+      "valueRef": "vesper.mem.resolve.c1.s4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -577,7 +581,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_D_Resolve",
-      "value": 1,
+      "valueRef": "vesper.mem.resolve.c1.s5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -616,7 +620,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_D_Resolve",
-      "value": 1,
+      "valueRef": "vesper.mem.resolve.c1.s6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -654,7 +658,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_Resolve",
-      "value": 1,
+      "valueRef": "vesper.mem.resolve.c2.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -692,7 +696,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_Resolve",
-      "value": 1,
+      "valueRef": "vesper.mem.resolve.c2.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -731,7 +735,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_Resolve",
-      "value": 1,
+      "valueRef": "vesper.mem.resolve.c2.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -769,7 +773,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_Resolve",
-      "value": 1,
+      "valueRef": "vesper.mem.resolve.c2.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -807,7 +811,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_Resolve",
-      "value": 1,
+      "valueRef": "vesper.mem.resolve.c2.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -846,7 +850,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_Resolve",
-      "value": 1,
+      "valueRef": "vesper.mem.resolve.c2.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -902,7 +906,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Burst",
-        "value": 25,
+        "value": {
+          "valueRef": "vesper.mem.resolve.c2.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -952,7 +958,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Element",
-        "value": 50,
+        "value": {
+          "valueRef": "vesper.mem.resolve.c2.n2/gimmick/value"
+        },
         "arg": 2,
         "cooldown": 0,
         "target": null
@@ -999,7 +1007,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_D_Resolve",
-          "value": 10,
+          "valueRef": "vesper.mem.resolve.c2.x/options/0/value",
           "param": "Radius",
           "receiver": null,
           "target": {
@@ -1015,7 +1023,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_D_Resolve",
-          "value": 3,
+          "valueRef": "vesper.mem.resolve.c2.x/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -1055,7 +1063,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_Resolve",
-      "value": 5,
+      "valueRef": "vesper.mem.resolve.c2.s1/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -1092,7 +1100,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_Resolve",
-      "value": 5,
+      "valueRef": "vesper.mem.resolve.c2.s2/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -1129,7 +1137,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_Resolve",
-      "value": 5,
+      "valueRef": "vesper.mem.resolve.c2.s3/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -1168,7 +1176,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_D_Resolve",
-      "value": 1,
+      "valueRef": "vesper.mem.resolve.c2.s4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -1207,7 +1215,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_D_Resolve",
-      "value": 1,
+      "valueRef": "vesper.mem.resolve.c2.s5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -1246,7 +1254,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_D_Resolve",
-      "value": 1,
+      "valueRef": "vesper.mem.resolve.c2.s6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -1283,7 +1291,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_Resolve",
-      "value": 1,
+      "valueRef": "vesper.mem.resolve.c3.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -1321,7 +1329,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_Resolve",
-      "value": 1,
+      "valueRef": "vesper.mem.resolve.c3.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -1359,7 +1367,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_Resolve",
-      "value": 1,
+      "valueRef": "vesper.mem.resolve.c3.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -1397,7 +1405,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_Resolve",
-      "value": 1,
+      "valueRef": "vesper.mem.resolve.c3.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -1435,7 +1443,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_Resolve",
-      "value": 1,
+      "valueRef": "vesper.mem.resolve.c3.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -1474,7 +1482,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_Resolve",
-      "value": 1,
+      "valueRef": "vesper.mem.resolve.c3.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -1530,7 +1538,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Primed",
-        "value": 20,
+        "value": {
+          "valueRef": "vesper.mem.resolve.c3.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -1581,7 +1591,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Echo",
-        "value": 12,
+        "value": {
+          "valueRef": "vesper.mem.resolve.c3.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -1628,7 +1640,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_D_Resolve",
-          "value": 10,
+          "valueRef": "vesper.mem.resolve.c3.x/options/0/value",
           "param": "Duration",
           "receiver": null,
           "target": {
@@ -1644,7 +1656,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_D_Resolve",
-          "value": 3,
+          "valueRef": "vesper.mem.resolve.c3.x/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -1684,7 +1696,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_Resolve",
-      "value": 5,
+      "valueRef": "vesper.mem.resolve.c3.s1/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -1721,7 +1733,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_Resolve",
-      "value": 5,
+      "valueRef": "vesper.mem.resolve.c3.s2/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -1758,7 +1770,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_Resolve",
-      "value": 5,
+      "valueRef": "vesper.mem.resolve.c3.s3/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -1797,7 +1809,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_D_Resolve",
-      "value": 1,
+      "valueRef": "vesper.mem.resolve.c3.s4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -1836,7 +1848,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_D_Resolve",
-      "value": 1,
+      "valueRef": "vesper.mem.resolve.c3.s5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -1875,7 +1887,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_D_Resolve",
-      "value": 1,
+      "valueRef": "vesper.mem.resolve.c3.s6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -1912,7 +1924,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_Resolve",
-      "value": 1,
+      "valueRef": "vesper.mem.resolve.c4.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -1950,7 +1962,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_Resolve",
-      "value": 1,
+      "valueRef": "vesper.mem.resolve.c4.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -1990,7 +2002,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_Resolve",
-      "value": 1,
+      "valueRef": "vesper.mem.resolve.c4.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -2029,7 +2041,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_Resolve",
-      "value": 1,
+      "valueRef": "vesper.mem.resolve.c4.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -2068,7 +2080,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_Resolve",
-      "value": 1,
+      "valueRef": "vesper.mem.resolve.c4.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -2107,7 +2119,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_Resolve",
-      "value": 1,
+      "valueRef": "vesper.mem.resolve.c4.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -2162,7 +2174,9 @@
       "gimmick": {
         "trigger": "OnCrit",
         "effect": "Element",
-        "value": 40,
+        "value": {
+          "valueRef": "vesper.mem.resolve.c4.n1/gimmick/value"
+        },
         "arg": 2,
         "cooldown": 0,
         "target": null
@@ -2214,7 +2228,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "ElementEdge",
-        "value": 5,
+        "value": {
+          "valueRef": "vesper.mem.resolve.c4.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -2261,7 +2277,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_D_Resolve",
-          "value": 10,
+          "valueRef": "vesper.mem.resolve.c4.x/options/0/value",
           "param": "Radius",
           "receiver": null,
           "target": {
@@ -2277,7 +2293,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_D_Resolve",
-          "value": 3,
+          "valueRef": "vesper.mem.resolve.c4.x/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -2315,7 +2331,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_Resolve",
-      "value": 5,
+      "valueRef": "vesper.mem.resolve.c4.s1/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -2350,7 +2366,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_Resolve",
-      "value": 5,
+      "valueRef": "vesper.mem.resolve.c4.s2/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -2385,7 +2401,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_Resolve",
-      "value": 5,
+      "valueRef": "vesper.mem.resolve.c4.s3/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -2424,7 +2440,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_D_Resolve",
-      "value": 1,
+      "valueRef": "vesper.mem.resolve.c4.s4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -2463,7 +2479,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_D_Resolve",
-      "value": 1,
+      "valueRef": "vesper.mem.resolve.c4.s5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -2502,7 +2518,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_D_Resolve",
-      "value": 1,
+      "valueRef": "vesper.mem.resolve.c4.s6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -2539,7 +2555,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_CruelSun",
-      "value": 1,
+      "valueRef": "vesper.mem.cruel-sun.c1.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -2577,7 +2593,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_CruelSun",
-      "value": 1,
+      "valueRef": "vesper.mem.cruel-sun.c1.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -2617,7 +2633,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_CruelSun",
-      "value": 1,
+      "valueRef": "vesper.mem.cruel-sun.c1.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -2656,7 +2672,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_Q_CruelSun",
-      "value": 1,
+      "valueRef": "vesper.mem.cruel-sun.c1.e4/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -2692,7 +2708,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_Q_CruelSun",
-      "value": 1,
+      "valueRef": "vesper.mem.cruel-sun.c1.e5/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -2728,7 +2744,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_Q_CruelSun",
-      "value": 1,
+      "valueRef": "vesper.mem.cruel-sun.c1.e6/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -2783,7 +2799,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Wound",
-        "value": 12,
+        "value": {
+          "valueRef": "vesper.mem.cruel-sun.c1.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -2835,7 +2853,9 @@
       "gimmick": {
         "trigger": "OnUse",
         "effect": "Primed",
-        "value": 20,
+        "value": {
+          "valueRef": "vesper.mem.cruel-sun.c1.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -2883,7 +2903,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_Q_CruelSun",
-          "value": 10,
+          "valueRef": "vesper.mem.cruel-sun.c1.x/options/0/value",
           "param": "Duration",
           "receiver": null,
           "target": {
@@ -2899,7 +2919,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_Q_CruelSun",
-          "value": 3,
+          "valueRef": "vesper.mem.cruel-sun.c1.x/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -2939,7 +2959,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_CruelSun",
-      "value": 5,
+      "valueRef": "vesper.mem.cruel-sun.c1.s1/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -2976,7 +2996,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_CruelSun",
-      "value": 5,
+      "valueRef": "vesper.mem.cruel-sun.c1.s2/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -3013,7 +3033,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_CruelSun",
-      "value": 5,
+      "valueRef": "vesper.mem.cruel-sun.c1.s3/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -3052,7 +3072,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_CruelSun",
-      "value": 1,
+      "valueRef": "vesper.mem.cruel-sun.c1.s4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -3091,7 +3111,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_CruelSun",
-      "value": 1,
+      "valueRef": "vesper.mem.cruel-sun.c1.s5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -3130,7 +3150,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_CruelSun",
-      "value": 1,
+      "valueRef": "vesper.mem.cruel-sun.c1.s6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -3168,7 +3188,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_CruelSun",
-      "value": 1,
+      "valueRef": "vesper.mem.cruel-sun.c2.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -3206,7 +3226,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_CruelSun",
-      "value": 1,
+      "valueRef": "vesper.mem.cruel-sun.c2.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -3245,7 +3265,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_CruelSun",
-      "value": 1,
+      "valueRef": "vesper.mem.cruel-sun.c2.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -3283,7 +3303,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_Q_CruelSun",
-      "value": 1,
+      "valueRef": "vesper.mem.cruel-sun.c2.e4/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -3318,7 +3338,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_Q_CruelSun",
-      "value": 1,
+      "valueRef": "vesper.mem.cruel-sun.c2.e5/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -3354,7 +3374,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_Q_CruelSun",
-      "value": 1,
+      "valueRef": "vesper.mem.cruel-sun.c2.e6/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -3407,7 +3427,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Heal",
-        "value": 1,
+        "value": {
+          "valueRef": "vesper.mem.cruel-sun.c2.n1/gimmick/value"
+        },
         "arg": 1,
         "cooldown": 0,
         "target": null
@@ -3457,7 +3479,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Element",
-        "value": 50,
+        "value": {
+          "valueRef": "vesper.mem.cruel-sun.c2.n2/gimmick/value"
+        },
         "arg": 2,
         "cooldown": 0,
         "target": null
@@ -3504,7 +3528,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_Q_CruelSun",
-          "value": 10,
+          "valueRef": "vesper.mem.cruel-sun.c2.x/options/0/value",
           "param": "Radius",
           "receiver": null,
           "target": {
@@ -3520,7 +3544,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_Q_CruelSun",
-          "value": 3,
+          "valueRef": "vesper.mem.cruel-sun.c2.x/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -3560,7 +3584,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_CruelSun",
-      "value": 5,
+      "valueRef": "vesper.mem.cruel-sun.c2.s1/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -3597,7 +3621,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_CruelSun",
-      "value": 5,
+      "valueRef": "vesper.mem.cruel-sun.c2.s2/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -3634,7 +3658,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_CruelSun",
-      "value": 5,
+      "valueRef": "vesper.mem.cruel-sun.c2.s3/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -3673,7 +3697,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_CruelSun",
-      "value": 1,
+      "valueRef": "vesper.mem.cruel-sun.c2.s4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -3712,7 +3736,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_CruelSun",
-      "value": 1,
+      "valueRef": "vesper.mem.cruel-sun.c2.s5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -3751,7 +3775,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_CruelSun",
-      "value": 1,
+      "valueRef": "vesper.mem.cruel-sun.c2.s6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -3788,7 +3812,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_CruelSun",
-      "value": 1,
+      "valueRef": "vesper.mem.cruel-sun.c3.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -3826,7 +3850,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_CruelSun",
-      "value": 1,
+      "valueRef": "vesper.mem.cruel-sun.c3.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -3864,7 +3888,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_CruelSun",
-      "value": 1,
+      "valueRef": "vesper.mem.cruel-sun.c3.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -3902,7 +3926,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_Q_CruelSun",
-      "value": 1,
+      "valueRef": "vesper.mem.cruel-sun.c3.e4/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -3937,7 +3961,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_Q_CruelSun",
-      "value": 1,
+      "valueRef": "vesper.mem.cruel-sun.c3.e5/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -3973,7 +3997,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_Q_CruelSun",
-      "value": 1,
+      "valueRef": "vesper.mem.cruel-sun.c3.e6/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -4026,7 +4050,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Sap",
-        "value": 3,
+        "value": {
+          "valueRef": "vesper.mem.cruel-sun.c3.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -4076,7 +4102,9 @@
       "gimmick": {
         "trigger": "OnUse",
         "effect": "Shield",
-        "value": 2,
+        "value": {
+          "valueRef": "vesper.mem.cruel-sun.c3.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -4124,7 +4152,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_Q_CruelSun",
-          "value": 10,
+          "valueRef": "vesper.mem.cruel-sun.c3.x/options/0/value",
           "param": "Duration",
           "receiver": null,
           "target": {
@@ -4140,7 +4168,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_Q_CruelSun",
-          "value": 3,
+          "valueRef": "vesper.mem.cruel-sun.c3.x/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -4180,7 +4208,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_CruelSun",
-      "value": 5,
+      "valueRef": "vesper.mem.cruel-sun.c3.s1/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -4217,7 +4245,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_CruelSun",
-      "value": 5,
+      "valueRef": "vesper.mem.cruel-sun.c3.s2/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -4254,7 +4282,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_CruelSun",
-      "value": 5,
+      "valueRef": "vesper.mem.cruel-sun.c3.s3/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -4293,7 +4321,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_CruelSun",
-      "value": 1,
+      "valueRef": "vesper.mem.cruel-sun.c3.s4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -4332,7 +4360,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_CruelSun",
-      "value": 1,
+      "valueRef": "vesper.mem.cruel-sun.c3.s5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -4371,7 +4399,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_CruelSun",
-      "value": 1,
+      "valueRef": "vesper.mem.cruel-sun.c3.s6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -4409,7 +4437,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_CruelSun",
-      "value": 1,
+      "valueRef": "vesper.mem.cruel-sun.c4.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -4447,7 +4475,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_CruelSun",
-      "value": 1,
+      "valueRef": "vesper.mem.cruel-sun.c4.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -4486,7 +4514,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_CruelSun",
-      "value": 1,
+      "valueRef": "vesper.mem.cruel-sun.c4.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -4524,7 +4552,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_Q_CruelSun",
-      "value": 1,
+      "valueRef": "vesper.mem.cruel-sun.c4.e4/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -4559,7 +4587,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_Q_CruelSun",
-      "value": 1,
+      "valueRef": "vesper.mem.cruel-sun.c4.e5/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -4595,7 +4623,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_Q_CruelSun",
-      "value": 1,
+      "valueRef": "vesper.mem.cruel-sun.c4.e6/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -4645,7 +4673,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "ElementEdge",
-        "value": 5,
+        "value": {
+          "valueRef": "vesper.mem.cruel-sun.c4.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -4695,7 +4725,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "RechargeOther",
-        "value": 3,
+        "value": {
+          "valueRef": "vesper.mem.cruel-sun.c4.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -4742,7 +4774,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_Q_CruelSun",
-          "value": 10,
+          "valueRef": "vesper.mem.cruel-sun.c4.x/options/0/value",
           "param": "Radius",
           "receiver": null,
           "target": {
@@ -4758,7 +4790,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_Q_CruelSun",
-          "value": 3,
+          "valueRef": "vesper.mem.cruel-sun.c4.x/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -4796,7 +4828,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_CruelSun",
-      "value": 5,
+      "valueRef": "vesper.mem.cruel-sun.c4.s1/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -4831,7 +4863,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_CruelSun",
-      "value": 5,
+      "valueRef": "vesper.mem.cruel-sun.c4.s2/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -4866,7 +4898,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_CruelSun",
-      "value": 5,
+      "valueRef": "vesper.mem.cruel-sun.c4.s3/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -4905,7 +4937,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_CruelSun",
-      "value": 1,
+      "valueRef": "vesper.mem.cruel-sun.c4.s4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -4944,7 +4976,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_CruelSun",
-      "value": 1,
+      "valueRef": "vesper.mem.cruel-sun.c4.s5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -4983,7 +5015,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_CruelSun",
-      "value": 1,
+      "valueRef": "vesper.mem.cruel-sun.c4.s6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -5020,7 +5052,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_SanctuaryOfEl",
-      "value": 1,
+      "valueRef": "vesper.mem.sanctuary.c1.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -5058,7 +5090,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_SanctuaryOfEl",
-      "value": 1,
+      "valueRef": "vesper.mem.sanctuary.c1.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -5098,7 +5130,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_SanctuaryOfEl",
-      "value": 1,
+      "valueRef": "vesper.mem.sanctuary.c1.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -5137,7 +5169,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_R_SanctuaryOfEl",
-      "value": 1,
+      "valueRef": "vesper.mem.sanctuary.c1.e4/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -5173,7 +5205,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_R_SanctuaryOfEl",
-      "value": 1,
+      "valueRef": "vesper.mem.sanctuary.c1.e5/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -5209,7 +5241,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_R_SanctuaryOfEl",
-      "value": 1,
+      "valueRef": "vesper.mem.sanctuary.c1.e6/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -5264,7 +5296,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Sap",
-        "value": 3,
+        "value": {
+          "valueRef": "vesper.mem.sanctuary.c1.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -5316,7 +5350,9 @@
       "gimmick": {
         "trigger": "OnUse",
         "effect": "Shield",
-        "value": 2,
+        "value": {
+          "valueRef": "vesper.mem.sanctuary.c1.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -5364,7 +5400,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_R_SanctuaryOfEl",
-          "value": 10,
+          "valueRef": "vesper.mem.sanctuary.c1.x/options/0/value",
           "param": "Duration",
           "receiver": null,
           "target": {
@@ -5380,7 +5416,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_R_SanctuaryOfEl",
-          "value": 3,
+          "valueRef": "vesper.mem.sanctuary.c1.x/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -5420,7 +5456,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_SanctuaryOfEl",
-      "value": 5,
+      "valueRef": "vesper.mem.sanctuary.c1.s1/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -5457,7 +5493,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_SanctuaryOfEl",
-      "value": 5,
+      "valueRef": "vesper.mem.sanctuary.c1.s2/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -5494,7 +5530,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_SanctuaryOfEl",
-      "value": 5,
+      "valueRef": "vesper.mem.sanctuary.c1.s3/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -5533,7 +5569,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_SanctuaryOfEl",
-      "value": 1,
+      "valueRef": "vesper.mem.sanctuary.c1.s4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -5572,7 +5608,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_SanctuaryOfEl",
-      "value": 1,
+      "valueRef": "vesper.mem.sanctuary.c1.s5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -5611,7 +5647,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_SanctuaryOfEl",
-      "value": 1,
+      "valueRef": "vesper.mem.sanctuary.c1.s6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -5649,7 +5685,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_SanctuaryOfEl",
-      "value": 1,
+      "valueRef": "vesper.mem.sanctuary.c2.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -5687,7 +5723,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_SanctuaryOfEl",
-      "value": 1,
+      "valueRef": "vesper.mem.sanctuary.c2.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -5726,7 +5762,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_SanctuaryOfEl",
-      "value": 1,
+      "valueRef": "vesper.mem.sanctuary.c2.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -5764,7 +5800,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_R_SanctuaryOfEl",
-      "value": 1,
+      "valueRef": "vesper.mem.sanctuary.c2.e4/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -5799,7 +5835,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_R_SanctuaryOfEl",
-      "value": 1,
+      "valueRef": "vesper.mem.sanctuary.c2.e5/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -5835,7 +5871,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_R_SanctuaryOfEl",
-      "value": 1,
+      "valueRef": "vesper.mem.sanctuary.c2.e6/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -5888,7 +5924,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Heal",
-        "value": 1,
+        "value": {
+          "valueRef": "vesper.mem.sanctuary.c2.n1/gimmick/value"
+        },
         "arg": 1,
         "cooldown": 0,
         "target": null
@@ -5938,7 +5976,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Element",
-        "value": 50,
+        "value": {
+          "valueRef": "vesper.mem.sanctuary.c2.n2/gimmick/value"
+        },
         "arg": 2,
         "cooldown": 0,
         "target": null
@@ -5985,7 +6025,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_R_SanctuaryOfEl",
-          "value": 10,
+          "valueRef": "vesper.mem.sanctuary.c2.x/options/0/value",
           "param": "Radius",
           "receiver": null,
           "target": {
@@ -6001,7 +6041,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_R_SanctuaryOfEl",
-          "value": 3,
+          "valueRef": "vesper.mem.sanctuary.c2.x/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -6041,7 +6081,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_SanctuaryOfEl",
-      "value": 5,
+      "valueRef": "vesper.mem.sanctuary.c2.s1/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -6078,7 +6118,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_SanctuaryOfEl",
-      "value": 5,
+      "valueRef": "vesper.mem.sanctuary.c2.s2/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -6115,7 +6155,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_SanctuaryOfEl",
-      "value": 5,
+      "valueRef": "vesper.mem.sanctuary.c2.s3/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -6154,7 +6194,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_SanctuaryOfEl",
-      "value": 1,
+      "valueRef": "vesper.mem.sanctuary.c2.s4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -6193,7 +6233,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_SanctuaryOfEl",
-      "value": 1,
+      "valueRef": "vesper.mem.sanctuary.c2.s5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -6232,7 +6272,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_SanctuaryOfEl",
-      "value": 1,
+      "valueRef": "vesper.mem.sanctuary.c2.s6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -6269,7 +6309,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_SanctuaryOfEl",
-      "value": 1,
+      "valueRef": "vesper.mem.sanctuary.c3.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -6307,7 +6347,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_SanctuaryOfEl",
-      "value": 1,
+      "valueRef": "vesper.mem.sanctuary.c3.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -6345,7 +6385,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_SanctuaryOfEl",
-      "value": 1,
+      "valueRef": "vesper.mem.sanctuary.c3.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -6383,7 +6423,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_R_SanctuaryOfEl",
-      "value": 1,
+      "valueRef": "vesper.mem.sanctuary.c3.e4/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -6418,7 +6458,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_R_SanctuaryOfEl",
-      "value": 1,
+      "valueRef": "vesper.mem.sanctuary.c3.e5/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -6454,7 +6494,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_R_SanctuaryOfEl",
-      "value": 1,
+      "valueRef": "vesper.mem.sanctuary.c3.e6/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -6507,7 +6547,9 @@
       "gimmick": {
         "trigger": "OnUse",
         "effect": "Primed",
-        "value": 25,
+        "value": {
+          "valueRef": "vesper.mem.sanctuary.c3.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -6558,7 +6600,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Wound",
-        "value": 12,
+        "value": {
+          "valueRef": "vesper.mem.sanctuary.c3.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -6605,7 +6649,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_R_SanctuaryOfEl",
-          "value": 10,
+          "valueRef": "vesper.mem.sanctuary.c3.x/options/0/value",
           "param": "Duration",
           "receiver": null,
           "target": {
@@ -6621,7 +6665,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_R_SanctuaryOfEl",
-          "value": 3,
+          "valueRef": "vesper.mem.sanctuary.c3.x/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -6661,7 +6705,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_SanctuaryOfEl",
-      "value": 5,
+      "valueRef": "vesper.mem.sanctuary.c3.s1/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -6698,7 +6742,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_SanctuaryOfEl",
-      "value": 5,
+      "valueRef": "vesper.mem.sanctuary.c3.s2/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -6735,7 +6779,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_SanctuaryOfEl",
-      "value": 5,
+      "valueRef": "vesper.mem.sanctuary.c3.s3/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -6774,7 +6818,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_SanctuaryOfEl",
-      "value": 1,
+      "valueRef": "vesper.mem.sanctuary.c3.s4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -6813,7 +6857,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_SanctuaryOfEl",
-      "value": 1,
+      "valueRef": "vesper.mem.sanctuary.c3.s5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -6852,7 +6896,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_SanctuaryOfEl",
-      "value": 1,
+      "valueRef": "vesper.mem.sanctuary.c3.s6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -6890,7 +6934,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_SanctuaryOfEl",
-      "value": 1,
+      "valueRef": "vesper.mem.sanctuary.c4.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -6928,7 +6972,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_SanctuaryOfEl",
-      "value": 1,
+      "valueRef": "vesper.mem.sanctuary.c4.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -6967,7 +7011,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_SanctuaryOfEl",
-      "value": 1,
+      "valueRef": "vesper.mem.sanctuary.c4.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -7005,7 +7049,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_R_SanctuaryOfEl",
-      "value": 1,
+      "valueRef": "vesper.mem.sanctuary.c4.e4/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -7040,7 +7084,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_R_SanctuaryOfEl",
-      "value": 1,
+      "valueRef": "vesper.mem.sanctuary.c4.e5/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -7076,7 +7120,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_R_SanctuaryOfEl",
-      "value": 1,
+      "valueRef": "vesper.mem.sanctuary.c4.e6/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -7129,7 +7173,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Burst",
-        "value": 25,
+        "value": {
+          "valueRef": "vesper.mem.sanctuary.c4.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -7179,7 +7225,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "ElementEdge",
-        "value": 5,
+        "value": {
+          "valueRef": "vesper.mem.sanctuary.c4.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -7226,7 +7274,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_R_SanctuaryOfEl",
-          "value": 10,
+          "valueRef": "vesper.mem.sanctuary.c4.x/options/0/value",
           "param": "Radius",
           "receiver": null,
           "target": {
@@ -7242,7 +7290,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_R_SanctuaryOfEl",
-          "value": 3,
+          "valueRef": "vesper.mem.sanctuary.c4.x/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -7282,7 +7330,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_SanctuaryOfEl",
-      "value": 5,
+      "valueRef": "vesper.mem.sanctuary.c4.s1/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -7319,7 +7367,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_SanctuaryOfEl",
-      "value": 5,
+      "valueRef": "vesper.mem.sanctuary.c4.s2/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -7356,7 +7404,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_SanctuaryOfEl",
-      "value": 5,
+      "valueRef": "vesper.mem.sanctuary.c4.s3/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -7395,7 +7443,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_SanctuaryOfEl",
-      "value": 1,
+      "valueRef": "vesper.mem.sanctuary.c4.s4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -7434,7 +7482,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_SanctuaryOfEl",
-      "value": 1,
+      "valueRef": "vesper.mem.sanctuary.c4.s5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -7473,7 +7521,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_SanctuaryOfEl",
-      "value": 1,
+      "valueRef": "vesper.mem.sanctuary.c4.s6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -7510,7 +7558,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.25,
+      "valueRef": "vesper.mem.charge.c1.e1/value",
       "param": null,
       "receiver": "St_M_Charge",
       "target": {
@@ -7549,7 +7597,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.25,
+      "valueRef": "vesper.mem.charge.c1.e2/value",
       "param": null,
       "receiver": "St_M_Charge",
       "target": {
@@ -7590,7 +7638,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.25,
+      "valueRef": "vesper.mem.charge.c1.e3/value",
       "param": null,
       "receiver": "St_M_Charge",
       "target": {
@@ -7630,7 +7678,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.25,
+      "valueRef": "vesper.mem.charge.c1.e4/value",
       "param": null,
       "receiver": "St_M_Charge",
       "target": {
@@ -7670,7 +7718,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.25,
+      "valueRef": "vesper.mem.charge.c1.e5/value",
       "param": null,
       "receiver": "St_M_Charge",
       "target": {
@@ -7710,7 +7758,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.25,
+      "valueRef": "vesper.mem.charge.c1.e6/value",
       "param": null,
       "receiver": "St_M_Charge",
       "target": {
@@ -7769,7 +7817,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Recharge",
-        "value": 3,
+        "value": {
+          "valueRef": "vesper.mem.charge.c1.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": "St_M_Charge"
@@ -7825,7 +7875,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Recharge",
-        "value": 4,
+        "value": {
+          "valueRef": "vesper.mem.charge.c1.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": "St_M_Charge"
@@ -7873,7 +7925,7 @@
         {
           "kind": "GimmickBoost",
           "memory": null,
-          "value": 0.5,
+          "valueRef": "vesper.mem.charge.c1.x/options/0/value",
           "param": null,
           "receiver": "St_M_Charge",
           "target": {
@@ -7896,7 +7948,9 @@
           "gimmick": {
             "trigger": "OnUse",
             "effect": "Recharge",
-            "value": 2,
+            "value": {
+              "valueRef": "vesper.mem.charge.c1.x/options/1/gimmick/value"
+            },
             "arg": 0,
             "cooldown": 0,
             "target": "St_M_Charge"
@@ -7937,7 +7991,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.25,
+      "valueRef": "vesper.mem.charge.c1.s1/value",
       "param": null,
       "receiver": "St_M_Charge",
       "target": {
@@ -7977,7 +8031,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.25,
+      "valueRef": "vesper.mem.charge.c1.s2/value",
       "param": null,
       "receiver": "St_M_Charge",
       "target": {
@@ -8017,7 +8071,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.25,
+      "valueRef": "vesper.mem.charge.c1.s3/value",
       "param": null,
       "receiver": "St_M_Charge",
       "target": {
@@ -8057,7 +8111,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.25,
+      "valueRef": "vesper.mem.charge.c1.s4/value",
       "param": null,
       "receiver": "St_M_Charge",
       "target": {
@@ -8097,7 +8151,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.25,
+      "valueRef": "vesper.mem.charge.c1.s5/value",
       "param": null,
       "receiver": "St_M_Charge",
       "target": {
@@ -8137,7 +8191,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.25,
+      "valueRef": "vesper.mem.charge.c1.s6/value",
       "param": null,
       "receiver": "St_M_Charge",
       "target": {
@@ -8176,7 +8230,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.25,
+      "valueRef": "vesper.mem.charge.c2.e1/value",
       "param": null,
       "receiver": "St_M_Charge",
       "target": {
@@ -8215,7 +8269,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.25,
+      "valueRef": "vesper.mem.charge.c2.e2/value",
       "param": null,
       "receiver": "St_M_Charge",
       "target": {
@@ -8255,7 +8309,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.25,
+      "valueRef": "vesper.mem.charge.c2.e3/value",
       "param": null,
       "receiver": "St_M_Charge",
       "target": {
@@ -8294,7 +8348,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.25,
+      "valueRef": "vesper.mem.charge.c2.e4/value",
       "param": null,
       "receiver": "St_M_Charge",
       "target": {
@@ -8333,7 +8387,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.25,
+      "valueRef": "vesper.mem.charge.c2.e5/value",
       "param": null,
       "receiver": "St_M_Charge",
       "target": {
@@ -8373,7 +8427,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.25,
+      "valueRef": "vesper.mem.charge.c2.e6/value",
       "param": null,
       "receiver": "St_M_Charge",
       "target": {
@@ -8430,7 +8484,9 @@
       "gimmick": {
         "trigger": "OnUse",
         "effect": "Recharge",
-        "value": 4,
+        "value": {
+          "valueRef": "vesper.mem.charge.c2.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": "St_M_Charge"
@@ -8484,7 +8540,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Recharge",
-        "value": 3,
+        "value": {
+          "valueRef": "vesper.mem.charge.c2.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": "St_M_Charge"
@@ -8532,7 +8590,7 @@
         {
           "kind": "GimmickBoost",
           "memory": null,
-          "value": 0.5,
+          "valueRef": "vesper.mem.charge.c2.x/options/0/value",
           "param": null,
           "receiver": "St_M_Charge",
           "target": {
@@ -8555,7 +8613,9 @@
           "gimmick": {
             "trigger": "OnHit",
             "effect": "Recharge",
-            "value": 2,
+            "value": {
+              "valueRef": "vesper.mem.charge.c2.x/options/1/gimmick/value"
+            },
             "arg": 0,
             "cooldown": 0,
             "target": "St_M_Charge"
@@ -8596,7 +8656,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.25,
+      "valueRef": "vesper.mem.charge.c2.s1/value",
       "param": null,
       "receiver": "St_M_Charge",
       "target": {
@@ -8636,7 +8696,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.25,
+      "valueRef": "vesper.mem.charge.c2.s2/value",
       "param": null,
       "receiver": "St_M_Charge",
       "target": {
@@ -8676,7 +8736,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.25,
+      "valueRef": "vesper.mem.charge.c2.s3/value",
       "param": null,
       "receiver": "St_M_Charge",
       "target": {
@@ -8716,7 +8776,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.25,
+      "valueRef": "vesper.mem.charge.c2.s4/value",
       "param": null,
       "receiver": "St_M_Charge",
       "target": {
@@ -8756,7 +8816,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.25,
+      "valueRef": "vesper.mem.charge.c2.s5/value",
       "param": null,
       "receiver": "St_M_Charge",
       "target": {
@@ -8796,7 +8856,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.25,
+      "valueRef": "vesper.mem.charge.c2.s6/value",
       "param": null,
       "receiver": "St_M_Charge",
       "target": {
@@ -8834,7 +8894,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.25,
+      "valueRef": "vesper.mem.charge.c3.e1/value",
       "param": null,
       "receiver": "St_M_Charge",
       "target": {
@@ -8873,7 +8933,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.25,
+      "valueRef": "vesper.mem.charge.c3.e2/value",
       "param": null,
       "receiver": "St_M_Charge",
       "target": {
@@ -8912,7 +8972,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.25,
+      "valueRef": "vesper.mem.charge.c3.e3/value",
       "param": null,
       "receiver": "St_M_Charge",
       "target": {
@@ -8951,7 +9011,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.25,
+      "valueRef": "vesper.mem.charge.c3.e4/value",
       "param": null,
       "receiver": "St_M_Charge",
       "target": {
@@ -8990,7 +9050,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.25,
+      "valueRef": "vesper.mem.charge.c3.e5/value",
       "param": null,
       "receiver": "St_M_Charge",
       "target": {
@@ -9030,7 +9090,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.25,
+      "valueRef": "vesper.mem.charge.c3.e6/value",
       "param": null,
       "receiver": "St_M_Charge",
       "target": {
@@ -9087,7 +9147,9 @@
       "gimmick": {
         "trigger": "OnCrit",
         "effect": "Recharge",
-        "value": 2,
+        "value": {
+          "valueRef": "vesper.mem.charge.c3.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": "St_M_Charge"
@@ -9141,7 +9203,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Recharge",
-        "value": 3,
+        "value": {
+          "valueRef": "vesper.mem.charge.c3.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": "St_M_Charge"
@@ -9189,7 +9253,7 @@
         {
           "kind": "GimmickBoost",
           "memory": null,
-          "value": 0.5,
+          "valueRef": "vesper.mem.charge.c3.x/options/0/value",
           "param": null,
           "receiver": "St_M_Charge",
           "target": {
@@ -9212,7 +9276,9 @@
           "gimmick": {
             "trigger": "OnHit",
             "effect": "Recharge",
-            "value": 1,
+            "value": {
+              "valueRef": "vesper.mem.charge.c3.x/options/1/gimmick/value"
+            },
             "arg": 0,
             "cooldown": 0,
             "target": "St_M_Charge"
@@ -9253,7 +9319,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.25,
+      "valueRef": "vesper.mem.charge.c3.s1/value",
       "param": null,
       "receiver": "St_M_Charge",
       "target": {
@@ -9293,7 +9359,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.25,
+      "valueRef": "vesper.mem.charge.c3.s2/value",
       "param": null,
       "receiver": "St_M_Charge",
       "target": {
@@ -9333,7 +9399,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.25,
+      "valueRef": "vesper.mem.charge.c3.s3/value",
       "param": null,
       "receiver": "St_M_Charge",
       "target": {
@@ -9373,7 +9439,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.25,
+      "valueRef": "vesper.mem.charge.c3.s4/value",
       "param": null,
       "receiver": "St_M_Charge",
       "target": {
@@ -9413,7 +9479,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.25,
+      "valueRef": "vesper.mem.charge.c3.s5/value",
       "param": null,
       "receiver": "St_M_Charge",
       "target": {
@@ -9453,7 +9519,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.25,
+      "valueRef": "vesper.mem.charge.c3.s6/value",
       "param": null,
       "receiver": "St_M_Charge",
       "target": {
@@ -9491,7 +9557,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.25,
+      "valueRef": "vesper.mem.charge.c4.e1/value",
       "param": null,
       "receiver": "St_M_Charge",
       "target": {
@@ -9530,7 +9596,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.25,
+      "valueRef": "vesper.mem.charge.c4.e2/value",
       "param": null,
       "receiver": "St_M_Charge",
       "target": {
@@ -9571,7 +9637,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.25,
+      "valueRef": "vesper.mem.charge.c4.e3/value",
       "param": null,
       "receiver": "St_M_Charge",
       "target": {
@@ -9611,7 +9677,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.25,
+      "valueRef": "vesper.mem.charge.c4.e4/value",
       "param": null,
       "receiver": "St_M_Charge",
       "target": {
@@ -9651,7 +9717,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.25,
+      "valueRef": "vesper.mem.charge.c4.e5/value",
       "param": null,
       "receiver": "St_M_Charge",
       "target": {
@@ -9691,7 +9757,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.25,
+      "valueRef": "vesper.mem.charge.c4.e6/value",
       "param": null,
       "receiver": "St_M_Charge",
       "target": {
@@ -9750,7 +9816,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Recharge",
-        "value": 3,
+        "value": {
+          "valueRef": "vesper.mem.charge.c4.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": "St_M_Charge"
@@ -9806,7 +9874,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Recharge",
-        "value": 4,
+        "value": {
+          "valueRef": "vesper.mem.charge.c4.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": "St_M_Charge"
@@ -9854,7 +9924,7 @@
         {
           "kind": "GimmickBoost",
           "memory": null,
-          "value": 0.5,
+          "valueRef": "vesper.mem.charge.c4.x/options/0/value",
           "param": null,
           "receiver": "St_M_Charge",
           "target": {
@@ -9877,7 +9947,9 @@
           "gimmick": {
             "trigger": "OnHit",
             "effect": "Recharge",
-            "value": 2,
+            "value": {
+              "valueRef": "vesper.mem.charge.c4.x/options/1/gimmick/value"
+            },
             "arg": 0,
             "cooldown": 0,
             "target": "St_M_Charge"
@@ -9918,7 +9990,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.25,
+      "valueRef": "vesper.mem.charge.c4.s1/value",
       "param": null,
       "receiver": "St_M_Charge",
       "target": {
@@ -9958,7 +10030,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.25,
+      "valueRef": "vesper.mem.charge.c4.s2/value",
       "param": null,
       "receiver": "St_M_Charge",
       "target": {
@@ -9998,7 +10070,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.25,
+      "valueRef": "vesper.mem.charge.c4.s3/value",
       "param": null,
       "receiver": "St_M_Charge",
       "target": {
@@ -10038,7 +10110,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.25,
+      "valueRef": "vesper.mem.charge.c4.s4/value",
       "param": null,
       "receiver": "St_M_Charge",
       "target": {
@@ -10078,7 +10150,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.25,
+      "valueRef": "vesper.mem.charge.c4.s5/value",
       "param": null,
       "receiver": "St_M_Charge",
       "target": {
@@ -10118,7 +10190,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.25,
+      "valueRef": "vesper.mem.charge.c4.s6/value",
       "param": null,
       "receiver": "St_M_Charge",
       "target": {
@@ -10156,7 +10228,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_MercyOfEl",
-      "value": 1,
+      "valueRef": "vesper.mem.mercy.c1.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -10194,7 +10266,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_MercyOfEl",
-      "value": 1,
+      "valueRef": "vesper.mem.mercy.c1.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -10234,7 +10306,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_MercyOfEl",
-      "value": 1,
+      "valueRef": "vesper.mem.mercy.c1.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -10273,7 +10345,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_MercyOfEl",
-      "value": 1,
+      "valueRef": "vesper.mem.mercy.c1.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -10312,7 +10384,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_MercyOfEl",
-      "value": 1,
+      "valueRef": "vesper.mem.mercy.c1.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -10351,7 +10423,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_MercyOfEl",
-      "value": 1,
+      "valueRef": "vesper.mem.mercy.c1.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -10409,7 +10481,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Sap",
-        "value": 3,
+        "value": {
+          "valueRef": "vesper.mem.mercy.c1.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -10461,7 +10535,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Wound",
-        "value": 12,
+        "value": {
+          "valueRef": "vesper.mem.mercy.c1.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -10508,7 +10584,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_D_MercyOfEl",
-          "value": 10,
+          "valueRef": "vesper.mem.mercy.c1.x/options/0/value",
           "param": "Duration",
           "receiver": null,
           "target": {
@@ -10524,7 +10600,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_D_MercyOfEl",
-          "value": 3,
+          "valueRef": "vesper.mem.mercy.c1.x/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -10564,7 +10640,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_MercyOfEl",
-      "value": 5,
+      "valueRef": "vesper.mem.mercy.c1.s1/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -10601,7 +10677,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_MercyOfEl",
-      "value": 5,
+      "valueRef": "vesper.mem.mercy.c1.s2/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -10638,7 +10714,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_MercyOfEl",
-      "value": 5,
+      "valueRef": "vesper.mem.mercy.c1.s3/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -10677,7 +10753,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_D_MercyOfEl",
-      "value": 1,
+      "valueRef": "vesper.mem.mercy.c1.s4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -10716,7 +10792,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_D_MercyOfEl",
-      "value": 1,
+      "valueRef": "vesper.mem.mercy.c1.s5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -10755,7 +10831,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_D_MercyOfEl",
-      "value": 1,
+      "valueRef": "vesper.mem.mercy.c1.s6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -10793,7 +10869,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_MercyOfEl",
-      "value": 1,
+      "valueRef": "vesper.mem.mercy.c2.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -10831,7 +10907,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_MercyOfEl",
-      "value": 1,
+      "valueRef": "vesper.mem.mercy.c2.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -10870,7 +10946,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_MercyOfEl",
-      "value": 1,
+      "valueRef": "vesper.mem.mercy.c2.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -10908,7 +10984,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_MercyOfEl",
-      "value": 1,
+      "valueRef": "vesper.mem.mercy.c2.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -10946,7 +11022,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_MercyOfEl",
-      "value": 1,
+      "valueRef": "vesper.mem.mercy.c2.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -10985,7 +11061,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_MercyOfEl",
-      "value": 1,
+      "valueRef": "vesper.mem.mercy.c2.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -11041,7 +11117,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Burst",
-        "value": 25,
+        "value": {
+          "valueRef": "vesper.mem.mercy.c2.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -11091,7 +11169,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Element",
-        "value": 50,
+        "value": {
+          "valueRef": "vesper.mem.mercy.c2.n2/gimmick/value"
+        },
         "arg": 2,
         "cooldown": 0,
         "target": null
@@ -11138,7 +11218,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_D_MercyOfEl",
-          "value": 10,
+          "valueRef": "vesper.mem.mercy.c2.x/options/0/value",
           "param": "Radius",
           "receiver": null,
           "target": {
@@ -11154,7 +11234,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_D_MercyOfEl",
-          "value": 3,
+          "valueRef": "vesper.mem.mercy.c2.x/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -11194,7 +11274,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_MercyOfEl",
-      "value": 5,
+      "valueRef": "vesper.mem.mercy.c2.s1/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -11231,7 +11311,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_MercyOfEl",
-      "value": 5,
+      "valueRef": "vesper.mem.mercy.c2.s2/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -11268,7 +11348,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_MercyOfEl",
-      "value": 5,
+      "valueRef": "vesper.mem.mercy.c2.s3/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -11307,7 +11387,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_D_MercyOfEl",
-      "value": 1,
+      "valueRef": "vesper.mem.mercy.c2.s4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -11346,7 +11426,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_D_MercyOfEl",
-      "value": 1,
+      "valueRef": "vesper.mem.mercy.c2.s5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -11385,7 +11465,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_D_MercyOfEl",
-      "value": 1,
+      "valueRef": "vesper.mem.mercy.c2.s6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -11422,7 +11502,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_MercyOfEl",
-      "value": 1,
+      "valueRef": "vesper.mem.mercy.c3.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -11460,7 +11540,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_MercyOfEl",
-      "value": 1,
+      "valueRef": "vesper.mem.mercy.c3.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -11498,7 +11578,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_MercyOfEl",
-      "value": 1,
+      "valueRef": "vesper.mem.mercy.c3.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -11536,7 +11616,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_MercyOfEl",
-      "value": 1,
+      "valueRef": "vesper.mem.mercy.c3.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -11574,7 +11654,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_MercyOfEl",
-      "value": 1,
+      "valueRef": "vesper.mem.mercy.c3.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -11613,7 +11693,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_MercyOfEl",
-      "value": 1,
+      "valueRef": "vesper.mem.mercy.c3.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -11669,7 +11749,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Primed",
-        "value": 20,
+        "value": {
+          "valueRef": "vesper.mem.mercy.c3.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -11720,7 +11802,9 @@
       "gimmick": {
         "trigger": "OnCrit",
         "effect": "Shield",
-        "value": 2,
+        "value": {
+          "valueRef": "vesper.mem.mercy.c3.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -11768,7 +11852,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_D_MercyOfEl",
-          "value": 10,
+          "valueRef": "vesper.mem.mercy.c3.x/options/0/value",
           "param": "Duration",
           "receiver": null,
           "target": {
@@ -11784,7 +11868,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_D_MercyOfEl",
-          "value": 3,
+          "valueRef": "vesper.mem.mercy.c3.x/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -11824,7 +11908,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_MercyOfEl",
-      "value": 5,
+      "valueRef": "vesper.mem.mercy.c3.s1/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -11861,7 +11945,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_MercyOfEl",
-      "value": 5,
+      "valueRef": "vesper.mem.mercy.c3.s2/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -11898,7 +11982,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_MercyOfEl",
-      "value": 5,
+      "valueRef": "vesper.mem.mercy.c3.s3/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -11937,7 +12021,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_D_MercyOfEl",
-      "value": 1,
+      "valueRef": "vesper.mem.mercy.c3.s4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -11976,7 +12060,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_D_MercyOfEl",
-      "value": 1,
+      "valueRef": "vesper.mem.mercy.c3.s5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -12015,7 +12099,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_D_MercyOfEl",
-      "value": 1,
+      "valueRef": "vesper.mem.mercy.c3.s6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -12052,7 +12136,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_MercyOfEl",
-      "value": 1,
+      "valueRef": "vesper.mem.mercy.c4.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -12090,7 +12174,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_MercyOfEl",
-      "value": 1,
+      "valueRef": "vesper.mem.mercy.c4.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -12130,7 +12214,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_MercyOfEl",
-      "value": 1,
+      "valueRef": "vesper.mem.mercy.c4.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -12169,7 +12253,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_MercyOfEl",
-      "value": 1,
+      "valueRef": "vesper.mem.mercy.c4.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -12208,7 +12292,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_MercyOfEl",
-      "value": 1,
+      "valueRef": "vesper.mem.mercy.c4.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -12247,7 +12331,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_MercyOfEl",
-      "value": 1,
+      "valueRef": "vesper.mem.mercy.c4.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -12302,7 +12386,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "ElementEdge",
-        "value": 5,
+        "value": {
+          "valueRef": "vesper.mem.mercy.c4.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -12357,7 +12443,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Heal",
-        "value": 1,
+        "value": {
+          "valueRef": "vesper.mem.mercy.c4.n2/gimmick/value"
+        },
         "arg": 1,
         "cooldown": 0,
         "target": null
@@ -12404,7 +12492,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_D_MercyOfEl",
-          "value": 10,
+          "valueRef": "vesper.mem.mercy.c4.x/options/0/value",
           "param": "Radius",
           "receiver": null,
           "target": {
@@ -12420,7 +12508,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_D_MercyOfEl",
-          "value": 3,
+          "valueRef": "vesper.mem.mercy.c4.x/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -12460,7 +12548,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_MercyOfEl",
-      "value": 5,
+      "valueRef": "vesper.mem.mercy.c4.s1/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -12497,7 +12585,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_MercyOfEl",
-      "value": 5,
+      "valueRef": "vesper.mem.mercy.c4.s2/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -12534,7 +12622,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_MercyOfEl",
-      "value": 5,
+      "valueRef": "vesper.mem.mercy.c4.s3/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -12573,7 +12661,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_D_MercyOfEl",
-      "value": 1,
+      "valueRef": "vesper.mem.mercy.c4.s4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -12612,7 +12700,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_D_MercyOfEl",
-      "value": 1,
+      "valueRef": "vesper.mem.mercy.c4.s5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -12651,7 +12739,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_D_MercyOfEl",
-      "value": 1,
+      "valueRef": "vesper.mem.mercy.c4.s6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -12688,7 +12776,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_Discipline",
-      "value": 1,
+      "valueRef": "vesper.mem.discipline.c1.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -12726,7 +12814,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_Discipline",
-      "value": 1,
+      "valueRef": "vesper.mem.discipline.c1.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -12766,7 +12854,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_Discipline",
-      "value": 1,
+      "valueRef": "vesper.mem.discipline.c1.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -12805,7 +12893,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_Q_Discipline",
-      "value": 1,
+      "valueRef": "vesper.mem.discipline.c1.e4/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -12841,7 +12929,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_Q_Discipline",
-      "value": 1,
+      "valueRef": "vesper.mem.discipline.c1.e5/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -12877,7 +12965,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_Q_Discipline",
-      "value": 1,
+      "valueRef": "vesper.mem.discipline.c1.e6/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -12932,7 +13020,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Sap",
-        "value": 3,
+        "value": {
+          "valueRef": "vesper.mem.discipline.c1.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -12984,7 +13074,9 @@
       "gimmick": {
         "trigger": "OnUse",
         "effect": "Shield",
-        "value": 2,
+        "value": {
+          "valueRef": "vesper.mem.discipline.c1.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -13032,7 +13124,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_Q_Discipline",
-          "value": 10,
+          "valueRef": "vesper.mem.discipline.c1.x/options/0/value",
           "param": "Duration",
           "receiver": null,
           "target": {
@@ -13048,7 +13140,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_Q_Discipline",
-          "value": 3,
+          "valueRef": "vesper.mem.discipline.c1.x/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -13088,7 +13180,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_Discipline",
-      "value": 5,
+      "valueRef": "vesper.mem.discipline.c1.s1/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -13125,7 +13217,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_Discipline",
-      "value": 5,
+      "valueRef": "vesper.mem.discipline.c1.s2/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -13162,7 +13254,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_Discipline",
-      "value": 5,
+      "valueRef": "vesper.mem.discipline.c1.s3/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -13201,7 +13293,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_Discipline",
-      "value": 1,
+      "valueRef": "vesper.mem.discipline.c1.s4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -13240,7 +13332,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_Discipline",
-      "value": 1,
+      "valueRef": "vesper.mem.discipline.c1.s5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -13279,7 +13371,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_Discipline",
-      "value": 1,
+      "valueRef": "vesper.mem.discipline.c1.s6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -13317,7 +13409,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_Discipline",
-      "value": 1,
+      "valueRef": "vesper.mem.discipline.c2.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -13355,7 +13447,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_Discipline",
-      "value": 1,
+      "valueRef": "vesper.mem.discipline.c2.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -13394,7 +13486,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_Discipline",
-      "value": 1,
+      "valueRef": "vesper.mem.discipline.c2.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -13432,7 +13524,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_Q_Discipline",
-      "value": 1,
+      "valueRef": "vesper.mem.discipline.c2.e4/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -13467,7 +13559,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_Q_Discipline",
-      "value": 1,
+      "valueRef": "vesper.mem.discipline.c2.e5/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -13503,7 +13595,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_Q_Discipline",
-      "value": 1,
+      "valueRef": "vesper.mem.discipline.c2.e6/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -13556,7 +13648,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Burst",
-        "value": 25,
+        "value": {
+          "valueRef": "vesper.mem.discipline.c2.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -13606,7 +13700,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Element",
-        "value": 50,
+        "value": {
+          "valueRef": "vesper.mem.discipline.c2.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -13653,7 +13749,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_Q_Discipline",
-          "value": 10,
+          "valueRef": "vesper.mem.discipline.c2.x/options/0/value",
           "param": "Radius",
           "receiver": null,
           "target": {
@@ -13669,7 +13765,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_Q_Discipline",
-          "value": 3,
+          "valueRef": "vesper.mem.discipline.c2.x/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -13709,7 +13805,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_Discipline",
-      "value": 5,
+      "valueRef": "vesper.mem.discipline.c2.s1/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -13746,7 +13842,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_Discipline",
-      "value": 5,
+      "valueRef": "vesper.mem.discipline.c2.s2/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -13783,7 +13879,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_Discipline",
-      "value": 5,
+      "valueRef": "vesper.mem.discipline.c2.s3/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -13822,7 +13918,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_Discipline",
-      "value": 1,
+      "valueRef": "vesper.mem.discipline.c2.s4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -13861,7 +13957,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_Discipline",
-      "value": 1,
+      "valueRef": "vesper.mem.discipline.c2.s5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -13900,7 +13996,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_Discipline",
-      "value": 1,
+      "valueRef": "vesper.mem.discipline.c2.s6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -13937,7 +14033,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_Discipline",
-      "value": 1,
+      "valueRef": "vesper.mem.discipline.c3.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -13975,7 +14071,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_Discipline",
-      "value": 1,
+      "valueRef": "vesper.mem.discipline.c3.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -14013,7 +14109,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_Discipline",
-      "value": 1,
+      "valueRef": "vesper.mem.discipline.c3.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -14051,7 +14147,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_Q_Discipline",
-      "value": 1,
+      "valueRef": "vesper.mem.discipline.c3.e4/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -14086,7 +14182,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_Q_Discipline",
-      "value": 1,
+      "valueRef": "vesper.mem.discipline.c3.e5/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -14122,7 +14218,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_Q_Discipline",
-      "value": 1,
+      "valueRef": "vesper.mem.discipline.c3.e6/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -14175,7 +14271,9 @@
       "gimmick": {
         "trigger": "OnUse",
         "effect": "Primed",
-        "value": 20,
+        "value": {
+          "valueRef": "vesper.mem.discipline.c3.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -14226,7 +14324,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Wound",
-        "value": 12,
+        "value": {
+          "valueRef": "vesper.mem.discipline.c3.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -14273,7 +14373,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_Q_Discipline",
-          "value": 10,
+          "valueRef": "vesper.mem.discipline.c3.x/options/0/value",
           "param": "Duration",
           "receiver": null,
           "target": {
@@ -14289,7 +14389,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_Q_Discipline",
-          "value": 3,
+          "valueRef": "vesper.mem.discipline.c3.x/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -14329,7 +14429,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_Discipline",
-      "value": 5,
+      "valueRef": "vesper.mem.discipline.c3.s1/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -14366,7 +14466,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_Discipline",
-      "value": 5,
+      "valueRef": "vesper.mem.discipline.c3.s2/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -14403,7 +14503,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_Discipline",
-      "value": 5,
+      "valueRef": "vesper.mem.discipline.c3.s3/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -14442,7 +14542,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_Discipline",
-      "value": 1,
+      "valueRef": "vesper.mem.discipline.c3.s4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -14481,7 +14581,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_Discipline",
-      "value": 1,
+      "valueRef": "vesper.mem.discipline.c3.s5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -14520,7 +14620,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_Discipline",
-      "value": 1,
+      "valueRef": "vesper.mem.discipline.c3.s6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -14557,7 +14657,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_Discipline",
-      "value": 1,
+      "valueRef": "vesper.mem.discipline.c4.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -14595,7 +14695,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_Discipline",
-      "value": 1,
+      "valueRef": "vesper.mem.discipline.c4.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -14635,7 +14735,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_Discipline",
-      "value": 1,
+      "valueRef": "vesper.mem.discipline.c4.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -14674,7 +14774,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_Q_Discipline",
-      "value": 1,
+      "valueRef": "vesper.mem.discipline.c4.e4/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -14710,7 +14810,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_Q_Discipline",
-      "value": 1,
+      "valueRef": "vesper.mem.discipline.c4.e5/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -14746,7 +14846,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_Q_Discipline",
-      "value": 1,
+      "valueRef": "vesper.mem.discipline.c4.e6/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -14798,7 +14898,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "ElementEdge",
-        "value": 5,
+        "value": {
+          "valueRef": "vesper.mem.discipline.c4.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -14853,7 +14955,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Heal",
-        "value": 1,
+        "value": {
+          "valueRef": "vesper.mem.discipline.c4.n2/gimmick/value"
+        },
         "arg": 1,
         "cooldown": 0,
         "target": null
@@ -14900,7 +15004,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_Q_Discipline",
-          "value": 10,
+          "valueRef": "vesper.mem.discipline.c4.x/options/0/value",
           "param": "Radius",
           "receiver": null,
           "target": {
@@ -14916,7 +15020,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_Q_Discipline",
-          "value": 3,
+          "valueRef": "vesper.mem.discipline.c4.x/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -14956,7 +15060,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_Discipline",
-      "value": 5,
+      "valueRef": "vesper.mem.discipline.c4.s1/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -14993,7 +15097,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_Discipline",
-      "value": 5,
+      "valueRef": "vesper.mem.discipline.c4.s2/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -15030,7 +15134,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_Discipline",
-      "value": 5,
+      "valueRef": "vesper.mem.discipline.c4.s3/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -15069,7 +15173,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_Discipline",
-      "value": 1,
+      "valueRef": "vesper.mem.discipline.c4.s4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -15108,7 +15212,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_Discipline",
-      "value": 1,
+      "valueRef": "vesper.mem.discipline.c4.s5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -15147,7 +15251,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_Discipline",
-      "value": 1,
+      "valueRef": "vesper.mem.discipline.c4.s6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -15184,7 +15288,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_BaptismOfSun",
-      "value": 1,
+      "valueRef": "vesper.mem.baptism.c1.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -15222,7 +15326,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_BaptismOfSun",
-      "value": 1,
+      "valueRef": "vesper.mem.baptism.c1.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -15262,7 +15366,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_BaptismOfSun",
-      "value": 1,
+      "valueRef": "vesper.mem.baptism.c1.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -15301,7 +15405,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_R_BaptismOfSun",
-      "value": 1,
+      "valueRef": "vesper.mem.baptism.c1.e4/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -15337,7 +15441,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_R_BaptismOfSun",
-      "value": 1,
+      "valueRef": "vesper.mem.baptism.c1.e5/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -15373,7 +15477,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_R_BaptismOfSun",
-      "value": 1,
+      "valueRef": "vesper.mem.baptism.c1.e6/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -15428,7 +15532,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Sap",
-        "value": 3,
+        "value": {
+          "valueRef": "vesper.mem.baptism.c1.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -15480,7 +15586,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Wound",
-        "value": 12,
+        "value": {
+          "valueRef": "vesper.mem.baptism.c1.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -15527,7 +15635,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_R_BaptismOfSun",
-          "value": 10,
+          "valueRef": "vesper.mem.baptism.c1.x/options/0/value",
           "param": "Duration",
           "receiver": null,
           "target": {
@@ -15543,7 +15651,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_R_BaptismOfSun",
-          "value": 3,
+          "valueRef": "vesper.mem.baptism.c1.x/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -15583,7 +15691,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_BaptismOfSun",
-      "value": 5,
+      "valueRef": "vesper.mem.baptism.c1.s1/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -15620,7 +15728,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_BaptismOfSun",
-      "value": 5,
+      "valueRef": "vesper.mem.baptism.c1.s2/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -15657,7 +15765,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_BaptismOfSun",
-      "value": 5,
+      "valueRef": "vesper.mem.baptism.c1.s3/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -15696,7 +15804,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_BaptismOfSun",
-      "value": 1,
+      "valueRef": "vesper.mem.baptism.c1.s4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -15735,7 +15843,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_BaptismOfSun",
-      "value": 1,
+      "valueRef": "vesper.mem.baptism.c1.s5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -15774,7 +15882,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_BaptismOfSun",
-      "value": 1,
+      "valueRef": "vesper.mem.baptism.c1.s6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -15812,7 +15920,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_BaptismOfSun",
-      "value": 1,
+      "valueRef": "vesper.mem.baptism.c2.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -15850,7 +15958,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_BaptismOfSun",
-      "value": 1,
+      "valueRef": "vesper.mem.baptism.c2.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -15889,7 +15997,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_BaptismOfSun",
-      "value": 1,
+      "valueRef": "vesper.mem.baptism.c2.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -15927,7 +16035,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_R_BaptismOfSun",
-      "value": 1,
+      "valueRef": "vesper.mem.baptism.c2.e4/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -15962,7 +16070,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_R_BaptismOfSun",
-      "value": 1,
+      "valueRef": "vesper.mem.baptism.c2.e5/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -15998,7 +16106,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_R_BaptismOfSun",
-      "value": 1,
+      "valueRef": "vesper.mem.baptism.c2.e6/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -16051,7 +16159,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Heal",
-        "value": 1,
+        "value": {
+          "valueRef": "vesper.mem.baptism.c2.n1/gimmick/value"
+        },
         "arg": 1,
         "cooldown": 0,
         "target": null
@@ -16101,7 +16211,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Element",
-        "value": 50,
+        "value": {
+          "valueRef": "vesper.mem.baptism.c2.n2/gimmick/value"
+        },
         "arg": 2,
         "cooldown": 0,
         "target": null
@@ -16148,7 +16260,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_R_BaptismOfSun",
-          "value": 10,
+          "valueRef": "vesper.mem.baptism.c2.x/options/0/value",
           "param": "Radius",
           "receiver": null,
           "target": {
@@ -16164,7 +16276,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_R_BaptismOfSun",
-          "value": 3,
+          "valueRef": "vesper.mem.baptism.c2.x/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -16204,7 +16316,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_BaptismOfSun",
-      "value": 5,
+      "valueRef": "vesper.mem.baptism.c2.s1/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -16241,7 +16353,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_BaptismOfSun",
-      "value": 5,
+      "valueRef": "vesper.mem.baptism.c2.s2/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -16278,7 +16390,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_BaptismOfSun",
-      "value": 5,
+      "valueRef": "vesper.mem.baptism.c2.s3/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -16317,7 +16429,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_BaptismOfSun",
-      "value": 1,
+      "valueRef": "vesper.mem.baptism.c2.s4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -16356,7 +16468,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_BaptismOfSun",
-      "value": 1,
+      "valueRef": "vesper.mem.baptism.c2.s5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -16395,7 +16507,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_BaptismOfSun",
-      "value": 1,
+      "valueRef": "vesper.mem.baptism.c2.s6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -16432,7 +16544,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_BaptismOfSun",
-      "value": 1,
+      "valueRef": "vesper.mem.baptism.c3.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -16470,7 +16582,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_BaptismOfSun",
-      "value": 1,
+      "valueRef": "vesper.mem.baptism.c3.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -16508,7 +16620,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_BaptismOfSun",
-      "value": 1,
+      "valueRef": "vesper.mem.baptism.c3.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -16546,7 +16658,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_R_BaptismOfSun",
-      "value": 1,
+      "valueRef": "vesper.mem.baptism.c3.e4/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -16581,7 +16693,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_R_BaptismOfSun",
-      "value": 1,
+      "valueRef": "vesper.mem.baptism.c3.e5/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -16617,7 +16729,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_R_BaptismOfSun",
-      "value": 1,
+      "valueRef": "vesper.mem.baptism.c3.e6/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -16670,7 +16782,9 @@
       "gimmick": {
         "trigger": "OnUse",
         "effect": "Primed",
-        "value": 20,
+        "value": {
+          "valueRef": "vesper.mem.baptism.c3.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -16721,7 +16835,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Echo",
-        "value": 8,
+        "value": {
+          "valueRef": "vesper.mem.baptism.c3.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -16768,7 +16884,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_R_BaptismOfSun",
-          "value": 10,
+          "valueRef": "vesper.mem.baptism.c3.x/options/0/value",
           "param": "Duration",
           "receiver": null,
           "target": {
@@ -16784,7 +16900,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_R_BaptismOfSun",
-          "value": 3,
+          "valueRef": "vesper.mem.baptism.c3.x/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -16824,7 +16940,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_BaptismOfSun",
-      "value": 5,
+      "valueRef": "vesper.mem.baptism.c3.s1/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -16861,7 +16977,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_BaptismOfSun",
-      "value": 5,
+      "valueRef": "vesper.mem.baptism.c3.s2/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -16898,7 +17014,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_BaptismOfSun",
-      "value": 5,
+      "valueRef": "vesper.mem.baptism.c3.s3/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -16937,7 +17053,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_BaptismOfSun",
-      "value": 1,
+      "valueRef": "vesper.mem.baptism.c3.s4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -16976,7 +17092,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_BaptismOfSun",
-      "value": 1,
+      "valueRef": "vesper.mem.baptism.c3.s5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -17015,7 +17131,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_BaptismOfSun",
-      "value": 1,
+      "valueRef": "vesper.mem.baptism.c3.s6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -17053,7 +17169,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_BaptismOfSun",
-      "value": 1,
+      "valueRef": "vesper.mem.baptism.c4.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -17091,7 +17207,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_BaptismOfSun",
-      "value": 1,
+      "valueRef": "vesper.mem.baptism.c4.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -17130,7 +17246,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_BaptismOfSun",
-      "value": 1,
+      "valueRef": "vesper.mem.baptism.c4.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -17168,7 +17284,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_R_BaptismOfSun",
-      "value": 1,
+      "valueRef": "vesper.mem.baptism.c4.e4/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -17203,7 +17319,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_R_BaptismOfSun",
-      "value": 1,
+      "valueRef": "vesper.mem.baptism.c4.e5/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -17239,7 +17355,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_R_BaptismOfSun",
-      "value": 1,
+      "valueRef": "vesper.mem.baptism.c4.e6/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -17292,7 +17408,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Burst",
-        "value": 20,
+        "value": {
+          "valueRef": "vesper.mem.baptism.c4.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -17342,7 +17460,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "RechargeOther",
-        "value": 3,
+        "value": {
+          "valueRef": "vesper.mem.baptism.c4.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -17389,7 +17509,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_R_BaptismOfSun",
-          "value": 10,
+          "valueRef": "vesper.mem.baptism.c4.x/options/0/value",
           "param": "Radius",
           "receiver": null,
           "target": {
@@ -17405,7 +17525,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_R_BaptismOfSun",
-          "value": 3,
+          "valueRef": "vesper.mem.baptism.c4.x/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -17445,7 +17565,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_BaptismOfSun",
-      "value": 5,
+      "valueRef": "vesper.mem.baptism.c4.s1/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -17482,7 +17602,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_BaptismOfSun",
-      "value": 5,
+      "valueRef": "vesper.mem.baptism.c4.s2/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -17519,7 +17639,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_BaptismOfSun",
-      "value": 5,
+      "valueRef": "vesper.mem.baptism.c4.s3/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -17558,7 +17678,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_BaptismOfSun",
-      "value": 1,
+      "valueRef": "vesper.mem.baptism.c4.s4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -17597,7 +17717,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_BaptismOfSun",
-      "value": 1,
+      "valueRef": "vesper.mem.baptism.c4.s5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -17636,7 +17756,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_BaptismOfSun",
-      "value": 1,
+      "valueRef": "vesper.mem.baptism.c4.s6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -17675,7 +17795,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_Resolve",
-      "value": 1,
+      "valueRef": "vesper.bridge.force.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -17715,7 +17835,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_Resolve",
-      "value": 1,
+      "valueRef": "vesper.bridge.force.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -17755,7 +17875,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_Resolve",
-      "value": 1,
+      "valueRef": "vesper.bridge.force.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -17795,7 +17915,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_Resolve",
-      "value": 1,
+      "valueRef": "vesper.bridge.force.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -17835,7 +17955,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_Resolve",
-      "value": 1,
+      "valueRef": "vesper.bridge.force.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -17876,7 +17996,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_Resolve",
-      "value": 1,
+      "valueRef": "vesper.bridge.force.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -17930,7 +18050,9 @@
       "gimmick": {
         "trigger": "OnCrit",
         "effect": "Echo",
-        "value": 8,
+        "value": {
+          "valueRef": "vesper.bridge.force.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null,
@@ -17983,7 +18105,9 @@
       "gimmick": {
         "trigger": "OnCrit",
         "effect": "RechargeOther",
-        "value": 3,
+        "value": {
+          "valueRef": "vesper.bridge.force.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null,
@@ -18032,7 +18156,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_D_Resolve",
-          "value": 3,
+          "valueRef": "vesper.bridge.force.x/options/0/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -18055,7 +18179,9 @@
           "gimmick": {
             "trigger": "OnCrit",
             "effect": "Element",
-            "value": 30,
+            "value": {
+              "valueRef": "vesper.bridge.force.x/options/1/gimmick/value"
+            },
             "arg": 2,
             "cooldown": 0,
             "target": null,
@@ -18097,7 +18223,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_D_Resolve",
-      "value": 1,
+      "valueRef": "vesper.bridge.force.s1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -18136,7 +18262,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_D_Resolve",
-      "value": 1,
+      "valueRef": "vesper.bridge.force.s2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -18175,7 +18301,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_D_Resolve",
-      "value": 1,
+      "valueRef": "vesper.bridge.force.s3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -18214,7 +18340,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_D_Resolve",
-      "value": 1,
+      "valueRef": "vesper.bridge.force.s4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -18253,7 +18379,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_CruelSun",
-      "value": 1,
+      "valueRef": "vesper.bridge.insight.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -18293,7 +18419,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_CruelSun",
-      "value": 1,
+      "valueRef": "vesper.bridge.insight.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -18333,7 +18459,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_CruelSun",
-      "value": 1,
+      "valueRef": "vesper.bridge.insight.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -18373,7 +18499,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_CruelSun",
-      "value": 1,
+      "valueRef": "vesper.bridge.insight.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -18413,7 +18539,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_CruelSun",
-      "value": 1,
+      "valueRef": "vesper.bridge.insight.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -18454,7 +18580,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_CruelSun",
-      "value": 1,
+      "valueRef": "vesper.bridge.insight.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -18508,7 +18634,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Echo",
-        "value": 8,
+        "value": {
+          "valueRef": "vesper.bridge.insight.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null,
@@ -18561,7 +18689,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Heal",
-        "value": 1,
+        "value": {
+          "valueRef": "vesper.bridge.insight.n2/gimmick/value"
+        },
         "arg": 1,
         "cooldown": 0,
         "target": null,
@@ -18610,7 +18740,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_Q_CruelSun",
-          "value": 3,
+          "valueRef": "vesper.bridge.insight.x/options/0/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -18633,7 +18763,9 @@
           "gimmick": {
             "trigger": "OnHit",
             "effect": "Element",
-            "value": 30,
+            "value": {
+              "valueRef": "vesper.bridge.insight.x/options/1/gimmick/value"
+            },
             "arg": 2,
             "cooldown": 0,
             "target": null,
@@ -18675,7 +18807,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_CruelSun",
-      "value": 1,
+      "valueRef": "vesper.bridge.insight.s1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -18714,7 +18846,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_CruelSun",
-      "value": 1,
+      "valueRef": "vesper.bridge.insight.s2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -18753,7 +18885,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_CruelSun",
-      "value": 1,
+      "valueRef": "vesper.bridge.insight.s3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -18792,7 +18924,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_CruelSun",
-      "value": 1,
+      "valueRef": "vesper.bridge.insight.s4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -18831,7 +18963,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.25,
+      "valueRef": "vesper.bridge.vessel.e1/value",
       "param": null,
       "receiver": "St_M_Charge",
       "target": {
@@ -18872,7 +19004,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.25,
+      "valueRef": "vesper.bridge.vessel.e2/value",
       "param": null,
       "receiver": "St_M_Charge",
       "target": {
@@ -18913,7 +19045,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.25,
+      "valueRef": "vesper.bridge.vessel.e3/value",
       "param": null,
       "receiver": "St_M_Charge",
       "target": {
@@ -18954,7 +19086,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.25,
+      "valueRef": "vesper.bridge.vessel.e4/value",
       "param": null,
       "receiver": "St_M_Charge",
       "target": {
@@ -18995,7 +19127,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.25,
+      "valueRef": "vesper.bridge.vessel.e5/value",
       "param": null,
       "receiver": "St_M_Charge",
       "target": {
@@ -19037,7 +19169,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.25,
+      "valueRef": "vesper.bridge.vessel.e6/value",
       "param": null,
       "receiver": "St_M_Charge",
       "target": {
@@ -19092,7 +19224,9 @@
       "gimmick": {
         "trigger": "OnUse",
         "effect": "Recharge",
-        "value": 3,
+        "value": {
+          "valueRef": "vesper.bridge.vessel.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": "St_M_Charge",
@@ -19146,7 +19280,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Recharge",
-        "value": 4,
+        "value": {
+          "valueRef": "vesper.bridge.vessel.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": "St_M_Charge"
@@ -19195,7 +19331,7 @@
         {
           "kind": "GimmickBoost",
           "memory": null,
-          "value": 0.5,
+          "valueRef": "vesper.bridge.vessel.x/options/0/value",
           "param": null,
           "receiver": "St_M_Charge",
           "target": {
@@ -19218,7 +19354,9 @@
           "gimmick": {
             "trigger": "OnHit",
             "effect": "Recharge",
-            "value": 2,
+            "value": {
+              "valueRef": "vesper.bridge.vessel.x/options/1/gimmick/value"
+            },
             "arg": 0,
             "cooldown": 0,
             "target": "St_M_Charge"
@@ -19260,7 +19398,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.25,
+      "valueRef": "vesper.bridge.vessel.s1/value",
       "param": null,
       "receiver": "St_M_Charge",
       "target": {
@@ -19300,7 +19438,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.25,
+      "valueRef": "vesper.bridge.vessel.s2/value",
       "param": null,
       "receiver": "St_M_Charge",
       "target": {
@@ -19340,7 +19478,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.25,
+      "valueRef": "vesper.bridge.vessel.s3/value",
       "param": null,
       "receiver": "St_M_Charge",
       "target": {
@@ -19380,7 +19518,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.25,
+      "valueRef": "vesper.bridge.vessel.s4/value",
       "param": null,
       "receiver": "St_M_Charge",
       "target": {
@@ -19420,7 +19558,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.25,
+      "valueRef": "vesper.bridge.armor.e1/value",
       "param": null,
       "receiver": "St_M_Charge",
       "target": {
@@ -19461,7 +19599,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.25,
+      "valueRef": "vesper.bridge.armor.e2/value",
       "param": null,
       "receiver": "St_M_Charge",
       "target": {
@@ -19502,7 +19640,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.25,
+      "valueRef": "vesper.bridge.armor.e3/value",
       "param": null,
       "receiver": "St_M_Charge",
       "target": {
@@ -19543,7 +19681,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.25,
+      "valueRef": "vesper.bridge.armor.e4/value",
       "param": null,
       "receiver": "St_M_Charge",
       "target": {
@@ -19584,7 +19722,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.25,
+      "valueRef": "vesper.bridge.armor.e5/value",
       "param": null,
       "receiver": "St_M_Charge",
       "target": {
@@ -19626,7 +19764,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.25,
+      "valueRef": "vesper.bridge.armor.e6/value",
       "param": null,
       "receiver": "St_M_Charge",
       "target": {
@@ -19681,7 +19819,9 @@
       "gimmick": {
         "trigger": "OnCrit",
         "effect": "Recharge",
-        "value": 2,
+        "value": {
+          "valueRef": "vesper.bridge.armor.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": "St_M_Charge",
@@ -19735,7 +19875,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Recharge",
-        "value": 3,
+        "value": {
+          "valueRef": "vesper.bridge.armor.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": "St_M_Charge"
@@ -19784,7 +19926,7 @@
         {
           "kind": "GimmickBoost",
           "memory": null,
-          "value": 0.5,
+          "valueRef": "vesper.bridge.armor.x/options/0/value",
           "param": null,
           "receiver": "St_M_Charge",
           "target": {
@@ -19807,7 +19949,9 @@
           "gimmick": {
             "trigger": "OnHit",
             "effect": "Recharge",
-            "value": 1,
+            "value": {
+              "valueRef": "vesper.bridge.armor.x/options/1/gimmick/value"
+            },
             "arg": 0,
             "cooldown": 0,
             "target": "St_M_Charge"
@@ -19849,7 +19993,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.25,
+      "valueRef": "vesper.bridge.armor.s1/value",
       "param": null,
       "receiver": "St_M_Charge",
       "target": {
@@ -19889,7 +20033,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.25,
+      "valueRef": "vesper.bridge.armor.s2/value",
       "param": null,
       "receiver": "St_M_Charge",
       "target": {
@@ -19929,7 +20073,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.25,
+      "valueRef": "vesper.bridge.armor.s3/value",
       "param": null,
       "receiver": "St_M_Charge",
       "target": {
@@ -19969,7 +20113,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.25,
+      "valueRef": "vesper.bridge.armor.s4/value",
       "param": null,
       "receiver": "St_M_Charge",
       "target": {
@@ -20009,7 +20153,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_MercyOfEl",
-      "value": 1,
+      "valueRef": "vesper.bridge.recall.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -20049,7 +20193,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_MercyOfEl",
-      "value": 1,
+      "valueRef": "vesper.bridge.recall.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -20089,7 +20233,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_MercyOfEl",
-      "value": 1,
+      "valueRef": "vesper.bridge.recall.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -20129,7 +20273,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_MercyOfEl",
-      "value": 1,
+      "valueRef": "vesper.bridge.recall.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -20169,7 +20313,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_MercyOfEl",
-      "value": 1,
+      "valueRef": "vesper.bridge.recall.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -20210,7 +20354,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_MercyOfEl",
-      "value": 1,
+      "valueRef": "vesper.bridge.recall.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -20264,7 +20408,9 @@
       "gimmick": {
         "trigger": "OnCrit",
         "effect": "Element",
-        "value": 30,
+        "value": {
+          "valueRef": "vesper.bridge.recall.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null,
@@ -20317,7 +20463,9 @@
       "gimmick": {
         "trigger": "OnCrit",
         "effect": "RechargeOther",
-        "value": 3,
+        "value": {
+          "valueRef": "vesper.bridge.recall.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null,
@@ -20366,7 +20514,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_D_MercyOfEl",
-          "value": 3,
+          "valueRef": "vesper.bridge.recall.x/options/0/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -20389,7 +20537,9 @@
           "gimmick": {
             "trigger": "OnCrit",
             "effect": "Heal",
-            "value": 1,
+            "value": {
+              "valueRef": "vesper.bridge.recall.x/options/1/gimmick/value"
+            },
             "arg": 1,
             "cooldown": 0,
             "target": null,
@@ -20431,7 +20581,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_D_MercyOfEl",
-      "value": 1,
+      "valueRef": "vesper.bridge.recall.s1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -20470,7 +20620,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_D_MercyOfEl",
-      "value": 1,
+      "valueRef": "vesper.bridge.recall.s2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -20509,7 +20659,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_D_MercyOfEl",
-      "value": 1,
+      "valueRef": "vesper.bridge.recall.s3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -20548,7 +20698,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_D_MercyOfEl",
-      "value": 1,
+      "valueRef": "vesper.bridge.recall.s4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -20587,7 +20737,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_BaptismOfSun",
-      "value": 1,
+      "valueRef": "vesper.bridge.rhythm.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -20627,7 +20777,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_BaptismOfSun",
-      "value": 1,
+      "valueRef": "vesper.bridge.rhythm.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -20667,7 +20817,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_BaptismOfSun",
-      "value": 1,
+      "valueRef": "vesper.bridge.rhythm.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -20707,7 +20857,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_BaptismOfSun",
-      "value": 1,
+      "valueRef": "vesper.bridge.rhythm.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -20747,7 +20897,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_BaptismOfSun",
-      "value": 1,
+      "valueRef": "vesper.bridge.rhythm.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -20788,7 +20938,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_BaptismOfSun",
-      "value": 1,
+      "valueRef": "vesper.bridge.rhythm.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -20842,7 +20992,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Element",
-        "value": 30,
+        "value": {
+          "valueRef": "vesper.bridge.rhythm.n1/gimmick/value"
+        },
         "arg": 2,
         "cooldown": 0,
         "target": null,
@@ -20895,7 +21047,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Heal",
-        "value": 1,
+        "value": {
+          "valueRef": "vesper.bridge.rhythm.n2/gimmick/value"
+        },
         "arg": 1,
         "cooldown": 0,
         "target": null,
@@ -20944,7 +21098,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_R_BaptismOfSun",
-          "value": 10,
+          "valueRef": "vesper.bridge.rhythm.x/options/0/value",
           "param": "Radius",
           "receiver": null,
           "target": {
@@ -20960,7 +21114,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_R_BaptismOfSun",
-          "value": 3,
+          "valueRef": "vesper.bridge.rhythm.x/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -21003,7 +21157,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_BaptismOfSun",
-      "value": 1,
+      "valueRef": "vesper.bridge.rhythm.s1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -21042,7 +21196,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_BaptismOfSun",
-      "value": 1,
+      "valueRef": "vesper.bridge.rhythm.s2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -21081,7 +21235,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_BaptismOfSun",
-      "value": 1,
+      "valueRef": "vesper.bridge.rhythm.s3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -21120,7 +21274,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_BaptismOfSun",
-      "value": 1,
+      "valueRef": "vesper.bridge.rhythm.s4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -21159,7 +21313,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_BaptismOfSun",
-      "value": 1,
+      "valueRef": "vesper.bridge.resolve.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -21199,7 +21353,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_BaptismOfSun",
-      "value": 1,
+      "valueRef": "vesper.bridge.resolve.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -21239,7 +21393,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_BaptismOfSun",
-      "value": 1,
+      "valueRef": "vesper.bridge.resolve.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -21279,7 +21433,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_BaptismOfSun",
-      "value": 1,
+      "valueRef": "vesper.bridge.resolve.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -21319,7 +21473,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_BaptismOfSun",
-      "value": 1,
+      "valueRef": "vesper.bridge.resolve.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -21360,7 +21514,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_BaptismOfSun",
-      "value": 1,
+      "valueRef": "vesper.bridge.resolve.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -21414,7 +21568,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "ElementEdge",
-        "value": 3,
+        "value": {
+          "valueRef": "vesper.bridge.resolve.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null,
@@ -21467,7 +21623,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Echo",
-        "value": 8,
+        "value": {
+          "valueRef": "vesper.bridge.resolve.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null,
@@ -21516,7 +21674,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_R_BaptismOfSun",
-          "value": 3,
+          "valueRef": "vesper.bridge.resolve.x/options/0/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -21539,7 +21697,9 @@
           "gimmick": {
             "trigger": "OnHit",
             "effect": "Heal",
-            "value": 1,
+            "value": {
+              "valueRef": "vesper.bridge.resolve.x/options/1/gimmick/value"
+            },
             "arg": 1,
             "cooldown": 0,
             "target": null,
@@ -21581,7 +21741,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_BaptismOfSun",
-      "value": 1,
+      "valueRef": "vesper.bridge.resolve.s1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -21620,7 +21780,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_BaptismOfSun",
-      "value": 1,
+      "valueRef": "vesper.bridge.resolve.s2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -21659,7 +21819,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_BaptismOfSun",
-      "value": 1,
+      "valueRef": "vesper.bridge.resolve.s3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -21698,7 +21858,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_BaptismOfSun",
-      "value": 1,
+      "valueRef": "vesper.bridge.resolve.s4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -21736,7 +21896,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_Resolve",
-      "value": 1,
+      "valueRef": "vesper.outer.frontline.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -21774,7 +21934,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_Resolve",
-      "value": 1,
+      "valueRef": "vesper.outer.frontline.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -21813,7 +21973,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_Resolve",
-      "value": 1,
+      "valueRef": "vesper.outer.frontline.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -21851,7 +22011,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_Resolve",
-      "value": 1,
+      "valueRef": "vesper.outer.frontline.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -21889,7 +22049,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_Resolve",
-      "value": 1,
+      "valueRef": "vesper.outer.frontline.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -21928,7 +22088,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_Resolve",
-      "value": 1,
+      "valueRef": "vesper.outer.frontline.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -21984,7 +22144,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Shield",
-        "value": 2,
+        "value": {
+          "valueRef": "vesper.outer.frontline.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -22038,7 +22200,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Heal",
-        "value": 1,
+        "value": {
+          "valueRef": "vesper.outer.frontline.n2/gimmick/value"
+        },
         "arg": 1,
         "cooldown": 0,
         "target": null
@@ -22085,7 +22249,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_D_Resolve",
-          "value": 10,
+          "valueRef": "vesper.outer.frontline.x/options/0/value",
           "param": "Duration",
           "receiver": null,
           "target": {
@@ -22101,7 +22265,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_D_Resolve",
-          "value": 10,
+          "valueRef": "vesper.outer.frontline.x/options/1/value",
           "param": "Radius",
           "receiver": null,
           "target": {
@@ -22141,7 +22305,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_Resolve",
-      "value": 5,
+      "valueRef": "vesper.outer.frontline.s1/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -22178,7 +22342,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_Resolve",
-      "value": 5,
+      "valueRef": "vesper.outer.frontline.s2/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -22215,7 +22379,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_Resolve",
-      "value": 5,
+      "valueRef": "vesper.outer.frontline.s3/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -22252,7 +22416,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_Resolve",
-      "value": 5,
+      "valueRef": "vesper.outer.frontline.s4/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -22289,7 +22453,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_Resolve",
-      "value": 5,
+      "valueRef": "vesper.outer.frontline.s5/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -22326,7 +22490,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_Resolve",
-      "value": 5,
+      "valueRef": "vesper.outer.frontline.s6/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -22365,7 +22529,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_D_Resolve",
-      "value": 1,
+      "valueRef": "vesper.outer.frontline.s7/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -22404,7 +22568,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_D_Resolve",
-      "value": 1,
+      "valueRef": "vesper.outer.frontline.s8/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -22443,7 +22607,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_D_Resolve",
-      "value": 1,
+      "valueRef": "vesper.outer.frontline.s9/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -22481,7 +22645,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_CruelSun",
-      "value": 1,
+      "valueRef": "vesper.outer.afterglow.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -22520,7 +22684,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_CruelSun",
-      "value": 1,
+      "valueRef": "vesper.outer.afterglow.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -22561,7 +22725,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_CruelSun",
-      "value": 1,
+      "valueRef": "vesper.outer.afterglow.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -22601,7 +22765,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_CruelSun",
-      "value": 1,
+      "valueRef": "vesper.outer.afterglow.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -22641,7 +22805,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_CruelSun",
-      "value": 1,
+      "valueRef": "vesper.outer.afterglow.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -22681,7 +22845,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_CruelSun",
-      "value": 1,
+      "valueRef": "vesper.outer.afterglow.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -22736,7 +22900,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Echo",
-        "value": 8,
+        "value": {
+          "valueRef": "vesper.outer.afterglow.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -22791,7 +22957,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Burst",
-        "value": 20,
+        "value": {
+          "valueRef": "vesper.outer.afterglow.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -22838,7 +23006,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_Q_CruelSun",
-          "value": 10,
+          "valueRef": "vesper.outer.afterglow.x/options/0/value",
           "param": "Duration",
           "receiver": null,
           "target": {
@@ -22854,7 +23022,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_Q_CruelSun",
-          "value": 10,
+          "valueRef": "vesper.outer.afterglow.x/options/1/value",
           "param": "Radius",
           "receiver": null,
           "target": {
@@ -22892,7 +23060,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_CruelSun",
-      "value": 5,
+      "valueRef": "vesper.outer.afterglow.s1/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -22927,7 +23095,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_CruelSun",
-      "value": 5,
+      "valueRef": "vesper.outer.afterglow.s2/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -22962,7 +23130,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_CruelSun",
-      "value": 5,
+      "valueRef": "vesper.outer.afterglow.s3/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -22999,7 +23167,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_CruelSun",
-      "value": 5,
+      "valueRef": "vesper.outer.afterglow.s4/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -23036,7 +23204,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_CruelSun",
-      "value": 5,
+      "valueRef": "vesper.outer.afterglow.s5/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -23073,7 +23241,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_CruelSun",
-      "value": 5,
+      "valueRef": "vesper.outer.afterglow.s6/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -23112,7 +23280,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_CruelSun",
-      "value": 1,
+      "valueRef": "vesper.outer.afterglow.s7/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -23151,7 +23319,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_CruelSun",
-      "value": 1,
+      "valueRef": "vesper.outer.afterglow.s8/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -23190,7 +23358,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_CruelSun",
-      "value": 1,
+      "valueRef": "vesper.outer.afterglow.s9/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -23228,7 +23396,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_SanctuaryOfEl",
-      "value": 1,
+      "valueRef": "vesper.outer.gathering.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -23266,7 +23434,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_SanctuaryOfEl",
-      "value": 1,
+      "valueRef": "vesper.outer.gathering.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -23305,7 +23473,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_SanctuaryOfEl",
-      "value": 1,
+      "valueRef": "vesper.outer.gathering.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -23343,7 +23511,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_SanctuaryOfEl",
-      "value": 1,
+      "valueRef": "vesper.outer.gathering.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -23381,7 +23549,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_SanctuaryOfEl",
-      "value": 1,
+      "valueRef": "vesper.outer.gathering.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -23420,7 +23588,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_SanctuaryOfEl",
-      "value": 1,
+      "valueRef": "vesper.outer.gathering.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -23473,7 +23641,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Element",
-        "value": 40,
+        "value": {
+          "valueRef": "vesper.outer.gathering.n1/gimmick/value"
+        },
         "arg": 2,
         "cooldown": 0,
         "target": null
@@ -23523,7 +23693,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "RechargeOther",
-        "value": 3,
+        "value": {
+          "valueRef": "vesper.outer.gathering.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -23570,7 +23742,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_R_SanctuaryOfEl",
-          "value": 10,
+          "valueRef": "vesper.outer.gathering.x/options/0/value",
           "param": "Duration",
           "receiver": null,
           "target": {
@@ -23586,7 +23758,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_R_SanctuaryOfEl",
-          "value": 10,
+          "valueRef": "vesper.outer.gathering.x/options/1/value",
           "param": "Radius",
           "receiver": null,
           "target": {
@@ -23624,7 +23796,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_SanctuaryOfEl",
-      "value": 5,
+      "valueRef": "vesper.outer.gathering.s1/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -23659,7 +23831,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_SanctuaryOfEl",
-      "value": 5,
+      "valueRef": "vesper.outer.gathering.s2/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -23694,7 +23866,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_SanctuaryOfEl",
-      "value": 5,
+      "valueRef": "vesper.outer.gathering.s3/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -23729,7 +23901,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_SanctuaryOfEl",
-      "value": 5,
+      "valueRef": "vesper.outer.gathering.s4/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -23764,7 +23936,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_SanctuaryOfEl",
-      "value": 5,
+      "valueRef": "vesper.outer.gathering.s5/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -23799,7 +23971,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_SanctuaryOfEl",
-      "value": 5,
+      "valueRef": "vesper.outer.gathering.s6/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -23838,7 +24010,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_SanctuaryOfEl",
-      "value": 1,
+      "valueRef": "vesper.outer.gathering.s7/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -23877,7 +24049,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_SanctuaryOfEl",
-      "value": 1,
+      "valueRef": "vesper.outer.gathering.s8/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -23916,7 +24088,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_SanctuaryOfEl",
-      "value": 1,
+      "valueRef": "vesper.outer.gathering.s9/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -23953,7 +24125,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.25,
+      "valueRef": "vesper.outer.return-path.e1/value",
       "param": null,
       "receiver": "St_M_Charge",
       "target": {
@@ -23992,7 +24164,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.25,
+      "valueRef": "vesper.outer.return-path.e2/value",
       "param": null,
       "receiver": "St_M_Charge",
       "target": {
@@ -24031,7 +24203,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.25,
+      "valueRef": "vesper.outer.return-path.e3/value",
       "param": null,
       "receiver": "St_M_Charge",
       "target": {
@@ -24070,7 +24242,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.25,
+      "valueRef": "vesper.outer.return-path.e4/value",
       "param": null,
       "receiver": "St_M_Charge",
       "target": {
@@ -24109,7 +24281,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.25,
+      "valueRef": "vesper.outer.return-path.e5/value",
       "param": null,
       "receiver": "St_M_Charge",
       "target": {
@@ -24149,7 +24321,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.25,
+      "valueRef": "vesper.outer.return-path.e6/value",
       "param": null,
       "receiver": "St_M_Charge",
       "target": {
@@ -24209,7 +24381,9 @@
       "gimmick": {
         "trigger": "OnUse",
         "effect": "Recharge",
-        "value": 3,
+        "value": {
+          "valueRef": "vesper.outer.return-path.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": "St_M_Charge"
@@ -24266,7 +24440,9 @@
       "gimmick": {
         "trigger": "OnUse",
         "effect": "Recharge",
-        "value": 3,
+        "value": {
+          "valueRef": "vesper.outer.return-path.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": "St_M_Charge"
@@ -24314,7 +24490,7 @@
         {
           "kind": "GimmickBoost",
           "memory": null,
-          "value": 0.5,
+          "valueRef": "vesper.outer.return-path.x/options/0/value",
           "param": null,
           "receiver": "St_M_Charge",
           "target": {
@@ -24337,7 +24513,9 @@
           "gimmick": {
             "trigger": "OnCrit",
             "effect": "Recharge",
-            "value": 2,
+            "value": {
+              "valueRef": "vesper.outer.return-path.x/options/1/gimmick/value"
+            },
             "arg": 0,
             "cooldown": 0,
             "target": "St_M_Charge"
@@ -24378,7 +24556,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.25,
+      "valueRef": "vesper.outer.return-path.s1/value",
       "param": null,
       "receiver": "St_M_Charge",
       "target": {
@@ -24418,7 +24596,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.25,
+      "valueRef": "vesper.outer.return-path.s2/value",
       "param": null,
       "receiver": "St_M_Charge",
       "target": {
@@ -24458,7 +24636,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.25,
+      "valueRef": "vesper.outer.return-path.s3/value",
       "param": null,
       "receiver": "St_M_Charge",
       "target": {
@@ -24498,7 +24676,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.25,
+      "valueRef": "vesper.outer.return-path.s4/value",
       "param": null,
       "receiver": "St_M_Charge",
       "target": {
@@ -24538,7 +24716,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.25,
+      "valueRef": "vesper.outer.return-path.s5/value",
       "param": null,
       "receiver": "St_M_Charge",
       "target": {
@@ -24578,7 +24756,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.25,
+      "valueRef": "vesper.outer.return-path.s6/value",
       "param": null,
       "receiver": "St_M_Charge",
       "target": {
@@ -24618,7 +24796,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.25,
+      "valueRef": "vesper.outer.return-path.s7/value",
       "param": null,
       "receiver": "St_M_Charge",
       "target": {
@@ -24658,7 +24836,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.25,
+      "valueRef": "vesper.outer.return-path.s8/value",
       "param": null,
       "receiver": "St_M_Charge",
       "target": {
@@ -24698,7 +24876,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.25,
+      "valueRef": "vesper.outer.return-path.s9/value",
       "param": null,
       "receiver": "St_M_Charge",
       "target": {
@@ -24736,7 +24914,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_MercyOfEl",
-      "value": 1,
+      "valueRef": "vesper.outer.shared-light.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -24774,7 +24952,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_MercyOfEl",
-      "value": 1,
+      "valueRef": "vesper.outer.shared-light.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -24814,7 +24992,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_MercyOfEl",
-      "value": 1,
+      "valueRef": "vesper.outer.shared-light.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -24853,7 +25031,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_MercyOfEl",
-      "value": 1,
+      "valueRef": "vesper.outer.shared-light.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -24892,7 +25070,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_MercyOfEl",
-      "value": 1,
+      "valueRef": "vesper.outer.shared-light.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -24931,7 +25109,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_MercyOfEl",
-      "value": 1,
+      "valueRef": "vesper.outer.shared-light.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -24986,7 +25164,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "RechargeOther",
-        "value": 3,
+        "value": {
+          "valueRef": "vesper.outer.shared-light.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -25041,7 +25221,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Shield",
-        "value": 2,
+        "value": {
+          "valueRef": "vesper.outer.shared-light.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -25089,7 +25271,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_D_MercyOfEl",
-          "value": 10,
+          "valueRef": "vesper.outer.shared-light.x/options/0/value",
           "param": "Duration",
           "receiver": null,
           "target": {
@@ -25105,7 +25287,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_D_MercyOfEl",
-          "value": 10,
+          "valueRef": "vesper.outer.shared-light.x/options/1/value",
           "param": "Radius",
           "receiver": null,
           "target": {
@@ -25145,7 +25327,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_MercyOfEl",
-      "value": 5,
+      "valueRef": "vesper.outer.shared-light.s1/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -25182,7 +25364,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_MercyOfEl",
-      "value": 5,
+      "valueRef": "vesper.outer.shared-light.s2/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -25219,7 +25401,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_MercyOfEl",
-      "value": 5,
+      "valueRef": "vesper.outer.shared-light.s3/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -25254,7 +25436,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_MercyOfEl",
-      "value": 5,
+      "valueRef": "vesper.outer.shared-light.s4/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -25289,7 +25471,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_MercyOfEl",
-      "value": 5,
+      "valueRef": "vesper.outer.shared-light.s5/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -25324,7 +25506,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_MercyOfEl",
-      "value": 5,
+      "valueRef": "vesper.outer.shared-light.s6/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -25363,7 +25545,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_D_MercyOfEl",
-      "value": 1,
+      "valueRef": "vesper.outer.shared-light.s7/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -25402,7 +25584,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_D_MercyOfEl",
-      "value": 1,
+      "valueRef": "vesper.outer.shared-light.s8/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -25441,7 +25623,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_D_MercyOfEl",
-      "value": 1,
+      "valueRef": "vesper.outer.shared-light.s9/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -25479,7 +25661,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_Discipline",
-      "value": 1,
+      "valueRef": "vesper.outer.advance.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -25518,7 +25700,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_Discipline",
-      "value": 1,
+      "valueRef": "vesper.outer.advance.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -25557,7 +25739,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_Discipline",
-      "value": 1,
+      "valueRef": "vesper.outer.advance.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -25596,7 +25778,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_Discipline",
-      "value": 1,
+      "valueRef": "vesper.outer.advance.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -25635,7 +25817,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_Discipline",
-      "value": 1,
+      "valueRef": "vesper.outer.advance.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -25675,7 +25857,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_Discipline",
-      "value": 1,
+      "valueRef": "vesper.outer.advance.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -25728,7 +25910,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "RechargeOther",
-        "value": 3,
+        "value": {
+          "valueRef": "vesper.outer.advance.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -25781,7 +25965,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Burst",
-        "value": 20,
+        "value": {
+          "valueRef": "vesper.outer.advance.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -25828,7 +26014,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_Q_Discipline",
-          "value": 10,
+          "valueRef": "vesper.outer.advance.x/options/0/value",
           "param": "Duration",
           "receiver": null,
           "target": {
@@ -25844,7 +26030,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_Q_Discipline",
-          "value": 10,
+          "valueRef": "vesper.outer.advance.x/options/1/value",
           "param": "Radius",
           "receiver": null,
           "target": {
@@ -25882,7 +26068,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_Discipline",
-      "value": 5,
+      "valueRef": "vesper.outer.advance.s1/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -25917,7 +26103,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_Discipline",
-      "value": 5,
+      "valueRef": "vesper.outer.advance.s2/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -25952,7 +26138,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_Discipline",
-      "value": 5,
+      "valueRef": "vesper.outer.advance.s3/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -25989,7 +26175,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_Discipline",
-      "value": 5,
+      "valueRef": "vesper.outer.advance.s4/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -26026,7 +26212,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_Discipline",
-      "value": 5,
+      "valueRef": "vesper.outer.advance.s5/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -26063,7 +26249,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_Discipline",
-      "value": 5,
+      "valueRef": "vesper.outer.advance.s6/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -26102,7 +26288,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_Discipline",
-      "value": 1,
+      "valueRef": "vesper.outer.advance.s7/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -26141,7 +26327,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_Discipline",
-      "value": 1,
+      "valueRef": "vesper.outer.advance.s8/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -26180,7 +26366,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_Discipline",
-      "value": 1,
+      "valueRef": "vesper.outer.advance.s9/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -26218,7 +26404,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_BaptismOfSun",
-      "value": 1,
+      "valueRef": "vesper.outer.campfire.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -26256,7 +26442,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_BaptismOfSun",
-      "value": 1,
+      "valueRef": "vesper.outer.campfire.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -26295,7 +26481,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_BaptismOfSun",
-      "value": 1,
+      "valueRef": "vesper.outer.campfire.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -26333,7 +26519,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_BaptismOfSun",
-      "value": 1,
+      "valueRef": "vesper.outer.campfire.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -26371,7 +26557,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_BaptismOfSun",
-      "value": 1,
+      "valueRef": "vesper.outer.campfire.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -26410,7 +26596,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_BaptismOfSun",
-      "value": 1,
+      "valueRef": "vesper.outer.campfire.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -26466,7 +26652,9 @@
       "gimmick": {
         "trigger": "OnUse",
         "effect": "Heal",
-        "value": 1,
+        "value": {
+          "valueRef": "vesper.outer.campfire.n1/gimmick/value"
+        },
         "arg": 1,
         "cooldown": 0,
         "target": null
@@ -26516,7 +26704,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "ElementEdge",
-        "value": 5,
+        "value": {
+          "valueRef": "vesper.outer.campfire.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -26563,7 +26753,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_R_BaptismOfSun",
-          "value": 10,
+          "valueRef": "vesper.outer.campfire.x/options/0/value",
           "param": "Duration",
           "receiver": null,
           "target": {
@@ -26579,7 +26769,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_R_BaptismOfSun",
-          "value": 10,
+          "valueRef": "vesper.outer.campfire.x/options/1/value",
           "param": "Radius",
           "receiver": null,
           "target": {
@@ -26617,7 +26807,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_BaptismOfSun",
-      "value": 5,
+      "valueRef": "vesper.outer.campfire.s1/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -26652,7 +26842,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_BaptismOfSun",
-      "value": 5,
+      "valueRef": "vesper.outer.campfire.s2/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -26687,7 +26877,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_BaptismOfSun",
-      "value": 5,
+      "valueRef": "vesper.outer.campfire.s3/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -26724,7 +26914,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_BaptismOfSun",
-      "value": 5,
+      "valueRef": "vesper.outer.campfire.s4/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -26761,7 +26951,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_BaptismOfSun",
-      "value": 5,
+      "valueRef": "vesper.outer.campfire.s5/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -26798,7 +26988,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_BaptismOfSun",
-      "value": 5,
+      "valueRef": "vesper.outer.campfire.s6/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -26837,7 +27027,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_BaptismOfSun",
-      "value": 1,
+      "valueRef": "vesper.outer.campfire.s7/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -26876,7 +27066,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_BaptismOfSun",
-      "value": 1,
+      "valueRef": "vesper.outer.campfire.s8/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -26915,7 +27105,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_BaptismOfSun",
-      "value": 1,
+      "valueRef": "vesper.outer.campfire.s9/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -26962,7 +27152,9 @@
           {
             "effect": "Echo",
             "field": "Value",
-            "pct": 100
+            "pct": {
+              "valueRef": "vesper.key.delayed-light/keystone/upsideSpec/0/pct"
+            }
           }
         ]
       },
@@ -27001,7 +27193,9 @@
           {
             "effect": "Burst",
             "field": "Value",
-            "pct": 100
+            "pct": {
+              "valueRef": "vesper.key.narrow-sun/keystone/upsideSpec/0/pct"
+            }
           }
         ]
       },
@@ -27040,7 +27234,9 @@
           {
             "effect": "Wound",
             "field": "Total",
-            "pct": 80
+            "pct": {
+              "valueRef": "vesper.key.long-wound/keystone/upsideSpec/0/pct"
+            }
           }
         ]
       },
@@ -27079,7 +27275,9 @@
           {
             "effect": "Shield",
             "field": "Value",
-            "pct": 80
+            "pct": {
+              "valueRef": "vesper.key.silent-bulwark/keystone/upsideSpec/0/pct"
+            }
           }
         ]
       },
@@ -27118,12 +27316,16 @@
           {
             "effect": "Heal",
             "field": "AllyValue",
-            "pct": 100
+            "pct": {
+              "valueRef": "vesper.key.shared-flame/keystone/upsideSpec/0/pct"
+            }
           },
           {
             "effect": "Heal",
             "field": "Radius",
-            "pct": 50
+            "pct": {
+              "valueRef": "vesper.key.shared-flame/keystone/upsideSpec/1/pct"
+            }
           }
         ]
       },
@@ -27162,7 +27364,9 @@
           {
             "effect": "Recharge",
             "field": "Value",
-            "pct": 40,
+            "pct": {
+              "valueRef": "vesper.key.return-vow/keystone/upsideSpec/0/pct"
+            },
             "receiver": "St_M_Charge"
           }
         ]
@@ -27202,13 +27406,19 @@
           {
             "effect": "Primed",
             "field": "Value",
-            "pct": 80
+            "pct": {
+              "valueRef": "vesper.key.measured-blow/keystone/upsideSpec/0/pct"
+            }
           },
           {
             "effect": "Primed",
             "field": "Lifetime",
-            "from": 5,
-            "to": 8
+            "from": {
+              "valueRef": "vesper.key.measured-blow/keystone/upsideSpec/1/from"
+            },
+            "to": {
+              "valueRef": "vesper.key.measured-blow/keystone/upsideSpec/1/to"
+            }
           }
         ]
       },
@@ -27247,7 +27457,9 @@
           {
             "effect": "ElementEdge",
             "field": "ValuePerType",
-            "pct": 80
+            "pct": {
+              "valueRef": "vesper.key.ember-council/keystone/upsideSpec/0/pct"
+            }
           }
         ]
       },
@@ -27487,7 +27699,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Element",
-        "value": 20,
+        "value": {
+          "valueRef": "h.vesper.fire/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -27527,7 +27741,9 @@
           "gimmick": {
             "trigger": "OnKill",
             "effect": "Heal",
-            "value": 1,
+            "value": {
+              "valueRef": "h.vesper.wall/options/0/gimmick/value"
+            },
             "arg": 0,
             "cooldown": 0,
             "target": null
@@ -27547,7 +27763,9 @@
           "gimmick": {
             "trigger": "OnKill",
             "effect": "Heal",
-            "value": 1,
+            "value": {
+              "valueRef": "h.vesper.wall/options/1/gimmick/value"
+            },
             "arg": 0,
             "cooldown": 0,
             "target": null
@@ -27579,7 +27797,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Element",
-        "value": 20,
+        "value": {
+          "valueRef": "h.vesper.light/gimmick/value"
+        },
         "arg": 2,
         "cooldown": 0,
         "target": null
@@ -27608,7 +27828,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Recharge",
-        "value": 2,
+        "value": {
+          "valueRef": "h.vesper.vigor/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -27637,7 +27859,9 @@
       "gimmick": {
         "trigger": "OnUse",
         "effect": "Shield",
-        "value": 1,
+        "value": {
+          "valueRef": "h.vesper.deep.tenacity/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -27668,7 +27892,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Recharge",
-        "value": 2,
+        "value": {
+          "valueRef": "h.vesper.deep.regen/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -27708,7 +27934,9 @@
           "gimmick": {
             "trigger": "OnHit",
             "effect": "Echo",
-            "value": 2,
+            "value": {
+              "valueRef": "h.vesper.deep.body/options/0/gimmick/value"
+            },
             "arg": 0,
             "cooldown": 0,
             "target": null
@@ -27728,7 +27956,9 @@
           "gimmick": {
             "trigger": "OnHit",
             "effect": "Echo",
-            "value": 2,
+            "value": {
+              "valueRef": "h.vesper.deep.body/options/1/gimmick/value"
+            },
             "arg": 0,
             "cooldown": 0,
             "target": null
@@ -27753,7 +27983,7 @@
       "region": "migration",
       "kind": "GimmickBoost",
       "memory": "St_D_Resolve",
-      "value": 2,
+      "valueRef": "h.vesper.route.resolve.1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -27780,7 +28010,7 @@
       "region": "migration",
       "kind": "GimmickBoost",
       "memory": "St_D_Resolve",
-      "value": 2,
+      "valueRef": "h.vesper.route.resolve.5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -27807,7 +28037,7 @@
       "region": "migration",
       "kind": "GimmickBoost",
       "memory": "St_D_MercyOfEl",
-      "value": 2,
+      "valueRef": "h.vesper.route.mercy.3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -27834,7 +28064,7 @@
       "region": "migration",
       "kind": "GimmickBoost",
       "memory": "St_D_MercyOfEl",
-      "value": 2,
+      "valueRef": "h.vesper.route.mercy.6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -27861,7 +28091,7 @@
       "region": "migration",
       "kind": "GimmickBoost",
       "memory": "St_Q_CruelSun",
-      "value": 2,
+      "valueRef": "h.vesper.route.cruel-sun.1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -27888,7 +28118,7 @@
       "region": "migration",
       "kind": "GimmickBoost",
       "memory": "St_Q_CruelSun",
-      "value": 2,
+      "valueRef": "h.vesper.route.cruel-sun.6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -27915,7 +28145,7 @@
       "region": "migration",
       "kind": "GimmickBoost",
       "memory": "St_Q_Discipline",
-      "value": 2,
+      "valueRef": "h.vesper.route.discipline.3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -27942,7 +28172,7 @@
       "region": "migration",
       "kind": "GimmickBoost",
       "memory": "St_Q_Discipline",
-      "value": 2,
+      "valueRef": "h.vesper.route.discipline.6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -27969,7 +28199,7 @@
       "region": "migration",
       "kind": "GimmickBoost",
       "memory": "St_R_BaptismOfSun",
-      "value": 2,
+      "valueRef": "h.vesper.route.baptism.1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -27996,7 +28226,7 @@
       "region": "migration",
       "kind": "GimmickBoost",
       "memory": "St_R_BaptismOfSun",
-      "value": 2,
+      "valueRef": "h.vesper.route.baptism.3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -28023,7 +28253,7 @@
       "region": "migration",
       "kind": "GimmickBoost",
       "memory": "St_R_BaptismOfSun",
-      "value": 2,
+      "valueRef": "h.vesper.route.baptism.6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -28057,7 +28287,9 @@
       "gimmick": {
         "trigger": "OnUse",
         "effect": "Element",
-        "value": 50,
+        "value": {
+          "valueRef": "h.vesper.route.baptism.7/gimmick/value"
+        },
         "arg": 2,
         "cooldown": 0,
         "target": null
@@ -28079,7 +28311,7 @@
       "region": "migration",
       "kind": "GimmickBoost",
       "memory": "St_R_SanctuaryOfEl",
-      "value": 2,
+      "valueRef": "h.vesper.route.sanctuary.5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -28106,7 +28338,7 @@
       "region": "migration",
       "kind": "GimmickBoost",
       "memory": "St_R_SanctuaryOfEl",
-      "value": 2,
+      "valueRef": "h.vesper.route.sanctuary.6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -28133,7 +28365,7 @@
       "region": "migration",
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.5,
+      "valueRef": "h.vesper.route.charge.1/value",
       "param": null,
       "receiver": "St_M_Charge",
       "target": {
@@ -28162,7 +28394,7 @@
       "region": "migration",
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.5,
+      "valueRef": "h.vesper.route.charge.3/value",
       "param": null,
       "receiver": "St_M_Charge",
       "target": {
@@ -28191,7 +28423,7 @@
       "region": "migration",
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.5,
+      "valueRef": "h.vesper.route.charge.5/value",
       "param": null,
       "receiver": "St_M_Charge",
       "target": {
@@ -28220,7 +28452,7 @@
       "region": "migration",
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.5,
+      "valueRef": "h.vesper.route.charge.6/value",
       "param": null,
       "receiver": "St_M_Charge",
       "target": {
@@ -28256,7 +28488,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Recharge",
-        "value": 2,
+        "value": {
+          "valueRef": "h.vesper.route.charge.2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": "St_M_Charge"
@@ -28285,7 +28519,9 @@
       "gimmick": {
         "trigger": "OnUse",
         "effect": "Recharge",
-        "value": 2,
+        "value": {
+          "valueRef": "h.vesper.route.charge.4/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": "St_M_Charge"
@@ -28314,7 +28550,9 @@
       "gimmick": {
         "trigger": "OnCrit",
         "effect": "Recharge",
-        "value": 6,
+        "value": {
+          "valueRef": "h.vesper.route.charge.7/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": "St_M_Charge"
@@ -28343,14 +28581,22 @@
       "gimmick": {
         "trigger": "OnUse",
         "effect": "Recharge",
-        "value": 30,
+        "value": {
+          "valueRef": "h.vesper.ring.vessel/gimmick/valuesByRank/0"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": "St_M_Charge",
         "valuesByRank": [
-          30,
-          40,
-          50
+          {
+            "valueRef": "h.vesper.ring.vessel/gimmick/valuesByRank/0"
+          },
+          {
+            "valueRef": "h.vesper.ring.vessel/gimmick/valuesByRank/1"
+          },
+          {
+            "valueRef": "h.vesper.ring.vessel/gimmick/valuesByRank/2"
+          }
         ]
       },
       "power": null,
@@ -28377,14 +28623,22 @@
       "gimmick": {
         "trigger": "OnCrit",
         "effect": "Recharge",
-        "value": 30,
+        "value": {
+          "valueRef": "h.vesper.ring.armor/gimmick/valuesByRank/0"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": "St_M_Charge",
         "valuesByRank": [
-          30,
-          40,
-          50
+          {
+            "valueRef": "h.vesper.ring.armor/gimmick/valuesByRank/0"
+          },
+          {
+            "valueRef": "h.vesper.ring.armor/gimmick/valuesByRank/1"
+          },
+          {
+            "valueRef": "h.vesper.ring.armor/gimmick/valuesByRank/2"
+          }
         ]
       },
       "power": null,
@@ -28415,7 +28669,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_D_Resolve",
-          "value": 1,
+          "valueRef": "h.vesper.ring.renewal/options/0/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -28431,7 +28685,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_D_MercyOfEl",
-          "value": 1,
+          "valueRef": "h.vesper.ring.renewal/options/1/value",
           "param": null,
           "receiver": null,
           "target": {

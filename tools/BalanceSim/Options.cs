@@ -31,6 +31,7 @@ public sealed class Options
     public bool Infinity => Mode == "infinity";
     public bool Forge => Mode == "forge";
     public bool StarEfficiency => Mode == "star-efficiency";
+    public bool StarValues => Mode == "star-values";
 
     public int SecureHeat => Policy switch { "delve1" => 1, "greedy" => 3, _ => 0 };
 
@@ -76,8 +77,8 @@ public sealed class Options
                     o.MetricsJson = value;
                     break;
                 case "--mode":
-                    if (value is not ("expeditions" or "stars" or "sets" or "v132stars" or "infinity" or "forge" or "star-efficiency"))
-                        throw new ArgumentException("--mode は expeditions / stars / sets / v132stars / infinity / forge / star-efficiency です。");
+                    if (value is not ("expeditions" or "stars" or "sets" or "v132stars" or "infinity" or "forge" or "star-efficiency" or "star-values"))
+                        throw new ArgumentException("--mode は expeditions / stars / sets / v132stars / infinity / forge / star-efficiency / star-values です。");
                     o.Mode = value;
                     break;
                 case "--dream-level":
@@ -95,8 +96,8 @@ public sealed class Options
         }
         if ((long)o.Zones * o.Rooms > int.MaxValue)
             throw new ArgumentException("ゾーン数×部屋数は32ビット整数の範囲にしてください。");
-        if (o.MetricsJson != null && o.Mode is not ("expeditions" or "forge" or "star-efficiency"))
-            throw new ArgumentException("--metrics-json は expeditions / forge / star-efficiency のみ対応しています。");
+        if (o.MetricsJson != null && o.Mode is not ("expeditions" or "forge" or "star-efficiency" or "star-values"))
+            throw new ArgumentException("--metrics-json は expeditions / forge / star-efficiency / star-values のみ対応しています。");
         return o;
     }
 
@@ -141,10 +142,10 @@ public sealed class Options
           --bounty 0.6       本体行動に依存する依頼の達成確率
           --item-level 1     最初のゾーンのアイテムレベル
           --item-level-per-zone 1  次のゾーンで増えるアイテムレベル
-          --mode expeditions  expeditions / stars / sets / v132stars / infinity / forge / star-efficiency
+          --mode expeditions  expeditions / stars / sets / v132stars / infinity / forge / star-efficiency / star-values
           --star-max-points 500  stars の最終節目（50〜500、50刻み。軽量実行は50）
           --out <path>       標準出力に加えてUTF-8のMarkdownファイルに保存
-          --metrics-json <path>  expeditions / forge / star-efficiency の生データと未丸め集計をJSONに保存
+          --metrics-json <path>  expeditions / forge / star-efficiency / star-values の生データと未丸め集計をJSONに保存
           --help             この説明を表示
         """;
 }

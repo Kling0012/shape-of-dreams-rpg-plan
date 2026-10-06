@@ -62,7 +62,7 @@ RETAINED_POWER_KEYS = {"h.vesper.key", "h.vesper.key2", "h.lacerta.key", "h.lace
                        "h.mist.key", "h.mist.key2"}
 BASELINE_KEYS = {}
 for _hero, _id, _power, _value in re.findall(r'Key\("Hero_(\w+)",\s*"(\w+\.key2?)",\s*"[^"]*",\s*"[^"]*",\s*Power\.(\w+),\s*(\d+)',
-                                            (ROOT / "src/SodRpg.Core/Game/HeroSigils.cs").read_text(encoding="utf-8")):
+                                            star_values.legacy_numeric_source("src/SodRpg.Core/Game/HeroSigils.cs")):
     BASELINE_KEYS["h." + _id] = (_power, _value)
 
 
@@ -184,12 +184,12 @@ class Compiler:
         self.powers = enum_members("src/SodRpg.Core/Game/Ids.cs", "Power")
         self.stats = enum_members("src/SodRpg.Core/Game/Ids.cs", "Stat")
         self.routes = {}
-        text = (ROOT / "src/SodRpg.Core/Game/HeroStarRoutes.cs").read_text(encoding="utf-8")
+        text = star_values.legacy_numeric_source("src/SodRpg.Core/Game/HeroStarRoutes.cs")
         for hero, slug, memory in re.findall(r'new Route\(nodes,\s*"(\w+)",\s*"([^"]+)",\s*"([^"]+)"', text):
             if hero.lower() == name:
                 self.routes[memory] = "h." + name + ".route." + slug
         # Explicit registered real pairs: no invented pair for an eighth region.
-        text = (ROOT / "src/SodRpg.Core/Game/PairCombos.cs").read_text(encoding="utf-8")
+        text = star_values.legacy_numeric_source("src/SodRpg.Core/Game/PairCombos.cs")
         self.pairs = {}
         slugs = ("force", "insight", "vessel", "armor", "recall", "rhythm", "resolve")
         for line in text.splitlines():
@@ -218,7 +218,7 @@ class Compiler:
                 "star_a": route_a + "." + str(order_a), "star_b": route_b + "." + str(order_b)}
         # Registered real outer anchor stats (StarClusters.OuterAnchors): the legacy
         # contract-accepted outer entrances without an authored Stat root.
-        text = (ROOT / "src/SodRpg.Core/Game/StarClusters.cs").read_text(encoding="utf-8")
+        text = star_values.legacy_numeric_source("src/SodRpg.Core/Game/StarClusters.cs")
         self.outer_anchors = set()
         for match in re.finditer(r'new TalentDef\("(h\.[\w.-]+)"[\s\S]*?\{([^}]*)\}', text):
             hero = re.search(r'HeroKey = "(\w+)"', match.group(2))
@@ -389,7 +389,8 @@ class Compiler:
                 return None
             if kind == "baseline":
                 override = LEGACY_OPENING_OVERRIDES.get(sid)
-                return "ManifestPair(" + cs(self.hero) + ", " + cs(sid) + (", openingOverride: MemoryEventKind." + TRIGGERS[override] if override else "") + ")"
+                ranks = array([units(x) for x in g["valuesByRank"]], "int")
+                return "ManifestPair(" + cs(self.hero) + ", " + cs(sid) + (", openingOverride: MemoryEventKind." + TRIGGERS[override] if override else "") + ", rankValues: " + ranks + ")"
         if e == "IdentityStrike":
             return self.identity_strike(sid, row, g, prefix)
         if e == "MemoryTuning":
@@ -483,8 +484,8 @@ class Compiler:
         elif e in ("SacrificeShield", "StunSourceFilter"):
             # C11/C08 named adapters: the flag payload is the whole typed mechanism; the host reads its fixed
             # design constants (50%/4s/10% cap, 6%HP/3s/2s interval) from the runtime, so no source/payload fields exist.
-            if sid != ("h.aurena.key2.grant" if e == "SacrificeShield" else "h.cetus.key2.grant") or g["cooldown"] != (0 if e == "SacrificeShield" else 2) or g["target"] is not None:
-                self.fail(sid, prefix + ".effect", e, "native adapter grants belong only to their named legacy keystone (no target, cooldown 0/2)")
+            if sid != ("h.aurena.key2.grant" if e == "SacrificeShield" else "h.cetus.key2.grant") or g["target"] is not None:
+                self.fail(sid, prefix + ".effect", e, "native adapter grants belong only to their named legacy keystone (no target)")
                 return None
             return obj("AuthoredMechanismSpec", {"ChannelId": cs(sid), "Kind": "AuthoredMechanismKind." + e})
         else:
@@ -578,8 +579,6 @@ class Compiler:
         wrong = []
         if not same_effect:
             wrong.append("effect " + g["effect"] + " vs " + effect)
-        if [number(x) for x in g.get("valuesByRank", [])] != [Decimal(v1), Decimal(v2), Decimal(v3)]:
-            wrong.append("rank table")
         if g["arg"] != int(arg or 0):
             wrong.append("arg")
         if g["cooldown"] != 0:
@@ -749,8 +748,8 @@ class Compiler:
             # The upside is the baseline keystone's own Power. The value is never re-typed here: the C# helper
             # (ManifestKeystone) reads it from the baseline node. This only confirms the manifest says the Power is kept.
             baseline = BASELINE_KEYS.get(sid)
-            if baseline is None or not re.search(r"Power\." + baseline[0] + r"\s*=?\s*" + baseline[1] + r"(?!\d)", key["upside"]):
-                self.fail(sid, "keystone.upside", key["upside"], "retained-Power key does not name the baseline Power " + display_value(baseline))
+            if baseline is None or "Power." + baseline[0] not in key["upside"]:
+                self.fail(sid, "keystone.upside", key["upside"], "retained-Power key does not name its baseline Power " + display_value(baseline))
                 return None
         if key["upsideSpec"] is None and not retained:
             self.fail(sid, "keystone.upsideSpec", None,

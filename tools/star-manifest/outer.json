@@ -17,7 +17,7 @@
       "requiresAny": [],
       "kind": "Stat",
       "memory": null,
-      "value": 3,
+      "value": null,
       "param": null,
       "receiver": null,
       "target": null,
@@ -25,7 +25,9 @@
       "power": null,
       "stat": {
         "name": "Armor",
-        "perRank": 3
+        "perRank": {
+          "valueRef": "outer.ward.s1/stat/perRank"
+        }
       },
       "options": null,
       "keystone": null,
@@ -53,7 +55,7 @@
       "requiresAny": [],
       "kind": "Stat",
       "memory": null,
-      "value": 2,
+      "value": null,
       "param": null,
       "receiver": null,
       "target": null,
@@ -61,7 +63,9 @@
       "power": null,
       "stat": {
         "name": "MaxHealthPct",
-        "perRank": 2
+        "perRank": {
+          "valueRef": "outer.ward.s2/stat/perRank"
+        }
       },
       "options": null,
       "keystone": null,
@@ -89,7 +93,7 @@
       "requiresAny": [],
       "kind": "Stat",
       "memory": null,
-      "value": 3,
+      "value": null,
       "param": null,
       "receiver": null,
       "target": null,
@@ -97,7 +101,9 @@
       "power": null,
       "stat": {
         "name": "Tenacity",
-        "perRank": 3
+        "perRank": {
+          "valueRef": "outer.ward.s3/stat/perRank"
+        }
       },
       "options": null,
       "keystone": null,
@@ -124,7 +130,7 @@
       "requiresAny": [],
       "kind": "Stat",
       "memory": null,
-      "value": 3,
+      "value": null,
       "param": null,
       "receiver": null,
       "target": null,
@@ -132,7 +138,9 @@
       "power": null,
       "stat": {
         "name": "ShieldPower",
-        "perRank": 3
+        "perRank": {
+          "valueRef": "outer.ward.s4/stat/perRank"
+        }
       },
       "options": null,
       "keystone": null,
@@ -159,7 +167,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_C_GlacialStomp",
-      "value": 3,
+      "valueRef": "outer.ward.a1/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -202,7 +210,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Sap",
-        "value": 3,
+        "value": {
+          "valueRef": "outer.ward.a2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -236,7 +246,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_C_GlacialStomp",
-      "value": 10,
+      "valueRef": "outer.ward.a3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -273,7 +283,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_C_GlacialStomp",
-      "value": 15,
+      "valueRef": "outer.ward.a4/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -348,7 +358,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Rampart",
-        "value": 1,
+        "value": {
+          "valueRef": "outer.ward.a6/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -381,7 +393,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_C_FlashFreeze",
-      "value": 3,
+      "valueRef": "outer.ward.b1/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -424,7 +436,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Sap",
-        "value": 3,
+        "value": {
+          "valueRef": "outer.ward.b2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -458,7 +472,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_C_FlashFreeze",
-      "value": 10,
+      "valueRef": "outer.ward.b3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -495,7 +509,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_C_FlashFreeze",
-      "value": 15,
+      "valueRef": "outer.ward.b4/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -570,7 +584,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Rampart",
-        "value": 1,
+        "value": {
+          "valueRef": "outer.ward.b6/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -610,7 +626,9 @@
       "gimmick": null,
       "power": {
         "name": "ShieldbreakBurst",
-        "perRank": 3
+        "perRank": {
+          "valueRef": "outer.ward.n1/power/perRank"
+        }
       },
       "stat": null,
       "options": null,
@@ -645,7 +663,9 @@
       "gimmick": null,
       "power": {
         "name": "UnbowedMind",
-        "perRank": 2
+        "perRank": {
+          "valueRef": "outer.ward.n2/power/perRank"
+        }
       },
       "stat": null,
       "options": null,
@@ -679,7 +699,9 @@
       "gimmick": null,
       "power": {
         "name": "VanguardsOath",
-        "perRank": 5
+        "perRank": {
+          "valueRef": "outer.ward.n3/power/perRank"
+        }
       },
       "stat": null,
       "options": null,
@@ -726,7 +748,9 @@
           "gimmick": null,
           "power": {
             "name": "ReadyGuard",
-            "perRank": 3
+            "perRank": {
+              "valueRef": "outer.ward.c1/options/0/power/perRank"
+            }
           },
           "stat": null,
           "nameJa": "初撃への備え",
@@ -742,7 +766,9 @@
           "gimmick": null,
           "power": {
             "name": "Bulwark",
-            "perRank": 6
+            "perRank": {
+              "valueRef": "outer.ward.c1/options/1/power/perRank"
+            }
           },
           "stat": null,
           "nameJa": "多勢を防ぐ壁",
@@ -774,7 +800,7 @@
       "requiresAny": [],
       "kind": "Stat",
       "memory": null,
-      "value": 3,
+      "value": null,
       "param": null,
       "receiver": null,
       "target": null,
@@ -782,7 +808,9 @@
       "power": null,
       "stat": {
         "name": "HealPower",
-        "perRank": 3
+        "perRank": {
+          "valueRef": "outer.mending.s1/stat/perRank"
+        }
       },
       "options": null,
       "keystone": null,
@@ -810,7 +838,7 @@
       "requiresAny": [],
       "kind": "Stat",
       "memory": null,
-      "value": 3,
+      "value": null,
       "param": null,
       "receiver": null,
       "target": null,
@@ -818,7 +846,9 @@
       "power": null,
       "stat": {
         "name": "ShieldPower",
-        "perRank": 3
+        "perRank": {
+          "valueRef": "outer.mending.s2/stat/perRank"
+        }
       },
       "options": null,
       "keystone": null,
@@ -846,7 +876,7 @@
       "requiresAny": [],
       "kind": "Stat",
       "memory": null,
-      "value": 2,
+      "value": null,
       "param": null,
       "receiver": null,
       "target": null,
@@ -854,7 +884,9 @@
       "power": null,
       "stat": {
         "name": "MaxHealthPct",
-        "perRank": 2
+        "perRank": {
+          "valueRef": "outer.mending.s3/stat/perRank"
+        }
       },
       "options": null,
       "keystone": null,
@@ -882,7 +914,7 @@
       "requiresAny": [],
       "kind": "Stat",
       "memory": null,
-      "value": 3,
+      "value": null,
       "param": null,
       "receiver": null,
       "target": null,
@@ -890,7 +922,9 @@
       "power": null,
       "stat": {
         "name": "Armor",
-        "perRank": 3
+        "perRank": {
+          "valueRef": "outer.mending.s4/stat/perRank"
+        }
       },
       "options": null,
       "keystone": null,
@@ -917,7 +951,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_C_BeamOfLight",
-      "value": 3,
+      "valueRef": "outer.mending.a1/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -960,7 +994,9 @@
       "gimmick": {
         "trigger": "OnUse",
         "effect": "Heal",
-        "value": 1,
+        "value": {
+          "valueRef": "outer.mending.a2/gimmick/value"
+        },
         "arg": 1,
         "cooldown": 0,
         "target": null
@@ -994,7 +1030,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_C_BeamOfLight",
-      "value": 10,
+      "valueRef": "outer.mending.a3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -1031,7 +1067,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_C_BeamOfLight",
-      "value": 15,
+      "valueRef": "outer.mending.a4/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -1106,7 +1142,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Sap",
-        "value": 3,
+        "value": {
+          "valueRef": "outer.mending.a6/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -1139,7 +1177,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_C_Purgatory",
-      "value": 3,
+      "valueRef": "outer.mending.b1/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -1182,7 +1220,9 @@
       "gimmick": {
         "trigger": "OnUse",
         "effect": "Heal",
-        "value": 1,
+        "value": {
+          "valueRef": "outer.mending.b2/gimmick/value"
+        },
         "arg": 1,
         "cooldown": 0,
         "target": null
@@ -1216,7 +1256,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_C_Purgatory",
-      "value": 10,
+      "valueRef": "outer.mending.b3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -1253,7 +1293,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_C_Purgatory",
-      "value": 15,
+      "valueRef": "outer.mending.b4/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -1328,7 +1368,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Sap",
-        "value": 3,
+        "value": {
+          "valueRef": "outer.mending.b6/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -1368,7 +1410,9 @@
       "gimmick": null,
       "power": {
         "name": "KindnessReturns",
-        "perRank": 5
+        "perRank": {
+          "valueRef": "outer.mending.n1/power/perRank"
+        }
       },
       "stat": null,
       "options": null,
@@ -1403,7 +1447,9 @@
       "gimmick": null,
       "power": {
         "name": "SharedWard",
-        "perRank": 8
+        "perRank": {
+          "valueRef": "outer.mending.n2/power/perRank"
+        }
       },
       "stat": null,
       "options": null,
@@ -1437,7 +1483,9 @@
       "gimmick": null,
       "power": {
         "name": "SecondWind",
-        "perRank": 6
+        "perRank": {
+          "valueRef": "outer.mending.n3/power/perRank"
+        }
       },
       "stat": null,
       "options": null,
@@ -1484,7 +1532,9 @@
           "gimmick": null,
           "power": {
             "name": "WatchfulHand",
-            "perRank": 5
+            "perRank": {
+              "valueRef": "outer.mending.c1/options/0/power/perRank"
+            }
           },
           "stat": null,
           "nameJa": "見守る手",
@@ -1500,7 +1550,9 @@
           "gimmick": null,
           "power": {
             "name": "ShardBoon",
-            "perRank": 3
+            "perRank": {
+              "valueRef": "outer.mending.c1/options/1/power/perRank"
+            }
           },
           "stat": null,
           "nameJa": "破片の恵み",
@@ -1532,7 +1584,7 @@
       "requiresAny": [],
       "kind": "Stat",
       "memory": null,
-      "value": 3,
+      "value": null,
       "param": null,
       "receiver": null,
       "target": null,
@@ -1540,7 +1592,9 @@
       "power": null,
       "stat": {
         "name": "SummonPower",
-        "perRank": 3
+        "perRank": {
+          "valueRef": "outer.summons.s1/stat/perRank"
+        }
       },
       "options": null,
       "keystone": null,
@@ -1568,7 +1622,7 @@
       "requiresAny": [],
       "kind": "Stat",
       "memory": null,
-      "value": 2,
+      "value": null,
       "param": null,
       "receiver": null,
       "target": null,
@@ -1576,7 +1630,9 @@
       "power": null,
       "stat": {
         "name": "PowerPct",
-        "perRank": 2
+        "perRank": {
+          "valueRef": "outer.summons.s2/stat/perRank"
+        }
       },
       "options": null,
       "keystone": null,
@@ -1604,7 +1660,7 @@
       "requiresAny": [],
       "kind": "Stat",
       "memory": null,
-      "value": 2,
+      "value": null,
       "param": null,
       "receiver": null,
       "target": null,
@@ -1612,7 +1668,9 @@
       "power": null,
       "stat": {
         "name": "MaxHealthPct",
-        "perRank": 2
+        "perRank": {
+          "valueRef": "outer.summons.s3/stat/perRank"
+        }
       },
       "options": null,
       "keystone": null,
@@ -1640,7 +1698,7 @@
       "requiresAny": [],
       "kind": "Stat",
       "memory": null,
-      "value": 3,
+      "value": null,
       "param": null,
       "receiver": null,
       "target": null,
@@ -1648,7 +1706,9 @@
       "power": null,
       "stat": {
         "name": "HealPower",
-        "perRank": 3
+        "perRank": {
+          "valueRef": "outer.summons.s4/stat/perRank"
+        }
       },
       "options": null,
       "keystone": null,
@@ -1675,7 +1735,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_L_SmallMoltenCore",
-      "value": 3,
+      "valueRef": "outer.summons.a1/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -1718,7 +1778,9 @@
       "gimmick": {
         "trigger": "OnUse",
         "effect": "AlliedWard",
-        "value": 20,
+        "value": {
+          "valueRef": "outer.summons.a2/gimmick/value"
+        },
         "arg": 1,
         "cooldown": 0,
         "target": null
@@ -1753,7 +1815,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_L_SmallMoltenCore",
-      "value": 10,
+      "valueRef": "outer.summons.a3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -1790,7 +1852,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_L_SmallMoltenCore",
-      "value": 20,
+      "valueRef": "outer.summons.a4/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -1825,7 +1887,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_L_SmallMoltenCore",
-      "value": 1,
+      "valueRef": "outer.summons.a5/value",
       "param": "ExtraTargets",
       "receiver": null,
       "target": {
@@ -1868,7 +1930,9 @@
       "gimmick": {
         "trigger": "OnUse",
         "effect": "PackMend",
-        "value": 2,
+        "value": {
+          "valueRef": "outer.summons.a6/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -1901,7 +1965,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_C_SparklingWaterGun",
-      "value": 3,
+      "valueRef": "outer.summons.b1/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -1944,7 +2008,9 @@
       "gimmick": {
         "trigger": "OnUse",
         "effect": "AlliedWard",
-        "value": 20,
+        "value": {
+          "valueRef": "outer.summons.b2/gimmick/value"
+        },
         "arg": 1,
         "cooldown": 0,
         "target": null
@@ -1979,7 +2045,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_C_SparklingWaterGun",
-      "value": 10,
+      "valueRef": "outer.summons.b3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -2016,7 +2082,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_C_SparklingWaterGun",
-      "value": 20,
+      "valueRef": "outer.summons.b4/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -2051,7 +2117,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_C_SparklingWaterGun",
-      "value": 1,
+      "valueRef": "outer.summons.b5/value",
       "param": "ExtraTargets",
       "receiver": null,
       "target": {
@@ -2094,7 +2160,9 @@
       "gimmick": {
         "trigger": "OnUse",
         "effect": "PackMend",
-        "value": 2,
+        "value": {
+          "valueRef": "outer.summons.b6/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -2134,7 +2202,9 @@
       "gimmick": null,
       "power": {
         "name": "PackFeast",
-        "perRank": 2
+        "perRank": {
+          "valueRef": "outer.summons.n1/power/perRank"
+        }
       },
       "stat": null,
       "options": null,
@@ -2169,7 +2239,9 @@
       "gimmick": null,
       "power": {
         "name": "DeathBloom",
-        "perRank": 20
+        "perRank": {
+          "valueRef": "outer.summons.n2/power/perRank"
+        }
       },
       "stat": null,
       "options": null,
@@ -2203,7 +2275,9 @@
       "gimmick": {
         "trigger": "OnUse",
         "effect": "AlliedWard",
-        "value": 15,
+        "value": {
+          "valueRef": "outer.summons.n3/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -2249,7 +2323,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_L_SmallMoltenCore",
-          "value": 20,
+          "valueRef": "outer.summons.c1/options/0/value",
           "param": "Radius",
           "receiver": null,
           "target": {
@@ -2265,7 +2339,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_C_SparklingWaterGun",
-          "value": 20,
+          "valueRef": "outer.summons.c1/options/1/value",
           "param": "Duration",
           "receiver": null,
           "target": {
@@ -2305,7 +2379,7 @@
       "requiresAny": [],
       "kind": "Stat",
       "memory": null,
-      "value": 3,
+      "value": null,
       "param": null,
       "receiver": null,
       "target": null,
@@ -2313,7 +2387,9 @@
       "power": null,
       "stat": {
         "name": "FireAmp",
-        "perRank": 3
+        "perRank": {
+          "valueRef": "outer.steam.s1/stat/perRank"
+        }
       },
       "options": null,
       "keystone": null,
@@ -2341,7 +2417,7 @@
       "requiresAny": [],
       "kind": "Stat",
       "memory": null,
-      "value": 3,
+      "value": null,
       "param": null,
       "receiver": null,
       "target": null,
@@ -2349,7 +2425,9 @@
       "power": null,
       "stat": {
         "name": "ColdAmp",
-        "perRank": 3
+        "perRank": {
+          "valueRef": "outer.steam.s2/stat/perRank"
+        }
       },
       "options": null,
       "keystone": null,
@@ -2377,7 +2455,7 @@
       "requiresAny": [],
       "kind": "Stat",
       "memory": null,
-      "value": 3,
+      "value": null,
       "param": null,
       "receiver": null,
       "target": null,
@@ -2385,7 +2463,9 @@
       "power": null,
       "stat": {
         "name": "Armor",
-        "perRank": 3
+        "perRank": {
+          "valueRef": "outer.steam.s3/stat/perRank"
+        }
       },
       "options": null,
       "keystone": null,
@@ -2413,7 +2493,7 @@
       "requiresAny": [],
       "kind": "Stat",
       "memory": null,
-      "value": 2,
+      "value": null,
       "param": null,
       "receiver": null,
       "target": null,
@@ -2421,7 +2501,9 @@
       "power": null,
       "stat": {
         "name": "PowerPct",
-        "perRank": 2
+        "perRank": {
+          "valueRef": "outer.steam.s4/stat/perRank"
+        }
       },
       "options": null,
       "keystone": null,
@@ -2448,7 +2530,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_C_Pew",
-      "value": 3,
+      "valueRef": "outer.steam.a1/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -2491,7 +2573,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Element",
-        "value": 50,
+        "value": {
+          "valueRef": "outer.steam.a2/gimmick/value"
+        },
         "arg": 1,
         "cooldown": 0,
         "target": null
@@ -2525,7 +2609,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_C_Pew",
-      "value": 10,
+      "valueRef": "outer.steam.a3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -2562,7 +2646,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_C_Pew",
-      "value": 5,
+      "valueRef": "outer.steam.a4/value",
       "param": "Chance",
       "receiver": null,
       "target": {
@@ -2637,7 +2721,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Burst",
-        "value": 35,
+        "value": {
+          "valueRef": "outer.steam.a6/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -2670,7 +2756,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_C_FlashFreeze",
-      "value": 3,
+      "valueRef": "outer.steam.b1/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -2713,7 +2799,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Element",
-        "value": 100,
+        "value": {
+          "valueRef": "outer.steam.b2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -2747,7 +2835,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_C_FlashFreeze",
-      "value": 10,
+      "valueRef": "outer.steam.b3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -2784,7 +2872,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_C_FlashFreeze",
-      "value": 10,
+      "valueRef": "outer.steam.b4/value",
       "param": "Chance",
       "receiver": null,
       "target": {
@@ -2859,7 +2947,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Burst",
-        "value": 35,
+        "value": {
+          "valueRef": "outer.steam.b6/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -2899,7 +2989,9 @@
       "gimmick": null,
       "power": {
         "name": "Steam",
-        "perRank": 25
+        "perRank": {
+          "valueRef": "outer.steam.n1/power/perRank"
+        }
       },
       "stat": null,
       "options": null,
@@ -2934,7 +3026,9 @@
       "gimmick": null,
       "power": {
         "name": "Fetters",
-        "perRank": 4
+        "perRank": {
+          "valueRef": "outer.steam.n2/power/perRank"
+        }
       },
       "stat": null,
       "options": null,
@@ -2968,7 +3062,9 @@
       "gimmick": null,
       "power": {
         "name": "ElementalHarvest",
-        "perRank": 6
+        "perRank": {
+          "valueRef": "outer.steam.n3/power/perRank"
+        }
       },
       "stat": null,
       "options": null,
@@ -3015,7 +3111,9 @@
           "gimmick": null,
           "power": {
             "name": "Steam",
-            "perRank": 15
+            "perRank": {
+              "valueRef": "outer.steam.c1/options/0/power/perRank"
+            }
           },
           "stat": null,
           "nameJa": "湯気の猛り",
@@ -3031,7 +3129,9 @@
           "gimmick": {
             "trigger": "OnHit",
             "effect": "Sap",
-            "value": 3,
+            "value": {
+              "valueRef": "outer.steam.c1/options/1/gimmick/value"
+            },
             "arg": 0,
             "cooldown": 0,
             "target": null
@@ -3068,7 +3168,7 @@
       "requiresAny": [],
       "kind": "Stat",
       "memory": null,
-      "value": 3,
+      "value": null,
       "param": null,
       "receiver": null,
       "target": null,
@@ -3076,7 +3176,9 @@
       "power": null,
       "stat": {
         "name": "LightAmp",
-        "perRank": 3
+        "perRank": {
+          "valueRef": "outer.eclipse.s1/stat/perRank"
+        }
       },
       "options": null,
       "keystone": null,
@@ -3104,7 +3206,7 @@
       "requiresAny": [],
       "kind": "Stat",
       "memory": null,
-      "value": 3,
+      "value": null,
       "param": null,
       "receiver": null,
       "target": null,
@@ -3112,7 +3214,9 @@
       "power": null,
       "stat": {
         "name": "DarkAmp",
-        "perRank": 3
+        "perRank": {
+          "valueRef": "outer.eclipse.s2/stat/perRank"
+        }
       },
       "options": null,
       "keystone": null,
@@ -3140,7 +3244,7 @@
       "requiresAny": [],
       "kind": "Stat",
       "memory": null,
-      "value": 2,
+      "value": null,
       "param": null,
       "receiver": null,
       "target": null,
@@ -3148,7 +3252,9 @@
       "power": null,
       "stat": {
         "name": "AttackPct",
-        "perRank": 2
+        "perRank": {
+          "valueRef": "outer.eclipse.s3/stat/perRank"
+        }
       },
       "options": null,
       "keystone": null,
@@ -3176,7 +3282,7 @@
       "requiresAny": [],
       "kind": "Stat",
       "memory": null,
-      "value": 2,
+      "value": null,
       "param": null,
       "receiver": null,
       "target": null,
@@ -3184,7 +3290,9 @@
       "power": null,
       "stat": {
         "name": "PowerPct",
-        "perRank": 2
+        "perRank": {
+          "valueRef": "outer.eclipse.s4/stat/perRank"
+        }
       },
       "options": null,
       "keystone": null,
@@ -3211,7 +3319,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_C_Starfall",
-      "value": 3,
+      "valueRef": "outer.eclipse.a1/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -3254,7 +3362,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Element",
-        "value": 50,
+        "value": {
+          "valueRef": "outer.eclipse.a2/gimmick/value"
+        },
         "arg": 3,
         "cooldown": 0,
         "target": null
@@ -3288,7 +3398,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_C_Starfall",
-      "value": 10,
+      "valueRef": "outer.eclipse.a3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -3325,7 +3435,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_C_Starfall",
-      "value": 5,
+      "valueRef": "outer.eclipse.a4/value",
       "param": "Chance",
       "receiver": null,
       "target": {
@@ -3400,7 +3510,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Wound",
-        "value": 25,
+        "value": {
+          "valueRef": "outer.eclipse.a6/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -3433,7 +3545,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_C_DarkBolt",
-      "value": 3,
+      "valueRef": "outer.eclipse.b1/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -3476,7 +3588,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Element",
-        "value": 50,
+        "value": {
+          "valueRef": "outer.eclipse.b2/gimmick/value"
+        },
         "arg": 2,
         "cooldown": 0,
         "target": null
@@ -3510,7 +3624,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_C_DarkBolt",
-      "value": 10,
+      "valueRef": "outer.eclipse.b3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -3547,7 +3661,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_C_DarkBolt",
-      "value": 5,
+      "valueRef": "outer.eclipse.b4/value",
       "param": "Chance",
       "receiver": null,
       "target": {
@@ -3622,7 +3736,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Wound",
-        "value": 25,
+        "value": {
+          "valueRef": "outer.eclipse.b6/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -3662,7 +3778,9 @@
       "gimmick": null,
       "power": {
         "name": "Eclipse",
-        "perRank": 5
+        "perRank": {
+          "valueRef": "outer.eclipse.n1/power/perRank"
+        }
       },
       "stat": null,
       "options": null,
@@ -3697,7 +3815,9 @@
       "gimmick": null,
       "power": {
         "name": "UmbralHeritage",
-        "perRank": 20
+        "perRank": {
+          "valueRef": "outer.eclipse.n2/power/perRank"
+        }
       },
       "stat": null,
       "options": null,
@@ -3731,7 +3851,9 @@
       "gimmick": null,
       "power": {
         "name": "StardustCycle",
-        "perRank": 3
+        "perRank": {
+          "valueRef": "outer.eclipse.n3/power/perRank"
+        }
       },
       "stat": null,
       "options": null,
@@ -3778,7 +3900,9 @@
           "gimmick": null,
           "power": {
             "name": "Eclipse",
-            "perRank": 3
+            "perRank": {
+              "valueRef": "outer.eclipse.c1/options/0/power/perRank"
+            }
           },
           "stat": null,
           "nameJa": "蝕の深まり",
@@ -3787,7 +3911,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_C_Starfall",
-          "value": 20,
+          "valueRef": "outer.eclipse.c1/options/1/value",
           "param": "Duration",
           "receiver": null,
           "target": {
@@ -3827,7 +3951,7 @@
       "requiresAny": [],
       "kind": "Stat",
       "memory": null,
-      "value": 3,
+      "value": null,
       "param": null,
       "receiver": null,
       "target": null,
@@ -3835,7 +3959,9 @@
       "power": null,
       "stat": {
         "name": "FireAmp",
-        "perRank": 3
+        "perRank": {
+          "valueRef": "outer.cinder-rime.s1/stat/perRank"
+        }
       },
       "options": null,
       "keystone": null,
@@ -3863,7 +3989,7 @@
       "requiresAny": [],
       "kind": "Stat",
       "memory": null,
-      "value": 3,
+      "value": null,
       "param": null,
       "receiver": null,
       "target": null,
@@ -3871,7 +3997,9 @@
       "power": null,
       "stat": {
         "name": "ColdAmp",
-        "perRank": 3
+        "perRank": {
+          "valueRef": "outer.cinder-rime.s2/stat/perRank"
+        }
       },
       "options": null,
       "keystone": null,
@@ -3899,7 +4027,7 @@
       "requiresAny": [],
       "kind": "Stat",
       "memory": null,
-      "value": 3,
+      "value": null,
       "param": null,
       "receiver": null,
       "target": null,
@@ -3907,7 +4035,9 @@
       "power": null,
       "stat": {
         "name": "LightAmp",
-        "perRank": 3
+        "perRank": {
+          "valueRef": "outer.cinder-rime.s3/stat/perRank"
+        }
       },
       "options": null,
       "keystone": null,
@@ -3935,7 +4065,7 @@
       "requiresAny": [],
       "kind": "Stat",
       "memory": null,
-      "value": 3,
+      "value": null,
       "param": null,
       "receiver": null,
       "target": null,
@@ -3943,7 +4073,9 @@
       "power": null,
       "stat": {
         "name": "DarkAmp",
-        "perRank": 3
+        "perRank": {
+          "valueRef": "outer.cinder-rime.s4/stat/perRank"
+        }
       },
       "options": null,
       "keystone": null,
@@ -3970,7 +4102,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_C_DarkBolt",
-      "value": 3,
+      "valueRef": "outer.cinder-rime.a1/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -4013,7 +4145,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Element",
-        "value": 100,
+        "value": {
+          "valueRef": "outer.cinder-rime.a2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -4047,7 +4181,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_C_DarkBolt",
-      "value": 10,
+      "valueRef": "outer.cinder-rime.a3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -4084,7 +4218,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_C_DarkBolt",
-      "value": 10,
+      "valueRef": "outer.cinder-rime.a4/value",
       "param": "Chance",
       "receiver": null,
       "target": {
@@ -4159,7 +4293,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Echo",
-        "value": 8,
+        "value": {
+          "valueRef": "outer.cinder-rime.a6/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -4192,7 +4328,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_C_FlashFreeze",
-      "value": 3,
+      "valueRef": "outer.cinder-rime.b1/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -4235,7 +4371,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Element",
-        "value": 50,
+        "value": {
+          "valueRef": "outer.cinder-rime.b2/gimmick/value"
+        },
         "arg": 2,
         "cooldown": 0,
         "target": null
@@ -4269,7 +4407,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_C_FlashFreeze",
-      "value": 10,
+      "valueRef": "outer.cinder-rime.b3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -4306,7 +4444,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_C_FlashFreeze",
-      "value": 5,
+      "valueRef": "outer.cinder-rime.b4/value",
       "param": "Chance",
       "receiver": null,
       "target": {
@@ -4381,7 +4519,9 @@
       "gimmick": {
         "trigger": "OnUse",
         "effect": "Shield",
-        "value": 2,
+        "value": {
+          "valueRef": "outer.cinder-rime.b6/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -4422,7 +4562,9 @@
       "gimmick": null,
       "power": {
         "name": "Cinder",
-        "perRank": 1
+        "perRank": {
+          "valueRef": "outer.cinder-rime.n1/power/perRank"
+        }
       },
       "stat": null,
       "options": null,
@@ -4457,7 +4599,9 @@
       "gimmick": null,
       "power": {
         "name": "FrostCrystal",
-        "perRank": 3
+        "perRank": {
+          "valueRef": "outer.cinder-rime.n2/power/perRank"
+        }
       },
       "stat": null,
       "options": null,
@@ -4491,7 +4635,9 @@
       "gimmick": null,
       "power": {
         "name": "SharedWard",
-        "perRank": 6
+        "perRank": {
+          "valueRef": "outer.cinder-rime.n3/power/perRank"
+        }
       },
       "stat": null,
       "options": null,
@@ -4538,7 +4684,9 @@
           "gimmick": null,
           "power": {
             "name": "ElementalHarvest",
-            "perRank": 8
+            "perRank": {
+              "valueRef": "outer.cinder-rime.c1/options/0/power/perRank"
+            }
           },
           "stat": null,
           "nameJa": "灰を刈り取る",
@@ -4554,7 +4702,9 @@
           "gimmick": null,
           "power": {
             "name": "FrostCrystal",
-            "perRank": 2
+            "perRank": {
+              "valueRef": "outer.cinder-rime.c1/options/1/power/perRank"
+            }
           },
           "stat": null,
           "nameJa": "厚く茂る氷晶",
@@ -4586,7 +4736,7 @@
       "requiresAny": [],
       "kind": "Stat",
       "memory": null,
-      "value": 3,
+      "value": null,
       "param": null,
       "receiver": null,
       "target": null,
@@ -4594,7 +4744,9 @@
       "power": null,
       "stat": {
         "name": "HealPower",
-        "perRank": 3
+        "perRank": {
+          "valueRef": "outer.support.s1/stat/perRank"
+        }
       },
       "options": null,
       "keystone": null,
@@ -4622,7 +4774,7 @@
       "requiresAny": [],
       "kind": "Stat",
       "memory": null,
-      "value": 3,
+      "value": null,
       "param": null,
       "receiver": null,
       "target": null,
@@ -4630,7 +4782,9 @@
       "power": null,
       "stat": {
         "name": "ShieldPower",
-        "perRank": 3
+        "perRank": {
+          "valueRef": "outer.support.s2/stat/perRank"
+        }
       },
       "options": null,
       "keystone": null,
@@ -4658,7 +4812,7 @@
       "requiresAny": [],
       "kind": "Stat",
       "memory": null,
-      "value": 3,
+      "value": null,
       "param": null,
       "receiver": null,
       "target": null,
@@ -4666,7 +4820,9 @@
       "power": null,
       "stat": {
         "name": "Tenacity",
-        "perRank": 3
+        "perRank": {
+          "valueRef": "outer.support.s3/stat/perRank"
+        }
       },
       "options": null,
       "keystone": null,
@@ -4694,7 +4850,7 @@
       "requiresAny": [],
       "kind": "Stat",
       "memory": null,
-      "value": 2,
+      "value": null,
       "param": null,
       "receiver": null,
       "target": null,
@@ -4702,7 +4858,9 @@
       "power": null,
       "stat": {
         "name": "MaxHealthPct",
-        "perRank": 2
+        "perRank": {
+          "valueRef": "outer.support.s4/stat/perRank"
+        }
       },
       "options": null,
       "keystone": null,
@@ -4729,7 +4887,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_C_MassProtection",
-      "value": 3,
+      "valueRef": "outer.support.a1/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -4772,7 +4930,9 @@
       "gimmick": {
         "trigger": "OnUse",
         "effect": "AlliedWard",
-        "value": 20,
+        "value": {
+          "valueRef": "outer.support.a2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -4807,7 +4967,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_C_MassProtection",
-      "value": 10,
+      "valueRef": "outer.support.a3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -4844,7 +5004,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_C_MassProtection",
-      "value": 20,
+      "valueRef": "outer.support.a4/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -4879,7 +5039,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_C_MassProtection",
-      "value": 20,
+      "valueRef": "outer.support.a5/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -4915,7 +5075,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_C_MassProtection",
-      "value": 1,
+      "valueRef": "outer.support.a6/value",
       "param": "ExtraTargets",
       "receiver": null,
       "target": {
@@ -4951,7 +5111,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_E_MassCleanse",
-      "value": 3,
+      "valueRef": "outer.support.b1/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -4994,7 +5154,9 @@
       "gimmick": {
         "trigger": "OnUse",
         "effect": "AlliedWard",
-        "value": 20,
+        "value": {
+          "valueRef": "outer.support.b2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -5029,7 +5191,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_E_MassCleanse",
-      "value": 10,
+      "valueRef": "outer.support.b3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -5066,7 +5228,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_E_MassCleanse",
-      "value": 20,
+      "valueRef": "outer.support.b4/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -5101,7 +5263,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_E_MassCleanse",
-      "value": 20,
+      "valueRef": "outer.support.b5/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -5137,7 +5299,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_E_MassCleanse",
-      "value": 1,
+      "valueRef": "outer.support.b6/value",
       "param": "ExtraTargets",
       "receiver": null,
       "target": {
@@ -5180,7 +5342,9 @@
       "gimmick": null,
       "power": {
         "name": "SharedWard",
-        "perRank": 8
+        "perRank": {
+          "valueRef": "outer.support.n1/power/perRank"
+        }
       },
       "stat": null,
       "options": null,
@@ -5215,7 +5379,9 @@
       "gimmick": null,
       "power": {
         "name": "WatchfulHand",
-        "perRank": 5
+        "perRank": {
+          "valueRef": "outer.support.n2/power/perRank"
+        }
       },
       "stat": null,
       "options": null,
@@ -5249,7 +5415,9 @@
       "gimmick": null,
       "power": {
         "name": "KindnessReturns",
-        "perRank": 5
+        "perRank": {
+          "valueRef": "outer.support.n3/power/perRank"
+        }
       },
       "stat": null,
       "options": null,
@@ -5296,7 +5464,9 @@
           "gimmick": null,
           "power": {
             "name": "VanguardsOath",
-            "perRank": 5
+            "perRank": {
+              "valueRef": "outer.support.c1/options/0/power/perRank"
+            }
           },
           "stat": null,
           "nameJa": "先陣に立つ誓い",
@@ -5312,7 +5482,9 @@
           "gimmick": null,
           "power": {
             "name": "RearguardsWay",
-            "perRank": 3
+            "perRank": {
+              "valueRef": "outer.support.c1/options/1/power/perRank"
+            }
           },
           "stat": null,
           "nameJa": "殿を守る流儀",
@@ -5344,7 +5516,7 @@
       "requiresAny": [],
       "kind": "Stat",
       "memory": null,
-      "value": 2,
+      "value": null,
       "param": null,
       "receiver": null,
       "target": null,
@@ -5352,7 +5524,9 @@
       "power": null,
       "stat": {
         "name": "MaxHealthPct",
-        "perRank": 2
+        "perRank": {
+          "valueRef": "outer.dream.s1/stat/perRank"
+        }
       },
       "options": null,
       "keystone": null,
@@ -5380,7 +5554,7 @@
       "requiresAny": [],
       "kind": "Stat",
       "memory": null,
-      "value": 3,
+      "value": null,
       "param": null,
       "receiver": null,
       "target": null,
@@ -5388,7 +5562,9 @@
       "power": null,
       "stat": {
         "name": "Armor",
-        "perRank": 3
+        "perRank": {
+          "valueRef": "outer.dream.s2/stat/perRank"
+        }
       },
       "options": null,
       "keystone": null,
@@ -5416,7 +5592,7 @@
       "requiresAny": [],
       "kind": "Stat",
       "memory": null,
-      "value": 2,
+      "value": null,
       "param": null,
       "receiver": null,
       "target": null,
@@ -5424,7 +5600,9 @@
       "power": null,
       "stat": {
         "name": "AttackPct",
-        "perRank": 2
+        "perRank": {
+          "valueRef": "outer.dream.s3/stat/perRank"
+        }
       },
       "options": null,
       "keystone": null,
@@ -5452,7 +5630,7 @@
       "requiresAny": [],
       "kind": "Stat",
       "memory": null,
-      "value": 2,
+      "value": null,
       "param": null,
       "receiver": null,
       "target": null,
@@ -5460,7 +5638,9 @@
       "power": null,
       "stat": {
         "name": "PowerPct",
-        "perRank": 2
+        "perRank": {
+          "valueRef": "outer.dream.s4/stat/perRank"
+        }
       },
       "options": null,
       "keystone": null,
@@ -5487,7 +5667,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_L_CoinExplosion",
-      "value": 3,
+      "valueRef": "outer.dream.a1/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -5530,7 +5710,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "PressureDividend",
-        "value": 10,
+        "value": {
+          "valueRef": "outer.dream.a2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -5565,7 +5747,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_L_CoinExplosion",
-      "value": 10,
+      "valueRef": "outer.dream.a3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -5602,7 +5784,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_L_CoinExplosion",
-      "value": 5,
+      "valueRef": "outer.dream.a4/value",
       "param": "Chance",
       "receiver": null,
       "target": {
@@ -5677,7 +5859,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Echo",
-        "value": 8,
+        "value": {
+          "valueRef": "outer.dream.a6/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -5753,7 +5937,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "PressureDividend",
-        "value": 10,
+        "value": {
+          "valueRef": "outer.dream.b2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -5788,7 +5974,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_U_ShoutOfOblivion",
-      "value": 10,
+      "valueRef": "outer.dream.b3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -5825,7 +6011,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_U_ShoutOfOblivion",
-      "value": 5,
+      "valueRef": "outer.dream.b4/value",
       "param": "Chance",
       "receiver": null,
       "target": {
@@ -5900,7 +6086,9 @@
       "gimmick": {
         "trigger": "OnUse",
         "effect": "Shield",
-        "value": 2,
+        "value": {
+          "valueRef": "outer.dream.b6/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -5941,7 +6129,9 @@
       "gimmick": null,
       "power": {
         "name": "DreamOmen",
-        "perRank": 8
+        "perRank": {
+          "valueRef": "outer.dream.n1/power/perRank"
+        }
       },
       "stat": null,
       "options": null,
@@ -5976,7 +6166,9 @@
       "gimmick": null,
       "power": {
         "name": "ShardBoon",
-        "perRank": 3
+        "perRank": {
+          "valueRef": "outer.dream.n2/power/perRank"
+        }
       },
       "stat": null,
       "options": null,
@@ -6010,7 +6202,9 @@
       "gimmick": null,
       "power": {
         "name": "SpendersWard",
-        "perRank": 2
+        "perRank": {
+          "valueRef": "outer.dream.n3/power/perRank"
+        }
       },
       "stat": null,
       "options": null,
@@ -6057,7 +6251,9 @@
           "gimmick": null,
           "power": {
             "name": "LucidBoon",
-            "perRank": 1
+            "perRank": {
+              "valueRef": "outer.dream.c1/options/0/power/perRank"
+            }
           },
           "stat": null,
           "nameJa": "明晰夢の恵み",
@@ -6073,7 +6269,9 @@
           "gimmick": null,
           "power": {
             "name": "PreyPride",
-            "perRank": 1
+            "perRank": {
+              "valueRef": "outer.dream.c1/options/1/power/perRank"
+            }
           },
           "stat": null,
           "nameJa": "狩人の誇り",
@@ -6105,7 +6303,7 @@
       "requiresAny": [],
       "kind": "Stat",
       "memory": null,
-      "value": 2,
+      "value": null,
       "param": null,
       "receiver": null,
       "target": null,
@@ -6113,7 +6311,9 @@
       "power": null,
       "stat": {
         "name": "MoveSpeedPct",
-        "perRank": 2
+        "perRank": {
+          "valueRef": "outer.fortune.s1/stat/perRank"
+        }
       },
       "options": null,
       "keystone": null,
@@ -6147,7 +6347,9 @@
       "gimmick": null,
       "power": {
         "name": "KillGoldPct",
-        "perRank": 4
+        "perRank": {
+          "valueRef": "outer.fortune.s2/power/perRank"
+        }
       },
       "stat": null,
       "options": null,
@@ -6183,7 +6385,9 @@
       "gimmick": null,
       "power": {
         "name": "KillGoldPct",
-        "perRank": 4
+        "perRank": {
+          "valueRef": "outer.fortune.s3/power/perRank"
+        }
       },
       "stat": null,
       "options": null,
@@ -6219,7 +6423,9 @@
       "gimmick": null,
       "power": {
         "name": "KillGoldPct",
-        "perRank": 4
+        "perRank": {
+          "valueRef": "outer.fortune.s4/power/perRank"
+        }
       },
       "stat": null,
       "options": null,
@@ -6254,7 +6460,9 @@
       "gimmick": null,
       "power": {
         "name": "DreamDustPct",
-        "perRank": 4
+        "perRank": {
+          "valueRef": "outer.fortune.d1/power/perRank"
+        }
       },
       "stat": null,
       "options": null,
@@ -6291,7 +6499,9 @@
       "gimmick": null,
       "power": {
         "name": "DreamDustPct",
-        "perRank": 4
+        "perRank": {
+          "valueRef": "outer.fortune.d2/power/perRank"
+        }
       },
       "stat": null,
       "options": null,
@@ -6328,7 +6538,9 @@
       "gimmick": null,
       "power": {
         "name": "DreamDustPct",
-        "perRank": 4
+        "perRank": {
+          "valueRef": "outer.fortune.d3/power/perRank"
+        }
       },
       "stat": null,
       "options": null,
@@ -6364,7 +6576,9 @@
       "gimmick": null,
       "power": {
         "name": "EliteKillGoldPct",
-        "perRank": 25
+        "perRank": {
+          "valueRef": "outer.fortune.n1/power/perRank"
+        }
       },
       "stat": null,
       "options": null,
@@ -6400,7 +6614,9 @@
       "gimmick": null,
       "power": {
         "name": "DreamDustDelvePct",
-        "perRank": 10
+        "perRank": {
+          "valueRef": "outer.fortune.n2/power/perRank"
+        }
       },
       "stat": null,
       "options": null,

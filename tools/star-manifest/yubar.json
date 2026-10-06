@@ -53,7 +53,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ExoticMatter",
-      "value": 2,
+      "valueRef": "yubar.mem.exotic-matter.c1.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -125,7 +125,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ExoticMatter",
-      "value": 2,
+      "valueRef": "yubar.mem.exotic-matter.c1.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -199,7 +199,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ExoticMatter",
-      "value": 2,
+      "valueRef": "yubar.mem.exotic-matter.c1.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -244,7 +244,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Element",
-        "value": 25,
+        "value": {
+          "valueRef": "yubar.mem.exotic-matter.c1.n1/gimmick/value"
+        },
         "arg": 2,
         "cooldown": 0,
         "target": null
@@ -286,7 +288,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "ElementEdge",
-        "value": 4,
+        "value": {
+          "valueRef": "yubar.mem.exotic-matter.c1.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -348,7 +352,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_D_ExoticMatter",
-          "value": 3,
+          "valueRef": "yubar.mem.exotic-matter.c1.x/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -424,7 +428,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ExoticMatter",
-      "value": 2,
+      "valueRef": "yubar.mem.exotic-matter.c2.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -498,7 +502,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ExoticMatter",
-      "value": 2,
+      "valueRef": "yubar.mem.exotic-matter.c2.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -573,7 +577,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ExoticMatter",
-      "value": 2,
+      "valueRef": "yubar.mem.exotic-matter.c2.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -618,7 +622,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Echo",
-        "value": 8,
+        "value": {
+          "valueRef": "yubar.mem.exotic-matter.c2.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -660,7 +666,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Burst",
-        "value": 12,
+        "value": {
+          "valueRef": "yubar.mem.exotic-matter.c2.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -720,7 +728,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_D_ExoticMatter",
-          "value": 10,
+          "valueRef": "yubar.mem.exotic-matter.c2.x/options/1/value",
           "param": "Radius",
           "receiver": null,
           "target": {
@@ -796,7 +804,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ExoticMatter",
-      "value": 2,
+      "valueRef": "yubar.mem.exotic-matter.c3.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -870,7 +878,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ExoticMatter",
-      "value": 2,
+      "valueRef": "yubar.mem.exotic-matter.c3.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -945,7 +953,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ExoticMatter",
-      "value": 2,
+      "valueRef": "yubar.mem.exotic-matter.c3.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -990,7 +998,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Sap",
-        "value": 2,
+        "value": {
+          "valueRef": "yubar.mem.exotic-matter.c3.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -1032,7 +1042,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "AlliedWard",
-        "value": 1,
+        "value": {
+          "valueRef": "yubar.mem.exotic-matter.c3.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null,
@@ -1085,7 +1097,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_D_ExoticMatter",
-          "value": 10,
+          "valueRef": "yubar.mem.exotic-matter.c3.x/options/0/value",
           "param": "Duration",
           "receiver": null,
           "target": {
@@ -1101,7 +1113,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_D_ExoticMatter",
-          "value": 3,
+          "valueRef": "yubar.mem.exotic-matter.c3.x/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -1177,7 +1189,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ExoticMatter",
-      "value": 2,
+      "valueRef": "yubar.mem.exotic-matter.c4.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -1249,7 +1261,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ExoticMatter",
-      "value": 2,
+      "valueRef": "yubar.mem.exotic-matter.c4.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -1323,7 +1335,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ExoticMatter",
-      "value": 2,
+      "valueRef": "yubar.mem.exotic-matter.c4.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -1368,7 +1380,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "RechargeOther",
-        "value": 4,
+        "value": {
+          "valueRef": "yubar.mem.exotic-matter.c4.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -1410,7 +1424,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Heal",
-        "value": 1,
+        "value": {
+          "valueRef": "yubar.mem.exotic-matter.c4.n2/gimmick/value"
+        },
         "arg": 1,
         "cooldown": 0,
         "target": null
@@ -1472,7 +1488,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_D_ExoticMatter",
-          "value": 3,
+          "valueRef": "yubar.mem.exotic-matter.c4.x/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -1548,7 +1564,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EtherealInfluence",
-      "value": 2,
+      "valueRef": "yubar.mem.ethereal.c1.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -1620,7 +1636,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EtherealInfluence",
-      "value": 2,
+      "valueRef": "yubar.mem.ethereal.c1.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -1694,7 +1710,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EtherealInfluence",
-      "value": 2,
+      "valueRef": "yubar.mem.ethereal.c1.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -1739,7 +1755,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Element",
-        "value": 25,
+        "value": {
+          "valueRef": "yubar.mem.ethereal.c1.n1/gimmick/value"
+        },
         "arg": 2,
         "cooldown": 0,
         "target": null
@@ -1781,7 +1799,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "ElementEdge",
-        "value": 4,
+        "value": {
+          "valueRef": "yubar.mem.ethereal.c1.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -1843,7 +1863,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_Q_EtherealInfluence",
-          "value": 3,
+          "valueRef": "yubar.mem.ethereal.c1.x/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -1919,7 +1939,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EtherealInfluence",
-      "value": 2,
+      "valueRef": "yubar.mem.ethereal.c2.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -1993,7 +2013,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EtherealInfluence",
-      "value": 2,
+      "valueRef": "yubar.mem.ethereal.c2.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -2068,7 +2088,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EtherealInfluence",
-      "value": 2,
+      "valueRef": "yubar.mem.ethereal.c2.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -2113,7 +2133,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Echo",
-        "value": 8,
+        "value": {
+          "valueRef": "yubar.mem.ethereal.c2.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -2155,7 +2177,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Burst",
-        "value": 12,
+        "value": {
+          "valueRef": "yubar.mem.ethereal.c2.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -2215,7 +2239,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_Q_EtherealInfluence",
-          "value": 10,
+          "valueRef": "yubar.mem.ethereal.c2.x/options/1/value",
           "param": "Radius",
           "receiver": null,
           "target": {
@@ -2291,7 +2315,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EtherealInfluence",
-      "value": 2,
+      "valueRef": "yubar.mem.ethereal.c3.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -2365,7 +2389,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EtherealInfluence",
-      "value": 2,
+      "valueRef": "yubar.mem.ethereal.c3.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -2440,7 +2464,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EtherealInfluence",
-      "value": 2,
+      "valueRef": "yubar.mem.ethereal.c3.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -2485,7 +2509,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Sap",
-        "value": 2,
+        "value": {
+          "valueRef": "yubar.mem.ethereal.c3.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -2527,7 +2553,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "AlliedWard",
-        "value": 1,
+        "value": {
+          "valueRef": "yubar.mem.ethereal.c3.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null,
@@ -2580,7 +2608,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_Q_EtherealInfluence",
-          "value": 10,
+          "valueRef": "yubar.mem.ethereal.c3.x/options/0/value",
           "param": "Duration",
           "receiver": null,
           "target": {
@@ -2596,7 +2624,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_Q_EtherealInfluence",
-          "value": 3,
+          "valueRef": "yubar.mem.ethereal.c3.x/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -2672,7 +2700,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EtherealInfluence",
-      "value": 2,
+      "valueRef": "yubar.mem.ethereal.c4.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -2744,7 +2772,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EtherealInfluence",
-      "value": 2,
+      "valueRef": "yubar.mem.ethereal.c4.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -2818,7 +2846,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EtherealInfluence",
-      "value": 2,
+      "valueRef": "yubar.mem.ethereal.c4.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -2863,7 +2891,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Recharge",
-        "value": 4,
+        "value": {
+          "valueRef": "yubar.mem.ethereal.c4.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -2905,7 +2935,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Heal",
-        "value": 1,
+        "value": {
+          "valueRef": "yubar.mem.ethereal.c4.n2/gimmick/value"
+        },
         "arg": 1,
         "cooldown": 0,
         "target": null
@@ -2967,7 +2999,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_Q_EtherealInfluence",
-          "value": 3,
+          "valueRef": "yubar.mem.ethereal.c4.x/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -3043,7 +3075,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_Cataclysm",
-      "value": 2,
+      "valueRef": "yubar.mem.cataclysm.c1.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -3115,7 +3147,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_Cataclysm",
-      "value": 2,
+      "valueRef": "yubar.mem.cataclysm.c1.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -3189,7 +3221,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_Cataclysm",
-      "value": 2,
+      "valueRef": "yubar.mem.cataclysm.c1.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -3234,7 +3266,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Element",
-        "value": 25,
+        "value": {
+          "valueRef": "yubar.mem.cataclysm.c1.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -3276,7 +3310,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "ElementEdge",
-        "value": 4,
+        "value": {
+          "valueRef": "yubar.mem.cataclysm.c1.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -3338,7 +3374,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_R_Cataclysm",
-          "value": 3,
+          "valueRef": "yubar.mem.cataclysm.c1.x/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -3414,7 +3450,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_Cataclysm",
-      "value": 2,
+      "valueRef": "yubar.mem.cataclysm.c2.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -3488,7 +3524,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_Cataclysm",
-      "value": 2,
+      "valueRef": "yubar.mem.cataclysm.c2.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -3563,7 +3599,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_Cataclysm",
-      "value": 2,
+      "valueRef": "yubar.mem.cataclysm.c2.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -3608,7 +3644,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Echo",
-        "value": 8,
+        "value": {
+          "valueRef": "yubar.mem.cataclysm.c2.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -3650,7 +3688,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Burst",
-        "value": 12,
+        "value": {
+          "valueRef": "yubar.mem.cataclysm.c2.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -3710,7 +3750,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_R_Cataclysm",
-          "value": 10,
+          "valueRef": "yubar.mem.cataclysm.c2.x/options/1/value",
           "param": "Radius",
           "receiver": null,
           "target": {
@@ -3786,7 +3826,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_Cataclysm",
-      "value": 2,
+      "valueRef": "yubar.mem.cataclysm.c3.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -3860,7 +3900,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_Cataclysm",
-      "value": 2,
+      "valueRef": "yubar.mem.cataclysm.c3.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -3935,7 +3975,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_Cataclysm",
-      "value": 2,
+      "valueRef": "yubar.mem.cataclysm.c3.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -3980,7 +4020,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Sap",
-        "value": 2,
+        "value": {
+          "valueRef": "yubar.mem.cataclysm.c3.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -4022,7 +4064,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "AlliedWard",
-        "value": 1,
+        "value": {
+          "valueRef": "yubar.mem.cataclysm.c3.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null,
@@ -4075,7 +4119,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_R_Cataclysm",
-          "value": 10,
+          "valueRef": "yubar.mem.cataclysm.c3.x/options/0/value",
           "param": "Duration",
           "receiver": null,
           "target": {
@@ -4091,7 +4135,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_R_Cataclysm",
-          "value": 3,
+          "valueRef": "yubar.mem.cataclysm.c3.x/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -4167,7 +4211,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_Cataclysm",
-      "value": 2,
+      "valueRef": "yubar.mem.cataclysm.c4.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -4239,7 +4283,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_Cataclysm",
-      "value": 2,
+      "valueRef": "yubar.mem.cataclysm.c4.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -4313,7 +4357,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_Cataclysm",
-      "value": 2,
+      "valueRef": "yubar.mem.cataclysm.c4.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -4358,7 +4402,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Recharge",
-        "value": 4,
+        "value": {
+          "valueRef": "yubar.mem.cataclysm.c4.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -4400,7 +4446,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Heal",
-        "value": 1,
+        "value": {
+          "valueRef": "yubar.mem.cataclysm.c4.n2/gimmick/value"
+        },
         "arg": 1,
         "cooldown": 0,
         "target": null
@@ -4462,7 +4510,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_R_Cataclysm",
-          "value": 3,
+          "valueRef": "yubar.mem.cataclysm.c4.x/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -4502,7 +4550,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.5,
+      "valueRef": "yubar.mem.flicker.c1.e1/value",
       "param": null,
       "receiver": "St_M_Flicker",
       "target": {
@@ -4542,7 +4590,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.5,
+      "valueRef": "yubar.mem.flicker.c1.e2/value",
       "param": null,
       "receiver": "St_M_Flicker",
       "target": {
@@ -4582,7 +4630,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.5,
+      "valueRef": "yubar.mem.flicker.c1.e3/value",
       "param": null,
       "receiver": "St_M_Flicker",
       "target": {
@@ -4622,7 +4670,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.5,
+      "valueRef": "yubar.mem.flicker.c1.e4/value",
       "param": null,
       "receiver": "St_M_Flicker",
       "target": {
@@ -4662,7 +4710,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.5,
+      "valueRef": "yubar.mem.flicker.c1.e5/value",
       "param": null,
       "receiver": "St_M_Flicker",
       "target": {
@@ -4703,7 +4751,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.5,
+      "valueRef": "yubar.mem.flicker.c1.e6/value",
       "param": null,
       "receiver": "St_M_Flicker",
       "target": {
@@ -4749,7 +4797,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Recharge",
-        "value": 1,
+        "value": {
+          "valueRef": "yubar.mem.flicker.c1.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": "St_M_Flicker"
@@ -4792,7 +4842,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Recharge",
-        "value": 2,
+        "value": {
+          "valueRef": "yubar.mem.flicker.c1.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": "St_M_Flicker"
@@ -4842,7 +4894,7 @@
         {
           "kind": "GimmickBoost",
           "memory": null,
-          "value": 2,
+          "valueRef": "yubar.mem.flicker.c1.x/options/0/value",
           "param": null,
           "receiver": "St_M_Flicker",
           "target": {
@@ -4865,7 +4917,9 @@
           "gimmick": {
             "trigger": "OnHit",
             "effect": "Recharge",
-            "value": 1,
+            "value": {
+              "valueRef": "yubar.mem.flicker.c1.x/options/1/gimmick/value"
+            },
             "arg": 0,
             "cooldown": 0,
             "target": "St_M_Flicker"
@@ -4904,7 +4958,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.5,
+      "valueRef": "yubar.mem.flicker.c2.e1/value",
       "param": null,
       "receiver": "St_M_Flicker",
       "target": {
@@ -4944,7 +4998,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.5,
+      "valueRef": "yubar.mem.flicker.c2.e2/value",
       "param": null,
       "receiver": "St_M_Flicker",
       "target": {
@@ -4984,7 +5038,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.5,
+      "valueRef": "yubar.mem.flicker.c2.e3/value",
       "param": null,
       "receiver": "St_M_Flicker",
       "target": {
@@ -5024,7 +5078,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.5,
+      "valueRef": "yubar.mem.flicker.c2.e4/value",
       "param": null,
       "receiver": "St_M_Flicker",
       "target": {
@@ -5064,7 +5118,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.5,
+      "valueRef": "yubar.mem.flicker.c2.e5/value",
       "param": null,
       "receiver": "St_M_Flicker",
       "target": {
@@ -5105,7 +5159,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.5,
+      "valueRef": "yubar.mem.flicker.c2.e6/value",
       "param": null,
       "receiver": "St_M_Flicker",
       "target": {
@@ -5151,7 +5205,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Recharge",
-        "value": 1,
+        "value": {
+          "valueRef": "yubar.mem.flicker.c2.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": "St_M_Flicker"
@@ -5194,7 +5250,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Recharge",
-        "value": 2,
+        "value": {
+          "valueRef": "yubar.mem.flicker.c2.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": "St_M_Flicker"
@@ -5244,7 +5302,7 @@
         {
           "kind": "GimmickBoost",
           "memory": null,
-          "value": 2,
+          "valueRef": "yubar.mem.flicker.c2.x/options/0/value",
           "param": null,
           "receiver": "St_M_Flicker",
           "target": {
@@ -5267,7 +5325,9 @@
           "gimmick": {
             "trigger": "OnHit",
             "effect": "Recharge",
-            "value": 1,
+            "value": {
+              "valueRef": "yubar.mem.flicker.c2.x/options/1/gimmick/value"
+            },
             "arg": 0,
             "cooldown": 0,
             "target": "St_M_Flicker"
@@ -5306,7 +5366,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.5,
+      "valueRef": "yubar.mem.flicker.c3.e1/value",
       "param": null,
       "receiver": "St_M_Flicker",
       "target": {
@@ -5346,7 +5406,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.5,
+      "valueRef": "yubar.mem.flicker.c3.e2/value",
       "param": null,
       "receiver": "St_M_Flicker",
       "target": {
@@ -5386,7 +5446,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.5,
+      "valueRef": "yubar.mem.flicker.c3.e3/value",
       "param": null,
       "receiver": "St_M_Flicker",
       "target": {
@@ -5424,7 +5484,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.5,
+      "valueRef": "yubar.mem.flicker.c3.e4/value",
       "param": null,
       "receiver": "St_M_Flicker",
       "target": {
@@ -5464,7 +5524,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.5,
+      "valueRef": "yubar.mem.flicker.c3.e5/value",
       "param": null,
       "receiver": "St_M_Flicker",
       "target": {
@@ -5504,7 +5564,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.5,
+      "valueRef": "yubar.mem.flicker.c3.e6/value",
       "param": null,
       "receiver": "St_M_Flicker",
       "target": {
@@ -5550,7 +5610,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Recharge",
-        "value": 1,
+        "value": {
+          "valueRef": "yubar.mem.flicker.c3.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": "St_M_Flicker"
@@ -5593,7 +5655,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Recharge",
-        "value": 2,
+        "value": {
+          "valueRef": "yubar.mem.flicker.c3.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": "St_M_Flicker"
@@ -5643,7 +5707,7 @@
         {
           "kind": "GimmickBoost",
           "memory": null,
-          "value": 2,
+          "valueRef": "yubar.mem.flicker.c3.x/options/0/value",
           "param": null,
           "receiver": "St_M_Flicker",
           "target": {
@@ -5666,7 +5730,9 @@
           "gimmick": {
             "trigger": "OnHit",
             "effect": "Recharge",
-            "value": 1,
+            "value": {
+              "valueRef": "yubar.mem.flicker.c3.x/options/1/gimmick/value"
+            },
             "arg": 0,
             "cooldown": 0,
             "target": "St_M_Flicker"
@@ -5705,7 +5771,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.5,
+      "valueRef": "yubar.mem.flicker.c4.e1/value",
       "param": null,
       "receiver": "St_M_Flicker",
       "target": {
@@ -5745,7 +5811,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.5,
+      "valueRef": "yubar.mem.flicker.c4.e2/value",
       "param": null,
       "receiver": "St_M_Flicker",
       "target": {
@@ -5785,7 +5851,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.5,
+      "valueRef": "yubar.mem.flicker.c4.e3/value",
       "param": null,
       "receiver": "St_M_Flicker",
       "target": {
@@ -5825,7 +5891,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.5,
+      "valueRef": "yubar.mem.flicker.c4.e4/value",
       "param": null,
       "receiver": "St_M_Flicker",
       "target": {
@@ -5865,7 +5931,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.5,
+      "valueRef": "yubar.mem.flicker.c4.e5/value",
       "param": null,
       "receiver": "St_M_Flicker",
       "target": {
@@ -5906,7 +5972,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.5,
+      "valueRef": "yubar.mem.flicker.c4.e6/value",
       "param": null,
       "receiver": "St_M_Flicker",
       "target": {
@@ -5952,7 +6018,9 @@
       "gimmick": {
         "trigger": "OnUse",
         "effect": "Recharge",
-        "value": 2,
+        "value": {
+          "valueRef": "yubar.mem.flicker.c4.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": "St_M_Flicker"
@@ -5995,7 +6063,9 @@
       "gimmick": {
         "trigger": "OnUse",
         "effect": "Recharge",
-        "value": 1,
+        "value": {
+          "valueRef": "yubar.mem.flicker.c4.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": "St_M_Flicker"
@@ -6045,7 +6115,7 @@
         {
           "kind": "GimmickBoost",
           "memory": null,
-          "value": 2,
+          "valueRef": "yubar.mem.flicker.c4.x/options/0/value",
           "param": null,
           "receiver": "St_M_Flicker",
           "target": {
@@ -6068,7 +6138,9 @@
           "gimmick": {
             "trigger": "OnUse",
             "effect": "Recharge",
-            "value": 1,
+            "value": {
+              "valueRef": "yubar.mem.flicker.c4.x/options/1/gimmick/value"
+            },
             "arg": 0,
             "cooldown": 0,
             "target": "St_M_Flicker"
@@ -6143,7 +6215,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ConvergencePoint",
-      "value": 2,
+      "valueRef": "yubar.mem.converging-stars.c1.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -6215,7 +6287,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ConvergencePoint",
-      "value": 2,
+      "valueRef": "yubar.mem.converging-stars.c1.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -6289,7 +6361,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ConvergencePoint",
-      "value": 2,
+      "valueRef": "yubar.mem.converging-stars.c1.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -6334,7 +6406,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Element",
-        "value": 25,
+        "value": {
+          "valueRef": "yubar.mem.converging-stars.c1.n1/gimmick/value"
+        },
         "arg": 2,
         "cooldown": 0,
         "target": null
@@ -6376,7 +6450,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "ElementEdge",
-        "value": 4,
+        "value": {
+          "valueRef": "yubar.mem.converging-stars.c1.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -6438,7 +6514,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_D_ConvergencePoint",
-          "value": 3,
+          "valueRef": "yubar.mem.converging-stars.c1.x/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -6514,7 +6590,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ConvergencePoint",
-      "value": 2,
+      "valueRef": "yubar.mem.converging-stars.c2.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -6588,7 +6664,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ConvergencePoint",
-      "value": 2,
+      "valueRef": "yubar.mem.converging-stars.c2.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -6663,7 +6739,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ConvergencePoint",
-      "value": 2,
+      "valueRef": "yubar.mem.converging-stars.c2.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -6708,7 +6784,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Echo",
-        "value": 8,
+        "value": {
+          "valueRef": "yubar.mem.converging-stars.c2.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -6750,7 +6828,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Burst",
-        "value": 12,
+        "value": {
+          "valueRef": "yubar.mem.converging-stars.c2.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -6810,7 +6890,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_D_ConvergencePoint",
-          "value": 10,
+          "valueRef": "yubar.mem.converging-stars.c2.x/options/1/value",
           "param": "Radius",
           "receiver": null,
           "target": {
@@ -6886,7 +6966,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ConvergencePoint",
-      "value": 2,
+      "valueRef": "yubar.mem.converging-stars.c3.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -6960,7 +7040,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ConvergencePoint",
-      "value": 2,
+      "valueRef": "yubar.mem.converging-stars.c3.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -7035,7 +7115,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ConvergencePoint",
-      "value": 2,
+      "valueRef": "yubar.mem.converging-stars.c3.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -7080,7 +7160,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Sap",
-        "value": 2,
+        "value": {
+          "valueRef": "yubar.mem.converging-stars.c3.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -7122,7 +7204,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "AlliedWard",
-        "value": 1,
+        "value": {
+          "valueRef": "yubar.mem.converging-stars.c3.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null,
@@ -7175,7 +7259,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_D_ConvergencePoint",
-          "value": 10,
+          "valueRef": "yubar.mem.converging-stars.c3.x/options/0/value",
           "param": "Duration",
           "receiver": null,
           "target": {
@@ -7191,7 +7275,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_D_ConvergencePoint",
-          "value": 3,
+          "valueRef": "yubar.mem.converging-stars.c3.x/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -7267,7 +7351,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ConvergencePoint",
-      "value": 2,
+      "valueRef": "yubar.mem.converging-stars.c4.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -7339,7 +7423,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ConvergencePoint",
-      "value": 2,
+      "valueRef": "yubar.mem.converging-stars.c4.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -7413,7 +7497,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ConvergencePoint",
-      "value": 2,
+      "valueRef": "yubar.mem.converging-stars.c4.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -7458,7 +7542,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "RechargeOther",
-        "value": 4,
+        "value": {
+          "valueRef": "yubar.mem.converging-stars.c4.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -7500,7 +7586,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Heal",
-        "value": 1,
+        "value": {
+          "valueRef": "yubar.mem.converging-stars.c4.n2/gimmick/value"
+        },
         "arg": 1,
         "cooldown": 0,
         "target": null
@@ -7562,7 +7650,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_D_ConvergencePoint",
-          "value": 3,
+          "valueRef": "yubar.mem.converging-stars.c4.x/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -7638,7 +7726,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_SuperNova",
-      "value": 2,
+      "valueRef": "yubar.mem.supernova.c1.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -7710,7 +7798,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_SuperNova",
-      "value": 2,
+      "valueRef": "yubar.mem.supernova.c1.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -7784,7 +7872,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_SuperNova",
-      "value": 2,
+      "valueRef": "yubar.mem.supernova.c1.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -7829,7 +7917,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Element",
-        "value": 25,
+        "value": {
+          "valueRef": "yubar.mem.supernova.c1.n1/gimmick/value"
+        },
         "arg": 2,
         "cooldown": 0,
         "target": null
@@ -7871,7 +7961,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "ElementEdge",
-        "value": 4,
+        "value": {
+          "valueRef": "yubar.mem.supernova.c1.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -7933,7 +8025,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_Q_SuperNova",
-          "value": 3,
+          "valueRef": "yubar.mem.supernova.c1.x/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -8009,7 +8101,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_SuperNova",
-      "value": 2,
+      "valueRef": "yubar.mem.supernova.c2.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -8083,7 +8175,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_SuperNova",
-      "value": 2,
+      "valueRef": "yubar.mem.supernova.c2.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -8158,7 +8250,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_SuperNova",
-      "value": 2,
+      "valueRef": "yubar.mem.supernova.c2.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -8203,7 +8295,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Echo",
-        "value": 8,
+        "value": {
+          "valueRef": "yubar.mem.supernova.c2.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -8245,7 +8339,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Burst",
-        "value": 12,
+        "value": {
+          "valueRef": "yubar.mem.supernova.c2.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -8305,7 +8401,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_Q_SuperNova",
-          "value": 10,
+          "valueRef": "yubar.mem.supernova.c2.x/options/1/value",
           "param": "Radius",
           "receiver": null,
           "target": {
@@ -8381,7 +8477,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_SuperNova",
-      "value": 2,
+      "valueRef": "yubar.mem.supernova.c3.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -8455,7 +8551,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_SuperNova",
-      "value": 2,
+      "valueRef": "yubar.mem.supernova.c3.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -8530,7 +8626,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_SuperNova",
-      "value": 2,
+      "valueRef": "yubar.mem.supernova.c3.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -8575,7 +8671,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Sap",
-        "value": 2,
+        "value": {
+          "valueRef": "yubar.mem.supernova.c3.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -8617,7 +8715,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "AlliedWard",
-        "value": 1,
+        "value": {
+          "valueRef": "yubar.mem.supernova.c3.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null,
@@ -8670,7 +8770,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_Q_SuperNova",
-          "value": 10,
+          "valueRef": "yubar.mem.supernova.c3.x/options/0/value",
           "param": "Duration",
           "receiver": null,
           "target": {
@@ -8686,7 +8786,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_Q_SuperNova",
-          "value": 3,
+          "valueRef": "yubar.mem.supernova.c3.x/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -8762,7 +8862,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_SuperNova",
-      "value": 2,
+      "valueRef": "yubar.mem.supernova.c4.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -8834,7 +8934,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_SuperNova",
-      "value": 2,
+      "valueRef": "yubar.mem.supernova.c4.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -8908,7 +9008,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_SuperNova",
-      "value": 2,
+      "valueRef": "yubar.mem.supernova.c4.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -8953,7 +9053,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Recharge",
-        "value": 4,
+        "value": {
+          "valueRef": "yubar.mem.supernova.c4.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -8995,7 +9097,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Heal",
-        "value": 1,
+        "value": {
+          "valueRef": "yubar.mem.supernova.c4.n2/gimmick/value"
+        },
         "arg": 1,
         "cooldown": 0,
         "target": null
@@ -9057,7 +9161,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_Q_SuperNova",
-          "value": 3,
+          "valueRef": "yubar.mem.supernova.c4.x/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -9097,7 +9201,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_Tranquility",
-      "value": 2,
+      "valueRef": "yubar.mem.tranquility.c1.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -9135,7 +9239,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_R_Tranquility",
-      "value": 1,
+      "valueRef": "yubar.mem.tranquility.c1.e2/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -9171,7 +9275,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_Tranquility",
-      "value": 2,
+      "valueRef": "yubar.mem.tranquility.c1.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -9208,7 +9312,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_R_Tranquility",
-      "value": 1,
+      "valueRef": "yubar.mem.tranquility.c1.e4/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -9244,7 +9348,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_Tranquility",
-      "value": 2,
+      "valueRef": "yubar.mem.tranquility.c1.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -9282,7 +9386,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_R_Tranquility",
-      "value": 1,
+      "valueRef": "yubar.mem.tranquility.c1.e6/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -9324,7 +9428,9 @@
       "gimmick": {
         "trigger": "OnUse",
         "effect": "RelayWindow",
-        "value": 4,
+        "value": {
+          "valueRef": "yubar.mem.tranquility.c1.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": "St_Q_EtherealInfluence"
@@ -9367,7 +9473,9 @@
       "gimmick": {
         "trigger": "OnUse",
         "effect": "Recharge",
-        "value": 2,
+        "value": {
+          "valueRef": "yubar.mem.tranquility.c1.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": "St_Q_EtherealInfluence"
@@ -9417,7 +9525,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_R_Tranquility",
-          "value": 3,
+          "valueRef": "yubar.mem.tranquility.c1.x/options/0/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -9433,7 +9541,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_R_Tranquility",
-          "value": 10,
+          "valueRef": "yubar.mem.tranquility.c1.x/options/1/value",
           "param": "Duration",
           "receiver": null,
           "target": {
@@ -9473,7 +9581,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_Tranquility",
-      "value": 2,
+      "valueRef": "yubar.mem.tranquility.c2.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -9511,7 +9619,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_R_Tranquility",
-      "value": 1,
+      "valueRef": "yubar.mem.tranquility.c2.e2/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -9547,7 +9655,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_Tranquility",
-      "value": 2,
+      "valueRef": "yubar.mem.tranquility.c2.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -9585,7 +9693,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_R_Tranquility",
-      "value": 1,
+      "valueRef": "yubar.mem.tranquility.c2.e4/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -9621,7 +9729,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_Tranquility",
-      "value": 2,
+      "valueRef": "yubar.mem.tranquility.c2.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -9660,7 +9768,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_R_Tranquility",
-      "value": 1,
+      "valueRef": "yubar.mem.tranquility.c2.e6/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -9702,7 +9810,9 @@
       "gimmick": {
         "trigger": "OnUse",
         "effect": "RelayWindow",
-        "value": 4,
+        "value": {
+          "valueRef": "yubar.mem.tranquility.c2.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": "St_Q_SuperNova"
@@ -9745,7 +9855,9 @@
       "gimmick": {
         "trigger": "OnUse",
         "effect": "Recharge",
-        "value": 2,
+        "value": {
+          "valueRef": "yubar.mem.tranquility.c2.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": "St_Q_SuperNova"
@@ -9795,7 +9907,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_R_Tranquility",
-          "value": 3,
+          "valueRef": "yubar.mem.tranquility.c2.x/options/0/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -9811,7 +9923,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_R_Tranquility",
-          "value": 10,
+          "valueRef": "yubar.mem.tranquility.c2.x/options/1/value",
           "param": "Duration",
           "receiver": null,
           "target": {
@@ -9851,7 +9963,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_Tranquility",
-      "value": 2,
+      "valueRef": "yubar.mem.tranquility.c3.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -9889,7 +10001,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_R_Tranquility",
-      "value": 1,
+      "valueRef": "yubar.mem.tranquility.c3.e2/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -9925,7 +10037,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_Tranquility",
-      "value": 2,
+      "valueRef": "yubar.mem.tranquility.c3.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -9963,7 +10075,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_R_Tranquility",
-      "value": 1,
+      "valueRef": "yubar.mem.tranquility.c3.e4/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -9999,7 +10111,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_Tranquility",
-      "value": 2,
+      "valueRef": "yubar.mem.tranquility.c3.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -10038,7 +10150,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_R_Tranquility",
-      "value": 1,
+      "valueRef": "yubar.mem.tranquility.c3.e6/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -10080,7 +10192,9 @@
       "gimmick": {
         "trigger": "OnUse",
         "effect": "Heal",
-        "value": 1,
+        "value": {
+          "valueRef": "yubar.mem.tranquility.c3.n1/gimmick/value"
+        },
         "arg": 1,
         "cooldown": 0,
         "target": null
@@ -10122,7 +10236,9 @@
       "gimmick": {
         "trigger": "OnUse",
         "effect": "AlliedWard",
-        "value": 2,
+        "value": {
+          "valueRef": "yubar.mem.tranquility.c3.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null,
@@ -10175,7 +10291,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_R_Tranquility",
-          "value": 3,
+          "valueRef": "yubar.mem.tranquility.c3.x/options/0/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -10191,7 +10307,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_R_Tranquility",
-          "value": 10,
+          "valueRef": "yubar.mem.tranquility.c3.x/options/1/value",
           "param": "Radius",
           "receiver": null,
           "target": {
@@ -10231,7 +10347,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_Tranquility",
-      "value": 2,
+      "valueRef": "yubar.mem.tranquility.c4.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -10269,7 +10385,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_R_Tranquility",
-      "value": 1,
+      "valueRef": "yubar.mem.tranquility.c4.e2/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -10305,7 +10421,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_Tranquility",
-      "value": 2,
+      "valueRef": "yubar.mem.tranquility.c4.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -10342,7 +10458,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_R_Tranquility",
-      "value": 1,
+      "valueRef": "yubar.mem.tranquility.c4.e4/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -10378,7 +10494,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_Tranquility",
-      "value": 2,
+      "valueRef": "yubar.mem.tranquility.c4.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -10416,7 +10532,7 @@
       "requiresAny": [],
       "kind": "MemoryHaste",
       "memory": "St_R_Tranquility",
-      "value": 1,
+      "valueRef": "yubar.mem.tranquility.c4.e6/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -10458,7 +10574,9 @@
       "gimmick": {
         "trigger": "OnUse",
         "effect": "Primed",
-        "value": 12,
+        "value": {
+          "valueRef": "yubar.mem.tranquility.c4.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -10501,7 +10619,9 @@
       "gimmick": {
         "trigger": "OnUse",
         "effect": "Recharge",
-        "value": 2,
+        "value": {
+          "valueRef": "yubar.mem.tranquility.c4.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": "St_M_Flicker"
@@ -10551,7 +10671,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_R_Tranquility",
-          "value": 3,
+          "valueRef": "yubar.mem.tranquility.c4.x/options/0/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -10567,7 +10687,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_R_Tranquility",
-          "value": 10,
+          "valueRef": "yubar.mem.tranquility.c4.x/options/1/value",
           "param": "Duration",
           "receiver": null,
           "target": {
@@ -10610,7 +10730,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EtherealInfluence",
-      "value": 1,
+      "valueRef": "yubar.bridge.b1.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -10649,7 +10769,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EtherealInfluence",
-      "value": 1,
+      "valueRef": "yubar.bridge.b1.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -10688,7 +10808,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EtherealInfluence",
-      "value": 1,
+      "valueRef": "yubar.bridge.b1.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -10727,7 +10847,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EtherealInfluence",
-      "value": 1,
+      "valueRef": "yubar.bridge.b1.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -10766,7 +10886,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EtherealInfluence",
-      "value": 1,
+      "valueRef": "yubar.bridge.b1.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -10806,7 +10926,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ExoticMatter",
-      "value": 1,
+      "valueRef": "yubar.bridge.b1.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -10845,7 +10965,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ExoticMatter",
-      "value": 1,
+      "valueRef": "yubar.bridge.b1.e7/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -10884,7 +11004,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ExoticMatter",
-      "value": 1,
+      "valueRef": "yubar.bridge.b1.e8/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -10923,7 +11043,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ExoticMatter",
-      "value": 1,
+      "valueRef": "yubar.bridge.b1.e9/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -10962,7 +11082,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ExoticMatter",
-      "value": 1,
+      "valueRef": "yubar.bridge.b1.e10/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -11007,7 +11127,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Echo",
-        "value": 6,
+        "value": {
+          "valueRef": "yubar.bridge.b1.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null,
@@ -11051,7 +11173,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Recharge",
-        "value": 2,
+        "value": {
+          "valueRef": "yubar.bridge.b1.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": "St_Q_EtherealInfluence",
@@ -11165,7 +11289,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_D_ExoticMatter",
-          "value": 2,
+          "valueRef": "yubar.bridge.b1.x2/options/0/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -11181,7 +11305,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_Q_EtherealInfluence",
-          "value": 2,
+          "valueRef": "yubar.bridge.b1.x2/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -11224,7 +11348,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EtherealInfluence",
-      "value": 1,
+      "valueRef": "yubar.bridge.b2.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -11263,7 +11387,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EtherealInfluence",
-      "value": 1,
+      "valueRef": "yubar.bridge.b2.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -11302,7 +11426,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EtherealInfluence",
-      "value": 1,
+      "valueRef": "yubar.bridge.b2.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -11341,7 +11465,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EtherealInfluence",
-      "value": 1,
+      "valueRef": "yubar.bridge.b2.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -11380,7 +11504,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EtherealInfluence",
-      "value": 1,
+      "valueRef": "yubar.bridge.b2.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -11420,7 +11544,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_Cataclysm",
-      "value": 1,
+      "valueRef": "yubar.bridge.b2.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -11459,7 +11583,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_Cataclysm",
-      "value": 1,
+      "valueRef": "yubar.bridge.b2.e7/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -11498,7 +11622,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_Cataclysm",
-      "value": 1,
+      "valueRef": "yubar.bridge.b2.e8/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -11537,7 +11661,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_Cataclysm",
-      "value": 1,
+      "valueRef": "yubar.bridge.b2.e9/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -11576,7 +11700,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_Cataclysm",
-      "value": 1,
+      "valueRef": "yubar.bridge.b2.e10/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -11621,7 +11745,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "ElementEdge",
-        "value": 3,
+        "value": {
+          "valueRef": "yubar.bridge.b2.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null,
@@ -11665,7 +11791,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "AlliedWard",
-        "value": 1,
+        "value": {
+          "valueRef": "yubar.bridge.b2.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null,
@@ -11781,7 +11909,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_Q_EtherealInfluence",
-          "value": 2,
+          "valueRef": "yubar.bridge.b2.x2/options/0/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -11797,7 +11925,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_Q_EtherealInfluence",
-          "value": 10,
+          "valueRef": "yubar.bridge.b2.x2/options/1/value",
           "param": "Radius",
           "receiver": null,
           "target": {
@@ -11840,7 +11968,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_Cataclysm",
-      "value": 1,
+      "valueRef": "yubar.bridge.b3.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -11879,7 +12007,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_Cataclysm",
-      "value": 1,
+      "valueRef": "yubar.bridge.b3.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -11918,7 +12046,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_Cataclysm",
-      "value": 1,
+      "valueRef": "yubar.bridge.b3.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -11957,7 +12085,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_Cataclysm",
-      "value": 1,
+      "valueRef": "yubar.bridge.b3.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -11996,7 +12124,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_Cataclysm",
-      "value": 1,
+      "valueRef": "yubar.bridge.b3.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -12036,7 +12164,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 1,
+      "valueRef": "yubar.bridge.b3.e6/value",
       "param": null,
       "receiver": "St_M_Flicker",
       "target": {
@@ -12076,7 +12204,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 1,
+      "valueRef": "yubar.bridge.b3.e7/value",
       "param": null,
       "receiver": "St_M_Flicker",
       "target": {
@@ -12116,7 +12244,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 1,
+      "valueRef": "yubar.bridge.b3.e8/value",
       "param": null,
       "receiver": "St_M_Flicker",
       "target": {
@@ -12156,7 +12284,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 1,
+      "valueRef": "yubar.bridge.b3.e9/value",
       "param": null,
       "receiver": "St_M_Flicker",
       "target": {
@@ -12196,7 +12324,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 1,
+      "valueRef": "yubar.bridge.b3.e10/value",
       "param": null,
       "receiver": "St_M_Flicker",
       "target": {
@@ -12242,7 +12370,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Recharge",
-        "value": 1,
+        "value": {
+          "valueRef": "yubar.bridge.b3.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": "St_M_Flicker"
@@ -12286,7 +12416,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Recharge",
-        "value": 2,
+        "value": {
+          "valueRef": "yubar.bridge.b3.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": "St_M_Flicker",
@@ -12340,7 +12472,7 @@
         {
           "kind": "GimmickBoost",
           "memory": null,
-          "value": 2,
+          "valueRef": "yubar.bridge.b3.x1/options/0/value",
           "param": null,
           "receiver": "St_M_Flicker",
           "target": {
@@ -12356,7 +12488,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_R_Cataclysm",
-          "value": 2,
+          "valueRef": "yubar.bridge.b3.x1/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -12415,7 +12547,9 @@
           "gimmick": {
             "trigger": "OnHit",
             "effect": "Recharge",
-            "value": 1,
+            "value": {
+              "valueRef": "yubar.bridge.b3.x2/options/0/gimmick/value"
+            },
             "arg": 0,
             "cooldown": 0,
             "target": "St_M_Flicker"
@@ -12435,7 +12569,9 @@
           "gimmick": {
             "trigger": "OnKill",
             "effect": "Recharge",
-            "value": 1,
+            "value": {
+              "valueRef": "yubar.bridge.b3.x2/options/1/gimmick/value"
+            },
             "arg": 0,
             "cooldown": 0,
             "target": "St_M_Flicker",
@@ -12478,7 +12614,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ConvergencePoint",
-      "value": 1,
+      "valueRef": "yubar.bridge.b4.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -12517,7 +12653,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ConvergencePoint",
-      "value": 1,
+      "valueRef": "yubar.bridge.b4.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -12556,7 +12692,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ConvergencePoint",
-      "value": 1,
+      "valueRef": "yubar.bridge.b4.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -12595,7 +12731,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ConvergencePoint",
-      "value": 1,
+      "valueRef": "yubar.bridge.b4.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -12634,7 +12770,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ConvergencePoint",
-      "value": 1,
+      "valueRef": "yubar.bridge.b4.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -12674,7 +12810,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 1,
+      "valueRef": "yubar.bridge.b4.e6/value",
       "param": null,
       "receiver": "St_M_Flicker",
       "target": {
@@ -12714,7 +12850,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 1,
+      "valueRef": "yubar.bridge.b4.e7/value",
       "param": null,
       "receiver": "St_M_Flicker",
       "target": {
@@ -12754,7 +12890,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 1,
+      "valueRef": "yubar.bridge.b4.e8/value",
       "param": null,
       "receiver": "St_M_Flicker",
       "target": {
@@ -12794,7 +12930,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 1,
+      "valueRef": "yubar.bridge.b4.e9/value",
       "param": null,
       "receiver": "St_M_Flicker",
       "target": {
@@ -12834,7 +12970,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 1,
+      "valueRef": "yubar.bridge.b4.e10/value",
       "param": null,
       "receiver": "St_M_Flicker",
       "target": {
@@ -12880,7 +13016,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Recharge",
-        "value": 1,
+        "value": {
+          "valueRef": "yubar.bridge.b4.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": "St_M_Flicker",
@@ -12925,7 +13063,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Recharge",
-        "value": 2,
+        "value": {
+          "valueRef": "yubar.bridge.b4.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": "St_M_Flicker",
@@ -12979,7 +13119,7 @@
         {
           "kind": "GimmickBoost",
           "memory": null,
-          "value": 2,
+          "valueRef": "yubar.bridge.b4.x1/options/0/value",
           "param": null,
           "receiver": "St_M_Flicker",
           "target": {
@@ -12995,7 +13135,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_D_ConvergencePoint",
-          "value": 2,
+          "valueRef": "yubar.bridge.b4.x1/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -13054,7 +13194,9 @@
           "gimmick": {
             "trigger": "OnHit",
             "effect": "Recharge",
-            "value": 1,
+            "value": {
+              "valueRef": "yubar.bridge.b4.x2/options/0/gimmick/value"
+            },
             "arg": 0,
             "cooldown": 0,
             "target": "St_M_Flicker",
@@ -13075,7 +13217,9 @@
           "gimmick": {
             "trigger": "OnKill",
             "effect": "Recharge",
-            "value": 1,
+            "value": {
+              "valueRef": "yubar.bridge.b4.x2/options/1/gimmick/value"
+            },
             "arg": 0,
             "cooldown": 0,
             "target": "St_M_Flicker",
@@ -13118,7 +13262,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ConvergencePoint",
-      "value": 1,
+      "valueRef": "yubar.bridge.b5.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -13157,7 +13301,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ConvergencePoint",
-      "value": 1,
+      "valueRef": "yubar.bridge.b5.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -13196,7 +13340,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ConvergencePoint",
-      "value": 1,
+      "valueRef": "yubar.bridge.b5.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -13235,7 +13379,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ConvergencePoint",
-      "value": 1,
+      "valueRef": "yubar.bridge.b5.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -13274,7 +13418,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ConvergencePoint",
-      "value": 1,
+      "valueRef": "yubar.bridge.b5.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -13314,7 +13458,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_SuperNova",
-      "value": 1,
+      "valueRef": "yubar.bridge.b5.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -13353,7 +13497,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_SuperNova",
-      "value": 1,
+      "valueRef": "yubar.bridge.b5.e7/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -13392,7 +13536,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_SuperNova",
-      "value": 1,
+      "valueRef": "yubar.bridge.b5.e8/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -13431,7 +13575,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_SuperNova",
-      "value": 1,
+      "valueRef": "yubar.bridge.b5.e9/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -13470,7 +13614,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_SuperNova",
-      "value": 1,
+      "valueRef": "yubar.bridge.b5.e10/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -13515,7 +13659,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Echo",
-        "value": 6,
+        "value": {
+          "valueRef": "yubar.bridge.b5.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null,
@@ -13559,7 +13705,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Recharge",
-        "value": 2,
+        "value": {
+          "valueRef": "yubar.bridge.b5.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": "St_Q_SuperNova",
@@ -13673,7 +13821,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_D_ConvergencePoint",
-          "value": 2,
+          "valueRef": "yubar.bridge.b5.x2/options/0/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -13689,7 +13837,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_Q_SuperNova",
-          "value": 2,
+          "valueRef": "yubar.bridge.b5.x2/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -13732,7 +13880,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_SuperNova",
-      "value": 1,
+      "valueRef": "yubar.bridge.b6.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -13771,7 +13919,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_SuperNova",
-      "value": 1,
+      "valueRef": "yubar.bridge.b6.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -13810,7 +13958,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_SuperNova",
-      "value": 1,
+      "valueRef": "yubar.bridge.b6.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -13849,7 +13997,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_SuperNova",
-      "value": 1,
+      "valueRef": "yubar.bridge.b6.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -13888,7 +14036,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_SuperNova",
-      "value": 1,
+      "valueRef": "yubar.bridge.b6.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -13928,7 +14076,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_Tranquility",
-      "value": 1,
+      "valueRef": "yubar.bridge.b6.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -13967,7 +14115,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_Tranquility",
-      "value": 1,
+      "valueRef": "yubar.bridge.b6.e7/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -14006,7 +14154,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_Tranquility",
-      "value": 1,
+      "valueRef": "yubar.bridge.b6.e8/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -14045,7 +14193,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_Tranquility",
-      "value": 1,
+      "valueRef": "yubar.bridge.b6.e9/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -14084,7 +14232,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_Tranquility",
-      "value": 1,
+      "valueRef": "yubar.bridge.b6.e10/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -14129,7 +14277,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Echo",
-        "value": 6,
+        "value": {
+          "valueRef": "yubar.bridge.b6.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null,
@@ -14173,7 +14323,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "AlliedWard",
-        "value": 1,
+        "value": {
+          "valueRef": "yubar.bridge.b6.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null,
@@ -14242,7 +14394,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_R_Tranquility",
-          "value": 2,
+          "valueRef": "yubar.bridge.b6.x1/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -14294,7 +14446,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_Q_SuperNova",
-          "value": 2,
+          "valueRef": "yubar.bridge.b6.x2/options/0/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -14310,7 +14462,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_Q_SuperNova",
-          "value": 10,
+          "valueRef": "yubar.bridge.b6.x2/options/1/value",
           "param": "Radius",
           "receiver": null,
           "target": {
@@ -14353,7 +14505,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_Tranquility",
-      "value": 1,
+      "valueRef": "yubar.bridge.b7.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -14392,7 +14544,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_Tranquility",
-      "value": 1,
+      "valueRef": "yubar.bridge.b7.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -14431,7 +14583,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_Tranquility",
-      "value": 1,
+      "valueRef": "yubar.bridge.b7.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -14470,7 +14622,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_Tranquility",
-      "value": 1,
+      "valueRef": "yubar.bridge.b7.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -14509,7 +14661,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_Tranquility",
-      "value": 1,
+      "valueRef": "yubar.bridge.b7.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -14549,7 +14701,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ExoticMatter",
-      "value": 1,
+      "valueRef": "yubar.bridge.b7.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -14588,7 +14740,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ExoticMatter",
-      "value": 1,
+      "valueRef": "yubar.bridge.b7.e7/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -14627,7 +14779,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ExoticMatter",
-      "value": 1,
+      "valueRef": "yubar.bridge.b7.e8/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -14666,7 +14818,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ExoticMatter",
-      "value": 1,
+      "valueRef": "yubar.bridge.b7.e9/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -14705,7 +14857,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ExoticMatter",
-      "value": 1,
+      "valueRef": "yubar.bridge.b7.e10/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -14750,7 +14902,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Echo",
-        "value": 6,
+        "value": {
+          "valueRef": "yubar.bridge.b7.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null,
@@ -14794,7 +14948,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "AlliedWard",
-        "value": 1,
+        "value": {
+          "valueRef": "yubar.bridge.b7.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null,
@@ -14863,7 +15019,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_R_Tranquility",
-          "value": 2,
+          "valueRef": "yubar.bridge.b7.x1/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -14915,7 +15071,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_D_ExoticMatter",
-          "value": 2,
+          "valueRef": "yubar.bridge.b7.x2/options/0/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -14931,7 +15087,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_D_ExoticMatter",
-          "value": 10,
+          "valueRef": "yubar.bridge.b7.x2/options/1/value",
           "param": "Radius",
           "receiver": null,
           "target": {
@@ -14972,7 +15128,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ExoticMatter",
-      "value": 1,
+      "valueRef": "yubar.outer.o1.exotic-matter.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -15011,7 +15167,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ExoticMatter",
-      "value": 1,
+      "valueRef": "yubar.outer.o1.exotic-matter.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -15050,7 +15206,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ExoticMatter",
-      "value": 1,
+      "valueRef": "yubar.outer.o1.exotic-matter.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -15089,7 +15245,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ExoticMatter",
-      "value": 1,
+      "valueRef": "yubar.outer.o1.exotic-matter.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -15128,7 +15284,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ExoticMatter",
-      "value": 1,
+      "valueRef": "yubar.outer.o1.exotic-matter.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -15168,7 +15324,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ExoticMatter",
-      "value": 1,
+      "valueRef": "yubar.outer.o1.exotic-matter.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -15213,7 +15369,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Burst",
-        "value": 6,
+        "value": {
+          "valueRef": "yubar.outer.o1.exotic-matter.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -15255,7 +15413,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Element",
-        "value": 10,
+        "value": {
+          "valueRef": "yubar.outer.o1.exotic-matter.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -15304,7 +15464,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_D_ExoticMatter",
-          "value": 2,
+          "valueRef": "yubar.outer.o1.exotic-matter.x/options/0/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -15320,7 +15480,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_D_ExoticMatter",
-          "value": 10,
+          "valueRef": "yubar.outer.o1.exotic-matter.x/options/1/value",
           "param": "Radius",
           "receiver": null,
           "target": {
@@ -15361,7 +15521,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ConvergencePoint",
-      "value": 1,
+      "valueRef": "yubar.outer.o1.converging-stars.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -15400,7 +15560,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ConvergencePoint",
-      "value": 1,
+      "valueRef": "yubar.outer.o1.converging-stars.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -15439,7 +15599,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ConvergencePoint",
-      "value": 1,
+      "valueRef": "yubar.outer.o1.converging-stars.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -15478,7 +15638,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ConvergencePoint",
-      "value": 1,
+      "valueRef": "yubar.outer.o1.converging-stars.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -15517,7 +15677,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ConvergencePoint",
-      "value": 1,
+      "valueRef": "yubar.outer.o1.converging-stars.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -15557,7 +15717,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ConvergencePoint",
-      "value": 1,
+      "valueRef": "yubar.outer.o1.converging-stars.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -15602,7 +15762,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Burst",
-        "value": 6,
+        "value": {
+          "valueRef": "yubar.outer.o1.converging-stars.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -15644,7 +15806,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Element",
-        "value": 10,
+        "value": {
+          "valueRef": "yubar.outer.o1.converging-stars.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -15693,7 +15857,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_D_ConvergencePoint",
-          "value": 2,
+          "valueRef": "yubar.outer.o1.converging-stars.x/options/0/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -15709,7 +15873,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_D_ConvergencePoint",
-          "value": 10,
+          "valueRef": "yubar.outer.o1.converging-stars.x/options/1/value",
           "param": "Radius",
           "receiver": null,
           "target": {
@@ -15750,7 +15914,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EtherealInfluence",
-      "value": 1,
+      "valueRef": "yubar.outer.o1.ethereal.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -15789,7 +15953,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EtherealInfluence",
-      "value": 1,
+      "valueRef": "yubar.outer.o1.ethereal.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -15828,7 +15992,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EtherealInfluence",
-      "value": 1,
+      "valueRef": "yubar.outer.o1.ethereal.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -15867,7 +16031,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EtherealInfluence",
-      "value": 1,
+      "valueRef": "yubar.outer.o1.ethereal.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -15906,7 +16070,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EtherealInfluence",
-      "value": 1,
+      "valueRef": "yubar.outer.o1.ethereal.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -15946,7 +16110,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EtherealInfluence",
-      "value": 1,
+      "valueRef": "yubar.outer.o1.ethereal.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -15991,7 +16155,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Burst",
-        "value": 6,
+        "value": {
+          "valueRef": "yubar.outer.o1.ethereal.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -16033,7 +16199,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Element",
-        "value": 10,
+        "value": {
+          "valueRef": "yubar.outer.o1.ethereal.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -16082,7 +16250,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_Q_EtherealInfluence",
-          "value": 2,
+          "valueRef": "yubar.outer.o1.ethereal.x/options/0/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -16098,7 +16266,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_Q_EtherealInfluence",
-          "value": 10,
+          "valueRef": "yubar.outer.o1.ethereal.x/options/1/value",
           "param": "Radius",
           "receiver": null,
           "target": {
@@ -16139,7 +16307,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_SuperNova",
-      "value": 1,
+      "valueRef": "yubar.outer.o1.supernova.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -16178,7 +16346,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_SuperNova",
-      "value": 1,
+      "valueRef": "yubar.outer.o1.supernova.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -16217,7 +16385,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_SuperNova",
-      "value": 1,
+      "valueRef": "yubar.outer.o1.supernova.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -16256,7 +16424,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_SuperNova",
-      "value": 1,
+      "valueRef": "yubar.outer.o1.supernova.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -16295,7 +16463,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_SuperNova",
-      "value": 1,
+      "valueRef": "yubar.outer.o1.supernova.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -16335,7 +16503,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_SuperNova",
-      "value": 1,
+      "valueRef": "yubar.outer.o1.supernova.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -16380,7 +16548,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Burst",
-        "value": 6,
+        "value": {
+          "valueRef": "yubar.outer.o1.supernova.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -16422,7 +16592,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Element",
-        "value": 10,
+        "value": {
+          "valueRef": "yubar.outer.o1.supernova.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -16471,7 +16643,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_Q_SuperNova",
-          "value": 2,
+          "valueRef": "yubar.outer.o1.supernova.x/options/0/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -16487,7 +16659,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_Q_SuperNova",
-          "value": 10,
+          "valueRef": "yubar.outer.o1.supernova.x/options/1/value",
           "param": "Radius",
           "receiver": null,
           "target": {
@@ -16528,7 +16700,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ExoticMatter",
-      "value": 1,
+      "valueRef": "yubar.outer.o2.exotic-matter.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -16567,7 +16739,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ExoticMatter",
-      "value": 1,
+      "valueRef": "yubar.outer.o2.exotic-matter.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -16606,7 +16778,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ExoticMatter",
-      "value": 1,
+      "valueRef": "yubar.outer.o2.exotic-matter.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -16645,7 +16817,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ExoticMatter",
-      "value": 1,
+      "valueRef": "yubar.outer.o2.exotic-matter.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -16684,7 +16856,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ExoticMatter",
-      "value": 1,
+      "valueRef": "yubar.outer.o2.exotic-matter.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -16724,7 +16896,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ExoticMatter",
-      "value": 1,
+      "valueRef": "yubar.outer.o2.exotic-matter.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -16769,7 +16941,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Echo",
-        "value": 4,
+        "value": {
+          "valueRef": "yubar.outer.o2.exotic-matter.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -16811,7 +16985,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Wound",
-        "value": 8,
+        "value": {
+          "valueRef": "yubar.outer.o2.exotic-matter.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -16860,7 +17036,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_D_ExoticMatter",
-          "value": 2,
+          "valueRef": "yubar.outer.o2.exotic-matter.x/options/0/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -16876,7 +17052,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_D_ExoticMatter",
-          "value": 10,
+          "valueRef": "yubar.outer.o2.exotic-matter.x/options/1/value",
           "param": "Duration",
           "receiver": null,
           "target": {
@@ -16917,7 +17093,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ConvergencePoint",
-      "value": 1,
+      "valueRef": "yubar.outer.o2.converging-stars.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -16956,7 +17132,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ConvergencePoint",
-      "value": 1,
+      "valueRef": "yubar.outer.o2.converging-stars.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -16995,7 +17171,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ConvergencePoint",
-      "value": 1,
+      "valueRef": "yubar.outer.o2.converging-stars.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -17034,7 +17210,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ConvergencePoint",
-      "value": 1,
+      "valueRef": "yubar.outer.o2.converging-stars.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -17073,7 +17249,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ConvergencePoint",
-      "value": 1,
+      "valueRef": "yubar.outer.o2.converging-stars.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -17113,7 +17289,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ConvergencePoint",
-      "value": 1,
+      "valueRef": "yubar.outer.o2.converging-stars.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -17158,7 +17334,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Echo",
-        "value": 4,
+        "value": {
+          "valueRef": "yubar.outer.o2.converging-stars.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -17200,7 +17378,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Wound",
-        "value": 8,
+        "value": {
+          "valueRef": "yubar.outer.o2.converging-stars.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -17249,7 +17429,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_D_ConvergencePoint",
-          "value": 2,
+          "valueRef": "yubar.outer.o2.converging-stars.x/options/0/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -17265,7 +17445,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_D_ConvergencePoint",
-          "value": 10,
+          "valueRef": "yubar.outer.o2.converging-stars.x/options/1/value",
           "param": "Duration",
           "receiver": null,
           "target": {
@@ -17306,7 +17486,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EtherealInfluence",
-      "value": 1,
+      "valueRef": "yubar.outer.o2.ethereal.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -17345,7 +17525,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EtherealInfluence",
-      "value": 1,
+      "valueRef": "yubar.outer.o2.ethereal.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -17384,7 +17564,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EtherealInfluence",
-      "value": 1,
+      "valueRef": "yubar.outer.o2.ethereal.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -17423,7 +17603,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EtherealInfluence",
-      "value": 1,
+      "valueRef": "yubar.outer.o2.ethereal.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -17462,7 +17642,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EtherealInfluence",
-      "value": 1,
+      "valueRef": "yubar.outer.o2.ethereal.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -17502,7 +17682,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EtherealInfluence",
-      "value": 1,
+      "valueRef": "yubar.outer.o2.ethereal.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -17547,7 +17727,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Echo",
-        "value": 4,
+        "value": {
+          "valueRef": "yubar.outer.o2.ethereal.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -17589,7 +17771,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Wound",
-        "value": 8,
+        "value": {
+          "valueRef": "yubar.outer.o2.ethereal.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -17638,7 +17822,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_Q_EtherealInfluence",
-          "value": 2,
+          "valueRef": "yubar.outer.o2.ethereal.x/options/0/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -17654,7 +17838,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_Q_EtherealInfluence",
-          "value": 10,
+          "valueRef": "yubar.outer.o2.ethereal.x/options/1/value",
           "param": "Duration",
           "receiver": null,
           "target": {
@@ -17695,7 +17879,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_Cataclysm",
-      "value": 1,
+      "valueRef": "yubar.outer.o2.cataclysm.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -17734,7 +17918,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_Cataclysm",
-      "value": 1,
+      "valueRef": "yubar.outer.o2.cataclysm.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -17773,7 +17957,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_Cataclysm",
-      "value": 1,
+      "valueRef": "yubar.outer.o2.cataclysm.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -17812,7 +17996,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_Cataclysm",
-      "value": 1,
+      "valueRef": "yubar.outer.o2.cataclysm.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -17851,7 +18035,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_Cataclysm",
-      "value": 1,
+      "valueRef": "yubar.outer.o2.cataclysm.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -17891,7 +18075,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_Cataclysm",
-      "value": 1,
+      "valueRef": "yubar.outer.o2.cataclysm.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -17936,7 +18120,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Echo",
-        "value": 4,
+        "value": {
+          "valueRef": "yubar.outer.o2.cataclysm.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -17978,7 +18164,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Wound",
-        "value": 8,
+        "value": {
+          "valueRef": "yubar.outer.o2.cataclysm.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -18027,7 +18215,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_R_Cataclysm",
-          "value": 2,
+          "valueRef": "yubar.outer.o2.cataclysm.x/options/0/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -18043,7 +18231,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_R_Cataclysm",
-          "value": 10,
+          "valueRef": "yubar.outer.o2.cataclysm.x/options/1/value",
           "param": "Duration",
           "receiver": null,
           "target": {
@@ -18084,7 +18272,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EtherealInfluence",
-      "value": 1,
+      "valueRef": "yubar.outer.o3.ethereal.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -18123,7 +18311,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EtherealInfluence",
-      "value": 1,
+      "valueRef": "yubar.outer.o3.ethereal.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -18162,7 +18350,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EtherealInfluence",
-      "value": 1,
+      "valueRef": "yubar.outer.o3.ethereal.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -18201,7 +18389,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EtherealInfluence",
-      "value": 1,
+      "valueRef": "yubar.outer.o3.ethereal.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -18240,7 +18428,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EtherealInfluence",
-      "value": 1,
+      "valueRef": "yubar.outer.o3.ethereal.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -18280,7 +18468,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EtherealInfluence",
-      "value": 1,
+      "valueRef": "yubar.outer.o3.ethereal.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -18325,7 +18513,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "AlliedWard",
-        "value": 1,
+        "value": {
+          "valueRef": "yubar.outer.o3.ethereal.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null,
@@ -18371,7 +18561,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Heal",
-        "value": 1,
+        "value": {
+          "valueRef": "yubar.outer.o3.ethereal.n2/gimmick/value"
+        },
         "arg": 1,
         "cooldown": 0,
         "target": null
@@ -18420,7 +18612,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_Q_EtherealInfluence",
-          "value": 2,
+          "valueRef": "yubar.outer.o3.ethereal.x/options/0/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -18436,7 +18628,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_Q_EtherealInfluence",
-          "value": 10,
+          "valueRef": "yubar.outer.o3.ethereal.x/options/1/value",
           "param": "Radius",
           "receiver": null,
           "target": {
@@ -18477,7 +18669,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_SuperNova",
-      "value": 1,
+      "valueRef": "yubar.outer.o3.supernova.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -18516,7 +18708,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_SuperNova",
-      "value": 1,
+      "valueRef": "yubar.outer.o3.supernova.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -18555,7 +18747,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_SuperNova",
-      "value": 1,
+      "valueRef": "yubar.outer.o3.supernova.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -18594,7 +18786,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_SuperNova",
-      "value": 1,
+      "valueRef": "yubar.outer.o3.supernova.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -18633,7 +18825,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_SuperNova",
-      "value": 1,
+      "valueRef": "yubar.outer.o3.supernova.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -18673,7 +18865,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_SuperNova",
-      "value": 1,
+      "valueRef": "yubar.outer.o3.supernova.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -18718,7 +18910,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "AlliedWard",
-        "value": 1,
+        "value": {
+          "valueRef": "yubar.outer.o3.supernova.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null,
@@ -18764,7 +18958,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Heal",
-        "value": 1,
+        "value": {
+          "valueRef": "yubar.outer.o3.supernova.n2/gimmick/value"
+        },
         "arg": 1,
         "cooldown": 0,
         "target": null
@@ -18813,7 +19009,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_Q_SuperNova",
-          "value": 2,
+          "valueRef": "yubar.outer.o3.supernova.x/options/0/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -18829,7 +19025,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_Q_SuperNova",
-          "value": 10,
+          "valueRef": "yubar.outer.o3.supernova.x/options/1/value",
           "param": "Radius",
           "receiver": null,
           "target": {
@@ -18870,7 +19066,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_Cataclysm",
-      "value": 1,
+      "valueRef": "yubar.outer.o3.cataclysm.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -18909,7 +19105,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_Cataclysm",
-      "value": 1,
+      "valueRef": "yubar.outer.o3.cataclysm.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -18948,7 +19144,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_Cataclysm",
-      "value": 1,
+      "valueRef": "yubar.outer.o3.cataclysm.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -18987,7 +19183,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_Cataclysm",
-      "value": 1,
+      "valueRef": "yubar.outer.o3.cataclysm.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -19026,7 +19222,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_Cataclysm",
-      "value": 1,
+      "valueRef": "yubar.outer.o3.cataclysm.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -19066,7 +19262,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_Cataclysm",
-      "value": 1,
+      "valueRef": "yubar.outer.o3.cataclysm.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -19111,7 +19307,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "AlliedWard",
-        "value": 1,
+        "value": {
+          "valueRef": "yubar.outer.o3.cataclysm.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null,
@@ -19157,7 +19355,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Heal",
-        "value": 1,
+        "value": {
+          "valueRef": "yubar.outer.o3.cataclysm.n2/gimmick/value"
+        },
         "arg": 1,
         "cooldown": 0,
         "target": null
@@ -19206,7 +19406,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_R_Cataclysm",
-          "value": 2,
+          "valueRef": "yubar.outer.o3.cataclysm.x/options/0/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -19222,7 +19422,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_R_Cataclysm",
-          "value": 10,
+          "valueRef": "yubar.outer.o3.cataclysm.x/options/1/value",
           "param": "Radius",
           "receiver": null,
           "target": {
@@ -19263,7 +19463,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_Tranquility",
-      "value": 1,
+      "valueRef": "yubar.outer.o3.tranquility.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -19302,7 +19502,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_Tranquility",
-      "value": 1,
+      "valueRef": "yubar.outer.o3.tranquility.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -19341,7 +19541,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_Tranquility",
-      "value": 1,
+      "valueRef": "yubar.outer.o3.tranquility.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -19380,7 +19580,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_Tranquility",
-      "value": 1,
+      "valueRef": "yubar.outer.o3.tranquility.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -19419,7 +19619,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_Tranquility",
-      "value": 1,
+      "valueRef": "yubar.outer.o3.tranquility.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -19459,7 +19659,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_Tranquility",
-      "value": 1,
+      "valueRef": "yubar.outer.o3.tranquility.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -19504,7 +19704,9 @@
       "gimmick": {
         "trigger": "OnUse",
         "effect": "AlliedWard",
-        "value": 1,
+        "value": {
+          "valueRef": "yubar.outer.o3.tranquility.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null,
@@ -19550,7 +19752,9 @@
       "gimmick": {
         "trigger": "OnUse",
         "effect": "Heal",
-        "value": 1,
+        "value": {
+          "valueRef": "yubar.outer.o3.tranquility.n2/gimmick/value"
+        },
         "arg": 1,
         "cooldown": 0,
         "target": null
@@ -19599,7 +19803,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_R_Tranquility",
-          "value": 2,
+          "valueRef": "yubar.outer.o3.tranquility.x/options/0/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -19615,7 +19819,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_R_Tranquility",
-          "value": 10,
+          "valueRef": "yubar.outer.o3.tranquility.x/options/1/value",
           "param": "Radius",
           "receiver": null,
           "target": {
@@ -19656,7 +19860,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ExoticMatter",
-      "value": 1,
+      "valueRef": "yubar.outer.o4.exotic-matter.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -19695,7 +19899,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ExoticMatter",
-      "value": 1,
+      "valueRef": "yubar.outer.o4.exotic-matter.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -19734,7 +19938,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ExoticMatter",
-      "value": 1,
+      "valueRef": "yubar.outer.o4.exotic-matter.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -19773,7 +19977,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ExoticMatter",
-      "value": 1,
+      "valueRef": "yubar.outer.o4.exotic-matter.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -19812,7 +20016,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ExoticMatter",
-      "value": 1,
+      "valueRef": "yubar.outer.o4.exotic-matter.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -19852,7 +20056,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ExoticMatter",
-      "value": 1,
+      "valueRef": "yubar.outer.o4.exotic-matter.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -19897,7 +20101,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Element",
-        "value": 10,
+        "value": {
+          "valueRef": "yubar.outer.o4.exotic-matter.n1/gimmick/value"
+        },
         "arg": 1,
         "cooldown": 0,
         "target": null
@@ -19939,7 +20145,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "ElementEdge",
-        "value": 2,
+        "value": {
+          "valueRef": "yubar.outer.o4.exotic-matter.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -19988,7 +20196,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_D_ExoticMatter",
-          "value": 2,
+          "valueRef": "yubar.outer.o4.exotic-matter.x/options/0/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -20042,7 +20250,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ConvergencePoint",
-      "value": 1,
+      "valueRef": "yubar.outer.o4.converging-stars.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -20081,7 +20289,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ConvergencePoint",
-      "value": 1,
+      "valueRef": "yubar.outer.o4.converging-stars.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -20120,7 +20328,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ConvergencePoint",
-      "value": 1,
+      "valueRef": "yubar.outer.o4.converging-stars.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -20159,7 +20367,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ConvergencePoint",
-      "value": 1,
+      "valueRef": "yubar.outer.o4.converging-stars.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -20198,7 +20406,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ConvergencePoint",
-      "value": 1,
+      "valueRef": "yubar.outer.o4.converging-stars.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -20238,7 +20446,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ConvergencePoint",
-      "value": 1,
+      "valueRef": "yubar.outer.o4.converging-stars.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -20283,7 +20491,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Element",
-        "value": 10,
+        "value": {
+          "valueRef": "yubar.outer.o4.converging-stars.n1/gimmick/value"
+        },
         "arg": 1,
         "cooldown": 0,
         "target": null
@@ -20325,7 +20535,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "ElementEdge",
-        "value": 2,
+        "value": {
+          "valueRef": "yubar.outer.o4.converging-stars.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -20374,7 +20586,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_D_ConvergencePoint",
-          "value": 2,
+          "valueRef": "yubar.outer.o4.converging-stars.x/options/0/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -20428,7 +20640,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EtherealInfluence",
-      "value": 1,
+      "valueRef": "yubar.outer.o4.ethereal.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -20467,7 +20679,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EtherealInfluence",
-      "value": 1,
+      "valueRef": "yubar.outer.o4.ethereal.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -20506,7 +20718,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EtherealInfluence",
-      "value": 1,
+      "valueRef": "yubar.outer.o4.ethereal.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -20545,7 +20757,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EtherealInfluence",
-      "value": 1,
+      "valueRef": "yubar.outer.o4.ethereal.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -20584,7 +20796,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EtherealInfluence",
-      "value": 1,
+      "valueRef": "yubar.outer.o4.ethereal.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -20624,7 +20836,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EtherealInfluence",
-      "value": 1,
+      "valueRef": "yubar.outer.o4.ethereal.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -20669,7 +20881,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Element",
-        "value": 10,
+        "value": {
+          "valueRef": "yubar.outer.o4.ethereal.n1/gimmick/value"
+        },
         "arg": 1,
         "cooldown": 0,
         "target": null
@@ -20711,7 +20925,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "ElementEdge",
-        "value": 2,
+        "value": {
+          "valueRef": "yubar.outer.o4.ethereal.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -20760,7 +20976,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_Q_EtherealInfluence",
-          "value": 2,
+          "valueRef": "yubar.outer.o4.ethereal.x/options/0/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -20814,7 +21030,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_SuperNova",
-      "value": 1,
+      "valueRef": "yubar.outer.o4.supernova.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -20853,7 +21069,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_SuperNova",
-      "value": 1,
+      "valueRef": "yubar.outer.o4.supernova.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -20892,7 +21108,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_SuperNova",
-      "value": 1,
+      "valueRef": "yubar.outer.o4.supernova.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -20931,7 +21147,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_SuperNova",
-      "value": 1,
+      "valueRef": "yubar.outer.o4.supernova.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -20970,7 +21186,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_SuperNova",
-      "value": 1,
+      "valueRef": "yubar.outer.o4.supernova.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -21010,7 +21226,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_SuperNova",
-      "value": 1,
+      "valueRef": "yubar.outer.o4.supernova.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -21055,7 +21271,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Element",
-        "value": 10,
+        "value": {
+          "valueRef": "yubar.outer.o4.supernova.n1/gimmick/value"
+        },
         "arg": 1,
         "cooldown": 0,
         "target": null
@@ -21097,7 +21315,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "ElementEdge",
-        "value": 2,
+        "value": {
+          "valueRef": "yubar.outer.o4.supernova.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -21146,7 +21366,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_Q_SuperNova",
-          "value": 2,
+          "valueRef": "yubar.outer.o4.supernova.x/options/0/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -21200,7 +21420,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ExoticMatter",
-      "value": 1,
+      "valueRef": "yubar.outer.o5.exotic-matter.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -21239,7 +21459,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ExoticMatter",
-      "value": 1,
+      "valueRef": "yubar.outer.o5.exotic-matter.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -21278,7 +21498,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ExoticMatter",
-      "value": 1,
+      "valueRef": "yubar.outer.o5.exotic-matter.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -21317,7 +21537,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ExoticMatter",
-      "value": 1,
+      "valueRef": "yubar.outer.o5.exotic-matter.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -21356,7 +21576,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ExoticMatter",
-      "value": 1,
+      "valueRef": "yubar.outer.o5.exotic-matter.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -21396,7 +21616,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ExoticMatter",
-      "value": 1,
+      "valueRef": "yubar.outer.o5.exotic-matter.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -21441,7 +21661,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Element",
-        "value": 10,
+        "value": {
+          "valueRef": "yubar.outer.o5.exotic-matter.n1/gimmick/value"
+        },
         "arg": 3,
         "cooldown": 0,
         "target": null
@@ -21483,7 +21705,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Burst",
-        "value": 8,
+        "value": {
+          "valueRef": "yubar.outer.o5.exotic-matter.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -21532,7 +21756,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_D_ExoticMatter",
-          "value": 2,
+          "valueRef": "yubar.outer.o5.exotic-matter.x/options/0/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -21548,7 +21772,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_D_ExoticMatter",
-          "value": 10,
+          "valueRef": "yubar.outer.o5.exotic-matter.x/options/1/value",
           "param": "Radius",
           "receiver": null,
           "target": {
@@ -21589,7 +21813,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ConvergencePoint",
-      "value": 1,
+      "valueRef": "yubar.outer.o5.converging-stars.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -21628,7 +21852,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ConvergencePoint",
-      "value": 1,
+      "valueRef": "yubar.outer.o5.converging-stars.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -21667,7 +21891,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ConvergencePoint",
-      "value": 1,
+      "valueRef": "yubar.outer.o5.converging-stars.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -21706,7 +21930,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ConvergencePoint",
-      "value": 1,
+      "valueRef": "yubar.outer.o5.converging-stars.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -21745,7 +21969,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ConvergencePoint",
-      "value": 1,
+      "valueRef": "yubar.outer.o5.converging-stars.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -21785,7 +22009,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ConvergencePoint",
-      "value": 1,
+      "valueRef": "yubar.outer.o5.converging-stars.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -21830,7 +22054,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Element",
-        "value": 10,
+        "value": {
+          "valueRef": "yubar.outer.o5.converging-stars.n1/gimmick/value"
+        },
         "arg": 3,
         "cooldown": 0,
         "target": null
@@ -21872,7 +22098,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Burst",
-        "value": 8,
+        "value": {
+          "valueRef": "yubar.outer.o5.converging-stars.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -21921,7 +22149,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_D_ConvergencePoint",
-          "value": 2,
+          "valueRef": "yubar.outer.o5.converging-stars.x/options/0/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -21937,7 +22165,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_D_ConvergencePoint",
-          "value": 10,
+          "valueRef": "yubar.outer.o5.converging-stars.x/options/1/value",
           "param": "Radius",
           "receiver": null,
           "target": {
@@ -21978,7 +22206,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_SuperNova",
-      "value": 1,
+      "valueRef": "yubar.outer.o5.supernova.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -22017,7 +22245,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_SuperNova",
-      "value": 1,
+      "valueRef": "yubar.outer.o5.supernova.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -22056,7 +22284,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_SuperNova",
-      "value": 1,
+      "valueRef": "yubar.outer.o5.supernova.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -22095,7 +22323,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_SuperNova",
-      "value": 1,
+      "valueRef": "yubar.outer.o5.supernova.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -22134,7 +22362,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_SuperNova",
-      "value": 1,
+      "valueRef": "yubar.outer.o5.supernova.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -22174,7 +22402,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_SuperNova",
-      "value": 1,
+      "valueRef": "yubar.outer.o5.supernova.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -22219,7 +22447,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Element",
-        "value": 10,
+        "value": {
+          "valueRef": "yubar.outer.o5.supernova.n1/gimmick/value"
+        },
         "arg": 3,
         "cooldown": 0,
         "target": null
@@ -22261,7 +22491,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Burst",
-        "value": 8,
+        "value": {
+          "valueRef": "yubar.outer.o5.supernova.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -22310,7 +22542,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_Q_SuperNova",
-          "value": 2,
+          "valueRef": "yubar.outer.o5.supernova.x/options/0/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -22326,7 +22558,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_Q_SuperNova",
-          "value": 10,
+          "valueRef": "yubar.outer.o5.supernova.x/options/1/value",
           "param": "Radius",
           "receiver": null,
           "target": {
@@ -22367,7 +22599,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_Cataclysm",
-      "value": 1,
+      "valueRef": "yubar.outer.o5.cataclysm.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -22406,7 +22638,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_Cataclysm",
-      "value": 1,
+      "valueRef": "yubar.outer.o5.cataclysm.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -22445,7 +22677,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_Cataclysm",
-      "value": 1,
+      "valueRef": "yubar.outer.o5.cataclysm.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -22484,7 +22716,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_Cataclysm",
-      "value": 1,
+      "valueRef": "yubar.outer.o5.cataclysm.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -22523,7 +22755,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_Cataclysm",
-      "value": 1,
+      "valueRef": "yubar.outer.o5.cataclysm.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -22563,7 +22795,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_Cataclysm",
-      "value": 1,
+      "valueRef": "yubar.outer.o5.cataclysm.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -22608,7 +22840,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Element",
-        "value": 10,
+        "value": {
+          "valueRef": "yubar.outer.o5.cataclysm.n1/gimmick/value"
+        },
         "arg": 3,
         "cooldown": 0,
         "target": null
@@ -22650,7 +22884,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Burst",
-        "value": 8,
+        "value": {
+          "valueRef": "yubar.outer.o5.cataclysm.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -22699,7 +22935,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_R_Cataclysm",
-          "value": 2,
+          "valueRef": "yubar.outer.o5.cataclysm.x/options/0/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -22715,7 +22951,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_R_Cataclysm",
-          "value": 10,
+          "valueRef": "yubar.outer.o5.cataclysm.x/options/1/value",
           "param": "Radius",
           "receiver": null,
           "target": {
@@ -22756,7 +22992,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EtherealInfluence",
-      "value": 1,
+      "valueRef": "yubar.outer.o6.ethereal.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -22795,7 +23031,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EtherealInfluence",
-      "value": 1,
+      "valueRef": "yubar.outer.o6.ethereal.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -22834,7 +23070,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EtherealInfluence",
-      "value": 1,
+      "valueRef": "yubar.outer.o6.ethereal.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -22873,7 +23109,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EtherealInfluence",
-      "value": 1,
+      "valueRef": "yubar.outer.o6.ethereal.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -22912,7 +23148,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EtherealInfluence",
-      "value": 1,
+      "valueRef": "yubar.outer.o6.ethereal.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -22952,7 +23188,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EtherealInfluence",
-      "value": 1,
+      "valueRef": "yubar.outer.o6.ethereal.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -22997,7 +23233,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Recharge",
-        "value": 2,
+        "value": {
+          "valueRef": "yubar.outer.o6.ethereal.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -23039,7 +23277,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "RechargeOther",
-        "value": 2,
+        "value": {
+          "valueRef": "yubar.outer.o6.ethereal.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -23088,7 +23328,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_Q_EtherealInfluence",
-          "value": 2,
+          "valueRef": "yubar.outer.o6.ethereal.x/options/0/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -23104,7 +23344,7 @@
         {
           "kind": "MemoryHaste",
           "memory": "St_Q_EtherealInfluence",
-          "value": 2,
+          "valueRef": "yubar.outer.o6.ethereal.x/options/1/value",
           "param": null,
           "receiver": null,
           "target": null,
@@ -23142,7 +23382,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_SuperNova",
-      "value": 1,
+      "valueRef": "yubar.outer.o6.supernova.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -23181,7 +23421,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_SuperNova",
-      "value": 1,
+      "valueRef": "yubar.outer.o6.supernova.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -23220,7 +23460,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_SuperNova",
-      "value": 1,
+      "valueRef": "yubar.outer.o6.supernova.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -23259,7 +23499,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_SuperNova",
-      "value": 1,
+      "valueRef": "yubar.outer.o6.supernova.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -23298,7 +23538,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_SuperNova",
-      "value": 1,
+      "valueRef": "yubar.outer.o6.supernova.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -23338,7 +23578,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_SuperNova",
-      "value": 1,
+      "valueRef": "yubar.outer.o6.supernova.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -23383,7 +23623,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Recharge",
-        "value": 2,
+        "value": {
+          "valueRef": "yubar.outer.o6.supernova.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -23425,7 +23667,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "RechargeOther",
-        "value": 2,
+        "value": {
+          "valueRef": "yubar.outer.o6.supernova.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -23474,7 +23718,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_Q_SuperNova",
-          "value": 2,
+          "valueRef": "yubar.outer.o6.supernova.x/options/0/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -23490,7 +23734,7 @@
         {
           "kind": "MemoryHaste",
           "memory": "St_Q_SuperNova",
-          "value": 2,
+          "valueRef": "yubar.outer.o6.supernova.x/options/1/value",
           "param": null,
           "receiver": null,
           "target": null,
@@ -23528,7 +23772,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_Cataclysm",
-      "value": 1,
+      "valueRef": "yubar.outer.o6.cataclysm.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -23567,7 +23811,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_Cataclysm",
-      "value": 1,
+      "valueRef": "yubar.outer.o6.cataclysm.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -23606,7 +23850,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_Cataclysm",
-      "value": 1,
+      "valueRef": "yubar.outer.o6.cataclysm.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -23645,7 +23889,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_Cataclysm",
-      "value": 1,
+      "valueRef": "yubar.outer.o6.cataclysm.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -23684,7 +23928,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_Cataclysm",
-      "value": 1,
+      "valueRef": "yubar.outer.o6.cataclysm.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -23724,7 +23968,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_Cataclysm",
-      "value": 1,
+      "valueRef": "yubar.outer.o6.cataclysm.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -23769,7 +24013,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Recharge",
-        "value": 2,
+        "value": {
+          "valueRef": "yubar.outer.o6.cataclysm.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -23811,7 +24057,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "RechargeOther",
-        "value": 2,
+        "value": {
+          "valueRef": "yubar.outer.o6.cataclysm.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -23860,7 +24108,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_R_Cataclysm",
-          "value": 2,
+          "valueRef": "yubar.outer.o6.cataclysm.x/options/0/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -23876,7 +24124,7 @@
         {
           "kind": "MemoryHaste",
           "memory": "St_R_Cataclysm",
-          "value": 2,
+          "valueRef": "yubar.outer.o6.cataclysm.x/options/1/value",
           "param": null,
           "receiver": null,
           "target": null,
@@ -23914,7 +24162,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_Tranquility",
-      "value": 1,
+      "valueRef": "yubar.outer.o6.tranquility.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -23953,7 +24201,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_Tranquility",
-      "value": 1,
+      "valueRef": "yubar.outer.o6.tranquility.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -23992,7 +24240,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_Tranquility",
-      "value": 1,
+      "valueRef": "yubar.outer.o6.tranquility.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -24031,7 +24279,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_Tranquility",
-      "value": 1,
+      "valueRef": "yubar.outer.o6.tranquility.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -24070,7 +24318,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_Tranquility",
-      "value": 1,
+      "valueRef": "yubar.outer.o6.tranquility.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -24110,7 +24358,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_Tranquility",
-      "value": 1,
+      "valueRef": "yubar.outer.o6.tranquility.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -24166,7 +24414,9 @@
           "gimmick": {
             "trigger": "OnUse",
             "effect": "Recharge",
-            "value": 1,
+            "value": {
+              "valueRef": "yubar.outer.o6.tranquility.n1/options/0/gimmick/value"
+            },
             "arg": 0,
             "cooldown": 0,
             "target": "St_Q_EtherealInfluence"
@@ -24186,7 +24436,9 @@
           "gimmick": {
             "trigger": "OnUse",
             "effect": "Recharge",
-            "value": 1,
+            "value": {
+              "valueRef": "yubar.outer.o6.tranquility.n1/options/1/gimmick/value"
+            },
             "arg": 0,
             "cooldown": 0,
             "target": "St_Q_SuperNova"
@@ -24243,7 +24495,9 @@
           "gimmick": {
             "trigger": "OnUse",
             "effect": "Recharge",
-            "value": 1,
+            "value": {
+              "valueRef": "yubar.outer.o6.tranquility.n2/options/0/gimmick/value"
+            },
             "arg": 0,
             "cooldown": 0,
             "target": "St_Q_EtherealInfluence"
@@ -24263,7 +24517,9 @@
           "gimmick": {
             "trigger": "OnUse",
             "effect": "Recharge",
-            "value": 1,
+            "value": {
+              "valueRef": "yubar.outer.o6.tranquility.n2/options/1/gimmick/value"
+            },
             "arg": 0,
             "cooldown": 0,
             "target": "St_Q_SuperNova"
@@ -24316,7 +24572,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_R_Tranquility",
-          "value": 2,
+          "valueRef": "yubar.outer.o6.tranquility.x/options/0/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -24332,7 +24588,7 @@
         {
           "kind": "MemoryHaste",
           "memory": "St_R_Tranquility",
-          "value": 2,
+          "valueRef": "yubar.outer.o6.tranquility.x/options/1/value",
           "param": null,
           "receiver": null,
           "target": null,
@@ -24370,7 +24626,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ExoticMatter",
-      "value": 1,
+      "valueRef": "yubar.outer.o7.exotic-matter.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -24409,7 +24665,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ExoticMatter",
-      "value": 1,
+      "valueRef": "yubar.outer.o7.exotic-matter.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -24448,7 +24704,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ExoticMatter",
-      "value": 1,
+      "valueRef": "yubar.outer.o7.exotic-matter.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -24487,7 +24743,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ExoticMatter",
-      "value": 1,
+      "valueRef": "yubar.outer.o7.exotic-matter.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -24526,7 +24782,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ExoticMatter",
-      "value": 1,
+      "valueRef": "yubar.outer.o7.exotic-matter.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -24566,7 +24822,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ExoticMatter",
-      "value": 1,
+      "valueRef": "yubar.outer.o7.exotic-matter.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -24611,7 +24867,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Primed",
-        "value": 8,
+        "value": {
+          "valueRef": "yubar.outer.o7.exotic-matter.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -24654,7 +24912,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Burst",
-        "value": 6,
+        "value": {
+          "valueRef": "yubar.outer.o7.exotic-matter.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -24703,7 +24963,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_D_ExoticMatter",
-          "value": 2,
+          "valueRef": "yubar.outer.o7.exotic-matter.x/options/0/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -24719,7 +24979,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_D_ExoticMatter",
-          "value": 10,
+          "valueRef": "yubar.outer.o7.exotic-matter.x/options/1/value",
           "param": "Duration",
           "receiver": null,
           "target": {
@@ -24760,7 +25020,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ConvergencePoint",
-      "value": 1,
+      "valueRef": "yubar.outer.o7.converging-stars.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -24799,7 +25059,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ConvergencePoint",
-      "value": 1,
+      "valueRef": "yubar.outer.o7.converging-stars.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -24838,7 +25098,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ConvergencePoint",
-      "value": 1,
+      "valueRef": "yubar.outer.o7.converging-stars.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -24877,7 +25137,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ConvergencePoint",
-      "value": 1,
+      "valueRef": "yubar.outer.o7.converging-stars.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -24916,7 +25176,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ConvergencePoint",
-      "value": 1,
+      "valueRef": "yubar.outer.o7.converging-stars.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -24956,7 +25216,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ConvergencePoint",
-      "value": 1,
+      "valueRef": "yubar.outer.o7.converging-stars.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -25001,7 +25261,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Primed",
-        "value": 8,
+        "value": {
+          "valueRef": "yubar.outer.o7.converging-stars.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -25044,7 +25306,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Burst",
-        "value": 6,
+        "value": {
+          "valueRef": "yubar.outer.o7.converging-stars.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -25093,7 +25357,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_D_ConvergencePoint",
-          "value": 2,
+          "valueRef": "yubar.outer.o7.converging-stars.x/options/0/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -25109,7 +25373,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_D_ConvergencePoint",
-          "value": 10,
+          "valueRef": "yubar.outer.o7.converging-stars.x/options/1/value",
           "param": "Duration",
           "receiver": null,
           "target": {
@@ -25150,7 +25414,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EtherealInfluence",
-      "value": 1,
+      "valueRef": "yubar.outer.o7.ethereal.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -25189,7 +25453,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EtherealInfluence",
-      "value": 1,
+      "valueRef": "yubar.outer.o7.ethereal.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -25228,7 +25492,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EtherealInfluence",
-      "value": 1,
+      "valueRef": "yubar.outer.o7.ethereal.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -25267,7 +25531,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EtherealInfluence",
-      "value": 1,
+      "valueRef": "yubar.outer.o7.ethereal.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -25306,7 +25570,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EtherealInfluence",
-      "value": 1,
+      "valueRef": "yubar.outer.o7.ethereal.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -25346,7 +25610,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EtherealInfluence",
-      "value": 1,
+      "valueRef": "yubar.outer.o7.ethereal.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -25391,7 +25655,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Primed",
-        "value": 8,
+        "value": {
+          "valueRef": "yubar.outer.o7.ethereal.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -25434,7 +25700,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Burst",
-        "value": 6,
+        "value": {
+          "valueRef": "yubar.outer.o7.ethereal.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -25483,7 +25751,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_Q_EtherealInfluence",
-          "value": 2,
+          "valueRef": "yubar.outer.o7.ethereal.x/options/0/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -25499,7 +25767,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_Q_EtherealInfluence",
-          "value": 10,
+          "valueRef": "yubar.outer.o7.ethereal.x/options/1/value",
           "param": "Duration",
           "receiver": null,
           "target": {
@@ -25540,7 +25808,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_Cataclysm",
-      "value": 1,
+      "valueRef": "yubar.outer.o7.cataclysm.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -25579,7 +25847,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_Cataclysm",
-      "value": 1,
+      "valueRef": "yubar.outer.o7.cataclysm.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -25618,7 +25886,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_Cataclysm",
-      "value": 1,
+      "valueRef": "yubar.outer.o7.cataclysm.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -25657,7 +25925,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_Cataclysm",
-      "value": 1,
+      "valueRef": "yubar.outer.o7.cataclysm.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -25696,7 +25964,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_Cataclysm",
-      "value": 1,
+      "valueRef": "yubar.outer.o7.cataclysm.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -25736,7 +26004,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_Cataclysm",
-      "value": 1,
+      "valueRef": "yubar.outer.o7.cataclysm.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -25781,7 +26049,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Primed",
-        "value": 8,
+        "value": {
+          "valueRef": "yubar.outer.o7.cataclysm.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -25824,7 +26094,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Burst",
-        "value": 6,
+        "value": {
+          "valueRef": "yubar.outer.o7.cataclysm.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -25873,7 +26145,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_R_Cataclysm",
-          "value": 2,
+          "valueRef": "yubar.outer.o7.cataclysm.x/options/0/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -25889,7 +26161,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_R_Cataclysm",
-          "value": 10,
+          "valueRef": "yubar.outer.o7.cataclysm.x/options/1/value",
           "param": "Duration",
           "receiver": null,
           "target": {
@@ -25930,7 +26202,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EtherealInfluence",
-      "value": 1,
+      "valueRef": "yubar.outer.o8.ethereal.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -25969,7 +26241,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EtherealInfluence",
-      "value": 1,
+      "valueRef": "yubar.outer.o8.ethereal.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -26008,7 +26280,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EtherealInfluence",
-      "value": 1,
+      "valueRef": "yubar.outer.o8.ethereal.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -26047,7 +26319,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EtherealInfluence",
-      "value": 1,
+      "valueRef": "yubar.outer.o8.ethereal.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -26086,7 +26358,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EtherealInfluence",
-      "value": 1,
+      "valueRef": "yubar.outer.o8.ethereal.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -26126,7 +26398,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EtherealInfluence",
-      "value": 1,
+      "valueRef": "yubar.outer.o8.ethereal.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -26171,7 +26443,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Recharge",
-        "value": 1,
+        "value": {
+          "valueRef": "yubar.outer.o8.ethereal.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": "St_M_Flicker"
@@ -26214,7 +26488,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "AlliedWard",
-        "value": 1,
+        "value": {
+          "valueRef": "yubar.outer.o8.ethereal.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null,
@@ -26268,7 +26544,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_Q_EtherealInfluence",
-          "value": 2,
+          "valueRef": "yubar.outer.o8.ethereal.x/options/0/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -26284,7 +26560,7 @@
         {
           "kind": "GimmickBoost",
           "memory": null,
-          "value": 1,
+          "valueRef": "yubar.outer.o8.ethereal.x/options/1/value",
           "param": null,
           "receiver": "St_M_Flicker",
           "target": {
@@ -26326,7 +26602,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_SuperNova",
-      "value": 1,
+      "valueRef": "yubar.outer.o8.supernova.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -26365,7 +26641,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_SuperNova",
-      "value": 1,
+      "valueRef": "yubar.outer.o8.supernova.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -26404,7 +26680,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_SuperNova",
-      "value": 1,
+      "valueRef": "yubar.outer.o8.supernova.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -26443,7 +26719,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_SuperNova",
-      "value": 1,
+      "valueRef": "yubar.outer.o8.supernova.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -26482,7 +26758,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_SuperNova",
-      "value": 1,
+      "valueRef": "yubar.outer.o8.supernova.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -26522,7 +26798,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_SuperNova",
-      "value": 1,
+      "valueRef": "yubar.outer.o8.supernova.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -26567,7 +26843,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Recharge",
-        "value": 1,
+        "value": {
+          "valueRef": "yubar.outer.o8.supernova.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": "St_M_Flicker"
@@ -26610,7 +26888,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "AlliedWard",
-        "value": 1,
+        "value": {
+          "valueRef": "yubar.outer.o8.supernova.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null,
@@ -26664,7 +26944,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_Q_SuperNova",
-          "value": 2,
+          "valueRef": "yubar.outer.o8.supernova.x/options/0/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -26680,7 +26960,7 @@
         {
           "kind": "GimmickBoost",
           "memory": null,
-          "value": 1,
+          "valueRef": "yubar.outer.o8.supernova.x/options/1/value",
           "param": null,
           "receiver": "St_M_Flicker",
           "target": {
@@ -26722,7 +27002,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_Cataclysm",
-      "value": 1,
+      "valueRef": "yubar.outer.o8.cataclysm.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -26761,7 +27041,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_Cataclysm",
-      "value": 1,
+      "valueRef": "yubar.outer.o8.cataclysm.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -26800,7 +27080,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_Cataclysm",
-      "value": 1,
+      "valueRef": "yubar.outer.o8.cataclysm.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -26839,7 +27119,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_Cataclysm",
-      "value": 1,
+      "valueRef": "yubar.outer.o8.cataclysm.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -26878,7 +27158,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_Cataclysm",
-      "value": 1,
+      "valueRef": "yubar.outer.o8.cataclysm.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -26918,7 +27198,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_Cataclysm",
-      "value": 1,
+      "valueRef": "yubar.outer.o8.cataclysm.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -26963,7 +27243,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Recharge",
-        "value": 1,
+        "value": {
+          "valueRef": "yubar.outer.o8.cataclysm.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": "St_M_Flicker"
@@ -27006,7 +27288,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "AlliedWard",
-        "value": 1,
+        "value": {
+          "valueRef": "yubar.outer.o8.cataclysm.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null,
@@ -27060,7 +27344,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_R_Cataclysm",
-          "value": 2,
+          "valueRef": "yubar.outer.o8.cataclysm.x/options/0/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -27076,7 +27360,7 @@
         {
           "kind": "GimmickBoost",
           "memory": null,
-          "value": 1,
+          "valueRef": "yubar.outer.o8.cataclysm.x/options/1/value",
           "param": null,
           "receiver": "St_M_Flicker",
           "target": {
@@ -27118,7 +27402,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_Tranquility",
-      "value": 1,
+      "valueRef": "yubar.outer.o8.tranquility.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -27157,7 +27441,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_Tranquility",
-      "value": 1,
+      "valueRef": "yubar.outer.o8.tranquility.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -27196,7 +27480,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_Tranquility",
-      "value": 1,
+      "valueRef": "yubar.outer.o8.tranquility.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -27235,7 +27519,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_Tranquility",
-      "value": 1,
+      "valueRef": "yubar.outer.o8.tranquility.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -27274,7 +27558,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_Tranquility",
-      "value": 1,
+      "valueRef": "yubar.outer.o8.tranquility.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -27314,7 +27598,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_Tranquility",
-      "value": 1,
+      "valueRef": "yubar.outer.o8.tranquility.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -27359,7 +27643,9 @@
       "gimmick": {
         "trigger": "OnUse",
         "effect": "Recharge",
-        "value": 1,
+        "value": {
+          "valueRef": "yubar.outer.o8.tranquility.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": "St_M_Flicker"
@@ -27402,7 +27688,9 @@
       "gimmick": {
         "trigger": "OnUse",
         "effect": "AlliedWard",
-        "value": 1,
+        "value": {
+          "valueRef": "yubar.outer.o8.tranquility.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null,
@@ -27456,7 +27744,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_R_Tranquility",
-          "value": 2,
+          "valueRef": "yubar.outer.o8.tranquility.x/options/0/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -27472,7 +27760,7 @@
         {
           "kind": "GimmickBoost",
           "memory": null,
-          "value": 1,
+          "valueRef": "yubar.outer.o8.tranquility.x/options/1/value",
           "param": null,
           "receiver": "St_M_Flicker",
           "target": {
@@ -27526,7 +27814,9 @@
             "memory": "St_D_ExoticMatter",
             "effect": "Echo/Burst/Wound",
             "field": "Value",
-            "pct": 60
+            "pct": {
+              "valueRef": "yubar.key.split-afterglow/keystone/upsideSpec/0/pct"
+            }
           }
         ]
       },
@@ -27568,7 +27858,9 @@
             "memory": "St_D_ConvergencePoint",
             "effect": "Echo/Burst/ElementEdge",
             "field": "Damage",
-            "pct": 50
+            "pct": {
+              "valueRef": "yubar.key.returning-orbit/keystone/upsideSpec/0/pct"
+            }
           }
         ]
       },
@@ -27612,7 +27904,9 @@
             "memory": "St_Q_EtherealInfluence",
             "effect": "NativeDamage",
             "field": "Damage",
-            "pct": 35
+            "pct": {
+              "valueRef": "yubar.key.single-star/keystone/upsideSpec/0/pct"
+            }
           }
         ]
       },
@@ -27654,13 +27948,17 @@
             "memory": "St_Q_SuperNova",
             "effect": "Burst",
             "field": "Radius",
-            "pct": 80
+            "pct": {
+              "valueRef": "yubar.key.wide-supernova/keystone/upsideSpec/0/pct"
+            }
           },
           {
             "memory": "St_Q_SuperNova",
             "effect": "Burst",
             "field": "Value",
-            "pct": 40
+            "pct": {
+              "valueRef": "yubar.key.wide-supernova/keystone/upsideSpec/1/pct"
+            }
           }
         ]
       },
@@ -27702,13 +28000,17 @@
             "memory": "St_R_Cataclysm",
             "effect": "Echo/Burst/Wound",
             "field": "Value",
-            "pct": 50
+            "pct": {
+              "valueRef": "yubar.key.meteor-residue/keystone/upsideSpec/0/pct"
+            }
           },
           {
             "memory": "St_R_Cataclysm",
             "effect": "Wound",
             "field": "Duration",
-            "pct": 50
+            "pct": {
+              "valueRef": "yubar.key.meteor-residue/keystone/upsideSpec/1/pct"
+            }
           }
         ]
       },
@@ -27754,13 +28056,17 @@
             "memory": "St_R_Tranquility",
             "effect": "RelayWindow",
             "field": "Duration",
-            "pct": 100
+            "pct": {
+              "valueRef": "yubar.key.quiet-relay/keystone/upsideSpec/0/pct"
+            }
           },
           {
             "memory": "St_R_Tranquility",
             "effect": "RelayWindow",
             "field": "Value",
-            "pct": 50
+            "pct": {
+              "valueRef": "yubar.key.quiet-relay/keystone/upsideSpec/1/pct"
+            }
           }
         ]
       },
@@ -28308,7 +28614,7 @@
       "region": "migration",
       "kind": "GimmickBoost",
       "memory": "St_R_Tranquility",
-      "value": 2,
+      "valueRef": "h.yubar.route.tranquility.6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -28337,7 +28643,7 @@
       "region": "migration",
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 1,
+      "valueRef": "h.yubar.route.flicker.2/value",
       "param": null,
       "receiver": "St_M_Flicker",
       "target": {
@@ -28368,7 +28674,7 @@
       "region": "migration",
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 1,
+      "valueRef": "h.yubar.route.flicker.6/value",
       "param": null,
       "receiver": "St_M_Flicker",
       "target": {
@@ -28417,7 +28723,9 @@
           "gimmick": {
             "trigger": "OnHit",
             "effect": "Recharge",
-            "value": 1,
+            "value": {
+              "valueRef": "h.yubar.ring.renewal/options/0/gimmick/value"
+            },
             "arg": 0,
             "cooldown": 0,
             "target": "St_M_Flicker"
@@ -28437,7 +28745,9 @@
           "gimmick": {
             "trigger": "OnHit",
             "effect": "Recharge",
-            "value": 1,
+            "value": {
+              "valueRef": "h.yubar.ring.renewal/options/1/gimmick/value"
+            },
             "arg": 0,
             "cooldown": 0,
             "target": "St_M_Flicker"
@@ -28473,7 +28783,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Recharge",
-        "value": 1,
+        "value": {
+          "valueRef": "h.yubar.route.flicker.1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": "St_M_Flicker"
@@ -28499,7 +28811,7 @@
       "region": "migration",
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 1,
+      "valueRef": "h.yubar.route.flicker.3/value",
       "param": null,
       "receiver": "St_M_Flicker",
       "target": {
@@ -28548,7 +28860,9 @@
           "gimmick": {
             "trigger": "OnHit",
             "effect": "Recharge",
-            "value": 1,
+            "value": {
+              "valueRef": "h.yubar.route.flicker.4/options/0/gimmick/value"
+            },
             "arg": 0,
             "cooldown": 0,
             "target": "St_M_Flicker"
@@ -28568,7 +28882,9 @@
           "gimmick": {
             "trigger": "OnHit",
             "effect": "Recharge",
-            "value": 1,
+            "value": {
+              "valueRef": "h.yubar.route.flicker.4/options/1/gimmick/value"
+            },
             "arg": 0,
             "cooldown": 0,
             "target": "St_M_Flicker"
@@ -28597,7 +28913,7 @@
       "region": "migration",
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 1,
+      "valueRef": "h.yubar.route.flicker.5/value",
       "param": null,
       "receiver": "St_M_Flicker",
       "target": {
@@ -28628,7 +28944,7 @@
       "region": "migration",
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 3,
+      "valueRef": "h.yubar.route.flicker.7/value",
       "param": null,
       "receiver": "St_M_Flicker",
       "target": {
@@ -28731,7 +29047,7 @@
       "region": "migration",
       "kind": "GimmickBoost",
       "memory": "St_R_Tranquility",
-      "value": 1,
+      "valueRef": "h.yubar.route.tranquility.3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -28760,7 +29076,7 @@
       "region": "migration",
       "kind": "GimmickBoost",
       "memory": "St_R_Tranquility",
-      "value": 1,
+      "valueRef": "h.yubar.route.tranquility.5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -28823,7 +29139,9 @@
       "gimmick": null,
       "power": {
         "name": "StarShield",
-        "perRank": 15
+        "perRank": {
+          "valueRef": "h.yubar.key2/power/perRank"
+        }
       },
       "stat": null,
       "options": null,

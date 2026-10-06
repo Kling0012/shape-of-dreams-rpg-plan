@@ -161,11 +161,17 @@ namespace SodRpg.Core.Game
             if (spec.Bridge != null) return BridgePayload(spec.Bridge.BasePayoff, everyN, value, probability,
                 spec.UncappedDurationSeconds, spec.UncappedRadiusMetres, spec.UncappedTargetCount, durationBaseOverride);
             if (spec.Kind == AuthoredMechanismKind.SacrificeShield)
-                return new KeystonePayload(KeystoneLayer.ModEffect, 50, new KeystoneCaps(100, 4),
-                    KeystonePayloadKind.SacrificeShield, GimmickEffect.Shield, id, durationSeconds: 4, everyN: everyN);
+                return new KeystonePayload(KeystoneLayer.ModEffect, MemoryDamageBalance.Effect_legacy_h_aurena_key2_native_value,
+                    new KeystoneCaps(MemoryDamageBalance.Effect_legacy_h_aurena_key2_native_payloadValueCap,
+                        (decimal)MemoryDamageBalance.Effect_legacy_h_aurena_key2_native_duration),
+                    KeystonePayloadKind.SacrificeShield, GimmickEffect.Shield, id,
+                    durationSeconds: (decimal)MemoryDamageBalance.Effect_legacy_h_aurena_key2_native_duration, everyN: everyN);
             if (spec.Kind == AuthoredMechanismKind.StunSourceFilter)
-                return new KeystonePayload(KeystoneLayer.ModEffect, 6, new KeystoneCaps(15, 3),
-                    KeystonePayloadKind.Gimmick, GimmickEffect.Shield, id, durationSeconds: 3, everyN: everyN);
+                return new KeystonePayload(KeystoneLayer.ModEffect, MemoryDamageBalance.Effect_legacy_h_cetus_key2_native_value,
+                    new KeystoneCaps(MemoryDamageBalance.Effect_legacy_h_cetus_key2_native_payloadValueCap,
+                        (decimal)MemoryDamageBalance.Effect_legacy_h_cetus_key2_native_duration),
+                    KeystonePayloadKind.Gimmick, GimmickEffect.Shield, id,
+                    durationSeconds: (decimal)MemoryDamageBalance.Effect_legacy_h_cetus_key2_native_duration, everyN: everyN);
             throw new ArgumentException("Mechanism has no admitted typed payload.");
         }
 

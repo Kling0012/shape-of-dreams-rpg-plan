@@ -208,7 +208,7 @@ namespace SodRpg.Mod
             {
                 if (!_runtimes.TryGetValue(hero, out var rt)) return;
                 AwardModShield(rt, recipient, ModShieldPoolKind.Ordinary,
-                    SupportStats.AmplifyShield(recipient.maxHealth * CalmShieldGrant.ValueUnits / 10000f, rt.Powers.Build.Get(Stat.ShieldPower)),
+                    SupportStats.AmplifyShield(recipient.maxHealth * (float)CalmShieldGrant.ValueUnits / 10000f, rt.Powers.Build.Get(Stat.ShieldPower)),
                     CalmShieldGrant.DurationSeconds, null, ModShieldEquipmentEpoch(rt));
             });
             if (sacrifice) BindAuthoredSacrificeShield(hero); else StopSacrificeShield(hero);

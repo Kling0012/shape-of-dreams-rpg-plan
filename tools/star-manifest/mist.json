@@ -128,7 +128,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_D_AstridsMasterpieceEnGarde",
-      "value": 2,
+      "valueRef": "mist.mem.en-garde.c1.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -170,7 +170,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_D_AstridsMasterpieceEnGarde",
-      "value": 2,
+      "valueRef": "mist.mem.en-garde.c1.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -212,7 +212,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_D_AstridsMasterpieceEnGarde",
-      "value": 2,
+      "valueRef": "mist.mem.en-garde.c1.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -261,7 +261,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Echo",
-        "value": 8,
+        "value": {
+          "valueRef": "mist.mem.en-garde.c1.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -307,7 +309,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Wound",
-        "value": 12,
+        "value": {
+          "valueRef": "mist.mem.en-garde.c1.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -367,7 +371,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_D_AstridsMasterpieceEnGarde",
-          "value": 6,
+          "valueRef": "mist.mem.en-garde.c1.x/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -518,7 +522,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_D_AstridsMasterpieceEnGarde",
-      "value": 2,
+      "valueRef": "mist.mem.en-garde.c2.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -560,7 +564,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_D_AstridsMasterpieceEnGarde",
-      "value": 2,
+      "valueRef": "mist.mem.en-garde.c2.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -602,7 +606,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_D_AstridsMasterpieceEnGarde",
-      "value": 2,
+      "valueRef": "mist.mem.en-garde.c2.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -651,7 +655,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Shield",
-        "value": 2,
+        "value": {
+          "valueRef": "mist.mem.en-garde.c2.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -698,7 +704,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Sap",
-        "value": 3,
+        "value": {
+          "valueRef": "mist.mem.en-garde.c2.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -758,7 +766,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_D_AstridsMasterpieceEnGarde",
-          "value": 6,
+          "valueRef": "mist.mem.en-garde.c2.x/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -909,7 +917,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_D_AstridsMasterpieceEnGarde",
-      "value": 2,
+      "valueRef": "mist.mem.en-garde.c3.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -951,7 +959,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_D_AstridsMasterpieceEnGarde",
-      "value": 2,
+      "valueRef": "mist.mem.en-garde.c3.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -993,7 +1001,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_D_AstridsMasterpieceEnGarde",
-      "value": 2,
+      "valueRef": "mist.mem.en-garde.c3.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -1042,7 +1050,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Expose",
-        "value": 16,
+        "value": {
+          "valueRef": "mist.mem.en-garde.c3.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -1088,7 +1098,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Element",
-        "value": 25,
+        "value": {
+          "valueRef": "mist.mem.en-garde.c3.n2/gimmick/value"
+        },
         "arg": 2,
         "cooldown": 0,
         "target": null
@@ -1148,7 +1160,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_D_AstridsMasterpieceEnGarde",
-          "value": 6,
+          "valueRef": "mist.mem.en-garde.c3.x/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -1299,7 +1311,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_D_AstridsMasterpieceEnGarde",
-      "value": 2,
+      "valueRef": "mist.mem.en-garde.c4.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -1341,7 +1353,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_D_AstridsMasterpieceEnGarde",
-      "value": 2,
+      "valueRef": "mist.mem.en-garde.c4.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -1383,7 +1395,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_D_AstridsMasterpieceEnGarde",
-      "value": 2,
+      "valueRef": "mist.mem.en-garde.c4.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -1432,7 +1444,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Burst",
-        "value": 25,
+        "value": {
+          "valueRef": "mist.mem.en-garde.c4.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -1478,7 +1492,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "ElementEdge",
-        "value": 5,
+        "value": {
+          "valueRef": "mist.mem.en-garde.c4.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -1538,7 +1554,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_D_AstridsMasterpieceEnGarde",
-          "value": 6,
+          "valueRef": "mist.mem.en-garde.c4.x/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -1689,7 +1705,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_Lunge",
-      "value": 2,
+      "valueRef": "mist.mem.lunge.c1.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -1731,7 +1747,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_Lunge",
-      "value": 2,
+      "valueRef": "mist.mem.lunge.c1.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -1773,7 +1789,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_Lunge",
-      "value": 2,
+      "valueRef": "mist.mem.lunge.c1.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -1822,7 +1838,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Echo",
-        "value": 8,
+        "value": {
+          "valueRef": "mist.mem.lunge.c1.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -1868,7 +1886,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Wound",
-        "value": 12,
+        "value": {
+          "valueRef": "mist.mem.lunge.c1.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -1928,7 +1948,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_Q_Lunge",
-          "value": 6,
+          "valueRef": "mist.mem.lunge.c1.x/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -2079,7 +2099,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_Lunge",
-      "value": 2,
+      "valueRef": "mist.mem.lunge.c2.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -2121,7 +2141,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_Lunge",
-      "value": 2,
+      "valueRef": "mist.mem.lunge.c2.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -2163,7 +2183,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_Lunge",
-      "value": 2,
+      "valueRef": "mist.mem.lunge.c2.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -2212,7 +2232,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Shield",
-        "value": 2,
+        "value": {
+          "valueRef": "mist.mem.lunge.c2.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -2259,7 +2281,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Sap",
-        "value": 3,
+        "value": {
+          "valueRef": "mist.mem.lunge.c2.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -2319,7 +2343,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_Q_Lunge",
-          "value": 6,
+          "valueRef": "mist.mem.lunge.c2.x/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -2470,7 +2494,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_Lunge",
-      "value": 2,
+      "valueRef": "mist.mem.lunge.c3.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -2512,7 +2536,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_Lunge",
-      "value": 2,
+      "valueRef": "mist.mem.lunge.c3.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -2554,7 +2578,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_Lunge",
-      "value": 2,
+      "valueRef": "mist.mem.lunge.c3.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -2603,7 +2627,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Expose",
-        "value": 16,
+        "value": {
+          "valueRef": "mist.mem.lunge.c3.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -2649,7 +2675,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Element",
-        "value": 25,
+        "value": {
+          "valueRef": "mist.mem.lunge.c3.n2/gimmick/value"
+        },
         "arg": 3,
         "cooldown": 0,
         "target": null
@@ -2709,7 +2737,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_Q_Lunge",
-          "value": 6,
+          "valueRef": "mist.mem.lunge.c3.x/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -2860,7 +2888,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_Lunge",
-      "value": 2,
+      "valueRef": "mist.mem.lunge.c4.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -2902,7 +2930,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_Lunge",
-      "value": 2,
+      "valueRef": "mist.mem.lunge.c4.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -2944,7 +2972,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_Lunge",
-      "value": 2,
+      "valueRef": "mist.mem.lunge.c4.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -2993,7 +3021,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Burst",
-        "value": 25,
+        "value": {
+          "valueRef": "mist.mem.lunge.c4.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -3039,7 +3069,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "ElementEdge",
-        "value": 5,
+        "value": {
+          "valueRef": "mist.mem.lunge.c4.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -3099,7 +3131,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_Q_Lunge",
-          "value": 6,
+          "valueRef": "mist.mem.lunge.c4.x/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -3250,7 +3282,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_UnbreakableDetermination",
-      "value": 2,
+      "valueRef": "mist.mem.determination.c1.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -3292,7 +3324,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_UnbreakableDetermination",
-      "value": 2,
+      "valueRef": "mist.mem.determination.c1.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -3334,7 +3366,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_UnbreakableDetermination",
-      "value": 2,
+      "valueRef": "mist.mem.determination.c1.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -3383,7 +3415,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Echo",
-        "value": 6,
+        "value": {
+          "valueRef": "mist.mem.determination.c1.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -3429,7 +3463,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Wound",
-        "value": 12,
+        "value": {
+          "valueRef": "mist.mem.determination.c1.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -3489,7 +3525,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_R_UnbreakableDetermination",
-          "value": 6,
+          "valueRef": "mist.mem.determination.c1.x/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -3640,7 +3676,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_UnbreakableDetermination",
-      "value": 2,
+      "valueRef": "mist.mem.determination.c2.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -3682,7 +3718,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_UnbreakableDetermination",
-      "value": 2,
+      "valueRef": "mist.mem.determination.c2.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -3724,7 +3760,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_UnbreakableDetermination",
-      "value": 2,
+      "valueRef": "mist.mem.determination.c2.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -3773,7 +3809,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Shield",
-        "value": 1,
+        "value": {
+          "valueRef": "mist.mem.determination.c2.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -3820,7 +3858,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Sap",
-        "value": 3,
+        "value": {
+          "valueRef": "mist.mem.determination.c2.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -3880,7 +3920,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_R_UnbreakableDetermination",
-          "value": 6,
+          "valueRef": "mist.mem.determination.c2.x/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -4031,7 +4071,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_UnbreakableDetermination",
-      "value": 2,
+      "valueRef": "mist.mem.determination.c3.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -4073,7 +4113,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_UnbreakableDetermination",
-      "value": 2,
+      "valueRef": "mist.mem.determination.c3.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -4115,7 +4155,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_UnbreakableDetermination",
-      "value": 2,
+      "valueRef": "mist.mem.determination.c3.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -4164,7 +4204,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Expose",
-        "value": 16,
+        "value": {
+          "valueRef": "mist.mem.determination.c3.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -4210,7 +4252,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Element",
-        "value": 20,
+        "value": {
+          "valueRef": "mist.mem.determination.c3.n2/gimmick/value"
+        },
         "arg": 2,
         "cooldown": 0,
         "target": null
@@ -4270,7 +4314,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_R_UnbreakableDetermination",
-          "value": 6,
+          "valueRef": "mist.mem.determination.c3.x/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -4421,7 +4465,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_UnbreakableDetermination",
-      "value": 2,
+      "valueRef": "mist.mem.determination.c4.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -4463,7 +4507,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_UnbreakableDetermination",
-      "value": 2,
+      "valueRef": "mist.mem.determination.c4.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -4505,7 +4549,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_UnbreakableDetermination",
-      "value": 2,
+      "valueRef": "mist.mem.determination.c4.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -4554,7 +4598,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Burst",
-        "value": 18,
+        "value": {
+          "valueRef": "mist.mem.determination.c4.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -4600,7 +4646,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "ElementEdge",
-        "value": 5,
+        "value": {
+          "valueRef": "mist.mem.determination.c4.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -4660,7 +4708,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_R_UnbreakableDetermination",
-          "value": 6,
+          "valueRef": "mist.mem.determination.c4.x/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -4700,7 +4748,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.25,
+      "valueRef": "mist.mem.fast-feet.c1.e1/value",
       "param": null,
       "receiver": "St_M_FastFeet",
       "target": {
@@ -4740,7 +4788,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.25,
+      "valueRef": "mist.mem.fast-feet.c1.e2/value",
       "param": null,
       "receiver": "St_M_FastFeet",
       "target": {
@@ -4782,7 +4830,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.25,
+      "valueRef": "mist.mem.fast-feet.c1.e3/value",
       "param": null,
       "receiver": "St_M_FastFeet",
       "target": {
@@ -4823,7 +4871,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.25,
+      "valueRef": "mist.mem.fast-feet.c1.e4/value",
       "param": null,
       "receiver": "St_M_FastFeet",
       "target": {
@@ -4864,7 +4912,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.25,
+      "valueRef": "mist.mem.fast-feet.c1.e5/value",
       "param": null,
       "receiver": "St_M_FastFeet",
       "target": {
@@ -4905,7 +4953,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.25,
+      "valueRef": "mist.mem.fast-feet.c1.e6/value",
       "param": null,
       "receiver": "St_M_FastFeet",
       "target": {
@@ -4955,7 +5003,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Recharge",
-        "value": 10,
+        "value": {
+          "valueRef": "mist.mem.fast-feet.c1.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": "St_M_FastFeet"
@@ -5002,7 +5052,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Recharge",
-        "value": 10,
+        "value": {
+          "valueRef": "mist.mem.fast-feet.c1.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": "St_M_FastFeet"
@@ -5059,7 +5111,9 @@
           "gimmick": {
             "trigger": "OnHit",
             "effect": "Recharge",
-            "value": 1,
+            "value": {
+              "valueRef": "mist.mem.fast-feet.c1.x/options/0/gimmick/value"
+            },
             "arg": 0,
             "cooldown": 0,
             "target": "St_M_FastFeet"
@@ -5072,7 +5126,7 @@
         {
           "kind": "GimmickBoost",
           "memory": null,
-          "value": 6,
+          "valueRef": "mist.mem.fast-feet.c1.x/options/1/value",
           "param": null,
           "receiver": "St_M_FastFeet",
           "target": {
@@ -5114,7 +5168,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.25,
+      "valueRef": "mist.mem.fast-feet.c2.e1/value",
       "param": null,
       "receiver": "St_M_FastFeet",
       "target": {
@@ -5154,7 +5208,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.25,
+      "valueRef": "mist.mem.fast-feet.c2.e2/value",
       "param": null,
       "receiver": "St_M_FastFeet",
       "target": {
@@ -5196,7 +5250,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.25,
+      "valueRef": "mist.mem.fast-feet.c2.e3/value",
       "param": null,
       "receiver": "St_M_FastFeet",
       "target": {
@@ -5237,7 +5291,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.25,
+      "valueRef": "mist.mem.fast-feet.c2.e4/value",
       "param": null,
       "receiver": "St_M_FastFeet",
       "target": {
@@ -5278,7 +5332,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.25,
+      "valueRef": "mist.mem.fast-feet.c2.e5/value",
       "param": null,
       "receiver": "St_M_FastFeet",
       "target": {
@@ -5319,7 +5373,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.25,
+      "valueRef": "mist.mem.fast-feet.c2.e6/value",
       "param": null,
       "receiver": "St_M_FastFeet",
       "target": {
@@ -5369,7 +5423,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Recharge",
-        "value": 10,
+        "value": {
+          "valueRef": "mist.mem.fast-feet.c2.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": "St_M_FastFeet"
@@ -5416,7 +5472,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Recharge",
-        "value": 10,
+        "value": {
+          "valueRef": "mist.mem.fast-feet.c2.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": "St_M_FastFeet"
@@ -5473,7 +5531,9 @@
           "gimmick": {
             "trigger": "OnHit",
             "effect": "Recharge",
-            "value": 1,
+            "value": {
+              "valueRef": "mist.mem.fast-feet.c2.x/options/0/gimmick/value"
+            },
             "arg": 0,
             "cooldown": 0,
             "target": "St_M_FastFeet"
@@ -5486,7 +5546,7 @@
         {
           "kind": "GimmickBoost",
           "memory": null,
-          "value": 6,
+          "valueRef": "mist.mem.fast-feet.c2.x/options/1/value",
           "param": null,
           "receiver": "St_M_FastFeet",
           "target": {
@@ -5528,7 +5588,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.25,
+      "valueRef": "mist.mem.fast-feet.c3.e1/value",
       "param": null,
       "receiver": "St_M_FastFeet",
       "target": {
@@ -5568,7 +5628,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.25,
+      "valueRef": "mist.mem.fast-feet.c3.e2/value",
       "param": null,
       "receiver": "St_M_FastFeet",
       "target": {
@@ -5610,7 +5670,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.25,
+      "valueRef": "mist.mem.fast-feet.c3.e3/value",
       "param": null,
       "receiver": "St_M_FastFeet",
       "target": {
@@ -5651,7 +5711,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.25,
+      "valueRef": "mist.mem.fast-feet.c3.e4/value",
       "param": null,
       "receiver": "St_M_FastFeet",
       "target": {
@@ -5692,7 +5752,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.25,
+      "valueRef": "mist.mem.fast-feet.c3.e5/value",
       "param": null,
       "receiver": "St_M_FastFeet",
       "target": {
@@ -5733,7 +5793,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.25,
+      "valueRef": "mist.mem.fast-feet.c3.e6/value",
       "param": null,
       "receiver": "St_M_FastFeet",
       "target": {
@@ -5783,7 +5843,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Recharge",
-        "value": 2,
+        "value": {
+          "valueRef": "mist.mem.fast-feet.c3.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": "St_M_FastFeet"
@@ -5830,7 +5892,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Recharge",
-        "value": 2,
+        "value": {
+          "valueRef": "mist.mem.fast-feet.c3.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": "St_M_FastFeet"
@@ -5887,7 +5951,9 @@
           "gimmick": {
             "trigger": "OnHit",
             "effect": "Recharge",
-            "value": 1,
+            "value": {
+              "valueRef": "mist.mem.fast-feet.c3.x/options/0/gimmick/value"
+            },
             "arg": 0,
             "cooldown": 0,
             "target": "St_M_FastFeet"
@@ -5900,7 +5966,7 @@
         {
           "kind": "GimmickBoost",
           "memory": null,
-          "value": 6,
+          "valueRef": "mist.mem.fast-feet.c3.x/options/1/value",
           "param": null,
           "receiver": "St_M_FastFeet",
           "target": {
@@ -5942,7 +6008,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.25,
+      "valueRef": "mist.mem.fast-feet.c4.e1/value",
       "param": null,
       "receiver": "St_M_FastFeet",
       "target": {
@@ -5982,7 +6048,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.25,
+      "valueRef": "mist.mem.fast-feet.c4.e2/value",
       "param": null,
       "receiver": "St_M_FastFeet",
       "target": {
@@ -6024,7 +6090,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.25,
+      "valueRef": "mist.mem.fast-feet.c4.e3/value",
       "param": null,
       "receiver": "St_M_FastFeet",
       "target": {
@@ -6065,7 +6131,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.25,
+      "valueRef": "mist.mem.fast-feet.c4.e4/value",
       "param": null,
       "receiver": "St_M_FastFeet",
       "target": {
@@ -6106,7 +6172,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.25,
+      "valueRef": "mist.mem.fast-feet.c4.e5/value",
       "param": null,
       "receiver": "St_M_FastFeet",
       "target": {
@@ -6147,7 +6213,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.25,
+      "valueRef": "mist.mem.fast-feet.c4.e6/value",
       "param": null,
       "receiver": "St_M_FastFeet",
       "target": {
@@ -6197,7 +6263,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Recharge",
-        "value": 1,
+        "value": {
+          "valueRef": "mist.mem.fast-feet.c4.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": "St_M_FastFeet"
@@ -6244,7 +6312,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Recharge",
-        "value": 1,
+        "value": {
+          "valueRef": "mist.mem.fast-feet.c4.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": "St_M_FastFeet"
@@ -6301,7 +6371,9 @@
           "gimmick": {
             "trigger": "OnHit",
             "effect": "Recharge",
-            "value": 1,
+            "value": {
+              "valueRef": "mist.mem.fast-feet.c4.x/options/0/gimmick/value"
+            },
             "arg": 0,
             "cooldown": 0,
             "target": "St_M_FastFeet"
@@ -6314,7 +6386,7 @@
         {
           "kind": "GimmickBoost",
           "memory": null,
-          "value": 6,
+          "valueRef": "mist.mem.fast-feet.c4.x/options/1/value",
           "param": null,
           "receiver": "St_M_FastFeet",
           "target": {
@@ -6467,7 +6539,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_D_AstridsMasterpiecePriorite",
-      "value": 2,
+      "valueRef": "mist.mem.priorite.c1.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -6509,7 +6581,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_D_AstridsMasterpiecePriorite",
-      "value": 2,
+      "valueRef": "mist.mem.priorite.c1.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -6551,7 +6623,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_D_AstridsMasterpiecePriorite",
-      "value": 2,
+      "valueRef": "mist.mem.priorite.c1.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -6600,7 +6672,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Echo",
-        "value": 6,
+        "value": {
+          "valueRef": "mist.mem.priorite.c1.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -6646,7 +6720,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Wound",
-        "value": 12,
+        "value": {
+          "valueRef": "mist.mem.priorite.c1.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -6706,7 +6782,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_D_AstridsMasterpiecePriorite",
-          "value": 6,
+          "valueRef": "mist.mem.priorite.c1.x/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -6857,7 +6933,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_D_AstridsMasterpiecePriorite",
-      "value": 2,
+      "valueRef": "mist.mem.priorite.c2.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -6899,7 +6975,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_D_AstridsMasterpiecePriorite",
-      "value": 2,
+      "valueRef": "mist.mem.priorite.c2.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -6941,7 +7017,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_D_AstridsMasterpiecePriorite",
-      "value": 2,
+      "valueRef": "mist.mem.priorite.c2.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -6990,7 +7066,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Shield",
-        "value": 2,
+        "value": {
+          "valueRef": "mist.mem.priorite.c2.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -7037,7 +7115,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Sap",
-        "value": 3,
+        "value": {
+          "valueRef": "mist.mem.priorite.c2.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -7097,7 +7177,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_D_AstridsMasterpiecePriorite",
-          "value": 6,
+          "valueRef": "mist.mem.priorite.c2.x/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -7248,7 +7328,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_D_AstridsMasterpiecePriorite",
-      "value": 2,
+      "valueRef": "mist.mem.priorite.c3.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -7290,7 +7370,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_D_AstridsMasterpiecePriorite",
-      "value": 2,
+      "valueRef": "mist.mem.priorite.c3.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -7332,7 +7412,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_D_AstridsMasterpiecePriorite",
-      "value": 2,
+      "valueRef": "mist.mem.priorite.c3.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -7381,7 +7461,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Expose",
-        "value": 16,
+        "value": {
+          "valueRef": "mist.mem.priorite.c3.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -7427,7 +7509,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Element",
-        "value": 25,
+        "value": {
+          "valueRef": "mist.mem.priorite.c3.n2/gimmick/value"
+        },
         "arg": 3,
         "cooldown": 0,
         "target": null
@@ -7487,7 +7571,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_D_AstridsMasterpiecePriorite",
-          "value": 6,
+          "valueRef": "mist.mem.priorite.c3.x/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -7638,7 +7722,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_D_AstridsMasterpiecePriorite",
-      "value": 2,
+      "valueRef": "mist.mem.priorite.c4.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -7680,7 +7764,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_D_AstridsMasterpiecePriorite",
-      "value": 2,
+      "valueRef": "mist.mem.priorite.c4.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -7722,7 +7806,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_D_AstridsMasterpiecePriorite",
-      "value": 2,
+      "valueRef": "mist.mem.priorite.c4.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -7771,7 +7855,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Burst",
-        "value": 20,
+        "value": {
+          "valueRef": "mist.mem.priorite.c4.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -7817,7 +7903,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "ElementEdge",
-        "value": 5,
+        "value": {
+          "valueRef": "mist.mem.priorite.c4.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -7877,7 +7965,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_D_AstridsMasterpiecePriorite",
-          "value": 6,
+          "valueRef": "mist.mem.priorite.c4.x/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -8028,7 +8116,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_Fleche",
-      "value": 2,
+      "valueRef": "mist.mem.fleche.c1.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -8070,7 +8158,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_Fleche",
-      "value": 2,
+      "valueRef": "mist.mem.fleche.c1.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -8112,7 +8200,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_Fleche",
-      "value": 2,
+      "valueRef": "mist.mem.fleche.c1.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -8161,7 +8249,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Echo",
-        "value": 8,
+        "value": {
+          "valueRef": "mist.mem.fleche.c1.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -8207,7 +8297,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Wound",
-        "value": 12,
+        "value": {
+          "valueRef": "mist.mem.fleche.c1.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -8267,7 +8359,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_Q_Fleche",
-          "value": 6,
+          "valueRef": "mist.mem.fleche.c1.x/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -8418,7 +8510,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_Fleche",
-      "value": 2,
+      "valueRef": "mist.mem.fleche.c2.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -8460,7 +8552,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_Fleche",
-      "value": 2,
+      "valueRef": "mist.mem.fleche.c2.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -8502,7 +8594,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_Fleche",
-      "value": 2,
+      "valueRef": "mist.mem.fleche.c2.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -8551,7 +8643,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Shield",
-        "value": 2,
+        "value": {
+          "valueRef": "mist.mem.fleche.c2.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -8598,7 +8692,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Sap",
-        "value": 3,
+        "value": {
+          "valueRef": "mist.mem.fleche.c2.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -8658,7 +8754,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_Q_Fleche",
-          "value": 6,
+          "valueRef": "mist.mem.fleche.c2.x/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -8809,7 +8905,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_Fleche",
-      "value": 2,
+      "valueRef": "mist.mem.fleche.c3.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -8851,7 +8947,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_Fleche",
-      "value": 2,
+      "valueRef": "mist.mem.fleche.c3.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -8893,7 +8989,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_Fleche",
-      "value": 2,
+      "valueRef": "mist.mem.fleche.c3.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -8942,7 +9038,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Expose",
-        "value": 16,
+        "value": {
+          "valueRef": "mist.mem.fleche.c3.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -8988,7 +9086,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Element",
-        "value": 25,
+        "value": {
+          "valueRef": "mist.mem.fleche.c3.n2/gimmick/value"
+        },
         "arg": 2,
         "cooldown": 0,
         "target": null
@@ -9048,7 +9148,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_Q_Fleche",
-          "value": 6,
+          "valueRef": "mist.mem.fleche.c3.x/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -9199,7 +9299,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_Fleche",
-      "value": 2,
+      "valueRef": "mist.mem.fleche.c4.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -9241,7 +9341,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_Fleche",
-      "value": 2,
+      "valueRef": "mist.mem.fleche.c4.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -9283,7 +9383,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_Fleche",
-      "value": 2,
+      "valueRef": "mist.mem.fleche.c4.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -9332,7 +9432,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Burst",
-        "value": 25,
+        "value": {
+          "valueRef": "mist.mem.fleche.c4.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -9378,7 +9480,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "ElementEdge",
-        "value": 5,
+        "value": {
+          "valueRef": "mist.mem.fleche.c4.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -9438,7 +9542,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_Q_Fleche",
-          "value": 6,
+          "valueRef": "mist.mem.fleche.c4.x/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -9589,7 +9693,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_Parry",
-      "value": 2,
+      "valueRef": "mist.mem.parry.c1.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -9631,7 +9735,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_Parry",
-      "value": 2,
+      "valueRef": "mist.mem.parry.c1.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -9673,7 +9777,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_Parry",
-      "value": 2,
+      "valueRef": "mist.mem.parry.c1.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -9722,7 +9826,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Echo",
-        "value": 10,
+        "value": {
+          "valueRef": "mist.mem.parry.c1.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -9768,7 +9874,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Wound",
-        "value": 16,
+        "value": {
+          "valueRef": "mist.mem.parry.c1.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -9828,7 +9936,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_R_Parry",
-          "value": 6,
+          "valueRef": "mist.mem.parry.c1.x/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -9979,7 +10087,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_Parry",
-      "value": 2,
+      "valueRef": "mist.mem.parry.c2.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -10021,7 +10129,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_Parry",
-      "value": 2,
+      "valueRef": "mist.mem.parry.c2.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -10063,7 +10171,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_Parry",
-      "value": 2,
+      "valueRef": "mist.mem.parry.c2.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -10112,7 +10220,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Shield",
-        "value": 3,
+        "value": {
+          "valueRef": "mist.mem.parry.c2.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -10159,7 +10269,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Sap",
-        "value": 3,
+        "value": {
+          "valueRef": "mist.mem.parry.c2.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -10219,7 +10331,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_R_Parry",
-          "value": 6,
+          "valueRef": "mist.mem.parry.c2.x/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -10370,7 +10482,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_Parry",
-      "value": 2,
+      "valueRef": "mist.mem.parry.c3.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -10412,7 +10524,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_Parry",
-      "value": 2,
+      "valueRef": "mist.mem.parry.c3.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -10454,7 +10566,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_Parry",
-      "value": 2,
+      "valueRef": "mist.mem.parry.c3.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -10503,7 +10615,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Expose",
-        "value": 16,
+        "value": {
+          "valueRef": "mist.mem.parry.c3.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -10549,7 +10663,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Element",
-        "value": 25,
+        "value": {
+          "valueRef": "mist.mem.parry.c3.n2/gimmick/value"
+        },
         "arg": 2,
         "cooldown": 0,
         "target": null
@@ -10609,7 +10725,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_R_Parry",
-          "value": 6,
+          "valueRef": "mist.mem.parry.c3.x/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -10760,7 +10876,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_Parry",
-      "value": 2,
+      "valueRef": "mist.mem.parry.c4.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -10802,7 +10918,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_Parry",
-      "value": 2,
+      "valueRef": "mist.mem.parry.c4.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -10844,7 +10960,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_Parry",
-      "value": 2,
+      "valueRef": "mist.mem.parry.c4.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -10893,7 +11009,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Burst",
-        "value": 30,
+        "value": {
+          "valueRef": "mist.mem.parry.c4.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -10939,7 +11057,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "ElementEdge",
-        "value": 5,
+        "value": {
+          "valueRef": "mist.mem.parry.c4.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -10999,7 +11119,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_R_Parry",
-          "value": 6,
+          "valueRef": "mist.mem.parry.c4.x/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -11255,7 +11375,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Shield",
-        "value": 1,
+        "value": {
+          "valueRef": "mist.bridge.force.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null,
@@ -11300,7 +11422,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Burst",
-        "value": 12,
+        "value": {
+          "valueRef": "mist.bridge.force.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null,
@@ -11350,7 +11474,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_D_AstridsMasterpieceEnGarde",
-          "value": 4,
+          "valueRef": "mist.bridge.force.x/options/0/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -11407,7 +11531,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_D_AstridsMasterpieceEnGarde",
-      "value": 2,
+      "valueRef": "mist.bridge.force.s1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -11448,7 +11572,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_D_AstridsMasterpieceEnGarde",
-      "value": 2,
+      "valueRef": "mist.bridge.force.s2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -11489,7 +11613,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_D_AstridsMasterpieceEnGarde",
-      "value": 2,
+      "valueRef": "mist.bridge.force.s3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -11529,7 +11653,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_D_AstridsMasterpieceEnGarde",
-      "value": 2,
+      "valueRef": "mist.bridge.force.s4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -11782,7 +11906,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Echo",
-        "value": 5,
+        "value": {
+          "valueRef": "mist.bridge.insight.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null,
@@ -11826,7 +11952,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Shield",
-        "value": 1,
+        "value": {
+          "valueRef": "mist.bridge.insight.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null,
@@ -11877,7 +12005,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_Q_Lunge",
-          "value": 4,
+          "valueRef": "mist.bridge.insight.x/options/0/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -11934,7 +12062,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_Lunge",
-      "value": 2,
+      "valueRef": "mist.bridge.insight.s1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -11975,7 +12103,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_Lunge",
-      "value": 2,
+      "valueRef": "mist.bridge.insight.s2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -12016,7 +12144,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_Lunge",
-      "value": 2,
+      "valueRef": "mist.bridge.insight.s3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -12056,7 +12184,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_Lunge",
-      "value": 2,
+      "valueRef": "mist.bridge.insight.s4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -12198,7 +12326,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 1,
+      "valueRef": "mist.bridge.vessel.e4/value",
       "param": null,
       "receiver": "St_M_FastFeet",
       "target": {
@@ -12238,7 +12366,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 1,
+      "valueRef": "mist.bridge.vessel.e5/value",
       "param": null,
       "receiver": "St_M_FastFeet",
       "target": {
@@ -12278,7 +12406,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 1,
+      "valueRef": "mist.bridge.vessel.e6/value",
       "param": null,
       "receiver": "St_M_FastFeet",
       "target": {
@@ -12324,7 +12452,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Heal",
-        "value": 1,
+        "value": {
+          "valueRef": "mist.bridge.vessel.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null,
@@ -12368,7 +12498,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Burst",
-        "value": 12,
+        "value": {
+          "valueRef": "mist.bridge.vessel.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null,
@@ -12418,7 +12550,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_R_UnbreakableDetermination",
-          "value": 4,
+          "valueRef": "mist.bridge.vessel.x/options/0/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -12475,7 +12607,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_UnbreakableDetermination",
-      "value": 2,
+      "valueRef": "mist.bridge.vessel.s1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -12516,7 +12648,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_UnbreakableDetermination",
-      "value": 2,
+      "valueRef": "mist.bridge.vessel.s2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -12557,7 +12689,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_UnbreakableDetermination",
-      "value": 2,
+      "valueRef": "mist.bridge.vessel.s3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -12597,7 +12729,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_UnbreakableDetermination",
-      "value": 2,
+      "valueRef": "mist.bridge.vessel.s4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -12635,7 +12767,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 1,
+      "valueRef": "mist.bridge.armor.e1/value",
       "param": null,
       "receiver": "St_M_FastFeet",
       "target": {
@@ -12675,7 +12807,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 1,
+      "valueRef": "mist.bridge.armor.e2/value",
       "param": null,
       "receiver": "St_M_FastFeet",
       "target": {
@@ -12715,7 +12847,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 1,
+      "valueRef": "mist.bridge.armor.e3/value",
       "param": null,
       "receiver": "St_M_FastFeet",
       "target": {
@@ -12865,7 +12997,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Heal",
-        "value": 1,
+        "value": {
+          "valueRef": "mist.bridge.armor.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null,
@@ -12909,7 +13043,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Burst",
-        "value": 12,
+        "value": {
+          "valueRef": "mist.bridge.armor.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null,
@@ -12959,7 +13095,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_D_AstridsMasterpiecePriorite",
-          "value": 4,
+          "valueRef": "mist.bridge.armor.x/options/0/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -13016,7 +13152,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_D_AstridsMasterpiecePriorite",
-      "value": 2,
+      "valueRef": "mist.bridge.armor.s1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -13057,7 +13193,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_D_AstridsMasterpiecePriorite",
-      "value": 2,
+      "valueRef": "mist.bridge.armor.s2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -13098,7 +13234,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_D_AstridsMasterpiecePriorite",
-      "value": 2,
+      "valueRef": "mist.bridge.armor.s3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -13138,7 +13274,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_D_AstridsMasterpiecePriorite",
-      "value": 2,
+      "valueRef": "mist.bridge.armor.s4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -13391,7 +13527,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Echo",
-        "value": 5,
+        "value": {
+          "valueRef": "mist.bridge.recall.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null,
@@ -13435,7 +13573,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Shield",
-        "value": 1,
+        "value": {
+          "valueRef": "mist.bridge.recall.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null,
@@ -13486,7 +13626,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_Q_Fleche",
-          "value": 4,
+          "valueRef": "mist.bridge.recall.x/options/0/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -13543,7 +13683,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_Fleche",
-      "value": 2,
+      "valueRef": "mist.bridge.recall.s1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -13584,7 +13724,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_Fleche",
-      "value": 2,
+      "valueRef": "mist.bridge.recall.s2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -13625,7 +13765,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_Fleche",
-      "value": 2,
+      "valueRef": "mist.bridge.recall.s3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -13665,7 +13805,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_Fleche",
-      "value": 2,
+      "valueRef": "mist.bridge.recall.s4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -13918,7 +14058,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Burst",
-        "value": 15,
+        "value": {
+          "valueRef": "mist.bridge.rhythm.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null,
@@ -13962,7 +14104,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Shield",
-        "value": 1,
+        "value": {
+          "valueRef": "mist.bridge.rhythm.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null,
@@ -14013,7 +14157,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_R_Parry",
-          "value": 4,
+          "valueRef": "mist.bridge.rhythm.x/options/0/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -14070,7 +14214,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_Parry",
-      "value": 2,
+      "valueRef": "mist.bridge.rhythm.s1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -14111,7 +14255,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_Parry",
-      "value": 2,
+      "valueRef": "mist.bridge.rhythm.s2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -14152,7 +14296,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_Parry",
-      "value": 2,
+      "valueRef": "mist.bridge.rhythm.s3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -14192,7 +14336,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_Parry",
-      "value": 2,
+      "valueRef": "mist.bridge.rhythm.s4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -14445,7 +14589,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Echo",
-        "value": 5,
+        "value": {
+          "valueRef": "mist.bridge.resolve.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null,
@@ -14489,7 +14635,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Heal",
-        "value": 1,
+        "value": {
+          "valueRef": "mist.bridge.resolve.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null,
@@ -14539,7 +14687,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_R_Parry",
-          "value": 4,
+          "valueRef": "mist.bridge.resolve.x/options/0/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -14596,7 +14744,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_Parry",
-      "value": 2,
+      "valueRef": "mist.bridge.resolve.s1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -14637,7 +14785,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_Parry",
-      "value": 2,
+      "valueRef": "mist.bridge.resolve.s2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -14678,7 +14826,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_Parry",
-      "value": 2,
+      "valueRef": "mist.bridge.resolve.s3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -14718,7 +14866,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_Parry",
-      "value": 2,
+      "valueRef": "mist.bridge.resolve.s4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -14971,7 +15119,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Heal",
-        "value": 1,
+        "value": {
+          "valueRef": "mist.bridge.renewal.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -15013,7 +15163,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Heal",
-        "value": 1,
+        "value": {
+          "valueRef": "mist.bridge.renewal.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -15060,7 +15212,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_Q_Fleche",
-          "value": 4,
+          "valueRef": "mist.bridge.renewal.x/options/0/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -15076,7 +15228,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_Q_Lunge",
-          "value": 4,
+          "valueRef": "mist.bridge.renewal.x/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -15120,7 +15272,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_Fleche",
-      "value": 2,
+      "valueRef": "mist.bridge.renewal.s1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -15161,7 +15313,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_Fleche",
-      "value": 2,
+      "valueRef": "mist.bridge.renewal.s2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -15202,7 +15354,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_Lunge",
-      "value": 2,
+      "valueRef": "mist.bridge.renewal.s3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -15243,7 +15395,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_Lunge",
-      "value": 2,
+      "valueRef": "mist.bridge.renewal.s4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -15283,7 +15435,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_D_AstridsMasterpieceEnGarde",
-      "value": 2,
+      "valueRef": "mist.outer.last-ripple.en-garde.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -15324,7 +15476,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_D_AstridsMasterpieceEnGarde",
-      "value": 2,
+      "valueRef": "mist.outer.last-ripple.en-garde.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -15369,7 +15521,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Burst",
-        "value": 12,
+        "value": {
+          "valueRef": "mist.outer.last-ripple.en-garde.n/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -15404,7 +15558,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_AstridsMasterpieceEnGarde",
-      "value": 5,
+      "valueRef": "mist.outer.last-ripple.en-garde.e3/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -15445,7 +15599,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_D_AstridsMasterpieceEnGarde",
-      "value": 2,
+      "valueRef": "mist.outer.last-ripple.en-garde.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -15509,7 +15663,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_D_AstridsMasterpieceEnGarde",
-          "value": 3,
+          "valueRef": "mist.outer.last-ripple.en-garde.x/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -15552,7 +15706,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_D_AstridsMasterpiecePriorite",
-      "value": 2,
+      "valueRef": "mist.outer.last-ripple.priorite.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -15593,7 +15747,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_D_AstridsMasterpiecePriorite",
-      "value": 2,
+      "valueRef": "mist.outer.last-ripple.priorite.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -15638,7 +15792,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Burst",
-        "value": 12,
+        "value": {
+          "valueRef": "mist.outer.last-ripple.priorite.n/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -15673,7 +15829,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_AstridsMasterpiecePriorite",
-      "value": 5,
+      "valueRef": "mist.outer.last-ripple.priorite.e3/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -15714,7 +15870,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_D_AstridsMasterpiecePriorite",
-      "value": 2,
+      "valueRef": "mist.outer.last-ripple.priorite.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -15778,7 +15934,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_D_AstridsMasterpiecePriorite",
-          "value": 3,
+          "valueRef": "mist.outer.last-ripple.priorite.x/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -15821,7 +15977,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_Lunge",
-      "value": 2,
+      "valueRef": "mist.outer.last-ripple.lunge.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -15862,7 +16018,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_Lunge",
-      "value": 2,
+      "valueRef": "mist.outer.last-ripple.lunge.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -15907,7 +16063,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Burst",
-        "value": 12,
+        "value": {
+          "valueRef": "mist.outer.last-ripple.lunge.n/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -15942,7 +16100,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_Lunge",
-      "value": 5,
+      "valueRef": "mist.outer.last-ripple.lunge.e3/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -15983,7 +16141,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_Lunge",
-      "value": 2,
+      "valueRef": "mist.outer.last-ripple.lunge.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -16047,7 +16205,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_Q_Lunge",
-          "value": 3,
+          "valueRef": "mist.outer.last-ripple.lunge.x/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -16090,7 +16248,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_UnbreakableDetermination",
-      "value": 2,
+      "valueRef": "mist.outer.last-ripple.determination.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -16131,7 +16289,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_UnbreakableDetermination",
-      "value": 2,
+      "valueRef": "mist.outer.last-ripple.determination.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -16176,7 +16334,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Burst",
-        "value": 12,
+        "value": {
+          "valueRef": "mist.outer.last-ripple.determination.n/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -16211,7 +16371,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_UnbreakableDetermination",
-      "value": 5,
+      "valueRef": "mist.outer.last-ripple.determination.e3/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -16252,7 +16412,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_UnbreakableDetermination",
-      "value": 2,
+      "valueRef": "mist.outer.last-ripple.determination.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -16316,7 +16476,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_R_UnbreakableDetermination",
-          "value": 3,
+          "valueRef": "mist.outer.last-ripple.determination.x/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -16359,7 +16519,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_Fleche",
-      "value": 2,
+      "valueRef": "mist.outer.last-ripple.fleche.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -16400,7 +16560,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_Fleche",
-      "value": 2,
+      "valueRef": "mist.outer.last-ripple.fleche.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -16445,7 +16605,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Burst",
-        "value": 12,
+        "value": {
+          "valueRef": "mist.outer.last-ripple.fleche.n/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -16480,7 +16642,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_Fleche",
-      "value": 5,
+      "valueRef": "mist.outer.last-ripple.fleche.e3/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -16521,7 +16683,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_Fleche",
-      "value": 2,
+      "valueRef": "mist.outer.last-ripple.fleche.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -16585,7 +16747,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_Q_Fleche",
-          "value": 3,
+          "valueRef": "mist.outer.last-ripple.fleche.x/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -16628,7 +16790,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_Parry",
-      "value": 2,
+      "valueRef": "mist.outer.last-ripple.parry.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -16669,7 +16831,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_Parry",
-      "value": 2,
+      "valueRef": "mist.outer.last-ripple.parry.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -16714,7 +16876,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Burst",
-        "value": 12,
+        "value": {
+          "valueRef": "mist.outer.last-ripple.parry.n/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -16749,7 +16913,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_Parry",
-      "value": 5,
+      "valueRef": "mist.outer.last-ripple.parry.e3/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -16790,7 +16954,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_Parry",
-      "value": 2,
+      "valueRef": "mist.outer.last-ripple.parry.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -16854,7 +17018,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_R_Parry",
-          "value": 3,
+          "valueRef": "mist.outer.last-ripple.parry.x/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -16897,7 +17061,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_D_AstridsMasterpieceEnGarde",
-      "value": 2,
+      "valueRef": "mist.outer.shared-rest.en-garde.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -16938,7 +17102,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_D_AstridsMasterpieceEnGarde",
-      "value": 2,
+      "valueRef": "mist.outer.shared-rest.en-garde.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -16983,7 +17147,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Heal",
-        "value": 1,
+        "value": {
+          "valueRef": "mist.outer.shared-rest.en-garde.n/gimmick/value"
+        },
         "arg": 1,
         "cooldown": 0,
         "target": null
@@ -17018,7 +17184,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_AstridsMasterpieceEnGarde",
-      "value": 5,
+      "valueRef": "mist.outer.shared-rest.en-garde.e3/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -17059,7 +17225,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_D_AstridsMasterpieceEnGarde",
-      "value": 2,
+      "valueRef": "mist.outer.shared-rest.en-garde.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -17123,7 +17289,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_D_AstridsMasterpieceEnGarde",
-          "value": 3,
+          "valueRef": "mist.outer.shared-rest.en-garde.x/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -17166,7 +17332,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_D_AstridsMasterpiecePriorite",
-      "value": 2,
+      "valueRef": "mist.outer.shared-rest.priorite.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -17207,7 +17373,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_D_AstridsMasterpiecePriorite",
-      "value": 2,
+      "valueRef": "mist.outer.shared-rest.priorite.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -17252,7 +17418,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Heal",
-        "value": 1,
+        "value": {
+          "valueRef": "mist.outer.shared-rest.priorite.n/gimmick/value"
+        },
         "arg": 1,
         "cooldown": 0,
         "target": null
@@ -17287,7 +17455,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_AstridsMasterpiecePriorite",
-      "value": 5,
+      "valueRef": "mist.outer.shared-rest.priorite.e3/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -17328,7 +17496,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_D_AstridsMasterpiecePriorite",
-      "value": 2,
+      "valueRef": "mist.outer.shared-rest.priorite.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -17392,7 +17560,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_D_AstridsMasterpiecePriorite",
-          "value": 3,
+          "valueRef": "mist.outer.shared-rest.priorite.x/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -17435,7 +17603,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_Lunge",
-      "value": 2,
+      "valueRef": "mist.outer.shared-rest.lunge.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -17476,7 +17644,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_Lunge",
-      "value": 2,
+      "valueRef": "mist.outer.shared-rest.lunge.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -17521,7 +17689,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Heal",
-        "value": 1,
+        "value": {
+          "valueRef": "mist.outer.shared-rest.lunge.n/gimmick/value"
+        },
         "arg": 1,
         "cooldown": 0,
         "target": null
@@ -17556,7 +17726,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_Lunge",
-      "value": 5,
+      "valueRef": "mist.outer.shared-rest.lunge.e3/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -17597,7 +17767,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_Lunge",
-      "value": 2,
+      "valueRef": "mist.outer.shared-rest.lunge.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -17661,7 +17831,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_Q_Lunge",
-          "value": 3,
+          "valueRef": "mist.outer.shared-rest.lunge.x/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -17704,7 +17874,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_UnbreakableDetermination",
-      "value": 2,
+      "valueRef": "mist.outer.shared-rest.determination.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -17745,7 +17915,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_UnbreakableDetermination",
-      "value": 2,
+      "valueRef": "mist.outer.shared-rest.determination.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -17790,7 +17960,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Heal",
-        "value": 1,
+        "value": {
+          "valueRef": "mist.outer.shared-rest.determination.n/gimmick/value"
+        },
         "arg": 1,
         "cooldown": 0,
         "target": null
@@ -17825,7 +17997,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_UnbreakableDetermination",
-      "value": 5,
+      "valueRef": "mist.outer.shared-rest.determination.e3/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -17866,7 +18038,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_UnbreakableDetermination",
-      "value": 2,
+      "valueRef": "mist.outer.shared-rest.determination.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -17930,7 +18102,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_R_UnbreakableDetermination",
-          "value": 3,
+          "valueRef": "mist.outer.shared-rest.determination.x/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -17973,7 +18145,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_Fleche",
-      "value": 2,
+      "valueRef": "mist.outer.shared-rest.fleche.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -18014,7 +18186,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_Fleche",
-      "value": 2,
+      "valueRef": "mist.outer.shared-rest.fleche.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -18059,7 +18231,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Heal",
-        "value": 1,
+        "value": {
+          "valueRef": "mist.outer.shared-rest.fleche.n/gimmick/value"
+        },
         "arg": 1,
         "cooldown": 0,
         "target": null
@@ -18094,7 +18268,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_Fleche",
-      "value": 5,
+      "valueRef": "mist.outer.shared-rest.fleche.e3/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -18135,7 +18309,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_Fleche",
-      "value": 2,
+      "valueRef": "mist.outer.shared-rest.fleche.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -18199,7 +18373,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_Q_Fleche",
-          "value": 3,
+          "valueRef": "mist.outer.shared-rest.fleche.x/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -18242,7 +18416,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_Parry",
-      "value": 2,
+      "valueRef": "mist.outer.shared-rest.parry.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -18283,7 +18457,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_Parry",
-      "value": 2,
+      "valueRef": "mist.outer.shared-rest.parry.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -18328,7 +18502,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Heal",
-        "value": 1,
+        "value": {
+          "valueRef": "mist.outer.shared-rest.parry.n/gimmick/value"
+        },
         "arg": 1,
         "cooldown": 0,
         "target": null
@@ -18363,7 +18539,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_Parry",
-      "value": 5,
+      "valueRef": "mist.outer.shared-rest.parry.e3/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -18404,7 +18580,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_Parry",
-      "value": 2,
+      "valueRef": "mist.outer.shared-rest.parry.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -18468,7 +18644,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_R_Parry",
-          "value": 3,
+          "valueRef": "mist.outer.shared-rest.parry.x/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -18511,7 +18687,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_D_AstridsMasterpieceEnGarde",
-      "value": 2,
+      "valueRef": "mist.outer.ember-point.en-garde.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -18552,7 +18728,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_D_AstridsMasterpieceEnGarde",
-      "value": 2,
+      "valueRef": "mist.outer.ember-point.en-garde.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -18597,7 +18773,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Element",
-        "value": 20,
+        "value": {
+          "valueRef": "mist.outer.ember-point.en-garde.n/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -18632,7 +18810,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_AstridsMasterpieceEnGarde",
-      "value": 3,
+      "valueRef": "mist.outer.ember-point.en-garde.e3/value",
       "param": "Chance",
       "receiver": null,
       "target": {
@@ -18673,7 +18851,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_D_AstridsMasterpieceEnGarde",
-      "value": 2,
+      "valueRef": "mist.outer.ember-point.en-garde.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -18737,7 +18915,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_D_AstridsMasterpieceEnGarde",
-          "value": 3,
+          "valueRef": "mist.outer.ember-point.en-garde.x/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -18780,7 +18958,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_D_AstridsMasterpiecePriorite",
-      "value": 2,
+      "valueRef": "mist.outer.ember-point.priorite.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -18821,7 +18999,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_D_AstridsMasterpiecePriorite",
-      "value": 2,
+      "valueRef": "mist.outer.ember-point.priorite.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -18866,7 +19044,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Element",
-        "value": 20,
+        "value": {
+          "valueRef": "mist.outer.ember-point.priorite.n/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -18901,7 +19081,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_AstridsMasterpiecePriorite",
-      "value": 3,
+      "valueRef": "mist.outer.ember-point.priorite.e3/value",
       "param": "Chance",
       "receiver": null,
       "target": {
@@ -18942,7 +19122,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_D_AstridsMasterpiecePriorite",
-      "value": 2,
+      "valueRef": "mist.outer.ember-point.priorite.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -19006,7 +19186,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_D_AstridsMasterpiecePriorite",
-          "value": 3,
+          "valueRef": "mist.outer.ember-point.priorite.x/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -19049,7 +19229,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_Lunge",
-      "value": 2,
+      "valueRef": "mist.outer.ember-point.lunge.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -19090,7 +19270,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_Lunge",
-      "value": 2,
+      "valueRef": "mist.outer.ember-point.lunge.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -19135,7 +19315,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Element",
-        "value": 20,
+        "value": {
+          "valueRef": "mist.outer.ember-point.lunge.n/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -19170,7 +19352,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_Lunge",
-      "value": 3,
+      "valueRef": "mist.outer.ember-point.lunge.e3/value",
       "param": "Chance",
       "receiver": null,
       "target": {
@@ -19211,7 +19393,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_Lunge",
-      "value": 2,
+      "valueRef": "mist.outer.ember-point.lunge.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -19275,7 +19457,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_Q_Lunge",
-          "value": 3,
+          "valueRef": "mist.outer.ember-point.lunge.x/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -19318,7 +19500,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_UnbreakableDetermination",
-      "value": 2,
+      "valueRef": "mist.outer.ember-point.determination.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -19359,7 +19541,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_UnbreakableDetermination",
-      "value": 2,
+      "valueRef": "mist.outer.ember-point.determination.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -19404,7 +19586,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Element",
-        "value": 20,
+        "value": {
+          "valueRef": "mist.outer.ember-point.determination.n/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -19439,7 +19623,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_UnbreakableDetermination",
-      "value": 3,
+      "valueRef": "mist.outer.ember-point.determination.e3/value",
       "param": "Chance",
       "receiver": null,
       "target": {
@@ -19480,7 +19664,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_UnbreakableDetermination",
-      "value": 2,
+      "valueRef": "mist.outer.ember-point.determination.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -19544,7 +19728,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_R_UnbreakableDetermination",
-          "value": 3,
+          "valueRef": "mist.outer.ember-point.determination.x/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -19587,7 +19771,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_Fleche",
-      "value": 2,
+      "valueRef": "mist.outer.ember-point.fleche.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -19628,7 +19812,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_Fleche",
-      "value": 2,
+      "valueRef": "mist.outer.ember-point.fleche.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -19673,7 +19857,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Element",
-        "value": 20,
+        "value": {
+          "valueRef": "mist.outer.ember-point.fleche.n/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -19708,7 +19894,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_Fleche",
-      "value": 3,
+      "valueRef": "mist.outer.ember-point.fleche.e3/value",
       "param": "Chance",
       "receiver": null,
       "target": {
@@ -19749,7 +19935,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_Fleche",
-      "value": 2,
+      "valueRef": "mist.outer.ember-point.fleche.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -19813,7 +19999,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_Q_Fleche",
-          "value": 3,
+          "valueRef": "mist.outer.ember-point.fleche.x/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -19856,7 +20042,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_Parry",
-      "value": 2,
+      "valueRef": "mist.outer.ember-point.parry.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -19897,7 +20083,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_Parry",
-      "value": 2,
+      "valueRef": "mist.outer.ember-point.parry.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -19942,7 +20128,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Element",
-        "value": 20,
+        "value": {
+          "valueRef": "mist.outer.ember-point.parry.n/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -19977,7 +20165,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_Parry",
-      "value": 3,
+      "valueRef": "mist.outer.ember-point.parry.e3/value",
       "param": "Chance",
       "receiver": null,
       "target": {
@@ -20018,7 +20206,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_Parry",
-      "value": 2,
+      "valueRef": "mist.outer.ember-point.parry.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -20082,7 +20270,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_R_Parry",
-          "value": 3,
+          "valueRef": "mist.outer.ember-point.parry.x/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -20125,7 +20313,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_D_AstridsMasterpieceEnGarde",
-      "value": 2,
+      "valueRef": "mist.outer.light-trace.en-garde.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -20166,7 +20354,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_D_AstridsMasterpieceEnGarde",
-      "value": 2,
+      "valueRef": "mist.outer.light-trace.en-garde.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -20211,7 +20399,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Element",
-        "value": 25,
+        "value": {
+          "valueRef": "mist.outer.light-trace.en-garde.n/gimmick/value"
+        },
         "arg": 2,
         "cooldown": 0,
         "target": null
@@ -20246,7 +20436,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_AstridsMasterpieceEnGarde",
-      "value": 5,
+      "valueRef": "mist.outer.light-trace.en-garde.e3/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -20287,7 +20477,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_D_AstridsMasterpieceEnGarde",
-      "value": 2,
+      "valueRef": "mist.outer.light-trace.en-garde.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -20351,7 +20541,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_D_AstridsMasterpieceEnGarde",
-          "value": 3,
+          "valueRef": "mist.outer.light-trace.en-garde.x/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -20394,7 +20584,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_D_AstridsMasterpiecePriorite",
-      "value": 2,
+      "valueRef": "mist.outer.light-trace.priorite.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -20435,7 +20625,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_D_AstridsMasterpiecePriorite",
-      "value": 2,
+      "valueRef": "mist.outer.light-trace.priorite.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -20480,7 +20670,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Element",
-        "value": 25,
+        "value": {
+          "valueRef": "mist.outer.light-trace.priorite.n/gimmick/value"
+        },
         "arg": 2,
         "cooldown": 0,
         "target": null
@@ -20515,7 +20707,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_AstridsMasterpiecePriorite",
-      "value": 5,
+      "valueRef": "mist.outer.light-trace.priorite.e3/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -20556,7 +20748,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_D_AstridsMasterpiecePriorite",
-      "value": 2,
+      "valueRef": "mist.outer.light-trace.priorite.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -20620,7 +20812,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_D_AstridsMasterpiecePriorite",
-          "value": 3,
+          "valueRef": "mist.outer.light-trace.priorite.x/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -20663,7 +20855,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_Lunge",
-      "value": 2,
+      "valueRef": "mist.outer.light-trace.lunge.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -20704,7 +20896,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_Lunge",
-      "value": 2,
+      "valueRef": "mist.outer.light-trace.lunge.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -20749,7 +20941,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Element",
-        "value": 25,
+        "value": {
+          "valueRef": "mist.outer.light-trace.lunge.n/gimmick/value"
+        },
         "arg": 2,
         "cooldown": 0,
         "target": null
@@ -20784,7 +20978,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_Lunge",
-      "value": 5,
+      "valueRef": "mist.outer.light-trace.lunge.e3/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -20825,7 +21019,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_Lunge",
-      "value": 2,
+      "valueRef": "mist.outer.light-trace.lunge.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -20889,7 +21083,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_Q_Lunge",
-          "value": 3,
+          "valueRef": "mist.outer.light-trace.lunge.x/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -20932,7 +21126,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_UnbreakableDetermination",
-      "value": 2,
+      "valueRef": "mist.outer.light-trace.determination.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -20973,7 +21167,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_UnbreakableDetermination",
-      "value": 2,
+      "valueRef": "mist.outer.light-trace.determination.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -21018,7 +21212,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Element",
-        "value": 25,
+        "value": {
+          "valueRef": "mist.outer.light-trace.determination.n/gimmick/value"
+        },
         "arg": 2,
         "cooldown": 0,
         "target": null
@@ -21053,7 +21249,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_UnbreakableDetermination",
-      "value": 5,
+      "valueRef": "mist.outer.light-trace.determination.e3/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -21094,7 +21290,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_UnbreakableDetermination",
-      "value": 2,
+      "valueRef": "mist.outer.light-trace.determination.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -21158,7 +21354,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_R_UnbreakableDetermination",
-          "value": 3,
+          "valueRef": "mist.outer.light-trace.determination.x/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -21201,7 +21397,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_Fleche",
-      "value": 2,
+      "valueRef": "mist.outer.light-trace.fleche.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -21242,7 +21438,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_Fleche",
-      "value": 2,
+      "valueRef": "mist.outer.light-trace.fleche.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -21287,7 +21483,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Element",
-        "value": 25,
+        "value": {
+          "valueRef": "mist.outer.light-trace.fleche.n/gimmick/value"
+        },
         "arg": 2,
         "cooldown": 0,
         "target": null
@@ -21322,7 +21520,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_Fleche",
-      "value": 5,
+      "valueRef": "mist.outer.light-trace.fleche.e3/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -21363,7 +21561,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_Fleche",
-      "value": 2,
+      "valueRef": "mist.outer.light-trace.fleche.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -21427,7 +21625,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_Q_Fleche",
-          "value": 3,
+          "valueRef": "mist.outer.light-trace.fleche.x/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -21470,7 +21668,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_Parry",
-      "value": 2,
+      "valueRef": "mist.outer.light-trace.parry.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -21511,7 +21709,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_Parry",
-      "value": 2,
+      "valueRef": "mist.outer.light-trace.parry.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -21556,7 +21754,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Element",
-        "value": 25,
+        "value": {
+          "valueRef": "mist.outer.light-trace.parry.n/gimmick/value"
+        },
         "arg": 2,
         "cooldown": 0,
         "target": null
@@ -21591,7 +21791,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_Parry",
-      "value": 5,
+      "valueRef": "mist.outer.light-trace.parry.e3/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -21632,7 +21832,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_Parry",
-      "value": 2,
+      "valueRef": "mist.outer.light-trace.parry.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -21696,7 +21896,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_R_Parry",
-          "value": 3,
+          "valueRef": "mist.outer.light-trace.parry.x/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -21739,7 +21939,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_D_AstridsMasterpieceEnGarde",
-      "value": 2,
+      "valueRef": "mist.outer.close-support.en-garde.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -21780,7 +21980,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_D_AstridsMasterpieceEnGarde",
-      "value": 2,
+      "valueRef": "mist.outer.close-support.en-garde.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -21825,7 +22025,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Heal",
-        "value": 1,
+        "value": {
+          "valueRef": "mist.outer.close-support.en-garde.n/gimmick/value"
+        },
         "arg": 1,
         "cooldown": 0,
         "target": null
@@ -21860,7 +22062,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_AstridsMasterpieceEnGarde",
-      "value": 5,
+      "valueRef": "mist.outer.close-support.en-garde.e3/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -21901,7 +22103,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_D_AstridsMasterpieceEnGarde",
-      "value": 2,
+      "valueRef": "mist.outer.close-support.en-garde.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -21965,7 +22167,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_D_AstridsMasterpieceEnGarde",
-          "value": 3,
+          "valueRef": "mist.outer.close-support.en-garde.x/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -22008,7 +22210,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_D_AstridsMasterpiecePriorite",
-      "value": 2,
+      "valueRef": "mist.outer.close-support.priorite.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -22049,7 +22251,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_D_AstridsMasterpiecePriorite",
-      "value": 2,
+      "valueRef": "mist.outer.close-support.priorite.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -22094,7 +22296,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Heal",
-        "value": 1,
+        "value": {
+          "valueRef": "mist.outer.close-support.priorite.n/gimmick/value"
+        },
         "arg": 1,
         "cooldown": 0,
         "target": null
@@ -22129,7 +22333,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_AstridsMasterpiecePriorite",
-      "value": 5,
+      "valueRef": "mist.outer.close-support.priorite.e3/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -22170,7 +22374,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_D_AstridsMasterpiecePriorite",
-      "value": 2,
+      "valueRef": "mist.outer.close-support.priorite.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -22234,7 +22438,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_D_AstridsMasterpiecePriorite",
-          "value": 3,
+          "valueRef": "mist.outer.close-support.priorite.x/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -22277,7 +22481,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_Lunge",
-      "value": 2,
+      "valueRef": "mist.outer.close-support.lunge.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -22318,7 +22522,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_Lunge",
-      "value": 2,
+      "valueRef": "mist.outer.close-support.lunge.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -22363,7 +22567,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Heal",
-        "value": 1,
+        "value": {
+          "valueRef": "mist.outer.close-support.lunge.n/gimmick/value"
+        },
         "arg": 1,
         "cooldown": 0,
         "target": null
@@ -22398,7 +22604,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_Lunge",
-      "value": 5,
+      "valueRef": "mist.outer.close-support.lunge.e3/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -22439,7 +22645,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_Lunge",
-      "value": 2,
+      "valueRef": "mist.outer.close-support.lunge.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -22503,7 +22709,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_Q_Lunge",
-          "value": 3,
+          "valueRef": "mist.outer.close-support.lunge.x/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -22546,7 +22752,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_UnbreakableDetermination",
-      "value": 2,
+      "valueRef": "mist.outer.close-support.determination.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -22587,7 +22793,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_UnbreakableDetermination",
-      "value": 2,
+      "valueRef": "mist.outer.close-support.determination.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -22632,7 +22838,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Heal",
-        "value": 1,
+        "value": {
+          "valueRef": "mist.outer.close-support.determination.n/gimmick/value"
+        },
         "arg": 1,
         "cooldown": 0,
         "target": null
@@ -22667,7 +22875,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_UnbreakableDetermination",
-      "value": 5,
+      "valueRef": "mist.outer.close-support.determination.e3/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -22708,7 +22916,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_UnbreakableDetermination",
-      "value": 2,
+      "valueRef": "mist.outer.close-support.determination.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -22772,7 +22980,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_R_UnbreakableDetermination",
-          "value": 3,
+          "valueRef": "mist.outer.close-support.determination.x/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -22815,7 +23023,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_Fleche",
-      "value": 2,
+      "valueRef": "mist.outer.close-support.fleche.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -22856,7 +23064,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_Fleche",
-      "value": 2,
+      "valueRef": "mist.outer.close-support.fleche.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -22901,7 +23109,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Heal",
-        "value": 1,
+        "value": {
+          "valueRef": "mist.outer.close-support.fleche.n/gimmick/value"
+        },
         "arg": 1,
         "cooldown": 0,
         "target": null
@@ -22936,7 +23146,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_Fleche",
-      "value": 5,
+      "valueRef": "mist.outer.close-support.fleche.e3/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -22977,7 +23187,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_Fleche",
-      "value": 2,
+      "valueRef": "mist.outer.close-support.fleche.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -23041,7 +23251,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_Q_Fleche",
-          "value": 3,
+          "valueRef": "mist.outer.close-support.fleche.x/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -23084,7 +23294,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_Parry",
-      "value": 2,
+      "valueRef": "mist.outer.close-support.parry.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -23125,7 +23335,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_Parry",
-      "value": 2,
+      "valueRef": "mist.outer.close-support.parry.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -23170,7 +23380,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Heal",
-        "value": 1,
+        "value": {
+          "valueRef": "mist.outer.close-support.parry.n/gimmick/value"
+        },
         "arg": 1,
         "cooldown": 0,
         "target": null
@@ -23205,7 +23417,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_Parry",
-      "value": 5,
+      "valueRef": "mist.outer.close-support.parry.e3/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -23246,7 +23458,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_Parry",
-      "value": 2,
+      "valueRef": "mist.outer.close-support.parry.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -23310,7 +23522,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_R_Parry",
-          "value": 3,
+          "valueRef": "mist.outer.close-support.parry.x/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -23353,7 +23565,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_D_AstridsMasterpieceEnGarde",
-      "value": 2,
+      "valueRef": "mist.outer.split-impact.en-garde.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -23394,7 +23606,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_D_AstridsMasterpieceEnGarde",
-      "value": 2,
+      "valueRef": "mist.outer.split-impact.en-garde.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -23439,9 +23651,15 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Ricochet",
-        "value": 8,
-        "arg": 1,
-        "cooldown": 0.3,
+        "value": {
+          "valueRef": "mist.outer.split-impact.en-garde.n/gimmick/value"
+        },
+        "arg": {
+          "valueRef": "mist.outer.split-impact.en-garde.n/gimmick/arg"
+        },
+        "cooldown": {
+          "valueRef": "mist.outer.split-impact.en-garde.n/gimmick/cooldown"
+        },
         "target": null
       },
       "power": null,
@@ -23474,7 +23692,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_AstridsMasterpieceEnGarde",
-      "value": 1,
+      "valueRef": "mist.outer.split-impact.en-garde.e3/value",
       "param": "ExtraTargets",
       "receiver": null,
       "target": {
@@ -23515,7 +23733,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_D_AstridsMasterpieceEnGarde",
-      "value": 2,
+      "valueRef": "mist.outer.split-impact.en-garde.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -23579,7 +23797,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_D_AstridsMasterpieceEnGarde",
-          "value": 3,
+          "valueRef": "mist.outer.split-impact.en-garde.x/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -23622,7 +23840,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_D_AstridsMasterpiecePriorite",
-      "value": 2,
+      "valueRef": "mist.outer.split-impact.priorite.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -23663,7 +23881,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_D_AstridsMasterpiecePriorite",
-      "value": 2,
+      "valueRef": "mist.outer.split-impact.priorite.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -23708,9 +23926,15 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Ricochet",
-        "value": 8,
-        "arg": 1,
-        "cooldown": 0.3,
+        "value": {
+          "valueRef": "mist.outer.split-impact.priorite.n/gimmick/value"
+        },
+        "arg": {
+          "valueRef": "mist.outer.split-impact.priorite.n/gimmick/arg"
+        },
+        "cooldown": {
+          "valueRef": "mist.outer.split-impact.priorite.n/gimmick/cooldown"
+        },
         "target": null
       },
       "power": null,
@@ -23743,7 +23967,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_AstridsMasterpiecePriorite",
-      "value": 1,
+      "valueRef": "mist.outer.split-impact.priorite.e3/value",
       "param": "ExtraTargets",
       "receiver": null,
       "target": {
@@ -23784,7 +24008,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_D_AstridsMasterpiecePriorite",
-      "value": 2,
+      "valueRef": "mist.outer.split-impact.priorite.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -23848,7 +24072,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_D_AstridsMasterpiecePriorite",
-          "value": 3,
+          "valueRef": "mist.outer.split-impact.priorite.x/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -23891,7 +24115,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_Lunge",
-      "value": 2,
+      "valueRef": "mist.outer.split-impact.lunge.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -23932,7 +24156,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_Lunge",
-      "value": 2,
+      "valueRef": "mist.outer.split-impact.lunge.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -23977,9 +24201,15 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Ricochet",
-        "value": 8,
-        "arg": 1,
-        "cooldown": 0.3,
+        "value": {
+          "valueRef": "mist.outer.split-impact.lunge.n/gimmick/value"
+        },
+        "arg": {
+          "valueRef": "mist.outer.split-impact.lunge.n/gimmick/arg"
+        },
+        "cooldown": {
+          "valueRef": "mist.outer.split-impact.lunge.n/gimmick/cooldown"
+        },
         "target": null
       },
       "power": null,
@@ -24012,7 +24242,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_Lunge",
-      "value": 1,
+      "valueRef": "mist.outer.split-impact.lunge.e3/value",
       "param": "ExtraTargets",
       "receiver": null,
       "target": {
@@ -24053,7 +24283,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_Lunge",
-      "value": 2,
+      "valueRef": "mist.outer.split-impact.lunge.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -24117,7 +24347,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_Q_Lunge",
-          "value": 3,
+          "valueRef": "mist.outer.split-impact.lunge.x/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -24160,7 +24390,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_UnbreakableDetermination",
-      "value": 2,
+      "valueRef": "mist.outer.split-impact.determination.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -24201,7 +24431,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_UnbreakableDetermination",
-      "value": 2,
+      "valueRef": "mist.outer.split-impact.determination.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -24246,9 +24476,15 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Ricochet",
-        "value": 8,
-        "arg": 1,
-        "cooldown": 0.3,
+        "value": {
+          "valueRef": "mist.outer.split-impact.determination.n/gimmick/value"
+        },
+        "arg": {
+          "valueRef": "mist.outer.split-impact.determination.n/gimmick/arg"
+        },
+        "cooldown": {
+          "valueRef": "mist.outer.split-impact.determination.n/gimmick/cooldown"
+        },
         "target": null
       },
       "power": null,
@@ -24281,7 +24517,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_UnbreakableDetermination",
-      "value": 1,
+      "valueRef": "mist.outer.split-impact.determination.e3/value",
       "param": "ExtraTargets",
       "receiver": null,
       "target": {
@@ -24322,7 +24558,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_UnbreakableDetermination",
-      "value": 2,
+      "valueRef": "mist.outer.split-impact.determination.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -24386,7 +24622,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_R_UnbreakableDetermination",
-          "value": 3,
+          "valueRef": "mist.outer.split-impact.determination.x/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -24429,7 +24665,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_Fleche",
-      "value": 2,
+      "valueRef": "mist.outer.split-impact.fleche.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -24470,7 +24706,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_Fleche",
-      "value": 2,
+      "valueRef": "mist.outer.split-impact.fleche.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -24515,9 +24751,15 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Ricochet",
-        "value": 8,
-        "arg": 1,
-        "cooldown": 0.3,
+        "value": {
+          "valueRef": "mist.outer.split-impact.fleche.n/gimmick/value"
+        },
+        "arg": {
+          "valueRef": "mist.outer.split-impact.fleche.n/gimmick/arg"
+        },
+        "cooldown": {
+          "valueRef": "mist.outer.split-impact.fleche.n/gimmick/cooldown"
+        },
         "target": null
       },
       "power": null,
@@ -24550,7 +24792,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_Fleche",
-      "value": 1,
+      "valueRef": "mist.outer.split-impact.fleche.e3/value",
       "param": "ExtraTargets",
       "receiver": null,
       "target": {
@@ -24591,7 +24833,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_Fleche",
-      "value": 2,
+      "valueRef": "mist.outer.split-impact.fleche.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -24655,7 +24897,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_Q_Fleche",
-          "value": 3,
+          "valueRef": "mist.outer.split-impact.fleche.x/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -24698,7 +24940,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_Parry",
-      "value": 2,
+      "valueRef": "mist.outer.split-impact.parry.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -24739,7 +24981,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_Parry",
-      "value": 2,
+      "valueRef": "mist.outer.split-impact.parry.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -24784,9 +25026,15 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Ricochet",
-        "value": 8,
-        "arg": 1,
-        "cooldown": 0.3,
+        "value": {
+          "valueRef": "mist.outer.split-impact.parry.n/gimmick/value"
+        },
+        "arg": {
+          "valueRef": "mist.outer.split-impact.parry.n/gimmick/arg"
+        },
+        "cooldown": {
+          "valueRef": "mist.outer.split-impact.parry.n/gimmick/cooldown"
+        },
         "target": null
       },
       "power": null,
@@ -24819,7 +25067,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_Parry",
-      "value": 1,
+      "valueRef": "mist.outer.split-impact.parry.e3/value",
       "param": "ExtraTargets",
       "receiver": null,
       "target": {
@@ -24860,7 +25108,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_Parry",
-      "value": 2,
+      "valueRef": "mist.outer.split-impact.parry.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -24924,7 +25172,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_R_Parry",
-          "value": 3,
+          "valueRef": "mist.outer.split-impact.parry.x/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -24967,7 +25215,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_D_AstridsMasterpieceEnGarde",
-      "value": 2,
+      "valueRef": "mist.outer.ready-again.en-garde.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -25008,7 +25256,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_D_AstridsMasterpieceEnGarde",
-      "value": 2,
+      "valueRef": "mist.outer.ready-again.en-garde.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -25053,7 +25301,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "RechargeOther",
-        "value": 1,
+        "value": {
+          "valueRef": "mist.outer.ready-again.en-garde.n/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -25091,7 +25341,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_D_AstridsMasterpieceEnGarde",
-      "value": 2,
+      "valueRef": "mist.outer.ready-again.en-garde.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -25132,7 +25382,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_D_AstridsMasterpieceEnGarde",
-      "value": 2,
+      "valueRef": "mist.outer.ready-again.en-garde.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -25196,7 +25446,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_D_AstridsMasterpieceEnGarde",
-          "value": 3,
+          "valueRef": "mist.outer.ready-again.en-garde.x/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -25239,7 +25489,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_D_AstridsMasterpiecePriorite",
-      "value": 2,
+      "valueRef": "mist.outer.ready-again.priorite.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -25280,7 +25530,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_D_AstridsMasterpiecePriorite",
-      "value": 2,
+      "valueRef": "mist.outer.ready-again.priorite.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -25325,7 +25575,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "RechargeOther",
-        "value": 1,
+        "value": {
+          "valueRef": "mist.outer.ready-again.priorite.n/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -25363,7 +25615,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_D_AstridsMasterpiecePriorite",
-      "value": 2,
+      "valueRef": "mist.outer.ready-again.priorite.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -25404,7 +25656,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_D_AstridsMasterpiecePriorite",
-      "value": 2,
+      "valueRef": "mist.outer.ready-again.priorite.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -25468,7 +25720,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_D_AstridsMasterpiecePriorite",
-          "value": 3,
+          "valueRef": "mist.outer.ready-again.priorite.x/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -25511,7 +25763,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_Lunge",
-      "value": 2,
+      "valueRef": "mist.outer.ready-again.lunge.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -25552,7 +25804,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_Lunge",
-      "value": 2,
+      "valueRef": "mist.outer.ready-again.lunge.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -25597,7 +25849,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Recharge",
-        "value": 3,
+        "value": {
+          "valueRef": "mist.outer.ready-again.lunge.n/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -25635,7 +25889,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_Lunge",
-      "value": 2,
+      "valueRef": "mist.outer.ready-again.lunge.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -25676,7 +25930,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_Lunge",
-      "value": 2,
+      "valueRef": "mist.outer.ready-again.lunge.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -25740,7 +25994,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_Q_Lunge",
-          "value": 3,
+          "valueRef": "mist.outer.ready-again.lunge.x/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -25783,7 +26037,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_UnbreakableDetermination",
-      "value": 2,
+      "valueRef": "mist.outer.ready-again.determination.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -25824,7 +26078,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_UnbreakableDetermination",
-      "value": 2,
+      "valueRef": "mist.outer.ready-again.determination.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -25869,7 +26123,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Recharge",
-        "value": 3,
+        "value": {
+          "valueRef": "mist.outer.ready-again.determination.n/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -25907,7 +26163,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_UnbreakableDetermination",
-      "value": 2,
+      "valueRef": "mist.outer.ready-again.determination.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -25948,7 +26204,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_UnbreakableDetermination",
-      "value": 2,
+      "valueRef": "mist.outer.ready-again.determination.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -26012,7 +26268,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_R_UnbreakableDetermination",
-          "value": 3,
+          "valueRef": "mist.outer.ready-again.determination.x/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -26055,7 +26311,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_Fleche",
-      "value": 2,
+      "valueRef": "mist.outer.ready-again.fleche.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -26096,7 +26352,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_Fleche",
-      "value": 2,
+      "valueRef": "mist.outer.ready-again.fleche.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -26141,7 +26397,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Recharge",
-        "value": 3,
+        "value": {
+          "valueRef": "mist.outer.ready-again.fleche.n/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -26179,7 +26437,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_Fleche",
-      "value": 2,
+      "valueRef": "mist.outer.ready-again.fleche.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -26220,7 +26478,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_Fleche",
-      "value": 2,
+      "valueRef": "mist.outer.ready-again.fleche.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -26284,7 +26542,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_Q_Fleche",
-          "value": 3,
+          "valueRef": "mist.outer.ready-again.fleche.x/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -26327,7 +26585,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_Parry",
-      "value": 2,
+      "valueRef": "mist.outer.ready-again.parry.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -26368,7 +26626,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_Parry",
-      "value": 2,
+      "valueRef": "mist.outer.ready-again.parry.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -26413,7 +26671,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Recharge",
-        "value": 3,
+        "value": {
+          "valueRef": "mist.outer.ready-again.parry.n/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -26451,7 +26711,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_Parry",
-      "value": 2,
+      "valueRef": "mist.outer.ready-again.parry.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -26492,7 +26752,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_Parry",
-      "value": 2,
+      "valueRef": "mist.outer.ready-again.parry.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -26556,7 +26816,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_R_Parry",
-          "value": 3,
+          "valueRef": "mist.outer.ready-again.parry.x/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -26599,7 +26859,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_D_AstridsMasterpieceEnGarde",
-      "value": 2,
+      "valueRef": "mist.outer.next-answer.en-garde.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -26640,7 +26900,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_D_AstridsMasterpieceEnGarde",
-      "value": 2,
+      "valueRef": "mist.outer.next-answer.en-garde.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -26685,7 +26945,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Element",
-        "value": 20,
+        "value": {
+          "valueRef": "mist.outer.next-answer.en-garde.n/gimmick/value"
+        },
         "arg": 1,
         "cooldown": 0,
         "target": null
@@ -26720,7 +26982,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_AstridsMasterpieceEnGarde",
-      "value": 3,
+      "valueRef": "mist.outer.next-answer.en-garde.e3/value",
       "param": "Chance",
       "receiver": null,
       "target": {
@@ -26761,7 +27023,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_D_AstridsMasterpieceEnGarde",
-      "value": 2,
+      "valueRef": "mist.outer.next-answer.en-garde.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -26825,7 +27087,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_D_AstridsMasterpieceEnGarde",
-          "value": 3,
+          "valueRef": "mist.outer.next-answer.en-garde.x/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -26868,7 +27130,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_D_AstridsMasterpiecePriorite",
-      "value": 2,
+      "valueRef": "mist.outer.next-answer.priorite.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -26909,7 +27171,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_D_AstridsMasterpiecePriorite",
-      "value": 2,
+      "valueRef": "mist.outer.next-answer.priorite.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -26954,7 +27216,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Element",
-        "value": 20,
+        "value": {
+          "valueRef": "mist.outer.next-answer.priorite.n/gimmick/value"
+        },
         "arg": 1,
         "cooldown": 0,
         "target": null
@@ -26989,7 +27253,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_AstridsMasterpiecePriorite",
-      "value": 3,
+      "valueRef": "mist.outer.next-answer.priorite.e3/value",
       "param": "Chance",
       "receiver": null,
       "target": {
@@ -27030,7 +27294,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_D_AstridsMasterpiecePriorite",
-      "value": 2,
+      "valueRef": "mist.outer.next-answer.priorite.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -27094,7 +27358,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_D_AstridsMasterpiecePriorite",
-          "value": 3,
+          "valueRef": "mist.outer.next-answer.priorite.x/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -27137,7 +27401,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_Lunge",
-      "value": 2,
+      "valueRef": "mist.outer.next-answer.lunge.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -27178,7 +27442,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_Lunge",
-      "value": 2,
+      "valueRef": "mist.outer.next-answer.lunge.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -27223,7 +27487,9 @@
       "gimmick": {
         "trigger": "OnUse",
         "effect": "Primed",
-        "value": 12,
+        "value": {
+          "valueRef": "mist.outer.next-answer.lunge.n/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -27259,7 +27525,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_Lunge",
-      "value": 10,
+      "valueRef": "mist.outer.next-answer.lunge.e3/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -27300,7 +27566,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_Lunge",
-      "value": 2,
+      "valueRef": "mist.outer.next-answer.lunge.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -27364,7 +27630,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_Q_Lunge",
-          "value": 3,
+          "valueRef": "mist.outer.next-answer.lunge.x/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -27407,7 +27673,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_UnbreakableDetermination",
-      "value": 2,
+      "valueRef": "mist.outer.next-answer.determination.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -27448,7 +27714,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_UnbreakableDetermination",
-      "value": 2,
+      "valueRef": "mist.outer.next-answer.determination.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -27493,7 +27759,9 @@
       "gimmick": {
         "trigger": "OnUse",
         "effect": "Primed",
-        "value": 12,
+        "value": {
+          "valueRef": "mist.outer.next-answer.determination.n/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -27529,7 +27797,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_UnbreakableDetermination",
-      "value": 10,
+      "valueRef": "mist.outer.next-answer.determination.e3/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -27570,7 +27838,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_UnbreakableDetermination",
-      "value": 2,
+      "valueRef": "mist.outer.next-answer.determination.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -27634,7 +27902,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_R_UnbreakableDetermination",
-          "value": 3,
+          "valueRef": "mist.outer.next-answer.determination.x/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -27677,7 +27945,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_Fleche",
-      "value": 2,
+      "valueRef": "mist.outer.next-answer.fleche.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -27718,7 +27986,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_Fleche",
-      "value": 2,
+      "valueRef": "mist.outer.next-answer.fleche.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -27763,7 +28031,9 @@
       "gimmick": {
         "trigger": "OnUse",
         "effect": "Primed",
-        "value": 12,
+        "value": {
+          "valueRef": "mist.outer.next-answer.fleche.n/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -27799,7 +28069,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_Fleche",
-      "value": 10,
+      "valueRef": "mist.outer.next-answer.fleche.e3/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -27840,7 +28110,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_Fleche",
-      "value": 2,
+      "valueRef": "mist.outer.next-answer.fleche.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -27904,7 +28174,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_Q_Fleche",
-          "value": 3,
+          "valueRef": "mist.outer.next-answer.fleche.x/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -27947,7 +28217,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_Parry",
-      "value": 2,
+      "valueRef": "mist.outer.next-answer.parry.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -27988,7 +28258,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_Parry",
-      "value": 2,
+      "valueRef": "mist.outer.next-answer.parry.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -28033,7 +28303,9 @@
       "gimmick": {
         "trigger": "OnUse",
         "effect": "Primed",
-        "value": 12,
+        "value": {
+          "valueRef": "mist.outer.next-answer.parry.n/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -28069,7 +28341,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_Parry",
-      "value": 10,
+      "valueRef": "mist.outer.next-answer.parry.e3/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -28110,7 +28382,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_Parry",
-      "value": 2,
+      "valueRef": "mist.outer.next-answer.parry.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -28174,7 +28446,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_R_Parry",
-          "value": 3,
+          "valueRef": "mist.outer.next-answer.parry.x/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -28227,7 +28499,9 @@
             "memory": "St_D_AstridsMasterpieceEnGarde",
             "effect": "Echo",
             "field": "Value",
-            "pct": 100
+            "pct": {
+              "valueRef": "mist.key.en-garde-echo/keystone/upsideSpec/0/pct"
+            }
           }
         ]
       },
@@ -28269,13 +28543,17 @@
             "memory": "St_D_AstridsMasterpiecePriorite",
             "effect": "Burst",
             "field": "Value",
-            "pct": 100
+            "pct": {
+              "valueRef": "mist.key.priorite-wave/keystone/upsideSpec/0/pct"
+            }
           },
           {
             "memory": "St_D_AstridsMasterpiecePriorite",
             "effect": "Burst",
             "field": "Radius",
-            "pct": 25
+            "pct": {
+              "valueRef": "mist.key.priorite-wave/keystone/upsideSpec/1/pct"
+            }
           }
         ]
       },
@@ -28317,7 +28595,9 @@
             "memory": "St_Q_Fleche",
             "effect": "NativeDamage",
             "field": "Damage",
-            "pct": 50
+            "pct": {
+              "valueRef": "mist.key.fleche-point/keystone/upsideSpec/0/pct"
+            }
           }
         ]
       },
@@ -28359,7 +28639,9 @@
             "memory": "St_Q_Lunge",
             "effect": "Burst/Echo/Element/ElementEdge/Expose/Heal/Primed/Recharge/Ricochet/Sap/Shield/Wound",
             "field": "Value",
-            "pct": 60
+            "pct": {
+              "valueRef": "mist.key.lunge-artifice/keystone/upsideSpec/0/pct"
+            }
           }
         ]
       },
@@ -28401,7 +28683,9 @@
             "memory": "St_R_Parry",
             "effect": "Echo",
             "field": "Value",
-            "pct": 100
+            "pct": {
+              "valueRef": "mist.key.parry-needle/keystone/upsideSpec/0/pct"
+            }
           }
         ]
       },
@@ -28443,13 +28727,17 @@
             "memory": "St_R_UnbreakableDetermination",
             "effect": "Echo",
             "field": "Value",
-            "pct": 100
+            "pct": {
+              "valueRef": "mist.key.determination-afterimage/keystone/upsideSpec/0/pct"
+            }
           },
           {
             "memory": "St_R_UnbreakableDetermination",
             "effect": "Wound",
             "field": "Value",
-            "pct": 50
+            "pct": {
+              "valueRef": "mist.key.determination-afterimage/keystone/upsideSpec/1/pct"
+            }
           }
         ]
       },
@@ -28495,7 +28783,9 @@
           {
             "effect": "Heal",
             "field": "AllyValue",
-            "pct": 100
+            "pct": {
+              "valueRef": "mist.key.shared-victory/keystone/upsideSpec/0/pct"
+            }
           }
         ]
       },
@@ -28541,7 +28831,9 @@
           {
             "effect": "Wound",
             "field": "Duration",
-            "to": 6
+            "to": {
+              "valueRef": "mist.key.long-wound/keystone/upsideSpec/0/to"
+            }
           }
         ]
       },
@@ -28792,7 +29084,9 @@
           "gimmick": {
             "trigger": "OnHit",
             "effect": "Echo",
-            "value": 2,
+            "value": {
+              "valueRef": "h.mist.dance/options/0/gimmick/value"
+            },
             "arg": 0,
             "cooldown": 0,
             "target": null
@@ -28812,7 +29106,9 @@
           "gimmick": {
             "trigger": "OnHit",
             "effect": "Echo",
-            "value": 2,
+            "value": {
+              "valueRef": "h.mist.dance/options/1/gimmick/value"
+            },
             "arg": 0,
             "cooldown": 0,
             "target": null
@@ -28962,7 +29258,9 @@
           "gimmick": {
             "trigger": "OnHit",
             "effect": "Shield",
-            "value": 1,
+            "value": {
+              "valueRef": "h.mist.duel/options/0/gimmick/value"
+            },
             "arg": 0,
             "cooldown": 0,
             "target": null
@@ -28982,7 +29280,9 @@
           "gimmick": {
             "trigger": "OnHit",
             "effect": "Shield",
-            "value": 1,
+            "value": {
+              "valueRef": "h.mist.duel/options/1/gimmick/value"
+            },
             "arg": 0,
             "cooldown": 0,
             "target": null
@@ -29029,7 +29329,9 @@
           "gimmick": {
             "trigger": "OnHit",
             "effect": "Shield",
-            "value": 1,
+            "value": {
+              "valueRef": "h.mist.haste/options/0/gimmick/value"
+            },
             "arg": 0,
             "cooldown": 0,
             "target": null
@@ -29049,7 +29351,9 @@
           "gimmick": {
             "trigger": "OnHit",
             "effect": "Shield",
-            "value": 1,
+            "value": {
+              "valueRef": "h.mist.haste/options/1/gimmick/value"
+            },
             "arg": 0,
             "cooldown": 0,
             "target": null
@@ -29130,7 +29434,7 @@
       "region": "migration",
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 1,
+      "valueRef": "h.mist.deep.life/value",
       "param": null,
       "receiver": "St_M_FastFeet",
       "target": {
@@ -29177,7 +29481,9 @@
           "gimmick": {
             "trigger": "OnHit",
             "effect": "Shield",
-            "value": 1,
+            "value": {
+              "valueRef": "h.mist.deep.whirl/options/0/gimmick/value"
+            },
             "arg": 0,
             "cooldown": 0,
             "target": null
@@ -29197,7 +29503,9 @@
           "gimmick": {
             "trigger": "OnHit",
             "effect": "Shield",
-            "value": 1,
+            "value": {
+              "valueRef": "h.mist.deep.whirl/options/1/gimmick/value"
+            },
             "arg": 0,
             "cooldown": 0,
             "target": null
@@ -29301,7 +29609,7 @@
       "region": "migration",
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 1,
+      "valueRef": "h.mist.route.fast-feet.1/value",
       "param": null,
       "receiver": "St_M_FastFeet",
       "target": {
@@ -29330,7 +29638,7 @@
       "region": "migration",
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 1,
+      "valueRef": "h.mist.route.fast-feet.2/value",
       "param": null,
       "receiver": "St_M_FastFeet",
       "target": {
@@ -29359,7 +29667,7 @@
       "region": "migration",
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 1,
+      "valueRef": "h.mist.route.fast-feet.3/value",
       "param": null,
       "receiver": "St_M_FastFeet",
       "target": {
@@ -29395,7 +29703,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Recharge",
-        "value": 1,
+        "value": {
+          "valueRef": "h.mist.route.fast-feet.4/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": "St_M_FastFeet"
@@ -29422,7 +29732,7 @@
       "region": "migration",
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 1,
+      "valueRef": "h.mist.route.fast-feet.5/value",
       "param": null,
       "receiver": "St_M_FastFeet",
       "target": {
@@ -29451,7 +29761,7 @@
       "region": "migration",
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 1,
+      "valueRef": "h.mist.route.fast-feet.6/value",
       "param": null,
       "receiver": "St_M_FastFeet",
       "target": {
@@ -29480,7 +29790,7 @@
       "region": "migration",
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 0.5,
+      "valueRef": "h.mist.route.fast-feet.7/value",
       "param": null,
       "receiver": "St_M_FastFeet",
       "target": {
@@ -29734,7 +30044,7 @@
       "region": "migration",
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 1,
+      "valueRef": "h.mist.ring.renewal/value",
       "param": null,
       "receiver": "St_M_FastFeet",
       "target": {

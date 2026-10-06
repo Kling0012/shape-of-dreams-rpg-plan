@@ -104,7 +104,7 @@ namespace SodRpg.Core.Game
         // A migrated direct receiver changes the gate/source explicitly; it is not a mark.
         internal static AuthoredMechanismSpec ManifestPair(string hero, string bridgeId,
             string directSource = null, string directRecipient = null, MemoryEventKind directTrigger = MemoryEventKind.ConfirmedUse,
-            int[] directRankValues = null, MemoryEventKind? openingOverride = null)
+            int[] directRankValues = null, MemoryEventKind? openingOverride = null, int[] rankValues = null)
         {
             var pair = PairCombos.ForBridge(bridgeId);
             if (pair == null || pair.HeroKey != hero) throw new InvalidOperationException("Unknown manifest pair: " + bridgeId);
@@ -119,7 +119,7 @@ namespace SodRpg.Core.Game
             var budget = payoffTrigger == MemoryEventKind.Kill ? AttributionBudget.PerKill
                 : payoffTrigger == MemoryEventKind.OwnedBasicAttackFired ? AttributionBudget.PerOwnedBasicAttack
                 : pair.OncePerVictim && !pair.OncePerActivation ? AttributionBudget.PerActivationVictim : AttributionBudget.PerActivation;
-            var values = direct ? directRankValues : pair.TableRankValues.Select(x => checked(x * 100)).ToArray();
+            var values = direct ? directRankValues : rankValues ?? pair.TableRankValues.Select(x => checked(x * 100)).ToArray();
             var effect = direct ? GimmickEffect.Recharge : pair.Effect;
             BridgePayload payload;
             if (effect == GimmickEffect.Recharge || effect == GimmickEffect.RechargeOther)

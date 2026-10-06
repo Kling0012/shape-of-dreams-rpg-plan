@@ -29,8 +29,8 @@ namespace SodRpg.Core.Game
     public readonly struct CalmShieldGrant
     {
         public const string ConsumerId = "h.cetus.key2";
-        public const int ValueUnits = 600;
-        public const float DurationSeconds = 3f;
+        public const int ValueUnits = (int)(MemoryDamageBalance.Effect_legacy_h_cetus_key2_native_value * 100m);
+        public const float DurationSeconds = MemoryDamageBalance.Effect_legacy_h_cetus_key2_native_duration;
         public readonly long OwnerId, EquipmentEpoch, SourceEventId;
         public CalmShieldGrant(long ownerId, long equipmentEpoch, long sourceEventId)
         { OwnerId = ownerId; EquipmentEpoch = equipmentEpoch; SourceEventId = sourceEventId; }
@@ -39,7 +39,7 @@ namespace SodRpg.Core.Game
     /// <summary>C08 applies only to explicitly selected Cetus Calm, never to generic StillWater power.</summary>
     public sealed class StunSourceFilter
     {
-        public const double IntervalSeconds = 2;
+        public const double IntervalSeconds = MemoryDamageBalance.Effect_legacy_h_cetus_key2_native_cooldown;
         private readonly long _ownerId;
         private long _epoch;
         private string _q, _r;

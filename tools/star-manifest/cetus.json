@@ -15,7 +15,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_IcyVeins",
-      "value": 1,
+      "valueRef": "cetus.mem.icy-veins.c1.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -51,7 +51,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_IcyVeins",
-      "value": 1,
+      "valueRef": "cetus.mem.icy-veins.c1.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -87,7 +87,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_IcyVeins",
-      "value": 1,
+      "valueRef": "cetus.mem.icy-veins.c1.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -123,7 +123,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_IcyVeins",
-      "value": 1,
+      "valueRef": "cetus.mem.icy-veins.c1.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -159,7 +159,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_IcyVeins",
-      "value": 1,
+      "valueRef": "cetus.mem.icy-veins.c1.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -196,7 +196,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_IcyVeins",
-      "value": 1,
+      "valueRef": "cetus.mem.icy-veins.c1.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -247,7 +247,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Wound",
-        "value": 15,
+        "value": {
+          "valueRef": "cetus.mem.icy-veins.c1.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -295,7 +297,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Echo",
-        "value": 12,
+        "value": {
+          "valueRef": "cetus.mem.icy-veins.c1.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -355,7 +359,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_D_IcyVeins",
-          "value": 3,
+          "valueRef": "cetus.mem.icy-veins.c1.choice/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -396,7 +400,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_IcyVeins",
-      "value": 1,
+      "valueRef": "cetus.mem.icy-veins.c1.s1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -432,7 +436,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_IcyVeins",
-      "value": 1,
+      "valueRef": "cetus.mem.icy-veins.c1.s2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -469,7 +473,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_IcyVeins",
-      "value": 4,
+      "valueRef": "cetus.mem.icy-veins.c1.s3/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -507,7 +511,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_IcyVeins",
-      "value": 1,
+      "valueRef": "cetus.mem.icy-veins.c1.s4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -543,7 +547,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_IcyVeins",
-      "value": 1,
+      "valueRef": "cetus.mem.icy-veins.c1.s5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -580,7 +584,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_IcyVeins",
-      "value": 4,
+      "valueRef": "cetus.mem.icy-veins.c1.s6/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -616,7 +620,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_IcyVeins",
-      "value": 1,
+      "valueRef": "cetus.mem.icy-veins.c2.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -652,7 +656,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_IcyVeins",
-      "value": 1,
+      "valueRef": "cetus.mem.icy-veins.c2.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -688,7 +692,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_IcyVeins",
-      "value": 1,
+      "valueRef": "cetus.mem.icy-veins.c2.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -724,7 +728,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_IcyVeins",
-      "value": 1,
+      "valueRef": "cetus.mem.icy-veins.c2.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -760,7 +764,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_IcyVeins",
-      "value": 1,
+      "valueRef": "cetus.mem.icy-veins.c2.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -798,7 +802,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_IcyVeins",
-      "value": 1,
+      "valueRef": "cetus.mem.icy-veins.c2.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -849,7 +853,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Rampart",
-        "value": 1,
+        "value": {
+          "valueRef": "cetus.mem.icy-veins.c2.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -897,7 +903,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Sap",
-        "value": 5,
+        "value": {
+          "valueRef": "cetus.mem.icy-veins.c2.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -957,7 +965,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_D_IcyVeins",
-          "value": 3,
+          "valueRef": "cetus.mem.icy-veins.c2.choice/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -998,7 +1006,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_IcyVeins",
-      "value": 1,
+      "valueRef": "cetus.mem.icy-veins.c2.s1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -1034,7 +1042,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_IcyVeins",
-      "value": 1,
+      "valueRef": "cetus.mem.icy-veins.c2.s2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -1071,7 +1079,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_IcyVeins",
-      "value": 4,
+      "valueRef": "cetus.mem.icy-veins.c2.s3/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -1109,7 +1117,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_IcyVeins",
-      "value": 1,
+      "valueRef": "cetus.mem.icy-veins.c2.s4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -1145,7 +1153,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_IcyVeins",
-      "value": 1,
+      "valueRef": "cetus.mem.icy-veins.c2.s5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -1182,7 +1190,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_IcyVeins",
-      "value": 4,
+      "valueRef": "cetus.mem.icy-veins.c2.s6/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -1217,7 +1225,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_IcyVeins",
-      "value": 1,
+      "valueRef": "cetus.mem.icy-veins.c3.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -1253,7 +1261,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_IcyVeins",
-      "value": 1,
+      "valueRef": "cetus.mem.icy-veins.c3.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -1289,7 +1297,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_IcyVeins",
-      "value": 1,
+      "valueRef": "cetus.mem.icy-veins.c3.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -1325,7 +1333,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_IcyVeins",
-      "value": 1,
+      "valueRef": "cetus.mem.icy-veins.c3.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -1361,7 +1369,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_IcyVeins",
-      "value": 1,
+      "valueRef": "cetus.mem.icy-veins.c3.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -1398,7 +1406,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_IcyVeins",
-      "value": 1,
+      "valueRef": "cetus.mem.icy-veins.c3.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -1449,7 +1457,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "ElementEdge",
-        "value": 6,
+        "value": {
+          "valueRef": "cetus.mem.icy-veins.c3.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -1497,7 +1507,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Element",
-        "value": 35,
+        "value": {
+          "valueRef": "cetus.mem.icy-veins.c3.n2/gimmick/value"
+        },
         "arg": 2,
         "cooldown": 0,
         "target": null
@@ -1557,7 +1569,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_D_IcyVeins",
-          "value": 3,
+          "valueRef": "cetus.mem.icy-veins.c3.choice/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -1598,7 +1610,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_IcyVeins",
-      "value": 1,
+      "valueRef": "cetus.mem.icy-veins.c3.s1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -1634,7 +1646,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_IcyVeins",
-      "value": 1,
+      "valueRef": "cetus.mem.icy-veins.c3.s2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -1671,7 +1683,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_IcyVeins",
-      "value": 4,
+      "valueRef": "cetus.mem.icy-veins.c3.s3/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -1709,7 +1721,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_IcyVeins",
-      "value": 1,
+      "valueRef": "cetus.mem.icy-veins.c3.s4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -1745,7 +1757,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_IcyVeins",
-      "value": 1,
+      "valueRef": "cetus.mem.icy-veins.c3.s5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -1782,7 +1794,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_IcyVeins",
-      "value": 4,
+      "valueRef": "cetus.mem.icy-veins.c3.s6/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -1817,7 +1829,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_IcyVeins",
-      "value": 1,
+      "valueRef": "cetus.mem.icy-veins.c4.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -1853,7 +1865,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_IcyVeins",
-      "value": 1,
+      "valueRef": "cetus.mem.icy-veins.c4.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -1889,7 +1901,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_IcyVeins",
-      "value": 1,
+      "valueRef": "cetus.mem.icy-veins.c4.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -1925,7 +1937,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_IcyVeins",
-      "value": 1,
+      "valueRef": "cetus.mem.icy-veins.c4.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -1961,7 +1973,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_IcyVeins",
-      "value": 1,
+      "valueRef": "cetus.mem.icy-veins.c4.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -1998,7 +2010,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_IcyVeins",
-      "value": 1,
+      "valueRef": "cetus.mem.icy-veins.c4.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -2049,7 +2061,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Heal",
-        "value": 2,
+        "value": {
+          "valueRef": "cetus.mem.icy-veins.c4.n1/gimmick/value"
+        },
         "arg": 1,
         "cooldown": 0,
         "target": null
@@ -2097,7 +2111,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Burst",
-        "value": 25,
+        "value": {
+          "valueRef": "cetus.mem.icy-veins.c4.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -2144,7 +2160,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_D_IcyVeins",
-          "value": 3,
+          "valueRef": "cetus.mem.icy-veins.c4.choice/options/0/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -2160,7 +2176,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_D_IcyVeins",
-          "value": 4,
+          "valueRef": "cetus.mem.icy-veins.c4.choice/options/1/value",
           "param": "Radius",
           "receiver": null,
           "target": {
@@ -2201,7 +2217,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_IcyVeins",
-      "value": 1,
+      "valueRef": "cetus.mem.icy-veins.c4.s1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -2237,7 +2253,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_IcyVeins",
-      "value": 1,
+      "valueRef": "cetus.mem.icy-veins.c4.s2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -2275,7 +2291,7 @@
       ],
       "kind": "GimmickParam",
       "memory": "St_D_IcyVeins",
-      "value": 4,
+      "valueRef": "cetus.mem.icy-veins.c4.s3/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -2313,7 +2329,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_IcyVeins",
-      "value": 1,
+      "valueRef": "cetus.mem.icy-veins.c4.s4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -2349,7 +2365,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_IcyVeins",
-      "value": 1,
+      "valueRef": "cetus.mem.icy-veins.c4.s5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -2387,7 +2403,7 @@
       ],
       "kind": "GimmickParam",
       "memory": "St_D_IcyVeins",
-      "value": 4,
+      "valueRef": "cetus.mem.icy-veins.c4.s6/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -2423,7 +2439,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EmbracingTheChill",
-      "value": 1,
+      "valueRef": "cetus.mem.embrace-chill.c1.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -2459,7 +2475,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EmbracingTheChill",
-      "value": 1,
+      "valueRef": "cetus.mem.embrace-chill.c1.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -2495,7 +2511,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EmbracingTheChill",
-      "value": 1,
+      "valueRef": "cetus.mem.embrace-chill.c1.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -2531,7 +2547,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EmbracingTheChill",
-      "value": 1,
+      "valueRef": "cetus.mem.embrace-chill.c1.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -2567,7 +2583,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EmbracingTheChill",
-      "value": 1,
+      "valueRef": "cetus.mem.embrace-chill.c1.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -2605,7 +2621,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EmbracingTheChill",
-      "value": 1,
+      "valueRef": "cetus.mem.embrace-chill.c1.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -2656,7 +2672,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Wound",
-        "value": 15,
+        "value": {
+          "valueRef": "cetus.mem.embrace-chill.c1.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -2704,7 +2722,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "ElementEdge",
-        "value": 5,
+        "value": {
+          "valueRef": "cetus.mem.embrace-chill.c1.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -2764,7 +2784,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_Q_EmbracingTheChill",
-          "value": 3,
+          "valueRef": "cetus.mem.embrace-chill.c1.choice/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -2805,7 +2825,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EmbracingTheChill",
-      "value": 1,
+      "valueRef": "cetus.mem.embrace-chill.c1.s1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -2841,7 +2861,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EmbracingTheChill",
-      "value": 1,
+      "valueRef": "cetus.mem.embrace-chill.c1.s2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -2878,7 +2898,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_EmbracingTheChill",
-      "value": 4,
+      "valueRef": "cetus.mem.embrace-chill.c1.s3/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -2916,7 +2936,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EmbracingTheChill",
-      "value": 1,
+      "valueRef": "cetus.mem.embrace-chill.c1.s4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -2952,7 +2972,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EmbracingTheChill",
-      "value": 1,
+      "valueRef": "cetus.mem.embrace-chill.c1.s5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -2989,7 +3009,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_EmbracingTheChill",
-      "value": 4,
+      "valueRef": "cetus.mem.embrace-chill.c1.s6/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -3025,7 +3045,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EmbracingTheChill",
-      "value": 1,
+      "valueRef": "cetus.mem.embrace-chill.c2.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -3061,7 +3081,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EmbracingTheChill",
-      "value": 1,
+      "valueRef": "cetus.mem.embrace-chill.c2.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -3097,7 +3117,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EmbracingTheChill",
-      "value": 1,
+      "valueRef": "cetus.mem.embrace-chill.c2.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -3133,7 +3153,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EmbracingTheChill",
-      "value": 1,
+      "valueRef": "cetus.mem.embrace-chill.c2.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -3169,7 +3189,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EmbracingTheChill",
-      "value": 1,
+      "valueRef": "cetus.mem.embrace-chill.c2.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -3207,7 +3227,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EmbracingTheChill",
-      "value": 1,
+      "valueRef": "cetus.mem.embrace-chill.c2.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -3258,7 +3278,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Rampart",
-        "value": 1,
+        "value": {
+          "valueRef": "cetus.mem.embrace-chill.c2.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -3306,7 +3328,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Sap",
-        "value": 4,
+        "value": {
+          "valueRef": "cetus.mem.embrace-chill.c2.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -3366,7 +3390,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_Q_EmbracingTheChill",
-          "value": 3,
+          "valueRef": "cetus.mem.embrace-chill.c2.choice/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -3407,7 +3431,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EmbracingTheChill",
-      "value": 1,
+      "valueRef": "cetus.mem.embrace-chill.c2.s1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -3443,7 +3467,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EmbracingTheChill",
-      "value": 1,
+      "valueRef": "cetus.mem.embrace-chill.c2.s2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -3480,7 +3504,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_EmbracingTheChill",
-      "value": 4,
+      "valueRef": "cetus.mem.embrace-chill.c2.s3/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -3518,7 +3542,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EmbracingTheChill",
-      "value": 1,
+      "valueRef": "cetus.mem.embrace-chill.c2.s4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -3554,7 +3578,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EmbracingTheChill",
-      "value": 1,
+      "valueRef": "cetus.mem.embrace-chill.c2.s5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -3591,7 +3615,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_EmbracingTheChill",
-      "value": 4,
+      "valueRef": "cetus.mem.embrace-chill.c2.s6/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -3626,7 +3650,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EmbracingTheChill",
-      "value": 1,
+      "valueRef": "cetus.mem.embrace-chill.c3.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -3662,7 +3686,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EmbracingTheChill",
-      "value": 1,
+      "valueRef": "cetus.mem.embrace-chill.c3.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -3698,7 +3722,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EmbracingTheChill",
-      "value": 1,
+      "valueRef": "cetus.mem.embrace-chill.c3.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -3734,7 +3758,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EmbracingTheChill",
-      "value": 1,
+      "valueRef": "cetus.mem.embrace-chill.c3.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -3770,7 +3794,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EmbracingTheChill",
-      "value": 1,
+      "valueRef": "cetus.mem.embrace-chill.c3.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -3807,7 +3831,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EmbracingTheChill",
-      "value": 1,
+      "valueRef": "cetus.mem.embrace-chill.c3.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -3858,7 +3882,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Element",
-        "value": 20,
+        "value": {
+          "valueRef": "cetus.mem.embrace-chill.c3.n1/gimmick/value"
+        },
         "arg": 2,
         "cooldown": 0,
         "target": null
@@ -3906,7 +3932,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Burst",
-        "value": 25,
+        "value": {
+          "valueRef": "cetus.mem.embrace-chill.c3.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -3966,7 +3994,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_Q_EmbracingTheChill",
-          "value": 3,
+          "valueRef": "cetus.mem.embrace-chill.c3.choice/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -4007,7 +4035,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EmbracingTheChill",
-      "value": 1,
+      "valueRef": "cetus.mem.embrace-chill.c3.s1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -4043,7 +4071,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EmbracingTheChill",
-      "value": 1,
+      "valueRef": "cetus.mem.embrace-chill.c3.s2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -4080,7 +4108,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_EmbracingTheChill",
-      "value": 4,
+      "valueRef": "cetus.mem.embrace-chill.c3.s3/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -4118,7 +4146,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EmbracingTheChill",
-      "value": 1,
+      "valueRef": "cetus.mem.embrace-chill.c3.s4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -4154,7 +4182,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EmbracingTheChill",
-      "value": 1,
+      "valueRef": "cetus.mem.embrace-chill.c3.s5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -4191,7 +4219,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_EmbracingTheChill",
-      "value": 4,
+      "valueRef": "cetus.mem.embrace-chill.c3.s6/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -4226,7 +4254,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EmbracingTheChill",
-      "value": 1,
+      "valueRef": "cetus.mem.embrace-chill.c4.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -4262,7 +4290,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EmbracingTheChill",
-      "value": 1,
+      "valueRef": "cetus.mem.embrace-chill.c4.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -4298,7 +4326,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EmbracingTheChill",
-      "value": 1,
+      "valueRef": "cetus.mem.embrace-chill.c4.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -4334,7 +4362,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EmbracingTheChill",
-      "value": 1,
+      "valueRef": "cetus.mem.embrace-chill.c4.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -4370,7 +4398,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EmbracingTheChill",
-      "value": 1,
+      "valueRef": "cetus.mem.embrace-chill.c4.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -4407,7 +4435,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EmbracingTheChill",
-      "value": 1,
+      "valueRef": "cetus.mem.embrace-chill.c4.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -4458,7 +4486,9 @@
       "gimmick": {
         "trigger": "OnUse",
         "effect": "Primed",
-        "value": 20,
+        "value": {
+          "valueRef": "cetus.mem.embrace-chill.c4.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -4507,7 +4537,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Heal",
-        "value": 2,
+        "value": {
+          "valueRef": "cetus.mem.embrace-chill.c4.n2/gimmick/value"
+        },
         "arg": 1,
         "cooldown": 0,
         "target": null
@@ -4554,7 +4586,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_Q_EmbracingTheChill",
-          "value": 3,
+          "valueRef": "cetus.mem.embrace-chill.c4.choice/options/0/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -4570,7 +4602,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_Q_EmbracingTheChill",
-          "value": 4,
+          "valueRef": "cetus.mem.embrace-chill.c4.choice/options/1/value",
           "param": "Radius",
           "receiver": null,
           "target": {
@@ -4611,7 +4643,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EmbracingTheChill",
-      "value": 1,
+      "valueRef": "cetus.mem.embrace-chill.c4.s1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -4647,7 +4679,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EmbracingTheChill",
-      "value": 1,
+      "valueRef": "cetus.mem.embrace-chill.c4.s2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -4684,7 +4716,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_EmbracingTheChill",
-      "value": 4,
+      "valueRef": "cetus.mem.embrace-chill.c4.s3/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -4722,7 +4754,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EmbracingTheChill",
-      "value": 1,
+      "valueRef": "cetus.mem.embrace-chill.c4.s4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -4758,7 +4790,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EmbracingTheChill",
-      "value": 1,
+      "valueRef": "cetus.mem.embrace-chill.c4.s5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -4795,7 +4827,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_EmbracingTheChill",
-      "value": 4,
+      "valueRef": "cetus.mem.embrace-chill.c4.s6/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -4830,7 +4862,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_BackOff",
-      "value": 1,
+      "valueRef": "cetus.mem.back-off.c1.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -4866,7 +4898,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_BackOff",
-      "value": 1,
+      "valueRef": "cetus.mem.back-off.c1.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -4902,7 +4934,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_BackOff",
-      "value": 1,
+      "valueRef": "cetus.mem.back-off.c1.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -4938,7 +4970,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_BackOff",
-      "value": 1,
+      "valueRef": "cetus.mem.back-off.c1.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -4974,7 +5006,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_BackOff",
-      "value": 1,
+      "valueRef": "cetus.mem.back-off.c1.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -5011,7 +5043,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_BackOff",
-      "value": 1,
+      "valueRef": "cetus.mem.back-off.c1.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -5062,7 +5094,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Wound",
-        "value": 15,
+        "value": {
+          "valueRef": "cetus.mem.back-off.c1.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -5110,7 +5144,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "ElementEdge",
-        "value": 5,
+        "value": {
+          "valueRef": "cetus.mem.back-off.c1.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -5170,7 +5206,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_R_BackOff",
-          "value": 3,
+          "valueRef": "cetus.mem.back-off.c1.choice/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -5211,7 +5247,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_BackOff",
-      "value": 1,
+      "valueRef": "cetus.mem.back-off.c1.s1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -5247,7 +5283,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_BackOff",
-      "value": 1,
+      "valueRef": "cetus.mem.back-off.c1.s2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -5284,7 +5320,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_BackOff",
-      "value": 4,
+      "valueRef": "cetus.mem.back-off.c1.s3/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -5322,7 +5358,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_BackOff",
-      "value": 1,
+      "valueRef": "cetus.mem.back-off.c1.s4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -5358,7 +5394,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_BackOff",
-      "value": 1,
+      "valueRef": "cetus.mem.back-off.c1.s5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -5395,7 +5431,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_BackOff",
-      "value": 4,
+      "valueRef": "cetus.mem.back-off.c1.s6/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -5431,7 +5467,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_BackOff",
-      "value": 1,
+      "valueRef": "cetus.mem.back-off.c2.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -5467,7 +5503,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_BackOff",
-      "value": 1,
+      "valueRef": "cetus.mem.back-off.c2.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -5503,7 +5539,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_BackOff",
-      "value": 1,
+      "valueRef": "cetus.mem.back-off.c2.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -5539,7 +5575,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_BackOff",
-      "value": 1,
+      "valueRef": "cetus.mem.back-off.c2.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -5575,7 +5611,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_BackOff",
-      "value": 1,
+      "valueRef": "cetus.mem.back-off.c2.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -5613,7 +5649,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_BackOff",
-      "value": 1,
+      "valueRef": "cetus.mem.back-off.c2.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -5664,7 +5700,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Rampart",
-        "value": 1,
+        "value": {
+          "valueRef": "cetus.mem.back-off.c2.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -5712,7 +5750,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Sap",
-        "value": 5,
+        "value": {
+          "valueRef": "cetus.mem.back-off.c2.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -5772,7 +5812,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_R_BackOff",
-          "value": 3,
+          "valueRef": "cetus.mem.back-off.c2.choice/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -5813,7 +5853,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_BackOff",
-      "value": 1,
+      "valueRef": "cetus.mem.back-off.c2.s1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -5849,7 +5889,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_BackOff",
-      "value": 1,
+      "valueRef": "cetus.mem.back-off.c2.s2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -5886,7 +5926,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_BackOff",
-      "value": 4,
+      "valueRef": "cetus.mem.back-off.c2.s3/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -5924,7 +5964,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_BackOff",
-      "value": 1,
+      "valueRef": "cetus.mem.back-off.c2.s4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -5960,7 +6000,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_BackOff",
-      "value": 1,
+      "valueRef": "cetus.mem.back-off.c2.s5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -5997,7 +6037,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_BackOff",
-      "value": 4,
+      "valueRef": "cetus.mem.back-off.c2.s6/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -6032,7 +6072,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_BackOff",
-      "value": 1,
+      "valueRef": "cetus.mem.back-off.c3.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -6068,7 +6108,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_BackOff",
-      "value": 1,
+      "valueRef": "cetus.mem.back-off.c3.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -6104,7 +6144,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_BackOff",
-      "value": 1,
+      "valueRef": "cetus.mem.back-off.c3.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -6140,7 +6180,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_BackOff",
-      "value": 1,
+      "valueRef": "cetus.mem.back-off.c3.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -6176,7 +6216,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_BackOff",
-      "value": 1,
+      "valueRef": "cetus.mem.back-off.c3.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -6213,7 +6253,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_BackOff",
-      "value": 1,
+      "valueRef": "cetus.mem.back-off.c3.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -6264,7 +6304,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Burst",
-        "value": 25,
+        "value": {
+          "valueRef": "cetus.mem.back-off.c3.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -6312,7 +6354,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Element",
-        "value": 25,
+        "value": {
+          "valueRef": "cetus.mem.back-off.c3.n2/gimmick/value"
+        },
         "arg": 2,
         "cooldown": 0,
         "target": null
@@ -6372,7 +6416,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_R_BackOff",
-          "value": 3,
+          "valueRef": "cetus.mem.back-off.c3.choice/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -6413,7 +6457,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_BackOff",
-      "value": 1,
+      "valueRef": "cetus.mem.back-off.c3.s1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -6449,7 +6493,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_BackOff",
-      "value": 1,
+      "valueRef": "cetus.mem.back-off.c3.s2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -6486,7 +6530,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_BackOff",
-      "value": 4,
+      "valueRef": "cetus.mem.back-off.c3.s3/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -6524,7 +6568,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_BackOff",
-      "value": 1,
+      "valueRef": "cetus.mem.back-off.c3.s4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -6560,7 +6604,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_BackOff",
-      "value": 1,
+      "valueRef": "cetus.mem.back-off.c3.s5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -6597,7 +6641,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_BackOff",
-      "value": 4,
+      "valueRef": "cetus.mem.back-off.c3.s6/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -6632,7 +6676,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_BackOff",
-      "value": 1,
+      "valueRef": "cetus.mem.back-off.c4.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -6668,7 +6712,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_BackOff",
-      "value": 1,
+      "valueRef": "cetus.mem.back-off.c4.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -6704,7 +6748,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_BackOff",
-      "value": 1,
+      "valueRef": "cetus.mem.back-off.c4.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -6740,7 +6784,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_BackOff",
-      "value": 1,
+      "valueRef": "cetus.mem.back-off.c4.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -6776,7 +6820,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_BackOff",
-      "value": 1,
+      "valueRef": "cetus.mem.back-off.c4.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -6813,7 +6857,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_BackOff",
-      "value": 1,
+      "valueRef": "cetus.mem.back-off.c4.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -6864,7 +6908,9 @@
       "gimmick": {
         "trigger": "OnUse",
         "effect": "Primed",
-        "value": 25,
+        "value": {
+          "valueRef": "cetus.mem.back-off.c4.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -6913,7 +6959,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Heal",
-        "value": 2,
+        "value": {
+          "valueRef": "cetus.mem.back-off.c4.n2/gimmick/value"
+        },
         "arg": 1,
         "cooldown": 0,
         "target": null
@@ -6960,7 +7008,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_R_BackOff",
-          "value": 3,
+          "valueRef": "cetus.mem.back-off.c4.choice/options/0/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -6976,7 +7024,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_R_BackOff",
-          "value": 4,
+          "valueRef": "cetus.mem.back-off.c4.choice/options/1/value",
           "param": "Radius",
           "receiver": null,
           "target": {
@@ -7017,7 +7065,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_BackOff",
-      "value": 1,
+      "valueRef": "cetus.mem.back-off.c4.s1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -7053,7 +7101,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_BackOff",
-      "value": 1,
+      "valueRef": "cetus.mem.back-off.c4.s2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -7090,7 +7138,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_BackOff",
-      "value": 4,
+      "valueRef": "cetus.mem.back-off.c4.s3/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -7128,7 +7176,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_BackOff",
-      "value": 1,
+      "valueRef": "cetus.mem.back-off.c4.s4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -7164,7 +7212,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_BackOff",
-      "value": 1,
+      "valueRef": "cetus.mem.back-off.c4.s5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -7201,7 +7249,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_BackOff",
-      "value": 4,
+      "valueRef": "cetus.mem.back-off.c4.s6/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -7241,7 +7289,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_EmbracingTheChill",
-      "value": 1,
+      "valueRef": "cetus.mem.frost-charge.c1.e1/value",
       "param": null,
       "receiver": "St_M_FrostyCharge",
       "target": {
@@ -7282,7 +7330,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_EmbracingTheChill",
-      "value": 1,
+      "valueRef": "cetus.mem.frost-charge.c1.e2/value",
       "param": null,
       "receiver": "St_M_FrostyCharge",
       "target": {
@@ -7323,7 +7371,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_EmbracingTheChill",
-      "value": 1,
+      "valueRef": "cetus.mem.frost-charge.c1.e3/value",
       "param": null,
       "receiver": "St_M_FrostyCharge",
       "target": {
@@ -7364,7 +7412,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_EmbracingTheChill",
-      "value": 1,
+      "valueRef": "cetus.mem.frost-charge.c1.e4/value",
       "param": null,
       "receiver": "St_M_FrostyCharge",
       "target": {
@@ -7405,7 +7453,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_EmbracingTheChill",
-      "value": 1,
+      "valueRef": "cetus.mem.frost-charge.c1.e5/value",
       "param": null,
       "receiver": "St_M_FrostyCharge",
       "target": {
@@ -7448,7 +7496,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_EmbracingTheChill",
-      "value": 1,
+      "valueRef": "cetus.mem.frost-charge.c1.e6/value",
       "param": null,
       "receiver": "St_M_FrostyCharge",
       "target": {
@@ -7500,7 +7548,9 @@
       "gimmick": {
         "trigger": "OnUse",
         "effect": "Recharge",
-        "value": 2,
+        "value": {
+          "valueRef": "cetus.mem.frost-charge.c1.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": "St_M_FrostyCharge"
@@ -7549,7 +7599,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Recharge",
-        "value": 2,
+        "value": {
+          "valueRef": "cetus.mem.frost-charge.c1.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": "St_M_FrostyCharge"
@@ -7604,7 +7656,9 @@
           "gimmick": {
             "trigger": "OnKill",
             "effect": "Recharge",
-            "value": 4,
+            "value": {
+              "valueRef": "cetus.mem.frost-charge.c1.choice/options/0/gimmick/value"
+            },
             "arg": 0,
             "cooldown": 0,
             "target": "St_M_FrostyCharge"
@@ -7624,7 +7678,9 @@
           "gimmick": {
             "trigger": "OnUse",
             "effect": "Recharge",
-            "value": 1,
+            "value": {
+              "valueRef": "cetus.mem.frost-charge.c1.choice/options/1/gimmick/value"
+            },
             "arg": 0,
             "cooldown": 0,
             "target": "St_M_FrostyCharge"
@@ -7663,7 +7719,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EmbracingTheChill",
-      "value": 1,
+      "valueRef": "cetus.mem.frost-charge.c1.s1/value",
       "param": null,
       "receiver": "St_M_FrostyCharge",
       "target": {
@@ -7700,7 +7756,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EmbracingTheChill",
-      "value": 1,
+      "valueRef": "cetus.mem.frost-charge.c1.s2/value",
       "param": null,
       "receiver": "St_M_FrostyCharge",
       "target": {
@@ -7736,7 +7792,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EmbracingTheChill",
-      "value": 1,
+      "valueRef": "cetus.mem.frost-charge.c1.s3/value",
       "param": null,
       "receiver": "St_M_FrostyCharge",
       "target": {
@@ -7775,7 +7831,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EmbracingTheChill",
-      "value": 1,
+      "valueRef": "cetus.mem.frost-charge.c1.s4/value",
       "param": null,
       "receiver": "St_M_FrostyCharge",
       "target": {
@@ -7812,7 +7868,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EmbracingTheChill",
-      "value": 1,
+      "valueRef": "cetus.mem.frost-charge.c1.s5/value",
       "param": null,
       "receiver": "St_M_FrostyCharge",
       "target": {
@@ -7848,7 +7904,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EmbracingTheChill",
-      "value": 1,
+      "valueRef": "cetus.mem.frost-charge.c1.s6/value",
       "param": null,
       "receiver": "St_M_FrostyCharge",
       "target": {
@@ -7888,7 +7944,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_BigBorealChunk",
-      "value": 1,
+      "valueRef": "cetus.mem.frost-charge.c2.e1/value",
       "param": null,
       "receiver": "St_M_FrostyCharge",
       "target": {
@@ -7929,7 +7985,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_BigBorealChunk",
-      "value": 1,
+      "valueRef": "cetus.mem.frost-charge.c2.e2/value",
       "param": null,
       "receiver": "St_M_FrostyCharge",
       "target": {
@@ -7970,7 +8026,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_BigBorealChunk",
-      "value": 1,
+      "valueRef": "cetus.mem.frost-charge.c2.e3/value",
       "param": null,
       "receiver": "St_M_FrostyCharge",
       "target": {
@@ -8011,7 +8067,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_BigBorealChunk",
-      "value": 1,
+      "valueRef": "cetus.mem.frost-charge.c2.e4/value",
       "param": null,
       "receiver": "St_M_FrostyCharge",
       "target": {
@@ -8052,7 +8108,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_BigBorealChunk",
-      "value": 1,
+      "valueRef": "cetus.mem.frost-charge.c2.e5/value",
       "param": null,
       "receiver": "St_M_FrostyCharge",
       "target": {
@@ -8094,7 +8150,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_BigBorealChunk",
-      "value": 1,
+      "valueRef": "cetus.mem.frost-charge.c2.e6/value",
       "param": null,
       "receiver": "St_M_FrostyCharge",
       "target": {
@@ -8146,7 +8202,9 @@
       "gimmick": {
         "trigger": "OnUse",
         "effect": "Recharge",
-        "value": 2,
+        "value": {
+          "valueRef": "cetus.mem.frost-charge.c2.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": "St_M_FrostyCharge"
@@ -8195,7 +8253,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Recharge",
-        "value": 2,
+        "value": {
+          "valueRef": "cetus.mem.frost-charge.c2.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": "St_M_FrostyCharge"
@@ -8250,7 +8310,9 @@
           "gimmick": {
             "trigger": "OnKill",
             "effect": "Recharge",
-            "value": 4,
+            "value": {
+              "valueRef": "cetus.mem.frost-charge.c2.choice/options/0/gimmick/value"
+            },
             "arg": 0,
             "cooldown": 0,
             "target": "St_M_FrostyCharge"
@@ -8270,7 +8332,9 @@
           "gimmick": {
             "trigger": "OnUse",
             "effect": "Recharge",
-            "value": 1,
+            "value": {
+              "valueRef": "cetus.mem.frost-charge.c2.choice/options/1/gimmick/value"
+            },
             "arg": 0,
             "cooldown": 0,
             "target": "St_M_FrostyCharge"
@@ -8309,7 +8373,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_BigBorealChunk",
-      "value": 1,
+      "valueRef": "cetus.mem.frost-charge.c2.s1/value",
       "param": null,
       "receiver": "St_M_FrostyCharge",
       "target": {
@@ -8346,7 +8410,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_BigBorealChunk",
-      "value": 1,
+      "valueRef": "cetus.mem.frost-charge.c2.s2/value",
       "param": null,
       "receiver": "St_M_FrostyCharge",
       "target": {
@@ -8382,7 +8446,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_BigBorealChunk",
-      "value": 1,
+      "valueRef": "cetus.mem.frost-charge.c2.s3/value",
       "param": null,
       "receiver": "St_M_FrostyCharge",
       "target": {
@@ -8421,7 +8485,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_BigBorealChunk",
-      "value": 1,
+      "valueRef": "cetus.mem.frost-charge.c2.s4/value",
       "param": null,
       "receiver": "St_M_FrostyCharge",
       "target": {
@@ -8458,7 +8522,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_BigBorealChunk",
-      "value": 1,
+      "valueRef": "cetus.mem.frost-charge.c2.s5/value",
       "param": null,
       "receiver": "St_M_FrostyCharge",
       "target": {
@@ -8494,7 +8558,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_BigBorealChunk",
-      "value": 1,
+      "valueRef": "cetus.mem.frost-charge.c2.s6/value",
       "param": null,
       "receiver": "St_M_FrostyCharge",
       "target": {
@@ -8534,7 +8598,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_BackOff",
-      "value": 1,
+      "valueRef": "cetus.mem.frost-charge.c3.e1/value",
       "param": null,
       "receiver": "St_M_FrostyCharge",
       "target": {
@@ -8575,7 +8639,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_BackOff",
-      "value": 1,
+      "valueRef": "cetus.mem.frost-charge.c3.e2/value",
       "param": null,
       "receiver": "St_M_FrostyCharge",
       "target": {
@@ -8616,7 +8680,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_BackOff",
-      "value": 1,
+      "valueRef": "cetus.mem.frost-charge.c3.e3/value",
       "param": null,
       "receiver": "St_M_FrostyCharge",
       "target": {
@@ -8657,7 +8721,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_BackOff",
-      "value": 1,
+      "valueRef": "cetus.mem.frost-charge.c3.e4/value",
       "param": null,
       "receiver": "St_M_FrostyCharge",
       "target": {
@@ -8698,7 +8762,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_BackOff",
-      "value": 1,
+      "valueRef": "cetus.mem.frost-charge.c3.e5/value",
       "param": null,
       "receiver": "St_M_FrostyCharge",
       "target": {
@@ -8740,7 +8804,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_BackOff",
-      "value": 1,
+      "valueRef": "cetus.mem.frost-charge.c3.e6/value",
       "param": null,
       "receiver": "St_M_FrostyCharge",
       "target": {
@@ -8792,7 +8856,9 @@
       "gimmick": {
         "trigger": "OnUse",
         "effect": "Recharge",
-        "value": 2,
+        "value": {
+          "valueRef": "cetus.mem.frost-charge.c3.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": "St_M_FrostyCharge"
@@ -8841,7 +8907,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Recharge",
-        "value": 2,
+        "value": {
+          "valueRef": "cetus.mem.frost-charge.c3.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": "St_M_FrostyCharge"
@@ -8896,7 +8964,9 @@
           "gimmick": {
             "trigger": "OnKill",
             "effect": "Recharge",
-            "value": 4,
+            "value": {
+              "valueRef": "cetus.mem.frost-charge.c3.choice/options/0/gimmick/value"
+            },
             "arg": 0,
             "cooldown": 0,
             "target": "St_M_FrostyCharge"
@@ -8916,7 +8986,9 @@
           "gimmick": {
             "trigger": "OnUse",
             "effect": "Recharge",
-            "value": 1,
+            "value": {
+              "valueRef": "cetus.mem.frost-charge.c3.choice/options/1/gimmick/value"
+            },
             "arg": 0,
             "cooldown": 0,
             "target": "St_M_FrostyCharge"
@@ -8955,7 +9027,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_BackOff",
-      "value": 1,
+      "valueRef": "cetus.mem.frost-charge.c3.s1/value",
       "param": null,
       "receiver": "St_M_FrostyCharge",
       "target": {
@@ -8992,7 +9064,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_BackOff",
-      "value": 1,
+      "valueRef": "cetus.mem.frost-charge.c3.s2/value",
       "param": null,
       "receiver": "St_M_FrostyCharge",
       "target": {
@@ -9028,7 +9100,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_BackOff",
-      "value": 1,
+      "valueRef": "cetus.mem.frost-charge.c3.s3/value",
       "param": null,
       "receiver": "St_M_FrostyCharge",
       "target": {
@@ -9067,7 +9139,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_BackOff",
-      "value": 1,
+      "valueRef": "cetus.mem.frost-charge.c3.s4/value",
       "param": null,
       "receiver": "St_M_FrostyCharge",
       "target": {
@@ -9104,7 +9176,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_BackOff",
-      "value": 1,
+      "valueRef": "cetus.mem.frost-charge.c3.s5/value",
       "param": null,
       "receiver": "St_M_FrostyCharge",
       "target": {
@@ -9140,7 +9212,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_BackOff",
-      "value": 1,
+      "valueRef": "cetus.mem.frost-charge.c3.s6/value",
       "param": null,
       "receiver": "St_M_FrostyCharge",
       "target": {
@@ -9180,7 +9252,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_FrozenFists",
-      "value": 1,
+      "valueRef": "cetus.mem.frost-charge.c4.e1/value",
       "param": null,
       "receiver": "St_M_FrostyCharge",
       "target": {
@@ -9221,7 +9293,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_FrozenFists",
-      "value": 1,
+      "valueRef": "cetus.mem.frost-charge.c4.e2/value",
       "param": null,
       "receiver": "St_M_FrostyCharge",
       "target": {
@@ -9262,7 +9334,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_FrozenFists",
-      "value": 1,
+      "valueRef": "cetus.mem.frost-charge.c4.e3/value",
       "param": null,
       "receiver": "St_M_FrostyCharge",
       "target": {
@@ -9303,7 +9375,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_FrozenFists",
-      "value": 1,
+      "valueRef": "cetus.mem.frost-charge.c4.e4/value",
       "param": null,
       "receiver": "St_M_FrostyCharge",
       "target": {
@@ -9344,7 +9416,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_FrozenFists",
-      "value": 1,
+      "valueRef": "cetus.mem.frost-charge.c4.e5/value",
       "param": null,
       "receiver": "St_M_FrostyCharge",
       "target": {
@@ -9386,7 +9458,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_FrozenFists",
-      "value": 1,
+      "valueRef": "cetus.mem.frost-charge.c4.e6/value",
       "param": null,
       "receiver": "St_M_FrostyCharge",
       "target": {
@@ -9438,7 +9510,9 @@
       "gimmick": {
         "trigger": "OnUse",
         "effect": "Recharge",
-        "value": 2,
+        "value": {
+          "valueRef": "cetus.mem.frost-charge.c4.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": "St_M_FrostyCharge"
@@ -9487,7 +9561,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Recharge",
-        "value": 1,
+        "value": {
+          "valueRef": "cetus.mem.frost-charge.c4.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": "St_M_FrostyCharge"
@@ -9542,7 +9618,9 @@
           "gimmick": {
             "trigger": "OnKill",
             "effect": "Recharge",
-            "value": 4,
+            "value": {
+              "valueRef": "cetus.mem.frost-charge.c4.choice/options/0/gimmick/value"
+            },
             "arg": 0,
             "cooldown": 0,
             "target": "St_M_FrostyCharge"
@@ -9562,7 +9640,9 @@
           "gimmick": {
             "trigger": "OnUse",
             "effect": "Recharge",
-            "value": 1,
+            "value": {
+              "valueRef": "cetus.mem.frost-charge.c4.choice/options/1/gimmick/value"
+            },
             "arg": 0,
             "cooldown": 0,
             "target": "St_M_FrostyCharge"
@@ -9601,7 +9681,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_FrozenFists",
-      "value": 1,
+      "valueRef": "cetus.mem.frost-charge.c4.s1/value",
       "param": null,
       "receiver": "St_M_FrostyCharge",
       "target": {
@@ -9638,7 +9718,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_FrozenFists",
-      "value": 1,
+      "valueRef": "cetus.mem.frost-charge.c4.s2/value",
       "param": null,
       "receiver": "St_M_FrostyCharge",
       "target": {
@@ -9674,7 +9754,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_FrozenFists",
-      "value": 1,
+      "valueRef": "cetus.mem.frost-charge.c4.s3/value",
       "param": null,
       "receiver": "St_M_FrostyCharge",
       "target": {
@@ -9713,7 +9793,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_FrozenFists",
-      "value": 1,
+      "valueRef": "cetus.mem.frost-charge.c4.s4/value",
       "param": null,
       "receiver": "St_M_FrostyCharge",
       "target": {
@@ -9750,7 +9830,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_FrozenFists",
-      "value": 1,
+      "valueRef": "cetus.mem.frost-charge.c4.s5/value",
       "param": null,
       "receiver": "St_M_FrostyCharge",
       "target": {
@@ -9786,7 +9866,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_FrozenFists",
-      "value": 1,
+      "valueRef": "cetus.mem.frost-charge.c4.s6/value",
       "param": null,
       "receiver": "St_M_FrostyCharge",
       "target": {
@@ -9822,7 +9902,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ChargedAnguillian",
-      "value": 1,
+      "valueRef": "cetus.mem.charged.c1.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -9858,7 +9938,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ChargedAnguillian",
-      "value": 1,
+      "valueRef": "cetus.mem.charged.c1.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -9894,7 +9974,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ChargedAnguillian",
-      "value": 1,
+      "valueRef": "cetus.mem.charged.c1.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -9930,7 +10010,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ChargedAnguillian",
-      "value": 1,
+      "valueRef": "cetus.mem.charged.c1.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -9966,7 +10046,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ChargedAnguillian",
-      "value": 1,
+      "valueRef": "cetus.mem.charged.c1.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -10003,7 +10083,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ChargedAnguillian",
-      "value": 1,
+      "valueRef": "cetus.mem.charged.c1.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -10054,7 +10134,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Wound",
-        "value": 15,
+        "value": {
+          "valueRef": "cetus.mem.charged.c1.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -10102,7 +10184,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "ElementEdge",
-        "value": 6,
+        "value": {
+          "valueRef": "cetus.mem.charged.c1.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -10162,7 +10246,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_D_ChargedAnguillian",
-          "value": 3,
+          "valueRef": "cetus.mem.charged.c1.choice/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -10203,7 +10287,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ChargedAnguillian",
-      "value": 1,
+      "valueRef": "cetus.mem.charged.c1.s1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -10239,7 +10323,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ChargedAnguillian",
-      "value": 1,
+      "valueRef": "cetus.mem.charged.c1.s2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -10276,7 +10360,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_ChargedAnguillian",
-      "value": 4,
+      "valueRef": "cetus.mem.charged.c1.s3/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -10314,7 +10398,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ChargedAnguillian",
-      "value": 1,
+      "valueRef": "cetus.mem.charged.c1.s4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -10350,7 +10434,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ChargedAnguillian",
-      "value": 1,
+      "valueRef": "cetus.mem.charged.c1.s5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -10387,7 +10471,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_ChargedAnguillian",
-      "value": 4,
+      "valueRef": "cetus.mem.charged.c1.s6/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -10423,7 +10507,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ChargedAnguillian",
-      "value": 1,
+      "valueRef": "cetus.mem.charged.c2.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -10459,7 +10543,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ChargedAnguillian",
-      "value": 1,
+      "valueRef": "cetus.mem.charged.c2.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -10495,7 +10579,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ChargedAnguillian",
-      "value": 1,
+      "valueRef": "cetus.mem.charged.c2.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -10531,7 +10615,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ChargedAnguillian",
-      "value": 1,
+      "valueRef": "cetus.mem.charged.c2.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -10567,7 +10651,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ChargedAnguillian",
-      "value": 1,
+      "valueRef": "cetus.mem.charged.c2.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -10605,7 +10689,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ChargedAnguillian",
-      "value": 1,
+      "valueRef": "cetus.mem.charged.c2.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -10656,7 +10740,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Sap",
-        "value": 5,
+        "value": {
+          "valueRef": "cetus.mem.charged.c2.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -10704,7 +10790,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Shield",
-        "value": 3,
+        "value": {
+          "valueRef": "cetus.mem.charged.c2.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -10765,7 +10853,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_D_ChargedAnguillian",
-          "value": 3,
+          "valueRef": "cetus.mem.charged.c2.choice/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -10806,7 +10894,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ChargedAnguillian",
-      "value": 1,
+      "valueRef": "cetus.mem.charged.c2.s1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -10842,7 +10930,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ChargedAnguillian",
-      "value": 1,
+      "valueRef": "cetus.mem.charged.c2.s2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -10880,7 +10968,7 @@
       ],
       "kind": "GimmickParam",
       "memory": "St_D_ChargedAnguillian",
-      "value": 4,
+      "valueRef": "cetus.mem.charged.c2.s3/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -10918,7 +11006,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ChargedAnguillian",
-      "value": 1,
+      "valueRef": "cetus.mem.charged.c2.s4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -10954,7 +11042,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ChargedAnguillian",
-      "value": 1,
+      "valueRef": "cetus.mem.charged.c2.s5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -10992,7 +11080,7 @@
       ],
       "kind": "GimmickParam",
       "memory": "St_D_ChargedAnguillian",
-      "value": 4,
+      "valueRef": "cetus.mem.charged.c2.s6/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -11027,7 +11115,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ChargedAnguillian",
-      "value": 1,
+      "valueRef": "cetus.mem.charged.c3.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -11063,7 +11151,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ChargedAnguillian",
-      "value": 1,
+      "valueRef": "cetus.mem.charged.c3.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -11099,7 +11187,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ChargedAnguillian",
-      "value": 1,
+      "valueRef": "cetus.mem.charged.c3.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -11135,7 +11223,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ChargedAnguillian",
-      "value": 1,
+      "valueRef": "cetus.mem.charged.c3.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -11171,7 +11259,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ChargedAnguillian",
-      "value": 1,
+      "valueRef": "cetus.mem.charged.c3.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -11208,7 +11296,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ChargedAnguillian",
-      "value": 1,
+      "valueRef": "cetus.mem.charged.c3.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -11259,7 +11347,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Burst",
-        "value": 20,
+        "value": {
+          "valueRef": "cetus.mem.charged.c3.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -11307,7 +11397,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Element",
-        "value": 50,
+        "value": {
+          "valueRef": "cetus.mem.charged.c3.n2/gimmick/value"
+        },
         "arg": 3,
         "cooldown": 0,
         "target": null
@@ -11367,7 +11459,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_D_ChargedAnguillian",
-          "value": 3,
+          "valueRef": "cetus.mem.charged.c3.choice/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -11408,7 +11500,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ChargedAnguillian",
-      "value": 1,
+      "valueRef": "cetus.mem.charged.c3.s1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -11444,7 +11536,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ChargedAnguillian",
-      "value": 1,
+      "valueRef": "cetus.mem.charged.c3.s2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -11482,7 +11574,7 @@
       ],
       "kind": "GimmickParam",
       "memory": "St_D_ChargedAnguillian",
-      "value": 4,
+      "valueRef": "cetus.mem.charged.c3.s3/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -11520,7 +11612,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ChargedAnguillian",
-      "value": 1,
+      "valueRef": "cetus.mem.charged.c3.s4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -11556,7 +11648,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ChargedAnguillian",
-      "value": 1,
+      "valueRef": "cetus.mem.charged.c3.s5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -11594,7 +11686,7 @@
       ],
       "kind": "GimmickParam",
       "memory": "St_D_ChargedAnguillian",
-      "value": 4,
+      "valueRef": "cetus.mem.charged.c3.s6/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -11629,7 +11721,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ChargedAnguillian",
-      "value": 1,
+      "valueRef": "cetus.mem.charged.c4.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -11665,7 +11757,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ChargedAnguillian",
-      "value": 1,
+      "valueRef": "cetus.mem.charged.c4.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -11701,7 +11793,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ChargedAnguillian",
-      "value": 1,
+      "valueRef": "cetus.mem.charged.c4.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -11737,7 +11829,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ChargedAnguillian",
-      "value": 1,
+      "valueRef": "cetus.mem.charged.c4.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -11773,7 +11865,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ChargedAnguillian",
-      "value": 1,
+      "valueRef": "cetus.mem.charged.c4.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -11810,7 +11902,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ChargedAnguillian",
-      "value": 1,
+      "valueRef": "cetus.mem.charged.c4.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -11861,7 +11953,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Primed",
-        "value": 25,
+        "value": {
+          "valueRef": "cetus.mem.charged.c4.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -11910,7 +12004,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Heal",
-        "value": 2,
+        "value": {
+          "valueRef": "cetus.mem.charged.c4.n2/gimmick/value"
+        },
         "arg": 1,
         "cooldown": 0,
         "target": null
@@ -11957,7 +12053,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_D_ChargedAnguillian",
-          "value": 3,
+          "valueRef": "cetus.mem.charged.c4.choice/options/0/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -11973,7 +12069,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_D_ChargedAnguillian",
-          "value": 4,
+          "valueRef": "cetus.mem.charged.c4.choice/options/1/value",
           "param": "Radius",
           "receiver": null,
           "target": {
@@ -12014,7 +12110,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ChargedAnguillian",
-      "value": 1,
+      "valueRef": "cetus.mem.charged.c4.s1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -12050,7 +12146,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ChargedAnguillian",
-      "value": 1,
+      "valueRef": "cetus.mem.charged.c4.s2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -12087,7 +12183,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_ChargedAnguillian",
-      "value": 4,
+      "valueRef": "cetus.mem.charged.c4.s3/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -12125,7 +12221,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ChargedAnguillian",
-      "value": 1,
+      "valueRef": "cetus.mem.charged.c4.s4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -12161,7 +12257,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ChargedAnguillian",
-      "value": 1,
+      "valueRef": "cetus.mem.charged.c4.s5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -12198,7 +12294,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_ChargedAnguillian",
-      "value": 4,
+      "valueRef": "cetus.mem.charged.c4.s6/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -12233,7 +12329,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_BigBorealChunk",
-      "value": 1,
+      "valueRef": "cetus.mem.boreal-chunk.c1.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -12269,7 +12365,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_BigBorealChunk",
-      "value": 1,
+      "valueRef": "cetus.mem.boreal-chunk.c1.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -12305,7 +12401,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_BigBorealChunk",
-      "value": 1,
+      "valueRef": "cetus.mem.boreal-chunk.c1.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -12341,7 +12437,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_BigBorealChunk",
-      "value": 1,
+      "valueRef": "cetus.mem.boreal-chunk.c1.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -12377,7 +12473,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_BigBorealChunk",
-      "value": 1,
+      "valueRef": "cetus.mem.boreal-chunk.c1.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -12414,7 +12510,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_BigBorealChunk",
-      "value": 1,
+      "valueRef": "cetus.mem.boreal-chunk.c1.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -12465,7 +12561,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Wound",
-        "value": 15,
+        "value": {
+          "valueRef": "cetus.mem.boreal-chunk.c1.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -12513,7 +12611,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "ElementEdge",
-        "value": 6,
+        "value": {
+          "valueRef": "cetus.mem.boreal-chunk.c1.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -12573,7 +12673,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_Q_BigBorealChunk",
-          "value": 3,
+          "valueRef": "cetus.mem.boreal-chunk.c1.choice/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -12614,7 +12714,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_BigBorealChunk",
-      "value": 1,
+      "valueRef": "cetus.mem.boreal-chunk.c1.s1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -12650,7 +12750,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_BigBorealChunk",
-      "value": 1,
+      "valueRef": "cetus.mem.boreal-chunk.c1.s2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -12687,7 +12787,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_BigBorealChunk",
-      "value": 4,
+      "valueRef": "cetus.mem.boreal-chunk.c1.s3/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -12725,7 +12825,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_BigBorealChunk",
-      "value": 1,
+      "valueRef": "cetus.mem.boreal-chunk.c1.s4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -12761,7 +12861,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_BigBorealChunk",
-      "value": 1,
+      "valueRef": "cetus.mem.boreal-chunk.c1.s5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -12798,7 +12898,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_BigBorealChunk",
-      "value": 4,
+      "valueRef": "cetus.mem.boreal-chunk.c1.s6/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -12834,7 +12934,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_BigBorealChunk",
-      "value": 1,
+      "valueRef": "cetus.mem.boreal-chunk.c2.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -12870,7 +12970,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_BigBorealChunk",
-      "value": 1,
+      "valueRef": "cetus.mem.boreal-chunk.c2.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -12906,7 +13006,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_BigBorealChunk",
-      "value": 1,
+      "valueRef": "cetus.mem.boreal-chunk.c2.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -12942,7 +13042,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_BigBorealChunk",
-      "value": 1,
+      "valueRef": "cetus.mem.boreal-chunk.c2.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -12978,7 +13078,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_BigBorealChunk",
-      "value": 1,
+      "valueRef": "cetus.mem.boreal-chunk.c2.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -13016,7 +13116,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_BigBorealChunk",
-      "value": 1,
+      "valueRef": "cetus.mem.boreal-chunk.c2.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -13067,7 +13167,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Rampart",
-        "value": 1,
+        "value": {
+          "valueRef": "cetus.mem.boreal-chunk.c2.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -13115,7 +13217,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Sap",
-        "value": 5,
+        "value": {
+          "valueRef": "cetus.mem.boreal-chunk.c2.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -13175,7 +13279,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_Q_BigBorealChunk",
-          "value": 3,
+          "valueRef": "cetus.mem.boreal-chunk.c2.choice/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -13216,7 +13320,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_BigBorealChunk",
-      "value": 1,
+      "valueRef": "cetus.mem.boreal-chunk.c2.s1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -13252,7 +13356,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_BigBorealChunk",
-      "value": 1,
+      "valueRef": "cetus.mem.boreal-chunk.c2.s2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -13289,7 +13393,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_BigBorealChunk",
-      "value": 4,
+      "valueRef": "cetus.mem.boreal-chunk.c2.s3/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -13327,7 +13431,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_BigBorealChunk",
-      "value": 1,
+      "valueRef": "cetus.mem.boreal-chunk.c2.s4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -13363,7 +13467,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_BigBorealChunk",
-      "value": 1,
+      "valueRef": "cetus.mem.boreal-chunk.c2.s5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -13400,7 +13504,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_BigBorealChunk",
-      "value": 4,
+      "valueRef": "cetus.mem.boreal-chunk.c2.s6/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -13435,7 +13539,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_BigBorealChunk",
-      "value": 1,
+      "valueRef": "cetus.mem.boreal-chunk.c3.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -13471,7 +13575,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_BigBorealChunk",
-      "value": 1,
+      "valueRef": "cetus.mem.boreal-chunk.c3.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -13507,7 +13611,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_BigBorealChunk",
-      "value": 1,
+      "valueRef": "cetus.mem.boreal-chunk.c3.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -13543,7 +13647,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_BigBorealChunk",
-      "value": 1,
+      "valueRef": "cetus.mem.boreal-chunk.c3.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -13579,7 +13683,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_BigBorealChunk",
-      "value": 1,
+      "valueRef": "cetus.mem.boreal-chunk.c3.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -13616,7 +13720,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_BigBorealChunk",
-      "value": 1,
+      "valueRef": "cetus.mem.boreal-chunk.c3.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -13667,7 +13771,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Burst",
-        "value": 30,
+        "value": {
+          "valueRef": "cetus.mem.boreal-chunk.c3.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -13715,7 +13821,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Element",
-        "value": 50,
+        "value": {
+          "valueRef": "cetus.mem.boreal-chunk.c3.n2/gimmick/value"
+        },
         "arg": 2,
         "cooldown": 0,
         "target": null
@@ -13775,7 +13883,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_Q_BigBorealChunk",
-          "value": 3,
+          "valueRef": "cetus.mem.boreal-chunk.c3.choice/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -13816,7 +13924,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_BigBorealChunk",
-      "value": 1,
+      "valueRef": "cetus.mem.boreal-chunk.c3.s1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -13852,7 +13960,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_BigBorealChunk",
-      "value": 1,
+      "valueRef": "cetus.mem.boreal-chunk.c3.s2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -13890,7 +13998,7 @@
       ],
       "kind": "GimmickParam",
       "memory": "St_Q_BigBorealChunk",
-      "value": 4,
+      "valueRef": "cetus.mem.boreal-chunk.c3.s3/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -13928,7 +14036,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_BigBorealChunk",
-      "value": 1,
+      "valueRef": "cetus.mem.boreal-chunk.c3.s4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -13964,7 +14072,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_BigBorealChunk",
-      "value": 1,
+      "valueRef": "cetus.mem.boreal-chunk.c3.s5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -14002,7 +14110,7 @@
       ],
       "kind": "GimmickParam",
       "memory": "St_Q_BigBorealChunk",
-      "value": 4,
+      "valueRef": "cetus.mem.boreal-chunk.c3.s6/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -14037,7 +14145,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_BigBorealChunk",
-      "value": 1,
+      "valueRef": "cetus.mem.boreal-chunk.c4.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -14073,7 +14181,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_BigBorealChunk",
-      "value": 1,
+      "valueRef": "cetus.mem.boreal-chunk.c4.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -14109,7 +14217,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_BigBorealChunk",
-      "value": 1,
+      "valueRef": "cetus.mem.boreal-chunk.c4.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -14145,7 +14253,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_BigBorealChunk",
-      "value": 1,
+      "valueRef": "cetus.mem.boreal-chunk.c4.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -14181,7 +14289,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_BigBorealChunk",
-      "value": 1,
+      "valueRef": "cetus.mem.boreal-chunk.c4.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -14218,7 +14326,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_BigBorealChunk",
-      "value": 1,
+      "valueRef": "cetus.mem.boreal-chunk.c4.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -14269,7 +14377,9 @@
       "gimmick": {
         "trigger": "OnUse",
         "effect": "Primed",
-        "value": 25,
+        "value": {
+          "valueRef": "cetus.mem.boreal-chunk.c4.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -14318,7 +14428,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Heal",
-        "value": 2,
+        "value": {
+          "valueRef": "cetus.mem.boreal-chunk.c4.n2/gimmick/value"
+        },
         "arg": 1,
         "cooldown": 0,
         "target": null
@@ -14365,7 +14477,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_Q_BigBorealChunk",
-          "value": 3,
+          "valueRef": "cetus.mem.boreal-chunk.c4.choice/options/0/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -14381,7 +14493,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_Q_BigBorealChunk",
-          "value": 4,
+          "valueRef": "cetus.mem.boreal-chunk.c4.choice/options/1/value",
           "param": "Radius",
           "receiver": null,
           "target": {
@@ -14422,7 +14534,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_BigBorealChunk",
-      "value": 1,
+      "valueRef": "cetus.mem.boreal-chunk.c4.s1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -14458,7 +14570,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_BigBorealChunk",
-      "value": 1,
+      "valueRef": "cetus.mem.boreal-chunk.c4.s2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -14495,7 +14607,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_BigBorealChunk",
-      "value": 4,
+      "valueRef": "cetus.mem.boreal-chunk.c4.s3/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -14533,7 +14645,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_BigBorealChunk",
-      "value": 1,
+      "valueRef": "cetus.mem.boreal-chunk.c4.s4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -14569,7 +14681,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_BigBorealChunk",
-      "value": 1,
+      "valueRef": "cetus.mem.boreal-chunk.c4.s5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -14606,7 +14718,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_BigBorealChunk",
-      "value": 4,
+      "valueRef": "cetus.mem.boreal-chunk.c4.s6/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -14641,7 +14753,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_FrozenFists",
-      "value": 1,
+      "valueRef": "cetus.mem.frozen-fists.c1.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -14677,7 +14789,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_FrozenFists",
-      "value": 1,
+      "valueRef": "cetus.mem.frozen-fists.c1.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -14713,7 +14825,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_FrozenFists",
-      "value": 1,
+      "valueRef": "cetus.mem.frozen-fists.c1.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -14749,7 +14861,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_FrozenFists",
-      "value": 1,
+      "valueRef": "cetus.mem.frozen-fists.c1.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -14785,7 +14897,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_FrozenFists",
-      "value": 1,
+      "valueRef": "cetus.mem.frozen-fists.c1.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -14822,7 +14934,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_FrozenFists",
-      "value": 1,
+      "valueRef": "cetus.mem.frozen-fists.c1.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -14873,7 +14985,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Wound",
-        "value": 15,
+        "value": {
+          "valueRef": "cetus.mem.frozen-fists.c1.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -14921,7 +15035,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "ElementEdge",
-        "value": 4,
+        "value": {
+          "valueRef": "cetus.mem.frozen-fists.c1.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -14981,7 +15097,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_R_FrozenFists",
-          "value": 3,
+          "valueRef": "cetus.mem.frozen-fists.c1.choice/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -15022,7 +15138,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_FrozenFists",
-      "value": 1,
+      "valueRef": "cetus.mem.frozen-fists.c1.s1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -15058,7 +15174,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_FrozenFists",
-      "value": 1,
+      "valueRef": "cetus.mem.frozen-fists.c1.s2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -15095,7 +15211,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_FrozenFists",
-      "value": 4,
+      "valueRef": "cetus.mem.frozen-fists.c1.s3/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -15133,7 +15249,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_FrozenFists",
-      "value": 1,
+      "valueRef": "cetus.mem.frozen-fists.c1.s4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -15169,7 +15285,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_FrozenFists",
-      "value": 1,
+      "valueRef": "cetus.mem.frozen-fists.c1.s5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -15206,7 +15322,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_FrozenFists",
-      "value": 4,
+      "valueRef": "cetus.mem.frozen-fists.c1.s6/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -15242,7 +15358,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_FrozenFists",
-      "value": 1,
+      "valueRef": "cetus.mem.frozen-fists.c2.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -15278,7 +15394,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_FrozenFists",
-      "value": 1,
+      "valueRef": "cetus.mem.frozen-fists.c2.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -15314,7 +15430,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_FrozenFists",
-      "value": 1,
+      "valueRef": "cetus.mem.frozen-fists.c2.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -15350,7 +15466,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_FrozenFists",
-      "value": 1,
+      "valueRef": "cetus.mem.frozen-fists.c2.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -15386,7 +15502,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_FrozenFists",
-      "value": 1,
+      "valueRef": "cetus.mem.frozen-fists.c2.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -15424,7 +15540,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_FrozenFists",
-      "value": 1,
+      "valueRef": "cetus.mem.frozen-fists.c2.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -15475,7 +15591,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Rampart",
-        "value": 1,
+        "value": {
+          "valueRef": "cetus.mem.frozen-fists.c2.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -15523,7 +15641,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Sap",
-        "value": 4,
+        "value": {
+          "valueRef": "cetus.mem.frozen-fists.c2.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -15583,7 +15703,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_R_FrozenFists",
-          "value": 3,
+          "valueRef": "cetus.mem.frozen-fists.c2.choice/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -15624,7 +15744,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_FrozenFists",
-      "value": 1,
+      "valueRef": "cetus.mem.frozen-fists.c2.s1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -15660,7 +15780,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_FrozenFists",
-      "value": 1,
+      "valueRef": "cetus.mem.frozen-fists.c2.s2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -15697,7 +15817,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_FrozenFists",
-      "value": 4,
+      "valueRef": "cetus.mem.frozen-fists.c2.s3/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -15735,7 +15855,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_FrozenFists",
-      "value": 1,
+      "valueRef": "cetus.mem.frozen-fists.c2.s4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -15771,7 +15891,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_FrozenFists",
-      "value": 1,
+      "valueRef": "cetus.mem.frozen-fists.c2.s5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -15808,7 +15928,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_FrozenFists",
-      "value": 4,
+      "valueRef": "cetus.mem.frozen-fists.c2.s6/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -15843,7 +15963,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_FrozenFists",
-      "value": 1,
+      "valueRef": "cetus.mem.frozen-fists.c3.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -15879,7 +15999,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_FrozenFists",
-      "value": 1,
+      "valueRef": "cetus.mem.frozen-fists.c3.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -15915,7 +16035,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_FrozenFists",
-      "value": 1,
+      "valueRef": "cetus.mem.frozen-fists.c3.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -15951,7 +16071,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_FrozenFists",
-      "value": 1,
+      "valueRef": "cetus.mem.frozen-fists.c3.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -15987,7 +16107,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_FrozenFists",
-      "value": 1,
+      "valueRef": "cetus.mem.frozen-fists.c3.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -16024,7 +16144,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_FrozenFists",
-      "value": 1,
+      "valueRef": "cetus.mem.frozen-fists.c3.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -16075,7 +16195,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Burst",
-        "value": 25,
+        "value": {
+          "valueRef": "cetus.mem.frozen-fists.c3.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -16123,7 +16245,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Element",
-        "value": 50,
+        "value": {
+          "valueRef": "cetus.mem.frozen-fists.c3.n2/gimmick/value"
+        },
         "arg": 2,
         "cooldown": 0,
         "target": null
@@ -16183,7 +16307,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_R_FrozenFists",
-          "value": 3,
+          "valueRef": "cetus.mem.frozen-fists.c3.choice/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -16224,7 +16348,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_FrozenFists",
-      "value": 1,
+      "valueRef": "cetus.mem.frozen-fists.c3.s1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -16260,7 +16384,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_FrozenFists",
-      "value": 1,
+      "valueRef": "cetus.mem.frozen-fists.c3.s2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -16298,7 +16422,7 @@
       ],
       "kind": "GimmickParam",
       "memory": "St_R_FrozenFists",
-      "value": 4,
+      "valueRef": "cetus.mem.frozen-fists.c3.s3/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -16336,7 +16460,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_FrozenFists",
-      "value": 1,
+      "valueRef": "cetus.mem.frozen-fists.c3.s4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -16372,7 +16496,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_FrozenFists",
-      "value": 1,
+      "valueRef": "cetus.mem.frozen-fists.c3.s5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -16410,7 +16534,7 @@
       ],
       "kind": "GimmickParam",
       "memory": "St_R_FrozenFists",
-      "value": 4,
+      "valueRef": "cetus.mem.frozen-fists.c3.s6/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -16445,7 +16569,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_FrozenFists",
-      "value": 1,
+      "valueRef": "cetus.mem.frozen-fists.c4.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -16481,7 +16605,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_FrozenFists",
-      "value": 1,
+      "valueRef": "cetus.mem.frozen-fists.c4.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -16517,7 +16641,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_FrozenFists",
-      "value": 1,
+      "valueRef": "cetus.mem.frozen-fists.c4.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -16553,7 +16677,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_FrozenFists",
-      "value": 1,
+      "valueRef": "cetus.mem.frozen-fists.c4.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -16589,7 +16713,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_FrozenFists",
-      "value": 1,
+      "valueRef": "cetus.mem.frozen-fists.c4.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -16626,7 +16750,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_FrozenFists",
-      "value": 1,
+      "valueRef": "cetus.mem.frozen-fists.c4.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -16677,7 +16801,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Primed",
-        "value": 25,
+        "value": {
+          "valueRef": "cetus.mem.frozen-fists.c4.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -16726,7 +16852,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Heal",
-        "value": 2,
+        "value": {
+          "valueRef": "cetus.mem.frozen-fists.c4.n2/gimmick/value"
+        },
         "arg": 1,
         "cooldown": 0,
         "target": null
@@ -16773,7 +16901,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_R_FrozenFists",
-          "value": 3,
+          "valueRef": "cetus.mem.frozen-fists.c4.choice/options/0/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -16789,7 +16917,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_R_FrozenFists",
-          "value": 4,
+          "valueRef": "cetus.mem.frozen-fists.c4.choice/options/1/value",
           "param": "Radius",
           "receiver": null,
           "target": {
@@ -16830,7 +16958,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_FrozenFists",
-      "value": 1,
+      "valueRef": "cetus.mem.frozen-fists.c4.s1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -16866,7 +16994,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_FrozenFists",
-      "value": 1,
+      "valueRef": "cetus.mem.frozen-fists.c4.s2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -16903,7 +17031,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_FrozenFists",
-      "value": 4,
+      "valueRef": "cetus.mem.frozen-fists.c4.s3/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -16941,7 +17069,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_FrozenFists",
-      "value": 1,
+      "valueRef": "cetus.mem.frozen-fists.c4.s4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -16977,7 +17105,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_FrozenFists",
-      "value": 1,
+      "valueRef": "cetus.mem.frozen-fists.c4.s5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -17014,7 +17142,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_FrozenFists",
-      "value": 4,
+      "valueRef": "cetus.mem.frozen-fists.c4.s6/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -17053,7 +17181,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_IcyVeins",
-      "value": 1,
+      "valueRef": "cetus.bridge.b1.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -17093,7 +17221,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EmbracingTheChill",
-      "value": 1,
+      "valueRef": "cetus.bridge.b1.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -17133,7 +17261,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_IcyVeins",
-      "value": 1,
+      "valueRef": "cetus.bridge.b1.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -17173,7 +17301,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EmbracingTheChill",
-      "value": 1,
+      "valueRef": "cetus.bridge.b1.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -17213,7 +17341,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_IcyVeins",
-      "value": 1,
+      "valueRef": "cetus.bridge.b1.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -17254,7 +17382,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EmbracingTheChill",
-      "value": 1,
+      "valueRef": "cetus.bridge.b1.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -17305,7 +17433,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Burst",
-        "value": 20,
+        "value": {
+          "valueRef": "cetus.bridge.b1.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null,
@@ -17355,7 +17485,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Heal",
-        "value": 1,
+        "value": {
+          "valueRef": "cetus.bridge.b1.n2/gimmick/value"
+        },
         "arg": 1,
         "cooldown": 0,
         "target": null,
@@ -17404,7 +17536,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_D_IcyVeins",
-          "value": 0.25,
+          "valueRef": "cetus.bridge.b1.choice/options/0/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -17420,7 +17552,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_Q_EmbracingTheChill",
-          "value": 0.25,
+          "valueRef": "cetus.bridge.b1.choice/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -17462,7 +17594,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_IcyVeins",
-      "value": 1,
+      "valueRef": "cetus.bridge.b1.s1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -17497,7 +17629,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EmbracingTheChill",
-      "value": 1,
+      "valueRef": "cetus.bridge.b1.s2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -17535,7 +17667,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_IcyVeins",
-      "value": 1,
+      "valueRef": "cetus.bridge.b1.s3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -17570,7 +17702,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EmbracingTheChill",
-      "value": 1,
+      "valueRef": "cetus.bridge.b1.s4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -17609,7 +17741,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EmbracingTheChill",
-      "value": 1,
+      "valueRef": "cetus.bridge.b2.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -17649,7 +17781,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_BackOff",
-      "value": 1,
+      "valueRef": "cetus.bridge.b2.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -17689,7 +17821,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EmbracingTheChill",
-      "value": 1,
+      "valueRef": "cetus.bridge.b2.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -17729,7 +17861,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_BackOff",
-      "value": 1,
+      "valueRef": "cetus.bridge.b2.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -17769,7 +17901,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EmbracingTheChill",
-      "value": 1,
+      "valueRef": "cetus.bridge.b2.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -17810,7 +17942,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_BackOff",
-      "value": 1,
+      "valueRef": "cetus.bridge.b2.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -17861,7 +17993,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Element",
-        "value": 25,
+        "value": {
+          "valueRef": "cetus.bridge.b2.n1/gimmick/value"
+        },
         "arg": 3,
         "cooldown": 0,
         "target": null,
@@ -17911,7 +18045,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Shield",
-        "value": 1,
+        "value": {
+          "valueRef": "cetus.bridge.b2.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null,
@@ -17961,7 +18097,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_Q_EmbracingTheChill",
-          "value": 0.25,
+          "valueRef": "cetus.bridge.b2.choice/options/0/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -17977,7 +18113,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_R_BackOff",
-          "value": 0.25,
+          "valueRef": "cetus.bridge.b2.choice/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -18019,7 +18155,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EmbracingTheChill",
-      "value": 1,
+      "valueRef": "cetus.bridge.b2.s1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -18054,7 +18190,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_BackOff",
-      "value": 1,
+      "valueRef": "cetus.bridge.b2.s2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -18092,7 +18228,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EmbracingTheChill",
-      "value": 1,
+      "valueRef": "cetus.bridge.b2.s3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -18127,7 +18263,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_BackOff",
-      "value": 1,
+      "valueRef": "cetus.bridge.b2.s4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -18166,7 +18302,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_BackOff",
-      "value": 1,
+      "valueRef": "cetus.bridge.b3.e1/value",
       "param": null,
       "receiver": "St_M_FrostyCharge",
       "target": {
@@ -18207,7 +18343,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_BackOff",
-      "value": 1,
+      "valueRef": "cetus.bridge.b3.e2/value",
       "param": null,
       "receiver": "St_M_FrostyCharge",
       "target": {
@@ -18248,7 +18384,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_BackOff",
-      "value": 1,
+      "valueRef": "cetus.bridge.b3.e3/value",
       "param": null,
       "receiver": "St_M_FrostyCharge",
       "target": {
@@ -18289,7 +18425,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_BackOff",
-      "value": 1,
+      "valueRef": "cetus.bridge.b3.e4/value",
       "param": null,
       "receiver": "St_M_FrostyCharge",
       "target": {
@@ -18330,7 +18466,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_BackOff",
-      "value": 1,
+      "valueRef": "cetus.bridge.b3.e5/value",
       "param": null,
       "receiver": "St_M_FrostyCharge",
       "target": {
@@ -18372,7 +18508,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_BackOff",
-      "value": 1,
+      "valueRef": "cetus.bridge.b3.e6/value",
       "param": null,
       "receiver": "St_M_FrostyCharge",
       "target": {
@@ -18424,7 +18560,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Recharge",
-        "value": 10,
+        "value": {
+          "valueRef": "cetus.bridge.b3.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": "St_M_FrostyCharge"
@@ -18474,7 +18612,9 @@
       "gimmick": {
         "trigger": "OnUse",
         "effect": "Recharge",
-        "value": 4,
+        "value": {
+          "valueRef": "cetus.bridge.b3.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": "St_M_FrostyCharge"
@@ -18530,7 +18670,9 @@
           "gimmick": {
             "trigger": "OnKill",
             "effect": "Recharge",
-            "value": 4,
+            "value": {
+              "valueRef": "cetus.bridge.b3.choice/options/0/gimmick/value"
+            },
             "arg": 0,
             "cooldown": 0,
             "target": "St_M_FrostyCharge"
@@ -18550,7 +18692,9 @@
           "gimmick": {
             "trigger": "OnUse",
             "effect": "Recharge",
-            "value": 1,
+            "value": {
+              "valueRef": "cetus.bridge.b3.choice/options/1/gimmick/value"
+            },
             "arg": 0,
             "cooldown": 0,
             "target": "St_M_FrostyCharge"
@@ -18590,7 +18734,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_BackOff",
-      "value": 1,
+      "valueRef": "cetus.bridge.b3.s1/value",
       "param": null,
       "receiver": "St_M_FrostyCharge",
       "target": {
@@ -18626,7 +18770,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_BackOff",
-      "value": 1,
+      "valueRef": "cetus.bridge.b3.s2/value",
       "param": null,
       "receiver": "St_M_FrostyCharge",
       "target": {
@@ -18665,7 +18809,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_BackOff",
-      "value": 1,
+      "valueRef": "cetus.bridge.b3.s3/value",
       "param": null,
       "receiver": "St_M_FrostyCharge",
       "target": {
@@ -18701,7 +18845,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_BackOff",
-      "value": 1,
+      "valueRef": "cetus.bridge.b3.s4/value",
       "param": null,
       "receiver": "St_M_FrostyCharge",
       "target": {
@@ -18741,7 +18885,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ChargedAnguillian",
-      "value": 1,
+      "valueRef": "cetus.bridge.b4.e1/value",
       "param": null,
       "receiver": "St_M_FrostyCharge",
       "target": {
@@ -18782,7 +18926,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ChargedAnguillian",
-      "value": 1,
+      "valueRef": "cetus.bridge.b4.e2/value",
       "param": null,
       "receiver": "St_M_FrostyCharge",
       "target": {
@@ -18823,7 +18967,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ChargedAnguillian",
-      "value": 1,
+      "valueRef": "cetus.bridge.b4.e3/value",
       "param": null,
       "receiver": "St_M_FrostyCharge",
       "target": {
@@ -18864,7 +19008,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ChargedAnguillian",
-      "value": 1,
+      "valueRef": "cetus.bridge.b4.e4/value",
       "param": null,
       "receiver": "St_M_FrostyCharge",
       "target": {
@@ -18905,7 +19049,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ChargedAnguillian",
-      "value": 1,
+      "valueRef": "cetus.bridge.b4.e5/value",
       "param": null,
       "receiver": "St_M_FrostyCharge",
       "target": {
@@ -18947,7 +19091,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ChargedAnguillian",
-      "value": 1,
+      "valueRef": "cetus.bridge.b4.e6/value",
       "param": null,
       "receiver": "St_M_FrostyCharge",
       "target": {
@@ -18999,7 +19143,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Recharge",
-        "value": 10,
+        "value": {
+          "valueRef": "cetus.bridge.b4.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": "St_M_FrostyCharge"
@@ -19049,7 +19195,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Recharge",
-        "value": 2,
+        "value": {
+          "valueRef": "cetus.bridge.b4.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": "St_M_FrostyCharge",
@@ -19106,7 +19254,9 @@
           "gimmick": {
             "trigger": "OnKill",
             "effect": "Recharge",
-            "value": 4,
+            "value": {
+              "valueRef": "cetus.bridge.b4.choice/options/0/gimmick/value"
+            },
             "arg": 0,
             "cooldown": 0,
             "target": "St_M_FrostyCharge"
@@ -19126,7 +19276,9 @@
           "gimmick": {
             "trigger": "OnHit",
             "effect": "Recharge",
-            "value": 1,
+            "value": {
+              "valueRef": "cetus.bridge.b4.choice/options/1/gimmick/value"
+            },
             "arg": 0,
             "cooldown": 0,
             "target": "St_M_FrostyCharge",
@@ -19167,7 +19319,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ChargedAnguillian",
-      "value": 1,
+      "valueRef": "cetus.bridge.b4.s1/value",
       "param": null,
       "receiver": "St_M_FrostyCharge",
       "target": {
@@ -19203,7 +19355,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ChargedAnguillian",
-      "value": 1,
+      "valueRef": "cetus.bridge.b4.s2/value",
       "param": null,
       "receiver": "St_M_FrostyCharge",
       "target": {
@@ -19242,7 +19394,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ChargedAnguillian",
-      "value": 1,
+      "valueRef": "cetus.bridge.b4.s3/value",
       "param": null,
       "receiver": "St_M_FrostyCharge",
       "target": {
@@ -19278,7 +19430,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ChargedAnguillian",
-      "value": 1,
+      "valueRef": "cetus.bridge.b4.s4/value",
       "param": null,
       "receiver": "St_M_FrostyCharge",
       "target": {
@@ -19318,7 +19470,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ChargedAnguillian",
-      "value": 1,
+      "valueRef": "cetus.bridge.b5.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -19358,7 +19510,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_BigBorealChunk",
-      "value": 1,
+      "valueRef": "cetus.bridge.b5.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -19398,7 +19550,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ChargedAnguillian",
-      "value": 1,
+      "valueRef": "cetus.bridge.b5.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -19438,7 +19590,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_BigBorealChunk",
-      "value": 1,
+      "valueRef": "cetus.bridge.b5.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -19478,7 +19630,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ChargedAnguillian",
-      "value": 1,
+      "valueRef": "cetus.bridge.b5.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -19519,7 +19671,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_BigBorealChunk",
-      "value": 1,
+      "valueRef": "cetus.bridge.b5.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -19570,7 +19722,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Burst",
-        "value": 20,
+        "value": {
+          "valueRef": "cetus.bridge.b5.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null,
@@ -19620,7 +19774,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Element",
-        "value": 25,
+        "value": {
+          "valueRef": "cetus.bridge.b5.n2/gimmick/value"
+        },
         "arg": 3,
         "cooldown": 0,
         "target": null,
@@ -19669,7 +19825,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_D_ChargedAnguillian",
-          "value": 0.25,
+          "valueRef": "cetus.bridge.b5.choice/options/0/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -19685,7 +19841,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_Q_BigBorealChunk",
-          "value": 0.25,
+          "valueRef": "cetus.bridge.b5.choice/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -19727,7 +19883,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ChargedAnguillian",
-      "value": 1,
+      "valueRef": "cetus.bridge.b5.s1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -19762,7 +19918,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_BigBorealChunk",
-      "value": 1,
+      "valueRef": "cetus.bridge.b5.s2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -19800,7 +19956,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ChargedAnguillian",
-      "value": 1,
+      "valueRef": "cetus.bridge.b5.s3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -19835,7 +19991,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_BigBorealChunk",
-      "value": 1,
+      "valueRef": "cetus.bridge.b5.s4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -19874,7 +20030,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_BigBorealChunk",
-      "value": 1,
+      "valueRef": "cetus.bridge.b6.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -19914,7 +20070,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_FrozenFists",
-      "value": 1,
+      "valueRef": "cetus.bridge.b6.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -19954,7 +20110,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_BigBorealChunk",
-      "value": 1,
+      "valueRef": "cetus.bridge.b6.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -19994,7 +20150,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_FrozenFists",
-      "value": 1,
+      "valueRef": "cetus.bridge.b6.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -20034,7 +20190,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_BigBorealChunk",
-      "value": 1,
+      "valueRef": "cetus.bridge.b6.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -20075,7 +20231,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_FrozenFists",
-      "value": 1,
+      "valueRef": "cetus.bridge.b6.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -20126,7 +20282,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Burst",
-        "value": 20,
+        "value": {
+          "valueRef": "cetus.bridge.b6.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null,
@@ -20176,7 +20334,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Heal",
-        "value": 1,
+        "value": {
+          "valueRef": "cetus.bridge.b6.n2/gimmick/value"
+        },
         "arg": 1,
         "cooldown": 0,
         "target": null,
@@ -20225,7 +20385,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_Q_BigBorealChunk",
-          "value": 0.25,
+          "valueRef": "cetus.bridge.b6.choice/options/0/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -20241,7 +20401,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_R_FrozenFists",
-          "value": 0.25,
+          "valueRef": "cetus.bridge.b6.choice/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -20283,7 +20443,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_BigBorealChunk",
-      "value": 1,
+      "valueRef": "cetus.bridge.b6.s1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -20318,7 +20478,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_FrozenFists",
-      "value": 1,
+      "valueRef": "cetus.bridge.b6.s2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -20356,7 +20516,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_BigBorealChunk",
-      "value": 1,
+      "valueRef": "cetus.bridge.b6.s3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -20391,7 +20551,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_FrozenFists",
-      "value": 1,
+      "valueRef": "cetus.bridge.b6.s4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -20430,7 +20590,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_FrozenFists",
-      "value": 1,
+      "valueRef": "cetus.bridge.b7.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -20470,7 +20630,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_IcyVeins",
-      "value": 1,
+      "valueRef": "cetus.bridge.b7.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -20510,7 +20670,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_FrozenFists",
-      "value": 1,
+      "valueRef": "cetus.bridge.b7.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -20550,7 +20710,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_IcyVeins",
-      "value": 1,
+      "valueRef": "cetus.bridge.b7.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -20590,7 +20750,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_FrozenFists",
-      "value": 1,
+      "valueRef": "cetus.bridge.b7.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -20631,7 +20791,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_IcyVeins",
-      "value": 1,
+      "valueRef": "cetus.bridge.b7.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -20682,7 +20842,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Element",
-        "value": 40,
+        "value": {
+          "valueRef": "cetus.bridge.b7.n1/gimmick/value"
+        },
         "arg": 3,
         "cooldown": 0,
         "target": null,
@@ -20732,7 +20894,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Recharge",
-        "value": 10,
+        "value": {
+          "valueRef": "cetus.bridge.b7.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": "@Q",
@@ -20782,7 +20946,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_R_FrozenFists",
-          "value": 0.25,
+          "valueRef": "cetus.bridge.b7.choice/options/0/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -20798,7 +20962,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_D_IcyVeins",
-          "value": 0.25,
+          "valueRef": "cetus.bridge.b7.choice/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -20840,7 +21004,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_FrozenFists",
-      "value": 1,
+      "valueRef": "cetus.bridge.b7.s1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -20875,7 +21039,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_IcyVeins",
-      "value": 1,
+      "valueRef": "cetus.bridge.b7.s2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -20913,7 +21077,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_FrozenFists",
-      "value": 1,
+      "valueRef": "cetus.bridge.b7.s3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -20948,7 +21112,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_IcyVeins",
-      "value": 1,
+      "valueRef": "cetus.bridge.b7.s4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -20987,7 +21151,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_D_IcyVeins",
-      "value": 1,
+      "valueRef": "cetus.outer.o1.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -21023,7 +21187,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_IcyVeins",
-      "value": 1,
+      "valueRef": "cetus.outer.o1.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -21059,7 +21223,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_IcyVeins",
-      "value": 1,
+      "valueRef": "cetus.outer.o1.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -21095,7 +21259,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_IcyVeins",
-      "value": 1,
+      "valueRef": "cetus.outer.o1.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -21131,7 +21295,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_IcyVeins",
-      "value": 1,
+      "valueRef": "cetus.outer.o1.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -21169,7 +21333,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_IcyVeins",
-      "value": 1,
+      "valueRef": "cetus.outer.o1.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -21222,7 +21386,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "RechargeOther",
-        "value": 6,
+        "value": {
+          "valueRef": "cetus.outer.o1.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -21272,7 +21438,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Element",
-        "value": 35,
+        "value": {
+          "valueRef": "cetus.outer.o1.n2/gimmick/value"
+        },
         "arg": 3,
         "cooldown": 0,
         "target": null
@@ -21322,7 +21490,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_D_IcyVeins",
-          "value": 1,
+          "valueRef": "cetus.outer.o1.choice/options/0/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -21338,7 +21506,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_D_IcyVeins",
-          "value": 4,
+          "valueRef": "cetus.outer.o1.choice/options/1/value",
           "param": "Radius",
           "receiver": null,
           "target": {
@@ -21376,7 +21544,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_IcyVeins",
-      "value": 1,
+      "valueRef": "cetus.outer.o1.s1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -21411,7 +21579,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_IcyVeins",
-      "value": 1,
+      "valueRef": "cetus.outer.o1.s2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -21448,7 +21616,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_IcyVeins",
-      "value": 2,
+      "valueRef": "cetus.outer.o1.s3/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -21483,7 +21651,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_IcyVeins",
-      "value": 1,
+      "valueRef": "cetus.outer.o1.s4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -21518,7 +21686,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_IcyVeins",
-      "value": 1,
+      "valueRef": "cetus.outer.o1.s5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -21555,7 +21723,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_IcyVeins",
-      "value": 2,
+      "valueRef": "cetus.outer.o1.s6/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -21590,7 +21758,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_IcyVeins",
-      "value": 1,
+      "valueRef": "cetus.outer.o1.s7/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -21625,7 +21793,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_IcyVeins",
-      "value": 1,
+      "valueRef": "cetus.outer.o1.s8/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -21662,7 +21830,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_IcyVeins",
-      "value": 2,
+      "valueRef": "cetus.outer.o1.s9/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -21701,7 +21869,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_EmbracingTheChill",
-      "value": 1,
+      "valueRef": "cetus.outer.o2.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -21737,7 +21905,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EmbracingTheChill",
-      "value": 1,
+      "valueRef": "cetus.outer.o2.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -21773,7 +21941,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EmbracingTheChill",
-      "value": 1,
+      "valueRef": "cetus.outer.o2.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -21809,7 +21977,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EmbracingTheChill",
-      "value": 1,
+      "valueRef": "cetus.outer.o2.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -21845,7 +22013,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EmbracingTheChill",
-      "value": 1,
+      "valueRef": "cetus.outer.o2.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -21883,7 +22051,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EmbracingTheChill",
-      "value": 1,
+      "valueRef": "cetus.outer.o2.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -21936,7 +22104,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Recharge",
-        "value": 5,
+        "value": {
+          "valueRef": "cetus.outer.o2.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -21986,7 +22156,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Shield",
-        "value": 2,
+        "value": {
+          "valueRef": "cetus.outer.o2.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -22037,7 +22209,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_Q_EmbracingTheChill",
-          "value": 1,
+          "valueRef": "cetus.outer.o2.choice/options/0/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -22053,7 +22225,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_Q_EmbracingTheChill",
-          "value": 4,
+          "valueRef": "cetus.outer.o2.choice/options/1/value",
           "param": "Duration",
           "receiver": null,
           "target": {
@@ -22091,7 +22263,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EmbracingTheChill",
-      "value": 1,
+      "valueRef": "cetus.outer.o2.s1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -22126,7 +22298,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EmbracingTheChill",
-      "value": 1,
+      "valueRef": "cetus.outer.o2.s2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -22163,7 +22335,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_EmbracingTheChill",
-      "value": 2,
+      "valueRef": "cetus.outer.o2.s3/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -22198,7 +22370,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EmbracingTheChill",
-      "value": 1,
+      "valueRef": "cetus.outer.o2.s4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -22233,7 +22405,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EmbracingTheChill",
-      "value": 1,
+      "valueRef": "cetus.outer.o2.s5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -22270,7 +22442,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_EmbracingTheChill",
-      "value": 2,
+      "valueRef": "cetus.outer.o2.s6/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -22305,7 +22477,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EmbracingTheChill",
-      "value": 1,
+      "valueRef": "cetus.outer.o2.s7/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -22340,7 +22512,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_EmbracingTheChill",
-      "value": 1,
+      "valueRef": "cetus.outer.o2.s8/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -22377,7 +22549,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_EmbracingTheChill",
-      "value": 2,
+      "valueRef": "cetus.outer.o2.s9/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -22415,7 +22587,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_BackOff",
-      "value": 1,
+      "valueRef": "cetus.outer.o3.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -22451,7 +22623,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_BackOff",
-      "value": 1,
+      "valueRef": "cetus.outer.o3.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -22487,7 +22659,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_BackOff",
-      "value": 1,
+      "valueRef": "cetus.outer.o3.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -22523,7 +22695,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_BackOff",
-      "value": 1,
+      "valueRef": "cetus.outer.o3.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -22559,7 +22731,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_BackOff",
-      "value": 1,
+      "valueRef": "cetus.outer.o3.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -22596,7 +22768,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_BackOff",
-      "value": 1,
+      "valueRef": "cetus.outer.o3.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -22649,7 +22821,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Echo",
-        "value": 10,
+        "value": {
+          "valueRef": "cetus.outer.o3.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -22699,7 +22873,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Element",
-        "value": 35,
+        "value": {
+          "valueRef": "cetus.outer.o3.n2/gimmick/value"
+        },
         "arg": 3,
         "cooldown": 0,
         "target": null
@@ -22749,7 +22925,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_R_BackOff",
-          "value": 1,
+          "valueRef": "cetus.outer.o3.choice/options/0/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -22765,7 +22941,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_R_BackOff",
-          "value": 4,
+          "valueRef": "cetus.outer.o3.choice/options/1/value",
           "param": "Radius",
           "receiver": null,
           "target": {
@@ -22803,7 +22979,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_BackOff",
-      "value": 1,
+      "valueRef": "cetus.outer.o3.s1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -22838,7 +23014,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_BackOff",
-      "value": 1,
+      "valueRef": "cetus.outer.o3.s2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -22875,7 +23051,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_BackOff",
-      "value": 2,
+      "valueRef": "cetus.outer.o3.s3/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -22910,7 +23086,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_BackOff",
-      "value": 1,
+      "valueRef": "cetus.outer.o3.s4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -22945,7 +23121,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_BackOff",
-      "value": 1,
+      "valueRef": "cetus.outer.o3.s5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -22982,7 +23158,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_BackOff",
-      "value": 2,
+      "valueRef": "cetus.outer.o3.s6/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -23017,7 +23193,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_BackOff",
-      "value": 1,
+      "valueRef": "cetus.outer.o3.s7/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -23052,7 +23228,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_BackOff",
-      "value": 1,
+      "valueRef": "cetus.outer.o3.s8/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -23089,7 +23265,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_BackOff",
-      "value": 2,
+      "valueRef": "cetus.outer.o3.s9/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -23130,7 +23306,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 1,
+      "valueRef": "cetus.outer.o4.e1/value",
       "param": null,
       "receiver": "St_M_FrostyCharge",
       "target": {
@@ -23167,7 +23343,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 1,
+      "valueRef": "cetus.outer.o4.e2/value",
       "param": null,
       "receiver": "St_M_FrostyCharge",
       "target": {
@@ -23204,7 +23380,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 1,
+      "valueRef": "cetus.outer.o4.e3/value",
       "param": null,
       "receiver": "St_M_FrostyCharge",
       "target": {
@@ -23241,7 +23417,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 1,
+      "valueRef": "cetus.outer.o4.e4/value",
       "param": null,
       "receiver": "St_M_FrostyCharge",
       "target": {
@@ -23278,7 +23454,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 1,
+      "valueRef": "cetus.outer.o4.e5/value",
       "param": null,
       "receiver": "St_M_FrostyCharge",
       "target": {
@@ -23316,7 +23492,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 1,
+      "valueRef": "cetus.outer.o4.e6/value",
       "param": null,
       "receiver": "St_M_FrostyCharge",
       "target": {
@@ -23370,7 +23546,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Recharge",
-        "value": 2,
+        "value": {
+          "valueRef": "cetus.outer.o4.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": "St_M_FrostyCharge"
@@ -23421,7 +23599,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Recharge",
-        "value": 1,
+        "value": {
+          "valueRef": "cetus.outer.o4.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": "St_M_FrostyCharge"
@@ -23479,7 +23659,9 @@
           "gimmick": {
             "trigger": "OnKill",
             "effect": "Recharge",
-            "value": 3,
+            "value": {
+              "valueRef": "cetus.outer.o4.choice/options/0/gimmick/value"
+            },
             "arg": 0,
             "cooldown": 0,
             "target": "St_M_FrostyCharge"
@@ -23499,7 +23681,9 @@
           "gimmick": {
             "trigger": "OnKill",
             "effect": "Recharge",
-            "value": 3,
+            "value": {
+              "valueRef": "cetus.outer.o4.choice/options/1/gimmick/value"
+            },
             "arg": 0,
             "cooldown": 0,
             "target": "St_M_FrostyCharge"
@@ -23535,7 +23719,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 1,
+      "valueRef": "cetus.outer.o4.s1/value",
       "param": null,
       "receiver": "St_M_FrostyCharge",
       "target": {
@@ -23571,7 +23755,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 1,
+      "valueRef": "cetus.outer.o4.s2/value",
       "param": null,
       "receiver": "St_M_FrostyCharge",
       "target": {
@@ -23607,7 +23791,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 1,
+      "valueRef": "cetus.outer.o4.s3/value",
       "param": null,
       "receiver": "St_M_FrostyCharge",
       "target": {
@@ -23643,7 +23827,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 1,
+      "valueRef": "cetus.outer.o4.s4/value",
       "param": null,
       "receiver": "St_M_FrostyCharge",
       "target": {
@@ -23679,7 +23863,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 1,
+      "valueRef": "cetus.outer.o4.s5/value",
       "param": null,
       "receiver": "St_M_FrostyCharge",
       "target": {
@@ -23715,7 +23899,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 1,
+      "valueRef": "cetus.outer.o4.s6/value",
       "param": null,
       "receiver": "St_M_FrostyCharge",
       "target": {
@@ -23751,7 +23935,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 1,
+      "valueRef": "cetus.outer.o4.s7/value",
       "param": null,
       "receiver": "St_M_FrostyCharge",
       "target": {
@@ -23787,7 +23971,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 1,
+      "valueRef": "cetus.outer.o4.s8/value",
       "param": null,
       "receiver": "St_M_FrostyCharge",
       "target": {
@@ -23823,7 +24007,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 1,
+      "valueRef": "cetus.outer.o4.s9/value",
       "param": null,
       "receiver": "St_M_FrostyCharge",
       "target": {
@@ -23862,7 +24046,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_D_ChargedAnguillian",
-      "value": 1,
+      "valueRef": "cetus.outer.o5.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -23898,7 +24082,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ChargedAnguillian",
-      "value": 1,
+      "valueRef": "cetus.outer.o5.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -23934,7 +24118,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ChargedAnguillian",
-      "value": 1,
+      "valueRef": "cetus.outer.o5.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -23970,7 +24154,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ChargedAnguillian",
-      "value": 1,
+      "valueRef": "cetus.outer.o5.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -24006,7 +24190,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ChargedAnguillian",
-      "value": 1,
+      "valueRef": "cetus.outer.o5.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -24043,7 +24227,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ChargedAnguillian",
-      "value": 1,
+      "valueRef": "cetus.outer.o5.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -24096,7 +24280,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "RechargeOther",
-        "value": 6,
+        "value": {
+          "valueRef": "cetus.outer.o5.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -24146,7 +24332,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Expose",
-        "value": 5,
+        "value": {
+          "valueRef": "cetus.outer.o5.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -24196,7 +24384,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_D_ChargedAnguillian",
-          "value": 1,
+          "valueRef": "cetus.outer.o5.choice/options/0/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -24212,7 +24400,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_D_ChargedAnguillian",
-          "value": 4,
+          "valueRef": "cetus.outer.o5.choice/options/1/value",
           "param": "Duration",
           "receiver": null,
           "target": {
@@ -24250,7 +24438,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ChargedAnguillian",
-      "value": 1,
+      "valueRef": "cetus.outer.o5.s1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -24285,7 +24473,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ChargedAnguillian",
-      "value": 1,
+      "valueRef": "cetus.outer.o5.s2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -24322,7 +24510,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_ChargedAnguillian",
-      "value": 2,
+      "valueRef": "cetus.outer.o5.s3/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -24357,7 +24545,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ChargedAnguillian",
-      "value": 1,
+      "valueRef": "cetus.outer.o5.s4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -24392,7 +24580,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ChargedAnguillian",
-      "value": 1,
+      "valueRef": "cetus.outer.o5.s5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -24429,7 +24617,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_ChargedAnguillian",
-      "value": 2,
+      "valueRef": "cetus.outer.o5.s6/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -24464,7 +24652,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ChargedAnguillian",
-      "value": 1,
+      "valueRef": "cetus.outer.o5.s7/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -24499,7 +24687,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_D_ChargedAnguillian",
-      "value": 1,
+      "valueRef": "cetus.outer.o5.s8/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -24536,7 +24724,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_D_ChargedAnguillian",
-      "value": 2,
+      "valueRef": "cetus.outer.o5.s9/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -24574,7 +24762,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_Q_BigBorealChunk",
-      "value": 1,
+      "valueRef": "cetus.outer.o6.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -24610,7 +24798,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_BigBorealChunk",
-      "value": 1,
+      "valueRef": "cetus.outer.o6.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -24646,7 +24834,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_BigBorealChunk",
-      "value": 1,
+      "valueRef": "cetus.outer.o6.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -24682,7 +24870,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_BigBorealChunk",
-      "value": 1,
+      "valueRef": "cetus.outer.o6.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -24718,7 +24906,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_BigBorealChunk",
-      "value": 1,
+      "valueRef": "cetus.outer.o6.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -24755,7 +24943,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_BigBorealChunk",
-      "value": 1,
+      "valueRef": "cetus.outer.o6.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -24808,7 +24996,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Recharge",
-        "value": 6,
+        "value": {
+          "valueRef": "cetus.outer.o6.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -24858,7 +25048,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Shield",
-        "value": 2,
+        "value": {
+          "valueRef": "cetus.outer.o6.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -24909,7 +25101,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_Q_BigBorealChunk",
-          "value": 1,
+          "valueRef": "cetus.outer.o6.choice/options/0/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -24925,7 +25117,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_Q_BigBorealChunk",
-          "value": 4,
+          "valueRef": "cetus.outer.o6.choice/options/1/value",
           "param": "Duration",
           "receiver": null,
           "target": {
@@ -24963,7 +25155,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_BigBorealChunk",
-      "value": 1,
+      "valueRef": "cetus.outer.o6.s1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -24998,7 +25190,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_BigBorealChunk",
-      "value": 1,
+      "valueRef": "cetus.outer.o6.s2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -25035,7 +25227,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_BigBorealChunk",
-      "value": 2,
+      "valueRef": "cetus.outer.o6.s3/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -25070,7 +25262,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_BigBorealChunk",
-      "value": 1,
+      "valueRef": "cetus.outer.o6.s4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -25105,7 +25297,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_BigBorealChunk",
-      "value": 1,
+      "valueRef": "cetus.outer.o6.s5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -25142,7 +25334,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_BigBorealChunk",
-      "value": 2,
+      "valueRef": "cetus.outer.o6.s6/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -25177,7 +25369,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_BigBorealChunk",
-      "value": 1,
+      "valueRef": "cetus.outer.o6.s7/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -25212,7 +25404,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_Q_BigBorealChunk",
-      "value": 1,
+      "valueRef": "cetus.outer.o6.s8/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -25249,7 +25441,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_Q_BigBorealChunk",
-      "value": 2,
+      "valueRef": "cetus.outer.o6.s9/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -25288,7 +25480,7 @@
       ],
       "kind": "GimmickBoost",
       "memory": "St_R_FrozenFists",
-      "value": 1,
+      "valueRef": "cetus.outer.o7.e1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -25324,7 +25516,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_FrozenFists",
-      "value": 1,
+      "valueRef": "cetus.outer.o7.e2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -25360,7 +25552,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_FrozenFists",
-      "value": 1,
+      "valueRef": "cetus.outer.o7.e3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -25396,7 +25588,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_FrozenFists",
-      "value": 1,
+      "valueRef": "cetus.outer.o7.e4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -25432,7 +25624,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_FrozenFists",
-      "value": 1,
+      "valueRef": "cetus.outer.o7.e5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -25470,7 +25662,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_FrozenFists",
-      "value": 1,
+      "valueRef": "cetus.outer.o7.e6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -25523,7 +25715,9 @@
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Recharge",
-        "value": 4,
+        "value": {
+          "valueRef": "cetus.outer.o7.n1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -25573,7 +25767,9 @@
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Expose",
-        "value": 5,
+        "value": {
+          "valueRef": "cetus.outer.o7.n2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null
@@ -25623,7 +25819,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_R_FrozenFists",
-          "value": 1,
+          "valueRef": "cetus.outer.o7.choice/options/0/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -25639,7 +25835,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_R_FrozenFists",
-          "value": 4,
+          "valueRef": "cetus.outer.o7.choice/options/1/value",
           "param": "Duration",
           "receiver": null,
           "target": {
@@ -25677,7 +25873,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_FrozenFists",
-      "value": 1,
+      "valueRef": "cetus.outer.o7.s1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -25712,7 +25908,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_FrozenFists",
-      "value": 1,
+      "valueRef": "cetus.outer.o7.s2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -25749,7 +25945,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_FrozenFists",
-      "value": 2,
+      "valueRef": "cetus.outer.o7.s3/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -25784,7 +25980,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_FrozenFists",
-      "value": 1,
+      "valueRef": "cetus.outer.o7.s4/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -25819,7 +26015,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_FrozenFists",
-      "value": 1,
+      "valueRef": "cetus.outer.o7.s5/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -25856,7 +26052,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_FrozenFists",
-      "value": 2,
+      "valueRef": "cetus.outer.o7.s6/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -25891,7 +26087,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_FrozenFists",
-      "value": 1,
+      "valueRef": "cetus.outer.o7.s7/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -25926,7 +26122,7 @@
       "requiresAny": [],
       "kind": "GimmickBoost",
       "memory": "St_R_FrozenFists",
-      "value": 1,
+      "valueRef": "cetus.outer.o7.s8/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -25963,7 +26159,7 @@
       "requiresAny": [],
       "kind": "GimmickParam",
       "memory": "St_R_FrozenFists",
-      "value": 2,
+      "valueRef": "cetus.outer.o7.s9/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -26010,7 +26206,9 @@
           {
             "effect": "Shield/Rampart",
             "field": "Value",
-            "pct": 80,
+            "pct": {
+              "valueRef": "cetus.key.thick-rime/keystone/upsideSpec/0/pct"
+            },
             "scope": "nonMovement6"
           }
         ]
@@ -26050,7 +26248,9 @@
           {
             "effect": "Burst/Echo/Wound/ElementEdge",
             "field": "Damage",
-            "pct": 70,
+            "pct": {
+              "valueRef": "cetus.key.fractured-depth/keystone/upsideSpec/0/pct"
+            },
             "scope": "nonMovement6"
           }
         ]
@@ -26094,7 +26294,9 @@
             "memory": "St_Q_EmbracingTheChill",
             "effect": "Wound/Sap",
             "field": "Duration",
-            "pct": 100
+            "pct": {
+              "valueRef": "cetus.key.lingering-field/keystone/upsideSpec/0/pct"
+            }
           }
         ]
       },
@@ -26136,7 +26338,9 @@
             "memory": "St_Q_BigBorealChunk",
             "effect": "Echo",
             "field": "Value",
-            "pct": 100
+            "pct": {
+              "valueRef": "cetus.key.glacier-reverb/keystone/upsideSpec/0/pct"
+            }
           }
         ]
       },
@@ -26179,7 +26383,9 @@
             "memory": "St_D_ChargedAnguillian",
             "effect": "NativeDamage",
             "field": "Damage",
-            "pct": 45
+            "pct": {
+              "valueRef": "cetus.key.focused-current/keystone/upsideSpec/0/pct"
+            }
           }
         ]
       },
@@ -26222,7 +26428,9 @@
             "memory": "St_R_FrozenFists",
             "effect": "Burst/Echo/Wound/ElementEdge",
             "field": "Damage",
-            "pct": 60
+            "pct": {
+              "valueRef": "cetus.key.close-covenant/keystone/upsideSpec/0/pct"
+            }
           }
         ]
       },
@@ -26265,7 +26473,9 @@
             "memory": "St_R_BackOff",
             "effect": "Shield/Rampart",
             "field": "Value",
-            "pct": 100
+            "pct": {
+              "valueRef": "cetus.key.sheltering-return/keystone/upsideSpec/0/pct"
+            }
           }
         ]
       },
@@ -26309,7 +26519,9 @@
           {
             "effect": "Recharge",
             "field": "Value",
-            "pct": 20,
+            "pct": {
+              "valueRef": "cetus.key.distant-tide/keystone/upsideSpec/0/pct"
+            },
             "receiver": "St_M_FrostyCharge"
           }
         ]
@@ -26537,23 +26749,31 @@
       "region": "migration",
       "kind": "Notable",
       "memory": "St_Q_EmbracingTheChill",
-      "value": 15,
+      "value": null,
       "param": null,
       "receiver": null,
       "target": null,
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Echo",
-        "value": 15,
+        "value": {
+          "valueRef": "h.cetus.ring.insight/gimmick/valuesByRank/0"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": null,
         "condition": "BridgeMark:h.cetus.ring.insight",
         "once": true,
         "valuesByRank": [
-          15,
-          25,
-          35
+          {
+            "valueRef": "h.cetus.ring.insight/gimmick/valuesByRank/0"
+          },
+          {
+            "valueRef": "h.cetus.ring.insight/gimmick/valuesByRank/1"
+          },
+          {
+            "valueRef": "h.cetus.ring.insight/gimmick/valuesByRank/2"
+          }
         ]
       },
       "power": null,
@@ -26576,22 +26796,30 @@
       "region": "migration",
       "kind": "Notable",
       "memory": "St_R_BackOff",
-      "value": 30,
+      "value": null,
       "param": null,
       "receiver": "St_M_FrostyCharge",
       "target": null,
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Recharge",
-        "value": 30,
+        "value": {
+          "valueRef": "h.cetus.ring.vessel/gimmick/valuesByRank/0"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": "St_M_FrostyCharge",
         "once": true,
         "valuesByRank": [
-          30,
-          40,
-          50
+          {
+            "valueRef": "h.cetus.ring.vessel/gimmick/valuesByRank/0"
+          },
+          {
+            "valueRef": "h.cetus.ring.vessel/gimmick/valuesByRank/1"
+          },
+          {
+            "valueRef": "h.cetus.ring.vessel/gimmick/valuesByRank/2"
+          }
         ]
       },
       "power": null,
@@ -26615,22 +26843,30 @@
       "region": "migration",
       "kind": "Notable",
       "memory": "St_D_ChargedAnguillian",
-      "value": 20,
+      "value": null,
       "param": null,
       "receiver": "St_M_FrostyCharge",
       "target": null,
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Recharge",
-        "value": 20,
+        "value": {
+          "valueRef": "h.cetus.ring.armor/gimmick/valuesByRank/0"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": "St_M_FrostyCharge",
         "once": true,
         "valuesByRank": [
-          20,
-          30,
-          40
+          {
+            "valueRef": "h.cetus.ring.armor/gimmick/valuesByRank/0"
+          },
+          {
+            "valueRef": "h.cetus.ring.armor/gimmick/valuesByRank/1"
+          },
+          {
+            "valueRef": "h.cetus.ring.armor/gimmick/valuesByRank/2"
+          }
         ]
       },
       "power": null,
@@ -26716,7 +26952,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_D_IcyVeins",
-          "value": 3,
+          "valueRef": "h.cetus.shell/options/0/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -26732,7 +26968,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_D_ChargedAnguillian",
-          "value": 3,
+          "valueRef": "h.cetus.shell/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -26876,7 +27112,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_Q_EmbracingTheChill",
-          "value": 3,
+          "valueRef": "h.cetus.regen/options/0/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -26892,7 +27128,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_Q_BigBorealChunk",
-          "value": 3,
+          "valueRef": "h.cetus.regen/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -26934,7 +27170,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_R_BackOff",
-          "value": 3,
+          "valueRef": "h.cetus.deep.power/options/0/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -26950,7 +27186,7 @@
         {
           "kind": "GimmickBoost",
           "memory": "St_R_FrozenFists",
-          "value": 3,
+          "valueRef": "h.cetus.deep.power/options/1/value",
           "param": null,
           "receiver": null,
           "target": {
@@ -26992,7 +27228,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_Q_EmbracingTheChill",
-          "value": 4,
+          "valueRef": "h.cetus.deep.armor/options/0/value",
           "param": "Duration",
           "receiver": null,
           "target": {
@@ -27008,7 +27244,7 @@
         {
           "kind": "GimmickParam",
           "memory": "St_R_BackOff",
-          "value": 4,
+          "valueRef": "h.cetus.deep.armor/options/1/value",
           "param": "Duration",
           "receiver": null,
           "target": {
@@ -27042,7 +27278,7 @@
       "region": "migration",
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 1,
+      "valueRef": "h.cetus.deep.weight/value",
       "param": null,
       "receiver": "St_M_FrostyCharge",
       "target": {
@@ -27073,14 +27309,16 @@
       "region": "migration",
       "kind": "Notable",
       "memory": "St_D_IcyVeins",
-      "value": 30,
+      "value": null,
       "param": null,
       "receiver": null,
       "target": null,
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Element",
-        "value": 30,
+        "value": {
+          "valueRef": "h.cetus.route.icy-veins.2/gimmick/value"
+        },
         "arg": 2,
         "cooldown": 0,
         "target": null
@@ -27104,14 +27342,16 @@
       "region": "migration",
       "kind": "Notable",
       "memory": "St_Q_BigBorealChunk",
-      "value": 30,
+      "value": null,
       "param": null,
       "receiver": null,
       "target": null,
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Element",
-        "value": 30,
+        "value": {
+          "valueRef": "h.cetus.route.boreal-chunk.2/gimmick/value"
+        },
         "arg": 2,
         "cooldown": 0,
         "target": null
@@ -27135,14 +27375,16 @@
       "region": "migration",
       "kind": "Notable",
       "memory": "St_R_FrozenFists",
-      "value": 30,
+      "value": null,
       "param": null,
       "receiver": null,
       "target": null,
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Element",
-        "value": 30,
+        "value": {
+          "valueRef": "h.cetus.route.frozen-fists.2/gimmick/value"
+        },
         "arg": 2,
         "cooldown": 0,
         "target": null
@@ -27166,7 +27408,7 @@
       "region": "migration",
       "kind": "GimmickBoost",
       "memory": "St_D_IcyVeins",
-      "value": 3,
+      "valueRef": "h.cetus.route.icy-veins.6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -27193,7 +27435,7 @@
       "region": "migration",
       "kind": "GimmickBoost",
       "memory": "St_D_ChargedAnguillian",
-      "value": 2,
+      "valueRef": "h.cetus.route.charged.3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -27220,7 +27462,7 @@
       "region": "migration",
       "kind": "GimmickBoost",
       "memory": "St_D_ChargedAnguillian",
-      "value": 2,
+      "valueRef": "h.cetus.route.charged.6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -27247,7 +27489,7 @@
       "region": "migration",
       "kind": "GimmickBoost",
       "memory": "St_Q_EmbracingTheChill",
-      "value": 3,
+      "valueRef": "h.cetus.route.embrace-chill.6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -27274,7 +27516,7 @@
       "region": "migration",
       "kind": "GimmickBoost",
       "memory": "St_Q_BigBorealChunk",
-      "value": 3,
+      "valueRef": "h.cetus.route.boreal-chunk.6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -27301,7 +27543,7 @@
       "region": "migration",
       "kind": "GimmickBoost",
       "memory": "St_R_BackOff",
-      "value": 3,
+      "valueRef": "h.cetus.route.back-off.6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -27328,7 +27570,7 @@
       "region": "migration",
       "kind": "GimmickBoost",
       "memory": "St_R_FrozenFists",
-      "value": 3,
+      "valueRef": "h.cetus.route.frozen-fists.6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -27355,14 +27597,16 @@
       "region": "migration",
       "kind": "Notable",
       "memory": "@Q",
-      "value": 1,
+      "value": null,
       "param": null,
       "receiver": "St_M_FrostyCharge",
       "target": null,
       "gimmick": {
         "trigger": "OnUse",
         "effect": "Recharge",
-        "value": 1,
+        "value": {
+          "valueRef": "h.cetus.route.frost-charge.1/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": "St_M_FrostyCharge"
@@ -27386,14 +27630,16 @@
       "region": "migration",
       "kind": "Notable",
       "memory": "@Q",
-      "value": 2,
+      "value": null,
       "param": null,
       "receiver": "St_M_FrostyCharge",
       "target": null,
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Recharge",
-        "value": 2,
+        "value": {
+          "valueRef": "h.cetus.route.frost-charge.2/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": "St_M_FrostyCharge"
@@ -27418,14 +27664,16 @@
       "region": "migration",
       "kind": "Notable",
       "memory": "@R",
-      "value": 1,
+      "value": null,
       "param": null,
       "receiver": "St_M_FrostyCharge",
       "target": null,
       "gimmick": {
         "trigger": "OnUse",
         "effect": "Recharge",
-        "value": 1,
+        "value": {
+          "valueRef": "h.cetus.route.frost-charge.3/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": "St_M_FrostyCharge"
@@ -27449,14 +27697,16 @@
       "region": "migration",
       "kind": "Notable",
       "memory": "@R",
-      "value": 2,
+      "value": null,
       "param": null,
       "receiver": "St_M_FrostyCharge",
       "target": null,
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Recharge",
-        "value": 2,
+        "value": {
+          "valueRef": "h.cetus.route.frost-charge.4/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": "St_M_FrostyCharge"
@@ -27481,7 +27731,7 @@
       "region": "migration",
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 2,
+      "valueRef": "h.cetus.route.frost-charge.5/value",
       "param": null,
       "receiver": "St_M_FrostyCharge",
       "target": {
@@ -27509,7 +27759,7 @@
       "region": "migration",
       "kind": "GimmickBoost",
       "memory": null,
-      "value": 2,
+      "valueRef": "h.cetus.route.frost-charge.6/value",
       "param": null,
       "receiver": "St_M_FrostyCharge",
       "target": {
@@ -27537,14 +27787,16 @@
       "region": "migration",
       "kind": "Notable",
       "memory": "@Q|@R",
-      "value": 10,
+      "value": null,
       "param": null,
       "receiver": "St_M_FrostyCharge",
       "target": null,
       "gimmick": {
         "trigger": "OnKill",
         "effect": "Recharge",
-        "value": 10,
+        "value": {
+          "valueRef": "h.cetus.route.frost-charge.7/gimmick/value"
+        },
         "arg": 0,
         "cooldown": 0,
         "target": "St_M_FrostyCharge"
@@ -27580,14 +27832,16 @@
         {
           "kind": "Notable",
           "memory": "@Q",
-          "value": 1,
+          "value": null,
           "param": null,
           "receiver": "St_M_FrostyCharge",
           "target": null,
           "gimmick": {
             "trigger": "OnKill",
             "effect": "Recharge",
-            "value": 1,
+            "value": {
+              "valueRef": "h.cetus.ring.renewal/options/0/gimmick/value"
+            },
             "arg": 0,
             "cooldown": 0,
             "target": "St_M_FrostyCharge"
@@ -27600,14 +27854,16 @@
         {
           "kind": "Notable",
           "memory": "@R",
-          "value": 1,
+          "value": null,
           "param": null,
           "receiver": "St_M_FrostyCharge",
           "target": null,
           "gimmick": {
             "trigger": "OnKill",
             "effect": "Recharge",
-            "value": 1,
+            "value": {
+              "valueRef": "h.cetus.ring.renewal/options/1/gimmick/value"
+            },
             "arg": 0,
             "cooldown": 0,
             "target": "St_M_FrostyCharge"
@@ -27636,7 +27892,7 @@
       "region": "migration",
       "kind": "GimmickBoost",
       "memory": "St_Q_EmbracingTheChill",
-      "value": 2,
+      "valueRef": "h.cetus.route.embrace-chill.3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -27707,7 +27963,7 @@
       "region": "migration",
       "kind": "GimmickBoost",
       "memory": "St_R_BackOff",
-      "value": 2,
+      "valueRef": "h.cetus.route.back-off.1/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -27759,7 +28015,7 @@
       "region": "migration",
       "kind": "GimmickBoost",
       "memory": "St_R_FrozenFists",
-      "value": 2,
+      "valueRef": "h.cetus.route.frozen-fists.3/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -27808,7 +28064,7 @@
       "region": "migration",
       "kind": "GimmickBoost",
       "memory": "St_D_IcyVeins",
-      "value": 5,
+      "valueRef": "h.cetus.cluster.icy-veins.2/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -27836,7 +28092,7 @@
       "region": "migration",
       "kind": "GimmickBoost",
       "memory": "St_D_IcyVeins",
-      "value": 5,
+      "valueRef": "h.cetus.cluster.icy-veins.6/value",
       "param": null,
       "receiver": null,
       "target": {
@@ -27864,7 +28120,7 @@
       "region": "migration",
       "kind": "GimmickParam",
       "memory": "St_D_IcyVeins",
-      "value": 5,
+      "valueRef": "h.cetus.cluster.icy-veins.3/value",
       "param": "Chance",
       "receiver": null,
       "target": {
@@ -27893,7 +28149,7 @@
       "region": "migration",
       "kind": "GimmickParam",
       "memory": "St_D_IcyVeins",
-      "value": 10,
+      "valueRef": "h.cetus.cluster.icy-veins.4/value",
       "param": "Duration",
       "receiver": null,
       "target": {
@@ -27933,14 +28189,16 @@
         {
           "kind": "Notable",
           "memory": "St_D_IcyVeins",
-          "value": 1,
+          "value": null,
           "param": null,
           "receiver": null,
           "target": null,
           "gimmick": {
             "trigger": "OnHit",
             "effect": "Shield",
-            "value": 1,
+            "value": {
+              "valueRef": "h.cetus.cluster.icy-veins.5/options/0/gimmick/value"
+            },
             "arg": 0,
             "cooldown": 0,
             "target": null
@@ -27953,14 +28211,16 @@
         {
           "kind": "Notable",
           "memory": "St_D_IcyVeins",
-          "value": 2,
+          "value": null,
           "param": null,
           "receiver": "St_M_FrostyCharge",
           "target": null,
           "gimmick": {
             "trigger": "OnHit",
             "effect": "Recharge",
-            "value": 2,
+            "value": {
+              "valueRef": "h.cetus.cluster.icy-veins.5/options/1/gimmick/value"
+            },
             "arg": 0,
             "cooldown": 0,
             "target": "St_M_FrostyCharge"
@@ -27988,7 +28248,7 @@
       "region": "migration",
       "kind": "MemoryHaste",
       "memory": "St_Q_EmbracingTheChill",
-      "value": 2,
+      "valueRef": "h.cetus.cluster.frozen-recall.1/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -28013,16 +28273,20 @@
       "region": "migration",
       "kind": "Notable",
       "memory": "St_D_IcyVeins",
-      "value": 12,
+      "value": null,
       "param": null,
       "receiver": null,
       "target": null,
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Burst",
-        "value": 12,
+        "value": {
+          "valueRef": "h.cetus.cluster.frozen-recall.2/gimmick/value"
+        },
         "arg": 0,
-        "cooldown": 1,
+        "cooldown": {
+          "valueRef": "h.cetus.cluster.frozen-recall.2/gimmick/cooldown"
+        },
         "target": null,
         "condition": "BridgeSuccess:h.cetus.ring.force"
       },
@@ -28045,7 +28309,7 @@
       "region": "migration",
       "kind": "GimmickParam",
       "memory": "St_D_IcyVeins",
-      "value": 10,
+      "valueRef": "h.cetus.cluster.frozen-recall.3/value",
       "param": "Radius",
       "receiver": null,
       "target": {
@@ -28082,7 +28346,9 @@
       "power": null,
       "stat": {
         "name": "MaxHealthPct",
-        "perRank": 2
+        "perRank": {
+          "valueRef": "h.cetus.outer.abyssal-shell/stat/perRank"
+        }
       },
       "options": null,
       "keystone": null,
@@ -28109,7 +28375,9 @@
       "power": null,
       "stat": {
         "name": "Armor",
-        "perRank": 2
+        "perRank": {
+          "valueRef": "h.cetus.cluster.abyssal-shell.1/stat/perRank"
+        }
       },
       "options": null,
       "keystone": null,
@@ -28126,16 +28394,22 @@
       "region": "migration",
       "kind": "Notable",
       "memory": "St_Q_EmbracingTheChill",
-      "value": 6,
+      "value": null,
       "param": null,
       "receiver": null,
       "target": null,
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Ricochet",
-        "value": 6,
-        "arg": 1,
-        "cooldown": 0.3,
+        "value": {
+          "valueRef": "h.cetus.cluster.abyssal-shell.2/gimmick/value"
+        },
+        "arg": {
+          "valueRef": "h.cetus.cluster.abyssal-shell.2/gimmick/arg"
+        },
+        "cooldown": {
+          "valueRef": "h.cetus.cluster.abyssal-shell.2/gimmick/cooldown"
+        },
         "target": null
       },
       "power": null,
@@ -28157,7 +28431,7 @@
       "region": "migration",
       "kind": "GimmickParam",
       "memory": "St_Q_EmbracingTheChill",
-      "value": 1,
+      "valueRef": "h.cetus.cluster.abyssal-shell.3/value",
       "param": "ExtraTargets",
       "receiver": null,
       "target": {
@@ -28205,7 +28479,9 @@
           "power": null,
           "stat": {
             "name": "MaxHealthPct",
-            "perRank": 2
+            "perRank": {
+              "valueRef": "h.cetus.cluster.abyssal-shell.4/options/0/stat/perRank"
+            }
           },
           "nameJa": "深まる殻",
           "nameEn": "Deepening Shell"
@@ -28220,7 +28496,9 @@
           "gimmick": null,
           "power": {
             "name": "Aegis",
-            "perRank": 2
+            "perRank": {
+              "valueRef": "h.cetus.cluster.abyssal-shell.4/options/1/power/perRank"
+            }
           },
           "stat": null,
           "nameJa": "立ち上がる氷壁",
@@ -28250,7 +28528,9 @@
       "gimmick": null,
       "power": {
         "name": "Frost",
-        "perRank": 70
+        "perRank": {
+          "valueRef": "h.cetus.key/power/perRank"
+        }
       },
       "stat": null,
       "options": null,
@@ -28280,7 +28560,9 @@
       "gimmick": null,
       "power": {
         "name": "StillWater",
-        "perRank": 6
+        "perRank": {
+          "valueRef": "h.cetus.key2/power/perRank"
+        }
       },
       "stat": null,
       "options": null,
@@ -28293,9 +28575,13 @@
             "gimmick": {
               "trigger": "OnHit",
               "effect": "StunSourceFilter",
-              "value": 6,
+              "value": {
+                "valueRef": "legacy/h.cetus.key2/native/value"
+              },
               "arg": 0,
-              "cooldown": 2,
+              "cooldown": {
+                "valueRef": "legacy/h.cetus.key2/native/cooldown"
+              },
               "target": null
             }
           }
