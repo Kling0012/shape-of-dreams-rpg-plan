@@ -8,16 +8,30 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
-- インフィニティでボスまでの部屋数を短くすると敵が強く多くなり、通常の遺物が出やすく、受け取れる量とエピックの予算も増えるようになりました。伝説・限定品・道標の固定保証は据え置きです。開始画面で各間隔の違いを確認できます。
+---
 
-- インフィニティでボスまでの部屋数を短くすると敵が強く多くなり、通常の遺物が出やすくなりました。開始画面で各間隔の違いを確認できます。
+## v2.9.0 — インフィニティのランダムボスと部屋数の選択（2026-10-07）
 
-- インフィニティの次のボスを特殊ボスも含む重み付き抽選にし、直前のボスの連続出現を避けるようにしました。
-- インフィニティでは、ボスまでの各区間に本体の井戸とショップをそれぞれ少なくとも1回訪れられるようにしました。対応する部屋がない区間は警告のみで続行します。
+インフィニティのボスが特殊ボスを含めてランダムになり、ボスまでの部屋数で難しさと遺物の出やすさが変わるようになりました。協力プレイでゲストが自分の選択をできない問題も直しました。 / Infinity bosses are now random (special bosses included), and the boss interval changes difficulty and relic drops. Guests can now make their own choices in co-op.
 
-- 中断した遠征の鞄の遺物を、次の遠征中に1回だけ受け取れるボタンを追加しました。死亡時の遺失物とは分けて保存し、「続きから」や受け取りの再操作による重複を防ぎます。
+### 更新前に確認 / Before updating
 
-- インフィニティの協力プレイで、ホストが帰還・潜行・移動先を決めても、ゲスト全員が自分の契約・道標などを選ぶかスキップするまで待つように修正しました。待機相手と残り時間を表示し、60秒で未選択を「選ばない」として進み、切断した人は待ちません。
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。ただし、この版で一度保存すると、以前の版では読み込めなくなります（保存形式を更新しました）。 / Saves carry over. Once saved with this version, they can no longer be loaded by older versions (the save format was updated).
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 新しい要素 / New
+
+- **インフィニティのボスがランダムに**：ボスを倒して潜ると、次のボスを特殊ボス（エレボス・光の精霊・マウ・オブリビアクス・ポラリス）を含めた中からランダムに選びます。直前と同じボスは出ません。専用エンディングにはならず、通常のボスと同じ流れで進みます。インフィニティ中は本体の実績は記録されません（順番外の撃破で誤って解除されないため）。 / **Random Infinity bosses**: after a boss, the next boss is picked at random, special bosses (Erebos, Light Elemental, Maw, Obliviax, Polaris) included, never the same twice in a row. Their special endings do not trigger; they play out like normal bosses. Native achievements are not recorded during Infinity so out-of-order kills cannot unlock them by mistake.
+- **ボスまでの部屋数で難しさと遺物が変わる**：インフィニティでボスまでの部屋数を少なくするほど、夢の圧が上がり敵の数が増えますが、通常の遺物も手に入りやすくなります（15部屋・10部屋）。開始画面にそれぞれの効果を表示します。 / **Boss interval matters**: a shorter boss interval in Infinity (15 or 10 rooms) raises dream pressure and adds enemies, but ordinary relics drop more often. The start screen shows each option's effects.
+- **ボスまでに井戸とショップ**：インフィニティで、ボスまでの各区間に強化の井戸とショップを必ず1つずつ訪れられるようにしました。 / **Well and shop before every boss**: each Infinity segment now always lets you visit one upgrade well and one shop before the boss.
+- **中断した遠征の遺物を受け取る**：遠征が不具合などで中断して鞄の遺物を受け取れなかったとき、次の遠征中に MOD メニューの「中断した遠征の遺物を受け取る」で1回だけ受け取れます（1遠征につき1回）。倒されて失った遺物は、これまでどおり遺失物の扱いです。 / **Recover an interrupted expedition's relics**: if an expedition was cut short (crash, disconnect, bug), you can claim its satchel once during your next expedition from the MOD menu (once per expedition). Relics lost to death still go through lost-and-found as before.
+
+### 不具合の修正 / Bug fixes
+
+- インフィニティの協力プレイで、ホストが選ぶとすぐ移動してしまい、ゲストが契約などを選べなかった問題を修正しました。ゲスト全員が選ぶか「スキップ」するまで移動を待ちます（最長60秒、切断した人は待ちません）。 / Infinity co-op: the host's choice no longer moves everyone before guests can pick their pacts and other choices. The move waits until every guest chooses or skips (up to 60 seconds; disconnected players are not waited for).
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
 
 ---
 
