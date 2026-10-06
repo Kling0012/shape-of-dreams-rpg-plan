@@ -30,6 +30,16 @@
 - Unity画面・実ネットワークでのマルチは未検証。取得済みログも v2.7.1 であり、v2.7.2 の通常確保 UI 消失の直接原因には使えない。
 
 
+## Continue 追加報告の追跡
+
+- **今回再現した条件**：通常モードにも `InfinityNativeRestore` が `BeginRestore` を実行し、従来の `FinishRestore` は期限のない `ZoneManager.CallOnReadyAfterTransition` でしか `_restoring` を解除しなかった。チェックポイント復元が `ActiveRunId` を空にした後、`ClientSession.TrackRun` が `InfinityMode.Restoring` で戻り続け、`RunActive → TryFinishSecureArrival → AwaitingChoice` と UI に届かない。ホスト自身の Hello や参加者の受領 ACK は、この通常モード停止の必要条件ではない。
+- **導入時期**：`7ed08b3`（2026-10-05）の lazy-ready 待ちと `bf26204` の通常モードにも掛かる `TrackRun` ガードの組合せ。v2.7.1・v2.7.2 の両タグに存在し、#246 で新たに導入された退行ではない。利用者の実機で通知が未着となった具体的な本体条件は未確認。
+- **修正**：本体 `ApplyGameData` の完了は部屋復元後なので、そこから余分な準備完了待ちを挟まず共有フラグを解除する。完了通知自体も30秒で一度警告し、遷移終了済みの本体に対してチェックポイントを復元して進める。異なる本体runには復元せず候補を保持し、復元だけをスキップする。本体ロード未完了時だけはMOD報酬・Build反映を保留し、偽の完了・receiptは作らない。#248 の巻き戻し後にBuildの遮断を解除する順序、#259 の受領待ち期限、#255 の経済・予約・台帳は変更しない。
+- **回帰**：実 `BeginRestore/FinishRestore`・`TrackRun`・`TickRunChoices`・確保パネル状態を同時に実行。ホスト単独／参加者あり × 本体完了通知あり／未着の4ケースで、Continue→ボス報酬→ゾーン終了→UI開放を確認。別runへの誤復元とロード中のBuild早期解放を防ぐ2ケースを追加。修正前は完了後でも未着のlazy-ready待ちにより `ActiveRunId` が空のままになるケースが失敗した。
+- **独立スモーク**：テストrunnerを使わずリンク済み本番メソッドを呼ぶ実行プログラムでも同じ4経路を確認。全経路 `resumed=True bossKills=1 secureChoice=True panelOpen=True checkpointRetained=True lateCallbackSafe=True`。逆順の完了呼出し・遅着通知でも新しいボス報酬を巻き戻さない。一時プログラムは撤去した。
+- **今回の指定検証**：Release build は警告5件・エラー0件。`DOTNET=/usr/bin/dotnet DOTNET_ROLL_FORWARD=LatestMajor python tools/test_changed.py --all` は Native 106・Core 2471・Startup 73、計2650件成功・失敗0件・既存skip4件。
+- **限界**：本体境界は既存double。Unity画面、実ソケット通信、利用者の実際の通知未着条件は未確認。通常モードの当該停止経路を修正した証拠であり、別のInfinityボス／魂／保存待ちの全経路保証ではない。
+
 ## #246 全48ファイルの見直し一覧
 
 「追加なし」は、今回の静的差分・成功時経路の追跡で追加修正を裏付ける退行を確認しなかった意味。実機の全経路保証ではない。

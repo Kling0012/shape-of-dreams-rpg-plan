@@ -212,6 +212,8 @@ namespace SodRpg.Mod
         public Zone currentZone;
         public int currentNodeIndex = -1;
         public WorldNode currentNode;
+        public Action ReadyAfterTransition;
+        public void CallOnReadyAfterTransition(Action action) => ReadyAfterTransition = action;
     }
     internal class GameMod_Limbo { public int depth; }
     internal sealed class Zone { public string name; }
@@ -360,10 +362,19 @@ namespace SodRpg.Mod
     }
     // Native Infinity is unavailable by default. Tests may enable save agreement and supply
     // shared snapshots for an exploring participant; native graph/choice operations are out of scope.
-    internal static class InfinityMode
+    internal static partial class InfinityMode
     {
-        internal static bool Available => false;
-        internal static bool Restoring => false;
+        internal static bool Available { get; set; }
+        private static bool _restoring, _newInfinity, _refresh, _hunterAdjustSuspended;
+        private static int _hunterMoveCounter;
+        private static InfinityRunState _initial;
+        private static InfinityChoice _choice, _ackWaitingChoice;
+        private static string _choiceText;
+        private static readonly Dictionary<string, long> Acks = new Dictionary<string, long>();
+        internal static bool NativeEnvelopePresent => false;
+        internal static InfinityRunState State => null;
+        private static void ClearPendingTravel() { }
+        internal static void InterceptionFailed(string hook, Exception error) => Log.Warn(hook + ": " + error.Message);
         internal static bool Enabled { get; set; }
         internal static bool NativeSaveAgreement { get; set; }
         internal static void WriteEnvelope() { }

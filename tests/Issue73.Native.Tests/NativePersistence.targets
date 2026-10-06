@@ -37,7 +37,9 @@
             || m.GetType().Name == "PropertyDeclarationSyntax") && wanted.Contains(identifier(m))).ToArray();
         if (methods.Length == 0 || wanted.Any(w => !methods.Any(m => identifier(m) == w))) throw new System.InvalidOperationException("Native persistence member contract changed; review the harness extraction.");
         var imports = ((System.Collections.IEnumerable)root.GetType().GetProperty("Usings").GetValue(root)).Cast<object>();
-        var source = string.Concat(imports.Select(sourceText)) + "\nnamespace SodRpg.Mod { internal sealed partial class " + ClassName + " {\n"
+        var modifiers = session.GetType().GetProperty("Modifiers").GetValue(session).ToString();
+        if (!modifiers.Split(' ').Contains("partial")) modifiers += " partial";
+        var source = string.Concat(imports.Select(sourceText)) + "\nnamespace SodRpg.Mod { " + modifiers + " class " + ClassName + " {\n"
             + string.Join("\n", methods.Select(sourceText)) + "\n} }\n";
         System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(OutputPath));
         System.IO.File.WriteAllText(OutputPath, source);
@@ -71,6 +73,13 @@
     <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/ClientSession.Infinity.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)InfinityContinue.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="ClientSession" Methods="InfinityStateDurable;HostInfinityStateDurable;InfinitySaveHoldReleased;InfinitySaveHoldSatisfied;HostInfinitySaveHoldSatisfied;PersistHostInfinityState;SaveInfinityState;SaveInfinityReceipt;BeginInfinitySaveHold;ResetInfinitySaveHold;CompleteInfinityStateSave;CountHostInfinityRoom;SyncInfinityContinueSnapshot;ObserveInfinityRoomTotal;TickInfinity;TryOpenInfinityChoice;AdvanceInfinityIdentity;ResetInfinityContinueState" />
     <ItemGroup>
       <Compile Include="$(IntermediateOutputPath)InfinityContinue.g.cs" />
+    </ItemGroup>
+  </Target>
+
+  <Target Name="CompileInfinityRestore" BeforeTargets="CoreCompile">
+    <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/InfinityMode.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)InfinityRestore.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="InfinityMode" Methods="BeginRestore;FinishRestore;Restoring" />
+    <ItemGroup>
+      <Compile Include="$(IntermediateOutputPath)InfinityRestore.g.cs" />
     </ItemGroup>
   </Target>
 

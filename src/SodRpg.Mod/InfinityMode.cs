@@ -257,15 +257,10 @@ namespace SodRpg.Mod
                 if (NativeEnvelopePresent || State != null) DisableFeature("Infinity continue has no native graph.");
                 return;
             }
-            zone.CallOnReadyAfterTransition(() =>
-            {
-                try
-                {
-                    _restoring = false;
-                    if (Available) ClientSession.FinishNativeContinueRestore();
-                }
-                catch (Exception ex) { InterceptionFailed(nameof(FinishRestore), ex); }
-            });
+            // ApplyGameData's completion already follows native room restoration. Waiting again
+            // on GameManager.CallOnReady can strand even normal runs behind this global flag.
+            _restoring = false;
+            ClientSession.FinishNativeContinueRestore();
         }
 
         internal static bool TryReadEnvelope(out Envelope envelope)

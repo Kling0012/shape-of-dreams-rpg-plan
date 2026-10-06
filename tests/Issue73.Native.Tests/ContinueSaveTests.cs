@@ -114,6 +114,135 @@ namespace Issue73.Native.Tests
             Assert.False(ClientSession.NativeContinueRestoring);
         }
 
+        [Theory]
+        [InlineData(false, true)]
+        [InlineData(true, true)]
+        [InlineData(false, false)]
+        [InlineData(true, false)]
+        public void Continue_then_boss_and_zone_end_opens_secure_panel_even_without_native_ready_callback(
+            bool withGuest, bool nativeFinished)
+        {
+            var host = HostSession(out var actor);
+            var zone = new ZoneManager { currentZoneIndex = 0 };
+            NetworkedManagerBase<ZoneManager>.softInstance = zone;
+            Set(host, "_zone", zone);
+            Set(host, "_clientRpcOn", actor);
+            Set(host, "_grantPendingKill", (Action<PendingRunKill>)(kill => Call(host, "GrantPendingKill", kill)));
+            var progress = (RunChoiceProgress)Get(host, "_runChoiceProgress");
+            progress.BeginRun("run", 0);
+            var save = new DewPersistence.GameData();
+            SaveContinue(save);
+            string checkpointId = HostCheckpointId(save);
+            ClientSession guest = null;
+            if (withGuest)
+            {
+                guest = GuestInGame("run");
+                Set(guest, "_zone", zone);
+                ((RunChoiceProgress)Get(guest, "_runChoiceProgress")).BeginRun("run", 0);
+                Call(guest, "PrepareContinueSnapshot");
+                guest.Profile.ContinueCheckpoints.Add(RunCheckpoint.Capture(guest.Profile, checkpointId));
+                Fight(guest.Profile, MonsterTier.Boss, 1); // Must be rewound, not counted again.
+                NetworkServer.active = true;
+                NetworkClient.active = false;
+            }
+            Fight(host.Profile, MonsterTier.Boss, 1);
+            ReturnToLobby(host);
+            Call(host, "TrackRun");
+            NetworkedManagerBase<GameManager>.softInstance = new GameManager { runId = "run" };
+            LoadContinue(save);
+            InfinityMode.Available = true;
+            InfinityMode.BeginRestore();
+            if (nativeFinished)
+            {
+                // Both production completion paths run, but native lazy readiness never calls back.
+                _finishNativeContinue();
+                InfinityMode.FinishRestore();
+            }
+            else
+            {
+                Time.unscaledTime = 129.99f;
+                Call(host, "TrackRun");
+                Assert.Null(host.ActiveRunId);
+                Time.unscaledTime = 130f;
+            }
+            Call(host, "TrackRun");
+            Assert.Equal("run", host.ActiveRunId);
+            Assert.False(ClientSession.NativeContinueRestoring);
+            Assert.False(InfinityMode.Restoring);
+            if (!nativeFinished) Assert.Contains(host.Events, e => e.Kind == EventKind.Warning);
+            Assert.Equal(0, host.Profile.Run.Kills);
+            Assert.Contains(host.Profile.ContinueCheckpoints, c => c.Id == checkpointId);
+
+            progress.Rewards.Add(new PendingRunKill("run", 0, 0, MonsterTier.Boss, 10,
+                NightmareAffix.None, null, "hero"));
+            zone.currentZoneIndex = 1;
+            Call(host, "TrackRun"); // Same-run reconciliation also covers a missed native zone event.
+            Call(host, "TickRunChoices");
+            Assert.True(host.Profile.Run.AwaitingChoice);
+            Assert.True(host.CanResolveSecureChoice);
+            Assert.Equal(1, host.Profile.Run.Kills);
+            Assert.False(new DreamforgeUi(host).SecurePanelHidden);
+            int shards = host.Profile.Run.SatchelShards;
+            _finishNativeContinue(); // Late completion must not rewind the new boss reward/choice.
+            Call(host, "TickRunChoices");
+            Assert.Equal(1, host.Profile.Run.Kills);
+            Assert.Equal(shards, host.Profile.Run.SatchelShards);
+            Assert.True(host.Profile.Run.AwaitingChoice);
+
+            if (guest != null)
+            {
+                NetworkServer.active = false;
+                NetworkClient.active = true;
+                Call(guest, "ReceiveContinueHandshake", Hello("run", checkpointId, host.Profile.ContinueResumeSession));
+                foreach (var msg in actor.Sent.Select(s => s.Message).OfType<DreamforgeRunChoicesMsg>())
+                    Call(guest, "OnRunChoices", msg);
+                Call(guest, "TrackRun");
+                Call(guest, "TickRunChoices");
+                Assert.True(guest.Profile.Run.AwaitingChoice);
+                Assert.Equal("run", guest.ActiveRunId);
+                Assert.Equal(0, guest.Profile.Run.Kills);
+                Assert.False(new DreamforgeUi(guest).SecurePanelHidden);
+            }
+        }
+
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void Continue_timeout_preserves_checkpoint_and_never_rewinds_an_unready_or_different_native_run(bool loading)
+        {
+            var host = HostSession();
+            var zone = new ZoneManager { currentZoneIndex = 0, isInAnyTransition = loading };
+            NetworkedManagerBase<ZoneManager>.softInstance = zone;
+            Set(host, "_zone", zone);
+            ((RunChoiceProgress)Get(host, "_runChoiceProgress")).BeginRun("run", 0);
+            var save = new DewPersistence.GameData();
+            SaveContinue(save);
+            Fight(host.Profile, MonsterTier.Boss, 1);
+            LoadContinue(save);
+            NetworkedManagerBase<GameManager>.softInstance.runId = loading ? "run" : "different-run";
+            Time.unscaledTime = 130f;
+            Call(host, "TrackRun");
+            Assert.Contains(host.Profile.ContinueCheckpoints, c => c.Id == HostCheckpointId(save));
+            Assert.NotNull(host.ContinueWarning);
+            if (loading)
+            {
+                Assert.True(ClientSession.NativeContinueRestoring);
+                Assert.Equal(1, host.Profile.Run.Kills); // Do not expose pre-rewind Build or native state.
+                zone.isInAnyTransition = false;
+                _finishNativeContinue();
+                Call(host, "TrackRun");
+                Assert.Equal(0, host.Profile.Run.Kills);
+                Assert.True(host.RunActive);
+            }
+            else
+            {
+                Assert.False(ClientSession.NativeContinueRestoring);
+                Assert.Equal("different-run", host.ActiveRunId);
+                Assert.Equal("different-run", host.Profile.Run.RunId);
+                Assert.True(host.RunActive); // A foreign checkpoint cannot stop a new native run.
+            }
+        }
+
         /// <summary>巻き戻りのない再開（保存後そのまま再開）では、遠征が今までどおり続く。</summary>
         [Fact]
         public void Resume_without_rollback_continues_the_expedition_as_before()
@@ -770,6 +899,9 @@ namespace Issue73.Native.Tests
             DewPlayer.gamePlayers.Clear();
             DewPlayer.local = null;
             InfinityMode.NativeSaveAgreement = false;
+            InfinityMode.Available = false;
+            Set(typeof(InfinityMode), "_restoring", false);
+            NetworkedManagerBase<ZoneManager>.softInstance = null;
             SingletonDewNetworkBehaviour<Room>.softInstance = null;
             HostAuthority.NativeInstance = null;
             Set(typeof(HostAuthority), "_pendingContinueTrades", null);

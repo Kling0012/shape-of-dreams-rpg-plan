@@ -45,6 +45,7 @@ namespace SodRpg.Mod
         private string _pendingContinueId, _confirmedContinueId;
         private bool _continueCheckpointBlocked;
         private bool _nativeContinueRestoring;
+        private float _nativeContinueRestoreDeadline = float.PositiveInfinity;
         internal static bool NativeContinueRestoring => _hostSession?._nativeContinueRestoring == true;
         private GameManager _continueGame;
         private bool ContinueReady => !_nativeContinueRestoring && (LobbyReturnPending
@@ -133,6 +134,7 @@ namespace SodRpg.Mod
             var session = _hostSession;
             if (!NetworkServer.active || session == null || data?.serverActorData == null) return;
             session._nativeContinueRestoring = true;
+            session._nativeContinueRestoreDeadline = Time.unscaledTime + 30f;
             HostAuthority.GemContinueSources.Reset();
             HostAuthority.NativeInstance?.BeginNativeContinueRestore();
             session._nativeContinueCheckpoint = null;
@@ -155,6 +157,43 @@ namespace SodRpg.Mod
                         HostAuthority.GemContinueSources.Include(player.playerGuid);
             data.serverActorData.TryGetValue(ContinueTradesKey, out string trades);
             HostAuthority.RestoreContinueTrades(trades);
+        }
+
+        private void TickContinueRestore()
+        {
+            if (!NetworkServer.active || (!_nativeContinueRestoring
+                && _nativeContinueCheckpoint == null && !InfinityMode.Restoring)
+                || Time.unscaledTime < _nativeContinueRestoreDeadline) return;
+            _nativeContinueRestoreDeadline = float.PositiveInfinity;
+            string warning = Loc.T("再開の完了通知が30秒届いていません。本体の復元状態を確認して待機を解除します。",
+                "Resume completion has not arrived for 30 seconds. Checking native restore state to release the wait.");
+            Log.Warn(warning);
+            _notify?.Invoke(new GameEvent(EventKind.Warning, warning));
+            var game = NetworkedManagerBase<GameManager>.softInstance;
+            var zone = NetworkedManagerBase<ZoneManager>.softInstance;
+            if (string.IsNullOrEmpty(game?.runId) || zone == null || zone.isInAnyTransition)
+            {
+                // The native load itself has not finished: pause only restored rewards/builds.
+                // A real completion can still install the retained checkpoint; do not fake it.
+                ContinueWarning = Loc.T("本体の復元完了を確認できないため、この遠征のMOD報酬・Build反映のみ保留しています。",
+                    "Native restore is not ready. Only this expedition's MOD rewards and Build application are paused.");
+                Log.Warn(ContinueWarning);
+                return;
+            }
+            var checkpoint = _nativeContinueCheckpoint;
+            if (checkpoint != null && checkpoint.RunId != game.runId)
+            {
+                // Retain the snapshot, but never rewind another expedition or invent a receipt.
+                RememberContinueCheckpoint(checkpoint);
+                _nativeContinueCheckpoint = null;
+                _continueCheckpointId = _continueResumeSession = null;
+                HostAuthority.GemContinueSources.Reset();
+                ContinueWarning = Loc.T("再開地点と本体の遠征が一致しないため、復元をスキップして遠征を続けます。以前の保存は保持しています。",
+                    "Resume checkpoint does not match the native expedition. Skipping restore and continuing; earlier saves are retained.");
+                Log.Warn(ContinueWarning);
+            }
+            InfinityMode.FinishRestore();
+            FinishNativeContinueRestore();
         }
 
         internal static void FinishNativeContinueRestore()

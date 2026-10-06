@@ -511,6 +511,7 @@ namespace SodRpg.Mod
         private void TrackRun()
         {
             var gm = NetworkedManagerBase<GameManager>.softInstance;
+            TickContinueRestore();
             if (LobbyReturnPending)
             {
                 // Finish the old defeat before observing a new native run. A pending Infinity defeat
@@ -526,7 +527,7 @@ namespace SodRpg.Mod
                 return;
             }
             string runId = gm.runId;
-if (_nativeContinueRestoring || InfinityMode.Restoring) return;
+            if (_nativeContinueRestoring || InfinityMode.Restoring) return;
             if (BlockLobbyReturnedContinue(runId)) return;
             if (_nativeContinueCheckpoint != null)
             {
