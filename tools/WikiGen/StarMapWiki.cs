@@ -131,15 +131,15 @@ internal static class StarMapWiki
     private static string StarRow(Row r)
     {
         var t = r.T;
-        string effect = Ja(() => StarMapPresentation.EffectDescription(t)) + "\n"
-            + En(() => StarMapPresentation.EffectDescription(t));
+        string effect = Ja(() => StarMapPresentation.DisplayDescription(t)) + "\n"
+            + En(() => StarMapPresentation.DisplayDescription(t));
         return $"| {NameCell(t.Name)} | {(r.Cluster == "" ? "-" : Cell(r.Cluster))} | {t.MaxRank} | {t.RankCost} | {Cell(effect)} |";
     }
 
     private static string KeystoneRow(TalentDef t)
     {
-        string up = Ja(() => StarMapPresentation.EffectDescription(t)) + "\n"
-            + En(() => StarMapPresentation.EffectDescription(t));
+        string up = Ja(() => StarMapPresentation.DisplayDescription(t)) + "\n"
+            + En(() => StarMapPresentation.DisplayDescription(t));
         int cost = t.KeystoneDefinition?.Cost ?? Content.KeystoneCost;
         return $"| {NameCell(t.Name)} | {Cell(up)} | {cost} |";
     }

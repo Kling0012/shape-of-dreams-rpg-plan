@@ -102,7 +102,7 @@ namespace SodRpg.Core.Tests
             foreach (bool ja in new[] { true, false })
             {
                 string text = InLanguage(ja, () => Detail(entry, true, state));
-                string power = InLanguage(ja, () => Content.FormatPower(named.Powers[0].Power, named.Powers[0].Value));
+                string power = InLanguage(ja, () => Content.FormatPowerBullets(named.Powers[0].Power, named.Powers[0].Value));
                 Assert.Contains(ja ? named.Name.Ja : named.Name.En, text);
                 Assert.Contains(power, text);
                 Assert.Contains(ja ? named.Lore.Ja : named.Lore.En, text);
@@ -133,7 +133,7 @@ namespace SodRpg.Core.Tests
                 Assert.DoesNotContain(named.Lore.En, text);
                 Assert.DoesNotContain(set.Name.Ja, text);
                 Assert.DoesNotContain(set.Name.En, text);
-                Assert.DoesNotContain(InLanguage(ja, () => Content.FormatPower(named.Powers[0].Power, named.Powers[0].Value)), text);
+                Assert.DoesNotContain(InLanguage(ja, () => Content.FormatPowerBullets(named.Powers[0].Power, named.Powers[0].Value)), text);
             }
         }
 

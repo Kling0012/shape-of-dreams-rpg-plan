@@ -175,9 +175,9 @@ namespace SodRpg.Mod
                 sb.Append(Loc.T("土台：", "Base: ")).Append(e.Base.Name.ToString()).Append('\n');
                 AppendImplicit(sb, e.Base);
             }
-            foreach (var pw in u.Powers) sb.Append(Colored(Content.FormatPower(pw.Power, pw.Value), Purple)).Append('\n');
+            foreach (var pw in u.Powers) sb.Append(Colored(Content.FormatPowerBullets(pw.Power, pw.Value), Purple)).Append('\n');
             if (u.BossMove != null)
-                sb.Append(Colored(BossProfiles.DescribeMove(u.BossMove), Purple)).Append('\n');
+                sb.Append(Colored(EffectLayout.Bullets(BossProfiles.DescribeMove(u.BossMove)), Purple)).Append('\n');
             if (u.Link != null) sb.Append(Colored(Links.Describe(u.Link), Cyan)).Append('\n');
             sb.Append(Loc.T("特性：入手のたびに3つ抽選されます。", "Affixes: 3 are rolled each time you obtain one.")).Append('\n');
             sb.Append(Colored(Loc.T(
@@ -218,9 +218,9 @@ namespace SodRpg.Mod
                 sb.Append('\n');
                 if (got)
                     foreach (var pw in pc.Powers)
-                        sb.Append("  ").Append(Colored(Content.FormatPower(pw.Power, pw.Value), Purple)).Append('\n');
+                        sb.Append(Colored(Content.FormatPowerBullets(pw.Power, pw.Value, "  "), Purple)).Append('\n');
                 if (got && pc.BossMove != null)
-                    sb.Append("  ").Append(Colored(BossProfiles.DescribeMove(pc.BossMove), Purple)).Append('\n');
+                    sb.Append(Colored(EffectLayout.Bullets(BossProfiles.DescribeMove(pc.BossMove), "  "), Purple)).Append('\n');
             }
         }
 
@@ -234,7 +234,7 @@ namespace SodRpg.Mod
                 sb.Append(Loc.T("土台：", "Base: ")).Append(e.Base.Name.ToString()).Append('\n');
                 AppendImplicit(sb, e.Base);
             }
-            foreach (var pw in n.Powers) sb.Append(Colored(Content.FormatPower(pw.Power, pw.Value), Purple)).Append('\n');
+            foreach (var pw in n.Powers) sb.Append(Colored(Content.FormatPowerBullets(pw.Power, pw.Value), Purple)).Append('\n');
             int affixes = Content.AffixCount(n.Rarity);
             sb.Append(Loc.T($"特性：入手のたびに{affixes}つ抽選されます。", $"Affixes: {affixes} are rolled each time you obtain one.")).Append('\n');
             if (!string.IsNullOrEmpty(n.Lore.ToString()))
@@ -275,7 +275,7 @@ namespace SodRpg.Mod
         {
             if (CodexQuery.TryPowerRange(e.Power, out int min, out int max))
             {
-                if (min == max) sb.Append(Colored(Content.FormatPower(e.Power, max), Purple)).Append('\n');
+                if (min == max) sb.Append(Colored(Content.FormatPowerBullets(e.Power, max), Purple)).Append('\n');
                 else
                 {
                     sb.Append(Colored(Content.FormatPower(e.Power, min), Purple)).Append(Colored(Loc.T("  （最小）", "  (min)"), Dim)).Append('\n');

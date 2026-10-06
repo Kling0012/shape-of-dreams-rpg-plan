@@ -228,20 +228,20 @@ namespace SodRpg.Core.Game
         public string Describe()
         {
             string two = string.Join(Loc.T("、", ", "), TwoPiece.Select(s => Content.FormatStat(s.Stat, s.Value)));
-            string three = string.Join("\n", ThreePiece.Select(p => "　" + Content.FormatPower(p.Power, p.Value)));
+            string three = string.Join("\n", ThreePiece.Select(p => Content.FormatPowerBullets(p.Power, p.Value, "　")));
             string text = Loc.T($"2つ装着：{two}\n3つ装着：\n{three}", $"2 pieces: {two}\n3 pieces:\n{three}");
             if (BossStages.Count > 0)
-                text = string.Join("\n", BossStages.Select(s => Loc.T($"{s.RequiredPieces}つ装着：", $"{s.RequiredPieces} pieces: ") + BossProfiles.DescribeMove(s.ProfileId)));
+                text = string.Join("\n", BossStages.Select(s => Loc.T($"{s.RequiredPieces}つ装着：\n", $"{s.RequiredPieces} pieces:\n") + EffectLayout.Bullets(BossProfiles.DescribeMove(s.ProfileId), "　")));
             if (SixPiece != null && SixPiece.Length > 0)
             {
-                string six = string.Join("\n", SixPiece.Select(p => "　" + Content.FormatPower(p.Power, p.Value)));
+                string six = string.Join("\n", SixPiece.Select(p => Content.FormatPowerBullets(p.Power, p.Value, "　")));
                 text += Loc.T($"\n6つ装着：\n{six}", $"\n6 pieces:\n{six}");
             }
             if (BossTypeName != null)
                 text += Loc.T("\n入手先：対応するボスからのみ", "\nSource: only from the matching boss");
             foreach (var stage in LinkStages)
-                text += Loc.T($"\n{stage.RequiredPieces}つ装着の任意連携：", $"\nOptional {stage.RequiredPieces}-piece link: ")
-                    + (stage.Link.Kind == LinkKind.BossReward ? BossProfiles.DescribeReward(BossReward, (int)stage.Link.Value) : Links.Describe(stage.Link));
+                text += Loc.T($"\n{stage.RequiredPieces}つ装着の任意連携：\n", $"\nOptional {stage.RequiredPieces}-piece link:\n")
+                    + EffectLayout.Bullets(stage.Link.Kind == LinkKind.BossReward ? BossProfiles.DescribeReward(BossReward, (int)stage.Link.Value) : Links.Describe(stage.Link), "　");
             return text;
         }
 
@@ -5900,6 +5900,9 @@ namespace SodRpg.Core.Game
                 default: return "-";
             }
         }
+
+        /// <summary>画面に出す固有効果：1行目に効果の要点、続けて条件・間隔・上限を「・」の箇条書きにする。</summary>
+        public static string FormatPowerBullets(Power p, int v, string indent = "") => EffectLayout.Bullets(FormatPower(p, v), indent);
 
         public static string FormatPower(Power p, int v)
         {
