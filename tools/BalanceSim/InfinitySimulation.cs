@@ -2,7 +2,35 @@ using SodRpg.Core.Game;
 
 namespace BalanceSim;
 
-internal sealed record InfinityScenario(string Key, string Name, int Speed, int Depth, double NightmareMultiplier, Waypoint Waypoint);
+internal sealed record InfinityScenario(string Key, string Name, int Speed, int Depth, double NightmareMultiplier, Waypoint Waypoint, bool Normal = false);
+
+internal struct InfinitySupply
+{
+    public long Relics, Shards, Tuning, DreamXp, StarXp;
+
+    internal static InfinitySupply Capture(Profile profile, InfinityRow row)
+    {
+        long dreamXp = profile.DreamXp;
+        for (int level = 1; level < profile.DreamLevel; level++) dreamXp += Content.XpToNext(level);
+        return new InfinitySupply
+        {
+            Relics = row.Relics,
+            Shards = profile.Material(Materials.Shard) + (profile.Run?.SatchelShards ?? 0) + (profile.Run?.DeferredWaypointShards ?? 0),
+            Tuning = profile.Material(Materials.Tuning) + (profile.Run?.SatchelTuning ?? 0) + (profile.Run?.DeferredWaypointTuning ?? 0),
+            DreamXp = dreamXp,
+            StarXp = profile.Hero(InfinitySimulation.Hero).StarXp,
+        };
+    }
+
+    internal void AddDelta(InfinitySupply before, InfinitySupply after)
+    {
+        Relics += after.Relics - before.Relics;
+        Shards += after.Shards - before.Shards;
+        Tuning += after.Tuning - before.Tuning;
+        DreamXp += after.DreamXp - before.DreamXp;
+        StarXp += after.StarXp - before.StarXp;
+    }
+}
 
 internal sealed class InfinityRow
 {
@@ -18,6 +46,7 @@ internal sealed class InfinityRow
     public long Accepted, Rejected;
     public double OutputReserved, Guaranteed, GuaranteeOpportunities, HighRareSpent, LegendarySpent, CombatSeconds;
     public int PeakHeat, Pressure;
+    public InfinitySupply CombatSupply, BossSupply;
     public double Hours => Players * Minutes / 60.0;
 }
 
@@ -60,7 +89,10 @@ internal sealed class InfinitySimulation
         var intervals = comparison ? ComparisonIntervals : Intervals;
         foreach (int depth in new[] { 0, 5 })
             foreach (int minutes in durations)
-                Rows.Add(Simulate(new InfinityScenario($"normal-depth{depth}", $"normal depth{depth}", 1, depth, 1, Waypoint.None), minutes, 0, "normal"));
+                Rows.Add(Simulate(new InfinityScenario($"normal-depth{depth}", $"normal depth{depth}", 1, depth, 1, Waypoint.None, Normal: true), minutes, 0, "normal"));
+        foreach (int minutes in durations)
+            Rows.Add(Simulate(new InfinityScenario("normal-matched", "normal matched room/boss count", 1, 0, 1, Waypoint.None, Normal: true),
+                minutes, InfinityRunState.DefaultInterval, "default"));
         foreach (var scenario in Scenarios)
             foreach (int minutes in durations)
                 foreach (var interval in intervals)
@@ -98,16 +130,18 @@ internal sealed class InfinitySimulation
             while (elapsed < minutes * 60)
             {
                 var run = profile.Run;
-                bool boss = interval == 0 ? combatSinceBoss == NormalCombatRoomsPerZone : run.Infinity.BossDue;
+                var supplyBefore = InfinitySupply.Capture(profile, row);
+                bool boss = scenario.Normal ? combatSinceBoss == (interval == 0 ? NormalCombatRoomsPerZone : interval) : run.Infinity.BossDue;
                 if (boss)
                 {
                     run.Infinity?.TryEnterBoss();
                     AdvanceAndKill(profile, MonsterTier.Boss, NightmareAffix.None, nodeSeconds, ref elapsed, minutes, row,
-                        bossSetEligible: interval != 0 || normalZone == 0);
+                        bossSetEligible: !scenario.Normal || normalZone == 0);
                     if (elapsed > minutes * 60) break;
+                    row.BossSupply.AddDelta(supplyBefore, InfinitySupply.Capture(profile, row));
                     row.Bosses++;
                     combatSinceBoss = 0;
-                    if (interval != 0)
+                    if (!scenario.Normal)
                     {
                         FinishBoss(profile);
                         Observe(Rules.Delve(profile), row, profile);
@@ -156,6 +190,7 @@ internal sealed class InfinitySimulation
                     run.Infinity.TryCountCombatClear(run.Infinity.GraphEpoch, combatSinceBoss - 1, true, false, false);
                 Observe(Rules.OnRoomsCleared(profile, ++normalNode), row, profile);
                 row.PeakHeat = Math.Max(row.PeakHeat, run.PeakHeat);
+                row.CombatSupply.AddDelta(supplyBefore, InfinitySupply.Capture(profile, row));
                 row.Pressure = Math.Max(row.Pressure, run.Infinity?.PressureStage ?? 0);
             }
             row.PeakHeat = Math.Max(row.PeakHeat, profile.Run?.PeakHeat ?? 0);
@@ -175,7 +210,7 @@ internal sealed class InfinitySimulation
     {
         Rules.BeginRun(profile, $"balance-infinity-{runNumber}", heroKey: Hero, dreamDepth: scenario.Depth);
         profile.Run.ActiveWaypoint = scenario.Waypoint;
-        if (interval != 0)
+        if (!scenario.Normal)
             profile.Run.Infinity = new InfinityRunState
             {
                 FixedZoneId = "Zone_Forest", DifficultyId = "diffNormal", Interval = interval,

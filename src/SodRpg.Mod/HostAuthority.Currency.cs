@@ -33,7 +33,7 @@ namespace SodRpg.Mod
             {
                 if (ReferenceEquals(player, null) || !player.isHumanPlayer) continue;
                 _currencySeen.Add(player);
-                float delta = !InfinityMode.Enabled && _builds.TryGetValue(player, out var received)
+                float delta = _builds.TryGetValue(player, out var received)
                     ? CurrencyStars.KillGoldMultiplierDelta(received.Build) : 0f;
                 if (_killGoldLedger.AppliedDelta(player) == delta) continue;
                 try
@@ -103,7 +103,6 @@ namespace SodRpg.Mod
         {
             try
             {
-                if (InfinityMode.Enabled) return; // Conservative cap: no MOD-created native currency.
                 if (ReferenceEquals(player, null) || player == null || amount <= 0 || !_builds.TryGetValue(player, out var received)) return;
                 int bonus = CurrencyStars.DreamDustBonusForPickup(received.Build, CurrencyStars.IsDelving(ClientSession.HostRun),
                     amount, pickup.isGivenByOtherPlayer, _rng.NextDouble());
@@ -121,7 +120,6 @@ namespace SodRpg.Mod
         /// </summary>
         private void GrantEliteKillGold(Monster monster)
         {
-            if (InfinityMode.Enabled) return;
             if (monster == null || (monster.type != Monster.MonsterType.MiniBoss && monster.type != Monster.MonsterType.Boss)
                 || monster.disableLoot) return;
             var status = monster.Status;

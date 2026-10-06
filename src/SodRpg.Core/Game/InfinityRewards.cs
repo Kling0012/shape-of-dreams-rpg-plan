@@ -77,7 +77,7 @@ namespace SodRpg.Core.Game
             Refill(ref b.Shards, ShardsPerHour / 3600, deltaSeconds, ShardsBurst);
             Refill(ref b.Tuning, TuningPerHour / 3600, deltaSeconds, TuningBurst);
             Refill(ref b.Xp, XpPerHour / 3600, deltaSeconds, XpBurst);
-            Refill(ref b.StarXp, StarXpPerHour / 3600, deltaSeconds, StarXpBurst);
+            Refill(ref b.StarXp, StarXpPerHour * DreamDepth.StarXpMultiplier(p.Run.DreamDepth) / 3600, deltaSeconds, StarXpBurst);
             Refill(ref b.Awakening, AwakeningPerHour / 3600, deltaSeconds, AwakeningBurst);
             Refill(ref b.DustConversions, DustConversionsPerHour / 3600, deltaSeconds, DustConversionsBurst);
             Refill(ref b.Merchants, MerchantsPerHour / 3600, deltaSeconds, MerchantsBurst);
@@ -165,7 +165,7 @@ namespace SodRpg.Core.Game
                 $"Infinity guarantee budget is unavailable ({needed} credit(s) required, {GuaranteesPerHour} per combat hour, no initial credit).");
             return allowed;
         }
-        /// <summary>Admit the entire random opportunity before any roll; never inspect a rolled rarity to limit EV.</summary>
+        /// <summary>Admit the full rare opportunity before rolling; ordinary supply has independent output budgets.</summary>
         internal static bool AdmitKill(Profile p, MonsterTier tier, MonsterTier rollTier, int heat, Waypoint waypoint, bool nightmare,
             string bossTypeName, bool bossDropNightmare, int bossDropDepth)
         {

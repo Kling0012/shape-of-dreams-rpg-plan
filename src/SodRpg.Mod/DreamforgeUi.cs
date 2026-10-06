@@ -2985,12 +2985,12 @@ namespace SodRpg.Mod
 
         private void DrawInfinityCaps()
         {
-            GUILayout.Label(Loc.T($"報酬上限：部屋ごとの撃破機会予算＋実戦闘時間予算。戦闘1時間あたり無料遺物{InfinityRewards.RelicsPerHour}個、Epic以上の保証は別枠{InfinityRewards.GuaranteesPerHour}個。待機・休止・ロード・再接続では補充しません。",
-                $"Reward caps: per-room kill opportunity budgets plus combat-time budgets. Free relics: {InfinityRewards.RelicsPerHour}/combat hour; Epic+ guarantees: a separate {InfinityRewards.GuaranteesPerHour}/combat hour. Idle, pause, loading and reconnecting do not refill budgets."), _st.Small);
+            GUILayout.Label(Loc.T($"報酬上限：一般供給は実戦闘時間予算、Epic以上の抽選は部屋ごとの撃破機会予算も必要です。戦闘1時間あたり無料遺物{InfinityRewards.RelicsPerHour}個、Epic以上の保証は別枠{InfinityRewards.GuaranteesPerHour}個。待機・休止・ロード・再接続では補充しません。",
+                $"Reward caps: ordinary supply uses combat-time budgets; Epic+ rolls also require per-room kill opportunity budgets. Free relics: {InfinityRewards.RelicsPerHour}/combat hour; Epic+ guarantees: a separate {InfinityRewards.GuaranteesPerHour}/combat hour. Idle, pause, loading and reconnecting do not refill budgets."), _st.Small);
             GUILayout.Label(Loc.T("欠片・調律石・夢XP・星XP・覚醒・換金機会にも上限があります。Heatボーナスと満杯時の欠片化も対象です。支払済みの対価・旧所持品の回収・有償製作は無料供給と別扱いです。",
                 "Shards, tuning, Dream XP, Star XP, awakening and exchange opportunities are capped too, including Heat bonuses and overflow conversion. Paid rewards, recovered existing items and paid crafting are separate from free supply."), _st.Small);
-            GUILayout.Label(Loc.T("インフィニティ中のMOD追加ゴールド／ダストボーナスは0です。本体の基本収入は変更せず、旧資産を使う有償取得も含めた総取得量の上限ではありません。",
-                "MOD-added gold/dust bonuses are zero in Infinity. Native base income is unchanged; these are not total-acquisition caps including spending existing assets."), _st.Small);
+            GUILayout.Label(Loc.T("本体の基本収入と星のゴールド／ダストボーナスは通常モードと同じです。旧資産を使う有償取得も含めた総取得量の上限ではありません。",
+                "Native base income and star Gold/Dust bonuses follow normal-mode rules. These are not total-acquisition caps including spending existing assets."), _st.Small);
         }
 
         private void DrawInfinityRecords(Profile profile)

@@ -5,12 +5,12 @@ namespace SodRpg.Core.Game
     internal static class InfinityBalance
     {
         internal const double ReferenceSeconds = 2100;
-        internal const double RelicsPerHour = 24;
+        internal const double RelicsPerHour = 30;
         internal const double GuaranteesPerHour = 0.25;
-        internal const double ShardsPerHour = 180;
-        internal const double TuningPerHour = 6;
-        internal const double XpPerHour = 1200;
-        internal const double StarXpPerHour = 780;
+        internal const double ShardsPerHour = 360;
+        internal const double TuningPerHour = 10;
+        internal const double XpPerHour = 1800;
+        internal const double StarXpPerHour = 1200;
         internal const double AwakeningPerHour = 780;
         internal const double DustConversionsPerHour = 6;
         internal const double MerchantsPerHour = 6;
@@ -30,16 +30,16 @@ namespace SodRpg.Core.Game
         internal const double ShardsBurst = 30;
         internal const double TuningBurst = 3;
         internal const double XpBurst = 50;
-        internal const double StarXpBurst = 20;
+        internal const double StarXpBurst = 40;
         internal const double AwakeningBurst = 20;
         internal const double DustConversionsBurst = 1;
         internal const double MerchantsBurst = 1;
         internal const double LesserRoomCap = 10;
-        internal const double LesserRoomIncrement = 5;
+        internal const double LesserRoomIncrement = 10;
         internal const double NormalRoomCap = 8;
-        internal const double NormalRoomIncrement = 4;
+        internal const double NormalRoomIncrement = 8;
         internal const double MiniBossRoomCap = 1;
-        internal const double MiniBossRoomIncrement = 0.125;
+        internal const double MiniBossRoomIncrement = 0.25;
         internal const double BossRoomCap = 1;
         internal const double BossRoomIncrement = 0.1;
         internal const int DefaultInterval = 10;
@@ -47,6 +47,6 @@ namespace SodRpg.Core.Game
         internal const int MiddleInterval = 15;
         internal const int LongInterval = 20;
         internal const int MaximumPressureStage = 100;
-        internal static readonly string ContentFingerprintRecord = null;
+        internal static readonly string ContentFingerprintRecord = "balance:infinity:v1:rates/relicsPerHour:double:credits/hour:30;rates/shardsPerHour:double:credits/hour:360;rates/tuningPerHour:double:credits/hour:10;rates/xpPerHour:double:credits/hour:1800;rates/starXpPerHour:double:credits/hour:1200;bursts/starXp:double:credits:40;rooms/lesser/increment:double:credits/room:10;rooms/normal/increment:double:credits/room:8;rooms/miniBoss/increment:double:credits/room:0.25";
     }
 }

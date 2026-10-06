@@ -72,14 +72,14 @@ namespace SodRpg.Core.Game
             return total == 0 ? 0 : high / total;
         }
 
-        public static Rarity RollRarity(Rng rng, double luck, bool allowLegendary, Rarity floor = Rarity.Common)
+        public static Rarity RollRarity(Rng rng, double luck, bool allowLegendary, Rarity floor = Rarity.Common, Rarity ceiling = Rarity.Legendary)
         {
             double f = 1.0 + LootBalance.RarityLuckCoefficient * Math.Max(0, luck);
             var w = new double[BaseRarityWeights.Length];
             double total = 0;
             for (int i = 0; i < w.Length; i++)
             {
-                if (i < (int)floor || (!allowLegendary && i == (int)Rarity.Legendary)) continue;
+                if (i < (int)floor || i > (int)ceiling || (!allowLegendary && i == (int)Rarity.Legendary)) continue;
                 w[i] = BaseRarityWeights[i] * Math.Pow(f, i);
                 total += w[i];
             }
@@ -400,7 +400,7 @@ namespace SodRpg.Core.Game
         /// （計画書 第14章「確保と損失は個人ごと」）。天井（救済）はなく、主報酬は通常抽選のみ。
         /// </summary>
         public static KillReward RollKill(Rng rng, MonsterTier tier, int itemLevel, int heat, Line? focus = null, Pacts.Totals mods = null,
-            IReadOnlyList<Relic> ownedRelics = null, IReadOnlyList<Relic> unsecuredRelics = null, ISet<string> codex = null)
+            IReadOnlyList<Relic> ownedRelics = null, IReadOnlyList<Relic> unsecuredRelics = null, ISet<string> codex = null, Rarity ceiling = Rarity.Legendary)
         {
             heat = ClampHeat(heat);
             var reward = new KillReward { Xp = Content.KillXp(tier) };
@@ -411,10 +411,10 @@ namespace SodRpg.Core.Game
             if (rng.Chance(chance))
             {
                 Rarity floor = tier == MonsterTier.Boss ? Rarity.Uncommon : Rarity.Common;
-                var rarity = RollRarity(rng, luck, allowLegendary, floor);
+                var rarity = RollRarity(rng, luck, allowLegendary, floor, ceiling);
                 reward.Relics.Add(RollRelic(rng, rarity, itemLevel, null, focus, ownedRelics, unsecuredRelics, codex));
                 if (tier == MonsterTier.Boss && rng.Chance(BossExtraRelicChance))
-                    reward.Relics.Add(RollRelic(rng, RollRarity(rng, luck, true, Rarity.Uncommon), itemLevel, null, focus, ownedRelics, unsecuredRelics, codex));
+                    reward.Relics.Add(RollRelic(rng, RollRarity(rng, luck, true, Rarity.Uncommon, ceiling), itemLevel, null, focus, ownedRelics, unsecuredRelics, codex));
             }
 
             switch (tier)
