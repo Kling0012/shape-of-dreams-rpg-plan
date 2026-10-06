@@ -42,12 +42,18 @@ namespace SodRpg.Core.Game
             if (lobbyBaseline == null && !string.IsNullOrEmpty(current.ContinueLobbyBaseline))
                 // The baseline is only a comparison input, not the profile being restored.
                 lobbyBaseline = ProfileCodec.ReadCheckpointProfile(current.ContinueLobbyBaseline);
-            if (!string.IsNullOrEmpty(current.CoopTradeEconomy))
+            // Recovery changes ownership irreversibly only for its source and receiving expeditions.
+            // Use today's economics, not merely the claim-time snapshot: relics may since have been
+            // secured, salvaged, traded, or lost. Unrelated future expeditions retain normal Continue.
+            bool interruptedEconomy = current.InterruptedRelicsClaimedRunIds.Contains(RunId)
+                || current.InterruptedRelicsRetiredSourceRunIds.Contains(RunId);
+            if (!interruptedEconomy && !string.IsNullOrEmpty(current.CoopTradeEconomy))
             {
                 var economyNotes = new List<string>();
                 var economy = ProfileCodec.ReadCheckpointProfile(current.CoopTradeEconomy, economyNotes);
                 if (economy.CoopTradeEconomy != null || economyNotes.Count != 0
-                    || ProfileCodec.WriteCheckpointProfile(economy.Clone()) != current.CoopTradeEconomy)
+                    || (economy.LoadedVersion == Profile.CurrentVersion
+                        && ProfileCodec.WriteCheckpointProfile(economy.Clone()) != current.CoopTradeEconomy))
                     throw new LedgerFormatException(Loc.T("協力取引の経済保存情報が不正です。", "Cooperative trade economic checkpoint is invalid."));
                 if (restored.CoopTradeEconomy != current.CoopTradeEconomy)
                     CoopTradeRules.CopyEconomics(restored, economy);
@@ -58,16 +64,20 @@ namespace SodRpg.Core.Game
                     CoopTradeRules.CopyDurableState(lobbyBaseline, current);
                 }
             }
+            if (interruptedEconomy) CoopTradeRules.CopyEconomics(restored, current);
             CoopTradeRules.CopyDurableState(restored, current);
             if (lobbyBaseline != null)
             {
-                if (!ReplayLobbyEconomy(restored, lobbyBaseline, current))
+                if (!interruptedEconomy && !ReplayLobbyEconomy(restored, lobbyBaseline, current))
                     notes?.Add(Loc.T("続きの保存にない遺物や素材を使ったため、ロビーでの鍛冶・取引の変更を戻しました。",
                         "Lobby crafting and trade changes were reverted because their relics or materials are not available at the continue point."));
                 ReplayLobbyHeroes(restored, lobbyBaseline, current);
             }
             // Never erase durable reservation or receipt deduplication through native Continue.
             CoopTradeRules.CopyDurableState(restored, current);
+            // Before claim, resuming the original expedition returns its ordinary satchel rights.
+            if (restored.InterruptedRelicsRunId == RunId)
+                Rules.ResumeInterruptedSource(restored, !string.IsNullOrEmpty(current.CoopTradeEconomy));
             // Preferences are not expedition earnings. Revision remains monotonic for disk reconciliation.
             restored.Revision = current.Revision;
             restored.Japanese = current.Japanese;

@@ -55,6 +55,9 @@ namespace SodRpg.Mod
         internal bool CanEditTalents = true, CanEditLoadout = true, Dirty, InGame;
         internal object LocalHero;
         internal bool CoopTradeLocked => Profile.CoopTradePending != null;
+        internal bool HasInterruptedRelics => InGame && Profile.Run != null && Profile.InterruptedRelics.Count != 0;
+        internal bool CanClaimInterruptedRelics => HasInterruptedRelics && !CoopTradeLocked && Rules.CanClaimInterruptedRelics(Profile);
+        internal string ClaimInterruptedRelics() => throw new NotSupportedException("Interrupted relic persistence is outside the refund fixture.");
         internal readonly List<GameEvent> Notices = new List<GameEvent>();
         internal void MarkDirty(bool build) => Dirty |= build;
         internal void Emit(GameEvent notice) => Notices.Add(notice);

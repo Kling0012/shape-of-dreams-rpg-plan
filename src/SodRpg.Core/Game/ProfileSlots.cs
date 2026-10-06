@@ -195,7 +195,8 @@ namespace SodRpg.Core.Game
         /// </summary>
         public bool CanCopySolo => ActiveSlot == ProfileSlot.Multi && !Store.WritesBlocked
             && !_copyUsed && IsPristineMulti(Profile)
-            && _savedSolo != null && _savedSolo.Run == null && _savedSolo.PendingSalvage.Count == 0 && _savedSolo.PendingTrades.Count == 0;
+            && _savedSolo != null && _savedSolo.Run == null && _savedSolo.PendingSalvage.Count == 0 && _savedSolo.PendingTrades.Count == 0
+            && _savedSolo.InterruptedRelics.Count == 0;
 
         /// <summary>
         /// Reads Solo's serialized save without writing any inactive-slot files, then deep
@@ -220,7 +221,8 @@ namespace SodRpg.Core.Game
             var notes = new List<string>();
             Profile copy = ProfileCodec.Read(_fs.ReadAllText(_soloStore.Path), notes);
             if (copy.LoadedVersion < Profile.ResetBeforeVersion || notes.Count != 0
-                || copy.Run != null || copy.PendingSalvage.Count != 0 || copy.PendingTrades.Count != 0) return false;
+                || copy.Run != null || copy.PendingSalvage.Count != 0 || copy.PendingTrades.Count != 0
+                || copy.InterruptedRelics.Count != 0) return false;
             // Revisions belong to the destination file; its backup must not outrank the copy.
             copy.Revision = Math.Max(copy.Revision, Profile.Revision);
             try
@@ -304,6 +306,8 @@ namespace SodRpg.Core.Game
         private bool IsPristineMulti(Profile p)
         {
             if (p.Run != null || p.LastReport != null || p.PendingSalvage.Count != 0 || p.PendingTrades.Count != 0 || p.RetuneOffer != null
+                || p.InterruptedRelics.Count != 0 || p.InterruptedRelicsExecuted.Count != 0
+                || p.InterruptedRelicsClaimedRunIds.Count != 0 || p.InterruptedRelicsRetiredSourceRunIds.Count != 0
                 || p.LoadedVersion != Game.Profile.CurrentVersion || p.DreamLevel != 1 || p.DreamXp != 0
                 || p.BulkSalvageMaxRarity != Rarity.Uncommon || p.BestItemLevel != 1 || p.StartDepth != 0 || p.LastDreamDepth != 0
                 || p.Materials.Count != 0 || p.LostAndFound.Count != 0 || p.Feats.Count != 0
