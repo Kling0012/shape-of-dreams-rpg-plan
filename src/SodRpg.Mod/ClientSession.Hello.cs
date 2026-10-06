@@ -14,13 +14,11 @@ namespace SodRpg.Mod
         private Action<DreamforgeHelloMsg> _onHello;
         private float _helloFirstSent = -1f, _nextHello;
         private bool _helloAnswered;
-        private string _acceptedHostContent;
+        private bool _hostCompatibilityWarned;
         private bool _hostInfinityAvailable;
         internal static bool RemoteHostInfinityAvailable => _hostSession?._hostInfinityAvailable == true;
         // #144: a participant with no host answer yet is "waiting", not "disabled".
         internal static bool RemoteHostHelloAnswered => _hostSession?._helloAnswered == true;
-        private bool MechanismHandshakeAccepted => NetworkServer.active
-            || _helloAnswered && string.Equals(_acceptedHostContent, ContentFingerprint.Value, StringComparison.Ordinal);
 
         /// <summary>ホストと版が違う／ホストから返事がないときの説明。問題なければ null。</summary>
         public string HostVersionWarning { get; private set; }
@@ -42,8 +40,7 @@ namespace SodRpg.Mod
             _helloFirstSent = -1f;
             _nextHello = 0f;
             _helloAnswered = false;
-            _continueHandshakeReady = false;
-            _acceptedHostContent = null;
+            _hostCompatibilityWarned = false;
             _hostInfinityAvailable = false;
             HostVersionWarning = null;
         }
@@ -75,15 +72,26 @@ namespace SodRpg.Mod
         {
             if (msg == null) return;
             _helloAnswered = true;
-            bool same = msg.continueCheckpoints && ContentFingerprint.Matches(msg.protocol, msg.content, Protocol.Version);
-            _acceptedHostContent = same ? msg.content : null;
-            _hostInfinityAvailable = same && msg.infinityAvailable;
-            if (same) ReceiveContinueHandshake(msg);
-            if (same && msg.authorityGeneration != 0) ObserveMonsterAuthority(msg.authorityGeneration);
-            string theirs = string.IsNullOrEmpty(msg.modVer) ? "?" : msg.modVer;
-            HostVersionWarning = same ? null : Loc.T(
-                $"ホストと Dreamforge の版が違います（ホスト {theirs} / 自分 {HostAuthority.ModVersion}）。装備の効果が反映されず、報酬も入りません。全員同じ版にしてください。",
-                $"Your Dreamforge version differs from the host (host {theirs} / yours {HostAuthority.ModVersion}). Gear bonuses and rewards will not work. Everyone must use the same version.");
+            bool sameProtocol = msg.protocol == Protocol.Version;
+            bool sameContent = string.Equals(msg.content, ContentFingerprint.Value, StringComparison.Ordinal);
+            bool sameVersion = string.Equals(msg.modVer, HostAuthority.ModVersion, StringComparison.Ordinal);
+            _hostInfinityAvailable = msg.infinityAvailable;
+            ReceiveContinueHandshake(msg);
+            if (msg.authorityGeneration != 0) ObserveMonsterAuthority(msg.authorityGeneration);
+            if (sameProtocol && sameContent && sameVersion && msg.continueCheckpoints)
+            {
+                _hostCompatibilityWarned = false;
+                HostVersionWarning = null;
+            }
+            else if (!_hostCompatibilityWarned)
+            {
+                _hostCompatibilityWarned = true;
+                string theirs = string.IsNullOrEmpty(msg.modVer) ? "?" : msg.modVer;
+                HostVersionWarning = Loc.T(
+                    $"ホストの Dreamforge 互換性情報に差があります（版 {theirs}/{HostAuthority.ModVersion}、Protocol {msg.protocol}/{Protocol.Version}）。機能は続行します。",
+                    $"The host's Dreamforge compatibility information differs (version {theirs}/{HostAuthority.ModVersion}, protocol {msg.protocol}/{Protocol.Version}). Features continue.");
+                Log.Warn($"Client: compatibility warning: protocol {msg.protocol}/{Protocol.Version}, mod {theirs}/{HostAuthority.ModVersion}, contentEqual={sameContent}, continueCheckpoints={msg.continueCheckpoints}; features continue.");
+            }
         }
     }
 }

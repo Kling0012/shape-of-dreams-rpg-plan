@@ -93,7 +93,7 @@
 - 推奨はそのゾーンの本来のbossRoomsを使い、実ボスの安定IDを撃破事実／報酬へ保持して#48の共通抽選に接続。悪夢エリートのBoss相当報酬は限定セット対象外。ボス・セットの任意選択や他ゾーンボスを普通部屋へ直spawnする案は採らない。
 
 ## 9. 協力同期・セーブ・記録
-- mode／現ゾーン／間隔／Phase／累計はホスト権威。全員のMOD対応版を開始前に確認し、未導入・非互換の参加者ではInfinity開始／途中参加を認可しない。クライアントの部屋数を信用しない。
+- mode／現ゾーン／間隔／Phase／累計はホスト権威。版・Protocol・内容・対応可否の差や未着／遅延Helloは警告だけにし、Infinity開始・途中参加・進行を拒否しない（#246）。読めない通信はその1件だけ警告して捨てる。クライアントの部屋数を信用せず、既存の所有者・ラン・世代・台帳確認は維持する。
 - RunChoiceProgressにGraph/Segmentの到着を追加。同じnative zoneIndexの技術更新では通常の確保・道標／出来事再抽選・ZoneTraveler依頼を発火させない。本体zoneIndexは偽装しない。
 - mode・NativeZoneIndex・Graph/Segment/RoomEpochをSnapshot／Publisher／Progress／Stream／履歴、PendingRunKill／撃破事実／分類／再送、PressureDividend、codec／cloneへ伝搬。通常はmode OFFと従来ゾーン遷移を維持する。
 - 次区間の契約／イベントを変える前に旧区間の撃破を旧規則で精算する。Heat・WaypointだけでなくPact/EventLuck等も現在run値を参照するため、境界を越える保留が必要なら戦闘時のimmutable補正も保持する。
@@ -101,7 +101,7 @@
 - native continueはmanager→actor→LoadNodeSettingsの順で復元する。`SerializeGameData` Prefixで更新予定epoch／Phase／次遷移intentをsnapshot前に入れ、復元はApplyGameDataのonFinishとready後に照合する（C/DewPersistence.cs:693-769,824-945）。
 - **本体とMODの2ファイルは原子的な一括保存ではない**。本体SaveContinueDataはvoid・例外catch、DewSaveの通常書込は遅延で成功receiptもない（C/GameManager.cs:982-1023; C/DewSave.cs:1471-1581）。SaveProfileContinue(immediate:true)でも原子性の証明にならない。
 - RunId／epoch／確定境界／遷移intentを両方に保存。native envelopeを地図の権威、MODの保存済receiptを報酬の権威とする。不一致では新規報酬と進行を止め、既存回復経路で未精算を解く。曖昧な保存から部屋や報酬を推測して作らない。
-- 着手時はProfile版5、Protocol18。段階1は保存形式5の省略可能項目追加・Protocol19。段階2も保存形式5の省略可能予算・記録を追加し、報酬制限のない参加者を拒否するためProtocol20へ更新。旧保存はOFF・epoch0・予算0、未知の新形式は拒否する。
+- 着手時はProfile版5、Protocol18。段階1は保存形式5の省略可能項目追加・Protocol19、段階2は予算・記録追加を示すProtocol20へ更新した。現在のProtocol24でも版差は警告のみで参加者を拒否しない。旧保存はOFF・epoch0・予算0で読み込む。解読できない保存形式から状態を推測しない。
 - 途中参加は現区間と生存敵を分割同期し、入場前の撃破は新規配布しない。ホスト交代のライブ移行は前提にせず、本体continue＋同ホストプロフィールから復帰する。
 - 段階2の記録は、固定ゾーン・周期・選択DreamDepth・本体難易度別に、帰還時最大累計Combat部屋数とその帰還の圧段階、帰還回数、直近帰還の部屋数／圧を保存する。未帰還・敗北・切断の到達は帰還記録を更新しない。Heatは既存RunReportに残す。最高未帰還到達・専用累計ボス／敗北カウンタは今回の記録指標には追加しない。
 - ProfileStats／RunReport／Codec／記録UIへ集約値と直近結果だけ追加。部屋ごとの全履歴は保存しない（R/src/SodRpg.Core/Game/Profile.cs:210-247; R/src/SodRpg.Mod/DreamforgeUi.cs:3008-3011）。
@@ -113,7 +113,7 @@
 - 未ACK事実／未決区間は固定の上限を置き、上限到達時は新しい報酬付き部屋へ進まず精算待ち。推奨開始値は2048事実／参加者、旧未決区間2まで。切断peerへ将来の撃破を積まない。固定集合の退役には拒否境界の保存が必要。
 - 敵・wave・投射物／DoT・spawn待ちを累計に比例させず、既存room停止と現役効果の寿命を守る。鞄・保管庫・保留Hoardは既存容量、記録はscalar。未決保存を含むプロフィール全体の厳密固定bytesは保証しない。
 - 新しい累計／epochは64bit、既存int報酬累計は飽和、revision／modifier IDは安全な世代境界で再基準化する設計が必要。現役／未決参照が残る間は再利用せず、数値限界では破損より明示停止を優先する。
-- 更新に特に弱い箇所：Mirror `UserCode_*` 名、LoadNode順序／flag、魂報酬coroutine、特殊boss ending、modifier保存、customData復元、結果種別。公開APIとイベントを優先し、対象signature／前提が一致しない版ではInfinityを選べなくする。通常モードまで壊す包括patchは避ける。
+- 更新に特に弱い箇所：Mirror `UserCode_*` 名、LoadNode順序／flag、魂報酬coroutine、特殊boss ending、modifier保存、customData復元、結果種別。公開APIとイベントを優先する。版やIL・非公開APIの厳密一致を起動条件にしない。実際にパッチ適用・本体操作が失敗した場合だけその機能へ影響を限定し、通常モードまで壊す包括patchは避ける。
 
 ## 11. Claudeが確定すべき選択肢（太字が推奨）
 | 判断 | 選択肢・推奨／理由 |
@@ -186,7 +186,7 @@
 - #97の非再帰チェックポイントは、Infinityの固定ゾーン・難易度・周期・累計／区間クリア数・世代・phase・選択receiptと、プロフィールの報酬予算・入場重複排除・帰還記録を保存する。復元は同じProfile参照へ所有済み状態を移し、帰還receiptと記録表示のrevisionも戻す。次回ロビー設定は現在の選択を残し、再開するrunの周期を変えない。
 - native保存前にクリア状態と未反映の戦闘creditを同期する。native完了callbackと地図ready後に対応チェックポイントを適用・照合し、同RunIdでもInfinity初期化・ミラー・クリア観測・ACK・予算時刻の一時状態を捨てる。ロード前の最新Profileとの誤照合や、ロード中の時刻差による補充を避ける。
 - Infinityの13パッチ（ロビー開始条件を含む）の対象・実適用を公開Harmony APIで確認し、欠落・適用失敗・実行例外ではInfinityだけをプロセス中無効にする。既に入ったフックも無効時は本体処理へ戻す。MOD全体の停止やゲーム全体のpauseは行わず、保存済みInfinityデータは保持する。
-- 無効時はロビーONを拒否し、OFFへの切替と通常モードは残す。HelloのInfinity可否は通常のProtocol／内容照合と分離し、対応が欠ける参加者とのInfinity開始だけを拒否する。ホストの無効化は参加者のInfinity割り込み・新規報酬にも反映する。
+- 実際の割り込み失敗でInfinityが無効な場合はOFFへの切替と通常モードを残す。#246以降、Helloの版・Protocol・内容・Infinity可否の差は警告だけにし、他参加者の装備・報酬・Infinityを停止しない。ホスト自身の実際の無効化は既存の停止keyで共有する。
 - ソースReleaseビルドは成功（エラー0・警告5）、配備先 `/tmp/sod-deploy-i95`。指定 `DOTNET=/usr/bin/dotnet DOTNET_ROLL_FORWARD=Major python tools/test_changed.py --all` は追加mainも含めて完走・終了コード0：Core 3237成功／既存2skip、Native 31成功、Startup 5成功、計3273成功・失敗0。main側の既存ケースを保持し、こちらでは部分クラス代役・反射呼出し・旧保存fixture補助関数だけを追従した。テストケース本体・期待値の変更や新規ケース作成は行っていない。残存コンパイル不備なし。
 - 既存BalanceSimを `--mode infinity --players 1 --seed 95` で実行し、通常／Infinity経済経路と合法帰還・clone・codec往復が完走した。帰還部屋10・圧1・帰還回数1・終了済み・Runなし・codec注記なしを観測し、既存2000人の結果ファイルは上書きしていない。本体起動プログラムがないため、実画面・実coop・実本体continueとInfinity native割り込み失敗時の実ゲーム挙動は未確認。
 
@@ -210,9 +210,9 @@
 - 通常の次室を作れなくなった地図では、最後の部屋の実クリア後に既存の技術境界receiptを配信する。全員のACK（通常は耐久保存、保存不調が30秒続いた遠征では警告後のメモリ内receipt）・未精算撃破／取引の完了後に同ゾーンを `noAdvance:true` で再生成し、開始部屋＋次室を直ちに用意する。技術境界に新しい選択画面を挟まず、累計・周期・native zoneIndexを保持する。BossDueならCombat枯渇による更新よりボスを優先する。
 - 訪問済み表示は**現GraphEpochの有限地図**に限定する。更新後の地図で旧世代indexやRectTransformを使わず、全世代の部屋履歴を蓄積しない。nativeのKOのみ復活・狩り局所リセットは従来どおり。
 - 表示の権威は既存のMirror node status。参加者はホストと違う距離順を持っていても次室を独自に選ばない。新しいRPC・共有選択payload・profile/envelope項目を増やさない。
-- **Protocol 23**：wireの追加項目はないが、旧クライアントは未探索nodeを表示し、非隣接の次室・ボスを選べない。同一パーティの表示と選択契約を保証するため22とは互換にしない。通常協力プレイも全員同版へ更新する。
+- **Protocol 23**：wireの追加項目はないが、旧クライアントは未探索nodeを表示し、非隣接の次室・ボスを選べないため版を上げた。現在は同版を推奨するが、差は警告のみで機能や参加を拒否しない。
 - **保存形式5／Infinity codec version 1は変更なし。** 開示状態と次室は既存native node statusに含まれ、MODの報酬receipt／チェックポイントは従来のまま。nativeは到着前に保存する（C/ZoneManager.cs:1410-1424）ため、続きからでは保存された移動先を訪問済みにして同じ次室を再構成する。部屋内保存の単一の次室は保持する。復元中は巻き戻し前の新しいHostRunではなく保存済みnative envelopeのPhaseを使い、復元完了・プロフィール照合後にも正規化する。
-- 旧Infinity保存も既存の訪問済み・現在地を保って開示を絞る。旧地図に複数の次室候補がある場合は§18の配分補正つき距離／indexで選び直し、ボスは保存済み周期に従う。通常保存をInfinityへ変更しない。不一致・対象欠落・実行例外では既存のfail-softでInfinityだけを停止し、MOD全体・通常モードは止めない。
+- 旧Infinity保存も既存の訪問済み・現在地を保って開示を絞る。旧地図に複数の次室候補がある場合は§18の配分補正つき距離／indexで選び直し、ボスは保存済み周期に従う。通常保存をInfinityへ変更しない。版・Protocol・内容不一致は警告のみ。実際の対象欠落・割り込み失敗ではその機能だけをfail-softし、MOD全体・通常モードは止めない。
 
 ### 検証
 - 指定Releaseビルド：成功、警告5・エラー0。追加のnative UI参照は本体の `UnityUIExtensions.dll`。

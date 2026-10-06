@@ -139,12 +139,6 @@ namespace SodRpg.Mod
         public string difficulty;
         public MidJoinBanType midJoinBanType;
     }
-    // The real protocol constant lives in NetMessages.cs (not compiled here).
-    internal static class Protocol
-    {
-        public const int Version = 24;
-        public const string LobbyReturnedResumeSession = "lobby-returned";
-    }
     public enum GameState { InLobby, Playing }
     public enum MidJoinBanType { None, GameHasEnded }
     public static class DewGameResult
@@ -188,6 +182,8 @@ namespace SodRpg.Mod
     {
         public static object SerializeGameData(object settings) => null;
         public static void ApplyGameData(object data, Action onFinish = null) => onFinish?.Invoke();
+        public static object FromJson(string json, Type type, Newtonsoft.Json.JsonSerializerSettings settings = null)
+            => Newtonsoft.Json.JsonConvert.DeserializeObject(json, type, settings);
     }
     public static class SingletonDewNetworkBehaviour<T> where T : class { public static T softInstance; }
     public sealed class RoomEvent

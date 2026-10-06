@@ -353,11 +353,10 @@ namespace SodRpg.Core.Tests
 
         /// <summary>
         /// 協力プレイ: ホストの共有ルールはRunChoiceSnapshotで参加者へ伝わる（未受領の参加者へはON設定ごと伝わる）。
-        /// 通常モード（OFF）のsnapshotはインフィニティ遠征へは適用されず、
-        /// Protocol / 内容指紋が一致しない相手は認められない。
+        /// 通常モード（OFF）のsnapshotはインフィニティ遠征へは適用されない。
         /// </summary>
         [Fact]
-        public void Host_infinity_settings_propagate_and_protocol_mismatches_are_rejected()
+        public void Host_infinity_settings_propagate_and_stale_epochs_are_rejected()
         {
             var host = BeginInfinityRun(100UL, "coop-run");
             for (int room = 1; room <= 6; room++)
@@ -400,10 +399,6 @@ namespace SodRpg.Core.Tests
             Assert.Equal(hostInfinity.Interval, plainGuest.Run.Infinity.Interval);
             Assert.Equal(hostInfinity.ClearedCombatTotal, plainGuest.Run.Infinity.ClearedCombatTotal);
 
-            Assert.False(SodRpg.Core.Game.ContentFingerprint.Matches(SodRpg.Mod.Protocol.Version - 1,
-                SodRpg.Core.Game.ContentFingerprint.Value, SodRpg.Mod.Protocol.Version));
-            Assert.False(SodRpg.Core.Game.ContentFingerprint.Matches(SodRpg.Mod.Protocol.Version, null, SodRpg.Mod.Protocol.Version));
-            Assert.True(SodRpg.Core.Game.ContentFingerprint.Matches(SodRpg.Mod.Protocol.Version, SodRpg.Core.Game.ContentFingerprint.Value, SodRpg.Mod.Protocol.Version));
         }
 
         /// <summary>ロビー設定（ON/OFF・周期）と帰還記録はプロフィール保存で失われない。</summary>

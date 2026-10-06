@@ -19,7 +19,7 @@ namespace SodRpg.Mod
             string runId = TradeRunId();
             if (_satchelDustDisabled || !NetworkServer.active || !owner.isHumanPlayer || !DewPlayer.gamePlayers.Contains(owner)
                 || string.IsNullOrEmpty(playerKey) || string.IsNullOrEmpty(runId)
-                || message.runId != runId || !MechanismHandshakeAccepted(owner))
+                || message.runId != runId)
             {
                 Log.Error("Host: legacy satchel overflow owner/expedition unavailable; using shards.");
                 return _tradeAuthority.FailSatchelOverflow(playerKey, runId, request);
@@ -94,15 +94,18 @@ namespace SodRpg.Mod
         private void OnTrade(DreamforgeTradeMsg msg, DewPlayer caller)
         {
             if (caller == null || msg == null) return;
+            Protocol.WarnMismatch(msg.protocol, nameof(DreamforgeTradeMsg));
             ApplyContinueTrades();
             bool ok = false;
             string reason = null;
             long ledgerId = 0;
             try
             {
-                if (msg.protocol != Protocol.Version) reason = "protocol";
-                else if (!TradeWire.TryDecode(msg.token, msg.spendGold, msg.spendDust, msg.earnDust, out var req))
-                    reason = "protocol"; // 旧形式（金額の申告）は版違いとして断る
+                if (!TradeWire.TryDecode(msg.token, msg.spendGold, msg.spendDust, msg.earnDust, out var req))
+                {
+                    reason = "protocol";
+                    Log.Warn("Host: rejected malformed or unsupported trade payload; this packet was not executed.");
+                }
                 else
                 {
                     string playerKey = TradePlayerKey(caller);

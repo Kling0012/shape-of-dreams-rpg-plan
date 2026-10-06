@@ -1,6 +1,6 @@
 # Dreamforge RPG（ゲーム内MOD）
 
-このブランチは **Protocol 24・保存形式5（プロフィールリセットなし）**。最新mainの機能に加え、#232 のInfinity潜行時のランダムなゾーン切り替えに対応しています。協力プレイは全員のProtocolと内容を揃えてください。変更は[更新履歴](../../CHANGELOG.md)を参照。
+このブランチは **Protocol 24・保存形式5（プロフィールリセットなし）**。最新mainの機能に加え、#232 のInfinity潜行時のランダムなゾーン切り替えに対応しています。協力プレイは同じ版を推奨しますが、版・Protocol・内容の差は警告だけで機能を続けます。変更は[更新履歴](../../CHANGELOG.md)を参照。
 
 全14ボスセット84部位・11種のnative報酬adapterを実装済み。装備照合と報酬更新は#73の共通装備キャッシュ／epochを使い、`EntityAbility.SetAbility`／`RemoveAbility`で更新します。ボス撃破条件は共通の連番・ストリーム台帳へ記録します。[承認仕様と実装境界](../../docs/specs/issue-48-boss-sets.md)
 
@@ -93,7 +93,7 @@ LastStarlight の捕捉はホスト上の生存中・登録済みの旅人が正
 - チェックポイントのない旧保存も読み込めるが、過去の保存時点のMOD報酬状態を後から復元することはできない。未完了の遠征が残っていることと、本体の保存から安全に再開できることは別。
 - 新しい本体保存のチェックポイントが参加者側にない場合は、その遠征の報酬を停止して案内する（最新状態で続けて二重報酬を得ることはしない）。別IDで新規開始したときの未確保品の精算は従来どおり。保存形式5は据え置き、通信はProtocol 24と中断対応の相互確認を使う。
 - #180：保存障壁では各参加者の報酬を固定し、本体の `onSaveEnded` 後に保存ファイルのIDを読み戻して確定通知を送る（終了通知は書き込み失敗後にも来るため、成功の証拠にはしない）。確定したIDより前だけを整理し、直前1件と以後の未確定候補は保持する。確認できないときは警告して履歴整理だけを停止し、MOD全体や進行中の報酬は止めない。失敗が続く間はMOD保存が大きくなるが、確認成功後に整理する。既に削除された候補の復元はできない。確定通知で報酬を再採取する旧参加者を防ぐため、Protocol 22で導入した保護を現在のProtocol 24でも維持する。
-- **EN (#180):** Freeze each guest's rewards at the ordered save barrier. After `onSaveEnded`, read the native file's ID before sending a commit notice; the event also fires after failed writes. Cleanup retains the committed ID, its predecessor and all later unconfirmed candidates. Verification failures warn and pause cleanup only, not the MOD or current rewards. MOD saves grow while failures persist, then shrink after confirmation; previously deleted checkpoints cannot be reconstructed. Current Protocol 24 retains the Protocol 22 protection against old guests re-capturing rewards on commit notices; everyone in co-op must update.
+- **EN (#180):** Freeze each guest's rewards at the ordered save barrier. After `onSaveEnded`, read the native file's ID before sending a commit notice; the event also fires after failed writes. Cleanup retains the committed ID, its predecessor and all later unconfirmed candidates. Verification failures warn and pause cleanup only, not the MOD or current rewards. MOD saves grow while failures persist, then shrink after confirmation; previously deleted checkpoints cannot be reconstructed. Protocol 24 retains the Protocol 22 protection against re-capturing rewards on commit notices; matching versions are recommended, not required for admission.
 - #48の未払い撃破と撃破factは、`bossTypeName`・`bossDropNightmare`・`bossDropDepth`も共通codecでチェックポイントへ保存・復元する。`rt.Boss`の予告・印・CDなどは部屋／Hero寿命の一時状態なので保存しない。本体再開で旧Heroを破棄し、新しいHeroのruntimeと復元済み装備・Buildから作り直す（mainの寿命規則を維持）。
 - Infinityの累計Combat部屋数・周期・圧段階を決める状態、地図／区間／部屋の世代、共通選択のreceipt、報酬予算・入場済み部屋・帰還記録も同じチェックポイントへ戻す。本体の復元完了と地図readyを待って照合し、ロード前の最新状態とは比較しない。時刻観測とACKの一時状態をリセットし、ロード・切断中の時間を予算に足さない。ロビーで選んだ次回のInfinity設定は維持する。
 - **EN:** A suspended expedition locks profile switching and Star Map edits until it ends. Use Continue if a native save is available; guests follow the host. MOD checkpoints restore the same run's satchel, unsecured shards, kills and rewards to the native save's point. Each participant needs a matching local checkpoint. Legacy saves remain readable, but missing checkpoints cannot reconstruct past MOD rewards; a suspended-run notice does not guarantee that Continue is available.
@@ -102,7 +102,7 @@ LastStarlight の捕捉はホスト上の生存中・登録済みの旅人が正
 ### Infinity割り込みの互換性
 
 - native対象の不足、パッチ適用・実行の失敗では、警告を出して **Infinityだけを無効化**する。MOD全体を停止せず、ゲーム全体をpauseしない。preflightは警告のみで、Harmonyの非公開内部APIや厳密なIL検査を起動の必須条件にしない。
-- 必要なInfinityパッチがすべて適用できた場合だけ、ロビーからONにできる。無効時もOFFへ切り替えて通常遠征を開始できる。参加者のInfinity可否はProtocol・内容照合とは別に交換するため、Infinityが使えない参加者の通常モードの装備・報酬まで拒否しない。
+- 必要なInfinityパッチが実際に適用できた場合にロビーからONにできる。無効時もOFFへ切り替えて通常遠征を開始できる。参加者の版・Protocol・内容・対応可否の差、Hello未着／遅延は警告のみで、開始・進行・装備・報酬を拒否しない（#246）。読めない通信だけを警告して捨て、次の通信を処理する。台帳の未精算、所有者やランIDの確認、本体保存とMODチェックポイントの整合保護は維持する。
 - 無効化されたInfinityの保存内容は通常遠征へ書き換えずに保持し、新しいInfinity進行・報酬だけを止める。
 
 ### Infinityの地図とゾーン（Issue #208・#232）
@@ -111,8 +111,8 @@ LastStarlight の捕捉はホスト上の生存中・登録済みの旅人が正
 - 本体の有限グラフ・部屋寿命・読み込みを維持し、現地図を使い切ったら精算と全員の保存ACK後に同ゾーンを更新して続ける。保存待ちは5秒ごとに再試行し、30秒で警告してその遠征だけ解除する。未精算の撃破・報酬・取引の確認と重複排除は維持し、続きからでは報酬とreceiptを一緒に巻き戻す。全世代の地図を蓄積しない。全体／ミニ地図・ゲームパッド・tooltipの候補はホストが既存Mirrorで同期する。続きからもnative node statusから同じ次室を復元する。
 - ボス撃破後の「潜行」では本体の全 `Zone_` リソースから順序・tierに関係なく次のゾーンを抽選する。候補が複数なら直前のゾーンを避け、ボスも移動先の本来の候補から抽選する。開始ゾーンと、ボス前の部屋不足による同ゾーン更新は従来どおり。
 - ランIDから作る専用シードと保存済み区間／地図世代で抽選し、ホストのnative zone・node statusと既存共有状態を同期する。Continueも保存されたゾーンと地図へ戻る。本体のゾーン番号・ambientLevelは進めず、既存の深度・夢の圧で難化する。ゾーン切り替えが失敗した回だけ警告1回で元のゾーンを更新する。
-- 協力プレイは全員Protocol 24へ更新する（旧版の純白の勝利処理を混在させない）。保存形式5・Infinity codec version 1・既存envelopeの項目は変更なし。旧保存は従来のゾーンのまま再開し、次の潜行から抽選する。通常モードは変更しない。[設計と根拠](../../docs/specs/issue-95-infinity-mode.md)。
-- **EN:** Infinity reveals visited rooms and one next room, with native bosses after 10/15/20 combat clears. Delve after a boss chooses among all native zones, avoiding the previous one when alternatives exist; exhaustion before a boss regenerates the same zone. Run-specific seeds and saved epochs keep zone/boss choices reproducible, with host synchronization and Continue restoration. Native zone index/ambient difficulty stays unchanged; existing depth/pressure scaling and reward limits remain. Failed switches warn once and regenerate the previous zone. Save waits retry every five seconds and, after 30 seconds, warn and lift only that expedition's save hold; unsettled rewards/trades and deduplication remain guarded. Continue may roll back rewards and their receipts together. All co-op players need Protocol 24; save format 5 is unchanged.
+- 協力プレイは全員Protocol 24への更新を推奨する（旧版の純白の勝利処理には意味の差がある）が、版の差を理由に機能は止めない。保存形式5・Infinity codec version 1・既存envelopeの項目は変更なし。旧保存は従来のゾーンのまま再開し、次の潜行から抽選する。通常モードは変更しない。[設計と根拠](../../docs/specs/issue-95-infinity-mode.md)。
+- **EN:** Infinity reveals visited rooms and one next room, with native bosses after 10/15/20 combat clears. Delve after a boss chooses among all native zones, avoiding the previous one when alternatives exist; exhaustion before a boss regenerates the same zone. Run-specific seeds and saved epochs keep zone/boss choices reproducible, with host synchronization and Continue restoration. Native zone index/ambient difficulty stays unchanged; existing depth/pressure scaling and reward limits remain. Failed switches warn once and regenerate the previous zone. Save waits retry every five seconds and, after 30 seconds, warn and lift only that expedition's save hold; unsettled rewards/trades and deduplication remain guarded. Continue may roll back rewards and their receipts together. Protocol 24 is recommended; differing versions/content and missing Hello only warn, never disable features. Unreadable messages are individually discarded with a warning. Save format 5 is unchanged.
 
 
 ### 「ロビーに戻る」の敗北精算（Issue #112）
@@ -120,8 +120,8 @@ LastStarlight の捕捉はホスト上の生存中・登録済みの旅人が正
 - 確認後の `DewNetworkManager.RestartSession()` を対象に、ホスト・本体の未決着・MOD の未決着・本体と MOD の runId 一致を確認する。結果画面からの通常復帰、決着待ち／精算済みの遠征、`EndSession()` のメニュー・デスクトップ復帰やキック経路は対象外。IL の厳密一致や MOD 全体の起動条件は追加しない。
 - ホストは既存の `DreamforgeRunChoicesMsg` に `lobbyReturnRunId` と敗北・道標の状態を載せ、信頼性のある本体 Actor RPC でロビー遷移前に通知する。各 PC は対応する遠征だけを既存の `TryConcludeRun()` → `Rules.EndRun(..., false)` で一度だけ精算する。未確定の撃破や道標は既存の順序で処理し、保留分があればロビー遷移後も同じ敗北の精算を継続する。遷移中に参加者をホストと誤認しないよう、精算開始時の権限も保持する。
 - 本体の中断保存は変更・削除しない。終了した runId を MOD 保存の省略可能な `lobbyReturnedRunIds` に記録し、チェックポイント復元でも履歴を消さない。後からその本体保存を再開しても MOD の遠征や報酬は作らず、「この遠征は『ロビーに戻る』で終了済みのため、MOD の報酬は出ません」と案内する。ホストの再開通知でも終了状態を伝える（`continueResumeSession` の予約値 `lobby-returned`）。
-- 判別できない（本体と MOD の runId が食い違うなど）場合はその回は何もせず中断のまま（警告1回）で、次の正しい「ロビーに戻る」では精算される。判別中の例外では警告を出し、ロビー復帰時の敗北判定だけを無効にする。通常の中断・MOD の他機能は停止しない。保存形式は5のまま。現在の協力プレイにはProtocol 24が必要。
-- 報酬停止中の Infinity 遠征（#131）は敗北待ちに入れない。その回は中断のまま（警告1回）で、Infinity の回復後に正しい帰還があれば精算される。精算待ちの保存・読込を経てから Infinity が停止しても、別 runId の遠征開始で待ちを放棄する（帰還済み runId は保持し、旧ランは通常の未解決ランと同じ扱い）。参加者の遠征未開始・観戦・ロード中・ゾーン番号未着の通知は見送るだけ（#132）で、機能は無効化しない。無効化は通知の内容の破損・不一致（terminal/victory/choices の runId 不一致）や判別中の例外だけに限る。
+- 判別できない（本体と MOD の runId が食い違うなど）場合はその回は何もせず中断のまま（警告1回）で、次の正しい「ロビーに戻る」では精算される。判別中の本体操作の例外では警告を出し、ロビー復帰時の敗北判定だけを無効にする。読めない帰還通知はその1件だけ捨てる。通常の中断・MOD の他機能は停止しない。保存形式は5のまま。通信はProtocol 24だが、版の差だけでは拒否しない。
+- 報酬停止中の Infinity 遠征（#131）は敗北待ちに入れない。その回は中断のまま（警告1回）で、Infinity の回復後に正しい帰還があれば精算される。精算待ちの保存・読込を経てから Infinity が停止しても、別 runId の遠征開始で待ちを放棄する（帰還済み runId は保持し、旧ランは通常の未解決ランと同じ扱い）。参加者の遠征未開始・観戦・ロード中・ゾーン番号未着の通知は見送るだけ（#132）で、機能は無効化しない。破損した帰還通知もその1件だけ警告して捨て、実際の本体操作の例外だけをその機能のfail-soft対象とする。
 - 実機のメニュー表示・ロビー遷移・協力通信は未確認。リンクした本体境界テスト（`LobbyReturnTests`）で、ホスト・参加者の敗北精算・結果画面の非精算・判別できない場合のスキップ・判別失敗の無効化・「続きから」の案内と runId 保存・停止中の Infinity 帰還のスキップと再開・精算待ちの放棄・未開始参加者への通知の見送りを確認している。
 
 ### 純白の保留中の撃破の精算（Issue #71・#88）
@@ -130,7 +130,7 @@ LastStarlight の捕捉はホスト上の生存中・登録済みの旅人が正
 - 道標・夢の深さはホスト共有、確保／潜行・契約は各自の選択。純白ではホストの確定後も参加者本人が選ぶまで撃破報酬を保留し、自動潜行で選択を飛ばさない。ソロ・ホストも明示選択まで保留する。通常ルートの戦闘継続による自動潜行は変えない。
 - 保留したまま Primus を倒して勝つ確定では潜行しない。選択待ちを解くだけで、深度・確保ボーナス・最深記録は戦った深さのまま確保される。ホストも参加者も同じ確定経路を使う。
 - 深さ0で出た敵も出現処理は済ませた扱いにする。あとで潜行して深さが1以上になれば、#60 の深度の揃え直しの対象になる。
-- 保存形式5は据え置き。保留中の撃破の `heat`/`waypoint` を維持し、欄のない旧保存データは精算時の現在の状態を使う（従来どおり）。通信項目は変えず、旧参加者の自動精算が混在しないよう Protocol 17へ更新する（#88）。協力する全員を同じ版へ更新する必要がある。実機での確認はまだ。
+- 保存形式5は据え置き。保留中の撃破の `heat`/`waypoint` を維持し、欄のない旧保存データは精算時の現在の状態を使う（従来どおり）。#88では旧参加者の自動精算との意味の差を示すためProtocol 17へ更新した。現在は同版を推奨するが、版の差は警告のみ。実機での確認はまだ。
 
 ### 商人の遅延応答と保存互換（Issue #67）
 
@@ -147,7 +147,7 @@ LastStarlight の捕捉はホスト上の生存中・登録済みの旅人が正
 - 核の効果・IDは維持。Yubar「事象の地平」だけ1段の星の障壁を5→4にし、核の合計を35→32（効果上限40の80%）へ収めた。
 - 連携は従来の別枠の条件付き補正。記憶加速は同じ発動の合計100%まで、余韻は装着条件を満たす発動元のうち最大値1つ（5秒・重ならず時間を延長）。装着条件を外すとその余韻も解除する。
 - 夢の圧は各参加者の夢レベル1〜30・使用済み星0〜300を制限してから平均する。未受信の参加者は1・0、死亡者は含め、ロビー・観戦者・退出者は除く。最大でHP×2.375・与ダメージ×1.675。同じ進行度なら1人と4人で同じ倍率。
-- 通信はProtocol 5だった（現在は上記のとおり9、開発中は12）。全員同じ版が必要。`Build`の`d:`が夢レベル、`a:`が使用済み星で、ホストの倍率は`DreamforgePressureMsg`で共有する。
+- 通信は当時Protocol 5だった（現在は冒頭のProtocol 24）。同じ版を推奨するが、版の差だけでは能力を拒否しない。`Build`の`d:`が夢レベル、`a:`が使用済み星で、ホストの倍率は`DreamforgePressureMsg`で共有する。
 - 本クローンには`.ref/dump`がないため、共有の`C:/Temp/sod-reflect/dump`で署名を照合。`EntityStatus.finalStatsProcessors`・`FinalStats.maxHealth`と`Actor.dealtDamageProcessor`・`DamageData.ApplyAmplification`を使い、再計算は本体のHP割合を保つ。Coreの遠征・配分・保存／移行・通信・圧は実行スモーク済み。Unity上の1080p表示と実際の協力通信は未確認。
 
 ### v1.30 の合わせ技 / Memory-pair combos
@@ -224,7 +224,7 @@ v1.23 のイベントとメンバーの署名は `.ref/dump/` で確認した。
 
 v1.24 の変種通知は `DreamforgeVariantMsg`。途中参加向けに悪夢と同じ5秒間隔で再送し、クライアントはスポーン前の通知を保持してモデルの準備後に色・大きさを付ける。死亡・セッション切替・MOD解除時に補正を外す。ホストはセッション最初の変種出現と最初の死亡爆発をログに出す。
 
-変種のゲームAPI署名は `.ref/dump/` の `Entity`・`EntityVisual`・色／変形修飾子・`DamageData`・`Actor`・`ActorManager`・`ZoneManager` で照合した。ダメージプロセッサの登録／解除は既存の旅人向け実装と同じ方法を使う。プロトコルは2に更新した（ダンプには未知のCustomRpc通知を旧クライアントが安全に無視する保証がないため、旧版のBuild・取引は受け付けない）。ファイル編集のみで、ビルド・Coreテスト・実機でのプロセッサ順序や描画・協力同期は未確認。Coreの挙動とテストは変更していない。
+変種のゲームAPI署名は `.ref/dump/` の `Entity`・`EntityVisual`・色／変形修飾子・`DamageData`・`Actor`・`ActorManager`・`ZoneManager` で照合した。ダメージプロセッサの登録／解除は既存の旅人向け実装と同じ方法を使う。当時はプロトコル2への更新と旧版拒否を行ったが、#246では読めるBuild・取引を版の差だけで拒否しない。実機でのプロセッサ順序や描画・協力同期は未確認。
 
 ## ビルドと配置
 
@@ -240,6 +240,6 @@ dotnet build src/SodRpg.Mod -c Release -p:GameDir="D:\app\stm\steamapps\common\S
 
 確認済み：中断（ロビーに戻る）後に新しいランを始めたときの全滅精算（遺失物・残響）、最初のゾーンで確保地点を出さないこと、セット効果と狙い系統の表示、遠征結果パネル（確認用コマンド経由）、読み込み、日本語UI、遺物の装着・比較、ホストでの能力補正の反映（`dreamforge_stats` で攻撃力%・防御・移動速度が一致）、ドロップ・レベルアップ・確保の流れ（模擬撃破）、ライブリロード、他MOD 2つとの併用。
 
-既知の制限：協力時、ホストはクライアントが送る能力の集計値を上限で丸めて受け入れる（装備データ一式の検証はしない）。信頼できる仲間との協力を前提とする。プロトコル版が違うクライアントの値は無視する。
+既知の制限：協力時のBuildはホストが正規入力から再構成し、上限と所有者を確認する。信頼できる仲間との協力を前提とする。版・Protocol・内容の差は警告のみで、読み取れる通信の処理を続ける。異なる旧版のゲーム上の意味まで一致する保証はない。
 
 未確認（プレイヤーによる確認待ち）：実際の敵の撃破によるドロップ、ゾーン移動時の確保地点、全滅・踏破の精算、固有効果の体感、2人以上の協力プレイ、数値の手触り。

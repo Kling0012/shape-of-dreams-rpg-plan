@@ -143,16 +143,21 @@ namespace Issue73.Native.Tests
             Assert.True(ContinueReady(session));
             Assert.Equal(kills, session.Profile.Run.Kills);
             Assert.Null(session.ContinueWarning);
-            // 参加者: ホストがチェックポイントIDなしで再開したら従来どおり参加できる。
+            // A new participant does not require Hello to use the current expedition.
             var following = GuestInGame("run");
-            Call(following, "ReceiveContinueHandshake", Hello("run"));
+            Assert.True(ContinueReady(following));
+            Assert.True(following.RunActive);
+            var delayedHello = Hello("run");
+            delayedHello.protocol = Protocol.Version - 1;
+            Call(following, "ReceiveContinueHandshake", delayedHello);
             Assert.True(ContinueReady(following));
 
             // 参加者: ホストの保存地点IDに対応する自分のチェックポイントがなければ報酬を止めて案内する。
             var missing = GuestInGame("run");
-            Call(missing, "ReceiveContinueHandshake", Hello("run", checkpointId: "host-save-missing", resumeSession: "resume-9"));
+            var missingHello = Hello("run", checkpointId: "host-save-missing", resumeSession: "resume-9");
+            missingHello.protocol = Protocol.Version - 1;
+            Call(missing, "ReceiveContinueHandshake", missingHello);
             Assert.NotNull(missing.ContinueWarning);
-            Assert.Contains("再開地点のMOD保存がありません", missing.ContinueWarning);
             Assert.False(ContinueReady(missing)); // 報酬は停止中（hello が済んでいても再開できない）
         }
 
@@ -205,7 +210,7 @@ namespace Issue73.Native.Tests
         /// ホストがその保存から再開したら、参加者は自分のチェックポイントまで戻って続き、再挨拶で戻し直さない。
         /// </summary>
         [Fact]
-        public void Guests_capture_the_host_checkpoint_barrier_and_align_their_own_state_on_resume()
+        public void Guests_without_Hello_capture_differing_version_checkpoint_barriers_and_align_state_on_resume()
         {
             Actor actor;
             var host = HostSession(out actor);
@@ -220,7 +225,7 @@ namespace Issue73.Native.Tests
             Assert.Equal(barrierId, barrier.checkpointId);
 
             var guest = GuestInGame("run");
-            Call(guest, "ReceiveContinueHandshake", Hello("run")); // 参加時の挨拶（まだチェックポイントなし）
+            barrier.protocol = Protocol.Version - 1;
             Call(guest, "OnContinueCheckpoint", barrier);          // ホストの保存障壁を受け取る
             Assert.Equal(new[] { barrierId }, guest.Profile.ContinueCheckpoints.Select(c => c.Id));
             var guestAtBarrier = guest.Profile.Clone();
@@ -235,6 +240,7 @@ namespace Issue73.Native.Tests
             NetworkedManagerBase<GameManager>.softInstance = resumed;
             Call(guest, "ObserveContinueGame", resumed);
             var resumeHello = Hello("run", checkpointId: barrierId, resumeSession: "resume-1");
+            resumeHello.protocol = Protocol.Version - 1;
             Call(guest, "ReceiveContinueHandshake", resumeHello);
 
             Assert.Equal(guestKillsAtBarrier, guest.Profile.Run.Kills); // 参加者も保存地点に戻る

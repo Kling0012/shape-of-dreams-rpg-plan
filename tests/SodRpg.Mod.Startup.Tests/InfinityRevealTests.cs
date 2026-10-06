@@ -551,21 +551,23 @@ namespace SodRpg.Mod.Startup.Tests
         }
 
         [Fact]
-        public void ConfirmedVoteWaitsForGuestCompatibilityAndNativeTravelReasonWithoutVotingAgain()
+        public void ConfirmedVoteIgnoresCompatibilityWarningsAndStillWaitsForNativeTravelReason()
         {
             var (_, zone, authority) = StartRevealGraph();
             var guest = JoinLobbyParticipant("pending-travel-guest");
             DewPlayer.gamePlayers.Add(guest);
             zone.VoteRequired = true;
-            Assert.False(InfinityMode.CanAdvance);
+            Assert.True(InfinityMode.CanAdvance);
+            ClientSession.HostInfinityRewardsSettled = false;
             zone.CmdTravelToNode(1, new NetworkConnectionToClient { Player = DewPlayer.local });
             Assert.True(zone.isVoting);
             zone.CompleteVote();
             Assert.False(zone.isVoting);
             InfinityMode.Tick();
             Assert.Equal(0, zone.TravelToNodeCalls);
-            FeedHello(authority, guest, Protocol.Version, ContentFingerprint.Value, true);
+            FeedHello(authority, guest, Protocol.Version - 1, "different-content", false);
             zone.CannotTravelReason = ("holding an item", false);
+            ClientSession.HostInfinityRewardsSettled = true;
             InfinityMode.Tick();
             Assert.Equal(0, zone.TravelToNodeCalls);
             zone.CannotTravelReason = default;

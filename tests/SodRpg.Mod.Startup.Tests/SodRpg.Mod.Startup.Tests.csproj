@@ -26,6 +26,8 @@
   <Compile Include="../../src/SodRpg.Mod/ClientSession.InfinitySettings.cs" Link="ModUnderTest/ClientSession.InfinitySettings.cs" />
   <Compile Include="../../src/SodRpg.Mod/HostAuthority.Infinity.cs" Link="ModUnderTest/HostAuthority.Infinity.cs" />
   <Compile Include="../../src/SodRpg.Mod/HostAuthority.Hello.cs" Link="ModUnderTest/HostAuthority.Hello.cs" />
+  <Compile Include="../../src/SodRpg.Mod/NetMessages.cs" Link="ModUnderTest/NetMessages.cs" />
+  <Compile Include="../../src/SodRpg.Mod/NetMessageDecodeWarning.cs" Link="ModUnderTest/NetMessageDecodeWarning.cs" />
   <Compile Include="../../src/SodRpg.Mod/SafeReflection.cs" Link="ModUnderTest/SafeReflection.cs" />
   </ItemGroup>
 </Project>

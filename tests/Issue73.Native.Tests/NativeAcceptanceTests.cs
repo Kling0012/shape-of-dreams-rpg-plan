@@ -39,7 +39,7 @@ namespace Issue73.Native.Tests
         }
 
         [Fact]
-        public void ReturningPeerResendSharesFrameBudgetWithDifferentialTrafficAndEventuallyDeliversEveryFact()
+        public void DifferingVersionPeerWithoutHelloSharesFrameBudgetAndEventuallyReceivesEveryFact()
         {
             var saved = new KillClassificationCheckpoint { RunId = "run", HostSequence = 70 };
             var returning = new KillReplayPeer { Id = "native-owner.client", NativeOwnerId = "native-owner" };
@@ -56,7 +56,7 @@ namespace Issue73.Native.Tests
             DewPlayer.gamePlayers.Add(player);
             Call(host, "OnKillReceipt", new DreamforgeKillReceiptMsg
             {
-                protocol = Protocol.Version, authorityGeneration = ClientSession.HostAuthorityGeneration,
+                protocol = Protocol.Version - 1, authorityGeneration = ClientSession.HostAuthorityGeneration,
                 runId = "run", clientId = "client", observationSessionId = "reconnected",
                 receipts = Array.Empty<DreamforgeKillStreamReceipt>(),
             }, player);
@@ -86,7 +86,7 @@ namespace Issue73.Native.Tests
             Assert.Equal(Enumerable.Range(1, 70).Select(i => (long)i), outstanding.HostFacts.Select(f => f.Sequence));
             Call(host, "OnKillReceipt", new DreamforgeKillReceiptMsg
             {
-                protocol = Protocol.Version, authorityGeneration = ClientSession.HostAuthorityGeneration,
+                protocol = Protocol.Version - 1, authorityGeneration = ClientSession.HostAuthorityGeneration,
                 runId = "run", clientId = "client", observationSessionId = "reconnected",
                 receipts = new[] { new DreamforgeKillStreamReceipt { streamId = "prior", receivedThrough = 70 } },
             }, player);

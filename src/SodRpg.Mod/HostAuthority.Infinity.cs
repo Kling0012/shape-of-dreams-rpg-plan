@@ -7,44 +7,14 @@ namespace SodRpg.Mod
 {
     internal sealed partial class HostAuthority
     {
-        // Give a game-scene peer six client Hello retry intervals. This is per peer and
-        // transport/run, never lobby time, and does not grant handshake/reward authority.
+        // Hello silence is diagnostic only. Scope its warning to the scene transport/run.
         private const float InfinityHelloGraceSeconds = 30f;
         private readonly Dictionary<DewPlayer, float> _infinityHelloWaiting = new Dictionary<DewPlayer, float>();
         private readonly List<DewPlayer> _infinityHelloDeparted = new List<DewPlayer>();
+        private readonly HashSet<DewPlayer> _infinityHelloWarned = new HashSet<DewPlayer>();
         private GameManager _infinityHelloGame;
         private Actor _infinityHelloActor;
         private string _infinityHelloRunId;
-
-        // Gameplay boundaries require confirmed support. Lobby admission is deliberately separate:
-        // Actor RPC Hello is not available until the PlayGame scene creates the server actor.
-        internal static bool InfinityRosterCompatible(IReadOnlyList<DewPlayer> players)
-        {
-            if (!NetworkServer.active || !InfinityMode.Available) return false;
-            if (players == null) return false;
-            var host = NativeInstance;
-            for (int i = 0; i < players.Count; i++)
-            {
-                var player = players[i];
-                if (player == null || !player.isHumanPlayer || player == DewPlayer.local) continue;
-                if (host == null || !host.InfinityHandshakeAccepted(player)) return false;
-            }
-            return true;
-        }
-
-        internal static bool InfinityLobbyRosterCompatible(IReadOnlyList<DewPlayer> players)
-        {
-            if (!NetworkServer.active || !InfinityMode.Available || players == null) return false;
-            var host = NativeInstance;
-            if (host == null) return true;
-            for (int i = 0; i < players.Count; i++)
-            {
-                var player = players[i];
-                if (player == null || !player.isHumanPlayer || player == DewPlayer.local) continue;
-                if (host._protocolMismatches.Contains(player)) return false;
-            }
-            return true;
-        }
 
         internal static void CheckInfinityRunCompatibility()
         {
@@ -59,6 +29,7 @@ namespace SodRpg.Mod
                 || !ReferenceEquals(host._registeredOn, NetworkedManagerBase<ActorManager>.softInstance?.serverActor))
             {
                 host._infinityHelloWaiting.Clear();
+                host._infinityHelloWarned.Clear();
                 host._infinityHelloGame = null;
                 host._infinityHelloActor = null;
                 host._infinityHelloRunId = null;
@@ -68,19 +39,23 @@ namespace SodRpg.Mod
                 || host._infinityHelloActor != host._registeredOn)
             {
                 host._infinityHelloWaiting.Clear();
+                host._infinityHelloWarned.Clear();
                 host._infinityHelloGame = game;
                 host._infinityHelloActor = host._registeredOn;
                 host._infinityHelloRunId = game.runId;
             }
             var players = DewPlayer.gamePlayers;
-            // A departed peer must not halt the expedition or lend its old deadline to
-            // a later join. Confirmed peers no longer need a pending Hello deadline.
+            // Forget departed peers and completed Hello waits without affecting gameplay.
             host._infinityHelloDeparted.Clear();
             foreach (var pending in host._infinityHelloWaiting)
                 if (pending.Key == null || !pending.Key.isHumanPlayer || pending.Key == DewPlayer.local
-                    || !players.Contains(pending.Key) || host.InfinityHandshakeAccepted(pending.Key))
+                    || !players.Contains(pending.Key) || host._helloPeers.Contains(pending.Key))
                     host._infinityHelloDeparted.Add(pending.Key);
-            foreach (var player in host._infinityHelloDeparted) host._infinityHelloWaiting.Remove(player);
+            foreach (var player in host._infinityHelloDeparted)
+            {
+                host._infinityHelloWaiting.Remove(player);
+                host._infinityHelloWarned.Remove(player);
+            }
             host._infinityHelloDeparted.Clear();
 
             float now = Time.unscaledTime;
@@ -88,23 +63,11 @@ namespace SodRpg.Mod
             {
                 var player = players[i];
                 if (player == null || !player.isHumanPlayer || player == DewPlayer.local) continue;
-                if (host._infinityRejectedPeers.Contains(player))
-                {
-                    InfinityMode.StopExpedition(Loc.T(
-                        $"{player.playerName} の Protocol・MOD内容・インフィニティ対応が一致しないため、この遠征は通常モードで続けます。",
-                        $"{player.playerName}'s protocol, mod content or Infinity support is incompatible; this expedition continues in normal mode."));
-                    return;
-                }
-                if (host.InfinityHandshakeAccepted(player)) continue;
+                if (host._helloPeers.Contains(player)) continue;
                 if (!host._infinityHelloWaiting.TryGetValue(player, out float since))
                     host._infinityHelloWaiting[player] = now;
-                else if (now - since >= InfinityHelloGraceSeconds)
-                {
-                    InfinityMode.StopExpedition(Loc.T(
-                        $"{player.playerName} から Dreamforge の互換性確認（Hello）が30秒以内に届かなかったため、この遠征は通常モードで続けます。",
-                        $"No Dreamforge compatibility Hello from {player.playerName} within 30 seconds; this expedition continues in normal mode."));
-                    return;
-                }
+                else if (now - since >= InfinityHelloGraceSeconds && host._infinityHelloWarned.Add(player))
+                    Log.Warn($"Infinity: no Hello from {player.playerName} within 30 seconds; features continue.");
             }
         }
 
@@ -113,9 +76,8 @@ namespace SodRpg.Mod
             get
             {
                 var host = NativeInstance;
-                // The roster above can be self-compatible without a registered host authority;
-                // these ledgers only exist once the server actor is registered.
-                if (host == null || !InfinityRosterCompatible(DewPlayer.gamePlayers)) return false;
+                // Kill ledgers require a registered authority, not compatibility permission.
+                if (host == null) return false;
                 foreach (var fact in host._killUnacknowledged.Values)
                 {
                     if (fact.Sequence > ClientSession.HostKillReceiptForProgress(fact.StreamId)) return false;
@@ -142,7 +104,7 @@ namespace SodRpg.Mod
             get
             {
                 var host = NativeInstance;
-                if (host == null || !InfinityRosterCompatible(DewPlayer.gamePlayers)) return false;
+                if (host == null) return false;
                 if (host._killUnacknowledged.Count >= 2048 || host._killSequence == long.MaxValue) return false;
                 long graph = ClientSession.HostRun?.Infinity?.GraphEpoch ?? 0;
                 if (host._killHistory.Count > 0 && host._killHistory[0].GraphEpoch <= graph - 2) return false;

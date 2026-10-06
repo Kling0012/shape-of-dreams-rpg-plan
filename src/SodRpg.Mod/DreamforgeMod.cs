@@ -42,8 +42,8 @@ namespace SodRpg.Mod
             {
                 if (harmony == null || string.IsNullOrEmpty(harmony.Id) || harmony.Id == "*")
                     throw new InvalidOperationException("Startup requires a non-wildcard Harmony owner.");
-                // Native prerequisites gate only their dependent feature groups. The composed-IL
-                // diagnostic is advisory; unrelated classes can still install if its copier fails.
+                // Native/IL/private-API checks are advisory; only actual patch installation
+                // failures can skip their own class, never unrelated features or the whole MOD.
                 try { NativePatchPreflight.Validate(harmony, typeof(DreamforgeMod).Assembly); }
                 catch (Exception ex) { Log.Warn("Native preflight failed; patching class by class instead: " + ex); }
                 stage = "patch installation";
@@ -352,13 +352,6 @@ namespace SodRpg.Mod
                 bool infinity = InfinityMode.IsNativePatch(type);
                 // #229: the hunter adjustment degrades alone when its own patch cannot install.
                 bool hunter = type == typeof(InfinityHunterAdvance);
-                if (NativePatchPreflight.TryGetDisabledFeature(type, out var featureName))
-                {
-                    if (infinity) InfinityMode.DisableFeature("Infinity patch skipped: native feature " + featureName + " is unavailable or unconfirmed: " + type.FullName);
-                    skipped.Add(type.FullName);
-                    Log.Warn("Patch class skipped: " + type.FullName + ": native feature " + featureName + " is unavailable or unconfirmed.");
-                    continue;
-                }
                 try
                 {
                     if (HarmonyMethodExtensions.GetFromType(type).Count == 0)

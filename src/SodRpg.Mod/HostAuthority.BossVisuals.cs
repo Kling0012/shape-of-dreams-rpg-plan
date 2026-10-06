@@ -249,14 +249,14 @@ namespace SodRpg.Mod
             msg.epoch = state.Epoch; msg.revision = state.Revision; msg.snapshot = snapshot; msg.effects = effects;
             msg.equipmentEpoch = state.EquipmentEpoch;
             msg.hostTime = Time.time; msg.sentAt = NetworkTime.time;
-            // Serialize once per bounded batch, then fan the immutable strings to accepted recipients.
+            // Serialize once per bounded batch, then fan the immutable strings to human recipients.
             string serialized = null;
             var players = DewPlayer.gamePlayers;
             int recipients = 0;
             for (int i = 0; i < players.Count && i < BossVisualOwnerLimit * 2 && recipients < BossVisualOwnerLimit; i++)
             {
                 var player = players[i];
-                if (player != null && player.isHumanPlayer && MechanismHandshakeAccepted(player))
+                if (player != null && player.isHumanPlayer)
                 {
                     if (serialized == null) serialized = DewPersistence.ToJson(msg);
                     send(_registeredOn, player, nameof(DreamforgeBossEffectsMsg), serialized);

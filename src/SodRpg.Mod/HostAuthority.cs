@@ -1288,9 +1288,10 @@ namespace SodRpg.Mod
         {
             try
             {
-                if (caller == null || msg == null || msg.protocol != Protocol.Version) return;
+                if (caller == null || msg == null) return;
                 var hero = caller.hero;
                 if (hero == null || !hero.isActive) return;
+                Protocol.WarnMismatch(msg.protocol, nameof(DreamforgeCurseMsg));
                 // Resync (ordinal > 0) is idempotent per player: skip if enough live pact curses already exist.
                 int ordinal = PactCurseSync.Ordinal(msg.strength);
                 if (!PactCurseSync.ShouldApply(ordinal, _pactCurses.CountLive(caller, se => se != null && !se.isDestroyed && se.isActive))) return;
@@ -1342,7 +1343,8 @@ namespace SodRpg.Mod
         {
             try
             {
-                if (caller == null || msg == null || msg.protocol != Protocol.Version) return;
+                if (caller == null || msg == null) return;
+                Protocol.WarnMismatch(msg.protocol, nameof(DreamforgeCurseClearMsg));
                 // 既に消えているもの（ゲームの終了・部屋の切り替え・呪いの解除など）は数えない。
                 int cleared = _pactCurses.Release(caller, se => se != null && !se.isDestroyed && se.isActive, se => se.Destroy(),
                     ex => Log.Error("Host: clear pact curse " + ex));

@@ -251,7 +251,8 @@ namespace SodRpg.Mod
 
         private void OnRunChoices(DreamforgeRunChoicesMsg msg)
         {
-            if (msg == null || msg.protocol != Protocol.Version) return;
+            if (msg == null) return;
+            Protocol.WarnMismatch(msg.protocol, nameof(DreamforgeRunChoicesMsg));
             if (!string.IsNullOrEmpty(msg.lobbyReturnRunId))
             {
                 try
@@ -270,11 +271,11 @@ namespace SodRpg.Mod
 
         private void ReceiveRunChoices(string encoded, bool? victory = null)
         {
-            if (NetworkServer.active || !ContinueReady || !RunChoiceSnapshot.TryDecode(encoded, out var snapshot)) return;
-            if (InfinityMode.ExpeditionHalted)
+            if (NetworkServer.active || !ContinueReady) return;
+            if (!RunChoiceSnapshot.TryDecode(encoded, out var snapshot))
             {
-                StopInfinityRun();
-                if (snapshot.Infinity != null) return;
+                Log.Warn("Client: rejected malformed run choices payload.");
+                return;
             }
             string gameRunId = NetworkedManagerBase<GameManager>.softInstance?.runId;
             if (!string.IsNullOrEmpty(snapshot.RunId) && !string.IsNullOrEmpty(gameRunId) && snapshot.RunId != gameRunId) return;
@@ -297,7 +298,6 @@ namespace SodRpg.Mod
         private void ApplyHostRunChoices()
         {
             if (Profile.Run?.Infinity != null && !InfinityMode.NativeSaveAgreement) return;
-            if (InfinityMode.ExpeditionHalted && _receivedRunChoices?.Infinity != null) return;
             if (!RunActive || (_zone != null && _zone.isInAnyTransition)) return;
             if (!_runChoiceProgress.ApplyCurrent(Profile, ChoiceZoneIndex)) return;
             MarkDirty(true);

@@ -185,7 +185,6 @@ namespace Issue73.Native.Tests
         private ClientSession Session(Profile profile, Actor transport, long ledgerId, string fileName, Action<GameEvent> notify = null)
         {
             var session = new ClientSession(notify) { Profile = profile, ActiveRunId = RunId };
-            Set(session, "_continueHandshakeReady", true);
             Set(session, "_clientRpcOn", transport);
             Set(session, "_hostLedgerId", ledgerId);
             Set(session, "_store", new ProfileStore(new RealFileSystem(), Path.Combine(_directory, fileName), 176));

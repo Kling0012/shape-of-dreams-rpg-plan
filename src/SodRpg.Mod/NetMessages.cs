@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using SodRpg.Core.Game;
 
 namespace SodRpg.Mod
@@ -189,13 +190,31 @@ namespace SodRpg.Mod
         // Version 19 binds MOD checkpoint barriers and resume handshakes to native continue saves.
 // Version 20 carries run-bound return-to-lobby defeats and blocks their native resumes.
         // Version 19 adds fixed-zone infinity epochs, shared boss choices and continue-save agreement.
-        // Version 20 requires persistent Infinity reward caps; cap-less participants are incompatible.
+        // Version 20 carries persistent Infinity reward caps.
         // Version 21 keeps the return-to-lobby defeat + Infinity reward-cap protocol and adds owner-bound satchel overflow dust trades with their expedition identity.
         // Version 22 distinguishes frozen continue barriers from disk-confirmed cleanup notices.
         // Version 23 requires one-room Infinity reveal and matching travel/vote restrictions.
         // Version 24 requires random Infinity zone transitions and nonterminal Primus choices.
         public const int Version = 24;
         public const string LobbyReturnedResumeSession = "lobby-returned";
+
+        // Compatibility is diagnostic, never permission to run a feature.
+        // Bound warnings by the locally defined message names, not remote values.
+        private static readonly HashSet<string> ProtocolWarnings = new HashSet<string>(StringComparer.Ordinal);
+        private static readonly HashSet<string> ContentWarnings = new HashSet<string>(StringComparer.Ordinal);
+
+        internal static void WarnMismatch(int received, string message)
+        {
+            if (received != Version && ProtocolWarnings.Add(message))
+                Log.Warn($"{message}: protocol {received} differs from local {Version}; continuing with readable fields.");
+        }
+
+        internal static void WarnContentMismatch(int received, string content, string message)
+        {
+            WarnMismatch(received, message);
+            if (!string.Equals(content, ContentFingerprint.Value, StringComparison.Ordinal) && ContentWarnings.Add(message))
+                Log.Warn($"{message}: MOD content differs; continuing with readable fields.");
+        }
     }
 
     [Serializable]

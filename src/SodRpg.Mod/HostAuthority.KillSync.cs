@@ -208,8 +208,7 @@ namespace SodRpg.Mod
                     cursor.Started = cursor.HeardReceipt = cursor.ControlSent = false;
                     cursor.MonsterIndex = 0;
                     cursor.Monsters.Clear();
-                    if (MechanismHandshakeAccepted(pair.Key))
-                        foreach (var runtime in _monsters.Values) cursor.Monsters.Add(runtime);
+                    foreach (var runtime in _monsters.Values) cursor.Monsters.Add(runtime);
                     cursor.Requested.Clear();
                 }
             _killReplayDeparted.Clear();
@@ -227,7 +226,7 @@ namespace SodRpg.Mod
         {
             EnsureKillRun();
             if (player == null || !player.isHumanPlayer || string.IsNullOrEmpty(_killRunId)
-                || !DewPlayer.gamePlayers.Contains(player) || _versionMismatches.ContainsKey(player)
+                || !DewPlayer.gamePlayers.Contains(player)
                 || _killReplayPlayers.ContainsKey(player)) return;
             string id = "connection." + ClientSession.HostAuthorityGeneration.ToString(CultureInfo.InvariantCulture)
                 + "." + player.netId.ToString(CultureInfo.InvariantCulture);
@@ -362,10 +361,11 @@ namespace SodRpg.Mod
         private void OnKillReceipt(DreamforgeKillReceiptMsg msg, DewPlayer caller)
         {
             EnsureKillRun();
-            if (msg == null || msg.protocol != Protocol.Version || caller == null || !caller.isHumanPlayer
+            if (msg == null || caller == null || !caller.isHumanPlayer
                 || !DewPlayer.gamePlayers.Contains(caller) || msg.runId != _killRunId
                 || msg.authorityGeneration != ClientSession.HostAuthorityGeneration || string.IsNullOrEmpty(caller.guid)
-                || string.IsNullOrEmpty(msg.clientId) || msg.clientId.Length > 64 || !MechanismHandshakeAccepted(caller)) return;
+                || string.IsNullOrEmpty(msg.clientId) || msg.clientId.Length > 64) return;
+            Protocol.WarnMismatch(msg.protocol, nameof(DreamforgeKillReceiptMsg));
             if (msg.receipts != null)
                 foreach (var receipt in msg.receipts)
                     if (receipt == null || string.IsNullOrEmpty(receipt.streamId) || receipt.streamId.Length > 64
@@ -541,7 +541,7 @@ namespace SodRpg.Mod
                 bossTypeName, bossDropNightmare, bossDropDepth, runtime.GraphEpoch, runtime.SegmentEpoch, runtime.RoomEpoch);
             RestoreHostFact(fact);
             foreach (var pair in _killReplayPlayers)
-                if (MechanismHandshakeAccepted(pair.Key) || !pair.Value.ControlSent) pair.Value.Participation.Through = fact.Sequence;
+                pair.Value.Participation.Through = fact.Sequence;
             ClientSession.PublishHostKillFact(fact);
             var actor = NetworkedManagerBase<ActorManager>.softInstance?.serverActor;
             actor?.CustomRpc_SendMessageToAllClients(
@@ -750,7 +750,6 @@ namespace SodRpg.Mod
                 SendKillStreamControl(player, cursor);
                 return 1;
             }
-            if (!MechanismHandshakeAccepted(player)) return 0;
             if (!cursor.Started || (!cursor.HeardReceipt && Time.unscaledTime >= cursor.NextStartRetry))
             {
                 if (!ReserveMonsterSyncMessage()) return 0;

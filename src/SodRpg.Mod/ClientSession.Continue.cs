@@ -43,11 +43,11 @@ namespace SodRpg.Mod
         private RunCheckpoint _nativeContinueCheckpoint;
         private string _continueCheckpointId, _continueResumeSession;
         private string _pendingContinueId, _confirmedContinueId;
-        private bool _continueHandshakeReady;
+        private bool _continueCheckpointBlocked;
         private bool _nativeContinueRestoring;
         private GameManager _continueGame;
-private bool ContinueReady => !_nativeContinueRestoring && (LobbyReturnPending || (_blockedContinueRunId == null
-            && (CanChooseRunRules || _continueHandshakeReady)));
+        private bool ContinueReady => !_nativeContinueRestoring && (LobbyReturnPending
+            || (_blockedContinueRunId == null && !_continueCheckpointBlocked));
         public string ContinueWarning { get; private set; }
 
         // The ID travels in the native save itself: same runId alone cannot identify a save point.
@@ -192,8 +192,14 @@ private bool ContinueReady => !_nativeContinueRestoring && (LobbyReturnPending |
 
         private void OnContinueCheckpoint(DreamforgeContinueCheckpointMsg msg)
         {
-            if (NetworkServer.active || !ContinueReady || msg == null || msg.protocol != Protocol.Version
+            if (NetworkServer.active || !ContinueReady || msg == null
                 || msg.runId != Profile.Run?.RunId || msg.runId != NetworkedManagerBase<GameManager>.softInstance?.runId) return;
+            Protocol.WarnMismatch(msg.protocol, nameof(DreamforgeContinueCheckpointMsg));
+            if (string.IsNullOrEmpty(msg.checkpointId))
+            {
+                Log.Warn("Client: rejected checkpoint notification without a checkpoint ID.");
+                return;
+            }
             if (msg.committed)
             {
                 if (ConfirmContinueCheckpoint(msg.runId, msg.checkpointId)) SaveNow(true);
@@ -221,7 +227,7 @@ private bool ContinueReady => !_nativeContinueRestoring && (LobbyReturnPending |
                 return;
             }
             _continueGame = gm;
-            _continueHandshakeReady = false;
+            _continueCheckpointBlocked = false;
             ContinueWarning = null;
             _blockedContinueRunId = null;
             if (gm != null) return;
@@ -239,9 +245,10 @@ private bool ContinueReady => !_nativeContinueRestoring && (LobbyReturnPending |
 
         private void ReceiveContinueHandshake(DreamforgeHelloMsg msg)
         {
-            if (NetworkServer.active || msg.protocol != Protocol.Version) return;
+            if (NetworkServer.active || msg == null) return;
             string runId = NetworkedManagerBase<GameManager>.softInstance?.runId;
             if (string.IsNullOrEmpty(runId) || msg.continueRunId != runId) return;
+            Protocol.WarnContentMismatch(msg.protocol, msg.content, nameof(DreamforgeHelloMsg));
             if (msg.continueResumeSession == Protocol.LobbyReturnedResumeSession)
             {
                 Profile.LobbyReturnedRunIds.Add(runId);
@@ -252,7 +259,7 @@ private bool ContinueReady => !_nativeContinueRestoring && (LobbyReturnPending |
                 && (Profile.Run?.RunId != runId || Profile.ContinueResumeSession != msg.continueResumeSession))
             {
                 // A different expedition must not bypass rewind, even in an already seen resume session.
-                _continueHandshakeReady = false;
+                _continueCheckpointBlocked = true;
                 RunCheckpoint checkpoint = null;
                 foreach (var candidate in Profile.ContinueCheckpoints)
                     if (candidate.Id == msg.continueCheckpointId && candidate.RunId == runId) { checkpoint = candidate; break; }
@@ -263,7 +270,7 @@ private bool ContinueReady => !_nativeContinueRestoring && (LobbyReturnPending |
                 }
                 RestoreContinueCheckpoint(checkpoint, msg.continueResumeSession);
             }
-            _continueHandshakeReady = true;
+            _continueCheckpointBlocked = false;
         }
 
         private void RestoreContinueCheckpoint(RunCheckpoint checkpoint, string resumeSession)
@@ -321,7 +328,7 @@ private bool ContinueReady => !_nativeContinueRestoring && (LobbyReturnPending |
                 if (!msg.terminal || msg.victory || !RunChoiceSnapshot.TryDecode(msg.choices, out var snapshot)
                     || snapshot.RunId != runId)
                 {
-                    DisableLobbyReturn("host return notification does not match the active expedition");
+                    Log.Warn("Client: rejected malformed host return notification for the active expedition.");
                     return false;
                 }
                 // Spectating, still loading or a run mismatch is an ordinary state on this side:

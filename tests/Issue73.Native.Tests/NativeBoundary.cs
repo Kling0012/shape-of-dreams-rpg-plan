@@ -249,7 +249,6 @@ namespace SodRpg.Mod
         private readonly Random _rng = new Random(1);
         private readonly Dictionary<Monster, MonsterRuntime> _monsters = new Dictionary<Monster, MonsterRuntime>();
         private readonly Dictionary<Monster, NightmareAffix> _nightmares = new Dictionary<Monster, NightmareAffix>();
-        private readonly Dictionary<DewPlayer, string> _versionMismatches = new Dictionary<DewPlayer, string>();
         internal sealed class MonsterRuntime
         {
             public Monster Monster;
@@ -264,7 +263,6 @@ namespace SodRpg.Mod
         internal sealed class Variant { public string Id; }
         internal sealed class Behavior { public bool CueQueued; }
         internal static bool Alive(Entity entity) => entity != null && entity.isActive && entity.currentHealth > 0;
-        private bool MechanismHandshakeAccepted(DewPlayer player) => true;
         private void SendMonsterBehaviorCue(MonsterRuntime runtime, bool force, DewPlayer target = null)
         {
             // Native cue transport is not needed in these scenarios. Unexpected calls fail rather than inventing behavior.
@@ -341,7 +339,6 @@ namespace SodRpg.Mod
     {
         internal static bool Available => false;
         internal static bool Restoring => false;
-        internal static bool ExpeditionHalted => false;
         internal static bool NativeSaveAgreement { get; set; }
         internal static void WriteEnvelope() { }
         internal static bool IsTechnicalRefresh => false;
@@ -365,7 +362,6 @@ namespace SodRpg.Mod
     }
     internal sealed partial class ClientSession
     {
-        internal static void StopInfinityRun(string notice = null) { }
         public Profile Profile;
         public Hero LocalHero;
         // ClientSession.cs(リンク外)の実装と同じ意味: ロビー復帰済みの遠征は精算が保留の間だけ活性。
@@ -422,7 +418,6 @@ namespace SodRpg.Mod
         private void ClearVariants() { }
         private void ClearMonsterCues() { }
         private void ClearBossDisplay() { }
-        private bool MechanismHandshakeAccepted => true;
         private void RequireOrdinaryRun()
         {
             if (Profile.Run?.Infinity != null) throw new NotSupportedException("Infinity is outside the harness.");
