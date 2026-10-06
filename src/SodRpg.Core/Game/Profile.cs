@@ -303,11 +303,11 @@ namespace SodRpg.Core.Game
         public RetuneOffer RetuneOffer { get; set; }
 
         /// <summary>
-        /// 保存の版。v1.27 で 2、v1.28 で 3、v1.31 で 4、撃破受領フロンティアで 5、協力取引の預かり品で 6。
+        /// 保存の版。v1.27 で 2、v1.28 で 3、v1.31 で 4、撃破受領フロンティアで 5、協力取引の預かり品で 6、中断遺物で 7。
         /// 古いMODは新しい版を読み取り専用で開き（LedgerVersionException）、知らない星や遺物を捨てて上書きしない。
-        /// 3→4→5→6 はリセットしない（ResetBeforeVersion は 3 のまま）。
+        /// 3→4→5→6→7 はリセットしない（ResetBeforeVersion は 3 のまま）。
         /// </summary>
-        public const int CurrentVersion = 6;
+        public const int CurrentVersion = 7;
 
         /// <summary>この版より古い保存は読み込まず、写しを残して新しいプロフィールで始める。</summary>
         public const int ResetBeforeVersion = 3;
@@ -339,6 +339,14 @@ namespace SodRpg.Core.Game
         public SortedDictionary<string, int> Materials { get; } = new SortedDictionary<string, int>(StringComparer.Ordinal);
         public List<Relic> Stash { get; } = new List<Relic>();
         public List<Relic> LostAndFound { get; } = new List<Relic>();
+        /// <summary>The latest unsecured interruption, excluded from ordinary inventory operations.</summary>
+        public List<Relic> InterruptedRelics { get; } = new List<Relic>();
+        public string InterruptedRelicsId { get; set; }
+        public string InterruptedRelicsRunId { get; set; }
+        /// <summary>Permanent receipt, claimant expedition, and consumed or displaced source expedition ledgers.</summary>
+        public SortedSet<string> InterruptedRelicsExecuted { get; } = new SortedSet<string>(StringComparer.Ordinal);
+        public SortedSet<string> InterruptedRelicsClaimedRunIds { get; } = new SortedSet<string>(StringComparer.Ordinal);
+        public SortedSet<string> InterruptedRelicsRetiredSourceRunIds { get; } = new SortedSet<string>(StringComparer.Ordinal);
         /// <summary>分解の応答待ち。装着・鍛冶・出来事の対象には含めない。</summary>
         public List<PendingSalvage> PendingSalvage { get; } = new List<PendingSalvage>();
         /// <summary>
@@ -478,12 +486,17 @@ namespace SodRpg.Core.Game
 
         public void StoreRng(Rng rng) => RngState = rng.State;
 
-        internal bool ContainsRelicUid(string uid)
+        internal bool ContainsRelicUid(string uid, bool includeCoopReservation = true)
         {
             foreach (var relic in Stash)
                 if (relic.Uid == uid) return true;
             foreach (var relic in LostAndFound)
                 if (relic.Uid == uid) return true;
+            foreach (var relic in InterruptedRelics)
+                if (relic.Uid == uid) return true;
+            if (includeCoopReservation && CoopTradePending != null)
+                foreach (var escrow in CoopTradePending.Relics)
+                    if (escrow.Relic.Uid == uid) return true;
             foreach (var pending in PendingSalvage)
                 if (pending.Relic.Uid == uid) return true;
             if (Run != null)
@@ -497,7 +510,7 @@ namespace SodRpg.Core.Game
         }
 
         /// <summary>Installs an owned, decoded checkpoint without replacing the slot's Profile reference.</summary>
-        internal void RestoreFrom(Profile source)
+        public void RestoreFrom(Profile source)
         {
             // ReceiveOverflowDreamDust remains live configuration, not checkpoint state.
             LoadedVersion = source.LoadedVersion;
@@ -540,6 +553,16 @@ namespace SodRpg.Core.Game
             Stash.AddRange(source.Stash);
             LostAndFound.Clear();
             LostAndFound.AddRange(source.LostAndFound);
+            InterruptedRelics.Clear();
+            InterruptedRelics.AddRange(source.InterruptedRelics);
+            InterruptedRelicsId = source.InterruptedRelicsId;
+            InterruptedRelicsRunId = source.InterruptedRelicsRunId;
+            InterruptedRelicsExecuted.Clear();
+            InterruptedRelicsExecuted.UnionWith(source.InterruptedRelicsExecuted);
+            InterruptedRelicsClaimedRunIds.Clear();
+            InterruptedRelicsClaimedRunIds.UnionWith(source.InterruptedRelicsClaimedRunIds);
+            InterruptedRelicsRetiredSourceRunIds.Clear();
+            InterruptedRelicsRetiredSourceRunIds.UnionWith(source.InterruptedRelicsRetiredSourceRunIds);
             PendingSalvage.Clear();
             PendingSalvage.AddRange(source.PendingSalvage);
             PendingTrades.Clear();
@@ -577,6 +600,9 @@ namespace SodRpg.Core.Game
             var c = new Profile
             {
                 Revision = Revision,
+                LoadedVersion = LoadedVersion,
+                InterruptedRelicsId = InterruptedRelicsId,
+                InterruptedRelicsRunId = InterruptedRelicsRunId,
                 RngState = RngState,
                 DreamLevel = DreamLevel,
                 DreamXp = DreamXp,
@@ -617,6 +643,10 @@ namespace SodRpg.Core.Game
             c.ContinueCheckpoints.AddRange(ContinueCheckpoints);
             foreach (var r in Stash) c.Stash.Add(r.Clone());
             foreach (var r in LostAndFound) c.LostAndFound.Add(r.Clone());
+            foreach (var relic in InterruptedRelics) c.InterruptedRelics.Add(relic.Clone());
+            c.InterruptedRelicsExecuted.UnionWith(InterruptedRelicsExecuted);
+            c.InterruptedRelicsClaimedRunIds.UnionWith(InterruptedRelicsClaimedRunIds);
+            c.InterruptedRelicsRetiredSourceRunIds.UnionWith(InterruptedRelicsRetiredSourceRunIds);
             foreach (var pending in PendingSalvage) c.PendingSalvage.Add(pending.Clone());
             foreach (var trade in PendingTrades) c.PendingTrades.Add(trade.Clone());
             c.CoopTradeExecuted.UnionWith(CoopTradeExecuted);

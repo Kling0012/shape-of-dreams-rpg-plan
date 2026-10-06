@@ -144,6 +144,12 @@ namespace SodRpg.Core.Game
                 .Add("materials", mats)
                 .Add("stash", WriteRelics(p.Stash))
                 .Add("lostAndFound", WriteRelics(p.LostAndFound))
+                .Add("interruptedRelics", WriteRelics(p.InterruptedRelics))
+                .Add("interruptedRelicsId", p.InterruptedRelicsId)
+                .Add("interruptedRelicsRunId", p.InterruptedRelicsRunId)
+                .Add("interruptedRelicsExecuted", p.InterruptedRelicsExecuted.Select(id => (object)id).ToList())
+                .Add("interruptedRelicsClaimedRunIds", p.InterruptedRelicsClaimedRunIds.Select(id => (object)id).ToList())
+                .Add("interruptedRelicsRetiredSourceRunIds", p.InterruptedRelicsRetiredSourceRunIds.Select(id => (object)id).ToList())
                 .Add("pendingSalvage", pendingSalvage)
                 .Add("pendingTrades", p.PendingTrades.Select(WriteTrade).ToList())
                 .Add("coopTradePending", WriteCoopTradeReservation(p.CoopTradePending))
@@ -527,6 +533,7 @@ namespace SodRpg.Core.Game
                             && !run.OfferedWaypoints.Contains((Waypoint)id)) run.OfferedWaypoints.Add((Waypoint)id);
                 p.Run = run;
             }
+            ReadInterruptedRelics(b, p, notes);
             // Preserve connected allocations; refund only this Traveler when the budget or graph is invalid.
             foreach (var kv in p.Heroes)
             {

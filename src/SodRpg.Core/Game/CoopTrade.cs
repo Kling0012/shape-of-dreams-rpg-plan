@@ -341,7 +341,7 @@ namespace SodRpg.Core.Game
         }
 
         private static bool HasOwnedUid(Profile profile, string uid) =>
-            profile.ContainsRelicUid(uid) || profile.IsEquippedAnywhere(uid)
+            profile.ContainsRelicUid(uid, includeCoopReservation: false) || profile.IsEquippedAnywhere(uid)
             || profile.PendingTrades.Any(pending => pending.Uid == uid || pending.Relic?.Uid == uid);
 
         private static string ValidateInventory(Profile profile)
@@ -356,6 +356,7 @@ namespace SodRpg.Core.Game
         {
             foreach (var relic in profile.Stash) yield return relic;
             foreach (var relic in profile.LostAndFound) yield return relic;
+            foreach (var relic in profile.InterruptedRelics) yield return relic;
             foreach (var pending in profile.PendingSalvage) yield return pending.Relic;
             foreach (var pending in profile.PendingTrades)
                 if (pending.Relic != null) yield return pending.Relic;
@@ -411,6 +412,15 @@ namespace SodRpg.Core.Game
             target.CoopTradeExecuted.Clear();
             target.CoopTradeExecuted.UnionWith(source.CoopTradeExecuted);
             target.CoopTradeEconomy = source.CoopTradeEconomy;
+            CopyRelics(target.InterruptedRelics, source.InterruptedRelics);
+            target.InterruptedRelicsId = source.InterruptedRelicsId;
+            target.InterruptedRelicsRunId = source.InterruptedRelicsRunId;
+            target.InterruptedRelicsExecuted.Clear();
+            target.InterruptedRelicsExecuted.UnionWith(source.InterruptedRelicsExecuted);
+            target.InterruptedRelicsClaimedRunIds.Clear();
+            target.InterruptedRelicsClaimedRunIds.UnionWith(source.InterruptedRelicsClaimedRunIds);
+            target.InterruptedRelicsRetiredSourceRunIds.Clear();
+            target.InterruptedRelicsRetiredSourceRunIds.UnionWith(source.InterruptedRelicsRetiredSourceRunIds);
         }
 
         internal static void CopyEconomics(Profile target, Profile source)
@@ -430,6 +440,10 @@ namespace SodRpg.Core.Game
             target.SatchelOverflowShards = source.SatchelOverflowShards;
             target.SatchelOverflowCount = source.SatchelOverflowCount;
             target.SatchelOverflowDiscarded = source.SatchelOverflowDiscarded;
+            target.OverflowBonusPendingRunId = source.OverflowBonusPendingRunId;
+            target.OverflowBonusPendingLedgerId = source.OverflowBonusPendingLedgerId;
+            target.OverflowBonusPendingTotal = source.OverflowBonusPendingTotal;
+            target.InfinityRewardBudget = source.InfinityRewardBudget.Clone();
             target.Upgrades.Clear();
             foreach (var pair in source.Upgrades) target.Upgrades.Add(pair.Key, pair.Value);
             target.Codex.Clear();
@@ -447,6 +461,8 @@ namespace SodRpg.Core.Game
                 target.Run.SatchelTuning = source.Run?.SatchelTuning ?? 0;
                 target.Run.DeferredWaypointShards = source.Run?.DeferredWaypointShards ?? 0;
                 target.Run.DeferredWaypointTuning = source.Run?.DeferredWaypointTuning ?? 0;
+                target.Run.OverflowDreamDustTotal = source.Run?.OverflowDreamDustTotal ?? 0;
+                target.Run.OverflowDreamDustLedgerId = source.Run?.OverflowDreamDustLedgerId ?? 0;
             }
         }
 

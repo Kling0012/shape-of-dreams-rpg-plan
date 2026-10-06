@@ -142,7 +142,7 @@ namespace SodRpg.Mod
 
         private bool ProfileSessionSettled => !HasHeldTrades && !CoopTradeLocked && CoopTrade == null
             && _pendingRunRewards.Count == 0 && !_runChoiceProgress.HasPendingArrival && !_pendingRunVictory.HasValue
-            && _pendingResultRunId == null && Profile.PendingSalvage.Count == 0;
+            && _pendingResultRunId == null && Profile.PendingSalvage.Count == 0 && _interruptedRelicNotices == null;
 
         private void TickProfileSlots()
         {

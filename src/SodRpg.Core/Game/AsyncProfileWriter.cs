@@ -29,6 +29,9 @@ namespace SodRpg.Core.Game
 
         /// <summary>ディスクへ書き終えた最新のリビジョン。</summary>
         public long WrittenRevision { get { lock (_lock) return _writtenRevision; } }
+        /// <summary>Latest revision actually handed to the worker, excluding serialization failures.</summary>
+        public long EnqueuedRevision { get { lock (_lock) return _enqueuedRevision; } }
+        private long _enqueuedRevision;
 
         private long _writtenRevision;
         private long _attemptedRevision;
@@ -39,6 +42,12 @@ namespace SodRpg.Core.Game
         /// 呼び出し側はこの印を見て保存を予約し直す必要がある（#72）。
         /// </summary>
         public bool HasPendingFailure { get { lock (_lock) return _failurePending; } }
+
+        /// <summary>A completed failure, not a timeout or an older failed write.</summary>
+        public bool HasFailedRevision(long revision)
+        {
+            lock (_lock) return _attemptedRevision >= revision && _writtenRevision < revision;
+        }
 
         public int Coalesced { get; private set; }
 
@@ -90,6 +99,7 @@ namespace SodRpg.Core.Game
                 if (_pendingText != null) Coalesced++;
                 _pendingText = text;
                 _pendingRevision = rev;
+                _enqueuedRevision = rev;
                 if (_running) return rev;
                 _running = true;
                 _idle.Reset();

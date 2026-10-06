@@ -157,20 +157,6 @@ namespace SodRpg.Core.Tests
             Assert.Empty(Rules.OnRoomsCleared(p, 6));
         }
 
-        [Fact]
-        public void Starting_a_different_run_settles_the_unfinished_one_as_defeat()
-        {
-            var p = NewProfile();
-            Rules.BeginRun(p, "old");
-            p.Run.Satchel.Add(Loot.RollRelic(new Rng(1), Rarity.Rare, 5));
-            Rules.BeginRun(p, "old"); // 同じランの再開は何もしない
-            Assert.Single(p.Run.Satchel);
-
-            Rules.BeginRun(p, "new");
-            Assert.Equal("new", p.Run.RunId);
-            Assert.Empty(p.Run.Satchel);
-            Assert.Single(p.LostAndFound);
-        }
 
 
         [Fact]

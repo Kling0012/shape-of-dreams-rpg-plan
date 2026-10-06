@@ -109,10 +109,18 @@ namespace SodRpg.Core.Game
                 if (string.IsNullOrEmpty(p.Run.HeroKey) && !string.IsNullOrEmpty(heroKey)) p.Run.HeroKey = heroKey;
                 return ev;
             }
+            // A stale, already-settled Run is not a new interruption or another victory/defeat.
+            if (p.Run != null && p.Run.RunId == p.CompletedRunId) p.Run = null;
             if (p.Run != null)
             {
-                ev.Add(new GameEvent(EventKind.Warning, Loc.T("前回の遠征は確保されずに終わりました。", "Your previous expedition ended unsecured.")));
-                ev.AddRange(EndRun(p, victory: false, reservedUids: reservedUids));
+                var reservations = InterruptedSalvageReservations(p, reservedUids);
+                bool? terminal = InterruptedRunTerminalOutcome(p);
+                if (!terminal.HasValue)
+                {
+                    ev.Add(new GameEvent(EventKind.Warning, Loc.T("前回の遠征は確保されずに中断しました。", "Your previous expedition was interrupted unsecured.")));
+                    CaptureInterruptedRelics(p, reservations, ev);
+                }
+                ev.AddRange(EndRun(p, victory: terminal == true, reservedUids: reservations));
             }
             // 開始深度は v1.1 で廃止（本体の Limbo 深度に統合）。
             p.Run = new RunState { RunId = runId, HeroKey = heroKey, LevelAtStart = p.DreamLevel, DailyId = daily?.Id ?? 0, LimboDepth = Math.Max(0, limboDepth), DreamDepth = dreamDepth ?? p.LastDreamDepth };
@@ -287,6 +295,11 @@ namespace SodRpg.Core.Game
 
         private static void AddToSatchel(Profile p, Relic relic, TradeLedger trades = null, bool suppressShards = false)
         {
+            AddToSatchelReserved(p, relic, trades, suppressShards, null);
+        }
+
+        private static void AddToSatchelReserved(Profile p, Relic relic, TradeLedger trades, bool suppressShards, ISet<string> reservedUids)
+        {
             var run = p.Run;
             run.Satchel.Add(relic);
             int capacity = Workshop.SatchelCapacity(p);
@@ -298,7 +311,8 @@ namespace SodRpg.Core.Game
                 for (int i = 0; i < run.Satchel.Count; i++)
                 {
                     var candidate = run.Satchel[i];
-                    if (trades != null && trades.IsReserved(candidate.Uid)) continue;
+                    if ((trades != null && trades.IsReserved(candidate.Uid))
+                        || (reservedUids != null && reservedUids.Contains(candidate.Uid))) continue;
                     if (worstIndex >= 0 && candidate.Rarity > worstRarity) continue;
                     int score = candidate.Score;
                     if (worstIndex < 0 || candidate.Rarity < worstRarity || score < worstScore)
