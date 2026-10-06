@@ -125,8 +125,8 @@ namespace SodRpg.Mod
             SaveNow();
             if (NetworkServer.active) PersistHostInfinityState();
             _notify?.Invoke(new GameEvent(EventKind.Info, Loc.T(
-                "ボスの魂の報酬を受領。ホストは全員で確保して帰還するか、深く潜るかを選べます。",
-                "Boss soul rewards complete. The host chooses Secure and return together, or Delve deeper.")));
+                "ボスの魂の処理が完了。記憶・エッセンスを拾ってから選択画面を開いてください。ホストは全員の回収を確認して帰還か潜行を選べます。",
+                "Boss soul finished. Collect memories and essences before opening the choice panel. The host can confirm everyone has collected their loot, then choose Return or Delve.")));
         }
 
         private bool TryInfinityArrival()
