@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Reflection.Emit;
+using System.Runtime.CompilerServices;
+using Mirror;
 using HarmonyLib;
 using UnityEngine;
 
@@ -9,6 +11,111 @@ namespace SodRpg.Mod
 {
     internal static class InfinityMapPresentation
     {
+        private sealed class Projection
+        {
+            internal readonly ZoneManager Zone;
+            internal readonly UI_InGame_World_NodeItem[] Items;
+            internal readonly bool[] Dirty;
+            internal readonly HunterStatus[] Hunters;
+            internal readonly Dictionary<long, UI_InGame_World_Edge> Edges = new Dictionary<long, UI_InGame_World_Edge>();
+            internal readonly List<long> RetiredEdges = new List<long>();
+            internal bool Retired, TopologyChanged = true;
+            internal int Current = -1, Next = -1, HunterStart = -1, VoteData = -1;
+            internal VoteType Vote;
+            internal WorldDisplayStatus Display;
+
+            internal Projection(ZoneManager zone)
+            {
+                Zone = zone;
+                Items = new UI_InGame_World_NodeItem[zone.nodes.Count];
+                Dirty = new bool[Items.Length];
+                Hunters = new HunterStatus[Items.Length];
+                zone.nodes.Callback += NodesChanged;
+                zone.nodeDistanceMatrix.Callback += DistancesChanged;
+            }
+
+            private void NodesChanged(SyncList<WorldNodeData>.Operation op, int index,
+                WorldNodeData oldNode, WorldNodeData newNode)
+            {
+                if (op != SyncList<WorldNodeData>.Operation.OP_SET || index >= Dirty.Length)
+                    Retired = true;
+                else Dirty[index] = true;
+            }
+
+            private void DistancesChanged(SyncList<int>.Operation op, int index, int oldValue, int newValue)
+                => TopologyChanged = true;
+
+            internal void Detach()
+            {
+                Zone.nodes.Callback -= NodesChanged;
+                Zone.nodeDistanceMatrix.Callback -= DistancesChanged;
+            }
+        }
+
+        private static readonly ConditionalWeakTable<UI_InGame_WorldMap, Projection> Projections
+            = new ConditionalWeakTable<UI_InGame_WorldMap, Projection>();
+
+        internal static void Release(UI_InGame_WorldMap map, bool onlyOwned = false)
+        {
+            bool owned = Projections.TryGetValue(map, out var projection);
+            if (onlyOwned && !owned) return;
+            if (owned)
+            {
+                projection.Detach();
+                Projections.Remove(map);
+            }
+            ClearCache(map);
+            RetireChildren(map);
+            RemoveRetiredHoverHandlers(map);
+        }
+
+        private static void RetireChildren(UI_InGame_WorldMap map)
+        {
+            for (int i = map.nodeParent.childCount - 1; i >= 0; i--)
+                Retire(map.nodeParent.GetChild(i).gameObject);
+        }
+
+        private static void Retire(GameObject child)
+        {
+            // Unity destruction is deferred; pointer/ping input must stop immediately.
+            child.SetActive(false);
+            UnityEngine.Object.Destroy(child);
+        }
+
+        private static void RemoveRetiredHoverHandlers(UI_InGame_WorldMap map)
+        {
+            if (map.onHoveringNodeChanged == null) return;
+            // Native OnDestroy removes these subscriptions only at the end of the frame.
+            // Filter once per retirement batch; unchanged refreshes never allocate this array.
+            foreach (var callback in map.onHoveringNodeChanged.GetInvocationList())
+            {
+                bool retired = callback.Target is UI_InGame_World_NodeItem node
+                    ? node == null || !node.gameObject.activeSelf
+                    : callback.Target is UI_InGame_World_Edge edge && (edge == null || !edge.gameObject.activeSelf);
+                if (retired) map.onHoveringNodeChanged -= (Action<int, int>)callback;
+            }
+        }
+
+        private static long EdgeKey(int a, int b)
+            => a < b ? ((long)a << 32) | (uint)b : ((long)b << 32) | (uint)a;
+
+        private static bool ShowEdge(ZoneManager zone, Projection projection, int a, int b)
+            => zone.IsNodeConnected(a, b)
+                || (a == projection.Current && b == projection.Next)
+                || (b == projection.Current && a == projection.Next);
+
+        private static bool SameProjection(WorldNodeData a, WorldNodeData b)
+            => a.status == b.status && a.type == b.type
+                && a.position.x == b.position.x && a.position.y == b.position.y
+                && ReferenceEquals(a.modifiers, b.modifiers);
+
+        internal static void UpdateTravel(UI_InGame_World_NodeItem item, ZoneManager zone)
+        {
+            bool destination = InfinityMode.IsRevealDestination(zone, item.index);
+            item.canTraverseObject.SetActive(destination
+                && InGameUIManager.instance.isWorldDisplayed == WorldDisplayStatus.Shown);
+            if (item.button != null) item.button.interactable = destination;
+        }
         internal static void ClearCache(UI_InGame_WorldMap map)
         {
             var ui = InGameUIManager.instance;
@@ -23,47 +130,113 @@ namespace SodRpg.Mod
                 if (!InfinityMode.IsRevealVisible(zone, i)) cache[i] = null;
         }
 
-        internal static void Refresh(UI_InGame_WorldMap map, ZoneManager zone)
+        internal static bool Refresh(UI_InGame_WorldMap map, ZoneManager zone)
         {
-            ClearCache(map);
+            if (zone == null || zone.currentZone == null || zone.currentNodeIndex < 0)
+            {
+                Release(map);
+                return false;
+            }
+            var ui = InGameUIManager.instance;
+            var cache = map.nodePrefab.isMiniMapVariant ? ui.miniWorldMapNodeItems : ui.fullWorldMapNodeItems;
+            bool reset = !Projections.TryGetValue(map, out var projection)
+                || projection.Zone != zone || projection.Retired || projection.Items.Length != zone.nodes.Count;
+            if (reset)
+            {
+                Release(map);
+                projection = new Projection(zone);
+                Projections.Add(map, projection);
+            }
+            while (cache.Count < zone.nodes.Count) cache.Add(null);
+            int next = InfinityMode.RevealedNext(zone);
+            bool currentChanged = projection.Current != zone.currentNodeIndex;
+            bool contextChanged = currentChanged || projection.Next != next
+                || projection.Display != ui.isWorldDisplayed || projection.Vote != zone.voteType
+                || projection.VoteData != zone.voteData;
+            bool changed = reset || contextChanged || projection.TopologyChanged;
+            bool retiredViews = false;
+            for (int i = 0; i < projection.Items.Length; i++)
+            {
+                var item = projection.Items[i];
+                var hunter = zone.hunterStatuses[i];
+                bool visible = InfinityMode.IsRevealVisible(zone, i) && !zone.nodes[i].IsSidetrackNode();
+                bool replace = projection.Dirty[i] || projection.Hunters[i] != hunter
+                    // Mirror's initial/full snapshot deserializer skips SyncList callbacks.
+                    || (item != null && !SameProjection(item.node, zone.nodes[i]))
+                    || (currentChanged && (i == projection.Current || i == zone.currentNodeIndex))
+                    || (projection.HunterStart != zone.hunterStartNodeIndex
+                        && (i == projection.HunterStart || i == zone.hunterStartNodeIndex));
+                projection.Dirty[i] = visible && (item == null || replace);
+                projection.Hunters[i] = hunter;
+                if (item != null && (!visible || replace))
+                {
+                    Retire(item.gameObject);
+                    retiredViews = true;
+                    projection.Items[i] = null;
+                    cache[i] = null;
+                    changed = true;
+                }
+                if (!visible) cache[i] = null;
+                else if (!projection.Dirty[i]) cache[i] = (RectTransform)item.transform;
+                if (!projection.Dirty[i]) continue;
+                // Native Setup subscribes hover/click handlers and starts tweens/materials.
+                // It is one-shot: replace affected views rather than calling it twice.
+                item = UnityEngine.Object.Instantiate(map.nodePrefab, map.nodeParent);
+                projection.Items[i] = item;
+                item.Setup(i, map);
+                changed = true;
+            }
+            projection.Current = zone.currentNodeIndex;
+            projection.Next = next;
+            projection.Display = ui.isWorldDisplayed;
+            projection.HunterStart = zone.hunterStartNodeIndex;
+            projection.Vote = zone.voteType;
+            projection.VoteData = zone.voteData;
+            if (!changed) return false;
             if (map.isMain)
             {
                 var tooltip = SingletonBehaviour<UI_TooltipManager>.instance;
                 if (tooltip != null && tooltip.worldNodeTooltip != null && tooltip.worldNodeTooltip.activeSelf) tooltip.Hide();
             }
-            // Destroy is deferred in Unity. Retired views must stop receiving pointer/ping
-            // input immediately, including when a replacement graph has the same node count.
-            for (int i = map.nodeParent.childCount - 1; i >= 0; i--)
+            projection.RetiredEdges.Clear();
+            foreach (var pair in projection.Edges)
             {
-                var child = map.nodeParent.GetChild(i).gameObject;
-                child.SetActive(false);
-                UnityEngine.Object.Destroy(child);
+                int a = (int)(pair.Key >> 32), b = (int)pair.Key;
+                if (projection.Items[a] == null || projection.Items[b] == null
+                    || projection.Dirty[a] || projection.Dirty[b] || !ShowEdge(zone, projection, a, b))
+                {
+                    Retire(pair.Value.gameObject);
+                    retiredViews = true;
+                    projection.RetiredEdges.Add(pair.Key);
+                }
+                else pair.Value.UpdateStatus(projection.Current, map.hoveringNode);
             }
-            if (zone == null || zone.currentZone == null || zone.currentNodeIndex < 0) return;
-            var ui = InGameUIManager.instance;
-            var cache = map.nodePrefab.isMiniMapVariant ? ui.miniWorldMapNodeItems : ui.fullWorldMapNodeItems;
-            while (cache.Count < zone.nodes.Count) cache.Add(null);
-            var items = new List<UI_InGame_World_NodeItem>();
-            UI_InGame_World_NodeItem current = null;
-            UI_InGame_World_NodeItem next = null;
-            int nextIndex = InfinityMode.RevealedNext(zone);
-            for (int i = 0; i < zone.nodes.Count; i++)
+            for (int i = 0; i < projection.RetiredEdges.Count; i++)
+                projection.Edges.Remove(projection.RetiredEdges[i]);
+            // The native graph exposes a distance matrix, not adjacency lists. Discover
+            // connections only for changed endpoints (or once after topology replacement).
+            for (int a = 0; a < projection.Items.Length; a++)
             {
-                if (!InfinityMode.IsRevealVisible(zone, i) || zone.nodes[i].IsSidetrackNode()) continue;
-                var item = UnityEngine.Object.Instantiate(map.nodePrefab, map.nodeParent);
-                item.Setup(i, map);
-                items.Add(item);
-                if (i == zone.currentNodeIndex) current = item;
-                if (i == nextIndex) next = item;
+                if (projection.Items[a] == null) continue;
+                UpdateTravel(projection.Items[a], zone);
+                if (!projection.TopologyChanged && !projection.Dirty[a]
+                    && !(contextChanged && a == projection.Current)) continue;
+                for (int b = 0; b < projection.Items.Length; b++)
+                {
+                    if (a == b || projection.Items[b] == null
+                        || (b < a && (projection.TopologyChanged || projection.Dirty[b]
+                            || (contextChanged && b == projection.Current)))) continue;
+                    long key = EdgeKey(a, b);
+                    if (projection.Edges.ContainsKey(key) || !ShowEdge(zone, projection, a, b)) continue;
+                    var edge = UnityEngine.Object.Instantiate(map.edgePrefab, map.nodeParent);
+                    edge.Setup(projection.Items[a], projection.Items[b], map);
+                    projection.Edges.Add(key, edge);
+                }
             }
-            for (int i = 0; i < items.Count; i++)
-                for (int j = i + 1; j < items.Count; j++)
-                    // Native RefreshNodes uses list positions here; the filtered projection
-                    // must use actual graph indices, never mutate native connectivity.
-                    if (zone.IsNodeConnected(items[i].index, items[j].index))
-                        UnityEngine.Object.Instantiate(map.edgePrefab, map.nodeParent).Setup(items[i], items[j], map);
-            if (current != null && next != null && !zone.IsNodeConnected(current.index, next.index))
-                UnityEngine.Object.Instantiate(map.edgePrefab, map.nodeParent).Setup(current, next, map);
+            if (retiredViews) RemoveRetiredHoverHandlers(map);
+            Array.Clear(projection.Dirty, 0, projection.Dirty.Length);
+            projection.TopologyChanged = false;
+            return true;
         }
 
         // Only the native client travel guard calls this replacement. Preserve its hunter
@@ -163,15 +336,23 @@ namespace SodRpg.Mod
             try
             {
                 if (!InfinityMode.Enabled) return true;
-                ____snappedNodeIndex = -1;
-                ____snapNodeTimer = 0f;
-                ____cursorCv = Vector2.zero;
-                __instance.HoverNode(-1, true);
-                InfinityMapPresentation.Refresh(__instance, NetworkedManagerBase<ZoneManager>.instance);
-                __state = true;
+                __state = InfinityMapPresentation.Refresh(__instance, NetworkedManagerBase<ZoneManager>.instance);
+                if (__state)
+                {
+                    ____snappedNodeIndex = -1;
+                    ____snapNodeTimer = 0f;
+                    ____cursorCv = Vector2.zero;
+                    __instance.HoverNode(-1, true);
+                }
                 return false;
             }
-            catch (Exception ex) { InfinityMode.InterceptionFailed(nameof(InfinityMapRefresh), ex); return true; }
+            catch (Exception ex)
+            {
+                InfinityMode.InterceptionFailed(nameof(InfinityMapRefresh), ex);
+                try { InfinityMapPresentation.Release(__instance); }
+                catch (Exception cleanup) { InfinityMode.InterceptionFailed(nameof(InfinityMapRefresh), cleanup); }
+                return true;
+            }
         }
 
         private static void Postfix(UI_InGame_WorldMap __instance, bool __state, ref int ____snappedNodeIndex)
@@ -198,8 +379,7 @@ namespace SodRpg.Mod
     {
         private static void Prefix(UI_InGame_WorldMap __instance)
         {
-            if (!InfinityMode.Available) return;
-            try { if (InfinityMode.Enabled) InfinityMapPresentation.ClearCache(__instance); }
+            try { InfinityMapPresentation.Release(__instance, onlyOwned: true); }
             catch (Exception ex) { InfinityMode.InterceptionFailed(nameof(InfinityMapDisable), ex); }
         }
     }
@@ -222,9 +402,7 @@ namespace SodRpg.Mod
                     var cache = __instance.isMiniMapVariant ? ui.miniWorldMapNodeItems : ui.fullWorldMapNodeItems;
                     if (i >= 0 && i < cache.Count) cache[i] = null;
                 }
-                bool destination = visible && InfinityMode.IsRevealDestination(zone, i);
-                __instance.canTraverseObject.SetActive(destination && InGameUIManager.instance.isWorldDisplayed == WorldDisplayStatus.Shown);
-                if (__instance.button != null) __instance.button.interactable = destination;
+                InfinityMapPresentation.UpdateTravel(__instance, zone);
             }
             catch (Exception ex) { InfinityMode.InterceptionFailed(nameof(InfinityMapNodeSetup), ex); }
         }

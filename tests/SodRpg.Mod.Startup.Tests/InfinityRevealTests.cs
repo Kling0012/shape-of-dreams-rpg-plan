@@ -217,6 +217,98 @@ namespace SodRpg.Mod.Startup.Tests
             Assert.True(description.TooFarMessageVisible);
         }
 
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public void MapRefreshKeepsUnchangedViewsAndEdgesAndRetiresChangedHiddenAndReplacementGraphViews(bool mini)
+        {
+            var (_, zone, _) = StartRevealGraph();
+            zone.SetCurrentNodeIndexAndRevealAdjacent(1);
+            InGameUIManager.instance = new InGameUIManager();
+            var tooltip = new UI_TooltipManager();
+            tooltip.Hide();
+            SingletonBehaviour<UI_TooltipManager>.instance = tooltip;
+            var map = new UI_InGame_WorldMap { isMain = !mini };
+            map.nodePrefab.isMiniMapVariant = mini;
+            var cache = mini ? InGameUIManager.instance.miniWorldMapNodeItems
+                : InGameUIManager.instance.fullWorldMapNodeItems;
+            var refresh = AccessTools.Method(typeof(UI_InGame_WorldMap), "RefreshNodes");
+            refresh.Invoke(map, null);
+            var startView = cache[0];
+            var currentView = cache[1];
+            var nextView = cache[3];
+            var unchangedEdge = MapEdge(map, 0, 1);
+            var changedEdge = MapEdge(map, 1, 3);
+            map.HoverNode(3);
+            tooltip.ShowWorldNodeTooltip(new TooltipSettings(), 3);
+            map.gamepadCursor.position = new UnityEngine.Vector2(37, 19);
+
+            refresh.Invoke(map, null);
+            Assert.Same(startView, cache[0]);
+            Assert.Same(currentView, cache[1]);
+            Assert.Same(nextView, cache[3]);
+            Assert.Same(unchangedEdge, MapEdge(map, 0, 1));
+            Assert.Same(changedEdge, MapEdge(map, 1, 3));
+            Assert.Equal(3, map.hoveringNode);
+            Assert.Equal(3, tooltip.ShownNode);
+            Assert.Equal(new UnityEngine.Vector2(37, 19), (UnityEngine.Vector2)map.gamepadCursor.position);
+
+            var node = zone.nodes[3];
+            node.position = new UnityEngine.Vector2(340, 20);
+            var snapshot = zone.nodes.ToArray();
+            snapshot[3] = node;
+            zone.nodes.LoadSnapshot(snapshot);
+            refresh.Invoke(map, null);
+            Assert.Same(startView, cache[0]);
+            Assert.Same(currentView, cache[1]);
+            Assert.NotSame(nextView, cache[3]);
+            Assert.False(nextView.gameObject.activeSelf);
+            Assert.Equal(node.position, (UnityEngine.Vector2)cache[3].position);
+            Assert.Same(unchangedEdge, MapEdge(map, 0, 1));
+            Assert.False(changedEdge.gameObject.activeSelf);
+            Assert.NotSame(changedEdge, MapEdge(map, 1, 3));
+
+            var hiddenView = cache[3];
+            node.status = WorldNodeStatus.Unexplored;
+            zone.nodes[3] = node;
+            refresh.Invoke(map, null);
+            Assert.Null(cache[3]);
+            Assert.False(hiddenView.gameObject.activeSelf);
+            Assert.Equal(new[] { 0, 1 }, CachedIds(cache));
+
+            // Native SyncLists retain their identity and final count across regeneration.
+            var replacement = zone.nodes.ToArray();
+            zone.nodes.Clear();
+            zone.nodes.AddRange(replacement);
+            refresh.Invoke(map, null);
+            Assert.NotSame(startView, cache[0]);
+            Assert.NotSame(currentView, cache[1]);
+            Assert.False(startView.gameObject.activeSelf);
+            Assert.False(currentView.gameObject.activeSelf);
+            Assert.False(unchangedEdge.gameObject.activeSelf);
+            Assert.Equal(new[] { 0, 1 }, CachedIds(cache));
+            var disabledView = cache[0];
+            AccessTools.Method(typeof(UI_InGame_WorldMap), "OnDisable").Invoke(map, null);
+            Assert.False(disabledView.gameObject.activeSelf);
+            Assert.Empty(CachedIds(cache));
+            refresh.Invoke(map, null);
+            Assert.NotSame(disabledView, cache[0]);
+            Assert.Equal(new[] { 0, 1 }, CachedIds(cache));
+            Assert.True(InfinityMode.Available, string.Join(" | ", Log.Warnings));
+        }
+
+        private static UI_InGame_World_Edge MapEdge(UI_InGame_WorldMap map, int a, int b)
+        {
+            foreach (var child in map.nodeParent.children)
+            {
+                if (!(child.gameObject.component is UI_InGame_World_Edge edge)) continue;
+                var first = (UI_InGame_World_NodeItem)AccessTools.Field(typeof(UI_InGame_World_Edge), "_a").GetValue(edge);
+                var second = (UI_InGame_World_NodeItem)AccessTools.Field(typeof(UI_InGame_World_Edge), "_b").GetValue(edge);
+                if ((first.index == a && second.index == b) || (first.index == b && second.index == a)) return edge;
+            }
+            throw new InvalidOperationException("Expected projected map edge is absent.");
+        }
+
         [Fact]
         public void CoopMapProjectsHostStatusesForFullMiniTravelTooltipAndGamepadAfterSameSizeGraphReplacement()
         {

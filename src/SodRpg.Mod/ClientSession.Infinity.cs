@@ -15,6 +15,15 @@ namespace SodRpg.Mod
         private float _nextInfinityAck;
         private string _infinityInitializedRun;
         private RunChoiceSnapshot _infinityMirroredSnapshot;
+        private long _infinityPendingSaveRevision;
+        private string _infinityPendingSaveRun;
+        private AsyncProfileWriter _infinityPendingSaveWriter;
+
+        private bool InfinityStateDurable => _infinityPendingSaveRevision == 0
+            || _infinityPendingSaveRun == Profile.Run?.RunId
+                && ReferenceEquals(_infinityPendingSaveWriter, _writer) && _writer != null
+                && _writer.WrittenRevision >= _infinityPendingSaveRevision;
+        internal static bool HostInfinityStateDurable => _hostSession != null && _hostSession.InfinityStateDurable;
 
         internal static bool HostInfinityRewardsSettled => _hostSession != null
             && !_hostSession.HasPendingKillClassification && _hostSession._pendingRunRewards.Count == 0
@@ -34,6 +43,9 @@ namespace SodRpg.Mod
             _infinityAcknowledgedBoundary = false;
             _infinityResultStarted = false;
             _nextInfinityAck = 0;
+            _infinityPendingSaveRevision = 0;
+            _infinityPendingSaveRun = null;
+            _infinityPendingSaveWriter = null;
             ResetInfinityRewardSamples();
         }
 
@@ -72,15 +84,29 @@ namespace SodRpg.Mod
             else InfinityMode.ConfirmAgreement();
         }
 
-        internal static bool PersistHostInfinityState()
+        internal static bool PersistHostInfinityState() => _hostSession?.SaveInfinityState(confirm: true) == true;
+
+        private bool SaveInfinityState(bool confirm)
         {
-            if (!NetworkServer.active || _hostSession == null || _hostSession.Profile.Run?.Infinity == null) return false;
-            if (!InfinityMode.NativeSaveAgreement) return false;
+            if (!NetworkServer.active || Profile.Run?.Infinity == null || !InfinityMode.NativeSaveAgreement) return false;
             InfinityMode.WriteEnvelope();
-            _hostSession.MarkDirty(true);
-            bool saved = _hostSession.SaveNow(true);
-            if (saved) _hostSession.PublishRunChoices();
+            MarkDirty(true);
+            _infinityPendingSaveRun = Profile.Run.RunId;
+            _infinityPendingSaveRevision = Profile.Revision + 1;
+            // A missing store must still fail the durability gate instead of a no-op enqueue succeeding.
+            bool saved = SaveNow(confirm || _store == null);
+            _infinityPendingSaveWriter = _writer;
+            if (saved && confirm) CompleteInfinityStateSave();
             return saved;
+        }
+
+        private void CompleteInfinityStateSave()
+        {
+            if (_infinityPendingSaveRevision == 0 || !InfinityStateDurable) return;
+            _infinityPendingSaveRevision = 0;
+            _infinityPendingSaveRun = null;
+            _infinityPendingSaveWriter = null;
+            PublishRunChoices();
         }
 
         internal static void CountHostInfinityRoom()
@@ -88,7 +114,8 @@ namespace SodRpg.Mod
             if (_hostSession == null || _hostSession.Profile.Run?.Infinity == null) return;
             var session = _hostSession;
             session.ObserveInfinityRoomTotal(session.Profile.Run.Infinity.ClearedCombatTotal);
-            PersistHostInfinityState();
+            // Queue once; travel and shared receipts stay gated until this revision reaches disk.
+            session.SaveInfinityState(confirm: false);
         }
 
         private void ObserveInfinityRoomTotal(long total)
@@ -122,8 +149,8 @@ namespace SodRpg.Mod
             if (!CanChooseRunRules) sharedChoices.ApplyTo(Profile.Run, ChoiceZoneIndex);
             _nextDreamEventNotice = 0f;
             MarkDirty(true);
-            SaveNow();
             if (NetworkServer.active) PersistHostInfinityState();
+            else SaveNow();
             _notify?.Invoke(new GameEvent(EventKind.Info, Loc.T(
                 "ボスの魂の処理が完了。記憶・エッセンスを拾ってから選択画面を開いてください。ホストは全員の回収を確認して帰還か潜行を選べます。",
                 "Boss soul finished. Collect memories and essences before opening the choice panel. The host can confirm everyone has collected their loot, then choose Return or Delve.")));
@@ -205,6 +232,7 @@ namespace SodRpg.Mod
                 StopInfinityRun();
                 return;
             }
+            CompleteInfinityStateSave();
             InfinityMode.Tick();
             if (!InfinityMode.NativeSaveAgreement) return;
             var choice = InfinityMode.CurrentChoice;
@@ -288,7 +316,6 @@ namespace SodRpg.Mod
                         Emit(Rules.Delve(Profile, CanChooseRunRules ? choice.Pact : Pact.None));
                         if (state.ChoiceRevision != choice.Revision) return;
                         AdvanceInfinityIdentity();
-                        PublishRunChoices();
                     }
                     _buildDirty = true;
                 }
@@ -297,12 +324,13 @@ namespace SodRpg.Mod
             if (_infinityAcknowledgedRevision != choice.Revision || _infinityAcknowledgedGraph != choice.GraphEpoch
                 || _infinityAcknowledgedBoundary != choice.Boundary)
             {
-                if (!SaveNow(true)) return;
+                bool saved = NetworkServer.active && Profile.Run?.Infinity != null
+                    ? SaveInfinityState(confirm: true) : SaveNow(true);
+                if (!saved) return;
                 _infinityAcknowledgedRevision = choice.Revision;
                 _infinityAcknowledgedGraph = choice.GraphEpoch;
                 _infinityAcknowledgedBoundary = choice.Boundary;
                 _nextInfinityAck = 0;
-                if (NetworkServer.active && Profile.Run?.Infinity != null) InfinityMode.WriteEnvelope();
             }
             if (Time.unscaledTime >= _nextInfinityAck)
             {

@@ -3,6 +3,46 @@ using System.Collections.Generic;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
+namespace Mirror
+{
+    public sealed class SyncList<T> : List<T>
+    {
+        public enum Operation : byte { OP_ADD, OP_CLEAR, OP_INSERT, OP_REMOVEAT, OP_SET }
+        public delegate void SyncListChanged(Operation op, int index, T oldItem, T newItem);
+        public event SyncListChanged Callback;
+        public new T this[int index]
+        {
+            get => base[index];
+            set
+            {
+                var old = base[index];
+                if (EqualityComparer<T>.Default.Equals(old, value)) return;
+                base[index] = value;
+                Callback?.Invoke(Operation.OP_SET, index, old, value);
+            }
+        }
+        public new void Clear()
+        {
+            base.Clear();
+            Callback?.Invoke(Operation.OP_CLEAR, 0, default, default);
+        }
+        public new void Add(T item)
+        {
+            base.Add(item);
+            Callback?.Invoke(Operation.OP_ADD, Count - 1, default, item);
+        }
+        public new void AddRange(IEnumerable<T> items)
+        {
+            foreach (var item in items) Add(item);
+        }
+        // Models Mirror OnDeserializeAll, which silently replaces its backing objects.
+        public void LoadSnapshot(IEnumerable<T> items)
+        {
+            base.Clear();
+            base.AddRange(items);
+        }
+    }
+}
 namespace UnityEngine
 {
     public struct Vector2
@@ -80,6 +120,8 @@ namespace UnityEngine.UI
 }
 namespace SodRpg.Mod
 {
+    public enum HunterStatus { None, AboutToBeTaken, Level1, Level2, Level3 }
+    public enum VoteType { None, NextNode }
     public static class SingletonBehaviour<T> { public static T instance; }
     public sealed class DewQuest
     {
@@ -107,6 +149,7 @@ namespace SodRpg.Mod
     }
     public sealed class UI_InGame_WorldMap : Component
     {
+        public Action<int, int> onHoveringNodeChanged;
         public UI_InGame_World_NodeItem nodePrefab = new UI_InGame_World_NodeItem();
         public UI_InGame_World_Edge edgePrefab = new UI_InGame_World_Edge();
         public Transform nodeParent = new GameObject().transform;
@@ -132,7 +175,12 @@ namespace SodRpg.Mod
         private void MoveSelection(Vector2 direction)
         { HoverNode(Math.Min(NetworkedManagerBase<ZoneManager>.instance.nodes.Count - 1, hoveringNode + 1)); }
         private int FindClosestNodeIndex(Vector2 screenPos, float maxDist = -1) => 0;
-        public void HoverNode(int index, bool force = false) { hoveringNode = index; }
+        public void HoverNode(int index, bool force = false)
+        {
+            int previous = hoveringNode;
+            hoveringNode = index;
+            if (previous != index || force) onHoveringNodeChanged?.Invoke(previous, index);
+        }
         private void OnDisable() { }
     }
     public sealed class UI_InGame_World_NodeItem : Component
@@ -142,12 +190,14 @@ namespace SodRpg.Mod
         public readonly UnityEngine.UI.Button button = new UnityEngine.UI.Button();
         public readonly GameObject canTraverseObject = new GameObject();
         public int index { get; private set; }
+        public WorldNodeData node { get; private set; }
         private UI_InGame_WorldMap _parent;
         protected override Object Clone() => new UI_InGame_World_NodeItem { isMiniMapVariant = isMiniMapVariant };
         public void Setup(int i, UI_InGame_WorldMap parent)
         {
             index = i; _parent = parent;
-            _originalPos = NetworkedManagerBase<ZoneManager>.instance.nodes[i].position;
+            node = NetworkedManagerBase<ZoneManager>.instance.nodes[i];
+            _originalPos = node.position;
             transform.position = _originalPos;
             var cache = isMiniMapVariant ? InGameUIManager.instance.miniWorldMapNodeItems : InGameUIManager.instance.fullWorldMapNodeItems;
             while (cache.Count <= i) cache.Add(null);
@@ -164,7 +214,11 @@ namespace SodRpg.Mod
         public readonly Material matAdjacentCantMove = new Material(), matHover = new Material(), matNormal = new Material();
         protected override Object Clone() => new UI_InGame_World_Edge();
         public void Setup(UI_InGame_World_NodeItem a, UI_InGame_World_NodeItem b, UI_InGame_WorldMap parent)
-        { _a = a; _b = b; _parent = parent; UpdateStatus(-1, -1); }
+        {
+            _a = a; _b = b; _parent = parent;
+            parent.onHoveringNodeChanged += UpdateStatus;
+            UpdateStatus(-1, -1);
+        }
         public void UpdateStatus(int current, int hovering) { lineRenderer.material = matNormal; }
     }
     public sealed class TooltipSettings { }
