@@ -49,6 +49,6 @@ namespace SodRpg.Mod
         internal static ulong HostAuthorityGeneration;
         internal static string ContinueRunId => NetworkedManagerBase<GameManager>.softInstance?.runId;
         internal static string ContinueCheckpointId, ContinueResumeSession;
-        internal static long DurableHostKillReceipt(string streamId) => 0;
+        internal static long HostKillReceiptForProgress(string streamId) => 0;
     }
 }

@@ -434,7 +434,7 @@ namespace SodRpg.Mod
             var state = State;
             if (zone == null || state == null) return;
             RegisterAcks();
-            if (!NativeSaveAgreement || !ClientSession.HostInfinityStateDurable) return;
+            if (!NativeSaveAgreement || !ClientSession.HostInfinitySaveHoldSatisfied) return;
             if (zone.isInAnyTransition) return;
             if (zone.currentZone == null || zone.currentZone.name != state.FixedZoneId)
             { DisableFeature("Infinity native zone does not match the fixed graph."); return; }
@@ -521,7 +521,7 @@ namespace SodRpg.Mod
             if (state.GraphEpoch == long.MaxValue) { DisableFeature("Infinity graph epoch exhausted."); return false; }
             if (state.Phase != InfinityPhase.Transitioning && !state.BeginGraphTransition(intent)) return false;
             _refresh = true;
-            if (!ClientSession.PersistHostInfinityState()) { _refresh = false; DisableFeature("Infinity transition receipt could not be saved."); return false; }
+            if (!ClientSession.PersistHostInfinityState()) { _refresh = false; return false; }
             _refreshOrigin = zone.currentZone;
             _refreshTarget = _refreshOrigin;
             _zoneSwitchWarned = false;

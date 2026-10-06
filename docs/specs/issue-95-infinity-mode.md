@@ -142,7 +142,7 @@
 ## 14. 段階1の実装と検証結果
 - 本体割り込みは `InfinityMode.cs` に集約：PlayGameManager.LoadNextZone、ZoneManager.GenerateWorldAuto／TravelToNode／TravelToZone、Room.OnStartServer／StartRoom、RoomRifts.CreateSidetrackRift、Rift_RoomExitの実TargetRpc body、GameManager.WrapUpAndShowResult、DewPersistence.SerializeGameData／ApplyGameData、GameMod_StarlessPathの招待処理。ロビー開始条件は `ClientSession.InfinitySettings.cs`。既存DepthRoomsの深さ補正を残し、共有Zone assetは変更しない。
 - 部屋数はserverの実Combatクリアを当世代node集合で重複排除。到達可能な新規Combatが尽きたら有限グラフを置換する。RoomEpochは本体の部屋開始前に更新し、敵の撃破／配当にはspawn時のGraph/Segment/Roomを保持する。
-- 魂の実生成後の消滅・実クリア・Rift解錠を確認して確保画面へ。共通選択と技術更新は参加中全員の耐久保存ACK後に実行し、帰還はCompletedRunId＋CompletedRunSecuredReturnで二重確保／Conceded敗北精算を防ぐ。
+- 魂の実生成後の消滅・実クリア・Rift解錠を確認して確保画面へ。共通選択と技術更新は原則として参加中全員の耐久保存ACK後に実行する。保存失敗・遅延は5秒ごとに非同期で再試行し、30秒で警告してその遠征の保存保留だけ解除する（未精算・取引の耐久確認は解除しない）。解除後は保存済みと偽らず、精算済みのメモリ内receiptで進行し、Continueでは報酬・重複排除receiptを同じチェックポイントへ戻して解除状態を捨てる。帰還はCompletedRunId＋CompletedRunSecuredReturnで二重確保／Conceded敗北精算を防ぐ。
 - 確定済みの分類墓標・配当nonce・部屋報酬集合・選択履歴を拒否境界付きで退役。地図modifierは生成後に新地図から参照されないものだけ除去。未ACK撃破2048件（全体上限、参加者別より厳しい）または2世代前の未精算で次部屋への進行を停止する。既存32再送RPC／frame、buffer再利用、敵／wave数を増やさない方針を維持する。最後の部屋内で発生した未精算は捨てず、プロフィール全体の固定bytesは保証しない。
 - 本体continueとMODプロフィールのRunId・seed・ゾーン・世代・クリア数・phase・選択receiptが一致しなければ進行と新規報酬を停止する。既存のcontinue再読込と一致するホストプロフィール選択で回復する。一致する保存が失われた場合は推測で修復しない。保存済み参加者が古い区間／地図へ戻り、必要な共有選択receiptがない場合も明示停止し、潜行を推測して再生しない。
 - 指定Releaseビルド：成功、エラー0・警告5。出力先 `/tmp/sod-deploy-i95`。
@@ -207,7 +207,7 @@
 - native node変更イベント／地図再表示で更新する。Unityの遅延Destroyより先に旧表示を無効化し、全体／ミニ地図のcache・hover・snap・古いtooltipを整理する。同じnode数の再生成でも旧表示を使わない。ゲームパッド選択・距離検索に毎フレームのcollection割り当ては追加しない。
 
 ### 技術更新・協力・保存の互換
-- 通常の次室を作れなくなった地図では、最後の部屋の実クリア後に既存の技術境界receiptを配信する。全員の耐久保存ACK・未精算撃破／取引の完了後に同ゾーンを `noAdvance:true` で再生成し、開始部屋＋次室を直ちに用意する。技術境界に新しい選択画面を挟まず、累計・周期・native zoneIndexを保持する。BossDueならCombat枯渇による更新よりボスを優先する。
+- 通常の次室を作れなくなった地図では、最後の部屋の実クリア後に既存の技術境界receiptを配信する。全員のACK（通常は耐久保存、保存不調が30秒続いた遠征では警告後のメモリ内receipt）・未精算撃破／取引の完了後に同ゾーンを `noAdvance:true` で再生成し、開始部屋＋次室を直ちに用意する。技術境界に新しい選択画面を挟まず、累計・周期・native zoneIndexを保持する。BossDueならCombat枯渇による更新よりボスを優先する。
 - 訪問済み表示は**現GraphEpochの有限地図**に限定する。更新後の地図で旧世代indexやRectTransformを使わず、全世代の部屋履歴を蓄積しない。nativeのKOのみ復活・狩り局所リセットは従来どおり。
 - 表示の権威は既存のMirror node status。参加者はホストと違う距離順を持っていても次室を独自に選ばない。新しいRPC・共有選択payload・profile/envelope項目を増やさない。
 - **Protocol 23**：wireの追加項目はないが、旧クライアントは未探索nodeを表示し、非隣接の次室・ボスを選べない。同一パーティの表示と選択契約を保証するため22とは互換にしない。通常協力プレイも全員同版へ更新する。

@@ -272,14 +272,12 @@ namespace SodRpg.Mod
         private string _infinityInitializedRun;
         private bool _infinityResultStarted;
         private long _infinityAcknowledgedRevision, _infinityAcknowledgedGraph, _infinityObservedClears;
-        private long _infinityPendingSaveRevision;
-        private string _infinityPendingSaveRun;
-        private AsyncProfileWriter _infinityPendingSaveWriter;
         private object _nativeContinueCheckpoint;
         private bool ContinueReady => true;
         private RunChoiceSnapshot _receivedRunChoices => null;
         internal static void ValidateHostInfinityContinue() { }
         private void PublishRunChoices() { }
+        private void ResetInfinitySaveHold() { }
         public ClientSession(string dir, Action<GameEvent> notify) { SavePath = dir; _notify = notify; }
         public void FirstLaunch() { }
         public void Tick() { }
@@ -300,7 +298,7 @@ namespace SodRpg.Mod
         internal static bool RemoteHostInfinityAvailable, RemoteHostHelloAnswered;
         internal static bool RunActive, InGame, CanChooseRunRules, CanChooseDepth;
         internal static bool PersistHostInfinityState() => true;
-        internal static bool HostInfinityStateDurable => true;
+        internal static bool HostInfinitySaveHoldSatisfied => true;
         internal static void CountHostInfinityRoom() { }
         internal static void OpenHostInfinityChoice() { }
         internal static void FinishNativeContinueRestore() { }

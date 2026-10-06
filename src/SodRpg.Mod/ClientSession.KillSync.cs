@@ -58,6 +58,24 @@ namespace SodRpg.Mod
             return 0;
         }
 
+        private IReadOnlyList<KillReceiptState> KillReceiptsForProgress(string runId)
+        {
+            // Only the failed Infinity expedition may acknowledge settled in-memory rewards.
+            // SaveNow captures rewards and these deduplication frontiers together; Continue
+            // restores both and resets the waiver. Never manufacture a durable frontier.
+            if (InfinitySaveHoldReleased && Profile.KillClassification?.RunId == runId)
+                return Profile.KillClassification.Receipts;
+            return _killDurableRunId == runId ? _killDurableReceipts : Array.Empty<KillReceiptState>();
+        }
+
+        internal static long HostKillReceiptForProgress(string streamId)
+        {
+            if (_hostSession == null) return 0;
+            foreach (var receipt in _hostSession.KillReceiptsForProgress(NetworkedManagerBase<GameManager>.softInstance?.runId))
+                if (receipt.StreamId == streamId) return receipt.AcknowledgedThrough;
+            return 0;
+        }
+
         internal static void PrepareHostKillStream(string runId, string streamId, long baseline)
         {
             if (_hostSession == null) return;
@@ -328,13 +346,14 @@ namespace SodRpg.Mod
                         streamId = _missingKillDeaths[i].StreamId, netId = _missingKillDeaths[i].MonsterNetId,
                         observationSessionId = _missingKillDeaths[i].ObservationSessionId,
                     };
-            var receipts = _killDurableRunId == runId
-                ? new DreamforgeKillStreamReceipt[_killDurableReceipts.Count] : Array.Empty<DreamforgeKillStreamReceipt>();
+            var acknowledged = KillReceiptsForProgress(runId);
+            var receipts = acknowledged.Count == 0 ? Array.Empty<DreamforgeKillStreamReceipt>()
+                : new DreamforgeKillStreamReceipt[acknowledged.Count];
             for (int i = 0; i < receipts.Length; i++)
                 receipts[i] = new DreamforgeKillStreamReceipt
                 {
-                    streamId = _killDurableReceipts[i].StreamId,
-                    receivedThrough = _killDurableReceipts[i].AcknowledgedThrough,
+                    streamId = acknowledged[i].StreamId,
+                    receivedThrough = acknowledged[i].AcknowledgedThrough,
                 };
             _clientRpcOn.CustomRpc_SendMessageToServer(new DreamforgeKillReceiptMsg
             {

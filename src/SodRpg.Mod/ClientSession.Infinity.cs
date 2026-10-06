@@ -18,12 +18,19 @@ namespace SodRpg.Mod
         private long _infinityPendingSaveRevision;
         private string _infinityPendingSaveRun;
         private AsyncProfileWriter _infinityPendingSaveWriter;
+        private float _infinityPendingSaveStarted, _nextInfinitySaveRetry;
+        private string _infinitySaveHoldReleasedRun;
+        private bool _infinityPendingPublication;
 
         private bool InfinityStateDurable => _infinityPendingSaveRevision == 0
-            || _infinityPendingSaveRun == Profile.Run?.RunId
+            || _infinityPendingSaveRun == NetworkedManagerBase<GameManager>.softInstance?.runId
                 && ReferenceEquals(_infinityPendingSaveWriter, _writer) && _writer != null
                 && _writer.WrittenRevision >= _infinityPendingSaveRevision;
         internal static bool HostInfinityStateDurable => _hostSession != null && _hostSession.InfinityStateDurable;
+        private bool InfinitySaveHoldReleased => _infinitySaveHoldReleasedRun != null
+            && _infinitySaveHoldReleasedRun == NetworkedManagerBase<GameManager>.softInstance?.runId;
+        private bool InfinitySaveHoldSatisfied => InfinityStateDurable || InfinitySaveHoldReleased;
+        internal static bool HostInfinitySaveHoldSatisfied => _hostSession != null && _hostSession.InfinitySaveHoldSatisfied;
 
         internal static bool HostInfinityRewardsSettled => _hostSession != null
             && !_hostSession.HasPendingKillClassification && _hostSession._pendingRunRewards.Count == 0
@@ -43,9 +50,7 @@ namespace SodRpg.Mod
             _infinityAcknowledgedBoundary = false;
             _infinityResultStarted = false;
             _nextInfinityAck = 0;
-            _infinityPendingSaveRevision = 0;
-            _infinityPendingSaveRun = null;
-            _infinityPendingSaveWriter = null;
+            ResetInfinitySaveHold();
             ResetInfinityRewardSamples();
         }
 
@@ -90,22 +95,75 @@ namespace SodRpg.Mod
         {
             if (!NetworkServer.active || Profile.Run?.Infinity == null || !InfinityMode.NativeSaveAgreement) return false;
             InfinityMode.WriteEnvelope();
-            MarkDirty(true);
-            _infinityPendingSaveRun = Profile.Run.RunId;
+            return SaveInfinityReceipt(Profile.Run.RunId, confirm);
+        }
+
+        private void ResetInfinitySaveHold()
+        {
+            _infinityPendingSaveRevision = 0;
+            _infinityPendingSaveRun = null;
+            _infinityPendingSaveWriter = null;
+            _infinityPendingSaveStarted = _nextInfinitySaveRetry = 0;
+            _infinitySaveHoldReleasedRun = null;
+            _infinityPendingPublication = false;
+        }
+
+        private void BeginInfinitySaveHold(string runId)
+        {
+            if (_infinityPendingSaveRevision == 0 || _infinityPendingSaveRun != runId)
+                _infinityPendingSaveStarted = Time.unscaledTime;
+            _infinityPendingSaveRun = runId;
             _infinityPendingSaveRevision = Profile.Revision + 1;
-            // A missing store must still fail the durability gate instead of a no-op enqueue succeeding.
-            bool saved = SaveNow(confirm || _store == null);
             _infinityPendingSaveWriter = _writer;
+            _infinityPendingPublication = true;
+        }
+
+        private bool SaveInfinityReceipt(string runId, bool confirm)
+        {
+            if (!InfinityMode.NativeSaveAgreement || string.IsNullOrEmpty(runId)
+                || runId != NetworkedManagerBase<GameManager>.softInstance?.runId) return false;
+            bool waiting = _infinityPendingSaveRevision != 0 && _infinityPendingSaveRun == runId;
+            BeginInfinitySaveHold(runId);
+            MarkDirty(true);
+            // Do not block the main thread again for the same outstanding receipt.
+            if (confirm && waiting && !InfinitySaveHoldReleased && Time.unscaledTime < _nextInfinitySaveRetry)
+                return false;
+            _nextInfinitySaveRetry = Time.unscaledTime + 5f;
+            bool saved = SaveNow((confirm && !waiting && !InfinitySaveHoldReleased) || _store == null);
             if (saved && confirm) CompleteInfinityStateSave();
-            return saved;
+            return confirm ? InfinitySaveHoldSatisfied : saved;
         }
 
         private void CompleteInfinityStateSave()
         {
-            if (_infinityPendingSaveRevision == 0 || !InfinityStateDurable) return;
-            _infinityPendingSaveRevision = 0;
-            _infinityPendingSaveRun = null;
-            _infinityPendingSaveWriter = null;
+            if (_infinityPendingSaveRevision == 0
+                || _infinityPendingSaveRun != NetworkedManagerBase<GameManager>.softInstance?.runId) return;
+            if (!InfinityStateDurable && !InfinitySaveHoldReleased)
+            {
+                if (Time.unscaledTime - _infinityPendingSaveStarted >= 30f)
+                {
+                    _infinitySaveHoldReleasedRun = _infinityPendingSaveRun;
+                    string warning = Loc.T(
+                        "Infinityの保存が完了しないため、この遠征の保存待ちを解除しました。保存は再試行しますが、続きから再開すると進行が戻る場合があります。",
+                        "Infinity saving has not completed. Save waits are lifted for this expedition only. Saving will retry, but Continue may roll back progress.");
+                    Log.Warn(warning);
+                    _notify?.Invoke(new GameEvent(EventKind.Warning, warning));
+                }
+                else if (Time.unscaledTime >= _nextInfinitySaveRetry)
+                {
+                    _nextInfinitySaveRetry = Time.unscaledTime + 5f;
+                    SaveNow(_store == null);
+                }
+            }
+            if (!InfinitySaveHoldSatisfied || !_infinityPendingPublication) return;
+            _infinityPendingPublication = false;
+            if (InfinityStateDurable)
+            {
+                _infinityPendingSaveRevision = 0;
+                _infinityPendingSaveRun = null;
+                _infinityPendingSaveWriter = null;
+            }
+            // Released holds are not durable receipts: keep their write revision for reconciliation.
             PublishRunChoices();
         }
 
@@ -114,7 +172,7 @@ namespace SodRpg.Mod
             if (_hostSession == null || _hostSession.Profile.Run?.Infinity == null) return;
             var session = _hostSession;
             session.ObserveInfinityRoomTotal(session.Profile.Run.Infinity.ClearedCombatTotal);
-            // Queue once; travel and shared receipts stay gated until this revision reaches disk.
+            // Queue once; gate travel and publication until disk commit or the bounded save hold expires.
             session.SaveInfinityState(confirm: false);
         }
 
@@ -325,7 +383,7 @@ namespace SodRpg.Mod
                 || _infinityAcknowledgedBoundary != choice.Boundary)
             {
                 bool saved = NetworkServer.active && Profile.Run?.Infinity != null
-                    ? SaveInfinityState(confirm: true) : SaveNow(true);
+                    ? SaveInfinityState(confirm: true) : SaveInfinityReceipt(choice.RunId, confirm: true);
                 if (!saved) return;
                 _infinityAcknowledgedRevision = choice.Revision;
                 _infinityAcknowledgedGraph = choice.GraphEpoch;

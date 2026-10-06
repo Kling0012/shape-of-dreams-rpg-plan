@@ -435,7 +435,7 @@ namespace SodRpg.Mod
             {
                 // Protocol 15 recorded no absent-client frontiers: this fixed migration set must survive until run end.
                 if (pair.Value.StreamId.EndsWith(".legacy", StringComparison.Ordinal)) continue;
-                if (pair.Key > ClientSession.DurableHostKillReceipt(pair.Value.StreamId)) continue;
+                if (pair.Key > ClientSession.HostKillReceiptForProgress(pair.Value.StreamId)) continue;
                 bool needed = false;
                 foreach (var peer in _killPeers.Values)
                     if (PeerNeedsFact(peer, pair.Value)) { needed = true; break; }
