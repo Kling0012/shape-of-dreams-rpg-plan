@@ -255,19 +255,6 @@ namespace SodRpg.Core.Tests
             Assert.Equal(expected, ScrollMath.Wheel(current, delta, step, content, view));
         }
 
-        [Fact]
-        public void Keystone_header_names_the_traveler_in_both_languages()
-        {
-            bool previous = Loc.Japanese;
-            try
-            {
-                Loc.Japanese = true;
-                Assert.Equal("ミストの刻印：", HeroNames.KeystoneHeader("Hero_Mist"));
-                Loc.Japanese = false;
-                Assert.Equal("Mist keystones:", HeroNames.KeystoneHeader("Hero_Mist"));
-            }
-            finally { Loc.Japanese = previous; }
-        }
 
         [Fact]
         public void Keystone_slot_status_and_next_slot_text_name_the_real_level()

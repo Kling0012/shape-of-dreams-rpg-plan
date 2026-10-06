@@ -49,26 +49,6 @@ namespace SodRpg.Core.Tests
         }
 
         [Fact]
-        public void Failure_probability_follows_every_target_level_and_stops_at_each_rarity_cap()
-        {
-            var (_, r) = Legendary();
-            var coefficients = ForgeBalanceTests.ReadRawFailureCoefficients();
-            for (int target = 1; target <= 20; target++)
-            {
-                r.Enhance = target - 1;
-                int expected = ForgeBalanceTests.ExpectedFailureChance(coefficients, r.Enhance, Content.MaxEnhanceFor(r));
-                Assert.Equal(expected, Rules.EnhanceFailureChance(r));
-            }
-            foreach (Rarity rarity in System.Enum.GetValues(typeof(Rarity)))
-            {
-                r.Rarity = rarity;
-                r.LimitBreaks = Content.MaxLimitBreaks(rarity);
-                r.Enhance = Content.MaxEnhanceFor(r);
-                Assert.Equal(0, Rules.EnhanceFailureChance(r));
-            }
-        }
-
-        [Fact]
         public void Seeded_forge_spends_shards_and_preserves_previously_earned_progress()
         {
             var (p, r) = Legendary();

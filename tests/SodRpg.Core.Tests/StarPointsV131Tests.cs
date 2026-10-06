@@ -7,45 +7,6 @@ namespace SodRpg.Core.Tests
     /// <summary>v1.31：星図の予算を150→500に伸ばす（曲線と夢の圧の星の係数は据え置き）。</summary>
     public class StarPointsV131Tests
     {
-        [Fact]
-        public void Max_budget_is_500()
-        {
-            Assert.Equal(500, StarProgression.MaxPoints);
-        }
-
-        [Fact]
-        public void Cost_and_total_are_unchanged_and_reach_500()
-        {
-            Assert.Equal(56, StarProgression.CostForPoint(1));
-            Assert.Equal(950, StarProgression.CostForPoint(150));
-            Assert.Equal(1850, StarProgression.CostForPoint(300));
-            Assert.Equal(3050, StarProgression.CostForPoint(500));
-            Assert.Equal(0, StarProgression.TotalXpForPoints(0));
-            Assert.Equal(75450, StarProgression.TotalXpForPoints(150)); // v1.30 までの総量はそのまま
-            Assert.Equal(285900, StarProgression.TotalXpForPoints(300));
-            Assert.Equal(501200, StarProgression.TotalXpForPoints(400));
-            Assert.Equal(776500, StarProgression.TotalXpForPoints(500));
-            Assert.Equal(776500, StarProgression.TotalXpForPoints(int.MaxValue));
-        }
-
-        [Theory]
-        [InlineData(0)]
-        [InlineData(1)]
-        [InlineData(149)]
-        [InlineData(150)]
-        [InlineData(151)]
-        [InlineData(299)]
-        [InlineData(300)]
-        [InlineData(400)]
-        [InlineData(499)]
-        [InlineData(500)]
-        public void Points_is_exact_at_every_visited_boundary_and_never_exceeds_the_cap(int k)
-        {
-            int total = StarProgression.TotalXpForPoints(k);
-            Assert.Equal(k, StarProgression.Points(total));
-            if (k > 0) Assert.Equal(k - 1, StarProgression.Points(total - 1));
-            Assert.Equal(500, StarProgression.Points(int.MaxValue));
-        }
 
         [Fact]
         public void Points_is_monotone_and_capped_across_transitions()

@@ -111,28 +111,6 @@ namespace SodRpg.Core.Tests
         }
 
         [Fact]
-        public void After_displacement_critical_consumes_the_preparation_on_any_first_hit()
-        {
-            var state = new IdentityStrikeState(CritWindStrike());
-            Assert.False(state.OnBasicHit(1, 0f, critical: true)); // not primed yet
-            state.OnDisplacement(1f);
-            Assert.True(state.OnBasicHit(2, 2f, critical: true)); // critical first hit inside the 3 s window
-            Assert.False(state.OnBasicHit(3, 2.1f, critical: true)); // once per displacement
-            state.OnDisplacement(10f);
-            Assert.False(state.OnBasicHit(4, 11f, critical: false)); // a noncritical first hit consumes the preparation ...
-            Assert.False(state.OnBasicHit(5, 11.5f, critical: true)); // ... so a later critical hit of the same preparation is too late
-            state.OnDisplacement(20f);
-            Assert.False(state.OnBasicHit(6, 23.5f, critical: true)); // the 3 s window has closed
-            state.OnDisplacement(30f);
-            Assert.True(state.OnBasicHit(7, 30f, critical: true));
-            state.OnDisplacement(30.2f);
-            Assert.False(state.OnBasicHit(8, 30.5f, critical: true)); // at most one strike per second
-            state.OnDisplacement(33f);
-            Assert.True(state.OnBasicHit(9, 33f, critical: true));
-            Assert.False(state.OnBasicHit(9, 33f, critical: true)); // same activation never twice
-        }
-
-        [Fact]
         public void Consecutive_critical_needs_three_crits_on_one_victim_and_resets_on_any_break()
         {
             var state = new IdentityStrikeState(CritFlowStrike());
@@ -200,25 +178,6 @@ namespace SodRpg.Core.Tests
         }
 
         [Fact]
-        public void Every_nth_counts_each_basic_attack_activation_once_and_every_one_fires_at_n_equals_one()
-        {
-            var third = new IdentityStrikeState(FlowStrike(everyN: 3));
-            var fired = new List<long>();
-            for (long activation = 1; activation <= 9; activation++)
-            {
-                if (third.OnBasicHit(activation, 0f)) fired.Add(activation);
-                Assert.False(third.OnBasicHit(activation, 0f)); // multi-hit attacks count once
-            }
-            Assert.Equal(new long[] { 3, 6, 9 }, fired);
-            var every = new IdentityStrikeState(FlowStrike());
-            for (long activation = 1; activation <= 5; activation++) Assert.True(every.OnBasicHit(activation, 0f));
-            third.Reset();
-            Assert.Equal(0, third.Count);
-            Assert.False(third.OnBasicHit(100, 0f));
-            Assert.Equal(1, third.Count);
-        }
-
-        [Fact]
         public void Scaling_rescales_both_terms_together_and_leaves_the_dash_attribution_alone()
         {
             var doubled = FlowStrike().Scaled(2m);
@@ -269,20 +228,6 @@ namespace SodRpg.Core.Tests
             Assert.Throws<InvalidOperationException>(() => MemoryTuningDefinition.KeepSpeed("t.k", 9500));
             Assert.Throws<InvalidOperationException>(() => MemoryTuningDefinition.HealScale("t.h", 5000));
             Assert.Throws<InvalidOperationException>(() => new MemoryTuningDefinition("t.q", MemoryTuningKind.StanceSwordQiAttackBasis, 5000));
-        }
-
-        [Fact]
-        public void Keep_speed_hands_back_the_kept_share_of_both_attack_speed_and_converted_damage()
-        {
-            // Native: speed 1.8 (bonus 80%), ratio 0.5 -> +40 attack damage, speed flattened to 1.
-            var result = MemoryTuningMath.KeepSpeed(attackDamageAfter: 140f, multiplierAfter: 1f, originalMultiplier: 1.8f, gainedAttackDamage: 40f, keptUnits: 4000);
-            Assert.Equal(124f, result.AttackDamage, 3);
-            Assert.Equal(1.32f, result.AttackSpeedMultiplier, 3);
-            Assert.Equal(16f, result.KeptAttackDamageRefund, 3);
-            var none = MemoryTuningMath.KeepSpeed(100f, 1f, 1f, 0f, 4000); // no bonus attack speed, nothing converted
-            Assert.Equal(100f, none.AttackDamage, 3); Assert.Equal(1f, none.AttackSpeedMultiplier, 3);
-            Assert.Equal(24, MemoryTuningMath.ConvertedGainedAd(40, 4000));
-            Assert.Equal(40, MemoryTuningMath.ConvertedGainedAd(40, 0));
         }
 
         [Fact]

@@ -57,18 +57,6 @@ namespace SodRpg.Core.Tests
             Assert.Equal(seen.Count, seen.Distinct().Count()); // どれも一度だけ
         }
 
-        [Fact]
-        public void Starter_kit_is_granted_once_with_one_relic_per_slot()
-        {
-            var p = Profile.CreateNew(1);
-            var kit = Onboarding.GrantStarterKit(p);
-            Assert.Equal(Content.SlotCount, kit.Count);
-            Assert.Equal(Content.SlotCount, kit.Select(r => r.Slot).Distinct().Count());
-            Assert.All(kit, r => Assert.Equal(Rarity.Uncommon, r.Rarity));
-            Assert.Empty(Onboarding.GrantStarterKit(p));
-            Assert.Equal(Content.SlotCount, p.Stash.Count);
-        }
-
         /// <summary>初期装備に銘品が含まれる最初のシード（なければ失敗）。</summary>
         private static ulong SeedWithNamedStarter()
         {

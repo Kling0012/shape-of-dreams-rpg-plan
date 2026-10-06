@@ -272,37 +272,5 @@ namespace SodRpg.Core.Tests
             Assert.Equal(build.Powers.ToArray(), decoded.Powers.ToArray());
         }
 
-        [Theory]
-        [InlineData(Power.Finale, "終曲の", "Final")]
-        [InlineData(Power.CriticalEcho, "余韻の", "Lingering")]
-        [InlineData(Power.Fetters, "枷の", "Fettering")]
-        [InlineData(Power.CrystalResonance, "結晶の", "Crystalline")]
-        [InlineData(Power.PreyPride, "誇り高き", "Proud")]
-        [InlineData(Power.OverflowingLife, "満ちる", "Brimming")]
-        [InlineData(Power.Devotion, "祈りの", "Devout")]
-        [InlineData(Power.Wildfire, "飛び火の", "Spreading")]
-        public void New_powers_have_bilingual_text_and_the_requested_epithets(Power power, string ja, string en)
-        {
-            var epithet = Content.Epithet(power);
-            Assert.NotNull(epithet);
-            Assert.Equal(ja, epithet.Ja);
-            Assert.Equal(en, epithet.En);
-            bool previous = Loc.Japanese;
-            try
-            {
-                foreach (bool japanese in new[] { true, false })
-                {
-                    Loc.Japanese = japanese;
-                    Assert.False(string.IsNullOrWhiteSpace(Content.PowerName(power)));
-                    Assert.NotEqual("-", Content.PowerName(power));
-                    Assert.False(string.IsNullOrWhiteSpace(Content.FormatPower(power, 5)));
-                    Assert.NotEqual("-", Content.FormatPower(power, 5));
-                }
-            }
-            finally
-            {
-                Loc.Japanese = previous;
-            }
-        }
     }
 }

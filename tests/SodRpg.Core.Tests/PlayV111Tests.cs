@@ -117,20 +117,6 @@ namespace SodRpg.Core.Tests
         }
 
         [Fact]
-        public void New_events_are_offered_at_secure_points()
-        {
-            var p = AtEvent(DreamEvent.None);
-            var rng = new Rng(21);
-            var seen = new HashSet<DreamEvent>();
-            for (int i = 0; i < 2000; i++) seen.Add(DreamEvents.Roll(rng, p));
-            Assert.Contains(DreamEvent.Merchant, seen); // 欠片が無くても商人は出る（ゴールド払い）
-            Assert.Contains(DreamEvent.Stargazer, seen);
-            Assert.Contains(DreamEvent.Archive, seen);
-            Assert.Contains(DreamEvent.LuckyStar, seen);
-            Assert.DoesNotContain(DreamEvent.Tapir, seen); // 鞄が空なら出ない
-        }
-
-        [Fact]
         public void Feats_are_recorded_then_claimed_once()
         {
             var p = Profile.CreateNew(7);

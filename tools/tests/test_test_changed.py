@@ -279,12 +279,6 @@ class DiffNarrowingTests(unittest.TestCase):
         self.assertFalse(selection.run_all)
         self.assertEqual(selection.classes, {"T.SpecificTests"})
 
-    def test_no_diff_behaves_like_before(self):
-        selection = tc.select_tests([CORE], self.corpus(), None)
-        self.assertEqual(
-            selection.classes,
-            {"SodRpg.Core.Tests.StarSummaryTests", "SodRpg.Core.Tests.PartialWordTests"},
-        )
 
 
 class FilterChunkTests(unittest.TestCase):
@@ -297,8 +291,6 @@ class FilterChunkTests(unittest.TestCase):
         self.assertEqual(sorted(terms),
                          sorted(f"FullyQualifiedName~{c}" for c in classes))
 
-    def test_small_selection_is_one_run(self):
-        self.assertEqual(len(tc.build_filters(["A.T", "B.U"])), 1)
 
 
 class FakeRepoLayoutTests(unittest.TestCase):

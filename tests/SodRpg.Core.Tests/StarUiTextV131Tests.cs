@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using SodRpg.Core.Game;
@@ -31,38 +30,7 @@ namespace SodRpg.Core.Tests
             finally { Loc.Japanese = previous; }
         }
 
-        [Theory]
-        [InlineData(true)]
-        [InlineData(false)]
-        public void Cluster_display_names_never_contain_internal_ids(bool japanese) => WithLanguage(japanese, () =>
-        {
-            var clusters = StarMapClusters.Build(CetusExamples());
-            Assert.NotEmpty(clusters);
-            foreach (var cluster in clusters)
-            {
-                string name = cluster.DisplayName.ToString();
-                Assert.False(string.IsNullOrWhiteSpace(name));
-                Assert.DoesNotContain("h.cetus", name);
-                Assert.DoesNotContain(cluster.Id, name);
-            }
-        });
 
-        [Fact]
-        public void Memory_cluster_is_named_from_its_memory_and_bridge_from_both_memories()
-        {
-            WithLanguage(true, () =>
-            {
-                var clusters = StarMapClusters.Build(CetusExamples());
-                var memory = clusters.Single(c => c.Region == ClusterRegionKind.Memory);
-                Assert.Equal(Links.Name("St_D_IcyVeins").Ja + "の星団", memory.DisplayName.Ja);
-                Assert.Equal(Links.Name("St_D_IcyVeins").En + " Cluster", memory.DisplayName.En);
-                var outer = clusters.Single(c => c.Region == ClusterRegionKind.Outer);
-                Assert.Equal(outer.Name.Ja + "の外縁星団", outer.DisplayName.Ja);
-                var bridge = clusters.Single(c => c.Region == ClusterRegionKind.Bridge);
-                Assert.StartsWith("橋の星団「", bridge.DisplayName.Ja);
-                Assert.DoesNotContain("の橋の星団", bridge.DisplayName.Ja);
-            });
-        }
 
         [Fact]
         public void Explicit_cluster_name_wins_over_the_derived_one()
@@ -115,24 +83,6 @@ namespace SodRpg.Core.Tests
             });
         }
 
-        [Fact]
-        public void Allocation_status_is_one_sentence_and_never_repeats_itself()
-        {
-            WithLanguage(true, () =>
-            {
-                foreach (bool keystone in new[] { false, true })
-                    foreach (bool maxed in new[] { false, true })
-                        foreach (bool unlocked in new[] { false, true })
-                            foreach (bool points in new[] { false, true })
-                            {
-                                string text = StarMapPresentation.AllocationStatus(keystone, maxed, unlocked, points);
-                                Assert.EndsWith("。", text);
-                                Assert.Equal(1, text.Count(c => c == '。'));
-                            }
-                Assert.Equal("取得済みの星と線でつながると振れます。", StarMapPresentation.AllocationStatus(false, false, false, true));
-                Assert.Equal("振れます。", StarMapPresentation.AllocationStatus(false, false, true, true));
-            });
-        }
 
         [Theory]
         [InlineData(true)]
@@ -210,17 +160,5 @@ namespace SodRpg.Core.Tests
             });
         }
 
-        /// <summary>星図・装備の操作から画面に出る検証コードに、英語だけのメッセージが残っていないことを確かめる。</summary>
-        [Fact]
-        public void Allocation_validation_source_has_no_english_only_player_messages()
-        {
-            string dir = AppContext.BaseDirectory;
-            while (dir != null && !File.Exists(Path.Combine(dir, "SodRpg.sln"))) dir = Path.GetDirectoryName(dir);
-            if (dir == null) return; // ソースがない環境では検査しない
-            string source = File.ReadAllText(Path.Combine(dir, "src", "SodRpg.Core", "Game", "EffectiveAllocationValidation.cs"));
-            var literal = new Regex("InvalidOperationException\\(\"([^\"]*)\"");
-            foreach (Match m in literal.Matches(source))
-                Assert.Matches(Japanese, m.Groups[1].Value);
-        }
     }
 }

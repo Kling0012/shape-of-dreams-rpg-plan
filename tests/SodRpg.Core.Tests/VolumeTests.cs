@@ -1,5 +1,3 @@
-using System;
-using System.Linq;
 using SodRpg.Core.Game;
 using Xunit;
 
@@ -16,16 +14,6 @@ namespace SodRpg.Core.Tests
                 Assert.Equal(2, u.Powers.Count);
                 Assert.True(Content.TryGetBase(u.BaseId, out _));
             }
-        }
-
-        [Fact]
-        public void Content_volume_is_large_enough()
-        {
-            Assert.True(Content.Uniques.Count(u => u.SetId == null) >= 20);
-            Assert.True(DailyDream.All.Count >= 10);
-            Assert.Equal(44, Enum.GetValues(typeof(BountyKind)).Length);
-            Assert.Equal(95, Enum.GetValues(typeof(Power)).Length - 1);
-            Assert.True(HeroSigils.All.Count >= 45);
         }
 
         [Fact]

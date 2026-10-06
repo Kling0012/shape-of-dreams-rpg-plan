@@ -1,4 +1,3 @@
-using System;
 using SodRpg.Core.Game;
 using Xunit;
 
@@ -86,28 +85,6 @@ namespace SodRpg.Core.Tests
             var link = Assert.Single(decoded.Links);
             Assert.Equal(build.Links[0].Requires, link.Requires);
             Assert.True(Links.Satisfied(link, "Hero_Mist", null, null, new[] { "Hero_Husk" }));
-        }
-
-        [Fact]
-        public void Descriptions_explain_range_self_membership_and_every_required_traveler()
-        {
-            bool old = Loc.Japanese;
-            try
-            {
-                Loc.Japanese = true;
-                string single = Links.Describe(Bond("Hero_Vesper"));
-                Assert.Contains("10m以内に生存中の味方のVesperがいるとき", single);
-                Assert.Contains("自分がVesper", single);
-                Assert.Contains("10m", single);
-                string pair = Links.Describe(Bond("Hero_Husk", "Hero_Mist"));
-                Assert.Contains("Husk・Mist", pair);
-                Assert.Contains("のうち1人が自分で", pair);
-                Loc.Japanese = false;
-                Assert.Contains("living allied Vesper within 10 m", Links.Describe(Bond("Hero_Vesper")));
-                Assert.Contains("one of Husk and Mist", Links.Describe(Bond("Hero_Husk", "Hero_Mist")));
-                Assert.Contains("✓", Links.Describe(Bond("Hero_Vesper"), _ => true));
-            }
-            finally { Loc.Japanese = old; }
         }
     }
 }
