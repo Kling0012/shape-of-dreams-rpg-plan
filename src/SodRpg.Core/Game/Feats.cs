@@ -150,7 +150,7 @@ namespace SodRpg.Core.Game
                 case FeatKind.Victories: return p.Stats.Victories;
                 case FeatKind.Legendaries: return p.Stats.LegendariesFound;
                 case FeatKind.Relics: return p.Stats.RelicsFound;
-                case FeatKind.CodexPct: return (int)((long)p.Codex.Count * 100 / (Content.Bases.Count + Content.Uniques.Count));
+                case FeatKind.CodexPct: return (int)((long)p.Codex.Count * 100 / (Content.Bases.Count + Content.Uniques.Count + NamedItems.All.Count));
                 case FeatKind.DepthSecured: return p.Stats.BestHeatSecured;
                 case FeatKind.Nightmares: return p.Stats.NightmaresSlain;
                 case FeatKind.DreamLevel: return p.DreamLevel;
