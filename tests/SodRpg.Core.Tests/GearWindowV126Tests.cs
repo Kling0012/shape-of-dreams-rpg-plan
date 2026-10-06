@@ -55,11 +55,11 @@ namespace SodRpg.Core.Tests
             Assert.False(p.Run.AwaitingChoice);
 
             int shards = p.Material(Materials.Shard);
-            Rules.ConvertDust(p, Economy.DustPerBatch * 2);
-            Assert.Equal(shards + Economy.ShardsPerBatch * 2, p.Material(Materials.Shard));
+            Rules.ConvertDust(p, LootEconomyInputs.Exchange("dustPerBatch") * 2);
+            Assert.Equal(shards + LootEconomyInputs.Exchange("shardsPerBatch") * 2, p.Material(Materials.Shard));
 
             Rules.OnKill(p, MonsterTier.Normal, 5);
-            Assert.Throws<InvalidOperationException>(() => Rules.ConvertDust(p, Economy.DustPerBatch * 2));
+            Assert.Throws<InvalidOperationException>(() => Rules.ConvertDust(p, LootEconomyInputs.Exchange("dustPerBatch") * 2));
         }
     }
 }

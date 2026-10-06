@@ -24,7 +24,7 @@ namespace SodRpg.Core.Game
 
     public static class Waypoints
     {
-        public const int Offered = 3;
+        public const int Offered = WaypointBalance.Offered;
         public const int MaximumDeferredRelics = 256;
 
         /// <summary>Shared read-only values; callers must not modify a cached definition.</summary>
@@ -60,35 +60,122 @@ namespace SodRpg.Core.Game
             public bool BossRelicsToShards { get; internal set; }
         }
 
-        private static WaypointDef D(Waypoint id, string ja, string en, string jaDescription, string enDescription, Totals effects)
-            => new WaypointDef { Id = id, Name = new Txt(ja, en), Description = new Txt(jaDescription, enDescription), Effects = effects };
+        private static WaypointDef D(Waypoint id, string ja, string en, Totals effects)
+            => new WaypointDef { Id = id, Name = new Txt(ja, en), Description = Describe(id, effects), Effects = effects };
+
+        private static string N(double value) => value.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
+        private static string Times(double value) => value == 2 ? "double" : N(value) + " times";
+        private static string Fold(double value) => value == 3 ? "threefold" : N(value) + "-fold";
+        private static string SalvageTimes(double value) => value == 3 ? "three times" : value == 4 ? "four times" : N(value) + " times";
+        private static string PercentChange(double value, bool ja)
+        {
+            double percent = Math.Abs(value - 1) * 100;
+            return ja
+                ? N(percent) + (value < 1 ? "%減る" : "%増える")
+                : (value < 1 ? "reduced" : "increased") + " by " + N(percent) + "%";
+        }
+
+        private static Txt Describe(Waypoint id, Totals t)
+        {
+            switch (id)
+            {
+                case Waypoint.WeaponRoad:
+                case Waypoint.ArmorRoad:
+                case Waypoint.CharmRoad:
+                case Waypoint.HeadRoad:
+                case Waypoint.HandsRoad:
+                case Waypoint.FeetRoad:
+                    var slot = t.ForcedSlot.Value switch
+                    {
+                        Slot.Weapon => ("武器", "weapons"), Slot.Armor => ("防具", "armor"),
+                        Slot.Charm => ("装飾品", "charms"), Slot.Head => ("頭装備", "headgear"),
+                        Slot.Hands => ("手装備", "hand gear"), Slot.Feet => ("足装備", "footwear"),
+                        _ => throw new ArgumentOutOfRangeException(nameof(t.ForcedSlot)),
+                    };
+                    string luck = N(Loot.LuckPercent(t.Luck));
+                    return new Txt($"次のゾーンで敵から得る遺物はすべて{slot.Item1}になり、良い遺物の出やすさが+{luck}%になります。", $"All relics from enemies in the next zone are {slot.Item2}, with +{luck}% better relics.");
+                case Waypoint.NightmareHunt:
+                    string chance = t.NightmareChanceMultiplier == 2 ? "twice" : N(t.NightmareChanceMultiplier) + " times";
+                    return new Txt($"次のゾーンでは悪夢化する機会が{N(t.NightmareChanceMultiplier)}倍になり、悪夢と変種から得る遺物・欠片・調律石が{N(t.NightmareRewardMultiplier)}倍になります。", $"In the next zone, enemies are {chance} as likely to become nightmares. Nightmares and variants yield {Times(t.NightmareRewardMultiplier)} relics, shards and tuning stones.");
+                case Waypoint.GlassAegis:
+                    return new Txt($"次のゾーンでは受ける回復が{PercentChange(t.HealingMultiplier, true)}代わりに、得る障壁の量が{N(Math.Abs(t.ShieldMultiplier - 1) * 100)}%{(t.ShieldMultiplier < 1 ? "減ります" : "増えます")}。", $"In the next zone, healing received is {PercentChange(t.HealingMultiplier, false)}, but shield amounts {(t.ShieldMultiplier < 1 ? "decrease" : "increase")} by {N(Math.Abs(t.ShieldMultiplier - 1) * 100)}%.");
+                case Waypoint.ResonantRoad:
+                    string reaction = t.ReactionMultiplier == 2 ? "doubles" : "multiplies by " + N(t.ReactionMultiplier);
+                    return new Txt($"次のゾーンでは装備による属性の反応の威力が{N(t.ReactionMultiplier)}倍になります。ダメージ・被ダメージ増加・付与する火・障壁の量が対象です。範囲・時間・間隔・鈍足は変わりません。", $"Equipment-based elemental reactions have {Times(t.ReactionMultiplier)} strength in the next zone. This {reaction} damage, damage vulnerability, Fire applied and shield amounts. Radius, duration, interval and slow stay the same.");
+                case Waypoint.EndlessNight:
+                    string awakening = t.AwakeningMultiplier == 3 ? "tripled" : "multiplied by " + N(t.AwakeningMultiplier);
+                    return new Txt($"次のゾーンではすべての敵が悪夢化し、撃破で得る覚醒の力が{N(t.AwakeningMultiplier)}倍になります。", $"Every enemy becomes a nightmare in the next zone, and awakening points from kills are {awakening}.");
+                case Waypoint.BossHoard:
+                    return new Txt($"次のゾーンで敵から得る遺物・欠片・調律石はボスを倒すまで保留され、倒すとボスの分も含め{WaypointBalance.HoardRewardMultiplier}倍受け取れます。ボス撃破後の戦利品もその場で{WaypointBalance.HoardRewardMultiplier}倍受け取れます。未開封でゾーンを離れると保留分を失います。保留・所持の上限を超えた遺物は欠片になります。経験はその場で得ます。", $"Enemy relics, shards and tuning stones in the next zone are held until a boss falls, then paid out {Fold(WaypointBalance.HoardRewardMultiplier)}, including the boss's loot. Later kills also pay out {Fold(WaypointBalance.HoardRewardMultiplier)} immediately. Leaving before opening the hoard forfeits held loot. Relics beyond holding or inventory capacity become shards. Experience is immediate.");
+                case Waypoint.TemperedFinds:
+                    string limit = t.MaxRelicsPerRoom == 1 ? "only one relic can be found" : $"at most {t.MaxRelicsPerRoom} relics can be found";
+                    return new Txt($"次のゾーンの遺物は最初から強化+{t.Enhancement}。ただし敵から得られる遺物は1部屋につき{t.MaxRelicsPerRoom}つまでです。", $"Relics from enemies in the next zone start at enhancement +{t.Enhancement}, but {limit} per room.");
+                case Waypoint.FleetingMemories:
+                    return new Txt($"次のゾーンでは通常記憶のクールダウンが{N(Math.Abs(t.MemoryCooldownMultiplier - 1) * 100)}%{(t.MemoryCooldownMultiplier < 1 ? "短く" : "長く")}なり、夢の圧による敵のHPと攻撃の倍率が{N(Math.Abs(t.PressureMultiplier - 1) * 100)}%{(t.PressureMultiplier < 1 ? "減ります" : "増えます")}。回避と奥義は対象外です。", $"Normal memory cooldowns are {N(Math.Abs(t.MemoryCooldownMultiplier - 1) * 100)}% {(t.MemoryCooldownMultiplier < 1 ? "shorter" : "longer")} in the next zone, while dream pressure's enemy health and damage multipliers {(t.PressureMultiplier < 1 ? "fall" : "rise")} by {N(Math.Abs(t.PressureMultiplier - 1) * 100)}%. Dodge and Ultimate are excluded.");
+                case Waypoint.SummonerTrail:
+                    return new Txt($"次のゾーンでは召喚獣の与えるダメージが{N(Math.Abs(t.SummonPowerMultiplier - 1) * 100)}%{(t.SummonPowerMultiplier < 1 ? "減り" : "増え")}、旅人の最大HPが{N(Math.Abs(t.HeroHealthMultiplier - 1) * 100)}%{(t.HeroHealthMultiplier < 1 ? "減ります" : "増えます")}。", $"In the next zone, summons deal {N(Math.Abs(t.SummonPowerMultiplier - 1) * 100)}% {(t.SummonPowerMultiplier < 1 ? "less" : "more")} damage and the Traveler has {N(Math.Abs(t.HeroHealthMultiplier - 1) * 100)}% {(t.HeroHealthMultiplier < 1 ? "less" : "more")} maximum health.");
+                case Waypoint.EpicMirage:
+                    return new Txt(t.ShardMultiplier == 0 ? "次のゾーンで敵から得る遺物は必ずエピック以上になりますが、撃破による欠片は得られません。" : $"次のゾーンで敵から得る遺物は必ずエピック以上になり、撃破による欠片が{N(t.ShardMultiplier)}倍になります。", t.ShardMultiplier == 0 ? "Every relic from enemies in the next zone is Epic or better, but kills yield no shards." : $"Every relic from enemies in the next zone is Epic or better, and kills yield {N(t.ShardMultiplier)} times the shards.");
+                case Waypoint.ShardRoad:
+                    if (t.RelicSalvageMultiplier == 0)
+                        return new Txt("次のゾーンで敵から得る遺物は欠片に変換せず、そのまま受け取れます。", "Relics from enemies in the next zone are kept instead of converted to shards.");
+                    return new Txt($"次のゾーンで敵から得る遺物は、その場で分解価値の{t.RelicSalvageMultiplier}倍の欠片に変わります。", $"Relics from enemies in the next zone turn immediately into {SalvageTimes(t.RelicSalvageMultiplier)} their salvage value in shards.");
+                case Waypoint.TwinCache:
+                    string copies = WaypointBalance.TwinRelicCopies == 2 ? "an identical second copy" : $"{WaypointBalance.TwinRelicCopies - 1} identical extra copies";
+                    string tuningJa = t.TuningMultiplier == 0 ? "撃破による調律石は得られません" : $"撃破による調律石が{N(t.TuningMultiplier)}倍になります";
+                    string tuningEn = t.TuningMultiplier == 0 ? "kills yield no tuning stones" : $"kills yield {N(t.TuningMultiplier)} times the tuning stones";
+                    return new Txt($"次のゾーンで敵から得る遺物には同じ物がもう{WaypointBalance.TwinRelicCopies - 1}つ付きますが、{tuningJa}。", $"Each relic from enemies in the next zone comes with {copies}, but {tuningEn}.");
+                case Waypoint.StarOffering:
+                    return new Txt($"次のゾーンで撃破から得る欠片は、1個につき星の経験{WaypointBalance.StarXpPerShard}に変わります。夢の深さの経験倍率も適用されます。", $"Each shard from kills in the next zone becomes {WaypointBalance.StarXpPerShard} star experience. The dream depth experience multiplier also applies.");
+                case Waypoint.HumbleForge:
+                    return new Txt($"次のゾーンで敵から得る遺物はすべてコモンになり、最初から強化+{t.Enhancement}になります。", $"All relics from enemies in the next zone are Common and start at enhancement +{t.Enhancement}.");
+                case Waypoint.BossTribute:
+                    string tuning = WaypointBalance.TuningPerNonBossRelic == 1 ? "one tuning stone" : $"{WaypointBalance.TuningPerNonBossRelic} tuning stones";
+                    return new Txt($"次のゾーンではボス以外の遺物が1個につき調律石{WaypointBalance.TuningPerNonBossRelic}に変わり、ボスの遺物は必ずエピック以上になります。", $"In the next zone, each relic from a non-boss becomes {tuning}. Boss relics are always Epic or better.");
+                case Waypoint.SixfoldRoad:
+                    return new Txt($"次のゾーンの遺物は武器・防具・装飾品・頭・手・足の順に巡ります。良い遺物の出やすさが+{N(Loot.LuckPercent(t.Luck))}%になります。", $"Relics in the next zone cycle through weapon, armor, charm, head, hands and feet, with +{N(Loot.LuckPercent(t.Luck))}% better relics.");
+                case Waypoint.AwakeningPilgrimage:
+                    if (t.AwakeningPerRelic == 0)
+                        return new Txt("次のゾーンで敵から得る遺物は覚醒の力に変換せず、そのまま受け取れます。", "Relics from enemies in the next zone are kept instead of converted to awakening points.");
+                    return new Txt($"次のゾーンで敵から得る遺物は、装着中の伝説の遺物それぞれの覚醒の力{t.AwakeningPerRelic}に変わります。装着していない場合は受け取れません。夢の深さの覚醒倍率も適用されます。", $"Each relic from enemies in the next zone becomes {t.AwakeningPerRelic} awakening points for every equipped Legendary. Without an equipped Legendary, those points are lost. Dream depth's awakening multiplier applies.");
+                case Waypoint.FirstClaim:
+                    if (t.MaxRelicsPerRoom == 0)
+                        return new Txt("次のゾーンでは敵から遺物を得られません。", "Enemies in the next zone yield no relics.");
+                    return new Txt(t.MaxRelicsPerRoom == 1 ? "次のゾーンでは各部屋の最初の撃破でレア以上の遺物を1つ得ます。その部屋の以後の撃破では遺物を得られません。" : $"次のゾーンでは各部屋の最初の撃破でレア以上の遺物を1つ得ます。敵から得られる遺物は1部屋につき{t.MaxRelicsPerRoom}つまでです。", t.MaxRelicsPerRoom == 1 ? "The first kill in each room of the next zone grants one Rare-or-better relic. Later kills in that room yield no relics." : $"The first kill in each room of the next zone grants one Rare-or-better relic. At most {t.MaxRelicsPerRoom} relics can be found per room.");
+                case Waypoint.SupplyLine:
+                    return WaypointBalance.BossSalvageMultiplier == 0
+                        ? new Txt("次のゾーンではボスの遺物を欠片に変換せず、そのまま受け取れます。ボス以外の遺物もそのまま受け取れます。", "Boss relics in the next zone are kept instead of converted to shards. Relics from other enemies are also kept.")
+                        : new Txt($"次のゾーンではボスの遺物が分解価値の{WaypointBalance.BossSalvageMultiplier}倍の欠片に変わります。ボス以外の遺物はそのまま受け取れます。", $"Boss relics in the next zone become {SalvageTimes(WaypointBalance.BossSalvageMultiplier)} their salvage value in shards. Relics from other enemies are kept.");
+                default: throw new ArgumentOutOfRangeException(nameof(id));
+            }
+        }
 
         public static readonly IReadOnlyList<WaypointDef> All = new[]
         {
-            D(Waypoint.WeaponRoad, "刃の道", "Road of Blades", "次のゾーンで敵から得る遺物はすべて武器になり、良い遺物の出やすさが+60%になります。", "All relics from enemies in the next zone are weapons, with +60% better relics.", new Totals { ForcedSlot = Slot.Weapon, Luck = 1 }),
-            D(Waypoint.ArmorRoad, "鎧の道", "Road of Armor", "次のゾーンで敵から得る遺物はすべて防具になり、良い遺物の出やすさが+60%になります。", "All relics from enemies in the next zone are armor, with +60% better relics.", new Totals { ForcedSlot = Slot.Armor, Luck = 1 }),
-            D(Waypoint.CharmRoad, "護符の道", "Road of Charms", "次のゾーンで敵から得る遺物はすべて装飾品になり、良い遺物の出やすさが+60%になります。", "All relics from enemies in the next zone are charms, with +60% better relics.", new Totals { ForcedSlot = Slot.Charm, Luck = 1 }),
-            D(Waypoint.HeadRoad, "冠の道", "Road of Crowns", "次のゾーンで敵から得る遺物はすべて頭装備になり、良い遺物の出やすさが+60%になります。", "All relics from enemies in the next zone are headgear, with +60% better relics.", new Totals { ForcedSlot = Slot.Head, Luck = 1 }),
-            D(Waypoint.HandsRoad, "籠手の道", "Road of Gauntlets", "次のゾーンで敵から得る遺物はすべて手装備になり、良い遺物の出やすさが+60%になります。", "All relics from enemies in the next zone are hand gear, with +60% better relics.", new Totals { ForcedSlot = Slot.Hands, Luck = 1 }),
-            D(Waypoint.FeetRoad, "足跡の道", "Road of Footsteps", "次のゾーンで敵から得る遺物はすべて足装備になり、良い遺物の出やすさが+60%になります。", "All relics from enemies in the next zone are footwear, with +60% better relics.", new Totals { ForcedSlot = Slot.Feet, Luck = 1 }),
-            D(Waypoint.NightmareHunt, "悪夢狩り", "Nightmare Hunt", "次のゾーンでは悪夢化する機会が2倍になり、悪夢と変種から得る遺物・欠片・調律石が2倍になります。", "In the next zone, enemies are twice as likely to become nightmares. Nightmares and variants yield double relics, shards and tuning stones.", new Totals { NightmareChanceMultiplier = 2, NightmareRewardMultiplier = 2 }),
-            D(Waypoint.GlassAegis, "硝子の障壁", "Glass Aegis", "次のゾーンでは受ける回復が50%減る代わりに、得る障壁の量が100%増えます。", "In the next zone, healing received is reduced by 50%, but shield amounts increase by 100%.", new Totals { HealingMultiplier = .5, ShieldMultiplier = 2 }),
-            D(Waypoint.ResonantRoad, "反応の小径", "Road of Reactions", "次のゾーンでは装備による属性の反応の威力が2倍になります。ダメージ・被ダメージ増加・付与する火・障壁の量が対象です。範囲・時間・間隔・鈍足は変わりません。", "Equipment-based elemental reactions have double strength in the next zone. This doubles damage, damage vulnerability, Fire applied and shield amounts. Radius, duration, interval and slow stay the same.", new Totals { ReactionMultiplier = 2 }),
-            D(Waypoint.EndlessNight, "明けない夜", "Endless Night", "次のゾーンではすべての敵が悪夢化し、撃破で得る覚醒の力が3倍になります。", "Every enemy becomes a nightmare in the next zone, and awakening points from kills are tripled.", new Totals { AllNightmares = true, AwakeningMultiplier = 3 }),
-            D(Waypoint.BossHoard, "封じられた宝庫", "Sealed Hoard", "次のゾーンで敵から得る遺物・欠片・調律石はボスを倒すまで保留され、倒すとボスの分も含め3倍受け取れます。ボス撃破後の戦利品もその場で3倍受け取れます。未開封でゾーンを離れると保留分を失います。保留・所持の上限を超えた遺物は欠片になります。経験はその場で得ます。", "Enemy relics, shards and tuning stones in the next zone are held until a boss falls, then paid out threefold, including the boss's loot. Later kills also pay out threefold immediately. Leaving before opening the hoard forfeits held loot. Relics beyond holding or inventory capacity become shards. Experience is immediate.", new Totals { DelayDropsUntilBoss = true }),
-            D(Waypoint.TemperedFinds, "焼き入れの道", "Tempered Road", "次のゾーンの遺物は最初から強化+2。ただし敵から得られる遺物は1部屋につき1つまでです。", "Relics from enemies in the next zone start at enhancement +2, but only one relic can be found per room.", new Totals { Enhancement = 2, MaxRelicsPerRoom = 1 }),
-            D(Waypoint.FleetingMemories, "駆ける記憶", "Fleeting Memories", "次のゾーンでは通常記憶のクールダウンが20%短くなり、夢の圧による敵のHPと攻撃の倍率が25%増えます。回避と奥義は対象外です。", "Normal memory cooldowns are 20% shorter in the next zone, while dream pressure's enemy health and damage multipliers rise by 25%. Dodge and Ultimate are excluded.", new Totals { MemoryCooldownMultiplier = .8, PressureMultiplier = 1.25 }),
-            D(Waypoint.SummonerTrail, "群れの小径", "Trail of the Pack", "次のゾーンでは召喚獣の与えるダメージが50%増え、旅人の最大HPが15%減ります。", "In the next zone, summons deal 50% more damage and the Traveler has 15% less maximum health.", new Totals { SummonPowerMultiplier = 1.5, HeroHealthMultiplier = .85 }),
-            D(Waypoint.EpicMirage, "紫の蜃気楼", "Violet Mirage", "次のゾーンで敵から得る遺物は必ずエピック以上になりますが、撃破による欠片は得られません。", "Every relic from enemies in the next zone is Epic or better, but kills yield no shards.", new Totals { MinimumRarity = Rarity.Epic, ShardMultiplier = 0 }),
-            D(Waypoint.ShardRoad, "欠片の河", "River of Shards", "次のゾーンで敵から得る遺物は、その場で分解価値の3倍の欠片に変わります。", "Relics from enemies in the next zone turn immediately into three times their salvage value in shards.", new Totals { RelicSalvageMultiplier = 3 }),
-            D(Waypoint.TwinCache, "双子の宝箱", "Twin Cache", "次のゾーンで敵から得る遺物には同じ物がもう1つ付きますが、撃破による調律石は得られません。", "Each relic from enemies in the next zone comes with an identical second copy, but kills yield no tuning stones.", new Totals { TwinRelics = true, TuningMultiplier = 0 }),
-            D(Waypoint.StarOffering, "星への供物", "Offering to the Stars", "次のゾーンで撃破から得る欠片は、1個につき星の経験4に変わります。夢の深さの経験倍率も適用されます。", "Each shard from kills in the next zone becomes 4 star experience. The dream depth experience multiplier also applies.", new Totals { ShardsToStarXp = true }),
-            D(Waypoint.HumbleForge, "素朴な鍛冶場", "Humble Forge", "次のゾーンで敵から得る遺物はすべてコモンになり、最初から強化+4になります。", "All relics from enemies in the next zone are Common and start at enhancement +4.", new Totals { ForcedRarity = Rarity.Common, Enhancement = 4 }),
-            D(Waypoint.BossTribute, "門番への貢ぎ物", "Tribute to the Gate", "次のゾーンではボス以外の遺物が1個につき調律石1に変わり、ボスの遺物は必ずエピック以上になります。", "In the next zone, each relic from a non-boss becomes one tuning stone. Boss relics are always Epic or better.", new Totals { NonBossRelicsToTuning = true }),
-            D(Waypoint.SixfoldRoad, "六つの足取り", "Sixfold Trail", "次のゾーンの遺物は武器・防具・装飾品・頭・手・足の順に巡ります。良い遺物の出やすさが+30%になります。", "Relics in the next zone cycle through weapon, armor, charm, head, hands and feet, with +30% better relics.", new Totals { CycleSlots = true, Luck = .5 }),
-            D(Waypoint.AwakeningPilgrimage, "目覚めの巡礼", "Pilgrimage of Awakening", "次のゾーンで敵から得る遺物は、装着中の伝説の遺物それぞれの覚醒の力20に変わります。装着していない場合は受け取れません。夢の深さの覚醒倍率も適用されます。", "Each relic from enemies in the next zone becomes 20 awakening points for every equipped Legendary. Without an equipped Legendary, those points are lost. Dream depth's awakening multiplier applies.", new Totals { AwakeningPerRelic = 20 }),
-            D(Waypoint.FirstClaim, "一番槍の宝", "First Claim", "次のゾーンでは各部屋の最初の撃破でレア以上の遺物を1つ得ます。その部屋の以後の撃破では遺物を得られません。", "The first kill in each room of the next zone grants one Rare-or-better relic. Later kills in that room yield no relics.", new Totals { FirstKillRelic = true, MinimumRarity = Rarity.Rare, MaxRelicsPerRoom = 1 }),
-            D(Waypoint.SupplyLine, "道中の収穫", "Trail Supplies", "次のゾーンではボスの遺物が分解価値の4倍の欠片に変わります。ボス以外の遺物はそのまま受け取れます。", "Boss relics in the next zone become four times their salvage value in shards. Relics from other enemies are kept.", new Totals { BossRelicsToShards = true }),
+            D(Waypoint.WeaponRoad, "刃の道", "Road of Blades", new Totals { ForcedSlot = Slot.Weapon, Luck = WaypointBalance.WeaponRoadLuck }),
+            D(Waypoint.ArmorRoad, "鎧の道", "Road of Armor", new Totals { ForcedSlot = Slot.Armor, Luck = WaypointBalance.ArmorRoadLuck }),
+            D(Waypoint.CharmRoad, "護符の道", "Road of Charms", new Totals { ForcedSlot = Slot.Charm, Luck = WaypointBalance.CharmRoadLuck }),
+            D(Waypoint.HeadRoad, "冠の道", "Road of Crowns", new Totals { ForcedSlot = Slot.Head, Luck = WaypointBalance.HeadRoadLuck }),
+            D(Waypoint.HandsRoad, "籠手の道", "Road of Gauntlets", new Totals { ForcedSlot = Slot.Hands, Luck = WaypointBalance.HandsRoadLuck }),
+            D(Waypoint.FeetRoad, "足跡の道", "Road of Footsteps", new Totals { ForcedSlot = Slot.Feet, Luck = WaypointBalance.FeetRoadLuck }),
+            D(Waypoint.NightmareHunt, "悪夢狩り", "Nightmare Hunt", new Totals { NightmareChanceMultiplier = WaypointBalance.NightmareHuntNightmareChanceMultiplier, NightmareRewardMultiplier = WaypointBalance.NightmareHuntNightmareRewardMultiplier }),
+            D(Waypoint.GlassAegis, "硝子の障壁", "Glass Aegis", new Totals { HealingMultiplier = WaypointBalance.GlassAegisHealingMultiplier, ShieldMultiplier = WaypointBalance.GlassAegisShieldMultiplier }),
+            D(Waypoint.ResonantRoad, "反応の小径", "Road of Reactions", new Totals { ReactionMultiplier = WaypointBalance.ResonantRoadReactionMultiplier }),
+            D(Waypoint.EndlessNight, "明けない夜", "Endless Night", new Totals { AllNightmares = true, AwakeningMultiplier = WaypointBalance.EndlessNightAwakeningMultiplier }),
+            D(Waypoint.BossHoard, "封じられた宝庫", "Sealed Hoard", new Totals { DelayDropsUntilBoss = true }),
+            D(Waypoint.TemperedFinds, "焼き入れの道", "Tempered Road", new Totals { Enhancement = WaypointBalance.TemperedFindsEnhancement, MaxRelicsPerRoom = WaypointBalance.TemperedFindsMaxRelicsPerRoom }),
+            D(Waypoint.FleetingMemories, "駆ける記憶", "Fleeting Memories", new Totals { MemoryCooldownMultiplier = WaypointBalance.FleetingMemoriesMemoryCooldownMultiplier, PressureMultiplier = WaypointBalance.FleetingMemoriesPressureMultiplier }),
+            D(Waypoint.SummonerTrail, "群れの小径", "Trail of the Pack", new Totals { SummonPowerMultiplier = WaypointBalance.SummonerTrailSummonPowerMultiplier, HeroHealthMultiplier = WaypointBalance.SummonerTrailHeroHealthMultiplier }),
+            D(Waypoint.EpicMirage, "紫の蜃気楼", "Violet Mirage", new Totals { MinimumRarity = Rarity.Epic, ShardMultiplier = WaypointBalance.EpicMirageShardMultiplier }),
+            D(Waypoint.ShardRoad, "欠片の河", "River of Shards", new Totals { RelicSalvageMultiplier = WaypointBalance.ShardRoadRelicSalvageMultiplier }),
+            D(Waypoint.TwinCache, "双子の宝箱", "Twin Cache", new Totals { TwinRelics = true, TuningMultiplier = WaypointBalance.TwinCacheTuningMultiplier }),
+            D(Waypoint.StarOffering, "星への供物", "Offering to the Stars", new Totals { ShardsToStarXp = true }),
+            D(Waypoint.HumbleForge, "素朴な鍛冶場", "Humble Forge", new Totals { ForcedRarity = Rarity.Common, Enhancement = WaypointBalance.HumbleForgeEnhancement }),
+            D(Waypoint.BossTribute, "門番への貢ぎ物", "Tribute to the Gate", new Totals { NonBossRelicsToTuning = true }),
+            D(Waypoint.SixfoldRoad, "六つの足取り", "Sixfold Trail", new Totals { CycleSlots = true, Luck = WaypointBalance.SixfoldRoadLuck }),
+            D(Waypoint.AwakeningPilgrimage, "目覚めの巡礼", "Pilgrimage of Awakening", new Totals { AwakeningPerRelic = WaypointBalance.AwakeningPilgrimageAwakeningPerRelic }),
+            D(Waypoint.FirstClaim, "一番槍の宝", "First Claim", new Totals { FirstKillRelic = true, MinimumRarity = Rarity.Rare, MaxRelicsPerRoom = WaypointBalance.FirstClaimMaxRelicsPerRoom }),
+            D(Waypoint.SupplyLine, "道中の収穫", "Trail Supplies", new Totals { BossRelicsToShards = true }),
         };
 
         private static readonly Totals Neutral = new Totals();
@@ -177,11 +264,11 @@ namespace SodRpg.Core.Game
                 r.Enhance = Math.Min(Content.MaxEnhanceFor(r.Rarity, r.LimitBreaks), Math.Max(r.Enhance, t.Enhancement));
                 if (t.Enhancement > 0) Rules.GrantEnhanceMilestones(rng, r);
             }
-            int copies = t.TwinRelics ? 2 : nightmare ? (int)t.NightmareRewardMultiplier : 1;
+            int copies = t.TwinRelics ? WaypointBalance.TwinRelicCopies : nightmare ? (int)t.NightmareRewardMultiplier : 1;
             Duplicate(reward.Relics, copies, rng);
             reward.Shards = DreamDepth.ScaleReward(reward.Shards, t.ShardMultiplier * (nightmare ? t.NightmareRewardMultiplier : 1));
             reward.Tuning = DreamDepth.ScaleReward(reward.Tuning, t.TuningMultiplier * (nightmare ? t.NightmareRewardMultiplier : 1));
-            int salvage = t.BossRelicsToShards && tier == MonsterTier.Boss ? 4 : t.RelicSalvageMultiplier;
+            int salvage = t.BossRelicsToShards && tier == MonsterTier.Boss ? WaypointBalance.BossSalvageMultiplier : t.RelicSalvageMultiplier;
             if (salvage > 0)
             {
                 foreach (var r in reward.Relics) reward.Shards = Add(reward.Shards, Content.SalvageShards(r.Rarity) * salvage);
@@ -189,7 +276,7 @@ namespace SodRpg.Core.Game
             }
             if (t.NonBossRelicsToTuning && tier != MonsterTier.Boss)
             {
-                reward.Tuning = Add(reward.Tuning, reward.Relics.Count);
+                reward.Tuning = Add(reward.Tuning, reward.Relics.Count * WaypointBalance.TuningPerNonBossRelic);
                 reward.Relics.Clear();
             }
             if (t.AwakeningPerRelic > 0)
@@ -199,10 +286,10 @@ namespace SodRpg.Core.Game
             }
             if (t.ShardsToStarXp)
             {
-                starXp = DreamDepth.ScaleReward(reward.Shards, 4);
+                starXp = DreamDepth.ScaleReward(reward.Shards, WaypointBalance.StarXpPerShard);
                 reward.Shards = 0;
             }
-            InfinityRewards.LimitReward(p, reward, t.DelayDropsUntilBoss ? 3 : 1);
+            InfinityRewards.LimitReward(p, reward, t.DelayDropsUntilBoss ? WaypointBalance.HoardRewardMultiplier : 1);
             if (!t.DelayDropsUntilBoss) return;
             if (!run.WaypointHoardReleased)
             {
@@ -225,9 +312,9 @@ namespace SodRpg.Core.Game
                 run.DeferredWaypointTuning = 0;
                 run.WaypointHoardReleased = true;
             }
-            Duplicate(reward.Relics, 3, rng);
-            reward.Shards = DreamDepth.ScaleReward(reward.Shards, 3);
-            reward.Tuning = DreamDepth.ScaleReward(reward.Tuning, 3);
+            Duplicate(reward.Relics, WaypointBalance.HoardRewardMultiplier, rng);
+            reward.Shards = DreamDepth.ScaleReward(reward.Shards, WaypointBalance.HoardRewardMultiplier);
+            reward.Tuning = DreamDepth.ScaleReward(reward.Tuning, WaypointBalance.HoardRewardMultiplier);
         }
 
         private static int Add(int a, int b) => (int)Math.Min(int.MaxValue, (long)a + b);

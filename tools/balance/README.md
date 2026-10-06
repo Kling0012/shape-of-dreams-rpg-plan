@@ -445,6 +445,99 @@ JSON出力を指定しない既存モードの挙動は維持します（setsの
 これは安全性、形式、契約の検証を緩めたり、任意の係数で全テストが常に成功すると保証したりするものではありません。
 本レポートは実際のCore呼出と固定条件のシミュレーションであり、実ゲームの勝率や経済の保証ではありません。
 
+## 段階6：ドロップ・経済・契約・日替わり・道標・出来事
+
+数値の原本は次の7表です。名前・ID・enum・保存／通信の構造・関係フラグは従来のCore定義に残します。
+同じ値でも異なる経済系は別キーです（商人のgold価格と旧shards価格、ArchiveとDreamOfferingのXPなど）。
+
+| 表 | 調整対象 | 生成器 |
+| --- | --- | --- |
+| `loot.json` | rarity重み、tier別ドロップ／幸運、heat係数、追加遺物、選択重み、撃破素材、変種の追加欠片 | `loot_values.py` |
+| `boss-sets.json` | ボスセットの通常／悪夢／深度ドロップと上限 | `boss_sets_values.py` |
+| `economy.json` | dust⇔shards換算、商人gold、分解dust、Limbo補正、確保時の潜行ボーナス除数 | `economy_values.py` |
+| `pacts.json` | 契約ごとの呪い強度・報酬・能力値、提示数、潜行ボーナス倍率 | `pact_values.py` |
+| `daily-dream.json` | 日替わり効果の倍率・報酬、固有効果強化率 | `daily_dream_values.py` |
+| `waypoints.json` | 道標ごとの量・倍率・提示数、遺物複製／分解・星XP・覚醒・調律石・宝庫の換算 | `waypoint_values.py` |
+| `events.json` | 出来事の出現率／抽選重み、価格・確率・個数・報酬・heat増分・XP | `events_values.py` |
+
+各表は `schemaVersion: 1` の閉じたschemaです。整数の個数／費用とdoubleの確率／倍率を区別し、
+未知の欄・boolを数値として使った入力・非有限値・doubleに往復できない小数精度を生成前に拒否します。
+生成先は `src/SodRpg.Core/Game/Balance/{Loot,BossSets,Economy,Pacts,DailyDream,Waypoints,Events}.Generated.cs`。
+保証強化は段階3の `forge.json` に残し、出来事表へ重複させません。
+Mastery、enum番号、関係フラグ、取引の待ち時間／照会回数、保存／通信／保留容量は対象外です。
+`MaxDustEarnPerTrade`・`MaxBatchesPerTrade` 等の安全上限も広げません。
+分解dustの最大額は採用済みforge表から検証し、既存の取引上限を超える調整は生成段階で拒否します。
+
+### 操作
+
+該当する表の1セルを変更し、従来どおり次の入口を使います（任意cwdから実行可能）。
+
+```sh
+DOTNET=/usr/bin/dotnet DOTNET_ROLL_FORWARD=LatestMajor tools/balance/run
+```
+
+現在のrunは従来の6モード（forge、star-efficiency、star-values、star-progression、v132stars、expeditions）に
+次の3モードを加えた9スナップショットを保存します。上の旧段階の「4モード」等の記述は当時の範囲です。
+
+| 新モード | 比較する量 |
+| --- | --- |
+| `loot-economy` | heat／tier／rarity／floor別の正確な抽選分布、遺物・素材期待値、ボスセット率、gold／dust換算、Coreで実際に確保した欠片 |
+| `pact-daily-waypoints` | 個々の契約／日替わり／道標の採用済み効果量、幸運の表示率、道標の各換算係数 |
+| `events` | 出来事ごとの価格・確率・抽選重み・報酬と、heat／rarity／個数別の価格・XP・調律石 |
+
+新モードも `<mode>.md`／`<mode>.json` と `current.json`／`comparison.md` に入り、
+`tableMetadata` に7表の入力を記録します。各モードは別Coreプロセスです。
+標準の初期表では新モードの比較行は378／1016／125行。IDは意味と条件軸で固定し、単位別に照合します。
+`conditions` にruntime、実登録旅人、抽選floor方針、独立効果の方針、確保の模型入力（未確保欠片100、空の装備・依頼、Infinity無効）を保存します。
+素材の値は補正前の期待値、商人goldは本体難易度補正前です。DPS・勝率・踏破速度・本体通貨取引の成功率は測りません。
+
+レポートだけなら独立した未検証基準を使えます。検証済みの `last-success.json` は更新しません。
+
+```sh
+DOTNET=/usr/bin/dotnet DOTNET_ROLL_FORWARD=LatestMajor tools/balance/run --no-tests --runs 1 --players 1
+python tools/balance/gen_cs.py --check
+DOTNET_ROLL_FORWARD=LatestMajor /usr/bin/dotnet tools/BalanceSim/bin/Release/net8.0/BalanceSim.dll \
+  --mode events --out /tmp/events.md --metrics-json /tmp/events.json
+```
+
+価格の実行・候補判定・日英の説明は同じ採用済み値を参照します。道標の幸運表示も `Loot.LuckPercent` 由来です。
+ゲーム中のJSON読込・倍率再計算・文字列キー検索は追加しません。
+共通生成器とrunの接続は `stage6_values.py`／`stage6_run.py` に分離し、既存の行は変更せず追記しています。
+表／生成器の変更は `tools/test_changed.py` でも全スイート対象になります。
+
+### 初期値の互換性と検証
+
+移行前のCore実行から、数値定義・抽選結果／RNG状態・価格／換算・確保報酬を6652項目保存した
+`tests/SodRpg.Core.Tests/Stage6OriginalValues.json` と、独立プロセスの内容指紋を比較する最小の移行回帰を追加しています。
+このfixtureは互換性の観測であり、調整原本でも実行時fallbackでもありません。
+初期表の星図登録後ContentFingerprintは移行前後とも `10579-ab35d865a569c87b`。
+値変更後は意味・型・単位・採用値の正準レコードを既存FNV-1a照合へ加えます。
+ボスセット率は既存 `boss-drop` レコードを使い、二重に加えません。JSONの空白／キー順は指紋へ影響しません。
+ファイルのSHA256検証は行いません。保存形式・Protocolは変更していません。
+既存の数値期待値は生の表と独立した式／RNG分岐を使い、正当な調整で初期fixtureを再固定する必要はありません。
+
+```sh
+DOTNET=/usr/bin/dotnet DOTNET_ROLL_FORWARD=LatestMajor /usr/bin/dotnet build SodRpg.sln -c Release
+DOTNET=/usr/bin/dotnet DOTNET_ROLL_FORWARD=LatestMajor python tools/test_changed.py --all
+python -m unittest discover -s tools/tests -p 'test_*.py'
+```
+
+実機Unityの描画はこのCore／CLI検証の対象外です。
+
+### 比較の実行例（段階6の移行確認）
+
+同じ出力先・`--no-tests --runs 1 --players 1` で初期表を保存した後、
+`events.json` の `stoneBroker.shards` だけを35から36へ一時変更してrunを実行しました。
+
+| 指標 | 単位 | 現在 | 前回 | 差 | 相対差（丸め） |
+| --- | --- | ---: | ---: | ---: | ---: |
+| `events/stoneBroker/shards` | shards | 36 | 35 | +1 | 約+2.857% |
+
+新3モードの条件・指標ID・単位は同じで、1519行中の差分はこの1行だけでした。
+実際のCoreでも35欠片では候補を使えず、100欠片から36を支払い、64欠片と調律石2を得ました。
+日英の候補表示も36を参照しました。移行コミットの表は元の35です。
+不正な `offerChance: 1.1` は `events.offerChance: expected probability in 0..1` で拒否され、
+生成物も前回の基準も変わりませんでした。レポート専用の実行は検証済み基準を作りません。
 ## 装備の種類別原本（Issue #149 段階7）
 
 この節が装備の最新の操作手順です。上の過去段階の記載にある `sets.json` は

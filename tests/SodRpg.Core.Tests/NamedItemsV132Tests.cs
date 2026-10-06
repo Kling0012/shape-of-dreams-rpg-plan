@@ -531,7 +531,7 @@ namespace SodRpg.Core.Tests
             var named = NamedRelic("named.test.w1");
             p.Stash.Add(named);
             p.Hero("Hero_Vesper").Equipped[(int)Slot.Weapon] = named.Uid;
-            p.AddMaterial(Materials.Tuning, 1);
+            p.AddMaterial(Materials.Tuning, EventBalanceTestData.Number("memoryWell", "tuning"));
             Assert.Null(DreamEvents.TradeTarget(p, DreamEvent.MemoryWell));
             Assert.False(DreamEvents.CanUse(p, DreamEvent.MemoryWell, out _));
 
@@ -559,7 +559,7 @@ namespace SodRpg.Core.Tests
             var p = ProfileAtEvent(DreamEvent.TwinMirror, 6004);
             var named = NamedRelic("named.test.w3");
             p.Run.Satchel.Add(named);
-            p.Run.SatchelShards = 60;
+            p.Run.SatchelShards = EventBalanceTestData.Number("twinMirror", "epicShards");
             Rules.UseEvent(p, DreamEvent.TwinMirror);
             Assert.Equal(0, p.Run.SatchelShards);
             var copy = p.Run.Satchel.Single(r => r.Uid != named.Uid);
@@ -574,16 +574,22 @@ namespace SodRpg.Core.Tests
                 var q = ProfileAtEvent(DreamEvent.RelicWager, seed);
                 var wager = NamedRelic("named.test.w1");
                 q.Run.Satchel.Add(wager);
+                double chance = EventBalanceTestData.Probability("relicWager", wager.Rarity == Rarity.Rare ? "rareWinChance" : "lowerWinChance");
+                bool expectedWin = chance >= 1 || (chance > 0 && new Rng(q.RngState).NextDouble() < chance);
                 Rules.UseEvent(p: q, e: DreamEvent.RelicWager);
                 var replacement = q.Run.Satchel.SingleOrDefault(r => r.Uid != wager.Uid);
-                if (replacement == null) continue; // この乱数では負けた。勝つ乱数まで確定で進む。
+                if (!expectedWin)
+                {
+                    Assert.Null(replacement);
+                    Assert.DoesNotContain(wager, q.Run.Satchel);
+                    continue;
+                }
+                Assert.NotNull(replacement);
                 Assert.Equal(wager.BaseId, replacement.BaseId);
                 Assert.Equal(Rarity.Rare, replacement.Rarity);
                 Assert.Null(replacement.NamedId);
                 Assert.Null(replacement.UniqueId);
-                return;
             }
-            Assert.True(false, "どの乱数でも賭けに勝たなかった（確率1/2が40回以上続くのは異常）");
         }
 
 

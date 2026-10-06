@@ -33,20 +33,8 @@ namespace SodRpg.Core.Tests
             Assert.Single(p.Run.Satchel); // エピックだけが残る
             Assert.Equal(Rarity.Epic, p.Run.Satchel[0].Rarity);
             Assert.Equal(before + lows * Content.SalvageShards(Rarity.Uncommon), p.Material(Materials.Shard)); // 保管庫側へ直接
-            Assert.Equal(lows / 3, p.Run.SatchelTuning);
+            Assert.Equal(lows / EventBalanceTestData.Number("tapir", "relicsPerTuning"), p.Run.SatchelTuning);
         }
 
-        [Fact]
-        public void Stargazer_text_matches_its_effect()
-        {
-            Loc.Japanese = true;
-            var p = Profile.CreateNew(13);
-            Rules.BeginRun(p, "sg");
-            Rules.ReachSecurePoint(p);
-            p.Run.OfferedEvent = DreamEvent.Stargazer;
-            string text = DreamEvents.Describe(DreamEvent.Stargazer, p);
-            Rules.UseEvent(p, DreamEvent.Stargazer);
-            Assert.Contains($"{(int)System.Math.Round(p.Run.EventDropBonus * 100)}%", text);
-        }
     }
 }

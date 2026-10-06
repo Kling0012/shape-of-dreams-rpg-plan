@@ -25,6 +25,23 @@ internal static class Metrics
     private static readonly string[] CapacityIds =
         ["satchelFullTransitions", "satchelOverflowSalvaged", "stashFullTransitions", "stashOverflowSalvaged"];
 
+
+    internal static void WriteStage6(string path, string mode, IReadOnlyList<QuantityMetricValue> metrics) => Write(path, new
+    {
+        modelVersion = 1, mode, contentFingerprint = ContentFingerprint.Value,
+        conditions = new
+        {
+            runtime = RuntimeIdentity(), registeredHeroes = RegisteredHeroes(),
+            valuePolicy = Stage6Report.ValuePolicy,
+            heatPolicy = "all integer heat levels 0..Content.MaxHeat; drop tiers and rarities independently",
+            effectPolicy = "each pact, daily dream and waypoint independently; no combined build or combat simulation",
+            eventPolicy = "definition prices/rewards/chances, eligible targets; no native gold/dust trade execution",
+            distributionPolicy = LootEconomyReport.Policy,
+            secureProjection = new { unsecuredShards = LootEconomyReport.SecureSampleShards,
+                inventory = "empty; no bounties; Infinity inactive", pacts = "none or CursedHoard independently" },
+        },
+        metrics,
+    });
     public static void WriteForge(string path, IReadOnlyList<ForgeEntry> entries)
     {
         var metrics = entries.Select(entry => new ForgeMetricValue(

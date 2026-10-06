@@ -1,0 +1,95 @@
+{
+  "schemaVersion": 1,
+  "powerBoostPct": 50,
+  "definitions": {
+    "4": {
+      "shardMult": 1.5
+    },
+    "5": {
+      "dropBonus": 0.25
+    },
+    "6": {
+      "nightmareMult": 2.0
+    },
+    "7": {
+      "xpMult": 1.3
+    },
+    "8": {
+      "bountyMult": 2.0
+    },
+    "13": {
+      "xpMult": 1.5
+    },
+    "14": {
+      "bountyMult": 1.5,
+      "shardMult": 1.25
+    },
+    "21": {
+      "dropBonus": 0.2,
+      "shardMult": 1.2
+    },
+    "22": {
+      "nightmareMult": 1.5,
+      "xpMult": 1.2
+    },
+    "23": {
+      "dropBonus": 0.35
+    },
+    "24": {
+      "xpMult": 1.3,
+      "bountyMult": 1.5
+    },
+    "25": {
+      "shardMult": 1.6
+    },
+    "26": {
+      "bountyMult": 1.5,
+      "dropBonus": 0.1
+    },
+    "30": {
+      "nightmareMult": 1.5,
+      "dropBonus": 0.25
+    },
+    "46": {
+      "shardMult": 1.4,
+      "dropBonus": 0.15
+    },
+    "47": {
+      "xpMult": 1.4,
+      "nightmareMult": 1.25
+    },
+    "48": {
+      "bountyMult": 1.75,
+      "xpMult": 1.15
+    },
+    "49": {
+      "dropBonus": 0.3,
+      "xpMult": 1.2
+    },
+    "50": {
+      "nightmareMult": 2.0,
+      "dropBonus": 0.2
+    },
+    "51": {
+      "shardMult": 1.5,
+      "bountyMult": 1.25
+    },
+    "52": {
+      "dropBonus": 0.15
+    },
+    "53": {
+      "xpMult": 1.25
+    },
+    "54": {
+      "nightmareMult": 1.5
+    },
+    "57": {
+      "shardMult": 1.45,
+      "dropBonus": 0.1
+    },
+    "60": {
+      "xpMult": 1.3,
+      "shardMult": 1.3
+    }
+  }
+}

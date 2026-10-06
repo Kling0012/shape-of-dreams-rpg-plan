@@ -15,6 +15,7 @@ import star_values
 import pressure_values
 import monster_values
 import infinity_values
+import stage6_values
 import equipment_items_values
 import powers_values
 import equipment_pools_values
@@ -39,6 +40,7 @@ def _star_generator():
 
 def generate(check=False):
     # Resolve and render every domain before publishing any file.
+    stage6 = stage6_values.render_outputs()
     forge = render_forge(load_forge())
     gear = gear_values.render_outputs()
     sets = set_values.render_outputs()
@@ -55,6 +57,7 @@ def generate(check=False):
     outputs.update(pressure)
     outputs.update(monsters)
     outputs.update(infinity)
+    outputs.update(stage6)
     outputs.update(equipment_items_values.render_outputs())
     outputs.update(powers_values.render_outputs())
     outputs.update(equipment_pools_values.render_outputs())

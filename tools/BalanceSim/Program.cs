@@ -17,6 +17,7 @@ internal static class Program
                 return 0;
             }
             var timer = Stopwatch.StartNew();
+            if (Stage6Report.TryRun(options)) return 0;
             if (options.Forge)
             {
                 var entries = ForgeReport.Measure();

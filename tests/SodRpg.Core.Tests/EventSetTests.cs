@@ -22,10 +22,11 @@ namespace SodRpg.Core.Tests
         public void Merchant_sells_an_unsecured_relic_for_shards()
         {
             var p = AtEvent(DreamEvent.Merchant);
-            Assert.False(DreamEvents.CanUse(p, DreamEvent.Merchant, out _));
-            p.AddMaterial(Materials.Shard, 100);
+            int cost = EventBalanceTestData.Number("merchant", "baseShards");
+            Assert.Equal(cost == 0, DreamEvents.CanUse(p, DreamEvent.Merchant, out _));
+            p.AddMaterial(Materials.Shard, cost);
             Rules.UseEvent(p, DreamEvent.Merchant);
-            Assert.Equal(100 - DreamEvents.MerchantCost(0), p.Material(Materials.Shard));
+            Assert.Equal(0, p.Material(Materials.Shard));
             var r = Assert.Single(p.Run.Satchel);
             Assert.True(r.Rarity >= Rarity.Uncommon);
             Assert.Equal(DreamEvent.None, p.Run.OfferedEvent);
@@ -33,23 +34,22 @@ namespace SodRpg.Core.Tests
         }
 
         [Fact]
-        public void Chalice_doubles_or_loses_unsecured_shards()
+        public void Chalice_applies_the_win_reward_or_loses_unsecured_shards()
         {
-            int wins = 0, losses = 0;
+            int wins = 0, expectedWins = 0;
             for (ulong seed = 1; seed <= 200; seed++)
             {
                 var p = AtEvent(DreamEvent.Chalice, seed);
                 p.Run.SatchelShards = 40;
+                double chance = EventBalanceTestData.Probability("chalice", "winChance");
+                bool expectedWin = chance >= 1 || (chance > 0 && new Rng(p.RngState).NextDouble() < chance);
+                if (expectedWin) expectedWins++;
                 Rules.UseEvent(p, DreamEvent.Chalice);
-                if (p.Run.SatchelShards == 80) wins++;
-                else
-                {
-                    Assert.Equal(0, p.Run.SatchelShards);
-                    losses++;
-                }
+                int expected = expectedWin ? 40 * (1 + EventBalanceTestData.Number("chalice", "bonusMultiplier")) : 0;
+                Assert.Equal(expected, p.Run.SatchelShards);
+                if (p.Run.SatchelShards != 0) wins++;
             }
-            Assert.InRange(wins, 70, 130);
-            Assert.Equal(200, wins + losses);
+            Assert.Equal(expectedWins, wins);
         }
 
         [Fact]

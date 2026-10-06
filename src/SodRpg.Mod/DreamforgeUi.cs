@@ -628,8 +628,8 @@ namespace SodRpg.Mod
                     "Infinity: Secure returns everyone and ends the run; Delve continues for everyone. The host decides."), _st.Warn);
                 DrawInfinityCaps();
             }
-            int bonus = run.SatchelShards * run.Heat / 4;
-            if (Pacts.Sum(run.Pacts).DoubleDepthBonus) bonus *= 2;
+            int bonus = run.SatchelShards * run.Heat / EconomyBalance.SecureBonusDivisor;
+            if (Pacts.Sum(run.Pacts).DoubleDepthBonus) bonus *= PactBalance.DoubleDepthBonusMultiplier;
             int free = Math.Max(0, Workshop.StashCapacity(_s.Profile) - _s.Profile.Stash.Count);
             CacheSecureText(run, bonus, free, DailyDream.Get(run.DailyId)?.NightmareMult ?? 1.0);
             GUILayout.Label(_secureLootText, _st.Label);

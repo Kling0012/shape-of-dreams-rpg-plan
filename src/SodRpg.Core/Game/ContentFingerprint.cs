@@ -54,6 +54,7 @@ namespace SodRpg.Core.Game
             ids.AddRange(PowerPoolsBalance.ContentFingerprintRecords);
             ids.AddRange(EquipmentCapsBalance.ContentFingerprintRecords);
             ids.AddRange(PowersBalance.ContentFingerprintRecords);
+            Stage6Fingerprint.AddRecords(ids);
             foreach (var b in Content.Bases) ids.Add("b:" + b.Id);
             foreach (var u in Content.Uniques)
             {

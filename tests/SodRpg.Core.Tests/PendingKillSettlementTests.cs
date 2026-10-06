@@ -63,7 +63,7 @@ namespace SodRpg.Core.Tests
             int before = host.Material(Materials.Shard);
             Rules.EndRun(host, victory: true);
             // 確保ボーナスと最深記録は戦った深度3のまま（潜行で+1されない）。
-            Assert.Equal(before + 40 + 40 * 3 / 4, host.Material(Materials.Shard));
+            Assert.Equal(before + 40 + 40 * 3 / PactDailyWaypointTestValues.Integer("economy", "expedition.secureBonusDivisor"), host.Material(Materials.Shard));
             Assert.Equal(3, host.Stats.BestHeatSecured);
         }
 

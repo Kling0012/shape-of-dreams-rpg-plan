@@ -1,0 +1,7 @@
+{
+  "schemaVersion": 1,
+  "exchange": {"dustPerBatch": 100, "shardsPerBatch": 10},
+  "merchant": {"baseGold": 60, "goldPerHeat": 15},
+  "salvage": {"dustPerShard": 5, "dustPerEnhance": 10},
+  "expedition": {"limboDropBonus": 0.10, "limboLuck": 0.2, "secureBonusDivisor": 4}
+}

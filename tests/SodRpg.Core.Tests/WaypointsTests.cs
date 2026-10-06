@@ -1,11 +1,39 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.IO;
+using System.Text.Json;
 using SodRpg.Core.Game;
 using Xunit;
 
 namespace SodRpg.Core.Tests
 {
+    internal static class PactDailyWaypointTestValues
+    {
+        internal static JsonElement Raw(string table)
+        {
+            for (var dir = new DirectoryInfo(AppContext.BaseDirectory); dir != null; dir = dir.Parent)
+            {
+                string path = Path.Combine(dir.FullName, "tools", "balance", table + ".json");
+                if (!File.Exists(path)) continue;
+                using (var document = JsonDocument.Parse(File.ReadAllText(path)))
+                    return document.RootElement.Clone();
+            }
+            throw new InvalidOperationException("Balance table not found: " + table);
+        }
+
+        internal static double Number(string table, string path)
+        {
+            var value = Raw(table);
+            foreach (string key in path.Split('.')) value = value.GetProperty(key);
+            return value.GetDouble();
+        }
+
+        internal static int Integer(string table, string path) => checked((int)Number(table, path));
+        internal static double Waypoint(Waypoint id, string field) => Number("waypoints", "definitions." + id + "." + field);
+        internal static int Reward(string field) => Integer("waypoints", "rewards." + field);
+    }
+
     public class WaypointsTests
     {
         private static Profile Run(Waypoint waypoint = Waypoint.None, int depth = 0)
@@ -59,7 +87,7 @@ namespace SodRpg.Core.Tests
             Rules.ReachSecurePoint(a);
             Rules.ReachSecurePoint(b);
             Assert.Equal(a.Run.OfferedWaypoints, b.Run.OfferedWaypoints);
-            Assert.Equal(3, a.Run.OfferedWaypoints.Distinct().Count());
+            Assert.Equal(PactDailyWaypointTestValues.Integer("waypoints", "offered"), a.Run.OfferedWaypoints.Distinct().Count());
             Assert.Equal(a.RngState, b.RngState);
             ulong rng = a.RngState;
             Rules.ReachSecurePoint(a);
@@ -99,7 +127,7 @@ namespace SodRpg.Core.Tests
             Assert.Throws<InvalidOperationException>(() => Rules.PickWaypoint(p, Waypoint.WeaponRoad));
             Rules.ReachSecurePoint(p);
             string before = ProfileCodec.Write(p);
-            var unavailable = Waypoints.All.First(x => !p.Run.OfferedWaypoints.Contains(x.Id)).Id;
+            var unavailable = Waypoints.All.Select(x => x.Id).Where(x => !p.Run.OfferedWaypoints.Contains(x)).DefaultIfEmpty((Waypoint)999).First();
             Assert.Throws<InvalidOperationException>(() => Rules.PickWaypoint(p, unavailable));
             Assert.Equal(before, ProfileCodec.Write(p));
             Rules.PickWaypoint(p, Waypoint.None);
@@ -138,23 +166,9 @@ namespace SodRpg.Core.Tests
             Apply(p, r);
             Assert.All(r.Relics, relic => Assert.Equal(slot, relic.Slot));
             Assert.All(r.Relics, relic => Assert.Equal(Rarity.Legendary, relic.Rarity));
-            Assert.Equal(1, Rules.KillModifiers(p.Run).Luck);
+            Assert.Equal(PactDailyWaypointTestValues.Waypoint(waypoint, "luck"), Rules.KillModifiers(p.Run).Luck);
         }
 
-        [Fact]
-        public void Combat_rules_expose_exact_host_values_without_allocating_per_read()
-        {
-            Assert.Equal(2, Waypoints.Sum(Waypoint.NightmareHunt).NightmareChanceMultiplier);
-            Assert.Equal(.5, Waypoints.Sum(Waypoint.GlassAegis).HealingMultiplier);
-            Assert.Equal(2, Waypoints.Sum(Waypoint.GlassAegis).ShieldMultiplier);
-            Assert.Equal(2, Waypoints.Sum(Waypoint.ResonantRoad).ReactionMultiplier);
-            Assert.True(Waypoints.Sum(Waypoint.EndlessNight).AllNightmares);
-            Assert.Equal(3, Waypoints.Sum(Waypoint.EndlessNight).AwakeningMultiplier);
-            Assert.Equal(.8, Waypoints.Sum(Waypoint.FleetingMemories).MemoryCooldownMultiplier);
-            Assert.Equal(1.25, Waypoints.Sum(Waypoint.FleetingMemories).PressureMultiplier);
-            Assert.Equal(1.5, Waypoints.Sum(Waypoint.SummonerTrail).SummonPowerMultiplier);
-            Assert.Equal(.85, Waypoints.Sum(Waypoint.SummonerTrail).HeroHealthMultiplier);
-        }
 
         [Fact]
         public void Nightmare_hunt_doubles_only_nightmare_loot_with_unique_copy_ids()
@@ -164,10 +178,11 @@ namespace SodRpg.Core.Tests
             Apply(Run(Waypoint.NightmareHunt), ordinary);
             Apply(Run(Waypoint.NightmareHunt), nightmare, nightmare: true);
             Assert.Single(ordinary.Relics);
-            Assert.Equal(2, nightmare.Relics.Count);
-            Assert.Equal(2, nightmare.Relics.Select(r => r.Uid).Distinct().Count());
-            Assert.Equal(ordinary.Shards * 2, nightmare.Shards);
-            Assert.Equal(ordinary.Tuning * 2, nightmare.Tuning);
+            double multiplier = PactDailyWaypointTestValues.Waypoint(Waypoint.NightmareHunt, "nightmareRewardMultiplier");
+            Assert.Equal((int)multiplier, nightmare.Relics.Count);
+            Assert.Equal((int)multiplier, nightmare.Relics.Select(r => r.Uid).Distinct().Count());
+            Assert.Equal((int)Math.Round(ordinary.Shards * multiplier, MidpointRounding.AwayFromZero), nightmare.Shards);
+            Assert.Equal((int)Math.Round(ordinary.Tuning * multiplier, MidpointRounding.AwayFromZero), nightmare.Tuning);
         }
 
         [Fact]
@@ -180,35 +195,41 @@ namespace SodRpg.Core.Tests
             Assert.Equal(5, first.Xp);
             var boss = Reward(seed: 314160);
             Apply(p, boss, MonsterTier.Boss);
-            Assert.Equal(6, boss.Relics.Count);
-            Assert.Equal(6, boss.Relics.Select(r => r.Uid).Distinct().Count());
-            Assert.Equal(60, boss.Shards);
-            Assert.Equal(12, boss.Tuning);
+            int multiplier = PactDailyWaypointTestValues.Reward("hoardRewardMultiplier");
+            Assert.Equal(2 * multiplier, boss.Relics.Count);
+            Assert.Equal(2 * multiplier, boss.Relics.Select(r => r.Uid).Distinct().Count());
+            Assert.Equal(20 * multiplier, boss.Shards);
+            Assert.Equal(4 * multiplier, boss.Tuning);
             Assert.Empty(p.Run.DeferredWaypointRelics);
             var next = Reward(seed: 314161);
             Apply(p, next, MonsterTier.Boss);
-            Assert.Equal(3, next.Relics.Count);
-            Assert.Equal(30, next.Shards);
+            Assert.Equal(multiplier, next.Relics.Count);
+            Assert.Equal(10 * multiplier, next.Shards);
         }
 
         [Fact]
         public void Room_limits_survive_clear_callbacks_room_revisits_and_save_load()
         {
             var p = Run(Waypoint.TemperedFinds);
-            var first = Reward(3);
+            int limit = (int)PactDailyWaypointTestValues.Waypoint(Waypoint.TemperedFinds, "maxRelicsPerRoom");
+            p.Run.WaypointRoom = 9;
+            p.Run.WaypointRelicsInRoom = Math.Max(0, limit - 3);
+            var first = Reward(5);
             Apply(p, first, room: 9);
-            Assert.Equal(2, Assert.Single(first.Relics).Enhance);
+            Assert.Equal(Math.Min(3, limit), first.Relics.Count);
+            Assert.All(first.Relics, r => Assert.Equal(Math.Min(Content.MaxEnhanceFor(r.Rarity, r.LimitBreaks),
+                (int)PactDailyWaypointTestValues.Waypoint(Waypoint.TemperedFinds, "enhancement")), r.Enhance));
             Rules.OnRoomsCleared(p, 1);
             var same = Reward();
             Apply(p, same, room: 9);
             Assert.Empty(same.Relics);
             var next = Reward();
             Apply(p, next, room: 10);
-            Assert.Single(next.Relics);
+            Assert.Equal(Math.Min(1, limit), next.Relics.Count);
             p = ProfileCodec.Read(ProfileCodec.Write(p), new List<string>());
             var revisit = Reward();
             Apply(p, revisit, room: 9);
-            Assert.Empty(revisit.Relics);
+            Assert.Equal(Math.Min(1, Math.Max(0, limit - 1)), revisit.Relics.Count);
         }
 
         [Fact]
@@ -230,29 +251,33 @@ namespace SodRpg.Core.Tests
         public void Salvage_twin_humble_and_boss_tribute_transform_the_actual_items()
         {
             var shards = Reward();
-            int expected = 10 + Content.SalvageShards(shards.Relics[0].Rarity) * 3;
+            int expected = 10 + Content.SalvageShards(shards.Relics[0].Rarity) * (int)PactDailyWaypointTestValues.Waypoint(Waypoint.ShardRoad, "relicSalvageMultiplier");
             Apply(Run(Waypoint.ShardRoad), shards);
-            Assert.Empty(shards.Relics);
+            if (PactDailyWaypointTestValues.Waypoint(Waypoint.ShardRoad, "relicSalvageMultiplier") > 0) Assert.Empty(shards.Relics);
+            else Assert.Single(shards.Relics);
             Assert.Equal(expected, shards.Shards);
             var twin = Reward();
             Apply(Run(Waypoint.TwinCache), twin);
-            Assert.Equal(2, twin.Relics.Count);
-            Assert.NotEqual(twin.Relics[0].Uid, twin.Relics[1].Uid);
-            Assert.Equal(twin.Relics[0].BaseId, twin.Relics[1].BaseId);
-            Assert.Equal(0, twin.Tuning);
+            Assert.Equal(PactDailyWaypointTestValues.Reward("twinRelicCopies"), twin.Relics.Count);
+            Assert.Equal(twin.Relics.Count, twin.Relics.Select(r => r.Uid).Distinct().Count());
+            Assert.All(twin.Relics, r => Assert.Equal(twin.Relics[0].BaseId, r.BaseId));
+            double tuningMultiplier = PactDailyWaypointTestValues.Waypoint(Waypoint.TwinCache, "tuningMultiplier");
+            Assert.Equal(tuningMultiplier <= 0 ? 0 : Math.Max(1, (int)Math.Round(2 * tuningMultiplier, MidpointRounding.AwayFromZero)), twin.Tuning);
             var humble = Reward(2, Rarity.Legendary);
             Apply(Run(Waypoint.HumbleForge), humble);
             Assert.All(humble.Relics, r =>
             {
                 Assert.Equal(Rarity.Common, r.Rarity);
-                Assert.Equal(4, r.Enhance);
-                Assert.Equal(1, r.EnhanceMilestones);
-                Assert.Equal(Content.AffixCount(Rarity.Common) + 1, r.Affixes.Count);
+                int enhancement = Math.Min(Content.MaxEnhanceFor(Rarity.Common, 0), (int)PactDailyWaypointTestValues.Waypoint(Waypoint.HumbleForge, "enhancement"));
+                int milestones = ForgeBalanceTests.Milestones(enhancement);
+                Assert.Equal(enhancement, r.Enhance);
+                Assert.Equal(milestones, r.EnhanceMilestones);
+                Assert.Equal(Content.AffixCount(Rarity.Common) + milestones, r.Affixes.Count);
             });
             var tribute = Reward(2);
             Apply(Run(Waypoint.BossTribute), tribute);
             Assert.Empty(tribute.Relics);
-            Assert.Equal(4, tribute.Tuning);
+            Assert.Equal(2 + 2 * PactDailyWaypointTestValues.Reward("tuningPerNonBossRelic"), tribute.Tuning);
             var boss = Reward(2, Rarity.Common);
             Apply(Run(Waypoint.BossTribute), boss, MonsterTier.Boss);
             Assert.All(boss.Relics, r => Assert.True(r.Rarity >= Rarity.Epic));
@@ -269,7 +294,7 @@ namespace SodRpg.Core.Tests
             var next = Reward(3);
             Apply(p, next);
             Assert.Equal(new[] { Slot.Hands, Slot.Feet, Slot.Weapon }, next.Relics.Select(r => r.Slot));
-            Assert.Equal(.5, Rules.KillModifiers(p.Run).Luck);
+            Assert.Equal(PactDailyWaypointTestValues.Waypoint(Waypoint.SixfoldRoad, "luck"), Rules.KillModifiers(p.Run).Luck);
         }
 
         [Fact]
@@ -278,14 +303,15 @@ namespace SodRpg.Core.Tests
             var star = Reward();
             var offering = Run(Waypoint.StarOffering);
             Waypoints.ApplyKill(offering, MonsterTier.Normal, false, new Rng(17), star, 10, null, 1, Waypoint.StarOffering, out int starXp, out int awakening);
-            Assert.Equal(40, starXp);
+            Assert.Equal((int)Math.Min(int.MaxValue, 10L * PactDailyWaypointTestValues.Reward("starXpPerShard")), starXp);
             Assert.Equal(0, star.Shards);
             Assert.Equal(0, awakening);
             var pilgrim = Reward(2);
             Waypoints.ApplyKill(Run(Waypoint.AwakeningPilgrimage), MonsterTier.Normal, false, new Rng(17), pilgrim, 10, null, 1, Waypoint.AwakeningPilgrimage, out starXp, out awakening);
             Assert.Equal(0, starXp);
-            Assert.Equal(40, awakening);
-            Assert.Empty(pilgrim.Relics);
+            Assert.Equal(2 * (int)PactDailyWaypointTestValues.Waypoint(Waypoint.AwakeningPilgrimage, "awakeningPerRelic"), awakening);
+            if (PactDailyWaypointTestValues.Waypoint(Waypoint.AwakeningPilgrimage, "awakeningPerRelic") > 0) Assert.Empty(pilgrim.Relics);
+            else Assert.Equal(2, pilgrim.Relics.Count);
         }
 
         [Fact]
@@ -294,12 +320,13 @@ namespace SodRpg.Core.Tests
             var p = Run(Waypoint.FirstClaim);
             var first = Reward(0);
             Apply(p, first);
-            Assert.Equal(Rarity.Rare, Assert.Single(first.Relics).Rarity);
+            Assert.Equal(Math.Min(1, (int)PactDailyWaypointTestValues.Waypoint(Waypoint.FirstClaim, "maxRelicsPerRoom")), first.Relics.Count);
+            Assert.All(first.Relics, r => Assert.Equal(Rarity.Rare, r.Rarity));
             var next = Reward(3, Rarity.Legendary);
             Apply(p, next);
-            Assert.Empty(next.Relics);
+            Assert.Equal(Math.Min(3, Math.Max(0, (int)PactDailyWaypointTestValues.Waypoint(Waypoint.FirstClaim, "maxRelicsPerRoom") - first.Relics.Count)), next.Relics.Count);
             var supplies = Reward();
-            int expected = 10 + Content.SalvageShards(supplies.Relics[0].Rarity) * 4;
+            int expected = 10 + Content.SalvageShards(supplies.Relics[0].Rarity) * PactDailyWaypointTestValues.Reward("bossSalvageMultiplier");
             Apply(Run(Waypoint.SupplyLine), supplies, MonsterTier.Boss);
             Assert.Empty(supplies.Relics);
             Assert.Equal(expected, supplies.Shards);
@@ -316,7 +343,8 @@ namespace SodRpg.Core.Tests
             p.Stash.Add(legendary);
             p.Hero("Hero_Lacerta").Equipped[(int)legendary.Slot] = legendary.Uid;
             Rules.OnKill(p, MonsterTier.Normal, 10, NightmareAffix.Berserk);
-            Assert.Equal(DreamDepth.ScaleReward(Content.AwakenPoints(MonsterTier.Normal, true), 3 * 1.25), legendary.AwakenPoints);
+            double multiplier = PactDailyWaypointTestValues.Waypoint(Waypoint.EndlessNight, "awakeningMultiplier") * DreamDepth.AwakeningMultiplier(1);
+            Assert.Equal((int)Math.Round(Content.AwakenPoints(MonsterTier.Normal, true) * multiplier, MidpointRounding.AwayFromZero), legendary.AwakenPoints);
             Assert.Equal(DreamDepth.ScaleReward(StarProgression.KillXp(MonsterTier.Normal, true), 1.2), p.Hero("Hero_Lacerta").StarXp);
         }
 

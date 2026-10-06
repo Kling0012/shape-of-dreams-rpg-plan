@@ -1,0 +1,78 @@
+{
+  "schemaVersion": 1,
+  "offered": 3,
+  "definitions": {
+    "WeaponRoad": {
+      "luck": 1
+    },
+    "ArmorRoad": {
+      "luck": 1
+    },
+    "CharmRoad": {
+      "luck": 1
+    },
+    "HeadRoad": {
+      "luck": 1
+    },
+    "HandsRoad": {
+      "luck": 1
+    },
+    "FeetRoad": {
+      "luck": 1
+    },
+    "NightmareHunt": {
+      "nightmareChanceMultiplier": 2,
+      "nightmareRewardMultiplier": 2
+    },
+    "GlassAegis": {
+      "healingMultiplier": 0.5,
+      "shieldMultiplier": 2
+    },
+    "ResonantRoad": {
+      "reactionMultiplier": 2
+    },
+    "EndlessNight": {
+      "awakeningMultiplier": 3
+    },
+    "TemperedFinds": {
+      "enhancement": 2,
+      "maxRelicsPerRoom": 1
+    },
+    "FleetingMemories": {
+      "memoryCooldownMultiplier": 0.8,
+      "pressureMultiplier": 1.25
+    },
+    "SummonerTrail": {
+      "summonPowerMultiplier": 1.5,
+      "heroHealthMultiplier": 0.85
+    },
+    "EpicMirage": {
+      "shardMultiplier": 0
+    },
+    "ShardRoad": {
+      "relicSalvageMultiplier": 3
+    },
+    "TwinCache": {
+      "tuningMultiplier": 0
+    },
+    "HumbleForge": {
+      "enhancement": 4
+    },
+    "SixfoldRoad": {
+      "luck": 0.5
+    },
+    "AwakeningPilgrimage": {
+      "awakeningPerRelic": 20
+    },
+    "FirstClaim": {
+      "maxRelicsPerRoom": 1
+    }
+  },
+  "rewards": {
+    "twinRelicCopies": 2,
+    "bossSalvageMultiplier": 4,
+    "starXpPerShard": 4,
+    "hoardRewardMultiplier": 3,
+    "tuningPerNonBossRelic": 1
+  }
+}

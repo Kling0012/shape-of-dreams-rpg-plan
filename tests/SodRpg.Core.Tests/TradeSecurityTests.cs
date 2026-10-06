@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using SodRpg.Core.Game;
 using Xunit;
@@ -30,26 +31,27 @@ namespace SodRpg.Core.Tests
 
             // レビューのシナリオ：spendGold=0/spendDust=0/earnDust=2000 を送れば 2000 ダストが手に入った。
             // 新しい依頼には金額の項目が無く、貰える額は種別と引数から決まる。
-            var dust = a.Evaluate("p", "run", new TradeRequest { Token = 1, Kind = TradeKind.DustToShards, Batches = 3 }, 0, 3 * Economy.DustPerBatch);
+            var dust = a.Evaluate("p", "run", new TradeRequest { Token = 1, Kind = TradeKind.DustToShards, Batches = 3 }, 0, 3 * LootEconomyInputs.Exchange("dustPerBatch"));
             Assert.True(dust.Ok);
-            Assert.Equal(3 * Economy.DustPerBatch, dust.SpendDust);
+            Assert.Equal(3 * LootEconomyInputs.Exchange("dustPerBatch"), dust.SpendDust);
             Assert.Equal(0, dust.EarnDust);
 
             var salvage = a.Evaluate("p", "run", new TradeRequest { Token = 2, Kind = TradeKind.SalvageForDust, Rarity = (int)Rarity.Common, Enhance = 0, SalvageUid = 1 }, 0, 0);
             Assert.True(salvage.Ok);
-            Assert.Equal(Economy.SalvageDust(Rarity.Common, 0), salvage.EarnDust);
-            Assert.NotEqual(2000, salvage.EarnDust);
+            Assert.Equal(LootEconomyInputs.SalvageDust(Rarity.Common, 0), salvage.EarnDust);
 
             // 商人の価格は熱度と本体の価格補正から出る（申告した金額とは無関係）。
-            var merchant = a.Evaluate("p", "run", new TradeRequest { Token = 3, Kind = TradeKind.MerchantGold, Heat = 2 }, 999, 0, 1.5f);
+            int merchantPrice = (int)Math.Round(LootEconomyInputs.MerchantPrice(2) * 1.5f);
+            var merchant = a.Evaluate("p", "run", new TradeRequest { Token = 3, Kind = TradeKind.MerchantGold, Heat = 2 }, merchantPrice, 0, 1.5f);
             Assert.True(merchant.Ok);
-            Assert.Equal(Economy.MerchantGoldBase(2) * 1.5f, merchant.SpendGold, 0);
+            Assert.Equal(merchantPrice, merchant.SpendGold);
 
             // 正規の引数の範囲で MaxDustEarnPerTrade を超える申告は作れない（上限とレートが整合している）。
             int maxEnhance = Content.MaxEnhanceFor(Rarity.Legendary, Content.MaxLimitBreaks(Rarity.Legendary));
             var top = a.Evaluate("p", "run", new TradeRequest { Token = 4, Kind = TradeKind.SalvageForDust, Rarity = (int)Rarity.Legendary, Enhance = maxEnhance, SalvageUid = 2 }, 0, 0);
             Assert.True(top.Ok);
-            Assert.InRange(top.EarnDust, 1, Economy.MaxDustEarnPerTrade);
+            Assert.Equal(LootEconomyInputs.SalvageDust(Rarity.Legendary, maxEnhance), top.EarnDust);
+            Assert.InRange(top.EarnDust, 0, Economy.MaxDustEarnPerTrade);
         }
 
         // mp-host.md #2／mp-ui-save.md #10：同じトークンを送り直しても、記録済みの結果を返すだけで再実行しない。
@@ -148,7 +150,7 @@ namespace SodRpg.Core.Tests
             var p = Profile.CreateNew(31);
             var l = new TradeLedger();
             var host = new TradeAuthority();
-            int dustBalance = 500;
+            int dustBalance = 5 * LootEconomyInputs.Exchange("dustPerBatch");
 
             var t = l.BeginDustToShards(batches: 1, now: 0.0);
             var d = host.Evaluate("p1", "run", RequestOf(t), 0, dustBalance);
@@ -168,12 +170,12 @@ namespace SodRpg.Core.Tests
             var done = l.Complete(t.Token, answer.Ok);
             Assert.NotNull(done);
             Rules.GrantPaidDustShards(p, done.SpendDust);
-            Assert.Equal(Economy.ShardsPerBatch, p.Material(Materials.Shard));
+            Assert.Equal(LootEconomyInputs.Exchange("shardsPerBatch"), p.Material(Materials.Shard));
 
             // 元の成功応答が遅れて届いても二重には付かない。
             Assert.Null(l.Complete(t.Token, ok: true));
-            Assert.Equal(Economy.ShardsPerBatch, p.Material(Materials.Shard));
-            Assert.Equal(400, dustBalance);
+            Assert.Equal(LootEconomyInputs.Exchange("shardsPerBatch"), p.Material(Materials.Shard));
+            Assert.Equal(4 * LootEconomyInputs.Exchange("dustPerBatch"), dustBalance);
         }
 
         // mp-ui-save.md #7／#10：分解の期限切れ。結果不明の間は遺物を預かったまま、照会の答えで
@@ -334,7 +336,7 @@ namespace SodRpg.Core.Tests
             var done = fresh.Complete(t.Token, ok: true);
             Assert.NotNull(done);
             Assert.Equal(TradeKind.DustToShards, done.Kind);
-            Assert.Equal(3 * Economy.DustPerBatch, done.SpendDust);
+            Assert.Equal(3 * LootEconomyInputs.Exchange("dustPerBatch"), done.SpendDust);
             Assert.Equal(TradeKind.MerchantGold, fresh.Complete(m.Token, ok: true).Kind);
         }
 
@@ -365,10 +367,10 @@ namespace SodRpg.Core.Tests
             Assert.Equal(0, a.TrackedTokenCount("p"));
 
             // 残高が足りないときは実行しない（gold/dust）。失敗は台帳に残さないので、後の再試行を妨げない。
-            Assert.Equal("gold", a.Evaluate("p", "run", new TradeRequest { Token = 20, Kind = TradeKind.MerchantGold, Heat = 0 }, gold: 1, dust: 0).Reason);
-            Assert.Equal("dust", a.Evaluate("p", "run", new TradeRequest { Token = 21, Kind = TradeKind.DustToShards, Batches = 1 }, gold: 0, dust: Economy.DustPerBatch - 1).Reason);
+            Assert.Equal("gold", a.Evaluate("p", "run", new TradeRequest { Token = 20, Kind = TradeKind.MerchantGold, Heat = 0 }, gold: LootEconomyInputs.MerchantPrice(0) - 1, dust: 0).Reason);
+            Assert.Equal("dust", a.Evaluate("p", "run", new TradeRequest { Token = 21, Kind = TradeKind.DustToShards, Batches = 1 }, gold: 0, dust: LootEconomyInputs.Exchange("dustPerBatch") - 1).Reason);
             Assert.Equal(0, a.TrackedTokenCount("p"));
-            Assert.True(a.Evaluate("p", "run", new TradeRequest { Token = 22, Kind = TradeKind.MerchantGold, Heat = 0 }, gold: Economy.MerchantGoldBase(0), dust: 0).Ok);
+            Assert.True(a.Evaluate("p", "run", new TradeRequest { Token = 22, Kind = TradeKind.MerchantGold, Heat = 0 }, gold: LootEconomyInputs.MerchantPrice(0), dust: 0).Ok);
         }
 
         // 通信の符号：往復でき、旧クライアントの金額申告（spendGold ≥ 0）は種別付き要求として復号できない。

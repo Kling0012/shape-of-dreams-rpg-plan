@@ -1,0 +1,8 @@
+{
+  "schemaVersion": 1,
+  "normalDropPercent": 10,
+  "nightmareBonusPercent": 5,
+  "depthBonusPercent": 1,
+  "maxDropDepth": 5,
+  "maxDropPercent": 20
+}

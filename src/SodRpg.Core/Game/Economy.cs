@@ -10,8 +10,8 @@ namespace SodRpg.Core.Game
     public static class Economy
     {
         /// <summary>ドリームダスト→欠片の換算単位。</summary>
-        public const int DustPerBatch = 100;
-        public const int ShardsPerBatch = 10;
+        public const int DustPerBatch = EconomyBalance.DustPerBatch;
+        public const int ShardsPerBatch = EconomyBalance.ShardsPerBatch;
 
         /// <summary>1回の取引で受け取れるドリームダストの上限（ホスト側の検証に使う）。</summary>
         public const int MaxDustEarnPerTrade = 2000;
@@ -27,12 +27,12 @@ namespace SodRpg.Core.Game
         public const int MaxTradeQueries = 30;
 
         /// <summary>夢の商人の基本価格（ゴールド、難易度補正の前）。</summary>
-        public static int MerchantGoldBase(int heat) => 60 + 15 * Loot.ClampHeat(heat);
+        public static int MerchantGoldBase(int heat) => EconomyBalance.MerchantBaseGold + EconomyBalance.MerchantGoldPerHeat * Loot.ClampHeat(heat);
 
         /// <summary>遠征中に未確保の遺物を分解したときのドリームダスト。ホストは種別と引数からこれで計算する。</summary>
         public static int SalvageDust(Relic r) => SalvageDust(r.Rarity, r.Enhance);
 
-        public static int SalvageDust(Rarity rarity, int enhance) => Content.SalvageShards(rarity) * 5 + enhance * 10;
+        public static int SalvageDust(Rarity rarity, int enhance) => Content.SalvageShards(rarity) * EconomyBalance.SalvageDustPerShard + enhance * EconomyBalance.SalvageDustPerEnhance;
 
         /// <summary>Legacy overflow dust trade recovery uses the established unenhanced salvage rate.</summary>
         public static int SatchelOverflowDust(Rarity rarity) => SalvageDust(rarity, 0);

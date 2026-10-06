@@ -17,6 +17,7 @@ HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent.parent
 sys.path.insert(0, str(HERE))
 import gen_cs
+import stage6_run
 
 
 def execute(command: list[str], env: dict[str, str]) -> None:
@@ -82,6 +83,7 @@ def comparison(current: dict, previous: dict | None) -> str:
     lines.extend(["v132stars はCoreの鍛錬帳簿に決定的な平均行動を流した模型。到達zone・最終stat・感度で比較し、未到達は0にしません。星XP曲線は star-progression のCore実式で別に列挙します。", ""])
     lines.extend(["pressure はCoreの圧／深度／敵定義の決定的な投影。infinity は全sessionを戦闘時間とする既存経済模型で、勝率・実クリア時間・通信性能ではありません。", ""])
     lines.extend(["equipment はCoreの土台・固有品・抽選範囲／重み・上限を種類と単位別に列挙します。通貨上限は戦闘能力の上限と区別します。sets は既存のcap正規化予算であり、戦闘DPS・勝率の予測ではありません。", ""])
+    lines.extend(["loot-economy はCoreの抽選分布・素材期待値・通貨換算、pact-daily-waypoints は採用済み定義と道標の換算、events は出来事の価格・報酬・確率。戦闘結果や本体通貨の実取引を模型化しません。", ""])
     if "tableMetadata" in current:
         lines.extend(["調整表メタデータ 現在: `" + json_text(current["tableMetadata"], sort_keys=True) + "`",
                       "調整表メタデータ 前回: " + ("`" + json_text(previous["tableMetadata"], sort_keys=True) + "`"
@@ -205,6 +207,7 @@ def main() -> int:
             path.stem: json.loads(path.read_text(encoding="utf-8"), parse_float=Decimal)
             for path in sorted((HERE / "equipment").glob("*.json"))
         }
+        table_metadata.update(gen_cs.stage6_values.load_tables())
         requested_dotnet = os.environ.get("DOTNET")
         dotnet = shutil.which(requested_dotnet or "dotnet")
         if dotnet is None:
@@ -245,6 +248,7 @@ def main() -> int:
                 execute([dotnet, str(dll), "--mode", mode, "--out", str(staging / f"{mode}.md"),
                          "--metrics-json", str(staging / f"{mode}.json")], env)
                 snapshots.append(json.loads((staging / f"{mode}.json").read_text(encoding="utf-8"), parse_float=Decimal))
+            snapshots.extend(stage6_run.measure(dotnet, dll, staging, execute, env))
             current = {"modelVersion": 1, "createdAt": datetime.now(timezone.utc).isoformat(),
                        "validation": {"testsPassed": not args.no_tests, "slow": args.slow},
                        "gitRevision": git_revision(), "tableMetadata": table_metadata, "snapshots": snapshots}

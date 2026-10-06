@@ -53,7 +53,7 @@ namespace SodRpg.Core.Tests
             var p = Profile.CreateNew(61);
             var client = new TradeLedger(generation: 9);
             var oldHost = new TradeAuthority(generation: 100);
-            int dust = 500;
+            int dust = 5 * LootEconomyInputs.Exchange("dustPerBatch");
 
             var t = client.BeginDustToShards(batches: 1, now: 0.0);
             SendBound(client, oldHost, "p1", t, 0, dust, out var paid);
@@ -83,8 +83,8 @@ namespace SodRpg.Core.Tests
             Assert.Equal(TradeOutcome.Paid, client.OnResult(t.Token, true, null, out var done));
             Rules.GrantPaidDustShards(p, done.SpendDust);
             Assert.Equal(TradeOutcome.NotFound, client.OnResult(t.Token, true, null, out _));
-            Assert.Equal(Economy.ShardsPerBatch, p.Material(Materials.Shard));
-            Assert.Equal(400, dust);
+            Assert.Equal(LootEconomyInputs.Exchange("shardsPerBatch"), p.Material(Materials.Shard));
+            Assert.Equal(4 * LootEconomyInputs.Exchange("dustPerBatch"), dust);
             Assert.Equal(0, client.HeldCount);
         }
 
@@ -96,13 +96,13 @@ namespace SodRpg.Core.Tests
             var client = new TradeLedger(generation: 3);
             var t = client.BeginDustToShards(batches: 2, now: 0.0);
             t.LedgerId = 12345; // 別の（失われた）台帳へ送ったことになっている
-            var answer = host.Evaluate("p1", "run", QueryOf(t.Token, t.LedgerId), 0, 1000);
+            var answer = host.Evaluate("p1", "run", QueryOf(t.Token, t.LedgerId), 0, 2 * LootEconomyInputs.Exchange("dustPerBatch"));
             Assert.Equal(TradeWire.LostReason, ReasonCode(answer));
 
-            var late = host.Evaluate("p1", "run", RequestOf(t), 0, 1000);
+            var late = host.Evaluate("p1", "run", RequestOf(t), 0, 2 * LootEconomyInputs.Exchange("dustPerBatch"));
             Assert.True(late.Ok);
             Assert.False(late.Replayed);
-            Assert.Equal(2 * Economy.DustPerBatch, late.SpendDust);
+            Assert.Equal(2 * LootEconomyInputs.Exchange("dustPerBatch"), late.SpendDust);
             Assert.Equal(TradeOutcome.Paid, client.OnResult(t.Token, late.Ok, ReasonCode(late), out _));
         }
 
@@ -144,17 +144,17 @@ namespace SodRpg.Core.Tests
             var host = new TradeAuthority(generation: 20);
             var client = new TradeLedger(generation: 6);
             var t = client.BeginDustToShards(batches: 1, now: 0.0);
-            SendBound(client, host, "netId-1", t, 0, 500, out var paid);
+            SendBound(client, host, "netId-1", t, 0, 5 * LootEconomyInputs.Exchange("dustPerBatch"), out var paid);
             Assert.True(paid.Ok);
 
             // 参加者が再接続して netId が変わった。新しい接続の台帳には記録がない。
-            var answer = host.Evaluate("netId-2", "run", QueryOf(t.Token, t.LedgerId), 0, 400);
+            var answer = host.Evaluate("netId-2", "run", QueryOf(t.Token, t.LedgerId), 0, 4 * LootEconomyInputs.Exchange("dustPerBatch"));
             Assert.False(answer.Ok);
             Assert.Equal(TradeWire.LostReason, ReasonCode(answer));
             Assert.Equal(0, host.TrackedTokenCount("netId-2"));
 
             // 元の接続の台帳に問い合わせられれば、記録が見つかる。
-            var original = host.Evaluate("netId-1", "run", QueryOf(t.Token, t.LedgerId), 0, 400);
+            var original = host.Evaluate("netId-1", "run", QueryOf(t.Token, t.LedgerId), 0, 4 * LootEconomyInputs.Exchange("dustPerBatch"));
             Assert.True(original.Ok);
             Assert.True(original.Replayed);
         }
@@ -167,7 +167,7 @@ namespace SodRpg.Core.Tests
             long ledger = host.LedgerIdOf("p", "run");
             int n = TradeAuthority.MaxTokensPerPlayer * 2;
             for (int i = 1; i <= n; i++)
-                Assert.True(host.Evaluate("p", "run", new TradeRequest { Token = i, Kind = TradeKind.DustToShards, Batches = 1 }, 0, 1000).Ok);
+                Assert.True(host.Evaluate("p", "run", new TradeRequest { Token = i, Kind = TradeKind.DustToShards, Batches = 1 }, 0, LootEconomyInputs.Exchange("dustPerBatch")).Ok);
             Assert.Equal(TradeAuthority.MaxTokensPerPlayer, host.TrackedTokenCount("p"));
 
             // 忘れた古い取引（実は実行済み）：「未実行」ではなく確かめられない。
@@ -175,7 +175,7 @@ namespace SodRpg.Core.Tests
             Assert.False(forgotten.Ok);
             Assert.Equal(TradeWire.LostReason, ReasonCode(forgotten));
             // 忘れた取引の再送も、新規実行にならない（二重決済しない）。
-            var resend = host.Evaluate("p", "run", new TradeRequest { Token = 1, Kind = TradeKind.DustToShards, Batches = 1 }, 0, 1000);
+            var resend = host.Evaluate("p", "run", new TradeRequest { Token = 1, Kind = TradeKind.DustToShards, Batches = 1 }, 0, LootEconomyInputs.Exchange("dustPerBatch"));
             Assert.False(resend.Ok);
             Assert.Equal(TradeWire.LostReason, ReasonCode(resend));
 
@@ -188,12 +188,12 @@ namespace SodRpg.Core.Tests
             var unexecuted = host.Evaluate("p", "run", QueryOf(n + 100, ledger), 0, 0);
             Assert.False(unexecuted.Ok);
             Assert.Equal("unknown", ReasonCode(unexecuted));
-            var lateOriginal = host.Evaluate("p", "run", new TradeRequest { Token = n + 100, Kind = TradeKind.DustToShards, Batches = 1 }, 0, 1000);
+            var lateOriginal = host.Evaluate("p", "run", new TradeRequest { Token = n + 100, Kind = TradeKind.DustToShards, Batches = 1 }, 0, LootEconomyInputs.Exchange("dustPerBatch"));
             Assert.False(lateOriginal.Ok);
             Assert.Equal("cancelled", ReasonCode(lateOriginal));
 
             // 新しい取引は通常どおり受け付ける。
-            Assert.True(host.Evaluate("p", "run", new TradeRequest { Token = n + 1, Kind = TradeKind.DustToShards, Batches = 1 }, 0, 1000).Ok);
+            Assert.True(host.Evaluate("p", "run", new TradeRequest { Token = n + 1, Kind = TradeKind.DustToShards, Batches = 1 }, 0, LootEconomyInputs.Exchange("dustPerBatch")).Ok);
         }
 
         // 取り消しの記録も上限で忘れる：忘れたあとに元の要求が届いても実行しない。
@@ -205,7 +205,7 @@ namespace SodRpg.Core.Tests
             for (int i = 1; i <= TradeAuthority.MaxTokensPerPlayer + 10; i++)
                 Assert.Equal("unknown", ReasonCode(host.Evaluate("p", "run", QueryOf(i, ledger), 0, 0)));
 
-            var late = host.Evaluate("p", "run", new TradeRequest { Token = 1, Kind = TradeKind.DustToShards, Batches = 1 }, 0, 1000);
+            var late = host.Evaluate("p", "run", new TradeRequest { Token = 1, Kind = TradeKind.DustToShards, Batches = 1 }, 0, LootEconomyInputs.Exchange("dustPerBatch"));
             Assert.False(late.Ok);
             Assert.NotEqual("", late.Reason);
             Assert.Equal(0, host.TrackedTokenCount("p"));
@@ -244,7 +244,7 @@ namespace SodRpg.Core.Tests
             var answer = host.Evaluate("p1", "run", QueryOf(77, 0), 0, 0);
             Assert.Equal(TradeWire.LostReason, ReasonCode(answer));
             // 取り消されていないので、元の要求は普通に実行される。
-            Assert.True(host.Evaluate("p1", "run", new TradeRequest { Token = 77, Kind = TradeKind.DustToShards, Batches = 1 }, 0, 500).Ok);
+            Assert.True(host.Evaluate("p1", "run", new TradeRequest { Token = 77, Kind = TradeKind.DustToShards, Batches = 1 }, 0, LootEconomyInputs.Exchange("dustPerBatch")).Ok);
         }
 
         // 識別子の問い合わせは台帳に何も書かず、台帳ごと（権威・接続）に値が違う。
@@ -265,9 +265,9 @@ namespace SodRpg.Core.Tests
             Assert.NotEqual(a.LedgerId, new TradeAuthority(generation: 43).Evaluate("p1", "run", probe, 0, 0).LedgerId);
 
             // 実行・取り消しの判定にも、そのときの台帳の識別子が付く。
-            var d = host.Evaluate("p1", "run", new TradeRequest { Token = 5, Kind = TradeKind.DustToShards, Batches = 1 }, 0, 500);
+            var d = host.Evaluate("p1", "run", new TradeRequest { Token = 5, Kind = TradeKind.DustToShards, Batches = 1 }, 0, LootEconomyInputs.Exchange("dustPerBatch"));
             Assert.Equal(a.LedgerId, d.LedgerId);
-            Assert.Equal(a.LedgerId, host.Evaluate("p1", "run", new TradeRequest { Token = 5, Kind = TradeKind.DustToShards, Batches = 1 }, 0, 500).LedgerId);
+            Assert.Equal(a.LedgerId, host.Evaluate("p1", "run", new TradeRequest { Token = 5, Kind = TradeKind.DustToShards, Batches = 1 }, 0, LootEconomyInputs.Exchange("dustPerBatch")).LedgerId);
         }
 
         [Fact]

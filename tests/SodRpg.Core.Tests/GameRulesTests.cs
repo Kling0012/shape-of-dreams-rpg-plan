@@ -44,7 +44,7 @@ namespace SodRpg.Core.Tests
         }
 
         [Fact]
-        public void Higher_heat_increases_drop_rate_and_rarity()
+        public void Heat_drop_rate_and_rarity_follow_the_table()
         {
             int Count(int heat, out int epics)
             {
@@ -62,9 +62,15 @@ namespace SodRpg.Core.Tests
 
             int d0 = Count(0, out int e0);
             int d5 = Count(5, out int e5);
-            Assert.InRange(d0, 920, 1240); // 2.7%（v1.19）
-            Assert.True(d5 > d0 * 2.2, $"heat5 drops {d5} vs {d0}");
-            Assert.True((double)e5 / d5 > (double)e0 / d0 * 2, "heat raises epic share");
+            foreach (var sample in new[] { (Heat: 0, Drops: d0, Epics: e0), (Heat: 5, Drops: d5, Epics: e5) })
+            {
+                double dropChance = LootEconomyInputs.DropChance(MonsterTier.Normal, sample.Heat);
+                double epicChance = dropChance * LootEconomyInputs.RarityProbability(MonsterTier.Normal, sample.Heat, Rarity.Epic);
+                double dropTolerance = LootEconomyInputs.SamplingTolerance(dropChance * (1 - dropChance), 40000);
+                double epicTolerance = LootEconomyInputs.SamplingTolerance(epicChance * (1 - epicChance), 40000);
+                Assert.InRange(sample.Drops / 40000.0, dropChance - dropTolerance, dropChance + dropTolerance);
+                Assert.InRange(sample.Epics / 40000.0, epicChance - epicTolerance, epicChance + epicTolerance);
+            }
         }
 
         [Fact]
@@ -93,7 +99,7 @@ namespace SodRpg.Core.Tests
 
             var ev = Rules.Secure(p);
             Assert.Single(p.Stash);
-            Assert.Equal(40 + 40 * 2 / 4, p.Material(Materials.Shard));
+            Assert.Equal(40 + 40 * 2 / PactDailyWaypointTestValues.Integer("economy", "expedition.secureBonusDivisor"), p.Material(Materials.Shard));
             Assert.Equal(1, p.Material(Materials.Tuning));
             Assert.Equal(0, p.Run.Heat);
             Assert.False(p.Run.HasUnsecured);

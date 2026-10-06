@@ -157,12 +157,12 @@ namespace SodRpg.Core.Tests
         [Fact]
         public void Drop_chance_formula_and_registered_source_only()
         {
-            Assert.Equal(0.10, BossSets.DropChance(false, 0), 6);
-            Assert.Equal(0.15, BossSets.DropChance(true, 0), 6);
-            Assert.Equal(0.13, BossSets.DropChance(false, 3), 6);
-            Assert.Equal(0.15, BossSets.DropChance(false, 5), 6);
-            Assert.Equal(0.15, BossSets.DropChance(false, 9), 6); // 深さは0〜5に固定
-            Assert.Equal(0.20, BossSets.DropChance(true, 5), 6);
+            Assert.Equal(LootEconomyInputs.BossChance(false, 0), BossSets.DropChance(false, 0), 6);
+            Assert.Equal(LootEconomyInputs.BossChance(true, 0), BossSets.DropChance(true, 0), 6);
+            Assert.Equal(LootEconomyInputs.BossChance(false, 3), BossSets.DropChance(false, 3), 6);
+            Assert.Equal(LootEconomyInputs.BossChance(false, 5), BossSets.DropChance(false, 5), 6);
+            Assert.Equal(LootEconomyInputs.BossChance(false, 9), BossSets.DropChance(false, 9), 6);
+            Assert.Equal(LootEconomyInputs.BossChance(true, 5), BossSets.DropChance(true, 5), 6);
             // 未登録のボス型名（Crawler）は抽選前に弾かれ、乱数を消費しない。
             var rng = new Rng(9);
             ulong before = rng.State;
@@ -175,16 +175,18 @@ namespace SodRpg.Core.Tests
         public void RollDrop_returns_one_of_the_six_pieces_when_won()
         {
             var valid = new HashSet<string>(PieceIds, StringComparer.Ordinal);
-            int won = 0, lost = 0;
-            for (ulong seed = 1; seed <= 4000 && (won == 0 || lost == 0 || won < 30); seed++)
+            int won = 0, expectedWins = 0;
+            double chance = LootEconomyInputs.BossChance(false, 0);
+            for (ulong seed = 1; seed <= 4000; seed++)
             {
+                if (new Rng(seed).NextDouble() < chance) expectedWins++;
                 var relic = BossSets.RollDrop(new Rng(seed), "Mon_Forest_BossDemon", false, 0, 10);
-                if (relic == null) { lost++; continue; }
+                if (relic == null) continue;
                 won++;
                 Assert.True(valid.Contains(relic.UniqueId), relic.UniqueId);
                 Assert.Equal(Rarity.Legendary, relic.Rarity);
             }
-            Assert.True(won >= 20 && lost >= 100, $"expected a meaningful sample, won={won} lost={lost}");
+            Assert.Equal(expectedWins, won);
         }
 
         private static IList<Relic> BossKillDrops(int kills, string bossTypeName, bool nightmare, int depth, int itemLevel = 12)
@@ -207,9 +209,10 @@ namespace SodRpg.Core.Tests
         [Fact]
         public void Only_the_matching_boss_kill_grants_the_exclusive_pieces()
         {
-            // 通常・基礎深度 p=10%：300撃破で有意な当選、ただし確定保証ではない。
             var normal = BossKillDrops(300, "Mon_Forest_BossDemon", false, 0);
-            Assert.InRange(normal.Count, 10, 60);
+            double chance = LootEconomyInputs.BossChance(false, 0);
+            double tolerance = LootEconomyInputs.SamplingTolerance(chance * (1 - chance), 300);
+            Assert.InRange(normal.Count / 300.0, chance - tolerance, chance + tolerance);
             Assert.All(normal, r => Assert.StartsWith(SetId + ".", r.UniqueId, StringComparison.Ordinal));
             // 未登録の型名（旧Skoll）・ボス以外の撃破では1つも出ない。
             Assert.Empty(BossKillDrops(300, "Mon_SnowMountain_BossSkoll", false, 0));
@@ -228,12 +231,16 @@ namespace SodRpg.Core.Tests
         }
 
         [Fact]
-        public void Nightmare_and_depth_raise_the_exclusive_drop_rate()
+        public void Nightmare_and_depth_follow_the_exclusive_drop_formula()
         {
             var plain = BossKillDrops(400, "Mon_Forest_BossDemon", false, 0);
             var pushed = BossKillDrops(400, "Mon_Forest_BossDemon", true, 5);
-            // 10% vs 20%：同シード数で2倍近く。確率的変動を吸収できる範囲でだけ検証する。
-            Assert.InRange(pushed.Count, plain.Count * 3 / 2, plain.Count * 5 / 2 + 20);
+            double normalChance = LootEconomyInputs.BossChance(false, 0);
+            double pushedChance = LootEconomyInputs.BossChance(true, 5);
+            double normalTolerance = LootEconomyInputs.SamplingTolerance(normalChance * (1 - normalChance), 400);
+            double pushedTolerance = LootEconomyInputs.SamplingTolerance(pushedChance * (1 - pushedChance), 400);
+            Assert.InRange(plain.Count / 400.0, normalChance - normalTolerance, normalChance + normalTolerance);
+            Assert.InRange(pushed.Count / 400.0, pushedChance - pushedTolerance, pushedChance + pushedTolerance);
         }
 
         [Fact]

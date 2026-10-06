@@ -15,8 +15,8 @@ namespace SodRpg.Core.Tests
             Rules.ReachSecurePoint(p);
             Rules.Secure(p); // 返事より先に確保した（#5）
             int before = p.Material(Materials.Shard);
-            Rules.GrantPaidDustShards(p, 300);
-            Assert.Equal(before + 30, p.Material(Materials.Shard));
+            Rules.GrantPaidDustShards(p, 3 * LootEconomyInputs.Exchange("dustPerBatch"));
+            Assert.Equal(before + 3 * LootEconomyInputs.Exchange("shardsPerBatch"), p.Material(Materials.Shard));
         }
 
         [Fact]
