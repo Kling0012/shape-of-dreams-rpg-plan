@@ -8,13 +8,29 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
-- 協力プレイのインフィニティで、参加者から返事がないまま確認待ちが残り、確保画面や次の地図へ進めない問題を修正しました。未応答の通信は30秒で待機を解除し、バージョンや内容の違いだけでは停止しません。
+---
 
-- 夢の圧が高まると、ボス以外の敵が各ウェーブの戦闘中に増えるようにしました。増えた敵からも報酬を得られますが、部屋の報酬が膨らみすぎないように調整しています。
+## v2.7.3 — 協力プレイの進行停止とエッセンス枠の修正（2026-10-07）
 
-- 星図の追加エッセンス枠の反映・復帰処理を修正し、祠・再開・再接続時に本体由来の枠と装着済みエッセンスを保護するようにしました。振り直し時の枠の誤減算と、既存セーブの余分な枠にエッセンスが残る不具合も修正しました。
+協力プレイでインフィニティや確保の画面が進まなくなる問題と、エッセンス枠の不具合を直しました。 / Fixes co-op stalls in Infinity and the secure choice, plus essence-slot bugs.
 
-- 鞄からあふれた遺物の欠片を減らさず、ドリームダストも追加で受け取れる設定を追加しました（既定OFF）。大量にあふれた場合もまとめて付与し、協力プレイでは各自の設定を使います。
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 新しい要素 / New
+
+- **あふれた遺物でドリームダストも受け取る設定**：鞄からあふれた遺物は今までどおり欠片になり、設定をONにするとドリームダストも追加でもらえます（既定はOFF）。大量にあふれてもまとめて受け取るので重くなりません。 / **Dream Dust from overflowing relics**: overflowing relics still turn into shards; turn the option on to also receive Dream Dust (off by default). It is granted in one batch, so large overflows stay light.
+- **夢の圧で敵の数も増える**：夢の圧が高いほど、ボス以外の敵が各ウェーブに混ざって増えます。増えた敵からも報酬を得られます。 / **Dream pressure adds enemies**: higher pressure adds more non-boss enemies to each wave. The extra enemies also drop rewards.
+
+### 不具合の修正 / Bug fixes
+
+- 協力プレイで、返事のない参加者の確認を待ち続け、インフィニティの選択画面や次の地図へ進めなくなる問題を修正しました。待ちは30秒で解除されます。 / Co-op: Infinity's choice screen and the next map no longer stall waiting forever on a silent player; waits now end after 30 seconds.
+- エッセンス枠の不具合を修正しました。読み込み直すと上限を超えた枠にエッセンスが残る問題、混沌の祠・振り直し・続きから・再接続で枠や装着中のエッセンスが消えたり減ったりする問題を直しました。星などで増える枠は合計2枠までです。 / Fixed essence-slot bugs: essences left in over-cap slots after reloading, and slots or equipped essences vanishing with the Chaos shrine, respec, Continue or reconnect. Star-added slots are capped at 2 in total.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
 
 ---
 

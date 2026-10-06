@@ -1,5 +1,5 @@
-[b]v2.7.2: fixes Infinity falling back to normal mode between players on the same version (mismatches now only warn), and boss-gear movement triggers that never fired. Saves carry over. Update all co-op players and restart the game.[/b]
-[b]v2.7.2：同じバージョン同士なのにインフィニティが通常モードになる問題（今後は違いがあっても警告だけ）と、ボス装備の移動トリガーが働いていなかった問題を修正しました。セーブデータはそのまま引き継げます。協力プレイでは参加者全員がこのバージョンに更新し、ゲームを再起動してください。[/b]
+[b]v2.7.3: fixes co-op stalls in Infinity and essence-slot bugs; adds an option to also get Dream Dust from overflowing relics, and higher dream pressure now adds enemies. Saves carry over. Update all co-op players and restart the game.[/b]
+[b]v2.7.3：協力プレイでインフィニティが進まなくなる問題とエッセンス枠の不具合を修正し、あふれた遺物でドリームダストももらえる設定と、夢の圧で敵の数が増える仕組みを追加しました。セーブデータはそのまま引き継げます。協力プレイでは参加者全員がこのバージョンに更新し、ゲームを再起動してください。[/b]
 
 [h1]Dreamforge RPG[/h1]
 Turns every run into part of a long RPG journey: relics you keep, a risky "secure or delve" choice at every zone, a star map per Traveler, a forge, and long-term goals. Co-op ready.
