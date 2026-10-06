@@ -58,7 +58,9 @@ namespace SodRpg.Mod
             typeof(InfinityMapClosestNode), typeof(InfinityMapHover), typeof(InfinityMapNodeTooltip),
             typeof(InfinityMapTooltip), typeof(InfinityMapTravelTooltip), typeof(InfinityMapDescription),
             typeof(InfinityMapPingPosition), typeof(InfinityMapCacheChanged), typeof(InfinityMapEdgeStatus),
-        };
+            // InfinityHunterAdvance is deliberately absent: its failure degrades only the
+            // hunter adjustment (see DreamforgeMod.PatchEachClass), never Infinity itself.
+         };
 
         internal static bool Available { get; private set; }
         internal static string UnavailableReason { get; private set; }
@@ -239,6 +241,8 @@ namespace SodRpg.Mod
             if (!Available) return;
             ClearPendingTravel();
             _restoring = false; _refresh = false;
+            _hunterAdjustSuspended = false;
+            _hunterMoveCounter = 0;
             _newInfinity = ClientSession.HostChosenInfinityEnabled;
             _initial = null; _runId = null;
             _generationReportedRun = null;
@@ -258,6 +262,8 @@ namespace SodRpg.Mod
         {
             _restoring = true; _initial = null; _newInfinity = false; _refresh = false;
             ClearPendingTravel();
+            _hunterAdjustSuspended = false;
+            _hunterMoveCounter = 0;
             Acks.Clear(); _choice = null; _choiceText = null;
         }
         internal static void FinishRestore()
@@ -399,6 +405,10 @@ namespace SodRpg.Mod
             foreach (var pair in zone.modifierServerData)
                 if (!ReferencedModifiers.Contains(pair.Key)) RetiredModifiers.Add(pair.Key);
             foreach (int idToRemove in RetiredModifiers) zone.modifierServerData.Remove(idToRemove);
+            // #229: restart the hunt from the far side of the entry instead of the native
+            // exit-farthest (entry-side) start that spawns on top of the one-room reveal path.
+            _hunterMoveCounter = 0;
+            RelocateHunterStart(zone);
             ReferencedModifiers.Clear(); RetiredModifiers.Clear();
             RefreshReveal(zone, 0);
             WriteEnvelope();

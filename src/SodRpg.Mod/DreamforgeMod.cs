@@ -350,6 +350,8 @@ namespace SodRpg.Mod
             foreach (var type in AccessTools.GetTypesFromAssembly(typeof(DreamforgeMod).Assembly))
             {
                 bool infinity = InfinityMode.IsNativePatch(type);
+                // #229: the hunter adjustment degrades alone when its own patch cannot install.
+                bool hunter = type == typeof(InfinityHunterAdvance);
                 if (NativePatchPreflight.TryGetDisabledFeature(type, out var featureName))
                 {
                     if (infinity) InfinityMode.DisableFeature("Infinity patch skipped: native feature " + featureName + " is unavailable or unconfirmed: " + type.FullName);
@@ -375,12 +377,16 @@ namespace SodRpg.Mod
                         }
                         installedInfinity++;
                     }
+                    if (hunter && (targets == null || targets.Count == 0 || !HasInstalledClass(type)))
+                        InfinityMode.DisableHunterAdjustment("Hunter patch was not installed: " + type.FullName);
                     installed++;
                 }
                 catch (Exception ex)
                 {
                     skipped.Add(type.FullName);
                     Log.Warn("Patch class skipped: " + type.FullName + ": " + ex);
+                    if (hunter)
+                        InfinityMode.DisableHunterAdjustment("Hunter patch installation failed: " + type.FullName + ": " + ex.Message);
                     if (infinity)
                     {
                         InfinityMode.DisableFeature("Infinity patch installation failed: " + type.FullName + ": " + ex.Message);

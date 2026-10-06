@@ -103,6 +103,61 @@ namespace SodRpg.Mod.Startup.Tests
             Assert.Equal(zone.GeneratedDistances, zone.nodeDistanceMatrix);
         }
 
+        [Fact]
+        public void HunterStaysPressureWithoutSwallowingTheOneRevealedForwardRoom()
+        {
+            var (_, zone, _) = StartRevealGraph();
+            // The hunt restarts on the far side of the entry, not on the native entry-side start.
+            Assert.Equal(4, zone.hunterStartNodeIndex);
+
+            // A hunt advance onto the revealed next room keeps only the native warning level.
+            zone.hunterStatuses[1] = HunterStatus.Level3;
+            zone.hunterStatuses[3] = HunterStatus.Level2;
+            zone.AdvanceHunterTurn();
+            Assert.Equal(HunterStatus.AboutToBeTaken, zone.hunterStatuses[1]);
+            Assert.Equal(HunterStatus.Level2, zone.hunterStatuses[3]);
+
+            // The reveal prefers a hunter-free room over closer hunted ones (2 and 3 are taken).
+            zone.hunterStatuses[2] = HunterStatus.Level1;
+            zone.SetCurrentNodeIndexAndRevealAdjacent(1);
+            Assert.Equal(4, InfinityMode.RevealedNext(zone));
+
+            // A hunter-taken retained next room is capped back to the warning level.
+            zone.hunterStatuses[4] = HunterStatus.Level2;
+            zone.SetCurrentNodeIndexAndRevealAdjacent(1);
+            Assert.Equal(4, InfinityMode.RevealedNext(zone));
+            Assert.Equal(HunterStatus.AboutToBeTaken, zone.hunterStatuses[4]);
+
+            // With no hunter-free fresh room left the closest one is chosen and capped.
+            var retired = zone.nodes[4];
+            retired.status = WorldNodeStatus.HasVisited;
+            zone.nodes[4] = retired;
+            zone.SetCurrentNodeIndexAndRevealAdjacent(1);
+            Assert.Equal(3, InfinityMode.RevealedNext(zone));
+            Assert.Equal(HunterStatus.AboutToBeTaken, zone.hunterStatuses[3]);
+        }
+
+        [Fact]
+        public void HunterAdjustmentSuspendsAloneAndNeverStopsInfinity()
+        {
+            var (_, zone, _) = StartRevealGraph();
+            Assert.True(InfinityMode.HunterAdjustmentActive);
+            InfinityMode.SuspendHunterAdjustment(nameof(HunterAdjustmentSuspendsAloneAndNeverStopsInfinity),
+                new Exception("hunter adjustment failed"));
+            Assert.False(InfinityMode.HunterAdjustmentActive);
+
+            // Native hunting passes through untouched: the cap no longer applies.
+            zone.hunterStatuses[1] = HunterStatus.Level3;
+            zone.AdvanceHunterTurn();
+            Assert.Equal(HunterStatus.Level3, zone.hunterStatuses[1]);
+
+            // Infinity itself stays enabled and the reveal keeps its native event pacing.
+            Assert.True(InfinityMode.Available);
+            Assert.True(InfinityMode.Enabled);
+            zone.SetCurrentNodeIndexAndRevealAdjacent(1);
+            Assert.Equal(3, InfinityMode.RevealedNext(zone));
+        }
+
         [Theory]
         [InlineData(false)]
         [InlineData(true)]
@@ -182,10 +237,38 @@ namespace SodRpg.Mod.Startup.Tests
         }
 
         [Fact]
+        public void HunterAdvancesOnEverySecondMoveInInfinityOnly()
+        {
+            var (_, zone, _) = StartRevealGraph();
+            zone.AdvanceHunterTurn();                       // odd move: skipped
+            Assert.Equal(0, zone.AdvanceHunterTurnCalls);
+            zone.AdvanceHunterTurn();                       // even move: native advance runs
+            Assert.Equal(1, zone.AdvanceHunterTurnCalls);
+            zone.AdvanceHunterTurn();
+            Assert.Equal(1, zone.AdvanceHunterTurnCalls);
+
+            zone.GenerateWorldAuto();                       // regeneration resets the counter
+            zone.AdvanceHunterTurn();
+            Assert.Equal(1, zone.AdvanceHunterTurnCalls);   // first move after regeneration skips
+            zone.AdvanceHunterTurn();
+            Assert.Equal(2, zone.AdvanceHunterTurnCalls);
+
+            // A suspended adjustment hands every move back to the native rules.
+            InfinityMode.SuspendHunterAdjustment(nameof(HunterAdvancesOnEverySecondMoveInInfinityOnly),
+                new Exception("hunter adjustment failed"));
+            zone.AdvanceHunterTurn();
+            zone.AdvanceHunterTurn();
+            Assert.Equal(4, zone.AdvanceHunterTurnCalls);
+        }
+
+        [Fact]
         public void NormalMapRetainsNativeRevealAndConnectedSelectionSemantics()
         {
             var (_, zone, _) = StartRevealGraph(enabled: false);
             Assert.False(InfinityMode.Enabled);
+            zone.AdvanceHunterTurn();
+            zone.AdvanceHunterTurn();
+            Assert.Equal(2, zone.AdvanceHunterTurnCalls);
             Assert.Equal(WorldNodeStatus.HasVisited, zone.nodes[0].status);
             Assert.Equal(WorldNodeStatus.Revealed, zone.nodes[1].status);
             Assert.Equal(WorldNodeStatus.Revealed, zone.nodes[2].status);
