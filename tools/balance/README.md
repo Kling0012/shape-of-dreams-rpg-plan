@@ -504,8 +504,9 @@ Mastery、enum番号、関係フラグ、取引の待ち時間／照会回数、
 DOTNET=/usr/bin/dotnet DOTNET_ROLL_FORWARD=LatestMajor tools/balance/run
 ```
 
-現在のrunは従来の6モード（forge、star-efficiency、star-values、star-progression、v132stars、expeditions）に
-次の3モードを加えた9スナップショットを保存します。上の旧段階の「4モード」等の記述は当時の範囲です。
+段階6時点のrunは従来の6モード（forge、star-efficiency、star-values、star-progression、v132stars、expeditions）に
+次の3モードを加えた9スナップショットを保存しました。段階5・7・8のモード追加分は各節参照、
+上の旧段階の「4モード」等の記述は当時の範囲です。
 
 | 新モード | 比較する量 |
 | --- | --- |
