@@ -8,25 +8,33 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
-- インフィニティで通常装備・素材・経験値とゴールド／ダストの星ボーナスが少なすぎる問題を修正しました。伝説・限定装備の希少性は維持します。
-- インフィニティでボス後に潜行すると、本体の全ゾーンから直前と重ならない次のゾーン・現地のボスを抽選するようにしました（協力・続きから対応、協力は全員Protocol 24へ更新、保存形式は変更なし）。
-- インフィニティの地図移動で、撃破報酬などの確定待ちに移動要求が失われ、何度も押す必要がある問題を修正しました（協力プレイ対応、通常モードは変更なし）。
-- インフィニティのボス後は選択画面を折りたたんで待ち、記憶・エッセンスを拾ってから開けるようにしました。開いた後も「戻る（拾いに行く）」で回収に戻れます（協力プレイ対応、通常モードは変更なし）。
-- ドロップ・ボスセット抽選・通貨／潜行報酬・契約／日替わり／道標／出来事を種類別の調整表へ移し、生成と同条件の前後比較を追加。数値・内容指紋・保存形式・Protocolは据え置き。
+---
 
-- インフィニティの部屋クリア時の引っかかりを軽減。地図の作り直しと保存完了待ちを減らし、協力プレイの進行・保存の安全確認は維持します。
-- インフィニティの保存失敗・遅延を再試行し、30秒で警告してその遠征だけ保存待ちを解除するようにしました。報酬の重複排除は維持しますが、続きから再開すると進行が戻る場合があります。
-- 星の組合せ定義の更新時に、以前の登録が残っていると条件付き効果の更新に失敗する問題を修正しました。
-- 星の記憶加速・仕掛け量／パラメータ・重要効果・刻印・能力値を `stars.json` の種類別原本へ移し、生成と前後比較を追加。ゲーム値・内容指紋・保存形式・Protocolは変更しません。
-- 鍛冶の費用・強化／覚醒倍率・限界突破・再調律・製作／合成／分解・現行工房・保証強化を `forge.json` へ集約し、生成・実支払いの前後比較を追加。数値・内容指紋・保存形式・Protocolは据え置き。
-- 鍛錬46欄と星XP曲線・費用・報酬・刻印解放を `run-growth.json`・`star-progression.json` へ分離し、到達ゾーン・能力値・感度の前後比較を追加。数値・内容指紋・保存形式・Protocolは変更しません。
-- 夢の圧・深度・悪夢／変種／敵行動・Infinity供給の179係数を表へ集約し、型付き生成と圧・敵パラメータ・供給／時の前後比較を追加。数値・内容指紋・保存形式・Protocolは据え置き。
-- インフィニティで生成済みの配分を基準にイベント部屋を優先し、戦闘部屋ばかり続く偏りを軽減しました（ボス周期・報酬量は変更なし）。
-- インフィニティで公開中の「次の1部屋」がハンターの侵食した部屋（戦闘強化）として読み込まれないよう保証し、狩りの起点を入口から離れた位置へ再配置。侵食の進行も2移動につき1手に減速します。警告表示と背後の侵食は残るので急かす圧力は維持。保存形式・Protocolは変更しません。
+## v2.7.0 — インフィニティのゾーン巡りと修正（2026-10-06）
 
-- 装備の土台・固有品・通常セット・特性／固有効果抽選・上限を種類別の表へ集約し、銘品の派生生成と装備／セットの前後比較を追加。数値・内容指紋・保存形式・Protocolは据え置き。
-- Powerの時間・距離・条件（PowerRuntime・新Power・Mod適用・説明文）を `powers.json` の種類別原本へ移行。数値・内容指紋・保存形式・Protocolは変更しません。
-- 14ボスセット126技・12固有報酬の挙動数値を `tools/balance/bosses/` の13表へ移し、型付き生成と表↔実定義の一致検証を追加。数値・内容指紋・保存形式・Protocolは変更しません。
+インフィニティモードを遊びやすくしました。ボスを倒すたびに次のゾーンがランダムに変わります。 / Infinity mode is much more playable: after each boss, the next zone is picked at random.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください（通信の版が変わりました）。 / Everyone in co-op must update (the network protocol changed).
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 新しい要素 / New
+
+- **インフィニティのゾーン巡り**：ボスを倒して潜行を続けると、次のゾーンを全ゾーンからランダムに選びます（直前と同じゾーンは避けます）。ボスも移動先のゾーンのものになります。ホスト・参加者・続きからの再開で同じ結果になります。 / **Infinity zone rotation**: after a boss, delving on picks the next zone at random from all zones (never the same one twice in a row), with that zone's boss. Host, guests and Continue all get the same result.
+
+### 不具合の修正 / Bug fixes
+
+- インフィニティで、ボスの魂に触れると選択画面がすぐ開き、ボス限定の記憶・エッセンスを拾えなかった問題を修正しました。画面は最初は折りたたまれ、拾ってから開けます。「戻る（拾いに行く）」も付けました。 / Infinity: touching the boss soul no longer opens the choice screen right away; it starts collapsed so you can pick up the boss's memories and essences first, and has a "Back (go pick up)" button.
+- インフィニティで、部屋をクリアした瞬間に強く引っかかる問題を軽くしました。保存が失敗・遅延しても進行が止まったままにならないようにしました。 / Infinity: reduced the hitch when a room is cleared, and a failed or slow save can no longer stall progress.
+- インフィニティで、地図の「移動」を何回も押さないと移動しなかった問題を修正しました。 / Infinity: the map Travel button no longer needs several presses.
+- インフィニティで、ハンターの侵食にすぐ呑まれて進めなくなる問題を修正しました。次に進む1部屋は侵食されません。 / Infinity: the hunt no longer swallows the single path ahead; the next room you can enter is kept clear.
+- インフィニティで、イベント部屋にほとんど出会えなかった問題を修正しました。 / Infinity: event rooms now show up instead of almost never appearing.
+- インフィニティで、報酬（通常装備・素材・経験値、ゴールド・ダストの星の効果）が非常に少なかった問題を修正しました。 / Infinity: rewards (regular gear, materials, XP, and gold/dust star bonuses) were far too scarce; fixed.
+- 星の組み合わせの定義を更新するとき、古い登録が残っていると条件付きの効果が正しく更新されない問題を修正しました。 / Fixed conditional star effects not updating when an older pairing registration was still present.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
 
 ---
 
