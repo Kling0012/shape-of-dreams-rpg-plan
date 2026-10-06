@@ -14,6 +14,13 @@
 段階3では鍛冶の残りを `forge.json`（schemaVersion 2）へ集約しました。
 保存済みの履歴番号・旧覚醒段・退役工房の返金原本は変更しません。
 
+## インフィニティのボス重み（Issue #272）
+
+`infinity-bosses.json` の各 `entries[].weight` を非負整数で調整し、`python3 tools/balance/gen_cs.py` を実行してMODを再ビルドします。実行時にJSONは読みません。
+初期値は通常7種とPrimusが各10、Erebos・LightElemental・Obliviaxが各4、Mawが3、Polarisが2。DarkMoonはWhiteNightに付随し、単独の抽選枠はありません。
+重み0は候補外。正の候補が複数なら直前のボスを除き、残りの重みの比率で抽選します。全て0、または不正・欠落した表を再生成した場合は、従来の均一ゾーン抽選へ戻ります（不正な表は生成時に警告）。
+選択はホストが行い、本体の同期・Continue保存で保持します。抽選後に表を変更しても保存済みの選択は変えません。Protocolとプロフィール保存形式は変更しません。
+
 ## コマンド
 
 Python 3 と .NET SDK が必要です。`DOTNET` を指定しない場合は PATH の `dotnet` を使います。

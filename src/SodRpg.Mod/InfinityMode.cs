@@ -240,6 +240,7 @@ namespace SodRpg.Mod
                 settings.customData.Remove(RuntimeKey);
                 settings.customData.Remove(ChoiceKey);
                 settings.customData.Remove(HaltKey);
+                settings.customData.Remove(BossKey);
             }
             HostAuthority.CheckInfinityRunCompatibility();
         }
@@ -381,6 +382,7 @@ namespace SodRpg.Mod
                 State.FixedZoneId = asset.name;
                 _refresh = false;
             }
+            ApplyBossRoom(zone);
             EnsureServiceRooms(zone);
             ReferencedModifiers.Clear(); RetiredModifiers.Clear();
             foreach (var node in zone.nodes)
@@ -515,18 +517,7 @@ namespace SodRpg.Mod
             if (intent == "delve")
                 try
                 {
-                    var candidates = new List<Zone>(DewResources.FindAllByNameSubstring<Zone>("Zone_"));
-                    candidates.Sort((a, b) => StringComparer.Ordinal.Compare(a.name, b.name));
-                    if (candidates.Count > 1) candidates.RemoveAll(z => z.name == state.FixedZoneId);
-                    if (candidates.Count == 0) throw new InvalidOperationException("No native zones are available.");
-                    var rng = new Rng(Rng.SeedFrom(ClientSession.HostRun.RunId + ":infinity-zone:")
-                        + unchecked((ulong)state.SegmentEpoch));
-                    var target = candidates[rng.Range(0, candidates.Count - 1)];
-                    if (!HasNativeRoomPools(target))
-                        throw new InvalidOperationException(target.name + " has no native start/combat/boss room pools.");
-                    if (target.name == "Zone_Primus" && !InfinityPrimusDeath.IsInstalled)
-                        throw new InvalidOperationException("Native Primus boss-soul interception is unavailable.");
-                    _refreshTarget = target;
+                    _refreshTarget = PrepareBossTarget(_refreshOrigin, state);
                 }
                 catch (Exception ex) { WarnZoneSwitch(ex.Message); }
             // noAdvance retains native index/tier/loop/ambient difficulty. The selected prefab owns
@@ -568,6 +559,7 @@ namespace SodRpg.Mod
                 if (_refreshTarget == _refreshOrigin) throw;
                 WarnZoneSwitch(ex.Message);
                 _refreshTarget = _refreshOrigin;
+                FallBackBoss(_refreshOrigin, ex.Message);
                 // Generation precedes scene load/native Continue serialization. Restore the
                 // public native zone and live LoadNode request before either can save a
                 // target-zone identity with a previous-zone graph after a caught native error.
@@ -604,6 +596,7 @@ namespace SodRpg.Mod
         {
             WarnZoneSwitch(reason);
             _refreshTarget = _refreshOrigin;
+            FallBackBoss(_refreshOrigin, reason);
             return TravelGraph(zone);
         }
 
@@ -969,10 +962,16 @@ namespace SodRpg.Mod
         }
     }
 
-    [HarmonyPatch(typeof(Mon_Primus_BossPrimusAeron), "OnDeath")]
-    internal static class InfinityPrimusDeath
+    [HarmonyPatch]
+    internal static class InfinityBossSoulDeath
     {
         private static Action<BossMonster, EventInfoKill> _nativeDeath;
+        private static IEnumerable<System.Reflection.MethodBase> TargetMethods()
+        {
+            yield return AccessTools.Method(typeof(Mon_Primus_BossPrimusAeron), "OnDeath");
+            yield return AccessTools.Method(typeof(Mon_Special_BossMaw), "OnDeath");
+            yield return AccessTools.Method(typeof(Mon_Special_BossPolaris), "OnDeath");
+        }
         private static bool Prepare()
         {
             try
@@ -983,29 +982,30 @@ namespace SodRpg.Mod
             }
             catch (Exception ex)
             {
-                Log.Warn("Infinity Primus boss-soul hook unavailable; Primus draws will keep the previous zone. " + ex.Message);
+                Log.Warn("Infinity generic boss-soul hook unavailable; affected draws use the zone's native boss. " + ex.Message);
                 return false;
             }
         }
 
-        internal static bool IsInstalled
+        internal static bool IsInstalled(string bossTypeName)
         {
-            get
-            {
-                if (_nativeDeath == null) return false;
-                var info = Harmony.GetPatchInfo(AccessTools.Method(typeof(Mon_Primus_BossPrimusAeron), "OnDeath"));
-                if (info == null) return false;
-                foreach (var patch in info.Prefixes)
-                    if (patch.PatchMethod.DeclaringType == typeof(InfinityPrimusDeath)) return true;
-                return false;
-            }
+            if (_nativeDeath == null) return false;
+            Type type = bossTypeName == "Mon_Primus_BossPrimusAeron" ? typeof(Mon_Primus_BossPrimusAeron)
+                : bossTypeName == "Mon_Special_BossMaw" ? typeof(Mon_Special_BossMaw)
+                : bossTypeName == "Mon_Special_BossPolaris" ? typeof(Mon_Special_BossPolaris) : null;
+            if (type == null) return false;
+            var info = Harmony.GetPatchInfo(AccessTools.Method(type, "OnDeath"));
+            if (info == null) return false;
+            foreach (var patch in info.Prefixes)
+                if (patch.PatchMethod.DeclaringType == typeof(InfinityBossSoulDeath)) return true;
+            return false;
         }
 
-        private static bool Prefix(Mon_Primus_BossPrimusAeron __instance, EventInfoKill info)
+        private static bool Prefix(BossMonster __instance, EventInfoKill info)
         {
             if (!NetworkServer.active || !InfinityMode.Enabled) return true;
-            // Primus normally skips the soul, pays Dust directly and starts the ending cutscene.
-            // Use native generic boss death (nonvirtual) instead: one soul/reward, normal Rift.
+            // These bosses skip the normal soul or award Dust directly. Bypass the specialized
+            // death flow: one actual-type soul/reward, no ending or duplicate native payout.
             __instance.skipBossSoulFlow = false;
             _nativeDeath(__instance, info);
             return false;

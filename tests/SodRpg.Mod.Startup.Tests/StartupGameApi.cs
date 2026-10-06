@@ -92,6 +92,12 @@ namespace SodRpg.Mod
         internal static void Install(Harmony harmony) { }
         internal static void Stop() { }
     }
+    // Scene/phase adaptation is exercised separately with its linked production smoke harness.
+    internal static class InfinityBossArena
+    {
+        internal static void EnsureForBoss(string bossTypeName) { }
+        internal static void Stop() { }
+    }
     // Game-boundary doubles for the real InfinityMode.cs (compiled into this project).
     // Only the members InfinityMode and its native patch classes touch are modeled; the
     // patch classes install onto these methods with real Harmony detours.
@@ -108,6 +114,8 @@ namespace SodRpg.Mod
     {
         public bool isActive;
         public string name;
+        public bool Destroyed;
+        public void Destroy() { Destroyed = true; isActive = false; }
         // The harness records custom-RPC traffic so lobby handshake tests can observe the host's answer.
         public static readonly List<(DewPlayer player, object message)> SentToClients = new List<(DewPlayer, object)>();
         public static readonly List<(string name, Delegate handler)> ServerHandlers = new List<(string, Delegate)>();
@@ -120,9 +128,9 @@ namespace SodRpg.Mod
             => ServerHandlers.Add((name, handler));
         public void CustomRpc_UnregisterServerMessageHandler<T>(Action<T, DewPlayer> handler) { }
     }
-    public sealed class Shrine_BossSoul : Actor { }
+    public sealed class Shrine_BossSoul : Actor { public string Network_bossTypeName; }
     public struct EventInfoKill { }
-    public class BossMonster : Actor
+    public class BossMonster : Monster
     {
         public bool skipBossSoulFlow;
         public bool SoulStarted;
@@ -139,6 +147,33 @@ namespace SodRpg.Mod
             base.OnDeath(info);
             DirectDustPayments++;
             EndingStarted = true;
+        }
+    }
+    public sealed class Mon_Special_BossMaw : BossMonster
+    {
+        public Mon_Special_BossMaw() { skipBossSoulFlow = true; }
+        protected override void OnDeath(EventInfoKill info) { base.OnDeath(info); }
+    }
+    public sealed class Mon_Special_BossPolaris : BossMonster
+    {
+        public Mon_Special_BossPolaris() { skipBossSoulFlow = true; }
+        protected override void OnDeath(EventInfoKill info) { base.OnDeath(info); }
+    }
+    public sealed class Mon_Special_BossErebos : BossMonster { }
+    public sealed class Mon_Special_BossLightElemental : BossMonster { }
+    public sealed class Mon_Special_BossObliviax : BossMonster { }
+    public sealed class MonsterSpawnRule { public bool isBossSpawn; }
+    public sealed class SpawnMonsterSettings { public MonsterSpawnRule rule; public Action<Entity> beforeSpawn; }
+    public sealed class RoomMonsters
+    {
+        public sealed class MonsterSpawnData { }
+        public Entity Spawn(SpawnMonsterSettings settings, Entity prefab)
+            => SpawnMonsterImp(settings, new MonsterSpawnData(), prefab, 1);
+        private Entity SpawnMonsterImp(SpawnMonsterSettings s, MonsterSpawnData monsterSpawnData, Entity monster, float popCost)
+        {
+            var spawned = Activator.CreateInstance(monster.GetType()) as Entity;
+            s.beforeSpawn?.Invoke(spawned);
+            return monster.FailSpawn ? null : spawned;
         }
     }
     public static class ManagerBase<T> { public static T instance; }
@@ -227,17 +262,19 @@ namespace SodRpg.Mod
         public string name;
         public bool useSpecialGeneration;
         public int specialNodes;
-        public List<object> startRooms = new List<object>(), combatRooms = new List<object>(), bossRooms = new List<object>();
+        public List<string> startRooms = new List<string>(), combatRooms = new List<string>(), bossRooms = new List<string>();
         public List<string> shopRooms = new List<string>();
         public bool disableRoomModifiers;
     }
     public static class DewResources
     {
         public static readonly List<Zone> Zones = new List<Zone>();
+        public static readonly Dictionary<string, BossMonster> Bosses = new Dictionary<string, BossMonster>();
         public static T GetByShortTypeName<T>(string name, ResourceLoadSettings settings = ResourceLoadSettings.Default)
             where T : class
-            => NetworkedManagerBase<ZoneManager>.softInstance?.NativeModifierPrefabs
-                .FirstOrDefault(modifier => modifier.name == name) as T;
+            => Bosses.TryGetValue(name, out var boss) ? boss as T
+                : NetworkedManagerBase<ZoneManager>.softInstance?.NativeModifierPrefabs
+                    .FirstOrDefault(modifier => modifier.name == name) as T;
         public static IEnumerable<T> FindAllByNameSubstring<T>(string name)
         {
             foreach (var zone in Zones)
@@ -347,15 +384,15 @@ namespace SodRpg.Mod
         public static void Dispose() { }
     }
     internal static class BlockInputWhileMenuOpen { public static bool MenuOpen; }
-    public class Entity
+    public class Entity : Actor
     {
-        public bool isActive;
+        public bool FailSpawn;
         public UnityEngine.Vector3 agentPosition;
         public EntityRelation GetRelation(Entity entity) => EntityRelation.Ally;
         public bool CheckEnemyOrNeutral(Entity entity) => false;
         public void Kill() { }
     }
-    public sealed class Monster : Entity { }
+    public class Monster : Entity { }
     public sealed class Hero : Entity
     {
         public float currentHealth;
@@ -374,6 +411,11 @@ namespace SodRpg.Mod
     }
     public static class NetworkedManagerBase<T> { public static T softInstance; public static T instance; }
     public sealed class ActorManager { public Actor serverActor; public readonly List<Actor> allActors = new List<Actor>(); }
+    public static class Dew
+    {
+        public static T FindActorOfType<T>() where T : Actor
+            => NetworkedManagerBase<ActorManager>.softInstance?.allActors.OfType<T>().FirstOrDefault(actor => actor.isActive);
+    }
     public sealed class ZoneManager
     {
         public int currentNodeIndex;
@@ -445,6 +487,15 @@ namespace SodRpg.Mod
             modifierServerData[modifier.id] = new object();
             beforePrepare?.Invoke(prefab);
             return modifier.id;
+        }
+        public bool FailRoomOverride;
+        public void SetRoomOverride(int index, string scene)
+        {
+            if (FailRoomOverride) throw new InvalidOperationException("Injected room override failure");
+            var node = nodes[index];
+            node.roomOverride = scene;
+            nodes[index] = node;
+            visitedNodesSaveData[index] = null;
         }
 
         public void AdvanceHunterTurn(bool forceMove = false) { AdvanceHunterTurnCalls++; }

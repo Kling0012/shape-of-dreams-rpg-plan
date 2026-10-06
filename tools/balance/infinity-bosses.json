@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "entries": [
+    {"bossTypeName": "Mon_Forest_BossDemon", "zoneId": "Zone_Forest", "weight": 10},
+    {"bossTypeName": "Mon_LavaLand_BossInfernus", "zoneId": "Zone_LavaLand", "weight": 10},
+    {"bossTypeName": "Mon_DarkCave_BossSeeker", "zoneId": "Zone_DarkCave", "weight": 10},
+    {"bossTypeName": "Mon_SnowMountain_BossSkoll", "zoneId": "Zone_SnowMountain", "weight": 10},
+    {"bossTypeName": "Mon_Sky_BossNyx", "zoneId": "Zone_Sky", "weight": 10},
+    {"bossTypeName": "Mon_Ink_BossWhiteNight", "zoneId": "Zone_Ink", "weight": 10},
+    {"bossTypeName": "Mon_Despair_BossAzurak", "zoneId": "Zone_Despair", "weight": 10},
+    {"bossTypeName": "Mon_Primus_BossPrimusAeron", "zoneId": "Zone_Primus", "weight": 10},
+    {"bossTypeName": "Mon_Special_BossErebos", "zoneId": null, "weight": 4},
+    {"bossTypeName": "Mon_Special_BossLightElemental", "zoneId": null, "weight": 4},
+    {"bossTypeName": "Mon_Special_BossObliviax", "zoneId": null, "weight": 4},
+    {"bossTypeName": "Mon_Special_BossMaw", "zoneId": null, "weight": 3},
+    {"bossTypeName": "Mon_Special_BossPolaris", "zoneId": null, "weight": 2}
+  ]
+}

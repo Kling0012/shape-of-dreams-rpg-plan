@@ -272,3 +272,14 @@
 - 初回の指定テストは2375成功・1失敗・既存4skip。失敗はseed生成への変更に伴う `GenerateWorldAuto` 呼出回数assertのみで、該当テストの実装依存の回数assertを削除した。地図／公開状態／周期／未精算境界の検証は維持する。
 - 修正後の指定 `DOTNET=/usr/bin/dotnet DOTNET_ROLL_FORWARD=LatestMajor python tools/test_changed.py` は終了コード0、2376成功・失敗0・既存4skip（Core 2239、Native 75、Startup 62）。ゲストの新ゾーンsnapshot取り込み／古いsnapshot拒否／チェックポイントへのゾーン巻き戻し、同ゾーン枯渇更新、直前回避／seed再演、遷移・生成例外の元ゾーン継続、Infinityと通常Primusの魂／勝利分岐を含む。
 
+## 20. #272：特殊ボスを含む重み付き抽選（19節の抽選を更新）
+
+- ボス後のDelveだけで次のボスを抽選する。原本は `tools/balance/infinity-bosses.json`、生成先は `InfinityBosses.Generated.cs`。13候補の初期重みはゾーンボス7＋Primusが各10、Erebos・LightElemental・Obliviaxが各4、Mawが3、Polarisが2。DarkMoonはInkのWhiteNightに付随し、独立候補にしない。
+- `runId + ":infinity-boss:"` と保存済みSegmentEpochの専用Rngを使い、正の候補が複数なら実際に出た直前のボスを除く。個人の報酬RNGは消費しない。全重み0・不正表では19節の均一ゾーン抽選へ戻す。不正表の生成は警告と既知13種の重み0への置換に限定し、他のバランス生成を止めない。
+- 通常7種はForest／LavaLand／DarkCave／SnowMountain／Sky／Ink／Despair、PrimusはPrimusへ移動し、native `bossRooms` から得たsceneを公開 `SetRoomOverride` でExitBossに固定する。特殊5種は19節の直前回避ゾーン抽選を使い、その通常ボス部屋のprimary BossMonsterだけを `RoomMonsters.SpawnMonsterImp` で差し替える。WhiteNightが直接生成するDarkMoonは差し替えない。
+- 現行DLLで確認した追加依存：Erebosの後半は `Erebos_BossRoomCenter` 必須、Polarisは `PHASE_CHANGE` director不在だと第一形態の致死ダメージ後にInTransitionから戻らない。Erebosは部屋寿命の中央markerとnative arena半径内のphase geometry、Polarisは専用scene外で本体の二形態・予告・制御解除・掃除・Adaptation・8tick回復を保つ遷移adapterを使う。専用cutscene／stage演出は移植しない。arena不足・任意hook失敗はその回のnativeボスへ戻す。
+- Primus・Maw・Polarisは非virtual `BossMonster.OnDeath` で通常の魂フローへ統一する。Maw専用祠・Polaris直接Dust・Primus専用死亡演出は呼ばない。魂の `Network_bossTypeName` とMOD撃破fact／固有セットは実体の型名を使う。
+- 選択と実出現型をnative `GameSettingsManager.customData["dreamforge.infinity.boss"]` に保存・同期する。native manager復元は部屋spawnとMOD checkpoint巻き戻しより早いため、Continue中はこのplanを参照し、ロード前のMOD SegmentEpochには依存しない。部屋不足による同区間の技術更新では再抽選しない。Protocol 24・プロフィール保存形式5・Infinity codec1は変更なし。旧保存はnativeボスを復元し、次のDelveから抽選する。
+- 差し替え／部屋指定の失敗は警告1回で当該planだけnativeボスへ戻す。native spawnが部分生成後にnullを返した場合は捕捉した差し替えactorだけをDestroyして元のprefabで再spawnする。新しいadapterをInfinity起動条件にせず、IL一致・非公開内部構造の検査は追加しない。
+- 現行DLLのPolaris managerは専用sceneで実ボスの死亡を購読してending flowに入る。部屋ごとの移植はしない。さらにInfinity中はPrimus／Polarisのending entrypointと専用concludeを抑止する。本体実績はhost／guest双方でobserver生成・授与・profile／Steam／Continue進捗保存を抑止し、teardown後の遅延callbackも遮断する。次の通常runは追跡を再開する。MODの死亡通知・報酬・偉業は抑止しない。
+- 検証は本体DLL参照Releaseビルド、指定全テスト、生成鮮度確認と一時コンソールの実Harmony境界。13出現方式・特殊5の保存plan再開・host権限・実体型セット・部屋／部分spawn失敗を確認し、別の製品adapterリンクでErebos arenaとPolaris二形態遷移・実績／ending抑止を実行した。Unity APIは境界モデルで、実sceneの演出・狭いarenaの体感・実通信・実機Continueは未確認。

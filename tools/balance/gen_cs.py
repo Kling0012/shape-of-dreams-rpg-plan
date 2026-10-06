@@ -16,6 +16,7 @@ import star_values
 import pressure_values
 import monster_values
 import infinity_values
+import infinity_boss_values
 import stage6_values
 import equipment_items_values
 import powers_values
@@ -59,6 +60,7 @@ def generate(check=False):
     outputs.update(pressure)
     outputs.update(monsters)
     outputs.update(infinity)
+    outputs.update(infinity_boss_values.render_outputs())
     outputs.update(stage6)
     outputs.update(equipment_items_values.render_outputs())
     outputs.update(powers_values.render_outputs())

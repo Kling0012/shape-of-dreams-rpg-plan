@@ -87,9 +87,9 @@ namespace SodRpg.Mod.Startup.Tests
             NetworkedManagerBase<GameManager>.softInstance = game;
             ClientSession.InGame = true;
             var asset = new Zone { name = "Zone_First" };
-            asset.startRooms.Add(new object());
-            asset.combatRooms.Add(new object());
-            asset.bossRooms.Add(new object());
+            asset.startRooms.Add("Room_First_Start");
+            asset.combatRooms.Add("Room_First_Combat");
+            asset.bossRooms.Add("Room_First_Boss");
             var zone = new ZoneManager { SceneZone = asset, currentZoneIndex = -1 };
             NetworkedManagerBase<ZoneManager>.softInstance = zone;
 
@@ -558,9 +558,9 @@ namespace SodRpg.Mod.Startup.Tests
 
             // Native TravelToZone -> LoadNode sets currentZone, then GenerateWorldAuto (patched).
             zone.currentZone = new Zone { name = "Zone_Foo" };
-            zone.currentZone.startRooms.Add(new object());
-            zone.currentZone.combatRooms.Add(new object());
-            zone.currentZone.bossRooms.Add(new object());
+            zone.currentZone.startRooms.Add("Room_Foo_Start");
+            zone.currentZone.combatRooms.Add("Room_Foo_Combat");
+            zone.currentZone.bossRooms.Add("Room_Foo_Boss");
             return zone;
         }
 
