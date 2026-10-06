@@ -83,4 +83,11 @@
       <Compile Include="$(IntermediateOutputPath)RelicRowCacheUi.g.cs" />
     </ItemGroup>
   </Target>
+
+  <Target Name="CompileSecurePanelUi" BeforeTargets="CoreCompile">
+    <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/DreamforgeUi.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)SecurePanelUi.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="DreamforgeUi" Methods="UpdateSecurePanel;ToggleSecurePanel" />
+    <ItemGroup>
+      <Compile Include="$(IntermediateOutputPath)SecurePanelUi.g.cs" />
+    </ItemGroup>
+  </Target>
 </Project>

@@ -110,9 +110,34 @@ namespace SodRpg.Mod
         }
 
         private bool _secureHidden;
+        private RunState _securePanelRun;
+        private long _securePanelSegment;
 
-        /// <summary>確保地点の画面を隠す／出す。何度でも切り替えられる。次の確保地点では出し直しになる。</summary>
-        public void ToggleSecurePanel() => _secureHidden = !_secureHidden;
+        // #227: soul completion creates floor loot; it does not mean players collected it.
+        // Visibility is local only. Keep the shared choice/reward receipts untouched.
+        private void UpdateSecurePanel()
+        {
+            var run = _s.Profile.Run;
+            bool waiting = _s.InGame && run != null && run.AwaitingChoice && _s.ActiveRunId != null;
+            if (!waiting)
+            {
+                _securePanelRun = null;
+                _secureHidden = false;
+                return;
+            }
+            long segment = run.Infinity?.SegmentEpoch ?? 0;
+            if (ReferenceEquals(run, _securePanelRun) && segment == _securePanelSegment) return;
+            _securePanelRun = run;
+            _securePanelSegment = segment;
+            _secureHidden = run.Infinity != null;
+        }
+
+        /// <summary>確保地点の画面を隠す／出す。通常は自動表示、インフィニティのボス後は回収のため折りたたんで待つ。</summary>
+        public void ToggleSecurePanel()
+        {
+            UpdateSecurePanel();
+            _secureHidden = !_secureHidden;
+        }
 
         public void Toggle()
         {
@@ -287,6 +312,7 @@ namespace SodRpg.Mod
             bool layout = LayoutEnabled;
             try
             {
+                UpdateSecurePanel();
                 var zm = NetworkedManagerBase<ZoneManager>.softInstance;
                 bool transition = zm != null && zm.isInAnyTransition;
                 if (_s.InGame && !transition)
@@ -297,7 +323,6 @@ namespace SodRpg.Mod
                         if (cfg.hudMode != HudMode.Off) DrawHud(w, h, cfg);
                     }
                     bool secureWait = _s.Profile.Run != null && _s.Profile.Run.AwaitingChoice && _s.ActiveRunId != null;
-                    if (!secureWait) _secureHidden = false;
                     if (layout && !Open && secureWait)
                     {
                         if (_secureHidden) DrawSecureCollapsed(w, cfg);
@@ -514,6 +539,7 @@ namespace SodRpg.Mod
 
         private (int Menu, int Secure, int Delve, int Panel, bool Japanese) _secureButtonKey;
         private string _secureOpenButton, _secureButton, _delveButton, _gearButton, _secureHideButton;
+        private string _infinityOpenButton, _infinityBackButton;
 
         private void CacheSecureButtons(DreamforgeConfig cfg)
         {
@@ -526,16 +552,22 @@ namespace SodRpg.Mod
             _delveButton = Loc.T($"深く潜る [{cfg.delveKey}]", $"Delve [{cfg.delveKey}]");
             _gearButton = Loc.T($"装備を整える [{cfg.menuKey}]", $"Gear up [{cfg.menuKey}]");
             _secureHideButton = Loc.T($"画面を隠す [{cfg.securePanelKey}]", $"Hide [{cfg.securePanelKey}]");
+            _infinityOpenButton = Loc.T($"回収完了：継続／帰還を選ぶ [{cfg.securePanelKey}]", $"Loot collected: choose Delve / Return [{cfg.securePanelKey}]");
+            _infinityBackButton = Loc.T($"戻る（拾いに行く） [{cfg.securePanelKey}]", $"Back to collect loot [{cfg.securePanelKey}]");
         }
 
         /// <summary>確保地点の画面を隠している間の、小さな呼び出しボタン。</summary>
         private void DrawSecureCollapsed(float w, DreamforgeConfig cfg)
         {
             CacheSecureButtons(cfg);
-            var rect = new Rect(w / 2 - 190, 12, 380, 44);
+            bool infinity = _s.Profile.Run?.Infinity != null;
+            var rect = infinity ? new Rect(w / 2 - 280, 12, 560, 76) : new Rect(w / 2 - 190, 12, 380, 44);
             if (rect.Contains(Event.current.mousePosition)) MouseOverPanel = true;
             GUILayout.BeginArea(rect, _st.Window);
-            if (GUILayout.Button(_secureOpenButton, _st.Button, GUILayout.Height(28)))
+            if (infinity)
+                GUILayout.Label(Loc.T("記憶・エッセンスを拾ってから開いてください。進行はホストが決定します。",
+                    "Collect memories and essences first. The host decides when to proceed."), _st.Small);
+            if (GUILayout.Button(infinity ? _infinityOpenButton : _secureOpenButton, _st.Button, GUILayout.Height(28)))
                 _secureHidden = false;
             GUILayout.EndArea();
         }
@@ -585,6 +617,8 @@ namespace SodRpg.Mod
             if (rect.height > h - 100) rect.height = h - 100;
             if (rect.Contains(Event.current.mousePosition)) MouseOverPanel = true;
             GUILayout.BeginArea(rect, _st.Window);
+            if (run.Infinity != null && GUILayout.Button(_infinityBackButton, _st.Button, GUILayout.Height(34)))
+                _secureHidden = true;
             _scrollSecure = GUILayout.BeginScrollView(_scrollSecure);
             GUILayout.Label(Loc.T("確保地点 ─ ここで持ち帰るか、さらに潜るかを選びます", "Secure Point ─ take your loot home, or delve deeper"), _st.Title);
             DrawWaypointPicker(run);
