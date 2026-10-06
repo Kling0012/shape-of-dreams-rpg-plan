@@ -286,6 +286,74 @@ namespace SodRpg.Mod.Startup.Tests
             Assert.True(InfinityMode.Available, string.Join(" | ", Log.Warnings));
         }
 
+        [Theory]
+        [InlineData(10, 24, 4, 3)]
+        [InlineData(15, 24, 4, 3)]
+        [InlineData(20, 24, 4, 3)]
+        [InlineData(10, 8, 4, 2)]
+        [InlineData(10, 8, 0, 0)]
+        public void DistantNativeEventsKeepTheirShareBeforeBossWithoutChangingTypes(
+            int interval, int combats, int events, int firstEventAfter)
+        {
+            var (session, zone, _) = StartRevealGraph();
+            var state = session.Profile.Run.Infinity;
+            state.Interval = interval;
+            int count = combats + events + 2;
+            zone.GeneratedNodes = Enumerable.Range(0, count).Select(i => new WorldNodeData {
+                type = i == 0 ? WorldNodeType.Start : i == count - 1 ? WorldNodeType.ExitBoss
+                    : i <= combats ? WorldNodeType.Combat : WorldNodeType.Event,
+            }).ToArray();
+            zone.GeneratedDistances = new int[count * count];
+            for (int a = 0; a < count; a++)
+                for (int b = 0; b < count; b++) zone.GeneratedDistances[a * count + b] = Math.Abs(a - b);
+            zone.GenerateWorldAuto();
+            var nativeTypes = zone.nodes.Select(n => n.type).ToArray();
+            int eventVisits = 0, combatVisits = 0;
+            while (state.Phase == InfinityPhase.Exploring)
+            {
+                int next = InfinityMode.RevealedNext(zone);
+                if (next < 0) break;
+                var type = zone.nodes[next].type;
+                zone.SetCurrentNodeIndexAndRevealAdjacent(next);
+                if (type == WorldNodeType.Event) eventVisits++;
+                if (type == WorldNodeType.Combat) combatVisits++;
+                InfinityMode.OnRoomClear(SingletonDewNetworkBehaviour<Room>.softInstance);
+                if (events > 0 && combatVisits == firstEventAfter && eventVisits == 0)
+                {
+                    int selected = InfinityMode.RevealedNext(zone);
+                    Assert.Equal(WorldNodeType.Event, zone.nodes[selected].type);
+                    // Revisit/continue keeps the already published host choice.
+                    zone.SetCurrentNodeIndexAndRevealAdjacent(0);
+                    Assert.Equal(selected, InfinityMode.RevealedNext(zone));
+                    InfinityMode.WriteEnvelope();
+                    InfinityMode.BeginRestore();
+                    zone.SetCurrentNodeIndexAndRevealAdjacent(next);
+                    InfinityMode.FinishRestore();
+                    Assert.Equal(selected, InfinityMode.RevealedNext(zone));
+                    // A guest's distance order cannot override the host's published status.
+                    NetworkServer.active = false;
+                    ClientSession.RemoteHostInfinityAvailable = true;
+                    int hostDistance = zone.nodeDistanceMatrix[next * count + selected];
+                    zone.nodeDistanceMatrix[next * count + selected] = 100;
+                    InfinityMode.RefreshReveal(zone, next);
+                    Assert.Equal(selected, InfinityMode.RevealedNext(zone));
+                    zone.nodeDistanceMatrix[next * count + selected] = hostDistance;
+                    NetworkServer.active = true;
+                }
+            }
+            Assert.Equal(nativeTypes, zone.nodes.Select(n => n.type).ToArray());
+            Assert.Equal(Math.Min(combats, interval), combatVisits);
+            Assert.InRange(eventVisits, combats < interval ? events
+                : events == 0 ? 0 : Math.Min(events, (combatVisits - 1) / firstEventAfter), events);
+            Assert.Equal(combatVisits, state.ClearedCombatTotal);
+            if (combats >= interval)
+            {
+                Assert.Equal(InfinityPhase.BossDue, state.Phase);
+                Assert.Equal(WorldNodeType.ExitBoss, zone.nodes[InfinityMode.RevealedNext(zone)].type);
+            }
+            Assert.True(InfinityMode.Available, string.Join(" | ", Log.Warnings));
+        }
+
         private static int[] CachedIds(List<UnityEngine.RectTransform> cache)
             => Enumerable.Range(0, cache.Count).Where(i => cache[i] != null && cache[i].gameObject.activeInHierarchy).ToArray();
     }

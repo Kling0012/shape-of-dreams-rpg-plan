@@ -57,17 +57,7 @@ namespace SodRpg.Mod
             else if (state.Phase == InfinityPhase.Exploring)
             {
                 if (IsFreshRevealRoom(zone, retained, current)) next = retained;
-                else
-                {
-                    int distance = int.MaxValue;
-                    for (int i = 0; i < zone.nodes.Count; i++)
-                    {
-                        if (!IsFreshRevealRoom(zone, i, current)) continue;
-                        int candidate = zone.GetNodeDistance(current, i);
-                        if (candidate <= 0 || candidate >= distance) continue;
-                        next = i; distance = candidate;
-                    }
-                }
+                else next = ChooseNextRevealRoom(zone, current);
             }
             for (int i = 0; i < zone.nodes.Count; i++)
             {
@@ -78,6 +68,41 @@ namespace SodRpg.Mod
                 node.status = status;
                 zone.nodes[i] = node;
             }
+        }
+
+        // Match the native graph's Event/Combat mix, but bring a distant event forward after
+        // at most three combat visits per event. BossDue still takes precedence in RefreshReveal.
+        // Only saved native statuses are used: revisits and Continue cannot reset the pacing.
+        private static int ChooseNextRevealRoom(ZoneManager zone, int current)
+        {
+            int combats = 0, events = 0, visitedCombats = 0, visitedEvents = 0;
+            int next = -1, nextEvent = -1, distance = int.MaxValue, eventDistance = int.MaxValue;
+            for (int i = 0; i < zone.nodes.Count; i++)
+            {
+                var node = zone.nodes[i];
+                bool visited = i == current || node.status == WorldNodeStatus.HasVisited;
+                if (node.type == WorldNodeType.Combat)
+                {
+                    combats++;
+                    if (visited) visitedCombats++;
+                }
+                else if (node.type == WorldNodeType.Event)
+                {
+                    events++;
+                    if (visited) visitedEvents++;
+                }
+                if (!IsFreshRevealRoom(zone, i, current)) continue;
+                int candidate = zone.GetNodeDistance(current, i);
+                if (candidate <= 0) continue;
+                if (candidate < distance) { next = i; distance = candidate; }
+                if (node.type == WorldNodeType.Event && candidate < eventDistance)
+                { nextEvent = i; eventDistance = candidate; }
+            }
+            // No room conversion, additional scene/modifier allocation, or reward changes.
+            // When the native pool has no usable events, keep the original nearest-room fallback.
+            int pacedCombats = Math.Min(combats, events * 3);
+            return nextEvent >= 0 && visitedCombats * events >= (visitedEvents + 1) * pacedCombats
+                ? nextEvent : next;
         }
 
         private static bool IsFreshRevealRoom(ZoneManager zone, int index, int current)
