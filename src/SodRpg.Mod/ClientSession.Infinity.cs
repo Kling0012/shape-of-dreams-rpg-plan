@@ -160,7 +160,7 @@ namespace SodRpg.Mod
         {
             if (Profile.Run?.Infinity == null && !InfinityMode.Enabled) return false;
             AdvanceInfinityIdentity();
-            // Same-zone generation is a technical boundary, never a normal zone secure/travel event.
+            // Infinity graph arrival is a technical boundary, never a normal zone secure/travel event.
             return true;
         }
 

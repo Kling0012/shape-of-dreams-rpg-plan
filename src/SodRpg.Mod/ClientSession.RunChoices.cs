@@ -46,11 +46,13 @@ namespace SodRpg.Mod
         private int ChoiceZoneIndex => LobbyReturnPending
             && NetworkedManagerBase<GameManager>.softInstance?.runId != _pendingResultRunId
                 ? _runChoiceProgress.ZoneIndex : _zone != null ? _zone.currentZoneIndex : -1;
-        private bool InPureWhiteRoute => _zone != null && _zone.currentZone != null && _zone.currentZone.name == "Zone_Primus";
+        private bool InPureWhiteRoute => Profile.Run?.Infinity == null
+            && _zone != null && _zone.currentZone != null && _zone.currentZone.name == "Zone_Primus";
 
         internal static void OnPureWhiteBossDefeated()
         {
             if (!NetworkServer.active || _hostSession == null || !_hostSession.RunActive) return;
+            if (_hostSession.Profile.Run.Infinity != null) return;
             if (_hostSession.LobbyReturnPending) return;
             if (_hostSession._pendingRunVictory == true && _hostSession._pendingResultRunId == _hostSession.ActiveRunId) return;
             _hostSession._pendingRunVictory = true;

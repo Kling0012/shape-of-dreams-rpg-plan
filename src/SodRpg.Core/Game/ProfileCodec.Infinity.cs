@@ -10,6 +10,7 @@ namespace SodRpg.Core.Game
         internal static JsonObject WriteInfinity(InfinityRunState state)
         {
             if (state == null) return null;
+            // The legacy key identifies the current graph's zone, not the expedition's starting zone.
             return new JsonObject().Add("version", 1L).Add("fixedZone", state.FixedZoneId)
                 .Add("interval", (long)state.Interval).Add("total", state.ClearedCombatTotal)
                 .Add("difficulty", state.DifficultyId)

@@ -271,6 +271,7 @@ private bool ContinueReady => !_nativeContinueRestoring && (LobbyReturnPending |
             if (BlockLobbyReturnedContinue(checkpoint.RunId)) return;
             FlushSaves();
             var notes = new List<string>();
+            // Native restore owns the saved zone and graph; this receipt restores their matching run identity.
             checkpoint.Restore(Profile, notes: notes);
             ResetInfinityContinueState();
             Profile.ContinueResumeSession = resumeSession;

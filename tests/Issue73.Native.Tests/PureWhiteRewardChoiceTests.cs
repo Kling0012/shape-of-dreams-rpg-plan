@@ -189,6 +189,40 @@ namespace Issue73.Native.Tests
             Assert.Equal(reference.Stash.Select(r => r.Uid), session.Profile.Stash.Select(r => r.Uid));
         }
 
+        [Fact]
+        public void Infinity_Primus_boss_stays_in_the_soul_cycle_without_native_victory_or_entrance_suspension()
+        {
+            NetworkServer.active = true;
+            var profile = Profile.CreateNew(232);
+            Rules.BeginRun(profile, "run", heroKey: "hero", dreamDepth: 3);
+            profile.Run.Infinity = new InfinityRunState { FixedZoneId = "Zone_Primus", Interval = 10 };
+            var session = new ClientSession { Profile = profile, LocalHero = new Hero() };
+            session.ActiveRunId = "run";
+            Set(session, "_zone", new ZoneManager { currentZoneIndex = 0, currentZone = new Zone { name = "Zone_Primus" } });
+            Set(typeof(ClientSession), "_hostSession", session);
+            NetworkedManagerBase<GameManager>.softInstance = new GameManager { runId = "run" };
+            var state = profile.Run.Infinity;
+            for (int node = 1; node <= state.Interval; node++)
+                Assert.True(state.TryCountCombatClear(0, node, true, false, false));
+            Assert.True(state.TryEnterBoss());
+            Assert.True(state.ObserveBossClear());
+
+            Assert.False(ClientSession.HostCombatChoiceSuspended);
+            ClientSession.OnPureWhiteBossDefeated();
+            Assert.NotNull(profile.Run);
+            Assert.Null(Get(session, "_pendingRunVictory"));
+            Assert.Equal(0, profile.Stats.Victories);
+            Assert.Equal(InfinityPhase.WaitingSoulFinish, state.Phase);
+            Assert.False(profile.Run.AwaitingChoice);
+
+            Assert.False(state.ObserveSoul(true, true, true));
+            Assert.True(state.ObserveSoul(false, true, true));
+            Rules.ReachInfinityChoice(profile);
+            Assert.True(profile.Run.AwaitingChoice);
+            Assert.Equal(InfinityPhase.AwaitingChoice, state.Phase);
+            Assert.False(ClientSession.HostCombatChoiceSuspended);
+        }
+
         /// <summary>深さ0から深度3まで潜り、純白の入口（ゾーン2）で選択を保留した状態。</summary>
         private static Profile EntranceProfile()
         {

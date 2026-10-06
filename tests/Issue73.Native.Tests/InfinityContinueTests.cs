@@ -86,6 +86,96 @@ namespace Issue73.Native.Tests
             Assert.Equal(savedBudget.HighRare, profile.InfinityRewardBudget.HighRare, 10); // 予算の消費も一致
         }
 
+        [Fact]
+        public void Guest_new_graph_zone_is_checkpointed_and_continue_restores_it_after_later_travel()
+        {
+            var session = HostSession();
+            Set(typeof(ClientSession), "_hostSession", null);
+            NetworkServer.active = false;
+            NetworkClient.active = true;
+            InfinityMode.NativeSaveAgreement = true;
+            Set(session, "_zone", new ZoneManager { currentZoneIndex = 0 });
+            var progress = (RunChoiceProgress)Get(session, "_runChoiceProgress");
+            progress.BeginRun("run", 0);
+            Call(session, "ReceiveContinueHandshake", new DreamforgeHelloMsg
+            {
+                protocol = Protocol.Version, continueRunId = "run",
+            });
+
+            var profile = session.Profile;
+            var state = profile.Run.Infinity;
+            for (int node = 1; node <= state.Interval; node++) FightInfinityRoom(profile, node);
+            Assert.True(state.TryEnterBoss());
+            Assert.True(state.ObserveBossClear());
+            Assert.False(state.ObserveSoul(true, true, true));
+            Assert.True(state.ObserveSoul(false, true, true));
+            Rules.ReachInfinityChoice(profile);
+            // TickInfinity writes this departed graph receipt before the guest's durable Delve ACK.
+            state.SettledGraphEpoch = state.GraphEpoch;
+            state.SettledSegmentEpoch = state.SegmentEpoch;
+            Rules.Delve(profile);
+            Assert.Equal(InfinityPhase.Transitioning, state.Phase);
+            var departed = RunChoiceSnapshot.Capture(profile.Run, 3, 0, revision: 1, authorityGeneration: 232);
+
+            var host = profile.Clone();
+            Assert.True(host.Run.Infinity.CompleteGraphTransition(1));
+            host.Run.Infinity.FixedZoneId = "Zone_Cloud";
+            var arrived = RunChoiceSnapshot.Capture(host.Run, 3, 0, revision: 2, authorityGeneration: 232);
+            Call(session, "OnRunChoices", new DreamforgeRunChoicesMsg
+            {
+                protocol = Protocol.Version, choices = arrived.Encode(),
+            });
+            Assert.Equal("Zone_Mist", state.FixedZoneId);
+            Assert.Equal(0, state.GraphEpoch);
+
+            // The real native checkpoint barrier synchronizes the received graph before capturing its receipt.
+            Call(session, "OnContinueCheckpoint", new DreamforgeContinueCheckpointMsg
+            {
+                protocol = Protocol.Version, runId = "run", checkpointId = "zone-checkpoint",
+            });
+            Assert.Equal("Zone_Cloud", state.FixedZoneId);
+            Assert.Equal(1, state.GraphEpoch);
+            Assert.Equal(1, state.SegmentEpoch);
+            Assert.Equal(InfinityPhase.Exploring, state.Phase);
+            Assert.Equal(state.Interval, state.ClearedCombatTotal);
+            Assert.Equal(0, state.ClearsInCycle);
+            Assert.Empty(state.ClearedNodes);
+            Assert.Equal(1, profile.Run.Heat - profile.Run.StartDepth);
+            var checkpoint = Assert.Single(profile.ContinueCheckpoints);
+
+            // A delayed old graph snapshot must not put the guest back into the previous zone.
+            Call(session, "OnRunChoices", new DreamforgeRunChoicesMsg
+            {
+                protocol = Protocol.Version, choices = departed.Encode(),
+            });
+            Call(session, "TickInfinity");
+            Assert.Equal("Zone_Cloud", state.FixedZoneId);
+            Assert.Equal(1, state.GraphEpoch);
+
+            for (int node = 1; node <= state.Interval; node++) FightInfinityRoom(profile, node);
+            Assert.True(state.TryEnterBoss());
+            Assert.True(state.ObserveBossClear());
+            Assert.False(state.ObserveSoul(true, true, true));
+            Assert.True(state.ObserveSoul(false, true, true));
+            Rules.ReachInfinityChoice(profile);
+            state.SettledGraphEpoch = state.GraphEpoch;
+            state.SettledSegmentEpoch = state.SegmentEpoch;
+            Rules.Delve(profile);
+            Assert.True(state.CompleteGraphTransition(2));
+            state.FixedZoneId = "Zone_Later";
+            Call(session, "ReceiveContinueHandshake", new DreamforgeHelloMsg
+            {
+                protocol = Protocol.Version, continueRunId = "run",
+                continueCheckpointId = checkpoint.Id, continueResumeSession = "zone-resume",
+            });
+            Assert.Equal("Zone_Cloud", profile.Run.Infinity.FixedZoneId);
+            Assert.Equal(1, profile.Run.Infinity.GraphEpoch);
+            Assert.Equal(1, profile.Run.Infinity.SegmentEpoch);
+            Assert.Equal(state.Interval, profile.Run.Infinity.ClearedCombatTotal);
+            Assert.Empty(profile.Run.Infinity.ClearedNodes);
+            Assert.Null(session.ContinueWarning);
+        }
+
         /// <summary>戦闘部屋1つの突破。入場・戦闘時間・撃破・実クリアを1部屋分まとめて進める。</summary>
         private static void FightInfinityRoom(Profile profile, int node)
         {
@@ -164,6 +254,7 @@ namespace Issue73.Native.Tests
         {
             NetworkServer.active = false;
             NetworkClient.active = false;
+            InfinityMode.NativeSaveAgreement = false;
             _finishNativeContinue = null;
             Time.frameCount = 1;
             Time.unscaledTime = 100;
