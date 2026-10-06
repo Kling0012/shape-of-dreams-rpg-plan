@@ -300,22 +300,23 @@ namespace SodRpg.Core.Tests
             foreach (var spec in Specs)
             {
                 var ids = new HashSet<string>(Pieces(spec.SetId).Select(u => u.Id), StringComparer.Ordinal);
-                var before = BossPieceUids();
                 int own = 0;
                 for (ulong seed = 1; seed <= 120; seed++)
                 {
+                    p.Run.Satchel.Clear();
                     p.Run.Bounties.Clear();
                     Rules.OnKill(p, MonsterTier.Boss, 12, NightmareAffix.None, Hero,
                         bossTypeName: spec.BossType, bossDropNightmare: false, bossDropDepth: 0);
+                    foreach (var relic in p.Run.Satchel)
+                        if (relic.UniqueId != null && Content.TryGetUnique(relic.UniqueId, out var u) && BossSets.IsExclusive(u))
+                        {
+                            Assert.True(ids.Contains(u.Id), $"{spec.BossType} dropped a foreign piece: {u.Id}");
+                            own++;
+                        }
                 }
-                foreach (var relic in p.Run.Satchel.Where(r => !before.Contains(r.Uid)))
-                    if (relic.UniqueId != null && Content.TryGetUnique(relic.UniqueId, out var u) && BossSets.IsExclusive(u))
-                    {
-                        Assert.True(ids.Contains(u.Id), $"{spec.BossType} dropped a foreign piece: {u.Id}");
-                        own++;
-                    }
-                // 通常・基礎深度 p=10%・120撃破で期待12。確定保証ではないので下限は緩く取る。
-                Assert.True(own >= 4, $"{spec.BossType} dropped only {own} pieces in 120 kills");
+                double chance = LootEconomyInputs.BossChance(false, 0);
+                double tolerance = LootEconomyInputs.SamplingTolerance(chance * (1 - chance), 120);
+                Assert.InRange(own / 120.0, chance - tolerance, chance + tolerance);
             }
         }
 

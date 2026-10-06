@@ -1,0 +1,96 @@
+{
+  "schemaVersion": 1,
+  "offerChance": 0.5,
+  "stargazerDropBonus": 0.3,
+  "luckyStarLuck": 0.4,
+  "merchant": {
+    "baseShards": 50,
+    "shardsPerHeat": 10
+  },
+  "twinMirror": {
+    "shards": 30,
+    "epicShards": 60
+  },
+  "chalice": {
+    "winChance": 0.5,
+    "bonusMultiplier": 1
+  },
+  "cauldron": {
+    "relicCount": 3
+  },
+  "tapir": {
+    "relicsPerTuning": 3
+  },
+  "courageGate": {
+    "heatIncrement": 1,
+    "shards": 40
+  },
+  "archive": {
+    "baseXp": 40,
+    "xpPerHeat": 20
+  },
+  "memoryWell": {
+    "tuning": 1,
+    "epicTuning": 2
+  },
+  "shadowExchange": {
+    "shards": 25,
+    "epicShards": 50
+  },
+  "lostMausoleum": {
+    "shards": 60
+  },
+  "relicWager": {
+    "rareWinChance": 0.2,
+    "lowerWinChance": 0.5
+  },
+  "stoneBroker": {
+    "shards": 35,
+    "tuning": 2
+  },
+  "shardKiln": {
+    "tuning": 2,
+    "shards": 45
+  },
+  "starOffering": {
+    "xp": 40
+  },
+  "dreamOffering": {
+    "baseXp": 40,
+    "xpPerHeat": 20
+  },
+  "abyssalChest": {
+    "shards": 75,
+    "heatIncrement": 1
+  },
+  "sealedVault": {
+    "shards": 40
+  },
+  "offerWeights": {
+    "Merchant": 8,
+    "Fountain": 8,
+    "Chalice": 8,
+    "Lantern": 8,
+    "ForgeShrine": 8,
+    "TwinMirror": 8,
+    "Stargazer": 8,
+    "Cauldron": 8,
+    "Tapir": 8,
+    "CourageGate": 8,
+    "Archive": 8,
+    "LuckyStar": 8,
+    "MemoryWell": 6,
+    "ShadowExchange": 8,
+    "LostMausoleum": 5,
+    "RelicWager": 6,
+    "TemperingAltar": 6,
+    "StoneBroker": 8,
+    "ShardKiln": 8,
+    "StarOffering": 6,
+    "DreamOffering": 6,
+    "AbyssalChest": 5,
+    "RelicExchange": 8,
+    "SealedVault": 5,
+    "PowerCrucible": 5
+  }
+}

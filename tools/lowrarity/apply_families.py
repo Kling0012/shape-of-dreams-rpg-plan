@@ -7,7 +7,7 @@ Modes
              Input: base-families.json = {"<base id>": "<Family>", ...}
                     or [{"id": "...", "family": "..."}, ...]
   new-bases  append new BaseDef lines at the end of Content.Bases.
-             Input: new-bases.json = [{"id", "slot", "line", "ja", "en", "stat", "value", "family"}, ...]
+             Input: new-bases.json metadata with canonical valueRef (no numeric value).
              `slot`, `line`, `stat` and `family` are enum member names (e.g. "Weapon", "Offense", "Haste", "Frost").
              Ids are only ever added; an id that already exists aborts the run.
 
@@ -22,10 +22,13 @@ import json
 import os
 import re
 import sys
+from pathlib import Path
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.abspath(os.path.join(HERE, "..", ".."))
 DEFAULT_CONTENT = os.path.join(ROOT, "src", "SodRpg.Core", "Game", "Content.cs")
+sys.path.insert(0, str(Path(ROOT) / "tools/balance"))
+from equipment_items_values import constant_name, load_bases
 
 FAMILIES = {"Plain", "Frost", "Flame", "Light", "Dark", "Guard", "Gale", "Mend", "Summon", "Memory"}
 SLOTS = {"Weapon", "Armor", "Charm", "Head", "Hands", "Feet"}
@@ -33,7 +36,7 @@ LINES = {"Offense", "Guard", "Resonance"}
 
 # new BaseDef("id", Slot.X, Line.Y, new Txt("ja", "en"), Stat.Z, 5[, Family.F])[,]
 BASE_RE = re.compile(
-    r'^(?P<indent>\s*)new BaseDef\("(?P<id>[^"]+)", (?P<head>Slot\.\w+, Line\.\w+, new Txt\("[^"]*", "[^"]*"\), Stat\.\w+, -?\d+)'
+    r'^(?P<indent>\s*)new BaseDef\("(?P<id>[^"]+)", (?P<head>Slot\.\w+, Line\.\w+, new Txt\("[^"]*", "[^"]*"\), Stat\.\w+, EquipmentItemsBalanceValues\.\w+)'
     r'(?:, Family\.(?P<fam>\w+))?\)(?P<comma>,?)(?P<tail>\s*)$'
 )
 
@@ -120,6 +123,7 @@ def append_new_bases(text, entries):
         raise ValueError("unexpected end of Content.Bases at line %d" % (last + 2))
     new_lines = []
     batch_ids = set()
+    values = load_bases()
     for e in entries:
         base_id = e["id"]
         if base_id in existing or base_id in batch_ids:
@@ -131,9 +135,14 @@ def append_new_bases(text, entries):
         if not re.fullmatch(r"\w+", e["stat"]):
             raise ValueError("%s: bad stat %r" % (base_id, e["stat"]))
         family_arg = "" if e["family"] == "Plain" else ", Family.%s" % e["family"]
-        new_lines.append("            new BaseDef(%s, Slot.%s, Line.%s, new Txt(%s, %s), Stat.%s, %d%s)," % (
-            cs_string(base_id), e["slot"], e["line"], cs_string(e["ja"]), cs_string(e["en"]),
-            e["stat"], int(e["value"]), family_arg))
+        expected_ref = "equipment/bases.json#%s/implicitValue" % base_id
+        if "value" in e or e.get("valueRef") != expected_ref or base_id not in values:
+            raise ValueError("%s: expected canonical valueRef" % base_id)
+        if values[base_id]["stat"] != e["stat"]:
+            raise ValueError("%s: stat must match canonical relation" % base_id)
+        new_lines.append("            new BaseDef(%s, Slot.%s, Line.%s, new Txt(%s, %s), Stat.%s, EquipmentItemsBalanceValues.%s%s)," % (
+            cs_string(base_id), e["slot"], e["line"], cs_string(e.get("ja", e.get("nameJa"))), cs_string(e.get("en", e.get("nameEn"))),
+            e["stat"], constant_name("Base", base_id), family_arg))
     lines[last + 1:last + 1] = new_lines
     return eol.join(lines), len(new_lines)
 

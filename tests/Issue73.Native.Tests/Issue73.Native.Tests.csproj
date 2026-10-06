@@ -30,6 +30,7 @@
     <Compile Include="../../src/SodRpg.Mod/NetMessages.cs" Link="ModUnderTest/NetMessages.cs" />
     <Compile Include="../../src/SodRpg.Mod/NetMessages.KillSync.cs" Link="ModUnderTest/NetMessages.KillSync.cs" />
     <Compile Include="../../src/SodRpg.Mod/PressureDividendMessages.cs" Link="ModUnderTest/PressureDividendMessages.cs" />
+    <Compile Include="../SodRpg.Core.Tests/EventBalanceTestData.cs" Link="EventBalanceTestData.cs" />
   </ItemGroup>
   <Import Project="NativePersistence.targets" />
 </Project>

@@ -13,13 +13,14 @@ namespace SodRpg.Core.Tests
         };
 
         [Theory]
-        [InlineData(Stat.HealPower, 20, 60)]
-        [InlineData(Stat.ShieldPower, 21, 60)]
-        [InlineData(Stat.SummonPower, 22, 80)]
-        [InlineData(Stat.SacrificeReduction, 23, 40)]
+        [InlineData(Stat.HealPower, 20)]
+        [InlineData(Stat.ShieldPower, 21)]
+        [InlineData(Stat.SummonPower, 22)]
+        [InlineData(Stat.SacrificeReduction, 23)]
         public void Support_stats_keep_wire_ids_and_caps(
-            Stat stat, int wireId, int cap)
+            Stat stat, int wireId)
         {
+            int cap = EquipmentBalanceInputs.Cap(stat);
             Assert.Equal(wireId, (int)stat);
             Assert.Equal(cap, Content.StatCap(stat));
         }
@@ -32,41 +33,41 @@ namespace SodRpg.Core.Tests
             var decoded = Build.Decode(build.Encode());
             Assert.NotNull(decoded);
             Assert.Equal(12, decoded.Get(Stat.AttackPct));
-            Assert.Equal(1, decoded.Get(Stat.EssenceSlotMovement));
-            Assert.Equal(13, decoded.Get(Stat.HealPower));
-            Assert.Equal(24, decoded.Get(Stat.ShieldPower));
-            Assert.Equal(35, decoded.Get(Stat.SummonPower));
-            Assert.Equal(16, decoded.Get(Stat.SacrificeReduction));
+            Assert.Equal(Math.Min(1, EquipmentBalanceInputs.Cap(Stat.EssenceSlotMovement)), decoded.Get(Stat.EssenceSlotMovement));
+            Assert.Equal(Math.Min(13, EquipmentBalanceInputs.Cap(Stat.HealPower)), decoded.Get(Stat.HealPower));
+            Assert.Equal(Math.Min(24, EquipmentBalanceInputs.Cap(Stat.ShieldPower)), decoded.Get(Stat.ShieldPower));
+            Assert.Equal(Math.Min(35, EquipmentBalanceInputs.Cap(Stat.SummonPower)), decoded.Get(Stat.SummonPower));
+            Assert.Equal(Math.Min(16, EquipmentBalanceInputs.Cap(Stat.SacrificeReduction)), decoded.Get(Stat.SacrificeReduction));
         }
 
         [Theory]
-        [InlineData(999, 60, 60, 80, 40)]
-        [InlineData(-999, -60, -60, -80, -40)]
-        public void Untrusted_support_values_are_capped_and_unknown_ids_are_rejected(
-            int value, int heal, int shield, int summon, int sacrifice)
+        [InlineData(int.MaxValue)]
+        [InlineData(int.MinValue)]
+        public void Untrusted_support_values_are_capped_and_unknown_ids_are_rejected(int value)
         {
             Assert.Null(Build.Decode($"s:20={value},21={value},22={value},23={value},999=40;p:"));
             var decoded = Build.Decode($"s:20={value},21={value},22={value},23={value};p:");
             Assert.NotNull(decoded);
-            Assert.Equal(heal, decoded.Get(Stat.HealPower));
-            Assert.Equal(shield, decoded.Get(Stat.ShieldPower));
-            Assert.Equal(summon, decoded.Get(Stat.SummonPower));
-            Assert.Equal(sacrifice, decoded.Get(Stat.SacrificeReduction));
+            foreach (var stat in Support)
+            {
+                int cap = EquipmentBalanceInputs.Cap(stat);
+                Assert.Equal(Math.Max(-cap, Math.Min(cap, value)), decoded.Get(stat));
+            }
             Assert.False(decoded.Stats.ContainsKey((Stat)999));
         }
 
         [Theory]
-        [InlineData(200f, -20f, 200f, 200f, 200f, 200f)]
-        [InlineData(200f, 12.5f, 225f, 225f, 225f, 175f)]
-        [InlineData(200f, 999f, 320f, 320f, 360f, 120f)]
-        [InlineData(0f, 999f, 0f, 0f, 0f, 0f)]
-        public void Support_math_uses_percent_units_and_clamps_without_eliminating_hp_costs(
-            float amount, float percent, float heal, float shield, float summon, float sacrifice)
+        [InlineData(200f, -20f)]
+        [InlineData(200f, 12.5f)]
+        [InlineData(200f, 999f)]
+        [InlineData(0f, 999f)]
+        public void Support_math_uses_percent_units_and_clamps_without_eliminating_hp_costs(float amount, float percent)
         {
-            Assert.Equal(heal, SupportStats.AmplifyHeal(amount, percent), 3);
-            Assert.Equal(shield, SupportStats.AmplifyShield(amount, percent), 3);
-            Assert.Equal(summon, SupportStats.AmplifySummonDamage(amount, percent), 3);
-            Assert.Equal(sacrifice, SupportStats.ReduceSacrifice(amount, percent), 3);
+            float Clamped(Stat stat) => Math.Max(0f, Math.Min(EquipmentBalanceInputs.Cap(stat), percent));
+            Assert.Equal(amount * (1f + Clamped(Stat.HealPower) / 100f), SupportStats.AmplifyHeal(amount, percent), 3);
+            Assert.Equal(amount * (1f + Clamped(Stat.ShieldPower) / 100f), SupportStats.AmplifyShield(amount, percent), 3);
+            Assert.Equal(amount * (1f + Clamped(Stat.SummonPower) / 100f), SupportStats.AmplifySummonDamage(amount, percent), 3);
+            Assert.Equal(amount * (1f - Clamped(Stat.SacrificeReduction) / 100f), SupportStats.ReduceSacrifice(amount, percent), 3);
         }
 
         [Fact]

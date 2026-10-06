@@ -213,10 +213,10 @@ namespace SodRpg.Mod
             state.LastReconcile=now;
             bool current=LastStarlightCurrent(state);
             int stage=current && BossEnsure(state.Runtime)?BossRewardStage(state.Runtime,BossProfiles.ErebosRewardId):0;
-            float delayDelta=stage>0?-Math.Min(.2f,Math.Max(0,state.Delay-.25f)):0;
-            float attractionDelta=stage>=2?Math.Min(1,Math.Max(0,12-state.Attraction)):0;
-            float tickDelta=stage>=2?Math.Min(.5f,Math.Max(0,8-state.TickRadius)):0;
-            float durationDelta=stage>=3?Math.Min(1,Math.Max(0,6-state.Duration)):0;
+            float delayDelta=stage>0?-Math.Min(PowersBalance.LastStarlightDelayReductionMax,Math.Max(0,state.Delay-PowersBalance.LastStarlightDelayFloor)):0;
+            float attractionDelta=stage>=2?Math.Min(PowersBalance.LastStarlightAttractionBonusMax,Math.Max(0,PowersBalance.LastStarlightAttractionCap-state.Attraction)):0;
+            float tickDelta=stage>=2?Math.Min(PowersBalance.LastStarlightTickRadiusBonusMax,Math.Max(0,PowersBalance.LastStarlightTickRadiusCap-state.TickRadius)):0;
+            float durationDelta=stage>=3?Math.Min(PowersBalance.LastStarlightDurationBonusMax,Math.Max(0,PowersBalance.LastStarlightDurationCap-state.Duration)):0;
             // Preserve any external/native write and remove only this adapter's own difference.
             state.Instance.delay+=delayDelta-state.DelayDelta;
             state.Instance.duration+=durationDelta-state.DurationDelta;
@@ -251,7 +251,7 @@ namespace SodRpg.Mod
                 ReconcileLastStarlight(state,now);
                 if (state.Stage<3 || state.Relocated || state.Active || state.Instance.Network_isBlackholeOn
                     || !state.Waiting || now>=state.WaitStart+state.Delay+state.DelayDelta) continue;
-                if (!BossGround(state.OriginalCenter,endpoint,2,out var center)) continue;
+                if (!BossGround(state.OriginalCenter,endpoint,PowersBalance.LastStarlightRelocateRange,out var center)) continue;
                 var info=state.Instance.info; info.point=center;
                 state.Instance.FxStopNetworked(state.Instance.fxBlackholePrepare);
                 state.Instance.Network_info=info;

@@ -28,6 +28,7 @@ public sealed class Options
     public string InfinityScope { get; private set; } = "full";
     public bool Stars => Mode == "stars";
     public bool Sets => Mode == "sets";
+    public bool Equipment => Mode == "equipment";
     public bool V132Stars => Mode == "v132stars";
     public bool Infinity => Mode == "infinity";
     public bool Forge => Mode == "forge";
@@ -80,8 +81,9 @@ public sealed class Options
                     o.MetricsJson = value;
                     break;
                 case "--mode":
-                    if (value is not ("expeditions" or "stars" or "sets" or "v132stars" or "infinity" or "forge" or "star-efficiency" or "star-values" or "star-progression" or "pressure"))
-                        throw new ArgumentException("--mode は expeditions / stars / sets / v132stars / infinity / forge / star-efficiency / star-values / star-progression / pressure です。");
+                    if (Stage6Report.Supports(value)) { o.Mode = value; break; }
+                    if (value is not ("expeditions" or "stars" or "sets" or "equipment" or "v132stars" or "infinity" or "forge" or "star-efficiency" or "star-values" or "star-progression" or "pressure"))
+                        throw new ArgumentException("--mode は expeditions / stars / sets / equipment / v132stars / infinity / forge / star-efficiency / star-values / star-progression / pressure です。");
                     o.Mode = value;
                     break;
                 case "--infinity-scope":
@@ -104,8 +106,9 @@ public sealed class Options
         }
         if ((long)o.Zones * o.Rooms > int.MaxValue)
             throw new ArgumentException("ゾーン数×部屋数は32ビット整数の範囲にしてください。");
-        if (o.MetricsJson != null && o.Mode is not ("expeditions" or "forge" or "star-efficiency" or "star-values" or "star-progression" or "v132stars" or "pressure" or "infinity"))
-            throw new ArgumentException("--metrics-json は expeditions / forge / star-efficiency / star-values / star-progression / v132stars / pressure / infinity のみ対応しています。");
+        if (Stage6Report.Supports(o.Mode)) return o;
+        if (o.MetricsJson != null && o.Mode is not ("expeditions" or "sets" or "equipment" or "forge" or "star-efficiency" or "star-values" or "star-progression" or "v132stars" or "pressure" or "infinity"))
+            throw new ArgumentException("--metrics-json は expeditions / sets / equipment / forge / star-efficiency / star-values / star-progression / v132stars / pressure / infinity のみ対応しています。");
         return o;
     }
 
@@ -150,11 +153,12 @@ public sealed class Options
           --bounty 0.6       本体行動に依存する依頼の達成確率
           --item-level 1     最初のゾーンのアイテムレベル
           --item-level-per-zone 1  次のゾーンで増えるアイテムレベル
-          --mode expeditions  expeditions / stars / sets / v132stars / infinity / forge / star-efficiency / star-values / star-progression / pressure
+          --mode expeditions  expeditions / stars / sets / equipment / v132stars / infinity / forge / star-efficiency / star-values / star-progression / pressure
+          段階6モード       loot-economy / pact-daily-waypoints / events（--metrics-json 対応）
           --star-max-points 500  stars の最終節目（50〜500、50刻み。軽量実行は50）
           --infinity-scope full  infinity の full（全周期）/ comparison（30分、Core既定周期、通常深度0/5＋4構成）
           --out <path>       標準出力に加えてUTF-8のMarkdownファイルに保存
-          --metrics-json <path>  expeditions / forge / star-efficiency / star-values / star-progression / v132stars / pressure / infinity の生データと未丸め集計をJSONに保存
+          --metrics-json <path>  expeditions / sets / equipment / forge / star-efficiency / star-values / star-progression / v132stars / pressure / infinity の生データと未丸め集計をJSONに保存
           --help             この説明を表示
         """;
 }

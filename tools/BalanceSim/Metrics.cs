@@ -10,7 +10,8 @@ internal sealed record MetricValue(string Id, string Label, double? Value, strin
 internal sealed record StarEfficiencyMetricValue(string Id, string Label, decimal? Value, string Unit,
     string Status = "measured");
 internal sealed record ForgeMetricValue(string Id, string Label, decimal? Value, string Unit, string Status);
-internal sealed record QuantityMetricValue(string Id, string Label, double? Value, string Unit, string Status = "measured");
+internal sealed record QuantityMetricValue(string Id, string Label, double? Value, string Unit, string Status = "measured",
+    string Type = "double");
 
 internal static class Metrics
 {
@@ -24,6 +25,23 @@ internal static class Metrics
     private static readonly string[] CapacityIds =
         ["satchelFullTransitions", "satchelOverflowSalvaged", "stashFullTransitions", "stashOverflowSalvaged"];
 
+
+    internal static void WriteStage6(string path, string mode, IReadOnlyList<QuantityMetricValue> metrics) => Write(path, new
+    {
+        modelVersion = 1, mode, contentFingerprint = ContentFingerprint.Value,
+        conditions = new
+        {
+            runtime = RuntimeIdentity(), registeredHeroes = RegisteredHeroes(),
+            valuePolicy = Stage6Report.ValuePolicy,
+            heatPolicy = "all integer heat levels 0..Content.MaxHeat; drop tiers and rarities independently",
+            effectPolicy = "each pact, daily dream and waypoint independently; no combined build or combat simulation",
+            eventPolicy = "definition prices/rewards/chances, eligible targets; no native gold/dust trade execution",
+            distributionPolicy = LootEconomyReport.Policy,
+            secureProjection = new { unsecuredShards = LootEconomyReport.SecureSampleShards,
+                inventory = "empty; no bounties; Infinity inactive", pacts = "none or CursedHoard independently" },
+        },
+        metrics,
+    });
     public static void WriteForge(string path, IReadOnlyList<ForgeEntry> entries)
     {
         var metrics = entries.Select(entry => new ForgeMetricValue(
@@ -290,6 +308,61 @@ internal static class Metrics
         });
     }
 
+    public static void WriteSets(string path, IReadOnlyList<SetBalanceResult> results)
+    {
+        double median = SetBalance.MedianSixBonusGain(results);
+        var metrics = new List<QuantityMetricValue>();
+        foreach (var result in results)
+        {
+            string id = $"sets/{result.Id}";
+            void Add(string field, double value, string unit = "PowerScore", string status = "measured") =>
+                metrics.Add(new(id + "/" + field, result.Name + " " + field, value, unit, status));
+            Add("baseline", result.Baseline);
+            Add("twoPieces", result.TwoPieces);
+            Add("threePieces", result.ThreePieces);
+            Add("sixPieces", result.SixPieces);
+            Add("sixPiecesWithoutBonus", result.SixPiecesWithoutBonus);
+            Add("gain2", result.Gain2);
+            Add("gain3", result.Gain3);
+            Add("gain6", result.Gain6);
+            Add("sixBonusGain", result.SixBonusGain, status: SetBalance.Verdict(result.SixBonusGain, median));
+            Add("sixShare", result.SixShare, "ratio");
+        }
+        metrics.Add(new("sets/medianSixBonusGain", "6点ボーナス利得の中央値", median, "PowerScore"));
+        metrics.Add(new("sets/bandMinimum", "6点ボーナス許容帯の下限", median * SetBalance.WeakRatio, "PowerScore"));
+        metrics.Add(new("sets/bandMaximum", "6点ボーナス許容帯の上限", median * SetBalance.StrongRatio, "PowerScore"));
+        Write(path, new
+        {
+            modelVersion = 1, mode = "sets", contentFingerprint = ContentFingerprint.Value,
+            conditions = new
+            {
+                runtime = RuntimeIdentity(), registeredHeroes = RegisteredHeroes(),
+                hero = SetBalance.HeroKey, itemLevel = SetBalance.GearItemLevel,
+                alternativeRollsPerSlotAndRarity = SetBalance.AlternativeRolls,
+                seedPolicy = "fixed internal SetBalance seeds; independent of CLI seed",
+                fixedSeeds = SetBalance.SeedIdentity,
+                selectionPolicy = "first 2/3/6 pieces in Content registration order; remaining slots use alternatives",
+                alternativePolicy = "best sampled non-set Epic/Legendary item per slot; no enhancement or awakening",
+                valuePolicy = "existing PowerScore sums cap-normalized Build stats/powers; not DPS, win rate or encounter time",
+                bandPolicy = "sixBonusGain / median; strict outside bounds, otherwise ok; median <= 0 is strong",
+                weakRatio = SetBalance.WeakRatio, strongRatio = SetBalance.StrongRatio,
+                limitations = "48 ordinary sets only; excludes boss profiles, ordinary links and combat activation frequency",
+            },
+            metrics, sets = results,
+        });
+    }
+
+    public static void WriteEquipment(string path, IReadOnlyList<EquipmentEntry> entries) => Write(path, new
+    {
+        modelVersion = 1, mode = "equipment", contentFingerprint = ContentFingerprint.Value,
+        conditions = new
+        {
+            runtime = RuntimeIdentity(), registeredHeroes = RegisteredHeroes(),
+            valuePolicy = EquipmentReport.ValuePolicy, limitations = EquipmentReport.Limitations,
+            aggregationPolicy = "individual typed values only; no sums across units or currency caps",
+        },
+        metrics = entries, entries,
+    });
     public static void WriteV132Stars(string path, Options options, IReadOnlyList<EconomyResult> economy,
         IReadOnlyList<GrowthResult> growth, IReadOnlyList<GrowthResult> sensitivity)
     {

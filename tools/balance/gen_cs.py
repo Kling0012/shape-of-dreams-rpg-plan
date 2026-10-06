@@ -11,10 +11,15 @@ import gear_values
 import set_values
 import forge_values
 import star_progression_values
+import boss_values
 import star_values
 import pressure_values
 import monster_values
 import infinity_values
+import stage6_values
+import equipment_items_values
+import powers_values
+import equipment_pools_values
 
 ROOT = Path(__file__).resolve().parents[2]
 FORGE_PATH = ROOT / "tools" / "balance" / "forge.json"
@@ -36,6 +41,7 @@ def _star_generator():
 
 def generate(check=False):
     # Resolve and render every domain before publishing any file.
+    stage6 = stage6_values.render_outputs()
     forge = render_forge(load_forge())
     gear = gear_values.render_outputs()
     sets = set_values.render_outputs()
@@ -48,10 +54,15 @@ def generate(check=False):
     outputs[OUTPUT_PATH] = forge
     outputs.update(gear)
     outputs.update(sets)
+    outputs.update(boss_values.render_outputs())
     outputs.update(progression)
     outputs.update(pressure)
     outputs.update(monsters)
     outputs.update(infinity)
+    outputs.update(stage6)
+    outputs.update(equipment_items_values.render_outputs())
+    outputs.update(powers_values.render_outputs())
+    outputs.update(equipment_pools_values.render_outputs())
     return stars.publish_outputs(outputs, check=check)
 
 

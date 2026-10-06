@@ -13,6 +13,7 @@
   <ItemGroup>
     <InternalsVisibleTo Include="SodRpg.Core.Tests" />
     <InternalsVisibleTo Include="Issue73.Native.Tests" />
+    <InternalsVisibleTo Include="BalanceSim" />
   </ItemGroup>
 
 </Project>

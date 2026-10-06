@@ -6,11 +6,11 @@ namespace SodRpg.Core.Game
     /// <summary>Registered boss sources and their exclusive, uniformly selected set pieces.</summary>
     public static class BossSets
     {
-        public const int NormalDropPercent = 10;
-        public const int NightmareBonusPercent = 5;
-        public const int DepthBonusPercent = 1;
-        public const int MaxDropDepth = 5;
-        public const int MaxDropPercent = 20;
+        public const int NormalDropPercent = BossSetsBalance.NormalDropPercent;
+        public const int NightmareBonusPercent = BossSetsBalance.NightmareBonusPercent;
+        public const int DepthBonusPercent = BossSetsBalance.DepthBonusPercent;
+        public const int MaxDropDepth = BossSetsBalance.MaxDropDepth;
+        public const int MaxDropPercent = BossSetsBalance.MaxDropPercent;
 
         private static readonly Dictionary<string, SetDef> Sources = new Dictionary<string, SetDef>(StringComparer.Ordinal);
         private static readonly Dictionary<SetDef, UniqueDef[]> Pieces = new Dictionary<SetDef, UniqueDef[]>();

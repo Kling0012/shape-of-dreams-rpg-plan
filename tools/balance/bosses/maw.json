@@ -1,0 +1,202 @@
+{
+  "schemaVersion": 1,
+  "shared": {
+    "fanMaxTargets": 8,
+    "fanMaxInstances": 1
+  },
+  "moves": {
+    "weapon": {
+      "channels": {
+        "MawBite": {
+          "value": 18,
+          "cap": 18
+        }
+      },
+      "actions": [
+        {
+          "cooldownMillis": 4000,
+          "rangeMilli": 3000,
+          "angleMilli": 120000
+        }
+      ]
+    },
+    "armor": {
+      "channels": {
+        "MawConversion": {
+          "value": 14,
+          "cap": 14
+        }
+      },
+      "actions": [
+        {
+          "cooldownMillis": 6000,
+          "lifetimeMillis": 2000,
+          "maxTargets": 1,
+          "maxInstances": 1,
+          "magnitudeMilli": 15000
+        }
+      ]
+    },
+    "charm": {
+      "channels": {
+        "MawGreatjaw": {
+          "value": 6,
+          "cap": 6
+        }
+      },
+      "actions": [
+        {
+          "cooldownMillis": 5000,
+          "mainHits": 4,
+          "counterLifetimeMillis": 4000,
+          "maxTargets": 1,
+          "maxInstances": 1,
+          "magnitudeMilli": 8000
+        }
+      ]
+    },
+    "head": {
+      "channels": {
+        "MawStance": {
+          "value": 16,
+          "cap": 16
+        }
+      },
+      "actions": [
+        {
+          "cooldownMillis": 6000,
+          "lifetimeMillis": 600,
+          "maxTargets": 8,
+          "maxInstances": 2,
+          "rangeMilli": 6000,
+          "widthMilli": 1000,
+          "speedMilli": 10000
+        },
+        {
+          "delayMillis": 150,
+          "lifetimeMillis": 600,
+          "maxTargets": 8,
+          "maxInstances": 2,
+          "rangeMilli": 6000,
+          "widthMilli": 1000,
+          "speedMilli": 10000
+        }
+      ]
+    },
+    "hands": {
+      "channels": {
+        "MawDevour": {
+          "value": 4,
+          "cap": 4
+        }
+      },
+      "actions": [
+        {
+          "cooldownMillis": 4000,
+          "maxTargets": 1,
+          "maxInstances": 1,
+          "magnitudeMilli": 10000
+        }
+      ]
+    },
+    "feet": {
+      "channels": {
+        "MawShadowbite": {
+          "value": 18,
+          "cap": 18
+        }
+      },
+      "actions": [
+        {
+          "lifetimeMillis": 2000,
+          "maxTargets": 1,
+          "maxInstances": 1
+        },
+        {
+          "cooldownMillis": 5000,
+          "rangeMilli": 3000,
+          "angleMilli": 90000
+        }
+      ]
+    },
+    "stage2": {
+      "channels": {
+        "MawCycleBite": {
+          "value": 18,
+          "cap": 18
+        }
+      },
+      "actions": [
+        {
+          "cooldownMillis": 3000,
+          "rangeMilli": 3000,
+          "angleMilli": 120000
+        },
+        {
+          "cooldownMillis": 0,
+          "rangeMilli": 3000,
+          "angleMilli": 90000
+        }
+      ]
+    },
+    "stage3": {
+      "channels": {
+        "MawPurgatory": {
+          "value": 22,
+          "cap": 22
+        }
+      },
+      "actions": [
+        {
+          "cooldownMillis": 5000,
+          "delayMillis": 500,
+          "maxTargets": 8,
+          "maxInstances": 1,
+          "radiusMilli": 2500,
+          "rangeMilli": 8000
+        }
+      ]
+    },
+    "stage6": {
+      "channels": {
+        "MawRavenousHunt": {
+          "value": 90,
+          "cap": 100
+        },
+        "MawHuntAbsorb": {
+          "value": 38,
+          "cap": 40
+        }
+      },
+      "actions": [
+        {
+          "cooldownMillis": 8000,
+          "rangeMilli": 3500,
+          "angleMilli": 120000
+        },
+        {
+          "cooldownMillis": 0,
+          "rangeMilli": 3500,
+          "angleMilli": 90000
+        }
+      ]
+    }
+  },
+  "rewards": {
+    "healValueMilli": 8000,
+    "healCapMilli": 8000,
+    "healCooldownMillis": 8000,
+    "healCount": 3,
+    "healMagnitudeMilli": 20000,
+    "shieldValueMilli": 10000,
+    "shieldCapMilli": 10000,
+    "shieldCooldownMillis": 8000,
+    "shieldCount": 3,
+    "shieldMagnitudeMilli": 20000,
+    "cooldownValueMilli": 500,
+    "cooldownCapMilli": 500,
+    "cooldownCooldownMillis": 8000,
+    "cooldownCount": 3,
+    "cooldownMagnitudeMilli": 250
+  }
+}

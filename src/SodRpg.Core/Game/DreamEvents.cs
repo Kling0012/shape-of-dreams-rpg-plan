@@ -42,13 +42,19 @@ namespace SodRpg.Core.Game
     public static class DreamEvents
     {
         /// <summary>確保地点で出来事が現れる確率。</summary>
-        public const double OfferChance = 0.5;
+        public const double OfferChance = EventsBalance.OfferChance;
         /// <summary>星読みの塔：次に確保するまでの遺物ドロップ率の上乗せ（説明文と効果の両方で使う）。</summary>
-        public const double StargazerDropBonus = 0.3;
+        public const double StargazerDropBonus = EventsBalance.StargazerDropBonus;
         /// <summary>幸運の星：次に確保するまでの幸運（レア度の上振れ）。</summary>
-        public const double LuckyStarLuck = 0.4;
+        public const double LuckyStarLuck = EventsBalance.LuckyStarLuck;
 
-        public static int MerchantCost(int heat) => 50 + 10 * Loot.ClampHeat(heat);
+        public static int MerchantCost(int heat) => EventsBalance.MerchantBaseShards + EventsBalance.MerchantShardsPerHeat * Loot.ClampHeat(heat);
+        public static int TwinMirrorCost(Rarity rarity) => rarity >= Rarity.Epic ? EventsBalance.TwinMirrorEpicShards : EventsBalance.TwinMirrorShards;
+        public static int MemoryWellCost(Rarity rarity) => rarity >= Rarity.Epic ? EventsBalance.MemoryWellEpicTuning : EventsBalance.MemoryWellTuning;
+        public static int ShadowExchangeCost(Rarity rarity) => rarity >= Rarity.Epic ? EventsBalance.ShadowExchangeEpicShards : EventsBalance.ShadowExchangeShards;
+        public static int ArchiveXp(int heat) => EventsBalance.ArchiveBaseXp + EventsBalance.ArchiveXpPerHeat * heat;
+        public static int DreamOfferingXp(int heat) => EventsBalance.DreamOfferingBaseXp + EventsBalance.DreamOfferingXpPerHeat * heat;
+        public static double RelicWagerChance(Rarity rarity) => rarity == Rarity.Rare ? EventsBalance.RelicWagerRareWinChance : EventsBalance.RelicWagerLowerWinChance;
 
         public static string Name(DreamEvent e)
         {
@@ -92,25 +98,25 @@ namespace SodRpg.Core.Game
                 case DreamEvent.Chalice: return Loc.T("欠片を賭ける", "Wager the shards");
                 case DreamEvent.Lantern: return Loc.T("遺失物を取り戻す", "Recover a lost relic");
                 case DreamEvent.ForgeShrine: return Loc.T($"欠片{Content.GuaranteedEnhanceCost(e, Rarity.Common)}（エピック以上は{Content.GuaranteedEnhanceCost(e, Rarity.Epic)}）で強化する", $"Enhance for {Content.GuaranteedEnhanceCost(e, Rarity.Common)} shards ({Content.GuaranteedEnhanceCost(e, Rarity.Epic)} for Epic+)");
-                case DreamEvent.TwinMirror: return Loc.T("欠片30（エピック以上は60）で写し取る", "Copy for 30 shards (60 for Epic+)");
+                case DreamEvent.TwinMirror: return Loc.T($"欠片{EventsBalance.TwinMirrorShards}（エピック以上は{EventsBalance.TwinMirrorEpicShards}）で写し取る", $"Copy for {EventsBalance.TwinMirrorShards} shards ({EventsBalance.TwinMirrorEpicShards} for Epic+)");
                 case DreamEvent.Stargazer: return Loc.T("星を読む", "Read the stars");
-                case DreamEvent.Cauldron: return Loc.T("3つを溶かす", "Melt three relics");
+                case DreamEvent.Cauldron: return Loc.T($"{EventsBalance.CauldronRelicCount}つを溶かす", $"Melt {(EventsBalance.CauldronRelicCount == 3 ? "three" : EventsBalance.CauldronRelicCount.ToString())} relics");
                 case DreamEvent.Tapir: return Loc.T("獏に食べさせる", "Feed the tapir");
-                case DreamEvent.CourageGate: return Loc.T("門をくぐる（潜行が1段深くなる）", "Pass the gate (delve +1)");
+                case DreamEvent.CourageGate: return Loc.T($"門をくぐる（潜行が{EventsBalance.CourageGateHeatIncrement}段深くなる）", $"Pass the gate (delve +{EventsBalance.CourageGateHeatIncrement})");
                 case DreamEvent.Archive: return Loc.T("記憶を読む", "Read the memories");
                 case DreamEvent.LuckyStar: return Loc.T("星に願う", "Wish upon the star");
-                case DreamEvent.MemoryWell: return Loc.T("調律石1（エピック以上は2）で固有効果を交換する", "Swap a power for 1 tuning stone (2 for Epic+)");
-                case DreamEvent.ShadowExchange: return Loc.T("欠片25（エピック以上は50）で最初の特性を引き直す", "Reroll the first affix for 25 shards (50 for Epic+)");
-                case DreamEvent.LostMausoleum: return Loc.T("欠片60を払い、強化を失って回収する", "Pay 60 shards and recover with lost enhancement");
+                case DreamEvent.MemoryWell: return Loc.T($"調律石{EventsBalance.MemoryWellTuning}（エピック以上は{EventsBalance.MemoryWellEpicTuning}）で固有効果を交換する", $"Swap a power for {EventsBalance.MemoryWellTuning} tuning stone ({EventsBalance.MemoryWellEpicTuning} for Epic+)");
+                case DreamEvent.ShadowExchange: return Loc.T($"欠片{EventsBalance.ShadowExchangeShards}（エピック以上は{EventsBalance.ShadowExchangeEpicShards}）で最初の特性を引き直す", $"Reroll the first affix for {EventsBalance.ShadowExchangeShards} shards ({EventsBalance.ShadowExchangeEpicShards} for Epic+)");
+                case DreamEvent.LostMausoleum: return Loc.T($"欠片{EventsBalance.LostMausoleumShards}を払い、強化を失って回収する", $"Pay {EventsBalance.LostMausoleumShards} shards and recover with lost enhancement");
                 case DreamEvent.RelicWager: return Loc.T("一番強い対象の遺物を賭ける", "Wager the strongest eligible relic");
                 case DreamEvent.TemperingAltar: return Loc.T($"最初の特性を捧げて{Content.GuaranteedEnhanceSteps(e)}段階強化する", $"Sacrifice the first affix to enhance by {Content.GuaranteedEnhanceSteps(e)} levels");
-                case DreamEvent.StoneBroker: return Loc.T("欠片35を調律石2に換える", "Trade 35 shards for 2 tuning stones");
-                case DreamEvent.ShardKiln: return Loc.T("調律石2を欠片45に換える", "Trade 2 tuning stones for 45 shards");
+                case DreamEvent.StoneBroker: return Loc.T($"欠片{EventsBalance.StoneBrokerShards}を調律石{EventsBalance.StoneBrokerTuning}に換える", $"Trade {EventsBalance.StoneBrokerShards} shards for {EventsBalance.StoneBrokerTuning} tuning stones");
+                case DreamEvent.ShardKiln: return Loc.T($"調律石{EventsBalance.ShardKilnTuning}を欠片{EventsBalance.ShardKilnShards}に換える", $"Trade {EventsBalance.ShardKilnTuning} tuning stones for {EventsBalance.ShardKilnShards} shards");
                 case DreamEvent.StarOffering: return Loc.T("遺物を捧げて星の経験を得る", "Sacrifice a relic for star experience");
                 case DreamEvent.DreamOffering: return Loc.T("遺物を捧げて夢の経験を得る", "Sacrifice a relic for dream experience");
-                case DreamEvent.AbyssalChest: return Loc.T("欠片75を払い、1段深く潜る", "Pay 75 shards and delve one level deeper");
+                case DreamEvent.AbyssalChest: return Loc.T($"欠片{EventsBalance.AbyssalChestShards}を払い、{EventsBalance.AbyssalChestHeatIncrement}段深く潜る", $"Pay {EventsBalance.AbyssalChestShards} shards and delve {(EventsBalance.AbyssalChestHeatIncrement == 1 ? "one" : EventsBalance.AbyssalChestHeatIncrement.ToString())} level deeper");
                 case DreamEvent.RelicExchange: return Loc.T("一番弱い対象の遺物を交換する", "Exchange the weakest eligible relic");
-                case DreamEvent.SealedVault: return Loc.T("欠片40で遺物1つを保管庫へ送る", "Pay 40 shards to send one relic to the stash");
+                case DreamEvent.SealedVault: return Loc.T($"欠片{EventsBalance.SealedVaultShards}で遺物1つを保管庫へ送る", $"Pay {EventsBalance.SealedVaultShards} shards to send one relic to the stash");
                 case DreamEvent.PowerCrucible: return Loc.T("最後の固有効果を捧げ、最初を交換する", "Sacrifice the last power to swap the first");
                 default: return Loc.T("この出来事を選ぶ", "Take this event");
             }
@@ -141,66 +147,66 @@ namespace SodRpg.Core.Game
                 case DreamEvent.Fountain:
                     return Loc.T($"まだ持ち帰っていない遺物のうち一番弱い物を捧げると、一番強い物が+{Content.GuaranteedEnhanceSteps(e)}強化されます。", $"Sacrifice your weakest unsecured relic to enhance your best one by +{Content.GuaranteedEnhanceSteps(e)}.");
                 case DreamEvent.Chalice:
-                    return Loc.T($"まだ持ち帰っていない欠片{run?.SatchelShards ?? 0}を賭けます。50%の確率で2倍になり、外れるとすべて失います。",
-                        $"Wager your {run?.SatchelShards ?? 0} unsecured shards: 50% to double them, otherwise you lose them all.");
+                    return Loc.T($"まだ持ち帰っていない欠片{run?.SatchelShards ?? 0}を賭けます。{EventsBalance.ChaliceWinChance * 100:g}%の確率で{1 + EventsBalance.ChaliceBonusMultiplier}倍になり、外れるとすべて失います。",
+                        $"Wager your {run?.SatchelShards ?? 0} unsecured shards: {EventsBalance.ChaliceWinChance * 100:g}% to {(EventsBalance.ChaliceBonusMultiplier == 1 ? "double them" : $"multiply them by {1 + EventsBalance.ChaliceBonusMultiplier}")}, otherwise you lose them all.");
                 case DreamEvent.Lantern:
                     return Loc.T("遺失物のうち一番良い物を1つ、この場で取り戻せます（確保するまでは、まだ持ち帰っていない扱いです）。", "Recover your best lost relic right here (it stays unsecured until you secure).");
                 case DreamEvent.ForgeShrine:
                     return Loc.T($"まだ持ち帰っていない欠片を{Content.GuaranteedEnhanceCost(e, Rarity.Common)}（対象がエピック以上なら{Content.GuaranteedEnhanceCost(e, Rarity.Epic)}）払うと、まだ持ち帰っていない遺物のうち一番強い物が+{Content.GuaranteedEnhanceSteps(e)}強化されます。",
                         $"Pay {Content.GuaranteedEnhanceCost(e, Rarity.Common)} unsecured shards ({Content.GuaranteedEnhanceCost(e, Rarity.Epic)} if the target is Epic or better) to enhance your best unsecured relic by +{Content.GuaranteedEnhanceSteps(e)}.");
                 case DreamEvent.TwinMirror:
-                    return Loc.T("まだ持ち帰っていない欠片を30（元の遺物がエピック以上なら60）払うと、まだ持ち帰っていない遺物のうち一番強い物と同じ種類・同じレア度の遺物が、もう1つ手に入ります（固有品の場合はエピックになります）。",
-                        "Pay 30 unsecured shards (60 if the source is Epic or better) to get another relic of the same type and rarity as your best unsecured relic (legendaries become epic).");
+                    return Loc.T($"まだ持ち帰っていない欠片を{EventsBalance.TwinMirrorShards}（元の遺物がエピック以上なら{EventsBalance.TwinMirrorEpicShards}）払うと、まだ持ち帰っていない遺物のうち一番強い物と同じ種類・同じレア度の遺物が、もう1つ手に入ります（固有品の場合はエピックになります）。",
+                        $"Pay {EventsBalance.TwinMirrorShards} unsecured shards ({EventsBalance.TwinMirrorEpicShards} if the source is Epic or better) to get another relic of the same type and rarity as your best unsecured relic (legendaries become epic).");
                 case DreamEvent.Stargazer:
                     return Loc.T($"次に確保するまで、遺物が{(int)Math.Round(StargazerDropBonus * 100)}%多く落ちます。",
                         $"Until you next secure, relics drop {(int)Math.Round(StargazerDropBonus * 100)}% more often.");
                 case DreamEvent.Cauldron:
-                    return Loc.T("まだ持ち帰っていないコモンかアンコモンの遺物を3つ溶かして、1つ上のレア度の遺物を1つ作ります。",
-                        "Melt 3 unsecured Common or Uncommon relics into one relic of the next rarity.");
+                    return Loc.T($"まだ持ち帰っていないコモンかアンコモンの遺物を{EventsBalance.CauldronRelicCount}つ溶かして、1つ上のレア度の遺物を1つ作ります。",
+                        $"Melt {EventsBalance.CauldronRelicCount} unsecured Common or Uncommon relics into one relic of the next rarity.");
                 case DreamEvent.Tapir:
-                    return Loc.T("まだ持ち帰っていないエピック未満の遺物をすべて獏に食べさせ、分解と同じだけの欠片と、3つごとに調律石1をもらいます（欠片はすぐ保管庫に入ります。エピック以上は食べません）。",
-                        "Feed all unsecured relics below Epic to the tapir: shards equal to salvaging them, plus 1 tuning stone per 3 relics (the shards go straight to your stash; Epic and above are spared).");
+                    return Loc.T($"まだ持ち帰っていないエピック未満の遺物をすべて獏に食べさせ、分解と同じだけの欠片と、{EventsBalance.TapirRelicsPerTuning}つごとに調律石1をもらいます（欠片はすぐ保管庫に入ります。エピック以上は食べません）。",
+                        $"Feed all unsecured relics below Epic to the tapir: shards equal to salvaging them, plus 1 tuning stone per {EventsBalance.TapirRelicsPerTuning} relics (the shards go straight to your stash; Epic and above are spared).");
                 case DreamEvent.CourageGate:
-                    return Loc.T("潜行が1段深くなる代わりに、まだ持ち帰っていない欠片が40増えます。",
-                        "Your delve goes one level deeper, and you gain 40 unsecured shards.");
+                    return Loc.T($"潜行が{EventsBalance.CourageGateHeatIncrement}段深くなる代わりに、まだ持ち帰っていない欠片が{EventsBalance.CourageGateShards}増えます。",
+                        $"Your delve goes {(EventsBalance.CourageGateHeatIncrement == 1 ? "one" : EventsBalance.CourageGateHeatIncrement.ToString())} level deeper, and you gain {EventsBalance.CourageGateShards} unsecured shards.");
                 case DreamEvent.Archive:
-                    return Loc.T($"夢のレベルの経験値を{40 + 20 * heat}もらいます。",
-                        $"Gain {40 + 20 * heat} Dream Level experience.");
+                    return Loc.T($"夢のレベルの経験値を{ArchiveXp(heat)}もらいます。",
+                        $"Gain {ArchiveXp(heat)} Dream Level experience.");
                 case DreamEvent.LuckyStar:
                     return Loc.T("次に確保するまで、レア度の高い遺物が少し出やすくなります。",
                         "Until you next secure, rarer relics drop slightly more often.");
                 case DreamEvent.MemoryWell:
-                    return Loc.T("保管庫の調律石1（対象がエピック以上なら2）を払い、この遠征の旅人が装着している対象のうち一番強い遺物の最初の固有効果を、同じ枠の別の効果へ交換します。固有品は対象外。元の効果と値は失います。",
-                        "Pay 1 stash tuning stone (2 if the target is Epic or better) to replace the first power of this expedition hero's strongest eligible equipped relic with a different power from the same slot. Unique relics are excluded; the original power and value are lost.");
+                    return Loc.T($"保管庫の調律石{EventsBalance.MemoryWellTuning}（対象がエピック以上なら{EventsBalance.MemoryWellEpicTuning}）を払い、この遠征の旅人が装着している対象のうち一番強い遺物の最初の固有効果を、同じ枠の別の効果へ交換します。固有品は対象外。元の効果と値は失います。",
+                        $"Pay {EventsBalance.MemoryWellTuning} stash tuning stone ({EventsBalance.MemoryWellEpicTuning} if the target is Epic or better) to replace the first power of this expedition hero's strongest eligible equipped relic with a different power from the same slot. Unique relics are excluded; the original power and value are lost.");
                 case DreamEvent.ShadowExchange:
-                    return Loc.T("未確保の欠片25（対象がエピック以上なら50）を払い、対象のうち一番強い未確保の遺物の最初の特性を、別の能力値へ引き直します。再調律を1回消費し、元の特性は失います。",
-                        "Pay 25 unsecured shards (50 if the target is Epic or better) to reroll the first affix of your strongest eligible unsecured relic into a different stat. Uses one retune; the old affix is lost.");
+                    return Loc.T($"未確保の欠片{EventsBalance.ShadowExchangeShards}（対象がエピック以上なら{EventsBalance.ShadowExchangeEpicShards}）を払い、対象のうち一番強い未確保の遺物の最初の特性を、別の能力値へ引き直します。再調律を1回消費し、元の特性は失います。",
+                        $"Pay {EventsBalance.ShadowExchangeShards} unsecured shards ({EventsBalance.ShadowExchangeEpicShards} if the target is Epic or better) to reroll the first affix of your strongest eligible unsecured relic into a different stat. Uses one retune; the old affix is lost.");
                 case DreamEvent.LostMausoleum:
-                    return Loc.T("未確保の欠片60を払い、対象の遺失物をすべて未確保として回収します。各遺物の強化は0になります（獲得済みの節目は残ります）。全品を入れる鞄の空きが必要です。",
-                        "Pay 60 unsecured shards to recover all eligible lost relics as unsecured. Each loses all enhancement (earned milestones remain). Your satchel must have room for all of them.");
+                    return Loc.T($"未確保の欠片{EventsBalance.LostMausoleumShards}を払い、対象の遺失物をすべて未確保として回収します。各遺物の強化は0になります（獲得済みの節目は残ります）。全品を入れる鞄の空きが必要です。",
+                        $"Pay {EventsBalance.LostMausoleumShards} unsecured shards to recover all eligible lost relics as unsecured. Each loses all enhancement (earned milestones remain). Your satchel must have room for all of them.");
                 case DreamEvent.RelicWager:
-                    return Loc.T("エピック未満・固有品以外の対象から一番強い未確保の遺物を賭けます。対象がレアなら20%、それ未満なら50%で同じ土台・レベルの1つ上のレア度の新品に交換し、外れると分解相当の未確保の欠片になります。元の遺物と強化は失います。",
-                        "Wager your strongest eligible unsecured non-unique relic below Epic. A Rare target has a 20% chance (50% below Rare) to become a fresh relic of the same base and level, one rarity higher; otherwise, unsecured shards equal to its salvage value. The original relic and enhancements are lost.");
+                    return Loc.T($"エピック未満・固有品以外の対象から一番強い未確保の遺物を賭けます。対象がレアなら{EventsBalance.RelicWagerRareWinChance * 100:g}%、それ未満なら{EventsBalance.RelicWagerLowerWinChance * 100:g}%で同じ土台・レベルの1つ上のレア度の新品に交換し、外れると分解相当の未確保の欠片になります。元の遺物と強化は失います。",
+                        $"Wager your strongest eligible unsecured non-unique relic below Epic. A Rare target has a {EventsBalance.RelicWagerRareWinChance * 100:g}% chance ({EventsBalance.RelicWagerLowerWinChance * 100:g}% below Rare) to become a fresh relic of the same base and level, one rarity higher; otherwise, unsecured shards equal to its salvage value. The original relic and enhancements are lost.");
                 case DreamEvent.TemperingAltar:
                     return Loc.T($"対象のうち一番強い未確保の遺物の最初の特性を失う代わりに、強化を{Content.GuaranteedEnhanceSteps(e)}段階進めます。強化の節目は通常どおり得られます。",
                         $"Lose the first affix of your strongest eligible unsecured relic to enhance it by {Content.GuaranteedEnhanceSteps(e)} levels. Enhancement milestones are granted normally.");
                 case DreamEvent.StoneBroker:
-                    return Loc.T("未確保の欠片35を失い、未確保の調律石2を得ます。", "Trade 35 unsecured shards for 2 unsecured tuning stones.");
+                    return Loc.T($"未確保の欠片{EventsBalance.StoneBrokerShards}を失い、未確保の調律石{EventsBalance.StoneBrokerTuning}を得ます。", $"Trade {EventsBalance.StoneBrokerShards} unsecured shards for {EventsBalance.StoneBrokerTuning} unsecured tuning stones.");
                 case DreamEvent.ShardKiln:
-                    return Loc.T("未確保の調律石2を失い、未確保の欠片45を得ます。", "Trade 2 unsecured tuning stones for 45 unsecured shards.");
+                    return Loc.T($"未確保の調律石{EventsBalance.ShardKilnTuning}を失い、未確保の欠片{EventsBalance.ShardKilnShards}を得ます。", $"Trade {EventsBalance.ShardKilnTuning} unsecured tuning stones for {EventsBalance.ShardKilnShards} unsecured shards.");
                 case DreamEvent.StarOffering:
-                    return Loc.T("レア以上の対象から一番弱い未確保の遺物を捧げ、この遠征の旅人の星の経験を40得ます。", "Sacrifice your weakest eligible unsecured relic of Rare or better for 40 permanent star experience for this expedition's hero.");
+                    return Loc.T($"レア以上の対象から一番弱い未確保の遺物を捧げ、この遠征の旅人の星の経験を{EventsBalance.StarOfferingXp}得ます。", $"Sacrifice your weakest eligible unsecured relic of Rare or better for {EventsBalance.StarOfferingXp} permanent star experience for this expedition's hero.");
                 case DreamEvent.DreamOffering:
-                    return Loc.T($"対象のうち一番弱い未確保の遺物を捧げ、夢のレベルの経験値を{40 + 20 * heat}得ます。", $"Sacrifice your weakest eligible unsecured relic for {40 + 20 * heat} Dream Level experience.");
+                    return Loc.T($"対象のうち一番弱い未確保の遺物を捧げ、夢のレベルの経験値を{DreamOfferingXp(heat)}得ます。", $"Sacrifice your weakest eligible unsecured relic for {DreamOfferingXp(heat)} Dream Level experience.");
                 case DreamEvent.AbyssalChest:
-                    return Loc.T("未確保の欠片75を払い、潜行が1段深くなります。代わりにエピックの遺物1つを未確保で得ます。鞄の空きが必要です。",
-                        "Pay 75 unsecured shards and delve one level deeper to gain one unsecured Epic relic. Requires a free satchel slot.");
+                    return Loc.T($"未確保の欠片{EventsBalance.AbyssalChestShards}を払い、潜行が{EventsBalance.AbyssalChestHeatIncrement}段深くなります。代わりにエピックの遺物1つを未確保で得ます。鞄の空きが必要です。",
+                        $"Pay {EventsBalance.AbyssalChestShards} unsecured shards and delve {(EventsBalance.AbyssalChestHeatIncrement == 1 ? "one" : EventsBalance.AbyssalChestHeatIncrement.ToString())} level deeper to gain one unsecured Epic relic. Requires a free satchel slot.");
                 case DreamEvent.RelicExchange:
                     return Loc.T("レアかエピックの対象から一番弱い未確保の遺物を失い、同じレア度・レベルの次の枠の新品を得ます（武器→防具→装飾→頭→手→足→武器）。強化などは引き継ぎません。",
                         "Lose your weakest eligible unsecured Rare or Epic relic for a fresh relic of the same rarity and level in the next slot (Weapon → Armor → Charm → Head → Hands → Feet → Weapon). Enhancements and other investments are not carried over.");
                 case DreamEvent.SealedVault:
-                    return Loc.T("未確保の欠片40を払い、対象のうち一番強い未確保の遺物を直接保管庫へ送ります。他の荷物や欠片は確保されず、潜行や契約も変わりません。",
-                        "Pay 40 unsecured shards to send your strongest eligible unsecured relic directly to the stash. Other cargo stays unsecured; delve and pacts remain unchanged.");
+                    return Loc.T($"未確保の欠片{EventsBalance.SealedVaultShards}を払い、対象のうち一番強い未確保の遺物を直接保管庫へ送ります。他の荷物や欠片は確保されず、潜行や契約も変わりません。",
+                        $"Pay {EventsBalance.SealedVaultShards} unsecured shards to send your strongest eligible unsecured relic directly to the stash. Other cargo stays unsecured; delve and pacts remain unchanged.");
                 case DreamEvent.PowerCrucible:
                     return Loc.T("固有品以外の対象から一番強い未確保の遺物の最後の固有効果を失い、最初の固有効果を同じ枠の別の効果へ交換します。交換前の効果と値は失います。",
                         "Lose the last power of your strongest eligible unsecured non-unique relic to replace its first power with a different power from the same slot. The original first power and value are also lost.");
@@ -269,20 +275,20 @@ namespace SodRpg.Core.Game
                         if (trades != null && trades.IsReserved(relic.Uid)) continue;
                         if (source == null || relic.Score > source.Score) source = relic;
                     }
-                    int cost = source != null && source.Rarity >= Rarity.Epic ? 60 : 30;
+                    int cost = TwinMirrorCost(source?.Rarity ?? Rarity.Common);
                     if (run.SatchelShards < cost) reason = Loc.T($"まだ持ち帰っていない欠片が{cost}必要です（いま{run.SatchelShards}）。", $"Need {cost} unsecured shards (you have {run.SatchelShards}).");
                     else if (source == null) reason = Loc.T("未確保の遺物が必要です。", "Need an unsecured relic.");
                     break;
                 }
                 case DreamEvent.Cauldron:
-                    if (run.Satchel.Count(r => (r.Rarity == Rarity.Common || r.Rarity == Rarity.Uncommon) && (trades == null || !trades.IsReserved(r.Uid))) < 3)
-                        reason = Loc.T("コモンかアンコモンの未確保の遺物が3つ必要です。", "Need 3 unsecured Common or Uncommon relics.");
+                    if (run.Satchel.Count(r => (r.Rarity == Rarity.Common || r.Rarity == Rarity.Uncommon) && (trades == null || !trades.IsReserved(r.Uid))) < EventsBalance.CauldronRelicCount)
+                        reason = Loc.T($"コモンかアンコモンの未確保の遺物が{EventsBalance.CauldronRelicCount}つ必要です。", $"Need {EventsBalance.CauldronRelicCount} unsecured Common or Uncommon relics.");
                     break;
                 case DreamEvent.Tapir:
                     if (!run.Satchel.Any(r => r.Rarity < Rarity.Epic && (trades == null || !trades.IsReserved(r.Uid)))) reason = Loc.T("まだ持ち帰っていない、エピック未満の遺物が必要です。", "Need an unsecured relic below Epic.");
                     break;
                 case DreamEvent.CourageGate:
-                    if (run.Heat >= Content.MaxHeat) reason = Loc.T("これ以上深く潜れません。", "Cannot delve any deeper.");
+                    if (run.Heat > Content.MaxHeat - EventsBalance.CourageGateHeatIncrement) reason = Loc.T("これ以上深く潜れません。", "Cannot delve any deeper.");
                     break;
                 case DreamEvent.Stargazer:
                 case DreamEvent.Archive:
@@ -291,7 +297,7 @@ namespace SodRpg.Core.Game
                 case DreamEvent.MemoryWell:
                 {
                     var target = TradeTarget(p, e, trades);
-                    int cost = target != null && target.Rarity >= Rarity.Epic ? 2 : 1;
+                    int cost = MemoryWellCost(target?.Rarity ?? Rarity.Common);
                     if (p.Material(Materials.Tuning) < cost) reason = Loc.T($"保管庫の調律石{cost}が必要です。", $"Need {cost} stash tuning stones.");
                     else if (target == null) reason = NoTradeTarget();
                     break;
@@ -299,7 +305,7 @@ namespace SodRpg.Core.Game
                 case DreamEvent.ShadowExchange:
                 {
                     var target = TradeTarget(p, e, trades);
-                    int cost = target != null && target.Rarity >= Rarity.Epic ? 50 : 25;
+                    int cost = ShadowExchangeCost(target?.Rarity ?? Rarity.Common);
                     if (run.SatchelShards < cost) reason = NeedShards(cost);
                     else if (target == null) reason = NoTradeTarget();
                     break;
@@ -307,7 +313,7 @@ namespace SodRpg.Core.Game
                 case DreamEvent.LostMausoleum:
                 {
                     int count = LostCandidates(p, trades).Count();
-                    if (run.SatchelShards < 60) reason = NeedShards(60);
+                    if (run.SatchelShards < EventsBalance.LostMausoleumShards) reason = NeedShards(EventsBalance.LostMausoleumShards);
                     else if (count == 0) reason = NoTradeTarget();
                     else if (run.Satchel.Count + count > Workshop.SatchelCapacity(p)) reason = NoSatchelRoom();
                     break;
@@ -322,10 +328,10 @@ namespace SodRpg.Core.Game
                     if (TradeTarget(p, e, trades) == null) reason = NoTradeTarget();
                     break;
                 case DreamEvent.StoneBroker:
-                    if (run.SatchelShards < 35) reason = NeedShards(35);
+                    if (run.SatchelShards < EventsBalance.StoneBrokerShards) reason = NeedShards(EventsBalance.StoneBrokerShards);
                     break;
                 case DreamEvent.ShardKiln:
-                    if (run.SatchelTuning < 2) reason = Loc.T("未確保の調律石2が必要です。", "Need 2 unsecured tuning stones.");
+                    if (run.SatchelTuning < EventsBalance.ShardKilnTuning) reason = Loc.T($"未確保の調律石{EventsBalance.ShardKilnTuning}が必要です。", $"Need {EventsBalance.ShardKilnTuning} unsecured tuning stones.");
                     break;
                 case DreamEvent.StarOffering:
                     if (string.IsNullOrEmpty(run.HeroKey) || !p.Heroes.TryGetValue(run.HeroKey, out var hero)
@@ -338,12 +344,12 @@ namespace SodRpg.Core.Game
                     else if (TradeTarget(p, e, trades) == null) reason = NoTradeTarget();
                     break;
                 case DreamEvent.AbyssalChest:
-                    if (run.SatchelShards < 75) reason = NeedShards(75);
-                    else if (run.Heat >= Content.MaxHeat) reason = Loc.T("これ以上深く潜れません。", "Cannot delve any deeper.");
+                    if (run.SatchelShards < EventsBalance.AbyssalChestShards) reason = NeedShards(EventsBalance.AbyssalChestShards);
+                    else if (run.Heat > Content.MaxHeat - EventsBalance.AbyssalChestHeatIncrement) reason = Loc.T("これ以上深く潜れません。", "Cannot delve any deeper.");
                     else if (run.Satchel.Count >= Workshop.SatchelCapacity(p)) reason = NoSatchelRoom();
                     break;
                 case DreamEvent.SealedVault:
-                    if (run.SatchelShards < 40) reason = NeedShards(40);
+                    if (run.SatchelShards < EventsBalance.SealedVaultShards) reason = NeedShards(EventsBalance.SealedVaultShards);
                     else if (p.Stash.Count >= Workshop.StashCapacity(p)) reason = Loc.T("保管庫に空きがありません。", "The stash is full.");
                     else if (TradeTarget(p, e, trades) == null) reason = NoTradeTarget();
                     break;
@@ -423,31 +429,31 @@ namespace SodRpg.Core.Game
         {
             switch (e)
             {
-                case DreamEvent.Merchant: return 8;
-                case DreamEvent.Fountain: return 8;
-                case DreamEvent.Chalice: return 8;
-                case DreamEvent.Lantern: return 8;
-                case DreamEvent.ForgeShrine: return 8;
-                case DreamEvent.TwinMirror: return 8;
-                case DreamEvent.Stargazer: return 8;
-                case DreamEvent.Cauldron: return 8;
-                case DreamEvent.Tapir: return 8;
-                case DreamEvent.CourageGate: return 8;
-                case DreamEvent.Archive: return 8;
-                case DreamEvent.LuckyStar: return 8;
-                case DreamEvent.MemoryWell: return 6;
-                case DreamEvent.ShadowExchange: return 8;
-                case DreamEvent.LostMausoleum: return 5;
-                case DreamEvent.RelicWager: return 6;
-                case DreamEvent.TemperingAltar: return 6;
-                case DreamEvent.StoneBroker: return 8;
-                case DreamEvent.ShardKiln: return 8;
-                case DreamEvent.StarOffering: return 6;
-                case DreamEvent.DreamOffering: return 6;
-                case DreamEvent.AbyssalChest: return 5;
-                case DreamEvent.RelicExchange: return 8;
-                case DreamEvent.SealedVault: return 5;
-                case DreamEvent.PowerCrucible: return 5;
+                case DreamEvent.Merchant: return EventsBalance.OfferWeightsMerchant;
+                case DreamEvent.Fountain: return EventsBalance.OfferWeightsFountain;
+                case DreamEvent.Chalice: return EventsBalance.OfferWeightsChalice;
+                case DreamEvent.Lantern: return EventsBalance.OfferWeightsLantern;
+                case DreamEvent.ForgeShrine: return EventsBalance.OfferWeightsForgeShrine;
+                case DreamEvent.TwinMirror: return EventsBalance.OfferWeightsTwinMirror;
+                case DreamEvent.Stargazer: return EventsBalance.OfferWeightsStargazer;
+                case DreamEvent.Cauldron: return EventsBalance.OfferWeightsCauldron;
+                case DreamEvent.Tapir: return EventsBalance.OfferWeightsTapir;
+                case DreamEvent.CourageGate: return EventsBalance.OfferWeightsCourageGate;
+                case DreamEvent.Archive: return EventsBalance.OfferWeightsArchive;
+                case DreamEvent.LuckyStar: return EventsBalance.OfferWeightsLuckyStar;
+                case DreamEvent.MemoryWell: return EventsBalance.OfferWeightsMemoryWell;
+                case DreamEvent.ShadowExchange: return EventsBalance.OfferWeightsShadowExchange;
+                case DreamEvent.LostMausoleum: return EventsBalance.OfferWeightsLostMausoleum;
+                case DreamEvent.RelicWager: return EventsBalance.OfferWeightsRelicWager;
+                case DreamEvent.TemperingAltar: return EventsBalance.OfferWeightsTemperingAltar;
+                case DreamEvent.StoneBroker: return EventsBalance.OfferWeightsStoneBroker;
+                case DreamEvent.ShardKiln: return EventsBalance.OfferWeightsShardKiln;
+                case DreamEvent.StarOffering: return EventsBalance.OfferWeightsStarOffering;
+                case DreamEvent.DreamOffering: return EventsBalance.OfferWeightsDreamOffering;
+                case DreamEvent.AbyssalChest: return EventsBalance.OfferWeightsAbyssalChest;
+                case DreamEvent.RelicExchange: return EventsBalance.OfferWeightsRelicExchange;
+                case DreamEvent.SealedVault: return EventsBalance.OfferWeightsSealedVault;
+                case DreamEvent.PowerCrucible: return EventsBalance.OfferWeightsPowerCrucible;
                 default: return 0;
             }
         }

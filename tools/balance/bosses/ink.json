@@ -1,0 +1,394 @@
+{
+  "schemaVersion": 1,
+  "shared": {
+    "whiteShieldDurationMillis": 2000,
+    "darkCooldownMillis": 1000,
+    "darkCount": 3,
+    "darkGapToleranceMillis": 100,
+    "darkMagnitude": 3,
+    "darkSpearValue": 250,
+    "darkSpearCooldownMillis": 1000,
+    "darkSpearCount": 3,
+    "darkSpearRangeMilli": 8000,
+    "darkSpearSpeedMilli": 12000,
+    "darkSpearWidthMilli": 500,
+    "darkModeCooldownMillis": 1000,
+    "darkModeCount": 6
+  },
+  "moves": {
+    "white_weapon": {
+      "channels": {
+        "LotusPalm": {
+          "value": 25
+        }
+      },
+      "actions": [
+        {
+          "cooldownMillis": 3000,
+          "delayMillis": 650,
+          "mainHits": 3,
+          "maxInstances": 1,
+          "radiusMilli": 2500
+        }
+      ]
+    },
+    "white_armor": {
+      "channels": {
+        "LotusHaven": {
+          "value": 15
+        }
+      },
+      "actions": [
+        {
+          "cooldownMillis": 8000,
+          "lifetimeMillis": 1500,
+          "maxInstances": 1,
+          "maxTargets": 1,
+          "radiusMilli": 2000,
+          "magnitudeMilli": 380
+        }
+      ]
+    },
+    "white_charm": {
+      "channels": {
+        "LotusSafe": {
+          "value": 12
+        }
+      },
+      "actions": [
+        {
+          "cooldownMillis": 6000,
+          "delayMillis": 1200,
+          "lifetimeMillis": 2000,
+          "maxInstances": 1,
+          "maxTargets": 2,
+          "radiusMilli": 3000,
+          "widthMilli": 2000,
+          "magnitudeMilli": 380
+        }
+      ]
+    },
+    "white_head": {
+      "channels": {
+        "LotusWave": {
+          "value": 30
+        }
+      },
+      "actions": [
+        {
+          "cooldownMillis": 5000,
+          "intervalMillis": 200,
+          "count": 3,
+          "mainHits": 5,
+          "maxInstances": 1,
+          "rangeMilli": 5000,
+          "angleMilli": 60000,
+          "magnitudeMilli": 30000
+        }
+      ]
+    },
+    "white_hands": {
+      "channels": {
+        "LotusInch": {
+          "value": 20
+        }
+      },
+      "actions": [
+        {
+          "radiusMilli": 2000,
+          "magnitudeMilli": 1000
+        },
+        {
+          "cooldownMillis": 4000,
+          "delayMillis": 350,
+          "mainHits": 4,
+          "maxInstances": 1,
+          "radiusMilli": 2000
+        }
+      ]
+    },
+    "white_feet": {
+      "channels": {
+        "LotusArrival": {
+          "value": 20
+        }
+      },
+      "actions": [
+        {
+          "lifetimeMillis": 2000
+        },
+        {
+          "cooldownMillis": 4000,
+          "rangeMilli": 6000,
+          "widthMilli": 1000
+        }
+      ]
+    },
+    "white_stage2": {
+      "channels": {
+        "LotusDomainPalm": {
+          "value": 40
+        },
+        "LotusDomainShield": {
+          "value": 15
+        }
+      },
+      "actions": [
+        {
+          "cooldownMillis": 4000,
+          "delayMillis": 750,
+          "lifetimeMillis": 2000,
+          "mainHits": 3,
+          "maxInstances": 1,
+          "radiusMilli": 3000
+        },
+        {
+          "lifetimeMillis": 2000,
+          "maxTargets": 2,
+          "radiusMilli": 3000,
+          "magnitudeMilli": 380
+        }
+      ]
+    },
+    "white_stage3": {
+      "channels": {
+        "LotusDomainWave": {
+          "value": 30
+        }
+      },
+      "actions": [
+        {
+          "cooldownMillis": 2000,
+          "rangeMilli": 6000,
+          "angleMilli": 90000
+        }
+      ]
+    },
+    "white_stage6": {
+      "channels": {
+        "LotusBoundary": {
+          "value": 90,
+          "cap": 100
+        },
+        "LotusBoundaryShield": {
+          "value": 38,
+          "cap": 40
+        }
+      },
+      "actions": [
+        {
+          "cooldownMillis": 6000,
+          "mainHits": 3,
+          "radiusMilli": 5000
+        },
+        {
+          "lifetimeMillis": 2000,
+          "maxTargets": 2,
+          "radiusMilli": 3000,
+          "magnitudeMilli": 380
+        }
+      ]
+    },
+    "dark_weapon": {
+      "channels": {
+        "MoonBlade": {
+          "value": 25
+        }
+      },
+      "actions": [
+        {
+          "cooldownMillis": 3000,
+          "mainHits": 3,
+          "rangeMilli": 4000,
+          "angleMilli": 90000
+        }
+      ]
+    },
+    "dark_armor": {
+      "channels": {
+        "MoonWrath": {
+          "value": 20
+        }
+      },
+      "actions": [
+        {
+          "cooldownMillis": 8000,
+          "delayMillis": 800,
+          "maxInstances": 1,
+          "radiusMilli": 2000,
+          "rangeMilli": 8000
+        }
+      ]
+    },
+    "dark_charm": {
+      "channels": {
+        "MoonThrow": {
+          "value": 20
+        }
+      },
+      "actions": [
+        {
+          "cooldownMillis": 5000,
+          "maxInstances": 1,
+          "rangeMilli": 8000,
+          "widthMilli": 500,
+          "speedMilli": 12000
+        }
+      ]
+    },
+    "dark_head": {
+      "channels": {
+        "MoonEgo": {
+          "value": 25
+        }
+      },
+      "actions": [
+        {
+          "cooldownMillis": 5000,
+          "mainHits": 5,
+          "maxInstances": 1,
+          "radiusMilli": 2000,
+          "rangeMilli": 8000,
+          "widthMilli": 500,
+          "speedMilli": 12000
+        }
+      ]
+    },
+    "dark_hands": {
+      "channels": {
+        "MoonCarry": {
+          "value": 20
+        }
+      },
+      "actions": [
+        {
+          "cooldownMillis": 4000,
+          "mainHits": 4,
+          "rangeMilli": 5000,
+          "widthMilli": 800,
+          "magnitudeMilli": 1000
+        }
+      ]
+    },
+    "dark_feet": {
+      "channels": {
+        "MoonArrival": {
+          "value": 25
+        }
+      },
+      "actions": [
+        {
+          "lifetimeMillis": 2000
+        },
+        {
+          "cooldownMillis": 4000,
+          "delayMillis": 400,
+          "maxInstances": 1,
+          "rangeMilli": 5000,
+          "widthMilli": 1000
+        }
+      ]
+    },
+    "dark_stage2": {
+      "channels": {
+        "MoonForm": {
+          "value": 25
+        },
+        "MoonFormHammer": {
+          "value": 40
+        }
+      },
+      "actions": [
+        {
+          "cooldownMillis": 1000,
+          "counterLifetimeMillis": 6000,
+          "count": 3,
+          "rangeMilli": 4000,
+          "angleMilli": 90000
+        },
+        {
+          "rangeMilli": 7000,
+          "widthMilli": 800
+        },
+        {
+          "delayMillis": 600,
+          "maxInstances": 1,
+          "radiusMilli": 2500
+        }
+      ]
+    },
+    "dark_stage3": {
+      "channels": {
+        "MoonMark": {
+          "value": 30
+        }
+      },
+      "actions": [
+        {
+          "cooldownMillis": 3000,
+          "delayMillis": 300,
+          "lifetimeMillis": 6000,
+          "mainHits": 3,
+          "maxTargets": 1,
+          "maxInstances": 1
+        },
+        {
+          "cooldownMillis": 2000,
+          "count": 3
+        }
+      ]
+    },
+    "dark_stage6": {
+      "channels": {
+        "MoonPhantom": {
+          "value": 90,
+          "cap": 100
+        },
+        "MoonFinish": {
+          "value": 38,
+          "cap": 40
+        }
+      },
+      "actions": [
+        {
+          "cooldownMillis": 6000,
+          "delayMillis": 350,
+          "counterLifetimeMillis": 6000,
+          "count": 2,
+          "maxInstances": 1,
+          "rangeMilli": 6000,
+          "widthMilli": 800,
+          "magnitudeMilli": 2000
+        },
+        {
+          "delayMillis": 800,
+          "maxInstances": 1,
+          "radiusMilli": 3000
+        }
+      ]
+    }
+  },
+  "rewards": {
+    "whiteStage1Conversion": 250,
+    "whiteStage1Slots": 1,
+    "whiteStage1Target": 120,
+    "whiteStage1Budget": 240,
+    "whiteStage2Conversion": 250,
+    "whiteStage2Slots": 2,
+    "whiteStage2Target": 200,
+    "whiteStage2Budget": 400,
+    "whiteStage3Conversion": 500,
+    "whiteStage3Slots": 2,
+    "whiteStage3Target": 300,
+    "whiteStage3Budget": 600,
+    "darkStage1DwellMillis": 1000,
+    "darkStage1Flat": 100,
+    "darkStage1Budget": 300,
+    "darkStage2DwellMillis": 750,
+    "darkStage2Flat": 150,
+    "darkStage2Budget": 450,
+    "darkStage3DwellMillis": 500,
+    "darkStage3Flat": 200,
+    "darkStage3Budget": 600
+  }
+}

@@ -1,0 +1,219 @@
+{
+  "schemaVersion": 1,
+  "shared": {
+    "arrowLifetimeMillis": 1500,
+    "arrowMaxInstances": 1,
+    "arrowRangeMilli": 8000,
+    "tickLifetimeMillis": 1500,
+    "tickIntervalMillis": 500,
+    "tickCount": 3,
+    "tickMaxInstances": 1,
+    "tickRangeMilli": 8000
+  },
+  "moves": {
+    "weapon": {
+      "channels": {
+        "SkollBlade": {
+          "value": 28,
+          "cap": 84
+        }
+      },
+      "actions": [
+        {
+          "cooldownMillis": 5000,
+          "delayMillis": 250,
+          "rangeMilli": 4000,
+          "widthMilli": 1000,
+          "magnitudeMilli": 8000
+        }
+      ]
+    },
+    "armor": {
+      "channels": {
+        "SkollCounter": {
+          "value": 25,
+          "cap": 75
+        }
+      },
+      "actions": [
+        {
+          "cooldownMillis": 7000,
+          "delayMillis": 400,
+          "radiusMilli": 2000
+        }
+      ]
+    },
+    "charm": {
+      "channels": {
+        "SkollArrow": {
+          "value": 18,
+          "cap": 54
+        },
+        "SkollArrowTick": {
+          "value": 6,
+          "cap": 18
+        }
+      },
+      "actions": [
+        {
+          "delayMillis": 450,
+          "radiusMilli": 1800,
+          "cooldownMillis": 8000
+        },
+        {
+          "delayMillis": 950,
+          "radiusMilli": 1800
+        }
+      ]
+    },
+    "head": {
+      "channels": {
+        "SkollRow": {
+          "value": 12,
+          "cap": 36
+        }
+      },
+      "actions": [
+        {
+          "cooldownMillis": 8000,
+          "delayMillis": 500,
+          "intervalMillis": 250,
+          "count": 3,
+          "maxInstances": 1,
+          "mainHits": 3,
+          "counterLifetimeMillis": 6000,
+          "radiusMilli": 900,
+          "widthMilli": 1500
+        }
+      ]
+    },
+    "hands": {
+      "channels": {
+        "SkollFan": {
+          "value": 30,
+          "cap": 90
+        }
+      },
+      "actions": [
+        {
+          "cooldownMillis": 6000,
+          "delayMillis": 250,
+          "mainHits": 4,
+          "counterLifetimeMillis": 6000,
+          "rangeMilli": 4000,
+          "angleMilli": 60000,
+          "magnitudeMilli": 1000
+        }
+      ]
+    },
+    "feet": {
+      "channels": {
+        "SkollWhirl": {
+          "value": 7,
+          "cap": 21
+        }
+      },
+      "actions": [
+        {
+          "cooldownMillis": 5000,
+          "delayMillis": 250,
+          "lifetimeMillis": 1000,
+          "intervalMillis": 250,
+          "count": 4,
+          "maxInstances": 1,
+          "radiusMilli": 2000
+        }
+      ]
+    },
+    "stage2": {
+      "channels": {
+        "SkollSeal": {
+          "value": 1,
+          "cap": 1
+        },
+        "SkollRelease": {
+          "value": 35,
+          "cap": 35
+        }
+      },
+      "actions": [
+        {
+          "lifetimeMillis": 6000,
+          "count": 3
+        },
+        {
+          "lifetimeMillis": 6000,
+          "count": 3
+        },
+        {
+          "cooldownMillis": 4000,
+          "delayMillis": 400,
+          "rangeMilli": 5000,
+          "widthMilli": 1000,
+          "magnitudeMilli": 8000
+        }
+      ]
+    },
+    "stage3": {
+      "channels": {
+        "SkollSealArrow": {
+          "value": 15,
+          "cap": 15
+        },
+        "SkollSealTick": {
+          "value": 5,
+          "cap": 5
+        }
+      },
+      "actions": [
+        {
+          "delayMillis": 650,
+          "radiusMilli": 2000
+        },
+        {
+          "delayMillis": 1150,
+          "radiusMilli": 2000
+        }
+      ]
+    },
+    "stage6": {
+      "channels": {
+        "SkollRain": {
+          "value": 90,
+          "cap": 100
+        },
+        "SkollRainShield": {
+          "value": 38,
+          "cap": 40
+        }
+      },
+      "actions": [
+        {
+          "cooldownMillis": 10000,
+          "delayMillis": 600,
+          "intervalMillis": 200,
+          "count": 4,
+          "maxInstances": 1,
+          "radiusMilli": 1000,
+          "rangeMilli": 2000
+        },
+        {
+          "delayMillis": 1200,
+          "lifetimeMillis": 2000,
+          "maxInstances": 1
+        }
+      ]
+    }
+  },
+  "rewards": {
+    "healValueMilli": 20000,
+    "healCapMilli": 20000,
+    "healCooldownMillis": 2000,
+    "healMagnitudeMilli": 12000,
+    "targetDurationMillis": 2000,
+    "intervalCooldownMillis": 8000,
+    "intervalDurationMillis": 1000,
+    "intervalCount": 3,
+    "intervalIntervalMillis": 100
+  }
+}

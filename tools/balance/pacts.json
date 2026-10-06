@@ -1,0 +1,207 @@
+{
+  "schemaVersion": 1,
+  "offered": 3,
+  "doubleDepthBonusMultiplier": 2,
+  "definitions": {
+    "GlassHeart": {
+      "curseStrength": 1,
+      "dropBonus": 0.4
+    },
+    "DullBlade": {
+      "curseStrength": 1,
+      "luck": 0.6
+    },
+    "Unguarded": {
+      "curseStrength": 1,
+      "shardMult": 1.5
+    },
+    "LeadenFeet": {
+      "curseStrength": 1,
+      "xpMult": 1.5
+    },
+    "Frenzy": {
+      "curseStrength": 2,
+      "boons": {
+        "AttackPct": 15,
+        "PowerPct": 15
+      }
+    },
+    "CursedHoard": {
+      "curseStrength": 1
+    },
+    "DryDream": {
+      "curseStrength": 2,
+      "tuningOnElite": 1
+    },
+    "Burden": {
+      "curseStrength": 3,
+      "luck": 1.4
+    },
+    "Glutton": {
+      "curseStrength": 2,
+      "dropBonus": 0.6
+    },
+    "Scholar": {
+      "curseStrength": 1,
+      "xpMult": 1.3,
+      "luck": 0.3
+    },
+    "Gambler": {
+      "curseStrength": 2,
+      "shardMult": 2.0
+    },
+    "AbyssEye": {
+      "curseStrength": 3,
+      "dropBonus": 0.5,
+      "luck": 0.8,
+      "tuningOnElite": 1
+    },
+    "BloodPrice": {
+      "curseStrength": 2,
+      "boons": {
+        "AttackSpeedPct": 15
+      }
+    },
+    "IronOath": {
+      "curseStrength": 1,
+      "boons": {
+        "Armor": 10
+      }
+    },
+    "HollowCrown": {
+      "curseStrength": 3,
+      "dropBonus": 0.8,
+      "shardMult": 1.5
+    },
+    "ThiefsBargain": {
+      "curseStrength": 1,
+      "shardMult": 1.3,
+      "dropBonus": 0.2
+    },
+    "Stargazer": {
+      "curseStrength": 1,
+      "luck": 0.4,
+      "dropBonus": 0.15
+    },
+    "Wanderer": {
+      "curseStrength": 2,
+      "xpMult": 1.5,
+      "dropBonus": 0.3
+    },
+    "Miser": {
+      "curseStrength": 2,
+      "shardMult": 1.3
+    },
+    "BloodMoon": {
+      "curseStrength": 3,
+      "boons": {
+        "AttackPct": 20,
+        "PowerPct": 20
+      }
+    },
+    "SaltOath": {
+      "curseStrength": 2,
+      "shardMult": 1.4,
+      "luck": 0.5
+    },
+    "BlankMap": {
+      "curseStrength": 2,
+      "tuningOnElite": 2
+    },
+    "HoneyedChains": {
+      "curseStrength": 2,
+      "xpMult": 1.8
+    },
+    "StardustDebt": {
+      "curseStrength": 3,
+      "dropBonus": 1.0
+    },
+    "BoneDice": {
+      "curseStrength": 3,
+      "luck": 2.0
+    },
+    "NightOfVeils": {
+      "curseStrength": 1,
+      "boons": {
+        "DarkAmp": 12
+      }
+    },
+    "OathOfDawn": {
+      "curseStrength": 1,
+      "boons": {
+        "LightAmp": 12
+      }
+    },
+    "AshenChalice": {
+      "curseStrength": 2,
+      "boons": {
+        "MaxHealthFlat": 50
+      }
+    },
+    "CrackedMirror": {
+      "curseStrength": 3,
+      "boons": {
+        "CritChancePct": 4
+      }
+    },
+    "ClangoringHeart": {
+      "curseStrength": 2,
+      "boons": {
+        "AttackSpeedPct": 10
+      }
+    },
+    "LayeredLamps": {
+      "curseStrength": 2,
+      "boons": {
+        "ShieldPower": 12
+      }
+    },
+    "MossboundPact": {
+      "curseStrength": 1,
+      "boons": {
+        "HealthRegen": 4
+      }
+    },
+    "PuppetStrings": {
+      "curseStrength": 2,
+      "boons": {
+        "SummonPower": 20
+      }
+    },
+    "GraciousRain": {
+      "curseStrength": 1,
+      "boons": {
+        "HealPower": 12
+      }
+    },
+    "StagnantSpring": {
+      "curseStrength": 2,
+      "shardMult": 1.75
+    },
+    "HourglassLie": {
+      "curseStrength": 2,
+      "xpMult": 1.6
+    },
+    "LongWayRound": {
+      "curseStrength": 2,
+      "xpMult": 1.4,
+      "dropBonus": 0.25
+    },
+    "ShellBargain": {
+      "curseStrength": 1,
+      "dropBonus": 0.3,
+      "shardMult": 1.2
+    },
+    "DeepmirePromise": {
+      "curseStrength": 3,
+      "tuningOnElite": 1
+    },
+    "GildedWound": {
+      "curseStrength": 3,
+      "boons": {
+        "AttackFlat": 10,
+        "PowerFlat": 10
+      }
+    }
+  }
+}

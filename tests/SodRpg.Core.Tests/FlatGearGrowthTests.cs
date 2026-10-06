@@ -8,16 +8,17 @@ namespace SodRpg.Core.Tests
     public class FlatGearGrowthTests
     {
         [Theory]
-        [InlineData(Stat.AttackFlat, 295)]
-        [InlineData(Stat.PowerFlat, 295)]
-        [InlineData(Stat.Armor, 217)]
-        [InlineData(Stat.MaxHealthFlat, 217)]
-        [InlineData(Stat.HealthRegen, 217)]
-        [InlineData(Stat.Haste, 217)]
-        [InlineData(Stat.Tenacity, 217)]
-        [InlineData(Stat.AttackSpeedPct, 100)]
-        public void Implicit_recalculates_by_stat_without_changing_saved_affixes(Stat stat, int pct)
+        [InlineData(Stat.AttackFlat)]
+        [InlineData(Stat.PowerFlat)]
+        [InlineData(Stat.Armor)]
+        [InlineData(Stat.MaxHealthFlat)]
+        [InlineData(Stat.HealthRegen)]
+        [InlineData(Stat.Haste)]
+        [InlineData(Stat.Tenacity)]
+        [InlineData(Stat.AttackSpeedPct)]
+        public void Implicit_recalculates_by_stat_without_changing_saved_affixes(Stat stat)
         {
+            int pct = EquipmentBalanceInputs.LevelScale(stat, 60);
             var basis = Content.Bases.First(b => b.ImplicitStat == stat);
             var relic = Loot.RollBaseRelic(new Rng(29), basis, Rarity.Rare, 1);
             relic.Affixes.Clear();
@@ -32,12 +33,13 @@ namespace SodRpg.Core.Tests
             Assert.Equal(Relic.Scale(basis.ImplicitValue, pct), restored.Implicit.Value);
         }
         [Theory]
-        [InlineData(Stat.AttackFlat, 1, 7, 14)]
-        [InlineData(Stat.PowerFlat, 60, 19, 39)]
-        public void Rolled_flat_damage_reaches_effective_build_with_existing_rounding(Stat stat, int level, int raw, int effective)
+        [InlineData(Stat.AttackFlat, 1)]
+        [InlineData(Stat.PowerFlat, 60)]
+        public void Rolled_flat_damage_reaches_effective_build_with_existing_rounding(Stat stat, int level)
         {
             var profile = Profile.CreateNew(17);
             const string hero = "Hero_Cetus";
+            int totalEffective = 0;
             foreach (var slot in Content.SlotOrder)
             {
                 var basis = Content.BasesFor(slot).First(b => b.Line == Line.Guard && b.ImplicitStat != stat);
@@ -46,20 +48,27 @@ namespace SodRpg.Core.Tests
                 var rng = new Rng(31);
                 var rolls = Enumerable.Range(0, 64).Select(_ => Loot.RollAffix(rng, slot, Rarity.Legendary, level, excluded)).ToList();
                 var best = rolls.OrderByDescending(a => a.Value).First();
-                Assert.Equal(raw, best.Value);
+                var range = EquipmentBalanceInputs.Affix(slot, stat);
+                int pct = Content.RarityValuePct(Rarity.Legendary) * EquipmentBalanceInputs.LevelScale(stat, level) / 100;
+                Assert.InRange(best.Value, EquipmentBalanceInputs.Scale(range.GetProperty("min").GetInt32(), pct),
+                    EquipmentBalanceInputs.Scale(range.GetProperty("max").GetInt32(), pct));
                 relic.Affixes.Clear();
                 relic.Affixes.Add(best);
                 relic.Powers.Clear();
                 relic.Enhance = 20;
                 relic.LimitBreaks = 3;
                 relic.AwakenLevel = 3;
+                int enhanced = EquipmentBalanceInputs.Scale(best.Value, ForgeBalanceTests.At("enhancement", "statPercents", 20));
+                int effective = enhanced * ForgeBalanceTests.At("awakening", "affixPercents", 3) / 100;
+                totalEffective += effective;
                 Assert.Equal(effective, relic.EffectiveStats().Single(a => a.Stat == stat).Value);
                 profile.Stash.Add(relic);
                 profile.Hero(hero).Equipped[(int)slot] = relic.Uid;
             }
-            Assert.Equal(effective * 6, Build.Compute(profile, hero, 0).Get(stat));
-            foreach (var relic in profile.Stash) relic.Affixes[0] = new StatLine(stat, 100);
-            Assert.Equal(250, Build.Compute(profile, hero, 0).Get(stat));
+            int cap = EquipmentBalanceInputs.Cap(stat);
+            Assert.Equal(System.Math.Min(cap, totalEffective), Build.Compute(profile, hero, 0).Get(stat));
+            foreach (var relic in profile.Stash) relic.Affixes[0] = new StatLine(stat, cap);
+            Assert.Equal(cap, Build.Compute(profile, hero, 0).Get(stat));
         }
 
         [Theory]
@@ -70,16 +79,18 @@ namespace SodRpg.Core.Tests
             var basis = Content.BasesFor(Slot.Weapon).First(b => b.ImplicitStat != stat);
             var relic = Loot.RollBaseRelic(new Rng(19), basis, Rarity.Epic, 60);
             relic.Affixes.Clear();
-            int max = Relic.Scale(Content.AffixPool(relic.Slot).Single(a => a.Stat == stat).Max, 120 * 295 / 100);
+            int pct = Content.RarityValuePct(Rarity.Epic) * EquipmentBalanceInputs.LevelScale(stat, 60) / 100;
+            int max = EquipmentBalanceInputs.Scale(EquipmentBalanceInputs.Affix(relic.Slot, stat).GetProperty("max").GetInt32(), pct);
             relic.Affixes.Add(new StatLine(stat, max));
             Assert.True(HostGearValidation.TryValidate(relic, out var validated));
             Assert.Equal(max, validated.Affixes[0].Value);
             relic.Affixes[0] = new StatLine(stat, max + 1);
             Assert.True(HostGearValidation.TryValidate(relic, out validated));
             Assert.Equal(max, validated.Affixes[0].Value);
-            relic.Affixes[0] = new StatLine(stat, 14);
+            int saved = System.Math.Min(14, max);
+            relic.Affixes[0] = new StatLine(stat, saved);
             Assert.True(HostGearValidation.TryValidate(relic, out validated));
-            Assert.Equal(14, validated.Affixes[0].Value);
+            Assert.Equal(saved, validated.Affixes[0].Value);
         }
     }
 }

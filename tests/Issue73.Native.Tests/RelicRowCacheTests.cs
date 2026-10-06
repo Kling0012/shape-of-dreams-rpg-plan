@@ -44,7 +44,8 @@ namespace Issue73.Native.Tests
             profile.Hero("hero").Equipped[(int)relic.Slot] = relic.Uid;
             Rules.BeginRun(profile, "row-cache", heroKey: "hero");
             profile.Run.Bounties.Clear();
-            profile.AddMaterial(Materials.Tuning, 100);
+            int wellCost = SodRpg.Core.Tests.EventBalanceTestData.Number("memoryWell", "epicTuning");
+            profile.AddMaterial(Materials.Tuning, Math.Max(100, wellCost));
             DreamforgeUi ui = null;
             _session = new ClientSession(e => ui.Notify(e)) { Profile = profile };
             typeof(ClientSession).GetField("_store", BindingFlags.Instance | BindingFlags.NonPublic)
@@ -69,7 +70,7 @@ namespace Issue73.Native.Tests
             Assert.Equal(beforeCount, relic.Powers.Count);
             Assert.Equal(beforeRarity, relic.Rarity);
             Assert.Equal(beforeScore, relic.Score);
-            Assert.Equal(beforeTuning - 2, profile.Material(Materials.Tuning));
+            Assert.Equal(beforeTuning - wellCost, profile.Material(Materials.Tuning));
             Assert.NotEqual(beforeName, relic.DisplayName);
 
             // The first read can occur before or after the 0.3-second sorting refresh.

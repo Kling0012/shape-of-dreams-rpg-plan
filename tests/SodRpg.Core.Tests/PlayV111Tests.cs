@@ -46,7 +46,7 @@ namespace SodRpg.Core.Tests
             var p = AtEvent(DreamEvent.TwinMirror);
             var leg = Loot.RollRelic(new Rng(3), Rarity.Legendary, 5);
             p.Run.Satchel.Add(leg);
-            p.Run.SatchelShards = 60;
+            p.Run.SatchelShards = EventBalanceTestData.Number("twinMirror", "epicShards");
             Rules.UseEvent(p, DreamEvent.TwinMirror);
             Assert.Equal(2, p.Run.Satchel.Count);
             var copy = p.Run.Satchel.Single(r => r.Uid != leg.Uid);
@@ -60,22 +60,22 @@ namespace SodRpg.Core.Tests
         {
             var p = AtEvent(DreamEvent.Stargazer);
             Rules.UseEvent(p, DreamEvent.Stargazer);
-            Assert.Equal(0.3, p.Run.EventDropBonus, 3);
+            Assert.Equal(EventBalanceTestData.Bonus("stargazerDropBonus"), p.Run.EventDropBonus, 3);
             p.Run.OfferedEvent = DreamEvent.LuckyStar;
             Rules.UseEvent(p, DreamEvent.LuckyStar);
-            Assert.Equal(0.4, p.Run.EventLuck, 3);
-            Assert.True(Rules.KillModifiers(p.Run).DropBonus >= 0.3);
+            Assert.Equal(EventBalanceTestData.Bonus("luckyStarLuck"), p.Run.EventLuck, 3);
+            Assert.True(Rules.KillModifiers(p.Run).DropBonus >= EventBalanceTestData.Bonus("stargazerDropBonus"));
             Rules.Secure(p);
             Assert.Equal(0, p.Run.EventDropBonus);
             Assert.Equal(0, p.Run.EventLuck);
         }
 
         [Fact]
-        public void Cauldron_melts_three_low_relics_into_one_better_one()
+        public void Cauldron_melts_the_required_low_relics_into_one_better_one()
         {
             var p = AtEvent(DreamEvent.Cauldron);
-            Give(p, Rarity.Common);
-            Give(p, Rarity.Common);
+            int required = EventBalanceTestData.Number("cauldron", "relicCount");
+            for (int i = 1; i < required; i++) Give(p, Rarity.Common);
             Assert.False(DreamEvents.CanUse(p, DreamEvent.Cauldron, out _));
             Give(p, Rarity.Uncommon);
             var keep = Give(p, Rarity.Epic);
@@ -98,7 +98,7 @@ namespace SodRpg.Core.Tests
             Assert.Contains(epic, p.Run.Satchel);
             Assert.Equal(before + 4 * Content.SalvageShards(Rarity.Common), p.Material(Materials.Shard));
             Assert.Equal(0, p.Run.SatchelShards);
-            Assert.Equal(1, p.Run.SatchelTuning);
+            Assert.Equal(4 / EventBalanceTestData.Number("tapir", "relicsPerTuning"), p.Run.SatchelTuning);
         }
 
         [Fact]
@@ -107,13 +107,19 @@ namespace SodRpg.Core.Tests
             var p = AtEvent(DreamEvent.CourageGate);
             int heat = p.Run.Heat;
             Rules.UseEvent(p, DreamEvent.CourageGate);
-            Assert.Equal(heat + 1, p.Run.Heat);
-            Assert.Equal(40, p.Run.SatchelShards);
+            Assert.Equal(heat + EventBalanceTestData.Number("courageGate", "heatIncrement"), p.Run.Heat);
+            Assert.Equal(EventBalanceTestData.Number("courageGate", "shards"), p.Run.SatchelShards);
 
             var q = AtEvent(DreamEvent.Archive);
             int xp = q.DreamXp, lv = q.DreamLevel;
+            int earned = EventBalanceTestData.Number("archive", "baseXp") + EventBalanceTestData.Number("archive", "xpPerHeat") * q.Run.Heat;
+            int expectedXp = (int)Math.Min(int.MaxValue, (long)xp + earned), expectedLevel = lv;
+            while (expectedLevel < Content.MaxDreamLevel && expectedXp >= Content.XpToNext(expectedLevel))
+                expectedXp -= Content.XpToNext(expectedLevel++);
+            if (expectedLevel == Content.MaxDreamLevel) expectedXp = 0;
             Rules.UseEvent(q, DreamEvent.Archive);
-            Assert.True(q.DreamLevel > lv || q.DreamXp > xp);
+            Assert.Equal(expectedLevel, q.DreamLevel);
+            Assert.Equal(expectedXp, q.DreamXp);
         }
 
         [Fact]

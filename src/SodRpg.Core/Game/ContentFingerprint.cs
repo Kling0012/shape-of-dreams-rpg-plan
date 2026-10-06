@@ -49,6 +49,12 @@ namespace SodRpg.Core.Game
                 ids.Add(InfinityBalance.ContentFingerprintRecord);
             ids.Add(GearBalance.ContentFingerprintRecord);
             ids.Add(SetBalanceValues.ContentFingerprintRecord);
+            ids.AddRange(EquipmentItemsBalanceValues.ContentFingerprintRecords);
+            ids.AddRange(AffixPoolsBalance.ContentFingerprintRecords);
+            ids.AddRange(PowerPoolsBalance.ContentFingerprintRecords);
+            ids.AddRange(EquipmentCapsBalance.ContentFingerprintRecords);
+            ids.AddRange(PowersBalance.ContentFingerprintRecords);
+            Stage6Fingerprint.AddRecords(ids);
             foreach (var b in Content.Bases) ids.Add("b:" + b.Id);
             foreach (var u in Content.Uniques)
             {

@@ -96,8 +96,8 @@ namespace SodRpg.Core.Game
         /// （途中で終了したランの未確保品は遺失物へ）。
         /// </summary>
         /// <summary>Limbo 深度1ごとの遺物ドロップ率の上乗せと幸運。</summary>
-        public const double LimboDropBonus = 0.10;
-        public const double LimboLuck = 0.2;
+        public const double LimboDropBonus = EconomyBalance.LimboDropBonus;
+        public const double LimboLuck = EconomyBalance.LimboLuck;
 
         public static List<GameEvent> BeginRun(Profile p, string runId, DailyDream daily = null, int limboDepth = 0, ISet<string> reservedUids = null, string heroKey = null, int? dreamDepth = null)
         {
@@ -171,7 +171,7 @@ namespace SodRpg.Core.Game
             var focus = p.Focus ?? DailyDream.Get(run.DailyId)?.FeaturedLine;
             bool admitted = InfinityRewards.AdmitKill(p, tier, rollTier, killHeat, killWaypoint, isNightmare, bossTypeName, bossDropNightmare, bossDropDepth);
             var reward = admitted ? Loot.RollKill(rng, rollTier, itemLevel, killHeat, focus, KillModifiers(run, killWaypoint), p.Stash, run.Satchel, p.Codex) : new KillReward();
-            if (admitted && variant != null && variant.ShardBonusPct != 100) reward.Shards = (int)Math.Min(int.MaxValue, (long)reward.Shards * variant.ShardBonusPct / 100 + Variants.BonusShards);
+            if (admitted && variant != null && variant.ShardBonusPct != 100) reward.Shards = (int)Math.Min(int.MaxValue, (long)reward.Shards * variant.ShardBonusPct / 100 + LootBalance.VariantAdditiveShards);
             bool hoardPayout = killWaypoint == Waypoint.BossHoard
                 && !run.WaypointHoardReleased && tier == MonsterTier.Boss;
             Waypoints.ApplyKill(p, tier, isNightmare, rng, reward, itemLevel, focus, roomIndex ?? run.RoomsCleared, killWaypoint, out int waypointStarXp, out int waypointAwakening, admitted);
@@ -465,8 +465,8 @@ namespace SodRpg.Core.Game
             run.StarSecureRewarded = true;
             int heat = run.Heat;
             int relics = run.Satchel.Count;
-            int bonusShards = InfinityRewards.LimitShards(p, (int)Math.Min(int.MaxValue, (long)run.SatchelShards * heat / 4
-                * (Pacts.Sum(run.Pacts).DoubleDepthBonus ? 2 : 1)));
+            int bonusShards = InfinityRewards.LimitShards(p, (int)Math.Min(int.MaxValue, (long)run.SatchelShards * heat / EconomyBalance.SecureBonusDivisor
+                * (Pacts.Sum(run.Pacts).DoubleDepthBonus ? PactBalance.DoubleDepthBonusMultiplier : 1)));
             int shards = SaturatingAdd(run.SatchelShards, bonusShards);
             int tuning = run.SatchelTuning;
 
@@ -802,9 +802,9 @@ namespace SodRpg.Core.Game
                 case DreamEvent.Chalice:
                 {
                     int bet = run.SatchelShards;
-                    if (rng.Chance(0.5))
+                    if (rng.Chance(EventsBalance.ChaliceWinChance))
                     {
-                        run.SatchelShards = SaturatingAdd(run.SatchelShards, InfinityRewards.LimitShards(p, bet));
+                        run.SatchelShards = SaturatingAdd(run.SatchelShards, InfinityRewards.LimitShards(p, bet * EventsBalance.ChaliceBonusMultiplier));
                         ev.Add(new GameEvent(EventKind.Secured, Loc.T($"賭けに勝ちました！ まだ持ち帰っていない欠片が{bet}から{run.SatchelShards}に増えました。", $"You won! Unsecured shards {bet} -> {run.SatchelShards}")));
                     }
                     else
@@ -839,7 +839,7 @@ namespace SodRpg.Core.Game
                     var source = run.Satchel.Where(r => trades == null || !trades.IsReserved(r.Uid)).OrderByDescending(r => r.Score).First();
                     var rarity = source.Rarity == Rarity.Legendary ? Rarity.Epic : source.Rarity;
                     var relic = Loot.RollBaseRelic(rng, source.Base, rarity, source.ItemLevel);
-                    run.SatchelShards -= source.Rarity >= Rarity.Epic ? 60 : 30;
+                    run.SatchelShards -= DreamEvents.TwinMirrorCost(source.Rarity);
                     RecordEventRelic(p, relic, ev, trades);
                     break;
                 }
@@ -850,7 +850,7 @@ namespace SodRpg.Core.Game
                 case DreamEvent.Cauldron:
                 {
                     var parts = run.Satchel.Where(r => (r.Rarity == Rarity.Common || r.Rarity == Rarity.Uncommon) && (trades == null || !trades.IsReserved(r.Uid)))
-                        .OrderBy(r => r.Score).Take(3).ToList();
+                        .OrderBy(r => r.Score).Take(EventsBalance.CauldronRelicCount).ToList();
                     var rarity = parts.Max(r => r.Rarity) + 1;
                     int itemLevel = parts.Max(r => r.ItemLevel);
                     foreach (var part in parts) run.Satchel.Remove(part);
@@ -871,7 +871,7 @@ namespace SodRpg.Core.Game
                         count++;
                         run.Satchel.RemoveAt(i);
                     }
-                    int tuning = count / 3;
+                    int tuning = count / EventsBalance.TapirRelicsPerTuning;
                     // 獏の欠片は保管庫へ直接入れ、確保時の潜行ボーナスを掛けない。
                     p.AddMaterial(Materials.Shard, shards);
                     run.SatchelTuning += tuning;
@@ -881,9 +881,9 @@ namespace SodRpg.Core.Game
                 }
                 case DreamEvent.CourageGate:
                 {
-                    run.Heat = Loot.ClampHeat(run.Heat + 1);
+                    run.Heat = Loot.ClampHeat(run.Heat + EventsBalance.CourageGateHeatIncrement);
                     run.PeakHeat = Math.Max(run.PeakHeat, run.Heat);
-                    int granted = InfinityRewards.LimitShards(p, 40);
+                    int granted = InfinityRewards.LimitShards(p, EventsBalance.CourageGateShards);
                     run.SatchelShards = SaturatingAdd(run.SatchelShards, granted);
                     ev.Add(new GameEvent(EventKind.Delved, Loc.T($"勇気の門をくぐり、潜行が{run.Heat}になりました。まだ持ち帰っていない欠片が{granted}増えました。",
                         $"Gate of Courage: delve {run.Heat}, +{granted} unsecured shards")));
@@ -891,7 +891,7 @@ namespace SodRpg.Core.Game
                 }
                 case DreamEvent.Archive:
                     ev.Add(new GameEvent(EventKind.Info, DreamEvents.Describe(e, p)));
-                    ev.AddRange(AddXp(p, 40 + 20 * run.Heat));
+                    ev.AddRange(AddXp(p, DreamEvents.ArchiveXp(run.Heat)));
                     break;
                 case DreamEvent.LuckyStar:
                     run.EventLuck += DreamEvents.LuckyStarLuck;
@@ -907,7 +907,7 @@ namespace SodRpg.Core.Game
                     var chosen = pool[rng.Range(0, pool.Count - 1)];
                     var replacement = new PowerLine(chosen.Power, rng.Range(chosen.Min, chosen.Max));
                     var old = target.Powers[0];
-                    if (e == DreamEvent.MemoryWell) p.AddMaterial(Materials.Tuning, -(target.Rarity >= Rarity.Epic ? 2 : 1));
+                    if (e == DreamEvent.MemoryWell) p.AddMaterial(Materials.Tuning, -DreamEvents.MemoryWellCost(target.Rarity));
                     else target.Powers.RemoveAt(target.Powers.Count - 1);
                     target.Powers[0] = replacement;
                     ev.Add(new GameEvent(e == DreamEvent.MemoryWell ? EventKind.LevelUp : EventKind.Info, Loc.T(
@@ -921,7 +921,7 @@ namespace SodRpg.Core.Game
                     var replacement = Loot.RollAffix(rng, target.Slot, target.Rarity, target.ItemLevel, DreamEvents.ShadowExcludedStats(target), target.Base.Family);
                     if (replacement == null) throw new InvalidOperationException(Loc.T("別の特性を付けられません。", "No different affix is available."));
                     var old = target.Affixes[0];
-                    run.SatchelShards -= target.Rarity >= Rarity.Epic ? 50 : 25;
+                    run.SatchelShards -= DreamEvents.ShadowExchangeCost(target.Rarity);
                     target.Retunes++;
                     target.Affixes[0] = replacement;
                     ev.Add(new GameEvent(EventKind.Info, Loc.T(
@@ -932,7 +932,7 @@ namespace SodRpg.Core.Game
                 case DreamEvent.LostMausoleum:
                 {
                     var recovered = DreamEvents.LostCandidates(p, trades).ToList();
-                    run.SatchelShards -= 60;
+                    run.SatchelShards -= EventsBalance.LostMausoleumShards;
                     foreach (var relic in recovered)
                     {
                         p.LostAndFound.Remove(relic);
@@ -947,7 +947,7 @@ namespace SodRpg.Core.Game
                 case DreamEvent.RelicWager:
                 {
                     var target = DreamEvents.TradeTarget(p, e, trades);
-                    if (rng.Chance(target.Rarity == Rarity.Rare ? 0.2 : 0.5))
+                    if (rng.Chance(DreamEvents.RelicWagerChance(target.Rarity)))
                     {
                         var replacement = Loot.RollBaseRelic(rng, target.Base, target.Rarity + 1, target.ItemLevel);
                         run.Satchel.Remove(target);
@@ -977,13 +977,13 @@ namespace SodRpg.Core.Game
                     break;
                 }
                 case DreamEvent.StoneBroker:
-                    run.SatchelShards -= 35;
-                    run.SatchelTuning += 2;
+                    run.SatchelShards -= EventsBalance.StoneBrokerShards;
+                    run.SatchelTuning += EventsBalance.StoneBrokerTuning;
                     ev.Add(new GameEvent(EventKind.Info, DreamEvents.Describe(e, p)));
                     break;
                 case DreamEvent.ShardKiln:
-                    run.SatchelTuning -= 2;
-                    run.SatchelShards += 45;
+                    run.SatchelTuning -= EventsBalance.ShardKilnTuning;
+                    run.SatchelShards += EventsBalance.ShardKilnShards;
                     ev.Add(new GameEvent(EventKind.Info, DreamEvents.Describe(e, p)));
                     break;
                 case DreamEvent.StarOffering:
@@ -994,17 +994,17 @@ namespace SodRpg.Core.Game
                     ev.Add(new GameEvent(EventKind.Lost, Loc.T($"「{target.DisplayName}」を供物として捧げました。", $"Sacrificed \"{target.DisplayName}\" as an offering."), target.Rarity));
                     if (e == DreamEvent.StarOffering)
                     {
-                        AddStarXp(p, run.HeroKey, 40, ev, false);
+                        AddStarXp(p, run.HeroKey, EventsBalance.StarOfferingXp, ev, false);
                     }
-                    else ev.AddRange(AddXp(p, 40 + 20 * run.Heat, false));
+                    else ev.AddRange(AddXp(p, DreamEvents.DreamOfferingXp(run.Heat), false));
                     break;
                 }
                 case DreamEvent.AbyssalChest:
                 {
                     var relic = Loot.RollRelic(rng, Rarity.Epic, p.BestItemLevel, null,
                         p.Focus ?? DailyDream.Get(run.DailyId)?.FeaturedLine, p.Stash, run.Satchel, p.Codex);
-                    run.SatchelShards -= 75;
-                    run.Heat++;
+                    run.SatchelShards -= EventsBalance.AbyssalChestShards;
+                    run.Heat += EventsBalance.AbyssalChestHeatIncrement;
                     run.PeakHeat = Math.Max(run.PeakHeat, run.Heat);
                     ev.Add(new GameEvent(EventKind.Delved, Loc.T($"宝箱を開き、潜行が{run.Heat}になりました。", $"Opened the chest; delve is now {run.Heat}.")));
                     RecordEventRelic(p, relic, ev, trades);
@@ -1025,7 +1025,7 @@ namespace SodRpg.Core.Game
                 case DreamEvent.SealedVault:
                 {
                     var target = DreamEvents.TradeTarget(p, e, trades);
-                    run.SatchelShards -= 40;
+                    run.SatchelShards -= EventsBalance.SealedVaultShards;
                     run.Satchel.Remove(target);
                     p.Stash.Add(target);
                     run.RelicsSecured++;

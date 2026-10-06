@@ -51,12 +51,16 @@ namespace SodRpg.Core.Tests
                 Assert.True(DreamEvents.CanUse(p, e, true, out string reason), reason);
                 seen.Add(e);
             }
-            Assert.Equal(25, seen.Count);
+            Assert.All(seen, e => Assert.True(EventBalanceTestData.Number("offerWeights", e.ToString()) > 0));
             p.Run.SatchelShards = 0;
             for (int i = 0; i < 500; i++)
             {
                 var e = DreamEvents.Roll(rng, p);
-                Assert.DoesNotContain(e, new[] { DreamEvent.ShadowExchange, DreamEvent.LostMausoleum, DreamEvent.StoneBroker, DreamEvent.AbyssalChest, DreamEvent.SealedVault });
+                Assert.False((e == DreamEvent.ShadowExchange && EventBalanceTestData.Number("shadowExchange", "epicShards") > 0)
+                    || (e == DreamEvent.LostMausoleum && EventBalanceTestData.Number("lostMausoleum", "shards") > 0)
+                    || (e == DreamEvent.StoneBroker && EventBalanceTestData.Number("stoneBroker", "shards") > 0)
+                    || (e == DreamEvent.AbyssalChest && EventBalanceTestData.Number("abyssalChest", "shards") > 0)
+                    || (e == DreamEvent.SealedVault && EventBalanceTestData.Number("sealedVault", "shards") > 0));
             }
         }
 
@@ -389,7 +393,7 @@ namespace SodRpg.Core.Tests
             int shards = p.Run.SatchelShards;
             Rules.UseEvent(p, DreamEvent.LostMausoleum);
             Assert.Empty(p.LostAndFound);
-            Assert.Equal(shards - 60, p.Run.SatchelShards);
+            Assert.Equal(shards - EventBalanceTestData.Number("lostMausoleum", "shards"), p.Run.SatchelShards);
             foreach (var r in lost)
             {
                 Assert.Contains(r, p.Run.Satchel);
@@ -409,7 +413,7 @@ namespace SodRpg.Core.Tests
             Assert.Contains(best, p.Stash);
             Assert.DoesNotContain(best, p.Run.Satchel);
             Assert.Equal(count - 1, p.Run.Satchel.Count);
-            Assert.Equal(shards - 40, p.Run.SatchelShards);
+            Assert.Equal(shards - EventBalanceTestData.Number("sealedVault", "shards"), p.Run.SatchelShards);
             Assert.Equal(tuning, p.Run.SatchelTuning);
             Assert.Equal(bank, p.Material(Materials.Shard));
         }
@@ -444,32 +448,31 @@ namespace SodRpg.Core.Tests
         [Fact]
         public void Relic_wager_either_upgrades_the_same_base_or_salvages_without_duplicating_the_stake()
         {
-            bool won = false, lost = false;
             for (ulong seed = 1; seed <= 32; seed++)
             {
                 var p = EventProfile(DreamEvent.RelicWager, seed);
                 var stake = p.Run.Satchel.Where(r => r.Rarity < Rarity.Epic).OrderByDescending(r => r.Score).First();
                 var others = p.Run.Satchel.Where(r => r != stake).Select(r => r.Uid).ToHashSet();
                 int shards = p.Run.SatchelShards;
+                double chance = EventBalanceTestData.Probability("relicWager", stake.Rarity == Rarity.Rare ? "rareWinChance" : "lowerWinChance");
+                bool expectedWin = chance >= 1 || (chance > 0 && new Rng(p.RngState).NextDouble() < chance);
                 Rules.UseEvent(p, DreamEvent.RelicWager);
                 Assert.DoesNotContain(stake, p.Run.Satchel);
                 Assert.All(others, uid => Assert.Contains(p.Run.Satchel, r => r.Uid == uid));
                 var replacement = p.Run.Satchel.Where(r => !others.Contains(r.Uid)).ToArray();
-                if (replacement.Length == 1)
+                if (expectedWin)
                 {
-                    won = true;
+                    Assert.Single(replacement);
                     Assert.Equal(stake.BaseId, replacement[0].BaseId);
                     Assert.Equal(stake.Rarity + 1, replacement[0].Rarity);
                     Assert.Equal(shards, p.Run.SatchelShards);
                 }
                 else
                 {
-                    lost = true;
                     Assert.Empty(replacement);
                     Assert.Equal(shards + Content.SalvageShards(stake.Rarity), p.Run.SatchelShards);
                 }
             }
-            Assert.True(won && lost);
         }
 
         [Fact]
@@ -480,7 +483,7 @@ namespace SodRpg.Core.Tests
             int tuning = p.Material(Materials.Tuning);
             Rules.UseEvent(p, DreamEvent.MemoryWell);
             var changed = Assert.Single(p.Stash, r => !before[r.Uid].SequenceEqual(r.Powers.Select(x => (x.Power, x.Value))));
-            Assert.Equal(tuning - 2, p.Material(Materials.Tuning));
+            Assert.Equal(tuning - EventBalanceTestData.Number("memoryWell", changed.Rarity >= Rarity.Epic ? "epicTuning" : "tuning"), p.Material(Materials.Tuning));
             Assert.Equal(before[changed.Uid].Skip(1), changed.Powers.Skip(1).Select(x => (x.Power, x.Value)));
             Assert.DoesNotContain(before[changed.Uid], line => line.Power == changed.Powers[0].Power);
             Assert.Contains(Content.PowerPool(changed.Slot), range => range.Power == changed.Powers[0].Power);
@@ -494,6 +497,9 @@ namespace SodRpg.Core.Tests
             p.Run.AwaitingChoice = true;
             p.Run.OfferedEvent = e;
             p.Run.Heat = 2;
+            if (e == DreamEvent.CourageGate || e == DreamEvent.AbyssalChest)
+                p.Run.Heat = Math.Min(p.Run.Heat, Content.MaxHeat - EventBalanceTestData.Number(
+                    e == DreamEvent.CourageGate ? "courageGate" : "abyssalChest", "heatIncrement"));
             p.Run.SatchelShards = 500;
             p.Run.SatchelTuning = 20;
             p.AddMaterial(Materials.Shard, 10000);
@@ -518,6 +524,9 @@ namespace SodRpg.Core.Tests
                 }
                 p.Run.Satchel.Add(Loot.RollRelic(rng, rarity, 10));
             }
+            if (e == DreamEvent.Cauldron)
+                for (int count = 4; count < EventBalanceTestData.Number("cauldron", "relicCount"); count++)
+                    p.Run.Satchel.Add(Loot.RollRelic(new Rng(seed + (ulong)count + 1000), Rarity.Common, 10));
             var lost = Loot.RollRelic(rng, Rarity.Rare, 10);
             lost.Enhance = 1;
             p.LostAndFound.Add(lost);

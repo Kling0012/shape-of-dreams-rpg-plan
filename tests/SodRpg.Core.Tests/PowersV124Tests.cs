@@ -169,24 +169,26 @@ namespace SodRpg.Core.Tests
         [Fact]
         public void Runtime_caps_hand_constructed_shield_and_speed_values()
         {
-            var rt = new PowerRuntime(With((Power.StillWater, 1000), (Power.SpendersWard, 1000),
-                (Power.PerfectRead, 1000)), 0);
-            Assert.Equal(150f, rt.TakeStillWater(0, true, 1000));
-            Assert.Equal(600f, rt.TakeSpendersWard(0, 400, 1000));
+            var rt = new PowerRuntime(With((Power.StillWater, int.MaxValue), (Power.SpendersWard, int.MaxValue),
+                (Power.PerfectRead, int.MaxValue)), 0);
+            Assert.Equal(EquipmentBalanceInputs.Cap(Power.StillWater) * 10f, rt.TakeStillWater(0, true, 1000));
+            Assert.Equal(EquipmentBalanceInputs.Cap(Power.SpendersWard) * 30f, rt.TakeSpendersWard(0, 400, 1000));
             Assert.True(rt.TakePerfectRead(0, true));
-            Assert.Equal(40, rt.Current(0).AttackSpeedPct);
+            Assert.Equal(EquipmentBalanceInputs.Cap(Power.PerfectRead), rt.Current(0).AttackSpeedPct);
         }
 
         [Theory]
-        [InlineData(Power.StillWater, 39, 15)]
-        [InlineData(Power.SpendersWard, 40, 20)]
-        [InlineData(Power.PerfectRead, 41, 40)]
-        [InlineData(Power.LucidBoon, 42, 18)]
-        public void New_power_ids_round_trip_and_clamp_received_and_equipped_values(Power power, int id, int cap)
+        [InlineData(Power.StillWater, 39)]
+        [InlineData(Power.SpendersWard, 40)]
+        [InlineData(Power.PerfectRead, 41)]
+        [InlineData(Power.LucidBoon, 42)]
+        public void New_power_ids_round_trip_and_clamp_received_and_equipped_values(Power power, int id)
         {
+            int cap = EquipmentBalanceInputs.Cap(power);
             Assert.Equal(id, (int)power);
             Assert.Equal(cap, Content.PowerCap(power));
-            Assert.Equal(cap - 1, Build.Decode(With((power, cap - 1)).Encode()).Get(power));
+            int belowCap = System.Math.Max(0, cap - 1);
+            Assert.Equal(belowCap, Build.Decode(With((power, belowCap)).Encode()).Get(power));
             int wireCap = StarDamageScaling.IsDamage(power)
                 ? (int)decimal.Ceiling(cap * (2.5m + 1m + 1.5m * 504 / 500))
                 : (int)(cap * 2.5m);

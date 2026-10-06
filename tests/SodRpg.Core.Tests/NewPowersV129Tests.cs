@@ -459,7 +459,7 @@ namespace SodRpg.Core.Tests
                 Rules.BeginRun(p, "rare-well", heroKey: "Hero_Vesper");
                 p.Run.AwaitingChoice = true;
                 p.Run.OfferedEvent = DreamEvent.MemoryWell;
-                p.AddMaterial(Materials.Tuning, 1);
+                p.AddMaterial(Materials.Tuning, EventBalanceTestData.Number("memoryWell", "tuning"));
                 Rules.UseEvent(p, DreamEvent.MemoryWell);
                 Power replacement = Assert.Single(r.Powers).Power;
                 Assert.NotEqual(old, replacement);

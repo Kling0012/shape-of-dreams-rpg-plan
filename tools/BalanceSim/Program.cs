@@ -17,6 +17,7 @@ internal static class Program
                 return 0;
             }
             var timer = Stopwatch.StartNew();
+            if (Stage6Report.TryRun(options)) return 0;
             if (options.Forge)
             {
                 var entries = ForgeReport.Measure();
@@ -90,6 +91,32 @@ internal static class Program
                 }
                 if (options.MetricsJson != null) Metrics.WritePressure(options.MetricsJson, entries);
                 Console.Write(pressureReport);
+                return 0;
+            }
+            if (options.Sets || options.Equipment)
+            {
+                string equipmentReport;
+                if (options.Sets)
+                {
+                    var results = SetBalance.MeasureAll();
+                    timer.Stop();
+                    equipmentReport = SetReport.Render(results, timer.Elapsed);
+                    if (options.MetricsJson != null) Metrics.WriteSets(options.MetricsJson, results);
+                }
+                else
+                {
+                    var entries = EquipmentReport.Measure();
+                    equipmentReport = EquipmentReport.Render(entries);
+                    if (options.MetricsJson != null) Metrics.WriteEquipment(options.MetricsJson, entries);
+                }
+                if (options.Out != null)
+                {
+                    string path = Path.GetFullPath(options.Out);
+                    string? directory = Path.GetDirectoryName(path);
+                    if (directory != null) Directory.CreateDirectory(directory);
+                    File.WriteAllText(path, equipmentReport, new UTF8Encoding(false));
+                }
+                Console.Write(equipmentReport);
                 return 0;
             }
             if (options.Infinity)

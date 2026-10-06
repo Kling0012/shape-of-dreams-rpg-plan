@@ -25,7 +25,7 @@ namespace SodRpg.Core.Tests
             p.Run.Bounties.Clear();
             Rules.ReachSecurePoint(p);
             p.Run.OfferedEvent = DreamEvent.Cauldron;
-            for (int i = 0; i < 3; i++) p.Run.Satchel.Add(Loot.RollRelic(new Rng((ulong)(10 + i)), Rarity.Common, 4));
+            for (int i = 0; i < EventBalanceTestData.Number("cauldron", "relicCount"); i++) p.Run.Satchel.Add(Loot.RollRelic(new Rng((ulong)(10 + i)), Rarity.Common, 4));
             Rules.UseEvent(p, DreamEvent.Cauldron);
             Assert.Single(p.Run.Satchel);
             Assert.Equal(4, p.Run.Satchel[0].ItemLevel);
@@ -41,7 +41,7 @@ namespace SodRpg.Core.Tests
             Rules.ReachSecurePoint(p);
             p.Run.OfferedEvent = DreamEvent.TwinMirror;
             p.Run.Satchel.Add(Loot.RollRelic(new Rng(5), Rarity.Rare, 3));
-            p.Run.SatchelShards = 30;
+            p.Run.SatchelShards = EventBalanceTestData.Number("twinMirror", "shards");
             Rules.UseEvent(p, DreamEvent.TwinMirror);
             Assert.True(p.Run.Bounties[0].Done);
         }

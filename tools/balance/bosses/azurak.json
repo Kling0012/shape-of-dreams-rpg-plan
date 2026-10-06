@@ -1,0 +1,175 @@
+{
+  "schemaVersion": 1,
+  "shared": {},
+  "moves": {
+    "weapon": {
+      "channels": {
+        "RoarDouble": {
+          "value": 18
+        }
+      },
+      "actions": [
+        {
+          "cooldownMillis": 4000,
+          "intervalMillis": 150,
+          "count": 2,
+          "maxInstances": 1,
+          "radiusMilli": 2500
+        }
+      ]
+    },
+    "armor": {
+      "channels": {
+        "RoarRampart": {
+          "value": 10
+        }
+      },
+      "actions": [
+        {
+          "cooldownMillis": 6000,
+          "lifetimeMillis": 2000,
+          "maxTargets": 1,
+          "maxInstances": 1
+        }
+      ]
+    },
+    "charm": {
+      "channels": {
+        "RoarCall": {
+          "value": 14
+        }
+      },
+      "actions": [
+        {
+          "cooldownMillis": 6000,
+          "maxInstances": 1,
+          "radiusMilli": 3000,
+          "magnitudeMilli": 800
+        }
+      ]
+    },
+    "head": {
+      "channels": {
+        "RoarHaven": {
+          "value": 8
+        }
+      },
+      "actions": [
+        {
+          "cooldownMillis": 6000,
+          "delayMillis": 500,
+          "lifetimeMillis": 1000,
+          "maxInstances": 1,
+          "maxTargets": 1,
+          "radiusMilli": 2000
+        },
+        {
+          "lifetimeMillis": 1500,
+          "maxTargets": 1
+        }
+      ]
+    },
+    "hands": {
+      "channels": {
+        "RoarArtillery": {
+          "value": 18
+        }
+      },
+      "actions": [
+        {
+          "cooldownMillis": 5000,
+          "delayMillis": 600,
+          "maxInstances": 1,
+          "radiusMilli": 1500,
+          "rangeMilli": 8000
+        }
+      ]
+    },
+    "feet": {
+      "channels": {
+        "RoarLanding": {
+          "value": 16
+        }
+      },
+      "actions": [
+        {
+          "cooldownMillis": 5000,
+          "maxInstances": 1,
+          "radiusMilli": 2000
+        }
+      ]
+    },
+    "stage2": {
+      "channels": {
+        "RoarQuake": {
+          "value": 16
+        }
+      },
+      "actions": [
+        {
+          "cooldownMillis": 3000,
+          "mainHits": 3,
+          "counterLifetimeMillis": 4000,
+          "maxInstances": 1,
+          "radiusMilli": 2500,
+          "rangeMilli": 8000
+        }
+      ]
+    },
+    "stage3": {
+      "channels": {
+        "RoarRestomp": {
+          "value": 22
+        }
+      },
+      "actions": [
+        {
+          "cooldownMillis": 5000,
+          "delayMillis": 450,
+          "maxInstances": 1,
+          "radiusMilli": 2500,
+          "rangeMilli": 8000
+        }
+      ]
+    },
+    "stage6": {
+      "channels": {
+        "RoarGrandDouble": {
+          "value": 90,
+          "cap": 100
+        },
+        "RoarGrandShield": {
+          "value": 38,
+          "cap": 40
+        }
+      },
+      "actions": [
+        {
+          "cooldownMillis": 8000,
+          "delayMillis": 350,
+          "intervalMillis": 200,
+          "count": 2,
+          "maxInstances": 1,
+          "radiusMilli": 3000,
+          "rangeMilli": 8000
+        },
+        {
+          "lifetimeMillis": 3000,
+          "maxTargets": 1
+        }
+      ]
+    }
+  },
+  "rewards": {
+    "extendValueMilli": 150,
+    "extendCapMilli": 150,
+    "extendDurationMillis": 1000,
+    "damageStage2ValueMilli": 200,
+    "damageStage3ValueMilli": 250,
+    "damageCooldownMillis": 8000,
+    "damageStage2BudgetMilli": 200,
+    "damageStage3BudgetMilli": 450,
+    "shortenValueMilli": 50,
+    "shortenCapMilli": 50
+  }
+}

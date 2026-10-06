@@ -5,9 +5,9 @@
 `star-progression.json` の星XP曲線・費用・報酬・刻印枠の解放、
 `gear.json` の装備レベル成長・固定攻魔上限、`sets.json` の通常セット2/3/6部位効果、
 `pressure.json` の夢の圧・深度、`monsters.json` の悪夢・変種・敵行動、
-`infinity.json` の供給予算・周期・圧段階上限を型付きC#へ生成します。
-記憶ダメージはmanifestの480親＋258選択肢と旧ルート98成分、計836欄を移行済みです。
-星ID・段数・費用・選択肢・保存形式5・Protocol 23は維持し、調整した有効値を内容照合に含めます。
+`infinity.json` の供給予算・周期・圧段階上限、`powers.json` のPowerの時間・距離・条件（127欄）を
+型付きC#へ生成します。記憶ダメージはmanifestの480親＋258選択肢と旧ルート98成分、計836欄を移行済みです。
+星ID・段数・費用・選択肢・保存形式5・Protocol 23は維持し、調整した有効値（装備・セット・Powerを含む）を内容照合に含めます。
 段階2ではMemoryHaste・GimmickBoost・GimmickParam・Notable・Keystone・Statの
 明示的な効果欄と旧星・汎用星・sampleの数値を追加しました。今回の切替ではゲーム値を変更せず、
 生成後の採用済み定義と内容指紋を維持します。実行時のJSON読込はありません。
@@ -234,6 +234,34 @@ Finale is cooldown reduction, not pure damage, so its existing values are retain
 Saved affix/power rolls remain intact; implicits and set bonuses are recalculated. Save format 5 and
 Protocol 23 remain unchanged; co-op content matching includes the generated gear/set balance records.
 
+
+## ボス挙動表の調整（Issue #149 段階8 前半）
+
+数値原本は `tools/balance/bosses/<boss>.json` の13ファイル（demon・skoll・infernus・ink・nyx・erebos・seeker・
+azurak・primus・light・maw・obliviax・polaris）。ink.json は白夜／黒月の両セットを `white_*`／`dark_*` キーで持ちます。
+1セルを編集して `tools/balance/run` を実行すると、型付き生成・全通常テスト・実測・前回成功との比較まで進みます。
+生成先は `src/SodRpg.Core/Game/Balance/Boss<Boss>Balance.Generated.cs` 13本と `BossBalanceValues.Generated.cs`。
+`BossProfiles.*.cs` は構造（ID・enum・説明文・報酬の段構成）と生成済み定数の参照だけを持ち、実行時にJSONを読みません。
+
+| 表のセクション | 内容 |
+| --- | --- |
+| `shared` | ボス固有の共有定数（Demonの樹芽4定数等）と技ヘルパー埋め込み値（Skoll氷矢の持続・射程等） |
+| `moves/<部位や段>/<profile>` | チャネルの `value`／`cap`（表示%、生成時に×1000でValueMilli/CapMilli）と、
+  各アクションの `cooldownMillis`・`radiusMilli`・`count` 等のpayload欄 |
+| `rewards` | 固有報酬のアクションpayload。Inkの白／黒・Azurakの段別条件は段ごとのセル |
+
+- チャネルの `cap` 省略は `cap == value`（InkChannel／AzurakChannel形式）。`value` は正、`cap >= value`。
+  アクション欄はBossActionコンストラクタの受理範囲（`count` 1〜64、`maxInstances` 1〜4、`angleMilli` 0〜360000 等）を
+  生成時に検証し、不正な表はrender前に拒否します。
+- `order`・段番号・`BossSetStage(2/3/6)`・セットの部位数、ID・enum・説明文（Txt）・イベント順序・契約文字列は
+  構造なので表へ移しません。Power定数・Mod側native adapterの数値・説明文内の数値は段階8の後半で別に扱います。
+- ボス値は既存の指紋レコード（`boss-schema`・`boss-channel`・`boss-action`・`boss-reward-action`）で全面的に照合されるため、
+  表変更時に新しい指紋レコードは追加しません。有効値が変われば既存の内容照合が相手側で不一致を検出します。
+- 無調整移行の回帰は `BossBalanceMigrationTests` が担当します。全チャネル・アクション欄と代表報酬値の表↔実定義一致に加え、
+  表が移行時のまま（`BossBalanceValues.MatchesFrozenReference`）である限り、ボス指紋レコードの要約
+  `591-685158953d5197ef` と全体指紋 `10579-ab35d865a569c87b` が移行前と一致することを確認します。
+  1セルでも調整した表はこの固定照合を離れ、表↔実定義の一致検証だけが常時有効です。
+
 ## 記憶ダメージの調整
 
 調整するのは `stars.json` の1セルです。旅人別の例：
@@ -444,3 +472,203 @@ JSON出力を指定しない既存モードの挙動は維持します（setsの
 既存の鍛冶期待値テストは原本 `forge.json` から独立計算する期待値へ移行し、実際の失敗率・固定seedでの成功失敗結果を検証します。
 これは安全性、形式、契約の検証を緩めたり、任意の係数で全テストが常に成功すると保証したりするものではありません。
 本レポートは実際のCore呼出と固定条件のシミュレーションであり、実ゲームの勝率や経済の保証ではありません。
+
+## 段階6：ドロップ・経済・契約・日替わり・道標・出来事
+
+数値の原本は次の7表です。名前・ID・enum・保存／通信の構造・関係フラグは従来のCore定義に残します。
+同じ値でも異なる経済系は別キーです（商人のgold価格と旧shards価格、ArchiveとDreamOfferingのXPなど）。
+
+| 表 | 調整対象 | 生成器 |
+| --- | --- | --- |
+| `loot.json` | rarity重み、tier別ドロップ／幸運、heat係数、追加遺物、選択重み、撃破素材、変種の追加欠片 | `loot_values.py` |
+| `boss-sets.json` | ボスセットの通常／悪夢／深度ドロップと上限 | `boss_sets_values.py` |
+| `economy.json` | dust⇔shards換算、商人gold、分解dust、Limbo補正、確保時の潜行ボーナス除数 | `economy_values.py` |
+| `pacts.json` | 契約ごとの呪い強度・報酬・能力値、提示数、潜行ボーナス倍率 | `pact_values.py` |
+| `daily-dream.json` | 日替わり効果の倍率・報酬、固有効果強化率 | `daily_dream_values.py` |
+| `waypoints.json` | 道標ごとの量・倍率・提示数、遺物複製／分解・星XP・覚醒・調律石・宝庫の換算 | `waypoint_values.py` |
+| `events.json` | 出来事の出現率／抽選重み、価格・確率・個数・報酬・heat増分・XP | `events_values.py` |
+
+各表は `schemaVersion: 1` の閉じたschemaです。整数の個数／費用とdoubleの確率／倍率を区別し、
+未知の欄・boolを数値として使った入力・非有限値・doubleに往復できない小数精度を生成前に拒否します。
+生成先は `src/SodRpg.Core/Game/Balance/{Loot,BossSets,Economy,Pacts,DailyDream,Waypoints,Events}.Generated.cs`。
+保証強化は段階3の `forge.json` に残し、出来事表へ重複させません。
+Mastery、enum番号、関係フラグ、取引の待ち時間／照会回数、保存／通信／保留容量は対象外です。
+`MaxDustEarnPerTrade`・`MaxBatchesPerTrade` 等の安全上限も広げません。
+分解dustの最大額は採用済みforge表から検証し、既存の取引上限を超える調整は生成段階で拒否します。
+
+### 操作
+
+該当する表の1セルを変更し、従来どおり次の入口を使います（任意cwdから実行可能）。
+
+```sh
+DOTNET=/usr/bin/dotnet DOTNET_ROLL_FORWARD=LatestMajor tools/balance/run
+```
+
+段階6時点のrunは従来の6モード（forge、star-efficiency、star-values、star-progression、v132stars、expeditions）に
+次の3モードを加えた9スナップショットを保存しました。段階5・7・8のモード追加分は各節参照、
+上の旧段階の「4モード」等の記述は当時の範囲です。
+
+| 新モード | 比較する量 |
+| --- | --- |
+| `loot-economy` | heat／tier／rarity／floor別の正確な抽選分布、遺物・素材期待値、ボスセット率、gold／dust換算、Coreで実際に確保した欠片 |
+| `pact-daily-waypoints` | 個々の契約／日替わり／道標の採用済み効果量、幸運の表示率、道標の各換算係数 |
+| `events` | 出来事ごとの価格・確率・抽選重み・報酬と、heat／rarity／個数別の価格・XP・調律石 |
+
+新モードも `<mode>.md`／`<mode>.json` と `current.json`／`comparison.md` に入り、
+`tableMetadata` に7表の入力を記録します。各モードは別Coreプロセスです。
+標準の初期表では新モードの比較行は378／1016／125行。IDは意味と条件軸で固定し、単位別に照合します。
+`conditions` にruntime、実登録旅人、抽選floor方針、独立効果の方針、確保の模型入力（未確保欠片100、空の装備・依頼、Infinity無効）を保存します。
+素材の値は補正前の期待値、商人goldは本体難易度補正前です。DPS・勝率・踏破速度・本体通貨取引の成功率は測りません。
+
+レポートだけなら独立した未検証基準を使えます。検証済みの `last-success.json` は更新しません。
+
+```sh
+DOTNET=/usr/bin/dotnet DOTNET_ROLL_FORWARD=LatestMajor tools/balance/run --no-tests --runs 1 --players 1
+python tools/balance/gen_cs.py --check
+DOTNET_ROLL_FORWARD=LatestMajor /usr/bin/dotnet tools/BalanceSim/bin/Release/net8.0/BalanceSim.dll \
+  --mode events --out /tmp/events.md --metrics-json /tmp/events.json
+```
+
+価格の実行・候補判定・日英の説明は同じ採用済み値を参照します。道標の幸運表示も `Loot.LuckPercent` 由来です。
+ゲーム中のJSON読込・倍率再計算・文字列キー検索は追加しません。
+共通生成器とrunの接続は `stage6_values.py`／`stage6_run.py` に分離し、既存の行は変更せず追記しています。
+表／生成器の変更は `tools/test_changed.py` でも全スイート対象になります。
+
+### 初期値の互換性と検証
+
+移行前のCore実行から、数値定義・抽選結果／RNG状態・価格／換算・確保報酬を6652項目保存した
+`tests/SodRpg.Core.Tests/Stage6OriginalValues.json` と、独立プロセスの内容指紋を比較する最小の移行回帰を追加しています。
+このfixtureは互換性の観測であり、調整原本でも実行時fallbackでもありません。
+初期表の星図登録後ContentFingerprintは移行前後とも `10579-ab35d865a569c87b`。
+値変更後は意味・型・単位・採用値の正準レコードを既存FNV-1a照合へ加えます。
+ボスセット率は既存 `boss-drop` レコードを使い、二重に加えません。JSONの空白／キー順は指紋へ影響しません。
+ファイルのSHA256検証は行いません。保存形式・Protocolは変更していません。
+既存の数値期待値は生の表と独立した式／RNG分岐を使い、正当な調整で初期fixtureを再固定する必要はありません。
+
+```sh
+DOTNET=/usr/bin/dotnet DOTNET_ROLL_FORWARD=LatestMajor /usr/bin/dotnet build SodRpg.sln -c Release
+DOTNET=/usr/bin/dotnet DOTNET_ROLL_FORWARD=LatestMajor python tools/test_changed.py --all
+python -m unittest discover -s tools/tests -p 'test_*.py'
+```
+
+実機Unityの描画はこのCore／CLI検証の対象外です。
+
+### 比較の実行例（段階6の移行確認）
+
+同じ出力先・`--no-tests --runs 1 --players 1` で初期表を保存した後、
+`events.json` の `stoneBroker.shards` だけを35から36へ一時変更してrunを実行しました。
+
+| 指標 | 単位 | 現在 | 前回 | 差 | 相対差（丸め） |
+| --- | --- | ---: | ---: | ---: | ---: |
+| `events/stoneBroker/shards` | shards | 36 | 35 | +1 | 約+2.857% |
+
+新3モードの条件・指標ID・単位は同じで、1519行中の差分はこの1行だけでした。
+実際のCoreでも35欠片では候補を使えず、100欠片から36を支払い、64欠片と調律石2を得ました。
+日英の候補表示も36を参照しました。移行コミットの表は元の35です。
+不正な `offerChance: 1.1` は `events.offerChance: expected probability in 0..1` で拒否され、
+生成物も前回の基準も変わりませんでした。レポート専用の実行は検証済み基準を作りません。
+## 装備の種類別原本（Issue #149 段階7）
+
+この節が装備の最新の操作手順です。上の過去段階の記載にある `sets.json` は
+`equipment/sets.json` へ移動済みです。`gear.json` は装備レベル成長だけを担当し、
+固定攻撃力・魔力の上限は `equipment/caps.json` に集約しました。
+
+| 原本（`tools/balance/` 以下） | 対象 | 編集する数値 |
+| --- | --- | --- |
+| `equipment/bases.json` | 土台600種 | IDごとの `implicitValue` |
+| `equipment/uniques.json` | 固有品1,418定義（参照だけの部品も収録） | `powers[].value` 2,092欄、`link.value` 357欄 |
+| `equipment/sets.json` | 通常セット48組 | `twoPiece` / `threePiece` / `sixPiece` の307欄 |
+| `equipment/affixes.json` | 6枠・98特性 | `pools[枠][Stat]` の `min` / `max` / `weight` |
+| `equipment/power-pools.json` | 6枠・207固有効果候補 | `pools[枠][Power]` の `min` / `max` |
+| `equipment/caps.json` | 固有効果95・能力値26の上限 | `power[Power]` / `stat[Stat]` |
+
+名前・lore・土台／セット／効果の関係は既存の定義を維持します。通常セットの
+既存表にある名前も据え置きです。ボス14セットの技・報酬payloadは段階8の対象で、
+2/3/6部位の技参照や報酬段階番号は調整数値にしません。
+保存形式・Protocol・既存の機能ゲートは変更しません。
+
+表の1セルを編集し、次の1コマンドで生成・全通常テスト・実測・前回成功比較を行います。
+
+```sh
+DOTNET=/usr/bin/dotnet DOTNET_ROLL_FORWARD=LatestMajor python tools/balance/run
+
+# 生成だけ／書込なしの生成鮮度確認
+python tools/balance/gen_cs.py
+python tools/balance/gen_cs.py --check
+
+# 装備定義／既存セット予算の個別実測（先に生成・Releaseビルドを行う）
+DOTNET_ROLL_FORWARD=LatestMajor /usr/bin/dotnet tools/BalanceSim/bin/Release/net8.0/BalanceSim.dll --mode equipment --metrics-json /tmp/equipment.json
+DOTNET_ROLL_FORWARD=LatestMajor /usr/bin/dotnet tools/BalanceSim/bin/Release/net8.0/BalanceSim.dll --mode sets --metrics-json /tmp/sets.json
+```
+
+従来の6モードに `equipment` と `sets` を追加し、それぞれ別プロセスで取得します。
+`equipment` は実際のCore定義の値・型・単位を列挙し、相対重みを確率と混同しません。
+土台・固有品・通常セット・抽選範囲・上限に加えて、PowerPoolsから派生する銘品も比較します。
+通貨上限は戦闘能力の上限と別のID・単位です。値を持たないセット部品・ボス参照は
+`null` と参照状態を記録し、実測0に置き換えません。型または単位が異なる行の差は出しません。
+
+`sets` は既存 `SetBalance` の48組・同枠代替品とのPowerScore比較を実行します。
+2/3/6点の予算、代替との差、6点ボーナス自体の利得・占有率、中央値と既存許容帯判定を
+未丸めのJSONで保存します。アイテムレベル10、強化／覚醒なし、各枠Epic／Legendary各64抽選、
+既存の固定seedを条件に記録します。通常連携・ボス技・戦闘DPS・勝率は模型に含めません。
+
+銘品の `{power, band}` は実数値の原本ではありません。名前付き遺物は土台の枠の範囲から、
+旧来の別枠候補を持つものは明示的な `rangeSlot` から値を生成します。小セットの3点効果も
+明示的な `rangeSlot` を使います。low=1/6、mid=2/5、high=13/20の帯をDecimalで
+四捨五入（half-up）し、範囲内に収める従来値を維持します。
+1枠だけの範囲変更でも、他枠の一致を必須条件にせず、その参照元の派生品だけを再生成します。
+`NamedItems.Data.cs` と240土台の `new-bases.json` 参照メタデータも共通生成の出力に含め、
+全入力の検証・render成功後に一括publishします。
+
+低レア度ツールの旧240土台の数値コピー、C#抽選表を読む経路、set5の旧数値提案は廃止しました。
+`tools/import_v129_content.py` は過去MarkdownのID対応を監査するだけで、数値を書き戻しません。
+旧 `--write` は廃止しました。新土台のメタデータは `valueRef` で原本を参照します。
+ゲーム実行時には生成済みint／decimal定数・既存型付き配列だけを使用し、JSONを読みません。
+
+新しく移した数値の初期有効内容は、既存FNV-1aの意味付きレコードidentityを互換参照として
+凍結しています。初期値は追加の内容照合レコードを出さず、移行前のContentFingerprintを維持します。
+採用済み値が変われば、安定ID・型・値のレコードを既存内容照合へ追加します。
+通常セットは既存の指紋レコードをそのまま使います。互換参照は数値のフォールバックではなく、
+JSONの空白／キー順・比較条件・ファイルハッシュは新しい内容照合に含めません。
+
+移行前後の実行時定義を直接比較した例（無調整）：
+
+| 指標 | 単位 | 移行前 | 移行後 | 差 | 相対差 |
+| --- | --- | ---: | ---: | ---: | ---: |
+| Weapon / Momentum 抽選上限 | percent | 5 | 5 | 0 pp | 0% |
+| `named.armor.001` Momentum（派生値） | percent | 3 | 3 | 0 pp | 0% |
+
+別の一時ビルドでWeapon / Momentumの `max` だけを5→6にした実動確認では、
+Core抽選上限が6、上の派生銘品が4となり、内容指紋も変わることを確認しました。
+この一時変更はチェックインした表・生成物には反映していません。
+
+## Powerの時間・距離・条件（Issue #149 段階8・前半）
+
+Power側の調整数値の原本は `tools/balance/powers.json` です。
+1効果の「表・Core計算・Mod適用・説明表示」が同じ生成定数を参照します。
+生成先は `src/SodRpg.Core/Game/Balance/Powers.Generated.cs`（`PowersBalance`）で、
+`PowerRuntime` の公開定数は同クラスへのエイリアスとして維持します。
+
+| セクション | 対象 | 例 |
+| --- | --- | --- |
+| `runtime` | `PowerRuntime.cs` の公開定数55＋障壁の最初の遅延 | `MomentumDuration`、`ChainChance`（double） |
+| `newPowers` | `PowerRuntime.NewPowers.cs` の定数3と式内の調整値、新Power44種の適用時間・距離 | `RunUpDistance`、`TollOfGrudgeThreshold`（比率） |
+| `host` | Mod側だけで適用する値 | `AegisShieldDuration`、`BulwarkRange` / `FrenzyRange` |
+| `lastStarlight` | `HostAuthority.BossLastStarlight.cs` の適応delta | `LastStarlightDelayReductionMax`、`LastStarlightAttractionCap` |
+
+- 単位はキーごとに固定です。`seconds`／`meters`／`count`／`percent`／`gold` は正、
+  `ratio` は0より大きく1未満。しきい値は従来のfloat比率（0.3＝30%）のまま保存し、
+  表示は `:0%` で整数パーセントへ出します。intとfloat/doubleの区別もキーごとに固定です。
+- 同じ数字でも別の効果・別の意味のセルは統合しません（例: `BasicSplashRadius` は
+  会心の飛沫と詠唱の薙ぎの共有適用半径、`ConditionalPowerCap` と `PrimedPercentCap` は別原本）。
+  本体由来の属性スタック上限（光5・闇5）、Q/W/Eの3枠、報酬段階番号は調整対象外です。
+- Core式内の値（45秒ゲート、3体→4体、60%蓄積など）は生成定数へ置き換え、
+  Mod側の適用（半径・障壁時間・スロウ30%・2秒など）も同じ定数を使います。
+  `lastStarlight` の段階番号（stage 1/2/3の境界）はBossProfiles側の報酬構造なので
+  この表では扱いません。BossProfiles本体の数値は段階8ボス側の担当範囲です。
+- 移行は無調整です。初期表は追加の指紋レコードを出さず、ContentFingerprintは
+  移行前と同じ `10579-ab35d865a569c87b` を維持します（検証時点）。
+  1セル変更すると採用値の正準レコードが `balance:powers:v1:` 接頭辞で内容照合へ加わります。
+- 説明文（`Content.FormatPower` と `NewPowersV129.Describe` の日英両文）は生成定数を
+  補間します。移行時に2言語×全Power×代表値の全文が移行前と一致することを確認しました。
+  ゲーム実行時のJSON読込・Protocol・保存形式の変更はありません。

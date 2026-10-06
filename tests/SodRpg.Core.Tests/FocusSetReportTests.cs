@@ -29,8 +29,9 @@ namespace SodRpg.Core.Tests
             double focused = Share(Line.Guard);
             int guards = Content.Bases.Count(b => b.Line == Line.Guard);
             double expectedBase = (double)guards / Content.Bases.Count;
-            double expectedFocus = (double)(guards * Loot.FocusWeight) /
-                (Content.Bases.Count + guards * (Loot.FocusWeight - 1));
+            int focusWeight = LootEconomyInputs.Raw("loot").GetProperty("selection").GetProperty("focusWeight").GetInt32();
+            double expectedFocus = (double)(guards * focusWeight) /
+                (Content.Bases.Count + guards * (focusWeight - 1));
             Assert.InRange(baseShare, expectedBase - 0.03, expectedBase + 0.03);
             Assert.InRange(focused, expectedFocus - 0.03, expectedFocus + 0.03);
         }

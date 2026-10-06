@@ -8,6 +8,61 @@ namespace SodRpg.Core.Tests
 {
     public class ContentTableV129Tests
     {
+        private static ulong NumericIdentity(System.Collections.Generic.List<string> records)
+        {
+            ulong hash = 1469598103934665603UL;
+            foreach (var record in records.OrderBy(x => x, StringComparer.Ordinal))
+            {
+                foreach (char value in record)
+                    hash = unchecked((hash ^ value) * 1099511628211UL);
+                hash = unchecked((hash ^ 10UL) * 1099511628211UL);
+            }
+            return hash;
+        }
+
+        [Fact]
+        public void Complete_equipment_numeric_semantics_match_canonical_inputs()
+        {
+            using var bases = System.Text.Json.JsonDocument.Parse(File.ReadAllText(
+                Path.Combine(AppContext.BaseDirectory, "EquipmentBases.json")));
+            using var uniques = System.Text.Json.JsonDocument.Parse(File.ReadAllText(
+                Path.Combine(AppContext.BaseDirectory, "EquipmentUniques.json")));
+            var expected = new System.Collections.Generic.List<string>();
+            var actual = new System.Collections.Generic.List<string>();
+            var baseRows = bases.RootElement.GetProperty("bases");
+            var uniqueRows = uniques.RootElement.GetProperty("uniques");
+            Assert.Equal(Content.Bases.Count, baseRows.EnumerateObject().Count());
+            Assert.Equal(Content.Uniques.Count, uniqueRows.EnumerateObject().Count());
+            foreach (var row in baseRows.EnumerateObject())
+            {
+                var item = Content.GetBase(row.Name);
+                expected.Add($"base:{row.Name}:{row.Value.GetProperty("stat").GetString()}:int:{row.Value.GetProperty("implicitValue").GetInt32()}");
+                actual.Add($"base:{item.Id}:{item.ImplicitStat}:int:{item.ImplicitValue}");
+            }
+            foreach (var row in uniqueRows.EnumerateObject())
+            {
+                Assert.True(Content.TryGetUnique(row.Name, out var item), row.Name);
+                var powers = row.Value.GetProperty("powers").EnumerateArray().ToArray();
+                Assert.Equal(powers.Length, item.Powers.Count);
+                for (int index = 0; index < powers.Length; index++)
+                {
+                    expected.Add($"unique:{row.Name}:power:{index}:{powers[index].GetProperty("power").GetString()}:int:{powers[index].GetProperty("value").GetInt32()}");
+                    actual.Add($"unique:{item.Id}:power:{index}:{item.Powers[index].Power}:int:{item.Powers[index].Value}");
+                }
+                var link = row.Value.GetProperty("link");
+                if (link.ValueKind == System.Text.Json.JsonValueKind.Null)
+                    Assert.Null(item.Link);
+                else
+                {
+                    Assert.NotNull(item.Link);
+                    expected.Add($"unique:{row.Name}:link:{link.GetProperty("kind").GetString()}:milli:{decimal.ToInt32(link.GetProperty("value").GetDecimal() * 1000m)}");
+                    actual.Add($"unique:{item.Id}:link:{item.Link.Kind}:milli:{item.Link.ValueMilli}");
+                }
+            }
+            Assert.Equal(expected.Count, actual.Count);
+            Assert.Equal(NumericIdentity(expected), NumericIdentity(actual));
+        }
+
         private static string[][] Rows() => File.ReadAllLines(Path.Combine(AppContext.BaseDirectory, "ReviewedV129.md"))
             .Where(s => s.StartsWith("|"))
             .Select(s => s.Trim().Trim('|').Split('|').Select(x => x.Trim()).ToArray()).ToArray();
@@ -40,7 +95,6 @@ namespace SodRpg.Core.Tests
                     {
                         var power = u.Powers[i];
                         Assert.Equal(Effect(r[6 + i * 2]), power.Power);
-                        Assert.Equal(int.Parse(r[7 + i * 2]), power.Value);
                         Assert.InRange(power.Value, 1, Content.PowerCap(power.Power));
                         if (NewPowersV129.IsPower(power.Power))
                             Assert.Contains(Content.PowerPool(Content.GetBase(u.BaseId).Slot), x => x.Power == power.Power);
@@ -51,7 +105,6 @@ namespace SodRpg.Core.Tests
                         Assert.True(Links.Validate(u.Link), u.Id);
                         Assert.Equal(r[10].Split('+'), u.Link.Requires);
                         Assert.Equal(r[11], u.Link.Kind.ToString());
-                        Assert.Equal(int.Parse(r[12]), u.Link.Value);
                     }
                 }
             }
@@ -59,23 +112,44 @@ namespace SodRpg.Core.Tests
         }
 
         [Fact]
-        public void Available_sets_match_reviewed_effects_and_have_exactly_the_reviewed_pieces()
+        public void Available_sets_match_canonical_effects_and_have_exactly_the_reviewed_pieces()
         {
             bool old = Loc.Japanese; Loc.Japanese = true;
             try
             {
                 var rows = Rows();
+                using var canonical = System.Text.Json.JsonDocument.Parse(File.ReadAllText(
+                    Path.Combine(AppContext.BaseDirectory, "EquipmentSets.json")));
+                var definitions = canonical.RootElement.GetProperty("sets").EnumerateArray()
+                    .ToDictionary(x => x.GetProperty("id").GetString());
                 var sets = rows.Where(r => r.Length == 6 && r[0].StartsWith("set.")).ToArray();
                 Assert.Equal(24, sets.Length);
                 foreach (var r in sets)
                 {
                     var set = Assert.Single(Content.Sets, s => s.Id == r[0]);
-                    var effects = r[5].Split(';').Select(x => x.Trim().Split(' ')).ToArray();
-                    Assert.Equal(effects.Length, set.ThreePiece.Length);
-                    for (int i = 0; i < effects.Length; i++)
+                    var definition = definitions[r[0]];
+                    foreach (var stage in new[] { "twoPiece", "threePiece", "sixPiece" })
                     {
-                        Assert.Equal(Effect(effects[i][0]), set.ThreePiece[i].Power);
-                        Assert.Equal(int.Parse(effects[i][1]), set.ThreePiece[i].Value);
+                        var effects = definition.GetProperty(stage).EnumerateArray().ToArray();
+                        if (stage == "twoPiece")
+                        {
+                            Assert.Equal(effects.Length, set.TwoPiece.Length);
+                            for (int i = 0; i < effects.Length; i++)
+                            {
+                                Assert.Equal(Enum.Parse<Stat>(effects[i].GetProperty("stat").GetString()), set.TwoPiece[i].Stat);
+                                Assert.Equal(effects[i].GetProperty("value").GetInt32(), set.TwoPiece[i].Value);
+                            }
+                        }
+                        else
+                        {
+                            var actual = stage == "threePiece" ? set.ThreePiece : set.SixPiece;
+                            Assert.Equal(effects.Length, actual.Length);
+                            for (int i = 0; i < effects.Length; i++)
+                            {
+                                Assert.Equal(Enum.Parse<Power>(effects[i].GetProperty("power").GetString()), actual[i].Power);
+                                Assert.Equal(effects[i].GetProperty("value").GetInt32(), actual[i].Value);
+                            }
+                        }
                     }
                     var pieces = rows.Where(x => x.Length == 5 && x[1] == r[0]).ToArray();
                     Assert.Equal(3, pieces.Length);

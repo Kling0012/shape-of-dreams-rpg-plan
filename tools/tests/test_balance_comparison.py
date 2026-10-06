@@ -36,3 +36,18 @@ class BalanceComparisonTests(unittest.TestCase):
         self.assertEqual("—", reverse[5])
         current["snapshots"][0]["conditions"]["zones"] = 5
         self.assertEqual(["—", "—"], cells(balance.comparison(current, previous))[4:])
+
+    def test_equipment_type_change_is_not_a_numeric_delta(self):
+        previous = {
+            "createdAt": "before", "validation": {"testsPassed": True},
+            "snapshots": [{"mode": "equipment", "modelVersion": 1, "conditions": {},
+                           "contentFingerprint": "old", "metrics": [
+                               {"id": "equipment/link", "label": "link", "type": "int32",
+                                "unit": "percent", "value": 4, "status": "measured"}]}],
+        }
+        current = copy.deepcopy(previous)
+        current["snapshots"][0]["metrics"][0].update(type="decimal", value=4.5)
+        row = next(line for line in balance.comparison(current, previous).splitlines()
+                   if "| percent |" in line)
+        cells = [cell.strip() for cell in row.split("|")[1:-1]]
+        self.assertEqual(["4.5", "4", "—", "—"], cells[2:])

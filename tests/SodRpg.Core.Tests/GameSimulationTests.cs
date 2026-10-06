@@ -247,7 +247,8 @@ namespace SodRpg.Core.Tests
             var rng = new Rng(2024);
             double Rate(MonsterTier t, int n)
             {
-                int drops = 0, shards = 0, tuning = 0;
+                int drops = 0;
+                long shards = 0, tuning = 0;
                 var rarities = new int[5];
                 for (int i = 0; i < n; i++)
                 {
@@ -258,36 +259,42 @@ namespace SodRpg.Core.Tests
                     foreach (var relic in reward.Relics) rarities[(int)relic.Rarity]++;
                 }
 
-                // The rebalance must not reduce low-tier equipment or material income.
+                var table = LootEconomyInputs.Raw("loot");
+                var material = table.GetProperty("materials").GetProperty(LootEconomyInputs.TierKey(t));
+                double payoutChance = t <= MonsterTier.Normal ? material.GetProperty("shardChance").GetDouble() : 1;
+                double min = t == MonsterTier.Lesser ? material.GetProperty("shards").GetInt32() : material.GetProperty("shardMin").GetInt32();
+                double max = t == MonsterTier.Lesser ? min : material.GetProperty("shardMax").GetInt32();
+                double mean = (min + max) / 2;
+                double expectedShards = payoutChance * mean;
+                double shardVariance = payoutChance * ((max - min) * (max - min + 2) / 12 + mean * mean)
+                    - expectedShards * expectedShards;
+                double shardTolerance = LootEconomyInputs.SamplingTolerance(shardVariance, n);
+                Assert.InRange((double)shards / n, expectedShards - shardTolerance, expectedShards + shardTolerance);
+                double tuningChance = t == MonsterTier.MiniBoss ? material.GetProperty("tuningChance").GetDouble() : t == MonsterTier.Boss ? 1 : 0;
+                double tuningPayout = t >= MonsterTier.MiniBoss ? material.GetProperty("tuning").GetInt32() : 0;
+                double expectedTuning = tuningChance * tuningPayout;
+                double tuningTolerance = LootEconomyInputs.SamplingTolerance(tuningChance * (1 - tuningChance) * tuningPayout * tuningPayout, n);
+                Assert.InRange((double)tuning / n, expectedTuning - tuningTolerance, expectedTuning + tuningTolerance);
                 if (t == MonsterTier.Normal)
-                {
-                    Assert.InRange((double)rarities[(int)Rarity.Common] / n, 0.0148, 0.0182);
-                    Assert.InRange((double)rarities[(int)Rarity.Uncommon] / n, 0.0064, 0.0085);
-                    Assert.InRange((double)rarities[(int)Rarity.Rare] / n, 0.0020, 0.0035);
-                    Assert.InRange((double)shards / n, 0.16, 0.20);
-                    Assert.Equal(0, tuning);
-                }
-                else if (t == MonsterTier.Lesser)
-                {
-                    Assert.InRange((double)shards / n, 0.045, 0.055);
-                    Assert.Equal(0, tuning);
-                }
-                else if (t == MonsterTier.MiniBoss)
-                {
-                    Assert.InRange((double)shards / n, 7.3, 7.7);
-                    Assert.InRange((double)tuning / n, 0.18, 0.22);
-                }
-                else
-                {
-                    Assert.InRange((double)shards / n, 24.7, 25.3);
-                    Assert.Equal(n, tuning);
-                }
+                    foreach (var rarity in new[] { Rarity.Common, Rarity.Uncommon, Rarity.Rare })
+                    {
+                        double expected = LootEconomyInputs.DropChance(t, 0) * LootEconomyInputs.RarityProbability(t, 0, rarity);
+                        double tolerance = LootEconomyInputs.SamplingTolerance(expected * (1 - expected), n);
+                        Assert.InRange((double)rarities[(int)rarity] / n, expected - tolerance, expected + tolerance);
+                    }
                 return (double)drops / n;
             }
-            Assert.InRange(Rate(MonsterTier.Lesser, 100000), 0.006, 0.010); // v1.19：6枠に合わせて約3割増し
-            Assert.InRange(Rate(MonsterTier.Normal, 50000), 0.024, 0.030);
-            Assert.InRange(Rate(MonsterTier.MiniBoss, 5000), 0.42, 0.48);
-            Assert.InRange(Rate(MonsterTier.Boss, 5000), 1.55, 1.65); // 1個確定＋60%で2個目
+            foreach (var sample in new[] { (MonsterTier.Lesser, 100000), (MonsterTier.Normal, 50000),
+                (MonsterTier.MiniBoss, 5000), (MonsterTier.Boss, 5000) })
+            {
+                double chance = LootEconomyInputs.DropChance(sample.Item1, 0);
+                double extra = sample.Item1 == MonsterTier.Boss
+                    ? LootEconomyInputs.Raw("loot").GetProperty("bossExtraRelicChance").GetDouble() : 0;
+                double expected = chance * (1 + extra);
+                double variance = chance * (1 + 3 * extra) - expected * expected;
+                double tolerance = LootEconomyInputs.SamplingTolerance(variance, sample.Item2);
+                Assert.InRange(Rate(sample.Item1, sample.Item2), expected - tolerance, expected + tolerance);
+            }
         }
 
         [Fact]

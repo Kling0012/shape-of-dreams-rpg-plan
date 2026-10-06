@@ -1966,7 +1966,7 @@ namespace SodRpg.Mod
                 var hero = rt.Hero;
                 bool alive = Alive(hero);
                 p.NearbyEnemies = (p.Build.Get(Power.Bulwark) > 0 || p.Build.Get(Power.Frenzy) > 0)
-                    && alive ? CountEnemiesNear(hero, 6f) : 0;
+                    && alive ? CountEnemiesNear(hero, Math.Max(PowersBalance.BulwarkRange, PowersBalance.FrenzyRange)) : 0;
                 long quality = 0;
                 if (p.Build.Get(Power.CrystalResonance) > 0 && alive && hero.Skill != null)
                 {
@@ -2322,7 +2322,7 @@ namespace SodRpg.Mod
                     finally { _reflectingDamage = false; }
                 }
                 float aegis = rt.Powers.TakeAegis(Time.time, info.damage.amount, hero.maxHealth);
-                if (aegis > 0) hero.GiveShield(hero, aegis, 6f);
+                if (aegis > 0) hero.GiveShield(hero, aegis, PowersBalance.AegisShieldDuration);
             }
             catch (Exception ex)
             {

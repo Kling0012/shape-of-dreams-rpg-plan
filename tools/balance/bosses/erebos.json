@@ -1,0 +1,226 @@
+{
+  "schemaVersion": 1,
+  "shared": {
+    "circleMaxInstances": 2
+  },
+  "moves": {
+    "weapon": {
+      "channels": {
+        "ErebosGaze": {
+          "value": 8,
+          "cap": 8
+        }
+      },
+      "actions": [
+        {
+          "cooldownMillis": 5000,
+          "delayMillis": 300,
+          "intervalMillis": 300,
+          "count": 2,
+          "maxInstances": 2,
+          "rangeMilli": 6000,
+          "widthMilli": 600
+        }
+      ]
+    },
+    "armor": {
+      "channels": {
+        "ErebosLanding": {
+          "value": 12,
+          "cap": 12
+        }
+      },
+      "actions": [
+        {
+          "radiusMilli": 2000,
+          "delayMillis": 500,
+          "cooldownMillis": 8000
+        }
+      ]
+    },
+    "charm": {
+      "channels": {
+        "ErebosWhitehole": {
+          "value": 10,
+          "cap": 10
+        }
+      },
+      "actions": [
+        {
+          "radiusMilli": 2500,
+          "delayMillis": 300,
+          "cooldownMillis": 6000
+        }
+      ]
+    },
+    "head": {
+      "channels": {
+        "ErebosMeteor": {
+          "value": 18,
+          "cap": 18
+        }
+      },
+      "actions": [
+        {
+          "cooldownMillis": 7000,
+          "delayMillis": 700,
+          "maxInstances": 2,
+          "radiusMilli": 1800,
+          "rangeMilli": 8000
+        }
+      ]
+    },
+    "hands": {
+      "channels": {
+        "ErebosStarRain": {
+          "value": 8,
+          "cap": 8
+        }
+      },
+      "actions": [
+        {
+          "cooldownMillis": 6000,
+          "lifetimeMillis": 1000,
+          "intervalMillis": 200,
+          "count": 2,
+          "maxInstances": 2,
+          "radiusMilli": 1000,
+          "rangeMilli": 8000,
+          "widthMilli": 200,
+          "speedMilli": 12000
+        }
+      ]
+    },
+    "feet": {
+      "channels": {
+        "ErebosRippleFirst": {
+          "value": 4,
+          "cap": 4
+        },
+        "ErebosRippleSecond": {
+          "value": 5,
+          "cap": 5
+        },
+        "ErebosRippleThird": {
+          "value": 6,
+          "cap": 6
+        }
+      },
+      "actions": [
+        {
+          "radiusMilli": 1000,
+          "delayMillis": 200,
+          "cooldownMillis": 6000
+        },
+        {
+          "radiusMilli": 2000,
+          "delayMillis": 400
+        },
+        {
+          "radiusMilli": 3000,
+          "delayMillis": 600
+        }
+      ]
+    },
+    "stage2": {
+      "channels": {
+        "ErebosRippleStart": {
+          "value": 10,
+          "cap": 10
+        },
+        "ErebosRippleEnd": {
+          "value": 14,
+          "cap": 14
+        }
+      },
+      "actions": [
+        {
+          "lifetimeMillis": 4000,
+          "maxInstances": 1,
+          "radiusMilli": 3000,
+          "rangeMilli": 8000
+        },
+        {
+          "radiusMilli": 2000,
+          "delayMillis": 0,
+          "cooldownMillis": 6000
+        },
+        {
+          "radiusMilli": 3000,
+          "delayMillis": 300
+        }
+      ]
+    },
+    "stage3": {
+      "channels": {
+        "ErebosPolarity": {
+          "value": 80,
+          "cap": 80
+        }
+      },
+      "actions": [
+        {
+          "count": 1,
+          "maxInstances": 1,
+          "lifetimeMillis": 4000,
+          "radiusMilli": 3000,
+          "magnitudeMilli": 800
+        },
+        {
+          "count": 3,
+          "maxInstances": 1,
+          "lifetimeMillis": 12000
+        }
+      ]
+    },
+    "stage6": {
+      "channels": {
+        "ErebosFinale": {
+          "value": 90,
+          "cap": 100
+        },
+        "ErebosFinaleShield": {
+          "value": 38,
+          "cap": 40
+        }
+      },
+      "actions": [
+        {
+          "radiusMilli": 4000,
+          "delayMillis": 3000,
+          "cooldownMillis": 10000,
+          "lifetimeMillis": 3000
+        },
+        {
+          "delayMillis": 2500,
+          "maxInstances": 2,
+          "count": 2,
+          "rangeMilli": 6000,
+          "widthMilli": 600
+        },
+        {
+          "lifetimeMillis": 3000,
+          "maxInstances": 1
+        }
+      ]
+    }
+  },
+  "rewards": {
+    "delayValueMilli": 200,
+    "delayCapMilli": 200,
+    "delayDurationMillis": 250,
+    "attractValueMilli": 1000,
+    "attractCapMilli": 1000,
+    "attractRangeMilli": 12000,
+    "tickValueMilli": 500,
+    "tickCapMilli": 500,
+    "tickRangeMilli": 8000,
+    "relocateValueMilli": 2000,
+    "relocateCapMilli": 2000,
+    "relocateCount": 1,
+    "relocateRangeMilli": 2000,
+    "durationValueMilli": 1000,
+    "durationCapMilli": 1000,
+    "durationDurationMillis": 6000
+  }
+}

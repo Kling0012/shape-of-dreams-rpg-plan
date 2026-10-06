@@ -20,64 +20,67 @@ namespace SodRpg.Core.Game
     /// </summary>
     public sealed partial class PowerRuntime
     {
-        public const int MomentumMaxStacks = 5;
-        public const float MomentumDuration = 4f;
-        public const float RetaliationDuration = 3f;
-        public const float TailwindDuration = 2f;
-        public const float BarrierInterval = 12f;
+        // 調整数値の原本は tools/balance/powers.json → Balance/Powers.Generated.cs（Issue #149 段階8）。
+        public const int MomentumMaxStacks = PowersBalance.MomentumMaxStacks;
+        public const float MomentumDuration = PowersBalance.MomentumDuration;
+        public const float RetaliationDuration = PowersBalance.RetaliationDuration;
+        public const float TailwindDuration = PowersBalance.TailwindDuration;
+        public const float BarrierInterval = PowersBalance.BarrierInterval;
+        /// <summary>護りの灯の最初の障壁までの時間（以後は BarrierInterval ごと）。</summary>
+        public const float BarrierFirstDelay = PowersBalance.BarrierFirstDelay;
         /// <summary>護りの灯の障壁が残る時間（v1.28：12秒続くと常に張られている状態になるため短く）。</summary>
-        public const float BarrierDuration = 4f;
+        public const float BarrierDuration = PowersBalance.BarrierDuration;
         /// <summary>星の盾（Ultimate で張る障壁）が残る時間。</summary>
-        public const float StarShieldDuration = 5f;
-        public const float SecondWindCooldown = 60f;
-        public const float SecondWindThreshold = 0.3f;
-        public const float LifestealInterval = 0.15f;
-        public const float ThornsInterval = 1f;
-        public const float ExecuteThreshold = 0.3f;
-        public const int BulwarkEnemies = 3;
-        public const float ResonanceRange = 10f;
-        public const double ChainChance = 0.25;
-        public const int ChainTargets = 2;
-        public const float ChainRange = 6f;
-        public const float ShatterRadius = 4f;
-        public const float AegisThreshold = 0.1f; // v1.28：タンクは最大HPが多く20%の一撃はまれなので10%に
-        public const float AegisCooldown = 12f;
-        public const float BloodlustThreshold = 0.5f;
-        public const float ConvergenceCooldown = 6f;
-        public const float SurgeDuration = 5f;
-        public const float SoulSiphonInterval = 0.5f;
-        public const float WhirlwindInterval = 2f;
-        public const float WhirlwindRadius = 4f;
-        public const int FrenzyMaxEnemies = 8; // v1.28：敵が多く出るので5体では頭打ちが早い
-        public const float OpeningStrikeThreshold = 0.9f;
-        public const float SprintDuration = 3f;
+        public const float StarShieldDuration = PowersBalance.StarShieldDuration;
+        public const float SecondWindCooldown = PowersBalance.SecondWindCooldown;
+        public const float SecondWindThreshold = PowersBalance.SecondWindThreshold;
+        public const float LifestealInterval = PowersBalance.LifestealInterval;
+        public const float ThornsInterval = PowersBalance.ThornsInterval;
+        public const float ExecuteThreshold = PowersBalance.ExecuteThreshold;
+        public const int BulwarkEnemies = PowersBalance.BulwarkEnemies;
+        public const float ResonanceRange = PowersBalance.ResonanceRange;
+        public const double ChainChance = PowersBalance.ChainChance;
+        public const int ChainTargets = PowersBalance.ChainTargets;
+        public const float ChainRange = PowersBalance.ChainRange;
+        public const float ShatterRadius = PowersBalance.ShatterRadius;
+        public const float AegisThreshold = PowersBalance.AegisThreshold; // v1.28：タンクは最大HPが多く20%の一撃はまれなので10%に
+        public const float AegisCooldown = PowersBalance.AegisCooldown;
+        public const float BloodlustThreshold = PowersBalance.BloodlustThreshold;
+        public const float ConvergenceCooldown = PowersBalance.ConvergenceCooldown;
+        public const float SurgeDuration = PowersBalance.SurgeDuration;
+        public const float SoulSiphonInterval = PowersBalance.SoulSiphonInterval;
+        public const float WhirlwindInterval = PowersBalance.WhirlwindInterval;
+        public const float WhirlwindRadius = PowersBalance.WhirlwindRadius;
+        public const int FrenzyMaxEnemies = PowersBalance.FrenzyMaxEnemies; // v1.28：敵が多く出るので5体では頭打ちが早い
+        public const float OpeningStrikeThreshold = PowersBalance.OpeningStrikeThreshold;
+        public const float SprintDuration = PowersBalance.SprintDuration;
         /// <summary>回避の残響：回避の後、次の通常攻撃への上乗せができる猶予（新しい回避で延びる）。</summary>
-        public const float EchoingDodgeWindow = 3f;
+        public const float EchoingDodgeWindow = PowersBalance.EchoingDodgeWindow;
         /// <summary>瞬歩の刃：回避・ダッシュ・瞬間移動の後、次の通常攻撃への上乗せができる猶予。</summary>
-        public const float ShadowStepWindow = 3f;
-        public const float VigorThreshold = 0.8f;
-        public const float OverloadDuration = 4f;
-        public const float FinaleWindow = 8f;
-        public const float FinaleCooldown = 10f;
-        public const float CriticalEchoCooldown = 0.5f;
-        public const int CrystalResonanceMaxTiers = 8;
-        public const int PreyPrideMaxLevel = 3;
-        public const int DevotionMaxStacks = 5;
-        public const float OverflowingLifeDuration = 3f;
-        public const float OverflowingLifeMaxHealthRatio = 0.1f;
-        public const int WildfireMinStacks = 3;
-        public const float WildfireRange = 6f;
-        public const float WildfireCooldown = 2f;
-        public const float StillWaterDuration = 3f;
-        public const float StillWaterCooldown = 2f;
-        public const int SpendersWardGold = 100;
-        public const int SpendersWardMaxStacks = 3;
-        public const float SpendersWardDuration = 10f;
-        public const float PerfectReadDuration = 4f;
-        public const float PerfectReadCooldown = 1.5f;
-        public const int LucidBoonMaxDreams = 6;
+        public const float ShadowStepWindow = PowersBalance.ShadowStepWindow;
+        public const float VigorThreshold = PowersBalance.VigorThreshold;
+        public const float OverloadDuration = PowersBalance.OverloadDuration;
+        public const float FinaleWindow = PowersBalance.FinaleWindow;
+        public const float FinaleCooldown = PowersBalance.FinaleCooldown;
+        public const float CriticalEchoCooldown = PowersBalance.CriticalEchoCooldown;
+        public const int CrystalResonanceMaxTiers = PowersBalance.CrystalResonanceMaxTiers;
+        public const int PreyPrideMaxLevel = PowersBalance.PreyPrideMaxLevel;
+        public const int DevotionMaxStacks = PowersBalance.DevotionMaxStacks;
+        public const float OverflowingLifeDuration = PowersBalance.OverflowingLifeDuration;
+        public const float OverflowingLifeMaxHealthRatio = PowersBalance.OverflowingLifeMaxHealthRatio;
+        public const int WildfireMinStacks = PowersBalance.WildfireMinStacks;
+        public const float WildfireRange = PowersBalance.WildfireRange;
+        public const float WildfireCooldown = PowersBalance.WildfireCooldown;
+        public const float StillWaterDuration = PowersBalance.StillWaterDuration;
+        public const float StillWaterCooldown = PowersBalance.StillWaterCooldown;
+        public const int SpendersWardGold = PowersBalance.SpendersWardGold;
+        public const int SpendersWardMaxStacks = PowersBalance.SpendersWardMaxStacks;
+        public const float SpendersWardDuration = PowersBalance.SpendersWardDuration;
+        public const float PerfectReadDuration = PowersBalance.PerfectReadDuration;
+        public const float PerfectReadCooldown = PowersBalance.PerfectReadCooldown;
+        public const int LucidBoonMaxDreams = PowersBalance.LucidBoonMaxDreams;
         /// <summary>連携（記憶の余韻）の持続時間。効果は重ならず、時間だけ伸びる。</summary>
-        public const float LinkSurgeDuration = 5f;
+        public const float LinkSurgeDuration = PowersBalance.LinkSurgeDuration;
 
         private readonly Dictionary<LinkDef, float> _linkSurges = new Dictionary<LinkDef, float>();
         private readonly List<LinkDef> _expiredLinkSurges = new List<LinkDef>();
@@ -120,7 +123,7 @@ namespace SodRpg.Core.Game
         public PowerRuntime(Build build, float now, ulong seed = 1)
         {
             Build = build ?? new Build();
-            _nextBarrier = now + 3f;
+            _nextBarrier = now + PowersBalance.BarrierFirstDelay;
             _rng = new Rng(seed);
             _lastCombat = now;
         }

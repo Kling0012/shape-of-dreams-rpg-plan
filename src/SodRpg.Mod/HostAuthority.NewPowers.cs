@@ -278,7 +278,7 @@ namespace SodRpg.Mod
             if (!Alive(recipient) || !_runtimes.TryGetValue(recipient, out var owner)) return;
             float share = owner.Powers.SharedWardShield(amount);
             if (share <= 0f) return;
-            foreach (var ally in LivingAllies(recipient, 10f)) PowerShield(owner, ally, Power.SharedWard, share, 4f);
+            foreach (var ally in LivingAllies(recipient, PowersBalance.SharedWardAllyRange)) PowerShield(owner, ally, Power.SharedWard, share, PowersBalance.SharedWardDuration);
         }
 
         private void UnhookNewPowers(HeroRuntime rt)
@@ -341,18 +341,18 @@ namespace SodRpg.Mod
             var hero = rt.Hero;
             var p = rt.Powers;
             if (!Alive(hero)) { p.IsVanguard = p.IsRearguard = false; return; }
-            p.NearbyEnemies8 = CountEnemiesNear(hero, 8f);
-            float shield = p.TakeBreakout(now, CountEnemiesNear(hero, 6f), hero.maxHealth);
+            p.NearbyEnemies8 = CountEnemiesNear(hero, PowersBalance.DuelistsWayRange);
+            float shield = p.TakeBreakout(now, CountEnemiesNear(hero, PowersBalance.BreakoutRange), hero.maxHealth);
             if (shield > 0f)
             {
-                PowerShield(rt, hero, Power.Breakout, shield, 5f);
+                PowerShield(rt, hero, Power.Breakout, shield, PowersBalance.BreakoutShieldDuration);
                 ListReturnHandle<Entity> handle;
-                var found = DewPhysics.OverlapCircleAllEntities(out handle, hero.agentPosition, 6f, EnemyFilter, hero);
+                var found = DewPhysics.OverlapCircleAllEntities(out handle, hero.agentPosition, PowersBalance.BreakoutRange, EnemyFilter, hero);
                 try
                 {
                     foreach (var enemy in found)
                         if (enemy != null && enemy.isActive && enemy.currentHealth > 0f)
-                            hero.CreateBasicEffect(enemy, new SlowEffect { strength = 30f }, 2f,
+                            hero.CreateBasicEffect(enemy, new SlowEffect { strength = PowersBalance.BreakoutSlowPercent }, PowersBalance.BreakoutSlowDuration,
                                 "dreamforge.power.breakout", DuplicateEffectBehavior.UsePrevious);
                 }
                 finally { handle.Return(); }
@@ -367,7 +367,7 @@ namespace SodRpg.Mod
                 if (distance < selfDistance) front = false;
                 if (distance > selfDistance) rear = false;
                 float ward = p.TakeWatchfulHand(now, ally.GetInstanceID(), ally.maxHealth > 0f ? ally.currentHealth / ally.maxHealth : 1f, hero.maxHealth);
-                PowerShield(rt, ally, Power.WatchfulHand, ward, 6f);
+                PowerShield(rt, ally, Power.WatchfulHand, ward, PowersBalance.WatchfulHandDuration);
             }
             p.IsVanguard = front; p.IsRearguard = rear; p.LivingPartySize = party;
         }
@@ -397,7 +397,7 @@ namespace SodRpg.Mod
             if (ultimate)
             {
                 float heal = rt.Powers.TriumphSongHeal(hero.maxHealth);
-                foreach (var ally in LivingAllies(hero, 10f, includeSelf: true)) PowerHeal(rt, ally, heal);
+                foreach (var ally in LivingAllies(hero, PowersBalance.TriumphSongRange, includeSelf: true)) PowerHeal(rt, ally, heal);
             }
         }
 
@@ -409,7 +409,7 @@ namespace SodRpg.Mod
             var p = rt.Powers;
             var victim = info.victim;
             float now = Time.time;
-            PowerShield(rt, hero, Power.ReadyGuard, p.TakeReadyGuard(now, hero.maxHealth), 8f);
+            PowerShield(rt, hero, Power.ReadyGuard, p.TakeReadyGuard(now, hero.maxHealth), PowersBalance.ReadyGuardDuration);
             // Native discardedAmount already subtracts health AND shields after armor.
             rt.NewPowers.Overkill[victim.GetInstanceID()] = Math.Max(0f, info.damage.discardedAmount);
             bool crit = info.damage.HasAttr(DamageAttribute.IsCrit);
@@ -419,17 +419,17 @@ namespace SodRpg.Mod
             var basic = BasicAttackContext.Current;
             if (basic == null || basic.Actor != info.actor || basic.Target != victim || basic.From != hero || !basic.Primary) return;
             p.ShieldAmount = CurrentNativeShield(hero);
-            p.NearbyEnemies8 = CountEnemiesNear(hero, 8f);
+            p.NearbyEnemies8 = CountEnemiesNear(hero, PowersBalance.DuelistsWayRange);
             p.ObserveMemoryReadiness(1, false, AllNormalMemoriesCooling(hero), UltimateReady(hero));
             var result = p.OnNewBasicHit(now, victim.GetInstanceID(), Higher(hero), info.damage.amount,
                 crit, basic.Guaranteed || !basic.CriticalAtNative && crit, primary: true,
-                targetWithin8: (victim.agentPosition - hero.agentPosition).sqrMagnitude <= 64f);
+                targetWithin8: (victim.agentPosition - hero.agentPosition).sqrMagnitude <= PowersBalance.DuelistsWayRange * PowersBalance.DuelistsWayRange);
             QueuePowerDamage(rt, victim, victim.position, 0f, result.DirectDamage, magic: true);
-            QueuePowerDamage(rt, null, victim.position, 3f, result.SplashDamage, except: victim, pure: true);
+            QueuePowerDamage(rt, null, victim.position, PowersBalance.BasicSplashRadius, result.SplashDamage, except: victim, pure: true);
             if (result.NormalCooldownSeconds > 0f)
                 foreach (var skill in NormalMemories(hero)) hero.ApplyCooldownReduction(skill, result.NormalCooldownSeconds);
             if (result.SlowPercent > 0 && victim.isActive && victim.currentHealth > 0f)
-                hero.CreateBasicEffect(victim, new SlowEffect { strength = result.SlowPercent }, 1f,
+                hero.CreateBasicEffect(victim, new SlowEffect { strength = result.SlowPercent }, PowersBalance.StrafeShotSlowDuration,
                     "dreamforge.power.strafe", DuplicateEffectBehavior.UsePrevious);
         }
 
@@ -445,9 +445,9 @@ namespace SodRpg.Mod
             if (native != null && native.Target == hero) lost = Math.Min(lost, Math.Max(0f, native.Health));
             bool broken = beforeShield > 0f && info.negatedAmountByShield >= beforeShield - .0001f;
             float burst = p.TakeShieldbreak(Time.time, beforeShield, hero.maxHealth, broken);
-            QueuePowerDamage(rt, null, hero.agentPosition, 5f, burst);
-            QueuePowerDamage(rt, null, hero.agentPosition, 6f, p.TakeTollOfGrudge(lost, hero.maxHealth), magic: true);
-            PowerShield(rt, hero, Power.ReadyGuard, p.TakeReadyGuard(Time.time, hero.maxHealth), 8f);
+            QueuePowerDamage(rt, null, hero.agentPosition, PowersBalance.ShieldbreakBurstRadius, burst);
+            QueuePowerDamage(rt, null, hero.agentPosition, PowersBalance.TollOfGrudgeRange, p.TakeTollOfGrudge(lost, hero.maxHealth), magic: true);
+            PowerShield(rt, hero, Power.ReadyGuard, p.TakeReadyGuard(Time.time, hero.maxHealth), PowersBalance.ReadyGuardDuration);
         }
 
         private void OnNewPowerKill(HeroRuntime rt, EventInfoKill info)
@@ -464,7 +464,7 @@ namespace SodRpg.Mod
             }
             bool summonKill = info.actor != null && info.actor.FindFirstOfType<Summon>() is Summon summon
                 && summon.FindFirstAncestorOfType<Hero>() == hero;
-            PowerShield(rt, hero, Power.PackFeast, p.PackFeastShield(hero.maxHealth, summonKill), 4f);
+            PowerShield(rt, hero, Power.PackFeast, p.PackFeastShield(hero.maxHealth, summonKill), PowersBalance.PackFeastDuration);
             Hero nearest = null;
             float distance = float.PositiveInfinity;
             foreach (var ally in LivingAllies(hero, 0f))
@@ -475,7 +475,7 @@ namespace SodRpg.Mod
             if (nearest != null) ReduceNormalMemories(nearest, p.TakeRelayHand(Time.time, nearest.GetInstanceID()) * 100f, longestOnly: true);
             var st = victim.Status;
             int types = (st.fireStack > 0 ? 1 : 0) + (st.hasCold ? 1 : 0) + (st.lightStack > 0 ? 1 : 0) + (st.darkStack > 0 ? 1 : 0);
-            QueuePowerDamage(rt, null, victim.position, 4f, p.ElementalHarvestDamage(Higher(hero), types), except: victim);
+            QueuePowerDamage(rt, null, victim.position, PowersBalance.ElementalHarvestRange, p.ElementalHarvestDamage(Higher(hero), types), except: victim);
             if (rt.NewPowers.Overkill.TryGetValue(victim.GetInstanceID(), out float overkill) && overkill > 0f)
             {
                 float amount = p.SpilloverDamage(overkill + 1f, 1f);
@@ -493,7 +493,7 @@ namespace SodRpg.Mod
         {
             if (amount <= 0f) return;
             Entity nearest = null;
-            float distance = 36f;
+            float distance = PowersBalance.SpilloverStrikeRange * PowersBalance.SpilloverStrikeRange;
             if (_am == null) return;
             foreach (var enemy in _am.allEntities)
             {
@@ -507,7 +507,7 @@ namespace SodRpg.Mod
         private void SpreadUmbral(HeroRuntime rt, Entity dead, Vector3 center)
         {
             ListReturnHandle<Entity> handle;
-            var found = DewPhysics.OverlapCircleAllEntities(out handle, center, 6f, EnemyFilter, rt.Hero);
+            var found = DewPhysics.OverlapCircleAllEntities(out handle, center, PowersBalance.UmbralHeritageRange, EnemyFilter, rt.Hero);
             _reactionEffectDepth++;
             try
             {
@@ -515,8 +515,8 @@ namespace SodRpg.Mod
                 foreach (var enemy in found)
                 {
                     if (enemy == dead || !enemy.isActive || enemy.currentHealth <= 0f) continue;
-                    if (count++ >= 5) break;
-                    if (rt.Powers.RollUmbralHeritage(2, _rng.NextDouble())) rt.Hero.ApplyElemental(ElementalType.Dark, enemy, 1);
+                    if (count++ >= PowersBalance.UmbralHeritageMaxTargets) break;
+                    if (rt.Powers.RollUmbralHeritage(PowersBalance.UmbralHeritageMinStacks, _rng.NextDouble())) rt.Hero.ApplyElemental(ElementalType.Dark, enemy, 1);
                 }
             }
             finally { _reactionEffectDepth--; handle.Return(); }
@@ -533,7 +533,7 @@ namespace SodRpg.Mod
             var result = rt.Powers.OnElementApplied(Time.time, info.victim.GetInstanceID(), element,
                 before, after, rt.Hero.maxHealth);
             ReduceNormalMemories(rt.Hero, result.LongestCooldownFraction * 100f, longestOnly: true);
-            PowerShield(rt, rt.Hero, Power.PrismShift, result.Shield, 3f);
+            PowerShield(rt, rt.Hero, Power.PrismShift, result.Shield, PowersBalance.PrismShiftDuration);
         }
 
         private void OnPersonalDreamEvent(DreamforgeDreamEventStartedMsg message, DewPlayer caller)
@@ -547,7 +547,7 @@ namespace SodRpg.Mod
                 message.dreamEvent, state.OmenRun, state.OmenGeneration)) return;
             state.OmenRun = message.runId; state.OmenGeneration = message.generation;
             ReduceNormalMemories(rt.Hero, rt.Powers.DreamOmenCooldownFraction * 100f);
-            PowerShield(rt, rt.Hero, Power.DreamOmen, rt.Powers.DreamOmenShield(rt.Hero.maxHealth), 10f);
+            PowerShield(rt, rt.Hero, Power.DreamOmen, rt.Powers.DreamOmenShield(rt.Hero.maxHealth), PowersBalance.DreamOmenShieldDuration);
         }
     }
 }

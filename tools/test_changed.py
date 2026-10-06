@@ -206,12 +206,18 @@ def select_tests(changed, files, diffs=None) -> Selection:
             selection.run_all = True
             selection.reasons.append(f"build file changed: {path}")
             continue
-        if path in ("tools/balance/forge.json", "tools/balance/stars.json",
-                    "tools/balance/run-growth.json", "tools/balance/star-progression.json",
-                    "tools/balance/star_progression_values.py",
-                    "tools/balance/gen_cs.py", "tools/balance/star_values.py",
-                    "src/SodRpg.Core/Game/Balance/Forge.Generated.cs",
+        if path.startswith("tools/balance/") and path.endswith((".json", ".py")):
+            selection.run_all = True
+            selection.reasons.append(f"balance input changed: {path}")
+            continue
+        if path in ("src/SodRpg.Core/Game/Balance/Forge.Generated.cs",
+                    "src/SodRpg.Core/Game/Balance/Powers.Generated.cs",
                     "src/SodRpg.Core/Game/Balance/Stars.Generated.cs"):
+            selection.run_all = True
+            selection.reasons.append(f"balance input changed: {path}")
+            continue
+        if path == "tools/balance/boss_values.py" or path.startswith("tools/balance/bosses/") \
+                or re.fullmatch(r"src/SodRpg\.Core/Game/Balance/Boss[A-Za-z]+(Values)?\.Generated\.cs", path):
             selection.run_all = True
             selection.reasons.append(f"balance input changed: {path}")
             continue
@@ -331,8 +337,9 @@ def collect_changed(root: Path, base: str) -> list[str]:
         changed.add(line.strip().replace("\\", "/"))
     for line in run_git(root, "ls-files", "--others", "--exclude-standard").splitlines():
         path = line.strip().replace("\\", "/")
-        if path.endswith(".cs") or is_data_file(path) or path in ("tools/balance/gen_cs.py", "tools/balance/star_values.py",
-                                                               "tools/balance/star_progression_values.py"):
+        if path.startswith("tools/balance/") and path.endswith((".json", ".py")):
+            changed.add(path)
+        if path.endswith(".cs") or is_data_file(path):
             changed.add(path)
     return sorted(p for p in changed if p and not p.startswith(".ref/"))
 

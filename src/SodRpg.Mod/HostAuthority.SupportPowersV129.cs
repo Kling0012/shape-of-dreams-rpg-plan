@@ -52,7 +52,7 @@ namespace SodRpg.Mod
                 var rt = summon.hero != null && _runtimes.TryGetValue(summon.hero, out var owner) ? owner : null;
                 if (rt == null || !Alive(rt.Hero)) return;
                 float amount = rt.Powers.DeathBloomDamage(Higher(rt.Hero), true);
-                QueuePowerDamage(rt, null, summon.agentPosition, 4f, amount);
+                QueuePowerDamage(rt, null, summon.agentPosition, PowersBalance.DeathBloomRange, amount);
                 if (amount > 0f) LogPowerTrigger(Power.DeathBloom);
                 return;
             }
@@ -114,7 +114,7 @@ namespace SodRpg.Mod
             // Each native potion tick shares half the collector's actual healing. Other recipients do not retrigger it.
             float heal = rt.Powers.ApothecaryAllyHeal(info.amount);
             if (heal <= 0f) return;
-            foreach (var ally in LivingAllies(rt.Hero, 10f)) PowerHeal(rt, ally, heal);
+            foreach (var ally in LivingAllies(rt.Hero, PowersBalance.ApothecaryAllyRange)) PowerHeal(rt, ally, heal);
         }
 
         private void ClearSupportPowerStateV129() => _summonLethalHits.Clear();

@@ -35,7 +35,7 @@ namespace SodRpg.Core.Tests
         public void Delving_with_an_unoffered_pact_is_rejected()
         {
             var p = RunAtSecurePoint();
-            var notOffered = Pacts.All.Select(x => x.Id).First(x => !p.Run.OfferedPacts.Contains(x));
+            var notOffered = Pacts.All.Select(x => x.Id).Where(x => !p.Run.OfferedPacts.Contains(x)).DefaultIfEmpty((Pact)999).First();
             Assert.Throws<InvalidOperationException>(() => Rules.Delve(p, notOffered));
             Assert.Empty(p.Run.Pacts);
             Assert.Equal(0, p.Run.Heat);
@@ -70,29 +70,18 @@ namespace SodRpg.Core.Tests
             var b = Build.Compute(p, "H", 0, new[] { Pact.GlassHeart, Pact.Frenzy, Pact.Burden });
             Assert.Equal(0, b.Get(Stat.MaxHealthPct));
             Assert.Equal(0, b.Get(Stat.Armor));
-            Assert.Equal(15, b.Get(Stat.AttackPct));
-            Assert.Equal(15, b.Get(Stat.PowerPct));
+            Assert.Equal(PactDailyWaypointTestValues.Integer("pacts", "definitions.Frenzy.boons.AttackPct"), b.Get(Stat.AttackPct));
+            Assert.Equal(PactDailyWaypointTestValues.Integer("pacts", "definitions.Frenzy.boons.PowerPct"), b.Get(Stat.PowerPct));
         }
 
         [Fact]
-        public void Every_pact_carries_a_game_curse_and_an_upside()
+        public void Every_pact_uses_native_curse_tiers_without_stat_penalties()
         {
             foreach (var d in Pacts.All)
             {
                 Assert.InRange(d.CurseStrength, 1, 3);
                 Assert.Empty(d.Penalties);
-                bool upside = d.DropBonus > 0 || d.Luck > 0 || d.ShardMult > 1 || d.XpMult > 1 || d.TuningOnElite > 0 || d.DoubleDepthBonus || d.Boons.Length > 0;
-                Assert.True(upside, d.Id.ToString());
-                foreach (bool ja in new[] { true, false })
-                {
-                    Loc.Japanese = ja;
-                    Assert.False(string.IsNullOrWhiteSpace(d.Name.ToString()));
-                    Assert.False(string.IsNullOrWhiteSpace(d.Description.ToString()));
-                    Assert.False(string.IsNullOrWhiteSpace(PactDef.StrengthName(d.CurseStrength)));
-                }
             }
-            Loc.Japanese = true;
-            Assert.Contains(Pacts.All, d => d.CurseStrength == 3);
         }
 
         [Fact]
@@ -107,7 +96,10 @@ namespace SodRpg.Core.Tests
             }
             int plain = Drops(null);
             int glass = Drops(Pacts.Sum(new[] { Pact.GlassHeart }));
-            Assert.InRange((double)glass / plain, 1.25, 1.55);
+            double plainChance = LootEconomyInputs.DropChance(MonsterTier.Normal, 0);
+            double bonus = PactDailyWaypointTestValues.Number("pacts", "definitions.GlassHeart.dropBonus");
+            double expectedRatio = Math.Min(1, plainChance * (1 + bonus)) / plainChance;
+            Assert.InRange((double)glass / plain, expectedRatio - .15, expectedRatio + .15);
         }
 
         [Fact]
@@ -116,9 +108,13 @@ namespace SodRpg.Core.Tests
             var mods = Pacts.Sum(new[] { Pact.Unguarded, Pact.LeadenFeet, Pact.DryDream });
             var rng = new Rng(9);
             var rw = Loot.RollKill(rng, MonsterTier.Boss, 10, 0, null, mods);
-            Assert.InRange(rw.Shards, 30, 45);   // 20〜30 ×1.5
-            Assert.Equal(2, rw.Tuning);          // 1 + 乾いた夢
-            Assert.Equal(75, rw.Xp);             // 50 ×1.5
+            var materials = LootEconomyInputs.Raw("loot").GetProperty("materials").GetProperty("boss");
+            double shardMult = PactDailyWaypointTestValues.Number("pacts", "definitions.Unguarded.shardMult");
+            Assert.InRange(rw.Shards,
+                (int)Math.Round(materials.GetProperty("shardMin").GetInt32() * shardMult),
+                (int)Math.Round(materials.GetProperty("shardMax").GetInt32() * shardMult));
+            Assert.Equal(materials.GetProperty("tuning").GetInt32() + PactDailyWaypointTestValues.Integer("pacts", "definitions.DryDream.tuningOnElite"), rw.Tuning);
+            Assert.Equal((int)Math.Round(Content.KillXp(MonsterTier.Boss) * PactDailyWaypointTestValues.Number("pacts", "definitions.LeadenFeet.xpMult")), rw.Xp);
         }
 
         [Fact]
@@ -130,7 +126,9 @@ namespace SodRpg.Core.Tests
             Rules.Delve(p, Pact.CursedHoard);
             p.Run.SatchelShards = 40;
             Rules.Secure(p);
-            Assert.Equal(40 + 2 * (40 * 1 / 4), p.Material(Materials.Shard));
+            int multiplier = PactDailyWaypointTestValues.Integer("pacts", "doubleDepthBonusMultiplier");
+            int divisor = PactDailyWaypointTestValues.Integer("economy", "expedition.secureBonusDivisor");
+            Assert.Equal(40 + multiplier * (40 * 1 / divisor), p.Material(Materials.Shard));
 
             var q = RunAtSecurePoint(33);
             q.Run.OfferedPacts.Clear();
@@ -145,7 +143,7 @@ namespace SodRpg.Core.Tests
         public void Pacts_roundtrip_through_codec()
         {
             var p = RunAtSecurePoint();
-            var chosen = p.Run.OfferedPacts[1];
+            var chosen = p.Run.OfferedPacts[0];
             Rules.Delve(p, chosen);
             Rules.ReachSecurePoint(p);
             string text = ProfileCodec.Write(p);

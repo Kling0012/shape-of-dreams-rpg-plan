@@ -38,7 +38,8 @@ namespace SodRpg.Core.Tests
         {
             var golden = Profile.CreateNew(8);
             Rules.BeginRun(golden, "g", DailyDream.Get(4));
-            Assert.Equal(1.5, Rules.KillModifiers(golden.Run).ShardMult);
+            double multiplier = PactDailyWaypointTestValues.Number("daily-dream", "definitions.4.shardMult");
+            Assert.Equal(multiplier, Rules.KillModifiers(golden.Run).ShardMult);
             var plain = Profile.CreateNew(8);
             Rules.BeginRun(plain, "g");
             golden.Run.Bounties.Clear();
@@ -48,7 +49,7 @@ namespace SodRpg.Core.Tests
                 Rules.OnKill(golden, MonsterTier.Boss, 10);
                 Rules.OnKill(plain, MonsterTier.Boss, 10);
             }
-            Assert.True(golden.Run.SatchelShards > plain.Run.SatchelShards * 1.3);
+            Assert.InRange((double)golden.Run.SatchelShards / plain.Run.SatchelShards, Math.Max(0, multiplier - .2), multiplier + .2);
         }
 
         [Fact]
@@ -60,8 +61,9 @@ namespace SodRpg.Core.Tests
             p.Run.Bounties.Add(new Bounty { Kind = BountyKind.Collector, Target = 1, RewardShards = 20, RewardTuning = 1, RewardXp = 1 });
             p.Run.Satchel.Add(Loot.RollRelic(new Rng(99), Rarity.Common, 1));
             Rules.Secure(p);
-            Assert.Equal(40, p.Material(Materials.Shard));
-            Assert.Equal(2, p.Material(Materials.Tuning));
+            double multiplier = PactDailyWaypointTestValues.Number("daily-dream", "definitions.8.bountyMult");
+            Assert.Equal((int)Math.Round(20 * multiplier), p.Material(Materials.Shard));
+            Assert.Equal((int)Math.Round(multiplier), p.Material(Materials.Tuning));
         }
 
         [Fact]
@@ -73,7 +75,7 @@ namespace SodRpg.Core.Tests
             p.Stash.Add(r);
             Rules.Equip(p, "H", r.Uid);
             Assert.Equal(60, Build.Compute(p, "H", 0).Get(Power.Blaze));
-            Assert.Equal(90, Build.Compute(p, "H", 0, null, 1).Get(Power.Blaze));
+            Assert.Equal(60 + 60 * PactDailyWaypointTestValues.Integer("daily-dream", "powerBoostPct") / 100, Build.Compute(p, "H", 0, null, 1).Get(Power.Blaze));
             Assert.Equal(60, Build.Compute(p, "H", 0, null, 2).Get(Power.Blaze)); // 別の日
         }
 

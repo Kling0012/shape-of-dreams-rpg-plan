@@ -20,23 +20,22 @@ namespace SodRpg.Core.Game
     /// </summary>
     public static class Loot
     {
-        // Keep Common/Uncommon/Rare in the same proportions; Epic/Legendary have 40% of their former relative weight.
-        private static readonly int[] BaseRarityWeights = { 3000, 1350, 500, 30, 2 };
+        private static readonly int[] BaseRarityWeights = LootBalance.RarityWeights;
 
         /// <summary>夢の深度1あたりの装備ドロップ率の増分。</summary>
-        public const double HeatDropBonus = 0.35;
+        public const double HeatDropBonus = LootBalance.HeatDropBonus;
         /// <summary>夢の深度1あたりの幸運（レア度の上振れ）。</summary>
-        public const double HeatLuck = 0.3;
+        public const double HeatLuck = LootBalance.HeatLuck;
 
         public static double DropChance(MonsterTier tier, int heat)
         {
             double baseChance;
             switch (tier)
             {
-                case MonsterTier.Lesser: baseChance = 0.008; break; // v1.19：枠が6つに増えたので、約3割増し
-                case MonsterTier.Normal: baseChance = 0.027; break;
-                case MonsterTier.MiniBoss: baseChance = 0.45; break;
-                default: baseChance = 1.0; break;
+                case MonsterTier.Lesser: baseChance = LootBalance.LesserDropChance; break;
+                case MonsterTier.Normal: baseChance = LootBalance.NormalDropChance; break;
+                case MonsterTier.MiniBoss: baseChance = LootBalance.MiniBossDropChance; break;
+                default: baseChance = LootBalance.BossDropChance; break;
             }
             return Math.Min(1.0, baseChance * (1.0 + HeatDropBonus * ClampHeat(heat)));
         }
@@ -45,22 +44,22 @@ namespace SodRpg.Core.Game
         {
             switch (tier)
             {
-                case MonsterTier.MiniBoss: return 0.6;
-                case MonsterTier.Boss: return 1.2;
+                case MonsterTier.MiniBoss: return LootBalance.MiniBossLuck;
+                case MonsterTier.Boss: return LootBalance.BossLuck;
                 default: return 0.0;
             }
         }
         /// <summary>
-        /// 画面に出す「良い遺物の出やすさ」の%。レア度が1段上がるごとに、抽選の重みがこの%だけ多く掛かる（RollRarity の f = 1 + 0.6×luck）。
+        /// 画面に出す「良い遺物の出やすさ」の%。レア度が1段上がるごとに、抽選の重みがこの%だけ多く掛かる。
         /// </summary>
-        public static double LuckPercent(double luck) => 60.0 * Math.Max(0, luck);
+        public static double LuckPercent(double luck) => (100.0 * LootBalance.RarityLuckCoefficient) * Math.Max(0, luck);
 
-        internal const double BossExtraRelicChance = 0.6;
+        internal const double BossExtraRelicChance = LootBalance.BossExtraRelicChance;
 
         /// <summary>The RollRarity distribution, without allocating weights or consuming RNG.</summary>
         internal static double HighRarityProbability(double luck, bool allowLegendary, Rarity floor, out double legendary)
         {
-            double f = 1.0 + 0.6 * Math.Max(0, luck), total = 0, high = 0, legendaryWeight = 0;
+            double f = 1.0 + LootBalance.RarityLuckCoefficient * Math.Max(0, luck), total = 0, high = 0, legendaryWeight = 0;
             for (int i = 0; i < BaseRarityWeights.Length; i++)
             {
                 if (i < (int)floor || (!allowLegendary && i == (int)Rarity.Legendary)) continue;
@@ -75,7 +74,7 @@ namespace SodRpg.Core.Game
 
         public static Rarity RollRarity(Rng rng, double luck, bool allowLegendary, Rarity floor = Rarity.Common)
         {
-            double f = 1.0 + 0.6 * Math.Max(0, luck);
+            double f = 1.0 + LootBalance.RarityLuckCoefficient * Math.Max(0, luck);
             var w = new double[BaseRarityWeights.Length];
             double total = 0;
             for (int i = 0; i < w.Length; i++)
@@ -183,8 +182,8 @@ namespace SodRpg.Core.Game
             return named;
         }
 
-        /// <summary>銘品1種の重み（設計 3.4）。レア度ごとの定数 × 狙い系統2倍 × 図鑑にまだない3倍 × 始めた組の未所持部位4倍。
-        /// 図鑑を受け取らない呼び出しでは3倍を掛けない（分からないものを「未所持」とは扱わない）。</summary>
+        /// <summary>銘品1種の重み（設計 3.4）。レア度・狙い系統・図鑑・始めた組の未所持部位の倍率を掛け合わせる。
+        /// 図鑑を受け取らない呼び出しでは未発見の倍率を掛けない。</summary>
         internal static int NamedWeight(NamedDef def, BaseDef baseDef, Line? focus, ISet<string> codex,
             IReadOnlyList<Relic> ownedRelics, IReadOnlyList<Relic> unsecuredRelics)
         {
@@ -274,14 +273,14 @@ namespace SodRpg.Core.Game
             r.Powers.Add(new PowerLine(pick.Power, rng.Range(pick.Min, top)));
         }
 
-        /// <summary>狙い系統の重み。狙った系統は2倍出やすい（計画書 付録B）。</summary>
-        public const int FocusWeight = 2;
+        /// <summary>狙い系統の重みの倍率。</summary>
+        public const int FocusWeight = LootBalance.FocusWeight;
 
         /// <summary>所持しているセットの未所持部位の重み。狙い系統の重みと掛け合わせる。</summary>
         /// <summary>伝説の抽選でセット品そのものが選ばれやすくなる倍率。</summary>
-        public const int SetPieceWeight = 4; // v1.22：セット24種。一般の固有品とのつり合いを保つ
+        public const int SetPieceWeight = LootBalance.SetPieceWeight;
 
-        public const int SetCompletionWeight = 60;
+        public const int SetCompletionWeight = LootBalance.SetCompletionWeight;
 
         private static bool IsMissingSetPiece(UniqueDef candidate, IReadOnlyList<Relic> ownedRelics, IReadOnlyList<Relic> unsecuredRelics)
         {
@@ -421,18 +420,18 @@ namespace SodRpg.Core.Game
             switch (tier)
             {
                 case MonsterTier.Lesser:
-                    if (rng.Chance(0.05)) reward.Shards = 1;
+                    if (rng.Chance(LootBalance.LesserShardChance)) reward.Shards = LootBalance.LesserShards;
                     break;
                 case MonsterTier.Normal:
-                    if (rng.Chance(0.12)) reward.Shards = rng.Range(1, 2);
+                    if (rng.Chance(LootBalance.NormalShardChance)) reward.Shards = rng.Range(LootBalance.NormalShardMin, LootBalance.NormalShardMax);
                     break;
                 case MonsterTier.MiniBoss:
-                    reward.Shards = rng.Range(5, 10);
-                    if (rng.Chance(0.2)) reward.Tuning = 1;
+                    reward.Shards = rng.Range(LootBalance.MiniBossShardMin, LootBalance.MiniBossShardMax);
+                    if (rng.Chance(LootBalance.MiniBossTuningChance)) reward.Tuning = LootBalance.MiniBossTuning;
                     break;
                 default:
-                    reward.Shards = rng.Range(20, 30);
-                    reward.Tuning = 1;
+                    reward.Shards = rng.Range(LootBalance.BossShardMin, LootBalance.BossShardMax);
+                    reward.Tuning = LootBalance.BossTuning;
                     break;
             }
             if (mods != null)

@@ -31,7 +31,7 @@ namespace SodRpg.Core.Tests
             Rules.BeginRun(p, "m");
             Rules.ReachSecurePoint(p);
             p.Run.OfferedEvent = DreamEvent.Merchant;
-            Assert.False(DreamEvents.CanUse(p, DreamEvent.Merchant, out _));            // 欠片払いなら不可
+            Assert.Equal(EventBalanceTestData.Number("merchant", "baseShards") == 0, DreamEvents.CanUse(p, DreamEvent.Merchant, out _));
             Assert.True(DreamEvents.CanUse(p, DreamEvent.Merchant, true, out _));       // ゴールド払いなら可
             Rules.UseEvent(p, DreamEvent.Merchant, goldPaid: true);
             Assert.Single(p.Run.Satchel);
@@ -43,11 +43,14 @@ namespace SodRpg.Core.Tests
         {
             var p = Profile.CreateNew(4);
             Rules.BeginRun(p, "d");
-            Assert.Throws<InvalidOperationException>(() => Rules.ConvertDust(p, 300));
+            var rates = LootEconomyInputs.Raw("economy").GetProperty("exchange");
+            int dust = rates.GetProperty("dustPerBatch").GetInt32();
+            int shards = rates.GetProperty("shardsPerBatch").GetInt32();
+            Assert.Throws<InvalidOperationException>(() => Rules.ConvertDust(p, dust * 3));
             Rules.ReachSecurePoint(p);
-            Assert.Throws<InvalidOperationException>(() => Rules.ConvertDust(p, 99));
-            Rules.ConvertDust(p, 350);
-            Assert.Equal(3 * Economy.ShardsPerBatch, p.Material(Materials.Shard));
+            Assert.Throws<InvalidOperationException>(() => Rules.ConvertDust(p, dust - 1));
+            Rules.ConvertDust(p, dust * 3 + dust / 2);
+            Assert.Equal(3 * shards, p.Material(Materials.Shard));
         }
 
         [Fact]
@@ -58,7 +61,7 @@ namespace SodRpg.Core.Tests
             var r = Loot.RollRelic(new Rng(4004), Rarity.Epic, 10);
             r.Enhance = 2;
             p.Run.Satchel.Add(r);
-            Assert.Equal(Content.SalvageShards(Rarity.Epic) * 5 + 20, Economy.SalvageDust(r));
+            Assert.Equal(LootEconomyInputs.SalvageDust(Rarity.Epic, r.Enhance), Economy.SalvageDust(r));
             Assert.Same(r, Rules.SalvageUnsecured(p, r.Uid));
             Assert.Empty(p.Run.Satchel);
             Assert.Null(Rules.SalvageUnsecured(p, r.Uid)); // v1.14.1：二度目の成功応答は何もしない
@@ -66,10 +69,12 @@ namespace SodRpg.Core.Tests
         }
 
         [Fact]
-        public void Merchant_price_grows_with_delve()
+        public void Merchant_price_uses_heat_coefficient_and_clamps_heat()
         {
-            Assert.True(Economy.MerchantGoldBase(5) > Economy.MerchantGoldBase(0));
-            Assert.Equal(Economy.MerchantGoldBase(5), Economy.MerchantGoldBase(99));
+            var merchant = LootEconomyInputs.Raw("economy").GetProperty("merchant");
+            int expected = merchant.GetProperty("baseGold").GetInt32() + 5 * merchant.GetProperty("goldPerHeat").GetInt32();
+            Assert.Equal(expected, Economy.MerchantGoldBase(5));
+            Assert.Equal(expected, Economy.MerchantGoldBase(99));
         }
     }
 }

@@ -22,10 +22,11 @@ namespace SodRpg.Core.Tests
         public void Merchant_sells_an_unsecured_relic_for_shards()
         {
             var p = AtEvent(DreamEvent.Merchant);
-            Assert.False(DreamEvents.CanUse(p, DreamEvent.Merchant, out _));
-            p.AddMaterial(Materials.Shard, 100);
+            int cost = EventBalanceTestData.Number("merchant", "baseShards");
+            Assert.Equal(cost == 0, DreamEvents.CanUse(p, DreamEvent.Merchant, out _));
+            p.AddMaterial(Materials.Shard, cost);
             Rules.UseEvent(p, DreamEvent.Merchant);
-            Assert.Equal(100 - DreamEvents.MerchantCost(0), p.Material(Materials.Shard));
+            Assert.Equal(0, p.Material(Materials.Shard));
             var r = Assert.Single(p.Run.Satchel);
             Assert.True(r.Rarity >= Rarity.Uncommon);
             Assert.Equal(DreamEvent.None, p.Run.OfferedEvent);
@@ -33,23 +34,22 @@ namespace SodRpg.Core.Tests
         }
 
         [Fact]
-        public void Chalice_doubles_or_loses_unsecured_shards()
+        public void Chalice_applies_the_win_reward_or_loses_unsecured_shards()
         {
-            int wins = 0, losses = 0;
+            int wins = 0, expectedWins = 0;
             for (ulong seed = 1; seed <= 200; seed++)
             {
                 var p = AtEvent(DreamEvent.Chalice, seed);
                 p.Run.SatchelShards = 40;
+                double chance = EventBalanceTestData.Probability("chalice", "winChance");
+                bool expectedWin = chance >= 1 || (chance > 0 && new Rng(p.RngState).NextDouble() < chance);
+                if (expectedWin) expectedWins++;
                 Rules.UseEvent(p, DreamEvent.Chalice);
-                if (p.Run.SatchelShards == 80) wins++;
-                else
-                {
-                    Assert.Equal(0, p.Run.SatchelShards);
-                    losses++;
-                }
+                int expected = expectedWin ? 40 * (1 + EventBalanceTestData.Number("chalice", "bonusMultiplier")) : 0;
+                Assert.Equal(expected, p.Run.SatchelShards);
+                if (p.Run.SatchelShards != 0) wins++;
             }
-            Assert.InRange(wins, 70, 130);
-            Assert.Equal(200, wins + losses);
+            Assert.Equal(expectedWins, wins);
         }
 
         [Fact]
@@ -106,11 +106,21 @@ namespace SodRpg.Core.Tests
         }
 
         [Theory]
-        [InlineData("set.runupcharge", Stat.AttackFlat, Power.RunUp, 88, Power.StrafeShot, 25)]
-        [InlineData("set.crystalcircuit", Stat.PowerFlat, Power.Finale, 22, Power.CrystalResonance, 2)]
+        [InlineData("set.runupcharge", Stat.AttackFlat, Power.RunUp, Power.StrafeShot)]
+        [InlineData("set.crystalcircuit", Stat.PowerFlat, Power.Finale, Power.CrystalResonance)]
         public void Ordinary_set_fixed_stats_and_bonuses_activate_only_at_their_thresholds(
-            string setId, Stat flat, Power damage, int damageValue, Power unchanged, int unchangedValue)
+            string setId, Stat flat, Power damage, Power unchanged)
         {
+            using var canonical = System.Text.Json.JsonDocument.Parse(System.IO.File.ReadAllText(
+                System.IO.Path.Combine(AppContext.BaseDirectory, "EquipmentSets.json")));
+            var definition = canonical.RootElement.GetProperty("sets").EnumerateArray()
+                .Single(x => x.GetProperty("id").GetString() == setId);
+            int flatValue = definition.GetProperty("twoPiece").EnumerateArray()
+                .Single(x => x.GetProperty("stat").GetString() == flat.ToString()).GetProperty("value").GetInt32();
+            int PowerValue(Power power) => definition.GetProperty("threePiece").EnumerateArray()
+                .Single(x => x.GetProperty("power").GetString() == power.ToString()).GetProperty("value").GetInt32();
+            int damageValue = Math.Min(Content.PowerCap(damage), PowerValue(damage));
+            int unchangedValue = Math.Min(Content.PowerCap(unchanged), PowerValue(unchanged));
             var p = Profile.CreateNew(1);
             var ids = Content.Uniques.Where(u => u.SetId == setId).Select(u => u.Id).ToArray();
             var stages = new List<Build>();
@@ -127,18 +137,18 @@ namespace SodRpg.Core.Tests
                 stages.Add(Build.Compute(p, "H", 0));
             }
             Assert.Equal(implicitFlats[0], stages[0].Get(flat));
-            Assert.Equal(implicitFlats[1] + 15, stages[1].Get(flat));
+            Assert.Equal(Math.Min(Content.StatCap(flat), implicitFlats[1] + flatValue), stages[1].Get(flat));
             Assert.Equal(0, stages[1].Get(damage));
             Assert.Equal(damageValue, stages[2].Get(damage));
             Assert.Equal(unchangedValue, stages[2].Get(unchanged));
             Assert.Equal(damageValue, stages[5].Get(damage));
-            Assert.Equal(implicitFlats[5] + 15, stages[5].Get(flat));
+            Assert.Equal(Math.Min(Content.StatCap(flat), implicitFlats[5] + flatValue), stages[5].Get(flat));
             if (damage == Power.Finale)
             {
                 var runtime = new PowerRuntime(stages[2], 0);
                 Assert.Equal(0f, runtime.TakeFinale(0f, 0));
                 Assert.Equal(0f, runtime.TakeFinale(1f, 1));
-                Assert.Equal(0.22f, runtime.TakeFinale(2f, 2));
+                Assert.Equal(damageValue / 100f, runtime.TakeFinale(2f, 2));
                 Assert.Equal(0f, runtime.TakeFinale(3f, 2));
             }
         }

@@ -7,7 +7,7 @@
   "nameJa": "無垢の直刀",
   "nameEn": "Unblemished Blade",
   "stat": "AttackFlat",
-  "value": 5
+  "valueRef": "equipment/bases.json#weapon.plain_edge/implicitValue"
  },
  {
   "id": "weapon.soldier_saber",
@@ -17,7 +17,7 @@
   "nameJa": "兵の軍刀",
   "nameEn": "Soldier's Saber",
   "stat": "AttackFlat",
-  "value": 6
+  "valueRef": "equipment/bases.json#weapon.soldier_saber/implicitValue"
  },
  {
   "id": "weapon.rough_cleaver",
@@ -27,7 +27,7 @@
   "nameJa": "無骨な鉈",
   "nameEn": "Unrefined Cleaver",
   "stat": "CritDamagePct",
-  "value": 12
+  "valueRef": "equipment/bases.json#weapon.rough_cleaver/implicitValue"
  },
  {
   "id": "weapon.apprentice_wand",
@@ -37,7 +37,7 @@
   "nameJa": "見習いの短杖",
   "nameEn": "Apprentice's Wand",
   "stat": "PowerFlat",
-  "value": 5
+  "valueRef": "equipment/bases.json#weapon.apprentice_wand/implicitValue"
  },
  {
   "id": "weapon.icevein_blade",
@@ -47,7 +47,7 @@
   "nameJa": "氷脈の刀",
   "nameEn": "Icevein Blade",
   "stat": "ColdAmp",
-  "value": 10
+  "valueRef": "equipment/bases.json#weapon.icevein_blade/implicitValue"
  },
  {
   "id": "weapon.hoarfrost_dirk",
@@ -57,7 +57,7 @@
   "nameJa": "霧氷の短剣",
   "nameEn": "Hoarfrost Dirk",
   "stat": "CritChancePct",
-  "value": 3
+  "valueRef": "equipment/bases.json#weapon.hoarfrost_dirk/implicitValue"
  },
  {
   "id": "weapon.winterbrand_mace",
@@ -67,7 +67,7 @@
   "nameJa": "冬の戦鎚",
   "nameEn": "Winterbrand Mace",
   "stat": "MaxHealthFlat",
-  "value": 20
+  "valueRef": "equipment/bases.json#weapon.winterbrand_mace/implicitValue"
  },
  {
   "id": "weapon.frozen_oath_blade",
@@ -77,7 +77,7 @@
   "nameJa": "凍てつく誓いの剣",
   "nameEn": "Frozen-Oath Blade",
   "stat": "Tenacity",
-  "value": 8
+  "valueRef": "equipment/bases.json#weapon.frozen_oath_blade/implicitValue"
  },
  {
   "id": "weapon.inferno_lash",
@@ -87,7 +87,7 @@
   "nameJa": "業火の鞭",
   "nameEn": "Inferno Lash",
   "stat": "FireAmp",
-  "value": 10
+  "valueRef": "equipment/bases.json#weapon.inferno_lash/implicitValue"
  },
  {
   "id": "weapon.firedance_saber",
@@ -97,7 +97,7 @@
   "nameJa": "火舞の細剣",
   "nameEn": "Firedance Saber",
   "stat": "AttackSpeedPct",
-  "value": 5
+  "valueRef": "equipment/bases.json#weapon.firedance_saber/implicitValue"
  },
  {
   "id": "weapon.phoenix_plume_sword",
@@ -107,7 +107,7 @@
   "nameJa": "鳳羽の剣",
   "nameEn": "Phoenix-Plume Sword",
   "stat": "AttackRangePct",
-  "value": 5
+  "valueRef": "equipment/bases.json#weapon.phoenix_plume_sword/implicitValue"
  },
  {
   "id": "weapon.cauterizing_estoc",
@@ -117,7 +117,7 @@
   "nameJa": "焼灼の刺突剣",
   "nameEn": "Cauterizing Estoc",
   "stat": "CritDamagePct",
-  "value": 14
+  "valueRef": "equipment/bases.json#weapon.cauterizing_estoc/implicitValue"
  },
  {
   "id": "weapon.daybreak_blade",
@@ -127,7 +127,7 @@
   "nameJa": "夜明けの刃",
   "nameEn": "Daybreak Blade",
   "stat": "PowerFlat",
-  "value": 5
+  "valueRef": "equipment/bases.json#weapon.daybreak_blade/implicitValue"
  },
  {
   "id": "weapon.halo_blade",
@@ -137,7 +137,7 @@
   "nameJa": "光環の剣",
   "nameEn": "Halo Blade",
   "stat": "CritChancePct",
-  "value": 3
+  "valueRef": "equipment/bases.json#weapon.halo_blade/implicitValue"
  },
  {
   "id": "weapon.seraph_rod",
@@ -147,7 +147,7 @@
   "nameJa": "煌めく天使の杖",
   "nameEn": "Seraph's Rod",
   "stat": "HealPower",
-  "value": 5
+  "valueRef": "equipment/bases.json#weapon.seraph_rod/implicitValue"
  },
  {
   "id": "weapon.lamplighter_sword",
@@ -157,7 +157,7 @@
   "nameJa": "灯守の剣",
   "nameEn": "Lamplighter Sword",
   "stat": "ShieldPower",
-  "value": 5
+  "valueRef": "equipment/bases.json#weapon.lamplighter_sword/implicitValue"
  },
  {
   "id": "weapon.shadowfang_knife",
@@ -167,7 +167,7 @@
   "nameJa": "影牙の短刀",
   "nameEn": "Shadowfang Knife",
   "stat": "DarkAmp",
-  "value": 10
+  "valueRef": "equipment/bases.json#weapon.shadowfang_knife/implicitValue"
  },
  {
   "id": "weapon.nightreaver_axe",
@@ -177,7 +177,7 @@
   "nameJa": "夜刈りの斧",
   "nameEn": "Nightreaver Axe",
   "stat": "AttackFlat",
-  "value": 5
+  "valueRef": "equipment/bases.json#weapon.nightreaver_axe/implicitValue"
  },
  {
   "id": "weapon.eclipsed_rapier",
@@ -187,7 +187,7 @@
   "nameJa": "蝕刻の突剣",
   "nameEn": "Eclipsed Rapier",
   "stat": "CritDamagePct",
-  "value": 12
+  "valueRef": "equipment/bases.json#weapon.eclipsed_rapier/implicitValue"
  },
  {
   "id": "weapon.shadowstitch_kodachi",
@@ -197,7 +197,7 @@
   "nameJa": "影縫いの小太刀",
   "nameEn": "Shadowstitch Kodachi",
   "stat": "AttackSpeedPct",
-  "value": 3
+  "valueRef": "equipment/bases.json#weapon.shadowstitch_kodachi/implicitValue"
  },
  {
   "id": "weapon.sentry_halberd",
@@ -207,7 +207,7 @@
   "nameJa": "哨兵の斧槍",
   "nameEn": "Sentry's Halberd",
   "stat": "Armor",
-  "value": 7
+  "valueRef": "equipment/bases.json#weapon.sentry_halberd/implicitValue"
  },
  {
   "id": "weapon.bulwark_greatsword",
@@ -217,7 +217,7 @@
   "nameJa": "壁衛の大剣",
   "nameEn": "Bulwark Greatsword",
   "stat": "Armor",
-  "value": 9
+  "valueRef": "equipment/bases.json#weapon.bulwark_greatsword/implicitValue"
  },
  {
   "id": "weapon.oakheart_club",
@@ -227,7 +227,7 @@
   "nameJa": "樫心の棍",
   "nameEn": "Oakheart Club",
   "stat": "HealthRegen",
-  "value": 2
+  "valueRef": "equipment/bases.json#weapon.oakheart_club/implicitValue"
  },
  {
   "id": "weapon.vanguard_hammer",
@@ -237,7 +237,7 @@
   "nameJa": "先陣の戦鎚",
   "nameEn": "Vanguard Hammer",
   "stat": "MaxHealthPct",
-  "value": 6
+  "valueRef": "equipment/bases.json#weapon.vanguard_hammer/implicitValue"
  },
  {
   "id": "weapon.whirlwind_naginata",
@@ -247,7 +247,7 @@
   "nameJa": "旋風の薙刀",
   "nameEn": "Whirlwind Naginata",
   "stat": "AttackRangePct",
-  "value": 6
+  "valueRef": "equipment/bases.json#weapon.whirlwind_naginata/implicitValue"
  },
  {
   "id": "weapon.gale_tossed_blades",
@@ -257,7 +257,7 @@
   "nameJa": "疾風の投刃",
   "nameEn": "Gale-Tossed Blades",
   "stat": "AttackSpeedPct",
-  "value": 3
+  "valueRef": "equipment/bases.json#weapon.gale_tossed_blades/implicitValue"
  },
  {
   "id": "weapon.stormstring_bow",
@@ -267,7 +267,7 @@
   "nameJa": "風鳴りの弓",
   "nameEn": "Stormstring Bow",
   "stat": "AttackFlat",
-  "value": 5
+  "valueRef": "equipment/bases.json#weapon.stormstring_bow/implicitValue"
  },
  {
   "id": "weapon.tailwind_saber",
@@ -277,7 +277,7 @@
   "nameJa": "追風の細剣",
   "nameEn": "Tailwind Saber",
   "stat": "Haste",
-  "value": 4
+  "valueRef": "equipment/bases.json#weapon.tailwind_saber/implicitValue"
  },
  {
   "id": "weapon.mercy_staff",
@@ -287,7 +287,7 @@
   "nameJa": "慈悲の杖",
   "nameEn": "Staff of Mercy",
   "stat": "HealthRegen",
-  "value": 3
+  "valueRef": "equipment/bases.json#weapon.mercy_staff/implicitValue"
  },
  {
   "id": "weapon.herbalist_sickle",
@@ -297,7 +297,7 @@
   "nameJa": "薬草鎌",
   "nameEn": "Herbalist's Sickle",
   "stat": "PowerFlat",
-  "value": 5
+  "valueRef": "equipment/bases.json#weapon.herbalist_sickle/implicitValue"
  },
  {
   "id": "weapon.soothing_chime_staff",
@@ -307,7 +307,7 @@
   "nameJa": "癒し鈴の杖",
   "nameEn": "Soothing-Chime Staff",
   "stat": "MaxHealthFlat",
-  "value": 20
+  "valueRef": "equipment/bases.json#weapon.soothing_chime_staff/implicitValue"
  },
  {
   "id": "weapon.dewdrop_wand",
@@ -317,7 +317,7 @@
   "nameJa": "露滴の細杖",
   "nameEn": "Dewdrop Wand",
   "stat": "Haste",
-  "value": 4
+  "valueRef": "equipment/bases.json#weapon.dewdrop_wand/implicitValue"
  },
  {
   "id": "weapon.callers_greatsword",
@@ -327,7 +327,7 @@
   "nameJa": "喚起の大剣",
   "nameEn": "Caller's Greatsword",
   "stat": "SummonPower",
-  "value": 8
+  "valueRef": "equipment/bases.json#weapon.callers_greatsword/implicitValue"
  },
  {
   "id": "weapon.beast_tamer_whip",
@@ -337,7 +337,7 @@
   "nameJa": "獣使いの鞭",
   "nameEn": "Beast-Tamer's Whip",
   "stat": "AttackFlat",
-  "value": 7
+  "valueRef": "equipment/bases.json#weapon.beast_tamer_whip/implicitValue"
  },
  {
   "id": "weapon.pact_dagger",
@@ -347,7 +347,7 @@
   "nameJa": "契約の短剣",
   "nameEn": "Pact Dagger",
   "stat": "CritDamagePct",
-  "value": 10
+  "valueRef": "equipment/bases.json#weapon.pact_dagger/implicitValue"
  },
  {
   "id": "weapon.spirit_call_lance",
@@ -357,7 +357,7 @@
   "nameJa": "霊呼びの槍",
   "nameEn": "Spirit-Call Lance",
   "stat": "AttackRangePct",
-  "value": 5
+  "valueRef": "equipment/bases.json#weapon.spirit_call_lance/implicitValue"
  },
  {
   "id": "weapon.remembrance_blade",
@@ -367,7 +367,7 @@
   "nameJa": "追憶の剣",
   "nameEn": "Remembrance Blade",
   "stat": "PowerFlat",
-  "value": 6
+  "valueRef": "equipment/bases.json#weapon.remembrance_blade/implicitValue"
  },
  {
   "id": "weapon.yesteryear_staff",
@@ -377,7 +377,7 @@
   "nameJa": "在りし日の杖",
   "nameEn": "Yesteryear Staff",
   "stat": "PowerFlat",
-  "value": 7
+  "valueRef": "equipment/bases.json#weapon.yesteryear_staff/implicitValue"
  },
  {
   "id": "weapon.dusk_memory_scythe",
@@ -387,7 +387,7 @@
   "nameJa": "夕闇の追憶鎌",
   "nameEn": "Dusk-Memory Scythe",
   "stat": "DarkAmp",
-  "value": 8
+  "valueRef": "equipment/bases.json#weapon.dusk_memory_scythe/implicitValue"
  },
  {
   "id": "weapon.relic_hunter_blade",
@@ -397,7 +397,7 @@
   "nameJa": "遺跡巡りの刀",
   "nameEn": "Relic-Hunter Blade",
   "stat": "MoveSpeedPct",
-  "value": 3
+  "valueRef": "equipment/bases.json#weapon.relic_hunter_blade/implicitValue"
  },
  {
   "id": "armor.sturdy_jerkin",
@@ -407,7 +407,7 @@
   "nameJa": "頑丈な革胴",
   "nameEn": "Sturdy Jerkin",
   "stat": "Armor",
-  "value": 6
+  "valueRef": "equipment/bases.json#armor.sturdy_jerkin/implicitValue"
  },
  {
   "id": "armor.militia_cuirass",
@@ -417,7 +417,7 @@
   "nameJa": "郷勇の胸当て",
   "nameEn": "Militia Cuirass",
   "stat": "MaxHealthPct",
-  "value": 5
+  "valueRef": "equipment/bases.json#armor.militia_cuirass/implicitValue"
  },
  {
   "id": "armor.roadworn_jacket",
@@ -427,7 +427,7 @@
   "nameJa": "旅路の上着",
   "nameEn": "Roadworn Jacket",
   "stat": "AttackSpeedPct",
-  "value": 3
+  "valueRef": "equipment/bases.json#armor.roadworn_jacket/implicitValue"
  },
  {
   "id": "armor.padded_vest",
@@ -437,7 +437,7 @@
   "nameJa": "詰め物の胴着",
   "nameEn": "Padded Vest",
   "stat": "HealthRegen",
-  "value": 2
+  "valueRef": "equipment/bases.json#armor.padded_vest/implicitValue"
  },
  {
   "id": "armor.hoarfrost_mail",
@@ -447,7 +447,7 @@
   "nameJa": "霧氷の鎖帷子",
   "nameEn": "Hoarfrost Mail",
   "stat": "ColdAmp",
-  "value": 10
+  "valueRef": "equipment/bases.json#armor.hoarfrost_mail/implicitValue"
  },
  {
   "id": "armor.frozen_rampart",
@@ -457,7 +457,7 @@
   "nameJa": "氷塁の胸当て",
   "nameEn": "Frozen Rampart",
   "stat": "Armor",
-  "value": 7
+  "valueRef": "equipment/bases.json#armor.frozen_rampart/implicitValue"
  },
  {
   "id": "armor.snowdrift_coat",
@@ -467,7 +467,7 @@
   "nameJa": "雪どけの上衣",
   "nameEn": "Snowdrift Coat",
   "stat": "HealthRegen",
-  "value": 3
+  "valueRef": "equipment/bases.json#armor.snowdrift_coat/implicitValue"
  },
  {
   "id": "armor.iceskimmer_wrap",
@@ -477,7 +477,7 @@
   "nameJa": "氷滑りの帯衣",
   "nameEn": "Iceskimmer Wrap",
   "stat": "MoveSpeedPct",
-  "value": 3
+  "valueRef": "equipment/bases.json#armor.iceskimmer_wrap/implicitValue"
  },
  {
   "id": "armor.cinderplate",
@@ -487,7 +487,7 @@
   "nameJa": "燃殻の板金鎧",
   "nameEn": "Cinderplate",
   "stat": "AttackFlat",
-  "value": 6
+  "valueRef": "equipment/bases.json#armor.cinderplate/implicitValue"
  },
  {
   "id": "armor.furnace_guard",
@@ -497,7 +497,7 @@
   "nameJa": "火床の胸当て",
   "nameEn": "Furnace Guard",
   "stat": "MaxHealthPct",
-  "value": 6
+  "valueRef": "equipment/bases.json#armor.furnace_guard/implicitValue"
  },
  {
   "id": "armor.ember_flare_jacket",
@@ -507,7 +507,7 @@
   "nameJa": "火焔閃の上着",
   "nameEn": "Ember-Flare Jacket",
   "stat": "CritDamagePct",
-  "value": 12
+  "valueRef": "equipment/bases.json#armor.ember_flare_jacket/implicitValue"
  },
  {
   "id": "armor.slowfire_bandolier",
@@ -517,7 +517,7 @@
   "nameJa": "燠りの帯衣",
   "nameEn": "Slowfire Bandolier",
   "stat": "HealthRegen",
-  "value": 2
+  "valueRef": "equipment/bases.json#armor.slowfire_bandolier/implicitValue"
  },
  {
   "id": "armor.dawnweave_harness",
@@ -527,7 +527,7 @@
   "nameJa": "暁織りの胸綱",
   "nameEn": "Dawnweave Harness",
   "stat": "LightAmp",
-  "value": 10
+  "valueRef": "equipment/bases.json#armor.dawnweave_harness/implicitValue"
  },
  {
   "id": "armor.sanctum_vest",
@@ -537,7 +537,7 @@
   "nameJa": "聖域の胴衣",
   "nameEn": "Sanctum Vest",
   "stat": "HealPower",
-  "value": 5
+  "valueRef": "equipment/bases.json#armor.sanctum_vest/implicitValue"
  },
  {
   "id": "armor.clearsky_corset",
@@ -547,7 +547,7 @@
   "nameJa": "晴空の胴衣",
   "nameEn": "Clear-Sky Corset",
   "stat": "CritChancePct",
-  "value": 3
+  "valueRef": "equipment/bases.json#armor.clearsky_corset/implicitValue"
  },
  {
   "id": "armor.lamplight_sash",
@@ -557,7 +557,7 @@
   "nameJa": "灯火の飾り帯",
   "nameEn": "Lamplight Sash",
   "stat": "Haste",
-  "value": 4
+  "valueRef": "equipment/bases.json#armor.lamplight_sash/implicitValue"
  },
  {
   "id": "armor.midnight_hauberk",
@@ -567,7 +567,7 @@
   "nameJa": "真夜中の鎖帷子",
   "nameEn": "Midnight Hauberk",
   "stat": "DarkAmp",
-  "value": 10
+  "valueRef": "equipment/bases.json#armor.midnight_hauberk/implicitValue"
  },
  {
   "id": "armor.wraithweave_coat",
@@ -577,7 +577,7 @@
   "nameJa": "幽織りの外套",
   "nameEn": "Wraithweave Coat",
   "stat": "CritDamagePct",
-  "value": 14
+  "valueRef": "equipment/bases.json#armor.wraithweave_coat/implicitValue"
  },
  {
   "id": "armor.nightprowler_jacket",
@@ -587,7 +587,7 @@
   "nameJa": "夜盗の上着",
   "nameEn": "Nightprowler's Jacket",
   "stat": "AttackFlat",
-  "value": 7
+  "valueRef": "equipment/bases.json#armor.nightprowler_jacket/implicitValue"
  },
  {
   "id": "armor.shadowstep_cloak",
@@ -597,7 +597,7 @@
   "nameJa": "影歩みの外套",
   "nameEn": "Shadowstep Cloak",
   "stat": "MoveSpeedPct",
-  "value": 4
+  "valueRef": "equipment/bases.json#armor.shadowstep_cloak/implicitValue"
  },
  {
   "id": "armor.keepers_plate",
@@ -607,7 +607,7 @@
   "nameJa": "預かり人の板金鎧",
   "nameEn": "Keeper's Plate",
   "stat": "Armor",
-  "value": 9
+  "valueRef": "equipment/bases.json#armor.keepers_plate/implicitValue"
  },
  {
   "id": "armor.deepwell_cuirass",
@@ -617,7 +617,7 @@
   "nameJa": "深井戸の胴鎧",
   "nameEn": "Deepwell Cuirass",
   "stat": "MaxHealthFlat",
-  "value": 30
+  "valueRef": "equipment/bases.json#armor.deepwell_cuirass/implicitValue"
  },
  {
   "id": "armor.unyielding_ply",
@@ -627,7 +627,7 @@
   "nameJa": "屈しぬ腹当て",
   "nameEn": "Unyielding Ply",
   "stat": "Tenacity",
-  "value": 12
+  "valueRef": "equipment/bases.json#armor.unyielding_ply/implicitValue"
  },
  {
   "id": "armor.warden_sigil_vest",
@@ -637,7 +637,7 @@
   "nameJa": "番印の胴衣",
   "nameEn": "Warden-Sigil Vest",
   "stat": "ShieldPower",
-  "value": 5
+  "valueRef": "equipment/bases.json#armor.warden_sigil_vest/implicitValue"
  },
  {
   "id": "armor.windcutter_vest",
@@ -647,7 +647,7 @@
   "nameJa": "風切りの胸当て",
   "nameEn": "Windcutter Vest",
   "stat": "AttackSpeedPct",
-  "value": 5
+  "valueRef": "equipment/bases.json#armor.windcutter_vest/implicitValue"
  },
  {
   "id": "armor.skyclad_sash",
@@ -657,7 +657,7 @@
   "nameJa": "天衣の帯",
   "nameEn": "Skyclad Sash",
   "stat": "Haste",
-  "value": 4
+  "valueRef": "equipment/bases.json#armor.skyclad_sash/implicitValue"
  },
  {
   "id": "armor.darting_wrap",
@@ -667,7 +667,7 @@
   "nameJa": "疾走の帯衣",
   "nameEn": "Darting Wrap",
   "stat": "AttackFlat",
-  "value": 5
+  "valueRef": "equipment/bases.json#armor.darting_wrap/implicitValue"
  },
  {
   "id": "armor.cyclone_cloak",
@@ -677,7 +677,7 @@
   "nameJa": "竜巻の外套",
   "nameEn": "Cyclone Cloak",
   "stat": "CritDamagePct",
-  "value": 10
+  "valueRef": "equipment/bases.json#armor.cyclone_cloak/implicitValue"
  },
  {
   "id": "armor.herb_pouch_vest",
@@ -687,7 +687,7 @@
   "nameJa": "薬袋の胴着",
   "nameEn": "Herb-Pouch Vest",
   "stat": "PowerFlat",
-  "value": 5
+  "valueRef": "equipment/bases.json#armor.herb_pouch_vest/implicitValue"
  },
  {
   "id": "armor.gentle_rain_jacket",
@@ -697,7 +697,7 @@
   "nameJa": "慈雨の上着",
   "nameEn": "Gentle-Rain Jacket",
   "stat": "Haste",
-  "value": 4
+  "valueRef": "equipment/bases.json#armor.gentle_rain_jacket/implicitValue"
  },
  {
   "id": "armor.bandage_wrap",
@@ -707,7 +707,7 @@
   "nameJa": "包帯の巻衣",
   "nameEn": "Bandage Wrap",
   "stat": "ShieldPower",
-  "value": 5
+  "valueRef": "equipment/bases.json#armor.bandage_wrap/implicitValue"
  },
  {
   "id": "armor.longevity_coat",
@@ -717,7 +717,7 @@
   "nameJa": "長命の上衣",
   "nameEn": "Longevity Coat",
   "stat": "MoveSpeedPct",
-  "value": 3
+  "valueRef": "equipment/bases.json#armor.longevity_coat/implicitValue"
  },
  {
   "id": "armor.whistle_call_vest",
@@ -727,7 +727,7 @@
   "nameJa": "呼笛の胴衣",
   "nameEn": "Whistle-Call Vest",
   "stat": "AttackFlat",
-  "value": 5
+  "valueRef": "equipment/bases.json#armor.whistle_call_vest/implicitValue"
  },
  {
   "id": "armor.lair_woven_mail",
@@ -737,7 +737,7 @@
   "nameJa": "巣織りの帷子",
   "nameEn": "Lair-Woven Mail",
   "stat": "MaxHealthFlat",
-  "value": 25
+  "valueRef": "equipment/bases.json#armor.lair_woven_mail/implicitValue"
  },
  {
   "id": "armor.familiars_shawl",
@@ -747,7 +747,7 @@
   "nameJa": "使い魔の肩掛け",
   "nameEn": "Familiar's Shawl",
   "stat": "Haste",
-  "value": 5
+  "valueRef": "equipment/bases.json#armor.familiars_shawl/implicitValue"
  },
  {
   "id": "armor.pack_leader_wrap",
@@ -757,7 +757,7 @@
   "nameJa": "群れ率びの腹巻",
   "nameEn": "Pack-Leader Wrap",
   "stat": "CritChancePct",
-  "value": 3
+  "valueRef": "equipment/bases.json#armor.pack_leader_wrap/implicitValue"
  },
  {
   "id": "armor.annals_robe",
@@ -767,7 +767,7 @@
   "nameJa": "年代記の法衣",
   "nameEn": "Annals Robe",
   "stat": "PowerFlat",
-  "value": 6
+  "valueRef": "equipment/bases.json#armor.annals_robe/implicitValue"
  },
  {
   "id": "armor.afterglow_vest",
@@ -777,7 +777,7 @@
   "nameJa": "名残りの胴衣",
   "nameEn": "Afterglow Vest",
   "stat": "DarkAmp",
-  "value": 8
+  "valueRef": "equipment/bases.json#armor.afterglow_vest/implicitValue"
  },
  {
   "id": "armor.keepsake_cloak",
@@ -787,7 +787,7 @@
   "nameJa": "形見の外套",
   "nameEn": "Keepsake Cloak",
   "stat": "Haste",
-  "value": 6
+  "valueRef": "equipment/bases.json#armor.keepsake_cloak/implicitValue"
  },
  {
   "id": "armor.lingering_image_coat",
@@ -797,7 +797,7 @@
   "nameJa": "面影の上衣",
   "nameEn": "Lingering-Image Coat",
   "stat": "MaxHealthFlat",
-  "value": 20
+  "valueRef": "equipment/bases.json#armor.lingering_image_coat/implicitValue"
  },
  {
   "id": "charm.copper_band",
@@ -807,7 +807,7 @@
   "nameJa": "銅の腕輪",
   "nameEn": "Copper Band",
   "stat": "AttackFlat",
-  "value": 7
+  "valueRef": "equipment/bases.json#charm.copper_band/implicitValue"
  },
  {
   "id": "charm.rough_hewn_charm",
@@ -817,7 +817,7 @@
   "nameJa": "荒削りの御守り",
   "nameEn": "Rough-Hewn Charm",
   "stat": "CritDamagePct",
-  "value": 12
+  "valueRef": "equipment/bases.json#charm.rough_hewn_charm/implicitValue"
  },
  {
   "id": "charm.simple_sigil",
@@ -827,7 +827,7 @@
   "nameJa": "素朴な印章",
   "nameEn": "Simple Sigil",
   "stat": "PowerFlat",
-  "value": 5
+  "valueRef": "equipment/bases.json#charm.simple_sigil/implicitValue"
  },
  {
   "id": "charm.journeythread_ring",
@@ -837,7 +837,7 @@
   "nameJa": "旅緒の指輪",
   "nameEn": "Journeythread Ring",
   "stat": "MoveSpeedPct",
-  "value": 3
+  "valueRef": "equipment/bases.json#charm.journeythread_ring/implicitValue"
  },
  {
   "id": "charm.glacier_locket",
@@ -847,7 +847,7 @@
   "nameJa": "氷晶のロケット",
   "nameEn": "Glacier Locket",
   "stat": "MaxHealthPct",
-  "value": 5
+  "valueRef": "equipment/bases.json#charm.glacier_locket/implicitValue"
  },
  {
   "id": "charm.frostlock_ring",
@@ -857,7 +857,7 @@
   "nameJa": "霜鎖の指輪",
   "nameEn": "Frostlock Ring",
   "stat": "Tenacity",
-  "value": 12
+  "valueRef": "equipment/bases.json#charm.frostlock_ring/implicitValue"
  },
  {
   "id": "charm.frost_breath_charm",
@@ -867,7 +867,7 @@
   "nameJa": "白息の御守り",
   "nameEn": "Frost-Breath Charm",
   "stat": "HealthRegen",
-  "value": 2
+  "valueRef": "equipment/bases.json#charm.frost_breath_charm/implicitValue"
  },
  {
   "id": "charm.north_sky_charm",
@@ -877,7 +877,7 @@
   "nameJa": "北空の飾り",
   "nameEn": "North-Sky Charm",
   "stat": "Haste",
-  "value": 4
+  "valueRef": "equipment/bases.json#charm.north_sky_charm/implicitValue"
  },
  {
   "id": "charm.sparkcase_pendant",
@@ -887,7 +887,7 @@
   "nameJa": "火種の垂飾り",
   "nameEn": "Sparkcase Pendant",
   "stat": "AttackFlat",
-  "value": 5
+  "valueRef": "equipment/bases.json#charm.sparkcase_pendant/implicitValue"
  },
  {
   "id": "charm.melt_ore_locket",
@@ -897,7 +897,7 @@
   "nameJa": "熔鉱のロケット",
   "nameEn": "Melt-Ore Locket",
   "stat": "CritDamagePct",
-  "value": 14
+  "valueRef": "equipment/bases.json#charm.melt_ore_locket/implicitValue"
  },
  {
   "id": "charm.flarewheel_brooch",
@@ -907,7 +907,7 @@
   "nameJa": "火輪のブローチ",
   "nameEn": "Flarewheel Brooch",
   "stat": "AttackRangePct",
-  "value": 5
+  "valueRef": "equipment/bases.json#charm.flarewheel_brooch/implicitValue"
  },
  {
   "id": "charm.tinder_band",
@@ -917,7 +917,7 @@
   "nameJa": "火口の腕輪",
   "nameEn": "Tinder Band",
   "stat": "AttackSpeedPct",
-  "value": 5
+  "valueRef": "equipment/bases.json#charm.tinder_band/implicitValue"
  },
  {
   "id": "charm.sunrise_locket",
@@ -927,7 +927,7 @@
   "nameJa": "朝焼けのロケット",
   "nameEn": "Sunrise Locket",
   "stat": "LightAmp",
-  "value": 10
+  "valueRef": "equipment/bases.json#charm.sunrise_locket/implicitValue"
  },
  {
   "id": "charm.kindness_beads",
@@ -937,7 +937,7 @@
   "nameJa": "慈愛の数珠",
   "nameEn": "Beads of Kindness",
   "stat": "HealPower",
-  "value": 5
+  "valueRef": "equipment/bases.json#charm.kindness_beads/implicitValue"
  },
  {
   "id": "charm.sanctuary_seal",
@@ -947,7 +947,7 @@
   "nameJa": "聖域の印章",
   "nameEn": "Sanctuary Seal",
   "stat": "ShieldPower",
-  "value": 5
+  "valueRef": "equipment/bases.json#charm.sanctuary_seal/implicitValue"
  },
  {
   "id": "charm.broad_day_charm",
@@ -957,7 +957,7 @@
   "nameJa": "白昼の御守り",
   "nameEn": "Broad-Daylight Charm",
   "stat": "PowerFlat",
-  "value": 6
+  "valueRef": "equipment/bases.json#charm.broad_day_charm/implicitValue"
  },
  {
   "id": "charm.night_owl_charm",
@@ -967,7 +967,7 @@
   "nameJa": "梟の御守り",
   "nameEn": "Night-Owl Charm",
   "stat": "CritChancePct",
-  "value": 3
+  "valueRef": "equipment/bases.json#charm.night_owl_charm/implicitValue"
  },
  {
   "id": "charm.grave_bell_ring",
@@ -977,7 +977,7 @@
   "nameJa": "墓鈴の指輪",
   "nameEn": "Grave-Bell Ring",
   "stat": "CritDamagePct",
-  "value": 12
+  "valueRef": "equipment/bases.json#charm.grave_bell_ring/implicitValue"
  },
  {
   "id": "charm.funeral_band",
@@ -987,7 +987,7 @@
   "nameJa": "葬列の腕輪",
   "nameEn": "Funeral Band",
   "stat": "AttackFlat",
-  "value": 6
+  "valueRef": "equipment/bases.json#charm.funeral_band/implicitValue"
  },
  {
   "id": "charm.dusk_mist_band",
@@ -997,7 +997,7 @@
   "nameJa": "宵霧の腕輪",
   "nameEn": "Dusk-Mist Band",
   "stat": "MoveSpeedPct",
-  "value": 4
+  "valueRef": "equipment/bases.json#charm.dusk_mist_band/implicitValue"
  },
  {
   "id": "charm.heavy_chain_charm",
@@ -1007,7 +1007,7 @@
   "nameJa": "重鎖の飾り",
   "nameEn": "Heavy-Chain Charm",
   "stat": "Armor",
-  "value": 8
+  "valueRef": "equipment/bases.json#charm.heavy_chain_charm/implicitValue"
  },
  {
   "id": "charm.immovable_ring",
@@ -1017,7 +1017,7 @@
   "nameJa": "不動の指輪",
   "nameEn": "Immovable Ring",
   "stat": "MaxHealthFlat",
-  "value": 25
+  "valueRef": "equipment/bases.json#charm.immovable_ring/implicitValue"
  },
  {
   "id": "charm.wellspring_amulet",
@@ -1027,7 +1027,7 @@
   "nameJa": "湧き泉の護符",
   "nameEn": "Wellspring Amulet",
   "stat": "HealthRegen",
-  "value": 3
+  "valueRef": "equipment/bases.json#charm.wellspring_amulet/implicitValue"
  },
  {
   "id": "charm.watchpost_badge",
@@ -1037,7 +1037,7 @@
   "nameJa": "見張り番の徽章",
   "nameEn": "Watchpost Badge",
   "stat": "ShieldPower",
-  "value": 5
+  "valueRef": "equipment/bases.json#charm.watchpost_badge/implicitValue"
  },
  {
   "id": "charm.tailwind_plume",
@@ -1047,7 +1047,7 @@
   "nameJa": "追風の羽飾り",
   "nameEn": "Tailwind Plume",
   "stat": "AttackSpeedPct",
-  "value": 4
+  "valueRef": "equipment/bases.json#charm.tailwind_plume/implicitValue"
  },
  {
   "id": "charm.skylark_bell",
@@ -1057,7 +1057,7 @@
   "nameJa": "雲雀の鈴",
   "nameEn": "Skylark Bell",
   "stat": "Haste",
-  "value": 6
+  "valueRef": "equipment/bases.json#charm.skylark_bell/implicitValue"
  },
  {
   "id": "charm.far_flight_charm",
@@ -1067,7 +1067,7 @@
   "nameJa": "遠翔の御守り",
   "nameEn": "Far-Flight Charm",
   "stat": "AttackRangePct",
-  "value": 6
+  "valueRef": "equipment/bases.json#charm.far_flight_charm/implicitValue"
  },
  {
   "id": "charm.gust_band",
@@ -1077,7 +1077,7 @@
   "nameJa": "疾風の腕輪",
   "nameEn": "Gust Band",
   "stat": "AttackFlat",
-  "value": 5
+  "valueRef": "equipment/bases.json#charm.gust_band/implicitValue"
  },
  {
   "id": "charm.healing_sachet",
@@ -1087,7 +1087,7 @@
   "nameJa": "癒しの香袋",
   "nameEn": "Healing Sachet",
   "stat": "PowerFlat",
-  "value": 5
+  "valueRef": "equipment/bases.json#charm.healing_sachet/implicitValue"
  },
  {
   "id": "charm.restful_heart_ring",
@@ -1097,7 +1097,7 @@
   "nameJa": "心休まる指輪",
   "nameEn": "Restful-Heart Ring",
   "stat": "Haste",
-  "value": 5
+  "valueRef": "equipment/bases.json#charm.restful_heart_ring/implicitValue"
  },
  {
   "id": "charm.lotus_bloom_seal",
@@ -1107,7 +1107,7 @@
   "nameJa": "蓮華の印",
   "nameEn": "Lotus-Bloom Seal",
   "stat": "MaxHealthFlat",
-  "value": 20
+  "valueRef": "equipment/bases.json#charm.lotus_bloom_seal/implicitValue"
  },
  {
   "id": "charm.salve_case_charm",
@@ -1117,7 +1117,7 @@
   "nameJa": "薬盒の飾り",
   "nameEn": "Salve-Case Charm",
   "stat": "ShieldPower",
-  "value": 5
+  "valueRef": "equipment/bases.json#charm.salve_case_charm/implicitValue"
  },
  {
   "id": "charm.packfang_pendant",
@@ -1127,7 +1127,7 @@
   "nameJa": "群牙の垂飾り",
   "nameEn": "Packfang Pendant",
   "stat": "AttackFlat",
-  "value": 6
+  "valueRef": "equipment/bases.json#charm.packfang_pendant/implicitValue"
  },
  {
   "id": "charm.bone_whistle_charm",
@@ -1137,7 +1137,7 @@
   "nameJa": "骨笛の飾り",
   "nameEn": "Bone-Whistle Charm",
   "stat": "Haste",
-  "value": 4
+  "valueRef": "equipment/bases.json#charm.bone_whistle_charm/implicitValue"
  },
  {
   "id": "charm.wildheart_locket",
@@ -1147,7 +1147,7 @@
   "nameJa": "野性のロケット",
   "nameEn": "Wildheart Locket",
   "stat": "CritChancePct",
-  "value": 3
+  "valueRef": "equipment/bases.json#charm.wildheart_locket/implicitValue"
  },
  {
   "id": "charm.rein_ring",
@@ -1157,7 +1157,7 @@
   "nameJa": "手綱の指輪",
   "nameEn": "Rein Ring",
   "stat": "AttackSpeedPct",
-  "value": 3
+  "valueRef": "equipment/bases.json#charm.rein_ring/implicitValue"
  },
  {
   "id": "charm.unaddressed_letter",
@@ -1167,7 +1167,7 @@
   "nameJa": "宛先なき手紙",
   "nameEn": "Unaddressed Letter",
   "stat": "DarkAmp",
-  "value": 8
+  "valueRef": "equipment/bases.json#charm.unaddressed_letter/implicitValue"
  },
  {
   "id": "charm.old_coin_charm",
@@ -1177,7 +1177,7 @@
   "nameJa": "古銭の御守り",
   "nameEn": "Old-Coin Charm",
   "stat": "DarkAmp",
-  "value": 10
+  "valueRef": "equipment/bases.json#charm.old_coin_charm/implicitValue"
  },
  {
   "id": "charm.forgotten_name_charm",
@@ -1187,7 +1187,7 @@
   "nameJa": "忘れ名の飾り",
   "nameEn": "Forgotten-Name Charm",
   "stat": "PowerFlat",
-  "value": 6
+  "valueRef": "equipment/bases.json#charm.forgotten_name_charm/implicitValue"
  },
  {
   "id": "charm.memory_bookmark",
@@ -1197,7 +1197,7 @@
   "nameJa": "思い出の栞",
   "nameEn": "Bookmark of Memories",
   "stat": "PowerFlat",
-  "value": 7
+  "valueRef": "equipment/bases.json#charm.memory_bookmark/implicitValue"
  },
  {
   "id": "head.broad_brim_hat",
@@ -1207,7 +1207,7 @@
   "nameJa": "つばの広い帽子",
   "nameEn": "Broad-Brim Hat",
   "stat": "AttackFlat",
-  "value": 5
+  "valueRef": "equipment/bases.json#head.broad_brim_hat/implicitValue"
  },
  {
   "id": "head.cotton_hood",
@@ -1217,7 +1217,7 @@
   "nameJa": "木綿の頭巾",
   "nameEn": "Cotton Hood",
   "stat": "CritDamagePct",
-  "value": 10
+  "valueRef": "equipment/bases.json#head.cotton_hood/implicitValue"
  },
  {
   "id": "head.straw_hat",
@@ -1227,7 +1227,7 @@
   "nameJa": "麦わら帽子",
   "nameEn": "Straw Hat",
   "stat": "AttackSpeedPct",
-  "value": 3
+  "valueRef": "equipment/bases.json#head.straw_hat/implicitValue"
  },
  {
   "id": "head.sweatband",
@@ -1237,7 +1237,7 @@
   "nameJa": "汗の鉢巻",
   "nameEn": "Sweatband",
   "stat": "HealthRegen",
-  "value": 2
+  "valueRef": "equipment/bases.json#head.sweatband/implicitValue"
  },
  {
   "id": "head.aurora_circlet",
@@ -1247,7 +1247,7 @@
   "nameJa": "極光の額冠",
   "nameEn": "Aurora Circlet",
   "stat": "ColdAmp",
-  "value": 10
+  "valueRef": "equipment/bases.json#head.aurora_circlet/implicitValue"
  },
  {
   "id": "head.snowlight_hood",
@@ -1257,7 +1257,7 @@
   "nameJa": "雪明りの頭巾",
   "nameEn": "Snowlight Hood",
   "stat": "MaxHealthPct",
-  "value": 5
+  "valueRef": "equipment/bases.json#head.snowlight_hood/implicitValue"
  },
  {
   "id": "head.everfrost_hood",
@@ -1267,7 +1267,7 @@
   "nameJa": "不凍の頭巾",
   "nameEn": "Everfrost Hood",
   "stat": "HealthRegen",
-  "value": 3
+  "valueRef": "equipment/bases.json#head.everfrost_hood/implicitValue"
  },
  {
   "id": "head.icicle_crown",
@@ -1277,7 +1277,7 @@
   "nameJa": "氷柱の冠",
   "nameEn": "Icicle Crown",
   "stat": "Armor",
-  "value": 6
+  "valueRef": "equipment/bases.json#head.icicle_crown/implicitValue"
  },
  {
   "id": "head.brazier_crown",
@@ -1287,7 +1287,7 @@
   "nameJa": "火鉢の冠",
   "nameEn": "Brazier Crown",
   "stat": "FireAmp",
-  "value": 10
+  "valueRef": "equipment/bases.json#head.brazier_crown/implicitValue"
  },
  {
   "id": "head.flashfire_band",
@@ -1297,7 +1297,7 @@
   "nameJa": "火閃の鉢巻",
   "nameEn": "Flashfire Band",
   "stat": "AttackSpeedPct",
-  "value": 5
+  "valueRef": "equipment/bases.json#head.flashfire_band/implicitValue"
  },
  {
   "id": "head.scorched_mask",
@@ -1307,7 +1307,7 @@
   "nameJa": "焦土の面",
   "nameEn": "Scorched-Earth Mask",
   "stat": "CritChancePct",
-  "value": 3
+  "valueRef": "equipment/bases.json#head.scorched_mask/implicitValue"
  },
  {
   "id": "head.forge_hood",
@@ -1317,7 +1317,7 @@
   "nameJa": "鍛冶場の頭巾",
   "nameEn": "Forge-Hood",
   "stat": "MaxHealthPct",
-  "value": 5
+  "valueRef": "equipment/bases.json#head.forge_hood/implicitValue"
  },
  {
   "id": "head.hope_circlet",
@@ -1327,7 +1327,7 @@
   "nameJa": "望みの額冠",
   "nameEn": "Circlet of Hope",
   "stat": "LightAmp",
-  "value": 10
+  "valueRef": "equipment/bases.json#head.hope_circlet/implicitValue"
  },
  {
   "id": "head.nurses_veil",
@@ -1337,7 +1337,7 @@
   "nameJa": "看護のヴェール",
   "nameEn": "Nurse's Veil",
   "stat": "HealPower",
-  "value": 5
+  "valueRef": "equipment/bases.json#head.nurses_veil/implicitValue"
  },
  {
   "id": "head.first_light_band",
@@ -1347,7 +1347,7 @@
   "nameJa": "夜明けの鉢巻",
   "nameEn": "First-Light Band",
   "stat": "Haste",
-  "value": 5
+  "valueRef": "equipment/bases.json#head.first_light_band/implicitValue"
  },
  {
   "id": "head.clear_gaze_glasses",
@@ -1357,7 +1357,7 @@
   "nameJa": "澄眼の眼鏡",
   "nameEn": "Clear-Gaze Glasses",
   "stat": "CritChancePct",
-  "value": 3
+  "valueRef": "equipment/bases.json#head.clear_gaze_glasses/implicitValue"
  },
  {
   "id": "head.nightmare_visage",
@@ -1367,7 +1367,7 @@
   "nameJa": "悪夢の面",
   "nameEn": "Nightmare Visage",
   "stat": "DarkAmp",
-  "value": 10
+  "valueRef": "equipment/bases.json#head.nightmare_visage/implicitValue"
  },
  {
   "id": "head.funeral_crown",
@@ -1377,7 +1377,7 @@
   "nameJa": "葬列の冠",
   "nameEn": "Funeral Crown",
   "stat": "CritDamagePct",
-  "value": 14
+  "valueRef": "equipment/bases.json#head.funeral_crown/implicitValue"
  },
  {
   "id": "head.shroud_hood",
@@ -1387,7 +1387,7 @@
   "nameJa": "死装束の頭巾",
   "nameEn": "Shroud Hood",
   "stat": "AttackSpeedPct",
-  "value": 4
+  "valueRef": "equipment/bases.json#head.shroud_hood/implicitValue"
  },
  {
   "id": "head.moth_wing_mask",
@@ -1397,7 +1397,7 @@
   "nameJa": "蛾翅の仮面",
   "nameEn": "Moth-Wing Mask",
   "stat": "MoveSpeedPct",
-  "value": 3
+  "valueRef": "equipment/bases.json#head.moth_wing_mask/implicitValue"
  },
  {
   "id": "head.siege_helm",
@@ -1407,7 +1407,7 @@
   "nameJa": "攻城戦の兜",
   "nameEn": "Siege Helm",
   "stat": "Armor",
-  "value": 8
+  "valueRef": "equipment/bases.json#head.siege_helm/implicitValue"
  },
  {
   "id": "head.locked_visor",
@@ -1417,7 +1417,7 @@
   "nameJa": "閉扉の面頬",
   "nameEn": "Locked Visor",
   "stat": "Tenacity",
-  "value": 12
+  "valueRef": "equipment/bases.json#head.locked_visor/implicitValue"
  },
  {
   "id": "head.patrol_hood",
@@ -1427,7 +1427,7 @@
   "nameJa": "巡視の頭巾",
   "nameEn": "Patrol Hood",
   "stat": "HealthRegen",
-  "value": 2
+  "valueRef": "equipment/bases.json#head.patrol_hood/implicitValue"
  },
  {
   "id": "head.heartwood_circlet",
@@ -1437,7 +1437,7 @@
   "nameJa": "心材の冠",
   "nameEn": "Heartwood Circlet",
   "stat": "MaxHealthFlat",
-  "value": 20
+  "valueRef": "equipment/bases.json#head.heartwood_circlet/implicitValue"
  },
  {
   "id": "head.sprinting_veil",
@@ -1447,7 +1447,7 @@
   "nameJa": "疾走のヴェール",
   "nameEn": "Sprinting Veil",
   "stat": "Haste",
-  "value": 6
+  "valueRef": "equipment/bases.json#head.sprinting_veil/implicitValue"
  },
  {
   "id": "head.kite_mask",
@@ -1457,7 +1457,7 @@
   "nameJa": "凧の面",
   "nameEn": "Kite Mask",
   "stat": "AttackSpeedPct",
-  "value": 3
+  "valueRef": "equipment/bases.json#head.kite_mask/implicitValue"
  },
  {
   "id": "head.wind_crest_band",
@@ -1467,7 +1467,7 @@
   "nameJa": "風紋の鉢巻",
   "nameEn": "Wind-Crest Band",
   "stat": "AttackFlat",
-  "value": 6
+  "valueRef": "equipment/bases.json#head.wind_crest_band/implicitValue"
  },
  {
   "id": "head.far_horizon_cap",
@@ -1477,7 +1477,7 @@
   "nameJa": "遠地平の帽子",
   "nameEn": "Far-Horizon Cap",
   "stat": "CritDamagePct",
-  "value": 10
+  "valueRef": "equipment/bases.json#head.far_horizon_cap/implicitValue"
  },
  {
   "id": "head.pilgrim_doctor_hat",
@@ -1487,7 +1487,7 @@
   "nameJa": "巡礼医の帽子",
   "nameEn": "Pilgrim-Doctor Hat",
   "stat": "MaxHealthPct",
-  "value": 5
+  "valueRef": "equipment/bases.json#head.pilgrim_doctor_hat/implicitValue"
  },
  {
   "id": "head.balm_band",
@@ -1497,7 +1497,7 @@
   "nameJa": "香膏の鉢巻",
   "nameEn": "Balm Band",
   "stat": "PowerFlat",
-  "value": 5
+  "valueRef": "equipment/bases.json#head.balm_band/implicitValue"
  },
  {
   "id": "head.soothing_wreath",
@@ -1507,7 +1507,7 @@
   "nameJa": "癒やしの花冠",
   "nameEn": "Soothing Wreath",
   "stat": "ShieldPower",
-  "value": 5
+  "valueRef": "equipment/bases.json#head.soothing_wreath/implicitValue"
  },
  {
   "id": "head.quiet_prayer_veil",
@@ -1517,7 +1517,7 @@
   "nameJa": "静祷のヴェール",
   "nameEn": "Quiet-Prayer Veil",
   "stat": "MaxHealthFlat",
-  "value": 20
+  "valueRef": "equipment/bases.json#head.quiet_prayer_veil/implicitValue"
  },
  {
   "id": "head.beast_ear_hood",
@@ -1527,7 +1527,7 @@
   "nameJa": "獣耳の頭巾",
   "nameEn": "Beast-Ear Hood",
   "stat": "AttackFlat",
-  "value": 6
+  "valueRef": "equipment/bases.json#head.beast_ear_hood/implicitValue"
  },
  {
   "id": "head.falconers_hood",
@@ -1537,7 +1537,7 @@
   "nameJa": "鷹狩りの頭巾",
   "nameEn": "Falconer's Hood",
   "stat": "CritDamagePct",
-  "value": 10
+  "valueRef": "equipment/bases.json#head.falconers_hood/implicitValue"
  },
  {
   "id": "head.den_mother_circlet",
@@ -1547,7 +1547,7 @@
   "nameJa": "巣守りの額冠",
   "nameEn": "Den-Mother Circlet",
   "stat": "MaxHealthPct",
-  "value": 5
+  "valueRef": "equipment/bases.json#head.den_mother_circlet/implicitValue"
  },
  {
   "id": "head.calling_whistle_band",
@@ -1557,7 +1557,7 @@
   "nameJa": "呼び笛の鉢巻",
   "nameEn": "Calling-Whistle Band",
   "stat": "Haste",
-  "value": 5
+  "valueRef": "equipment/bases.json#head.calling_whistle_band/implicitValue"
  },
  {
   "id": "head.nostalgia_band",
@@ -1567,7 +1567,7 @@
   "nameJa": "追憶の鉢巻",
   "nameEn": "Nostalgia Band",
   "stat": "PowerFlat",
-  "value": 6
+  "valueRef": "equipment/bases.json#head.nostalgia_band/implicitValue"
  },
  {
   "id": "head.old_tales_hood",
@@ -1577,7 +1577,7 @@
   "nameJa": "昔話の頭巾",
   "nameEn": "Old-Tales Hood",
   "stat": "DarkAmp",
-  "value": 8
+  "valueRef": "equipment/bases.json#head.old_tales_hood/implicitValue"
  },
  {
   "id": "head.star_calendar_cap",
@@ -1587,7 +1587,7 @@
   "nameJa": "星暦の帽子",
   "nameEn": "Star-Calendar Cap",
   "stat": "Haste",
-  "value": 6
+  "valueRef": "equipment/bases.json#head.star_calendar_cap/implicitValue"
  },
  {
   "id": "head.relic_eye_monocle",
@@ -1597,7 +1597,7 @@
   "nameJa": "遺物眼の単眼鏡",
   "nameEn": "Relic-Eye Monocle",
   "stat": "CritChancePct",
-  "value": 3
+  "valueRef": "equipment/bases.json#head.relic_eye_monocle/implicitValue"
  },
  {
   "id": "hands.work_gloves",
@@ -1607,7 +1607,7 @@
   "nameJa": "作業手袋",
   "nameEn": "Work Gloves",
   "stat": "AttackFlat",
-  "value": 5
+  "valueRef": "equipment/bases.json#hands.work_gloves/implicitValue"
  },
  {
   "id": "hands.tumblers_gloves",
@@ -1617,7 +1617,7 @@
   "nameJa": "軽業の手袋",
   "nameEn": "Tumbler's Gloves",
   "stat": "AttackSpeedPct",
-  "value": 5
+  "valueRef": "equipment/bases.json#hands.tumblers_gloves/implicitValue"
  },
  {
   "id": "hands.iron_thumb_gauntlet",
@@ -1627,7 +1627,7 @@
   "nameJa": "鉄親指の籠手",
   "nameEn": "Iron-Thumb Gauntlet",
   "stat": "CritDamagePct",
-  "value": 12
+  "valueRef": "equipment/bases.json#hands.iron_thumb_gauntlet/implicitValue"
  },
  {
   "id": "hands.cotton_wraps",
@@ -1637,7 +1637,7 @@
   "nameJa": "木綿の手巻き",
   "nameEn": "Cotton Wraps",
   "stat": "PowerFlat",
-  "value": 5
+  "valueRef": "equipment/bases.json#hands.cotton_wraps/implicitValue"
  },
  {
   "id": "hands.rimeguard_gauntlets",
@@ -1647,7 +1647,7 @@
   "nameJa": "霧氷の籠手",
   "nameEn": "Rimeguard Gauntlets",
   "stat": "ColdAmp",
-  "value": 10
+  "valueRef": "equipment/bases.json#hands.rimeguard_gauntlets/implicitValue"
  },
  {
   "id": "hands.frozen_grip",
@@ -1657,7 +1657,7 @@
   "nameJa": "氷結の握り",
   "nameEn": "Frozen Grip",
   "stat": "Tenacity",
-  "value": 10
+  "valueRef": "equipment/bases.json#hands.frozen_grip/implicitValue"
  },
  {
   "id": "hands.snow_weight_gloves",
@@ -1667,7 +1667,7 @@
   "nameJa": "雪重りの手袋",
   "nameEn": "Snow-Weight Gloves",
   "stat": "AttackFlat",
-  "value": 6
+  "valueRef": "equipment/bases.json#hands.snow_weight_gloves/implicitValue"
  },
  {
   "id": "hands.winter_ready_gloves",
@@ -1677,7 +1677,7 @@
   "nameJa": "冬支度の手袋",
   "nameEn": "Winter-Ready Gloves",
   "stat": "HealthRegen",
-  "value": 3
+  "valueRef": "equipment/bases.json#hands.winter_ready_gloves/implicitValue"
  },
  {
   "id": "hands.volcanic_grips",
@@ -1687,7 +1687,7 @@
   "nameJa": "火山岩の握り",
   "nameEn": "Volcanic Grips",
   "stat": "FireAmp",
-  "value": 10
+  "valueRef": "equipment/bases.json#hands.volcanic_grips/implicitValue"
  },
  {
   "id": "hands.fire_tong_mitts",
@@ -1697,7 +1697,7 @@
   "nameJa": "火箸の指なし",
   "nameEn": "Fire-Tong Mitts",
   "stat": "AttackSpeedPct",
-  "value": 4
+  "valueRef": "equipment/bases.json#hands.fire_tong_mitts/implicitValue"
  },
  {
   "id": "hands.slag_knuckles",
@@ -1707,7 +1707,7 @@
   "nameJa": "鉱滓の拳当て",
   "nameEn": "Slag Knuckles",
   "stat": "CritDamagePct",
-  "value": 14
+  "valueRef": "equipment/bases.json#hands.slag_knuckles/implicitValue"
  },
  {
   "id": "hands.brand_iron_fingerless",
@@ -1717,7 +1717,7 @@
   "nameJa": "焼印の指抜き",
   "nameEn": "Brand-Iron Fingerless",
   "stat": "CritChancePct",
-  "value": 3
+  "valueRef": "equipment/bases.json#hands.brand_iron_fingerless/implicitValue"
  },
  {
   "id": "hands.morninglight_gloves",
@@ -1727,7 +1727,7 @@
   "nameJa": "朝光の手袋",
   "nameEn": "Morninglight Gloves",
   "stat": "LightAmp",
-  "value": 8
+  "valueRef": "equipment/bases.json#hands.morninglight_gloves/implicitValue"
  },
  {
   "id": "hands.first_aid_mitts",
@@ -1737,7 +1737,7 @@
   "nameJa": "手当ての指なし",
   "nameEn": "First-Aid Mitts",
   "stat": "HealPower",
-  "value": 5
+  "valueRef": "equipment/bases.json#hands.first_aid_mitts/implicitValue"
  },
  {
   "id": "hands.gospel_gloves",
@@ -1747,7 +1747,7 @@
   "nameJa": "福音の手袋",
   "nameEn": "Gospel Gloves",
   "stat": "PowerFlat",
-  "value": 5
+  "valueRef": "equipment/bases.json#hands.gospel_gloves/implicitValue"
  },
  {
   "id": "hands.sunhold_bands",
@@ -1757,7 +1757,7 @@
   "nameJa": "日向の腕輪",
   "nameEn": "Sunhold Bands",
   "stat": "Haste",
-  "value": 5
+  "valueRef": "equipment/bases.json#hands.sunhold_bands/implicitValue"
  },
  {
   "id": "hands.gravediggers_claws",
@@ -1767,7 +1767,7 @@
   "nameJa": "墓掘りの爪",
   "nameEn": "Gravedigger's Claws",
   "stat": "DarkAmp",
-  "value": 10
+  "valueRef": "equipment/bases.json#hands.gravediggers_claws/implicitValue"
  },
  {
   "id": "hands.assassins_fingerless",
@@ -1777,7 +1777,7 @@
   "nameJa": "暗殺者の指抜き",
   "nameEn": "Assassin's Fingerless",
   "stat": "CritDamagePct",
-  "value": 12
+  "valueRef": "equipment/bases.json#hands.assassins_fingerless/implicitValue"
  },
  {
   "id": "hands.gloomfang_knuckles",
@@ -1787,7 +1787,7 @@
   "nameJa": "闇牙の拳当て",
   "nameEn": "Gloomfang Knuckles",
   "stat": "AttackSpeedPct",
-  "value": 5
+  "valueRef": "equipment/bases.json#hands.gloomfang_knuckles/implicitValue"
  },
  {
   "id": "hands.night_rose_gloves",
@@ -1797,7 +1797,7 @@
   "nameJa": "夜薔薇の手袋",
   "nameEn": "Night-Rose Gloves",
   "stat": "MoveSpeedPct",
-  "value": 3
+  "valueRef": "equipment/bases.json#hands.night_rose_gloves/implicitValue"
  },
  {
   "id": "hands.bastion_mitts",
@@ -1807,7 +1807,7 @@
   "nameJa": "砦の指なし",
   "nameEn": "Bastion Mitts",
   "stat": "Armor",
-  "value": 8
+  "valueRef": "equipment/bases.json#hands.bastion_mitts/implicitValue"
  },
  {
   "id": "hands.anvil_gauntlets",
@@ -1817,7 +1817,7 @@
   "nameJa": "金床の籠手",
   "nameEn": "Anvil Gauntlets",
   "stat": "Armor",
-  "value": 10
+  "valueRef": "equipment/bases.json#hands.anvil_gauntlets/implicitValue"
  },
  {
   "id": "hands.steadfast_grips",
@@ -1827,7 +1827,7 @@
   "nameJa": "不動の握り",
   "nameEn": "Steadfast Grips",
   "stat": "MaxHealthFlat",
-  "value": 25
+  "valueRef": "equipment/bases.json#hands.steadfast_grips/implicitValue"
  },
  {
   "id": "hands.iron_will_wraps",
@@ -1837,7 +1837,7 @@
   "nameJa": "鉄意志の手巻き",
   "nameEn": "Iron-Will Wraps",
   "stat": "Tenacity",
-  "value": 15
+  "valueRef": "equipment/bases.json#hands.iron_will_wraps/implicitValue"
  },
  {
   "id": "hands.quicksilver_bands",
@@ -1847,7 +1847,7 @@
   "nameJa": "迅銀の腕輪",
   "nameEn": "Quicksilver Bands",
   "stat": "AttackSpeedPct",
-  "value": 3
+  "valueRef": "equipment/bases.json#hands.quicksilver_bands/implicitValue"
  },
  {
   "id": "hands.galefinger_gloves",
@@ -1857,7 +1857,7 @@
   "nameJa": "風指の手袋",
   "nameEn": "Galefinger Gloves",
   "stat": "AttackFlat",
-  "value": 6
+  "valueRef": "equipment/bases.json#hands.galefinger_gloves/implicitValue"
  },
  {
   "id": "hands.hawking_gloves",
@@ -1867,7 +1867,7 @@
   "nameJa": "鷹寄せの手袋",
   "nameEn": "Hawking Gloves",
   "stat": "CritChancePct",
-  "value": 3
+  "valueRef": "equipment/bases.json#hands.hawking_gloves/implicitValue"
  },
  {
   "id": "hands.windstep_wraps",
@@ -1877,7 +1877,7 @@
   "nameJa": "風歩きの手巻き",
   "nameEn": "Windstep Wraps",
   "stat": "MoveSpeedPct",
-  "value": 4
+  "valueRef": "equipment/bases.json#hands.windstep_wraps/implicitValue"
  },
  {
   "id": "hands.repair_gloves",
@@ -1887,7 +1887,7 @@
   "nameJa": "繕いの手袋",
   "nameEn": "Repair Gloves",
   "stat": "PowerFlat",
-  "value": 6
+  "valueRef": "equipment/bases.json#hands.repair_gloves/implicitValue"
  },
  {
   "id": "hands.supporting_gloves",
@@ -1897,7 +1897,7 @@
   "nameJa": "支えの手袋",
   "nameEn": "Supporting Gloves",
   "stat": "ShieldPower",
-  "value": 5
+  "valueRef": "equipment/bases.json#hands.supporting_gloves/implicitValue"
  },
  {
   "id": "hands.splint_wraps",
@@ -1907,7 +1907,7 @@
   "nameJa": "副木の手巻き",
   "nameEn": "Splint Wraps",
   "stat": "MaxHealthFlat",
-  "value": 20
+  "valueRef": "equipment/bases.json#hands.splint_wraps/implicitValue"
  },
  {
   "id": "hands.spring_breeze_grips",
@@ -1917,7 +1917,7 @@
   "nameJa": "春風の握り",
   "nameEn": "Spring-Breeze Grips",
   "stat": "Haste",
-  "value": 4
+  "valueRef": "equipment/bases.json#hands.spring_breeze_grips/implicitValue"
  },
  {
   "id": "hands.beasthide_gloves",
@@ -1927,7 +1927,7 @@
   "nameJa": "獣皮の手袋",
   "nameEn": "Beasthide Gloves",
   "stat": "AttackFlat",
-  "value": 6
+  "valueRef": "equipment/bases.json#hands.beasthide_gloves/implicitValue"
  },
  {
   "id": "hands.tamers_mitts",
@@ -1937,7 +1937,7 @@
   "nameJa": "調教の指なし",
   "nameEn": "Tamer's Mitts",
   "stat": "AttackSpeedPct",
-  "value": 4
+  "valueRef": "equipment/bases.json#hands.tamers_mitts/implicitValue"
  },
  {
   "id": "hands.alpha_grips",
@@ -1947,7 +1947,7 @@
   "nameJa": "頭領の握り",
   "nameEn": "Alpha Grips",
   "stat": "CritDamagePct",
-  "value": 14
+  "valueRef": "equipment/bases.json#hands.alpha_grips/implicitValue"
  },
  {
   "id": "hands.kennel_keeper_gloves",
@@ -1957,7 +1957,7 @@
   "nameJa": "番犬飼いの手袋",
   "nameEn": "Kennel-Keeper Gloves",
   "stat": "MaxHealthPct",
-  "value": 5
+  "valueRef": "equipment/bases.json#hands.kennel_keeper_gloves/implicitValue"
  },
  {
   "id": "hands.palimpsest_gloves",
@@ -1967,7 +1967,7 @@
   "nameJa": "重写本の手袋",
   "nameEn": "Palimpsest Gloves",
   "stat": "PowerFlat",
-  "value": 7
+  "valueRef": "equipment/bases.json#hands.palimpsest_gloves/implicitValue"
  },
  {
   "id": "hands.keepsake_bands",
@@ -1977,7 +1977,7 @@
   "nameJa": "形見の腕輪",
   "nameEn": "Keepsake Bands",
   "stat": "Haste",
-  "value": 5
+  "valueRef": "equipment/bases.json#hands.keepsake_bands/implicitValue"
  },
  {
   "id": "hands.tale_teller_gloves",
@@ -1987,7 +1987,7 @@
   "nameJa": "昔語りの手袋",
   "nameEn": "Tale-Teller Gloves",
   "stat": "CritChancePct",
-  "value": 3
+  "valueRef": "equipment/bases.json#hands.tale_teller_gloves/implicitValue"
  },
  {
   "id": "hands.duskthread_wraps",
@@ -1997,7 +1997,7 @@
   "nameJa": "夕糸の手巻き",
   "nameEn": "Duskthread Wraps",
   "stat": "DarkAmp",
-  "value": 8
+  "valueRef": "equipment/bases.json#hands.duskthread_wraps/implicitValue"
  },
  {
   "id": "feet.hobnail_boots",
@@ -2007,7 +2007,7 @@
   "nameJa": "鉄釘の長靴",
   "nameEn": "Hobnail Boots",
   "stat": "Armor",
-  "value": 6
+  "valueRef": "equipment/bases.json#feet.hobnail_boots/implicitValue"
  },
  {
   "id": "feet.everyday_shoes",
@@ -2017,7 +2017,7 @@
   "nameJa": "日常の靴",
   "nameEn": "Everyday Shoes",
   "stat": "AttackFlat",
-  "value": 6
+  "valueRef": "equipment/bases.json#feet.everyday_shoes/implicitValue"
  },
  {
   "id": "feet.work_boots",
@@ -2027,7 +2027,7 @@
   "nameJa": "仕事靴",
   "nameEn": "Work Boots",
   "stat": "CritDamagePct",
-  "value": 10
+  "valueRef": "equipment/bases.json#feet.work_boots/implicitValue"
  },
  {
   "id": "feet.earth_stained_sandals",
@@ -2037,7 +2037,7 @@
   "nameJa": "土の付いた草鞋",
   "nameEn": "Earth-Stained Sandals",
   "stat": "Haste",
-  "value": 4
+  "valueRef": "equipment/bases.json#feet.earth_stained_sandals/implicitValue"
  },
  {
   "id": "feet.blizzard_gaiters",
@@ -2047,7 +2047,7 @@
   "nameJa": "吹雪の脚絆",
   "nameEn": "Blizzard Gaiters",
   "stat": "ColdAmp",
-  "value": 10
+  "valueRef": "equipment/bases.json#feet.blizzard_gaiters/implicitValue"
  },
  {
   "id": "feet.floe_skimmer_shoes",
@@ -2057,7 +2057,7 @@
   "nameJa": "流氷滑りの靴",
   "nameEn": "Floe-Skimmer Shoes",
   "stat": "MaxHealthPct",
-  "value": 5
+  "valueRef": "equipment/bases.json#feet.floe_skimmer_shoes/implicitValue"
  },
  {
   "id": "feet.ice_road_boots",
@@ -2067,7 +2067,7 @@
   "nameJa": "氷道の長靴",
   "nameEn": "Ice-Road Boots",
   "stat": "HealthRegen",
-  "value": 2
+  "valueRef": "equipment/bases.json#feet.ice_road_boots/implicitValue"
  },
  {
   "id": "feet.frostwind_slippers",
@@ -2077,7 +2077,7 @@
   "nameJa": "霜風の上履き",
   "nameEn": "Frostwind Slippers",
   "stat": "MoveSpeedPct",
-  "value": 3
+  "valueRef": "equipment/bases.json#feet.frostwind_slippers/implicitValue"
  },
  {
   "id": "feet.scorching_footwear",
@@ -2087,7 +2087,7 @@
   "nameJa": "灼熱の履き物",
   "nameEn": "Scorching Footwear",
   "stat": "FireAmp",
-  "value": 10
+  "valueRef": "equipment/bases.json#feet.scorching_footwear/implicitValue"
  },
  {
   "id": "feet.firewalk_sandals",
@@ -2097,7 +2097,7 @@
   "nameJa": "火渡りの草鞋",
   "nameEn": "Firewalk Sandals",
   "stat": "AttackSpeedPct",
-  "value": 4
+  "valueRef": "equipment/bases.json#feet.firewalk_sandals/implicitValue"
  },
  {
   "id": "feet.cinder_trail_shoes",
@@ -2107,7 +2107,7 @@
   "nameJa": "燼跡の靴",
   "nameEn": "Cinder-Trail Shoes",
   "stat": "AttackFlat",
-  "value": 5
+  "valueRef": "equipment/bases.json#feet.cinder_trail_shoes/implicitValue"
  },
  {
   "id": "feet.smelter_boots",
@@ -2117,7 +2117,7 @@
   "nameJa": "溶鉱の長靴",
   "nameEn": "Smelter Boots",
   "stat": "CritDamagePct",
-  "value": 12
+  "valueRef": "equipment/bases.json#feet.smelter_boots/implicitValue"
  },
  {
   "id": "feet.sunpath_sandals",
@@ -2127,7 +2127,7 @@
   "nameJa": "日の道の草鞋",
   "nameEn": "Sunpath Sandals",
   "stat": "LightAmp",
-  "value": 10
+  "valueRef": "equipment/bases.json#feet.sunpath_sandals/implicitValue"
  },
  {
   "id": "feet.pilgrim_light_shoes",
@@ -2137,7 +2137,7 @@
   "nameJa": "巡礼灯の靴",
   "nameEn": "Pilgrim-Light Shoes",
   "stat": "HealPower",
-  "value": 5
+  "valueRef": "equipment/bases.json#feet.pilgrim_light_shoes/implicitValue"
  },
  {
   "id": "feet.morningstar_shoes",
@@ -2147,7 +2147,7 @@
   "nameJa": "暁星の靴",
   "nameEn": "Morningstar Shoes",
   "stat": "Haste",
-  "value": 5
+  "valueRef": "equipment/bases.json#feet.morningstar_shoes/implicitValue"
  },
  {
   "id": "feet.beacon_steps",
@@ -2157,7 +2157,7 @@
   "nameJa": "灯台の足取り",
   "nameEn": "Beacon Steps",
   "stat": "MoveSpeedPct",
-  "value": 3
+  "valueRef": "equipment/bases.json#feet.beacon_steps/implicitValue"
  },
  {
   "id": "feet.graveshade_boots",
@@ -2167,7 +2167,7 @@
   "nameJa": "墓影の長靴",
   "nameEn": "Graveshade Boots",
   "stat": "DarkAmp",
-  "value": 10
+  "valueRef": "equipment/bases.json#feet.graveshade_boots/implicitValue"
  },
  {
   "id": "feet.soundless_shoes",
@@ -2177,7 +2177,7 @@
   "nameJa": "無音の靴",
   "nameEn": "Soundless Shoes",
   "stat": "AttackFlat",
-  "value": 6
+  "valueRef": "equipment/bases.json#feet.soundless_shoes/implicitValue"
  },
  {
   "id": "feet.shadowstrider_boots",
@@ -2187,7 +2187,7 @@
   "nameJa": "影渡りの靴",
   "nameEn": "Shadowstrider Boots",
   "stat": "CritDamagePct",
-  "value": 14
+  "valueRef": "equipment/bases.json#feet.shadowstrider_boots/implicitValue"
  },
  {
   "id": "feet.torchless_shoes",
@@ -2197,7 +2197,7 @@
   "nameJa": "灯無しの靴",
   "nameEn": "Torchless Shoes",
   "stat": "Tenacity",
-  "value": 12
+  "valueRef": "equipment/bases.json#feet.torchless_shoes/implicitValue"
  },
  {
   "id": "feet.gatehouse_sabatons",
@@ -2207,7 +2207,7 @@
   "nameJa": "城門の鉄鞋",
   "nameEn": "Gatehouse Sabatons",
   "stat": "Armor",
-  "value": 9
+  "valueRef": "equipment/bases.json#feet.gatehouse_sabatons/implicitValue"
  },
  {
   "id": "feet.mountain_boots",
@@ -2217,7 +2217,7 @@
   "nameJa": "山岳の重靴",
   "nameEn": "Mountain Boots",
   "stat": "Armor",
-  "value": 10
+  "valueRef": "equipment/bases.json#feet.mountain_boots/implicitValue"
  },
  {
   "id": "feet.night_watch_boots",
@@ -2227,7 +2227,7 @@
   "nameJa": "夜警の長靴",
   "nameEn": "Night-Watch Boots",
   "stat": "MaxHealthPct",
-  "value": 5
+  "valueRef": "equipment/bases.json#feet.night_watch_boots/implicitValue"
  },
  {
   "id": "feet.patrol_sandals",
@@ -2237,7 +2237,7 @@
   "nameJa": "巡回兵の草鞋",
   "nameEn": "Patrol-Soldier Sandals",
   "stat": "HealthRegen",
-  "value": 3
+  "valueRef": "equipment/bases.json#feet.patrol_sandals/implicitValue"
  },
  {
   "id": "feet.updraft_greaves",
@@ -2247,7 +2247,7 @@
   "nameJa": "上昇風の脛当て",
   "nameEn": "Updraft Greaves",
   "stat": "Haste",
-  "value": 5
+  "valueRef": "equipment/bases.json#feet.updraft_greaves/implicitValue"
  },
  {
   "id": "feet.breeze_runners",
@@ -2257,7 +2257,7 @@
   "nameJa": "微風の走り靴",
   "nameEn": "Breeze Runners",
   "stat": "Haste",
-  "value": 6
+  "valueRef": "equipment/bases.json#feet.breeze_runners/implicitValue"
  },
  {
   "id": "feet.swallow_flight_boots",
@@ -2267,7 +2267,7 @@
   "nameJa": "燕飛びの靴",
   "nameEn": "Swallow-Flight Boots",
   "stat": "AttackFlat",
-  "value": 5
+  "valueRef": "equipment/bases.json#feet.swallow_flight_boots/implicitValue"
  },
  {
   "id": "feet.long_stride_boots",
@@ -2277,7 +2277,7 @@
   "nameJa": "大股の長靴",
   "nameEn": "Long-Stride Boots",
   "stat": "AttackRangePct",
-  "value": 5
+  "valueRef": "equipment/bases.json#feet.long_stride_boots/implicitValue"
  },
  {
   "id": "feet.hospice_slippers",
@@ -2287,7 +2287,7 @@
   "nameJa": "病院の上履き",
   "nameEn": "Hospice Slippers",
   "stat": "PowerFlat",
-  "value": 5
+  "valueRef": "equipment/bases.json#feet.hospice_slippers/implicitValue"
  },
  {
   "id": "feet.comfort_sandals",
@@ -2297,7 +2297,7 @@
   "nameJa": "安らぎの草鞋",
   "nameEn": "Comfort Sandals",
   "stat": "ShieldPower",
-  "value": 5
+  "valueRef": "equipment/bases.json#feet.comfort_sandals/implicitValue"
  },
  {
   "id": "feet.herb_garden_shoes",
@@ -2307,7 +2307,7 @@
   "nameJa": "薬草園の靴",
   "nameEn": "Herb-Garden Shoes",
   "stat": "Haste",
-  "value": 4
+  "valueRef": "equipment/bases.json#feet.herb_garden_shoes/implicitValue"
  },
  {
   "id": "feet.night_nurse_boots",
@@ -2317,7 +2317,7 @@
   "nameJa": "夜看の長靴",
   "nameEn": "Night-Nurse Boots",
   "stat": "MaxHealthFlat",
-  "value": 20
+  "valueRef": "equipment/bases.json#feet.night_nurse_boots/implicitValue"
  },
  {
   "id": "feet.pack_trot_boots",
@@ -2327,7 +2327,7 @@
   "nameJa": "群れ駆けの長靴",
   "nameEn": "Pack-Trot Boots",
   "stat": "AttackSpeedPct",
-  "value": 4
+  "valueRef": "equipment/bases.json#feet.pack_trot_boots/implicitValue"
  },
  {
   "id": "feet.beast_path_shoes",
@@ -2337,7 +2337,7 @@
   "nameJa": "獣径の靴",
   "nameEn": "Beast-Path Shoes",
   "stat": "AttackFlat",
-  "value": 6
+  "valueRef": "equipment/bases.json#feet.beast_path_shoes/implicitValue"
  },
  {
   "id": "feet.howling_greaves",
@@ -2347,7 +2347,7 @@
   "nameJa": "遠吠えの脛当て",
   "nameEn": "Howling Greaves",
   "stat": "CritDamagePct",
-  "value": 10
+  "valueRef": "equipment/bases.json#feet.howling_greaves/implicitValue"
  },
  {
   "id": "feet.den_warden_sabatons",
@@ -2357,7 +2357,7 @@
   "nameJa": "巣番の鉄鞋",
   "nameEn": "Den-Warden Sabatons",
   "stat": "MaxHealthPct",
-  "value": 5
+  "valueRef": "equipment/bases.json#feet.den_warden_sabatons/implicitValue"
  },
  {
   "id": "feet.old_road_boots",
@@ -2367,7 +2367,7 @@
   "nameJa": "旧道の長靴",
   "nameEn": "Old-Road Boots",
   "stat": "PowerFlat",
-  "value": 6
+  "valueRef": "equipment/bases.json#feet.old_road_boots/implicitValue"
  },
  {
   "id": "feet.twilight_stroll_shoes",
@@ -2377,7 +2377,7 @@
   "nameJa": "黄昏散策の靴",
   "nameEn": "Twilight-Stroll Shoes",
   "stat": "DarkAmp",
-  "value": 8
+  "valueRef": "equipment/bases.json#feet.twilight_stroll_shoes/implicitValue"
  },
  {
   "id": "feet.remembered_steps",
@@ -2387,7 +2387,7 @@
   "nameJa": "思い出の足取り",
   "nameEn": "Remembered Steps",
   "stat": "Haste",
-  "value": 6
+  "valueRef": "equipment/bases.json#feet.remembered_steps/implicitValue"
  },
  {
   "id": "feet.once_worn_sandals",
@@ -2397,6 +2397,6 @@
   "nameJa": "昔履きの草鞋",
   "nameEn": "Once-Worn Sandals",
   "stat": "MoveSpeedPct",
-  "value": 3
+  "valueRef": "equipment/bases.json#feet.once_worn_sandals/implicitValue"
  }
 ]

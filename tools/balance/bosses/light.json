@@ -1,0 +1,210 @@
+{
+  "schemaVersion": 1,
+  "shared": {
+    "beamMaxTargets": 8,
+    "beamMaxInstances": 1,
+    "shieldLifetimeMillis": 2000,
+    "shieldMaxTargets": 1,
+    "shieldMaxInstances": 1
+  },
+  "moves": {
+    "weapon": {
+      "channels": {
+        "LightBeamAtk": {
+          "value": 28,
+          "cap": 28
+        }
+      },
+      "actions": [
+        {
+          "cooldownMillis": 5000,
+          "delayMillis": 300,
+          "rangeMilli": 7000,
+          "widthMilli": 800
+        }
+      ]
+    },
+    "armor": {
+      "channels": {
+        "LightShardShield": {
+          "value": 20,
+          "cap": 20
+        }
+      },
+      "actions": [
+        {
+          "cooldownMillis": 7000
+        }
+      ]
+    },
+    "charm": {
+      "channels": {
+        "LightCrystalBeam": {
+          "value": 24,
+          "cap": 24
+        }
+      },
+      "actions": [
+        {
+          "cooldownMillis": 8000,
+          "delayMillis": 500,
+          "lifetimeMillis": 3000,
+          "maxTargets": 8,
+          "maxInstances": 1,
+          "rangeMilli": 6000,
+          "widthMilli": 600,
+          "magnitudeMilli": 2000
+        }
+      ]
+    },
+    "head": {
+      "channels": {
+        "LightLightning": {
+          "value": 32,
+          "cap": 32
+        }
+      },
+      "actions": [
+        {
+          "cooldownMillis": 7000,
+          "delayMillis": 450,
+          "intervalMillis": 300,
+          "count": 2,
+          "maxTargets": 8,
+          "maxInstances": 1,
+          "radiusMilli": 1200,
+          "rangeMilli": 8000
+        }
+      ]
+    },
+    "hands": {
+      "channels": {
+        "LightBeamBarrage": {
+          "value": 30,
+          "cap": 30
+        }
+      },
+      "actions": [
+        {
+          "cooldownMillis": 6000,
+          "delayMillis": 300,
+          "lifetimeMillis": 800,
+          "mainHits": 3,
+          "counterLifetimeMillis": 6000,
+          "maxTargets": 8,
+          "maxInstances": 1,
+          "rangeMilli": 5000,
+          "widthMilli": 600,
+          "angleMilli": 50000
+        }
+      ]
+    },
+    "feet": {
+      "channels": {
+        "LightFlashBeams": {
+          "value": 24,
+          "cap": 24
+        }
+      },
+      "actions": [
+        {
+          "cooldownMillis": 5000,
+          "delayMillis": 250,
+          "rangeMilli": 4000,
+          "widthMilli": 500,
+          "count": 3,
+          "angleMilli": 40000
+        }
+      ]
+    },
+    "stage2": {
+      "channels": {
+        "LightChargedBeam": {
+          "value": 35,
+          "cap": 35
+        }
+      },
+      "actions": [
+        {
+          "cooldownMillis": 4000,
+          "delayMillis": 350,
+          "rangeMilli": 8000,
+          "widthMilli": 1000
+        },
+        {
+          "lifetimeMillis": 6000,
+          "count": 3,
+          "maxTargets": 1,
+          "maxInstances": 1
+        }
+      ]
+    },
+    "stage3": {
+      "channels": {
+        "LightTerminalLightning": {
+          "value": 30,
+          "cap": 30
+        }
+      },
+      "actions": [
+        {
+          "delayMillis": 650,
+          "maxTargets": 8,
+          "maxInstances": 1,
+          "radiusMilli": 1800
+        }
+      ]
+    },
+    "stage6": {
+      "channels": {
+        "LightFractureSweeps": {
+          "value": 90,
+          "cap": 100
+        },
+        "LightSupportShield": {
+          "value": 38,
+          "cap": 40
+        }
+      },
+      "actions": [
+        {
+          "cooldownMillis": 12000,
+          "delayMillis": 300,
+          "rangeMilli": 6000,
+          "widthMilli": 700,
+          "lifetimeMillis": 400,
+          "angleMilli": 90000,
+          "count": 3
+        },
+        {
+          "cooldownMillis": 0
+        },
+        {
+          "lifetimeMillis": 3000,
+          "count": 2,
+          "maxTargets": 1,
+          "maxInstances": 1,
+          "rangeMilli": 2000
+        }
+      ]
+    }
+  },
+  "rewards": {
+    "turnValueMilli": 30000,
+    "turnCapMilli": 30000,
+    "turnMagnitudeMilli": 1500,
+    "widthValueMilli": 300,
+    "widthCapMilli": 300,
+    "widthMagnitudeMilli": 1500,
+    "pulseValueMilli": 450,
+    "pulseCapMilli": 450,
+    "pulseCooldownMillis": 6000,
+    "pulseDurationMillis": 350,
+    "pulseCount": 2,
+    "pulseRangeMilli": 1800,
+    "pulseMagnitudeMilli": 3,
+    "pulseIntervalMillis": 1000,
+    "pulseTargetCapMilli": 3,
+    "pulseBudgetMilli": 900
+  }
+}

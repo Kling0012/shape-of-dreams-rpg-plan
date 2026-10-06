@@ -6,7 +6,7 @@ namespace SodRpg.Core.Game
     /// <summary>Transient v1.29 state; the host supplies facts and applies returned effects without chaining.</summary>
     public sealed partial class PowerRuntime
     {
-        public const int ConditionalPowerCap = 120;
+        public const int ConditionalPowerCap = PowersBalance.ConditionalPowerCap;
         private readonly Dictionary<int, float> _wanderReady = new Dictionary<int, float>();
         private readonly Dictionary<int, float> _watchReady = new Dictionary<int, float>();
         private readonly Dictionary<int, float> _relayReady = new Dictionary<int, float>();
@@ -96,11 +96,11 @@ namespace SodRpg.Core.Game
             if (!specialMovement && moving && !_runUp && NewValue(Power.RunUp) > 0
                 && !float.IsNaN(walkedDistance) && !float.IsInfinity(walkedDistance))
             {
-                _walked = Math.Min(12f, _walked + Math.Max(0, walkedDistance));
-                if (_walked >= 12f) _runUp = true;
+                _walked = Math.Min(PowersBalance.RunUpDistance, _walked + Math.Max(0, walkedDistance));
+                if (_walked >= PowersBalance.RunUpDistance) _runUp = true;
             }
         }
-        public bool ImmovableActive(float now) => !IsMoving && !float.IsNaN(_stillSince) && now - _stillSince >= 1f;
+        public bool ImmovableActive(float now) => !IsMoving && !float.IsNaN(_stillSince) && now - _stillSince >= PowersBalance.ImmovableStanceStillSeconds;
         public float OutgoingDamageAmplification(float now, bool normalMemory, bool summon)
         {
             if (summon) return now < _lifelineUntil ? NewValue(Power.Lifeline) / 100f : 0;
@@ -117,7 +117,7 @@ namespace SodRpg.Core.Game
             if (!ImmovableActive(now)) return 0;
             Build.StarPowers.TryGetValue(Power.ImmovableStance, out int ranked);
             Build.UnrankedStarPowers.TryGetValue(Power.ImmovableStance, out int basis);
-            return Math.Min(10, Math.Max(0, Build.Get(Power.ImmovableStance) - ranked + basis) / 2) / 100f;
+            return Math.Min(PowersBalance.ImmovableStanceMaxReduction, Math.Max(0, Build.Get(Power.ImmovableStance) - ranked + basis) / 2) / 100f;
         }
         public float ShieldGainAmplification() => IsVanguard ? NewValue(Power.VanguardsOath) / (LivingPartySize <= 1 ? 200f : 100f) : 0;
         public float PilingLuckCriticalChance => NewValue(Power.PilingLuck) * _pilingLuck / 100f;
@@ -131,7 +131,7 @@ namespace SodRpg.Core.Game
         public int MedleyStacks(float now)
         {
             if (now >= _medleyUntil) _medleyMemories.Clear();
-            return Math.Min(3, _medleyMemories.Count);
+            return Math.Min(PowersBalance.MedleyMaxTypes, _medleyMemories.Count);
         }
         /// <summary>Call alongside the existing OnSkillUsed once per real use. Returns remaining-CD fraction for the used memory.</summary>
         public float OnNewMemoryUsed(float now, string memory, bool isMovement, bool isUltimate)
@@ -146,9 +146,9 @@ namespace SodRpg.Core.Game
                 if (NewValue(Power.Medley) > 0 && !_medleyMemories.Contains(memory))
                 {
                     _medleyMemories.Add(memory);
-                    _medleyUntil = now + 12f;
+                    _medleyUntil = now + PowersBalance.MedleyDuration;
                 }
-                if (NewValue(Power.Spellsweep) > 0) _spellsweepUntil = now + 5f;
+                if (NewValue(Power.Spellsweep) > 0) _spellsweepUntil = now + PowersBalance.SpellsweepWindow;
                 if (_openingReady) { cut += NewValue(Power.OpeningSalvo) / 100f; _openingReady = false; }
             }
             if (NewValue(Power.PileOn) > 0)
@@ -156,7 +156,7 @@ namespace SodRpg.Core.Game
                 if (_lastMemory == memory) _memoryRepeat++;
                 else { _lastMemory = memory; _memoryRepeat = 1; }
             }
-            if (_memoryRepeat >= 3)
+            if (_memoryRepeat >= PowersBalance.PileOnUses)
             {
                 _memoryRepeat = 0;
                 cut += NewValue(Power.PileOn) / 100f;
@@ -168,27 +168,27 @@ namespace SodRpg.Core.Game
         public float TakeWatchfulHand(float now, int allyId, float allyHealthRatio, float maxHealth)
         {
             int v = NewValue(Power.WatchfulHand);
-            return v > 0 && allyHealthRatio > 0 && allyHealthRatio < .3f && maxHealth > 0 && Gate(_watchReady, allyId, now, 45f)
+            return v > 0 && allyHealthRatio > 0 && allyHealthRatio < PowersBalance.WatchfulHandThreshold && maxHealth > 0 && Gate(_watchReady, allyId, now, PowersBalance.WatchfulHandCooldown)
                 ? Percent(maxHealth, v) : 0;
         }
         public float KindnessReturnsHeal(float actualAllyHealing) => Percent(actualAllyHealing, NewValue(Power.KindnessReturns));
-        public float TakeRelayHand(float now, int allyId) => NewValue(Power.RelayHand) > 0 && Gate(_relayReady, allyId, now, 2f)
+        public float TakeRelayHand(float now, int allyId) => NewValue(Power.RelayHand) > 0 && Gate(_relayReady, allyId, now, PowersBalance.RelayHandCooldown)
             ? NewValue(Power.RelayHand) / 100f : 0;
         public float TakeShieldbreak(float now, float shieldBefore, float maxHealth, bool brokenByEnemy)
         {
             int v = NewValue(Power.ShieldbreakBurst);
             if (v <= 0 || !brokenByEnemy || shieldBefore <= 0 || now < _shieldbreakReady) return 0;
-            _shieldbreakReady = now + 6f;
+            _shieldbreakReady = now + PowersBalance.ShieldbreakBurstCooldown;
             return Percent(Math.Max(shieldBefore, maxHealth), v);
         }
         public float SharedWardShield(float gainedShield, bool sharedShield = false) => sharedShield ? 0 : Percent(gainedShield, NewValue(Power.SharedWard));
         public float TakeBreakout(float now, int enemies6m, float maxHealth)
         {
-            bool entered = _lastEnemyCount <= 3 && enemies6m >= 4;
+            bool entered = _lastEnemyCount <= PowersBalance.BreakoutMinEnemies && enemies6m >= PowersBalance.BreakoutTriggerEnemies;
             _lastEnemyCount = Math.Max(0, enemies6m);
             int v = NewValue(Power.Breakout);
             if (!entered || v <= 0 || maxHealth <= 0 || now < _breakoutReady) return 0;
-            _breakoutReady = now + 10f;
+            _breakoutReady = now + PowersBalance.BreakoutCooldown;
             return Percent(maxHealth, v);
         }
         public float TakeTollOfGrudge(float actualHealthLost, float maxHealth)
@@ -196,12 +196,12 @@ namespace SodRpg.Core.Game
             int v = NewValue(Power.TollOfGrudge);
             if (v <= 0 || maxHealth <= 0 || actualHealthLost <= 0) return 0;
             _toll += actualHealthLost;
-            int bursts = (int)(_toll / (maxHealth * .6f));
-            _toll -= bursts * maxHealth * .6f;
+            int bursts = (int)(_toll / (maxHealth * PowersBalance.TollOfGrudgeThreshold));
+            _toll -= bursts * maxHealth * PowersBalance.TollOfGrudgeThreshold;
             return Percent(maxHealth, v) * bursts;
         }
-        public const float UnbowedMindDuration = 4f;
-        public const float UnbowedMindCooldown = 8f;
+        public const float UnbowedMindDuration = PowersBalance.UnbowedMindDuration;
+        public const float UnbowedMindCooldown = PowersBalance.UnbowedMindCooldown;
 
         public float TakeUnbowedMind(float now, float maxHealth, bool enemySource, bool stun = true, bool immune = false)
         {
@@ -213,7 +213,7 @@ namespace SodRpg.Core.Game
         /// <summary>Call only for actual outgoing or incoming hostile damage, including shield absorption.</summary>
         public float TakeReadyGuard(float now, float maxHealth)
         {
-            bool ready = now - _lastCombat >= 5f;
+            bool ready = now - _lastCombat >= PowersBalance.ReadyGuardWindow;
             _lastCombat = now;
             return ready ? Percent(maxHealth, NewValue(Power.ReadyGuard)) : 0;
         }
@@ -221,26 +221,26 @@ namespace SodRpg.Core.Game
         {
             int v = NewValue(Power.ShardBoon);
             if (v <= 0 || maxHealth <= 0 || now < _shardReady) return 0;
-            _shardReady = now + .3f;
+            _shardReady = now + PowersBalance.ShardBoonCooldown;
             return maxHealth * v / 1000f;
         }
         public void OnOverheal(float now, float discardedAmount)
         {
-            if (discardedAmount > 0 && NewValue(Power.Lifeline) > 0) _lifelineUntil = now + 4f;
+            if (discardedAmount > 0 && NewValue(Power.Lifeline) > 0) _lifelineUntil = now + PowersBalance.LifelineDuration;
         }
         public float CrystalCircuitCooldownFraction => NewValue(Power.CrystalCircuit) / 100f;
         public float DreamOmenCooldownFraction => NewValue(Power.DreamOmen) / 100f;
         public float DreamOmenShield(float maxHealth) => maxHealth * NewValue(Power.DreamOmen) / 200f;
         public float ApothecaryCooldownFraction => NewValue(Power.Apothecary) / 100f;
-        public float ApothecaryAllyHeal(float potionHealing) => NewValue(Power.Apothecary) > 0 ? Math.Max(0, potionHealing) / 2f : 0;
+        public float ApothecaryAllyHeal(float potionHealing) => NewValue(Power.Apothecary) > 0 ? Math.Max(0, potionHealing) * PowersBalance.ApothecaryAllyHealShare : 0;
         public float ReturningBladeCooldownFraction(bool attributedMemory) => attributedMemory ? NewValue(Power.ReturningBlade) / 100f : 0;
         public float PackFeastShield(float maxHealth, bool summonKill) => summonKill ? Percent(maxHealth, NewValue(Power.PackFeast)) : 0;
         public float DeathBloomDamage(float higher, bool killedByEnemy) => killedByEnemy ? Percent(higher, NewValue(Power.DeathBloom)) : 0;
         public float SpilloverDamage(float finalHitDamage, float victimHealthBefore) => victimHealthBefore > 0
             ? Percent(Math.Max(0, finalHitDamage - victimHealthBefore), NewValue(Power.SpilloverStrike)) : 0;
-        public float ElementalHarvestDamage(float higher, int elementTypes) => elementTypes >= 2
-            ? Percent(higher, NewValue(Power.ElementalHarvest)) * Math.Min(4, elementTypes) : 0;
-        public bool RollUmbralHeritage(int deadDarkStacks, double roll) => deadDarkStacks >= 2 && roll >= 0
+        public float ElementalHarvestDamage(float higher, int elementTypes) => elementTypes >= PowersBalance.ElementalHarvestMinTypes
+            ? Percent(higher, NewValue(Power.ElementalHarvest)) * Math.Min(PowersBalance.ElementalHarvestMaxTypes, elementTypes) : 0;
+        public bool RollUmbralHeritage(int deadDarkStacks, double roll) => deadDarkStacks >= PowersBalance.UmbralHeritageMinStacks && roll >= 0
             && roll < NewValue(Power.UmbralHeritage) / 100d;
         public struct ElementPowerResult { public float Shield, LongestCooldownFraction; }
         /// <summary>element: Fire=0, Cold=1, Light=2, Dark=3. Call only for an actual native application.</summary>
@@ -248,15 +248,15 @@ namespace SodRpg.Core.Game
         {
             var result = new ElementPowerResult();
             if (element < 0 || element > 3 || after <= 0) return result;
-            if (element == 2 && before < 5 && after >= 5 && NewValue(Power.StardustCycle) > 0
-                && now >= _stardustGlobalReady && Gate(_stardustReady, victimId, now, 5f))
+            if (element == 2 && before < PowersBalance.StardustCycleLightStacks && after >= PowersBalance.StardustCycleLightStacks && NewValue(Power.StardustCycle) > 0
+                && now >= _stardustGlobalReady && Gate(_stardustReady, victimId, now, PowersBalance.StardustCyclePerEnemyCooldown))
             {
-                _stardustGlobalReady = now + 1f;
+                _stardustGlobalReady = now + PowersBalance.StardustCycleGlobalCooldown;
                 result.LongestCooldownFraction = NewValue(Power.StardustCycle) / 100f;
             }
             if (_lastElement >= 0 && _lastElement != element && now >= _prismReady && NewValue(Power.PrismShift) > 0)
             {
-                _prismReady = now + 1f;
+                _prismReady = now + PowersBalance.PrismShiftCooldown;
                 result.Shield = Percent(maxHealth, NewValue(Power.PrismShift));
             }
             _lastElement = element;
@@ -268,16 +268,16 @@ namespace SodRpg.Core.Game
             int v = NewValue(Power.WeakPointWound);
             if (!critical || v <= 0) return 0;
             _wounds.TryGetValue(victimId, out var state);
-            if (now - state.Last >= 6f) state.Count = 0;
+            if (now - state.Last >= PowersBalance.WeakPointWoundWindow) state.Count = 0;
             state.Last = now;
             state.Count++;
-            float damage = state.Count >= 3 ? Percent(higher, v) : 0;
-            if (state.Count >= 3) state.Count = 0;
+            float damage = state.Count >= PowersBalance.WeakPointWoundCrits ? Percent(higher, v) : 0;
+            if (state.Count >= PowersBalance.WeakPointWoundCrits) state.Count = 0;
             _wounds[victimId] = state;
             if (_wounds.Count > 256)
             {
                 var expired = new List<int>();
-                foreach (var pair in _wounds) if (now - pair.Value.Last >= 6f) expired.Add(pair.Key);
+                foreach (var pair in _wounds) if (now - pair.Value.Last >= PowersBalance.WeakPointWoundWindow) expired.Add(pair.Key);
                 foreach (int id in expired) _wounds.Remove(id);
             }
             return damage;
@@ -299,29 +299,29 @@ namespace SodRpg.Core.Game
             var r = new NewBasicResult();
             if (!primary) return r;
             bool switched = _lastBasicTarget.HasValue && _lastBasicTarget.Value != victimId;
-            if (switched && NewValue(Power.WanderersEdge) > 0 && Gate(_wanderReady, victimId, now, 1f))
+            if (switched && NewValue(Power.WanderersEdge) > 0 && Gate(_wanderReady, victimId, now, PowersBalance.WanderersEdgeCooldown))
                 r.DirectDamage += Percent(higher, NewValue(Power.WanderersEdge));
-            if (!_lastBasicTarget.HasValue || switched || now - _lastBasicAt >= 4f) _focusHits = 0;
+            if (!_lastBasicTarget.HasValue || switched || now - _lastBasicAt >= PowersBalance.FocusFireWindow) _focusHits = 0;
             _lastBasicTarget = victimId; _lastBasicAt = now;
             if (NewValue(Power.FocusFire) > 0) _focusHits++;
             else _focusHits = 0;
-            if (_focusHits >= 5) { _focusHits = 0; r.DirectDamage += Percent(higher, NewValue(Power.FocusFire)); }
+            if (_focusHits >= PowersBalance.FocusFireHits) { _focusHits = 0; r.DirectDamage += Percent(higher, NewValue(Power.FocusFire)); }
             r.DirectDamage += Percent(ShieldAmount, NewValue(Power.ShieldBash));
             if (NearbyEnemies8 == 1 && targetWithin8) r.DirectDamage += Percent(higher, NewValue(Power.DuelistsWay));
             if (IsMoving) r.SlowPercent = NewValue(Power.StrafeShot);
             if (now < _spellsweepUntil) { r.SplashDamage += Percent(finalDamage, NewValue(Power.Spellsweep)); _spellsweepUntil = float.NegativeInfinity; }
             if (isCrit) r.SplashDamage += Percent(finalDamage, NewValue(Power.CritSplash));
             if (AllNormalMemoriesCooling && NewValue(Power.BareHandedPride) > 0 && now >= _bareReady)
-            { r.NormalCooldownSeconds = NewValue(Power.BareHandedPride) / 10f; _bareReady = now + .3f; }
-            if (!guaranteedCrit && NewValue(Power.PilingLuck) > 0) _pilingLuck = isCrit ? 0 : Math.Min(10, _pilingLuck + 1);
+            { r.NormalCooldownSeconds = NewValue(Power.BareHandedPride) / 10f; _bareReady = now + PowersBalance.BareHandedPrideCooldown; }
+            if (!guaranteedCrit && NewValue(Power.PilingLuck) > 0) _pilingLuck = isCrit ? 0 : Math.Min(PowersBalance.PilingLuckMaxStacks, _pilingLuck + 1);
             return r;
         }
-        public void PrimeNextBasic(float now, float percent, float duration = 5f)
+        public void PrimeNextBasic(float now, float percent, float duration = PowersBalance.PrimedWindowBase)
         {
             if (!Gimmicks.Finite(now) || !Gimmicks.Finite(percent) || !Gimmicks.Finite(duration) || percent <= 0 || duration <= 0) return;
             if (now >= _primedUntil) _primedPercent = 0;
-            _primedPercent = Math.Max(_primedPercent, Math.Min(120f * (float)StarDamageScaling.Multiplier(Build.SpentStarPoints), percent));
-            _primedUntil = now + Math.Min(5f * (1f + Gimmicks.MaxParameterPercent / 100f), duration);
+            _primedPercent = Math.Max(_primedPercent, Math.Min(PowersBalance.PrimedPercentCap * (float)StarDamageScaling.Multiplier(Build.SpentStarPoints), percent));
+            _primedUntil = now + Math.Min(PowersBalance.PrimedWindowBase * (1f + Gimmicks.MaxParameterPercent / 100f), duration);
         }
         private void TakeLargestNextBasic(float now, float higher, ref HitResult result)
         {

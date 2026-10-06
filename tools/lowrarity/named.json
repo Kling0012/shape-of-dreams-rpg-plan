@@ -12,6 +12,7 @@
     "powers": [
       {
         "power": "Momentum",
+        "rangeSlot": "Weapon",
         "band": "low"
       }
     ],
@@ -30,6 +31,7 @@
     "powers": [
       {
         "power": "ChainLightning",
+        "rangeSlot": "Weapon",
         "band": "low"
       }
     ],
@@ -48,6 +50,7 @@
     "powers": [
       {
         "power": "OpeningStrike",
+        "rangeSlot": "Weapon",
         "band": "low"
       }
     ],
@@ -84,6 +87,7 @@
     "powers": [
       {
         "power": "Steam",
+        "rangeSlot": "Charm",
         "band": "low"
       }
     ],
@@ -102,6 +106,7 @@
     "powers": [
       {
         "power": "Blaze",
+        "rangeSlot": "Weapon",
         "band": "low"
       }
     ],
@@ -120,6 +125,7 @@
     "powers": [
       {
         "power": "Ember",
+        "rangeSlot": "Weapon",
         "band": "low"
       }
     ],
@@ -138,6 +144,7 @@
     "powers": [
       {
         "power": "Cinder",
+        "rangeSlot": "Charm",
         "band": "low"
       }
     ],
@@ -174,6 +181,7 @@
     "powers": [
       {
         "power": "Radiance",
+        "rangeSlot": "Weapon",
         "band": "low"
       }
     ],
@@ -192,6 +200,7 @@
     "powers": [
       {
         "power": "Executioner",
+        "rangeSlot": "Weapon",
         "band": "low"
       }
     ],
@@ -210,6 +219,7 @@
     "powers": [
       {
         "power": "Umbra",
+        "rangeSlot": "Charm",
         "band": "low"
       }
     ],
@@ -228,6 +238,7 @@
     "powers": [
       {
         "power": "Eclipse",
+        "rangeSlot": "Charm",
         "band": "low"
       }
     ],
@@ -318,6 +329,7 @@
     "powers": [
       {
         "power": "Tailwind",
+        "rangeSlot": "Charm",
         "band": "low"
       }
     ],
@@ -354,6 +366,7 @@
     "powers": [
       {
         "power": "Lifesteal",
+        "rangeSlot": "Weapon",
         "band": "low"
       }
     ],
@@ -390,6 +403,7 @@
     "powers": [
       {
         "power": "CoStar",
+        "rangeSlot": "Charm",
         "band": "low"
       }
     ],
@@ -408,6 +422,7 @@
     "powers": [
       {
         "power": "Finale",
+        "rangeSlot": "Head",
         "band": "low"
       }
     ],
@@ -426,6 +441,7 @@
     "powers": [
       {
         "power": "StardustCycle",
+        "rangeSlot": "Head",
         "band": "low"
       }
     ],
@@ -444,6 +460,7 @@
     "powers": [
       {
         "power": "Shatter",
+        "rangeSlot": "Charm",
         "band": "low"
       }
     ],
@@ -480,6 +497,7 @@
     "powers": [
       {
         "power": "Frost",
+        "rangeSlot": "Charm",
         "band": "mid"
       }
     ],
@@ -498,6 +516,7 @@
     "powers": [
       {
         "power": "FrostCrystal",
+        "rangeSlot": "Charm",
         "band": "mid"
       }
     ],
@@ -516,6 +535,7 @@
     "powers": [
       {
         "power": "BrittleIce",
+        "rangeSlot": "Weapon",
         "band": "low"
       }
     ],
@@ -534,6 +554,7 @@
     "powers": [
       {
         "power": "Wildfire",
+        "rangeSlot": "Weapon",
         "band": "low"
       }
     ],
@@ -588,6 +609,7 @@
     "powers": [
       {
         "power": "KindnessReturns",
+        "rangeSlot": "Charm",
         "band": "mid"
       }
     ],
@@ -606,6 +628,7 @@
     "powers": [
       {
         "power": "Lifeline",
+        "rangeSlot": "Charm",
         "band": "low"
       }
     ],
@@ -624,6 +647,7 @@
     "powers": [
       {
         "power": "SoulSiphon",
+        "rangeSlot": "Weapon",
         "band": "low"
       }
     ],
@@ -642,6 +666,7 @@
     "powers": [
       {
         "power": "UmbralHeritage",
+        "rangeSlot": "Charm",
         "band": "low"
       }
     ],
@@ -732,6 +757,7 @@
     "powers": [
       {
         "power": "WanderersEdge",
+        "rangeSlot": "Weapon",
         "band": "low"
       }
     ],
@@ -768,6 +794,7 @@
     "powers": [
       {
         "power": "SecondWind",
+        "rangeSlot": "Charm",
         "band": "mid"
       }
     ],
@@ -822,6 +849,7 @@
     "powers": [
       {
         "power": "RelayHand",
+        "rangeSlot": "Charm",
         "band": "mid"
       }
     ],
@@ -840,6 +868,7 @@
     "powers": [
       {
         "power": "CriticalEcho",
+        "rangeSlot": "Weapon",
         "band": "mid"
       }
     ],
@@ -858,6 +887,7 @@
     "powers": [
       {
         "power": "AceInHand",
+        "rangeSlot": "Weapon",
         "band": "mid"
       }
     ],
@@ -920,6 +950,7 @@
     "powers": [
       {
         "power": "Blaze",
+        "rangeSlot": "Weapon",
         "band": "high"
       },
       {
@@ -964,6 +995,7 @@
     "powers": [
       {
         "power": "Executioner",
+        "rangeSlot": "Weapon",
         "band": "high"
       },
       {
@@ -1096,6 +1128,7 @@
     "powers": [
       {
         "power": "Finale",
+        "rangeSlot": "Head",
         "band": "mid"
       },
       {
@@ -1118,6 +1151,7 @@
     "powers": [
       {
         "power": "CriticalEcho",
+        "rangeSlot": "Weapon",
         "band": "high"
       },
       {
@@ -1140,6 +1174,7 @@
     "powers": [
       {
         "power": "Momentum",
+        "rangeSlot": "Weapon",
         "band": "low"
       }
     ],
@@ -1158,6 +1193,7 @@
     "powers": [
       {
         "power": "ChainLightning",
+        "rangeSlot": "Weapon",
         "band": "low"
       }
     ],
@@ -1176,6 +1212,7 @@
     "powers": [
       {
         "power": "StillWater",
+        "rangeSlot": "Armor",
         "band": "low"
       }
     ],
@@ -1248,6 +1285,7 @@
     "powers": [
       {
         "power": "Blaze",
+        "rangeSlot": "Weapon",
         "band": "low"
       }
     ],
@@ -1266,6 +1304,7 @@
     "powers": [
       {
         "power": "Wildfire",
+        "rangeSlot": "Weapon",
         "band": "low"
       }
     ],
@@ -1392,6 +1431,7 @@
     "powers": [
       {
         "power": "Thorns",
+        "rangeSlot": "Armor",
         "band": "low"
       }
     ],
@@ -1446,6 +1486,7 @@
     "powers": [
       {
         "power": "WanderersEdge",
+        "rangeSlot": "Weapon",
         "band": "low"
       }
     ],
@@ -1482,6 +1523,7 @@
     "powers": [
       {
         "power": "Lifesteal",
+        "rangeSlot": "Weapon",
         "band": "low"
       }
     ],
@@ -1572,6 +1614,7 @@
     "powers": [
       {
         "power": "OpeningStrike",
+        "rangeSlot": "Weapon",
         "band": "low"
       }
     ],
@@ -1626,6 +1669,7 @@
     "powers": [
       {
         "power": "Fetters",
+        "rangeSlot": "Weapon",
         "band": "mid"
       }
     ],
@@ -1644,6 +1688,7 @@
     "powers": [
       {
         "power": "BrittleIce",
+        "rangeSlot": "Weapon",
         "band": "low"
       }
     ],
@@ -1662,6 +1707,7 @@
     "powers": [
       {
         "power": "Ember",
+        "rangeSlot": "Weapon",
         "band": "low"
       }
     ],
@@ -1716,6 +1762,7 @@
     "powers": [
       {
         "power": "Barrier",
+        "rangeSlot": "Armor",
         "band": "mid"
       }
     ],
@@ -1734,6 +1781,7 @@
     "powers": [
       {
         "power": "Radiance",
+        "rangeSlot": "Weapon",
         "band": "low"
       }
     ],
@@ -1770,6 +1818,7 @@
     "powers": [
       {
         "power": "Executioner",
+        "rangeSlot": "Weapon",
         "band": "low"
       }
     ],
@@ -1788,6 +1837,7 @@
     "powers": [
       {
         "power": "Bulwark",
+        "rangeSlot": "Armor",
         "band": "mid"
       }
     ],
@@ -1806,6 +1856,7 @@
     "powers": [
       {
         "power": "Aegis",
+        "rangeSlot": "Armor",
         "band": "mid"
       }
     ],
@@ -1824,6 +1875,7 @@
     "powers": [
       {
         "power": "ImmovableStance",
+        "rangeSlot": "Armor",
         "band": "low"
       }
     ],
@@ -1842,6 +1894,7 @@
     "powers": [
       {
         "power": "Frenzy",
+        "rangeSlot": "Weapon",
         "band": "low"
       }
     ],
@@ -1860,6 +1913,7 @@
     "powers": [
       {
         "power": "RunUp",
+        "rangeSlot": "Weapon",
         "band": "low"
       }
     ],
@@ -1896,6 +1950,7 @@
     "powers": [
       {
         "power": "OverflowingLife",
+        "rangeSlot": "Armor",
         "band": "mid"
       }
     ],
@@ -1986,6 +2041,7 @@
     "powers": [
       {
         "power": "Finale",
+        "rangeSlot": "Head",
         "band": "mid"
       }
     ],
@@ -2268,6 +2324,7 @@
     "powers": [
       {
         "power": "ChainLightning",
+        "rangeSlot": "Weapon",
         "band": "low"
       }
     ],
@@ -2286,6 +2343,7 @@
     "powers": [
       {
         "power": "Shatter",
+        "rangeSlot": "Charm",
         "band": "low"
       }
     ],
@@ -2304,6 +2362,7 @@
     "powers": [
       {
         "power": "StillWater",
+        "rangeSlot": "Armor",
         "band": "low"
       }
     ],
@@ -2322,6 +2381,7 @@
     "powers": [
       {
         "power": "Frost",
+        "rangeSlot": "Charm",
         "band": "low"
       }
     ],
@@ -2340,6 +2400,7 @@
     "powers": [
       {
         "power": "Steam",
+        "rangeSlot": "Charm",
         "band": "low"
       }
     ],
@@ -2358,6 +2419,7 @@
     "powers": [
       {
         "power": "Blaze",
+        "rangeSlot": "Weapon",
         "band": "low"
       }
     ],
@@ -2376,6 +2438,7 @@
     "powers": [
       {
         "power": "Ember",
+        "rangeSlot": "Weapon",
         "band": "low"
       }
     ],
@@ -2394,6 +2457,7 @@
     "powers": [
       {
         "power": "Cinder",
+        "rangeSlot": "Charm",
         "band": "low"
       }
     ],
@@ -2412,6 +2476,7 @@
     "powers": [
       {
         "power": "Barrier",
+        "rangeSlot": "Armor",
         "band": "low"
       }
     ],
@@ -2430,6 +2495,7 @@
     "powers": [
       {
         "power": "StarShield",
+        "rangeSlot": "Armor",
         "band": "low"
       }
     ],
@@ -2466,6 +2532,7 @@
     "powers": [
       {
         "power": "Executioner",
+        "rangeSlot": "Weapon",
         "band": "low"
       }
     ],
@@ -2484,6 +2551,7 @@
     "powers": [
       {
         "power": "Eclipse",
+        "rangeSlot": "Charm",
         "band": "low"
       }
     ],
@@ -2610,6 +2678,7 @@
     "powers": [
       {
         "power": "SecondWind",
+        "rangeSlot": "Charm",
         "band": "low"
       }
     ],
@@ -2646,6 +2715,7 @@
     "powers": [
       {
         "power": "CoStar",
+        "rangeSlot": "Charm",
         "band": "low"
       }
     ],
@@ -2682,6 +2752,7 @@
     "powers": [
       {
         "power": "CriticalEcho",
+        "rangeSlot": "Weapon",
         "band": "low"
       }
     ],
@@ -2700,6 +2771,7 @@
     "powers": [
       {
         "power": "OpeningStrike",
+        "rangeSlot": "Weapon",
         "band": "low"
       }
     ],
@@ -2736,6 +2808,7 @@
     "powers": [
       {
         "power": "Fetters",
+        "rangeSlot": "Weapon",
         "band": "mid"
       }
     ],
@@ -2754,6 +2827,7 @@
     "powers": [
       {
         "power": "FrostCrystal",
+        "rangeSlot": "Charm",
         "band": "mid"
       }
     ],
@@ -2772,6 +2846,7 @@
     "powers": [
       {
         "power": "BrittleIce",
+        "rangeSlot": "Weapon",
         "band": "low"
       }
     ],
@@ -2790,6 +2865,7 @@
     "powers": [
       {
         "power": "Wildfire",
+        "rangeSlot": "Weapon",
         "band": "low"
       }
     ],
@@ -2826,6 +2902,7 @@
     "powers": [
       {
         "power": "Radiance",
+        "rangeSlot": "Weapon",
         "band": "mid"
       }
     ],
@@ -2844,6 +2921,7 @@
     "powers": [
       {
         "power": "KindnessReturns",
+        "rangeSlot": "Charm",
         "band": "mid"
       }
     ],
@@ -2862,6 +2940,7 @@
     "powers": [
       {
         "power": "Lifeline",
+        "rangeSlot": "Charm",
         "band": "low"
       }
     ],
@@ -2880,6 +2959,7 @@
     "powers": [
       {
         "power": "Umbra",
+        "rangeSlot": "Charm",
         "band": "low"
       }
     ],
@@ -2898,6 +2978,7 @@
     "powers": [
       {
         "power": "UmbralHeritage",
+        "rangeSlot": "Charm",
         "band": "low"
       }
     ],
@@ -2988,6 +3069,7 @@
     "powers": [
       {
         "power": "Frenzy",
+        "rangeSlot": "Weapon",
         "band": "low"
       }
     ],
@@ -3006,6 +3088,7 @@
     "powers": [
       {
         "power": "Lifesteal",
+        "rangeSlot": "Weapon",
         "band": "mid"
       }
     ],
@@ -3024,6 +3107,7 @@
     "powers": [
       {
         "power": "Apothecary",
+        "rangeSlot": "Armor",
         "band": "mid"
       }
     ],
@@ -3060,6 +3144,7 @@
     "powers": [
       {
         "power": "SharedWard",
+        "rangeSlot": "Armor",
         "band": "mid"
       }
     ],
@@ -3078,6 +3163,7 @@
     "powers": [
       {
         "power": "RelayHand",
+        "rangeSlot": "Charm",
         "band": "mid"
       }
     ],
@@ -3096,6 +3182,7 @@
     "powers": [
       {
         "power": "Finale",
+        "rangeSlot": "Head",
         "band": "mid"
       }
     ],
@@ -3114,6 +3201,7 @@
     "powers": [
       {
         "power": "StardustCycle",
+        "rangeSlot": "Head",
         "band": "mid"
       }
     ],
@@ -3154,6 +3242,7 @@
     "powers": [
       {
         "power": "Frost",
+        "rangeSlot": "Charm",
         "band": "high"
       },
       {
@@ -3176,6 +3265,7 @@
     "powers": [
       {
         "power": "Blaze",
+        "rangeSlot": "Weapon",
         "band": "high"
       },
       {
@@ -3198,6 +3288,7 @@
     "powers": [
       {
         "power": "Barrier",
+        "rangeSlot": "Armor",
         "band": "high"
       },
       {
@@ -3330,6 +3421,7 @@
     "powers": [
       {
         "power": "SharedWard",
+        "rangeSlot": "Armor",
         "band": "high"
       },
       {
@@ -3374,6 +3466,7 @@
     "powers": [
       {
         "power": "Finale",
+        "rangeSlot": "Head",
         "band": "high"
       },
       {
@@ -3558,6 +3651,7 @@
     "powers": [
       {
         "power": "Radiance",
+        "rangeSlot": "Weapon",
         "band": "low"
       }
     ],
@@ -3612,6 +3706,7 @@
     "powers": [
       {
         "power": "SoulSiphon",
+        "rangeSlot": "Weapon",
         "band": "low"
       }
     ],
@@ -3630,6 +3725,7 @@
     "powers": [
       {
         "power": "Bulwark",
+        "rangeSlot": "Armor",
         "band": "low"
       }
     ],
@@ -3648,6 +3744,7 @@
     "powers": [
       {
         "power": "Aegis",
+        "rangeSlot": "Armor",
         "band": "low"
       }
     ],
@@ -3702,6 +3799,7 @@
     "powers": [
       {
         "power": "Tailwind",
+        "rangeSlot": "Charm",
         "band": "low"
       }
     ],
@@ -3738,6 +3836,7 @@
     "powers": [
       {
         "power": "SecondWind",
+        "rangeSlot": "Charm",
         "band": "low"
       }
     ],
@@ -3774,6 +3873,7 @@
     "powers": [
       {
         "power": "CoStar",
+        "rangeSlot": "Charm",
         "band": "low"
       }
     ],
@@ -3900,6 +4000,7 @@
     "powers": [
       {
         "power": "FrostCrystal",
+        "rangeSlot": "Charm",
         "band": "low"
       }
     ],
@@ -3954,6 +4055,7 @@
     "powers": [
       {
         "power": "Barrier",
+        "rangeSlot": "Armor",
         "band": "mid"
       }
     ],
@@ -3972,6 +4074,7 @@
     "powers": [
       {
         "power": "StarShield",
+        "rangeSlot": "Armor",
         "band": "mid"
       }
     ],
@@ -3990,6 +4093,7 @@
     "powers": [
       {
         "power": "Lifeline",
+        "rangeSlot": "Charm",
         "band": "low"
       }
     ],
@@ -4008,6 +4112,7 @@
     "powers": [
       {
         "power": "Umbra",
+        "rangeSlot": "Charm",
         "band": "low"
       }
     ],
@@ -4026,6 +4131,7 @@
     "powers": [
       {
         "power": "Eclipse",
+        "rangeSlot": "Charm",
         "band": "low"
       }
     ],
@@ -4044,6 +4150,7 @@
     "powers": [
       {
         "power": "Thorns",
+        "rangeSlot": "Armor",
         "band": "mid"
       }
     ],
@@ -4062,6 +4169,7 @@
     "powers": [
       {
         "power": "ImmovableStance",
+        "rangeSlot": "Armor",
         "band": "mid"
       }
     ],
@@ -4080,6 +4188,7 @@
     "powers": [
       {
         "power": "ReadyGuard",
+        "rangeSlot": "Armor",
         "band": "low"
       }
     ],
@@ -4116,6 +4225,7 @@
     "powers": [
       {
         "power": "Whirlwind",
+        "rangeSlot": "Armor",
         "band": "low"
       }
     ],
@@ -4152,6 +4262,7 @@
     "powers": [
       {
         "power": "OverflowingLife",
+        "rangeSlot": "Armor",
         "band": "mid"
       }
     ],
@@ -4188,6 +4299,7 @@
     "powers": [
       {
         "power": "SharedWard",
+        "rangeSlot": "Armor",
         "band": "mid"
       }
     ],
@@ -4206,6 +4318,7 @@
     "powers": [
       {
         "power": "WatchfulHand",
+        "rangeSlot": "Armor",
         "band": "mid"
       }
     ],
@@ -4242,6 +4355,7 @@
     "powers": [
       {
         "power": "AceInHand",
+        "rangeSlot": "Weapon",
         "band": "mid"
       }
     ],
@@ -4370,6 +4484,7 @@
     "powers": [
       {
         "power": "Bulwark",
+        "rangeSlot": "Armor",
         "band": "mid"
       },
       {
@@ -4458,6 +4573,7 @@
     "powers": [
       {
         "power": "SharedWard",
+        "rangeSlot": "Armor",
         "band": "mid"
       },
       {
@@ -4524,6 +4640,7 @@
     "powers": [
       {
         "power": "Momentum",
+        "rangeSlot": "Weapon",
         "band": "low"
       }
     ],
@@ -4542,6 +4659,7 @@
     "powers": [
       {
         "power": "ChainLightning",
+        "rangeSlot": "Weapon",
         "band": "low"
       }
     ],
@@ -4560,6 +4678,7 @@
     "powers": [
       {
         "power": "OpeningStrike",
+        "rangeSlot": "Weapon",
         "band": "low"
       }
     ],
@@ -4596,6 +4715,7 @@
     "powers": [
       {
         "power": "Fetters",
+        "rangeSlot": "Weapon",
         "band": "low"
       }
     ],
@@ -4614,6 +4734,7 @@
     "powers": [
       {
         "power": "Blaze",
+        "rangeSlot": "Weapon",
         "band": "low"
       }
     ],
@@ -4632,6 +4753,7 @@
     "powers": [
       {
         "power": "Ember",
+        "rangeSlot": "Weapon",
         "band": "low"
       }
     ],
@@ -4650,6 +4772,7 @@
     "powers": [
       {
         "power": "Cinder",
+        "rangeSlot": "Charm",
         "band": "low"
       }
     ],
@@ -4740,6 +4863,7 @@
     "powers": [
       {
         "power": "SoulSiphon",
+        "rangeSlot": "Weapon",
         "band": "low"
       }
     ],
@@ -4776,6 +4900,7 @@
     "powers": [
       {
         "power": "Thorns",
+        "rangeSlot": "Armor",
         "band": "low"
       }
     ],
@@ -4794,6 +4919,7 @@
     "powers": [
       {
         "power": "Tailwind",
+        "rangeSlot": "Charm",
         "band": "low"
       }
     ],
@@ -4812,6 +4938,7 @@
     "powers": [
       {
         "power": "Whirlwind",
+        "rangeSlot": "Armor",
         "band": "low"
       }
     ],
@@ -4830,6 +4957,7 @@
     "powers": [
       {
         "power": "Sprint",
+        "rangeSlot": "Armor",
         "band": "low"
       }
     ],
@@ -4848,6 +4976,7 @@
     "powers": [
       {
         "power": "Lifesteal",
+        "rangeSlot": "Weapon",
         "band": "low"
       }
     ],
@@ -4866,6 +4995,7 @@
     "powers": [
       {
         "power": "Apothecary",
+        "rangeSlot": "Armor",
         "band": "low"
       }
     ],
@@ -4902,6 +5032,7 @@
     "powers": [
       {
         "power": "SharedWard",
+        "rangeSlot": "Armor",
         "band": "low"
       }
     ],
@@ -4956,6 +5087,7 @@
     "powers": [
       {
         "power": "Shatter",
+        "rangeSlot": "Charm",
         "band": "low"
       }
     ],
@@ -4974,6 +5106,7 @@
     "powers": [
       {
         "power": "StillWater",
+        "rangeSlot": "Armor",
         "band": "low"
       }
     ],
@@ -4992,6 +5125,7 @@
     "powers": [
       {
         "power": "Frost",
+        "rangeSlot": "Charm",
         "band": "mid"
       }
     ],
@@ -5010,6 +5144,7 @@
     "powers": [
       {
         "power": "Steam",
+        "rangeSlot": "Charm",
         "band": "mid"
       }
     ],
@@ -5028,6 +5163,7 @@
     "powers": [
       {
         "power": "BrittleIce",
+        "rangeSlot": "Weapon",
         "band": "low"
       }
     ],
@@ -5046,6 +5182,7 @@
     "powers": [
       {
         "power": "Wildfire",
+        "rangeSlot": "Weapon",
         "band": "low"
       }
     ],
@@ -5100,6 +5237,7 @@
     "powers": [
       {
         "power": "KindnessReturns",
+        "rangeSlot": "Charm",
         "band": "mid"
       }
     ],
@@ -5136,6 +5274,7 @@
     "powers": [
       {
         "power": "Executioner",
+        "rangeSlot": "Weapon",
         "band": "low"
       }
     ],
@@ -5154,6 +5293,7 @@
     "powers": [
       {
         "power": "UmbralHeritage",
+        "rangeSlot": "Charm",
         "band": "low"
       }
     ],
@@ -5172,6 +5312,7 @@
     "powers": [
       {
         "power": "Bulwark",
+        "rangeSlot": "Armor",
         "band": "mid"
       }
     ],
@@ -5190,6 +5331,7 @@
     "powers": [
       {
         "power": "Aegis",
+        "rangeSlot": "Armor",
         "band": "mid"
       }
     ],
@@ -5208,6 +5350,7 @@
     "powers": [
       {
         "power": "ReadyGuard",
+        "rangeSlot": "Armor",
         "band": "low"
       }
     ],
@@ -5226,6 +5369,7 @@
     "powers": [
       {
         "power": "Frenzy",
+        "rangeSlot": "Weapon",
         "band": "low"
       }
     ],
@@ -5244,6 +5388,7 @@
     "powers": [
       {
         "power": "WanderersEdge",
+        "rangeSlot": "Weapon",
         "band": "low"
       }
     ],
@@ -5262,6 +5407,7 @@
     "powers": [
       {
         "power": "OverflowingLife",
+        "rangeSlot": "Armor",
         "band": "mid"
       }
     ],
@@ -5334,6 +5480,7 @@
     "powers": [
       {
         "power": "WatchfulHand",
+        "rangeSlot": "Armor",
         "band": "mid"
       }
     ],
@@ -5370,6 +5517,7 @@
     "powers": [
       {
         "power": "CriticalEcho",
+        "rangeSlot": "Weapon",
         "band": "mid"
       }
     ],
@@ -5388,6 +5536,7 @@
     "powers": [
       {
         "power": "Momentum",
+        "rangeSlot": "Weapon",
         "band": "high"
       },
       {
@@ -5432,6 +5581,7 @@
     "powers": [
       {
         "power": "Blaze",
+        "rangeSlot": "Weapon",
         "band": "high"
       },
       {
@@ -5520,6 +5670,7 @@
     "powers": [
       {
         "power": "Tailwind",
+        "rangeSlot": "Charm",
         "band": "high"
       },
       {
@@ -5670,6 +5821,7 @@
     "powers": [
       {
         "power": "Shatter",
+        "rangeSlot": "Charm",
         "band": "low"
       }
     ],
@@ -5724,6 +5876,7 @@
     "powers": [
       {
         "power": "Frost",
+        "rangeSlot": "Charm",
         "band": "low"
       }
     ],
@@ -5778,6 +5931,7 @@
     "powers": [
       {
         "power": "Cinder",
+        "rangeSlot": "Charm",
         "band": "low"
       }
     ],
@@ -5814,6 +5968,7 @@
     "powers": [
       {
         "power": "StarShield",
+        "rangeSlot": "Armor",
         "band": "low"
       }
     ],
@@ -5868,6 +6023,7 @@
     "powers": [
       {
         "power": "Eclipse",
+        "rangeSlot": "Charm",
         "band": "low"
       }
     ],
@@ -5886,6 +6042,7 @@
     "powers": [
       {
         "power": "Bulwark",
+        "rangeSlot": "Armor",
         "band": "low"
       }
     ],
@@ -5904,6 +6061,7 @@
     "powers": [
       {
         "power": "Aegis",
+        "rangeSlot": "Armor",
         "band": "low"
       }
     ],
@@ -5958,6 +6116,7 @@
     "powers": [
       {
         "power": "Tailwind",
+        "rangeSlot": "Charm",
         "band": "low"
       }
     ],
@@ -5994,6 +6153,7 @@
     "powers": [
       {
         "power": "OverflowingLife",
+        "rangeSlot": "Armor",
         "band": "low"
       }
     ],
@@ -6012,6 +6172,7 @@
     "powers": [
       {
         "power": "SharedWard",
+        "rangeSlot": "Armor",
         "band": "low"
       }
     ],
@@ -6030,6 +6191,7 @@
     "powers": [
       {
         "power": "WatchfulHand",
+        "rangeSlot": "Armor",
         "band": "low"
       }
     ],
@@ -6066,6 +6228,7 @@
     "powers": [
       {
         "power": "Finale",
+        "rangeSlot": "Head",
         "band": "low"
       }
     ],
@@ -6084,6 +6247,7 @@
     "powers": [
       {
         "power": "StillWater",
+        "rangeSlot": "Armor",
         "band": "low"
       }
     ],
@@ -6138,6 +6302,7 @@
     "powers": [
       {
         "power": "Steam",
+        "rangeSlot": "Charm",
         "band": "mid"
       }
     ],
@@ -6156,6 +6321,7 @@
     "powers": [
       {
         "power": "FrostCrystal",
+        "rangeSlot": "Charm",
         "band": "low"
       }
     ],
@@ -6210,6 +6376,7 @@
     "powers": [
       {
         "power": "Barrier",
+        "rangeSlot": "Armor",
         "band": "mid"
       }
     ],
@@ -6228,6 +6395,7 @@
     "powers": [
       {
         "power": "KindnessReturns",
+        "rangeSlot": "Charm",
         "band": "mid"
       }
     ],
@@ -6246,6 +6414,7 @@
     "powers": [
       {
         "power": "Lifeline",
+        "rangeSlot": "Charm",
         "band": "low"
       }
     ],
@@ -6264,6 +6433,7 @@
     "powers": [
       {
         "power": "Umbra",
+        "rangeSlot": "Charm",
         "band": "low"
       }
     ],
@@ -6282,6 +6452,7 @@
     "powers": [
       {
         "power": "UmbralHeritage",
+        "rangeSlot": "Charm",
         "band": "low"
       }
     ],
@@ -6300,6 +6471,7 @@
     "powers": [
       {
         "power": "Thorns",
+        "rangeSlot": "Armor",
         "band": "mid"
       }
     ],
@@ -6318,6 +6490,7 @@
     "powers": [
       {
         "power": "ImmovableStance",
+        "rangeSlot": "Armor",
         "band": "mid"
       }
     ],
@@ -6336,6 +6509,7 @@
     "powers": [
       {
         "power": "ReadyGuard",
+        "rangeSlot": "Armor",
         "band": "low"
       }
     ],
@@ -6372,6 +6546,7 @@
     "powers": [
       {
         "power": "Whirlwind",
+        "rangeSlot": "Armor",
         "band": "low"
       }
     ],
@@ -6390,6 +6565,7 @@
     "powers": [
       {
         "power": "SecondWind",
+        "rangeSlot": "Charm",
         "band": "mid"
       }
     ],
@@ -6408,6 +6584,7 @@
     "powers": [
       {
         "power": "Apothecary",
+        "rangeSlot": "Armor",
         "band": "mid"
       }
     ],
@@ -6444,6 +6621,7 @@
     "powers": [
       {
         "power": "CoStar",
+        "rangeSlot": "Charm",
         "band": "mid"
       }
     ],
@@ -6462,6 +6640,7 @@
     "powers": [
       {
         "power": "RelayHand",
+        "rangeSlot": "Charm",
         "band": "mid"
       }
     ],
@@ -6498,6 +6677,7 @@
     "powers": [
       {
         "power": "StardustCycle",
+        "rangeSlot": "Head",
         "band": "mid"
       }
     ],
@@ -6626,6 +6806,7 @@
     "powers": [
       {
         "power": "Bulwark",
+        "rangeSlot": "Armor",
         "band": "mid"
       },
       {
@@ -6692,6 +6873,7 @@
     "powers": [
       {
         "power": "SharedWard",
+        "rangeSlot": "Armor",
         "band": "high"
       },
       {
@@ -6714,6 +6896,7 @@
     "powers": [
       {
         "power": "CoStar",
+        "rangeSlot": "Charm",
         "band": "mid"
       },
       {

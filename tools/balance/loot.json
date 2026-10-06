@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "rarityWeights": [3000, 1350, 500, 30, 2],
+  "dropChance": {"lesser": 0.008, "normal": 0.027, "miniBoss": 0.45, "boss": 1.0},
+  "tierLuck": {"miniBoss": 0.6, "boss": 1.2},
+  "heat": {"dropBonus": 0.35, "luck": 0.3},
+  "rarityLuckCoefficient": 0.6,
+  "bossExtraRelicChance": 0.6,
+  "selection": {"focusWeight": 2, "setPieceWeight": 4, "setCompletionWeight": 60},
+  "materials": {
+    "lesser": {"shardChance": 0.05, "shards": 1},
+    "normal": {"shardChance": 0.12, "shardMin": 1, "shardMax": 2},
+    "miniBoss": {"shardMin": 5, "shardMax": 10, "tuningChance": 0.2, "tuning": 1},
+    "boss": {"shardMin": 20, "shardMax": 30, "tuning": 1}
+  },
+  "variantAdditiveShards": 10
+}

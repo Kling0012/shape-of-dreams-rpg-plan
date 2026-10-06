@@ -38,7 +38,7 @@ namespace SodRpg.Core.Game
         }
         /// <summary>狙い系統を選んでいないときに代わりに使う系統。</summary>
         public Line? FeaturedLine;
-        /// <summary>強化される固有効果（値+50%）。</summary>
+        /// <summary>強化される固有効果（強化量は PowerBoostPct）。</summary>
         public Power[] BoostedPowers = Array.Empty<Power>();
         public double DropBonus;
         public double ShardMult = 1.0;
@@ -46,7 +46,7 @@ namespace SodRpg.Core.Game
         public double BountyMult = 1.0;
         public double NightmareMult = 1.0;
 
-        public const int PowerBoostPct = 50;
+        public const int PowerBoostPct = DailyDreamBalance.PowerBoostPct;
 
         public static readonly IReadOnlyList<DailyDream> All = new[]
         {
@@ -68,27 +68,27 @@ namespace SodRpg.Core.Game
             new DailyDream
             {
                 Id = 4, Name = new Txt("黄金の夢", "Golden Dream"),
-                ShardMult = 1.5,
+                ShardMult = DailyDreamBalance.Day4ShardMult,
             },
             new DailyDream
             {
                 Id = 5, Name = new Txt("豊穣の夢", "Bountiful Dream"),
-                DropBonus = 0.25,
+                DropBonus = DailyDreamBalance.Day5DropBonus,
             },
             new DailyDream
             {
                 Id = 6, Name = new Txt("悪夢の夜", "Night of Nightmares"),
-                NightmareMult = 2.0,
+                NightmareMult = DailyDreamBalance.Day6NightmareMult,
             },
             new DailyDream
             {
                 Id = 7, Name = new Txt("星降る夢", "Starfall Dream"),
-                XpMult = 1.3,
+                XpMult = DailyDreamBalance.Day7XpMult,
             },
             new DailyDream
             {
                 Id = 8, Name = new Txt("静かな夢", "Quiet Dream"),
-                BountyMult = 2.0,
+                BountyMult = DailyDreamBalance.Day8BountyMult,
             },
             new DailyDream
             {
@@ -113,12 +113,12 @@ namespace SodRpg.Core.Game
             new DailyDream
             {
                 Id = 13, Name = new Txt("学びの夢", "Dream of Learning"),
-                XpMult = 1.5,
+                XpMult = DailyDreamBalance.Day13XpMult,
             },
             new DailyDream
             {
                 Id = 14, Name = new Txt("依頼の夢", "Dream of Errands"),
-                BountyMult = 1.5, ShardMult = 1.25,
+                BountyMult = DailyDreamBalance.Day14BountyMult, ShardMult = DailyDreamBalance.Day14ShardMult,
             },
             new DailyDream
             {
@@ -153,32 +153,32 @@ namespace SodRpg.Core.Game
             new DailyDream
             {
                 Id = 21, Name = new Txt("豊作の夢", "Harvest Dream"),
-                DropBonus = 0.2, ShardMult = 1.2,
+                DropBonus = DailyDreamBalance.Day21DropBonus, ShardMult = DailyDreamBalance.Day21ShardMult,
             },
             new DailyDream
             {
                 Id = 22, Name = new Txt("悪夢の祭り", "Festival of Nightmares"),
-                NightmareMult = 1.5, XpMult = 1.2,
+                NightmareMult = DailyDreamBalance.Day22NightmareMult, XpMult = DailyDreamBalance.Day22XpMult,
             },
             new DailyDream
             {
                 Id = 23, Name = new Txt("宝の夢", "Treasure Dream"),
-                DropBonus = 0.35,
+                DropBonus = DailyDreamBalance.Day23DropBonus,
             },
             new DailyDream
             {
                 Id = 24, Name = new Txt("修練の夢", "Training Dream"),
-                XpMult = 1.3, BountyMult = 1.5,
+                XpMult = DailyDreamBalance.Day24XpMult, BountyMult = DailyDreamBalance.Day24BountyMult,
             },
             new DailyDream
             {
                 Id = 25, Name = new Txt("職人の夢", "Artisan's Dream"),
-                ShardMult = 1.6,
+                ShardMult = DailyDreamBalance.Day25ShardMult,
             },
             new DailyDream
             {
                 Id = 26, Name = new Txt("静寂の森", "Silent Forest"),
-                BountyMult = 1.5, DropBonus = 0.1,
+                BountyMult = DailyDreamBalance.Day26BountyMult, DropBonus = DailyDreamBalance.Day26DropBonus,
             },
             new DailyDream
             {
@@ -198,7 +198,7 @@ namespace SodRpg.Core.Game
             new DailyDream
             {
                 Id = 30, Name = new Txt("混沌の夢", "Chaotic Dream"),
-                NightmareMult = 1.5, DropBonus = 0.25,
+                NightmareMult = DailyDreamBalance.Day30NightmareMult, DropBonus = DailyDreamBalance.Day30DropBonus,
             },
             new DailyDream
             {
@@ -278,47 +278,47 @@ namespace SodRpg.Core.Game
             new DailyDream
             {
                 Id = 46, Name = new Txt("満月の収穫", "Full Moon Harvest"),
-                ShardMult = 1.4, DropBonus = 0.15,
+                ShardMult = DailyDreamBalance.Day46ShardMult, DropBonus = DailyDreamBalance.Day46DropBonus,
             },
             new DailyDream
             {
                 Id = 47, Name = new Txt("長い夜の夢", "Long Night Dream"),
-                XpMult = 1.4, NightmareMult = 1.25,
+                XpMult = DailyDreamBalance.Day47XpMult, NightmareMult = DailyDreamBalance.Day47NightmareMult,
             },
             new DailyDream
             {
                 Id = 48, Name = new Txt("追い風の市場", "Tailwind Market"),
-                BountyMult = 1.75, XpMult = 1.15,
+                BountyMult = DailyDreamBalance.Day48BountyMult, XpMult = DailyDreamBalance.Day48XpMult,
             },
             new DailyDream
             {
                 Id = 49, Name = new Txt("星霜の夢", "Stellar Dream"),
-                DropBonus = 0.3, XpMult = 1.2,
+                DropBonus = DailyDreamBalance.Day49DropBonus, XpMult = DailyDreamBalance.Day49XpMult,
             },
             new DailyDream
             {
                 Id = 50, Name = new Txt("深淵の縁", "Edge of the Abyss"),
-                NightmareMult = 2.0, DropBonus = 0.2,
+                NightmareMult = DailyDreamBalance.Day50NightmareMult, DropBonus = DailyDreamBalance.Day50DropBonus,
             },
             new DailyDream
             {
                 Id = 51, Name = new Txt("骨の市", "Bone Market"),
-                ShardMult = 1.5, BountyMult = 1.25,
+                ShardMult = DailyDreamBalance.Day51ShardMult, BountyMult = DailyDreamBalance.Day51BountyMult,
             },
             new DailyDream
             {
                 Id = 52, Name = new Txt("早朝の霧", "Dawn Mist"),
-                FeaturedLine = Line.Guard, DropBonus = 0.15,
+                FeaturedLine = Line.Guard, DropBonus = DailyDreamBalance.Day52DropBonus,
             },
             new DailyDream
             {
                 Id = 53, Name = new Txt("白夜", "White Night"),
-                FeaturedLine = Line.Resonance, XpMult = 1.25,
+                FeaturedLine = Line.Resonance, XpMult = DailyDreamBalance.Day53XpMult,
             },
             new DailyDream
             {
                 Id = 54, Name = new Txt("黒曜の夜", "Obsidian Night"),
-                FeaturedLine = Line.Offense, NightmareMult = 1.5,
+                FeaturedLine = Line.Offense, NightmareMult = DailyDreamBalance.Day54NightmareMult,
             },
             new DailyDream
             {
@@ -333,7 +333,7 @@ namespace SodRpg.Core.Game
             new DailyDream
             {
                 Id = 57, Name = new Txt("秋の実り", "Autumn Yield"),
-                FeaturedLine = Line.Resonance, ShardMult = 1.45, DropBonus = 0.1,
+                FeaturedLine = Line.Resonance, ShardMult = DailyDreamBalance.Day57ShardMult, DropBonus = DailyDreamBalance.Day57DropBonus,
             },
             new DailyDream
             {
@@ -348,7 +348,7 @@ namespace SodRpg.Core.Game
             new DailyDream
             {
                 Id = 60, Name = new Txt("果てしない夢", "Endless Dream"),
-                XpMult = 1.3, ShardMult = 1.3,
+                XpMult = DailyDreamBalance.Day60XpMult, ShardMult = DailyDreamBalance.Day60ShardMult,
             },
         };
 

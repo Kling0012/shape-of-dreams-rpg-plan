@@ -147,10 +147,14 @@ namespace SodRpg.Core.Tests
             for (int i = 0; i < kills; i++)
             {
                 // 鞄は容量で捨てられるため、主報酬＝その撃破の最初のドロップイベントで判定する。
-                var main = Rules.OnKill(p, MonsterTier.Boss, 10).First(e => e.Kind == EventKind.Drop);
-                if (main.Rarity >= Rarity.Epic) epicMains++;
+                var main = Rules.OnKill(p, MonsterTier.Boss, 10).FirstOrDefault(e => e.Kind == EventKind.Drop);
+                if (main != null && main.Rarity >= Rarity.Epic) epicMains++;
             }
-            Assert.InRange((double)epicMains / kills, 0.03, 0.06); // 主報酬エピック以上 約4.28%（天井なし）
+            double expected = LootEconomyInputs.DropChance(MonsterTier.Boss, 0)
+                * (LootEconomyInputs.RarityProbability(MonsterTier.Boss, 0, Rarity.Epic)
+                    + LootEconomyInputs.RarityProbability(MonsterTier.Boss, 0, Rarity.Legendary));
+            double tolerance = LootEconomyInputs.SamplingTolerance(expected * (1 - expected), kills);
+            Assert.InRange((double)epicMains / kills, expected - tolerance, expected + tolerance);
         }
 
     }
