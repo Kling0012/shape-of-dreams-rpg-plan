@@ -131,7 +131,7 @@ namespace SodRpg.Core.Game
         {
             string text = DescribeTrade(e, p);
             if (e < DreamEvent.MemoryWell || e > DreamEvent.PowerCrucible) return text;
-            return text + Loc.T(" 対象は鍵なし・取引中でない・再調律の候補待ちでない遺物です。井戸以外は未装着のみ。同じ強さなら個体ID順で選びます。",
+            return text + Loc.T(" 対象は鍵なし・取引中でない・再調律の候補待ちでない遺物。井戸以外は未装着のみ。同じ強さなら個体ID順で選ぶ。",
                 " Eligible relics are unlocked, not reserved for a trade and not awaiting a retune choice. Except at the Well, equipped relics are excluded. Score ties use ordinal relic ID order.");
         }
 
@@ -142,73 +142,73 @@ namespace SodRpg.Core.Game
             switch (e)
             {
                 case DreamEvent.Merchant:
-                    return Loc.T($"ゴールドで中身の分からない遺物を1つ買えます。必ずアンコモン以上で、深く潜っているほど良い物が出ます。",
+                    return Loc.T($"ゴールドで中身の分からない遺物を1つ買える。必ずアンコモン以上で、深く潜っているほど良い物が出る。",
                         "Buy a mystery relic with gold (Uncommon or better; better when deeper).");
                 case DreamEvent.Fountain:
-                    return Loc.T($"まだ持ち帰っていない遺物のうち一番弱い物を捧げると、一番強い物が+{Content.GuaranteedEnhanceSteps(e)}強化されます。", $"Sacrifice your weakest unsecured relic to enhance your best one by +{Content.GuaranteedEnhanceSteps(e)}.");
+                    return Loc.T($"まだ持ち帰っていない遺物のうち一番弱い物を捧げると、一番強い物が+{Content.GuaranteedEnhanceSteps(e)}強化される。", $"Sacrifice your weakest unsecured relic to enhance your best one by +{Content.GuaranteedEnhanceSteps(e)}.");
                 case DreamEvent.Chalice:
-                    return Loc.T($"まだ持ち帰っていない欠片{run?.SatchelShards ?? 0}を賭けます。{EventsBalance.ChaliceWinChance * 100:g}%の確率で{1 + EventsBalance.ChaliceBonusMultiplier}倍になり、外れるとすべて失います。",
+                    return Loc.T($"まだ持ち帰っていない欠片{run?.SatchelShards ?? 0}を賭ける。{EventsBalance.ChaliceWinChance * 100:g}%の確率で{1 + EventsBalance.ChaliceBonusMultiplier}倍になり、外れるとすべて失う。",
                         $"Wager your {run?.SatchelShards ?? 0} unsecured shards: {EventsBalance.ChaliceWinChance * 100:g}% to {(EventsBalance.ChaliceBonusMultiplier == 1 ? "double them" : $"multiply them by {1 + EventsBalance.ChaliceBonusMultiplier}")}, otherwise you lose them all.");
                 case DreamEvent.Lantern:
-                    return Loc.T("遺失物のうち一番良い物を1つ、この場で取り戻せます（確保するまでは、まだ持ち帰っていない扱いです）。", "Recover your best lost relic right here (it stays unsecured until you secure).");
+                    return Loc.T("遺失物のうち一番良い物を1つ、この場で取り戻せる（確保するまでは、まだ持ち帰っていない扱い）。", "Recover your best lost relic right here (it stays unsecured until you secure).");
                 case DreamEvent.ForgeShrine:
-                    return Loc.T($"まだ持ち帰っていない欠片を{Content.GuaranteedEnhanceCost(e, Rarity.Common)}（対象がエピック以上なら{Content.GuaranteedEnhanceCost(e, Rarity.Epic)}）払うと、まだ持ち帰っていない遺物のうち一番強い物が+{Content.GuaranteedEnhanceSteps(e)}強化されます。",
+                    return Loc.T($"まだ持ち帰っていない欠片を{Content.GuaranteedEnhanceCost(e, Rarity.Common)}（対象がエピック以上なら{Content.GuaranteedEnhanceCost(e, Rarity.Epic)}）払うと、まだ持ち帰っていない遺物のうち一番強い物が+{Content.GuaranteedEnhanceSteps(e)}強化される。",
                         $"Pay {Content.GuaranteedEnhanceCost(e, Rarity.Common)} unsecured shards ({Content.GuaranteedEnhanceCost(e, Rarity.Epic)} if the target is Epic or better) to enhance your best unsecured relic by +{Content.GuaranteedEnhanceSteps(e)}.");
                 case DreamEvent.TwinMirror:
-                    return Loc.T($"まだ持ち帰っていない欠片を{EventsBalance.TwinMirrorShards}（元の遺物がエピック以上なら{EventsBalance.TwinMirrorEpicShards}）払うと、まだ持ち帰っていない遺物のうち一番強い物と同じ種類・同じレア度の遺物が、もう1つ手に入ります（固有品の場合はエピックになります）。",
+                    return Loc.T($"まだ持ち帰っていない欠片を{EventsBalance.TwinMirrorShards}（元の遺物がエピック以上なら{EventsBalance.TwinMirrorEpicShards}）払うと、まだ持ち帰っていない遺物のうち一番強い物と同じ種類・同じレア度の遺物が、もう1つ手に入る（固有品の場合はエピックになる）。",
                         $"Pay {EventsBalance.TwinMirrorShards} unsecured shards ({EventsBalance.TwinMirrorEpicShards} if the source is Epic or better) to get another relic of the same type and rarity as your best unsecured relic (legendaries become epic).");
                 case DreamEvent.Stargazer:
-                    return Loc.T($"次に確保するまで、遺物が{(int)Math.Round(StargazerDropBonus * 100)}%多く落ちます。",
+                    return Loc.T($"次に確保するまで、遺物が{(int)Math.Round(StargazerDropBonus * 100)}%多く落ちる。",
                         $"Until you next secure, relics drop {(int)Math.Round(StargazerDropBonus * 100)}% more often.");
                 case DreamEvent.Cauldron:
-                    return Loc.T($"まだ持ち帰っていないコモンかアンコモンの遺物を{EventsBalance.CauldronRelicCount}つ溶かして、1つ上のレア度の遺物を1つ作ります。",
+                    return Loc.T($"まだ持ち帰っていないコモンかアンコモンの遺物を{EventsBalance.CauldronRelicCount}つ溶かして、1つ上のレア度の遺物を1つ作る。",
                         $"Melt {EventsBalance.CauldronRelicCount} unsecured Common or Uncommon relics into one relic of the next rarity.");
                 case DreamEvent.Tapir:
-                    return Loc.T($"まだ持ち帰っていないエピック未満の遺物をすべて獏に食べさせ、分解と同じだけの欠片と、{EventsBalance.TapirRelicsPerTuning}つごとに調律石1をもらいます（欠片はすぐ保管庫に入ります。エピック以上は食べません）。",
+                    return Loc.T($"まだ持ち帰っていないエピック未満の遺物をすべて獏に食べさせ、分解と同じだけの欠片と、{EventsBalance.TapirRelicsPerTuning}つごとに調律石1をもらう（欠片はすぐ保管庫に入る。エピック以上は食べない）。",
                         $"Feed all unsecured relics below Epic to the tapir: shards equal to salvaging them, plus 1 tuning stone per {EventsBalance.TapirRelicsPerTuning} relics (the shards go straight to your stash; Epic and above are spared).");
                 case DreamEvent.CourageGate:
-                    return Loc.T($"潜行が{EventsBalance.CourageGateHeatIncrement}段深くなる代わりに、まだ持ち帰っていない欠片が{EventsBalance.CourageGateShards}増えます。",
+                    return Loc.T($"潜行が{EventsBalance.CourageGateHeatIncrement}段深くなる代わりに、まだ持ち帰っていない欠片が{EventsBalance.CourageGateShards}増える。",
                         $"Your delve goes {(EventsBalance.CourageGateHeatIncrement == 1 ? "one" : EventsBalance.CourageGateHeatIncrement.ToString())} level deeper, and you gain {EventsBalance.CourageGateShards} unsecured shards.");
                 case DreamEvent.Archive:
-                    return Loc.T($"夢のレベルの経験値を{ArchiveXp(heat)}もらいます。",
+                    return Loc.T($"夢のレベルの経験値を{ArchiveXp(heat)}もらう。",
                         $"Gain {ArchiveXp(heat)} Dream Level experience.");
                 case DreamEvent.LuckyStar:
-                    return Loc.T("次に確保するまで、レア度の高い遺物が少し出やすくなります。",
+                    return Loc.T("次に確保するまで、レア度の高い遺物が少し出やすくなる。",
                         "Until you next secure, rarer relics drop slightly more often.");
                 case DreamEvent.MemoryWell:
-                    return Loc.T($"保管庫の調律石{EventsBalance.MemoryWellTuning}（対象がエピック以上なら{EventsBalance.MemoryWellEpicTuning}）を払い、この遠征の旅人が装着している対象のうち一番強い遺物の最初の固有効果を、同じ枠の別の効果へ交換します。固有品は対象外。元の効果と値は失います。",
+                    return Loc.T($"保管庫の調律石{EventsBalance.MemoryWellTuning}（対象がエピック以上なら{EventsBalance.MemoryWellEpicTuning}）を払い、この遠征の旅人が装着している対象のうち一番強い遺物の最初の固有効果を、同じ枠の別の効果へ交換する。固有品は対象外。元の効果と値は失う。",
                         $"Pay {EventsBalance.MemoryWellTuning} stash tuning stone ({EventsBalance.MemoryWellEpicTuning} if the target is Epic or better) to replace the first power of this expedition hero's strongest eligible equipped relic with a different power from the same slot. Unique relics are excluded; the original power and value are lost.");
                 case DreamEvent.ShadowExchange:
-                    return Loc.T($"未確保の欠片{EventsBalance.ShadowExchangeShards}（対象がエピック以上なら{EventsBalance.ShadowExchangeEpicShards}）を払い、対象のうち一番強い未確保の遺物の最初の特性を、別の能力値へ引き直します。再調律を1回消費し、元の特性は失います。",
+                    return Loc.T($"未確保の欠片{EventsBalance.ShadowExchangeShards}（対象がエピック以上なら{EventsBalance.ShadowExchangeEpicShards}）を払い、対象のうち一番強い未確保の遺物の最初の特性を、別の能力値へ引き直す。再調律を1回消費し、元の特性は失う。",
                         $"Pay {EventsBalance.ShadowExchangeShards} unsecured shards ({EventsBalance.ShadowExchangeEpicShards} if the target is Epic or better) to reroll the first affix of your strongest eligible unsecured relic into a different stat. Uses one retune; the old affix is lost.");
                 case DreamEvent.LostMausoleum:
-                    return Loc.T($"未確保の欠片{EventsBalance.LostMausoleumShards}を払い、対象の遺失物をすべて未確保として回収します。各遺物の強化は0になります（獲得済みの節目は残ります）。全品を入れる鞄の空きが必要です。",
+                    return Loc.T($"未確保の欠片{EventsBalance.LostMausoleumShards}を払い、対象の遺失物をすべて未確保として回収する。各遺物の強化は0になる（獲得済みの節目は残る）。全品を入れる鞄の空きが必要。",
                         $"Pay {EventsBalance.LostMausoleumShards} unsecured shards to recover all eligible lost relics as unsecured. Each loses all enhancement (earned milestones remain). Your satchel must have room for all of them.");
                 case DreamEvent.RelicWager:
-                    return Loc.T($"エピック未満・固有品以外の対象から一番強い未確保の遺物を賭けます。対象がレアなら{EventsBalance.RelicWagerRareWinChance * 100:g}%、それ未満なら{EventsBalance.RelicWagerLowerWinChance * 100:g}%で同じ土台・レベルの1つ上のレア度の新品に交換し、外れると分解相当の未確保の欠片になります。元の遺物と強化は失います。",
+                    return Loc.T($"エピック未満・固有品以外の対象から一番強い未確保の遺物を賭ける。対象がレアなら{EventsBalance.RelicWagerRareWinChance * 100:g}%、それ未満なら{EventsBalance.RelicWagerLowerWinChance * 100:g}%で同じ土台・レベルの1つ上のレア度の新品に交換し、外れると分解相当の未確保の欠片になる。元の遺物と強化は失う。",
                         $"Wager your strongest eligible unsecured non-unique relic below Epic. A Rare target has a {EventsBalance.RelicWagerRareWinChance * 100:g}% chance ({EventsBalance.RelicWagerLowerWinChance * 100:g}% below Rare) to become a fresh relic of the same base and level, one rarity higher; otherwise, unsecured shards equal to its salvage value. The original relic and enhancements are lost.");
                 case DreamEvent.TemperingAltar:
-                    return Loc.T($"対象のうち一番強い未確保の遺物の最初の特性を失う代わりに、強化を{Content.GuaranteedEnhanceSteps(e)}段階進めます。強化の節目は通常どおり得られます。",
+                    return Loc.T($"対象のうち一番強い未確保の遺物の最初の特性を失う代わりに、強化を{Content.GuaranteedEnhanceSteps(e)}段階進める。強化の節目は通常どおり得られる。",
                         $"Lose the first affix of your strongest eligible unsecured relic to enhance it by {Content.GuaranteedEnhanceSteps(e)} levels. Enhancement milestones are granted normally.");
                 case DreamEvent.StoneBroker:
-                    return Loc.T($"未確保の欠片{EventsBalance.StoneBrokerShards}を失い、未確保の調律石{EventsBalance.StoneBrokerTuning}を得ます。", $"Trade {EventsBalance.StoneBrokerShards} unsecured shards for {EventsBalance.StoneBrokerTuning} unsecured tuning stones.");
+                    return Loc.T($"未確保の欠片{EventsBalance.StoneBrokerShards}を失い、未確保の調律石{EventsBalance.StoneBrokerTuning}を得る。", $"Trade {EventsBalance.StoneBrokerShards} unsecured shards for {EventsBalance.StoneBrokerTuning} unsecured tuning stones.");
                 case DreamEvent.ShardKiln:
-                    return Loc.T($"未確保の調律石{EventsBalance.ShardKilnTuning}を失い、未確保の欠片{EventsBalance.ShardKilnShards}を得ます。", $"Trade {EventsBalance.ShardKilnTuning} unsecured tuning stones for {EventsBalance.ShardKilnShards} unsecured shards.");
+                    return Loc.T($"未確保の調律石{EventsBalance.ShardKilnTuning}を失い、未確保の欠片{EventsBalance.ShardKilnShards}を得る。", $"Trade {EventsBalance.ShardKilnTuning} unsecured tuning stones for {EventsBalance.ShardKilnShards} unsecured shards.");
                 case DreamEvent.StarOffering:
-                    return Loc.T($"レア以上の対象から一番弱い未確保の遺物を捧げ、この遠征の旅人の星の経験を{EventsBalance.StarOfferingXp}得ます。", $"Sacrifice your weakest eligible unsecured relic of Rare or better for {EventsBalance.StarOfferingXp} permanent star experience for this expedition's hero.");
+                    return Loc.T($"レア以上の対象から一番弱い未確保の遺物を捧げ、この遠征の旅人の星の経験を{EventsBalance.StarOfferingXp}得る。", $"Sacrifice your weakest eligible unsecured relic of Rare or better for {EventsBalance.StarOfferingXp} permanent star experience for this expedition's hero.");
                 case DreamEvent.DreamOffering:
-                    return Loc.T($"対象のうち一番弱い未確保の遺物を捧げ、夢のレベルの経験値を{DreamOfferingXp(heat)}得ます。", $"Sacrifice your weakest eligible unsecured relic for {DreamOfferingXp(heat)} Dream Level experience.");
+                    return Loc.T($"対象のうち一番弱い未確保の遺物を捧げ、夢のレベルの経験値を{DreamOfferingXp(heat)}得る。", $"Sacrifice your weakest eligible unsecured relic for {DreamOfferingXp(heat)} Dream Level experience.");
                 case DreamEvent.AbyssalChest:
-                    return Loc.T($"未確保の欠片{EventsBalance.AbyssalChestShards}を払い、潜行が{EventsBalance.AbyssalChestHeatIncrement}段深くなります。代わりにエピックの遺物1つを未確保で得ます。鞄の空きが必要です。",
+                    return Loc.T($"未確保の欠片{EventsBalance.AbyssalChestShards}を払い、潜行が{EventsBalance.AbyssalChestHeatIncrement}段深くなる。代わりにエピックの遺物1つを未確保で得る。鞄の空きが必要。",
                         $"Pay {EventsBalance.AbyssalChestShards} unsecured shards and delve {(EventsBalance.AbyssalChestHeatIncrement == 1 ? "one" : EventsBalance.AbyssalChestHeatIncrement.ToString())} level deeper to gain one unsecured Epic relic. Requires a free satchel slot.");
                 case DreamEvent.RelicExchange:
-                    return Loc.T("レアかエピックの対象から一番弱い未確保の遺物を失い、同じレア度・レベルの次の枠の新品を得ます（武器→防具→装飾→頭→手→足→武器）。強化などは引き継ぎません。",
+                    return Loc.T("レアかエピックの対象から一番弱い未確保の遺物を失い、同じレア度・レベルの次の枠の新品を得る（武器→防具→装飾→頭→手→足→武器）。強化などは引き継がない。",
                         "Lose your weakest eligible unsecured Rare or Epic relic for a fresh relic of the same rarity and level in the next slot (Weapon → Armor → Charm → Head → Hands → Feet → Weapon). Enhancements and other investments are not carried over.");
                 case DreamEvent.SealedVault:
-                    return Loc.T($"未確保の欠片{EventsBalance.SealedVaultShards}を払い、対象のうち一番強い未確保の遺物を直接保管庫へ送ります。他の荷物や欠片は確保されず、潜行や契約も変わりません。",
+                    return Loc.T($"未確保の欠片{EventsBalance.SealedVaultShards}を払い、対象のうち一番強い未確保の遺物を直接保管庫へ送る。他の荷物や欠片は確保されず、潜行や契約も変わらない。",
                         $"Pay {EventsBalance.SealedVaultShards} unsecured shards to send your strongest eligible unsecured relic directly to the stash. Other cargo stays unsecured; delve and pacts remain unchanged.");
                 case DreamEvent.PowerCrucible:
-                    return Loc.T("固有品以外の対象から一番強い未確保の遺物の最後の固有効果を失い、最初の固有効果を同じ枠の別の効果へ交換します。交換前の効果と値は失います。",
+                    return Loc.T("固有品以外の対象から一番強い未確保の遺物の最後の固有効果を失い、最初の固有効果を同じ枠の別の効果へ交換する。交換前の効果と値は失う。",
                         "Lose the last power of your strongest eligible unsecured non-unique relic to replace its first power with a different power from the same slot. The original first power and value are also lost.");
                 default: return "";
             }

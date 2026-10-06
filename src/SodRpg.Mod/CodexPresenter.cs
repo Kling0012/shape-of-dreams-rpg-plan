@@ -77,7 +77,7 @@ namespace SodRpg.Mod
 
         public static string SlotsText(int mask)
         {
-            if (mask == 0x3F) return Loc.T("全部位", "Any slot");
+            if (mask == 0x3F) return Loc.T("全枠", "Any slot");
             var sb = new StringBuilder();
             foreach (var s in Slots)
                 if ((mask & (1 << (int)s)) != 0)
@@ -161,8 +161,8 @@ namespace SodRpg.Mod
                 if (state.Codex.Contains(u.Id)) found++;
             }
             sb.Append('\n').Append(Loc.T(
-                "特性：入手のたびに抽選されます。",
-                "Affixes are rolled each time you obtain one.")).Append('\n');
+                "特性：入手のたびに抽選される。",
+                "Affixes: rolled each time you obtain one.")).Append('\n');
             if (total > 0)
                 sb.Append('\n').Append(Loc.T($"この土台の固有品：{found}/{total} 発見", $"Legendaries on this base: {found}/{total} found"));
         }
@@ -179,10 +179,10 @@ namespace SodRpg.Mod
             if (u.BossMove != null)
                 sb.Append(Colored(EffectLayout.Bullets(BossProfiles.DescribeMove(u.BossMove)), Purple)).Append('\n');
             if (u.Link != null) sb.Append(Colored(Links.Describe(u.Link), Cyan)).Append('\n');
-            sb.Append(Loc.T("特性：入手のたびに3つ抽選されます。", "Affixes: 3 are rolled each time you obtain one.")).Append('\n');
+            sb.Append(Loc.T("特性：入手のたびに3つ抽選される。", "Affixes: 3 are rolled each time you obtain one.")).Append('\n');
             sb.Append(Colored(Loc.T(
-                $"覚醒：装着して敵を倒すと溜まり、{Content.AwakenThresholdFor(1)}・{Content.AwakenThresholdFor(2)}・{Content.AwakenThresholdFor(3)}で覚醒Ⅰ・Ⅱ・Ⅲ（固有効果 最大{Content.AwakenPowerPctAt(Content.MaxAwakenLevel) / 100f:0.##}倍）。",
-                $"Awakening: gather power while worn; at {Content.AwakenThresholdFor(1)}, {Content.AwakenThresholdFor(2)} and {Content.AwakenThresholdFor(3)} it reaches I, II and III (powers up to x{Content.AwakenPowerPctAt(Content.MaxAwakenLevel) / 100f:0.##})."), Dim)).Append('\n');
+                $"覚醒：装着して敵を倒すと溜まり、{Content.AwakenThresholdFor(1)}・{Content.AwakenThresholdFor(2)}・{Content.AwakenThresholdFor(3)}で覚醒Ⅰ・Ⅱ・Ⅲ（固有効果 最大{Content.AwakenPowerPctAt(Content.MaxAwakenLevel) / 100f:0.##}倍・特性 最大{Content.AwakenAffixPctAt(Content.MaxAwakenLevel) / 100f:0.##}倍）。",
+                $"Awakening: gathers power as the Traveler wearing it defeats enemies; at {Content.AwakenThresholdFor(1)}, {Content.AwakenThresholdFor(2)} and {Content.AwakenThresholdFor(3)} it reaches I, II and III (powers up to x{Content.AwakenPowerPctAt(Content.MaxAwakenLevel) / 100f:0.##}, affixes up to x{Content.AwakenAffixPctAt(Content.MaxAwakenLevel) / 100f:0.##})."), Dim)).Append('\n');
             if (u.SetId != null && Content.GetSet(u.SetId) is SetDef set)
             {
                 sb.Append('\n').Append(Colored($"《{set.Name}》", Orange)).Append('\n');
@@ -236,7 +236,7 @@ namespace SodRpg.Mod
             }
             foreach (var pw in n.Powers) sb.Append(Colored(Content.FormatPowerBullets(pw.Power, pw.Value), Purple)).Append('\n');
             int affixes = Content.AffixCount(n.Rarity);
-            sb.Append(Loc.T($"特性：入手のたびに{affixes}つ抽選されます。", $"Affixes: {affixes} are rolled each time you obtain one.")).Append('\n');
+            sb.Append(Loc.T($"特性：入手のたびに{affixes}つ抽選される。", $"Affixes: {affixes} are rolled each time you obtain one.")).Append('\n');
             if (!string.IsNullOrEmpty(n.Lore.ToString()))
                 sb.Append('\n').Append("<i>").Append(Colored(n.Lore.ToString(), "#c9a86a")).Append("</i>").Append('\n');
             if (n.MiniSetId != null && NamedItems.TryGetMiniSet(n.MiniSetId, out var ms))
@@ -282,7 +282,7 @@ namespace SodRpg.Mod
                     sb.Append(Colored(Content.FormatPower(e.Power, max), Purple)).Append(Colored(Loc.T("  （最大）", "  (max)"), Dim)).Append('\n');
                 }
             }
-            sb.Append('\n').Append(Loc.T("付く部位：", "Found on: ")).Append(SlotsText(e.SlotMask)).Append('\n');
+            sb.Append('\n').Append(Loc.T("付く枠：", "Found on: ")).Append(SlotsText(e.SlotMask)).Append('\n');
             var names = new System.Collections.Generic.List<string>();
             foreach (var u in e.Carriers)
                 if (state.Codex.Contains(u.Id)) names.Add(u.Name.ToString());
