@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "rates": {
+    "referenceSeconds": 2100,
+    "relicsPerHour": 24,
+    "guaranteesPerHour": 0.25,
+    "shardsPerHour": 180,
+    "tuningPerHour": 6,
+    "xpPerHour": 1200,
+    "starXpPerHour": 780,
+    "awakeningPerHour": 780,
+    "dustConversionsPerHour": 6,
+    "merchantsPerHour": 6
+  },
+  "killMix": { "lesser": 200, "normal": 160, "miniBoss": 5, "boss": 4 },
+  "bursts": {
+    "lesserTime": 10, "normalTime": 8, "miniBossTime": 1, "bossTime": 1,
+    "highRare": 7, "relics": 24, "legendary": 7,
+    "guaranteeOpportunities": 1, "guaranteedRelics": 2,
+    "shards": 30, "tuning": 3, "xp": 50, "starXp": 20,
+    "awakening": 20, "dustConversions": 1, "merchants": 1
+  },
+  "rooms": {
+    "lesser": { "cap": 10, "increment": 5 },
+    "normal": { "cap": 8, "increment": 4 },
+    "miniBoss": { "cap": 1, "increment": 0.125 },
+    "boss": { "cap": 1, "increment": 0.1 }
+  },
+  "run": { "defaultInterval": 10, "shortInterval": 10, "middleInterval": 15, "longInterval": 20, "maximumPressureStage": 100 }
+}

@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "dreamPressure": {
+    "freeDreamLevels": 5,
+    "healthPerLevel": 0.025,
+    "healthPerStarPoint": 0.005,
+    "healthPerInfinityStage": 0.10,
+    "damagePerLevel": 0.012,
+    "damagePerStarPoint": 0.0025,
+    "damagePerInfinityStage": 0.04
+  },
+  "dreamDepth": {
+    "maximum": 5,
+    "healthPerDepth": 0.15,
+    "damagePerDepth": 0.08,
+    "rarityLuckPerDepth": 0.25,
+    "awakeningPerDepth": 0.25,
+    "starXpPerDepth": 0.2,
+    "extraNodesPerDepth": 2
+  }
+}

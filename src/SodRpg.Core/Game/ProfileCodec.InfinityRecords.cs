@@ -46,11 +46,11 @@ namespace SodRpg.Core.Game
                 bool hasLastPressure = row.TryGet("lastPressure", out object lastPressure);
                 if (hasLastRooms != hasLastPressure || (hasLastRooms && (!(lastRooms is long) || !(lastPressure is long))))
                     throw new LedgerFormatException("Invalid infinity last return");
-                var record = new InfinityRecord(zoneId, (int)InfinityLong(row, "interval", 10, 20),
-                    (int)InfinityLong(row, "dreamDepth", 0, DreamDepth.Maximum), (string)difficulty,
-                    InfinityLong(row, "returns", 1), InfinityLong(row, "bestRooms"), (int)InfinityLong(row, "bestPressure", 0, 100),
+                var record = new InfinityRecord(zoneId, (int)InfinityLong(row, "interval", 1, InfinityRunState.MaximumGraphNodes),
+                    (int)InfinityLong(row, "dreamDepth", 0, InfinityRecords.MaximumRecordedDreamDepth), (string)difficulty,
+                    InfinityLong(row, "returns", 1), InfinityLong(row, "bestRooms"), (int)InfinityLong(row, "bestPressure", 0, InfinityRecords.MaximumRecordedPressureStage),
                     hasLastRooms ? (long?)InfinityLong(row, "lastRooms") : null,
-                    hasLastPressure ? (int?)InfinityLong(row, "lastPressure", 0, 100) : null);
+                    hasLastPressure ? (int?)InfinityLong(row, "lastPressure", 0, InfinityRecords.MaximumRecordedPressureStage) : null);
                 ValidateInfinityRecord(record);
                 string key = InfinityRecords.ConfigurationKey(record.FixedZoneId, record.Interval, record.DreamDepth, record.DifficultyId);
                 if (profile.InfinityRecords.ContainsKey(key)) throw new LedgerFormatException("Duplicate infinity record configuration");
@@ -61,13 +61,15 @@ namespace SodRpg.Core.Game
 
         private static void ValidateInfinityRecord(InfinityRecord record)
         {
+            // Display history does not identify its originating build's gameplay cap.
+            // Keep its recorded stage within the fixed save bound without reinterpreting it using today's tuning.
             if (record == null || !InfinityRecords.ValidConfiguration(record.FixedZoneId, record.Interval, record.DreamDepth, record.DifficultyId)
                 || record.ReturnCount < 1 || record.BestReturnedRooms < 0
-                || record.PressureAtBestReturn != InfinityRecords.Pressure(record.BestReturnedRooms, record.Interval)
+                || record.PressureAtBestReturn < 0 || record.PressureAtBestReturn > InfinityRecords.Pressure(record.BestReturnedRooms, record.Interval)
                 || record.LastReturnedRooms.HasValue != record.LastPressure.HasValue
                 || (record.LastReturnedRooms.HasValue && (record.LastReturnedRooms.Value < 0
                     || record.LastReturnedRooms.Value > record.BestReturnedRooms
-                    || record.LastPressure.Value != InfinityRecords.Pressure(record.LastReturnedRooms.Value, record.Interval))))
+                    || record.LastPressure.Value < 0 || record.LastPressure.Value > InfinityRecords.Pressure(record.LastReturnedRooms.Value, record.Interval))))
                 throw new LedgerFormatException("Inconsistent infinity return record");
         }
     }

@@ -8,25 +8,25 @@ namespace SodRpg.Core.Game
     public enum NightmareAffix
     {
         None = 0,
-        /// <summary>鋼殻：防御+60</summary>
+        /// <summary>鋼殻：防御を上乗せ</summary>
         Ironclad = 1 << 0,
-        /// <summary>狂暴：攻撃力+40%・攻撃速度+30%</summary>
+        /// <summary>狂暴：攻撃力・攻撃速度を上乗せ</summary>
         Berserk = 1 << 1,
-        /// <summary>巨躯：最大HP+150%</summary>
+        /// <summary>巨躯：最大HPを上乗せ</summary>
         Colossal = 1 << 2,
-        /// <summary>疾風：移動速度+35%・攻撃速度+20%</summary>
+        /// <summary>疾風：移動速度・攻撃速度を上乗せ</summary>
         Swift = 1 << 3,
-        /// <summary>再生：毎秒 最大HPの2%回復</summary>
+        /// <summary>再生：毎秒、最大HPに応じて回復</summary>
         Regenerating = 1 << 4,
-        /// <summary>魔力：魔力+50%・スキル加速+40</summary>
+        /// <summary>魔力：魔力・スキル加速を上乗せ</summary>
         Arcane = 1 << 5,
-        /// <summary>結界：出現時に最大HPの25%の障壁（v1.24）</summary>
+        /// <summary>結界：出現時に最大HPに応じた障壁</summary>
         Warded = 1 << 6,
-        /// <summary>棘皮：受けたダメージの20%を攻撃者へ返す（v1.24）</summary>
+        /// <summary>棘皮：受けたダメージの一部を攻撃者へ返す</summary>
         Thorned = 1 << 7,
-        /// <summary>飢渇：与えたダメージの15%だけ回復する（v1.24）</summary>
+        /// <summary>飢渇：与えたダメージの一部だけ回復する</summary>
         Ravenous = 1 << 8,
-        /// <summary>破甲：攻撃が当たると、相手の防御を4秒間 20 下げる（v1.24）</summary>
+        /// <summary>破甲：命中した相手の防御を一定時間下げる</summary>
         Sundering = 1 << 9,
         Veiled = 1 << 10,
         Hollow = 1 << 11,
@@ -47,7 +47,39 @@ namespace SodRpg.Core.Game
     public static class Nightmares
     {
         /// <summary>悪夢化の基礎体力の上乗せ（%）。見た目と専用攻撃は本体のエリート効果（MirageSkin）が担う。</summary>
-        public const int BaseHealthPct = 40;
+        public const int BaseHealthPct = MonstersBalance.BaseHealthPct;
+
+        public const int BossDepthMinimum = MonstersBalance.BossDepthMinimum;
+        public const int BossHealthPctPerDepth = MonstersBalance.BossHealthPctPerDepth;
+        public const int HealthPctPerDepth = MonstersBalance.HealthPctPerDepth;
+        public const int AttackPctPerDepth = MonstersBalance.AttackPctPerDepth;
+        public const int ArmorDepthMinimum = MonstersBalance.ArmorDepthMinimum;
+        public const int DepthArmor = MonstersBalance.DepthArmor;
+        public const int GearHealthDivisor = MonstersBalance.GearHealthDivisor;
+        public const double GearMaximumChanceBonus = MonstersBalance.GearMaximumChanceBonus;
+        public const double GearScoreDivisor = MonstersBalance.GearScoreDivisor;
+        public const double LesserChancePerDepth = MonstersBalance.LesserChancePerDepth;
+        public const double NormalChancePerDepth = MonstersBalance.NormalChancePerDepth;
+        public const double MiniBossBaseChance = MonstersBalance.MiniBossBaseChance;
+        public const double MiniBossChancePerDepth = MonstersBalance.MiniBossChancePerDepth;
+        public const int TwoAffixDepth = MonstersBalance.TwoAffixDepth;
+        public const int ThreeAffixDepth = MonstersBalance.ThreeAffixDepth;
+        public const int BaseAffixCount = MonstersBalance.BaseAffixCount;
+        public const int TwoAffixCount = MonstersBalance.TwoAffixCount;
+        public const int ThreeAffixCount = MonstersBalance.ThreeAffixCount;
+        public const int IroncladArmor = MonstersBalance.IroncladArmor;
+        public const int BerserkAttackPct = MonstersBalance.BerserkAttackPct;
+        public const int BerserkAttackSpeedPct = MonstersBalance.BerserkAttackSpeedPct;
+        public const int ColossalHealthPct = MonstersBalance.ColossalHealthPct;
+        public const int SwiftMoveSpeedPct = MonstersBalance.SwiftMoveSpeedPct;
+        public const int SwiftAttackSpeedPct = MonstersBalance.SwiftAttackSpeedPct;
+        public const float RegenerationPctPerSecond = MonstersBalance.RegenerationPctPerSecond;
+        public const int ArcanePowerPct = MonstersBalance.ArcanePowerPct;
+        public const int ArcaneHaste = MonstersBalance.ArcaneHaste;
+        public const int WardedArmor = MonstersBalance.WardedArmor;
+        public const int ThornedArmor = MonstersBalance.ThornedArmor;
+        public const int RavenousAttackPct = MonstersBalance.RavenousAttackPct;
+        public const int SunderingAttackPct = MonstersBalance.SunderingAttackPct;
 
         public static readonly NightmareAffix[] AllAffixes =
         {
@@ -62,13 +94,13 @@ namespace SodRpg.Core.Game
         // ───── v1.24：敵側のつり合い ─────
 
         /// <summary>結界：出現時の障壁（最大HPに対する%）。</summary>
-        public const int WardShieldPct = 25;
+        public const int WardShieldPct = MonstersBalance.WardShieldPct;
         /// <summary>棘皮：受けたダメージを返す割合（%）。v1.31 で20→15、さらに1回の上限を設けた。</summary>
-        public const int ThornsReflectPct = 15;
+        public const int ThornsReflectPct = MonstersBalance.ThornsReflectPct;
         /// <summary>棘皮：1回に返す量の上限（攻撃した旅人の最大HPに対する%、夢の圧・潜行の倍率を掛ける前）。</summary>
-        public const float ThornsReflectMaxHealthPct = 1.5f;
+        public const float ThornsReflectMaxHealthPct = MonstersBalance.ThornsReflectMaxHealthPct;
         /// <summary>棘皮：同じ敵から同じ旅人へ返す間隔（秒）。多段攻撃・連打で何度も返さない。</summary>
-        public const float ThornsReflectInterval = 0.4f;
+        public const float ThornsReflectInterval = MonstersBalance.ThornsReflectInterval;
 
         /// <summary>
         /// 棘皮で返す量。プレイヤーの火力は HP よりずっと伸びやすいので、与えたダメージの割合だけで返すと
@@ -80,14 +112,14 @@ namespace SodRpg.Core.Game
             return Math.Min(damageDealt * ThornsReflectPct / 100f, attackerMaxHealth * ThornsReflectMaxHealthPct / 100f);
         }
         /// <summary>飢渇：与えたダメージのうち回復する割合（%）。</summary>
-        public const int RavenousLeechPct = 15;
+        public const int RavenousLeechPct = MonstersBalance.RavenousLeechPct;
         /// <summary>破甲：当たったプレイヤーの防御を下げる量と秒数。</summary>
-        public const int SunderArmor = 20;
-        public const float SunderSeconds = 4f;
+        public const int SunderArmor = MonstersBalance.SunderArmor;
+        public const float SunderSeconds = MonstersBalance.SunderSeconds;
 
         /// <summary>
         /// 深度に応じた、すべての敵（悪夢化していない敵を含む）への上乗せ。
-        /// 通常の敵：深度1ごとに 最大HP+8%・攻撃力+4%、深度3から防御+10。ボス：深度4から 最大HP+10%/深度。
+        /// 通常の敵は最大HP・攻撃力と、一定深度から防御を上乗せ。ボスのHP補正は別の深度から始まる。
         /// </summary>
         public static List<StatLine> DepthBonus(MonsterTier tier, int depth)
         {
@@ -96,46 +128,49 @@ namespace SodRpg.Core.Game
             if (depth <= 0) return list;
             if (tier == MonsterTier.Boss)
             {
-                if (depth >= 4) list.Add(new StatLine(Stat.MaxHealthPct, 10 * depth));
+                if (depth >= BossDepthMinimum) list.Add(new StatLine(Stat.MaxHealthPct, BossHealthPctPerDepth * depth));
                 return list;
             }
-            list.Add(new StatLine(Stat.MaxHealthPct, 8 * depth));
-            list.Add(new StatLine(Stat.AttackPct, 4 * depth));
-            if (depth >= 3) list.Add(new StatLine(Stat.Armor, 10));
+            list.Add(new StatLine(Stat.MaxHealthPct, HealthPctPerDepth * depth));
+            list.Add(new StatLine(Stat.AttackPct, AttackPctPerDepth * depth));
+            if (depth >= ArmorDepthMinimum) list.Add(new StatLine(Stat.Armor, DepthArmor));
             return list;
         }
 
         /// <summary>
-        /// 装備の強さから、悪夢化の確率の倍率を出す（1.0〜1.5）。強い装備で潜るほど手応えのある敵が増える。
-        /// 強さ＝攻撃力%・魔力%の大きい方＋最大HP%の半分。100で+25%、200以上で+50%。
+        /// 装備の強さから、悪夢化の確率の倍率を出す。強い装備で潜るほど手応えのある敵が増える。
+        /// 強さは攻撃力%・魔力%の大きい方に最大HP%の寄与を加え、表の係数で倍率へ変換する。
         /// </summary>
         public static double GearChanceMult(Build b)
         {
             if (b == null) return 1.0;
             int offense = Math.Max(b.Get(Stat.AttackPct), b.Get(Stat.PowerPct));
-            int score = offense + b.Get(Stat.MaxHealthPct) / 2;
-            return 1.0 + Math.Min(0.5, Math.Max(0, score) / 400.0);
+            int score = offense + b.Get(Stat.MaxHealthPct) / GearHealthDivisor;
+            return 1.0 + Math.Min(GearMaximumChanceBonus, Math.Max(0, score) / GearScoreDivisor);
         }
 
-        /// <summary>悪夢化の確率。深度0では起きない。通常の敵は深度1で2%・以後+2%、エリートは深度1で20%・以後+8%。ボスは対象外。</summary>
+        /// <summary>悪夢化の確率。深度0では起きない。各格の深度曲線は調整表を参照し、ボスは対象外。</summary>
         public static double Chance(MonsterTier tier, int depth)
         {
             depth = Loot.ClampHeat(depth);
             if (depth <= 0) return 0;
             switch (tier)
             {
-                case MonsterTier.Lesser: return 0.01 * depth;
-                case MonsterTier.Normal: return 0.02 * depth;
-                case MonsterTier.MiniBoss: return 0.20 + 0.08 * (depth - 1);
+                case MonsterTier.Lesser: return LesserChancePerDepth * depth;
+                case MonsterTier.Normal: return NormalChancePerDepth * depth;
+                case MonsterTier.MiniBoss: return MiniBossBaseChance + MiniBossChancePerDepth * (depth - 1);
                 default: return 0;
             }
         }
 
-        /// <summary>悪夢化するか抽選し、するなら接頭効果（深度3以上で2つ、5で3つ）を返す。</summary>
+        /// <summary>深度に応じた接頭効果の数。</summary>
+        public static int AffixCount(int depth) => depth >= ThreeAffixDepth ? ThreeAffixCount
+            : depth >= TwoAffixDepth ? TwoAffixCount : BaseAffixCount;
+
         public static NightmareAffix Roll(Rng rng, MonsterTier tier, int depth, double chanceMult = 1.0)
         {
             if (!rng.Chance(Math.Min(1.0, Chance(tier, depth) * chanceMult))) return NightmareAffix.None;
-            int count = depth >= 5 ? 3 : depth >= 3 ? 2 : 1;
+            int count = AffixCount(depth);
             var pool = new List<NightmareAffix>(AllAffixes);
             var result = NightmareAffix.None;
             for (int i = 0; i < count && pool.Count > 0; i++)
@@ -180,29 +215,29 @@ namespace SodRpg.Core.Game
         {
             var list = new List<StatLine> { new StatLine(Stat.MaxHealthPct, BaseHealthPct) };
             regenPctPerSecond = 0;
-            if ((a & NightmareAffix.Ironclad) != 0) list.Add(new StatLine(Stat.Armor, 60));
+            if ((a & NightmareAffix.Ironclad) != 0) list.Add(new StatLine(Stat.Armor, IroncladArmor));
             if ((a & NightmareAffix.Berserk) != 0)
             {
-                list.Add(new StatLine(Stat.AttackPct, 40));
-                list.Add(new StatLine(Stat.AttackSpeedPct, 30));
+                list.Add(new StatLine(Stat.AttackPct, BerserkAttackPct));
+                list.Add(new StatLine(Stat.AttackSpeedPct, BerserkAttackSpeedPct));
             }
-            if ((a & NightmareAffix.Colossal) != 0) list.Add(new StatLine(Stat.MaxHealthPct, 150));
+            if ((a & NightmareAffix.Colossal) != 0) list.Add(new StatLine(Stat.MaxHealthPct, ColossalHealthPct));
             if ((a & NightmareAffix.Swift) != 0)
             {
-                list.Add(new StatLine(Stat.MoveSpeedPct, 35));
-                list.Add(new StatLine(Stat.AttackSpeedPct, 20));
+                list.Add(new StatLine(Stat.MoveSpeedPct, SwiftMoveSpeedPct));
+                list.Add(new StatLine(Stat.AttackSpeedPct, SwiftAttackSpeedPct));
             }
-            if ((a & NightmareAffix.Regenerating) != 0) regenPctPerSecond = 2f;
+            if ((a & NightmareAffix.Regenerating) != 0) regenPctPerSecond = RegenerationPctPerSecond;
             if ((a & NightmareAffix.Arcane) != 0)
             {
-                list.Add(new StatLine(Stat.PowerPct, 50));
-                list.Add(new StatLine(Stat.Haste, 40));
+                list.Add(new StatLine(Stat.PowerPct, ArcanePowerPct));
+                list.Add(new StatLine(Stat.Haste, ArcaneHaste));
             }
             // v1.24：行動に関わる性質（障壁・反射・吸収・防御低下）はホストが処理する。能力値は控えめに足すだけ。
-            if ((a & NightmareAffix.Warded) != 0) list.Add(new StatLine(Stat.Armor, 20));
-            if ((a & NightmareAffix.Thorned) != 0) list.Add(new StatLine(Stat.Armor, 30));
-            if ((a & NightmareAffix.Ravenous) != 0) list.Add(new StatLine(Stat.AttackPct, 15));
-            if ((a & NightmareAffix.Sundering) != 0) list.Add(new StatLine(Stat.AttackPct, 10));
+            if ((a & NightmareAffix.Warded) != 0) list.Add(new StatLine(Stat.Armor, WardedArmor));
+            if ((a & NightmareAffix.Thorned) != 0) list.Add(new StatLine(Stat.Armor, ThornedArmor));
+            if ((a & NightmareAffix.Ravenous) != 0) list.Add(new StatLine(Stat.AttackPct, RavenousAttackPct));
+            if ((a & NightmareAffix.Sundering) != 0) list.Add(new StatLine(Stat.AttackPct, SunderingAttackPct));
             return list;
         }
 
@@ -240,26 +275,26 @@ namespace SodRpg.Core.Game
         {
             switch (a)
             {
-                case NightmareAffix.Ironclad: return Loc.T("防御+60。強い一撃で殻を突破。", "Armor +60; use strong hits to breach its shell.");
-                case NightmareAffix.Berserk: return Loc.T("攻撃力+40%・攻撃速度+30%。連撃を避けて反撃。", "Attack +40%, attack speed +30%; dodge its flurry, then retaliate.");
-                case NightmareAffix.Colossal: return Loc.T("最大HP+150%。長期戦に備え、攻撃を避け続ける。", "Max HP +150%; conserve resources and keep dodging.");
-                case NightmareAffix.Swift: return Loc.T("移動+35%・攻撃速度+20%。直線逃走より回避で切り返す。", "Movement +35%, attack speed +20%; dodge and turn rather than flee straight.");
-                case NightmareAffix.Regenerating: return Loc.T("毎秒最大HPの2%回復。攻撃を集中して倒す。", "Heals 2% max HP each second; focus damage to defeat it.");
-                case NightmareAffix.Arcane: return Loc.T("魔力+50%・スキル加速+40。術を避け、発動後に攻める。", "Power +50%, haste +40; evade spells and punish after casting.");
-                case NightmareAffix.Warded: return Loc.T("防御+20、出現時に最大HP25%の障壁。障壁を割って攻める。", "Armor +20 and a spawn shield of 25% max HP; break the barrier.");
-                case NightmareAffix.Thorned: return Loc.T("防御+30。旅人から受けたダメージの15%をその旅人へ返す（1回につき最大HPの1.5%まで、夢の圧と潜行で増える。0.4秒に1回まで。召喚獣の攻撃は返さない）。", "Armor +30. Returns 15% of damage taken from a traveler to that traveler (at most 1.5% of their max HP per hit, raised by dream pressure and delve; once per 0.4 s; not to summons).");
-                case NightmareAffix.Ravenous: return Loc.T("攻撃力+15%、与ダメージの15%回復。攻撃を避けて回復を防ぐ。", "Attack +15%; heals for 15% of damage dealt. Dodge to deny healing.");
-                case NightmareAffix.Sundering: return Loc.T("攻撃力+10%、命中で防御-20を4秒。追撃を避ける。", "Attack +10%; hits reduce armor by 20 for 4s. Avoid follow-up hits.");
-                case NightmareAffix.Veiled: return Loc.T("6mより遠い攻撃の被ダメージ-30%。6m以内へ近づく。", "Receives 30% less damage from beyond 6m; approach within 6m.");
-                case NightmareAffix.Hollow: return Loc.T("3m未満からの被ダメージ-30%。3m以上離れて攻撃。", "Receives 30% less damage from within 3m; strike from at least 3m.");
-                case NightmareAffix.Facing: return Loc.T("正面120度の被ダメージ-30%。側面や背後へ回る。", "Receives 30% less damage in its frontal 120-degree cone; flank or attack from behind.");
-                case NightmareAffix.Packbound: return Loc.T("同区画5m以内に生存し活動中の味方がいると被ダメージ-30%。引き離すか仲間を倒す。", "Receives 30% less damage with a living awake ally within 5m in the same section; separate or clear allies.");
-                case NightmareAffix.Beacon: return Loc.T("2秒の予告後、一生に一度、同区画5m以内の最寄りの活動中の非ボス味方に最大HP15%の障壁を6秒。重複不可。先に倒すか引き離す。", "After a 2s warning, once per life shields the nearest living awake nonboss ally within 5m in the same section for 15% target max HP for 6s; no stacking. Kill support first or separate.");
-                case NightmareAffix.Pulsing: return Loc.T("最初の2秒は無防備。その後3秒間被ダメージ-30%、3秒間無防備を繰り返す。無防備の間に集中攻撃。", "Initially open for 2s, then alternates 3s of 30% damage reduction and 3s open; burst during openings.");
-                case NightmareAffix.Committed: return Loc.T("詠唱中は被ダメージ-30%、攻撃発射後1.5秒は被ダメージ+20%が優先。回避後に反撃。", "Receives 30% less damage while channeling; 1.5s after firing an attack, takes 20% more instead. Dodge then punish recovery.");
-                case NightmareAffix.Skittish: return Loc.T("未被弾時は移動+20%、ダメージを受けると2秒間移動-15%。一撃を当てて追う。", "Movement +20% while unhit; damaging hits slow movement by 15% for 2s. Tag then pursue.");
-                case NightmareAffix.Recuperating: return Loc.T("4秒間無傷なら毎秒最大HP1%回復、一生の上限10%。満タンでは消費しない。攻撃を続ける。", "After 4s without damage heals 1% max HP per second, capped at 10% per life; no budget spent at full HP. Keep pressure.");
-                case NightmareAffix.LastStand: return Loc.T("HP35%以下で2秒予告後、一生に一度、最大HP15%の障壁を6秒。予告中に倒すか殻を割る。", "At 35% HP or less, warns for 2s then shields itself for 15% max HP for 6s, once per life. Finish during warning or break the shell.");
+                case NightmareAffix.Ironclad: return Loc.T($"防御+{IroncladArmor}。強い一撃で殻を突破。", $"Armor +{IroncladArmor}; use strong hits to breach its shell.");
+                case NightmareAffix.Berserk: return Loc.T($"攻撃力+{BerserkAttackPct}%・攻撃速度+{BerserkAttackSpeedPct}%。連撃を避けて反撃。", $"Attack +{BerserkAttackPct}%, attack speed +{BerserkAttackSpeedPct}%; dodge its flurry, then retaliate.");
+                case NightmareAffix.Colossal: return Loc.T($"最大HP+{ColossalHealthPct}%。長期戦に備え、攻撃を避け続ける。", $"Max HP +{ColossalHealthPct}%; conserve resources and keep dodging.");
+                case NightmareAffix.Swift: return Loc.T($"移動+{SwiftMoveSpeedPct}%・攻撃速度+{SwiftAttackSpeedPct}%。直線逃走より回避で切り返す。", $"Movement +{SwiftMoveSpeedPct}%, attack speed +{SwiftAttackSpeedPct}%; dodge and turn rather than flee straight.");
+                case NightmareAffix.Regenerating: return Loc.T($"毎秒最大HPの{MonsterBehavior.Number((decimal)RegenerationPctPerSecond)}%回復。攻撃を集中して倒す。", $"Heals {MonsterBehavior.Number((decimal)RegenerationPctPerSecond)}% max HP each second; focus damage to defeat it.");
+                case NightmareAffix.Arcane: return Loc.T($"魔力+{ArcanePowerPct}%・スキル加速+{ArcaneHaste}。術を避け、発動後に攻める。", $"Power +{ArcanePowerPct}%, haste +{ArcaneHaste}; evade spells and punish after casting.");
+                case NightmareAffix.Warded: return Loc.T($"防御+{WardedArmor}、出現時に最大HP{WardShieldPct}%の障壁。障壁を割って攻める。", $"Armor +{WardedArmor} and a spawn shield of {WardShieldPct}% max HP; break the barrier.");
+                case NightmareAffix.Thorned: return Loc.T($"防御+{ThornedArmor}。旅人から受けたダメージの{ThornsReflectPct}%をその旅人へ返す（1回につき最大HPの{MonsterBehavior.Number((decimal)ThornsReflectMaxHealthPct)}%まで、夢の圧と潜行で増える。{MonsterBehavior.Number((decimal)ThornsReflectInterval)}秒に1回まで。召喚獣の攻撃は返さない）。", $"Armor +{ThornedArmor}. Returns {ThornsReflectPct}% of damage taken from a traveler to that traveler (at most {MonsterBehavior.Number((decimal)ThornsReflectMaxHealthPct)}% of their max HP per hit, raised by dream pressure and delve; once per {MonsterBehavior.Number((decimal)ThornsReflectInterval)} s; not to summons).");
+                case NightmareAffix.Ravenous: return Loc.T($"攻撃力+{RavenousAttackPct}%、与ダメージの{RavenousLeechPct}%回復。攻撃を避けて回復を防ぐ。", $"Attack +{RavenousAttackPct}%; heals for {RavenousLeechPct}% of damage dealt. Dodge to deny healing.");
+                case NightmareAffix.Sundering: return Loc.T($"攻撃力+{SunderingAttackPct}%、命中で防御-{SunderArmor}を{MonsterBehavior.Number((decimal)SunderSeconds)}秒。追撃を避ける。", $"Attack +{SunderingAttackPct}%; hits reduce armor by {SunderArmor} for {MonsterBehavior.Number((decimal)SunderSeconds)}s. Avoid follow-up hits.");
+                case NightmareAffix.Veiled: return Loc.T($"{MonsterBehavior.Number((decimal)MonsterBehavior.Range)}mより遠い攻撃の被ダメージ-{MonsterBehavior.Number((decimal)MonsterBehavior.GuardReduction * 100m)}%。{MonsterBehavior.Number((decimal)MonsterBehavior.Range)}m以内へ近づく。", $"Receives {MonsterBehavior.Number((decimal)MonsterBehavior.GuardReduction * 100m)}% less damage from beyond {MonsterBehavior.Number((decimal)MonsterBehavior.Range)}m; approach within {MonsterBehavior.Number((decimal)MonsterBehavior.Range)}m.");
+                case NightmareAffix.Hollow: return Loc.T($"{MonsterBehavior.Number((decimal)MonsterBehavior.InnerRange)}m未満からの被ダメージ-{MonsterBehavior.Number((decimal)MonsterBehavior.GuardReduction * 100m)}%。{MonsterBehavior.Number((decimal)MonsterBehavior.InnerRange)}m以上離れて攻撃。", $"Receives {MonsterBehavior.Number((decimal)MonsterBehavior.GuardReduction * 100m)}% less damage from within {MonsterBehavior.Number((decimal)MonsterBehavior.InnerRange)}m; strike from at least {MonsterBehavior.Number((decimal)MonsterBehavior.InnerRange)}m.");
+                case NightmareAffix.Facing: return Loc.T($"正面{MonsterBehavior.Number((decimal)(Math.Acos(MonsterBehavior.FacingDot) * 360.0 / Math.PI))}度の被ダメージ-{MonsterBehavior.Number((decimal)MonsterBehavior.GuardReduction * 100m)}%。側面や背後へ回る。", $"Receives {MonsterBehavior.Number((decimal)MonsterBehavior.GuardReduction * 100m)}% less damage in its frontal {MonsterBehavior.Number((decimal)(Math.Acos(MonsterBehavior.FacingDot) * 360.0 / Math.PI))}-degree cone; flank or attack from behind.");
+                case NightmareAffix.Packbound: return Loc.T($"同区画{MonsterBehavior.Number((decimal)MonsterBehavior.AllyRadius)}m以内に生存し活動中の味方がいると被ダメージ-{MonsterBehavior.Number((decimal)MonsterBehavior.GuardReduction * 100m)}%。引き離すか仲間を倒す。", $"Receives {MonsterBehavior.Number((decimal)MonsterBehavior.GuardReduction * 100m)}% less damage with a living awake ally within {MonsterBehavior.Number((decimal)MonsterBehavior.AllyRadius)}m in the same section; separate or clear allies.");
+                case NightmareAffix.Beacon: return Loc.T($"{MonsterBehavior.Number((decimal)MonsterBehavior.WarmupSeconds)}秒の予告後、一生に一度、同区画{MonsterBehavior.Number((decimal)MonsterBehavior.AllyRadius)}m以内の最寄りの活動中の非ボス味方に最大HP{MonsterBehavior.Number((decimal)MonsterBehavior.ShieldPct)}%の障壁を{MonsterBehavior.Number((decimal)MonsterBehavior.ShieldSeconds)}秒。重複不可。先に倒すか引き離す。", $"After a {MonsterBehavior.Number((decimal)MonsterBehavior.WarmupSeconds)}s warning, once per life shields the nearest living awake nonboss ally within {MonsterBehavior.Number((decimal)MonsterBehavior.AllyRadius)}m in the same section for {MonsterBehavior.Number((decimal)MonsterBehavior.ShieldPct)}% target max HP for {MonsterBehavior.Number((decimal)MonsterBehavior.ShieldSeconds)}s; no stacking. Kill support first or separate.");
+                case NightmareAffix.Pulsing: return Loc.T($"最初の{MonsterBehavior.Number((decimal)MonsterBehavior.WarmupSeconds)}秒は無防備。その後{MonsterBehavior.Number((decimal)MonsterBehavior.PulseHalfPeriod)}秒間被ダメージ-{MonsterBehavior.Number((decimal)MonsterBehavior.GuardReduction * 100m)}%、{MonsterBehavior.Number((decimal)MonsterBehavior.PulseHalfPeriod)}秒間無防備を繰り返す。無防備の間に集中攻撃。", $"Initially open for {MonsterBehavior.Number((decimal)MonsterBehavior.WarmupSeconds)}s, then alternates {MonsterBehavior.Number((decimal)MonsterBehavior.PulseHalfPeriod)}s of {MonsterBehavior.Number((decimal)MonsterBehavior.GuardReduction * 100m)}% damage reduction and {MonsterBehavior.Number((decimal)MonsterBehavior.PulseHalfPeriod)}s open; burst during openings.");
+                case NightmareAffix.Committed: return Loc.T($"詠唱中は被ダメージ-{MonsterBehavior.Number((decimal)MonsterBehavior.GuardReduction * 100m)}%、攻撃発射後{MonsterBehavior.Number((decimal)MonsterBehavior.RecoverySeconds)}秒は被ダメージ+{MonsterBehavior.Number(((decimal)MonsterBehavior.OpeningIncomingMultiplier - 1m) * 100m)}%が優先。回避後に反撃。", $"Receives {MonsterBehavior.Number((decimal)MonsterBehavior.GuardReduction * 100m)}% less damage while channeling; {MonsterBehavior.Number((decimal)MonsterBehavior.RecoverySeconds)}s after firing an attack, takes {MonsterBehavior.Number(((decimal)MonsterBehavior.OpeningIncomingMultiplier - 1m) * 100m)}% more instead. Dodge then punish recovery.");
+                case NightmareAffix.Skittish: return Loc.T($"未被弾時は移動+{MonsterBehavior.Number((decimal)MonsterBehavior.UnhitMovementPct)}%、ダメージを受けると{MonsterBehavior.Number((decimal)MonsterBehavior.HitSlowSeconds)}秒間移動-{MonsterBehavior.Number(-(decimal)MonsterBehavior.HitMovementPct)}%。一撃を当てて追う。", $"Movement +{MonsterBehavior.Number((decimal)MonsterBehavior.UnhitMovementPct)}% while unhit; damaging hits slow movement by {MonsterBehavior.Number(-(decimal)MonsterBehavior.HitMovementPct)}% for {MonsterBehavior.Number((decimal)MonsterBehavior.HitSlowSeconds)}s. Tag then pursue.");
+                case NightmareAffix.Recuperating: return Loc.T($"{MonsterBehavior.Number((decimal)MonsterBehavior.HealDelaySeconds)}秒間無傷なら毎秒最大HP{MonsterBehavior.Number((decimal)MonsterBehavior.HealPctPerSecond)}%回復、一生の上限{MonsterBehavior.Number((decimal)MonsterBehavior.HealBudgetPct)}%。満タンでは消費しない。攻撃を続ける。", $"After {MonsterBehavior.Number((decimal)MonsterBehavior.HealDelaySeconds)}s without damage heals {MonsterBehavior.Number((decimal)MonsterBehavior.HealPctPerSecond)}% max HP per second, capped at {MonsterBehavior.Number((decimal)MonsterBehavior.HealBudgetPct)}% per life; no budget spent at full HP. Keep pressure.");
+                case NightmareAffix.LastStand: return Loc.T($"HP{MonsterBehavior.Number((decimal)MonsterBehavior.LastStandHealthRatio * 100m)}%以下で{MonsterBehavior.Number((decimal)MonsterBehavior.WarmupSeconds)}秒予告後、一生に一度、最大HP{MonsterBehavior.Number((decimal)MonsterBehavior.ShieldPct)}%の障壁を{MonsterBehavior.Number((decimal)MonsterBehavior.ShieldSeconds)}秒。予告中に倒すか殻を割る。", $"At {MonsterBehavior.Number((decimal)MonsterBehavior.LastStandHealthRatio * 100m)}% HP or less, warns for {MonsterBehavior.Number((decimal)MonsterBehavior.WarmupSeconds)}s then shields itself for {MonsterBehavior.Number((decimal)MonsterBehavior.ShieldPct)}% max HP for {MonsterBehavior.Number((decimal)MonsterBehavior.ShieldSeconds)}s, once per life. Finish during warning or break the shell.");
                 default: return "";
             }
         }

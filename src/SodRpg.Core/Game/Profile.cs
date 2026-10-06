@@ -323,7 +323,7 @@ namespace SodRpg.Core.Game
         private int _lastDreamDepth;
         public int LastDreamDepth { get => _lastDreamDepth; set => _lastDreamDepth = DreamDepth.Clamp(value); }
         public bool LastInfinityEnabled { get; set; }
-        public int LastInfinityInterval { get; set; } = 10;
+        public int LastInfinityInterval { get; set; } = InfinityRunState.DefaultInterval;
         public InfinityRewardBudget InfinityRewardBudget { get; set; } = new InfinityRewardBudget();
         public SortedDictionary<string, InfinityRecord> InfinityRecords { get; } = new SortedDictionary<string, InfinityRecord>(StringComparer.Ordinal);
         public long InfinityRecordsRevision { get; internal set; }

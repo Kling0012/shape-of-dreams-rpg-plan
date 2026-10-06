@@ -7,16 +7,16 @@ namespace SodRpg.Core.Tests
     public class DreamDepthV130Tests
     {
         [Theory]
-        [InlineData(2, 1.30, 1.16, 0.50, 1.50, 1.4)]
-        [InlineData(int.MinValue, 1, 1, 0, 1, 1)]
-        [InlineData(int.MaxValue, 1.75, 1.40, 1.25, 2.25, 2)]
-        public void Every_depth_formula_and_bound_is_explicit(int depth, double hp, double damage, double luck, double awakening, double stars)
+        [InlineData(2)]
+        [InlineData(int.MinValue)]
+        [InlineData(int.MaxValue)]
+        public void Every_depth_formula_and_bound_is_explicit(int depth)
         {
-            Assert.Equal(hp, DreamDepth.HealthMultiplier(depth), 10);
-            Assert.Equal(damage, DreamDepth.DamageMultiplier(depth), 10);
-            Assert.Equal(luck, DreamDepth.RarityLuck(depth), 10);
-            Assert.Equal(awakening, DreamDepth.AwakeningMultiplier(depth), 10);
-            Assert.Equal(stars, DreamDepth.StarXpMultiplier(depth), 10);
+            Assert.Equal(PressureBalanceTests.DepthValue("healthPerDepth", depth), DreamDepth.HealthMultiplier(depth), 10);
+            Assert.Equal(PressureBalanceTests.DepthValue("damagePerDepth", depth), DreamDepth.DamageMultiplier(depth), 10);
+            Assert.Equal(PressureBalanceTests.DepthValue("rarityLuckPerDepth", depth, 0), DreamDepth.RarityLuck(depth), 10);
+            Assert.Equal(PressureBalanceTests.DepthValue("awakeningPerDepth", depth), DreamDepth.AwakeningMultiplier(depth), 10);
+            Assert.Equal(PressureBalanceTests.DepthValue("starXpPerDepth", depth), DreamDepth.StarXpMultiplier(depth), 10);
         }
 
         [Fact]
@@ -25,10 +25,10 @@ namespace SodRpg.Core.Tests
             var members = new[] { new Build { DreamLevel = 30, SpentStarPoints = 150 }, null };
             var baseline = DreamPressure.Average(members);
             var deep = baseline.WithRunModifiers(5, 1.25);
-            Assert.Equal(baseline.HealthMultiplier * 1.75 * 1.25, deep.HealthMultiplier, 10);
-            Assert.Equal(baseline.DamageMultiplier * 1.4 * 1.25, deep.DamageMultiplier, 10);
+            Assert.Equal(baseline.HealthMultiplier * PressureBalanceTests.DepthValue("healthPerDepth", 5) * 1.25, deep.HealthMultiplier, 10);
+            Assert.Equal(baseline.DamageMultiplier * PressureBalanceTests.DepthValue("damagePerDepth", 5) * 1.25, deep.DamageMultiplier, 10);
             Assert.Equal(baseline.HealthMultiplier, baseline.WithRunModifiers(0).HealthMultiplier);
-            Assert.Equal(5, baseline.WithRunModifiers(99).Depth);
+            Assert.Equal(PressureBalanceTests.Maximum, baseline.WithRunModifiers(99).Depth);
             Assert.Equal(0, baseline.WithRunModifiers(-99).Depth);
         }
 

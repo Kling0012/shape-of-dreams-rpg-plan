@@ -36,6 +36,9 @@ namespace SodRpg.Core.Game
         // Bound configuration cardinality, not play duration. Existing configurations remain updatable at capacity.
         public const int MaximumConfigurations = 1024;
         public const int MaximumIdentifierLength = 256;
+        // Historical receipt acceptance is independent of today's game pressure cap.
+        internal const int MaximumRecordedPressureStage = 100;
+        internal const int MaximumRecordedDreamDepth = 5;
 
         public static string ConfigurationKey(string zone, int interval, int depth, string difficulty)
         {
@@ -45,9 +48,10 @@ namespace SodRpg.Core.Game
                 + ":" + (difficulty == null ? "0:" : difficulty.Length.ToString(CultureInfo.InvariantCulture) + ":" + difficulty);
         }
 
+        // Return receipts retain their original interval identity even after tuning changes.
         internal static bool ValidConfiguration(string zone, int interval, int depth, string difficulty)
-            => ValidIdentifier(zone) && InfinityRunState.ValidInterval(interval)
-                && depth >= 0 && depth <= DreamDepth.Maximum && (difficulty == null || ValidIdentifier(difficulty));
+            => ValidIdentifier(zone) && (InfinityRunState.ValidInterval(interval) || interval == 10 || interval == 15 || interval == 20)
+                && depth >= 0 && depth <= MaximumRecordedDreamDepth && (difficulty == null || ValidIdentifier(difficulty));
 
         private static bool ValidIdentifier(string value)
         {
@@ -57,7 +61,7 @@ namespace SodRpg.Core.Game
             return true;
         }
 
-        internal static int Pressure(long rooms, int interval) => (int)Math.Min(100L, rooms / interval);
+        internal static int Pressure(long rooms, int interval) => (int)Math.Min((long)MaximumRecordedPressureStage, rooms / interval);
 
         /// <summary>Called only from the committed secured-return path, before Secure mutates or clears the run.</summary>
         public static bool RecordReturn(Profile profile, RunState run)

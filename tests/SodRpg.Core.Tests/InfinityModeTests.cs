@@ -16,7 +16,74 @@ namespace SodRpg.Core.Tests
         private const double RoomSeconds = 35 * 60.0 / 24; // 通常20戦闘＋ボス4体＝35分の比較モデル
         private const string Zone = "Zone_Mist";
 
-        private static Profile BeginInfinityRun(ulong seed, string runId, int interval = 10)
+        [Fact]
+        public void Combat_supply_accumulates_saturates_and_spends_whole_credits()
+        {
+            var p = BeginInfinityRun(149UL, "supply-149");
+            double seconds = 17.25;
+            InfinityRewards.AdvanceCombat(p, seconds);
+            InfinityRewards.AdvanceCombat(p, seconds);
+            double expected = Math.Min(InfinityRewards.ShardsBurst,
+                Math.Min(InfinityRewards.ShardsBurst, InfinityRewards.ShardsPerHour / 3600 * seconds)
+                    + InfinityRewards.ShardsPerHour / 3600 * seconds);
+            int spend = (int)Math.Floor(expected + 1e-9);
+            Assert.Equal(spend, InfinityRewards.LimitShards(p, int.MaxValue));
+            Assert.Equal(Math.Max(0, expected - spend), p.InfinityRewardBudget.Shards);
+            InfinityRewards.AdvanceCombat(p, 1e20);
+            Assert.Equal((int)Math.Floor(InfinityRewards.ShardsBurst + 1e-9),
+                InfinityRewards.LimitShards(p, int.MaxValue));
+            Assert.Equal(0, InfinityRewards.LimitShards(p, int.MaxValue));
+
+            // Frozen legacy oracle applies only when this domain has no effective tuning delta.
+            var record = typeof(Profile).Assembly.GetType("SodRpg.Core.Game.InfinityBalance")
+                .GetField("ContentFingerprintRecord", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic);
+            if (record.GetValue(null) != null) return;
+            double LegacyRareRate(bool legendary)
+            {
+                double lesser = Loot.HighRarityProbability(0, false, Rarity.Common, out double lesserLegend);
+                double normal = Loot.HighRarityProbability(0, false, Rarity.Common, out double normalLegend);
+                double mini = Loot.HighRarityProbability(Loot.TierLuck(MonsterTier.MiniBoss), true, Rarity.Common, out double miniLegend);
+                double boss = Loot.HighRarityProbability(Loot.TierLuck(MonsterTier.Boss), true, Rarity.Uncommon, out double bossLegend);
+                double ev = 200 * Loot.DropChance(MonsterTier.Lesser, 0) * (legendary ? lesserLegend : lesser)
+                    + 160 * Loot.DropChance(MonsterTier.Normal, 0) * (legendary ? normalLegend : normal)
+                    + 5 * Loot.DropChance(MonsterTier.MiniBoss, 0) * (legendary ? miniLegend : mini)
+                    + 4 * Loot.DropChance(MonsterTier.Boss, 0) * (1 + Loot.BossExtraRelicChance) * (legendary ? bossLegend : boss);
+                return ev * 3600 / 2100;
+            }
+            double[] Credits(InfinityRewardBudget b) => new[] {
+                b.LesserTime, b.NormalTime, b.MiniBossTime, b.BossTime, b.HighRare, b.Relics,
+                b.Legendary, b.GuaranteeOpportunities, b.GuaranteedRelics, b.Shards, b.Tuning,
+                b.Xp, b.StarXp, b.Awakening, b.DustConversions, b.Merchants };
+            double[] rates = { 200 / 2100.0, 160 / 2100.0, 5 / 2100.0, 4 / 2100.0,
+                LegacyRareRate(false) / 3600, 24 / 3600.0, LegacyRareRate(true) / 3600,
+                .25 / 3600, .25 / 3600, 180 / 3600.0, 6 / 3600.0, 1200 / 3600.0,
+                780 / 3600.0, 780 / 3600.0, 6 / 3600.0, 6 / 3600.0 };
+            double[] bursts = { 10, 8, 1, 1, 7, 24, 7, 1, 2, 30, 3, 50, 20, 20, 1, 1 };
+            var legacy = BeginInfinityRun(150UL, "legacy-supply-149");
+            InfinityRewards.AdvanceCombat(legacy, seconds);
+            var actual = Credits(legacy.InfinityRewardBudget);
+            for (int i = 0; i < actual.Length; i++)
+                Assert.Equal(BitConverter.DoubleToInt64Bits(Math.Min(bursts[i], rates[i] * seconds)),
+                    BitConverter.DoubleToInt64Bits(actual[i]));
+            InfinityRewards.AdvanceCombat(legacy, 1e20);
+            Assert.Equal(bursts, Credits(legacy.InfinityRewardBudget));
+            InfinityRewards.EnterRoom(legacy, 0, 0);
+            var budget = legacy.InfinityRewardBudget;
+            Assert.Equal(new[] { 5.0, 4, .125, .1 }, new[] { budget.LesserRoom, budget.NormalRoom, budget.MiniBossRoom, budget.BossRoom });
+            for (int room = 1; room <= 20; room++) InfinityRewards.EnterRoom(legacy, 0, room);
+            Assert.Equal(new[] { 10.0, 8, 1, 1 }, new[] { budget.LesserRoom, budget.NormalRoom, budget.MiniBossRoom, budget.BossRoom });
+            Assert.Equal(BitConverter.DoubleToInt64Bits(LegacyRareRate(false)),
+                BitConverter.DoubleToInt64Bits(InfinityRewards.NormalHighRarePerHour(0)));
+            Assert.Equal(BitConverter.DoubleToInt64Bits(LegacyRareRate(true)),
+                BitConverter.DoubleToInt64Bits(InfinityRewards.NormalLegendaryPerHour(0)));
+            Assert.Equal(10, legacy.Run.Infinity.Interval);
+            Assert.True(InfinityRunState.ValidInterval(10) && InfinityRunState.ValidInterval(15) && InfinityRunState.ValidInterval(20));
+            Assert.False(InfinityRunState.ValidInterval(9) || InfinityRunState.ValidInterval(11) || InfinityRunState.ValidInterval(21));
+            legacy.Run.Infinity.ClearedCombatTotal = long.MaxValue;
+            Assert.Equal(100, legacy.Run.Infinity.PressureStage);
+        }
+
+        private static Profile BeginInfinityRun(ulong seed, string runId, int interval = InfinityRunState.DefaultInterval)
         {
             var p = Profile.CreateNew(seed);
             Rules.BeginRun(p, runId, heroKey: "hero", dreamDepth: 3);
@@ -62,10 +129,10 @@ namespace SodRpg.Core.Tests
         {
             var p = BeginInfinityRun(95UL, "run-95");
             var infinity = p.Run.Infinity;
-            Assert.Equal(10, infinity.Interval);
+            Assert.Equal(InfinityRunState.DefaultInterval, infinity.Interval);
 
             // 周期に数えられるのは実Combatクリアだけ。BossDueはちょうど周期部屋数目で立つ。
-            for (int room = 1; room < 10; room++)
+            for (int room = 1; room < InfinityRunState.DefaultInterval; room++)
             {
                 FightRoom(p, node: room, StandardRoomKills);
                 Assert.Equal(InfinityPhase.Exploring, infinity.Phase);
@@ -76,11 +143,11 @@ namespace SodRpg.Core.Tests
             Assert.False(Rules.ShouldOfferSecurePoint(p));
             Assert.False(infinity.TryEnterBoss()); // まだボスではない
 
-            FightRoom(p, node: 10, StandardRoomKills);
+            FightRoom(p, node: InfinityRunState.DefaultInterval, StandardRoomKills);
             Assert.True(infinity.BossDue);
             Assert.Equal(InfinityPhase.BossDue, infinity.Phase);
             // ボスを倒すまで次の戦闘部屋は数えられない
-            Assert.False(infinity.TryCountCombatClear(infinity.GraphEpoch, 11, true, false, false));
+            Assert.False(infinity.TryCountCombatClear(infinity.GraphEpoch, InfinityRunState.DefaultInterval + 1, true, false, false));
 
             FinishBossCycle(p);
             Assert.Equal(InfinityPhase.AwaitingChoice, infinity.Phase);
@@ -104,10 +171,10 @@ namespace SodRpg.Core.Tests
             Assert.NotNull(p.Run); // ひとつの世界で終わらずに続く
 
             // 周期2：同じノード番号を再生成後の地図で使い直しても数えられる（世代で区別）
-            for (int room = 1; room <= 10; room++)
+            for (int room = 1; room <= InfinityRunState.DefaultInterval; room++)
                 FightRoom(p, node: room, StandardRoomKills);
-            Assert.Equal(20, infinity.ClearedCombatTotal);
-            Assert.Equal(2, infinity.PressureStage); // 累計部屋数に応じて圧が上がる
+            Assert.Equal(2L * InfinityRunState.DefaultInterval, infinity.ClearedCombatTotal);
+            Assert.Equal(Math.Min(2, InfinityRunState.MaximumPressureStage), infinity.PressureStage);
             Assert.True(infinity.BossDue);
 
             FinishBossCycle(p);
@@ -115,10 +182,10 @@ namespace SodRpg.Core.Tests
             Assert.True(infinity.CompleteGraphTransition(infinity.GraphEpoch + 1));
             Assert.Equal(Zone, infinity.FixedZoneId); // ずっと同じ世界
             Assert.Equal("diffNormal", infinity.DifficultyId);
-            for (int room = 1; room <= 10; room++)
+            for (int room = 1; room <= InfinityRunState.DefaultInterval; room++)
                 FightRoom(p, node: room, StandardRoomKills);
-            Assert.Equal(30, infinity.ClearedCombatTotal);
-            Assert.Equal(3, infinity.PressureStage);
+            Assert.Equal(3L * InfinityRunState.DefaultInterval, infinity.ClearedCombatTotal);
+            Assert.Equal(Math.Min(3, InfinityRunState.MaximumPressureStage), infinity.PressureStage);
             Assert.NotNull(p.Run);
         }
 
@@ -129,7 +196,7 @@ namespace SodRpg.Core.Tests
             var p = BeginInfinityRun(96UL, "run-96");
             long victories = p.Stats.Victories;
             long defeats = p.Stats.Defeats;
-            for (int room = 1; room <= 10; room++)
+            for (int room = 1; room <= InfinityRunState.DefaultInterval; room++)
                 FightRoom(p, node: room, StandardRoomKills);
             Assert.False(InfinityRecords.RecordReturn(p, p.Run)); // ボス周期の途中は帰還記録が付かない
             Assert.Empty(p.InfinityRecords);
@@ -146,8 +213,8 @@ namespace SodRpg.Core.Tests
             Assert.Equal(defeats, p.Stats.Defeats);
             Assert.Single(p.InfinityRecords);
             var first = p.InfinityRecords.Values.Single();
-            Assert.Equal(10, first.BestReturnedRooms);
-            Assert.Equal(1, first.PressureAtBestReturn);
+            Assert.Equal(InfinityRunState.DefaultInterval, first.BestReturnedRooms);
+            Assert.Equal(Math.Min(1, InfinityRunState.MaximumPressureStage), first.PressureAtBestReturn);
             Assert.Equal(1, first.ReturnCount);
 
             // 同じreceiptの再受信・再開では二度出ない
@@ -192,7 +259,7 @@ namespace SodRpg.Core.Tests
             Assert.Equal(4, infinity.RoomEpoch);
             Assert.Equal(InfinityPhase.Exploring, infinity.Phase);
             Assert.Equal(new HashSet<int> { 1, 2, 3, 4 }, infinity.ClearedNodes);
-            Assert.Equal(0, infinity.PressureStage);              // 圧は累計10部屋ごとに上がる
+            Assert.Equal(Math.Min(4 / infinity.Interval, InfinityRunState.MaximumPressureStage), infinity.PressureStage);
             var savedBudget = atSave.InfinityRewardBudget;
             var budget = p.InfinityRewardBudget;
             Assert.Equal(savedBudget.RoomRunId, budget.RoomRunId); // 入場receipt
@@ -236,7 +303,7 @@ namespace SodRpg.Core.Tests
             Assert.Equal(3, budget.RoomEpoch);
 
             InfinityRewards.EnterRoom(p, 0, 4);   // 新規部屋だけが補充される
-            Assert.True(budget.LesserRoom > lesser);
+            Assert.Equal(Math.Min(InfinityRewards.LesserRoomCap, lesser + InfinityRewards.LesserRoomIncrement), budget.LesserRoom);
             InfinityRewards.EnterRoom(p, 1, 1);   // 地図再生成後の新規部屋
             Assert.Equal(1, budget.RoomGraph);
         }
@@ -279,7 +346,7 @@ namespace SodRpg.Core.Tests
 
             // 同じプロフィールでもONの遠征になると初回から上限が効く（OFFに戻れば通常どおり）
             Rules.BeginRun(p, "run-99b", heroKey: "hero", dreamDepth: 3);
-            p.Run.Infinity = new InfinityRunState { FixedZoneId = Zone, Interval = 10 };
+            p.Run.Infinity = new InfinityRunState { FixedZoneId = Zone, Interval = InfinityRunState.DefaultInterval };
             Assert.Equal(0, InfinityRewards.LimitShards(p, 999)); // 予算0では補充なし
             p.Run.Infinity = null;
             Assert.True(InfinityRewards.CanBuyMerchant(p));
@@ -346,19 +413,19 @@ namespace SodRpg.Core.Tests
         {
             var p = BeginInfinityRun(104UL, "run-104");
             p.LastInfinityEnabled = true;
-            p.LastInfinityInterval = 15;
-            for (int room = 1; room <= 10; room++)
+            p.LastInfinityInterval = InfinityRunState.MiddleInterval;
+            for (int room = 1; room <= InfinityRunState.DefaultInterval; room++)
                 FightRoom(p, node: room, StandardRoomKills);
             FinishBossCycle(p);
             Rules.SecuredReturn(p);
 
             var reloaded = ProfileCodec.Read(ProfileCodec.Write(p), new List<string>());
             Assert.True(reloaded.LastInfinityEnabled);
-            Assert.Equal(15, reloaded.LastInfinityInterval);
+            Assert.Equal(InfinityRunState.MiddleInterval, reloaded.LastInfinityInterval);
             Assert.Single(reloaded.InfinityRecords);
             var record = reloaded.InfinityRecords.Values.Single();
-            Assert.Equal(10, record.BestReturnedRooms);
-            Assert.Equal(1, record.PressureAtBestReturn);
+            Assert.Equal(InfinityRunState.DefaultInterval, record.BestReturnedRooms);
+            Assert.Equal(Math.Min(1, InfinityRunState.MaximumPressureStage), record.PressureAtBestReturn);
             Assert.Equal("run-104", reloaded.CompletedRunId);
             Assert.True(reloaded.CompletedRunSecuredReturn);
         }

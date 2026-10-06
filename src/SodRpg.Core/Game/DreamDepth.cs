@@ -5,16 +5,22 @@ namespace SodRpg.Core.Game
     /// <summary>Run-start difficulty, independent of delve heat and the game's Limbo depth.</summary>
     public static class DreamDepth
     {
-        public const int Maximum = 5;
+        public const int Maximum = PressureBalance.MaximumDepth;
+        public const double HealthPerDepth = PressureBalance.HealthPerDepth;
+        public const double DamagePerDepth = PressureBalance.DamagePerDepth;
+        public const double RarityLuckPerDepth = PressureBalance.RarityLuckPerDepth;
+        public const double AwakeningPerDepth = PressureBalance.AwakeningPerDepth;
+        public const double StarXpPerDepth = PressureBalance.StarXpPerDepth;
+        public const int ExtraNodesPerDepth = PressureBalance.ExtraNodesPerDepth;
         public static int Clamp(int depth) => Math.Max(0, Math.Min(Maximum, depth));
-        public static double HealthMultiplier(int depth) => 1 + 0.15 * Clamp(depth);
-        public static double DamageMultiplier(int depth) => 1 + 0.08 * Clamp(depth);
-        public static double RarityLuck(int depth) => 0.25 * Clamp(depth);
-        public static double AwakeningMultiplier(int depth) => 1 + 0.25 * Clamp(depth);
-        public static double StarXpMultiplier(int depth) => 1 + 0.2 * Clamp(depth);
+        public static double HealthMultiplier(int depth) => 1 + HealthPerDepth * Clamp(depth);
+        public static double DamageMultiplier(int depth) => 1 + DamagePerDepth * Clamp(depth);
+        public static double RarityLuck(int depth) => RarityLuckPerDepth * Clamp(depth);
+        public static double AwakeningMultiplier(int depth) => 1 + AwakeningPerDepth * Clamp(depth);
+        public static double StarXpMultiplier(int depth) => 1 + StarXpPerDepth * Clamp(depth);
 
         /// <summary>Extra rooms (world nodes) the run gains per zone at the given depth. Depth 0 = unchanged game.</summary>
-        public static int ExtraZoneNodes(int depth) => 2 * Clamp(depth);
+        public static int ExtraZoneNodes(int depth) => ExtraNodesPerDepth * Clamp(depth);
 
         /// <summary>Amount to add to the game's worldNodeCountOffset during zone generation: only on the server, only for normally generated zones, only while a run is active.</summary>
         public static int ZoneNodeOffset(int depth, bool isServer, bool specialGeneration, bool runActive)

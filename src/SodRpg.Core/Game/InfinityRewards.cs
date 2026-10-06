@@ -17,11 +17,39 @@ namespace SodRpg.Core.Game
 
     public static class InfinityRewards
     {
-        public const double ReferenceSeconds = 2100;
-        public const double RelicsPerHour = 24, GuaranteesPerHour = .25;
-        public const double ShardsPerHour = 180, TuningPerHour = 6, XpPerHour = 1200;
-        public const double StarXpPerHour = 780, AwakeningPerHour = 780;
-        public const double DustConversionsPerHour = 6, MerchantsPerHour = 6;
+        public const double ReferenceSeconds = InfinityBalance.ReferenceSeconds;
+        public const double RelicsPerHour = InfinityBalance.RelicsPerHour, GuaranteesPerHour = InfinityBalance.GuaranteesPerHour;
+        public const double ShardsPerHour = InfinityBalance.ShardsPerHour, TuningPerHour = InfinityBalance.TuningPerHour, XpPerHour = InfinityBalance.XpPerHour;
+        public const double StarXpPerHour = InfinityBalance.StarXpPerHour, AwakeningPerHour = InfinityBalance.AwakeningPerHour;
+        public const double DustConversionsPerHour = InfinityBalance.DustConversionsPerHour, MerchantsPerHour = InfinityBalance.MerchantsPerHour;
+        public const int KillMixLesser = InfinityBalance.KillMixLesser;
+        public const int KillMixNormal = InfinityBalance.KillMixNormal;
+        public const int KillMixMiniBoss = InfinityBalance.KillMixMiniBoss;
+        public const int KillMixBoss = InfinityBalance.KillMixBoss;
+        public const double LesserTimeBurst = InfinityBalance.LesserTimeBurst;
+        public const double NormalTimeBurst = InfinityBalance.NormalTimeBurst;
+        public const double MiniBossTimeBurst = InfinityBalance.MiniBossTimeBurst;
+        public const double BossTimeBurst = InfinityBalance.BossTimeBurst;
+        public const double HighRareBurst = InfinityBalance.HighRareBurst;
+        public const double RelicsBurst = InfinityBalance.RelicsBurst;
+        public const double LegendaryBurst = InfinityBalance.LegendaryBurst;
+        public const double GuaranteeOpportunitiesBurst = InfinityBalance.GuaranteeOpportunitiesBurst;
+        public const double GuaranteedRelicsBurst = InfinityBalance.GuaranteedRelicsBurst;
+        public const double ShardsBurst = InfinityBalance.ShardsBurst;
+        public const double TuningBurst = InfinityBalance.TuningBurst;
+        public const double XpBurst = InfinityBalance.XpBurst;
+        public const double StarXpBurst = InfinityBalance.StarXpBurst;
+        public const double AwakeningBurst = InfinityBalance.AwakeningBurst;
+        public const double DustConversionsBurst = InfinityBalance.DustConversionsBurst;
+        public const double MerchantsBurst = InfinityBalance.MerchantsBurst;
+        public const double LesserRoomCap = InfinityBalance.LesserRoomCap;
+        public const double LesserRoomIncrement = InfinityBalance.LesserRoomIncrement;
+        public const double NormalRoomCap = InfinityBalance.NormalRoomCap;
+        public const double NormalRoomIncrement = InfinityBalance.NormalRoomIncrement;
+        public const double MiniBossRoomCap = InfinityBalance.MiniBossRoomCap;
+        public const double MiniBossRoomIncrement = InfinityBalance.MiniBossRoomIncrement;
+        public const double BossRoomCap = InfinityBalance.BossRoomCap;
+        public const double BossRoomIncrement = InfinityBalance.BossRoomIncrement;
         private static readonly double HighRarePerSecond = NormalHighRarePerHour(0) / 3600;
         private static readonly double LegendaryPerSecond = NormalLegendaryPerHour(0) / 3600;
         public static bool Active(Profile p) => p?.Run?.Infinity != null;
@@ -37,22 +65,22 @@ namespace SodRpg.Core.Game
         {
             if (!Active(p) || double.IsNaN(deltaSeconds) || double.IsInfinity(deltaSeconds) || deltaSeconds <= 0) return;
             var b = p.InfinityRewardBudget;
-            Refill(ref b.LesserTime, 200 / ReferenceSeconds, deltaSeconds, 10);
-            Refill(ref b.NormalTime, 160 / ReferenceSeconds, deltaSeconds, 8);
-            Refill(ref b.MiniBossTime, 5 / ReferenceSeconds, deltaSeconds, 1);
-            Refill(ref b.BossTime, 4 / ReferenceSeconds, deltaSeconds, 1);
-            Refill(ref b.HighRare, HighRarePerSecond, deltaSeconds, 7);
-            Refill(ref b.Relics, RelicsPerHour / 3600, deltaSeconds, 24);
-            Refill(ref b.Legendary, LegendaryPerSecond, deltaSeconds, 7);
-            Refill(ref b.GuaranteeOpportunities, GuaranteesPerHour / 3600, deltaSeconds, 1);
-            Refill(ref b.GuaranteedRelics, GuaranteesPerHour / 3600, deltaSeconds, 2);
-            Refill(ref b.Shards, ShardsPerHour / 3600, deltaSeconds, 30);
-            Refill(ref b.Tuning, TuningPerHour / 3600, deltaSeconds, 3);
-            Refill(ref b.Xp, XpPerHour / 3600, deltaSeconds, 50);
-            Refill(ref b.StarXp, StarXpPerHour / 3600, deltaSeconds, 20);
-            Refill(ref b.Awakening, AwakeningPerHour / 3600, deltaSeconds, 20);
-            Refill(ref b.DustConversions, DustConversionsPerHour / 3600, deltaSeconds, 1);
-            Refill(ref b.Merchants, MerchantsPerHour / 3600, deltaSeconds, 1);
+            Refill(ref b.LesserTime, KillMixLesser / ReferenceSeconds, deltaSeconds, LesserTimeBurst);
+            Refill(ref b.NormalTime, KillMixNormal / ReferenceSeconds, deltaSeconds, NormalTimeBurst);
+            Refill(ref b.MiniBossTime, KillMixMiniBoss / ReferenceSeconds, deltaSeconds, MiniBossTimeBurst);
+            Refill(ref b.BossTime, KillMixBoss / ReferenceSeconds, deltaSeconds, BossTimeBurst);
+            Refill(ref b.HighRare, HighRarePerSecond, deltaSeconds, HighRareBurst);
+            Refill(ref b.Relics, RelicsPerHour / 3600, deltaSeconds, RelicsBurst);
+            Refill(ref b.Legendary, LegendaryPerSecond, deltaSeconds, LegendaryBurst);
+            Refill(ref b.GuaranteeOpportunities, GuaranteesPerHour / 3600, deltaSeconds, GuaranteeOpportunitiesBurst);
+            Refill(ref b.GuaranteedRelics, GuaranteesPerHour / 3600, deltaSeconds, GuaranteedRelicsBurst);
+            Refill(ref b.Shards, ShardsPerHour / 3600, deltaSeconds, ShardsBurst);
+            Refill(ref b.Tuning, TuningPerHour / 3600, deltaSeconds, TuningBurst);
+            Refill(ref b.Xp, XpPerHour / 3600, deltaSeconds, XpBurst);
+            Refill(ref b.StarXp, StarXpPerHour / 3600, deltaSeconds, StarXpBurst);
+            Refill(ref b.Awakening, AwakeningPerHour / 3600, deltaSeconds, AwakeningBurst);
+            Refill(ref b.DustConversions, DustConversionsPerHour / 3600, deltaSeconds, DustConversionsBurst);
+            Refill(ref b.Merchants, MerchantsPerHour / 3600, deltaSeconds, MerchantsBurst);
         }
         /// <summary>Call once on authoritative entry to a new native Combat, never for a boss/revisit.</summary>
         public static void EnterRoom(Profile p, long graph, long roomEpoch)
@@ -61,10 +89,10 @@ namespace SodRpg.Core.Game
             var b = p.InfinityRewardBudget;
             if (b.RoomRunId == p.Run.RunId && (graph < b.RoomGraph || (graph == b.RoomGraph && roomEpoch <= b.RoomEpoch))) return;
             b.RoomRunId = p.Run.RunId; b.RoomGraph = graph; b.RoomEpoch = roomEpoch;
-            b.LesserRoom = Math.Min(10, b.LesserRoom + 5);
-            b.NormalRoom = Math.Min(8, b.NormalRoom + 4);
-            b.MiniBossRoom = Math.Min(1, b.MiniBossRoom + .125);
-            b.BossRoom = Math.Min(1, b.BossRoom + .1);
+            b.LesserRoom = Math.Min(LesserRoomCap, b.LesserRoom + LesserRoomIncrement);
+            b.NormalRoom = Math.Min(NormalRoomCap, b.NormalRoom + NormalRoomIncrement);
+            b.MiniBossRoom = Math.Min(MiniBossRoomCap, b.MiniBossRoom + MiniBossRoomIncrement);
+            b.BossRoom = Math.Min(BossRoomCap, b.BossRoom + BossRoomIncrement);
         }
         // Share the actual rarity weights with Loot; balance changes cannot silently stale the cap.
         private static double HighProbability(MonsterTier tier, double luck, Rarity floor, out double legendary)
@@ -79,10 +107,10 @@ namespace SodRpg.Core.Game
             double mini = HighProbability(MonsterTier.MiniBoss, luck + Loot.TierLuck(MonsterTier.MiniBoss), Rarity.Common, out double miniLegend);
             double boss = HighProbability(MonsterTier.Boss, luck + Loot.TierLuck(MonsterTier.Boss), Rarity.Uncommon, out double bossLegend);
             // No boss-set credit: most ordinary bosses have no registered set, unlike a repeated fixed Demon farm.
-            double ev = 200 * Loot.DropChance(MonsterTier.Lesser, 0) * (legendaryOnly ? lesserLegend : lesser)
-                + 160 * Loot.DropChance(MonsterTier.Normal, 0) * (legendaryOnly ? normalLegend : normal)
-                + 5 * Loot.DropChance(MonsterTier.MiniBoss, 0) * (legendaryOnly ? miniLegend : mini)
-                + 4 * Loot.DropChance(MonsterTier.Boss, 0) * (1 + Loot.BossExtraRelicChance) * (legendaryOnly ? bossLegend : boss);
+            double ev = KillMixLesser * Loot.DropChance(MonsterTier.Lesser, 0) * (legendaryOnly ? lesserLegend : lesser)
+                + KillMixNormal * Loot.DropChance(MonsterTier.Normal, 0) * (legendaryOnly ? normalLegend : normal)
+                + KillMixMiniBoss * Loot.DropChance(MonsterTier.MiniBoss, 0) * (legendaryOnly ? miniLegend : mini)
+                + KillMixBoss * Loot.DropChance(MonsterTier.Boss, 0) * (1 + Loot.BossExtraRelicChance) * (legendaryOnly ? bossLegend : boss);
             return ev * 3600 / ReferenceSeconds;
         }
         public static double ExpectedKillHighRareCost(RunState run, MonsterTier rollTier, int heat, Waypoint waypoint,
@@ -133,8 +161,8 @@ namespace SodRpg.Core.Game
         {
             bool allowed = CanChooseWaypoint(p, waypoint);
             int needed = waypoint == Waypoint.BossTribute ? 2 : 1;
-            reason = allowed ? null : Loc.T($"Infinityの保証予算が不足しています（必要枠{needed}、戦闘時間4時間につき1枠、初期枠なし）。",
-                $"Infinity guarantee budget is unavailable ({needed} credit(s) required, one per four combat hours, no initial credit).");
+            reason = allowed ? null : Loc.T($"Infinityの保証予算が不足しています（必要枠{needed}、戦闘1時間につき{GuaranteesPerHour}枠、初期枠なし）。",
+                $"Infinity guarantee budget is unavailable ({needed} credit(s) required, {GuaranteesPerHour} per combat hour, no initial credit).");
             return allowed;
         }
         /// <summary>Admit the entire random opportunity before any roll; never inspect a rolled rarity to limit EV.</summary>

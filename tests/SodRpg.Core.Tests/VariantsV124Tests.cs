@@ -33,13 +33,17 @@ namespace SodRpg.Core.Tests
         public void Variants_appear_from_depth_two_and_at_most_once_per_room()
         {
             var v = Variants.All[0];
-            Assert.Equal(0, Variants.Chance(1));
-            Assert.Equal(0.06, Variants.Chance(2), 3);
-            Assert.Equal(0.12, Variants.Chance(5), 3);
+            int minimum = MonsterBalanceTableTests.Int("variants", "MinDepth");
+            double baseline = MonsterBalanceTableTests.Double("variants", "BaseChance");
+            double perDepth = MonsterBalanceTableTests.Double("variants", "ChancePerDepth");
+            Assert.Equal(0, Variants.Chance(minimum - 1));
+            Assert.Equal(baseline, Variants.Chance(minimum), 3);
+            double expected = baseline + perDepth * (5 - minimum);
+            Assert.Equal(expected, Variants.Chance(5), 3);
             var rng = new Rng(9);
             int hits = 0;
             for (int i = 0; i < 5000; i++) if (Variants.Roll(rng, v.MonsterType, 5, false) != null) hits++;
-            Assert.InRange(hits / 5000.0, 0.09, 0.15);
+            Assert.InRange(hits / 5000.0, System.Math.Max(0, expected - 0.03), System.Math.Min(1, expected + 0.03));
             for (int i = 0; i < 200; i++) Assert.Null(Variants.Roll(rng, v.MonsterType, 5, true));
             Assert.Null(Variants.Roll(rng, "Mon_Unknown", 5, false));
         }
@@ -66,6 +70,7 @@ namespace SodRpg.Core.Tests
             {
                 var p = Profile.CreateNew(seed);
                 Rules.BeginRun(p, "Hero_A");
+                p.Run.Bounties.Clear();
                 Rules.OnKill(p, MonsterTier.Normal, 5, NightmareAffix.Ironclad);
                 return p.Run.SatchelShards;
             }
@@ -73,12 +78,18 @@ namespace SodRpg.Core.Tests
             {
                 var p = Profile.CreateNew(seed);
                 Rules.BeginRun(p, "Hero_A");
+                p.Run.Bounties.Clear();
                 Rules.OnKill(p, MonsterTier.Normal, 5, variantId: "var.shard_devourer");
                 return p.Run.SatchelShards;
             }
-            int a = 0, b = 0;
-            for (ulong s = 1; s <= 40; s++) { a += Normal(s); b += Devourer(s); }
-            Assert.True(b > a * 2, $"devourer {b} vs nightmare {a}");
+            int percent = MonsterBalanceTableTests.Int("variants", "DevourerShardBonusPct");
+            int bonus = MonsterBalanceTableTests.Int("variants", "BonusShards");
+            for (ulong s = 1; s <= 40; s++)
+            {
+                int normal = Normal(s);
+                int expected = percent == 100 ? normal : (int)System.Math.Min(int.MaxValue, (long)normal * percent / 100 + bonus);
+                Assert.Equal(expected, Devourer(s));
+            }
         }
     }
 }

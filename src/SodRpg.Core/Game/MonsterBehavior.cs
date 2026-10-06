@@ -4,22 +4,33 @@ namespace SodRpg.Core.Game
 {
     public static class MonsterBehavior
     {
-        public const float Range = 6f;
-        public const float InnerRange = 3f;
-        public const float AllyRadius = 5f;
-        public const float GuardReduction = 0.30f;
-        public const float MaxGuardReduction = 0.40f;
-        public const float BossGuardReduction = 0.20f;
-        public const float WarmupSeconds = 2f;
-        public const float PulseHalfPeriod = 3f;
-        public const float RecoverySeconds = 1.5f;
-        public const float HitSlowSeconds = 2f;
-        public const float HealDelaySeconds = 4f;
-        public const float HealPctPerSecond = 1f;
-        public const float HealBudgetPct = 10f;
-        public const float ShieldPct = 15f;
-        public const float ShieldSeconds = 6f;
-        public const float PhaseOpeningSeconds = 3f;
+        public const float Range = MonstersBalance.Range;
+        public const float InnerRange = MonstersBalance.InnerRange;
+        public const float AllyRadius = MonstersBalance.AllyRadius;
+        public const float GuardReduction = MonstersBalance.GuardReduction;
+        public const float MaxGuardReduction = MonstersBalance.MaxGuardReduction;
+        public const float BossGuardReduction = MonstersBalance.BossGuardReduction;
+        public const float WarmupSeconds = MonstersBalance.WarmupSeconds;
+        public const float PulseHalfPeriod = MonstersBalance.PulseHalfPeriod;
+        public const float RecoverySeconds = MonstersBalance.RecoverySeconds;
+        public const float HitSlowSeconds = MonstersBalance.HitSlowSeconds;
+        public const float HealDelaySeconds = MonstersBalance.HealDelaySeconds;
+        public const float HealPctPerSecond = MonstersBalance.HealPctPerSecond;
+        public const float HealBudgetPct = MonstersBalance.HealBudgetPct;
+        public const float ShieldPct = MonstersBalance.ShieldPct;
+        public const float ShieldSeconds = MonstersBalance.ShieldSeconds;
+        public const float PhaseOpeningSeconds = MonstersBalance.PhaseOpeningSeconds;
+
+        public const float OpeningIncomingMultiplier = MonstersBalance.OpeningIncomingMultiplier;
+        public const float FacingDot = MonstersBalance.FacingDot;
+        public const float HitMovementPct = MonstersBalance.HitMovementPct;
+        public const float UnhitMovementPct = MonstersBalance.UnhitMovementPct;
+        public const float LastStandHealthRatio = MonstersBalance.LastStandHealthRatio;
+        public const float FirstPhaseHealthRatio = MonstersBalance.FirstPhaseHealthRatio;
+        public const float SecondPhaseHealthRatio = MonstersBalance.SecondPhaseHealthRatio;
+
+        internal static string Number(decimal value) =>
+            value.ToString("0.######", System.Globalization.CultureInfo.InvariantCulture);
 
         public static bool PulseGuarded(float age) => age >= WarmupSeconds &&
             (age - WarmupSeconds) % (2f * PulseHalfPeriod) < PulseHalfPeriod;
@@ -27,13 +38,13 @@ namespace SodRpg.Core.Game
         public static float IncomingMultiplier(NightmareAffix affixes, float distance, float forwardDot,
             bool hasAlly, bool channeling, bool recovering, float age, bool boss, bool phaseOpening)
         {
-            if (phaseOpening || ((affixes & NightmareAffix.Committed) != 0 && recovering)) return 1.2f;
+            if (phaseOpening || ((affixes & NightmareAffix.Committed) != 0 && recovering)) return OpeningIncomingMultiplier;
             float reduction = 0f;
             if (distance >= 0f)
             {
                 if ((affixes & NightmareAffix.Veiled) != 0 && distance > Range) reduction += GuardReduction;
                 if ((affixes & NightmareAffix.Hollow) != 0 && distance < InnerRange) reduction += GuardReduction;
-                if ((affixes & NightmareAffix.Facing) != 0 && forwardDot >= 0.5f) reduction += GuardReduction;
+                if ((affixes & NightmareAffix.Facing) != 0 && forwardDot >= FacingDot) reduction += GuardReduction;
             }
             if ((affixes & NightmareAffix.Packbound) != 0 && hasAlly) reduction += GuardReduction;
             if ((affixes & NightmareAffix.Pulsing) != 0 && PulseGuarded(age)) reduction += GuardReduction;
@@ -42,7 +53,7 @@ namespace SodRpg.Core.Game
         }
 
         public static float MovementPct(NightmareAffix affixes, bool recentlyHit) =>
-            (affixes & NightmareAffix.Skittish) == 0 ? 0f : recentlyHit ? -15f : 20f;
+            (affixes & NightmareAffix.Skittish) == 0 ? 0f : recentlyHit ? HitMovementPct : UnhitMovementPct;
 
         public static float HealingPct(float quietSeconds, float elapsedSeconds, float remainingBudgetPct) =>
             quietSeconds >= HealDelaySeconds
@@ -50,27 +61,27 @@ namespace SodRpg.Core.Game
                 : 0f;
 
         public static bool ShouldWarnLastStand(NightmareAffix affixes, float healthRatio, bool alreadyWarned) =>
-            (affixes & NightmareAffix.LastStand) != 0 && healthRatio <= 0.35f && !alreadyWarned;
+            (affixes & NightmareAffix.LastStand) != 0 && healthRatio <= LastStandHealthRatio && !alreadyWarned;
 
         public static int CrossedHealthPhases(float previousRatio, float currentRatio)
         {
             if (currentRatio >= previousRatio) return 0;
             int phases = 0;
-            if (previousRatio > 0.70f && currentRatio <= 0.70f) phases |= 1;
-            if (previousRatio > 0.40f && currentRatio <= 0.40f) phases |= 2;
+            if (previousRatio > FirstPhaseHealthRatio && currentRatio <= FirstPhaseHealthRatio) phases |= 1;
+            if (previousRatio > SecondPhaseHealthRatio && currentRatio <= SecondPhaseHealthRatio) phases |= 2;
             return phases;
         }
 
         // ─── 変種の弱点・耐性（v1.29 wave 2）───
 
-        /// <summary>属性弱点で受けるダメージの上乗せ（+30%）。悪夢の軽減とは別の層。</summary>
-        public const float WeaknessTakenBonus = 0.30f;
-        /// <summary>耐性（Armored/Spellward）の上限。−30%で止まり、どの型も無効化しない。</summary>
-        public const float MaxTagResistance = 0.30f;
-        /// <summary>ShieldBreaker/SummonHunter が対象へ与えるダメージの上乗せ（+50%）。</summary>
-        public const float TagHunterDealtBonus = 0.50f;
+        /// <summary>属性弱点で受けるダメージの上乗せ。悪夢の軽減とは別の層。</summary>
+        public const float WeaknessTakenBonus = MonstersBalance.WeaknessTakenBonus;
+        /// <summary>耐性（Armored/Spellward）の上限。どの型も無効化しない。</summary>
+        public const float MaxTagResistance = MonstersBalance.MaxTagResistance;
+        /// <summary>ShieldBreaker/SummonHunter が対象へ与えるダメージの上乗せ。</summary>
+        public const float TagHunterDealtBonus = MonstersBalance.TagHunterDealtBonus;
         /// <summary>LightEater が効果を出す光スタック数。スタックは決して消費しない。</summary>
-        public const int LightEaterMinStacks = 3;
+        public const int LightEaterMinStacks = MonstersBalance.LightEaterMinStacks;
 
         /// <summary>
         /// 変種の弱点・耐性の、受けるダメージ倍率。
@@ -98,7 +109,7 @@ namespace SodRpg.Core.Game
             return 1f + bonus - Math.Min(resistance, MaxTagResistance);
         }
 
-        /// <summary>ShieldBreaker/SummonHunter が与えるダメージの倍率（障壁持ち・召喚獣への +50%）。</summary>
+        /// <summary>ShieldBreaker/SummonHunter が障壁持ち・召喚獣へ与えるダメージの倍率。</summary>
         public static float WeaknessDealtMultiplier(VariantTag tags, bool targetShielded, bool targetIsSummon)
         {
             if (tags == VariantTag.None) return 1f;

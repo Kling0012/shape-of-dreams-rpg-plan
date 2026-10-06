@@ -389,7 +389,7 @@ namespace SodRpg.Mod
                     .Append(infinity.ClearedCombatTotal).Append(Loc.T("部屋 · 周期 ", " rooms · cycle "))
                     .Append(infinity.ClearsInCycle).Append('/').Append(infinity.Interval)
                     .Append(Loc.T(" · 圧段階 ", " · pressure stage ")).Append(infinity.PressureStage);
-                if (infinity.PressureStage == 100) sb.Append(Loc.T("（上限）", " (cap)"));
+                if (infinity.PressureStage == InfinityRunState.MaximumPressureStage) sb.Append(Loc.T("（上限）", " (cap)"));
                 sb.Append("</size>");
                 // #144: host/solo judge only their own Infinity availability; participants wait
                 // for the host's answer instead of being told "disabled" without a reason.
@@ -773,7 +773,7 @@ namespace SodRpg.Mod
             GUILayout.BeginHorizontal();
             GUILayout.Label(Loc.T("夢の深さ", "Dream depth"), _st.Label, GUILayout.Width(110));
             GUI.enabled = _s.CanChooseDepth;
-            for (int i = 0; i < DepthLabels.Length; i++)
+            for (int i = 0; i <= DreamDepth.Maximum; i++)
                 if (GUILayout.Button(DepthLabels[i], depth == i ? _st.TabSel : _st.Tab, GUILayout.Width(36)))
                     SetStatus(_s.ChooseDreamDepth(i));
             GUI.enabled = true;
@@ -787,8 +787,8 @@ namespace SodRpg.Mod
                 $"Enemy HP ×{DreamDepth.HealthMultiplier(depth):0.00} · enemy damage ×{DreamDepth.DamageMultiplier(depth):0.00} · better relics +{Loot.LuckPercent(DreamDepth.RarityLuck(depth)):0}% · awakening ×{DreamDepth.AwakeningMultiplier(depth):0.00} · star XP ×{DreamDepth.StarXpMultiplier(depth):0.00} · Rooms +{DreamDepth.ExtraZoneNodes(depth)}"), _st.Small);
         }
 
-        private static readonly int[] InfinityIntervals = { 10, 15, 20 };
-        private static readonly string[] InfinityIntervalLabels = { "10", "15", "20" };
+        private static readonly int[] InfinityIntervals = { InfinityRunState.ShortInterval, InfinityRunState.MiddleInterval, InfinityRunState.LongInterval };
+        private static readonly string[] InfinityIntervalLabels = Array.ConvertAll(InfinityIntervals, interval => interval.ToString(System.Globalization.CultureInfo.InvariantCulture));
 
         private void DrawInfinityChoice()
         {
@@ -2951,8 +2951,8 @@ namespace SodRpg.Mod
 
         private void DrawInfinityCaps()
         {
-            GUILayout.Label(Loc.T("報酬上限：部屋ごとの撃破機会50%＋実戦闘時間予算。戦闘1時間あたり無料遺物24個、Epic以上の保証は別枠0.25個。待機・休止・ロード・再接続では補充しません。",
-                "Reward caps: 50% kill opportunities per room plus combat-time budgets. Free relics: 24/combat hour; Epic+ guarantees: a separate 0.25/combat hour. Idle, pause, loading and reconnecting do not refill budgets."), _st.Small);
+            GUILayout.Label(Loc.T($"報酬上限：部屋ごとの撃破機会予算＋実戦闘時間予算。戦闘1時間あたり無料遺物{InfinityRewards.RelicsPerHour}個、Epic以上の保証は別枠{InfinityRewards.GuaranteesPerHour}個。待機・休止・ロード・再接続では補充しません。",
+                $"Reward caps: per-room kill opportunity budgets plus combat-time budgets. Free relics: {InfinityRewards.RelicsPerHour}/combat hour; Epic+ guarantees: a separate {InfinityRewards.GuaranteesPerHour}/combat hour. Idle, pause, loading and reconnecting do not refill budgets."), _st.Small);
             GUILayout.Label(Loc.T("欠片・調律石・夢XP・星XP・覚醒・換金機会にも上限があります。Heatボーナスと満杯時の欠片化も対象です。支払済みの対価・旧所持品の回収・有償製作は無料供給と別扱いです。",
                 "Shards, tuning, Dream XP, Star XP, awakening and exchange opportunities are capped too, including Heat bonuses and overflow conversion. Paid rewards, recovered existing items and paid crafting are separate from free supply."), _st.Small);
             GUILayout.Label(Loc.T("インフィニティ中のMOD追加ゴールド／ダストボーナスは0です。本体の基本収入は変更せず、旧資産を使う有償取得も含めた総取得量の上限ではありません。",
@@ -2993,12 +2993,12 @@ namespace SodRpg.Mod
                 string zone = InfinitySettingName(record.FixedZoneId, false);
                 string difficulty = InfinitySettingName(record.DifficultyId, true);
                 text.Append(Loc.T(
-                    $"<b>{zone} · {difficulty}</b>　周期{record.Interval}部屋 · 夢の深さ{record.DreamDepth}\n最高帰還：累計{record.BestReturnedRooms}部屋 · 圧段階{record.PressureAtBestReturn}/100　帰還{record.ReturnCount}回",
-                    $"<b>{zone} · {difficulty}</b>  Interval {record.Interval} rooms · Dream Depth {record.DreamDepth}\nBest return: {record.BestReturnedRooms} cumulative rooms · pressure {record.PressureAtBestReturn}/100  Returns {record.ReturnCount}"));
+                    $"<b>{zone} · {difficulty}</b>　周期{record.Interval}部屋 · 夢の深さ{record.DreamDepth}\n最高帰還：累計{record.BestReturnedRooms}部屋 · 圧段階{record.PressureAtBestReturn}/{InfinityRunState.MaximumPressureStage}　帰還{record.ReturnCount}回",
+                    $"<b>{zone} · {difficulty}</b>  Interval {record.Interval} rooms · Dream Depth {record.DreamDepth}\nBest return: {record.BestReturnedRooms} cumulative rooms · pressure {record.PressureAtBestReturn}/{InfinityRunState.MaximumPressureStage}  Returns {record.ReturnCount}"));
                 if (record.LastReturnedRooms.HasValue)
                     text.Append(Loc.T(
-                        $"\n直近の帰還：累計{record.LastReturnedRooms.Value}部屋 · 圧段階{record.LastPressure.Value}/100",
-                        $"\nLast return: {record.LastReturnedRooms.Value} cumulative rooms · pressure {record.LastPressure.Value}/100"));
+                        $"\n直近の帰還：累計{record.LastReturnedRooms.Value}部屋 · 圧段階{record.LastPressure.Value}/{InfinityRunState.MaximumPressureStage}",
+                        $"\nLast return: {record.LastReturnedRooms.Value} cumulative rooms · pressure {record.LastPressure.Value}/{InfinityRunState.MaximumPressureStage}"));
             }
             _infinityRecordsText = text.ToString();
         }

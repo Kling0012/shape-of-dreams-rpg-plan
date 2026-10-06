@@ -134,6 +134,162 @@ internal static class Metrics
         metrics = entries.Select(e => new StarEfficiencyMetricValue(e.Id, e.Label, e.Value, e.Unit)).ToArray(),
     });
 
+    public static void WritePressure(string path, IReadOnlyList<QuantityMetricValue> entries) => Write(path, new
+    {
+        modelVersion = 1, mode = "pressure", contentFingerprint = ContentFingerprint.Value,
+        conditions = new
+        {
+            runtime = RuntimeIdentity(), registeredHeroes = RegisteredHeroes(),
+            dreamLevels = PressureReport.DreamLevels, spentPoints = PressureReport.SpentPoints,
+            depths = PressureReport.Depths, infinityStages = PressureReport.InfinityStages,
+            waypoints = PressureReport.WaypointAxis.Select(w => w.ToString()).ToArray(),
+            policy = PressureReport.Policy,
+            enemyPolicy = "delve heat 0..5; eligible enemy; no existing room variant; each nightmare affix independently",
+            statsPolicy = "display units; sum repeated stat lines; absent stats omitted, not zero; appearance excluded",
+            variantProfiles = Variants.All.OrderBy(v => v.Id, StringComparer.Ordinal).Select(v => new
+                { v.Id, v.MonsterType, affixes = v.Affixes.ToString(), traits = v.Traits.ToString(), tags = v.Tags.ToString() }).ToArray(),
+        },
+        metrics = entries,
+    });
+
+    public static void WriteInfinity(string path, Options options, InfinitySimulation simulation)
+    {
+        var metrics = new List<QuantityMetricValue>();
+        void Add(string id, string label, double value, string unit) => metrics.Add(new(id, label, value, unit));
+        Add("infinity/parameters/defaultInterval", "Default boss interval", InfinityRunState.DefaultInterval, "rooms");
+        Add("infinity/parameters/shortInterval", "Short boss interval", InfinityRunState.ShortInterval, "rooms");
+        Add("infinity/parameters/middleInterval", "Middle boss interval", InfinityRunState.MiddleInterval, "rooms");
+        Add("infinity/parameters/longInterval", "Long boss interval", InfinityRunState.LongInterval, "rooms");
+        Add("infinity/parameters/maximumPressureStage", "Maximum pressure stage", InfinityRunState.MaximumPressureStage, "stages");
+        Add("infinity/parameters/referenceSeconds", "Ordinary reference duration", InfinityRewards.ReferenceSeconds, "seconds");
+        Add("infinity/parameters/killMix/lesser", "Reference Lesser kill mix", InfinityRewards.KillMixLesser, "kills/reference");
+        Add("infinity/parameters/killMix/normal", "Reference Normal kill mix", InfinityRewards.KillMixNormal, "kills/reference");
+        Add("infinity/parameters/killMix/miniBoss", "Reference MiniBoss kill mix", InfinityRewards.KillMixMiniBoss, "kills/reference");
+        Add("infinity/parameters/killMix/boss", "Reference Boss kill mix", InfinityRewards.KillMixBoss, "kills/reference");
+        Add("infinity/parameters/burst/lesserTime", "Lesser time-credit burst", InfinityRewards.LesserTimeBurst, "kills");
+        Add("infinity/parameters/burst/normalTime", "Normal time-credit burst", InfinityRewards.NormalTimeBurst, "kills");
+        Add("infinity/parameters/burst/miniBossTime", "MiniBoss time-credit burst", InfinityRewards.MiniBossTimeBurst, "kills");
+        Add("infinity/parameters/burst/bossTime", "Boss time-credit burst", InfinityRewards.BossTimeBurst, "kills");
+        Add("infinity/parameters/burst/highRare", "Random Epic+ EV burst", InfinityRewards.HighRareBurst, "expected-relics");
+        Add("infinity/parameters/burst/relics", "Free relic-output burst", InfinityRewards.RelicsBurst, "credits");
+        Add("infinity/parameters/burst/legendary", "Random Legendary EV burst", InfinityRewards.LegendaryBurst, "expected-relics");
+        Add("infinity/parameters/burst/guaranteeOpportunities", "Guarantee opportunity burst", InfinityRewards.GuaranteeOpportunitiesBurst, "opportunities");
+        Add("infinity/parameters/burst/guaranteedRelics", "Guaranteed output burst", InfinityRewards.GuaranteedRelicsBurst, "credits");
+        Add("infinity/parameters/burst/shards", "Shard credit burst", InfinityRewards.ShardsBurst, "shards");
+        Add("infinity/parameters/burst/tuning", "Tuning credit burst", InfinityRewards.TuningBurst, "tuning");
+        Add("infinity/parameters/burst/dreamXp", "Dream XP credit burst", InfinityRewards.XpBurst, "xp");
+        Add("infinity/parameters/burst/starXp", "Star XP credit burst", InfinityRewards.StarXpBurst, "xp");
+        Add("infinity/parameters/burst/awakening", "Awakening credit burst", InfinityRewards.AwakeningBurst, "awakening");
+        Add("infinity/parameters/burst/dustConversions", "Dust-conversion credit burst", InfinityRewards.DustConversionsBurst, "opportunities");
+        Add("infinity/parameters/burst/merchants", "Merchant credit burst", InfinityRewards.MerchantsBurst, "opportunities");
+        Add("infinity/parameters/room/lesserCap", "Lesser room-credit cap", InfinityRewards.LesserRoomCap, "kills");
+        Add("infinity/parameters/room/lesserIncrement", "Lesser room-credit increment", InfinityRewards.LesserRoomIncrement, "kills/room");
+        Add("infinity/parameters/room/normalCap", "Normal room-credit cap", InfinityRewards.NormalRoomCap, "kills");
+        Add("infinity/parameters/room/normalIncrement", "Normal room-credit increment", InfinityRewards.NormalRoomIncrement, "kills/room");
+        Add("infinity/parameters/room/miniBossCap", "MiniBoss room-credit cap", InfinityRewards.MiniBossRoomCap, "kills");
+        Add("infinity/parameters/room/miniBossIncrement", "MiniBoss room-credit increment", InfinityRewards.MiniBossRoomIncrement, "kills/room");
+        Add("infinity/parameters/room/bossCap", "Boss room-credit cap", InfinityRewards.BossRoomCap, "kills");
+        Add("infinity/parameters/room/bossIncrement", "Boss room-credit increment", InfinityRewards.BossRoomIncrement, "kills/room");
+        foreach (int depth in new[] { 0, 5 })
+        {
+            string id = $"infinity/budget/depth/{depth}";
+            Add(id + "/normalEpicPlus", $"Normal depth{depth} non-set Epic+ budget/hour",
+                InfinityRewards.NormalHighRarePerHour(depth), "expected-relics/hour");
+            Add(id + "/normalLegendary", $"Normal depth{depth} non-set Legendary budget/hour",
+                InfinityRewards.NormalLegendaryPerHour(depth), "expected-relics/hour");
+            Add(id + "/infinityEpicPlus", $"Infinity depth{depth} Epic+ authorization/hour",
+                InfinityRewards.NormalHighRarePerHour(0), "expected-relics/hour");
+            Add(id + "/infinityLegendary", $"Infinity depth{depth} Legendary authorization/hour",
+                InfinityRewards.NormalLegendaryPerHour(0), "expected-relics/hour");
+        }
+        Add("infinity/budget/relics", "Free relic authorization/hour", InfinityRewards.RelicsPerHour, "relics/hour");
+        Add("infinity/budget/guarantees", "Guaranteed output authorization/hour", InfinityRewards.GuaranteesPerHour, "credits/hour");
+        Add("infinity/budget/shards", "Shard authorization/hour", InfinityRewards.ShardsPerHour, "shards/hour");
+        Add("infinity/budget/tuning", "Tuning authorization/hour", InfinityRewards.TuningPerHour, "tuning/hour");
+        Add("infinity/budget/dreamXp", "Dream XP authorization/hour", InfinityRewards.XpPerHour, "xp/hour");
+        Add("infinity/budget/starXp", "Star XP authorization/hour", InfinityRewards.StarXpPerHour, "xp/hour");
+        Add("infinity/budget/awakening", "Awakening authorization/hour", InfinityRewards.AwakeningPerHour, "awakening/hour");
+        Add("infinity/budget/merchants", "Merchant authorization/hour", InfinityRewards.MerchantsPerHour, "opportunities/hour");
+        Add("infinity/budget/dustConversions", "Dust conversion authorization/hour", InfinityRewards.DustConversionsPerHour, "opportunities/hour");
+        foreach (var row in simulation.Rows)
+        {
+            string id = $"infinity/session/{row.ScenarioKey}/{row.IntervalKey}/{row.Minutes}";
+            string label = $"{row.Scenario} interval={row.Interval} minutes={row.Minutes}";
+            void Total(string key, double value, string unit) => Add(id + "/" + key, label + " " + key, value, unit);
+            void Supply(string key, double value, string unit)
+            {
+                Total(key, value, unit);
+                Add(id + "/" + key + "PerHour", label + " " + key + "/hour", value / row.Hours, unit + "/hour");
+            }
+            Total("interval", row.Interval, "rooms");
+            Total("exposureHours", row.Hours, "profile-hours");
+            Total("combatSeconds", row.CombatSeconds, "profile-seconds");
+            Total("rooms", row.Rooms, "rooms");
+            Total("bosses", row.Bosses, "kills");
+            Total("nightmares", row.Nightmares, "kills");
+            Total("attemptedKills", row.Attempts, "kills");
+            Supply("relics", row.Relics, "relics");
+            Supply("epic", row.Epic, "relics");
+            Supply("epicPlus", row.Epic + row.Legendary, "relics");
+            Supply("legendary", row.Legendary, "relics");
+            Supply("bossSets", row.BossSet, "relics");
+            Supply("shards", row.Shards, "shards");
+            Supply("tuning", row.Tuning, "tuning");
+            Supply("dreamXp", row.DreamXp, "xp");
+            Supply("starXp", row.StarXp, "xp");
+            Supply("awakening", row.Awakening, "awakening");
+            Total("peakHeat", row.PeakHeat, "heat");
+            Total("pressureStage", row.Pressure, "stages");
+            if (row.Interval == 0) continue; // Ordinary kills have no Infinity authorization ledger.
+            Supply("acceptedKills", row.Accepted, "kills");
+            Supply("rejectedKills", row.Rejected, "kills");
+            Supply("highRareReserved", row.HighRareSpent, "expected-relics");
+            Supply("legendaryReserved", row.LegendarySpent, "expected-relics");
+            Supply("outputReserved", row.OutputReserved, "credits");
+            Supply("guaranteedReserved", row.Guaranteed, "credits");
+            Supply("guaranteeOpportunitiesReserved", row.GuaranteeOpportunities, "opportunities");
+        }
+        Write(path, new
+        {
+            modelVersion = 1, mode = "infinity", contentFingerprint = ContentFingerprint.Value,
+            conditions = new
+            {
+                runtime = RuntimeIdentity(), registeredHeroes = RegisteredHeroes(),
+                options.Players, seed = options.Seed.ToString(CultureInfo.InvariantCulture), options.ItemLevel,
+                options.InfinityScope,
+                hero = InfinitySimulation.Hero, nativeZone = "Zone_Forest", difficulty = "diffNormal",
+                bossType = simulation.BossTypeName, nativeBossNightmare = false,
+                encounterModel = new
+                {
+                    nodeSeconds = InfinitySimulation.NodeSeconds,
+                    combatRoomsPerZone = InfinitySimulation.NormalCombatRoomsPerZone,
+                    zonesPerNormalRun = InfinitySimulation.NormalZonesPerRun,
+                    lesserPerRoom = InfinitySimulation.LesserPerRoom, normalPerRoom = InfinitySimulation.NormalPerRoom,
+                    miniBossChance = InfinitySimulation.MiniBossChance,
+                    normalBossSetPolicy = "first boss registered, other three unregistered; infinity all registered",
+                    timePolicy = "all session time is active combat; partial encounters refill but do not reward an incomplete kill",
+                    initialState = "fresh zero-credit profile per row/player; one equipped existing relic, excluded from new supply; no allocated stars",
+                    rngPolicy = "same Core seed stream reset per row; encounter/equipment seeds drawn independently",
+                    transitionPolicy = "normal secure each zone, victory after four zones; infinity real boss/soul/choice/Delve, fixed waypoint restored",
+                    rewardsPolicy = "actual Drop events including overflow; boss sets subset of Legendary; held and secured resources included; no forced final return",
+                    exclusions = "no travel, idle, paid merchant/events, crafting, old-item recovery, discretionary bounty; no winrate or measured clear speed",
+                    fundedBoss = "default-interval room entries sharing2700 combat seconds without admissions, then one registered Boss over5400 seconds; default interval is current Core content",
+                    epicMirage = "300 minute 4x session at current Core default interval, depth0",
+                },
+                sessions = simulation.Rows.Select(r => new
+                {
+                    r.ScenarioKey, r.Minutes, r.IntervalKey, r.Speed, r.Depth, r.NightmareMultiplier,
+                    waypoint = r.Waypoint.ToString(),
+                }).ToArray(),
+                budgetPolicy = "Core normal non-set lower reference; infinity always depth0; expectation authorization, not finite-sample bound",
+            },
+            metrics,
+            resolvedIntervals = simulation.Rows.Select(r => new { r.ScenarioKey, r.Minutes, r.IntervalKey, r.Interval }).ToArray(),
+            persistenceObservation = simulation.PersistenceObservation,
+            persistenceNotes = simulation.PersistenceNotes,
+        });
+    }
+
     public static void WriteV132Stars(string path, Options options, IReadOnlyList<EconomyResult> economy,
         IReadOnlyList<GrowthResult> growth, IReadOnlyList<GrowthResult> sensitivity)
     {
@@ -291,6 +447,7 @@ internal static class Metrics
         version = Environment.Version.ToString(),
         os = RuntimeInformation.OSDescription,
         processArchitecture = RuntimeInformation.ProcessArchitecture.ToString(),
+        rollForward = Environment.GetEnvironmentVariable("DOTNET_ROLL_FORWARD"),
     };
 
     private static string[] RegisteredHeroes() => HeroSigils.All
