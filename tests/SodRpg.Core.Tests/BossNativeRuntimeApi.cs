@@ -17,6 +17,15 @@ namespace HarmonyLib
     {
         public static IEnumerable<KeyValuePair<OpCode, object>> ReadMethodBody(MethodBase method)
         {
+            // #247 double: shipped Dew.Contents stub bodies (code = single ret with the
+            // original fat-header exception table still present) make Harmony's
+            // MethodBodyReader throw before producing any instruction.
+            if (method?.DeclaringType == typeof(global::SodRpg.Mod.Ai_R_BrokenStubBody))
+                throw new ArgumentOutOfRangeException("offset", 78, "Instruction offset 78 is outside valid range 0 - 0");
+            return ReadBody(method);
+        }
+        private static IEnumerable<KeyValuePair<OpCode, object>> ReadBody(MethodBase method)
+        {
             if (method == null) yield break;
             var body = method.GetMethodBody();
             if (body == null) yield break;
@@ -313,6 +322,13 @@ namespace SodRpg.Mod
     {
         public bool isRight;
         public CastInfo info = new CastInfo();
+    }
+
+    // #247 double for one of the shipped Dew.Contents stub methods (e.g. Ai_R_Fireball.Explode):
+    // an Actor method whose body Harmony cannot decode during the movement-source scan.
+    internal sealed class Ai_R_BrokenStubBody : Actor
+    {
+        public void Explode() { }
     }
 
     internal sealed partial class ZoneManager { public Room currentRoom = new Room(); public bool isInAnyTransition; public int currentRoomIndex; }

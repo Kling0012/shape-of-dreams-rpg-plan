@@ -255,5 +255,22 @@ namespace SodRpg.Core.Tests
             Assert.Single(live);
             Assert.Equal(-50f, live[0].strength);
         }
+
+        // #247: shipped Dew.Contents actor methods stubbed to `ret` keep stale fat-header
+        // exception tables; Harmony's body reader throws on them and the movement-source
+        // target scan used to abort, skipping the whole patch class at startup.
+        [Fact]
+        public void Movement_source_targets_survive_an_undecodable_native_body()
+        {
+            var factory = typeof(SodRpg.Mod.BossNativeMovementSource).GetMethod("TargetMethods",
+                BindingFlags.NonPublic | BindingFlags.Static, null, Type.EmptyTypes, null);
+            var targets = ((IEnumerable<MethodBase>)factory.Invoke(null, null)).ToList();
+
+            Assert.Contains(targets, m => m.DeclaringType == typeof(SodRpg.Mod.Actor) && m.Name == "LogicUpdate");
+            Assert.Contains(targets, m => m.DeclaringType == typeof(SodRpg.Mod.Actor) && m.Name == "FrameUpdate");
+            Assert.Contains(targets, m => m.DeclaringType == typeof(SodRpg.Mod.Actor) && m.Name == "InvokeOnCreateIfDidnt");
+            // The undecodable stub body itself is not a movement caller and is skipped, not patched.
+            Assert.DoesNotContain(targets, m => m.DeclaringType == typeof(SodRpg.Mod.Ai_R_BrokenStubBody));
+        }
     }
 }

@@ -384,7 +384,7 @@ namespace SodRpg.Mod
                 catch (Exception ex)
                 {
                     skipped.Add(type.FullName);
-                    Log.Warn("Patch class skipped: " + type.FullName + ": " + ex);
+                    Log.Warn("Patch class skipped: " + type.FullName + ": " + ex.Message);
                     if (hunter)
                         InfinityMode.DisableHunterAdjustment("Hunter patch installation failed: " + type.FullName + ": " + ex.Message);
                     if (infinity)

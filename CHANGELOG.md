@@ -8,6 +8,8 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
+- 起動ログに出ていたボス移動パッチの例外を止め、ボスセットの移動トリガー（ポラリスの踏みつけなど）が機能しないままだった問題を修正しました。 / Fixed the boss movement patch class being skipped at startup with an exception, which had silently disabled boss-set movement triggers such as Polaris stomps. (#247)
+
 ---
 
 ## v2.7.1 — 読み込みと保存の軽量化（2026-10-06）
