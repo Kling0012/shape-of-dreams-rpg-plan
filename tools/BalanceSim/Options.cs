@@ -24,6 +24,7 @@ public sealed class Options
     public bool Help { get; private set; }
     public string Mode { get; internal set; } = "expeditions";
     public int DreamLevel { get; private set; } = Content.MaxDreamLevel;
+    public int StarMaxPoints { get; private set; } = StarProgression.MaxPoints;
     public bool Stars => Mode == "stars";
     public bool Sets => Mode == "sets";
     public bool V132Stars => Mode == "v132stars";
@@ -84,6 +85,11 @@ public sealed class Options
                     if (o.DreamLevel > Content.MaxDreamLevel)
                         throw new ArgumentException($"--dream-level は 1〜{Content.MaxDreamLevel} です。");
                     break;
+                case "--star-max-points":
+                    o.StarMaxPoints = Integer(key, value, 50);
+                    if (!StarBalance.Checkpoints.Contains(o.StarMaxPoints))
+                        throw new ArgumentException("--star-max-points は 50〜500 の50刻みです。");
+                    break;
                 default: throw new ArgumentException($"未知の引数: {key}");
             }
         }
@@ -100,6 +106,7 @@ public sealed class Options
         Runs = Runs, Players = Players, Seed = Seed, Zones = Zones, Rooms = Rooms, Lesser = Lesser, Normal = Normal,
         MiniBoss = MiniBoss, Bosses = Bosses, Policy = Policy, Wipe = Wipe, Bounty = Bounty, ItemLevel = ItemLevel,
         ItemLevelPerZone = ItemLevelPerZone, Out = Out, MetricsJson = MetricsJson, Mode = Mode, DreamLevel = DreamLevel,
+        StarMaxPoints = StarMaxPoints,
     };
 
     private static int Integer(string key, string value, int min)
@@ -135,6 +142,7 @@ public sealed class Options
           --item-level 1     最初のゾーンのアイテムレベル
           --item-level-per-zone 1  次のゾーンで増えるアイテムレベル
           --mode expeditions  expeditions / stars / sets / v132stars / infinity / forge / star-efficiency
+          --star-max-points 500  stars の最終節目（50〜500、50刻み。軽量実行は50）
           --out <path>       標準出力に加えてUTF-8のMarkdownファイルに保存
           --metrics-json <path>  expeditions / forge / star-efficiency の生データと未丸め集計をJSONに保存
           --help             この説明を表示

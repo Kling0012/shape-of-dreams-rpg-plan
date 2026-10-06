@@ -13,7 +13,7 @@ internal static class StarReport
         text.AppendLine();
         text.AppendLine("## 条件と仮定");
         text.AppendLine();
-        text.AppendLine($"- 新規プロフィールに星経験 StarProgression.TotalXpForPoints({StarProgression.MaxPoints}) を与え（ポイント {StarProgression.MaxPoints}、図鑑ボーナスなし）、節目 {string.Join("/", StarBalance.Checkpoints.Select(Culture))} まで `Rules.AddTalentRank` / `Rules.SetKeystone` で実際に購入します。計算はすべて `Build.Compute` の実経路です。");
+        text.AppendLine($"- 新規プロフィールに星経験 StarProgression.TotalXpForPoints({StarProgression.MaxPoints}) を与え（ポイント {StarProgression.MaxPoints}、図鑑ボーナスなし）、節目 {string.Join("/", sim.Checkpoints.Select(Culture))} まで `Rules.AddTalentRank` / `Rules.SetKeystone` で実際に購入します。計算はすべて `Build.Compute` の実経路です。");
         text.AppendLine($"- ツリーは実行時に登録されているもの（`HeroSigils.TreeFor`）をそのまま使い、authored 星群の追加・差し替えにコードの変更は要りません。対象は HeroStarRoutes に現れる旅人 {sim.Heroes.Count} 人（{string.Join("・", sim.Heroes.Select(HeroName))}）。");
         text.AppendLine($"- 熟練度は最初から満タン（撃破数 1,000,000 → Mastery.Level=10、核の前提 HeroSigils.KeystoneMastery={HeroSigils.KeystoneMastery} を充足）。星の払い戻しはせず、節目をまたいで同じ割り振りを続けます。");
         text.AppendLine($"- 夢のレベルは入力仮定 --dream-level={o.DreamLevel}（上限 {Content.MaxDreamLevel}）。500ポイント（星経験 776,500）に要する遊戯量を考えると、終盤の節目では夢レベルが天井に張り付く想定です。");
@@ -21,6 +21,8 @@ internal static class StarReport
         text.AppendLine("- 力の代理値（プロキシ）は本体が悪夢化抽選の強さに使う式（攻撃力%か魔力%の大きい方＋最大HP%の半分）をクランプ前のまま使います。戦闘の出力ではありません。仕掛け・連携・固有効果は条件付きのまま Host へ渡されるため、件数（効果の幅）のみ別掲します。");
         text.AppendLine("- 夢の圧は `DreamPressure.ForPlayer(夢Lv, 使用ポイント).WithRunModifiers(深度)` の実式、深度の効果は `DreamDepth` / `Nightmares` の実式です。ゲームの定数は一切変更していません。");
         text.AppendLine("- 乱数を使わない決定的なシミュレーションです（--seed は使いません）。");
+        if (o.StarMaxPoints < StarProgression.MaxPoints)
+            text.AppendLine($"- 軽量実行（--star-max-points={o.StarMaxPoints}）：購入手順は通常実行と同じですが、この節目で停止します。以降の節目は未測定です。");
         text.AppendLine($"- シミュレーション実行時間（レポート整形・ファイル書込・ビルドを除く）：{elapsed.TotalSeconds.ToString("0.000", CultureInfo.InvariantCulture)} 秒。");
         text.AppendLine();
 
@@ -67,7 +69,7 @@ internal static class StarReport
             text.AppendLine("| 節目 | 平均プロキシ | 前節目比 | 平均残ポイント |");
             text.AppendLine("| --- | ---: | ---: | ---: |");
             double previous = 0;
-            foreach (int target in StarBalance.Checkpoints)
+            foreach (int target in sim.Checkpoints)
             {
                 double average = rows.Select(r => r.Checkpoints.First(c => c.Target == target).Proxy).Average();
                 double unspent = rows.Select(r => r.Checkpoints.First(c => c.Target == target).Unspent).Average();
@@ -85,7 +87,7 @@ internal static class StarReport
         text.AppendLine();
         text.AppendLine("| 節目 | 必要星XP | 換算確保数 | 深度0 | 深度1 | 深度2 | 深度3 | 深度4 | 深度5 |");
         text.AppendLine("| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |");
-        foreach (int points in StarBalance.Checkpoints)
+        foreach (int points in sim.Checkpoints)
         {
             var row = new StringBuilder($"| {points} | {StarProgression.TotalXpForPoints(points)} | {StarProgression.TotalXpForPoints(points) / StarProgression.SecureXp} ");
             for (int depth = 0; depth <= DreamDepth.Maximum; depth++)
@@ -98,7 +100,7 @@ internal static class StarReport
         text.AppendLine();
         text.AppendLine("| 節目 | 深度0 | 深度1 | 深度2 | 深度3 | 深度4 | 深度5 |");
         text.AppendLine("| --- | ---: | ---: | ---: | ---: | ---: | ---: |");
-        foreach (int points in StarBalance.Checkpoints)
+        foreach (int points in sim.Checkpoints)
         {
             var row = new StringBuilder($"| {points} ");
             for (int depth = 0; depth <= DreamDepth.Maximum; depth++)
@@ -111,7 +113,7 @@ internal static class StarReport
         text.AppendLine();
         text.AppendLine("| 節目 | 星項HP | 星項被DMG | レベル項HP | レベル項被DMG | 合計HP倍率 | 合計被DMG倍率 |");
         text.AppendLine("| --- | ---: | ---: | ---: | ---: | ---: | ---: |");
-        foreach (int points in StarBalance.Checkpoints)
+        foreach (int points in sim.Checkpoints)
         {
             var p = DreamPressure.ForPlayer(o.DreamLevel, points);
             text.AppendLine($"| {points} | {Plus(0.0025 * points)} | {Plus(0.00125 * points)} | {Plus(0.025 * (p.AverageDreamLevel - DreamPressure.FreeDreamLevels))} | {Plus(0.012 * (p.AverageDreamLevel - DreamPressure.FreeDreamLevels))} | {Number(p.HealthMultiplier)} | {Number(p.DamageMultiplier)} |");
@@ -121,7 +123,7 @@ internal static class StarReport
         text.AppendLine();
         text.AppendLine("| 節目 | 夢Lv10 HP / 被DMG | 夢Lv20 HP / 被DMG | 夢Lv30 HP / 被DMG |");
         text.AppendLine("| --- | ---: | ---: | ---: |");
-        foreach (int points in StarBalance.Checkpoints)
+        foreach (int points in sim.Checkpoints)
         {
             string Cell(int level)
             {
@@ -151,7 +153,7 @@ internal static class StarReport
         }
         text.AppendLine();
         var final = sim.Results.Select(r => r.Checkpoints.Last()).ToList();
-        text.AppendLine($"{StarProgression.MaxPoints}ポイント時の `Nightmares.GearChanceMult`（悪夢化率の装備強さ倍率、1.0〜1.5）は全旅人・全戦略で {Number(final.Min(c => c.GearChanceMult))}〜{Number(final.Max(c => c.GearChanceMult))}。");
+        text.AppendLine($"{o.StarMaxPoints}ポイントの節目での `Nightmares.GearChanceMult`（悪夢化率の装備強さ倍率、1.0〜1.5）は全旅人・全戦略で {Number(final.Min(c => c.GearChanceMult))}〜{Number(final.Max(c => c.GearChanceMult))}。");
         text.AppendLine();
 
         text.AppendLine("## コアAPIの不足と測定の限界");
