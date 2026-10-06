@@ -1465,6 +1465,9 @@ namespace SodRpg.Mod
                 + (r.Retunes > 0 ? Loc.T($" · 再調律{r.Retunes}/{Content.MaxRetunes}", $" · retuned {r.Retunes}/{Content.MaxRetunes}") : ""), _st.Small);
             GUILayout.EndVertical();
             GUILayout.EndHorizontal();
+            GUILayout.Label(Loc.T(
+                $"Lv1は100%。固定攻魔は1Lvごと+{GearBalance.FlatDamageGrowthPct}%、他の固定能力は+{GearBalance.OtherFixedGrowthPct}%（Lv{Content.ItemLevelScalingCap}で停止）。%能力は成長しません。保存済み特性は再抽選せず、基礎能力は再計算します。",
+                $"Lv1: 100%. Flat attack/power gain +{GearBalance.FlatDamageGrowthPct}% per level; other fixed stats +{GearBalance.OtherFixedGrowthPct}% (stops at Lv{Content.ItemLevelScalingCap}). Percent stats do not scale. Saved affixes are not rerolled; implicit stats recalculate."), _st.Small);
             if (r.DeveloperGranted)
                 GUILayout.Label(Loc.T("出所：開発付与", "Source: developer grant"), _st.Small);
             if (Content.MaxLimitBreaks(r.Rarity) > 0 && (r.LimitBreaks > 0 || r.Enhance >= Content.MaxEnhance))

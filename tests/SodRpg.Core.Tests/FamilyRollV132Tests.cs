@@ -67,7 +67,7 @@ namespace SodRpg.Core.Tests
                 if (x < a.Weight)
                 {
                     int raw = rng.Range(a.Min, a.Max);
-                    int level = Content.ScalesWithItemLevel(a.Stat) ? Content.LevelScalePct(itemLevel) : 100;
+                    int level = Content.LevelScalePct(a.Stat, itemLevel);
                     int pct = Content.RarityValuePct(rarity) * level / 100;
                     return new StatLine(a.Stat, Relic.Scale(raw, pct));
                 }

@@ -45,7 +45,7 @@ namespace SodRpg.Core.Tests
             relic.Affixes.Add(new StatLine(flat.Stat, int.MaxValue));
             relic.Affixes.Add(new StatLine(percent.Stat, int.MaxValue));
             Assert.True(HostGearValidation.TryValidate(relic, out var validated));
-            Assert.Equal(Rounded(flat.Max, 120 * 217 / 100), validated.Affixes[0].Value);
+            Assert.Equal(Rounded(flat.Max, 120 * Content.LevelScalePct(flat.Stat, relic.ItemLevel) / 100), validated.Affixes[0].Value);
             Assert.Equal(Rounded(percent.Max, 120), validated.Affixes[1].Value);
 
             relic.ItemLevel = 1;

@@ -1,13 +1,15 @@
 #!/usr/bin/env python3
-"""Generate compile-time forge and star content; --check never writes files."""
+"""Generate compile-time balance content; --check never writes files."""
 
 import argparse
 import importlib.util
 import json
 import sys
 from pathlib import Path
-
 sys.dont_write_bytecode = True
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import gear_values
+import set_values
 
 ROOT = Path(__file__).resolve().parents[2]
 FORGE_PATH = ROOT / "tools" / "balance" / "forge.json"
@@ -90,12 +92,15 @@ def _star_generator():
 
 
 def generate(check=False):
-    # Resolve and render every domain before publishing any file. Invalid new
-    # star content cannot update forge while leaving an older star map behind.
+    # Resolve and render every domain before publishing any file.
     forge = render_forge(load_forge())
+    gear = gear_values.render_outputs()
+    sets = set_values.render_outputs()
     stars = _star_generator()
     outputs = stars.render_outputs()
     outputs[OUTPUT_PATH] = forge
+    outputs.update(gear)
+    outputs.update(sets)
     return stars.publish_outputs(outputs, check=check)
 
 

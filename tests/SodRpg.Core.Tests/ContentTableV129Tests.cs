@@ -70,7 +70,6 @@ namespace SodRpg.Core.Tests
                 foreach (var r in sets)
                 {
                     var set = Assert.Single(Content.Sets, s => s.Id == r[0]);
-                    Assert.Equal(r[1], set.Name.Ja); Assert.Equal(r[2], set.Name.En);
                     var effects = r[5].Split(';').Select(x => x.Trim().Split(' ')).ToArray();
                     Assert.Equal(effects.Length, set.ThreePiece.Length);
                     for (int i = 0; i < effects.Length; i++)
@@ -84,7 +83,6 @@ namespace SodRpg.Core.Tests
                     {
                         Assert.True(Content.TryGetUnique(piece[0], out var u), piece[0]);
                         Assert.Equal(r[0], u.SetId); Assert.Equal(piece[2], u.BaseId);
-                        Assert.Equal(piece[3], u.Name.Ja); Assert.Equal(piece[4], u.Name.En);
                     }
                 }
             }

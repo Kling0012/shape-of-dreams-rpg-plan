@@ -1,9 +1,10 @@
-# バランス外部定義・比較（Issue149 段階0・1）
+# バランス外部定義・比較（Issue #149、#119・#121）
 
-`forge.json` の強化失敗率3係数と、`stars.json` の `MemoryDamage` 基準値・倍率を
+`forge.json` の強化失敗率3係数、`stars.json` の `MemoryDamage` 基準値・倍率、
+`gear.json` の装備レベル成長・固定攻魔上限、`sets.json` の通常セット2/3/6部位効果を
 型付きC#へ生成します。記憶ダメージはmanifestの480親＋258選択肢と旧ルート98成分、
-計836欄を移行済みです。基準値と初期倍率1は従来どおりで、数値バランス、
-保存形式・Protocol・内容指紋は変更しません。MemoryHasteや仕掛けの調整数値は対象外です。
+計836欄を移行済みです。保存形式5・Protocol 23は維持し、装備・セットの調整数値を
+内容照合に含めます。MemoryHasteや仕掛けの調整数値は対象外です。
 
 ## コマンド
 
@@ -38,6 +39,28 @@ python tools/balance/gen_cs.py --check
 既定の遠征は新規プロフィール3遠征×8人、seed=1、2ゾーン×2部屋、その他は既存の遠征モード既定です。
 500pt星図の長時間シミュレーションは実行しません。
 
+## 装備・通常セットの調整（#119・#121）
+
+- 装備の攻撃力・魔力の固定値はLv1で100%、以後+5%/レベル、Lv40以上で295%、合計上限250。
+  その他の固定能力は従来の+3%/レベル（Lv40以上217%）、%能力はレベル成長なし。
+- 通常セットの3/6部位の純ダメージ係数を旧値の1.25倍にし、整数は四捨五入。
+  助走の2部位AttackFlat・結晶の2部位PowerFlatは10から15。
+  個別cap・A枠+120%／B枠×1.8の計画値・ボス効果・確率・CD・スロウ・対象数・範囲・持続・付与数は据え置き。
+  Finale（終曲）は奥義の残りCD短縮のため、提案書の対象一覧から除外して旧値を維持する。
+- `gear.json`・`sets.json` を変更後、`python tools/balance/gen_cs.py` で生成する。
+  全入力を検証・renderしてから既存のpublish経路で書き込み、`--check` は書き込まない。
+  ゲーム内では生成済み定義だけを使用し、JSON読込・Python・追加の起動検査を要求しない。
+- 保存済み特性・固有効果は再抽選しない。基礎能力とセット効果は再計算されるため旧装備にも反映する。
+  新規抽選とホストの許容値は同じ能力値別成長式を使用する。協力プレイは全員同じ内容定義が必要。
+
+**EN:** Equipment flat Attack/Power grows by 5% per item level (100% at Lv1, 295% from Lv40),
+capped at 250 in total. Other flat stats retain 3% growth; percentage stats do not grow with level.
+Normal 3/6-piece pure-damage coefficients are multiplied by 1.25, rounded half up; Run-Up/Crystal
+2-piece flat bonuses become 15. Caps, A/B plans, boss effects and non-damage parameters are unchanged.
+Finale is cooldown reduction, not pure damage, so its existing values are retained.
+Saved affix/power rolls remain intact; implicits and set bonuses are recalculated. Save format 5 and
+Protocol 23 remain unchanged; co-op content matching includes the generated gear/set balance records.
+
 ## 記憶ダメージの調整
 
 調整するのは `stars.json` の1セルです。旅人別の例：
@@ -61,7 +84,7 @@ python tools/balance/gen_cs.py --check
 - PythonはDecimalで計算し、MemoryDamageを既存 `LinkDef.Value` → `ValueMilli` へ通します。
   有効値は正の0.001刻み、ValueMilliはInt32の範囲内。表現不能な結果は該当pathを示して失敗し、
   丸め・切捨て・上限拡大はしません。MemoryHaste、Stat、Power、旧仕掛けのAmountは整数のままです。
-- `run` / `gen_cs.py --check` は鍛冶・星定数・全9星図・登録ファイルをまとめて扱います。
+- `run` / `gen_cs.py --check` は鍛冶・装備・通常セット・星定数・全9星図・登録ファイルをまとめて扱います。
   全入力の検証・renderが成功してから変更のある生成物だけを書きます。
   `python tools/star-manifest/validate.py` と単体の星生成も同じ解決済み値を検証します。
 
@@ -90,7 +113,7 @@ Choiceは全A（option 0）／全B（option 1）の2構成を別集計し、同�
 - `forge.md` / `forge.json`: 全レア度・合法な限界突破回数・現在強化値の一覧。
 - `star-efficiency.md` / `star-efficiency.json`: 旅人×記憶×全A/全B×由来の効果量・費用・%/点と旅人別min/max。
 - `expeditions.md` / `expeditions.json`: 既存Simulationの遠征・節目・容量計測。
-- `current.json`: 3モードのスナップショット、検証状態、日時、生成入力の `tableMetadata.forge`（schemaVersionと3係数）／`tableMetadata.stars`（schemaVersionと倍率）、既存Gitコミットの `gitRevision`（取得不能時null、比較表示はunknown）。
+- `current.json`: 3モードのスナップショット、検証状態、日時、生成入力の `tableMetadata.forge`（schemaVersionと3係数）／`tableMetadata.stars`（schemaVersionと倍率）／`tableMetadata.gear`・`tableMetadata.sets`（装備・通常セットの原本）、既存Gitコミットの `gitRevision`（取得不能時null、比較表示はunknown）。
 - `comparison.md`: 現在／前回成功／差／相対差。
 
 検証済み基準は `last-success.json`。`--no-tests` は独立した
