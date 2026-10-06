@@ -1,0 +1,204 @@
+{
+  "schemaVersion": 1,
+  "shared": {
+    "fanDoubleIntervalMillis": 250,
+    "fanMaxTargets": 8,
+    "fanMaxInstances": 1,
+    "lightMaxTargets": 8,
+    "lightMaxInstances": 1,
+    "lightRangeMilli": 8000,
+    "lightWidthMilli": 400,
+    "lightSpeedMilli": 12000,
+    "lightHitGateMillis": 150,
+    "lightDefaultLifetimeMillis": 667,
+    "shieldMaxTargets": 1,
+    "shieldMaxInstances": 1
+  },
+  "moves": {
+    "weapon": {
+      "channels": {
+        "PrimusForceStrike": {
+          "value": 18,
+          "cap": 18
+        }
+      },
+      "actions": [
+        {
+          "cooldownMillis": 4000,
+          "rangeMilli": 3000,
+          "angleMilli": 90000
+        }
+      ]
+    },
+    "armor": {
+      "channels": {
+        "PrimusRageShield": {
+          "value": 8,
+          "cap": 8
+        }
+      },
+      "actions": [
+        {
+          "cooldownMillis": 12000,
+          "lifetimeMillis": 3000
+        }
+      ]
+    },
+    "charm": {
+      "channels": {
+        "PrimusAdaptChain": {
+          "value": 8,
+          "cap": 8
+        }
+      },
+      "actions": [
+        {
+          "cooldownMillis": 7000,
+          "maxTargets": 3,
+          "lifetimeMillis": 1500
+        }
+      ]
+    },
+    "head": {
+      "channels": {
+        "PrimusRageBlades": {
+          "value": 20,
+          "cap": 20
+        }
+      },
+      "actions": [
+        {
+          "cooldownMillis": 5000,
+          "rangeMilli": 3000,
+          "angleMilli": 120000,
+          "count": 2
+        }
+      ]
+    },
+    "hands": {
+      "channels": {
+        "PrimusDoomImpact": {
+          "value": 18,
+          "cap": 18
+        }
+      },
+      "actions": [
+        {
+          "cooldownMillis": 8000,
+          "delayMillis": 500,
+          "maxTargets": 8,
+          "maxInstances": 1,
+          "radiusMilli": 2000,
+          "rangeMilli": 6000
+        }
+      ]
+    },
+    "feet": {
+      "channels": {
+        "PrimusIceclawCuts": {
+          "value": 20,
+          "cap": 20
+        }
+      },
+      "actions": [
+        {
+          "cooldownMillis": 7000,
+          "rangeMilli": 2500,
+          "angleMilli": 120000,
+          "count": 2
+        }
+      ]
+    },
+    "stage2": {
+      "channels": {
+        "PrimusPhaseTechnique": {
+          "value": 12,
+          "cap": 12
+        }
+      },
+      "actions": [
+        {
+          "cooldownMillis": 500,
+          "count": 3,
+          "maxTargets": 1,
+          "maxInstances": 1
+        },
+        {
+          "cooldownMillis": 3000,
+          "rangeMilli": 3000,
+          "angleMilli": 90000
+        },
+        {
+          "cooldownMillis": 3000
+        },
+        {
+          "cooldownMillis": 3000,
+          "maxTargets": 8,
+          "maxInstances": 1,
+          "radiusMilli": 2000
+        }
+      ]
+    },
+    "stage3": {
+      "channels": {
+        "PrimusGlyphReach": {
+          "value": 6,
+          "cap": 6
+        }
+      },
+      "actions": [
+        {
+          "delayMillis": 350,
+          "lifetimeMillis": 4000,
+          "maxTargets": 1,
+          "maxInstances": 1,
+          "rangeMilli": 6000
+        }
+      ]
+    },
+    "stage6": {
+      "channels": {
+        "PrimusConfluence": {
+          "value": 90,
+          "cap": 100
+        },
+        "PrimusConfluenceShield": {
+          "value": 38,
+          "cap": 40
+        }
+      },
+      "actions": [
+        {
+          "cooldownMillis": 18000,
+          "lifetimeMillis": 8000,
+          "count": 3,
+          "maxTargets": 1,
+          "maxInstances": 1
+        },
+        {
+          "cooldownMillis": 0,
+          "rangeMilli": 4000,
+          "angleMilli": 90000
+        },
+        {
+          "delayMillis": 300,
+          "maxTargets": 8,
+          "maxInstances": 1,
+          "rangeMilli": 8000,
+          "widthMilli": 600
+        },
+        {
+          "delayMillis": 600,
+          "maxTargets": 8,
+          "maxInstances": 1,
+          "radiusMilli": 2500
+        },
+        {
+          "cooldownMillis": 0,
+          "lifetimeMillis": 6000
+        }
+      ]
+    }
+  },
+  "rewards": {}
+}

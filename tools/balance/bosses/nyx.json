@@ -1,0 +1,224 @@
+{
+  "schemaVersion": 1,
+  "shared": {
+    "circleMaxInstances": 1
+  },
+  "moves": {
+    "weapon": {
+      "channels": {
+        "NyxPillar": {
+          "value": 12,
+          "cap": 36
+        },
+        "NyxPillarEcho": {
+          "value": 6,
+          "cap": 18
+        }
+      },
+      "actions": [
+        {
+          "radiusMilli": 1500,
+          "delayMillis": 350,
+          "cooldownMillis": 5000
+        },
+        {
+          "radiusMilli": 1500,
+          "delayMillis": 750
+        }
+      ]
+    },
+    "armor": {
+      "channels": {
+        "NyxMantle": {
+          "value": 16,
+          "cap": 48
+        },
+        "NyxMantleBurst": {
+          "value": 8,
+          "cap": 24
+        }
+      },
+      "actions": [
+        {
+          "cooldownMillis": 8000,
+          "lifetimeMillis": 2000,
+          "maxInstances": 1
+        },
+        {
+          "radiusMilli": 2000,
+          "delayMillis": 400
+        }
+      ]
+    },
+    "charm": {
+      "channels": {
+        "NyxSeed": {
+          "value": 10,
+          "cap": 30
+        }
+      },
+      "actions": [
+        {
+          "cooldownMillis": 6000,
+          "delayMillis": 600,
+          "lifetimeMillis": 500,
+          "count": 3,
+          "maxInstances": 1,
+          "rangeMilli": 4000,
+          "widthMilli": 500,
+          "speedMilli": 8000
+        }
+      ]
+    },
+    "head": {
+      "channels": {
+        "NyxOrbit": {
+          "value": 14,
+          "cap": 42
+        }
+      },
+      "actions": [
+        {
+          "radiusMilli": 1000,
+          "delayMillis": 300,
+          "cooldownMillis": 5000
+        }
+      ]
+    },
+    "hands": {
+      "channels": {
+        "NyxBinding": {
+          "value": 12,
+          "cap": 36
+        }
+      },
+      "actions": [
+        {
+          "radiusMilli": 2000,
+          "delayMillis": 400,
+          "cooldownMillis": 6000
+        },
+        {
+          "lifetimeMillis": 300,
+          "maxTargets": 3,
+          "radiusMilli": 2000,
+          "magnitudeMilli": 600
+        }
+      ]
+    },
+    "feet": {
+      "channels": {
+        "NyxCrossing": {
+          "value": 10,
+          "cap": 30
+        }
+      },
+      "actions": [
+        {
+          "cooldownMillis": 7000,
+          "lifetimeMillis": 200,
+          "maxInstances": 1,
+          "rangeMilli": 3000,
+          "widthMilli": 600
+        }
+      ]
+    },
+    "stage2": {
+      "channels": {
+        "NyxStarpoint": {
+          "value": 1,
+          "cap": 1
+        },
+        "NyxStarColumn": {
+          "value": 10,
+          "cap": 10
+        }
+      },
+      "actions": [
+        {
+          "lifetimeMillis": 6000,
+          "maxInstances": 1,
+          "radiusMilli": 2000,
+          "rangeMilli": 8000
+        },
+        {
+          "radiusMilli": 2000,
+          "delayMillis": 350,
+          "cooldownMillis": 6000
+        },
+        {
+          "radiusMilli": 2000,
+          "delayMillis": 750
+        }
+      ]
+    },
+    "stage3": {
+      "channels": {
+        "NyxStarMark": {
+          "value": 1,
+          "cap": 1
+        }
+      },
+      "actions": [
+        {
+          "lifetimeMillis": 12000,
+          "count": 3,
+          "rangeMilli": 2000
+        },
+        {
+          "lifetimeMillis": 300,
+          "radiusMilli": 2000,
+          "magnitudeMilli": 600
+        }
+      ]
+    },
+    "stage6": {
+      "channels": {
+        "NyxStarsea": {
+          "value": 90,
+          "cap": 100
+        },
+        "NyxStarseaShield": {
+          "value": 38,
+          "cap": 40
+        }
+      },
+      "actions": [
+        {
+          "cooldownMillis": 10000,
+          "delayMillis": 500,
+          "lifetimeMillis": 1000,
+          "maxTargets": 3,
+          "maxInstances": 1,
+          "radiusMilli": 3000,
+          "rangeMilli": 8000,
+          "speedMilli": 2000,
+          "magnitudeMilli": 2000,
+          "requiredMarks": 3
+        },
+        {
+          "radiusMilli": 3000,
+          "delayMillis": 1500
+        },
+        {
+          "delayMillis": 1500,
+          "lifetimeMillis": 3000,
+          "maxInstances": 1
+        }
+      ]
+    }
+  },
+  "rewards": {
+    "pullCount": 64,
+    "pullMagnitudeMilli": 2000,
+    "pullSpeedMilli": 1000,
+    "radiusRangeMilli": 8000,
+    "radiusMagnitudeMilli": 1000,
+    "endValueMilli": 450,
+    "endCapMilli": 450,
+    "endDurationMillis": 1000,
+    "endCount": 3,
+    "endMagnitudeMilli": 250,
+    "endRangeMilli": 3000
+  }
+}

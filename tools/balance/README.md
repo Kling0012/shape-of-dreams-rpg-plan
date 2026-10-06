@@ -234,6 +234,34 @@ Finale is cooldown reduction, not pure damage, so its existing values are retain
 Saved affix/power rolls remain intact; implicits and set bonuses are recalculated. Save format 5 and
 Protocol 23 remain unchanged; co-op content matching includes the generated gear/set balance records.
 
+
+## ボス挙動表の調整（Issue #149 段階8 前半）
+
+数値原本は `tools/balance/bosses/<boss>.json` の13ファイル（demon・skoll・infernus・ink・nyx・erebos・seeker・
+azurak・primus・light・maw・obliviax・polaris）。ink.json は白夜／黒月の両セットを `white_*`／`dark_*` キーで持ちます。
+1セルを編集して `tools/balance/run` を実行すると、型付き生成・全通常テスト・実測・前回成功との比較まで進みます。
+生成先は `src/SodRpg.Core/Game/Balance/Boss<Boss>Balance.Generated.cs` 13本と `BossBalanceValues.Generated.cs`。
+`BossProfiles.*.cs` は構造（ID・enum・説明文・報酬の段構成）と生成済み定数の参照だけを持ち、実行時にJSONを読みません。
+
+| 表のセクション | 内容 |
+| --- | --- |
+| `shared` | ボス固有の共有定数（Demonの樹芽4定数等）と技ヘルパー埋め込み値（Skoll氷矢の持続・射程等） |
+| `moves/<部位や段>/<profile>` | チャネルの `value`／`cap`（表示%、生成時に×1000でValueMilli/CapMilli）と、
+  各アクションの `cooldownMillis`・`radiusMilli`・`count` 等のpayload欄 |
+| `rewards` | 固有報酬のアクションpayload。Inkの白／黒・Azurakの段別条件は段ごとのセル |
+
+- チャネルの `cap` 省略は `cap == value`（InkChannel／AzurakChannel形式）。`value` は正、`cap >= value`。
+  アクション欄はBossActionコンストラクタの受理範囲（`count` 1〜64、`maxInstances` 1〜4、`angleMilli` 0〜360000 等）を
+  生成時に検証し、不正な表はrender前に拒否します。
+- `order`・段番号・`BossSetStage(2/3/6)`・セットの部位数、ID・enum・説明文（Txt）・イベント順序・契約文字列は
+  構造なので表へ移しません。Power定数・Mod側native adapterの数値・説明文内の数値は段階8の後半で別に扱います。
+- ボス値は既存の指紋レコード（`boss-schema`・`boss-channel`・`boss-action`・`boss-reward-action`）で全面的に照合されるため、
+  表変更時に新しい指紋レコードは追加しません。有効値が変われば既存の内容照合が相手側で不一致を検出します。
+- 無調整移行の回帰は `BossBalanceMigrationTests` が担当します。全チャネル・アクション欄と代表報酬値の表↔実定義一致に加え、
+  表が移行時のまま（`BossBalanceValues.MatchesFrozenReference`）である限り、ボス指紋レコードの要約
+  `591-685158953d5197ef` と全体指紋 `10579-ab35d865a569c87b` が移行前と一致することを確認します。
+  1セルでも調整した表はこの固定照合を離れ、表↔実定義の一致検証だけが常時有効です。
+
 ## 記憶ダメージの調整
 
 調整するのは `stars.json` の1セルです。旅人別の例：

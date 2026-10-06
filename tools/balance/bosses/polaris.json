@@ -1,0 +1,208 @@
+{
+  "schemaVersion": 1,
+  "shared": {
+    "spearLifetimeMillis": 800,
+    "spearMaxTargets": 8,
+    "spearMaxInstances": 4,
+    "spearRangeMilli": 8000,
+    "spearWidthMilli": 400,
+    "spearSpeedMilli": 12000,
+    "spearDoubleAngleMilli": 12000,
+    "guardMaxTargets": 1,
+    "guardMaxInstances": 1,
+    "circleMaxTargets": 8,
+    "circleMaxInstances": 4,
+    "circleRangeMilli": 6000
+  },
+  "moves": {
+    "weapon": {
+      "channels": {
+        "PolarisGoldenSpear": {
+          "value": 24,
+          "cap": 24
+        }
+      },
+      "actions": [
+        {
+          "cooldownMillis": 5000,
+          "count": 2
+        }
+      ]
+    },
+    "armor": {
+      "channels": {
+        "PolarisFirstGuard": {
+          "value": 16,
+          "cap": 16
+        }
+      },
+      "actions": [
+        {
+          "cooldownMillis": 12000,
+          "lifetimeMillis": 4000
+        }
+      ]
+    },
+    "charm": {
+      "channels": {
+        "PolarisPurgatory": {
+          "value": 36,
+          "cap": 36
+        },
+        "PolarisPurgatoryReturn": {
+          "value": 6,
+          "cap": 6
+        }
+      },
+      "actions": [
+        {
+          "cooldownMillis": 9000,
+          "delayMillis": 400,
+          "intervalMillis": 500,
+          "count": 3,
+          "maxTargets": 8,
+          "maxInstances": 1,
+          "radiusMilli": 2000,
+          "rangeMilli": 6000
+        },
+        {
+          "maxTargets": 1,
+          "maxInstances": 1
+        }
+      ]
+    },
+    "head": {
+      "channels": {
+        "PolarisCounterGuard": {
+          "value": 8,
+          "cap": 8
+        },
+        "PolarisCountershot": {
+          "value": 28,
+          "cap": 28
+        }
+      },
+      "actions": [
+        {
+          "cooldownMillis": 10000,
+          "lifetimeMillis": 1000
+        },
+        {}
+      ]
+    },
+    "hands": {
+      "channels": {
+        "PolarisRainfire": {
+          "value": 36,
+          "cap": 36
+        }
+      },
+      "actions": [
+        {
+          "cooldownMillis": 8000,
+          "delayMillis": 400,
+          "intervalMillis": 150,
+          "count": 3,
+          "maxTargets": 8,
+          "maxInstances": 1,
+          "radiusMilli": 1200,
+          "rangeMilli": 6000,
+          "magnitudeMilli": 1500
+        }
+      ]
+    },
+    "feet": {
+      "channels": {
+        "PolarisStarstomp": {
+          "value": 36,
+          "cap": 36
+        }
+      },
+      "actions": [
+        {
+          "cooldownMillis": 7000,
+          "radiusMilli": 2500,
+          "delayMillis": 250
+        }
+      ]
+    },
+    "stage2": {
+      "channels": {
+        "PolarisHolyGuard": {
+          "value": 12,
+          "cap": 12
+        },
+        "PolarisBeastStomp": {
+          "value": 36,
+          "cap": 36
+        }
+      },
+      "actions": [
+        {
+          "cooldownMillis": 500,
+          "count": 2,
+          "maxTargets": 1,
+          "maxInstances": 1
+        },
+        {
+          "cooldownMillis": 8000,
+          "lifetimeMillis": 3000
+        },
+        {
+          "cooldownMillis": 4000,
+          "radiusMilli": 2500,
+          "delayMillis": 250
+        }
+      ]
+    },
+    "stage3": {
+      "channels": {
+        "PolarisDepartureReach": {
+          "value": 6,
+          "cap": 6
+        }
+      },
+      "actions": [
+        {
+          "delayMillis": 350,
+          "lifetimeMillis": 4000,
+          "maxTargets": 1,
+          "maxInstances": 1,
+          "rangeMilli": 6000
+        }
+      ]
+    },
+    "stage6": {
+      "channels": {
+        "PolarisDualSanctity": {
+          "value": 180,
+          "cap": 200
+        },
+        "PolarisReturnGuard": {
+          "value": 76,
+          "cap": 80
+        }
+      },
+      "actions": [
+        {
+          "cooldownMillis": 18000,
+          "lifetimeMillis": 8000,
+          "count": 3,
+          "maxTargets": 1,
+          "maxInstances": 1
+        },
+        {},
+        {
+          "cooldownMillis": 0,
+          "radiusMilli": 3000,
+          "delayMillis": 500
+        },
+        {
+          "cooldownMillis": 0,
+          "lifetimeMillis": 6000
+        }
+      ]
+    }
+  },
+  "rewards": {}
+}

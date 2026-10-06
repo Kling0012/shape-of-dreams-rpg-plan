@@ -1,0 +1,214 @@
+{
+  "schemaVersion": 1,
+  "shared": {
+    "eruptionsCount": 3,
+    "eruptionsMaxInstances": 1,
+    "eruptionsWidthMilli": 2000,
+    "radialCount": 4,
+    "radialMaxInstances": 1,
+    "radialCounterLifetimeMillis": 6000,
+    "radialAngleMilli": 90000
+  },
+  "moves": {
+    "weapon": {
+      "channels": {
+        "InfernusEruption": {
+          "value": 10,
+          "cap": 10
+        }
+      },
+      "actions": [
+        {
+          "cooldownMillis": 5000,
+          "delayMillis": 300,
+          "intervalMillis": 150,
+          "magnitudeMilli": 1500,
+          "radiusMilli": 800
+        }
+      ]
+    },
+    "armor": {
+      "channels": {
+        "InfernusLanding": {
+          "value": 24,
+          "cap": 24
+        }
+      },
+      "actions": [
+        {
+          "cooldownMillis": 7000,
+          "delayMillis": 350,
+          "maxInstances": 1,
+          "radiusMilli": 2000,
+          "magnitudeMilli": 800
+        }
+      ]
+    },
+    "charm": {
+      "channels": {
+        "InfernusPillarInitial": {
+          "value": 16,
+          "cap": 16
+        },
+        "InfernusPillarTick": {
+          "value": 6,
+          "cap": 6
+        }
+      },
+      "actions": [
+        {
+          "cooldownMillis": 8000,
+          "delayMillis": 500,
+          "lifetimeMillis": 1500,
+          "maxInstances": 1,
+          "radiusMilli": 1500,
+          "rangeMilli": 8000
+        },
+        {
+          "delayMillis": 1000,
+          "lifetimeMillis": 1500,
+          "intervalMillis": 500,
+          "count": 3,
+          "maxInstances": 1,
+          "radiusMilli": 1500
+        }
+      ]
+    },
+    "head": {
+      "channels": {
+        "InfernusBreath": {
+          "value": 12,
+          "cap": 12
+        }
+      },
+      "actions": [
+        {
+          "cooldownMillis": 7000,
+          "lifetimeMillis": 600,
+          "intervalMillis": 200,
+          "count": 3,
+          "maxInstances": 1,
+          "rangeMilli": 5000,
+          "widthMilli": 1000
+        }
+      ]
+    },
+    "hands": {
+      "channels": {
+        "InfernusRoar": {
+          "value": 20,
+          "cap": 20
+        }
+      },
+      "actions": [
+        {
+          "cooldownMillis": 6000,
+          "delayMillis": 350,
+          "speedMilli": 10000,
+          "rangeMilli": 4000,
+          "widthMilli": 500,
+          "lifetimeMillis": 400,
+          "mainHits": 3
+        }
+      ]
+    },
+    "feet": {
+      "channels": {
+        "InfernusDashImpact": {
+          "value": 18,
+          "cap": 18
+        }
+      },
+      "actions": [
+        {
+          "cooldownMillis": 5000,
+          "maxInstances": 1,
+          "rangeMilli": 3000,
+          "widthMilli": 1500,
+          "magnitudeMilli": 1200
+        }
+      ]
+    },
+    "stage2": {
+      "channels": {
+        "InfernusHeatEruption": {
+          "value": 12,
+          "cap": 12
+        }
+      },
+      "actions": [
+        {
+          "count": 3,
+          "lifetimeMillis": 6000,
+          "maxInstances": 1
+        },
+        {
+          "cooldownMillis": 4000,
+          "delayMillis": 350,
+          "intervalMillis": 200,
+          "magnitudeMilli": 2000,
+          "radiusMilli": 1000
+        }
+      ]
+    },
+    "stage3": {
+      "channels": {
+        "InfernusHeatPillar": {
+          "value": 8,
+          "cap": 8
+        }
+      },
+      "actions": [
+        {
+          "delayMillis": 800,
+          "lifetimeMillis": 2000,
+          "intervalMillis": 500,
+          "count": 4,
+          "maxInstances": 1,
+          "radiusMilli": 2000
+        }
+      ]
+    },
+    "stage6": {
+      "channels": {
+        "InfernusBurst": {
+          "value": 90,
+          "cap": 100
+        },
+        "InfernusBurstShield": {
+          "value": 38,
+          "cap": 40
+        }
+      },
+      "actions": [
+        {
+          "cooldownMillis": 10000,
+          "delayMillis": 1000,
+          "speedMilli": 12000,
+          "rangeMilli": 6000,
+          "widthMilli": 700,
+          "lifetimeMillis": 500
+        },
+        {
+          "delayMillis": 1000,
+          "lifetimeMillis": 2000,
+          "maxInstances": 1
+        }
+      ]
+    }
+  },
+  "rewards": {
+    "timerValueMilli": 1000,
+    "timerCapMilli": 1000,
+    "timerDurationMillis": 1000,
+    "stackValueMilli": 1000,
+    "stackCapMilli": 1000,
+    "stackCooldownMillis": 1000,
+    "stackDurationMillis": 2000,
+    "stackCount": 3,
+    "critValueMilli": 3000,
+    "critCapMilli": 5000,
+    "critCooldownMillis": 4000,
+    "critCount": 1
+  }
+}

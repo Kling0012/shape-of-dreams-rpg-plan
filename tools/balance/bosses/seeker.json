@@ -1,0 +1,192 @@
+{
+  "schemaVersion": 1,
+  "shared": {
+    "orbDefaultLifetimeMillis": 1000,
+    "orbDefaultSpeedMilli": 8000,
+    "orbMaxInstances": 1,
+    "orbRadiusMilli": 1500,
+    "orbRangeMilli": 8000,
+    "orbWidthMilli": 400
+  },
+  "moves": {
+    "weapon": {
+      "channels": {
+        "SeekerOrb": {
+          "value": 18,
+          "cap": 54
+        }
+      },
+      "actions": [
+        {
+          "cooldownMillis": 3000
+        }
+      ]
+    },
+    "armor": {
+      "channels": {
+        "SeekerDoubleGuard": {
+          "value": 18,
+          "cap": 54
+        }
+      },
+      "actions": [
+        {
+          "cooldownMillis": 10000,
+          "lifetimeMillis": 2000,
+          "maxInstances": 1
+        }
+      ]
+    },
+    "charm": {
+      "channels": {
+        "SeekerChaser": {
+          "value": 24,
+          "cap": 72
+        }
+      },
+      "actions": [
+        {
+          "cooldownMillis": 6000,
+          "lifetimeMillis": 2000,
+          "speedMilli": 4000
+        }
+      ]
+    },
+    "head": {
+      "channels": {
+        "SeekerAim": {
+          "value": 20,
+          "cap": 60
+        }
+      },
+      "actions": [
+        {
+          "cooldownMillis": 5000,
+          "delayMillis": 400,
+          "maxInstances": 1,
+          "radiusMilli": 2000,
+          "rangeMilli": 8000
+        }
+      ]
+    },
+    "hands": {
+      "channels": {
+        "SeekerPurple": {
+          "value": 10,
+          "cap": 30
+        }
+      },
+      "actions": [
+        {
+          "cooldownMillis": 6000,
+          "delayMillis": 500,
+          "lifetimeMillis": 2000,
+          "intervalMillis": 1000,
+          "count": 2,
+          "maxInstances": 1,
+          "radiusMilli": 2000,
+          "rangeMilli": 8000
+        }
+      ]
+    },
+    "feet": {
+      "channels": {
+        "SeekerFissure": {
+          "value": 22,
+          "cap": 66
+        }
+      },
+      "actions": [
+        {
+          "cooldownMillis": 5000,
+          "delayMillis": 300,
+          "maxInstances": 1,
+          "radiusMilli": 1500,
+          "magnitudeMilli": 250
+        }
+      ]
+    },
+    "stage2": {
+      "channels": {
+        "SeekerPhase": {
+          "value": 16,
+          "cap": 16
+        }
+      },
+      "actions": [
+        {
+          "cooldownMillis": 3000
+        },
+        {
+          "delayMillis": 400,
+          "maxInstances": 1,
+          "radiusMilli": 1500,
+          "rangeMilli": 8000
+        },
+        {
+          "maxInstances": 1,
+          "radiusMilli": 1500,
+          "rangeMilli": 8000
+        }
+      ]
+    },
+    "stage3": {
+      "channels": {
+        "SeekerEcho": {
+          "value": 12,
+          "cap": 12
+        }
+      },
+      "actions": [
+        {
+          "cooldownMillis": 5000,
+          "lifetimeMillis": 3000,
+          "maxInstances": 1,
+          "rangeMilli": 8000
+        }
+      ]
+    },
+    "stage6": {
+      "channels": {
+        "SeekerClaws": {
+          "value": 90,
+          "cap": 100
+        },
+        "SeekerClawGuard": {
+          "value": 38,
+          "cap": 40
+        }
+      },
+      "actions": [
+        {
+          "cooldownMillis": 10000,
+          "delayMillis": 500,
+          "intervalMillis": 250,
+          "count": 3,
+          "maxInstances": 1,
+          "rangeMilli": 4000,
+          "angleMilli": 90000,
+          "magnitudeMilli": 8000
+        },
+        {
+          "lifetimeMillis": 2500,
+          "maxInstances": 1
+        }
+      ]
+    }
+  },
+  "rewards": {
+    "healValueMilli": 10000,
+    "healCapMilli": 10000,
+    "healMagnitudeMilli": 20000,
+    "selfValueMilli": 25000,
+    "selfCapMilli": 25000,
+    "selfDurationMillis": 6000,
+    "selfTargetCapMilli": 30000,
+    "allyValueMilli": 25000,
+    "allyCapMilli": 25000,
+    "allyDurationMillis": 3000,
+    "allyRangeMilli": 6000,
+    "allyTargetCapMilli": 40000
+  }
+}

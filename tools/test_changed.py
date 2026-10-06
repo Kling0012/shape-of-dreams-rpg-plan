@@ -216,6 +216,11 @@ def select_tests(changed, files, diffs=None) -> Selection:
             selection.run_all = True
             selection.reasons.append(f"balance input changed: {path}")
             continue
+        if path == "tools/balance/boss_values.py" or path.startswith("tools/balance/bosses/") \
+                or re.fullmatch(r"src/SodRpg\.Core/Game/Balance/Boss[A-Za-z]+(Values)?\.Generated\.cs", path):
+            selection.run_all = True
+            selection.reasons.append(f"balance input changed: {path}")
+            continue
         if path.startswith("tests/") and path.endswith(".cs"):
             # Rule 1: the test file itself changed.
             selection.classes.update(declared_test_classes(content))

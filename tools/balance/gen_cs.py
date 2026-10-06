@@ -11,6 +11,7 @@ import gear_values
 import set_values
 import forge_values
 import star_progression_values
+import boss_values
 import star_values
 import pressure_values
 import monster_values
@@ -53,6 +54,7 @@ def generate(check=False):
     outputs[OUTPUT_PATH] = forge
     outputs.update(gear)
     outputs.update(sets)
+    outputs.update(boss_values.render_outputs())
     outputs.update(progression)
     outputs.update(pressure)
     outputs.update(monsters)

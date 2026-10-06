@@ -1,0 +1,200 @@
+{
+  "schemaVersion": 1,
+  "shared": {
+    "circleMaxTargets": 8,
+    "circleMaxInstances": 1,
+    "shieldMaxTargets": 1,
+    "shieldMaxInstances": 1
+  },
+  "moves": {
+    "weapon": {
+      "channels": {
+        "ObliviaxBlades": {
+          "value": 18,
+          "cap": 18
+        }
+      },
+      "actions": [
+        {
+          "cooldownMillis": 3000,
+          "maxTargets": 8,
+          "maxInstances": 1,
+          "rangeMilli": 4000,
+          "widthMilli": 1500
+        }
+      ]
+    },
+    "armor": {
+      "channels": {
+        "ObliviaxMantle": {
+          "value": 18,
+          "cap": 18
+        }
+      },
+      "actions": [
+        {
+          "cooldownMillis": 8000,
+          "lifetimeMillis": 2000
+        }
+      ]
+    },
+    "charm": {
+      "channels": {
+        "ObliviaxArtillery": {
+          "value": 24,
+          "cap": 24
+        }
+      },
+      "actions": [
+        {
+          "cooldownMillis": 6000,
+          "radiusMilli": 1500,
+          "delayMillis": 600,
+          "rangeMilli": 8000
+        }
+      ]
+    },
+    "head": {
+      "channels": {
+        "ObliviaxTurretOrbs": {
+          "value": 18,
+          "cap": 18
+        }
+      },
+      "actions": [
+        {
+          "cooldownMillis": 4000,
+          "lifetimeMillis": 1000,
+          "intervalMillis": 200,
+          "count": 2,
+          "maxTargets": 8,
+          "maxInstances": 1,
+          "radiusMilli": 1000,
+          "rangeMilli": 8000,
+          "widthMilli": 400,
+          "speedMilli": 12000
+        },
+        {
+          "lifetimeMillis": 1000,
+          "maxTargets": 1,
+          "maxInstances": 1,
+          "magnitudeMilli": 1000
+        }
+      ]
+    },
+    "hands": {
+      "channels": {
+        "ObliviaxNeedles": {
+          "value": 18,
+          "cap": 18
+        }
+      },
+      "actions": [
+        {
+          "cooldownMillis": 6000,
+          "radiusMilli": 2000
+        }
+      ]
+    },
+    "feet": {
+      "channels": {
+        "ObliviaxCapture": {
+          "value": 12,
+          "cap": 12
+        }
+      },
+      "actions": [
+        {
+          "cooldownMillis": 6000,
+          "lifetimeMillis": 250,
+          "maxTargets": 1,
+          "maxInstances": 1,
+          "rangeMilli": 3000,
+          "magnitudeMilli": 1000
+        }
+      ]
+    },
+    "stage2": {
+      "channels": {
+        "ObliviaxAmbush": {
+          "value": 20,
+          "cap": 20
+        }
+      },
+      "actions": [
+        {
+          "cooldownMillis": 4000,
+          "lifetimeMillis": 3000,
+          "maxTargets": 1,
+          "maxInstances": 1
+        },
+        {
+          "maxTargets": 8,
+          "maxInstances": 1,
+          "rangeMilli": 8000,
+          "widthMilli": 1500
+        }
+      ]
+    },
+    "stage3": {
+      "channels": {
+        "ObliviaxAfterimage": {
+          "value": 15,
+          "cap": 15
+        }
+      },
+      "actions": [
+        {
+          "lifetimeMillis": 3000,
+          "maxTargets": 1,
+          "maxInstances": 1
+        },
+        {
+          "cooldownMillis": 0,
+          "radiusMilli": 1500,
+          "delayMillis": 400,
+          "rangeMilli": 8000
+        }
+      ]
+    },
+    "stage6": {
+      "channels": {
+        "ObliviaxBarrage": {
+          "value": 90,
+          "cap": 100
+        },
+        "ObliviaxBarrageShield": {
+          "value": 38,
+          "cap": 40
+        }
+      },
+      "actions": [
+        {
+          "cooldownMillis": 10000,
+          "delayMillis": 600,
+          "intervalMillis": 200,
+          "count": 3,
+          "maxTargets": 8,
+          "maxInstances": 1,
+          "radiusMilli": 1500,
+          "rangeMilli": 8000,
+          "magnitudeMilli": 2000
+        },
+        {
+          "cooldownMillis": 0,
+          "lifetimeMillis": 2500
+        }
+      ]
+    }
+  },
+  "rewards": {
+    "huntValueMilli": 30,
+    "huntCapMilli": 150,
+    "stepValueMilli": 1000,
+    "stepCapMilli": 1000,
+    "stepDurationMillis": 400,
+    "stepRangeMilli": 5000,
+    "stunValueMilli": 400,
+    "stunCapMilli": 400
+  }
+}

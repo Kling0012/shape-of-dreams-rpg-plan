@@ -202,7 +202,8 @@ def main() -> int:
                           "starProgression": gen_cs.star_progression_values.load(),
                           "pressure": gen_cs.pressure_values.load(),
                           "monsters": gen_cs.monster_values.load(),
-                          "infinity": gen_cs.infinity_values.load()}
+                          "infinity": gen_cs.infinity_values.load(),
+                          "bosses": gen_cs.boss_values.tables_summary()}
         table_metadata["equipment"] = {
             path.stem: json.loads(path.read_text(encoding="utf-8"), parse_float=Decimal)
             for path in sorted((HERE / "equipment").glob("*.json"))

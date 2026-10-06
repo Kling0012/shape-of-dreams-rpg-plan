@@ -1,0 +1,185 @@
+{
+  "schemaVersion": 1,
+  "shared": {
+    "budDelayMillis": 1200,
+    "budCollectibleDelayMillis": 150,
+    "budRadiusMilli": 2500,
+    "maxBuds": 4,
+    "nativeHysteriaSpeedMilli": -50000,
+    "budRangeMilli": 8000
+  },
+  "moves": {
+    "weapon": {
+      "channels": {
+        "DemonImpact": {
+          "value": 25,
+          "cap": 80
+        }
+      },
+      "actions": [
+        {
+          "cooldownMillis": 2000,
+          "mainHits": 3,
+          "radiusMilli": 3000
+        }
+      ]
+    },
+    "armor": {
+      "channels": {
+        "DemonStride": {
+          "value": 6,
+          "cap": 10
+        }
+      },
+      "actions": [
+        {
+          "cooldownMillis": 8000,
+          "lifetimeMillis": 600
+        }
+      ]
+    },
+    "charm": {
+      "channels": {
+        "DemonSeed": {
+          "value": 20,
+          "cap": 60
+        }
+      },
+      "actions": [
+        {
+          "cooldownMillis": 4000
+        }
+      ]
+    },
+    "head": {
+      "channels": {
+        "DemonVolley": {
+          "value": 12,
+          "cap": 40
+        }
+      },
+      "actions": [
+        {
+          "cooldownMillis": 6000,
+          "lifetimeMillis": 500,
+          "count": 6,
+          "mainHits": 6,
+          "rangeMilli": 6000,
+          "widthMilli": 400,
+          "speedMilli": 12000,
+          "angleMilli": 60000
+        }
+      ]
+    },
+    "hands": {
+      "channels": {
+        "DemonDelay": {
+          "value": 25,
+          "cap": 80
+        }
+      },
+      "actions": [
+        {
+          "cooldownMillis": 3000,
+          "delayMillis": 650,
+          "lifetimeMillis": 650,
+          "mainHits": 4,
+          "radiusMilli": 2000
+        }
+      ]
+    },
+    "feet": {
+      "channels": {
+        "DemonArrival": {
+          "value": 20,
+          "cap": 60
+        }
+      },
+      "actions": [
+        {
+          "lifetimeMillis": 3000
+        },
+        {
+          "cooldownMillis": 4000,
+          "radiusMilli": 3000
+        }
+      ]
+    },
+    "stage2": {
+      "channels": {
+        "DemonStomp": {
+          "value": 50,
+          "cap": 100
+        }
+      },
+      "actions": [
+        {
+          "cooldownMillis": 3000,
+          "radiusMilli": 3000
+        }
+      ]
+    },
+    "stage3": {
+      "channels": {
+        "DemonGrove": {
+          "value": 45,
+          "cap": 90
+        }
+      },
+      "actions": [
+        {
+          "cooldownMillis": 1000,
+          "rangeMilli": 4000
+        },
+        {
+          "cooldownMillis": 1000,
+          "rangeMilli": 8000
+        },
+        {
+          "cooldownMillis": 1000
+        }
+      ]
+    },
+    "stage6": {
+      "channels": {
+        "DemonMarch": {
+          "value": 90,
+          "cap": 100
+        },
+        "DemonReplant": {
+          "value": 38,
+          "cap": 40
+        }
+      },
+      "actions": [
+        {
+          "cooldownMillis": 6000,
+          "intervalMillis": 250,
+          "count": 3,
+          "radiusMilli": 2500,
+          "rangeMilli": 8000,
+          "maxInstances": 4,
+          "magnitudeMilli": 6000
+        },
+        {
+          "count": 2
+        }
+      ]
+    }
+  },
+  "rewards": {
+    "pairCooldownMillis": 3000,
+    "pairCount": 2,
+    "plantValueMilli": 45000,
+    "plantCapMilli": 90000,
+    "plantCooldownMillis": 1000,
+    "plantCount": 1,
+    "plantRangeMilli": 8000,
+    "collectCooldownMillis": 1000,
+    "collectRangeMilli": 4000,
+    "marchCooldownMillis": 6000,
+    "marchRangeMilli": 8000,
+    "nativeSpeedValueMilli": -25000,
+    "nativeSpeedCapMilli": 50000
+  }
+}
