@@ -2,8 +2,8 @@
 
 ## 1. 結論と調査範囲
 - **実現可能と判断する。ただし静的根拠に基づく判断で、Unity実機・協力プレイ・長時間動作の保証ではない。**
-- 推奨：選択したゾーンの本体生成グラフを有限サイズで使い、同じゾーンを `TravelToZone(zone, noAdvance:true)` で繰り返し生成する。無限ノード追加、Limbo深度の上限解除は採用しない。
-- 「ひとつの世界」はゾーンasset・背景・通常部屋／ボスのプールを固定する意味。地図と部屋配置は世代ごとに変わる。本体のゾーン番号・tier・loopは進めない。
+- 設計A：本体の有限生成グラフを `TravelToZone(zone, noAdvance:true)` で再生成する。#232ではボス後の潜行時だけ本体全ゾーンから次のassetを抽選し、ボス前の枯渇更新は同ゾーン。無限ノード追加、Limbo深度の上限解除は採用しない。
+- 敵・背景・通常部屋／ボスのプールは現グラフのゾーンassetに従う。地図と部屋配置は世代ごとに変わる。本体のゾーン番号・tier・loopは進めない。#232の最新仕様は§19、以前の実装・検証記録は各段階の時点を表す。
 - 読んだ要求：[Issue #95](https://github.com/Kling0012/shape-of-dreams-rpg-plan/issues/95)、関連：[ボス限定セット #48](https://github.com/Kling0012/shape-of-dreams-rpg-plan/issues/48)。本書は段階1の実装仕様を兼ねる。
 - 本体は r.1.4.0.13（`~/dev/sod-gamedata/README.md:3-10`）。以下 **C/** は同ディレクトリの `decompiled/sod-decomp/Dew.Core/`、**N/** は `decompiled/sod-decomp/Dew.Contents/`、**R/** はリポジトリ相対パス。
 - 根拠は現在の逆コンパイルソースの行番号。実DLLに `ilspycmd -t ZoneManager` を実行し、同ゾーン再生成分岐・seed更新・BossRush分岐の存在も確認した。DLL再出力とは行番号が異なる。本体本文は転載しない。
@@ -28,10 +28,10 @@
 | 終了種別 | Concededは非勝利。UnknownFateは名前に反して勝利。本体勝利・Limbo進捗を付ける安全帰還として使わない | C/DewGameResult.cs:190-197; C/ResultTypeExtensions.cs:3-5; C/DewSave.cs:383-490 |
 
 ## 3. 実現案：Harmony候補と比較
-1. **A：有限グラフの同ゾーン再生成（推奨、中～大規模）**。
-   - 本体の生成・部屋寿命・scene読込・spawn・Mirror地図同期を残す。通常部屋枯渇時と潜行時だけ同assetを更新する。
+1. **A：有限グラフの本体ゾーン再生成（採用）**。
+   - 本体の生成・部屋寿命・scene読込・spawn・Mirror地図同期を残す。通常部屋枯渇時は同asset、ボス後の潜行時はランダムな次assetへ更新する。
    - `Room.OnStartServer` PostfixでserverのonRoomClearを購読（C/Room.cs:238-247）。`ZoneManager.TravelToNode` Prefix／既存 `AddTravelToNodeInterrupt`（C/ZoneManager.cs:925-954）でボス早期入場と選択待ち移動を止める。
-   - `PlayGameManager.LoadNextZone` Prefixで初回は固定ゾーンを開始、以後は許可された同ゾーン更新に置換。`GenerateWorldAuto` Postfixで新地図から参照されないmodifierServerDataを掃除する。
+   - `PlayGameManager.LoadNextZone` Prefixで初回は従来のゾーンを開始、以後はMODの許可したnoAdvance更新に置換。`GenerateWorldAuto`割り込みで専用seedの本体生成を使い、新地図から参照されないmodifierServerDataを掃除する。
    - `Rift_RoomExit.UserCode_TpcInteract__NetworkConnectionToClient` Prefixでモード専用の次部屋／確保UIへ。`RoomRifts.CreateSidetrackRift` PrefixでTheDream等の別世界・終結入口を対象限定で止める。
    - `GenerateWorld_Imp`への既存 `R/src/SodRpg.Mod/DepthRooms.cs:15-45` と生成方針を一本化する。必要なら `GameManager.WrapUpAndShowResult` PrefixもInfinity限定で置き、許可した帰還／GameOverは残し、通常endingへの進入を防ぐ。
 2. **B：小さなローリング地図をMODが構築（大規模、非推奨）**。
@@ -52,12 +52,12 @@
 - Infinityは通常本体モード上のMOD追加モードとして選び、Limboとは排他。Starlessの自動修飾子の存在だけではロビー開始を拒否せず、Infinity中の招待・sidetrack・別ゾーン遷移を止める。本体の通常難易度と通常設定保存keyは維持し、MODプロフィールの独立した省略可能設定と名前空間付きcustomDataでInfinityを保存・同期する。
 - ロビー：既存「夢の深さ」付近に「インフィニティモードON/OFF」「ボス周期10/15/20戦闘部屋」を追加。初期値はOFF・10。OFFは通常遠征。ボス出現のON/OFFは作らない。ホストだけ編集し、参加者は確定値を表示、遠征中は固定。
 - 既存UI／権限：R/src/SodRpg.Mod/DreamforgeUi.cs:733-750、ClientSession.RunChoices.cs:39-71。初回生成はRun生成より前なので、ロビー確定値を使うDepthRoomsと同じ順序にする。
-- 最初の通常生成ゾーンを固定し、その本来のbossRoomsを使用する。start/combat/bossプールがある通常ゾーンのみ対象。特殊生成・終結ゾーンは対象外。共有assetのプールは書き換えない。
-- 状態は `FixedZoneId, Interval, ClearedCombatTotal, ClearsInCycle, GraphEpoch, SegmentEpoch, RoomEpoch, Phase` とRunId・選択revision・確定境界を保存する。Infinity状態の有無がON/OFFを表す。BossDueは周期内の実クリア数から決まる。
+- 開始ゾーンは本体の従来の選択。潜行時の候補は全 `Zone_` リソースとし、通常進行のtier／content制限は抽選に使わない。共有assetの部屋プールは書き換えず、移動先の本来のプールを使う。生成に必要なnative部屋／地図が不足する候補を引いた回は、元のゾーンへfail-softする。
+- 状態は `FixedZoneId, Interval, ClearedCombatTotal, ClearsInCycle, GraphEpoch, SegmentEpoch, RoomEpoch, Phase` とRunId・選択revision・確定境界を保存する。互換性のため名前を維持する `FixedZoneId` は現グラフのゾーンID。Infinity状態の有無がON/OFFを表す。BossDueは周期内の実クリア数から決まる。
 - Phaseは `Exploring → BossDue → BossFight → WaitingSoulFinish → AwaitingChoice → Transitioning/Returning`。魂生成後の消滅と実クリアを順に観測し、単なる「魂がない」判定を使わない。
 - GraphEpoch＝技術的な地図再生成、SegmentEpoch＝選択と報酬規則の区間、RoomEpoch＝新規部屋の識別。native zoneIndex、WaypointGeneration、AuthorityGenerationの代用にしない。
 - 通常クリアはserverのRoom.onRoomClearで、active・非遷移・非revisit・Combat・未計数の当世代nodeだけを加算。MiniBossを含むCombatも1部屋。Start/Merchant/Event/再訪/ボス部屋は周期に数えない。
-- モードONではN部屋クリアでBossDueを立て、**次の新規部屋を固定ゾーンのExitBossにする**。#208ではホストがnative node statusで唯一の次室を開示し、clientはそのindexをCmdで選ぶ。server実bodyが開示済み移動先を検証してnative投票へ送り、`TravelToNode`でも世代・Due・精算条件を再確認する。
+- モードONではN部屋クリアでBossDueを立て、**次の新規部屋を現ゾーンのExitBossにする**。#208ではホストがnative node statusで唯一の次室を開示し、clientはそのindexをCmdで選ぶ。server実bodyが開示済み移動先を検証してnative投票へ送り、`TravelToNode`でも世代・Due・精算条件を再確認する。
 - 次の未訪問通常部屋がなくなったら、同ゾーンをnoAdvanceで再生成。技術更新では新遠征・確保・イベント抽選・道標更新・ZoneTraveler依頼を発火させず、累計と周期を維持する。Dueなら枯渇更新より周期ボスを優先し、潜行確定時だけClearsInCycleとBossDueを戻す。
 - ボス撃破→魂生成待ち→全員の魂選択／報酬完了→魂消滅・Rift解錠・実クリア→MODの未決撃破／配当精算→確保画面。魂がまだ存在しない4秒間を「完了」と誤認しない。
 - **ボス以外の出口・N部屋ごとの確保は作らない。** ボス撃破と魂報酬完了後だけ既存確保画面を出す。確保は帰還して終了、潜行は継続。
@@ -69,7 +69,7 @@
 - 推奨はホストがパーティ全体の「確保して帰還／深く潜る」を決定。荷物、取引予約、出来事、契約は個人のまま。参加者個別退出は採らない。通常モードの個人確保は変更しない。
 - 確保：各人の未決撃破・配当・取引の終了条件を満たして既存の確保を1回適用し、CompletedRunIdと帰還結果を耐久保存。踏破XP・勝利／敗北・本体ending解放は付けない。
 - その後ホストで `GameManager.WrapUpAndShowResult(Conceded)` を呼び、本体の結果同期／ready／ロビー再開を残す。MODはSecuredReturnを優先して本体Concededを敗北精算しない。本体のConceded履歴・mastery等の精算と「放棄」表示は残るため、表示上はInfinity帰還と区別する。
-- 潜行：本体の終結APIを呼ばず、各人の選択確定後に既存Delveを1回適用、鞄を維持、次Segmentへ。同ゾーン再生成の開始前に確定状態を同期・保存する。
+- 潜行：本体の終結APIを呼ばず、各人の選択確定後に既存Delveを1回適用、鞄を維持、次Segmentへ。全員の保存ACK後に次ゾーンを抽選し、noAdvanceで再生成する。
 - Infinity選択待ちを戦闘／遅着報酬による既存の自動Delveで解除しない（R/src/SodRpg.Mod/ClientSession.RunChoices.cs:153-177）。全員KOは従来のGameOver、切断は帰還・勝利とみなさない。
 
 ## 7. 難しさの伸び
@@ -93,7 +93,7 @@
 - 推奨はそのゾーンの本来のbossRoomsを使い、実ボスの安定IDを撃破事実／報酬へ保持して#48の共通抽選に接続。悪夢エリートのBoss相当報酬は限定セット対象外。ボス・セットの任意選択や他ゾーンボスを普通部屋へ直spawnする案は採らない。
 
 ## 9. 協力同期・セーブ・記録
-- mode／固定ゾーン／間隔／Phase／累計はホスト権威。全員のMOD対応版を開始前に確認し、未導入・非互換の参加者ではInfinity開始／途中参加を認可しない。クライアントの部屋数を信用しない。
+- mode／現ゾーン／間隔／Phase／累計はホスト権威。全員のMOD対応版を開始前に確認し、未導入・非互換の参加者ではInfinity開始／途中参加を認可しない。クライアントの部屋数を信用しない。
 - RunChoiceProgressにGraph/Segmentの到着を追加。同じnative zoneIndexの技術更新では通常の確保・道標／出来事再抽選・ZoneTraveler依頼を発火させない。本体zoneIndexは偽装しない。
 - mode・NativeZoneIndex・Graph/Segment/RoomEpochをSnapshot／Publisher／Progress／Stream／履歴、PendingRunKill／撃破事実／分類／再送、PressureDividend、codec／cloneへ伝搬。通常はmode OFFと従来ゾーン遷移を維持する。
 - 次区間の契約／イベントを変える前に旧区間の撃破を旧規則で精算する。Heat・WaypointだけでなくPact/EventLuck等も現在run値を参照するため、境界を越える保留が必要なら戦闘時のimmutable補正も保持する。
@@ -118,10 +118,10 @@
 ## 11. Claudeが確定すべき選択肢（太字が推奨）
 | 判断 | 選択肢・推奨／理由 |
 |---|---|
-| 同じ世界 | **固定assetの有限地図再生成**／固定slot／本体loop。Aが寿命管理を最も残す |
+| 同じ世界 | **本体assetの有限地図再生成、潜行時だけランダムな次asset（#232）**／固定slot／本体loop。Aの寿命管理を維持 |
 | モードと出口 | **モードOFF＝通常遠征、ON＝周期ボス必須、魂報酬後のみ確保**。ボス出現スイッチ・ボス以外の出口は作らない |
 | 帰還と協力 | **全員共通ホスト選択・SecuredReturn＋native Conceded**／個別退出／通常勝利。個別退出は別設計、勝利は進捗誤付与 |
-| 世界・ボスの選択 | **通常ゾーンと本来のボス**／特殊ゾーンも許可／ボス指名。特殊scene・Primusの途中参加禁止とendingは追加調査が必要 |
+| 世界・ボスの選択 | **全本体ゾーンから抽選し、本来のbossRoomsを使用（#232）**。純白も通常の勝利処理へ送らず、native生成不可の回だけ元ゾーンへfail-soft |
 | 周期・難度 | **10（選択10/15/20）、圧HP+10%／攻撃+4%・100段上限**／別係数／無制限。数値は提案で、有限域の安定を優先 |
 | 更新の副作用 | **本体のKO復活・狩り局所リセットを明示して採用**／技術更新時だけ抑止。後者はLoadNode内部介入が増える |
 | 報酬上限 | **機会＋変換後無料出力、保証別枠**。部屋予算50%も併用。段階2の確定値・期待値の評価範囲は§15 |
@@ -224,7 +224,7 @@
 ## 18. #228：イベント部屋の公開順の偏りを抑える
 
 ### 原因と通常モードの頻度
-- 部屋種別は本体生成を流用する。`InfinityMode.OnGenerated` は種別を割り当てず、同ゾーン再生成も `TravelToZone(currentZone, noAdvance:true)`（`InfinityMode.cs:345-389,485-498`）。本体は `numOfEvents.x`〜`y`（両端含む）からイベント数を抽選し、残った候補へランダム配置する（C/ZoneManager.cs:2452-2466）。有効な設定なら抽選された数を生成するが、1室以上・ボスまでの遭遇はコード上の最低保証ではない。
+- 部屋種別は本体生成を流用する。`InfinityMode.OnGenerated` は種別を割り当てない。#228時点では全更新が同ゾーン、#232以後はボス後の潜行時だけ次ゾーンへ切り替える。本体は `numOfEvents.x`〜`y`（両端含む）からイベント数を抽選し、残った候補へランダム配置する（C/ZoneManager.cs:2452-2466）。有効な設定なら抽選された数を生成するが、1室以上・ボスまでの遭遇はコード上の最低保証ではない。
 - 実生成ノード数をN、イベント数をE、商人数をMとすると、通常の生成割合は全体で `E/N`、開始・ボスを除くと `E/(N−2)`、戦闘＋イベントでは `E/(N−2−M)`。通常は隣接候補から利用者が選ぶため、生成割合と遭遇割合は別（C/ZoneManager.cs:2771-2802,3692-3710）。手元資料はDLL・逆コンパイル・reflectionのみでUnityのZone設定アセットを含まないため、ゾーン別の実数・百分率は未確認。
 - 修正前の1室公開は最短距離／indexだけで選ぶ（変更前 `InfinityMapReveal.cs:62-69`）。戦闘10／15／20室でボスが優先され、その後の潜行で旧グラフを再生成するため、遠いイベントを未訪問のまま捨て得る（`InfinityRunState.cs:35-46`、`InfinityMode.cs:485-498`、C/ZoneManager.cs:2474-2475）。`DepthRooms.cs:22-33` の深度によるノード増加もイベント数を増やさないので、生成比率を薄め得る。利用者の実機での不足量は未計測。
 
@@ -239,4 +239,35 @@
 - 遠いイベントを置いた最小回帰は修正前に4ケース失敗（期待Event／実際Combat）、イベント0室の1ケースは成功。境界は周期10／15／20、生成配分8戦闘:4イベント、イベント0室、再訪・Continueの次室保持、参加者の距離順の違いを扱う。
 - 指定Releaseビルド成功（警告5・エラー0）。一時コンソールから製品ソースをリンクした実Harmony境界を実行し、30ノード・24戦闘・4イベントの地図で、10戦闘クリアまでに4イベント訪問、次室はボス29、Continue／参加者でも29を保持した。Unity APIは既存ハーネスの代替であり、Unity実画面・実通信・実機Continueは未確認。
 - 指定 `DOTNET=/usr/bin/dotnet DOTNET_ROLL_FORWARD=LatestMajor python tools/test_changed.py` は終了コード0、Core 1812・Native 62・Startup 55成功、計1929成功／失敗0／既存4skip。追加回帰の5ケースを含む。初回はイベントが自然に続く場合まで3室に制限するテストの誤った期待だけが失敗し、自然な早期イベントも許す頻度下限の検証へ修正した。
+
+## 19. #232：ボス後の潜行でランダムな次ゾーンへ
+
+### 原因と本体API
+- 本体の通常進行は `PlayGameManager.LoadNextZone` → `ZoneManager.LoadNextZoneByContentSettings`。tierの候補を使い切ると次tierへ、末尾ならloopを進め、`FilterZones` 後の該当tierから抽選して `TravelToZone` を呼ぶ（C/PlayGameManager.cs:174-186、C/ZoneManager.cs:3387-3432）。実際のtier配列・候補数はUnityアセットの値で、DLLの初期値を本番値とは扱わない。
+- 旧MODは初回以外の通常進行を `InfinityNextZone` で止め、`Regenerate` でも `TravelToZone(currentZone, noAdvance:true)` を呼んでいた（変更前R/src/SodRpg.Mod/InfinityMode.cs:575-589,485-498）。本体は地図・訪問済み・部屋プール・hunter/turn局所状態を再生成時に戻す（C/ZoneManager.cs:2372-2376,2550-2560）。開始ゾーンがForestなら、そのassetとベルフォメットのプールを毎回使うため、世界状況の先頭へ戻るように見える。
+- `TravelToZone(target, noAdvance:true)` は本体のroom終了・actor破棄・新ゾーン設定・全員のsceneロードを使う。敵の規則と音楽は新 `currentZone`、背景／敵／ボス固有scriptは移動先sceneに従う（C/ZoneManager.cs:981-998,1230-1333,1430-1474、C/RoomMonsters.cs:1009-1019、C/Room.cs:355-361）。
+
+### 選択・fail-soft
+- 開始は従来どおり。全員のボス後Delve保存ACKが揃った後だけ、`DewResources.FindAllByNameSubstring<Zone>("Zone_")` の全件から選ぶ。tier、通常モードの `FilterZones`、ロビーの次ゾーン順を使わない。名前をOrdinalで整列し、候補が複数なら直前のゾーン名を除く。候補が1件なら同ゾーン。
+- ゾーン抽選は `Rng.SeedFrom(runId + ":infinity-zone:") + SegmentEpoch`、地図は別ドメイン `":infinity-world:" + 次GraphEpoch` の専用seed。個人の報酬RNGを消費しない。公開 `GenerateWorldWithSeed` は通常生成と同じ本体実装へ入り、`bossRooms` の抽選も本体seed＋912に任せる（C/ZoneManager.cs:2065-2069,2412-2419）。本体のcached RNG cursorへ依存せず、Continue・抽選前の保存再演で同じ結果になる。
+- ボス前の部屋不足更新は同asset。通常生成だけでなく、native start/combat/bossプールと3ノード以上を持つ特殊有限グラフもそのまま扱う（C/ZoneManager.cs:2075-2079,2110-2120,2378-2419,2468-2472）。共有assetを書き換えず、架空の通常部屋や敵を補わない。
+- 選択／移動／native生成が失敗した回は警告1回で元のゾーンを再生成する。生成失敗はsceneロード・本体Continue保存より前に、public `currentZone` とlive `lastLoadNodeSettings.newZone` を元へ戻してseed生成する。APIで拒否された遷移はready後にも検知する。新しい非公開API・IL一致をMOD／Infinity全体の起動条件にしない。
+- 正常にゾーンが変わったときだけ、native prewarmの公開 `lastClearedZoneIndex` を無効化する。noAdvanceでは番号が変わらず、本体のゾーン間能力pool退役が動かないため。同じnative退役経路を次室のprewarmで実行し、古いゾーンのpoolを積み増さない（C/RoomMonsters.cs:1028-1035、C/SpawnManager.cs:22）。
+- Primusは専用 `OnCreate` で魂を省略し、`OnDeath` で直接Dustを払い `Primus_Ending.StartPrimusDeath` を開始する（本体Dew.Contents.dllを型指定ilspycmdで確認）。Infinityではpublic Harmony delegateの非virtual呼出で `BossMonster.OnDeath` の通常魂処理を使い、二重Dustとエンディングを避ける。既存MODの純白入口・勝利処理もInfinityには適用しない。この任意adapterが利用できないときは、Primusを引いた回だけ元のゾーンへ戻す。
+
+### 難度・報酬・保存
+- `noAdvance` でzoneIndex／ambientLevelを維持し、TravelToZoneだけではtier／loopも進まない（C/ZoneManager.cs:1312-1317）。native番号由来のHP／攻撃倍率、XP、Gold／物価、記憶レベル／エッセンス品質、hard variantの段階は従来のInfinityと同じ位置に留める。根拠：C/GameManager.cs:1073-1124,1354-1412、C/LootManager.cs:178-200、C/ZoneManager.cs:547,3354-3382。次ゾーンの番号を偽装して難度と供給を二重に増やさない。既存DreamDepth／Heat／夢の圧で上げ、新係数はない。敵prefab固有の基礎値・行動は移動先のものなので、全ボスが同じ強さになる保証ではない。
+- native通常ドロップは共有LootManagerのpool／rarity表で、ゾーン別の代替表は作らない。native魂はその実ボスの `GetUniqueReward` を使う。MODも実ボス型を既存の撃破factに保存し、`BossSets` で固有セットを抽選する（R/src/SodRpg.Mod/HostAuthority.KillSync.cs:527-541、R/src/SodRpg.Core/Game/BossSets.cs:9-55）。Infinityの時間／部屋／高レア／無料出力予算は引き継ぎ、既存 `ExpectedKillCosts` がそのボス限定確率も予算に含める（R/src/SodRpg.Core/Game/InfinityRewards.cs:147-150）。nativeとMODの報酬上限は別で、ゾーン切り替えを予算補充理由にしない。
+- ホストが新グラフの実ゾーンを既存 `FixedZoneId` に確定し、native currentZone／node statusと共有snapshotで送る。参加者は保存済みChoiceRevision／SegmentEpoch一致後にゾーンとGraphEpochを一緒に取り込む。Continueはnative graph-ready後に保存地点のMODチェックポイントを戻し、asset名・worldseed・epochを照合する。
+- **Protocol 24**：wire項目は増やさないが、旧参加者の純白勝利／選択停止処理との混在を拒否する。**保存形式5・Infinity codec version 1・native envelope項目は変更なし**。`FixedZoneId`／`fixedZone` は互換性のため名前を残し、現在のグラフのゾーンを表す。旧保存は保存された同ゾーンを復元し、次のDelveから新抽選を使う。Infinity欄のない旧通常保存は従来どおりOFF。
+
+### 候補一覧の根拠と限界
+- 全件一覧の権威はUnityのMainResources `nameToGuid`（C/DewResources.cs:62-71,448-455）。手元の本体データにはManaged DLLだけがあり、このアセット／scene／現行ローカライズはない。確認できたliteral IDは `Zone_Forest`、`Zone_Despair`、`Zone_Primus`。反射一覧にはForest／SnowMountain／LavaLand／DarkCave／Ink／Sky／Despair／Primusの敵群があるが、これを全ゾーンasset名の確定一覧としてハードコードしない。
+- 全候補の実名、日本語表示名、Primusを含む特殊assetの実pool／specialNodes、scene固有挙動は未確定。候補から黙って除外せず、抽選対象に含めたうえでnative生成に必要な値が不足する回だけfail-softする。実機のscene・背景・通信・Continueの保証は境界ハーネスではできない。
+
+### 検証
+- 指定Releaseビルド成功：警告5・エラー0。指定 `GameDir` を参照し、`ModDeployDir=/tmp/x` を指定した。
+- 一時Releaseコンソールで製品ソースの実Harmony境界を実行：合成7候補の36潜行で直前の再選択なし、GraphEpoch36／Combat累計360／native zoneIndex0。保存前のrun／epoch復元＋候補列挙順反転で同じゾーンとseed（782812123）を観測。生成例外を注入すると `currentZone`・live遷移要求・profileのゾーンがすべて元へ戻り、Exploringで継続。Primusは魂あり／endingなし／直接Dust払い0を観測した。Unity境界は既存代替APIであり、実scene・ネットワークの保証ではない。一時コンソールは削除済み。
+- 初回の指定テストは2375成功・1失敗・既存4skip。失敗はseed生成への変更に伴う `GenerateWorldAuto` 呼出回数assertのみで、該当テストの実装依存の回数assertを削除した。地図／公開状態／周期／未精算境界の検証は維持する。
+- 修正後の指定 `DOTNET=/usr/bin/dotnet DOTNET_ROLL_FORWARD=LatestMajor python tools/test_changed.py` は終了コード0、2376成功・失敗0・既存4skip（Core 2239、Native 75、Startup 62）。ゲストの新ゾーンsnapshot取り込み／古いsnapshot拒否／チェックポイントへのゾーン巻き戻し、同ゾーン枯渇更新、直前回避／seed再演、遷移・生成例外の元ゾーン継続、Infinityと通常Primusの魂／勝利分岐を含む。
 

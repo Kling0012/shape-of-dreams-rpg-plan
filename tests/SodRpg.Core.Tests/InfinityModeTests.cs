@@ -123,9 +123,9 @@ namespace SodRpg.Core.Tests
             Rules.ReachInfinityChoice(p);
         }
 
-        /// <summary>ボス後に確保画面が出て、潜行すれば同じ世界で遠征が終わらずに続く。</summary>
+        /// <summary>ボス後に確保画面が出て、潜行すれば次の地図でも遠征が終わらずに続く。</summary>
         [Fact]
-        public void Infinity_run_continues_in_one_zone_with_bosses_per_cleared_rooms()
+        public void Infinity_run_continues_across_graphs_with_bosses_per_cleared_rooms()
         {
             var p = BeginInfinityRun(95UL, "run-95");
             var infinity = p.Run.Infinity;
@@ -156,7 +156,7 @@ namespace SodRpg.Core.Tests
             Assert.InRange(p.Run.OfferedWaypoints.Count, 0, 3);
             Assert.NotNull(p.Run.RunId);
 
-            // 潜行：難度が上がり、同じゾーンの技術再生成を経て次の周期へ（遠征は終わらない）
+            // 潜行：難度が上がり、技術再生成を経て次の周期へ（遠征は終わらない）
             int heat = p.Run.Heat;
             Rules.Delve(p);
             Assert.Equal(heat + 1, p.Run.Heat);
@@ -180,7 +180,6 @@ namespace SodRpg.Core.Tests
             FinishBossCycle(p);
             Rules.Delve(p);
             Assert.True(infinity.CompleteGraphTransition(infinity.GraphEpoch + 1));
-            Assert.Equal(Zone, infinity.FixedZoneId); // ずっと同じ世界
             Assert.Equal("diffNormal", infinity.DifficultyId);
             for (int room = 1; room <= InfinityRunState.DefaultInterval; room++)
                 FightRoom(p, node: room, StandardRoomKills);

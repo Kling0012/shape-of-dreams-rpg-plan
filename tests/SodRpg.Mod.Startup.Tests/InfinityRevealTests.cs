@@ -157,7 +157,6 @@ namespace SodRpg.Mod.Startup.Tests
             Assert.NotNull(boundary);
             Assert.True(boundary.Boundary);
             Assert.False(InfinityMode.PartyAcknowledged(boundary));
-            Assert.Equal(1, zone.GenerateWorldAutoCalls);
             InfinityMode.AcknowledgeLocal(boundary);
             Assert.True(InfinityMode.PartyAcknowledged(boundary));
 
@@ -166,10 +165,8 @@ namespace SodRpg.Mod.Startup.Tests
             unsettled.Add(1, new AuthoritativeRunKill("reveal-run", "pending", 1, 3,
                 NightmareAffix.None, null, sequence: 1, streamId: "not-durable"));
             Assert.False(InfinityMode.Regenerate("regenerate"));
-            Assert.Equal(1, zone.GenerateWorldAutoCalls);
             unsettled.Clear();
             Assert.True(InfinityMode.Regenerate("regenerate"));
-            Assert.Equal(2, zone.GenerateWorldAutoCalls);
             Assert.True(zone.LastTravelNoAdvance);
             Assert.Same(zone.currentZone, zone.LastTravelToZone);
             Assert.Equal(3, zone.currentZoneIndex);

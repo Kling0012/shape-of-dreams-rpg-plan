@@ -193,7 +193,8 @@ namespace SodRpg.Mod
         // Version 21 keeps the return-to-lobby defeat + Infinity reward-cap protocol and adds owner-bound satchel overflow dust trades with their expedition identity.
         // Version 22 distinguishes frozen continue barriers from disk-confirmed cleanup notices.
         // Version 23 requires one-room Infinity reveal and matching travel/vote restrictions.
-        public const int Version = 23;
+        // Version 24 requires random Infinity zone transitions and nonterminal Primus choices.
+        public const int Version = 24;
         public const string LobbyReturnedResumeSession = "lobby-returned";
     }
 

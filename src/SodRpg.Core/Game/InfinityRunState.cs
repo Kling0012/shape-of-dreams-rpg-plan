@@ -15,6 +15,7 @@ namespace SodRpg.Core.Game
         public const int LongInterval = InfinityBalance.LongInterval;
         public const int MaximumPressureStage = InfinityBalance.MaximumPressureStage;
         public bool Enabled => true;
+        /// <summary>Current native graph's zone. The exported name is retained for save/wire compatibility.</summary>
         public string FixedZoneId { get; set; }
         public string DifficultyId { get; set; }
         public int Interval { get; set; } = DefaultInterval;

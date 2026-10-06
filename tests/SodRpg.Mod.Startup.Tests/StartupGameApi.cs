@@ -110,6 +110,28 @@ namespace SodRpg.Mod
         public void CustomRpc_UnregisterServerMessageHandler<T>(Action<T, DewPlayer> handler) { }
     }
     public sealed class Shrine_BossSoul : Actor { }
+    public struct EventInfoKill { }
+    public class BossMonster : Actor
+    {
+        public bool skipBossSoulFlow;
+        public bool SoulStarted;
+        public void Die() => OnDeath(default);
+        protected virtual void OnDeath(EventInfoKill info) { SoulStarted = !skipBossSoulFlow; }
+    }
+    public sealed class Mon_Primus_BossPrimusAeron : BossMonster
+    {
+        public bool EndingStarted;
+        public int DirectDustPayments;
+        public Mon_Primus_BossPrimusAeron() { skipBossSoulFlow = true; }
+        protected override void OnDeath(EventInfoKill info)
+        {
+            base.OnDeath(info);
+            DirectDustPayments++;
+            EndingStarted = true;
+        }
+    }
+    public static class ManagerBase<T> { public static T instance; }
+    public sealed class SpawnManager { public int lastClearedZoneIndex = -1; }
     public sealed class GameSettingsManager
     {
         public readonly Dictionary<string, string> customData = new Dictionary<string, string>();
@@ -120,7 +142,7 @@ namespace SodRpg.Mod
     // The real protocol constant lives in NetMessages.cs (not compiled here).
     internal static class Protocol
     {
-        public const int Version = 23;
+        public const int Version = 24;
         public const string LobbyReturnedResumeSession = "lobby-returned";
     }
     public enum GameState { InLobby, Playing }
@@ -186,8 +208,19 @@ namespace SodRpg.Mod
     {
         public string name;
         public bool useSpecialGeneration;
+        public int specialNodes;
         public List<object> startRooms = new List<object>(), combatRooms = new List<object>(), bossRooms = new List<object>();
     }
+    public static class DewResources
+    {
+        public static readonly List<Zone> Zones = new List<Zone>();
+        public static IEnumerable<T> FindAllByNameSubstring<T>(string name)
+        {
+            foreach (var zone in Zones)
+                if (zone.name.Contains(name) && zone is T value) yield return value;
+        }
+    }
+    public sealed class LoadNodeSettings { public Zone newZone; }
     internal sealed class PerfMeter
     {
         public void Frame(float delta) { }
@@ -330,6 +363,7 @@ namespace SodRpg.Mod
         public readonly List<HunterStatus> hunterStatuses = new List<HunterStatus>();
         public int hunterStartNodeIndex = -1;
         public VoteType voteType;
+        public LoadNodeSettings lastLoadNodeSettings = new LoadNodeSettings();
         public readonly List<WorldNodeModifier> modifiers = new List<WorldNodeModifier>();
         public readonly Dictionary<int, object> modifierServerData = new Dictionary<int, object>();
         public readonly List<object> visitedNodesSaveData = new List<object>();
@@ -370,9 +404,20 @@ namespace SodRpg.Mod
         public Zone SceneZone;
         public WorldNodeData[] GeneratedNodes;
         public int[] GeneratedDistances;
+        public Zone RejectTravelTo, FailGenerationFor;
         public void GenerateWorldAuto()
         {
             GenerateWorldAutoCalls++;
+            GenerateGraph();
+        }
+        public void GenerateWorldWithSeed(uint seed)
+        {
+            worldSeed = seed;
+            if (currentZone == FailGenerationFor) throw new InvalidOperationException("Injected generation failure");
+            GenerateGraph();
+        }
+        private void GenerateGraph()
+        {
             if (currentZone == null && SceneZone == null && GeneratedNodes == null) return;
             nodes.Clear();
             nodes.AddRange(GeneratedNodes ?? new[] {
@@ -431,6 +476,8 @@ namespace SodRpg.Mod
         public void TravelToZone(Zone prefab, bool noAdvance)
         {
             LastTravelToZone = prefab; LastTravelNoAdvance = noAdvance; TravelToZoneCalls++;
+            lastLoadNodeSettings.newZone = prefab;
+            if (prefab == RejectTravelTo) throw new InvalidOperationException("Injected travel failure");
             if (SceneZone == null && GeneratedNodes == null) return;
             currentZone = prefab;
             if (!noAdvance) currentZoneIndex++;

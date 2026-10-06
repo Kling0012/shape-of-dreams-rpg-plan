@@ -39,6 +39,9 @@ namespace SodRpg.Mod
         private static bool _restoring;
         private static bool _newInfinity;
         private static bool _refresh;
+        private static Zone _refreshTarget;
+        private static Zone _refreshOrigin;
+        private static bool _zoneSwitchWarned;
         private static bool _unavailable;
         private static string _lastDisableLog;
         private static string _generationReportedRun;
@@ -356,28 +359,38 @@ namespace SodRpg.Mod
                 _runId = id; _initial = null;
             }
             var asset = zone.currentZone;
-            if (asset == null || asset.useSpecialGeneration || asset.name == "Zone_Primus"
-                || asset.startRooms == null || asset.startRooms.Count == 0
-                || asset.combatRooms == null || asset.combatRooms.Count == 0
-                || asset.bossRooms == null || asset.bossRooms.Count == 0)
+            if (!HasNativeRoomPools(asset))
             {
-                DisableFeature("Infinity requires a normal zone with native start, combat and boss pools."); return;
+                if (_refresh) throw new InvalidOperationException("Infinity target has no native start/combat/boss pools.");
+                DisableFeature("Infinity requires native start, combat and boss pools."); return;
             }
             if (State == null) _initial = new InfinityRunState
             {
                 FixedZoneId = asset.name, Interval = ClientSession.HostChosenInfinityInterval,
                 DifficultyId = NetworkedManagerBase<GameManager>.softInstance?.difficulty?.name,
             };
-            if (State.FixedZoneId != asset.name) { DisableFeature("Infinity fixed-zone identity changed."); return; }
+            if (State.FixedZoneId != asset.name && (!_refresh || asset != _refreshTarget))
+            { DisableFeature("Infinity current-zone identity changed outside its transition."); return; }
             AttachInitialToHostRun();
+            if (zone.nodes.Count > InfinityRunState.MaximumGraphNodes || _refresh && zone.nodes.Count < 3)
+            {
+                if (_refresh) throw new InvalidOperationException("Infinity target graph has an unsupported node count.");
+                DisableFeature("Infinity generated graph exceeds its bounded node limit."); return;
+            }
             if (_refresh)
             {
                 if (!State.CompleteGraphTransition(State.GraphEpoch + 1))
                 { DisableFeature("Infinity graph generation did not match its transition intent."); return; }
+                if (State.FixedZoneId != asset.name)
+                {
+                    // Native prewarm retires monster ability pools by zoneIndex, which noAdvance
+                    // retains. Invalidate its public marker only on an actual biome change.
+                    var spawn = ManagerBase<SpawnManager>.instance;
+                    if (spawn != null) spawn.lastClearedZoneIndex = -1;
+                }
+                State.FixedZoneId = asset.name;
                 _refresh = false;
             }
-            if (zone.nodes.Count > InfinityRunState.MaximumGraphNodes)
-            { DisableFeature("Infinity generated graph exceeds its bounded node limit."); return; }
             ReferencedModifiers.Clear(); RetiredModifiers.Clear();
             foreach (var node in zone.nodes)
                 if (node.modifiers != null)
@@ -499,10 +512,115 @@ namespace SodRpg.Mod
             if (state.Phase != InfinityPhase.Transitioning && !state.BeginGraphTransition(intent)) return false;
             _refresh = true;
             if (!ClientSession.PersistHostInfinityState()) { _refresh = false; DisableFeature("Infinity transition receipt could not be saved."); return false; }
-            // noAdvance explicitly retains zoneIndex, tier, loop and ambientLevel. Native LoadNode adopts
-            // KO-only revival and resets hunter credit/status/turn; healthy heroes are not fully healed.
-            try { zone.TravelToZone(zone.currentZone, noAdvance: true); return true; }
-            catch (Exception ex) { InterceptionFailed(nameof(Regenerate), ex); return false; }
+            _refreshOrigin = zone.currentZone;
+            _refreshTarget = _refreshOrigin;
+            _zoneSwitchWarned = false;
+            if (intent == "delve")
+                try
+                {
+                    var candidates = new List<Zone>(DewResources.FindAllByNameSubstring<Zone>("Zone_"));
+                    candidates.Sort((a, b) => StringComparer.Ordinal.Compare(a.name, b.name));
+                    if (candidates.Count > 1) candidates.RemoveAll(z => z.name == state.FixedZoneId);
+                    if (candidates.Count == 0) throw new InvalidOperationException("No native zones are available.");
+                    var rng = new Rng(Rng.SeedFrom(ClientSession.HostRun.RunId + ":infinity-zone:")
+                        + unchecked((ulong)state.SegmentEpoch));
+                    var target = candidates[rng.Range(0, candidates.Count - 1)];
+                    if (!HasNativeRoomPools(target))
+                        throw new InvalidOperationException(target.name + " has no native start/combat/boss room pools.");
+                    if (target.name == "Zone_Primus" && !InfinityPrimusDeath.IsInstalled)
+                        throw new InvalidOperationException("Native Primus boss-soul interception is unavailable.");
+                    _refreshTarget = target;
+                }
+                catch (Exception ex) { WarnZoneSwitch(ex.Message); }
+            // noAdvance retains native index/tier/loop/ambient difficulty. The selected prefab owns
+            // enemies, scenes and boss pools; depth and Infinity pressure remain the scaling axes.
+            return TravelGraph(zone);
+        }
+
+        private static bool HasNativeRoomPools(Zone asset)
+            => asset != null && asset.startRooms != null && asset.startRooms.Count > 0
+                && asset.combatRooms != null && asset.combatRooms.Count > 0
+                && (!asset.useSpecialGeneration || asset.specialNodes >= 3)
+                && asset.bossRooms != null && asset.bossRooms.Count > 0;
+
+        private static void WarnZoneSwitch(string reason)
+        {
+            if (_zoneSwitchWarned) return;
+            _zoneSwitchWarned = true;
+            Log.Warn("Infinity zone switch failed; continuing in the previous zone for this graph. " + reason);
+        }
+
+        internal static bool HandleZoneGenerationFailure(Exception error)
+        {
+            if (!_refresh || _refreshTarget == _refreshOrigin) return false;
+            WarnZoneSwitch(error.Message);
+            return true;
+        }
+
+        internal static void GenerateRefresh(ZoneManager zone)
+        {
+            uint seed = RefreshWorldSeed;
+            try
+            {
+                zone.GenerateWorldWithSeed(seed);
+                if (zone.nodes.Count < 3 || zone.nodes.Count > InfinityRunState.MaximumGraphNodes)
+                    throw new InvalidOperationException("Infinity target graph has an unsupported node count.");
+            }
+            catch (Exception ex)
+            {
+                if (_refreshTarget == _refreshOrigin) throw;
+                WarnZoneSwitch(ex.Message);
+                _refreshTarget = _refreshOrigin;
+                // Generation precedes scene load/native Continue serialization. Restore the
+                // public native zone and live LoadNode request before either can save a
+                // target-zone identity with a previous-zone graph after a caught native error.
+                zone.currentZone = _refreshOrigin;
+                zone.lastLoadNodeSettings.newZone = _refreshOrigin;
+                zone.GenerateWorldWithSeed(seed);
+            }
+        }
+
+        private static bool TravelGraph(ZoneManager zone)
+        {
+            try
+            {
+                zone.TravelToZone(_refreshTarget, noAdvance: true);
+                zone.CallOnReadyAfterTransition(() =>
+                {
+                    // LoadNode catches native generation errors inside its coroutine. Detect a
+                    // rejected/incomplete switch too, not only synchronous API exceptions.
+                    if (_refresh && _refreshTarget != _refreshOrigin)
+                        FallbackGraph(zone, "Native zone generation did not complete.");
+                });
+                return true;
+            }
+            catch (Exception ex)
+            {
+                if (_refreshTarget != _refreshOrigin) return FallbackGraph(zone, ex.Message);
+                _refresh = false;
+                WarnZoneSwitch(ex.Message);
+                return false;
+            }
+        }
+
+        private static bool FallbackGraph(ZoneManager zone, string reason)
+        {
+            WarnZoneSwitch(reason);
+            _refreshTarget = _refreshOrigin;
+            return TravelGraph(zone);
+        }
+
+        internal static bool IsRefreshTarget(Zone prefab) => _refresh && prefab == _refreshTarget;
+
+        internal static uint RefreshWorldSeed
+        {
+            get
+            {
+                var rng = new Rng(Rng.SeedFrom(ClientSession.HostRun.RunId + ":infinity-world:")
+                    + unchecked((ulong)(State.GraphEpoch + 1)));
+                uint seed = (uint)rng.NextULong();
+                return seed == 0 ? 1u : seed;
+            }
         }
 
         internal static void PublishChoice(InfinityChoice choice)
@@ -633,18 +751,34 @@ namespace SodRpg.Mod
                     InfinityMode.DisableFeature("Infinity modifier generation identity is unavailable or exhausted.");
                     return true;
                 }
-                if (InfinityMode.NativeSaveAgreement) return true;
+                if (InfinityMode.NativeSaveAgreement)
+                {
+                    if (!InfinityMode.IsTechnicalRefresh) return true;
+                    // Public seeded generation shares native graph/boss logic, without consuming
+                    // a mutable cached random cursor that Continue or a failed switch could alter.
+                    InfinityMode.GenerateRefresh(__instance);
+                    return false;
+                }
                 __state = false;
                 return false;
             }
-            catch (Exception ex) { InfinityMode.InterceptionFailed(nameof(InfinityGenerated), ex); return true; }
+            catch (Exception ex)
+            {
+                if (InfinityMode.HandleZoneGenerationFailure(ex)) { __state = false; return false; }
+                InfinityMode.InterceptionFailed(nameof(InfinityGenerated), ex);
+                return true;
+            }
         }
 
         private static void Postfix(ZoneManager __instance, bool __state)
         {
             if (!InfinityMode.Available || !__state) return;
             try { InfinityMode.OnGenerated(__instance); }
-            catch (Exception ex) { InfinityMode.InterceptionFailed(nameof(InfinityGenerated), ex); }
+            catch (Exception ex)
+            {
+                if (!InfinityMode.HandleZoneGenerationFailure(ex))
+                    InfinityMode.InterceptionFailed(nameof(InfinityGenerated), ex);
+            }
         }
     }
 
@@ -795,7 +929,7 @@ namespace SodRpg.Mod
             {
                 return !InfinityMode.Enabled || __instance.currentZone == null
                     || InfinityMode.NativeSaveAgreement && InfinityMode.IsTechnicalRefresh
-                        && noAdvance && prefab == __instance.currentZone;
+                        && noAdvance && InfinityMode.IsRefreshTarget(prefab);
             }
             catch (Exception ex) { InfinityMode.InterceptionFailed(nameof(InfinityZoneTravel), ex); return true; }
         }
@@ -809,6 +943,49 @@ namespace SodRpg.Mod
             if (!InfinityMode.Available) return true;
             try { return !InfinityMode.Enabled; }
             catch (Exception ex) { InfinityMode.InterceptionFailed(nameof(InfinityNoSpecialInvitation), ex); return true; }
+        }
+    }
+
+    [HarmonyPatch(typeof(Mon_Primus_BossPrimusAeron), "OnDeath")]
+    internal static class InfinityPrimusDeath
+    {
+        private static Action<BossMonster, EventInfoKill> _nativeDeath;
+        private static bool Prepare()
+        {
+            try
+            {
+                _nativeDeath = AccessTools.MethodDelegate<Action<BossMonster, EventInfoKill>>(
+                    AccessTools.Method(typeof(BossMonster), "OnDeath"), virtualCall: false);
+                return _nativeDeath != null;
+            }
+            catch (Exception ex)
+            {
+                Log.Warn("Infinity Primus boss-soul hook unavailable; Primus draws will keep the previous zone. " + ex.Message);
+                return false;
+            }
+        }
+
+        internal static bool IsInstalled
+        {
+            get
+            {
+                if (_nativeDeath == null) return false;
+                var info = Harmony.GetPatchInfo(AccessTools.Method(typeof(Mon_Primus_BossPrimusAeron), "OnDeath"));
+                if (info == null) return false;
+                foreach (var patch in info.Prefixes)
+                    if (patch.PatchMethod.DeclaringType == typeof(InfinityPrimusDeath)) return true;
+                return false;
+            }
+        }
+
+        private static bool Prefix(Mon_Primus_BossPrimusAeron __instance, EventInfoKill info)
+        {
+            if (!NetworkServer.active || !InfinityMode.Enabled) return true;
+            // Primus normally skips the soul, pays Dust directly and starts the ending cutscene.
+            // Use native generic boss death (nonvirtual) instead: one soul/reward, normal Rift.
+            __instance.skipBossSoulFlow = false;
+            _nativeDeath(__instance, info);
+            return false;
         }
     }
 }
