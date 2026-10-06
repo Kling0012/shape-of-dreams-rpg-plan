@@ -143,9 +143,22 @@ namespace SodRpg.Mod
     internal static class NativeAttributedHpDamage
     {
         private static readonly Action<EntityStatus, float> NativeSetHealth =
-            (Action<EntityStatus, float>)Delegate.CreateDelegate(typeof(Action<EntityStatus, float>),
-                AccessTools.PropertySetter(typeof(EntityStatus), nameof(EntityStatus.currentHealth)));
+            ResolveNativeHealthSetter();
         internal static void Prewarm() { _ = NativeSetHealth; }
+        private static bool Prepare() => NativeSetHealth != null;
+        private static Action<EntityStatus, float> ResolveNativeHealthSetter()
+        {
+            try
+            {
+                return (Action<EntityStatus, float>)Delegate.CreateDelegate(typeof(Action<EntityStatus, float>),
+                    AccessTools.PropertySetter(typeof(EntityStatus), nameof(EntityStatus.currentHealth)));
+            }
+            catch (Exception ex)
+            {
+                Log.Warn("Native HP attribution disabled: " + ex.Message);
+                return null;
+            }
+        }
         private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
         {
             var setter = AccessTools.PropertySetter(typeof(EntityStatus), nameof(EntityStatus.currentHealth));

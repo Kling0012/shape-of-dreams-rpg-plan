@@ -13,27 +13,6 @@ namespace SodRpg.Mod
         internal const string RuntimeKey = "dreamforge.infinity.runtime";
         internal const string ChoiceKey = "dreamforge.infinity.choice";
         private const string HaltKey = "dreamforge.infinity.halted";
-        private const string RosterHaltKey = "dreamforge.infinity.rosterHalted";
-        internal static bool ExpeditionHalted
-            => NetworkedManagerBase<GameSettingsManager>.softInstance?.customData.ContainsKey(RosterHaltKey) == true;
-        internal static string ExpeditionHaltNotice
-            => NetworkedManagerBase<GameSettingsManager>.softInstance?.customData.TryGetValue(RosterHaltKey, out var reason) == true
-                ? reason : null;
-
-        internal static void StopExpedition(string reason)
-        {
-            if (!NetworkServer.active || ExpeditionHalted) return;
-            ClearPendingTravel();
-            var settings = NetworkedManagerBase<GameSettingsManager>.softInstance;
-            if (settings == null) return;
-            settings.customData[RosterHaltKey] = reason;
-            settings.customData.Remove(RuntimeKey);
-            settings.customData.Remove(ChoiceKey);
-            _initial = null; _newInfinity = false; _refresh = false; _restoring = false;
-            _choice = null; _choiceText = null; Acks.Clear();
-            Log.Warn("Infinity stopped for this expedition; normal mode continues. " + reason);
-            ClientSession.StopInfinityRun(reason);
-        }
         private static string _runId;
         private static InfinityRunState _initial;
         private static bool _restoring;
@@ -149,7 +128,6 @@ namespace SodRpg.Mod
         {
             get
             {
-                if (ExpeditionHalted) return null;
                 var run = ClientSession.HostRun;
                 // The first zone can generate after BeginRun already created the run but before
                 // InitializeInfinityRun could attach the state (#144: that ordering made this
@@ -161,16 +139,16 @@ namespace SodRpg.Mod
                 return _initial;
             }
         }
-        internal static bool Enabled => Available && !ExpeditionHalted && (NetworkServer.active
+        internal static bool Enabled => Available && (NetworkServer.active
             ? State != null || NativeEnvelopePresent || _newInfinity
                 || NetworkedManagerBase<GameManager>.softInstance == null && ClientSession.HostChosenInfinityEnabled
             : NativeEnvelopePresent || NetworkedManagerBase<GameManager>.softInstance == null
                 && NetworkedManagerBase<GameSettingsManager>.softInstance?.customData.TryGetValue("dreamforge.infinity.enabled", out var enabled) == true && enabled == "1")
-            && (NetworkServer.active || ClientSession.RemoteHostInfinityAvailable
-                && NetworkedManagerBase<GameSettingsManager>.softInstance?.customData.ContainsKey(HaltKey) != true);
-        internal static bool NativeSaveAgreement => Available && !ExpeditionHalted && !_restoring
-            && (NetworkServer.active || ClientSession.RemoteHostInfinityAvailable
-                && NetworkedManagerBase<GameSettingsManager>.softInstance?.customData.ContainsKey(HaltKey) != true);
+            && (NetworkServer.active
+                || NetworkedManagerBase<GameSettingsManager>.softInstance?.customData.ContainsKey(HaltKey) != true);
+        internal static bool NativeSaveAgreement => Available && !_restoring
+            && (NetworkServer.active
+                || NetworkedManagerBase<GameSettingsManager>.softInstance?.customData.ContainsKey(HaltKey) != true);
         internal static bool IsTechnicalRefresh => _refresh;
         internal static bool CanAdvance => NativeSaveAgreement && ClientSession.HostInfinityCanAdvance;
         internal static bool Restoring => _restoring;
@@ -201,13 +179,12 @@ namespace SodRpg.Mod
         {
             get
             {
-                if (ExpeditionHalted) return null;
                 var settings = NetworkedManagerBase<GameSettingsManager>.softInstance;
                 if (settings == null || !settings.customData.TryGetValue(ChoiceKey, out var text)) return null;
                 if (text == _choiceText) return _choice;
                 _choiceText = text;
                 try { _choice = JsonConvert.DeserializeObject<InfinityChoice>(text); }
-                catch (JsonException) { _choice = null; DisableFeature("Invalid Infinity choice envelope."); }
+                catch (JsonException ex) { _choice = null; Log.Warn("Infinity: discarded unreadable choice envelope: " + ex.Message); }
                 if (_choice != null && RunChoiceSnapshot.TryDecode(_choice.BeforeChoices, out var before)) _choice.Before = before;
                 return _choice;
             }
@@ -227,7 +204,6 @@ namespace SodRpg.Mod
             else
             {
                 string reason = !Available ? UnavailableReason
-                    : ExpeditionHalted ? ExpeditionHaltNotice
                     : !ClientSession.HostChosenInfinityEnabled ? "lobby selection is OFF"
                     : "Infinity was not armed before initial generation";
                 string message = "Infinity initial map uses normal mode; " + context + " reason=" + reason;
@@ -253,7 +229,6 @@ namespace SodRpg.Mod
                 settings.customData.Remove(RuntimeKey);
                 settings.customData.Remove(ChoiceKey);
                 settings.customData.Remove(HaltKey);
-                settings.customData.Remove(RosterHaltKey);
             }
             HostAuthority.CheckInfinityRunCompatibility();
         }
@@ -293,7 +268,7 @@ namespace SodRpg.Mod
             var settings = NetworkedManagerBase<GameSettingsManager>.softInstance;
             if (settings == null || !settings.customData.TryGetValue(RuntimeKey, out var text)) return false;
             try { envelope = JsonConvert.DeserializeObject<Envelope>(text); }
-            catch (JsonException) { return false; }
+            catch (JsonException ex) { Log.Warn("Infinity: discarded unreadable runtime envelope: " + ex.Message); return false; }
             return envelope?.State != null;
         }
 
@@ -661,12 +636,13 @@ namespace SodRpg.Mod
             {
                 var choice = CurrentChoice;
                 if (caller == null || !caller.isHumanPlayer || !DewPlayer.gamePlayers.Contains(caller)
-                    || msg == null || msg.protocol != Protocol.Version || choice == null
+                    || msg == null || choice == null
                     || msg.runId != choice.RunId || msg.revision != choice.Revision
                     || msg.graphEpoch != choice.GraphEpoch || msg.boundary != choice.Boundary) return;
+                Protocol.WarnMismatch(msg.protocol, nameof(DreamforgeInfinityAckMsg));
                 Acks[caller.guid] = msg.revision;
             }
-            catch (Exception ex) { InterceptionFailed(nameof(ReceiveAck), ex); }
+            catch (Exception ex) { Log.Warn("Infinity: discarded invalid ACK: " + ex.Message); }
         }
 
         internal static void AcknowledgeLocal(InfinityChoice choice)

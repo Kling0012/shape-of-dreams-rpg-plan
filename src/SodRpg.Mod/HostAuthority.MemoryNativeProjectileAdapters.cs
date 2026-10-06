@@ -53,14 +53,32 @@ namespace SodRpg.Mod
     // Native coroutine fields are exact inspected compiler-generated members, not a search by type-name prefix.
     internal static class NativeDoubleTapCoroutineContract
     {
-        internal static readonly Type ClosureType = typeof(Se_D_DoubleTap).GetNestedType("<>c__DisplayClass13_0", BindingFlags.NonPublic)
-            ?? throw new MissingMemberException("The inspected Double Tap coroutine closure is unavailable.");
-        internal static readonly Type IteratorType = ClosureType.GetNestedType("<<EntityEventOnAttackFired>g__Routine|0>d", BindingFlags.NonPublic)
-            ?? throw new MissingMemberException("The inspected Double Tap coroutine iterator is unavailable.");
-        internal static readonly FieldInfo Source = ClosureType.GetField("<>4__this", BindingFlags.Public | BindingFlags.Instance)
-            ?? throw new MissingFieldException("The inspected Double Tap source capture is unavailable.");
-        internal static readonly FieldInfo Fired = ClosureType.GetField("obj", BindingFlags.Public | BindingFlags.Instance)
-            ?? throw new MissingFieldException("The inspected Double Tap fired-event capture is unavailable.");
+        internal static readonly Type ClosureType, IteratorType;
+        internal static readonly FieldInfo Source, Fired;
+        internal static readonly MethodInfo Factory, MoveNext;
+        internal static readonly bool Available;
+        static NativeDoubleTapCoroutineContract()
+        {
+            try
+            {
+                ClosureType = typeof(Se_D_DoubleTap).GetNestedType("<>c__DisplayClass13_0", BindingFlags.NonPublic)
+                    ?? throw new MissingMemberException("Native Double Tap coroutine closure is unavailable.");
+                IteratorType = ClosureType.GetNestedType("<<EntityEventOnAttackFired>g__Routine|0>d", BindingFlags.NonPublic)
+                    ?? throw new MissingMemberException("Native Double Tap coroutine iterator is unavailable.");
+                Source = ClosureType.GetField("<>4__this", BindingFlags.Public | BindingFlags.Instance);
+                Fired = ClosureType.GetField("obj", BindingFlags.Public | BindingFlags.Instance);
+                if (Source == null || Source.IsStatic || Source.FieldType != typeof(Se_D_DoubleTap)
+                    || Fired == null || Fired.IsStatic || Fired.FieldType != typeof(EventInfoAttackFired))
+                    throw new MissingFieldException("Native Double Tap source/fired-event capture is unavailable.");
+                Factory = ClosureType.GetMethod("<EntityEventOnAttackFired>g__Routine|0",
+                    BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
+                    ?? throw new MissingMethodException("Native Double Tap coroutine factory is unavailable.");
+                MoveNext = IteratorType.GetMethod("MoveNext", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
+                    ?? throw new MissingMethodException("Native Double Tap coroutine continuation is unavailable.");
+                Available = true;
+            }
+            catch (Exception ex) { Log.Warn("Double Tap coroutine attribution disabled: " + ex.Message); }
+        }
         internal static readonly ConditionalWeakTable<Se_D_DoubleTap, object> Lifetimes = new ConditionalWeakTable<Se_D_DoubleTap, object>();
         internal static readonly ConditionalWeakTable<object, PendingDoubleTap> Pending = new ConditionalWeakTable<object, PendingDoubleTap>();
         internal static PendingDoubleTap Current;
@@ -95,9 +113,8 @@ namespace SodRpg.Mod
     [HarmonyPatch]
     internal static class NativeDoubleTapCoroutineCapture
     {
-        private static MethodBase TargetMethod() => NativeDoubleTapCoroutineContract.ClosureType.GetMethod(
-            "<EntityEventOnAttackFired>g__Routine|0", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
-            ?? throw new MissingMethodException("The inspected Double Tap coroutine factory is unavailable.");
+        private static bool Prepare() => NativeDoubleTapCoroutineContract.Available;
+        private static MethodBase TargetMethod() => NativeDoubleTapCoroutineContract.Factory;
         private static void Postfix(object __instance, IEnumerator __result)
         {
             if (!NetworkServer.active || __result == null) return;
@@ -112,9 +129,8 @@ namespace SodRpg.Mod
     [HarmonyPatch]
     internal static class NativeDoubleTapCoroutineResume
     {
-        private static MethodBase TargetMethod() => NativeDoubleTapCoroutineContract.IteratorType.GetMethod(
-            "MoveNext", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
-            ?? throw new MissingMethodException("The inspected Double Tap coroutine continuation is unavailable.");
+        private static bool Prepare() => NativeDoubleTapCoroutineContract.Available;
+        private static MethodBase TargetMethod() => NativeDoubleTapCoroutineContract.MoveNext;
         private static void Prefix(object __instance, out NativeDoubleTapCoroutineContract.PendingDoubleTap __state)
         {
             __state = NativeDoubleTapCoroutineContract.Current;

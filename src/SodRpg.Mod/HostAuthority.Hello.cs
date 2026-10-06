@@ -6,7 +6,7 @@ namespace SodRpg.Mod
 {
     /// <summary>
     /// 版のあいさつ（ホスト側）。参加者の MOD の版と内容の指紋を受け取り、自分の版を返す。
-    /// 違っていれば、ホストの画面に「○○の版が違うため、装備の効果を反映できません」を出す（mp-ui-save #4）。
+    /// 違っていれば警告するが、装備・報酬・インフィニティの利用条件にはしない。
     /// </summary>
     internal sealed partial class HostAuthority
     {
@@ -14,19 +14,7 @@ namespace SodRpg.Mod
         internal static string ModVersion = "?";
 
         private readonly Dictionary<DewPlayer, string> _versionMismatches = new Dictionary<DewPlayer, string>();
-        private readonly Dictionary<DewPlayer, string> _acceptedMechanismContent = new Dictionary<DewPlayer, string>();
-        private readonly HashSet<DewPlayer> _infinityAvailablePeers = new HashSet<DewPlayer>();
-        private readonly HashSet<DewPlayer> _protocolMismatches = new HashSet<DewPlayer>();
-        private readonly HashSet<DewPlayer> _infinityRejectedPeers = new HashSet<DewPlayer>();
-
-        private bool MechanismHandshakeAccepted(DewPlayer caller) => caller != null
-            && (caller == DewPlayer.local
-                || _acceptedMechanismContent.TryGetValue(caller, out string content)
-                    && string.Equals(content, ContentFingerprint.Value, StringComparison.Ordinal));
-
-        private bool InfinityHandshakeAccepted(DewPlayer caller) => InfinityMode.Available
-            && MechanismHandshakeAccepted(caller)
-            && (caller == DewPlayer.local || _infinityAvailablePeers.Contains(caller));
+        private readonly HashSet<DewPlayer> _helloPeers = new HashSet<DewPlayer>();
         private static readonly List<string> MismatchScratch = new List<string>();
 
         /// <summary>版が違う参加者の説明（ホストの画面に出す）。無ければ空。</summary>
@@ -53,10 +41,7 @@ namespace SodRpg.Mod
                 try { actor.CustomRpc_UnregisterServerMessageHandler<DreamforgeHelloMsg>(_onHello); } catch (Exception) { }
             _helloActor = null;
             _versionMismatches.Clear();
-            _acceptedMechanismContent.Clear();
-            _infinityAvailablePeers.Clear();
-            _protocolMismatches.Clear();
-            _infinityRejectedPeers.Clear();
+            _helloPeers.Clear();
             RebuildMismatchList();
         }
 
@@ -64,29 +49,26 @@ namespace SodRpg.Mod
         {
             try
             {
-                if (msg == null || caller == null || !caller.isHumanPlayer) return;
-                bool same = msg.continueCheckpoints && ContentFingerprint.Matches(msg.protocol, msg.content, Protocol.Version);
-                if (msg.protocol == Protocol.Version) _protocolMismatches.Remove(caller);
-                else _protocolMismatches.Add(caller);
-                if (same && msg.infinityAvailable) _infinityRejectedPeers.Remove(caller);
-                else _infinityRejectedPeers.Add(caller);
-                if (same && msg.infinityAvailable) _infinityAvailablePeers.Add(caller);
-                else _infinityAvailablePeers.Remove(caller);
-                if (same)
-                {
+                if (msg == null || caller == null || !caller.isHumanPlayer || caller == DewPlayer.local
+                    || !DewPlayer.gamePlayers.Contains(caller) && !DewPlayer.lobbyPlayers.Contains(caller)) return;
+                _helloPeers.Add(caller);
+                // Hello reports diagnostics, not authorization. Bind the observation session
+                // even when a readable peer advertises another version or content registry.
+                BindKillObservationSession(caller, msg.killObservationSessionId);
+                bool sameProtocol = msg.protocol == Protocol.Version;
+                bool sameContent = string.Equals(msg.content, ContentFingerprint.Value, StringComparison.Ordinal);
+                bool sameVersion = string.Equals(msg.modVer, ModVersion, StringComparison.Ordinal);
+                if (sameProtocol && sameContent && sameVersion && msg.continueCheckpoints && msg.infinityAvailable)
                     _versionMismatches.Remove(caller);
-                    _acceptedMechanismContent[caller] = msg.content;
-                    BindKillObservationSession(caller, msg.killObservationSessionId);
-                }
-                else
+                else if (!_versionMismatches.ContainsKey(caller))
                 {
-                    _acceptedMechanismContent.Remove(caller);
-                    RemoveKillPeer(caller);
                     string theirs = string.IsNullOrEmpty(msg.modVer) ? "?" : msg.modVer;
                     _versionMismatches[caller] = Loc.T(
-                        $"{caller.playerName} の Dreamforge の版が違います（ホスト {ModVersion} / 相手 {theirs}）。この人の装備の効果は反映されません。",
-                        $"{caller.playerName} has a different Dreamforge version (host {ModVersion} / theirs {theirs}). Their gear bonuses are not applied.");
-                    Log.Warn($"Host: version mismatch with {caller.playerName}: protocol {msg.protocol} vs {Protocol.Version}, mod {theirs} vs {ModVersion}, content {msg.content} vs {ContentFingerprint.Value}");
+                        $"{caller.playerName} の Dreamforge 互換性情報に差があります（版 {ModVersion}/{theirs}、Protocol {Protocol.Version}/{msg.protocol}）。機能は続行します。",
+                        $"{caller.playerName}'s Dreamforge compatibility information differs (version {ModVersion}/{theirs}, protocol {Protocol.Version}/{msg.protocol}). Features continue.");
+                    // One warning per mismatch episode/transport, not every five-second retry.
+                    // Do not call a content/capability difference a protocol mismatch.
+                    Log.Warn($"Host: compatibility warning for {caller.playerName}: protocol {msg.protocol}/{Protocol.Version}, mod {theirs}/{ModVersion}, contentEqual={sameContent}, continueCheckpoints={msg.continueCheckpoints}, infinityAvailable={msg.infinityAvailable}; features continue.");
                 }
                 RebuildMismatchList();
                 CheckInfinityRunCompatibility();

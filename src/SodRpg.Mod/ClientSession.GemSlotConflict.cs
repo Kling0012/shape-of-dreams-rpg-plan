@@ -50,9 +50,10 @@ namespace SodRpg.Mod
         private void OnGemSlotConflict(DreamforgeGemSlotConflictMsg msg)
         {
             TickGemSlotConflict();
-            if (msg == null || msg.protocol != Protocol.Version || msg.heroNetId == 0) return;
+            if (msg == null || msg.heroNetId == 0) return;
             var hero = _gemSlotConflictHero;
             if (hero == null || _gemSlotConflictHeroNetId != msg.heroNetId) return;
+            Protocol.WarnMismatch(msg.protocol, nameof(DreamforgeGemSlotConflictMsg));
             _gemSlotConflict = msg.disabled;
         }
     }

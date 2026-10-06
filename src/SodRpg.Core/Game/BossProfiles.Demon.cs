@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 
 namespace SodRpg.Core.Game
@@ -106,7 +107,7 @@ namespace SodRpg.Core.Game
         }
         internal static IEnumerable<string> FingerprintRecords()
         {
-            yield return "boss-schema:v2:" + MaxEntries + ":" + BudDelayMillis + ":" + BudCollectibleDelayMillis + ":" + BudRadiusMilli + ":" + MaxBuds + ":" + NativeHysteriaSpeedMilli;
+            yield return "boss-schema:v2:" + MaxEntries + ":" + BudDelayMillis + ":" + BudCollectibleDelayMillis + ":" + BudRadiusMilli + ":" + MaxBuds + ":" + NativeHysteriaSpeedMilli.ToString(CultureInfo.InvariantCulture);
             yield return "boss-order:" + DemonEventOrder;
             yield return "boss-native:" + NativeContract;
             yield return "boss-order:skoll:" + SkollEventOrder;

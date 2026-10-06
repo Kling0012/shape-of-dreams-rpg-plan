@@ -35,8 +35,9 @@ namespace SodRpg.Mod
 
         private void OnMonsterCue(DreamforgeMonsterCueMsg msg)
         {
-            if (msg == null || msg.protocol != Protocol.Version || msg.netId == 0 || msg.cue < 0 || msg.cue > 4) return;
+            if (msg == null || msg.netId == 0 || msg.cue < 0 || msg.cue > 4) return;
             if (!ObserveMonsterAuthority(msg.authorityGeneration)) return;
+            Protocol.WarnMismatch(msg.protocol, nameof(DreamforgeMonsterCueMsg));
             if (msg.cue == 0)
             {
                 RemoveMonsterCue(msg.netId);

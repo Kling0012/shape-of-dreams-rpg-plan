@@ -170,7 +170,6 @@ namespace Issue73.Native.Tests
             _session = HostSession(out var transport);
             NetworkServer.active = host;
             NetworkClient.active = true;
-            Set(_session, "_continueHandshakeReady", true);
             ((MonsterAuthorityState)Get(_session, "_monsterAuthority")).Observe(1, out _);
             _files.FailWrite = true;
             _files.Release.Set();

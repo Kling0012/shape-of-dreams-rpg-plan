@@ -167,7 +167,7 @@ namespace SodRpg.Mod
             {
                 case "gold": return Loc.T("取引できませんでした。ゴールドが足りません。", "Trade failed: not enough gold.");
                 case "dust": return Loc.T("取引できませんでした。ドリームダストが足りません。", "Trade failed: not enough Dream Dust.");
-                case "protocol": return Loc.T("取引できませんでした。ホストと Dreamforge の版が違います。全員が同じ版を入れてください。", "Trade failed: the host runs a different Dreamforge version. Everyone needs the same version.");
+                case "protocol": return Loc.T("この取引の通信を読み取れませんでした。この1件は実行していません。", "This trade message could not be read. This request was not executed.");
                 case "dup": return Loc.T("取引できませんでした。この遺物の分解は今回の遠征で受け付け済みです。", "Trade failed: this relic was already salvaged in this run.");
                 case "unknown":
                 case "cancelled": return Loc.T("取引は成立していませんでした。ゴールドとドリームダストは減っていません。", "The trade did not go through. Your gold and Dream Dust were not spent.");
@@ -935,7 +935,8 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
 
         private void OnNightmare(DreamforgeNightmareMsg msg)
         {
-            if (msg == null || msg.protocol != Protocol.Version || !ObserveMonsterAuthority(msg.authorityGeneration)) return;
+            if (msg == null || !ObserveMonsterAuthority(msg.authorityGeneration)) return;
+            Protocol.WarnMismatch(msg.protocol, nameof(DreamforgeNightmareMsg));
             if (msg.removed)
             {
                 _monsterAuthority.Remove(msg.netId);
@@ -958,8 +959,9 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
 
         private void OnVariant(DreamforgeVariantMsg msg)
         {
-            if (msg == null || msg.protocol != Protocol.Version || !ObserveMonsterAuthority(msg.authorityGeneration)
+            if (msg == null || !ObserveMonsterAuthority(msg.authorityGeneration)
                 || !_monsterAuthority.Set(msg.authorityGeneration, msg.netId, NightmareAffix.None, msg.variantId)) return;
+            Protocol.WarnMismatch(msg.protocol, nameof(DreamforgeVariantMsg));
             var def = Variants.Get(msg.variantId);
             if (def == null)
             {
@@ -1060,15 +1062,21 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
 
         private void OnApplied(DreamforgeAppliedMsg msg)
         {
-            if (msg == null || msg.protocol != Protocol.Version || !MechanismHandshakeAccepted) return;
+            if (msg == null) return;
             if (msg.heroNetId != 0 && (LocalHero == null || LocalHero.netId != msg.heroNetId)) return;
-            if (_appliedTransfer.TryAccept(msg.ToPart(), out string summary) && summary != null)
-                HostSummary = summary;
+            Protocol.WarnMismatch(msg.protocol, nameof(DreamforgeAppliedMsg));
+            if (!_appliedTransfer.TryAccept(msg.ToPart(), out string summary))
+            {
+                Log.Warn("Client: rejected invalid applied-build transfer packet.");
+                return;
+            }
+            if (summary != null) HostSummary = summary;
         }
 
         private void OnPressure(DreamforgePressureMsg msg)
         {
-            if (msg == null || msg.protocol != Protocol.Version) return;
+            if (msg == null) return;
+            Protocol.WarnMismatch(msg.protocol, nameof(DreamforgePressureMsg));
             PressureHealthMultiplier = msg.healthMultiplier;
             PressureDamageMultiplier = msg.damageMultiplier;
             ReceiveRunChoices(msg.runChoices);
@@ -1083,9 +1091,10 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
 
         private void OnBountyReport(DreamforgeBountyReportMsg msg)
         {
-            if (msg == null || msg.protocol != Protocol.Version || !RunActive || msg.runId != ActiveRunId) return;
+            if (msg == null || !RunActive || msg.runId != ActiveRunId) return;
             var hero = LocalHero;
             if (hero == null || msg.heroNetId != hero.netId) return;
+            Protocol.WarnMismatch(msg.protocol, nameof(DreamforgeBountyReportMsg));
             switch ((BountyReportKind)msg.report)
             {
                 case BountyReportKind.ElementalKill:
@@ -1205,7 +1214,6 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
         {
             var hero = LocalHero;
             if (hero == null || _clientRpcOn == null || !NetworkClient.active) return;
-            if (!MechanismHandshakeAccepted) return;
             if (_sentDreamLevel != Profile.DreamLevel)
             {
                 _buildDirty = true;

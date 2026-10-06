@@ -24,12 +24,33 @@ namespace SodRpg.Mod
 
     internal static class NativeFeatherDelayedContract
     {
-        internal static readonly Type Closure = typeof(Se_D_BeautifulThreat).GetNestedType("<>c__DisplayClass19_0", BindingFlags.NonPublic)
-            ?? throw new MissingMemberException("C02 native Feather delayed closure was not found.");
-        internal static readonly FieldInfo Source = AccessTools.Field(Closure, "<>4__this")
-            ?? throw new MissingFieldException("C02 native Feather source capture was not found.");
-        internal static readonly FieldInfo Effect = AccessTools.Field(Closure, "obj")
-            ?? throw new MissingFieldException("C02 native Feather attack-effect capture was not found.");
+        internal static readonly Type Closure;
+        internal static readonly FieldInfo Source, Effect;
+        internal static readonly MethodInfo Dispatch;
+        internal static bool Available { get; private set; }
+        static NativeFeatherDelayedContract()
+        {
+            try
+            {
+                Closure = typeof(Se_D_BeautifulThreat).GetNestedType("<>c__DisplayClass19_0", BindingFlags.NonPublic)
+                    ?? throw new MissingMemberException("Native Feather delayed closure was not found.");
+                Source = AccessTools.Field(Closure, "<>4__this");
+                Effect = AccessTools.Field(Closure, "obj");
+                if (Source == null || Source.IsStatic || Source.FieldType != typeof(Se_D_BeautifulThreat)
+                    || Effect == null || Effect.IsStatic || Effect.FieldType != typeof(EventInfoAttackEffect))
+                    throw new MissingFieldException("Native Feather source/attack-effect capture is unavailable.");
+                Dispatch = AccessTools.Method(Closure, "<EntityEventOnAttackEffectTriggered>b__0")
+                    ?? throw new MissingMethodException("Native Feather delayed dispatch was not found.");
+                Available = true;
+            }
+            catch (Exception ex) { Log.Warn("Feather delayed attribution disabled: " + ex.Message); }
+        }
+        internal static void Disable(string reason)
+        {
+            if (!Available) return;
+            Available = false;
+            Log.Warn("Feather delayed attribution disabled: " + reason);
+        }
         internal static readonly ConditionalWeakTable<object, NativeFeatherTriggerCapture> Captures =
             new ConditionalWeakTable<object, NativeFeatherTriggerCapture>();
         internal static readonly ConditionalWeakTable<Actor, NativeBaptismCoroutineContract.Lifetime> Lifetimes =
@@ -48,6 +69,7 @@ namespace SodRpg.Mod
     [HarmonyPatch(typeof(Se_D_BeautifulThreat), "EntityEventOnAttackEffectTriggered")]
     internal static class NativeFeatherDelayedCapture
     {
+        private static bool Prepare() => NativeFeatherDelayedContract.Available;
         private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
         {
             var target = AccessTools.Method(typeof(Dew), nameof(Dew.CallDelayed), new[] { typeof(Action), typeof(int) })
@@ -63,15 +85,18 @@ namespace SodRpg.Mod
         }
         private static void CaptureAndDelay(Action callback, int frames)
         {
-            if (NetworkServer.active)
+            if (NetworkServer.active && NativeFeatherDelayedContract.Available)
             {
                 if (callback == null || callback.Target == null || callback.Target.GetType() != NativeFeatherDelayedContract.Closure)
-                    throw new InvalidOperationException("C02 Feather delayed callback has an unexpected native closure.");
-                var source = (Se_D_BeautifulThreat)NativeFeatherDelayedContract.Source.GetValue(callback.Target);
-                var effect = (EventInfoAttackEffect)NativeFeatherDelayedContract.Effect.GetValue(callback.Target);
-                var capture = HostAuthority.NativeInstance?.CaptureNativeFeatherTrigger(source, effect)
-                    ?? new NativeFeatherTriggerCapture { Source = source };
-                NativeFeatherDelayedContract.Captures.Add(callback.Target, capture);
+                    NativeFeatherDelayedContract.Disable("the native delayed callback has an unexpected closure.");
+                else
+                {
+                    var source = (Se_D_BeautifulThreat)NativeFeatherDelayedContract.Source.GetValue(callback.Target);
+                    var effect = (EventInfoAttackEffect)NativeFeatherDelayedContract.Effect.GetValue(callback.Target);
+                    var capture = HostAuthority.NativeInstance?.CaptureNativeFeatherTrigger(source, effect)
+                        ?? new NativeFeatherTriggerCapture { Source = source };
+                    NativeFeatherDelayedContract.Captures.Add(callback.Target, capture);
+                }
             }
             Dew.CallDelayed(callback, frames);
         }
@@ -80,13 +105,13 @@ namespace SodRpg.Mod
     [HarmonyPatch]
     internal static class NativeFeatherDelayedDispatch
     {
-        private static MethodBase TargetMethod() => AccessTools.Method(NativeFeatherDelayedContract.Closure, "<EntityEventOnAttackEffectTriggered>b__0")
-            ?? throw new MissingMethodException("C02 native Feather delayed dispatch was not found.");
+        private static bool Prepare() => NativeFeatherDelayedContract.Available;
+        private static MethodBase TargetMethod() => NativeFeatherDelayedContract.Dispatch;
         private static void Prefix(object __instance, out NativeFeatherTriggerCapture __state)
         {
             __state = NativeFeatherTriggerCapture.Current;
             NativeFeatherTriggerCapture.Current = null;
-            if (!NetworkServer.active) return;
+            if (!NetworkServer.active || !NativeFeatherDelayedContract.Available) return;
             NativeFeatherTriggerCapture.Current = NativeFeatherDelayedContract.Captures.TryGetValue(__instance, out var capture)
                 ? capture : new NativeFeatherTriggerCapture { Source = (Se_D_BeautifulThreat)NativeFeatherDelayedContract.Source.GetValue(__instance) };
         }
@@ -109,16 +134,39 @@ namespace SodRpg.Mod
 
     internal static class NativeBaptismCoroutineContract
     {
-        internal static readonly Type Closure = typeof(Se_R_BaptismOfSun_Buff).GetNestedType("<>c__DisplayClass15_0", BindingFlags.NonPublic)
-            ?? throw new MissingMemberException("C02 native Baptism callback closure was not found.");
-        internal static readonly Type Iterator = Closure.GetNestedType("<<OnCreate>g__Routine|2>d", BindingFlags.NonPublic)
-            ?? throw new MissingMemberException("C02 native Baptism damage iterator was not found.");
-        internal static readonly FieldInfo Buff = AccessTools.Field(Closure, "<>4__this")
-            ?? throw new MissingFieldException("C02 native Baptism buff capture was not found.");
-        internal static readonly FieldInfo Effect = AccessTools.Field(Closure, "effect")
-            ?? throw new MissingFieldException("C02 native Baptism attack-effect capture was not found.");
-        internal static readonly FieldInfo IteratorClosure = AccessTools.Field(Iterator, "<>4__this")
-            ?? throw new MissingFieldException("C02 native Baptism iterator closure was not found.");
+        internal static readonly Type Closure, Iterator;
+        internal static readonly FieldInfo Buff, Effect, IteratorClosure;
+        internal static readonly MethodInfo Factory, MoveNext;
+        internal static bool Available { get; private set; }
+        static NativeBaptismCoroutineContract()
+        {
+            try
+            {
+                Closure = typeof(Se_R_BaptismOfSun_Buff).GetNestedType("<>c__DisplayClass15_0", BindingFlags.NonPublic)
+                    ?? throw new MissingMemberException("Native Baptism callback closure was not found.");
+                Iterator = Closure.GetNestedType("<<OnCreate>g__Routine|2>d", BindingFlags.NonPublic)
+                    ?? throw new MissingMemberException("Native Baptism damage iterator was not found.");
+                Buff = AccessTools.Field(Closure, "<>4__this");
+                Effect = AccessTools.Field(Closure, "effect");
+                IteratorClosure = AccessTools.Field(Iterator, "<>4__this");
+                if (Buff == null || Buff.IsStatic || Buff.FieldType != typeof(Se_R_BaptismOfSun_Buff)
+                    || Effect == null || Effect.IsStatic || Effect.FieldType != typeof(EventInfoAttackEffect)
+                    || IteratorClosure == null || IteratorClosure.IsStatic || IteratorClosure.FieldType != Closure)
+                    throw new MissingFieldException("Native Baptism buff/attack-effect/iterator capture is unavailable.");
+                Factory = AccessTools.Method(Closure, "<OnCreate>g__Routine|2")
+                    ?? throw new MissingMethodException("Native Baptism coroutine factory was not found.");
+                MoveNext = AccessTools.Method(Iterator, "MoveNext")
+                    ?? throw new MissingMethodException("Native Baptism damage iterator method was not found.");
+                Available = true;
+            }
+            catch (Exception ex) { Log.Warn("Baptism coroutine attribution disabled: " + ex.Message); }
+        }
+        internal static void Disable(string reason)
+        {
+            if (!Available) return;
+            Available = false;
+            Log.Warn("Baptism coroutine attribution disabled: " + reason);
+        }
         internal sealed class Lifetime { internal long Serial; internal HostAuthority Host; }
         internal static readonly ConditionalWeakTable<Actor, Lifetime> BuffLifetimes = new ConditionalWeakTable<Actor, Lifetime>();
         internal static readonly ConditionalWeakTable<NativeMemoryPayloadScope, Lifetime> CaptureLifetimes =
@@ -139,11 +187,11 @@ namespace SodRpg.Mod
     [HarmonyPatch]
     internal static class NativeBaptismCoroutineCapture
     {
-        private static MethodBase TargetMethod() => AccessTools.Method(NativeBaptismCoroutineContract.Closure, "<OnCreate>g__Routine|2")
-            ?? throw new MissingMethodException("C02 native Baptism coroutine factory was not found.");
+        private static bool Prepare() => NativeBaptismCoroutineContract.Available;
+        private static MethodBase TargetMethod() => NativeBaptismCoroutineContract.Factory;
         private static void Postfix(object __instance, IEnumerator __result)
         {
-            if (!NetworkServer.active || __result == null) return;
+            if (!NetworkServer.active || __result == null || !NativeBaptismCoroutineContract.Available) return;
             var buff = (Se_R_BaptismOfSun_Buff)NativeBaptismCoroutineContract.Buff.GetValue(__instance);
             var effect = (EventInfoAttackEffect)NativeBaptismCoroutineContract.Effect.GetValue(__instance);
             var capture = HostAuthority.NativeInstance?.CaptureNativeBaptismDamage(buff, effect)
@@ -155,13 +203,13 @@ namespace SodRpg.Mod
     [HarmonyPatch]
     internal static class NativeBaptismCoroutineDispatch
     {
-        private static MethodBase TargetMethod() => AccessTools.Method(NativeBaptismCoroutineContract.Iterator, "MoveNext")
-            ?? throw new MissingMethodException("C02 native Baptism damage iterator method was not found.");
+        private static bool Prepare() => NativeBaptismCoroutineContract.Available;
+        private static MethodBase TargetMethod() => NativeBaptismCoroutineContract.MoveNext;
         private static void Prefix(object __instance, out NativeMemoryPayloadScope __state)
         {
             __state = NativeMemoryPayloadScope.Current;
             NativeMemoryPayloadScope.Current = null;
-            if (!NetworkServer.active) return;
+            if (!NetworkServer.active || !NativeBaptismCoroutineContract.Available) return;
             if (NativeBaptismCoroutineContract.Captures.TryGetValue(__instance, out var capture))
                 NativeMemoryPayloadScope.Current = HostAuthority.NativeInstance != null
                     && HostAuthority.NativeInstance.NativeBaptismCaptureIsCurrent(capture)
@@ -170,7 +218,7 @@ namespace SodRpg.Mod
             {
                 var closure = NativeBaptismCoroutineContract.IteratorClosure.GetValue(__instance);
                 NativeMemoryPayloadScope.Current = new NativeMemoryPayloadScope
-                    { Source = (Actor)NativeBaptismCoroutineContract.Buff.GetValue(closure), Rejected = true };
+                    { Source = closure != null ? (Actor)NativeBaptismCoroutineContract.Buff.GetValue(closure) : null, Rejected = true };
             }
         }
         private static void Finalizer(NativeMemoryPayloadScope __state) { NativeMemoryPayloadScope.Current = __state; }
@@ -246,7 +294,10 @@ namespace SodRpg.Mod
             if (source == null || !source.isActive || !(source.info.caster is Hero hero) || effect.attacker != hero
                 || !TryGetNativeTriggerActivation(effect, out var input) || input.OwnerId != hero.GetInstanceID()) return null;
             if (!NativeFeatherDelayedContract.Lifetimes.TryGetValue(source, out var lifetime) || !ReferenceEquals(lifetime.Host, this))
-                throw new InvalidOperationException("C02 Feather has no captured native creation lifetime.");
+            {
+                NativeFeatherDelayedContract.Disable("the native creation lifetime was not captured.");
+                return null;
+            }
             var capture = new NativeFeatherTriggerCapture
                 { Source = source, Victim = effect.victim, Chain = effect.chain, Input = input, Lifetime = lifetime.Serial, Host = this, Admitted = true };
             RetainDeferredAttribution(capture, input);
@@ -261,7 +312,10 @@ namespace SodRpg.Mod
                 || hero.GetInstanceID() != original.OwnerId || effect.attacker != buff.info.caster
                 || !TryGetNativeTriggerActivation(effect, out var attack) || attack.OwnerId != original.OwnerId) return null;
             if (!NativeBaptismCoroutineContract.BuffLifetimes.TryGetValue(buff, out var lifetime) || !ReferenceEquals(lifetime.Host, this))
-                throw new InvalidOperationException("C02 Baptism buff has no captured native creation lifetime.");
+            {
+                NativeBaptismCoroutineContract.Disable("the native creation lifetime was not captured.");
+                return null;
+            }
             var capture = new NativeMemoryPayloadScope
             {
                 Source = buff, Owner = hero, Adapter = "native.baptism.buff", Victim = effect.victim,

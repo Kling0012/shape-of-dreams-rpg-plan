@@ -16,16 +16,12 @@ namespace SodRpg.Mod
             try
             {
                 if (caller == null || !caller.isHumanPlayer || !DewPlayer.gamePlayers.Contains(caller)) return;
-                if (msg == null || msg.protocol != Protocol.Version)
+                if (msg == null)
                 {
-                    RejectBuildOnce(caller, "protocol");
+                    RejectBuildOnce(caller, "null");
                     return;
                 }
-                if (!MechanismHandshakeAccepted(caller))
-                {
-                    _incomingBuilds.Remove(caller);
-                    return;
-                }
+                Protocol.WarnMismatch(msg.protocol, nameof(DreamforgeBuildMsg));
                 if (!_incomingBuilds.TryGetValue(caller, out var transfer))
                     _incomingBuilds.Add(caller, transfer = new BuildTransferReceiver());
                 if (!transfer.TryAccept(msg.ToPart(), out string encoded))

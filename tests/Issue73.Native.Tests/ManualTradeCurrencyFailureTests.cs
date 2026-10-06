@@ -40,7 +40,7 @@ namespace Issue73.Native.Tests
         [InlineData(TradeKind.MerchantGold, false)]
         [InlineData(TradeKind.DustToShards, false)]
         [InlineData(TradeKind.SalvageForDust, false)]
-        public void Currency_exception_settles_once_and_queries_and_resends_agree(TradeKind kind, bool balanceChanged)
+        public void Differing_version_trade_settles_once_and_queries_and_resends_agree_after_currency_exception(TradeKind kind, bool balanceChanged)
         {
             var profile = Profile.CreateNew(181);
             Rules.BeginRun(profile, "run181");
@@ -71,7 +71,7 @@ namespace Issue73.Native.Tests
             TradeWire.Encode(trade, out int gold, out int dust, out int earn);
             var request = new DreamforgeTradeMsg
             {
-                protocol = Protocol.Version, token = trade.Token, spendGold = gold, spendDust = dust, earnDust = earn,
+                protocol = Protocol.Version - 1, token = trade.Token, spendGold = gold, spendDust = dust, earnDust = earn,
             };
 
             var first = Send(host, actor, player, request);
@@ -81,7 +81,7 @@ namespace Issue73.Native.Tests
             TradeWire.EncodeQuery(ledgerId, out gold, out dust, out earn);
             var query = new DreamforgeTradeMsg
             {
-                protocol = Protocol.Version, token = trade.Token, spendGold = gold, spendDust = dust, earnDust = earn,
+                protocol = Protocol.Version - 1, token = trade.Token, spendGold = gold, spendDust = dust, earnDust = earn,
             };
             foreach (var message in new[] { query, request })
             {
@@ -102,6 +102,38 @@ namespace Issue73.Native.Tests
                 Assert.Same(relic, Assert.Single(profile.Run.Satchel));
             else
                 Assert.Empty(profile.Run.Satchel);
+        }
+
+        [Fact]
+        public void Malformed_legacy_trade_does_not_charge_or_prevent_a_readable_trade_with_the_same_token()
+        {
+            var trades = new TradeLedger();
+            var trade = trades.BeginMerchant(0, Economy.MerchantGoldBase(0), now: 0);
+            var player = new DewPlayer { guid = "player181", gold = 1000, dreamDust = 1000 };
+            var actor = new Actor();
+            var host = new HostAuthority();
+            typeof(HostAuthority).GetField("_registeredOn", Hidden).SetValue(host, actor);
+            var malformed = Send(host, actor, player, new DreamforgeTradeMsg
+            {
+                protocol = Protocol.Version - 1, token = trade.Token,
+                spendGold = trade.SpendGold, spendDust = trade.SpendDust, earnDust = trade.EarnDust,
+            });
+            Assert.False(malformed.ok);
+            Assert.Equal(1000, player.gold);
+            Assert.Equal(1000, player.dreamDust);
+            TradeWire.SplitReason(malformed.reason, out _, out long malformedLedger);
+            Assert.Equal(0, malformedLedger);
+
+            TradeWire.Encode(trade, out int gold, out int dust, out int earn);
+            var readable = new DreamforgeTradeMsg
+            {
+                protocol = Protocol.Version - 1, token = trade.Token, spendGold = gold, spendDust = dust, earnDust = earn,
+            };
+            Assert.True(Send(host, actor, player, readable).ok);
+            Assert.Equal(1000 - trade.SpendGold, player.gold);
+            Assert.Equal(1000, player.dreamDust);
+            Assert.True(Send(host, actor, player, readable).ok);
+            Assert.Equal(1000 - trade.SpendGold, player.gold);
         }
 
         private static DreamforgeTradeResultMsg Send(HostAuthority host, Actor actor, DewPlayer player, DreamforgeTradeMsg message)

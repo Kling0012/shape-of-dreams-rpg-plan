@@ -148,10 +148,11 @@ namespace SodRpg.Mod
         private void OnKillReplayStart(DreamforgeKillReplayStartMsg msg)
         {
             string runId = NetworkedManagerBase<GameManager>.softInstance?.runId;
-            if (msg == null || msg.protocol != Protocol.Version || string.IsNullOrEmpty(runId)
+            if (msg == null || string.IsNullOrEmpty(runId)
                 || msg.runId != runId || runId == _completedRunId || msg.baseline < -1
                 || msg.streamId != msg.authorityGeneration.ToString(CultureInfo.InvariantCulture)
                 || !ObserveMonsterAuthority(msg.authorityGeneration)) return;
+            Protocol.WarnMismatch(msg.protocol, nameof(DreamforgeKillReplayStartMsg));
             if (msg.clearLiveState)
             {
                 Nightmare.Clear();
@@ -170,13 +171,12 @@ namespace SodRpg.Mod
 
         private void OnMonsterKill(DreamforgeMonsterKillMsg msg)
         {
-            if (msg == null || msg.protocol != Protocol.Version || msg.netId == 0 || msg.sequence <= 0
-                || string.IsNullOrEmpty(msg.streamId) || string.IsNullOrEmpty(msg.runId) || string.IsNullOrEmpty(msg.eventId)
-                || !string.IsNullOrEmpty(msg.bossTypeName) && (!MechanismHandshakeAccepted
-                    || !ContentFingerprint.Matches(msg.protocol, msg.content, Protocol.Version))) return;
+            if (msg == null || msg.netId == 0 || msg.sequence <= 0
+                || string.IsNullOrEmpty(msg.streamId) || string.IsNullOrEmpty(msg.runId) || string.IsNullOrEmpty(msg.eventId)) return;
             string gameRunId = NetworkedManagerBase<GameManager>.softInstance?.runId;
             if (string.IsNullOrEmpty(gameRunId) || msg.runId != gameRunId || msg.runId == _completedRunId) return;
             if (!ObserveMonsterAuthority(msg.authorityGeneration)) return;
+            Protocol.WarnContentMismatch(msg.protocol, msg.content, nameof(DreamforgeMonsterKillMsg));
             if (msg.recoveredUnknown) _killClassifications.BindRecoveredDeath(msg.netId, msg.streamId, msg.observationSessionId, Time.unscaledTime);
             ReceiveAuthoritativeKill(msg.ToFact());
         }
@@ -331,7 +331,7 @@ namespace SodRpg.Mod
                 _killDurableReceipts = _killSavedReceipts;
                 _killDurableRunId = _killSavedRunId;
             }
-            if (_clientRpcOn == null || !NetworkClient.active || !MechanismHandshakeAccepted
+            if (_clientRpcOn == null || !NetworkClient.active
                 || !_monsterAuthority.HasAuthority || Time.unscaledTime < _nextKillReceipt) return;
             string runId = NetworkedManagerBase<GameManager>.softInstance?.runId;
             if (string.IsNullOrEmpty(runId) || runId == _completedRunId) return;

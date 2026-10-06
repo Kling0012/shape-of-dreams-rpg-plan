@@ -26,23 +26,10 @@ namespace SodRpg.Mod
 
         private static bool PeerNeedsFact(KillReplayPeer peer, AuthoritativeRunKill fact) => false;
         private void BindKillObservationSession(DewPlayer player, string observationSessionId) { }
-        private void RemoveKillPeer(DewPlayer player) { }
 
         private sealed class KillReplayCursor { public string PeerId; }
     }
 
-    // Same shape as the production NetMessages.cs message this protocol must keep stable.
-    public class DreamforgeHelloMsg
-    {
-        public int protocol;
-        public string modVer;
-        public string content;
-        public string killObservationSessionId;
-        public ulong authorityGeneration;
-        public string continueRunId, continueCheckpointId, continueResumeSession;
-        public bool continueCheckpoints;
-        public bool infinityAvailable;
-    }
 
     internal sealed partial class ClientSession
     {

@@ -74,6 +74,16 @@ namespace SodRpg.Mod
             internal bool Claimed;
         }
         internal static Scope Current;
+        private static bool Prepare()
+        {
+            var method=AccessTools.DeclaredMethod(typeof(Se_U_HerWorld_Blackhole),"ActiveLogicUpdate");
+            var body=method?.GetMethodBody();
+            // NativeMove consumes ldloc.1 as an Entity; this is required by this
+            // adapter, independently of the advisory feature-wide preflight.
+            if(body==null || body.LocalVariables.Count<=1 || !typeof(Entity).IsAssignableFrom(body.LocalVariables[1].LocalType))
+                throw new InvalidOperationException("HerWorld native attraction target local contract changed.");
+            return true;
+        }
         private static void Prefix(Se_U_HerWorld_Blackhole __instance)
         {
             if(NetworkServer.active) HostAuthority.NativeInstance?.RefreshNyxWorld(__instance);

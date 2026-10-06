@@ -540,8 +540,9 @@ namespace SodRpg.Mod
         {
             var run = ClientSession.HostRun;
             // The offer is personal: the host's own Secure/Delve choice (AwaitingChoice) says nothing about this player's offer.
-            if (message == null || message.protocol != Protocol.Version || caller == null || run == null
+            if (message == null || caller == null || run == null
                 || !Alive(caller.hero) || !_runtimes.TryGetValue(caller.hero, out var rt)) return;
+            Protocol.WarnMismatch(message.protocol, nameof(DreamforgeDreamEventStartedMsg));
             var state = rt.NewPowers;
             if (!DreamOmenGate.Accept(run.RunId, run.WaypointGeneration, message.runId, message.generation,
                 message.dreamEvent, state.OmenRun, state.OmenGeneration)) return;

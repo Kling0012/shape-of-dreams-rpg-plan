@@ -103,7 +103,8 @@ namespace SodRpg.Core.Game
         internal string Fingerprint => string.Join(":", (int)Event, (int)Mechanism, (int)Payload, ChannelId, (int)Shape, (int)Anchor,
             CooldownMillis, DelayMillis, LifetimeMillis, IntervalMillis, Count, MaxTargets, MaxInstances, MainHits, CounterLifetimeMillis,
             GenerationLimit, RadiusMilli, RangeMilli, WidthMilli, SpeedMilli, AngleMilli, HitGateMillis, Collectible, FirstHitOnly, ReplaceOldest, LedgerId,
-            MagnitudeMilli, (int)Element, RequiredMode, FollowOwner, ModifierStat.HasValue ? (int)ModifierStat.Value : -1, RequiredMarks, ConsumeMarks);
+            MagnitudeMilli.ToString(CultureInfo.InvariantCulture), (int)Element, RequiredMode.ToString(CultureInfo.InvariantCulture), FollowOwner,
+            (ModifierStat.HasValue ? (int)ModifierStat.Value : -1).ToString(CultureInfo.InvariantCulture), RequiredMarks, ConsumeMarks);
     }
 
     public sealed class BossMoveProfile
@@ -156,7 +157,7 @@ namespace SodRpg.Core.Game
             TargetCapMilli = targetCapMilli; BudgetMilli = budgetMilli; DwellMillis = dwellMillis; GapToleranceMillis = gapToleranceMillis;
             SpeedMilli = speedMilli; WidthMilli = widthMilli;
         }
-        internal string Fingerprint => string.Join(":", (int)Kind, ValueMilli, CapMilli, CooldownMillis, DurationMillis, Count, RangeMilli, Order,
+        internal string Fingerprint => string.Join(":", (int)Kind, ValueMilli.ToString(CultureInfo.InvariantCulture), CapMilli, CooldownMillis, DurationMillis, Count, RangeMilli, Order,
             MagnitudeMilli, IntervalMillis, TargetCapMilli, BudgetMilli, DwellMillis, GapToleranceMillis, SpeedMilli, WidthMilli);
     }
     public sealed class BossRewardStage

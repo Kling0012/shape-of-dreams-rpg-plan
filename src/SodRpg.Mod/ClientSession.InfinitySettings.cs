@@ -15,30 +15,6 @@ namespace SodRpg.Mod
         internal static bool HostInfinityBoundarySettled => HostAuthority.InfinityBoundarySettled;
         internal static long HostInfinityRetireBeforeSegment(long current) => HostAuthority.InfinityRetireBeforeSegment(current);
 
-        internal static void StopInfinityRun(string notice = null)
-        {
-            var session = _hostSession;
-            if (session == null) return;
-            var run = session.Profile.Run;
-            if (run?.Infinity != null)
-            {
-                if (run.Infinity.Phase == InfinityPhase.AwaitingChoice) run.AwaitingChoice = false;
-                run.Infinity = null;
-                // Drop only Infinity choice history, not queued kills, trades or other run progress.
-                session._runChoiceProgress.ResetConnection(resetHistory: true);
-                session._runChoiceProgress.BeginRun(run.RunId,
-                    NetworkedManagerBase<ZoneManager>.softInstance?.currentZoneIndex ?? -1);
-                session._choicePublisher = new RunChoicePublisher();
-                session._encodedRunChoices = null;
-                session._nextChoicesSync = 0;
-                session.ResetInfinitySaveHold();
-                session.MarkDirty(true);
-                session.SaveNow();
-                session.PublishRunChoices();
-            }
-            if (notice != null) session._notify?.Invoke(new GameEvent(EventKind.Warning, notice));
-        }
-
         /// <summary>
         /// ロビー／HUDのインフィニティ注意行（#144）。自分がホストまたはソロ（canChooseRunRules）のときは
         /// 自分の InfinityMode.Available だけを見る。参加者のときだけホストの返事を使い、返事がまだ無ければ
@@ -47,8 +23,6 @@ namespace SodRpg.Mod
         internal static string InfinitySupportNotice(bool canChooseRunRules)
         {
             if (!InfinityMode.Available) return InfinityMode.UnavailableNotice;
-            if (NetworkedManagerBase<GameManager>.softInstance != null && InfinityMode.ExpeditionHalted)
-                return InfinityMode.ExpeditionHaltNotice;
             if (canChooseRunRules) return null;
             if (!RemoteHostHelloAnswered)
                 return Loc.T("ホストの設定を待っています…", "Waiting for the host's Infinity setting…");
@@ -86,7 +60,7 @@ namespace SodRpg.Mod
 
         private void InitializeInfinityRun()
         {
-            if (!InfinityMode.Available || InfinityMode.ExpeditionHalted || !ContinueReady || InfinityMode.Restoring
+            if (!InfinityMode.Available || !ContinueReady || InfinityMode.Restoring
                 || _nativeContinueCheckpoint != null || Profile.Run == null
                 || _infinityInitializedRun == Profile.Run.RunId) return;
             _infinityInitializedRun = Profile.Run.RunId;
@@ -111,7 +85,6 @@ namespace SodRpg.Mod
 
         private void TickInfinitySettings()
         {
-            if (InGame && InfinityMode.ExpeditionHalted) StopInfinityRun();
             if (!NetworkServer.active || InGame) return;
             var settings = NetworkedManagerBase<GameSettingsManager>.softInstance;
             if (settings == null || settings.state != GameState.InLobby) return;
@@ -150,10 +123,6 @@ namespace SodRpg.Mod
                     reason = Loc.T("インフィニティモードは通常の遠征で選べます（Limboとは併用できません）。", "Infinity mode is available for normal expeditions, not Limbo.");
                     return;
                 }
-                if (HostAuthority.InfinityLobbyRosterCompatible(DewPlayer.lobbyPlayers)) return;
-                __result = false;
-                reason = Loc.T($"参加者の Protocol が一致しません。インフィニティには全員 Protocol {Protocol.Version} が必要です。",
-                    $"A participant's protocol differs. Infinity requires Protocol {Protocol.Version} for every player.");
             }
             catch (System.Exception ex)
             {

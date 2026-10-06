@@ -40,13 +40,16 @@ namespace SodRpg.Mod
         }
         // Kill-sync peers live in HostAuthority.KillSync.cs, which is not linked here.
         private void BindKillObservationSession(DewPlayer player, string observationSessionId) { }
-        private void RemoveKillPeer(DewPlayer player) { }
         // Infinity's game-scene lifecycle is exercised by SodRpg.Mod.Startup.Tests.
         internal static void CheckInfinityRunCompatibility() { }
         internal void ReceiveNegotiation(DreamforgeHelloMsg message, DewPlayer player)
             => ((Action<DreamforgeHelloMsg, DewPlayer>)_registeredOn.ServerHandlers[typeof(DreamforgeHelloMsg)])(message, player);
-        internal bool AcceptsNegotiatedBuild(DewPlayer player) => MechanismHandshakeAccepted(player);
         internal void DetachNegotiation() => UnregisterHello(_registeredOn);
+    }
+
+    internal sealed partial class DewPlayer
+    {
+        public static readonly List<DewPlayer> lobbyPlayers = new List<DewPlayer>();
     }
 
     // Product ClientSession exposes the native continue point in its hello reply.

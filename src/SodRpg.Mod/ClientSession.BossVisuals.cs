@@ -140,15 +140,14 @@ namespace SodRpg.Mod
 
         private void OnBossEffects(DreamforgeBossEffectsMsg msg)
         {
-            if (msg == null || !MechanismHandshakeAccepted
-                || !ContentFingerprint.Matches(msg.protocol, msg.content, Protocol.Version)
-                || msg.ownerNetId == 0 || msg.epoch <= 0 || msg.revision < 0 || msg.equipmentEpoch < 0
+            if (msg == null || msg.ownerNetId == 0 || msg.epoch <= 0 || msg.revision < 0 || msg.equipmentEpoch < 0
                 || !BossFinite(msg.hostTime) || !BossFinite(msg.sentAt)
                 || msg.effects == null || msg.effects.Length > 64) return;
             RefreshBossDisplayRoom();
             if (string.IsNullOrEmpty(_bossVisualRun) || msg.runId != _bossVisualRun
                 || msg.zone != _bossVisualZone || msg.room != _bossVisualRoom
                 || !ObserveMonsterAuthority(msg.authorityGeneration)) return;
+            Protocol.WarnContentMismatch(msg.protocol, msg.content, nameof(DreamforgeBossEffectsMsg));
             // ObserveMonsterAuthority may clear displays on a new host lifetime.
             RefreshBossDisplayRoom();
             for (int i = 0; i < msg.effects.Length; i++)

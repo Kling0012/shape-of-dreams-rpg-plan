@@ -8,18 +8,10 @@ using HarmonyLib;
 
 namespace SodRpg.Mod
 {
-    /// <summary>Check feature prerequisites independently, then dry-run Harmony's native IL contracts without installing detours.</summary>
+    /// <summary>Warn about native prerequisites and dry-run IL contracts; never gate feature installation.</summary>
     internal static class NativePatchPreflight
     {
         private enum NativeFeature { LastStarlight, Feather, Baptism, DoubleTap, NyxWorld, InkBeam, NativeAttributedHpDamage }
-        private static readonly bool[] FeatureAvailable = new bool[(int)NativeFeature.NativeAttributedHpDamage + 1];
-
-        internal static bool TryGetDisabledFeature(Type patchClass, out string featureName)
-        {
-            var feature = FeatureFor(patchClass);
-            featureName = feature?.ToString();
-            return feature.HasValue && !FeatureAvailable[(int)feature.Value];
-        }
 
         private static NativeFeature? FeatureFor(Type patchClass)
         {
@@ -72,7 +64,7 @@ namespace SodRpg.Mod
 
         private static void ValidateFeatures(Type[] patchClasses)
         {
-            var present = new bool[FeatureAvailable.Length];
+            var present = new bool[(int)NativeFeature.NativeAttributedHpDamage + 1];
             foreach (var type in patchClasses)
             {
                 var feature = FeatureFor(type);
@@ -105,23 +97,20 @@ namespace SodRpg.Mod
                             ValidateHpDamageDelegate();
                             break;
                     }
-                    FeatureAvailable[i] = true;
                 }
                 catch (Exception ex)
                 {
-                    Log.Warn("Native feature disabled: " + feature + ": " + ex);
+                    Log.Warn("Native feature preflight warning; installation continues: " + feature + ": " + ex);
                 }
             }
         }
 
         internal static void Validate(Harmony harmony, Assembly assembly)
         {
-            // Reset first: an unconfirmed prerequisite must never inherit a previous successful run.
-            Array.Clear(FeatureAvailable, 0, FeatureAvailable.Length);
             var patchClasses = assembly.GetTypes();
             ValidateFeatures(patchClasses);
             // Private Harmony APIs are only used by this advisory composed-IL diagnostic.
-            // Feature availability above does not depend on the private copier being available.
+            // Installation never depends on prerequisites or the private copier being available.
             var harmonyAssembly = typeof(Harmony).Assembly;
             var tools = harmonyAssembly.GetType("HarmonyLib.PatchTools", true);
             var attributePatch = harmonyAssembly.GetType("HarmonyLib.AttributePatch", true);

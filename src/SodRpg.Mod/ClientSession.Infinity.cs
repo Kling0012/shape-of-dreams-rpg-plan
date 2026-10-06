@@ -285,11 +285,6 @@ namespace SodRpg.Mod
 
         private void TickInfinity()
         {
-            if (InfinityMode.ExpeditionHalted)
-            {
-                StopInfinityRun();
-                return;
-            }
             CompleteInfinityStateSave();
             InfinityMode.Tick();
             if (!InfinityMode.NativeSaveAgreement) return;

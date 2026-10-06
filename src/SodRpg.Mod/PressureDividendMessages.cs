@@ -28,7 +28,7 @@ namespace SodRpg.Mod
 
         public PressureDividendReward ToReward()
         {
-            if (protocol != Protocol.Version || shardCount != 1) throw new InvalidOperationException("Invalid pressure dividend receipt.");
+            if (shardCount != 1) throw new InvalidOperationException("Invalid pressure dividend receipt.");
             return new PressureDividendReward(runId, zoneId, spawnId, ownerId, rewardNonce, graphEpoch, segmentEpoch, roomEpoch);
         }
     }

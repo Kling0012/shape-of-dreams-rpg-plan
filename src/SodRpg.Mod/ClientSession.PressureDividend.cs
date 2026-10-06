@@ -12,11 +12,17 @@ namespace SodRpg.Mod
         {
             // This handler is registered only as a client handler on the native serverActor.
             // Actor.HandleRpc_Imp routes client-origin Commands exclusively to server handlers.
-            if (message == null || message.protocol != Protocol.Version || message.shardCount != 1) return;
+            if (message == null) return;
             var hero = LocalHero;
             var runId = NetworkedManagerBase<GameManager>.softInstance?.runId;
             if (hero == null || hero.netId != message.heroNetId || string.IsNullOrEmpty(runId)
                 || runId == _completedRunId || message.runId != runId) return;
+            Protocol.WarnMismatch(message.protocol, nameof(DreamforgePressureDividendMsg));
+            if (message.shardCount != 1)
+            {
+                Log.Warn("Client: rejected pressure dividend receipt with an invalid shard count.");
+                return;
+            }
             try
             {
                 var reward = message.ToReward();

@@ -1,3 +1,5 @@
+using System.Globalization;
+using System.Linq;
 using SodRpg.Core.Game;
 using Xunit;
 
@@ -15,6 +17,22 @@ namespace SodRpg.Core.Tests
             Assert.False(ContentFingerprint.Matches(12, a, 13));
             Assert.False(ContentFingerprint.Matches(13, a + "x", 13));
             Assert.False(ContentFingerprint.Matches(13, null, 13));
+        }
+
+        [Fact]
+        public void Boss_content_records_do_not_depend_on_the_platform_negative_sign()
+        {
+            var original = CultureInfo.CurrentCulture;
+            try
+            {
+                CultureInfo.CurrentCulture = CultureInfo.InvariantCulture;
+                string[] expected = BossProfiles.FingerprintRecords().ToArray();
+                var alternate = (CultureInfo)CultureInfo.InvariantCulture.Clone();
+                alternate.NumberFormat.NegativeSign = "\u2212";
+                CultureInfo.CurrentCulture = alternate;
+                Assert.Equal(expected, BossProfiles.FingerprintRecords().ToArray());
+            }
+            finally { CultureInfo.CurrentCulture = original; }
         }
 
         [Fact]

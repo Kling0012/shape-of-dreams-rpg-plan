@@ -8,47 +8,76 @@ namespace SodRpg.Core.Tests
     public class NegotiationNativeTests
     {
         [Fact]
-        public void Host_requires_matching_protocol_and_full_registry_before_accepting_builds()
+        public void Host_reports_compatibility_differences_and_clears_them_after_a_matching_hello()
         {
             var host = new HostAuthority();
             var actor = host.RegisterNegotiation();
             var peer = new DewPlayer();
-            Assert.False(host.AcceptsNegotiatedBuild(peer));
-            host.ReceiveNegotiation(new DreamforgeHelloMsg { protocol = 12, content = ContentFingerprint.Value, continueCheckpoints = true }, peer);
-            Assert.False(host.AcceptsNegotiatedBuild(peer));
-            // 中断チェックポイント非対応の旧クライアントは登録が同じでも受け入れない（Protocol 17 相互確認）。
-            host.ReceiveNegotiation(new DreamforgeHelloMsg { protocol = Protocol.Version, content = ContentFingerprint.Value }, peer);
-            Assert.False(host.AcceptsNegotiatedBuild(peer));
-            host.ReceiveNegotiation(new DreamforgeHelloMsg { protocol = Protocol.Version, content = "different-registry", continueCheckpoints = true }, peer);
-            Assert.False(host.AcceptsNegotiatedBuild(peer));
-            host.ReceiveNegotiation(new DreamforgeHelloMsg { protocol = Protocol.Version, content = ContentFingerprint.Value, continueCheckpoints = true }, peer);
-            Assert.True(host.AcceptsNegotiatedBuild(peer));
-            var reply = Assert.IsType<DreamforgeHelloMsg>(actor.ClientMessages.Last());
-            Assert.True(ContentFingerprint.Matches(reply.protocol, reply.content, Protocol.Version));
-            host.DetachNegotiation();
-            Assert.False(host.AcceptsNegotiatedBuild(peer));
+            DewPlayer.gamePlayers.Add(peer);
+            try
+            {
+                host.ReceiveNegotiation(new DreamforgeHelloMsg { protocol = 12, content = ContentFingerprint.Value, continueCheckpoints = true }, peer);
+                Assert.Single(HostAuthority.VersionWarnings);
+                var reply = Assert.IsType<DreamforgeHelloMsg>(actor.ClientMessages.Last());
+                Assert.Equal(Protocol.Version, reply.protocol);
+                Assert.Equal(ContentFingerprint.Value, reply.content);
+                host.ReceiveNegotiation(new DreamforgeHelloMsg { protocol = Protocol.Version, content = ContentFingerprint.Value }, peer);
+                Assert.Single(HostAuthority.VersionWarnings);
+                host.ReceiveNegotiation(new DreamforgeHelloMsg { protocol = Protocol.Version, content = "different-registry", continueCheckpoints = true }, peer);
+                Assert.Single(HostAuthority.VersionWarnings);
+                host.ReceiveNegotiation(new DreamforgeHelloMsg
+                {
+                    protocol = Protocol.Version, modVer = HostAuthority.ModVersion, content = ContentFingerprint.Value,
+                    continueCheckpoints = true, infinityAvailable = true,
+                }, peer);
+                Assert.Empty(HostAuthority.VersionWarnings);
+            }
+            finally
+            {
+                host.DetachNegotiation();
+                DewPlayer.gamePlayers.Remove(peer);
+            }
             Assert.False(actor.ServerHandlers.ContainsKey(typeof(DreamforgeHelloMsg)));
         }
 
         [Fact]
-        public void Cap_registry_change_revokes_old_negotiation_until_both_sides_renegotiate()
+        public void Cap_registry_changes_only_update_the_compatibility_warning()
         {
             var host = new HostAuthority();
             host.RegisterNegotiation();
             var peer = new DewPlayer();
-            string previous = ContentFingerprint.Value;
-            host.ReceiveNegotiation(new DreamforgeHelloMsg { protocol = Protocol.Version, content = previous, continueCheckpoints = true }, peer);
-            Assert.True(host.AcceptsNegotiatedBuild(peer));
-            FractionalScopedModifiers.RegisterCapProfile(new NativeStarCapProfile {
-                Id = "integration.negotiation.host", Kind = LinkKind.MemoryDamage,
-                Maximum = ValueUnits.FromPercent(80m)
-            });
-            Assert.False(host.AcceptsNegotiatedBuild(peer));
-            host.ReceiveNegotiation(new DreamforgeHelloMsg { protocol = Protocol.Version, content = previous, continueCheckpoints = true }, peer);
-            Assert.False(host.AcceptsNegotiatedBuild(peer));
-            host.ReceiveNegotiation(new DreamforgeHelloMsg { protocol = Protocol.Version, content = ContentFingerprint.Value, continueCheckpoints = true }, peer);
-            Assert.True(host.AcceptsNegotiatedBuild(peer));
-            host.DetachNegotiation();
+            DewPlayer.gamePlayers.Add(peer);
+            try
+            {
+                string previous = ContentFingerprint.Value;
+                host.ReceiveNegotiation(new DreamforgeHelloMsg
+                {
+                    protocol = Protocol.Version, modVer = HostAuthority.ModVersion, content = previous,
+                    continueCheckpoints = true, infinityAvailable = true,
+                }, peer);
+                Assert.Empty(HostAuthority.VersionWarnings);
+                FractionalScopedModifiers.RegisterCapProfile(new NativeStarCapProfile {
+                    Id = "integration.negotiation.host", Kind = LinkKind.MemoryDamage,
+                    Maximum = ValueUnits.FromPercent(80m)
+                });
+                host.ReceiveNegotiation(new DreamforgeHelloMsg
+                {
+                    protocol = Protocol.Version, modVer = HostAuthority.ModVersion, content = previous,
+                    continueCheckpoints = true, infinityAvailable = true,
+                }, peer);
+                Assert.Single(HostAuthority.VersionWarnings);
+                host.ReceiveNegotiation(new DreamforgeHelloMsg
+                {
+                    protocol = Protocol.Version, modVer = HostAuthority.ModVersion, content = ContentFingerprint.Value,
+                    continueCheckpoints = true, infinityAvailable = true,
+                }, peer);
+                Assert.Empty(HostAuthority.VersionWarnings);
+            }
+            finally
+            {
+                host.DetachNegotiation();
+                DewPlayer.gamePlayers.Remove(peer);
+            }
         }
     }
 }

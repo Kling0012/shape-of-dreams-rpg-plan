@@ -38,9 +38,10 @@ namespace SodRpg.Mod
 
         private void OnRunGrowth(DreamforgeRunGrowthMsg msg)
         {
-            if (msg == null || msg.protocol != Protocol.Version || msg.heroNetId == 0) return;
+            if (msg == null || msg.heroNetId == 0) return;
             var hero = LocalHero;
             if (hero == null || hero.netId != msg.heroNetId) return;
+            Protocol.WarnMismatch(msg.protocol, nameof(DreamforgeRunGrowthMsg));
             var parsed = new Dictionary<string, int>(StringComparer.Ordinal);
             if (!string.IsNullOrEmpty(msg.stacks))
                 foreach (string part in msg.stacks.Split(','))
@@ -48,7 +49,11 @@ namespace SodRpg.Mod
                     int eq = part.IndexOf('=');
                     if (eq <= 0 || !Gimmicks.ValidStarId(part.Substring(0, eq))
                         || !int.TryParse(part.Substring(eq + 1), NumberStyles.Integer, CultureInfo.InvariantCulture, out int stacks)
-                        || stacks < 0 || stacks > RunGrowthDef.MaxCap) return;
+                        || stacks < 0 || stacks > RunGrowthDef.MaxCap)
+                    {
+                        Log.Warn("Client: rejected malformed run growth payload.");
+                        return;
+                    }
                     parsed[part.Substring(0, eq)] = stacks;
                 }
             bool changed = _growthRunId != msg.runId || parsed.Count != _growthStacks.Count;
