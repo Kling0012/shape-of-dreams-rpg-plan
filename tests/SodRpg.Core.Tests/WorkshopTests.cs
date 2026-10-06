@@ -25,7 +25,9 @@ namespace SodRpg.Core.Tests
         public void Buying_costs_materials_and_stops_at_max()
         {
             var p = Profile.CreateNew(1);
-            p.AddMaterial(Materials.Shard, 100);
+            var cost = ForgeBalanceTests.Raw().GetProperty("workshop").GetProperty("bigSatchel").GetProperty("costs")[0];
+            p.AddMaterial(Materials.Shard, cost[0].GetInt32());
+            p.AddMaterial(Materials.Tuning, cost[1].GetInt32());
             Rules.BuyUpgrade(p, Upgrade.BigSatchel);
             Assert.Equal(1, Workshop.Level(p, Upgrade.BigSatchel));
             Assert.Equal(0, p.Material(Materials.Shard));
@@ -49,12 +51,18 @@ namespace SodRpg.Core.Tests
             var p = Rich();
             Max(p, Upgrade.BigSatchel);
             Max(p, Upgrade.WideStash);
-            Assert.Equal(Content.SatchelCapacity + 50, Workshop.SatchelCapacity(p));
-            Assert.Equal(Content.StashCapacity + 340, Workshop.StashCapacity(p));
+            var workshop = ForgeBalanceTests.Raw().GetProperty("workshop");
+            var satchel = workshop.GetProperty("bigSatchel");
+            var stash = workshop.GetProperty("wideStash");
+            int satchelCapacity = Content.SatchelCapacity + satchel.GetProperty("costs").GetArrayLength() * satchel.GetProperty("capacityPerLevel").GetInt32();
+            int bands = stash.GetProperty("firstBandLevels").GetInt32();
+            Assert.Equal(satchelCapacity, Workshop.SatchelCapacity(p));
+            Assert.Equal(Content.StashCapacity + bands * stash.GetProperty("firstBandCapacity").GetInt32()
+                + (stash.GetProperty("costs").GetArrayLength() - bands) * stash.GetProperty("laterCapacity").GetInt32(), Workshop.StashCapacity(p));
 
             Rules.BeginRun(p, "cap");
             var rng = new Rng(1001);
-            for (int i = 0; i < Content.SatchelCapacity + 50; i++) p.Run.Satchel.Add(Loot.RollRelic(rng, Rarity.Common, 1));
+            for (int i = 0; i < satchelCapacity; i++) p.Run.Satchel.Add(Loot.RollRelic(rng, Rarity.Common, 1));
             for (int i = 0; i < 10; i++) Rules.OnKill(p, MonsterTier.Boss, 1);
             Assert.Equal(Workshop.SatchelCapacity(p), p.Run.Satchel.Count);
         }

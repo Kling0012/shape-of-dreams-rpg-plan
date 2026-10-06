@@ -27,7 +27,7 @@ namespace SodRpg.Core.Tests
         {
             // Issue #30：480×3^35 は long を超えるが、費用そのものは int に収まる
             var r = new Relic { Rarity = Rarity.Epic, AffixRerolls = 35 };
-            Assert.Equal((698_932_611, 23_297_754), Rules.AffixRerollCost(r));
+            Assert.Equal(ForgeBalanceTests.RerollCost(r), Rules.AffixRerollCost(r));
         }
 
         [Fact]
@@ -35,16 +35,16 @@ namespace SodRpg.Core.Tests
         {
             var (p, r) = WithRelic(Rarity.Rare);
             var (shards, tuning) = Rules.AffixRerollCost(r);
-            Assert.Equal((180, 6), (shards, tuning));
+            Assert.Equal(ForgeBalanceTests.RerollCost(r), (shards, tuning));
             var ev = Rules.AffixReroll(p, r.Uid);
             Assert.Equal(EventKind.Info, ev.Kind);
             Assert.Equal(5000 - shards, p.Material(Materials.Shard));
             Assert.Equal(50 - tuning, p.Material(Materials.Tuning));
             Assert.Equal(1, r.AffixRerolls);
-            Assert.Equal((270, 9), Rules.AffixRerollCost(r));
+            Assert.Equal(ForgeBalanceTests.RerollCost(r), Rules.AffixRerollCost(r));
             Rules.AffixReroll(p, r.Uid);
             Assert.Equal(2, r.AffixRerolls);
-            Assert.Equal((405, 14), Rules.AffixRerollCost(r)); // 調律石は13.5の切り上げ
+            Assert.Equal(ForgeBalanceTests.RerollCost(r), Rules.AffixRerollCost(r));
         }
 
         [Fact]

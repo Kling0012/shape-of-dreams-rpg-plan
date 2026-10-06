@@ -13,7 +13,7 @@ public sealed class Simulation
 {
     internal static readonly string[] MilestoneNames =
     ["初めてのレア以上（発見）", "初めてのエピック以上（発見）", "初めての伝説・固有品（発見）",
-     "初めてのセット3部位所持", "夢のレベル5", "夢のレベル10", "夢のレベル20", "装着6枠がすべて+3以上"];
+     "初めてのセット3部位所持", "夢のレベル5", "夢のレベル10", "夢のレベル20", $"装着6枠がすべて+{Content.EnhanceMilestoneFirst}以上"];
     private const string Hero = "default";
     private readonly Options options;
     public double[,,] Samples { get; }
@@ -258,7 +258,7 @@ public sealed class Simulation
             {
                 var relic = Rules.EquippedRelic(p, Hero, (Slot)slot);
                 if (relic == null || relic.Enhance >= Content.MaxEnhanceFor(relic)
-                    || Content.EnhanceCost(relic.Enhance) * (relic.Rarity >= Rarity.Epic ? 2 : 1) > p.Material(Materials.Shard)) continue;
+                    || Content.EnhanceCost(relic) > p.Material(Materials.Shard)) continue;
                 if (next == null || relic.Enhance < next.Enhance) next = relic;
             }
             if (next == null) break;
@@ -277,7 +277,7 @@ public sealed class Simulation
             slots++;
             rarity += (int)relic.Rarity;
             enhance += relic.Enhance;
-            if (relic.Enhance < 3) allPlusThree = false;
+            if (relic.Enhance < Content.EnhanceMilestoneFirst) allPlusThree = false;
         }
         row[(int)Metric.EquippedSlots] = slots;
         row[(int)Metric.EquippedRarity] = slots == 0 ? 0 : (double)rarity / slots;

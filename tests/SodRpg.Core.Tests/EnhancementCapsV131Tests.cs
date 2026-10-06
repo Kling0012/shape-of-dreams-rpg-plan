@@ -57,7 +57,8 @@ namespace SodRpg.Core.Tests
             second.Powers.Add(new PowerLine(Power.Blaze, cap / 2));
             Equip(p, first);
             Equip(p, second);
-            int enhanced = (int)(((cap * 120L + 50) / 100) * 180 / 100);
+            int enhanced = (int)(((cap * (long)ForgeBalanceTests.At("enhancement", "powerPercents", first.Enhance) + 50) / 100)
+                * ForgeBalanceTests.At("awakening", "powerPercents", first.AwakenLevel) / 100);
             int expected = (int)((enhanced + cap / 2) * (decimal)cap / (cap + cap / 2));
             Assert.Equal(expected, Build.Compute(p, Hero, 0).Get(Power.Blaze));
         }
@@ -66,7 +67,7 @@ namespace SodRpg.Core.Tests
         public void Single_awakened_haste_link_exceeds_old_equipped_cap()
         {
             var unique = Content.Uniques.First(u => u.Link != null && u.Link.Kind == LinkKind.MemoryHaste
-                && u.Link.Value * 1.8m > Links.EquippedCap(u.Link.Kind, u.Link.Requires.Length));
+                && u.Link.Value * ForgeBalanceTests.At("awakening", "powerPercents", 3) / 100m > Links.EquippedCap(u.Link.Kind, u.Link.Requires.Length));
             var p = Profile.CreateNew(135);
             var relic = Loot.RollUnique(new Rng(43), unique, 60);
             relic.AwakenLevel = 3;
@@ -75,7 +76,7 @@ namespace SodRpg.Core.Tests
             var link = Assert.Single(build.Links);
             decimal cap = Links.EquippedCap(link.Kind, link.Requires.Length);
             Assert.True(link.Value > cap);
-            Assert.Equal(unique.Link.Value * 1.8m, link.Value);
+            Assert.Equal(unique.Link.Value * ForgeBalanceTests.At("awakening", "powerPercents", 3) / 100m, link.Value);
             Assert.InRange(link.Value, 0, cap * 2.5m);
             Assert.True(HostBuildValidation.TryAccept(HostBuildValidation.Encode(build, p, Hero, 0),
                 Hero, out var accepted, out var reason), reason);
@@ -98,7 +99,7 @@ namespace SodRpg.Core.Tests
             var strongest = p.FindStash(p.Hero(Hero).Equipped[(int)Content.GetBase(group[0].BaseId).Slot]);
             strongest.AwakenLevel = 3;
             decimal basis = group.Sum(u => u.Link.Value);
-            decimal scaled = basis + group[0].Link.Value * 0.8m;
+            decimal scaled = basis + group[0].Link.Value * (ForgeBalanceTests.At("awakening", "powerPercents", 3) / 100m - 1m);
             int expectedMilli = (int)Math.Round(scaled * cap / basis * 1000m, MidpointRounding.AwayFromZero);
             var build = Build.Compute(p, Hero, 0);
             Assert.Equal(expectedMilli, Assert.Single(build.Links).ValueMilli);

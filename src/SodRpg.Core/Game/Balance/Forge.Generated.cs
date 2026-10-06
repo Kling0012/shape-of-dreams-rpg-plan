@@ -4,10 +4,73 @@ namespace SodRpg.Core.Game
 {
     internal static class ForgeBalance
     {
+        internal const int MilestoneFirst = 3;
+        internal const int MilestoneSecond = 5;
+        internal const int MilestoneThird = 10;
+        internal const int MilestoneFourth = 15;
+        internal const int MilestoneFifth = 20;
+        internal const int RerollGrowthNumerator = 3;
+        internal const int MaxAwakenLevel = 3;
         internal const int CurrentLevelOffset = 2;
         internal const int PercentPerLevel = 3;
         internal const int MaximumPercent = 45;
-        // The original tuple contributes no record, preserving existing fingerprints.
-        internal static readonly string ContentFingerprintRecord = null;
+        internal const double DemotionChance = 0.5d;
+        internal const int DemotionSteps = 1;
+        internal const int BaseCap = 5;
+        internal const int StepPerBreak = 5;
+        internal static readonly int[] Milestones = { 3, 5, 10, 15, 20 };
+        internal const int MilestonePowerPercent = 120;
+        internal static readonly int[] StatPercents = { 100, 106, 111, 116, 121, 126, 129, 132, 135, 138, 140, 142, 144, 146, 148, 150, 152, 153, 154, 155, 156 };
+        internal static readonly int[] PowerPercents = { 100, 104, 108, 112, 116, 120, 123, 126, 128, 130, 132, 134, 136, 138, 139, 140, 141, 142, 143, 144, 145 };
+        internal static readonly int[] EnhanceShardCosts = { 20, 35, 60, 90, 130, 180, 230, 290, 360, 440, 270, 345, 435, 540, 660, 360, 460, 580, 720, 880 };
+        internal const int EpicMaterialMultiplier = 2;
+        internal static readonly int[] AwakenThresholds = { 0, 5000, 15000, 37500 };
+        internal static readonly int[] AwakenPowerPercents = { 100, 125, 150, 180 };
+        internal static readonly int[] AwakenAffixPercents = { 100, 110, 120, 130 };
+        internal const int AwakenNormalPoints = 1;
+        internal const int AwakenMiniBossPoints = 5;
+        internal const int AwakenBossPoints = 20;
+        internal const int AwakenNightmareMultiplier = 2;
+        internal static readonly int[] MaxBreaks = { 0, 0, 1, 2, 3 };
+        internal static readonly int[] BreakShardCosts = { 200, 400, 800 };
+        internal static readonly int[] BreakTuningCosts = { 5, 10, 20 };
+        internal const int MaxRetunes = 3;
+        internal const int RetuneChoices = 3;
+        internal const int RetuneBaseCost = 1;
+        internal const int RetuneCostPerLevel = 1;
+        internal const int RerollBaseShards = 60;
+        internal const int RerollBaseTuning = 2;
+        internal const double RerollGrowthMultiplier = 1.5d;
+        internal static readonly int[] CraftShardCosts = { 60, 150 };
+        internal static readonly int[] CraftTuningCosts = { 0, 2 };
+        internal static readonly double[] CraftLuck = { 0.5d, 1d };
+        internal static readonly int[] SynthesisInputs = { 5, 5, 12, 16 };
+        internal static readonly int[] SynthesisShardCosts = { 10, 20, 60, 300 };
+        internal static readonly int[] SynthesisTuningCosts = { 0, 0, 0, 4 };
+        internal const int SynthesisTargetCostPercent = 150;
+        internal static readonly int[] SalvageShards = { 3, 6, 12, 30, 60 };
+        internal const int SalvageEpicTuning = 1;
+        internal const int SalvageRefundDivisor = 2;
+        internal const int FountainSteps = 1;
+        internal const int ForgeShrineSteps = 1;
+        internal const int ForgeShrineShards = 20;
+        internal const int TemperingAltarSteps = 2;
+        internal static readonly (int Shards, int Tuning)[] BigSatchelCosts = { (100, 0), (200, 2), (400, 4), (600, 6), (800, 8), (1000, 10), (1300, 12), (1600, 14), (2000, 16), (2500, 20) };
+        internal const int BigSatchelCapacityPerLevel = 5;
+        internal static readonly (int Shards, int Tuning)[] WideStashCosts = { (80, 0), (160, 1), (320, 3), (500, 5), (700, 7), (900, 9), (1200, 11), (1500, 13), (1900, 16), (2400, 20) };
+        internal const int WideStashFirstBandLevels = 3;
+        internal const int WideStashFirstBandCapacity = 20;
+        internal const int WideStashLaterCapacity = 40;
+        internal static readonly (int Shards, int Tuning)[] BountyRerollCosts = { (150, 2), (300, 4) };
+        internal const int BountyRerollRerollsPerLevel = 1;
+        internal static readonly (int Shards, int Tuning)[] EchoLanternCosts = { (200, 2), (400, 5) };
+        internal const int EchoLanternBasePercent = 25;
+        internal const int EchoLanternPercentPerLevel = 5;
+        internal static readonly (int Shards, int Tuning)[] LostMapCosts = { (250, 3) };
+        internal const int LostMapRoomsPerLevel = 1;
+        internal const int LostMapMinimumRooms = 2;
+        internal static readonly (int Shards, int Tuning)[] PactStarsCosts = { (350, 6) };
+        internal const int PactStarsOffersPerLevel = 1;
+        internal static readonly string[] ContentFingerprintRecords = {  };
     }
 }

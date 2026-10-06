@@ -15,6 +15,7 @@ ROOT = Path(__file__).resolve().parents[2]
 SPEC = importlib.util.spec_from_file_location("forge_generator", ROOT / "tools" / "balance" / "gen_cs.py")
 forge = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(forge)
+import forge_values
 
 
 class ForgeBalanceTests(unittest.TestCase):
@@ -40,7 +41,7 @@ class ForgeBalanceTests(unittest.TestCase):
             data = copy.deepcopy(original)
             data["enhanceFailure"][name] = value
             invalid.append(data)
-        for version in (True, 2):
+        for version in (True, 3):
             data = copy.deepcopy(original)
             data["schemaVersion"] = version
             invalid.append(data)
@@ -57,18 +58,69 @@ class ForgeBalanceTests(unittest.TestCase):
         for offset in (0, 20):
             data = copy.deepcopy(original)
             data["enhanceFailure"]["currentLevelOffset"] = offset
-            data["enhanceFailure"]["percentPerLevel"] = forge.INT_MAX // 20 + 1
+            data["enhanceFailure"]["percentPerLevel"] = forge_values.INT_MAX // 20 + 1
+            invalid.append(data)
+        for section, key, value in (
+            ("enhancement", "statPercents", [100]),
+            ("enhancement", "milestones", [3, 5, 10, 10, 20]),
+            ("awakening", "thresholds", [0, 5000, 4000, 37500]),
+            ("enhanceFailure", "demotionChance", 1.01),
+            ("enhanceFailure", "demotionSteps", 0),
+            ("affixReroll", "growthMultiplier", 1.6),
+            ("salvage", "enhanceRefundDivisor", 0),
+            ("synthesis", "inputs", [5, 0, 12, 16]),
+            ("limitBreak", "maxByRarity", [0, 0, 1, 2, 4]),
+        ):
+            data = copy.deepcopy(original)
+            data[section][key] = value
             invalid.append(data)
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "forge.json"
             for data in invalid:
                 with self.subTest(data=data):
-                    path.write_text(json.dumps(data), encoding="utf-8")
+                    path.write_text(json.dumps(data, default=float), encoding="utf-8")
                     with self.assertRaises(ValueError):
                         forge.load_forge(path)
             path.write_text('{"schemaVersion":1,"schemaVersion":1,"enhanceFailure":{}}', encoding="utf-8")
             with self.assertRaises(ValueError):
                 forge.load_forge(path)
+
+    def test_legacy_forge_values_do_not_change_the_negotiated_fingerprint(self):
+        # Frozen migration reference is not a balance source or a tuning expectation.
+        legacy = copy.deepcopy(forge_values.LEGACY)
+        effective = forge_values.effective_fields(legacy)
+        for name, section, key in (
+            ("StatPercents", "enhancement", "statPercents"),
+            ("PowerPercents", "enhancement", "powerPercents"),
+            ("EnhanceShardCosts", "enhancement", "shardCosts"),
+            ("AwakenThresholds", "awakening", "thresholds"),
+            ("AwakenPowerPercents", "awakening", "powerPercents"),
+            ("AwakenAffixPercents", "awakening", "affixPercents"),
+            ("BreakShardCosts", "limitBreak", "shardCosts"),
+            ("BreakTuningCosts", "limitBreak", "tuningCosts"),
+            ("BaseCap", "enhancement", "baseCap"),
+            ("StepPerBreak", "enhancement", "stepPerBreak"),
+            ("MilestonePowerPercent", "enhancement", "milestonePowerPercent"),
+        ):
+            with self.subTest(field=name):
+                self.assertEqual(legacy[section][key], effective[name])
+        self.assertEqual([], forge_values.fingerprint_records(legacy))
+        adjusted = copy.deepcopy(legacy)
+        adjusted["enhancement"]["powerPercents"][7] += 1
+        self.assertEqual(legacy["enhancement"]["powerPercents"][7] + 1,
+                         forge_values.effective_fields(adjusted)["PowerPercents"][7])
+        self.assertEqual(
+            ["balance:forge:v2:enhancement/powerPercents/7:int:percent:127"],
+            forge_values.fingerprint_records(adjusted),
+        )
+        adjusted = copy.deepcopy(legacy)
+        adjusted["awakening"]["thresholds"][1] += 1
+        self.assertEqual(legacy["awakening"]["thresholds"][1] + 1,
+                         forge_values.effective_fields(adjusted)["AwakenThresholds"][1])
+        self.assertEqual(
+            ["balance:forge:v2:awakening/thresholds/1:int:points:5001"],
+            forge_values.fingerprint_records(adjusted),
+        )
 
 
 if __name__ == "__main__":

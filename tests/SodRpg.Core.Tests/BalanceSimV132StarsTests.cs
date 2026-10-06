@@ -103,13 +103,14 @@ namespace SodRpg.Core.Tests
         [Fact]
         public void EnhanceStepsAffordable_counts_cumulative_Content_costs()
         {
-            // +0→+1 20、+1→+2 35、+2→+3 60、+3→+4 90、+4→+5 130（Content.EnhanceCost の実値）。
-            Assert.Equal(0, V132Model.EnhanceStepsAffordable(19));
-            Assert.Equal(1, V132Model.EnhanceStepsAffordable(20));
-            Assert.Equal(2, V132Model.EnhanceStepsAffordable(56));    // 20+35=55 まで買える
-            Assert.Equal(3, V132Model.EnhanceStepsAffordable(115));   // 20+35+60=115
-            Assert.Equal(5, V132Model.EnhanceStepsAffordable(335));   // 20+35+60+90+130
-            Assert.Equal(7, V132Model.EnhanceStepsAffordable(1000));  // 745（7回）まで買える
+            var costs = ForgeBalanceTests.Raw().GetProperty("enhancement").GetProperty("shardCosts");
+            int total = 0;
+            for (int level = 0; level < costs.GetArrayLength(); level++)
+            {
+                total += costs[level].GetInt32();
+                Assert.Equal(level, V132Model.EnhanceStepsAffordable(total - 1));
+                Assert.Equal(level + 1, V132Model.EnhanceStepsAffordable(total));
+            }
         }
 
         [Fact]

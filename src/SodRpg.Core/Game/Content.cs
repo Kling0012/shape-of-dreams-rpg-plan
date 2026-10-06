@@ -459,64 +459,47 @@ namespace SodRpg.Core.Game
         public const int SatchelCapacity = 30;
         public const int LostAndFoundCapacity = 10;
         public const int MaxHeat = 5;
-        public const int MaxEnhance = 5;
-        public const int MaxRetunes = 3;
+        public const int MaxEnhance = ForgeBalance.BaseCap;
+        public const int MaxRetunes = ForgeBalance.MaxRetunes;
         public const int MaxDreamLevel = 30;
         public const int KeystoneRouteRequirement = 6;
         public const int KeystoneCost = 3;
         public const int RoomsToRecoverLost = 3;
         public const int CodexPerPoint = 6;
         public const int MaxCodexBonus = 4;
-        /// <summary>強化の節目。+3で特性が1行、+5で固有効果（なければ）か特性1行。</summary>
-        public const int EnhanceMilestoneFirst = 3;
-        public const int EnhanceMilestoneSecond = 5;
-        /// <summary>限界突破（v1.27）。1回ごとに強化上限がこの値だけ広がる。</summary>
-        public const int EnhanceStepPerBreak = 5;
-        /// <summary>限界突破の節目。+10と+15で特性が1行ずつ、+20（伝説のみ）で固有効果1つの値が1.2倍。</summary>
-        public const int EnhanceMilestoneThird = 10;
-        public const int EnhanceMilestoneFourth = 15;
-        public const int EnhanceMilestoneFifth = 20;
-        /// <summary>強化の節目の数（+3・+5・+10・+15・+20）。</summary>
+        /// <summary>強化の節目。保存に記録する節目の序数とは独立した調整値。</summary>
+        public const int EnhanceMilestoneFirst = ForgeBalance.MilestoneFirst;
+        public const int EnhanceMilestoneSecond = ForgeBalance.MilestoneSecond;
+        public const int EnhanceStepPerBreak = ForgeBalance.StepPerBreak;
+        public const int EnhanceMilestoneThird = ForgeBalance.MilestoneThird;
+        public const int EnhanceMilestoneFourth = ForgeBalance.MilestoneFourth;
+        public const int EnhanceMilestoneFifth = ForgeBalance.MilestoneFifth;
+        /// <summary>保存される強化節目の序数の数（調整値ではない）。</summary>
         public const int MaxEnhanceMilestones = 5;
-        /// <summary>限界突破で固有効果1つの値に掛ける倍率（%）。+20の節目。</summary>
-        public const int LimitBreakPowerPct = 120;
-        /// <summary>再調律で出す候補の数。</summary>
-        public const int RetuneChoices = 3;
-        /// <summary>合成の結果の枠を選ぶときの欠片の倍率（%）。</summary>
-        public const int TransmuteTargetCostPct = 150;
-        /// <summary>合成に必要な同じレア度の遺物の数（r → r+1）。</summary>
+        /// <summary>最後の強化節目で固有効果に掛ける倍率（%）。</summary>
+        public const int LimitBreakPowerPct = ForgeBalance.MilestonePowerPercent;
+        public const int RetuneChoices = ForgeBalance.RetuneChoices;
+        public const int TransmuteTargetCostPct = ForgeBalance.SynthesisTargetCostPercent;
         public static int TransmuteInputs(Rarity r)
-        {
-            switch (r)
-            {
-                case Rarity.Common: return 5;
-                case Rarity.Uncommon: return 5;
-                case Rarity.Rare: return 12;
-                default: return 16;
-            }
-        }
-        /// <summary>覚醒の段の数（v1.27 で1段から3段に）。</summary>
-        public const int MaxAwakenLevel = 3;
-        private static readonly int[] AwakenThresholds = { 0, 5000, 15000, 37500 }; // 1回の遠征で約460溜まる（BalanceSim の前提）。約11・33・82回
-        private static readonly int[] AwakenPowerPcts = { 100, 125, 150, 180 };
-        private static readonly int[] AwakenAffixPcts = { 100, 110, 120, 130 };
+            => ForgeBalance.SynthesisInputs[r == Rarity.Common ? 0 : r == Rarity.Uncommon ? 1 : r == Rarity.Rare ? 2 : 3];
+        public const int MaxAwakenLevel = ForgeBalance.MaxAwakenLevel;
         /// <summary>v1.26 までに覚醒した遺物が入る段（倍率が当時と同じ）。</summary>
         public const int LegacyAwakenLevel = 2;
         /// <summary>覚醒の力の上限（最後の段に要る累計）。</summary>
-        public static int AwakenThreshold => AwakenThresholds[MaxAwakenLevel];
+        public static int AwakenThreshold => ForgeBalance.AwakenThresholds[MaxAwakenLevel];
 
         private static int AwakenClamp(int level) => Math.Max(0, Math.Min(MaxAwakenLevel, level));
         /// <summary>その段に上がるのに要る覚醒の力（累計）。</summary>
-        public static int AwakenThresholdFor(int level) => AwakenThresholds[AwakenClamp(level)];
+        public static int AwakenThresholdFor(int level) => ForgeBalance.AwakenThresholds[AwakenClamp(level)];
         /// <summary>その段の固有効果（と連携）の倍率（%）。</summary>
-        public static int AwakenPowerPctAt(int level) => AwakenPowerPcts[AwakenClamp(level)];
+        public static int AwakenPowerPctAt(int level) => ForgeBalance.AwakenPowerPercents[AwakenClamp(level)];
         /// <summary>その段の特性の倍率（%）。</summary>
-        public static int AwakenAffixPctAt(int level) => AwakenAffixPcts[AwakenClamp(level)];
+        public static int AwakenAffixPctAt(int level) => ForgeBalance.AwakenAffixPercents[AwakenClamp(level)];
         /// <summary>覚醒の力の累計から、届いている段。</summary>
         public static int AwakenLevelFor(int points)
         {
             int level = 0;
-            while (level < MaxAwakenLevel && points >= AwakenThresholds[level + 1]) level++;
+            while (level < MaxAwakenLevel && points >= ForgeBalance.AwakenThresholds[level + 1]) level++;
             return level;
         }
         public static string AwakenNumeral(int level) => level == 1 ? "Ⅰ" : level == 2 ? "Ⅱ" : level == 3 ? "Ⅲ" : "";
@@ -5335,83 +5318,50 @@ namespace SodRpg.Core.Game
             return GearBalance.BaseLevelScalePct + growth * (l - 1);
         }
 
-        /// <summary>強化の累計倍率（%）。1段ごとの伸びは上限に近づくほど小さくなる。</summary>
-        private static readonly int[] EnhanceStatPcts =
-        {
-            100, 106, 111, 116, 121, 126, 129, 132, 135, 138, 140,
-            142, 144, 146, 148, 150, 152, 153, 154, 155, 156
-        };
-
-        private static readonly int[] EnhancePowerPcts =
-        {
-            100, 104, 108, 112, 116, 120, 123, 126, 128, 130, 132,
-            134, 136, 138, 139, 140, 141, 142, 143, 144, 145
-        };
-
-        /// <summary>基礎能力・特性の強化倍率（%）。+5/+10/+15/+20で126/140/150/156%。</summary>
+        /// <summary>基礎能力・特性の強化倍率（%）。表の範囲に丸める。</summary>
         public static int EnhanceScalePct(int enhance)
-        {
-            return EnhanceStatPcts[Math.Max(0, Math.Min(enhance, EnhanceMilestoneFifth))];
-        }
+            => ForgeBalance.StatPercents[Math.Max(0, Math.Min(enhance, ForgeBalance.StatPercents.Length - 1))];
 
-        /// <summary>固有効果の強化倍率（%）。+5/+10/+15/+20で120/132/140/145%。</summary>
+        /// <summary>固有効果の強化倍率（%）。表の範囲に丸める。</summary>
         public static int EnhancePowerScalePct(int enhance)
-        {
-            return EnhancePowerPcts[Math.Max(0, Math.Min(enhance, EnhanceMilestoneFifth))];
-        }
-
-        /// <summary>+6以降の強化1回の基本欠片（+6〜+10が180・230・290・360・440、+11〜+15は1.5倍、+16〜+20は2倍。支払いはエピック以上でさらに2倍）。</summary>
-        private static readonly int[] LimitBreakEnhanceCosts = { 180, 230, 290, 360, 440 };
+            => ForgeBalance.PowerPercents[Math.Max(0, Math.Min(enhance, ForgeBalance.PowerPercents.Length - 1))];
 
         public static int EnhanceCost(int currentEnhance)
-        {
-            switch (currentEnhance)
-            {
-                case 0: return 20;
-                case 1: return 35;
-                case 2: return 60;
-                case 3: return 90;
-                case 4: return 130;
-                default:
-                    int beyond = currentEnhance - MaxEnhance; // +6にするときが0
-                    if (beyond < 0 || beyond >= LimitBreakEnhanceCosts.Length * 3) return int.MaxValue;
-                    int baseCost = LimitBreakEnhanceCosts[beyond % LimitBreakEnhanceCosts.Length];
-                    int tier = beyond / LimitBreakEnhanceCosts.Length; // 0:+6〜+10、1:+11〜+15、2:+16〜+20
-                    return tier == 0 ? baseCost : tier == 1 ? baseCost * 3 / 2 : baseCost * 2;
-            }
-        }
+            => currentEnhance < 0 || currentEnhance >= ForgeBalance.EnhanceShardCosts.Length
+                ? int.MaxValue : ForgeBalance.EnhanceShardCosts[currentEnhance];
 
-        /// <summary>限界突破の回数の上限。レア1回・エピック2回・伝説3回。コモン・アンコモンはできない。</summary>
-        public static int MaxLimitBreaks(Rarity r) => r >= Rarity.Legendary ? 3 : r >= Rarity.Epic ? 2 : r >= Rarity.Rare ? 1 : 0;
-
-        /// <summary>その遺物の強化の上限。限界突破1回ごとに+5（レア+10・エピック+15・伝説+20）。</summary>
-        public static int MaxEnhanceFor(Relic r) => MaxEnhanceFor(r == null ? Rarity.Common : r.Rarity, r?.LimitBreaks ?? 0);
-
+        public static int ForgeMaterialCostMultiplier(Rarity rarity) => rarity >= Rarity.Epic ? ForgeBalance.EpicMaterialMultiplier : 1;
+        public static int EnhanceCost(Relic relic) => EnhanceCost(relic.Enhance) * ForgeMaterialCostMultiplier(relic.Rarity);
+        public static double EnhanceDemotionChance => ForgeBalance.DemotionChance;
+        public static int EnhanceDemotionSteps => ForgeBalance.DemotionSteps;
+        public static int AwakenNightmareMultiplier => ForgeBalance.AwakenNightmareMultiplier;
+        public static int MaxLimitBreaks(Rarity rarity)
+            => ForgeBalance.MaxBreaks[rarity >= Rarity.Legendary ? 4 : rarity >= Rarity.Epic ? 3 : rarity >= Rarity.Rare ? 2 : rarity >= Rarity.Uncommon ? 1 : 0];
+        public static int MaxEnhanceFor(Relic relic) => MaxEnhanceFor(relic == null ? Rarity.Common : relic.Rarity, relic?.LimitBreaks ?? 0);
         public static int MaxEnhanceFor(Rarity rarity, int limitBreaks)
             => MaxEnhance + EnhanceStepPerBreak * Math.Max(0, Math.Min(MaxLimitBreaks(rarity), limitBreaks));
+        public static int LimitBreakTuningCost(int n) => ForgeBalance.BreakTuningCosts[n <= 1 ? 0 : n == 2 ? 1 : 2];
+        public static int LimitBreakShardCost(int n) => ForgeBalance.BreakShardCosts[n <= 1 ? 0 : n == 2 ? 1 : 2];
+        public static int LimitBreakTuningCost(int n, Rarity rarity) => LimitBreakTuningCost(n) * ForgeMaterialCostMultiplier(rarity);
+        public static int LimitBreakShardCost(int n, Rarity rarity) => LimitBreakShardCost(n) * ForgeMaterialCostMultiplier(rarity);
+        public static int RetuneCost(int retunesDone) => ForgeBalance.RetuneBaseCost + ForgeBalance.RetuneCostPerLevel * retunesDone;
+        public static int RetuneCost(Relic relic) => RetuneCost(relic.Retunes) * ForgeMaterialCostMultiplier(relic.Rarity);
 
-        /// <summary>限界突破 n 回目（1〜3）に要る基本調律石（支払いはエピック以上で2倍）。</summary>
-        public static int LimitBreakTuningCost(int n) => n <= 1 ? 5 : n == 2 ? 10 : 20;
+        public static int SalvageShards(Rarity rarity)
+            => ForgeBalance.SalvageShards[rarity == Rarity.Common ? 0 : rarity == Rarity.Uncommon ? 1 : rarity == Rarity.Rare ? 2 : rarity == Rarity.Epic ? 3 : 4];
+        public static int SalvageTuning(Rarity rarity) => rarity >= Rarity.Epic ? ForgeBalance.SalvageEpicTuning : 0;
 
-        /// <summary>限界突破 n 回目（1〜3）に要る基本欠片（支払いはエピック以上で2倍）。</summary>
-        public static int LimitBreakShardCost(int n) => n <= 1 ? 200 : n == 2 ? 400 : 800;
-
-        /// <summary>再調律の基本調律石（支払いはエピック以上で2倍）。</summary>
-        public static int RetuneCost(int retunesDone) => retunesDone + 1;
-
-        public static int SalvageShards(Rarity r)
+        public static int GuaranteedEnhanceSteps(DreamEvent dreamEvent)
+            => dreamEvent == DreamEvent.Fountain ? ForgeBalance.FountainSteps
+                : dreamEvent == DreamEvent.ForgeShrine ? ForgeBalance.ForgeShrineSteps
+                : dreamEvent == DreamEvent.TemperingAltar ? ForgeBalance.TemperingAltarSteps : 0;
+        public static int GuaranteedEnhanceCost(DreamEvent dreamEvent, Rarity rarity)
+            => dreamEvent == DreamEvent.ForgeShrine ? ForgeBalance.ForgeShrineShards * ForgeMaterialCostMultiplier(rarity) : 0;
+        public static bool CanGuaranteedEnhance(Relic relic, DreamEvent dreamEvent)
         {
-            switch (r)
-            {
-                case Rarity.Common: return 3;
-                case Rarity.Uncommon: return 6;
-                case Rarity.Rare: return 12;
-                case Rarity.Epic: return 30;
-                default: return 60;
-            }
+            int steps = GuaranteedEnhanceSteps(dreamEvent);
+            return relic != null && steps > 0 && relic.Enhance <= MaxEnhanceFor(relic) - steps;
         }
-
-        public static int SalvageTuning(Rarity r) => r >= Rarity.Epic ? 1 : 0;
 
         /// <summary>夢のレベル n から n+1 へ必要な経験値。</summary>
         public static int XpToNext(int level) => 60 + 25 * Math.Max(1, level) + 3 * level * level;
@@ -5433,11 +5383,11 @@ namespace SodRpg.Core.Game
             int points;
             switch (tier)
             {
-                case MonsterTier.Boss: points = 20; break;
-                case MonsterTier.MiniBoss: points = 5; break;
-                default: points = 1; break;
+                case MonsterTier.Boss: points = ForgeBalance.AwakenBossPoints; break;
+                case MonsterTier.MiniBoss: points = ForgeBalance.AwakenMiniBossPoints; break;
+                default: points = ForgeBalance.AwakenNormalPoints; break;
             }
-            return nightmare ? points * 2 : points;
+            return nightmare ? points * ForgeBalance.AwakenNightmareMultiplier : points;
         }
 
         public const int SecureXp = 20;

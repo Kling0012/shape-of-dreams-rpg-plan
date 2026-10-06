@@ -275,20 +275,29 @@ int powersListed = 0;
     sb.Append(H2("アイテムレベル"));
     sb.Append($"固定値の攻撃力・魔力はレベル1で100%、1上がるごとに+{GearBalance.FlatDamageGrowthPct}%、レベル{Content.ItemLevelScalingCap}以上で{Content.LevelScalePct(Stat.AttackFlat, Content.ItemLevelScalingCap)}%。他の固定値（最大HP・防御・HP回復・記憶加速・行動妨害耐性）は1上がるごとに+{GearBalance.OtherFixedGrowthPct}%、レベル{Content.ItemLevelScalingCap}以上で{Content.LevelScalePct(Stat.MaxHealthFlat, Content.ItemLevelScalingCap)}%です。%の能力値はレベルでは伸びません。最大レベルは{Content.MaxItemLevel}です。保存済みの特性値は再抽選せず、基礎能力は現在の倍率で再計算します。\n\n");
     sb.Append(H2("強化 (Enhancement)"));
-    sb.Append($"通常は+{Content.MaxEnhance}まで強化できます。+{Content.MaxEnhance}までは強化1段ごとに特性が+6%、固有効果が+5%。限界突破後の+{Content.MaxEnhance + 1}以降は特性が+4%、固有効果が+3%ずつ伸びます。\n\n");
+    sb.Append($"通常は+{Content.MaxEnhance}まで強化できます。限界突破後を含む各段の累計倍率と、次の段へ進む実支払いは下表のとおりです。\n\n");
     sb.Append("^ 強化 ^ 特性の倍率 ^ 固有効果の倍率 ^ 夢の欠片（レア以下） ^ 夢の欠片（エピック以上） ^\n");
     for (int e = 1; e <= Content.EnhanceMilestoneFifth; e++)
-        sb.Append($"| +{e} | {Content.EnhanceScalePct(e)}% | {Content.EnhancePowerScalePct(e)}% | {Content.EnhanceCost(e - 1)} | {Content.EnhanceCost(e - 1) * 2} |\n");
+        sb.Append($"| +{e} | {Content.EnhanceScalePct(e)}% | {Content.EnhancePowerScalePct(e)}% | {Content.EnhanceCost(new Relic { Rarity = Rarity.Rare, Enhance = e - 1 })} | {Content.EnhanceCost(new Relic { Rarity = Rarity.Epic, Enhance = e - 1 })} |\n");
     sb.Append($"\n強化の節目（+{Content.EnhanceMilestoneFirst}・+{Content.EnhanceMilestoneSecond}・+{Content.EnhanceMilestoneThird}・+{Content.EnhanceMilestoneFourth}・+{Content.EnhanceMilestoneFifth}）では追加の報酬を受け取れます。\n\n");
     sb.Append(H2("限界突破 (Limit Break)"));
-    sb.Append("限界突破をすると、強化の上限が1回ごとに+5広がります。レアは1回（+10まで）、エピックは2回（+15まで）、固有品は3回（+20まで）です。コモン・アンコモンはできません。下表はエピック以上の費用です。レアの1回目は調律石5個・欠片200個です。\n\n^ 回数 ^ 調律石（エピック以上） ^ 夢の欠片（エピック以上） ^\n");
-    for (int n = 1; n <= 3; n++) sb.Append($"| {n} | {Content.LimitBreakTuningCost(n) * 2} | {Content.LimitBreakShardCost(n) * 2} |\n");
+    sb.Append($"限界突破をすると、強化の上限が1回ごとに+{Content.EnhanceStepPerBreak}広がります。\n\n^ レア度 ^ 現在の突破回数 ^ 強化上限 ^ 次の突破の調律石 ^ 次の突破の欠片 ^\n");
+    foreach (var rarity in Enum.GetValues<Rarity>())
+        for (int done = 0; done <= Content.MaxLimitBreaks(rarity); done++)
+        {
+            bool cap = done == Content.MaxLimitBreaks(rarity);
+            sb.Append($"| {TxtBi(Content.RarityName(rarity))} | {done} | +{Content.MaxEnhanceFor(rarity, done)} | {(cap ? "—" : Content.LimitBreakTuningCost(done + 1, rarity).ToString())} | {(cap ? "—" : Content.LimitBreakShardCost(done + 1, rarity).ToString())} |\n");
+        }
     sb.Append('\n').Append(H2("覚醒 (Awakening)"));
     sb.Append("装備を使うと覚醒の力が溜まり、段が上がると固有効果（と連携）と特性が強くなります。\n\n^ 段 ^ 必要な覚醒の力（累計） ^ 固有効果の倍率 ^ 特性の倍率 ^\n");
     for (int l = 1; l <= Content.MaxAwakenLevel; l++)
         sb.Append($"| {Content.AwakenNumeral(l)} | {Content.AwakenThresholdFor(l)} | {Content.AwakenPowerPctAt(l)}% | {Content.AwakenAffixPctAt(l)}% |\n");
     sb.Append('\n').Append(H2("再調律 (Retune)"));
-    sb.Append($"特性を引き直します。毎回{Content.RetuneChoices}つの候補から選び、1装備につき最大{Content.MaxRetunes}回までです。必要な調律石は、レア以下では{Content.RetuneCost(0)}個、{Content.RetuneCost(1)}個、{Content.RetuneCost(2)}個、エピック以上では{Content.RetuneCost(0) * 2}個、{Content.RetuneCost(1) * 2}個、{Content.RetuneCost(2) * 2}個と増えます。\n\n");
+    sb.Append($"特性を引き直します。毎回{Content.RetuneChoices}つの候補から選び、1装備につき最大{Content.MaxRetunes}回までです。\n\n^ レア度 ^ 再調律済み回数 ^ 次の調律石 ^\n");
+    foreach (var rarity in Enum.GetValues<Rarity>())
+        for (int done = 0; done < Content.MaxRetunes; done++)
+            sb.Append($"| {TxtBi(Content.RarityName(rarity))} | {done} | {Content.RetuneCost(new Relic { Rarity = rarity, Retunes = done })} |\n");
+    sb.Append('\n');
     sb.Append(H2("系統 (Lines)"));
     foreach (var l in Enum.GetValues<Line>()) sb.Append($"  * {TxtBi(Content.LineName(l))}\n");
     sb.Append('\n').Append(H2("部位 (Slots)"));

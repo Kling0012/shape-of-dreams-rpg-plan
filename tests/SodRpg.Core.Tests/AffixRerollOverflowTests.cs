@@ -8,10 +8,14 @@ namespace SodRpg.Core.Tests
     /// <summary>洗い直し費用の境界：中間の3^nがlongを超えても、費用は正確に切り上げられるか int の上限に張り付き、負にならない。</summary>
     public class AffixRerollOverflowTests
     {
-        /// <summary>独立な計算方法（BigInteger）で求めた、value × 1.5^times の切り上げ（int上限で打ち切り）。</summary>
+        /// <summary>独立な有理数計算で求めた費用の切り上げ（int上限で打ち切り）。</summary>
         private static int Expected(int value, int times)
         {
-            BigInteger num = BigInteger.Pow(3, times) * value, den = BigInteger.Pow(2, times);
+            decimal growth = ForgeBalanceTests.Raw().GetProperty("affixReroll").GetProperty("growthMultiplier").GetDecimal();
+            int[] bits = decimal.GetBits(growth);
+            BigInteger numerator = (uint)bits[0] + ((BigInteger)(uint)bits[1] << 32) + ((BigInteger)(uint)bits[2] << 64);
+            BigInteger denominator = BigInteger.Pow(10, (bits[3] >> 16) & 255);
+            BigInteger num = BigInteger.Pow(numerator, times) * value, den = BigInteger.Pow(denominator, times);
             BigInteger cost = (num + den - 1) / den;
             return cost > int.MaxValue ? int.MaxValue : (int)cost;
         }
@@ -23,12 +27,12 @@ namespace SodRpg.Core.Tests
         public void Cost_is_exact_nonnegative_and_nondecreasing_across_the_overflow_boundaries(Rarity rarity)
         {
             int prevShards = 0, prevTuning = 0;
-            int multiplier = rarity >= Rarity.Epic ? 2 : 1;
+            int multiplier = rarity >= Rarity.Epic ? ForgeBalanceTests.Number("enhancement", "epicMaterialMultiplier") : 1;
             for (int n = 0; n <= 120; n++)
             {
                 var (shards, tuning) = Rules.AffixRerollCost(new Relic { Rarity = rarity, AffixRerolls = n });
-                Assert.Equal(Expected(60 * ((int)rarity + 1) * multiplier, n), shards);
-                Assert.Equal(Expected(2 * ((int)rarity + 1) * multiplier, n), tuning);
+                Assert.Equal(Expected(ForgeBalanceTests.Number("affixReroll", "baseShards") * ((int)rarity + 1) * multiplier, n), shards);
+                Assert.Equal(Expected(ForgeBalanceTests.Number("affixReroll", "baseTuning") * ((int)rarity + 1) * multiplier, n), tuning);
                 Assert.True(shards >= prevShards && tuning >= prevTuning, $"cost decreased at {n} rerolls");
                 prevShards = shards;
                 prevTuning = tuning;
@@ -44,7 +48,11 @@ namespace SodRpg.Core.Tests
             {
                 var (shards, tuning) = Rules.AffixRerollCost(new Relic { Rarity = rarity, AffixRerolls = rerolls });
                 Assert.True(shards >= 0 && tuning >= 0);
-                if (rerolls > 100) Assert.Equal((int.MaxValue, int.MaxValue), (shards, tuning));
+                if (rerolls > 100 && ForgeBalanceTests.Raw().GetProperty("affixReroll").GetProperty("growthMultiplier").GetDecimal() > 1m)
+                    Assert.Equal((ForgeBalanceTests.Number("affixReroll", "baseShards") == 0 ? 0 : int.MaxValue,
+                        ForgeBalanceTests.Number("affixReroll", "baseTuning") == 0 ? 0 : int.MaxValue), (shards, tuning));
+                else
+                    Assert.Equal(ForgeBalanceTests.RerollCost(new Relic { Rarity = rarity }), (shards, tuning));
             }
         }
 
@@ -70,11 +78,12 @@ namespace SodRpg.Core.Tests
             var r = Loot.RollRelic(new Rng(7), Rarity.Epic, 5, Slot.Weapon);
             r.AffixRerolls = 35;
             p.Stash.Add(r);
-            p.AddMaterial(Materials.Shard, 700_000_000);
-            p.AddMaterial(Materials.Tuning, 30_000_000);
+            var expected = ForgeBalanceTests.RerollCost(r);
+            p.AddMaterial(Materials.Shard, expected.Shards);
+            p.AddMaterial(Materials.Tuning, expected.Tuning);
             Rules.AffixReroll(p, r.Uid);
-            Assert.Equal(700_000_000 - 698_932_611, p.Material(Materials.Shard));
-            Assert.Equal(30_000_000 - 23_297_754, p.Material(Materials.Tuning));
+            Assert.Equal(0, p.Material(Materials.Shard));
+            Assert.Equal(0, p.Material(Materials.Tuning));
             Assert.Equal(36, r.AffixRerolls);
         }
     }

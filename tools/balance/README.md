@@ -1,6 +1,6 @@
 # バランス外部定義・比較（Issue #149、#117・#119・#120・#121）
 
-`forge.json` の強化失敗率3係数、`stars.json` の7種類の星の基準値・倍率、
+`forge.json` の鍛冶・覚醒・合成・分解・現行工房・イベント保証強化、`stars.json` の7種類の星の基準値・倍率、
 鍛錬の閾値・上限・1スタック量・上限増分、星ダメージの位階係数、
 `gear.json` の装備レベル成長・固定攻魔上限、`sets.json` の通常セット2/3/6部位効果を
 型付きC#へ生成します。記憶ダメージはmanifestの480親＋258選択肢と旧ルート98成分、
@@ -9,6 +9,8 @@
 段階2ではMemoryHaste・GimmickBoost・GimmickParam・Notable・Keystone・Statの
 明示的な効果欄と旧星・汎用星・sampleの数値を追加しました。今回の切替ではゲーム値を変更せず、
 生成後の採用済み定義と内容指紋を維持します。実行時のJSON読込はありません。
+段階3では鍛冶の残りを `forge.json`（schemaVersion 2）へ集約しました。
+保存済みの履歴番号・旧覚醒段・退役工房の返金原本は変更しません。
 
 ## コマンド
 
@@ -42,6 +44,53 @@ python tools/balance/gen_cs.py --check
 4モードは別プロセスで起動し、Coreの静的状態を共有しません。
 既定の遠征は新規プロフィール3遠征×8人、seed=1、2ゾーン×2部屋、その他は既存の遠征モード既定です。
 500pt星図の長時間シミュレーションは実行しません。
+
+## 鍛冶の調整（Issue #149 段階3）
+
+数値原本は `forge.json`。1セルを編集し、`tools/balance/run` で生成・全通常テスト・比較を実行します。
+生成先は `src/SodRpg.Core/Game/Balance/Forge.Generated.cs`。Coreの実行・候補判定・ゲーム内説明・
+WikiGenの鍛冶説明・BalanceSimは同じ生成済み値を使い、実行時に表を読みません。
+
+| 表のセクション | 内容 |
+| --- | --- |
+| `enhanceFailure` | 失敗率3係数、失敗後の降格確率（0〜1）・段数 |
+| `enhancement` | 基本上限、突破の上限増分、5節目、節目の固有効果倍率、能力／固有効果の42倍率、20強化費用、Epic以上の素材倍率 |
+| `awakening` | 累計閾値・固有効果倍率・特性倍率の12欄、敵の格別獲得点・悪夢倍率 |
+| `limitBreak` / `retune` | レア度別突破上限と費用、再調律の上限・候補数・基本費用・回数別増分 |
+| `affixReroll` | 特性洗い直しの基本欠片・調律石と回数ごとの増加倍率 |
+| `craft` / `synthesis` / `salvage` | 製作費用・幸運、合成の材料数／費用／枠指定倍率、分解報酬・強化費用返金の除数 |
+| `guaranteedEnhancement` | 泉・鍛冶の祠・鍛錬の祭壇の保証強化段数、祠の基本欠片 |
+| `workshop` | 現行6種の段別欠片／調律石と効果量。退役3種の返金定義は対象外 |
+
+配列は0始まり。例：`enhancement.shardCosts[0]` は現在+0から+1への基本欠片、
+`awakening.thresholds[1]` は覚醒Ⅰの累計必要点。`statPercents` / `powerPercents` は
+100が1倍、`demotionChance` は0.5が50%。同じ数字でも異なる意味の原本は統合しません。
+強化の20段・覚醒3段・節目5件・突破費用3件などの配列長は固定です。
+範囲・整数性・積のInt32収容・閾値／節目の順序を生成時に検証し、不正な表は生成前に拒否します。
+特性洗い直しの `growthMultiplier` は1〜8の0.5刻みのみ。
+整数の有理数計算で最後に切り上げ、従来のInt32飽和を維持します。任意小数への丸めは行いません。
+保証強化の候補は指定段数ぶん上限まで空きが必要で、実行と説明も同じ段数・費用を参照します。
+ドリームダスト換算などの経済係数と、旧保存の返金／回復義務はこの表へ移しません。
+
+`forge` 比較は実支払い額（Epic以上の素材倍率込み）・強化返金込みの分解報酬を列挙します。
+特性洗い直しは済ませた回数0・1・2・3・10・Int32最大の代表条件、工房は対象以外0段、
+出来事は必要な供物がある条件。覚醒点は深度等の外部補正前です。
+上限・対象外の操作は `null` とし、架空の0や差分を作りません。
+非拘束の係数変更などで実際の合法状態の結果が変わらない場合、原本の変更は `tableMetadata` に残ります。
+
+同条件で2回実行した比較表の例（無調整移行なので差は0）：
+
+| 指標 | 単位 | 現在 | 前回 | 差 | 相対差 |
+| --- | --- | ---: | ---: | ---: | ---: |
+| Epic 突破0 現在+0 次の強化支払い | shards | 40 | 40 | 0 shards | 0% |
+| +20 固有効果倍率 | percent | 145 | 145 | 0 pp | 0% |
+| 覚醒1 累計必要点 | points | 5000 | 5000 | 0 点 | 0% |
+
+例えば基本欠片を20→21へ調整すると、Epicの支払いは40→42（+2 shards、+5%）。
+これは操作例であり、チェックインした表の値は変更していません。
+移行前の値は生成器内の凍結した互換参照との比較にのみ使い、欠落セルの既定値には使いません。
+従来値は追加の鍛冶指紋レコードを生成せず、採用値が変わった欄だけ安定key・型・単位・値を
+既存ContentFingerprint入力へ追加します。保存形式5・Protocol 23は維持します。
 
 ## 装備・通常セットの調整（#119・#121）
 
@@ -206,11 +255,11 @@ DOTNET_ROLL_FORWARD=LatestMajor /usr/bin/dotnet tools/BalanceSim/bin/Release/net
 既定の出力先は `tools/balance/results/`（gitignore対象）。成功した実行ごとに
 日時付きディレクトリへ次を保存します。
 
-- `forge.md` / `forge.json`: 全レア度・合法な限界突破回数・現在強化値の一覧。
+- `forge.md` / `forge.json`: 鍛冶・覚醒・合成・分解・現行工房・保証強化の意味別実測値。
 - `star-efficiency.md` / `star-efficiency.json`: 旅人×記憶×全A/全B×由来の効果量・費用・%/点と旅人別min/max。
 - `star-values.md` / `star-values.json`: 6種類の旅人×構成×由来×星×意味×欄×単位別の採用済み値。
 - `expeditions.md` / `expeditions.json`: 既存Simulationの遠征・節目・容量計測。
-- `current.json`: 4モードのスナップショット、検証状態、日時、生成入力の `tableMetadata.forge`（schemaVersionと3係数）／`tableMetadata.stars`（schemaVersionと倍率・位階係数・鍛錬数値）／`tableMetadata.gear`・`tableMetadata.sets`（装備・通常セットの原本）、既存Gitコミットの `gitRevision`（取得不能時null、比較表示はunknown）。
+- `current.json`: 4モードのスナップショット、検証状態、日時、生成入力の `tableMetadata.forge`（schemaVersion 2と全鍛冶表）／`tableMetadata.stars`（schemaVersionと倍率・位階係数・鍛錬数値）／`tableMetadata.gear`・`tableMetadata.sets`（装備・通常セットの原本）、既存Gitコミットの `gitRevision`（取得不能時null、比較表示はunknown）。
 - `comparison.md`: 現在／前回成功／差／相対差。
 
 検証済み基準は `last-success.json`。`--no-tests` は独立した
@@ -246,8 +295,8 @@ dotnet tools/BalanceSim/bin/Release/net8.0/BalanceSim.dll --mode star-efficiency
 dotnet tools/BalanceSim/bin/Release/net8.0/BalanceSim.dll --mode expeditions --runs 2 --players 4 --metrics-json /tmp/expeditions.json
 ```
 
-JSONは `modelVersion: 1`、`mode`、`contentFingerprint`、`conditions`、比較用 `metrics` を持ちます。
-`metrics` は安定した `id`、表示用 `label`、未丸めの `value`、`status`（`measured` / `cap` / `not-reached`）。
+JSONは `modelVersion`（forgeは2、その他は既存版）、`mode`、`contentFingerprint`、`conditions`、比較用 `metrics` を持ちます。
+`metrics` は安定した `id`、表示用 `label`、未丸めの `value`、`status` を持ちます。
 System.Text.Jsonで直接数値を書き出し、Markdownの丸め値や文言を逆解析しません。
 
 記憶効率の `metrics` はdecimalの値と `unit`（`percent` / `points` / `percent/point` / `nodes`）を持ち、
@@ -255,13 +304,15 @@ System.Text.Jsonで直接数値を書き出し、Markdownの丸め値や文言�
 `entries` に効果星ごとの `contributions`（星ID・選択肢番号・段あたり値・段数・費用）、
 `configurations` にChoiceの選択、`choiceOptions` に両選択肢、`ranges` にmin/maxと該当記憶を保存します。
 
-鍛冶の `forge` 配列は `rarity`、`limitBreaks`、`currentEnhance`、`maxEnhance`、`isCap`、
-`failurePercent`、`baseShardCost`。失敗率は `Rules.EnhanceFailureChance`、基本欠片は
-`Content.EnhanceCost` の実際の戻り値です。上限は失敗率0でも `isCap: true` かつ `status: cap`、
-次の強化費用は `null`（強化不可）。基本欠片は実際のエピック以上の支払い額の2倍補正前です。
+鍛冶の `forge` 配列は `id`、`label`、decimalの `value`、`unit`、`status`、条件軸の `axes`。
+`metrics` は同じ値・単位を比較用に投影します。`status` は `measured` / `cap` / `inapplicable`、
+上限・対象外の操作値は `null`。単位は `percent` / `ratio` / `levels` / `count` / `shards` /
+`tuning` / `relics` / `points` / `rooms` で、同じ単位の値だけ比較します。
+`conditions` に代表再抽選回数と工房／出来事の前提も記録します。
+旧forge modelVersion 1とは比較不可で、最初の新版実行は現在値だけを表示します。
 遠征は `samples` のプレイヤー順生値、`milestones.reachedAt`（未到達はnull）、`capacity.values` と、
 その平均／線形補間の中央値・P10・P90等を出力します。Coreの鍛冶式を複製しません。
-`--metrics-json` は forge / star-efficiency / expeditions に対応し、他モードは重い計測前に引数エラーになります。
+`--metrics-json` は forge / star-efficiency / star-values / expeditions に対応し、他モードは重い計測前に引数エラーになります。
 JSON出力を指定しない既存モードの挙動は維持します（setsの既存問題はstage0対象外）。
 
 旧初期表の星図登録後ContentFingerprint `10575-81dd841870386d98` は、元の数値内容を表す互換情報です。

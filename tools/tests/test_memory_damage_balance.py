@@ -103,7 +103,7 @@ class MemoryDamageBalanceTests(unittest.TestCase):
             persisted = json.loads(path.read_text(encoding="utf-8"), parse_float=Decimal)
             report = runner["comparison"](current, persisted)
         row = next(line for line in report.splitlines() if line.startswith("| fixture |"))
-        values = [Decimal(cell.strip().split()[0].rstrip("%")) for cell in row.split("|")[2:6]]
+        values = [Decimal(cell.strip().split()[0].rstrip("%")) for cell in row.split("|")[3:7]]
         difference = current_value - original
         self.assertEqual([current_value, original, difference, difference / original * 100], values)
 

@@ -791,8 +791,8 @@ namespace SodRpg.Core.Game
                 {
                     var sacrifice = run.Satchel.Where(r => trades == null || !trades.IsReserved(r.Uid)).OrderBy(r => r.Score).First();
                     run.Satchel.Remove(sacrifice);
-                    var target = run.Satchel.Where(r => r.Enhance < Content.MaxEnhanceFor(r) && (trades == null || !trades.IsReserved(r.Uid))).OrderByDescending(r => r.Score).First();
-                    target.Enhance++;
+                    var target = run.Satchel.Where(r => Content.CanGuaranteedEnhance(r, e) && (trades == null || !trades.IsReserved(r.Uid))).OrderByDescending(r => r.Score).First();
+                    target.Enhance += Content.GuaranteedEnhanceSteps(e);
                     string fountainMilestone = GrantEnhanceMilestones(rng, target);
                     ev.Add(new GameEvent(EventKind.Info, Loc.T($"泉に「{sacrifice.DisplayName}」を捧げると、「{target.PlainName}」が+{target.Enhance}に強化されました。",
                         $"Offered \"{sacrifice.DisplayName}\"; \"{target.PlainName}\" was enhanced to +{target.Enhance}.") + MilestoneSuffix(fountainMilestone), target.Rarity));
@@ -825,9 +825,9 @@ namespace SodRpg.Core.Game
                 }
                 case DreamEvent.ForgeShrine:
                 {
-                    var target = run.Satchel.Where(r => r.Enhance < Content.MaxEnhanceFor(r) && (trades == null || !trades.IsReserved(r.Uid))).OrderByDescending(r => r.Score).First();
-                    run.SatchelShards -= target.Rarity >= Rarity.Epic ? 40 : 20;
-                    target.Enhance++;
+                    var target = run.Satchel.Where(r => Content.CanGuaranteedEnhance(r, e) && (trades == null || !trades.IsReserved(r.Uid))).OrderByDescending(r => r.Score).First();
+                    run.SatchelShards -= Content.GuaranteedEnhanceCost(e, target.Rarity);
+                    target.Enhance += Content.GuaranteedEnhanceSteps(e);
                     string shrineMilestone = GrantEnhanceMilestones(rng, target);
                     ev.Add(new GameEvent(EventKind.Info, Loc.T($"鍛冶の祠で「{target.PlainName}」を+{target.Enhance}に強化しました。",
                         $"The Forge Shrine enhanced \"{target.PlainName}\" to +{target.Enhance}.") + MilestoneSuffix(shrineMilestone), target.Rarity));
@@ -968,7 +968,7 @@ namespace SodRpg.Core.Game
                     var target = DreamEvents.TradeTarget(p, e, trades);
                     var lost = target.Affixes[0];
                     target.Affixes.RemoveAt(0);
-                    target.Enhance += 2;
+                    target.Enhance += Content.GuaranteedEnhanceSteps(e);
                     string milestone = GrantEnhanceMilestones(rng, target);
                     ev.Add(new GameEvent(EventKind.Info, Loc.T(
                         $"「{target.PlainName}」は特性「{Content.FormatStat(lost.Stat, lost.Value)}」を失い、+{target.Enhance}に強化されました。",
@@ -1380,7 +1380,7 @@ namespace SodRpg.Core.Game
         {
             int refund = 0;
             for (int i = 0; i < r.Enhance; i++) refund += Content.EnhanceCost(i);
-            return Content.SalvageShards(r.Rarity) + refund / 2;
+            return Content.SalvageShards(r.Rarity) + refund / ForgeBalance.SalvageRefundDivisor;
         }
 
         public static GameEvent Salvage(Profile p, string uid, TradeLedger trades = null, bool loadoutLocked = false)
@@ -1455,20 +1455,20 @@ namespace SodRpg.Core.Game
             RequireNoRetuneOffer(p, uid);
             var r = p.FindStash(uid) ?? throw new InvalidOperationException(Loc.T("保管庫にない遺物です。", "That relic is not in your stash."));
             if (r.Enhance >= Content.MaxEnhanceFor(r)) throw new InvalidOperationException(Loc.T("これ以上強化できません。", "Already at maximum enhancement."));
-            int cost = Content.EnhanceCost(r.Enhance) * (r.Rarity >= Rarity.Epic ? 2 : 1);
+            int cost = Content.EnhanceCost(r);
             if (p.Material(Materials.Shard) < cost) throw new InvalidOperationException(Loc.T($"欠片が足りません（{cost}必要）。", $"Not enough shards ({cost} needed)."));
             p.AddMaterial(Materials.Shard, -cost);
             var rng = p.TakeRng();
             if (rng.Chance(EnhanceFailureChance(r) / 100.0))
             {
-                // 失敗しても半分は強化値そのまま。下がるかどうかも失敗判定と同じ rng から続けて引く。
-                bool lowered = rng.Chance(0.5);
-                if (lowered) r.Enhance = Math.Max(0, r.Enhance - 1);
+                // 降格も失敗判定と同じ rng から続けて引く。
+                bool lowered = rng.Chance(Content.EnhanceDemotionChance);
+                if (lowered) r.Enhance = Math.Max(0, r.Enhance - Content.EnhanceDemotionSteps);
                 p.StoreRng(rng);
                 return new GameEvent(EventKind.Info, lowered
                     ? Loc.T(
-                        $"「{r.PlainName}」の強化に失敗し、強化値が1段下がりました（+{r.Enhance}）。欠片{cost}は消費されました。",
-                        $"Enhancement failed for \"{r.PlainName}\" and lowered it by one level to +{r.Enhance}. The {cost} shards were spent.")
+                        $"「{r.PlainName}」の強化に失敗し、強化値が{Content.EnhanceDemotionSteps}段下がりました（+{r.Enhance}）。欠片{cost}は消費されました。",
+                        $"Enhancement failed for \"{r.PlainName}\" and lowered it by {Content.EnhanceDemotionSteps} level(s) to +{r.Enhance}. The {cost} shards were spent.")
                     : Loc.T(
                         $"「{r.PlainName}」の強化に失敗しましたが、強化値は変わりませんでした（+{r.Enhance}）。欠片{cost}は消費されました。",
                         $"Enhancement failed for \"{r.PlainName}\" but its enhancement level is unchanged (+{r.Enhance}). The {cost} shards were spent."), r.Rarity);
@@ -1492,7 +1492,7 @@ namespace SodRpg.Core.Game
         }
 
         /// <summary>
-        /// 限界突破（v1.27）。強化が上限に達した遺物の強化上限を+5広げる。
+        /// 限界突破。強化が上限に達した遺物の強化上限を表の段階幅だけ広げる。
         /// 同じ枠の同じレア度以上の遺物1つを材料として消費し、調律石と欠片を払う。
         /// </summary>
         public static GameEvent LimitBreak(Profile p, string uid, string materialUid, TradeLedger trades = null)
@@ -1508,7 +1508,7 @@ namespace SodRpg.Core.Game
             if (!LimitBreakCandidates(p, r, trades).Contains(material))
                 throw new InvalidOperationException(Loc.T("材料は同じ枠で同じレア度以上の、鍵なし・未装着・取引中でない遺物です。", "The material must be an unlocked, unequipped, unreserved relic of the same slot and equal or higher rarity."));
             int n = r.LimitBreaks + 1;
-            int tuningCost = Content.LimitBreakTuningCost(n) * (r.Rarity >= Rarity.Epic ? 2 : 1), shardCost = Content.LimitBreakShardCost(n) * (r.Rarity >= Rarity.Epic ? 2 : 1);
+            int tuningCost = Content.LimitBreakTuningCost(n, r.Rarity), shardCost = Content.LimitBreakShardCost(n, r.Rarity);
             if (p.Material(Materials.Tuning) < tuningCost) throw new InvalidOperationException(Loc.T($"調律石が足りません（{tuningCost}必要）。", $"Not enough tuning stones ({tuningCost} needed)."));
             if (p.Material(Materials.Shard) < shardCost) throw new InvalidOperationException(Loc.T($"欠片が足りません（{shardCost}必要）。", $"Not enough shards ({shardCost} needed)."));
             p.AddMaterial(Materials.Tuning, -tuningCost);
@@ -1521,8 +1521,8 @@ namespace SodRpg.Core.Game
         }
 
         /// <summary>
-        /// 強化の節目（+3：特性が1行。+5：固有効果を持たない遺物はその枠の固有効果を1つ得る、持っている遺物は特性がもう1行。
-        /// +10・+15：特性が1行ずつ。+20：伝説だけ、固有効果1つの値が1.2倍）。
+        /// 強化の節目：順に特性、固有効果（既にある場合は特性）、特性、特性、伝説の固有効果の倍率。
+        /// 節目の強化値と倍率は表から読み、保存する序数は固定。
         /// 強化段階が上がったときと、起動時の一度だけの補完で呼ぶ。起きたことの文を返す（何もなければ null）。
         /// </summary>
         public static string GrantEnhanceMilestones(Rng rng, Relic r)
@@ -1570,13 +1570,13 @@ namespace SodRpg.Core.Game
                 {
                     r.MilestonePowerApplied = true;
                     r.EnhanceMilestones = 5;
-                    notes.Add(Loc.T("固有技のdamage/heal/shield係数に1.2倍の節目を適用しました（時間・距離・CDは固定）。",
-                        "Applied the authored move's 1.2x damage/heal/shield milestone (time, range and cooldown stay fixed)."));
+                    notes.Add(Loc.T($"固有技のdamage/heal/shield係数に{Content.LimitBreakPowerPct / 100m:0.##}倍の節目を適用しました（時間・距離・CDは固定）。",
+                        $"Applied the authored move's {Content.LimitBreakPowerPct / 100m:0.##}x damage/heal/shield milestone (time, range and cooldown stay fixed)."));
                 }
                 else
                 {
                     var boosted = BoostMilestonePower(r);
-                    if (boosted != null) notes.Add(Loc.T($"固有効果「{Content.PowerName(boosted.Power)}」の値が1.2倍になりました。", $"\"{Content.PowerName(boosted.Power)}\" grew 1.2x stronger."));
+                    if (boosted != null) notes.Add(Loc.T($"固有効果「{Content.PowerName(boosted.Power)}」の値が{Content.LimitBreakPowerPct / 100m:0.##}倍になりました。", $"\"{Content.PowerName(boosted.Power)}\" grew {Content.LimitBreakPowerPct / 100m:0.##}x stronger."));
                 }
             }
             return notes.Count == 0 ? null : string.Join(Loc.T("", " "), notes);
@@ -1591,7 +1591,7 @@ namespace SodRpg.Core.Game
             return line;
         }
 
-        /// <summary>+20の節目（伝説のみ）。1つ目の固有効果の保存値を一度だけ1.2倍にする。</summary>
+        /// <summary>伝説の最後の節目。1つ目の固有効果の保存値を表の倍率で一度だけ増やす。</summary>
         private static PowerLine BoostMilestonePower(Relic r)
         {
             if (r.MilestonePowerApplied || r.Powers.Count == 0) return null;
@@ -1627,7 +1627,7 @@ namespace SodRpg.Core.Game
         }
 
         /// <summary>
-        /// 再調律：調律石を払って、その特性の候補を3つ出す（できるだけ別の能力値）。候補は保存し、ChooseRetune で選ぶ。
+        /// 再調律：調律石を払って、表に定めた個数の候補を出す（できるだけ別の能力値）。候補は保存し、ChooseRetune で選ぶ。
         /// 払った調律石と回数は、選ばなくても戻らない。
         /// </summary>
         public static GameEvent Retune(Profile p, string uid, int affixIndex, TradeLedger trades = null)
@@ -1637,7 +1637,7 @@ namespace SodRpg.Core.Game
             var r = p.FindStash(uid) ?? throw new InvalidOperationException(Loc.T("保管庫にない遺物です。", "That relic is not in your stash."));
             if (affixIndex < 0 || affixIndex >= r.Affixes.Count) throw new InvalidOperationException(Loc.T("特性を選んでください。", "Choose an affix."));
             if (r.Retunes >= Content.MaxRetunes) throw new InvalidOperationException(Loc.T("再調律の回数を使い切りました。", "No retunes left."));
-            int cost = Content.RetuneCost(r.Retunes) * (r.Rarity >= Rarity.Epic ? 2 : 1);
+            int cost = Content.RetuneCost(r);
             if (p.Material(Materials.Tuning) < cost) throw new InvalidOperationException(Loc.T($"調律石が足りません（{cost}必要）。", $"Not enough tuning stones ({cost} needed)."));
             var others = new HashSet<Stat> { r.Base.ImplicitStat };
             for (int i = 0; i < r.Affixes.Count; i++) if (i != affixIndex) others.Add(r.Affixes[i].Stat);
@@ -1679,29 +1679,31 @@ namespace SodRpg.Core.Game
                 $"Retuned: {Content.FormatStat(old.Stat, old.Value)} -> {Content.FormatStat(line.Stat, line.Value)}"), r.Rarity);
         }
 
-        /// <summary>特性の洗い直しの費用（v1.31）：欠片 60×(レア度+1) と調律石 2×(レア度+1)（エピック以上は2倍）を、その遺物で済ませた回数ぶん1.5倍（切り上げ）する。</summary>
+        /// <summary>表の基本費用にレア度と素材倍率を掛け、済ませた回数ぶん正確な有理数で増加（最後に切り上げ）。</summary>
         public static (int Shards, int Tuning) AffixRerollCost(Relic r)
         {
             int times = Math.Max(0, r.AffixRerolls);
-            return (TimesThreeHalves((r.Rarity >= Rarity.Epic ? 120 : 60) * ((int)r.Rarity + 1), times), TimesThreeHalves((r.Rarity >= Rarity.Epic ? 4 : 2) * ((int)r.Rarity + 1), times));
+            int multiplier = Content.ForgeMaterialCostMultiplier(r.Rarity) * ((int)r.Rarity + 1);
+            return (TimesHalfRational(ForgeBalance.RerollBaseShards * multiplier, times, ForgeBalance.RerollGrowthNumerator),
+                TimesHalfRational(ForgeBalance.RerollBaseTuning * multiplier, times, ForgeBalance.RerollGrowthNumerator));
         }
 
         /// <summary>
-        /// value × 1.5^times を整数だけで切り上げる（浮動小数点の誤差を持ち込まない）。
-        /// 値を q + r/2^i（0 ≤ r &lt; 2^i）の形で持ち、1回ごとに×3/2 を正確に行うので、3^times や 2^times を一度も作らずに済む。
-        /// q が int を超えたら（以後は単調に増えるだけなので）欠片の所持上限 int.MaxValue に張り付く。
+        /// value × (numerator/2)^times を整数だけで正確に求め、最後に切り上げる。
+        /// 値を q + r/2^i（0 ≤ r &lt; 2^i）として保持し、大きい累乗や浮動小数点の丸めを避ける。
+        /// 単調増加だけを受け付ける。q が int を超えたら、所持上限 int.MaxValue に張り付く。
         /// </summary>
-        internal static int TimesThreeHalves(int value, int times)
+        private static int TimesHalfRational(int value, int times, int numerator)
         {
-            if (value <= 0 || times <= 0) return Math.Max(0, value);
+            if (value <= 0 || times <= 0 || numerator == 2) return Math.Max(0, value);
             long q = value, r = 0;
             for (int i = 0; i < times; i++)
             {
-                if (q > int.MaxValue) return int.MaxValue; // 以後は増える一方。ここで止めるので i は高々60台で、2^i も long に収まる
+                if (q > int.MaxValue) return int.MaxValue; // 最小の増加率1.5倍でも54回以内。分母と余りはlongに収まる。
                 long den = 1L << i;
-                long carry = 3 * r / den;                  // 3r/2^i = carry + r2/2^i
-                long r2 = 3 * r % den;
-                long top = 3 * q + carry;                  // x×3 = top + r2/2^i を、さらに2で割る
+                long carry = numerator * r / den;
+                long r2 = numerator * r % den;
+                long top = numerator * q + carry;
                 q = top >> 1;
                 r = ((top & 1) << i) + r2;                 // 割った余りは 2^(i+1) を分母にした値になる
             }
@@ -1748,8 +1750,9 @@ namespace SodRpg.Core.Game
                 $"Rerolled all affixes on \"{r.PlainName}\": {string.Join(sep, before)} -> {after}"), r.Rarity);
         }
 
-        public static int CraftShardCost(bool fine) => fine ? 150 : 60;
-        public static int CraftTuningCost(bool fine) => fine ? 2 : 0;
+        public static int CraftShardCost(bool fine) => ForgeBalance.CraftShardCosts[fine ? 1 : 0];
+        public static int CraftTuningCost(bool fine) => ForgeBalance.CraftTuningCosts[fine ? 1 : 0];
+        public static double CraftLuck(bool fine) => ForgeBalance.CraftLuck[fine ? 1 : 0];
 
         /// <summary>製作。通常はアンコモン以上、上等はレア以上を、到達した最高アイテムレベルで作る。</summary>
         public static GameEvent Craft(Profile p, Slot slot, bool fine)
@@ -1760,7 +1763,7 @@ namespace SodRpg.Core.Game
             if (p.Material(Materials.Shard) < shards || p.Material(Materials.Tuning) < tuning)
                 throw new InvalidOperationException(Loc.T($"素材が足りません（欠片{shards}・調律石{tuning}）。", $"Not enough materials ({shards} shards, {tuning} tuning)."));
             var rng = p.TakeRng();
-            var rarity = Loot.RollRarity(rng, fine ? 1.0 : 0.5, allowLegendary: false, fine ? Rarity.Rare : Rarity.Uncommon);
+            var rarity = Loot.RollRarity(rng, CraftLuck(fine), allowLegendary: false, fine ? Rarity.Rare : Rarity.Uncommon);
             var relic = Loot.RollRelic(rng, rarity, p.BestItemLevel, slot, ownedRelics: p.Stash, unsecuredRelics: p.Run?.Satchel, codex: p.Codex);
             p.StoreRng(rng);
             p.AddMaterial(Materials.Shard, -shards);
@@ -1772,10 +1775,14 @@ namespace SodRpg.Core.Game
                 $"Crafted {Content.RarityName(relic.Rarity)} \"{relic.DisplayName}\""), relic.Rarity);
         }
 
-        public static int TransmuteCost(Rarity r) => r >= Rarity.Epic ? 300 : r == Rarity.Rare ? 60 : 10 * ((int)r + 1);
+        public static int TransmuteCost(Rarity r) => r >= Rarity.Epic ? ForgeBalance.SynthesisShardCosts[3]
+            : r == Rarity.Rare ? ForgeBalance.SynthesisShardCosts[2]
+            : r == Rarity.Uncommon ? ForgeBalance.SynthesisShardCosts[1] : ForgeBalance.SynthesisShardCosts[0] * ((int)r + 1);
 
-        /// <summary>合成で要る調律石（固有品への合成だけ）。</summary>
-        public static int TransmuteTuning(Rarity r) => r >= Rarity.Epic ? 4 : 0;
+        /// <summary>合成で要る調律石。</summary>
+        public static int TransmuteTuning(Rarity r) => r >= Rarity.Epic ? ForgeBalance.SynthesisTuningCosts[3]
+            : r == Rarity.Rare ? ForgeBalance.SynthesisTuningCosts[2]
+            : r == Rarity.Uncommon ? ForgeBalance.SynthesisTuningCosts[1] : ForgeBalance.SynthesisTuningCosts[0];
 
         /// <summary>合成の材料になる遺物（鍵なし・どこにも装着していない・同じレア度）を弱い順に。</summary>
         public static List<Relic> TransmuteCandidates(Profile p, Rarity r, TradeLedger trades = null)

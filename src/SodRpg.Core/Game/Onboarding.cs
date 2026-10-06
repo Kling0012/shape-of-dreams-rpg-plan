@@ -111,8 +111,8 @@ namespace SodRpg.Core.Game
             new HintDef
             {
                 Id = Hint.ForgeReady, Title = new Txt("鍛冶を使ってみましょう", "Forge ready"),
-                Body = new Txt($"欠片が貯まりました。[F6] の「鍛冶」タブで遺物を強化（+{Content.MaxEnhance}まで）したり、同じレア度3つを合成したりできます。",
-                    $"You have enough shards. In the [F6] Forge tab you can enhance relics (+{Content.MaxEnhance} max) or transmute 3 of a rarity into a better one."),
+                Body = new Txt($"欠片が貯まりました。[F6] の「鍛冶」タブで遺物を強化（+{Content.MaxEnhance}まで）したり、同じレア度の遺物を必要な個数集めて合成したりできます。",
+                    $"You have enough shards. In the [F6] Forge tab you can enhance relics (+{Content.MaxEnhance} max) or collect the required number of relics of one rarity to transmute into a better one."),
             },
         };
 
