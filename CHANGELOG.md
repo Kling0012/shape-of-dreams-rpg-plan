@@ -8,7 +8,24 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
-- **軽量化（内部処理）**：星図の移行チェックが毎回やり直していた星図レイアウト全体の計算をやめました。保存データの読み込み・保存後の読み戻し検証が約160倍速く（計測：65ms → 0.4ms）、読み込み・続きの再開・保存の引っかかりが減ります。ほかに、ビルド集計の検証結果の再利用、星の検索・前提チェックの高速化、保存文字列の書き出しの高速化、群れの味方の存在確認の早期終了を入れました。挙動と数値は変わりません。 / **Lighter internals**: the star-map migration no longer rebuilds the whole layout each time, making profile load and the post-save verification read ~160x faster (65 ms to 0.4 ms measured). Also reused build validation, faster star lookups and prerequisite checks, faster string writing, and an early exit for the pack-ally check. No behaviour or number changes.
+---
+
+## v2.7.1 — 読み込みと保存の軽量化（2026-10-06）
+
+読み込み・保存・続きの再開が軽くなりました。 / Loading, saving and resuming are now lighter.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 改善 / Improvements
+
+- **読み込みと保存の軽量化**：セーブデータを読むたびに星図全体を計算し直していた処理をやめ、読み込みと保存後の確認が約160倍速くなりました（65ms → 0.4ms）。読み込み・保存・続きの再開での引っかかりが減ります。ゲームの挙動と数値は変わりません。 / **Lighter load and save**: profile loading and the post-save check no longer rebuild the whole star map, making them about 160x faster (65 ms to 0.4 ms). Fewer hitches when loading, saving and resuming. No gameplay or number changes.
+- ほかにも、ビルドの集計、星の検索、保存データの書き出し、群れの味方の確認を軽くしました。 / Build totals, star lookups, save writing and the pack-ally check are also lighter.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
 
 ---
 
