@@ -242,6 +242,7 @@ namespace SodRpg.Mod
             ClearPendingTravel();
             _restoring = false; _refresh = false;
             _hunterAdjustSuspended = false;
+            _hunterMoveCounter = 0;
             _newInfinity = ClientSession.HostChosenInfinityEnabled;
             _initial = null; _runId = null;
             _generationReportedRun = null;
@@ -262,6 +263,7 @@ namespace SodRpg.Mod
             _restoring = true; _initial = null; _newInfinity = false; _refresh = false;
             ClearPendingTravel();
             _hunterAdjustSuspended = false;
+            _hunterMoveCounter = 0;
             Acks.Clear(); _choice = null; _choiceText = null;
         }
         internal static void FinishRestore()
@@ -405,6 +407,7 @@ namespace SodRpg.Mod
             foreach (int idToRemove in RetiredModifiers) zone.modifierServerData.Remove(idToRemove);
             // #229: restart the hunt from the far side of the entry instead of the native
             // exit-farthest (entry-side) start that spawns on top of the one-room reveal path.
+            _hunterMoveCounter = 0;
             RelocateHunterStart(zone);
             ReferencedModifiers.Clear(); RetiredModifiers.Clear();
             RefreshReveal(zone, 0);

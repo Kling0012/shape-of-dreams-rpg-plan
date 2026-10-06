@@ -237,10 +237,38 @@ namespace SodRpg.Mod.Startup.Tests
         }
 
         [Fact]
+        public void HunterAdvancesOnEverySecondMoveInInfinityOnly()
+        {
+            var (_, zone, _) = StartRevealGraph();
+            zone.AdvanceHunterTurn();                       // odd move: skipped
+            Assert.Equal(0, zone.AdvanceHunterTurnCalls);
+            zone.AdvanceHunterTurn();                       // even move: native advance runs
+            Assert.Equal(1, zone.AdvanceHunterTurnCalls);
+            zone.AdvanceHunterTurn();
+            Assert.Equal(1, zone.AdvanceHunterTurnCalls);
+
+            zone.GenerateWorldAuto();                       // regeneration resets the counter
+            zone.AdvanceHunterTurn();
+            Assert.Equal(1, zone.AdvanceHunterTurnCalls);   // first move after regeneration skips
+            zone.AdvanceHunterTurn();
+            Assert.Equal(2, zone.AdvanceHunterTurnCalls);
+
+            // A suspended adjustment hands every move back to the native rules.
+            InfinityMode.SuspendHunterAdjustment(nameof(HunterAdvancesOnEverySecondMoveInInfinityOnly),
+                new Exception("hunter adjustment failed"));
+            zone.AdvanceHunterTurn();
+            zone.AdvanceHunterTurn();
+            Assert.Equal(4, zone.AdvanceHunterTurnCalls);
+        }
+
+        [Fact]
         public void NormalMapRetainsNativeRevealAndConnectedSelectionSemantics()
         {
             var (_, zone, _) = StartRevealGraph(enabled: false);
             Assert.False(InfinityMode.Enabled);
+            zone.AdvanceHunterTurn();
+            zone.AdvanceHunterTurn();
+            Assert.Equal(2, zone.AdvanceHunterTurnCalls);
             Assert.Equal(WorldNodeStatus.HasVisited, zone.nodes[0].status);
             Assert.Equal(WorldNodeStatus.Revealed, zone.nodes[1].status);
             Assert.Equal(WorldNodeStatus.Revealed, zone.nodes[2].status);

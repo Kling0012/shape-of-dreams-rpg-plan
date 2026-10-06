@@ -10,8 +10,10 @@ namespace SodRpg.Mod
         // AdvanceHunterTurn, then UpdateModifiersByHunterStatus, then arrival logic). The native
         // hunter start is the node farthest from the zone exit, i.e. on the entry side where the
         // Infinity player keeps walking one revealed room at a time, so the hunt spawned on top of
-        // the only path and every forward room was inevitably swallowed. Two host-side rules keep
+        // the only path and every forward room was inevitably swallowed. Host-side rules keep
         // the hunt as pressure without ever blocking the single forward option:
+        //  - the hunt advances on every second room move only (odd advances are skipped;
+        //    the host owns the move counter and each regenerated graph resets it),
         //  - each regenerated graph restarts the hunt from the far side of the entry node, and
         //  - the one revealed next room is capped at the native AboutToBeTaken warning level, so
         //    it never loads as a hunted fight (UpdateModifiersByHunterStatus removes RoomMod_Hunted
@@ -23,6 +25,7 @@ namespace SodRpg.Mod
         private const int NativeNodeDistInfinity = 10000;
         private static bool _hunterPatchInstalled = true;
         private static bool _hunterAdjustSuspended;
+        private static int _hunterMoveCounter;
 
         internal static bool HunterAdjustmentActive => _hunterPatchInstalled && !_hunterAdjustSuspended;
 
@@ -41,6 +44,21 @@ namespace SodRpg.Mod
                 + where + ": " + error.Message);
         }
 
+        // #229 half speed: count every native hunter turn while Infinity runs and let only
+        // every second one execute (the first move after each (re)generation is skipped).
+        // The counter is host-only and unsaved; Continue resets it, which can grant at most
+        // one skipped move - native hunterSkippedTurns/statuses still rule the rest.
+        internal static bool ShouldAdvanceHunter()
+        {
+            if (!HunterAdjustmentActive) return true;
+            try
+            {
+                if (!NetworkServer.active || !Enabled) return true;
+                _hunterMoveCounter++;
+                return _hunterMoveCounter % 2 == 0;
+            }
+            catch (Exception ex) { SuspendHunterAdjustment(nameof(ShouldAdvanceHunter), ex); return true; }
+        }
         internal static void OnHunterAdvanced(ZoneManager zone)
         {
             if (!HunterAdjustmentActive) return;
@@ -102,6 +120,8 @@ namespace SodRpg.Mod
     [HarmonyPatch(typeof(ZoneManager), nameof(ZoneManager.AdvanceHunterTurn))]
     internal static class InfinityHunterAdvance
     {
+        private static bool Prefix() => InfinityMode.ShouldAdvanceHunter();
+
         private static void Postfix(ZoneManager __instance)
         {
             // OnHunterAdvanced owns its failure handling: only the hunter adjustment stops.
