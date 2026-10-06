@@ -383,10 +383,10 @@ namespace SodRpg.Mod
                     if (infinity)
                     {
                         InfinityMode.DisableFeature("Infinity patch installation failed: " + type.FullName + ": " + ex.Message);
-                        try { RollBackClass(type); }
-                        catch (Exception rollback) { Log.Warn("Infinity patch rollback failed; its hooks remain disabled: " + rollback); }
                     }
-                    else RollBackClass(type);
+                    // Rollback diagnostics must not escape this class's failure boundary.
+                    try { RollBackClass(type); }
+                    catch (Exception rollback) { Log.Warn("Patch class rollback failed: " + type.FullName + ": " + rollback); }
                 }
             }
             InfinityMode.CompletePatchInstallation(installedInfinity);

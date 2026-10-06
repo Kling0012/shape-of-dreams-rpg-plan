@@ -8,7 +8,7 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
-- 協力プレイで同じ版でもインフィニティが互換性判定で無効になる問題を修正し、版・Protocol・内容の差や確認通信の遅れは警告だけで機能を続けるようにしました（#246）。
+- 協力プレイで同じ版でもインフィニティが互換性判定で無効になる問題を修正し、版・Protocol・内容の差や確認通信の遅れは警告だけで機能を続け、本体連携の不一致も該当機能だけを停止するようにしました（#246）。
 
 - 起動ログに出ていたボス移動パッチの例外を止め、ボスセットの移動トリガー（ポラリスの踏みつけなど）が機能しないままだった問題を修正しました。 / Fixed the boss movement patch class being skipped at startup with an exception, which had silently disabled boss-set movement triggers such as Polaris stomps. (#247)
 

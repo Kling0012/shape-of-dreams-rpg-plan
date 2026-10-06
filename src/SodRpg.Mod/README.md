@@ -8,17 +8,17 @@
 
 ## 本体連携の利用可否（Issue #109）
 
-`NativePatchPreflight` は機能ごとの前提を独立に確認し、不一致・検査例外・未確認の機能だけを無効にする。判定は起動ごとに未確認へ戻し、1機能の検査例外が残りの確認を飛ばさない。無効化は機能名とパッチクラス名を `Log.Warn` に出す。Harmony内部copierによる合成ILのdry変換は診断用であり、失敗をMOD全体の起動条件にしない。適用中に失敗したクラスは自MODの該当パッチだけを戻し、別ownerのパッチは残す。
+`NativePatchPreflight` は診断専用で、不一致・検査例外・未確認を適用拒否の理由にしない。Harmony内部copierによる合成ILのdry変換も、MOD全体や機能の起動条件にしない。実際の適用に必要な対象・捕捉フィールド・注入先の型は各パッチの初期化／`Prepare`／transpilerで確認し、失敗したクラスだけをスキップする。適用途中の失敗は自MODの該当クラスのパッチだけを戻し、別ownerと他クラスは残す。ロールバックの検査例外もクラスの失敗境界から外へ出さない。非公開メンバーの解決失敗は警告して依存する帰属機能だけを止め、型初期化や毎フレームの例外にしない。
 
-| 機能 | 無効になる条件 |
+| 機能 | 実際の適用・実行で止める範囲 |
 | --- | --- |
-| エレボス LastStarlight 連携（関連5クラス） | 本体列挙子を解決できない、または既存transpiler適用後の `MoveNext` に `SI.WaitForSeconds` の生成が正確に2箇所ない |
-| Feather 帰属（関連4クラス） | 捕捉したsource／effectが非staticの所定型でない、または遅延dispatch対象を解決できない |
-| Baptism buff／コルーチン帰属（関連3クラス） | buff／effect／iteratorのclosureフィールドが非staticの所定型でない、またはfactory／`MoveNext`を解決できない。独立した終了時爆発の連携は止めない |
-| DoubleTap 帰属（関連5クラス） | source／firedフィールドが非staticの所定型でない、またはfactory／`MoveNext`を解決できない |
-| Nyx HerWorld 連携（関連11クラス） | 本体 `ActiveLogicUpdate` のメソッド本体を取得できない、またはlocal 1が `Entity` 互換でない |
-| 白夜／暗月 InkBeam 連携（関連4クラス） | 本体 `Hit` を取得できない、または既存transpiler適用後のdamage dispatch／heal dispatch／敵判定がそれぞれ正確に1箇所ない |
-| HP実損失の帰属（`NativeAttributedHpDamage`） | 本体 `currentHealth` setterのtyped delegateを取得できない |
+| エレボス LastStarlight 連携 | 対象メソッドへの適用に失敗したクラスだけをスキップ。待機回数の事前診断は適用を拒否せず、実行中の想定外の待機ではその列挙の値変更・表示だけを解除 |
+| Feather 遅延帰属 | source／effectの所定の捕捉フィールド・遅延dispatch対象を解決できなければ依存フックだけをスキップ。実行時の想定外callback・未捕捉の生成寿命は遅延帰属だけを警告して停止し、本体callbackは実行 |
+| Baptism コルーチン帰属 | buff／effect／iteratorの所定の捕捉フィールド・factory／`MoveNext`を解決できなければ依存フックだけをスキップ。未捕捉の生成寿命はコルーチン帰属だけを停止。本体処理と独立した終了時爆発の連携は続行 |
+| DoubleTap コルーチン帰属 | source／firedの所定の捕捉フィールド・factory／`MoveNext`を解決できなければ依存フックだけをスキップ。生成寿命の記録や本体の射撃は続行 |
+| Nyx HerWorld 移動・tick帰属 | `ActiveLogicUpdate`のlocal 1が`Entity`互換でないなど、注入に必要な前提が合わなければ該当クラスをスキップ |
+| 白夜／暗月 InkBeam 命中連携 | `Hit`の必要なdispatch／敵判定を解決・置換できなければ該当クラスをスキップ |
+| HP実損失の帰属 | `currentHealth` setterのtyped delegateを取得できなければHP帰属パッチだけをスキップ。ホストの生成や本体のHP処理は続行 |
 | ボス効果表示の送信 | 本体RPC送信のtyped delegateを取得できない。表示送信だけを止め、ゲームプレイは継続する |
 | WinterDive のテレポート帰属 | 本体列挙子またはcaster捕捉フィールドを取得できない。従来の `Prepare` 判定を維持し、無効化ログを `Log.Warn` に統一 |
 
