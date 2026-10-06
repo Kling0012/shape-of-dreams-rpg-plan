@@ -47,6 +47,7 @@ namespace SodRpg.Mod
         private sealed class KillPeer
         {
             internal bool ControlSent = true;
+            internal bool ReceiptWaitReleased;
             internal readonly ParticipationRange Participation = new ParticipationRange();
         }
         private sealed class ParticipationRange { internal long Through; }

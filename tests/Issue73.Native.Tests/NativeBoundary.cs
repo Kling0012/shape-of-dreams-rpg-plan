@@ -190,7 +190,12 @@ namespace SodRpg.Mod
         public void WrapUpAndShowResult(DewGameResult.ResultType type) => throw new NotSupportedException();
     }
     internal sealed class DewGameResult { public enum ResultType { Conceded } }
-    internal sealed class GameSettingsManager { public readonly Dictionary<string, string> customData = new Dictionary<string, string>(); }
+    internal enum GameState { InLobby, Playing }
+    internal sealed class GameSettingsManager
+    {
+        public GameState state = GameState.Playing;
+        public readonly Dictionary<string, string> customData = new Dictionary<string, string>();
+    }
     internal sealed class ActorManager { public Actor serverActor; }
     // #112: 「ロビーに戻る」の確認で呼ばれる本体の入口。isEndingSession がtrue のEndSession 系
     // (メニュー・デスクトップ復帰など)は精算対象外。仮想プロパティで判別時の例外も注入できる。
@@ -253,7 +258,6 @@ namespace SodRpg.Mod
     internal sealed partial class HostAuthority
     {
         internal static HostAuthority NativeInstance;
-        internal const string ModVersion = "native-test";
         internal static readonly RunGrowthLedger RunGrowthLedger = new RunGrowthLedger();
         private Actor _registeredOn;
         private ZoneManager _zone;
@@ -360,6 +364,7 @@ namespace SodRpg.Mod
     {
         internal static bool Available => false;
         internal static bool Restoring => false;
+        internal static bool Enabled { get; set; }
         internal static bool NativeSaveAgreement { get; set; }
         internal static void WriteEnvelope() { }
         internal static bool IsTechnicalRefresh => false;
@@ -456,8 +461,8 @@ namespace SodRpg.Mod
             if (Profile.Run?.Infinity != null) throw new NotSupportedException("Infinity is outside the harness.");
         }
         internal static void ValidateHostInfinityContinue() { }
-        internal static bool HostInfinityBoundarySettled => throw new NotSupportedException();
-        internal static long HostInfinityRetireBeforeSegment(long current) => throw new NotSupportedException();
+        internal static bool HostInfinityBoundarySettled => HostAuthority.InfinityBoundarySettled;
+        internal static long HostInfinityRetireBeforeSegment(long current) => HostAuthority.InfinityRetireBeforeSegment(current);
         private bool TryInfinitySecure(out string error)
         {
             RequireOrdinaryRun();
