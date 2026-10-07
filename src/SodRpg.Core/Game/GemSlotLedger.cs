@@ -29,9 +29,13 @@ namespace SodRpg.Core.Game
         public int OurContribution { get; private set; }
         public int LastWritten { get; private set; }
 
-        public GemSlotLedger(int current)
+        public GemSlotLedger(int current) : this(0, current) { }
+
+        /// <summary>Restores recorded ownership, for example after the mod was reloaded in game.</summary>
+        internal GemSlotLedger(int ourContribution, int lastWritten)
         {
-            LastWritten = Math.Max(0, current);
+            OurContribution = Math.Max(0, ourContribution);
+            LastWritten = Math.Max(0, lastWritten);
         }
 
         /// <summary>A known absolute native rewrite replaces the whole cap, including our previous contribution.</summary>

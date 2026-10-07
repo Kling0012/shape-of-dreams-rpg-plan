@@ -31,6 +31,7 @@ namespace SodRpg.Mod
         {
             if (skill == null || !GemSlotLedgers.TryGetValue(skill, out var ledger)) return;
             ledger.Identity.ObserveNativeReplacement(skill.GetMaxGemCount(HeroSkillLocation.Identity));
+            ledger.Persist();
             if (ClientSession.NativeContinueRestoring) return;
             var host = NativeInstance;
             var hero = skill.hero;
@@ -39,6 +40,7 @@ namespace SodRpg.Mod
                 || rt.AppliedBuild == null) return;
             host.UpdateGemSlot(skill, ledger.Identity, HeroSkillLocation.Identity,
                 EssenceSlots.AddedFrom(rt.AppliedBuild.Build, Stat.EssenceSlotIdentity), false);
+            ledger.Persist();
         }
 
     }

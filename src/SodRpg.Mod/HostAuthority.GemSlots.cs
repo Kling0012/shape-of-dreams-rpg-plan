@@ -13,16 +13,49 @@ namespace SodRpg.Mod
         private sealed class NativeGemSlotLedger
         {
             internal readonly GemSlotLedger Identity, Movement;
-            internal NativeGemSlotLedger(HeroSkill skill)
+            // Shared with every loaded copy of this mod through AppDomain data: a reload drops the
+            // previous copy's statics, and the caps it still owns must stay owned, not become a
+            // foreign baseline that the bonus is added to a second time.
+            private readonly int[] _persisted;
+            internal NativeGemSlotLedger(HeroSkill skill) : this(new int[4], skill) { }
+            private NativeGemSlotLedger(int[] persisted, HeroSkill skill)
             {
-                Identity = new GemSlotLedger(skill.GetMaxGemCount(HeroSkillLocation.Identity));
-                Movement = new GemSlotLedger(skill.GetMaxGemCount(HeroSkillLocation.Movement));
+                _persisted = persisted;
+                // A recorded contribution proves this exact component still holds our own slots.
+                // Without one, the observed cap is an unknown foreign baseline exactly as before.
+                Identity = new GemSlotLedger(persisted[0], persisted[0] > 0 || persisted[1] > 0
+                    ? persisted[1] : skill.GetMaxGemCount(HeroSkillLocation.Identity));
+                Movement = new GemSlotLedger(persisted[2], persisted[2] > 0 || persisted[3] > 0
+                    ? persisted[3] : skill.GetMaxGemCount(HeroSkillLocation.Movement));
+            }
+            internal static NativeGemSlotLedger Capture(HeroSkill skill, int[] persisted)
+                => new NativeGemSlotLedger(persisted, skill);
+            internal void Persist()
+            {
+                _persisted[0] = Identity.OurContribution;
+                _persisted[1] = Identity.LastWritten;
+                _persisted[2] = Movement.OurContribution;
+                _persisted[3] = Movement.LastWritten;
             }
         }
 
-        // Static weak keys also preserve ownership across authority recreation after failed cleanup.
+        // The working table belongs to this assembly copy (a reload starts it empty). Ownership
+        // itself is kept per native skill in AppDomain data, which every copy shares.
+        private const string GemSlotLedgerStoreKey = "dreamforge.gemslot.ownership.v1";
         private static readonly ConditionalWeakTable<HeroSkill, NativeGemSlotLedger> GemSlotLedgers =
             new ConditionalWeakTable<HeroSkill, NativeGemSlotLedger>();
+
+        private static ConditionalWeakTable<HeroSkill, int[]> PersistedGemSlotLedgers =>
+            AppDomain.CurrentDomain.GetData(GemSlotLedgerStoreKey) as ConditionalWeakTable<HeroSkill, int[]>
+            ?? CreatePersistedGemSlotLedgers();
+
+        private static ConditionalWeakTable<HeroSkill, int[]> CreatePersistedGemSlotLedgers()
+        {
+            var created = new ConditionalWeakTable<HeroSkill, int[]>();
+            AppDomain.CurrentDomain.SetData(GemSlotLedgerStoreKey, created);
+            return created;
+        }
+
         private readonly ConditionalWeakTable<HeroSkill, NativeGemSlotLedger> _trackedGemSkills =
             new ConditionalWeakTable<HeroSkill, NativeGemSlotLedger>();
         private readonly List<WeakReference<HeroSkill>> _gemSkills = new List<WeakReference<HeroSkill>>();
@@ -43,12 +76,15 @@ namespace SodRpg.Mod
                 EssenceSlots.AddedFrom(build, Stat.EssenceSlotIdentity), false);
             UpdateGemSlot(skill, ledger.Movement, HeroSkillLocation.Movement,
                 EssenceSlots.AddedFrom(build, Stat.EssenceSlotMovement), false);
+            ledger.Persist();
             ClearGemSlotConflict(rt.Hero);
         }
 
         private NativeGemSlotLedger TrackGemSkill(HeroSkill skill)
         {
-            var ledger = GemSlotLedgers.GetValue(skill, s => new NativeGemSlotLedger(s));
+            // Rehydrates ownership that survived a mod reload in the shared store.
+            var ledger = GemSlotLedgers.GetValue(skill,
+                s => NativeGemSlotLedger.Capture(s, PersistedGemSlotLedgers.GetValue(s, _ => new int[4])));
             if (!_trackedGemSkills.TryGetValue(skill, out _))
             {
                 _trackedGemSkills.Add(skill, ledger);
@@ -74,6 +110,7 @@ namespace SodRpg.Mod
                 var ledger = TrackGemSkill(skill);
                 UpdateGemSlot(skill, ledger.Identity, HeroSkillLocation.Identity, ledger.Identity.OurContribution, false);
                 UpdateGemSlot(skill, ledger.Movement, HeroSkillLocation.Movement, ledger.Movement.OurContribution, false);
+                ledger.Persist();
             }
         }
 
@@ -97,13 +134,13 @@ namespace SodRpg.Mod
                     ApplyGemSlots(rt, rt.AppliedBuild.Build);
                     continue;
                 }
-                if (GemSlotLedgers.TryGetValue(skill, out var ledger))
-                {
-                    UpdateGemSlot(skill, ledger.Identity, HeroSkillLocation.Identity,
-                        EssenceSlots.AddedFrom(rt.AppliedBuild.Build, Stat.EssenceSlotIdentity), false);
-                    UpdateGemSlot(skill, ledger.Movement, HeroSkillLocation.Movement,
-                        EssenceSlots.AddedFrom(rt.AppliedBuild.Build, Stat.EssenceSlotMovement), false);
-                }
+                // Re-tracking also repairs a working-table entry lost to a reload.
+                var ledger = TrackGemSkill(skill);
+                UpdateGemSlot(skill, ledger.Identity, HeroSkillLocation.Identity,
+                    EssenceSlots.AddedFrom(rt.AppliedBuild.Build, Stat.EssenceSlotIdentity), false);
+                UpdateGemSlot(skill, ledger.Movement, HeroSkillLocation.Movement,
+                    EssenceSlots.AddedFrom(rt.AppliedBuild.Build, Stat.EssenceSlotMovement), false);
+                ledger.Persist();
                 if (notify) ClearGemSlotConflict(hero);
             }
         }
@@ -123,6 +160,7 @@ namespace SodRpg.Mod
             if (skill.hero == null || !skill.hero.isActive) return;
             UpdateGemSlot(skill, ledger.Identity, HeroSkillLocation.Identity, 0, true);
             UpdateGemSlot(skill, ledger.Movement, HeroSkillLocation.Movement, 0, true);
+            ledger.Persist();
         }
 
         private void DetachGemSlots()
