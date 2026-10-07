@@ -8,9 +8,25 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
+---
+
+## v2.10.6 — インフィニティが ON にならない問題とエッセンス枠の表示の修正（2026-10-08）
+
+インフィニティを ON にしても ON にならない不具合と、エッセンス枠が表示されない不具合を直しました。 / Fixes Infinity not turning on, and gem slots not being shown.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+- MOD 一覧で Dreamforge RPG が2つ（ローカル版と Workshop 版など）有効になっていないか確認し、1つだけにしてください。 / Make sure only one copy of Dreamforge RPG is enabled in the mod list (for example, not both a local and a Workshop copy).
+
 ### 不具合の修正 / Bug fixes
 
-- 同じMODが2つ読み込まれた状態（MOD一覧でローカルとWorkshopの両方を有効化するなど）で起動すると、旧コピーの割り込みが残ったままの再導入に失敗した地図表示の割り込み2件のせいで、インフィニティを ON にしても「無効です」と出て選べない問題を直しました。旧コピーの割り込みが生きているときは再導入の失敗で機能を止めないようにしました。 / With this MOD loaded twice (for example, both the local copy and the Workshop copy enabled), two map-display hooks failed to reinstall over the earlier copy's live hooks and switched Infinity off entirely, so toggling it ON showed "disabled"; a failed reinstall no longer disables the feature while the earlier copy's hook keeps intercepting.
+- ロビーでインフィニティを ON にしても「無効です」で拒否され、ON にならないことがある問題を修正しました（同じ MOD が2重に読み込まれたときに起きていました）。 / Fixed Infinity sometimes being refused as "disabled" when turned on in the lobby (this happened when the mod was loaded twice).
+- 星図でエッセンス枠を増やすと、回避などの記憶に枠が1つも表示されなくなることがある問題を修正しました。 / Fixed memories such as the dodge showing no gem slots at all after adding slots from the star chart.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
 
 ---
 
