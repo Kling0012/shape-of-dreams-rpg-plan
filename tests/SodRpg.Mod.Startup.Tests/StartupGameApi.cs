@@ -108,6 +108,12 @@ namespace SodRpg.Mod
         internal static void Install(Harmony harmony) { }
         internal static void Stop() { }
     }
+    // Native prototypes have a separate linked-production boundary smoke.
+    internal static class NativeDreamContent
+    {
+        internal static void Install(Harmony harmony, bool enabled) { }
+        internal static void Stop() { }
+    }
     // Scene/phase adaptation is exercised separately with its linked production smoke harness.
     internal static class InfinityBossArena
     {

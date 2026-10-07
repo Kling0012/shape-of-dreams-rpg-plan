@@ -19,7 +19,7 @@ namespace SodRpg.Mod
     /// MODの入口。ゲームの ModBehaviour として読み込まれ、各PCの ClientSession と、ホスト時の HostAuthority を動かす。
     /// ゲームプレイを変えるため isAlteringGameplay を立てる（ロビーにMODアイコンが出る）。
     /// </summary>
-    public class DreamforgeMod : ModBehaviour
+    public partial class DreamforgeMod : ModBehaviour
     {
         public DreamforgeConfig config = new DreamforgeConfig();
 
@@ -72,6 +72,8 @@ namespace SodRpg.Mod
                 _session.FirstLaunch();
                 _perfLogEnabled = File.Exists(Path.Combine(dir, "perf.flag"));
                 _devCommands = File.Exists(Path.Combine(dir, "dev.flag"));
+                try { NativeDreamContent.Install(harmony, _devCommands && File.Exists(Path.Combine(dir, "native-dream.flag"))); }
+                catch (Exception ex) { Log.Warn("Native dream prototypes unavailable; other features remain active: " + ex.Message); }
                 if (_perfLogEnabled) Log.Info("perf logging enabled (perf.flag)");
                 Log.Info($"Loaded {mod.metadata.id} {mod.metadata.modVer}. Profile: {_session.SavePath}");
                 HostAuthority.ModVersion = mod.metadata.modVer ?? "?";
@@ -326,6 +328,7 @@ namespace SodRpg.Mod
             try { CulinaryMagnet.Stop(); } catch (Exception ex) { Log.Error("Startup cleanup: culinary attraction: " + ex); }
             try { CulinaryIngredientCap.Stop(); } catch (Exception ex) { Log.Error("Startup cleanup: culinary ingredients: " + ex); }
             try { CulinaryIngredientDisplay.Stop(); } catch (Exception ex) { Log.Error("Startup cleanup: culinary ingredient display: " + ex); }
+            try { NativeDreamContent.Stop(); } catch (Exception ex) { Log.Warn("Native dream cleanup: " + ex.Message); }
             try { host?.Detach(); } catch (Exception ex) { Log.Error("Startup cleanup: host detach: " + ex); }
             try { session?.Unwire(); } catch (Exception ex) { Log.Error("Startup cleanup: session unwire: " + ex); }
             try { ui?.Dispose(); } catch (Exception ex) { Log.Error("Startup cleanup: UI dispose: " + ex); }
