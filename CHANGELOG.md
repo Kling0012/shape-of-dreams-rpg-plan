@@ -10,16 +10,12 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ### 新しい要素 / New
 
+- **料理のエッセンスの食材が自動で吸い寄せられる**：本体の「料理のエッセンス」で落ちた食材が、近く（約9m）にいる生存中の旅人へ自動で吸い寄せられます。落ちて少し経ってから動き出し、近づくほど速くなります。協力プレイでは、食材から最も近い生存中の旅人へ向かいます（ホストが決めます）。食材の型名が想定と違うと動かないので、動かない場合は Player.log の「culinary magnet: pickup type」の行を教えてください。 / **Culinary Essence ingredients are pulled to you automatically**: ingredients dropped by the base game's Essence of Culinary are drawn to the nearest living traveler within about 9 m. They start moving a moment after dropping and speed up as they close in. In co-op the host picks the nearest living traveler. If nothing moves, please send the "culinary magnet: pickup type" lines from Player.log, because the pickup type name may differ from what was expected.
 - **夢の圧で欠片と悪夢化が増える**：夢の圧が高いほど、敵を倒したときの欠片が出やすくなり、敵が悪夢化しやすくなります。どちらも最大1.5倍で、圧が敵HP+100%分上がるごとに欠片は+25%、悪夢化は+20%です（HUDの「HP×」から計算できます）。欠片は、出る確率が決まっている敵では出る確率が、必ず出るエリート・ボスでは量が増えます。インフィニティでは適用されません。悪夢化は従来どおり深度1以上でのみ起きます。 / **Dream pressure now boosts shards and nightmares**: higher pressure makes shards drop more and enemies turn into nightmares more, up to x1.5 each (+25% shards and +20% nightmare chance per +100% enemy HP). Enemies with a drop chance drop more often; guaranteed elite/boss drops give more. Not applied in Infinity. Nightmares still only appear at delve depth 1 or higher.
-
 ---
-
 ## v2.9.1 — インフィニティの待ち時間と無効化の修正（2026-10-07）
-
 インフィニティでソロでも60秒待たされる問題と、インフィニティが無効のまま戻らない問題を直しました。 / Fixes Infinity making solo players wait 60 seconds, and Infinity staying disabled until restart.
-
 ### 更新前に確認 / Before updating
-
 - **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
 - セーブデータはそのまま引き継げます。 / Saves carry over.
 - 更新後はゲームを再起動してください。 / Restart the game after updating.

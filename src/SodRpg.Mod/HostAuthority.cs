@@ -333,7 +333,7 @@ namespace SodRpg.Mod
                 "boss effects", "boss visuals", "identity strikes", "gimmicks v129", "sap prune", "attribution prune", "runtime", "run growth", "currency",
                 "shield pools", "spawns", "monster prune", "monster behaviors", "kill replay", "sunders",
                 "nightmare regen", "classification resync",
-                "overflow bonus",
+                "overflow bonus", "culinary magnet",
             };
             _tickStages = new Action[]
             {
@@ -342,7 +342,7 @@ namespace SodRpg.Mod
                 StageBossEffects, TickBossVisualSnapshots, UpdateIdentityStrikes, StageGimmicksV129, StageSapPrune, PruneMemoryAttribution, StageRuntimes, StageRunGrowth, StageCurrency,
                 StageModShieldPools, ProcessSpawns, StageMonsterPrune, StageMonsterBehaviors, TickKillReplay, StageSunders,
                 StageNightmareRegen, StageClassificationResync,
-                TickOverflowBonus,
+                TickOverflowBonus, StageCulinaryMagnet,
             };
             _tickGuard = new TickGuard(_tickStages, _tickStageNames, 10f, message => Log.Error("Host tick " + message));
         }
@@ -830,6 +830,7 @@ namespace SodRpg.Mod
             if (actor is Shrine shrine && _shrines.Add(shrine))
                 shrine.ClientEvent_OnSuccessfulUse += _onShrineUsed;
             if (actor is Pickup_DreamDust dust) HookDreamDust(dust);
+            TrackCulinaryPickup(actor);
         }
 
         private void OnActorRemove(Actor actor)
@@ -846,6 +847,7 @@ namespace SodRpg.Mod
             }
             if (actor is Monster m) RemoveMonster(m);
             if (actor is Pickup_DreamDust dust) UnhookDreamDust(dust);
+            UntrackCulinaryPickup(actor);
             if (actor is Shrine shrine && _shrines.Remove(shrine))
                 shrine.ClientEvent_OnSuccessfulUse -= _onShrineUsed;
         }
@@ -1110,6 +1112,7 @@ namespace SodRpg.Mod
                 foreach (var rt in _runtimes.Values) { RemoveBonuses(rt); Unhook(rt, restoreGemSlots: false); }
                 _runtimes.Clear();
                 ReleaseCurrency();
+                ReleaseCulinaryMagnets();
                 _builds.Clear();
                 _incomingBuilds.Clear();
                 ClearBuildValidationPeers();
@@ -1227,6 +1230,7 @@ namespace SodRpg.Mod
             }
             _runtimes.Clear();
             ReleaseCurrency();
+            ReleaseCulinaryMagnets();
             DetachGemSlots();
             _scanList.Clear();
             _scanPowers = Array.Empty<PowerRuntime>();
