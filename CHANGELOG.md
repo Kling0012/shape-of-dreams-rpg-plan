@@ -8,10 +8,24 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
+---
+
+## v2.9.1 — インフィニティの待ち時間と無効化の修正（2026-10-07）
+
+インフィニティでソロでも60秒待たされる問題と、インフィニティが無効のまま戻らない問題を直しました。 / Fixes Infinity making solo players wait 60 seconds, and Infinity staying disabled until restart.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
 ### 不具合の修正 / Bug fixes
 
-- 「インフィニティは無効です」と出て、ロビーでも選べないままになる問題を直しました。遠征中の検査やワールドマップ表示の一時的なエラーで止まると、ゲームを再起動するまで止まったままでした。いまは、止まった遠征が終わってロビーに戻れば使えるようになります。地図表示の一時的なエラーでは止まらなくなりました（同じ表示が続けて失敗するときだけ止まります）。本体のパッチが入らなかった場合だけは、これまでどおり再起動まで無効です。 / Fixed Infinity staying "disabled" in the lobby until the game was restarted. A check or a transient world-map display error during an expedition used to switch it off for the whole session; now it comes back once that expedition is over and you are back in the lobby, and a one-off map display error no longer stops it (only a display hook that keeps failing does). A missing native patch still keeps it off until restart.
-- **インフィニティの選択待ち（最大60秒）がソロでも発動する問題を修正**：ホスト本人の選択を待っていたため、ソロや「ゲストが全員選び終えた後」でも次の部屋へ進むのに60秒かかっていました。ホストは待たず、ゲスト全員が選び終えた時点ですぐ進めます。 / **Fixed the Infinity choice wait (up to 60 s) also applying in solo play**: the host was waiting on its own receipt, so moving on took 60 s even in solo or after every guest had chosen. The host is no longer waited for, and the party moves on as soon as every guest has chosen.
+- インフィニティで次の部屋へ進むとき、ソロや、ゲスト全員が選び終えた後でも、最大60秒待たされる問題を修正しました。ホスト自身の選択は待たなくなりました。 / Infinity no longer makes you wait up to 60 seconds before the next room when playing solo or after every guest has chosen; the host's own choice is no longer waited on.
+- 「インフィニティは無効です」と出て、ゲームを再起動するまで選べなくなる問題を修正しました。遠征中に一時的なエラーで止まっても、その遠征が終わってロビーに戻れば、また使えるようになります。地図表示の一時的なエラーでは止まらなくなりました。 / Infinity no longer stays "disabled" until you restart the game. If it stops due to a temporary error during an expedition, it becomes available again once you return to the lobby, and brief map display errors no longer stop it.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
 
 ---
 
