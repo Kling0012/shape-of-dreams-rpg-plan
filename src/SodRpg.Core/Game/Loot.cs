@@ -400,9 +400,10 @@ namespace SodRpg.Core.Game
         /// </summary>
         public static KillReward RollKill(Rng rng, MonsterTier tier, int itemLevel, int heat, Line? focus = null, Pacts.Totals mods = null,
             IReadOnlyList<Relic> ownedRelics = null, IReadOnlyList<Relic> unsecuredRelics = null, ISet<string> codex = null,
-            Rarity ceiling = Rarity.Legendary, double ordinaryRelicMultiplier = 1)
+            Rarity ceiling = Rarity.Legendary, double ordinaryRelicMultiplier = 1, double shardDropMultiplier = 1)
         {
             heat = ClampHeat(heat);
+            if (!(shardDropMultiplier > 1) || double.IsInfinity(shardDropMultiplier)) shardDropMultiplier = 1;
             var reward = new KillReward { Xp = Content.KillXp(tier) };
             double luck = TierLuck(tier) + HeatLuck * heat + (mods?.Luck ?? 0);
             bool allowLegendary = tier >= MonsterTier.MiniBoss;
@@ -436,17 +437,26 @@ namespace SodRpg.Core.Game
             switch (tier)
             {
                 case MonsterTier.Lesser:
-                    if (rng.Chance(LootBalance.LesserShardChance)) reward.Shards = LootBalance.LesserShards;
+                {
+                    double shardChance = Math.Min(1.0, LootBalance.LesserShardChance * shardDropMultiplier);
+                    if (rng.Chance(shardChance))
+                        reward.Shards = ScaleShards(rng, LootBalance.LesserShards, LootBalance.LesserShardChance, shardChance, shardDropMultiplier);
                     break;
+                }
                 case MonsterTier.Normal:
-                    if (rng.Chance(LootBalance.NormalShardChance)) reward.Shards = rng.Range(LootBalance.NormalShardMin, LootBalance.NormalShardMax);
+                {
+                    double shardChance = Math.Min(1.0, LootBalance.NormalShardChance * shardDropMultiplier);
+                    if (rng.Chance(shardChance))
+                        reward.Shards = ScaleShards(rng, rng.Range(LootBalance.NormalShardMin, LootBalance.NormalShardMax),
+                            LootBalance.NormalShardChance, shardChance, shardDropMultiplier);
                     break;
+                }
                 case MonsterTier.MiniBoss:
-                    reward.Shards = rng.Range(LootBalance.MiniBossShardMin, LootBalance.MiniBossShardMax);
+                    reward.Shards = ScaleShards(rng, rng.Range(LootBalance.MiniBossShardMin, LootBalance.MiniBossShardMax), 1, 1, shardDropMultiplier);
                     if (rng.Chance(LootBalance.MiniBossTuningChance)) reward.Tuning = LootBalance.MiniBossTuning;
                     break;
                 default:
-                    reward.Shards = rng.Range(LootBalance.BossShardMin, LootBalance.BossShardMax);
+                    reward.Shards = ScaleShards(rng, rng.Range(LootBalance.BossShardMin, LootBalance.BossShardMax), 1, 1, shardDropMultiplier);
                     reward.Tuning = LootBalance.BossTuning;
                     break;
             }
@@ -457,6 +467,19 @@ namespace SodRpg.Core.Game
                 reward.Xp = (int)Math.Round(reward.Xp * mods.XpMult);
             }
             return reward;
+        }
+
+        /// <summary>
+        /// 欠片の出やすさの倍率。確率で出る格は確率を上げ、100%で頭打ちになった分は量で補う。必ず出る格は量を増やす。
+        /// 小数は確率で切り上げ、期待値を保つ。倍率1では乱数を余分に使わない。
+        /// </summary>
+        private static int ScaleShards(Rng rng, int amount, double baseChance, double effectiveChance, double multiplier)
+        {
+            if (!(multiplier > 1) || amount <= 0) return amount;
+            double scaled = amount * (baseChance * multiplier / effectiveChance);
+            int whole = (int)scaled;
+            double fraction = scaled - whole;
+            return whole + (fraction > 1e-9 && rng.Chance(fraction) ? 1 : 0);
         }
 
         public static int ClampHeat(int heat) => Math.Max(0, Math.Min(Content.MaxHeat, heat));

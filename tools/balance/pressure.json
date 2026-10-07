@@ -11,7 +11,11 @@
     "enemyCountHealthPerStage": 0.10,
     "enemyCountPerStage": 0.08,
     "enemyCountMaximumBonus": 0.60,
-    "enemyCountAdditionalRewardBudget": 0.20
+    "enemyCountAdditionalRewardBudget": 0.20,
+    "shardDropPerPressure": 0.25,
+    "shardDropMaximum": 1.5,
+    "nightmareChancePerPressure": 0.20,
+    "nightmareChanceMaximum": 1.5
   },
   "dreamDepth": {
     "maximum": 5,

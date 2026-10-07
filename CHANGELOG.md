@@ -8,6 +8,10 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
+### 新しい要素 / New
+
+- **夢の圧で欠片と悪夢化が増える**：夢の圧が高いほど、敵を倒したときの欠片が出やすくなり、敵が悪夢化しやすくなります。どちらも最大1.5倍で、圧が敵HP+100%分上がるごとに欠片は+25%、悪夢化は+20%です（HUDの「HP×」から計算できます）。欠片は、出る確率が決まっている敵では出る確率が、必ず出るエリート・ボスでは量が増えます。インフィニティでは適用されません。悪夢化は従来どおり深度1以上でのみ起きます。 / **Dream pressure now boosts shards and nightmares**: higher pressure makes shards drop more and enemies turn into nightmares more, up to x1.5 each (+25% shards and +20% nightmare chance per +100% enemy HP). Enemies with a drop chance drop more often; guaranteed elite/boss drops give more. Not applied in Infinity. Nightmares still only appear at delve depth 1 or higher.
+
 ---
 
 ## v2.9.1 — インフィニティの待ち時間と無効化の修正（2026-10-07）

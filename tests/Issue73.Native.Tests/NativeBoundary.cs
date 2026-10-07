@@ -279,6 +279,7 @@ namespace SodRpg.Mod
         }
         internal sealed class Variant { public string Id; }
         internal sealed class Behavior { public bool CueQueued; }
+        private double ShardDropMultiplierForKill() => 1;
         internal static bool Alive(Entity entity) => entity != null && entity.isActive && entity.currentHealth > 0;
         private void SendMonsterBehaviorCue(MonsterRuntime runtime, bool force, DewPlayer target = null)
         {

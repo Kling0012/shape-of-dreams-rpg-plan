@@ -9,6 +9,7 @@ namespace SodRpg.Core.Game
     {
         public const string ActorScaleKey = "DreamforgeRPG.pressureEnemyCount.rewardScale";
         private const string EventSuffix = "|pressure:";
+        private const string ShardSuffix = "|shards:";
         private const int EncodedScaleLength = 16;
 
         public static double ScaleForBonus(double bonus) => bonus > 0 && !double.IsNaN(bonus)
@@ -24,30 +25,57 @@ namespace SodRpg.Core.Game
                 && scale >= 0 && scale <= 1 ? scale : 1;
         }
 
-        /// <summary>The authenticated opaque event identity is already carried by replay and pending-kill saves.</summary>
-        public static string EncodeEventId(string id, double scale)
+        /// <summary>
+        /// The authenticated opaque event identity is already carried by replay and pending-kill saves.
+        /// Host-decided per-kill facts ride as optional suffixes: thinning scale, then shard drop multiplier.
+        /// </summary>
+        public static string EncodeEventId(string id, double scale, double shardDropMultiplier = 1)
         {
             if (string.IsNullOrEmpty(id)) throw new ArgumentException("A kill event identity is required.", nameof(id));
             scale = Normalize(scale);
-            return scale == 1 ? id : id + EventSuffix
-                + unchecked((ulong)BitConverter.DoubleToInt64Bits(scale)).ToString("x16", CultureInfo.InvariantCulture);
+            shardDropMultiplier = NormalizeShardDrop(shardDropMultiplier);
+            if (scale != 1) id += EventSuffix + EncodeDouble(scale);
+            if (shardDropMultiplier != 1) id += ShardSuffix + EncodeDouble(shardDropMultiplier);
+            return id;
         }
 
         public static double ScaleFromEventId(string id)
         {
-            if (string.IsNullOrEmpty(id)) return 1;
-            int marker = id.Length - EventSuffix.Length - EncodedScaleLength;
-            if (marker <= 0 || string.CompareOrdinal(id, marker, EventSuffix, 0, EventSuffix.Length) != 0) return 1;
+            id = StripSuffix(id, ShardSuffix, out _);
+            StripSuffix(id, EventSuffix, out double value);
+            return value >= 0 && value <= 1 ? value : 1;
+        }
+
+        /// <summary>Shard drop multiplier recorded by the host when the enemy died; 1 for ids without one.</summary>
+        public static double ShardDropMultiplierFromEventId(string id)
+        {
+            StripSuffix(id, ShardSuffix, out double value);
+            return NormalizeShardDrop(value);
+        }
+
+        private static double NormalizeShardDrop(double multiplier) => double.IsNaN(multiplier) || double.IsInfinity(multiplier)
+            ? 1 : Math.Max(1, Math.Min(DreamPressure.ShardDropMaximum, multiplier));
+
+        private static string EncodeDouble(double value) =>
+            unchecked((ulong)BitConverter.DoubleToInt64Bits(value)).ToString("x16", CultureInfo.InvariantCulture);
+
+        /// <summary>Removes a trailing "suffix + 16 hex digits" from the id; value is 1 when absent or malformed.</summary>
+        private static string StripSuffix(string id, string suffix, out double value)
+        {
+            value = 1;
+            if (string.IsNullOrEmpty(id)) return id;
+            int marker = id.Length - suffix.Length - EncodedScaleLength;
+            if (marker <= 0 || string.CompareOrdinal(id, marker, suffix, 0, suffix.Length) != 0) return id;
             ulong bits = 0;
-            for (int i = marker + EventSuffix.Length; i < id.Length; i++)
+            for (int i = marker + suffix.Length; i < id.Length; i++)
             {
                 char c = id[i];
                 int digit = c >= '0' && c <= '9' ? c - '0' : c >= 'a' && c <= 'f' ? c - 'a' + 10 : -1;
-                if (digit < 0) return 1;
+                if (digit < 0) return id;
                 bits = (bits << 4) | (uint)digit;
             }
-            double scale = BitConverter.Int64BitsToDouble(unchecked((long)bits));
-            return scale >= 0 && scale <= 1 ? scale : 1;
+            value = BitConverter.Int64BitsToDouble(unchecked((long)bits));
+            return id.Substring(0, marker);
         }
 
         /// <summary>Unbiased integer rounding: a one-unit reward must not become a guaranteed extra unit.</summary>

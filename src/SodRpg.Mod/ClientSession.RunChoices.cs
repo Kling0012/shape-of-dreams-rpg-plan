@@ -243,7 +243,8 @@ namespace SodRpg.Mod
             Emit(Rules.OnKill(Profile, kill.Tier, kill.Level, kill.Nightmare, kill.HeroKey, _trades,
                 variantId: kill.VariantId, roomIndex: kill.RoomIndex, heat: kill.Heat, waypoint: kill.Waypoint,
                 bossTypeName: kill.BossTypeName, bossDropNightmare: kill.BossDropNightmare, bossDropDepth: kill.BossDropDepth,
-                rewardScale: PressureCountRewards.ScaleFromEventId(kill.EventId)));
+                rewardScale: PressureCountRewards.ScaleFromEventId(kill.EventId),
+                shardDropMultiplier: PressureCountRewards.ShardDropMultiplierFromEventId(kill.EventId)));
             if (Mastery.Level(Profile.Hero(kill.HeroKey).Kills) > masteryBefore) _buildDirty = true;
             if (Rules.EquippedAwakenLevels(Profile, kill.HeroKey) > awakenBefore)
             {
