@@ -1,3 +1,4 @@
+using System.Linq;
 using SodRpg.Core.Game;
 using Xunit;
 
@@ -25,14 +26,15 @@ namespace SodRpg.Core.Tests
             big.Stats[Stat.EssenceSlotIdentity] = int.MaxValue;
             big.Stats[Stat.EssenceSlotMovement] = int.MinValue;
             var back2 = Build.Decode(big.Encode());
-            Assert.Equal(1, back2.Get(Stat.EssenceSlotIdentity));
+            Assert.Equal(6, back2.Get(Stat.EssenceSlotIdentity));
             Assert.Equal(0, back2.Get(Stat.EssenceSlotMovement));
         }
 
         [Theory]
-        [InlineData(int.MaxValue, int.MaxValue, 1, 1)]
-        [InlineData(int.MinValue, int.MaxValue, 0, 1)]
-        [InlineData(int.MaxValue, int.MinValue, 1, 0)]
+        [InlineData(int.MaxValue, int.MaxValue, 6, 6)]
+        [InlineData(int.MinValue, int.MaxValue, 0, 6)]
+        [InlineData(int.MaxValue, int.MinValue, 6, 0)]
+        [InlineData(4, 5, 4, 5)]
         public void Hand_built_and_wire_builds_share_the_combined_slot_budget(int identity, int movement, int expectedIdentity, int expectedMovement)
         {
             var build = new Build();
@@ -52,8 +54,25 @@ namespace SodRpg.Core.Tests
         {
             var decoded = Build.Decode("h:0;s:18=9,19=9");
             Assert.NotNull(decoded);
-            Assert.Equal(1, decoded.Get(Stat.EssenceSlotIdentity));
-            Assert.Equal(1, decoded.Get(Stat.EssenceSlotMovement));
+            Assert.Equal(6, decoded.Get(Stat.EssenceSlotIdentity));
+            Assert.Equal(6, decoded.Get(Stat.EssenceSlotMovement));
+        }
+
+        [Theory]
+        [InlineData(3)]
+        [InlineData(6)]
+        public void Slot_stars_stack_up_to_the_per_location_cap_and_cost_five_points_per_rank(int ranks)
+        {
+            foreach (string hero in new[] { "Hero_Mist", "Hero_Husk" })
+            {
+                var layout = HeroTreeLayout.ForHero(hero);
+                var star = layout.Nodes.Select(n => n.Talent).First(t => t != null && t.Stat == Stat.EssenceSlotMovement);
+                Assert.Equal(EssenceSlots.MaxPerLocation, star.MaxRank);
+                Assert.Equal(5, star.RankCost);
+                var build = new Build();
+                build.Stats[star.Stat] = star.PerRank * ranks;
+                Assert.Equal(ranks, EssenceSlots.AddedFrom(build, Stat.EssenceSlotMovement));
+            }
         }
 
 
