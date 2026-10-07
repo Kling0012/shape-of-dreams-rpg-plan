@@ -10,6 +10,7 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ### 不具合の修正 / Bug fixes
 
+- 「インフィニティは無効です」と出て、ロビーでも選べないままになる問題を直しました。遠征中の検査やワールドマップ表示の一時的なエラーで止まると、ゲームを再起動するまで止まったままでした。いまは、止まった遠征が終わってロビーに戻れば使えるようになります。地図表示の一時的なエラーでは止まらなくなりました（同じ表示が続けて失敗するときだけ止まります）。本体のパッチが入らなかった場合だけは、これまでどおり再起動まで無効です。 / Fixed Infinity staying "disabled" in the lobby until the game was restarted. A check or a transient world-map display error during an expedition used to switch it off for the whole session; now it comes back once that expedition is over and you are back in the lobby, and a one-off map display error no longer stops it (only a display hook that keeps failing does). A missing native patch still keeps it off until restart.
 - **インフィニティの選択待ち（最大60秒）がソロでも発動する問題を修正**：ホスト本人の選択を待っていたため、ソロや「ゲストが全員選び終えた後」でも次の部屋へ進むのに60秒かかっていました。ホストは待たず、ゲスト全員が選び終えた時点ですぐ進めます。 / **Fixed the Infinity choice wait (up to 60 s) also applying in solo play**: the host was waiting on its own receipt, so moving on took 60 s even in solo or after every guest had chosen. The host is no longer waited for, and the party moves on as soon as every guest has chosen.
 
 ---
