@@ -22,10 +22,34 @@ namespace SodRpg.Core.Game
         public const double DamagePerStarPoint = PressureBalance.DamagePerStarPoint;
         public const double DamagePerInfinityStage = PressureBalance.DamagePerInfinityStage;
         private double LevelsOverFree => Math.Max(0, AverageDreamLevel - FreeDreamLevels);
-        public double HealthMultiplier => (1 + HealthPerLevel * LevelsOverFree + HealthPerStarPoint * AverageSpentStarPoints)
-            * DreamDepth.HealthMultiplier(Depth) * WaypointMultiplier * (1 + HealthPerInfinityStage * InfinityStage);
+        private double HealthMultiplierBeforeInfinity => (1 + HealthPerLevel * LevelsOverFree + HealthPerStarPoint * AverageSpentStarPoints)
+            * DreamDepth.HealthMultiplier(Depth) * WaypointMultiplier;
+        public double HealthMultiplier => HealthMultiplierBeforeInfinity * (1 + HealthPerInfinityStage * InfinityStage);
         public double DamageMultiplier => (1 + DamagePerLevel * LevelsOverFree + DamagePerStarPoint * AverageSpentStarPoints)
             * DreamDepth.DamageMultiplier(Depth) * WaypointMultiplier * (1 + DamagePerInfinityStage * InfinityStage);
+
+        public const double ShardDropPerPressure = PressureBalance.ShardDropPerPressure;
+        public const double ShardDropMaximum = PressureBalance.ShardDropMaximum;
+        public const double NightmareChancePerPressure = PressureBalance.NightmareChancePerPressure;
+        public const double NightmareChanceMaximum = PressureBalance.NightmareChanceMaximum;
+
+        /// <summary>
+        /// 欠片・悪夢化の倍率に使う圧の大きさ（敵HPの増分）。インフィニティの圧段階は含めない。
+        /// インフィニティは供給予算が別にあり、その調整を変えないため、段階分の圧を倍率に数えない。
+        /// </summary>
+        public double RewardPressure => Math.Max(0, HealthMultiplierBeforeInfinity - 1);
+
+        /// <summary>撃破で欠片が出る確率・量にかける倍率。圧がなければ1、上限は <see cref="ShardDropMaximum"/>。</summary>
+        public double ShardDropMultiplier => CappedMultiplier(ShardDropPerPressure, ShardDropMaximum);
+
+        /// <summary>悪夢化の確率にかける倍率。圧がなければ1、上限は <see cref="NightmareChanceMaximum"/>。</summary>
+        public double NightmareChanceMultiplier => CappedMultiplier(NightmareChancePerPressure, NightmareChanceMaximum);
+
+        private double CappedMultiplier(double perPressure, double maximum)
+        {
+            double value = 1 + perPressure * RewardPressure;
+            return double.IsNaN(value) ? 1 : Math.Max(1, Math.Min(maximum, value));
+        }
 
         /// <summary>通常の圧には段番号がないため、最終HPの増分を圧1段のHP増分で換算する。</summary>
         public double EnemyCountMultiplier => EnemyCountMultiplierForHealth(HealthMultiplier);

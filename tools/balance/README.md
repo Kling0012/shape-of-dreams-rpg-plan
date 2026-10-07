@@ -4,7 +4,7 @@
 `run-growth.json` の鍛錬の閾値・上限・1スタック量・上限増分・効果増分、
 `star-progression.json` の星XP曲線・費用・報酬・刻印枠の解放、
 `gear.json` の装備レベル成長・固定攻魔上限、`sets.json` の通常セット2/3/6部位効果、
-`pressure.json` の夢の圧・深度、`monsters.json` の悪夢・変種・敵行動、
+`pressure.json` の夢の圧・深度（欠片の出やすさと悪夢化の確率にかける倍率の係数・上限を含む）、`monsters.json` の悪夢・変種・敵行動、
 `infinity.json` の供給予算・周期・圧段階上限・周期別補正、`powers.json` のPowerの時間・距離・条件（127欄）を
 型付きC#へ生成します。記憶ダメージはmanifestの480親＋258選択肢と旧ルート98成分、計836欄を移行済みです。
 星ID・段数・費用・選択肢・保存形式5・Protocol 23は維持し、調整した有効値（装備・セット・Powerを含む）を内容照合に含めます。

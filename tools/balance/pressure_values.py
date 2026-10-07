@@ -20,6 +20,8 @@ LEGACY = {
         "enemyCountPerStage": Decimal("0"),
         "enemyCountMaximumBonus": Decimal("0.60"),
         "enemyCountAdditionalRewardBudget": Decimal("0"),
+        "shardDropPerPressure": Decimal("0"), "shardDropMaximum": Decimal("1"),
+        "nightmareChancePerPressure": Decimal("0"), "nightmareChanceMaximum": Decimal("1"),
     },
     "dreamDepth": {
         "maximum": 5, "healthPerDepth": Decimal("0.15"), "damagePerDepth": Decimal("0.08"),
@@ -40,6 +42,10 @@ FIELDS = {
         "enemyCountPerStage": ("EnemyCountPerStage", "double", "ratio/stage", 0, 1),
         "enemyCountMaximumBonus": ("EnemyCountMaximumBonus", "double", "ratio", 0, 1),
         "enemyCountAdditionalRewardBudget": ("EnemyCountAdditionalRewardBudget", "double", "ratio", 0, 1),
+        "shardDropPerPressure": ("ShardDropPerPressure", "double", "multiplier/hp-bonus", 0, 10),
+        "shardDropMaximum": ("ShardDropMaximum", "double", "multiplier", 1, 10),
+        "nightmareChancePerPressure": ("NightmareChancePerPressure", "double", "multiplier/hp-bonus", 0, 10),
+        "nightmareChanceMaximum": ("NightmareChanceMaximum", "double", "multiplier", 1, 10),
     },
     "dreamDepth": {
         "maximum": ("MaximumDepth", "int", "depth", 1, 5),

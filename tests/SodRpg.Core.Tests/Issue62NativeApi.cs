@@ -53,6 +53,7 @@ namespace SodRpg.Mod
         private sealed class ParticipationRange { internal long Through; }
         private readonly Dictionary<DewPlayer, KillPeer> _killReplayPlayers = new Dictionary<DewPlayer, KillPeer>();
         internal readonly List<AuthoritativeRunKill> OrdinaryKillFacts = new List<AuthoritativeRunKill>();
+        private double ShardDropMultiplierForKill() => 1;
         private void EnsureKillRun() => _killRunId = NetworkedManagerBase<GameManager>.softInstance.runId;
         private void RegisterKillPeer(DewPlayer player) { }
         private void SendKillStreamControl(DewPlayer player, KillPeer peer) { }
