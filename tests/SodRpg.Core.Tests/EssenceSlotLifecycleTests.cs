@@ -334,7 +334,7 @@ namespace SodRpg.Core.Tests
             hero.Skill.gems[new GemLocation { skill = HeroSkillLocation.Identity, index = 0 }] = nativeGem;
             hero.Skill.gems[new GemLocation { skill = HeroSkillLocation.Identity, index = 1 }] = identityGem;
             hero.Skill.gems[new GemLocation { skill = HeroSkillLocation.Movement, index = 0 }] = movementGem;
-            hero.Skill.gems[new GemLocation { skill = HeroSkillLocation.Identity, index = 3 }] = legacyGem;
+            hero.Skill.gems[new GemLocation { skill = HeroSkillLocation.Identity, index = 9 }] = legacyGem;
             string previousRun = ClientSession.ContinueRunId;
             EntityStatus.LiveStatusEffects.Add(native);
             DewPlayer.gamePlayers.Add(peer);

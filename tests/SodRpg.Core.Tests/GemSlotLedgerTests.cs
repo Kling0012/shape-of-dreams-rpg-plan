@@ -87,7 +87,8 @@ namespace SodRpg.Core.Tests
         [Theory]
         [InlineData(-5, -2, 0)]
         [InlineData(-1, 1, 1)]
-        [InlineData(0, 5, 1)]
+        [InlineData(0, 5, 5)]
+        [InlineData(0, 9, 6)]
         [InlineData(2, -1, 2)]
         [InlineData(int.MaxValue, 1, int.MaxValue)]
         public void Caps_and_desired_values_are_clamped_without_claiming_unadded_slots(int current, int desired, int target)

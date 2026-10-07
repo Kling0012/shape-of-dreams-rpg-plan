@@ -675,8 +675,8 @@ namespace SodRpg.Core.Game
             {
                 bool identity = cap.RouteMemory.StartsWith("St_D_", System.StringComparison.Ordinal);
                 var node = identity
-                    ? new TalentDef(cap.RouteId + ".slot", Line.Offense, new Txt("記憶の器を広げる", "Widen the Memory's Vessel"), Stat.EssenceSlotIdentity, StarRankBalance.EssenceSlotStarAmount, 1)
-                    : new TalentDef(cap.RouteId + ".slot", Line.Offense, new Txt("回避の器を広げる", "Widen the Dodge's Vessel"), Stat.EssenceSlotMovement, StarRankBalance.EssenceSlotStarAmount, 1);
+                    ? new TalentDef(cap.RouteId + ".slot", Line.Offense, new Txt("記憶の器を広げる", "Widen the Memory's Vessel"), Stat.EssenceSlotIdentity, StarRankBalance.EssenceSlotStarAmount, EssenceSlotMaxRank)
+                    : new TalentDef(cap.RouteId + ".slot", Line.Offense, new Txt("回避の器を広げる", "Widen the Dodge's Vessel"), Stat.EssenceSlotMovement, StarRankBalance.EssenceSlotStarAmount, EssenceSlotMaxRank);
                 node.HeroKey = cap.HeroKey;
                 node.Tier = 2;
                 node.RouteId = cap.RouteId;
@@ -687,8 +687,11 @@ namespace SodRpg.Core.Game
             }
         }
 
-        /// <summary>エッセンスの枠を増やす星の費用。</summary>
+        /// <summary>エッセンスの枠を増やす星の費用（1段あたり）。</summary>
         public const int EssenceSlotCost = 5;
+
+        /// <summary>エッセンスの枠を増やす星の段数。1段で枠+1。場所ごとの上限まで取れる。</summary>
+        public const int EssenceSlotMaxRank = StarRankBalance.EssenceSlotsMaxPerLocation;
 
         private static void AddRing(List<TalentDef> nodes, string hero)
         {
