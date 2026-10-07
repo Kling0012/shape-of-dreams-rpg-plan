@@ -6,15 +6,15 @@ using Xunit;
 
 namespace SodRpg.Core.Tests
 {
-    /// <summary>星図の枠の星は1段ごとに枠+1、場所ごとに最大6まで（合計12）。取得から本体へ渡す値までを通しで確かめる。</summary>
+    /// <summary>星図の枠の星は1段ごとに枠+1、場所ごとに最大4まで（合計8。本体が1つの記憶に並べられるのは4まで）。取得から本体へ渡す値までを通しで確かめる。</summary>
     [Collection("Generated hero registry")]
     public sealed class EssenceSlotStarCapTests : IClassFixture<StarMapReachabilityTests.Registered>
     {
         public EssenceSlotStarCapTests(StarMapReachabilityTests.Registered registered) { }
 
         [Theory]
-        [InlineData("Hero_Mist", "h.mist.route.fast-feet.slot", false, 6)]
-        [InlineData("Hero_Mist", "h.mist.route.en-garde.slot", true, 6)]
+        [InlineData("Hero_Mist", "h.mist.route.fast-feet.slot", false, 4)]
+        [InlineData("Hero_Mist", "h.mist.route.en-garde.slot", true, 4)]
         [InlineData("Hero_Husk", "h.husk.route.flash-step.slot", false, 3)]
         public void Buying_slot_ranks_raises_the_added_slots_and_the_host_accepts_the_build(string hero, string starId, bool identity, int ranks)
         {
@@ -47,14 +47,14 @@ namespace SodRpg.Core.Tests
         }
 
         [Fact]
-        public void Combined_budget_allows_six_identity_and_six_movement()
+        public void Combined_budget_allows_four_identity_and_four_movement()
         {
             var build = new Build();
-            build.Stats[Stat.EssenceSlotIdentity] = 6;
-            build.Stats[Stat.EssenceSlotMovement] = 6;
-            Assert.Equal(6, EssenceSlots.AddedFrom(build, Stat.EssenceSlotIdentity));
-            Assert.Equal(6, EssenceSlots.AddedFrom(build, Stat.EssenceSlotMovement));
-            Assert.Equal(12, EssenceSlots.MaxAdded);
+            build.Stats[Stat.EssenceSlotIdentity] = 4;
+            build.Stats[Stat.EssenceSlotMovement] = 4;
+            Assert.Equal(4, EssenceSlots.AddedFrom(build, Stat.EssenceSlotIdentity));
+            Assert.Equal(4, EssenceSlots.AddedFrom(build, Stat.EssenceSlotMovement));
+            Assert.Equal(8, EssenceSlots.MaxAdded);
         }
     }
 }

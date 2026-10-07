@@ -11,7 +11,12 @@ namespace SodRpg.Core.Game
         /// <summary>全ソースを合算した、旅人1人あたりの追加枠上限。</summary>
         public const int MaxAdded = StarRankBalance.EssenceSlotsMaxAdded;
 
-        /// <summary>1つの枠で足せる数の上限。</summary>
+        /// <summary>
+        /// 本体が1つの記憶に実際に並べられる枠の上限。本体の混沌の聖堂（追加枠の効果）は4で止まり、
+        /// HUD の枠並び（UI_InGame_SkillButton_GemGroup）は現在値がこの範囲を超えると枠を1つも描かない。
+        /// そのため書き込む上限はこの値を超えない（他MODが既に上げた現在値は壊さない）。
+        /// </summary>
+        public const int NativeCapPerLocation = 4;
         public const int MaxPerLocation = StarRankBalance.EssenceSlotsMaxPerLocation;
 
         /// <summary>手作りの Build にも同じ共有上限を適用する。予算不足時はアイデンティティを先に数える。</summary>

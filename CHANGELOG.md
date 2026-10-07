@@ -8,7 +8,15 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
----
+### 不具合の修正 / Bug fixes
+
+- 星図で増やせるエッセンス枠を、本体が1つの記憶に実際に並べられる4個まで（合計8個）に戻しました。本体は枠の数が4を超えると、その記憶の枠を1つも表示しないつくりになっているため、5・6段まで取ると「回避の器を広げる」などを取っても枠が増えないことがありました。5・6段を取っていた場合は4段に切り詰められ、使ったポイントは戻ります。 / Star-chart essence slots are capped again at what the game can actually display per memory: 4 each, 8 total. Above four the game shows no sockets at all, so ranks 5–6 left the slot invisible; existing ranks are trimmed to 4 and their points return.
+- ホストが書き込むエッセンス枠の上限を、混沌の聖堂の追加分と足しても4を超えないようにしました。 / The host now keeps the written slot cap within four even when combined with native chaos-shrine additions.
+
+### その他 / Other
+
+- HUD の技ボタンが各記憶のエッセンス枠を何個まで並べられるかを、ゲームに入った後に1回だけ Player.log に残すようにしました（枠が表示されない報告の切り分け）。 / Once per session the client logs how many gem sockets each HUD skill button can display, to diagnose invisible-slot reports.
+
 
 ## v2.10.5 — MOD再読み込み後のインフィニティ無効表示と食材の修正（2026-10-08）
 
