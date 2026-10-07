@@ -10,6 +10,24 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v2.10.2 — 一番槍の保証の修正（2026-10-07）
+
+夢の圧で増えた敵を部屋で最初に倒したとき、「一番槍」のレア遺物保証が消える不具合を直しました。 / Fixes the First Claim rare relic guarantee being lost when the first kill in a room is an extra pressure enemy.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- 部屋で最初に倒した敵が夢の圧で増えた敵だと、「一番槍」のレア以上の遺物保証がなくなり、その部屋ではもう受け取れなくなる問題を修正しました。 / If the first enemy killed in a room was an extra enemy from dream pressure, the First Claim guarantee of a Rare-or-better relic could vanish for that room; fixed.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
 ## v2.10.1 — トレード履歴と追加敵の報酬の修正（2026-10-07）
 
 協力プレイのトレード履歴と、夢の圧で増えた敵の報酬の不具合を直しました。 / Fixes co-op trade history and rewards from extra pressure enemies.
