@@ -8,7 +8,24 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
-- 他のMODもエッセンス枠を増やしている環境で、Continue後に枠が余分に増えたり、星図で増やした枠が正しく保たれないことがあったのを直しました。 / Fixed gem slots sometimes growing too much after continuing, or star-chart gem slots not being kept correctly, when another mod also adds gem slots.
+---
+
+## v2.10.3 — 他MODとのエッセンス枠の共存（2026-10-07）
+
+他のMODもエッセンス枠を増やしている環境で、枠が増えすぎたり消えたりする不具合を直しました。 / Fixes gem slots growing too much or disappearing when another mod also adds gem slots.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- 他のMOD（DewGemSlotCount など）もエッセンス枠を増やしている環境で、Continue 後に枠が余分に増えたり、星図で増やした枠が正しく保たれなかったりする問題を修正しました。他のMODが増やした枠はそのまま残し、このMODは星図の分だけを足します。 / With another mod (such as DewGemSlotCount) also adding gem slots, slots could grow too much after continuing, or star-chart slots were not kept correctly; fixed. Slots added by other mods are left as they are, and this mod adds only its star-chart bonus.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
 ---
 
 ## v2.10.2 — 一番槍の保証の修正（2026-10-07）
