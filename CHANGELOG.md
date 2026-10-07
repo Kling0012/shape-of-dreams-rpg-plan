@@ -8,6 +8,7 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
+- ゲームを起動したままMODを更新・再読み込みした直後に、入っている割り込みが「未導入」と誤って判定され、インフィニティが無効と表示されることがある問題を修正しました（再起動すると直っていた原因）。 / Fixed freshly installed hooks being misdetected as missing right after updating or reloading the mod without restarting the game, which could show Infinity as disabled (the reason a restart appeared to fix it).
 ---
 
 ## v2.10.4 — インフィニティの無効表示の修正と食材の吸い寄せ（2026-10-07）

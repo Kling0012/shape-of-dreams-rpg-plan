@@ -452,7 +452,7 @@ namespace SodRpg.Mod
                 if (info == null) continue;
                 foreach (var list in new[] { info.Prefixes, info.Postfixes, info.Transpilers, info.Finalizers })
                     foreach (var patch in list)
-                        if (patch.owner == harmony.Id && IsSameOrNested(patch.PatchMethod.DeclaringType, type)) return true;
+                        if (patch.owner == harmony.Id && PatchMethodOwnership.DeclaresPatch(patch, type)) return true;
             }
             return false;
         }
@@ -467,18 +467,11 @@ namespace SodRpg.Mod
                 var mine = new List<MethodInfo>();
                 foreach (var list in new[] { info.Prefixes, info.Postfixes, info.Transpilers, info.Finalizers })
                     foreach (var patch in list)
-                        if (patch.owner == harmony.Id && IsSameOrNested(patch.PatchMethod.DeclaringType, type)) mine.Add(patch.PatchMethod);
+                        if (patch.owner == harmony.Id && PatchMethodOwnership.DeclaresPatch(patch, type)) mine.Add(patch.PatchMethod);
                 foreach (var method in mine)
                     try { harmony.Unpatch(target, method); }
                     catch (Exception ex) { Log.Error("Rollback unpatch " + target.FullDescription() + ": " + ex); }
             }
-        }
-
-        private static bool IsSameOrNested(Type candidate, Type root)
-        {
-            for (var t = candidate; t != null; t = t.DeclaringType)
-                if (t == root) return true;
-            return false;
         }
 
         [ConsoleCommand("Dreamforge (test): add star map points for this session only (0-500, 0 = off)", "dreamforge_testpoints")]
