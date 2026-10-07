@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
+using SodRpg.Core.Game;
 using HarmonyLib;
 using Mirror;
 using UnityEngine;
@@ -14,6 +15,12 @@ namespace SodRpg.Mod
         internal const string GemId = "Gem_Dreamforge_SeedOfShelter";
         internal const string MemoryId = "St_Dreamforge_Seedling";
 
+#if DREAMFORGE_SPECIAL
+        internal const bool SpecialEdition = true;
+#else
+        internal const bool SpecialEdition = false;
+#endif
+
         private static readonly List<KeyValuePair<MethodBase, MethodInfo>> RegistryHooks =
             new List<KeyValuePair<MethodBase, MethodInfo>>();
         private static Harmony _registryHarmony;
@@ -22,6 +29,9 @@ namespace SodRpg.Mod
         private static SkillTrigger _memoryTemplate;
         private static bool _gemWarning;
         private static bool _memoryWarning;
+        private static bool _poolWarning;
+        private static List<string> _poolEntryGem;
+        private static List<string> _poolEntryMemory;
 
         internal static bool Enabled { get; private set; }
         internal static bool ReadyGem { get; private set; }
@@ -44,7 +54,7 @@ namespace SodRpg.Mod
                 string.Equals(marker, id, StringComparison.Ordinal);
         }
 
-        internal static void Install(Harmony harmony, bool enabled)
+        internal static void Install(Harmony harmony, bool enabled, bool specialEdition)
         {
             Stop();
             if (!enabled) return;
@@ -52,6 +62,7 @@ namespace SodRpg.Mod
             Enabled = true;
             _gemWarning = false;
             _memoryWarning = false;
+            _poolWarning = false;
             _registryHarmony = harmony;
             try
             {
@@ -67,6 +78,7 @@ namespace SodRpg.Mod
 
             InstallItem(harmony, false);
             InstallItem(harmony, true);
+            if (specialEdition) InstallLootPool(harmony);
         }
 
         private static void InstallRegistryHooks(Harmony harmony)
@@ -129,6 +141,9 @@ namespace SodRpg.Mod
                 Actor template = clone.GetComponent<Actor>();
                 if (template == null || template.GetType() != nativeType)
                     throw new InvalidOperationException("Native dream clone lost its concrete component: " + nativeType.Name);
+                // Instantiated clones copy components but not the managed SyncDictionary, so this
+                // tag marks a fresh server-side clone of the template before its first prepare.
+                clone.AddComponent<SeedTemplateTag>();
 
                 // No marker on the template: Unity does not copy its managed SyncDictionary.
                 if (memory)
@@ -176,7 +191,7 @@ namespace SodRpg.Mod
             bool memory;
             if (IsGem(__instance)) memory = false;
             else if (IsMemory(__instance)) memory = true;
-            else return;
+            else if (!MarkSeedTemplateClone(__instance, out memory)) return;
 
             try
             {
@@ -191,6 +206,25 @@ namespace SodRpg.Mod
                 Fail(memory, error);
             }
         }
+
+        private static bool MarkSeedTemplateClone(Actor actor, out bool memory)
+        {
+            memory = false;
+            if (!Enabled || actor == null) return false;
+            Type type = actor.GetType();
+            if (type != typeof(Gem_C_Quicksilver) && type != typeof(St_C_MassProtection)) return false;
+            if (actor.GetComponent<SeedTemplateTag>() == null) return false;
+            memory = type == typeof(St_C_MassProtection);
+            // Only claim a clone while its item is registered; a failed item leaves the clone as
+            // the vanilla object instead of a markerless hybrid.
+            if (memory ? !ReadyMemory : !ReadyGem) return false;
+            // A fresh clone of a registered template (special-edition loot drop): give it the same
+            // saved and synced marker string the development grant writes, then run the shared
+            // configure path above.
+            actor.persistentSyncedData[MarkerKey] = memory ? MemoryId : GemId;
+            return true;
+        }
+
 
         internal static bool Give(Hero hero, bool memory)
         {
@@ -246,6 +280,107 @@ namespace SodRpg.Mod
             {
                 Fail(memory, error);
             }
+        }
+
+        // Special edition only: enter the native loot selection with one transient entry per item,
+        // in the prototype's own rarity bucket and with the same weight as the prototype itself.
+        // The custom ids are never written into the saved native pool lists, so a save opened by a
+        // normal edition or without this MOD keeps selecting and loading the original items only.
+        private static void InstallLootPool(Harmony harmony)
+        {
+            PatchLootPool(harmony, nameof(LootManager.SelectGemAndQuality), nameof(SelectGemPoolPrefix));
+            PatchLootPool(harmony, nameof(LootManager.SelectSkillAndLevel), nameof(SelectSkillPoolPrefix));
+        }
+
+        private static void PatchLootPool(Harmony harmony, string methodName, string prefixName)
+        {
+            try
+            {
+                MethodBase original = AccessTools.Method(typeof(LootManager), methodName);
+                if (original == null) throw new MissingMethodException(typeof(LootManager).FullName, methodName);
+                MethodInfo prefix = AccessTools.DeclaredMethod(typeof(NativeDreamContent), prefixName);
+                MethodInfo finalizer = AccessTools.DeclaredMethod(typeof(NativeDreamContent), nameof(SelectPoolFinalizer));
+                // Record both patch methods so Stop removes the whole hook.
+                RegistryHooks.Add(new KeyValuePair<MethodBase, MethodInfo>(original, prefix));
+                RegistryHooks.Add(new KeyValuePair<MethodBase, MethodInfo>(original, finalizer));
+                harmony.Patch(original, prefix: new HarmonyMethod(prefix), finalizer: new HarmonyMethod(finalizer));
+            }
+            catch (Exception error)
+            {
+                WarnLootPool(error);
+            }
+        }
+
+        private static void SelectGemPoolPrefix(LootManager __instance)
+        {
+            try
+            {
+                _poolEntryGem = NativeDreamEdition.IncludeInLootPool(SpecialEdition, ReadyGem) && _gemTemplate != null
+                    ? EnterLootPool(__instance.poolGemsByRarity, _gemTemplate.rarity, GemId)
+                    : null;
+            }
+            catch (Exception error)
+            {
+                WarnLootPool(error);
+                _poolEntryGem = null;
+            }
+        }
+
+        private static void SelectSkillPoolPrefix(LootManager __instance)
+        {
+            try
+            {
+                _poolEntryMemory = NativeDreamEdition.IncludeInLootPool(SpecialEdition, ReadyMemory) && _memoryTemplate != null
+                    ? EnterLootPool(__instance.poolSkillsByRarity, _memoryTemplate.rarity, MemoryId)
+                    : null;
+            }
+            catch (Exception error)
+            {
+                WarnLootPool(error);
+                _poolEntryMemory = null;
+            }
+        }
+
+        private static List<string> EnterLootPool(Dictionary<Rarity, List<string>> pools, Rarity rarity, string id)
+        {
+            if (pools == null) return null;
+            if (!pools.TryGetValue(rarity, out List<string> list) || list == null || list.Contains(id)) return null;
+            list.Add(id);
+            return list;
+        }
+
+        private static void SelectPoolFinalizer()
+        {
+            ExitLootPool(ref _poolEntryGem, GemId);
+            ExitLootPool(ref _poolEntryMemory, MemoryId);
+        }
+
+        private static void ExitLootPool(ref List<string> entry, string id)
+        {
+            List<string> list = entry;
+            entry = null;
+            if (list == null) return;
+            try
+            {
+                int index = list.LastIndexOf(id);
+                if (index >= 0) list.RemoveAt(index);
+            }
+            catch (Exception error)
+            {
+                WarnLootPool(error);
+            }
+        }
+
+        private static void WarnLootPool(Exception error)
+        {
+            if (_poolWarning) return;
+            _poolWarning = true;
+            Log.Warn("Native dream loot pool entry unavailable; the seeds stay obtainable through the development command: "
+                + error.GetType().Name + ": " + error.Message);
+        }
+
+        private sealed class SeedTemplateTag : MonoBehaviour
+        {
         }
 
         internal static void Fail(bool memory, Exception error)

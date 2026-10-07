@@ -21,6 +21,9 @@
     <GameDir Condition="'$(GameDir)' == ''">C:\Program Files (x86)\Steam\steamapps\common\Shape of Dreams</GameDir>
     <GameManagedDir>$(GameDir)\Shape of Dreams_Data\Managed</GameManagedDir>
     <ModDeployDir>$(GameDir)\Mods\DreamforgeRPG</ModDeployDir>
+    <!-- 版の切り替え。-p:DreamforgeEdition=special で特別版（夢の種をフラグなしで有効化し、本体の抽選プールへ原型と同じ重みで追加）。既定は通常版。 -->
+    <DreamforgeEdition Condition="'$(DreamforgeEdition)' == ''">normal</DreamforgeEdition>
+    <DefineConstants Condition="'$(DreamforgeEdition)' == 'special'">$(DefineConstants);DREAMFORGE_SPECIAL</DefineConstants>
   </PropertyGroup>
 
   <!-- 純C#コアは別DLLにせず同じアセンブリへ取り込む（ゲームは読み込み時にアセンブリ名を書き換えるため、MOD間参照を避ける）。 -->

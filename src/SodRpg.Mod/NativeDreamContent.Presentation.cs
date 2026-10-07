@@ -6,8 +6,13 @@ namespace SodRpg.Mod
 {
     internal static partial class NativeDreamContent
     {
+#if DREAMFORGE_SPECIAL
+        private static string GemName => Loc.Japanese ? "護りの種" : "Seed of Shelter";
+        private static string MemoryName => Loc.Japanese ? "芽吹きの種" : "Seedling";
+#else
         private static string GemName => Loc.Japanese ? "護りの種（試作）" : "Seed of Shelter (prototype)";
         private static string MemoryName => Loc.Japanese ? "芽吹きの種（試作）" : "Seedling (prototype)";
+#endif
         private static string GemDescription => Loc.Japanese
             ? "装着した記憶を使うと、自分に最大HPの3%の障壁を4秒間与える。8秒に1回。品質によらず同じ効果。本体の水銀と同時装着・融合はできない。"
             : "Using the equipped memory grants you a shield for 3% of maximum HP for 4 seconds. Once every 8 seconds. Fixed effect at all qualities. Cannot equip alongside or merge with native Quicksilver.";
