@@ -10,6 +10,25 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v2.10.1 — トレード履歴と追加敵の報酬の修正（2026-10-07）
+
+協力プレイのトレード履歴と、夢の圧で増えた敵の報酬の不具合を直しました。 / Fixes co-op trade history and rewards from extra pressure enemies.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- v2.8.0 で協力プレイのトレードをしたことがあるホストが v2.9.0 以降に更新すると、トレードの履歴を開けず、新しいトレードや預かり中の品の確認が進まなくなる問題を修正しました。 / Hosts who traded in v2.8.0 and then updated to v2.9.0 or later could no longer open their trade history, which blocked new trades and checks on held items; fixed.
+- 古いバージョンの参加者がいると、夢の圧で増えた敵の報酬が多くなりすぎる問題を修正しました。 / With a player on an older version, extra enemies from dream pressure gave too many rewards; fixed.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
 ## v2.10.0 — 食材の自動回収と夢の圧の報酬（2026-10-07）
 
 料理のエッセンスの食材が自動で集まり、上限なく貯められるようになりました。夢の圧が高いほど、欠片と悪夢化も増えます。 / Culinary Essence ingredients now come to you and stack without a cap, and higher dream pressure brings more shards and nightmares.
