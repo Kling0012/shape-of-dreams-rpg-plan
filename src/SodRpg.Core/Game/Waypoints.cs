@@ -244,7 +244,8 @@ namespace SodRpg.Core.Game
                 run.WaypointRoom = roomIndex;
                 run.WaypointRelicsInRoom = run.WaypointLootRooms.Contains(roomIndex) ? 1 : 0;
             }
-            if (t.FirstKillRelic && run.WaypointRelicsInRoom == 0 && reward.Relics.Count == 0)
+            bool firstClaim = t.FirstKillRelic && run.WaypointRelicsInRoom == 0;
+            if (firstClaim && reward.Relics.Count == 0)
                 reward.Relics.Add(Loot.RollRelic(rng, Rarity.Rare, itemLevel, null, focus, p.Stash, run.Satchel));
             if (t.MaxRelicsPerRoom != int.MaxValue)
             {
@@ -297,6 +298,11 @@ namespace SodRpg.Core.Game
                 reward.Shards = 0;
             }
             PressureCountRewards.ScaleLoot(rng, reward, rewardScale);
+            // First Claim is a fixed room guarantee, including when an extra dies first.
+            // Restore only its Rare floor; randomly rolled Epic/Legendary loot still uses
+            // the extra's thinning and pre-authorized Infinity rare budget.
+            if (firstClaim && t.MaxRelicsPerRoom > 0 && reward.Relics.Count == 0)
+                reward.Relics.Add(Loot.RollRelic(rng, Rarity.Rare, itemLevel, null, focus, p.Stash, run.Satchel));
             InfinityRewards.LimitReward(p, reward, t.DelayDropsUntilBoss ? WaypointBalance.HoardRewardMultiplier : 1,
                 InfinityRewards.OrdinaryBudgetMultiplier(run, waypoint, tier));
             if (!t.DelayDropsUntilBoss) return;
