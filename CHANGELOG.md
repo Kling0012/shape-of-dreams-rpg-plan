@@ -8,14 +8,13 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
+- ゲームを起動したままMODを更新・再読み込みした直後に、入っている割り込みが「未導入」と誤って判定され、インフィニティが無効と表示されることがある問題を修正しました（再起動すると直っていた原因）。 / Fixed freshly installed hooks being misdetected as missing right after updating or reloading the mod without restarting the game, which could show Infinity as disabled (the reason a restart appeared to fix it).
 ### 不具合の修正 / Bug fixes
-
 - **ブリンクなどで高速に動く旅人から料理の食材が逃げる問題を修正**：持ち主が瞬間移動して食材を置いていっても、離れすぎた食材（3m超）をホストが毎フレーム持ち主の位置へ移して拾わせます。 / **Fixed Culinary Essence ingredients getting left behind by fast, blinking travelers**: when the owner teleports away, the host now moves any ingredient more than 3 m away onto the owner every frame so it is picked up.
 ### 新しいもの / New
 - **星図で増やせるエッセンス枠の上限を6に**：アイデンティティと移動（回避）の枠を、星図でそれぞれ最大 +6 まで増やせます（合計 +12）。「記憶の器を広げる」「回避の器を広げる」は1段→6段になり、1段ごとに枠 +1、費用は1段5ポイントです（+6には30ポイント）。アイデンティティのルートは2本ありますが、段数は2本の合計で数えます。すでに1段取っている場合はそのままです。実機で本体の枠の表示は未確認です。 / **Star-chart essence slot cap raised to 6**: the Identity and Movement (dodge) slots can each gain up to +6 (+12 total) from the star chart. "Widen the Memory's Vessel" and "Widen the Dodge's Vessel" now have 6 ranks (+1 slot per rank, 5 points per rank, 30 points for +6). Identity ranks count together across its two routes. Existing 1-rank saves stay as they are. The game's own slot display has not been checked in-game.
 ### その他 / Other
 - 「星図でエッセンス枠を取っても増えない」報告の切り分けのため、ホストが枠の上限を書き換えたとき（現在の上限・星図の追加分・書き込む値・読み戻した値）を Player.log に「Host: gem slots …」として残すようにしました（1回の起動で60行まで）。動作は変えていません。 / To help diagnose reports of star-chart essence slots not increasing, the host now logs each gem-slot cap write (current cap, star bonus, target and read-back value) to Player.log as "Host: gem slots …" (up to 60 lines per launch). Behavior is unchanged.
-
 ---
 
 ## v2.10.4 — インフィニティの無効表示の修正と食材の吸い寄せ（2026-10-07）

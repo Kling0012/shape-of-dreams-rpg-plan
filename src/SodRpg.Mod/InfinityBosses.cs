@@ -256,7 +256,7 @@ namespace SodRpg.Mod
                 var patches = Harmony.GetPatchInfo(AccessTools.Method(typeof(RoomMonsters), "SpawnMonsterImp"));
                 if (patches != null)
                     foreach (var patch in patches.Prefixes)
-                        if (patch.PatchMethod.DeclaringType == typeof(InfinityBossSpawn)) return true;
+                        if (PatchMethodOwnership.DeclaresPatch(patch, typeof(InfinityBossSpawn))) return true;
                 return false;
             }
         }

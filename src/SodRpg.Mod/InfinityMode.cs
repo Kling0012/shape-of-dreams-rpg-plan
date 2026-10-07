@@ -1069,7 +1069,7 @@ namespace SodRpg.Mod
             var info = Harmony.GetPatchInfo(AccessTools.Method(type, "OnDeath"));
             if (info == null) return false;
             foreach (var patch in info.Prefixes)
-                if (patch.PatchMethod.DeclaringType == typeof(InfinityBossSoulDeath)) return true;
+                if (PatchMethodOwnership.DeclaresPatch(patch, typeof(InfinityBossSoulDeath))) return true;
             return false;
         }
 
