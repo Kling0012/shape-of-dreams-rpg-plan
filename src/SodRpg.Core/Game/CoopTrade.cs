@@ -282,7 +282,7 @@ namespace SodRpg.Core.Game
         {
             var notes = new List<string>();
             var profile = ProfileCodec.Read(text, notes);
-            if (notes.Count != 0 || ProfileCodec.Write(profile.Clone()) != text)
+            if (notes.Count != 0 || ProfileCodec.WriteCoopTradeReceiptProfile(profile.Clone()) != text)
                 throw new InvalidOperationException(Loc.T("取引のプロフィールに読み取れない所持品や不正な保存情報があります。", "Trade profile snapshot is not canonical or contains unreadable assets."));
             return profile;
         }
