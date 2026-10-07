@@ -586,6 +586,9 @@ namespace SodRpg.Mod.Startup.Tests
             // UnavailableReason is an auto-property: its backing field name differs, so reset via the setter.
             type.GetProperty("UnavailableReason", BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Static)
                 !.GetSetMethod(true)!.Invoke(null, new object[] { null });
+            ((System.Collections.Generic.HashSet<string>)type.GetField("DisableReasons", BindingFlags.NonPublic | BindingFlags.Static)!.GetValue(null)!).Clear();
+            type.GetProperty("LobbyStartGuardMissing", BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Static)
+                !.GetSetMethod(true)!.Invoke(null, new object[] { false });
             ((System.Collections.IDictionary)type.GetField("PresentationFailures", BindingFlags.NonPublic | BindingFlags.Static)!.GetValue(null)!).Clear();
             type.GetProperty("Available", BindingFlags.NonPublic | BindingFlags.Static).SetValue(null, false);
         }

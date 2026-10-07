@@ -8,6 +8,10 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
+### 不具合の修正 / Bug fixes
+
+- ロビーに「インフィニティは無効です（理由: Infinity patch was not installed: …InfinityLobbyStartCondition）」と出て選べない問題を直しました。この割り込みはロビーの開始メッセージを出すだけなので、ゲーム本体側に取り付けられなくてもインフィニティは無効にならなくなりました（Limbo では使えない規則はそのまま守ります）。取り付けられなかったときは、本体側の対象の有無とオーバーロード数を Player.log に出します。無効の理由が複数あるときは、ロビーの行に件数を添えます。 / Fixed "Infinity is disabled (Reason: Infinity patch was not installed: …InfinityLobbyStartCondition)" in the lobby. That hook only shows lobby start messages, so when it cannot attach to the game build Infinity is no longer switched off (the no-Infinity-in-Limbo rule still holds). A patch that fails to install now logs whether the native target exists and its overload count to Player.log, and the lobby line shows how many further reasons were recorded.
+
 ---
 
 ## v2.10.3 — 他MODとのエッセンス枠の共存（2026-10-07）

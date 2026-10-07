@@ -331,6 +331,57 @@ namespace SodRpg.Mod.Startup.Tests
             Assert.StartsWith("InfinityMapHover: node view destroyed", InfinityMode.UnavailableReason);
         }
 
+        /// <summary>
+        /// 報告「Infinity patch was not installed: InfinityLobbyStartCondition」：ロビーの開始メッセージだけの割り込みが入らない
+        /// 本体でも、インフィニティは無効にならない。残す必要のある規則（Limbo では使えない）は割り込みなしで守る。
+        /// </summary>
+        [Fact]
+        public void MissingLobbyStartGuardKeepsInfinityAvailableAndStillRefusesLimbo()
+        {
+            var required = (Type[])typeof(InfinityMode).GetField("NativePatchClasses", BindingFlags.NonPublic | BindingFlags.Static)!.GetValue(null)!;
+            Assert.DoesNotContain(typeof(InfinityLobbyStartCondition), required);
+            Assert.False(InfinityMode.IsNativePatch(typeof(InfinityLobbyStartCondition)));
+
+            InfinityMode.LobbyStartGuardUnavailable("Patch was not installed: InfinityLobbyStartCondition");
+            InfinityMode.CompletePatchInstallation(required.Length);
+            Assert.True(InfinityMode.Available);
+            Assert.Contains(Log.Warnings, m => m.Contains("lobby start guard unavailable"));
+
+            var settings = new GameSettingsManager { state = GameState.InLobby, difficulty = "diffNormal" };
+            NetworkedManagerBase<GameSettingsManager>.softInstance = settings;
+            try
+            {
+                Assert.False(InfinityMode.LimboBlocksInfinity);
+                settings.difficulty = "diffLimbo";
+                Assert.True(InfinityMode.LimboBlocksInfinity);
+            }
+            finally { NetworkedManagerBase<GameSettingsManager>.softInstance = null; }
+        }
+
+        /// <summary>入らなかったパッチの行に、本体側の対象が見つかるか・オーバーロード数・Harmony が返した数が出る。</summary>
+        [Fact]
+        public void PatchOutcomeLineNamesTheNativeTargetAndOverloads()
+        {
+            var describe = typeof(DreamforgeMod).GetMethod("DescribePatchOutcome", BindingFlags.NonPublic | BindingFlags.Static)!;
+            string text = (string)describe.Invoke(null, new object?[] { typeof(InfinityLobbyStartCondition), new List<MethodInfo>() })!;
+            Assert.Contains("targets reported: 0", text);
+            Assert.Contains("PlayLobbyManager.CheckStartGameCondition", text);
+            Assert.Contains("found:", text);
+            Assert.Contains("declared overloads: 1", text);
+        }
+
+        /// <summary>無効になった理由が複数あるとき、ロビーの行は最初の理由と件数だけを出し、残りはログへ。</summary>
+        [Fact]
+        public void LobbyNoticeCountsFurtherReasons()
+        {
+            SodRpg.Core.Game.Loc.Japanese = true;
+            InfinityMode.DisableFeature("check A failed");
+            Assert.DoesNotContain("ほか", InfinityMode.UnavailableNotice);
+            InfinityMode.DisableFeature("check B failed");
+            InfinityMode.DisableFeature("check C failed");
+            Assert.EndsWith("（理由: check A failed）（ほか2件はログ）", InfinityMode.UnavailableNotice);
+        }
+
         private static bool OwnsHook(MethodBase target, Type patchClass)
         {
             var info = Harmony.GetPatchInfo(target);
@@ -351,6 +402,9 @@ namespace SodRpg.Mod.Startup.Tests
             // UnavailableReason is an auto-property; its backing field name differs, so reset via the setter.
             type.GetProperty("UnavailableReason", BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Static)
                 !.GetSetMethod(true)!.Invoke(null, new object[] { null });
+            ((System.Collections.Generic.HashSet<string>)type.GetField("DisableReasons", BindingFlags.NonPublic | BindingFlags.Static)!.GetValue(null)!).Clear();
+            type.GetProperty("LobbyStartGuardMissing", BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Static)
+                !.GetSetMethod(true)!.Invoke(null, new object[] { false });
             ((System.Collections.IDictionary)type.GetField("PresentationFailures", BindingFlags.NonPublic | BindingFlags.Static)!.GetValue(null)!).Clear();
             type.GetProperty("Available", BindingFlags.NonPublic | BindingFlags.Static).SetValue(null, false);
         }

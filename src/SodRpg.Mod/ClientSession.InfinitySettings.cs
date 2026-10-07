@@ -9,7 +9,7 @@ namespace SodRpg.Mod
         internal const string InfinityEnabledKey = "dreamforge.infinity.enabled";
         internal const string InfinityIntervalKey = "dreamforge.infinity.interval";
         internal static bool HostChosenInfinityEnabled => NetworkServer.active && _hostSession != null
-            && _hostSession.Profile.LastInfinityEnabled;
+            && _hostSession.Profile.LastInfinityEnabled && !InfinityMode.LimboBlocksInfinity;
         internal static int HostChosenInfinityInterval => _hostSession?.Profile.LastInfinityInterval ?? InfinityRunState.DefaultInterval;
         internal static bool HostInfinityCanAdvance => HostInfinitySaveHoldSatisfied && HostAuthority.InfinityCanAdvance;
         internal static bool HostInfinityBoundarySettled => HostAuthority.InfinityBoundarySettled;
@@ -127,9 +127,10 @@ namespace SodRpg.Mod
             }
             catch (System.Exception ex)
             {
-                InfinityMode.InterceptionFailed(nameof(InfinityLobbyStartCondition), ex);
+                // The start message is not worth ending Infinity for; a hook that keeps failing still does.
+                InfinityMode.PresentationFailed(nameof(InfinityLobbyStartCondition), ex);
                 // A normal-mode start must not be blocked by optional Infinity checks.
-                if (ClientSession.HostChosenInfinityEnabled)
+                if (!InfinityMode.Available && ClientSession.HostChosenInfinityEnabled)
                 {
                     __result = false;
                     reason = InfinityMode.UnavailableNotice;
