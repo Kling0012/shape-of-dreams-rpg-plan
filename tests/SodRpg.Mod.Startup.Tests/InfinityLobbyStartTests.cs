@@ -362,6 +362,34 @@ namespace SodRpg.Mod.Startup.Tests
             Assert.Equal(1, zone.TravelToNodeCalls);
         }
 
+        /// <summary>
+        /// 報告: 「版 2.10.3-special/2.10.3-special、Protocol 24/24」と同じなのに「互換性情報に差があります」と出る。
+        /// 実際は参加者側でインフィニティが無効なだけだったので、警告は差のある項目を名前で挙げ、版・Protocol の差とは言わない。
+        /// </summary>
+        [Fact]
+        public void HostWarningNamesTheDifferingItemWhenOnlyTheGuestsInfinityIsOff()
+        {
+            SodRpg.Core.Game.Loc.Japanese = true;
+            var (session, participant, authority, zone) = StartPendingInfinity();
+            FeedHello(authority, participant, Protocol.Version, ContentFingerprint.Value, infinityAvailable: false);
+
+            var mismatches = (System.Collections.IDictionary)AccessTools.Field(typeof(HostAuthority), "_versionMismatches").GetValue(authority);
+            string text = (string)mismatches[participant];
+            Assert.Contains("相手側でインフィニティが無効", text);
+            Assert.DoesNotContain("Protocolが違う", text);
+            Assert.DoesNotContain("版が違う", text);
+            Assert.DoesNotContain("内容", text);
+        }
+
+        [Fact]
+        public void DifferenceItemsAreListedInOrderAndEmptyWhenNothingDiffers()
+        {
+            Assert.Equal("", HostAuthority.DescribeDifferencesJa(true, true, true, true, true));
+            Assert.Equal("版が違う、Protocolが違う、内容（星・遺物などの登録）が一致しない、中断保存に未対応、相手側でインフィニティが無効",
+                HostAuthority.DescribeDifferencesJa(false, false, false, false, false));
+            Assert.Equal("content registry differs", HostAuthority.DescribeDifferencesEn(true, false, true, true, true));
+        }
+
         [Fact]
         public void SilentGuestWarnsOnceWithoutStoppingInfinityOrDiscardingPendingKills()
         {

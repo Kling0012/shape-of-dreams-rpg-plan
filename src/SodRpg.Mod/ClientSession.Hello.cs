@@ -149,9 +149,10 @@ namespace SodRpg.Mod
             {
                 _hostCompatibilityWarned = true;
                 string theirs = string.IsNullOrEmpty(msg.modVer) ? "?" : msg.modVer;
+                // The host's own Infinity availability is shown by the lobby line, so only the shared items are listed here.
                 HostVersionWarning = Loc.T(
-                    $"ホストの Dreamforge 互換性情報に差があります（版 {theirs}/{HostAuthority.ModVersion}、Protocol {msg.protocol}/{Protocol.Version}）。機能は続行します。",
-                    $"The host's Dreamforge compatibility information differs (version {theirs}/{HostAuthority.ModVersion}, protocol {msg.protocol}/{Protocol.Version}). Features continue.");
+                    $"ホストの Dreamforge に差があります（{HostAuthority.DescribeDifferencesJa(sameProtocol, sameContent, sameVersion, msg.continueCheckpoints, true)}。版 {theirs}/{HostAuthority.ModVersion}、Protocol {msg.protocol}/{Protocol.Version}）。機能は続行します。",
+                    $"The host's Dreamforge differs ({HostAuthority.DescribeDifferencesEn(sameProtocol, sameContent, sameVersion, msg.continueCheckpoints, true)}; version {theirs}/{HostAuthority.ModVersion}, protocol {msg.protocol}/{Protocol.Version}). Features continue.");
                 Log.Warn($"Client: compatibility warning: protocol {msg.protocol}/{Protocol.Version}, mod {theirs}/{HostAuthority.ModVersion}, contentEqual={sameContent}, continueCheckpoints={msg.continueCheckpoints}; features continue.");
             }
         }

@@ -67,9 +67,11 @@ namespace SodRpg.Mod
                 else if (!_versionMismatches.ContainsKey(caller))
                 {
                     string theirs = string.IsNullOrEmpty(msg.modVer) ? "?" : msg.modVer;
+                    // Name the item that differs: version and protocol often read identical while the content
+                    // fingerprint or the peer's Infinity availability is what the warning is about.
                     _versionMismatches[caller] = Loc.T(
-                        $"{caller.playerName} の Dreamforge 互換性情報に差があります（版 {ModVersion}/{theirs}、Protocol {Protocol.Version}/{msg.protocol}）。機能は続行します。",
-                        $"{caller.playerName}'s Dreamforge compatibility information differs (version {ModVersion}/{theirs}, protocol {Protocol.Version}/{msg.protocol}). Features continue.");
+                        $"{caller.playerName} の Dreamforge に差があります（{DescribeDifferencesJa(sameProtocol, sameContent, sameVersion, msg.continueCheckpoints, msg.infinityAvailable)}。版 {ModVersion}/{theirs}、Protocol {Protocol.Version}/{msg.protocol}）。機能は続行します。",
+                        $"{caller.playerName}'s Dreamforge differs ({DescribeDifferencesEn(sameProtocol, sameContent, sameVersion, msg.continueCheckpoints, msg.infinityAvailable)}; version {ModVersion}/{theirs}, protocol {Protocol.Version}/{msg.protocol}). Features continue.");
                     // One warning per mismatch episode/transport, not every five-second retry.
                     // Do not call a content/capability difference a protocol mismatch.
                     Log.Warn($"Host: compatibility warning for {caller.playerName}: protocol {msg.protocol}/{Protocol.Version}, mod {theirs}/{ModVersion}, contentEqual={sameContent}, continueCheckpoints={msg.continueCheckpoints}, infinityAvailable={msg.infinityAvailable}; features continue.");
@@ -88,6 +90,32 @@ namespace SodRpg.Mod
                 });
             }
             catch (Exception ex) { Log.Error("Host: hello " + ex); }
+        }
+
+        // Which compatibility items differ, in the order a player can act on them. A peer that merely has Infinity
+        // switched off is reported as that, not as a version or protocol difference.
+        internal static string DescribeDifferencesJa(bool sameProtocol, bool sameContent, bool sameVersion,
+            bool continueCheckpoints, bool infinityAvailable)
+        {
+            var items = new List<string>();
+            if (!sameVersion) items.Add("版が違う");
+            if (!sameProtocol) items.Add("Protocolが違う");
+            if (!sameContent) items.Add("内容（星・遺物などの登録）が一致しない");
+            if (!continueCheckpoints) items.Add("中断保存に未対応");
+            if (!infinityAvailable) items.Add("相手側でインフィニティが無効");
+            return string.Join("、", items);
+        }
+
+        internal static string DescribeDifferencesEn(bool sameProtocol, bool sameContent, bool sameVersion,
+            bool continueCheckpoints, bool infinityAvailable)
+        {
+            var items = new List<string>();
+            if (!sameVersion) items.Add("version differs");
+            if (!sameProtocol) items.Add("protocol differs");
+            if (!sameContent) items.Add("content registry differs");
+            if (!continueCheckpoints) items.Add("no continue-checkpoint support");
+            if (!infinityAvailable) items.Add("Infinity is disabled on their side");
+            return string.Join(", ", items);
         }
 
         private void RebuildMismatchList()

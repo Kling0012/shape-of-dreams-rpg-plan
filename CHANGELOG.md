@@ -8,6 +8,10 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
+### 不具合の修正 / Bug fixes
+
+- 版も Protocol も同じなのに赤字で「Dreamforge 互換性情報に差があります（版 2.10.3-special/2.10.3-special、Protocol 24/24）」と出る表示を直しました。実際に差があったのは参加者側でインフィニティが無効になっていること（または内容の登録）で、表示がそれを示していませんでした。いまは「相手側でインフィニティが無効」「内容（星・遺物などの登録）が一致しない」のように、差のある項目を名前で出します。 / The red "Dreamforge compatibility information differs (version X/X, protocol 24/24)" line now names what actually differs (for example "Infinity is disabled on their side" or "content registry differs") instead of implying a version or protocol difference.
+
 ---
 
 ## v2.10.3 — 他MODとのエッセンス枠の共存（2026-10-07）
