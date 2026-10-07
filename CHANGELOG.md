@@ -10,6 +10,10 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ### 不具合の修正 / Bug fixes
 
+- 同じMODが2つ読み込まれた状態（MOD一覧でローカルとWorkshopの両方を有効化するなど）で起動すると、旧コピーの割り込みが残ったままの再導入に失敗した地図表示の割り込み2件のせいで、インフィニティを ON にしても「無効です」と出て選べない問題を直しました。旧コピーの割り込みが生きているときは再導入の失敗で機能を止めないようにしました。 / With this MOD loaded twice (for example, both the local copy and the Workshop copy enabled), two map-display hooks failed to reinstall over the earlier copy's live hooks and switched Infinity off entirely, so toggling it ON showed "disabled"; a failed reinstall no longer disables the feature while the earlier copy's hook keeps intercepting.
+
+---
+
 - 星図で増やせるエッセンス枠を、本体が1つの記憶に実際に並べられる4個まで（合計8個）に戻しました。本体は枠の数が4を超えると、その記憶の枠を1つも表示しないつくりになっているため、5・6段まで取ると「回避の器を広げる」などを取っても枠が増えないことがありました。5・6段を取っていた場合は4段に切り詰められ、使ったポイントは戻ります。 / Star-chart essence slots are capped again at what the game can actually display per memory: 4 each, 8 total. Above four the game shows no sockets at all, so ranks 5–6 left the slot invisible; existing ranks are trimmed to 4 and their points return.
 - ホストが書き込むエッセンス枠の上限を、混沌の聖堂の追加分と足しても4を超えないようにしました。 / The host now keeps the written slot cap within four even when combined with native chaos-shrine additions.
 

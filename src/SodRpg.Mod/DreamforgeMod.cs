@@ -385,33 +385,69 @@ namespace SodRpg.Mod
                     }
                     var targets = harmony.CreateClassProcessor(type).Patch();
                     if (lobbyGuard && (targets == null || targets.Count == 0 || !HasInstalledClass(type)))
-                        InfinityMode.LobbyStartGuardUnavailable("Patch was not installed: " + type.FullName + " " + DescribePatchOutcome(type, targets));
+                    {
+                        if (EarlierCopyHookIsLive(type))
+                            Log.Warn("Lobby start guard kept from an earlier copy of this MOD: " + type.FullName);
+                        else
+                            InfinityMode.LobbyStartGuardUnavailable("Patch was not installed: " + type.FullName + " " + DescribePatchOutcome(type, targets));
+                    }
                     if (infinity)
                     {
                         if (targets == null || targets.Count == 0 || !HasInstalledClass(type))
                         {
-                            Log.Warn("Infinity patch outcome: " + type.FullName + " " + DescribePatchOutcome(type, targets));
-                            InfinityMode.DisablePermanently("Infinity patch was not installed: " + type.FullName);
+                            if (EarlierCopyHookIsLive(type))
+                            {
+                                // The earlier copy's hook keeps intercepting; count the class as covered (#246).
+                                Log.Warn("Infinity patch kept from an earlier copy of this MOD: " + type.FullName);
+                                installedInfinity++;
+                            }
+                            else
+                            {
+                                Log.Warn("Infinity patch outcome: " + type.FullName + " " + DescribePatchOutcome(type, targets));
+                                InfinityMode.DisablePermanently("Infinity patch was not installed: " + type.FullName);
+                            }
                             skipped.Add(type.FullName);
                             continue;
                         }
                         installedInfinity++;
                     }
                     if (hunter && (targets == null || targets.Count == 0 || !HasInstalledClass(type)))
-                        InfinityMode.DisableHunterAdjustment("Hunter patch was not installed: " + type.FullName);
+                    {
+                        if (EarlierCopyHookIsLive(type))
+                            Log.Warn("Hunter adjustment kept from an earlier copy of this MOD: " + type.FullName);
+                        else
+                            InfinityMode.DisableHunterAdjustment("Hunter patch was not installed: " + type.FullName);
+                    }
                     installed++;
                 }
                 catch (Exception ex)
                 {
                     skipped.Add(type.FullName);
                     Log.Warn("Patch class skipped: " + type.FullName + ": " + ex.Message);
+                    bool earlierCopy = EarlierCopyHookIsLive(type);
                     if (hunter)
-                        InfinityMode.DisableHunterAdjustment("Hunter patch installation failed: " + type.FullName + ": " + ex.Message);
+                    {
+                        if (earlierCopy) Log.Warn("Hunter adjustment kept from an earlier copy of this MOD: " + type.FullName);
+                        else InfinityMode.DisableHunterAdjustment("Hunter patch installation failed: " + type.FullName + ": " + ex.Message);
+                    }
                     if (lobbyGuard)
-                        InfinityMode.LobbyStartGuardUnavailable("Patch installation failed: " + type.FullName + ": " + ex.Message);
+                    {
+                        if (earlierCopy) Log.Warn("Lobby start guard kept from an earlier copy of this MOD: " + type.FullName);
+                        else InfinityMode.LobbyStartGuardUnavailable("Patch installation failed: " + type.FullName + ": " + ex.Message);
+                    }
                     if (infinity)
                     {
-                        InfinityMode.DisablePermanently("Infinity patch installation failed: " + type.FullName + ": " + ex.Message);
+                        if (earlierCopy)
+                        {
+                            // Re-patching over the earlier copy's live detour can fail (its transpilers cannot be
+                            // re-cloned); that failure must not switch Infinity off while the old hook still runs.
+                            Log.Warn("Infinity patch kept from an earlier copy of this MOD: " + type.FullName + ": " + ex.Message);
+                            installedInfinity++;
+                        }
+                        else
+                        {
+                            InfinityMode.DisablePermanently("Infinity patch installation failed: " + type.FullName + ": " + ex.Message);
+                        }
                     }
                     // Rollback diagnostics must not escape this class's failure boundary.
                     try { RollBackClass(type); }
@@ -420,6 +456,25 @@ namespace SodRpg.Mod
             }
             InfinityMode.CompletePatchInstallation(installedInfinity);
             Log.Info($"Patches installed: {installed} classes" + (skipped.Count > 0 ? $", skipped {skipped.Count}: {string.Join(", ", skipped)}" : ""));
+        }
+
+        /// <summary>
+        /// A patch declared by this class is already live under another owner: an earlier copy of this MOD that the game
+        /// loaded into the same process (the loader renames the assembly and never unloads the old image). When such a copy
+        /// is still intercepting, a failed re-install of the same class is a reload artifact, not a missing hook, so the
+        /// feature must stay available (#246). Matching is by full name across every owner, mirroring PatchMethodOwnership.
+        /// </summary>
+        private bool EarlierCopyHookIsLive(Type type)
+        {
+            foreach (var target in Harmony.GetAllPatchedMethods())
+            {
+                var info = Harmony.GetPatchInfo(target);
+                if (info == null) continue;
+                foreach (var list in new[] { info.Prefixes, info.Postfixes, info.Transpilers, info.Finalizers })
+                    foreach (var patch in list)
+                        if (patch.owner != harmony.Id && PatchMethodOwnership.DeclaresPatch(patch, type)) return true;
+            }
+            return false;
         }
 
         /// <summary>

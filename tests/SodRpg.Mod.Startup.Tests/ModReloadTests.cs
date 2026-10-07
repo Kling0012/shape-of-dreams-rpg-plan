@@ -78,6 +78,95 @@ namespace SodRpg.Mod.Startup.Tests
             Assert.Equal(UnpatchedKey, BossBuildCodec.Key("reload", "target"));
         }
 
+        [Fact]
+        public void EarlierCopyHookIsLiveMatchesOnlyForeignOwnerSameNamePatch()
+        {
+            Log.Warnings.Clear();
+            // 旧コピーの生存フック: 別オーナーで同名クラスの割り込みが対象に載っている状態。
+            var earlier = new Harmony("reload.earlier." + Guid.NewGuid().ToString("N"));
+            var target = AccessTools.Method(typeof(BossBuildCodec), nameof(BossBuildCodec.Key));
+            earlier.Patch(target, postfix: new HarmonyMethod(AccessTools.Method(typeof(ReloadLobbyPatch), "Postfix")));
+            var owner = new Harmony("reload.later." + Guid.NewGuid().ToString("N"));
+            var mod = new DreamforgeMod { harmony = owner };
+            var isLive = typeof(DreamforgeMod).GetMethod("EarlierCopyHookIsLive",
+                BindingFlags.NonPublic | BindingFlags.Instance)!;
+            try
+            {
+                Assert.True((bool)isLive.Invoke(mod, new object[] { typeof(ReloadLobbyPatch) })!,
+                    "a live same-named patch under another owner is an earlier copy's hook");
+                Assert.False((bool)isLive.Invoke(mod, new object[] { typeof(ModReloadTests) })!,
+                    "classes without a live hook are not covered");
+            }
+            finally
+            {
+                foreach (var method in earlier.GetPatchedMethods().ToArray())
+                    earlier.Unpatch(method, HarmonyPatchType.All, earlier.Id);
+            }
+            Assert.False((bool)isLive.Invoke(mod, new object[] { typeof(ReloadLobbyPatch) })!,
+                "an unpatched earlier copy no longer covers the class");
+
+            // 自分のオーナーで入れた割り込みは「旧コピー」と数えない（導入検証の役割は HasInstalledClass のまま）。
+            owner.Patch(target, postfix: new HarmonyMethod(AccessTools.Method(typeof(ReloadLobbyPatch), "Postfix")));
+            try
+            {
+                Assert.False((bool)isLive.Invoke(mod, new object[] { typeof(ReloadLobbyPatch) })!);
+            }
+            finally
+            {
+                foreach (var method in owner.GetPatchedMethods().ToArray())
+                    owner.Unpatch(method, HarmonyPatchType.All, owner.Id);
+            }
+            Assert.Equal(UnpatchedKey, BossBuildCodec.Key("reload", "target"));
+        }
+
+        [Fact]
+        public void ReinstallOverEarlierCopyLiveTranspilersKeepsInfinityAvailable()
+        {
+            // 報告「インフィニティを ON にしても ON になっていない」(v2.10.5 実機) の回帰試験。
+            // 本体は同じMODを2つ同時に読み込める（MOD一覧の適用はIDの重複をそのまま書き込む）。旧コピーの割り込みが
+            // 生きたまま2つ目のコピーを導入すると、Transpiler を持つ地図表示の2クラスだけ再導入に失敗する。
+            // その失敗でインフィニティ全体を無効にせず、旧コピーのフックが引き受けることを保証する。
+            Log.Warnings.Clear();
+            var earlier = new Harmony("reload.earlier.transpiler." + Guid.NewGuid().ToString("N"));
+            earlier.Patch(AccessTools.Method(typeof(UI_InGame_WorldMap), nameof(UI_InGame_WorldMap.TravelToNode)),
+                transpiler: new HarmonyMethod(AccessTools.Method(typeof(InfinityMapTravelSelection), "Transpiler")));
+            earlier.Patch(AccessTools.Method(typeof(UI_Tooltip_WorldNode_Description), nameof(UI_Tooltip_WorldNode_Description.OnSetup)),
+                transpiler: new HarmonyMethod(AccessTools.Method(typeof(InfinityMapDescription), "Transpiler")));
+            var owner = new Harmony("reload.later.transpiler." + Guid.NewGuid().ToString("N"));
+            var mod = new DreamforgeMod { harmony = owner };
+            try
+            {
+                AccessTools.Method(typeof(DreamforgeMod), "PatchEachClass").Invoke(mod, null);
+                Assert.True(InfinityMode.Available,
+                    "a failed re-install over the earlier copy's live hook must not switch Infinity off: "
+                    + string.Join(" | ", Log.Warnings));
+                Assert.DoesNotContain(Log.Warnings, w => w.Contains("Infinity patch installation failed")
+                    || w.Contains("Infinity patch was not installed"));
+                Assert.Contains(Log.Warnings, w => w.Contains("kept from an earlier copy"));
+            }
+            finally
+            {
+                foreach (var method in owner.GetPatchedMethods().ToArray())
+                    owner.Unpatch(method, HarmonyPatchType.All, owner.Id);
+                foreach (var method in earlier.GetPatchedMethods().ToArray())
+                    earlier.Unpatch(method, HarmonyPatchType.All, earlier.Id);
+                ResetInfinityStatics();
+            }
+        }
+
+        private static void ResetInfinityStatics()
+        {
+            var type = typeof(InfinityMode);
+            foreach (var name in new[] { "_unavailable", "_permanentlyUnavailable", "_gameSeenSinceDisable",
+                "_restoring", "_newInfinity", "_refresh", "_lastDisableLog", "_initial", "_runId",
+                "_choice", "_choiceText", "_generationReportedRun" })
+                type.GetField(name, BindingFlags.NonPublic | BindingFlags.Static)?.SetValue(null, null);
+            type.GetProperty("UnavailableReason", BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Static)
+                !.GetSetMethod(true)!.Invoke(null, new object[] { null });
+            type.GetProperty("Available", BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Static)
+                !.SetValue(null, false);
+        }
+
         private static byte[] Rename(byte[] image, string suffix, Guid mvid)
         {
             var resolver = new DefaultAssemblyResolver();
