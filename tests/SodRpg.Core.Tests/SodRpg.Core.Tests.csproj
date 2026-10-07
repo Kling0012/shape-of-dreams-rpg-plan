@@ -19,6 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="Fixtures/CoopTradeV6/*.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../docs/specs/v1.29-uniques-table.md" Link="ReviewedV129.md" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../tools/balance/equipment/bases.json" Link="EquipmentBases.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../tools/balance/equipment/uniques.json" Link="EquipmentUniques.json" CopyToOutputDirectory="PreserveNewest" />

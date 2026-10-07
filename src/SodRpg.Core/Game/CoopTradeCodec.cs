@@ -72,6 +72,32 @@ namespace SodRpg.Core.Game
 
     public static partial class ProfileCodec
     {
+        // Receipts are immutable evidence, so validate them in the schema that originally
+        // wrote them. Do not accept older snapshots merely because migration produced no notes:
+        // canonical comparison must still reject missing, unknown, or normalized asset data.
+        internal static string WriteCoopTradeReceiptProfile(Profile profile)
+        {
+            if (profile.LoadedVersion == Profile.CurrentVersion) return Write(profile);
+            if (profile.LoadedVersion != 6) return null; // Cooperative trading began in version 6.
+            profile.SettleSatchelOverflow();
+            var body = new JsonObject();
+            foreach (var property in WriteBody(profile, true).Properties)
+            {
+                switch (property.Key)
+                {
+                    case "interruptedRelics":
+                    case "interruptedRelicsId":
+                    case "interruptedRelicsRunId":
+                    case "interruptedRelicsExecuted":
+                    case "interruptedRelicsClaimedRunIds":
+                    case "interruptedRelicsRetiredSourceRunIds":
+                        continue;
+                }
+                body.Add(property.Key, property.Value);
+            }
+            return Json.Write(new JsonObject().Add("format", Format).Add("version", 6L).Add("body", body));
+        }
+
         private static object WriteCoopTradeReservation(CoopTradeReservation pending)
         {
             if (pending == null) return null;
