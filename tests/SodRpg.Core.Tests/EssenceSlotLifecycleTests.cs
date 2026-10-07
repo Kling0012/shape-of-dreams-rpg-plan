@@ -390,6 +390,124 @@ namespace SodRpg.Core.Tests
         }
 
         [Fact]
+        public void Pending_continue_keeps_other_mod_baseline_without_readding_or_shrinking()
+        {
+            // Another mod raised both caps before the continue source is confirmed.
+            var hero = new Hero(); var peer = new DewPlayer { guid = "dew-resume-guest", hero = hero };
+            hero.owner = peer;
+            var host = new HostAuthority(); var rt = Runtime(hero);
+            hero.Skill.Caps[0] = 3; hero.Skill.Caps[1] = 2;
+            var native = new Se_Shrine_Chaos_StatBonus { victim = hero, isActive = true, currentAddedGemSlotIdentity = 1 };
+            var nativeGem = new Gem(); var housedGem = new Gem(); var moveGem = new Gem();
+            hero.Skill.gems[new GemLocation { skill = HeroSkillLocation.Identity, index = 0 }] = nativeGem;
+            // A gem from a former MOD slot now sits inside the other mod's raised baseline.
+            hero.Skill.gems[new GemLocation { skill = HeroSkillLocation.Identity, index = 2 }] = housedGem;
+            hero.Skill.gems[new GemLocation { skill = HeroSkillLocation.Movement, index = 0 }] = moveGem;
+            string previousRun = ClientSession.ContinueRunId;
+            EntityStatus.LiveStatusEffects.Add(native);
+            DewPlayer.gamePlayers.Add(peer);
+            HostAuthority.GemContinueSources.Begin("dew-run", "dew-checkpoint", "dew-resume");
+            HostAuthority.GemContinueSources.Include(peer.guid);
+            ClientSession.ContinueRunId = "dew-run";
+            try
+            {
+                for (int cycle = 0; cycle < 3; cycle++)
+                {
+                    host.ApplyForTest(rt, new Build());
+                    Assert.Equal(new[] { 3, 2 }, hero.Skill.Caps);
+                    Assert.Equal(0, hero.Skill.Writes);
+                    Assert.True(hero.Skill.gems.ContainsValue(nativeGem));
+                    Assert.True(hero.Skill.gems.ContainsValue(housedGem));
+                    Assert.True(hero.Skill.gems.ContainsValue(moveGem));
+                    Assert.Empty(hero.Skill.Dropped);
+                }
+            }
+            finally
+            {
+                HostAuthority.GemContinueSources.Reset();
+                ClientSession.ContinueRunId = previousRun;
+                DewPlayer.gamePlayers.Remove(peer);
+                EntityStatus.LiveStatusEffects.Remove(native);
+            }
+        }
+
+        [Fact]
+        public void Foreign_writeback_after_our_bonus_is_resupplied_idempotently()
+        {
+            var hero = new Hero(); var host = new HostAuthority(); var rt = Runtime(hero);
+            hero.Skill.Caps[0] = 3; hero.Skill.Caps[1] = 2;
+            host.ApplyForTest(rt, Both());
+            Assert.Equal(new[] { 4, 3 }, hero.Skill.Caps);
+            var ourGem = new Gem();
+            hero.Skill.gems[new GemLocation { skill = HeroSkillLocation.Identity, index = 3 }] = ourGem;
+            for (int i = 1; i <= 3; i++)
+            {
+                // The other mod rewrites its own absolute config, dropping our bonus with it.
+                hero.Skill.Caps[0] = 3; hero.Skill.Caps[1] = 2;
+                UnityEngine.Time.unscaledTime = i;
+                host.TickGemSlotsForTest();
+                Assert.Equal(new[] { 4, 3 }, hero.Skill.Caps);
+                Assert.True(hero.Skill.gems.ContainsValue(ourGem));
+                Assert.Empty(hero.Skill.Dropped);
+            }
+        }
+
+        [Fact]
+        public void Pending_source_then_validated_build_respec_and_detach_preserve_other_mod_slots()
+        {
+            var hero = new Hero(); var peer = new DewPlayer { guid = "dew-cycle-guest", hero = hero };
+            hero.owner = peer;
+            var host = new HostAuthority(); var rt = Runtime(hero);
+            hero.Skill.Caps[0] = 3; hero.Skill.Caps[1] = 2;
+            var native = new Se_Shrine_Chaos_StatBonus { victim = hero, isActive = true, currentAddedGemSlotIdentity = 1 };
+            var kept = new Gem();
+            hero.Skill.gems[new GemLocation { skill = HeroSkillLocation.Identity, index = 0 }] = kept;
+            string previousRun = ClientSession.ContinueRunId;
+            EntityStatus.LiveStatusEffects.Add(native);
+            DewPlayer.gamePlayers.Add(peer);
+            HostAuthority.GemContinueSources.Begin("dew-cycle", "dew-cp", "dew-rs");
+            HostAuthority.GemContinueSources.Include(peer.guid);
+            ClientSession.ContinueRunId = "dew-cycle";
+            try
+            {
+                host.RegisterNegotiation();
+                host.ApplyForTest(rt, new Build());
+                Assert.Equal(new[] { 3, 2 }, hero.Skill.Caps);
+                var receipt = new DreamforgeHelloMsg
+                {
+                    protocol = Protocol.Version + 1, modVer = "different", content = "different",
+                    continueRunId = "dew-cycle", continueCheckpointId = "dew-cp", continueResumeSession = "dew-rs",
+                };
+                host.ReceiveNegotiation(receipt, peer);
+                Assert.True(HostAuthority.GemContinueSources.QueueFreshBuild(peer.guid, peer, "dew-cycle"));
+                var profile = Profile.CreateNew(248);
+                var computed = Build.Compute(profile, "Hero_Cetus", 0);
+                string encoded = HostBuildValidation.Encode(computed, profile, "Hero_Cetus", 0);
+                Assert.True(HostBuildValidation.TryAccept(encoded, "Hero_Cetus", out var accepted, out var reason), reason);
+                HostAuthority.GemContinueSources.CommitFreshBuild(peer.guid, peer, "dew-cycle");
+                host.ApplyForTest(rt, Both());
+                Assert.Equal(new[] { 4, 3 }, hero.Skill.Caps);
+                var ourGem = new Gem();
+                hero.Skill.gems[new GemLocation { skill = HeroSkillLocation.Identity, index = 3 }] = ourGem;
+                host.ApplyForTest(rt, new Build());
+                Assert.Equal(new[] { 3, 2 }, hero.Skill.Caps);
+                Assert.Same(ourGem, Assert.Single(hero.Skill.Dropped));
+                Assert.True(hero.Skill.gems.ContainsValue(kept));
+                host.DetachGemSlotsForTest();
+                Assert.Equal(new[] { 3, 2 }, hero.Skill.Caps);
+                Assert.Single(hero.Skill.Dropped);
+            }
+            finally
+            {
+                host.DetachNegotiation();
+                HostAuthority.GemContinueSources.Reset();
+                ClientSession.ContinueRunId = previousRun;
+                DewPlayer.gamePlayers.Remove(peer);
+                EntityStatus.LiveStatusEffects.Remove(native);
+            }
+        }
+
+        [Fact]
         public void Reconnected_saved_guid_cannot_reuse_the_previous_peer_source_receipt()
         {
             var first = new DewPlayer { guid = "slot-rejoin-guest" };
