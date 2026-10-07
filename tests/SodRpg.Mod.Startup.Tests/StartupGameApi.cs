@@ -92,6 +92,22 @@ namespace SodRpg.Mod
         internal static void Install(Harmony harmony) { }
         internal static void Stop() { }
     }
+    // Native culinary adapters are exercised by a separate linked-production smoke harness.
+    internal static class CulinaryMagnet
+    {
+        internal static void Install(Harmony harmony) { }
+        internal static void Stop() { }
+    }
+    internal static class CulinaryIngredientCap
+    {
+        internal static void Install(Harmony harmony) { }
+        internal static void Stop() { }
+    }
+    internal static class CulinaryIngredientDisplay
+    {
+        internal static void Install(Harmony harmony) { }
+        internal static void Stop() { }
+    }
     // Scene/phase adaptation is exercised separately with its linked production smoke harness.
     internal static class InfinityBossArena
     {
