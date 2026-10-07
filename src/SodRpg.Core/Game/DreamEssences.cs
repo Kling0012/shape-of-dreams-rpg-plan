@@ -4,9 +4,9 @@ using System.Collections.Generic;
 namespace SodRpg.Core.Game
 {
     /// <summary>
-    /// 夢のエッセンス（案）：記憶ごとの「夢のソケット」へ入れ、その記憶の性質を変える MOD 独自のエッセンス。
-    /// 既存の記憶の仕掛け（<see cref="GimmickEffect"/>）だけで組める12種の定義と、ソケット1つ以上の組から仕掛けへ変える規則を持つ。
-    /// ソケット・保存・通信・画面はまだ無く、ゲームには何も出ない。設計と候補一覧は docs/specs/v2.10-dream-essences.md。
+    /// MOD独自のエッセンス候補12種。値・条件と既存効果の上限を評価するための定義。
+    /// ゲームへの追加は native Gem / SkillTrigger の試作で行い、疑似ソケットには接続しない。
+    /// 設計と候補一覧は docs/specs/v2.10-dream-essences.md。
     /// </summary>
     public sealed class DreamEssenceDef
     {
@@ -34,22 +34,11 @@ namespace SodRpg.Core.Game
         public int Arg(int quality) => Args[quality - 1];
     }
 
-    /// <summary>ソケットに入れた夢のエッセンス1つ分。記憶は本体の型名（St_...）。</summary>
-    public struct DreamSocketing
-    {
-        public string Memory { get; set; }
-        public string EssenceId { get; set; }
-        public int Quality { get; set; }
-    }
 
     public static class DreamEssences
     {
         public const int MinQuality = 1;
         public const int MaxQuality = 3;
-        /// <summary>装備できる記憶（Q・W・E・R・アイデンティティ・移動）の数。ソケットは記憶1つにつき1つ。</summary>
-        public const int MaxSockets = 6;
-
-        private const string IdPrefix = "dream.";
 
         private static readonly DreamEssenceDef[] Defs =
         {
@@ -100,14 +89,9 @@ namespace SodRpg.Core.Game
             return null;
         }
 
-        /// <summary>仕掛けの識別子（通信で使える文字だけ）。同じ品質の同じ品は同じ識別子になる。</summary>
-        public static string StarId(DreamEssenceDef def, int quality) => IdPrefix + def.Id + ".q" + quality;
 
         public static bool ValidQuality(int quality) => quality >= MinQuality && quality <= MaxQuality;
 
-        /// <summary>記憶に入れられるか。記憶の型名は本体のもの。既存の判定に従い、記憶の型名で入れられない効果（移動の記憶に入れられない効果など）を断る。</summary>
-        public static bool CanSocket(DreamEssenceDef def, string memory) =>
-            def != null && Links.IsMemory(memory) && Gimmicks.AllowedOnMemory(def.Effect, memory);
 
         /// <summary>1段分の仕掛けの定義。品質が範囲外なら null。</summary>
         public static GimmickDef ToGimmick(DreamEssenceDef def, int quality)
@@ -123,49 +107,5 @@ namespace SodRpg.Core.Game
             };
         }
 
-        /// <summary>既存の上限と検証に通した仕掛け。入れられない組み合わせは null。</summary>
-        public static GimmickEntry ToEntry(DreamEssenceDef def, int quality, string memory)
-        {
-            if (!CanSocket(def, memory)) return null;
-            var gimmick = ToGimmick(def, quality);
-            if (gimmick == null) return null;
-            return Gimmicks.Clamp(new GimmickEntry { StarId = StarId(def, quality), Memory = memory, Def = gimmick });
-        }
-
-        /// <summary>
-        /// ソケットの組から、有効な仕掛けを入力の順に返す。
-        /// 記憶1つにつきエッセンスは1つ（先に書かれたものを使う）、ソケットは最大 <see cref="MaxSockets"/>。
-        /// 同じ系統（同じ <see cref="GimmickEffect"/>）が別の記憶に入っていれば強い方だけが有効で、同じ強さなら先のもの。
-        /// 入れられない組み合わせは黙って捨てず <paramref name="rejected"/> に理由つきで返す。
-        /// </summary>
-        public static List<GimmickEntry> Resolve(IEnumerable<DreamSocketing> sockets, out List<string> rejected)
-        {
-            rejected = new List<string>();
-            var candidates = new List<GimmickEntry>();
-            var memories = new HashSet<string>(StringComparer.Ordinal);
-            int seen = 0;
-            foreach (var socket in sockets ?? new DreamSocketing[0])
-            {
-                if (++seen > MaxSockets) { rejected.Add("socket count over " + MaxSockets); break; }
-                var def = Find(socket.EssenceId);
-                if (def == null) { rejected.Add("unknown essence " + socket.EssenceId); continue; }
-                if (!ValidQuality(socket.Quality)) { rejected.Add("invalid quality " + socket.Quality + " for " + def.Id); continue; }
-                if (!memories.Add(socket.Memory ?? "")) { rejected.Add("memory already has a socketed essence: " + socket.Memory); continue; }
-                var entry = ToEntry(def, socket.Quality, socket.Memory);
-                if (entry == null) { rejected.Add(def.Id + " cannot be socketed in " + socket.Memory); continue; }
-                candidates.Add(entry);
-            }
-            var strongest = new Dictionary<GimmickEffect, GimmickEntry>();
-            foreach (var entry in candidates)
-                if (!strongest.TryGetValue(entry.Def.Effect, out var best) || entry.Def.ValuePrecise > best.Def.ValuePrecise)
-                    strongest[entry.Def.Effect] = entry;
-            var result = new List<GimmickEntry>();
-            foreach (var entry in candidates)
-            {
-                if (ReferenceEquals(strongest[entry.Def.Effect], entry)) result.Add(entry);
-                else rejected.Add(entry.StarId + " overridden by a stronger " + entry.Def.Effect + " essence");
-            }
-            return result;
-        }
     }
 }

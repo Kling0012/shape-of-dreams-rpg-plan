@@ -273,6 +273,17 @@ Gemini案より実コードを優先した箇所：
 
 開発者モードのコンソール（`）で使える確認用コマンド：`dreamforge_perf`（このMODの1フレームあたりの処理時間）、`dreamforge_status`、`dreamforge_stats`（キャラの最終能力値と補正）。
 
+### 開発専用：native 記憶・エッセンス2品
+
+既定は無効。起動時に `Application.persistentDataPath/QuickSave/Mods/DreamforgeRPG/` の **`dev.flag` と `native-dream.flag` の両方**がある場合だけ有効になる。協力で確認する場合は全参加者の MOD と両フラグを揃える。
+
+- コンソールの `dreamforge_native_status` で有効状態と2品それぞれの登録 readiness をログへ出す。ホストだけが `dreamforge_native_give 0`（護りの種）と `dreamforge_native_give 1`（芽吹きの種）で **本体のワールド拾得物**を作れる。
+- 通常操作で拾い、護りの種をエッセンス枠、芽吹きの種を通常記憶枠へ装着する。護りの種は品質I固定：装着先の記憶を使うと最大HPの3%の障壁を4秒、8秒に1回。芽吹きの種は native passive：Monster を5体倒すごとに自分と10m以内の味方 hero を各対象の最大HPの8%回復する。
+- 解除後の停止、再装着・部屋移動の重複なし、ソロ Continue、フラグなし／MOD無効で元の品へ戻ること、協力での表示・効果・各PCのログを確認する。保存は `Gem_C_Quicksilver` / `St_C_MassProtection` と既存辞書内の文字列の印で、新しい保存型・network schema・assetId は足さない。
+- 同じ具体型の native 制約により、原型 Quicksilver と護りの種は同時装着できない。試作品と原型の交差合成は拒否する。入手は開発 grant のみで、独立したドロップ・ショップ・図鑑行・新実績は追加しない。
+
+**この2品の Unity 実機確認はまだない。** 品ごとの初期化失敗は警告1回で vanilla fallback とし、通常の起動を止めない。[方式比較・コード根拠・PC確認手順](../../docs/specs/v2.10-dream-essences.md)を参照。
+
 ## 構成
 
 | ファイル | 役割 |
