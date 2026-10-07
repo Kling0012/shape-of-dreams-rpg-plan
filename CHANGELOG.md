@@ -8,6 +8,10 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
+### その他 / Other
+
+- 「星図でエッセンス枠を取っても増えない」報告の切り分けのため、ホストが枠の上限を書き換えたとき（現在の上限・星図の追加分・書き込む値・読み戻した値）を Player.log に「Host: gem slots …」として残すようにしました（1回の起動で60行まで）。動作は変えていません。 / To help diagnose reports of star-chart essence slots not increasing, the host now logs each gem-slot cap write (current cap, star bonus, target and read-back value) to Player.log as "Host: gem slots …" (up to 60 lines per launch). Behavior is unchanged.
+
 ---
 
 ## v2.10.4 — インフィニティの無効表示の修正と食材の吸い寄せ（2026-10-07）

@@ -191,6 +191,7 @@ namespace SodRpg.Mod
                     observed = skill.GetMaxGemCount(loc);
                     ledger.Commit(decision, observed);
                 }
+                LogGemSlotWrite(skill, loc, current, desired, removing, decision, observed);
                 // Saves retain gem locations, not these native caps. A resumed legacy
                 // high-index gem can overflow even if applying this build did not shrink a cap.
                 if (observed != decision.Target) return;
@@ -203,6 +204,22 @@ namespace SodRpg.Mod
             }
             catch (Exception ex) { Log.Error($"Host: gem slots {loc}: " + ex); }
             finally { _gemOverflow.Clear(); }
+        }
+
+        // 「星を取ったのに枠が増えない」報告の切り分け用。書き込みが起きたときだけ、値の流れを Player.log に残す（上限あり）。
+        private const int GemSlotLogLimit = 60;
+        private static int _gemSlotLogCount;
+
+        private static void LogGemSlotWrite(HeroSkill skill, HeroSkillLocation loc, int current, int desired, bool removing,
+            GemSlotDecision decision, int observed)
+        {
+            if (!decision.ShouldWrite && observed == decision.Target) return;
+            if (_gemSlotLogCount >= GemSlotLogLimit) return;
+            _gemSlotLogCount++;
+            string hero = skill.hero != null ? skill.hero.GetType().Name : "?";
+            Log.Info($"Host: gem slots {hero} {loc}: cap {current} -> target {decision.Target} (desired star bonus {desired}"
+                + (removing ? ", removing" : "") + $"), read back {observed}"
+                + (observed == decision.Target ? "" : " [differs from target]"));
         }
 
         // Other mods may also raise gem caps. Never disable anything for it; one notice per
