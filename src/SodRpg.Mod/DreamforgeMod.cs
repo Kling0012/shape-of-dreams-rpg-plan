@@ -49,6 +49,10 @@ namespace SodRpg.Mod
                 stage = "patch installation";
                 PatchEachClass();
                 PressureEnemyCount.Install(harmony);
+                CulinaryMagnet.Install(harmony);
+                CulinaryIngredientCap.Install(harmony);
+                try { CulinaryIngredientDisplay.Install(harmony); }
+                catch (Exception ex) { Log.Warn("Culinary ingredient count display disabled; other MOD features remain active: " + ex.Message); }
                 stage = "resource initialization";
                 Loc.Japanese = config.japanese;
                 // Install the generated star maps and their migration rules before any profile is loaded or any build is computed.
@@ -319,6 +323,9 @@ namespace SodRpg.Mod
             var performance = _performance; _performance = null;
             try { PressureEnemyCount.Stop(); } catch (Exception ex) { Log.Error("Startup cleanup: pressure enemy count: " + ex); }
             try { InfinityBossArena.Stop(); } catch (Exception ex) { Log.Error("Startup cleanup: Infinity boss arenas: " + ex); }
+            try { CulinaryMagnet.Stop(); } catch (Exception ex) { Log.Error("Startup cleanup: culinary attraction: " + ex); }
+            try { CulinaryIngredientCap.Stop(); } catch (Exception ex) { Log.Error("Startup cleanup: culinary ingredients: " + ex); }
+            try { CulinaryIngredientDisplay.Stop(); } catch (Exception ex) { Log.Error("Startup cleanup: culinary ingredient display: " + ex); }
             try { host?.Detach(); } catch (Exception ex) { Log.Error("Startup cleanup: host detach: " + ex); }
             try { session?.Unwire(); } catch (Exception ex) { Log.Error("Startup cleanup: session unwire: " + ex); }
             try { ui?.Dispose(); } catch (Exception ex) { Log.Error("Startup cleanup: UI dispose: " + ex); }
