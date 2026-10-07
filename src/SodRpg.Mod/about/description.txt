@@ -1,5 +1,5 @@
-[b]v2.10.4: fixes Infinity mode showing as disabled in the lobby and a false compatibility warning; Culinary Essence ingredients now come from anywhere in the room. Saves carry over. Update all co-op players and restart the game.[/b]
-[b]v2.10.4：ロビーでインフィニティが「無効です」と出て選べない問題と、版が同じなのに互換性の警告が出る問題を修正しました。料理のエッセンスの食材が部屋のどこからでも寄ってきます。セーブデータはそのまま引き継げます。協力プレイでは参加者全員がこのバージョンに更新し、ゲームを再起動してください。[/b]
+[b]v2.10.5: fixes Infinity showing as disabled after the mod is updated while the game is running, and Culinary ingredients left behind by blinking. Saves carry over. Update all co-op players and restart the game.[/b]
+[b]v2.10.5：ゲームを起動したまま MOD を更新したあとにインフィニティが無効と表示される問題と、ブリンクで料理の食材を置いていく問題を修正しました。セーブデータはそのまま引き継げます。協力プレイでは参加者全員がこのバージョンに更新し、ゲームを再起動してください。[/b]
 
 [h1]Dreamforge RPG[/h1]
 Turns every run into part of a long RPG journey: relics you keep, a risky "secure or delve" choice at every zone, a star map per Traveler, a forge, and long-term goals. Co-op ready.
