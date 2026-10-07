@@ -73,6 +73,58 @@ namespace SodRpg.Mod.Startup.Tests
         [Theory]
         [InlineData(false)]
         [InlineData(true)]
+        public void Confirmed_room_travel_never_waits_for_the_host_personal_choice(bool withGuest)
+        {
+            var (session, zone, _) = StartRevealGraph();
+            DewPlayer guest = null;
+            if (withGuest)
+            {
+                guest = JoinLobbyParticipant("ready-guest");
+                DewPlayer.gamePlayers.Add(guest);
+            }
+            var run = session.Profile.Run;
+            run.Infinity.Phase = InfinityPhase.AwaitingChoice;
+            run.AwaitingChoice = true;
+            InfinityMode.BeginPersonalChoice(run);
+            if (guest != null) FeedPersonalChoice(guest, Pact.None, skip: true);
+            // The host only travels; it never submits a personal receipt of its own.
+            run.Infinity.Phase = InfinityPhase.Exploring;
+            zone.VoteRequired = true;
+            zone.CmdTravelToNode(1, new NetworkConnectionToClient { Player = DewPlayer.local });
+            zone.CompleteVote();
+            InfinityMode.Tick();
+            InfinityMode.Tick();
+            Assert.Equal(1, zone.TravelToNodeCalls);
+            Assert.Equal(1, zone.LastTravelTo);
+            Assert.False(InfinityMode.PersonalBarrier.TimedOut);
+            Assert.True(InfinityMode.PersonalChoicesSettled);
+        }
+
+        [Fact]
+        public void Confirmed_room_travel_still_waits_for_a_guest_that_has_not_chosen()
+        {
+            var (session, zone, _) = StartRevealGraph();
+            var guest = JoinLobbyParticipant("slow-guest");
+            DewPlayer.gamePlayers.Add(guest);
+            var run = session.Profile.Run;
+            run.Infinity.Phase = InfinityPhase.AwaitingChoice;
+            run.AwaitingChoice = true;
+            InfinityMode.BeginPersonalChoice(run);
+            run.Infinity.Phase = InfinityPhase.Exploring;
+            zone.VoteRequired = true;
+            zone.CmdTravelToNode(1, new NetworkConnectionToClient { Player = DewPlayer.local });
+            zone.CompleteVote();
+            InfinityMode.Tick();
+            Assert.Equal(0, zone.TravelToNodeCalls);
+            FeedPersonalChoice(guest, Pact.None);
+            InfinityMode.Tick();
+            InfinityMode.Tick();
+            Assert.Equal(1, zone.TravelToNodeCalls);
+        }
+
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
         public void Host_boss_decision_keeps_personal_panel_open_until_sixty_second_deadline(bool secure)
         {
             var (session, zone, _) = StartRevealGraph();
