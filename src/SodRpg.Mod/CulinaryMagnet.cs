@@ -57,11 +57,11 @@ namespace SodRpg.Mod
             {
                 // Applied after native variation on both host and clients. All movement,
                 // eligibility, pickup effects and Network_target synchronization stay native.
-                _range.SetValue(__instance, 9f);
-                _delay.SetValue(__instance, Math.Max(0.6f, (float)_delay.GetValue(__instance)));
-                _speed.SetValue(__instance, 24f);
-                _accelerationMin.SetValue(__instance, 7f);
-                _accelerationMax.SetValue(__instance, 30f);
+                _range.SetValue(__instance, 16f);
+                _delay.SetValue(__instance, Math.Min(0.3f, (float)_delay.GetValue(__instance)));
+                _speed.SetValue(__instance, 40f);
+                _accelerationMin.SetValue(__instance, 14f);
+                _accelerationMax.SetValue(__instance, 60f);
             }
             catch (Exception ex)
             {
