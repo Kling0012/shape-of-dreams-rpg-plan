@@ -56,6 +56,18 @@ namespace SodRpg.Core.Game
             return new GemSlotDecision(current, Math.Max(Math.Max(0, minimumNative), cap - RemainingContribution(cap)), 0);
         }
 
+        /// <summary>
+        /// Hold an observed cap we did not author instead of shrinking below it, for example
+        /// while a continue source is still pending. The raised slots stay unclaimed foreign
+        /// baseline; existing ownership is kept so a later removal removes only our part.
+        /// </summary>
+        public GemSlotDecision PreserveExternal(GemSlotDecision decision, int current)
+        {
+            int cap = Math.Max(0, current);
+            if (decision.Target >= cap) return decision;
+            return new GemSlotDecision(decision.Current, cap, Math.Max(decision.Contribution, OurContribution));
+        }
+
         // Absolute native rewrites may already have removed some or all of our contribution.
         private int RemainingContribution(int cap) =>
             cap < LastWritten ? Math.Max(0, OurContribution - (LastWritten - cap)) : OurContribution;

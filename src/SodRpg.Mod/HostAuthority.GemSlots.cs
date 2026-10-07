@@ -153,17 +153,21 @@ namespace SodRpg.Mod
             {
                 int current = skill.GetMaxGemCount(loc);
                 int minimumNative = NativeGemSlotMinimum(skill, loc);
-                if (PendingNativeContinueGemSource(skill))
+                WarnOnceOnForeignGemSlotChange(ledger, current, minimumNative);
+                bool pendingSource = PendingNativeContinueGemSource(skill);
+                if (pendingSource)
                 {
                     int nativeOnly = ledger.DecideRemoval(current, minimumNative).Target;
                     int budget = EssenceSlots.MaxAdded;
                     if (loc == HeroSkillLocation.Movement && GemSlotLedgers.TryGetValue(skill, out var pair))
                         budget -= pair.Identity.OurContribution;
                     budget = Math.Min(EssenceSlots.MaxPerLocation, Math.Min(Math.Max(0, budget), int.MaxValue - nativeOnly));
-                    int pending = Math.Min(budget, Math.Max(0, Math.Max(0, current) - nativeOnly));
-                    // Save files retain exact gem locations, not caps. Preserve only the bounded
-                    // possible MOD tail until a successfully rewound source has been validated.
-                    for (int extra = pending; extra < budget; extra++)
+                    // Save files retain exact gem locations, not caps. The observed cap already
+                    // houses every restored gem below it, including slots other mods added, so
+                    // count only unhoused gems as the bounded possible MOD tail.
+                    int housed = Math.Max(0, Math.Max(0, current) - nativeOnly);
+                    int pending = 0;
+                    for (int extra = housed; extra < budget; extra++)
                         if (skill.gems.TryGetValue(new GemLocation { skill = loc, index = nativeOnly + extra }, out var gem) && gem != null)
                             pending = extra + 1;
                     if (pending > 0)
@@ -173,6 +177,8 @@ namespace SodRpg.Mod
                     }
                 }
                 var decision = removing ? ledger.DecideRemoval(current, minimumNative) : ledger.Decide(current, desired, minimumNative);
+                // A pending source must not shrink below a cap that other mods raised meanwhile.
+                if (pendingSource) decision = ledger.PreserveExternal(decision, current);
                 int observed;
                 try
                 {
@@ -197,6 +203,18 @@ namespace SodRpg.Mod
             }
             catch (Exception ex) { Log.Error($"Host: gem slots {loc}: " + ex); }
             finally { _gemOverflow.Clear(); }
+        }
+
+        // Other mods may also raise gem caps. Never disable anything for it; one notice per
+        // session is enough because the ledger treats every unauthored value as the baseline.
+        private static bool _foreignGemSlotChangeWarned;
+
+        private static void WarnOnceOnForeignGemSlotChange(GemSlotLedger ledger, int current, int minimumNative)
+        {
+            if (_foreignGemSlotChangeWarned || current == ledger.LastWritten || current == minimumNative) return;
+            _foreignGemSlotChangeWarned = true;
+            Log.Warn("Gem slot counts were changed outside this mod (game or another mod). " +
+                "Treating the current counts as the base and adding only this mod's own star-chart bonus.");
         }
     }
 }

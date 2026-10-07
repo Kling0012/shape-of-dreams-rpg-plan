@@ -8,6 +8,7 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
+- 他のMODもエッセンス枠を増やしている環境で、Continue後に枠が余分に増えたり、星図で増やした枠が正しく保たれないことがあったのを直しました。 / Fixed gem slots sometimes growing too much after continuing, or star-chart gem slots not being kept correctly, when another mod also adds gem slots.
 ---
 
 ## v2.10.2 — 一番槍の保証の修正（2026-10-07）
