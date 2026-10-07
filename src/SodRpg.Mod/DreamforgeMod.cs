@@ -361,7 +361,7 @@ namespace SodRpg.Mod
                 {
                     if (HarmonyMethodExtensions.GetFromType(type).Count == 0)
                     {
-                        if (infinity) InfinityMode.DisableFeature("Infinity patch has no native target: " + type.FullName);
+                        if (infinity) InfinityMode.DisablePermanently("Infinity patch has no native target: " + type.FullName);
                         continue;
                     }
                     var targets = harmony.CreateClassProcessor(type).Patch();
@@ -369,7 +369,7 @@ namespace SodRpg.Mod
                     {
                         if (targets == null || targets.Count == 0 || !HasInstalledClass(type))
                         {
-                            InfinityMode.DisableFeature("Infinity patch was not installed: " + type.FullName);
+                            InfinityMode.DisablePermanently("Infinity patch was not installed: " + type.FullName);
                             skipped.Add(type.FullName);
                             continue;
                         }
@@ -387,7 +387,7 @@ namespace SodRpg.Mod
                         InfinityMode.DisableHunterAdjustment("Hunter patch installation failed: " + type.FullName + ": " + ex.Message);
                     if (infinity)
                     {
-                        InfinityMode.DisableFeature("Infinity patch installation failed: " + type.FullName + ": " + ex.Message);
+                        InfinityMode.DisablePermanently("Infinity patch installation failed: " + type.FullName + ": " + ex.Message);
                     }
                     // Rollback diagnostics must not escape this class's failure boundary.
                     try { RollBackClass(type); }

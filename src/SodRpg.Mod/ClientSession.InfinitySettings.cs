@@ -85,6 +85,7 @@ namespace SodRpg.Mod
 
         private void TickInfinitySettings()
         {
+            InfinityMode.RecoverAfterExpedition(InGame);
             if (!NetworkServer.active || InGame) return;
             var settings = NetworkedManagerBase<GameSettingsManager>.softInstance;
             if (settings == null || settings.state != GameState.InLobby) return;

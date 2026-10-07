@@ -248,7 +248,7 @@ namespace SodRpg.Mod
                 if (InfinityMode.Enabled)
                     return from == zone.currentNodeIndex && InfinityMode.IsRevealDestination(zone, to);
             }
-            catch (Exception ex) { InfinityMode.InterceptionFailed(nameof(InfinityMapTravelSelection), ex); }
+            catch (Exception ex) { InfinityMode.PresentationFailed(nameof(InfinityMapTravelSelection), ex); }
             return zone.IsNodeConnected(from, to);
         }
 
@@ -259,7 +259,7 @@ namespace SodRpg.Mod
                 if (InfinityMode.Enabled && from == zone.currentNodeIndex && InfinityMode.IsRevealDestination(zone, to))
                     return 1;
             }
-            catch (Exception ex) { InfinityMode.InterceptionFailed(nameof(InfinityMapDescription), ex); }
+            catch (Exception ex) { InfinityMode.PresentationFailed(nameof(InfinityMapDescription), ex); }
             return zone.GetNodeDistance(from, to);
         }
 
@@ -348,9 +348,9 @@ namespace SodRpg.Mod
             }
             catch (Exception ex)
             {
-                InfinityMode.InterceptionFailed(nameof(InfinityMapRefresh), ex);
+                InfinityMode.PresentationFailed(nameof(InfinityMapRefresh), ex);
                 try { InfinityMapPresentation.Release(__instance); }
-                catch (Exception cleanup) { InfinityMode.InterceptionFailed(nameof(InfinityMapRefresh), cleanup); }
+                catch (Exception cleanup) { InfinityMode.PresentationFailed(nameof(InfinityMapRefresh), cleanup); }
                 return true;
             }
         }
@@ -370,7 +370,7 @@ namespace SodRpg.Mod
                 ____snappedNodeIndex = current;
                 __instance.HoverNode(current, true);
             }
-            catch (Exception ex) { InfinityMode.InterceptionFailed(nameof(InfinityMapRefresh), ex); }
+            catch (Exception ex) { InfinityMode.PresentationFailed(nameof(InfinityMapRefresh), ex); }
         }
     }
 
@@ -380,7 +380,7 @@ namespace SodRpg.Mod
         private static void Prefix(UI_InGame_WorldMap __instance)
         {
             try { InfinityMapPresentation.Release(__instance, onlyOwned: true); }
-            catch (Exception ex) { InfinityMode.InterceptionFailed(nameof(InfinityMapDisable), ex); }
+            catch (Exception ex) { InfinityMode.PresentationFailed(nameof(InfinityMapDisable), ex); }
         }
     }
 
@@ -404,7 +404,7 @@ namespace SodRpg.Mod
                 }
                 InfinityMapPresentation.UpdateTravel(__instance, zone);
             }
-            catch (Exception ex) { InfinityMode.InterceptionFailed(nameof(InfinityMapNodeSetup), ex); }
+            catch (Exception ex) { InfinityMode.PresentationFailed(nameof(InfinityMapNodeSetup), ex); }
         }
     }
 
@@ -429,7 +429,7 @@ namespace SodRpg.Mod
                 InfinityMapPresentation.MoveSelection(__instance, NetworkedManagerBase<ZoneManager>.instance, direction);
                 return false;
             }
-            catch (Exception ex) { InfinityMode.InterceptionFailed(nameof(InfinityMapMoveSelection), ex); return true; }
+            catch (Exception ex) { InfinityMode.PresentationFailed(nameof(InfinityMapMoveSelection), ex); return true; }
         }
     }
 
@@ -446,7 +446,7 @@ namespace SodRpg.Mod
                     InGameUIManager.instance.fullWorldMapNodeItems, screenPos, maxDist);
                 return false;
             }
-            catch (Exception ex) { InfinityMode.InterceptionFailed(nameof(InfinityMapClosestNode), ex); return true; }
+            catch (Exception ex) { InfinityMode.PresentationFailed(nameof(InfinityMapClosestNode), ex); return true; }
         }
     }
 
@@ -457,7 +457,7 @@ namespace SodRpg.Mod
         {
             if (!InfinityMode.Available) return true;
             try { return !InfinityMode.Enabled || index < 0 || InfinityMode.IsRevealVisible(NetworkedManagerBase<ZoneManager>.instance, index); }
-            catch (Exception ex) { InfinityMode.InterceptionFailed(nameof(InfinityMapHover), ex); return true; }
+            catch (Exception ex) { InfinityMode.PresentationFailed(nameof(InfinityMapHover), ex); return true; }
         }
     }
 
@@ -468,7 +468,7 @@ namespace SodRpg.Mod
         {
             if (!InfinityMode.Available) return true;
             try { return !InfinityMode.Enabled || __instance.isActiveAndEnabled && InfinityMode.IsRevealVisible(NetworkedManagerBase<ZoneManager>.instance, __instance.index); }
-            catch (Exception ex) { InfinityMode.InterceptionFailed(nameof(InfinityMapNodeTooltip), ex); return true; }
+            catch (Exception ex) { InfinityMode.PresentationFailed(nameof(InfinityMapNodeTooltip), ex); return true; }
         }
     }
 
@@ -484,7 +484,7 @@ namespace SodRpg.Mod
                 __instance.Hide();
                 return false;
             }
-            catch (Exception ex) { InfinityMode.InterceptionFailed(nameof(InfinityMapTooltip), ex); return true; }
+            catch (Exception ex) { InfinityMode.PresentationFailed(nameof(InfinityMapTooltip), ex); return true; }
         }
     }
 
@@ -503,7 +503,7 @@ namespace SodRpg.Mod
                 __instance.gameObject.SetActive(canTravel);
                 if (__instance.layoutElement != null) __instance.layoutElement.ignoreLayout = !canTravel;
             }
-            catch (Exception ex) { InfinityMode.InterceptionFailed(nameof(InfinityMapTravelTooltip), ex); }
+            catch (Exception ex) { InfinityMode.PresentationFailed(nameof(InfinityMapTravelTooltip), ex); }
         }
     }
 
@@ -528,7 +528,7 @@ namespace SodRpg.Mod
                 __result = new Vector2(-1000f, -1000f);
                 return false;
             }
-            catch (Exception ex) { InfinityMode.InterceptionFailed(nameof(InfinityMapPingPosition), ex); return true; }
+            catch (Exception ex) { InfinityMode.PresentationFailed(nameof(InfinityMapPingPosition), ex); return true; }
         }
     }
 
@@ -549,7 +549,7 @@ namespace SodRpg.Mod
                     && tooltip.currentObjects.Count > 0 && tooltip.currentObjects[0] is int index
                     && !InfinityMode.IsRevealVisible(zone, index)) tooltip.Hide();
             }
-            catch (Exception ex) { InfinityMode.InterceptionFailed(nameof(InfinityMapCacheChanged), ex); }
+            catch (Exception ex) { InfinityMode.PresentationFailed(nameof(InfinityMapCacheChanged), ex); }
         }
     }
 
@@ -572,7 +572,7 @@ namespace SodRpg.Mod
                     __instance.lineRenderer.material = ____parent.hoveringNode == other
                         ? __instance.matHover : __instance.matAdjacentCantMove;
             }
-            catch (Exception ex) { InfinityMode.InterceptionFailed(nameof(InfinityMapEdgeStatus), ex); }
+            catch (Exception ex) { InfinityMode.PresentationFailed(nameof(InfinityMapEdgeStatus), ex); }
         }
     }
 }

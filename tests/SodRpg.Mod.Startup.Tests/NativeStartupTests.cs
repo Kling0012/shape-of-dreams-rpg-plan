@@ -262,6 +262,73 @@ namespace SodRpg.Mod.Startup.Tests
             }
         }
 
+        /// <summary>
+        /// 「インフィニティが無効」多発の報告：遠征中の検査で止まると、ゲームを再起動するまでロビーでも無効のままだった。
+        /// 止めた遠征が終わってロビーに戻ったら使えるように戻る。起動時のパッチ不足による停止は戻らない。
+        /// </summary>
+        [Fact]
+        public void RuntimeStopEndsWithTheExpeditionButAMissingPatchStaysOff()
+        {
+            InfinityMode.CompletePatchInstallation(typeof(InfinityMode).GetField("NativePatchClasses", BindingFlags.NonPublic | BindingFlags.Static) is { } f ? ((Type[])f.GetValue(null)!).Length : 0);
+            Assert.True(InfinityMode.Available);
+
+            InfinityMode.RecoverAfterExpedition(inGame: true);
+            InfinityMode.DisableFeature("Infinity native/profile continue receipts disagree.");
+            Assert.False(InfinityMode.Available);
+
+            InfinityMode.RecoverAfterExpedition(inGame: true);   // 遠征中は止まったまま
+            Assert.False(InfinityMode.Available);
+
+            InfinityMode.RecoverAfterExpedition(inGame: false);  // ロビーに戻った
+            Assert.True(InfinityMode.Available);
+            Assert.Null(InfinityMode.UnavailableReason);
+            Assert.Contains(Log.Infos, m => m.Contains("Infinity is available again") && m.Contains("receipts disagree"));
+
+            // 同じ検査が再び止めれば、また止まる（理由もログに出る）。
+            InfinityMode.DisableFeature("Infinity native/profile continue receipts disagree.");
+            Assert.False(InfinityMode.Available);
+            Assert.Equal(2, Log.Warnings.Count(m => m.EndsWith("receipts disagree.")));
+
+            InfinityMode.RecoverAfterExpedition(inGame: true);
+            InfinityMode.RecoverAfterExpedition(inGame: false);
+            Assert.True(InfinityMode.Available);
+
+            InfinityMode.DisablePermanently("Infinity patch was not installed: X");
+            InfinityMode.RecoverAfterExpedition(inGame: true);
+            InfinityMode.RecoverAfterExpedition(inGame: false);
+            Assert.False(InfinityMode.Available);
+        }
+
+        /// <summary>ロビーで止まった場合は、一度遠征が行われるまで戻らない（毎フレーム失敗する検査が入切を繰り返さない）。</summary>
+        [Fact]
+        public void LobbyStopWaitsForAnExpeditionBeforeRecovering()
+        {
+            InfinityMode.DisableFeature("lobby check failed");
+            for (int i = 0; i < 3; i++) InfinityMode.RecoverAfterExpedition(inGame: false);
+            Assert.False(InfinityMode.Available);
+
+            InfinityMode.RecoverAfterExpedition(inGame: true);
+            InfinityMode.RecoverAfterExpedition(inGame: false);
+            Assert.True(InfinityMode.Available);
+        }
+
+        /// <summary>地図表示の割り込みは1フレームの例外ではインフィニティを止めない。失敗が続く割り込みだけが止める。</summary>
+        [Fact]
+        public void MapDisplayHookTransientFailureKeepsInfinityButRepeatedFailureStopsIt()
+        {
+            InfinityMode.CompletePatchInstallation(typeof(InfinityMode).GetField("NativePatchClasses", BindingFlags.NonPublic | BindingFlags.Static) is { } f ? ((Type[])f.GetValue(null)!).Length : 0);
+            var error = new InvalidOperationException("node view destroyed");
+
+            for (int i = 0; i < 4; i++) InfinityMode.PresentationFailed("InfinityMapHover", error);
+            InfinityMode.PresentationFailed("InfinityMapTooltip", error);
+            Assert.True(InfinityMode.Available);
+            Assert.Equal(5, Log.Warnings.Count(m => m.Contains("map display hook")));
+
+            InfinityMode.PresentationFailed("InfinityMapHover", error);
+            Assert.False(InfinityMode.Available);
+            Assert.StartsWith("InfinityMapHover: node view destroyed", InfinityMode.UnavailableReason);
+        }
+
         private static bool OwnsHook(MethodBase target, Type patchClass)
         {
             var info = Harmony.GetPatchInfo(target);
@@ -276,12 +343,13 @@ namespace SodRpg.Mod.Startup.Tests
         private static void ResetInfinity()
         {
             var type = typeof(InfinityMode);
-            foreach (var name in new[] { "_unavailable", "_restoring", "_newInfinity", "_refresh", "_lastDisableLog",
+            foreach (var name in new[] { "_unavailable", "_permanentlyUnavailable", "_gameSeenSinceDisable", "_restoring", "_newInfinity", "_refresh", "_lastDisableLog",
                 "_initial", "_runId", "_choice", "_choiceText" })
                 type.GetField(name, BindingFlags.NonPublic | BindingFlags.Static)?.SetValue(null, null);
             // UnavailableReason is an auto-property; its backing field name differs, so reset via the setter.
             type.GetProperty("UnavailableReason", BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Static)
                 !.GetSetMethod(true)!.Invoke(null, new object[] { null });
+            ((System.Collections.IDictionary)type.GetField("PresentationFailures", BindingFlags.NonPublic | BindingFlags.Static)!.GetValue(null)!).Clear();
             type.GetProperty("Available", BindingFlags.NonPublic | BindingFlags.Static).SetValue(null, false);
         }
 

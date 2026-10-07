@@ -22,6 +22,10 @@ namespace SodRpg.Mod
         private static Zone _refreshOrigin;
         private static bool _zoneSwitchWarned;
         private static bool _unavailable;
+        // Startup failures (a native patch that could not be installed) last until the game restarts.
+        private static bool _permanentlyUnavailable;
+        // A runtime check that stopped Infinity may only stop it until the expedition that hit it is over.
+        private static bool _gameSeenSinceDisable;
         private static string _lastDisableLog;
         private static string _generationReportedRun;
         private static readonly Type[] NativePatchClasses =
@@ -59,11 +63,41 @@ namespace SodRpg.Mod
         internal static void CompletePatchInstallation(int installedCount)
         {
             if (installedCount != NativePatchClasses.Length)
-                DisableFeature("Infinity native interception is incomplete.");
+                DisablePermanently("Infinity native interception is incomplete.");
             if (!_unavailable) Available = true;
         }
 
         internal static void DisableFeature(string reason) => DisableFeature(reason, null);
+
+        /// <summary>A native patch is missing: nothing the player does in game can bring it back, so the stop outlasts expeditions.</summary>
+        internal static void DisablePermanently(string reason)
+        {
+            _permanentlyUnavailable = true;
+            DisableFeature(reason, null);
+        }
+
+        /// <summary>
+        /// A check that stops Infinity while an expedition runs (save receipts, native hooks, a transient exception) used
+        /// to keep it off until the game was restarted, so every later lobby showed "Infinity is disabled" and could
+        /// not start it. The stop now ends with the expedition: once a game has run since the stop and the player is back
+        /// outside of it, Infinity is available again. A stop that happens again simply stops it again, and a missing
+        /// native patch (DisablePermanently) is never lifted. The game-seen gate keeps a fault that fires on every
+        /// lobby frame from flipping the feature on and off.
+        /// </summary>
+        internal static void RecoverAfterExpedition(bool inGame)
+        {
+            if (!_unavailable || _permanentlyUnavailable) return;
+            if (inGame) { _gameSeenSinceDisable = true; return; }
+            if (!_gameSeenSinceDisable) return;
+            string reason = UnavailableReason;
+            _unavailable = false;
+            _gameSeenSinceDisable = false;
+            UnavailableReason = null;
+            _lastDisableLog = null;
+            PresentationFailures.Clear();
+            Available = true;
+            Log.Info("Infinity is available again after the expedition that stopped it. Earlier reason: " + reason);
+        }
 
         internal static void DisableFeature(string reason, Exception error)
         {
@@ -82,6 +116,7 @@ namespace SodRpg.Mod
             }
             if (_unavailable) return;
             _unavailable = true;
+            _gameSeenSinceDisable = NetworkedManagerBase<GameManager>.softInstance != null;
             UnavailableReason = reason;
             if (NetworkServer.active)
                 try
@@ -94,6 +129,20 @@ namespace SodRpg.Mod
 
         internal static void InterceptionFailed(string hook, Exception error)
             => DisableFeature(hook + ": " + error.Message, error);
+
+        // The map display hooks only decide what the world map shows (the server routes every travel itself), and
+        // they run every frame on native UI objects that can be mid-rebuild. One bad frame must not end Infinity for
+        // the session; a hook that keeps failing still stops it, so it cannot throw on every frame.
+        private const int PresentationFailureLimit = 5;
+        private static readonly Dictionary<string, int> PresentationFailures = new Dictionary<string, int>(StringComparer.Ordinal);
+
+        internal static void PresentationFailed(string hook, Exception error)
+        {
+            PresentationFailures.TryGetValue(hook, out int count);
+            PresentationFailures[hook] = ++count;
+            if (count >= PresentationFailureLimit) { InterceptionFailed(hook, error); return; }
+            Log.Warn($"Infinity map display hook {hook} failed ({count}/{PresentationFailureLimit}); Infinity continues: {error.Message}");
+        }
 
         // #157: an interception exception logs its first stack frames so the next Player.log
         // pinpoints the failing line. Best effort: empty when the runtime stripped the trace.
@@ -741,7 +790,7 @@ namespace SodRpg.Mod
         private static bool Prepare()
         {
             if (NextModifier != null) return true;
-            InfinityMode.DisableFeature("Infinity native modifier identity field is unavailable.");
+            InfinityMode.DisablePermanently("Infinity native modifier identity field is unavailable.");
             return false;
         }
 
