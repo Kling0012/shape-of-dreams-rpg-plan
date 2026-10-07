@@ -51,7 +51,8 @@ namespace SodRpg.Mod
                     _infinityNoticeNames.Clear();
                     foreach (var player in DewPlayer.gamePlayers)
                     {
-                        if (player == null || !player.isHumanPlayer || barrier.HasCompleted(player.guid)) continue;
+                        if (player == null || !player.isHumanPlayer || InfinityMode.IsPersonalChoiceHost(player)
+                            || barrier.HasCompleted(player.guid)) continue;
                         if (_infinityNoticeNames.Length != 0) _infinityNoticeNames.Append("、");
                         _infinityNoticeNames.Append(player.playerName);
                     }

@@ -78,6 +78,11 @@ namespace SodRpg.Mod
 
         private static readonly List<string> PersonalPlayerScratch = new List<string>();
 
+        // The host decides through the party choice or by travelling; it never fills in a personal
+        // panel, so waiting for its receipt only makes a solo run (or a fully-ready party) idle for the deadline.
+        internal static bool IsPersonalChoiceHost(DewPlayer player) =>
+            NetworkServer.active && player != null && ReferenceEquals(player, DewPlayer.local);
+
         internal static void StartPersonalTravelWait()
         {
             if (_personalBarrier == null || _personalBarrier.Released) return;
@@ -105,7 +110,7 @@ namespace SodRpg.Mod
             }
             PersonalPlayerScratch.Clear();
             foreach (var player in DewPlayer.gamePlayers)
-                if (player != null && player.isHumanPlayer) PersonalPlayerScratch.Add(player.guid);
+                if (player != null && player.isHumanPlayer && !IsPersonalChoiceHost(player)) PersonalPlayerScratch.Add(player.guid);
             if (_personalBarrier.TryRelease(PersonalPlayerScratch, Time.unscaledTime))
             {
                 if (_personalBarrier.TimedOut) WarnPersonalChoices("personal selection wait exceeded 60 seconds; missing players continue without a choice");
