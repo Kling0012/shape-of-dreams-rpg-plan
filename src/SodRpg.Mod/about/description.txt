@@ -1,5 +1,5 @@
-[b]v2.10.1: fixes co-op trade history after updating from v2.8.0, and extra pressure enemies giving too many rewards with older-version players. Saves carry over. Update all co-op players and restart the game.[/b]
-[b]v2.10.1：v2.8.0 でトレードしたホストが更新するとトレード履歴を開けない問題と、古いバージョンの参加者がいると追加の敵の報酬が多すぎる問題を修正しました。セーブデータはそのまま引き継げます。協力プレイでは参加者全員がこのバージョンに更新し、ゲームを再起動してください。[/b]
+[b]v2.10.2: fixes the First Claim rare relic guarantee being lost when the first kill in a room is an extra pressure enemy. Saves carry over. Update all co-op players and restart the game.[/b]
+[b]v2.10.2：部屋で最初に倒した敵が夢の圧で増えた敵だと、「一番槍」のレア遺物保証がなくなる問題を修正しました。セーブデータはそのまま引き継げます。協力プレイでは参加者全員がこのバージョンに更新し、ゲームを再起動してください。[/b]
 
 [h1]Dreamforge RPG[/h1]
 Turns every run into part of a long RPG journey: relics you keep, a risky "secure or delve" choice at every zone, a star map per Traveler, a forge, and long-term goals. Co-op ready.
