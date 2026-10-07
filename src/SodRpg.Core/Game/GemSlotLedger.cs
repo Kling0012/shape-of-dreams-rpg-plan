@@ -46,6 +46,11 @@ namespace SodRpg.Core.Game
             int cap = Math.Max(0, current);
             int withoutOwn = Math.Max(Math.Max(0, minimumNative), cap - RemainingContribution(cap));
             int contribution = Math.Min(EssenceSlots.ClampAdded(desired), int.MaxValue - withoutOwn);
+            // The native HUD draws gem sockets only up to the game's own per-skill ceiling (the chaos
+            // shrine stops at four); a cap above it hides every socket of that skill. A baseline that
+            // another mod already raised above the ceiling stays theirs; keep adding on top of it.
+            if (withoutOwn < EssenceSlots.NativeCapPerLocation)
+                contribution = Math.Min(contribution, EssenceSlots.NativeCapPerLocation - withoutOwn);
             return new GemSlotDecision(current, withoutOwn + contribution, contribution);
         }
 

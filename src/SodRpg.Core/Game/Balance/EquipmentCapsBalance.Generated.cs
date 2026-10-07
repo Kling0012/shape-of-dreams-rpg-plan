@@ -118,8 +118,8 @@ namespace SodRpg.Core.Game
         internal const int Stat_DarkAmp = 100;
         internal const int Stat_AttackRangePct = 30;
         internal const int Stat_FourthAttackShift = 1;
-        internal const int Stat_EssenceSlotIdentity = 6;
-        internal const int Stat_EssenceSlotMovement = 6;
+        internal const int Stat_EssenceSlotIdentity = 4;
+        internal const int Stat_EssenceSlotMovement = 4;
         internal const int Stat_HealPower = 60;
         internal const int Stat_ShieldPower = 60;
         internal const int Stat_SummonPower = 80;
@@ -231,8 +231,8 @@ namespace SodRpg.Core.Game
             "balance:equipment:caps:v1:stat/CritChancePct/cap:int32:value=50",
             "balance:equipment:caps:v1:stat/CritDamagePct/cap:int32:value=150",
             "balance:equipment:caps:v1:stat/DarkAmp/cap:int32:value=100",
-            "balance:equipment:caps:v1:stat/EssenceSlotIdentity/cap:int32:value=6",
-            "balance:equipment:caps:v1:stat/EssenceSlotMovement/cap:int32:value=6",
+            "balance:equipment:caps:v1:stat/EssenceSlotIdentity/cap:int32:value=4",
+            "balance:equipment:caps:v1:stat/EssenceSlotMovement/cap:int32:value=4",
             "balance:equipment:caps:v1:stat/FireAmp/cap:int32:value=100",
             "balance:equipment:caps:v1:stat/FourthAttackShift/cap:int32:value=1",
             "balance:equipment:caps:v1:stat/Haste/cap:int32:value=100",

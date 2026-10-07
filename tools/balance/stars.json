@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
   "essenceSlots": {
-    "maxAdded": 12,
-    "maxPerLocation": 6,
+    "maxAdded": 8,
+    "maxPerLocation": 4,
     "starAmount": 1
   },
   "multipliers": {

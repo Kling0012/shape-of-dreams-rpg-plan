@@ -26,15 +26,15 @@ namespace SodRpg.Core.Tests
             big.Stats[Stat.EssenceSlotIdentity] = int.MaxValue;
             big.Stats[Stat.EssenceSlotMovement] = int.MinValue;
             var back2 = Build.Decode(big.Encode());
-            Assert.Equal(6, back2.Get(Stat.EssenceSlotIdentity));
+            Assert.Equal(4, back2.Get(Stat.EssenceSlotIdentity));
             Assert.Equal(0, back2.Get(Stat.EssenceSlotMovement));
         }
 
         [Theory]
-        [InlineData(int.MaxValue, int.MaxValue, 6, 6)]
-        [InlineData(int.MinValue, int.MaxValue, 0, 6)]
-        [InlineData(int.MaxValue, int.MinValue, 6, 0)]
-        [InlineData(4, 5, 4, 5)]
+        [InlineData(int.MaxValue, int.MaxValue, 4, 4)]
+        [InlineData(int.MinValue, int.MaxValue, 0, 4)]
+        [InlineData(int.MaxValue, int.MinValue, 4, 0)]
+        [InlineData(3, 2, 3, 2)]
         public void Hand_built_and_wire_builds_share_the_combined_slot_budget(int identity, int movement, int expectedIdentity, int expectedMovement)
         {
             var build = new Build();
@@ -54,13 +54,13 @@ namespace SodRpg.Core.Tests
         {
             var decoded = Build.Decode("h:0;s:18=9,19=9");
             Assert.NotNull(decoded);
-            Assert.Equal(6, decoded.Get(Stat.EssenceSlotIdentity));
-            Assert.Equal(6, decoded.Get(Stat.EssenceSlotMovement));
+            Assert.Equal(4, decoded.Get(Stat.EssenceSlotIdentity));
+            Assert.Equal(4, decoded.Get(Stat.EssenceSlotMovement));
         }
 
         [Theory]
         [InlineData(3)]
-        [InlineData(6)]
+        [InlineData(4)]
         public void Slot_stars_stack_up_to_the_per_location_cap_and_cost_five_points_per_rank(int ranks)
         {
             foreach (string hero in new[] { "Hero_Mist", "Hero_Husk" })
