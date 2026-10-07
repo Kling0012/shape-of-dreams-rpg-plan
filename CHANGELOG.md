@@ -8,10 +8,25 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
+---
+
+## v2.10.0 — 食材の自動回収と夢の圧の報酬（2026-10-07）
+
+料理のエッセンスの食材が自動で集まり、上限なく貯められるようになりました。夢の圧が高いほど、欠片と悪夢化も増えます。 / Culinary Essence ingredients now come to you and stack without a cap, and higher dream pressure brings more shards and nightmares.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
 ### 新しい要素 / New
 
-- **料理のエッセンスの食材が自動で吸い寄せられ、所持数の上限を撤廃**：本体の食材型に合わせ、約9m以内の生存中の持ち主へ吸い寄せます（協力プレイでも本体の所有権・同期を維持）。食材は安全上限2,147,483,647個まで貯められ、所持数は999を超えても表示されます。1回の調理量と効果は本体の元の上限を維持し、余った食材は次の調理に残ります。 / **Culinary Essence ingredients attract automatically without the inventory cap**: confirmed native ingredients are drawn to their living owner within about 9 m, preserving native ownership and co-op synchronization. Stock can grow safely to 2,147,483,647, with counts above 999 displayed. Each cooking batch and its rewards retain the native limit; excess ingredients remain for later cooking.
-- **夢の圧で欠片と悪夢化が増える**：夢の圧が高いほど、敵を倒したときの欠片が出やすくなり、敵が悪夢化しやすくなります。どちらも最大1.5倍で、圧が敵HP+100%分上がるごとに欠片は+25%、悪夢化は+20%です（HUDの「HP×」から計算できます）。欠片は、出る確率が決まっている敵では出る確率が、必ず出るエリート・ボスでは量が増えます。インフィニティでは適用されません。悪夢化は従来どおり深度1以上でのみ起きます。 / **Dream pressure now boosts shards and nightmares**: higher pressure makes shards drop more and enemies turn into nightmares more, up to x1.5 each (+25% shards and +20% nightmare chance per +100% enemy HP). Enemies with a drop chance drop more often; guaranteed elite/boss drops give more. Not applied in Infinity. Nightmares still only appear at delve depth 1 or higher.
+- **料理のエッセンスの食材が自動で集まる・上限なし**：料理のエッセンスで落ちた食材が、約9m以内にいる持ち主（そのエッセンスを持っている旅人）へ自動で吸い寄せられます。食材の所持数の上限もなくなり、999を超えても表示されます。1回の調理で使う量と効果は今までどおりで、余った食材は次の調理に回せます。 / **Culinary Essence ingredients come to you, no cap**: ingredients dropped by Culinary Essence are drawn to their owner (the traveler holding the essence) within about 9 m. The ingredient stock no longer has a cap and shows past 999. Each cooking still uses the usual amount for the usual effect, and leftovers carry over to the next cooking.
+- **夢の圧で欠片と悪夢化が増える**：夢の圧が高いほど、敵を倒したときに欠片が出やすくなり、敵が悪夢化しやすくなります（インフィニティでは適用されません。悪夢化はこれまでどおり深度1以上でのみ起きます）。 / **Dream pressure brings more shards and nightmares**: the higher the pressure, the more shards drop and the more often enemies turn into nightmares (not in Infinity; nightmares still only happen at depth 1 or higher).
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
 ---
 ## v2.9.1 — インフィニティの待ち時間と無効化の修正（2026-10-07）
 インフィニティでソロでも60秒待たされる問題と、インフィニティが無効のまま戻らない問題を直しました。 / Fixes Infinity making solo players wait 60 seconds, and Infinity staying disabled until restart.
