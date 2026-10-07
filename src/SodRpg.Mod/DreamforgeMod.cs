@@ -373,18 +373,24 @@ namespace SodRpg.Mod
                 bool infinity = InfinityMode.IsNativePatch(type);
                 // #229: the hunter adjustment degrades alone when its own patch cannot install.
                 bool hunter = type == typeof(InfinityHunterAdvance);
+                // The lobby start messages degrade alone as well: no Infinity switch-off for a missing message hook.
+                bool lobbyGuard = type == typeof(InfinityLobbyStartCondition);
                 try
                 {
                     if (HarmonyMethodExtensions.GetFromType(type).Count == 0)
                     {
                         if (infinity) InfinityMode.DisablePermanently("Infinity patch has no native target: " + type.FullName);
+                        if (lobbyGuard) InfinityMode.LobbyStartGuardUnavailable("Patch has no native target: " + type.FullName);
                         continue;
                     }
                     var targets = harmony.CreateClassProcessor(type).Patch();
+                    if (lobbyGuard && (targets == null || targets.Count == 0 || !HasInstalledClass(type)))
+                        InfinityMode.LobbyStartGuardUnavailable("Patch was not installed: " + type.FullName + " " + DescribePatchOutcome(type, targets));
                     if (infinity)
                     {
                         if (targets == null || targets.Count == 0 || !HasInstalledClass(type))
                         {
+                            Log.Warn("Infinity patch outcome: " + type.FullName + " " + DescribePatchOutcome(type, targets));
                             InfinityMode.DisablePermanently("Infinity patch was not installed: " + type.FullName);
                             skipped.Add(type.FullName);
                             continue;
@@ -401,6 +407,8 @@ namespace SodRpg.Mod
                     Log.Warn("Patch class skipped: " + type.FullName + ": " + ex.Message);
                     if (hunter)
                         InfinityMode.DisableHunterAdjustment("Hunter patch installation failed: " + type.FullName + ": " + ex.Message);
+                    if (lobbyGuard)
+                        InfinityMode.LobbyStartGuardUnavailable("Patch installation failed: " + type.FullName + ": " + ex.Message);
                     if (infinity)
                     {
                         InfinityMode.DisablePermanently("Infinity patch installation failed: " + type.FullName + ": " + ex.Message);
@@ -412,6 +420,28 @@ namespace SodRpg.Mod
             }
             InfinityMode.CompletePatchInstallation(installedInfinity);
             Log.Info($"Patches installed: {installed} classes" + (skipped.Count > 0 ? $", skipped {skipped.Count}: {string.Join(", ", skipped)}" : ""));
+        }
+
+        /// <summary>
+        /// Best-effort facts for the Player.log line of a patch that did not install: how many targets Harmony reported, whether
+        /// the native target resolves, and what it is. Makes the next report name the game-side cause instead of only the class.
+        /// </summary>
+        private static string DescribePatchOutcome(Type type, List<MethodInfo> targets)
+        {
+            try
+            {
+                var attribute = HarmonyMethodExtensions.GetMergedFromType(type);
+                string wanted = attribute.declaringType?.FullName + "." + attribute.methodName;
+                var found = attribute.declaringType == null || attribute.methodName == null ? null
+                    : AccessTools.DeclaredMethod(attribute.declaringType, attribute.methodName, attribute.argumentTypes);
+                int overloads = 0;
+                if (attribute.declaringType != null && attribute.methodName != null)
+                    foreach (var method in AccessTools.GetDeclaredMethods(attribute.declaringType))
+                        if (method.Name == attribute.methodName) overloads++;
+                return $"(targets reported: {(targets == null ? "null" : targets.Count.ToString())}; native target {wanted} "
+                    + (found == null ? "not found" : "found: " + found.FullDescription()) + $"; declared overloads: {overloads})";
+            }
+            catch (Exception ex) { return "(outcome details unavailable: " + ex.Message + ")"; }
         }
 
         private bool HasInstalledClass(Type type)

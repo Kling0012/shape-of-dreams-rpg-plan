@@ -34,7 +34,7 @@ namespace SodRpg.Mod
             typeof(InfinityRoomIdentity), typeof(InfinityTravel), typeof(InfinityNoSpecialRift),
             typeof(InfinityResult), typeof(InfinityExit), typeof(InfinityNativeSave),
             typeof(InfinityNativeRestore), typeof(InfinityZoneTravel), typeof(InfinityNoSpecialInvitation),
-            typeof(InfinityLobbyStartCondition), typeof(InfinityRevealArrival), typeof(InfinityRevealWorld),
+            typeof(InfinityRevealArrival), typeof(InfinityRevealWorld),
             typeof(InfinityTravelCommand), typeof(InfinityRevealQuestOverride),
             typeof(InfinityMapRefresh), typeof(InfinityMapDisable),
             typeof(InfinityMapNodeSetup), typeof(InfinityMapTravelSelection), typeof(InfinityMapMoveSelection),
@@ -43,6 +43,8 @@ namespace SodRpg.Mod
             typeof(InfinityMapPingPosition), typeof(InfinityMapCacheChanged), typeof(InfinityMapEdgeStatus),
             // InfinityHunterAdvance is deliberately absent: its failure degrades only the
             // hunter adjustment (see DreamforgeMod.PatchEachClass), never Infinity itself.
+            // InfinityLobbyStartCondition is absent for the same reason: it only adds lobby start
+            // messages, so a game build it cannot attach to must not switch Infinity off.
          };
 
         internal static bool Available { get; private set; }
@@ -53,12 +55,31 @@ namespace SodRpg.Mod
         internal static string UnavailableNotice => Loc.T(
             "インフィニティは無効です。通常モードは利用できます。", "Infinity is disabled. Normal mode remains available.")
             + (string.IsNullOrEmpty(UnavailableReason) ? ""
-                : " " + Loc.T("（理由: ", "(Reason: ") + NoticeReason(UnavailableReason) + Loc.T("）", ")"));
+                : " " + Loc.T("（理由: ", "(Reason: ") + NoticeReason(UnavailableReason) + Loc.T("）", ")") + MoreReasons);
+
+        private static readonly HashSet<string> DisableReasons = new HashSet<string>(StringComparer.Ordinal);
+        private static string MoreReasons => DisableReasons.Count > 1
+            ? Loc.T($"（ほか{DisableReasons.Count - 1}件はログ）", $" (+{DisableReasons.Count - 1} more in the log)") : "";
 
         private static string NoticeReason(string reason) => reason.Length <= NoticeReasonLimit
             ? reason : reason.Substring(0, NoticeReasonLimit);
 
         internal static bool IsNativePatch(Type type) => Array.IndexOf(NativePatchClasses, type) >= 0;
+
+        // The lobby start guard (InfinityLobbyStartCondition) only turns a start into a message: "Infinity is
+        // unavailable" and "not together with Limbo". When its patch cannot be installed on the player's game build,
+        // Infinity keeps working and the one rule that must still hold (no Infinity in Limbo) is applied here instead.
+        internal static bool LobbyStartGuardMissing { get; private set; }
+
+        internal static void LobbyStartGuardUnavailable(string reason)
+        {
+            if (LobbyStartGuardMissing) return;
+            LobbyStartGuardMissing = true;
+            Log.Warn("Infinity lobby start guard unavailable; Infinity continues without its start messages. " + reason);
+        }
+
+        internal static bool LimboBlocksInfinity => LobbyStartGuardMissing
+            && NetworkedManagerBase<GameSettingsManager>.softInstance?.difficulty == "diffLimbo";
 
         internal static void CompletePatchInstallation(int installedCount)
         {
@@ -94,6 +115,7 @@ namespace SodRpg.Mod
             _gameSeenSinceDisable = false;
             UnavailableReason = null;
             _lastDisableLog = null;
+            DisableReasons.Clear();
             PresentationFailures.Clear();
             Available = true;
             Log.Info("Infinity is available again after the expedition that stopped it. Earlier reason: " + reason);
@@ -109,6 +131,7 @@ namespace SodRpg.Mod
             // #144: every distinct check that stops Infinity is logged by name; the first reason
             // stays in the lobby notice. Later checks used to be swallowed silently, hiding which
             // patch or interception actually disabled the feature on a player's machine.
+            DisableReasons.Add(reason);
             if (reason != _lastDisableLog)
             {
                 _lastDisableLog = reason;
