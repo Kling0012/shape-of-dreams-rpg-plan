@@ -1,5 +1,5 @@
-[b]v2.9.0: random Infinity bosses (special bosses included), shorter boss intervals are harder but drop more relics, a guaranteed well and shop before each boss, a one-time claim for an interrupted expedition's relics, and guests can make their own choices in co-op. Saves carry over, but once saved they cannot be loaded by older versions. Update all co-op players and restart the game.[/b]
-[b]v2.9.0：インフィニティのボスが特殊ボスを含めてランダムに。ボスまでの部屋数が少ないほど難しく遺物が出やすくなり、ボスまでに井戸とショップを必ず訪れられます。中断した遠征の遺物を1回だけ受け取るボタンを追加し、協力プレイでゲストが自分の選択をできない問題を修正しました。セーブデータは引き継げますが、この版で保存すると以前の版では読み込めなくなります。協力プレイでは参加者全員がこのバージョンに更新し、ゲームを再起動してください。[/b]
+[b]v2.9.1: Infinity no longer makes solo players wait 60 seconds between rooms, and no longer stays disabled until restart. Saves carry over. Update all co-op players and restart the game.[/b]
+[b]v2.9.1：インフィニティでソロでも部屋の移動に60秒待たされる問題と、再起動するまで無効のままになる問題を修正しました。セーブデータはそのまま引き継げます。協力プレイでは参加者全員がこのバージョンに更新し、ゲームを再起動してください。[/b]
 
 [h1]Dreamforge RPG[/h1]
 Turns every run into part of a long RPG journey: relics you keep, a risky "secure or delve" choice at every zone, a star map per Traveler, a forge, and long-term goals. Co-op ready.
