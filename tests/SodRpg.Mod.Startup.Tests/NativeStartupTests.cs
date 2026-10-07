@@ -34,6 +34,8 @@ namespace SodRpg.Mod.Startup.Tests
             ErebosLastStarlightSequence.Captures = 0;
             ErebosLastStarlightSequence.WaitAdaptations = 0;
             BlockInputWhileMenuOpen.MenuOpen = false;
+            // Start outside an expedition; other fixtures leave their simulated game in this static.
+            NetworkedManagerBase<GameManager>.softInstance = null;
             ResetInfinity();
         }
 

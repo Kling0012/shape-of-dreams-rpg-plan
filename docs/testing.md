@@ -222,6 +222,10 @@ Linux／.NET 10、Releaseの実Core DLLで、鞄30個・レア度／スコア混
   契約不一致による適用拒否と、自MODのpatchだけを取り消す失敗時処理を確認する。
   ゲームと同じHarmony 2.3.3 APIを保つ `Lib.Harmony.Thin` と、
   .NET 10へのroll-forwardに対応する `MonoMod.Core` 1.3.6を固定している。
+  `NativeStartupTests` は開始時に模擬ゲームの `GameManager.softInstance` を消し、
+  他フィクスチャの遠征状態を持ち越さずロビー状態から実行する。
+  Infinity の停止時点の遠征判定はこの singleton の有無を使うため、
+  Infinity 自身の静的フィールドを初期化するだけでは隔離できない。
 - Linuxでの全体実行：
   `DOTNET=/usr/bin/dotnet DOTNET_ROLL_FORWARD=Major python tools/test_changed.py --all`
 - このハーネスは実ゲームの戦闘、Unity描画、Mirror協力同期、GC／frame時間を検証しない。
