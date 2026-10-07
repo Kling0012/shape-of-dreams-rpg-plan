@@ -72,11 +72,17 @@ namespace SodRpg.Mod
                 _session.FirstLaunch();
                 _perfLogEnabled = File.Exists(Path.Combine(dir, "perf.flag"));
                 _devCommands = File.Exists(Path.Combine(dir, "dev.flag"));
-                try { NativeDreamContent.Install(harmony, _devCommands && File.Exists(Path.Combine(dir, "native-dream.flag"))); }
+                // Special edition builds enable the native dream seeds without any flag; the
+                // normal build keeps requiring both dev.flag and native-dream.flag.
+                bool nativeDreamFlag = File.Exists(Path.Combine(dir, "native-dream.flag"));
+                try { NativeDreamContent.Install(harmony,
+                    NativeDreamEdition.EnableContent(NativeDreamContent.SpecialEdition, _devCommands, nativeDreamFlag),
+                    NativeDreamContent.SpecialEdition); }
                 catch (Exception ex) { Log.Warn("Native dream prototypes unavailable; other features remain active: " + ex.Message); }
                 if (_perfLogEnabled) Log.Info("perf logging enabled (perf.flag)");
-                Log.Info($"Loaded {mod.metadata.id} {mod.metadata.modVer}. Profile: {_session.SavePath}");
-                HostAuthority.ModVersion = mod.metadata.modVer ?? "?";
+                HostAuthority.ModVersion = (mod.metadata.modVer ?? "?")
+                    + NativeDreamEdition.VersionSuffix(NativeDreamContent.SpecialEdition);
+                Log.Info($"Loaded {mod.metadata.id} {HostAuthority.ModVersion}. Profile: {_session.SavePath}");
                 _originalGameplayFlag = instance.isAlteringGameplay;
                 _gameplayFlagChanged = true;
                 instance.isAlteringGameplay = true;
