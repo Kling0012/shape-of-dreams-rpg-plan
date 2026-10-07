@@ -8,6 +8,10 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
+### 不具合の修正 / Bug fixes
+
+- **ブリンクなどで高速に動く旅人から料理の食材が逃げる問題を修正**：持ち主が瞬間移動して食材を置いていっても、離れすぎた食材（3m超）をホストが毎フレーム持ち主の位置へ移して拾わせます。 / **Fixed Culinary Essence ingredients getting left behind by fast, blinking travelers**: when the owner teleports away, the host now moves any ingredient more than 3 m away onto the owner every frame so it is picked up.
+
 ---
 
 ## v2.10.4 — インフィニティの無効表示の修正と食材の吸い寄せ（2026-10-07）
