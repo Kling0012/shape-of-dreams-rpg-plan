@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Reflection;
+using System.Text;
 using SodRpg.Core.Game;
 using UnityEngine;
 
@@ -26,10 +28,42 @@ namespace SodRpg.Mod
         private readonly HashSet<string> _pickupTypesSeen = new HashSet<string>(StringComparer.Ordinal);
         private float _lastMagnetTick = -1f;
 
+        private bool _culinaryDumped;
+
+        /// <summary>
+        /// 食材の所持上限（カンスト）の実装を調べるための記録。料理のエッセンスが現れたとき、
+        /// 数値・真偽値の項目の名前と値を1回だけログへ出す（値は変えない）。
+        /// </summary>
+        private void DumpCulinaryEssence(Actor actor)
+        {
+            if (_culinaryDumped) return;
+            _culinaryDumped = true;
+            try
+            {
+                var sb = new StringBuilder("culinary essence members of " + actor.GetType().FullName + ":");
+                const BindingFlags flags = BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic;
+                for (var t = actor.GetType(); t != null && t != typeof(object) && t.Namespace == actor.GetType().Namespace; t = t.BaseType)
+                {
+                    if (t.Name == "Gem" || t.Name == "Actor") break;
+                    foreach (var f in t.GetFields(flags | BindingFlags.DeclaredOnly))
+                        if (f.FieldType.IsPrimitive || f.FieldType == typeof(string))
+                            sb.Append("\n  field ").Append(t.Name).Append('.').Append(f.Name).Append(" : ").Append(f.FieldType.Name)
+                              .Append(f.IsStatic ? " (static) = " : " = ").Append(f.GetValue(f.IsStatic ? null : actor));
+                    foreach (var pr in t.GetProperties(flags | BindingFlags.DeclaredOnly))
+                        if (pr.GetIndexParameters().Length == 0 && pr.CanRead && (pr.PropertyType.IsPrimitive || pr.PropertyType == typeof(string)))
+                            sb.Append("\n  property ").Append(t.Name).Append('.').Append(pr.Name).Append(" : ").Append(pr.PropertyType.Name)
+                              .Append(" = ").Append(pr.GetValue(pr.GetMethod.IsStatic ? null : actor));
+                }
+                Log.Info(sb.ToString());
+            }
+            catch (Exception ex) { Log.Warn("culinary essence dump failed: " + ex.Message); }
+        }
+
         private void TrackCulinaryPickup(Actor actor)
         {
             if (actor == null) return;
             string type = actor.GetType().Name;
+            if (type == "Gem_L_Culinary") DumpCulinaryEssence(actor);
             if (!type.StartsWith("Pickup_", StringComparison.Ordinal)) return;
             bool ingredient = CulinaryMagnet.IsIngredientTypeName(type);
             if (_pickupTypesSeen.Add(type))
