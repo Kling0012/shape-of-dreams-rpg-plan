@@ -8,11 +8,28 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
+---
+
+## v2.10.4 — インフィニティの無効表示の修正と食材の吸い寄せ（2026-10-07）
+
+インフィニティモードがロビーで「無効です」と出て選べない不具合を直し、料理のエッセンスの食材が部屋のどこからでも寄ってくるようにしました。 / Fixes Infinity mode showing as disabled in the lobby, and Culinary Essence ingredients now come to you from anywhere in the room.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 新機能・改善 / New features and improvements
+
+- 料理のエッセンスの食材が、部屋のどこに落ちても（約500m以内）、待たずにすぐ自分のところへ飛んでくるようになりました。 / Culinary Essence ingredients dropped anywhere in the room (within about 500 m) now fly to you right away.
+
 ### 不具合の修正 / Bug fixes
 
-- ロビーに「インフィニティは無効です（理由: Infinity patch was not installed: …InfinityLobbyStartCondition）」と出て選べない問題を直しました。この割り込みはロビーの開始メッセージを出すだけなので、ゲーム本体側に取り付けられなくてもインフィニティは無効にならなくなりました（Limbo では使えない規則はそのまま守ります）。取り付けられなかったときは、本体側の対象の有無とオーバーロード数を Player.log に出します。無効の理由が複数あるときは、ロビーの行に件数を添えます。 / Fixed "Infinity is disabled (Reason: Infinity patch was not installed: …InfinityLobbyStartCondition)" in the lobby. That hook only shows lobby start messages, so when it cannot attach to the game build Infinity is no longer switched off (the no-Infinity-in-Limbo rule still holds). A patch that fails to install now logs whether the native target exists and its overload count to Player.log, and the lobby line shows how many further reasons were recorded.
-- 版も Protocol も同じなのに赤字で「Dreamforge 互換性情報に差があります（版 2.10.3-special/2.10.3-special、Protocol 24/24）」と出る表示を直しました。実際に差があったのは参加者側でインフィニティが無効になっていること（または内容の登録）で、表示がそれを示していませんでした。いまは「相手側でインフィニティが無効」「内容（星・遺物などの登録）が一致しない」のように、差のある項目を名前で出します。 / The red "Dreamforge compatibility information differs (version X/X, protocol 24/24)" line now names what actually differs (for example "Infinity is disabled on their side" or "content registry differs") instead of implying a version or protocol difference.
-- **料理のエッセンスの食材の吸い付きを最大に**：部屋のどこに落ちた食材も（約500m以内）、待ちなしで一気に旅人へ飛んでくるようにしました。最高速度は24から120、加速も大幅に上げています。 / **Maximum ingredient attraction for Culinary Essence**: ingredients anywhere in the room (within about 500 m) now fly to the traveler at once with no wait. Top speed is 120 (was 24) with much higher acceleration.
+- ロビーに「インフィニティは無効です（理由: Infinity patch was not installed …）」と出て、インフィニティモードを選べないことがある問題を修正しました。 / Fixed Infinity mode sometimes showing as disabled in the lobby ("Infinity patch was not installed …") and being unselectable.
+- 版もプロトコルも同じなのに「互換性情報に差があります」と赤字で出る問題を修正しました。差があるときは、何が違うのかを表示します。 / Fixed a red "compatibility information differs" warning appearing even with the same version and protocol. When something does differ, the warning now says what.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
 
 ---
 
