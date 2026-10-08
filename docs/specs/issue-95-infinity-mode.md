@@ -289,17 +289,17 @@
 - 現行DLLのPolaris managerは専用sceneで実ボスの死亡を購読してending flowに入る。部屋ごとの移植はしない。さらにInfinity中はPrimus／Polarisのending entrypointと専用concludeを抑止する。本体実績はhost／guest双方でobserver生成・授与・profile／Steam／Continue進捗保存を抑止し、teardown後の遅延callbackも遮断する。次の通常runは追跡を再開する。MODの死亡通知・報酬・偉業は抑止しない。
 - 検証は本体DLL参照Releaseビルド、指定全テスト、生成鮮度確認と一時コンソールの実Harmony境界。13出現方式・特殊5の保存plan再開・host権限・実体型セット・部屋／部分spawn失敗を確認し、別の製品adapterリンクでErebos arenaとPolaris二形態遷移・実績／ending抑止を実行した。Unity APIは境界モデルで、実sceneの演出・狭いarenaの体感・実通信・実機Continueは未確認。
 
-## 21. 純白など周期を賄えない特殊ゾーンの除外と救済（19節の抽選を更新）
+## 21. 純白など周期を賄えない特殊ゾーンの完結ボス扱い（19節の抽選を更新）
 
 ### 原因
-- 実機報告：インフィニティで純白（`Zone_Primus`）に入ると、プレイヤーの意思と関係なく何度も次の地図へ運ばれ続け、遊べなくなる。
-- 特殊生成ゾーンのグラフは入口・ボス＋`specialNodes - 2` の戦闘部屋で固定（C/ZoneManager.cs:2075-2079,2378-2412,2468-2472。商人・イベントは発生しない）。この戦闘部屋数が周期（10/15/20）に満たないとき、`RefreshReveal` は次室を出せず `BossDue` にも到達しない。部屋クリア毎に `TickNative` が技術境界receiptを配信し（R/src/SodRpg.Mod/InfinityMode.cs:518-528）、ホストは入力なしで `Regenerate("regenerate")` を実行する（R/src/SodRpg.Mod/ClientSession.Infinity.cs:417-423）。再生後のグラフも同様に尽きるため、強制移動が無限に連鎖する。戦闘部屋0の構成では `ClearsInCycle` が一切増えず、永久に詰む。
-- 19節の「候補から黙って除外せず」はnative生成に必要な値（pool等）についての原則であった。周期を賄えない構造は生成値ではなく遊技可能性の問題であり、この節で限定的に更新する。
+- 実機報告：インフィニティで純白（`Zone_Primus`）に入り準備部屋の扉（ノック）からボス部屋へ進むと、ボス戦開始の前に準備部屋へ戻され、遊べない。
+- 特殊生成ゾーンのグラフは入口・ボス＋`specialNodes - 2` の戦闘部屋で固定（C/ZoneManager.cs:2075-2079,2378-2412,2468-2472。商人・イベントは発生しない）。この戦闘部屋数が周期（10/15/20）に満たないとき、唯一の戦闘部屋をクリアした時点で `RefreshReveal` は次室を出せず、`TickNative` が技術境界receiptを配信し（R/src/SodRpg.Mod/InfinityMode.cs:518-528）、ホストは入力なしで `Regenerate("regenerate")` を実行する（R/src/SodRpg.Mod/ClientSession.Infinity.cs:417-423）。この強制再生は `isInAnyTransition` が解けた瞬間にも発火するため、扉（`Shrine_PrimusDoor` が `LoadNode(to: 2)` で直接ボスノードへ読み込む。TravelToNode を経由しない）でボス部屋へ入っても、到着直後に入口ノードへ戻される。戦闘部屋0の構成では `ClearsInCycle` が一切増えず、永久に詰む。
+- v2.10.8（PR #304）はこの構造のゾーンを抽選から外した。強制移動の機構推定は正しかったが、重み10のPrimusボスがインフィニティから消え、19節の「候補から黙って除外せず」に反していた。
 
 ### 修正
-- `CanHostInterval(zone, interval)`：特殊生成ゾーンは `specialNodes - 2 >= interval` を満たすときだけ抽選・潜行先として使える。通常生成ゾーンはseedとDreamDepthのoffsetで部屋数が変わるため対象外（従来の枯渇時同ゾーン再生成を維持）。
-- `ChooseNativeZone` はこの条件を満たす候補だけを列挙する。`PrepareBossTarget` は条件を満たさない引いた先（Primusボス計画の `Zone_Primus` を含む）を例外で棄却し、既存のfail-soft（使える再抽選＞使える元ゾーン＞pool確保な再抽選＞元ゾーン）で別のゾーンへ向かう。
-- 修正前に保存された遠征が純白に滞留している場合、技術境界の `Regenerate("regenerate")` は元ゾーンを再生成せず、周期を賄える別ゾーンへ移る（1回の強制移動で脱出）。以降の境界・抽選は通常どおり。
+- `IsBossFinaleZone(zone, interval)`（= `useSpecialGeneration && !CanHostInterval(...)`）：周期を賄えない特殊グラフは「完結ボスゾーン」とする。`OnGenerated` は生成直後に `PromoteFinaleBoss()`（`ClearsInCycle` を周期まで引き上げ `Phase = BossDue`）を呼ぶため、地図はボスノードだけを前方に出し、技術境界は一度も発生しない。区間は準備→ボス（＋任意の戦闘部屋）で完結する。
+- 扉は `LoadNode` 直行のため `RouteTravel` の `TryEnterBoss` を通らない。`TickNative` はボスノード到着時に完結ボスゾーンなら `PromoteFinaleBoss()`→`TryEnterBoss()` で `BossFight` へ入る（v2.10.8以前の保存＝`Exploring` のまま純白にいる遠征も、扉でボス戦に入って撃破後に次へ進める）。`RefreshReveal` は `BossDue` で唯一のボスノードの上にいるとき、誤って「scheduled boss なし」で機能を止めない（ボスノードが1つもないグラフだけ止める）。
+- `ChooseNativeZone`（ランダム抽選）と v2.10.8 の救済は従来どおり周期を賄える候補に限定したまま。`PrepareBossTarget` は固定ゾーンID（保存済み計画または当選ボスの専用ゾーン）で指定された純白だけを例外として許す。井戸/ショップ保証とその警告は完結ボスゾーンでは適用しない（2部屋構成に畳むため）。
 
 ### 検証
-- 回帰4件（`tests/SodRpg.Mod.Startup.Tests/InfinityZoneTests.cs`）：抽選が純白を選ばない、保存済みPrimusボス計画の棄却と別ゾーンへのfail-soft、純白内の技術境界による脱出、純白からのDelveが純白へ戻らない。19節の回帰は候補の `specialNodes` を周期に見合う値へ更新して維持した。
+- 回帰（`tests/SodRpg.Mod.Startup.Tests/InfinityZoneTests.cs`）：Primusボス計画の潜行が純白に入り `BossDue` でボスノードを公開すること、扉到着（`SetCurrentNodeIndexAndRevealAdjacent(2)`＋`Tick`）が機能を止めず `BossFight` に入り、撃破・魂の出現で `AwaitingChoice` まで至ること、旧保存（`Exploring`）からの扉到着も `BossFight` に入ること。ランダム抽選が純白を選ばないこと、技術境界による脱出、純白からのDelveが純白へ戻らないことは v2.10.8 の回帰を維持。

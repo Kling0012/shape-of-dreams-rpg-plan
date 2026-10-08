@@ -122,7 +122,7 @@ namespace SodRpg.Mod.Startup.Tests
         }
 
         [Fact]
-        public void DelveRejectsASavedPrimusBossPlanThatCannotHostTheCycle()
+        public void DelveWithASavedPrimusPlanPlaysThePureWhiteRouteAsABossFinale()
         {
             var (session, zone) = StartZoneTransition("pure-white-plan");
             var state = session.Profile.Run.Infinity;
@@ -131,14 +131,70 @@ namespace SodRpg.Mod.Startup.Tests
                 Newtonsoft.Json.JsonConvert.SerializeObject(new InfinityMode.BossPlan
                 {
                     RunId = NetworkedManagerBase<GameManager>.softInstance.runId,
-                    SegmentEpoch = state.SegmentEpoch, ZoneId = "Zone_Primus",
+                    SegmentEpoch = state.SegmentEpoch, BossTypeName = "Mon_Primus_BossPrimusAeron",
+                    ZoneId = "Zone_Primus",
                 });
             DewResources.Zones.Add(SmallPrimusZone());
             DewResources.Zones.RemoveAll(z => z.name == "Zone_Foo");
             DewResources.Zones.Add(NativeZone("Zone_Other"));
             Assert.True(InfinityMode.Regenerate("delve"));
-            Assert.Equal("Zone_Other", zone.currentZone.name);
-            Assert.Equal("Zone_Other", state.FixedZoneId);
+            Assert.Equal("Zone_Primus", zone.currentZone.name);
+            Assert.Equal("Zone_Primus", state.FixedZoneId);
+            Assert.Equal(1, state.GraphEpoch);
+            // The graph cannot host the interval: the cycle is due on arrival and the boss
+            // node is the one forward option, so no dead-end boundary can bounce the party.
+            Assert.Equal(InfinityPhase.BossDue, state.Phase);
+            Assert.Equal(10, state.ClearsInCycle);
+            Assert.Equal(2, InfinityMode.RevealedNext(zone));
+            Assert.Equal(WorldNodeType.ExitBoss, zone.nodes[2].type);
+            Assert.True(InfinityMode.Available);
+
+            // The preparation gate (Shrine_PrimusDoor) loads the boss node directly, without
+            // the map/vote travel path: arrival must not disable Infinity or bounce back.
+            SingletonDewNetworkBehaviour<Room>.softInstance = new Room { isActive = true, didClearRoom = true };
+            zone.SetCurrentNodeIndexAndRevealAdjacent(2);
+            Assert.Equal(-1, InfinityMode.RevealedNext(zone));
+            Assert.True(InfinityMode.Available);
+            InfinityMode.Tick();
+            Assert.Equal(InfinityPhase.BossFight, state.Phase);
+            Assert.True(InfinityMode.Available);
+
+            // Killing the boss reaches the choice that delves into the next zone.
+            InfinityMode.OnRoomClear(SingletonDewNetworkBehaviour<Room>.softInstance);
+            Assert.Equal(InfinityPhase.WaitingSoulFinish, state.Phase);
+            var soul = new Shrine_BossSoul { isActive = true };
+            NetworkedManagerBase<ActorManager>.softInstance.allActors.Add(soul);
+            Rift_RoomExit.instance = new Rift_RoomExit();
+            InfinityMode.Tick();
+            Assert.True(state.SoulObserved);
+            NetworkedManagerBase<ActorManager>.softInstance.allActors.Remove(soul);
+            InfinityMode.Tick();
+            Assert.Equal(InfinityPhase.AwaitingChoice, state.Phase);
+            Assert.True(InfinityMode.Available);
+            DewResources.Zones.Clear();
+        }
+
+        [Fact]
+        public void PureWhiteGateArrivalFromALegacyExploringSaveEntersTheBossFight()
+        {
+            var (session, zone) = StartZoneTransition("pure-white-legacy-gate");
+            var state = session.Profile.Run.Infinity;
+            // A save made before finale promotion: still Exploring inside the pure-white route.
+            zone.currentZone = SmallPrimusZone();
+            zone.SceneZone = zone.currentZone;
+            state.FixedZoneId = zone.currentZone.name;
+            state.Phase = InfinityPhase.Exploring;
+            state.ClearsInCycle = 1;
+            zone.currentZoneIndex = 0;
+            zone.GenerateWorldAuto();
+            Assert.Equal(InfinityPhase.BossDue, state.Phase);
+            Assert.Equal(2, InfinityMode.RevealedNext(zone));
+
+            SingletonDewNetworkBehaviour<Room>.softInstance = new Room { isActive = true, didClearRoom = true };
+            zone.SetCurrentNodeIndexAndRevealAdjacent(2);
+            InfinityMode.Tick();
+            Assert.Equal(InfinityPhase.BossFight, state.Phase);
+            Assert.Equal(10, state.ClearsInCycle);
             Assert.True(InfinityMode.Available);
             DewResources.Zones.Clear();
         }

@@ -32,6 +32,9 @@ namespace SodRpg.Mod
             {
                 var state = State;
                 if (!NetworkServer.active || !Enabled || _restoring || zone == null || state == null) return;
+                // A boss-finale zone (the pure-white route) completes as entrance → boss: it has
+                // no room for the per-segment well/shop promise and no pool to draw them from.
+                if (IsBossFinaleZone(zone.currentZone, state.Interval)) return;
                 if (zone.nodes.Count == 0 || zone.currentZone == null)
                 {
                     WarnServiceUnavailable("generated graph has no usable entry or zone");
@@ -111,6 +114,8 @@ namespace SodRpg.Mod
             try
             {
                 if (zone == null || current < 0 || current >= zone.nodes.Count) return -1;
+                // A boss-finale zone has no service rooms to route through.
+                if (IsBossFinaleZone(zone.currentZone, State?.Interval ?? 0)) return -1;
                 bool shopVisited = false, wellVisited = false;
                 for (int i = 0; i < zone.nodes.Count; i++)
                 {

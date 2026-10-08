@@ -454,6 +454,13 @@ namespace SodRpg.Mod
                 State.FixedZoneId = asset.name;
                 _refresh = false;
             }
+            if (IsBossFinaleZone(asset, State.Interval) && State.PromoteFinaleBoss())
+            {
+                // A special-generation graph too small for the cycle (the pure-white route) ends
+                // at its boss: the cycle is due on arrival, so the map reveals the boss node
+                // instead of dead-ending the party into a forced boundary regeneration.
+                ClientSession.PersistHostInfinityState();
+            }
             ApplyBossRoom(zone);
             EnsureServiceRooms(zone);
             ReferencedModifiers.Clear(); RetiredModifiers.Clear();
@@ -504,6 +511,13 @@ namespace SodRpg.Mod
             { DisableFeature("Infinity combat-clear counter exhausted."); return; }
             if (zone.currentNode.type == WorldNodeType.ExitBoss)
             {
+                // The pure-white preparation gate (Shrine_PrimusDoor) loads the boss node
+                // directly, bypassing RouteTravel: arriving there makes this graph's boss the
+                // cycle boss (finale graphs are due on arrival) and starts the fight.
+                var beforeArrival = state.Phase;
+                if (IsBossFinaleZone(zone.currentZone, state.Interval)) state.PromoteFinaleBoss();
+                state.TryEnterBoss();
+                if (beforeArrival != state.Phase) ClientSession.PersistHostInfinityState();
                 bool soul = false;
                 var actors = NetworkedManagerBase<ActorManager>.softInstance;
                 if (actors != null && (state.Phase == InfinityPhase.BossFight || state.Phase == InfinityPhase.WaitingSoulFinish))
