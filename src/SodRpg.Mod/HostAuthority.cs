@@ -336,7 +336,7 @@ namespace SodRpg.Mod
             {
                 "sacrifice shields", "build updates", "run modifiers", "pressure", "pending builds",
                 "gem slots", "movement charges", "waypoint heroes", "area scan", "new powers", "reactions", "gimmick apply",
-                "boss effects", "boss visuals", "identity strikes", "gimmicks v129", "sap prune", "attribution prune", "runtime", "run growth", "currency",
+                "boss effects", "boss visuals", "identity strikes", "gimmicks v129", "back-off charge", "sap prune", "attribution prune", "runtime", "run growth", "currency",
                 "shield pools", "spawns", "monster prune", "monster behaviors", "kill replay", "sunders",
                 "nightmare regen", "classification resync",
                 "overflow bonus", "culinary snap",
@@ -345,7 +345,7 @@ namespace SodRpg.Mod
             {
                 UpdateSacrificeShields, StageBuildUpdates, RefreshRunModifiers, StagePressure, PruneAndApplyPending,
                 TickGemSlots, TickMovementCharges, SyncWaypointHeroes, StageAreaScan, StageNewPowers, StageReactions, StageGimmickApply,
-                StageBossEffects, TickBossVisualSnapshots, UpdateIdentityStrikes, StageGimmicksV129, StageSapPrune, PruneMemoryAttribution, StageRuntimes, StageRunGrowth, StageCurrency,
+                StageBossEffects, TickBossVisualSnapshots, UpdateIdentityStrikes, StageGimmicksV129, StageBackOffCharge, StageSapPrune, PruneMemoryAttribution, StageRuntimes, StageRunGrowth, StageCurrency,
                 StageModShieldPools, ProcessSpawns, StageMonsterPrune, StageMonsterBehaviors, TickKillReplay, StageSunders,
                 StageNightmareRegen, StageClassificationResync,
                 TickOverflowBonus, CulinaryMagnet.SnapToOwners,
@@ -1220,6 +1220,7 @@ namespace SodRpg.Mod
             ReleasePowerShields();
             ClearNewPowerZone();
             ClearZoneGimmicksV129();
+            ClearBackOffCharge();
             ClearSupportPowerStateV129();
             ClearNativeDeathHooks();
             ClearWaypointHeroes();
@@ -1476,6 +1477,7 @@ namespace SodRpg.Mod
                 hero.takenDamageProcessor.Add(rt.DamageTaken);
                 InitializeNewPowers(rt);
                 InitializeGimmicksV129(rt);
+                InitializeBackOffCharge(rt);
                 rt.DamageDealt = (ref DamageData d, Actor a, Entity t) =>
                 {
                     if (!Alive(captured.Hero) || t == null || !t.isActive || t.Status == null
@@ -1599,6 +1601,7 @@ namespace SodRpg.Mod
             if (restoreGemSlots) RestoreGemSlots(rt);
             StopMovementCharges(rt);
             UnhookNewPowers(rt);
+            UnhookBackOffCharge(rt);
             UnhookGimmicksV129(rt);
             UnhookGoldSpend(rt);
             foreach (var summon in rt.Summons)
