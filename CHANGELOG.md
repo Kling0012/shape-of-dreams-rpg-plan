@@ -8,7 +8,23 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
-- **インフィニティの純白**：部屋数が周期に足りない特殊ゾーン（純白など）を潜行先に引くと、部屋をクリアするたびにプレイヤーの意思と関係なく次の地図へ運ばれ続け、先へ進めなくなっていました。このようなゾーンを抽選から外し、既に入ってしまった遠征は次の区切りで別のゾーンへ移るようにしました。 / **Infinity in the pure-white route**: drawing a special zone with too few rooms for the cycle (such as the pure-white route) kept carrying the party to a new map after every cleared room, with no way forward. Such zones are now excluded from the draw, and a run already inside one moves to another zone at the next boundary.
+---
+
+## v2.10.8 — インフィニティの純白で詰む問題の修正（2026-10-08）
+
+インフィニティで純白など部屋の少ないゾーンに入ると、勝手に何度も移動させられて詰む不具合を直しました。 / Fixes Infinity repeatedly moving you on its own and getting stuck in small zones such as the pure-white route.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。純白の中で止まっているセーブは、次の移動で別のゾーンへ抜け出します。 / Saves carry over. A save stuck inside the pure-white route moves to another zone at the next transition.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- インフィニティで純白など部屋の数が少ないゾーンに入ると、部屋をクリアするたびに入力なしで移動させられ、先へ進めなくなる問題を修正しました。部屋が足りないゾーンはインフィニティの行き先に選ばれなくなります。 / Fixed Infinity moving you without input after every room and leaving you stuck in zones with too few rooms, such as the pure-white route. Such zones are no longer chosen as Infinity destinations.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
 
 ---
 
