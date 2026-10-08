@@ -56,7 +56,7 @@ namespace SodRpg.Core.Game
             ["Hero_Bismuth"] = new[] { "prismatic-eyes", "innocence", "distorting-sprint", "infernal-tales", "valiant-heart", "distorted-mind" },
         };
         private static readonly Dictionary<string, HeroTreeLayout> Layouts = CreateLayouts();
-        private static readonly HeroTreeLayout Generic = Create(Content.Talents, false);
+        private static readonly HeroTreeLayout Generic = Create(Content.Talents, false, false);
         private readonly Dictionary<string, int> indices;
         // Reused under the lock: neither UI availability checks nor build evaluation allocate traversal buffers.
         private readonly bool[] reached;
@@ -82,14 +82,17 @@ namespace SodRpg.Core.Game
                 : heroKey != null && Layouts.TryGetValue(heroKey, out var layout) ? layout : Generic;
 
         /// <summary>Builds a validated generated tree for data tooling and layout stress scenarios.</summary>
-        public static HeroTreeLayout ForTalents(IReadOnlyList<TalentDef> talents) => Create(talents, true);
+        public static HeroTreeLayout ForTalents(IReadOnlyList<TalentDef> talents) => Create(talents, true, true);
+
+        /// <summary>調整済み座標（StarMapPlacements）を使うかを選ぶ。調整ツールが既定の配置を得るために false を渡す。</summary>
+        public static HeroTreeLayout ForTalents(IReadOnlyList<TalentDef> talents, bool tuned) => Create(talents, true, tuned);
 
         private static Dictionary<string, HeroTreeLayout> CreateLayouts()
         {
             var layouts = new Dictionary<string, HeroTreeLayout>(StringComparer.Ordinal);
             foreach (var talent in HeroSigils.All)
                 if (!layouts.ContainsKey(talent.HeroKey))
-                    layouts.Add(talent.HeroKey, Create(HeroSigils.TreeFor(talent.HeroKey), true));
+                    layouts.Add(talent.HeroKey, Create(HeroSigils.TreeFor(talent.HeroKey), true, true));
             return layouts;
         }
 
@@ -108,7 +111,7 @@ namespace SodRpg.Core.Game
 
         private static double Angle(double position, int count) => -Math.PI / 2 + 2 * Math.PI * position / count;
 
-        private static HeroTreeLayout Create(IReadOnlyList<TalentDef> talents, bool heroTree)
+        private static HeroTreeLayout Create(IReadOnlyList<TalentDef> talents, bool heroTree, bool tuned)
         {
             var nodes = new List<HeroTreeNode>(talents.Count + 1);
             var neighbors = new List<List<int>>(talents.Count + 1);
@@ -255,6 +258,7 @@ namespace SodRpg.Core.Game
             Join(branchNodes[1][2], branchNodes[2][2]);
             Join(branchNodes[4][2], branchNodes[5][2]);
             PlaceClusters(nodes, neighbors, edges, talents);
+            if (tuned) ApplyTunedPlacements(nodes, neighbors);
             return new HeroTreeLayout(nodes, edges);
         }
 
