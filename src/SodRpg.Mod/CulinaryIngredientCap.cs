@@ -10,16 +10,30 @@ namespace SodRpg.Mod
     // decay timers, zero-stack destruction, save data and synchronization stay native.
     internal static class CulinaryIngredientCap
     {
-        private sealed class Capacity
+        private const string CapacityStoreKey = "dreamforge.culinary.native-batch.v1";
+
+        // Native actors outlive a MOD assembly reload. Both generic arguments must be
+        // native/framework types so every loaded copy can read the same weak-key store.
+        // Do not retain a MOD-defined type here or keep the actors alive.
+        private static ConditionalWeakTable<StackedStatusEffect, Tuple<int>> Capacities
         {
-            internal readonly int CookingBatch;
-            internal Capacity(int cookingBatch) { CookingBatch = cookingBatch; }
+            get
+            {
+                var domain = AppDomain.CurrentDomain;
+                lock (domain)
+                {
+                    var stored = domain.GetData(CapacityStoreKey);
+                    if (stored == null)
+                    {
+                        stored = new ConditionalWeakTable<StackedStatusEffect, Tuple<int>>();
+                        domain.SetData(CapacityStoreKey, stored);
+                    }
+                    return stored as ConditionalWeakTable<StackedStatusEffect, Tuple<int>> ??
+                        throw new InvalidOperationException("Culinary native batch store is incompatible");
+                }
+            }
         }
 
-        // Native actors can be pooled. Retain their original prefab limit across reuse
-        // and MOD lifecycle restarts without keeping the actors alive.
-        private static readonly ConditionalWeakTable<StackedStatusEffect, Capacity> Capacities =
-            new ConditionalWeakTable<StackedStatusEffect, Capacity>();
         private static readonly List<MethodInfo> Targets = new List<MethodInfo>();
         private static Harmony _harmony;
         private static Type _ingredientType;
@@ -60,7 +74,7 @@ namespace SodRpg.Mod
             _enabled = false;
             Unpatch();
             // Do not truncate inventory or rewrite native saved/synchronized stack state.
-            // Capacities survives Stop so a reused actor never treats our raised max as native.
+            // Shared provenance survives Stop and assembly reload, including pooled actors.
         }
 
         private static MethodInfo Require(Type type, string name, params Type[] arguments) =>
@@ -100,29 +114,35 @@ namespace SodRpg.Mod
             Log.Warn("Culinary ingredient cap disabled; other MOD features remain active: " + ex.Message);
         }
 
-        private static bool TryCapacity(StackedStatusEffect effect, out Capacity capacity)
+        private static bool TryCapacity(StackedStatusEffect effect, out int cookingBatch)
         {
-            capacity = null;
+            cookingBatch = 0;
             if (!_enabled || ReferenceEquals(effect, null) || effect.GetType() != _ingredientType) return false;
             try
             {
-                if (!Capacities.TryGetValue(effect, out capacity))
+                var capacities = Capacities;
+                // Capture and raise atomically even if two loaded MOD copies see this actor.
+                lock (capacities)
                 {
-                    // Read the actual instance before changing maxStack, including restored
-                    // actors and clients. Never guess the serialized prefab's native limit.
-                    int original = effect.maxStack;
-                    if (original <= 0 || (double)(3f * original) > int.MaxValue)
-                        throw new InvalidOperationException("Native culinary cooking limit is not safe: " + original);
-                    capacity = new Capacity(original);
-                    Capacities.Add(effect, capacity);
+                    if (!capacities.TryGetValue(effect, out var capacity))
+                    {
+                        // Read the actual instance before changing maxStack, including restored
+                        // actors and clients. Never guess the serialized prefab's native limit.
+                        int original = effect.maxStack;
+                        if (original <= 0 || (double)(3f * original) > int.MaxValue)
+                            throw new InvalidOperationException("Native culinary cooking limit is not safe: " + original);
+                        capacity = Tuple.Create(original);
+                        capacities.Add(effect, capacity);
+                    }
+                    cookingBatch = capacity.Item1;
+                    effect.maxStack = int.MaxValue;
                 }
-                effect.maxStack = int.MaxValue;
                 return true;
             }
             catch (Exception ex)
             {
                 Disable(ex);
-                capacity = null;
+                cookingBatch = 0;
                 return false;
             }
         }
@@ -152,8 +172,8 @@ namespace SodRpg.Mod
             try
             {
                 var effect = Ingredients(hero);
-                if (TryCapacity(effect, out var capacity))
-                    __result = Math.Min(__result, capacity.CookingBatch);
+                if (TryCapacity(effect, out var cookingBatch))
+                    __result = Math.Min(__result, cookingBatch);
                 // Native OnUse transmits this bounded count to the client UI; native Apply
                 // receives the same bound. No client-side prefab lookup or numeric fallback.
             }
@@ -165,8 +185,8 @@ namespace SodRpg.Mod
             try
             {
                 var effect = Ingredients(hero);
-                if (!TryCapacity(effect, out var capacity)) return true;
-                effect.RemoveStack(Math.Min(Math.Max(0, effect.stack), capacity.CookingBatch));
+                if (!TryCapacity(effect, out var cookingBatch)) return true;
+                effect.RemoveStack(Math.Min(Math.Max(0, effect.stack), cookingBatch));
                 // Match the displayed/rewarded batch, preserving the remaining inventory.
                 return false;
             }
