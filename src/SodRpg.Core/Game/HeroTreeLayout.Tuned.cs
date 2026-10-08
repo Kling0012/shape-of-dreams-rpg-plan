@@ -24,7 +24,7 @@ namespace SodRpg.Core.Game
         }
 
         /// <summary>登録済みの表（無ければ false）。count と fingerprint は表の作成時の星集合（始まりの星を除く）。</summary>
-        public static bool TryGet(string heroKey, out int count, out ulong fingerprint, out string data)
+        internal static bool TryGet(string heroKey, out int count, out ulong fingerprint, out string data)
         {
             count = 0; fingerprint = 0; data = null;
             if (heroKey != null) Find(heroKey, ref count, ref fingerprint, ref data);
