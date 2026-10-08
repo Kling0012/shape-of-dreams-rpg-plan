@@ -7,10 +7,29 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 ---
 
 ## 未リリース / Unreleased
-インフィニティの報酬の枠をなくし、報酬が途中で止まらないようにしました。 / Infinity rewards are no longer capped, so they keep dropping without stopping mid-run.
 
+---
 
-インフィニティで純白のボス（準備部屋の扉からボス部屋へ進むルート）が遊べるように戻しました。v2.10.8 で純白が行き先に選ばれなくなっていたのを、準備→ボスの2部屋で完結するボス区間として修正します。 / Infinity can draw the pure-white route again as a boss segment: entering the boss room through the preparation gate no longer bounces you back, and the segment completes as preparation room → boss.
+## v2.10.11 — インフィニティの報酬の枠の撤去と純白の修正（2026-10-09）
+
+インフィニティの報酬の枠をなくし、純白でボス部屋から準備部屋へ戻される不具合を直しました。 / Removes the Infinity reward caps and fixes being sent back from the pure-white boss room.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 新機能・改善 / New features and improvements
+
+- インフィニティの報酬の枠をなくしました。遊び続けても、遺物や欠片などが途中で出なくなることはありません。 / Infinity reward caps are gone; relics, shards and other rewards no longer stop during long sessions.
+- インフィニティで、純白をボス戦として遊べるようになりました（準備部屋からゲートを通ってボスへ）。 / In Infinity, the pure-white route can be played as a boss fight again (through the gate from the preparation room to the boss).
+
+### 不具合の修正 / Bug fixes
+
+- インフィニティの純白で、ゲートを通ってボス部屋に入ると、ボス戦が始まる前に準備部屋へ戻される問題を修正しました。 / Fixed being sent back to the preparation room after entering the pure-white boss room through the gate in Infinity, before the boss fight started.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
 
 ---
 

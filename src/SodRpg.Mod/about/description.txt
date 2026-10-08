@@ -1,5 +1,5 @@
-[b]v2.10.10: Infinity now notifies you when a reward cap runs out and shows the remaining relic and shard caps. Saves carry over. Update all co-op players and restart the game.[/b]
-[b]v2.10.10：インフィニティで報酬の枠が尽きたときに通知し、遺物と欠片の枠の残りを表示するようにしました。セーブデータはそのまま引き継げます。協力プレイでは参加者全員がこのバージョンに更新し、ゲームを再起動してください。[/b]
+[b]v2.10.11: removes Infinity reward caps and fixes being sent back from the pure-white boss room in Infinity. Saves carry over. Update all co-op players and restart the game.[/b]
+[b]v2.10.11：インフィニティの報酬の枠をなくし、純白でボス部屋から準備部屋へ戻される問題を修正しました。セーブデータはそのまま引き継げます。協力プレイでは参加者全員がこのバージョンに更新し、ゲームを再起動してください。[/b]
 
 [h1]Dreamforge RPG[/h1]
 Turns every run into part of a long RPG journey: relics you keep, a risky "secure or delve" choice at every zone, a star map per Traveler, a forge, and long-term goals. Co-op ready.
