@@ -8,6 +8,8 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
+- 本体のアイデンティティ枠が4個のとき、星図の追加で上限を超えて枠が表示されなくなる問題を修正しました。外部MODを外した後の起動・Continueでも、本体枠と星図の枠を正しく数え直します。 / Fixed star-chart bonuses exceeding the limit and hiding Identity essence slots when the native count was four; slot ownership is reconciled on startup and Continue after removing an external slot mod.
+
 ### バランス調整 / Balance
 
 - 夢の圧（敵の強化）を大きく引き上げました。夢Lv30・星500点・深度0で、敵のHPは ×4.1 → **×16.5**、敵の数は ×1.6 → **×5.0**、敵の与ダメージは ×2.6 → ×3.4 になります。星1点あたりの敵HP +0.5% → +2.8%、夢レベル1段あたり +2.5% → +6% などです。 / Dream pressure (enemy scaling) is raised substantially. At dream level 30 with 500 star points on depth 0, enemy HP goes from x4.1 to x16.5, enemy count from x1.6 to x5.0 and enemy damage from x2.6 to x3.4.

@@ -32,14 +32,14 @@ namespace SodRpg.Core.Tests
         public void External_additions_are_preserved_on_reapply_and_removal()
         {
             var ledger = new GemSlotLedger(2);
-            int cap = Apply(ledger, 2, 1);
+            int cap = Apply(ledger, 5, 1);
             for (int i = 0; i < 10; i++)
             {
                 cap++;
                 Assert.Equal(cap, Apply(ledger, cap, 1));
             }
-            Assert.Equal(12, Apply(ledger, cap, 0));
-            Assert.Equal(12, ledger.DecideRemoval(12).Target);
+            Assert.Equal(15, Apply(ledger, cap, 0));
+            Assert.Equal(15, ledger.DecideRemoval(15).Target);
         }
 
         [Fact]
