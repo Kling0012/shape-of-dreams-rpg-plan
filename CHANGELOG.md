@@ -8,7 +8,24 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
-- インフィニティで報酬枠が尽きて遺物や欠片などが出なくなったとき、種類ごとに1回だけ通知し、HUDに遺物・欠片の残り枠を表示するようにしました。 / Infinity now notifies once per reward kind when its budget runs out, and the HUD shows the remaining relic/shard budgets.
+---
+
+## v2.10.10 — インフィニティの報酬の枠の通知（2026-10-08）
+
+インフィニティで報酬の枠が尽きたとき、通知と残りの表示で分かるようにしました。 / Infinity now tells you when a reward cap is reached and shows what remains.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 新機能 / New features
+
+- インフィニティでは、遺物や欠片などの報酬に、戦闘を続けると少しずつ回復する枠があります。枠が尽きて報酬が出なくなったときに「インフィニティの報酬の上限に達しました：遺物（戦闘を続けると少しずつ回復します）」のように通知します。 / Infinity rewards such as relics and shards have caps that refill slowly during combat. When one runs out, you now see a notice such as "Infinity reward cap reached: relics (it refills slowly as combat continues)".
+- インフィニティの表示に、遺物と欠片の枠の残りを出すようにしました。 / The Infinity display now shows the remaining relic and shard caps.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
 
 ---
 
