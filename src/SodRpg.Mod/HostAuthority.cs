@@ -81,6 +81,12 @@ namespace SodRpg.Mod
             public int ReportedLinks;
             // Runtime retains only the component reference; ownership lives in its weak-key ledger.
             public HeroSkill GemSlotOwner;
+            // Hero-specific movement charge bonus: this assembly's own SkillBonus on the movement skill.
+            public SkillBonus MovementChargeBonus;
+            public SkillTrigger MovementChargeOwner;
+            public int MovementChargeApplied;
+            public int MovementChargeDesired;
+            public bool MovementChargeBroken;
             // v1.32 B: the stacks live in HostAuthority.RunGrowthLedger (outside this runtime); only their applied effect is kept here.
             public StatBonus GrowthBonus;
             public readonly Dictionary<Stat, double> GrowthTotals = new Dictionary<Stat, double>();
@@ -329,7 +335,7 @@ namespace SodRpg.Mod
             _tickStageNames = new[]
             {
                 "sacrifice shields", "build updates", "run modifiers", "pressure", "pending builds",
-                "gem slots", "waypoint heroes", "area scan", "new powers", "reactions", "gimmick apply",
+                "gem slots", "movement charges", "waypoint heroes", "area scan", "new powers", "reactions", "gimmick apply",
                 "boss effects", "boss visuals", "identity strikes", "gimmicks v129", "sap prune", "attribution prune", "runtime", "run growth", "currency",
                 "shield pools", "spawns", "monster prune", "monster behaviors", "kill replay", "sunders",
                 "nightmare regen", "classification resync",
@@ -338,7 +344,7 @@ namespace SodRpg.Mod
             _tickStages = new Action[]
             {
                 UpdateSacrificeShields, StageBuildUpdates, RefreshRunModifiers, StagePressure, PruneAndApplyPending,
-                TickGemSlots, SyncWaypointHeroes, StageAreaScan, StageNewPowers, StageReactions, StageGimmickApply,
+                TickGemSlots, TickMovementCharges, SyncWaypointHeroes, StageAreaScan, StageNewPowers, StageReactions, StageGimmickApply,
                 StageBossEffects, TickBossVisualSnapshots, UpdateIdentityStrikes, StageGimmicksV129, StageSapPrune, PruneMemoryAttribution, StageRuntimes, StageRunGrowth, StageCurrency,
                 StageModShieldPools, ProcessSpawns, StageMonsterPrune, StageMonsterBehaviors, TickKillReplay, StageSunders,
                 StageNightmareRegen, StageClassificationResync,
@@ -1228,6 +1234,7 @@ namespace SodRpg.Mod
             _runtimes.Clear();
             ReleaseCurrency();
             DetachGemSlots();
+            DetachMovementCharges();
             _scanList.Clear();
             _scanPowers = Array.Empty<PowerRuntime>();
             _builds.Clear();
@@ -1545,6 +1552,7 @@ namespace SodRpg.Mod
             ConfigureAuthoredMechanisms(hero, build);
             BindGoldSpend(rt);
             ApplyGemSlots(rt, build);
+            ApplyMovementCharges(rt, build);
             // Builds can arrive after a persistent summon (for example Fenrir) has spawned.
             if (_am != null)
                 foreach (var entity in _am.allEntities)
@@ -1589,6 +1597,7 @@ namespace SodRpg.Mod
             ClearBossEffects(rt);
             ForgetAssignedMechanismOwner(rt.Hero);
             if (restoreGemSlots) RestoreGemSlots(rt);
+            StopMovementCharges(rt);
             UnhookNewPowers(rt);
             UnhookGimmicksV129(rt);
             UnhookGoldSpend(rt);
