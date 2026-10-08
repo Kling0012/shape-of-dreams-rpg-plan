@@ -74,6 +74,24 @@ namespace SodRpg.Mod
                 int delta = _tradeAuthority.PendingOverflowBonus(TradePlayerKey(caller), msg.runId, msg.total, msg.ledgerId);
                 if (delta < 0 || delta > 0 && msg.runId != nativeRunId)
                 {
+                    // A host restart or rehost replaced the ledger of this same native run. Offer a fresh
+                    // handshake with the current identity instead of disabling the bonus for the whole run:
+                    // the client must rebase its cumulative total to zero, so nothing already paid under the
+                    // old ledger is paid twice. Old-run deltas and blocked ledgers still disable only the dust.
+                    long currentLedger = string.IsNullOrEmpty(nativeRunId) || msg.runId != nativeRunId
+                        ? 0
+                        : _tradeAuthority.LedgerIdOf(TradePlayerKey(caller), nativeRunId);
+                    if (delta < 0 && currentLedger != 0 && msg.ledgerId != currentLedger)
+                    {
+                        peer.RunId = nativeRunId;
+                        peer.LedgerId = currentLedger;
+                        peer.Total = 0;
+                        peer.Pending = false;
+                        peer.Disabled = _tradeAuthority.OverflowBonusBlocked(TradePlayerKey(caller), nativeRunId);
+                        Log.Warn("Overflow bonus ledger changed for " + caller.playerName + "; offering a fresh handshake, already paid dust stays paid");
+                        ReplyOverflowBonus(caller, peer, !peer.Disabled);
+                        return;
+                    }
                     if (!peer.Disabled)
                         Log.Warn("Overflow bonus ledger/run mismatch; only extra Dream Dust is disabled for " + caller.playerName);
                     peer.Disabled = true;
@@ -129,17 +147,23 @@ namespace SodRpg.Mod
                     }
                     catch (Exception ex)
                     {
-                        // Mutation precedes RPC/callbacks. Exact payment is committed even if a later callback throws.
+                        // Mutation precedes RPC/callbacks. Exact payment is committed even if a later callback
+                        // throws, and an exactly settled balance proves the native outcome: a subscriber/RPC
+                        // callback throwing after the mutation is not a currency failure, so the optional bonus
+                        // must keep working for the rest of the session.
                         // Partial/ambiguous native changes must never be retried against a possibly paid balance.
                         if (owner.dreamDust - (long)before == delta)
+                        {
                             _tradeAuthority.CommitOverflowBonus(key, peer.RunId, peer.Total, peer.LedgerId);
+                            Log.Warn("Overflow bonus settled exactly but a native callback threw; the bonus continues: " + ex.Message);
+                        }
                         else
                         {
                             peer.Disabled = true;
                             _tradeAuthority.BlockOverflowBonus(key, peer.RunId, peer.LedgerId);
+                            _overflowBonusDisabled = true;
+                            Log.Warn("Overflow bonus native grant failed; only extra Dream Dust is disabled: " + ex.Message);
                         }
-                        _overflowBonusDisabled = true;
-                        Log.Warn("Overflow bonus native grant failed; only extra Dream Dust is disabled: " + ex.Message);
                     }
                 }
                 ReplyOverflowBonus(owner, peer, !peer.Disabled && !_overflowBonusDisabled);

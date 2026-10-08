@@ -53,6 +53,12 @@ namespace SodRpg.Core.Game
             return true;
         }
 
+        /// <summary>Whether the current run's ledger is blocked for the optional overflow bonus after an
+        /// uncertain native mutation. Never changes a ledger; false when no current-run ledger exists.</summary>
+        public bool OverflowBonusBlocked(string playerKey, string runId) =>
+            playerKey != null && runId != null && _players.TryGetValue(playerKey, out var ledger)
+            && ledger.RunId == runId && ledger.OverflowBonusBlocked;
+
         /// <summary>Paid optional overflow bonus in the current or retained completed run; zero if missing. Never changes a ledger.</summary>
         public long OverflowBonusPaid(string playerKey, string runId)
         {

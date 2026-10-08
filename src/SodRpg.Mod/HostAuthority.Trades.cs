@@ -40,10 +40,15 @@ namespace SodRpg.Mod
             catch (Exception ex)
             {
                 // EarnDreamDust can mutate the SyncVar before a later callback fails. Never pay again.
-                // Restore a partial/native mismatch to the prior balance before selecting shard fallback.
+                // An exactly settled balance proves the native outcome; only a partial/ambiguous one
+                // disables this legacy path and selects the shard fallback.
+                if (owner.dreamDust - (long)before == decision.EarnDust)
+                {
+                    Log.Warn("Host: legacy satchel overflow settled exactly but a native callback threw: " + ex.Message);
+                    return decision;
+                }
                 Log.Error("Host: legacy satchel overflow Dream Dust grant failed: " + ex.Message);
                 _satchelDustDisabled = true;
-                if (owner.dreamDust - (long)before == decision.EarnDust) return decision;
                 try { owner.dreamDust = before; }
                 catch (Exception restoreError)
                 {
@@ -73,13 +78,18 @@ namespace SodRpg.Mod
             }
             catch (Exception ex)
             {
-                _manualTradesDisabled = true;
-                Log.Error("Host: manual trades disabled after native currency failure: " + ex.Message);
-                // Native currency changes precede RPC/callbacks. A later exception must not undo a paid trade.
+                // Native currency changes precede RPC/callbacks. A later exception must not undo a paid trade,
+                // and an exactly settled balance proves the native outcome: a subscriber/RPC callback throwing
+                // after the mutation is not a currency failure, so later trades must stay available.
                 long goldDelta = owner.gold - (long)goldBefore;
                 long dustDelta = owner.dreamDust - (long)dustBefore;
                 if (goldDelta == -decision.SpendGold && dustDelta == decision.EarnDust - (long)decision.SpendDust)
+                {
+                    Log.Warn("Host: manual trade settled exactly but a native callback threw; trades continue: " + ex.Message);
                     return decision;
+                }
+                _manualTradesDisabled = true;
+                Log.Error("Host: manual trades disabled after native currency failure: " + ex.Message);
                 // Never restore an ambiguous balance: another MOD may have changed it. Keep the trade on hold.
                 return _tradeAuthority.FailExecution(playerKey, runId, request,
                     outcomeUnknown: goldDelta != 0 || dustDelta != 0);
