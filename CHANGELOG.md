@@ -8,6 +8,8 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
+- 鞄あふれの追加ドリームダストで、前の遠征の未確認分が残ったままだと警告が出て追加ダストが次の遠征以降ずっと止まっていた問題を修正しました。別の遠征が始まった時点でその分は1回だけ警告して放棄し、遺物の受け取り・欠片化と新しい遠征での追加ダストを再開します。 / Fixed optional overflow Dream Dust staying disabled forever after an unpaid remainder from a previous expedition: it is now abandoned with a one-time warning once a different expedition starts, and relic pickup, shard conversion and the bonus re-arm and continue.
+
 ---
 
 ## v2.10.8 — インフィニティの純白で詰む問題の修正（2026-10-08）

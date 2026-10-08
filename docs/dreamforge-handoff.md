@@ -6,6 +6,10 @@
 
 When the satchel is full, the lowest-rarity, lowest-score relic is converted to shards as before. Removal order and Infinity budget use are resolved per relic; the local `Profile` accumulates the `Content.SalvageShards` amount and relic count, then credits `Materials.Shard` within the tick or before an earlier save/secure boundary, not to unsecured satchel materials. New overflow does not grant host-paid Dream Dust or create trades/RPCs. Infinity free-supply limits and waypoint conversion suppression are unchanged. One summary reports "Satchel overflow: shards +N (M relics)" and any suppressed count. Persistence uses the usual batched saves, not a save per overflow.
 
+追加ドリームダスト設定（#252）の未確認累積は、別の遠征が始まった時点で確定不能として1回だけ警告して放棄する（ホストは自分のnativeランの外では支払わないため）。放棄するのは追加ダストだけで、遺物の受け取り・欠片化と新しい遠征での追加ダストは再開する。同じ遠征IDの再開（続きから）が可能な間は保持する。
+
+An unconfirmed cumulative overflow-bonus total (#252) is abandoned with a one-time warning once a different expedition starts (the host never pays outside its own native run). Only the extra Dust is forgone; relic pickup, shard conversion and the bonus in the new run re-arm. It is retained while the same run can still resume through Continue.
+
 v2.3.1〜v2.4.0の保存に残る容量超過の `PendingTrades` は互換復旧だけを継続する。旧取引のreceiptを繰り返し照会し、旧ダスト取引そのものは再送しない。同じ台帳で未払い・未送信と確認された義務は既存の欠片回復処理を使い、支払い済みならダストも欠片も重複付与しない。確認不能な間は保留を残す。鍛冶・記録タブから手動で行う分解は変更しない。通信・保存形式の版も変更しない。
 
 Overflow `PendingTrades` retained in v2.3.1–v2.4.0 saves remain recoverable through repeated legacy receipt queries, not retransmission of Dust trades. Confirmed unpaid/unsent obligations in the same ledger use the existing shard fallback; recorded payment is not credited again, and unknown payment status preserves the hold. Manual salvage in the forge and record tabs is unchanged, as are the protocol and save-format versions.
