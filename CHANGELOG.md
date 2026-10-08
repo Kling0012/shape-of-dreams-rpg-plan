@@ -8,7 +8,23 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
-- 鞄あふれの追加ドリームダストで、前の遠征の未確認分が残ったままだと警告が出て追加ダストが次の遠征以降ずっと止まっていた問題を修正しました。別の遠征が始まった時点でその分は1回だけ警告して放棄し、遺物の受け取り・欠片化と新しい遠征での追加ダストを再開します。 / Fixed optional overflow Dream Dust staying disabled forever after an unpaid remainder from a previous expedition: it is now abandoned with a one-time warning once a different expedition starts, and relic pickup, shard conversion and the bonus re-arm and continue.
+---
+
+## v2.10.9 — 鞄あふれの追加ダストが止まる問題の修正（2026-10-08）
+
+鞄あふれの赤文字が出たあと、追加のドリームダストがずっと止まったままになる不具合を直しました。 / Fixes extra overflow Dream Dust staying off for good after the red overflow warning.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- 「鞄あふれの追加ドリームダストを確認できません」と赤文字が出たあと、次の遠征以降も追加ダストがずっともらえなくなる問題を修正しました。新しい遠征では、また追加ダストがもらえるようになります。警告文も、止まるのは追加ダストだけという内容に直しました。 / Fixed extra overflow Dream Dust staying unavailable in every later expedition after the red "Extra overflow Dream Dust is unavailable" warning. It works again from the next expedition, and the warning now says only the extra Dream Dust is affected.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
 
 ---
 
