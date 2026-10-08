@@ -57,6 +57,19 @@ namespace SodRpg.Core.Game
             return true;
         }
 
+        /// <summary>
+        /// A graph that cannot cover the cycle interval (the pure-white route) ends at its boss:
+        /// the cycle is due on arrival, so the segment completes as entrance → boss. The counter
+        /// is raised to the interval so <see cref="TryEnterBoss"/> accepts the one-way gate entry.
+        /// </summary>
+        public bool PromoteFinaleBoss()
+        {
+            if (Phase != InfinityPhase.Exploring && Phase != InfinityPhase.BossDue) return false;
+            if (ClearsInCycle < Interval) ClearsInCycle = Interval;
+            Phase = InfinityPhase.BossDue;
+            return true;
+        }
+
         public bool ObserveBossClear()
         {
             if (Phase != InfinityPhase.BossFight) return false;

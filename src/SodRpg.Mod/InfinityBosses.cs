@@ -76,15 +76,22 @@ namespace SodRpg.Mod
         /// <summary>
         /// Special generation fixes the room count (entrance, boss and specialNodes - 2 others)
         /// and never rolls merchants or events. When that count cannot cover the cycle interval,
-        /// every generated graph dead-ends before BossDue and the technical-boundary regeneration
-        /// moves the party on without player input, over and over. Normal zones keep the existing
-        /// exhaustion regeneration: their room count varies by seed and offset.
+        /// the graph can only complete as entrance → boss (the pure-white route): such a zone is
+        /// never drawn at random and never regenerated in place, but a deliberate fixed-zone boss
+        /// plan (the Primus draw) may still target it; OnGenerated then makes the cycle due on
+        /// arrival instead of dead-ending the party into a forced boundary regeneration.
+        /// Normal zones keep the existing exhaustion regeneration: their room count varies by
+        /// seed and offset.
         /// </summary>
         internal static bool CanHostInterval(Zone zone, int interval)
         {
             if (zone == null || !zone.useSpecialGeneration) return true;
             return zone.specialNodes - 2 >= Math.Max(1, interval);
         }
+
+        /// <summary>A special-generation graph too small for the cycle: its boss ends the segment.</summary>
+        internal static bool IsBossFinaleZone(Zone zone, int interval)
+            => zone != null && zone.useSpecialGeneration && !CanHostInterval(zone, interval);
 
         private static bool CanServeAsBossTarget(Zone zone, int interval)
             => HasNativeRoomPools(zone) && CanHostInterval(zone, interval)
@@ -107,6 +114,10 @@ namespace SodRpg.Mod
             }
             SaveBossPlan(plan);
             Zone target = null;
+            // A target taken from a fixed zone id (a saved plan or the drawn boss's dedicated
+            // zone, e.g. the pure-white Primus route) may be a boss-finale zone and completes
+            // the segment as entrance -> boss; random native draws may not (see CanHostInterval).
+            string fixedZoneId = plan.ZoneId;
             try
             {
                 if (!string.IsNullOrEmpty(plan.ZoneId))
@@ -118,6 +129,7 @@ namespace SodRpg.Mod
                     if (selected == null) throw new InvalidOperationException("Unknown boss plan.");
                     if (selected.ZoneId != null)
                     {
+                        fixedZoneId = selected.ZoneId;
                         foreach (var candidate in DewResources.FindAllByNameSubstring<Zone>("Zone_"))
                             if (candidate.name == selected.ZoneId) { target = candidate; break; }
                         if (target == null) throw new InvalidOperationException("Boss zone unavailable: " + selected.ZoneId);
@@ -134,7 +146,7 @@ namespace SodRpg.Mod
                 }
                 if (target == null) target = ChooseNativeZone(state);
                 if (!HasNativeRoomPools(target)) throw new InvalidOperationException(target.name + " has no native room pools.");
-                if (!CanHostInterval(target, state.Interval))
+                if (!CanHostInterval(target, state.Interval) && target.name != fixedZoneId)
                     throw new InvalidOperationException(target.name + " cannot host the cycle's rooms in one graph.");
                 if (target.name == "Zone_Primus" && !InfinityBossSoulDeath.IsInstalled("Mon_Primus_BossPrimusAeron"))
                     throw new InvalidOperationException("Native Primus boss-soul interception is unavailable.");

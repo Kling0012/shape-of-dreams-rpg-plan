@@ -57,9 +57,16 @@ namespace SodRpg.Mod
                 next = ChooseRequiredServiceRoom(zone, current);
             if (next < 0 && state.Phase == InfinityPhase.BossDue)
             {
+                bool bossNode = false;
                 for (int i = 0; i < zone.nodes.Count; i++)
-                    if (zone.nodes[i].type == WorldNodeType.ExitBoss && i != current) { next = i; break; }
-                if (next < 0) { DisableFeature("Infinity reveal graph has no scheduled boss."); return; }
+                    if (zone.nodes[i].type == WorldNodeType.ExitBoss)
+                    {
+                        bossNode = true;
+                        if (i != current) { next = i; break; }
+                    }
+                // Standing on the only boss node (the pure-white gate's direct arrival) needs
+                // no forward reveal; only a graph with no boss at all is broken.
+                if (!bossNode) { DisableFeature("Infinity reveal graph has no scheduled boss."); return; }
             }
             else if (next < 0 && state.Phase == InfinityPhase.Exploring)
             {
