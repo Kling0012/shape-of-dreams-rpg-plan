@@ -64,9 +64,9 @@ namespace SodRpg.Mod
             public Hero Hero;
             public string HeroKey = "Hero_Cetus";
             public HeroSkill GemSlotOwner;
-            public GemBuildForTest AppliedBuild;
+            public ReceivedBuild AppliedBuild;
         }
-        internal sealed class GemBuildForTest { internal Build Build; }
+        internal sealed class GemBuildForTest : ReceivedBuild { }
         internal void ApplyForTest(HeroRuntime runtime, Build build)
         {
             runtime.AppliedBuild = new GemBuildForTest { Build = build };

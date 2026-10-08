@@ -101,7 +101,10 @@ namespace SodRpg.Mod
                         continue;
                     }
                     string summary = build.Encode();
-                    if (previous != null && previous.HeroKey == heroKey && previous.Summary == summary && !previous.ApplyFailed)
+                    // Movement charges are reconstructed from allocations and intentionally absent
+                    // from the wire summary. Equal damage totals can still change this host effect.
+                    if (previous != null && previous.HeroKey == heroKey && previous.Summary == summary && !previous.ApplyFailed
+                        && Build.MovementChargeBonus(heroKey, previous.Build) == Build.MovementChargeBonus(heroKey, build))
                     {
                         previous.Encoded = encoded;
                         SendApplied(player, hero, previous);
