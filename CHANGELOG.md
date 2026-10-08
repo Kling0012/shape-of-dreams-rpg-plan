@@ -8,6 +8,8 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
+星図のエッセンス枠がゲーム内のMOD再読み込み後に設計どおりにならないことがあるのを直し、再読み込み後の2回目の起動でインフィニティのパッチがすべて「未導入」と誤判定されるのを直しました。 / Star-chart essence slots now keep their designed counts across in-game mod reloads, and the second startup after a reload no longer misreports every Infinity patch as not installed.
+
 ---
 
 ## v2.10.6 — インフィニティが ON にならない問題とエッセンス枠の表示の修正（2026-10-08）

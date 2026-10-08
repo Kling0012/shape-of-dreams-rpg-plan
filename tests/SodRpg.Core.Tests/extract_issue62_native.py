@@ -6,7 +6,9 @@ import sys
 root = Path(__file__).resolve().parents[2]
 
 def block(path, declaration):
-    source = (root / path).read_text()
+    # The sources are UTF-8 (Japanese comments); without this the read uses the machine's
+    # ANSI code page when PYTHONUTF8 is not set, and the extraction crashes.
+    source = (root / path).read_text(encoding="utf-8")
     match = re.search(declaration, source)
     if match is None:
         raise ValueError(f"Missing native declaration: {declaration}")

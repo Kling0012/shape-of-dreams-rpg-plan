@@ -88,6 +88,11 @@ namespace SodRpg.Core.Tests
         {
             var build = new Build(); build.Stats[Stat.EssenceSlotIdentity] = 1; build.Stats[Stat.EssenceSlotMovement] = 1; return build;
         }
+
+        private static Build MoveOnly()
+        {
+            var build = new Build(); build.Stats[Stat.EssenceSlotMovement] = 1; return build;
+        }
         private static HostAuthority.HeroRuntime Runtime(Hero hero) => new HostAuthority.HeroRuntime { Hero = hero };
 
         [Fact]
@@ -571,6 +576,113 @@ namespace SodRpg.Core.Tests
         {
             var hero = new Hero(); var host = new HostAuthority();
             host.RestoreForTest(Runtime(hero)); Assert.Equal(new[] { 2, 2 }, hero.Skill.Caps);
+        }
+
+        // ---- 協力プレイの順序と再読み込み（報告：星図で回避のスロットを増やす星が反映されないことがある）----
+
+        private static void SimulateModReload()
+        {
+            // ゲームの再読み込みは同じ MOD を別のアセンブリコピーとして読み込む。コピーごとの
+            // 作業台帳は空で始まる（ここでは同等の状態を作る）。
+            var field = typeof(HostAuthority).GetField("GemSlotLedgers",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+            var table = field.GetValue(null);
+            table.GetType().GetMethod("Clear").Invoke(table, null);
+        }
+
+        [Fact]
+        public void Reload_leftover_slots_converge_to_the_designed_value()
+        {
+            // 再読み込み時に書き戻せなかった自分の枠（ゾーン移動中など本体が非アクティブ）は
+            // 次のコピーの台帳で自分の持ち分として引き継がれ、再度上乗せされない。
+            var hero = new Hero(); var host = new HostAuthority(); var rt = Runtime(hero);
+            host.ApplyForTest(rt, Both());
+            Assert.Equal(new[] { 3, 3 }, hero.Skill.Caps);
+            SimulateModReload();
+            var reloaded = new HostAuthority(); var rt2 = Runtime(hero);
+            reloaded.ApplyForTest(rt2, Both());
+            UnityEngine.Time.unscaledTime = 1;
+            reloaded.TickGemSlotsForTest();
+            Assert.Equal(new[] { 3, 3 }, hero.Skill.Caps);
+            // 解除は自分の +1 だけを外す。残りは他MOD・本体分として残る。
+            reloaded.RestoreForTest(rt2);
+            Assert.Equal(new[] { 2, 2 }, hero.Skill.Caps);
+        }
+
+        [Fact]
+        public void Reload_leftover_then_respec_converges()
+        {
+            var hero = new Hero(); var host = new HostAuthority();
+            host.ApplyForTest(Runtime(hero), Both());
+            SimulateModReload();
+            var reloaded = new HostAuthority(); var rt = Runtime(hero);
+            reloaded.ApplyForTest(rt, Both());
+            // 振り直し：アイデンティティの星を返却し、回避の星だけ残す。
+            reloaded.ApplyForTest(rt, MoveOnly());
+            Assert.Equal(new[] { 2, 3 }, hero.Skill.Caps);
+            reloaded.RestoreForTest(rt);
+            Assert.Equal(new[] { 2, 2 }, hero.Skill.Caps);
+        }
+
+        [Fact]
+        public void Reload_after_clean_detach_reapplies_normally()
+        {
+            var hero = new Hero(); var host = new HostAuthority(); var rt = Runtime(hero);
+            host.ApplyForTest(rt, Both());
+            host.RestoreForTest(rt);
+            Assert.Equal(new[] { 2, 2 }, hero.Skill.Caps);
+            SimulateModReload();
+            var reloaded = new HostAuthority();
+            reloaded.ApplyForTest(Runtime(hero), Both());
+            Assert.Equal(new[] { 3, 3 }, hero.Skill.Caps);
+        }
+
+        [Fact]
+        public void Build_before_the_skill_component_heals_on_the_next_tick()
+        {
+            // 参加者の参加直後：Build が先に届き、HeroSkill はまだ無い。1秒ごとの確認で付与される。
+            var hero = new Hero(); var host = new HostAuthority(); var rt = Runtime(hero);
+            var skill = hero.Skill;
+            hero.Skill = null;
+            host.ApplyForTest(rt, Both());
+            Assert.Equal(new[] { 2, 2 }, skill.Caps);
+            hero.Skill = skill;
+            UnityEngine.Time.unscaledTime = 1;
+            host.TickGemSlotsForTest();
+            Assert.Equal(new[] { 3, 3 }, hero.Skill.Caps);
+        }
+
+        [Fact]
+        public void Skill_recreated_with_foreign_carried_caps_preserves_them()
+        {
+            // 本体交換で運ばれてきた枠が他MOD由来なら、それは基地として保持し、自分の分だけを足す。
+            var hero = new Hero(); var host = new HostAuthority(); var rt = Runtime(hero);
+            host.ApplyForTest(rt, Both());
+            var carried = new HeroSkill { hero = hero };
+            carried.Caps[0] = hero.Skill.Caps[0];
+            carried.Caps[1] = hero.Skill.Caps[1];
+            hero.Skill = carried;
+            UnityEngine.Time.unscaledTime = 1;
+            host.TickGemSlotsForTest();
+            Assert.Equal(new[] { 4, 4 }, carried.Caps);
+            host.RestoreForTest(rt);
+            Assert.Equal(new[] { 3, 3 }, carried.Caps);
+        }
+
+        [Fact]
+        public void Client_view_returns_to_the_design_after_a_native_reset()
+        {
+            // 参加者の画面はホストが書いた SyncVar を描く。本体・他MODが値を戻しても
+            // 確認のたびに設計値へ戻る（＝参加者側でも枠が消えたままにならない）。
+            var hero = new Hero(); var host = new HostAuthority(); var rt = Runtime(hero);
+            host.ApplyForTest(rt, Both());
+            for (int i = 1; i <= 3; i++)
+            {
+                hero.Skill.Caps[0] = 2; hero.Skill.Caps[1] = 2;
+                UnityEngine.Time.unscaledTime = i;
+                host.TickGemSlotsForTest();
+                Assert.Equal(new[] { 3, 3 }, hero.Skill.Caps);
+            }
         }
     }
 }

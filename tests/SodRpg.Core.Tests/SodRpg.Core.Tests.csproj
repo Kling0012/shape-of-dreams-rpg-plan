@@ -94,9 +94,32 @@
     <Compile Include="../../src/SodRpg.Mod/NetMessages.BossEffects.cs" Link="ModUnderTest/NetMessages.BossEffects.cs" />
   </ItemGroup>
 
-
-  <Target Name="ExtractIssue62NativeCallbacks" BeforeTargets="CoreCompile">
-    <Exec Command="python &quot;$(MSBuildProjectDirectory)/extract_issue62_native.py&quot; &quot;$(MSBuildProjectDirectory)/$(IntermediateOutputPath)Issue62.Native.cs&quot;" />
+  <!-- Some build harnesses run MSBuild with a PATH whose "python" is not usable by cmd.exe
+       (a Store stub or a POSIX-only entry). Probe candidates by actually running one and keep
+       the first that works; -p:PythonCommand=... skips the probe. When nothing works the build
+       still fails loudly, exactly like the previous unconditional "python" invocation. -->
+  <Target Name="ResolvePython" Condition="'$(PythonCommand)' == ''">
+    <PropertyGroup>
+      <_PythonProbe>$(IntermediateOutputPath)python-probe.flag</_PythonProbe>
+    </PropertyGroup>
+    <!-- Candidates run least preferred first: the last one that actually executes writes its
+         own command line into the probe file, so PATH python still wins where it works (CI). -->
+    <ItemGroup>
+      <_PythonCandidate Include="$(LOCALAPPDATA)\Programs\Python\Python*\python.exe" />
+      <_PythonCandidate Include="py -3" />
+      <_PythonCandidate Include="python" />
+    </ItemGroup>
+    <Delete Files="$(_PythonProbe)" Condition="Exists('$(_PythonProbe)')" />
+    <Exec Command="%(_PythonCandidate.Identity) -c &quot;open(r'$(_PythonProbe)', 'w').write(r'%(_PythonCandidate.Identity)')&quot;"
+          IgnoreExitCode="true" StandardOutputImportance="low" StandardErrorImportance="low" />
+    <ReadLinesFromFile File="$(_PythonProbe)" Condition="Exists('$(_PythonProbe)')">
+      <Output TaskParameter="Lines" PropertyName="PythonCommand" />
+    </ReadLinesFromFile>
+    <Error Condition="'$(PythonCommand)' == ''" Text="No usable Python interpreter for extract_issue62_native.py (tried PATH python, per-user installs, py -3). Pass -p:PythonCommand= to select one." />
   </Target>
 
+
+  <Target Name="ExtractIssue62NativeCallbacks" BeforeTargets="CoreCompile" DependsOnTargets="ResolvePython">
+    <Exec Command="$(PythonCommand) &quot;$(MSBuildProjectDirectory)/extract_issue62_native.py&quot; &quot;$(MSBuildProjectDirectory)/$(IntermediateOutputPath)Issue62.Native.cs&quot;" />
+  </Target>
 </Project>

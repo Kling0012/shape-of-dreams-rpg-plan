@@ -26,7 +26,7 @@ namespace SodRpg.Core.Tests
             const string hero = "Hero_Cetus";
             var anchor = Node("layout.anchor.1", "layout.anchor", "h.cetus.route.icy-veins.7");
             var dependent = Node("layout.dependent.1", "layout.dependent", anchor.Id);
-            var baseline = HeroSigils.TreeFor(hero);
+            var baseline = HeroSigils.BaselineTreeFor(hero); // 登録済み生成星図の有無で結果が変わらないように基準ツリーを使う
             var tree = baseline.Concat(new[] { dependent, anchor }).ToArray();
             var layout = HeroTreeLayout.ForTalents(tree);
             var anchorNode = layout.Nodes.Single(n => n.Id == anchor.Id);
@@ -51,7 +51,9 @@ namespace SodRpg.Core.Tests
         public void Authored_outer_root_has_only_its_explicit_access_path(bool anchorMetadata)
         {
             const string hero = "Hero_Cetus", id = "layout.outer.s1";
-            var baseline = HeroSigils.TreeFor(hero);
+            // GenerateAuthored の呼び出し元は常に基準ツリーを渡す（登録済み生成星図は含めない）。
+            // 登録済みツリーだと生成星の検証辞書に無いクラスタを参照して順序に依存するため、ここも基準ツリーを使う。
+            var baseline = HeroSigils.BaselineTreeFor(hero);
             string anchor = baseline.First(t => t.RouteMemory == "St_D_IcyVeins" && t.RouteOrder == 7).Id;
             var definition = new AuthoredStarDef { HeroKey = hero, LocalStarId = id, ClusterId = "layout.outer",
                 Region = ClusterRegion.Outer, Shape = ClusterShape.Chain, AnchorId = anchorMetadata ? anchor : null,
