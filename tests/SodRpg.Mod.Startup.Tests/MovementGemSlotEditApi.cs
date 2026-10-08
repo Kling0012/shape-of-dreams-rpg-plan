@@ -31,5 +31,15 @@ namespace SodRpg.Mod
     {
         public HeroSkillLocation skillType;
         public GameObject skillActivationKeyObject;
+        protected override UnityEngine.Object Clone() => new UI_InGame_SkillButton
+        {
+            skillType = skillType,
+            skillActivationKeyObject = skillActivationKeyObject
+        };
+        internal override void RemapCloneReferences(System.Collections.Generic.Dictionary<GameObject, GameObject> copies)
+        {
+            if (skillActivationKeyObject != null && copies.TryGetValue(skillActivationKeyObject, out var copy))
+                skillActivationKeyObject = copy;
+        }
     }
 }

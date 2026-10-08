@@ -43,6 +43,8 @@ namespace SodRpg.Mod
             var hero = player == null ? null : player.hero;
             var skill = hero == null ? null : hero.Skill;
             if (skill == null) return;
+            int cap = skill.GetMaxGemCount(HeroSkillLocation.Movement);
+            if (cap < 1) { Hide(); return; }
             var buttons = ManagerBase<UI_InGame_SkillButtons>.softInstance;
             var array = buttons == null ? null : buttons.skillButtons;
             if (array == null || array.Length == 0) return;
@@ -51,8 +53,7 @@ namespace SodRpg.Mod
                 if (button != null && button.skillType == HeroSkillLocation.Movement) { movement = button; break; }
             if (movement == null) movement = FindOrCloneColumn(buttons, array);
             if (movement == null) return;
-            if (skill.GetMaxGemCount(HeroSkillLocation.Movement) < 1) { Hide(); return; }
-            Show(manager, buttons, array, movement, skill.GetMaxGemCount(HeroSkillLocation.Movement));
+            Show(manager, buttons, array, movement, cap);
         }
 
         private static void Show(EditSkillManager manager, UI_InGame_SkillButtons buttons, UI_InGame_SkillButton[] array, UI_InGame_SkillButton movement, int cap)
@@ -98,27 +99,29 @@ namespace SodRpg.Mod
         private static UI_InGame_SkillButton FindOrCloneColumn(UI_InGame_SkillButtons buttons, UI_InGame_SkillButton[] array)
         {
             UI_InGame_SkillButton template = null, any = null;
-            Transform parent = null;
             foreach (var button in array)
             {
                 if (button == null || button.skillType == HeroSkillLocation.Movement) continue;
                 if (any == null) any = button;
-                if (parent == null && button.transform.parent != null) parent = button.transform.parent;
                 if (button.skillType == HeroSkillLocation.Q) { template = button; break; }
             }
             if (template == null) template = any;
             if (template == null || template.transform.parent == null) return null;
-            if (parent == null) parent = template.transform.parent;
+            var templateColumn = template.transform.parent;
+            var parent = templateColumn.parent;
+            if (parent == null) return null;
             for (int i = 0; i < parent.childCount; i++)
             {
                 var child = parent.GetChild(i).gameObject;
-                var reuse = child.GetComponentInChildren<UI_InGame_SkillButton>();
-                if (reuse != null && reuse.skillType == HeroSkillLocation.Movement) return reuse;
+                var reuse = child.GetComponentInChildren<UI_InGame_SkillButton>(true);
+                if (reuse != null && reuse.skillType == HeroSkillLocation.Movement)
+                    return RegisterButton(buttons, array, reuse);
             }
             GameObject clone;
             try
             {
-                clone = UnityEngine.Object.Instantiate(template.transform.parent.gameObject, parent);
+                // 元の列の子ではなく、同じ行の兄弟として複製する。
+                clone = UnityEngine.Object.Instantiate(templateColumn.gameObject, parent);
             }
             catch (Exception ex)
             {
@@ -127,7 +130,7 @@ namespace SodRpg.Mod
             }
             clone.name = CloneName;
             clone.SetActive(false);
-            var cloned = clone.GetComponentInChildren<UI_InGame_SkillButton>();
+            var cloned = clone.GetComponentInChildren<UI_InGame_SkillButton>(true);
             if (cloned == null)
             {
                 UnityEngine.Object.Destroy(clone);
@@ -137,11 +140,16 @@ namespace SodRpg.Mod
             cloned.skillType = HeroSkillLocation.Movement;
             // 複製した列のキー表示は元の技のものが残るので、誤解を避けるために消しておく。
             if (cloned.skillActivationKeyObject != null) cloned.skillActivationKeyObject.SetActive(false);
+            return RegisterButton(buttons, array, cloned);
+        }
+
+        private static UI_InGame_SkillButton RegisterButton(UI_InGame_SkillButtons buttons, UI_InGame_SkillButton[] array, UI_InGame_SkillButton movement)
+        {
             var grown = new UI_InGame_SkillButton[array.Length + 1];
             Array.Copy(array, grown, array.Length);
-            grown[array.Length] = cloned;
+            grown[array.Length] = movement;
             buttons.skillButtons = grown;
-            return cloned;
+            return movement;
         }
 
         private static void Place(UI_InGame_SkillButtons buttons, UI_InGame_SkillButton[] array, UI_InGame_SkillButton movement)
