@@ -66,8 +66,9 @@ namespace SodRpg.Core.Tests
         [Fact]
         public void Balance_values_keep_the_caps_reachable_and_modest()
         {
-            Assert.InRange(DreamPressure.ShardDropMaximum, 1.1, 2.0);
-            Assert.InRange(DreamPressure.NightmareChanceMaximum, 1.1, 2.0);
+            // v2.11：敵の強化を大きく引き上げたため、報酬の上限も引き上げた（欠片 ×3.0、悪夢化 ×2.5）。
+            Assert.InRange(DreamPressure.ShardDropMaximum, 1.1, 3.0);
+            Assert.InRange(DreamPressure.NightmareChanceMaximum, 1.1, 2.5);
             Assert.True(DreamPressure.ShardDropPerPressure > 0);
             Assert.True(DreamPressure.NightmareChancePerPressure > 0);
         }
