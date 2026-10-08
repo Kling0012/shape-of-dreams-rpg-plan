@@ -21,6 +21,7 @@ ORIGINAL_GROWTH = json.loads(r'''{
     "cetus.run.choice/options/1/growth/effectPct": 0,
     "cetus.run.g1/growth/cap": 60,
     "cetus.run.g1/growth/effects/0/amount": 0.5,
+    "cetus.run.g1/growth/effects/1/amount": 5,
     "cetus.run.g1/growth/threshold": 9,
     "cetus.run.m1/growth/capBonus": 20,
     "cetus.run.m1/growth/effectPct": 0,
@@ -71,6 +72,7 @@ ORIGINAL_RANK_RECORD = (
     "cetus.run.choice/options/1/growth/capBonus:milli:0|"
     "cetus.run.g1/growth/cap:milli:60000|"
     "cetus.run.g1/growth/effects/0/amount:milli:500|"
+    "cetus.run.g1/growth/effects/1/amount:milli:5000|"
     "cetus.run.g1/growth/threshold:milli:9000|"
     "cetus.run.m1/growth/capBonus:milli:20000|"
     "cetus.run.m2/growth/capBonus:milli:20000|"
