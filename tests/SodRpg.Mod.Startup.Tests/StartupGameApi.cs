@@ -134,6 +134,7 @@ namespace SodRpg.Mod
         public string playerName;
         public bool isHumanPlayer;
         public static DewPlayer local;
+        public Hero hero;
         public static readonly List<DewPlayer> gamePlayers = new List<DewPlayer>();
         public static readonly List<DewPlayer> lobbyPlayers = new List<DewPlayer>();
     }
@@ -203,7 +204,7 @@ namespace SodRpg.Mod
             return monster.FailSpawn ? null : spawned;
         }
     }
-    public static class ManagerBase<T> { public static T instance; }
+    public static class ManagerBase<T> { public static T instance; public static T softInstance; }
     public sealed class SpawnManager { public int lastClearedZoneIndex = -1; }
     public sealed class GameSettingsManager
     {
@@ -422,6 +423,7 @@ namespace SodRpg.Mod
     public class Monster : Entity { }
     public sealed class Hero : Entity
     {
+        public HeroSkill Skill = new HeroSkill();
         public float currentHealth;
         public HeroStatus Status = new HeroStatus();
     }
@@ -442,6 +444,8 @@ namespace SodRpg.Mod
     {
         public static T FindActorOfType<T>() where T : Actor
             => NetworkedManagerBase<ActorManager>.softInstance?.allActors.OfType<T>().FirstOrDefault(actor => actor.isActive);
+        // 遅延実行の本体相当。テストは同期的に確定させたいので即座に実行する。
+        public static void CallDelayed(Action func, int frameCount = 1) => func();
     }
     public sealed class ZoneManager
     {

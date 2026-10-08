@@ -35,5 +35,6 @@
   <Compile Include="../../src/SodRpg.Mod/NetMessages.cs" Link="ModUnderTest/NetMessages.cs" />
   <Compile Include="../../src/SodRpg.Mod/NetMessageDecodeWarning.cs" Link="ModUnderTest/NetMessageDecodeWarning.cs" />
   <Compile Include="../../src/SodRpg.Mod/SafeReflection.cs" Link="ModUnderTest/SafeReflection.cs" />
+    <Compile Include="../../src/SodRpg.Mod/MovementGemSlotEdit.cs" Link="ModUnderTest/MovementGemSlotEdit.cs" />
   </ItemGroup>
 </Project>

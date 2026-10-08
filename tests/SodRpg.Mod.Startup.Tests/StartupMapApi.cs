@@ -79,8 +79,20 @@ namespace UnityEngine
         public bool activeInHierarchy => activeSelf && (transform.parent == null || transform.parent.gameObject.activeInHierarchy);
         public readonly RectTransform transform;
         public Component component;
+        public string name;
         public GameObject() { transform = new RectTransform(this); }
         public void SetActive(bool value) => activeSelf = value;
+        public T GetComponentInChildren<T>() where T : Component => GetComponent<T>() ?? FindComponent<T>(transform);
+        public T GetComponent<T>() where T : Component => component as T;
+        private static T FindComponent<T>(Transform node) where T : Component
+        {
+            for (int i = 0; i < node.childCount; i++)
+            {
+                var found = node.GetChild(i).gameObject.GetComponent<T>() ?? FindComponent<T>(node.GetChild(i));
+                if (found != null) return found;
+            }
+            return null;
+        }
     }
     public class Transform : Object
     {
@@ -91,6 +103,7 @@ namespace UnityEngine
         public Transform(GameObject owner) { gameObject = owner; }
         public int childCount => children.Count;
         public Transform GetChild(int index) => children[index];
+        public Transform root { get { var current = this; while (current.parent != null) current = current.parent; return current; } }
         public void SetParent(Transform value)
         {
             parent?.children.Remove(this);
@@ -100,8 +113,18 @@ namespace UnityEngine
     }
     public sealed class RectTransform : Transform
     {
+        public Vector2 sizeDelta;
         public Vector2 anchorMin, anchorMax, anchoredPosition;
         public RectTransform(GameObject owner) : base(owner) { }
+        public void GetWorldCorners(Vector3[] fourCorners)
+        {
+            var center = position;
+            float hx = sizeDelta.x * 0.5f, hy = sizeDelta.y * 0.5f;
+            fourCorners[0] = new Vector3(center.x - hx, center.y - hy, center.z);
+            fourCorners[1] = new Vector3(center.x + hx, center.y - hy, center.z);
+            fourCorners[2] = new Vector3(center.x + hx, center.y + hy, center.z);
+            fourCorners[3] = new Vector3(center.x - hx, center.y + hy, center.z);
+        }
     }
     public class Component : Object
     {
@@ -110,6 +133,7 @@ namespace UnityEngine
         public bool isActiveAndEnabled => gameObject.activeInHierarchy;
         public Component() { gameObject = new GameObject(); gameObject.component = this; }
     }
+    public sealed class MissingComponentException : System.Exception { public MissingComponentException() { } public MissingComponentException(string message) : base(message) { } }
     public sealed class Material : Object { }
     public static class Canvas { public static void ForceUpdateCanvases() { } }
 }
