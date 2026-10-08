@@ -182,5 +182,194 @@ namespace SodRpg.Core.Tests
 
         [Theory, MemberData(nameof(Heroes))]
         public void Walking_the_whole_map_leaves_no_star_that_can_never_be_bought(string hero) => AssertNoProblems(hero);
+
+        private static Profile MaxedProfile(string hero)
+        {
+            var profile = Profile.CreateNew(63);
+            var state = profile.Hero(hero);
+            state.StarXp = StarProgression.TotalXpForPoints(StarProgression.MaxPoints);
+            state.Kills = 1000000;
+            for (int i = 0; i < Content.MaxCodexBonus * Content.CodexPerPoint; i++) profile.Codex.Add("reach.codex." + i);
+            return profile;
+        }
+
+        /// <summary>The stars the map offers as takeable (connected, prerequisites met) that the rules then refuse, option by option.</summary>
+        private static List<(TalentDef Star, int Option)> OfferedButRefused(Profile profile, string hero, List<(TalentDef Star, int Option)> offered)
+        {
+            var layout = HeroTreeLayout.ForHero(hero);
+            var state = profile.Hero(hero);
+            var snapshot = layout.ReachabilitySnapshot(state);
+            var refused = new List<(TalentDef, int)>();
+            foreach (var node in layout.Nodes)
+            {
+                var star = node.Talent;
+                if (star == null || star.IsKeystone || !layout.CanReach(state, star, snapshot)) continue;
+                if (state.Talents.TryGetValue(star.Id, out int rank) && rank >= star.MaxRank) continue;
+                int options = star.IsChoice ? star.Choices.Count : 1;
+                for (int option = 0; option < options; option++)
+                {
+                    if (star.IsChoice && rank > 0 && state.TalentChoices[star.Id] != option) continue;
+                    offered?.Add((star, option));
+                    var plan = Rules.PreviewAllocationChange(profile, hero, new AllocationChange
+                    {
+                        Kind = AllocationChangeKind.Purchase, CandidateStarId = star.Id, SelectedOption = star.IsChoice ? (int?)option : null,
+                    });
+                    if (!plan.CanApply || plan.AffectedRefundIds.Count > 0) refused.Add((star, option));
+                }
+            }
+            return refused;
+        }
+
+        /// <summary>
+        /// A star the map shows as takeable must be takeable. Nothing can be owned at the start, so every star connected to the start,
+        /// and every star that becomes connected after one first purchase, has to be bought as offered (each option of a choice star),
+        /// without first buying some unrelated star. (Cetus's Ice Shell and Tide Scales, and Lacerta's Powder, used to be refused here:
+        /// the option boosted a memory effect that nothing owned yet provided.)
+        /// </summary>
+        [Theory, MemberData(nameof(Heroes))]
+        public void Every_star_connected_to_the_start_can_be_taken_first_and_after_any_one_other_purchase(string hero)
+        {
+            var problems = new List<string>();
+            var first = new List<(TalentDef Star, int Option)>();
+            foreach (var refused in OfferedButRefused(MaxedProfile(hero), hero, first))
+                problems.Add("at the start: " + refused.Star.Id + " (" + refused.Star.Name + ") option " + refused.Option);
+            foreach (var pick in first)
+            {
+                if (pick.Star.Stat == Stat.EssenceSlotIdentity || pick.Star.Stat == Stat.EssenceSlotMovement) continue; // only one slot per kind ever counts
+                var profile = MaxedProfile(hero);
+                try { Rules.AddTalentRank(profile, hero, pick.Star.Id, pick.Star.IsChoice ? (int?)pick.Option : null); }
+                catch (InvalidOperationException) { continue; } // already reported above
+                foreach (var refused in OfferedButRefused(profile, hero, null))
+                    problems.Add("after " + pick.Star.Id + "/" + pick.Option + ": " + refused.Star.Id + " (" + refused.Star.Name + ") option " + refused.Option);
+            }
+            Assert.True(problems.Count == 0, hero + " offers stars it then refuses: " + string.Join("; ", problems.Take(20)));
+        }
+
+        private static bool IsRingStar(TalentDef star) =>
+            star != null && !star.IsKeystone && star.RouteId == null && star.Cluster == null && !star.IsOuterAnchor && !star.IsDreamRing;
+
+        /// <summary>
+        /// The first star of a memory route hangs off a ring star. With only the path to that ring star owned, entering the route has to
+        /// work, however the route's own source star sits deeper behind it (Lacerta's Muzzle Heat and Aim Build-up were refused here).
+        /// </summary>
+        [Theory, MemberData(nameof(Heroes))]
+        public void Every_star_beside_a_ring_star_can_be_taken_with_only_the_path_to_that_ring_star(string hero)
+        {
+            var layout = HeroTreeLayout.ForHero(hero);
+            var problems = new List<string>();
+            foreach (var node in layout.Nodes)
+            {
+                var star = node.Talent;
+                if (star == null || star.IsKeystone || star.AuthoredStar != null && (star.AuthoredStar.RequiredStarIds.Count > 0 || star.AuthoredStar.RequiredAnyStarIds.Count > 0)) continue;
+                foreach (int neighbour in node.Neighbors)
+                {
+                    var ring = layout.Nodes[neighbour].Talent;
+                    if (!IsRingStar(ring) || ring.Stat == Stat.EssenceSlotIdentity || ring.Stat == Stat.EssenceSlotMovement) continue;
+                    var profile = MaxedProfile(hero);
+                    var state = profile.Hero(hero);
+                    try
+                    {
+                        TreeTestPaths.Connect(profile, hero, ring.Id);
+                        Rules.AddTalentRank(profile, hero, ring.Id, ring.IsChoice ? (int?)0 : null);
+                    }
+                    catch (InvalidOperationException) { continue; } // the ring star itself is covered by the test above
+                    if (state.Talents.ContainsKey(star.Id) || !layout.CanReach(state, star)) continue;
+                    int options = star.IsChoice ? star.Choices.Count : 1;
+                    for (int option = 0; option < options; option++)
+                    {
+                        var plan = Rules.PreviewAllocationChange(profile, hero, new AllocationChange
+                        {
+                            Kind = AllocationChangeKind.Purchase, CandidateStarId = star.Id, SelectedOption = star.IsChoice ? (int?)option : null,
+                        });
+                        if (!plan.CanApply || plan.AffectedRefundIds.Count > 0)
+                            problems.Add(ring.Id + " -> " + star.Id + " (" + star.Name + ") option " + option);
+                    }
+                }
+            }
+            Assert.True(problems.Count == 0, hero + " cannot be entered from the ring: " + string.Join("; ", problems.Take(20)));
+        }
+
+        /// <summary>
+        /// A mechanism's channel is boosted from its source side or its receiving side, never both: a build that holds both is rejected as a
+        /// "double boost", so the star that provides the channel could never be taken once a star of each side was owned. A boost star that
+        /// sits on the path to the mechanism (or is the mechanism) is the worst case, but any pair of ordinary stars is enough.
+        /// Cetus's Icy Veins fork (Retreat After the Burst) used to clash this way with 73 source stars and 86 Frosty Charge receiver stars.
+        /// </summary>
+        [Theory, MemberData(nameof(Heroes))]
+        public void No_mechanism_can_be_boosted_from_both_its_source_side_and_its_receiving_side(string hero)
+        {
+            var layout = HeroTreeLayout.ForHero(hero);
+            var all = new List<(TalentDef Star, TalentDef Def)>();
+            foreach (var node in layout.Nodes)
+            {
+                var star = node.Talent;
+                if (star == null || star.IsKeystone) continue;
+                if (star.IsChoice) foreach (var option in star.Choices) all.Add((star, option));
+                else all.Add((star, star));
+            }
+            var problems = new List<string>();
+            foreach (var mechanism in all.Where(x => x.Def.Mechanism != null))
+            {
+                var entry = new AuthoredMechanismEntry { StarId = mechanism.Def.Id, ContributorIds = new[] { mechanism.Def.Id }, Spec = mechanism.Def.Mechanism.Copy() };
+                // Rank-less parameter boosts (duration, radius, ...) are summed separately and never clash; only the plain boost does.
+                bool Boosts(TalentDef def, bool receiver) => def.ScopedModifier != null && !def.ScopedModifier.Param.HasValue
+                    && (def.ScopedModifier.ScopeKind == ScopeKind.Receiver) == receiver && AuthoredMechanisms.Matches(def.ScopedModifier, entry);
+                var source = all.Where(x => Boosts(x.Def, false) && x.Star.Id != mechanism.Star.Id).ToList();
+                var receiver = all.Where(x => Boosts(x.Def, true) && x.Star.Id != mechanism.Star.Id).ToList();
+                if (source.Count > 0 && receiver.Count > 0)
+                    problems.Add(mechanism.Def.Id + " (" + source.Count + " source boosts, " + receiver.Count + " receiver boosts, e.g. "
+                        + source[0].Star.Id + " + " + receiver[0].Star.Id + ")");
+            }
+            Assert.True(problems.Count == 0, hero + ": " + string.Join("; ", problems));
+        }
+
+        /// <summary>
+        /// Plays the map the way a player does, in a fixed pseudo-random order: whatever the map offers as takeable (connected, prerequisites
+        /// met) must be takeable, at every step. Exclusions that are real design rules (a saturated or dominated effect, a slot already
+        /// taken) are not reported here because the map's own rules refuse them as well; what is reported is a star offered and then refused for
+        /// lack of a recipient or a clash between two boosts.
+        /// </summary>
+        [Theory, MemberData(nameof(Heroes))]
+        public void Playing_in_any_order_never_offers_a_star_the_rules_then_refuse_for_a_missing_recipient_or_a_clash(string hero)
+        {
+            var layout = HeroTreeLayout.ForHero(hero);
+            var problems = new List<string>();
+            for (int seed = 0; seed < 2 && problems.Count == 0; seed++)
+            {
+                var random = new Random(seed * 17 + 3);
+                var profile = MaxedProfile(hero);
+                var state = profile.Hero(hero);
+                for (int step = 0; step < 70; step++)
+                {
+                    var snapshot = layout.ReachabilitySnapshot(state);
+                    var takeable = new List<(TalentDef Star, int Option)>();
+                    foreach (var node in layout.Nodes)
+                    {
+                        var star = node.Talent;
+                        if (star == null || star.IsKeystone || !layout.CanReach(state, star, snapshot)) continue;
+                        state.Talents.TryGetValue(star.Id, out int rank);
+                        if (rank >= star.MaxRank) continue;
+                        int options = star.IsChoice ? star.Choices.Count : 1;
+                        for (int option = 0; option < options; option++)
+                        {
+                            if (star.IsChoice && rank > 0 && state.TalentChoices[star.Id] != option) continue;
+                            var plan = Rules.PreviewAllocationChange(profile, hero, new AllocationChange
+                            {
+                                Kind = AllocationChangeKind.Purchase, CandidateStarId = star.Id, SelectedOption = star.IsChoice ? (int?)option : null,
+                            });
+                            if (plan.CanApply && plan.AffectedRefundIds.Count == 0) { takeable.Add((star, option)); continue; }
+                            bool missing = plan.SaturationDetails.Any(d => d.Reason == AllocationInertReason.MissingOwnedRecipient);
+                            bool clash = !plan.CanApply && plan.SaturatedChannels.Count > 0 && plan.SaturationDetails.Count == 0;
+                            if (missing || clash)
+                                problems.Add("seed " + seed + " step " + step + ": " + star.Id + " (" + star.Name + ") option " + option + (missing ? " has no recipient" : " clashes with an owned boost"));
+                        }
+                    }
+                    if (takeable.Count == 0) break;
+                    var pick = takeable[random.Next(takeable.Count)];
+                    Rules.AddTalentRank(profile, hero, pick.Star.Id, pick.Star.IsChoice ? (int?)pick.Option : null);
+                }
+            }
+            Assert.True(problems.Count == 0, hero + " offers stars it then refuses: " + string.Join("; ", problems.Take(10)));
+        }
     }
 }

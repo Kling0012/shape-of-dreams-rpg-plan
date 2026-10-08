@@ -557,12 +557,41 @@ namespace SodRpg.Core.Game
         private bool IsPendingRouteReceiver(HeroState hero, TalentDef talent, int rank,
             IReadOnlyList<EffectiveAllocationChannel> with, IReadOnlyList<EffectiveAllocationChannel> without)
         {
+            if (IsPendingChoice(hero, talent, with)) return true;
             var modifier = talent.ScopedModifier;
-            if (modifier == null || modifier.ScopeKind != ScopeKind.Receiver || talent.IsChoice || talent.Cluster != null || talent.IsOuterAnchor) return false;
-            if (modifier.ScopeMemory == null || talent.RouteMemory != null && modifier.ScopeMemory != talent.RouteMemory
+            if (modifier == null || talent.IsChoice || talent.Cluster != null || talent.IsOuterAnchor) return false;
+            if (modifier.ScopeKind != ScopeKind.Receiver)
+            {
+                // A route's stars can boost the effect the route's own deeper star provides (Lacerta's Muzzle Heat and Aim Build-up
+                // sit at the route's mouth); the route could not be entered from the ring otherwise.
+                if (talent.RouteId == null || modifier.ScopeMemory == null || modifier.ScopeMemory != talent.RouteMemory) return false;
+            }
+            else if (modifier.ScopeMemory == null || talent.RouteMemory != null && modifier.ScopeMemory != talent.RouteMemory
                 || !modifier.ScopeMemory.StartsWith("St_M_", StringComparison.Ordinal)) return false;
             if (DisabledIds(hero).Contains(talent.Id)) return false;
             foreach (var channel in with) if (Targets(talent, channel)) return false;
+            return true;
+        }
+
+        /// <summary>
+        /// A choice star on the hero's own ring (for example Cetus's Ice Shell or Lacerta's Powder), or a choice star in a memory route that
+        /// boosts that route's own memory, lets the player pick which memory's effect it boosts. The source of that effect is a star
+        /// elsewhere on the map (the ring sits next to the start, where nothing is owned yet; a route's source can sit deeper in the route).
+        /// Refusing the option as "no owned recipient" would leave a star the map shows as takeable impossible to take until some other
+        /// star is bought first, so an option with no recipient yet is pending, not inert. Saturated or dominated ranks stay refused.
+        /// Cluster and outer stars are not covered: they hang off a route star that already owns the source.
+        /// </summary>
+        private bool IsPendingChoice(HeroState hero, TalentDef talent, IReadOnlyList<EffectiveAllocationChannel> with)
+        {
+            if (!talent.IsChoice || talent.Cluster != null || talent.IsOuterAnchor) return false;
+            if (!hero.TalentChoices.TryGetValue(talent.Id, out int option) || option < 0 || option >= talent.Choices.Count) return false;
+            var chosen = talent.Choices[option];
+            var modifier = chosen.ScopedModifier;
+            if (modifier == null || modifier.ScopeMemory == null) return false;
+            // A route star may only wait for its own route's memory; a ring star may name any memory.
+            if (talent.RouteId != null && modifier.ScopeMemory != talent.RouteMemory && modifier.ScopeMemory != chosen.RouteMemory) return false;
+            if (DisabledIds(hero).Contains(talent.Id)) return false;
+            foreach (var channel in with) if (Targets(chosen, channel)) return false;
             return true;
         }
 
