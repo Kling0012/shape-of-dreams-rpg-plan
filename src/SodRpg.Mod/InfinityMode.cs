@@ -592,6 +592,14 @@ namespace SodRpg.Mod
                     _refreshTarget = PrepareBossTarget(_refreshOrigin, state);
                 }
                 catch (Exception ex) { WarnZoneSwitch(ex.Message); }
+            else if (!CanHostInterval(_refreshOrigin, state.Interval))
+            {
+                // The current zone (e.g. a save made before too-small special zones were excluded
+                // from the draw) cannot host the cycle: regenerating it would dead-end again and
+                // force yet another move. Leave for a zone the run can actually play.
+                try { _refreshTarget = ChooseNativeZone(state); }
+                catch (Exception ex) { WarnZoneSwitch(ex.Message); }
+            }
             // noAdvance retains native index/tier/loop/ambient difficulty. The selected prefab owns
             // enemies, scenes and boss pools; depth and Infinity pressure remain the scaling axes.
             return TravelGraph(zone);

@@ -28,7 +28,8 @@ namespace SodRpg.Mod.Startup.Tests
             var previous = zone.currentZone;
             var primus = NativeZone("Zone_Primus");
             primus.useSpecialGeneration = true;
-            primus.specialNodes = 3;
+            // Interval 10: a special zone must offer entrance + boss + 10 clearable rooms.
+            primus.specialNodes = 12;
             DewResources.Zones.Add(primus);
             PrepareDelve(session.Profile.Run.Infinity);
             var savedRun = session.Profile.Run.Clone();
@@ -106,6 +107,82 @@ namespace SodRpg.Mod.Startup.Tests
             DewResources.Zones.Clear();
         }
 
+        [Fact]
+        public void DelveNeverDrawsASpecialZoneTooSmallForTheCycle()
+        {
+            var (session, zone) = StartZoneTransition("pure-white-lottery");
+            DewResources.Zones.Add(SmallPrimusZone());
+            DewResources.Zones.Add(NativeZone("Zone_Other"));
+            PrepareDelve(session.Profile.Run.Infinity);
+            Assert.True(InfinityMode.Regenerate("delve"));
+            Assert.NotEqual("Zone_Primus", zone.currentZone.name);
+            Assert.Equal(zone.currentZone.name, session.Profile.Run.Infinity.FixedZoneId);
+            Assert.True(InfinityMode.Available);
+            DewResources.Zones.Clear();
+        }
+
+        [Fact]
+        public void DelveRejectsASavedPrimusBossPlanThatCannotHostTheCycle()
+        {
+            var (session, zone) = StartZoneTransition("pure-white-plan");
+            var state = session.Profile.Run.Infinity;
+            PrepareDelve(state);
+            NetworkedManagerBase<GameSettingsManager>.softInstance.customData[InfinityMode.BossKey] =
+                Newtonsoft.Json.JsonConvert.SerializeObject(new InfinityMode.BossPlan
+                {
+                    RunId = NetworkedManagerBase<GameManager>.softInstance.runId,
+                    SegmentEpoch = state.SegmentEpoch, ZoneId = "Zone_Primus",
+                });
+            DewResources.Zones.Add(SmallPrimusZone());
+            DewResources.Zones.RemoveAll(z => z.name == "Zone_Foo");
+            DewResources.Zones.Add(NativeZone("Zone_Other"));
+            Assert.True(InfinityMode.Regenerate("delve"));
+            Assert.Equal("Zone_Other", zone.currentZone.name);
+            Assert.Equal("Zone_Other", state.FixedZoneId);
+            Assert.True(InfinityMode.Available);
+            DewResources.Zones.Clear();
+        }
+
+        [Fact]
+        public void ExhaustionLeavesASpecialZoneTooSmallForTheCycle()
+        {
+            var (session, zone) = StartZoneTransition("pure-white-rescue");
+            var state = session.Profile.Run.Infinity;
+            zone.currentZone = SmallPrimusZone();
+            state.FixedZoneId = zone.currentZone.name;
+            state.Phase = InfinityPhase.Exploring;
+            state.ClearsInCycle = 0;
+            DewResources.Zones.Add(zone.currentZone);
+            DewResources.Zones.RemoveAll(z => z.name == "Zone_Foo");
+            DewResources.Zones.Add(NativeZone("Zone_Other"));
+            Assert.True(InfinityMode.Regenerate("regenerate"));
+            Assert.Equal("Zone_Other", zone.currentZone.name);
+            Assert.Equal("Zone_Other", state.FixedZoneId);
+            Assert.Equal(1, state.GraphEpoch);
+            Assert.Equal(InfinityPhase.Exploring, state.Phase);
+            Assert.True(InfinityMode.Available);
+            DewResources.Zones.Clear();
+        }
+
+        [Fact]
+        public void DelveFromASpecialZoneTooSmallForTheCycleLeavesIt()
+        {
+            var (session, zone) = StartZoneTransition("pure-white-leave");
+            var state = session.Profile.Run.Infinity;
+            zone.currentZone = SmallPrimusZone();
+            state.FixedZoneId = zone.currentZone.name;
+            PrepareDelve(state);
+            DewResources.Zones.Add(zone.currentZone);
+            DewResources.Zones.RemoveAll(z => z.name == "Zone_Foo");
+            DewResources.Zones.Add(NativeZone("Zone_Other"));
+            Assert.True(InfinityMode.Regenerate("delve"));
+            Assert.NotEqual("Zone_Primus", zone.currentZone.name);
+            Assert.Equal(zone.currentZone.name, state.FixedZoneId);
+            Assert.True(InfinityMode.Available);
+            DewResources.Zones.Clear();
+        }
+
+
         private (ClientSession session, ZoneManager zone) StartZoneTransition(string runId)
         {
             DewResources.Zones.Clear();
@@ -126,6 +203,15 @@ namespace SodRpg.Mod.Startup.Tests
             zone.startRooms.Add(name + "_Start");
             zone.combatRooms.Add(name + "_Combat");
             zone.bossRooms.Add(name + "_Boss");
+            return zone;
+        }
+
+        private static Zone SmallPrimusZone()
+        {
+            var zone = NativeZone("Zone_Primus");
+            zone.useSpecialGeneration = true;
+            // Entrance + boss + one fight: interval 10 can never be reached in one graph.
+            zone.specialNodes = 3;
             return zone;
         }
 

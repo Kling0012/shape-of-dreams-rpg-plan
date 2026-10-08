@@ -8,6 +8,8 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
+- **インフィニティの純白**：部屋数が周期に足りない特殊ゾーン（純白など）を潜行先に引くと、部屋をクリアするたびにプレイヤーの意思と関係なく次の地図へ運ばれ続け、先へ進めなくなっていました。このようなゾーンを抽選から外し、既に入ってしまった遠征は次の区切りで別のゾーンへ移るようにしました。 / **Infinity in the pure-white route**: drawing a special zone with too few rooms for the cycle (such as the pure-white route) kept carrying the party to a new map after every cleared room, with no way forward. Such zones are now excluded from the draw, and a run already inside one moves to another zone at the next boundary.
+
 ---
 
 ## v2.10.7 — 協力プレイと再読み込み後のエッセンス枠の修正（2026-10-08）
