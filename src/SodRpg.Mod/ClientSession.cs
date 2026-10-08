@@ -204,8 +204,8 @@ namespace SodRpg.Mod
         {
             if (_tickSteps == null)
             {
-                _tickSteps = new Action[] { TickGemSlotHudProbe, TickProfileSlots, Wire, TickInfinitySettings, UpdateVariantVisuals, UpdateMonsterCues, TickBossDisplay, TrackRun, TickKillClassification, TickRunChoices, TickInfinityRewards, TickCurseResync, TickSalvageExpiry, TickSatchelOverflow, SendBuildIfNeeded, TickHello, TickPeriodicSave, TickInterruptedRelics, TickKillSync, TickCoopTrade };
-                _tickStepNames = new[] { "gem slot HUD probe", "profile slots", "wire", "infinity settings", "variant visuals", "monster cues", "boss effects", "track run", "kill classification", "run choices", "infinity rewards", "curse resync", "salvage expiry", "satchel overflow", "send build", "hello", "periodic save", "interrupted relic save", "kill sync", "coop trade" };
+                _tickSteps = new Action[] { TickGemSlotHudProbe, TickProfileSlots, Wire, TickInfinitySettings, UpdateVariantVisuals, UpdateMonsterCues, TickBossDisplay, TrackRun, TickKillClassification, TickRunChoices, TickCurseResync, TickSalvageExpiry, TickSatchelOverflow, SendBuildIfNeeded, TickHello, TickPeriodicSave, TickInterruptedRelics, TickKillSync, TickCoopTrade };
+                _tickStepNames = new[] { "gem slot HUD probe", "profile slots", "wire", "infinity settings", "variant visuals", "monster cues", "boss effects", "track run", "kill classification", "run choices", "curse resync", "salvage expiry", "satchel overflow", "send build", "hello", "periodic save", "interrupted relic save", "kill sync", "coop trade" };
                 _tickStepNextLog = new float[_tickSteps.Length];
             }
             for (int i = 0; i < _tickSteps.Length; i++)
@@ -653,7 +653,6 @@ namespace SodRpg.Mod
                     fightHeat = Profile.Run.Heat;
                     fightWaypoint = Profile.Run.ActiveWaypoint;
                 }
-                SampleInfinityRewards(true);
                 CaptureNativeKill(m, new PendingRunKill(gm.runId, ChoiceZoneIndex, _zone?.currentRoomIndex ?? 0,
                     tier, level, NightmareAffix.None, null, heroKey, heat: fightHeat, waypoint: fightWaypoint,
                     graphEpoch: Profile.Run?.Infinity?.GraphEpoch ?? 0, segmentEpoch: Profile.Run?.Infinity?.SegmentEpoch ?? 0,
@@ -747,8 +746,6 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
             if (LocalGold < price) return Loc.T($"ゴールドが足りません（{price}G）。", $"Not enough gold ({price}G).");
             string blocked = TradeUnavailable();
             if (blocked != null) return blocked;
-            if (!InfinityRewards.ReserveMerchant(Profile))
-                return Loc.T("インフィニティの商人購入枠が不足しています。戦闘中に補充されます。", "Infinity merchant budget is exhausted. It refills during combat.");
             return SendTrade(_trades.BeginMerchant(Profile.Run.Heat, price, Time.unscaledTime, Profile.Run.OfferedEventId));
         }
 
@@ -761,9 +758,6 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
             string blocked = TradeUnavailable();
             if (blocked != null) return blocked;
             int batches = Math.Min(dust / Economy.DustPerBatch, Economy.MaxBatchesPerTrade);
-            while (batches > 0 && !InfinityRewards.CanConvertDust(Profile, batches)) batches--;
-            if (batches == 0 || !InfinityRewards.ReserveDustConversion(Profile, batches))
-                return Loc.T("インフィニティの換金・欠片枠が不足しています。戦闘中に補充されます。", "Infinity conversion/shard budget is exhausted. It refills during combat.");
             return SendTrade(_trades.BeginDustToShards(batches, Time.unscaledTime));
         }
 

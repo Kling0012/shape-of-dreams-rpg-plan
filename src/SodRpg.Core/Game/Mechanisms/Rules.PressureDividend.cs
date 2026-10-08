@@ -8,7 +8,7 @@ namespace SodRpg.Core.Game
         {
             if (profile?.Run == null || reward == null || profile.Run.RunId != reward.RunId)
                 throw new InvalidOperationException("A pressure dividend belongs to its active expedition.");
-            int shards = InfinityRewards.LimitShards(profile, reward.ShardCount);
+            int shards = reward.ShardCount;
             if (shards == 0) return null;
             profile.Run.SatchelShards = (int)Math.Min(int.MaxValue, (long)profile.Run.SatchelShards + shards);
             return new GameEvent(EventKind.Info, Loc.T(

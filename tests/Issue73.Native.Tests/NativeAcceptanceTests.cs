@@ -221,7 +221,7 @@ namespace Issue73.Native.Tests
         }
 
         /// <summary>
-        /// #124: 保存照合が一致しない報酬停止中に配当 RPC が届いても、予算・鞄は変わらず
+        /// #124: 保存照合が一致しない報酬停止中に配当 RPC が届いても、鞄は変わらず
         /// 記録はキューに残る。同じ通知の再送は増えず、照合が戻れば一度だけ精算される。
         /// </summary>
         [Fact]
@@ -229,7 +229,6 @@ namespace Issue73.Native.Tests
         {
             var session = Session();
             session.Profile.Run.Infinity = new InfinityRunState { FixedZoneId = "Zone_Mist", Interval = 10, DifficultyId = "diffNormal" };
-            session.Profile.InfinityRewardBudget.Shards = 1;
             Call(session, "MarkDirty", false); // 初回の偉業通知を先に出し切る（以後は配当の文言だけを見る）
             session.Events.Clear();
             var queue = (PendingPressureDividends)Get(session, "_pendingPressureDividends");
@@ -239,7 +238,6 @@ namespace Issue73.Native.Tests
                 Call(session, "OnPressureDividend", receipt);
                 Assert.Equal(1, queue.Count); // 停止中は未精算のまま保持
                 Assert.Equal(0, session.Profile.Run.SatchelShards);
-                Assert.Equal(1.0, session.Profile.InfinityRewardBudget.Shards, 9);
                 Assert.Empty(session.Events);
                 Assert.Equal(float.MaxValue, Get(session, "_nextSave"));
                 Call(session, "FlushPendingRunRewards"); // 通常 Tick の入口も停止を維持する
@@ -253,7 +251,6 @@ namespace Issue73.Native.Tests
                 Call(session, "FlushPendingPressureDividends");
                 Assert.Equal(0, queue.Count);
                 Assert.Equal(1, session.Profile.Run.SatchelShards);
-                Assert.Equal(0.0, session.Profile.InfinityRewardBudget.Shards, 9);
                 Assert.Single(session.Events);
                 Call(session, "FlushPendingPressureDividends"); // 二度精算されない
                 Call(session, "OnPressureDividend", receipt);
@@ -263,13 +260,13 @@ namespace Issue73.Native.Tests
             finally { InfinityMode.NativeSaveAgreement = false; }
         }
 
-        /// <summary>#124: 欠片予算が0でも、停止中の通知はキューから取り除かれない。</summary>
+        /// <summary>#124: 旧予算が0のセーブでも、照合が戻れば配当は精算される。</summary>
         [Fact]
-        public void HaltedInfinityKeepsZeroBudgetDividendReceiptQueued()
+        public void HaltedInfinityZeroBudgetDividendStillSettlesOnRecovery()
         {
             var session = Session();
             session.Profile.Run.Infinity = new InfinityRunState { FixedZoneId = "Zone_Mist", Interval = 10, DifficultyId = "diffNormal" };
-            session.Profile.InfinityRewardBudget.Shards = 0;
+            session.Profile.InfinityRewardBudget.Shards = 0; // 枠0の古いセーブ
             Call(session, "MarkDirty", false); // 初回の偉業通知を先に出し切る（以後は配当の文言だけを見る）
             session.Events.Clear();
             var queue = (PendingPressureDividends)Get(session, "_pendingPressureDividends");
@@ -279,11 +276,12 @@ namespace Issue73.Native.Tests
                 Assert.Equal(1, queue.Count);
                 Assert.Equal(0, session.Profile.Run.SatchelShards);
 
-                InfinityMode.NativeSaveAgreement = true; // 解けたら通常どおり完了する（予算0なので付与なし）
+                InfinityMode.NativeSaveAgreement = true; // 解けたら通常どおり完了する（枠0でも付与される）
                 Call(session, "FlushPendingPressureDividends");
                 Assert.Equal(0, queue.Count);
-                Assert.Equal(0, session.Profile.Run.SatchelShards);
-                Assert.Empty(session.Events);
+                Assert.Equal(1, session.Profile.Run.SatchelShards);
+                Assert.Single(session.Events);
+                Assert.Equal(0, session.Profile.InfinityRewardBudget.Shards); // 台帳は触れない
             }
             finally { InfinityMode.NativeSaveAgreement = false; }
         }

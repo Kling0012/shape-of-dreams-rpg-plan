@@ -63,12 +63,6 @@ namespace Issue73.Native.Tests
             Assert.Equal(InfinityPhase.Exploring, infinity.Phase);
             Assert.Equal(new HashSet<int> { 1, 2 }, infinity.ClearedNodes);
             Assert.Equal(InfinityIntervalScaling.PressureOffset(infinity.Interval), infinity.PressureStage); // 保存した周期の開始時補正も復元
-            var savedBudget = atSave.InfinityRewardBudget;
-            Assert.Equal(savedBudget.RoomRunId, profile.InfinityRewardBudget.RoomRunId); // 入場receipt
-            Assert.Equal(savedBudget.RoomGraph, profile.InfinityRewardBudget.RoomGraph);
-            Assert.Equal(savedBudget.RoomEpoch, profile.InfinityRewardBudget.RoomEpoch);
-            Assert.Equal(savedBudget.LesserTime, profile.InfinityRewardBudget.LesserTime); // 戦闘時間creditも保存時点
-            Assert.Equal(savedBudget.Relics, profile.InfinityRewardBudget.Relics);
             Assert.Equal(atSave.Run.Kills, profile.Run.Kills);
             Assert.Equal(atSave.Run.Satchel.Select(r => r.Uid), profile.Run.Satchel.Select(r => r.Uid));
             Assert.Null(session.ContinueWarning);
@@ -83,7 +77,6 @@ namespace Issue73.Native.Tests
             Assert.Equal(atSave.Stats.RelicsFound, profile.Stats.RelicsFound);
             Assert.Equal(atSave.Material(Materials.Shard), profile.Material(Materials.Shard));
             Assert.Equal(3, profile.Run.Infinity.ClearedCombatTotal);
-            Assert.Equal(savedBudget.HighRare, profile.InfinityRewardBudget.HighRare, 10); // 予算の消費も一致
         }
 
         [Fact]
@@ -181,8 +174,6 @@ namespace Issue73.Native.Tests
         {
             var infinity = profile.Run.Infinity;
             infinity.RoomEpoch++;
-            InfinityRewards.EnterRoom(profile, infinity.GraphEpoch, infinity.RoomEpoch);
-            InfinityRewards.AdvanceCombat(profile, 35 * 60.0 / 24);
             for (int kill = 0; kill < 5; kill++)
                 Rules.OnKill(profile, MonsterTier.Lesser, 20, heat: profile.Run.Heat, waypoint: Waypoint.None);
             Assert.True(infinity.TryCountCombatClear(infinity.GraphEpoch, node, active: true, transitioning: false, revisit: false));

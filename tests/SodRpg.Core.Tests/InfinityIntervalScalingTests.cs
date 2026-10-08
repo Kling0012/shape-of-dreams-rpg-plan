@@ -42,25 +42,5 @@ namespace SodRpg.Core.Tests
             }
             Assert.InRange((double)ordinaryAfter / ordinaryBefore, 1.94, 2.06);
         }
-
-        [Fact]
-        public void Rare_authorization_charges_extra_Epic_but_preserves_Legendary_and_output_caps()
-        {
-            var p = Profile.CreateNew(271);
-            Rules.BeginRun(p, "interval-budget");
-            p.Run.Infinity = new InfinityRunState { FixedZoneId = "Zone_Forest", Interval = 20 };
-            double legend = InfinityRewards.ExpectedKillLegendaryCost(p.Run, MonsterTier.Boss, 0, Waypoint.None, false);
-            double epic = InfinityRewards.ExpectedKillHighRareCost(p.Run, MonsterTier.Boss, 0, Waypoint.None, false);
-            p.Run.Infinity.Interval = 10;
-            Assert.Equal(legend, InfinityRewards.ExpectedKillLegendaryCost(p.Run, MonsterTier.Boss, 0, Waypoint.None, false));
-            Assert.Equal(2 * epic - legend, InfinityRewards.ExpectedKillHighRareCost(p.Run, MonsterTier.Boss, 0, Waypoint.None, false), 10);
-            InfinityRewards.AdvanceCombat(p, 1e9);
-            Assert.Equal(InfinityRewards.LegendaryBurst, p.InfinityRewardBudget.Legendary);
-            p.InfinityRewardBudget.Relics = 1;
-            var reward = Loot.RollKill(new Rng(1), MonsterTier.Boss, 1, 0, ordinaryRelicMultiplier: 2);
-            InfinityRewards.LimitReward(p, reward);
-            Assert.Single(reward.Relics);
-            Assert.Equal(0, p.InfinityRewardBudget.Relics);
-        }
     }
 }

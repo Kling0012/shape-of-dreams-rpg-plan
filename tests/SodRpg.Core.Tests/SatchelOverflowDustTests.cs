@@ -526,16 +526,13 @@ namespace SodRpg.Core.Tests
             Assert.Null(Rules.FlushSatchelOverflow(p));
         }
 
-        [Theory]
-        [InlineData(0, 0)]
-        [InlineData(2, 2)]
-        [InlineData(10, 3)]
-        public void Infinity_free_supply_overflow_caps_shards_but_preserves_the_old_dust_conversion(int credit, int expected)
+        [Fact]
+        public void Infinity_overflow_pays_full_shards_even_with_a_zero_legacy_budget()
         {
             var p = Profile.CreateNew(131);
             Rules.BeginRun(p, "infinity-overflow");
             p.Run.Infinity = new InfinityRunState();
-            p.InfinityRewardBudget.Shards = credit;
+            p.InfinityRewardBudget.Shards = 0; // 古いセーブの枠0
             p.ReceiveOverflowDreamDust = true;
             for (int i = 0; i < Workshop.SatchelCapacity(p); i++)
                 p.Run.Satchel.Add(Rolled(Rarity.Legendary, 20, (ulong)(3000 + i)));
@@ -544,9 +541,9 @@ namespace SodRpg.Core.Tests
             OverflowByPickup(p, dropped);
             Assert.Equal(0, p.Material(Materials.Shard));
             var overflow = Rules.FlushSatchelOverflow(p);
-            Assert.Equal(expected, overflow.SatchelOverflowShards);
-            Assert.Equal(expected, p.Material(Materials.Shard));
-            Assert.Equal((double)(credit - expected), p.InfinityRewardBudget.Shards);
+            Assert.Equal(Content.SalvageShards(Rarity.Common), overflow.SatchelOverflowShards); // 減額されない
+            Assert.Equal(Content.SalvageShards(Rarity.Common), p.Material(Materials.Shard));
+            Assert.Equal(0, p.InfinityRewardBudget.Shards); // 台帳は触れない
             Assert.Equal(Economy.SatchelOverflowDust(Rarity.Common), p.Run.OverflowDreamDustTotal);
             Assert.Equal(0, p.Run.SatchelShards);
             Assert.Empty(p.PendingTrades);

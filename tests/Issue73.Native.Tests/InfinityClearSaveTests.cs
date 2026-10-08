@@ -174,7 +174,6 @@ namespace Issue73.Native.Tests
             _files.FailWrite = true;
             _files.Release.Set();
             ClientSession.PrepareHostKillStream("run", "stream", 3);
-            InfinityRewards.AdvanceCombat(_session.Profile, 60); // Earn supply credit before testing an actual dividend.
             _session.SaveNow();
             var checkpoint = RunCheckpoint.Capture(_session.Profile, "before-dividend");
             var dividend = DreamforgePressureDividendMsg.FromReward(

@@ -1,35 +1,10 @@
 {
   "schemaVersion": 1,
-  "rates": {
-    "referenceSeconds": 2100,
-    "relicsPerHour": 30,
-    "guaranteesPerHour": 0.25,
-    "shardsPerHour": 360,
-    "tuningPerHour": 10,
-    "xpPerHour": 1800,
-    "starXpPerHour": 1200,
-    "awakeningPerHour": 780,
-    "dustConversionsPerHour": 6,
-    "merchantsPerHour": 6
-  },
-  "killMix": { "lesser": 200, "normal": 160, "miniBoss": 5, "boss": 4 },
-  "bursts": {
-    "lesserTime": 10, "normalTime": 8, "miniBossTime": 1, "bossTime": 1,
-    "highRare": 7, "relics": 24, "legendary": 7,
-    "guaranteeOpportunities": 1, "guaranteedRelics": 2,
-    "shards": 30, "tuning": 3, "xp": 50, "starXp": 40,
-    "awakening": 20, "dustConversions": 1, "merchants": 1
-  },
-  "rooms": {
-    "lesser": { "cap": 10, "increment": 10 },
-    "normal": { "cap": 8, "increment": 8 },
-    "miniBoss": { "cap": 1, "increment": 0.25 },
-    "boss": { "cap": 1, "increment": 0.1 }
-  },
+  "uniqueDropMultiplier": 0.5,
   "run": { "defaultInterval": 10, "shortInterval": 10, "middleInterval": 15, "longInterval": 20, "maximumPressureStage": 100 },
   "intervalScaling": {
-    "short": { "pressureOffset": 4, "enemyCountBonus": 4, "relicMultiplier": 2, "ordinaryBudgetMultiplier": 2 },
-    "middle": { "pressureOffset": 2, "enemyCountBonus": 2, "relicMultiplier": 1.5, "ordinaryBudgetMultiplier": 1.5 },
-    "long": { "pressureOffset": 0, "enemyCountBonus": 0, "relicMultiplier": 1, "ordinaryBudgetMultiplier": 1 }
+    "short": { "pressureOffset": 4, "enemyCountBonus": 4, "relicMultiplier": 2 },
+    "middle": { "pressureOffset": 2, "enemyCountBonus": 2, "relicMultiplier": 1.5 },
+    "long": { "pressureOffset": 0, "enemyCountBonus": 0, "relicMultiplier": 1 }
   }
 }
