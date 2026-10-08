@@ -62,10 +62,12 @@ namespace UnityEngine
     public class Object
     {
         protected virtual Object Clone() => throw new NotSupportedException();
+        internal Object CloneForHierarchy() => Clone();
         public static T Instantiate<T>(T original, Transform parent) where T : Object
         {
             var clone = (T)original.Clone();
             if (clone is Component component) component.transform.SetParent(parent);
+            if (clone is GameObject go) go.transform.SetParent(parent);
             return clone;
         }
         public static void Destroy(Object target)
@@ -82,16 +84,44 @@ namespace UnityEngine
         public string name;
         public GameObject() { transform = new RectTransform(this); }
         public void SetActive(bool value) => activeSelf = value;
-        public T GetComponentInChildren<T>() where T : Component => GetComponent<T>() ?? FindComponent<T>(transform);
+        // Unity always searches the receiver, but excludes inactive descendants by default.
+        public T GetComponentInChildren<T>(bool includeInactive = false) where T : Component
+            => GetComponent<T>() ?? FindComponent<T>(transform, includeInactive);
         public T GetComponent<T>() where T : Component => component as T;
-        private static T FindComponent<T>(Transform node) where T : Component
+        private static T FindComponent<T>(Transform node, bool includeInactive) where T : Component
         {
             for (int i = 0; i < node.childCount; i++)
             {
-                var found = node.GetChild(i).gameObject.GetComponent<T>() ?? FindComponent<T>(node.GetChild(i));
+                var child = node.GetChild(i);
+                if (!includeInactive && !child.gameObject.activeInHierarchy) continue;
+                var found = child.gameObject.GetComponent<T>() ?? FindComponent<T>(child, includeInactive);
                 if (found != null) return found;
             }
             return null;
+        }
+        protected override Object Clone()
+        {
+            // Model hierarchy, active state and internal references, not Unity lifecycle callbacks.
+            var copies = new Dictionary<GameObject, GameObject>();
+            var clone = CloneHierarchy(this, copies);
+            foreach (var copy in copies.Values) copy.component?.RemapCloneReferences(copies);
+            return clone;
+        }
+        private static GameObject CloneHierarchy(GameObject source, Dictionary<GameObject, GameObject> copies)
+        {
+            // Unsupported components still throw; this is a scoped hierarchy model, not Unity serialization.
+            var clone = source.component == null ? new GameObject() : ((Component)source.component.CloneForHierarchy()).gameObject;
+            copies.Add(source, clone);
+            clone.name = source.name;
+            clone.activeSelf = source.activeSelf;
+            clone.transform.position = source.transform.position;
+            clone.transform.sizeDelta = source.transform.sizeDelta;
+            clone.transform.anchorMin = source.transform.anchorMin;
+            clone.transform.anchorMax = source.transform.anchorMax;
+            clone.transform.anchoredPosition = source.transform.anchoredPosition;
+            for (int i = 0; i < source.transform.childCount; i++)
+                CloneHierarchy(source.transform.GetChild(i).gameObject, copies).transform.SetParent(clone.transform);
+            return clone;
         }
     }
     public class Transform : Object
@@ -132,6 +162,7 @@ namespace UnityEngine
         public RectTransform transform => gameObject.transform;
         public bool isActiveAndEnabled => gameObject.activeInHierarchy;
         public Component() { gameObject = new GameObject(); gameObject.component = this; }
+        internal virtual void RemapCloneReferences(Dictionary<GameObject, GameObject> copies) { }
     }
     public sealed class MissingComponentException : System.Exception { public MissingComponentException() { } public MissingComponentException(string message) : base(message) { } }
     public sealed class Material : Object { }

@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using UnityEngine;
 using HarmonyLib;
 using Xunit;
@@ -72,6 +73,8 @@ namespace SodRpg.Mod.Startup.Tests
                 var button = new UI_InGame_SkillButton { skillType = type };
                 button.transform.SetParent(column.transform);
                 button.transform.position = new Vector3(x, 100f, 0f);
+                button.skillActivationKeyObject = new GameObject();
+                button.skillActivationKeyObject.transform.SetParent(button.transform);
                 return button;
             }
         }
@@ -158,17 +161,147 @@ namespace SodRpg.Mod.Startup.Tests
             Assert.Equal(330f, hud.Movement.transform.parent.position.x, 3);
         }
 
-        [Fact]
-        public void MissingMovementButtonWarnsOnceAndNeverThrows()
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void MissingMovementButtonClonesASiblingColumnAndItsOwnKeyLabel(bool templateActive)
         {
             LocalHeroWithSlots(2);
             var hud = new Hud(new[] { 860f, 980f, 1100f, 1220f, 1340f }, withMovement: false);
+            var template = hud.Buttons.skillButtons[0];
+            template.transform.parent.gameObject.SetActive(templateActive);
+
+            Open(manager, EditSkillManager.ModeType.EquipGem);
+
+            var movement = Assert.Single(hud.Buttons.skillButtons, button => button.skillType == HeroSkillLocation.Movement);
+            Assert.Equal(6, hud.Buttons.skillButtons.Length);
+            Assert.Equal(6, hud.Row.transform.childCount);
+            Assert.Same(hud.Row.transform, movement.transform.parent.parent);
+            Assert.Equal(MovementGemSlotEdit.CloneName, movement.transform.parent.gameObject.name);
+            Assert.True(movement.gameObject.activeInHierarchy);
+            Assert.Equal(1460f, movement.transform.parent.position.x, 3);
+            Assert.Equal(100f, movement.transform.parent.position.y, 3);
+            Assert.NotSame(template.skillActivationKeyObject, movement.skillActivationKeyObject);
+            Assert.False(movement.skillActivationKeyObject.activeSelf);
+            Assert.True(template.skillActivationKeyObject.activeSelf);
+            Assert.Equal(templateActive, template.transform.parent.gameObject.activeSelf);
+            Assert.Equal(HeroSkillLocation.Q, template.skillType);
+            Assert.Empty(Log.Warnings);
+        }
+
+        [Fact]
+        public void MissingQButtonUsesAnotherSkillColumn()
+        {
+            LocalHeroWithSlots(1);
+            var hud = new Hud(new[] { 860f, 980f, 1100f }, withMovement: false);
+            for (int i = 0; i < hud.Buttons.skillButtons.Length; i++)
+                hud.Buttons.skillButtons[i].skillType = (HeroSkillLocation)(i + 1);
+
+            Open(manager, EditSkillManager.ModeType.EquipGem);
+
+            var movement = Assert.Single(hud.Buttons.skillButtons, button => button.skillType == HeroSkillLocation.Movement);
+            Assert.Same(hud.Row.transform, movement.transform.parent.parent);
+            Assert.True(movement.gameObject.activeInHierarchy);
+            Assert.Equal(1220f, movement.transform.parent.position.x, 3);
+            Assert.Equal(HeroSkillLocation.W, hud.Buttons.skillButtons[0].skillType);
+            Assert.Empty(Log.Warnings);
+        }
+
+        [Fact]
+        public void ClonedColumnIsReusedAcrossModeChangesCloseReopenAndSlotLoss()
+        {
+            LocalHeroWithSlots(1);
+            var hud = new Hud(new[] { 860f, 980f, 1100f, 1220f, 1340f }, withMovement: false);
+            Open(manager, EditSkillManager.ModeType.EquipGem);
+            var movement = Assert.Single(hud.Buttons.skillButtons, button => button.skillType == HeroSkillLocation.Movement);
+
+            for (int i = 0; i < 3; i++)
+            {
+                Open(manager, EditSkillManager.ModeType.EquipSkill);
+                Assert.True(movement.gameObject.activeInHierarchy);
+                Open(manager, EditSkillManager.ModeType.None);
+                Assert.False(movement.gameObject.activeInHierarchy);
+                Assert.True(hud.Buttons.skillButtons[0].gameObject.activeInHierarchy);
+                Open(manager, EditSkillManager.ModeType.EquipGem);
+                Assert.True(movement.gameObject.activeInHierarchy);
+                Assert.Same(movement, Assert.Single(hud.Buttons.skillButtons, button => button.skillType == HeroSkillLocation.Movement));
+            }
+
+            DewPlayer.local.hero.Skill.MovementMaxGemCount = 0;
+            Open(manager, EditSkillManager.ModeType.EquipGem);
+            Assert.False(movement.gameObject.activeInHierarchy);
+            DewPlayer.local.hero.Skill.MovementMaxGemCount = 1;
+            Open(manager, EditSkillManager.ModeType.EquipGem);
+            Assert.True(movement.gameObject.activeInHierarchy);
+            Assert.Equal(6, hud.Row.transform.childCount);
+            Assert.Equal(6, hud.Buttons.skillButtons.Length);
+            Assert.Empty(Log.Warnings);
+        }
+
+        [Fact]
+        public void InactiveMovementColumnMissingFromArrayIsReusedAndRegistered()
+        {
+            LocalHeroWithSlots(1);
+            var hud = new Hud(new[] { 860f, 980f, 1100f, 1220f, 1340f });
+            hud.Buttons.skillButtons = hud.Buttons.skillButtons.Where(button => button != hud.Movement).ToArray();
+
+            Open(manager, EditSkillManager.ModeType.EquipGem);
+
+            Assert.Same(hud.Movement, Assert.Single(hud.Buttons.skillButtons, button => button.skillType == HeroSkillLocation.Movement));
+            Assert.True(hud.Movement.gameObject.activeInHierarchy);
+            Assert.Equal(6, hud.Row.transform.childCount);
+            Open(manager, EditSkillManager.ModeType.None);
+            Assert.False(hud.Movement.gameObject.activeInHierarchy);
+            Open(manager, EditSkillManager.ModeType.EquipGem);
+            Assert.True(hud.Movement.gameObject.activeInHierarchy);
+            Assert.Equal(6, hud.Row.transform.childCount);
+            Assert.Empty(Log.Warnings);
+        }
+
+        [Fact]
+        public void ZeroSlotsDoesNotCloneOrDisableALaterFallback()
+        {
+            LocalHeroWithSlots(0);
+            var hud = new Hud(new[] { 860f, 980f, 1100f, 1220f, 1340f }, withMovement: false);
+
+            Open(manager, EditSkillManager.ModeType.EquipGem);
+
+            Assert.Equal(5, hud.Buttons.skillButtons.Length);
+            Assert.Equal(5, hud.Row.transform.childCount);
+            Assert.Empty(Log.Infos);
+            Assert.Empty(Log.Warnings);
+            DewPlayer.local.hero.Skill.MovementMaxGemCount = 1;
+            Open(manager, EditSkillManager.ModeType.EquipGem);
+            Assert.True(Assert.Single(hud.Buttons.skillButtons, button => button.skillType == HeroSkillLocation.Movement).gameObject.activeInHierarchy);
+        }
+
+        [Fact]
+        public void CloneFailureWarnsOnceAndNeverThrows()
+        {
+            LocalHeroWithSlots(2);
+            var hud = new Hud(new[] { 860f, 980f, 1100f, 1220f, 1340f }, withMovement: false);
+            // An unsupported component models an actual cloning failure, rather than making every clone fail.
+            new Component().transform.SetParent(hud.Buttons.skillButtons[0].transform.parent);
 
             Open(manager, EditSkillManager.ModeType.EquipGem);
             Open(manager, EditSkillManager.ModeType.EquipGem);
 
             Assert.Single(Log.Warnings);
             Assert.Contains("Movement essence slot display disabled", Log.Warnings[0]);
+            Assert.Equal(5, hud.Buttons.skillButtons.Length);
+        }
+
+        [Fact]
+        public void ChildSearchModelExcludesInactiveDescendantsButAlwaysChecksReceiver()
+        {
+            var root = new GameObject();
+            var child = new UI_InGame_SkillButton();
+            child.transform.SetParent(root.transform);
+            Assert.Same(child, root.GetComponentInChildren<UI_InGame_SkillButton>());
+            root.SetActive(false);
+            Assert.Null(root.GetComponentInChildren<UI_InGame_SkillButton>());
+            Assert.Same(child, root.GetComponentInChildren<UI_InGame_SkillButton>(true));
+            Assert.Same(child, child.gameObject.GetComponentInChildren<UI_InGame_SkillButton>());
         }
 
         [Fact]
