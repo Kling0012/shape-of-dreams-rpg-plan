@@ -71,6 +71,7 @@ namespace Issue73.Native.Tests
             _profile = Profile.CreateNew(252);
             Rules.BeginRun(_profile, RunId);
             var session = new ClientSession(null) { Profile = _profile, ActiveRunId = RunId };
+            _session = session; // Dispose must drain this session's writer before deleting its files.
             typeof(ClientSession).GetField("_hostSession", Hidden | BindingFlags.Static).SetValue(null, session);
             Set(session, "_store", new ProfileStore(new RealFileSystem(), Path.Combine(_directory, "solo.json"), 252));
             // Mirror host mode: the local client's messages to the server loop straight back.
@@ -94,6 +95,27 @@ namespace Issue73.Native.Tests
             var replies = _hostActor.Sent.Select(sent => sent.Message).OfType<DreamforgeTradeResultMsg>().ToArray();
             _hostActor.Sent.Clear();
             foreach (var reply in replies) Call(session, "OnTradeResult", reply);
+        }
+
+        [Fact]
+        public void Session_is_tracked_for_teardown_and_queued_saves_finish_before_cleanup()
+        {
+            var session = Session();
+            // Catch a missing ownership assignment deterministically, without depending on
+            // whether the worker wins the race against Directory.Delete on this machine.
+            Assert.Same(session, _session);
+            session.SaveNow();
+            var writer = (AsyncProfileWriter)Get(session, "_writer");
+            Assert.NotNull(writer);
+            long revision = writer.EnqueuedRevision;
+            Assert.True(revision > 0);
+
+            Dispose();
+
+            Assert.True(writer.Flush(0));
+            Assert.Equal(revision, writer.WrittenRevision);
+            Assert.Null(writer.LastError);
+            Assert.False(Directory.Exists(_directory));
         }
 
         [Fact]
