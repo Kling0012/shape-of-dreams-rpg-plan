@@ -23,23 +23,35 @@ namespace SodRpg.Core.Tests
         }
 
         [Fact]
-        public void Pressure_coefficient_per_star_is_unchanged_so_the_table_budget_pressures_proportionally()
+        public void Pressure_is_linear_in_star_points_with_the_table_coefficients_so_the_table_budget_pressures_proportionally()
         {
-            Assert.Equal(1.625, DreamPressure.ForPlayer(30, 0).HealthMultiplier, 10);
-            Assert.Equal(1.3, DreamPressure.ForPlayer(30, 0).DamageMultiplier, 10);
+            double healthPerStar = PressureBalanceTests.Number("dreamPressure", "healthPerStarPoint");
+            double damagePerStar = PressureBalanceTests.Number("dreamPressure", "damagePerStarPoint");
+            double health0 = PressureBalanceTests.Health(30, 0), damage0 = PressureBalanceTests.Damage(30, 0);
+            Assert.Equal(health0, DreamPressure.ForPlayer(30, 0).HealthMultiplier, 10);
+            Assert.Equal(damage0, DreamPressure.ForPlayer(30, 0).DamageMultiplier, 10);
             int intermediate = Math.Min(150, StarProgressionBalanceTests.MaxPoints);
             int maximum = StarProgressionBalanceTests.MaxPoints;
-            Assert.Equal(1.625 + 0.005 * intermediate, DreamPressure.ForPlayer(30, intermediate).HealthMultiplier, 10);
-            Assert.Equal(1.3 + 0.0025 * intermediate, DreamPressure.ForPlayer(30, intermediate).DamageMultiplier, 10);
-            Assert.Equal(1.625 + 0.005 * maximum, DreamPressure.ForPlayer(30, maximum).HealthMultiplier, 10);
-            Assert.Equal(1.3 + 0.0025 * maximum, DreamPressure.ForPlayer(30, maximum).DamageMultiplier, 10);
+            Assert.Equal(health0 + healthPerStar * intermediate, DreamPressure.ForPlayer(30, intermediate).HealthMultiplier, 10);
+            Assert.Equal(damage0 + damagePerStar * intermediate, DreamPressure.ForPlayer(30, intermediate).DamageMultiplier, 10);
+            Assert.Equal(health0 + healthPerStar * maximum, DreamPressure.ForPlayer(30, maximum).HealthMultiplier, 10);
+            Assert.Equal(damage0 + damagePerStar * maximum, DreamPressure.ForPlayer(30, maximum).DamageMultiplier, 10);
             double health = DreamPressure.ForPlayer(30, maximum).HealthMultiplier - DreamPressure.ForPlayer(30, 0).HealthMultiplier;
             double damage = DreamPressure.ForPlayer(30, maximum).DamageMultiplier - DreamPressure.ForPlayer(30, 0).DamageMultiplier;
-            Assert.Equal(0.005 * maximum, health, 10);
-            Assert.Equal(0.0025 * maximum, damage, 10);
+            Assert.Equal(healthPerStar * maximum, health, 10);
+            Assert.Equal(damagePerStar * maximum, damage, 10);
             var party = DreamPressure.Average(new[] { new Build { DreamLevel = 30, SpentStarPoints = maximum } });
             Assert.Equal(maximum, party.AverageSpentStarPoints);
-            Assert.Equal(1.625 + 0.005 * maximum, party.HealthMultiplier, 10);
+            Assert.Equal(health0 + healthPerStar * maximum, party.HealthMultiplier, 10);
+        }
+
+        [Fact]
+        public void Full_star_tree_pressure_is_well_above_the_ranked_star_damage_gain()
+        {
+            // 敵の強化が星ダメージの位階（最大2.5倍）に置いていかれないこと。HP側は位階の倍率の1.5倍以上を要求する。
+            var full = DreamPressure.ForPlayer(30, StarProgressionBalanceTests.MaxPoints);
+            var none = DreamPressure.ForPlayer(30, 0);
+            Assert.True(full.HealthMultiplier / none.HealthMultiplier >= 1.5 * (double)StarDamageScaling.Multiplier(StarProgressionBalanceTests.MaxPoints));
         }
 
         [Fact]

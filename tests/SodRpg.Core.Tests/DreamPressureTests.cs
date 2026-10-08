@@ -83,5 +83,27 @@ namespace SodRpg.Core.Tests
             Assert.Equal(PressureBalanceTests.Health(30, 500), pressure.HealthMultiplier, 10);
             Assert.Equal(PressureBalanceTests.Damage(30, 500), pressure.DamageMultiplier, 10);
         }
+
+        [Fact]
+        public void Full_progress_reaches_the_pressure_targets_for_enemy_health_and_count()
+        {
+            // 利用者の目標（2026-10-09）：最大の敵HP補正は15倍以上、敵の量の補正は5倍以上。
+            var full = DreamPressure.ForPlayer(Content.MaxDreamLevel, StarProgression.MaxPoints);
+            Assert.True(full.HealthMultiplier >= 15, "enemy HP multiplier at max level and stars: " + full.HealthMultiplier);
+            Assert.True(full.EnemyCountMultiplier >= 5, "enemy count multiplier at max level and stars: " + full.EnemyCountMultiplier);
+            Assert.True(full.ShardDropMultiplier > 2 && full.NightmareChanceMultiplier > 2);
+        }
+
+        [Fact]
+        public void Enemy_count_rises_smoothly_with_pressure_and_stops_at_the_cap()
+        {
+            double previous = 1;
+            for (int spent = 0; spent <= StarProgression.MaxPoints; spent += 10)
+            {
+                double count = DreamPressure.ForPlayer(Content.MaxDreamLevel, spent).EnemyCountMultiplier;
+                Assert.InRange(count, previous, 1 + PressureBalanceTests.Number("dreamPressure", "enemyCountMaximumBonus"));
+                previous = count;
+            }
+        }
     }
 }

@@ -21,7 +21,7 @@ namespace SodRpg.Core.Tests
             Assert.Equal(interval, loaded.Run.Infinity.Interval);
             Assert.Equal(3 + offset, loaded.Run.Infinity.PressureStage);
             var pressure = DreamPressure.ForPlayer(30, 500).WithInfinityPressure(loaded.Run.Infinity.PressureStage);
-            Assert.Equal(1.6 + bonus, InfinityIntervalScaling.EnemyCountMultiplier(pressure, interval), 10);
+            Assert.Equal(1 + PressureBalanceTests.Number("dreamPressure", "enemyCountMaximumBonus") + bonus, InfinityIntervalScaling.EnemyCountMultiplier(pressure, interval), 10);
             Assert.Equal(relics, InfinityIntervalScaling.RelicMultiplier(loaded.Run.Infinity.Interval));
             loaded.Run.Infinity.ClearedCombatTotal = long.MaxValue;
             Assert.Equal(100, loaded.Run.Infinity.PressureStage);
