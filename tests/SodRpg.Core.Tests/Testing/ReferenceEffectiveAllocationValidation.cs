@@ -10,6 +10,7 @@ namespace SodRpg.Core.Tests.Testing
     /// Only used by the equivalence tests as the oracle: the production class must make the same decisions.
     /// Deliberately unoptimized (every RankEffective runs two full Build computations). Its algorithm stays frozen,
     /// except for deliberate rule changes: keystone slots (v2.0.2), pending movement receivers (#174/#199),
+    /// pending choices and own-memory route boosts (#329),
     /// owned replacement retention (#199), native-damage keystone eligibility (#187), and paid damage rank (#117/#120).
     /// These eligibility rules are evaluated here independently; no production validation/optimization helpers are called.
     /// C15 production build evaluation, reusable with generated or synthetic trees and explicit disable policies.
@@ -370,23 +371,37 @@ namespace SodRpg.Core.Tests.Testing
                 ? fullSnapshot : Capture(profile, heroKey, marginal, hero);
             SetRank(marginal, talent.Id, rank - 1);
             var without = Capture(profile, heroKey, marginal, hero);
-            bool effective = HasPositiveDifference(with, without) || (!HasOwnedReplacement(hero, talent.Id) && CanWaitForMovementRouteRecipient(hero, talent, with));
+            bool effective = HasPositiveDifference(with, without) || (!HasOwnedReplacement(hero, talent.Id) && CanAwaitScopedRecipient(hero, talent, with));
             if (!effective && details != null) DescribeInert(hero, talent, rank, with, without, details);
             return effective;
         }
 
-        // A movement recharge source may be beyond a route, deep, or ring receiver boost. The boost can be bought while pending,
-        // but a disabled star or one with an existing (saturated/dominated) recipient still needs a positive delta.
-        private bool CanWaitForMovementRouteRecipient(HeroState hero, TalentDef talent, IReadOnlyList<EffectiveAllocationChannel> channels)
+        // Some entry stars must be bought before their recipient is reachable. Decide their eligibility independently
+        // of production's optimized validator; once an owned recipient exists, the ordinary marginal comparison applies.
+        private bool CanAwaitScopedRecipient(HeroState hero, TalentDef talent, IReadOnlyList<EffectiveAllocationChannel> channels)
         {
-            var modifier = talent.ScopedModifier;
-            if (talent.IsChoice || talent.Cluster != null || talent.IsOuterAnchor || modifier == null || modifier.ScopeKind != ScopeKind.Receiver) return false;
-            string memory = modifier.ScopeMemory;
-            if (memory == null || !memory.StartsWith("St_M_", StringComparison.Ordinal)
-                || (talent.RouteMemory != null && memory != talent.RouteMemory)) return false;
-            if (DisabledIds(hero).Contains(talent.Id)) return false;
+            if (talent.Cluster != null || talent.IsOuterAnchor || DisabledIds(hero).Contains(talent.Id)) return false;
+            var effect = talent;
+            if (talent.IsChoice)
+            {
+                if (!hero.TalentChoices.TryGetValue(talent.Id, out int selected) || selected < 0 || selected >= talent.Choices.Count) return false;
+                effect = talent.Choices[selected];
+            }
+            var modifier = effect.ScopedModifier;
+            string memory = modifier?.ScopeMemory;
+            if (memory == null) return false;
+
+            bool eligible;
+            if (talent.IsChoice)
+                eligible = talent.RouteId == null || memory == talent.RouteMemory || memory == effect.RouteMemory;
+            else if (modifier.ScopeKind == ScopeKind.Receiver)
+                eligible = memory.StartsWith("St_M_", StringComparison.Ordinal) && (talent.RouteMemory == null || memory == talent.RouteMemory);
+            else
+                eligible = talent.RouteId != null && memory == talent.RouteMemory;
+            if (!eligible) return false;
+
             foreach (var channel in channels)
-                if (Targets(talent, channel)) return false;
+                if (Targets(effect, channel)) return false;
             return true;
         }
 
