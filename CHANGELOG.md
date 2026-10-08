@@ -8,13 +8,29 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
-- エッセンスの装着画面で回避（移動の記憶）が隠れて、回避の枠にエッセンスを付けられなかったのを直しました。回避に枠が1つ以上あるとき（このMODの星図で増えた場合も、本体の聖堂などで増えた場合も）は、装着画面に回避の技ボタンと枠を表示し、ほかの技と同じようにドラッグやクリックでエッセンスの付け外しができます。枠が0のときはこれまでどおり非表示です。付け外しは本体の経路を使うため協力プレイでも正しく同期します。あわせて診断として、HUDの技ボタンの構成を起動後に1回 Player.log へ残します。 / Fixed the essence equip screen hiding the Movement (dodge) skill, which made its slots impossible to fill. Whenever the dodge skill has at least one slot (added by this MOD's star map or by the native shrine), the equip screen now shows the dodge skill and its slots, and essences can be attached and removed by drag or click like any other skill; with zero slots it stays hidden as before. Attaching uses the game's own path, so it syncs correctly in co-op. A one-time HUD diagnostic is still written to Player.log.
-- 本体のアイデンティティ枠が4個のとき、星図の追加で上限を超えて枠が表示されなくなる問題を修正しました。外部MODを外した後の起動・Continueでも、本体枠と星図の枠を正しく数え直します。 / Fixed star-chart bonuses exceeding the limit and hiding Identity essence slots when the native count was four; slot ownership is reconciled on startup and Continue after removing an external slot mod.
-### バランス調整 / Balance
-- 夢の圧（敵の強化）を大きく引き上げました。夢Lv30・星500点・深度0で、敵のHPは ×4.1 → **×16.5**、敵の数は ×1.6 → **×5.0**、敵の与ダメージは ×2.6 → ×3.4 になります。星1点あたりの敵HP +0.5% → +2.8%、夢レベル1段あたり +2.5% → +6% などです。 / Dream pressure (enemy scaling) is raised substantially. At dream level 30 with 500 star points on depth 0, enemy HP goes from x4.1 to x16.5, enemy count from x1.6 to x5.0 and enemy damage from x2.6 to x3.4.
-- そのぶん報酬も増やしました。夢の圧による欠片の増加の上限は ×1.5 → ×3.0、悪夢化の増加の上限は ×1.5 → ×2.5、増えた敵が分け合う報酬は元の20% → 50%です。 / Rewards go up with it: the pressure shard bonus cap is x3.0 (was x1.5), the nightmare chance cap x2.5 (was x1.5), and extra enemies share 50% of a wave's reward (was 20%).
-- 深度・Waypoint・インフィニティの倍率は変えていません。内容の指紋が変わるため、**協力プレイでは参加者全員が更新**してください。 / Depth, Waypoint and Infinity multipliers are unchanged. The content fingerprint changes, so everyone in co-op should update.
-- 詳しくは [docs/specs/v2.11-enemy-pressure.md](docs/specs/v2.11-enemy-pressure.md)。この調整は計算とテストで確認したもので、実際のゲームでの手応え（特に敵の数が並ぶか）は未確認です。 / Details in docs/specs/v2.11-enemy-pressure.md. Verified by calculation and tests, not yet in the live game (notably whether the larger enemy counts actually fit).
+---
+
+## v2.10.13 — 回避のエッセンス装着とエッセンス枠の修正（2026-10-09）
+
+エッセンスの装着画面で回避に枠を付けられるようになり、アイデンティティの枠が表示されない不具合などを直しました。 / You can now fill dodge essence slots on the equip screen, and Identity slots no longer disappear.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 新機能・改善 / New features and improvements
+
+- エッセンスの装着画面に回避（移動の記憶）を表示するようにしました。回避に枠が1つ以上あれば、ほかの技と同じようにエッセンスを付け外しできます。 / The essence equip screen now shows the dodge (movement memory). When it has at least one slot, you can attach and remove essences like any other skill.
+
+### 不具合の修正 / Bug fixes
+
+- 本体のエッセンス枠がちょうど4個のとき、星図で枠を増やすと枠がすべて表示されなくなる問題を修正しました。外部の枠追加MODを外した後でも正しく表示されます。 / Fixed all essence slots disappearing when the base slot count was exactly four and the star chart added more, including after removing an external slot mod.
+- 星の位階で強くなった「傷」の継続ダメージが、途中で切り捨てられていた問題を修正しました。 / Fixed Wound damage over time boosted by star ranks being cut off early.
+- ゲームを起動したまま MOD を読み込み直したあと、料理のエッセンスが正しく動かなくなることがある問題を修正しました。 / Fixed Culinary Essence sometimes misbehaving after the mod was reloaded while the game was running.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
 
 ---
 
