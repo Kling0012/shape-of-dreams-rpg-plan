@@ -70,6 +70,18 @@ namespace SodRpg.Core.Game
         /// <summary>夢の圧へ送る進行度。欠けている旧データは夢1・星0。</summary>
         public int DreamLevel { get; set; } = 1;
         public int SpentStarPoints { get; set; }
+        /// <summary>Allocated authored cluster stars, recomputed with the build; never part of the wire format.</summary>
+        public int AuthoredClusterStars { get; internal set; }
+        /// <summary>True when an authored cluster keystone (the final cluster tier) is applied.</summary>
+        public bool AuthoredClusterKeystone { get; internal set; }
+
+        /// <summary>Hero-specific movement charge bonus from authored cluster allocations (host-side only).</summary>
+        internal const string MovementChargeHero = "Hero_Husk";
+        internal static int MovementChargeBonus(string heroKey, Build build)
+        {
+            if (build == null || heroKey != MovementChargeHero || build.AuthoredClusterStars <= 0) return 0;
+            return build.AuthoredClusterKeystone ? 2 : 1;
+        }
 
         public int Get(Stat s) => Stats.TryGetValue(s, out int v) ? v : 0;
         public int Get(Power p) => Powers.TryGetValue(p, out int v) ? v : 0;
@@ -189,10 +201,12 @@ namespace SodRpg.Core.Game
                 else AddPower(power, value);
             }
             var selectedTalents = new List<KeyValuePair<TalentDef, int>>();
+            int authoredClusterStars = 0;
             foreach (var kv in h.Talents)
             {
                 if (kv.Value <= 0 || !definitions.TryGetValue(kv.Key, out var talent) || talent.IsKeystone
                     || !Unlocked(talent)) continue;
+                if (talent.AuthoredStar != null && !talent.AuthoredStar.RetainedLegacy) authoredClusterStars++;
                 int rank = Math.Min(kv.Value, talent.MaxRank);
                 if (talent.IsChoice)
                 {
@@ -203,6 +217,7 @@ namespace SodRpg.Core.Game
                 }
                 selectedTalents.Add(new KeyValuePair<TalentDef, int>(talent, rank));
             }
+            b.AuthoredClusterStars = authoredClusterStars;
 
             foreach (string uid in h.Equipped)
             {
@@ -411,10 +426,13 @@ namespace SodRpg.Core.Game
                 return ranks >= Content.KeystoneRouteRequirement
                     && (candidateKey.HeroKey == null || Mastery.Level(gate.Kills) >= HeroSigils.KeystoneMastery);
             }
+            bool authoredClusterKeystone = false;
             foreach (string keystoneId in h.Keystones)
             {
                 if (keystoneId == null || !definitions.TryGetValue(keystoneId, out var key) || !key.IsKeystone
                     || !Rules.BelongsTo(key, heroKey) || !KeyUnlocked(key)) continue;
+                if (key.AuthoredStar != null && !key.AuthoredStar.RetainedLegacy
+                    && key.AuthoredStar.Region.Kind == ClusterRegionKind.Keystone) authoredClusterKeystone = true;
                 b.AddSelectedKeystone(key.KeystoneDefinition);
                 bool migratedStillWater = false;
                 if (key.Power == Power.StillWater && key.KeystoneDefinition != null)
@@ -423,6 +441,7 @@ namespace SodRpg.Core.Game
                 // 各刻印の保持Powerは1回ずつ入れる（刻印の数だけ重なる。上限は通常の能力上限）。
                 if (key.Power != Power.None && !migratedStillWater) AddStarPower(key.Power, key.PowerValue);
             }
+            b.AuthoredClusterKeystone = authoredClusterKeystone;
             if (dependencies != null) dependencies.AppliedKeystones = b.SelectedKeystones;
             AuthoredKeystoneComposer.Apply(b);
 
