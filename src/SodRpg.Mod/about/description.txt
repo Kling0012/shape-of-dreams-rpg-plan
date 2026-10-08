@@ -1,5 +1,5 @@
-[b]v2.10.7: fixes star-chart gem slots not being applied or staying at the wrong count in co-op or after reloading the mod. Saves carry over. Update all co-op players and restart the game.[/b]
-[b]v2.10.7：協力プレイや MOD の再読み込みのあとに、星図で増やしたエッセンス枠が反映されない・数がずれる問題を修正しました。セーブデータはそのまま引き継げます。協力プレイでは参加者全員がこのバージョンに更新し、ゲームを再起動してください。[/b]
+[b]v2.10.8: fixes Infinity repeatedly moving you and getting stuck in small zones such as the pure-white route. Saves carry over. Update all co-op players and restart the game.[/b]
+[b]v2.10.8：インフィニティで純白など部屋の少ないゾーンに入ると、勝手に何度も移動させられて詰む問題を修正しました。セーブデータはそのまま引き継げます。協力プレイでは参加者全員がこのバージョンに更新し、ゲームを再起動してください。[/b]
 
 [h1]Dreamforge RPG[/h1]
 Turns every run into part of a long RPG journey: relics you keep, a risky "secure or delve" choice at every zone, a star map per Traveler, a forge, and long-term goals. Co-op ready.
