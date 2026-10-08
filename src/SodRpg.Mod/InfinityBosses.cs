@@ -64,11 +64,32 @@ namespace SodRpg.Mod
             var candidates = new List<Zone>(DewResources.FindAllByNameSubstring<Zone>("Zone_"));
             candidates.Sort((a, b) => StringComparer.Ordinal.Compare(a.name, b.name));
             if (candidates.Count > 1) candidates.RemoveAll(z => z.name == state.FixedZoneId);
+            // A zone that cannot host the interval dead-ends in every generation, so drawing it
+            // only chains forced technical-boundary moves. Fail-soft keeps the previous zone.
+            candidates.RemoveAll(z => !CanHostInterval(z, state.Interval));
             if (candidates.Count == 0) throw new InvalidOperationException("No native zones are available.");
             var rng = new Rng(Rng.SeedFrom(ClientSession.HostRun.RunId + ":infinity-zone:")
                 + unchecked((ulong)state.SegmentEpoch));
             return candidates[rng.Range(0, candidates.Count - 1)];
         }
+
+        /// <summary>
+        /// Special generation fixes the room count (entrance, boss and specialNodes - 2 others)
+        /// and never rolls merchants or events. When that count cannot cover the cycle interval,
+        /// every generated graph dead-ends before BossDue and the technical-boundary regeneration
+        /// moves the party on without player input, over and over. Normal zones keep the existing
+        /// exhaustion regeneration: their room count varies by seed and offset.
+        /// </summary>
+        internal static bool CanHostInterval(Zone zone, int interval)
+        {
+            if (zone == null || !zone.useSpecialGeneration) return true;
+            return zone.specialNodes - 2 >= Math.Max(1, interval);
+        }
+
+        private static bool CanServeAsBossTarget(Zone zone, int interval)
+            => HasNativeRoomPools(zone) && CanHostInterval(zone, interval)
+                && (zone.name != "Zone_Primus"
+                    || InfinityBossSoulDeath.IsInstalled("Mon_Primus_BossPrimusAeron"));
 
         private static Zone PrepareBossTarget(Zone origin, InfinityRunState state)
         {
@@ -113,6 +134,8 @@ namespace SodRpg.Mod
                 }
                 if (target == null) target = ChooseNativeZone(state);
                 if (!HasNativeRoomPools(target)) throw new InvalidOperationException(target.name + " has no native room pools.");
+                if (!CanHostInterval(target, state.Interval))
+                    throw new InvalidOperationException(target.name + " cannot host the cycle's rooms in one graph.");
                 if (target.name == "Zone_Primus" && !InfinityBossSoulDeath.IsInstalled("Mon_Primus_BossPrimusAeron"))
                     throw new InvalidOperationException("Native Primus boss-soul interception is unavailable.");
                 plan.ZoneId = target.name;
@@ -122,11 +145,17 @@ namespace SodRpg.Mod
             catch (Exception ex)
             {
                 // Missing optional resources/hooks affect this draw, not Infinity availability.
-                if (target == null)
-                    try { target = ChooseNativeZone(state); }
-                    catch (Exception) { target = origin; }
-                if (!HasNativeRoomPools(target) || target.name == "Zone_Primus"
-                    && !InfinityBossSoulDeath.IsInstalled("Mon_Primus_BossPrimusAeron")) target = origin;
+                // Prefer a usable redraw over the origin: a delve out of a zone that cannot host
+                // the cycle must not land the party back in the same dead-end graph.
+                if (target == null || !CanServeAsBossTarget(target, state.Interval))
+                {
+                    Zone redrawn = null;
+                    try { redrawn = ChooseNativeZone(state); } catch (Exception) { }
+                    if (CanServeAsBossTarget(redrawn, state.Interval)) target = redrawn;
+                    else if (CanServeAsBossTarget(origin, state.Interval)) target = origin;
+                    else if (redrawn != null && HasNativeRoomPools(redrawn)) target = redrawn;
+                    else target = origin;
+                }
                 FallBackBoss(target, ex.Message);
                 return target;
             }
