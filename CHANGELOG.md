@@ -8,6 +8,10 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
+
+- 鞄あふれの追加ドリームダストと手動分解（ダストへの換金・商人購入を含む）が、本体通貨の処理後に起きた一時的な例外1回で、そのセッションの間ずっと止まっていた問題を修正しました。 / Fixed extra overflow Dream Dust and manual salvage (including dust conversion and merchant buys) staying disabled for the whole session after a single transient exception behind the native currency call.
+- ホストの再起動などで同じ遠征の台帳が置き換わったとき、追加ドリームダストが遠征の残りずっと受け取れなくなっていた問題を修正しました。未確認分は諦めますが、それ以降のあふれから再度受け取れます。 / Fixed the extra overflow Dream Dust staying off for the rest of a run when the host's ledger for that same run was replaced (for example by a host restart); the unconfirmed part is forgone, later overflows pay again.
+
 ---
 
 ## v2.10.11 — インフィニティの報酬の枠の撤去と純白の修正（2026-10-09）

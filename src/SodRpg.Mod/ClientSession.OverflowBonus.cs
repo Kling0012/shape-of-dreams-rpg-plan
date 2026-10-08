@@ -80,8 +80,25 @@ namespace SodRpg.Mod
                 run.OverflowDreamDustLedgerId = _overflowBonusReplyLedger;
             if (run.OverflowDreamDustLedgerId != _overflowBonusReplyLedger)
             {
-                WarnOverflowBonus("receipt ledger changed; prior currency outcome cannot be replayed safely");
-                return;
+                // The host restarted or rehosted: the receipt ledger of this same run was replaced, so the
+                // cumulative total can no longer be replayed against it. Forgo only the unconfirmed extra
+                // dust (same semantics as a stale cross-run release), re-bind to the host's current ledger
+                // and restart the cumulative obligation from zero — dust already paid stays paid, nothing
+                // is paid twice, and future overflow accrues again instead of staying off for the whole run.
+                long forgone = Profile.OverflowBonusPendingRunId == run.RunId ? Profile.OverflowBonusPendingTotal : 0;
+                if (Profile.OverflowBonusPendingRunId != null)
+                {
+                    Profile.OverflowBonusPendingRunId = null;
+                    Profile.OverflowBonusPendingLedgerId = Profile.OverflowBonusPendingTotal = 0;
+                    _dirty = true; // Ordinary periodic save; the release is idempotent.
+                }
+                run.OverflowDreamDustLedgerId = _overflowBonusReplyLedger;
+                run.OverflowDreamDustTotal = 0;
+                _overflowBonusWarned = false; // The next genuine failure must warn again.
+                if (forgone > 0)
+                    Emit(new SodRpg.Core.Game.GameEvent(SodRpg.Core.Game.EventKind.Warning, SodRpg.Core.Game.Loc.T(
+                        $"ホストの再起動で、未確認の追加ドリームダスト{forgone}は確定できなかったため諦めました。遺物の受け取りと欠片への換算には影響しません。これからのあふれから再度受け取れます。",
+                        $"Gave up {forgone} unconfirmed extra overflow Dream Dust because the host restarted. Relic pickup and shard conversion are unaffected; new overflows pay again.")));
             }
             Profile.ReceiveOverflowDreamDust = true;
         }
