@@ -170,6 +170,41 @@ namespace SodRpg.Core.Tests
         }
 
 
+        [Theory]
+        [InlineData(Waypoint.WeaponRoad, Slot.Weapon)]
+        [InlineData(Waypoint.ArmorRoad, Slot.Armor)]
+        [InlineData(Waypoint.FeetRoad, Slot.Feet)]
+        [InlineData(Waypoint.SixfoldRoad, Slot.Weapon)]
+        [InlineData(Waypoint.SixfoldRoad, Slot.Armor)]
+        [InlineData(Waypoint.SixfoldRoad, Slot.Charm)]
+        [InlineData(Waypoint.SixfoldRoad, Slot.Head)]
+        [InlineData(Waypoint.SixfoldRoad, Slot.Hands)]
+        [InlineData(Waypoint.SixfoldRoad, Slot.Feet)]
+        public void Infinity_slot_transformations_keep_already_rolled_legendary_rewards(Waypoint waypoint, Slot target)
+        {
+            for (ulong seed = 1; seed <= 32; seed++)
+            {
+                var p = Run(waypoint);
+                p.Run.Infinity = new InfinityRunState { FixedZoneId = "Zone_Forest" };
+                p.Run.WaypointSlotCursor = (int)target;
+                var source = (Slot)(((int)target + 1) % Content.SlotCount);
+                var reward = new KillReward();
+                reward.Relics.Add(Loot.RollRelic(new Rng(seed), Rarity.Legendary, 10, source));
+                Assert.Equal(Rarity.Legendary, reward.Relics[0].Rarity);
+                Assert.NotEqual(target, reward.Relics[0].Slot);
+
+                Waypoints.ApplyKill(p, MonsterTier.Normal, false, new Rng(seed), reward,
+                    10, null, 4, waypoint, out _, out _);
+
+                var transformed = Assert.Single(reward.Relics);
+                Assert.Equal(target, transformed.Slot);
+                Assert.Equal(Rarity.Legendary, transformed.Rarity);
+                Assert.NotNull(transformed.UniqueId);
+                Assert.True(Content.TryGetUnique(transformed.UniqueId, out var unique));
+                Assert.False(BossSets.IsExclusive(unique));
+            }
+        }
+
         [Fact]
         public void Nightmare_hunt_doubles_only_nightmare_loot_with_unique_copy_ids()
         {

@@ -265,8 +265,9 @@ namespace SodRpg.Core.Game
                 Rarity rarity = t.ForcedRarity ?? (Rarity)Math.Max((int)r.Rarity, (int)t.MinimumRarity);
                 if (t.NonBossRelicsToTuning && tier == MonsterTier.Boss) rarity = (Rarity)Math.Max((int)rarity, (int)Rarity.Epic);
                 if (rarity != r.Rarity || (slot.HasValue && r.Slot != slot.Value))
-                    r = reward.Relics[i] = Loot.RollRelic(rng, rarity, r.ItemLevel, slot, focus, p.Stash, run.Satchel,
-                        uniqueDropMultiplier: InfinityRewards.UniqueDropMultiplier(p));
+                    // The original kill roll already applied Infinity's unique drop chance.
+                    // A slot/rarity transformation must not gate the same reward a second time.
+                    r = reward.Relics[i] = Loot.RollRelic(rng, rarity, r.ItemLevel, slot, focus, p.Stash, run.Satchel);
                 r.Enhance = Math.Min(Content.MaxEnhanceFor(r.Rarity, r.LimitBreaks), Math.Max(r.Enhance, t.Enhancement));
                 if (t.Enhancement > 0) Rules.GrantEnhanceMilestones(rng, r);
             }
