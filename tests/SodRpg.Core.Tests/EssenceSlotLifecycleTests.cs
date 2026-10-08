@@ -95,6 +95,125 @@ namespace SodRpg.Core.Tests
         }
         private static HostAuthority.HeroRuntime Runtime(Hero hero) => new HostAuthority.HeroRuntime { Hero = hero };
 
+        private static Hero NativeStart()
+        {
+            // Native HeroSkill initializes only Q/W/E/R (three); Identity/Movement start at zero.
+            var hero = new Hero();
+            hero.Skill.Caps[0] = hero.Skill.Caps[1] = 0;
+            foreach (var location in new[] { HeroSkillLocation.Q, HeroSkillLocation.W, HeroSkillLocation.E, HeroSkillLocation.R })
+                hero.Skill.SetMaxGemCount(location, 3);
+            return hero;
+        }
+
+        private static Build FourIdentity()
+        {
+            var build = MoveOnly(); build.Stats[Stat.EssenceSlotIdentity] = 4; return build;
+        }
+
+        [Theory]
+        [InlineData(0)]
+        [InlineData(4)]
+        public void Native_new_start_identity_star_add_remove_preserves_native_gems_and_drops_only_its_original_tail(int nativeCounter)
+        {
+            var hero = NativeStart(); var host = new HostAuthority(); var rt = Runtime(hero);
+            var native = new Se_Shrine_Chaos_StatBonus { victim = hero, isActive = true, currentAddedGemSlotIdentity = nativeCounter };
+            EntityStatus.LiveStatusEffects.Add(native);
+            try
+            {
+                hero.Skill.Caps[0] = nativeCounter;
+                host.ApplyForTest(rt, new Build());
+                Assert.Equal(new[] { nativeCounter, 0 }, hero.Skill.Caps);
+                host.ApplyForTest(rt, FourIdentity());
+                Assert.Equal(new[] { 4, 1 }, hero.Skill.Caps);
+                hero.Skill.Fill(HeroSkillLocation.Identity); hero.Skill.Fill(HeroSkillLocation.Movement);
+                var identity = Enumerable.Range(0, 4).Select(i => hero.Skill.gems[new GemLocation { skill = HeroSkillLocation.Identity, index = i }]).ToArray();
+                var movement = hero.Skill.gems[new GemLocation { skill = HeroSkillLocation.Movement, index = 0 }];
+                host.ApplyForTest(rt, MoveOnly());
+                Assert.Equal(new[] { nativeCounter, 1 }, hero.Skill.Caps);
+                Assert.Equal(identity.Take(nativeCounter).Concat(new[] { movement }), hero.Skill.gems.Values);
+                Assert.Equal(identity.Skip(nativeCounter).Reverse(), hero.Skill.Dropped);
+                host.ApplyForTest(rt, new Build());
+                host.RestoreForTest(rt);
+                Assert.Equal(new[] { nativeCounter, 0 }, hero.Skill.Caps);
+                Assert.Equal(identity.Take(nativeCounter), hero.Skill.gems.Values);
+                Assert.Equal(identity.Skip(nativeCounter).Reverse().Concat(new[] { movement }), hero.Skill.Dropped);
+            }
+            finally { EntityStatus.LiveStatusEffects.Remove(native); }
+        }
+
+        [Theory]
+        [InlineData(0)]
+        [InlineData(4)]
+        public void External_mod_removal_new_start_and_same_component_continue_reload_reconcile_original_gems_to_native_caps(int nativeCounter)
+        {
+            var hero = NativeStart(); var peer = new DewPlayer { guid = "native-slot-reload-" + nativeCounter, hero = hero };
+            hero.owner = peer;
+            var native = new Se_Shrine_Chaos_StatBonus { victim = hero, isActive = true, currentAddedGemSlotIdentity = nativeCounter };
+            var sources = HostAuthority.GemContinueSources;
+            string previousRun = ClientSession.ContinueRunId;
+            bool previousRestoring = ClientSession.NativeContinueRestoring;
+            EntityStatus.LiveStatusEffects.Add(native);
+            try
+            {
+                hero.Skill.Caps[0] = 8; hero.Skill.Caps[1] = 2;
+                var previousHost = new HostAuthority();
+                previousHost.ApplyForTest(Runtime(hero), FourIdentity());
+                Assert.Equal(new[] { 12, 3 }, hero.Skill.Caps);
+                hero.Skill.Fill(HeroSkillLocation.Identity); hero.Skill.Fill(HeroSkillLocation.Movement);
+                var identity = Enumerable.Range(0, 12).Select(i => hero.Skill.gems[new GemLocation { skill = HeroSkillLocation.Identity, index = i }]).ToArray();
+                var movement = Enumerable.Range(0, 3).Select(i => hero.Skill.gems[new GemLocation { skill = HeroSkillLocation.Movement, index = i }]).ToArray();
+
+                // A new native component cannot inherit the removed external mod's old cap.
+                var fresh = NativeStart(); var freshHost = new HostAuthority();
+                freshHost.ApplyForTest(Runtime(fresh), FourIdentity());
+                Assert.Equal(new[] { 4, 1 }, fresh.Skill.Caps);
+
+                // Continue restores exact gem locations before Chaos restores its saved counter.
+                // Reload can leave ownership on this same component while native caps are reset.
+                SimulateModReload();
+                hero.Skill.Caps[0] = hero.Skill.Caps[1] = 0;
+                var host = new HostAuthority(); var rt = Runtime(hero);
+                sources.Begin("native-slot-run", "native-slot-checkpoint", "native-slot-resume");
+                sources.Include(peer.guid);
+                ClientSession.ContinueRunId = "native-slot-run";
+                ClientSession.NativeContinueRestoring = true;
+                host.ApplyForTest(rt, new Build());
+                host.TickGemSlotsForTest();
+                Assert.Equal(new[] { 0, 0 }, hero.Skill.Caps);
+                Assert.Equal(identity.Concat(movement), hero.Skill.gems.Values);
+                Assert.Empty(hero.Skill.Dropped);
+                hero.Skill.Caps[0] = nativeCounter;
+                ClientSession.NativeContinueRestoring = false;
+                UnityEngine.Time.unscaledTime = 1;
+                host.TickGemSlotsForTest();
+                Assert.Equal(new[] { 4, 3 }, hero.Skill.Caps);
+                Assert.Equal(identity.Take(4).Concat(movement), hero.Skill.gems.Values);
+                Assert.Equal(identity.Skip(4).Reverse(), hero.Skill.Dropped);
+
+                sources.ObserveReceipt(peer.guid, peer, "native-slot-run", "native-slot-run", "native-slot-checkpoint", "native-slot-resume");
+                Assert.True(sources.QueueFreshBuild(peer.guid, peer, "native-slot-run"));
+                sources.CommitFreshBuild(peer.guid, peer, "native-slot-run");
+                host.ApplyForTest(rt, FourIdentity());
+                host.ApplyForTest(rt, FourIdentity());
+                Assert.Equal(new[] { 4, 1 }, hero.Skill.Caps);
+                Assert.Equal(identity.Take(4).Concat(movement.Take(1)), hero.Skill.gems.Values);
+                Assert.Equal(identity.Skip(4).Reverse().Concat(movement.Skip(1).Reverse()), hero.Skill.Dropped);
+                host.ApplyForTest(rt, new Build());
+                host.RestoreForTest(rt);
+                Assert.Equal(new[] { nativeCounter, 0 }, hero.Skill.Caps);
+                Assert.Equal(identity.Take(nativeCounter), hero.Skill.gems.Values);
+                Assert.Equal(identity.Skip(4).Reverse().Concat(movement.Skip(1).Reverse())
+                    .Concat(identity.Take(4).Skip(nativeCounter).Reverse()).Concat(movement.Take(1)), hero.Skill.Dropped);
+            }
+            finally
+            {
+                sources.Reset();
+                ClientSession.ContinueRunId = previousRun;
+                ClientSession.NativeContinueRestoring = previousRestoring;
+                EntityStatus.LiveStatusEffects.Remove(native);
+            }
+        }
+
         [Fact]
         public void Repeated_reload_preserves_other_bonuses_without_accumulating_our_two_slots()
         {
@@ -181,15 +300,16 @@ namespace SodRpg.Core.Tests
         public void Repeated_external_additions_remain_valid_without_disabling_either_bonus()
         {
             var hero = new Hero(); var host = new HostAuthority(); var rt = Runtime(hero);
+            hero.Skill.Caps[0] = 5; // An already out-of-range foreign baseline remains external.
             host.ApplyForTest(rt, Both());
             for (int i = 1; i <= 10; i++)
             {
                 hero.Skill.Caps[0]++;
                 host.ApplyForTest(rt, Both());
-                Assert.Equal(new[] { 3 + i, 3 }, hero.Skill.Caps);
+                Assert.Equal(new[] { 6 + i, 3 }, hero.Skill.Caps);
             }
             host.RestoreForTest(rt);
-            Assert.Equal(new[] { 12, 2 }, hero.Skill.Caps);
+            Assert.Equal(new[] { 15, 2 }, hero.Skill.Caps);
         }
 
         [Fact]
