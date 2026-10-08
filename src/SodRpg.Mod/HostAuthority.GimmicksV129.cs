@@ -253,8 +253,11 @@ namespace SodRpg.Mod
                             state.Victims[target.GetInstanceID()] = target;
                             float lifetime = Gimmicks.Duration(def, 3f);
                             float threeSecondAmount = high * def.ValuePercent / 100f * (def.EffectiveWoundTotal ? 3f / lifetime : 1f);
+                            // The star payload is already ranked after its ordinary cap; rank only the safety budget here.
+                            float maximumTotalDamage = high * (float)(Gimmicks.Cap(GimmickEffect.Wound) / 100m
+                                * StarDamageScaling.Multiplier(rt.Powers.Build.SpentStarPoints));
                             state.Wounds.Apply(target.GetInstanceID(), Time.time, threeSecondAmount,
-                                hero.Status.abilityPower > hero.Status.attackDamage, lifetime, high * 1.2f,
+                                hero.Status.abilityPower > hero.Status.attackDamage, lifetime, maximumTotalDamage,
                                 request.Entry.Memory, pending.AuthoredChannelId);
                         }
                         break;
