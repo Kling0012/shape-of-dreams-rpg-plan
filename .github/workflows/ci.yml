@@ -33,7 +33,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        project: [tests/Issue73.Native.Tests, tests/SodRpg.Mod.Startup.Tests]
+        project: [tests/Issue73.Native.Tests, tests/SodRpg.Mod.Startup.Tests, tests/SodRpg.Culinary.Tests]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v4

@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <LangVersion>9.0</LangVersion>
+    <Nullable>disable</Nullable>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../NativeApi/Culinary.NativeApi.csproj" />
+    <Compile Include="../../../src/SodRpg.Mod/CulinaryIngredientCap.cs" Link="CulinaryIngredientCap.cs" />
+  </ItemGroup>
+</Project>
