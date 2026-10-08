@@ -360,7 +360,7 @@ namespace SodRpg.Core.Tests
             var effect = new StunEffect { victim = enemy, parent = new StatusEffect { parentActor = actor } };
             var capture = host.CaptureCalmStun(effect); Assert.NotNull(capture);
             enemy.Status.hasStun = false;
-            float expected = runtime.Hero.maxHealth * .06f * (1f + build.Get(Stat.ShieldPower) / 100f);
+            float expected = runtime.Hero.maxHealth * (float)(MemoryDamageBalance.Effect_legacy_h_cetus_key2_native_value / 100m) * (1f + build.Get(Stat.ShieldPower) / 100f);
             host.CompleteCalmStun(effect, capture); Assert.Equal(0, runtime.Hero.Status.currentShield);
             enemy.Status.hasStun = true;
             host.CompleteCalmStun(effect, capture); Assert.Equal(expected, runtime.Hero.Status.currentShield, 4);
