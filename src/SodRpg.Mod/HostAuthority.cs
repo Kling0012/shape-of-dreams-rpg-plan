@@ -533,7 +533,7 @@ namespace SodRpg.Mod
             return mult;
         }
 
-        /// <summary>撃破時点の夢の圧から決める欠片の倍率。インフィニティは供給予算が別にあるため対象外。</summary>
+        /// <summary>撃破時点の夢の圧から決める欠片の倍率。インフィニティは対象外。</summary>
         private double ShardDropMultiplierForKill() => InfinityMode.State == null ? _pressure.ShardDropMultiplier : 1.0;
 
         private void OnEntityAdd(Entity e)
@@ -892,7 +892,7 @@ namespace SodRpg.Mod
             float now = Time.time;
             int depth = PartyDepth();
             int dailyId = _dailyIdOfHost != null ? _dailyIdOfHost() : 0;
-            // 夢の圧が高いほど悪夢化しやすい。インフィニティは供給予算が別にあるため対象外。
+            // 夢の圧が高いほど悪夢化しやすい。インフィニティは対象外。
             double pressureMult = InfinityMode.State == null ? _pressure.NightmareChanceMultiplier : 1.0;
             double mult = (DailyDream.Get(dailyId)?.NightmareMult ?? 1.0) * PartyGearChanceMult() * pressureMult;
             for (int i = _spawnQueue.Count - 1; i >= 0; i--)

@@ -52,7 +52,6 @@ namespace SodRpg.Mod
             _nextInfinityAck = 0;
             ResetInfinitySaveHold();
             ResetInfinityPersonalChoice();
-            ResetInfinityRewardSamples();
         }
 
         private void SyncInfinityContinueSnapshot()
@@ -62,7 +61,6 @@ namespace SodRpg.Mod
                 || Profile.Run.RunId != NetworkedManagerBase<GameManager>.softInstance?.runId) return;
             if (CanChooseRunRules) ObserveInfinityRoomTotal(Profile.Run.Infinity.ClearedCombatTotal);
             else TickInfinity();
-            SampleInfinityRewards(true);
         }
 
         internal static void ValidateHostInfinityContinue()

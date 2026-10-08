@@ -5,7 +5,7 @@
 `star-progression.json` の星XP曲線・費用・報酬・刻印枠の解放、
 `gear.json` の装備レベル成長・固定攻魔上限、`sets.json` の通常セット2/3/6部位効果、
 `pressure.json` の夢の圧・深度（欠片の出やすさと悪夢化の確率にかける倍率の係数・上限を含む）、`monsters.json` の悪夢・変種・敵行動、
-`infinity.json` の供給予算・周期・圧段階上限・周期別補正、`powers.json` のPowerの時間・距離・条件（127欄）を
+`infinity.json` の周期・圧段階上限・周期別補正・固有品係数、`powers.json` のPowerの時間・距離・条件（127欄）を
 型付きC#へ生成します。記憶ダメージはmanifestの480親＋258選択肢と旧ルート98成分、計836欄を移行済みです。
 星ID・段数・費用・選択肢・保存形式5・Protocol 23は維持し、調整した有効値（装備・セット・Powerを含む）を内容照合に含めます。
 段階2ではMemoryHaste・GimmickBoost・GimmickParam・Notable・Keystone・Statの
@@ -54,7 +54,7 @@ python tools/balance/gen_cs.py --check
 既定の遠征は新規プロフィール3遠征×8人、seed=1、2ゾーン×2部屋。鍛錬の `v132stars` は同じ人数・遠征数・seedで4ゾーン×5部屋、
 4旅人×深度0〜5×secure/greedy×6構成と入口のみの3感度条件を測定します。その他は既存モード既定です。
 Infinityの常用比較は `--infinity-scope comparison`：30分×通常深度0/5・同部屋数の通常比較・4構成の7行、
-人数・seedはrunの指定値、周期は現在の既定周期。長時間の保証・蓄積予算感度は単体の `--infinity-scope full` で測ります。
+人数・seedはrunの指定値、周期は現在の既定周期。長時間の保証感度は単体の `--infinity-scope full` で測ります。
 500pt星図の長時間シミュレーションは実行しません。
 
 ## 鍛冶の調整（Issue #149 段階3）
@@ -169,14 +169,14 @@ DOTNET_ROLL_FORWARD=LatestMajor /usr/bin/dotnet run --project tools/BalanceSim -
 | --- | --- | --- |
 | `pressure.json` | `dreamPressure` の無料夢レベル・HP／damageの夢レベル／星点／Infinity段係数7欄、敵数のHP換算幅／段ごとの増分／最大増分／追加報酬予算4欄、`dreamDepth` の最大深度・HP／damage／幸運／覚醒／星XP／追加部屋7欄 | `Game/Balance/Pressure.Generated.cs` |
 | `monsters.json` | `behavior` 27欄、`nightmare` 39欄、`variants` の確率・性質・欠片9欄、`variantStats` の30種47能力値 | `Game/Balance/Monsters.Generated.cs` |
-| `infinity.json` | `rates` 10欄、共通 `killMix` 4欄、`bursts` 16欄、`rooms` の4種cap／increment8欄、`run` の既定／3周期／圧上限5欄、`intervalScaling` の3周期×圧加算／敵数加算／通常遺物倍率／通常予算倍率12欄 | `Game/Balance/Infinity.Generated.cs` |
+| `infinity.json` | `run` の既定／3周期／圧上限5欄、`intervalScaling` の3周期×圧加算／敵数加算／通常遺物倍率9欄、`uniqueDropMultiplier` 1欄 | `Game/Balance/Infinity.Generated.cs` |
 
 `pressure` は夢Lv1/5/10/20/30×使用星点0/50/250/500×深度0〜5×道標なし／儚い記憶
 ×Infinity段0/1/10/100を `DreamPressure` の実式で列挙します。潜行Heatは夢の深度とは別軸です。
 敵数の原本は `dreamPressure.enemyCountHealthPerStage=0.10`、`enemyCountPerStage=0.08`、`enemyCountMaximumBonus=0.60`、`enemyCountAdditionalRewardBudget=0.20`。
 `DreamPressure.EnemyCountMultiplier` は最終HPから圧段階を換算し、ホストは各ウェーブで実際に出た非ボスの増分を偏りのない整数体数へ丸めて、その出現処理へ混ぜる。global／section同時人口上限と元のウェーブ数は据え置き、満員ならそのウェーブ内で空きを待つ。
-追加体の係数は `min(1, enemyCountAdditionalRewardBudget / 敵数増加率)`。通常／Infinityとも通常の撃破報酬経路へ通し、変換後の通貨・遺物を係数処理してから既存Infinity出力予算を消費する。整数は確率丸め、分割できない遺物・Chaos・配当・回復は確率を調整する。追加の直接報酬は元敵比で期待値+20%までであり、抽選結果・戦闘時間クレジット・依頼達成時期まで含む部屋総収入の決定的上限ではない。
-Issue #270の `intervalScaling` は20部屋を基準、15部屋を圧+2段・敵数+200%・通常遺物×1.5、10部屋を圧+4段・敵数+400%・通常遺物×2とする。圧の敵数上限とは別に加算し、追加報酬係数の分母には合計増加率を使う。追加抽選はEpic以下で、生成済み係数を使う `InfinityIntervalScaling.OrdinaryBudgetMultiplier` が通常遺物の出力とEpic期待値の実効予算にも同じ倍率を適用する。Legendary・ボス限定セット・固定保証の抽選と予算は増やさない。`--infinity-scope intervals` は固定部屋時間の実Core経済模型であり、実機のクリア速度予測ではない。
+追加体の係数は `min(1, enemyCountAdditionalRewardBudget / 敵数増加率)`。通常／Infinityとも通常の撃破報酬経路へ通し、変換後の通貨・遺物に係数を適用する。整数は確率丸め、分割できない遺物・Chaos・配当・回復は確率を調整する。追加の直接報酬は元敵比で期待値+20%までであり、抽選結果・依頼達成時期まで含む部屋総収入の決定的上限ではない。
+Issue #270の `intervalScaling` は20部屋を基準、15部屋を圧+2段・敵数+200%・通常遺物×1.5、10部屋を圧+4段・敵数+400%・通常遺物×2とする。圧の敵数上限とは別に加算し、追加報酬係数の分母には合計増加率を使う。追加抽選はEpic以下で、Legendary・ボス限定セット・固定保証の抽選は増やさない。`--infinity-scope intervals` は固定部屋時間の実Core経済模型であり、実機のクリア速度予測ではない。
 
 ### Issue #270：同一模型の修正前後比較
 
@@ -218,9 +218,8 @@ DOTNET_ROLL_FORWARD=LatestMajor /usr/bin/dotnet /tmp/issue270-followup-separated
 悪夢の出現確率・接頭効果数・能力値、30変種の能力値・欠片倍率、行動係数も独立した単位で比較します。
 単独接頭効果の投影であり、ランダムな複合結果・勝率・実クリア時間を予測しません。
 
-`infinity` はEpic+／Legendaryの解析認可予算と、実 `Rules.OnKill` を通った認可／抑止、
-遺物・欠片・調律石・夢XP・星XP・覚醒の供給／時を保存します。全55係数も直接比較できるので、
-模型の条件で拘束しないburst／cap変更を見落としません。期間・撃破構成・時間・装備・乱数・人数等の模型条件を記録します。
+`infinity` は実 `Rules.OnKill` を通った遺物・欠片・調律石・夢XP・星XP・覚醒の実際の発見数と供給／時を保存します。
+係数も直接比較できるので、模型の条件で拘束しない係数変更を見落としません。期間・撃破構成・時間・装備・乱数・人数等の模型条件を記録します。
 周期はshort/middle/long/defaultの選択役割を固定条件とし、その時点の数値を指標と `resolvedIntervals` に記録します。
 内容指紋が異なるだけでは比較を拒否せず、模型・外生条件・型・単位の違いで比較可否を判断します。
 全セッションを戦闘時間とする経済模型であり、通信性能・実機の戦闘速度の測定ではありません。

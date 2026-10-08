@@ -151,8 +151,7 @@ namespace SodRpg.Mod
                 InfinityMode.WarnPersonalChoices("accepted pact is no longer offered locally; continuing without a pact");
                 pact = Pact.None;
             }
-            if (waypoint != Waypoint.None && (!run.OfferedWaypoints.Contains(waypoint)
-                || !InfinityRewards.CanChooseWaypoint(Profile, waypoint)))
+            if (waypoint != Waypoint.None && !run.OfferedWaypoints.Contains(waypoint))
             {
                 InfinityMode.WarnPersonalChoices("accepted waypoint is no longer available locally; continuing without a waypoint");
                 waypoint = Waypoint.None;

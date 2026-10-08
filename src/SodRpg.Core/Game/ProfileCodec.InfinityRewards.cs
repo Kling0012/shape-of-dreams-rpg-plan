@@ -24,6 +24,8 @@ namespace SodRpg.Core.Game
                 throw new LedgerFormatException("Invalid infinity reward credit " + key);
             return value;
         }
+        // The saved Infinity reward budget is inert: values are round-tripped unchanged.
+        // These caps are the frozen format contract from the retired budget system.
         private static InfinityRewardBudget ReadInfinityRewardBudget(JsonObject body)
         {
             if (!body.TryGet("infinityRewardBudget", out object raw)) return new InfinityRewardBudget();
@@ -33,11 +35,11 @@ namespace SodRpg.Core.Game
                 throw new LedgerFormatException("Invalid infinity reward room identity");
             var b = new InfinityRewardBudget
             {
-                LesserTime = ReadCredit(obj, "lesserTime", InfinityRewards.LesserTimeBurst), NormalTime = ReadCredit(obj, "normalTime", InfinityRewards.NormalTimeBurst), MiniBossTime = ReadCredit(obj, "miniBossTime", InfinityRewards.MiniBossTimeBurst), BossTime = ReadCredit(obj, "bossTime", InfinityRewards.BossTimeBurst),
-                LesserRoom = ReadCredit(obj, "lesserRoom", InfinityRewards.LesserRoomCap), NormalRoom = ReadCredit(obj, "normalRoom", InfinityRewards.NormalRoomCap), MiniBossRoom = ReadCredit(obj, "miniBossRoom", InfinityRewards.MiniBossRoomCap), BossRoom = ReadCredit(obj, "bossRoom", InfinityRewards.BossRoomCap),
-                HighRare = ReadCredit(obj, "highRare", InfinityRewards.HighRareBurst), Legendary = ReadCredit(obj, "legendary", InfinityRewards.LegendaryBurst), Relics = ReadCredit(obj, "relics", InfinityRewards.RelicsBurst), GuaranteeOpportunities = ReadCredit(obj, "guaranteeOpportunities", InfinityRewards.GuaranteeOpportunitiesBurst), GuaranteedRelics = ReadCredit(obj, "guaranteedRelics", InfinityRewards.GuaranteedRelicsBurst),
-                Shards = ReadCredit(obj, "shards", InfinityRewards.ShardsBurst), Tuning = ReadCredit(obj, "tuning", InfinityRewards.TuningBurst), Xp = ReadCredit(obj, "xp", InfinityRewards.XpBurst), StarXp = ReadCredit(obj, "starXp", InfinityRewards.StarXpBurst), Awakening = ReadCredit(obj, "awakening", InfinityRewards.AwakeningBurst),
-                DustConversions = ReadCredit(obj, "dustConversions", InfinityRewards.DustConversionsBurst), Merchants = ReadCredit(obj, "merchants", InfinityRewards.MerchantsBurst),
+                LesserTime = ReadCredit(obj, "lesserTime", 10), NormalTime = ReadCredit(obj, "normalTime", 8), MiniBossTime = ReadCredit(obj, "miniBossTime", 1), BossTime = ReadCredit(obj, "bossTime", 1),
+                LesserRoom = ReadCredit(obj, "lesserRoom", 10), NormalRoom = ReadCredit(obj, "normalRoom", 8), MiniBossRoom = ReadCredit(obj, "miniBossRoom", 1), BossRoom = ReadCredit(obj, "bossRoom", 1),
+                HighRare = ReadCredit(obj, "highRare", 7), Legendary = ReadCredit(obj, "legendary", 7), Relics = ReadCredit(obj, "relics", 24), GuaranteeOpportunities = ReadCredit(obj, "guaranteeOpportunities", 1), GuaranteedRelics = ReadCredit(obj, "guaranteedRelics", 2),
+                Shards = ReadCredit(obj, "shards", 30), Tuning = ReadCredit(obj, "tuning", 3), Xp = ReadCredit(obj, "xp", 50), StarXp = ReadCredit(obj, "starXp", 40), Awakening = ReadCredit(obj, "awakening", 20),
+                DustConversions = ReadCredit(obj, "dustConversions", 1), Merchants = ReadCredit(obj, "merchants", 1),
                 RoomRunId = identity as string, RoomGraph = InfinityLong(obj, "roomGraph", -1), RoomEpoch = InfinityLong(obj, "roomEpoch", -1),
                 AcceptedKills = InfinityLong(obj, "acceptedKills"), RejectedKills = InfinityLong(obj, "rejectedKills"),
             };

@@ -177,31 +177,17 @@ namespace SodRpg.Core.Game
             int killHeat = heat ?? run.Heat;
             Waypoint killWaypoint = waypoint ?? run.ActiveWaypoint;
             var focus = p.Focus ?? DailyDream.Get(run.DailyId)?.FeaturedLine;
-            bool rareAllowed = InfinityRewards.AdmitKill(p, tier, rollTier, killHeat, killWaypoint, isNightmare, bossTypeName, bossDropNightmare, bossDropDepth, rewardScale);
             var reward = Loot.RollKill(rng, rollTier, itemLevel, killHeat, focus, KillModifiers(run, killWaypoint), p.Stash, run.Satchel, p.Codex,
-                rareAllowed ? Rarity.Legendary : Rarity.Rare, InfinityRewards.OrdinaryRelicMultiplier(run, killWaypoint, tier), shardDropMultiplier);
+                Rarity.Legendary, InfinityRewards.OrdinaryRelicMultiplier(run, killWaypoint, tier), shardDropMultiplier,
+                InfinityRewards.UniqueDropMultiplier(p));
             if (variant != null && variant.ShardBonusPct != 100) reward.Shards = (int)Math.Min(int.MaxValue, (long)reward.Shards * variant.ShardBonusPct / 100 + LootBalance.VariantAdditiveShards);
             bool hoardPayout = killWaypoint == Waypoint.BossHoard
                 && !run.WaypointHoardReleased && tier == MonsterTier.Boss;
-            Waypoints.ApplyKill(p, tier, isNightmare, rng, reward, itemLevel, focus, roomIndex ?? run.RoomsCleared, killWaypoint, out int waypointStarXp, out int waypointAwakening, rareAllowed: rareAllowed, rewardScale: rewardScale);
-            if (tier == MonsterTier.Boss && rareAllowed)
+            Waypoints.ApplyKill(p, tier, isNightmare, rng, reward, itemLevel, focus, roomIndex ?? run.RoomsCleared, killWaypoint, out int waypointStarXp, out int waypointAwakening, rewardScale: rewardScale);
+            if (tier == MonsterTier.Boss)
             {
                 var bossPiece = BossSets.RollDrop(rng, bossTypeName, bossDropNightmare, bossDropDepth, itemLevel);
-                if (bossPiece != null)
-                {
-                    bool separateOrdinaryBudget = InfinityRewards.OrdinaryBudgetMultiplier(run, killWaypoint, tier) > 1;
-                    bool relicBudgetGrants = !InfinityRewards.Active(p) || separateOrdinaryBudget || p.InfinityRewardBudget.Relics + 1e-9 >= 1;
-                    if (relicBudgetGrants)
-                    {
-                        if (InfinityRewards.Active(p))
-                        {
-                            if (!separateOrdinaryBudget) { p.InfinityRewardBudget.Relics = Math.Max(0, p.InfinityRewardBudget.Relics - 1); InfinityRewards.NoteRelicGate(p, true); }
-                            bossPiece.InfinityFreeSupply = true;
-                        }
-                        reward.Relics.Add(bossPiece);
-                    }
-                    else InfinityRewards.NoteRelicGate(p, false);
-                }
+                if (bossPiece != null) reward.Relics.Add(bossPiece);
             }
             if (!string.IsNullOrEmpty(heroKey))
             {
@@ -217,8 +203,7 @@ namespace SodRpg.Core.Game
                     if (r == null || r.Rarity != Rarity.Legendary) continue;
                     ReachBounty(p, BountyKind.Awakener, r.AwakenLevel, false, ev);
                     if (r.AwakenLevel >= Content.MaxAwakenLevel) continue;
-                    int grantedPoints = InfinityRewards.LimitAwakening(p, points);
-                    r.AwakenPoints = (int)Math.Min(Content.AwakenThreshold, (long)r.AwakenPoints + grantedPoints);
+                    r.AwakenPoints = (int)Math.Min(Content.AwakenThreshold, (long)r.AwakenPoints + points);
                     int level = Content.AwakenLevelFor(r.AwakenPoints);
                     if (level <= r.AwakenLevel) continue;
                     if (r.AwakenLevel == 0) p.Stats.RelicsAwakened = SaturatingAdd(p.Stats.RelicsAwakened, 1);
@@ -334,7 +319,6 @@ namespace SodRpg.Core.Game
                 var worst = run.Satchel[worstIndex];
                 run.Satchel.RemoveAt(worstIndex);
                 int shards = suppressShards ? 0 : Content.SalvageShards(worst.Rarity);
-                if (!suppressShards && worst.InfinityFreeSupply) shards = InfinityRewards.LimitShards(p, shards);
                 p.QueueSatchelOverflow(shards, suppressShards);
                 if (p.ReceiveOverflowDreamDust && !suppressShards
                     && (p.OverflowBonusPendingRunId == null || p.OverflowBonusPendingRunId == run.RunId))
@@ -481,7 +465,6 @@ namespace SodRpg.Core.Game
                 throw new InvalidOperationException(Loc.T("道標は確保地点で選べます。", "Choose a waypoint at a secure point."));
             if (waypoint != Waypoint.None && !run.OfferedWaypoints.Contains(waypoint))
                 throw new InvalidOperationException(Loc.T("その道標は提示されていません。", "That waypoint is not on offer."));
-            if (!InfinityRewards.CanChooseWaypoint(p, waypoint, out string budgetReason)) throw new InvalidOperationException(budgetReason);
             run.PendingWaypoint = waypoint;
             run.WaypointChosen = true;
             return new List<GameEvent> { new GameEvent(EventKind.Info, waypoint == Waypoint.None
@@ -500,19 +483,18 @@ namespace SodRpg.Core.Game
             run.StarSecureRewarded = true;
             int heat = run.Heat;
             int relics = run.Satchel.Count;
-            int bonusShards = InfinityRewards.LimitShards(p, (int)Math.Min(int.MaxValue, (long)run.SatchelShards * heat / EconomyBalance.SecureBonusDivisor
-                * (Pacts.Sum(run.Pacts).DoubleDepthBonus ? PactBalance.DoubleDepthBonusMultiplier : 1)));
+            int bonusShards = (int)Math.Min(int.MaxValue, (long)run.SatchelShards * heat / EconomyBalance.SecureBonusDivisor
+                * (Pacts.Sum(run.Pacts).DoubleDepthBonus ? PactBalance.DoubleDepthBonusMultiplier : 1));
             int shards = SaturatingAdd(run.SatchelShards, bonusShards);
             int tuning = run.SatchelTuning;
 
             var overflow = new List<Relic>();
             foreach (var r in run.Satchel.OrderByDescending(r => r.Score))
             {
-                if (p.Stash.Count < Workshop.StashCapacity(p)) { r.InfinityFreeSupply = false; p.Stash.Add(r); }
+                if (p.Stash.Count < Workshop.StashCapacity(p)) p.Stash.Add(r);
                 else overflow.Add(r);
             }
-            foreach (var r in overflow) shards = SaturatingAdd(shards, r.InfinityFreeSupply
-                ? InfinityRewards.LimitShards(p, Content.SalvageShards(r.Rarity)) : Content.SalvageShards(r.Rarity));
+            foreach (var r in overflow) shards = SaturatingAdd(shards, Content.SalvageShards(r.Rarity));
 
             p.AddMaterial(Materials.Shard, shards);
             p.AddMaterial(Materials.Tuning, tuning);
@@ -586,9 +568,9 @@ namespace SodRpg.Core.Game
             b.Progress = b.Target;
             p.Stats.BountiesDone = SaturatingAdd(p.Stats.BountiesDone, 1);
             double mult = DailyDream.Get(p.Run.DailyId)?.BountyMult ?? 1.0;
-            int shards = InfinityRewards.LimitShards(p, (int)Math.Round(b.RewardShards * mult));
-            int tuning = InfinityRewards.LimitTuning(p, (int)Math.Round(b.RewardTuning * mult));
-            int xp = InfinityRewards.LimitXp(p, (int)Math.Round(b.RewardXp * mult));
+            int shards = (int)Math.Round(b.RewardShards * mult);
+            int tuning = (int)Math.Round(b.RewardTuning * mult);
+            int xp = (int)Math.Round(b.RewardXp * mult);
             if (secured)
             {
                 p.AddMaterial(Materials.Shard, shards);
@@ -600,11 +582,11 @@ namespace SodRpg.Core.Game
                 p.Run.SatchelShards = SaturatingAdd(p.Run.SatchelShards, shards);
                 p.Run.SatchelTuning = SaturatingAdd(p.Run.SatchelTuning, tuning);
             }
-            string rewardText = InfinityRewards.Active(p) ? Loc.T($"欠片{shards}・調律石{tuning}・夢の経験{xp}", $"{shards} shards, {tuning} tuning, {xp} dream XP") : b.RewardText(mult);
+            string rewardText = b.RewardText(mult);
             ev.Add(new GameEvent(EventKind.Bounty, Loc.T(
                 $"依頼「{b.Describe()}」を達成しました。{rewardText}" + (secured ? "" : "（欠片と調律石はまだ持ち帰っていません）"),
                 $"Bounty complete: {b.Describe()} ({rewardText}" + (secured ? ")" : ", unsecured)"))));
-            ev.AddRange(AddXp(p, xp, false));
+            ev.AddRange(AddXp(p, xp));
             AddHint(p, Hint.FirstBounty, ev);
             ev.AddRange(Feats.Check(p));
         }
@@ -756,7 +738,6 @@ namespace SodRpg.Core.Game
                 report.EchoShards = echo;
                 foreach (var r in run.Satchel) p.LostAndFound.Add(r);
                 int salvaged = TrimLostAndFound(p);
-                foreach (var relic in p.LostAndFound) relic.InfinityFreeSupply = false;
                 if (lost > 0 || echo > 0)
                 {
                     ev.Add(new GameEvent(EventKind.Lost, Loc.T(
@@ -839,7 +820,7 @@ namespace SodRpg.Core.Game
                     int bet = run.SatchelShards;
                     if (rng.Chance(EventsBalance.ChaliceWinChance))
                     {
-                        run.SatchelShards = SaturatingAdd(run.SatchelShards, InfinityRewards.LimitShards(p, bet * EventsBalance.ChaliceBonusMultiplier));
+                        run.SatchelShards = SaturatingAdd(run.SatchelShards, bet * EventsBalance.ChaliceBonusMultiplier);
                         ev.Add(new GameEvent(EventKind.Secured, Loc.T($"賭けに勝ちました！ まだ持ち帰っていない欠片が{bet}から{run.SatchelShards}に増えました。", $"You won! Unsecured shards {bet} -> {run.SatchelShards}")));
                     }
                     else
@@ -918,10 +899,9 @@ namespace SodRpg.Core.Game
                 {
                     run.Heat = Loot.ClampHeat(run.Heat + EventsBalance.CourageGateHeatIncrement);
                     run.PeakHeat = Math.Max(run.PeakHeat, run.Heat);
-                    int granted = InfinityRewards.LimitShards(p, EventsBalance.CourageGateShards);
-                    run.SatchelShards = SaturatingAdd(run.SatchelShards, granted);
-                    ev.Add(new GameEvent(EventKind.Delved, Loc.T($"勇気の門をくぐり、潜行が{run.Heat}になりました。まだ持ち帰っていない欠片が{granted}増えました。",
-                        $"Gate of Courage: delve {run.Heat}, +{granted} unsecured shards")));
+                    run.SatchelShards = SaturatingAdd(run.SatchelShards, EventsBalance.CourageGateShards);
+                    ev.Add(new GameEvent(EventKind.Delved, Loc.T($"勇気の門をくぐり、潜行が{run.Heat}になりました。まだ持ち帰っていない欠片が{EventsBalance.CourageGateShards}増えました。",
+                        $"Gate of Courage: delve {run.Heat}, +{EventsBalance.CourageGateShards} unsecured shards")));
                     break;
                 }
                 case DreamEvent.Archive:
@@ -1029,9 +1009,9 @@ namespace SodRpg.Core.Game
                     ev.Add(new GameEvent(EventKind.Lost, Loc.T($"「{target.DisplayName}」を供物として捧げました。", $"Sacrificed \"{target.DisplayName}\" as an offering."), target.Rarity));
                     if (e == DreamEvent.StarOffering)
                     {
-                        AddStarXp(p, run.HeroKey, EventsBalance.StarOfferingXp, ev, false);
+                        AddStarXp(p, run.HeroKey, EventsBalance.StarOfferingXp, ev);
                     }
-                    else ev.AddRange(AddXp(p, DreamEvents.DreamOfferingXp(run.Heat), false));
+                    else ev.AddRange(AddXp(p, DreamEvents.DreamOfferingXp(run.Heat)));
                     break;
                 }
                 case DreamEvent.AbyssalChest:
@@ -1271,7 +1251,6 @@ namespace SodRpg.Core.Game
                 if (uid != null && pending.Relic.Uid != uid) continue;
                 if (keepUids != null && keepUids.Contains(pending.Relic.Uid)) continue;
                 p.PendingSalvage.RemoveAt(i--);
-                pending.Relic.InfinityFreeSupply = false;
                 if (pending.ReturnTarget == SalvageReturnTarget.Stash && p.Stash.Count < Workshop.StashCapacity(p))
                     p.Stash.Add(pending.Relic);
                 else
@@ -1296,8 +1275,7 @@ namespace SodRpg.Core.Game
             {
                 var worst = p.LostAndFound.OrderBy(r => r.Score).First();
                 p.LostAndFound.Remove(worst);
-                p.AddMaterial(Materials.Shard, worst.InfinityFreeSupply
-                    ? InfinityRewards.LimitShards(p, Content.SalvageShards(worst.Rarity)) : Content.SalvageShards(worst.Rarity));
+                p.AddMaterial(Materials.Shard, Content.SalvageShards(worst.Rarity));
                 salvaged++;
             }
             return salvaged;
@@ -1342,12 +1320,11 @@ namespace SodRpg.Core.Game
             p.Focus = focus;
         }
 
-        private static void AddStarXp(Profile p, string heroKey, int amount, List<GameEvent> ev, bool freeSupply = true, double rewardScale = 1, Rng rng = null)
+        private static void AddStarXp(Profile p, string heroKey, int amount, List<GameEvent> ev, double rewardScale = 1, Rng rng = null)
         {
             if (string.IsNullOrEmpty(heroKey)) return;
             amount = DreamDepth.ScaleReward(amount, DreamDepth.StarXpMultiplier(p.Run?.DreamDepth ?? 0));
             if (rng != null) amount = PressureCountRewards.ScaleInt(rng, amount, rewardScale);
-            if (freeSupply) amount = InfinityRewards.LimitStarXp(p, amount);
             var hero = p.Hero(heroKey);
             int before = StarProgression.Points(hero.StarXp);
             StarProgression.AddXp(hero, amount);
@@ -1360,10 +1337,9 @@ namespace SodRpg.Core.Game
             AddHint(p, Hint.TalentPoints, ev);
         }
 
-        public static List<GameEvent> AddXp(Profile p, int amount, bool freeSupply = true)
+        public static List<GameEvent> AddXp(Profile p, int amount)
         {
             var ev = new List<GameEvent>();
-            if (freeSupply) amount = InfinityRewards.LimitXp(p, amount);
             if (amount <= 0 || p.DreamLevel >= Content.MaxDreamLevel) return ev;
             p.DreamXp = (int)Math.Min(int.MaxValue, (long)p.DreamXp + amount);
             while (p.DreamLevel < Content.MaxDreamLevel && p.DreamXp >= Content.XpToNext(p.DreamLevel))

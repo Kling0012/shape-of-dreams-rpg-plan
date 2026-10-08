@@ -21,7 +21,6 @@ internal struct InfinitySupply
             StarXp = profile.Hero(InfinitySimulation.Hero).StarXp,
         };
     }
-
     internal void AddDelta(InfinitySupply before, InfinitySupply after)
     {
         Relics += after.Relics - before.Relics;
@@ -43,12 +42,7 @@ internal sealed class InfinityRow
     public int Minutes, Interval, Players;
     public long Rooms, Bosses, Nightmares, Attempts, BonusKills, Epic, Legendary, BossSet, Relics;
     public long Shards, Tuning, DreamXp, StarXp, Awakening;
-    public long Accepted, Rejected;
-    public double OutputReserved, Guaranteed, GuaranteeOpportunities, HighRareSpent, LegendarySpent, CombatSeconds;
-    public long AcceptedOriginals, AcceptedExtras, AcceptedBosses;
-    public double AcceptedOriginalLegendaryEv, AcceptedExtraLegendaryEv, AcceptedBossLegendaryEv;
-    public double AcceptedOriginalRawLegendaryEv, AcceptedExtraRawLegendaryEv;
-    public double AcceptedHighRareEv, RejectedLegendaryEv, RemainingLegendaryCredit;
+    public double CombatSeconds;
     public int PeakHeat, Pressure;
     public InfinitySupply CombatSupply, BossSupply;
     public double Hours => Players * Minutes / 60.0;
@@ -107,7 +101,7 @@ internal sealed class InfinitySimulation
                     Rows.Add(Simulate(scenario, minutes, interval.Value, interval.Key));
         if (!comparison && !intervalComparison)
         {
-            Rows.Add(Simulate(new InfinityScenario("epic-mirage", "EpicMirage authorization / 4x", 4, 0, 1, Waypoint.EpicMirage), 300, InfinityRunState.DefaultInterval, "default"));
+            Rows.Add(Simulate(new InfinityScenario("epic-mirage", "EpicMirage guarantee / 4x", 4, 0, 1, Waypoint.EpicMirage), 300, InfinityRunState.DefaultInterval, "default"));
             Rows.Add(ObserveFundedBoss());
         }
         ObservePersistence();
@@ -177,11 +171,7 @@ internal sealed class InfinitySimulation
                     }
                     continue;
                 }
-                if (run.Infinity != null)
-                {
-                    run.Infinity.RoomEpoch++;
-                    InfinityRewards.EnterRoom(profile, run.Infinity.GraphEpoch, run.Infinity.RoomEpoch);
-                }
+                if (run.Infinity != null) run.Infinity.RoomEpoch++;
                 bool mini = encounterRng.Chance(MiniBossChance);
                 int originalKills = LesserPerRoom + NormalPerRoom + (mini ? 1 : 0);
                 var effects = Waypoints.Sum(run.ActiveWaypoint);
@@ -232,7 +222,6 @@ internal sealed class InfinitySimulation
             row.DreamXp += dreamXp;
             row.StarXp += profile.Hero(Hero).StarXp;
             row.Awakening += equipped.AwakenPoints;
-            CaptureBudget(profile, row);
         }
         return row;
     }
@@ -254,61 +243,15 @@ internal sealed class InfinitySimulation
     {
         double remaining = minutes * 60 - elapsed;
         double actual = Math.Min(seconds, remaining);
-        // No rewards occur between these active combat ticks. Refill+clamp is additive,
-        // so aggregating the interval gives the same credits as native .25-second ticks.
-        InfinityRewards.AdvanceCombat(profile, actual);
         row.CombatSeconds += actual;
         elapsed += seconds;
         if (seconds > remaining + 1e-8) return;
         row.Attempts++;
         if (bonusKill) row.BonusKills++;
         if (nightmare != NightmareAffix.None) row.Nightmares++;
-        var budget = profile.InfinityRewardBudget;
-        double rareBefore = budget.HighRare, relicsBefore = budget.Relics;
-        double legendaryBefore = budget.Legendary;
-        double guaranteeBefore = budget.GuaranteedRelics, opportunityBefore = budget.GuaranteeOpportunities;
-        long acceptedBefore = budget.AcceptedKills;
-        bool isNightmare = nightmare != NightmareAffix.None;
-        var rollTier = isNightmare ? Nightmares.RewardTier(tier) : tier;
-        string? bossType = tier == MonsterTier.Boss && bossSetEligible ? BossTypeName : null;
-        var run = profile.Run;
-        double legendaryEv = run.Infinity == null ? 0 : InfinityRewards.ExpectedKillLegendaryCost(run, rollTier, run.Heat, run.ActiveWaypoint,
-            isNightmare, bossType, bossDropDepth: run.DreamDepth);
-        double highRareEv = run.Infinity == null ? 0 : InfinityRewards.ExpectedKillHighRareCost(run, rollTier, run.Heat, run.ActiveWaypoint,
-            isNightmare, bossType, bossDropDepth: run.DreamDepth);
         Observe(Rules.OnKill(profile, tier, options.ItemLevel, nightmare, Hero,
             bossTypeName: tier == MonsterTier.Boss && bossSetEligible ? BossTypeName : null, bossDropDepth: profile.Run.DreamDepth,
             rewardScale: rewardScale), row, profile);
-        row.HighRareSpent += Math.Max(0, rareBefore - budget.HighRare);
-        row.LegendarySpent += Math.Max(0, legendaryBefore - budget.Legendary);
-        row.OutputReserved += Math.Max(0, relicsBefore - budget.Relics);
-        row.Guaranteed += Math.Max(0, guaranteeBefore - budget.GuaranteedRelics);
-        row.GuaranteeOpportunities += Math.Max(0, opportunityBefore - budget.GuaranteeOpportunities);
-        if (run.Infinity != null)
-        {
-            if (budget.AcceptedKills > acceptedBefore)
-            {
-                row.AcceptedHighRareEv += highRareEv * rewardScale;
-                if (bonusKill)
-                {
-                    row.AcceptedExtras++;
-                    row.AcceptedExtraRawLegendaryEv += legendaryEv;
-                    row.AcceptedExtraLegendaryEv += legendaryEv * rewardScale;
-                }
-                else
-                {
-                    row.AcceptedOriginals++;
-                    row.AcceptedOriginalRawLegendaryEv += legendaryEv;
-                    row.AcceptedOriginalLegendaryEv += legendaryEv * rewardScale;
-                }
-                if (tier == MonsterTier.Boss)
-                {
-                    row.AcceptedBosses++;
-                    row.AcceptedBossLegendaryEv += legendaryEv * rewardScale;
-                }
-            }
-            else row.RejectedLegendaryEv += legendaryEv * rewardScale;
-        }
     }
 
     private static void FinishBoss(Profile profile)
@@ -335,23 +278,13 @@ internal sealed class InfinitySimulation
         }
     }
 
-    private static void CaptureBudget(Profile profile, InfinityRow row)
-    {
-        // Filled with the Core budget's persisted authorization ledger, not inferred from empty loot rolls.
-        var budget = profile.InfinityRewardBudget;
-        if (budget == null) return;
-        row.Accepted += budget.AcceptedKills;
-        row.Rejected += budget.RejectedKills;
-        row.RemainingLegendaryCredit += budget.Legendary;
-    }
-
     private InfinityRow ObserveFundedBoss()
     {
-        // Isolate the existing roll with genuinely accrued credit, not assigned balances.
-        // This is a stored-credit sensitivity case, not the ordinary throughput fixture.
+        // The separate native boss observation isolates #48 with a stored-credit-free
+        // long session: one full default cycle of rooms, then a single long boss fight.
         var row = new InfinityRow
         {
-            ScenarioKey = "funded-boss", Scenario = "funded native boss / stored combat credit",
+            ScenarioKey = "funded-boss", Scenario = "funded native boss / long stored encounter",
             Speed = 1, Depth = 0, NightmareMultiplier = 1, Waypoint = Waypoint.None,
             Minutes = 135, Interval = InfinityRunState.DefaultInterval, IntervalKey = "default", Players = options.Players
         };
@@ -366,8 +299,6 @@ internal sealed class InfinitySimulation
             for (int room = 0; room < InfinityRunState.DefaultInterval; room++)
             {
                 infinity.RoomEpoch++;
-                InfinityRewards.EnterRoom(profile, infinity.GraphEpoch, infinity.RoomEpoch);
-                InfinityRewards.AdvanceCombat(profile, roomSeconds);
                 row.CombatSeconds += roomSeconds;
                 elapsed += roomSeconds;
                 infinity.TryCountCombatClear(infinity.GraphEpoch, room, true, false, false);
@@ -383,7 +314,6 @@ internal sealed class InfinitySimulation
             for (int level = 1; level < profile.DreamLevel; level++) dreamXp += Content.XpToNext(level);
             row.DreamXp += dreamXp;
             row.StarXp += profile.Hero(Hero).StarXp;
-            CaptureBudget(profile, row);
         }
         return row;
     }
@@ -397,14 +327,11 @@ internal sealed class InfinitySimulation
         {
             var infinity = profile.Run.Infinity;
             infinity.RoomEpoch++;
-            InfinityRewards.EnterRoom(profile, infinity.GraphEpoch, infinity.RoomEpoch);
-            InfinityRewards.AdvanceCombat(profile, 20);
             Observe(Rules.OnKill(profile, MonsterTier.Normal, options.ItemLevel, heroKey: Hero), null, profile);
             infinity.TryCountCombatClear(infinity.GraphEpoch, room, true, false, false);
             Observe(Rules.OnRoomsCleared(profile, room + 1), null, profile);
         }
         profile.Run.Infinity.TryEnterBoss();
-        InfinityRewards.AdvanceCombat(profile, 20);
         Observe(Rules.OnKill(profile, MonsterTier.Boss, options.ItemLevel, heroKey: Hero, bossTypeName: BossTypeName), null, profile);
         FinishBoss(profile);
         int pressure = profile.Run.Infinity.PressureStage;
@@ -413,6 +340,6 @@ internal sealed class InfinitySimulation
         var restored = ProfileCodec.Read(ProfileCodec.Write(clone), PersistenceNotes);
         string records = string.Join("; ", restored.InfinityRecords.Select(kv =>
             $"{kv.Key}: returns={kv.Value.ReturnCount}, best rooms={kv.Value.BestReturnedRooms}, pressure={kv.Value.PressureAtBestReturn}"));
-        PersistenceObservation = $"Actual SecuredReturn → Profile.Clone → ProfileCodec.Write/Read: completed={restored.CompletedRunSecuredReturn}, active run={restored.Run != null}; pressure before secure={pressure}; {records}; persisted high-rare credit={restored.InfinityRewardBudget.HighRare:0.######}; accepted/rejected={restored.InfinityRewardBudget.AcceptedKills}/{restored.InfinityRewardBudget.RejectedKills}.";
+        PersistenceObservation = $"Actual SecuredReturn → Profile.Clone → ProfileCodec.Write/Read: completed={restored.CompletedRunSecuredReturn}, active run={restored.Run != null}; pressure before secure={pressure}; {records}.";
     }
 }

@@ -39,10 +39,11 @@ namespace SodRpg.Core.Tests
             Assert.Equal(0, reward.Xp);
         }
 
+        /// <summary>インフィニティでも一番槍の固定保証は枠なしで出る（旧台帳が0でも同じ）。</summary>
         [Theory]
-        [InlineData(0, 0)]
-        [InlineData(1, 1)]
-        public void Restored_guarantee_still_obeys_Infinity_output_budget(double credit, int expected)
+        [InlineData(0)]
+        [InlineData(1)]
+        public void Restored_guarantee_in_infinity_ignores_the_legacy_budget_ledger(double credit)
         {
             var p = Profile.CreateNew(8);
             Rules.BeginRun(p, "first-claim-infinity");
@@ -51,8 +52,9 @@ namespace SodRpg.Core.Tests
             var reward = new KillReward();
             Waypoints.ApplyKill(p, MonsterTier.Normal, false, new Rng(10), reward, 1, null, 0,
                 Waypoint.FirstClaim, out _, out _, rewardScale: 0);
-            Assert.Equal(expected, reward.Relics.Count);
-            Assert.Equal(0, p.InfinityRewardBudget.Relics);
+            Assert.Single(reward.Relics);
+            Assert.Equal(Rarity.Rare, reward.Relics[0].Rarity);
+            Assert.Equal(credit, p.InfinityRewardBudget.Relics); // 台帳は変わらない
         }
     }
 }

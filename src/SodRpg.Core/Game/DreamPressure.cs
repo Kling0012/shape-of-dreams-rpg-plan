@@ -35,7 +35,7 @@ namespace SodRpg.Core.Game
 
         /// <summary>
         /// 欠片・悪夢化の倍率に使う圧の大きさ（敵HPの増分）。インフィニティの圧段階は含めない。
-        /// インフィニティは供給予算が別にあり、その調整を変えないため、段階分の圧を倍率に数えない。
+        /// インフィニティの段階は敵数の追加で調整するため、報酬の倍率には数えない。
         /// </summary>
         public double RewardPressure => Math.Max(0, HealthMultiplierBeforeInfinity - 1);
 

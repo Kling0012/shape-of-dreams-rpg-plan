@@ -17,70 +17,70 @@ namespace SodRpg.Core.Tests
         private const string Zone = "Zone_Mist";
 
         [Fact]
-        public void Combat_supply_accumulates_saturates_and_spends_whole_credits()
+        public void Legacy_zero_credit_budget_still_grants_relics_and_shards()
         {
             var p = BeginInfinityRun(149UL, "supply-149");
-            double seconds = 17.25;
-            InfinityRewards.AdvanceCombat(p, seconds);
-            InfinityRewards.AdvanceCombat(p, seconds);
-            double expected = Math.Min(InfinityRewards.ShardsBurst,
-                Math.Min(InfinityRewards.ShardsBurst, InfinityRewards.ShardsPerHour / 3600 * seconds)
-                    + InfinityRewards.ShardsPerHour / 3600 * seconds);
-            int spend = (int)Math.Floor(expected + 1e-9);
-            Assert.Equal(spend, InfinityRewards.LimitShards(p, int.MaxValue));
-            Assert.Equal(Math.Max(0, expected - spend), p.InfinityRewardBudget.Shards);
-            InfinityRewards.AdvanceCombat(p, 1e20);
-            Assert.Equal((int)Math.Floor(InfinityRewards.ShardsBurst + 1e-9),
-                InfinityRewards.LimitShards(p, int.MaxValue));
-            Assert.Equal(0, InfinityRewards.LimitShards(p, int.MaxValue));
+            Assert.Equal(0, p.InfinityRewardBudget.Relics);
+            Assert.Equal(0, p.InfinityRewardBudget.Shards);
+            for (int kill = 0; kill < 60; kill++)
+                Rules.OnKill(p, MonsterTier.Boss, 20, heat: p.Run.Heat, waypoint: Waypoint.None);
+            Assert.True(p.Stats.RelicsFound > 0); // 枠0の古いセーブでも遺物は出る
+            Assert.True(p.Run.SatchelShards + p.Material(Materials.Shard) > 0); // 欠片も出る
+            Assert.Equal(0, p.InfinityRewardBudget.Relics); // 台帳はもう触れない
+            Assert.Equal(0, p.InfinityRewardBudget.Shards);
 
-            // Frozen legacy oracle applies only when this domain has no effective tuning delta.
-            var record = typeof(Profile).Assembly.GetType("SodRpg.Core.Game.InfinityBalance")
-                .GetField("ContentFingerprintRecord", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic);
-            if (record.GetValue(null) != null) return;
-            double LegacyRareRate(bool legendary)
-            {
-                double lesser = Loot.HighRarityProbability(0, false, Rarity.Common, out double lesserLegend);
-                double normal = Loot.HighRarityProbability(0, false, Rarity.Common, out double normalLegend);
-                double mini = Loot.HighRarityProbability(Loot.TierLuck(MonsterTier.MiniBoss), true, Rarity.Common, out double miniLegend);
-                double boss = Loot.HighRarityProbability(Loot.TierLuck(MonsterTier.Boss), true, Rarity.Uncommon, out double bossLegend);
-                double ev = 200 * Loot.DropChance(MonsterTier.Lesser, 0) * (legendary ? lesserLegend : lesser)
-                    + 160 * Loot.DropChance(MonsterTier.Normal, 0) * (legendary ? normalLegend : normal)
-                    + 5 * Loot.DropChance(MonsterTier.MiniBoss, 0) * (legendary ? miniLegend : mini)
-                    + 4 * Loot.DropChance(MonsterTier.Boss, 0) * (1 + Loot.BossExtraRelicChance) * (legendary ? bossLegend : boss);
-                return ev * 3600 / 2100;
-            }
-            double[] Credits(InfinityRewardBudget b) => new[] {
-                b.LesserTime, b.NormalTime, b.MiniBossTime, b.BossTime, b.HighRare, b.Relics,
-                b.Legendary, b.GuaranteeOpportunities, b.GuaranteedRelics, b.Shards, b.Tuning,
-                b.Xp, b.StarXp, b.Awakening, b.DustConversions, b.Merchants };
-            double[] rates = { 200 / 2100.0, 160 / 2100.0, 5 / 2100.0, 4 / 2100.0,
-                LegacyRareRate(false) / 3600, 24 / 3600.0, LegacyRareRate(true) / 3600,
-                .25 / 3600, .25 / 3600, 180 / 3600.0, 6 / 3600.0, 1200 / 3600.0,
-                780 / 3600.0, 780 / 3600.0, 6 / 3600.0, 6 / 3600.0 };
-            double[] bursts = { 10, 8, 1, 1, 7, 24, 7, 1, 2, 30, 3, 50, 20, 20, 1, 1 };
-            var legacy = BeginInfinityRun(150UL, "legacy-supply-149");
-            InfinityRewards.AdvanceCombat(legacy, seconds);
-            var actual = Credits(legacy.InfinityRewardBudget);
-            for (int i = 0; i < actual.Length; i++)
-                Assert.Equal(BitConverter.DoubleToInt64Bits(Math.Min(bursts[i], rates[i] * seconds)),
-                    BitConverter.DoubleToInt64Bits(actual[i]));
-            InfinityRewards.AdvanceCombat(legacy, 1e20);
-            Assert.Equal(bursts, Credits(legacy.InfinityRewardBudget));
-            InfinityRewards.EnterRoom(legacy, 0, 0);
-            var budget = legacy.InfinityRewardBudget;
-            Assert.Equal(new[] { 5.0, 4, .125, .1 }, new[] { budget.LesserRoom, budget.NormalRoom, budget.MiniBossRoom, budget.BossRoom });
-            for (int room = 1; room <= 20; room++) InfinityRewards.EnterRoom(legacy, 0, room);
-            Assert.Equal(new[] { 10.0, 8, 1, 1 }, new[] { budget.LesserRoom, budget.NormalRoom, budget.MiniBossRoom, budget.BossRoom });
-            Assert.Equal(BitConverter.DoubleToInt64Bits(LegacyRareRate(false)),
-                BitConverter.DoubleToInt64Bits(InfinityRewards.NormalHighRarePerHour(0)));
-            Assert.Equal(BitConverter.DoubleToInt64Bits(LegacyRareRate(true)),
-                BitConverter.DoubleToInt64Bits(InfinityRewards.NormalLegendaryPerHour(0)));
-            Assert.Equal(10, legacy.Run.Infinity.Interval);
+            Assert.Equal(10, p.Run.Infinity.Interval);
             Assert.True(InfinityRunState.ValidInterval(10) && InfinityRunState.ValidInterval(15) && InfinityRunState.ValidInterval(20));
             Assert.False(InfinityRunState.ValidInterval(9) || InfinityRunState.ValidInterval(11) || InfinityRunState.ValidInterval(21));
-            legacy.Run.Infinity.ClearedCombatTotal = long.MaxValue;
-            Assert.Equal(100, legacy.Run.Infinity.PressureStage);
+            p.Run.Infinity.ClearedCombatTotal = long.MaxValue;
+            Assert.Equal(100, p.Run.Infinity.PressureStage);
+        }
+
+        /// <summary>インフィニティでは固有品になる抽選（Legendary→固有品）に設定の係数が掛かる。</summary>
+        [Fact]
+        public void Infinity_unique_drops_roll_at_the_configured_multiplier()
+        {
+            var p = BeginInfinityRun(153UL, "unique-multiplier");
+            Assert.Equal(0.5, InfinityRewards.UniqueDropMultiplier(p));
+
+            long RollUniques(double multiplier)
+            {
+                var rng = new Rng(153UL);
+                long uniques = 0;
+                for (int i = 0; i < 60000; i++)
+                    uniques += Loot.RollKill(rng, MonsterTier.Boss, 20, 0, uniqueDropMultiplier: multiplier)
+                        .Relics.Count(r => r.UniqueId != null);
+                return uniques;
+            }
+            long normal = RollUniques(1);
+            long halved = RollUniques(InfinityRewards.UniqueDropMultiplier(p));
+            Assert.True(normal > 100, $"seed produced too few uniques to compare: {normal}");
+            Assert.True(halved < normal);
+            Assert.InRange(halved / (double)normal, 0.4, 0.6);
+        }
+
+        /// <summary>Rules.OnKill 経由でも同じ係数が効く（同一シードで固有品の数が半減する）。</summary>
+        [Fact]
+        public void Infinity_unique_drops_are_halved_through_the_kill_path()
+        {
+            long Uniques(bool infinity)
+            {
+                var p = Profile.CreateNew(153UL);
+                Rules.BeginRun(p, "unique-kill-path", heroKey: "hero");
+                if (infinity)
+                    p.Run.Infinity = new InfinityRunState { FixedZoneId = Zone, Interval = InfinityRunState.LongInterval, DifficultyId = "diffNormal" };
+                p.Run.Bounties.Clear();
+                long uniques = 0;
+                for (int kill = 0; kill < 4000; kill++)
+                    uniques += Rules.OnKill(p, MonsterTier.Boss, 20, heat: 0, waypoint: Waypoint.None)
+                        .Count(e => e.Kind == EventKind.Drop && e.Relic != null && e.Relic.UniqueId != null);
+                return uniques;
+            }
+            long normal = Uniques(false);
+            long infinity = Uniques(true);
+            Assert.True(normal >= 20, $"seed produced too few uniques to compare: {normal}");
+            Assert.True(infinity < normal);
+            Assert.InRange(infinity / (double)normal, 0.2, 0.8);
         }
 
         private static Profile BeginInfinityRun(ulong seed, string runId, int interval = InfinityRunState.DefaultInterval)
@@ -97,8 +97,6 @@ namespace SodRpg.Core.Tests
         {
             var infinity = p.Run.Infinity;
             infinity.RoomEpoch++;
-            InfinityRewards.EnterRoom(p, infinity.GraphEpoch, infinity.RoomEpoch);
-            InfinityRewards.AdvanceCombat(p, RoomSeconds);
             foreach (var tier in tiers)
                 Rules.OnKill(p, tier, 20, heat: p.Run.Heat, waypoint: Waypoint.None);
             Assert.True(infinity.TryCountCombatClear(infinity.GraphEpoch, node, active: true, transitioning: false, revisit: false));
@@ -113,7 +111,6 @@ namespace SodRpg.Core.Tests
         {
             var infinity = p.Run.Infinity;
             Assert.True(infinity.TryEnterBoss());
-            InfinityRewards.AdvanceCombat(p, RoomSeconds);
             Rules.OnKill(p, MonsterTier.Boss, 20, heat: p.Run.Heat, waypoint: Waypoint.None);
             Assert.True(infinity.ObserveBossClear());
             Assert.False(infinity.ObserveSoul(present: true, roomClear: false, riftUnlocked: false)); // 魂は出た
@@ -259,14 +256,6 @@ namespace SodRpg.Core.Tests
             Assert.Equal(InfinityPhase.Exploring, infinity.Phase);
             Assert.Equal(new HashSet<int> { 1, 2, 3, 4 }, infinity.ClearedNodes);
             Assert.Equal(Math.Min(4 / infinity.Interval + InfinityIntervalScaling.PressureOffset(infinity.Interval), InfinityRunState.MaximumPressureStage), infinity.PressureStage);
-            var savedBudget = atSave.InfinityRewardBudget;
-            var budget = p.InfinityRewardBudget;
-            Assert.Equal(savedBudget.RoomRunId, budget.RoomRunId); // 入場receipt
-            Assert.Equal(savedBudget.RoomGraph, budget.RoomGraph);
-            Assert.Equal(savedBudget.RoomEpoch, budget.RoomEpoch);
-            Assert.Equal(savedBudget.LesserTime, budget.LesserTime);   // 戦闘時間creditも保存時点
-            Assert.Equal(savedBudget.Relics, budget.Relics);
-            Assert.Equal(savedBudget.HighRare, budget.HighRare);
             Assert.Equal(atSave.Run.Kills, p.Run.Kills);
             Assert.Equal(atSave.Run.Satchel.Select(r => r.Uid), p.Run.Satchel.Select(r => r.Uid));
 
@@ -281,33 +270,9 @@ namespace SodRpg.Core.Tests
             Assert.Equal(atSave.Stats.Kills, p.Stats.Kills);
             Assert.Equal(atSave.Stats.RelicsFound, p.Stats.RelicsFound);
             Assert.Equal(atSave.Material(Materials.Shard), p.Material(Materials.Shard));
-            Assert.Equal(atSave.InfinityRewardBudget.HighRare, p.InfinityRewardBudget.HighRare, 10); // 予算の消費も一致
         }
 
-        /// <summary>同じ部屋入場の重複はRunId/Graph/RoomEpochで拒否され、報酬機会が二重に補充されない。</summary>
-        [Fact]
-        public void Room_entry_receipts_reject_duplicate_credit()
-        {
-            var p = BeginInfinityRun(98UL, "run-98");
-            p.Run.Infinity.RoomEpoch = 3;
-            InfinityRewards.EnterRoom(p, 0, 3);
-            var budget = p.InfinityRewardBudget;
-            double lesser = budget.LesserRoom;
-            Assert.Equal("run-98", budget.RoomRunId);
-
-            InfinityRewards.EnterRoom(p, 0, 3);   // 同じ部屋の再送信
-            InfinityRewards.EnterRoom(p, 0, 2);   // 古い世代
-            Assert.Equal(lesser, budget.LesserRoom);
-            Assert.Equal(0, budget.RoomGraph);
-            Assert.Equal(3, budget.RoomEpoch);
-
-            InfinityRewards.EnterRoom(p, 0, 4);   // 新規部屋だけが補充される
-            Assert.Equal(Math.Min(InfinityRewards.LesserRoomCap, lesser + InfinityRewards.LesserRoomIncrement), budget.LesserRoom);
-            InfinityRewards.EnterRoom(p, 1, 1);   // 地図再生成後の新規部屋
-            Assert.Equal(1, budget.RoomGraph);
-        }
-
-        /// <summary>通常モード（OFF）はインフィニティの制限を受けない。確保・潜行・勝利も従来どおり。</summary>
+        /// <summary>通常モード（OFF）はインフィニティの調整を受けない。確保・潜行・勝利も従来どおり。</summary>
         [Fact]
         public void Normal_mode_run_keeps_its_own_rules_without_infinity_limits()
         {
@@ -318,17 +283,7 @@ namespace SodRpg.Core.Tests
 
             Rules.OnKill(p, MonsterTier.Boss, 20, heat: p.Run.Heat, waypoint: Waypoint.None);
             Assert.True(Rules.ShouldOfferSecurePoint(p)); // 通常の確保判断は生きている
-
-            // 報酬上限・道標・換金・商人の制限は通常モードには掛からない
-            Assert.Equal(999, InfinityRewards.LimitShards(p, 999));
-            Assert.True(InfinityRewards.CanChooseWaypoint(p, Waypoint.BossHoard));
-            Assert.True(InfinityRewards.CanConvertDust(p, 1));
-            Assert.True(InfinityRewards.CanBuyMerchant(p));
-            double before = p.InfinityRewardBudget.LesserTime;
-            InfinityRewards.AdvanceCombat(p, RoomSeconds);
-            InfinityRewards.EnterRoom(p, 0, 1);
-            Assert.Equal(before, p.InfinityRewardBudget.LesserTime); // 予算は触れない
-            Assert.Equal(-1, p.InfinityRewardBudget.RoomGraph);
+            Assert.Equal(1, InfinityRewards.UniqueDropMultiplier(p)); // 固有品の係数も掛からない
 
             // 通常の確保は遠征を終わらせず、深度を戻して続く
             Rules.ReachSecurePoint(p);
@@ -342,13 +297,6 @@ namespace SodRpg.Core.Tests
             Assert.Null(p.Run);
             Assert.True(p.Stats.Victories > 0);
             Assert.False(p.CompletedRunSecuredReturn);
-
-            // 同じプロフィールでもONの遠征になると初回から上限が効く（OFFに戻れば通常どおり）
-            Rules.BeginRun(p, "run-99b", heroKey: "hero", dreamDepth: 3);
-            p.Run.Infinity = new InfinityRunState { FixedZoneId = Zone, Interval = InfinityRunState.DefaultInterval };
-            Assert.Equal(0, InfinityRewards.LimitShards(p, 999)); // 予算0では補充なし
-            p.Run.Infinity = null;
-            Assert.True(InfinityRewards.CanBuyMerchant(p));
         }
 
         /// <summary>
@@ -422,71 +370,6 @@ namespace SodRpg.Core.Tests
             Assert.Equal(Math.Min(1 + InfinityIntervalScaling.PressureOffset(record.Interval), InfinityRunState.MaximumPressureStage), record.PressureAtBestReturn);
             Assert.Equal("run-104", reloaded.CompletedRunId);
             Assert.True(reloaded.CompletedRunSecuredReturn);
-        }
-
-        /// <summary>報酬枠が尽きた通知は、種類ごとに尽きたとき1回だけ出て、満額の充当を挟むと再度1回だけ出る。</summary>
-        [Fact]
-        public void Budget_cap_notices_fire_once_per_exhaustion_and_again_after_refill()
-        {
-            var p = BeginInfinityRun(151UL, "cap-notice");
-            var notices = new List<GameEvent>();
-            InfinityRewards.CollectCapNotices(p, notices);
-            Assert.Empty(notices);
-
-            // 予算0では要求より少なく返る。通知は1回だけ（Info、赤ではない）。
-            Assert.Equal(0, InfinityRewards.LimitShards(p, 5));
-            InfinityRewards.CollectCapNotices(p, notices);
-            GameEvent shardNotice = Assert.Single(notices);
-            Assert.Equal(EventKind.Info, shardNotice.Kind);
-            Assert.Contains("欠片", shardNotice.Text);
-            notices.Clear();
-            InfinityRewards.CollectCapNotices(p, notices);
-            Assert.Empty(notices); // 連打しない
-            Assert.Equal(0, InfinityRewards.LimitShards(p, 5));
-            InfinityRewards.CollectCapNotices(p, notices);
-            Assert.Empty(notices); // 回復するまでは再通知しない
-
-            // 満額充当されれば通知状態は解ける
-            InfinityRewards.AdvanceCombat(p, 3600);
-            Assert.Equal(5, InfinityRewards.LimitShards(p, 5));
-            InfinityRewards.CollectCapNotices(p, notices);
-            Assert.Empty(notices);
-
-            // 遺物も LimitReward での減額で1回だけ出る（種類は別扱い）
-            p.InfinityRewardBudget.Relics = 1.5;
-            var reward = new KillReward();
-            reward.Relics.Add(Loot.RollRelic(new Rng(7), Rarity.Epic, 10, null, null, p.Stash, p.Run.Satchel));
-            reward.Relics.Add(Loot.RollRelic(new Rng(8), Rarity.Epic, 10, null, null, p.Stash, p.Run.Satchel));
-            InfinityRewards.LimitReward(p, reward);
-            Assert.Single(reward.Relics);
-            InfinityRewards.CollectCapNotices(p, notices);
-            GameEvent relicNotice = Assert.Single(notices);
-            Assert.Contains("遺物", relicNotice.Text);
-            notices.Clear();
-
-            // 回復して満額出せた後、再度尽きたらもう1回だけ出る
-            InfinityRewards.AdvanceCombat(p, 3600);
-            var full = new KillReward();
-            full.Relics.Add(Loot.RollRelic(new Rng(9), Rarity.Epic, 10, null, null, p.Stash, p.Run.Satchel));
-            full.Relics.Add(Loot.RollRelic(new Rng(10), Rarity.Epic, 10, null, null, p.Stash, p.Run.Satchel));
-            InfinityRewards.LimitReward(p, full);
-            Assert.Equal(2, full.Relics.Count);
-            InfinityRewards.CollectCapNotices(p, notices);
-            Assert.Empty(notices);
-            p.InfinityRewardBudget.Relics = 0.9;
-            var retry = new KillReward();
-            retry.Relics.Add(Loot.RollRelic(new Rng(11), Rarity.Epic, 10, null, null, p.Stash, p.Run.Satchel));
-            InfinityRewards.LimitReward(p, retry);
-            Assert.Empty(retry.Relics);
-            InfinityRewards.CollectCapNotices(p, notices);
-            Assert.Single(notices);
-            notices.Clear();
-
-            // 通常モードでは通知が出ない
-            p.Run.Infinity = null;
-            Assert.Equal(999, InfinityRewards.LimitShards(p, 999));
-            InfinityRewards.CollectCapNotices(p, notices);
-            Assert.Empty(notices);
         }
     }
 }

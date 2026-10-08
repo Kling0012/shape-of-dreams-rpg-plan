@@ -416,11 +416,6 @@ namespace SodRpg.Mod
                     .Append(Loc.T(" · 圧段階 ", " · pressure stage ")).Append(infinity.PressureStage);
                 if (infinity.PressureStage == InfinityRunState.MaximumPressureStage) sb.Append(Loc.T("（上限）", " (cap)"));
                 sb.Append("</size>");
-                // 枠の残りは整数（切り捨て）で出す：文字列が変化するのは端数がまたぐときだけ。
-                var budget = p.InfinityRewardBudget;
-                sb.Append("\n<size=13><color=#9aa0b8>").Append(Loc.T(
-                    $"報酬枠 残り：遺物 {(int)Math.Floor(budget.Relics + 1e-9)}・欠片 {(int)Math.Floor(budget.Shards + 1e-9)}",
-                    $"Reward budget left: {(int)Math.Floor(budget.Relics + 1e-9)} relics, {(int)Math.Floor(budget.Shards + 1e-9)} shards")).Append("</color></size>");
                 string choiceNotice = _s.InfinityChoiceNotice;
                 if (choiceNotice != null)
                     sb.Append("\n<color=#ffd27f>").Append(choiceNotice).Append("</color>");
@@ -636,7 +631,6 @@ namespace SodRpg.Mod
                 GUILayout.Label(Loc.T("インフィニティ：帰還・潜行はホスト、契約・道標・出来事は各自が選びます。全員の完了かスキップを待って進みます（最大60秒）。",
                     "Infinity: the host chooses Return / Delve; each player chooses their pact, waypoint and event. Progress waits for everyone to finish or skip (up to 60 seconds)."), _st.Warn);
                 DrawInfinityChoiceNotice();
-                DrawInfinityCaps();
             }
             int bonus = run.SatchelShards * run.Heat / EconomyBalance.SecureBonusDivisor;
             if (Pacts.Sum(run.Pacts).DoubleDepthBonus) bonus *= PactBalance.DoubleDepthBonusMultiplier;
@@ -653,9 +647,6 @@ namespace SodRpg.Mod
                 GUILayout.FlexibleSpace();
                 GUILayout.EndHorizontal();
             }
-            if (run.Infinity != null)
-                GUILayout.Label(Loc.T("以下の潜行ボーナス・満杯時の欠片化は上限前の見積もりです。無料出力予算で減少し、抑止分の代替報酬はありません。",
-                    "Delve bonuses and overflow-to-shard amounts below are pre-cap estimates. Free-output budgets may reduce them; withheld rewards have no substitute."), _st.Warn);
             GUILayout.Label(_secureBonusText, _st.Small);
             if (_secureOverflowText != null) GUILayout.Label(_secureOverflowText, _st.Warn);
             GUILayout.Label(_secureDelveText, _st.Small);
@@ -817,13 +808,11 @@ namespace SodRpg.Mod
                 if (def == null) continue;
                 if (!_waypointCards.TryGetValue(id, out var label))
                     _waypointCards[id] = label = $"<b>{def.Name}</b>\n<color=#a8e9cd>{def.Description}</color>";
-                bool rewardAvailable = InfinityRewards.CanChooseWaypoint(_s.Profile, id, out string unavailableReason);
-                GUI.enabled = (_s.CanChooseRunRules || _s.CanChooseInfinityPersonal) && rewardAvailable
+                GUI.enabled = (_s.CanChooseRunRules || _s.CanChooseInfinityPersonal)
                     && (run.Infinity == null || !InfinityMode.PersonalIntentPending);
                 if (GUILayout.Button(label, _st.RowWrap, GUILayout.MinHeight(56)))
                     SetStatus(_s.ChooseWaypoint(id));
                 GUI.enabled = true;
-                if (!rewardAvailable) GUILayout.Label(unavailableReason, _st.Warn);
             }
             if (run.OfferedWaypoints.Count > 0)
             {
@@ -878,8 +867,8 @@ namespace SodRpg.Mod
                     ? (japanese ? "高難度・遺物多め" : "Hard · more relics")
                     : (japanese ? "最高難度・遺物さらに多め" : "Hardest · most relics");
             return japanese
-                ? $"<b>{interval}部屋 · {difficulty}</b>\n圧段階 +{pressure} · 敵数 +{countBonus * 100:0}%\n通常遺物の抽選・予算 ×{relics:0.##}"
-                : $"<b>{interval} rooms · {difficulty}</b>\nPressure +{pressure} · enemies +{countBonus * 100:0}%\nOrdinary rolls & budgets ×{relics:0.##}";
+                ? $"<b>{interval}部屋 · {difficulty}</b>\n圧段階 +{pressure} · 敵数 +{countBonus * 100:0}%\n通常遺物の抽選 ×{relics:0.##}"
+                : $"<b>{interval} rooms · {difficulty}</b>\nPressure +{pressure} · enemies +{countBonus * 100:0}%\nOrdinary rolls ×{relics:0.##}";
         }
 
         private void DrawInfinityChoice()
@@ -916,16 +905,16 @@ namespace SodRpg.Mod
                 GUILayout.Label(effects[i], _st.Small, _infinityEffectsSize);
             GUILayout.EndHorizontal();
             GUILayout.Label(Loc.T(
-                "敵数は圧の増加に加算。通常＝エピック以下で、抽選・出力・エピック予算を増幅。伝説・限定品・道標の固定保証は据え置き。",
-                "Enemies add to pressure. Ordinary = Epic or below: rolls, output & Epic budgets scale. Legendary, limited items & fixed waypoint guarantees unchanged."), _st.Small);
+                "敵数は圧の増加に加算。通常＝エピック以下の抽選を増幅。伝説・限定品・道標の固定保証は据え置き。",
+                "Enemies add to pressure. Ordinary = Epic or below rolls scale. Legendary, limited items & fixed waypoint guarantees unchanged."), _st.Small);
             // #144: host/solo judge only their own availability; a participant without the host's
             // answer yet sees "waiting for the host's setting", not an unexplained "disabled".
             string lobbySupportNotice = ClientSession.InfinitySupportNotice(_s.CanChooseRunRules);
             if (lobbySupportNotice != null)
                 GUILayout.Label(lobbySupportNotice, _st.Warn);
             if (enabled)
-                GUILayout.Label(Loc.T("同じゾーンを再生成。周期ボスの魂報酬後に、ホストが全員の帰還／続行を選びます。再生成時はKO復活・狩りの局所リセット。報酬速度の上限は段階2です。",
-                    "Regenerates the same zone. After each boss's soul reward, the host chooses return or continue for everyone. Regeneration revives KO players and resets local hunts. Reward rate limits are deferred to stage 2."), _st.Small);
+                GUILayout.Label(Loc.T("同じゾーンを再生成。周期ボスの魂報酬後に、ホストが全員の帰還／続行を選びます。再生成時はKO復活・狩りの局所リセット。",
+                    "Regenerates the same zone. After each boss's soul reward, the host chooses return or continue for everyone. Regeneration revives KO players and resets local hunts."), _st.Small);
         }
 
         private Vector2 _scrollSecure;
@@ -3068,16 +3057,6 @@ namespace SodRpg.Mod
             GUILayout.EndScrollView();
         }
 
-        private void DrawInfinityCaps()
-        {
-            GUILayout.Label(Loc.T($"報酬上限：一般供給は実戦闘時間予算、Epic以上の抽選は部屋ごとの撃破機会予算も必要です。戦闘1時間あたり無料遺物{InfinityRewards.RelicsPerHour}個、Epic以上の保証は別枠{InfinityRewards.GuaranteesPerHour}個。待機・休止・ロード・再接続では補充しません。",
-                $"Reward caps: ordinary supply uses combat-time budgets; Epic+ rolls also require per-room kill opportunity budgets. Free relics: {InfinityRewards.RelicsPerHour}/combat hour; Epic+ guarantees: a separate {InfinityRewards.GuaranteesPerHour}/combat hour. Idle, pause, loading and reconnecting do not refill budgets."), _st.Small);
-            GUILayout.Label(Loc.T("欠片・調律石・夢XP・星XP・覚醒・換金機会にも上限があります。Heatボーナスと満杯時の欠片化も対象です。支払済みの対価・旧所持品の回収・有償製作は無料供給と別扱いです。",
-                "Shards, tuning, Dream XP, Star XP, awakening and exchange opportunities are capped too, including Heat bonuses and overflow conversion. Paid rewards, recovered existing items and paid crafting are separate from free supply."), _st.Small);
-            GUILayout.Label(Loc.T("本体の基本収入と星のゴールド／ダストボーナスは通常モードと同じです。旧資産を使う有償取得も含めた総取得量の上限ではありません。",
-                "Native base income and star Gold/Dust bonuses follow normal-mode rules. These are not total-acquisition caps including spending existing assets."), _st.Small);
-        }
-
         private void DrawInfinityRecords(Profile profile)
         {
             GUILayout.Space(6);
@@ -3089,7 +3068,6 @@ namespace SodRpg.Mod
             if (profile.InfinityRecords.Count >= InfinityRecords.MaximumConfigurations)
                 GUILayout.Label(Loc.T("設定グループの保存上限です。既存グループだけ更新できます。",
                     "Configuration storage is full. Only existing groups can be updated."), _st.Warn);
-            DrawInfinityCaps();
         }
 
         private void CacheInfinityRecords(Profile profile)

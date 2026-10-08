@@ -30,7 +30,6 @@
     <Compile Include="../../src/SodRpg.Mod/ClientSession.InterruptedRelics.cs" Link="ModUnderTest/ClientSession.InterruptedRelics.cs" />
     <Compile Include="../../src/SodRpg.Mod/ClientSession.PressureDividend.cs" Link="ModUnderTest/ClientSession.PressureDividend.cs" />
     <Compile Include="../../src/SodRpg.Mod/ClientSession.Durability.cs" Link="ModUnderTest/ClientSession.Durability.cs" />
-    <Compile Include="../../src/SodRpg.Mod/ClientSession.InfinityRewards.cs" Link="ModUnderTest/ClientSession.InfinityRewards.cs" />
     <Compile Include="../../src/SodRpg.Mod/ClientSession.InfinityPersonalChoices.cs" Link="ModUnderTest/ClientSession.InfinityPersonalChoices.cs" />
     <Compile Include="../../src/SodRpg.Mod/InfinityMode.PersonalChoices.cs" Link="ModUnderTest/InfinityMode.PersonalChoices.cs" />
     <Compile Include="../../src/SodRpg.Mod/InfinityMode.PersonalWaypoints.cs" Link="ModUnderTest/InfinityMode.PersonalWaypoints.cs" />

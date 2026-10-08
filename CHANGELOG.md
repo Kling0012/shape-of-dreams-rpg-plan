@@ -7,6 +7,7 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 ---
 
 ## 未リリース / Unreleased
+インフィニティの報酬の枠をなくし、報酬が途中で止まらないようにしました。 / Infinity rewards are no longer capped, so they keep dropping without stopping mid-run.
 
 
 インフィニティで純白のボス（準備部屋の扉からボス部屋へ進むルート）が遊べるように戻しました。v2.10.8 で純白が行き先に選ばれなくなっていたのを、準備→ボスの2部屋で完結するボス区間として修正します。 / Infinity can draw the pure-white route again as a boss segment: entering the boss room through the preparation gate no longer bounces you back, and the segment completes as preparation room → boss.

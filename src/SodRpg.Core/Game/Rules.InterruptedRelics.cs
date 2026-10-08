@@ -39,7 +39,6 @@ namespace SodRpg.Core.Game
                 p.LostAndFound.AddRange(p.InterruptedRelics);
                 p.InterruptedRelicsRetiredSourceRunIds.Add(p.InterruptedRelicsRunId);
                 int salvaged = TrimLostAndFound(p);
-                foreach (var relic in p.LostAndFound) relic.InfinityFreeSupply = false;
                 if (salvaged > 0)
                     events.Add(new GameEvent(EventKind.Warning, Loc.T(
                         $"前の中断遺物を遺失物へ移しました。上限を超えた{salvaged}個を欠片にしました。",

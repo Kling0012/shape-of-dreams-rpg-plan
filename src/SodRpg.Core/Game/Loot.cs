@@ -99,8 +99,13 @@ namespace SodRpg.Core.Game
         /// 所持リストを省略すると、セット部位の収集補助は行わない。
         /// </summary>
         public static Relic RollRelic(Rng rng, Rarity rarity, int itemLevel, Slot? slot = null, Line? focus = null,
-            IReadOnlyList<Relic> ownedRelics = null, IReadOnlyList<Relic> unsecuredRelics = null, ISet<string> codex = null)
+            IReadOnlyList<Relic> ownedRelics = null, IReadOnlyList<Relic> unsecuredRelics = null, ISet<string> codex = null,
+            double uniqueDropMultiplier = 1)
         {
+            // Infinity unique drop multiplier; a reduced roll keeps the Epic fallback.
+            // The extra draw happens only when the multiplier is active.
+            if (rarity == Rarity.Legendary && uniqueDropMultiplier < 1 && !rng.Chance(uniqueDropMultiplier))
+                rarity = Rarity.Epic;
             if (rarity == Rarity.Legendary)
             {
                 var candidates = new List<(UniqueDef Unique, int Weight)>();
@@ -400,7 +405,8 @@ namespace SodRpg.Core.Game
         /// </summary>
         public static KillReward RollKill(Rng rng, MonsterTier tier, int itemLevel, int heat, Line? focus = null, Pacts.Totals mods = null,
             IReadOnlyList<Relic> ownedRelics = null, IReadOnlyList<Relic> unsecuredRelics = null, ISet<string> codex = null,
-            Rarity ceiling = Rarity.Legendary, double ordinaryRelicMultiplier = 1, double shardDropMultiplier = 1)
+            Rarity ceiling = Rarity.Legendary, double ordinaryRelicMultiplier = 1, double shardDropMultiplier = 1,
+            double uniqueDropMultiplier = 1)
         {
             heat = ClampHeat(heat);
             if (!(shardDropMultiplier > 1) || double.IsInfinity(shardDropMultiplier)) shardDropMultiplier = 1;
@@ -413,9 +419,9 @@ namespace SodRpg.Core.Game
             {
                 Rarity floor = tier == MonsterTier.Boss ? Rarity.Uncommon : Rarity.Common;
                 var rarity = RollRarity(rng, luck, allowLegendary, floor, ceiling);
-                reward.Relics.Add(RollRelic(rng, rarity, itemLevel, null, focus, ownedRelics, unsecuredRelics, codex));
+                reward.Relics.Add(RollRelic(rng, rarity, itemLevel, null, focus, ownedRelics, unsecuredRelics, codex, uniqueDropMultiplier));
                 if (tier == MonsterTier.Boss && rng.Chance(BossExtraRelicChance))
-                    reward.Relics.Add(RollRelic(rng, RollRarity(rng, luck, true, Rarity.Uncommon, ceiling), itemLevel, null, focus, ownedRelics, unsecuredRelics, codex));
+                    reward.Relics.Add(RollRelic(rng, RollRarity(rng, luck, true, Rarity.Uncommon, ceiling), itemLevel, null, focus, ownedRelics, unsecuredRelics, codex, uniqueDropMultiplier));
             }
             if (ordinaryRelicMultiplier > 1)
             {

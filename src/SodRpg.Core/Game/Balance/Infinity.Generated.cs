@@ -4,44 +4,7 @@ namespace SodRpg.Core.Game
 {
     internal static class InfinityBalance
     {
-        internal const double ReferenceSeconds = 2100;
-        internal const double RelicsPerHour = 30;
-        internal const double GuaranteesPerHour = 0.25;
-        internal const double ShardsPerHour = 360;
-        internal const double TuningPerHour = 10;
-        internal const double XpPerHour = 1800;
-        internal const double StarXpPerHour = 1200;
-        internal const double AwakeningPerHour = 780;
-        internal const double DustConversionsPerHour = 6;
-        internal const double MerchantsPerHour = 6;
-        internal const int KillMixLesser = 200;
-        internal const int KillMixNormal = 160;
-        internal const int KillMixMiniBoss = 5;
-        internal const int KillMixBoss = 4;
-        internal const double LesserTimeBurst = 10;
-        internal const double NormalTimeBurst = 8;
-        internal const double MiniBossTimeBurst = 1;
-        internal const double BossTimeBurst = 1;
-        internal const double HighRareBurst = 7;
-        internal const double RelicsBurst = 24;
-        internal const double LegendaryBurst = 7;
-        internal const double GuaranteeOpportunitiesBurst = 1;
-        internal const double GuaranteedRelicsBurst = 2;
-        internal const double ShardsBurst = 30;
-        internal const double TuningBurst = 3;
-        internal const double XpBurst = 50;
-        internal const double StarXpBurst = 40;
-        internal const double AwakeningBurst = 20;
-        internal const double DustConversionsBurst = 1;
-        internal const double MerchantsBurst = 1;
-        internal const double LesserRoomCap = 10;
-        internal const double LesserRoomIncrement = 10;
-        internal const double NormalRoomCap = 8;
-        internal const double NormalRoomIncrement = 8;
-        internal const double MiniBossRoomCap = 1;
-        internal const double MiniBossRoomIncrement = 0.25;
-        internal const double BossRoomCap = 1;
-        internal const double BossRoomIncrement = 0.1;
+        internal const double UniqueDropMultiplier = 0.5;
         internal const int DefaultInterval = 10;
         internal const int ShortInterval = 10;
         internal const int MiddleInterval = 15;
@@ -50,15 +13,12 @@ namespace SodRpg.Core.Game
         internal const int ShortPressureOffset = 4;
         internal const double ShortEnemyCountBonus = 4;
         internal const double ShortRelicMultiplier = 2;
-        internal const double ShortOrdinaryBudgetMultiplier = 2;
         internal const int MiddlePressureOffset = 2;
         internal const double MiddleEnemyCountBonus = 2;
         internal const double MiddleRelicMultiplier = 1.5;
-        internal const double MiddleOrdinaryBudgetMultiplier = 1.5;
         internal const int LongPressureOffset = 0;
         internal const double LongEnemyCountBonus = 0;
         internal const double LongRelicMultiplier = 1;
-        internal const double LongOrdinaryBudgetMultiplier = 1;
-        internal static readonly string ContentFingerprintRecord = "balance:infinity:v1:rates/relicsPerHour:double:credits/hour:30;rates/shardsPerHour:double:credits/hour:360;rates/tuningPerHour:double:credits/hour:10;rates/xpPerHour:double:credits/hour:1800;rates/starXpPerHour:double:credits/hour:1200;bursts/starXp:double:credits:40;rooms/lesser/increment:double:credits/room:10;rooms/normal/increment:double:credits/room:8;rooms/miniBoss/increment:double:credits/room:0.25;intervalScaling/short/pressureOffset:int:stages:4;intervalScaling/short/enemyCountBonus:double:multiplier:4;intervalScaling/short/relicMultiplier:double:multiplier:2;intervalScaling/short/ordinaryBudgetMultiplier:double:multiplier:2;intervalScaling/middle/pressureOffset:int:stages:2;intervalScaling/middle/enemyCountBonus:double:multiplier:2;intervalScaling/middle/relicMultiplier:double:multiplier:1.5;intervalScaling/middle/ordinaryBudgetMultiplier:double:multiplier:1.5;intervalScaling/long/pressureOffset:int:stages:0;intervalScaling/long/enemyCountBonus:double:multiplier:0;intervalScaling/long/relicMultiplier:double:multiplier:1;intervalScaling/long/ordinaryBudgetMultiplier:double:multiplier:1";
+        internal static readonly string ContentFingerprintRecord = "balance:infinity:v1:uniqueDropMultiplier:double:multiplier:0.5;intervalScaling/short/pressureOffset:int:stages:4;intervalScaling/short/enemyCountBonus:double:multiplier:4;intervalScaling/short/relicMultiplier:double:multiplier:2;intervalScaling/middle/pressureOffset:int:stages:2;intervalScaling/middle/enemyCountBonus:double:multiplier:2;intervalScaling/middle/relicMultiplier:double:multiplier:1.5";
     }
 }
