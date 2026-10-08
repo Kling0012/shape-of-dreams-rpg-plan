@@ -60,6 +60,8 @@ namespace SodRpg.Core.Tests.Testing
             ? string.Join(" ", state.Ranks.Keys.Select(k => k + (state.Choices.TryGetValue(k, out int o) ? "/o" + o : ""))) : null;
 
         /// <summary>Stars that were reachable only after buying an unrelated star first (informational).</summary>
+        public Dictionary<string, string> OptionNeedsCompanion { get; } = new Dictionary<string, string>(StringComparer.Ordinal);
+
         public Dictionary<string, string> NeedsCompanion { get; } = new Dictionary<string, string>(StringComparer.Ordinal);
 
         private IEnumerable<TalentDef> Stars => layout.Nodes.Where(n => n.Talent != null && !n.Talent.IsKeystone).Select(n => n.Talent);
@@ -88,6 +90,59 @@ namespace SodRpg.Core.Tests.Testing
             foreach (string id in pending) Problems.Add("unreachable: " + Describe(layout.Nodes[indexOf[id]].Talent));
             foreach (var star in Stars)
                 if (reached.ContainsKey(star.Id)) CheckRanksAndOptions(star);
+            CheckKeystones();
+        }
+
+        /// <summary>
+        /// Every keystone must be choosable: some star next to it is reachable on its own path, and with enough stars around it
+        /// (the route requirement) the keystone preview is accepted. Returns the stars of the keystones that never are.
+        /// </summary>
+        public void CheckKeystones()
+        {
+            foreach (var node in layout.Nodes.Where(n => n.Talent != null && n.Talent.IsKeystone))
+            {
+                string lastReason = "no star next to it can be bought";
+                bool chosen = false;
+                foreach (int neighbour in node.Neighbors)
+                {
+                    State basis;
+                    if (neighbour == layout.StartIndex) basis = new State();
+                    else if (!reached.TryGetValue(layout.Nodes[neighbour].Id, out basis)) continue;
+                    var withRequired = WithRequiredStars(basis, node.Talent);
+                    if (withRequired == null) { lastReason = "a prerequisite star can never be bought"; continue; }
+                    foreach (var state in WithEnoughRanks(withRequired))
+                    {
+                        string reason = KeystoneRefusal(state, node.Talent);
+                        if (reason == null) { chosen = true; break; }
+                        lastReason = reason;
+                    }
+                    if (chosen) break;
+                }
+                if (!chosen) Problems.Add("keystone refused: " + Describe(node.Talent) + " - " + lastReason);
+            }
+        }
+
+        private IEnumerable<State> WithEnoughRanks(State basis)
+        {
+            yield return basis;
+            foreach (string candidate in reached.Keys.OrderBy(id => reached[id].Ranks.Count))
+            {
+                var merged = basis.Clone();
+                merged.Merge(reached[candidate]);
+                yield return merged;
+            }
+        }
+
+        private string KeystoneRefusal(State state, TalentDef keystone)
+        {
+            Load(state);
+            allocation.ClearKeystones();
+            try
+            {
+                var plan = Rules.PreviewAllocationChange(profile, hero, new AllocationChange { Kind = AllocationChangeKind.Keystone, KeystoneId = keystone.Id });
+                return plan.CanApply ? null : string.Join(",", plan.PrerequisiteViolations.Concat(plan.SaturatedChannels));
+            }
+            catch (InvalidOperationException e) { return e.Message; }
         }
 
         private static string Describe(TalentDef star) => star.Id + " (" + star.Name + ")";
@@ -264,7 +319,7 @@ namespace SodRpg.Core.Tests.Testing
                     if (merged.Choices.TryGetValue(star.Id, out int held) && held != option && Switchable(merged, star, option)) return Take(merged, star, option, 1);
                     continue;
                 }
-                if (Purchasable(merged, star, option)) return Take(merged, star, option, 1);
+                if (Purchasable(merged, star, option)) { OptionNeedsCompanion[star.Id + "/o" + option] = candidate; return Take(merged, star, option, 1); }
             }
             return null;
         }

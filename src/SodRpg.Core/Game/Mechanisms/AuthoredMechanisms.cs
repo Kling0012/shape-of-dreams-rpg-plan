@@ -267,6 +267,10 @@ namespace SodRpg.Core.Game
         internal static bool Matches(ScopedModifierDef modifier, AuthoredMechanismEntry entry)
         {
             var s = entry.Spec;
+            // A recharge that hands cooldown to another memory is boosted from the receiving side only (source/receiver separation).
+            // Letting the source side's boosts reach it too would make it clash with the receiver stars ("double boost"), and the
+            // star that provides it could then never be taken once either side was owned.
+            if (modifier.ScopeKind != ScopeKind.Receiver && s.Recharge != null && ReceiverMemory(s) != SourceMemory(s)) return false;
             string memory = modifier.ScopeKind == ScopeKind.Receiver ? ReceiverMemory(s) : SourceMemory(s);
             var ids = modifier.TargetEffectIds;
             if (!(memory == modifier.ScopeMemory || memory == null && ids.Length > 0)) return false;
