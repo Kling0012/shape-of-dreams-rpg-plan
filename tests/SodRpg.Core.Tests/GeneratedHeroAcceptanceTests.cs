@@ -410,6 +410,14 @@ namespace SodRpg.Core.Tests
             });
         }
 
+        [Fact]
+        public void Husk_over_cap_keystone_grants_allow_a_full_purchase_build_to_round_trip()
+        {
+            // Husk's aura-prism grant is authored above ElementEdge's cap. Keep this
+            // release failure in the fast suite even when the exhaustive hero sweep is skipped.
+            Greedy_maximum_point_purchase_succeeds_and_the_build_round_trips("Hero_Husk");
+        }
+
         /// <summary>Every generated hero, including the ones the fast subset skips (release gate; runs with SODRPG_SLOW=1).</summary>
         [SlowFact, Trait("Speed", "Slow")]
         public void Greedy_maximum_point_purchase_succeeds_and_the_build_round_trips_on_every_hero()
