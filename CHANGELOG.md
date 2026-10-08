@@ -8,6 +8,10 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
+### 新機能・改善 / New features and improvements
+
+- 全旅人の星図の星の配置を見直し、線の交差と、星の上を通る線を大きく減らしました（線の交差は約1/2〜1/6、星の上を通る線はほぼゼロ、いちばん長い線も短く）。星・線・取得条件・保存データは変えていません。 / Re-laid out every hero's star chart: far fewer crossing lines (about 1/2 to 1/6), almost no lines running over other stars, and shorter long lines. Stars, links, requirements and saves are unchanged.
+
 - **取れない星の修正（ケトゥス・ラケルタ）**：ケトゥスの「氷の殻」「潮の鱗」は、始まりに隣り合っているのに最初は取れませんでした（効果を強める相手の記憶の星が、まだ何も無いため）。ラケルタの「火薬」「防弾の外套」「狙撃」と、ルートの入口「砲口の熱」「狙いの蓄積」も同じです。受け手がまだ無い間は取得を保留として許し、受け手を取ると働きます。ケトゥスの「冷血の分かれ道」の第2案「爆ぜた後の退路」は、他の星を取った後だと選べなくなっていました（別の記憶へクールダウンを渡す効果は受け手側だけで強化する決まりなのに、送り手側の強化も重なっていたため）。送り手側の強化は及ばないことにしました。 / **Stars that could not be taken (Cetus, Lacerta)**: Cetus's Ice Shell and Tide Scales sit next to the start but were refused at first, because the memory effect they boost had no source yet; the same held for Lacerta's Powder, Bulletproof Cloak and Sniping and the route entrances Muzzle Heat and Aim Build-up. A star whose recipient is missing is now pending (allowed) until a recipient is taken. Cetus's Icy Veins fork option "Retreat After the Burst" became impossible to choose once other stars were owned (a cross-memory recharge is boosted from the receiving side only, but the source side's boosts reached it too and clashed); source-side boosts no longer apply to it.
 - 全キャラの星図に、取れない星が無いことを自動で調べるテストを追加しました（始まり直結の星、ルートの入口、順不同の購入、送り手と受け手の二重強化、刻印の選択）。 / Added automated checks for every hero's star chart: stars next to the start, route entrances, purchases in any order, source/receiver double boosts, and sigil selection.
 - 回避（移動の記憶）に枠を増やしても装着の画面で回避が隠れる件の切り分けと保険を追加しました。HUDの技ボタンの構成（回避のボタンの有無・枠並びの数・表示状態）を起動後に1回 Player.log へ残し、回避の枠が1つ以上あるのに枠並びだけ非表示のときは表示へ戻します。本体UIの構造は実機で未確認のため、これで解消するかは未検証です。 / Adds diagnostics and a safeguard for the Movement (dodge) essence slots being hidden in the equip UI. Unverified in the live game.

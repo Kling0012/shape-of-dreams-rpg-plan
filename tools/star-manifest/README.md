@@ -316,3 +316,22 @@ dotnet run --project tools/StarMapRender -c Release -- /home/wang/dev/sod-prompt
 `--before` を省くと現在の生メトリクスのみを記録する。`--max-edge 2000` は画像の最大辺（400以上）、`--no-png` はSVGのみ、`--metrics <file>` はレポート先の変更（`-` は標準出力）。
 
 標準出力とレポートには初回 `RegisterAllGenerated()` の全旅人構築・登録時間を記録する（静的初期化/JIT込み、dotnet build・プロセス起動・描画・集計は除外）。旅人別時間はその後の `RegisterGeneratedHero` 1回による**暖まったプロセスでの再構築・登録**で、Coldではない。Cached `ForHero` は1回ウォームアップ後の10,000回平均µs/callであり、レイアウト構築時間ではない。
+
+### 配置の最適化と検査（`--optimize` / `--check`）
+
+星の**座標だけ**を最適化する。星ID・線（隣接）・取得条件・セーブは変えない。結果は座標表 `src/SodRpg.Core/Game/StarMapPlacements.Generated.cs`（生成物。手で編集しない）に焼き込み、`HeroTreeLayout` が既定の配置の上に当てはめる。表の作成時と星の集合（ID）が違うとき（星の追加・削除・ID変更の後）は当てはめず、既定の配置に戻る。
+
+```sh
+# 検査：星の重なり・線が星の上を通る数・線の交差・最長の線を旅人ごとに出し、表が古ければ失敗する（終了コード1）
+dotnet run --project tools/StarMapRender -c Release -- --check
+
+# 再生成（全旅人。数分かかる）。--hero Cetus で一人だけ、--iterations N で反復回数（既定 300万、座標表は600万で作成）
+dotnet run --project tools/StarMapRender -c Release -- --optimize src/SodRpg.Core/Game/StarMapPlacements.Generated.cs --iterations 8000000
+```
+
+- 方法：焼きなまし法。動かすのは星団ごと（平行移動・回転・鏡映・つながる相手へ寄せる）、星団の中の星1つずつ（形の微調整）、橋のアクセス星・外縁の起点星・刻印、幹のルート星（小さな可動域）。始まりの星と幹の内側の星は動かさない。
+- 評価：線の交差、線が星の上を通る数（円盤＋余白）、線の長さ（長いほど強く減点）、星団の形・幹の形からのずれ。元から絡んでいる星団は形を保つ制約をゆるめて解く。
+- 守る条件（必ず満たす）：星どうしの間隔（同じ星団86／別の星団140／そのほか90〜110、刻印どうし160）、星団の外側へ他の星が入り込まない（凸包）、星団は記憶の扇形（ルートの区画）の中、前提の星は後続の星より内側（記憶の星団）。
+- 検査は `StarMapQuality.Measure`（Core）で、`tests/SodRpg.Core.Tests/StarMapLayoutQualityTests.cs` と `--check` が同じ計測を使う。テストは「座標だけが変わる」「重ならない」「線が星の上を通る数が上限以下」「最適化前より交差・長い線・線の平均長が減る」「表が現在の星に合っている」を確かめる。
+- 星や前提を変えて表が古くなったら `--check`（またはテスト）が知らせるので、上のコマンドで再生成する。表は決定的（同じ入力・同じ反復回数・同じ種なら同じ結果）。
+
