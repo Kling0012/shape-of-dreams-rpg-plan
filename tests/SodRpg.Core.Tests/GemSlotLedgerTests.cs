@@ -36,7 +36,10 @@ namespace SodRpg.Core.Tests
             for (int i = 0; i < 10; i++)
             {
                 cap++;
-                Assert.Equal(cap, Apply(ledger, cap, 1));
+                int external = 3 + i;
+                cap = Apply(ledger, cap, 1);
+                Assert.Equal(external == 4 ? 4 : external + 1, cap);
+                Assert.Equal(external, ledger.DecideRemoval(cap).Target);
             }
             Assert.Equal(12, Apply(ledger, cap, 0));
             Assert.Equal(12, ledger.DecideRemoval(12).Target);
@@ -120,6 +123,54 @@ namespace SodRpg.Core.Tests
             Assert.Equal(2, decision.Contribution);
             ledger.Commit(decision, 4);
             Assert.Equal(2, ledger.DecideRemoval(4, 2).Target);
+        }
+
+        [Theory]
+        [InlineData(1)]
+        [InlineData(4)]
+        public void Native_four_slot_baseline_never_claims_or_writes_bonus_slots(int desired)
+        {
+            var ledger = new GemSlotLedger(4);
+            for (int tick = 0; tick < 20; tick++)
+            {
+                var decision = ledger.Decide(4, desired, minimumNative: 4);
+                Assert.Equal(4, decision.Target);
+                Assert.Equal(0, decision.Contribution);
+                Assert.False(decision.ShouldWrite);
+                ledger.Commit(decision, 4);
+                Assert.Equal(0, ledger.OurContribution);
+            }
+            Assert.Equal(4, ledger.DecideRemoval(4, minimumNative: 4).Target);
+        }
+
+        [Fact]
+        public void Native_reset_to_four_releases_ownership_without_adding_past_the_ceiling()
+        {
+            var ledger = new GemSlotLedger(2);
+            Assert.Equal(3, Apply(ledger, 2, 1));
+            for (int reset = 0; reset < 20; reset++)
+            {
+                ledger.ObserveNativeReplacement(4);
+                Assert.Equal(4, Apply(ledger, 4, 1));
+                Assert.Equal(0, ledger.OurContribution);
+                Assert.Equal(4, ledger.DecideRemoval(4).Target);
+            }
+        }
+
+        [Fact]
+        public void Foreign_five_slot_baseline_keeps_its_bonus_and_survives_removal()
+        {
+            var ledger = new GemSlotLedger(5);
+            int cap = 5;
+            for (int tick = 0; tick < 20; tick++)
+            {
+                cap = Apply(ledger, cap, 1);
+                Assert.Equal(6, cap);
+                Assert.Equal(1, ledger.OurContribution);
+            }
+            Assert.Equal(5, Apply(ledger, cap, 0));
+            Assert.Equal(0, ledger.OurContribution);
+            Assert.Equal(5, ledger.DecideRemoval(5).Target);
         }
 
         private static int Apply(GemSlotLedger ledger, int current, int desired)

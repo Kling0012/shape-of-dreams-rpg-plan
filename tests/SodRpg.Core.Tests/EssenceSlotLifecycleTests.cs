@@ -178,7 +178,7 @@ namespace SodRpg.Core.Tests
         }
 
         [Fact]
-        public void Repeated_external_additions_remain_valid_without_disabling_either_bonus()
+        public void Repeated_external_additions_preserve_foreign_slots_and_respect_the_native_ceiling()
         {
             var hero = new Hero(); var host = new HostAuthority(); var rt = Runtime(hero);
             host.ApplyForTest(rt, Both());
@@ -186,10 +186,29 @@ namespace SodRpg.Core.Tests
             {
                 hero.Skill.Caps[0]++;
                 host.ApplyForTest(rt, Both());
-                Assert.Equal(new[] { 3 + i, 3 }, hero.Skill.Caps);
+                int external = 2 + i;
+                Assert.Equal(new[] { external == 4 ? 4 : external + 1, 3 }, hero.Skill.Caps);
             }
             host.RestoreForTest(rt);
             Assert.Equal(new[] { 12, 2 }, hero.Skill.Caps);
+        }
+
+        [Fact]
+        public void Native_four_slot_locations_stay_unchanged_through_ticks_and_cleanup()
+        {
+            var hero = new Hero(); var host = new HostAuthority(); var rt = Runtime(hero);
+            hero.Skill.Caps[0] = hero.Skill.Caps[1] = 4;
+            for (int tick = 0; tick < 20; tick++)
+            {
+                host.ApplyForTest(rt, Both());
+                UnityEngine.Time.unscaledTime = tick + 1;
+                host.TickGemSlotsForTest();
+                Assert.Equal(new[] { 4, 4 }, hero.Skill.Caps);
+                Assert.Equal(0, hero.Skill.Writes);
+            }
+            host.RestoreForTest(rt);
+            Assert.Equal(new[] { 4, 4 }, hero.Skill.Caps);
+            Assert.Equal(0, hero.Skill.Writes);
         }
 
         [Fact]
