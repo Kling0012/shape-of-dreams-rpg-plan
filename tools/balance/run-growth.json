@@ -7,6 +7,7 @@
     "cetus.run.choice/options/1/growth/effectPct": 0,
     "cetus.run.g1/growth/cap": 60,
     "cetus.run.g1/growth/effects/0/amount": 0.5,
+    "cetus.run.g1/growth/effects/1/amount": 5,
     "cetus.run.g1/growth/threshold": 9,
     "cetus.run.m1/growth/capBonus": 20,
     "cetus.run.m1/growth/effectPct": 0,

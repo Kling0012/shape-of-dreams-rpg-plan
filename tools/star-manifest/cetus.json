@@ -26569,6 +26569,12 @@
             "amount": {
               "valueRef": "cetus.run.g1/growth/effects/0/amount"
             }
+          },
+          {
+            "stat": "MaxHealthFlat",
+            "amount": {
+              "valueRef": "cetus.run.g1/growth/effects/1/amount"
+            }
           }
         ]
       },

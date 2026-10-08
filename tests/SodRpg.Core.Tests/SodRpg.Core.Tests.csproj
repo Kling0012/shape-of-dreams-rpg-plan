@@ -94,6 +94,7 @@
     <Compile Include="../../src/SodRpg.Mod/HostAuthority.BossShoutOfOblivion.cs" Link="ModUnderTest/HostAuthority.BossShoutOfOblivion.cs" />
     <Compile Include="../../src/SodRpg.Mod/HostAuthority.BossVisuals.cs" Link="ModUnderTest/HostAuthority.BossVisuals.cs" />
     <Compile Include="../../src/SodRpg.Mod/NetMessages.BossEffects.cs" Link="ModUnderTest/NetMessages.BossEffects.cs" />
+    <Compile Include="../../src/SodRpg.Mod/HostAuthority.BackOffCharge.cs" Link="ModUnderTest/HostAuthority.BackOffCharge.cs" />
   </ItemGroup>
 
   <!-- Some build harnesses run MSBuild with a PATH whose "python" is not usable by cmd.exe
