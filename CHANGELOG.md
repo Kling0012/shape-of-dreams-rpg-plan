@@ -8,6 +8,13 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
+### バランス調整 / Balance
+
+- 夢の圧（敵の強化）を大きく引き上げました。夢Lv30・星500点・深度0で、敵のHPは ×4.1 → **×16.5**、敵の数は ×1.6 → **×5.0**、敵の与ダメージは ×2.6 → ×3.4 になります。星1点あたりの敵HP +0.5% → +2.8%、夢レベル1段あたり +2.5% → +6% などです。 / Dream pressure (enemy scaling) is raised substantially. At dream level 30 with 500 star points on depth 0, enemy HP goes from x4.1 to x16.5, enemy count from x1.6 to x5.0 and enemy damage from x2.6 to x3.4.
+- そのぶん報酬も増やしました。夢の圧による欠片の増加の上限は ×1.5 → ×3.0、悪夢化の増加の上限は ×1.5 → ×2.5、増えた敵が分け合う報酬は元の20% → 50%です。 / Rewards go up with it: the pressure shard bonus cap is x3.0 (was x1.5), the nightmare chance cap x2.5 (was x1.5), and extra enemies share 50% of a wave's reward (was 20%).
+- 深度・Waypoint・インフィニティの倍率は変えていません。内容の指紋が変わるため、**協力プレイでは参加者全員が更新**してください。 / Depth, Waypoint and Infinity multipliers are unchanged. The content fingerprint changes, so everyone in co-op should update.
+- 詳しくは [docs/specs/v2.11-enemy-pressure.md](docs/specs/v2.11-enemy-pressure.md)。この調整は計算とテストで確認したもので、実際のゲームでの手応え（特に敵の数が並ぶか）は未確認です。 / Details in docs/specs/v2.11-enemy-pressure.md. Verified by calculation and tests, not yet in the live game (notably whether the larger enemy counts actually fit).
+
 ---
 
 ## v2.10.12 — 手動分解と鞄あふれのダストの修正（2026-10-09）

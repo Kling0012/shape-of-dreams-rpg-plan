@@ -40,7 +40,7 @@ FIELDS = {
         "damagePerInfinityStage": ("DamagePerInfinityStage", "double", "ratio/stage", 0, 100),
         "enemyCountHealthPerStage": ("EnemyCountHealthPerStage", "double", "health-ratio/stage", 0.000001, 100),
         "enemyCountPerStage": ("EnemyCountPerStage", "double", "ratio/stage", 0, 1),
-        "enemyCountMaximumBonus": ("EnemyCountMaximumBonus", "double", "ratio", 0, 1),
+        "enemyCountMaximumBonus": ("EnemyCountMaximumBonus", "double", "ratio", 0, 100),
         "enemyCountAdditionalRewardBudget": ("EnemyCountAdditionalRewardBudget", "double", "ratio", 0, 1),
         "shardDropPerPressure": ("ShardDropPerPressure", "double", "multiplier/hp-bonus", 0, 10),
         "shardDropMaximum": ("ShardDropMaximum", "double", "multiplier", 1, 10),
