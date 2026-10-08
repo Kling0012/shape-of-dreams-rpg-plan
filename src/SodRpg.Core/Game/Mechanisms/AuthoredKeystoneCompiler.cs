@@ -82,9 +82,15 @@ namespace SodRpg.Core.Game
             {
                 int index = 0;
                 foreach (var grant in key.Grants)
-                    build.Mechanisms.Add(new AuthoredMechanismEntry { StarId = key.KeystoneId,
+                {
+                    var entry = new AuthoredMechanismEntry { StarId = key.KeystoneId,
                         ContributorIds = new[] { key.KeystoneId }, Spec = AuthoredMechanismCodec.DecodeSpec(AuthoredMechanismCodec.EncodeSpec(grant)),
-                        Provenance = new MechanismProvenance().Add(grant, index++) });
+                        Provenance = new MechanismProvenance().Add(grant, index++) };
+                    // Grants retain their authored basis for later keystone transforms, but the
+                    // effective build must obey the same wire/runtime caps as purchased mechanisms.
+                    AuthoredMechanisms.ComposeGrantedGimmick(entry);
+                    build.Mechanisms.Add(entry);
+                }
             }
         }
 

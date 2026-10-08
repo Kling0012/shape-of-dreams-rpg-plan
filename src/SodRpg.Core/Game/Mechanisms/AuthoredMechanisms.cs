@@ -437,6 +437,12 @@ namespace SodRpg.Core.Game
                 build.PairCombos.RemoveAll(e => e.Def.Id == entry.Spec.Bridge.PairId);
         }
 
+        internal static void ComposeGrantedGimmick(AuthoredMechanismEntry entry)
+        {
+            if (entry.Spec.Gimmick != null)
+                ComposeEntry(entry, 1, Array.Empty<KeyValuePair<TalentDef, int>>());
+        }
+
         private static string Signature(AuthoredMechanismSpec spec)
         {
             var normalized = spec.Copy();
