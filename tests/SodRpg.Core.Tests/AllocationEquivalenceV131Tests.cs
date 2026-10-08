@@ -693,6 +693,131 @@ namespace SodRpg.Core.Tests
             }));
         }
 
+        // #329 is an intentional eligibility change. Keep the first-purchase cases in the fast suite instead of
+        // waiting for Lacerta seed 500, step 0 in the much longer generated-tree equivalence run.
+        [Theory]
+        [InlineData("Hero_Cetus", "h.cetus.shell", 0)]
+        [InlineData("Hero_Cetus", "h.cetus.shell", 1)]
+        [InlineData("Hero_Cetus", "h.cetus.regen", 0)]
+        [InlineData("Hero_Cetus", "h.cetus.regen", 1)]
+        [InlineData("Hero_Lacerta", "h.lacerta.powder", 0)]
+        [InlineData("Hero_Lacerta", "h.lacerta.powder", 1)]
+        [InlineData("Hero_Lacerta", "h.lacerta.range", 0)]
+        [InlineData("Hero_Lacerta", "h.lacerta.range", 1)]
+        [InlineData("Hero_Lacerta", "h.lacerta.crit", 0)]
+        [InlineData("Hero_Lacerta", "h.lacerta.crit", 1)]
+        [InlineData("Hero_Lacerta", "h.lacerta.route.hand-cannon.1", null)]
+        [InlineData("Hero_Lacerta", "h.lacerta.route.precision.1", null)]
+        public void Pending_ring_choices_and_own_memory_route_entries_match_the_reference(string hero, string starId, int? option)
+        {
+            WithVerification(() => WithGeneratedHero(hero, tree =>
+            {
+                var star = tree.Single(t => t.Id == starId);
+                var duo = new Duo(tree, null, HeroTreeLayout.ForHero(hero), hero, () =>
+                {
+                    var profile = FundedProfile(500UL, hero, 220, relics: 0);
+                    if (star.RouteId != null) TreeTestPaths.Connect(profile, hero, starId);
+                    else Assert.Empty(profile.Hero(hero).Talents);
+                    return profile;
+                }) { Label = hero + " pending " + starId + "/" + option };
+                for (int rank = 1; rank <= star.MaxRank; rank++)
+                {
+                    var result = duo.Step(new AllocationChange
+                    {
+                        Kind = AllocationChangeKind.Purchase, CandidateStarId = starId, SelectedOption = option,
+                    });
+                    Assert.Null(result.Error);
+                    Assert.NotNull(result.Plan);
+                    Assert.True(result.Plan.CanApply);
+                    Assert.Empty(result.Plan.SaturationDetails);
+                    Assert.Empty(result.Plan.AffectedRefundIds);
+                    Assert.Equal(rank, duo.ProductionProfile.Hero(hero).Talents[starId]);
+                }
+            }));
+        }
+
+        [Theory]
+        [InlineData(false, false)]
+        [InlineData(false, true)]
+        [InlineData(true, false)]
+        [InlineData(true, true)]
+        public void Pending_choice_exception_still_rejects_disabled_stars_and_saturated_recipients(bool ownRecipient, bool disabled)
+        {
+            WithVerification(() =>
+            {
+                var shield = Effect("test.pending.shield", GimmickEffect.Shield, Gimmicks.Cap(GimmickEffect.Shield));
+                const string id = "test.pending.choice";
+                var choice = Choice(id, Modifier(id, shield.Id, null, 10m), StatStar(id), ranks: 3);
+                var tree = HeroSigils.TreeFor(SynHero).Where(t => t.Cluster == null).Concat(new[] { shield, choice }).ToArray();
+                var policy = new EffectiveAllocationPolicy
+                {
+                    PermanentDisables = disabled ? new[] { new AllocationDisableRule { StarIds = new[] { id } } }
+                        : Array.Empty<AllocationDisableRule>(),
+                };
+                var duo = new Duo(tree, policy, null, SynHero, () => FundedProfile(501UL, SynHero, 80, relics: 0));
+                if (ownRecipient) duo.Buy(shield.Id);
+                string original = ProfileCodec.Write(duo.ProductionProfile);
+                var result = duo.Step(new AllocationChange { Kind = AllocationChangeKind.Purchase, CandidateStarId = id, SelectedOption = 0 });
+                Assert.Null(result.Error);
+                Assert.NotNull(result.Plan);
+                Assert.Equal(!disabled && !ownRecipient, result.Plan.CanApply);
+                Assert.Empty(result.Plan.AffectedRefundIds);
+                if (disabled || ownRecipient)
+                {
+                    Assert.Contains(result.Plan.SaturationDetails, d => d.StarId == id && d.Reason ==
+                        (disabled ? AllocationInertReason.PermanentlyDisabled : AllocationInertReason.Saturated));
+                    Assert.Equal(original, ProfileCodec.Write(duo.ProductionProfile));
+                }
+                else
+                {
+                    Assert.Empty(result.Plan.SaturationDetails);
+                    Assert.Equal(result.Plan.OldEffectiveChannels.Select(Describe), result.Plan.NewEffectiveChannels.Select(Describe));
+                    Assert.Equal(1, duo.ProductionProfile.Hero(SynHero).Talents[id]);
+                }
+            });
+        }
+
+        [Theory]
+        [InlineData(false, false, 1000)]
+        [InlineData(true, false, 1000)]
+        [InlineData(false, true, 1500)]
+        [InlineData(true, true, 1500)]
+        public void Cross_memory_recharge_matches_the_reference_and_only_uses_receiver_boosts(bool sourceBoost, bool receiverBoost, int expectedUnits)
+        {
+            WithVerification(() =>
+            {
+                const string movement = "St_M_FrostyCharge";
+                var shield = Effect("test.pending.source.shield", GimmickEffect.Shield, 1m);
+                var sender = Modifier("test.pending.sender", shield.Id, null, 100m);
+                sender.ScopedModifier.ScopeKind = ScopeKind.Memory;
+                sender.ScopedModifier.TargetEffectIds = Array.Empty<string>();
+                var recharge = StatStar("test.pending.recharge", 0);
+                recharge.RouteMemory = Memory;
+                recharge.Mechanism = new AuthoredMechanismSpec
+                {
+                    Kind = AuthoredMechanismKind.DirectedRecharge, ChannelId = recharge.Id, Source = MemorySelector.Parse(Memory),
+                    Trigger = MemoryEventKind.Hit, Budget = AttributionBudget.PerActivationVictim,
+                    Recharge = new DirectedRechargeChannel(recharge.Id, MemorySelector.Parse(Memory), MemoryEventKind.Hit,
+                        MemorySelector.Parse(movement), new[] { 1000 }, AttributionBudget.PerActivationVictim),
+                };
+                var receiver = Modifier("test.pending.receiver", recharge.Id, null, 50m);
+                receiver.RouteMemory = movement;
+                receiver.ScopedModifier.ScopeMemory = movement;
+                receiver.ScopedModifier.ScopeKind = ScopeKind.Receiver;
+                var tree = HeroSigils.TreeFor(SynHero).Where(t => t.Cluster == null).Concat(new[] { shield, sender, recharge, receiver }).ToArray();
+                var duo = new Duo(tree, null, null, SynHero, () => FundedProfile(502UL, SynHero, 80, relics: 0));
+                duo.Buy(shield.Id);
+                if (sourceBoost) duo.Buy(sender.Id);
+                if (receiverBoost) duo.Buy(receiver.Id);
+                var plan = duo.Buy(recharge.Id);
+                Assert.Empty(plan.AffectedRefundIds);
+                var build = Build.ComputeForTree(duo.ProductionProfile, SynHero, 0, tree);
+                Assert.Equal((decimal)expectedUnits, Assert.Single(build.Mechanisms).Spec.Recharge.EffectiveValueUnits);
+                Assert.Equal((decimal)expectedUnits, Assert.Single(Build.Decode(build.Encode()).Mechanisms).Spec.Recharge.EffectiveValueUnits);
+                Assert.Equal(sourceBoost ? 2m : 1m, Assert.Single(build.Gimmicks).Def.Value);
+            });
+        }
+
         // Route-entry eligibility is a rule change, not an optimization. Exercise it directly in the fast suite:
         // the short random sequences need not reach it (Mist seed 500 first did so at step 52 in the slow suite).
         [Theory]
