@@ -8,22 +8,30 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
+---
+
+## v2.10.14 — 星図の配置の見直しと取れない星の修正（2026-10-09）
+
+星図の見た目を整理し、取れない星や回避のエッセンス表示の不具合を直しました。 / Tidies up the star map layout and fixes unobtainable stars and the dodge essence display.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
 ### 新機能・改善 / New features and improvements
 
-- 全旅人の星図の星の配置を見直し、線の交差と、星の上を通る線を大きく減らしました（線の交差は約1/2〜1/6、星の上を通る線はほぼゼロ、いちばん長い線も短く）。星・線・取得条件・保存データは変えていません。 / Re-laid out every hero's star chart: far fewer crossing lines (about 1/2 to 1/6), almost no lines running over other stars, and shorter long lines. Stars, links, requirements and saves are unchanged.
+- 全旅人の星図の配置を見直し、線の交差・星の上を通る線・長すぎる線を減らして見やすくしました。星のつながりは変わっていません。 / Every traveler's star map has been re-laid out with fewer crossing lines, lines over stars and overly long lines. Connections between stars are unchanged.
+- ケトゥスの「下がれ！」に、チャージ中に周りへ継続ダメージを与える効果を加えました。 / Cetus's "Back Off!" now deals damage over time to nearby enemies while charging.
 
-- **取れない星の修正（ケトゥス・ラケルタ）**：ケトゥスの「氷の殻」「潮の鱗」は、始まりに隣り合っているのに最初は取れませんでした（効果を強める相手の記憶の星が、まだ何も無いため）。ラケルタの「火薬」「防弾の外套」「狙撃」と、ルートの入口「砲口の熱」「狙いの蓄積」も同じです。受け手がまだ無い間は取得を保留として許し、受け手を取ると働きます。ケトゥスの「冷血の分かれ道」の第2案「爆ぜた後の退路」は、他の星を取った後だと選べなくなっていました（別の記憶へクールダウンを渡す効果は受け手側だけで強化する決まりなのに、送り手側の強化も重なっていたため）。送り手側の強化は及ばないことにしました。 / **Stars that could not be taken (Cetus, Lacerta)**: Cetus's Ice Shell and Tide Scales sit next to the start but were refused at first, because the memory effect they boost had no source yet; the same held for Lacerta's Powder, Bulletproof Cloak and Sniping and the route entrances Muzzle Heat and Aim Build-up. A star whose recipient is missing is now pending (allowed) until a recipient is taken. Cetus's Icy Veins fork option "Retreat After the Burst" became impossible to choose once other stars were owned (a cross-memory recharge is boosted from the receiving side only, but the source side's boosts reached it too and clashed); source-side boosts no longer apply to it.
-- 全キャラの星図に、取れない星が無いことを自動で調べるテストを追加しました（始まり直結の星、ルートの入口、順不同の購入、送り手と受け手の二重強化、刻印の選択）。 / Added automated checks for every hero's star chart: stars next to the start, route entrances, purchases in any order, source/receiver double boosts, and sigil selection.
-- 回避（移動の記憶）に枠を増やしても装着の画面で回避が隠れる件の切り分けと保険を追加しました。HUDの技ボタンの構成（回避のボタンの有無・枠並びの数・表示状態）を起動後に1回 Player.log へ残し、回避の枠が1つ以上あるのに枠並びだけ非表示のときは表示へ戻します。本体UIの構造は実機で未確認のため、これで解消するかは未検証です。 / Adds diagnostics and a safeguard for the Movement (dodge) essence slots being hidden in the equip UI. Unverified in the live game.
-- 本体のアイデンティティ枠が4個のとき、星図の追加で上限を超えて枠が表示されなくなる問題を修正しました。外部MODを外した後の起動・Continueでも、本体枠と星図の枠を正しく数え直します。 / Fixed star-chart bonuses exceeding the limit and hiding Identity essence slots when the native count was four; slot ownership is reconciled on startup and Continue after removing an external slot mod.
-### バランス調整 / Balance
-- 夢の圧（敵の強化）を大きく引き上げました。夢Lv30・星500点・深度0で、敵のHPは ×4.1 → **×16.5**、敵の数は ×1.6 → **×5.0**、敵の与ダメージは ×2.6 → ×3.4 になります。星1点あたりの敵HP +0.5% → +2.8%、夢レベル1段あたり +2.5% → +6% などです。 / Dream pressure (enemy scaling) is raised substantially. At dream level 30 with 500 star points on depth 0, enemy HP goes from x4.1 to x16.5, enemy count from x1.6 to x5.0 and enemy damage from x2.6 to x3.4.
-- そのぶん報酬も増やしました。夢の圧による欠片の増加の上限は ×1.5 → ×3.0、悪夢化の増加の上限は ×1.5 → ×2.5、増えた敵が分け合う報酬は元の20% → 50%です。 / Rewards go up with it: the pressure shard bonus cap is x3.0 (was x1.5), the nightmare chance cap x2.5 (was x1.5), and extra enemies share 50% of a wave's reward (was 20%).
-- 深度・Waypoint・インフィニティの倍率は変えていません。内容の指紋が変わるため、**協力プレイでは参加者全員が更新**してください。 / Depth, Waypoint and Infinity multipliers are unchanged. The content fingerprint changes, so everyone in co-op should update.
-- 詳しくは [docs/specs/v2.11-enemy-pressure.md](docs/specs/v2.11-enemy-pressure.md)。この調整は計算とテストで確認したもので、実際のゲームでの手応え（特に敵の数が並ぶか）は未確認です。 / Details in docs/specs/v2.11-enemy-pressure.md. Verified by calculation and tests, not yet in the live game (notably whether the larger enemy counts actually fit).
-- ケトゥスを強化しました（火力と耐久）。記憶の冴え×1.2、攻撃の仕掛け（Burst・Echo・Wound）＋20%、刻印「割れる深海」「拳の誓い」「集束する雷」「遠い潮路」、夢輪「凍土の呼び戻し」「氷塊に呼ぶ雷」の再充填、奥の星「満ち潮」「氷の枷」を引き上げ、守りの仕掛け（盾・防壁・回復）を×1.5、刻印「凪」の盾を最大HP6%→10%、「氷壁」「氷の外殻」「深海の殻」「殻の厚み」を厚くしました。さらに「下がれ！」の守りの星団を中心に、障壁の持続を伸ばす星（＋4%→＋10%）、撃破時の回復（最大HP2%→5%）、「氷盾の補強」（2%→8%）、刻印「返礼の庇護」（＋100%→＋150%）を強め、遠征の鍛錬「障壁の積み重ね」に最大HPの成長（＋5）を足しました。星の依存関係と座標は変えていません。 / Cetus is buffed in both damage and durability: Memory damage x1.2, +20% on Burst/Echo/Wound gimmicks, higher keystones, bridge recharge and deep stars, x1.5 on shield/rampart/heal gimmicks, Calm Sea's shield 6% -> 10% max HP, sturdier Ice Wall, Ice Carapace and outer shell stars, and a Back Off!-centred pass: longer barrier-duration stars (+4% -> +10%), stronger kill heals (2% -> 5%), Reinforced Ice Shield 2% -> 8%, Sheltering Return +100% -> +150%, and max-HP growth (+5) added to the Layered Barrier run growth. Star prerequisites and positions are unchanged.
-- ケトゥスの「下がれ！」に、チャージ中の継続ダメージを足しました。チャージしている間、0.5秒ごとに周囲4.5mの敵（最大8体）へ高い方の攻撃力・魔力の40%（星の消費で伸びる）を与えます（最長2.5秒、フルで200%）。実機未確認で、本体の通知に合わなければ何も出ないだけです。 / Cetus's Back Off! now deals damage over time to nearby enemies while charging: every 0.5s, 40% of the higher of attack/ability power to up to 8 enemies within 4.5m (up to 2.5s, 200% in total, scaled by spent star points). Not yet verified in game; if the native cast events do not match, nothing is dealt.
-- 詳しくは [docs/specs/v2.12-cetus-buff.md](docs/specs/v2.12-cetus-buff.md)。この調整は計算とテストで確認したもので、ミスト・空殻との実際の手応えは未確認です。内容の指紋が変わるため、**協力プレイでは参加者全員が更新**してください。 / Details in docs/specs/v2.12-cetus-buff.md. Verified by calculation and tests, not yet in the live game. The content fingerprint changes, so everyone in co-op should update.
+### 不具合の修正 / Bug fixes
+
+- ケトゥスとラケルタの星図で、取れない星があった問題を修正しました。 / Fixed some stars on Cetus's and Lacerta's star maps that could not be taken.
+- エッセンスの装着画面で、回避の列が表示されないことがある問題を修正しました。 / Fixed the dodge column sometimes not appearing on the essence equip screen.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
 ---
 ## v2.10.13 — 回避のエッセンス装着とエッセンス枠の修正（2026-10-09）
 エッセンスの装着画面で回避に枠を付けられるようになり、アイデンティティの枠が表示されない不具合などを直しました。 / You can now fill dodge essence slots on the equip screen, and Identity slots no longer disappear.
