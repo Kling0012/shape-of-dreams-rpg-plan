@@ -89,6 +89,7 @@ namespace SodRpg.Mod
         internal void TickOverflowBonus()
         {
             UpdateOverflowBonusPreference();
+            ReleaseStaleOverflowBonus();
             if (!_overflowBonusChosen && Profile.OverflowBonusPendingRunId == null) return;
             if (!ContinueReady || DewPlayer.local == null) return;
             float now = Time.unscaledTime;
@@ -123,15 +124,37 @@ namespace SodRpg.Mod
             catch (Exception ex) { WarnOverflowBonus("send: " + ex.Message); }
         }
 
+        // The host pays the optional bonus only inside its own native run: once a different
+        // expedition is active, an older obligation can never settle (the host rejects
+        // positive deltas for other runs). Forgo only that dust, never the relic or shard
+        // credit already granted with the overflow, and re-arm the bonus for the new run.
+        // A null Run (lobby, checkpoint continue window) keeps the obligation; the same
+        // native run may still resume and settle it.
+        private void ReleaseStaleOverflowBonus()
+        {
+            string pendingRun = Profile.OverflowBonusPendingRunId;
+            var run = Profile.Run;
+            if (pendingRun == null || run == null || pendingRun == run.RunId) return;
+            long forgone = Profile.OverflowBonusPendingTotal;
+            Profile.OverflowBonusPendingRunId = null;
+            Profile.OverflowBonusPendingLedgerId = Profile.OverflowBonusPendingTotal = 0;
+            _dirty = true; // Ordinary periodic save; the release is idempotent.
+            if (forgone > 0)
+                Emit(new SodRpg.Core.Game.GameEvent(SodRpg.Core.Game.EventKind.Warning, SodRpg.Core.Game.Loc.T(
+                    $"前の遠征の追加ドリームダスト{forgone}は確定できなかったため諦めました。遺物の受け取りと欠片への換算には影響しません。",
+                    $"Gave up {forgone} unconfirmed extra overflow Dream Dust from the previous expedition. Relic pickup and shard conversion are unaffected.")));
+            UpdateOverflowBonusPreference();
+        }
+
         private void WarnOverflowBonus(string reason)
         {
             Profile.ReceiveOverflowDreamDust = false;
             if (_overflowBonusWarned) return;
             _overflowBonusWarned = true;
-            Log.Warn("Overflow bonus disabled/unavailable; shards and other features continue: " + reason);
+            Log.Warn("Overflow bonus unavailable; only the extra Dream Dust stops, relic pickup and shard conversion continue: " + reason);
             Emit(new SodRpg.Core.Game.GameEvent(SodRpg.Core.Game.EventKind.Warning, SodRpg.Core.Game.Loc.T(
-                "鞄あふれの追加ドリームダストを確認できません。欠片と他の機能はそのまま利用できます。",
-                "Extra overflow Dream Dust is unavailable. Shards and other features remain available.")));
+                "鞄あふれの追加ドリームダストは使えません（止まるのは追加のダストだけです）。遺物の受け取りと欠片への換算は続きます。",
+                "Extra overflow Dream Dust is unavailable (only the bonus dust stops). Relic pickup and shard conversion continue.")));
         }
     }
 }
