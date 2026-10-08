@@ -10,6 +10,24 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v2.10.15 — 空殻の刻印でビルドが失敗する問題の修正（2026-10-09）
+
+空殻で一部の刻印を付けると、ビルドの保存や送信に失敗する不具合を直しました。 / Fixes builds failing to save or send with some Husk keystones.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- v2.10.14 で、空殻の刻印「剣気の色」などを付けたビルドを保存・送信するときにエラーになり、星図が正しく反映されないことがある問題を修正しました。 / Fixed builds with some Husk keystones (such as "Aura Prism") failing to encode in v2.10.14, which could stop the star map from applying.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
 ## v2.10.14 — 星図の配置の見直しと取れない星の修正（2026-10-09）
 
 星図の見た目を整理し、取れない星や回避のエッセンス表示の不具合を直しました。 / Tidies up the star map layout and fixes unobtainable stars and the dodge essence display.

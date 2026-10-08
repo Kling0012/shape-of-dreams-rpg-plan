@@ -1,5 +1,5 @@
-[b]v2.10.14: re-laid out every star map for readability, added charge damage to Cetus's Back Off!, and fixed unobtainable Cetus/Lacerta stars and the dodge essence column. Saves carry over. Update all co-op players and restart the game.[/b]
-[b]v2.10.14：全旅人の星図の配置を見やすく見直し、ケトゥスの「下がれ！」にチャージ中の継続ダメージを加えました。ケトゥスとラケルタの取れない星と、装着画面の回避の列の問題も修正しました。セーブデータはそのまま引き継げます。協力プレイでは参加者全員がこのバージョンに更新し、ゲームを再起動してください。[/b]
+[b]v2.10.15: fixes builds with some Husk keystones failing to encode in v2.10.14. Saves carry over. Update all co-op players and restart the game.[/b]
+[b]v2.10.15：v2.10.14 で空殻の一部の刻印を付けたビルドがエラーになる問題を修正しました。セーブデータはそのまま引き継げます。協力プレイでは参加者全員がこのバージョンに更新し、ゲームを再起動してください。[/b]
 
 [h1]Dreamforge RPG[/h1]
 Turns every run into part of a long RPG journey: relics you keep, a risky "secure or delve" choice at every zone, a star map per Traveler, a forge, and long-term goals. Co-op ready.
