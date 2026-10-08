@@ -8,9 +8,24 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
+---
 
-- 鞄あふれの追加ドリームダストと手動分解（ダストへの換金・商人購入を含む）が、本体通貨の処理後に起きた一時的な例外1回で、そのセッションの間ずっと止まっていた問題を修正しました。 / Fixed extra overflow Dream Dust and manual salvage (including dust conversion and merchant buys) staying disabled for the whole session after a single transient exception behind the native currency call.
-- ホストの再起動などで同じ遠征の台帳が置き換わったとき、追加ドリームダストが遠征の残りずっと受け取れなくなっていた問題を修正しました。未確認分は諦めますが、それ以降のあふれから再度受け取れます。 / Fixed the extra overflow Dream Dust staying off for the rest of a run when the host's ledger for that same run was replaced (for example by a host restart); the unconfirmed part is forgone, later overflows pay again.
+## v2.10.12 — 手動分解と鞄あふれのダストの修正（2026-10-09）
+
+手動分解が「取引できませんでした」で失敗する不具合と、鞄あふれの追加ドリームダストがもらえない不具合を直しました。 / Fixes manual salvage failing with "Trade failed" and missing extra overflow Dream Dust.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- 遺物をドリームダストに手動分解しようとすると「取引できませんでした」と出て分解できないことがある問題を修正しました。ダストの換金や商人での購入も同じ原因で止まることがありました。 / Fixed manual salvage into Dream Dust sometimes failing with "Trade failed". Dust conversion and merchant purchases could stop for the same reason.
+- 鞄があふれて遺物が欠片になったとき、追加のドリームダスト（オプション）がもらえないことがある問題を修正しました。 / Fixed the optional extra Dream Dust sometimes not being granted when satchel overflow turns relics into shards.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
 
 ---
 
