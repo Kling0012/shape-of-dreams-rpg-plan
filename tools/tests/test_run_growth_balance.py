@@ -1,6 +1,7 @@
 """Growth cutover fingerprint compatibility and reference validation."""
 import copy
 import json
+import re
 import sys
 import unittest
 from decimal import Decimal
@@ -119,27 +120,31 @@ class RunGrowthBalanceTests(unittest.TestCase):
     def test_invalid_missing_extra_and_mixed_growth_references_are_rejected(self):
         table = star_values.load_table()
         manifests = star_values.load_manifests()
+        # Live manifests need the current complete table, not the frozen fingerprint fixture.
+        growth = star_values.load_growth_table()
+        # First prove the unmodified fixture resolves, so unrelated failures cannot mask a rejection.
+        star_values.resolve_all(table, manifests, growth_table=growth)
         for key in ("husk.run.m1/growth/effectPct", "husk.run.choice/options/0/growth/effectPct"):
             for invalid in (True, "50", -1, 501, Decimal("0.1"), Decimal("NaN")):
-                changed = copy.deepcopy(ORIGINAL_GROWTH)
+                changed = copy.deepcopy(growth)
                 changed["effects"][key] = invalid
-                with self.subTest(key=key, invalid=invalid), self.assertRaises(ValueError):
+                with self.subTest(key=key, invalid=invalid), self.assertRaisesRegex(ValueError, re.escape(key)):
                     star_values.resolve_all(table, manifests, growth_table=changed)
-            changed = copy.deepcopy(ORIGINAL_GROWTH)
+            changed = copy.deepcopy(growth)
             del changed["effects"][key]
-            with self.subTest(missing=key), self.assertRaisesRegex(ValueError, "missing runGrowth reference"):
+            with self.subTest(missing=key), self.assertRaisesRegex(ValueError, "missing runGrowth reference " + re.escape(key)):
                 star_values.resolve_all(table, manifests, growth_table=changed)
-        changed = copy.deepcopy(ORIGINAL_GROWTH)
+        changed = copy.deepcopy(growth)
         changed["effects"]["unused/growth/capBonus"] = 1
-        with self.assertRaisesRegex(ValueError, "extra unreferenced effect"):
+        with self.assertRaisesRegex(ValueError, "unused/growth/capBonus: extra unreferenced effect"):
             star_values.resolve_all(table, manifests, growth_table=changed)
         raw = copy.deepcopy(manifests["husk"])
         choice = next(row for row in raw["stars"] if row["id"] == "husk.run.choice")
         key = "husk.run.choice/options/0/growth/effectPct"
         for invalid in (58, {"valueRef": key, "value": 58}, {"valueRef": key + "-wrong"}):
             choice["options"][0]["growth"]["effectPct"] = invalid
-            with self.subTest(reference=invalid), self.assertRaisesRegex(ValueError, "canonical valueRef"):
-                star_values.resolve_manifest("husk", raw, table, ORIGINAL_GROWTH)
+            with self.subTest(reference=invalid), self.assertRaisesRegex(ValueError, "canonical valueRef " + re.escape(key)):
+                star_values.resolve_manifest("husk", raw, table, growth)
 
 
 if __name__ == "__main__":
