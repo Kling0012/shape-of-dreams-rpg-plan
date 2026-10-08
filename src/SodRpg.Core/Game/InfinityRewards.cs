@@ -1,7 +1,11 @@
 using System;
+using System.Collections.Generic;
 
 namespace SodRpg.Core.Game
 {
+    /// <summary>報酬枠の種類。上限到達通知の文面にも使う。</summary>
+    public enum InfinityBudgetKind : byte { Relics, HighRare, Legendary, Shards, Tuning, Xp, StarXp, Awakening }
+
     /// <summary>Fixed-size lifetime credits. A new profile has no time credits; runs never reset them.</summary>
     public sealed class InfinityRewardBudget
     {
@@ -12,6 +16,8 @@ namespace SodRpg.Core.Game
         public string RoomRunId;
         public long RoomGraph = -1, RoomEpoch = -1;
         public long AcceptedKills, RejectedKills;
+        /// <summary>枠が尽きて報酬が減った種類と、その通知済みの種類のビット（InfinityBudgetKind）。保存しない一時状態。</summary>
+        public byte CappedKinds, CappedKindsNotified;
         public InfinityRewardBudget Clone() => (InfinityRewardBudget)MemberwiseClone();
     }
 
@@ -60,6 +66,25 @@ namespace SodRpg.Core.Game
             int amount = (int)Math.Min(Math.Max(0, requested), Math.Floor(credit + 1e-9));
             credit = Math.Max(0, credit - amount);
             return amount;
+        }
+        // 通知状態の更新は「要求あり」のときだけ。要求0では既存の上限状態を書き換えない。
+        private static void MarkCap(InfinityRewardBudget b, InfinityBudgetKind kind, bool exhausted)
+        {
+            byte bit = (byte)(1 << (int)kind);
+            if (exhausted) b.CappedKinds |= bit;
+            else { b.CappedKinds &= (byte)~bit; b.CappedKindsNotified &= (byte)~bit; }
+        }
+        private static int TakeCapped(InfinityRewardBudget b, ref double credit, int requested, InfinityBudgetKind kind)
+        {
+            int keep = Take(ref credit, requested);
+            if (requested > 0) MarkCap(b, kind, keep < requested);
+            return keep;
+        }
+        private static int TakeAmplifiedCapped(InfinityRewardBudget b, ref double credit, int amount, int copies, InfinityBudgetKind kind)
+        {
+            int keep = TakeAmplified(ref credit, amount, copies);
+            if (amount > 0) MarkCap(b, kind, keep < amount);
+            return keep;
         }
         public static void AdvanceCombat(Profile p, double deltaSeconds)
         {
@@ -186,7 +211,7 @@ namespace SodRpg.Core.Game
             double scale = guaranteed || tier == MonsterTier.Boss ? 1 : PressureCountRewards.ScaleDouble(1, rewardScale);
             if (time + 1e-9 < scale || room + 1e-9 < scale || (guaranteed && (b.GuaranteeOpportunities + 1e-9 < 1
                 || b.GuaranteedRelics + 1e-9 < guaranteedOutputs || b.Relics + 1e-9 < guaranteedOutputs)))
-            { if (b.RejectedKills < long.MaxValue) b.RejectedKills++; return false; }
+            { if (guaranteed && b.Relics + 1e-9 < guaranteedOutputs) MarkCap(b, InfinityBudgetKind.Relics, true); if (b.RejectedKills < long.MaxValue) b.RejectedKills++; return false; }
             double ev = ExpectedKillCosts(p.Run, rollTier, heat, waypoint, nightmare, tier == MonsterTier.Boss ? bossTypeName : null, bossDropNightmare, bossDropDepth, out double legendary);
             // The guarantee covers the Epic floor, not random Legendary rolls; legendary already includes the boss set once.
             if (guaranteed) ev = tier == MonsterTier.Boss && BossSets.TryGetSet(bossTypeName, out _) ? BossSets.DropChance(bossDropNightmare, bossDropDepth) : 0;
@@ -197,7 +222,7 @@ namespace SodRpg.Core.Game
             ev *= scale;
             legendary *= scale;
             if (b.HighRare + 1e-12 < ev || b.Legendary + 1e-12 < legendary)
-            { if (b.RejectedKills < long.MaxValue) b.RejectedKills++; return false; }
+            { if (ev > 0) MarkCap(b, InfinityBudgetKind.HighRare, b.HighRare + 1e-12 < ev); if (legendary > 0) MarkCap(b, InfinityBudgetKind.Legendary, b.Legendary + 1e-12 < legendary); if (b.RejectedKills < long.MaxValue) b.RejectedKills++; return false; }
             if (rollTier == MonsterTier.Lesser) { b.LesserTime = Math.Max(0, b.LesserTime - scale); b.LesserRoom = Math.Max(0, b.LesserRoom - scale); }
             else if (rollTier == MonsterTier.Normal) { b.NormalTime = Math.Max(0, b.NormalTime - scale); b.NormalRoom = Math.Max(0, b.NormalRoom - scale); }
             else if (rollTier == MonsterTier.MiniBoss) { b.MiniBossTime = Math.Max(0, b.MiniBossTime - scale); b.MiniBossRoom = Math.Max(0, b.MiniBossRoom - scale); }
@@ -210,6 +235,9 @@ namespace SodRpg.Core.Game
                 b.GuaranteedRelics = Math.Max(0, b.GuaranteedRelics - guaranteedOutputs);
             }
             if (b.AcceptedKills < long.MaxValue) b.AcceptedKills++;
+            // 要求を満額充当できた種類は回復とみなし、通知状態を解く。
+            if (ev > 0) MarkCap(b, InfinityBudgetKind.HighRare, false);
+            if (legendary > 0) MarkCap(b, InfinityBudgetKind.Legendary, false);
             return true;
         }
         /// <summary>Reserve final free output, including Hoard amplification, before deferral; no charge on release.</summary>
@@ -219,9 +247,11 @@ namespace SodRpg.Core.Game
             var b = p.InfinityRewardBudget;
             if (ordinaryMultiplier == 1)
             {
-                int keep = (int)Math.Min(reward.Relics.Count, Math.Floor(b.Relics / amplification + 1e-9));
-                if (keep < reward.Relics.Count) reward.Relics.RemoveRange(keep, reward.Relics.Count - keep);
+                int requested = reward.Relics.Count;
+                int keep = (int)Math.Min(requested, Math.Floor(b.Relics / amplification + 1e-9));
+                if (keep < requested) reward.Relics.RemoveRange(keep, requested - keep);
                 b.Relics = Math.Max(0, b.Relics - keep * amplification);
+                if (requested > 0) MarkCap(b, InfinityBudgetKind.Relics, keep < requested);
             }
             else
             {
@@ -230,33 +260,43 @@ namespace SodRpg.Core.Game
                 // Compact in place, retaining relative order.
                 double ordinaryCost = amplification / ordinaryMultiplier;
                 int kept = 0;
+                int ordinary = 0;
+                bool ordinaryCapped = false;
                 for (int i = 0; i < reward.Relics.Count; i++)
                 {
                     var relic = reward.Relics[i];
                     if (relic.Rarity != Rarity.Legendary)
                     {
-                        if (b.Relics + 1e-9 < ordinaryCost) continue;
+                        ordinary++;
+                        if (b.Relics + 1e-9 < ordinaryCost) { ordinaryCapped = true; continue; }
                         b.Relics = Math.Max(0, b.Relics - ordinaryCost);
                     }
                     reward.Relics[kept++] = relic;
                 }
                 if (kept < reward.Relics.Count) reward.Relics.RemoveRange(kept, reward.Relics.Count - kept);
+                if (ordinary > 0) MarkCap(b, InfinityBudgetKind.Relics, ordinaryCapped);
             }
             foreach (var relic in reward.Relics) relic.InfinityFreeSupply = true;
-            reward.Shards = TakeAmplified(ref b.Shards, reward.Shards, amplification);
-            reward.Tuning = TakeAmplified(ref b.Tuning, reward.Tuning, amplification);
+            reward.Shards = TakeAmplifiedCapped(b, ref b.Shards, reward.Shards, amplification, InfinityBudgetKind.Shards);
+            reward.Tuning = TakeAmplifiedCapped(b, ref b.Tuning, reward.Tuning, amplification, InfinityBudgetKind.Tuning);
         }
         private static int TakeAmplified(ref double credit, int amount, int copies)
         {
             int keep = (int)Math.Min(Math.Max(0, amount), Math.Floor(credit / copies + 1e-9));
             credit = Math.Max(0, credit - (double)keep * copies); return keep;
         }
-        public static int LimitShards(Profile p, int amount) => Active(p) ? Take(ref p.InfinityRewardBudget.Shards, amount) : amount;
-        public static int LimitTuning(Profile p, int amount) => Active(p) ? Take(ref p.InfinityRewardBudget.Tuning, amount) : amount;
-        public static int LimitXp(Profile p, int amount) => Active(p) ? Take(ref p.InfinityRewardBudget.Xp, amount) : amount;
-        public static int LimitStarXp(Profile p, int amount) => Active(p) ? Take(ref p.InfinityRewardBudget.StarXp, amount) : amount;
-        public static int LimitAwakening(Profile p, int amount) => Active(p) ? Take(ref p.InfinityRewardBudget.Awakening, amount) : amount;
-        internal static int LimitHoardOverflow(Profile p, int amount) => Active(p) ? TakeAmplified(ref p.InfinityRewardBudget.Shards, amount, 3) : amount;
+        public static int LimitShards(Profile p, int amount)
+        { if (!Active(p)) return amount; var b = p.InfinityRewardBudget; return TakeCapped(b, ref b.Shards, amount, InfinityBudgetKind.Shards); }
+        public static int LimitTuning(Profile p, int amount)
+        { if (!Active(p)) return amount; var b = p.InfinityRewardBudget; return TakeCapped(b, ref b.Tuning, amount, InfinityBudgetKind.Tuning); }
+        public static int LimitXp(Profile p, int amount)
+        { if (!Active(p)) return amount; var b = p.InfinityRewardBudget; return TakeCapped(b, ref b.Xp, amount, InfinityBudgetKind.Xp); }
+        public static int LimitStarXp(Profile p, int amount)
+        { if (!Active(p)) return amount; var b = p.InfinityRewardBudget; return TakeCapped(b, ref b.StarXp, amount, InfinityBudgetKind.StarXp); }
+        public static int LimitAwakening(Profile p, int amount)
+        { if (!Active(p)) return amount; var b = p.InfinityRewardBudget; return TakeCapped(b, ref b.Awakening, amount, InfinityBudgetKind.Awakening); }
+        internal static int LimitHoardOverflow(Profile p, int amount)
+        { if (!Active(p)) return amount; var b = p.InfinityRewardBudget; return TakeAmplifiedCapped(b, ref b.Shards, amount, 3, InfinityBudgetKind.Shards); }
         public static bool CanConvertDust(Profile p, int batches) => !Active(p) || (batches > 0 && p.InfinityRewardBudget.DustConversions + 1e-9 >= batches && p.InfinityRewardBudget.Shards + 1e-9 >= (long)batches * Economy.ShardsPerBatch);
         public static bool ReserveDustConversion(Profile p, int batches)
         {
@@ -270,6 +310,30 @@ namespace SodRpg.Core.Game
             if (!CanBuyMerchant(p)) return false;
             if (Active(p)) p.InfinityRewardBudget.Merchants = Math.Max(0, p.InfinityRewardBudget.Merchants - 1);
             return true;
+        }
+        /// <summary>ボスの刻印遺物など Take を通らない遺物枠の充当結果を、通知状態に反映する。</summary>
+        internal static void NoteRelicGate(Profile p, bool granted)
+        { if (Active(p)) MarkCap(p.InfinityRewardBudget, InfinityBudgetKind.Relics, !granted); }
+        private static readonly string[] CapNoticeKindsJa =
+            { "遺物", "Epic以上の遺物", "伝説遺物", "欠片", "調律石", "夢XP", "星XP", "覚醒" };
+        private static readonly string[] CapNoticeKindsEn =
+            { "relics", "Epic+ relics", "legendary relics", "shards", "tuning stones", "Dream XP", "Star XP", "awakening" };
+        /// <summary>枠が尽きて報酬が減った種類のうち未通知のものについて、通知を1件ずつ作って events に追記する。
+        /// 種類ごとに、回復（満額の充当）を挟むまで再通知しない。通常モードでは何も出ない。</summary>
+        public static void CollectCapNotices(Profile p, List<GameEvent> events)
+        {
+            if (!Active(p) || events == null) return;
+            var b = p.InfinityRewardBudget;
+            byte pending = (byte)(b.CappedKinds & ~b.CappedKindsNotified);
+            if (pending == 0) return;
+            b.CappedKindsNotified |= pending;
+            for (int kind = 0; kind < CapNoticeKindsJa.Length; kind++)
+            {
+                if ((pending & (1 << kind)) == 0) continue;
+                events.Add(new GameEvent(EventKind.Info, Loc.T(
+                    $"インフィニティの報酬の上限に達しました：{CapNoticeKindsJa[kind]}（戦闘を続けると少しずつ回復します）",
+                    $"Infinity reward cap reached: {CapNoticeKindsEn[kind]} (it refills slowly as combat continues)")));
+            }
         }
     }
 }

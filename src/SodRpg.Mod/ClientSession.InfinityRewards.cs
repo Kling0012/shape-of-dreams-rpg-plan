@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using SodRpg.Core.Game;
 
 namespace SodRpg.Mod
@@ -16,7 +17,16 @@ namespace SodRpg.Mod
 
         // Native elapsedGameTime is synchronized and stops during game/AFK pause.
         // Samples are never restored: joining/loading starts a fresh observation, not a refill.
-        private void TickInfinityRewards() => SampleInfinityRewards(false);
+        // 通知の受け皿は使い回す：毎フレームの割り当てゼロで、未通知の上限だけを1件ずつ出す。
+        private readonly List<GameEvent> _capNoticeBuffer = new List<GameEvent>();
+
+        private void TickInfinityRewards()
+        {
+            SampleInfinityRewards(false);
+            _capNoticeBuffer.Clear();
+            InfinityRewards.CollectCapNotices(Profile, _capNoticeBuffer);
+            for (int i = 0; i < _capNoticeBuffer.Count; i++) Emit(_capNoticeBuffer[i]);
+        }
 
         private void ResetInfinityRewardSamples()
         {

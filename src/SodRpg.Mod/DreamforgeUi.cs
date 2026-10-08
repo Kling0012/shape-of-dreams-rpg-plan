@@ -416,6 +416,11 @@ namespace SodRpg.Mod
                     .Append(Loc.T(" · 圧段階 ", " · pressure stage ")).Append(infinity.PressureStage);
                 if (infinity.PressureStage == InfinityRunState.MaximumPressureStage) sb.Append(Loc.T("（上限）", " (cap)"));
                 sb.Append("</size>");
+                // 枠の残りは整数（切り捨て）で出す：文字列が変化するのは端数がまたぐときだけ。
+                var budget = p.InfinityRewardBudget;
+                sb.Append("\n<size=13><color=#9aa0b8>").Append(Loc.T(
+                    $"報酬枠 残り：遺物 {(int)Math.Floor(budget.Relics + 1e-9)}・欠片 {(int)Math.Floor(budget.Shards + 1e-9)}",
+                    $"Reward budget left: {(int)Math.Floor(budget.Relics + 1e-9)} relics, {(int)Math.Floor(budget.Shards + 1e-9)} shards")).Append("</color></size>");
                 string choiceNotice = _s.InfinityChoiceNotice;
                 if (choiceNotice != null)
                     sb.Append("\n<color=#ffd27f>").Append(choiceNotice).Append("</color>");

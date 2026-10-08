@@ -8,6 +8,8 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
+- インフィニティで報酬枠が尽きて遺物や欠片などが出なくなったとき、種類ごとに1回だけ通知し、HUDに遺物・欠片の残り枠を表示するようにしました。 / Infinity now notifies once per reward kind when its budget runs out, and the HUD shows the remaining relic/shard budgets.
+
 ---
 
 ## v2.10.9 — 鞄あふれの追加ダストが止まる問題の修正（2026-10-08）

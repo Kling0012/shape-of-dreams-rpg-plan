@@ -423,5 +423,70 @@ namespace SodRpg.Core.Tests
             Assert.Equal("run-104", reloaded.CompletedRunId);
             Assert.True(reloaded.CompletedRunSecuredReturn);
         }
+
+        /// <summary>報酬枠が尽きた通知は、種類ごとに尽きたとき1回だけ出て、満額の充当を挟むと再度1回だけ出る。</summary>
+        [Fact]
+        public void Budget_cap_notices_fire_once_per_exhaustion_and_again_after_refill()
+        {
+            var p = BeginInfinityRun(151UL, "cap-notice");
+            var notices = new List<GameEvent>();
+            InfinityRewards.CollectCapNotices(p, notices);
+            Assert.Empty(notices);
+
+            // 予算0では要求より少なく返る。通知は1回だけ（Info、赤ではない）。
+            Assert.Equal(0, InfinityRewards.LimitShards(p, 5));
+            InfinityRewards.CollectCapNotices(p, notices);
+            GameEvent shardNotice = Assert.Single(notices);
+            Assert.Equal(EventKind.Info, shardNotice.Kind);
+            Assert.Contains("欠片", shardNotice.Text);
+            notices.Clear();
+            InfinityRewards.CollectCapNotices(p, notices);
+            Assert.Empty(notices); // 連打しない
+            Assert.Equal(0, InfinityRewards.LimitShards(p, 5));
+            InfinityRewards.CollectCapNotices(p, notices);
+            Assert.Empty(notices); // 回復するまでは再通知しない
+
+            // 満額充当されれば通知状態は解ける
+            InfinityRewards.AdvanceCombat(p, 3600);
+            Assert.Equal(5, InfinityRewards.LimitShards(p, 5));
+            InfinityRewards.CollectCapNotices(p, notices);
+            Assert.Empty(notices);
+
+            // 遺物も LimitReward での減額で1回だけ出る（種類は別扱い）
+            p.InfinityRewardBudget.Relics = 1.5;
+            var reward = new KillReward();
+            reward.Relics.Add(Loot.RollRelic(new Rng(7), Rarity.Epic, 10, null, null, p.Stash, p.Run.Satchel));
+            reward.Relics.Add(Loot.RollRelic(new Rng(8), Rarity.Epic, 10, null, null, p.Stash, p.Run.Satchel));
+            InfinityRewards.LimitReward(p, reward);
+            Assert.Single(reward.Relics);
+            InfinityRewards.CollectCapNotices(p, notices);
+            GameEvent relicNotice = Assert.Single(notices);
+            Assert.Contains("遺物", relicNotice.Text);
+            notices.Clear();
+
+            // 回復して満額出せた後、再度尽きたらもう1回だけ出る
+            InfinityRewards.AdvanceCombat(p, 3600);
+            var full = new KillReward();
+            full.Relics.Add(Loot.RollRelic(new Rng(9), Rarity.Epic, 10, null, null, p.Stash, p.Run.Satchel));
+            full.Relics.Add(Loot.RollRelic(new Rng(10), Rarity.Epic, 10, null, null, p.Stash, p.Run.Satchel));
+            InfinityRewards.LimitReward(p, full);
+            Assert.Equal(2, full.Relics.Count);
+            InfinityRewards.CollectCapNotices(p, notices);
+            Assert.Empty(notices);
+            p.InfinityRewardBudget.Relics = 0.9;
+            var retry = new KillReward();
+            retry.Relics.Add(Loot.RollRelic(new Rng(11), Rarity.Epic, 10, null, null, p.Stash, p.Run.Satchel));
+            InfinityRewards.LimitReward(p, retry);
+            Assert.Empty(retry.Relics);
+            InfinityRewards.CollectCapNotices(p, notices);
+            Assert.Single(notices);
+            notices.Clear();
+
+            // 通常モードでは通知が出ない
+            p.Run.Infinity = null;
+            Assert.Equal(999, InfinityRewards.LimitShards(p, 999));
+            InfinityRewards.CollectCapNotices(p, notices);
+            Assert.Empty(notices);
+        }
     }
 }

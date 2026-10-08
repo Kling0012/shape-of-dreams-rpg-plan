@@ -190,15 +190,17 @@ namespace SodRpg.Core.Game
                 if (bossPiece != null)
                 {
                     bool separateOrdinaryBudget = InfinityRewards.OrdinaryBudgetMultiplier(run, killWaypoint, tier) > 1;
-                    if (!InfinityRewards.Active(p) || separateOrdinaryBudget || p.InfinityRewardBudget.Relics + 1e-9 >= 1)
+                    bool relicBudgetGrants = !InfinityRewards.Active(p) || separateOrdinaryBudget || p.InfinityRewardBudget.Relics + 1e-9 >= 1;
+                    if (relicBudgetGrants)
                     {
                         if (InfinityRewards.Active(p))
                         {
-                            if (!separateOrdinaryBudget) p.InfinityRewardBudget.Relics = Math.Max(0, p.InfinityRewardBudget.Relics - 1);
+                            if (!separateOrdinaryBudget) { p.InfinityRewardBudget.Relics = Math.Max(0, p.InfinityRewardBudget.Relics - 1); InfinityRewards.NoteRelicGate(p, true); }
                             bossPiece.InfinityFreeSupply = true;
                         }
                         reward.Relics.Add(bossPiece);
                     }
+                    else InfinityRewards.NoteRelicGate(p, false);
                 }
             }
             if (!string.IsNullOrEmpty(heroKey))
