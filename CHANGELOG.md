@@ -8,7 +8,23 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
-星図のエッセンス枠がゲーム内のMOD再読み込み後に設計どおりにならないことがあるのを直し、再読み込み後の2回目の起動でインフィニティのパッチがすべて「未導入」と誤判定されるのを直しました。 / Star-chart essence slots now keep their designed counts across in-game mod reloads, and the second startup after a reload no longer misreports every Infinity patch as not installed.
+---
+
+## v2.10.7 — 協力プレイと再読み込み後のエッセンス枠の修正（2026-10-08）
+
+協力プレイや MOD の再読み込みのあとに、星図で増やしたエッセンス枠の数がずれる不具合を直しました。 / Fixes star-chart gem slot counts going wrong in co-op or after the mod is reloaded.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- 協力プレイや、ゲームを起動したまま MOD を再読み込みしたあとに、星図で増やした回避などのエッセンス枠が反映されなかったり、数がずれたまま戻らなかったりする問題を修正しました。 / Fixed star-chart gem slots (for example on the dodge) not being applied, or staying at the wrong count, in co-op or after reloading the mod while the game was running.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
 
 ---
 
