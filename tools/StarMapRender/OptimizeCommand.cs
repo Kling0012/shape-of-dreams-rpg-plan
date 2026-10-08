@@ -30,8 +30,15 @@ internal static class OptimizeCommand
                 default: throw new ArgumentException("unknown argument " + a);
             }
         }
-        StarClusters.RegisterAllGenerated();
         var heroes = StarClusters.GeneratedHeroes.Where(h => only == null || h.Contains(only, StringComparison.OrdinalIgnoreCase)).ToArray();
+        if (heroes.Length == 0)
+        {
+            Console.Error.WriteLine("--hero matched no generated heroes: " + only);
+            return 1;
+        }
+        bool partial = heroes.Length < StarClusters.GeneratedHeroes.Count;
+        if (partial && outPath != "-" && File.Exists(outPath)) return RefusePartialOverwrite(outPath!);
+        StarClusters.RegisterAllGenerated();
         var results = new Dictionary<string, string>();
         var lockObject = new object();
         Parallel.ForEach(heroes, new ParallelOptions { MaxDegreeOfParallelism = Math.Max(1, Environment.ProcessorCount) }, hero =>
@@ -73,9 +80,22 @@ internal static class OptimizeCommand
         sb.Append("        static partial void Find(string heroKey, ref int count, ref ulong fingerprint, ref string data)\n        {\n            switch (heroKey)\n            {\n");
         foreach (var pair in results.OrderBy(p => p.Key, StringComparer.Ordinal)) sb.Append(pair.Value);
         sb.Append("            }\n        }\n    }\n}\n");
-        File.WriteAllText(outPath!, sb.ToString(), new UTF8Encoding(false));
+        // A partial run is a scratch export, not an update to a combined table. CreateNew also protects a file
+        // another process creates while the optimizer is running, after the preflight check above.
+        FileStream output;
+        try { output = new FileStream(outPath!, partial ? FileMode.CreateNew : FileMode.Create, FileAccess.Write); }
+        catch (IOException) when (partial && File.Exists(outPath)) { return RefusePartialOverwrite(outPath!); }
+        using (output)
+        using (var writer = new StreamWriter(output, new UTF8Encoding(false))) writer.Write(sb.ToString());
         Console.WriteLine("wrote " + outPath);
         return 0;
+    }
+
+    private static int RefusePartialOverwrite(string path)
+    {
+        Console.Error.WriteLine("Refusing to overwrite an existing placement table with a partial --hero result: " + path
+            + ". Use a new scratch output path (or '-' for metrics only), or omit --hero to regenerate every hero.");
+        return 1;
     }
 
     private static StarMapOptimizer.Options Clone(StarMapOptimizer.Options o) => (StarMapOptimizer.Options)typeof(object)

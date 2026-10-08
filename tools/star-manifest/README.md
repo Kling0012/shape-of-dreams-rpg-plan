@@ -325,13 +325,19 @@ dotnet run --project tools/StarMapRender -c Release -- /home/wang/dev/sod-prompt
 # 検査：星の重なり・線が星の上を通る数・線の交差・最長の線を旅人ごとに出し、表が古ければ失敗する（終了コード1）
 dotnet run --project tools/StarMapRender -c Release -- --check
 
-# 再生成（全旅人。数分かかる）。--hero Cetus で一人だけ、--iterations N で反復回数（既定 300万、座標表は600万で作成）
+# 再生成（全旅人。数分かかる）。--iterations N で反復回数（既定 300万、座標表は600万で作成）
 dotnet run --project tools/StarMapRender -c Release -- --optimize src/SodRpg.Core/Game/StarMapPlacements.Generated.cs --iterations 8000000
+
+# 一人だけ試す場合は、未作成の別ファイルへ出力する（全旅人の座標表には上書きしない）
+dotnet run --project tools/StarMapRender -c Release -- --optimize cetus-placements.cs --hero Cetus
+# 座標表を保存せず、結果の指標だけを見る
+dotnet run --project tools/StarMapRender -c Release -- --optimize - --hero Cetus
 ```
 
+- `--hero` で一部だけを選んだ場合、既存ファイルへの上書きは拒否する（終了コード1、元ファイルは変更しない）。全旅人の座標表を更新するときは `--hero` を省く。一人分の試行をやり直すときは新しい出力先か `-` を使う。どの旅人にも一致しない指定も、出力せず終了コード1で失敗する。
 - 方法：焼きなまし法。動かすのは星団ごと（平行移動・回転・鏡映・つながる相手へ寄せる）、星団の中の星1つずつ（形の微調整）、橋のアクセス星・外縁の起点星・刻印、幹のルート星（小さな可動域）。始まりの星と幹の内側の星は動かさない。
 - 評価：線の交差、線が星の上を通る数（円盤＋余白）、線の長さ（長いほど強く減点）、星団の形・幹の形からのずれ。元から絡んでいる星団は形を保つ制約をゆるめて解く。
 - 守る条件（必ず満たす）：星どうしの間隔（同じ星団86／別の星団140／そのほか90〜110、刻印どうし160）、星団の外側へ他の星が入り込まない（凸包）、星団は記憶の扇形（ルートの区画）の中、前提の星は後続の星より内側（記憶の星団）。
 - 検査は `StarMapQuality.Measure`（Core）で、`tests/SodRpg.Core.Tests/StarMapLayoutQualityTests.cs` と `--check` が同じ計測を使う。テストは「座標だけが変わる」「重ならない」「線が星の上を通る数が上限以下」「最適化前より交差・長い線・線の平均長が減る」「表が現在の星に合っている」を確かめる。
-- 星や前提を変えて表が古くなったら `--check`（またはテスト）が知らせるので、上のコマンドで再生成する。表は決定的（同じ入力・同じ反復回数・同じ種なら同じ結果）。
+- 星の追加・削除・ID変更では、指紋が一致しなくなり既定の配置へ戻る。`--check`（またはテスト）が表の不一致を知らせるので、上のコマンドで再生成する。指紋は星IDの集合だけを検査するため、同じIDのまま線・前提条件だけを変えても表は自動で無効にならない。その場合も座標表を再生成し、`--check` と目視で配置を確認する。表は決定的（同じ入力・同じ反復回数・同じ種なら同じ結果）。
 
