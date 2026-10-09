@@ -10,6 +10,26 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v2.10.16 — 星図の刻印と仕掛けの効果の修正（2026-10-09）
+
+星図の刻印と仕掛けの効果が、設定どおりの強さで効くように直しました。 / Star map keystones and mechanisms now apply at their full listed strength.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- 星図の刻印や仕掛けの効果が、内部の上限で途中から削られ、表示どおりの強さにならないことがある問題を修正しました。 / Fixed star map keystone and mechanism effects sometimes being cut down by an internal limit instead of applying at their listed strength.
+- 刻印が複数の効果を付けるとき、効果どうしが打ち消し合うことがある問題を修正しました。 / Fixed keystones that grant several effects sometimes having those effects overwrite each other.
+- 回復の対象を変える星を取ったあと、効果範囲が正しく計算されないことがある問題を修正しました。 / Fixed the effect radius sometimes being miscalculated after taking a star that changes who gets healed.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
 ## v2.10.15 — 空殻の刻印でビルドが失敗する問題の修正（2026-10-09）
 
 空殻で一部の刻印を付けると、ビルドの保存や送信に失敗する不具合を直しました。 / Fixes builds failing to save or send with some Husk keystones.
