@@ -86,14 +86,14 @@ namespace SodRpg.Core.Tests
         }
 
         [Fact]
-        public void Authored_caps_precede_rank_while_native_baseline_and_timing_remain_unchanged()
+        public void Authored_value_precedes_rank_while_native_baseline_and_timing_remain_unchanged()
         {
             var build = new Build { SpentStarPoints = 504 };
             var echo = new GimmickDef { Trigger = GimmickTrigger.OnHit, Effect = GimmickEffect.Echo,
-                Value = 1500m, ExtraTargets = 0, ChanceUnits = 3700 };
+                Value = 1100m, ExtraTargets = 0, ChanceUnits = 3700 };
             var payload = AuthoredKeystoneComposer.GimmickPayload(echo, everyN: 3);
             var result = AuthoredKeystoneComposer.TransformAllocationPayload(build, payload, Memory);
-            Assert.Equal(2512m, result.Value);
+            Assert.Equal(2763.2m, result.Value);
             Assert.Equal(3, result.EveryN);
             Assert.Equal(37m, result.ProbabilityPercent);
             var key = new KeystoneDefinition("test.rank.key", new[] { Memory },

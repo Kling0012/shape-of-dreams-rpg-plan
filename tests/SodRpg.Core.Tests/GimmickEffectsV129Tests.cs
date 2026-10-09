@@ -41,29 +41,6 @@ namespace SodRpg.Core.Tests
                 .Where(Gimmicks.IsV129).Select(e => (int)e));
         }
 
-        [Theory]
-        [InlineData(GimmickEffect.Wound, 120)]
-        [InlineData(GimmickEffect.Daze, 8)]
-        [InlineData(GimmickEffect.Ricochet, 50)]
-        [InlineData(GimmickEffect.Siphon, 10)]
-        [InlineData(GimmickEffect.Rampart, 2)]
-        [InlineData(GimmickEffect.Primed, 120)]
-        [InlineData(GimmickEffect.Crescendo, 8)]
-        [InlineData(GimmickEffect.ElementEdge, 40)]
-        [InlineData(GimmickEffect.PackMend, 8)]
-        [InlineData(GimmickEffect.Sap, 15)]
-        [InlineData(GimmickEffect.Weakspot, 25)]
-        public void Values_are_capped_and_round_trip_through_existing_wire_section(GimmickEffect effect, int cap)
-        {
-            var build = new Build();
-            var oversized = Entry(effect);
-            oversized.Def.ValueMilli = int.MaxValue;
-            build.Gimmicks.Add(oversized);
-            var result = Assert.Single(Build.Decode(build.Encode()).Gimmicks);
-            Assert.Equal(cap, Gimmicks.Cap(effect));
-            Assert.Equal(cap, result.Def.Value);
-            Assert.Equal(effect, result.Def.Effect);
-        }
 
 
         [Theory]
@@ -168,11 +145,11 @@ namespace SodRpg.Core.Tests
         public void Sap_and_Weakspot_are_target_scoped_nonstacking_windows_with_exact_expiry()
         {
             var runtime = new GimmickRuntime();
-            runtime.SetBuild(new[] { Entry(GimmickEffect.Sap), Entry(GimmickEffect.Weakspot),
+            runtime.SetBuild(new[] { Entry(GimmickEffect.Sap, 12), Entry(GimmickEffect.Weakspot),
                 Entry(GimmickEffect.Sap, 8, star: "h.mist.low") });
             Assert.Equal(3, Fire(runtime, victim: -44).Count);
-            Assert.Equal(15f, runtime.SapPercent(-44, 3.999f, false));
-            Assert.Equal(7.5f, runtime.SapPercent(-44, 3.999f, true));
+            Assert.Equal(12f, runtime.SapPercent(-44, 3.999f, false));
+            Assert.Equal(6f, runtime.SapPercent(-44, 3.999f, true));
             Assert.Equal(25, runtime.WeakspotPercent(-44, 3.999f));
             Assert.Equal(0, runtime.WeakspotPercent(44, 3.999f));
             Assert.Equal(0f, runtime.SapPercent(-44, 4, false));

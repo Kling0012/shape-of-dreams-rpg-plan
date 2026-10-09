@@ -75,8 +75,8 @@ namespace SodRpg.Core.Game
                 var d = e.Def;
                 GimmickRawCodec.Validate(d);
                 if (d.ValuePrecise % 10000 != 0 && d.ValuePrecise > Gimmicks.Cap(d.Effect) * Gimmicks.PreciseValueScale
-                    || d.DurationUnits % 100 != 0 && (d.DurationUnits > 30000 || !Gimmicks.SupportsParameter(d, GimmickParam.Duration))
-                    || d.RadiusUnits % 100 != 0 && (d.RadiusUnits > 30000 || !Gimmicks.SupportsParameter(d, GimmickParam.Radius))
+                    || d.DurationUnits % 100 != 0 && (d.DurationUnits > Gimmicks.MaxParameterPercent * 100 || !Gimmicks.SupportsParameter(d, GimmickParam.Duration))
+                    || d.RadiusUnits % 100 != 0 && (d.RadiusUnits > Gimmicks.MaxParameterPercent * 100 || !Gimmicks.SupportsParameter(d, GimmickParam.Radius))
                     || d.ChanceUnits % 100 != 0 && (d.ChanceUnits > 10000 || !Gimmicks.SupportsParameter(d, GimmickParam.Chance)))
                     throw new InvalidOperationException("Invalid exact effect fields.");
                 if (e.Channel != null)
@@ -203,7 +203,7 @@ namespace SodRpg.Core.Game
                 if (pair.Key[0] == 'f')
                 {
                     int duration = Parse(f[1]), radius = Parse(f[2]), chance = Parse(f[3]);
-                    if (duration < 0 || duration > 30000 || radius < 0 || radius > 30000 || chance < 0 || chance > 10000
+                    if (duration < 0 || duration > Gimmicks.MaxParameterPercent * 100 || radius < 0 || radius > Gimmicks.MaxParameterPercent * 100 || chance < 0 || chance > 10000
                         || duration > 0 && !Gimmicks.SupportsParameter(e.Def, GimmickParam.Duration)
                         || radius > 0 && !Gimmicks.SupportsParameter(e.Def, GimmickParam.Radius)
                         || chance > 0 && !Gimmicks.SupportsParameter(e.Def, GimmickParam.Chance)

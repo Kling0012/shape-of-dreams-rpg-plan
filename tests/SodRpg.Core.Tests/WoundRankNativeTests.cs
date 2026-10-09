@@ -68,38 +68,52 @@ namespace SodRpg.Core.Tests
         }
 
         [Theory]
-        [InlineData(-1, 120f)]
-        [InlineData(0, 120f)]
-        [InlineData(500, 300f)]
-        [InlineData(504, 301.44f)]
-        [InlineData(int.MaxValue, 301.44f)]
-        public void Host_safety_budget_still_caps_excessive_totals_and_clamps_rank_bounds(int spent, float expected)
+        [InlineData(-1, 1d)]
+        [InlineData(0, 1d)]
+        [InlineData(500, 2.5d)]
+        [InlineData(504, 2.512d)]
+        [InlineData(int.MaxValue, 2.512d)]
+        public void Host_safety_budget_still_caps_excessive_totals_and_clamps_rank_bounds(int spent, double rankFactor)
         {
             var (host, runtime, enemy) = Setup(new Build { SpentStarPoints = spent });
+            float expected = (float)(Gimmicks.Cap(GimmickEffect.Wound) * rankFactor);
+            float initialHealth = expected * 4f;
+            enemy.currentHealth = initialHealth;
             // Deliberately exceed the final cap at the host boundary: removing the cap must fail this test.
             Apply(host, runtime, enemy, new GimmickDef { Trigger = GimmickTrigger.OnHit,
-                Effect = GimmickEffect.Wound, Value = 1000m, DurationPercent = 100 });
+                Effect = GimmickEffect.Wound, Value = Gimmicks.Cap(GimmickEffect.Wound) * 10m, DurationPercent = 100 });
+            Assert.Equal(initialHealth, enemy.currentHealth);
             UnityEngine.Time.time = 6;
             host.FlushAuthored(runtime);
-            Assert.Equal(1000f - expected, enemy.currentHealth, 3);
+            Assert.Equal(initialHealth - expected, enemy.currentHealth, 3);
+            UnityEngine.Time.time = 12;
+            host.FlushAuthored(runtime);
+            Assert.Equal(initialHealth - expected, enemy.currentHealth, 3);
         }
 
         [Theory]
-        [InlineData(0, 120f)]
-        [InlineData(504, 301.44f)]
-        public void Ordinary_payload_cap_precedes_rank_without_a_second_damage_multiplier(int spent, float expected)
+        [InlineData(0, 1d)]
+        [InlineData(504, 2.512d)]
+        public void Ordinary_payload_cap_precedes_rank_without_a_second_damage_multiplier(int spent, double rankFactor)
         {
             var build = new Build { SpentStarPoints = spent };
+            float expected = (float)(Gimmicks.Cap(GimmickEffect.Wound) * rankFactor);
             var pristine = new GimmickDef { Trigger = GimmickTrigger.OnHit,
-                Effect = GimmickEffect.Wound, Value = 1000m, DurationPercent = 100 };
+                Effect = GimmickEffect.Wound, Value = Gimmicks.Cap(GimmickEffect.Wound) * 10m, DurationPercent = 100 };
             var result = AuthoredKeystoneComposer.TransformAllocationPayload(build,
                 AuthoredKeystoneComposer.GimmickPayload(pristine), Memory);
             Assert.Equal(expected, (float)result.Value, 3);
             var (host, runtime, enemy) = Setup(build);
+            float initialHealth = expected * 4f;
+            enemy.currentHealth = initialHealth;
             Apply(host, runtime, enemy, AuthoredKeystoneComposer.EffectiveGimmick(pristine, result));
+            Assert.Equal(initialHealth, enemy.currentHealth);
             UnityEngine.Time.time = 6;
             host.FlushAuthored(runtime);
-            Assert.Equal(1000f - expected, enemy.currentHealth, 3);
+            Assert.Equal(initialHealth - expected, enemy.currentHealth, 3);
+            UnityEngine.Time.time = 12;
+            host.FlushAuthored(runtime);
+            Assert.Equal(initialHealth - expected, enemy.currentHealth, 3);
         }
 
         [Fact]

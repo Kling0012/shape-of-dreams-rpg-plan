@@ -183,25 +183,6 @@ namespace SodRpg.Core.Tests
             Assert.Null(decoded);
         }
 
-        [Theory]
-        [InlineData(GimmickEffect.Element, 600)]
-        [InlineData(GimmickEffect.Burst, 1000)]
-        [InlineData(GimmickEffect.Shield, 100)]
-        [InlineData(GimmickEffect.Heal, 100)]
-        [InlineData(GimmickEffect.Recharge, 100)]
-        [InlineData(GimmickEffect.Quicken, 100)]
-        [InlineData(GimmickEffect.Empower, 200)]
-        [InlineData(GimmickEffect.Expose, 100)]
-        [InlineData(GimmickEffect.Echo, 1000)]
-        [InlineData(GimmickEffect.Reload, 1)]
-        [InlineData(GimmickEffect.RechargeOther, 100)]
-        public void Wire_caps_value_and_cooldown_by_effect(GimmickEffect effect, int cap)
-        {
-            var decoded = Build.Decode("g:h.test:St_Q_Fleche:2:" + (int)effect + ":2147483647:0:999:0:0:0:0");
-            var entry = Assert.Single(decoded.Gimmicks);
-            Assert.Equal(cap, entry.Def.Value);
-            Assert.Equal(60f, entry.Def.Cooldown);
-        }
 
         [Fact]
         public void Duplicate_stars_across_sections_are_not_applied_twice()

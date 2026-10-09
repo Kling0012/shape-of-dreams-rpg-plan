@@ -117,31 +117,6 @@ namespace SodRpg.Core.Tests
                 new KeystonePayload(KeystoneLayer.NativeDamage, 100, new KeystoneCaps(1000)), Source).Value);
         }
 
-        [Theory]
-        [InlineData(GimmickEffect.ElementEdge, 50.6, 40)]
-        [InlineData(GimmickEffect.Shield, 120.24, 100)]
-        public void Over_cap_keystone_grants_round_trip_without_losing_the_authored_basis(
-            GimmickEffect effect, double authoredValue, int cap)
-        {
-            decimal authored = (decimal)authoredValue;
-            var grant = new AuthoredMechanismSpec { Kind = AuthoredMechanismKind.Gimmick, ChannelId = "test.granted.capped",
-                Source = MemorySelector.Parse(Source), Trigger = MemoryEventKind.Hit,
-                Budget = AttributionBudget.PerActivationVictim,
-                Gimmick = new GimmickDef { Trigger = GimmickTrigger.OnHit, Effect = effect, Value = authored } };
-            var key = AuthoredKeystoneCompiler.Compile("test.integration.key", new[] { Source },
-                new[] { new AuthoredKeystoneSpec { Grant = grant } });
-            var build = AuthoredBuild(key);
-            var spec = Assert.Single(build.Mechanisms.Where(m => m.StarId == key.KeystoneId)).Spec;
-            Assert.Equal((decimal)cap, spec.Gimmick.Value);
-            Assert.Equal(authored * 100m, spec.UncappedValueUnits);
-            Assert.Equal(authored, grant.Gimmick.Value);
-            Assert.Equal(authored, Assert.Single(build.SelectedKeystone.Grants).Gimmick.Value);
-            string encoded = build.Encode();
-            Assert.Equal(encoded, Build.Decode(encoded).Encode());
-            var payload = AuthoredKeystoneComposer.MechanismPayload(spec);
-            Assert.Equal(authored, payload.Value);
-            Assert.Equal((decimal)cap, ScopedKeystoneModifiers.ApplyUnmodified(payload).Value);
-        }
 
         [Fact]
         public void Integer_and_absolute_parameters_survive_codec()

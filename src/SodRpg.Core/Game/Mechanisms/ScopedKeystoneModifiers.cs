@@ -492,9 +492,6 @@ namespace SodRpg.Core.Game
         private static KeystoneResult ApplyCaps(KeystonePayload payload, KeystoneResult result)
         {
             decimal valueCap = Math.Min(payload.Caps.Value, result.ValueMaximum ?? decimal.MaxValue);
-            if (payload.Layer == KeystoneLayer.ModEffect && payload.Effect != GimmickEffect.None
-                && (payload.Kind == KeystonePayloadKind.Gimmick || payload.Kind == KeystonePayloadKind.None))
-                valueCap = Math.Min(valueCap, Gimmicks.Cap(payload.Effect));
             if (payload.Kind == KeystonePayloadKind.MemoryPrimed) valueCap = Math.Min(valueCap, 120m);
             bool daze = payload.Layer == KeystoneLayer.ModEffect && payload.Effect == GimmickEffect.Daze;
             if (daze)
@@ -604,6 +601,9 @@ namespace SodRpg.Core.Game
                     case KeystoneField.EveryN: if (value < 1) throw new InvalidOperationException("EveryN must be positive."); result.EveryNWorking = checked((long)value); break;
                     case KeystoneField.Argument:
                         if (payload.Effect == GimmickEffect.Ricochet) result.TargetWorking = checked(result.TargetWorking + (long)value - result.ArgumentWorking);
+                        // An authored recipient change admits the existing allied-heal radius before later radius transforms.
+                        if (payload.Effect == GimmickEffect.Heal && result.ArgumentWorking == 0 && value == 1 && result.RadiusMetres == 0)
+                            result.RadiusMetres = 10m;
                         result.ArgumentWorking = checked((long)value); break;
                     case KeystoneField.Probability: result.ProbabilityPercent = value; break;
                 }

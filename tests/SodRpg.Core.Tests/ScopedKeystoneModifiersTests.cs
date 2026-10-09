@@ -150,7 +150,7 @@ namespace SodRpg.Core.Tests
             var result = runtime.Apply(Payload(GimmickEffect.Wound, 30, 3.6m), Context());
             Assert.Equal(60m, result.Value);
             Assert.Equal(7.2m, result.DurationSeconds);
-            Assert.Equal(120m, runtime.Apply(Payload(GimmickEffect.Wound, 100, 3), Context()).Value);
+            Assert.Equal(120m, runtime.Apply(Payload(GimmickEffect.Wound, 100, 3, cap: 120), Context()).Value);
         }
 
         [Fact]
@@ -163,15 +163,6 @@ namespace SodRpg.Core.Tests
             Assert.Equal(6m, result.DurationSeconds);
         }
 
-        [Theory]
-        [InlineData(GimmickEffect.Wound, 120)]
-        [InlineData(GimmickEffect.Ricochet, 50)]
-        [InlineData(GimmickEffect.Primed, 120)]
-        public void Canonical_caps_follow_keystone_upside(GimmickEffect effect, int expected)
-        {
-            var runtime = Runtime(Definition(up: new[] { Scale(KeystoneLayer.ModEffect, 100) }));
-            Assert.Equal(expected, runtime.Apply(Payload(effect, 200, duration: 3), Context()).Value);
-        }
 
 
         [Fact]

@@ -102,9 +102,9 @@ namespace SodRpg.Core.Tests
 
 
         [Theory]
-        [InlineData(GimmickEffect.Empower, GimmickParam.Duration, KeystoneField.Duration, 400, 16)]
+        [InlineData(GimmickEffect.Empower, GimmickParam.Duration, KeystoneField.Duration, 200, 18)]
         [InlineData(GimmickEffect.Ricochet, GimmickParam.ExtraTargets, KeystoneField.TargetCount, 30, 2 + Gimmicks.MaxExtraTargets)]
-        public void Allocated_parameters_transform_raw_then_apply_native_final_cap(GimmickEffect effect, GimmickParam parameter,
+        public void Allocated_parameters_preserve_authored_transform_or_explicit_target_quota(GimmickEffect effect, GimmickParam parameter,
             KeystoneField field, decimal amount, decimal expected)
         {
             var build = Allocated(new GimmickDef { Trigger = GimmickTrigger.OnHit, Effect = effect, Value = 1,

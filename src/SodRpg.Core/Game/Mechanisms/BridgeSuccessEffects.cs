@@ -47,7 +47,7 @@ namespace SodRpg.Core.Game
             if (string.IsNullOrWhiteSpace(channelId) || !Enum.IsDefined(typeof(BridgePayloadKind), kind)
                 || !Enum.IsDefined(typeof(BridgeDamageBasis), damageBasis) || valueContributions == null
                 || modifierUnits < 0 || capUnits <= 0 || (kind == BridgePayloadKind.Recharge && capUnits > 10000)
-                || (kind == BridgePayloadKind.OrdinaryShield && capUnits > 1500)
+                || (kind == BridgePayloadKind.OrdinaryShield && capUnits > Gimmicks.Cap(GimmickEffect.Shield) * 100)
                 || (kind == BridgePayloadKind.Recharge) != (recipient != null)
                 || !Gimmicks.Finite(durationSeconds) || (kind == BridgePayloadKind.OrdinaryShield ? durationSeconds <= 0 : durationSeconds != 0))
                 throw new ArgumentException("Invalid bridge payload.");
@@ -83,12 +83,12 @@ namespace SodRpg.Core.Game
         {
             if (valueUnits <= 0 || valueUnits > int.MaxValue
                 || kind == BridgePayloadKind.Recharge && valueUnits > 10000
-                || kind == BridgePayloadKind.OrdinaryShield && valueUnits > 1500)
+                || kind == BridgePayloadKind.OrdinaryShield && valueUnits > Gimmicks.Cap(GimmickEffect.Shield) * 100)
                 throw new ArgumentOutOfRangeException(nameof(valueUnits));
             if (uncappedValueUnits.HasValue && uncappedValueUnits <= 0
                 || uncappedProbabilityUnits.HasValue && uncappedProbabilityUnits < 0)
                 throw new ArgumentOutOfRangeException(nameof(uncappedValueUnits));
-            int cap = finalCapUnits ?? (kind == BridgePayloadKind.OrdinaryShield ? 1500 : 10000);
+            int cap = finalCapUnits ?? (kind == BridgePayloadKind.OrdinaryShield ? Gimmicks.Cap(GimmickEffect.Shield) * 100 : 10000);
             if (cap <= 0 || valueUnits > cap
                 || uncappedDurationSeconds.HasValue && uncappedDurationSeconds < 0
                 || uncappedRadiusMetres.HasValue && uncappedRadiusMetres < 0

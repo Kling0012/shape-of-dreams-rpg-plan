@@ -331,7 +331,7 @@ namespace SodRpg.Core.Game
             else if (s.Ward != null)
             {
                 var w = s.Ward;
-                s.Ward = new AlliedWardDefinition(w.ChannelId, w.RecipientKind, w.AmountBasis, w.PoolKind, Math.Min(10000, value),
+                s.Ward = new AlliedWardDefinition(w.ChannelId, w.RecipientKind, w.AmountBasis, w.PoolKind, Math.Min(AlliedWardDefinition.MaxValueUnits, value),
                     w.IncludeOwner, w.RadiusMetres, w.DurationSeconds, w.BaseTargets, w.Targets - w.BaseTargets, w.MaxTargets, w.Limits, w.Budget);
             }
             else if (s.Dividend != null) s.Dividend = PressureDividendChannel.FromEffective(s.Dividend.SourceMemory, s.Dividend.RequiredMemories,
@@ -437,11 +437,6 @@ namespace SodRpg.Core.Game
                 build.PairCombos.RemoveAll(e => e.Def.Id == entry.Spec.Bridge.PairId);
         }
 
-        internal static void ComposeGrantedGimmick(AuthoredMechanismEntry entry)
-        {
-            if (entry.Spec.Gimmick != null)
-                ComposeEntry(entry, 1, Array.Empty<KeyValuePair<TalentDef, int>>());
-        }
 
         private static string Signature(AuthoredMechanismSpec spec)
         {
@@ -546,8 +541,8 @@ namespace SodRpg.Core.Game
                 s.UncappedDurationSeconds = (decimal)w.DurationSeconds * (1m + duration / 10000m);
                 s.UncappedRadiusMetres = (decimal)w.RadiusMetres * (1m + radius / 10000m);
                 s.UncappedTargetCount = checked(w.Targets + (int)targets);
-                s.Ward = new AlliedWardDefinition(w.ChannelId, w.RecipientKind, w.AmountBasis, w.PoolKind, Value(w.ValueUnits, 10000), w.IncludeOwner,
-                    Math.Min(15, w.RadiusMetres * (1 + radius / 10000f)), Math.Min(w.Limits == WardLimitProfile.SummonRecipientHealth ? 9 : 8,
+                s.Ward = new AlliedWardDefinition(w.ChannelId, w.RecipientKind, w.AmountBasis, w.PoolKind, Value(w.ValueUnits, AlliedWardDefinition.MaxValueUnits), w.IncludeOwner,
+                    Math.Min(15, w.RadiusMetres * (1 + radius / 10000f)), Math.Min(AlliedWardDefinition.MaxDurationSeconds,
                     w.DurationSeconds * (1 + duration / 10000f)), w.BaseTargets, checked(w.Targets - w.BaseTargets + (int)targets), w.MaxTargets, w.Limits, w.Budget);
             }
             else if (s.Dividend != null)
@@ -588,8 +583,8 @@ namespace SodRpg.Core.Game
                         rawDuration = (p.UncappedDurationSeconds ?? (decimal)w.DurationSeconds) * (1m + duration / 10000m);
                         rawRadius = (p.UncappedRadiusMetres ?? (decimal)w.RadiusMetres) * (1m + radius / 10000m);
                         rawTargets = checked((p.UncappedTargetCount ?? w.Targets) + (int)targets);
-                        ward = new AlliedWardDefinition(w.ChannelId, w.RecipientKind, w.AmountBasis, w.PoolKind, Math.Min(10000, Math.Min(p.CapUnits, raw)), w.IncludeOwner,
-                            (float)Math.Min(15m, rawRadius.Value), (float)Math.Min(w.Limits == WardLimitProfile.SummonRecipientHealth ? 9m : 8m, rawDuration.Value),
+                        ward = new AlliedWardDefinition(w.ChannelId, w.RecipientKind, w.AmountBasis, w.PoolKind, Math.Min(AlliedWardDefinition.MaxValueUnits, Math.Min(p.CapUnits, raw)), w.IncludeOwner,
+                            (float)Math.Min(15m, rawRadius.Value), (float)Math.Min((decimal)AlliedWardDefinition.MaxDurationSeconds, rawDuration.Value),
                             w.BaseTargets, Math.Max(0, rawTargets.Value - w.BaseTargets), w.MaxTargets, w.Limits, w.Budget);
                     }
                     return BridgePayload.FromEffective(p.ChannelId, p.Kind, Math.Min(p.CapUnits, raw),

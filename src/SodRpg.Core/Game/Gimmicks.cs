@@ -156,27 +156,28 @@ namespace SodRpg.Core.Game
         public const float BuffDuration = 4f;
         public const float AreaRadius = 4f;
 
+        /// <summary>Finite transport/runtime ceilings cover all authored ranks, ordinary boosts and keystone upsides.</summary>
         public static int Cap(GimmickEffect effect)
         {
             switch (effect)
             {
-                case GimmickEffect.Element: return 600;
+                case GimmickEffect.Element: return 1000;
                 case GimmickEffect.Reload: return 1;
-                case GimmickEffect.Burst:
-                case GimmickEffect.Echo: return 1000;
+                case GimmickEffect.Burst: return 1000;
+                case GimmickEffect.Echo: return 1500;
                 case GimmickEffect.Empower: return 200;
-                case GimmickEffect.Wound:
+                case GimmickEffect.Wound: return 1500;
                 case GimmickEffect.Primed: return 120;
-                case GimmickEffect.Daze:
-                case GimmickEffect.Crescendo:
-                case GimmickEffect.PackMend: return 8;
-                case GimmickEffect.Ricochet: return 50;
+                case GimmickEffect.Daze: return 20;
+                case GimmickEffect.Crescendo: return 8;
+                case GimmickEffect.PackMend: return 15;
+                case GimmickEffect.Ricochet: return 60;
                 case GimmickEffect.Siphon: return 10;
-                case GimmickEffect.Rampart: return 2;
-                case GimmickEffect.ElementEdge: return 40;
-                case GimmickEffect.Sap: return 15;
+                case GimmickEffect.Rampart: return 20;
+                case GimmickEffect.ElementEdge: return 60;
+                case GimmickEffect.Sap: return 25;
                 case GimmickEffect.Weakspot: return 25;
-                case GimmickEffect.Shield:
+                case GimmickEffect.Shield: return 300;
                 case GimmickEffect.Heal:
                 case GimmickEffect.Recharge:
                 case GimmickEffect.RechargeOther:
@@ -335,8 +336,8 @@ namespace SodRpg.Core.Game
                             + center + " (magic damage if ability power is higher)";
                     break;
                 case GimmickEffect.Shield:
-                    effect = ja ? "障壁 +最大HPの" + n + "%：自分に張る（" + duration + "秒。星の障壁は付与者と受け手の組ごとに1つだけで、残量と新しい量の大きい方を保って時間を更新。受け手の最大HPの15%まで）"
-                        : "Shield +" + n + "% of maximum health: shield yourself for " + duration + " seconds (one star shield per giver and recipient; keeps the larger of the remaining and new amounts, refreshes the duration, and is capped at 15% of the recipient's maximum health)";
+                    effect = ja ? "障壁 +最大HPの" + n + "%：自分に張る（" + duration + "秒。星の障壁は付与者と受け手の組ごとに1つだけで、残量と新しい量の大きい方を保って時間を更新）"
+                        : "Shield +" + n + "% of maximum health: shield yourself for " + duration + " seconds (one star shield per giver and recipient; keeps the larger of the remaining and new amounts and refreshes the duration)";
                     break;
                 case GimmickEffect.Heal:
                     effect = ja ? "HP回復 +各自の最大HPの" + n + "%：自分" + (def.Arg == 1 ? "と" + healRadius + "m以内の味方" : "") + "を回復"

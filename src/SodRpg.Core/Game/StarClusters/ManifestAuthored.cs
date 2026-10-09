@@ -126,7 +126,7 @@ namespace SodRpg.Core.Game
                 payload = new BridgePayload(bridgeId, BridgePayloadKind.Recharge, new[] { values[0] },
                     recipient: MemorySelector.Parse(direct ? directRecipient : effect == GimmickEffect.RechargeOther ? "@OTHER" : pair.RechargeMemory));
             else if (effect == GimmickEffect.Shield)
-                payload = new BridgePayload(bridgeId, BridgePayloadKind.OrdinaryShield, new[] { values[0] }, capUnits: 1500, durationSeconds: PairCombos.Duration);
+                payload = new BridgePayload(bridgeId, BridgePayloadKind.OrdinaryShield, new[] { values[0] }, capUnits: Gimmicks.Cap(GimmickEffect.Shield) * 100, durationSeconds: PairCombos.Duration);
             else
                 payload = new BridgePayload(bridgeId, BridgePayloadKind.Gimmick, new[] { values[0] },
                     capUnits: checked(Gimmicks.Cap(effect) * 100),
