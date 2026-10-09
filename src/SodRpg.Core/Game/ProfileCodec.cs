@@ -174,6 +174,9 @@ namespace SodRpg.Core.Game
                 .Add("runRecovery", WriteRunRecovery(p.RunRecovery))
                 .Add("killClassification", WriteKillClassification(p.KillClassification))
                 .Add("run", run);
+            // 直送の使用済み遠征は、使っていない保存が旧MODの書き出しと1バイトも変わらないよう、空なら書かない。
+            if (p.DirectStashUsedRunIds.Count != 0)
+                body.Add("directStashUsedRunIds", p.DirectStashUsedRunIds.OrderBy(id => id, StringComparer.Ordinal).Select(id => (object)id).ToList());
             if (p.OverflowBonusPendingRunId != null)
                 body.Add("overflowBonusPendingRunId", p.OverflowBonusPendingRunId)
                     .Add("overflowBonusPendingLedgerId", p.OverflowBonusPendingLedgerId)

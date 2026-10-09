@@ -308,6 +308,7 @@ namespace SodRpg.Core.Game
             if (p.Run != null || p.LastReport != null || p.PendingSalvage.Count != 0 || p.PendingTrades.Count != 0 || p.RetuneOffer != null
                 || p.InterruptedRelics.Count != 0 || p.InterruptedRelicsExecuted.Count != 0
                 || p.InterruptedRelicsClaimedRunIds.Count != 0 || p.InterruptedRelicsRetiredSourceRunIds.Count != 0
+                || p.DirectStashUsedRunIds.Count != 0
                 || p.LoadedVersion != Game.Profile.CurrentVersion || p.DreamLevel != 1 || p.DreamXp != 0
                 || p.BulkSalvageMaxRarity != Rarity.Uncommon || p.BestItemLevel != 1 || p.StartDepth != 0 || p.LastDreamDepth != 0
                 || p.Materials.Count != 0 || p.LostAndFound.Count != 0 || p.Feats.Count != 0

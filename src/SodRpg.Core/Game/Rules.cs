@@ -124,6 +124,8 @@ namespace SodRpg.Core.Game
             }
             // 開始深度は v1.1 で廃止（本体の Limbo 深度に統合）。
             p.Run = new RunState { RunId = runId, HeroKey = heroKey, LevelAtStart = p.DreamLevel, DailyId = daily?.Id ?? 0, LimboDepth = Math.Max(0, limboDepth), DreamDepth = dreamDepth ?? p.LastDreamDepth };
+            // 直送の使用済みは現在の遠征だけが意味を持つ。前の遠征の記録をここで捨てる（保存も小さく済む）。
+            p.DirectStashUsedRunIds.RemoveWhere(used => used != runId);
             if (limboDepth > 0)
             {
                 ev.Add(new GameEvent(EventKind.Info, Loc.T(
@@ -472,6 +474,16 @@ namespace SodRpg.Core.Game
                 : Loc.T($"次のゾーンの道標：{Waypoints.Get(waypoint).Name}", $"Next zone waypoint: {Waypoints.Get(waypoint).Name}")) };
         }
 
+        /// <summary>保管庫へ良い物から順に入れ、入りきらない分を overflow へ残す（確保と鞄の直送で同じ扱い）。</summary>
+        private static void FillStash(Profile p, IEnumerable<Relic> relics, List<Relic> overflow)
+        {
+            foreach (var r in relics.OrderByDescending(r => r.Score))
+            {
+                if (p.Stash.Count < Workshop.StashCapacity(p)) p.Stash.Add(r);
+                else overflow.Add(r);
+            }
+        }
+
         private static List<GameEvent> Secure(Profile p, bool awardStarXp)
         {
             var ev = new List<GameEvent>();
@@ -489,11 +501,7 @@ namespace SodRpg.Core.Game
             int tuning = run.SatchelTuning;
 
             var overflow = new List<Relic>();
-            foreach (var r in run.Satchel.OrderByDescending(r => r.Score))
-            {
-                if (p.Stash.Count < Workshop.StashCapacity(p)) p.Stash.Add(r);
-                else overflow.Add(r);
-            }
+            FillStash(p, run.Satchel, overflow);
             foreach (var r in overflow) shards = SaturatingAdd(shards, Content.SalvageShards(r.Rarity));
 
             p.AddMaterial(Materials.Shard, shards);

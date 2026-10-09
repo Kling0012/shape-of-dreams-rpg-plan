@@ -58,6 +58,14 @@ namespace SodRpg.Mod
         internal bool HasInterruptedRelics => InGame && Profile.Run != null && Profile.InterruptedRelics.Count != 0;
         internal bool CanClaimInterruptedRelics => HasInterruptedRelics && !CoopTradeLocked && Rules.CanClaimInterruptedRelics(Profile);
         internal string ClaimInterruptedRelics() => throw new NotSupportedException("Interrupted relic persistence is outside the refund fixture.");
+        internal bool HasDirectStash => InGame && Profile.Run != null;
+        internal bool DirectStashUsedThisRun => Profile.Run != null && Profile.DirectStashUsedRunIds.Contains(Profile.Run.RunId);
+        internal bool CanStashSatchelNow => HasDirectStash && !DirectStashUsedThisRun && !CoopTradeLocked && Rules.CanStashSatchelNow(Profile);
+        internal string StashSatchelNow()
+        {
+            Notices.AddRange(Rules.StashSatchelNow(Profile));
+            return null;
+        }
         internal string InfinityChoiceNotice => null; // Ordinary-mode refund fixture; Infinity uses the native session harness.
         internal readonly List<GameEvent> Notices = new List<GameEvent>();
         internal void MarkDirty(bool build) => Dirty |= build;

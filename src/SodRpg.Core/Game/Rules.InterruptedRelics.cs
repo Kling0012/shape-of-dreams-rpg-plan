@@ -32,6 +32,13 @@ namespace SodRpg.Core.Game
             return null;
         }
 
+        /// <summary>予約・取引中・分解待ち・協力トレードの預かり中の遺物か。中断遺物の受け取りと鞄の保管庫直送で共通の除外。</summary>
+        private static bool IsSatchelRelicReserved(Profile p, Relic relic, ISet<string> reservedUids)
+            => (reservedUids != null && reservedUids.Contains(relic.Uid))
+                || p.PendingTrades.Any(trade => trade.Uid == relic.Uid || trade.Relic?.Uid == relic.Uid)
+                || p.PendingSalvage.Any(pending => pending.Relic.Uid == relic.Uid)
+                || (p.CoopTradePending != null && p.CoopTradePending.Relics.Any(escrow => escrow.Relic.Uid == relic.Uid));
+
         private static void CaptureInterruptedRelics(Profile p, ISet<string> reservedUids, List<GameEvent> events)
         {
             if (p.InterruptedRelicsRetiredSourceRunIds.Contains(p.Run.RunId)) return;
@@ -39,10 +46,7 @@ namespace SodRpg.Core.Game
             for (int i = 0; i < p.Run.Satchel.Count; i++)
             {
                 var relic = p.Run.Satchel[i];
-                if ((reservedUids != null && reservedUids.Contains(relic.Uid))
-                    || p.PendingTrades.Any(trade => trade.Uid == relic.Uid || trade.Relic?.Uid == relic.Uid)
-                    || p.PendingSalvage.Any(pending => pending.Relic.Uid == relic.Uid)
-                    || (p.CoopTradePending != null && p.CoopTradePending.Relics.Any(escrow => escrow.Relic.Uid == relic.Uid))) continue;
+                if (IsSatchelRelicReserved(p, relic, reservedUids)) continue;
                 captured.Add(relic);
                 p.Run.Satchel.RemoveAt(i--);
             }
