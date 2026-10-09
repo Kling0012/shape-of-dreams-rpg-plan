@@ -79,7 +79,6 @@ internal static class PressureReport
         Parameter("nightmare/baseHealth", Nightmares.BaseHealthPct, "percent-max-hp");
         Parameter("nightmare/ward", Nightmares.WardShieldPct, "percent-max-hp");
         Parameter("nightmare/thorns", Nightmares.ThornsReflectPct, "percent-damage");
-        Parameter("nightmare/thornsCap", Nightmares.ThornsReflectMaxHealthPct, "percent-max-hp");
         Parameter("nightmare/thornsInterval", Nightmares.ThornsReflectInterval, "seconds");
         Parameter("nightmare/leech", Nightmares.RavenousLeechPct, "percent-damage");
         Parameter("nightmare/sunderArmor", Nightmares.SunderArmor, "armor");

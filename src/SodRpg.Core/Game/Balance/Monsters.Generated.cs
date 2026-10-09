@@ -33,8 +33,7 @@ namespace SodRpg.Core.Game
         internal const float SecondPhaseHealthRatio = 0.4f;
         internal const int BaseHealthPct = 40;
         internal const int WardShieldPct = 25;
-        internal const int ThornsReflectPct = 15;
-        internal const float ThornsReflectMaxHealthPct = 1.5f;
+        internal const float ThornsReflectPct = 1.5f;
         internal const float ThornsReflectInterval = 0.4f;
         internal const int RavenousLeechPct = 15;
         internal const int SunderArmor = 20;
