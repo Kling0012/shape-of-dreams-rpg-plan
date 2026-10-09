@@ -94,6 +94,15 @@ namespace SodRpg.Core.Tests
             Assert.True(report.Bundles <= 6, "Cetus bundled lines " + report.Bundles);
         }
 
+        [Fact]
+        public void Bismuth_was_laid_out_again_for_overlapping_lines()
+        {
+            var report = StarMapQuality.Measure(HeroTreeLayout.ForHero("Hero_Bismuth"));
+            Assert.True(report.Crossings <= 100, "Bismuth crossings " + report.Crossings);
+            Assert.True(report.NearTouches <= 5, "Bismuth near-touching lines " + report.NearTouches);
+            Assert.True(report.Bundles <= 8, "Bismuth bundled lines " + report.Bundles);
+        }
+
         [Theory, MemberData(nameof(Heroes))]
         public void The_placement_table_matches_the_current_stars(string hero)
         {
