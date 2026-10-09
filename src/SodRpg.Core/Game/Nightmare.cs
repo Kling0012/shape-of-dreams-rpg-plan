@@ -97,8 +97,6 @@ namespace SodRpg.Core.Game
         public const int WardShieldPct = MonstersBalance.WardShieldPct;
         /// <summary>棘皮：受けたダメージを返す割合（%）。</summary>
         public const float ThornsReflectPct = MonstersBalance.ThornsReflectPct;
-        /// <summary>棘皮：同じ敵から同じ旅人へ返す間隔（秒）。多段攻撃・連打で何度も返さない。</summary>
-        public const float ThornsReflectInterval = MonstersBalance.ThornsReflectInterval;
 
         /// <summary>棘皮で返す量（与えたダメージの割合）。</summary>
         public static float ThornsReflectAmount(float damageDealt, float attackerMaxHealth)
@@ -277,7 +275,7 @@ namespace SodRpg.Core.Game
                 case NightmareAffix.Regenerating: return Loc.T($"毎秒最大HPの{MonsterBehavior.Number((decimal)RegenerationPctPerSecond)}%回復。攻撃を集中して倒す。", $"Heals {MonsterBehavior.Number((decimal)RegenerationPctPerSecond)}% max HP each second; focus damage to defeat it.");
                 case NightmareAffix.Arcane: return Loc.T($"魔力+{ArcanePowerPct}%・スキル加速+{ArcaneHaste}。術を避け、発動後に攻める。", $"Power +{ArcanePowerPct}%, haste +{ArcaneHaste}; evade spells and punish after casting.");
                 case NightmareAffix.Warded: return Loc.T($"防御+{WardedArmor}、出現時に最大HP{WardShieldPct}%の障壁。障壁を割って攻める。", $"Armor +{WardedArmor} and a spawn shield of {WardShieldPct}% max HP; break the barrier.");
-                case NightmareAffix.Thorned: return Loc.T($"防御+{ThornedArmor}。旅人から受けたダメージの{MonsterBehavior.Number((decimal)ThornsReflectPct)}%をその旅人へ返す（夢の圧と潜行で増える。{MonsterBehavior.Number((decimal)ThornsReflectInterval)}秒に1回まで。召喚獣の攻撃は返さない）。", $"Armor +{ThornedArmor}. Returns {MonsterBehavior.Number((decimal)ThornsReflectPct)}% of damage taken from a traveler to that traveler (raised by dream pressure and delve; once per {MonsterBehavior.Number((decimal)ThornsReflectInterval)} s; not to summons).");
+                case NightmareAffix.Thorned: return Loc.T($"防御+{ThornedArmor}。旅人から受けたダメージの{MonsterBehavior.Number((decimal)ThornsReflectPct)}%をその旅人へ返す（夢の圧と潜行で増える。召喚獣の攻撃は返さない）。", $"Armor +{ThornedArmor}. Returns {MonsterBehavior.Number((decimal)ThornsReflectPct)}% of damage taken from a traveler to that traveler (raised by dream pressure and delve; not to summons).");
                 case NightmareAffix.Ravenous: return Loc.T($"攻撃力+{RavenousAttackPct}%、与ダメージの{RavenousLeechPct}%回復。攻撃を避けて回復を防ぐ。", $"Attack +{RavenousAttackPct}%; heals for {RavenousLeechPct}% of damage dealt. Dodge to deny healing.");
                 case NightmareAffix.Sundering: return Loc.T($"攻撃力+{SunderingAttackPct}%、命中で防御-{SunderArmor}を{MonsterBehavior.Number((decimal)SunderSeconds)}秒。追撃を避ける。", $"Attack +{SunderingAttackPct}%; hits reduce armor by {SunderArmor} for {MonsterBehavior.Number((decimal)SunderSeconds)}s. Avoid follow-up hits.");
                 case NightmareAffix.Veiled: return Loc.T($"{MonsterBehavior.Number((decimal)MonsterBehavior.Range)}mより遠い攻撃の被ダメージ-{MonsterBehavior.Number((decimal)MonsterBehavior.GuardReduction * 100m)}%。{MonsterBehavior.Number((decimal)MonsterBehavior.Range)}m以内へ近づく。", $"Receives {MonsterBehavior.Number((decimal)MonsterBehavior.GuardReduction * 100m)}% less damage from beyond {MonsterBehavior.Number((decimal)MonsterBehavior.Range)}m; approach within {MonsterBehavior.Number((decimal)MonsterBehavior.Range)}m.");
