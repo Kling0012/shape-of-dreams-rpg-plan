@@ -152,6 +152,53 @@ namespace SodRpg.Core.Tests
         }
 
         [Fact]
+        public void Empty_new_interruption_keeps_the_previous_unclaimed_batch_claimable()
+        {
+            var p = Interrupted(out _);
+            // Limbo moves to the next depth with a fresh native run; an empty satchel must not
+            // retire the still-unclaimed batch (the claim button would never come back).
+            Rules.BeginRun(p, "third");
+            Assert.Equal("original", Assert.Single(p.InterruptedRelics).Uid);
+            Assert.Equal("source", p.InterruptedRelicsRunId);
+            Assert.Empty(p.LostAndFound);
+            Assert.DoesNotContain("source", p.InterruptedRelicsRetiredSourceRunIds);
+            Assert.True(Rules.CanClaimInterruptedRelics(p));
+            Rules.ClaimInterruptedRelics(p);
+            Assert.Equal("original", Assert.Single(p.Run.Satchel).Uid);
+        }
+
+        [Fact]
+        public void Non_empty_new_interruption_still_replaces_the_unclaimed_batch()
+        {
+            var p = Interrupted(out _);
+            p.Run.Satchel.Add(Relic("latest"));
+            Rules.BeginRun(p, "third");
+            Assert.Equal("latest", Assert.Single(p.InterruptedRelics).Uid);
+            Assert.Equal("recipient", p.InterruptedRelicsRunId);
+            Assert.Equal("original", Assert.Single(p.LostAndFound).Uid);
+            Assert.Contains("source", p.InterruptedRelicsRetiredSourceRunIds);
+        }
+
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public void Carried_over_pending_result_settles_the_stale_run_and_keeps_the_next_choice(bool victory)
+        {
+            var p = Profile.CreateNew(17);
+            Rules.BeginRun(p, "ended");
+            p.Run.Satchel.Add(Relic("ended-relic"));
+            // The session ended before conclusion; only the pending result was carried into recovery.
+            p.RunRecovery = new RunRecoveryState { PendingResultRunId = "ended", PendingVictory = victory };
+            Rules.BeginRun(p, "next");
+            Assert.Empty(p.InterruptedRelics);
+            Assert.Equal("ended-relic", Assert.Single(victory ? p.Stash : p.LostAndFound).Uid);
+            Assert.Equal(victory ? 1 : 0, p.Stats.Victories);
+            Assert.False(Rules.CanClaimInterruptedRelics(p));
+            Rules.ReachSecurePoint(p);
+            Assert.True(p.Run.AwaitingChoice);
+        }
+
+        [Fact]
         public void Source_continue_before_claim_cancels_rights_and_restores_original_satchel()
         {
             var p = Interrupted(out var source);

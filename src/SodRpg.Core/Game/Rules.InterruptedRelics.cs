@@ -34,6 +34,22 @@ namespace SodRpg.Core.Game
 
         private static void CaptureInterruptedRelics(Profile p, ISet<string> reservedUids, List<GameEvent> events)
         {
+            if (p.InterruptedRelicsRetiredSourceRunIds.Contains(p.Run.RunId)) return;
+            var captured = new List<Relic>();
+            for (int i = 0; i < p.Run.Satchel.Count; i++)
+            {
+                var relic = p.Run.Satchel[i];
+                if ((reservedUids != null && reservedUids.Contains(relic.Uid))
+                    || p.PendingTrades.Any(trade => trade.Uid == relic.Uid || trade.Relic?.Uid == relic.Uid)
+                    || p.PendingSalvage.Any(pending => pending.Relic.Uid == relic.Uid)
+                    || (p.CoopTradePending != null && p.CoopTradePending.Relics.Any(escrow => escrow.Relic.Uid == relic.Uid))) continue;
+                captured.Add(relic);
+                p.Run.Satchel.RemoveAt(i--);
+            }
+            // An empty new batch must not consume the previous unclaimed one: Limbo advances per depth
+            // with a fresh native run, so "moved on unsecured with an empty satchel" is routine there
+            // and retiring the old batch would erase the claim button forever.
+            if (captured.Count == 0) return;
             if (p.InterruptedRelics.Count > 0)
             {
                 p.LostAndFound.AddRange(p.InterruptedRelics);
@@ -45,23 +61,12 @@ namespace SodRpg.Core.Game
                         $"Previous interrupted relics moved to Lost & Found; {salvaged} overflow relic(s) became shards.")));
             }
             ClearInterruptedRelics(p);
-            if (p.InterruptedRelicsRetiredSourceRunIds.Contains(p.Run.RunId)) return;
-            for (int i = 0; i < p.Run.Satchel.Count; i++)
-            {
-                var relic = p.Run.Satchel[i];
-                if ((reservedUids != null && reservedUids.Contains(relic.Uid))
-                    || p.PendingTrades.Any(trade => trade.Uid == relic.Uid || trade.Relic?.Uid == relic.Uid)
-                    || p.PendingSalvage.Any(pending => pending.Relic.Uid == relic.Uid)
-                    || (p.CoopTradePending != null && p.CoopTradePending.Relics.Any(escrow => escrow.Relic.Uid == relic.Uid))) continue;
-                p.InterruptedRelics.Add(relic);
-                p.Run.Satchel.RemoveAt(i--);
-            }
-            if (p.InterruptedRelics.Count == 0) return;
+            p.InterruptedRelics.AddRange(captured);
             p.InterruptedRelicsId = Guid.NewGuid().ToString("N");
             p.InterruptedRelicsRunId = p.Run.RunId;
             events.Add(new GameEvent(EventKind.Info, Loc.T(
-                $"中断した遠征の遺物{p.InterruptedRelics.Count}個を受け取れます（現在の遠征で1回まで）。",
-                $"You can claim {p.InterruptedRelics.Count} relic(s) from the interrupted expedition, once this expedition.")));
+                $"中断した遠征の遺物{captured.Count}個を受け取れます（現在の遠征で1回まで）。",
+                $"You can claim {captured.Count} relic(s) from the interrupted expedition, once this expedition.")));
         }
 
         internal static void ClearInterruptedRelics(Profile p)
