@@ -91,6 +91,7 @@ namespace SodRpg.Core.Game
                     case "interruptedRelicsExecuted":
                     case "interruptedRelicsClaimedRunIds":
                     case "interruptedRelicsRetiredSourceRunIds":
+                    case "directStashUsedRunIds":
                         continue;
                 }
                 body.Add(property.Key, property.Value);

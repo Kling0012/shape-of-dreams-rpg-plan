@@ -57,6 +57,7 @@ namespace SodRpg.Mod
             // 最初に消えて押せなくなっていた（装備タブのロビーで約230px、鍛冶でも約100pxはみ出す。#128 と同じ型）。
             if (!_s.CoopTradeLocked) DrawAllocationRefund();
             DrawInterruptedRelics();
+            DrawDirectStash();
             GUILayout.Label(_status != null && Time.unscaledTime < _statusUntil ? _status : " ", _st.Warn);
 
             if (_s.CoopTradeLocked && _tab != 5)

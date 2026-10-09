@@ -8,6 +8,8 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
+遠征中に1回だけ、鞄の未確保の遺物を保管庫へ直接送れるボタンを追加しました（不具合で確保画面が出ないときの救済）。 / Added a once-per-expedition button that sends unsecured satchel relics straight to the stash (a rescue for when the secure screen fails to appear).
+
 Limboの途中で確保画面や「中断した遺物を受け取る」が出なくなることがある問題を修正しました。 / Fixed Limbo runs sometimes losing the secure-choice screen and the interrupted-relic claim button.
 
 ---

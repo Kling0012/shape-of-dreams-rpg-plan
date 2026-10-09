@@ -12,6 +12,8 @@ namespace SodRpg.Core.Game
             ReadInterruptedIds(body, "interruptedRelicsExecuted", p.InterruptedRelicsExecuted);
             ReadInterruptedIds(body, "interruptedRelicsClaimedRunIds", p.InterruptedRelicsClaimedRunIds);
             ReadInterruptedIds(body, "interruptedRelicsRetiredSourceRunIds", p.InterruptedRelicsRetiredSourceRunIds);
+            // 直送の使用済み遠征も同じ任意項目として読む（古い保存なら無くて空）。
+            ReadInterruptedIds(body, "directStashUsedRunIds", p.DirectStashUsedRunIds);
             p.InterruptedRelicsId = Str(body, "interruptedRelicsId");
             p.InterruptedRelicsRunId = Str(body, "interruptedRelicsRunId");
             var relics = new List<Relic>();
@@ -43,7 +45,7 @@ namespace SodRpg.Core.Game
             if (p.InterruptedRelics.Count == 0) Rules.ClearInterruptedRelics(p);
         }
 
-        private static void ReadInterruptedIds(JsonObject body, string key, SortedSet<string> into)
+        private static void ReadInterruptedIds(JsonObject body, string key, ICollection<string> into)
         {
             if (!body.TryGet(key, out object value) || !(value is List<object> ids)) return;
             foreach (var id in ids)

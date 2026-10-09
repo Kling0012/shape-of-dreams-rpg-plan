@@ -347,6 +347,8 @@ namespace SodRpg.Core.Game
         public SortedSet<string> InterruptedRelicsExecuted { get; } = new SortedSet<string>(StringComparer.Ordinal);
         public SortedSet<string> InterruptedRelicsClaimedRunIds { get; } = new SortedSet<string>(StringComparer.Ordinal);
         public SortedSet<string> InterruptedRelicsRetiredSourceRunIds { get; } = new SortedSet<string>(StringComparer.Ordinal);
+        /// <summary>「鞄の遺物を保管庫へ送る」を使い切った遠征（1遠征につき1回の救済機能）。</summary>
+        public HashSet<string> DirectStashUsedRunIds { get; } = new HashSet<string>(StringComparer.Ordinal);
         /// <summary>分解の応答待ち。装着・鍛冶・出来事の対象には含めない。</summary>
         public List<PendingSalvage> PendingSalvage { get; } = new List<PendingSalvage>();
         /// <summary>
@@ -563,6 +565,8 @@ namespace SodRpg.Core.Game
             InterruptedRelicsClaimedRunIds.UnionWith(source.InterruptedRelicsClaimedRunIds);
             InterruptedRelicsRetiredSourceRunIds.Clear();
             InterruptedRelicsRetiredSourceRunIds.UnionWith(source.InterruptedRelicsRetiredSourceRunIds);
+            DirectStashUsedRunIds.Clear();
+            DirectStashUsedRunIds.UnionWith(source.DirectStashUsedRunIds);
             PendingSalvage.Clear();
             PendingSalvage.AddRange(source.PendingSalvage);
             PendingTrades.Clear();
@@ -647,6 +651,7 @@ namespace SodRpg.Core.Game
             c.InterruptedRelicsExecuted.UnionWith(InterruptedRelicsExecuted);
             c.InterruptedRelicsClaimedRunIds.UnionWith(InterruptedRelicsClaimedRunIds);
             c.InterruptedRelicsRetiredSourceRunIds.UnionWith(InterruptedRelicsRetiredSourceRunIds);
+            c.DirectStashUsedRunIds.UnionWith(DirectStashUsedRunIds);
             foreach (var pending in PendingSalvage) c.PendingSalvage.Add(pending.Clone());
             foreach (var trade in PendingTrades) c.PendingTrades.Add(trade.Clone());
             c.CoopTradeExecuted.UnionWith(CoopTradeExecuted);
