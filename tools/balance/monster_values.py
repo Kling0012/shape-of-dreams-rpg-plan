@@ -43,9 +43,7 @@ _LEGACY_JSON = r"""{
   "nightmare": {
     "BaseHealthPct": 40,
     "WardShieldPct": 25,
-    "ThornsReflectPct": 15,
-    "ThornsReflectMaxHealthPct": 1.5,
-    "ThornsReflectInterval": 0.4,
+    "ThornsReflectPct": 1.5,
     "RavenousLeechPct": 15,
     "SunderArmor": 20,
     "SunderSeconds": 4.0,
@@ -443,7 +441,7 @@ def _unit(name):
     if "Multiplier" in name: return "multiplier"
     if name.endswith("Reduction") or name.endswith("Bonus"): return "ratio"
     if "Pct" in name: return "percent"
-    if "Seconds" in name or name in ("PulseHalfPeriod", "ThornsReflectInterval"): return "seconds"
+    if "Seconds" in name or name == "PulseHalfPeriod": return "seconds"
     if "Range" in name or "Radius" in name: return "meters"
     if "Depth" in name: return "depth"
     if name == "BonusShards": return "shards"
@@ -453,7 +451,7 @@ def _unit(name):
 
 FIELDS = {
     f"{group}.{name}": (name, "int" if type(value) is int else "float" if group == "behavior" or name in
-                           ("ThornsReflectMaxHealthPct", "ThornsReflectInterval", "SunderSeconds", "RegenerationPctPerSecond", "DeathBurstRadius") else "double", _unit(name))
+                           ("ThornsReflectPct", "SunderSeconds", "RegenerationPctPerSecond", "DeathBurstRadius") else "double", _unit(name))
     for group in ("behavior", "nightmare", "variants")
     for name, value in LEGACY[group].items()
 }

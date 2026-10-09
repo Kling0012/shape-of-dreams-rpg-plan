@@ -32,9 +32,7 @@
   "nightmare": {
     "BaseHealthPct": 40,
     "WardShieldPct": 25,
-    "ThornsReflectPct": 15,
-    "ThornsReflectMaxHealthPct": 1.5,
-    "ThornsReflectInterval": 0.4,
+    "ThornsReflectPct": 1.5,
     "RavenousLeechPct": 15,
     "SunderArmor": 20,
     "SunderSeconds": 4.0,

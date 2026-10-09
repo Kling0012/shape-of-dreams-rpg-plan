@@ -93,7 +93,7 @@ namespace SodRpg.Core.Tests
                 BitConverter.SingleToInt32Bits(MonsterBehavior.IncomingMultiplier(guards, 7f, 1f, true, true, false, 2f, false, false)));
             Assert.Equal(BitConverter.SingleToInt32Bits(1.2f),
                 BitConverter.SingleToInt32Bits(MonsterBehavior.IncomingMultiplier(guards, 7f, 1f, true, true, true, 2f, false, false)));
-            Assert.Equal(BitConverter.SingleToInt32Bits(Math.Min(10000f * 15 / 100f, 1000f * 1.5f / 100f)),
+            Assert.Equal(BitConverter.SingleToInt32Bits(10000f * 1.5f / 100f),
                 BitConverter.SingleToInt32Bits(Nightmares.ThornsReflectAmount(10000f, 1000f)));
         }
     }
