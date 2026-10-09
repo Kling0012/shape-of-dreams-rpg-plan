@@ -79,7 +79,19 @@ namespace SodRpg.Core.Tests
             Assert.True(after.Crossings * 100 <= before.Crossings * 80, hero + " crossings " + before.Crossings + " -> " + after.Crossings);
             Assert.True(after.EdgeStarPasses * 100 <= before.EdgeStarPasses * 30, hero + " edge-over-star " + before.EdgeStarPasses + " -> " + after.EdgeStarPasses);
             Assert.True(after.LongestEdge * 100 <= before.LongestEdge * 85, hero + " longest edge " + before.LongestEdge + " -> " + after.LongestEdge);
+            // 交わらないのに寄り添って見える線、同じ星から並んで走る線。まっすぐな道筋の線は構造上どうしても束になるので、束の基準はゆるめ。
+            Assert.True(after.NearTouches * 100 <= before.NearTouches * 40, hero + " near-touching lines " + before.NearTouches + " -> " + after.NearTouches);
+            Assert.True(after.Bundles * 100 <= before.Bundles * 85, hero + " bundled lines " + before.Bundles + " -> " + after.Bundles);
             Assert.True(after.MeanEdge * 100 <= before.MeanEdge * 90, hero + " mean edge " + before.MeanEdge + " -> " + after.MeanEdge);
+        }
+
+        [Fact]
+        public void Cetus_was_laid_out_again_for_overlapping_lines()
+        {
+            var report = StarMapQuality.Measure(HeroTreeLayout.ForHero("Hero_Cetus"));
+            Assert.True(report.Crossings <= 130, "Cetus crossings " + report.Crossings);
+            Assert.True(report.NearTouches <= 5, "Cetus near-touching lines " + report.NearTouches);
+            Assert.True(report.Bundles <= 6, "Cetus bundled lines " + report.Bundles);
         }
 
         [Theory, MemberData(nameof(Heroes))]

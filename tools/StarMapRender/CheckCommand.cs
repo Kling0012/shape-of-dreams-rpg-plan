@@ -13,8 +13,8 @@ internal static class CheckCommand
     {
         StarClusters.RegisterAllGenerated();
         int failures = 0;
-        Console.WriteLine("| hero | stars | crossings (before → after) | edge-over-star (before → after) | disc overlaps | min distance | longest edge (before → after) | table |");
-        Console.WriteLine("|---|---|---|---|---|---|---|---|");
+        Console.WriteLine("| hero | stars | crossings (before → after) | near-touches / bundles (before → after) | edge-over-star (before → after) | disc overlaps | min distance | longest edge (before → after) | table |");
+        Console.WriteLine("|---|---|---|---|---|---|---|---|---|");
         var details = new List<string>();
         foreach (string hero in StarClusters.GeneratedHeroes)
         {
@@ -31,7 +31,9 @@ internal static class CheckCommand
             if (after.PairsUnderMinimumSpacing > 0) problems.Add(after.PairsUnderMinimumSpacing + " star pairs closer than " + HeroTreeLayout.MinimumSpacing);
             if (after.EdgeStarPasses > 40) problems.Add(after.EdgeStarPasses + " lines run over unrelated stars (limit 40)");
             if (fresh && after.Crossings * 100 > before.Crossings * 80) problems.Add($"crossings {before.Crossings} → {after.Crossings} is not at least 20% better");
-            Console.WriteLine($"| {hero} | {after.Stars} | {before.Crossings} → {after.Crossings} | {before.EdgeStarPasses} → {after.EdgeStarPasses} | {after.DiscOverlaps} | {after.MinStarDistance:0.#} | {before.LongestEdge:0} → {after.LongestEdge:0} | {(fresh ? "fresh" : "STALE")} |");
+            if (fresh && after.NearTouches * 100 > before.NearTouches * 40) problems.Add($"near-touching lines {before.NearTouches} → {after.NearTouches} is not at least 60% better");
+            if (fresh && after.Bundles * 100 > before.Bundles * 85) problems.Add($"bundled lines {before.Bundles} → {after.Bundles} is not at least 15% better");
+            Console.WriteLine($"| {hero} | {after.Stars} | {before.Crossings} → {after.Crossings} | {before.NearTouches} / {before.Bundles} → {after.NearTouches} / {after.Bundles} | {before.EdgeStarPasses} → {after.EdgeStarPasses} | {after.DiscOverlaps} | {after.MinStarDistance:0.#} | {before.LongestEdge:0} → {after.LongestEdge:0} | {(fresh ? "fresh" : "STALE")} |");
             if (problems.Count > 0)
             {
                 failures++;
