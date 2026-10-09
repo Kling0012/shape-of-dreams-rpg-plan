@@ -8,6 +8,8 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
+Limboの途中で確保画面や「中断した遺物を受け取る」が出なくなることがある問題を修正しました。 / Fixed Limbo runs sometimes losing the secure-choice screen and the interrupted-relic claim button.
+
 ---
 
 ## v2.10.16 — 星図の刻印と仕掛けの効果の修正（2026-10-09）

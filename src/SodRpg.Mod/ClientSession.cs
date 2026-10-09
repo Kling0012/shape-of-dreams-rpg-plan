@@ -548,6 +548,12 @@ namespace SodRpg.Mod
             // The first reward must use the host's depth, including clients who join during an expedition.
             if (!CanChooseRunRules && (_receivedRunChoices == null || _receivedRunChoices.RunId != runId)) return;
             // 別のIDの未解決ランが残っていれば BeginRun の中で終わる。その契約の呪いを消す。
+            // Limbo は深度ごとに新しい本体ランで始まる。前の深度の結果が確定しきれず次のセッションへ
+            // 持ち越されたとき、ここで証拠を RunRecovery に残して待ち状態を消す。残したままでは
+            // FlushPendingRunRewards が次の遠征の確保地点（確保画面）を毎tick消してしまう。
+            CarryPendingResultIntoRecovery();
+            _pendingRunVictory = null;
+            _pendingResultRunId = null;
             int pacts = Profile.Run != null && Profile.Run.RunId != runId ? Profile.Run.Pacts.Count : 0;
             ActiveRunId = runId;
             PressureHealthMultiplier = PressureDamageMultiplier = 1f;
@@ -560,6 +566,18 @@ namespace SodRpg.Mod
             if (Onboarding.AutoEquipStarter(Profile, HeroKeyOf(LocalHero))) Emit(Rules.HintOnce(Profile, Hint.StarterGear));
             _buildDirty = true;
             SaveNow();
+        }
+
+        /// <summary>セッションをまたいで確定しなかった結果を、BeginRun の終着判定の証拠として RunRecovery に残す。
+        /// 保存前に落ちた場合も直前の結果が反映されるように、新しい本体ランへ移る前に呼ぶ。</summary>
+        private void CarryPendingResultIntoRecovery()
+        {
+            if (!_pendingRunVictory.HasValue || string.IsNullOrEmpty(_pendingResultRunId)
+                || Profile.Run == null || _pendingResultRunId != Profile.Run.RunId) return;
+            var state = Profile.RunRecovery ?? new RunRecoveryState();
+            state.PendingResultRunId = _pendingResultRunId;
+            state.PendingVictory = _pendingRunVictory;
+            Profile.RunRecovery = state;
         }
 
         /// <summary>本体の Limbo 深度（Limbo でなければ0）。</summary>
