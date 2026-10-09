@@ -4,7 +4,7 @@ namespace SodRpg.Core.Game
 {
     public static partial class Gimmicks
     {
-        public const int MaxParameterPercent = 300;
+        public const int MaxParameterPercent = 500;
         public const int MaxExtraTargets = 16;
 
         /// <summary>Only parameters with a real effect for this trigger and effect are accepted.</summary>

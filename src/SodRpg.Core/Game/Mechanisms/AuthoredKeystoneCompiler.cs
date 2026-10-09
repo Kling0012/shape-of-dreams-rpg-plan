@@ -37,7 +37,19 @@ namespace SodRpg.Core.Game
                         + (spec.Delta.HasValue ? 1 : 0) + (spec.Grant != null ? 1 : 0);
                     if (operations != 1 || spec.From.HasValue && !spec.To.HasValue
                         || spec.Maximum.HasValue && !spec.Delta.HasValue) throw new ArgumentException("Ambiguous keystone operation.");
-                    if (spec.Grant != null) { grants.Add(spec.Grant); continue; }
+                    if (spec.Grant != null)
+                    {
+                        var grant = spec.Grant;
+                        for (int i = 0; i < grants.Count; i++)
+                        {
+                            if (grants[i].ChannelId != grant.ChannelId) continue;
+                            grant = grant.Copy();
+                            grant.ChannelId += "." + grants.Count.ToString(System.Globalization.CultureInfo.InvariantCulture);
+                            break;
+                        }
+                        grants.Add(grant);
+                        continue;
+                    }
                     transforms.Add(spec.Percent.HasValue ? KeystoneTransform.Scale(spec.Layer, spec.Field, KeystoneMagnitude.FromPercent(spec.Percent.Value), spec.Scope)
                         : spec.To.HasValue ? KeystoneTransform.Set(spec.Layer, spec.Field, spec.To.Value, spec.Scope, spec.From)
                         : KeystoneTransform.Add(spec.Layer, spec.Field, spec.Delta.Value, spec.Scope, spec.Maximum));
@@ -86,9 +98,6 @@ namespace SodRpg.Core.Game
                     var entry = new AuthoredMechanismEntry { StarId = key.KeystoneId,
                         ContributorIds = new[] { key.KeystoneId }, Spec = AuthoredMechanismCodec.DecodeSpec(AuthoredMechanismCodec.EncodeSpec(grant)),
                         Provenance = new MechanismProvenance().Add(grant, index++) };
-                    // Grants retain their authored basis for later keystone transforms, but the
-                    // effective build must obey the same wire/runtime caps as purchased mechanisms.
-                    AuthoredMechanisms.ComposeGrantedGimmick(entry);
                     build.Mechanisms.Add(entry);
                 }
             }
@@ -117,7 +126,7 @@ namespace SodRpg.Core.Game
                 Gimmicks.SupportsParameter(def, GimmickParam.Duration)
                     ? (durationBaseOverride ?? GimmickDurationBase(def, Gimmicks.Cap(def.Effect))) * (1m + Gimmicks.MaxParameterPercent / 100m) : 0,
                 Gimmicks.SupportsParameter(def, GimmickParam.ExtraTargets) ? (def.Effect == GimmickEffect.Ricochet ? 2 : 5) + Gimmicks.MaxExtraTargets : 0,
-                radiusMetres: Gimmicks.SupportsParameter(def, GimmickParam.Radius)
+                radiusMetres: Gimmicks.SupportsParameter(def, GimmickParam.Radius) || def.Effect == GimmickEffect.Heal
                     ? GimmickRadiusBase(def) * (1m + Gimmicks.MaxParameterPercent / 100m) : 0),
                 KeystonePayloadKind.Gimmick, def.Effect, effectId, def.Arg, duration,
                 radiusOverride ?? (Gimmicks.SupportsParameter(def, GimmickParam.Radius)
@@ -152,7 +161,7 @@ namespace SodRpg.Core.Game
                     durationSeconds: spec.UncappedDurationSeconds ?? (decimal)spec.Relay.DurationSeconds, everyN: everyN);
             if (spec.Ward != null)
                 return new KeystonePayload(KeystoneLayer.ModEffect, value ?? spec.Ward.ValueUnits / 100m,
-                    new KeystoneCaps(100, spec.Ward.Limits == WardLimitProfile.SummonRecipientHealth ? 9 : 8,
+                    new KeystoneCaps(AlliedWardDefinition.MaxValueUnits / 100m, (decimal)AlliedWardDefinition.MaxDurationSeconds,
                         spec.Ward.MaxTargets, radiusMetres: 15), KeystonePayloadKind.AlliedWard, GimmickEffect.Shield, id,
                     durationSeconds: spec.UncappedDurationSeconds ?? (decimal)spec.Ward.DurationSeconds,
                     radiusMetres: spec.UncappedRadiusMetres ?? (decimal)spec.Ward.RadiusMetres,
@@ -193,7 +202,7 @@ namespace SodRpg.Core.Game
             targetOverride = targetOverride ?? payload.UncappedTargetCount;
             if (payload.Ward != null)
                 return new KeystonePayload(KeystoneLayer.ModEffect, valueOverride ?? payload.Ward.ValueUnits / 100m,
-                    new KeystoneCaps(100, payload.Ward.Limits == WardLimitProfile.SummonRecipientHealth ? 9 : 8, payload.Ward.MaxTargets, radiusMetres: 15),
+                    new KeystoneCaps(AlliedWardDefinition.MaxValueUnits / 100m, (decimal)AlliedWardDefinition.MaxDurationSeconds, payload.Ward.MaxTargets, radiusMetres: 15),
                     KeystonePayloadKind.AlliedWard, GimmickEffect.Shield, payload.ChannelId,
                     durationSeconds: durationOverride ?? (decimal)payload.Ward.DurationSeconds,
                     radiusMetres: radiusOverride ?? (decimal)payload.Ward.RadiusMetres,

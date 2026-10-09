@@ -308,7 +308,7 @@ namespace SodRpg.Mod
                         break;
                     case GimmickEffect.Rampart:
                         if (support == null || request.TargetCount <= 0) break;
-                        float amount = SupportStats.AmplifyShield(hero.maxHealth * Math.Min(2f, def.ValuePercent)
+                        float amount = SupportStats.AmplifyShield(hero.maxHealth * Math.Min(Gimmicks.Cap(GimmickEffect.Rampart), def.ValuePercent)
                             * Math.Min(Gimmicks.TargetLimit(def), request.TargetCount) / 100f, rt.Powers.Build.Get(Stat.ShieldPower));
                         float shieldDuration = Gimmicks.Duration(def, 4f);
                         AwardModShield(rt, hero, ModShieldPoolKind.Rampart, amount, shieldDuration,

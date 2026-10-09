@@ -57,10 +57,10 @@ namespace SodRpg.Core.Tests
             pools.Clear(); Assert.Equal(0, pools.Count); Assert.True(unrelated.Alive);
         }
         [Theory]
-        [InlineData(ModShieldPoolKind.Ordinary, 15f)]
-        [InlineData(ModShieldPoolKind.Rampart, 10f)]
-        [InlineData(ModShieldPoolKind.Allied, 3f)]
-        public void NativeCreationWithoutShieldSkipsAwardAndNextGrantUsesOriginalCap(ModShieldPoolKind kind, float cap)
+        [InlineData(ModShieldPoolKind.Ordinary)]
+        [InlineData(ModShieldPoolKind.Rampart)]
+        [InlineData(ModShieldPoolKind.Allied)]
+        public void NativeCreationWithoutShieldSkipsAwardAndNextGrantUsesOriginalCap(ModShieldPoolKind kind)
         {
             var pools = new ModShieldPools<Se_GenericShield_OneShot>();
             var recipient = new Entity();
@@ -70,21 +70,21 @@ namespace SodRpg.Core.Tests
             try
             {
                 root.AfterShieldCreated = handle => { handle.DestroyIfActive(); handle.shield = null; };
-                Assert.False(pools.Apply(key, new NativeModShieldAdapter(root, recipient), 20, 100, 0, 4, 1));
+                Assert.False(pools.Apply(key, new NativeModShieldAdapter(root, recipient), 2000, 100, 0, 4, 1));
                 Assert.Equal(0, pools.Count);
                 Assert.Equal(0f, recipient.Status.currentShield);
                 root.AfterShieldCreated = null;
-                Assert.True(pools.Apply(key, new NativeModShieldAdapter(root, recipient), 20, 100, 1, 4, 1));
-                Assert.Equal(cap, recipient.Status.currentShield, 4);
+                Assert.True(pools.Apply(key, new NativeModShieldAdapter(root, recipient), 2000, 100, 1, 4, 1));
+                Assert.Equal(100 * ModShieldPools<Se_GenericShield_OneShot>.CapRatio(kind), recipient.Status.currentShield, 4);
                 Assert.Equal(1, pools.Count);
             }
             finally { Mirror.NetworkServer.active = false; }
         }
         [Theory]
-        [InlineData(ModShieldPoolKind.Ordinary, 15f)]
-        [InlineData(ModShieldPoolKind.Rampart, 10f)]
-        [InlineData(ModShieldPoolKind.Allied, 3f)]
-        public void DestroyedNativePoolIsReplacedWithoutResurrectingItsRemainingAmount(ModShieldPoolKind kind, float cap)
+        [InlineData(ModShieldPoolKind.Ordinary)]
+        [InlineData(ModShieldPoolKind.Rampart)]
+        [InlineData(ModShieldPoolKind.Allied)]
+        public void DestroyedNativePoolIsReplacedWithoutResurrectingItsRemainingAmount(ModShieldPoolKind kind)
         {
             var pools = new ModShieldPools<Se_GenericShield_OneShot>();
             var recipient = new Entity();
@@ -96,14 +96,14 @@ namespace SodRpg.Core.Tests
             try
             {
                 root.AfterShieldCreated = handle => previous = handle;
-                Assert.True(pools.Apply(key, adapter, 20, 100, 0, 4, 1));
+                Assert.True(pools.Apply(key, adapter, 2000, 100, 0, 4, 1));
                 previous.DestroyIfActive();
                 previous.shield = null;
                 root.AfterShieldCreated = null;
                 Assert.True(pools.Apply(key, adapter, 1, 100, 1, 4, 1));
                 Assert.Equal(1f, recipient.Status.currentShield);
-                Assert.True(pools.Apply(key, adapter, 20, 100, 2, 4, 1));
-                Assert.Equal(cap, recipient.Status.currentShield, 4);
+                Assert.True(pools.Apply(key, adapter, 2000, 100, 2, 4, 1));
+                Assert.Equal(100 * ModShieldPools<Se_GenericShield_OneShot>.CapRatio(kind), recipient.Status.currentShield, 4);
                 Assert.False(previous.isActive);
                 Assert.Equal(1, pools.Count);
             }
@@ -134,7 +134,8 @@ namespace SodRpg.Core.Tests
             var pools = new ModShieldPools<Handle>(); var adapter = new Adapter();
             var key = new ModShieldPoolKey(1, 2, ModShieldPoolKind.Allied);
             Assert.Throws<ArgumentOutOfRangeException>(() => pools.Apply(key, adapter, float.NaN, 100, 0, 4, 1));
-            Assert.Throws<ArgumentOutOfRangeException>(() => pools.Apply(key, adapter, 5, 100, 0, 4, 1, .1f));
+            Assert.Throws<ArgumentOutOfRangeException>(() => pools.Apply(key, adapter, 5, 100, 0, 4, 1,
+                ModShieldPools<Handle>.CapRatio(key.Kind) + 1f));
             Assert.Equal(0, adapter.Processes);
         }
         [Fact]

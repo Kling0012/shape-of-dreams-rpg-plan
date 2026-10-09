@@ -98,9 +98,8 @@ namespace SodRpg.Core.Tests
                     System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(failure).Throw();
             }
 
-        // The expensive maximum-point purchase runs for a representative subset in the fast suite
-        // (Cetus: documented reference tree, Mist: largest slowest tree, Vesper: authored mechanisms);
-        // the exhaustive all-hero variants are SlowFacts and start the remaining heroes on demand.
+        // Purchases are cached across theories; the representative subset is prestarted,
+        // and all-hero checks start the remaining purchases on demand.
         internal static readonly string[] FastPlayedHeroes = { "Hero_Cetus", "Hero_Mist", "Hero_Vesper" };
 
         internal Played Play(string hero)
@@ -367,7 +366,7 @@ namespace SodRpg.Core.Tests
                     + " analysisTalentChars=" + capacity.MaximumEncodedTalentChars + Environment.NewLine);
         }
 
-        [Theory, MemberData(nameof(FastHeroes))]
+        [Theory, MemberData(nameof(Heroes))]
         public void Greedy_maximum_point_purchase_succeeds_and_the_build_round_trips(string hero)
         {
             WithHero(hero, tree =>
@@ -391,6 +390,7 @@ namespace SodRpg.Core.Tests
                         + refused.Count(r => r.StartsWith("keystone ", StringComparison.Ordinal)));
 
                 var build = Build.Compute(profile, hero, 0);
+                AssertMechanismValuesAreNotCapped(build, hero);
 
                 Assert.Equal(spent, build.SpentStarPoints);
                 string encoded = build.Encode();
@@ -407,16 +407,92 @@ namespace SodRpg.Core.Tests
                 Assert.InRange(submission.Length, 1, HostBuildValidation.MaxSubmissionChars);
                 Assert.True(HostBuildValidation.TryAccept(submission, hero, out var accepted, out string reason), "Host rejected the build: " + reason);
                 Assert.Equal(encoded, accepted.Encode());
+                AssertMechanismValuesAreNotCapped(decoded, hero);
+                AssertMechanismValuesAreNotCapped(accepted, hero);
             });
         }
 
-        [Fact]
-        public void Husk_over_cap_keystone_grants_allow_a_full_purchase_build_to_round_trip()
+        private static void AssertMechanismValuesAreNotCapped(Build build, string hero)
         {
-            // Husk's aura-prism grant is authored above ElementEdge's cap. Keep this
-            // release failure in the fast suite even when the exhaustive hero sweep is skipped.
-            Greedy_maximum_point_purchase_succeeds_and_the_build_round_trips("Hero_Husk");
+            foreach (var key in build.SelectedKeystones)
+                foreach (var grant in key.Grants)
+                {
+                    var stored = Assert.Single(build.Mechanisms, m => m.StarId == key.KeystoneId
+                        && m.Spec.ChannelId == grant.ChannelId);
+                    Assert.Equal(AuthoredKeystoneComposer.MechanismPayload(grant).Value,
+                        AuthoredKeystoneComposer.MechanismPayload(stored.Spec).Value);
+                }
+            foreach (var entry in build.Mechanisms)
+            {
+                var spec = entry.Spec;
+                if (spec.Gimmick == null && spec.Recharge == null && spec.Primed == null
+                    && spec.Relay == null && spec.Ward == null && spec.Dividend == null && spec.Bridge == null) continue;
+                var payloads = spec.Bridge != null
+                    ? spec.Bridge.Payloads.Select(p => AuthoredKeystoneComposer.BridgePayload(p)).ToArray()
+                    : new[] { AuthoredKeystoneComposer.MechanismPayload(spec) };
+                foreach (var payload in payloads)
+                {
+                    var unbounded = new KeystonePayload(payload.Layer, payload.Value,
+                        new KeystoneCaps(decimal.MaxValue, probabilityPercent: payload.Caps.ProbabilityPercent),
+                        payload.Kind, payload.Effect, payload.EffectId, payload.Argument, payload.DurationSeconds,
+                        payload.RadiusMetres, payload.DelaySeconds, payload.TargetCount, payload.EveryN, payload.ProbabilityPercent);
+                    foreach (string memory in VerifiedMechanismSlots.ForHero(hero))
+                        foreach (var slot in VerifiedMechanismSlots.ForMemory(hero, memory))
+                        {
+                            if (slot == MechanismMemorySlot.Movement || !spec.Source.Matches(
+                                new EquippedMechanismMemory(memory, 1, slot, true, false))) continue;
+                            var expected = AuthoredKeystoneComposer.TransformAllocationPayload(build, unbounded, memory,
+                                sourceSlot: slot, heroKey: hero);
+                            var actual = AuthoredKeystoneComposer.TransformAllocationPayload(build, payload, memory,
+                                sourceSlot: slot, heroKey: hero);
+                            Assert.True(expected.Value == actual.Value,
+                                hero + " " + entry.StarId + "@" + memory + ": authored composition "
+                                + expected.Value + " was capped to " + actual.Value);
+                            Assert.Equal(expected.DurationSeconds, actual.DurationSeconds);
+                            Assert.Equal(expected.RadiusMetres, actual.RadiusMetres);
+                            Assert.Equal(expected.TargetCount, actual.TargetCount);
+                        }
+                }
+            }
         }
+
+        [Theory, MemberData(nameof(Heroes))]
+        public void All_star_maximum_ranks_preserve_mechanism_values_with_every_keystone(string hero)
+        {
+            WithHero(hero, tree =>
+            {
+                var profile = Profile.CreateNew(1331);
+                var state = profile.Hero(hero);
+                state.StarXp = StarProgression.TotalXpForPoints(StarProgression.MaxPoints);
+                state.Kills = 1000000;
+                // This envelope deliberately exceeds the spendable budget; it is not submitted as a legal allocation.
+                foreach (var talent in tree.Where(t => !t.IsKeystone))
+                {
+                    state.Talents[talent.Id] = talent.MaxRank;
+                    if (talent.IsChoice) state.TalentChoices[talent.Id] = 0;
+                }
+                var keys = tree.Where(t => t.IsKeystone).ToArray();
+                var choices = tree.Where(t => t.IsChoice).ToArray();
+                var layout = HeroTreeLayout.ForHero(hero);
+                var byId = tree.ToDictionary(t => t.Id);
+                for (int option = 0; option < 2; option++)
+                {
+                    foreach (var choice in choices) state.TalentChoices[choice.Id] = option;
+                    for (int offset = 0; offset < keys.Length; offset += KeystoneSlots.Max)
+                    {
+                        state.ClearKeystones();
+                        foreach (var key in keys.Skip(offset).Take(KeystoneSlots.Max)) state.AddKeystone(key.Id);
+                        var build = Build.ComputeForValidatedTree(profile, hero, tree, state, state, layout,
+                            byId, layout.ReachabilitySnapshot(state), paidPoints: StarProgression.MaxSpendablePoints);
+                        AssertMechanismValuesAreNotCapped(build, hero);
+                        var decoded = Build.Decode(build.Encode());
+                        Assert.NotNull(decoded);
+                        AssertMechanismValuesAreNotCapped(decoded, hero);
+                    }
+                }
+            });
+        }
+
 
         /// <summary>Every generated hero, including the ones the fast subset skips (release gate; runs with SODRPG_SLOW=1).</summary>
         [SlowFact, Trait("Speed", "Slow")]

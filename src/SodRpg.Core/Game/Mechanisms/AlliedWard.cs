@@ -11,6 +11,8 @@ namespace SodRpg.Core.Game
     /// <summary>Effective payload, after the one GB/parameter/keystone layer. Percent integers are hundredths of one percent.</summary>
     public sealed class AlliedWardDefinition
     {
+        public const int MaxValueUnits = 20000;
+        public const float MaxDurationSeconds = 20f;
         public string ChannelId { get; }
         public WardRecipientKind RecipientKind { get; }
         public WardAmountBasis AmountBasis { get; }
@@ -40,10 +42,10 @@ namespace SodRpg.Core.Game
             if (limits == WardLimitProfile.SummonRecipientHealth && (recipientKind != WardRecipientKind.OwnedSummons
                 || amountBasis != WardAmountBasis.RecipientMaxHP || poolKind != ModShieldPoolKind.Allied || baseTargets != 1))
                 throw new ArgumentException("Summon recipient-health wards require their declared selector, basis, pool and baseline.");
-            float durationCap = limits == WardLimitProfile.SummonRecipientHealth ? 9f : 8f;
+            float durationCap = MaxDurationSeconds;
             int targetCap = limits == WardLimitProfile.SummonRecipientHealth ? 3 : recipientKind == WardRecipientKind.OwnedSummons ? 5 : 4;
             int targetMaximum = maxTargets ?? targetCap;
-            if (valueUnits <= 0 || valueUnits > 10000 || !FinitePositive(radiusMetres) || radiusMetres > 15f
+            if (valueUnits <= 0 || valueUnits > MaxValueUnits || !FinitePositive(radiusMetres) || radiusMetres > 15f
                 || !FinitePositive(durationSeconds) || durationSeconds > durationCap || baseTargets < 1
                 || targetMaximum < baseTargets || targetMaximum > targetCap || extraTargets < 0)
                 throw new ArgumentOutOfRangeException(nameof(valueUnits), "Effective ward exceeds its explicit profile limits.");

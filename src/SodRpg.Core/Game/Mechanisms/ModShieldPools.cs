@@ -50,9 +50,10 @@ namespace SodRpg.Core.Game
         {
             switch (kind)
             {
-                case ModShieldPoolKind.Ordinary: return .15f;
-                case ModShieldPoolKind.Rampart: return .10f;
-                case ModShieldPoolKind.Allied: return .03f;
+                // Covers authored shield coefficients, all Rampart targets and outgoing support amplification.
+                case ModShieldPoolKind.Ordinary:
+                case ModShieldPoolKind.Rampart:
+                case ModShieldPoolKind.Allied: return 10f;
                 default: throw new ArgumentOutOfRangeException(nameof(kind));
             }
         }

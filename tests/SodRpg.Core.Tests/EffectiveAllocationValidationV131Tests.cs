@@ -83,7 +83,7 @@ namespace SodRpg.Core.Tests
         [Fact]
         public void Each_rank_requires_gain_partial_cap_rank_is_allowed_and_fully_capped_rank_is_atomic_rejection()
         {
-            var sap = Effect("test.sap", GimmickEffect.Sap, 6m, 4, 2);
+            var sap = Effect("test.sap", GimmickEffect.Sap, Gimmicks.Cap(GimmickEffect.Sap) * 0.4m, 4, 2);
             var engine = Engine(sap);
             var p = Funded();
             for (int i = 0; i < 3; i++) Add(p, engine, sap.Id);
@@ -93,8 +93,8 @@ namespace SodRpg.Core.Tests
             var cap = plan.SaturationDetails.First(d => d.StarId == sap.Id && d.Field == AllocationEffectiveField.Value);
             Assert.Equal(4, cap.Rank);
             Assert.Equal(AllocationInertReason.Saturated, cap.Reason);
-            Assert.Equal(15000m, cap.EffectiveValue);
-            Assert.Equal(15000m, cap.Ceiling);
+            Assert.Equal(Gimmicks.Cap(GimmickEffect.Sap) * 1000m, cap.EffectiveValue);
+            Assert.Equal(Gimmicks.Cap(GimmickEffect.Sap) * 1000m, cap.Ceiling);
             Assert.Throws<AllocationValidationException>(() => engine.Commit(p, plan));
             Assert.Equal(before, State(p));
             Assert.Equal(6, engine.SpentPoints(p.Hero(Hero)));
@@ -386,7 +386,7 @@ namespace SodRpg.Core.Tests
         [Fact]
         public void Headroom_evaluates_unallocated_ranked_variants_and_reports_exact_first_inert_rank_without_mutation()
         {
-            var sap = Effect("test.headroom.sap", GimmickEffect.Sap, 6m, 4, 2);
+            var sap = Effect("test.headroom.sap", GimmickEffect.Sap, Gimmicks.Cap(GimmickEffect.Sap) * 0.4m, 4, 2);
             var p = Funded();
             var engine = Engine(sap);
             string before = State(p);
@@ -394,15 +394,16 @@ namespace SodRpg.Core.Tests
             Assert.True(row.Reachable);
             Assert.Equal(3, row.AttainableRanks);
             Assert.Equal(2, row.RankCost);
-            Assert.Contains(row.SaturationDetails, d => d.StarId == sap.Id && d.Rank == 4 && d.Ceiling == 15000m);
+            Assert.Contains(row.SaturationDetails, d => d.StarId == sap.Id && d.Rank == 4 &&
+                d.Ceiling == Gimmicks.Cap(GimmickEffect.Sap) * 1000m);
             Assert.Equal(before, State(p));
         }
 
         [Fact]
         public void Wound_duration_above_the_lifetime_cap_still_has_a_real_paid_rank_damage_benefit()
         {
-            var wound = Effect("test.wound", GimmickEffect.Wound, 80m);
-            wound.Gimmick.DurationUnits = 5000;
+            var wound = Effect("test.wound", GimmickEffect.Wound, Gimmicks.Cap(GimmickEffect.Wound));
+            wound.Gimmick.DurationUnits = Gimmicks.MaxParameterPercent * 100;
             var duration = Modifier("test.wound.duration", wound.Id, GimmickParam.Duration, 1m);
             var engine = Engine(wound, duration);
             var p = Funded();
@@ -418,7 +419,7 @@ namespace SodRpg.Core.Tests
         [Fact]
         public void Capped_explicit_additive_channel_does_not_gain_when_representative_star_id_changes()
         {
-            var existing = Effect("test.channel.z", GimmickEffect.Sap, 15m);
+            var existing = Effect("test.channel.z", GimmickEffect.Sap, Gimmicks.Cap(GimmickEffect.Sap));
             var candidate = Effect("test.channel.a", GimmickEffect.Sap, 1m);
             foreach (var talent in new[] { existing, candidate }) talent.EffectChannel = new EffectChannelDef
             { ChannelId = "test.c15.shared.sap", SourceMemory = Memory, ReceiverMemory = Memory };
@@ -427,7 +428,8 @@ namespace SodRpg.Core.Tests
             Add(p, engine, existing.Id);
             var plan = engine.Preview(p, Hero, Purchase(candidate.Id));
             Assert.False(plan.CanApply);
-            Assert.Contains(plan.SaturationDetails, d => d.StarId == candidate.Id && d.Ceiling == 15000m);
+            Assert.Contains(plan.SaturationDetails, d => d.StarId == candidate.Id &&
+                d.Ceiling == Gimmicks.Cap(GimmickEffect.Sap) * 1000m);
             Assert.False(p.Hero(Hero).Talents.ContainsKey(candidate.Id));
         }
 
@@ -457,7 +459,8 @@ namespace SodRpg.Core.Tests
         public void Unrelated_change_does_not_migrate_preexisting_dormant_or_already_inert_saved_ranks(bool connected)
         {
             var root = StatStar("test.dormant.root");
-            var dormant = Requires(Effect("test.dormant.saved", GimmickEffect.Sap, 9m, 3, 3), root.Id);
+            var dormant = Requires(Effect("test.dormant.saved", GimmickEffect.Sap,
+                Gimmicks.Cap(GimmickEffect.Sap) * 0.6m, 3, 3), root.Id);
             var unrelated = StatStar("test.dormant.other");
             var engine = Engine(root, dormant, unrelated);
             var p = Funded();
@@ -470,7 +473,7 @@ namespace SodRpg.Core.Tests
             Assert.Equal(1, p.Hero(Hero).Talents[unrelated.Id]);
             if (!connected) Add(p, engine, root.Id);
             Assert.Equal(3, p.Hero(Hero).Talents[dormant.Id]);
-            Assert.Equal(15m, Build.ComputeForTree(p, Hero, 0, Tree(root, dormant, unrelated)).Gimmicks
+            Assert.Equal(Gimmicks.Cap(GimmickEffect.Sap), Build.ComputeForTree(p, Hero, 0, Tree(root, dormant, unrelated)).Gimmicks
                 .First(e => e.StarId == dormant.Id).Def.Value);
         }
 

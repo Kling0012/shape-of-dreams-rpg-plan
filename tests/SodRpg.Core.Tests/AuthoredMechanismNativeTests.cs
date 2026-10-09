@@ -331,7 +331,7 @@ namespace SodRpg.Core.Tests
         [Theory]
         [InlineData(WardAmountBasis.CasterMaxOffense, ModShieldPoolKind.Allied, 2500, 25f)]
         [InlineData(WardAmountBasis.RecipientMaxHP, ModShieldPoolKind.Allied, 250, 50f)]
-        [InlineData(WardAmountBasis.RecipientMaxHP, ModShieldPoolKind.Ordinary, 2000, 300f)]
+        [InlineData(WardAmountBasis.RecipientMaxHP, ModShieldPoolKind.Ordinary, 2000, 400f)]
         public void Ward_preserves_basis_and_pool_through_decode_and_real_recipient_dispatch(WardAmountBasis basis, ModShieldPoolKind pool, int units, float amount)
         {
             var spec = new AuthoredMechanismSpec { Kind = AuthoredMechanismKind.AlliedWard, ChannelId = "native.ward", Source = Source(Identity),
@@ -411,16 +411,18 @@ namespace SodRpg.Core.Tests
                 new[] { KeystoneTransform.Scale(KeystoneLayer.ModEffect, KeystoneField.Value, new KeystoneMagnitude(-7500),
                     new KeystoneScope(targetEffectSet: new[] { GimmickEffect.Echo })) });
             var build = new Build { SelectedKeystone = key };
+            int cap = Gimmicks.Cap(GimmickEffect.Echo);
             build.Gimmicks.Add(new GimmickEntry { StarId = "test.legacy.echo", Memory = Q,
-                Def = new GimmickDef { Trigger = GimmickTrigger.OnHit, Effect = GimmickEffect.Echo, Value = 1000, UncappedValue = 2000 } });
+                Def = new GimmickDef { Trigger = GimmickTrigger.OnHit, Effect = GimmickEffect.Echo, Value = cap, UncappedValue = cap * 2 } });
             var (host, runtime) = Setup(Build.Decode(build.Encode())); var enemy = Enemy();
             var identity = host.Activation(runtime.Hero, Q); var native = new DamageData(100);
             host.NativeKeyDamage(runtime, enemy, identity, ref native); Assert.Equal(100, native.currentAmount, 4);
             host.LegacyNativeHit(runtime, enemy, identity, native.currentAmount);
-            UnityEngine.Time.time = .3f; host.FlushAuthored(runtime); Assert.Equal(500, enemy.currentHealth, 4);
+            float afterFirst = 1000f - cap / 2f;
+            UnityEngine.Time.time = .3f; host.FlushAuthored(runtime); Assert.Equal(afterFirst, enemy.currentHealth, 4);
             identity = host.Activation(runtime.Hero, Q); host.LegacyNativeHit(runtime, enemy, identity, 10);
             build.SelectedKeystone = null; host.BindAuthored(runtime, Build.Decode(build.Encode()));
-            UnityEngine.Time.time = .6f; host.FlushAuthored(runtime); Assert.Equal(400, enemy.currentHealth, 4);
+            UnityEngine.Time.time = .6f; host.FlushAuthored(runtime); Assert.Equal(afterFirst - cap / 10f, enemy.currentHealth, 4);
         }
 
         [Fact]
