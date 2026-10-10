@@ -32,7 +32,17 @@ namespace SodRpg.Core.Game
         /// <summary>遠征中に未確保の遺物を分解したときのドリームダスト。ホストは種別と引数からこれで計算する。</summary>
         public static int SalvageDust(Relic r) => SalvageDust(r.Rarity, r.Enhance);
 
-        public static int SalvageDust(Rarity rarity, int enhance) => Content.SalvageShards(rarity) * EconomyBalance.SalvageDustPerShard + enhance * EconomyBalance.SalvageDustPerEnhance;
+        public static int SalvageScale { get; set; } = 1;
+
+        public static int SalvageDust(Relic r, int scale) => SalvageDust(r.Rarity, r.Enhance, scale);
+
+        public static int SalvageDust(Rarity rarity, int enhance) => SalvageDust(rarity, enhance, SalvageScale);
+
+        public static int SalvageDust(Rarity rarity, int enhance, int scale)
+        {
+            int dust = Content.SalvageShards(rarity) * EconomyBalance.SalvageDustPerShard + enhance * EconomyBalance.SalvageDustPerEnhance;
+            return scale > 0 && dust <= int.MaxValue / scale ? dust * scale : dust;
+        }
 
         /// <summary>Unenhanced rate for optional overflow bonuses and persisted legacy overflow trades.</summary>
         public static int SatchelOverflowDust(Rarity rarity) => SalvageDust(rarity, 0);
@@ -373,14 +383,14 @@ namespace SodRpg.Core.Game
         }
 
         /// <summary>未確保の遺物の分解（v1.31）。受け取るダストは Economy.SalvageDust で計算する。</summary>
-        public PendingTrade BeginSalvage(Relic r, double now) =>
-            r == null ? throw new ArgumentNullException(nameof(r)) : BeginSalvage(r.Rarity, r.Enhance, r.Uid, now);
+        public PendingTrade BeginSalvage(Relic r, double now, int? scale = null) =>
+            r == null ? throw new ArgumentNullException(nameof(r)) : BeginSalvage(r.Rarity, r.Enhance, r.Uid, now, scale);
 
-        public PendingTrade BeginSalvage(Rarity rarity, int enhance, string uid, double now)
+        public PendingTrade BeginSalvage(Rarity rarity, int enhance, string uid, double now, int? scale = null)
         {
             if (string.IsNullOrEmpty(uid)) throw new ArgumentNullException(nameof(uid));
             EnsureRoom();
-            var t = new PendingTrade { Token = _next++, Kind = TradeKind.SalvageForDust, EarnDust = Economy.SalvageDust(rarity, enhance), Uid = uid, Rarity = (int)rarity, Enhance = enhance, StartedAt = now };
+            var t = new PendingTrade { Token = _next++, Kind = TradeKind.SalvageForDust, EarnDust = Economy.SalvageDust(rarity, enhance, scale ?? Economy.SalvageScale), Uid = uid, Rarity = (int)rarity, Enhance = enhance, StartedAt = now };
             _pending[t.Token] = t;
             return t;
         }

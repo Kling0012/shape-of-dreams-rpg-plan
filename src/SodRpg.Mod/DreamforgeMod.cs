@@ -38,6 +38,7 @@ namespace SodRpg.Mod
         {
             string stage = "native preflight";
             useGUILayout = false;
+            Economy.SalvageScale = 1;
             try
             {
                 if (harmony == null || string.IsNullOrEmpty(harmony.Id) || harmony.Id == "*")
@@ -72,7 +73,12 @@ namespace SodRpg.Mod
                 _host = new HostAuthority(() => _session?.Profile.Run?.DailyId ?? DailyDream.Today.Id);
                 _session.FirstLaunch();
                 _perfLogEnabled = File.Exists(Path.Combine(dir, "perf.flag"));
-                _devCommands = File.Exists(Path.Combine(dir, "dev.flag"));
+                try
+                {
+                    _devCommands = File.Exists(Path.Combine(dir, "dev.flag"));
+                    Economy.SalvageScale = _devCommands ? 4 : 1;
+                }
+                catch (Exception) { Economy.SalvageScale = 1; }
                 // Special edition builds enable the native dream seeds without any flag; the
                 // normal build keeps requiring both dev.flag and native-dream.flag.
                 bool nativeDreamFlag = File.Exists(Path.Combine(dir, "native-dream.flag"));
@@ -330,6 +336,7 @@ namespace SodRpg.Mod
         private void Stop()
         {
             _running = false;
+            Economy.SalvageScale = 1;
             if (_stopped) return;
             _stopped = true;
             _devCommands = false;
