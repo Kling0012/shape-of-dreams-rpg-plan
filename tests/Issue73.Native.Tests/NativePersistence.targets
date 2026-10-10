@@ -118,4 +118,10 @@
       <Compile Include="$(IntermediateOutputPath)InfinityChoiceNoticeUi.g.cs" />
     </ItemGroup>
   </Target>
+  <Target Name="CompileClientTickIsolation" BeforeTargets="CoreCompile">
+    <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/ClientSession.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)ClientTick.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="ClientSession" Methods="Tick" />
+    <ItemGroup>
+      <Compile Include="$(IntermediateOutputPath)ClientTick.g.cs" />
+    </ItemGroup>
+  </Target>
 </Project>
