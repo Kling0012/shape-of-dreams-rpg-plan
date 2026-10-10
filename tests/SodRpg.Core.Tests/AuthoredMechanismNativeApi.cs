@@ -130,7 +130,14 @@ namespace SodRpg.Mod
     {
         public uint netId = 1;
         public bool isKnockedOut;
-        public event Action<EventInfoCast> EntityEvent_OnCastCompleteBeforePrepare;
+        // Custom accessors let a double reject the cast-complete subscription like a native API change would.
+        internal bool RejectCastCompleteSubscription;
+        private Action<EventInfoCast> _castCompleteBeforePrepare;
+        public event Action<EventInfoCast> EntityEvent_OnCastCompleteBeforePrepare
+        {
+            add { if (RejectCastCompleteSubscription) throw new NotSupportedException("complete unavailable"); _castCompleteBeforePrepare += value; }
+            remove { _castCompleteBeforePrepare -= value; }
+        }
     }
     internal sealed class Hero_Cetus : Hero { }
     internal sealed partial class BasicAttackContext { public Actor Actor; }

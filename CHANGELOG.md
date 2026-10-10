@@ -8,6 +8,8 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
+- ケートスの「下がれ！」のチャージ中の継続ダメージが働いていなかった問題を修正しました。 / Fixed Cetus's "Back Off!" charge damage over time not working.
+
 - 遠征中の記録から、固有品以外のレア以下の遺物をまとめてドリームダストに分解できるようにしました。 / You can now salvage all non-legendary Rare-or-lower relics in your satchel for Dream Dust at once from the Records tab.
 
 ---

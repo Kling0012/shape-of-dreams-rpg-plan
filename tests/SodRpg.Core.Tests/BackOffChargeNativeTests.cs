@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Mirror;
 using SodRpg.Core.Game;
 using SodRpg.Mod;
@@ -8,30 +9,37 @@ namespace SodRpg.Mod
 {
     // Notification doubles exercise the production adapter's reflection/subscription boundary.
     // They do not assert that these events exist or mark the charging interval in the game DLL.
+    // The native side exposes cast start as a SafeAction field (not a C# event) and has no
+    // cast-cancel notification: an interruption is only visible as Network_isCasting turning false.
+    internal class SafeAction<T>
+    {
+        private readonly List<Action<T>> _handlers = new List<Action<T>>();
+        internal bool RejectAdd, RejectRemove;
+        public int Count => _handlers.Count;
+        public SafeAction<T> Add(Action<T> handler)
+        { if (RejectAdd) throw new NotSupportedException("start unavailable"); if (handler != null) _handlers.Add(handler); return this; }
+        public SafeAction<T> Remove(Action<T> handler)
+        { if (RejectRemove) throw new NotSupportedException("start removal unavailable"); if (handler != null) _handlers.Remove(handler); return this; }
+        public void Invoke(T arg) { foreach (var handler in _handlers.ToArray()) handler?.Invoke(arg); }
+    }
+
     internal partial class Entity
     {
-        private Action<EventInfoCast> _backOffStart, _backOffCancel;
-        internal bool RejectBackOffStart, RejectBackOffCancel, RejectBackOffStartRemoval;
-        public event Action<EventInfoCast> EntityEvent_OnCastStart
+        public SafeAction<EventInfoCast> EntityEvent_OnCastStart = new SafeAction<EventInfoCast>();
+        internal int BackOffStartSubscribers => EntityEvent_OnCastStart.Count;
+        internal void StartBackOff(Actor trigger)
         {
-            add { if (RejectBackOffStart) throw new NotSupportedException("start unavailable"); _backOffStart += value; }
-            remove { if (RejectBackOffStartRemoval) throw new NotSupportedException("start removal unavailable"); _backOffStart -= value; }
+            if (trigger is SkillTrigger skill) skill.Network_isCasting = true;
+            EntityEvent_OnCastStart.Invoke(new EventInfoCast { trigger = trigger });
         }
-        public event Action<EventInfoCast> EntityEvent_OnCastCancel
-        {
-            add { if (RejectBackOffCancel) throw new NotSupportedException("cancel unavailable"); _backOffCancel += value; }
-            remove { _backOffCancel -= value; }
-        }
-        internal int BackOffStartSubscribers => _backOffStart?.GetInvocationList().Length ?? 0;
-        internal int BackOffCancelSubscribers => _backOffCancel?.GetInvocationList().Length ?? 0;
-        internal void StartBackOff(Actor trigger) => _backOffStart?.Invoke(new EventInfoCast { trigger = trigger });
-        internal void CancelBackOff(Actor trigger) => _backOffCancel?.Invoke(new EventInfoCast { trigger = trigger });
     }
+
+    internal partial class SkillTrigger { public bool Network_isCasting; }
 
     internal partial class Hero
     {
-        internal int CastCompleteSubscribers => EntityEvent_OnCastCompleteBeforePrepare?.GetInvocationList().Length ?? 0;
-        internal void CompleteBackOff(Actor trigger) => EntityEvent_OnCastCompleteBeforePrepare?.Invoke(new EventInfoCast { trigger = trigger });
+        internal int CastCompleteSubscribers => _castCompleteBeforePrepare?.GetInvocationList().Length ?? 0;
+        internal void CompleteBackOff(Actor trigger) => _castCompleteBeforePrepare?.Invoke(new EventInfoCast { trigger = trigger });
     }
 
     internal sealed class St_R_BackOff : SkillTrigger { }
@@ -52,7 +60,7 @@ namespace SodRpg.Core.Tests
     public sealed class BackOffChargeNativeTests
     {
         private static (HostAuthority Host, HostAuthority.HeroRuntime Runtime, Hero Hero, SkillTrigger Skill, Entity Enemy)
-            Setup(bool rejectStart = false, bool rejectCancel = false, int spent = 0)
+            Setup(bool rejectStart = false, bool rejectComplete = false, int spent = 0)
         {
             NetworkServer.active = true;
             UnityEngine.Time.time = 0;
@@ -61,7 +69,9 @@ namespace SodRpg.Core.Tests
             Actor.SimDealerLog.Clear();
             var host = new HostAuthority();
             HostAuthority.NativeInstance = host;
-            var hero = new Hero_Cetus { RejectBackOffStart = rejectStart, RejectBackOffCancel = rejectCancel };
+            var hero = new Hero_Cetus();
+            if (rejectStart) hero.EntityEvent_OnCastStart.RejectAdd = true;
+            hero.RejectCastCompleteSubscription = rejectComplete;
             var skill = new St_R_BackOff { owner = hero, parentActor = hero };
             hero.Skill.Skills[HeroSkillLocation.R] = skill;
             var runtime = new HostAuthority.HeroRuntime
@@ -76,28 +86,26 @@ namespace SodRpg.Core.Tests
         [Theory]
         [InlineData(true, false)]
         [InlineData(false, true)]
-        public void An_unavailable_notification_disables_charge_damage_and_rolls_back_subscriptions(bool rejectStart, bool rejectCancel)
+        public void An_unavailable_notification_disables_charge_damage_and_rolls_back_subscriptions(bool rejectStart, bool rejectComplete)
         {
-            var (host, runtime, hero, skill, enemy) = Setup(rejectStart, rejectCancel);
+            var (host, runtime, hero, skill, enemy) = Setup(rejectStart, rejectComplete);
             hero.StartBackOff(skill);
             host.TickBackOffForTest(.5f);
             Assert.Equal(1000f, enemy.currentHealth);
             Assert.Empty(Actor.SimDamageLog);
             Assert.Equal(0, host.BackOffOwnersForTest);
             Assert.Equal(0, hero.BackOffStartSubscribers);
-            Assert.Equal(0, hero.BackOffCancelSubscribers);
             Assert.Equal(0, hero.CastCompleteSubscribers);
         }
 
         [Fact]
-        public void Failed_start_removal_does_not_skip_cancel_cleanup_or_reenable_an_unhooked_charge()
+        public void Failed_start_removal_does_not_skip_complete_cleanup_or_reenable_an_unhooked_charge()
         {
             var (host, runtime, hero, skill, enemy) = Setup();
             var clock = host.BackOffRuntimeForTest(runtime);
             hero.StartBackOff(skill);
-            hero.RejectBackOffStartRemoval = true;
+            hero.EntityEvent_OnCastStart.RejectRemove = true;
             host.UnhookBackOffForTest(runtime);
-            Assert.Equal(0, hero.BackOffCancelSubscribers);
             Assert.Equal(0, hero.CastCompleteSubscribers);
             hero.StartBackOff(skill); // A stale native delegate must remain inert if removal fails.
             Assert.False(clock.Charging);
@@ -108,13 +116,18 @@ namespace SodRpg.Core.Tests
         [Theory]
         [InlineData(false)]
         [InlineData(true)]
-        public void Completion_and_cancellation_stop_subsequent_damage(bool cancel)
+        public void Completion_and_casting_interruption_stop_subsequent_damage(bool interrupt)
         {
             var (host, runtime, hero, skill, enemy) = Setup();
             hero.StartBackOff(skill);
             host.TickBackOffForTest(.5f);
             Assert.Equal(960f, enemy.currentHealth);
-            if (cancel) hero.CancelBackOff(skill); else hero.CompleteBackOff(skill);
+            if (interrupt)
+            {
+                skill.Network_isCasting = false;
+                Assert.True(host.BackOffRuntimeForTest(runtime).Charging); // Stops on the next tick, not synchronously.
+            }
+            else hero.CompleteBackOff(skill);
             host.TickBackOffForTest(1f);
             Assert.Equal(960f, enemy.currentHealth);
             Assert.False(host.BackOffRuntimeForTest(runtime).Charging);
@@ -126,18 +139,30 @@ namespace SodRpg.Core.Tests
             var (host, runtime, hero, skill, enemy) = Setup();
             host.InitializeBackOffForTest(runtime);
             Assert.Equal(1, hero.BackOffStartSubscribers);
-            Assert.Equal(1, hero.BackOffCancelSubscribers);
             Assert.Equal(1, hero.CastCompleteSubscribers);
             hero.StartBackOff(skill);
             host.UnhookBackOffForTest(runtime);
             host.UnhookBackOffForTest(runtime);
             Assert.Equal(0, host.BackOffOwnersForTest);
             Assert.Equal(0, hero.BackOffStartSubscribers);
-            Assert.Equal(0, hero.BackOffCancelSubscribers);
             Assert.Equal(0, hero.CastCompleteSubscribers);
             hero.StartBackOff(skill);
             host.TickBackOffForTest(.5f);
             Assert.Equal(1000f, enemy.currentHealth);
+        }
+
+        [Fact]
+        public void Cast_start_subscription_actually_connects_and_damage_lands_during_the_charge()
+        {
+            var (host, runtime, hero, skill, enemy) = Setup();
+            // The handler must sit inside the reflected SafeAction field, not a C# event that never fires.
+            Assert.Equal(1, hero.BackOffStartSubscribers);
+            Assert.Equal(1, host.BackOffOwnersForTest);
+            hero.StartBackOff(skill);
+            Assert.True(host.BackOffRuntimeForTest(runtime).Charging);
+            host.TickBackOffForTest(.5f);
+            Assert.Equal(960f, enemy.currentHealth);
+            Assert.NotEmpty(Actor.SimDamageLog);
         }
 
         [Fact]
@@ -157,27 +182,29 @@ namespace SodRpg.Core.Tests
         [Theory]
         [InlineData(false)]
         [InlineData(true)]
-        public void Replacing_the_memory_instance_cannot_continue_its_previous_charge(bool cancelOld)
+        public void Replacing_the_memory_instance_cannot_continue_its_previous_charge(bool finishOld)
         {
             var (host, runtime, hero, skill, enemy) = Setup();
             hero.StartBackOff(skill);
             hero.Skill.Skills[HeroSkillLocation.R] = new St_R_BackOff { owner = hero, parentActor = hero };
-            // Cancellation can arrive after the equipment callback, or be absent altogether.
-            if (cancelOld) hero.CancelBackOff(skill);
+            // A completion can arrive after the equipment callback, or not at all.
+            if (finishOld) hero.CompleteBackOff(skill);
             host.TickBackOffForTest(.5f);
             Assert.Equal(1000f, enemy.currentHealth);
             Assert.False(host.BackOffRuntimeForTest(runtime).Charging);
         }
 
-        [Fact]
-        public void Cancelling_a_replaced_skill_does_not_stop_a_new_instances_charge()
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public void A_replaced_skills_completion_or_interrupt_does_not_stop_a_new_instances_charge(bool interruptOld)
         {
             var (host, runtime, hero, skill, enemy) = Setup();
             hero.StartBackOff(skill);
             var replacement = new St_R_BackOff { owner = hero, parentActor = hero };
             hero.Skill.Skills[HeroSkillLocation.R] = replacement;
             hero.StartBackOff(replacement);
-            hero.CancelBackOff(skill);
+            if (interruptOld) skill.Network_isCasting = false; else hero.CompleteBackOff(skill);
             host.TickBackOffForTest(.5f);
             Assert.Equal(960f, enemy.currentHealth);
             Assert.True(host.BackOffRuntimeForTest(runtime).Charging);
@@ -239,7 +266,7 @@ namespace SodRpg.Core.Tests
         }
 
         [Fact]
-        public void Cancelling_and_unhooking_one_hero_preserves_another_heroes_charge()
+        public void Interrupting_and_unhooking_one_hero_preserves_another_heroes_charge()
         {
             var (host, runtime, hero, skill, enemy) = Setup();
             var other = new Hero_Cetus { position = new UnityEngine.Vector3(10f, 0, 0) };
@@ -252,7 +279,7 @@ namespace SodRpg.Core.Tests
             DewPhysics.Entities.Add(otherEnemy);
             hero.StartBackOff(skill);
             other.StartBackOff(otherSkill);
-            hero.CancelBackOff(skill);
+            skill.Network_isCasting = false;
             host.TickBackOffForTest(.5f);
             Assert.Equal(1000f, enemy.currentHealth);
             Assert.Equal(960f, otherEnemy.currentHealth);
