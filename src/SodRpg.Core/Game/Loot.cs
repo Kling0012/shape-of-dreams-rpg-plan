@@ -406,16 +406,21 @@ namespace SodRpg.Core.Game
         public static KillReward RollKill(Rng rng, MonsterTier tier, int itemLevel, int heat, Line? focus = null, Pacts.Totals mods = null,
             IReadOnlyList<Relic> ownedRelics = null, IReadOnlyList<Relic> unsecuredRelics = null, ISet<string> codex = null,
             Rarity ceiling = Rarity.Legendary, double ordinaryRelicMultiplier = 1, double shardDropMultiplier = 1,
-            double uniqueDropMultiplier = 1)
+            double uniqueDropMultiplier = 1, double limboRelicMultiplier = 1)
         {
             heat = ClampHeat(heat);
             if (!(shardDropMultiplier > 1) || double.IsInfinity(shardDropMultiplier)) shardDropMultiplier = 1;
+            // Invalid Limbo values disable only this multiplier; at most three primary rolls per kill.
+            if (!(limboRelicMultiplier > 1) || limboRelicMultiplier > 3) limboRelicMultiplier = 1;
             var reward = new KillReward { Xp = Content.KillXp(tier) };
             double luck = TierLuck(tier) + HeatLuck * heat + (mods?.Luck ?? 0);
             bool allowLegendary = tier >= MonsterTier.MiniBoss;
             double chance = Math.Min(1.0, DropChance(tier, heat) * (1.0 + (mods?.DropBonus ?? 0)));
 
-            if (rng.Chance(chance))
+            double relicChance = chance * limboRelicMultiplier;
+            int relicCount = (int)relicChance;
+            if (rng.Chance(relicChance - relicCount)) relicCount++;
+            for (int i = 0; i < relicCount; i++)
             {
                 Rarity floor = tier == MonsterTier.Boss ? Rarity.Uncommon : Rarity.Common;
                 var rarity = RollRarity(rng, luck, allowLegendary, floor, ceiling);
@@ -431,7 +436,7 @@ namespace SodRpg.Core.Game
                 HighRarityProbability(luck, allowLegendary, floor, out double legendary);
                 if (ceiling < Rarity.Legendary) legendary = 0;
                 double extra = chance * (1 - legendary) * (tier == MonsterTier.Boss ? 1 + BossExtraRelicChance : 1)
-                    * (ordinaryRelicMultiplier - 1);
+                    * (ordinaryRelicMultiplier - 1) * limboRelicMultiplier;
                 int count = (int)extra;
                 if (rng.Chance(extra - count)) count++;
                 Rarity extraCeiling = (Rarity)Math.Min((int)ceiling, (int)Rarity.Epic);
