@@ -8,17 +8,35 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
-- 敵が消えたあとも効果が残り、例外と警告が繰り返されて処理が重くなる不具合を修正しました。 / Fixed effects lingering after enemies disappeared and repeatedly logging exceptions and warnings, slowing down the game.
+---
 
-- 新機能：Limbo の深さに応じて、遠征で得る経験値（旅人のレベル用）が増えます（深度1ごとに+10%、最大+100%）。 / New: experience gained on expeditions (traveler levels) now increases with Limbo depth (+10% per depth, up to +100%).
+## v2.10.20 — Performance, lingering fixes, Limbo experience（2026-10-10）
 
-- 協力プレイで同じ情報の繰り返し送信を減らし、対応した相手にはボス演出の通信を小さくしました。古い版の相手にも従来の形式で送れます。 / Reduced repeated state updates in co-op and made boss visual packets smaller for supported peers, while retaining the existing format for older versions.
+動作を軽くし、敵が消えたあとに効果やモデルが残る不具合を直しました。Limbo では深さに応じて経験値も増えます。 / Performance improvements, fixes for effects and enemy models lingering after enemies disappear, and experience scaling with Limbo depth.
 
-- 処理の軽量化：敵の掃除と表示の更新で毎フレーム走っていた一部の処理を減らし、`dreamforge_perf` に内訳（client／host）と割り当て量の表示を追加しました。 / Reduced some per-frame work (monster pruning, variant/cue lookups) and extended `dreamforge_perf` with client/host breakdown and allocation rate.
-- 敵が消えたあとにも残っていた変種の色・大きさや合図の光を、敵の消えるタイミングで確実に消すようにしました。ボス技の予告線も、ゲームのエフェクト品質設定（低）に合わせて簡素化されます。 / Variant tints, sizes and cue glows are now reliably removed when their monster despawns; boss telegraph lines also simplify when the game's effect quality is set to Low.
-- 敵が一度に多く倒れたときの死亡時の閃光・カメラ揺れ・コントローラ振動を間引いて軽くしました（最初の 1 回は必ず表示し、遠い死亡では出さない）。エフェクト品質が低のときは死亡時の光を省きます。 / Death flashes, camera shake and gamepad rumble are now thinned when many enemies die at once (the first always plays; distant deaths are skipped); death lights are omitted at Low effect quality.
-- 部屋や区画を移動しても敵のモデルが残ることがあったのを修正しました（プール再利用で止まったままの消去フラグの解消と、移動後の残存モデルの回収）。 / Enemy models could linger after moving to another room; stuck dissolve state is now cleared on pool reuse and leftover models are swept after room transitions.
-- ビスマスの「本が紡ぐ物語」の自動発動を、素早く・軽く動くよう改善しました。 / Bismuth's “Stories Woven by the Book” automatic casting is now faster and lighter.
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 新機能 / New features
+
+- **Limbo の経験値ボーナス**：Limbo の深さに応じて、遠征で得る経験値（旅人のレベル用）が増えます。深さ 1 ごとに +10%、最大 +100% です。遠征開始時の Limbo の案内にも表示されます。 / **Limbo experience bonus**: experience gained on expeditions (traveler levels) now increases with Limbo depth, +10% per depth up to +100%. The Limbo notice at the start of an expedition shows it.
+- **動作の軽量化** / **Performance**
+  - 協力プレイで、同じ内容の繰り返し送信を減らし、ボス演出の通信を小さくしました。古い版の相手にも従来の形式で送ります。 / Co-op sends fewer repeated updates and smaller boss visual packets; older peers still receive the previous format.
+  - 敵が一度に多く倒れたときの閃光・カメラ揺れ・コントローラ振動を間引きます（最初の 1 回は必ず出ます。遠くの死亡では出しません）。エフェクト品質「低」では死亡時の光を省きます。 / Death flashes, camera shake and rumble are thinned when many enemies die at once (the first always plays; distant deaths are skipped). Death lights are omitted at Low effect quality.
+  - ボス技の予告線が、ゲームのエフェクト品質設定（低）に合わせて簡素になります。 / Boss telegraph lines simplify at Low effect quality.
+  - 毎フレーム走っていた一部の処理を減らしました。`dreamforge_perf` に内訳の表示を追加しています。 / Reduced some per-frame work; `dreamforge_perf` now shows a breakdown.
+- ビスマスの「本が紡ぐ物語」の自動発動が、準備のできた記憶をすぐに使うようになりました。負荷が高いときは自動で抑えます。 / Bismuth's "Stories Woven by the Book" now casts ready memories promptly, and backs off automatically under load.
+
+### 不具合の修正 / Bug fixes
+
+- 敵が消えたあとも効果が残り、例外と警告が繰り返されて動作が重くなる問題を修正しました。 / Fixed effects lingering after enemies disappeared and repeatedly logging exceptions and warnings, slowing the game down.
+- 部屋や区画を移動しても敵のモデルが残ることがある問題を修正しました。 / Fixed enemy models sometimes remaining after moving to another room or area.
+- 敵が消えたあとに残っていた変種の色・大きさや合図の光を、敵が消えるときに確実に消すようにしました。 / Variant tints, sizes and cue glows are now reliably removed when their monster despawns.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
 
 ---
 
