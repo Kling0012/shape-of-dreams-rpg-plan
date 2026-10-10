@@ -1,0 +1,46 @@
+using System;
+using Mirror;
+using UnityEngine;
+
+namespace SodRpg.Mod
+{
+    internal sealed partial class ClientSession
+    {
+        private bool _hostBuildInputCapability;
+        private float _nextBuildInputProbe;
+        private Action<DreamforgeBuildInputCapabilityMsg> _onBuildInputCapability;
+
+        private void RegisterBuildInputCapability(Actor actor)
+        {
+            try
+            {
+                if (_onBuildInputCapability == null) _onBuildInputCapability = OnBuildInputCapability;
+                actor.CustomRpc_RegisterClientMessageHandler<DreamforgeBuildInputCapabilityMsg>(_onBuildInputCapability);
+            }
+            catch (Exception) { }
+        }
+
+        private void UnregisterBuildInputCapability(Actor actor)
+        {
+            if (actor != null && _onBuildInputCapability != null)
+                try { actor.CustomRpc_UnregisterClientMessageHandler<DreamforgeBuildInputCapabilityMsg>(_onBuildInputCapability); } catch (Exception) { }
+        }
+
+        private void OnBuildInputCapability(DreamforgeBuildInputCapabilityMsg msg)
+        {
+            if (msg == null || msg.version != 1 || _hostBuildInputCapability) return;
+            _hostBuildInputCapability = true;
+            _buildDirty = true;
+            _buildCacheFrame = -1;
+        }
+
+        private void ProbeBuildInputCapability(string heroKey)
+        {
+            if (NetworkServer.active || _hostBuildInputCapability || Profile.Hero(heroKey).ExtraPoints == 0
+                || Time.unscaledTime < _nextBuildInputProbe) return;
+            _nextBuildInputProbe = Time.unscaledTime + 5f;
+            try { _clientRpcOn.CustomRpc_SendMessageToServer(new DreamforgeBuildInputCapabilityMsg()); } catch (Exception) { }
+        }
+    }
+
+}

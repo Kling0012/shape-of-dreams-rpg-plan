@@ -11,7 +11,7 @@ namespace SodRpg.Core.Game
     /// one hero's connected allocations, their shared point budget, and bounded equipped sources.
     /// Derived combat effects are compared with the production computation, never trusted independently.
     /// </summary>
-    public static class HostBuildValidation
+    public static partial class HostBuildValidation
     {
         public const int MaxInputChars = 65536;
         public static int MaxSubmissionChars => checked(BuildLimits.MaxEncodedChars + 1 + MaxInputChars);
@@ -73,6 +73,7 @@ namespace SodRpg.Core.Game
                 sb.Append((int)pact);
             }
             sb.Append(";Y:").Append(dailyId);
+            if (hero.ExtraPoints != 0) sb.Append(";X:").Append(hero.ExtraPoints);
             if (sb.Length > MaxInputChars) throw new InvalidOperationException("Build inputs exceed their envelope.");
             return derived.Encode() + "|" + sb;
         }
@@ -148,7 +149,7 @@ namespace SodRpg.Core.Game
             }
             foreach (var choice in hero.TalentChoices)
                 if (!hero.Talents.ContainsKey(choice.Key)) return Reject("choice", out reason);
-            if (total > StarProgression.MaxSpendablePoints) return Reject("point-budget", out reason);
+            if (total > StarProgression.MaxSpendablePoints + hero.ExtraPoints) return Reject("point-budget", out reason);
             if (!engine.AllocationsConnected(hero)) return Reject("disconnected", out reason);
             foreach (string keystone in hero.Keystones)
                 if (keystone != null && !engine.KeystoneUnlocked(hero, heroKey, engine.Talent(keystone)))
@@ -214,14 +215,15 @@ namespace SodRpg.Core.Game
                         }
                         break;
                     case "S": hero.StarXp = StarProgression.TotalXpForPoints(Range(body, 0, StarProgression.MaxPoints)); break;
+                    case "X": hero.ExtraPoints = Range(body, 0, StarProgression.MaxExtraPoints); break;
                     case "T":
-                        foreach (string entry in Entries(body, StarProgression.MaxSpendablePoints))
+                        foreach (string entry in Entries(body, StarProgression.MaxAllocationPoints))
                         {
                             var fields = entry.Split('=');
                             if (fields.Length != 3) throw new FormatException();
                             Token(fields[0]);
-                            hero.Talents.Add(fields[0], Range(fields[1], 1, StarProgression.MaxSpendablePoints));
-                            int choice = Range(fields[2], -1, StarProgression.MaxSpendablePoints);
+                            hero.Talents.Add(fields[0], Range(fields[1], 1, StarProgression.MaxAllocationPoints));
+                            int choice = Range(fields[2], -1, StarProgression.MaxAllocationPoints);
                             if (choice >= 0) hero.TalentChoices.Add(fields[0], choice);
                         }
                         break;
@@ -278,7 +280,7 @@ namespace SodRpg.Core.Game
                     default: throw new FormatException();
                 }
             }
-            if (seen.Count != 9) throw new FormatException();
+            if (seen.Count - (seen.Contains("X") ? 1 : 0) != 9) throw new FormatException();
             return input;
         }
 

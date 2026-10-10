@@ -90,7 +90,7 @@ namespace SodRpg.Core.Game
             foreach (var rule in migrations) if (rule != null) stamp = Math.Max(stamp, rule.Revision);
             bool Redefined(string id) => costs.TryGetValue(id, out var rule) && rule.ChangedEffect
                 && hero.AuthoredMigrationVersion < Math.Max(rule.Revision, migrationVersion);
-            var candidate = new HeroState { Kills = hero.Kills, StarXp = hero.StarXp };
+            var candidate = new HeroState { Kills = hero.Kills, StarXp = hero.StarXp, ExtraPoints = hero.ExtraPoints };
             foreach (var allocation in hero.Talents)
             {
                 if (!nodes.TryGetValue(allocation.Key, out var node) || allocation.Value <= 0 || allocation.Value > node.MaxRank)

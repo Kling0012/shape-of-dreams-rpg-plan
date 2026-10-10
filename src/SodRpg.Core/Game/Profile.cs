@@ -29,9 +29,11 @@ namespace SodRpg.Core.Game
         /// <summary>この旅人の星の経験。獲得ポイントは StarProgression で求める。</summary>
         private int _starXp;
         public int StarXp { get => _starXp; set => _starXp = Math.Max(0, value); }
+        private int _extraPoints;
+        public int ExtraPoints { get => _extraPoints; set => _extraPoints = Math.Max(0, Math.Min(StarProgression.MaxExtraPoints, value)); }
         public HeroState Clone()
         {
-            var c = new HeroState { Kills = Kills, StarXp = StarXp, AuthoredMigrationVersion = AuthoredMigrationVersion };
+            var c = new HeroState { Kills = Kills, StarXp = StarXp, ExtraPoints = ExtraPoints, AuthoredMigrationVersion = AuthoredMigrationVersion };
             c.CopyKeystonesFrom(this);
             Array.Copy(Equipped, c.Equipped, Equipped.Length);
             foreach (var kv in Talents) c.Talents[kv.Key] = kv.Value;
@@ -476,7 +478,8 @@ namespace SodRpg.Core.Game
 
         /// <summary>その旅人の星ポイントに、図鑑とテスト設定の共通ボーナスを加える。</summary>
         public int TalentPoints(string heroKey) => (int)Math.Min(StarProgression.MaxSpendablePoints,
-            (long)StarProgression.Points(Hero(heroKey).StarXp) + CodexBonusPoints + Math.Max(0, TestBonusPoints));
+            (long)StarProgression.Points(Hero(heroKey).StarXp) + CodexBonusPoints + Math.Max(0, TestBonusPoints))
+            + Hero(heroKey).ExtraPoints;
 
         /// <summary>確認用に足す星図ポイント（保存しない）。0〜100。</summary>
         public static int TestBonusPoints { get; set; }

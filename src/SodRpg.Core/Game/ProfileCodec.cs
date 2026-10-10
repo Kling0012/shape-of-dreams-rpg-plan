@@ -71,9 +71,11 @@ namespace SodRpg.Core.Game
                 foreach (var choice in h.TalentChoices) choices.Add(choice.Key, (long)choice.Value);
                 var keystones = new List<object>();
                 for (int i = 1; i < h.Keystones.Length && h.Keystones[i] != null; i++) keystones.Add(h.Keystones[i]);
-                heroes.Add(kv.Key, new JsonObject().Add("equipped", eq).Add("talents", tal).Add("talentChoices", choices)
+                var hero = new JsonObject().Add("equipped", eq).Add("talents", tal).Add("talentChoices", choices)
                     .Add("keystone", h.Keystone).Add("keystones", keystones).Add("kills", (long)h.Kills).Add("starXp", (long)h.StarXp)
-                    .Add("authoredMigrationVersion", (long)h.AuthoredMigrationVersion));
+                    .Add("authoredMigrationVersion", (long)h.AuthoredMigrationVersion);
+                if (h.ExtraPoints != 0) hero.Add("xp2", (long)h.ExtraPoints);
+                heroes.Add(kv.Key, hero);
             }
             var codex = new List<object>();
             foreach (var c in p.Codex) codex.Add(c);
@@ -384,6 +386,7 @@ namespace SodRpg.Core.Game
                     h.StarXp = hj.TryGet("starXp", out object sx)
                         ? Clamp(sx is long xp ? xp : 0, 0, int.MaxValue)
                         : StarProgression.LegacyXp(h.Kills);
+                    h.ExtraPoints = Clamp(Long(hj, "xp2"), 0, StarProgression.MaxExtraPoints);
                     h.AuthoredMigrationVersion = Clamp(Long(hj, "authoredMigrationVersion"), 0, int.MaxValue);
                     string key = hj.TryGet("keystone", out object ko) ? ko as string : null;
                     if (key != null && Content.TryGetTalent(kv.Key, key, out var kdef) && kdef.IsKeystone && Rules.BelongsTo(kdef, kv.Key)) h.Keystone = key;

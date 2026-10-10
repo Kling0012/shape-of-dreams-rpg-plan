@@ -217,6 +217,12 @@ namespace SodRpg.Mod
         }
     }
 
+    [Serializable]
+    public class DreamforgeBuildInputCapabilityMsg
+    {
+        public int version = 1;
+    }
+
     // Optional extension: Hello and every existing packet remain unchanged (Protocol 24).
     [Serializable]
     public class DreamforgeOverflowBonusMsg

@@ -9,6 +9,8 @@ namespace SodRpg.Core.Game
 
         /// <summary>経験で得るポイントの上限に、図鑑のボーナス（最大 Content.MaxCodexBonus）を加えた、振れる合計の上限。</summary>
         public const int MaxSpendablePoints = MaxPoints + Content.MaxCodexBonus;
+        public const int MaxExtraPoints = 500;
+        public const int MaxAllocationPoints = MaxSpendablePoints + MaxExtraPoints;
         public const int SecureXp = StarProgressionBalance.SecureXp;
         public const int VictoryXp = StarProgressionBalance.VictoryXp;
 

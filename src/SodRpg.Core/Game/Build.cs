@@ -173,7 +173,7 @@ namespace SodRpg.Core.Game
                     if (definitions.TryGetValue(allocated.Key, out var talent))
                         spent += (long)Math.Max(0, allocated.Value) * talent.RankCost;
             }
-            if (spent > StarProgression.MaxSpendablePoints)
+            if (spent > StarProgression.MaxSpendablePoints + h.ExtraPoints)
                 throw new InvalidOperationException("The build exceeds the star point budget.");
             var b = new Build
             {
@@ -627,13 +627,13 @@ namespace SodRpg.Core.Game
             if (Gimmicks.Count + Mechanisms.Count > BuildLimits.MaxGimmickEntries || Links.Count > BuildLimits.MaxLinkEntries
                 || PairCombos.Count > BuildLimits.MaxPairComboEntries || Stats.Count > BuildLimits.MaxStatEntries
                 || Powers.Count > BuildLimits.MaxPowerEntries || ConditionalBasePowers.Count > BuildLimits.MaxConditionalPowerEntries
-                || MechanismEndpointRanks.Count > StarProgression.MaxSpendablePoints)
+                || MechanismEndpointRanks.Count > StarProgression.MaxAllocationPoints)
                 throw new InvalidOperationException("The build exceeds its legal entry envelope.");
             ScopedBuildCodec.Validate(this);
             global::SodRpg.Core.Game.RunGrowth.Validate(this);
             BossBuildCodec.Validate(this);
             foreach (var link in AggregateLinks(Links))
-                if (link.ValueMilli > BuildLimits.MaxLinkValueMilli(link.Kind, link.Requires.Length))
+                if (link.ValueMilli > BuildLimits.MaxLinkValueMilli(link.Kind, link.Requires.Length, Math.Max(StarProgression.MaxSpendablePoints, SpentStarPoints)))
                     throw new InvalidOperationException("The build exceeds its legal link value envelope.");
         }
 
@@ -660,7 +660,9 @@ namespace SodRpg.Core.Game
                     if (kind == "d") { b.DreamLevel = Math.Max(1, Math.Min(Content.MaxDreamLevel, ParseInt(body))); continue; }
                     if (kind == "a")
                     {
-                        b.SpentStarPoints = Math.Max(0, Math.Min(StarProgression.MaxSpendablePoints, ParseInt(body)));
+                        int points = ParseInt(body);
+                        b.SpentStarPoints = points > StarProgression.MaxAllocationPoints
+                            ? StarProgression.MaxSpendablePoints : Math.Max(0, points);
                         continue;
                     }
                     int limit;
@@ -679,7 +681,7 @@ namespace SodRpg.Core.Game
                         case "v": limit = BuildLimits.MaxGimmickEntries; break;
                         case "r": limit = BuildLimits.MaxGimmickEntries; break;
                         case "m": limit = BuildLimits.MaxGimmickEntries; break;
-                        case "e": limit = StarProgression.MaxSpendablePoints; break;
+                        case "e": limit = StarProgression.MaxAllocationPoints; break;
                         case "k": limit = KeystoneSlots.Max; break;
                         case "w": limit = global::SodRpg.Core.Game.RunGrowth.MaxEntries; break;
                         case "b":
@@ -714,7 +716,7 @@ namespace SodRpg.Core.Game
                             var link = new LinkDef { Kind = linkKind, ValueMilli = value, Requires = f[2].Split('+') };
                             if (linkKind == LinkKind.BossReward) return null;
                             if (!global::SodRpg.Core.Game.Links.Validate(link) || value < 0
-                                || value > BuildLimits.MaxLinkValueMilli(linkKind, link.Requires.Length)) return null;
+                                || value > BuildLimits.MaxLinkValueMilli(linkKind, link.Requires.Length, StarProgression.MaxAllocationPoints)) return null;
                             b.Links.Add(link);
                         }
                         else if (kind == "g")

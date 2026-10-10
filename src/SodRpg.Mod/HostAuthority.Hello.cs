@@ -34,6 +34,7 @@ namespace SodRpg.Mod
             if (_onHello == null) _onHello = OnHello;
             actor.CustomRpc_RegisterServerMessageHandler<DreamforgeHelloMsg>(nameof(DreamforgeHelloMsg), _onHello);
             RegisterOverflowBonus(actor);
+            RegisterBuildInputCapability(actor);
         }
 
         private void UnregisterHello(Actor actor)
@@ -41,10 +42,36 @@ namespace SodRpg.Mod
             if (actor != null && _onHello != null)
                 try { actor.CustomRpc_UnregisterServerMessageHandler<DreamforgeHelloMsg>(_onHello); } catch (Exception) { }
             UnregisterOverflowBonus(actor);
+            UnregisterBuildInputCapability(actor);
             _helloActor = null;
             _versionMismatches.Clear();
             _helloPeers.Clear();
             RebuildMismatchList();
+        }
+
+        private Action<DreamforgeBuildInputCapabilityMsg, DewPlayer> _onBuildInputCapability;
+
+        private void RegisterBuildInputCapability(Actor actor)
+        {
+            try
+            {
+                if (_onBuildInputCapability == null) _onBuildInputCapability = OnBuildInputCapability;
+                actor.CustomRpc_RegisterServerMessageHandler<DreamforgeBuildInputCapabilityMsg>(nameof(DreamforgeBuildInputCapabilityMsg), _onBuildInputCapability);
+            }
+            catch (Exception) { }
+        }
+
+        private void UnregisterBuildInputCapability(Actor actor)
+        {
+            if (actor != null && _onBuildInputCapability != null)
+                try { actor.CustomRpc_UnregisterServerMessageHandler<DreamforgeBuildInputCapabilityMsg>(_onBuildInputCapability); } catch (Exception) { }
+        }
+
+        private void OnBuildInputCapability(DreamforgeBuildInputCapabilityMsg msg, DewPlayer caller)
+        {
+            if (msg == null || msg.version != 1 || caller == null || !caller.isHumanPlayer
+                || !DewPlayer.gamePlayers.Contains(caller) && !DewPlayer.lobbyPlayers.Contains(caller)) return;
+            try { _registeredOn?.CustomRpc_SendMessageToClient(caller, new DreamforgeBuildInputCapabilityMsg()); } catch (Exception) { }
         }
 
         private void OnHello(DreamforgeHelloMsg msg, DewPlayer caller)

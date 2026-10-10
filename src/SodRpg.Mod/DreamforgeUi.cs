@@ -2032,7 +2032,7 @@ namespace SodRpg.Mod
         private readonly GUIContent _starProgress = new GUIContent();
         private HeroState _starState;
         private bool _starJapanese, _starDirty = true, _starDragging, _starMoved;
-        private int _starXp, _starKills, _starCodex, _starTestBonus, _starFree;
+        private int _starXp, _starKills, _starCodex, _starTestBonus, _starExtraPoints, _starFree;
         private int _starPressed = -1, _starMouseButton, _starDragControl;
         private Vector2 _starPan, _starDragOrigin, _starPanOrigin;
         private float _starZoom = 1f, _starMinX, _starMaxX, _starMinY, _starMaxY;
@@ -2175,7 +2175,7 @@ namespace SodRpg.Mod
             if (Event.current.type != EventType.Layout) return;
             string keystones = string.Join("\u0001", hs.Keystones);
             bool changed = _starDirty || _starState != hs || _starXp != hs.StarXp || _starKills != hs.Kills
-                || _starCodex != p.CodexBonusPoints || _starTestBonus != Profile.TestBonusPoints
+                || _starCodex != p.CodexBonusPoints || _starTestBonus != Profile.TestBonusPoints || _starExtraPoints != hs.ExtraPoints
                 || _starKeystoneSignature != keystones;
             var marks = LinkMarks();
             bool matchingHero = _s.LocalHero != null && ClientSession.HeroKeyOf(_s.LocalHero) == hero;
@@ -2219,6 +2219,7 @@ namespace SodRpg.Mod
             _starKills = hs.Kills;
             _starCodex = p.CodexBonusPoints;
             _starTestBonus = Profile.TestBonusPoints;
+            _starExtraPoints = hs.ExtraPoints;
             _starKeystoneSignature = keystones;
             _starFree = p.TalentPoints(hero) - spent;
             _starDirty = false;
