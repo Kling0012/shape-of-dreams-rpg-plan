@@ -289,6 +289,164 @@ namespace SodRpg.Core.Tests
             Assert.Contains(p.Stash, r => r.Uid == "free-2");
         }
 
+        [Theory]
+        [InlineData(255)]
+        [InlineData(256)]
+        public void Continue_before_direct_stash_use_keeps_consumed_right_after_history_pruning(int oldRunCount)
+        {
+            var p = Profile.CreateNew(17);
+            // Create real use receipts, including the 256-entry boundary, through normal rules.
+            for (int i = 0; i < oldRunCount; i++)
+            {
+                Rules.BeginRun(p, "zz-" + i.ToString("0000"));
+                p.Run.Satchel.Add(Relic("old-" + i));
+                Rules.StashSatchelNow(p);
+                Rules.Salvage(p, "old-" + i); // keep room for the later transfer
+            }
+            Rules.BeginRun(p, "run"); // sorts before the old receipt IDs
+            p.Run.Satchel.Add(Relic("banked", Rarity.Legendary));
+            var checkpoint = RunCheckpoint.Capture(p, "before-use");
+            p.ContinueCheckpoints.Add(checkpoint);
+            Rules.StashSatchelNow(p);
+            p.Run.Satchel.Add(Relic("later-earned", Rarity.Legendary));
+            Assert.Contains("run", p.DirectStashUsedRunIds);
+
+            Rules.BeginRun(p, "next"); // overflow pruning must protect retained Continue points
+            Rules.ClaimInterruptedRelics(p);
+            p = RoundTrip(p);
+            p.ContinueCheckpoints.Single().Restore(p);
+
+            Assert.Equal("run", p.Run.RunId);
+            Assert.Contains(p.Stash, relic => relic.Uid == "banked");
+            Assert.Equal("later-earned", Assert.Single(p.Run.Satchel).Uid);
+            Assert.False(Rules.CanStashSatchelNow(p));
+            Assert.Contains("run", p.DirectStashUsedRunIds);
+            string before = ProfileCodec.Write(p);
+            Assert.Throws<InvalidOperationException>(() => Rules.StashSatchelNow(p));
+            Assert.Equal(before, ProfileCodec.Write(p));
+        }
+
+        [Fact]
+        public void Pruning_preserves_more_than_256_retained_runs_without_growing_receipt_history()
+        {
+            var p = Profile.CreateNew(17);
+            var originals = new List<RunCheckpoint>();
+            for (int i = 0; i < 258; i++)
+            {
+                Rules.BeginRun(p, "run-" + i.ToString("0000"));
+                Assert.True(p.DirectStashUsedRunIds.Count <= Rules.MaxDirectStashUsedRunIds);
+                p.Run.Heat = i;
+                p.Run.Satchel.Add(Relic("carried-" + i));
+                var checkpoint = RunCheckpoint.Capture(p, "checkpoint-" + i);
+                originals.Add(checkpoint);
+                p.ContinueCheckpoints.Add(checkpoint);
+                Rules.StashSatchelNow(p);
+                Rules.Salvage(p, "carried-" + i);
+            }
+            Rules.BeginRun(p, "next");
+            p = RoundTrip(p);
+            Assert.Equal(258, p.ContinueCheckpoints.Count);
+            Assert.Equal(Rules.MaxDirectStashUsedRunIds, p.DirectStashUsedRunIds.Count);
+            for (int i = 0; i < originals.Count; i++)
+            {
+                var original = ProfileCodec.ReadCheckpointProfile(originals[i].Snapshot);
+                var retained = ProfileCodec.ReadCheckpointProfile(p.ContinueCheckpoints[i].Snapshot);
+                Assert.True(p.DirectStashUsedRunIds.Contains(originals[i].RunId)
+                    || retained.DirectStashUsedRunIds.Contains(originals[i].RunId));
+                Assert.True(retained.DirectStashUsedRunIds.Count <= Rules.MaxDirectStashUsedRunIds);
+                original.DirectStashUsedRunIds.Clear();
+                retained.DirectStashUsedRunIds.Clear();
+                Assert.Equal(ProfileCodec.WriteCheckpointProfile(original), ProfileCodec.WriteCheckpointProfile(retained));
+            }
+            // An old object must select its immutable replacement; economic rewind stays unchanged.
+            originals[0].Restore(p);
+            Assert.Equal(0, p.Run.Heat);
+            Assert.Empty(p.Stash);
+            Assert.Equal("carried-0", Assert.Single(p.Run.Satchel).Uid);
+            Assert.False(Rules.CanStashSatchelNow(p));
+            Assert.Contains("run-0000", p.DirectStashUsedRunIds);
+            p = RoundTrip(p);
+            Assert.False(Rules.CanStashSatchelNow(p));
+        }
+
+        [Fact]
+        public void Beginning_an_evicted_retained_run_recovers_and_protects_its_receipt()
+        {
+            var p = Running("carried");
+            p.ContinueCheckpoints.Add(RunCheckpoint.Capture(p, "before-use"));
+            Rules.StashSatchelNow(p);
+            for (int i = 0; i < 256; i++) p.DirectStashUsedRunIds.Add("zz-" + i);
+            Rules.BeginRun(p, "next");
+            Assert.DoesNotContain("run", p.DirectStashUsedRunIds);
+            p = RoundTrip(p);
+            Rules.BeginRun(p, "third"); // move beyond the completed-run duplicate-start guard
+            Rules.BeginRun(p, "run");
+            p.Run.Satchel.Add(Relic("later-earned"));
+            Assert.Equal(Rules.MaxDirectStashUsedRunIds, p.DirectStashUsedRunIds.Count);
+            Assert.Contains("run", p.DirectStashUsedRunIds);
+            Assert.False(Rules.CanStashSatchelNow(p));
+        }
+
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public void Invalid_checkpoint_prevents_partial_receipt_eviction_or_snapshot_replacement(bool invalidJson)
+        {
+            var p = Running("carried");
+            p.ContinueCheckpoints.Add(RunCheckpoint.Capture(p, "first-valid"));
+            var original = RunCheckpoint.Capture(p, "invalid");
+            p.ContinueCheckpoints.Add(new RunCheckpoint("invalid", "second",
+                invalidJson ? "{" : original.Snapshot));
+            Rules.StashSatchelNow(p);
+            p.DirectStashUsedRunIds.Add("second");
+            for (int i = 0; i < 256; i++) p.DirectStashUsedRunIds.Add("zz-" + i);
+            string before = ProfileCodec.Write(p);
+            Assert.Throws<LedgerFormatException>(() => Rules.BeginRun(p, "next"));
+            Assert.Equal(before, ProfileCodec.Write(p));
+        }
+
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public void Pruning_preserves_migration_bearing_checkpoint_content(bool olderVersion)
+        {
+            var p = Running("carried");
+            p.Run.Heat = 3;
+            p.Upgrades[Upgrade.LostLantern] = 1; // supported retired-upgrade refund migration
+            var captured = RunCheckpoint.Capture(p, "before-use");
+            string encoded = captured.Snapshot;
+            if (olderVersion)
+                encoded = encoded.Replace("\"version\":" + Profile.CurrentVersion + ",",
+                    "\"version\":" + (Profile.CurrentVersion - 1) + ",");
+            var original = new RunCheckpoint(captured.Id, captured.RunId, encoded);
+            p.ContinueCheckpoints.Add(original);
+            var notes = new List<string>();
+            var migrated = ProfileCodec.ReadCheckpointProfile(encoded, notes);
+            Assert.Contains(notes, note => note.Contains("廃止した工房強化"));
+            Assert.False(migrated.Upgrades.ContainsKey(Upgrade.LostLantern));
+            var liveNotes = new List<string>();
+            p = ProfileCodec.Read(ProfileCodec.Write(p), liveNotes);
+            Assert.Contains(liveNotes, note => note.Contains("廃止した工房強化"));
+            // Live state migrated; retained immutable snapshot still needs migration.
+            Rules.StashSatchelNow(p);
+            for (int i = 0; i < 256; i++) p.DirectStashUsedRunIds.Add("zz-" + i);
+
+            Rules.BeginRun(p, "next");
+            string rewritten = Assert.Single(p.ContinueCheckpoints).Snapshot;
+            Assert.Equal(WithoutDirectStashKey(encoded), WithoutDirectStashKey(rewritten));
+            Assert.Contains("\"lostLantern\":1", rewritten); // no premature refund/rewrite
+            notes.Clear();
+            var preserved = ProfileCodec.ReadCheckpointProfile(rewritten, notes);
+            Assert.Contains(notes, note => note.Contains("廃止した工房強化"));
+            Assert.Equal(migrated.Material(Materials.Shard), preserved.Material(Materials.Shard));
+            Assert.Contains("run", preserved.DirectStashUsedRunIds);
+            p = RoundTrip(p);
+            original.Restore(p); // stale object still uses the latest stored receipt
+            Assert.Equal(3, p.Run.Heat);
+            Assert.Equal(migrated.Material(Materials.Shard), p.Material(Materials.Shard));
+            Assert.False(Rules.CanStashSatchelNow(p));
+        }
+
         [Fact]
         public void Used_ids_over_256_are_pruned_smallest_ordinals_first()
         {
