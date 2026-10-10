@@ -8,6 +8,8 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
+- 熱病のエッセンスの爆発の光と揺れを軽くしました。 / Reduced explosion lights and camera shake from the Fever essence.
+
 ---
 
 ## v2.10.20 — Performance, lingering fixes, Limbo experience（2026-10-10）
