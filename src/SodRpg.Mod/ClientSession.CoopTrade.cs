@@ -21,6 +21,7 @@ namespace SodRpg.Mod
         private string _coopHostKey, _coopFrozenProfile;
         private CoopTradeOffer _coopPendingOffer;
         private string _coopOfferInFlight;
+        private float _coopOfferSentAt, _nextCoopOfferRetry;
         private bool _coopNativeSaving, _coopSettlementUnsaved, _coopDisabled;
         private long _coopPrepareSaveRevision;
         internal static string CoopHostJournalPath => _hostSession?.CoopTradeJournalPath;
@@ -106,6 +107,9 @@ namespace SodRpg.Mod
                 _coopFrozenProfile = null;
                 _coopPendingOffer = null;
                 _coopOfferInFlight = null;
+                _nextCoopOfferRetry = 0;
+                _coopDisabled = false;
+                CoopTradeWarning = null;
                 _coopHostKey = null;
                 _coopPrepareSaveRevision = 0;
                 _coopAnsweredAt = -100f;
@@ -137,6 +141,7 @@ namespace SodRpg.Mod
         private void ReceiveCoopPacket(DreamforgeCoopTradeDown packet)
         {
             try { OnCoopTradeState(CoopTradeTransport.Decode<DreamforgeCoopTradeState>(packet.Json)); }
+            catch (CoopSendException ex) { CoopTradeWarning = ex.Message; }
             catch (Exception ex) { DisableCoopTrade(ex); }
         }
 
@@ -179,6 +184,7 @@ namespace SodRpg.Mod
                     CoopTrade = null;
                     _coopFrozenProfile = null;
                 }
+                RetryCoopOffer();
                 if (Time.unscaledTime < _nextCoopProbe) return;
                 _nextCoopProbe = Time.unscaledTime + 5f;
                 SendCoop(new DreamforgeCoopTradeCommand { action = "probe", safe = CoopLocalSafe });
@@ -214,6 +220,7 @@ namespace SodRpg.Mod
                     _coopConnectionWarning = Loc.T("ホストがトレード非対応、または応答がありません。トレードのみ利用できません。",
                         "The host does not support trade or has not replied. Only trade is unavailable.");
             }
+            catch (CoopSendException ex) { CoopTradeWarning = ex.Message; }
             catch (Exception ex) { DisableCoopTrade(ex); }
         }
 
@@ -224,13 +231,24 @@ namespace SodRpg.Mod
             Log.Error("Coop trade: " + ex);
         }
 
+        private sealed class CoopSendException : Exception
+        {
+            public CoopSendException(Exception cause) : base(cause.Message, cause) { }
+        }
+
         private void SendCoop(DreamforgeCoopTradeCommand command)
         {
-            if (_coopConnection == null) throw new InvalidOperationException(Loc.T("未接続です。", "Not connected."));
-            if (NetworkServer.active) HostAuthority.NativeInstance?.ReceiveCoopTrade(command, DewPlayer.local);
-            else if (Time.unscaledTime - _coopAdvertisementAt <= 10f)
-                NetworkClient.Send(new DreamforgeCoopTradeUp { Json = CoopTradeTransport.Encode(command) });
-            else throw new InvalidOperationException(CoopUnavailable());
+            // Serialization errors are data failures; delivery errors leave the outcome unknown.
+            string json = NetworkServer.active ? null : CoopTradeTransport.Encode(command);
+            try
+            {
+                if (_coopConnection == null) throw new InvalidOperationException(Loc.T("未接続です。", "Not connected."));
+                if (NetworkServer.active) HostAuthority.NativeInstance?.ReceiveCoopTrade(command, DewPlayer.local);
+                else if (Time.unscaledTime - _coopAdvertisementAt <= 10f)
+                    NetworkClient.Send(new DreamforgeCoopTradeUp { Json = json });
+                else throw new InvalidOperationException(CoopUnavailable());
+            }
+            catch (Exception ex) { throw new CoopSendException(ex); }
         }
 
         private static string CoopSnapshot(Profile profile)
@@ -245,18 +263,47 @@ namespace SodRpg.Mod
             string snapshot = CoopSnapshot(Profile);
             string encoded = Convert.ToBase64String(Encoding.UTF8.GetBytes(snapshot));
             var parts = BuildTransfer.Split(encoded, CoopTradeTransport.MaxProfileChars);
-            if (action == "offer") _coopOfferInFlight = parts[0].TransferId;
+            if (action == "offer")
+            {
+                _coopOfferInFlight = parts[0].TransferId;
+                _coopOfferSentAt = Time.unscaledTime;
+            }
             if (action == "confirm") _coopFrozenProfile = snapshot;
             string serializedOffer = CoopTradeCodec.WriteOffer(offer);
             string id = CoopTrade.Id;
             int revision = CoopTrade.Revision;
-            foreach (var part in parts)
-                SendCoop(new DreamforgeCoopTradeCommand
+            try
+            {
+                foreach (var part in parts)
+                    SendCoop(new DreamforgeCoopTradeCommand
+                    {
+                        action = action, id = id, revision = revision, offer = serializedOffer, safe = CoopLocalSafe,
+                        data = part.Data, transferId = part.TransferId, index = part.Index,
+                        count = part.Count, totalLength = part.TotalLength,
+                    });
+            }
+            catch
+            {
+                if (action == "offer")
                 {
-                    action = action, id = id, revision = revision, offer = serializedOffer, safe = CoopLocalSafe,
-                    data = part.Data, transferId = part.TransferId, index = part.Index,
-                    count = part.Count, totalLength = part.TotalLength,
-                });
+                    _coopOfferInFlight = null;
+                    _nextCoopOfferRetry = Time.unscaledTime + 5f;
+                }
+                throw;
+            }
+        }
+
+        private void RetryCoopOffer()
+        {
+            if (_coopOfferInFlight != null && Time.unscaledTime - _coopOfferSentAt >= 5f)
+                _coopOfferInFlight = null;
+            if (_coopPendingOffer == null || _coopOfferInFlight != null || Time.unscaledTime < _nextCoopOfferRetry
+                || CoopTrade == null || !CoopTrade.Accepted || CoopTrade.Preparing) return;
+            _nextCoopOfferRetry = Time.unscaledTime + 5f;
+            if (!CanCoopTrade) return;
+            // New transfer ID, latest host revision: stale ACKs cannot confirm an unsent edit.
+            try { SendCoopProfile("offer", _coopPendingOffer); }
+            catch (Exception ex) { CoopTradeWarning = ex.Message; }
         }
 
         public string RequestCoopTrade(string key)
@@ -335,7 +382,8 @@ namespace SodRpg.Mod
                     if (Profile.CoopTradePending?.Id == msg.id)
                     {
                         if (Profile.CoopTradePending.HostKey != msg.hostKey) return;
-                        CoopTradeRules.Abort(Profile, msg.id);
+                        CoopTradeRules.Abort(Profile, msg.id, out string retryReason);
+                        if (retryReason != null) { DeferCoopSettlement(retryReason); return; }
                         CompleteCoopSettlement();
                     }
                     if (CoopTrade?.Id == msg.id) CoopTrade = null;
@@ -416,12 +464,21 @@ namespace SodRpg.Mod
                 else
                 {
                     if (Profile.CoopTradePending?.Id != msg.id && !Profile.CoopTradeExecuted.Contains(msg.id)) return;
-                    bool changed = CoopTradeRules.Resolve(Profile, receipt, key);
+                    bool changed = CoopTradeRules.Resolve(Profile, receipt, key, out string retryReason);
+                    if (retryReason != null) { DeferCoopSettlement(retryReason); return; }
                     CompleteCoopSettlement();
                     if (changed) Emit(new GameEvent(EventKind.Info, Loc.T("プレイヤーとの交換が成立しました。", "The player trade has committed.")));
                 }
             }
+            catch (CoopSendException ex) { CoopTradeWarning = ex.Message; }
             catch (Exception ex) { DisableCoopTrade(ex); }
+        }
+
+        private void DeferCoopSettlement(string reason)
+        {
+            _coopPrepareSaveRevision = 0;
+            CoopTradeWarning = reason + " " + Loc.T("予約品を保持し、条件が回復するまで結果照会を再試行します。",
+                "Reserved assets remain held. The result will be checked again until conditions recover.");
         }
 
         private void CompleteCoopSettlement()

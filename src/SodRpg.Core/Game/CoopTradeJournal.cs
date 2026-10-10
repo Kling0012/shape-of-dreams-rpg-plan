@@ -16,12 +16,13 @@ namespace SodRpg.Core.Game
         private readonly object _sync = new object();
         private bool _faulted;
 
-        public CoopTradeJournal(IFileSystem fs, string path)
+        public CoopTradeJournal(IFileSystem fs, string path, bool requireExisting = false)
         {
             _fs = fs ?? throw new ArgumentNullException(nameof(fs));
             if (string.IsNullOrEmpty(path)) throw new ArgumentException(Loc.T("協力取引の識別情報がありません。", "Trade journal path is required."), nameof(path));
             _path = path;
-            if (!fs.Exists(path)) return;
+            // Recovery must not mistake a missing or inaccessible journal for a new empty ledger.
+            if (!requireExisting && !fs.Exists(path)) return;
             var root = CoopTradeCodec.Object(Json.Parse(fs.ReadAllText(path)));
             if (CoopTradeCodec.String(root, "format") != Format || !(CoopTradeCodec.Value(root, "version") is long version) || version != 1)
                 throw new LedgerFormatException(Loc.T("協力取引の保存情報が不正です。", "Unsupported cooperative trade journal."));
@@ -95,6 +96,16 @@ namespace SodRpg.Core.Game
                 Persist(null, id);
                 _cancelled.Add(id);
                 return true;
+            }
+        }
+
+        /// <summary>Checks durable storage using only decisions validated from the current journal.</summary>
+        public void VerifyStorage()
+        {
+            lock (_sync)
+            {
+                EnsureHealthy();
+                Persist(null, null);
             }
         }
 
