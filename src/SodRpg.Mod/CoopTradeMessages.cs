@@ -24,7 +24,7 @@ namespace SodRpg.Mod
         public int revision, index, count, totalLength;
         public bool incoming, accepted, ownConfirmed, otherConfirmed, preparing;
         public string[] keys, names;
-        public bool[] available;
+        public bool[] available, ready;
         public BuildTransferPart Part() => new BuildTransferPart
         { Data = data, TransferId = transferId, Index = index, Count = count, TotalLength = totalLength };
     }
@@ -32,7 +32,7 @@ namespace SodRpg.Mod
     internal sealed class CoopTradePeer
     {
         public string Key, Name;
-        public bool Available;
+        public bool Available, Ready;
     }
 
     internal sealed class CoopTradeView

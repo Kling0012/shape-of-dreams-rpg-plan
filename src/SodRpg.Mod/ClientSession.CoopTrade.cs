@@ -22,26 +22,56 @@ namespace SodRpg.Mod
         private CoopTradeOffer _coopPendingOffer;
         private string _coopOfferInFlight;
         private bool _coopNativeSaving, _coopSettlementUnsaved, _coopDisabled;
+        private long _coopPrepareSaveRevision;
         internal static string CoopHostJournalPath => _hostSession?.CoopTradeJournalPath;
         internal static bool CoopHostSafe => _hostSession?.CoopLocalSafe == true;
         internal static bool CoopHostNativeSaving => _hostSession?._coopNativeSaving == true;
         internal static void ReceiveLocalCoopTrade(DreamforgeCoopTradeState state) => _hostSession?.OnCoopTradeState(state);
         public IReadOnlyList<CoopTradePeer> CoopTradePeers => _coopPeers;
         public CoopTradeView CoopTrade { get; private set; }
-        public string CoopTradeWarning { get; private set; }
+        private string _coopTradeWarning, _coopConnectionWarning;
+        public string CoopTradeWarning { get => _coopTradeWarning ?? _coopConnectionWarning; private set => _coopTradeWarning = value; }
         public bool CoopTradeOfferPending => _coopPendingOffer != null;
         public bool CoopTradeLocked => Profile.CoopTradePending != null || _coopSettlementUnsaved
             || CoopTrade?.OwnConfirmed == true || CoopTrade?.Preparing == true;
-        public bool CanCoopTrade => !_coopDisabled && Profile.CoopTradePending == null && !_coopSettlementUnsaved && CoopLocalSafe
-            && NetworkClient.active && DewPlayer.local != null && _coopConnection != null
-            && (NetworkServer.active || Time.unscaledTime - _coopAnsweredAt <= 20f);
-        private bool CoopLocalSafe => !_coopNativeSaving && _store != null && SaveError == null
-            && (_writer == null || _writer.WrittenRevision >= Profile.Revision)
-            && !HasHeldTrades && Profile.PendingSalvage.Count == 0 && _pendingRunRewards.Count == 0
-            && ContinueReady && CoopWorldSafe(DewPlayer.local)
-            && (!InGame || CanEditLoadout || NetworkedManagerBase<ZoneManager>.softInstance?.currentRoom?.didClearRoom == true);
+        public bool CanCoopTrade => CoopTradeUnavailableReason == null;
+        public string CoopTradeUnavailableReason
+        {
+            get
+            {
+                if (_coopDisabled) return CoopTradeWarning ?? Loc.T("トレードのみ利用できません。", "Only trade is unavailable.");
+                if (Profile.CoopTradePending != null)
+                    return Loc.T("前の取引の結果を確認しています", "Checking the result of an earlier trade");
+                if (_coopSettlementUnsaved)
+                    return Loc.T("保存が終わるのを待っています", "Waiting for save to finish");
+                if (!NetworkClient.active || DewPlayer.local == null || _coopConnection == null
+                    || !NetworkServer.active && (Time.unscaledTime - _coopAdvertisementAt > 10f || Time.unscaledTime - _coopAnsweredAt > 20f))
+                    return Loc.T("接続を待っています", "Waiting for connection");
+                return CoopLocalBlockReason;
+            }
+        }
+        private bool CoopLocalSafe => CoopLocalBlockReason == null;
+        private bool CoopLocalWorldSafe => CoopWorldSafe(DewPlayer.local, RunActive ? Profile.Run : null);
+        private string CoopLocalBlockReason
+        {
+            get
+            {
+                if (!ContinueReady)
+                    return Loc.T("続きからの再開を準備しています", "Preparing to continue");
+                if (_coopNativeSaving || _store == null || SaveError != null
+                    || _writer != null && _writer.WrittenRevision < Profile.Revision)
+                    return Loc.T("保存が終わるのを待っています", "Waiting for save to finish");
+                if (HasHeldTrades || Profile.PendingSalvage.Count != 0 || _pendingRunRewards.Count != 0)
+                    return Loc.T("前の取引の結果を確認しています", "Checking the result of an earlier trade");
+                if (!CoopLocalWorldSafe || InGame && !CanEditLoadout
+                    && !(NetworkServer.active && NetworkedManagerBase<ZoneManager>.softInstance?.currentRoom?.didClearRoom == true))
+                    return Loc.T("戦闘中・移動中は取引できません（部屋を片付けた後や確保地点で使えます）",
+                        "Not available in combat or while moving (use after clearing a room or at a secure point)");
+                return null;
+            }
+        }
 
-        internal static bool CoopWorldSafe(DewPlayer player)
+        internal static bool CoopWorldSafe(DewPlayer player, RunState localRun = null)
         {
             if (player == null || !player.isHumanPlayer) return false;
             var network = DewNetworkManager.softInstance;
@@ -51,11 +81,14 @@ namespace SodRpg.Mod
             var game = NetworkedManagerBase<GameManager>.softInstance;
             if (game == null) return settings.state == GameState.InLobby && DewPlayer.lobbyPlayers.Contains(player);
             var zone = NetworkedManagerBase<ZoneManager>.softInstance;
-            var run = HostRun;
+            // Room.didClearRoom and HostRun exist only on the server. Participants use
+            // their own run state; the host still checks its world state and their safe report.
+            var run = NetworkServer.active ? HostRun : localRun;
             return DewPlayer.gamePlayers.Contains(player) && player.hero != null && !player.hero.isInCombat
                 && !player.hero.isKnockedOut && zone != null && !zone.isInAnyTransition && !zone.isVoting
                 && zone.currentRoom != null && zone.currentRoom.isActive
-                && (zone.currentRoom.didClearRoom || run?.AwaitingChoice == true || run?.GearWindow == true);
+                && (NetworkServer.active && zone.currentRoom.didClearRoom
+                    || run != null && (NetworkServer.active || run.RunId == game.runId) && (run.AwaitingChoice || run.GearWindow));
         }
 
         private void CoopSaveStarted() => _coopNativeSaving = true;
@@ -74,7 +107,9 @@ namespace SodRpg.Mod
                 _coopPendingOffer = null;
                 _coopOfferInFlight = null;
                 _coopHostKey = null;
+                _coopPrepareSaveRevision = 0;
                 _coopAnsweredAt = -100f;
+                _coopConnectionWarning = null;
                 _nextCoopProbe = 0;
                 _coopSettings = null;
                 _coopAdvertisement = null;
@@ -126,7 +161,7 @@ namespace SodRpg.Mod
                 if (_coopConnection == null || _coopDisabled) return;
                 if (!NetworkServer.active && Time.unscaledTime - _coopAdvertisementAt > 10f)
                 {
-                    CoopTradeWarning = Loc.T("ホストがトレード非対応、または応答がありません。トレードのみ利用できません。",
+                    _coopConnectionWarning = Loc.T("ホストがトレード非対応、または応答がありません。トレードのみ利用できません。",
                         "The host does not support trade or has not replied. Only trade is unavailable.");
                     if (Time.unscaledTime >= _nextCoopProbe)
                     {
@@ -150,16 +185,33 @@ namespace SodRpg.Mod
                 var pending = Profile.CoopTradePending;
                 if (pending != null)
                 {
-                    CoopTradeWarning = Loc.T("取引結果を照会中です。予約品は成立または中止が確認できるまで保持します。",
-                        "Checking the trade result. Reserved assets remain held until commit or cancellation is confirmed.");
+                    if (string.IsNullOrEmpty(_coopTradeWarning))
+                        CoopTradeWarning = Loc.T("取引結果を照会中です。予約品は成立または中止が確認できるまで保持します。",
+                            "Checking the trade result. Reserved assets remain held until commit or cancellation is confirmed.");
                     if (_coopHostKey == pending.HostKey)
+                    {
+                        if (_coopPrepareSaveRevision > 0 && CoopTrade?.Id == pending.Id && CoopTrade.Preparing)
+                        {
+                            if (_writer.WrittenRevision >= _coopPrepareSaveRevision)
+                            {
+                                _coopPrepareSaveRevision = 0;
+                                SendCoop(new DreamforgeCoopTradeCommand
+                                { action = "prepared", id = pending.Id, revision = CoopTrade.Revision, safe = CoopLocalWorldSafe && !_coopNativeSaving });
+                            }
+                            else if (_writer.HasFailedRevision(_coopPrepareSaveRevision))
+                            {
+                                _coopPrepareSaveRevision = 0;
+                                SendCoop(new DreamforgeCoopTradeCommand { action = "cancel", id = pending.Id });
+                            }
+                        }
                         SendCoop(new DreamforgeCoopTradeCommand { action = "query", id = pending.Id });
+                    }
                     else if (_coopHostKey != null)
                         CoopTradeWarning = Loc.T("予約品の確認には元のホストへ再接続してください。トレード以外は続行できます。",
                             "Reconnect to the original host to settle reserved assets. Other features remain available.");
                 }
                 else if (!NetworkServer.active && Time.unscaledTime - _coopAnsweredAt > 20f)
-                    CoopTradeWarning = Loc.T("ホストがトレード非対応、または応答がありません。トレードのみ利用できません。",
+                    _coopConnectionWarning = Loc.T("ホストがトレード非対応、または応答がありません。トレードのみ利用できません。",
                         "The host does not support trade or has not replied. Only trade is unavailable.");
             }
             catch (Exception ex) { DisableCoopTrade(ex); }
@@ -250,7 +302,7 @@ namespace SodRpg.Mod
             try { SendCoop(new DreamforgeCoopTradeCommand { action = "cancel", id = CoopTrade.Id }); return null; }
             catch (Exception ex) { return ex.Message; }
         }
-        private string CoopUnavailable() => CoopTradeWarning ?? Loc.T(
+        private string CoopUnavailable() => CoopTradeUnavailableReason ?? CoopTradeWarning ?? Loc.T(
             "トレードは安全な時・保存完了後のみ利用できます。", "Trade is available only at a safe moment, after saving completes.");
 
         internal void OnCoopTradeState(DreamforgeCoopTradeState msg)
@@ -259,6 +311,7 @@ namespace SodRpg.Mod
             {
                 if (msg == null || msg.version != 1) return;
                 _coopAnsweredAt = Time.unscaledTime;
+                _coopConnectionWarning = null;
                 _coopHostKey = msg.hostKey;
                 if (msg.kind == "roster")
                 {
@@ -266,8 +319,14 @@ namespace SodRpg.Mod
                     if (msg.keys == null || msg.names == null || msg.available == null
                         || msg.keys.Length != msg.names.Length || msg.keys.Length != msg.available.Length) return;
                     for (int i = 0; i < msg.keys.Length; i++)
-                        _coopPeers.Add(new CoopTradePeer { Key = msg.keys[i], Name = msg.names[i], Available = msg.available[i] });
-                    if (Profile.CoopTradePending == null && !_coopSettlementUnsaved) CoopTradeWarning = msg.status;
+                        _coopPeers.Add(new CoopTradePeer
+                        {
+                            Key = msg.keys[i], Name = msg.names[i], Available = msg.available[i],
+                            // Older hosts omit readiness; retain their existing request behavior.
+                            Ready = msg.ready == null || msg.ready.Length != msg.keys.Length || msg.ready[i],
+                        });
+                    if (Profile.CoopTradePending == null && !_coopSettlementUnsaved && !string.IsNullOrEmpty(msg.status))
+                        CoopTradeWarning = msg.status;
                     return;
                 }
                 if (msg.kind == "error") { CoopTradeWarning = msg.status; return; }
@@ -343,8 +402,16 @@ namespace SodRpg.Mod
                     CoopTradeRules.Prepare(Profile, msg.id, receipt.HostKey, own);
                     CoopTrade.Preparing = true;
                     if (SaveNow(true))
-                        SendCoop(new DreamforgeCoopTradeCommand { action = "prepared", id = msg.id, revision = msg.revision, safe = CoopWorldSafe(DewPlayer.local) && !_coopNativeSaving });
-                    else CoopTradeWarning = Loc.T("予約の保存に失敗しました。成立させずに結果を照会します。", "Reservation save failed. Checking the result without committing.");
+                        SendCoop(new DreamforgeCoopTradeCommand { action = "prepared", id = msg.id, revision = msg.revision, safe = CoopLocalWorldSafe && !_coopNativeSaving });
+                    else
+                    {
+                        CoopTradeWarning = Loc.T("予約の保存に失敗しました。成立させずに結果を照会します。", "Reservation save failed. Checking the result without committing.");
+                        // A confirmation timeout can still finish writing. Cancel only a
+                        // completed failure or a reservation that never reached the writer.
+                        if (_writer == null || _writer.EnqueuedRevision < Profile.Revision || _writer.HasFailedRevision(Profile.Revision))
+                            SendCoop(new DreamforgeCoopTradeCommand { action = "cancel", id = msg.id });
+                        else _coopPrepareSaveRevision = Profile.Revision;
+                    }
                 }
                 else
                 {
@@ -359,6 +426,7 @@ namespace SodRpg.Mod
 
         private void CompleteCoopSettlement()
         {
+            _coopPrepareSaveRevision = 0;
             _coopSettlementUnsaved = true;
             _buildDirty = true;
             _buildCacheFrame = -1;

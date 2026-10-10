@@ -133,15 +133,17 @@ namespace SodRpg.Mod
                     return;
                 }
                 if (!CoopPeerAvailable(caller)) { SendCoopError(caller, "unsupported"); return; }
-                if (msg.action == "query" || msg.action == "cancel") { QueryCoopTrade(caller, msg.id); return; }
+                if (msg.action == "query") { QueryCoopTrade(caller, msg.id); return; }
+                if (msg.action == "cancel") { CancelCoopTrade(caller, msg.id); return; }
                 if (msg.action == "request")
                 {
                     if (_coopHostTrade != null || !msg.safe || !CoopPeerSafe(caller)) { SendCoopError(caller, "safe"); return; }
                     DewPlayer target = null;
                     foreach (var player in DewPlayer.allHumanPlayers)
                         if (player != null && player.guid == msg.target) { target = player; break; }
-                    if (target == caller || !CoopPeerAvailable(target) || !CoopPeerSafe(target))
+                    if (target == caller || !CoopPeerAvailable(target))
                     { SendCoopError(caller, "unsupported"); return; }
+                    if (!CoopPeerSafe(target)) { SendCoopError(caller, "peerBusy"); return; }
                     _coopHostTrade = new CoopHostTrade
                     { Id = Guid.NewGuid().ToString("N"), First = caller, Second = target, ActiveAt = Time.unscaledTime };
                     SendCoopViews();
@@ -263,6 +265,18 @@ namespace SodRpg.Mod
             SendCoopState(trade.Second, msg);
         }
 
+        private void CancelCoopTrade(DewPlayer caller, string id)
+        {
+            var trade = _coopHostTrade;
+            if (trade != null && trade.Id == id)
+            {
+                if (caller == trade.First || caller == trade.Second) CancelHostCoopTrade("cancelled");
+                return;
+            }
+            // A late cancellation must still return an already committed receipt.
+            QueryCoopTrade(caller, id);
+        }
+
         private void QueryCoopTrade(DewPlayer caller, string id)
         {
             if (!Guid.TryParseExact(id, "N", out _)) return;
@@ -275,7 +289,8 @@ namespace SodRpg.Mod
             var trade = _coopHostTrade;
             if (trade != null && trade.Id == id)
             {
-                if (caller == trade.First || caller == trade.Second) CancelHostCoopTrade("cancelled");
+                if (caller == trade.First) SendCoopView(trade.First, trade.Second, true, trade, false);
+                else if (caller == trade.Second) SendCoopView(trade.Second, trade.First, false, trade, false);
                 return;
             }
             // Absence in this original host's non-rewound journal is an authoritative abort.
@@ -291,7 +306,7 @@ namespace SodRpg.Mod
             SendCoopView(trade.First, trade.Second, true, trade);
             if (ReferenceEquals(_coopHostTrade, trade)) SendCoopView(trade.Second, trade.First, false, trade);
         }
-        private void SendCoopView(DewPlayer player, DewPlayer partner, bool first, CoopHostTrade trade)
+        private void SendCoopView(DewPlayer player, DewPlayer partner, bool first, CoopHostTrade trade, bool includeProfile = true)
         {
             SendCoopState(player, new DreamforgeCoopTradeState
             {
@@ -304,20 +319,21 @@ namespace SodRpg.Mod
                 offerAck = first ? trade.FirstOfferAck : trade.SecondOfferAck,
             });
             var other = first ? trade.SecondProfile : trade.FirstProfile;
-            if (other != null) SendCoopPayload(player, "profile", trade.Id, trade.Revision, ProfileCodec.WriteCheckpointProfile(other));
+            if (includeProfile && other != null) SendCoopPayload(player, "profile", trade.Id, trade.Revision, ProfileCodec.WriteCheckpointProfile(other));
         }
         private void SendCoopRoster(DewPlayer caller)
         {
             var players = DewPlayer.allHumanPlayers;
-            var keys = new List<string>(); var names = new List<string>(); var available = new List<bool>();
+            var keys = new List<string>(); var names = new List<string>(); var available = new List<bool>(); var ready = new List<bool>();
             foreach (var player in players)
             {
                 if (player == caller || !CoopPresent(player)) continue;
                 keys.Add(player.guid); names.Add(player.playerName);
                 available.Add(CoopPeerAvailable(player) && _coopHostFailure == null);
+                ready.Add(CoopPeerSafe(player) && _coopHostFailure == null);
             }
             SendCoopState(caller, new DreamforgeCoopTradeState
-            { kind = "roster", hostKey = CoopHostKey, keys = keys.ToArray(), names = names.ToArray(), available = available.ToArray() });
+            { kind = "roster", hostKey = CoopHostKey, keys = keys.ToArray(), names = names.ToArray(), available = available.ToArray(), ready = ready.ToArray() });
         }
         private void SendCoopPayload(DewPlayer player, string kind, string id, int revision, string text)
         {
@@ -343,6 +359,7 @@ namespace SodRpg.Mod
             switch (reason)
             {
                 case "unsupported": return Loc.T("相手がトレード非対応、または応答がありません。トレードのみ利用できません。", "The peer does not support trade or has not replied. Only trade is unavailable.");
+                case "peerBusy": return Loc.T("相手は今取引できる状態ではありません（戦闘中・保存中など）", "The other player can't trade right now (in combat, saving, etc.)");
                 case "safe": return Loc.T("安全な時・保存完了後のみ取引できます。取引は中止しました。", "Trade requires a safe moment and completed saves. The trade was cancelled.");
                 case "ownership": return Loc.T("所持品または残高が変わったため取引を中止しました。", "The trade was cancelled because inventory or balances changed.");
                 case "cancelled": case "connection": return Loc.T("取引を中止しました（取り消し・切断・時間切れ・移動）。", "Trade cancelled (cancel, disconnect, timeout or travel).");
