@@ -8,14 +8,23 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
+---
+
+## v2.10.18 — Movement essence slots in the edit screen（2026-10-10）
+
+エッセンス装着画面で回避スキルの枠が表示されない不具合を修正しました。 / Fixes the movement skill's essence slots not showing in the essence edit screen.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
 ### 不具合の修正 / Bug fixes
 
-- エッセンス装着画面で回避スキルの枠が表示されない不具合を修正しました。 / Fixed movement skill essence slots being hidden in the edit screen.
+- 回避スキルにエッセンス枠があっても、エッセンス装着画面で回避スキルの列が隠れたままになり、装着できなかった問題を修正しました。マウスでもゲームパッドでも選べます。 / Fixed the movement skill's column staying hidden in the essence edit screen even when it had essence slots, so nothing could be equipped there. It can now be selected with mouse or gamepad.
 
-### 新機能・改善 / New features and improvements
-
-- ビスマスの星図の配置も見直しました（線の交差 125→86、寄り添って見える線 0、同じ星から並んで走る線 25→4）。星・線・取得条件・保存データは変えていません。 / Re-laid out Bismuth's star chart as well (crossings 125 to 86, side-by-side lines from one star 25 to 4). Stars, links, requirements and saves are unchanged.
-- ケトゥスの星図の配置を見直し、重なって見える線を減らしました（線の交差 146→110、寄り添って見える線 9→0、同じ星から並んで走る線 40→0、いちばん長い線 2245→1673）。星・線・取得条件・保存データは変えていません。 / Re-laid out Cetus's star chart to cut overlapping lines (crossings 146 to 110, near-touching lines 9 to 0, side-by-side lines from one star 40 to 0, longest line 2245 to 1673). Stars, links, requirements and saves are unchanged.
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
 
 ---
 
