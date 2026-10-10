@@ -186,17 +186,20 @@ namespace SodRpg.Core.Game
             }
         }
 
-        /// <summary>Whether another manual trade fits its budget; overflow settlements do not consume that budget.</summary>
-        public bool CanBegin
+        /// <summary>Manual trades still held, including unresolved and lost results; legacy overflow settlements do not consume this budget.</summary>
+        public int ManualHeldCount
         {
             get
             {
                 int n = 0;
                 foreach (var t in _pending.Values)
                     if (t.Kind != TradeKind.SatchelOverflowDust) n++;
-                return n < MaxHeld;
+                return n;
             }
         }
+
+        /// <summary>Whether another manual trade fits its budget; overflow settlements do not consume that budget.</summary>
+        public bool CanBegin => ManualHeldCount < MaxHeld;
 
         /// <summary>応答待ち・結果不明を合わせて、まだ対価や返却が確定していない取引の数。プロフィールの切り替えなどを止めるのに使う。</summary>
         public int HeldCount => _pending.Count;
@@ -215,6 +218,18 @@ namespace SodRpg.Core.Game
                 if (t.Kind == TradeKind.MerchantGold
                     && (string.IsNullOrEmpty(t.MerchantOfferId) || t.MerchantOfferId == offerId)) return true;
             return false;
+        }
+
+        /// <summary>Number of reserved salvage trades, including unresolved and lost results.</summary>
+        public int ReservedSalvageCount
+        {
+            get
+            {
+                int n = 0;
+                foreach (var t in _pending.Values)
+                    if (t.Kind == TradeKind.SalvageForDust) n++;
+                return n;
+            }
         }
 
         /// <summary>分解の応答待ち（結果不明を含む）で、別の操作に使えない遺物か。</summary>

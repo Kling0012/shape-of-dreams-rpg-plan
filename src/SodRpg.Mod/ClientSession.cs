@@ -966,6 +966,52 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
             }
         }
 
+        internal bool CanBulkSalvageUnsecured(Relic r)
+        {
+            if (r.UniqueId != null || r.Rarity > Rarity.Rare || _trades.IsReserved(r.Uid)) return false;
+            for (int i = 0; i < Profile.PendingSalvage.Count; i++)
+                if (Profile.PendingSalvage[i].Relic.Uid == r.Uid) return false;
+            return true;
+        }
+
+        /// <summary>固有品以外のレア以下を、既存のホスト取引で最大30件ずつ分解へ回す。</summary>
+        public string SalvageUnsecuredBulk(out int sent, out int remaining)
+        {
+            sent = 0;
+            remaining = 0;
+            try
+            {
+                var run = Profile.Run ?? throw new InvalidOperationException(Loc.T("遠征中のみ使えます。", "Only during an expedition."));
+                var targets = new List<Relic>();
+                for (int i = 0; i < run.Satchel.Count; i++)
+                    if (CanBulkSalvageUnsecured(run.Satchel[i])) targets.Add(run.Satchel[i]);
+                remaining = targets.Count;
+                string blocked = TradeUnavailable();
+                if (blocked != null) return blocked;
+                int limit = Math.Min(30, TradeLedger.MaxHeld - _trades.ManualHeldCount);
+                for (int i = 0; i < targets.Count && sent < limit; i++)
+                {
+                    var r = targets[i];
+                    if (!run.Satchel.Contains(r) || !CanBulkSalvageUnsecured(r))
+                    {
+                        remaining--;
+                        continue;
+                    }
+                    blocked = TradeUnavailable();
+                    if (blocked != null) return blocked;
+                    string err = SendTrade(_trades.BeginSalvage(r, Time.unscaledTime));
+                    if (err != null) return err;
+                    sent++;
+                    remaining--;
+                }
+                return null;
+            }
+            catch (Exception ex)
+            {
+                return ex.Message;
+            }
+        }
+
         private void OnNightmare(DreamforgeNightmareMsg msg)
         {
             if (msg == null || !ObserveMonsterAuthority(msg.authorityGeneration)) return;

@@ -2947,6 +2947,63 @@ namespace SodRpg.Mod
         // DrawWorkshopTab・WorkshopValue は DreamforgeUi.Workshop.cs へ移した（#147 でスクロールに入れた）。
 
         private string _confirmDust;
+        private float _bulkDustArmedAt = -1f;
+        private RunState _bulkDustRun;
+        private int _bulkDustSatchelCount = -1, _bulkDustReservedCount = -1, _bulkDustPendingCount = -1;
+        private int _bulkDustCount;
+        private long _bulkDustTotal;
+        private bool _bulkDustJapanese;
+        private string _bulkDustLabel, _bulkDustConfirmLabel;
+
+        private void DrawBulkUnsecuredSalvage(RunState run)
+        {
+            int reserved = _s.Trades.ReservedSalvageCount;
+            int pending = _s.Profile.PendingSalvage.Count;
+            if (_bulkDustRun != run || _bulkDustSatchelCount != run.Satchel.Count
+                || _bulkDustReservedCount != reserved || _bulkDustPendingCount != pending)
+            {
+                _bulkDustRun = run;
+                _bulkDustSatchelCount = run.Satchel.Count;
+                _bulkDustReservedCount = reserved;
+                _bulkDustPendingCount = pending;
+                _bulkDustCount = 0;
+                _bulkDustTotal = 0;
+                for (int i = 0; i < run.Satchel.Count; i++)
+                {
+                    var r = run.Satchel[i];
+                    if (!_s.CanBulkSalvageUnsecured(r)) continue;
+                    _bulkDustCount++;
+                    _bulkDustTotal += Economy.SalvageDust(r);
+                }
+                _bulkDustArmedAt = -1f;
+                _bulkDustLabel = null;
+            }
+            if (_bulkDustCount == 0) return;
+            if (_bulkDustArmedAt >= 0f && Time.unscaledTime - _bulkDustArmedAt > 5f)
+                _bulkDustArmedAt = -1f;
+            if (_bulkDustLabel == null || _bulkDustJapanese != Loc.Japanese)
+            {
+                _bulkDustJapanese = Loc.Japanese;
+                _bulkDustLabel = Loc.T($"固有品以外のレア以下をまとめて分解（{_bulkDustCount}個、+{_bulkDustTotal}）",
+                    $"Salvage all non-legendary Rare-or-lower ({_bulkDustCount}, +{_bulkDustTotal})");
+                _bulkDustConfirmLabel = Loc.T($"<color=#ff8080>もう一度押すと {_bulkDustCount}個をまとめて分解</color>",
+                    $"<color=#ff8080>Press again to salvage {_bulkDustCount}</color>");
+            }
+            if (GUILayout.Button(_bulkDustArmedAt >= 0f ? _bulkDustConfirmLabel : _bulkDustLabel, _st.Button, DirectStashButtonSize))
+            {
+                if (_bulkDustArmedAt < 0f) _bulkDustArmedAt = Time.unscaledTime;
+                else
+                {
+                    _bulkDustArmedAt = -1f;
+                    string err = _s.SalvageUnsecuredBulk(out int sent, out int remaining);
+                    _bulkDustSatchelCount = -1;
+                    if (err != null) SetStatus(err);
+                    else if (remaining > 0) SetStatus(Loc.T(
+                        $"{sent}個を分解に回しました。残り{remaining}個はもう一度押してください。",
+                        $"Sent {sent} for salvage. Press again for the remaining {remaining}."));
+                }
+            }
+        }
 
         /// <summary>今日の夢が切り替わる時刻（世界時の0時）を、遊んでいる人の時計で。</summary>
         private static string DailyRollover() => DateTime.UtcNow.Date.AddDays(1).ToLocalTime().ToString("H:mm");
@@ -3004,6 +3061,7 @@ namespace SodRpg.Mod
                 GUILayout.Label(_s.InGame
                     ? Loc.T($"今回の遠征（まだ持ち帰っていない遺物{p.Run.Satchel.Count}個）", $"This expedition ({p.Run.Satchel.Count} relics not yet secured)")
                     : Loc.T($"中断中の遠征（まだ持ち帰っていない遺物{p.Run.Satchel.Count}個）", $"Suspended expedition ({p.Run.Satchel.Count} relics not yet secured)"), _st.Header);
+                DrawBulkUnsecuredSalvage(p.Run);
                 int rerolls = Rules.RerollsLeft(p);
                 for (int i = 0; i < p.Run.Bounties.Count; i++)
                 {
