@@ -14,7 +14,9 @@ namespace SodRpg.Core.Game
         internal const double LimboLuck = 0.2;
         internal const double LimboExpBonus = 0.1;
         internal const double LimboExpBonusCap = 1.0;
+        internal const double LimboRelicBonus = 0.2;
+        internal const double LimboRelicBonusCap = 2.0;
         internal const int SecureBonusDivisor = 4;
-        internal static readonly string ContentFingerprintRecord = null;
+        internal static readonly string ContentFingerprintRecord = "balance:economy:v1:expedition/limboRelicBonus:double:relic-mult/limbo-depth:0.2;expedition/limboRelicBonusCap:double:relic-bonus-cap:2.0";
     }
 }

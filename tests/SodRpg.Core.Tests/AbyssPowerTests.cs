@@ -30,7 +30,7 @@ namespace SodRpg.Core.Tests
             Assert.Equal(4, p.Run.LimboDepth);
             Assert.Contains(ev, e => e.Text.Contains("Limbo"));
             var m = Rules.KillModifiers(p.Run);
-            Assert.Equal(0.4, m.DropBonus, 3);
+            Assert.Equal(0, m.DropBonus, 3);
             Assert.Equal(0.8, m.Luck, 3);
             var q = ProfileCodec.Read(ProfileCodec.Write(p), new List<string>());
             Assert.Equal(4, q.Run.LimboDepth);

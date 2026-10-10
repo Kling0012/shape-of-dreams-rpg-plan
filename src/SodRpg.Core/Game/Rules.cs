@@ -95,9 +95,16 @@ namespace SodRpg.Core.Game
         /// ランの開始（または再開）。別のランIDの未解決ランが残っていれば、全滅と同じ扱いで精算する
         /// （途中で終了したランの未確保品は遺失物へ）。
         /// </summary>
-        /// <summary>Limbo 深度1ごとの遺物ドロップ率の上乗せと幸運。</summary>
+        /// <summary>旧ドロップ率の上乗せ（互換用。撃破報酬には使用しない）。</summary>
         public const double LimboDropBonus = EconomyBalance.LimboDropBonus;
         public const double LimboLuck = EconomyBalance.LimboLuck;
+
+        /// <summary>Limbo 深度1ごとの遺物個数倍率の上乗せと、その上限（深度10で頭打ち）。</summary>
+        public const double LimboRelicBonus = EconomyBalance.LimboRelicBonus;
+        public const double LimboRelicBonusCap = EconomyBalance.LimboRelicBonusCap;
+
+        public static double LimboRelicMultiplier(int limboDepth)
+            => 1 + Math.Min(LimboRelicBonusCap, LimboRelicBonus * Math.Max(0, limboDepth));
 
         /// <summary>Limbo 深度1ごとの経験値倍率の上乗せと、その上乗せの上限（深度10で頭打ち）。</summary>
         public const double LimboExpBonus = EconomyBalance.LimboExpBonus;
@@ -135,11 +142,11 @@ namespace SodRpg.Core.Game
             p.Run = new RunState { RunId = runId, HeroKey = heroKey, LevelAtStart = p.DreamLevel, DailyId = daily?.Id ?? 0, LimboDepth = Math.Max(0, limboDepth), DreamDepth = dreamDepth ?? p.LastDreamDepth };
             if (limboDepth > 0)
             {
-                int dropPercent = (int)(LimboDropBonus * 100 * limboDepth);
+                string relicMultiplier = LimboRelicMultiplier(limboDepth).ToString("0.0", CultureInfo.InvariantCulture);
                 int expPercent = (int)Math.Round((LimboXpMultiplier(limboDepth) - 1) * 100);
                 ev.Add(new GameEvent(EventKind.Info, Loc.T(
-                    $"Limboの深さ{limboDepth}：遺物が{dropPercent}%出やすくなり、レア度も上がります。経験値も+{expPercent}%されます。",
-                    $"Limbo depth {limboDepth}: +{dropPercent}% relic drops, better rarity, +{expPercent}% experience")));
+                    $"Limboの深さ{limboDepth}：遺物が{relicMultiplier}倍出るようになり、レア度も上がります。経験値も+{expPercent}%されます。",
+                    $"Limbo depth {limboDepth}: relic drops x{relicMultiplier}, better rarity, +{expPercent}% experience")));
             }
             if (daily != null) ev.Add(new GameEvent(EventKind.Info, Loc.T($"今日の夢「{daily.Name}」：{daily.Description}", $"Today's dream \"{daily.Name}\": {daily.Description}")));
             var brng = p.TakeRng();
@@ -159,7 +166,7 @@ namespace SodRpg.Core.Game
         public static Pacts.Totals KillModifiers(RunState run, Waypoint? waypoint = null)
         {
             var t = Pacts.Sum(run.Pacts);
-            t.DropBonus += LimboDropBonus * run.LimboDepth + run.EventDropBonus;
+            t.DropBonus += run.EventDropBonus;
             t.Luck += LimboLuck * run.LimboDepth + run.EventLuck;
             t.Luck += DreamDepth.RarityLuck(run.DreamDepth) + Waypoints.Sum(waypoint ?? run.ActiveWaypoint).Luck;
             var d = DailyDream.Get(run.DailyId);
@@ -191,7 +198,7 @@ namespace SodRpg.Core.Game
             var focus = p.Focus ?? DailyDream.Get(run.DailyId)?.FeaturedLine;
             var reward = Loot.RollKill(rng, rollTier, itemLevel, killHeat, focus, KillModifiers(run, killWaypoint), p.Stash, run.Satchel, p.Codex,
                 Rarity.Legendary, InfinityRewards.OrdinaryRelicMultiplier(run, killWaypoint, tier), shardDropMultiplier,
-                InfinityRewards.UniqueDropMultiplier(p));
+                InfinityRewards.UniqueDropMultiplier(p), LimboRelicMultiplier(run.LimboDepth));
             if (variant != null && variant.ShardBonusPct != 100) reward.Shards = (int)Math.Min(int.MaxValue, (long)reward.Shards * variant.ShardBonusPct / 100 + LootBalance.VariantAdditiveShards);
             bool hoardPayout = killWaypoint == Waypoint.BossHoard
                 && !run.WaypointHoardReleased && tier == MonsterTier.Boss;
