@@ -47,7 +47,7 @@
     </Task>
   </UsingTask>
   <Target Name="CompileNativePersistence" BeforeTargets="CoreCompile">
-    <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/ClientSession.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)NativePersistence.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="ClientSession" Methods="Tick;MarkDirty;DeferSave;TickSatchelOverflow;TickPeriodicSave;SaveNow;FlushSaves;Secure;Delve;OnConcluded;IsVictory;TrackRun;CarryPendingResultIntoRecovery;ReadLimboDepth;HeroKeyOf;Emit;SendTrade;TradeUnavailable;SendLedgerProbe;SendPreparedTrade;SendDueTradeQueries;RestoreSalvageTrade;OnTradeResult;TradeFailText;SalvageUnsecured" />
+    <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/ClientSession.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)NativePersistence.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="ClientSession" Methods="MarkDirty;DeferSave;TickSatchelOverflow;TickPeriodicSave;SaveNow;FlushSaves;Secure;Delve;OnConcluded;IsVictory;TrackRun;CarryPendingResultIntoRecovery;ReadLimboDepth;HeroKeyOf;Emit;SendTrade;TradeUnavailable;SendLedgerProbe;SendPreparedTrade;SendDueTradeQueries;RestoreSalvageTrade;OnTradeResult;TradeFailText;SalvageUnsecured" />
     <ItemGroup>
       <Compile Include="$(IntermediateOutputPath)NativePersistence.g.cs" />
     </ItemGroup>
@@ -116,6 +116,12 @@
     <ItemGroup>
       <Compile Include="$(IntermediateOutputPath)SecurePanelUi.g.cs" />
       <Compile Include="$(IntermediateOutputPath)InfinityChoiceNoticeUi.g.cs" />
+    </ItemGroup>
+  </Target>
+  <Target Name="CompileClientTickIsolation" BeforeTargets="CoreCompile">
+    <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/ClientSession.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)ClientTick.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="ClientSession" Methods="Tick" />
+    <ItemGroup>
+      <Compile Include="$(IntermediateOutputPath)ClientTick.g.cs" />
     </ItemGroup>
   </Target>
 </Project>
