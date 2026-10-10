@@ -147,7 +147,7 @@ namespace SodRpg.Mod
         private static void AppendImplicit(StringBuilder sb, BaseDef b)
         {
             sb.Append(Colored(Content.FormatStat(b.ImplicitStat, b.ImplicitValue), "#c8c8ff"))
-              .Append(Colored(Loc.T("  （この土台が必ず持つ性能）", "  (always on this base)"), Dim)).Append('\n');
+              .Append(Colored(Loc.T("  （この土台に必ず付く性能）", "  (always on this base)"), Dim)).Append('\n');
         }
 
         private static void AppendBase(StringBuilder sb, CodexEntry e, CodexState state)
@@ -161,7 +161,7 @@ namespace SodRpg.Mod
                 if (state.Codex.Contains(u.Id)) found++;
             }
             sb.Append('\n').Append(Loc.T(
-                "特性：入手のたびに抽選される。",
+                "特性：入手するたびにランダムに決まる。",
                 "Affixes: rolled each time you obtain one.")).Append('\n');
             if (total > 0)
                 sb.Append('\n').Append(Loc.T($"この土台の固有品：{found}/{total} 発見", $"Legendaries on this base: {found}/{total} found"));
@@ -179,9 +179,9 @@ namespace SodRpg.Mod
             if (u.BossMove != null)
                 sb.Append(Colored(EffectLayout.Bullets(BossProfiles.DescribeMove(u.BossMove)), Purple)).Append('\n');
             if (u.Link != null) sb.Append(Colored(Links.Describe(u.Link), Cyan)).Append('\n');
-            sb.Append(Loc.T("特性：入手のたびに3つ抽選される。", "Affixes: 3 are rolled each time you obtain one.")).Append('\n');
+            sb.Append(Loc.T("特性：入手するたびに3つがランダムに決まる。", "Affixes: 3 are rolled each time you obtain one.")).Append('\n');
             sb.Append(Colored(Loc.T(
-                $"覚醒：装着して敵を倒すと溜まり、{Content.AwakenThresholdFor(1)}・{Content.AwakenThresholdFor(2)}・{Content.AwakenThresholdFor(3)}で覚醒Ⅰ・Ⅱ・Ⅲ（固有効果 最大{Content.AwakenPowerPctAt(Content.MaxAwakenLevel) / 100f:0.##}倍・特性 最大{Content.AwakenAffixPctAt(Content.MaxAwakenLevel) / 100f:0.##}倍）。",
+                $"覚醒：装着して敵を倒すと溜まり、{Content.AwakenThresholdFor(1)}・{Content.AwakenThresholdFor(2)}・{Content.AwakenThresholdFor(3)}に達すると覚醒Ⅰ・Ⅱ・Ⅲになる。固有効果は最大{Content.AwakenPowerPctAt(Content.MaxAwakenLevel) / 100f:0.##}倍、特性は最大{Content.AwakenAffixPctAt(Content.MaxAwakenLevel) / 100f:0.##}倍になる。",
                 $"Awakening: gathers power as the Traveler wearing it defeats enemies; at {Content.AwakenThresholdFor(1)}, {Content.AwakenThresholdFor(2)} and {Content.AwakenThresholdFor(3)} it reaches I, II and III (powers up to x{Content.AwakenPowerPctAt(Content.MaxAwakenLevel) / 100f:0.##}, affixes up to x{Content.AwakenAffixPctAt(Content.MaxAwakenLevel) / 100f:0.##})."), Dim)).Append('\n');
             if (u.SetId != null && Content.GetSet(u.SetId) is SetDef set)
             {
@@ -236,7 +236,7 @@ namespace SodRpg.Mod
             }
             foreach (var pw in n.Powers) sb.Append(Colored(Content.FormatPowerBullets(pw.Power, pw.Value), Purple)).Append('\n');
             int affixes = Content.AffixCount(n.Rarity);
-            sb.Append(Loc.T($"特性：入手のたびに{affixes}つ抽選される。", $"Affixes: {affixes} are rolled each time you obtain one.")).Append('\n');
+            sb.Append(Loc.T($"特性：入手するたびに{affixes}つがランダムに決まる。", $"Affixes: {affixes} are rolled each time you obtain one.")).Append('\n');
             if (!string.IsNullOrEmpty(n.Lore.ToString()))
                 sb.Append('\n').Append("<i>").Append(Colored(n.Lore.ToString(), "#c9a86a")).Append("</i>").Append('\n');
             if (n.MiniSetId != null && NamedItems.TryGetMiniSet(n.MiniSetId, out var ms))
@@ -291,7 +291,7 @@ namespace SodRpg.Mod
                     if (se.Set == s && state.IsFound(se)) names.Add("《" + s.Name + "》");
             if (names.Count > 0)
             {
-                sb.Append('\n').Append(Loc.T("持っている発見済みの装備：", "Found gear carrying it: ")).Append('\n');
+                sb.Append('\n').Append(Loc.T("この固有効果が付く、発見済みの装備：", "Found gear carrying it: ")).Append('\n');
                 int shown = Math.Min(names.Count, 12);
                 for (int i = 0; i < shown; i++) sb.Append("・").Append(names[i]).Append('\n');
                 if (names.Count > shown) sb.Append(Loc.T($"…ほか{names.Count - shown}件", $"...and {names.Count - shown} more")).Append('\n');

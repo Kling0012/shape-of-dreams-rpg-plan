@@ -1571,7 +1571,7 @@ namespace SodRpg.Mod
                 GUILayout.Label(UiStyles.Colored(Loc.T($"限界突破 {r.LimitBreaks}/{Content.MaxLimitBreaks(r.Rarity)}（上限 +{Content.MaxEnhanceFor(r)}）",
                     $"Limit breaks {r.LimitBreaks}/{Content.MaxLimitBreaks(r.Rarity)} (cap +{Content.MaxEnhanceFor(r)})"), "#ffd36e"), _st.Small);
             var imp = r.Implicit;
-            GUILayout.Label(UiStyles.Colored(Content.FormatStat(imp.Stat, imp.Value), "#c8c8ff") + Loc.T("  <color=#aaa>（この土台が必ず持つ性能）</color>", "  <color=#aaa>(always on this base)</color>"), _st.Label);
+            GUILayout.Label(UiStyles.Colored(Content.FormatStat(imp.Stat, imp.Value), "#c8c8ff") + Loc.T("  <color=#aaa>（この土台に必ず付く性能）</color>", "  <color=#aaa>(always on this base)</color>"), _st.Label);
             // 固有効果は遺物の個性なので、特性より先に見せる。
             foreach (var pw in r.EffectivePowers()) GUILayout.Label(UiStyles.Colored(Content.FormatPowerBullets(pw.Power, pw.Value), "#e0b0ff"), _st.Label);
             if (r.BossMove != null)
