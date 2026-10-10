@@ -225,9 +225,16 @@ namespace SodRpg.Core.Game
         /// <summary>6つ装着の効果を持つか（= 6部位のセットか）。</summary>
         public bool HasSixPiece => BossStages.Count == 3 || SixPiece != null && SixPiece.Length > 0;
 
+        /// <summary>能力値の行を並べる。日本語は1行ごとに「。」で終える文にし、英語は従来どおりカンマでつなぐ。</summary>
+        internal static string JoinStatLines(IEnumerable<string> lines)
+        {
+            if (!Loc.Japanese) return string.Join(", ", lines);
+            return string.Concat(lines.Select(l => l.TrimEnd('。') + "。"));
+        }
+
         public string Describe()
         {
-            string two = string.Join(Loc.T("、", ", "), TwoPiece.Select(s => Content.FormatStat(s.Stat, s.Value)));
+            string two = JoinStatLines(TwoPiece.Select(s => Content.FormatStat(s.Stat, s.Value)));
             string three = string.Join("\n", ThreePiece.Select(p => Content.FormatPowerBullets(p.Power, p.Value, "　")));
             string text = Loc.T($"2つ装着：{two}\n3つ装着：\n{three}", $"2 pieces: {two}\n3 pieces:\n{three}");
             if (BossStages.Count > 0)
@@ -238,7 +245,7 @@ namespace SodRpg.Core.Game
                 text += Loc.T($"\n6つ装着：\n{six}", $"\n6 pieces:\n{six}");
             }
             if (BossTypeName != null)
-                text += Loc.T("\n入手先：対応するボスからのみ", "\nSource: only from the matching boss");
+                text += Loc.T("\n対応するボスからのみ入手できる。", "\nSource: only from the matching boss");
             foreach (var stage in LinkStages)
                 text += Loc.T($"\n{stage.RequiredPieces}つ装着の任意連携：\n", $"\nOptional {stage.RequiredPieces}-piece link:\n")
                     + EffectLayout.Bullets(stage.Link.Kind == LinkKind.BossReward ? BossProfiles.DescribeReward(BossReward, (int)stage.Link.Value) : Links.Describe(stage.Link), "　");
@@ -251,11 +258,11 @@ namespace SodRpg.Core.Game
             var stage = SelectLinkStage(count);
             string target = Links.Name(LinkStages[0].Link.Requires[0]).ToString();
             string status = Loc.T(
-                $"現在{count}つ装着。対象『{target}』：{(satisfied ? "装着済み" : "未装着")}。",
+                $"現在{count}つ装着している。対象の『{target}』は{(satisfied ? "装着済み" : "未装着")}である。",
                 $"{count} pieces equipped. Target {target}: {(satisfied ? "equipped" : "not equipped")}.");
             status += stage != null && satisfied
-                ? Loc.T($"有効な連携：{stage.RequiredPieces}つ装着段階。", $"Active link: {stage.RequiredPieces}-piece stage.")
-                : Loc.T("有効な連携：なし。", "Active link: none.");
+                ? Loc.T($"有効な連携は{stage.RequiredPieces}つ装着の段階である。", $"Active link: {stage.RequiredPieces}-piece stage.")
+                : Loc.T("有効な連携はない。", "Active link: none.");
             if (stage != null)
                 status += Loc.T($"\n選択段階（{stage.RequiredPieces}つ装着）：", $"\nSelected {stage.RequiredPieces}-piece stage: ")
                     + (stage.Link.Kind == LinkKind.BossReward ? BossProfiles.DescribeReward(BossReward, (int)stage.Link.Value) : Links.Describe(stage.Link));
@@ -263,9 +270,9 @@ namespace SodRpg.Core.Game
             {
                 if (next.RequiredPieces <= count) continue;
                 int missing = next.RequiredPieces - count;
-                return status + Loc.T($"\nあと{missing}つで{next.RequiredPieces}つ装着段階。", $"\n{missing} more piece(s) to the {next.RequiredPieces}-piece stage.");
+                return status + Loc.T($"\nあと{missing}つで{next.RequiredPieces}つ装着の段階になる。", $"\n{missing} more piece(s) to the {next.RequiredPieces}-piece stage.");
             }
-            return status + Loc.T("\n最終段階です。", "\nFinal stage reached.");
+            return status + Loc.T("\n最終段階である。", "\nFinal stage reached.");
         }
 
         /// <summary>いま何点そろっているかと、次に何が起きるか（装着画面用）。</summary>

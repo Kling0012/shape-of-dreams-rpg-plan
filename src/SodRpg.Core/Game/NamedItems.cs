@@ -74,7 +74,7 @@ namespace SodRpg.Core.Game
         /// <summary>図鑑・装着画面の説明文（SetDef.Describe と同じ書式）。</summary>
         public string Describe()
         {
-            string two = Content.FormatStat(TwoPiece.Stat, TwoPiece.Value);
+            string two = SetDef.JoinStatLines(new[] { Content.FormatStat(TwoPiece.Stat, TwoPiece.Value) });
             if (ThreePiece == null)
                 return Loc.T($"2つ装着：{two}", $"2 pieces: {two}");
             string three = Content.FormatPowerBullets(ThreePiece.Power, ThreePiece.Value, "　");
