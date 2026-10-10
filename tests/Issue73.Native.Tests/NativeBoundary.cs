@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using Mirror;
 using SodRpg.Core.Game;
 using Xunit;
 
@@ -11,7 +12,33 @@ using Xunit;
 namespace Mirror
 {
     internal static class NetworkServer { public static bool active; }
-    internal static class NetworkClient { public static bool active; }
+    internal static class NetworkClient
+    {
+        public static bool active;
+        public static NetworkConnection connection;
+        // CustomRpc と同じ意味の配送記録。SendHook で配送後の例外も注入できる（所見04・07）。
+        public static readonly List<object> Sent = new List<object>();
+        public static Action<object> SendHook;
+        public static void Send<T>(T message) where T : struct, NetworkMessage { SendHook?.Invoke(message); Sent.Add(message); }
+        public static void ReplaceHandler<T>(Action<T> handler) { }
+    }
+    internal interface NetworkMessage { }
+    internal sealed class NetworkWriter { public void WriteString(string value) { } }
+    internal sealed class NetworkReader { public string ReadString() => null; }
+    internal static class Writer<T> where T : struct, NetworkMessage
+    {
+        public static Action<NetworkWriter, T> write;
+    }
+    internal static class Reader<T> where T : struct, NetworkMessage
+    {
+        public static Func<NetworkReader, T> read;
+    }
+    internal class NetworkConnection
+    {
+        public readonly List<object> Sent = new List<object>();
+        public void Send<T>(T message) where T : struct, NetworkMessage => Sent.Add(message);
+    }
+    internal sealed class NetworkConnectionToClient : NetworkConnection { }
 }
  namespace UnityEngine
  {
@@ -145,11 +172,14 @@ namespace SodRpg.Mod
         public static DewPlayer local;
         public static readonly List<DewPlayer> gamePlayers = new List<DewPlayer>();
         public static readonly List<DewPlayer> lobbyPlayers = new List<DewPlayer>();
+        public static readonly List<DewPlayer> allHumanPlayers = new List<DewPlayer>();
         public string playerName;
         public uint netId;
         public string guid;
         public bool isHumanPlayer = true;
         public int gold, dreamDust;
+        public Hero hero;
+        public NetworkConnectionToClient connectionToClient;
         public Action BeforeCurrencyChange, AfterCurrencyChange;
         public void SpendGold(int amount)
         {
@@ -205,15 +235,18 @@ namespace SodRpg.Mod
     // (メニュー・デスクトップ復帰など)は精算対象外。仮想プロパティで判別時の例外も注入できる。
     internal class DewNetworkManager
     {
+        public static DewNetworkManager softInstance;
         public virtual bool isEndingSession { get; set; }
+        public bool hasSessionEnded;
         public void RestartSession() { }
     }
     internal sealed class ZoneManager
     {
         public int currentZoneIndex;
-        public bool isInAnyTransition;
+        public bool isInAnyTransition, isVoting;
         public int clearedCombatRooms, currentHuntLevel;
         public Zone currentZone;
+        public Room currentRoom;
         public int currentNodeIndex = -1;
         public WorldNode currentNode;
         public Action ReadyAfterTransition;
@@ -334,6 +367,38 @@ namespace SodRpg.Mod
         private readonly Dictionary<Hero, float> _applyRetryAt = new Dictionary<Hero, float>();
         private float _nextGemSlotCheck;
         private bool _pressureDirty;
+        // 協力取引ホスト（HostAuthority.CoopTrade.cs は未リンク）。NativePersistence.targets が
+        // 本物のハンドラ群を抽出するため、ここはその実行に必要な状態の形だけを用意する。
+        private sealed class CoopPeerState
+        {
+            public float Seen;
+            public bool Safe;
+            public readonly BuildTransferReceiver Transfer = new BuildTransferReceiver(CoopTradeTransport.MaxProfileChars);
+            public string Envelope;
+        }
+        private sealed class CoopHostTrade
+        {
+            public string Id;
+            public DewPlayer First, Second;
+            public CoopTradeOffer FirstOffer = new CoopTradeOffer(), SecondOffer = new CoopTradeOffer();
+            public Profile FirstProfile, SecondProfile;
+            public string FirstOfferAck, SecondOfferAck;
+            public bool Accepted, FirstConfirmed, SecondConfirmed, Preparing, FirstPrepared, SecondPrepared;
+            public int Revision;
+            public float ActiveAt;
+            public CoopTradeReceipt Receipt;
+        }
+        private readonly Dictionary<DewPlayer, CoopPeerState> _coopHostPeers = new Dictionary<DewPlayer, CoopPeerState>();
+        private NetworkConnectionToClient _coopServerConnection;
+        private bool _coopServerRegistered;
+        private GameSettingsManager _coopAdvertisedSettings;
+        private float _nextCoopAdvertisement;
+        private CoopTradeJournal _coopJournal;
+        private bool _coopJournalRequiresExisting;
+        private CoopHostTrade _coopHostTrade;
+        private string _coopHostFailure;
+        private float _nextCoopJournalRetry;
+        private float _nextCoopHostTick;
         internal sealed class ReceivedBuild { public Build Build; }
         private readonly Dictionary<Hero, AuthoredState> _authoredMechanisms = new Dictionary<Hero, AuthoredState>();
         private readonly Dictionary<HeroRuntime, object> _gimmickV129 = new Dictionary<HeroRuntime, object>();
@@ -423,6 +488,36 @@ namespace SodRpg.Mod
         private bool CoopTradeLocked => Profile.CoopTradePending != null;
         private bool _coopNativeSaving;
         private string CoopUnavailable() => Loc.T("トレードは安全な時・保存完了後のみ利用できます。", "Trade is available only at a safe moment, after saving completes.");
+        // 協力取引クライアント（ClientSession.CoopTrade.cs は未リンク）。NativePersistence.targets が
+        // 本物の判定・送信・受信メソッドを抽出するため、ここはその実行に必要な状態の形だけを用意する。
+        internal string CoopTradeJournalPath;
+        private readonly List<CoopTradePeer> _coopPeers = new List<CoopTradePeer>();
+        private readonly BuildTransferReceiver _coopTransfer = new BuildTransferReceiver(CoopTradeTransport.MaxProfileChars);
+        private NetworkConnection _coopConnection;
+        private GameSettingsManager _coopSettings;
+        private string _coopAdvertisement;
+        private float _coopAdvertisementAt = -100f;
+        private float _nextCoopProbe, _coopAnsweredAt = -100f;
+        private string _coopHostKey, _coopFrozenProfile;
+        private CoopTradeOffer _coopPendingOffer;
+        private string _coopOfferInFlight;
+        private float _coopOfferSentAt, _nextCoopOfferRetry;
+        private bool _coopSettlementUnsaved, _coopDisabled;
+        private long _coopPrepareSaveRevision;
+        private string _coopTradeWarning, _coopConnectionWarning;
+        public CoopTradeView CoopTrade { get; set; }
+        public string CoopTradeWarning { get => _coopTradeWarning ?? _coopConnectionWarning; set => _coopTradeWarning = value; }
+        internal static string CoopHostJournalPath => _hostSession?.CoopTradeJournalPath;
+        internal static bool CoopHostSafe => _hostSession?.CoopLocalSafe == true;
+        internal static bool CoopHostNativeSaving => _hostSession?._coopNativeSaving == true;
+        internal static void ReceiveLocalCoopTrade(DreamforgeCoopTradeState state) => _hostSession?.OnCoopTradeState(state);
+        private sealed class CoopSendException : Exception
+        {
+            public CoopSendException(Exception cause) : base(cause.Message, cause) { }
+        }
+        // ClientSession.cs(リンク外)の実装と同じ意味。
+        public bool HasHeldTrades => _trades.HeldCount > 0;
+        public bool CanEditLoadout => Profile.Run == null || Profile.Run.AwaitingChoice || Profile.Run.GearWindow || !InGame;
         public bool InGame => NetworkedManagerBase<GameManager>.softInstance != null;
         private float _nextSave = float.MaxValue;
         private bool _buildDirty;

@@ -83,6 +83,9 @@ namespace SodRpg.Mod
         {
             var trade = _s.CoopTrade;
             if (!string.IsNullOrEmpty(_s.CoopTradeWarning)) GUILayout.Label(_s.CoopTradeWarning, _st.Warn);
+            string unavailable = _s.CoopTradeUnavailableReason;
+            if (!string.IsNullOrEmpty(unavailable) && unavailable != _s.CoopTradeWarning)
+                GUILayout.Label(unavailable, _st.Warn);
             if (trade == null)
             {
                 _tradeDraftId = null;
@@ -171,11 +174,13 @@ namespace SodRpg.Mod
                 var peer = peers[i];
                 GUILayout.BeginHorizontal(_st.Panel);
                 GUILayout.Label(peer.Name, _st.Label, GUILayout.ExpandWidth(true), GUILayout.MinWidth(0));
-                GUI.enabled = enabled && peer.Available && _s.CanCoopTrade;
+                GUI.enabled = enabled && peer.Available && peer.Ready && _s.CanCoopTrade;
                 if (GUILayout.Button(Loc.T("交換を申し込む", "Request trade"), _st.ButtonWrap, GUILayout.Width(170))) SetStatus(_s.RequestCoopTrade(peer.Key));
                 GUI.enabled = enabled;
                 GUILayout.EndHorizontal();
                 if (!peer.Available) GUILayout.Label(Loc.T("交換に未対応、または応答待ちです（交換のみ利用不可）。", "Trade unsupported or awaiting a response (trade only is unavailable)."), _st.Small);
+                else if (!peer.Ready) GUILayout.Label(Loc.T("相手は今取引できる状態ではありません（戦闘中・保存中など）",
+                    "The other player can't trade right now (in combat, saving, etc.)"), _st.Small);
             }
             GUILayout.EndScrollView();
             _tradePlayersScroll.y = WheelScroll(_tradePlayersScroll.y, float.PositiveInfinity);

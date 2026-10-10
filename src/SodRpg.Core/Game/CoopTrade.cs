@@ -164,6 +164,14 @@ namespace SodRpg.Core.Game
 
         public static bool Resolve(Profile profile, CoopTradeReceipt receipt, string playerKey)
         {
+            bool changed = Resolve(profile, receipt, playerKey, out string retryReason);
+            RequireValid(retryReason);
+            return changed;
+        }
+
+        public static bool Resolve(Profile profile, CoopTradeReceipt receipt, string playerKey, out string retryReason)
+        {
+            retryReason = null;
             if (profile == null || receipt == null) throw new ArgumentNullException(profile == null ? nameof(profile) : nameof(receipt));
             if (profile.CoopTradeExecuted.Contains(receipt.Id)) return false;
             ValidateReceipt(receipt, out var first, out var second);
@@ -189,7 +197,8 @@ namespace SodRpg.Core.Game
                     throw new InvalidOperationException(Loc.T("受領書の遺物と保存済みの預かり品が一致しません。", "Receipt relic does not match durable escrow."));
             if (pending.Relics.Count != own.RelicUids.Count) throw new InvalidOperationException(Loc.T("預かり品の遺物数が不正です。", "Escrow relic count is invalid."));
             RequireValid(ValidateInventory(profile));
-            RequireValid(ValidateIncoming(profile, incoming, sender));
+            RequireValid(ValidateIncoming(profile, incoming, sender, out retryReason));
+            if (retryReason != null) return false;
             var next = profile.Clone();
             foreach (string uid in incoming.RelicUids) next.Stash.Add(FindOffered(sender, uid).Clone());
             next.Materials[Materials.Shard] = checked(next.Material(Materials.Shard) + incoming.Shards);
@@ -202,12 +211,23 @@ namespace SodRpg.Core.Game
 
         public static bool Abort(Profile profile, string id)
         {
+            bool changed = Abort(profile, id, out string retryReason);
+            RequireValid(retryReason);
+            return changed;
+        }
+
+        public static bool Abort(Profile profile, string id, out string retryReason)
+        {
+            retryReason = null;
             if (profile == null) throw new ArgumentNullException(nameof(profile));
             var pending = profile.CoopTradePending;
             if (pending == null || pending.Id != id) return false;
             if (profile.CoopTradeExecuted.Contains(id)) throw new InvalidOperationException(Loc.T("完了した取引は取り消せません。", "Executed trade cannot be aborted."));
             ValidateReservation(pending);
             RequireValid(ValidateInventory(profile));
+            if (profile.Material(Materials.Shard) < 0 || profile.Material(Materials.Tuning) < 0
+                || (profile.Run?.SatchelShards ?? 0) < 0 || (profile.Run?.SatchelTuning ?? 0) < 0)
+                throw new InvalidOperationException(Loc.T("取引の素材残高が不正です。", "Trade material balances are invalid."));
             bool sameCurrencyRun = profile.Run != null && profile.Run.RunId == pending.CurrencyRunId;
             int materialShards = sameCurrencyRun ? pending.MaterialShards : pending.Offer.Shards;
             int materialTuning = sameCurrencyRun ? pending.MaterialTuning : pending.Offer.Tuning;
@@ -216,7 +236,7 @@ namespace SodRpg.Core.Game
                 || (long)profile.Material(Materials.Tuning) + materialTuning > int.MaxValue
                 || (long)(profile.Run?.SatchelShards ?? 0) + satchelShards > int.MaxValue
                 || (long)(profile.Run?.SatchelTuning ?? 0) + satchelTuning > int.MaxValue)
-                throw new InvalidOperationException(Loc.T("預かり素材を返すと所持数の上限を超えます。", "Returning reserved materials would overflow."));
+                retryReason = Loc.T("預かり素材を返すと所持数の上限を超えます。", "Returning reserved materials would overflow.");
             int stashCount = profile.Stash.Count, satchelCount = profile.Run?.Satchel.Count ?? 0;
             foreach (var reserved in pending.Relics)
             {
@@ -225,7 +245,10 @@ namespace SodRpg.Core.Game
                 else stashCount++;
             }
             if (stashCount > Workshop.StashCapacity(profile) || satchelCount > Workshop.SatchelCapacity(profile))
-                throw new InvalidOperationException(Loc.T("預かり遺物を返すための空きがありません。", "There is no room to return reserved relics."));
+            {
+                retryReason = Loc.T("預かり遺物を返すための空きがありません。", "There is no room to return reserved relics.");
+            }
+            if (retryReason != null) return false;
             var next = profile.Clone();
             foreach (var reserved in pending.Relics)
                 (ReturnToSatchel(next, reserved) ? next.Run.Satchel : next.Stash).Add(reserved.Relic.Clone());
@@ -328,12 +351,16 @@ namespace SodRpg.Core.Game
             return null;
         }
 
-        private static string ValidateIncoming(Profile receiver, CoopTradeOffer incoming, Profile sender)
+        private static string ValidateIncoming(Profile receiver, CoopTradeOffer incoming, Profile sender, out string retryReason)
         {
-            if (receiver.Material(Materials.Shard) < 0 || receiver.Material(Materials.Tuning) < 0
-                || (long)receiver.Material(Materials.Shard) + incoming.Shards > int.MaxValue
-                || (long)receiver.Material(Materials.Tuning) + incoming.Tuning > int.MaxValue) return Loc.T("受け取る素材が所持上限を超えます。", "Received materials would overflow.");
-            if ((long)receiver.Stash.Count + incoming.RelicUids.Count > Workshop.StashCapacity(receiver)) return Loc.T("保管庫が一杯です。", "Your stash is full.");
+            retryReason = null;
+            if (receiver.Material(Materials.Shard) < 0 || receiver.Material(Materials.Tuning) < 0)
+                return Loc.T("取引の素材残高が不正です。", "Trade material balances are invalid.");
+            if ((long)receiver.Material(Materials.Shard) + incoming.Shards > int.MaxValue
+                || (long)receiver.Material(Materials.Tuning) + incoming.Tuning > int.MaxValue)
+                retryReason = Loc.T("受け取る素材が所持上限を超えます。", "Received materials would overflow.");
+            if ((long)receiver.Stash.Count + incoming.RelicUids.Count > Workshop.StashCapacity(receiver))
+                retryReason = Loc.T("保管庫が一杯です。", "Your stash is full.");
             foreach (string uid in incoming.RelicUids)
                 if (FindOffered(sender, uid) == null || HasOwnedUid(receiver, uid)
                     || receiver.CoopTradePending.Relics.Any(r => r.Relic.Uid == uid)) return Loc.T("受け取る遺物の個体IDが所持品と重複しています。", "Received relic ID conflicts with owned assets.");
@@ -408,6 +435,8 @@ namespace SodRpg.Core.Game
 
         internal static void CopyDurableState(Profile target, Profile source)
         {
+            // Native Continue must not restore a consumed direct-stash right from an older snapshot or overlay.
+            target.DirectStashUsedRunIds.UnionWith(source.DirectStashUsedRunIds);
             target.CoopTradePending = source.CoopTradePending?.Clone();
             target.CoopTradeExecuted.Clear();
             target.CoopTradeExecuted.UnionWith(source.CoopTradeExecuted);

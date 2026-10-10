@@ -1,0 +1,275 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Reflection;
+using System.Text;
+using Mirror;
+using SodRpg.Core;
+using SodRpg.Core.Game;
+using SodRpg.Mod;
+using Xunit;
+
+namespace Issue73.Native.Tests
+{
+    // 協力取引クライアント側（所見07・09・10・11）。OnCoopTradeState/TickCoopTrade/SendCoopProfile などは
+    // ClientSession.CoopTrade.cs から抽出された本物の実装で、輸送だけを境界の NetworkClient へ差し替えている。
+    public sealed class CoopTradeClientTests : IDisposable
+    {
+        private const BindingFlags Hidden = BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic;
+        private readonly string _directory = Path.Combine(Path.GetTempPath(), "issue73-coop-client-" + Guid.NewGuid().ToString("N"));
+        private readonly bool _previousClientActive = NetworkClient.active;
+        private readonly NetworkConnection _previousConnection = NetworkClient.connection;
+        private readonly Action<object> _previousSendHook = NetworkClient.SendHook;
+        private readonly bool _previousServerActive = NetworkServer.active;
+        private readonly DewNetworkManager _previousNetwork = DewNetworkManager.softInstance;
+        private readonly GameSettingsManager _previousSettings = NetworkedManagerBase<GameSettingsManager>.softInstance;
+        private readonly GameManager _previousGame = NetworkedManagerBase<GameManager>.softInstance;
+        private readonly ZoneManager _previousZone = NetworkedManagerBase<ZoneManager>.softInstance;
+        private readonly DewPlayer _previousLocal = DewPlayer.local;
+        private readonly ClientSession _previousHostSession = (ClientSession)typeof(ClientSession).GetField("_hostSession", Hidden).GetValue(null);
+        private readonly List<DewPlayer> _previousGamePlayers = new List<DewPlayer>(DewPlayer.gamePlayers);
+        private readonly List<DewPlayer> _previousLobbyPlayers = new List<DewPlayer>(DewPlayer.lobbyPlayers);
+        private readonly Action<string> _previousErrorSink = Log.ErrorSink;
+        private readonly float _previousTime = UnityEngine.Time.unscaledTime;
+
+        public CoopTradeClientTests()
+        {
+            NetworkClient.active = true;
+            NetworkClient.connection = new NetworkConnection();
+            NetworkClient.Sent.Clear();
+            NetworkServer.active = false;
+            UnityEngine.Time.unscaledTime = 100f;
+            Log.ErrorSink = _ => { };
+        }
+
+        public void Dispose()
+        {
+            NetworkClient.active = _previousClientActive;
+            NetworkClient.connection = _previousConnection;
+            NetworkClient.SendHook = _previousSendHook;
+            NetworkClient.Sent.Clear();
+            NetworkServer.active = _previousServerActive;
+            DewNetworkManager.softInstance = _previousNetwork;
+            NetworkedManagerBase<GameSettingsManager>.softInstance = _previousSettings;
+            NetworkedManagerBase<GameManager>.softInstance = _previousGame;
+            NetworkedManagerBase<ZoneManager>.softInstance = _previousZone;
+            DewPlayer.local = _previousLocal;
+            typeof(ClientSession).GetField("_hostSession", Hidden).SetValue(null, _previousHostSession);
+            DewPlayer.gamePlayers.Clear(); DewPlayer.gamePlayers.AddRange(_previousGamePlayers);
+            DewPlayer.lobbyPlayers.Clear(); DewPlayer.lobbyPlayers.AddRange(_previousLobbyPlayers);
+            Log.ErrorSink = _previousErrorSink;
+            UnityEngine.Time.unscaledTime = _previousTime;
+            if (Directory.Exists(_directory)) Directory.Delete(_directory, true);
+        }
+
+        private static object Get(object target, string name) => target.GetType().GetField(name, Hidden).GetValue(target);
+        private static void Set(object target, string name, object value) => target.GetType().GetField(name, Hidden).SetValue(target, value);
+        private static object Call(object target, string name, params object[] args)
+        {
+            try { return target.GetType().GetMethod(name, Hidden).Invoke(target, args); }
+            catch (TargetInvocationException error) when (error.InnerException != null)
+            { System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(error.InnerException).Throw(); throw; }
+        }
+
+        private static Relic Relic(string uid)
+        {
+            var relic = Loot.RollRelic(new Rng(17), Rarity.Common, 1);
+            relic.Uid = uid;
+            return relic;
+        }
+
+        // A connected lobby guest: lobby-safe world, idle writer, fresh host heartbeat.
+        private ClientSession Guest()
+        {
+            DewNetworkManager.softInstance = new DewNetworkManager();
+            NetworkedManagerBase<GameSettingsManager>.softInstance = new GameSettingsManager { state = GameState.InLobby };
+            NetworkedManagerBase<GameManager>.softInstance = null;
+            NetworkedManagerBase<ZoneManager>.softInstance = null;
+            var local = new DewPlayer { guid = "first", playerName = "Guest" };
+            DewPlayer.local = local;
+            DewPlayer.lobbyPlayers.Add(local);
+            var profile = Profile.CreateNew(17);
+            profile.Stash.Add(Relic("own-relic"));
+            var session = new ClientSession { Profile = profile };
+            Set(session, "_store", new ProfileStore(new RealFileSystem(), Path.Combine(_directory, "guest-profile.json"), 17));
+            Call(session, "WireCoopTrade");
+            Heartbeat(session);
+            return session;
+        }
+
+        private static void Heartbeat(ClientSession session)
+        {
+            Set(session, "_coopAdvertisementAt", UnityEngine.Time.unscaledTime);
+            Set(session, "_coopAnsweredAt", UnityEngine.Time.unscaledTime);
+        }
+
+        private static List<DreamforgeCoopTradeCommand> SentCommands(string action)
+        {
+            var commands = new List<DreamforgeCoopTradeCommand>();
+            foreach (var sent in NetworkClient.Sent)
+            {
+                var command = CoopTradeTransport.Decode<DreamforgeCoopTradeCommand>(((DreamforgeCoopTradeUp)sent).Json);
+                if (command != null && command.action == action) commands.Add(command);
+            }
+            return commands;
+        }
+
+        private static void DeliverState(ClientSession session, DreamforgeCoopTradeState state) => Call(session, "OnCoopTradeState", state);
+
+        private static void DeliverPayload(ClientSession session, string kind, string id, string text)
+        {
+            string encoded = Convert.ToBase64String(Encoding.UTF8.GetBytes(text));
+            foreach (var part in BuildTransfer.Split(encoded, CoopTradeTransport.MaxProfileChars))
+                DeliverState(session, new DreamforgeCoopTradeState
+                {
+                    kind = kind, id = id, revision = 0, hostKey = "host-key", data = part.Data,
+                    transferId = part.TransferId, index = part.Index, count = part.Count, totalLength = part.TotalLength,
+                });
+        }
+
+        [Fact]
+        public void Failed_offer_send_clears_the_inflight_marker_and_retries_with_a_new_transfer_id()
+        {
+            var session = Guest();
+            session.CoopTrade = new CoopTradeView { Id = "trade-1", Accepted = true, Revision = 3 };
+            NetworkClient.SendHook = _ => throw new InvalidOperationException("native send failed");
+            var offer = new CoopTradeOffer();
+
+            string error = (string)Call(session, "SetCoopTradeOffer", offer);
+            Assert.NotNull(error);
+            // The failed attempt is no longer in flight, so a late ACK can never confirm an unsent edit.
+            Assert.Null(Get(session, "_coopOfferInFlight"));
+            Assert.Same(offer, Get(session, "_coopPendingOffer"));
+            Assert.Empty(NetworkClient.Sent);
+            NetworkClient.SendHook = null; // the transport works again; only the backoff gates the retry
+
+            // Inside the retry backoff nothing is resent.
+            UnityEngine.Time.unscaledTime += 1f;
+            Heartbeat(session);
+            Call(session, "RetryCoopOffer");
+            Assert.Empty(NetworkClient.Sent);
+
+            // Past the backoff the offer retries and occupies a fresh transfer ID.
+            UnityEngine.Time.unscaledTime += 4.1f;
+            Heartbeat(session);
+            Call(session, "RetryCoopOffer");
+            string first = Assert.Single(SentCommands("offer")).transferId;
+            Assert.NotNull(first);
+            Assert.Equal(first, Get(session, "_coopOfferInFlight"));
+
+            // An ACK that never arrives also expires; the next retry uses a new transfer ID.
+            UnityEngine.Time.unscaledTime += 5.1f;
+            Heartbeat(session);
+            Call(session, "RetryCoopOffer");
+            string second = SentCommands("offer")[1].transferId;
+            Assert.NotEqual(first, second);
+            Assert.Equal(second, Get(session, "_coopOfferInFlight"));
+        }
+
+        [Fact]
+        public void Executed_receipt_with_a_full_stash_defers_keeps_querying_and_settles_after_a_slot_frees()
+        {
+            var session = Guest();
+            var profile = session.Profile;
+            var partner = Profile.CreateNew(18);
+            partner.Stash.Add(Relic("partner-relic"));
+            var receipt = CoopTradeRules.CreateReceipt("executed-1", "host-key", "first", profile,
+                new CoopTradeOffer { RelicUids = new List<string> { "own-relic" } }, "second", partner,
+                new CoopTradeOffer { RelicUids = new List<string> { "partner-relic" } });
+            CoopTradeRules.Prepare(profile, receipt.Id, receipt.HostKey, receipt.FirstOffer);
+            while (profile.Stash.Count < Workshop.StashCapacity(profile)) profile.Stash.Add(Relic("filler-" + profile.Stash.Count));
+            DeliverState(session, new DreamforgeCoopTradeState { kind = "roster", hostKey = "host-key",
+                keys = new string[0], names = new string[0], available = new bool[0] });
+
+            DeliverPayload(session, "executed", receipt.Id, CoopTradeCodec.WriteReceipt(receipt));
+            // The temporary condition defers settlement and keeps the escrow held (finding 09).
+            Assert.Contains("照会を再試行", session.CoopTradeWarning);
+            Assert.NotNull(profile.CoopTradePending);
+            Assert.False((bool)Get(session, "_coopSettlementUnsaved"));
+
+            // The client keeps querying the original host instead of abandoning the receipt.
+            NetworkClient.Sent.Clear();
+            Set(session, "_nextCoopProbe", 0f);
+            Heartbeat(session);
+            Call(session, "TickCoopTrade");
+            Assert.Contains(SentCommands("query"), command => command.id == receipt.Id);
+
+            // Once a slot frees, the same receipt settles and the save completes.
+            profile.Stash.RemoveAt(profile.Stash.Count - 1);
+            DeliverPayload(session, "executed", receipt.Id, CoopTradeCodec.WriteReceipt(receipt));
+            Assert.Null(profile.CoopTradePending);
+            Assert.Null(session.CoopTrade);
+            Assert.Null(session.CoopTradeWarning);
+            Assert.False((bool)Get(session, "_coopSettlementUnsaved"));
+            Assert.Null(profile.FindStash("own-relic"));
+            Assert.NotNull(profile.FindStash("partner-relic"));
+            Assert.Contains(receipt.Id, profile.CoopTradeExecuted);
+        }
+
+        [Fact]
+        public void Unavailable_reasons_name_each_blocked_state()
+        {
+            var session = Guest();
+            Assert.Null(session.CoopTradeUnavailableReason); // connected lobby guest, idle writer
+            Assert.True(session.CanCoopTrade);
+
+            CoopTradeRules.Prepare(session.Profile, "pending-1", "host-key", new CoopTradeOffer());
+            Assert.Equal(Loc.T("前の取引の結果を確認しています", "Checking the result of an earlier trade"),
+                session.CoopTradeUnavailableReason);
+            Assert.True(CoopTradeRules.Abort(session.Profile, "pending-1"));
+
+            Set(session, "_coopSettlementUnsaved", true);
+            Assert.Equal(Loc.T("保存が終わるのを待っています", "Waiting for save to finish"),
+                session.CoopTradeUnavailableReason);
+            Set(session, "_coopSettlementUnsaved", false);
+
+            Set(session, "_coopAdvertisementAt", UnityEngine.Time.unscaledTime - 11f);
+            Assert.Equal(Loc.T("接続を待っています", "Waiting for connection"), session.CoopTradeUnavailableReason);
+            Set(session, "_coopAdvertisementAt", UnityEngine.Time.unscaledTime);
+
+            NetworkedManagerBase<GameSettingsManager>.softInstance.state = GameState.Playing;
+            NetworkedManagerBase<GameManager>.softInstance = new GameManager { runId = "run-1" };
+            NetworkedManagerBase<ZoneManager>.softInstance = new ZoneManager
+            { currentRoom = new Room { isActive = true, didClearRoom = false } };
+            DewPlayer.gamePlayers.Add(DewPlayer.local);
+            Assert.Equal(Loc.T("戦闘中・移動中は取引できません（部屋を片付けた後や確保地点で使えます）",
+                "Not available in combat or while moving (use after clearing a room or at a secure point)"),
+                session.CoopTradeUnavailableReason);
+
+            Set(session, "_coopDisabled", true);
+            Assert.Equal(Loc.T("トレードのみ利用できません。", "Only trade is unavailable."),
+                session.CoopTradeUnavailableReason);
+        }
+
+        [Fact]
+        public void Roster_readiness_is_parsed_separately_and_a_legacy_host_without_ready_stays_permissive()
+        {
+            var session = Guest();
+            DeliverState(session, new DreamforgeCoopTradeState { kind = "roster", hostKey = "host-key",
+                keys = new[] { "k1", "k2" }, names = new[] { "One", "Two" },
+                available = new[] { true, true }, ready = new[] { true, false } });
+            var peers = (List<CoopTradePeer>)Get(session, "_coopPeers");
+            Assert.Equal(2, peers.Count);
+            Assert.True(peers[0].Available);
+            Assert.True(peers[0].Ready);
+            Assert.True(peers[1].Available);
+            Assert.False(peers[1].Ready);
+
+            // An older host omits readiness; its existing request behavior must not change.
+            DeliverState(session, new DreamforgeCoopTradeState { kind = "roster", hostKey = "host-key",
+                keys = new[] { "k1" }, names = new[] { "One" }, available = new[] { true } });
+            peers = (List<CoopTradePeer>)Get(session, "_coopPeers");
+            var peer = Assert.Single(peers);
+            Assert.True(peer.Available);
+            Assert.True(peer.Ready);
+
+            // An empty roster status never clears an existing warning while a trade is pending.
+            session.CoopTradeWarning = "kept-warning";
+            CoopTradeRules.Prepare(session.Profile, "pending-2", "host-key", new CoopTradeOffer());
+            DeliverState(session, new DreamforgeCoopTradeState { kind = "roster", hostKey = "host-key",
+                keys = new[] { "k1" }, names = new[] { "One" }, available = new[] { true }, status = "" });
+            Assert.Equal("kept-warning", session.CoopTradeWarning);
+        }
+    }
+}

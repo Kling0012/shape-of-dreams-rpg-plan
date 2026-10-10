@@ -101,7 +101,7 @@ namespace SodRpg.Mod
         private void TickSalvageExpiry() { }
         private void TickHello() { }
         private void TickDirectStash() { }
-        private void TickCoopTrade() { }
+        // TickCoopTrade comes from the real ClientSession.CoopTrade.cs extraction.
         private void TickRoomVisualSweep() { }
     }
 }

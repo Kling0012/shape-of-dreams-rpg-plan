@@ -838,30 +838,35 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
                 return Loc.T("取引の記録を保存できなかったため、取引は行っていません。保存先を確認してからもう一度お試しください。",
                     "The trade was not made because its record could not be saved. Check the save location and try again.");
             }
+            bool sendStarted = false;
             try
             {
                 TradeWire.Encode(t, out int spendGold, out int spendDust, out int earnDust);
-                _clientRpcOn.CustomRpc_SendMessageToServer(new DreamforgeTradeMsg
+                var message = new DreamforgeTradeMsg
                 {
                     token = t.Token, spendGold = spendGold, spendDust = spendDust, earnDust = earnDust,
                     protocol = Protocol.Version, runId = t.RunId,
-                });
+                };
+                sendStarted = true;
+                _clientRpcOn.CustomRpc_SendMessageToServer(message);
             }
             catch (Exception ex)
             {
-                if (t.Kind == TradeKind.SatchelOverflowDust)
+                if (!sendStarted)
                 {
-                    // Sending may have delivered before throwing; only a host receipt can prove non-payment.
-                    _trades.MarkAllUnresolved(Time.unscaledTime);
-                    Log.Warn("Satchel overflow send uncertain; querying the existing receipt: " + ex.Message);
-                }
-                else
-                {
+                    // Encoding failed before the send API was called, so the host cannot have received this request.
                     RestoreSalvageTrade(_trades.Complete(t.Token, false));
-                    Log.Error("Client SendTrade: " + ex.Message);
+                    Log.Error("Client SendTrade preparation: " + ex.Message);
+                    SaveNow();
+                    return Loc.T("取引を送れませんでした。", "Could not send the trade.");
                 }
+                // Sending may have delivered before throwing; keep every kind's token, ledger and reservation
+                // until a host receipt confirms the result, including a late success response.
+                _trades.MarkAllUnresolved(Time.unscaledTime);
+                Log.Warn("Client trade send uncertain; querying the existing receipt: " + ex.Message);
                 SaveNow();
-                return Loc.T("取引を送れませんでした。", "Could not send the trade.");
+                return Loc.T("取引の送信結果が不明です。予約を保持し、ホストに結果を確認しています。",
+                    "The trade send result is uncertain. Its reservation is retained while checking with the host.");
             }
             return null;
         }

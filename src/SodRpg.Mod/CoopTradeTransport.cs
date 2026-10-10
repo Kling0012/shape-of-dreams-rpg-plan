@@ -15,6 +15,8 @@ namespace SodRpg.Mod
         // Profiles include stash/Continue economic receipts, not just six equipped relics.
         // Bound one on-demand transfer per peer; no buffers exist while trade is idle.
         internal const int MaxProfileChars = 4 * 1024 * 1024;
+        internal static bool PayloadFits(string text) => text != null
+            && 4L * ((System.Text.Encoding.UTF8.GetByteCount(text) + 2L) / 3L) <= MaxProfileChars;
         private static bool _initialized;
         internal static void Initialize()
         {

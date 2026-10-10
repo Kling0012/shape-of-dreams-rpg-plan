@@ -202,7 +202,7 @@ namespace SodRpg.Core.Tests
         [Theory]
         [InlineData(false)]
         [InlineData(true)]
-        public void Continue_refunds_direct_stash_use_when_its_transfer_is_rewound(bool tradeBeforeUse)
+        public void Continue_keeps_the_used_direct_stash_receipt_when_its_transfer_is_rewound(bool tradeBeforeUse)
         {
             var p = Running("carried");
             var checkpoint = RunCheckpoint.Capture(p, "before-use");
@@ -216,13 +216,15 @@ namespace SodRpg.Core.Tests
             {
                 p = RoundTrip(p);
                 checkpoint.Restore(p);
+                // The transfer itself rewinds to the checkpoint, but the once-per-expedition
+                // right stays consumed: an older snapshot must not revive it (finding 05).
                 Assert.Empty(p.Stash);
                 Assert.Equal("carried", Assert.Single(p.Run.Satchel).Uid);
-                Assert.Empty(p.DirectStashUsedRunIds);
-                Assert.True(Rules.CanStashSatchelNow(p));
-                Rules.StashSatchelNow(p);
-                Assert.Equal("carried", Assert.Single(p.Stash).Uid);
+                Assert.Contains("run", p.DirectStashUsedRunIds);
                 Assert.False(Rules.CanStashSatchelNow(p));
+                string before = ProfileCodec.Write(p);
+                Assert.Throws<InvalidOperationException>(() => Rules.StashSatchelNow(p));
+                Assert.Equal(before, ProfileCodec.Write(p));
             }
         }
 
