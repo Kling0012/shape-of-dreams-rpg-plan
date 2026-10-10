@@ -51,10 +51,11 @@ namespace Issue73.Native.Tests
         public void Delivery_then_exception_keeps_the_reservation_and_the_late_success_settles_once()
         {
             string directory = Path.Combine(Path.GetTempPath(), "issue73-trade-send-" + Guid.NewGuid().ToString("N"));
+            ClientSession session = null;
             try
             {
                 var profile = Profile.CreateNew(73);
-                var session = new ClientSession { Profile = profile };
+                session = new ClientSession { Profile = profile };
                 Set(session, "_store", new ProfileStore(new RealFileSystem(), Path.Combine(directory, "profile.json"), 73));
                 var actor = new Actor();
                 var delivered = new List<object>();
@@ -88,7 +89,19 @@ namespace Issue73.Native.Tests
                 { token = trade.Token, ok = true, reason = "paid@" + 11L.ToString("x16") });
                 Assert.Equal(shardsBefore + Economy.ShardsPerBatch, profile.Material(Materials.Shard));
             }
-            finally { if (Directory.Exists(directory)) Directory.Delete(directory, true); }
+            finally
+            {
+                // OnTradeResult queues a real asynchronous save, even after native delivery throws.
+                // Drain it before removing its files, including when an earlier assertion fails.
+                var writer = session == null ? null : (AsyncProfileWriter)Get(session, "_writer");
+                if (writer != null)
+                {
+                    Assert.True(writer.Flush(), "Trade save must finish before its directory is removed.");
+                    Assert.Null(writer.LastError);
+                    Assert.Equal(writer.EnqueuedRevision, writer.WrittenRevision);
+                }
+                if (Directory.Exists(directory)) Directory.Delete(directory, true);
+            }
         }
     }
 }
