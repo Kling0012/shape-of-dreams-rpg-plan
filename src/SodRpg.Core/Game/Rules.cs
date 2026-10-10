@@ -132,8 +132,13 @@ namespace SodRpg.Core.Game
             }
             // 開始深度は v1.1 で廃止（本体の Limbo 深度に統合）。
             p.Run = new RunState { RunId = runId, HeroKey = heroKey, LevelAtStart = p.DreamLevel, DailyId = daily?.Id ?? 0, LimboDepth = Math.Max(0, limboDepth), DreamDepth = dreamDepth ?? p.LastDreamDepth };
-            // 直送の使用済みは現在の遠征だけが意味を持つ。前の遠征の記録をここで捨てる（保存も小さく済む）。
-            p.DirectStashUsedRunIds.RemoveWhere(used => used != runId);
+            // Continue で別の遠征へ戻っても使用済みを保つ。保存件数が上限を超えたときだけ整理する。
+            if (p.DirectStashUsedRunIds.Count > MaxDirectStashUsedRunIds)
+            {
+                var expired = p.DirectStashUsedRunIds.OrderBy(used => used, StringComparer.Ordinal)
+                    .Take(p.DirectStashUsedRunIds.Count - MaxDirectStashUsedRunIds).ToList();
+                foreach (string used in expired) p.DirectStashUsedRunIds.Remove(used);
+            }
             if (limboDepth > 0)
             {
                 int dropPercent = (int)(LimboDropBonus * 100 * limboDepth);

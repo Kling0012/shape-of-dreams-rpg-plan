@@ -427,9 +427,7 @@ namespace SodRpg.Core.Game
         {
             // Outgoing identities may now belong to another player; do not rewind their generator.
             target.RngState = source.RngState;
-            // The direct-stash allowance and its transfer must rewind or survive together.
-            // Unlike trade receipts, it is not durable when ordinary Continue rewinds the economy.
-            target.DirectStashUsedRunIds.Clear();
+            // Preserve usage from both runs when Continue retains transferred economic state.
             target.DirectStashUsedRunIds.UnionWith(source.DirectStashUsedRunIds);
             target.Materials.Clear();
             foreach (var pair in source.Materials) target.Materials.Add(pair.Key, pair.Value);
