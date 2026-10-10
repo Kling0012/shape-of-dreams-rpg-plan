@@ -427,6 +427,8 @@ namespace SodRpg.Core.Game
         {
             // Outgoing identities may now belong to another player; do not rewind their generator.
             target.RngState = source.RngState;
+            // Preserve usage from both runs when Continue retains transferred economic state.
+            target.DirectStashUsedRunIds.UnionWith(source.DirectStashUsedRunIds);
             target.Materials.Clear();
             foreach (var pair in source.Materials) target.Materials.Add(pair.Key, pair.Value);
             CopyRelics(target.Stash, source.Stash);

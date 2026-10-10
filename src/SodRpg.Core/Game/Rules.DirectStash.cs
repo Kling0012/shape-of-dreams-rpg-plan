@@ -5,6 +5,8 @@ namespace SodRpg.Core.Game
 {
     public static partial class Rules
     {
+        public const int MaxDirectStashUsedRunIds = 256;
+
         /// <summary>
         /// 鞄の遺物を保管庫へ直接送れるか。1遠征（RunId）につき1回で、対象が0個なら使えない
         /// （回数も消費しない）。除外品は <see cref="IsSatchelRelicReserved"/>（中断遺物と同じ条件）。
