@@ -70,6 +70,7 @@ namespace SodRpg.Mod.Startup.Tests
                 column.transform.SetParent(Row.transform);
                 column.transform.position = new Vector3(x, 100f, 0f);
                 column.SetActive(columnActive);
+                new UI_InGame_SkillButton_GemGroup().transform.SetParent(column.transform);
                 var button = new UI_InGame_SkillButton { skillType = type };
                 button.transform.SetParent(column.transform);
                 button.transform.position = new Vector3(x, 100f, 0f);
@@ -125,7 +126,7 @@ namespace SodRpg.Mod.Startup.Tests
         }
 
         [Fact]
-        public void ColumnManagedByNativeLayoutKeepsItsPosition()
+        public void ColumnManagedByNativeLayoutUsesEditRowPosition()
         {
             LocalHeroWithSlots(1);
             var hud = new Hud(new[] { 860f, 980f, 1100f, 1220f, 1340f });
@@ -134,7 +135,7 @@ namespace SodRpg.Mod.Startup.Tests
             Open(manager, EditSkillManager.ModeType.EquipGem);
 
             Assert.True(hud.Movement.gameObject.activeInHierarchy);
-            Assert.Equal(1540f, hud.Movement.transform.parent.position.x, 3);
+            Assert.Equal(1460f, hud.Movement.transform.parent.position.x, 3);
         }
 
         [Fact]
@@ -173,7 +174,7 @@ namespace SodRpg.Mod.Startup.Tests
 
             Open(manager, EditSkillManager.ModeType.EquipGem);
 
-            var movement = Assert.Single(hud.Buttons.skillButtons, button => button.skillType == HeroSkillLocation.Movement);
+            var movement = Assert.Single(hud.Buttons.skillButtons, button => button != null && button.skillType == HeroSkillLocation.Movement);
             Assert.Equal(6, hud.Buttons.skillButtons.Length);
             Assert.Equal(6, hud.Row.transform.childCount);
             Assert.Same(hud.Row.transform, movement.transform.parent.parent);
@@ -199,7 +200,7 @@ namespace SodRpg.Mod.Startup.Tests
 
             Open(manager, EditSkillManager.ModeType.EquipGem);
 
-            var movement = Assert.Single(hud.Buttons.skillButtons, button => button.skillType == HeroSkillLocation.Movement);
+            var movement = Assert.Single(hud.Buttons.skillButtons, button => button != null && button.skillType == HeroSkillLocation.Movement);
             Assert.Same(hud.Row.transform, movement.transform.parent.parent);
             Assert.True(movement.gameObject.activeInHierarchy);
             Assert.Equal(1220f, movement.transform.parent.position.x, 3);
@@ -213,7 +214,7 @@ namespace SodRpg.Mod.Startup.Tests
             LocalHeroWithSlots(1);
             var hud = new Hud(new[] { 860f, 980f, 1100f, 1220f, 1340f }, withMovement: false);
             Open(manager, EditSkillManager.ModeType.EquipGem);
-            var movement = Assert.Single(hud.Buttons.skillButtons, button => button.skillType == HeroSkillLocation.Movement);
+            var movement = Assert.Single(hud.Buttons.skillButtons, button => button != null && button.skillType == HeroSkillLocation.Movement);
 
             for (int i = 0; i < 3; i++)
             {
@@ -224,7 +225,7 @@ namespace SodRpg.Mod.Startup.Tests
                 Assert.True(hud.Buttons.skillButtons[0].gameObject.activeInHierarchy);
                 Open(manager, EditSkillManager.ModeType.EquipGem);
                 Assert.True(movement.gameObject.activeInHierarchy);
-                Assert.Same(movement, Assert.Single(hud.Buttons.skillButtons, button => button.skillType == HeroSkillLocation.Movement));
+                Assert.Same(movement, Assert.Single(hud.Buttons.skillButtons, button => button != null && button.skillType == HeroSkillLocation.Movement));
             }
 
             DewPlayer.local.hero.Skill.MovementMaxGemCount = 0;
@@ -247,7 +248,7 @@ namespace SodRpg.Mod.Startup.Tests
 
             Open(manager, EditSkillManager.ModeType.EquipGem);
 
-            Assert.Same(hud.Movement, Assert.Single(hud.Buttons.skillButtons, button => button.skillType == HeroSkillLocation.Movement));
+            Assert.Same(hud.Movement, Assert.Single(hud.Buttons.skillButtons, button => button != null && button.skillType == HeroSkillLocation.Movement));
             Assert.True(hud.Movement.gameObject.activeInHierarchy);
             Assert.Equal(6, hud.Row.transform.childCount);
             Open(manager, EditSkillManager.ModeType.None);
@@ -272,7 +273,7 @@ namespace SodRpg.Mod.Startup.Tests
             Assert.Empty(Log.Warnings);
             DewPlayer.local.hero.Skill.MovementMaxGemCount = 1;
             Open(manager, EditSkillManager.ModeType.EquipGem);
-            Assert.True(Assert.Single(hud.Buttons.skillButtons, button => button.skillType == HeroSkillLocation.Movement).gameObject.activeInHierarchy);
+            Assert.True(Assert.Single(hud.Buttons.skillButtons, button => button != null && button.skillType == HeroSkillLocation.Movement).gameObject.activeInHierarchy);
         }
 
         [Fact]

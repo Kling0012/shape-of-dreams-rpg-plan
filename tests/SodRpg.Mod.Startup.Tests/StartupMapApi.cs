@@ -88,6 +88,7 @@ namespace UnityEngine
         public T GetComponentInChildren<T>(bool includeInactive = false) where T : Component
             => GetComponent<T>() ?? FindComponent<T>(transform, includeInactive);
         public T GetComponent<T>() where T : Component => component as T;
+        public T AddComponent<T>() where T : Component, new() => new T();
         private static T FindComponent<T>(Transform node, bool includeInactive) where T : Component
         {
             for (int i = 0; i < node.childCount; i++)
@@ -130,6 +131,7 @@ namespace UnityEngine
         public Transform parent;
         public readonly List<Transform> children = new List<Transform>();
         public Vector3 position;
+        public Vector3 localPosition { get => position; set => position = value; }
         public Transform(GameObject owner) { gameObject = owner; }
         public int childCount => children.Count;
         public Transform GetChild(int index) => children[index];
@@ -171,7 +173,7 @@ namespace UnityEngine
 namespace UnityEngine.UI
 {
     public sealed class Button { public bool interactable; }
-    public sealed class LayoutElement { public bool ignoreLayout; }
+    public sealed class LayoutElement : UnityEngine.Component { public bool ignoreLayout; }
 }
 namespace SodRpg.Mod
 {

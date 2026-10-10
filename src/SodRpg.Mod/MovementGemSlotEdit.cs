@@ -2,16 +2,16 @@ using System;
 using System.Collections.Generic;
 using HarmonyLib;
 using UnityEngine;
+using UnityEngine.UI;
+using DG.Tweening;
 
 namespace SodRpg.Mod
 {
-    // エッセンスの装着画面は本体の HUD 技ボタン（UI_InGame_SkillButtons）を EditSkillManager が拡大したもので、
-    // 枠の並びは各技ボタンの UI_InGame_SkillButton_GemGroup が GetMaxGemCount の現在値で描く。逆コンパイルでは
-    // Movement をコードで除外する箇所は無く、本体はプレハブ側で回避の技ボタンを既定で隠している（実機報告と一致）。
-    // ここでは装着画面が開くたび（EditSkillManager.SetMode の後）だけ、回避に枠が1つ以上あるとき技ボタンの列を
-    // 表示に戻し、既存の技列の間隔を読んでその右隣（収まらないときは左隣）へ置く。枠への装着・外し・入れ替えは
-    // すべて本体経路（CmdEquipGem / CmdSwapSlotGem / CmdUnequipGem）なので、協力プレイでも本体が同期する。
-    // 失敗したらこの表示だけを諦めて警告1回。MOD全体や他の機能は止めない。
+    // Dew.UI: SkillButtons.OnStateChanged は hiddenWhenExpanded を alpha=0 / raycast無効にし、
+    // FrameUpdate は adjustedItems の位置を毎フレーム戻す。SetActive と遅延 Place だけでは直らない。
+    // 回避 HUD は MovementSkillIndicator なので、技列が無い場合は本体の編集用列を一度だけ複製する。
+    // GemGroup は Start でモード変更を購読するため、編集開始後に作った列には現在のモードを適用する。
+    // 装着・外し・交換は本体 EditSkillManager の Cmd 経路に任せる。失敗時はこの表示機能だけを止める。
     internal static class MovementGemSlotEdit
     {
         // プレハブに回避の技ボタン自体が無いとき、既存の技列を複製して回避用に作る列の名前（二重作成の防止）。
@@ -27,12 +27,29 @@ namespace SodRpg.Mod
         // この画面の間に表示へ戻した、回避の技列とその祖先。閉じるとき（または枠が0のとき）だけ元へ戻す。
         private static readonly List<GameObject> _activated = new List<GameObject>(MaxAncestors);
         private static readonly Vector3[] _corners = new Vector3[4];
+        private struct FadeState
+        {
+            internal CanvasGroup Group;
+            internal float Alpha;
+            internal bool Interactable, BlocksRaycasts;
+        }
+        private static readonly List<FadeState> _fades = new List<FadeState>(MaxAncestors);
+        private static readonly System.Reflection.MethodInfo _groupState = AccessTools.Method(typeof(UI_InGame_SkillButton_GemGroup), "OnStateChanged");
+        private static readonly System.Reflection.MethodInfo _setTarget = AccessTools.Method(typeof(UI_InGame_SkillButton), "SetTarget");
+        private static UI_InGame_SkillButton _movement;
+        private static Transform _placedColumn;
+        private static Vector3 _originalPosition;
         private static bool _warned, _failed, _shownLogged;
+
+        internal static bool IsAvailable => !_failed && _placedColumn != null && _movement != null && _movement.gameObject.activeInHierarchy
+            && DewPlayer.local != null && DewPlayer.local.hero != null
+            && DewPlayer.local.hero.Skill.GetMaxGemCount(HeroSkillLocation.Movement) > 0;
 
         internal static void ResetForTest()
         {
+            Hide();
             _warned = _failed = _shownLogged = false;
-            _activated.Clear();
+            _movement = null;
         }
 
         internal static void OnModeChanged(EditSkillManager manager)
@@ -53,7 +70,11 @@ namespace SodRpg.Mod
                 if (button != null && button.skillType == HeroSkillLocation.Movement) { movement = button; break; }
             if (movement == null) movement = FindOrCloneColumn(buttons, array);
             if (movement == null) return;
-            Show(manager, buttons, array, movement, cap);
+            _movement = movement;
+            Show(manager, buttons, buttons.skillButtons, movement, cap);
+            // SetMode 内の初期選択は列作成より先に走る。回避だけに枠がある場合も選択を確定する。
+            if (DewInput.currentMode == InputMode.Gamepad && !manager.selectedSkillSlot.HasValue && !manager.selectedGemSlot.HasValue)
+                manager.SelectAnyRelevantSlot();
         }
 
         private static void Show(EditSkillManager manager, UI_InGame_SkillButtons buttons, UI_InGame_SkillButton[] array, UI_InGame_SkillButton movement, int cap)
@@ -68,24 +89,77 @@ namespace SodRpg.Mod
                 _pending[i].SetActive(true);
                 _activated.Add(_pending[i]);
             }
-            Place(buttons, array, movement);
-            // 開いた直後は本体が技列を拡大位置へ動かしているので、落ち着いたところでもう一度だけ合わせる。
-            Dew.CallDelayed(() =>
-            {
-                try
+            // 本体の fade tween が SetMode 後にも alpha を書くので、対象の tween を止めてから戻す。
+            var hiddenGroups = buttons.hiddenWhenExpanded;
+            if (hiddenGroups != null)
+                foreach (var cg in hiddenGroups)
                 {
-                    if (!_failed && manager != null && manager.mode != EditSkillManager.ModeType.None)
-                        Place(buttons, array, movement);
+                    if (cg == null || !IsAncestor(cg.transform, movement.transform)) continue;
+                    bool saved = false;
+                    foreach (var state in _fades) if (state.Group == cg) { saved = true; break; }
+                    if (!saved) _fades.Add(new FadeState { Group = cg, Alpha = 0f,
+                        Interactable = false, BlocksRaycasts = false });
+                    cg.DOKill();
+                    cg.alpha = 1f;
+                    cg.interactable = cg.blocksRaycasts = true;
                 }
-                catch (Exception ex) { WarnFailed(ex); }
-            }, 20);
-            if (_shownLogged) return;
+            var group = movement.transform.parent.gameObject.GetComponentInChildren<UI_InGame_SkillButton_GemGroup>(true);
+            if (group == null || _groupState == null || _setTarget == null)
+                throw new MissingComponentException("movement column requires native GemGroup and skill handlers");
+            if (group.groups == null || cap > group.groups.Length)
+                throw new InvalidOperationException("movement gem count exceeds native UI capacity");
+            if (group.activeGemSlots == null && cap > 0)
+                group.groups[cap - 1].SetActive(false);
+            group.LogicUpdate(0f);
+            _groupState.Invoke(group, new object[] { manager.mode });
+            _setTarget.Invoke(movement, new object[] { DewPlayer.local.hero.Skill.GetSkill(HeroSkillLocation.Movement) });
+            var editor = movement.gameObject.GetComponent<UI_InGame_SkillButton_EditSkill>();
+            if (editor != null)
+                AccessTools.Method(typeof(UI_InGame_SkillButton_EditSkill), "UpdateStatus").Invoke(editor, null);
+            Canvas.ForceUpdateCanvases();
+            Place(buttons, array, movement);
+            if (_shownLogged || group.activeGemSlots == null || group.activeGemSlots.Length != cap) return;
             _shownLogged = true;
             Log.Info("Client: Movement essence slots shown in the edit screen (" + cap + " slot(s))");
         }
 
+        private static Transform FindCopiedTransform(Transform source, Transform copy, Transform target)
+        {
+            if (source == target) return copy;
+            for (int i = 0; i < source.childCount; i++)
+                if (IsAncestor(source.GetChild(i), target))
+                    return FindCopiedTransform(source.GetChild(i), copy.GetChild(i), target);
+            throw new InvalidOperationException("cannot locate cloned fade group");
+        }
+
+        private static bool IsAncestor(Transform ancestor, Transform child)
+        {
+            for (var t = child; t != null; t = t.parent) if (t == ancestor) return true;
+            return false;
+        }
+
+        internal static void UpdatePlacement(UI_InGame_SkillButtons buttons)
+        {
+            if (!IsAvailable || _placedColumn == null) return;
+            Place(buttons, buttons.skillButtons, _movement);
+        }
+
         private static void Hide()
         {
+            if (_placedColumn != null) _placedColumn.localPosition = _originalPosition;
+            _placedColumn = null;
+            foreach (var state in _fades)
+            {
+                if (state.Group == null) continue;
+                // None モードでは本体の復帰 tween を妨げない。失敗時・枠消失時は保存値へ戻す。
+                var manager = ManagerBase<EditSkillManager>.softInstance;
+                if (manager != null && manager.mode == EditSkillManager.ModeType.None) continue;
+                state.Group.DOKill();
+                state.Group.alpha = state.Alpha;
+                state.Group.interactable = state.Interactable;
+                state.Group.blocksRaycasts = state.BlocksRaycasts;
+            }
+            _fades.Clear();
             for (int i = 0; i < _activated.Count; i++)
             {
                 var go = _activated[i];
@@ -121,7 +195,11 @@ namespace SodRpg.Mod
             try
             {
                 // 元の列の子ではなく、同じ行の兄弟として複製する。
-                clone = UnityEngine.Object.Instantiate(templateColumn.gameObject, parent);
+                // Awake/OnEnable が元の Q として走らないよう、非表示の状態で複製してから skillType を設定する。
+                bool wasActive = templateColumn.gameObject.activeSelf;
+                templateColumn.gameObject.SetActive(false);
+                try { clone = UnityEngine.Object.Instantiate(templateColumn.gameObject, parent); }
+                finally { templateColumn.gameObject.SetActive(wasActive); }
             }
             catch (Exception ex)
             {
@@ -130,6 +208,18 @@ namespace SodRpg.Mod
             }
             clone.name = CloneName;
             clone.SetActive(false);
+            _activated.Add(clone);
+            // hiddenWhenExpanded は元列の参照だけを持つ。複製列にコピーされた fade 状態も解除する。
+            var hidden = buttons.hiddenWhenExpanded;
+            if (hidden != null)
+                foreach (var cg in hidden)
+                {
+                    if (cg == null || !IsAncestor(templateColumn, cg.transform)) continue;
+                    var copied = FindCopiedTransform(templateColumn, clone.transform, cg.transform).gameObject.GetComponent<CanvasGroup>();
+                    if (copied == null) continue;
+                    copied.alpha = 1f;
+                    copied.interactable = copied.blocksRaycasts = true;
+                }
             var cloned = clone.GetComponentInChildren<UI_InGame_SkillButton>(true);
             if (cloned == null)
             {
@@ -140,26 +230,34 @@ namespace SodRpg.Mod
             cloned.skillType = HeroSkillLocation.Movement;
             // 複製した列のキー表示は元の技のものが残るので、誤解を避けるために消しておく。
             if (cloned.skillActivationKeyObject != null) cloned.skillActivationKeyObject.SetActive(false);
+            // 複製した列はレイアウトグループの子でも本体の技列数や並びを変えない。
+            var layout = clone.GetComponent<LayoutElement>();
+            if (layout == null) layout = clone.AddComponent<LayoutElement>();
+            layout.ignoreLayout = true;
             return RegisterButton(buttons, array, cloned);
         }
 
         private static UI_InGame_SkillButton RegisterButton(UI_InGame_SkillButtons buttons, UI_InGame_SkillButton[] array, UI_InGame_SkillButton movement)
         {
-            var grown = new UI_InGame_SkillButton[array.Length + 1];
+            // 本体 Tooltip / FloatingGem は配列を skill enum で添字参照する。
+            int index = (int)HeroSkillLocation.Movement;
+            var grown = new UI_InGame_SkillButton[Math.Max(array.Length, index + 1)];
             Array.Copy(array, grown, array.Length);
-            grown[array.Length] = movement;
+            grown[index] = movement;
             buttons.skillButtons = grown;
             return movement;
         }
 
         private static void Place(UI_InGame_SkillButtons buttons, UI_InGame_SkillButton[] array, UI_InGame_SkillButton movement)
         {
-            // 本体の配置管理（adjustedItems）に入っている列は毎フレーム本体が動かすので触らない。
+            // 本体 FrameUpdate の後にも適用し、adjustedItems の SmoothDamp に戻されないようにする。
             var column = movement.transform.parent;
             if (column == null) return;
-            if (buttons.adjustedItems != null)
-                foreach (var item in buttons.adjustedItems)
-                    if (item == column) return;
+            if (_placedColumn != column)
+            {
+                _placedColumn = column;
+                _originalPosition = column.localPosition;
+            }
             int count = 0;
             foreach (var button in array)
             {
@@ -228,10 +326,102 @@ namespace SodRpg.Mod
         internal static void WarnFailed(Exception ex)
         {
             _failed = true;
-            Hide();
+            try { Hide(); }
+            catch { /* 表示の復帰に失敗しても本体や他のMOD機能へ例外を返さない。 */ }
             if (_warned) return;
             _warned = true;
             Log.Warn("Movement essence slot display disabled; other MOD features remain active: " + ex.Message);
+        }
+    }
+
+    [HarmonyPatch(typeof(UI_InGame_SkillButtons), "FrameUpdate")]
+    internal static class MovementGemSlotPlacementPatch
+    {
+        private static void Postfix(UI_InGame_SkillButtons __instance)
+        {
+            try { MovementGemSlotEdit.UpdatePlacement(__instance); }
+            catch (Exception ex) { MovementGemSlotEdit.WarnFailed(ex); }
+        }
+    }
+
+    // 本体の探索は Identity で折り返す。表示できた画面だけ Movement まで範囲を延ばす。
+    [HarmonyPatch(typeof(EditSkillManager), "TryGetNextRelevantSkillLocation")]
+    internal static class MovementGemSlotSkillNavigationPatch
+    {
+        private static bool Prefix(EditSkillManager __instance, bool next, bool skipStart, bool canWrap,
+            ref HeroSkillLocation loc, ref bool __result)
+        {
+            if (!MovementGemSlotEdit.IsAvailable) return true;
+            try
+            {
+                int start = (int)(__instance.selectedSkillSlot ?? HeroSkillLocation.Q);
+                int current = start;
+                for (int i = 0; i < 6; i++)
+                {
+                    if ((i != 0 || !skipStart) && __instance.IsSlotSelectable((HeroSkillLocation)current))
+                    {
+                        loc = (HeroSkillLocation)current;
+                        __result = true;
+                        return false;
+                    }
+                    current += next ? 1 : -1;
+                    if (current < 0 || current > (int)HeroSkillLocation.Movement)
+                    {
+                        if (!canWrap) { __result = false; return false; }
+                        current = next ? 0 : (int)HeroSkillLocation.Movement;
+                    }
+                }
+                loc = (HeroSkillLocation)start;
+                __result = __instance.IsSlotSelectable(loc);
+                return false;
+            }
+            catch (Exception ex) { MovementGemSlotEdit.WarnFailed(ex); return true; }
+        }
+    }
+
+    [HarmonyPatch(typeof(EditSkillManager), "TryGetNextRelevantGemSlot")]
+    internal static class MovementGemSlotGemNavigationPatch
+    {
+        private static bool Prefix(EditSkillManager __instance, bool next, bool skipStart, bool canWrap,
+            ref GemLocation loc, ref bool __result)
+        {
+            if (!MovementGemSlotEdit.IsAvailable) return true;
+            try
+            {
+                var skill = DewPlayer.local.hero.Skill;
+                var start = __instance.selectedGemSlot ?? new GemLocation(HeroSkillLocation.Q, 0);
+                var current = start;
+                // 空の列も1ステップ使う。各列の本体上限から探索の上限を決め、0枠でも有限にする。
+                int limit = 0;
+                for (int i = 0; i <= (int)HeroSkillLocation.Movement; i++)
+                    limit += Math.Max(1, skill.GetMaxGemCount((HeroSkillLocation)i));
+                for (int i = 0; i < limit; i++)
+                {
+                    int cap = skill.GetMaxGemCount(current.skill);
+                    if ((i != 0 || !skipStart) && current.index >= 0 && current.index < cap
+                        && __instance.IsSlotSelectable(current))
+                    {
+                        loc = current;
+                        __result = true;
+                        return false;
+                    }
+                    current.index += next ? 1 : -1;
+                    if (current.index >= 0 && current.index < cap) continue;
+                    int column = (int)current.skill + (next ? 1 : -1);
+                    if (column < 0 || column > (int)HeroSkillLocation.Movement)
+                    {
+                        if (!canWrap) { __result = false; return false; }
+                        column = next ? 0 : (int)HeroSkillLocation.Movement;
+                    }
+                    current.skill = (HeroSkillLocation)column;
+                    current.index = next ? 0 : skill.GetMaxGemCount(current.skill) - 1;
+                }
+                loc = start;
+                __result = start.index >= 0 && start.index < skill.GetMaxGemCount(start.skill)
+                    && __instance.IsSlotSelectable(start);
+                return false;
+            }
+            catch (Exception ex) { MovementGemSlotEdit.WarnFailed(ex); return true; }
         }
     }
 
