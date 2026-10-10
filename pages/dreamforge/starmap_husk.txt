@@ -1,0 +1,40 @@
+====== Huskの星図 ======
+
+Huskの星図です。星 888 個、到達刻印 10 個。内容はゲームのデータ（バージョン 2.10.21）から自動生成しています。
+
+[[dreamforge:starmap|星図の一覧へ]] / [[dreamforge:start|ホームへ戻る]]
+
+費用は、星を1段上げるのに要る星のポイントです。段が複数ある星は、1段ごとに同じ費用が要ります。「どちらか1つを選択」の星は、選択肢のうち1つを選びます。
+
+===== 構成 =====
+
+  * 核の星：2個
+  * 記憶の星：310個
+  * 橋の星：105個
+  * 外縁の星：471個
+
+===== 到達刻印 =====
+
+到達刻印は、対象・発動条件のある特別な星です。デバフはありません。星のレベルに応じて最大3つまで選べます。
+
+^ 刻印 ^ 効果 ^ 費用 ^
+| 虚ろの刃 (Hollow Blade) | 効果 \\ 闇付与 +1つ（さらに15%の確率でもう1つ）／通常攻撃が当たるたびに、敵に闇を1つ付ける（さらに15%の確率でもう1つ）。通常攻撃の会心時は、この確率判定と別に必ずもう1つ付与（闇は5つまで） \\ 必要ポイント：3 \\ Effect \\ Dark application +1 stack (plus a 15% chance for 1 more) / Basic attack hits apply 1 Dark (plus a 15% chance for 1 more). A critical basic hit always applies 1 additional stack independently of this roll (up to 5 stacks) \\ Cost: 3 points | 3 |
+| 瞬歩の刃 (Flash-Step Blade) | 効果 \\ 次の通常攻撃の追加ダメージ +攻撃力・魔力の高い方の69%／回避・ダッシュ・瞬間移動後3秒以内の次の命中時。重ならず、再移動で時間を延長。次の通常攻撃への追加効果は最大の1つだけを消費し、残りは期限まで保持 \\ 必要ポイント：3 \\ Effect \\ Next basic attack bonus damage +69% of the higher of your attack damage or ability power on the next hit within 3s of a dodge, dash or teleport; refreshes without stacking. Only the largest next-basic bonus is consumed; others remain until their expiry \\ Cost: 3 points | 3 |
+| 一刀専心 (Single-Minded Blade) | 効果 \\ 記憶の元々のダメージ：+113.85%（元の2.1385倍）。 \\ 対象：記憶『一歩一殺』による該当効果。記憶が元々与えるダメージだけを変更し、星による追加ダメージは変更しない。 \\ 発動元：記憶が元々持つ効果。 \\ 倍率は対象の現在の値に掛ける（パーセントポイントの加算ではない）。各効果の上限は変わらない。 \\ 取得の前提（すべて必要）：星『次歩の備え方』 \\ 必要ポイント：1 \\ Effect \\ Memory original damage: +113.85% (×2.1385). \\ Applies to: Memory “One Step, One Kill”. Changes only the memory's original damage, not star-generated extra damage. \\ Source: the memory's original effect. \\ Multipliers apply to the current value, not as added percentage points. Existing effect caps remain unchanged. \\ Acquisition prerequisites (all required): star “Readying the Next Step” \\ Cost: 1 point | 1 |
+| 風傷の芯 (Core of the Wind Scar) | 効果 \\ 記憶の元々のダメージ：+177.1%（元の2.771倍）。 \\ 対象：記憶『風の傷』による該当効果。記憶が元々与えるダメージだけを変更し、星による追加ダメージは変更しない。 \\ 発動元：記憶が元々持つ効果。 \\ 倍率は対象の現在の値に掛ける（パーセントポイントの加算ではない）。各効果の上限は変わらない。 \\ 取得の前提（すべて必要）：星『風の決め方』 \\ 必要ポイント：1 \\ Effect \\ Memory original damage: +177.1% (×2.771). \\ Applies to: Memory “Scar of the Wind”. Changes only the memory's original damage, not star-generated extra damage. \\ Source: the memory's original effect. \\ Multipliers apply to the current value, not as added percentage points. Existing effect caps remain unchanged. \\ Acquisition prerequisites (all required): star “How the Wind Finishes” \\ Cost: 1 point | 1 |
+| 遅れて裂ける刃 (Delayed Rend) | 効果 \\ 追撃ダメージ +当てたダメージの177.1%：0.3秒後にもう一度与える。発動条件：記憶『裂傷』が敵に命中したとき（間隔制限なし・効果量は最大1500%。星の追加ダメージでは発動しない） \\ 1回の使用につき1回まで。 \\ 取得の前提（すべて必要）：星『闇への差し色』 \\ 必要ポイント：1 \\ Effect \\ Echo damage +177.1% of the hit damage: deal again after 0.3 seconds. Triggered when Memory “Laceration” hits an enemy (no cooldown; effect capped at 1500%; not triggered by extra damage from stars). \\ At most once per use. \\ Acquisition prerequisites (all required): star “Accent of Light in Dark” \\ Cost: 1 point | 1 |
+| 砕ける楔 (Fractured Wedge) | 効果 \\ 範囲追加ダメージ +攻撃力・魔力の高い方の202.4%：当てた敵の周り4mの敵に与える（魔力が高ければ魔法）。発動条件：記憶『死の刻印』が敵に命中したとき（間隔制限なし・効果量は最大1000%。星の追加ダメージでは発動しない） \\ 1回の使用につき1回まで。 \\ 取得の前提（すべて必要）：星『刻印の重ね方』 \\ 必要ポイント：1 \\ Effect \\ Area damage +202.4% of the higher of attack damage or ability power: damage enemies within 4m of the hit enemy (magic damage if ability power is higher). Triggered when Memory “Death Mark” hits an enemy (no cooldown; effect capped at 1000%; not triggered by extra damage from stars). \\ At most once per use. \\ Acquisition prerequisites (all required): star “Stacking the Mark” \\ Cost: 1 point | 1 |
+| 剣気の色 (Prism of Aura) | 効果 \\ 追加ダメージ +属性1種類につき攻撃力・魔力の高い方の50.6%：当てた敵の火・冷気・光・闇を数える（4種類まで。属性は消費しない）。発動条件：記憶『滅殺態勢』が敵に命中したとき（間隔制限なし・効果量は最大60%。星の追加ダメージでは発動しない） \\ 1回の使用につき1回まで。 \\ 取得の前提（すべて必要）：星『勝利の回し方』 \\ 必要ポイント：1 \\ Effect \\ Extra damage +50.6% of the higher of attack damage or ability power per element: count Fire, Cold, Light and Dark on the hit enemy (up to 4 types; does not consume elements). Triggered when Memory “Annihilation Stance” hits an enemy (no cooldown; effect capped at 60%; not triggered by extra damage from stars). \\ At most once per use. \\ Acquisition prerequisites (all required): star “Passing the Victory” \\ Cost: 1 point | 1 |
+| 薄闇の護身 (Shadowed Bulwark) | 効果 \\ 障壁 +最大HPの20.24%：自分に張る（4秒。星の障壁は付与者と受け手の組ごとに1つだけで、残量と新しい量の大きい方を保って時間を更新）。発動条件：記憶『撹乱』が敵に命中したとき（間隔制限なし・効果量は最大300%。星の追加ダメージでは発動しない） \\ 1回の使用につき1回まで。 \\ 取得の前提（すべて必要）：星『決着の後始末』 \\ 必要ポイント：1 \\ Effect \\ Shield +20.24% of maximum health: shield yourself for 4 seconds (one star shield per giver and recipient; keeps the larger of the remaining and new amounts and refreshes the duration). Triggered when Memory “Deception” hits an enemy (no cooldown; effect capped at 300%; not triggered by extra damage from stars). \\ At most once per use. \\ Acquisition prerequisites (all required): star “After the Verdict” \\ Cost: 1 point | 1 |
+| 闇を編む (Weave of Darkness) | 効果 \\ 火・冷気・光・闇の付与：+126.5%（元の2.265倍）。 \\ 対象：自分が取得した星による該当効果すべて。 \\ 倍率は対象の現在の値に掛ける（パーセントポイントの加算ではない）。各効果の上限は変わらない。 \\ 取得の前提（すべて必要）：星『闇の彩り方』 \\ 必要ポイント：1 \\ Effect \\ Fire, Cold, Light or Dark application: +126.5% (×2.265). \\ Applies to: all matching effects from stars you own. \\ Multipliers apply to the current value, not as added percentage points. Existing effect caps remain unchanged. \\ Acquisition prerequisites (all required): star “Shading the Dark” \\ Cost: 1 point | 1 |
+| 残傷の契約 (Lingering Wound Pact) | 効果 \\ 継続ダメージ：+253%（元の3.53倍）。 \\ 対象：自分が取得した星による該当効果すべて。 \\ 倍率は対象の現在の値に掛ける（パーセントポイントの加算ではない）。各効果の上限は変わらない。 \\ 取得の前提（すべて必要）：星『裂き方の吟味』 \\ 必要ポイント：1 \\ Effect \\ damage over time: +253% (×3.53). \\ Applies to: all matching effects from stars you own. \\ Multipliers apply to the current value, not as added percentage points. Existing effect caps remain unchanged. \\ Acquisition prerequisites (all required): star “Choosing the Rend” \\ Cost: 1 point | 1 |
+
+===== 地域別ページ =====
+
+  * [[dreamforge:starmap_husk_core|核の星]]
+  * [[dreamforge:starmap_husk_memory_1|記憶の星 1/2]]
+  * [[dreamforge:starmap_husk_memory_2|記憶の星 2/2]]
+  * [[dreamforge:starmap_husk_bridge|橋の星]]
+  * [[dreamforge:starmap_husk_outer_1|外縁の星 1/3]]
+  * [[dreamforge:starmap_husk_outer_2|外縁の星 2/3]]
+  * [[dreamforge:starmap_husk_outer_3|外縁の星 3/3]]

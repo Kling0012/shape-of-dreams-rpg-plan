@@ -1,0 +1,107 @@
+====== 土台: 手 (Hands) ======
+
+手 (Hands)の土台（ベース装備）一覧です（100種）。基礎能力はアイテムレベル1・強化なしの値で、固定値の基礎能力はアイテムレベルに応じて伸びます。
+
+[[dreamforge:start|ホームへ戻る]]
+
+^ アイコン ^ 名前 (Name) ^ 系統 (Line) ^ 家系 (Family) ^ 基礎能力 (Implicit) ^ ID ^
+| {{dreamforge:icons:hands.leather_gloves.png?40}} | 革の手袋 (Leather Gloves) | 破壊 (Destruction) | ― | 攻撃速度 +4% (Attack speed +4%) | hands.leather_gloves |
+| {{dreamforge:icons:hands.iron_gauntlets.png?40}} | 鉄の籠手 (Iron Gauntlets) | 生命 (Life) | ― | 防御 +6 (Armor +6) | hands.iron_gauntlets |
+| {{dreamforge:icons:hands.archer_bracers.png?40}} | 射手の腕当て (Archer's Bracers) | 破壊 (Destruction) | ― | 会心ダメージ倍率 +10パーセントポイント (Critical damage multiplier +10 percentage points) | hands.archer_bracers |
+| {{dreamforge:icons:hands.spell_gloves.png?40}} | 呪文の手袋 (Spellweave Gloves) | 想像 (Imagination) | 記憶 (Memory) | 魔力 +5 (Ability power +5) | hands.spell_gloves |
+| {{dreamforge:icons:hands.claw_gauntlets.png?40}} | 獣爪の手甲 (Beastclaw Gauntlets) | 破壊 (Destruction) | 召喚 (Summon) | 攻撃力 +5 (Attack damage +5) | hands.claw_gauntlets |
+| {{dreamforge:icons:hands.frost_mitts.png?40}} | 霜の指なし手袋 (Frost Mitts) | 想像 (Imagination) | 氷霜 (Frost) | 冷気属性効果 +6% (Cold effect strength +6%) | hands.frost_mitts |
+| {{dreamforge:icons:hands.radiant_wraps.png?40}} | 光の手巻き (Radiant Wraps) | 想像 (Imagination) | 氷霜 (Frost) | 光属性効果 +6% (Light effect strength +6%) | hands.radiant_wraps |
+| {{dreamforge:icons:hands.vigor_grips.png?40}} | 活力の握り (Grips of Vigor) | 生命 (Life) | 氷霜 (Frost) | 最大HP +25 (Maximum health +25) | hands.vigor_grips |
+| {{dreamforge:icons:hands.quick_fingers.png?40}} | 早業の手袋 (Quickfinger Gloves) | 想像 (Imagination) | 疾風 (Gale) | スキル加速 +5（記憶のクールダウン回復を速める） (Ability haste +5 (speeds up memory cooldown recovery)) | hands.quick_fingers |
+| {{dreamforge:icons:hands.reach_bracers.png?40}} | 遠手の腕輪 (Bracers of Reach) | 破壊 (Destruction) | ― | 通常攻撃の射程 +5% (Basic attack range +5%) | hands.reach_bracers |
+| {{dreamforge:icons:hands.ember_gauntlets.png?40}} | 残り火の手甲 (Ember Gauntlets) | 破壊 (Destruction) | 炎 (Flame) | 火属性効果 +6% (Fire effect strength +6%) | hands.ember_gauntlets |
+| {{dreamforge:icons:hands.shadow_gloves.png?40}} | 影縫いの手袋 (Shadowstitch Gloves) | 破壊 (Destruction) | 闇 (Dark) | 闇属性効果 +6% (Dark effect strength +6%) | hands.shadow_gloves |
+| {{dreamforge:icons:hands.healer_hands.png?40}} | 癒し手の手袋 (Healer's Gloves) | 生命 (Life) | 癒し (Mend) | HP自動回復量 +2/秒 (Health regeneration +2/s) | hands.healer_hands |
+| {{dreamforge:icons:hands.stone_fists.png?40}} | 岩の拳 (Stone Fists) | 生命 (Life) | 守り (Guard) | 最大HP +5% (Maximum health +5%) | hands.stone_fists |
+| {{dreamforge:icons:hands.duelist_gloves.png?40}} | 決闘者の手袋 (Duelist's Gloves) | 破壊 (Destruction) | ― | 会心率 +3パーセントポイント (Critical chance +3 percentage points) | hands.duelist_gloves |
+| {{dreamforge:icons:hands.thorn_wraps.png?40}} | 茨の手巻き (Thorn Wraps) | 生命 (Life) | 守り (Guard) | 防御 +6 (Armor +6) | hands.thorn_wraps |
+| {{dreamforge:icons:hands.alchemist_gloves.png?40}} | 錬金術師の手袋 (Alchemist's Gloves) | 想像 (Imagination) | 癒し (Mend) | スキル加速 +5（記憶のクールダウン回復を速める） (Ability haste +5 (speeds up memory cooldown recovery)) | hands.alchemist_gloves |
+| {{dreamforge:icons:hands.bone_knuckles.png?40}} | 骨の拳当て (Bone Knuckles) | 破壊 (Destruction) | 召喚 (Summon) | 会心ダメージ倍率 +10パーセントポイント (Critical damage multiplier +10 percentage points) | hands.bone_knuckles |
+| {{dreamforge:icons:hands.star_rings.png?40}} | 星環の指輪 (Star-Ring Bands) | 想像 (Imagination) | 記憶 (Memory) | 光属性効果 +6% (Light effect strength +6%) | hands.star_rings |
+| {{dreamforge:icons:hands.oath_gauntlets.png?40}} | 誓いの籠手 (Oath Gauntlets) | 生命 (Life) | 光 (Light) | 行動妨害耐性 +8（受ける行動妨害の持続時間を短くする） (Tenacity +8 (shortens crowd-control effects on you)) | hands.oath_gauntlets |
+| {{dreamforge:icons:hands.tide_gloves.png?40}} | 潮の手袋 (Tide Gloves) | 想像 (Imagination) | 光 (Light) | 冷気属性効果 +6% (Cold effect strength +6%) | hands.tide_gloves |
+| {{dreamforge:icons:hands.flame_grips.png?40}} | 炎の握り (Flame Grips) | 破壊 (Destruction) | 闇 (Dark) | 火属性効果 +6% (Fire effect strength +6%) | hands.flame_grips |
+| {{dreamforge:icons:hands.void_claws.png?40}} | 虚ろの爪 (Hollow Claws) | 破壊 (Destruction) | 記憶 (Memory) | 闇属性効果 +6% (Dark effect strength +6%) | hands.void_claws |
+| {{dreamforge:icons:hands.sling_bracers.png?40}} | 投げ手の腕輪 (Thrower's Bracers) | 破壊 (Destruction) | 疾風 (Gale) | 通常攻撃の射程 +5% (Basic attack range +5%) | hands.sling_bracers |
+| {{dreamforge:icons:hands.prayer_beads.png?40}} | 祈りの数珠 (Prayer Beads) | 生命 (Life) | 癒し (Mend) | 最大HP +5% (Maximum health +5%) | hands.prayer_beads |
+| {{dreamforge:icons:hands.ice_bracers.png?40}} | 氷の腕輪 (Ice Bracers) | 想像 (Imagination) | 癒し (Mend) | 冷気属性効果 +6% (Cold effect strength +6%) | hands.ice_bracers |
+| {{dreamforge:icons:hands.chain_wraps.png?40}} | 鎖巻きの拳 (Chain-Wrapped Fists) | 破壊 (Destruction) | 炎 (Flame) | 攻撃力 +5 (Attack damage +5) | hands.chain_wraps |
+| {{dreamforge:icons:hands.sun_gauntlets.png?40}} | 陽光の籠手 (Sunlit Gauntlets) | 生命 (Life) | 光 (Light) | 光属性効果 +6% (Light effect strength +6%) | hands.sun_gauntlets |
+| {{dreamforge:icons:hands.thief_gloves.png?40}} | 盗賊の手袋 (Thief's Gloves) | 破壊 (Destruction) | 闇 (Dark) | 会心率 +3パーセントポイント (Critical chance +3 percentage points) | hands.thief_gloves |
+| {{dreamforge:icons:hands.monk_wraps.png?40}} | 修行者の手巻き (Ascetic's Wraps) | 生命 (Life) | 疾風 (Gale) | HP自動回復量 +2/秒 (Health regeneration +2/s) | hands.monk_wraps |
+| {{dreamforge:icons:hands.ripgrip_gloves.png?40}} | 裂握の手袋 (Ripgrip Gloves) | 破壊 (Destruction) | 炎 (Flame) | 攻撃力 +6 (Attack damage +6) | hands.ripgrip_gloves |
+| {{dreamforge:icons:hands.swiftpalm_gloves.png?40}} | 風掌の手袋 (Swift-Palm Gloves) | 破壊 (Destruction) | 疾風 (Gale) | 攻撃速度 +5% (Attack speed +5%) | hands.swiftpalm_gloves |
+| {{dreamforge:icons:hands.hunting_sinew.png?40}} | 狩りの筋帯 (Hunting Sinew Wraps) | 破壊 (Destruction) | 召喚 (Summon) | 会心ダメージ倍率 +12パーセントポイント (Critical damage multiplier +12 percentage points) | hands.hunting_sinew |
+| {{dreamforge:icons:hands.blazeknit_gloves.png?40}} | 火織りの手袋 (Blazeknit Gloves) | 破壊 (Destruction) | 炎 (Flame) | 火属性効果 +8% (Fire effect strength +8%) | hands.blazeknit_gloves |
+| {{dreamforge:icons:hands.frostbite_knuckles.png?40}} | 凍手の拳当て (Frostbite Knuckles) | 破壊 (Destruction) | 氷霜 (Frost) | 冷気属性効果 +8% (Cold effect strength +8%) | hands.frostbite_knuckles |
+| {{dreamforge:icons:hands.sunfire_grips.png?40}} | 陽炎の握り (Sunfire Grips) | 破壊 (Destruction) | 炎 (Flame) | 光属性効果 +8% (Light effect strength +8%) | hands.sunfire_grips |
+| {{dreamforge:icons:hands.nightpalm_gloves.png?40}} | 夜掌の手袋 (Nightpalm Gloves) | 破壊 (Destruction) | 闇 (Dark) | 闇属性効果 +8% (Dark effect strength +8%) | hands.nightpalm_gloves |
+| {{dreamforge:icons:hands.precise_fingerless.png?40}} | 的確な指抜き (Precise Fingerless Gloves) | 破壊 (Destruction) | 光 (Light) | 会心率 +3パーセントポイント (Critical chance +3 percentage points) | hands.precise_fingerless |
+| {{dreamforge:icons:hands.bowmaster_bracers.png?40}} | 弓張りの腕当て (Bowmaster's Bracers) | 破壊 (Destruction) | ― | 通常攻撃の射程 +6% (Basic attack range +6%) | hands.bowmaster_bracers |
+| {{dreamforge:icons:hands.storm_knuckles.png?40}} | 嵐の拳当て (Storm Knuckles) | 破壊 (Destruction) | 疾風 (Gale) | 攻撃速度 +4% (Attack speed +4%) | hands.storm_knuckles |
+| {{dreamforge:icons:hands.riven_fists.png?40}} | 裂罅の拳 (Riven Fists) | 破壊 (Destruction) | 闇 (Dark) | 攻撃力 +5 (Attack damage +5) | hands.riven_fists |
+| {{dreamforge:icons:hands.duelist_bracers.png?40}} | 決闘の腕当て (Duelist's Bracers) | 破壊 (Destruction) | 闇 (Dark) | 会心ダメージ倍率 +10パーセントポイント (Critical damage multiplier +10 percentage points) | hands.duelist_bracers |
+| {{dreamforge:icons:hands.viperfang_claws.png?40}} | 毒牙の爪 (Viper Fang Claws) | 破壊 (Destruction) | 召喚 (Summon) | 会心率 +3パーセントポイント (Critical chance +3 percentage points) | hands.viperfang_claws |
+| {{dreamforge:icons:hands.wardens_grips.png?40}} | 番人の握り (Warden's Grips) | 生命 (Life) | 守り (Guard) | 防御 +7 (Armor +7) | hands.wardens_grips |
+| {{dreamforge:icons:hands.bark_knuckles.png?40}} | 樹皮の拳当て (Bark Knuckles) | 生命 (Life) | 癒し (Mend) | HP自動回復量 +3/秒 (Health regeneration +3/s) | hands.bark_knuckles |
+| {{dreamforge:icons:hands.ironvein_gauntlets.png?40}} | 鉄脈の籠手 (Ironvein Gauntlets) | 生命 (Life) | 守り (Guard) | 防御 +9 (Armor +9) | hands.ironvein_gauntlets |
+| {{dreamforge:icons:hands.heavypalm_gloves.png?40}} | 重掌の手袋 (Heavypalm Gloves) | 生命 (Life) | 守り (Guard) | 最大HP +30 (Maximum health +30) | hands.heavypalm_gloves |
+| {{dreamforge:icons:hands.bulwark_wraps.png?40}} | 壁の手巻き (Bulwark Wraps) | 生命 (Life) | 守り (Guard) | 行動妨害耐性 +12（受ける行動妨害の持続時間を短くする） (Tenacity +12 (shortens crowd-control effects on you)) | hands.bulwark_wraps |
+| {{dreamforge:icons:hands.reef_gauntlets.png?40}} | 礁の籠手 (Reef Gauntlets) | 生命 (Life) | 氷霜 (Frost) | 防御 +6 (Armor +6) | hands.reef_gauntlets |
+| {{dreamforge:icons:hands.rootgrip_gloves.png?40}} | 根握りの手袋 (Rootgrip Gloves) | 生命 (Life) | 記憶 (Memory) | 最大HP +6% (Maximum health +6%) | hands.rootgrip_gloves |
+| {{dreamforge:icons:hands.snowmelt_mitts.png?40}} | 雪解の指なし (Snowmelt Mitts) | 生命 (Life) | 氷霜 (Frost) | HP自動回復量 +2/秒 (Health regeneration +2/s) | hands.snowmelt_mitts |
+| {{dreamforge:icons:hands.oathpalm_gloves.png?40}} | 誓掌の手袋 (Oathpalm Gloves) | 生命 (Life) | 光 (Light) | 与える障壁量 +5%（自分・味方への障壁が対象。装備・星の同じ能力値は合計で最大60%） (Shield amount granted +5% (to yourself and allies; combined equipment and star bonuses to this stat capped at 60%)) | hands.oathpalm_gloves |
+| {{dreamforge:icons:hands.manuscript_gloves.png?40}} | 写本の手袋 (Manuscript Gloves) | 想像 (Imagination) | 記憶 (Memory) | 魔力 +6 (Ability power +6) | hands.manuscript_gloves |
+| {{dreamforge:icons:hands.chime_bracers.png?40}} | 鈴鳴りの腕輪 (Chime Bracers) | 想像 (Imagination) | 疾風 (Gale) | スキル加速 +6（記憶のクールダウン回復を速める） (Ability haste +6 (speeds up memory cooldown recovery)) | hands.chime_bracers |
+| {{dreamforge:icons:hands.tidecaller_wraps.png?40}} | 潮呼びの手巻き (Tidecaller Wraps) | 想像 (Imagination) | 召喚 (Summon) | 冷気属性効果 +6% (Cold effect strength +6%) | hands.tidecaller_wraps |
+| {{dreamforge:icons:hands.cinderthread_wraps.png?40}} | 火糸の手巻き (Cinderthread Wraps) | 想像 (Imagination) | 記憶 (Memory) | 火属性効果 +6% (Fire effect strength +6%) | hands.cinderthread_wraps |
+| {{dreamforge:icons:hands.lantern_fingerless.png?40}} | 灯火の指抜き (Lantern Fingerless Gloves) | 想像 (Imagination) | 炎 (Flame) | 光属性効果 +6% (Light effect strength +6%) | hands.lantern_fingerless |
+| {{dreamforge:icons:hands.duskstitch_gloves.png?40}} | 黄昏縫いの手袋 (Duskstitch Gloves) | 想像 (Imagination) | 光 (Light) | 闇属性効果 +6% (Dark effect strength +6%) | hands.duskstitch_gloves |
+| {{dreamforge:icons:hands.mender_palms.png?40}} | 癒し掌の手袋 (Mender's Palms) | 想像 (Imagination) | 癒し (Mend) | 与えるHP回復量 +5%（自分・味方への回復が対象。装備・星の同じ能力値は合計で最大60%） (Healing granted +5% (to yourself and allies; combined equipment and star bonuses to this stat capped at 60%)) | hands.mender_palms |
+| {{dreamforge:icons:hands.summoner_bands.png?40}} | 喚び手の指輪 (Summoner's Bands) | 想像 (Imagination) | 召喚 (Summon) | 自分の召喚獣の与ダメージ +8%（装備・星の同じ能力値は合計で最大80%） (Your summons' damage +8% (combined equipment and star bonuses to this stat capped at 80%)) | hands.summoner_bands |
+| {{dreamforge:icons:hands.work_gloves.png?40}} | 作業手袋 (Work Gloves) | 破壊 (Destruction) | ― | 攻撃力 +5 (Attack damage +5) | hands.work_gloves |
+| {{dreamforge:icons:hands.tumblers_gloves.png?40}} | 軽業の手袋 (Tumbler's Gloves) | 破壊 (Destruction) | ― | 攻撃速度 +5% (Attack speed +5%) | hands.tumblers_gloves |
+| {{dreamforge:icons:hands.iron_thumb_gauntlet.png?40}} | 鉄親指の籠手 (Iron-Thumb Gauntlet) | 破壊 (Destruction) | ― | 会心ダメージ倍率 +12パーセントポイント (Critical damage multiplier +12 percentage points) | hands.iron_thumb_gauntlet |
+| {{dreamforge:icons:hands.cotton_wraps.png?40}} | 木綿の手巻き (Cotton Wraps) | 想像 (Imagination) | ― | 魔力 +5 (Ability power +5) | hands.cotton_wraps |
+| {{dreamforge:icons:hands.rimeguard_gauntlets.png?40}} | 霧氷の籠手 (Rimeguard Gauntlets) | 想像 (Imagination) | 氷霜 (Frost) | 冷気属性効果 +10% (Cold effect strength +10%) | hands.rimeguard_gauntlets |
+| {{dreamforge:icons:hands.frozen_grip.png?40}} | 氷結の握り (Frozen Grip) | 生命 (Life) | 氷霜 (Frost) | 行動妨害耐性 +10（受ける行動妨害の持続時間を短くする） (Tenacity +10 (shortens crowd-control effects on you)) | hands.frozen_grip |
+| {{dreamforge:icons:hands.snow_weight_gloves.png?40}} | 雪重りの手袋 (Snow-Weight Gloves) | 破壊 (Destruction) | 氷霜 (Frost) | 攻撃力 +6 (Attack damage +6) | hands.snow_weight_gloves |
+| {{dreamforge:icons:hands.winter_ready_gloves.png?40}} | 冬支度の手袋 (Winter-Ready Gloves) | 生命 (Life) | 氷霜 (Frost) | HP自動回復量 +3/秒 (Health regeneration +3/s) | hands.winter_ready_gloves |
+| {{dreamforge:icons:hands.volcanic_grips.png?40}} | 火山岩の握り (Volcanic Grips) | 破壊 (Destruction) | 炎 (Flame) | 火属性効果 +10% (Fire effect strength +10%) | hands.volcanic_grips |
+| {{dreamforge:icons:hands.fire_tong_mitts.png?40}} | 火箸の指なし (Fire-Tong Mitts) | 破壊 (Destruction) | 炎 (Flame) | 攻撃速度 +4% (Attack speed +4%) | hands.fire_tong_mitts |
+| {{dreamforge:icons:hands.slag_knuckles.png?40}} | 鉱滓の拳当て (Slag Knuckles) | 破壊 (Destruction) | 炎 (Flame) | 会心ダメージ倍率 +14パーセントポイント (Critical damage multiplier +14 percentage points) | hands.slag_knuckles |
+| {{dreamforge:icons:hands.brand_iron_fingerless.png?40}} | 焼印の指抜き (Brand-Iron Fingerless) | 破壊 (Destruction) | 炎 (Flame) | 会心率 +3パーセントポイント (Critical chance +3 percentage points) | hands.brand_iron_fingerless |
+| {{dreamforge:icons:hands.morninglight_gloves.png?40}} | 朝光の手袋 (Morninglight Gloves) | 想像 (Imagination) | 光 (Light) | 光属性効果 +8% (Light effect strength +8%) | hands.morninglight_gloves |
+| {{dreamforge:icons:hands.first_aid_mitts.png?40}} | 手当ての指なし (First-Aid Mitts) | 想像 (Imagination) | 光 (Light) | 与えるHP回復量 +5%（自分・味方への回復が対象。装備・星の同じ能力値は合計で最大60%） (Healing granted +5% (to yourself and allies; combined equipment and star bonuses to this stat capped at 60%)) | hands.first_aid_mitts |
+| {{dreamforge:icons:hands.gospel_gloves.png?40}} | 福音の手袋 (Gospel Gloves) | 想像 (Imagination) | 光 (Light) | 魔力 +5 (Ability power +5) | hands.gospel_gloves |
+| {{dreamforge:icons:hands.sunhold_bands.png?40}} | 日向の腕輪 (Sunhold Bands) | 想像 (Imagination) | 光 (Light) | スキル加速 +5（記憶のクールダウン回復を速める） (Ability haste +5 (speeds up memory cooldown recovery)) | hands.sunhold_bands |
+| {{dreamforge:icons:hands.gravediggers_claws.png?40}} | 墓掘りの爪 (Gravedigger's Claws) | 破壊 (Destruction) | 闇 (Dark) | 闇属性効果 +10% (Dark effect strength +10%) | hands.gravediggers_claws |
+| {{dreamforge:icons:hands.assassins_fingerless.png?40}} | 暗殺者の指抜き (Assassin's Fingerless) | 破壊 (Destruction) | 闇 (Dark) | 会心ダメージ倍率 +12パーセントポイント (Critical damage multiplier +12 percentage points) | hands.assassins_fingerless |
+| {{dreamforge:icons:hands.gloomfang_knuckles.png?40}} | 闇牙の拳当て (Gloomfang Knuckles) | 破壊 (Destruction) | 闇 (Dark) | 攻撃速度 +5% (Attack speed +5%) | hands.gloomfang_knuckles |
+| {{dreamforge:icons:hands.night_rose_gloves.png?40}} | 夜薔薇の手袋 (Night-Rose Gloves) | 想像 (Imagination) | 闇 (Dark) | 移動速度 +3% (Movement speed +3%) | hands.night_rose_gloves |
+| {{dreamforge:icons:hands.bastion_mitts.png?40}} | 砦の指なし (Bastion Mitts) | 生命 (Life) | 守り (Guard) | 防御 +8 (Armor +8) | hands.bastion_mitts |
+| {{dreamforge:icons:hands.anvil_gauntlets.png?40}} | 金床の籠手 (Anvil Gauntlets) | 生命 (Life) | 守り (Guard) | 防御 +10 (Armor +10) | hands.anvil_gauntlets |
+| {{dreamforge:icons:hands.steadfast_grips.png?40}} | 不動の握り (Steadfast Grips) | 生命 (Life) | 守り (Guard) | 最大HP +25 (Maximum health +25) | hands.steadfast_grips |
+| {{dreamforge:icons:hands.iron_will_wraps.png?40}} | 鉄意志の手巻き (Iron-Will Wraps) | 生命 (Life) | 守り (Guard) | 行動妨害耐性 +15（受ける行動妨害の持続時間を短くする） (Tenacity +15 (shortens crowd-control effects on you)) | hands.iron_will_wraps |
+| {{dreamforge:icons:hands.quicksilver_bands.png?40}} | 迅銀の腕輪 (Quicksilver Bands) | 破壊 (Destruction) | 疾風 (Gale) | 攻撃速度 +3% (Attack speed +3%) | hands.quicksilver_bands |
+| {{dreamforge:icons:hands.galefinger_gloves.png?40}} | 風指の手袋 (Galefinger Gloves) | 破壊 (Destruction) | 疾風 (Gale) | 攻撃力 +6 (Attack damage +6) | hands.galefinger_gloves |
+| {{dreamforge:icons:hands.hawking_gloves.png?40}} | 鷹寄せの手袋 (Hawking Gloves) | 破壊 (Destruction) | 疾風 (Gale) | 会心率 +3パーセントポイント (Critical chance +3 percentage points) | hands.hawking_gloves |
+| {{dreamforge:icons:hands.windstep_wraps.png?40}} | 風歩きの手巻き (Windstep Wraps) | 想像 (Imagination) | 疾風 (Gale) | 移動速度 +4% (Movement speed +4%) | hands.windstep_wraps |
+| {{dreamforge:icons:hands.repair_gloves.png?40}} | 繕いの手袋 (Repair Gloves) | 想像 (Imagination) | 癒し (Mend) | 魔力 +6 (Ability power +6) | hands.repair_gloves |
+| {{dreamforge:icons:hands.supporting_gloves.png?40}} | 支えの手袋 (Supporting Gloves) | 生命 (Life) | 癒し (Mend) | 与える障壁量 +5%（自分・味方への障壁が対象。装備・星の同じ能力値は合計で最大60%） (Shield amount granted +5% (to yourself and allies; combined equipment and star bonuses to this stat capped at 60%)) | hands.supporting_gloves |
+| {{dreamforge:icons:hands.splint_wraps.png?40}} | 副木の手巻き (Splint Wraps) | 生命 (Life) | 癒し (Mend) | 最大HP +20 (Maximum health +20) | hands.splint_wraps |
+| {{dreamforge:icons:hands.spring_breeze_grips.png?40}} | 春風の握り (Spring-Breeze Grips) | 想像 (Imagination) | 癒し (Mend) | スキル加速 +4（記憶のクールダウン回復を速める） (Ability haste +4 (speeds up memory cooldown recovery)) | hands.spring_breeze_grips |
+| {{dreamforge:icons:hands.beasthide_gloves.png?40}} | 獣皮の手袋 (Beasthide Gloves) | 破壊 (Destruction) | 召喚 (Summon) | 攻撃力 +6 (Attack damage +6) | hands.beasthide_gloves |
+| {{dreamforge:icons:hands.tamers_mitts.png?40}} | 調教の指なし (Tamer's Mitts) | 破壊 (Destruction) | 召喚 (Summon) | 攻撃速度 +4% (Attack speed +4%) | hands.tamers_mitts |
+| {{dreamforge:icons:hands.alpha_grips.png?40}} | 頭領の握り (Alpha Grips) | 破壊 (Destruction) | 召喚 (Summon) | 会心ダメージ倍率 +14パーセントポイント (Critical damage multiplier +14 percentage points) | hands.alpha_grips |
+| {{dreamforge:icons:hands.kennel_keeper_gloves.png?40}} | 番犬飼いの手袋 (Kennel-Keeper Gloves) | 生命 (Life) | 召喚 (Summon) | 最大HP +5% (Maximum health +5%) | hands.kennel_keeper_gloves |
+| {{dreamforge:icons:hands.palimpsest_gloves.png?40}} | 重写本の手袋 (Palimpsest Gloves) | 想像 (Imagination) | 記憶 (Memory) | 魔力 +7 (Ability power +7) | hands.palimpsest_gloves |
+| {{dreamforge:icons:hands.keepsake_bands.png?40}} | 形見の腕輪 (Keepsake Bands) | 想像 (Imagination) | 記憶 (Memory) | スキル加速 +5（記憶のクールダウン回復を速める） (Ability haste +5 (speeds up memory cooldown recovery)) | hands.keepsake_bands |
+| {{dreamforge:icons:hands.tale_teller_gloves.png?40}} | 昔語りの手袋 (Tale-Teller Gloves) | 破壊 (Destruction) | 記憶 (Memory) | 会心率 +3パーセントポイント (Critical chance +3 percentage points) | hands.tale_teller_gloves |
+| {{dreamforge:icons:hands.duskthread_wraps.png?40}} | 夕糸の手巻き (Duskthread Wraps) | 想像 (Imagination) | 記憶 (Memory) | 闇属性効果 +8% (Dark effect strength +8%) | hands.duskthread_wraps |

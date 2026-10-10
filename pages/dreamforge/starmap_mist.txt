@@ -1,0 +1,40 @@
+====== Mistの星図 ======
+
+Mistの星図です。星 888 個、到達刻印 10 個。内容はゲームのデータ（バージョン 2.10.21）から自動生成しています。
+
+[[dreamforge:starmap|星図の一覧へ]] / [[dreamforge:start|ホームへ戻る]]
+
+費用は、星を1段上げるのに要る星のポイントです。段が複数ある星は、1段ごとに同じ費用が要ります。「どちらか1つを選択」の星は、選択肢のうち1つを選びます。
+
+===== 構成 =====
+
+  * 核の星：3個
+  * 記憶の星：304個
+  * 橋の星：111個
+  * 外縁の星：470個
+
+===== 到達刻印 =====
+
+到達刻印は、対象・発動条件のある特別な星です。デバフはありません。星のレベルに応じて最大3つまで選べます。
+
+^ 刻印 ^ 効果 ^ 費用 ^
+| 先手の型 (Form of the First Strike) | 効果 \\ 通常攻撃の追加ダメージ +攻撃力の70%／HPが90%以上の敵に命中したとき \\ 必要ポイント：3 \\ Effect \\ Basic attack bonus damage +70% of your attack damage when hitting an enemy at or above 90% health \\ Cost: 3 points | 3 |
+| 受けて返す型 (Form of the Counter) | 効果 \\ 攻撃力・魔力 +25%／敵からダメージを受けた後3秒間。重ならず、再発動で時間を延長。条件つき攻撃力・魔力の増加は、覚醒前の数値で全効果の合計が最大120% \\ 必要ポイント：3 \\ Effect \\ Attack damage and ability power +25% for 3s after enemy damage; refreshes without stacking. Conditional attack damage and ability power bonuses together are capped at +120%, counted before awakening \\ Cost: 3 points | 3 |
+| 三撃の反響 (Echo of Three Strikes) | 効果 \\ 0.3秒後の追撃ダメージ：+100%（元の2倍）。 \\ 対象：記憶『アストリッドの傑作 - アンガルド』による該当効果。 \\ 倍率は対象の現在の値に掛ける（パーセントポイントの加算ではない）。各効果の上限は変わらない。 \\ 取得の前提（すべて必要）：星『傑作の二つの道』 \\ 必要ポイント：1 \\ Effect \\ follow-up damage after 0.3s: +100% (×2). \\ Applies to: Memory “Astrid's Masterpiece - En Garde”. \\ Multipliers apply to the current value, not as added percentage points. Existing effect caps remain unchanged. \\ Acquisition prerequisites (all required): star “Two Ways of the Masterwork” \\ Cost: 1 point | 1 |
+| 標的の波紋 (Ripple of the Mark) | 効果 \\ 範囲追加ダメージ：+100%（元の2倍）。 \\ 対象：記憶『アストリッドの傑作 - プリオリテ』による該当効果。 \\ 範囲追加ダメージ：半径 +25%（元の1.25倍）。 \\ 対象：記憶『アストリッドの傑作 - プリオリテ』による該当効果。 \\ 倍率は対象の現在の値に掛ける（パーセントポイントの加算ではない）。各効果の上限は変わらない。 \\ 取得の前提（すべて必要）：星『標的の二つの型』 \\ 必要ポイント：1 \\ Effect \\ area extra damage: +100% (×2). \\ Applies to: Memory “Astrid's Masterpiece - Priorité”. \\ area extra damage: radius +25% (×1.25). \\ Applies to: Memory “Astrid's Masterpiece - Priorité”. \\ Multipliers apply to the current value, not as added percentage points. Existing effect caps remain unchanged. \\ Acquisition prerequisites (all required): star “Two Forms of the Mark” \\ Cost: 1 point | 1 |
+| 研ぎ澄ました突剣 (Honed Rapier) | 効果 \\ 記憶の元々のダメージ：+50%（元の1.5倍）。 \\ 対象：記憶『フレッシュ』による該当効果。記憶が元々与えるダメージだけを変更し、星による追加ダメージは変更しない。 \\ 発動元：記憶が元々持つ効果。 \\ 倍率は対象の現在の値に掛ける（パーセントポイントの加算ではない）。各効果の上限は変わらない。 \\ 取得の前提（すべて必要）：星『疾走の二筋』 \\ 必要ポイント：1 \\ Effect \\ Memory original damage: +50% (×1.5). \\ Applies to: Memory “Flèche”. Changes only the memory's original damage, not star-generated extra damage. \\ Source: the memory's original effect. \\ Multipliers apply to the current value, not as added percentage points. Existing effect caps remain unchanged. \\ Acquisition prerequisites (all required): star “Two Threads of Sprinting” \\ Cost: 1 point | 1 |
+| 仕掛けの刺突 (Lunge Artifice) | 効果 \\ 範囲追加ダメージ・0.3秒後の追撃ダメージ・火・冷気・光・闇の付与・敵の属性の種類数に応じた追加ダメージ・敵が自分から受けるダメージ増加量・HP回復量・次の通常攻撃の追加ダメージ・残りクールダウン短縮量・近くの別の敵への追加ダメージ・敵の与ダメージ減少量・自分の障壁量・継続ダメージ：+60%（元の1.6倍）。 \\ 対象：記憶『ランジ』による該当効果。 \\ 倍率は対象の現在の値に掛ける（パーセントポイントの加算ではない）。各効果の上限は変わらない。 \\ 取得の前提（すべて必要）：星『突きの二つの型』 \\ 必要ポイント：1 \\ Effect \\ area extra damage / follow-up damage after 0.3s / Fire, Cold, Light or Dark application / extra damage per element type on the enemy / enemy damage taken from you / HP restored / next basic attack extra damage / remaining cooldown reduction / extra damage to other nearby enemies / enemy damage dealt reduction / self shield amount / damage over time: +60% (×1.6). \\ Applies to: Memory “Lunge”. \\ Multipliers apply to the current value, not as added percentage points. Existing effect caps remain unchanged. \\ Acquisition prerequisites (all required): star “Two Forms of the Thrust” \\ Cost: 1 point | 1 |
+| 一点の返し (Needle Riposte) | 効果 \\ 0.3秒後の追撃ダメージ：+100%（元の2倍）。 \\ 対象：記憶『パリィ』による該当効果。 \\ 倍率は対象の現在の値に掛ける（パーセントポイントの加算ではない）。各効果の上限は変わらない。 \\ 取得の前提（すべて必要）：星『受け流しの二道』 \\ 必要ポイント：1 \\ Effect \\ follow-up damage after 0.3s: +100% (×2). \\ Applies to: Memory “Parry”. \\ Multipliers apply to the current value, not as added percentage points. Existing effect caps remain unchanged. \\ Acquisition prerequisites (all required): star “Two Roads of the Parry” \\ Cost: 1 point | 1 |
+| 覚醒の残像 (Afterimage of Resolve) | 効果 \\ 0.3秒後の追撃ダメージ：+100%（元の2倍）。 \\ 対象：記憶『不屈の意志』による該当効果。 \\ 継続ダメージ：+50%（元の1.5倍）。 \\ 対象：記憶『不屈の意志』による該当効果。 \\ 倍率は対象の現在の値に掛ける（パーセントポイントの加算ではない）。各効果の上限は変わらない。 \\ 取得の前提（すべて必要）：星『覚醒の岔路』 \\ 必要ポイント：1 \\ Effect \\ follow-up damage after 0.3s: +100% (×2). \\ Applies to: Memory “Unbreakable Determination”. \\ damage over time: +50% (×1.5). \\ Applies to: Memory “Unbreakable Determination”. \\ Multipliers apply to the current value, not as added percentage points. Existing effect caps remain unchanged. \\ Acquisition prerequisites (all required): star “Fork of Awakening” \\ Cost: 1 point | 1 |
+| 勝利の分配 (Shared Victory) | 効果 \\ HP回復量：+100%（元の2倍）。 \\ 対象：自分が取得した星による該当効果すべて。 \\ 変更する対象：味方の旅人だけ（自分への効果は変わらない）。 \\ 対象は、自分だけでなく近くの味方旅人も回復する効果に限る。 \\ 倍率は対象の現在の値に掛ける（パーセントポイントの加算ではない）。各効果の上限は変わらない。 \\ 必要ポイント：1 \\ Effect \\ HP restored: +100% (×2). \\ Applies to: all matching effects from stars you own. \\ Changes the effect on: allied travelers only (your own effect is unchanged). \\ Applies only to effects that already heal nearby allied travelers as well as yourself. \\ Multipliers apply to the current value, not as added percentage points. Existing effect caps remain unchanged. \\ Cost: 1 point | 1 |
+| 長く残る切先 (Lingering Edge) | 効果 \\ 継続ダメージ：持続時間 → 6秒に変更。 \\ 対象：自分が取得した星による該当効果すべて。 \\ 毎秒のダメージは変わらず、持続が長くなる分だけ総ダメージが増える（総量上限は維持）。 \\ 必要ポイント：1 \\ Effect \\ damage over time: duration → 6s. \\ Applies to: all matching effects from stars you own. \\ Damage per second is unchanged; longer duration increases total damage, subject to the existing total cap. \\ Cost: 1 point | 1 |
+
+===== 地域別ページ =====
+
+  * [[dreamforge:starmap_mist_core|核の星]]
+  * [[dreamforge:starmap_mist_memory_1|記憶の星 1/2]]
+  * [[dreamforge:starmap_mist_memory_2|記憶の星 2/2]]
+  * [[dreamforge:starmap_mist_bridge|橋の星]]
+  * [[dreamforge:starmap_mist_outer_1|外縁の星 1/3]]
+  * [[dreamforge:starmap_mist_outer_2|外縁の星 2/3]]
+  * [[dreamforge:starmap_mist_outer_3|外縁の星 3/3]]

@@ -1,0 +1,10 @@
+====== 固有品: 足 (Feet)（2/2） ======
+
+足 (Feet)の固有品（名前付きの固定装備）一覧です（229種）。固有効果は固定で、特性は入手時に抽選されます。数値は強化・覚醒前の基本値です。
+
+[[dreamforge:start|ホームへ戻る]]
+
+ページ: [[dreamforge:uniques_feet_1|1]] / 2
+
+^ 名前 (Name) ^ 土台 (Base) ^ 固有効果 (Powers) ^ セット (Set) ^ 連携 (Link) ^
+| 踏星の鉄靴 (Starstomp Sabatons) | {{dreamforge:icons:feet.ironwave_greaves.png?40}} 鉄波の脛当て (Ironwave Greaves) | 移動完了時、その着地点に0.25秒の予告後、半径2.5mに攻撃力・魔力の高い方の36%の無属性踏みつけダメージを1回与える \\ ・再使用まで7秒、追加移動やスタンなし \\ <sub>When you finish moving, after a 0.25-second warning, stomp once at your landing position within a 2.5m radius, dealing Neutral damage equal to 36% of whichever is higher: your Attack or Ability Power \\ ・Cooldown: 7 seconds \\ ・Does not cause additional movement or stun</sub> | 墜聖の双装 (Fallen Sanctity Regalia) → [[dreamforge:sets|セット装備 / Sets]] | - |

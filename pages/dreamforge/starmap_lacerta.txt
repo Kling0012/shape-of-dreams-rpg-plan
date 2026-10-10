@@ -1,0 +1,40 @@
+====== Lacertaの星図 ======
+
+Lacertaの星図です。星 877 個、到達刻印 10 個。内容はゲームのデータ（バージョン 2.10.21）から自動生成しています。
+
+[[dreamforge:starmap|星図の一覧へ]] / [[dreamforge:start|ホームへ戻る]]
+
+費用は、星を1段上げるのに要る星のポイントです。段が複数ある星は、1段ごとに同じ費用が要ります。「どちらか1つを選択」の星は、選択肢のうち1つを選びます。
+
+===== 構成 =====
+
+  * 核の星：4個
+  * 記憶の星：472個
+  * 橋の星：98個
+  * 外縁の星：303個
+
+===== 到達刻印 =====
+
+到達刻印は、対象・発動条件のある特別な星です。デバフはありません。星のレベルに応じて最大3つまで選べます。
+
+^ 刻印 ^ 効果 ^ 費用 ^
+| サラマンダーの火種 (Salamander Ember) | 効果 \\ 火付与確率 +60パーセントポイント／通常攻撃が当たると、60%の確率で敵に火を1つ付ける（火の蓄積上限なし） \\ 必要ポイント：3 \\ Effect \\ Fire application chance +60 percentage points / Basic attack hits have a 60% chance to apply 1 Fire (Fire has no stack limit) \\ Cost: 3 points | 3 |
+| 一番手の銃声 (Opening Shot) | 効果 \\ 通常攻撃の追加ダメージ +攻撃力の70%／HPが90%以上の敵に命中したとき \\ 必要ポイント：3 \\ Effect \\ Basic attack bonus damage +70% of your attack damage when hitting an enemy at or above 90% health \\ Cost: 3 points | 3 |
+| 火薬庫の主 (Powder Keg Master) | 効果 \\ 範囲追加ダメージ・0.3秒後の追撃ダメージ・近くの別の敵への追加ダメージ：+100%（元の2倍）。 \\ 対象：記憶『サラマンダーパウダー』による該当効果。 \\ 倍率は対象の現在の値に掛ける（パーセントポイントの加算ではない）。各効果の上限は変わらない。 \\ 必要ポイント：1 \\ Effect \\ area extra damage / follow-up damage after 0.3s / extra damage to other nearby enemies: +100% (×2). \\ Applies to: Memory “Salamander Powder”. \\ Multipliers apply to the current value, not as added percentage points. Existing effect caps remain unchanged. \\ Cost: 1 point | 1 |
+| 二射の残像 (Twin Afterimage) | 効果 \\ 0.3秒後の追撃ダメージ・範囲追加ダメージ：+100%（元の2倍）。 \\ 対象：記憶『ダブルタップ』による該当効果。 \\ 倍率は対象の現在の値に掛ける（パーセントポイントの加算ではない）。各効果の上限は変わらない。 \\ 必要ポイント：1 \\ Effect \\ follow-up damage after 0.3s / area extra damage: +100% (×2). \\ Applies to: Memory “Double Tap”. \\ Multipliers apply to the current value, not as added percentage points. Existing effect caps remain unchanged. \\ Cost: 1 point | 1 |
+| 散開砲 (Wide Cannon) | 効果 \\ 範囲追加ダメージ：半径 +100%（元の2倍）。 \\ 対象：記憶『ハンドキャノン』による該当効果。 \\ 0.3秒後の追撃ダメージ：+80%（元の1.8倍）。 \\ 対象：記憶『ハンドキャノン』による該当効果。 \\ 倍率は対象の現在の値に掛ける（パーセントポイントの加算ではない）。各効果の上限は変わらない。 \\ 必要ポイント：1 \\ Effect \\ area extra damage: radius +100% (×2). \\ Applies to: Memory “Hand Cannon”. \\ follow-up damage after 0.3s: +80% (×1.8). \\ Applies to: Memory “Hand Cannon”. \\ Multipliers apply to the current value, not as added percentage points. Existing effect caps remain unchanged. \\ Cost: 1 point | 1 |
+| 装填防壁 (Loaded Bastion) | 効果 \\ 命中した敵の数に応じた障壁量：最大HPの2%に変更。 \\ 対象：記憶『焼夷弾装填』による該当効果。 \\ 命中した敵の数に応じた障壁量：持続時間 +100%（元の2倍）。 \\ 対象：記憶『焼夷弾装填』による該当効果。 \\ 倍率は対象の現在の値に掛ける（パーセントポイントの加算ではない）。各効果の上限は変わらない。 \\ 必要ポイント：1 \\ Effect \\ shield amount per enemy hit: Set to 2% maximum HP. \\ Applies to: Memory “Incendiary Rounds”. \\ shield amount per enemy hit: duration +100% (×2). \\ Applies to: Memory “Incendiary Rounds”. \\ Multipliers apply to the current value, not as added percentage points. Existing effect caps remain unchanged. \\ Cost: 1 point | 1 |
+| 側射の契約 (Side Fire Pact) | 効果 \\ 近くの別の敵への追加ダメージ：追加ダメージを受ける別の敵の数 +1体。上限：2体。 \\ 対象：記憶『クイックハンド』による該当効果。 \\ 近くの別の敵への追加ダメージ：+50%（元の1.5倍）。 \\ 対象：記憶『クイックハンド』による該当効果。 \\ 倍率は対象の現在の値に掛ける（パーセントポイントの加算ではない）。各効果の上限は変わらない。 \\ 必要ポイント：1 \\ Effect \\ extra damage to other nearby enemies: number of other enemies receiving extra damage +1 targets. Cap: 2 targets. \\ Applies to: Memory “Quick Draw”. \\ extra damage to other nearby enemies: +50% (×1.5). \\ Applies to: Memory “Quick Draw”. \\ Multipliers apply to the current value, not as added percentage points. Existing effect caps remain unchanged. \\ Cost: 1 point | 1 |
+| 遅れて届く銃声 (Late Report) | 効果 \\ 0.3秒後の追撃ダメージ：+120%（元の2.2倍）。 \\ 対象：記憶『精密射撃』による該当効果。 \\ 倍率は対象の現在の値に掛ける（パーセントポイントの加算ではない）。各効果の上限は変わらない。 \\ 必要ポイント：1 \\ Effect \\ follow-up damage after 0.3s: +120% (×2.2). \\ Applies to: Memory “Precision Shot”. \\ Multipliers apply to the current value, not as added percentage points. Existing effect caps remain unchanged. \\ Cost: 1 point | 1 |
+| 退路の備蓄 (Reserved Exit) | 効果 \\ 残りクールダウン短縮量：+100%（元の2倍）。 \\ 対象：自分が取得した星による該当効果すべて。 \\ 効果の受け手：記憶『速攻回避』。 \\ 倍率は対象の現在の値に掛ける（パーセントポイントの加算ではない）。各効果の上限は変わらない。 \\ すべて装備が必要：記憶『速攻回避』 \\ 必要ポイント：1 \\ Effect \\ remaining cooldown reduction: +100% (×2). \\ Applies to: all matching effects from stars you own. \\ Effect recipient: Memory “Nimble Dodge”. \\ Multipliers apply to the current value, not as added percentage points. Existing effect caps remain unchanged. \\ All must be equipped: Memory “Nimble Dodge” \\ Cost: 1 point | 1 |
+| 射線の救護所 (Firing Line Aid Station) | 効果 \\ HP回復量：回復対象に近くの味方旅人を含める。 \\ 対象：記憶『ハンドキャノン』、記憶『焼夷弾装填』、記憶『クイックハンド』、記憶『精密射撃』による該当効果。 \\ HP回復量：+200%（元の3倍）。 \\ 対象：記憶『ハンドキャノン』、記憶『焼夷弾装填』、記憶『クイックハンド』、記憶『精密射撃』による該当効果。 \\ HP回復量：半径 +100%（元の2倍）。 \\ 対象：記憶『ハンドキャノン』、記憶『焼夷弾装填』、記憶『クイックハンド』、記憶『精密射撃』による該当効果。 \\ 倍率は対象の現在の値に掛ける（パーセントポイントの加算ではない）。各効果の上限は変わらない。 \\ 必要ポイント：1 \\ Effect \\ HP restored: Healing also includes nearby allied travelers. \\ Applies to: Memory “Hand Cannon”, Memory “Incendiary Rounds”, Memory “Quick Draw”, Memory “Precision Shot”. \\ HP restored: +200% (×3). \\ Applies to: Memory “Hand Cannon”, Memory “Incendiary Rounds”, Memory “Quick Draw”, Memory “Precision Shot”. \\ HP restored: radius +100% (×2). \\ Applies to: Memory “Hand Cannon”, Memory “Incendiary Rounds”, Memory “Quick Draw”, Memory “Precision Shot”. \\ Multipliers apply to the current value, not as added percentage points. Existing effect caps remain unchanged. \\ Cost: 1 point | 1 |
+
+===== 地域別ページ =====
+
+  * [[dreamforge:starmap_lacerta_core|核の星]]
+  * [[dreamforge:starmap_lacerta_memory_1|記憶の星 1/3]]
+  * [[dreamforge:starmap_lacerta_memory_2|記憶の星 2/3]]
+  * [[dreamforge:starmap_lacerta_memory_3|記憶の星 3/3]]
+  * [[dreamforge:starmap_lacerta_bridge|橋の星]]
+  * [[dreamforge:starmap_lacerta_outer_1|外縁の星 1/2]]
+  * [[dreamforge:starmap_lacerta_outer_2|外縁の星 2/2]]

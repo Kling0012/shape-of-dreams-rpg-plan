@@ -1,0 +1,16 @@
+====== Lacertaの星図：核の星 ======
+
+旅人の根もとにある星です。能力値や固有効果を伸ばします。
+
+[[dreamforge:starmap|星図の一覧へ]] / [[dreamforge:start|ホームへ戻る]]
+
+[[dreamforge:starmap_lacerta|Lacertaの星図トップ]]
+
+==== 奥の星 ====
+
+^ 星 ^ 星群 ^ 最大段 ^ 1段の費用 ^ 効果 ^
+| 連装 (Double Load) | - | 1 | 4 | 強化通常攻撃までの必要回数 -1発 \\ ・4発目の強化攻撃を早める \\ ・（数値は1段あたり・最大1段・1段につき4ポイント） \\ Attacks needed for an empowered basic attack -1 \\ ・brings the empowered fourth attack forward \\ ・(values per rank; maximum 1 rank; 4 points per rank) |
+| 炸裂弾 (Explosive Rounds) | - | 3 | 1 | 通常攻撃の追加魔法ダメージ +攻撃力・魔力の高い方の15% \\ ・4発目の強化通常攻撃が命中したとき \\ ・命中回数ではなく、強化攻撃の周期で判定 \\ ・（数値は1段あたり・最大3段・1段につき1ポイント） \\ Basic attack bonus magic damage +15% of the higher of your attack damage or ability power when your empowered fourth attack hits \\ ・judged by the empowered-attack cycle, not by counting hits \\ ・(values per rank; maximum 3 ranks; 1 point per rank) |
+| 耐火の外套 (Fireproof Coat) | - | 3 | 1 | 障壁 +自分の最大HPの5% \\ ・自分の最大HPの10%以上の一撃を受けたとき、自分へ6秒間付与 \\ ・12秒に1回 \\ ・（数値は1段あたり・最大3段・1段につき1ポイント） \\ Shield +5% of your maximum health for 6s when a single hit deals at least 10% of your maximum health \\ ・once per 12s \\ ・(values per rank; maximum 3 ranks; 1 point per rank) |
+| 初弾必中 (First Shot) | - | 3 | 1 | 通常攻撃の追加ダメージ +攻撃力の15% \\ ・HPが90%以上の敵に命中したとき \\ ・（数値は1段あたり・最大3段・1段につき1ポイント） \\ Basic attack bonus damage +15% of your attack damage when hitting an enemy at or above 90% health \\ ・(values per rank; maximum 3 ranks; 1 point per rank) |
+

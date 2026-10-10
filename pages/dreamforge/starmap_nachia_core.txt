@@ -1,0 +1,15 @@
+====== Nachiaの星図：核の星 ======
+
+旅人の根もとにある星です。能力値や固有効果を伸ばします。
+
+[[dreamforge:starmap|星図の一覧へ]] / [[dreamforge:start|ホームへ戻る]]
+
+[[dreamforge:starmap_nachia|Nachiaの星図トップ]]
+
+==== 奥の星 ====
+
+^ 星 ^ 星群 ^ 最大段 ^ 1段の費用 ^ 効果 ^
+| 響き合う心 (Hearts in Tune) | - | 3 | 1 | 自分の攻撃力・魔力 +2%、味方は+1% \\ ・自分の周囲10m以内に味方がいる間 \\ ・味方がいなければ自分は+1% \\ ・10m以内の味方への付与は重ならず、最も高い値だけを適用 \\ ・条件つき攻撃力・魔力の増加は、覚醒前の数値で全効果の合計が最大120% \\ ・（数値は1段あたり・最大3段・1段につき1ポイント） \\ Your attack damage and ability power +2%, nearby allies' +1% while an ally is within 10m \\ ・without one, your bonus is +1% \\ ・Bonuses granted to allies within 10m do not stack \\ ・only the highest applies \\ ・Conditional attack damage and ability power bonuses together are capped at +120%, counted before awakening \\ ・(values per rank; maximum 3 ranks; 1 point per rank) |
+| 守りの灯 (Guarding Light) | - | 3 | 1 | 障壁 +超過回復量の10% \\ ・最大HPを超えた回復が出たとき、自分へ3秒間付与 \\ ・1回の付与量は自分の最大HPの10%まで \\ ・段数でこの10%上限は増えない \\ ・（数値は1段あたり・最大3段・1段につき1ポイント） \\ Shield +10% of overhealing, granted to yourself for 3s \\ ・each grant is capped at 10% of your maximum health \\ ・this 10% limit does not increase with ranks \\ ・(values per rank; maximum 3 ranks; 1 point per rank) |
+| 灯を絶やさず (Keep the Light) | - | 3 | 1 | 障壁 +自分の最大HPの3% \\ ・自分の技で敵をスタンさせたとき、自分へ3秒間付与 \\ ・2秒に1回 \\ ・装備・星の同じ効果は合計で最大15% \\ ・（数値は1段あたり・最大3段・1段につき1ポイント） \\ Shield +3% of your maximum health for 3s when your own skill stuns an enemy \\ ・once per 2s \\ ・combined across equipment and stars, this effect is capped at 15% \\ ・(values per rank; maximum 3 ranks; 1 point per rank) |
+

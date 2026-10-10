@@ -1,0 +1,14 @@
+====== Huskの星図：核の星 ======
+
+旅人の根もとにある星です。能力値や固有効果を伸ばします。
+
+[[dreamforge:starmap|星図の一覧へ]] / [[dreamforge:start|ホームへ戻る]]
+
+[[dreamforge:starmap_husk|Huskの星図トップ]]
+
+==== 奥の星 ====
+
+^ 星 ^ 星群 ^ 最大段 ^ 1段の費用 ^ 効果 ^
+| 闇を纏う (Shroud of Dark) | - | 3 | 1 | 闇付与確率 +15パーセントポイント \\ ・通常攻撃が当たると、15%の確率で敵に闇を1つ付ける \\ ・通常攻撃の会心時は、この確率判定と別に必ずもう1つ付与 \\ ・闇は5つまで \\ ・（数値は1段あたり・最大3段・1段につき1ポイント） \\ Dark application chance +15 percentage points / Basic attack hits have a 15% chance to apply 1 Dark \\ ・A critical basic hit always applies 1 additional stack independently of this roll \\ ・up to 5 stacks \\ ・(values per rank; maximum 3 ranks; 1 point per rank) |
+| とどめの刃 (Finishing Blade) | - | 3 | 1 | 通常攻撃の追加ダメージ +攻撃力の14% \\ ・HPが30%未満の敵に命中したとき \\ ・（数値は1段あたり・最大3段・1段につき1ポイント） \\ Basic attack bonus damage +14% of your attack damage when hitting an enemy below 30% health \\ ・(values per rank; maximum 3 ranks; 1 point per rank) |
+

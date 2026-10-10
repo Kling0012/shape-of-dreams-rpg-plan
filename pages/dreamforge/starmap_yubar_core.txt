@@ -1,0 +1,15 @@
+====== Yubarの星図：核の星 ======
+
+旅人の根もとにある星です。能力値や固有効果を伸ばします。
+
+[[dreamforge:starmap|星図の一覧へ]] / [[dreamforge:start|ホームへ戻る]]
+
+[[dreamforge:starmap_yubar|Yubarの星図トップ]]
+
+==== 奥の星 ====
+
+^ 星 ^ 星群 ^ 最大段 ^ 1段の費用 ^ 効果 ^
+| 重力の昂り (Gravity Surge) | - | 3 | 1 | 攻撃力・魔力 +6% \\ ・奥義の記憶を使った後5秒間 \\ ・重ならず、再使用で時間を延長 \\ ・条件つき攻撃力・魔力の増加は、覚醒前の数値で全効果の合計が最大120% \\ ・（数値は1段あたり・最大3段・1段につき1ポイント） \\ Attack damage and ability power +6% for 5s after using an Ultimate memory \\ ・refreshes without stacking \\ ・Conditional attack damage and ability power bonuses together are capped at +120%, counted before awakening \\ ・(values per rank; maximum 3 ranks; 1 point per rank) |
+| 事象の地平 (Event Horizon) | - | 3 | 1 | 障壁 +自分の最大HPの4% \\ ・奥義の記憶を使ったとき、自分へ5秒間付与 \\ ・（数値は1段あたり・最大3段・1段につき1ポイント） \\ Shield +4% of your maximum health, granted to yourself for 5s when using an Ultimate memory \\ ・(values per rank; maximum 3 ranks; 1 point per rank) |
+| 星屑の輝き (Stardust Glow) | - | 3 | 1 | 光付与確率 +20パーセントポイント \\ ・通常攻撃が当たると、20%の確率で敵に光を1つ付ける \\ ・光は5つまで、3つ以上で光ダメージが必ず会心 \\ ・（数値は1段あたり・最大3段・1段につき1ポイント） \\ Light application chance +20 percentage points / Basic attack hits have a 20% chance to apply 1 Light \\ ・up to 5 stacks \\ ・Light damage always critically hits at 3 or more \\ ・(values per rank; maximum 3 ranks; 1 point per rank) |
+

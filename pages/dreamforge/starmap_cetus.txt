@@ -1,0 +1,41 @@
+====== Cetusの星図 ======
+
+Cetusの星図です。星 895 個、到達刻印 10 個。内容はゲームのデータ（バージョン 2.10.21）から自動生成しています。
+
+[[dreamforge:starmap|星図の一覧へ]] / [[dreamforge:start|ホームへ戻る]]
+
+費用は、星を1段上げるのに要る星のポイントです。段が複数ある星は、1段ごとに同じ費用が要ります。「どちらか1つを選択」の星は、選択肢のうち1つを選びます。
+
+===== 構成 =====
+
+  * 核の星：3個
+  * 記憶の星：478個
+  * 橋の星：101個
+  * 外縁の星：313個
+
+===== 到達刻印 =====
+
+到達刻印は、対象・発動条件のある特別な星です。デバフはありません。星のレベルに応じて最大3つまで選べます。
+
+^ 刻印 ^ 効果 ^ 費用 ^
+| 凍てつく潮 (Freezing Tide) | 効果 \\ 冷気付与確率 +70パーセントポイント／通常攻撃が命中した敵に冷気を付ける。冷気は重ならない \\ 必要ポイント：3 \\ Effect \\ Cold application chance +70 percentage points on basic attack hits; applies Cold to the struck enemy, without stacking \\ Cost: 3 points | 3 |
+| 凪 (Calm Sea) | 効果 \\ 障壁 +自分の最大HPの6%／自分の技で敵をスタンさせたとき、自分へ3秒間付与（2秒に1回）（装備・星の同じ効果は合計で最大15%） \\ 障壁 +最大HPの10%（3秒間）。装備中のQまたはRの記憶が元々持つ効果で敵をスタンさせたとき、自分に付与。星による追加スタンは対象外。再発動まで2秒。 \\ 付与者と受け手の組ごとに、通常の星の障壁と1つを共有する（重ならず、残量の大きい方を保って時間を延長）。 \\ 必要ポイント：3 \\ Effect \\ Shield +6% of your maximum health for 3s when your own skill stuns an enemy (once per 2s) (combined across equipment and stars, this effect is capped at 15%) \\ Shield +10% maximum HP for 3s. Gain it when the original effect of your equipped Q or R memory stuns an enemy, excluding star-generated stuns. Cooldown: 2s. \\ Shares one shield with ordinary star shields for each caster and recipient pair (does not stack; keeps the larger remaining amount and refreshes the duration). \\ Cost: 3 points | 3 |
+| 静かな氷壁 (Quiet Ice Wall) | 効果 \\ 自分の障壁量・命中した敵の数に応じた障壁量：+100%（元の2倍）。 \\ 対象：記憶『氷の血脈』、記憶『チャージされたアンギリアン』、記憶『寒気を受け入れよ』、記憶『巨大な氷河の欠片』、記憶『下がれ！』、記憶『礼儀注入』による該当効果。 \\ 倍率は対象の現在の値に掛ける（パーセントポイントの加算ではない）。各効果の上限は変わらない。 \\ 必要ポイント：1 \\ Effect \\ self shield amount / shield amount per enemy hit: +100% (×2). \\ Applies to: Memory “Icy Veins”, Memory “Charged Anguillian”, Memory “Embrace the Chill”, Memory “Big Boreal Chunk”, Memory “Back Off!”, Memory “Teaching Manners”. \\ Multipliers apply to the current value, not as added percentage points. Existing effect caps remain unchanged. \\ Cost: 1 point | 1 |
+| 割れる深海 (Fractured Depth) | 効果 \\ 範囲追加ダメージ・0.3秒後の追撃ダメージ・継続ダメージ・敵の属性の種類数に応じた追加ダメージ：+90%（元の1.9倍）。 \\ 対象：記憶『氷の血脈』、記憶『チャージされたアンギリアン』、記憶『寒気を受け入れよ』、記憶『巨大な氷河の欠片』、記憶『下がれ！』、記憶『礼儀注入』による該当効果。 \\ 倍率は対象の現在の値に掛ける（パーセントポイントの加算ではない）。各効果の上限は変わらない。 \\ 必要ポイント：1 \\ Effect \\ area extra damage / follow-up damage after 0.3s / damage over time / extra damage per element type on the enemy: +90% (×1.9). \\ Applies to: Memory “Icy Veins”, Memory “Charged Anguillian”, Memory “Embrace the Chill”, Memory “Big Boreal Chunk”, Memory “Back Off!”, Memory “Teaching Manners”. \\ Multipliers apply to the current value, not as added percentage points. Existing effect caps remain unchanged. \\ Cost: 1 point | 1 |
+| 終わりを待たない寒気 (Lingering Chill) | 効果 \\ 継続ダメージ・敵の与ダメージ減少量：持続時間 +100%（元の2倍）。 \\ 対象：記憶『寒気を受け入れよ』による該当効果。 \\ 毎秒のダメージは変わらず、持続が長くなる分だけ総ダメージが増える（総量上限は維持）。 \\ 倍率は対象の現在の値に掛ける（パーセントポイントの加算ではない）。各効果の上限は変わらない。 \\ 取得の前提（すべて必要）：星『領域に残る傷跡』、星『領域に怯える敵』 \\ 必要ポイント：1 \\ Effect \\ damage over time / enemy damage dealt reduction: duration +100% (×2). \\ Applies to: Memory “Embrace the Chill”. \\ Damage per second is unchanged; longer duration increases total damage, subject to the existing total cap. \\ Multipliers apply to the current value, not as added percentage points. Existing effect caps remain unchanged. \\ Acquisition prerequisites (all required): star “Scars of the Domain”, star “Foes Cowed in the Domain” \\ Cost: 1 point | 1 |
+| 氷河の残響 (Glacial Reverberation) | 効果 \\ 0.3秒後の追撃ダメージ：+100%（元の2倍）。 \\ 対象：記憶『巨大な氷河の欠片』による該当効果。 \\ 倍率は対象の現在の値に掛ける（パーセントポイントの加算ではない）。各効果の上限は変わらない。 \\ 取得の前提（すべて必要）：星『砕片の分かれ道』 \\ 必要ポイント：1 \\ Effect \\ follow-up damage after 0.3s: +100% (×2). \\ Applies to: Memory “Big Boreal Chunk”. \\ Multipliers apply to the current value, not as added percentage points. Existing effect caps remain unchanged. \\ Acquisition prerequisites (all required): star “Parting of Shards” \\ Cost: 1 point | 1 |
+| 集束する雷 (Focused Current) | 効果 \\ 記憶の元々のダメージ：+55%（元の1.55倍）。 \\ 対象：記憶『チャージされたアンギリアン』による該当効果。記憶が元々与えるダメージだけを変更し、星による追加ダメージは変更しない。 \\ 発動元：記憶が元々持つ効果。 \\ 倍率は対象の現在の値に掛ける（パーセントポイントの加算ではない）。各効果の上限は変わらない。 \\ 取得の前提（すべて必要）：星『放電の深手』、星『電光の飛散』 \\ 必要ポイント：1 \\ Effect \\ Memory original damage: +55% (×1.55). \\ Applies to: Memory “Charged Anguillian”. Changes only the memory's original damage, not star-generated extra damage. \\ Source: the memory's original effect. \\ Multipliers apply to the current value, not as added percentage points. Existing effect caps remain unchanged. \\ Acquisition prerequisites (all required): star “Deep Wound of Discharge”, star “Scattering Bolts” \\ Cost: 1 point | 1 |
+| 拳の誓い (Fist Covenant) | 効果 \\ 範囲追加ダメージ・0.3秒後の追撃ダメージ・継続ダメージ・敵の属性の種類数に応じた追加ダメージ：+90%（元の1.9倍）。 \\ 対象：記憶『礼儀注入』による該当効果。 \\ 倍率は対象の現在の値に掛ける（パーセントポイントの加算ではない）。各効果の上限は変わらない。 \\ 取得の前提（すべて必要）：星『拳の深手』、星『倒れた場所の爆氷』 \\ 必要ポイント：1 \\ Effect \\ area extra damage / follow-up damage after 0.3s / damage over time / extra damage per element type on the enemy: +90% (×1.9). \\ Applies to: Memory “Teaching Manners”. \\ Multipliers apply to the current value, not as added percentage points. Existing effect caps remain unchanged. \\ Acquisition prerequisites (all required): star “Deep Wounds of Fists”, star “Ice Blast Where They Fell” \\ Cost: 1 point | 1 |
+| 返礼の庇護 (Sheltering Return) | 効果 \\ 自分の障壁量・命中した敵の数に応じた障壁量：+150%（元の2.5倍）。 \\ 対象：記憶『下がれ！』による該当効果。 \\ 倍率は対象の現在の値に掛ける（パーセントポイントの加算ではない）。各効果の上限は変わらない。 \\ 取得の前提（すべて必要）：星『押し返しの深手』、星『巻き込みの防壁』 \\ 必要ポイント：1 \\ Effect \\ self shield amount / shield amount per enemy hit: +150% (×2.5). \\ Applies to: Memory “Back Off!”. \\ Multipliers apply to the current value, not as added percentage points. Existing effect caps remain unchanged. \\ Acquisition prerequisites (all required): star “Deep Cut of the Push-Back”, star “Rampart of the Sweep” \\ Cost: 1 point | 1 |
+| 遠い潮路 (Distant Tide) | 効果 \\ 残りクールダウン短縮量：+50%（元の1.5倍）。 \\ 対象：自分が取得した星による該当効果すべて。 \\ 効果の受け手：記憶『フロストチャージ』。 \\ 倍率は対象の現在の値に掛ける（パーセントポイントの加算ではない）。各効果の上限は変わらない。 \\ すべて装備が必要：記憶『フロストチャージ』 \\ 取得の前提（すべて必要）：星『攻めと退きの岔路』 \\ 必要ポイント：1 \\ Effect \\ remaining cooldown reduction: +50% (×1.5). \\ Applies to: all matching effects from stars you own. \\ Effect recipient: Memory “Frosty Charge”. \\ Multipliers apply to the current value, not as added percentage points. Existing effect caps remain unchanged. \\ All must be equipped: Memory “Frosty Charge” \\ Acquisition prerequisites (all required): star “Fork of Advance and Retreat” \\ Cost: 1 point | 1 |
+
+===== 地域別ページ =====
+
+  * [[dreamforge:starmap_cetus_core|核の星]]
+  * [[dreamforge:starmap_cetus_memory_1|記憶の星 1/4]]
+  * [[dreamforge:starmap_cetus_memory_2|記憶の星 2/4]]
+  * [[dreamforge:starmap_cetus_memory_3|記憶の星 3/4]]
+  * [[dreamforge:starmap_cetus_memory_4|記憶の星 4/4]]
+  * [[dreamforge:starmap_cetus_bridge|橋の星]]
+  * [[dreamforge:starmap_cetus_outer_1|外縁の星 1/2]]
+  * [[dreamforge:starmap_cetus_outer_2|外縁の星 2/2]]

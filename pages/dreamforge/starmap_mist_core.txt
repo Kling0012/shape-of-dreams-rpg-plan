@@ -1,0 +1,15 @@
+====== Mistの星図：核の星 ======
+
+旅人の根もとにある星です。能力値や固有効果を伸ばします。
+
+[[dreamforge:starmap|星図の一覧へ]] / [[dreamforge:start|ホームへ戻る]]
+
+[[dreamforge:starmap_mist|Mistの星図トップ]]
+
+==== 奥の星 ====
+
+^ 星 ^ 星群 ^ 最大段 ^ 1段の費用 ^ 効果 ^
+| 受け流しの構え (Parry Stance) | - | 3 | 1 | 障壁 +自分の最大HPの3% \\ ・自分の技で敵をスタンさせたとき、自分へ3秒間付与 \\ ・2秒に1回 \\ ・装備・星の同じ効果は合計で最大15% \\ ・（数値は1段あたり・最大3段・1段につき1ポイント） \\ Shield +3% of your maximum health for 3s when your own skill stuns an enemy \\ ・once per 2s \\ ・combined across equipment and stars, this effect is capped at 15% \\ ・(values per rank; maximum 3 ranks; 1 point per rank) |
+| 先手の構え (First-Strike Stance) | - | 3 | 1 | 通常攻撃の追加ダメージ +攻撃力の15% \\ ・HPが90%以上の敵に命中したとき \\ ・（数値は1段あたり・最大3段・1段につき1ポイント） \\ Basic attack bonus damage +15% of your attack damage when hitting an enemy at or above 90% health \\ ・(values per rank; maximum 3 ranks; 1 point per rank) |
+| 受けて返す (Take and Return) | - | 3 | 1 | 攻撃力・魔力 +4% \\ ・敵からダメージを受けた後3秒間 \\ ・重ならず、再発動で時間を延長 \\ ・条件つき攻撃力・魔力の増加は、覚醒前の数値で全効果の合計が最大120% \\ ・（数値は1段あたり・最大3段・1段につき1ポイント） \\ Attack damage and ability power +4% for 3s after enemy damage \\ ・refreshes without stacking \\ ・Conditional attack damage and ability power bonuses together are capped at +120%, counted before awakening \\ ・(values per rank; maximum 3 ranks; 1 point per rank) |
+

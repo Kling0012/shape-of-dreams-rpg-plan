@@ -1,0 +1,128 @@
+====== 特性 (Affixes) ======
+
+装備に付く能力値です。部位ごとに出る特性と値の範囲を示します。値はアイテムレベル・レア度・強化で変わる前の基本値です。
+
+[[dreamforge:start|ホームへ戻る]]
+
+===== 主装備 (Weapon) =====
+
+^ 特性 (Affix) ^ 最小 (Min) ^ 最大 (Max) ^ 出るレア度 ^
+| 攻撃力 +2 (Attack damage +2) | 2 | 5 | すべて |
+| 攻撃力 +2% (Attack damage +2%) | 2 | 4 | エピック以上 |
+| 魔力 +2 (Ability power +2) | 2 | 5 | すべて |
+| 魔力 +2% (Ability power +2%) | 2 | 4 | エピック以上 |
+| 攻撃速度 +3% (Attack speed +3%) | 3 | 6 | すべて |
+| 会心率 +2パーセントポイント (Critical chance +2 percentage points) | 2 | 4 | すべて |
+| 会心ダメージ倍率 +6パーセントポイント (Critical damage multiplier +6 percentage points) | 6 | 12 | すべて |
+| スキル加速 +3（記憶のクールダウン回復を速める） (Ability haste +3 (speeds up memory cooldown recovery)) | 3 | 6 | すべて |
+| 火属性効果 +6% (Fire effect strength +6%) | 6 | 12 | すべて |
+| 光属性効果 +6% (Light effect strength +6%) | 6 | 12 | すべて |
+| 闇属性効果 +6% (Dark effect strength +6%) | 6 | 12 | すべて |
+| 通常攻撃の射程 +4% (Basic attack range +4%) | 4 | 8 | すべて |
+| 冷気属性効果 +6% (Cold effect strength +6%) | 6 | 12 | すべて |
+| 最大HP +4% (Maximum health +4%) | 4 | 8 | すべて |
+| 行動妨害耐性 +6（受ける行動妨害の持続時間を短くする） (Tenacity +6 (shortens crowd-control effects on you)) | 6 | 12 | すべて |
+
+===== 頭 (Head) =====
+
+^ 特性 (Affix) ^ 最小 (Min) ^ 最大 (Max) ^ 出るレア度 ^
+| 魔力 +2 (Ability power +2) | 2 | 5 | すべて |
+| 魔力 +2% (Ability power +2%) | 2 | 4 | エピック以上 |
+| スキル加速 +3（記憶のクールダウン回復を速める） (Ability haste +3 (speeds up memory cooldown recovery)) | 3 | 6 | すべて |
+| 会心率 +2パーセントポイント (Critical chance +2 percentage points) | 2 | 4 | すべて |
+| 最大HP +4% (Maximum health +4%) | 4 | 8 | すべて |
+| 防御 +4 (Armor +4) | 4 | 9 | すべて |
+| 行動妨害耐性 +6（受ける行動妨害の持続時間を短くする） (Tenacity +6 (shortens crowd-control effects on you)) | 6 | 12 | すべて |
+| 光属性効果 +6% (Light effect strength +6%) | 6 | 12 | すべて |
+| 闇属性効果 +6% (Dark effect strength +6%) | 6 | 12 | すべて |
+| HP自動回復量 +1/秒 (Health regeneration +1/s) | 1 | 3 | すべて |
+| 攻撃力 +2 (Attack damage +2) | 2 | 5 | すべて |
+| 攻撃力 +2% (Attack damage +2%) | 2 | 4 | エピック以上 |
+| 移動速度 +2% (Movement speed +2%) | 2 | 4 | すべて |
+| 冷気属性効果 +6% (Cold effect strength +6%) | 6 | 12 | すべて |
+| 火属性効果 +6% (Fire effect strength +6%) | 6 | 12 | すべて |
+| 与えるHP回復量 +3%（自分・味方への回復が対象。装備・星の同じ能力値は合計で最大60%） (Healing granted +3% (to yourself and allies; combined equipment and star bonuses to this stat capped at 60%)) | 3 | 6 | すべて |
+| 与える障壁量 +3%（自分・味方への障壁が対象。装備・星の同じ能力値は合計で最大60%） (Shield amount granted +3% (to yourself and allies; combined equipment and star bonuses to this stat capped at 60%)) | 3 | 6 | すべて |
+
+===== 防具 (Armor) =====
+
+^ 特性 (Affix) ^ 最小 (Min) ^ 最大 (Max) ^ 出るレア度 ^
+| 最大HP +4% (Maximum health +4%) | 4 | 8 | すべて |
+| 最大HP +15 (Maximum health +15) | 15 | 30 | すべて |
+| 防御 +4 (Armor +4) | 4 | 9 | すべて |
+| HP自動回復量 +1/秒 (Health regeneration +1/s) | 1 | 3 | すべて |
+| 行動妨害耐性 +6（受ける行動妨害の持続時間を短くする） (Tenacity +6 (shortens crowd-control effects on you)) | 6 | 12 | すべて |
+| 移動速度 +2% (Movement speed +2%) | 2 | 4 | すべて |
+| スキル加速 +3（記憶のクールダウン回復を速める） (Ability haste +3 (speeds up memory cooldown recovery)) | 3 | 6 | すべて |
+| 光属性効果 +5% (Light effect strength +5%) | 5 | 10 | すべて |
+| 魔力 +2 (Ability power +2) | 2 | 5 | すべて |
+| 魔力 +2% (Ability power +2%) | 2 | 4 | エピック以上 |
+| 攻撃力 +2 (Attack damage +2) | 2 | 5 | すべて |
+| 攻撃力 +2% (Attack damage +2%) | 2 | 4 | エピック以上 |
+| 冷気属性効果 +6% (Cold effect strength +6%) | 6 | 12 | すべて |
+| 闇属性効果 +6% (Dark effect strength +6%) | 6 | 12 | すべて |
+| 火属性効果 +6% (Fire effect strength +6%) | 6 | 12 | すべて |
+| 与えるHP回復量 +3%（自分・味方への回復が対象。装備・星の同じ能力値は合計で最大60%） (Healing granted +3% (to yourself and allies; combined equipment and star bonuses to this stat capped at 60%)) | 3 | 6 | すべて |
+| 与える障壁量 +3%（自分・味方への障壁が対象。装備・星の同じ能力値は合計で最大60%） (Shield amount granted +3% (to yourself and allies; combined equipment and star bonuses to this stat capped at 60%)) | 3 | 6 | すべて |
+
+===== 手 (Hands) =====
+
+^ 特性 (Affix) ^ 最小 (Min) ^ 最大 (Max) ^ 出るレア度 ^
+| 攻撃力 +2 (Attack damage +2) | 2 | 5 | すべて |
+| 攻撃力 +2% (Attack damage +2%) | 2 | 4 | エピック以上 |
+| 攻撃速度 +3% (Attack speed +3%) | 3 | 6 | すべて |
+| 会心率 +2パーセントポイント (Critical chance +2 percentage points) | 2 | 4 | すべて |
+| 会心ダメージ倍率 +6パーセントポイント (Critical damage multiplier +6 percentage points) | 6 | 12 | すべて |
+| 魔力 +2 (Ability power +2) | 2 | 5 | すべて |
+| 魔力 +2% (Ability power +2%) | 2 | 4 | エピック以上 |
+| 火属性効果 +6% (Fire effect strength +6%) | 6 | 12 | すべて |
+| 冷気属性効果 +6% (Cold effect strength +6%) | 6 | 12 | すべて |
+| 通常攻撃の射程 +4% (Basic attack range +4%) | 4 | 8 | すべて |
+| 防御 +4 (Armor +4) | 4 | 9 | すべて |
+| 最大HP +15 (Maximum health +15) | 15 | 30 | すべて |
+| 光属性効果 +6% (Light effect strength +6%) | 6 | 12 | すべて |
+| 闇属性効果 +6% (Dark effect strength +6%) | 6 | 12 | すべて |
+| スキル加速 +3（記憶のクールダウン回復を速める） (Ability haste +3 (speeds up memory cooldown recovery)) | 3 | 6 | すべて |
+
+===== 足 (Feet) =====
+
+^ 特性 (Affix) ^ 最小 (Min) ^ 最大 (Max) ^ 出るレア度 ^
+| 移動速度 +2% (Movement speed +2%) | 2 | 4 | すべて |
+| 行動妨害耐性 +6（受ける行動妨害の持続時間を短くする） (Tenacity +6 (shortens crowd-control effects on you)) | 6 | 12 | すべて |
+| 防御 +4 (Armor +4) | 4 | 9 | すべて |
+| 最大HP +4% (Maximum health +4%) | 4 | 8 | すべて |
+| 最大HP +15 (Maximum health +15) | 15 | 30 | すべて |
+| HP自動回復量 +1/秒 (Health regeneration +1/s) | 1 | 3 | すべて |
+| 攻撃速度 +3% (Attack speed +3%) | 3 | 6 | すべて |
+| スキル加速 +3（記憶のクールダウン回復を速める） (Ability haste +3 (speeds up memory cooldown recovery)) | 3 | 6 | すべて |
+| 冷気属性効果 +6% (Cold effect strength +6%) | 6 | 12 | すべて |
+| 火属性効果 +6% (Fire effect strength +6%) | 6 | 12 | すべて |
+| 会心率 +2パーセントポイント (Critical chance +2 percentage points) | 2 | 4 | すべて |
+| 光属性効果 +6% (Light effect strength +6%) | 6 | 12 | すべて |
+| 闇属性効果 +6% (Dark effect strength +6%) | 6 | 12 | すべて |
+| 攻撃力 +2 (Attack damage +2) | 2 | 5 | すべて |
+| 攻撃力 +2% (Attack damage +2%) | 2 | 4 | エピック以上 |
+| 魔力 +2 (Ability power +2) | 2 | 5 | すべて |
+| 魔力 +2% (Ability power +2%) | 2 | 4 | エピック以上 |
+
+===== 装飾品 (Charm) =====
+
+^ 特性 (Affix) ^ 最小 (Min) ^ 最大 (Max) ^ 出るレア度 ^
+| スキル加速 +4（記憶のクールダウン回復を速める） (Ability haste +4 (speeds up memory cooldown recovery)) | 4 | 8 | すべて |
+| 移動速度 +2% (Movement speed +2%) | 2 | 5 | すべて |
+| 会心率 +2パーセントポイント (Critical chance +2 percentage points) | 2 | 4 | すべて |
+| 攻撃力 +2 (Attack damage +2) | 2 | 5 | すべて |
+| 攻撃力 +2% (Attack damage +2%) | 2 | 4 | エピック以上 |
+| 魔力 +2 (Ability power +2) | 2 | 5 | すべて |
+| 魔力 +2% (Ability power +2%) | 2 | 4 | エピック以上 |
+| 最大HP +3% (Maximum health +3%) | 3 | 6 | すべて |
+| HP自動回復量 +1/秒 (Health regeneration +1/s) | 1 | 2 | すべて |
+| 冷気属性効果 +6% (Cold effect strength +6%) | 6 | 12 | すべて |
+| 火属性効果 +6% (Fire effect strength +6%) | 6 | 12 | すべて |
+| 光属性効果 +6% (Light effect strength +6%) | 6 | 12 | すべて |
+| 闇属性効果 +6% (Dark effect strength +6%) | 6 | 12 | すべて |
+| 行動妨害耐性 +6（受ける行動妨害の持続時間を短くする） (Tenacity +6 (shortens crowd-control effects on you)) | 6 | 12 | すべて |
+| 会心ダメージ倍率 +5パーセントポイント (Critical damage multiplier +5 percentage points) | 5 | 10 | すべて |
+| 与えるHP回復量 +3%（自分・味方への回復が対象。装備・星の同じ能力値は合計で最大60%） (Healing granted +3% (to yourself and allies; combined equipment and star bonuses to this stat capped at 60%)) | 3 | 6 | すべて |
+| 与える障壁量 +3%（自分・味方への障壁が対象。装備・星の同じ能力値は合計で最大60%） (Shield amount granted +3% (to yourself and allies; combined equipment and star bonuses to this stat capped at 60%)) | 3 | 6 | すべて |
+

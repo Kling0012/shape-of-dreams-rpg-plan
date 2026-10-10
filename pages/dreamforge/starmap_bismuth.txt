@@ -1,0 +1,35 @@
+====== Bismuthの星図 ======
+
+Bismuthの星図です。星 736 個、到達刻印 8 個。内容はゲームのデータ（バージョン 2.10.21）から自動生成しています。
+
+[[dreamforge:starmap|星図の一覧へ]] / [[dreamforge:start|ホームへ戻る]]
+
+費用は、星を1段上げるのに要る星のポイントです。段が複数ある星は、1段ごとに同じ費用が要ります。「どちらか1つを選択」の星は、選択肢のうち1つを選びます。
+
+===== 構成 =====
+
+  * 記憶の星：452個
+  * 橋の星：104個
+  * 外縁の星：180個
+
+===== 到達刻印 =====
+
+到達刻印は、対象・発動条件のある特別な星です。デバフはありません。星のレベルに応じて最大3つまで選べます。
+
+^ 刻印 ^ 効果 ^ 費用 ^
+| 四つの物語 (Four Tales) | 効果 \\ 追加ダメージ +攻撃力・魔力の高い方の100%／自分が属性を付けた敵に火・冷気・光・闇がそろっているとき、その敵に与える（同じ敵に6秒に1回） \\ 必要ポイント：3 \\ Effect \\ Bonus damage +100% of the higher of your attack damage or ability power to an enemy when your elemental application leaves it with Fire, Cold, Light and Dark (once per 6s per enemy) \\ Cost: 3 points | 3 |
+| 雷鳴の章 (Chapter of Thunder) | 効果 \\ 跳弾ダメージ +当てたダメージの30%：8m以内の別の敵2体までに与える。発動条件：記憶『プリズムの視界』が敵に命中したとき（この星ごとに0.3秒に1回・効果量は最大60%。星の追加ダメージでは発動しない） \\ 1回の使用につき1回まで。 \\ 必要ポイント：3 \\ Effect \\ Ricochet damage +30% of the hit damage: damage up to 2 other enemies within 8m. Triggered when Memory “Prismatic Vision” hits an enemy (once every 0.3 seconds per star; effect capped at 60%; not triggered by extra damage from stars). \\ At most once per use. \\ Cost: 3 points | 3 |
+| 光の陪審 (Jury of Light) | 効果 \\ 敵の与ダメージ -15%：当てた敵に4秒間適用（ミニボス・ボスは半分。重ならず、強い方で時間を延長）。発動条件：記憶『無垢な魂』が敵に命中したとき（間隔制限なし・効果量は最大25%。星の追加ダメージでは発動しない） \\ 1回の使用につき敵1体ごとに1回まで。 \\ スタン +0.8秒：当てた敵が対象（ミニボス・ボスには無効。同じ敵に5秒に1回）。発動条件：記憶『無垢な魂』が敵に命中したとき（間隔制限なし・スタンは最大2秒。星の追加ダメージでは発動しない） \\ 1回の使用につき敵1体ごとに1回まで。 \\ 取得の前提（すべて必要）：星『減速の攻め方』 \\ 必要ポイント：1 \\ Effect \\ Enemy damage dealt -15%: applies to the hit enemy for 4 seconds (halved for minibosses and bosses; does not stack; refreshes the stronger effect). Triggered when Memory “Pure Soul” hits an enemy (no cooldown; effect capped at 25%; not triggered by extra damage from stars). \\ At most once per enemy per use. \\ Stun +0.8 seconds: affects the hit enemy (ineffective against minibosses and bosses; once per enemy every 5 seconds). Triggered when Memory “Pure Soul” hits an enemy (no cooldown; stun capped at 2 seconds; not triggered by extra damage from stars). \\ At most once per enemy per use. \\ Acquisition prerequisites (all required): star “Pressing the Slowed” \\ Cost: 1 point | 1 |
+| 灰で書く結末 (Ending Written in Ash) | 効果 \\ 範囲追加ダメージ：半径 → 6mに変更。 \\ 対象：記憶『業火物語』による該当効果。 \\ 範囲追加ダメージ +攻撃力・魔力の高い方の160%：倒した敵の周り4mの敵に与える（魔力が高ければ魔法）。発動条件：記憶『業火物語』で敵を倒したとき（間隔制限なし・効果量は最大1000%。星の追加ダメージでは発動しない） \\ 倒した敵1体につき1回まで。 \\ 取得の前提（すべて必要）：星『燃え上がりの岐路』 \\ 必要ポイント：1 \\ Effect \\ area extra damage: radius → 6m. \\ Applies to: Memory “Tales of Hellfire”. \\ Area damage +160% of the higher of attack damage or ability power: damage enemies within 4m of the killed enemy (magic damage if ability power is higher). Triggered when Memory “Tales of Hellfire” kills an enemy (no cooldown; effect capped at 1000%; not triggered by extra damage from stars). \\ At most once per enemy killed. \\ Acquisition prerequisites (all required): star “Crossroads of Rekindling” \\ Cost: 1 point | 1 |
+| 剣の表紙 (Cover of the Sword) | 効果 \\ 障壁 +命中した敵1体につき最大HPの2%：同じ発動で当たった別々の敵を数え、4秒間張る（5体まで、1体につき最大20%。この障壁は通常の星の障壁とは別に1つまで。残量と新しい量の大きい方を保って時間を更新）。発動条件：記憶『勇敢なる心』が敵に命中したとき（間隔制限なし・効果量は最大20%。星の追加ダメージでは発動しない） \\ 1回の使用につき敵1体ごとに1回まで。 \\ 取得の前提（すべて必要）：星『剣の守りの岐路』 \\ 必要ポイント：1 \\ Effect \\ Shield +2% of maximum health per distinct enemy hit by this cast: lasts 4 seconds (up to 5 enemies and 20% per enemy; one pool separate from ordinary star shields, keeping the larger remaining or new amount and refreshing duration). Triggered when Memory “Valiant Heart” hits an enemy (no cooldown; effect capped at 20%; not triggered by extra damage from stars). \\ At most once per enemy per use. \\ Acquisition prerequisites (all required): star “Crossroads of Sword Wards” \\ Cost: 1 point | 1 |
+| 終わらない矢文 (Unfinished Arrow-Letters) | 効果 \\ 継続ダメージ：持続時間 +100%（元の2倍）。 \\ 対象：記憶『歪な精神』による該当効果。 \\ 毎秒のダメージは変わらず、持続が長くなる分だけ総ダメージが増える（総量上限は維持）。 \\ 倍率は対象の現在の値に掛ける（パーセントポイントの加算ではない）。各効果の上限は変わらない。 \\ 継続ダメージ +攻撃力・魔力の高い方の45%（3秒ごと）：当てた敵に3秒間与える（重ならず、強い方で時間を延長）。発動条件：記憶『歪な精神』が敵に命中したとき（間隔制限なし・効果量は最大1500%。星の追加ダメージでは発動しない） \\ 1回の使用につき敵1体ごとに1回まで。 \\ 取得の前提（すべて必要）：星『矢の撃ち方』 \\ 必要ポイント：1 \\ Effect \\ damage over time: duration +100% (×2). \\ Applies to: Memory “Distorted Mind”. \\ Damage per second is unchanged; longer duration increases total damage, subject to the existing total cap. \\ Multipliers apply to the current value, not as added percentage points. Existing effect caps remain unchanged. \\ Damage over time +45% of the higher of attack damage or ability power per 3 seconds: damage the hit enemy for 3 seconds (does not stack; refreshes the stronger wound). Triggered when Memory “Distorted Mind” hits an enemy (no cooldown; effect capped at 1500%; not triggered by extra damage from stars). \\ At most once per enemy per use. \\ Acquisition prerequisites (all required): star “Ways of Loosing Arrows” \\ Cost: 1 point | 1 |
+| 四色の精読 (Four-Color Reading) | 効果 \\ 追加ダメージ +属性1種類につき攻撃力・魔力の高い方の40%：当てた敵の火・冷気・光・闇を数える（4種類まで。属性は消費しない）。発動条件：記憶『プリズムの視界』が敵に命中したとき（間隔制限なし・効果量は最大60%。星の追加ダメージでは発動しない） \\ 1回の使用につき1回まで。 \\ 取得の前提（すべて必要）：星『彩の読みの岐路』 \\ 必要ポイント：1 \\ Effect \\ Extra damage +40% of the higher of attack damage or ability power per element: count Fire, Cold, Light and Dark on the hit enemy (up to 4 types; does not consume elements). Triggered when Memory “Prismatic Vision” hits an enemy (no cooldown; effect capped at 60%; not triggered by extra damage from stars). \\ At most once per use. \\ Acquisition prerequisites (all required): star “Crossroads of Hue-Reading” \\ Cost: 1 point | 1 |
+| 開かれた退路 (Open Exit) | 効果 \\ 残りクールダウン短縮量：発動確率 → 100%に変更。 \\ 対象：記憶『プリズムの視界』による該当効果。 \\ 効果の受け手：記憶『歪な疾走』。 \\ 残りクールダウン -8%。対象：記憶『歪な疾走』。 \\ 記憶『プリズムの視界』が敵に命中したとき、発動確率50%。残り時間を基準に短縮し、使用回数は直接回復しない。 \\ 1回の使用につき1回まで。 \\ 時間による再発動制限なし。 \\ すべて装備が必要：記憶『歪な疾走』 \\ 取得の前提（すべて必要）：星『退路の整え方』 \\ 必要ポイント：1 \\ Effect \\ remaining cooldown reduction: trigger chance → 100%. \\ Applies to: Memory “Prismatic Vision”. \\ Effect recipient: Memory “Distorting Sprint”. \\ Remaining cooldown -8%. Recipient: Memory “Distorting Sprint”. \\ Memory “Prismatic Vision” hits an enemy; chance 50%. Reduces the remaining time, not charges directly. \\ At most once per use. \\ No time-based cooldown. \\ All must be equipped: Memory “Distorting Sprint” \\ Acquisition prerequisites (all required): star “Ways to Ready the Exit” \\ Cost: 1 point | 1 |
+
+===== 地域別ページ =====
+
+  * [[dreamforge:starmap_bismuth_memory_1|記憶の星 1/3]]
+  * [[dreamforge:starmap_bismuth_memory_2|記憶の星 2/3]]
+  * [[dreamforge:starmap_bismuth_memory_3|記憶の星 3/3]]
+  * [[dreamforge:starmap_bismuth_bridge|橋の星]]
+  * [[dreamforge:starmap_bismuth_outer|外縁の星]]

@@ -1,0 +1,37 @@
+====== Nachiaの星図 ======
+
+Nachiaの星図です。星 736 個、到達刻印 8 個。内容はゲームのデータ（バージョン 2.10.21）から自動生成しています。
+
+[[dreamforge:starmap|星図の一覧へ]] / [[dreamforge:start|ホームへ戻る]]
+
+費用は、星を1段上げるのに要る星のポイントです。段が複数ある星は、1段ごとに同じ費用が要ります。「どちらか1つを選択」の星は、選択肢のうち1つを選びます。
+
+===== 構成 =====
+
+  * 核の星：3個
+  * 記憶の星：444個
+  * 橋の星：112個
+  * 外縁の星：177個
+
+===== 到達刻印 =====
+
+到達刻印は、対象・発動条件のある特別な星です。デバフはありません。星のレベルに応じて最大3つまで選べます。
+
+^ 刻印 ^ 効果 ^ 費用 ^
+| 共に在る (Together) | 効果 \\ 自分の攻撃力・魔力 +8%、味方は+4%／自分の周囲10m以内に味方がいる間。味方がいなければ自分は+4%。10m以内の味方への付与は重ならず、最も高い値だけを適用。条件つき攻撃力・魔力の増加は、覚醒前の数値で全効果の合計が最大120% \\ 必要ポイント：3 \\ Effect \\ Your attack damage and ability power +8%, nearby allies' +4% while an ally is within 10m; without one, your bonus is +4%. Bonuses granted to allies within 10m do not stack; only the highest applies. Conditional attack damage and ability power bonuses together are capped at +120%, counted before awakening \\ Cost: 3 points | 3 |
+| 祈りの過負荷 (Overflowing Prayer) | 効果 \\ 攻撃力・魔力 +20%／通常記憶を使った後4秒間。移動・奥義・アイデンティティ記憶は対象外。重ならず、再使用で時間を延長。条件つき攻撃力・魔力の増加は、覚醒前の数値で全効果の合計が最大120% \\ 必要ポイント：3 \\ Effect \\ Attack damage and ability power +20% for 4s after using an ordinary memory; excludes Movement, Ultimate and Identity memories; refreshes without stacking. Conditional attack damage and ability power bonuses together are capped at +120%, counted before awakening \\ Cost: 3 points | 3 |
+| 群れを覆う葉 (Leaves That Cover the Pack) | 効果 \\ 自分・味方の障壁量：対象数 +2体。上限：3体。 \\ 対象：自分が取得した星による該当効果すべて。 \\ 自分・味方の障壁量：+50%（元の1.5倍）。 \\ 対象：自分が取得した星による該当効果すべて。 \\ 倍率は対象の現在の値に掛ける（パーセントポイントの加算ではない）。各効果の上限は変わらない。 \\ 取得の前提（すべて必要）：星『庇の広げ方』 \\ 必要ポイント：1 \\ Effect \\ Shield amount for yourself and allies: target count +2 targets. Cap: 3 targets. \\ Applies to: all matching effects from stars you own. \\ Shield amount for yourself and allies: +50% (×1.5). \\ Applies to: all matching effects from stars you own. \\ Multipliers apply to the current value, not as added percentage points. Existing effect caps remain unchanged. \\ Acquisition prerequisites (all required): star “Extending the Shelter” \\ Cost: 1 point | 1 |
+| 長い囁き (Long Whisper) | 効果 \\ 自分の障壁量：持続時間 +100%（元の2倍）。 \\ 対象：記憶『自然の囁き』による該当効果。 \\ 自分・味方の障壁量：持続時間 +100%（元の2倍）。 \\ 対象：記憶『自然の囁き』による該当効果。 \\ 倍率は対象の現在の値に掛ける（パーセントポイントの加算ではない）。各効果の上限は変わらない。 \\ 取得の前提（すべて必要）：星『重ね布の重ね方』 \\ 必要ポイント：1 \\ Effect \\ self shield amount: duration +100% (×2). \\ Applies to: Memory “Nature's Whisper”. \\ Shield amount for yourself and allies: duration +100% (×2). \\ Applies to: Memory “Nature's Whisper”. \\ Multipliers apply to the current value, not as added percentage points. Existing effect caps remain unchanged. \\ Acquisition prerequisites (all required): star “Layering the Cloth” \\ Cost: 1 point | 1 |
+| 一頭一標 (One Quarry at a Time) | 効果 \\ 継続ダメージ：持続時間 +100%（元の2倍）。 \\ 対象：記憶『月光の誓約』による該当効果。 \\ 毎秒のダメージは変わらず、持続が長くなる分だけ総ダメージが増える（総量上限は維持）。 \\ 敵の与ダメージ減少量：持続時間 +100%（元の2倍）。 \\ 対象：記憶『月光の誓約』による該当効果。 \\ 敵が自分から受けるダメージ増加量：持続時間 +100%（元の2倍）。 \\ 対象：記憶『月光の誓約』による該当効果。 \\ 倍率は対象の現在の値に掛ける（パーセントポイントの加算ではない）。各効果の上限は変わらない。 \\ 取得の前提（すべて必要）：星『爪痕の残し方』 \\ 必要ポイント：1 \\ Effect \\ damage over time: duration +100% (×2). \\ Applies to: Memory “Moonlight Pact”. \\ Damage per second is unchanged; longer duration increases total damage, subject to the existing total cap. \\ enemy damage dealt reduction: duration +100% (×2). \\ Applies to: Memory “Moonlight Pact”. \\ enemy damage taken from you: duration +100% (×2). \\ Applies to: Memory “Moonlight Pact”. \\ Multipliers apply to the current value, not as added percentage points. Existing effect caps remain unchanged. \\ Acquisition prerequisites (all required): star “Ways Clawmarks Stay” \\ Cost: 1 point | 1 |
+| 歩幅を残す (Spare Footsteps) | 効果 \\ 残りクールダウン短縮量：+60%（元の1.6倍）。 \\ 対象：自分が取得した星による該当効果すべて。 \\ 効果の受け手：記憶『夢幻のワルツ』。 \\ 倍率は対象の現在の値に掛ける（パーセントポイントの加算ではない）。各効果の上限は変わらない。 \\ 取得の前提（すべて必要）：星『踏み数の選び方』 \\ 必要ポイント：1 \\ Effect \\ remaining cooldown reduction: +60% (×1.6). \\ Applies to: all matching effects from stars you own. \\ Effect recipient: Memory “Dreamy Waltz”. \\ Multipliers apply to the current value, not as added percentage points. Existing effect caps remain unchanged. \\ Acquisition prerequisites (all required): star “Choosing the Steps” \\ Cost: 1 point | 1 |
+| 木霊の庭師 (Echo Gardener) | 効果 \\ 0.3秒後の追撃ダメージ：+70%（元の1.7倍）。 \\ 対象：記憶『群れの心臓』、記憶『蛇の祝福』による該当効果。 \\ 倍率は対象の現在の値に掛ける（パーセントポイントの加算ではない）。各効果の上限は変わらない。 \\ 取得の前提（すべて必要）：星『闇の宿し方』 \\ 必要ポイント：1 \\ Effect \\ follow-up damage after 0.3s: +70% (×1.7). \\ Applies to: Memory “Heart of the Pack”, Memory “Serpent's Blessing”. \\ Multipliers apply to the current value, not as added percentage points. Existing effect caps remain unchanged. \\ Acquisition prerequisites (all required): star “Ways Dark Settles” \\ Cost: 1 point | 1 |
+| ゆっくり巡る命 (Slowly Circling Life) | 効果 \\ 自分の召喚獣のHP回復量：+100%（元の2倍）。 \\ 対象：記憶『生命の循環』による該当効果。 \\ 自分・味方の障壁量：+100%（元の2倍）。 \\ 対象：記憶『生命の循環』による該当効果。 \\ 倍率は対象の現在の値に掛ける（パーセントポイントの加算ではない）。各効果の上限は変わらない。 \\ 取得の前提（すべて必要）：星『薄衣の広げ方』 \\ 必要ポイント：1 \\ Effect \\ HP restored to your summons: +100% (×2). \\ Applies to: Memory “Circle of Life”. \\ Shield amount for yourself and allies: +100% (×2). \\ Applies to: Memory “Circle of Life”. \\ Multipliers apply to the current value, not as added percentage points. Existing effect caps remain unchanged. \\ Acquisition prerequisites (all required): star “Draping the Veil” \\ Cost: 1 point | 1 |
+
+===== 地域別ページ =====
+
+  * [[dreamforge:starmap_nachia_core|核の星]]
+  * [[dreamforge:starmap_nachia_memory_1|記憶の星 1/3]]
+  * [[dreamforge:starmap_nachia_memory_2|記憶の星 2/3]]
+  * [[dreamforge:starmap_nachia_memory_3|記憶の星 3/3]]
+  * [[dreamforge:starmap_nachia_bridge|橋の星]]
+  * [[dreamforge:starmap_nachia_outer|外縁の星]]

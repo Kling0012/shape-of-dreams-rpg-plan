@@ -1,0 +1,15 @@
+====== Cetusの星図：核の星 ======
+
+旅人の根もとにある星です。能力値や固有効果を伸ばします。
+
+[[dreamforge:starmap|星図の一覧へ]] / [[dreamforge:start|ホームへ戻る]]
+
+[[dreamforge:starmap_cetus|Cetusの星図トップ]]
+
+==== 奥の星 ====
+
+^ 星 ^ 星群 ^ 最大段 ^ 1段の費用 ^ 効果 ^
+| 満ち潮 (High Tide) | - | 3 | 1 | 攻撃力・魔力 +6% \\ ・通常記憶を使った後4秒間 \\ ・移動・奥義・アイデンティティ記憶は対象外 \\ ・重ならず、再使用で時間を延長 \\ ・条件つき攻撃力・魔力の増加は、覚醒前の数値で全効果の合計が最大120% \\ ・（数値は1段あたり・最大3段・1段につき1ポイント） \\ Attack damage and ability power +6% for 4s after using an ordinary memory \\ ・excludes Movement, Ultimate and Identity memories \\ ・refreshes without stacking \\ ・Conditional attack damage and ability power bonuses together are capped at +120%, counted before awakening \\ ・(values per rank; maximum 3 ranks; 1 point per rank) |
+| 氷の枷 (Ice Shackles) | - | 3 | 1 | 与ダメージ +6% \\ ・スタン・スロウ・冷気のいずれかを受けている敵が対象 \\ ・（数値は1段あたり・最大3段・1段につき1ポイント） \\ Damage dealt +6% to enemies that are stunned, slowed or chilled \\ ・(values per rank; maximum 3 ranks; 1 point per rank) |
+| 氷壁 (Ice Wall) | - | 3 | 1 | 障壁 +自分の最大HPの8% \\ ・自分の最大HPの10%以上の一撃を受けたとき、自分へ6秒間付与 \\ ・12秒に1回 \\ ・（数値は1段あたり・最大3段・1段につき1ポイント） \\ Shield +8% of your maximum health for 6s when a single hit deals at least 10% of your maximum health \\ ・once per 12s \\ ・(values per rank; maximum 3 ranks; 1 point per rank) |
+

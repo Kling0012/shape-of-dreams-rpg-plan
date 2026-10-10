@@ -1,0 +1,16 @@
+====== Vesperの星図：核の星 ======
+
+旅人の根もとにある星です。能力値や固有効果を伸ばします。
+
+[[dreamforge:starmap|星図の一覧へ]] / [[dreamforge:start|ホームへ戻る]]
+
+[[dreamforge:starmap_vesper|Vesperの星図トップ]]
+
+==== 奥の星 ====
+
+^ 星 ^ 星群 ^ 最大段 ^ 1段の費用 ^ 効果 ^
+| 四の型 (Fourth Form) | - | 1 | 4 | 強化通常攻撃までの必要回数 -1発 \\ ・4発目の強化攻撃を早める \\ ・（数値は1段あたり・最大1段・1段につき4ポイント） \\ Attacks needed for an empowered basic attack -1 \\ ・brings the empowered fourth attack forward \\ ・(values per rank; maximum 1 rank; 4 points per rank) |
+| 審問の盾 (Shield of Inquisition) | - | 3 | 1 | 障壁 +自分の最大HPの5% \\ ・自分の最大HPの10%以上の一撃を受けたとき、自分へ6秒間付与 \\ ・12秒に1回 \\ ・（数値は1段あたり・最大3段・1段につき1ポイント） \\ Shield +5% of your maximum health for 6s when a single hit deals at least 10% of your maximum health \\ ・once per 12s \\ ・(values per rank; maximum 3 ranks; 1 point per rank) |
+| 鉄の陣 (Iron Formation) | - | 3 | 1 | 防御 +6 \\ ・自分の周囲6m以内に敵が3体以上いる間 \\ ・（数値は1段あたり・最大3段・1段につき1ポイント） \\ Armor +6 while at least 3 enemies are within 6m of you \\ ・(values per rank; maximum 3 ranks; 1 point per rank) |
+| 光の烙印 (Brand of Light) | - | 3 | 1 | 光付与確率 +15パーセントポイント \\ ・通常攻撃が当たると、15%の確率で敵に光を1つ付ける \\ ・光は5つまで、3つ以上で光ダメージが必ず会心 \\ ・（数値は1段あたり・最大3段・1段につき1ポイント） \\ Light application chance +15 percentage points / Basic attack hits have a 15% chance to apply 1 Light \\ ・up to 5 stacks \\ ・Light damage always critically hits at 3 or more \\ ・(values per rank; maximum 3 ranks; 1 point per rank) |
+
