@@ -1,5 +1,5 @@
-[b]Minor internal adjustments.[/b]
-[b]内部の細かな調整。[/b]
+[b]Lighter performance, fixes for lingering effects and enemy models, experience scaling with Limbo depth.[/b]
+[b]動作の軽量化、効果・敵モデルの残留修正、Limbo の経験値ボーナス。[/b]
 
 [h1]Dreamforge RPG[/h1]
 Turns every run into part of a long RPG journey: relics you keep, a risky "secure or delve" choice at every zone, a star map per Traveler, a forge, and long-term goals. Co-op ready.
