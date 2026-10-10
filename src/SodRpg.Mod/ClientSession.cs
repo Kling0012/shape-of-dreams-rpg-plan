@@ -210,7 +210,7 @@ namespace SodRpg.Mod
             if (_tickSteps == null)
             {
                 _tickSteps = new Action[] { TickGemSlotHudProbe, TickProfileSlots, Wire, TickInfinitySettings, UpdateVariantVisuals, UpdateMonsterCues, TickBossDisplay, TrackRun, TickKillClassification, TickRunChoices, TickCurseResync, TickSalvageExpiry, TickSatchelOverflow, SendBuildIfNeeded, TickHello, TickPeriodicSave, TickInterruptedRelics, TickDirectStash, TickKillSync, TickCoopTrade, TickRoomVisualSweep };
-                _tickStepNames = new[] { "gem slot HUD probe", "profile slots", "wire", "infinity settings", "variant visuals", "monster cues", "boss effects", "track run", "kill classification", "run choices", "curse resync", "salvage expiry", "satchel overflow", "send build", "hello", "periodic save", "interrupted relic save", "kill sync", "coop trade" };
+                _tickStepNames = new[] { "gem slot HUD probe", "profile slots", "wire", "infinity settings", "variant visuals", "monster cues", "boss effects", "track run", "kill classification", "run choices", "curse resync", "salvage expiry", "satchel overflow", "send build", "hello", "periodic save", "interrupted relic save", "direct stash save", "kill sync", "coop trade", "room visual sweep" };
                 _tickStepNextLog = new float[_tickSteps.Length];
             }
             for (int i = 0; i < _tickSteps.Length; i++)
