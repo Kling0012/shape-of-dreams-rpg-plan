@@ -435,6 +435,8 @@ namespace SodRpg.Core.Game
 
         internal static void CopyDurableState(Profile target, Profile source)
         {
+            // Native Continue must not restore a consumed direct-stash right from an older snapshot or overlay.
+            target.DirectStashUsedRunIds.UnionWith(source.DirectStashUsedRunIds);
             target.CoopTradePending = source.CoopTradePending?.Clone();
             target.CoopTradeExecuted.Clear();
             target.CoopTradeExecuted.UnionWith(source.CoopTradeExecuted);
