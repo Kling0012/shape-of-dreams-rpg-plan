@@ -30,6 +30,7 @@ namespace SodRpg.Mod
 
         private readonly Action<EventInfoKill> _onDeath;
         private readonly Action<EventInfoLoadZone> _onZoneLoaded;
+        private readonly Action<EventInfoLoadRoom> _onRoomLoaded;
         private readonly Action _onClearedRoomsChanged;
         private readonly Action<DewGameResult> _onConcluded;
         private readonly Action<DreamforgeAppliedMsg> _onApplied;
@@ -109,6 +110,7 @@ namespace SodRpg.Mod
             RestoreRunDurability();
             _onDeath = OnDeath;
             _onZoneLoaded = OnZoneLoaded;
+            _onRoomLoaded = OnRoomLoadedSweep;
             _onClearedRoomsChanged = OnClearedRoomsChanged;
             _onConcluded = OnConcluded;
             _onApplied = OnApplied;
@@ -207,7 +209,7 @@ namespace SodRpg.Mod
         {
             if (_tickSteps == null)
             {
-                _tickSteps = new Action[] { TickGemSlotHudProbe, TickProfileSlots, Wire, TickInfinitySettings, UpdateVariantVisuals, UpdateMonsterCues, TickBossDisplay, TrackRun, TickKillClassification, TickRunChoices, TickCurseResync, TickSalvageExpiry, TickSatchelOverflow, SendBuildIfNeeded, TickHello, TickPeriodicSave, TickInterruptedRelics, TickDirectStash, TickKillSync, TickCoopTrade };
+                _tickSteps = new Action[] { TickGemSlotHudProbe, TickProfileSlots, Wire, TickInfinitySettings, UpdateVariantVisuals, UpdateMonsterCues, TickBossDisplay, TrackRun, TickKillClassification, TickRunChoices, TickCurseResync, TickSalvageExpiry, TickSatchelOverflow, SendBuildIfNeeded, TickHello, TickPeriodicSave, TickInterruptedRelics, TickDirectStash, TickKillSync, TickCoopTrade, TickRoomVisualSweep };
                 _tickStepNames = new[] { "gem slot HUD probe", "profile slots", "wire", "infinity settings", "variant visuals", "monster cues", "boss effects", "track run", "kill classification", "run choices", "curse resync", "salvage expiry", "satchel overflow", "send build", "hello", "periodic save", "interrupted relic save", "kill sync", "coop trade" };
                 _tickStepNextLog = new float[_tickSteps.Length];
             }
@@ -322,6 +324,7 @@ namespace SodRpg.Mod
                     try
                     {
                         _zone.ClientEvent_OnZoneLoaded -= _onZoneLoaded;
+                        _zone.ClientEvent_OnRoomLoaded -= _onRoomLoaded;
                         _zone.ClientEvent_OnClearedCombatRoomsChanged -= _onClearedRoomsChanged;
                         _zone.ClientEvent_OnCurrentHuntLevelChanged -= _onHuntChanged;
                     }
@@ -333,6 +336,7 @@ namespace SodRpg.Mod
                 if (zone != null)
                 {
                     zone.ClientEvent_OnZoneLoaded += _onZoneLoaded;
+                    zone.ClientEvent_OnRoomLoaded += _onRoomLoaded;
                     zone.ClientEvent_OnClearedCombatRoomsChanged += _onClearedRoomsChanged;
                     zone.ClientEvent_OnCurrentHuntLevelChanged += _onHuntChanged;
                 }
@@ -465,6 +469,7 @@ namespace SodRpg.Mod
                 if (_zone != null)
                 {
                     _zone.ClientEvent_OnZoneLoaded -= _onZoneLoaded;
+                    _zone.ClientEvent_OnRoomLoaded -= _onRoomLoaded;
                     _zone.ClientEvent_OnClearedCombatRoomsChanged -= _onClearedRoomsChanged;
                     _zone.ClientEvent_OnCurrentHuntLevelChanged -= _onHuntChanged;
                 }
@@ -725,6 +730,8 @@ namespace SodRpg.Mod
             try
             {
                 if (result == null) return;
+                // 遠征の終了時にも、部屋遷移と同じ掃除を 1 回だけ走らせる。
+                _roomSweepPendingAt = Time.unscaledTime + SweepDelaySeconds;
 if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
                     NetworkedManagerBase<GameManager>.softInstance?.runId ?? "")) return;
                 if (ObserveInfinityConclusion(result)) return;
