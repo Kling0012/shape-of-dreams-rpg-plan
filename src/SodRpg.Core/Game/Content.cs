@@ -407,9 +407,11 @@ namespace SodRpg.Core.Game
         private static string DescribeRunGrowth(RunGrowthDef def) => global::SodRpg.Core.Game.RunGrowth.Describe(def);
 
         internal static string DescribeGimmickBoost(string routeMemory, int amount, string heroKey = null) =>
-            DescribeRouteEffects(routeMemory, null, heroKey) + Loc.T($"の量 +{amount}%／", $" amount +{amount}% / ")
-            + Links.ItemName(routeMemory) + Loc.T("を装着中、対応する星の追加効果が対象。各効果の元の量に対する増加で、最終上限は各効果に従う",
-                " must be equipped; affects matching stars' additional effects. Increases each effect's original amount, subject to its final cap");
+            Loc.Japanese
+                ? Links.ItemName(routeMemory) + "を装着しているとき、対応する星の追加効果（" + DescribeRouteEffects(routeMemory, null, heroKey) + "）の量が、それぞれ元の量の"
+                    + amount + "%分増える。最終上限は各効果の上限に従う。"
+                : DescribeRouteEffects(routeMemory, null, heroKey) + $" amount +{amount}% / "
+                    + Links.ItemName(routeMemory) + " must be equipped; affects matching stars' additional effects. Increases each effect's original amount, subject to its final cap";
 
         internal static string DescribeGimmickParameter(string routeMemory, GimmickParam parameter, int amount, string id, string heroKey = null)
         {
@@ -428,11 +430,19 @@ namespace SodRpg.Core.Game
                 : parameter == GimmickParam.Chance ? Loc.T("パーセントポイント", " percentage points") : "%";
             string cap = parameter == GimmickParam.ExtraTargets ? Gimmicks.MaxExtraTargets + Loc.T("体", " targets")
                 : parameter == GimmickParam.Chance ? "100%" : Gimmicks.MaxParameterPercent + "%";
-            return effects + " " + field + " +" + amount + unit + Loc.T("／", " / ") + Links.ItemName(routeMemory)
-                + Loc.T("を装着中、対応する星の追加効果が対象。", " must be equipped; affects matching stars' additional effects. ")
+            if (Loc.Japanese)
+            {
+                string increase = parameter == GimmickParam.ExtraTargets ? field + "が" + amount + "体増える"
+                    : parameter == GimmickParam.Chance ? field + "が" + amount + "%上がる"
+                    : field + "が、元の" + field + "の" + amount + "%分増える";
+                return Links.ItemName(routeMemory) + "を装着しているとき、対応する星の追加効果（" + effects + "）の" + increase
+                    + "。同じ記憶への修飾は合算して、最大" + cap + "まで。";
+            }
+            return effects + " " + field + " +" + amount + unit + " / " + Links.ItemName(routeMemory)
+                + " must be equipped; affects matching stars' additional effects. "
                 + (parameter == GimmickParam.ExtraTargets || parameter == GimmickParam.Chance ? ""
-                    : Loc.T("元の" + field + "に対する増加。", "Increases the original " + field + ". "))
-                + Loc.T("同じ記憶の修飾を合算し、上限" + cap, "Combined modifiers for this memory capped at " + cap);
+                    : "Increases the original " + field + ". ")
+                + "Combined modifiers for this memory capped at " + cap;
         }
 
         private static string DescribeRouteEffects(string routeMemory, GimmickParam? parameter, string heroKey)

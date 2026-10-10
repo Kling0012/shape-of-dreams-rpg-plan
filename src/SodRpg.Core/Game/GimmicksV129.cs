@@ -45,7 +45,6 @@ namespace SodRpg.Core.Game
         private static string DescribeV129(GimmickDef def, string memory, int ranks, string triggerText = null)
         {
             decimal value = Math.Min(def.Value * ranks, Cap(def.Effect));
-            bool ja = Loc.Japanese;
             string n = value.ToString("0.#######", CultureInfo.InvariantCulture), text;
             string duration = Duration(def, BuffDuration).ToString("0.#######", CultureInfo.InvariantCulture);
             string woundDuration = Duration(def, 3f).ToString("0.#######", CultureInfo.InvariantCulture);
@@ -53,63 +52,113 @@ namespace SodRpg.Core.Game
             string ricochetRadius = Radius(def, 8f).ToString("0.#######", CultureInfo.InvariantCulture);
             string allyRadius = Radius(def, 10f).ToString("0.#######", CultureInfo.InvariantCulture);
             int targets = TargetLimit(def);
+            string maximumStun = Duration(def, Cap(GimmickEffect.Daze) / 10f).ToString("0.#######", CultureInfo.InvariantCulture);
+            if (Loc.Japanese)
+                return DescribeV129Ja(def, memory, n, duration, woundDuration, primedDuration, ricochetRadius, allyRadius, targets, maximumStun,
+                    Duration(def, (float)value / 10f).ToString("0.#######", CultureInfo.InvariantCulture), triggerText);
             switch (def.Effect)
             {
                 case GimmickEffect.Wound:
-                    text = ja ? "継続ダメージ +攻撃力・魔力の高い方の" + n + "%（3秒ごと）：当てた敵に" + woundDuration + "秒間与える（重ならず、強い方で時間を延長）"
-                        : "Damage over time +" + n + "% of the higher of attack damage or ability power per 3 seconds: damage the hit enemy for " + woundDuration + " seconds (does not stack; refreshes the stronger wound)"; break;
+                    text = "Damage over time +" + n + "% of the higher of attack damage or ability power per 3 seconds: damage the hit enemy for " + woundDuration + " seconds (does not stack; refreshes the stronger wound)"; break;
                 case GimmickEffect.Daze:
                     string seconds = Duration(def, (float)value / 10f).ToString("0.#######", CultureInfo.InvariantCulture);
-                    text = ja ? "スタン +" + seconds + "秒：当てた敵が対象（ミニボス・ボスには無効。同じ敵に5秒に1回）"
-                        : "Stun +" + seconds + " seconds: affects the hit enemy (ineffective against minibosses and bosses; once per enemy every 5 seconds)"; break;
+                    text = "Stun +" + seconds + " seconds: affects the hit enemy (ineffective against minibosses and bosses; once per enemy every 5 seconds)"; break;
                 case GimmickEffect.Ricochet:
-                    text = ja ? "跳弾ダメージ +当てたダメージの" + n + "%：" + ricochetRadius + "m以内の別の敵" + targets + "体までに与える"
-                        : "Ricochet damage +" + n + "% of the hit damage: damage up to " + targets + " other enemies within " + ricochetRadius + "m"; break;
+                    text = "Ricochet damage +" + n + "% of the hit damage: damage up to " + targets + " other enemies within " + ricochetRadius + "m"; break;
                 case GimmickEffect.Siphon:
-                    text = ja ? "HP回復 +その記憶の直接ダメージの" + n + "%：自分を回復（継続ダメージは対象外。1回につき自分の最大HPの1.5%まで）"
-                        + (def.Arg == 1 ? "。" + allyRadius + "m以内の味方旅人も半分回復（各自の最大HPの1.5%まで）" : "")
-                        : "Healing +" + n + "% of that memory's direct damage: heal yourself (excluding damage over time; at most 1.5% of your maximum health per heal)"
+                    text = "Healing +" + n + "% of that memory's direct damage: heal yourself (excluding damage over time; at most 1.5% of your maximum health per heal)"
                         + (def.Arg == 1 ? "; allied travelers within " + allyRadius + "m receive half as much, capped at 1.5% of their own maximum health" : ""); break;
                 case GimmickEffect.Rampart:
-                    text = ja ? "障壁 +命中した敵1体につき最大HPの" + n + "%：同じ発動で当たった別々の敵を数え、" + duration + "秒間張る（" + targets + "体まで、1体につき最大" + Cap(def.Effect) + "%。この障壁は通常の星の障壁とは別に1つまで。残量と新しい量の大きい方を保って時間を更新）"
-                        : "Shield +" + n + "% of maximum health per distinct enemy hit by this cast: lasts " + duration + " seconds (up to " + targets + " enemies and " + Cap(def.Effect) + "% per enemy; one pool separate from ordinary star shields, keeping the larger remaining or new amount and refreshing duration)"; break;
+                    text = "Shield +" + n + "% of maximum health per distinct enemy hit by this cast: lasts " + duration + " seconds (up to " + targets + " enemies and " + Cap(def.Effect) + "% per enemy; one pool separate from ordinary star shields, keeping the larger remaining or new amount and refreshing duration)"; break;
                 case GimmickEffect.Primed:
-                    text = ja ? "次の通常攻撃の追加ダメージ +攻撃力・魔力の高い方の" + n + "%（重ならず" + primedDuration + "秒で消える。次の通常攻撃への上乗せが複数あっても最大の1つだけ使い、残りは消費しない）"
-                        : "Next basic attack extra damage +" + n + "% of the higher of attack damage or ability power (does not stack; expires after " + primedDuration + " seconds; consumes only the largest next-basic-attack bonus and leaves the others ready)"; break;
+                    text = "Next basic attack extra damage +" + n + "% of the higher of attack damage or ability power (does not stack; expires after " + primedDuration + " seconds; consumes only the largest next-basic-attack bonus and leaves the others ready)"; break;
                 case GimmickEffect.Crescendo:
                     string minimum = Duration(def, 8f).ToString("0.#######", CultureInfo.InvariantCulture);
                     string factor = Duration(def, 1.5f).ToString("0.#######", CultureInfo.InvariantCulture);
-                    text = ja ? "記憶ダメージ +" + n + "%：その記憶が対象（同じ発動では1回、5回まで、最大40%。" + minimum + "秒かその記憶のクールダウンの" + factor + "倍の長い方だけ続く。ほかの記憶を使っても保持。記憶ダメージ増加との合計は最大120%）"
-                        : "Memory damage +" + n + "%: affects that memory (once per cast, up to 5 stacks and 40%; lasts the longer of " + minimum + " seconds or " + factor + " times that memory's cooldown; retained when using other memories; combined memory damage bonuses are capped at 120%)"; break;
+                    text = "Memory damage +" + n + "%: affects that memory (once per cast, up to 5 stacks and 40%; lasts the longer of " + minimum + " seconds or " + factor + " times that memory's cooldown; retained when using other memories; combined memory damage bonuses are capped at 120%)"; break;
                 case GimmickEffect.ElementEdge:
-                    text = ja ? "追加ダメージ +属性1種類につき攻撃力・魔力の高い方の" + n + "%：当てた敵の火・冷気・光・闇を数える（4種類まで。属性は消費しない）"
-                        : "Extra damage +" + n + "% of the higher of attack damage or ability power per element: count Fire, Cold, Light and Dark on the hit enemy (up to 4 types; does not consume elements)"; break;
+                    text = "Extra damage +" + n + "% of the higher of attack damage or ability power per element: count Fire, Cold, Light and Dark on the hit enemy (up to 4 types; does not consume elements)"; break;
                 case GimmickEffect.PackMend:
-                    text = ja ? "召喚獣のHP回復 +各自の最大HPの" + n + "%：自分の生存する召喚獣すべてが対象（旅人は対象外）"
-                        : "Summon healing +" + n + "% of each summon’s maximum health: affects all your living summons (does not heal travelers)"; break;
+                    text = "Summon healing +" + n + "% of each summon’s maximum health: affects all your living summons (does not heal travelers)"; break;
                 case GimmickEffect.Sap:
-                    text = ja ? "敵の与ダメージ -" + n + "%：当てた敵に" + duration + "秒間適用（ミニボス・ボスは半分。重ならず、強い方で時間を延長）"
-                        : "Enemy damage dealt -" + n + "%: applies to the hit enemy for " + duration + " seconds (halved for minibosses and bosses; does not stack; refreshes the stronger effect)"; break;
+                    text = "Enemy damage dealt -" + n + "%: applies to the hit enemy for " + duration + " seconds (halved for minibosses and bosses; does not stack; refreshes the stronger effect)"; break;
                 default:
-                    text = ja ? "会心率 +" + n + "パーセントポイント：当てた敵に対する自分の通常攻撃・記憶に適用（" + duration + "秒。重ならず、強い方で時間を延長。確定会心は変えない）"
-                        : "Critical chance +" + n + " percentage points: applies to your basic attacks and memories against the hit enemy for " + duration + " seconds (does not stack; refreshes the stronger effect; guaranteed critical hits remain unchanged)"; break;
+                    text = "Critical chance +" + n + " percentage points: applies to your basic attacks and memories against the hit enemy for " + duration + " seconds (does not stack; refreshes the stronger effect; guaranteed critical hits remain unchanged)"; break;
             }
-            string trigger = def.Trigger == GimmickTrigger.OnUse ? (ja ? "を使うと発動" : " is used")
-                : def.Trigger == GimmickTrigger.OnKill ? (ja ? "で敵を倒すと発動" : " kills an enemy")
-                : def.Trigger == GimmickTrigger.OnCrit ? (ja ? "が会心すると発動" : " critically hits")
-                : (ja ? "が当たると発動" : " hits");
+            string trigger = def.Trigger == GimmickTrigger.OnUse ? " is used"
+                : def.Trigger == GimmickTrigger.OnKill ? " kills an enemy"
+                : def.Trigger == GimmickTrigger.OnCrit ? " critically hits"
+                : " hits";
             float cd = Math.Max(MinimumCooldown(def.Effect), Math.Min(def.Cooldown, MaxCooldown));
-            string interval = cd > 0 ? (ja ? "この星ごとに" + cd.ToString("0.#######", CultureInfo.InvariantCulture) + "秒に1回"
-                : "once every " + cd.ToString("0.#######", CultureInfo.InvariantCulture) + " seconds per star")
-                : (ja ? "間隔制限なし" : "no cooldown");
-            string maximumStun = Duration(def, Cap(GimmickEffect.Daze) / 10f).ToString("0.#######", CultureInfo.InvariantCulture);
-            string cap = def.Effect == GimmickEffect.Daze ? (ja ? "スタンは最大" + maximumStun + "秒" : "stun capped at " + maximumStun + " seconds")
-                : (ja ? "効果量は最大" + Cap(def.Effect) + "%" : "effect capped at " + Cap(def.Effect) + "%");
-            return text + (ja ? "。" : ". ") + (triggerText ?? ((ja ? "" : "Triggered when ") + memory + trigger))
-                + (ja ? "（" + interval + "・" + cap + "。星の追加ダメージでは発動しない）"
-                    : " (" + interval + "; " + cap + "; not triggered by extra damage from stars).");
+            string interval = cd > 0 ? "once every " + cd.ToString("0.#######", CultureInfo.InvariantCulture) + " seconds per star"
+                : "no cooldown";
+            string cap = def.Effect == GimmickEffect.Daze ? "stun capped at " + maximumStun + " seconds"
+                : "effect capped at " + Cap(def.Effect) + "%";
+            return text + ". " + (triggerText ?? ("Triggered when " + memory + trigger))
+                + " (" + interval + "; " + cap + "; not triggered by extra damage from stars).";
         }
 
+        /// <summary>V1.29 の仕掛けの日本語の説明。組み立ては <see cref="DescribeJa"/> と同じ（条件→結果、限度、重なり、最後の一文）。</summary>
+        private static string DescribeV129Ja(GimmickDef def, string memory, string n, string duration, string woundDuration, string primedDuration,
+            string ricochetRadius, string allyRadius, int targets, string maximumStun, string stunSeconds, string triggerText)
+        {
+            string condition = JaCondition(def, memory, triggerText);
+            string enemy = JaHitEnemy(condition);
+            string effect, extra = "", cap = "効果量は最大" + Cap(def.Effect) + "%まで";
+            switch (def.Effect)
+            {
+                case GimmickEffect.Wound:
+                    effect = enemy + "に、3秒ごとに攻撃力・魔力の高い方の" + n + "%となる継続ダメージを" + woundDuration + "秒間与える";
+                    extra = "重ならず、強い方の継続ダメージが残って時間が延びる。";
+                    break;
+                case GimmickEffect.Daze:
+                    effect = enemy + "を" + stunSeconds + "秒間スタンさせる";
+                    extra = "ミニボス・ボスには効かず、同じ敵には5秒に1回まで。";
+                    cap = "スタンは最大" + maximumStun + "秒まで";
+                    break;
+                case GimmickEffect.Ricochet:
+                    effect = "当てたダメージの" + n + "%を、" + ricochetRadius + "m以内の別の敵" + targets + "体までに跳弾ダメージとして与える";
+                    break;
+                case GimmickEffect.Siphon:
+                    effect = def.Arg == 1 ? "その記憶の直接ダメージの" + n + "%分、自分を回復し、" + allyRadius + "m以内の味方旅人にはその半分を回復する"
+                        : "その記憶の直接ダメージの" + n + "%分、自分を回復する";
+                    extra = "継続ダメージは対象外で、1回の回復量は" + (def.Arg == 1 ? "各自" : "自分") + "の最大HPの1.5%まで。";
+                    break;
+                case GimmickEffect.Rampart:
+                    effect = "同じ発動で命中した別々の敵1体につき、最大HPの" + n + "%の障壁を" + duration + "秒間得る";
+                    extra = "数えるのは" + targets + "体までで、1体につき最大" + Cap(def.Effect) + "%まで。この障壁は通常の星の障壁とは別に1つだけで、残量と新しい量の大きい方を保ち、持続時間を更新する。";
+                    break;
+                case GimmickEffect.Primed:
+                    effect = "次の通常攻撃に、攻撃力・魔力の高い方の" + n + "%の追加ダメージを乗せる";
+                    extra = "重ならず、" + primedDuration + "秒で消える。次の通常攻撃への上乗せが複数あるときは、最大の1つだけを使い、残りは消費しない。";
+                    break;
+                case GimmickEffect.Crescendo:
+                    string minimum = Duration(def, 8f).ToString("0.#######", CultureInfo.InvariantCulture);
+                    string factor = Duration(def, 1.5f).ToString("0.#######", CultureInfo.InvariantCulture);
+                    effect = "その記憶のダメージが" + n + "%増える";
+                    extra = "同じ発動では1回だけ増え、重ねられるのは5回まで、最大40%まで。効果は" + minimum + "秒か、その記憶のクールダウンの" + factor
+                        + "倍のうち長い方だけ続き、ほかの記憶を使っても保たれる。記憶ダメージを増やすほかの効果との合計は最大120%まで。";
+                    break;
+                case GimmickEffect.ElementEdge:
+                    effect = enemy + "に付いている火・冷気・光・闇の種類を数え、1種類につき攻撃力・魔力の高い方の" + n + "%の追加ダメージを与える";
+                    extra = "数えるのは4種類までで、属性は消費しない。";
+                    break;
+                case GimmickEffect.PackMend:
+                    effect = "自分の生存している召喚獣すべてを、それぞれの最大HPの" + n + "%回復する";
+                    extra = "旅人は回復しない。";
+                    break;
+                case GimmickEffect.Sap:
+                    effect = enemy + "の与ダメージを" + duration + "秒間" + n + "%下げる";
+                    extra = "ミニボス・ボスでは効果が半分になる。重ならず、強い方の効果が残って時間が延びる。";
+                    break;
+                default:
+                    effect = enemy + "に対する自分の通常攻撃と記憶の会心率が、" + duration + "秒間" + n + "%上がる";
+                    extra = "重ならず、強い方の効果が残って時間が延びる。確定会心は変わらない。";
+                    break;
+            }
+            float cd = Math.Max(MinimumCooldown(def.Effect), def.Cooldown);
+            return JaSentence(condition, effect) + extra + JaLimits(cd, cap) + JaNoStarTrigger;
+        }
         public static float SiphonHeal(float damage, float maximumHealth, float percent)
         {
             if (!Finite(damage) || !Finite(maximumHealth) || !Finite(percent) || damage <= 0 || maximumHealth <= 0 || percent <= 0) return 0;
