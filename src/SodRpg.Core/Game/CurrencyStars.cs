@@ -29,27 +29,27 @@ namespace SodRpg.Core.Game
             switch (p)
             {
                 case Power.KillGoldPct:
-                    body = Loc.T($"撃破獲得ゴールド +{v}%／敵を倒したとき。本体の星『富の蓄え』などの撃破ゴールド倍率に加算",
+                    body = Loc.T($"敵を倒したときの獲得ゴールドが{v}%増える。本体の星『富の蓄え』などの撃破ゴールド倍率に加算される。",
                         $"Kill gold +{v}% when enemies are killed; adds to the base game's kill-gold multiplier bonuses");
                     break;
                 case Power.EliteKillGoldPct:
-                    body = Loc.T($"エリート・ボスの撃破獲得ゴールド +{v}%／自分に分配される撃破ゴールドを、撃破ゴールド倍率を適用した後の額からさらに増やす",
+                    body = Loc.T($"エリートやボスを倒したとき、自分に分配される撃破ゴールドが、撃破ゴールド倍率を適用した後の額からさらに{v}%増える。",
                         $"Elite and Boss kill gold +{v}% of your share after applying your kill-gold multipliers");
                     break;
                 case Power.DreamDustPct:
-                    body = Loc.T($"夢のダスト拾得量 +{v}%／自分で拾ったとき。仲間からの贈り物は対象外",
+                    body = Loc.T($"自分で拾った夢のダストの量が{v}%増える。仲間からの贈り物は対象外。",
                         $"Dream Dust picked up +{v}% when you collect it yourself; excludes gifts from allies");
                     break;
                 case Power.DreamDustDelvePct:
-                    body = Loc.T($"夢のダスト拾得量 +{v}%（潜行中は合計+{v * 2}%）／自分で拾ったとき。確保せず開始深度より深く進んでいる間は、同じ増加量をもう1回加算。仲間からの贈り物は対象外",
+                    body = Loc.T($"自分で拾った夢のダストの量が{v}%増える。確保せず開始深度より深く進んでいる間は、同じ増加量がもう1回加算され、合計で{v * 2}%増える。仲間からの贈り物は対象外。",
                         $"Dream Dust picked up +{v}% (+{v * 2}% total while delving) when you collect it yourself; adds the same bonus again while proceeding beyond your starting depth without securing the run; excludes gifts from allies");
                     break;
                 default: return "-";
             }
             string cap = p == Power.DreamDustDelvePct
-                ? Loc.T($"（同じ効果の星は合計で、通常時は最大+{Content.PowerCap(p)}%、潜行中は最大+{Content.PowerCap(p) * 2}%。夢のダストの他の増加効果とは別枠）",
+                ? Loc.T($"同じ効果の星は合計で、通常時は最大{Content.PowerCap(p)}%、潜行中は最大{Content.PowerCap(p) * 2}%まで。夢のダストの他の増加効果とは別枠である。",
                     $" (combined stars of this effect capped at +{Content.PowerCap(p)}% normally and +{Content.PowerCap(p) * 2}% while delving, separate from other Dream Dust bonuses)")
-                : Loc.T($"（同じ効果の星は合計で最大{Content.PowerCap(p)}%。他の獲得量増加とは別枠）",
+                : Loc.T($"同じ効果の星は合計で最大{Content.PowerCap(p)}%まで。他の獲得量増加とは別枠である。",
                     $" (combined stars of this effect capped at {Content.PowerCap(p)}%, separate from other acquisition bonuses)");
             return body + cap;
         }
