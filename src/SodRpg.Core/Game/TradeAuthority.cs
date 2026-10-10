@@ -289,7 +289,7 @@ namespace SodRpg.Core.Game
         /// <param name="gold">そのプレイヤーの現在のゴールド（本体の権威ある値）。</param>
         /// <param name="dust">そのプレイヤーの現在のドリームダスト（同上）。</param>
         /// <param name="goldCostScale">本体の価格補正（GameManager.GetAdjustedGoldAmount_Cost(1f)。ホスト側の値）。</param>
-        public TradeDecision Evaluate(string playerKey, string runId, TradeRequest req, int gold, int dust, float goldCostScale = 1f)
+        public TradeDecision Evaluate(string playerKey, string runId, TradeRequest req, int gold, int dust, float goldCostScale = 1f, int salvageScale = 1)
         {
             var d = new TradeDecision();
             if (req == null || req.Token <= 0) { d.Reason = "invalid"; return d; }
@@ -310,13 +310,14 @@ namespace SodRpg.Core.Game
                     if (req.Rarity < 0 || req.Rarity > (int)Rarity.Legendary || req.Enhance < 0
                         || req.Enhance > Content.MaxEnhanceFor((Rarity)req.Rarity, Content.MaxLimitBreaks((Rarity)req.Rarity)))
                     { d.Reason = "invalid"; return d; }
-                    d.EarnDust = Economy.SalvageDust((Rarity)req.Rarity, req.Enhance);
+                    d.EarnDust = Economy.SalvageDust((Rarity)req.Rarity, req.Enhance, 1);
                     if (d.EarnDust > Economy.MaxDustEarnPerTrade) { d.Reason = "invalid"; return d; }
+                    d.EarnDust = Economy.SalvageDust((Rarity)req.Rarity, req.Enhance, salvageScale);
                     break;
                 case TradeKind.SatchelOverflowDust:
                     if (req.Rarity < 0 || req.Rarity > (int)Rarity.Legendary || req.Enhance != 0)
                     { d.Reason = "invalid"; return d; }
-                    d.EarnDust = Economy.SatchelOverflowDust((Rarity)req.Rarity);
+                    d.EarnDust = Economy.SalvageDust((Rarity)req.Rarity, 0, 1);
                     break;
                 default:
                     d.Reason = "invalid";

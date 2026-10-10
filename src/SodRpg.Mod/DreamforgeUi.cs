@@ -2951,6 +2951,7 @@ namespace SodRpg.Mod
         private RunState _bulkDustRun;
         private int _bulkDustSatchelCount = -1, _bulkDustReservedCount = -1, _bulkDustPendingCount = -1;
         private int _bulkDustCount;
+        private int _bulkDustScale = -1;
         private long _bulkDustTotal;
         private bool _bulkDustJapanese;
         private string _bulkDustLabel, _bulkDustConfirmLabel;
@@ -2959,9 +2960,11 @@ namespace SodRpg.Mod
         {
             int reserved = _s.Trades.ReservedSalvageCount;
             int pending = _s.Profile.PendingSalvage.Count;
+            int scale = _s.SalvageScale;
             if (_bulkDustRun != run || _bulkDustSatchelCount != run.Satchel.Count
-                || _bulkDustReservedCount != reserved || _bulkDustPendingCount != pending)
+                || _bulkDustReservedCount != reserved || _bulkDustPendingCount != pending || _bulkDustScale != scale)
             {
+                _bulkDustScale = scale;
                 _bulkDustRun = run;
                 _bulkDustSatchelCount = run.Satchel.Count;
                 _bulkDustReservedCount = reserved;
@@ -2973,7 +2976,7 @@ namespace SodRpg.Mod
                     var r = run.Satchel[i];
                     if (!_s.CanBulkSalvageUnsecured(r)) continue;
                     _bulkDustCount++;
-                    _bulkDustTotal += Economy.SalvageDust(r);
+                    _bulkDustTotal += _s.SalvageDust(r);
                 }
                 _bulkDustArmedAt = -1f;
                 _bulkDustLabel = null;
@@ -3084,7 +3087,7 @@ namespace SodRpg.Mod
                     bool sure = _confirmDust == r.Uid;
                     string dustLabel = sure
                         ? Loc.T("<color=#ff8080>もう一度押すと分解</color>", "<color=#ff8080>Press again</color>")
-                        : Loc.T($"ドリームダストに分解（+{Economy.SalvageDust(r)}）", $"Salvage for Dream Dust (+{Economy.SalvageDust(r)})");
+                        : Loc.T($"ドリームダストに分解（+{_s.SalvageDust(r)}）", $"Salvage for Dream Dust (+{_s.SalvageDust(r)})");
                     if (GUILayout.Button(dustLabel, _st.Button, GUILayout.Width(190)))
                     {
                         if (!sure) _confirmDust = r.Uid;

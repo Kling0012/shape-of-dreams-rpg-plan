@@ -123,7 +123,7 @@ namespace SodRpg.Mod
                     int goldBefore = caller.gold, dustBefore = caller.dreamDust;
                     var d = req.Kind == TradeKind.SatchelOverflowDust && !req.Query
                         ? GrantSatchelOverflow(msg, caller, req)
-                        : _tradeAuthority.Evaluate(playerKey, runId, req, goldBefore, dustBefore, TradeGoldCostScale());
+                        : _tradeAuthority.Evaluate(playerKey, runId, req, goldBefore, dustBefore, TradeGoldCostScale(), SalvageScaleFor(caller));
                     if (d.Ok && !d.Replayed && req.Kind != TradeKind.SatchelOverflowDust)
                         d = ExecuteManualTrade(caller, playerKey, runId, req, d, goldBefore, dustBefore);
                     ok = d.Ok;
@@ -142,6 +142,12 @@ namespace SodRpg.Mod
                 // メッセージの形は変えず、reason に「コード@台帳の識別子」で台帳の識別子を載せる。クライアントはこれで台帳の入れ替わりに気づく（#36）。
                 token = msg.token, ok = ok, reason = TradeWire.ComposeReason(reason, ledgerId),
             });
+        }
+
+        internal static int SalvageScaleFor(DewPlayer caller)
+        {
+            try { return NetworkServer.active && caller != null && caller == DewPlayer.local ? Economy.SalvageScale : 1; }
+            catch (Exception) { return 1; }
         }
 
         /// <summary>中断保存と再接続をまたぐ本人の鍵。本体の通貨保存も guid ごとに復元される。</summary>

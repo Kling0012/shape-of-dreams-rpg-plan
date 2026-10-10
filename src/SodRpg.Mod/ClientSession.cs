@@ -760,6 +760,8 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
 
         public int LocalGold => DewPlayer.local != null ? DewPlayer.local.gold : 0;
         public int LocalDust => DewPlayer.local != null ? DewPlayer.local.dreamDust : 0;
+        internal int SalvageScale => HostAuthority.SalvageScaleFor(DewPlayer.local);
+        internal int SalvageDust(Relic r) => Economy.SalvageDust(r, SalvageScale);
         public bool TradePending(TradeKind kind) => _trades.HasPending(kind);
 
         /// <summary>夢の商人をゴールドで買う（本体の難易度補正を通した価格）。</summary>
@@ -963,7 +965,7 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
                 var r = run.Satchel.Find(x => x.Uid == uid) ?? throw new InvalidOperationException(Loc.T("未確保の遺物ではありません。", "That relic is not in your satchel."));
                 string blocked = TradeUnavailable();
                 if (blocked != null) return blocked;
-                return SendTrade(_trades.BeginSalvage(r, Time.unscaledTime));
+                return SendTrade(_trades.BeginSalvage(r, Time.unscaledTime, HostAuthority.SalvageScaleFor(DewPlayer.local)));
             }
             catch (InvalidOperationException ex)
             {
@@ -1004,7 +1006,7 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
                     }
                     blocked = TradeUnavailable();
                     if (blocked != null) return blocked;
-                    string err = SendTrade(_trades.BeginSalvage(r, Time.unscaledTime));
+                    string err = SendTrade(_trades.BeginSalvage(r, Time.unscaledTime, HostAuthority.SalvageScaleFor(DewPlayer.local)));
                     if (err != null) return err;
                     sent++;
                     remaining--;
