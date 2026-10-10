@@ -172,9 +172,9 @@ namespace SodRpg.Core.Tests
                     string windText = wind.Describe(); string flowText = flow.Describe();
                     if (japanese)
                     {
-                        Assert.Contains("会心すると", windText); Assert.Contains("準備を消費", windText); Assert.Contains("3秒以内", windText);
-                        Assert.Contains("35%短縮", windText); Assert.Contains("計6体まで", windText); Assert.Contains("発動間隔1秒", windText);
-                        Assert.Contains("3回連続", flowText); Assert.Contains("4秒以内", flowText); Assert.Contains("連続数をリセット", flowText);
+                        Assert.Contains("会心したとき", windText); Assert.Contains("準備は消費", windText); Assert.Contains("3秒以内", windText);
+                        Assert.Contains("35%短縮", windText); Assert.Contains("計6体まで", windText); Assert.Contains("再発動まで1秒", windText);
+                        Assert.Contains("3回連続", flowText); Assert.Contains("4秒以内", flowText); Assert.Contains("連続数はリセット", flowText);
                         Assert.Contains("計6体まで", flowText);
                     }
                     else
