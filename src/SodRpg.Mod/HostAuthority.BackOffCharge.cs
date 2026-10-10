@@ -19,6 +19,10 @@ namespace SodRpg.Mod
             public readonly BackOffChargeRuntime Runtime = new BackOffChargeRuntime();
             public Action<EventInfoCast> Start, Finish;
             public EventInfo StartEvent, CancelEvent;
+            public bool Enabled;
+            public SkillTrigger ChargingSkill;
+
+            public void End() { Runtime.End(); ChargingSkill = null; }
         }
 
         private readonly Dictionary<HeroRuntime, BackOffChargeHost> _backOffCharge = new Dictionary<HeroRuntime, BackOffChargeHost>();
@@ -27,12 +31,25 @@ namespace SodRpg.Mod
         {
             if (rt?.Hero == null || _backOffCharge.ContainsKey(rt)) return;
             var host = new BackOffChargeHost();
-            host.Start = info => { if (IsBackOffCast(rt, info)) host.Runtime.Begin(Time.time); };
-            host.Finish = info => { if (IsBackOffCast(rt, info)) host.Runtime.End(); };
+            host.Start = info =>
+            {
+                if (!host.Enabled || !IsBackOffCast(rt, info)) return;
+                host.ChargingSkill = (SkillTrigger)info.trigger;
+                host.Runtime.Begin(Time.time);
+            };
+            // 装備の交換後に届いた中断も、開始した実体に対する通知なら受け取る。
+            host.Finish = info => { if (ReferenceEquals(info.trigger, host.ChargingSkill)) host.End(); };
             // 完了は既存の仕掛けも使っている通知。開始と中断は、型が合うときだけ購読する。
             rt.Hero.EntityEvent_OnCastCompleteBeforePrepare += host.Finish;
             host.StartEvent = SubscribeCastEvent(rt.Hero, "EntityEvent_OnCastStart", host.Start);
             host.CancelEvent = SubscribeCastEvent(rt.Hero, "EntityEvent_OnCastCancel", host.Finish);
+            // 中断を追えない開始フックだけを残すと、詠唱をやめた後も安全弁までダメージが続く。
+            if (host.StartEvent == null || host.CancelEvent == null)
+            {
+                RemoveBackOffChargeHandlers(rt.Hero, host);
+                return;
+            }
+            host.Enabled = true;
             _backOffCharge.Add(rt, host);
         }
 
@@ -43,7 +60,7 @@ namespace SodRpg.Mod
                 var evt = typeof(Entity).GetEvent(name, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
                 if (evt == null || evt.EventHandlerType != typeof(Action<EventInfoCast>))
                 {
-                    Log.Warn($"Native event {name} unavailable; Back Off charge damage may not trigger.");
+                    Log.Warn($"Native event {name} unavailable; Back Off charge damage disabled.");
                     return null;
                 }
                 evt.AddEventHandler(hero, handler);
@@ -51,7 +68,7 @@ namespace SodRpg.Mod
             }
             catch (Exception ex)
             {
-                Log.Warn($"Native event {name} could not be subscribed; Back Off charge damage may not trigger: {ex.Message}");
+                Log.Warn($"Native event {name} could not be subscribed; Back Off charge damage disabled: {ex.Message}");
                 return null;
             }
         }
@@ -66,20 +83,30 @@ namespace SodRpg.Mod
         {
             if (rt == null || !_backOffCharge.TryGetValue(rt, out var host)) return;
             _backOffCharge.Remove(rt);
-            host.Runtime.End();
-            if (rt.Hero == null) return;
-            rt.Hero.EntityEvent_OnCastCompleteBeforePrepare -= host.Finish;
-            try
-            {
-                host.StartEvent?.RemoveEventHandler(rt.Hero, host.Start);
-                host.CancelEvent?.RemoveEventHandler(rt.Hero, host.Finish);
-            }
+            RemoveBackOffChargeHandlers(rt.Hero, host);
+        }
+
+        private static void RemoveBackOffChargeHandlers(Hero hero, BackOffChargeHost host)
+        {
+            // 解除が本体側で失敗しても、残った開始ハンドラーから状態を再開させない。
+            host.Enabled = false;
+            host.End();
+            if (hero == null) return;
+            try { hero.EntityEvent_OnCastCompleteBeforePrepare -= host.Finish; }
+            catch (Exception ex) { Log.Warn("Back Off charge unsubscribe failed: " + ex.Message); }
+            RemoveBackOffCastHandler(hero, host.StartEvent, host.Start);
+            RemoveBackOffCastHandler(hero, host.CancelEvent, host.Finish);
+        }
+
+        private static void RemoveBackOffCastHandler(Hero hero, EventInfo evt, Action<EventInfoCast> handler)
+        {
+            try { evt?.RemoveEventHandler(hero, handler); }
             catch (Exception ex) { Log.Warn("Back Off charge unsubscribe failed: " + ex.Message); }
         }
 
         private void ClearBackOffCharge()
         {
-            foreach (var host in _backOffCharge.Values) host.Runtime.End();
+            foreach (var host in _backOffCharge.Values) host.End();
         }
 
         private void StageBackOffCharge()
@@ -91,9 +118,10 @@ namespace SodRpg.Mod
         {
             if (!host.Runtime.Charging) return;
             var hero = rt.Hero;
-            if (!Alive(hero) || hero.Status == null || hero.Status.hasStun || FindMemory(hero, BackOffChargeRuntime.Memory) == null)
+            if (!Alive(hero) || hero.Status == null || hero.Status.hasStun
+                || !ReferenceEquals(host.ChargingSkill, FindMemory(hero, BackOffChargeRuntime.Memory)))
             {
-                host.Runtime.End();
+                host.End();
                 return;
             }
             int pulses = host.Runtime.Poll(now);
