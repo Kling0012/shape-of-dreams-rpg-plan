@@ -7,6 +7,8 @@ namespace SodRpg.Mod
     internal sealed partial class ClientSession
     {
         private bool _hostBuildInputCapability;
+        private bool _hostNetLite;
+        private bool _netLiteReceiveReady, _netLiteReceiveWarned;
         private float _nextBuildInputProbe;
         private Action<DreamforgeBuildInputCapabilityMsg> _onBuildInputCapability;
 
@@ -28,7 +30,9 @@ namespace SodRpg.Mod
 
         private void OnBuildInputCapability(DreamforgeBuildInputCapabilityMsg msg)
         {
-            if (msg == null || msg.version != 1 || _hostBuildInputCapability) return;
+            if (msg == null || msg.version != 1) return;
+            _hostNetLite = msg.netLite == 1 && _netLiteReceiveReady;
+            if (_hostBuildInputCapability) return;
             _hostBuildInputCapability = true;
             _buildDirty = true;
             _buildCacheFrame = -1;
@@ -36,10 +40,9 @@ namespace SodRpg.Mod
 
         private void ProbeBuildInputCapability(string heroKey)
         {
-            if (NetworkServer.active || _hostBuildInputCapability || Profile.Hero(heroKey).ExtraPoints == 0
-                || Time.unscaledTime < _nextBuildInputProbe) return;
+            if (NetworkServer.active || _hostNetLite || !_helloAnswered || Time.unscaledTime < _nextBuildInputProbe) return;
             _nextBuildInputProbe = Time.unscaledTime + 5f;
-            try { _clientRpcOn.CustomRpc_SendMessageToServer(new DreamforgeBuildInputCapabilityMsg()); } catch (Exception) { }
+            try { _clientRpcOn.CustomRpc_SendMessageToServer(new DreamforgeBuildInputCapabilityMsg { netLite = _netLiteReceiveReady ? 1 : 0 }); } catch (Exception) { }
         }
     }
 

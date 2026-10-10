@@ -57,6 +57,40 @@ namespace SodRpg.Mod
         private readonly Plane[] _bossVisualPlanes = new Plane[6];
         private static readonly GUIContent[] BossCaptionGlyphs = CreateBossCaptionGlyphs();
         private Action<DreamforgeBossEffectsMsg> _onBossEffects;
+        private Action<DreamforgeBossLiteMsg> _onBossLite;
+        private readonly DreamforgeBossEffectsMsg _bossLiteDecoded = new DreamforgeBossEffectsMsg();
+        private readonly DreamforgeBossEffect[] _bossLiteEffects = CreateBossLiteEffects();
+        private readonly DreamforgeBossEffect[][] _bossLiteBatches = CreateBossLiteBatches();
+
+        private static DreamforgeBossEffect[] CreateBossLiteEffects()
+        {
+            var effects = new DreamforgeBossEffect[BossDisplayEffectLimit];
+            for (int i = 0; i < effects.Length; i++) effects[i] = new DreamforgeBossEffect();
+            return effects;
+        }
+        private static DreamforgeBossEffect[][] CreateBossLiteBatches()
+        {
+            var batches = new DreamforgeBossEffect[BossDisplayEffectLimit + 1][];
+            for (int i = 0; i < batches.Length; i++) batches[i] = new DreamforgeBossEffect[i];
+            return batches;
+        }
+        private void OnBossLite(DreamforgeBossLiteMsg source)
+        {
+            if (source == null || source.f == null || source.f.Length > BossDisplayEffectLimit) return;
+            var msg = _bossLiteDecoded;
+            msg.protocol = source.p; msg.content = source.c; msg.runId = source.r;
+            msg.authorityGeneration = source.a; msg.ownerNetId = source.o;
+            msg.zone = source.z; msg.room = source.n; msg.epoch = source.e; msg.revision = source.v;
+            msg.equipmentEpoch = source.q; msg.snapshot = source.s; msg.hostTime = source.t; msg.sentAt = source.u;
+            msg.effects = _bossLiteBatches[source.f.Length];
+            for (int i = 0; i < source.f.Length; i++)
+            {
+                if (source.f[i] == null) return;
+                source.f[i].CopyTo(_bossLiteEffects[i]);
+                msg.effects[i] = _bossLiteEffects[i];
+            }
+            OnBossEffects(msg);
+        }
         private string _bossVisualRun;
         private int _bossVisualZone = -1, _bossVisualRoom = -1, _bossRenderCount, _bossSegmentsLeft;
         private float _nextBossDisplayPrune, _nextBossRenderRefresh;
@@ -110,11 +144,29 @@ namespace SodRpg.Mod
         {
             if (_onBossEffects == null) _onBossEffects = OnBossEffects;
             actor.CustomRpc_RegisterClientMessageHandler<DreamforgeBossEffectsMsg>(_onBossEffects);
+            _netLiteReceiveReady = false;
+            try
+            {
+                if (_onBossLite == null) _onBossLite = OnBossLite;
+                actor.CustomRpc_RegisterClientMessageHandler<DreamforgeBossLiteMsg>(_onBossLite);
+                _netLiteReceiveReady = true;
+            }
+            catch (Exception ex)
+            {
+                if (!_netLiteReceiveWarned)
+                {
+                    _netLiteReceiveWarned = true;
+                    Log.Warn("NetLite boss receiver unavailable; legacy displays remain active: " + ex.Message);
+                }
+            }
         }
         private void UnregisterBossVisuals(Actor actor)
         {
             if (_onBossEffects != null)
                 actor.CustomRpc_UnregisterClientMessageHandler<DreamforgeBossEffectsMsg>(_onBossEffects);
+            _netLiteReceiveReady = false;
+            if (_onBossLite != null)
+                try { actor.CustomRpc_UnregisterClientMessageHandler<DreamforgeBossLiteMsg>(_onBossLite); } catch (Exception) { }
         }
         private void ClearBossDisplay()
         {

@@ -221,6 +221,8 @@ namespace SodRpg.Mod
     public class DreamforgeBuildInputCapabilityMsg
     {
         public int version = 1;
+        // Optional JSON field: absent on older peers. Hello's fixed schema stays intact.
+        public int netLite;
     }
 
     // Optional extension: Hello and every existing packet remain unchanged (Protocol 24).

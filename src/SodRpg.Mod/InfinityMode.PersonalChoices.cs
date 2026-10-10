@@ -210,6 +210,7 @@ namespace SodRpg.Mod
                     graphEpoch = msg.graphEpoch, segmentEpoch = msg.segmentEpoch, revision = msg.revision,
                 };
                 if (caller == DewPlayer.local) ReceivePersonalChoiceAck(ack);
+                else if (NetworkTrafficOptions.OwnerOnly) _personalActor?.CustomRpc_SendMessageToClient(caller, ack);
                 else _personalActor?.CustomRpc_SendMessageToAllClients(ack);
             }
             catch (Exception ex) { WarnPersonalChoices("discarded personal choice: " + ex.Message); }

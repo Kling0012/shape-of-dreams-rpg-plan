@@ -393,6 +393,7 @@ namespace SodRpg.Mod
                     _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgePressureDividendMsg>(OnPressureDividend);
                 }
                 _clientRpcOn = actor;
+                _lastSentBuild = null; _lastBuildActor = null; _lastBuildHero = null;
                 // 接続が替わったら、応答待ちの取引は結果不明にして新しい接続から照会する（捨てると、支払い済みの対価や預かった遺物を失う）。
                 _trades.MarkAllUnresolved(Time.unscaledTime);
                 _hostLedgerId = 0; // 接続先が替わったので、新しい接続の台帳の識別子を尋ね直す（それまで新しい取引は始めない）
@@ -1239,6 +1240,11 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
             return _buildCache;
         }
 
+        private string _lastSentBuild;
+        private Actor _lastBuildActor;
+        private Hero _lastBuildHero;
+        private float _lastBuildHeartbeat;
+
         private void SendBuildIfNeeded()
         {
             if (_nativeContinueRestoring || _nativeContinueCheckpoint != null || _continueCheckpointBlocked) return;
@@ -1265,8 +1271,17 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
                 : Build.Compute(submissionProfile, heroKey, Profile.Run?.Heat ?? 0, Profile.Run?.Pacts, Profile.Run?.DailyId ?? 0);
             string encoded = HostBuildValidation.Encode(submissionBuild, submissionProfile, heroKey,
                 Profile.Run?.Heat ?? 0, Profile.Run?.Pacts, Profile.Run?.DailyId ?? 0);
-            foreach (var part in BuildTransfer.Split(encoded))
-                _clientRpcOn.CustomRpc_SendMessageToServer(DreamforgeBuildMsg.FromPart(part));
+            bool suppress = NetworkTrafficOptions.SkipUnchanged && HostConfirmed
+                && !_monsterAuthority.BuildResendRequired && ReferenceEquals(_lastBuildActor, _clientRpcOn)
+                && ReferenceEquals(_lastBuildHero, hero) && _lastSentBuild == encoded
+                && now - _lastBuildHeartbeat < 120f;
+            if (!suppress)
+            {
+                foreach (var part in BuildTransfer.Split(encoded))
+                    _clientRpcOn.CustomRpc_SendMessageToServer(DreamforgeBuildMsg.FromPart(part));
+                _lastSentBuild = encoded; _lastBuildActor = _clientRpcOn; _lastBuildHero = hero;
+                _lastBuildHeartbeat = now;
+            }
             _buildDirty = false;
             _monsterAuthority.BuildSent();
             _sentDreamLevel = Profile.DreamLevel;

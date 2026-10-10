@@ -38,6 +38,18 @@ namespace SodRpg.Mod
 
         [LabelText("Lighter rendering / 描画の軽量化（Off：なし／Light：軽め／Strong：強め／Max：最大）")]
         public LightweightMode lightweight = LightweightMode.Off;
+
+        [LabelText("Skip unchanged network state / 変わっていない通信を省く")]
+        public bool netSkipUnchanged = true;
+
+        [LabelText("Batch frequent network updates / 頻繁な通信をまとめる")]
+        public bool netCoalesce = true;
+
+        [LabelText("Send personal replies only to their owner / 個人への返事は本人にだけ送る")]
+        public bool netOwnerOnly = true;
+
+        [LabelText("Smaller packets with supported peers / 対応した相手への通信を小さくする")]
+        public bool netCompact = true;
     }
 
     public enum HudMode
