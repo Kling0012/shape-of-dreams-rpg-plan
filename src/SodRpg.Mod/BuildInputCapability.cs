@@ -9,6 +9,32 @@ namespace SodRpg.Mod
         private bool _hostBuildInputCapability;
         private bool _hostNetLite;
         private bool _netLiteReceiveReady, _netLiteReceiveWarned;
+        private bool _hostAutocastPressureCapability;
+        private float _nextAutocastPressureReport;
+        private int _lastAutocastPressure = -1;
+        private Action<DreamforgeAutocastPressureCapabilityMsg> _onAutocastPressureCapability;
+
+        private void RegisterAutocastPressureCapability(Actor actor)
+        {
+            try
+            {
+                if (_onAutocastPressureCapability == null) _onAutocastPressureCapability = OnAutocastPressureCapability;
+                actor.CustomRpc_RegisterClientMessageHandler<DreamforgeAutocastPressureCapabilityMsg>(_onAutocastPressureCapability);
+            }
+            catch (Exception) { }
+        }
+
+        private void UnregisterAutocastPressureCapability(Actor actor)
+        {
+            if (actor != null && _onAutocastPressureCapability != null)
+                try { actor.CustomRpc_UnregisterClientMessageHandler<DreamforgeAutocastPressureCapabilityMsg>(_onAutocastPressureCapability); } catch (Exception) { }
+        }
+
+        private void OnAutocastPressureCapability(DreamforgeAutocastPressureCapabilityMsg msg)
+        {
+            if (msg != null && msg.version == 1 && msg.capability == "autocast-pressure")
+                _hostAutocastPressureCapability = true;
+        }
         private float _nextBuildInputProbe;
         private Action<DreamforgeBuildInputCapabilityMsg> _onBuildInputCapability;
 

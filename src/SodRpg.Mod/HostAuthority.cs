@@ -331,6 +331,7 @@ namespace SodRpg.Mod
             NativeInstance = this;
             TickCoopTrade();
             EnsureRegistered();
+            AutocastPressure.TickHost(this, _registeredOn);
             if (_registeredOn == null) return;
             if (_tickStages == null) BuildTickStages();
             // #161: ダメージイベントごとの全走査をやめ、ティックごとに1回だけ判定する。
@@ -1228,6 +1229,7 @@ namespace SodRpg.Mod
         /// <summary>全キャラから補正を外し、登録を解除する（MODの再読み込み・終了時）。</summary>
         public void Detach()
         {
+            AutocastPressure.DetachHost(this);
             DetachCoopTrade();
             ClearAssignedMechanismSession();
             if (NativeInstance == this) NativeInstance = null;

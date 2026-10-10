@@ -32,6 +32,7 @@ namespace SodRpg.Mod
             actor.CustomRpc_RegisterClientMessageHandler<DreamforgeHelloMsg>(_onHello);
             RegisterOverflowBonus(actor);
             RegisterBuildInputCapability(actor);
+            RegisterAutocastPressureCapability(actor);
         }
 
         private void UnregisterHello(Actor actor)
@@ -40,6 +41,7 @@ namespace SodRpg.Mod
                 try { actor.CustomRpc_UnregisterClientMessageHandler<DreamforgeHelloMsg>(_onHello); } catch (Exception) { }
             UnregisterOverflowBonus(actor);
             UnregisterBuildInputCapability(actor);
+            UnregisterAutocastPressureCapability(actor);
         }
 
         private void ResetHello()
@@ -52,6 +54,9 @@ namespace SodRpg.Mod
             _hostBuildInputCapability = false;
             _hostNetLite = false;
             _netLiteReceiveReady = false;
+            _hostAutocastPressureCapability = false;
+            _nextAutocastPressureReport = 0f;
+            _lastAutocastPressure = -1;
             _nextBuildInputProbe = 0f;
             HostVersionWarning = null;
             ResetOverflowBonusConnection();
@@ -121,12 +126,16 @@ namespace SodRpg.Mod
 
         private void TickHello()
         {
+            TickAutocastPressureReport();
             // ホスト自身はあいさつ不要（自分の版なので必ず一致する）。
             if (_clientRpcOn == null || !NetworkClient.active || NetworkServer.active) return;
             float now = Time.unscaledTime;
             if (now >= _nextHello)
             {
                 _clientRpcOn.CustomRpc_SendMessageToServer(CreateHelloMessage());
+                // CustomRpc ignores unknown optional types; only the binary pressure packet needs a reply first.
+                if (!_hostAutocastPressureCapability)
+                    _clientRpcOn.CustomRpc_SendMessageToServer(new DreamforgeAutocastPressureCapabilityMsg());
                 if (_helloFirstSent < 0) _helloFirstSent = now;
                 _nextHello = now + 5f;
             }

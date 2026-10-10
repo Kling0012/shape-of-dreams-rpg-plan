@@ -218,6 +218,13 @@ namespace SodRpg.Mod
     }
 
     [Serializable]
+    public class DreamforgeAutocastPressureCapabilityMsg
+    {
+        public string capability = "autocast-pressure";
+        public int version = 1;
+    }
+
+    [Serializable]
     public class DreamforgeBuildInputCapabilityMsg
     {
         public int version = 1;
