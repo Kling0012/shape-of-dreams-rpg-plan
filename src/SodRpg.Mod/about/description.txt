@@ -1,5 +1,5 @@
-[b]Bulk relic salvage in the expedition records, and a batch of co-op trade fixes.[/b]
-[b]遠征中の記録に遺物の一括分解を追加し、協力プレイの取引の不具合をまとめて直しました。[/b]
+[b]A fix for Continue.[/b]
+[b]Continue まわりの不具合を直しました。[/b]
 
 [h1]Dreamforge RPG[/h1]
 Turns every run into part of a long RPG journey: relics you keep, a risky "secure or delve" choice at every zone, a star map per Traveler, a forge, and long-term goals. Co-op ready.

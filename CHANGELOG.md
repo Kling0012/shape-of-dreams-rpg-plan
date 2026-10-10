@@ -10,6 +10,24 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v2.10.23 — Continue fix（2026-10-11）
+
+Continue まわりの不具合を直しました。 / A fix for Continue.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- Continue で前の遠征に戻ったとき、遠征の記録が多くたまっていると、保管庫へ送るボタンの使用済みの記録が消え、もう一度使えてしまうことがある問題を修正しました。 / Fixed the send-to-stash button sometimes becoming usable again after Continue when many expedition records had accumulated.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
 ## v2.10.22 — Bulk relic salvage, Limbo waypoint, co-op trade fixes（2026-10-11）
 
 遠征中の記録に遺物の一括分解を追加し、協力プレイの取引の不具合をまとめて直しました。 / Bulk relic salvage in the expedition records, and a batch of co-op trade fixes.
