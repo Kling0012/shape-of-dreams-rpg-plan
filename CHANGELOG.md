@@ -8,9 +8,28 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
-遠征中に1回だけ、鞄の未確保の遺物を保管庫へ直接送れるボタンを追加しました（不具合で確保画面が出ないときの救済）。 / Added a once-per-expedition button that sends unsecured satchel relics straight to the stash (a rescue for when the secure screen fails to appear).
+---
 
-Limboの途中で確保画面や「中断した遺物を受け取る」が出なくなることがある問題を修正しました。 / Fixed Limbo runs sometimes losing the secure-choice screen and the interrupted-relic claim button.
+## v2.10.17 — Limbo の確保メニューの修正と保管庫へ送るボタン（2026-10-10）
+
+Limbo で確保メニューが出てこない不具合を直し、鞄の遺物を保管庫へ直接送るボタンを追加しました。 / Fixes the secure menu not appearing in Limbo and adds a button to send satchel relics straight to the stash.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 新機能 / New features
+
+- **鞄の遺物を保管庫へ送る**：遠征中に1回だけ、確保とは関係なく、鞄の遺物を保管庫へ直接送れるボタンを MOD メニューに追加しました。確保メニューが出ないときの救済用です。1回押すと確認表示になり、5秒以内にもう一度押すと実行します。確保ボーナスや依頼には数えず、遠征はそのまま続きます。 / **Send satchel relics to the stash**: a once-per-expedition MOD menu button that moves your satchel relics straight to the stash, regardless of securing. It is a fallback for when the secure menu does not appear. Press once to confirm and again within 5 seconds. It does not count toward secure bonuses or quests, and the expedition continues.
+
+### 不具合の修正 / Bug fixes
+
+- Limbo で、ボスを倒したあとや次の深度で、確保メニューが出てこないことがある問題を修正しました。 / Fixed the secure menu sometimes not appearing in Limbo after a boss or on the next depth.
+- 中断した遠征の遺物を受け取らないまま次へ進むと、受け取りボタンが消えてしまうことがある問題を修正しました。 / Fixed the interrupted-expedition relic claim button sometimes disappearing if you moved on without claiming.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
 
 ---
 
