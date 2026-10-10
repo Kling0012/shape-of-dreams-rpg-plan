@@ -225,11 +225,13 @@ namespace SodRpg.Core.Game
         /// <summary>6つ装着の効果を持つか（= 6部位のセットか）。</summary>
         public bool HasSixPiece => BossStages.Count == 3 || SixPiece != null && SixPiece.Length > 0;
 
-        /// <summary>能力値の行を並べる。日本語は1行ごとに「。」で終える文にし、英語は従来どおりカンマでつなぐ。</summary>
+        /// <summary>能力値の行を並べる。日本語は読点でつないで「。」で終える文にし、英語は従来どおりカンマでつなぐ。</summary>
         internal static string JoinStatLines(IEnumerable<string> lines)
         {
             if (!Loc.Japanese) return string.Join(", ", lines);
-            return string.Concat(lines.Select(l => l.TrimEnd('。') + "。"));
+            var all = lines.Select(l => l.TrimEnd('。')).ToList();
+            // 「冷気属性効果 +10%、移動速度 +5%。」のように読点でつなぐ。注記つきの長い行（すでに文）が混じるときは、1行ずつ文にする。
+            return all.Any(l => l.Contains('。')) ? string.Concat(all.Select(l => l + "。")) : string.Join("、", all) + "。";
         }
 
         public string Describe()
@@ -5524,12 +5526,12 @@ namespace SodRpg.Core.Game
                 case Stat.LightAmp: return Loc.T($"光属性効果 {sign}{v}%", $"Light effect strength {sign}{v}%");
                 case Stat.AttackRangePct: return Loc.T($"通常攻撃の射程 {sign}{v}%", $"Basic attack range {sign}{v}%");
                 case Stat.FourthAttackShift: return Loc.T($"強化通常攻撃までの必要回数 -{v}発（4発目の強化攻撃を早める）", $"Attacks needed for an empowered basic attack -{v} (brings the empowered fourth attack forward)");
-                case Stat.EssenceSlotIdentity: return Loc.T($"エッセンス枠 {sign}{v}（装備中のアイデンティティ記憶が対象。星・刻印・装備の追加枠は旅人ごとに合算し、各記憶 +{EssenceSlots.MaxPerLocation}、移動と合わせて最大 +{EssenceSlots.MaxAdded}）", $"Essence slots {sign}{v} (for your equipped Identity memory; shared across stars, keystones, engravings and equipment: +{EssenceSlots.MaxPerLocation} per memory, +{EssenceSlots.MaxAdded} total with Movement per traveler)");
-                case Stat.EssenceSlotMovement: return Loc.T($"エッセンス枠 {sign}{v}（装備中の移動の記憶が対象。星・刻印・装備の追加枠は旅人ごとに合算し、各記憶 +{EssenceSlots.MaxPerLocation}、アイデンティティと合わせて最大 +{EssenceSlots.MaxAdded}）", $"Essence slots {sign}{v} (for your equipped Movement memory; shared across stars, keystones, engravings and equipment: +{EssenceSlots.MaxPerLocation} per memory, +{EssenceSlots.MaxAdded} total with Identity per traveler)");
-                case Stat.HealPower: return Loc.T($"与えるHP回復量 {sign}{v}%（自分・味方への回復が対象。装備・星の同じ能力値は合計で最大{StatCap(s)}%まで）", $"Healing granted {sign}{v}% (to yourself and allies; combined equipment and star bonuses to this stat capped at {StatCap(s)}%)");
-                case Stat.ShieldPower: return Loc.T($"与える障壁量 {sign}{v}%（自分・味方への障壁が対象。装備・星の同じ能力値は合計で最大{StatCap(s)}%まで）", $"Shield amount granted {sign}{v}% (to yourself and allies; combined equipment and star bonuses to this stat capped at {StatCap(s)}%)");
-                case Stat.SummonPower: return Loc.T($"自分の召喚獣の与ダメージ {sign}{v}%（装備・星の同じ能力値は合計で最大{StatCap(s)}%まで）", $"Your summons' damage {sign}{v}% (combined equipment and star bonuses to this stat capped at {StatCap(s)}%)");
-                case Stat.SacrificeReduction: return Loc.T($"HPを捧げる技のHP消費 {-v:+0;-0;0}%（装備・星の同じ能力値による軽減は合計で最大{StatCap(s)}%まで）", $"HP cost of health-sacrificing skills {-v:+0;-0;0}% (combined equipment and star reductions capped at {StatCap(s)}%)");
+                case Stat.EssenceSlotIdentity: return Loc.T($"エッセンス枠 {sign}{v}。装備中のアイデンティティ記憶が対象で、星・刻印・装備の追加枠は旅人ごとに合算する。各記憶に最大 +{EssenceSlots.MaxPerLocation}、移動と合わせて最大 +{EssenceSlots.MaxAdded}まで。", $"Essence slots {sign}{v} (for your equipped Identity memory; shared across stars, keystones, engravings and equipment: +{EssenceSlots.MaxPerLocation} per memory, +{EssenceSlots.MaxAdded} total with Movement per traveler)");
+                case Stat.EssenceSlotMovement: return Loc.T($"エッセンス枠 {sign}{v}。装備中の移動の記憶が対象で、星・刻印・装備の追加枠は旅人ごとに合算する。各記憶に最大 +{EssenceSlots.MaxPerLocation}、アイデンティティと合わせて最大 +{EssenceSlots.MaxAdded}まで。", $"Essence slots {sign}{v} (for your equipped Movement memory; shared across stars, keystones, engravings and equipment: +{EssenceSlots.MaxPerLocation} per memory, +{EssenceSlots.MaxAdded} total with Identity per traveler)");
+                case Stat.HealPower: return Loc.T($"与えるHP回復量 {sign}{v}%。自分・味方への回復が対象で、装備・星の同じ能力値は合計で最大{StatCap(s)}%まで。", $"Healing granted {sign}{v}% (to yourself and allies; combined equipment and star bonuses to this stat capped at {StatCap(s)}%)");
+                case Stat.ShieldPower: return Loc.T($"与える障壁量 {sign}{v}%。自分・味方への障壁が対象で、装備・星の同じ能力値は合計で最大{StatCap(s)}%まで。", $"Shield amount granted {sign}{v}% (to yourself and allies; combined equipment and star bonuses to this stat capped at {StatCap(s)}%)");
+                case Stat.SummonPower: return Loc.T($"自分の召喚獣の与ダメージ {sign}{v}%。装備・星の同じ能力値は合計で最大{StatCap(s)}%まで。", $"Your summons' damage {sign}{v}% (combined equipment and star bonuses to this stat capped at {StatCap(s)}%)");
+                case Stat.SacrificeReduction: return Loc.T($"HPを捧げる技のHP消費 {-v:+0;-0;0}%。装備・星の同じ能力値による軽減は合計で最大{StatCap(s)}%まで。", $"HP cost of health-sacrificing skills {-v:+0;-0;0}% (combined equipment and star reductions capped at {StatCap(s)}%)");
                 default: return Loc.T($"闇属性効果 {sign}{v}%", $"Dark effect strength {sign}{v}%");
             }
         }
