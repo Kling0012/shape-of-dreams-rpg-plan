@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
 using HarmonyLib;
 using Mirror;
@@ -13,118 +12,152 @@ namespace SodRpg.Mod
     [HarmonyPatch(typeof(Se_Star_Bismuth_D_SkillHasteAndAutoCast), "ActiveLogicUpdate")]
     internal static class NativeBismuthAutoCast
     {
+        private const int SoloCastsPerSecond = 12;
+        private const int CoopCastsPerSecond = 5;
+        private const float TargetSearchDelay = 0.1f;
+
         private sealed class ScanState
         {
             internal int Frame = -1;
             internal int NextSlot = 1;
+            internal float LastCastTime = float.NegativeInfinity;
+            internal float NextTargetSearchTime;
+            internal readonly float[] CastTimes = new float[SoloCastsPerSecond];
+            internal int CastHead;
+            internal int CastCount;
         }
 
         private static readonly ConditionalWeakTable<Hero, ScanState> States = new ConditionalWeakTable<Hero, ScanState>();
         private static readonly ConditionalWeakTable<Hero, ScanState>.CreateValueCallback CreateState = CreateScanState;
         private static bool _disabled;
+        private static readonly Action<StatusEffect, float> BaseUpdate = CreateBaseUpdate();
 
         private static ScanState CreateScanState(Hero hero) => new ScanState();
 
-        private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+        private static Action<StatusEffect, float> CreateBaseUpdate()
         {
-            var baseUpdate = AccessTools.DeclaredMethod(typeof(StatusEffect), "ActiveLogicUpdate");
-            var scan = AccessTools.DeclaredMethod(typeof(NativeBismuthAutoCast), nameof(TryScan));
-            bool inserted = false;
-            foreach (var instruction in instructions)
-            {
-                yield return instruction;
-                if (inserted || baseUpdate == null || !instruction.Calls(baseUpdate)) continue;
-                inserted = true;
-                var nativeScan = generator.DefineLabel();
-                yield return new CodeInstruction(OpCodes.Ldarg_0);
-                yield return new CodeInstruction(OpCodes.Call, scan);
-                yield return new CodeInstruction(OpCodes.Brfalse, nativeScan);
-                yield return new CodeInstruction(OpCodes.Ret);
-                var resume = new CodeInstruction(OpCodes.Nop);
-                resume.labels.Add(nativeScan);
-                yield return resume;
-            }
-            if (!inserted) Disable("Native status update was not found; keeping the game's casting scan.");
-        }
-
-        // The native logic loop runs at up to 30 Hz, after AbilityTrigger's cooldown update.
-        // Returning true suppresses the old scan, so there is only one casting path.
-        private static bool TryScan(Se_Star_Bismuth_D_SkillHasteAndAutoCast star)
-        {
-            if (_disabled) return false;
             try
             {
-                var hero = star.hero;
-                if (!NetworkServer.active || !star.isServer || hero.IsNullInactiveDeadOrKnockedOut()
-                    || !hero.isInCombat || hero.Control.ongoingChannels.Count > 0
-                    || NetworkedManagerBase<ZoneManager>.instance.isInAnyTransition
-                    || ManagerBase<CameraManager>.instance.isPlayingCutscene) return true;
-
-                var state = States.GetValue(hero, CreateState);
-                if (state.Frame == Time.frameCount) return true;
-                state.Frame = Time.frameCount;
-
-                int ready = 0;
-                float range = 0f;
-                var queued = hero.Control.queuedActions;
-                for (int slot = 0; slot < 4; slot++)
-                {
-                    var skill = GetSlot(hero, slot);
-                    // CanBeCast uses native charges, minimum delay, mana, validators and cast locks.
-                    // A spare charge can be used while the next charge is recharging, as in the game.
-                    if (skill.IsNullOrInactive() || !skill.currentConfig.isActive
-                        || !skill.CanBeCast() || !skill.CanBeReserved() || IsQueued(queued, skill)) continue;
-                    ready |= 1 << slot;
-                    if (skill.currentConfig.castMethod.type != CastMethodType.None)
-                        range = Mathf.Max(range, skill.currentConfig.effectiveRange);
-                }
-                if (ready == 0) return true;
-
-                List<Entity> targets = null;
-                ListReturnHandle<Entity> handle = default;
-                bool queried = false;
-                try
-                {
-                    for (int offset = 0; offset < 4; offset++)
-                    {
-                        int slot = (state.NextSlot + offset) % 4;
-                        if ((ready & (1 << slot)) == 0) continue;
-                        var skill = GetSlot(hero, slot);
-                        CastInfo info;
-                        if (skill.currentConfig.castMethod.type == CastMethodType.None)
-                        {
-                            info = new CastInfo(hero);
-                        }
-                        else
-                        {
-                            // Pool-backed query once per scan; select nearest without sorting or LINQ.
-                            if (!queried)
-                            {
-                                targets = DewPhysics.OverlapCircleAllEntities(out handle, hero.position, range);
-                                queried = true;
-                            }
-                            var target = FindTarget(hero, skill, targets);
-                            if (target == null) continue;
-                            info = skill.GetPredictedCastInfoToTarget(target, UnityEngine.Random.Range(0f, 0.5f));
-                        }
-                        // Recheck after target validators, which may be supplied by another MOD.
-                        if (!skill.CanBeCast() || !skill.CanBeReserved() || IsQueued(queued, skill)) continue;
-                        state.NextSlot = (slot + 1) % 4;
-                        hero.Control.Cast(skill, skill.currentConfigIndex, info);
-                        return true;
-                    }
-                }
-                finally
-                {
-                    if (queried) handle.Return();
-                }
-                return true;
+                var method = AccessTools.DeclaredMethod(typeof(StatusEffect), "ActiveLogicUpdate")
+                    ?? throw new MissingMethodException(typeof(StatusEffect).FullName, "ActiveLogicUpdate");
+                return AccessTools.MethodDelegate<Action<StatusEffect, float>>(method, null, virtualCall: false);
             }
             catch (Exception ex)
             {
-                // Only this optimization degrades. Do not run a second scan on the failed frame.
+                Disable("Base status update delegate could not be created: " + ex.Message);
+                return null;
+            }
+        }
+
+        // A false-returning Prefix also skips subsequent state-changing Prefixes on duplicate loads.
+        private static bool Prefix(Se_Star_Bismuth_D_SkillHasteAndAutoCast __instance, float dt)
+        {
+            if (_disabled || BaseUpdate == null) return true;
+            try
+            {
+                BaseUpdate(__instance, dt);
+                Scan(__instance);
+            }
+            catch (Exception ex)
+            {
+                // Only this optimization degrades. Do not repeat the base update or scan on this tick.
                 Disable(ex.Message);
-                return true;
+            }
+            return false;
+        }
+
+        // The native logic loop runs at up to 30 Hz, after AbilityTrigger's cooldown update.
+        private static void Scan(Se_Star_Bismuth_D_SkillHasteAndAutoCast star)
+        {
+            var hero = star.hero;
+            if (!NetworkServer.active || !star.isServer || hero.IsNullInactiveDeadOrKnockedOut()
+                || !hero.isInCombat || hero.Control.ongoingChannels.Count > 0
+                || NetworkedManagerBase<ZoneManager>.instance.isInAnyTransition
+                || ManagerBase<CameraManager>.instance.isPlayingCutscene) return;
+
+            var state = States.GetValue(hero, CreateState);
+            if (state.Frame == Time.frameCount) return;
+            state.Frame = Time.frameCount;
+
+            int ready = 0;
+            float range = 0f;
+            var queued = hero.Control.queuedActions;
+            for (int slot = 0; slot < 4; slot++)
+            {
+                var skill = GetSlot(hero, slot);
+                // CanBeCast uses native charges, minimum delay, mana, validators and cast locks.
+                // A spare charge can be used while the next charge is recharging, as in the game.
+                if (skill.IsNullOrInactive() || !skill.currentConfig.isActive
+                    || !skill.CanBeCast() || !skill.CanBeReserved() || IsQueued(queued, skill)) continue;
+                ready |= 1 << slot;
+                if (skill.currentConfig.castMethod.type != CastMethodType.None)
+                    range = Mathf.Max(range, skill.currentConfig.effectiveRange);
+            }
+            if (ready == 0) return;
+
+            float now = Time.time;
+            bool coop = DewPlayer.allHumanPlayers.Count > 1;
+            float interval = coop ? star.castMinIntervalCoopGame : star.castMinIntervalSoloGame;
+            var graphics = ManagerBase<GraphicsManager>.instance;
+            if (graphics != null && graphics.perfPressureStrength > 0f)
+                interval = Mathf.Lerp(interval, 0.3f, graphics.perfPressureStrength);
+            if (now - state.LastCastTime < interval) return;
+
+            // A fixed ring enforces a rolling one-second cap without per-tick allocations.
+            while (state.CastCount > 0 && now - state.CastTimes[state.CastHead] >= 1f)
+            {
+                state.CastHead = (state.CastHead + 1) % SoloCastsPerSecond;
+                state.CastCount--;
+            }
+            if (state.CastCount >= (coop ? CoopCastsPerSecond : SoloCastsPerSecond)) return;
+
+            List<Entity> targets = null;
+            ListReturnHandle<Entity> handle = default;
+            bool queried = false;
+            bool foundTarget = false;
+            try
+            {
+                for (int offset = 0; offset < 4; offset++)
+                {
+                    int slot = (state.NextSlot + offset) % 4;
+                    if ((ready & (1 << slot)) == 0) continue;
+                    var skill = GetSlot(hero, slot);
+                    CastInfo info;
+                    if (skill.currentConfig.castMethod.type == CastMethodType.None)
+                    {
+                        info = new CastInfo(hero);
+                    }
+                    else
+                    {
+                        if (now < state.NextTargetSearchTime) continue;
+                        // Pool-backed query once per scan; select nearest without sorting or LINQ.
+                        if (!queried)
+                        {
+                            targets = DewPhysics.OverlapCircleAllEntities(out handle, hero.position, range);
+                            queried = true;
+                        }
+                        var target = FindTarget(hero, skill, targets, star.aiDetectDelay, now);
+                        if (target == null) continue;
+                        foundTarget = true;
+                        info = skill.GetPredictedCastInfoToTarget(target, UnityEngine.Random.Range(0f, 0.5f));
+                    }
+                    // Recheck after target validators, which may be supplied by another MOD.
+                    if (!skill.CanBeCast() || !skill.CanBeReserved() || IsQueued(queued, skill)) continue;
+                    state.NextSlot = (slot + 1) % 4;
+                    state.LastCastTime = now;
+                    state.CastTimes[(state.CastHead + state.CastCount) % SoloCastsPerSecond] = now;
+                    state.CastCount++;
+                    hero.Control.Cast(skill, skill.currentConfigIndex, info);
+                    return;
+                }
+            }
+            finally
+            {
+                if (queried)
+                {
+                    handle.Return();
+                    if (!foundTarget) state.NextTargetSearchTime = now + TargetSearchDelay;
+                }
             }
         }
 
@@ -146,7 +179,7 @@ namespace SodRpg.Mod
             return false;
         }
 
-        private static Entity FindTarget(Hero hero, SkillTrigger skill, List<Entity> targets)
+        private static Entity FindTarget(Hero hero, SkillTrigger skill, List<Entity> targets, Vector2 aiDetectDelay, float now)
         {
             Entity nearest = null;
             float nearestDistance = float.PositiveInfinity;
@@ -155,7 +188,8 @@ namespace SodRpg.Mod
             for (int i = 0; i < targets.Count; i++)
             {
                 var target = targets[i];
-                if (target.IsNullOrInactive() || target.Visual.isSpawning) continue;
+                if (target.IsNullOrInactive() || target.Visual.isSpawning
+                    || now - target.creationTime < aiDetectDelay.Lerp(target.netId * 0.25f)) continue;
                 var delta = target.position - center;
                 float distance = delta.sqrMagnitude;
                 // Match the native overlap circle, including a target's collider at the range edge.
