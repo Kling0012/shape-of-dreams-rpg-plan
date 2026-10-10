@@ -57,6 +57,7 @@ namespace SodRpg.Mod
                 stage = "resource initialization";
                 Loc.Japanese = config.japanese;
                 NetworkTrafficOptions.Configure(config.netSkipUnchanged, config.netCoalesce, config.netOwnerOnly, config.netCompact);
+                ApplyLevelEssenceConfig();
                 // Install the generated star maps and their migration rules before any profile is loaded or any build is computed.
                 StarClusters.RegisterAllGenerated((hero, error) =>
                     Log.Warn("Generated star map disabled for " + hero + "; other features remain available: " + error));
@@ -109,6 +110,20 @@ namespace SodRpg.Mod
             NetworkTrafficOptions.Configure(config.netSkipUnchanged, config.netCoalesce, config.netOwnerOnly, config.netCompact);
             _performance?.Configure(config);
             _session?.ConfigureOverflowBonus(config.overflowDreamDust);
+            ApplyLevelEssenceConfig();
+        }
+
+        // レベル連動のエッセンス枠（ホストの設定だけが枠に反映される）。壊れた入力でも他の機能は止めない。
+        private void ApplyLevelEssenceConfig()
+        {
+            try
+            {
+                LevelEssenceSettings.Current = LevelEssenceSettings.Create(config.levelEssenceSlots,
+                    config.levelEssenceQ, config.levelEssenceW, config.levelEssenceE,
+                    config.levelEssenceStages, config.levelEssenceMaxSlots);
+                Log.Info("Level essence slots: " + LevelEssenceSettings.Current.Describe());
+            }
+            catch (Exception ex) { Log.Warn("Level essence slots settings ignored: " + ex.Message); }
         }
 
         private void OnApplicationFocus(bool hasFocus)

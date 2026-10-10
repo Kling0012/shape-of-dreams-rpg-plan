@@ -1,3 +1,4 @@
+using SodRpg.Core.Game;
 using UnityEngine.InputSystem;
 
 namespace SodRpg.Mod
@@ -47,6 +48,25 @@ namespace SodRpg.Mod
 
         [LabelText("Send personal replies only to their owner / 個人への返事は本人にだけ送る")]
         public bool netOwnerOnly = true;
+
+        [LabelText("Level essence slots: add essence slots as the hero levels up (the host's setting applies) /\nレベル連動のエッセンス枠：英雄のレベルに応じて記憶のエッセンス枠を増やす（ホストの設定が使われる）")]
+        public bool levelEssenceSlots = true;
+
+        [LabelText("Level essence slots - Q memory / レベル連動の枠：Qの記憶を対象にする")]
+        public bool levelEssenceQ = true;
+
+        [LabelText("Level essence slots - W memory / レベル連動の枠：Wの記憶を対象にする")]
+        public bool levelEssenceW = true;
+
+        [LabelText("Level essence slots - E memory / レベル連動の枠：Eの記憶を対象にする")]
+        public bool levelEssenceE = true;
+
+        [LabelText("Level essence slots - stages, \"level:total\" separated by commas (10:1, 20:2 = +1 from Lv10, +2 from Lv20) /\nレベル連動の枠：段階。「レベル:合計」をカンマ区切り（10:1, 20:2 はLv10で+1、Lv20で+2）")]
+        public string levelEssenceStages = LevelEssenceSettings.DefaultStageText;
+
+        [LabelText("Level essence slots - max slots per memory (the game's HUD draws up to 4; higher is experimental) /\nレベル連動の枠：1つの記憶の枠の最大数（ゲームの画面が描けるのは4まで。それ以上は試験的）")]
+        [UnityEngine.Range(4, 8)]
+        public int levelEssenceMaxSlots = LevelEssenceSettings.MinCeiling;
 
         [LabelText("Smaller packets with supported peers / 対応した相手への通信を小さくする")]
         public bool netCompact = true;
