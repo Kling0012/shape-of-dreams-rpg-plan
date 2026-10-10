@@ -39,6 +39,7 @@
     <Compile Include="../../src/SodRpg.Mod/PressureDividendMessages.cs" Link="ModUnderTest/PressureDividendMessages.cs" />
     <Compile Include="../../src/SodRpg.Mod/HostAuthority.UnbowedMind.cs" Link="ModUnderTest/HostAuthority.UnbowedMind.cs" />
     <Compile Include="../../src/SodRpg.Mod/HostAuthority.GemSlots.cs" Link="ModUnderTest/HostAuthority.GemSlots.cs" />
+    <Compile Include="../../src/SodRpg.Mod/HostAuthority.LevelGemSlots.cs" Link="ModUnderTest/HostAuthority.LevelGemSlots.cs" />
     <Compile Include="../../src/SodRpg.Mod/HostAuthority.BuildValidation.cs" Link="ModUnderTest/HostAuthority.BuildValidation.cs" />
     <Compile Include="../../src/SodRpg.Mod/HostAuthority.MovementCharges.cs" Link="ModUnderTest/HostAuthority.MovementCharges.cs" />
     <Compile Include="../../src/SodRpg.Mod/HostAuthority.PairCombos.cs" Link="ModUnderTest/HostAuthority.PairCombos.cs" />

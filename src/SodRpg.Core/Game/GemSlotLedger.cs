@@ -46,15 +46,22 @@ namespace SodRpg.Core.Game
         }
 
         public GemSlotDecision Decide(int current, int desired, int minimumNative = 0)
+            => Decide(current, desired, minimumNative, EssenceSlots.NativeCapPerLocation);
+
+        /// <summary>
+        /// <paramref name="ceiling"/> は1つの記憶の枠の上限（既定は本体の枠並びが描ける4）。
+        /// レベル連動の枠が利用者の指定で4を超えて試すときだけ引き上げる。
+        /// </summary>
+        public GemSlotDecision Decide(int current, int desired, int minimumNative, int ceiling)
         {
             int cap = Math.Max(0, current);
             int withoutOwn = Math.Max(Math.Max(0, minimumNative), cap - RemainingContribution(cap));
-            int contribution = Math.Min(EssenceSlots.ClampAdded(desired), int.MaxValue - withoutOwn);
+            int contribution = Math.Min(Math.Max(0, Math.Min(desired, Math.Max(EssenceSlots.MaxPerLocation, ceiling))), int.MaxValue - withoutOwn);
             // The native HUD draws gem sockets only up to the game's own per-skill ceiling (the chaos
             // shrine stops at four); a cap above it hides every socket of that skill. A baseline that
             // another mod already raised above the ceiling stays theirs; keep adding on top of it.
-            if (withoutOwn <= EssenceSlots.NativeCapPerLocation)
-                contribution = Math.Min(contribution, EssenceSlots.NativeCapPerLocation - withoutOwn);
+            if (withoutOwn <= ceiling)
+                contribution = Math.Min(contribution, ceiling - withoutOwn);
             return new GemSlotDecision(current, withoutOwn + contribution, contribution);
         }
 

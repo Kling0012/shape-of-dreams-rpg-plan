@@ -185,7 +185,8 @@ namespace SodRpg.Mod
                 && effect != null && effect.victim == hero ? Math.Max(0, effect.currentAddedGemSlotIdentity) : 0;
         }
 
-        private void UpdateGemSlot(HeroSkill skill, GemSlotLedger ledger, HeroSkillLocation loc, int desired, bool removing)
+        private void UpdateGemSlot(HeroSkill skill, GemSlotLedger ledger, HeroSkillLocation loc, int desired, bool removing,
+            int ceiling = EssenceSlots.NativeCapPerLocation)
         {
             try
             {
@@ -199,7 +200,7 @@ namespace SodRpg.Mod
                     int budget = EssenceSlots.MaxAdded;
                     if (loc == HeroSkillLocation.Movement && GemSlotLedgers.TryGetValue(skill, out var pair))
                         budget -= pair.Identity.OurContribution;
-                    budget = Math.Min(EssenceSlots.MaxPerLocation, Math.Min(Math.Max(0, budget), int.MaxValue - nativeOnly));
+                    budget = Math.Min(Math.Max(EssenceSlots.MaxPerLocation, ceiling), Math.Min(Math.Max(0, budget), int.MaxValue - nativeOnly));
                     // Save files retain exact gem locations, not caps. The observed cap already
                     // houses every restored gem below it, including slots other mods added, so
                     // count only unhoused gems as the bounded possible MOD tail.
@@ -214,7 +215,7 @@ namespace SodRpg.Mod
                         removing = false;
                     }
                 }
-                var decision = removing ? ledger.DecideRemoval(current, minimumNative) : ledger.Decide(current, desired, minimumNative);
+                var decision = removing ? ledger.DecideRemoval(current, minimumNative) : ledger.Decide(current, desired, minimumNative, ceiling);
                 // A pending source must not shrink below a cap that other mods raised meanwhile.
                 if (pendingSource) decision = ledger.PreserveExternal(decision, current);
                 int observed;

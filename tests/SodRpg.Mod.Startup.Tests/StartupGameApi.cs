@@ -74,6 +74,9 @@ namespace SodRpg.Mod
     {
         public bool japanese;
         public bool overflowDreamDust;
+        public bool levelEssenceSlots = true, levelEssenceQ = true, levelEssenceW = true, levelEssenceE = true;
+        public string levelEssenceStages = "10:1, 20:2";
+        public int levelEssenceMaxSlots = 4;
         public bool netSkipUnchanged = true, netCoalesce = true, netOwnerOnly = true, netCompact = true;
         public LightweightMode lightweight;
         public Key menuKey, securePanelKey, secureKey, delveKey;
