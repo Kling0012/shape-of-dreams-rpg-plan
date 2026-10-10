@@ -16,6 +16,7 @@
   <ItemGroup>
     <Compile Include="../../src/SodRpg.Mod/HostAuthority.KillSync.cs" Link="ModUnderTest/HostAuthority.KillSync.cs" />
     <Compile Include="../../src/SodRpg.Mod/HostAuthority.Hello.cs" Link="ModUnderTest/HostAuthority.Hello.cs" />
+    <Compile Include="../../src/SodRpg.Mod/BuildInputCapability.cs" Link="ModUnderTest/BuildInputCapability.cs" />
     <Compile Include="../../src/SodRpg.Mod/HostAuthority.Infinity.cs" Link="ModUnderTest/HostAuthority.Infinity.cs" />
     <Compile Include="../../src/SodRpg.Mod/HostAuthority.NativePowers.cs" Link="ModUnderTest/HostAuthority.NativePowers.cs" />
     <Compile Include="../../src/SodRpg.Mod/HostAuthority.MemoryActivationAttribution.cs" Link="ModUnderTest/HostAuthority.MemoryActivationAttribution.cs" />

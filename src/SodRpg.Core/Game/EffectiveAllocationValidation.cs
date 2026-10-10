@@ -206,7 +206,7 @@ namespace SodRpg.Core.Game
                         for (int rank = 1; rank <= talent.MaxRank; rank++)
                         {
                             draft.Talents[talent.Id] = rank;
-                            if (SpentPoints(draft) > StarProgression.MaxSpendablePoints || !RankEffective(scope, draft, talent, rank, details)) break;
+                            if (SpentPoints(draft) > StarProgression.MaxSpendablePoints + draft.ExtraPoints || !RankEffective(scope, draft, talent, rank, details)) break;
                             ranks = rank;
                         }
                     rows.Add(new AllocationHeadroom
@@ -821,7 +821,7 @@ namespace SodRpg.Core.Game
 
             private static HeroState RegionAllocation(HeroState hero, RegionInfo region)
             {
-                var allocation = new HeroState { Kills = hero.Kills, StarXp = hero.StarXp, AuthoredMigrationVersion = hero.AuthoredMigrationVersion };
+                var allocation = new HeroState { Kills = hero.Kills, StarXp = hero.StarXp, ExtraPoints = hero.ExtraPoints, AuthoredMigrationVersion = hero.AuthoredMigrationVersion };
                 allocation.CopyKeystonesFrom(hero);
                 Array.Copy(hero.Equipped, allocation.Equipped, hero.Equipped.Length);
                 foreach (string id in region.Ids)
@@ -1461,7 +1461,7 @@ namespace SodRpg.Core.Game
 
         private static bool SameState(HeroState a, HeroState b)
         {
-            if (!SameKeystoneSlots(a, b) || a.StarXp != b.StarXp || a.Kills != b.Kills || a.Talents.Count != b.Talents.Count || a.TalentChoices.Count != b.TalentChoices.Count) return false;
+            if (!SameKeystoneSlots(a, b) || a.StarXp != b.StarXp || a.ExtraPoints != b.ExtraPoints || a.Kills != b.Kills || a.Talents.Count != b.Talents.Count || a.TalentChoices.Count != b.TalentChoices.Count) return false;
             for (int i = 0; i < a.Equipped.Length; i++) if (a.Equipped[i] != b.Equipped[i]) return false;
             foreach (var rank in a.Talents) if (!b.Talents.TryGetValue(rank.Key, out int other) || other != rank.Value) return false;
             foreach (var choice in a.TalentChoices) if (!b.TalentChoices.TryGetValue(choice.Key, out int other) || other != choice.Value) return false;

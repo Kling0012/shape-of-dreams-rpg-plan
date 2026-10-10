@@ -10,7 +10,7 @@ namespace SodRpg.Core.Game
     public static class AuthoredMechanismCodec
     {
         private const int Version = 1;
-        private const int MaxItems = 512;
+        private const int MaxItems = StarProgression.MaxAllocationPoints;
         public static string EncodeSpec(AuthoredMechanismSpec spec)
         {
             AuthoredMechanisms.Validate(spec);

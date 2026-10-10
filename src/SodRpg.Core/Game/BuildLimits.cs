@@ -27,17 +27,17 @@ namespace SodRpg.Core.Game
                     {
                         var talents = new List<TalentDef>(Content.Talents);
                         talents.AddRange(HeroSigils.All);
-                        registeredCapacity = Analyze(talents);
+                        registeredCapacity = Analyze(talents, StarProgression.MaxAllocationPoints);
                         registeredFingerprint = fingerprint;
                     }
                     return registeredCapacity;
                 }
             }
         }
-        public const int EffectiveChannelSecurityLimit = 512;
+        public const int EffectiveChannelSecurityLimit = 1024;
         public static int MaxGimmickEntries => Math.Min(EffectiveChannelSecurityLimit,
-            Math.Max(StarProgression.MaxSpendablePoints, Registered.GimmickEntries));
-        public static int MaxLinkEntries => checked(StarProgression.MaxSpendablePoints * Math.Max(1, Registered.MaximumLinksPerStar) + Content.SlotCount);
+            Math.Max(StarProgression.MaxAllocationPoints, Registered.GimmickEntries));
+        public static int MaxLinkEntries => checked(StarProgression.MaxAllocationPoints * Math.Max(1, Registered.MaximumLinksPerStar) + Content.SlotCount);
         public static int MaxPairComboEntries => PairCombos.All.Count;
         // Enum definitions never change at run time; these limits are read for every Encode/Decode, so count them once.
         private static readonly int StatEntryCount = Enum.GetValues(typeof(Stat)).Length;
@@ -64,13 +64,13 @@ namespace SodRpg.Core.Game
             }
         }
 
-        public static int MaxLinkValueMilli(LinkKind kind, int requireCount)
+        public static int MaxLinkValueMilli(LinkKind kind, int requireCount, int pointBudget = StarProgression.MaxSpendablePoints)
         {
             if (requireCount < 1 || requireCount > MaxLinkRequirements || kind == LinkKind.None
                 || !Enum.IsDefined(typeof(LinkKind), kind)) return 0;
             decimal equipped = Links.EquippedCap(kind, requireCount);
             decimal perPoint = Math.Max(equipped, Registered.LinkValuePerPoint(kind, requireCount));
-            decimal envelope = perPoint * StarProgression.MaxSpendablePoints
+            decimal envelope = perPoint * Math.Max(0, Math.Min(StarProgression.MaxAllocationPoints, pointBudget))
                 * (StarDamageScaling.IsDamage(kind) ? StarRankBalance.MaxMultiplier : 1m) + equipped * Content.SlotCount;
             // Capacity is an upper bound, not an encoded value: rank multiplication can
             // produce sub-thousandths even though every individual wire value is exact.
@@ -81,14 +81,14 @@ namespace SodRpg.Core.Game
         public const int MaxBossEncodedChars = 6 + BossProfiles.MaxEntries * (2 * (MaxTokenLength + 1)
             + 8 * (MaxTokenLength + IntegerChars + 2) + 1)
             + BossProfiles.MaxEntries * (2 * (MaxTokenLength + 1) + IntegerChars + 2);
-        public const int MaxEncodedChars = 195820 + MaxBossEncodedChars;
+        public const int MaxEncodedChars = 195820 * 2 + MaxBossEncodedChars;
 
         /// <summary>Build identifiers and separators are ASCII; UTF-8 bytes equal characters.</summary>
         public static int MaxEncodedBytes => MaxEncodedChars;
 
         public static void ValidateAuthoredProducer(IReadOnlyList<TalentDef> tree)
         {
-            var capacity = Analyze(tree);
+            var capacity = Analyze(tree, StarProgression.MaxAllocationPoints);
             int fixedFields = checked(64 + MaxBossEncodedChars + (MaxStatEntries + MaxPowerEntries + MaxConditionalPowerEntries) * (IntegerChars * 2 + 2)
                 + Content.SlotCount * (IntegerChars * 2 + MaxLinkRequirements * (MaxTokenLength + 1) + 4));
             if (capacity.GimmickEntries > EffectiveChannelSecurityLimit || capacity.MaximumEncodedTalentChars + fixedFields > MaxEncodedChars)
@@ -105,7 +105,7 @@ namespace SodRpg.Core.Game
         public static BuildCapacity Analyze(IEnumerable<TalentDef> talents, int pointBudget = StarProgression.MaxSpendablePoints)
         {
             if (talents == null) throw new ArgumentNullException(nameof(talents));
-            if (pointBudget < 0 || pointBudget > StarProgression.MaxSpendablePoints) throw new ArgumentOutOfRangeException(nameof(pointBudget));
+            if (pointBudget < 0 || pointBudget > StarProgression.MaxAllocationPoints) throw new ArgumentOutOfRangeException(nameof(pointBudget));
             var result = new BuildCapacity(pointBudget);
             var byHero = new Dictionary<string, List<NodeOutput>>(StringComparer.Ordinal);
             var ids = new HashSet<AuthoredStarKey>();

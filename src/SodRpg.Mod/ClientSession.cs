@@ -1246,7 +1246,13 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
             }
             float now = Time.unscaledTime;
             if (!_buildDirty && !_monsterAuthority.BuildResendRequired && now < _nextBuildSend) return;
-            string encoded = HostBuildValidation.Encode(CurrentBuild(HeroKeyOf(hero)), Profile, HeroKeyOf(hero),
+            string heroKey = HeroKeyOf(hero);
+            ProbeBuildInputCapability(heroKey);
+            var submissionProfile = NetworkServer.active || _hostBuildInputCapability
+                ? Profile : HostBuildValidation.CompatibleProfile(Profile, heroKey);
+            var submissionBuild = ReferenceEquals(submissionProfile, Profile) ? CurrentBuild(heroKey)
+                : Build.Compute(submissionProfile, heroKey, Profile.Run?.Heat ?? 0, Profile.Run?.Pacts, Profile.Run?.DailyId ?? 0);
+            string encoded = HostBuildValidation.Encode(submissionBuild, submissionProfile, heroKey,
                 Profile.Run?.Heat ?? 0, Profile.Run?.Pacts, Profile.Run?.DailyId ?? 0);
             foreach (var part in BuildTransfer.Split(encoded))
                 _clientRpcOn.CustomRpc_SendMessageToServer(DreamforgeBuildMsg.FromPart(part));

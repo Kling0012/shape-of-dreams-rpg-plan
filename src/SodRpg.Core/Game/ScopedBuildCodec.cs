@@ -12,7 +12,7 @@ namespace SodRpg.Core.Game
         private static int Parse(string text) => int.Parse(text, NumberStyles.Integer, CultureInfo.InvariantCulture);
         internal static void Validate(Build build)
         {
-            if (build.NativeModifiers.Count > StarProgression.MaxSpendablePoints) throw new InvalidOperationException("Too many native star modifiers.");
+            if (build.NativeModifiers.Count > StarProgression.MaxAllocationPoints) throw new InvalidOperationException("Too many native star modifiers.");
             var nativeKeys = new HashSet<string>(StringComparer.Ordinal);
             foreach (var n in build.NativeModifiers)
                 if (!FractionalScopedModifiers.ValidNativeEntry(n) || !nativeKeys.Add(((int)n.Kind) + ":" + n.Memory))
@@ -54,13 +54,13 @@ namespace SodRpg.Core.Game
                         || !entry.Spec.Bridge.Endpoints.Any(x => x.StarId == pair.StarB && x.Memory == pair.RouteB))
                         throw new InvalidOperationException("Pair endpoints differ from the registered definition.");
                     foreach (var endpoint in entry.Spec.Bridge.Endpoints)
-                        if (!build.MechanismEndpointRanks.TryGetValue(endpoint.StarId, out int rank) || rank < 0 || rank > StarProgression.MaxSpendablePoints)
+                        if (!build.MechanismEndpointRanks.TryGetValue(endpoint.StarId, out int rank) || rank < 0 || rank > StarProgression.MaxAllocationPoints)
                             throw new InvalidOperationException("Missing or invalid actual bridge endpoint rank.");
                 }
             }
-            if (ids.Count > StarProgression.MaxSpendablePoints) throw new InvalidOperationException("Too many mechanism contributors.");
+            if (ids.Count > StarProgression.MaxAllocationPoints) throw new InvalidOperationException("Too many mechanism contributors.");
             foreach (var endpoint in build.MechanismEndpointRanks)
-                if (!Gimmicks.ValidStarId(endpoint.Key) || endpoint.Value < 0 || endpoint.Value > StarProgression.MaxSpendablePoints)
+                if (!Gimmicks.ValidStarId(endpoint.Key) || endpoint.Value < 0 || endpoint.Value > StarProgression.MaxAllocationPoints)
                     throw new InvalidOperationException("Invalid endpoint rank.");
             foreach (var entry in build.Mechanisms)
                 if (entry.Spec.Condition != AuthoredMechanismCondition.Always && !build.Mechanisms.Any(x => x.Spec.Bridge?.PairId == entry.Spec.PairId))
@@ -82,7 +82,7 @@ namespace SodRpg.Core.Game
                 if (e.Channel != null)
                 {
                     FractionalScopedModifiers.ChannelKey(e);
-                    if (e.ContributorIds == null || e.ContributorIds.Length == 0 || e.ContributorIds.Length > StarProgression.MaxSpendablePoints
+                    if (e.ContributorIds == null || e.ContributorIds.Length == 0 || e.ContributorIds.Length > StarProgression.MaxAllocationPoints
                         || e.ContributorIds.Distinct(StringComparer.Ordinal).Count() != e.ContributorIds.Length
                         || e.ContributorIds.Any(id => !Gimmicks.ValidStarId(id)) || !e.ContributorIds.Contains(e.StarId))
                         throw new InvalidOperationException("Invalid channel contributors.");
@@ -91,7 +91,7 @@ namespace SodRpg.Core.Game
                 }
                 else if (!contributors.Add(e.StarId)) throw new InvalidOperationException("Duplicate effect contributor.");
             }
-            if (contributors.Count > StarProgression.MaxSpendablePoints) throw new InvalidOperationException("Too many authored effect contributors.");
+            if (contributors.Count > StarProgression.MaxAllocationPoints) throw new InvalidOperationException("Too many authored effect contributors.");
         }
         internal static void Append(StringBuilder sb, Build build)
         {

@@ -538,21 +538,32 @@ namespace SodRpg.Mod
             _ui.Notify(new GameEvent(EventKind.LevelUp, "[debug] star map points +" + Profile.TestBonusPoints));
         }
 
-        [ConsoleCommand("Dreamforge (test): permanently add star map points to the current traveler (1-500)", "dreamforge_addstarpoints")]
+        [ConsoleCommand("Dreamforge (test): adjust test value", "dreamforge_addstarpoints")]
         private void AddStarPointsCommand(int points)
         {
             if (!DevAllowed()) return;
             var p = _session.Profile;
             string heroKey = _session.LocalHero != null ? ClientSession.HeroKeyOf(_session.LocalHero) : p.Run != null ? p.Run.HeroKey : null;
-            if (string.IsNullOrEmpty(heroKey)) return;
+            if (string.IsNullOrEmpty(heroKey))
+            {
+                Debug.Log("[DreamforgeRPG] no traveler");
+                return;
+            }
+            if (points < 1 || points > StarProgression.MaxExtraPoints)
+            {
+                Debug.Log("[DreamforgeRPG] range 1-500");
+                return;
+            }
             var h = p.Hero(heroKey);
-            int current = StarProgression.Points(h.StarXp);
-            int target = Math.Min(StarProgression.MaxPoints, current + Math.Max(0, Math.Min(StarProgression.MaxPoints, points)));
-            if (target <= current) return;
-            h.StarXp = Math.Max(h.StarXp, StarProgression.TotalXpForPoints(target));
+            if (h.ExtraPoints >= StarProgression.MaxExtraPoints)
+            {
+                Debug.Log("[DreamforgeRPG] full");
+                return;
+            }
+            h.ExtraPoints += points;
             _session.MarkDirty(true);
             _session.SaveNow();
-            _ui.Notify(new GameEvent(EventKind.LevelUp, "[debug] star map points " + current + " -> " + StarProgression.Points(h.StarXp)));
+            Debug.Log("[DreamforgeRPG] ok");
         }
 
         [ConsoleCommand("Dreamforge: give relics for testing (count, rarity 0-4)", "dreamforge_give")]
