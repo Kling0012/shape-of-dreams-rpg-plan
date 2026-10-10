@@ -1,5 +1,5 @@
-[b]Movement skill essence slots now show in the edit screen.[/b]
-[b]エッセンス装着画面で回避スキルの枠が表示されるように。[/b]
+[b]Minor internal adjustments.[/b]
+[b]内部の細かな調整。[/b]
 
 [h1]Dreamforge RPG[/h1]
 Turns every run into part of a long RPG journey: relics you keep, a risky "secure or delve" choice at every zone, a star map per Traveler, a forge, and long-term goals. Co-op ready.
