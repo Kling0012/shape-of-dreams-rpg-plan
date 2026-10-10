@@ -90,7 +90,7 @@ namespace SodRpg.Core.Game
         public string Describe()
         {
             string chance = (ProbabilityUnits / 100m).ToString("0.##", CultureInfo.InvariantCulture);
-            return Loc.T($"夢の圧で最大HPが25%以上増えた敵を指定の記憶で倒すと、{chance}%の確率（上限40%）で未確保の欠片を1個獲得します。同じ敵から得られるのは1人につき最大1個です。",
+            return Loc.T($"夢の圧で最大HPが25%以上増えた敵を指定の記憶で倒したとき、{chance}%の確率（上限40%）で未確保の欠片を1個獲得する。同じ敵から獲得できるのは1人につき最大1個まで。",
                 $"Defeating enemies with the specified memory when dream pressure increased their maximum HP by at least 25% has a {chance}% chance (maximum 40%) to grant 1 unsecured shard, at most 1 per enemy for each owner.");
         }
 

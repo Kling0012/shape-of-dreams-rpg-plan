@@ -21,7 +21,7 @@ namespace SodRpg.Core.Game
         {
             // 二つの効果は見出しと空行で段落に分ける（#46：説明が密着して、どちらの候補か分からなくなる）。
             // 見出しの「効果 A/B」は選択パネルの列の見出しと同じ言葉なので、ツールチップとパネルが対応する。
-            string text = (chosen < 0 ? Loc.T("未選択：どちらか1つを選んでください。", "Unselected: choose one option.")
+            string text = (chosen < 0 ? Loc.T("まだ選んでいない。どちらか1つを選ぶ。", "Unselected: choose one option.")
                 : Loc.T("選択中の効果：", "Chosen effect:"))
                 + "\n" + ChoiceOptionHeading(0) + "\n" + ChoiceOptionLabel(star, 0, chosen, bulleted)
                 + "\n\n" + ChoiceOptionHeading(1) + "\n" + ChoiceOptionLabel(star, 1, chosen, bulleted);
@@ -34,7 +34,7 @@ namespace SodRpg.Core.Game
 
         /// <summary>星図の本文の末尾に付ける段数と費用の注記（通常星と二択で同じ言葉を使う）。</summary>
         internal static string RanksNote(TalentDef star) => Loc.T(
-            $"（数値は1段あたり・最大{star.MaxRank}段・1段につき{star.RankCost}ポイント）",
+            $"（数値は1段ごと。最大{star.MaxRank}段、1段につき{star.RankCost}ポイント）",
             $" (values per rank; maximum {star.MaxRank} {(star.MaxRank == 1 ? "rank" : "ranks")}; {star.RankCost} {(star.RankCost == 1 ? "point" : "points")} per rank)");
 
         private static string ChoiceOptionHeading(int option)
@@ -131,12 +131,12 @@ namespace SodRpg.Core.Game
         {
             string scopeJa = heroTree ? "この旅人の星" : "同じ系統の星", scopeEn = heroTree ? "this Traveler's stars" : "stars of the same line";
             string ja = $"{scopeJa}を合計{ranksNeeded}段取得" + (masteryNeeded > 0 ? $"し、熟練度{masteryNeeded}に達する" : "する")
-                + "必要があります（今は星" + ranksHave + "段" + (masteryNeeded > 0 ? "・熟練度" + masteryHave : "") + "）。";
+                + "必要がある（今は星" + ranksHave + "段" + (masteryNeeded > 0 ? "、熟練度" + masteryHave : "") + "）。";
             string en = $"Acquire {ranksNeeded} ranks of {scopeEn}" + (masteryNeeded > 0 ? $" and reach mastery {masteryNeeded}" : "")
                 + " (now: " + ranksHave + " ranks" + (masteryNeeded > 0 ? ", mastery " + masteryHave : "") + ").";
             string text = Loc.T(ja, en);
-            if (!connected) text += Loc.T("さらに、取得済みの星と線でつながっている必要があります。", " It must also connect to your acquired stars.");
-            return Loc.T($"刻印は星のレベルに応じて最大{slots}つまで選べます。", $"Up to {slots} keystones can be selected, depending on the star level. ") + text
+            if (!connected) text += Loc.T("さらに、取得済みの星と線でつながっている必要がある。", " It must also connect to your acquired stars.");
+            return Loc.T($"刻印は星のレベルに応じて最大{slots}つまで選べる。", $"Up to {slots} keystones can be selected, depending on the star level. ") + text
                 + NextSlotText(starLevel);
         }
 
@@ -144,7 +144,7 @@ namespace SodRpg.Core.Game
         public static string NextSlotText(int starLevel)
         {
             int next = KeystoneSlots.NextUnlockLevel(starLevel);
-            return next < 0 ? "" : Loc.T($"次の枠は星のレベル{next}で開きます。", $"The next slot unlocks at star level {next}.");
+            return next < 0 ? "" : Loc.T($"次の枠は星のレベル{next}で開く。", $"The next slot unlocks at star level {next}.");
         }
 
         /// <summary>刻印の帯に出す「刻印 n/枠数」。</summary>
@@ -271,6 +271,7 @@ namespace SodRpg.Core.Game
 
         internal static string DescribeKeySide(KeystoneDefinition key)
         {
+            // 英語は従来どおり1項目1行。日本語は1つの段落の文章にする。
             var lines = new List<string>();
             bool hasScale = false;
             if (key.RetainedPower != Power.None)
@@ -278,31 +279,42 @@ namespace SodRpg.Core.Game
             foreach (var transform in key.Upside)
             {
                 string effect = KeystoneEffectText(transform);
-                lines.Add(effect + Loc.T("：", ": ") + KeystoneChangeText(transform));
+                lines.Add(Loc.Japanese ? KeystoneChangeJa(transform, effect) : effect + ": " + KeystoneChangeText(transform));
                 var scope = transform.Scope;
                 var targets = new List<string>();
                 targets.AddRange(scope.TargetMemorySet.Select(Links.ItemName));
                 targets.AddRange(scope.SourceSelectors.Select(SelectorText));
                 targets.AddRange(scope.TargetEffectIds.Select(StarName));
-                lines.Add(Loc.T("対象：", "Applies to: ") + (targets.Count == 0
-                    ? Loc.T("自分が取得した星による該当効果すべて。", "all matching effects from stars you own.")
-                    : string.Join(Loc.T("、", ", "), targets) + Loc.T("による該当効果。", "."))
+                lines.Add(Loc.T("対象は、" + (targets.Count == 0
+                    ? "自分が取得した星による該当効果のすべて。"
+                    : string.Join("と", targets) + "による該当効果。")
                     + (transform.TargetLayer == KeystoneLayer.NativeDamage
-                        ? Loc.T("記憶が元々与えるダメージだけを変更し、星による追加ダメージは変更しない。", " Changes only the memory's original damage, not star-generated extra damage.")
+                        ? "記憶が元々与えるダメージだけを変更し、星による追加ダメージは変更しない。"
                         : transform.TargetLayer == KeystoneLayer.GeneratedDamage
-                            ? Loc.T("星による追加ダメージだけを変更し、記憶の元々のダメージは変更しない。", " Changes only star-generated extra damage, not the memory's original damage.")
-                            : ""));
+                            ? "星による追加ダメージだけを変更し、記憶の元々のダメージは変更しない。"
+                            : ""),
+                    "Applies to: " + (targets.Count == 0
+                    ? "all matching effects from stars you own."
+                    : string.Join(", ", targets) + ".")
+                    + (transform.TargetLayer == KeystoneLayer.NativeDamage
+                        ? " Changes only the memory's original damage, not star-generated extra damage."
+                        : transform.TargetLayer == KeystoneLayer.GeneratedDamage
+                            ? " Changes only star-generated extra damage, not the memory's original damage."
+                            : "")));
                 if (scope.ReceiverMemorySet.Count > 0 || scope.ReceiverSelectors.Count > 0)
-                    lines.Add(Loc.T("効果の受け手：", "Effect recipient: ")
-                        + string.Join(Loc.T("、", ", "), scope.ReceiverMemorySet.Select(Links.ItemName).Concat(scope.ReceiverSelectors.Select(SelectorText))) + Loc.T("。", "."));
+                {
+                    var receivers = scope.ReceiverMemorySet.Select(Links.ItemName).Concat(scope.ReceiverSelectors.Select(SelectorText)).ToList();
+                    lines.Add(Loc.T("効果の受け手は、" + string.Join("と", receivers) + "。",
+                        "Effect recipient: " + string.Join(", ", receivers) + "."));
+                }
                 if (scope.Recipient != KeystoneRecipientKind.Any)
-                    lines.Add(Loc.T("変更する対象：", "Changes the effect on: ") + EnumText(scope.Recipient, Loc.Japanese,
-                        new[] { "すべて", "自分", "味方の旅人だけ（自分への効果は変わらない）", "自分の召喚獣" },
-                        new[] { "everyone", "yourself", "allied travelers only (your own effect is unchanged)", "your summons" }) + Loc.T("。", "."));
+                    lines.Add(Loc.Japanese
+                        ? EnumText(scope.Recipient, "", "変更されるのは自分への効果だけ。", "変更されるのは味方の旅人への効果だけで、自分への効果は変わらない。", "変更されるのは自分の召喚獣への効果だけ。")
+                        : "Changes the effect on: " + EnumText(scope.Recipient, "everyone", "yourself", "allied travelers only (your own effect is unchanged)", "your summons") + ".");
                 if (scope.SourceKind.HasValue)
-                    lines.Add(Loc.T("発動元：", "Source: ") + EnumText(scope.SourceKind.Value, Loc.Japanese,
-                        new[] { "記憶が元々持つ効果", "自分の通常攻撃", "自分の召喚獣", "星による追加効果", "自分の移動" },
-                        new[] { "the memory's original effect", "your basic attacks", "your summons", "star-generated extra effects", "your displacement" }) + Loc.T("。", "."));
+                    lines.Add(Loc.Japanese
+                        ? EnumText(scope.SourceKind.Value, "発動元は、記憶が元々持つ効果に限る。", "発動元は、自分の通常攻撃に限る。", "発動元は、自分の召喚獣に限る。", "発動元は、星による追加効果に限る。", "発動元は、自分の移動に限る。")
+                        : "Source: " + EnumText(scope.SourceKind.Value, "the memory's original effect", "your basic attacks", "your summons", "star-generated extra effects", "your displacement") + ".");
                 if (scope.Argument.HasValue)
                     lines.Add(scope.TargetEffectSet.Contains(GimmickEffect.Heal)
                         ? (scope.Argument.Value == 1
@@ -311,20 +323,21 @@ namespace SodRpg.Core.Game
                                 : throw new InvalidOperationException("Unmapped healing condition."))
                         : KeystoneArgumentText(scope.TargetEffectSet, scope.Argument.Value));
                 if (scope.TargetEffectSet.Contains(GimmickEffect.Wound) && transform.Field == KeystoneField.Duration)
-                    lines.Add(Loc.T("毎秒のダメージは変わらず、持続が長くなる分だけ総ダメージが増える（総量上限は維持）。",
+                    lines.Add(Loc.T("毎秒のダメージは変わらず、持続が長くなる分だけ総ダメージが増える。総量の上限は変わらない。",
                         "Damage per second is unchanged; longer duration increases total damage, subject to the existing total cap."));
                 if (transform.Operation == KeystoneOperation.Scale) hasScale = true;
             }
             if (hasScale)
-                lines.Add(Loc.T("倍率は対象の現在の値に掛ける（パーセントポイントの加算ではない）。各効果の上限は変わらない。",
+                lines.Add(Loc.T("倍率は対象の現在の値に掛けるもので、%を足すわけではない。各効果の上限は変わらない。",
                     "Multipliers apply to the current value, not as added percentage points. Existing effect caps remain unchanged."));
             foreach (var grant in key.Grants)
                 lines.Add(DescribeMechanism(grant));
             if (key.RequiredMemories.Count > 0)
-                lines.Add(Loc.T("すべて装備が必要：", "All must be equipped: ") + string.Join(Loc.T("、", ", "), key.RequiredMemories.Select(Links.ItemName)));
+                lines.Add(RequiredEquipText(key.RequiredMemories));
             if (key.Prerequisites.Count > 0)
-                lines.Add(Loc.T("取得の前提（すべて必要）：", "Acquisition prerequisites (all required): ") + string.Join(Loc.T("、", ", "), key.Prerequisites.Select(StarName)));
-            return string.Join("\n", lines);
+                lines.Add(Loc.T("取得するには、" + string.Join("と", key.Prerequisites.Select(StarName)) + "を" + (key.Prerequisites.Count > 1 ? "すべて" : "") + "取得している必要がある。",
+                    "Acquisition prerequisites (all required): " + string.Join(", ", key.Prerequisites.Select(StarName))));
+            return Loc.Japanese ? string.Concat(lines.Where(line => line.Length > 0).Select(EndSentence)) : string.Join("\n", lines);
         }
 
         private static string KeystoneEffectText(KeystoneTransform transform)
@@ -347,37 +360,75 @@ namespace SodRpg.Core.Game
             }
         }
 
+        /// <summary>刻印が効果をどう変えるかの1文（日本語）。効果名を主語にして、「…が増える」「…に変更する」の形にする。</summary>
+        private static string KeystoneChangeJa(KeystoneTransform transform, string effect)
+        {
+            if (transform.Field == KeystoneField.Argument && transform.Scope.TargetEffectSet.Contains(GimmickEffect.Heal))
+                return KeystoneArgumentText(transform.Scope.TargetEffectSet, checked((int)transform.Seconds));
+            string field = EnumText(transform.Field, "量", "持続時間", "半径", "追加効果が発生するまでの時間", "対象数", "発動に必要な回数", "発動確率", "対象");
+            if (transform.Field == KeystoneField.Argument && transform.Scope.TargetEffectSet.Contains(GimmickEffect.Ricochet))
+                field = "追加ダメージを受ける別の敵の数";
+            // 効果名がすでに「量」を指すとき（値そのものの変更）は項目名を省く。
+            string subject = transform.Field == KeystoneField.Value ? effect : effect + "の" + field;
+            string result;
+            switch (transform.Operation)
+            {
+                case KeystoneOperation.Scale:
+                    bool raise = transform.MagnitudeUnits.Units > 0;
+                    string verb = transform.Field == KeystoneField.Probability ? (raise ? "上がり" : "下がり") : (raise ? "増え" : "減り");
+                    result = subject + "が" + Number(Math.Abs(transform.MagnitudeUnits.Percent)) + "%" + verb + "、元の" + Number(transform.MagnitudeUnits.Multiplier) + "倍になる。";
+                    break;
+                case KeystoneOperation.SetSeconds:
+                    result = subject + "を" + Number(transform.Seconds) + "秒に変更する。"; break;
+                case KeystoneOperation.AddTargets:
+                    result = subject + "が" + Math.Abs(transform.Count) + "体" + (transform.Count > 0 ? "増える" : "減る") + "。"; break;
+                case KeystoneOperation.SetEveryN:
+                    result = effect + "は、条件を満たす" + transform.Count + "回ごとに発動する。"; break;
+                case KeystoneOperation.Set:
+                    result = subject + "を" + (transform.ExpectedFrom.HasValue ? KeystoneNumericText(transform, transform.ExpectedFrom.Value) + "から" : "")
+                        + KeystoneNumericText(transform, transform.Seconds) + "に変更する。"; break;
+                case KeystoneOperation.Add:
+                    bool grow = transform.Seconds > 0;
+                    string change = transform.Field == KeystoneField.Duration || transform.Field == KeystoneField.Delay ? (grow ? "長くなる" : "短くなる")
+                        : transform.Field == KeystoneField.Probability ? (grow ? "上がる" : "下がる") : (grow ? "増える" : "減る");
+                    string amount = KeystoneNumericText(transform, Math.Abs(transform.Seconds));
+                    result = subject + "が" + amount + (amount.StartsWith("最大HPの", StringComparison.Ordinal) ? "分" : "") + change + "。"; break;
+                default: throw new InvalidOperationException("Unmapped keystone change.");
+            }
+            if (transform.Maximum.HasValue)
+                result += "上限は" + KeystoneNumericText(transform, transform.Maximum.Value) + "まで。";
+            return result;
+        }
+
         private static string KeystoneChangeText(KeystoneTransform transform)
         {
-            string field = EnumText(transform.Field, Loc.Japanese,
-                new[] { "量", "持続時間", "半径", "追加効果が発生するまでの時間", "対象数", "発動に必要な回数", "発動確率", "対象" },
-                new[] { "amount", "duration", "radius", "delay before the extra effect", "target count", "qualifying events needed", "trigger chance", "targets" });
+            string field = EnumText(transform.Field, "amount", "duration", "radius", "delay before the extra effect", "target count", "qualifying events needed", "trigger chance", "targets");
             if (transform.Field == KeystoneField.Argument && transform.Scope.TargetEffectSet.Contains(GimmickEffect.Heal))
                 return KeystoneArgumentText(transform.Scope.TargetEffectSet, checked((int)transform.Seconds));
             if (transform.Field == KeystoneField.Argument && transform.Scope.TargetEffectSet.Contains(GimmickEffect.Ricochet))
-                field = Loc.T("追加ダメージを受ける別の敵の数", "number of other enemies receiving extra damage");
+                field = "number of other enemies receiving extra damage";
             string result;
             switch (transform.Operation)
             {
                 case KeystoneOperation.Scale:
                     result = FieldLead(transform, field) + (transform.MagnitudeUnits.Units > 0 ? "+" : "") + Number(transform.MagnitudeUnits.Percent) + "%"
-                        + Loc.T("（", " (×") + (Loc.Japanese ? "元の" : "") + Number(transform.MagnitudeUnits.Multiplier) + Loc.T("倍）。", ").");
+                        + " (×" + Number(transform.MagnitudeUnits.Multiplier) + ").";
                     break;
                 case KeystoneOperation.SetSeconds:
-                    result = field + Loc.T("を", " → ") + Number(transform.Seconds) + Loc.T("秒に変更。", "s."); break;
+                    result = field + " → " + Number(transform.Seconds) + "s."; break;
                 case KeystoneOperation.AddTargets:
-                    result = FieldLead(transform, field) + (transform.Count > 0 ? "+" : "") + transform.Count + Loc.T("体。", " targets."); break;
+                    result = FieldLead(transform, field) + (transform.Count > 0 ? "+" : "") + transform.Count + " targets."; break;
                 case KeystoneOperation.SetEveryN:
-                    result = Loc.T("条件を満たす", "Every ") + transform.Count + Loc.T("回ごとに発動。", " qualifying events."); break;
+                    result = "Every " + transform.Count + " qualifying events."; break;
                 case KeystoneOperation.Set:
                     result = FieldLead(transform, field) + (transform.ExpectedFrom.HasValue ? KeystoneNumericText(transform, transform.ExpectedFrom.Value) + " → "
-                            : transform.Field == KeystoneField.Value ? Loc.T("", "Set to ") : "→ ") + KeystoneNumericText(transform, transform.Seconds) + Loc.T("に変更。", "."); break;
+                            : transform.Field == KeystoneField.Value ? "Set to " : "→ ") + KeystoneNumericText(transform, transform.Seconds) + "."; break;
                 case KeystoneOperation.Add:
-                    result = FieldLead(transform, field) + (transform.Seconds > 0 ? "+" : "") + KeystoneNumericText(transform, transform.Seconds) + Loc.T("。", "."); break;
+                    result = FieldLead(transform, field) + (transform.Seconds > 0 ? "+" : "") + KeystoneNumericText(transform, transform.Seconds) + "."; break;
                 default: throw new InvalidOperationException("Unmapped keystone change.");
             }
             if (transform.Maximum.HasValue)
-                result += Loc.T("上限：", " Cap: ") + KeystoneNumericText(transform, transform.Maximum.Value) + Loc.T("。", ".");
+                result += " Cap: " + KeystoneNumericText(transform, transform.Maximum.Value) + ".";
             return result;
         }
 
@@ -405,13 +456,14 @@ namespace SodRpg.Core.Game
         private static string KeystoneArgumentText(IReadOnlyList<GimmickEffect> effects, int argument)
         {
             if (effects.Contains(GimmickEffect.Heal))
-                return argument == 1 ? Loc.T("回復対象に近くの味方旅人を含める。", "Healing also includes nearby allied travelers.")
-                    : argument == 0 ? Loc.T("回復対象は自分だけ。", "Healing affects only yourself.") : throw new InvalidOperationException("Unmapped healing target.");
+                return argument == 1 ? Loc.T("回復の対象に、近くの味方旅人が加わる。", "Healing also includes nearby allied travelers.")
+                    : argument == 0 ? Loc.T("回復の対象は自分だけになる。", "Healing affects only yourself.") : throw new InvalidOperationException("Unmapped healing target.");
             if (effects.Contains(GimmickEffect.Ricochet))
-                return Loc.T("追加ダメージの対象：近くの別の敵", "Extra damage targets: up to ") + argument + Loc.T("体まで。", " other nearby enemies.");
+                return Loc.T("追加ダメージの対象は、近くの別の敵最大" + argument + "体になる。", "Extra damage targets: up to " + argument + " other nearby enemies.");
             if (effects.Contains(GimmickEffect.Element))
-                return Loc.T("付与する属性：", "Element applied: ") + EnumText((IdentityStrikeElement)(argument + 1), Loc.Japanese,
-                    new[] { "", "火", "冷気", "光", "闇" }, new[] { "", "Fire", "Cold", "Light", "Dark" }) + Loc.T("。", ".");
+                return Loc.Japanese
+                    ? "付与する属性は" + EnumText((IdentityStrikeElement)(argument + 1), "", "火", "冷気", "光", "闇") + "になる。"
+                    : "Element applied: " + EnumText((IdentityStrikeElement)(argument + 1), "", "Fire", "Cold", "Light", "Dark") + ".";
             throw new InvalidOperationException("Unmapped keystone target.");
         }
 

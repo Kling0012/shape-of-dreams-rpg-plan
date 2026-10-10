@@ -311,7 +311,7 @@ namespace SodRpg.Core.Game
         private static string Trim(string text)
         {
             if (text == null) return "";
-            foreach (string marker in new[] { "（数値は1段あたり", " (values per rank;", "（最大", " (maximum " })
+            foreach (string marker in new[] { "（数値は1段あたり", "（数値は1段ごと", " (values per rank;", "（最大", " (maximum " })
             {
                 int i = text.LastIndexOf(marker, StringComparison.Ordinal);
                 if (i > 0) text = text.Substring(0, i);

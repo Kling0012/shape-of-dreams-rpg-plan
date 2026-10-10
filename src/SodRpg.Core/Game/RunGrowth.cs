@@ -333,6 +333,61 @@ namespace SodRpg.Core.Game
             }
         }
 
+        /// <summary>日本語の文章で使う能力値の名前（「攻撃力」「会心ダメージ」など）。</summary>
+        private static string StatNameJa(Stat stat)
+        {
+            switch (stat)
+            {
+                case Stat.AttackFlat: case Stat.AttackPct: return "攻撃力";
+                case Stat.PowerFlat: case Stat.PowerPct: return "魔力";
+                case Stat.Armor: return "防御";
+                case Stat.MaxHealthFlat: case Stat.MaxHealthPct: return "最大HP";
+                case Stat.AttackSpeedPct: return "攻撃速度";
+                case Stat.CritChancePct: return "会心率";
+                case Stat.CritDamagePct: return "会心ダメージ";
+                case Stat.ShieldPower: return "シールドの強さ";
+                case Stat.HealPower: return "回復の強さ";
+                case Stat.SummonPower: return "召喚獣のダメージ";
+                case Stat.HealthRegen: return "HP自然回復";
+                case Stat.Haste: return "クールダウン短縮";
+                case Stat.MoveSpeedPct: return "移動速度";
+                case Stat.Tenacity: return "不屈";
+                default: return null;
+            }
+        }
+
+        private static bool IsPercentStat(Stat stat)
+        {
+            switch (stat)
+            {
+                case Stat.MaxHealthPct: case Stat.AttackPct: case Stat.PowerPct: case Stat.AttackSpeedPct: case Stat.CritChancePct:
+                case Stat.CritDamagePct: case Stat.ShieldPower: case Stat.HealPower: case Stat.SummonPower: case Stat.MoveSpeedPct:
+                    return true;
+                default: return false;
+            }
+        }
+
+        /// <summary>「攻撃力が5」「会心ダメージが12%」のような、能力値と量の組。未対応の能力値は従来の表記のまま。</summary>
+        private static string StatAmountJa(Stat stat, double value)
+        {
+            string name = StatNameJa(stat);
+            if (name == null) return StatText(stat, value);
+            return name + "が" + value.ToString("0.##", CultureInfo.InvariantCulture) + (IsPercentStat(stat) ? "%" : "");
+        }
+
+        /// <summary>「攻撃力は5から6に」のような、変化前後の表記（修飾の星の説明用）。</summary>
+        private static string StatChangeJa(Stat stat, double before, double after)
+        {
+            string name = StatNameJa(stat);
+            string unit = IsPercentStat(stat) ? "%" : "";
+            if (name == null) return StatText(stat, before) + "から" + StatText(stat, after) + "に";
+            return name + "は" + before.ToString("0.##", CultureInfo.InvariantCulture) + unit + "から" + after.ToString("0.##", CultureInfo.InvariantCulture) + unit + "に";
+        }
+
+        /// <summary>「攻撃力が5上がり、会心ダメージが12%上がる」。</summary>
+        private static string RiseJa(IList<string> amounts)
+            => string.Join("、", amounts.Select((amount, i) => amount + (i == amounts.Count - 1 ? "上がる" : "上がり")));
+
         private static string PerStack(RunGrowthEntry entry)
             => string.Join(Loc.T("、", ", "), entry.Effects.Select(x => StatText(x.Stat, x.AmountMilli / 1000d * (100 + entry.EffectPercent) / 100d)));
 
@@ -340,7 +395,8 @@ namespace SodRpg.Core.Game
         public static string Describe(RunGrowthEntry entry)
         {
             int gain = Math.Max(1, entry.GainMultiplier);
-            return Loc.T($"{PerStack(entry)}／鍛錬1つ：{TriggerText(entry.Trigger, entry.Threshold)}、鍛錬が{gain}つ溜まる（最大{entry.Cap}つ。遠征の間は死亡・ゾーン移動でも失われず、遠征の開始で0に戻る）",
+            string rise = RiseJa(entry.Effects.Select(x => StatAmountJa(x.Stat, x.AmountMilli / 1000d * (100 + entry.EffectPercent) / 100d)).ToList());
+            return Loc.T($"{TriggerText(entry.Trigger, entry.Threshold)}、鍛錬が{gain}つ溜まる。鍛錬1つにつき、{rise}。鍛錬は最大{entry.Cap}つまで溜まり、遠征の間は死亡やゾーン移動でも失われず、遠征の開始で0に戻る。",
                 $"{PerStack(entry)} per training stack: gain {gain} stack{(gain == 1 ? "" : "s")} {TriggerText(entry.Trigger, entry.Threshold)} (up to {entry.Cap} stacks; kept through death and zone changes for the whole expedition, reset when a new expedition begins)");
         }
 
@@ -352,37 +408,67 @@ namespace SodRpg.Core.Game
 
         public static string Describe(RunGrowthModifierDef mod, string heroKey = null)
         {
-            var parts = new List<string>();
-            if (mod.CapBonus > 0) parts.Add(Loc.T($"鍛錬の蓄積上限 +{mod.CapBonus}", $"training stack cap +{mod.CapBonus}"));
-            if (mod.EffectPercent > 0) parts.Add(Loc.T($"鍛錬1つごとの能力値増加量 +{mod.EffectPercent}%", $"stat gain per training stack +{mod.EffectPercent}%"));
-            if (mod.DoubleGain) parts.Add(Loc.T("鍛錬の獲得数 +100%（条件1回につき2つ）", "training stack gain +100% (2 stacks per completed condition)"));
             var targets = new List<TalentDef>();
             if (heroKey != null)
                 targets.AddRange(HeroSigils.TreeFor(heroKey).Where(t => t.RunGrowth != null && (mod.TargetStarId == null || t.Id == mod.TargetStarId)));
             else if (mod.TargetStarId != null && Content.TryGetTalent(mod.TargetStarId, out var target))
                 targets.Add(target);
+            return Loc.Japanese ? DescribeModifierJa(mod, targets) : DescribeModifierEn(mod, targets);
+        }
+
+        private static string DescribeModifierJa(RunGrowthModifierDef mod, List<TalentDef> targets)
+        {
+            var sb = new StringBuilder();
+            if (mod.CapBonus > 0) sb.Append($"鍛錬の蓄積上限が{mod.CapBonus}増える。");
+            if (mod.EffectPercent > 0) sb.Append($"鍛錬1つごとの能力値の上昇量が{mod.EffectPercent}%増える。");
+            if (mod.DoubleGain) sb.Append("鍛錬の獲得数が100%増え、条件を満たすたびに2つ溜まる。");
+            if (targets.Count == 0) return sb.Append("対象は、この旅人のすべての遠征の鍛錬。").ToString();
+            foreach (var talent in targets)
+            {
+                var growth = talent.RunGrowth;
+                sb.Append($"対象は星『{talent.Name}』で、{TriggerText(growth.Trigger, growth.Threshold)}に溜まる鍛錬が強化される。");
+                if (mod.EffectPercent == 0)
+                    sb.Append("鍛錬1つにつき、" + RiseJa(growth.Effects.Select(effect => StatAmountJa(effect.Stat, effect.AmountMilli / 1000d)).ToList()) + "。");
+                else
+                    sb.Append("鍛錬1つあたりの上昇量が、" + string.Join("、", growth.Effects.Select(effect =>
+                    {
+                        double amount = effect.AmountMilli / 1000d;
+                        return StatChangeJa(effect.Stat, amount, amount * (100 + mod.EffectPercent) / 100d);
+                    })) + "変わる。");
+                if (mod.CapBonus > 0) sb.Append($"鍛錬の蓄積上限は{growth.Cap}から{growth.Cap + mod.CapBonus}になる。");
+                if (mod.EffectPercent > 0 || mod.CapBonus > 0) sb.Append("これは、この星だけを基本値へ適用した場合の値である。");
+            }
+            return sb.ToString();
+        }
+
+        private static string DescribeModifierEn(RunGrowthModifierDef mod, List<TalentDef> targets)
+        {
+            var parts = new List<string>();
+            if (mod.CapBonus > 0) parts.Add($"training stack cap +{mod.CapBonus}");
+            if (mod.EffectPercent > 0) parts.Add($"stat gain per training stack +{mod.EffectPercent}%");
+            if (mod.DoubleGain) parts.Add("training stack gain +100% (2 stacks per completed condition)");
             string TargetText(TalentDef talent)
             {
                 var growth = talent.RunGrowth;
-                string gains = string.Join(Loc.T("、", ", "), growth.Effects.Select(effect =>
+                string gains = string.Join(", ", growth.Effects.Select(effect =>
                 {
                     double amount = effect.AmountMilli / 1000d;
                     string before = StatText(effect.Stat, amount);
                     return mod.EffectPercent == 0 ? before
                         : before + " → " + StatText(effect.Stat, amount * (100 + mod.EffectPercent) / 100d);
                 }));
-                string detail = Loc.T("。鍛錬1つごと：", ". Per training stack: ") + gains;
+                string detail = ". Per training stack: " + gains;
                 if (mod.CapBonus > 0)
-                    detail += Loc.T($"。蓄積上限：{growth.Cap} → {growth.Cap + mod.CapBonus}", $". Stack cap: {growth.Cap} → {growth.Cap + mod.CapBonus}");
+                    detail += $". Stack cap: {growth.Cap} → {growth.Cap + mod.CapBonus}";
                 if (mod.EffectPercent > 0 || mod.CapBonus > 0)
-                    detail += Loc.T("（この星だけを基本値へ適用した場合）", " (with only this star applied to the base values)");
-                return Loc.T("星『", "star “") + talent.Name + Loc.T("』：", "”: ")
+                    detail += " (with only this star applied to the base values)";
+                return "star “" + talent.Name + "”: "
                     + TriggerText(growth.Trigger, growth.Threshold) + detail;
             }
             string scope = targets.Count > 0
-                ? string.Join(Loc.T("、", "; "), targets.Select(TargetText))
-                : Loc.T("この旅人のすべての遠征の鍛錬", "all expedition training for this traveler");
-            return string.Join(Loc.T("、", ", "), parts) + Loc.T("。対象：", ". Applies to ") + scope;
+                ? string.Join("; ", targets.Select(TargetText))
+                : "all expedition training for this traveler";
+            return string.Join(", ", parts) + ". Applies to " + scope;
         }
 
         /// <summary>HUDの小さな1行。</summary>

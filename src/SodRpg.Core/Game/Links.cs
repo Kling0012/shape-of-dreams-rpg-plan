@@ -319,23 +319,23 @@ namespace SodRpg.Core.Game
         {
             if (link == null || link.Requires == null || link.Requires.Length == 0) return "";
             if (link.Kind == LinkKind.BossReward)
-                return Loc.T($"固有報酬の段階{link.Value}が有効：本人が{ItemName(link.Requires[0])}を装着中。対応する各セットの最高段階だけ有効。",
+                return Loc.T($"本人が{ItemName(link.Requires[0])}を装着しているとき、固有報酬の段階{link.Value}が有効になる。対応する各セットでは、最も高い段階だけが有効になる。",
                     $"Boss reward stage {link.Value} enabled: while you equip {ItemName(link.Requires[0])}. Highest stage per matching set only.");
             string value = link.Value.ToString(CultureInfo.InvariantCulture);
             string limitJa, limitEn;
             switch (link.Kind)
             {
                 case LinkKind.MemoryHaste:
-                    limitJa = "（1回の発動での短縮は合計100%まで）";
+                    limitJa = "1回の発動で短縮できる量は、合計で最大100%まで。";
                     limitEn = " (Total reduction per cast is capped at 100%.)";
                     break;
                 case LinkKind.MemorySurge:
-                    limitJa = "（同時に有効なのは最も大きい1つだけ。重ならず時間を延長し、装備条件を外すと解除）";
+                    limitJa = "同時に有効になるのは最も大きい1つだけで、重ならずに時間が延びる。装備条件を外すと解除される。";
                     limitEn = " (Only the strongest active link applies. It refreshes the duration without stacking, and ends when its equip requirements are removed.)";
                     break;
                 default:
                     int linkCap = Cap(link.Kind, link.Requires.Length);
-                    limitJa = linkCap > 0 ? $"（同種の連携は加算。元の値の合計は最大{linkCap}%）" : "（同種の連携は加算。合計の上限なし）";
+                    limitJa = linkCap > 0 ? $"同じ種類の連携は足し合わされ、元の値の合計で最大{linkCap}%まで。" : "同じ種類の連携は足し合わされ、合計の上限はない。";
                     limitEn = linkCap > 0 ? $" (Links of the same kind add together, capped at {linkCap}% of the original values.)" : " (Links of the same kind add together, with no total cap.)";
                     break;
             }
@@ -360,14 +360,17 @@ namespace SodRpg.Core.Game
                 }
                 else items.Add(ItemName(t) + Mark(t, isSatisfied));
             }
-            var conditions = new List<string>();
+            // 旅人と装着の条件は「…であり、かつ…とき」とつなぎ、全体を「とき」で終える。
+            string itemClause = items.Count == 0 ? null : JoinJa(items) + "を" + (items.Count > 1 ? "すべて" : "") + "装着している";
+            string travelerClause = null;
             if (travelers.Count == 1)
-                conditions.Add("自分が" + travelers[0] + "であるか、10m以内に生存中の味方の" + travelers[0] + "がいるとき");
+                travelerClause = itemClause == null
+                    ? "自分が" + travelers[0] + "であるか、10m以内に生存中の味方の" + travelers[0] + "がいる"
+                    : "自分が" + travelers[0] + "であるか、10m以内に生存中の味方の" + travelers[0] + "がいて";
             else if (travelers.Count > 1)
-                conditions.Add(string.Join("・", travelers) + "のうち1人が自分で、残りの旅人が10m以内に生存している味方であるとき");
-            if (items.Count > 0)
-                conditions.Add(JoinJa(items) + "を" + (items.Count > 1 ? "すべて" : "") + "装着しているとき");
-            return string.Join("、かつ", conditions);
+                travelerClause = JoinJa(travelers) + "のうち1人が自分で、残りの旅人が10m以内に生存している味方" + (itemClause == null ? "である" : "であり");
+            if (travelerClause == null) return itemClause + "とき";
+            return itemClause == null ? travelerClause + "とき" : travelerClause + "、かつ" + itemClause + "とき";
         }
 
         private static string JoinJa(List<string> items) =>
@@ -379,34 +382,32 @@ namespace SodRpg.Core.Game
             switch (link.Kind)
             {
                 case LinkKind.MemoryDamage:
-                    return MemorySubjectJa(link) + "のダメージ +" + value + "%：" + cond;
+                    return cond + "、" + (MemoryCount(link) == 1 ? "その記憶のダメージが" : "条件に挙げた記憶はどれもダメージが") + value + "%増える。";
                 case LinkKind.Attune:
-                    return "攻撃力・魔力 +" + value + "%：" + cond;
+                    return cond + "、攻撃力・魔力が" + value + "%上がる。";
                 case LinkKind.Guard:
-                    return "最大HP +" + value + "%・防御 +" + value + "：" + cond;
+                    return cond + "、最大HPが" + value + "%上がり、防御が" + value + "上がる。";
                 case LinkKind.MemoryHaste:
-                    return "クールダウン短縮 +" + value + "%：" + cond + "、" + MemorySubjectJa(link) + "を使うと、その記憶の残りクールダウンを最大クールダウンの" + value + "%分短縮する";
+                    return cond + "、" + (MemoryCount(link) == 1 ? "その記憶を使うと、残りクールダウンが" : "条件に挙げた記憶のどれかを使うと、その記憶の残りクールダウンが")
+                        + "最大クールダウンの" + value + "%分短くなる。";
                 case LinkKind.MemorySurge:
-                    return MemorySubjectJa(link) + "を使った後5秒間、攻撃力・魔力 +" + value + "%：" + cond;
+                    return cond + "、" + MemorySubjectJa(link) + "を使った後5秒間、攻撃力・魔力が" + value + "%上がる。";
                 default:
-                    return "連携条件：" + cond;
+                    return "連携が有効になるのは、" + cond + "。";
             }
         }
 
-        /// <summary>記憶を使う効果の主語。条件の記憶が1つならその名前、複数ならどれか1つ。</summary>
-        private static string MemorySubjectJa(LinkDef link)
+        private static int MemoryCount(LinkDef link)
         {
-            string first = null;
             int count = 0;
             foreach (string t in link.Requires)
-            {
-                if (!IsMemory(Canon(t))) continue;
-                count++;
-                if (first == null) first = ItemName(t);
-            }
-            if (count == 1) return first;
-            return "条件の記憶のどれか";
+                if (IsMemory(Canon(t))) count++;
+            return count;
         }
+
+        /// <summary>記憶を使う効果の主語。条件の記憶が1つならその記憶、複数ならそのどれか1つ。</summary>
+        private static string MemorySubjectJa(LinkDef link) =>
+            MemoryCount(link) == 1 ? "その記憶" : "条件に挙げた記憶のどれか";
 
         private static string ConditionEn(LinkDef link, Func<string, bool> isSatisfied, bool memoryKind)
         {
