@@ -1,5 +1,5 @@
-[b]v2.10.16: star map keystones and mechanisms now apply at their full listed strength, and fixes overlapping keystone effects and a heal-radius issue. Saves carry over. Update all co-op players and restart the game.[/b]
-[b]v2.10.16：星図の刻印や仕掛けの効果が内部の上限で削られる問題、刻印の効果が打ち消し合う問題、回復範囲のずれを修正しました。セーブデータはそのまま引き継げます。協力プレイでは参加者全員がこのバージョンに更新し、ゲームを再起動してください。[/b]
+[b]v2.10.17: fixes the secure menu not appearing in Limbo and adds a once-per-expedition button to send satchel relics straight to the stash. Saves carry over. Update all co-op players and restart the game.[/b]
+[b]v2.10.17：Limbo で確保メニューが出ない問題を修正し、遠征中に1回だけ鞄の遺物を保管庫へ直接送れるボタンを追加しました。セーブデータはそのまま引き継げます。協力プレイでは参加者全員がこのバージョンに更新し、ゲームを再起動してください。[/b]
 
 [h1]Dreamforge RPG[/h1]
 Turns every run into part of a long RPG journey: relics you keep, a risky "secure or delve" choice at every zone, a star map per Traveler, a forge, and long-term goals. Co-op ready.
