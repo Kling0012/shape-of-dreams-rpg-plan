@@ -8,6 +8,10 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
+### 不具合の修正 / Bug fixes
+
+- エッセンス装着画面で回避スキルの枠が表示されない不具合を修正しました。 / Fixed movement skill essence slots being hidden in the edit screen.
+
 ### 新機能・改善 / New features and improvements
 
 - ビスマスの星図の配置も見直しました（線の交差 125→86、寄り添って見える線 0、同じ星から並んで走る線 25→4）。星・線・取得条件・保存データは変えていません。 / Re-laid out Bismuth's star chart as well (crossings 125 to 86, side-by-side lines from one star 25 to 4). Stars, links, requirements and saves are unchanged.
