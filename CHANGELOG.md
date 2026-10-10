@@ -8,6 +8,8 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
+- 処理の軽量化：敵の掃除と表示の更新で毎フレーム走っていた一部の処理を減らし、`dreamforge_perf` に内訳（client／host）と割り当て量の表示を追加しました。 / Reduced some per-frame work (monster pruning, variant/cue lookups) and extended `dreamforge_perf` with client/host breakdown and allocation rate.
+
 ---
 
 ## v2.10.19 — Minor adjustments（2026-10-10）

@@ -75,6 +75,8 @@ namespace SodRpg.Mod
 
         private readonly Dictionary<uint, VariantVisual> _variantVisuals = new Dictionary<uint, VariantVisual>();
         private readonly List<uint> _variantScratch = new List<uint>();
+        // GetComponent を毎フレーム呼ばせないための変種の敵の解決結果（netId → 身元と Monster）。
+        private readonly Dictionary<uint, (Mirror.NetworkIdentity Identity, Monster Monster)> _variantMonsters = new Dictionary<uint, (Mirror.NetworkIdentity, Monster)>();
         private bool _loggedVariantVisualFailure;
 
         private readonly RoomCounter _rooms = new RoomCounter();
@@ -1005,7 +1007,14 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
                 {
                     continue;
                 }
-                var m = id.GetComponent<Monster>();
+                // 同じ NetworkIdentity なら前回の Monster を使い回し、GetComponent を毎フレーム呼ばない。
+                if (!_variantMonsters.TryGetValue(kv.Key, out var cached) || cached.Identity != id || cached.Monster == null)
+                {
+                    var resolved = id.GetComponent<Monster>();
+                    cached = (id, resolved);
+                    if (resolved != null) _variantMonsters[kv.Key] = cached;
+                }
+                var m = cached.Monster;
                 if (m == null || !m.isActive)
                 {
                     if (m == null) _variantScratch.Add(kv.Key);
@@ -1065,6 +1074,7 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
         public void RemoveVariant(uint netId)
         {
             Variant.Remove(netId);
+            _variantMonsters.Remove(netId);
             if (!_variantVisuals.TryGetValue(netId, out var state)) return;
             _variantVisuals.Remove(netId);
             StopVariantVisual(state);
@@ -1075,6 +1085,7 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
             foreach (var state in _variantVisuals.Values) StopVariantVisual(state);
             _variantVisuals.Clear();
             Variant.Clear();
+            _variantMonsters.Clear();
             _variantScratch.Clear();
         }
 

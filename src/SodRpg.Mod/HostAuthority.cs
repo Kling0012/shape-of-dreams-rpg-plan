@@ -424,8 +424,13 @@ namespace SodRpg.Mod
 
         private void StageModShieldPools() => UpdateModShieldPools(_tickNow);
 
+        private float _nextMonsterPrune;
+
         private void StageMonsterPrune()
         {
+            // 敵の掃除は安全網（本体の Actor 削除イベントで即座に外れる）なので、全敵走査を毎フレームでなく0.5秒ごとにする。
+            if (_tickNow < _nextMonsterPrune) return;
+            _nextMonsterPrune = _tickNow + 0.5f;
             PruneMonsters(_tickNow);
             PrunePressureDividendDeaths();
         }

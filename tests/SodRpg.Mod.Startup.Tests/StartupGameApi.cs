@@ -316,6 +316,11 @@ namespace SodRpg.Mod
         public void Begin() { }
         public void EndUpdate() { }
         public void EndGui() { }
+        public void BeginClient() { }
+        public void EndClient() { }
+        public void BeginHost() { }
+        public void EndHost() { }
+        public void SampleGC() { }
         public string Report() => "";
     }
     internal sealed class PerformanceTuner
