@@ -12,8 +12,8 @@ namespace SodRpg.Mod
     [HarmonyPatch(typeof(Se_Star_Bismuth_D_SkillHasteAndAutoCast), "ActiveLogicUpdate")]
     internal static class NativeBismuthAutoCast
     {
-        private const int SoloCastsPerSecond = 12;
-        private const int CoopCastsPerSecond = 5;
+        private const int MaxCastsPerSecond = 30;
+        private const int MinCastsPerSecond = 5;
         private const float TargetSearchDelay = 0.1f;
 
         private sealed class ScanState
@@ -22,7 +22,8 @@ namespace SodRpg.Mod
             internal int NextSlot = 1;
             internal float LastCastTime = float.NegativeInfinity;
             internal float NextTargetSearchTime;
-            internal readonly float[] CastTimes = new float[SoloCastsPerSecond];
+            internal float FrameTimeEma;
+            internal readonly float[] CastTimes = new float[MaxCastsPerSecond];
             internal int CastHead;
             internal int CastCount;
         }
@@ -78,6 +79,9 @@ namespace SodRpg.Mod
             var state = States.GetValue(hero, CreateState);
             if (state.Frame == Time.frameCount) return;
             state.Frame = Time.frameCount;
+            float frameTime = Time.unscaledDeltaTime;
+            state.FrameTimeEma = state.FrameTimeEma > 0f
+                ? Mathf.Lerp(state.FrameTimeEma, frameTime, 0.1f) : frameTime;
 
             int ready = 0;
             float range = 0f;
@@ -97,19 +101,20 @@ namespace SodRpg.Mod
 
             float now = Time.time;
             bool coop = DewPlayer.allHumanPlayers.Count > 1;
-            float interval = coop ? star.castMinIntervalCoopGame : star.castMinIntervalSoloGame;
+            float over = Mathf.Clamp01(state.FrameTimeEma / GetTargetFrameTime() - 1f);
             var graphics = ManagerBase<GraphicsManager>.instance;
-            if (graphics != null && graphics.perfPressureStrength > 0f)
-                interval = Mathf.Lerp(interval, 0.3f, graphics.perfPressureStrength);
+            float pressure = Mathf.Max(over, graphics != null ? graphics.perfPressureStrength : 0f);
+            float interval = Mathf.Lerp(coop ? 0.1f : 0f, 0.3f, pressure);
+            int castsPerSecond = Mathf.RoundToInt(Mathf.Lerp(MaxCastsPerSecond, MinCastsPerSecond, pressure));
             if (now - state.LastCastTime < interval) return;
 
             // A fixed ring enforces a rolling one-second cap without per-tick allocations.
             while (state.CastCount > 0 && now - state.CastTimes[state.CastHead] >= 1f)
             {
-                state.CastHead = (state.CastHead + 1) % SoloCastsPerSecond;
+                state.CastHead = (state.CastHead + 1) % MaxCastsPerSecond;
                 state.CastCount--;
             }
-            if (state.CastCount >= (coop ? CoopCastsPerSecond : SoloCastsPerSecond)) return;
+            if (state.CastCount >= castsPerSecond) return;
 
             List<Entity> targets = null;
             ListReturnHandle<Entity> handle = default;
@@ -145,7 +150,7 @@ namespace SodRpg.Mod
                     if (!skill.CanBeCast() || !skill.CanBeReserved() || IsQueued(queued, skill)) continue;
                     state.NextSlot = (slot + 1) % 4;
                     state.LastCastTime = now;
-                    state.CastTimes[(state.CastHead + state.CastCount) % SoloCastsPerSecond] = now;
+                    state.CastTimes[(state.CastHead + state.CastCount) % MaxCastsPerSecond] = now;
                     state.CastCount++;
                     hero.Control.Cast(skill, skill.currentConfigIndex, info);
                     return;
@@ -158,6 +163,24 @@ namespace SodRpg.Mod
                     handle.Return();
                     if (!foundTarget) state.NextTargetSearchTime = now + TargetSearchDelay;
                 }
+            }
+        }
+
+        private static float GetTargetFrameTime()
+        {
+            try
+            {
+                var settings = DewSave.platformSettings?.graphics;
+                if (settings == null) return 1f / 60f;
+                int refreshRate = (int)Screen.currentResolution.refreshRateRatio.value;
+                int frameLimit = settings.gameFrameLimit == -1 ? int.MaxValue : settings.gameFrameLimit;
+                float desiredFrameRate = Mathf.Min(Mathf.Min(refreshRate, frameLimit), 90);
+                return desiredFrameRate > 0f ? 1f / desiredFrameRate : 1f / 60f;
+            }
+            catch
+            {
+                // Missing display/settings data must not disable automatic casting.
+                return 1f / 60f;
             }
         }
 
