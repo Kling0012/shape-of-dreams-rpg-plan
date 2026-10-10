@@ -410,8 +410,8 @@ namespace SodRpg.Core.Game
         {
             heat = ClampHeat(heat);
             if (!(shardDropMultiplier > 1) || double.IsInfinity(shardDropMultiplier)) shardDropMultiplier = 1;
-            // Invalid Limbo values disable only this multiplier; at most three primary rolls per kill.
-            if (!(limboRelicMultiplier > 1) || limboRelicMultiplier > 3) limboRelicMultiplier = 1;
+            // Invalid Limbo values disable only this multiplier; the cap bounds primary rolls per kill.
+            if (!(limboRelicMultiplier > 1) || limboRelicMultiplier > EconomyBalance.LimboRelicMultiplierCap) limboRelicMultiplier = 1;
             var reward = new KillReward { Xp = Content.KillXp(tier) };
             double luck = TierLuck(tier) + HeatLuck * heat + (mods?.Luck ?? 0);
             bool allowLegendary = tier >= MonsterTier.MiniBoss;

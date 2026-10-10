@@ -7,16 +7,20 @@ namespace SodRpg.Core.Tests
     {
         [Theory]
         [InlineData(0, 1.0)]
-        [InlineData(5, 2.0)]
-        [InlineData(10, 3.0)]
-        [InlineData(15, 3.0)] // 深さ10で頭打ち
-        public void Multiplier_adds_relic_count_per_depth_and_caps_at_three(int depth, double expected)
+        [InlineData(1, 1.2)]
+        [InlineData(2, 2.0)]
+        [InlineData(5, 5.0)]
+        [InlineData(6, 6.0)]
+        [InlineData(7, 6.0)] // 深さ6で頭打ち
+        [InlineData(10, 6.0)]
+        [InlineData(25, 6.0)]
+        public void Multiplier_uses_the_depth_itself_and_caps_at_six(int depth, double expected)
         {
             Assert.Equal(expected, Rules.LimboRelicMultiplier(depth), 10);
         }
 
         [Fact]
-        public void Kill_drops_average_three_times_more_relics_at_depth_10_but_keep_shards_and_tuning()
+        public void Kill_drops_average_six_times_more_relics_at_depth_10_but_keep_shards_and_tuning()
         {
             const int profiles = 200;
             const int kills = 30;
@@ -30,9 +34,9 @@ namespace SodRpg.Core.Tests
             }
             double killsTotal = (double)profiles * kills;
             Assert.True(relics0 > 0, "深さ0でも遺物は落ちるはず");
-            // 期待比は3倍。標本誤差を許す幅を持たせる。
+            // 期待比は6倍（深さ10の倍率は上限の6）。標本誤差を許す幅を持たせる。
             double ratio = (relics10 / killsTotal) / (relics0 / killsTotal);
-            Assert.InRange(ratio, 2.7, 3.3);
+            Assert.InRange(ratio, 5.4, 6.6);
             // 欠片・調律石は深さで変わらない（抽選順のずれによる標本誤差のみ許容）。
             Assert.InRange(shards10 / killsTotal, shards0 / killsTotal * 0.95, shards0 / killsTotal * 1.05);
             Assert.InRange(tuning10 / killsTotal, tuning0 / killsTotal * 0.85, tuning0 / killsTotal * 1.15);
