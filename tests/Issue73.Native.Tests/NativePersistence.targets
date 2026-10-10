@@ -47,7 +47,7 @@
     </Task>
   </UsingTask>
   <Target Name="CompileNativePersistence" BeforeTargets="CoreCompile">
-    <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/ClientSession.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)NativePersistence.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="ClientSession" Methods="MarkDirty;DeferSave;TickSatchelOverflow;TickPeriodicSave;SaveNow;FlushSaves;Secure;Delve;TrackRun;CarryPendingResultIntoRecovery;ReadLimboDepth;HeroKeyOf;Emit;SendTrade;TradeUnavailable;SendLedgerProbe;SendPreparedTrade;SendDueTradeQueries;RestoreSalvageTrade;OnTradeResult;TradeFailText;SalvageUnsecured" />
+    <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/ClientSession.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)NativePersistence.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="ClientSession" Methods="MarkDirty;DeferSave;TickSatchelOverflow;TickPeriodicSave;SaveNow;FlushSaves;Secure;Delve;OnConcluded;IsVictory;TrackRun;CarryPendingResultIntoRecovery;ReadLimboDepth;HeroKeyOf;Emit;SendTrade;TradeUnavailable;SendLedgerProbe;SendPreparedTrade;SendDueTradeQueries;RestoreSalvageTrade;OnTradeResult;TradeFailText;SalvageUnsecured" />
     <ItemGroup>
       <Compile Include="$(IntermediateOutputPath)NativePersistence.g.cs" />
     </ItemGroup>
@@ -70,7 +70,7 @@
   </Target>
 
   <Target Name="CompileInfinityContinue" BeforeTargets="CoreCompile">
-    <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/ClientSession.Infinity.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)InfinityContinue.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="ClientSession" Methods="InfinityStateDurable;HostInfinityStateDurable;InfinitySaveHoldReleased;InfinitySaveHoldSatisfied;HostInfinitySaveHoldSatisfied;PersistHostInfinityState;SaveInfinityState;SaveInfinityReceipt;BeginInfinitySaveHold;ResetInfinitySaveHold;CompleteInfinityStateSave;CountHostInfinityRoom;SyncInfinityContinueSnapshot;ObserveInfinityRoomTotal;TickInfinity;TryOpenInfinityChoice;AdvanceInfinityIdentity;ResetInfinityContinueState" />
+    <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/ClientSession.Infinity.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)InfinityContinue.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="ClientSession" Methods="ObserveInfinityConclusion;InfinityStateDurable;HostInfinityStateDurable;InfinitySaveHoldReleased;InfinitySaveHoldSatisfied;HostInfinitySaveHoldSatisfied;PersistHostInfinityState;SaveInfinityState;SaveInfinityReceipt;BeginInfinitySaveHold;ResetInfinitySaveHold;CompleteInfinityStateSave;CountHostInfinityRoom;SyncInfinityContinueSnapshot;ObserveInfinityRoomTotal;TickInfinity;TryOpenInfinityChoice;AdvanceInfinityIdentity;ResetInfinityContinueState" />
     <ItemGroup>
       <Compile Include="$(IntermediateOutputPath)InfinityContinue.g.cs" />
     </ItemGroup>
