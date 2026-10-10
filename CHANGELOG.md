@@ -10,6 +10,22 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v2.10.19 — Minor adjustments（2026-10-10）
+
+内部の細かな調整を行いました。 / Minor internal adjustments.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 変更 / Changes
+
+- 内部の細かな調整を行いました。 / Minor internal adjustments.
+
+---
+
 ## v2.10.18 — Movement essence slots in the edit screen（2026-10-10）
 
 エッセンス装着画面で回避スキルの枠が表示されない不具合を修正しました。 / Fixes the movement skill's essence slots not showing in the essence edit screen.
