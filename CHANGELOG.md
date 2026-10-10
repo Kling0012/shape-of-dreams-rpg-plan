@@ -13,6 +13,10 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 - **レベル連動のエッセンス枠**：ゲーム本来のプレイ中のレベルに応じて、Q・W・Eの記憶にはめられるエッセンスの数を増やせるようにしました。初期設定はLv10で合計+1、Lv20で合計+2、Q・W・Eすべてが対象です。段階（いくつでも指定可能）、対象のQ・W・E、1つの記憶の枠の最大数は、ゲームのMOD設定で変えられ、F6メニューの記録タブに今の設定を表示します。星図のエッセンス枠とは別の仕組みで、セーブデータと通信の形式は変わりません。ホスト（ソロなら自分）の設定だけが反映されます。 / Level-based essence slots: the number of essence slots on your Q, W and E memories grows with your hero's in-game level. Defaults: +1 in total from Lv10 and +2 from Lv20, for all of Q/W/E. Stages (any number), the target memories and the per-memory slot maximum are set in the game's mod settings, and the F6 menu's Records tab shows the current setting. Separate from the star-map essence slots; no change to saves or the network format. Only the host's (or your own, when solo) setting applies.
 - 本体の画面が描けるエッセンス枠は1つの記憶につき4つまでで、Q・W・Eは最初から3つあるため、初期設定では+1までが実際に増えます。Lv20の+2を生かしたいときは、MOD設定の「1つの記憶の枠の最大数」を上げて試せます（試験的。枠が画面に描かれない場合は4に戻してください）。 / The game's HUD draws at most 4 essence slots per memory and Q/W/E start with 3, so by default only +1 actually appears. To make use of the Lv20 +2, raise "max slots per memory" in the mod settings (experimental; set it back to 4 if the slots stop being drawn).
 
+### 変更 / Changes
+
+- 星図・装備・図鑑の日本語の説明文を、「・」の箇条書きをやめて、普通の文章に書き換えました。条件→結果の順に読めるようにし、「パーセントポイント」は「%」にそろえました。数値と効果は変わっていません（英語の表示も変わりません）。 / Japanese descriptions of stars, gear and the Codex are now written as plain sentences instead of bullet lists. Numbers and effects are unchanged, and English text is untouched.
+
 ---
 
 ## v2.10.23 — Continue fix（2026-10-11）
