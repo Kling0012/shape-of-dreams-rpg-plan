@@ -15,6 +15,12 @@ namespace SodRpg.Mod
 
         private readonly Dictionary<DewPlayer, string> _versionMismatches = new Dictionary<DewPlayer, string>();
         private readonly HashSet<DewPlayer> _helloPeers = new HashSet<DewPlayer>();
+        private readonly HashSet<DewPlayer> _autocastPressurePeers = new HashSet<DewPlayer>();
+        private Action<DreamforgeAutocastPressureCapabilityMsg, DewPlayer> _onAutocastPressureCapability;
+        internal bool AutocastPressureReady;
+
+        internal bool SupportsAutocastPressure(DewPlayer player) => _autocastPressurePeers.Contains(player);
+        internal void ForgetAutocastPressure(DewPlayer player) => _autocastPressurePeers.Remove(player);
         private static readonly List<string> MismatchScratch = new List<string>();
 
         /// <summary>版が違う参加者の説明（ホストの画面に出す）。無ければ空。</summary>
@@ -35,6 +41,12 @@ namespace SodRpg.Mod
             actor.CustomRpc_RegisterServerMessageHandler<DreamforgeHelloMsg>(nameof(DreamforgeHelloMsg), _onHello);
             RegisterOverflowBonus(actor);
             RegisterBuildInputCapability(actor);
+            try
+            {
+                if (_onAutocastPressureCapability == null) _onAutocastPressureCapability = OnAutocastPressureCapability;
+                actor.CustomRpc_RegisterServerMessageHandler<DreamforgeAutocastPressureCapabilityMsg>(nameof(DreamforgeAutocastPressureCapabilityMsg), _onAutocastPressureCapability);
+            }
+            catch (Exception) { }
         }
 
         private void UnregisterHello(Actor actor)
@@ -43,10 +55,13 @@ namespace SodRpg.Mod
                 try { actor.CustomRpc_UnregisterServerMessageHandler<DreamforgeHelloMsg>(_onHello); } catch (Exception) { }
             UnregisterOverflowBonus(actor);
             UnregisterBuildInputCapability(actor);
+            if (actor != null && _onAutocastPressureCapability != null)
+                try { actor.CustomRpc_UnregisterServerMessageHandler<DreamforgeAutocastPressureCapabilityMsg>(_onAutocastPressureCapability); } catch (Exception) { }
             _helloActor = null;
             _versionMismatches.Clear();
             _helloPeers.Clear();
             _netLitePeers.Clear();
+            _autocastPressurePeers.Clear();
             RebuildMismatchList();
         }
 
@@ -78,6 +93,15 @@ namespace SodRpg.Mod
             else _netLitePeers.Remove(caller);
             try { _registeredOn?.CustomRpc_SendMessageToClient(caller,
                 new DreamforgeBuildInputCapabilityMsg { netLite = 1 }); } catch (Exception) { }
+        }
+
+        private void OnAutocastPressureCapability(DreamforgeAutocastPressureCapabilityMsg msg, DewPlayer caller)
+        {
+            if (!AutocastPressureReady || msg == null || msg.version != 1 || msg.capability != "autocast-pressure"
+                || caller == null || !caller.isHumanPlayer || caller == DewPlayer.local
+                || !DewPlayer.gamePlayers.Contains(caller) && !DewPlayer.lobbyPlayers.Contains(caller)) return;
+            _autocastPressurePeers.Add(caller);
+            try { _helloActor?.CustomRpc_SendMessageToClient(caller, new DreamforgeAutocastPressureCapabilityMsg()); } catch (Exception) { }
         }
 
         private void OnHello(DreamforgeHelloMsg msg, DewPlayer caller)

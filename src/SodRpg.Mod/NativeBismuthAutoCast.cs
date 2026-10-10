@@ -22,7 +22,6 @@ namespace SodRpg.Mod
             internal int NextSlot = 1;
             internal float LastCastTime = float.NegativeInfinity;
             internal float NextTargetSearchTime;
-            internal float FrameTimeEma;
             internal readonly float[] CastTimes = new float[MaxCastsPerSecond];
             internal int CastHead;
             internal int CastCount;
@@ -54,6 +53,9 @@ namespace SodRpg.Mod
         private static bool Prefix(Se_Star_Bismuth_D_SkillHasteAndAutoCast __instance, float dt)
         {
             if (_disabled || BaseUpdate == null) return true;
+            // Unknown/older peers retain the native 0.2-second scan and behavior.
+            if (NetworkServer.active && DewPlayer.allHumanPlayers.Count > 1
+                && !AutocastPressure.AllPeersSupported) return true;
             try
             {
                 BaseUpdate(__instance, dt);
@@ -79,9 +81,6 @@ namespace SodRpg.Mod
             var state = States.GetValue(hero, CreateState);
             if (state.Frame == Time.frameCount) return;
             state.Frame = Time.frameCount;
-            float frameTime = Time.unscaledDeltaTime;
-            state.FrameTimeEma = state.FrameTimeEma > 0f
-                ? Mathf.Lerp(state.FrameTimeEma, frameTime, 0.1f) : frameTime;
 
             int ready = 0;
             float range = 0f;
@@ -100,11 +99,12 @@ namespace SodRpg.Mod
             if (ready == 0) return;
 
             float now = Time.time;
-            bool coop = DewPlayer.allHumanPlayers.Count > 1;
-            float over = Mathf.Clamp01(state.FrameTimeEma / GetTargetFrameTime() - 1f);
+            float over = AutocastPressure.SampleFrame();
             var graphics = ManagerBase<GraphicsManager>.instance;
-            float pressure = Mathf.Max(over, graphics != null ? graphics.perfPressureStrength : 0f);
-            float interval = Mathf.Lerp(coop ? 0.1f : 0f, 0.3f, pressure);
+            float pressure = Mathf.Max(over, AutocastPressure.RemoteOver);
+            pressure = Mathf.Max(pressure, AutocastPressure.NetOver);
+            pressure = Mathf.Clamp01(Mathf.Max(pressure, graphics != null ? graphics.perfPressureStrength : 0f));
+            float interval = Mathf.Lerp(0f, 0.3f, pressure);
             int castsPerSecond = Mathf.RoundToInt(Mathf.Lerp(MaxCastsPerSecond, MinCastsPerSecond, pressure));
             if (now - state.LastCastTime < interval) return;
 
@@ -163,24 +163,6 @@ namespace SodRpg.Mod
                     handle.Return();
                     if (!foundTarget) state.NextTargetSearchTime = now + TargetSearchDelay;
                 }
-            }
-        }
-
-        private static float GetTargetFrameTime()
-        {
-            try
-            {
-                var settings = DewSave.platformSettings?.graphics;
-                if (settings == null) return 1f / 60f;
-                int refreshRate = (int)Screen.currentResolution.refreshRateRatio.value;
-                int frameLimit = settings.gameFrameLimit == -1 ? int.MaxValue : settings.gameFrameLimit;
-                float desiredFrameRate = Mathf.Min(Mathf.Min(refreshRate, frameLimit), 90);
-                return desiredFrameRate > 0f ? 1f / desiredFrameRate : 1f / 60f;
-            }
-            catch
-            {
-                // Missing display/settings data must not disable automatic casting.
-                return 1f / 60f;
             }
         }
 
