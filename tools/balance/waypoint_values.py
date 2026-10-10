@@ -88,6 +88,13 @@ LEGACY = json.loads(r'''{
     "tuningPerNonBossRelic": 1
   }
 }''', parse_float=Decimal)
+SCHEMA = {
+    **LEGACY,
+    "definitions": {
+        **LEGACY["definitions"],
+        "DeepeningNight": {"pressureMultiplier": Decimal("1.5"), "awakeningMultiplier": 3},
+    },
+}
 # Closed numeric schema: names and enum/definition relationships stay in Core.
 FIELDS = {
     'offered': ('Offered', 'int', 'choices'),
@@ -116,6 +123,8 @@ FIELDS = {
     'definitions.SixfoldRoad.luck': ('SixfoldRoadLuck', 'double', 'luck'),
     'definitions.AwakeningPilgrimage.awakeningPerRelic': ('AwakeningPilgrimageAwakeningPerRelic', 'int', 'awakening/relic'),
     'definitions.FirstClaim.maxRelicsPerRoom': ('FirstClaimMaxRelicsPerRoom', 'int', 'relics/room'),
+    'definitions.DeepeningNight.pressureMultiplier': ('DeepeningNightPressureMultiplier', 'double', 'multiplier'),
+    'definitions.DeepeningNight.awakeningMultiplier': ('DeepeningNightAwakeningMultiplier', 'double', 'multiplier'),
     'rewards.twinRelicCopies': ('TwinRelicCopies', 'int', 'copies/relic'),
     'rewards.bossSalvageMultiplier': ('BossSalvageMultiplier', 'int', 'multiplier'),
     'rewards.starXpPerShard': ('StarXpPerShard', 'int', 'star-xp/shard'),
@@ -141,7 +150,7 @@ def _shape(data, reference, path="waypoints"):
 
 
 def validate(data):
-    _shape(data, LEGACY)
+    _shape(data, SCHEMA)
     if type(data["schemaVersion"]) is not int or data["schemaVersion"] != 1:
         raise ValueError("waypoints.schemaVersion: expected integer 1")
     for path, (_, kind, _) in FIELDS.items():
@@ -192,12 +201,14 @@ def fingerprint_record(data):
     records = []
     for path, (_, kind, unit) in FIELDS.items():
         value = _get(data, path)
-        if value != _get(LEGACY, path):
+        definition = path.split(".")[1] if path.startswith("definitions.") else None
+        new_definition = definition is not None and definition not in LEGACY["definitions"]
+        if new_definition or value != _get(LEGACY, path):
             literal = _literal(value)
             if kind == "double":
                 # The fingerprint describes the adopted IEEE double, not JSON spelling.
                 literal = repr(float(value))
-                if float(value) == float(_get(LEGACY, path)):
+                if not new_definition and float(value) == float(_get(LEGACY, path)):
                     continue
             records.append(f"{path.replace('.', '/')}:{kind}:{unit}:{literal}")
     return "balance:waypoints:v1:" + ";".join(records) if records else None
