@@ -309,7 +309,17 @@ namespace SodRpg.Mod
                 catch (Exception ex) { Log.Error("Host: remove monster movement " + ex); }
                 try { if (state.GrantedShield != null && state.GrantedShield.isActive) state.GrantedShield.Destroy(); }
                 catch (Exception ex) { Log.Error("Host: remove beacon shield " + ex); }
-                try { if (m.Visual != null && m.isActive) m.Visual.SetShaderProperty("_CMEmission", Color.black); }
+                try
+                {
+                    if (m.Visual != null)
+                    {
+                        // Reset even after deactivation: the emission sits in the renderers'
+                        // property block, which pooled instances keep across reuse. The local
+                        // write covers the host view when the despawned actor cannot take the RPC.
+                        if (m.isActive) m.Visual.SetShaderProperty("_CMEmission", Color.black);
+                        else m.Visual.SetShaderPropertyLocal("_CMEmission", Color.black);
+                    }
+                }
                 catch (Exception ex) { Log.Error("Host: reset monster cue " + ex); }
                 QueueMonsterCue(m.netId, 0);
             }

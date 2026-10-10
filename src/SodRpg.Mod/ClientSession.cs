@@ -77,6 +77,7 @@ namespace SodRpg.Mod
         private readonly List<uint> _variantScratch = new List<uint>();
         // GetComponent を毎フレーム呼ばせないための変種の敵の解決結果（netId → 身元と Monster）。
         private readonly Dictionary<uint, (Mirror.NetworkIdentity Identity, Monster Monster)> _variantMonsters = new Dictionary<uint, (Mirror.NetworkIdentity, Monster)>();
+        private readonly List<uint> _variantStaleScratch = new List<uint>();
         private bool _loggedVariantVisualFailure;
 
         private readonly RoomCounter _rooms = new RoomCounter();
@@ -1006,6 +1007,10 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
             {
                 if (!NetworkClient.spawned.TryGetValue(kv.Key, out var id) || id == null)
                 {
+                    // Despawned: stop the color/scale modifiers now. Pooled instances keep
+                    // EntityVisual modifier lists across reuse, so a kept modifier bleeds the
+                    // variant tint and size onto the next monster that borrows the instance.
+                    _variantScratch.Add(kv.Key);
                     continue;
                 }
                 // 同じ NetworkIdentity なら前回の Monster を使い回し、GetComponent を毎フレーム呼ばない。
@@ -1038,6 +1043,17 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
             }
             // A message can arrive before the entity or its model is ready.
             if (visual == null || visual.model == null) return;
+            // Pool reuse can hand this same Monster component to a new netId while the old
+            // entry still holds live modifiers; stop those so scale and color are applied once.
+            _variantStaleScratch.Clear();
+            foreach (var kv in _variantVisuals)
+                if (kv.Key != netId && kv.Value.Monster == m) _variantStaleScratch.Add(kv.Key);
+            for (int i = 0; i < _variantStaleScratch.Count; i++)
+                if (_variantVisuals.TryGetValue(_variantStaleScratch[i], out var stale))
+                {
+                    StopVariantVisual(stale);
+                    _variantVisuals.Remove(_variantStaleScratch[i]);
+                }
             var state = new VariantVisual { Monster = m, Visual = visual };
             _variantVisuals[netId] = state;
             try
