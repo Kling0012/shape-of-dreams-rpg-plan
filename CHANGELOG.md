@@ -8,7 +8,31 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
-- 熱病のエッセンスの爆発の光と揺れを軽くしました。 / Reduced explosion lights and camera shake from the Fever essence.
+---
+
+## v2.10.21 — Lighter Fever essence, co-op and Continue fixes（2026-10-11）
+
+熱病のエッセンスの爆発を軽くし、協力プレイ・Continue まわりの不具合を直しました。 / Lighter Fever essence explosions and fixes for co-op and Continue issues.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 新機能 / New features
+
+- **熱病のエッセンスの軽量化**：爆発の光の明るさ・範囲と画面の揺れに上限を設け、一度に多く爆発したときは光る数を絞ります。エフェクト品質「低」では爆発の光を省きます。ダメージや範囲は変わりません。 / **Lighter Fever essence**: explosion light and camera shake are capped, and fewer lights are shown when many explode at once. At Low effect quality the explosion light is omitted. Damage and area are unchanged.
+
+### 不具合の修正 / Bug fixes
+
+- 同じ遠征に再接続したとき、まだ確定していなかった遠征の結果が失われることがある問題を修正しました。 / Fixed unconfirmed expedition results sometimes being lost when reconnecting to the same expedition.
+- Continue で前の遠征に戻ると、鞄の遺物を保管庫へ送るボタンをもう一度使えてしまう問題を修正しました。 / Fixed the send-to-stash button becoming usable again after continuing an earlier expedition.
+- ケートスの「下がれ！」のチャージを中断・差し替えしたあとも、継続ダメージが続くことがある問題を修正しました。 / Fixed Cetus's "Back Off!" charge damage sometimes continuing after the charge was cancelled or swapped.
+- 協力プレイで、参加者の負荷の報告が途切れて自動発動の調整が正しく働かないことがある問題を修正しました。 / Fixed participant load reports in co-op sometimes lapsing, which could misadjust automatic casting.
+- 内部の更新処理でエラーが起きたとき、記録の処理で別のエラーが重なることがある問題を修正しました。 / Fixed a secondary error that could occur while logging a failure in the client update loop.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
 
 ---
 

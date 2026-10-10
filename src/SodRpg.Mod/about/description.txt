@@ -1,5 +1,5 @@
-[b]Lighter performance, fixes for lingering effects and enemy models, experience scaling with Limbo depth.[/b]
-[b]動作の軽量化、効果・敵モデルの残留修正、Limbo の経験値ボーナス。[/b]
+[b]Lighter Fever essence explosions and fixes for co-op and Continue issues.[/b]
+[b]熱病のエッセンスの軽量化と、協力プレイ・Continue の不具合修正。[/b]
 
 [h1]Dreamforge RPG[/h1]
 Turns every run into part of a long RPG journey: relics you keep, a risky "secure or delve" choice at every zone, a star map per Traveler, a forge, and long-term goals. Co-op ready.
