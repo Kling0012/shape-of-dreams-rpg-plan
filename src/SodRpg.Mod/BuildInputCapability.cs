@@ -11,7 +11,6 @@ namespace SodRpg.Mod
         private bool _netLiteReceiveReady, _netLiteReceiveWarned;
         private bool _hostAutocastPressureCapability;
         private float _nextAutocastPressureReport;
-        private int _lastAutocastPressure = -1;
         private Action<DreamforgeAutocastPressureCapabilityMsg> _onAutocastPressureCapability;
 
         private void RegisterAutocastPressureCapability(Actor actor)

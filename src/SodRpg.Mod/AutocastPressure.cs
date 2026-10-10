@@ -234,10 +234,10 @@ namespace SodRpg.Mod
             if (now < _nextAutocastPressureReport) return;
             _nextAutocastPressureReport = now + 1f;
             byte quantized = (byte)Mathf.RoundToInt(over * 255f);
-            if (quantized == _lastAutocastPressure) return;
+            // Refresh even unchanged pressure: the host expires reports after five seconds.
+            // The one-second gate above also bounds heartbeat and failed-send retries.
             Writer<DreamforgePerfPressureMsg>.write = (writer, message) => writer.WriteByte(message.over);
             NetworkClient.Send(new DreamforgePerfPressureMsg { over = quantized });
-            _lastAutocastPressure = quantized;
         }
     }
 }

@@ -56,7 +56,6 @@ namespace SodRpg.Mod
             _netLiteReceiveReady = false;
             _hostAutocastPressureCapability = false;
             _nextAutocastPressureReport = 0f;
-            _lastAutocastPressure = -1;
             _nextBuildInputProbe = 0f;
             HostVersionWarning = null;
             ResetOverflowBonusConnection();

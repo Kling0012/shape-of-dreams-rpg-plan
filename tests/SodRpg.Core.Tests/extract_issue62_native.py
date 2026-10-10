@@ -37,7 +37,14 @@ output.parent.mkdir(parents=True, exist_ok=True)
 text = ("using System; using System.Collections.Generic; using SodRpg.Core.Game; using UnityEngine; using Mirror;\n"
         "namespace SodRpg.Mod {\n" + patch + "\ninternal sealed partial class HostAuthority {\n"
         + "\n".join(methods) + "\n}}\n")
-# Only rewrite when the content differs: an unconditional write changes the timestamp and
-# recompiles the whole test project on every build (issue #151).
+# Exercise the live pressure-report and connection-reset bodies without game DLLs.
+# A separate namespace keeps these focused doubles independent of the other native fixtures.
+pressure_methods = [
+    block("src/SodRpg.Mod/AutocastPressure.cs", r"private void TickAutocastPressureReport\("),
+    block("src/SodRpg.Mod/ClientSession.Hello.cs", r"private void ResetHello\("),
+]
+pressure_text = "namespace PressureReportUnderTest { internal sealed partial class ClientSession {\n" + "\n".join(pressure_methods) + "\n}}\n"
+text += pressure_text
+# Only rewrite when the content differs to preserve incremental builds (issue #151).
 if not output.exists() or output.read_text(encoding="utf-8") != text:
     output.write_text(text, encoding="utf-8")
