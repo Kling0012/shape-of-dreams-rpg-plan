@@ -10,11 +10,13 @@ using StarMapRender;
 //
 // Usage: dotnet run --project tools/StarMapRender -- <output-dir> [--max-edge 2000] [--no-png] [--metrics <file>] [--before <metrics.md>]
 //        dotnet run --project tools/StarMapRender -- --check                       (overlap / line-over-star / crossing check, exit 1 on failure)
-//        dotnet run --project tools/StarMapRender -- --optimize <StarMapPlacements.Generated.cs> [--hero X] [--iterations N]
+//        dotnet run --project tools/StarMapRender -- --optimize <StarMapPlacements.Generated.cs> [--hero X] [--iterations N] [--seed N] [--set Option=value]
+//        dotnet run --project tools/StarMapRender -- --diag <Hero_X>               (which kinds of lines cross, and the lines that cross most)
 // Writes <output-dir>/<hero>.svg (+ .png via rsvg-convert when available) and <output-dir>/metrics.md
 // (or the path given by --metrics, "-" for stdout only).
 
 if (args.Length > 0 && args[0] == "--optimize") return StarMapRender.OptimizeCommand.Run(args);
+if (args.Length > 1 && args[0] == "--diag") return StarMapRender.DiagCommand.Run(args[1]);
 if (args.Length > 0 && args[0] == "--check") return StarMapRender.CheckCommand.Run();
 if (args.Length < 1 || args[0] is "--help" or "-h" or "help")
 {

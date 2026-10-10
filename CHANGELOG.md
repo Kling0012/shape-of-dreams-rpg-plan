@@ -8,6 +8,11 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
+### 新機能・改善 / New features and improvements
+
+- ビスマスの星図の配置も見直しました（線の交差 125→86、寄り添って見える線 0、同じ星から並んで走る線 25→4）。星・線・取得条件・保存データは変えていません。 / Re-laid out Bismuth's star chart as well (crossings 125 to 86, side-by-side lines from one star 25 to 4). Stars, links, requirements and saves are unchanged.
+- ケトゥスの星図の配置を見直し、重なって見える線を減らしました（線の交差 146→110、寄り添って見える線 9→0、同じ星から並んで走る線 40→0、いちばん長い線 2245→1673）。星・線・取得条件・保存データは変えていません。 / Re-laid out Cetus's star chart to cut overlapping lines (crossings 146 to 110, near-touching lines 9 to 0, side-by-side lines from one star 40 to 0, longest line 2245 to 1673). Stars, links, requirements and saves are unchanged.
+
 ---
 
 ## v2.10.17 — Limbo の確保メニューの修正と保管庫へ送るボタン（2026-10-10）

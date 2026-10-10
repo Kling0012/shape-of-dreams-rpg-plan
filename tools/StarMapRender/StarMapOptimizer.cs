@@ -8,8 +8,10 @@ namespace StarMapRender;
 /// rotate, mirror, pull toward their outside neighbours), (b) single stars inside a cluster (the cluster's shape),
 /// and (c) loose stars (bridge access stars, outer anchors, keystones). Trunk, start and route lanes are fixed.
 ///
-/// Energy = crossings + edges running over unrelated stars + edge length (long lines are penalized harder) +
-/// intra-cluster edge-length drift (keeps a fan a fan). Hard constraints: spacing, radial floor, route wedge,
+/// Energy = crossings + lines that touch without crossing (closer than TouchDist) + same-star lines running side by
+/// side (bundles) + edges running over unrelated stars + edge length (long lines are penalized harder) +
+/// intra-cluster edge-length drift (keeps a fan a fan). Moves also swap two clusters of one sector (reordering them
+/// along a route), and route stars may leave their lane by up to RouteSlack. Hard constraints: spacing, radial floor, route wedge,
 /// memory prerequisites stay radially inside their successors. Every move is evaluated incrementally.
 /// </summary>
 internal sealed class StarMapOptimizer
@@ -18,14 +20,14 @@ internal sealed class StarMapOptimizer
     {
         public long Iterations = 3_000_000;
         public int Seed = 1;
-        public double WCross = 10, WPass = 10, WLen = 0.25, WLong = 0.4, LongStart = 1200, WShape = 2;
+        public double WCross = 20, WTouch = 6, WBundle = 3, TouchDist = 10, BundleCos = 0.9945, BundleMin = 140, WPass = 10, WLen = 0.25, WLong = 0.4, LongStart = 1200, WShape = 2;
         public double T0 = 3.0, T1 = 0.02;
         public double Wedge = 0.97, Floor = 760;
         public double PassMargin = 8;
         public double SpaceSame = 86, SpaceOther = 140, SpaceLoose = 90, SpaceKey = 160, SpaceKeyOther = 110, SpaceCluster = 100;
         public bool Hull = true, OuterWedge = true;
-        public double KeystoneRange = 8000, RouteSlack = 100, WStress = 1.5, WHome = 3, TangleRelax = 3;
-        public double RigidShare = 0.06, LooseShare = 0.10;
+        public double KeystoneRange = 8000, RouteSlack = 3000, WStress = 1.5, WHome = 0.2, TangleRelax = 3;
+        public double RigidShare = 0.06, LooseShare = 0.10, SwapShare = 0.05;
         public bool Verbose = true;
     }
 
@@ -279,6 +281,45 @@ internal sealed class StarMapOptimizer
         return (d3 > 0 && d4 < 0) || (d3 < 0 && d4 > 0);
     }
 
+    /// <summary>0 = clear, 1 = the lines cross, 2 = they come closer than TouchDist without crossing, 3 = same-star lines running side by side.</summary>
+    private int Interact(int e, int f)
+    {
+        int a = edgeA[e], b = edgeB[e], c = edgeA[f], d = edgeB[f];
+        if (a == c || a == d || b == c || b == d)
+        {
+            if (opt.WBundle <= 0) return 0;
+            int shared = a == c || a == d ? a : b;
+            int p = a == shared ? b : a, q = c == shared ? d : c;
+            double ux = px[p] - px[shared], uy = py[p] - py[shared], vx = px[q] - px[shared], vy = py[q] - py[shared];
+            double lu = Math.Sqrt(ux * ux + uy * uy), lv = Math.Sqrt(vx * vx + vy * vy);
+            if (lu < opt.BundleMin || lv < opt.BundleMin) return 0;
+            return (ux * vx + uy * vy) / (lu * lv) > opt.BundleCos ? 3 : 0;
+        }
+        double t = opt.WTouch > 0 ? opt.TouchDist : 0;
+        if (ex1[e] + t < ex0[f] || ex1[f] + t < ex0[e] || ey1[e] + t < ey0[f] || ey1[f] + t < ey0[e]) return 0;
+        double d1 = Side(px[c], py[c], px[d], py[d], px[a], py[a]);
+        double d2 = Side(px[c], py[c], px[d], py[d], px[b], py[b]);
+        if ((d1 > 0 && d2 < 0) || (d1 < 0 && d2 > 0))
+        {
+            double d3 = Side(px[a], py[a], px[b], py[b], px[c], py[c]);
+            double d4 = Side(px[a], py[a], px[b], py[b], px[d], py[d]);
+            if ((d3 > 0 && d4 < 0) || (d3 < 0 && d4 > 0)) return 1;
+        }
+        if (t <= 0) return 0;
+        double t2 = t * t;
+        if (PointSegSq(px[a], py[a], c, d) < t2 || PointSegSq(px[b], py[b], c, d) < t2 || PointSegSq(px[c], py[c], a, b) < t2 || PointSegSq(px[d], py[d], a, b) < t2) return 2;
+        return 0;
+    }
+
+    private double PointSegSq(double x, double y, int s, int u)
+    {
+        double ax = px[s], ay = py[s], dx = px[u] - ax, dy = py[u] - ay;
+        double len2 = dx * dx + dy * dy;
+        double t = len2 <= 0 ? 0 : Math.Max(0, Math.Min(1, ((x - ax) * dx + (y - ay) * dy) / len2));
+        double qx = x - ax - t * dx, qy = y - ay - t * dy;
+        return qx * qx + qy * qy;
+    }
+
     private bool Near(int e, int k, double r)
     {
         double x = px[k], y = py[k];
@@ -306,7 +347,7 @@ internal sealed class StarMapOptimizer
     private double Local(int[] moved)
     {
         // Caller has stamped nodes (nodeStamp == stamp) and edges (edgeStamp == stamp) and filled changedEdges.
-        double cross = 0, pass = 0, len = 0;
+        double cross = 0, pass = 0, len = 0, touch = 0, bundle = 0;
         for (int ci = 0; ci < changedEdges.Count; ci++)
         {
             int e = changedEdges[ci];
@@ -314,7 +355,8 @@ internal sealed class StarMapOptimizer
             for (int f = 0; f < m; f++)
             {
                 if (f == e || (edgeStamp[f] == stamp && f < e)) continue;
-                if (Crosses(e, f)) cross++;
+                int hit = Interact(e, f);
+                if (hit == 1) cross++; else if (hit == 2) touch++; else if (hit == 3) bundle++;
             }
             for (int k = 0; k < n; k++)
                 if (k != edgeA[e] && k != edgeB[e] && Near(e, k, clearance[k])) pass++;
@@ -327,7 +369,7 @@ internal sealed class StarMapOptimizer
         }
         double shape = 0;
         if (moved.Length == 1) shape = ShapeCost(moved[0]);
-        return opt.WCross * cross + opt.WPass * pass + len + shape;
+        return opt.WCross * cross + opt.WTouch * touch + opt.WBundle * bundle + opt.WPass * pass + len + shape;
     }
 
     /// <summary>Keeps a single moved star near the shape it started with: cluster stars keep their pairwise distances, other stars stay near home.</summary>
@@ -626,6 +668,19 @@ internal sealed class StarMapOptimizer
         return TryMove(stars, nx, ny, temperature, false);
     }
 
+    /// <summary>Exchanges the places of two clusters of the same sector (what translations cannot do: reorder clusters along a lane).</summary>
+    private bool SwapMove(Group a, Group b, double temperature)
+    {
+        var (ax, ay) = Centroid(a.Stars);
+        var (bx, by) = Centroid(b.Stars);
+        int ka = a.Stars.Length, kb = b.Stars.Length;
+        var moved = new int[ka + kb];
+        var nx = new double[ka + kb]; var ny = new double[ka + kb];
+        for (int i = 0; i < ka; i++) { moved[i] = a.Stars[i]; nx[i] = px[a.Stars[i]] + bx - ax; ny[i] = py[a.Stars[i]] + by - ay; }
+        for (int i = 0; i < kb; i++) { moved[ka + i] = b.Stars[i]; nx[ka + i] = px[b.Stars[i]] + ax - bx; ny[ka + i] = py[b.Stars[i]] + ay - by; }
+        return TryMove(moved, nx, ny, temperature, false);
+    }
+
     private bool StarMove(Group g, double temperature, double progress)
     {
         int i = g.Stars[(int)(Next() * g.Stars.Length)];
@@ -662,6 +717,12 @@ internal sealed class StarMapOptimizer
             double pick = Next();
             bool ok;
             if (pick < opt.RigidShare && groups.Count > 0) ok = RigidMove(groups[(int)(Next() * groups.Count)], temperature, progress);
+            else if (pick < opt.RigidShare + opt.LooseShare + opt.SwapShare && pick >= opt.RigidShare + opt.LooseShare && groups.Count > 1)
+            {
+                var g1 = groups[(int)(Next() * groups.Count)];
+                var g2 = groups[(int)(Next() * groups.Count)];
+                ok = g1 != g2 && g1.UseWedge == g2.UseWedge && (!g1.UseWedge || g1.SectorHeading == g2.SectorHeading) && SwapMove(g1, g2, temperature);
+            }
             else if (pick < opt.RigidShare + opt.LooseShare && looseNodes.Count > 0) ok = LooseMove(looseNodes[(int)(Next() * looseNodes.Count)], temperature, progress);
             else if (starGroups.Length > 0) ok = StarMove(starGroups[(int)(Next() * starGroups.Length)], temperature, progress);
             else continue;
