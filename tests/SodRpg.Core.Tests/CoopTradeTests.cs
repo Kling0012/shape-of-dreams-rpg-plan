@@ -545,5 +545,66 @@ namespace SodRpg.Core.Tests
             Assert.NotNull(first.CoopTradePending);
             Assert.DoesNotContain("trade", first.CoopTradeExecuted);
         }
+
+        [Fact]
+        public void Zero_balances_dropped_by_reload_still_resolve_after_reconnect()
+        {
+            // Finding 02: a reservation writes explicit zero keys, canonical saves drop them
+            // again, and a reconnected player must still settle the executed receipt.
+            var first = Player("first-relic", 30, 2); // pays every material: both keys become zero
+            var second = Profile.CreateNew(17);
+            second.Stash.Add(Relic("second-relic")); // tuning-stone-less: no material keys at all
+            var receipt = Receipt(first, second, Offer("first-relic", 30, 2), Offer("second-relic"));
+            CoopTradeRules.Prepare(first, receipt.Id, receipt.HostKey, receipt.FirstOffer);
+            CoopTradeRules.Prepare(second, receipt.Id, receipt.HostKey, receipt.SecondOffer);
+            Assert.True(first.Materials.ContainsKey(Materials.Shard));
+            Assert.Equal(0, first.Materials[Materials.Shard]);
+            Assert.True(second.Materials.ContainsKey(Materials.Tuning));
+            Assert.Equal(0, second.Materials[Materials.Tuning]);
+            first = ProfileCodec.Read(ProfileCodec.Write(first), new List<string>());
+            second = ProfileCodec.Read(ProfileCodec.Write(second), new List<string>());
+            Assert.False(first.Materials.ContainsKey(Materials.Shard)); // the reload really drops the keys
+            Assert.False(second.Materials.ContainsKey(Materials.Tuning));
+            var journal = new CoopTradeJournal(new InMemoryFileSystem(), "journal");
+            journal.Commit(receipt);
+            Assert.True(journal.TryGet(receipt.Id, out var executed));
+            Assert.True(CoopTradeRules.Resolve(first, executed, "first"));
+            Assert.True(CoopTradeRules.Resolve(second, executed, "second"));
+            Assert.Equal(0, first.Material(Materials.Shard));
+            Assert.Equal(0, first.Material(Materials.Tuning));
+            Assert.Equal(30, second.Material(Materials.Shard));
+            Assert.Equal(2, second.Material(Materials.Tuning));
+            Assert.Null(first.CoopTradePending);
+            Assert.Null(second.CoopTradePending);
+            first = ProfileCodec.Read(ProfileCodec.Write(first), new List<string>());
+            Assert.False(CoopTradeRules.Resolve(first, executed, "first"));
+        }
+
+        [Fact]
+        public void Temporary_capacity_conditions_return_a_retry_reason_and_keep_escrow_until_recovery()
+        {
+            // Finding 09: a temporarily full stash is reported as a retry reason through the
+            // query adapter instead of an exception, and the reservation survives recovery.
+            var first = Player("first-relic");
+            var second = Player("second-relic");
+            var receipt = Receipt(first, second);
+            CoopTradeRules.Prepare(first, receipt.Id, receipt.HostKey, receipt.FirstOffer);
+            while (first.Stash.Count < Workshop.StashCapacity(first)) first.Stash.Add(Relic("late-" + first.Stash.Count));
+            string before = ProfileCodec.Write(first);
+            Assert.False(CoopTradeRules.Resolve(first, receipt, "first", out string retryReason));
+            Assert.NotNull(retryReason);
+            Assert.Equal(before, ProfileCodec.Write(first));
+            Assert.NotNull(first.CoopTradePending);
+            Assert.Empty(first.CoopTradeExecuted);
+            // The player frees a slot; the same receipt then settles on the retry.
+            first.Stash.RemoveAt(first.Stash.Count - 1);
+            Assert.True(CoopTradeRules.Resolve(first, receipt, "first", out string settled));
+            Assert.Null(settled);
+            Assert.Contains("trade", first.CoopTradeExecuted);
+            Assert.Equal(Workshop.StashCapacity(first), first.Stash.Count);
+            Assert.Null(first.FindStash("first-relic")); // the outgoing relic stays gone
+            Assert.NotNull(first.FindStash("second-relic")); // the incoming relic settled into the freed slot
+            Assert.Null(first.CoopTradePending);
+        }
     }
 }
