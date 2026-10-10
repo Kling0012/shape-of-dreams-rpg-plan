@@ -142,24 +142,46 @@ namespace SodRpg.Mod
 
         private void SendRunGrowth(HeroRuntime rt, float now, int version, Build build)
         {
-            if (build.RunGrowths.Count == 0 || now - rt.GrowthSentAt < 0.5f) return;
-            // 変わった時は速く、変わらなくても5秒ごとに再送する（途中参加・取りこぼし向け）。
-            if (rt.GrowthSentVersion == version && now - rt.GrowthSentAt < 5f) return;
+            if (build.RunGrowths.Count == 0 || now - rt.GrowthSentAt < 0.5f || now < rt.GrowthNextCheck) return;
+            rt.GrowthNextCheck = now + 0.5f;
+            // Revalidate the actual owner's stacks; the ledger revision is shared by all owners.
+            if (!NetworkTrafficOptions.SkipUnchanged && rt.GrowthSentVersion == version && now - rt.GrowthSentAt < 5f) return;
             var player = rt.Hero != null ? rt.Hero.owner : null;
             if (ReferenceEquals(player, null) || player == null || _registeredOn == null) return;
             string owner = GrowthOwner(rt);
+            bool cacheable = build.RunGrowths.Count <= rt.GrowthSentStacks.Length;
+            bool same = cacheable && rt.GrowthSentVersion >= 0 && ReferenceEquals(rt.GrowthSentBuild, build)
+                && rt.GrowthSentRun == RunGrowthLedger.RunId && rt.GrowthSentHero == rt.Hero.netId
+                && ReferenceEquals(rt.GrowthSentPlayer, player) && ReferenceEquals(rt.GrowthSentActor, _registeredOn)
+                && rt.GrowthSentCount == build.RunGrowths.Count;
+            int index = 0;
+            foreach (var entry in build.RunGrowths)
+            {
+                int stacks = RunGrowthLedger.Stacks(owner, entry.StarId);
+                if (cacheable && rt.GrowthSentStacks[index] != stacks) same = false;
+                index++;
+            }
+            if (NetworkTrafficOptions.SkipUnchanged && same && now - rt.GrowthSentAt < 30f) return;
             var sb = new StringBuilder();
             foreach (var entry in build.RunGrowths)
             {
                 if (sb.Length > 0) sb.Append(',');
                 sb.Append(entry.StarId).Append('=').Append(RunGrowthLedger.Stacks(owner, entry.StarId).ToString(CultureInfo.InvariantCulture));
             }
-            rt.GrowthSentAt = now;
-            rt.GrowthSentVersion = version;
             _registeredOn.CustomRpc_SendMessageToClient(player, new DreamforgeRunGrowthMsg
             {
                 protocol = Protocol.Version, heroNetId = rt.Hero.netId, runId = RunGrowthLedger.RunId ?? "", stacks = sb.ToString(),
             });
+            rt.GrowthSentAt = now; rt.GrowthSentVersion = version;
+            rt.GrowthSentBuild = build; rt.GrowthSentRun = RunGrowthLedger.RunId;
+            rt.GrowthSentHero = rt.Hero.netId; rt.GrowthSentPlayer = player; rt.GrowthSentActor = _registeredOn;
+            rt.GrowthSentCount = build.RunGrowths.Count;
+            if (cacheable)
+            {
+                index = 0;
+                foreach (var entry in build.RunGrowths)
+                    rt.GrowthSentStacks[index++] = RunGrowthLedger.Stacks(owner, entry.StarId);
+            }
         }
 
         /// <summary>回復・シールド・召喚獣の強さへ足す、鍛錬の分（%）。</summary>

@@ -50,6 +50,8 @@ namespace SodRpg.Mod
             _hostCompatibilityWarned = false;
             _hostInfinityAvailable = false;
             _hostBuildInputCapability = false;
+            _hostNetLite = false;
+            _netLiteReceiveReady = false;
             _nextBuildInputProbe = 0f;
             HostVersionWarning = null;
             ResetOverflowBonusConnection();

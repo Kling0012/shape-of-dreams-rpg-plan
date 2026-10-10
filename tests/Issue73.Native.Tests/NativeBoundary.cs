@@ -432,6 +432,10 @@ namespace SodRpg.Mod
         private Hero _lastHero;
         private int _sentDreamLevel;
         private float _nextBuildSend;
+        private string _lastSentBuild;
+        private Actor _lastBuildActor;
+        private Hero _lastBuildHero;
+        private float _lastBuildHeartbeat;
         private ZoneManager _zone;
         private AsyncProfileWriter _writer;
         private ProfileStore _store;

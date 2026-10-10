@@ -74,6 +74,7 @@ namespace SodRpg.Mod
     {
         public bool japanese;
         public bool overflowDreamDust;
+        public bool netSkipUnchanged = true, netCoalesce = true, netOwnerOnly = true, netCompact = true;
         public LightweightMode lightweight;
         public Key menuKey, securePanelKey, secureKey, delveKey;
     }

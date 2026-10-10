@@ -50,11 +50,24 @@ namespace SodRpg.Mod
             internal readonly DreamforgeBossEffect[][] Snapshots = new DreamforgeBossEffect[BossVisualEffectLimit + 1][];
             internal readonly DreamforgeBossEffect[] Delta = new DreamforgeBossEffect[1];
             internal readonly DreamforgeBossEffect Removed = new DreamforgeBossEffect();
+            internal readonly DreamforgeBossLiteMsg LiteMessage = new DreamforgeBossLiteMsg();
+            internal readonly DreamforgeBossLiteEffect[] LiteEffects = new DreamforgeBossLiteEffect[BossVisualEffectLimit];
+            internal readonly DreamforgeBossLiteEffect[][] LiteBatches = new DreamforgeBossLiteEffect[BossVisualEffectLimit + 1][];
+            internal readonly DewPlayer[] SnapshotPeers = new DewPlayer[BossVisualOwnerLimit];
+            internal readonly long[] SnapshotEpochs = new long[BossVisualOwnerLimit];
+            internal readonly long[] SnapshotRevisions = new long[BossVisualOwnerLimit];
+            internal readonly int[] SnapshotCounts = new int[BossVisualOwnerLimit];
+            internal readonly float[] SnapshotTimes = new float[BossVisualOwnerLimit];
 
             internal BossVisualState()
             {
                 for (int i = 0; i < Effects.Length; i++) Effects[i] = new DreamforgeBossEffect();
-                for (int i = 0; i < Snapshots.Length; i++) Snapshots[i] = new DreamforgeBossEffect[i];
+                for (int i = 0; i < Snapshots.Length; i++)
+                {
+                    Snapshots[i] = new DreamforgeBossEffect[i];
+                    LiteBatches[i] = new DreamforgeBossLiteEffect[i];
+                }
+                for (int i = 0; i < LiteEffects.Length; i++) LiteEffects[i] = new DreamforgeBossLiteEffect();
             }
             internal int Find(long id)
             {
@@ -80,6 +93,8 @@ namespace SodRpg.Mod
                 Array.Clear(NativeSources, 0, NativeSources.Length);
                 Array.Clear(Pending, 0, Pending.Length); HasPending = false;
                 Message.runId = null; Message.effects = null;
+                LiteMessage.r = null; LiteMessage.f = null;
+                Array.Clear(SnapshotPeers, 0, SnapshotPeers.Length);
             }
         }
 
@@ -87,6 +102,28 @@ namespace SodRpg.Mod
         private long _bossVisualEpoch;
         private float _nextBossVisualSnapshot;
         private float _nextBossVisualDelta;
+        private bool _bossLiteWarned, _bossLiteBroken;
+
+        private static string EncodeBossLite(BossVisualState state, DreamforgeBossEffectsMsg source)
+        {
+            var msg = state.LiteMessage;
+            msg.p = source.protocol; msg.c = source.content; msg.r = source.runId;
+            msg.a = source.authorityGeneration; msg.o = source.ownerNetId;
+            msg.z = source.zone; msg.n = source.room; msg.e = source.epoch;
+            msg.v = source.revision; msg.q = source.equipmentEpoch; msg.s = source.snapshot;
+            msg.t = source.hostTime; msg.u = source.sentAt;
+            msg.f = state.LiteBatches[source.effects.Length];
+            for (int i = 0; i < source.effects.Length; i++)
+            {
+                var effect = source.effects[i];
+                if (effect.kind < 0 || effect.kind > 255 || effect.element < 0 || effect.element > 255
+                    || effect.shape < 0 || effect.shape > 255 || effect.count < 0 || effect.count > 255)
+                    throw new InvalidOperationException("Boss effect exceeds compact bounds.");
+                state.LiteEffects[i].CopyFrom(effect);
+                msg.f[i] = state.LiteEffects[i];
+            }
+            return DewPersistence.ToJson(msg);
+        }
 
         private static BossVisualState[] CreateBossVisualStates()
         {
@@ -150,6 +187,7 @@ namespace SodRpg.Mod
         }
         private void SendBossVisualSnapshot(BossVisualState state)
         {
+            if (state.HasPending) state.Revision++;
             var effects = state.Snapshots[state.Count];
             for (int i = 0; i < state.Count; i++) effects[i] = state.Effects[i];
             SendBossVisualMessage(state, effects, true);
@@ -176,13 +214,20 @@ namespace SodRpg.Mod
                     && old.budget == budget && old.shape == (int)shape && old.range == range && old.width == width
                     && old.angle == angle && old.finalRadius == finalRadius && old.targetNetId == targetNetId) return;
                 // Moving counters/remaining-duration refreshes are cosmetic; admission, transitions and removals are immediate.
-                if (kind == 9 && old.kind == kind && old.count == count
+                if (NetworkTrafficOptions.Coalesce && kind == 9 && old.kind == kind && old.count == count
                     && (old.budget == budget || old.budget > 0 && budget > 0)
                     && old.element == (int)element && old.radius == radius && old.targetNetId == targetNetId
                     && old.shape == (int)shape && old.range == range && old.width == width && old.angle == angle
                     && old.finalRadius == finalRadius && Time.unscaledTime < state.NextDelta[index]) send = false;
+                // The client follows a shield's native target every frame; its moving center is cosmetic.
+                if (NetworkTrafficOptions.Coalesce && kind == 7 && old.kind == kind
+                    && targetNetId != 0 && old.targetNetId == targetNetId && old.expires == expires
+                    && old.radius == radius && old.element == (int)element && old.count == count
+                    && old.budget == budget && old.shape == (int)shape && old.range == range
+                    && old.width == width && old.angle == angle && old.finalRadius == finalRadius
+                    && Time.unscaledTime < state.NextDelta[index]) send = false;
                 // Beam geometry changes are accumulated; phase, hit-budget and lifetime changes remain immediate.
-                if (coalesce && old.kind == kind && old.count == count && old.budget == budget
+                if (NetworkTrafficOptions.Coalesce && coalesce && old.kind == kind && old.count == count && old.budget == budget
                     && old.due == due && old.expires == expires && old.element == (int)element
                     && old.radius == radius && old.shape == (int)shape && old.width == width
                     && old.angle == angle && old.finalRadius == finalRadius && old.targetNetId == targetNetId) send = false;
@@ -250,7 +295,7 @@ namespace SodRpg.Mod
             msg.equipmentEpoch = state.EquipmentEpoch;
             msg.hostTime = Time.time; msg.sentAt = NetworkTime.time;
             // Serialize once per bounded batch, then fan the immutable strings to human recipients.
-            string serialized = null;
+            string serialized = null, compact = null;
             var players = DewPlayer.gamePlayers;
             int recipients = 0;
             for (int i = 0; i < players.Count && i < BossVisualOwnerLimit * 2 && recipients < BossVisualOwnerLimit; i++)
@@ -258,9 +303,45 @@ namespace SodRpg.Mod
                 var player = players[i];
                 if (player != null && player.isHumanPlayer)
                 {
-                    if (serialized == null) serialized = DewPersistence.ToJson(msg);
-                    send(_registeredOn, player, nameof(DreamforgeBossEffectsMsg), serialized);
-                    recipients++;
+                    int slot = recipients++;
+                    bool capable = HasNetLite(player);
+                    if (snapshot && NetworkTrafficOptions.SkipUnchanged && capable
+                        && ReferenceEquals(state.SnapshotPeers[slot], player)
+                        && state.SnapshotEpochs[slot] == state.Epoch
+                        && state.SnapshotRevisions[slot] == state.Revision
+                        && state.SnapshotCounts[slot] == state.Count
+                        && Time.unscaledTime - state.SnapshotTimes[slot] < 5f) continue;
+                    try
+                    {
+                        if (NetworkTrafficOptions.Compact && capable && !_bossLiteBroken)
+                        {
+                            if (compact == null) compact = EncodeBossLite(state, msg);
+                            send(_registeredOn, player, nameof(DreamforgeBossLiteMsg), compact);
+                        }
+                        else
+                        {
+                            if (serialized == null) serialized = DewPersistence.ToJson(msg);
+                            send(_registeredOn, player, nameof(DreamforgeBossEffectsMsg), serialized);
+                        }
+                        if (snapshot)
+                        {
+                            state.SnapshotPeers[slot] = player; state.SnapshotEpochs[slot] = state.Epoch;
+                            state.SnapshotRevisions[slot] = state.Revision; state.SnapshotCounts[slot] = state.Count;
+                            state.SnapshotTimes[slot] = Time.unscaledTime;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        // Disable just compact boss packets, then retry through the legacy transport.
+                        _bossLiteBroken = true;
+                        if (!_bossLiteWarned)
+                        {
+                            _bossLiteWarned = true;
+                            Log.Warn("NetLite boss transport unavailable; legacy transport remains active: " + ex.Message);
+                        }
+                        if (serialized == null) serialized = DewPersistence.ToJson(msg);
+                        send(_registeredOn, player, nameof(DreamforgeBossEffectsMsg), serialized);
+                    }
                 }
             }
         }

@@ -98,6 +98,14 @@ namespace SodRpg.Mod
             public int GrowthSentVersion = -1;
             public uint GrowthOwnerNetId;
             public string GrowthOwnerKey;
+            public Build GrowthSentBuild;
+            public string GrowthSentRun;
+            public uint GrowthSentHero;
+            public DewPlayer GrowthSentPlayer;
+            public Actor GrowthSentActor;
+            public readonly int[] GrowthSentStacks = new int[256];
+            public int GrowthSentCount;
+            public float GrowthNextCheck;
         }
 
         internal struct PendingGimmick
@@ -273,6 +281,7 @@ namespace SodRpg.Mod
                     RemoveBuildValidationPeer(player);
                     RemoveKillPeer(player);
                     _overflowBonusPeers.Remove(player); // Durable currency receipts remain keyed by guid.
+                    _netLitePeers.Remove(player);
                 }
                 _pressureDirty = true;
             };

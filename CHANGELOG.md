@@ -8,6 +8,8 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
+- 協力プレイで同じ情報の繰り返し送信を減らし、対応した相手にはボス演出の通信を小さくしました。古い版の相手にも従来の形式で送れます。 / Reduced repeated state updates in co-op and made boss visual packets smaller for supported peers, while retaining the existing format for older versions.
+
 - 処理の軽量化：敵の掃除と表示の更新で毎フレーム走っていた一部の処理を減らし、`dreamforge_perf` に内訳（client／host）と割り当て量の表示を追加しました。 / Reduced some per-frame work (monster pruning, variant/cue lookups) and extended `dreamforge_perf` with client/host breakdown and allocation rate.
 
 ---

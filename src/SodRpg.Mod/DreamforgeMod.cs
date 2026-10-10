@@ -55,6 +55,7 @@ namespace SodRpg.Mod
                 catch (Exception ex) { Log.Warn("Culinary ingredient count display disabled; other MOD features remain active: " + ex.Message); }
                 stage = "resource initialization";
                 Loc.Japanese = config.japanese;
+                NetworkTrafficOptions.Configure(config.netSkipUnchanged, config.netCoalesce, config.netOwnerOnly, config.netCompact);
                 // Install the generated star maps and their migration rules before any profile is loaded or any build is computed.
                 StarClusters.RegisterAllGenerated((hero, error) =>
                     Log.Warn("Generated star map disabled for " + hero + "; other features remain available: " + error));
@@ -99,6 +100,7 @@ namespace SodRpg.Mod
         {
             if (!_running) return;
             Loc.Japanese = config.japanese;
+            NetworkTrafficOptions.Configure(config.netSkipUnchanged, config.netCoalesce, config.netOwnerOnly, config.netCompact);
             _performance?.Configure(config);
             _session?.ConfigureOverflowBonus(config.overflowDreamDust);
         }
