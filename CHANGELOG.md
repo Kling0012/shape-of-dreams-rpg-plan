@@ -8,6 +8,8 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
+- 遠征中の記録から、固有品以外のレア以下の遺物をまとめてドリームダストに分解できるようにしました。 / You can now salvage all non-legendary Rare-or-lower relics in your satchel for Dream Dust at once from the Records tab.
+
 ---
 
 ## v2.10.21 — Lighter Fever essence, co-op and Continue fixes（2026-10-11）
