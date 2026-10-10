@@ -154,7 +154,8 @@ namespace SodRpg.Core.Tests
                 string unit = m.Groups[2].Value switch
                 {
                     "%" => "%",
-                    "パーセントポイント" or "percentage points" => "pp",
+                    // 日本語の確率・率は「%」だけで書く（docs/description-style.md の規則8）ので、英語の percentage points と同じ単位として扱う。
+                    "パーセントポイント" or "percentage points" => "%",
                     "秒" or "second" or "seconds" or "s" => "s",
                     _ => "m",
                 };

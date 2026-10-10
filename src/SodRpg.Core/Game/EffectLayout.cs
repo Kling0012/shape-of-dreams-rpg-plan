@@ -5,7 +5,8 @@ using System.Text;
 namespace SodRpg.Core.Game
 {
     /// <summary>
-    /// 効果の説明文を、1行目の効果の要点と、そのあとの「・」の箇条書きに並べ替える。
+    /// 英語の効果の説明文を、1行目の効果の要点と、そのあとの「・」の箇条書きに並べ替える。
+    /// 日本語は箇条書きにせず、1つの段落の文章のまま返す（docs/description-style.md）。
     /// 文の区切り（日本語の「。」と英語の「. 」「; 」）、「効果／条件」の「／」、文末の括弧書き（間隔・上限・例外）を、
     /// それぞれ1項目にする。文中の括弧と、すでに複数行になっている文の構造は変えない。
     /// </summary>
@@ -14,10 +15,11 @@ namespace SodRpg.Core.Game
         public const string Bullet = "・";
         private static readonly string[] StepConnectors = { "その後", "その0", "その1", "続いて", "さらに", "また", "そして", "同時に" };
 
-        /// <summary>1行の説明文を「要点＋箇条書き」の複数行にする。区切りが無ければそのまま返す。</summary>
+        /// <summary>英語は1行の説明文を「要点＋箇条書き」の複数行にする。日本語は文章のまま返す（インデントだけ付ける）。</summary>
         public static string Bullets(string text, string indent = "")
         {
             if (string.IsNullOrEmpty(text)) return text ?? "";
+            if (Loc.Japanese) return indent.Length == 0 ? text : indent + text.Replace("\n", "\n" + indent);
             if (text.IndexOf('\n') >= 0)
             {
                 var lines = text.Split('\n');
