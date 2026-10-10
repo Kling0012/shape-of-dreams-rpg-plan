@@ -8,14 +8,29 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
-- Limbo では道標「明けない夜」の代わりに「深まる夜」が出るようになりました。 / In Limbo, the waypoint "Endless Night" is replaced by "Deepening Night".
+---
 
-- ケートスの「下がれ！」のチャージ中の継続ダメージが働いていなかった問題を修正しました。 / Fixed Cetus's "Back Off!" charge damage over time not working.
+## v2.10.22 — Bulk relic salvage, Limbo waypoint, co-op trade fixes（2026-10-11）
 
-- 遠征中の記録から、固有品以外のレア以下の遺物をまとめてドリームダストに分解できるようにしました。 / You can now salvage all non-legendary Rare-or-lower relics in your satchel for Dream Dust at once from the Records tab.
+遠征中の記録に遺物の一括分解を追加し、協力プレイの取引の不具合をまとめて直しました。 / Bulk relic salvage in the expedition records, and a batch of co-op trade fixes.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 新機能 / New features
+
+- **遺物の一括分解**：遠征中の記録の、遺物をドリームダストに分解する画面に、固有品以外でレア以下（レアを含む）の遺物をまとめて分解するボタンを追加しました。誤操作を防ぐため、2回押すと実行します。 / **Bulk relic salvage**: the expedition records' salvage screen now has a button that salvages all non-unique relics of Rare or lower at once. Press it twice to confirm.
+- **リンボの道標「深まる夜」**：リンボでは、道標「明けない夜」（すべての敵が悪夢化）の代わりに「深まる夜」が出ます。敵は悪夢化しない代わりに夢の圧で強くなり、撃破で得る戦利品の格と覚醒の力が上がります。 / **Limbo waypoint "Deepening Night"**: in Limbo, "Endless Night" (all enemies become nightmares) is replaced by "Deepening Night". Enemies don't become nightmares but grow stronger under dream pressure, while kills yield higher-tier loot and more awakening.
+
 ### 不具合の修正 / Bug fixes
 
-- 協力プレイの取引で、参加者が遠征中に取引を始められない問題など、取引の不具合をまとめて修正しました。 / Fixed a batch of trade issues, including participants being unable to start trades during an expedition.
+- 協力プレイの取引で、参加者が遠征中に取引を始められない、送信中のエラーで支払った分が失われる、一時的なエラーのあと取引が使えなくなる、断られた理由が表示されない、などの不具合をまとめて修正しました。 / Fixed a batch of co-op trade issues, including participants being unable to start trades during an expedition, payment being lost on a send error, trading staying unusable after a temporary error, and missing reasons when a trade is refused.
+- ケートスの「下がれ！」の継続ダメージが入らないことがある問題を修正しました。 / Fixed Cetus's "Back Off!" damage over time sometimes not being applied.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
 
 ---
 
