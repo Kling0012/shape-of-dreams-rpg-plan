@@ -149,11 +149,18 @@ def _shape(data, reference, path="waypoints"):
         raise ValueError(f"{path}: expected a finite number (not boolean)")
 
 
-def validate(data):
-    _shape(data, SCHEMA)
+def _fields(reference):
+    for path, field in FIELDS.items():
+        if path.startswith("definitions.") and path.split(".")[1] not in reference["definitions"]:
+            continue
+        yield path, field
+
+
+def _validate(data, reference):
+    _shape(data, reference)
     if type(data["schemaVersion"]) is not int or data["schemaVersion"] != 1:
         raise ValueError("waypoints.schemaVersion: expected integer 1")
-    for path, (_, kind, _) in FIELDS.items():
+    for path, (_, kind, _) in _fields(reference):
         value = _get(data, path)
         if kind == "int":
             if type(value) is not int or not 0 <= value <= 2147483647:
@@ -188,6 +195,11 @@ def validate(data):
     return data
 
 
+def validate(data):
+    # Authored input must contain every current definition, including DeepeningNight.
+    return _validate(data, SCHEMA)
+
+
 def load(path=PATH):
     return validate(read_json(path))
 
@@ -197,9 +209,13 @@ def _literal(value):
 
 
 def fingerprint_record(data):
-    validate(data)
+    # Historical compatibility comparisons use the closed historical schema.
+    # This does not make old snapshots valid authored input or supply defaults.
+    definitions = data.get("definitions") if type(data) is dict else None
+    reference = LEGACY if type(definitions) is dict and set(definitions) == set(LEGACY["definitions"]) else SCHEMA
+    _validate(data, reference)
     records = []
-    for path, (_, kind, unit) in FIELDS.items():
+    for path, (_, kind, unit) in _fields(reference):
         value = _get(data, path)
         definition = path.split(".")[1] if path.startswith("definitions.") else None
         new_definition = definition is not None and definition not in LEGACY["definitions"]
