@@ -108,6 +108,98 @@ namespace SodRpg.Core.Tests
             Assert.Contains(p.Stash, r => r.Uid == "free-3");
         }
 
+        private static Profile RoundTrip(Profile profile)
+        {
+            string encoded = ProfileCodec.Write(profile);
+            var notes = new List<string>();
+            var reloaded = ProfileCodec.Read(encoded, notes);
+            Assert.Empty(notes);
+            Assert.Equal(encoded, ProfileCodec.Write(reloaded));
+            return reloaded;
+        }
+
+        [Fact]
+        public void Continue_after_interrupted_claim_keeps_direct_stash_receipt_with_live_economy()
+        {
+            var p = Running("recovered");
+            Rules.BeginRun(p, "receiving");
+            var checkpoint = RunCheckpoint.Capture(p, "before-claim");
+            Rules.ClaimInterruptedRelics(p);
+            Rules.StashSatchelNow(p);
+            p.Run.Satchel.Add(Relic("later-earned"));
+
+            for (int attempt = 0; attempt < 2; attempt++)
+            {
+                p = RoundTrip(p);
+                checkpoint.Restore(p);
+                Assert.Equal("recovered", Assert.Single(p.Stash).Uid);
+                Assert.Equal("later-earned", Assert.Single(p.Run.Satchel).Uid);
+                Assert.Contains("receiving", p.DirectStashUsedRunIds);
+                Assert.False(Rules.CanStashSatchelNow(p));
+                string before = ProfileCodec.Write(p);
+                Assert.Throws<InvalidOperationException>(() => Rules.StashSatchelNow(p));
+                Assert.Equal(before, ProfileCodec.Write(p));
+            }
+        }
+
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public void Continue_after_trade_keeps_direct_stash_receipt_with_frozen_economy(bool retained)
+        {
+            var p = Running("banked");
+            var checkpoint = RunCheckpoint.Capture(p, "before-use");
+            if (retained) p.ContinueCheckpoints.Add(checkpoint);
+            Rules.StashSatchelNow(p);
+            p.Run.Satchel.Add(Relic("later-earned"));
+            var other = Profile.CreateNew(42);
+            other.Stash.Add(Relic("incoming"));
+            var receipt = CoopTradeRules.CreateReceipt("trade", "host", "first", p,
+                new CoopTradeOffer(), "second", other,
+                new CoopTradeOffer { RelicUids = new List<string> { "incoming" } });
+            CoopTradeRules.Prepare(p, receipt.Id, receipt.HostKey, receipt.FirstOffer);
+            Assert.True(CoopTradeRules.Resolve(p, receipt, "first"));
+
+            for (int attempt = 0; attempt < 2; attempt++)
+            {
+                p = RoundTrip(p);
+                checkpoint.Restore(p);
+                Assert.Equal(new[] { "banked", "incoming" }, p.Stash.Select(relic => relic.Uid));
+                Assert.Equal("later-earned", Assert.Single(p.Run.Satchel).Uid);
+                Assert.Contains("run", p.DirectStashUsedRunIds);
+                Assert.False(Rules.CanStashSatchelNow(p));
+                Assert.Throws<InvalidOperationException>(() => Rules.StashSatchelNow(p));
+                Assert.False(CoopTradeRules.Resolve(p, receipt, "first"));
+            }
+        }
+
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public void Continue_refunds_direct_stash_use_when_its_transfer_is_rewound(bool tradeBeforeUse)
+        {
+            var p = Running("carried");
+            var checkpoint = RunCheckpoint.Capture(p, "before-use");
+            if (tradeBeforeUse)
+            {
+                CoopTradeRules.Prepare(p, "cancel", "host", new CoopTradeOffer());
+                Assert.True(CoopTradeRules.Abort(p, "cancel"));
+            }
+            Rules.StashSatchelNow(p);
+            for (int attempt = 0; attempt < 2; attempt++)
+            {
+                p = RoundTrip(p);
+                checkpoint.Restore(p);
+                Assert.Empty(p.Stash);
+                Assert.Equal("carried", Assert.Single(p.Run.Satchel).Uid);
+                Assert.Empty(p.DirectStashUsedRunIds);
+                Assert.True(Rules.CanStashSatchelNow(p));
+                Rules.StashSatchelNow(p);
+                Assert.Equal("carried", Assert.Single(p.Stash).Uid);
+                Assert.False(Rules.CanStashSatchelNow(p));
+            }
+        }
+
         [Fact]
         public void Only_excluded_relics_available_does_not_consume_the_use()
         {
