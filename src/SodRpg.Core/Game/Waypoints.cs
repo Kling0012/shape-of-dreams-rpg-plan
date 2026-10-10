@@ -12,6 +12,7 @@ namespace SodRpg.Core.Game
         FleetingMemories = 13, SummonerTrail = 14, EpicMirage = 15, ShardRoad = 16,
         TwinCache = 17, StarOffering = 18, HumbleForge = 19, BossTribute = 20,
         SixfoldRoad = 21, AwakeningPilgrimage = 22, FirstClaim = 23, SupplyLine = 24,
+        DeepeningNight = 25,
     }
 
     public sealed class WaypointDef
@@ -36,6 +37,7 @@ namespace SodRpg.Core.Game
             public double ShieldMultiplier { get; internal set; } = 1;
             public double ReactionMultiplier { get; internal set; } = 1;
             public bool AllNightmares { get; internal set; }
+            public int KillLootTierBonus { get; internal set; }
             public double NightmareChanceMultiplier { get; internal set; } = 1;
             public double NightmareRewardMultiplier { get; internal set; } = 1;
             public double AwakeningMultiplier { get; internal set; } = 1;
@@ -105,6 +107,8 @@ namespace SodRpg.Core.Game
                 case Waypoint.EndlessNight:
                     string awakening = t.AwakeningMultiplier == 3 ? "tripled" : "multiplied by " + N(t.AwakeningMultiplier);
                     return new Txt($"次のゾーンではすべての敵が悪夢化し、撃破で得る覚醒の力が{N(t.AwakeningMultiplier)}倍になる。", $"Every enemy becomes a nightmare in the next zone, and awakening points from kills are {awakening}.");
+                case Waypoint.DeepeningNight:
+                    return new Txt($"次のゾーンでは敵が悪夢化しない代わりに、夢の圧による敵のHPと攻撃の倍率が{N((t.PressureMultiplier - 1) * 100)}%増える。撃破で得る戦利品の格が1段上がり、覚醒の力が{N(t.AwakeningMultiplier)}倍になる。", $"Enemies in the next zone don't become nightmares, but dream pressure's enemy health and damage multipliers rise by {N((t.PressureMultiplier - 1) * 100)}%. Kills yield loot one tier higher, and awakening points are {N(t.AwakeningMultiplier)}x.");
                 case Waypoint.BossHoard:
                     return new Txt($"次のゾーンで敵から得る遺物・欠片・調律石はボスを倒すまで保留され、倒すとボスの分も含め{WaypointBalance.HoardRewardMultiplier}倍受け取れる。ボス撃破後の戦利品もその場で{WaypointBalance.HoardRewardMultiplier}倍受け取れる。未開封でゾーンを離れると保留分を失う。保留・所持の上限を超えた遺物は欠片になる。経験はその場で得る。", $"Enemy relics, shards and tuning stones in the next zone are held until a boss falls, then paid out {Fold(WaypointBalance.HoardRewardMultiplier)}, including the boss's loot. Later kills also pay out {Fold(WaypointBalance.HoardRewardMultiplier)} immediately. Leaving before opening the hoard forfeits held loot. Relics beyond holding or inventory capacity become shards. Experience is immediate.");
                 case Waypoint.TemperedFinds:
@@ -176,6 +180,7 @@ namespace SodRpg.Core.Game
             D(Waypoint.AwakeningPilgrimage, "目覚めの巡礼", "Pilgrimage of Awakening", new Totals { AwakeningPerRelic = WaypointBalance.AwakeningPilgrimageAwakeningPerRelic }),
             D(Waypoint.FirstClaim, "一番槍の宝", "First Claim", new Totals { FirstKillRelic = true, MinimumRarity = Rarity.Rare, MaxRelicsPerRoom = WaypointBalance.FirstClaimMaxRelicsPerRoom }),
             D(Waypoint.SupplyLine, "道中の収穫", "Trail Supplies", new Totals { BossRelicsToShards = true }),
+            D(Waypoint.DeepeningNight, "深まる夜", "Deepening Night", new Totals { PressureMultiplier = WaypointBalance.DeepeningNightPressureMultiplier, KillLootTierBonus = 1, AwakeningMultiplier = WaypointBalance.DeepeningNightAwakeningMultiplier }),
         };
 
         private static readonly Totals Neutral = new Totals();
@@ -186,11 +191,15 @@ namespace SodRpg.Core.Game
         }
         public static Totals Sum(Waypoint id) => Get(id)?.Effects ?? Neutral;
 
-        public static List<Waypoint> Offer(Rng rng)
+        public static List<Waypoint> Offer(Rng rng, bool limbo)
         {
             if (rng == null) throw new ArgumentNullException(nameof(rng));
             var pool = new List<Waypoint>(All.Count);
-            foreach (var d in All) pool.Add(d.Id);
+            foreach (var d in All)
+            {
+                if (d.Id == Waypoint.DeepeningNight) continue;
+                pool.Add(limbo && d.Id == Waypoint.EndlessNight ? Waypoint.DeepeningNight : d.Id);
+            }
             var result = new List<Waypoint>(Offered);
             for (int n = 0; n < Offered; n++)
             {

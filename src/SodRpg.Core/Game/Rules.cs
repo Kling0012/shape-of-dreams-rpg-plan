@@ -190,9 +190,10 @@ namespace SodRpg.Core.Game
             var variant = Variants.Get(variantId);
             // 夢の変種は、悪夢と同じく一段上の戦利品・覚醒の力2倍・悪夢の依頼に数える。
             bool isNightmare = nightmare != NightmareAffix.None || variant != null;
-            var rollTier = isNightmare ? Nightmares.RewardTier(tier) : tier;
-            int killHeat = heat ?? run.Heat;
             Waypoint killWaypoint = waypoint ?? run.ActiveWaypoint;
+            var rollTier = isNightmare ? Nightmares.RewardTier(tier) : tier;
+            if (Waypoints.Sum(killWaypoint).KillLootTierBonus > 0) rollTier = Nightmares.RewardTier(rollTier);
+            int killHeat = heat ?? run.Heat;
             var focus = p.Focus ?? DailyDream.Get(run.DailyId)?.FeaturedLine;
             var reward = Loot.RollKill(rng, rollTier, itemLevel, killHeat, focus, KillModifiers(run, killWaypoint), p.Stash, run.Satchel, p.Codex,
                 Rarity.Legendary, InfinityRewards.OrdinaryRelicMultiplier(run, killWaypoint, tier), shardDropMultiplier,
@@ -442,7 +443,7 @@ namespace SodRpg.Core.Game
             run.OfferedPacts.AddRange(Pacts.Offer(rng, run.Pacts, Workshop.PactsOffered(p)));
             run.OfferedEventId = Guid.NewGuid().ToString("N");
             run.OfferedEvent = DreamEvents.Roll(rng, p, trades);
-            run.OfferedWaypoints.AddRange(Waypoints.Offer(rng));
+            run.OfferedWaypoints.AddRange(Waypoints.Offer(rng, run.LimboDepth > 0));
             p.StoreRng(rng);
             AddHint(p, Hint.FirstSecurePoint, ev);
             return ev;

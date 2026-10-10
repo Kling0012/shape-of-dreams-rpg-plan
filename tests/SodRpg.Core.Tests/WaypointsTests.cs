@@ -62,12 +62,12 @@ namespace SodRpg.Core.Tests
         }
 
         [Fact]
-        public void Twenty_four_cards_have_unique_ids_names_and_complete_bilingual_text()
+        public void Twenty_five_cards_have_unique_ids_names_and_complete_bilingual_text()
         {
-            Assert.Equal(24, Waypoints.All.Count);
-            Assert.Equal(24, Waypoints.All.Select(x => x.Id).Distinct().Count());
-            Assert.Equal(24, Waypoints.All.Select(x => x.Name.Ja).Distinct().Count());
-            Assert.Equal(24, Waypoints.All.Select(x => x.Name.En).Distinct().Count());
+            Assert.Equal(25, Waypoints.All.Count);
+            Assert.Equal(25, Waypoints.All.Select(x => x.Id).Distinct().Count());
+            Assert.Equal(25, Waypoints.All.Select(x => x.Name.Ja).Distinct().Count());
+            Assert.Equal(25, Waypoints.All.Select(x => x.Name.En).Distinct().Count());
             Assert.All(Waypoints.All, d =>
             {
                 Assert.Same(d, Waypoints.Get(d.Id));
@@ -95,6 +95,32 @@ namespace SodRpg.Core.Tests
             Assert.Equal(1, a.Run.WaypointGeneration);
             var loaded = ProfileCodec.Read(ProfileCodec.Write(a), new List<string>());
             Assert.Equal(a.Run.OfferedWaypoints, loaded.Run.OfferedWaypoints);
+        }
+
+        [Fact]
+        public void Limbo_offers_swap_endless_night_for_deepening_night()
+        {
+            var limboSeen = new HashSet<Waypoint>();
+            var plainSeen = new HashSet<Waypoint>();
+            int offered = PactDailyWaypointTestValues.Integer("waypoints", "offered");
+            for (ulong seed = 1; seed <= 400; seed++)
+            {
+                var limbo = Waypoints.Offer(new Rng(seed), true);
+                var plain = Waypoints.Offer(new Rng(seed), false);
+                Assert.Equal(offered, limbo.Count);
+                Assert.Equal(offered, limbo.Distinct().Count());
+                // 同じ乱数列では、通常の候補の「明けない夜」だけが「深まる夜」に入れ替わる。
+                Assert.Equal(plain.Select(Swap), limbo);
+                limboSeen.UnionWith(limbo);
+                plainSeen.UnionWith(plain);
+            }
+            // Limbo では明けない夜が出ず深まる夜が出うる。通常runではその逆。
+            Assert.DoesNotContain(Waypoint.EndlessNight, limboSeen);
+            Assert.Contains(Waypoint.DeepeningNight, limboSeen);
+            Assert.DoesNotContain(Waypoint.DeepeningNight, plainSeen);
+            Assert.Contains(Waypoint.EndlessNight, plainSeen);
+
+            Waypoint Swap(Waypoint w) => w == Waypoint.EndlessNight ? Waypoint.DeepeningNight : w;
         }
 
         [Theory]
@@ -381,6 +407,47 @@ namespace SodRpg.Core.Tests
             double multiplier = PactDailyWaypointTestValues.Waypoint(Waypoint.EndlessNight, "awakeningMultiplier") * DreamDepth.AwakeningMultiplier(1);
             Assert.Equal((int)Math.Round(Content.AwakenPoints(MonsterTier.Normal, true) * multiplier, MidpointRounding.AwayFromZero), legendary.AwakenPoints);
             Assert.Equal(DreamDepth.ScaleReward(StarProgression.KillXp(MonsterTier.Normal, true), 1.2), p.Hero("Hero_Lacerta").StarXp);
+        }
+
+        [Fact]
+        public void Deepening_night_keeps_the_regular_nightmare_roll_and_raises_pressure_awakening_and_kill_loot_tier()
+        {
+            var t = Waypoints.Sum(Waypoint.DeepeningNight);
+            Assert.False(t.AllNightmares);
+            Assert.Equal(PactDailyWaypointTestValues.Waypoint(Waypoint.DeepeningNight, "pressureMultiplier"), t.PressureMultiplier);
+            Assert.Equal(1.5, t.PressureMultiplier);
+            Assert.Equal(PactDailyWaypointTestValues.Waypoint(Waypoint.DeepeningNight, "awakeningMultiplier"), t.AwakeningMultiplier);
+            Assert.Equal(3, t.AwakeningMultiplier);
+            // 全悪夢化しない：通常の悪夢抽選のまま（中立の道標と同じ比較、#127 と同じ形）。
+            foreach (var tier in new[] { MonsterTier.Lesser, MonsterTier.Normal, MonsterTier.MiniBoss })
+                for (int depth = 0; depth <= 5; depth++)
+                    for (ulong seed = 1; seed <= 128; seed++)
+                        Assert.Equal(Nightmares.Roll(new Rng(seed), tier, depth, 1.25),
+                            Nightmares.RollWaypoint(new Rng(seed), tier, depth, 1.25, t));
+            // 戦利品の格 +1：深まる夜の通常撃破は、道標なしの雑魚頭領（エリート）撃破と同じ戦利品を引く。
+            int dropped = 0;
+            for (ulong seed = 1; seed <= 16; seed++)
+            {
+                var deepened = FreshProfile(seed, Waypoint.DeepeningNight);
+                var elite = FreshProfile(seed, Waypoint.None);
+                Rules.OnKill(deepened, MonsterTier.Normal, 10);
+                Rules.OnKill(elite, MonsterTier.MiniBoss, 10);
+                Assert.Equal(elite.Run.SatchelShards, deepened.Run.SatchelShards);
+                Assert.Equal(elite.Run.SatchelTuning, deepened.Run.SatchelTuning);
+                Assert.Equal(elite.Run.Satchel.Select(r => (r.Rarity, r.Slot, r.ItemLevel, r.CodexId)),
+                    deepened.Run.Satchel.Select(r => (r.Rarity, r.Slot, r.ItemLevel, r.CodexId)));
+                dropped += deepened.Run.Satchel.Count;
+            }
+            Assert.True(dropped > 0);
+
+            Profile FreshProfile(ulong seed, Waypoint waypoint)
+            {
+                var p = Profile.CreateNew(seed);
+                Rules.BeginRun(p, "deepening-run", heroKey: "Hero_Lacerta");
+                p.Run.Bounties.Clear();
+                p.Run.ActiveWaypoint = waypoint;
+                return p;
+            }
         }
 
         [Fact]

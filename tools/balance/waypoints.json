@@ -66,6 +66,10 @@
     },
     "FirstClaim": {
       "maxRelicsPerRoom": 1
+    },
+    "DeepeningNight": {
+      "pressureMultiplier": 1.5,
+      "awakeningMultiplier": 3
     }
   },
   "rewards": {

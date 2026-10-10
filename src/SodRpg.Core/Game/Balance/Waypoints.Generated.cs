@@ -30,11 +30,13 @@ namespace SodRpg.Core.Game
         internal const double SixfoldRoadLuck = 0.5d;
         internal const int AwakeningPilgrimageAwakeningPerRelic = 20;
         internal const int FirstClaimMaxRelicsPerRoom = 1;
+        internal const double DeepeningNightPressureMultiplier = 1.5d;
+        internal const double DeepeningNightAwakeningMultiplier = 3d;
         internal const int TwinRelicCopies = 2;
         internal const int BossSalvageMultiplier = 4;
         internal const int StarXpPerShard = 4;
         internal const int HoardRewardMultiplier = 3;
         internal const int TuningPerNonBossRelic = 1;
-        internal static readonly string ContentFingerprintRecord = null;
+        internal static readonly string ContentFingerprintRecord = "balance:waypoints:v1:definitions/DeepeningNight/pressureMultiplier:double:multiplier:1.5;definitions/DeepeningNight/awakeningMultiplier:double:multiplier:3.0";
     }
 }
