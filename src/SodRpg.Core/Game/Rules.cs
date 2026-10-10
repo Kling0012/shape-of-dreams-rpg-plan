@@ -99,6 +99,14 @@ namespace SodRpg.Core.Game
         public const double LimboDropBonus = EconomyBalance.LimboDropBonus;
         public const double LimboLuck = EconomyBalance.LimboLuck;
 
+        /// <summary>Limbo 深度1ごとの経験値倍率の上乗せと、その上乗せの上限（深度10で頭打ち）。</summary>
+        public const double LimboExpBonus = EconomyBalance.LimboExpBonus;
+        public const double LimboExpBonusCap = EconomyBalance.LimboExpBonusCap;
+
+        /// <summary>Limbo の深さに応じた経験値倍率（深さ0では1倍。上乗せは LimboExpBonusCap で打ち切り）。</summary>
+        public static double LimboXpMultiplier(int limboDepth)
+            => 1 + Math.Min(LimboExpBonusCap, LimboExpBonus * Math.Max(0, limboDepth));
+
         public static List<GameEvent> BeginRun(Profile p, string runId, DailyDream daily = null, int limboDepth = 0, ISet<string> reservedUids = null, string heroKey = null, int? dreamDepth = null)
         {
             var ev = new List<GameEvent>();
@@ -128,9 +136,11 @@ namespace SodRpg.Core.Game
             p.DirectStashUsedRunIds.RemoveWhere(used => used != runId);
             if (limboDepth > 0)
             {
+                int dropPercent = (int)(LimboDropBonus * 100 * limboDepth);
+                int expPercent = (int)Math.Round((LimboXpMultiplier(limboDepth) - 1) * 100);
                 ev.Add(new GameEvent(EventKind.Info, Loc.T(
-                    $"Limboの深さ{limboDepth}：遺物が{(int)(LimboDropBonus * 100 * limboDepth)}%出やすくなり、レア度も上がります。",
-                    $"Limbo depth {limboDepth}: +{(int)(LimboDropBonus * 100 * limboDepth)}% relic drops, better rarity")));
+                    $"Limboの深さ{limboDepth}：遺物が{dropPercent}%出やすくなり、レア度も上がります。経験値も+{expPercent}%されます。",
+                    $"Limbo depth {limboDepth}: +{dropPercent}% relic drops, better rarity, +{expPercent}% experience")));
             }
             if (daily != null) ev.Add(new GameEvent(EventKind.Info, Loc.T($"今日の夢「{daily.Name}」：{daily.Description}", $"Today's dream \"{daily.Name}\": {daily.Description}")));
             var brng = p.TakeRng();
