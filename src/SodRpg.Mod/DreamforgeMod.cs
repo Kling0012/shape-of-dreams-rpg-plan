@@ -120,10 +120,14 @@ namespace SodRpg.Mod
             HandleKeys();
             bool block = _ui != null && (_ui.Open || _ui.MouseOverPanel);
             BlockInputWhileMenuOpen.MenuOpen = block;
+            _perf.BeginClient();
             _session.Tick();
+            _perf.EndClient();
             try
             {
+                _perf.BeginHost();
                 _host?.Tick();
+                _perf.EndHost();
             }
             catch (Exception ex)
             {
@@ -143,6 +147,8 @@ namespace SodRpg.Mod
                 useGUILayout = layout;
             }
             _perf.EndUpdate();
+            // GC の割り当て量は、perf.flag があるか dreamforge_perf が一度でも使われたときだけ測る（既定は無負荷）。
+            if (_perfLogEnabled || _perfPolled) _perf.SampleGC();
             if (_perfLogEnabled && Time.unscaledTime >= _nextPerfLog)
             {
                 _nextPerfLog = Time.unscaledTime + 10f;
@@ -156,6 +162,8 @@ namespace SodRpg.Mod
         // 計測用：保存先に perf.flag があるときだけ、10秒ごとに処理時間をログへ書く（通常は何もしない）。
         private bool _perfLogEnabled;
         private float _nextPerfLog;
+        // 計測用：dreamforge_perf が一度でも呼ばれたら、GC の割り当て計測を続ける。
+        private bool _perfPolled;
 
         private void HandleKeys()
         {
@@ -211,6 +219,7 @@ namespace SodRpg.Mod
         private void PerfCommand()
         {
             if (!CommandAllowed()) return;
+            _perfPolled = true; // 以後のフレームで GC 割り当ても測れるようにする。
             Debug.Log("[DreamforgeRPG] " + _perf.Report() + " | save avg " + _session.SaveMsAverage.ToString("0.00") +
                 $"ms (main thread) | lightweight={_performance?.Mode ?? config.lightweight} background={!_hasFocus}");
         }

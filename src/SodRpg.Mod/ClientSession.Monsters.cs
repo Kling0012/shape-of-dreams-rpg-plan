@@ -28,6 +28,8 @@ namespace SodRpg.Mod
             public Monster Monster;
             public EntityVisual Visual;
             public EntityColorModifier Color;
+            // GetComponent を毎フレーム呼ばせないための解決済みの身元（Monster と同じ GameObject に乗っている）。
+            public NetworkIdentity Identity;
         }
 
         private readonly Dictionary<uint, MonsterCueVisual> _monsterCues = new Dictionary<uint, MonsterCueVisual>();
@@ -65,7 +67,13 @@ namespace SodRpg.Mod
                     StopMonsterCue(state);
                     continue;
                 }
-                var m = identity.GetComponent<Monster>();
+                // 同じ NetworkIdentity なら前回の Monster を使い回し、GetComponent を毎フレーム呼ばない。
+                var m = state.Monster;
+                if (m == null || state.Identity != identity)
+                {
+                    m = identity.GetComponent<Monster>();
+                    state.Identity = identity;
+                }
                 if (m == null || !m.isActive || !m.isAlive)
                 {
                     if (m == null || !m.isAlive) _monsterCueScratch.Add(kv.Key);
