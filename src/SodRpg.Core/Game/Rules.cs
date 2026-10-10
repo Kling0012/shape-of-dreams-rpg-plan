@@ -117,6 +117,7 @@ namespace SodRpg.Core.Game
                 if (string.IsNullOrEmpty(p.Run.HeroKey) && !string.IsNullOrEmpty(heroKey)) p.Run.HeroKey = heroKey;
                 return ev;
             }
+            PreserveAndPruneDirectStashReceipts(p, runId);
             // A stale, already-settled Run is not a new interruption or another victory/defeat.
             if (p.Run != null && p.Run.RunId == p.CompletedRunId) p.Run = null;
             if (p.Run != null)
@@ -132,13 +133,6 @@ namespace SodRpg.Core.Game
             }
             // 開始深度は v1.1 で廃止（本体の Limbo 深度に統合）。
             p.Run = new RunState { RunId = runId, HeroKey = heroKey, LevelAtStart = p.DreamLevel, DailyId = daily?.Id ?? 0, LimboDepth = Math.Max(0, limboDepth), DreamDepth = dreamDepth ?? p.LastDreamDepth };
-            // Continue で別の遠征へ戻っても使用済みを保つ。保存件数が上限を超えたときだけ整理する。
-            if (p.DirectStashUsedRunIds.Count > MaxDirectStashUsedRunIds)
-            {
-                var expired = p.DirectStashUsedRunIds.OrderBy(used => used, StringComparer.Ordinal)
-                    .Take(p.DirectStashUsedRunIds.Count - MaxDirectStashUsedRunIds).ToList();
-                foreach (string used in expired) p.DirectStashUsedRunIds.Remove(used);
-            }
             if (limboDepth > 0)
             {
                 int dropPercent = (int)(LimboDropBonus * 100 * limboDepth);

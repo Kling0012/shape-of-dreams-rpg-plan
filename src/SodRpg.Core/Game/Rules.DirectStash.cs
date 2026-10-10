@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using SodRpg.Core.Internal;
 
 namespace SodRpg.Core.Game
 {
@@ -18,6 +20,73 @@ namespace SodRpg.Core.Game
             for (int i = 0; i < run.Satchel.Count; i++)
                 if (!IsSatchelRelicReserved(p, run.Satchel[i], reservedUids)) return true;
             return false;
+        }
+
+        // Retained native Continue points can outlive the bounded live receipt history.
+        // Store an evicted run's own consumed right in its immutable snapshot before eviction.
+        private static void PreserveAndPruneDirectStashReceipts(Profile p, string activeRunId)
+        {
+            var receipts = new HashSet<string>(p.DirectStashUsedRunIds, StringComparer.Ordinal);
+            var decoded = new Dictionary<RunCheckpoint, Profile>();
+            foreach (var checkpoint in p.ContinueCheckpoints.Where(c => c.RunId == activeRunId))
+            {
+                var snapshot = ReadDirectStashCheckpoint(checkpoint);
+                decoded[checkpoint] = snapshot;
+                if (snapshot.DirectStashUsedRunIds.Contains(activeRunId)) receipts.Add(activeRunId);
+            }
+            var expired = new HashSet<string>(receipts.OrderBy(id => id, StringComparer.Ordinal)
+                .Where(id => id != activeRunId)
+                .Take(Math.Max(0, receipts.Count - MaxDirectStashUsedRunIds)), StringComparer.Ordinal);
+            var replacements = new List<RunCheckpoint>(p.ContinueCheckpoints.Count);
+            foreach (var checkpoint in p.ContinueCheckpoints)
+            {
+                if (!expired.Contains(checkpoint.RunId))
+                {
+                    replacements.Add(checkpoint);
+                    continue;
+                }
+                if (!decoded.TryGetValue(checkpoint, out var snapshot))
+                    snapshot = ReadDirectStashCheckpoint(checkpoint);
+                snapshot.DirectStashUsedRunIds.Add(checkpoint.RunId);
+                // A snapshot only needs to guarantee its own expedition's consumed right.
+                foreach (var id in snapshot.DirectStashUsedRunIds.OrderBy(id => id, StringComparer.Ordinal)
+                    .Where(id => id != checkpoint.RunId)
+                    .Take(Math.Max(0, snapshot.DirectStashUsedRunIds.Count - MaxDirectStashUsedRunIds)).ToList())
+                    snapshot.DirectStashUsedRunIds.Remove(id);
+                replacements.Add(new RunCheckpoint(checkpoint.Id, checkpoint.RunId,
+                    WriteDirectStashCheckpoint(checkpoint, snapshot.DirectStashUsedRunIds)));
+            }
+            // Decode, validate and encode every candidate before changing the live profile.
+            receipts.ExceptWith(expired);
+            p.ContinueCheckpoints.Clear();
+            p.ContinueCheckpoints.AddRange(replacements);
+            p.DirectStashUsedRunIds.Clear();
+            p.DirectStashUsedRunIds.UnionWith(receipts);
+        }
+
+        private static Profile ReadDirectStashCheckpoint(RunCheckpoint checkpoint)
+        {
+            // The normal reader validates format/version and accepts supported migration notes.
+            // Its migrated values are never written back into this frozen snapshot.
+            var snapshot = ProfileCodec.ReadCheckpointProfile(checkpoint.Snapshot);
+            if (snapshot.Run?.RunId != checkpoint.RunId)
+                throw new LedgerFormatException("Direct-stash continue checkpoint is invalid.");
+            return snapshot;
+        }
+
+        private static string WriteDirectStashCheckpoint(RunCheckpoint checkpoint, ISet<string> receipts)
+        {
+            var root = (JsonObject)Json.Parse(checkpoint.Snapshot);
+            root.TryGet("body", out var bodyValue);
+            var body = new JsonObject();
+            foreach (var property in ((JsonObject)bodyValue).Properties)
+                if (property.Key != "directStashUsedRunIds") body.Add(property.Key, property.Value);
+            body.Add("directStashUsedRunIds", receipts.OrderBy(id => id, StringComparer.Ordinal)
+                .Select(id => (object)id).ToList());
+            var replacement = new JsonObject();
+            foreach (var property in root.Properties)
+                replacement.Add(property.Key, property.Key == "body" ? body : property.Value);
+            return Json.Write(replacement);
         }
 
         /// <summary>
