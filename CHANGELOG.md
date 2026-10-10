@@ -8,6 +8,8 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
+- 敵が消えたあとも効果が残り、例外と警告が繰り返されて処理が重くなる不具合を修正しました。 / Fixed effects lingering after enemies disappeared and repeatedly logging exceptions and warnings, slowing down the game.
+
 - 新機能：Limbo の深さに応じて、遠征で得る経験値（旅人のレベル用）が増えます（深度1ごとに+10%、最大+100%）。 / New: experience gained on expeditions (traveler levels) now increases with Limbo depth (+10% per depth, up to +100%).
 
 - 協力プレイで同じ情報の繰り返し送信を減らし、対応した相手にはボス演出の通信を小さくしました。古い版の相手にも従来の形式で送れます。 / Reduced repeated state updates in co-op and made boss visual packets smaller for supported peers, while retaining the existing format for older versions.
