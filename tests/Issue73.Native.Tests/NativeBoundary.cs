@@ -189,7 +189,11 @@ namespace SodRpg.Mod
         public float GetAdjustedGoldAmount_Cost(float amount) => 1f;
         public void WrapUpAndShowResult(DewGameResult.ResultType type) => throw new NotSupportedException();
     }
-    internal sealed class DewGameResult { public enum ResultType { Conceded } }
+    internal sealed class DewGameResult
+    {
+        public enum ResultType { Conceded, GameOver, PureWhiteDream, StarlessPath, UnknownFate }
+        public ResultType result;
+    }
     internal enum GameState { InLobby, Playing }
     internal sealed class GameSettingsManager
     {
@@ -406,6 +410,8 @@ namespace SodRpg.Mod
     internal static class ContentFingerprint { internal const string Value = "native-test-content"; }
     internal sealed partial class ClientSession
     {
+        private const float SweepDelaySeconds = 1.5f;
+        private float _roomSweepPendingAt;
         public Profile Profile;
         public Hero LocalHero;
         // ClientSession.cs(リンク外)の実装と同じ意味: ロビー復帰済みの遠征は精算が保留の間だけ活性。

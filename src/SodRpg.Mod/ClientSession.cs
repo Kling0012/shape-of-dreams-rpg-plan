@@ -560,9 +560,13 @@ namespace SodRpg.Mod
             // Limbo は深度ごとに新しい本体ランで始まる。前の深度の結果が確定しきれず次のセッションへ
             // 持ち越されたとき、ここで証拠を RunRecovery に残して待ち状態を消す。残したままでは
             // FlushPendingRunRewards が次の遠征の確保地点（確保画面）を毎tick消してしまう。
-            CarryPendingResultIntoRecovery();
-            _pendingRunVictory = null;
-            _pendingResultRunId = null;
+            // Initial attachment and same-run resume still need their pending result to settle.
+            if (_pendingResultRunId != runId)
+            {
+                CarryPendingResultIntoRecovery();
+                _pendingRunVictory = null;
+                _pendingResultRunId = null;
+            }
             int pacts = Profile.Run != null && Profile.Run.RunId != runId ? Profile.Run.Pacts.Count : 0;
             ActiveRunId = runId;
             PressureHealthMultiplier = PressureDamageMultiplier = 1f;
