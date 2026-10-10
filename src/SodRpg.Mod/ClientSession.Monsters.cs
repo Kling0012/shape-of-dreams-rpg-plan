@@ -64,7 +64,9 @@ namespace SodRpg.Mod
                 var state = kv.Value;
                 if (!NetworkClient.spawned.TryGetValue(kv.Key, out var identity) || identity == null)
                 {
-                    StopMonsterCue(state);
+                    // Despawned: drop the entry so the emission modifier is stopped before the
+                    // pooled instance is reused and the cue table stays bounded by live monsters.
+                    _monsterCueScratch.Add(kv.Key);
                     continue;
                 }
                 // 同じ NetworkIdentity なら前回の Monster を使い回し、GetComponent を毎フレーム呼ばない。

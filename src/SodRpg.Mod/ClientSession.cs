@@ -30,6 +30,7 @@ namespace SodRpg.Mod
 
         private readonly Action<EventInfoKill> _onDeath;
         private readonly Action<EventInfoLoadZone> _onZoneLoaded;
+        private readonly Action<EventInfoLoadRoom> _onRoomLoaded;
         private readonly Action _onClearedRoomsChanged;
         private readonly Action<DewGameResult> _onConcluded;
         private readonly Action<DreamforgeAppliedMsg> _onApplied;
@@ -77,6 +78,7 @@ namespace SodRpg.Mod
         private readonly List<uint> _variantScratch = new List<uint>();
         // GetComponent を毎フレーム呼ばせないための変種の敵の解決結果（netId → 身元と Monster）。
         private readonly Dictionary<uint, (Mirror.NetworkIdentity Identity, Monster Monster)> _variantMonsters = new Dictionary<uint, (Mirror.NetworkIdentity, Monster)>();
+        private readonly List<uint> _variantStaleScratch = new List<uint>();
         private bool _loggedVariantVisualFailure;
 
         private readonly RoomCounter _rooms = new RoomCounter();
@@ -108,6 +110,7 @@ namespace SodRpg.Mod
             RestoreRunDurability();
             _onDeath = OnDeath;
             _onZoneLoaded = OnZoneLoaded;
+            _onRoomLoaded = OnRoomLoadedSweep;
             _onClearedRoomsChanged = OnClearedRoomsChanged;
             _onConcluded = OnConcluded;
             _onApplied = OnApplied;
@@ -206,7 +209,7 @@ namespace SodRpg.Mod
         {
             if (_tickSteps == null)
             {
-                _tickSteps = new Action[] { TickGemSlotHudProbe, TickProfileSlots, Wire, TickInfinitySettings, UpdateVariantVisuals, UpdateMonsterCues, TickBossDisplay, TrackRun, TickKillClassification, TickRunChoices, TickCurseResync, TickSalvageExpiry, TickSatchelOverflow, SendBuildIfNeeded, TickHello, TickPeriodicSave, TickInterruptedRelics, TickDirectStash, TickKillSync, TickCoopTrade };
+                _tickSteps = new Action[] { TickGemSlotHudProbe, TickProfileSlots, Wire, TickInfinitySettings, UpdateVariantVisuals, UpdateMonsterCues, TickBossDisplay, TrackRun, TickKillClassification, TickRunChoices, TickCurseResync, TickSalvageExpiry, TickSatchelOverflow, SendBuildIfNeeded, TickHello, TickPeriodicSave, TickInterruptedRelics, TickDirectStash, TickKillSync, TickCoopTrade, TickRoomVisualSweep };
                 _tickStepNames = new[] { "gem slot HUD probe", "profile slots", "wire", "infinity settings", "variant visuals", "monster cues", "boss effects", "track run", "kill classification", "run choices", "curse resync", "salvage expiry", "satchel overflow", "send build", "hello", "periodic save", "interrupted relic save", "kill sync", "coop trade" };
                 _tickStepNextLog = new float[_tickSteps.Length];
             }
@@ -321,6 +324,7 @@ namespace SodRpg.Mod
                     try
                     {
                         _zone.ClientEvent_OnZoneLoaded -= _onZoneLoaded;
+                        _zone.ClientEvent_OnRoomLoaded -= _onRoomLoaded;
                         _zone.ClientEvent_OnClearedCombatRoomsChanged -= _onClearedRoomsChanged;
                         _zone.ClientEvent_OnCurrentHuntLevelChanged -= _onHuntChanged;
                     }
@@ -332,6 +336,7 @@ namespace SodRpg.Mod
                 if (zone != null)
                 {
                     zone.ClientEvent_OnZoneLoaded += _onZoneLoaded;
+                    zone.ClientEvent_OnRoomLoaded += _onRoomLoaded;
                     zone.ClientEvent_OnClearedCombatRoomsChanged += _onClearedRoomsChanged;
                     zone.ClientEvent_OnCurrentHuntLevelChanged += _onHuntChanged;
                 }
@@ -464,6 +469,7 @@ namespace SodRpg.Mod
                 if (_zone != null)
                 {
                     _zone.ClientEvent_OnZoneLoaded -= _onZoneLoaded;
+                    _zone.ClientEvent_OnRoomLoaded -= _onRoomLoaded;
                     _zone.ClientEvent_OnClearedCombatRoomsChanged -= _onClearedRoomsChanged;
                     _zone.ClientEvent_OnCurrentHuntLevelChanged -= _onHuntChanged;
                 }
@@ -724,6 +730,8 @@ namespace SodRpg.Mod
             try
             {
                 if (result == null) return;
+                // 遠征の終了時にも、部屋遷移と同じ掃除を 1 回だけ走らせる。
+                _roomSweepPendingAt = Time.unscaledTime + SweepDelaySeconds;
 if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
                     NetworkedManagerBase<GameManager>.softInstance?.runId ?? "")) return;
                 if (ObserveInfinityConclusion(result)) return;
@@ -1006,6 +1014,10 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
             {
                 if (!NetworkClient.spawned.TryGetValue(kv.Key, out var id) || id == null)
                 {
+                    // Despawned: stop the color/scale modifiers now. Pooled instances keep
+                    // EntityVisual modifier lists across reuse, so a kept modifier bleeds the
+                    // variant tint and size onto the next monster that borrows the instance.
+                    _variantScratch.Add(kv.Key);
                     continue;
                 }
                 // 同じ NetworkIdentity なら前回の Monster を使い回し、GetComponent を毎フレーム呼ばない。
@@ -1038,6 +1050,17 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
             }
             // A message can arrive before the entity or its model is ready.
             if (visual == null || visual.model == null) return;
+            // Pool reuse can hand this same Monster component to a new netId while the old
+            // entry still holds live modifiers; stop those so scale and color are applied once.
+            _variantStaleScratch.Clear();
+            foreach (var kv in _variantVisuals)
+                if (kv.Key != netId && kv.Value.Monster == m) _variantStaleScratch.Add(kv.Key);
+            for (int i = 0; i < _variantStaleScratch.Count; i++)
+                if (_variantVisuals.TryGetValue(_variantStaleScratch[i], out var stale))
+                {
+                    StopVariantVisual(stale);
+                    _variantVisuals.Remove(_variantStaleScratch[i]);
+                }
             var state = new VariantVisual { Monster = m, Visual = visual };
             _variantVisuals[netId] = state;
             try

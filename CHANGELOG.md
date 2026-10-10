@@ -11,6 +11,10 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 - 協力プレイで同じ情報の繰り返し送信を減らし、対応した相手にはボス演出の通信を小さくしました。古い版の相手にも従来の形式で送れます。 / Reduced repeated state updates in co-op and made boss visual packets smaller for supported peers, while retaining the existing format for older versions.
 
 - 処理の軽量化：敵の掃除と表示の更新で毎フレーム走っていた一部の処理を減らし、`dreamforge_perf` に内訳（client／host）と割り当て量の表示を追加しました。 / Reduced some per-frame work (monster pruning, variant/cue lookups) and extended `dreamforge_perf` with client/host breakdown and allocation rate.
+- 敵が消えたあとにも残っていた変種の色・大きさや合図の光を、敵の消えるタイミングで確実に消すようにしました。ボス技の予告線も、ゲームのエフェクト品質設定（低）に合わせて簡素化されます。 / Variant tints, sizes and cue glows are now reliably removed when their monster despawns; boss telegraph lines also simplify when the game's effect quality is set to Low.
+- 敵が一度に多く倒れたときの死亡時の閃光・カメラ揺れ・コントローラ振動を間引いて軽くしました（最初の 1 回は必ず表示し、遠い死亡では出さない）。エフェクト品質が低のときは死亡時の光を省きます。 / Death flashes, camera shake and gamepad rumble are now thinned when many enemies die at once (the first always plays; distant deaths are skipped); death lights are omitted at Low effect quality.
+- 部屋や区画を移動しても敵のモデルが残ることがあったのを修正しました（プール再利用で止まったままの消去フラグの解消と、移動後の残存モデルの回収）。 / Enemy models could linger after moving to another room; stuck dissolve state is now cleared on pool reuse and leftover models are swept after room transitions.
+>>>>>>> cf3ee34 (Fix lingering variant/cue visuals and scale boss telegraphs by effect quality)
 
 ---
 

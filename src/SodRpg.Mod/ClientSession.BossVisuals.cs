@@ -9,7 +9,12 @@ namespace SodRpg.Mod
     {
         private const int BossDisplayOwnerLimit = 16, BossDisplayEffectLimit = 64;
         private const int BossDisplayRenderLimit = 64, BossDisplaySegmentLimit = 2048;
-        private const float BossDisplayDistance = 64f;
+        private const int BossDisplaySegmentLimitLow = 768;
+        private const float BossDisplayDistance = 64f, BossDisplayDistanceLow = 40f;
+        private const int BossCaptionGlyphLimit = 512, BossCaptionGlyphLimitLow = 192;
+        private const int BossRingSegments = 24, BossRingSegmentsLow = 12;
+        private const int BossFanSegments = 16, BossFanSegmentsLow = 8;
+        private const int BossSpokeLimit = 16, BossSpokeLimitLow = 8;
 
         private sealed class BossEffectVisual
         {
@@ -94,6 +99,11 @@ namespace SodRpg.Mod
         private string _bossVisualRun;
         private int _bossVisualZone = -1, _bossVisualRoom = -1, _bossRenderCount, _bossSegmentsLeft;
         private float _nextBossDisplayPrune, _nextBossRenderRefresh;
+        // The game's effect-quality setting (and the PerformanceTuner override) also governs
+        // how much the mod's telegraphs draw; refreshed with the render list, not per line.
+        private Quality3Levels _bossVisualQuality = Quality3Levels.High;
+        private bool _loggedBossQualityFailure;
+        private bool BossQualityLow => _bossVisualQuality == Quality3Levels.Low;
 
         private static BossOwnerVisual[] CreateBossOwnerVisuals()
         {
@@ -305,17 +315,33 @@ namespace SodRpg.Mod
             var midpoint = (center + effect.end) * .5f;
             extent += (effect.end - center).magnitude * .5f;
             distance = (midpoint - camera.transform.position).sqrMagnitude;
-            float far = BossDisplayDistance + extent;
+            float far = (BossQualityLow ? BossDisplayDistanceLow : BossDisplayDistance) + extent;
             if (distance > far * far) return false;
             for (int i = 0; i < _bossVisualPlanes.Length; i++)
                 if (_bossVisualPlanes[i].GetDistanceToPoint(midpoint) < -extent) return false;
             return true;
         }
+        private void RefreshBossVisualQuality()
+        {
+            try
+            {
+                var graphics = ManagerBase<GraphicsManager>.instance;
+                _bossVisualQuality = graphics == null ? Quality3Levels.High : graphics.currentEffectQuality;
+            }
+            catch (Exception ex)
+            {
+                if (_loggedBossQualityFailure) return;
+                _loggedBossQualityFailure = true;
+                Log.Warn("Boss effect quality scaling unavailable; drawing at full detail: " + ex.Message);
+            }
+        }
+
         private void RefreshBossRenderVisuals(Camera camera, double now)
         {
             float clock = Time.unscaledTime;
             if (clock < _nextBossRenderRefresh) return;
             _nextBossRenderRefresh = clock + .1f;
+            RefreshBossVisualQuality();
             GeometryUtility.CalculateFrustumPlanes(camera, _bossVisualPlanes);
             _bossRenderCount = 0;
             // Admission is nearest-first with counters/glyphs ahead of generic geometry at the render-work cap.
@@ -355,8 +381,8 @@ namespace SodRpg.Mod
             double now = Time.time;
             RefreshBossRenderVisuals(camera, now);
             if (_bossRenderCount == 0) return;
-            _bossSegmentsLeft = BossDisplaySegmentLimit;
-            int captionGlyphsLeft = 512;
+            _bossSegmentsLeft = BossQualityLow ? BossDisplaySegmentLimitLow : BossDisplaySegmentLimit;
+            int captionGlyphsLeft = BossQualityLow ? BossCaptionGlyphLimitLow : BossCaptionGlyphLimit;
             var oldColor = GUI.color;
             var oldMatrix = GUI.matrix;
             // This world projection must not inherit the inventory UI's logical-canvas transform.
@@ -389,7 +415,7 @@ namespace SodRpg.Mod
                     else if (effect.shape == (int)BossShape.Radial)
                     {
                         var direction = BossVisualDirection(effect);
-                        int spokes = Math.Min(effect.count, 16);
+                        int spokes = Math.Min(effect.count, BossQualityLow ? BossSpokeLimitLow : BossSpokeLimit);
                         for (int i = 0; i < spokes && _bossSegmentsLeft >= (effect.kind == 4 ? 3 : 1); i++)
                         {
                             int spokeIndex = i * effect.count / spokes;
@@ -486,7 +512,7 @@ namespace SodRpg.Mod
         private void DrawBossWorldFan(Camera camera, DreamforgeBossEffect effect, float width)
         {
             var direction = BossVisualDirection(effect);
-            const int segments = 16;
+            int segments = BossQualityLow ? BossFanSegmentsLow : BossFanSegments;
             if (_bossSegmentsLeft < segments + 2) return;
             var previous = effect.center + Quaternion.Euler(0, -effect.angle * .5f, 0) * direction * effect.range;
             DrawBossWorldLine(camera, effect.center, previous, width);
@@ -499,7 +525,7 @@ namespace SodRpg.Mod
         }
         private void DrawBossWorldRing(Camera camera, Vector3 center, float radius, float width)
         {
-            const int segments = 24;
+            int segments = BossQualityLow ? BossRingSegmentsLow : BossRingSegments;
             if (_bossSegmentsLeft < segments) return;
             Vector3 previous = center + Vector3.right * radius;
             for (int i = 1; i <= segments; i++)
