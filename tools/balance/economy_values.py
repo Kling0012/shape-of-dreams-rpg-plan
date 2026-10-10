@@ -14,7 +14,7 @@ INT_MAX = (1 << 31) - 1
 LEGACY = {"schemaVersion": 1, "exchange": {"dustPerBatch": 100, "shardsPerBatch": 10},
           "merchant": {"baseGold": 60, "goldPerHeat": 15},
           "salvage": {"dustPerShard": 5, "dustPerEnhance": 10},
-          "expedition": {"limboDropBonus": Decimal("0.10"), "limboLuck": Decimal("0.2"), "limboExpBonus": Decimal("0.10"), "limboExpBonusCap": Decimal("1.0"), "limboRelicBonus": Decimal("0.0"), "limboRelicBonusCap": Decimal("0.0"), "secureBonusDivisor": 4}}
+          "expedition": {"limboDropBonus": Decimal("0.10"), "limboLuck": Decimal("0.2"), "limboExpBonus": Decimal("0.10"), "limboExpBonusCap": Decimal("1.0"), "limboRelicBonus": Decimal("0.0"), "limboRelicBonusCap": Decimal("0.0"), "limboRelicMultiplierCap": Decimal("0.0"), "secureBonusDivisor": 4}}
 FIELDS = {
     "exchange.dustPerBatch": ("DustPerBatch", "dust/batch"),
     "exchange.shardsPerBatch": ("ShardsPerBatch", "shards/batch"),
@@ -28,6 +28,7 @@ FIELDS = {
     "expedition.limboExpBonusCap": ("LimboExpBonusCap", "xp-bonus-cap"),
     "expedition.limboRelicBonus": ("LimboRelicBonus", "relic-mult/limbo-depth"),
     "expedition.limboRelicBonusCap": ("LimboRelicBonusCap", "relic-bonus-cap"),
+    "expedition.limboRelicMultiplierCap": ("LimboRelicMultiplierCap", "relic-mult-cap"),
     "expedition.secureBonusDivisor": ("SecureBonusDivisor", "divisor"),
 }
 

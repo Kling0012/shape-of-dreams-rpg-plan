@@ -99,14 +99,21 @@ namespace SodRpg.Core.Game
         public const double LimboDropBonus = EconomyBalance.LimboDropBonus;
         public const double LimboLuck = EconomyBalance.LimboLuck;
 
-        /// <summary>Limbo 深度1ごとの遺物個数倍率の上乗せと、その上限（深度10で頭打ち）。</summary>
+        /// <summary>Limbo 深度1ごとの遺物個数倍率の上乗せと、その上限（深度6で頭打ち）。</summary>
         public const double LimboRelicBonus = EconomyBalance.LimboRelicBonus;
         public const double LimboRelicBonusCap = EconomyBalance.LimboRelicBonusCap;
 
-        public static double LimboRelicMultiplier(int limboDepth)
-            => 1 + Math.Min(LimboRelicBonusCap, LimboRelicBonus * Math.Max(0, limboDepth));
+        /// <summary>遺物個数倍率の全体上限（本体の最大深度に合わせる。1撃破の遺物判定は最大この回数）。</summary>
+        public const double LimboRelicMultiplierCap = EconomyBalance.LimboRelicMultiplierCap;
 
-        /// <summary>Limbo 深度1ごとの経験値倍率の上乗せと、その上乗せの上限（深度10で頭打ち）。</summary>
+        /// <summary>深さ2以降は深さの数字そのものを倍率に使う（深さ1は +LimboRelicBonus のみ上乗せ）。</summary>
+        public static double LimboRelicMultiplier(int limboDepth)
+        {
+            int d = Math.Max(0, limboDepth);
+            return Math.Min(LimboRelicMultiplierCap, Math.Max(1 + Math.Min(LimboRelicBonusCap, LimboRelicBonus * d), d));
+        }
+
+        /// <summary>Limbo 深度1ごとの経験値倍率の上乗せと、その上乗せの上限（深度6でちょうど上限に届く）。</summary>
         public const double LimboExpBonus = EconomyBalance.LimboExpBonus;
         public const double LimboExpBonusCap = EconomyBalance.LimboExpBonusCap;
 
