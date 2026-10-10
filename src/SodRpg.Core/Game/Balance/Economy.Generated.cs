@@ -12,6 +12,8 @@ namespace SodRpg.Core.Game
         internal const int SalvageDustPerEnhance = 10;
         internal const double LimboDropBonus = 0.1;
         internal const double LimboLuck = 0.2;
+        internal const double LimboExpBonus = 0.1;
+        internal const double LimboExpBonusCap = 1.0;
         internal const int SecureBonusDivisor = 4;
         internal static readonly string ContentFingerprintRecord = null;
     }
