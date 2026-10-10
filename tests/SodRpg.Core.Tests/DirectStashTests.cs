@@ -173,6 +173,32 @@ namespace SodRpg.Core.Tests
             }
         }
 
+        [Fact]
+        public void Continue_back_to_an_earlier_expedition_keeps_its_used_receipt()
+        {
+            // Expedition A uses its direct stash, still carries a relic, and saves.
+            var p = Running("free-1");
+            Rules.StashSatchelNow(p);
+            p.Run.Satchel.Add(Relic("kept"));
+            var checkpoint = RunCheckpoint.Capture(p, "before-switch");
+            p.ContinueCheckpoints.Add(checkpoint);
+            p = RoundTrip(p);
+
+            // Back in the lobby the player starts expedition B and claims A's interrupted relics.
+            Rules.BeginRun(p, "b");
+            Rules.ClaimInterruptedRelics(p);
+
+            // Continuing A restores its runId but never a second direct stash there.
+            checkpoint.Restore(p);
+            Assert.Equal("run", p.Run.RunId);
+            Assert.Contains(p.Run.Satchel, r => r.Uid == "kept"); // a sendable relic is back...
+            Assert.Contains("run", p.DirectStashUsedRunIds); // ...yet the receipt forbids sending again
+            Assert.False(Rules.CanStashSatchelNow(p));
+            string before = ProfileCodec.Write(p);
+            Assert.Throws<InvalidOperationException>(() => Rules.StashSatchelNow(p));
+            Assert.Equal(before, ProfileCodec.Write(p));
+        }
+
         [Theory]
         [InlineData(false)]
         [InlineData(true)]
@@ -241,7 +267,7 @@ namespace SodRpg.Core.Tests
         }
 
         [Fact]
-        public void Unused_profiles_write_no_new_bytes_and_old_ids_prune_at_next_run()
+        public void Unused_profiles_write_no_new_bytes_and_used_ids_survive_the_next_run()
         {
             var p = Running("free-1");
             // The optional key stays absent until the feature is used, so unused saves keep
@@ -249,8 +275,36 @@ namespace SodRpg.Core.Tests
             Assert.DoesNotContain("directStashUsedRunIds", ProfileCodec.Write(p));
             Rules.StashSatchelNow(p);
             Assert.Contains("directStashUsedRunIds", ProfileCodec.Write(p));
+            // Past receipts survive the next expedition so a later Continue cannot reuse them.
             Rules.BeginRun(p, "next");
-            Assert.DoesNotContain("directStashUsedRunIds", ProfileCodec.Write(p));
+            Assert.Contains("run", p.DirectStashUsedRunIds);
+            Assert.Contains("directStashUsedRunIds", ProfileCodec.Write(p));
+            // The new expedition still gets its own single use.
+            p.Run.Satchel.Add(Relic("free-2"));
+            Assert.True(Rules.CanStashSatchelNow(p));
+            Rules.StashSatchelNow(p);
+            Assert.Contains("next", p.DirectStashUsedRunIds);
+            Assert.Contains(p.Stash, r => r.Uid == "free-2");
+        }
+
+        [Fact]
+        public void Used_ids_over_256_are_pruned_smallest_ordinals_first()
+        {
+            var p = Running("free-1");
+            Rules.StashSatchelNow(p); // "run" plus 256 filled ids reach the 257-entry overflow
+            for (int i = 0; i < 256; i++)
+                p.DirectStashUsedRunIds.Add("zz-" + i.ToString("0000"));
+            Assert.Equal(257, p.DirectStashUsedRunIds.Count);
+            Rules.BeginRun(p, "next");
+            Assert.Equal(Rules.MaxDirectStashUsedRunIds, p.DirectStashUsedRunIds.Count);
+            Assert.DoesNotContain("run", p.DirectStashUsedRunIds); // "run" sorts before every "zz-*" id
+            Assert.Contains("zz-0000", p.DirectStashUsedRunIds); // only the smallest ordinal is dropped
+            Assert.Contains("zz-0255", p.DirectStashUsedRunIds);
+            // The pruning only drops history; the fresh expedition can still use its own direct stash.
+            p.Run.Satchel.Add(Relic("free-2"));
+            Assert.True(Rules.CanStashSatchelNow(p));
+            Rules.StashSatchelNow(p);
+            Assert.Contains("next", p.DirectStashUsedRunIds);
         }
 
         [Fact]
