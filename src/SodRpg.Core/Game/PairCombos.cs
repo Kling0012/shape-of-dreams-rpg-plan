@@ -106,125 +106,185 @@ namespace SodRpg.Core.Game
                     ChannelId = def.Id, Bridge = def.AuthoredDefinition });
             var entry = Clamp(new PairComboEntry { Def = def, Ranks = ranks });
             if (entry == null) return "";
-            def = entry.Def;
-            bool ja = Loc.Japanese;
-            string a = MemoryName(def.RouteA, ja), b = MemoryName(def.RouteB, ja);
-            string origin = Action(def.Trigger, def.TriggerMemory, ja);
-            if (!ja) origin = "W" + origin.Substring(1);
-            string payoff = def.Step == PairComboStep.None ? "" : Action(def.PayoffTrigger, def.PayoffMemory, ja);
+            return Loc.Japanese ? DescribeJa(entry) : DescribeEn(entry);
+        }
+
+        private static string DescribeEn(PairComboEntry entry)
+        {
+            var def = entry.Def;
+            string a = MemoryName(def.RouteA, false), b = MemoryName(def.RouteB, false);
+            string origin = "W" + Action(def.Trigger, def.TriggerMemory, false).Substring(1);
+            string payoff = def.Step == PairComboStep.None ? "" : Action(def.PayoffTrigger, def.PayoffMemory, false);
             string duration = def.WindowDuration.ToString("R", CultureInfo.InvariantCulture);
             string markedPayoff = def.PayoffTrigger == PairComboTrigger.OnKill
-                ? (ja ? MemoryName(def.PayoffMemory, true) + "で連携印のある敵を倒すと"
-                    : "When " + MemoryName(def.PayoffMemory, false) + " kills that combo-marked enemy")
-                : (ja ? "連携印のある敵に" : "Against that combo-marked enemy, ") + payoff;
+                ? "When " + MemoryName(def.PayoffMemory, false) + " kills that combo-marked enemy"
+                : "Against that combo-marked enemy, " + payoff;
             string steps = def.Step == PairComboStep.None ? origin
                 : def.Step == PairComboStep.Mark
-                    ? origin + (ja ? "、その敵に連携の印を4秒付ける（自分から受けるダメージ +" + (entry.Ranks + 1) + "%）。" : ", mark that enemy for 4 seconds (damage taken from you +" + (entry.Ranks + 1) + "%). ") + markedPayoff
-                    : origin + (ja ? "、その後" + duration + "秒以内に" : ", then within " + duration + " seconds, ") + payoff;
+                    ? origin + ", mark that enemy for 4 seconds (damage taken from you +" + (entry.Ranks + 1) + "%). " + markedPayoff
+                    : origin + ", then within " + duration + " seconds, " + payoff;
             string n = entry.Value.ToString(CultureInfo.InvariantCulture);
             string effect;
             switch (def.Effect)
             {
                 case GimmickEffect.Recharge:
-                    string target = MemoryName(def.RechargeMemory, ja);
-                    effect = ja ? target + "の残りクールダウンを" + n + "%縮める" : "reduce " + target + "'s remaining cooldown by " + n + "%";
+                    string target = MemoryName(def.RechargeMemory, false);
+                    effect = "reduce " + target + "'s remaining cooldown by " + n + "%";
                     break;
                 case GimmickEffect.RechargeOther:
-                    effect = ja ? "装備中のほかの通常記憶の残りクールダウンを" + n + "%縮める（移動・奥義・アイデンティティと、発動した記憶自身は対象外）"
-                        : "reduce the remaining cooldown of your other equipped normal memories by " + n + "% (excluding movement, ultimate, identity and the triggering memory itself)";
+                    effect = "reduce the remaining cooldown of your other equipped normal memories by " + n + "% (excluding movement, ultimate, identity and the triggering memory itself)";
                     break;
                 case GimmickEffect.Shield:
-                    effect = ja ? "自分に最大HPの" + n + "%の障壁を張る（4秒）" : "gain a shield equal to " + n + "% of maximum health for 4 seconds";
+                    effect = "gain a shield equal to " + n + "% of maximum health for 4 seconds";
                     break;
                 case GimmickEffect.Heal:
-                    effect = ja ? "自分" + (def.Arg == 1 ? "と10m以内の味方" : "") + "を最大HPの" + n + "%回復する"
-                        : "heal yourself" + (def.Arg == 1 ? " and allies within 10m" : "") + " for " + n + "% of maximum health";
+                    effect = "heal yourself" + (def.Arg == 1 ? " and allies within 10m" : "") + " for " + n + "% of maximum health";
                     break;
                 case GimmickEffect.Burst:
-                    effect = ja ? "当てた敵の周り4mに、攻撃力・魔力の高い方の" + n + "%の追加ダメージを与える（魔力が高ければ魔法）"
-                        : "deal " + n + "% of the higher of attack damage or ability power as extra damage within 4m of the hit enemy (magic damage if ability power is higher)";
+                    effect = "deal " + n + "% of the higher of attack damage or ability power as extra damage within 4m of the hit enemy (magic damage if ability power is higher)";
                     break;
                 case GimmickEffect.Element:
-                    string element = ja ? (def.Arg == 0 ? "火" : def.Arg == 1 ? "冷気" : def.Arg == 2 ? "光" : "闇")
-                        : (def.Arg == 0 ? "fire" : def.Arg == 1 ? "cold" : def.Arg == 2 ? "light" : "darkness");
+                    string element = def.Arg == 0 ? "fire" : def.Arg == 1 ? "cold" : def.Arg == 2 ? "light" : "darkness";
                     int whole = entry.Value / 100, chance = entry.Value % 100;
-                    string stacks = ja ? whole + "つ" + (chance == 0 ? "" : "（さらに" + chance + "%の確率でもう1つ）")
-                        : whole + (whole == 1 ? " stack" : " stacks") + (chance == 0 ? "" : " (plus a " + chance + "% chance of one more)");
-                    effect = ja ? "当てた敵に" + element + "を" + stacks + "付ける" : "apply " + stacks + " of " + element + " to the hit enemy";
+                    string stacks = whole + (whole == 1 ? " stack" : " stacks") + (chance == 0 ? "" : " (plus a " + chance + "% chance of one more)");
+                    effect = "apply " + stacks + " of " + element + " to the hit enemy";
                     break;
                 default:
-                    effect = ja ? "当てたダメージの" + n + "%を0.3秒後にもう一度与える" : "deal " + n + "% of the hit damage again after 0.3 seconds";
+                    effect = "deal " + n + "% of the hit damage again after 0.3 seconds";
                     break;
             }
             string cd = def.Cooldown.ToString("R", CultureInfo.InvariantCulture);
-            string interval = def.Cooldown == 0 ? (ja ? "間隔制限なし" : "no cooldown")
-                : (ja ? "このペアごとに" + cd + "秒に1回" : "once every " + cd + (def.Cooldown == 1f ? " second" : " seconds") + " per pair, shared across enemies");
+            string interval = def.Cooldown == 0 ? "no cooldown"
+                : "once every " + cd + (def.Cooldown == 1f ? " second" : " seconds") + " per pair, shared across enemies";
             string limit = def.OncePerActivation
-                ? (ja ? "。1回の使用・通常攻撃・召喚物の攻撃につき1回まで" : "; at most once per memory use, basic attack or summon attack") : "";
-            if (def.OncePerVictim) limit += ja
-                ? (def.PayoffTrigger == PairComboTrigger.OnKill ? "。倒した敵1体につき1回まで" : "。連携印のある敵1体につき1回まで（最初の3回の追加ダメージで繰り返さない）")
-                : (def.PayoffTrigger == PairComboTrigger.OnKill ? "; once per killed victim" : "; once per combo-marked victim, not once for each of the first three bonus hits");
-            if (def.KillByPayoffMemory) limit += ja ? "。受け手の記憶で倒した敵のみ。味方・召喚獣・ほかの記憶の撃破は数えない"
-                : "; only kills by the receiving memory count, not kills by allies, summons or other memories";
+                ? "; at most once per memory use, basic attack or summon attack" : "";
+            if (def.OncePerVictim) limit += def.PayoffTrigger == PairComboTrigger.OnKill ? "; once per killed victim" : "; once per combo-marked victim, not once for each of the first three bonus hits";
+            if (def.KillByPayoffMemory) limit += "; only kills by the receiving memory count, not kills by allies, summons or other memories";
             string summon = def.Trigger == PairComboTrigger.OnBasicAttack || def.PayoffTrigger == PairComboTrigger.OnBasicAttack
-                ? (ja ? "召喚獣がいるとき、自分が基本攻撃を撃つたびに判定する（命中は不要）。" : "Checks whenever you fire your own basic attack while summons are present; no hit is required. ") : "";
-            string disabled = def.MovementOrigin ? (ja ? "移動の記憶は起点にならないため、この組は発動しない。" : "Inactive: movement memories cannot start a combo. ") : "";
+                ? "Checks whenever you fire your own basic attack while summons are present; no hit is required. " : "";
+            string disabled = def.MovementOrigin ? "Inactive: movement memories cannot start a combo. " : "";
             string headline = def.Effect == GimmickEffect.Recharge || def.Effect == GimmickEffect.RechargeOther
-                ? Loc.T($"残りクールダウン -{n}%", $"Remaining cooldown -{n}%")
-                : def.Effect == GimmickEffect.Heal ? Loc.T($"HP回復 +最大HPの{n}%", $"Healing +{n}% of maximum HP")
-                : def.Effect == GimmickEffect.Shield ? Loc.T($"障壁 +最大HPの{n}%", $"Shield +{n}% of maximum HP")
-                : def.Effect == GimmickEffect.Burst ? Loc.T($"範囲追加ダメージ +攻撃力・魔力の高い方の{n}%", $"Area bonus damage +{n}% of the higher of attack damage or ability power")
-                : def.Effect == GimmickEffect.Echo ? Loc.T($"追撃ダメージ +与ダメージの{n}%", $"Follow-up damage +{n}% of damage dealt")
-                : Loc.T($"属性付与 +{entry.Value / 100}つ", $"Element application +{entry.Value / 100} stacks");
+                ? $"Remaining cooldown -{n}%"
+                : def.Effect == GimmickEffect.Heal ? $"Healing +{n}% of maximum HP"
+                : def.Effect == GimmickEffect.Shield ? $"Shield +{n}% of maximum HP"
+                : def.Effect == GimmickEffect.Burst ? $"Area bonus damage +{n}% of the higher of attack damage or ability power"
+                : def.Effect == GimmickEffect.Echo ? $"Follow-up damage +{n}% of damage dealt"
+                : $"Element application +{entry.Value / 100} stacks";
             var notes = new List<string>();
             if (disabled.Length > 0) notes.Add(disabled.TrimEnd());
             if (summon.Length > 0) notes.Add(summon.TrimEnd());
-            string restrictions = Restrictions(def, ja);
+            string restrictions = Restrictions(def, false);
             if (restrictions.Length > 0) notes.Add(restrictions);
             string tail = notes.Count == 0 ? "" : "\n・" + string.Join("\n・", notes);
-            return headline + Loc.T("：", ": ") + steps + (ja ? "、" : ", ") + effect
-                + (ja ? "（" + interval + limit + "。追加ダメージは属性なし・連鎖なし。星の追加ダメージでは連携を開始・成立させられない）"
-                    : " (" + interval + limit + "; extra damage is elementless and cannot chain; star-generated damage cannot start or complete the combo).")
-                + "\n" + (ja ? a + "と" + b + "を両方装備し、星『" + StarName(def.BridgeId) + "』『" + StarName(def.StarA) + "』『" + StarName(def.StarB) + "』を各1段以上取得すると有効。"
-                    : "Equip both " + a + " and " + b + "; acquire at least one rank in stars “" + StarName(def.BridgeId) + "”, “" + StarName(def.StarA) + "” and “" + StarName(def.StarB) + "”.")
-                + "\n" + (ja ? "橋の1/2/3段での値：" : "Values at bridge ranks 1/2/3: ")
+            return headline + ": " + steps + ", " + effect
+                + " (" + interval + limit + "; extra damage is elementless and cannot chain; star-generated damage cannot start or complete the combo)."
+                + "\n" + "Equip both " + a + " and " + b + "; acquire at least one rank in stars “" + StarName(def.BridgeId) + "”, “" + StarName(def.StarA) + "” and “" + StarName(def.StarB) + "”."
+                + "\n" + "Values at bridge ranks 1/2/3: "
                 + (def.Effect == GimmickEffect.Element
-                    ? string.Join("/", def.TableRankValues.Select(v => (v / 100m).ToString(CultureInfo.InvariantCulture))) + Loc.T("つ（小数部分は追加1つの確率）", " stacks (fractional part is the chance of one extra stack)")
+                    ? string.Join("/", def.TableRankValues.Select(v => (v / 100m).ToString(CultureInfo.InvariantCulture))) + " stacks (fractional part is the chance of one extra stack)"
                     : string.Join("/", def.TableRankValues) + "%")
                 + tail;
+        }
+
+        /// <summary>日本語は箇条書きにせず、効果・条件・制限・必要な装備を1つの段落の文章にする。</summary>
+        private static string DescribeJa(PairComboEntry entry)
+        {
+            var def = entry.Def;
+            string a = MemoryName(def.RouteA, true), b = MemoryName(def.RouteB, true);
+            string origin = Action(def.Trigger, def.TriggerMemory, true);
+            string payoff = def.Step == PairComboStep.None ? "" : Action(def.PayoffTrigger, def.PayoffMemory, true);
+            string duration = def.WindowDuration.ToString("R", CultureInfo.InvariantCulture);
+            string markedPayoff = def.PayoffTrigger == PairComboTrigger.OnKill
+                ? MemoryName(def.PayoffMemory, true) + "で連携印のある敵を倒したとき"
+                : "連携印のある敵に" + payoff;
+            string n = entry.Value.ToString(CultureInfo.InvariantCulture);
+            string effect;
+            string effectNote = "";
+            switch (def.Effect)
+            {
+                case GimmickEffect.Recharge:
+                    effect = MemoryName(def.RechargeMemory, true) + "の残りクールダウンを" + n + "%短縮する";
+                    break;
+                case GimmickEffect.RechargeOther:
+                    effect = "装備中のほかの通常記憶の残りクールダウンを" + n + "%短縮する";
+                    effectNote = "移動・奥義・アイデンティティと、発動した記憶自身は対象外である。";
+                    break;
+                case GimmickEffect.Shield:
+                    effect = "自分に最大HPの" + n + "%の障壁を4秒間付与する";
+                    break;
+                case GimmickEffect.Heal:
+                    effect = "自分" + (def.Arg == 1 ? "と10m以内の味方" : "") + "を最大HPの" + n + "%回復する";
+                    break;
+                case GimmickEffect.Burst:
+                    effect = "当てた敵の周り4mに、攻撃力・魔力の高い方の" + n + "%の追加ダメージを与える";
+                    effectNote = "魔力が高ければ魔法ダメージになる。";
+                    break;
+                case GimmickEffect.Element:
+                    string element = def.Arg == 0 ? "火" : def.Arg == 1 ? "冷気" : def.Arg == 2 ? "光" : "闇";
+                    int whole = entry.Value / 100, chance = entry.Value % 100;
+                    effect = whole == 0 ? "当てた敵に" + chance + "%の確率で" + element + "を1つ付ける"
+                        : "当てた敵に" + element + "を" + whole + "つ付ける" + (chance == 0 ? "" : "。さらに" + chance + "%の確率で、もう1つ付ける");
+                    break;
+                default:
+                    effect = "当てたダメージの" + n + "%を0.3秒後にもう一度与える";
+                    break;
+            }
+            string steps = def.Step == PairComboStep.None ? origin + "、" + effect + "。"
+                : def.Step == PairComboStep.Mark
+                    ? origin + "、その敵に連携の印を4秒間付ける。印のある敵は、自分から受けるダメージが" + (entry.Ranks + 1) + "%増える。" + markedPayoff + "、" + effect + "。"
+                    : origin + "、その後" + duration + "秒以内に" + payoff + "、" + effect + "。";
+            string cd = def.Cooldown.ToString("R", CultureInfo.InvariantCulture);
+            var sb = new System.Text.StringBuilder(steps).Append(effectNote);
+            sb.Append(def.Cooldown == 0 ? "再発動の間隔制限はない。" : "このペアごとに" + cd + "秒に1回まで発動する。");
+            if (def.OncePerActivation) sb.Append("1回の使用・通常攻撃・召喚物の攻撃につき1回まで。");
+            if (def.OncePerVictim)
+                sb.Append(def.PayoffTrigger == PairComboTrigger.OnKill ? "倒した敵1体につき1回まで。" : "連携印のある敵1体につき1回まで。最初の3回の追加ダメージで繰り返すことはない。");
+            if (def.KillByPayoffMemory) sb.Append("受け手の記憶で倒した敵だけが対象で、味方・召喚獣・ほかの記憶の撃破は数えない。");
+            sb.Append("追加ダメージは属性を持たず、連鎖しない。星の追加ダメージでは、連携を開始することも成立させることもできない。");
+            if (def.MovementOrigin) sb.Append("移動の記憶は起点にならないため、この組は発動しない。");
+            if (def.Trigger == PairComboTrigger.OnBasicAttack || def.PayoffTrigger == PairComboTrigger.OnBasicAttack)
+                sb.Append("召喚獣がいるとき、自分が基本攻撃を撃つたびに判定する。命中は不要である。");
+            sb.Append(Restrictions(def, true));
+            sb.Append(a + "と" + b + "を両方装備し、星『" + StarName(def.BridgeId) + "』『" + StarName(def.StarA) + "』『" + StarName(def.StarB) + "』を各1段以上取得しているときに有効になる。");
+            sb.Append("橋の1/2/3段での値は、"
+                + (def.Effect == GimmickEffect.Element
+                    ? string.Join("/", def.TableRankValues.Select(v => (v / 100m).ToString(CultureInfo.InvariantCulture))) + "つ（小数部分は追加1つの確率）"
+                    : string.Join("/", def.TableRankValues) + "%")
+                + "。");
+            return sb.ToString();
         }
         private static string Restrictions(PairComboDef def, bool ja)
         {
             if (def.HeroKey == "Hero_Vesper" && (def.BridgeIndex == 6 || def.BridgeIndex == 7))
-                return ja ? "洗礼の最初の爆発だけが受け手。6秒間の追加火炎では発動しない。" : "Only Baptism's initial explosion completes the combo, never its 6 seconds of additional fire damage.";
+                return ja ? "洗礼の最初の爆発だけが受け手になる。6秒間の追加火炎では発動しない。" : "Only Baptism's initial explosion completes the combo, never its 6 seconds of additional fire damage.";
             if (def.HeroKey == "Hero_Cetus" && def.BridgeIndex == 2)
-                return ja ? "領域の持続終了時の爆発だけが受け手。継続ダメージでは発動せず、爆発しない選択では働かない。" : "Only the domain's terminal explosion completes the combo, not ongoing damage; non-exploding variants cannot trigger it.";
+                return ja ? "領域の持続終了時の爆発だけが受け手になる。継続ダメージでは発動せず、爆発しない選択では働かない。" : "Only the domain's terminal explosion completes the combo, not ongoing damage; non-exploding variants cannot trigger it.";
             if (def.HeroKey == "Hero_Husk" && def.BridgeIndex == 3)
-                return ja ? "印を付けるのは風の傷の固有斬りだけ（一歩一殺では付かない）。成立は滅殺態勢の剣気の命中だけで、基本攻撃や星の追加ダメージでは働かない。"
+                return ja ? "印を付けるのは風の傷の固有斬りだけで、一歩一殺では付かない。成立するのは滅殺態勢の剣気が命中したときだけで、基本攻撃や星の追加ダメージでは働かない。"
                     : "Only the Scar of the Wind's own slash places the mark (Killing Flow places none), and only Annihilation Stance's aura hits complete it, not basic attacks or star-generated damage.";
             if (def.HeroKey == "Hero_Husk" && def.BridgeIndex == 5)
-                return ja ? "死の刻印の楔が当たった敵を、死の刻印の楔で倒したときだけ。再入力の瞬間移動では印も成立も起きない。"
+                return ja ? "死の刻印の楔が当たった敵を、死の刻印の楔で倒したときだけ働く。再入力の瞬間移動では印も成立も起きない。"
                     : "Only a Death Mark wedge's hit places the mark and only a wedge kill completes it; the re-cast teleport does neither.";
             if (def.HeroKey == "Hero_Mist" && def.BridgeIndex == 3)
-                return ja ? "覚醒中の電撃爆発による撃破だけ。基本攻撃・ほかの記憶の撃破は数えない。" : "Only kills by the awakened lightning explosion count, not basic attacks or other memories.";
+                return ja ? "覚醒中の電撃爆発で倒したときだけ数える。基本攻撃やほかの記憶の撃破は数えない。" : "Only kills by the awakened lightning explosion count, not basic attacks or other memories.";
             if (def.HeroKey == "Hero_Mist" && (def.BridgeIndex == 4 || def.BridgeIndex == 5))
                 return ja ? "連携印はプリオリテ本体の印とは別物で、選択・成長・爆発を変えない。" : "The combo mark is separate from Priorité's own mark and does not change its selection, growth or explosion.";
             return "";
         }
         private static string MemoryName(string memory, bool ja)
         {
-            return Loc.T("記憶『", "Memory “") + (ja ? Links.Name(memory).Ja : Links.Name(memory).En) + Loc.T("』", "”");
+            return ja ? "記憶『" + Links.Name(memory).Ja + "』" : "Memory “" + Links.Name(memory).En + "”";
         }
         private static string Action(PairComboTrigger trigger, string memory, bool ja)
         {
             string name = MemoryName(memory, ja);
             switch (trigger)
             {
-                case PairComboTrigger.OnUse: return ja ? name + "を使うと" : "when you use " + name;
-                case PairComboTrigger.OnCrit: return ja ? name + "が会心すると" : "when " + name + " critically hits";
-                case PairComboTrigger.OnKill: return ja ? name + "で敵を倒すと" : "when " + name + " kills an enemy";
-                case PairComboTrigger.OnBasicAttack: return ja ? name + "で自分の基本攻撃を撃つと" : "when you fire your own basic attack with " + name;
-                default: return ja ? name + "が当たると" : "when " + name + " hits";
+                case PairComboTrigger.OnUse: return ja ? name + "を使ったとき" : "when you use " + name;
+                case PairComboTrigger.OnCrit: return ja ? name + "が会心したとき" : "when " + name + " critically hits";
+                case PairComboTrigger.OnKill: return ja ? name + "で敵を倒したとき" : "when " + name + " kills an enemy";
+                case PairComboTrigger.OnBasicAttack: return ja ? name + "で自分の基本攻撃を撃ったとき" : "when you fire your own basic attack with " + name;
+                default: return ja ? name + "が当たったとき" : "when " + name + " hits";
             }
         }
 

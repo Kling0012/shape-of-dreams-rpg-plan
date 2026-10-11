@@ -264,6 +264,7 @@ namespace SodRpg.Core.Game
                 case GimmickParam.ExtraTargets: field = Loc.T("対象数", "target count"); break;
                 default: field = Loc.T("量", "amount"); break;
             }
+            if (Loc.Japanese) return DescribeScopedJa(modifier, memory, effects, field, value, partners, combos);
             string amount = modifier.Param == GimmickParam.ExtraTargets ? modifier.ExtraTargets + Loc.T("体", modifier.ExtraTargets == 1 ? " target" : " targets")
                 : value + (modifier.Param == GimmickParam.Chance ? Loc.T("パーセントポイント", " percentage points") : "%");
             string scope = modifier.ScopeKind == ScopeKind.Receiver
@@ -286,6 +287,36 @@ namespace SodRpg.Core.Game
             return heading + " +" + amount + Loc.T("：", ": ") + scope + basis
                 + Loc.T("。強化される効果：", ". Enhanced effects: ") + effects + ModifierCapDescription(modifier)
                 + (partners.Count > 1 ? Loc.T("。連携する記憶：", ". Linked memories: ") + linked : "");
+        }
+
+        /// <summary>
+        /// 修飾の星の日本語の説明。1文目に「何がどう増えるか」、2文目に対象と上限、必要なら3文目に連携する記憶を書く。
+        /// </summary>
+        private static string DescribeScopedJa(ScopedModifierDef modifier, string memory, string effects, string field, string value,
+            HashSet<string> partners, List<string> combos)
+        {
+            string factor = (1m + modifier.Amount.Units / 10000m).ToString("0.####", CultureInfo.InvariantCulture);
+            string cap = ModifierCapDescription(modifier);
+            if (modifier.Param == GimmickParam.WindowDuration)
+            {
+                string combo = string.Join("、", combos.Distinct());
+                return "橋の合わせ技" + (combo.Length > 0 ? "「" + combo + "」" : "") + "が成立するまでの、" + field + "が" + value + "%増え、元の"
+                    + factor + "倍に延びる。" + cap + "。";
+            }
+            string increase;
+            switch (modifier.Param)
+            {
+                case GimmickParam.Chance: increase = field + "が" + value + "%上がる"; break;
+                case GimmickParam.ExtraTargets: increase = field + "が" + modifier.ExtraTargets + "体増える"; break;
+                default: increase = field + "が" + value + "%増え、元の" + (modifier.Param.HasValue ? "" : field + "の") + factor + "倍になる"; break;
+            }
+            string source = modifier.ScopeKind == ScopeKind.Receiver ? "その記憶が受け取る効果" : "その記憶から発動する星の効果";
+            string text = memory + "を装着しているとき、" + source + "の" + increase + "。"
+                + "対象は" + effects + "で、" + cap + "。";
+            var linked = partners.Where(id => id != null).OrderBy(id => id, StringComparer.Ordinal).Select(Links.ItemName).ToArray();
+            if (partners.Count > 1)
+                text += "連携する記憶は" + (linked.Length == 2 ? linked[0] + "と" + linked[1] : string.Join("、", linked)) + "。";
+            return text;
         }
 
         /// <summary>効果ラベルを属性付与→ダメージ→防御・回復→クールダウン→弱体→強化の順に並べる（未知のラベルは最後）。</summary>
@@ -378,14 +409,14 @@ namespace SodRpg.Core.Game
         private static string ModifierCapDescription(ScopedModifierDef modifier)
         {
             if (modifier.CapProfileId == null && !modifier.Param.HasValue)
-                return Loc.T("（各効果の最終上限は超えない）", " (never exceeds each effect's final cap)");
+                return Loc.T("各効果の最終上限は超えない", " (never exceeds each effect's final cap)");
             int units = modifier.CapProfileId != null ? ScopedCapMaximumUnits(modifier.CapProfileId)
                 : modifier.Param == GimmickParam.ExtraTargets ? Gimmicks.MaxExtraTargets
                 : modifier.Param == GimmickParam.Chance ? 10000 : Gimmicks.MaxParameterPercent * 100;
             string maximum = (modifier.Param == GimmickParam.ExtraTargets ? units : units / 100m).ToString("0.##", CultureInfo.InvariantCulture);
-            string jaUnit = modifier.Param == GimmickParam.ExtraTargets ? "体" : modifier.Param == GimmickParam.Chance ? "パーセントポイント" : "%";
+            string jaUnit = modifier.Param == GimmickParam.ExtraTargets ? "体" : "%";
             string enUnit = modifier.Param == GimmickParam.ExtraTargets ? " targets" : modifier.Param == GimmickParam.Chance ? " percentage points" : "%";
-            return Loc.T("（同じ効果への強化は合計で最大" + maximum + jaUnit + "）", " (enhancements to the same effect total at most " + maximum + enUnit + ")");
+            return Loc.T("同じ効果への強化は合計で最大" + maximum + jaUnit + "まで", " (enhancements to the same effect total at most " + maximum + enUnit + ")");
         }
 
         /// <summary>Total of several native stars sharing one effect: no per-star cap note, which would misread as a cap on the total.</summary>
@@ -394,8 +425,8 @@ namespace SodRpg.Core.Game
             string value = (units / 100m).ToString("0.##", CultureInfo.InvariantCulture);
             string memory = Links.ItemName(memoryId);
             return kind == LinkKind.MemoryDamage
-                ? Loc.T(memory + "のダメージ +" + value + "%", "Damage dealt by " + memory + " +" + value + "%")
-                : Loc.T("クールダウン短縮 +" + value + "%：" + memory + "を使うと、その記憶の残りクールダウンを最大クールダウンの" + value + "%分短縮する", "Cooldown reduction +" + value + "%: using " + memory + " removes " + value + "% of its maximum cooldown from its remaining cooldown");
+                ? Loc.T(memory + "のダメージが" + value + "%増える。", "Damage dealt by " + memory + " +" + value + "%")
+                : Loc.T(memory + "を使うと、その記憶の残りクールダウンが最大クールダウンの" + value + "%分短くなる。", "Cooldown reduction +" + value + "%: using " + memory + " removes " + value + "% of its maximum cooldown from its remaining cooldown");
         }
 
         public static string Describe(NativeMemoryModifierDef modifier)
@@ -405,8 +436,8 @@ namespace SodRpg.Core.Game
             string maximum = (cap.Maximum.Units / 100m).ToString("0.##", CultureInfo.InvariantCulture);
             string memory = Links.ItemName(modifier.Memory);
             return modifier.Kind == LinkKind.MemoryDamage
-                ? Loc.T(memory + "のダメージ +" + value + "%（星による上限" + maximum + "%）", "Damage dealt by " + memory + " +" + value + "% (star cap " + maximum + "%)")
-                : Loc.T("クールダウン短縮 +" + value + "%：" + memory + "を使うと、その記憶の残りクールダウンを最大クールダウンの" + value + "%分短縮する（星による上限" + maximum + "%）", "Cooldown reduction +" + value + "%: using " + memory + " removes " + value + "% of its maximum cooldown from its remaining cooldown (star cap " + maximum + "%)");
+                ? Loc.T(memory + "のダメージが" + value + "%増える。星による増加は最大" + maximum + "%まで。", "Damage dealt by " + memory + " +" + value + "% (star cap " + maximum + "%)")
+                : Loc.T(memory + "を使うと、その記憶の残りクールダウンが最大クールダウンの" + value + "%分短くなる。星による短縮は最大" + maximum + "%まで。", "Cooldown reduction +" + value + "%: using " + memory + " removes " + value + "% of its maximum cooldown from its remaining cooldown (star cap " + maximum + "%)");
         }
         public static void ValidateTalent(TalentDef talent)
         {

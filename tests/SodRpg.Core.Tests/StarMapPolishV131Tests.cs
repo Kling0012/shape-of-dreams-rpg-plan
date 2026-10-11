@@ -67,7 +67,7 @@ namespace SodRpg.Core.Tests
                 var ids = picked.Select(s => s.Id).ToArray();
                 var line = Assert.Single(StarSummary.Compute(profile, hero).Memories.SelectMany(g => g.Lines).Where(l => l.StarIds.Intersect(ids).Any()));
                 Assert.Equal(5, line.StarIds.Count);
-                Assert.Contains("+5%", line.Text);
+                Assert.Contains("量が5%増え", line.Text);
                 return;
             }
             Assert.True(false, "no registered hero has five identical +1% stars");

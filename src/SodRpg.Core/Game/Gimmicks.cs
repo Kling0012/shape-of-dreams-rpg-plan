@@ -297,92 +297,178 @@ namespace SodRpg.Core.Game
             string duration = Duration(def, BuffDuration).ToString("0.#######", CultureInfo.InvariantCulture);
             string radius = Radius(def, AreaRadius).ToString("0.#######", CultureInfo.InvariantCulture);
             string healRadius = Radius(def, 10f).ToString("0.#######", CultureInfo.InvariantCulture);
-            bool ja = Loc.Japanese;
+            if (Loc.Japanese) return DescribeJa(def, sourceText, value, n, duration, radius, healRadius, triggerText);
             string memory = sourceText;
             string trigger;
             switch (def.Trigger)
             {
-                case GimmickTrigger.OnUse: trigger = ja ? memory + "を使うと発動" : "Triggered when " + memory + " is used"; break;
-                case GimmickTrigger.OnHit: trigger = ja ? memory + "が当たると発動" : "Triggered when " + memory + " hits"; break;
-                case GimmickTrigger.OnKill: trigger = ja ? memory + "で敵を倒すと発動" : "Triggered when " + memory + " kills an enemy"; break;
-                default: trigger = ja ? memory + "が会心すると発動" : "Triggered when " + memory + " critically hits"; break;
+                case GimmickTrigger.OnUse: trigger = "Triggered when " + memory + " is used"; break;
+                case GimmickTrigger.OnHit: trigger = "Triggered when " + memory + " hits"; break;
+                case GimmickTrigger.OnKill: trigger = "Triggered when " + memory + " kills an enemy"; break;
+                default: trigger = "Triggered when " + memory + " critically hits"; break;
             }
             if (triggerText != null) trigger = triggerText;
             string effect;
             switch (def.Effect)
             {
                 case GimmickEffect.Element:
-                    string element = ja ? (def.Arg == 0 ? "火" : def.Arg == 1 ? "冷気" : def.Arg == 2 ? "光" : "闇")
-                        : (def.Arg == 0 ? "fire" : def.Arg == 1 ? "cold" : def.Arg == 2 ? "light" : "darkness");
+                    string element = def.Arg == 0 ? "fire" : def.Arg == 1 ? "cold" : def.Arg == 2 ? "light" : "darkness";
                     int whole = (int)(value / 100);
                     string chance = Math.Min(100, value % 100 + ChanceProbabilityUnits(def) / 100m).ToString("0.#######", CultureInfo.InvariantCulture);
-                    string stacks = ja ? (whole == 0 ? chance + "%の確率で1つ"
-                        : whole + "つ" + (chance == "0" ? "" : "（さらに" + chance + "%の確率でもう1つ）"))
-                        : (whole == 0 ? "1 stack with a " + chance + "% chance"
-                        : whole + (whole == 1 ? " stack" : " stacks") + (chance == "0" ? "" : " (plus a " + chance + "% chance of 1 more)"));
+                    string stacks = whole == 0 ? "1 stack with a " + chance + "% chance"
+                        : whole + (whole == 1 ? " stack" : " stacks") + (chance == "0" ? "" : " (plus a " + chance + "% chance of 1 more)");
                     string targets = def.Trigger == GimmickTrigger.OnUse
-                        ? (ja ? "自分の周り" + radius + "mの敵" : "enemies within " + radius + "m of yourself")
+                        ? "enemies within " + radius + "m of yourself"
                         : def.Trigger == GimmickTrigger.OnKill
-                            ? (ja ? "倒した敵の周り" + radius + "mの敵" : "enemies within " + radius + "m of the killed enemy")
-                            : (ja ? "当てた敵" : "the hit enemy");
-                    effect = ja ? element + "付与 +" + stacks + "：" + targets + "に付ける"
-                        : element + " stacks +" + stacks + ": apply to " + targets;
+                            ? "enemies within " + radius + "m of the killed enemy"
+                            : "the hit enemy";
+                    effect = element + " stacks +" + stacks + ": apply to " + targets;
                     break;
                 case GimmickEffect.Burst:
-                    string center = def.Trigger == GimmickTrigger.OnUse ? (ja ? "自分" : "yourself")
-                        : def.Trigger == GimmickTrigger.OnKill ? (ja ? "倒した敵" : "the killed enemy") : (ja ? "当てた敵" : "the hit enemy");
-                    effect = ja ? "範囲追加ダメージ +攻撃力・魔力の高い方の" + n + "%：" + center + "の周り" + radius + "mの敵に与える（魔力が高ければ魔法）"
-                        : "Area damage +" + n + "% of the higher of attack damage or ability power: damage enemies within " + radius + "m of "
-                            + center + " (magic damage if ability power is higher)";
+                    string center = def.Trigger == GimmickTrigger.OnUse ? "yourself"
+                        : def.Trigger == GimmickTrigger.OnKill ? "the killed enemy" : "the hit enemy";
+                    effect = "Area damage +" + n + "% of the higher of attack damage or ability power: damage enemies within " + radius + "m of "
+                        + center + " (magic damage if ability power is higher)";
                     break;
                 case GimmickEffect.Shield:
-                    effect = ja ? "障壁 +最大HPの" + n + "%：自分に張る（" + duration + "秒。星の障壁は付与者と受け手の組ごとに1つだけで、残量と新しい量の大きい方を保って時間を更新）"
-                        : "Shield +" + n + "% of maximum health: shield yourself for " + duration + " seconds (one star shield per giver and recipient; keeps the larger of the remaining and new amounts and refreshes the duration)";
+                    effect = "Shield +" + n + "% of maximum health: shield yourself for " + duration + " seconds (one star shield per giver and recipient; keeps the larger of the remaining and new amounts and refreshes the duration)";
                     break;
                 case GimmickEffect.Heal:
-                    effect = ja ? "HP回復 +各自の最大HPの" + n + "%：自分" + (def.Arg == 1 ? "と" + healRadius + "m以内の味方" : "") + "を回復"
-                        : "Healing +" + n + "% of each recipient's maximum health: heal yourself" + (def.Arg == 1 ? " and allies within " + healRadius + "m" : "");
+                    effect = "Healing +" + n + "% of each recipient's maximum health: heal yourself" + (def.Arg == 1 ? " and allies within " + healRadius + "m" : "");
                     break;
                 case GimmickEffect.Recharge:
-                    effect = ja ? "残りクールダウン -" + n + "%：その記憶の残り時間を短縮" : "Remaining cooldown -" + n + "%: shorten that memory's remaining cooldown";
+                    effect = "Remaining cooldown -" + n + "%: shorten that memory's remaining cooldown";
                     break;
                 case GimmickEffect.Reload:
-                    effect = ja ? "使用回数 +1回：その記憶に戻す（最大使用回数を超えない。使用回数が1回の記憶は、代わりに残りクールダウンを全て戻す）"
-                        : "Charges +1: restore to that memory, up to its maximum charges (single-charge memories fully reset their remaining cooldown instead)";
+                    effect = "Charges +1: restore to that memory, up to its maximum charges (single-charge memories fully reset their remaining cooldown instead)";
                     break;
                 case GimmickEffect.RechargeOther:
-                    effect = ja ? "ほかの通常記憶の残りクールダウン -" + n + "%：装着中の記憶が対象（移動・奥義・アイデンティティは対象外）"
-                        : "Other normal memories' remaining cooldown -" + n + "%: affects equipped memories (excluding Movement, Ultimate, and Identity memories)";
+                    effect = "Other normal memories' remaining cooldown -" + n + "%: affects equipped memories (excluding Movement, Ultimate, and Identity memories)";
                     break;
                 case GimmickEffect.Quicken:
-                    effect = ja ? "攻撃速度 +" + n + "%：" + duration + "秒間" : "Attack speed +" + n + "% for " + duration + " seconds";
+                    effect = "Attack speed +" + n + "% for " + duration + " seconds";
                     break;
                 case GimmickEffect.Empower:
-                    effect = ja ? "攻撃力・魔力 +" + n + "%：" + duration + "秒間" : "Attack damage and ability power +" + n + "% for " + duration + " seconds";
+                    effect = "Attack damage and ability power +" + n + "% for " + duration + " seconds";
                     break;
                 case GimmickEffect.Expose:
-                    effect = ja ? "自分から受けるダメージ +" + n + "%：当てた敵に" + duration + "秒間適用"
-                        : "Damage taken from you +" + n + "%: applies to the hit enemy for " + duration + " seconds";
+                    effect = "Damage taken from you +" + n + "%: applies to the hit enemy for " + duration + " seconds";
                     break;
                 default:
-                    effect = ja ? "追撃ダメージ +当てたダメージの" + n + "%：0.3秒後にもう一度与える" : "Echo damage +" + n + "% of the hit damage: deal again after 0.3 seconds";
+                    effect = "Echo damage +" + n + "% of the hit damage: deal again after 0.3 seconds";
                     break;
             }
             string cooldown = Math.Min(def.Cooldown, MaxCooldown).ToString("R", CultureInfo.InvariantCulture);
             string interval = def.Cooldown == 0
-                ? (ja ? "間隔制限なし" : "no cooldown")
-                : (ja ? "この星ごとに" + cooldown + "秒に1回" : "once every " + cooldown + (def.Cooldown == 1f ? " second" : " seconds") + " per star, shared across enemies and triggers");
+                ? "no cooldown"
+                : "once every " + cooldown + (def.Cooldown == 1f ? " second" : " seconds") + " per star, shared across enemies and triggers";
             string cap = def.Effect == GimmickEffect.Element
-                ? (ja ? "基本の上限は" + Cap(def.Effect) / 100 + "つ（確率補正で増やせるのは1つまで）"
-                    : "base amount capped at " + Cap(def.Effect) / 100 + " stacks (chance modifiers can add at most 1 more)")
+                ? "base amount capped at " + Cap(def.Effect) / 100 + " stacks (chance modifiers can add at most 1 more)"
                 : def.Effect == GimmickEffect.Reload
-                    ? (ja ? "効果は最大1回分" : "capped at 1 charge")
-                    : (ja ? "効果量は最大" + Cap(def.Effect) + "%" : "effect capped at " + Cap(def.Effect) + "%");
+                    ? "capped at 1 charge"
+                    : "effect capped at " + Cap(def.Effect) + "%";
             string stacking = def.Effect == GimmickEffect.Quicken || def.Effect == GimmickEffect.Empower || def.Effect == GimmickEffect.Expose
-                ? (ja ? "・同時に有効なのは最大の1つだけで、重ならず時間を延長" : "; only the strongest active value applies; it refreshes the duration without stacking") : "";
-            return effect + (ja ? "。" : ". ") + trigger
-                + (ja ? "（" + interval + "・" + cap + stacking + "。星の追加ダメージでは発動しない）"
-                : " (" + interval + "; " + cap + stacking + "; not triggered by extra damage from stars).");
+                ? "; only the strongest active value applies; it refreshes the duration without stacking" : "";
+            return effect + ". " + trigger
+                + " (" + interval + "; " + cap + stacking + "; not triggered by extra damage from stars).";
+        }
+
+        /// <summary>
+        /// 仕掛けの日本語の説明。1文目に「いつ・何が起きるか」、続く文に間隔・上限・重なり、最後に星の追加ダメージでは発動しない旨を書く。
+        /// 星のまとめ（StarSummary.Compact）は、間隔の文から最後の文までを省く。
+        /// </summary>
+        private static string DescribeJa(GimmickDef def, string memory, decimal value, string n, string duration, string radius, string healRadius, string triggerText)
+        {
+            string condition = JaCondition(def, memory, triggerText);
+            string enemy = JaHitEnemy(condition);
+            string effect, extra = "", stacking = "", cap = "効果量は最大" + Cap(def.Effect) + "%まで";
+            switch (def.Effect)
+            {
+                case GimmickEffect.Element:
+                    string element = def.Arg == 0 ? "火" : def.Arg == 1 ? "冷気" : def.Arg == 2 ? "光" : "闇";
+                    int whole = (int)(value / 100);
+                    string chance = Math.Min(100, value % 100 + ChanceProbabilityUnits(def) / 100m).ToString("0.#######", CultureInfo.InvariantCulture);
+                    string targets = def.Trigger == GimmickTrigger.OnUse ? "自分の周り" + radius + "mの敵"
+                        : def.Trigger == GimmickTrigger.OnKill ? "倒した敵の周り" + radius + "mの敵" : enemy;
+                    effect = whole == 0 ? targets + "に、" + chance + "%の確率で" + element + "を1つ付ける"
+                        : targets + "に" + element + "を" + whole + (chance == "0" ? "つ付ける" : "つ付け、さらに" + chance + "%の確率でもう1つ付ける");
+                    cap = "一度に付ける数は基本" + Cap(def.Effect) / 100 + "つまでで、確率を高める効果で増やせるのは1つまで";
+                    break;
+                case GimmickEffect.Burst:
+                    string center = def.Trigger == GimmickTrigger.OnUse ? "自分" : def.Trigger == GimmickTrigger.OnKill ? "倒した敵" : "当てた敵";
+                    effect = center + "の周り" + radius + "mの敵に、攻撃力・魔力の高い方の" + n + "%の追加ダメージを与え、魔力が高ければ魔法ダメージになる";
+                    break;
+                case GimmickEffect.Shield:
+                    effect = "自分の最大HPの" + n + "%の障壁を" + duration + "秒間得る";
+                    extra = "星の障壁は付与者と受け手の組ごとに1つだけで、残量と新しい量の大きい方を保ち、持続時間を更新する。";
+                    break;
+                case GimmickEffect.Heal:
+                    effect = def.Arg == 1 ? "自分と" + healRadius + "m以内の味方を、それぞれの最大HPの" + n + "%回復する"
+                        : "自分の最大HPの" + n + "%を回復する";
+                    break;
+                case GimmickEffect.Recharge:
+                    effect = "その記憶の残りクールダウンが" + n + "%短くなる";
+                    break;
+                case GimmickEffect.Reload:
+                    effect = "その記憶の使用回数が1回戻る。最大使用回数は超えず、使用回数が1回の記憶では、代わりに残りクールダウンをすべて戻す";
+                    cap = "効果は最大1回分まで";
+                    break;
+                case GimmickEffect.RechargeOther:
+                    effect = "装着中のほかの通常記憶（移動・奥義・アイデンティティを除く）の残りクールダウンが" + n + "%短くなる";
+                    break;
+                case GimmickEffect.Quicken:
+                    effect = "攻撃速度が" + duration + "秒間" + n + "%上がる";
+                    stacking = JaStrongestOnly;
+                    break;
+                case GimmickEffect.Empower:
+                    effect = "攻撃力・魔力が" + duration + "秒間" + n + "%上がる";
+                    stacking = JaStrongestOnly;
+                    break;
+                case GimmickEffect.Expose:
+                    effect = enemy + "が" + duration + "秒間、自分から受けるダメージが" + n + "%増える";
+                    stacking = JaStrongestOnly;
+                    break;
+                default:
+                    effect = "当てたダメージの" + n + "%を、追撃として0.3秒後にもう一度与える";
+                    break;
+            }
+            return JaSentence(condition, effect) + extra + JaLimits(def.Cooldown, cap) + stacking + JaNoStarTrigger;
+        }
+
+        private const string JaStrongestOnly = "同時に有効になるのは最も大きい1つだけで、重ならず、再発動すると効果時間が延びる。";
+        private const string JaNoStarTrigger = "星の追加ダメージでは発動しない。";
+
+        /// <summary>発動条件の節（「〜とき」で終える）。別の箇所が組み立てた条件文は、前置きと「。」を外して取り込む。</summary>
+        internal static string JaCondition(GimmickDef def, string memory, string triggerText)
+        {
+            if (triggerText != null)
+            {
+                string text = triggerText.Trim();
+                if (text.StartsWith("発動条件：", StringComparison.Ordinal)) text = text.Substring("発動条件：".Length);
+                text = text.TrimEnd('。');
+                return text.EndsWith("ときに発動", StringComparison.Ordinal) ? text.Substring(0, text.Length - "に発動".Length) : text;
+            }
+            switch (def.Trigger)
+            {
+                case GimmickTrigger.OnUse: return memory + "を使用したとき";
+                case GimmickTrigger.OnHit: return memory + "が敵に命中したとき";
+                case GimmickTrigger.OnKill: return memory + "で敵を倒したとき";
+                default: return memory + "が敵に会心で命中したとき";
+            }
+        }
+
+        /// <summary>条件が「敵に命中したとき」なら「その敵」、それ以外は「当てた敵」。</summary>
+        internal static string JaHitEnemy(string condition) =>
+            condition.EndsWith("命中したとき", StringComparison.Ordinal) ? "その敵" : "当てた敵";
+
+        internal static string JaSentence(string condition, string effect) => condition + "、" + effect + "。";
+
+        /// <summary>間隔と上限の文。cap は「〜まで」で終わる節。</summary>
+        internal static string JaLimits(float cooldown, string cap)
+        {
+            float cd = Math.Min(cooldown, MaxCooldown);
+            return (cd > 0 ? "この星ごとに" + cd.ToString("0.#######", CultureInfo.InvariantCulture) + "秒に1回まで発動し、"
+                : "発動間隔の制限はなく、") + cap + "。";
         }
     }
 

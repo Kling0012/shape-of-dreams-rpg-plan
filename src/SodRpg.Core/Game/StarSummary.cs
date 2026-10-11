@@ -300,7 +300,7 @@ namespace SodRpg.Core.Game
         }
 
         private static readonly Regex JaBoilerplate = new Regex(
-            "（[^（）]*(?:（[^（）]*）[^（）]*)*。星の追加ダメージでは発動しない）|(?:。効果量は最大[0-9.]+%)?。星の追加ダメージでは発動しない", RegexOptions.Compiled);
+            "(?:この星ごとに|発動間隔の制限はなく)[^。]*。(?:[^。]*。)*?星の追加ダメージでは発動しない。|（[^（）]*(?:（[^（）]*）[^（）]*)*。星の追加ダメージでは発動しない）|(?:。効果量は最大[0-9.]+%)?。星の追加ダメージでは発動しない", RegexOptions.Compiled);
         private static readonly Regex EnBoilerplate = new Regex(
             @" \([^()]*(?:\([^()]*\)[^()]*)*; not triggered by extra damage from stars\)\.?|(?:; effect capped at [0-9.]+%)?; not triggered by extra damage from stars\.?", RegexOptions.Compiled);
 
@@ -311,7 +311,7 @@ namespace SodRpg.Core.Game
         private static string Trim(string text)
         {
             if (text == null) return "";
-            foreach (string marker in new[] { "（数値は1段あたり", " (values per rank;", "（最大", " (maximum " })
+            foreach (string marker in new[] { "（数値は1段あたり", "（数値は1段ごと", " (values per rank;", "（最大", " (maximum " })
             {
                 int i = text.LastIndexOf(marker, StringComparison.Ordinal);
                 if (i > 0) text = text.Substring(0, i);

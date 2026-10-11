@@ -10,7 +10,7 @@ namespace SodRpg.Core.Game
     {
         private static readonly HashSet<string> DescriptionWarnings = new HashSet<string>(StringComparer.Ordinal);
         private static readonly Regex RichText = new Regex("<[^>]*>");
-        private static readonly string[] SummarySeparators = { "（数値は1段あたり", " (values per rank;", "／", " when ", " while " };
+        private static readonly string[] SummarySeparators = { "（数値は1段ごと", " (values per rank;", "／", " when ", " while " };
         private static readonly char[] ChangeSigns = { '+', '＋', '−' };
 
         private static string DescriptionFallback(TalentDef star, Exception error)
@@ -45,6 +45,12 @@ namespace SodRpg.Core.Game
                     {
                         int end = summary.IndexOf(separator, StringComparison.Ordinal);
                         if (end >= 0) summary = summary.Substring(0, end).Trim();
+                    }
+                    // 日本語の文章は、最初の1文を要約にする。
+                    if (Loc.Japanese)
+                    {
+                        int sentenceEnd = summary.IndexOf('。');
+                        if (sentenceEnd >= 0) summary = summary.Substring(0, sentenceEnd + 1);
                     }
                     int detail = summary.IndexOf(Loc.T("：", ": "), StringComparison.Ordinal);
                     if (detail >= 0)
