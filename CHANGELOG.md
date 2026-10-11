@@ -8,14 +8,24 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
+---
+
+## v2.10.24 — Essence slots by level, Japanese prose descriptions（2026-10-11）
+
+レベルに応じてQ・W・Eのエッセンス枠が増えるようになり、日本語の説明文を読みやすい文章に書き直しました。 / Essence slots on Q, W and E now grow with level, and Japanese descriptions read as natural sentences.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
 ### 新機能 / New features
 
-- **レベル連動のエッセンス枠**：ゲーム本来のプレイ中のレベルに応じて、Q・W・Eの記憶にはめられるエッセンスの数を増やせるようにしました。初期設定はLv10で合計+1、Lv20で合計+2、Q・W・Eすべてが対象です。段階（いくつでも指定可能）、対象のQ・W・E、1つの記憶の枠の最大数は、ゲームのMOD設定で変えられ、F6メニューの記録タブに今の設定を表示します。星図のエッセンス枠とは別の仕組みで、セーブデータと通信の形式は変わりません。ホスト（ソロなら自分）の設定だけが反映されます。 / Level-based essence slots: the number of essence slots on your Q, W and E memories grows with your hero's in-game level. Defaults: +1 in total from Lv10 and +2 from Lv20, for all of Q/W/E. Stages (any number), the target memories and the per-memory slot maximum are set in the game's mod settings, and the F6 menu's Records tab shows the current setting. Separate from the star-map essence slots; no change to saves or the network format. Only the host's (or your own, when solo) setting applies.
-- 本体の画面が描けるエッセンス枠は1つの記憶につき4つまでで、Q・W・Eは最初から3つあるため、初期設定では+1までが実際に増えます。Lv20の+2を生かしたいときは、MOD設定の「1つの記憶の枠の最大数」を上げて試せます（試験的。枠が画面に描かれない場合は4に戻してください）。 / The game's HUD draws at most 4 essence slots per memory and Q/W/E start with 3, so by default only +1 actually appears. To make use of the Lv20 +2, raise "max slots per memory" in the mod settings (experimental; set it back to 4 if the slots stop being drawn).
+- **レベルで増えるエッセンス枠**：英雄のレベルに応じて、Q・W・Eの記憶にはめられるエッセンスの枠が増えます。初期設定ではLv10で+1、Lv20で+2です。段階・対象・最大枠数はMOD設定で変えられ、F6メニューの記録タブで今の設定を確認できます。協力プレイではホストの設定が全員に使われます。 / **Essence slots by level**: Q, W and E memories gain essence slots as your hero levels up (+1 at Lv10, +2 at Lv20 by default). Stages, targets and the slot cap can be changed in the mod settings and are shown in the F6 Records tab. In co-op the host's settings apply to everyone.
+- **日本語の説明文を文章に**：星図・装備・図鑑の日本語の説明文を、記号や箇条書きではなく、条件から効果の順に読める文章にしました。数値や効果は変わりません。 / **Japanese descriptions as prose**: star map, gear and codex descriptions in Japanese now read as sentences instead of symbols and bullet lists. Values and effects are unchanged.
 
-### 変更 / Changes
-
-- 星図・装備・図鑑の日本語の説明文を、「・」の箇条書きをやめて、普通の文章に書き換えました。条件→結果の順に読めるようにし、「パーセントポイント」は「%」にそろえました。数値と効果は変わっていません（英語の表示も変わりません）。 / Japanese descriptions of stars, gear and the Codex are now written as plain sentences instead of bullet lists. Numbers and effects are unchanged, and English text is untouched.
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
 
 ---
 

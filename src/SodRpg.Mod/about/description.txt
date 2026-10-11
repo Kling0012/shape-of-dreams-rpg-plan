@@ -1,5 +1,5 @@
-[b]A fix for Continue.[/b]
-[b]Continue まわりの不具合を直しました。[/b]
+[b]Essence slots on Q, W and E now grow with level, and Japanese descriptions read as natural sentences.[/b]
+[b]レベルに応じてQ・W・Eのエッセンス枠が増え、日本語の説明文を読みやすい文章にしました。[/b]
 
 [h1]Dreamforge RPG[/h1]
 Turns every run into part of a long RPG journey: relics you keep, a risky "secure or delve" choice at every zone, a star map per Traveler, a forge, and long-term goals. Co-op ready.
