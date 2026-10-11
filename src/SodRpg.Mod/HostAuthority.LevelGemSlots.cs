@@ -5,21 +5,21 @@ using SodRpg.Core.Game;
 
 namespace SodRpg.Mod
 {
-    // ゲーム本来のプレイ中のレベルに応じて、Q・W・Eの記憶のエッセンス枠を増やす（ホストだけが書く）。
+    // ゲーム本来のプレイ中のレベルに応じて、Q・W・E・Rの記憶のエッセンス枠を増やす（ホストだけが書く）。
     // 星図の枠（Identity・Movement、HostAuthority.GemSlots.cs）とは別の台帳を持ち、Build・保存・通信には関わらない。
     // 枠の書き込みと戻し・はみ出したエッセンスの扱い・継続（Continue）中の保護は、星図の枠と同じ UpdateGemSlot を使う。
     internal sealed partial class HostAuthority
     {
         private static readonly HeroSkillLocation[] LevelGemLocations =
-            { HeroSkillLocation.Q, HeroSkillLocation.W, HeroSkillLocation.E };
+            { HeroSkillLocation.Q, HeroSkillLocation.W, HeroSkillLocation.E, HeroSkillLocation.R };
         private static readonly int[] LevelGemTargets =
-            { LevelEssenceSettings.TargetQ, LevelEssenceSettings.TargetW, LevelEssenceSettings.TargetE };
+            { LevelEssenceSettings.TargetQ, LevelEssenceSettings.TargetW, LevelEssenceSettings.TargetE, LevelEssenceSettings.TargetR };
 
         private sealed class LevelGemSlotLedger
         {
-            internal readonly GemSlotLedger[] Locations = new GemSlotLedger[3];
+            internal readonly GemSlotLedger[] Locations = new GemSlotLedger[LevelGemLocations.Length];
             private readonly int[] _persisted;
-            internal LevelGemSlotLedger(HeroSkill skill) : this(new int[6], skill) { }
+            internal LevelGemSlotLedger(HeroSkill skill) : this(new int[LevelGemLocations.Length * 2], skill) { }
             private LevelGemSlotLedger(int[] persisted, HeroSkill skill)
             {
                 _persisted = persisted;
@@ -59,7 +59,7 @@ namespace SodRpg.Mod
         private float _nextLevelGemSlotCheck;
         private bool _levelGemSettingsWarned;
 
-        /// <summary>1秒ごとに、全員の英雄のレベルを見て Q・W・E の枠を合わせる。</summary>
+        /// <summary>1秒ごとに、全員の英雄のレベルを見て Q・W・E・R の枠を合わせる。</summary>
         private void TickLevelGemSlots()
         {
             if (ClientSession.NativeContinueRestoring) return;
@@ -93,8 +93,19 @@ namespace SodRpg.Mod
 
         private LevelGemSlotLedger TrackLevelGemSkill(HeroSkill skill)
         {
-            var ledger = LevelGemSlotLedgers.GetValue(skill,
-                s => LevelGemSlotLedger.Capture(s, PersistedLevelGemSlotLedgers.GetValue(s, _ => new int[6])));
+            var ledger = LevelGemSlotLedgers.GetValue(skill, s =>
+            {
+                var store = PersistedLevelGemSlotLedgers;
+                var persisted = store.GetValue(s, _ => new int[LevelGemLocations.Length * 2]);
+                if (persisted.Length < LevelGemLocations.Length * 2)
+                {
+                    // 旧版の Q・W・E の所有記録を保ち、R の分だけ末尾に足す。
+                    Array.Resize(ref persisted, LevelGemLocations.Length * 2);
+                    store.Remove(s);
+                    store.Add(s, persisted);
+                }
+                return LevelGemSlotLedger.Capture(s, persisted);
+            });
             if (!_trackedLevelGemSkills.TryGetValue(skill, out _))
             {
                 _trackedLevelGemSkills.Add(skill, ledger);

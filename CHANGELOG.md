@@ -8,6 +8,10 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
+### 新機能 / New features
+
+- レベルに応じたエッセンス枠の追加が、Rの記憶にも適用されるようになりました。 / Level-based essence slots now also apply to the R memory.
+
 ---
 
 ## v2.10.24 — Essence slots by level, Japanese prose descriptions（2026-10-11）
