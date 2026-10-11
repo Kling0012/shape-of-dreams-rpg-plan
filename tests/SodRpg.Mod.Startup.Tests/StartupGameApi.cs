@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using HarmonyLib;
 using SodRpg.Core.Game;
 using UnityEngine.InputSystem;
@@ -8,6 +9,7 @@ using UnityEngine.InputSystem;
 namespace Mirror
 {
     internal static class NetworkServer { public static bool active; }
+    internal static class NetworkClient { public static bool active; }
     public sealed class NetworkConnectionToClient
     {
         public SodRpg.Mod.DewPlayer Player;
@@ -57,7 +59,12 @@ namespace SodRpg.Mod
         public bool useGUILayout;
         public GameMod mod = new GameMod();
         public GameMod instance = new GameMod();
+        // 本体の設定ファイルの置き場所。実物は MOD の設定欄から求めるが、試験では差し替えられるようにする。
+        public Func<FieldInfo, string> configFilePath = _ => null;
         public virtual void OnConfigChanged() { }
+        public virtual void LoadConfigsToDisk() { }
+        public string GetModConfigFilePath(FieldInfo field) => configFilePath(field);
+        public void SaveConfigsToDisk() { }
         public bool MakeSureServer() => false;
     }
     public sealed class GameMod
@@ -84,14 +91,10 @@ namespace SodRpg.Mod
     {
         internal static void Configure(LevelEssenceSettings settings) { }
         internal static void Tick(bool force = false) { }
+        internal static void DisableHud(string reason) { }
     }
     internal sealed class LevelEssenceHudGroups { }
     internal sealed class LevelEssenceChaosReplacement { }
-    public partial class DreamforgeMod
-    {
-        private void SaveLevelEssenceConfig() { }
-        private static void LevelEssencePatchUnavailable(Type type) { }
-    }
     internal static class Log
     {
         public static readonly List<string> Errors = new List<string>();
@@ -273,6 +276,7 @@ namespace SodRpg.Mod
         public static void ApplyGameData(object data, Action onFinish = null) => onFinish?.Invoke();
         public static object FromJson(string json, Type type, Newtonsoft.Json.JsonSerializerSettings settings = null)
             => Newtonsoft.Json.JsonConvert.DeserializeObject(json, type, settings);
+        public static T FromJson<T>(string json) => (T)FromJson(json, typeof(T));
     }
     public static class SingletonDewNetworkBehaviour<T> where T : class { public static T softInstance; }
     public sealed class RoomEvent

@@ -29,6 +29,7 @@ namespace SodRpg.Core.Tests
         [InlineData(10, 1)]
         [InlineData(19, 1)]
         [InlineData(20, 2)]
+        [InlineData(25, 2)]
         [InlineData(30, 3)]
         public void Default_interval_adds_one_every_ten_levels(int level, int expected)
         {
@@ -47,6 +48,15 @@ namespace SodRpg.Core.Tests
             Assert.Equal(0, onlyW.Desired(LevelEssenceSettings.TargetE, 20));
             Assert.Equal(0, Make(enabled: false).Desired(LevelEssenceSettings.TargetQ, 99));
             Assert.Equal(0, Make(q: false, w: false, e: false, r: false).Desired(LevelEssenceSettings.TargetQ, 99));
+        }
+
+        [Fact]
+        public void An_interval_of_one_adds_a_slot_every_level()
+        {
+            var everyLevel = Make(every: 1);
+            Assert.Equal(1, everyLevel.Desired(LevelEssenceSettings.TargetQ, 1));
+            Assert.Equal(7, everyLevel.Desired(LevelEssenceSettings.TargetW, 7));
+            Assert.Equal(99, everyLevel.Desired(LevelEssenceSettings.TargetE, 99));
         }
 
         [Theory]
@@ -190,6 +200,45 @@ namespace SodRpg.Core.Tests
             Assert.Equal(3, hero.Skill.Writes); // W・E・R だけ
             host.DetachLevelForTest();
             Assert.Equal(new[] { 4, 3, 3, 3 }, Caps(hero)); // Q の外部の4枠は残る
+        }
+
+        [Fact]
+        public void A_chaos_raised_memory_gets_only_the_room_left_under_the_cap()
+        {
+            // 混沌でQが既に4枠。Lv20 の候補は +2 だが、cap=5 なら +1 まで。
+            var host = new HostAuthority();
+            var raised = Traveler(20);
+            raised.Skill.SetMaxGemCount(HeroSkillLocation.Q, 4);
+            host.ApplyLevelForTest(raised, Make(ceiling: 5));
+            Assert.Equal(new[] { 5, 5, 5, 5 }, Caps(raised)); // Q は 4+1（5で頭打ち）、他は 3+2
+            // cap=4 ならQに余地はなく、レベル分は足さない（書き込みもない）。
+            var closed = Traveler(20);
+            closed.Skill.SetMaxGemCount(HeroSkillLocation.Q, 4); closed.Skill.Writes = 0;
+            host.ApplyLevelForTest(closed, Make(ceiling: 4));
+            Assert.Equal(new[] { 4, 4, 4, 4 }, Caps(closed));
+            Assert.Equal(3, closed.Skill.Writes); // Q には書かない（W・E・R だけ）
+            host.DetachLevelForTest();
+            Assert.Equal(new[] { 4, 3, 3, 3 }, Caps(closed)); // 混沌の4枠は減らない
+        }
+
+        [Fact]
+        public void Off_a_lower_cap_or_a_lower_level_remove_only_the_mods_slots_and_never_chaos_slots()
+        {
+            var host = new HostAuthority(); var hero = Traveler(20);
+            hero.Skill.SetMaxGemCount(HeroSkillLocation.Q, 4); // 混沌でQが4枠
+            host.ApplyLevelForTest(hero, Make(ceiling: 6));
+            Assert.Equal(new[] { 6, 5, 5, 5 }, Caps(hero)); // Q は混沌4+2、他は3+2
+            host.ApplyLevelForTest(hero, Make(enabled: false, ceiling: 6));
+            Assert.Equal(new[] { 4, 3, 3, 3 }, Caps(hero)); // OFF：自分の分だけ戻り、混沌の4は残る
+            host.ApplyLevelForTest(hero, Make(ceiling: 5));
+            Assert.Equal(new[] { 5, 5, 5, 5 }, Caps(hero)); // cap 低下：Q は 4+1 まで、他は 3+2
+            hero.Status.level = 10;
+            host.ApplyLevelForTest(hero, Make(ceiling: 5));
+            Assert.Equal(new[] { 5, 4, 4, 4 }, Caps(hero)); // レベル低下：他は +1 へ。Q は混沌4+1 のまま
+            hero.Status.level = 5;
+            host.ApplyLevelForTest(hero, Make(ceiling: 5));
+            Assert.Equal(new[] { 4, 3, 3, 3 }, Caps(hero)); // レベル分がなくなっても混沌の4は減らない
+            Assert.Equal(new[] { 2, 2 }, hero.Skill.Caps);  // 回避・アイデンティティ（星図の枠）は変わらない
         }
 
         [Fact]
