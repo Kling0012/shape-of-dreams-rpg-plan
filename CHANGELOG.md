@@ -8,9 +8,23 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
+---
+
+## v2.10.25 — Level-based essence slots for R（2026-10-11）
+
+レベルに応じたエッセンス枠の追加が、Rの記憶にも適用されるようになりました。 / Level-based essence slots now also apply to the R memory.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
 ### 新機能 / New features
 
-- レベルに応じたエッセンス枠の追加が、Rの記憶にも適用されるようになりました。 / Level-based essence slots now also apply to the R memory.
+- **Rの記憶もレベルで枠が増える**：英雄のレベルに応じたエッセンス枠の追加が、Q・W・Eに加えてRの記憶にも適用されます。段階と上限はQ・W・Eと同じで、MOD設定の `levelEssenceSlotsR` で切り替えられます（初期設定は有効）。回避とアイデンティティの記憶は、これまでどおり星図で増やします。 / **R memory gains slots by level too**: level-based essence slots now apply to the R memory as well as Q, W and E, with the same stages and cap. Toggle it with `levelEssenceSlotsR` in the mod settings (on by default). Movement and identity memories still gain slots from the star map.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
 
 ---
 
