@@ -70,7 +70,7 @@ namespace SodRpg.Mod
                 _iconsStarted = true;
                 RelicIcons.Init(mod?.path);
                 RelicIcons.Preload();
-                _ui = new DreamforgeUi(_session, () => config);
+                _ui = new DreamforgeUi(_session, () => config, SaveLevelEssenceConfig);
                 _host = new HostAuthority(() => _session?.Profile.Run?.DailyId ?? DailyDream.Today.Id);
                 _session.FirstLaunch();
                 _perfLogEnabled = File.Exists(Path.Combine(dir, "perf.flag"));
@@ -120,7 +120,9 @@ namespace SodRpg.Mod
             {
                 LevelEssenceSettings.Current = LevelEssenceSettings.Create(config.levelEssenceSlots,
                     config.levelEssenceQ, config.levelEssenceW, config.levelEssenceE, config.levelEssenceSlotsR,
-                    config.levelEssenceStages, config.levelEssenceMaxSlots);
+                    config.levelEssenceEveryLevels, config.levelEssenceCap);
+                LevelEssenceRuntime.Configure(LevelEssenceSettings.Current);
+                _host?.RefreshLevelGemSlots();
                 Log.Info("Level essence slots: " + LevelEssenceSettings.Current.Describe());
             }
             catch (Exception ex) { Log.Warn("Level essence slots settings ignored: " + ex.Message); }
@@ -141,6 +143,7 @@ namespace SodRpg.Mod
             _perf.Frame(Time.unscaledDeltaTime);
             _perf.Begin();
             HandleKeys();
+            LevelEssenceRuntime.Tick();
             bool block = _ui != null && (_ui.Open || _ui.MouseOverPanel);
             BlockInputWhileMenuOpen.MenuOpen = block;
             _perf.BeginClient();
@@ -451,12 +454,16 @@ namespace SodRpg.Mod
                         else
                             InfinityMode.DisableHunterAdjustment("Hunter patch was not installed: " + type.FullName);
                     }
+                    if ((type == typeof(LevelEssenceHudGroups) || type == typeof(LevelEssenceChaosReplacement))
+                        && (targets == null || targets.Count == 0 || !HasInstalledClass(type)))
+                        LevelEssencePatchUnavailable(type);
                     installed++;
                 }
                 catch (Exception ex)
                 {
                     skipped.Add(type.FullName);
                     Log.Warn("Patch class skipped: " + type.FullName + ": " + ex.Message);
+                    LevelEssencePatchUnavailable(type);
                     bool earlierCopy = EarlierCopyHookIsLive(type);
                     if (hunter)
                     {

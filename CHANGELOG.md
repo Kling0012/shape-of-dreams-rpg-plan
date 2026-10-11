@@ -8,6 +8,10 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
+### 新機能 / New features
+
+- レベルによるエッセンス枠の追加を『何レベルごとに+1』で設定できるようにし、破損した混沌と合わせた1つの記憶の枠の上限（最大8）とON/OFFをF6メニューから変えられるようにしました。 / Level-based essence slots are now set as +1 every N levels, and the per-memory slot cap shared with Corrupted Chaos (up to 8) and the on/off switch can be changed from the F6 menu.
+
 ---
 
 ## v2.10.25 — Level-based essence slots for R（2026-10-11）

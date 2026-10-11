@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using HarmonyLib;
 using SodRpg.Core.Game;
 using UnityEngine.InputSystem;
@@ -8,6 +9,7 @@ using UnityEngine.InputSystem;
 namespace Mirror
 {
     internal static class NetworkServer { public static bool active; }
+    internal static class NetworkClient { public static bool active; }
     public sealed class NetworkConnectionToClient
     {
         public SodRpg.Mod.DewPlayer Player;
@@ -57,7 +59,12 @@ namespace SodRpg.Mod
         public bool useGUILayout;
         public GameMod mod = new GameMod();
         public GameMod instance = new GameMod();
+        // 本体の設定ファイルの置き場所。実物は MOD の設定欄から求めるが、試験では差し替えられるようにする。
+        public Func<FieldInfo, string> configFilePath = _ => null;
         public virtual void OnConfigChanged() { }
+        public virtual void LoadConfigsToDisk() { }
+        public string GetModConfigFilePath(FieldInfo field) => configFilePath(field);
+        public void SaveConfigsToDisk() { }
         public bool MakeSureServer() => false;
     }
     public sealed class GameMod
@@ -75,12 +82,19 @@ namespace SodRpg.Mod
         public bool japanese;
         public bool overflowDreamDust;
         public bool levelEssenceSlots = true, levelEssenceQ = true, levelEssenceW = true, levelEssenceE = true, levelEssenceSlotsR = true;
-        public string levelEssenceStages = "10:1, 20:2";
-        public int levelEssenceMaxSlots = 4;
+        public int levelEssenceEveryLevels = 10, levelEssenceCap = 4;
         public bool netSkipUnchanged = true, netCoalesce = true, netOwnerOnly = true, netCompact = true;
         public LightweightMode lightweight;
         public Key menuKey, securePanelKey, secureKey, delveKey;
     }
+    internal static class LevelEssenceRuntime
+    {
+        internal static void Configure(LevelEssenceSettings settings) { }
+        internal static void Tick(bool force = false) { }
+        internal static void DisableHud(string reason) { }
+    }
+    internal sealed class LevelEssenceHudGroups { }
+    internal sealed class LevelEssenceChaosReplacement { }
     internal static class Log
     {
         public static readonly List<string> Errors = new List<string>();
@@ -262,6 +276,7 @@ namespace SodRpg.Mod
         public static void ApplyGameData(object data, Action onFinish = null) => onFinish?.Invoke();
         public static object FromJson(string json, Type type, Newtonsoft.Json.JsonSerializerSettings settings = null)
             => Newtonsoft.Json.JsonConvert.DeserializeObject(json, type, settings);
+        public static T FromJson<T>(string json) => (T)FromJson(json, typeof(T));
     }
     public static class SingletonDewNetworkBehaviour<T> where T : class { public static T softInstance; }
     public sealed class RoomEvent
@@ -344,7 +359,7 @@ namespace SodRpg.Mod
     internal sealed class DreamforgeUi
     {
         public bool Open, MouseOverPanel, NeedsLayout, LayoutEnabled;
-        public DreamforgeUi(ClientSession session, Func<DreamforgeConfig> config) { }
+        public DreamforgeUi(ClientSession session, Func<DreamforgeConfig> config, Action saveConfig = null) { }
         public void Notify(GameEvent ev) { }
         public void Toggle() { }
         public void Close() { }
@@ -412,6 +427,7 @@ namespace SodRpg.Mod
         public HostAuthority(Func<int> daily) { }
         public static void PrewarmBossVisualTransport() { }
         public void Tick() { }
+        public void RefreshLevelGemSlots() { }
         public void Detach() { }
     }
     internal static class RelicIcons
