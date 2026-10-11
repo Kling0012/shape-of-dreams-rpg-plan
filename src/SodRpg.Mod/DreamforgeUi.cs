@@ -3043,8 +3043,8 @@ namespace SodRpg.Mod
             GUILayout.Label(Loc.T("キーの割り当てや表示の大きさは、ゲームのMOD設定で変えられます。", "Keys and scale can be changed in the game's mod settings."), _st.Small);
             GUILayout.EndHorizontal();
             GUILayout.Label(LevelEssenceSettings.Current.Describe() + Loc.T(
-                "\n段階・対象はゲームのMOD設定で変えられます。ホスト（ソロなら自分）の設定が使われます。",
-                "\nChange stages and targets in the game's mod settings. The host's setting applies (yours when solo)."), _st.Small);
+                "\n段階・対象（Q・W・E・R）はゲームのMOD設定で変えられます。ホスト（ソロなら自分）の設定が使われます。",
+                "\nChange stages and targets (Q, W, E and R) in the game's mod settings. The host's setting applies (yours when solo)."), _st.Small);
             if (_s.SavePath != null) GUILayout.Label(Loc.T("保存先：", "Save file: ") + _s.SavePath, _st.Small);
             if (_s.LoadNotes != null) GUILayout.Label(_s.LoadNotes, _st.Warn);
             if (_s.SaveError != null) GUILayout.Label(Loc.T("保存エラー：", "Save error: ") + _s.SaveError, _st.Warn);

@@ -19,7 +19,7 @@ namespace SodRpg.Core.Tests
     public class LevelEssenceSlotsTests
     {
         private static LevelEssenceSettings Make(string stages = "10:1, 20:2", bool q = true, bool w = true, bool e = true,
-            bool enabled = true, int ceiling = 4) => LevelEssenceSettings.Create(enabled, q, w, e, stages, ceiling);
+            bool enabled = true, int ceiling = 4, bool r = true) => LevelEssenceSettings.Create(enabled, q, w, e, r, stages, ceiling);
 
         // ---- 設定の計算 ----
 
@@ -33,19 +33,20 @@ namespace SodRpg.Core.Tests
         public void Default_stages_add_one_at_level_10_and_two_in_total_at_level_20(int level, int expected)
         {
             var settings = LevelEssenceSettings.Default;
-            foreach (int target in new[] { LevelEssenceSettings.TargetQ, LevelEssenceSettings.TargetW, LevelEssenceSettings.TargetE })
+            // R も既定で対象（古い設定に levelEssenceSlotsR の欄がなくても、欄の初期値 true でこの既定になる）。
+            foreach (int target in new[] { LevelEssenceSettings.TargetQ, LevelEssenceSettings.TargetW, LevelEssenceSettings.TargetE, LevelEssenceSettings.TargetR })
                 Assert.Equal(expected, settings.Desired(target, level));
         }
 
         [Fact]
         public void Only_selected_memories_and_only_when_enabled_get_slots()
         {
-            var onlyW = Make(w: true, q: false, e: false);
+            var onlyW = Make(w: true, q: false, e: false, r: false);
             Assert.Equal(0, onlyW.Desired(LevelEssenceSettings.TargetQ, 20));
             Assert.Equal(2, onlyW.Desired(LevelEssenceSettings.TargetW, 20));
             Assert.Equal(0, onlyW.Desired(LevelEssenceSettings.TargetE, 20));
             Assert.Equal(0, Make(enabled: false).Desired(LevelEssenceSettings.TargetQ, 99));
-            Assert.Equal(0, Make(q: false, w: false, e: false).Desired(LevelEssenceSettings.TargetQ, 99));
+            Assert.Equal(0, Make(q: false, w: false, e: false, r: false).Desired(LevelEssenceSettings.TargetQ, 99));
         }
 
         [Fact]
@@ -167,12 +168,27 @@ namespace SodRpg.Core.Tests
 
             hero.Status.level = 10;
             host.ApplyLevelForTest(hero, settings);
-            Assert.Equal(new[] { 4, 4, 4, 3 }, Caps(hero));
+            Assert.Equal(new[] { 4, 4, 4, 4 }, Caps(hero));
 
             hero.Status.level = 20;
             host.ApplyLevelForTest(hero, settings);
-            Assert.Equal(new[] { 4, 4, 4, 3 }, Caps(hero)); // 本体の枠並びが描けるのは4まで
+            Assert.Equal(new[] { 4, 4, 4, 4 }, Caps(hero)); // 本体の枠並びが描けるのは4まで
             Assert.Equal(new[] { 2, 2 }, hero.Skill.Caps);  // 星図の枠（アイデンティティ・回避）には触れない
+        }
+
+        [Fact]
+        public void R_grows_at_the_same_stages_as_QWE_by_default_and_the_star_map_slots_are_left_alone()
+        {
+            var host = new HostAuthority(); var hero = Traveler(1); var settings = Make(ceiling: 5);
+            host.ApplyLevelForTest(hero, settings);
+            Assert.Equal(new[] { 3, 3, 3, 3 }, Caps(hero));
+            hero.Status.level = 10;
+            host.ApplyLevelForTest(hero, settings);
+            Assert.Equal(new[] { 4, 4, 4, 4 }, Caps(hero)); // R も Q・W・E と同じ Lv10 の +1
+            hero.Status.level = 20;
+            host.ApplyLevelForTest(hero, settings);
+            Assert.Equal(new[] { 5, 5, 5, 5 }, Caps(hero)); // 上限5なら Lv20 の +2 も R に入る
+            Assert.Equal(new[] { 2, 2 }, hero.Skill.Caps);  // 回避・アイデンティティ（星図の枠）は増やさない
         }
 
         [Fact]
@@ -180,15 +196,23 @@ namespace SodRpg.Core.Tests
         {
             var host = new HostAuthority(); var hero = Traveler(20); var settings = Make(ceiling: 5);
             host.ApplyLevelForTest(hero, settings);
-            Assert.Equal(new[] { 5, 5, 5, 3 }, Caps(hero));
+            Assert.Equal(new[] { 5, 5, 5, 5 }, Caps(hero));
         }
 
         [Fact]
         public void Only_the_chosen_memories_get_slots()
         {
             var host = new HostAuthority(); var hero = Traveler(20);
-            host.ApplyLevelForTest(hero, Make(q: false, w: true, e: false));
+            host.ApplyLevelForTest(hero, Make(q: false, w: true, e: false, r: false));
             Assert.Equal(new[] { 3, 4, 3, 3 }, Caps(hero));
+        }
+
+        [Fact]
+        public void Turning_off_R_only_stops_R_from_growing()
+        {
+            var host = new HostAuthority(); var hero = Traveler(20);
+            host.ApplyLevelForTest(hero, Make(r: false, ceiling: 5));
+            Assert.Equal(new[] { 5, 5, 5, 3 }, Caps(hero)); // Q・W・E は伸びて、R だけ元の3枠のまま
         }
 
         [Fact]
@@ -198,7 +222,7 @@ namespace SodRpg.Core.Tests
             host.ApplyLevelForTest(hero, settings);
             int writes = hero.Skill.Writes;
             for (int i = 0; i < 5; i++) host.ApplyLevelForTest(hero, settings);
-            Assert.Equal(new[] { 4, 4, 4, 3 }, Caps(hero));
+            Assert.Equal(new[] { 4, 4, 4, 4 }, Caps(hero));
             Assert.Equal(writes, hero.Skill.Writes);
         }
 
@@ -209,8 +233,8 @@ namespace SodRpg.Core.Tests
             var host = new HostAuthority(); var hero = Traveler(20);
             hero.Skill.SetMaxGemCount(HeroSkillLocation.Q, 4); hero.Skill.Writes = 0;
             host.ApplyLevelForTest(hero, Make());
-            Assert.Equal(new[] { 4, 4, 4, 3 }, Caps(hero));
-            Assert.Equal(2, hero.Skill.Writes); // W と E だけ
+            Assert.Equal(new[] { 4, 4, 4, 4 }, Caps(hero));
+            Assert.Equal(3, hero.Skill.Writes); // W・E・R だけ
             host.DetachLevelForTest();
             Assert.Equal(new[] { 4, 3, 3, 3 }, Caps(hero)); // Q の外部の4枠は残る
         }
@@ -243,7 +267,7 @@ namespace SodRpg.Core.Tests
         {
             var host = new HostAuthority(); var hero = Traveler(20); var settings = Make(ceiling: 5);
             host.ApplyLevelForTest(hero, settings);
-            Assert.Equal(new[] { 5, 5, 5, 3 }, Caps(hero));
+            Assert.Equal(new[] { 5, 5, 5, 5 }, Caps(hero));
             // 再読み込み後のアセンブリコピーは作業台帳が空だが、所有の記録は AppDomain に残る。
             var field = typeof(HostAuthority).GetField("LevelGemSlotLedgers",
                 System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
@@ -251,7 +275,7 @@ namespace SodRpg.Core.Tests
             table.GetType().GetMethod("Clear").Invoke(table, null);
             var reloaded = new HostAuthority();
             reloaded.ApplyLevelForTest(hero, settings);
-            Assert.Equal(new[] { 5, 5, 5, 3 }, Caps(hero));
+            Assert.Equal(new[] { 5, 5, 5, 5 }, Caps(hero));
             reloaded.DetachLevelForTest();
             Assert.Equal(new[] { 3, 3, 3, 3 }, Caps(hero));
         }

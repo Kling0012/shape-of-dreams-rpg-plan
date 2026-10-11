@@ -14,7 +14,7 @@ namespace SodRpg.Core.Game
     }
 
     /// <summary>
-    /// ゲーム本来のプレイ中のレベルに応じて、Q・W・Eの記憶のエッセンス枠を増やす設定。
+    /// ゲーム本来のプレイ中のレベルに応じて、Q・W・E・Rの記憶のエッセンス枠を増やす設定。
     /// 星図のエッセンス枠（<see cref="EssenceSlots"/>）とは別物で、Build・保存・通信には入らない。
     /// ホスト（ソロなら自分）の設定だけが使われ、参加者の設定は影響しない。
     /// </summary>
@@ -28,7 +28,7 @@ namespace SodRpg.Core.Game
         public const int MaxCeiling = 8;
         public const string DefaultStageText = "10:1, 20:2";
 
-        public const int TargetQ = 1, TargetW = 2, TargetE = 4, TargetAll = TargetQ | TargetW | TargetE;
+        public const int TargetQ = 1, TargetW = 2, TargetE = 4, TargetR = 8, TargetAll = TargetQ | TargetW | TargetE | TargetR;
 
         public bool Enabled { get; }
         public int Targets { get; }
@@ -47,16 +47,16 @@ namespace SodRpg.Core.Game
         }
 
         /// <summary>いま使う設定。MODの起動時とコンフィグの変更時に作り直す（ホストの値だけが枠に反映される）。</summary>
-        public static LevelEssenceSettings Current { get; set; } = Create(true, true, true, true, DefaultStageText, MinCeiling);
+        public static LevelEssenceSettings Current { get; set; } = Create(true, true, true, true, true, DefaultStageText, MinCeiling);
 
-        public static LevelEssenceSettings Default { get; } = Create(true, true, true, true, DefaultStageText, MinCeiling);
+        public static LevelEssenceSettings Default { get; } = Create(true, true, true, true, true, DefaultStageText, MinCeiling);
 
         /// <summary>設定を無効にした状態（枠を一切足さない）。</summary>
-        public static LevelEssenceSettings Off { get; } = Create(false, true, true, true, DefaultStageText, MinCeiling);
+        public static LevelEssenceSettings Off { get; } = Create(false, true, true, true, true, DefaultStageText, MinCeiling);
 
-        public static LevelEssenceSettings Create(bool enabled, bool q, bool w, bool e, string stageText, int ceiling)
+        public static LevelEssenceSettings Create(bool enabled, bool q, bool w, bool e, bool r, string stageText, int ceiling)
         {
-            int targets = (q ? TargetQ : 0) | (w ? TargetW : 0) | (e ? TargetE : 0);
+            int targets = (q ? TargetQ : 0) | (w ? TargetW : 0) | (e ? TargetE : 0) | (r ? TargetR : 0);
             ParseStages(stageText, out var stages, out var rejected);
             return new LevelEssenceSettings(enabled, targets, ceiling, stages, rejected);
         }
@@ -129,7 +129,7 @@ namespace SodRpg.Core.Game
             return total;
         }
 
-        /// <summary>1つの記憶（Q・W・Eのどれか）に、このレベルで足したい枠の数。上限での切り詰めは台帳が行う。</summary>
+        /// <summary>1つの記憶（Q・W・E・Rのどれか）に、このレベルで足したい枠の数。上限での切り詰めは台帳が行う。</summary>
         public int Desired(int target, int level)
         {
             if (!Enabled || !Includes(target)) return 0;
@@ -160,6 +160,7 @@ namespace SodRpg.Core.Game
             if (Includes(TargetQ)) parts.Add("Q");
             if (Includes(TargetW)) parts.Add("W");
             if (Includes(TargetE)) parts.Add("E");
+            if (Includes(TargetR)) parts.Add("R");
             return parts.Count == 0 ? Loc.T("対象なし", "no targets") : string.Join("・", parts);
         }
     }

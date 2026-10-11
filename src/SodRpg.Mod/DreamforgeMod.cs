@@ -119,7 +119,7 @@ namespace SodRpg.Mod
             try
             {
                 LevelEssenceSettings.Current = LevelEssenceSettings.Create(config.levelEssenceSlots,
-                    config.levelEssenceQ, config.levelEssenceW, config.levelEssenceE,
+                    config.levelEssenceQ, config.levelEssenceW, config.levelEssenceE, config.levelEssenceSlotsR,
                     config.levelEssenceStages, config.levelEssenceMaxSlots);
                 Log.Info("Level essence slots: " + LevelEssenceSettings.Current.Describe());
             }

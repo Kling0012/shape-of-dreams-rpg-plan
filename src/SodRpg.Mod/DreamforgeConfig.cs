@@ -61,6 +61,9 @@ namespace SodRpg.Mod
         [LabelText("Level essence slots - E memory / レベル連動の枠：Eの記憶を対象にする")]
         public bool levelEssenceE = true;
 
+        [LabelText("Level essence slots - R memory / レベル連動の枠：Rの記憶を対象にする")]
+        public bool levelEssenceSlotsR = true;
+
         [LabelText("Level essence slots - stages, \"level:total\" separated by commas (10:1, 20:2 = +1 from Lv10, +2 from Lv20) /\nレベル連動の枠：段階。「レベル:合計」をカンマ区切り（10:1, 20:2 はLv10で+1、Lv20で+2）")]
         public string levelEssenceStages = LevelEssenceSettings.DefaultStageText;
 
