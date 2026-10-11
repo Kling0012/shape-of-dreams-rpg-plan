@@ -8,9 +8,28 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
+---
+
+## v2.10.26 — Essence slot interval and cap in F6（2026-10-11）
+
+レベルによるエッセンス枠の追加を「何レベルごとに+1」で設定でき、枠の上限とON/OFFをF6メニューから変えられるようになりました。 / Level-based essence slots are now set as +1 every N levels, with the slot cap and on/off switch adjustable from the F6 menu.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
 ### 新機能 / New features
 
-- レベルによるエッセンス枠の追加を『何レベルごとに+1』で設定できるようにし、破損した混沌と合わせた1つの記憶の枠の上限（最大8）とON/OFFをF6メニューから変えられるようにしました。 / Level-based essence slots are now set as +1 every N levels, and the per-memory slot cap shared with Corrupted Chaos (up to 8) and the on/off switch can be changed from the F6 menu.
+- **エッセンス枠の設定をF6メニューで**：Q・W・E・Rの記憶のエッセンス枠が、英雄のレベル（ゲーム本来のレベル）が設定した数だけ上がるごとに1つ増えます（初期設定は10レベルごと）。ON/OFF、何レベルごとに増やすか、1つの記憶の枠の上限（4〜8、初期設定は4）を、F6メニューの記録タブから変えられます。上限は破損した混沌で増やした枠と合わせた合計に掛かり、破損した混沌でも上限まで増やせるようになります。協力プレイではホストの設定が全員に使われます。回避とアイデンティティの記憶は、これまでどおり星図で増やします。 / **Essence slot settings in F6**: Q, W, E and R memories gain one essence slot every N hero levels (the game's own level; every 10 by default). The on/off switch, the interval and the per-memory slot cap (4–8, default 4) can be changed from the F6 Records tab. The cap covers slots from Corrupted Chaos too, which can now add slots up to the cap. In co-op the host's settings apply. Movement and identity memories still gain slots from the star map.
+- 以前の「Lv10で+1、Lv20で+2」の段階指定はなくなりました。以前に上限を設定していた場合は、その値が引き継がれます。 / The old stage list is gone; a previously set slot cap carries over.
+
+### 注意 / Note
+
+- 上限を5以上にすると、スキルの枠の表示を5〜8枠に広げます。うまく広げられない環境では、上限は自動的に4に戻り、F6メニューにそのことが表示されます。5枠以上の表示はまだ実際のゲームで確認できていないので、おかしな点があれば教えてください。 / With a cap of 5 or more, the skill socket display is extended to 5–8 slots. If that fails, the cap falls back to 4 and the F6 menu says so. Displays above 4 slots are not yet verified in the live game; please report anything odd.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
 
 ---
 

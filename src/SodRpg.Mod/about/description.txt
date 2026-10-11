@@ -1,5 +1,5 @@
-[b]Level-based essence slots now also apply to the R memory.[/b]
-[b]レベルに応じたエッセンス枠の追加が、Rの記憶にも適用されるようになりました。[/b]
+[b]Level-based essence slots are now set as +1 every N levels, with the slot cap and on/off switch adjustable from the F6 menu.[/b]
+[b]エッセンス枠を「何レベルごとに+1」で設定でき、上限とON/OFFをF6メニューから変えられるようになりました。[/b]
 
 [h1]Dreamforge RPG[/h1]
 Turns every run into part of a long RPG journey: relics you keep, a risky "secure or delve" choice at every zone, a star map per Traveler, a forge, and long-term goals. Co-op ready.
