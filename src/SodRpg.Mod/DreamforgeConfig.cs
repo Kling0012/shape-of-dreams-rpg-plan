@@ -64,12 +64,13 @@ namespace SodRpg.Mod
         [LabelText("Level essence slots - R memory / レベル連動の枠：Rの記憶を対象にする")]
         public bool levelEssenceSlotsR = true;
 
-        [LabelText("Level essence slots - stages, \"level:total\" separated by commas (10:1, 20:2 = +1 from Lv10, +2 from Lv20) /\nレベル連動の枠：段階。「レベル:合計」をカンマ区切り（10:1, 20:2 はLv10で+1、Lv20で+2）")]
-        public string levelEssenceStages = LevelEssenceSettings.DefaultStageText;
+        [LabelText("Level essence slots - +1 every N hero levels /\nレベル連動の枠：英雄の何レベルごとに +1")]
+        [UnityEngine.Range(1, 99)]
+        public int levelEssenceEveryLevels = LevelEssenceSettings.DefaultEveryLevels;
 
-        [LabelText("Level essence slots - max slots per memory (the game's HUD draws up to 4; higher is experimental) /\nレベル連動の枠：1つの記憶の枠の最大数（ゲームの画面が描けるのは4まで。それ以上は試験的）")]
+        [LabelText("Essence slot cap per memory, including Corrupted Chaos /\n破損した混沌と合わせた1つの記憶のエッセンス枠の上限")]
         [UnityEngine.Range(4, 8)]
-        public int levelEssenceMaxSlots = LevelEssenceSettings.MinCeiling;
+        public int levelEssenceCap = LevelEssenceSettings.MinCeiling;
 
         [LabelText("Smaller packets with supported peers / 対応した相手への通信を小さくする")]
         public bool netCompact = true;

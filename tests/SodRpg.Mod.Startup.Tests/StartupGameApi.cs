@@ -75,11 +75,22 @@ namespace SodRpg.Mod
         public bool japanese;
         public bool overflowDreamDust;
         public bool levelEssenceSlots = true, levelEssenceQ = true, levelEssenceW = true, levelEssenceE = true, levelEssenceSlotsR = true;
-        public string levelEssenceStages = "10:1, 20:2";
-        public int levelEssenceMaxSlots = 4;
+        public int levelEssenceEveryLevels = 10, levelEssenceCap = 4;
         public bool netSkipUnchanged = true, netCoalesce = true, netOwnerOnly = true, netCompact = true;
         public LightweightMode lightweight;
         public Key menuKey, securePanelKey, secureKey, delveKey;
+    }
+    internal static class LevelEssenceRuntime
+    {
+        internal static void Configure(LevelEssenceSettings settings) { }
+        internal static void Tick(bool force = false) { }
+    }
+    internal sealed class LevelEssenceHudGroups { }
+    internal sealed class LevelEssenceChaosReplacement { }
+    public partial class DreamforgeMod
+    {
+        private void SaveLevelEssenceConfig() { }
+        private static void LevelEssencePatchUnavailable(Type type) { }
     }
     internal static class Log
     {
@@ -344,7 +355,7 @@ namespace SodRpg.Mod
     internal sealed class DreamforgeUi
     {
         public bool Open, MouseOverPanel, NeedsLayout, LayoutEnabled;
-        public DreamforgeUi(ClientSession session, Func<DreamforgeConfig> config) { }
+        public DreamforgeUi(ClientSession session, Func<DreamforgeConfig> config, Action saveConfig = null) { }
         public void Notify(GameEvent ev) { }
         public void Toggle() { }
         public void Close() { }
@@ -412,6 +423,7 @@ namespace SodRpg.Mod
         public HostAuthority(Func<int> daily) { }
         public static void PrewarmBossVisualTransport() { }
         public void Tick() { }
+        public void RefreshLevelGemSlots() { }
         public void Detach() { }
     }
     internal static class RelicIcons

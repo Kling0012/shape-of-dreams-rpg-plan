@@ -18,8 +18,8 @@ namespace SodRpg.Core.Tests
 {
     public class LevelEssenceSlotsTests
     {
-        private static LevelEssenceSettings Make(string stages = "10:1, 20:2", bool q = true, bool w = true, bool e = true,
-            bool enabled = true, int ceiling = 4, bool r = true) => LevelEssenceSettings.Create(enabled, q, w, e, r, stages, ceiling);
+        private static LevelEssenceSettings Make(int every = 10, bool q = true, bool w = true, bool e = true,
+            bool enabled = true, int ceiling = 4, bool r = true) => LevelEssenceSettings.Create(enabled, q, w, e, r, every, ceiling);
 
         // ---- 設定の計算 ----
 
@@ -29,8 +29,8 @@ namespace SodRpg.Core.Tests
         [InlineData(10, 1)]
         [InlineData(19, 1)]
         [InlineData(20, 2)]
-        [InlineData(30, 2)]
-        public void Default_stages_add_one_at_level_10_and_two_in_total_at_level_20(int level, int expected)
+        [InlineData(30, 3)]
+        public void Default_interval_adds_one_every_ten_levels(int level, int expected)
         {
             var settings = LevelEssenceSettings.Default;
             // R も既定で対象（古い設定に levelEssenceSlotsR の欄がなくても、欄の初期値 true でこの既定になる）。
@@ -49,58 +49,12 @@ namespace SodRpg.Core.Tests
             Assert.Equal(0, Make(q: false, w: false, e: false, r: false).Desired(LevelEssenceSettings.TargetQ, 99));
         }
 
-        [Fact]
-        public void Any_number_of_stages_are_accepted_and_sorted_by_level()
-        {
-            var settings = Make("30:3, 5:1, 15:2");
-            Assert.Equal(new[] { 5, 15, 30 }, settings.Stages.Select(s => s.Level));
-            Assert.Equal(new[] { 0, 1, 2, 3 }, new[] { 4, 5, 15, 30 }.Select(l => settings.TotalAtLevel(l)));
-        }
-
-        [Fact]
-        public void Stage_text_accepts_common_spellings_and_full_width_characters()
-        {
-            var settings = Make("Lv10:+1; 20=2、Ｌｖ３０：＋３ 40/4");
-            Assert.Equal(new[] { (10, 1), (20, 2), (30, 3), (40, 4) }, settings.Stages.Select(s => (s.Level, s.Total)));
-            Assert.Empty(settings.Rejected);
-        }
-
-        [Fact]
-        public void Unreadable_stages_are_dropped_and_reported_without_discarding_the_rest()
-        {
-            var settings = Make("10:1, abc, 0:2, 20:, :3, 100:1, 30:-1, 40:2");
-            Assert.Equal(new[] { (10, 1), (40, 2) }, settings.Stages.Select(s => (s.Level, s.Total)));
-            Assert.Equal(new[] { "abc", "0:2", "20:", ":3", "100:1", "30:-1" }, settings.Rejected);
-        }
-
         [Theory]
-        [InlineData(null)]
-        [InlineData("")]
-        [InlineData("   ")]
-        public void Empty_stage_text_adds_nothing(string text)
-        {
-            var settings = Make(text);
-            Assert.Empty(settings.Stages);
-            Assert.Equal(0, settings.Desired(LevelEssenceSettings.TargetQ, 99));
-        }
-
-        [Fact]
-        public void A_repeated_level_uses_the_later_entry_and_totals_never_go_down_with_level()
-        {
-            var settings = Make("10:1, 10:3, 20:1");
-            Assert.Equal(3, settings.TotalAtLevel(10));
-            Assert.Equal(3, settings.TotalAtLevel(25));
-        }
-
-        [Fact]
-        public void Totals_and_stage_count_are_bounded()
-        {
-            Assert.Equal(LevelEssenceSettings.MaxStageTotal, Make("10:99").TotalAtLevel(10));
-            var many = string.Join(",", Enumerable.Range(1, 40).Select(i => $"{i}:1"));
-            var settings = Make(many);
-            Assert.Equal(LevelEssenceSettings.MaxStages, settings.Stages.Count);
-            Assert.Equal(40 - LevelEssenceSettings.MaxStages, settings.Rejected.Count);
-        }
+        [InlineData(-1, 1)]
+        [InlineData(10, 10)]
+        [InlineData(150, 99)]
+        public void Interval_is_clamped_to_the_supported_range(int requested, int expected) =>
+            Assert.Equal(expected, Make(requested).EveryLevels);
 
         [Theory]
         [InlineData(-3, 4)]
@@ -118,8 +72,7 @@ namespace SodRpg.Core.Tests
             {
                 Loc.Japanese = true;
                 var text = Make(q: true, w: false, e: true).Describe();
-                Assert.Contains("Lv10:+1", text);
-                Assert.Contains("Lv20:+2", text);
+                Assert.Contains("10レベルごとに +1", text);
                 Assert.Contains("Q・E", text);
                 Assert.Contains("最大4枠", text);
                 Assert.Contains("オフ", Make(enabled: false).Describe());

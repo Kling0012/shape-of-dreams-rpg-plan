@@ -66,6 +66,7 @@ namespace SodRpg.Mod
 
         private readonly ClientSession _s;
         private readonly Func<DreamforgeConfig> _cfg;
+        private readonly Action _saveLevelEssenceConfig;
         private readonly UiStyles _st = new UiStyles();
         private readonly List<Toast> _toasts = new List<Toast>();
 
@@ -99,10 +100,11 @@ namespace SodRpg.Mod
         /// <summary>直近の描画で、マウスが確保地点のパネルの上にあったか（クリックをゲームへ通さないため）。</summary>
         public bool MouseOverPanel { get; private set; }
 
-        public DreamforgeUi(ClientSession session, Func<DreamforgeConfig> cfg)
+        public DreamforgeUi(ClientSession session, Func<DreamforgeConfig> cfg, Action saveLevelEssenceConfig = null)
         {
             _s = session;
             _cfg = cfg;
+            _saveLevelEssenceConfig = saveLevelEssenceConfig;
             _s.ProfileChanged += ResetProfileView;
             // 起動したときに持っていた遺物は「見た」ことにする。それ以降に手に入れた物に NEW を付ける。
             foreach (var r in session.Profile.Stash) _seenUids.Add(r.Uid);
@@ -3042,9 +3044,7 @@ namespace SodRpg.Mod
             }
             GUILayout.Label(Loc.T("キーの割り当てや表示の大きさは、ゲームのMOD設定で変えられます。", "Keys and scale can be changed in the game's mod settings."), _st.Small);
             GUILayout.EndHorizontal();
-            GUILayout.Label(LevelEssenceSettings.Current.Describe() + Loc.T(
-                "\n段階・対象（Q・W・E・R）はゲームのMOD設定で変えられます。ホスト（ソロなら自分）の設定が使われます。",
-                "\nChange stages and targets (Q, W, E and R) in the game's mod settings. The host's setting applies (yours when solo)."), _st.Small);
+            DrawLevelEssenceSettings(cfg);
             if (_s.SavePath != null) GUILayout.Label(Loc.T("保存先：", "Save file: ") + _s.SavePath, _st.Small);
             if (_s.LoadNotes != null) GUILayout.Label(_s.LoadNotes, _st.Warn);
             if (_s.SaveError != null) GUILayout.Label(Loc.T("保存エラー：", "Save error: ") + _s.SaveError, _st.Warn);
@@ -3120,6 +3120,49 @@ namespace SodRpg.Mod
 
             GUILayout.EndHorizontal();
             GUILayout.EndScrollView();
+        }
+
+        private void DrawLevelEssenceSettings(DreamforgeConfig cfg)
+        {
+            var settings = LevelEssenceRuntime.DisplaySettings;
+            bool editable = !Mirror.NetworkClient.active || Mirror.NetworkServer.active;
+            bool wasEnabled = GUI.enabled;
+            GUILayout.Space(4);
+            GUILayout.Label(Loc.T("記憶のエッセンス枠", "Memory essence slots"), _st.Header);
+            GUI.enabled = wasEnabled && editable;
+            bool enabled = GUILayout.Toggle(settings.Enabled, Loc.T("レベルによる追加を有効にする", "Enable slots from hero levels"));
+            int every = settings.EveryLevels, cap = settings.Ceiling;
+            GUILayout.BeginHorizontal();
+            GUILayout.Label(Loc.T($"{every} レベルごとに +1", $"+1 every {every} levels"), _st.Small, GUILayout.Width(280));
+            if (GUILayout.Button("−", _st.Button, GUILayout.Width(38))) every--;
+            if (GUILayout.Button("+", _st.Button, GUILayout.Width(38))) every++;
+            GUILayout.EndHorizontal();
+            GUILayout.BeginHorizontal();
+            GUILayout.Label(Loc.T($"1つの記憶の上限：{cap} 枠", $"Cap per memory: {cap} slots"), _st.Small, GUILayout.Width(280));
+            if (GUILayout.Button("−", _st.Button, GUILayout.Width(38))) cap--;
+            if (GUILayout.Button("+", _st.Button, GUILayout.Width(38))) cap++;
+            GUILayout.EndHorizontal();
+            GUI.enabled = wasEnabled;
+            every = LevelEssenceSettings.ClampEveryLevels(every);
+            cap = LevelEssenceSettings.ClampCeiling(cap);
+            if (editable && (enabled != settings.Enabled || every != settings.EveryLevels || cap != settings.Ceiling))
+            {
+                cfg.levelEssenceSlots = enabled;
+                cfg.levelEssenceEveryLevels = every;
+                cfg.levelEssenceCap = cap;
+                _saveLevelEssenceConfig?.Invoke();
+            }
+            GUILayout.Label(Loc.T($"対象：{settings.TargetsText()}。基本枠・破損した混沌・レベル分の合計に上限を適用。",
+                $"Targets: {settings.TargetsText()}. The cap includes base, Corrupted Chaos and level slots."), _st.Small);
+            if (!LevelEssenceSettings.RuntimeBonusAvailable)
+                GUILayout.Label(Loc.T("本体の枠更新を追跡できないため、レベルによる追加だけ無効です。",
+                    "Level additions are unavailable because native slot updates cannot be tracked."), _st.Warn);
+            if (LevelEssenceRuntime.EffectiveCap < settings.Ceiling)
+                GUILayout.Label(Loc.T($"HUD拡張の準備待ち／失敗：実効上限は{LevelEssenceRuntime.EffectiveCap}枠です。",
+                    $"HUD extension pending/unavailable: effective cap is {LevelEssenceRuntime.EffectiveCap}."), _st.Warn);
+            GUILayout.Label(editable ? Loc.T("変更は即反映して保存します。対象の選択はMOD設定で変更できます。",
+                "Changes apply and save immediately. Select targets in mod settings.") : Loc.T("ホストの設定を表示しています（変更はホストのみ）。",
+                "Showing the host's settings (only the host can change them)."), _st.Small);
         }
 
         private void DrawInfinityRecords(Profile profile)

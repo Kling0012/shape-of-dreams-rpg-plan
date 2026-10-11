@@ -57,7 +57,6 @@ namespace SodRpg.Mod
         private readonly List<WeakReference<HeroSkill>> _levelGemSkills = new List<WeakReference<HeroSkill>>();
         private readonly ConditionalWeakTable<HeroSkill, object> _trackedLevelGemSkills = new ConditionalWeakTable<HeroSkill, object>();
         private float _nextLevelGemSlotCheck;
-        private bool _levelGemSettingsWarned;
 
         /// <summary>1秒ごとに、全員の英雄のレベルを見て Q・W・E・R の枠を合わせる。</summary>
         private void TickLevelGemSlots()
@@ -67,11 +66,6 @@ namespace SodRpg.Mod
             if (now < _nextLevelGemSlotCheck) return;
             _nextLevelGemSlotCheck = now + 1f;
             var settings = LevelEssenceSettings.Current ?? LevelEssenceSettings.Off;
-            if (!_levelGemSettingsWarned && settings.Rejected.Count > 0)
-            {
-                _levelGemSettingsWarned = true;
-                Log.Warn("Level essence slots: ignored unreadable stage text: " + string.Join(", ", settings.Rejected));
-            }
             if (GemContinueSources.HasParticipants) ProtectNativeContinueLevelGemSlots();
             foreach (var player in DewPlayer.gamePlayers)
                 ApplyLevelGemSlotsFor(player != null ? player.hero : null, settings);
@@ -117,9 +111,13 @@ namespace SodRpg.Mod
         private void ApplyLevelGemSlots(HeroSkill skill, int level, LevelEssenceSettings settings)
         {
             var ledger = TrackLevelGemSkill(skill);
+            int cap = Math.Min(settings.Ceiling, LevelEssenceSettings.RuntimeCapLimit);
             for (int i = 0; i < LevelGemLocations.Length; i++)
+            {
+                int native = ledger.Locations[i].DecideRemoval(skill.GetMaxGemCount(LevelGemLocations[i])).Target;
                 UpdateGemSlot(skill, ledger.Locations[i], LevelGemLocations[i],
-                    settings.Desired(LevelGemTargets[i], level), false, settings.Ceiling);
+                    native >= cap || !LevelEssenceSettings.RuntimeBonusAvailable ? 0 : settings.Desired(LevelGemTargets[i], level), false, cap);
+            }
             ledger.Persist();
         }
 
@@ -135,7 +133,7 @@ namespace SodRpg.Mod
                 var ledger = TrackLevelGemSkill(skill);
                 for (int i = 0; i < LevelGemLocations.Length; i++)
                     UpdateGemSlot(skill, ledger.Locations[i], LevelGemLocations[i],
-                        ledger.Locations[i].OurContribution, false, settings.Ceiling);
+                        ledger.Locations[i].OurContribution, false, Math.Min(settings.Ceiling, LevelEssenceSettings.RuntimeCapLimit));
                 ledger.Persist();
             }
         }
