@@ -8,6 +8,10 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
+### 不具合修正 / Bug fixes
+
+- 取引で「前の取引の結果を確認しています」が出たまま、取引できなくなることがある問題を修正しました。 / Fixed trading sometimes staying blocked on 'Checking the result of an earlier trade'.
+
 - 鞄からあふれた遺物の追加ドリームダストが、受け取れなくなることがある問題を修正しました。 / Fixed extra Dream Dust from satchel overflow sometimes becoming unavailable.
 
 ---

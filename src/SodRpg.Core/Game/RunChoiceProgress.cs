@@ -36,6 +36,9 @@ namespace SodRpg.Core.Game
                 return;
             }
             _runId = runId;
+            // Old expedition facts cannot settle in this run. Remove them even when the new
+            // run is still waiting for a choice and therefore does not call Drain yet.
+            Rewards.RetainRun(runId);
             ZoneIndex = _lastArrival = zoneIndex;
             _arrivals.Clear();
             _applied = null;

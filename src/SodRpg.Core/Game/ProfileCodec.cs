@@ -618,7 +618,8 @@ namespace SodRpg.Core.Game
             .Add("runId", t.RunId).Add("fallbackShards", (long)t.FallbackShards)
             .Add("overflowRelic", t.Kind == TradeKind.SatchelOverflowDust && t.Relic != null ? WriteRelic(t.Relic) : null)
             .Add("rarity", (long)t.Rarity).Add("enhance", (long)t.Enhance)
-            .Add("ledger", unchecked((ulong)t.LedgerId).ToString(CultureInfo.InvariantCulture)).Add("lost", t.Lost);
+            .Add("ledger", unchecked((ulong)t.LedgerId).ToString(CultureInfo.InvariantCulture)).Add("lost", t.Lost)
+            .Add("detached", t.Detached);
 
         private static void ReadPendingTrades(JsonObject parent, List<PendingTrade> into, List<string> notes)
         {
@@ -661,7 +662,7 @@ namespace SodRpg.Core.Game
                     EarnDust = Clamp(Long(j, "earnDust"), 0, int.MaxValue), Uid = Str(j, "uid"),
                     Heat = Clamp(Long(j, "heat"), 0, int.MaxValue), Batches = Clamp(Long(j, "batches"), 0, int.MaxValue),
                     Rarity = Clamp(Long(j, "rarity"), 0, int.MaxValue), Enhance = Clamp(Long(j, "enhance"), 0, int.MaxValue),
-                    LedgerId = unchecked((long)ledgerBits), Lost = Bool(j, "lost", false),
+                    LedgerId = unchecked((long)ledgerBits), Lost = Bool(j, "lost", false), Detached = Bool(j, "detached", false),
                     MerchantOfferId = Str(j, "merchantOfferId"),
                     RunId = Str(j, "runId"), Relic = overflowRelic,
                     FallbackShards = Clamp(Long(j, "fallbackShards"), 0, int.MaxValue),
