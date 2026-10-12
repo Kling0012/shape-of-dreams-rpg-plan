@@ -188,7 +188,7 @@ namespace SodRpg.Core.Game
         /// <summary>All unallocated alternatives are evaluated explicitly. Tooling may supply an attainable owned-prerequisite allocation.</summary>
         public IReadOnlyList<AllocationHeadroom> AnalyzeHeadroom(Profile profile, string heroKey, HeroState attainableAllocation = null)
         {
-            var allocation = (attainableAllocation ?? profile.Hero(heroKey)).Clone();
+            var allocation = (attainableAllocation ?? profile.Hero(heroKey)).CloneAllocation();
             var scope = new PreviewScope(this, profile, heroKey);
             var rows = new List<AllocationHeadroom>();
             foreach (var talent in tree)
@@ -197,7 +197,7 @@ namespace SodRpg.Core.Game
                 int options = talent.IsChoice ? talent.Choices.Count : 1;
                 for (int option = 0; option < options; option++)
                 {
-                    var draft = allocation.Clone();
+                    var draft = allocation.CloneAllocation();
                     if (talent.IsChoice) draft.TalentChoices[talent.Id] = option;
                     bool reachable = layout.CanReach(draft, talent);
                     var details = new List<AllocationSaturation>();
@@ -253,8 +253,8 @@ namespace SodRpg.Core.Game
             if (change == null) throw new ArgumentNullException(nameof(change));
             string registryFingerprint = StarClusters.AuthoredRegistryFingerprint;
             string capFingerprint = FractionalScopedModifiers.CapRegistryFingerprint;
-            var original = profile.Hero(heroKey).Clone();
-            var proposed = original.Clone();
+            var original = profile.Hero(heroKey).CloneAllocation();
+            var proposed = original.CloneAllocation();
             var candidate = Talent(change.CandidateStarId);
             ApplyChange(profile, heroKey, proposed, candidate, change);
             var scope = new PreviewScope(this, profile, heroKey) { Original = original, Proposed = proposed };
@@ -289,7 +289,7 @@ namespace SodRpg.Core.Game
             }
             if (change.Kind == AllocationChangeKind.Keystone && change.KeystoneId != null && proposed.HasKeystone(change.KeystoneId))
             {
-                var withoutKey = proposed.Clone();
+                var withoutKey = proposed.CloneAllocation();
                 withoutKey.RemoveKeystone(change.KeystoneId);
                 candidateEffective = HasPositiveDifference(channels, scope.Capture(withoutKey, proposed)) || ScalesNativeDamage(Talent(change.KeystoneId));
                 if (!candidateEffective) saturated.Add(change.KeystoneId);
@@ -434,6 +434,41 @@ namespace SodRpg.Core.Game
             target.CopyKeystonesFrom(plan.Proposed);
         }
 
+        /// <summary>Reconcile saved ranks against current effects, gear and prerequisites, using the normal refund checks.</summary>
+        internal bool RepairSavedAllocation(Profile profile, string heroKey)
+        {
+            var hero = profile.Hero(heroKey);
+            bool refunded = false, changed;
+            do
+            {
+                changed = false;
+                var scope = new PreviewScope(this, profile, heroKey);
+                scope.Pin(hero, hero);
+                var refunds = new SortedDictionary<string, AllocationRefund>(StringComparer.Ordinal);
+                foreach (string id in new List<string>(hero.Talents.Keys))
+                {
+                    var node = Talent(id);
+                    int rank = hero.Talents[id], retained = rank;
+                    if (!CanReach(hero, node)) retained = 0;
+                    else for (int r = 1; r <= rank; r++)
+                        if (!CanRetainRank(scope, hero, node, r)) { retained = r - 1; break; }
+                    if (retained == rank) continue;
+                    Refund(hero, node, id, rank - retained, refunds);
+                    changed = refunded = true;
+                }
+                foreach (string id in (string[])hero.Keystones.Clone())
+                {
+                    if (id == null || KeystoneUnlocked(hero, heroKey, Talent(id))) continue;
+                    Refund(hero, Talent(id), id, 1, refunds);
+                    changed = refunded = true;
+                }
+            } while (changed);
+            // The same production Build pipeline enforces combinations and the hard spend limit.
+            var finalScope = new PreviewScope(this, profile, heroKey);
+            finalScope.Pin(hero, hero);
+            return refunded;
+        }
+
         public EffectiveAllocationPlan Apply(Profile profile, string heroKey, AllocationChange change, IReadOnlyCollection<string> approvedRefundIds = null)
         {
             var plan = Preview(profile, heroKey, change);
@@ -524,14 +559,14 @@ namespace SodRpg.Core.Game
             string withKey = allocated && allocatedRank == rank ? baseKey : MarginalKey(baseKey, talent.Id, rank);
             var with = scope.Capture(withKey, baseKey, () =>
             {
-                var marginal = hero.Clone();
+                var marginal = hero.CloneAllocation();
                 marginal.Talents[talent.Id] = rank;
                 return marginal;
             }, hero);
             string withoutKey = rank - 1 > 0 && allocated && allocatedRank == rank - 1 ? baseKey : MarginalKey(baseKey, talent.Id, rank - 1);
             var without = scope.Capture(withoutKey, baseKey, () =>
             {
-                var marginal = hero.Clone();
+                var marginal = hero.CloneAllocation();
                 marginal.Talents[talent.Id] = rank;
                 SetRank(marginal, talent.Id, rank - 1);
                 return marginal;
@@ -1015,7 +1050,7 @@ namespace SodRpg.Core.Game
             HeroState effective = allocation;
             if (disabled.Count > 0)
             {
-                effective = allocation.Clone();
+                effective = allocation.CloneAllocation();
                 foreach (string id in disabled)
                 {
                     effective.Talents.Remove(id);

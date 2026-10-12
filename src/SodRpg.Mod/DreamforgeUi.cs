@@ -2321,6 +2321,7 @@ namespace SodRpg.Mod
             HeroPicker();
             string hero = HeroKey;
             if (hero != beforePicker) { CancelStarDrag(); GUIUtility.ExitGUI(); }
+            DrawStarLoadouts(p, hero);
             RefreshStarState(p, hero, p.Hero(hero));
             GUILayout.BeginHorizontal();
             GUILayout.Label(_starPoints, _st.Label, StarFill);

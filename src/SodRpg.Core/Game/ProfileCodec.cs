@@ -75,6 +75,7 @@ namespace SodRpg.Core.Game
                     .Add("keystone", h.Keystone).Add("keystones", keystones).Add("kills", (long)h.Kills).Add("starXp", (long)h.StarXp)
                     .Add("authoredMigrationVersion", (long)h.AuthoredMigrationVersion);
                 if (h.ExtraPoints != 0) hero.Add("xp2", (long)h.ExtraPoints);
+                WriteStarLoadouts(hero, h);
                 heroes.Add(kv.Key, hero);
             }
             var codex = new List<object>();
@@ -552,6 +553,10 @@ namespace SodRpg.Core.Game
                     : Loc.T($"{kv.Key}: 始まりの星につながらない星があったため、この旅人の星を無料で振り直せるようにしました。",
                         $"{kv.Key}: Some allocated stars were disconnected from the starting star; this Traveler's stars were reset for free."));
             }
+            // Load optional snapshots after the shared state and active allocation; inactive slots are repaired on switching.
+            if (b.TryGet("heroes", out object loadoutHeroes) && loadoutHeroes is JsonObject heroEntries)
+                foreach (var entry in heroEntries.Properties)
+                    if (entry.Value is JsonObject heroJson) ReadStarLoadouts(p, entry.Key, heroJson, notes);
             return p;
         }
 

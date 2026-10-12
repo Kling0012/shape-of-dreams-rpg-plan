@@ -31,7 +31,33 @@ namespace SodRpg.Core.Game
         public int StarXp { get => _starXp; set => _starXp = Math.Max(0, value); }
         private int _extraPoints;
         public int ExtraPoints { get => _extraPoints; set => _extraPoints = Math.Max(0, Math.Min(StarProgression.MaxExtraPoints, value)); }
+        /// <summary>The active allocation lives above; inactive slots are independent snapshots. Null names use localized defaults.</summary>
+        private StarLoadout[] _starLoadouts;
+        public StarLoadout[] StarLoadouts => _starLoadouts ?? (_starLoadouts = new StarLoadout[Game.StarLoadouts.Count]);
+        public int ActiveStarLoadout { get; internal set; }
+
+        public void CopyStarLoadoutsFrom(HeroState other)
+        {
+            ActiveStarLoadout = other.ActiveStarLoadout;
+            if (other._starLoadouts == null) { _starLoadouts = null; return; }
+            for (int i = 0; i < Game.StarLoadouts.Count; i++) StarLoadouts[i] = other._starLoadouts[i]?.Clone();
+        }
+
+        public void CopyStarConfigurationFrom(HeroState other)
+        {
+            StarLoadout.Capture(other).ApplyTo(this);
+            CopyStarLoadoutsFrom(other);
+        }
+
         public HeroState Clone()
+        {
+            var c = CloneAllocation();
+            c.CopyStarLoadoutsFrom(this);
+            return c;
+        }
+
+        /// <summary>Allocation previews do not need to clone the five saved slots.</summary>
+        public HeroState CloneAllocation()
         {
             var c = new HeroState { Kills = Kills, StarXp = StarXp, ExtraPoints = ExtraPoints, AuthoredMigrationVersion = AuthoredMigrationVersion };
             c.CopyKeystonesFrom(this);
