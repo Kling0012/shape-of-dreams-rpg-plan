@@ -306,7 +306,7 @@ namespace SodRpg.Mod
 
             private Se_GenericEffectContainer Guard(BasicEffect effect)
             {
-                var guard = _source.CreateBasicEffect(_boss, effect, 60f)
+                var guard = _source.CreateBasicEffect(_boss, effect, 60f, "DreamforgeRPG.Polaris." + effect.GetType().Name)
                     ?? throw new InvalidOperationException("Polaris transition guard was unavailable.");
                 guard.DestroyOnDestroy(_source);
                 return guard;
