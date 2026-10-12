@@ -3,7 +3,20 @@ name: ci
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - docs/**
+      - "**.md"
+      - src/SodRpg.Mod/about/**
   pull_request:
+    paths-ignore:
+      - docs/**
+      - "**.md"
+      - src/SodRpg.Mod/about/**
+
+# A newer push to the same branch (several merges in a row) supersedes the older run.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   # Fast set: Speed=Slow exhaustive tests are skipped unless SODRPG_SLOW=1
