@@ -349,7 +349,7 @@ namespace SodRpg.Mod
             _tickStageNames = new[]
             {
                 "sacrifice shields", "build updates", "run modifiers", "pressure", "pending builds",
-                "gem slots", "level gem slots", "movement charges", "waypoint heroes", "area scan", "prop protections", "new powers", "reactions", "gimmick apply",
+                "gem slots", "level gem slots", "movement charges", "waypoint heroes", "area scan", "prop protections", "native protections", "new powers", "reactions", "gimmick apply",
                 "boss effects", "boss visuals", "identity strikes", "gimmicks v129", "back-off charge", "sap prune", "attribution prune", "runtime", "run growth", "currency",
                 "shield pools", "spawns", "monster prune", "monster behaviors", "kill replay", "sunders",
                 "nightmare regen", "classification resync",
@@ -358,7 +358,7 @@ namespace SodRpg.Mod
             _tickStages = new Action[]
             {
                 UpdateSacrificeShields, StageBuildUpdates, RefreshRunModifiers, StagePressure, PruneAndApplyPending,
-                TickGemSlots, TickLevelGemSlots, TickMovementCharges, SyncWaypointHeroes, StageAreaScan, TickPropProtection, StageNewPowers, StageReactions, StageGimmickApply,
+                TickGemSlots, TickLevelGemSlots, TickMovementCharges, SyncWaypointHeroes, StageAreaScan, TickPropProtection, TickNativeEntityProtection, StageNewPowers, StageReactions, StageGimmickApply,
                 StageBossEffects, TickBossVisualSnapshots, UpdateIdentityStrikes, StageGimmicksV129, StageBackOffCharge, StageSapPrune, PruneMemoryAttribution, StageRuntimes, StageRunGrowth, StageCurrency,
                 StageModShieldPools, ProcessSpawns, StageMonsterPrune, StageMonsterBehaviors, TickKillReplay, StageSunders,
                 StageNightmareRegen, StageClassificationResync,

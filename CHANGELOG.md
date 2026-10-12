@@ -10,7 +10,7 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ### 不具合修正 / Bug fixes
 
-- ゴールドやドリームダストを落とす石や、『不快な記憶』の部屋の石が壊せなくなる問題への安全策を追加しました。MOD 由来の無敵・行動阻害無効・非対象化の付与を防ぎ、残留した効果を解除します。報告された症状の原因と実ゲームでの解消は未確認です。 / Added a safeguard for unbreakable stones that drop gold or Dream Dust, and the stone in the 'Unpleasant Memory' room: prevents MOD-owned invulnerability, Unstoppable, and untargetability from being applied and removes lingering effects. The cause of the reported issue and its resolution in-game remain unconfirmed.
+- 石や敵が無敵になって攻撃が効かなくなることがある問題を修正しました。 / Fixed stones and enemies sometimes becoming invulnerable.
 
 ---
 

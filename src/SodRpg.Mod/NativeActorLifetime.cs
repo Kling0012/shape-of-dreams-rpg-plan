@@ -12,8 +12,6 @@ namespace SodRpg.Mod
         private sealed class Lifetime
         {
             internal bool CleanupRequested;
-            internal int InvalidSince = -1;
-            internal bool HadVictim;
             internal bool Faulted;
         }
 
@@ -93,19 +91,18 @@ namespace SodRpg.Mod
                 if (valid && effect is Se_MirageSkin_Sanctification_Protected protectedSkin)
                     valid = protectedSkin.beam != null && victim.Visual != null
                         && IsLive(effect.info.caster) && effect.info.caster.Visual != null;
-                if (valid)
-                {
-                    life.HadVictim = true;
-                    life.InvalidSince = -1;
-                    return true;
-                }
-                // Initial client spawn payloads can precede the referenced entity. Skip unsafe
-                // updates during that brief interval, then clean up a genuinely orphaned effect.
-                if (!NetworkServer.active && !life.HadVictim)
-                {
-                    if (life.InvalidSince < 0) life.InvalidSince = Time.frameCount;
-                    if (!NetworkClient.ready || NetworkClient.isLoadingScene || Time.frameCount - life.InvalidSince < 2) return false;
-                }
+                if (valid) return true;
+                // A missing SyncVar reference is not an authoritative despawn. Room loading
+                // and spawn ordering can take more than two frames; locally retiring here
+                // permanently unregisters a still-live effect from the update manager.
+                if (!NetworkServer.active && (victim == null || victim.isActive
+                    && (!victim.gameObject.activeInHierarchy || victim.Status == null))) return false;
+                if (!NetworkServer.active && effect is Se_MirageSkin_Sanctification_Protected
+                    && effect.info.caster == null) return false;
+                // A live victim can be temporarily parked during room setup. Do not convert
+                // that pause into a permanent CleanupRequested state on the server either.
+                if (victim != null && victim.isActive && victim.Status != null
+                    && !victim.gameObject.activeInHierarchy) return false;
                 Retire(effect);
             }
             catch (Exception ex)
