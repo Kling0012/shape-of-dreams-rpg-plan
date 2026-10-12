@@ -1,5 +1,5 @@
-[b]Level-based essence slots are now set as +1 every N levels, with the slot cap and on/off switch adjustable from the F6 menu.[/b]
-[b]エッセンス枠を「何レベルごとに+1」で設定でき、上限とON/OFFをF6メニューから変えられるようになりました。[/b]
+[b]Added star map loadouts: save up to 5 star allocations per traveler and switch between them.[/b]
+[b]星図のロードアウトを追加しました。旅人ごとに5つまで星の割り振りを保存して切り替えられます。[/b]
 
 [h1]Dreamforge RPG[/h1]
 Turns every run into part of a long RPG journey: relics you keep, a risky "secure or delve" choice at every zone, a star map per Traveler, a forge, and long-term goals. Co-op ready.

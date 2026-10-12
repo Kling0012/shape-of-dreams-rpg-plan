@@ -8,9 +8,23 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
+---
+
+## v2.10.27 — Star map loadouts（2026-10-12）
+
+星図のロードアウトを追加しました。旅人ごとに5つまで星の割り振りを保存して、切り替えられます。 / Added star map loadouts: save up to 5 star allocations per traveler and switch between them.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
 ### 新機能 / New features
 
-- 星図のロードアウトを追加しました。旅人ごとに5つまで星の割り振りを保存して、遠征の外で切り替えられます（星のポイントと装備は共通）。 / Added star map loadouts: save up to 5 star allocations per traveler and switch between them outside expeditions (star points and gear are shared).
+- **星図のロードアウト**：旅人ごとに5つまで、星の割り振り（選んだ星と要の星を含む）を保存し、遠征の外で切り替えられます。たとえばミストで「ランジ型」「フレッシュ型」「パリィ型」を作り分けられます。星のポイントと装備はすべてのロードアウトで共通です。今の割り振りはロードアウト1になり、ほかの枠は空から始まります。今の構成を別の枠へコピーしたり、各枠に名前を付けたりもできます。星図の画面の上にあるボタンで操作します。 / **Star map loadouts**: save up to 5 star allocations per traveler (including choices and keystones) and switch between them outside expeditions — for example, separate lunge, flesh and parry builds for Mist. Star points and gear are shared across loadouts. Your current allocation becomes Loadout 1 and the others start empty. You can copy the current build to another slot and name each one, using the buttons at the top of the star map.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
 
 ---
 
