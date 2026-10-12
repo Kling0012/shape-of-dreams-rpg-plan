@@ -39,11 +39,12 @@ namespace SodRpg.Mod
 
         internal void OnOverflowBonus(DreamforgeOverflowBonusMsg msg, DewPlayer caller)
         {
-            if (!NetworkServer.active || !ClientSession.HostOverflowBonusReady || caller == null || msg == null || !caller.isHumanPlayer
+            if (!NetworkServer.active || caller == null || msg == null || !caller.isHumanPlayer
                 || !DewPlayer.gamePlayers.Contains(caller) && !DewPlayer.lobbyPlayers.Contains(caller)) return;
             try
             {
-                ApplyContinueTrades();
+                bool ready = ClientSession.HostOverflowBonusReady;
+                if (ready) ApplyContinueTrades();
                 if (!_overflowBonusPeers.TryGetValue(caller, out var peer))
                 {
                     if (_overflowBonusPeers.Count >= SodRpg.Core.Game.TradeAuthority.MaxTrackedPlayers) return;
@@ -55,16 +56,27 @@ namespace SodRpg.Mod
                     return;
                 }
                 string nativeRunId = TradeRunId();
+                if (!ready || string.IsNullOrEmpty(nativeRunId))
+                {
+                    // Advertise the transport while native start/Continue is pending, without exposing
+                    // an old ledger or acknowledging a total against currency that has not restored yet.
+                    ReplyOverflowBonusWaiting(caller, peer);
+                    return;
+                }
+                // Establish only the authoritative native run before checking an existing cumulative
+                // obligation. A same-ID ledger may still belong to the lobby or the previous expedition.
+                long nativeLedger = msg.runId == nativeRunId
+                    ? _tradeAuthority.LedgerIdOf(TradePlayerKey(caller), nativeRunId) : 0;
                 // A zero-total handshake may initialize this run, never an already earned obligation.
                 if (msg.total == 0 && msg.ledgerId == 0)
                 {
-                    if (string.IsNullOrEmpty(nativeRunId) || msg.runId != nativeRunId)
+                    if (msg.runId != nativeRunId)
                     {
-                        ReplyOverflowBonus(caller, peer, true);
+                        ReplyOverflowBonusWaiting(caller, peer);
                         return;
                     }
                     peer.RunId = nativeRunId;
-                    peer.LedgerId = _tradeAuthority.LedgerIdOf(TradePlayerKey(caller), nativeRunId);
+                    peer.LedgerId = nativeLedger;
                     peer.Total = 0;
                     peer.Pending = false;
                     peer.Disabled = _tradeAuthority.PendingOverflowBonus(TradePlayerKey(caller), nativeRunId, 0, peer.LedgerId) < 0;
@@ -78,9 +90,7 @@ namespace SodRpg.Mod
                     // handshake with the current identity instead of disabling the bonus for the whole run:
                     // the client must rebase its cumulative total to zero, so nothing already paid under the
                     // old ledger is paid twice. Old-run deltas and blocked ledgers still disable only the dust.
-                    long currentLedger = string.IsNullOrEmpty(nativeRunId) || msg.runId != nativeRunId
-                        ? 0
-                        : _tradeAuthority.LedgerIdOf(TradePlayerKey(caller), nativeRunId);
+                    long currentLedger = nativeLedger;
                     if (delta < 0 && currentLedger != 0 && msg.ledgerId != currentLedger)
                     {
                         peer.RunId = nativeRunId;
@@ -122,6 +132,8 @@ namespace SodRpg.Mod
                 var owner = entry.Key;
                 var peer = entry.Value;
                 if (owner == null || !peer.Pending || peer.Disabled || peer.GrantFrame == Time.frameCount) continue;
+                if (string.IsNullOrEmpty(TradeRunId()))
+                    continue; // Keep the cumulative obligation until the native run is ready again.
                 peer.Pending = false;
                 string key = TradePlayerKey(owner);
                 int delta = _tradeAuthority.PendingOverflowBonus(key, peer.RunId, peer.Total, peer.LedgerId);
@@ -169,6 +181,16 @@ namespace SodRpg.Mod
                 ReplyOverflowBonus(owner, peer, !peer.Disabled && !_overflowBonusDisabled);
                 if (_overflowBonusDisabled) return;
             }
+        }
+
+        private void ReplyOverflowBonusWaiting(DewPlayer owner, OverflowBonusPeer peer)
+        {
+            var reply = peer.Reply;
+            reply.available = true;
+            reply.runId = null;
+            reply.ledgerId = reply.paid = 0;
+            if (owner == DewPlayer.local) ClientSession.ReceiveLocalOverflowBonus(reply);
+            else _registeredOn?.CustomRpc_SendMessageToClient(owner, reply);
         }
 
         private void ReplyOverflowBonus(DewPlayer owner, OverflowBonusPeer peer, bool available)

@@ -498,8 +498,10 @@ namespace SodRpg.Core.Game
                 if (_players.Count >= MaxTrackedPlayers) _players.Clear();
                 _players[playerKey] = ledger = new PlayerLedger { Id = ((long)Generation << 32) | (uint)++_ledgerSerial };
             }
-            if (ledger.RunId != runId)
+            if (!string.IsNullOrEmpty(runId) && ledger.RunId != runId)
             {
+                // Lobby/scene/Continue probes have no native run yet. Keep the current receipts until
+                // a real expedition replaces it; clearing them here could replay already paid dust.
                 // ランが変わったら分解の重複排除と追加ダストの支払状態を初めから（トークンの台帳はランをまたいで保持する）。
                 if (ledger.RunId != null && (ledger.OverflowBonusPaid > 0 || ledger.OverflowBonusBlocked))
                 {

@@ -8,6 +8,8 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
+- 鞄からあふれた遺物の追加ドリームダストが、受け取れなくなることがある問題を修正しました。 / Fixed extra Dream Dust from satchel overflow sometimes becoming unavailable.
+
 ---
 
 ## v2.10.27 — Star map loadouts（2026-10-12）

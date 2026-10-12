@@ -73,7 +73,8 @@ namespace SodRpg.Mod
         {
             var run = Profile.Run;
             Profile.ReceiveOverflowDreamDust = false;
-            if (!_overflowBonusChosen || !_overflowBonusAvailable || !ContinueReady || run == null
+            if (!_overflowBonusChosen || !_overflowBonusAvailable || !ContinueReady || _nativeContinueCheckpoint != null || run == null
+                || run.RunId != NetworkedManagerBase<GameManager>.softInstance?.runId
                 || _overflowBonusReplyRun != run.RunId || _overflowBonusReplyLedger <= 0
                 || Profile.OverflowBonusPendingRunId != null && Profile.OverflowBonusPendingRunId != run.RunId) return;
             if (run.OverflowDreamDustLedgerId == 0 && run.OverflowDreamDustTotal == 0)
@@ -108,7 +109,13 @@ namespace SodRpg.Mod
             UpdateOverflowBonusPreference();
             ReleaseStaleOverflowBonus();
             if (!_overflowBonusChosen && Profile.OverflowBonusPendingRunId == null) return;
-            if (!ContinueReady || DewPlayer.local == null) return;
+            if (!ContinueReady || _nativeContinueCheckpoint != null)
+            {
+                _overflowBonusFirstSend = -1f;
+                _nextOverflowBonusSend = 0;
+                return; // Native restore time is not evidence that the optional host capability is missing.
+            }
+            if (DewPlayer.local == null) return;
             float now = Time.unscaledTime;
             var run = Profile.Run;
             string runId = Profile.OverflowBonusPendingRunId ?? run?.RunId;
