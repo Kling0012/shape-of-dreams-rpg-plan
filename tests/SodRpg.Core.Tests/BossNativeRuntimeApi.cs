@@ -250,7 +250,8 @@ namespace SodRpg.Mod
         public EntityControl Control { get { if (_control == null) _control = new EntityControl { entity = this }; return _control; } }
         public Transform transform = new Transform();
         public bool CheckEnemyOrNeutral(Entity other) => other != null && other.GetRelation(this) == EntityRelation.Enemy;
-        public bool IsAnyBoss() => false;
+        public bool isAnyBoss;
+        public bool IsAnyBoss() => isAnyBoss;
     }
     internal partial class CastInfo { public Entity target; public Vector3 point; public Vector3 forward => Vector3.forward; }
     internal partial struct DamageData

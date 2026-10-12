@@ -8,6 +8,10 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
+### 不具合修正 / Bug fixes
+
+- 石や敵が無敵になって攻撃が効かなくなることがある問題を修正しました。 / Fixed stones and enemies sometimes becoming invulnerable.
+
 ---
 
 ## v2.10.28 — Mist, trade and overflow fixes（2026-10-13）

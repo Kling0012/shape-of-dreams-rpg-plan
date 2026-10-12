@@ -20,7 +20,7 @@ namespace HarmonyLib
 }
 namespace Mirror
 {
-    internal static class NetworkServer
+    internal static partial class NetworkServer
     {
         private static bool _active = true;
         // BossEnsure reads this once per entry, so tests use it as a recursion depth
@@ -32,6 +32,7 @@ namespace Mirror
             get { ActiveRead?.Invoke(Environment.CurrentManagedThreadId); return _active; }
             set { _active = value; }
         }
+        public static bool isLoadingScene;
     }
     internal static class NetworkTime { public static double time; }
 }
@@ -57,7 +58,7 @@ namespace SodRpg.Mod
         }
     }
     internal sealed partial class EntityStatus { public bool hasCrowdControlImmunity; }
-    internal class BasicEffect
+    internal partial class BasicEffect
     {
         public Entity victim { get; set; }
         public StatusEffect parent { get; set; }
