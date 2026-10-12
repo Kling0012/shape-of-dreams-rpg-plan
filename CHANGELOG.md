@@ -8,6 +8,10 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
+### 新機能 / New features
+
+- 星図のロードアウトを追加しました。旅人ごとに5つまで星の割り振りを保存して、遠征の外で切り替えられます（星のポイントと装備は共通）。 / Added star map loadouts: save up to 5 star allocations per traveler and switch between them outside expeditions (star points and gear are shared).
+
 ---
 
 ## v2.10.26 — Essence slot interval and cap in F6（2026-10-11）

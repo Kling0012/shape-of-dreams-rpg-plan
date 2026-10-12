@@ -479,6 +479,12 @@ namespace SodRpg.Core.Game
             foreach (var pair in source.Upgrades) target.Upgrades.Add(pair.Key, pair.Value);
             target.Codex.Clear();
             target.Codex.UnionWith(source.Codex);
+            foreach (var pair in source.Heroes)
+            {
+                if (!StarLoadouts.HasSavedState(pair.Value) && (!target.Heroes.TryGetValue(pair.Key, out var existing)
+                    || !StarLoadouts.HasSavedState(existing))) continue;
+                target.Hero(pair.Key).CopyStarConfigurationFrom(pair.Value);
+            }
             target.FeatsClaimed.Clear();
             target.FeatsClaimed.UnionWith(source.FeatsClaimed);
             target.Stats.RelicsFound = source.Stats.RelicsFound;

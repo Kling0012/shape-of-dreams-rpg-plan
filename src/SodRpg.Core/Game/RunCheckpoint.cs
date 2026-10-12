@@ -100,6 +100,18 @@ namespace SodRpg.Core.Game
                     if (relic == null || (int)relic.Slot != slot
                         || restored.PendingTrades.Any(trade => trade.Uid == relic.Uid)) hero.Equipped[slot] = null;
                 }
+            // Loadouts are lobby preferences, not expedition rewards. Keep the latest slots with checkpoint XP/gear.
+            foreach (var pair in current.Heroes)
+            {
+                if (!StarLoadouts.HasSavedState(pair.Value) && (!restored.Heroes.TryGetValue(pair.Key, out var existing)
+                    || !StarLoadouts.HasSavedState(existing))) continue;
+                var hero = restored.Hero(pair.Key);
+                hero.CopyStarConfigurationFrom(pair.Value);
+                var active = StarLoadouts.Repair(restored, pair.Key, StarLoadout.Capture(hero,
+                    hero.StarLoadouts[hero.ActiveStarLoadout]?.Name), hero.ActiveStarLoadout, notes);
+                active.ApplyTo(hero);
+                hero.StarLoadouts[hero.ActiveStarLoadout] = active;
+            }
             current.RestoreFrom(restored);
             return current;
         }
