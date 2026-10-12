@@ -1,6 +1,6 @@
 # 技術プロトタイプ計画（案）
 
-対象: `README.md`（設計提案 v0.1）第16章「技術方針と実現性の前提」と第17章「開発段階と依存関係」
+対象: `docs/development-plan.md`（旧 `README.md`、設計提案 v0.1）第16章「技術方針と実現性の前提」と第17章「開発段階と依存関係」
 作成日: 2026年10月1日
 位置づけ: 実装計画の提案であり、承認済みの仕様ではありません。リポジトリへの反映は行っていません。実機・本体アセンブリでの確認も行っていません。
 
@@ -357,7 +357,7 @@ P0 環境確認
 
 ## 13. 出典と確認範囲
 
-- 本リポジトリ `README.md` v0.1 第13・14・16・17・19・20・22章
+- 本リポジトリ `docs/development-plan.md`（旧 `README.md`）v0.1 第13・14・16・17・19・20・22章
 - 公式MODドキュメント: LizardSmoothie/ShapeOfDreamsModDocs（README第22章の S7）。プロジェクトのテンプレート、`metadata.json`、`ModBehaviour`、JSON上書き、Harmony、`isAlteringGameplay`、Workshop公開の記述を参照
 - 第三者リポジトリ 0x2E757/Shape-of-Dreams-mods: `-moddir`、`about/metadata.json`、Harmonyの解除方式、共通コードのソース共有方式
 - 第三者リポジトリ Dannywb1996/shape-of-dreams-mods（README第22章の S13）: RPG Items Modの機能の概要（実装の詳細は読み取れていない）
