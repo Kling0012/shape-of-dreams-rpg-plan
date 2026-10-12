@@ -83,6 +83,9 @@ namespace SodRpg.Mod
         public uint netId;
         public bool isActive = true;
         public float currentHealth = 100;
+        public DewPlayer owner;
+        public readonly EntityControl Control = new EntityControl();
+        public readonly EntityVisual Visual = new EntityVisual();
         public EntityStatus Status = new EntityStatus();
         public EntityRelation GetRelation(Entity other) => EntityRelation.Enemy;
     }
@@ -92,8 +95,12 @@ namespace SodRpg.Mod
         public float currentHealth { get; set; }
         public int fireStack, lightStack, darkStack;
         public bool hasCold;
+        public bool isDead, isInConversation, hasInvulnerable;
+        // ミストの行動不能保険（HostAuthority.CrowdControlRecovery.cs）が走査する本体の効果リスト。
+        private readonly List<BasicEffect> _basicEffects = new List<BasicEffect>();
         public bool HasElemental(ElementalType type) => false;
         public bool TryGetStatusEffect<T>(out T effect) where T : class { effect = null; return false; }
+        private void RemoveBasicEffect(BasicEffect effect) { _basicEffects.Remove(effect); effect.isAlive = false; }
     }
     internal class Monster : Entity
     {
@@ -102,7 +109,8 @@ namespace SodRpg.Mod
         public bool disableLoot;
     }
     internal sealed class BossMonster : Monster { }
-    internal sealed class Hero : Entity
+    // Hero_Mist の継承元。本体では非シールド。
+    internal class Hero : Entity
     {
         public readonly HeroSkill Skill = new HeroSkill();
         public bool isInCombat, isKnockedOut;
@@ -157,6 +165,54 @@ namespace SodRpg.Mod
     internal sealed class Ai_D_IcyVeins_Damage : Actor { }
     internal sealed class Ai_D_BeautifulThreat_Feather : Actor { }
     internal sealed class Se_HunterBuff { public bool enableGoldAndExpDrops; }
+    // ここから下はミストの行動不能修正（NativeMistLifetime.cs / HostAuthority.CrowdControlRecovery.cs）用の
+    // 本体 API。移動・中断・効果保持の記録だけを模倣し、時間は _tickNow で進める。
+    internal sealed class EntityVisual { public bool isSpawning; }
+    internal sealed class Hero_Mist : Hero { }
+    internal sealed class Ai_Q_Fleche_Dash { public void OnCancel() { } }
+    internal class EntityControl
+    {
+        public Entity entity;
+        public Displacement ongoingDisplacement;
+        public int Cancels;
+        public void CancelOngoingDisplacement() { Cancels++; ongoingDisplacement = null; }
+        private void CancelOngoingDisplacementLocal() { Cancels++; ongoingDisplacement = null; }
+    }
+    internal class Displacement
+    {
+        public float elapsedTime, cancelTime;
+        public Action onCancel, onFinish;
+    }
+    internal sealed class DispByTarget : Displacement
+    {
+        public bool isFriendly;
+        public Entity target;
+    }
+    internal static class EntityLifetimeExtensions
+    {
+        // 本体の拡張と同じ意味: 消失・非アクティブ・死亡・KO を無効対象とする。
+        internal static bool IsNullInactiveDeadOrKnockedOut(this Entity entity)
+            => entity == null || !entity.isActive || entity.currentHealth <= 0
+               || entity is Hero hero && hero.isKnockedOut;
+    }
+    internal class BasicEffect { public bool isAlive = true; public StatusEffect parent; }
+    internal sealed class StunEffect : BasicEffect { }
+    internal sealed class RootEffect : BasicEffect { }
+    internal class StatusEffect : Actor
+    {
+        public Entity victim;
+        public bool isActive = true;
+        public float creationTime;
+        public float? maxDuration, remainingDuration;
+        public void SetTimer(float duration) { maxDuration = duration; remainingDuration = duration; }
+        public void SetTimer(float duration, float usePrevious) { maxDuration = duration; }
+        public void StopBasicEffect(BasicEffect effect) => effect.isAlive = false;
+    }
+    internal sealed class Se_GenericEffectContainer : StatusEffect { public string id; }
+    internal static class ManagerBase<T> { public static T softInstance; }
+    internal sealed class CameraManager { public bool isPlayingCutscene; }
+    // NativeActorLifetime.cs は未リンク。この境界では警告の受け口だけが必要。
+    internal static class NativeActorLifetime { internal static void WarnOnce(string kind, Exception error) { } }
     internal struct ReactionChain { }
     internal enum DamageAttribute { IsCrit }
     internal struct DamageData { public float amount; public bool HasAttr(DamageAttribute attr) => false; }
@@ -365,6 +421,7 @@ namespace SodRpg.Mod
         private readonly HashSet<DewPlayer> _buildRejectionsLogged = new HashSet<DewPlayer>();
         private readonly List<DewPlayer> _buildUpdatePlayers = new List<DewPlayer>();
         private readonly Dictionary<Hero, float> _applyRetryAt = new Dictionary<Hero, float>();
+        private float _tickNow;
         private float _nextGemSlotCheck;
         private bool _pressureDirty;
         // 協力取引ホスト（HostAuthority.CoopTrade.cs は未リンク）。NativePersistence.targets が
@@ -408,9 +465,15 @@ namespace SodRpg.Mod
         private KeystonePayload TransformAuthoredPayload(Hero hero, KeystonePayload payload, string source, string receiver, KeystoneSourceKind kind) => throw new NotSupportedException();
         internal sealed class HeroRuntime
         {
+            public Hero Hero;
             public ReceivedBuild AppliedBuild;
             public readonly List<PendingGimmick> PendingGimmicks = new List<PendingGimmick>();
             public readonly Prunable Gimmicks = new Prunable(), PairCombos = new Prunable();
+            // HostAuthority.cs の HeroRuntime と同じ行動不能保険の観測状態。
+            public BasicEffect OrphanCrowdControl;
+            public float OrphanCrowdControlSince = -1f;
+            public BasicEffect FrozenCrowdControl;
+            public float FrozenCrowdControlRemaining, FrozenCrowdControlSince;
         }
         internal sealed class PendingGimmick { public AuthoredPending Authored; }
         internal struct AuthoredPending { public bool Enabled; public object Legacy; public MemoryActivationEvent Notification; }
