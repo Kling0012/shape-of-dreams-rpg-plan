@@ -87,6 +87,10 @@ namespace SodRpg.Mod
             public int MovementChargeApplied;
             public int MovementChargeDesired;
             public bool MovementChargeBroken;
+            public BasicEffect OrphanCrowdControl;
+            public float OrphanCrowdControlSince = -1f;
+            public BasicEffect FrozenCrowdControl;
+            public float FrozenCrowdControlRemaining, FrozenCrowdControlSince;
             // v1.32 B: the stacks live in HostAuthority.RunGrowthLedger (outside this runtime); only their applied effect is kept here.
             public StatBonus GrowthBonus;
             public readonly Dictionary<Stat, double> GrowthTotals = new Dictionary<Stat, double>();
@@ -349,7 +353,7 @@ namespace SodRpg.Mod
                 "boss effects", "boss visuals", "identity strikes", "gimmicks v129", "back-off charge", "sap prune", "attribution prune", "runtime", "run growth", "currency",
                 "shield pools", "spawns", "monster prune", "monster behaviors", "kill replay", "sunders",
                 "nightmare regen", "classification resync",
-                "overflow bonus", "culinary snap",
+                "overflow bonus", "culinary snap", "crowd-control recovery",
             };
             _tickStages = new Action[]
             {
@@ -358,7 +362,7 @@ namespace SodRpg.Mod
                 StageBossEffects, TickBossVisualSnapshots, UpdateIdentityStrikes, StageGimmicksV129, StageBackOffCharge, StageSapPrune, PruneMemoryAttribution, StageRuntimes, StageRunGrowth, StageCurrency,
                 StageModShieldPools, ProcessSpawns, StageMonsterPrune, StageMonsterBehaviors, TickKillReplay, StageSunders,
                 StageNightmareRegen, StageClassificationResync,
-                TickOverflowBonus, CulinaryMagnet.SnapToOwners,
+                TickOverflowBonus, CulinaryMagnet.SnapToOwners, StageCrowdControlRecovery,
             };
             _tickGuard = new TickGuard(_tickStages, _tickStageNames, 10f, message => Log.Error("Host tick " + message));
         }
