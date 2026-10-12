@@ -1,5 +1,5 @@
-[b]Added star map loadouts: save up to 5 star allocations per traveler and switch between them.[/b]
-[b]星図のロードアウトを追加しました。旅人ごとに5つまで星の割り振りを保存して切り替えられます。[/b]
+[b]Fixes for stuck trades, Mist getting stuck, and missing overflow Dream Dust.[/b]
+[b]取引が止まる問題、ミストが動けなくなる問題、鞄あふれの追加ダストの問題を直しました。[/b]
 
 [h1]Dreamforge RPG[/h1]
 Turns every run into part of a long RPG journey: relics you keep, a risky "secure or delve" choice at every zone, a star map per Traveler, a forge, and long-term goals. Co-op ready.

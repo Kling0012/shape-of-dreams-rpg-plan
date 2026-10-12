@@ -8,13 +8,25 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
-### 不具合修正 / Bug fixes
+---
 
-- ミストで、スタンしたまま動けなくなることがある問題を修正しました。 / Fixed Mist sometimes being left permanently stunned.
+## v2.10.28 — Mist, trade and overflow fixes（2026-10-13）
 
-- 取引で「前の取引の結果を確認しています」が出たまま、取引できなくなることがある問題を修正しました。 / Fixed trading sometimes staying blocked on 'Checking the result of an earlier trade'.
+取引が止まる問題、ミストが動けなくなる問題、鞄あふれの追加ドリームダストが受け取れない問題を直しました。 / Fixes for stuck trades, Mist getting stuck, and missing overflow Dream Dust.
 
-- 鞄からあふれた遺物の追加ドリームダストが、受け取れなくなることがある問題を修正しました。 / Fixed extra Dream Dust from satchel overflow sometimes becoming unavailable.
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- ミストで、フレッシュの突進中に狙った敵が倒れたり消えたりすると、動けないまま固まることがある問題を修正しました。あわせて、付けた相手がいなくなったスタンや足止めが異常に長く残ったときは、自動で外れるようにしました。 / Fixed Mist sometimes freezing in place when the target of a Flèche dash died or vanished. Stuns and roots left behind abnormally long by a vanished source are now cleared automatically.
+- 取引で「前の取引の結果を確認しています」と出たまま、取引できなくなることがある問題を修正しました。60秒たっても確定しない取引は待ちを解き、何を待っているかを表示するようにしました。 / Fixed trading sometimes staying blocked on "Checking the result of an earlier trade". Results still unconfirmed after 60 seconds no longer block trading, and the screen now shows what it is waiting for.
+- 鞄からあふれた遺物の追加ドリームダストが「使えません」になり、受け取れなくなることがある問題を修正しました。 / Fixed extra Dream Dust from satchel overflow sometimes becoming unavailable.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
 
 ---
 
