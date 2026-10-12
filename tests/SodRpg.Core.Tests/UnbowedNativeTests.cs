@@ -57,7 +57,7 @@ namespace SodRpg.Mod
         }
     }
     internal sealed partial class EntityStatus { public bool hasCrowdControlImmunity; }
-    internal class BasicEffect
+    internal partial class BasicEffect
     {
         public Entity victim { get; set; }
         public StatusEffect parent { get; set; }
