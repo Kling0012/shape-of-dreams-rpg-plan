@@ -16,12 +16,14 @@ namespace SodRpg.Mod
         Slow = 1u,
         Invulnerable = 0x800u,
         Unstoppable = 0x1000u,
+        Protected = 0x2000u,
+        Uncollidable = 0x4000u,
         Untargetable = 0x8000u
     }
 
     internal partial class BasicEffect { public BasicEffectMask mask; }
 
-    internal class PropEntity : Entity { }
+    internal class PropEntity : Entity { public float hitInvulnerableTime = 0.1f; }
     internal class PropEnt_Merchant_Base : PropEntity { }
     internal class MockEntity : Entity { }
     internal sealed class InvulnerableEffect : BasicEffect { }
