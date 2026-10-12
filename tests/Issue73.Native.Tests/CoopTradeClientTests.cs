@@ -242,6 +242,41 @@ namespace Issue73.Native.Tests
                 session.CoopTradeUnavailableReason);
         }
 
+        // #389：元ホストの応答がない協力予約が「前の取引の結果を確認しています」のまま全体の待機を占め続けた。
+        // 60秒で待機だけを解放し、予約品は保持したまま元ホストへの取消の再試行へ切り替わる。
+        [Fact]
+        public void A_stale_pending_coop_trade_releases_the_wait_after_60s_and_retries_with_a_cancel()
+        {
+            var session = Guest();
+            CoopTradeRules.Prepare(session.Profile, "pending-1", "host-key", new CoopTradeOffer());
+            Assert.True(session.CoopTradeLocked); // 60秒未満は前と同じ全体の待機
+            Assert.Equal(Loc.T("前の取引の結果を確認しています", "Checking the result of an earlier trade"),
+                session.CoopTradeUnavailableReason);
+            Assert.False(session.CanCoopTrade);
+
+            DeliverState(session, new DreamforgeCoopTradeState { kind = "roster", hostKey = "host-key",
+                keys = new string[0], names = new string[0], available = new bool[0] });
+            NetworkClient.Sent.Clear();
+            Set(session, "_nextCoopProbe", 0f);
+            Call(session, "TickCoopTrade");
+            Assert.Contains(SentCommands("query"), command => command.id == "pending-1"); // 60秒未満は照会
+
+            UnityEngine.Time.unscaledTime += 60f;
+            Heartbeat(session);
+            Assert.False(session.CoopTradeLocked); // 待機解除：新しい協力取引を受け付けられる
+            Assert.False(session.CanCoopTrade);    // 予約自体はまだ確定していない
+            Assert.NotNull(session.Profile.CoopTradePending); // 予約品は保持（消失させない）
+            Assert.Equal(Loc.T("前の協力取引が60秒以上未確定です。予約品を保持しています（元のホストへの再接続・所持品の空きを確認してください）",
+                "The earlier cooperative trade is unresolved for over 60 seconds. Reserved assets are retained (check the original host connection and inventory space)"),
+                session.CoopTradeUnavailableReason);
+
+            NetworkClient.Sent.Clear();
+            Set(session, "_nextCoopProbe", 0f);
+            Call(session, "TickCoopTrade");
+            Assert.Contains(SentCommands("cancel"), command => command.id == "pending-1"); // 取消の再試行
+            Assert.DoesNotContain(SentCommands("query"), command => command.id == "pending-1");
+        }
+
         [Fact]
         public void Roster_readiness_is_parsed_separately_and_a_legacy_host_without_ready_stays_permissive()
         {
