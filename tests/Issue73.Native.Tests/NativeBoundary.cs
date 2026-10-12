@@ -485,7 +485,7 @@ namespace SodRpg.Mod
             && (!Profile.LobbyReturnedRunIds.Contains(ActiveRunId) || LobbyReturnPending);
         public string ActiveRunId { get; internal set; }
         public bool HasPendingTrades => _trades.PendingCount > 0 || CoopTradeLocked;
-        private bool CoopTradeLocked => Profile.CoopTradePending != null;
+        // CoopTradeLocked is extracted from the production session.
         private bool _coopNativeSaving;
         private string CoopUnavailable() => Loc.T("トレードは安全な時・保存完了後のみ利用できます。", "Trade is available only at a safe moment, after saving completes.");
         // 協力取引クライアント（ClientSession.CoopTrade.cs は未リンク）。NativePersistence.targets が
@@ -504,6 +504,9 @@ namespace SodRpg.Mod
         private float _coopOfferSentAt, _nextCoopOfferRetry;
         private bool _coopSettlementUnsaved, _coopDisabled;
         private long _coopPrepareSaveRevision;
+        private string _coopWaitingId, _coopWaitReason;
+        private float _coopWaitingAt, _coopWaitReasonAt;
+        private bool _coopWaitReleased;
         private string _coopTradeWarning, _coopConnectionWarning;
         public CoopTradeView CoopTrade { get; set; }
         public string CoopTradeWarning { get => _coopTradeWarning ?? _coopConnectionWarning; set => _coopTradeWarning = value; }

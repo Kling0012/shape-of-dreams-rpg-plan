@@ -60,6 +60,16 @@ namespace SodRpg.Core.Game
         }
         public void Clear() => _kills.Clear();
 
+        public void RetainRun(string runId)
+        {
+            int count = _kills.Count;
+            for (int i = 0; i < count; i++)
+            {
+                var kill = _kills.Dequeue();
+                if (kill.RunId == runId) _kills.Enqueue(kill);
+            }
+        }
+
         /// <summary>
         /// Preserve event order and never replay a fact into a different expedition.
         /// A kill leaves the queue only after its reward succeeded: a throwing reward keeps the

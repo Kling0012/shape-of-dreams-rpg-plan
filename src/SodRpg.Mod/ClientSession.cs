@@ -243,6 +243,18 @@ namespace SodRpg.Mod
                     "The trade response is late. The wait was released; checking the result with the host.")));
                 SaveNow();
             }
+            if (_trades.DetachStale(Time.unscaledTime) > 0)
+            {
+                Emit(new GameEvent(EventKind.Warning, Loc.T(
+                    "60秒以上確認できない取引の待ちを解除しました。予約品は保持し、遅れた結果を引き続き確認します。他の品の取引は続行できます。",
+                    "Released the wait for trades unresolved for over 60 seconds. Reserved assets are retained and late results are still checked. Other assets can be traded.")));
+                SaveNow();
+            }
+            if (Profile.PendingSalvage.Count > 0)
+            {
+                var returned = Rules.RestorePendingSalvage(Profile, keepUids: _trades.ReservedSalvageUids());
+                if (returned.Count > 0) { Emit(returned); SaveNow(); }
+            }
             if (_hostLedgerId == 0) SendLedgerProbe();
             SendDueTradeQueries();
         }

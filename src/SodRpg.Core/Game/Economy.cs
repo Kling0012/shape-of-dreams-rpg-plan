@@ -81,9 +81,11 @@ namespace SodRpg.Core.Game
         public long LedgerId;
         /// <summary>
         /// ホストが「記録の有無を確かめられない」と答えた取引。対価も返却も確定せず、遅れて届く成功・失敗の応答か、
-        /// 利用者の明示的な放棄（TradeLedger.TakeLost）で初めて片付く。保存する。
+        /// 利用者の明示的な放棄（TradeLedger.TakeLost）で初めて片付く。Detached 後は低頻度で照会も再試行する。保存する。
         /// </summary>
         public bool Lost;
+        /// <summary>Long-lived uncertainty no longer consumes the active manual trade budget; the receipt and reservation remain durable.</summary>
+        public bool Detached;
         // 以下は v1.31 のホスト検証に使う引数（金額ではなく、金額の計算に使う値）。
         /// <summary>MerchantGold：価格の計算に使った熱度。</summary>
         public int Heat;
@@ -104,7 +106,7 @@ namespace SodRpg.Core.Game
         {
             Token = Token, Kind = Kind, SpendGold = SpendGold, SpendDust = SpendDust, EarnDust = EarnDust, Uid = Uid,
             StartedAt = StartedAt, Unresolved = Unresolved, Queries = Queries, NextQueryAt = NextQueryAt,
-            LedgerId = LedgerId, Lost = Lost, Heat = Heat, MerchantOfferId = MerchantOfferId,
+            LedgerId = LedgerId, Lost = Lost, Detached = Detached, Heat = Heat, MerchantOfferId = MerchantOfferId,
             Batches = Batches, Rarity = Rarity, Enhance = Enhance,
             RunId = RunId, Relic = Relic?.Clone(), FallbackShards = FallbackShards,
         };
@@ -196,23 +198,55 @@ namespace SodRpg.Core.Game
             }
         }
 
-        /// <summary>Manual trades still held, including unresolved and lost results; legacy overflow settlements do not consume this budget.</summary>
+        /// <summary>Active manual trades, including recent unresolved and lost results; detached receipts and legacy overflow do not consume this budget.</summary>
         public int ManualHeldCount
         {
             get
             {
                 int n = 0;
                 foreach (var t in _pending.Values)
-                    if (t.Kind != TradeKind.SatchelOverflowDust) n++;
+                    if (t.Kind != TradeKind.SatchelOverflowDust && !t.Detached) n++;
                 return n;
             }
         }
 
         /// <summary>Whether another manual trade fits its budget; overflow settlements do not consume that budget.</summary>
-        public bool CanBegin => ManualHeldCount < MaxHeld;
+        public bool CanBegin => ManualHeldCount < MaxHeld && HeldCount < MaxRestored;
 
         /// <summary>応答待ち・結果不明を合わせて、まだ対価や返却が確定していない取引の数。プロフィールの切り替えなどを止めるのに使う。</summary>
         public int HeldCount => _pending.Count;
+
+        public int ActiveHeldCount
+        {
+            get
+            {
+                int count = 0;
+                foreach (var trade in _pending.Values) if (!trade.Detached) count++;
+                return count;
+            }
+        }
+
+        /// <summary>Release only the global wait, never infer a refund from silence or a different ledger.</summary>
+        public int DetachStale(double now)
+        {
+            int count = 0;
+            foreach (var trade in _pending.Values)
+            {
+                if (trade.Detached || !trade.Unresolved || now - trade.StartedAt < 60.0) continue;
+                trade.Detached = true;
+                trade.Queries = 0;
+                trade.NextQueryAt = now;
+                count++;
+            }
+            return count;
+        }
+
+        public bool IsActiveReservation(string uid)
+        {
+            foreach (var trade in _pending.Values)
+                if (!trade.Detached && trade.Kind == TradeKind.SalvageForDust && trade.Uid == uid) return true;
+            return false;
+        }
 
         public bool HasPending(TradeKind kind)
         {
@@ -281,16 +315,18 @@ namespace SodRpg.Core.Game
 
         /// <summary>
         /// ホストへ照会する時期が来た結果不明の取引を集める（集めた取引は照会回数と次の時刻を進める）。
-        /// 接続していないときは呼ばない（呼び出し側が判断する）。上限回数に達した取引は照会しないが、遅れた応答は受け付け続ける。
+        /// 接続していないときは呼ばない（呼び出し側が判断する）。通常の待機中は上限回数まで。Detached は低頻度で再試行し、遅れた応答も受け付け続ける。
         /// </summary>
         public int CollectDueQueries(double now, List<PendingTrade> into)
         {
             int n = 0;
             foreach (var t in _pending.Values)
             {
-                if (!t.Unresolved || t.Lost || t.Queries >= Economy.MaxTradeQueries || now < t.NextQueryAt) continue;
+                if (!t.Unresolved || now < t.NextQueryAt) continue;
+                if (!t.Detached && (t.Lost || t.Queries >= Economy.MaxTradeQueries)) continue;
+                if (t.Detached && t.Queries >= Economy.MaxTradeQueries) t.Queries = 0;
                 t.Queries++;
-                t.NextQueryAt = now + Economy.TradeQueryIntervalSeconds;
+                t.NextQueryAt = now + (t.Detached ? 60.0 : Economy.TradeQueryIntervalSeconds);
                 into.Add(t);
                 n++;
             }

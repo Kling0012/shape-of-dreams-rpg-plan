@@ -140,7 +140,7 @@ namespace SodRpg.Mod
             // ProfileSlots.Save synchronously retries the complete current snapshot after draining.
         }
 
-        private bool ProfileSessionSettled => !HasHeldTrades && !CoopTradeLocked && CoopTrade == null
+        private bool ProfileSessionSettled => !HasHeldTrades && Profile.CoopTradePending == null && !CoopTradeLocked && CoopTrade == null
             && _pendingRunRewards.Count == 0 && !_runChoiceProgress.HasPendingArrival && !_pendingRunVictory.HasValue
             && _pendingResultRunId == null && Profile.PendingSalvage.Count == 0 && _interruptedRelicNotices == null;
 
