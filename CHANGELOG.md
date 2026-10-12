@@ -8,9 +8,23 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
-### 不具合修正 / Bug fixes
+---
 
-- 石や敵が無敵になって攻撃が効かなくなることがある問題を修正しました。 / Fixed stones and enemies sometimes becoming invulnerable.
+## v2.10.29 — Invulnerable stones and enemies fix（2026-10-13）
+
+石や敵が無敵になって攻撃が効かなくなることがある問題を直しました。 / A fix for stones and enemies becoming invulnerable.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- ゴールドやドリームダストを落とす石や、イベントの部屋の石、敵が、無敵になって攻撃が効かなくなることがある問題を修正しました。協力プレイの参加者側で効果が正しく片付かないことがあったのを直し、あわせて、持ち主のいなくなった無敵が残ったときは自動で外れるようにしました。 / Fixed stones that drop gold or Dream Dust, event-room stones and enemies sometimes becoming invulnerable. Effects that were not cleaned up correctly on co-op participants are fixed, and leftover invulnerability without a source is now cleared automatically.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
 
 ---
 
