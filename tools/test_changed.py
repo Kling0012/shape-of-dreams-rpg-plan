@@ -13,12 +13,14 @@ classes run with ``dotnet test <project> --filter ...``.
 
 The test projects serialize their own tests (shared game state:
 DisableTestParallelization), so the projects are built serially and their tests
-run as parallel ``dotnet test`` processes. The Core suite is additionally split
-into several class-filtered processes: the five heavyweight classes run alone
-and the rest is balanced by test-method count. With ``--slow``, every class
-holding Speed=Slow tests gets a process of its own (SODRPG_SLOW=1), so the
-exhaustive tests of different classes overlap. The union of the processes
-always selects exactly the tests a single unfiltered run would.
+run as parallel ``dotnet test`` processes (at most one per CPU core). The Core
+suite is additionally split into class-filtered processes: each of the five
+heavyweight classes anchors one process and the remaining classes are
+distributed over the same processes by test-method count. With ``--slow``,
+every class holding Speed=Slow tests anchors a process of its own
+(SODRPG_SLOW=1), so the exhaustive tests of different classes overlap. The
+union of the processes always selects exactly the tests a single unfiltered
+run would.
 
 If nothing test-relevant changed, a message is printed and the exit code is 0.
 Otherwise the exit code is the first non-zero ``dotnet test`` exit code.
@@ -51,8 +53,9 @@ DATA_DIRS = ("tools/star-manifest", "tools/lowrarity", "tools/balance")
 # The Core project is split into parallel per-class-filter processes (#404):
 # each test assembly serializes its own tests (shared Loc/StarClusters state),
 # so the wall-clock win comes from separate processes. The five classes below
-# take 62% of the suite's serial run time and each runs alone in its own
-# process; the remaining classes are balanced by test-method count.
+# take 62% of the suite's serial run time and #404 keeps them in separate
+# processes; five is also the smallest process count that allows that, so the
+# split runs Core over exactly five processes.
 CORE_TESTS_PROJECT = "tests/SodRpg.Core.Tests/SodRpg.Core.Tests.csproj"
 HEAVY_CORE_CLASSES = frozenset({
     "SodRpg.Core.Tests.AllocationEquivalenceV131Tests",
@@ -61,17 +64,19 @@ HEAVY_CORE_CLASSES = frozenset({
     "SodRpg.Core.Tests.PressureRewardMultiplierTests",
     "SodRpg.Core.Tests.StarMapOptimizeCommandTests",
 })
-CORE_REMAINDER_PROCESSES = 3
+CORE_PROCESS_COUNT = 5
 
 TYPE_DECL_RE = re.compile(
     r"\b(?:class|struct|enum|interface|record)(?:\s+(?:class|struct))?\s+([A-Za-z_]\w*)"
 )
 CLASS_DECL_RE = re.compile(r"\bclass\s+([A-Za-z_]\w*)")
-# A class declared directly inside a (block or file-scoped) namespace: four
-# spaces of indentation followed by an accessibility keyword. Test classes in
-# this repository all follow that layout; nested helper classes do not count.
-TOP_LEVEL_CLASS_RE = re.compile(
-    r"^ {4}(?:public|internal)\s+(?:sealed\s+|static\s+|abstract\s+|partial\s+)*class\s+([A-Za-z_]\w*)",
+# A class declaration line: leading whitespace, optional modifiers, ``class``.
+# Namespace-level classes are the declarations at the smallest indentation of
+# their namespace segment (nested helper classes sit strictly deeper), so the
+# scan follows whatever indentation a file uses instead of assuming one.
+CLASS_LINE_RE = re.compile(
+    r"^([ \t]*)(?:(?:public|internal|protected|private|sealed|static|abstract|partial)\s+)*"
+    r"class\s+([A-Za-z_]\w*)",
     re.M,
 )
 SLOW_TEST_RE = re.compile(r'\[\s*SlowFact\b|Trait\(\s*"Speed"\s*,\s*"Slow"\s*\)')
@@ -131,8 +136,10 @@ def top_level_test_classes(content: str) -> list[str]:
     real fully-qualified names (``Outer+Nested``) never match a filter anyway.
     A file may declare several namespaces (stub api + the real test classes);
     each declaration owns the segment up to the next one, so every class keeps
-    the namespace it is declared in. Files with an unusual layout fall back to
-    the inclusive scan.
+    the namespace it is declared in. Within a segment the namespace-level
+    classes are the ones at the smallest indentation, whatever that indentation
+    is. Files without any class declaration line fall back to the inclusive
+    scan.
     """
     stripped = strip_comments(content)
     declarations = list(NAMESPACE_RE.finditer(stripped))
@@ -143,7 +150,13 @@ def top_level_test_classes(content: str) -> list[str]:
                  for i, match in enumerate(declarations)])
     classes: list[str] = []
     for namespace, segment in segments:
-        for name in TOP_LEVEL_CLASS_RE.findall(segment):
+        found = CLASS_LINE_RE.findall(segment)
+        if not found:
+            continue
+        top = min(len(indent.replace("\t", "    ")) for indent, _ in found)
+        for indent, name in found:
+            if len(indent.replace("\t", "    ")) != top:
+                continue
             fqn = f"{namespace}.{name}" if namespace else name
             if fqn not in classes:
                 classes.append(fqn)
@@ -169,8 +182,8 @@ def slow_test_classes(files: dict[str, str]) -> set[str]:
 def class_weights(files: dict[str, str]) -> dict[str, float]:
     """Test-method count per class (shared evenly when a file declares several).
 
-    A rough proxy for run time, used only to balance the leftover classes
-    across processes.
+    A rough proxy for run time, used only to spread the remaining classes
+    evenly over the Core processes.
     """
     weights: dict[str, float] = {}
     for path, content in files.items():
@@ -185,31 +198,41 @@ def class_weights(files: dict[str, str]) -> dict[str, float]:
     return weights
 
 
-def balance_classes(classes, weights: dict[str, float], groups: int) -> list[list[str]]:
-    """Greedily balance classes over ``groups`` lists by weight (heaviest first)."""
-    buckets: list[list[str]] = [[] for _ in range(groups)]
-    loads = [0.0] * groups
-    for name in sorted(classes, key=lambda c: (-weights.get(c, 0.0), c)):
-        index = min(range(groups), key=lambda i: (loads[i], i))
-        buckets[index].append(name)
-        loads[index] += weights.get(name, 0.0)
-    return [bucket for bucket in buckets if bucket]
-
-
 def core_run_groups(core_classes: set[str], slow_classes: set[str],
                     weights: dict[str, float]) -> list[list[str]]:
     """Split the Core suite's classes into one list per parallel process.
 
-    The heavyweight classes (and, with ``--slow``, every class holding slow
-    tests) run alone; the rest is balanced over ``CORE_REMAINDER_PROCESSES``
-    processes. Every class stays in exactly one group, so the union of the
-    groups runs exactly the tests a single unfiltered process would.
+    Each heavyweight class (and, with ``--slow``, every class holding slow
+    tests) anchors a process of its own; classes with detected test methods
+    are attached to the currently least-loaded process, keeping the count at
+    ``CORE_PROCESS_COUNT`` unless the anchored classes alone exceed it. The
+    anchors are all known long runners, so every anchor starts with the same
+    load instead of its (unrepresentative) method count and the remaining
+    classes spread evenly on top; classes without test methods carry no load
+    and are spread by count to keep the filters even. Every class stays in
+    exactly one group, so the union of the groups runs exactly the tests a
+    single unfiltered process would.
     """
-    singles = sorted((HEAVY_CORE_CLASSES | slow_classes) & core_classes)
-    remainder = core_classes - set(singles)
-    groups = [[name] for name in singles]
-    groups.extend(balance_classes(remainder, weights, CORE_REMAINDER_PROCESSES))
-    return groups
+    anchors = sorted((HEAVY_CORE_CLASSES | slow_classes) & core_classes)
+    remainder = core_classes - set(anchors)
+    groups = [[name] for name in anchors]
+    while len(groups) < CORE_PROCESS_COUNT and remainder:
+        groups.append([])
+    anchor_load = max((weights.get(name, 0.0) for name in anchors), default=0.0)
+    loads = [anchor_load] * len(groups)
+    weighted = sorted((name for name in remainder if weights.get(name, 0.0) > 0.0),
+                      key=lambda c: (-weights.get(c, 0.0), c))
+    for name in weighted:
+        index = min(range(len(groups)), key=lambda i: (loads[i], i))
+        groups[index].append(name)
+        loads[index] += weights.get(name, 0.0)
+    # Classes without any detected test method (stub api types) carry no load,
+    # so spreading them by class count keeps the filter sizes even instead of
+    # letting them pile into whichever process happens to be lightest.
+    for name in sorted(remainder - set(weighted)):
+        index = min(range(len(groups)), key=lambda i: (len(groups[i]), i))
+        groups[index].append(name)
+    return [group for group in groups if group]
 
 
 def classes_by_project(root: Path, files: dict[str, str],
@@ -445,8 +468,13 @@ def select_tests(changed, files, diffs=None) -> Selection:
 
 
 def build_filters(classes, max_chars: int = MAX_FILTER_CHARS) -> list[str]:
-    """Chunk ``FullyQualifiedName~X`` terms into filter expressions."""
-    terms = [f"FullyQualifiedName~{c}" for c in sorted(classes)]
+    """Chunk ``FullyQualifiedName~X.`` terms into filter expressions.
+
+    The trailing dot keeps the contains-match scoped to class X: without it a
+    class whose fully-qualified name contains another's (X and XMore) would
+    have its tests selected by both terms.
+    """
+    terms = [f"FullyQualifiedName~{c}." for c in sorted(classes)]
     chunks: list[str] = []
     current: list[str] = []
     for term in terms:
@@ -636,9 +664,9 @@ def full_project_runs(project: str, all_classes: set[str], slow_classes: set[str
     """(filter expression, label) runs for the unfiltered full suite of a project.
 
     Only the Core suite is split: its classes are grouped by ``core_run_groups``
-    so the heavyweight (and, with ``--slow``, slow) classes run in parallel
-    processes. Every class stays in exactly one group, so the union of the
-    runs selects exactly the tests one unfiltered process would.
+    so the heavyweight (and, with ``--slow``, slow) classes each anchor a
+    parallel process. Every class stays in exactly one group, so the union of
+    the runs selects exactly the tests one unfiltered process would.
     """
     if project != CORE_TESTS_PROJECT or not all_classes:
         return [(None, "")]
@@ -672,7 +700,9 @@ def run_selection(root: Path, classes, run_all: bool, slow: bool = False) -> int
     Projects are built serially, then their tests run in parallel: every test
     assembly serializes its own tests (shared registry state), so the
     wall-clock win comes from overlapping processes. The Core suite is split
-    into several class-filtered processes (heavy and slow classes alone).
+    into class-filtered processes (heavy and slow classes anchoring one each),
+    and the parallelism is capped at the CPU core count so low-core machines
+    queue processes instead of thrashing.
     """
     projects = find_test_projects(root)
     if not projects:
@@ -702,10 +732,12 @@ def run_selection(root: Path, classes, run_all: bool, slow: bool = False) -> int
     if not pairs:
         print("no tests selected for any project")
         return 0
-    print(f"running {len(pairs)} parallel dotnet test processes", file=sys.stderr)
+    workers = max(1, min(len(pairs), os.cpu_count() or 1))
+    print(f"running {len(pairs)} dotnet test processes ({workers} in parallel)",
+          file=sys.stderr)
     exit_code = 0
     total_failed = total_passed = 0
-    with concurrent.futures.ThreadPoolExecutor(max_workers=len(pairs)) as pool:
+    with concurrent.futures.ThreadPoolExecutor(max_workers=workers) as pool:
         futures = {pool.submit(run_dotnet_test, root, project, expr, True, slow):
                    (project, label) for project, expr, label in pairs}
         for future, (project, label) in futures.items():

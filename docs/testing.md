@@ -68,7 +68,8 @@ python tools/test_changed.py [--base <git ref>] [--list] [--all] [--slow]
 ## 実行方法
 
 選択されたテストクラスから `dotnet test <project> --filter` 式を組み立てる。
-フィルタは `FullyQualifiedName~名前空間.クラス` 条件を `|` で連結した 1 本の式で、
+フィルタは `FullyQualifiedName~名前空間.クラス.` 条件（末尾のドットでクラス内だけに
+一致させ、名前が先頭一致する別クラスの二重実行を防ぐ）を `|` で連結した 1 本の式で、
 長すぎる場合（既定の上限 15000 文字）は複数回の `dotnet test` 実行に分割する。
 テストプロジェクトは `tests/` 配下の `.csproj` を再帰収集する（`bin`/`obj` を除く）。
 
@@ -76,13 +77,15 @@ python tools/test_changed.py [--base <git ref>] [--list] [--all] [--slow]
   （`obj/` の共有を守るため。Release は CPU 主体のこのスイートで
   Debug の半分以下の実時間になる）、その後 `dotnet test -c Release --no-build` を
   複数プロセス並列で実行する（各アセンブリ内のテストは共有状態のため
-  `DisableTestParallelization` のまま直列。並列化はプロセス分割による）。
+  `DisableTestParallelization` のまま直列。並列化はプロセス分割による。
+  同時実行数は CPU コア数を超えない）。
 
 - プロセス分割（#404）: `--all` では Core スイートをクラス単位のフィルタで
-  複数プロセスに分ける。所要時間の大半を占める重い 5 クラス
+  5 プロセスに分ける。所要時間の大半を占める重い 5 クラス
   （AllocationEquivalence・GeneratedHeroAcceptance・StarMapReachability・
-  PressureRewardMultiplier・StarMapOptimize）はそれぞれ単独プロセス、
-  残りはテストメソッド数を重みに 3 グループへ均等分割する
+  PressureRewardMultiplier・StarMapOptimize）がそれぞれ別々のプロセスの軸になり
+  （重いクラスどうしを同じプロセスにしないため、5 が最小のプロセス数）、
+  残りのクラスはテストメソッド数を重みにその 5 プロセスへ均等に振り分ける
   （同じクラスは必ず同じプロセス）。`--slow` では Speed=Slow テストを含む
   クラスもクラスごとに別プロセスで並列に走らせる。全プロセスの和が
   従来のフィルタなし 1 プロセスと同じテスト集合・合否になる。

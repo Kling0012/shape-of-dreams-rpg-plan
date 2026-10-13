@@ -47,7 +47,8 @@ python tools/balance/gen_cs.py --check
 
 `gen_cs.py --check` は内容ハッシュのキャッシュ（`tools/balance/.gen_cs-cache.json`、
 git管理外）を使う。前回の検証成功時から入力（`tools/star-manifest/`・`tools/balance/`
-配下と生成器が読む src の手書きファイル）と生成物のどちらも変わっていなければ、
+配下と `src/SodRpg.Core/Game` 配下の手書き .cs 全部。生成器が今後新しい src ファイルを
+読み始めても自動的に対象になる）と生成物のどちらも変わっていなければ、
 生成を丸ごと省いて数秒で終わる。入力・生成物のいずれかが変われば必ず通常の
 生成・比較が走り、失敗（stale）ならキャッシュは更新しない。
 

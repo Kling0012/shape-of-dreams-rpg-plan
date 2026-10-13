@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
-"""Generate compile-time balance content; --check never writes files.
+"""Generate compile-time balance content; --check writes no source files.
 
 --check consults a content-hash cache (tools/balance/.gen_cs-cache.json,
 git-ignored): when neither the generator inputs (everything under
-tools/star-manifest/ and tools/balance/ plus the hand-written src files the
-generators read) nor the generated files themselves changed since the last
-verified run, the expensive rendering is skipped entirely.
+tools/star-manifest/ and tools/balance/ plus every hand-written .cs under
+src/SodRpg.Core/Game) nor the generated files themselves changed since the
+last verified run, the expensive rendering is skipped entirely. --check still
+refreshes that cache file; it never touches the generated sources.
 """
 
 import argparse
@@ -45,25 +46,21 @@ CACHE_PATH = ROOT / "tools" / "balance" / ".gen_cs-cache.json"
 # only valid for the default output layout.
 DEFAULT_OUTPUT_PATH = OUTPUT_PATH
 
-# Hand-written src files the generators read (tools/balance/star_values.py,
-# set_values.py, equipment_items_values.py, tools/star-manifest/gen_cs.py and
-# validate.py; StarClusters/*.cs is globbed by validate.legacy_data and
-# BossProfiles.*.cs by equipment_items_values). Generated outputs are hashed
-# separately and must not appear here. Extend this list when a generator
-# starts reading a new src file.
-GENERATOR_SRC_INPUTS = (
-    "src/SodRpg.Core/Game/Content.cs",
-    "src/SodRpg.Core/Game/Gimmicks.cs",
-    "src/SodRpg.Core/Game/HeroSigils.cs",
-    "src/SodRpg.Core/Game/HeroStarRoutes.cs",
-    "src/SodRpg.Core/Game/Ids.cs",
-    "src/SodRpg.Core/Game/PairCombos.cs",
-    "src/SodRpg.Core/Game/StarClusters.cs",
-    "src/SodRpg.Core/Game/Mechanisms/AuthoredKeystoneCompiler.cs",
-    "src/SodRpg.Core/Game/Mechanisms/AuthoredStarContract.cs",
-    "src/SodRpg.Core/Game/Mechanisms/SacrificeShield.cs",
-    "src/SodRpg.Core/Game/Mechanisms/StunSourceFilter.cs",
-)
+# Hand-written src under this folder is hashed wholesale as generator input:
+# the generators (tools/balance/*_values.py, tools/star-manifest/*) read a
+# subset of it today, and hashing all of it means a generator that starts
+# reading a new file invalidates the cache automatically instead of relying on
+# a hand-maintained list. Generated outputs (*.Generated.cs, Generated*.cs,
+# *.g.cs) are excluded: they are hashed separately as cache outputs. If a
+# future output breaks that naming rule it only keeps the cache from ever
+# hitting (the full generation then runs, which is still correct).
+GENERATOR_SRC_ROOT = "src/SodRpg.Core/Game"
+
+
+def _is_generated_output(path: Path) -> bool:
+    name = path.name
+    return (name.startswith("Generated") or name.endswith(".Generated.cs")
+            or name.endswith(".g.cs"))
 
 
 def _hash_file(path: Path) -> str | None:
@@ -79,16 +76,13 @@ def _hash_file(path: Path) -> str | None:
 
 def _generator_inputs() -> list[str]:
     """Repo-relative input paths whose content decides the generated output."""
-    paths = list(GENERATOR_SRC_INPUTS)
+    paths: list[str] = []
     for folder in ("tools/star-manifest", "tools/balance"):
         for path in sorted((ROOT / folder).rglob("*")):
             if path.is_file() and "__pycache__" not in path.parts and path != CACHE_PATH:
                 paths.append(path.relative_to(ROOT).as_posix())
-    game = ROOT / "src/SodRpg.Core/Game"
-    for pattern in ("StarClusters/*.cs", "BossProfiles.*.cs"):
-        for path in sorted(game.glob(pattern)):
-            if path.name.startswith("Generated") or path.name.endswith(".Generated.cs"):
-                continue  # generated outputs are hashed separately
+    for path in sorted((ROOT / GENERATOR_SRC_ROOT).rglob("*.cs")):
+        if not _is_generated_output(path):
             paths.append(path.relative_to(ROOT).as_posix())
     return paths
 
@@ -104,14 +98,17 @@ def _cache_is_fresh(inputs: str) -> bool:
     """True when the recorded inputs and every recorded generated file match.
 
     A changed or missing generated file invalidates the cache, so a stale
-    output is never waved through.
+    output is never waved through. Any unreadable or malformed cache (missing
+    file, invalid JSON, non-object JSON) just counts as stale.
     """
     try:
         record = json.loads(CACHE_PATH.read_text(encoding="utf-8"))
-        outputs = record.get("outputs")
-        if record.get("inputs") != inputs or not isinstance(outputs, dict) or not outputs:
-            return False
     except (OSError, ValueError):
+        return False
+    if not isinstance(record, dict):
+        return False
+    outputs = record.get("outputs")
+    if record.get("inputs") != inputs or not isinstance(outputs, dict) or not outputs:
         return False
     return all(_hash_file(ROOT / rel) == file_hash for rel, file_hash in outputs.items())
 

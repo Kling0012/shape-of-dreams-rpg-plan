@@ -66,8 +66,10 @@ jobs:
   # releases; PRs only pay for the fast set above. One matrix entry per class
   # holding Speed=Slow tests, the same per-class process split as
   # tools/test_changed.py --slow (each test assembly serializes its own tests,
-  # so the parallelism comes from separate processes). When a new slow test
-  # class appears, add it here.
+  # so the parallelism comes from separate processes). The trailing dot in
+  # the filter keeps the contains-match inside the class (a future class
+  # whose name merely starts with an existing one must not run twice). When a
+  # new slow test class appears, add it here.
   slow-tests:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
@@ -90,6 +92,6 @@ jobs:
           restore-keys: nuget-${{ runner.os }}-
       - run: python tools/balance/gen_cs.py --check
       - run: dotnet build -c Release tests/SodRpg.Core.Tests
-      - run: dotnet test -c Release tests/SodRpg.Core.Tests --no-build --filter "Speed=Slow&FullyQualifiedName~${{ matrix.class }}"
+      - run: dotnet test -c Release tests/SodRpg.Core.Tests --no-build --filter "Speed=Slow&FullyQualifiedName~${{ matrix.class }}."
         env:
           SODRPG_SLOW: "1"
