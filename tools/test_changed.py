@@ -284,6 +284,57 @@ def mentions_any(content: str, names: list[str]) -> bool:
     return False
 
 
+CI_WORKFLOW_PATH = ".github/workflows/ci.yml"
+
+
+def ci_slow_matrix_classes(text: str) -> set[str]:
+    """Class entries listed in the slow-tests matrix of a ci.yml text.
+
+    The ``- <class>`` lines directly under the matrix ``class:`` key of the
+    ``slow-tests`` job. A missing job or key yields an empty set, which the
+    consistency check then reports as classes that would never run in CI.
+    """
+    classes: set[str] = set()
+    lines = text.splitlines()
+    job = next((i for i, line in enumerate(lines)
+                if re.match(r"^  slow-tests:\s*$", line)), len(lines))
+    if job == len(lines):
+        return classes
+    end = job + 1
+    while end < len(lines) and not re.match(r"^  \S", lines[end]):
+        end += 1
+    block = lines[job:end]
+    key = next((i for i, line in enumerate(block)
+                if re.match(r"^\s+class:\s*$", line)), len(block))
+    for line in block[key + 1:]:
+        entry = re.match(r"^\s+-\s+(\S+)\s*$", line)
+        if not entry:
+            break
+        classes.add(entry.group(1))
+    return classes
+
+
+def check_ci_matrix(root: Path) -> int:
+    """Fail when the ci.yml slow-tests matrix and the detected classes differ.
+
+    The matrix classes are maintained by hand; this guard (run in CI and
+    usable locally) makes a forgotten entry a visible failure instead of a
+    slow test class that silently stops running in CI.
+    """
+    detected = slow_test_classes(scan_test_files(root))
+    listed = ci_slow_matrix_classes(read_file(root, CI_WORKFLOW_PATH) or "")
+    if detected == listed:
+        print(f"ci.yml slow-tests matrix matches the {len(detected)} detected slow class(es)")
+        return 0
+    print("ci.yml slow-tests matrix does not match the Speed=Slow test classes:", file=sys.stderr)
+    for name in sorted(detected - listed):
+        print(f"  missing from the matrix (would never run in CI): {name}", file=sys.stderr)
+    for name in sorted(listed - detected):
+        print(f"  in the matrix but no Speed=Slow tests detected: {name}", file=sys.stderr)
+    print("update the slow-tests matrix in .github/workflows/ci.yml", file=sys.stderr)
+    return 1
+
+
 def is_generated_cs(path: str) -> bool:
     """True for generated .cs files (e.g. Foo.Generated.cs, GeneratedBar.cs)."""
     name = path.rsplit("/", 1)[-1]
@@ -672,7 +723,8 @@ def full_project_runs(project: str, all_classes: set[str], slow_classes: set[str
         return [(None, "")]
     labeled: list[tuple[str, str]] = []
     for group in core_run_groups(all_classes, slow_classes, weights):
-        name = group[0].rsplit(".", 1)[-1] if len(group) == 1 else f"{len(group)} classes"
+        anchor = group[0].rsplit(".", 1)[-1]
+        name = anchor if len(group) == 1 else f"{anchor}+{len(group) - 1}"
         for expr in build_filters(group):
             labeled.append((expr, name))
     return [(expr, f" ({index}/{len(labeled)}: {name})")
@@ -773,9 +825,14 @@ def main(argv=None) -> int:
                         help="run the full test suite")
     parser.add_argument("--slow", action="store_true",
                         help="also run Speed=Slow exhaustive tests (SODRPG_SLOW=1)")
+    parser.add_argument("--check-ci-matrix", action="store_true",
+                        help="verify the ci.yml slow-tests matrix lists exactly the "
+                             "classes holding Speed=Slow tests, then exit")
     args = parser.parse_args(argv)
 
     root = REPO_ROOT
+    if args.check_ci_matrix:
+        return check_ci_matrix(root)
     try:
         if args.base:
             run_git(root, "rev-parse", "--verify", f"{args.base}^{{commit}}")

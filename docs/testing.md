@@ -22,6 +22,7 @@ python tools/test_changed.py [--base <git ref>] [--list] [--all] [--slow]
 | `--list` | 選択されたテストクラス（完全修飾名）だけを表示して終了する（テストは実行しない） |
 | `--all` | スイート全体を実行する（Core はクラス単位のフィルタで複数プロセスに分割） |
 | `--slow` | `Speed=Slow` の網羅テスト（`SODRPG_SLOW=1`）も実行する（既定では除外）。低速テストを持つクラスはクラスごとに別プロセスで並列に走る |
+| `--check-ci-matrix` | `ci.yml` の slow-tests matrix が低速テスト検出と一致するかだけ検査して終了する（CI の core-tests ジョブでも実行） |
 
 終了コードは最初の非ゼロの `dotnet test` 終了コード。テストに関係する変更が
 一件もない場合は「変更なし」と表示して 0 を返す。
@@ -90,6 +91,9 @@ python tools/test_changed.py [--base <git ref>] [--list] [--all] [--slow]
   クラスもクラスごとに別プロセスで並列に走らせる。全プロセスの和が
   従来のフィルタなし 1 プロセスと同じテスト集合・合否になる。
   選択実行（`--all` 未指定）でも、`--slow` 時の低速クラスは同様に単独プロセスとする。
+  CI の slow-tests ジョブ（main マージ後）も同じクラス単位の matrix で走る。
+  matrix は手で列挙するため、`--check-ci-matrix`（CI の core-tests ジョブで実行）
+  が列挙と検出の不一致を失敗として報告する。
 
 - `dotnet` コマンド: 既定では `%LOCALAPPDATA%\dotnet-sdk\dotnet.exe` を使う。
   環境変数 `DOTNET` に実行ファイルのパスがあればそれを優先する。

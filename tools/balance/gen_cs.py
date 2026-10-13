@@ -5,15 +5,22 @@
 git-ignored): when neither the generator inputs (everything under
 tools/star-manifest/ and tools/balance/ plus every hand-written .cs under
 src/SodRpg.Core/Game) nor the generated files themselves changed since the
-last verified run, the expensive rendering is skipped entirely. --check still
-refreshes that cache file; it never touches the generated sources.
+last verified run, the expensive rendering is skipped entirely. The cache
+record is validated (safe paths, sha256-shaped hashes, a digest over the whole
+outputs mapping) before it is trusted, and anything unreadable, malformed,
+truncated or tampered with just counts as stale, falling back to the normal
+generation. --check still refreshes that cache file; it never touches the
+generated sources.
 """
+
+from __future__ import annotations
 
 import argparse
 import hashlib
 import importlib.util
 import json
 import os
+import re
 import sys
 from pathlib import Path
 sys.dont_write_bytecode = True
@@ -69,9 +76,30 @@ def _hash_file(path: Path) -> str | None:
         with path.open("rb") as handle:
             for chunk in iter(lambda: handle.read(1 << 20), b""):
                 digest.update(chunk)
-    except OSError:
+    except (OSError, ValueError):  # ValueError: e.g. NUL byte in the path
         return None
     return digest.hexdigest()
+
+
+HEX64_RE = re.compile(r"[0-9a-f]{64}")
+
+
+def _is_cacheable_path(rel) -> bool:
+    """True for a plain repo-relative posix path (no escape, no NUL byte)."""
+    return (isinstance(rel, str) and bool(rel) and "\\" not in rel and "\x00" not in rel
+            and not rel.startswith("/") and not re.match(r"[A-Za-z]:", rel)
+            and ".." not in rel.split("/"))
+
+
+def _outputs_digest(outputs: dict) -> str:
+    """Digest over the whole recorded outputs mapping (path -> content hash).
+
+    Stored next to ``outputs`` and recomputed on read, so a cache whose output
+    list was truncated or edited after writing (dropping generated files from
+    the check) no longer validates.
+    """
+    lines = sorted(f"{rel}:{digest}" for rel, digest in outputs.items())
+    return hashlib.sha256("\n".join(lines).encode("utf-8")).hexdigest()
 
 
 def _generator_inputs() -> list[str]:
@@ -98,8 +126,13 @@ def _cache_is_fresh(inputs: str) -> bool:
     """True when the recorded inputs and every recorded generated file match.
 
     A changed or missing generated file invalidates the cache, so a stale
-    output is never waved through. Any unreadable or malformed cache (missing
-    file, invalid JSON, non-object JSON) just counts as stale.
+    output is never waved through. The record is validated before use: the
+    inputs digest must match, ``outputs`` must be a non-empty mapping of safe
+    repo-relative paths to sha256-shaped hashes, and the digest stored next to
+    it must still describe that whole mapping (a partial or hand-edited output
+    list cannot smuggle unrecorded generated files past the check). Any
+    unreadable or malformed cache (missing file, invalid JSON, non-object JSON)
+    just counts as stale; nothing here raises.
     """
     try:
         record = json.loads(CACHE_PATH.read_text(encoding="utf-8"))
@@ -110,22 +143,33 @@ def _cache_is_fresh(inputs: str) -> bool:
     outputs = record.get("outputs")
     if record.get("inputs") != inputs or not isinstance(outputs, dict) or not outputs:
         return False
-    return all(_hash_file(ROOT / rel) == file_hash for rel, file_hash in outputs.items())
+    if not all(_is_cacheable_path(rel) and isinstance(digest, str)
+               and HEX64_RE.fullmatch(digest) for rel, digest in outputs.items()):
+        return False
+    if record.get("outputs_digest") != _outputs_digest(outputs):
+        return False
+    try:
+        return all(_hash_file(ROOT / rel) == digest for rel, digest in outputs.items())
+    except (OSError, ValueError):
+        return False
 
 
 def _write_cache(inputs: str, outputs) -> None:
-    record = {
-        "inputs": inputs,
-        "outputs": {path.relative_to(ROOT).as_posix():
+    try:
+        recorded = {path.relative_to(ROOT).as_posix():
                     hashlib.sha256(content.encode("utf-8")).hexdigest()
-                    for path, content in outputs.items()},
-    }
+                    for path, content in outputs.items()}
+        record = {"inputs": inputs, "outputs": recorded,
+                  "outputs_digest": _outputs_digest(recorded)}
+        text = json.dumps(record, indent=1)
+    except (OSError, ValueError):  # ValueError also covers UnicodeEncodeError
+        return  # the cache only saves time; never fail a successful run for it
     temp = CACHE_PATH.with_name(CACHE_PATH.name + ".tmp")
     try:
-        temp.write_text(json.dumps(record, indent=1), encoding="utf-8")
+        temp.write_text(text, encoding="utf-8")
         os.replace(temp, CACHE_PATH)
     except OSError:
-        pass  # the cache only saves time; never fail a successful run for it
+        pass
 
 
 def _star_generator():

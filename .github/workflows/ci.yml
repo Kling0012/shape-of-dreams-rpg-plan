@@ -37,6 +37,7 @@ jobs:
           key: nuget-${{ runner.os }}-${{ hashFiles('**/*.csproj') }}
           restore-keys: nuget-${{ runner.os }}-
       - run: python tools/balance/gen_cs.py --check
+      - run: python tools/test_changed.py --check-ci-matrix
       - run: python -m unittest discover -s tools/tests -p "test_*.py"
       - run: dotnet build -c Release tests/SodRpg.Core.Tests
       - run: dotnet test -c Release tests/SodRpg.Core.Tests --no-build
@@ -69,7 +70,11 @@ jobs:
   # so the parallelism comes from separate processes). The trailing dot in
   # the filter keeps the contains-match inside the class (a future class
   # whose name merely starts with an existing one must not run twice). When a
-  # new slow test class appears, add it here.
+  # new slow test class appears, add it here; the core-tests job runs
+  # `python tools/test_changed.py --check-ci-matrix`, which fails when this
+  # matrix and the detected slow classes disagree. Generation freshness is
+  # already enforced by the core-tests job on the same push, so the matrix
+  # entries skip the ~2 min gen_cs --check and only build and test.
   slow-tests:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
@@ -90,7 +95,6 @@ jobs:
           path: ~/.nuget/packages
           key: nuget-${{ runner.os }}-${{ hashFiles('**/*.csproj') }}
           restore-keys: nuget-${{ runner.os }}-
-      - run: python tools/balance/gen_cs.py --check
       - run: dotnet build -c Release tests/SodRpg.Core.Tests
       - run: dotnet test -c Release tests/SodRpg.Core.Tests --no-build --filter "Speed=Slow&FullyQualifiedName~${{ matrix.class }}."
         env:
