@@ -77,7 +77,7 @@ namespace SodRpg.Mod
                 try
                 {
                     _devCommands = File.Exists(Path.Combine(dir, "dev.flag"));
-                    Economy.SalvageScale = _devCommands ? 4 : 1;
+                    Economy.SalvageScale = _devCommands ? 2 : 1;
                 }
                 catch (Exception) { Economy.SalvageScale = 1; }
                 // Special edition builds enable the native dream seeds without any flag; the
