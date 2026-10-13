@@ -127,7 +127,7 @@
 
   <!-- 協力取引クライアント（所見01・07・09・10）。境界は NativeBoundary.cs の ClientSession 部。 -->
   <Target Name="CompileCoopTradeClient" BeforeTargets="CoreCompile">
-    <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/ClientSession.CoopTrade.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)CoopTradeClient.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="ClientSession" Methods="CoopPendingStale;CoopWaitText;CoopTradeLocked;CoopWorldSafe;CoopLocalSafe;CoopLocalWorldSafe;CoopLocalBlockReason;CoopTradeUnavailableReason;CanCoopTrade;WireCoopTrade;ReceiveCoopPacket;TickCoopTrade;DisableCoopTrade;SendCoop;CoopSnapshot;SendCoopProfile;SetCoopTradeOffer;RetryCoopOffer;OnCoopTradeState;DeferCoopSettlement;CompleteCoopSettlement" />
+    <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/ClientSession.CoopTrade.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)CoopTradeClient.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="ClientSession" Methods="CoopPendingStale;CoopWaitText;CoopTradeLocked;CoopWorldSafe;CoopLocalSafe;CoopLocalWorldSafe;CoopLocalCombatSafe;CoopLocalBlockReason;CoopTradeUnavailableReason;CanCoopTrade;WireCoopTrade;ReceiveCoopPacket;TickCoopTrade;DisableCoopTrade;SendCoop;CoopSnapshot;SendCoopProfile;SetCoopTradeOffer;RetryCoopOffer;OnCoopTradeState;DeferCoopSettlement;CompleteCoopSettlement" />
     <ItemGroup>
       <Compile Include="$(IntermediateOutputPath)CoopTradeClient.g.cs" />
     </ItemGroup>
@@ -135,7 +135,7 @@
 
   <!-- 協力取引ホスト（所見03・06・08・11）。境界は NativeBoundary.cs の HostAuthority 部。 -->
   <Target Name="CompileCoopTradeHost" BeforeTargets="CoreCompile">
-    <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/HostAuthority.CoopTrade.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)CoopTradeHost.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="HostAuthority" Methods="CoopHostKey;CoopPresent;CoopPeerAvailable;CoopPeerSafe;ReceiveCoopTrade;EnsureCoopJournal;QueryCoopTrade;CancelCoopTrade;CancelHostCoopTrade;CommitHostCoopTrade;PrepareHostCoopTrade;CoopReceiptFits;SendCoopViews;SendCoopView;SendCoopRoster;SendCoopPayload;SendCoopState;SendCoopError;CoopReason;FailHostCoopTrade" />
+    <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/HostAuthority.CoopTrade.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)CoopTradeHost.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="HostAuthority" Methods="CoopHostKey;CoopPresent;CoopPeerAvailable;CoopPeerSafe;TickCoopTrade;ReceiveCoopPacket;ReceiveCoopTrade;EnsureCoopJournal;QueryCoopTrade;CancelCoopTrade;CancelHostCoopTrade;CommitHostCoopTrade;PrepareHostCoopTrade;CoopReceiptFits;SendCoopViews;SendCoopView;SendCoopRoster;SendCoopPayload;SendCoopState;SendCoopError;CoopReason;FailHostCoopTrade" />
     <ItemGroup>
       <Compile Include="$(IntermediateOutputPath)CoopTradeHost.g.cs" />
     </ItemGroup>

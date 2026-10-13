@@ -89,6 +89,9 @@ namespace SodRpg.Mod
         }
         private bool CoopLocalSafe => CoopLocalBlockReason == null;
         private bool CoopLocalWorldSafe => CoopWorldSafe(DewPlayer.local, RunActive ? Profile.Run : null);
+        // Combat or travel only. Transient saves and pending replies block new actions but never end a trade (#400).
+        private bool CoopLocalCombatSafe => CoopLocalWorldSafe && !(InGame && !CanEditLoadout
+            && !(NetworkServer.active && NetworkedManagerBase<ZoneManager>.softInstance?.currentRoom?.didClearRoom == true));
         private string CoopLocalBlockReason
         {
             get
@@ -109,8 +112,7 @@ namespace SodRpg.Mod
                 if (_pendingRunRewards.Count != 0)
                     return CoopWaitText(Loc.T($"遠征報酬の精算を待っています（{_pendingRunRewards.Count}件）", $"Waiting for expedition rewards to settle ({_pendingRunRewards.Count})"));
                 CoopWaitText(null);
-                if (!CoopLocalWorldSafe || InGame && !CanEditLoadout
-                    && !(NetworkServer.active && NetworkedManagerBase<ZoneManager>.softInstance?.currentRoom?.didClearRoom == true))
+                if (!CoopLocalCombatSafe)
                     return Loc.T("戦闘中・移動中は取引できません（部屋を片付けた後や確保地点で使えます）",
                         "Not available in combat or while moving (use after clearing a room or at a secure point)");
                 return null;
@@ -232,7 +234,7 @@ namespace SodRpg.Mod
                     }
                     return;
                 }
-                if (CoopTrade != null && !CoopTrade.Preparing && !CoopLocalSafe)
+                if (CoopTrade != null && !CoopTrade.Preparing && !CoopLocalCombatSafe)
                 {
                     SendCoop(new DreamforgeCoopTradeCommand { action = "cancel", id = CoopTrade.Id });
                     CoopTrade = null;
