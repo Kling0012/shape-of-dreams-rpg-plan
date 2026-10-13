@@ -7,6 +7,10 @@ A mod that turns Shape of Dreams into a long-term RPG built around gear you brin
 - 最新版と導入用 zip：[Releases](https://github.com/Kling0012/shape-of-dreams-rpg-plan/releases)
 - 版ごとの変更：[更新履歴（CHANGELOG）](CHANGELOG.md)
 
+## 開発について / About development
+
+このMODの開発はAIが担当しています。IssueやPull Requestの確認、不具合の再現と修正、レビュー、テスト、マージ、リリースまで、すべてAIが自動で行います。 / This mod is developed by AI. Everything from triaging issues and pull requests, reproducing and fixing bugs, to review, testing, merging and releasing is handled automatically by AI.
+
 ## 主な遊び
 
 - **遺物**：敵を倒すと、各プレイヤーに個別に装備（遺物）が落ちます。6つの枠、5段階のレア度があり、エピック以上は固有の効果を持ちます。
