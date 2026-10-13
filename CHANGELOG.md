@@ -8,6 +8,8 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
+- Limbo でも道標「明けない夜」（すべての敵が悪夢化）が出るように戻しました。「深まる夜」は新しくは出ません（選択中のものはそのまま有効です）。 / Endless Night (all enemies become nightmares) is offered in Limbo again; Deepening Night is no longer offered (an already chosen one still works).
+
 ---
 
 ## v2.10.31 — Room Omens（2026-10-14）

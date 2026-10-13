@@ -451,7 +451,7 @@ namespace SodRpg.Core.Game
             run.OfferedPacts.AddRange(Pacts.Offer(rng, run.Pacts, Workshop.PactsOffered(p)));
             run.OfferedEventId = Guid.NewGuid().ToString("N");
             run.OfferedEvent = DreamEvents.Roll(rng, p, trades);
-            run.OfferedWaypoints.AddRange(Waypoints.Offer(rng, run.LimboDepth > 0));
+            run.OfferedWaypoints.AddRange(Waypoints.Offer(rng));
             p.StoreRng(rng);
             AddHint(p, Hint.FirstSecurePoint, ev);
             return ev;

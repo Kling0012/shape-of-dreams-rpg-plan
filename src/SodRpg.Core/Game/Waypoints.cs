@@ -191,14 +191,14 @@ namespace SodRpg.Core.Game
         }
         public static Totals Sum(Waypoint id) => Get(id)?.Effects ?? Neutral;
 
-        public static List<Waypoint> Offer(Rng rng, bool limbo)
+        public static List<Waypoint> Offer(Rng rng)
         {
             if (rng == null) throw new ArgumentNullException(nameof(rng));
             var pool = new List<Waypoint>(All.Count);
             foreach (var d in All)
             {
                 if (d.Id == Waypoint.DeepeningNight) continue;
-                pool.Add(limbo && d.Id == Waypoint.EndlessNight ? Waypoint.DeepeningNight : d.Id);
+                pool.Add(d.Id);
             }
             var result = new List<Waypoint>(Offered);
             for (int n = 0; n < Offered; n++)
