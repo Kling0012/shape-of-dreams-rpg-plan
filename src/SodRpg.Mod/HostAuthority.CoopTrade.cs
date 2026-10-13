@@ -74,10 +74,14 @@ namespace SodRpg.Mod
                 _nextCoopHostTick = Time.unscaledTime + 0.25f;
                 if (_coopHostFailure != null && !EnsureCoopJournal()) return;
                 var trade = _coopHostTrade;
+                // An accepted trade stays open while both sides keep probing (#400): choosing what to
+                // offer may take longer than the idle limit. Unanswered requests, a silent peer and a
+                // stuck prepare still time out. A transient host save only matters while preparing.
                 if (trade != null && (Time.unscaledTime - trade.ActiveAt >= 120f
+                        && (!trade.Accepted || trade.Preparing || !CoopPeerAvailable(trade.First) || !CoopPeerAvailable(trade.Second))
                     || !CoopPresent(trade.First) || !CoopPresent(trade.Second)
                     || !ClientSession.CoopWorldSafe(trade.First) || !ClientSession.CoopWorldSafe(trade.Second)
-                    || ClientSession.CoopHostNativeSaving))
+                    || trade.Preparing && ClientSession.CoopHostNativeSaving))
                     CancelHostCoopTrade("cancelled");
             }
             catch (Exception ex) { FailHostCoopTrade(ex); }
