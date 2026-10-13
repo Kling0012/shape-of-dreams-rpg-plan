@@ -11,7 +11,13 @@ using Xunit;
 // equipment snapshots, scope pools and dividend save scheduling come from linked Mod files.
 namespace Mirror
 {
-    internal static class NetworkServer { public static bool active; }
+    internal static class NetworkServer
+    {
+        public static bool active;
+        // ホスト側 TickCoopTrade の抽出（#400 再現）に必要な本体 Mirror API の境界。
+        public static NetworkConnectionToClient localConnection;
+        public static void ReplaceHandler<T>(Action<NetworkConnectionToClient, T> handler) where T : struct, NetworkMessage { }
+    }
     internal static class NetworkClient
     {
         public static bool active;
