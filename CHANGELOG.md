@@ -8,9 +8,23 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
+---
+
+## v2.10.31 — Room Omens（2026-10-14）
+
+部屋の兆しを追加しました。戦闘の部屋ごとに、恵みか試練がランダムに1つ付きます。 / Added Room Omens: each combat room gets a random blessing or trial.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
 ### 新機能 / New features
 
-- 部屋の兆しを追加しました。戦闘の部屋ごとに、攻撃力アップなどの恵みか、移動速度ダウンなどの試練がランダムに1つ付きます（試練の部屋は遺物が出やすくなります）。MOD 設定で切り替えられます。 / Added Room Omens: each combat room gets one random blessing (such as more attack) or trial (such as slower movement); trial rooms drop more relics. Toggle it in the mod settings.
+- **部屋の兆し**：遠征中、戦闘のある部屋に入るたびに、全員に「恵み」か「試練」がランダムに1つ付きます。恵みは攻撃力・移動速度・スキル加速・防御・受ける回復・遺物の出やすさのどれかが上がり、試練は移動速度・防御・攻撃速度・受ける回復のどれかが下がるか、敵が速く・硬くなります。試練の部屋は遺物が出やすくなります。効果は次の部屋に移ると消えます。ボスの部屋・商店・井戸などには付きません。部屋に入ったときに通知し、HUD にも表示します。MOD 設定の「roomOmens」で切り替えられます（協力プレイではホストの設定が使われます）。 / **Room Omens**: during an expedition, every combat room gives everyone one random blessing or trial. Blessings raise attack, movement speed, skill haste, armor, incoming healing or relic drops; trials lower movement speed, armor, attack speed or incoming healing, or make enemies faster or tougher. Trial rooms drop more relics. The effect ends when you move to the next room. Boss rooms, shops and wells are excluded. The omen is announced on entry and shown on the HUD. Toggle it with "roomOmens" in the mod settings (the host's setting applies in co-op).
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
 
 ---
 
