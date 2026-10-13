@@ -19,14 +19,30 @@ namespace SodRpg.Mod
         private static readonly GUILayoutOption[] TradeFieldSize = { GUILayout.Width(105) };
         private static readonly GUILayoutOption[] TradeActionSize = { GUILayout.Height(34), GUILayout.MinWidth(0) };
         private static readonly GUILayoutOption[] TradeRowSize = { GUILayout.MinHeight(58), GUILayout.MinWidth(0) };
+        private static readonly GUILayoutOption[] TradeFilterSize = { GUILayout.Height(30), GUILayout.MinWidth(0), GUILayout.ExpandWidth(true) };
+        private static readonly GUILayoutOption[] TradeSearchSize = { GUILayout.MinWidth(0), GUILayout.ExpandWidth(true) };
+        private static readonly SodRpg.Core.Game.Rarity[] TradeRarities =
+        {
+            SodRpg.Core.Game.Rarity.Common, SodRpg.Core.Game.Rarity.Uncommon, SodRpg.Core.Game.Rarity.Rare,
+            SodRpg.Core.Game.Rarity.Epic, SodRpg.Core.Game.Rarity.Legendary,
+        };
+        private static readonly Slot[] TradeSlots = { Slot.Weapon, Slot.Head, Slot.Armor, Slot.Hands, Slot.Feet, Slot.Charm };
+
+        // Display-only filters for the own-offer choices; the offer itself is never filtered.
+        // -1 means "all". Button labels are rebuilt only when a filter or the language changes.
+        private string _tradeSearch = "";
+        private int _tradeRarityFilter = -1, _tradeSlotFilter = -1;
+        private string _tradeRarityLabel, _tradeSlotLabel;
+        private bool _tradeFilterLabelsJapanese;
 
         // Cached only while this tab is drawn. Stat/power entries are immutable, so reference
         // comparisons also detect rerolls without formatting descriptions on every repaint.
         private sealed class TradeRelicText
         {
-            public string Uid, BaseId, UniqueId, NamedId, Title, SelectedTitle, IdleTitle, Details;
+            public string Uid, BaseId, UniqueId, NamedId, Name, Title, SelectedTitle, IdleTitle, Details;
             public int Enhance, Level, Awakening, LimitBreaks;
             public SodRpg.Core.Game.Rarity Rarity;
+            public Slot Slot;
             public bool Japanese;
             public StatLine[] Affixes;
             public PowerLine[] Powers;
@@ -50,7 +66,8 @@ namespace SodRpg.Mod
             {
                 Uid = r.Uid, BaseId = r.BaseId, UniqueId = r.UniqueId, NamedId = r.NamedId,
                 Enhance = r.Enhance, Level = r.ItemLevel, Awakening = r.AwakenLevel,
-                LimitBreaks = r.LimitBreaks, Rarity = r.Rarity, Japanese = Loc.Japanese,
+                LimitBreaks = r.LimitBreaks, Rarity = r.Rarity, Slot = r.Slot, Japanese = Loc.Japanese,
+                Name = r.DisplayName ?? "",
                 Affixes = r.Affixes.ToArray(), Powers = r.Powers.ToArray(),
                 Title = UiStyles.RelicTitle(r) + "  <color=#bcbcd2>" + Content.RarityName(r.Rarity)
                     + " · " + Content.SlotName(r.Slot) + " · Lv" + r.ItemLevel.ToString(CultureInfo.InvariantCulture) + "</color>"
@@ -138,6 +155,7 @@ namespace SodRpg.Mod
             GUI.enabled = enabled && trade.Accepted && _s.CanCoopTrade && !trade.Preparing;
             DrawCoopTradeMaterialFields(trade);
             GUI.enabled = enabled;
+            DrawCoopTradeFilters();
             _tradeOwnScroll = GUILayout.BeginScrollView(_tradeOwnScroll, false, false, GUIStyle.none, GUI.skin.verticalScrollbar, TradePaneSize);
             DrawCoopTradeOwnRelics(trade, enabled && trade.Accepted && _s.CanCoopTrade && !trade.Preparing && invalid == null);
             GUILayout.EndScrollView();
@@ -256,16 +274,76 @@ namespace SodRpg.Mod
             }
         }
 
+        private void DrawCoopTradeFilters()
+        {
+            if (_tradeRarityLabel == null || _tradeFilterLabelsJapanese != Loc.Japanese) RefreshCoopTradeFilterLabels();
+            GUILayout.BeginHorizontal();
+            GUILayout.Label(Loc.T("名前で検索", "Search name"), _st.Small, GUILayout.Width(110));
+            _tradeSearch = GUILayout.TextField(_tradeSearch ?? "", 40, TradeSearchSize);
+            GUILayout.EndHorizontal();
+            GUILayout.BeginHorizontal();
+            // Left click advances, right click goes back; "all" sits between the ends of each cycle.
+            bool back = Event.current.button == 1;
+            if (GUILayout.Button(_tradeRarityLabel, _st.ButtonWrap, TradeFilterSize))
+            {
+                _tradeRarityFilter = CycleCoopTradeFilter(_tradeRarityFilter, TradeRarities.Length, back);
+                RefreshCoopTradeFilterLabels();
+            }
+            if (GUILayout.Button(_tradeSlotLabel, _st.ButtonWrap, TradeFilterSize))
+            {
+                _tradeSlotFilter = CycleCoopTradeFilter(_tradeSlotFilter, TradeSlots.Length, back);
+                RefreshCoopTradeFilterLabels();
+            }
+            bool enabled = GUI.enabled;
+            GUI.enabled = enabled && CoopTradeFiltering;
+            if (GUILayout.Button(Loc.T("解除", "Clear"), _st.ButtonWrap, GUILayout.Height(30), GUILayout.Width(70)))
+            {
+                _tradeSearch = "";
+                _tradeRarityFilter = _tradeSlotFilter = -1;
+                RefreshCoopTradeFilterLabels();
+            }
+            GUI.enabled = enabled;
+            GUILayout.EndHorizontal();
+        }
+
+        private bool CoopTradeFiltering => _tradeRarityFilter >= 0 || _tradeSlotFilter >= 0 || !string.IsNullOrEmpty(_tradeSearch);
+
+        private static int CycleCoopTradeFilter(int current, int count, bool back)
+        {
+            int next = current + (back ? -1 : 1);
+            if (next >= count) return -1;
+            if (next < -1) return count - 1;
+            return next;
+        }
+
+        private void RefreshCoopTradeFilterLabels()
+        {
+            _tradeFilterLabelsJapanese = Loc.Japanese;
+            _tradeRarityLabel = Loc.T("レア度：", "Rarity: ")
+                + (_tradeRarityFilter < 0 ? Loc.T("すべて", "All") : Content.RarityName(TradeRarities[_tradeRarityFilter]));
+            _tradeSlotLabel = Loc.T("部位：", "Slot: ")
+                + (_tradeSlotFilter < 0 ? Loc.T("すべて", "All") : Content.SlotName(TradeSlots[_tradeSlotFilter]));
+        }
+
+        private bool MatchesCoopTradeFilters(TradeRelicText text)
+        {
+            if (_tradeRarityFilter >= 0 && text.Rarity != TradeRarities[_tradeRarityFilter]) return false;
+            if (_tradeSlotFilter >= 0 && text.Slot != TradeSlots[_tradeSlotFilter]) return false;
+            string query = _tradeSearch?.Trim();
+            return string.IsNullOrEmpty(query) || text.Name.IndexOf(query, StringComparison.OrdinalIgnoreCase) >= 0;
+        }
+
         private void DrawCoopTradeRelicChoices(Profile p, List<Relic> relics, CoopTradeView trade, bool editable)
         {
             bool enabled = GUI.enabled;
-            bool found = false;
+            bool found = false, hidden = false;
             for (int i = 0; i < relics.Count; i++)
             {
                 var relic = relics[i];
                 if (p.IsEquippedAnywhere(relic.Uid)) continue;
-                found = true;
                 var text = CoopTradeRelicText(relic);
+                if (!MatchesCoopTradeFilters(text)) { hidden = true; continue; }
+                found = true;
                 bool selected = trade.OwnOffer != null && trade.OwnOffer.RelicUids.Contains(relic.Uid);
                 GUILayout.BeginVertical(_st.Panel);
                 GUI.enabled = enabled && editable;
@@ -280,7 +358,9 @@ namespace SodRpg.Mod
                 GUILayout.Label(text.Details, _st.Small);
                 GUILayout.EndVertical();
             }
-            if (!found) GUILayout.Label(Loc.T("交換できる未装着の遺物がありません。", "No unequipped relics to offer."), _st.Small);
+            if (!found) GUILayout.Label(hidden
+                ? Loc.T("条件に合う遺物がありません。", "No relics match the filters.")
+                : Loc.T("交換できる未装着の遺物がありません。", "No unequipped relics to offer."), _st.Small);
         }
 
         private void DrawCoopTradeMaterialSummary(CoopTradeOffer offer)
