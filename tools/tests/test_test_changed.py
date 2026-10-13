@@ -288,8 +288,12 @@ class FilterChunkTests(unittest.TestCase):
         self.assertGreater(len(chunks), 1)
         self.assertTrue(all(len(c) <= 1500 for c in chunks))
         terms = "|".join(chunks).split("|")
-        self.assertEqual(sorted(terms),
-                         sorted(f"FullyQualifiedName~{c}." for c in classes))
+        # Every class contributes its dot term (own methods) and its ``+``
+        # term (nested classes), so nested test classes cannot drop out.
+        self.assertEqual(
+            sorted(terms),
+            sorted(f"FullyQualifiedName~{c}{suffix}" for c in classes
+                   for suffix in (".", "+")))
 
 
 

@@ -67,10 +67,12 @@ jobs:
   # releases; PRs only pay for the fast set above. One matrix entry per class
   # holding Speed=Slow tests, the same per-class process split as
   # tools/test_changed.py --slow (each test assembly serializes its own tests,
-  # so the parallelism comes from separate processes). The trailing dot in
-  # the filter keeps the contains-match inside the class (a future class
-  # whose name merely starts with an existing one must not run twice). When a
-  # new slow test class appears, add it here; the core-tests job runs
+  # so the parallelism comes from separate processes). The trailing separator
+  # in each filter term keeps the contains-match inside the class (a future
+  # class whose name merely starts with an existing one must not run twice);
+  # the ``+`` twin term also catches nested classes (Ns.X+Nested), which a
+  # dot-only term would silently miss. When a new slow test class appears,
+  # add it here; the core-tests job runs
   # `python tools/test_changed.py --check-ci-matrix`, which fails when this
   # matrix and the detected slow classes disagree. Generation freshness is
   # already enforced by the core-tests job on the same push, so the matrix
@@ -96,6 +98,6 @@ jobs:
           key: nuget-${{ runner.os }}-${{ hashFiles('**/*.csproj') }}
           restore-keys: nuget-${{ runner.os }}-
       - run: dotnet build -c Release tests/SodRpg.Core.Tests
-      - run: dotnet test -c Release tests/SodRpg.Core.Tests --no-build --filter "Speed=Slow&FullyQualifiedName~${{ matrix.class }}."
+      - run: dotnet test -c Release tests/SodRpg.Core.Tests --no-build --filter "Speed=Slow&(FullyQualifiedName~${{ matrix.class }}.|FullyQualifiedName~${{ matrix.class }}+)"
         env:
           SODRPG_SLOW: "1"

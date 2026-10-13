@@ -69,10 +69,18 @@ python tools/test_changed.py [--base <git ref>] [--list] [--all] [--slow]
 ## 実行方法
 
 選択されたテストクラスから `dotnet test <project> --filter` 式を組み立てる。
-フィルタは `FullyQualifiedName~名前空間.クラス.` 条件（末尾のドットでクラス内だけに
-一致させ、名前が先頭一致する別クラスの二重実行を防ぐ）を `|` で連結した 1 本の式で、
+フィルタはクラスごとに `FullyQualifiedName~名前空間.クラス.` と
+`FullyQualifiedName~名前空間.クラス+` の 2 条件（末尾の区切り文字でクラス内だけに
+一致させ、名前が先頭一致する別クラスの二重実行を防ぐ。`+` 条件は入れ子クラス
+`Ns.Class+Nested` のテストを取りこぼさないため）を `|` で連結した式で、
 長すぎる場合（既定の上限 15000 文字）は複数回の `dotnet test` 実行に分割する。
 テストプロジェクトは `tests/` 配下の `.csproj` を再帰収集する（`bin`/`obj` を除く）。
+クラスとプロジェクトの対応は csproj から判定する: 明示的な `<Compile Include>` の
+リンク先と、`EnableDefaultCompileItems`（既定のフォルダ glob）と `<Compile Remove>` を
+考慮したフォルダ位置の両方。同じファイルを複数プロジェクトがコンパイルする場合
+（他プロジェクトからリンクされつつ相手プロジェクトのフォルダ内にある等）は
+両方のプロジェクトに割り当てる。どのプロジェクトにも属さないクラスは従来どおり
+全プロジェクトで実行する。
 
 - まず `dotnet build -c Release` をプロジェクトごとに直列に実行し
   （`obj/` の共有を守るため。Release は CPU 主体のこのスイートで

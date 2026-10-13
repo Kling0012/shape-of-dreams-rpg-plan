@@ -82,6 +82,9 @@ CLASS_LINE_RE = re.compile(
 SLOW_TEST_RE = re.compile(r'\[\s*SlowFact\b|Trait\(\s*"Speed"\s*,\s*"Slow"\s*\)')
 TEST_METHOD_RE = re.compile(r"\[\s*(?:SlowFact|Fact|Theory)\b")
 COMPILE_INCLUDE_RE = re.compile(r'<Compile\s+Include="([^"]+)"', re.IGNORECASE)
+COMPILE_REMOVE_RE = re.compile(r'<Compile\s+Remove="([^"]+)"', re.IGNORECASE)
+NO_DEFAULT_COMPILE_RE = re.compile(
+    r"<EnableDefaultCompileItems\s+>\s*false\s*</", re.IGNORECASE)
 SUMMARY_RE = re.compile(r"Failed:\s*(\d+)[,，]?\s*Passed:\s*(\d+)")
 NAMESPACE_RE = re.compile(r"\bnamespace\s+([A-Za-z_][\w.]*)")
 # Identifiers worth mapping to tests when a diff narrows a production change:
@@ -235,38 +238,83 @@ def core_run_groups(core_classes: set[str], slow_classes: set[str],
     return [group for group in groups if group]
 
 
+def _csproj_path_pattern(base: str, rel: str) -> str:
+    """Normalize a csproj-relative Include/Remove pattern to repo-relative.
+
+    ``..`` segments pop, empty and ``.`` segments drop; wildcard characters
+    pass through for the later glob -> regex translation. Unresolvable ``..``
+    segments (path escaping the repo root) are kept, producing a pattern that
+    matches no repo-relative path.
+    """
+    parts: list[str] = []
+    for segment in f"{base}/{rel}".replace("\\", "/").split("/"):
+        if segment == "..":
+            if parts:
+                parts.pop()
+        elif segment not in ("", "."):
+            parts.append(segment)
+    return "/".join(parts)
+
+
+def _glob_regex(pattern: str) -> re.Pattern:
+    """MSBuild glob -> regex: ``*``/``?`` stay inside one path segment and
+    ``**`` matches zero or more whole segments (fnmatch would let ``*`` cross
+    ``/`` and require ``**/`` to consume one)."""
+    segments = pattern.split("/")
+    regex = ""
+    for index, segment in enumerate(segments):
+        if segment == "**":
+            regex += "(?:[^/]+/)*" if index < len(segments) - 1 else ".*"
+            continue
+        part = "".join("[^/]*" if ch == "*" else "[^/]" if ch == "?"
+                       else re.escape(ch) for ch in segment)
+        regex += part + ("/" if index < len(segments) - 1 else "")
+    return re.compile(regex + r"\Z")
+
+
 def classes_by_project(root: Path, files: dict[str, str],
                        projects: list[str]) -> dict[str, set[str]]:
     """Declared test classes per project.
 
-    A file belongs to the project that lists it via ``<Compile Include>`` or
-    whose folder contains it (deepest project wins). Files owned by no project
-    count for every project, preserving the historical run-everywhere filter.
+    A class belongs to every project whose assembly compiles its file: an
+    explicit ``<Compile Include>`` link, or the project's default folder glob
+    (``EnableDefaultCompileItems`` unset/false honored, ``<Compile Remove>``
+    patterns applied). A file can be owned by several projects at once — e.g.
+    shared test data linked from one project while still sitting inside
+    another project's folder — and then its classes run in each owning
+    project's processes, matching what the assemblies really compile. Files
+    owned by no project count for every project, preserving the historical
+    run-everywhere filter.
     """
-    links: dict[str, set[str]] = {}
+    includes: dict[str, set[str]] = {}
+    removes: dict[str, set[re.Pattern]] = {}
+    default_globs: dict[str, bool] = {}
+    folders: dict[str, str] = {}
     for project in projects:
-        linked: set[str] = set()
         text = read_file(root, project) or ""
-        base = project.rsplit("/", 1)[0]
-        for rel in COMPILE_INCLUDE_RE.findall(text):
-            parts: list[str] = []
-            for segment in f"{base}/{rel}".replace("\\", "/").split("/"):
-                if segment == "..":
-                    if parts:
-                        parts.pop()
-                elif segment not in ("", "."):
-                    parts.append(segment)
-            linked.add("/".join(parts))
-        links[project] = linked
+        base_dir = project.rsplit("/", 1)[0]
+        # Include/Remove attributes are semicolon-separated MSBuild item lists.
+        includes[project] = {_csproj_path_pattern(base_dir, rel)
+                             for value in COMPILE_INCLUDE_RE.findall(text)
+                             for rel in value.split(";") if rel.strip()}
+        removes[project] = {_glob_regex(_csproj_path_pattern(base_dir, rel))
+                            for value in COMPILE_REMOVE_RE.findall(text)
+                            for rel in value.split(";") if rel.strip()}
+        default_globs[project] = not NO_DEFAULT_COMPILE_RE.search(text)
+        folders[project] = base_dir
     mapping = {project: set() for project in projects}
     for path, content in sorted(files.items()):
         if not (path.startswith("tests/") and path.endswith(".cs")):
             continue
-        owners = [p for p in projects if path in links[p]]
-        if not owners:
-            owners = [p for p in projects if path.startswith(p.rsplit("/", 1)[0] + "/")]
-            if len(owners) > 1:  # nested project folders: deepest wins
-                owners = [max(owners, key=len)]
+        owners = [p for p in projects if path in includes[p]]
+        for p in projects:
+            if p in owners or not default_globs[p]:
+                continue
+            if not path.startswith(folders[p] + "/"):
+                continue
+            if any(pattern.fullmatch(path) for pattern in removes[p]):
+                continue
+            owners.append(p)  # the default glob compiles it too
         classes = top_level_test_classes(content)
         for owner in owners:
             mapping[owner].update(classes)
@@ -519,13 +567,18 @@ def select_tests(changed, files, diffs=None) -> Selection:
 
 
 def build_filters(classes, max_chars: int = MAX_FILTER_CHARS) -> list[str]:
-    """Chunk ``FullyQualifiedName~X.`` terms into filter expressions.
+    """Chunk ``FullyQualifiedName~X.`` / ``FullyQualifiedName~X+`` terms.
 
-    The trailing dot keeps the contains-match scoped to class X: without it a
-    class whose fully-qualified name contains another's (X and XMore) would
-    have its tests selected by both terms.
+    The trailing separator keeps the contains-match scoped to class X: without
+    it a class whose fully-qualified name contains another's (X and XMore)
+    would have its tests selected by both terms. The ``+`` twin of each term
+    keeps nested classes covered: vstest writes their fully-qualified names as
+    ``Ns.X+Nested.Method``, which a dot-only term would silently miss.
     """
-    terms = [f"FullyQualifiedName~{c}." for c in sorted(classes)]
+    terms: list[str] = []
+    for c in sorted(classes):
+        terms.append(f"FullyQualifiedName~{c}.")
+        terms.append(f"FullyQualifiedName~{c}+")
     chunks: list[str] = []
     current: list[str] = []
     for term in terms:

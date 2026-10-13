@@ -6,11 +6,12 @@ git-ignored): when neither the generator inputs (everything under
 tools/star-manifest/ and tools/balance/ plus every hand-written .cs under
 src/SodRpg.Core/Game) nor the generated files themselves changed since the
 last verified run, the expensive rendering is skipped entirely. The cache
-record is validated (safe paths, sha256-shaped hashes, a digest over the whole
-outputs mapping) before it is trusted, and anything unreadable, malformed,
-truncated or tampered with just counts as stale, falling back to the normal
-generation. --check still refreshes that cache file; it never touches the
-generated sources.
+record is validated (safe paths, sha256-shaped hashes, a key set equal to the
+disk-derived expected outputs, a digest over the whole outputs mapping)
+before it is trusted, and anything unreadable, malformed, truncated or
+tampered with just counts as stale, falling back to the normal generation.
+--check still refreshes that cache file; it never touches the generated
+sources.
 """
 
 from __future__ import annotations
@@ -62,6 +63,17 @@ DEFAULT_OUTPUT_PATH = OUTPUT_PATH
 # future output breaks that naming rule it only keeps the cache from ever
 # hitting (the full generation then runs, which is still correct).
 GENERATOR_SRC_ROOT = "src/SodRpg.Core/Game"
+
+# Generated outputs whose names carry no generated marker or that live
+# outside src/ (everything else matches _is_generated_output under src/).
+# Listed by hand so the cache's output set is checked against a disk-derived
+# expectation; a future output of that kind only keeps the cache from ever
+# hitting (the full generation then runs, which is still correct).
+EXTRA_OUTPUT_PATHS = ("src/SodRpg.Core/Game/NamedItems.Data.cs",
+                      "tools/lowrarity/new-bases.json")
+# Generated-marker files under src/ that this generator does NOT own; leaving
+# them in the expectation would permanently invalidate the cache.
+FOREIGN_MARKER_PATHS = ("src/SodRpg.Core/Game/StarMapPlacements.Generated.cs",)
 
 
 def _is_generated_output(path: Path) -> bool:
@@ -122,15 +134,37 @@ def _inputs_digest() -> str:
     return digest.hexdigest()
 
 
+def _expected_output_paths() -> set[str] | None:
+    """Output paths derived from the working tree, not from the cache record.
+
+    Every generated-marker .cs file under src/ minus the marker files this
+    generator does not own, plus the hand-listed marker-less / out-of-src
+    outputs. Compared against the cache's recorded keys, so a cache whose
+    output list was truncated and self-consistently re-digested (dropping a
+    generated file from the check) no longer validates even though every
+    recorded hash still matches. None when the scan itself fails.
+    """
+    try:
+        paths = set(EXTRA_OUTPUT_PATHS)
+        for path in (ROOT / "src").rglob("*.cs"):
+            rel = path.relative_to(ROOT).as_posix()
+            if _is_generated_output(path) and rel not in FOREIGN_MARKER_PATHS:
+                paths.add(rel)
+        return paths
+    except OSError:
+        return None
+
+
 def _cache_is_fresh(inputs: str) -> bool:
     """True when the recorded inputs and every recorded generated file match.
 
     A changed or missing generated file invalidates the cache, so a stale
     output is never waved through. The record is validated before use: the
     inputs digest must match, ``outputs`` must be a non-empty mapping of safe
-    repo-relative paths to sha256-shaped hashes, and the digest stored next to
-    it must still describe that whole mapping (a partial or hand-edited output
-    list cannot smuggle unrecorded generated files past the check). Any
+    repo-relative paths to sha256-shaped hashes whose key set equals the
+    disk-derived expected outputs (a partial, truncated or hand-edited output
+    list cannot smuggle unrecorded generated files past the check), and the
+    digest stored next to it must still describe that whole mapping. Any
     unreadable or malformed cache (missing file, invalid JSON, non-object JSON)
     just counts as stale; nothing here raises.
     """
@@ -145,6 +179,9 @@ def _cache_is_fresh(inputs: str) -> bool:
         return False
     if not all(_is_cacheable_path(rel) and isinstance(digest, str)
                and HEX64_RE.fullmatch(digest) for rel, digest in outputs.items()):
+        return False
+    expected = _expected_output_paths()
+    if expected is None or set(outputs) != expected:
         return False
     if record.get("outputs_digest") != _outputs_digest(outputs):
         return False
