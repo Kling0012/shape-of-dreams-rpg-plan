@@ -10,6 +10,26 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v2.10.33 — Search and filter relics in the co-op trade tab（2026-10-14）
+
+協力交換タブで、自分が渡す遺物を名前・レア度・部位で絞り込めるようにしました。 / You can now filter the relics you offer in the co-op trade tab by name, rarity and slot.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 新機能 / New features
+
+- **交換で渡す遺物の検索と絞り込み**：協力交換タブの「自分が渡すもの」の一覧（保管庫と鞄にある、装着していない遺物）に、名前の検索欄を追加しました。名前の一部を入れるだけで探せて、大文字と小文字は区別しません。強化値（+N）も検索の対象になります。 / **Search and filters for relics you trade**: the "what you give" list in the co-op trade tab (unequipped relics in your storage and bag) now has a name search box. Typing part of a name is enough, letters are matched regardless of case, and the upgrade level (+N) is searchable too.
+- 「レア度」と「部位」の切り替えボタンも追加しました。左クリックで次の条件へ、右クリックで前の条件へ切り替わり、一周すると「すべて」に戻ります。「解除」ボタンを押すと、すべての条件をまとめて外せます。 / Rarity and slot toggle buttons were also added. Left-click moves to the next option, right-click to the previous one, and cycling through returns to "All". The Clear button removes every filter at once.
+- 絞り込みで変わるのは一覧の表示だけです。選んだ遺物が一覧から見えなくなっても、選択はそのまま残ります。条件に合う遺物が1つもないときは「条件に合う遺物がありません。」と表示されます。条件は交換の相手を変えても残ります。 / Filters only change what the list shows. A relic you already selected stays selected even if the filter hides it. When nothing matches, the list says that no relics match the filters. Your filters stay in place when you switch trade partners.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
 ## v2.10.32 — Endless Night in Limbo again（2026-10-14）
 
 Limbo でも道標「明けない夜」が出るように戻しました。 / Endless Night is offered in Limbo again.

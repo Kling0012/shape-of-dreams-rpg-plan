@@ -1,5 +1,5 @@
-[b]Endless Night is offered in Limbo again.[/b]
-[b]Limbo でも道標「明けない夜」が出るように戻しました。[/b]
+[b]Find the relics you want to give in the co-op trade tab by name, rarity and slot.[/b]
+[b]協力交換タブで、渡したい遺物を名前・レア度・部位で探せるようにしました。[/b]
 
 [h1]Dreamforge RPG[/h1]
 Turns every run into part of a long RPG journey: relics you keep, a risky "secure or delve" choice at every zone, a star map per Traveler, a forge, and long-term goals. Co-op ready.
