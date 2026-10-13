@@ -5,4 +5,5 @@ obj/
 TestResults/
 .ref/
 tests/SodRpg.Core.Tests/Diagnostics/
+tools/balance/.gen_cs-cache.json
 __pycache__/

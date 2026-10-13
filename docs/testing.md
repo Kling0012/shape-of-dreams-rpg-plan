@@ -20,8 +20,8 @@ python tools/test_changed.py [--base <git ref>] [--list] [--all] [--slow]
 | なし | 変更に対応するテストクラスだけを `dotnet test` で実行する |
 | `--base <git ref>` | 比較元を指定する（既定: `origin/main` との merge-base） |
 | `--list` | 選択されたテストクラス（完全修飾名）だけを表示して終了する（テストは実行しない） |
-| `--all` | フィルタなしでスイート全体を実行する |
-| `--slow` | `Speed=Slow` の網羅テスト（`SODRPG_SLOW=1`）も実行する（既定では除外） |
+| `--all` | スイート全体を実行する（Core はクラス単位のフィルタで複数プロセスに分割） |
+| `--slow` | `Speed=Slow` の網羅テスト（`SODRPG_SLOW=1`）も実行する（既定では除外）。低速テストを持つクラスはクラスごとに別プロセスで並列に走る |
 
 終了コードは最初の非ゼロの `dotnet test` 終了コード。テストに関係する変更が
 一件もない場合は「変更なし」と表示して 0 を返す。
@@ -75,7 +75,18 @@ python tools/test_changed.py [--base <git ref>] [--list] [--all] [--slow]
 - まず `dotnet build -c Release` をプロジェクトごとに直列に実行し
   （`obj/` の共有を守るため。Release は CPU 主体のこのスイートで
   Debug の半分以下の実時間になる）、その後 `dotnet test -c Release --no-build` を
-  プロジェクト並列で実行する（各アセンブリ内のテストは共有状態のため元々直列）。
+  複数プロセス並列で実行する（各アセンブリ内のテストは共有状態のため
+  `DisableTestParallelization` のまま直列。並列化はプロセス分割による）。
+
+- プロセス分割（#404）: `--all` では Core スイートをクラス単位のフィルタで
+  複数プロセスに分ける。所要時間の大半を占める重い 5 クラス
+  （AllocationEquivalence・GeneratedHeroAcceptance・StarMapReachability・
+  PressureRewardMultiplier・StarMapOptimize）はそれぞれ単独プロセス、
+  残りはテストメソッド数を重みに 3 グループへ均等分割する
+  （同じクラスは必ず同じプロセス）。`--slow` では Speed=Slow テストを含む
+  クラスもクラスごとに別プロセスで並列に走らせる。全プロセスの和が
+  従来のフィルタなし 1 プロセスと同じテスト集合・合否になる。
+  選択実行（`--all` 未指定）でも、`--slow` 時の低速クラスは同様に単独プロセスとする。
 
 - `dotnet` コマンド: 既定では `%LOCALAPPDATA%\dotnet-sdk\dotnet.exe` を使う。
   環境変数 `DOTNET` に実行ファイルのパスがあればそれを優先する。

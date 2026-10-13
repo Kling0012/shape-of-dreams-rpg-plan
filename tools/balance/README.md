@@ -45,6 +45,12 @@ python tools/balance/gen_cs.py
 python tools/balance/gen_cs.py --check
 ```
 
+`gen_cs.py --check` は内容ハッシュのキャッシュ（`tools/balance/.gen_cs-cache.json`、
+git管理外）を使う。前回の検証成功時から入力（`tools/star-manifest/`・`tools/balance/`
+配下と生成器が読む src の手書きファイル）と生成物のどちらも変わっていなければ、
+生成を丸ごと省いて数秒で終わる。入力・生成物のいずれかが変われば必ず通常の
+生成・比較が走り、失敗（stale）ならキャッシュは更新しない。
+
 `run` は実行可能です。任意の作業ディレクトリから絶対パスでも呼び出せます。
 入力検証→生成→生成鮮度確認→BalanceSim Releaseビルド（1回）→
 `python tools/test_changed.py --all`（`--slow` 時は同オプション追加）→

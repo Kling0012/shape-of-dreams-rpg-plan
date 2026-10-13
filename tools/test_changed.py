@@ -11,9 +11,14 @@ narrows the mapping to touched tokens (members, string constants), retaining
 file-level type dependencies for object initialization changes.  The selected
 classes run with ``dotnet test <project> --filter ...``.
 
-The three test projects serialize their own tests (shared game state), so the
-projects are built serially and then run in parallel for wall-clock time.
-``--slow`` additionally enables the Speed=Slow exhaustive tests (SODRPG_SLOW=1).
+The test projects serialize their own tests (shared game state:
+DisableTestParallelization), so the projects are built serially and their tests
+run as parallel ``dotnet test`` processes. The Core suite is additionally split
+into several class-filtered processes: the five heavyweight classes run alone
+and the rest is balanced by test-method count. With ``--slow``, every class
+holding Speed=Slow tests gets a process of its own (SODRPG_SLOW=1), so the
+exhaustive tests of different classes overlap. The union of the processes
+always selects exactly the tests a single unfiltered run would.
 
 If nothing test-relevant changed, a message is printed and the exit code is 0.
 Otherwise the exit code is the first non-zero ``dotnet test`` exit code.
@@ -43,10 +48,35 @@ MAX_FILTER_CHARS = 15000
 # Non-code directories whose files are read by tests at run time.
 DATA_DIRS = ("tools/star-manifest", "tools/lowrarity", "tools/balance")
 
+# The Core project is split into parallel per-class-filter processes (#404):
+# each test assembly serializes its own tests (shared Loc/StarClusters state),
+# so the wall-clock win comes from separate processes. The five classes below
+# take 62% of the suite's serial run time and each runs alone in its own
+# process; the remaining classes are balanced by test-method count.
+CORE_TESTS_PROJECT = "tests/SodRpg.Core.Tests/SodRpg.Core.Tests.csproj"
+HEAVY_CORE_CLASSES = frozenset({
+    "SodRpg.Core.Tests.AllocationEquivalenceV131Tests",
+    "SodRpg.Core.Tests.GeneratedHeroAcceptanceTests",
+    "SodRpg.Core.Tests.StarMapReachabilityTests",
+    "SodRpg.Core.Tests.PressureRewardMultiplierTests",
+    "SodRpg.Core.Tests.StarMapOptimizeCommandTests",
+})
+CORE_REMAINDER_PROCESSES = 3
+
 TYPE_DECL_RE = re.compile(
     r"\b(?:class|struct|enum|interface|record)(?:\s+(?:class|struct))?\s+([A-Za-z_]\w*)"
 )
 CLASS_DECL_RE = re.compile(r"\bclass\s+([A-Za-z_]\w*)")
+# A class declared directly inside a (block or file-scoped) namespace: four
+# spaces of indentation followed by an accessibility keyword. Test classes in
+# this repository all follow that layout; nested helper classes do not count.
+TOP_LEVEL_CLASS_RE = re.compile(
+    r"^ {4}(?:public|internal)\s+(?:sealed\s+|static\s+|abstract\s+|partial\s+)*class\s+([A-Za-z_]\w*)",
+    re.M,
+)
+SLOW_TEST_RE = re.compile(r'\[\s*SlowFact\b|Trait\(\s*"Speed"\s*,\s*"Slow"\s*\)')
+TEST_METHOD_RE = re.compile(r"\[\s*(?:SlowFact|Fact|Theory)\b")
+COMPILE_INCLUDE_RE = re.compile(r'<Compile\s+Include="([^"]+)"', re.IGNORECASE)
 SUMMARY_RE = re.compile(r"Failed:\s*(\d+)[,，]?\s*Passed:\s*(\d+)")
 NAMESPACE_RE = re.compile(r"\bnamespace\s+([A-Za-z_][\w.]*)")
 # Identifiers worth mapping to tests when a diff narrows a production change:
@@ -92,6 +122,128 @@ def declared_test_classes(content: str) -> list[str]:
         if fqn not in classes:
             classes.append(fqn)
     return classes
+
+
+def top_level_test_classes(content: str) -> list[str]:
+    """Fully-qualified names of the namespace-level classes of a test .cs file.
+
+    Unlike ``declared_test_classes`` this excludes nested helper classes, whose
+    real fully-qualified names (``Outer+Nested``) never match a filter anyway.
+    Files with an unusual layout fall back to the inclusive scan.
+    """
+    stripped = strip_comments(content)
+    namespace_match = NAMESPACE_RE.search(stripped)
+    namespace = namespace_match.group(1) if namespace_match else ""
+    names = TOP_LEVEL_CLASS_RE.findall(stripped)
+    if not names:
+        return declared_test_classes(content)
+    classes = []
+    for name in names:
+        fqn = f"{namespace}.{name}" if namespace else name
+        if fqn not in classes:
+            classes.append(fqn)
+    return classes
+
+
+def slow_test_classes(files: dict[str, str]) -> set[str]:
+    """Classes holding Speed=Slow tests ([SlowFact] / Trait("Speed","Slow"))).
+
+    Each of them keeps its own ``dotnet test`` process when ``--slow`` is on,
+    so the expensive exhaustive tests of different classes overlap.
+    """
+    classes: set[str] = set()
+    for path, content in files.items():
+        if path.startswith("tests/") and path.endswith(".cs") \
+                and SLOW_TEST_RE.search(strip_comments(content)):
+            classes.update(top_level_test_classes(content))
+    return classes
+
+
+def class_weights(files: dict[str, str]) -> dict[str, float]:
+    """Test-method count per class (shared evenly when a file declares several).
+
+    A rough proxy for run time, used only to balance the leftover classes
+    across processes.
+    """
+    weights: dict[str, float] = {}
+    for path, content in files.items():
+        if not (path.startswith("tests/") and path.endswith(".cs")):
+            continue
+        classes = top_level_test_classes(content)
+        if not classes:
+            continue
+        share = len(TEST_METHOD_RE.findall(strip_comments(content))) / len(classes)
+        for name in classes:
+            weights[name] = weights.get(name, 0.0) + share
+    return weights
+
+
+def balance_classes(classes, weights: dict[str, float], groups: int) -> list[list[str]]:
+    """Greedily balance classes over ``groups`` lists by weight (heaviest first)."""
+    buckets: list[list[str]] = [[] for _ in range(groups)]
+    loads = [0.0] * groups
+    for name in sorted(classes, key=lambda c: (-weights.get(c, 0.0), c)):
+        index = min(range(groups), key=lambda i: (loads[i], i))
+        buckets[index].append(name)
+        loads[index] += weights.get(name, 0.0)
+    return [bucket for bucket in buckets if bucket]
+
+
+def core_run_groups(core_classes: set[str], slow_classes: set[str],
+                    weights: dict[str, float]) -> list[list[str]]:
+    """Split the Core suite's classes into one list per parallel process.
+
+    The heavyweight classes (and, with ``--slow``, every class holding slow
+    tests) run alone; the rest is balanced over ``CORE_REMAINDER_PROCESSES``
+    processes. Every class stays in exactly one group, so the union of the
+    groups runs exactly the tests a single unfiltered process would.
+    """
+    singles = sorted((HEAVY_CORE_CLASSES | slow_classes) & core_classes)
+    remainder = core_classes - set(singles)
+    groups = [[name] for name in singles]
+    groups.extend(balance_classes(remainder, weights, CORE_REMAINDER_PROCESSES))
+    return groups
+
+
+def classes_by_project(root: Path, files: dict[str, str],
+                       projects: list[str]) -> dict[str, set[str]]:
+    """Declared test classes per project.
+
+    A file belongs to the project that lists it via ``<Compile Include>`` or
+    whose folder contains it (deepest project wins). Files owned by no project
+    count for every project, preserving the historical run-everywhere filter.
+    """
+    links: dict[str, set[str]] = {}
+    for project in projects:
+        linked: set[str] = set()
+        text = read_file(root, project) or ""
+        base = project.rsplit("/", 1)[0]
+        for rel in COMPILE_INCLUDE_RE.findall(text):
+            parts: list[str] = []
+            for segment in f"{base}/{rel}".replace("\\", "/").split("/"):
+                if segment == "..":
+                    if parts:
+                        parts.pop()
+                elif segment not in ("", "."):
+                    parts.append(segment)
+            linked.add("/".join(parts))
+        links[project] = linked
+    mapping = {project: set() for project in projects}
+    for path, content in sorted(files.items()):
+        if not (path.startswith("tests/") and path.endswith(".cs")):
+            continue
+        owners = [p for p in projects if path in links[p]]
+        if not owners:
+            owners = [p for p in projects if path.startswith(p.rsplit("/", 1)[0] + "/")]
+            if len(owners) > 1:  # nested project folders: deepest wins
+                owners = [max(owners, key=len)]
+        classes = top_level_test_classes(content)
+        for owner in owners:
+            mapping[owner].update(classes)
+        if not owners:
+            for project in projects:
+                mapping[project].update(classes)
+    return mapping
 
 
 def mentions_any(content: str, names: list[str]) -> bool:
@@ -472,12 +624,48 @@ def build_projects(root: Path, projects: list[str]) -> int:
     return 0
 
 
+def full_project_runs(project: str, all_classes: set[str], slow_classes: set[str],
+                      weights: dict[str, float]) -> list[tuple[str | None, str]]:
+    """(filter expression, label) runs for the unfiltered full suite of a project.
+
+    Only the Core suite is split: its classes are grouped by ``core_run_groups``
+    so the heavyweight (and, with ``--slow``, slow) classes run in parallel
+    processes. Every class stays in exactly one group, so the union of the
+    runs selects exactly the tests one unfiltered process would.
+    """
+    if project != CORE_TESTS_PROJECT or not all_classes:
+        return [(None, "")]
+    labeled: list[tuple[str, str]] = []
+    for group in core_run_groups(all_classes, slow_classes, weights):
+        name = group[0].rsplit(".", 1)[-1] if len(group) == 1 else f"{len(group)} classes"
+        for expr in build_filters(group):
+            labeled.append((expr, name))
+    return [(expr, f" ({index}/{len(labeled)}: {name})")
+            for index, (expr, name) in enumerate(labeled, start=1)]
+
+
+def selection_runs(selected: set[str], slow_classes: set[str]) -> list[tuple[str, str]]:
+    """(filter expression, label) runs selecting exactly ``selected`` classes.
+
+    With ``--slow`` every slow class keeps its own process so the exhaustive
+    tests of different classes overlap; the other classes share one filter.
+    """
+    runs: list[tuple[str, str]] = []
+    slow = selected & slow_classes
+    for name in sorted(slow):
+        runs.append((build_filters([name])[0], f" {name.rsplit('.', 1)[-1]}"))
+    for expr in build_filters(sorted(selected - slow)):
+        runs.append((expr, ""))
+    return runs
+
+
 def run_selection(root: Path, classes, run_all: bool, slow: bool = False) -> int:
     """Run the selected classes (or everything); returns the exit code.
 
-    Projects are built serially, then their tests run in parallel: the three
-    test projects serialize their own tests (shared registry state), so the
-    wall-clock win comes from overlapping the projects.
+    Projects are built serially, then their tests run in parallel: every test
+    assembly serializes its own tests (shared registry state), so the
+    wall-clock win comes from overlapping processes. The Core suite is split
+    into several class-filtered processes (heavy and slow classes alone).
     """
     projects = find_test_projects(root)
     if not projects:
@@ -486,25 +674,45 @@ def run_selection(root: Path, classes, run_all: bool, slow: bool = False) -> int
     code = build_projects(root, projects)
     if code != 0:
         return code
-    filters = [None] if run_all else build_filters(classes)
-    pairs = [(project, index, expr)
-             for project in projects for index, expr in enumerate(filters, start=1)]
+    files = scan_test_files(root)
+    weights = class_weights(files)
+    slow_classes = slow_test_classes(files) if slow else set()
+    owned = classes_by_project(root, files, projects)
+    unowned: set[str] = set()
+    if not run_all and classes:
+        known = set().union(*owned.values()) if owned else set()
+        unowned = set(classes) - known
+    pairs: list[tuple[str, str | None, str]] = []  # (project, filter, label)
+    for project in projects:
+        if run_all:
+            runs = full_project_runs(project, owned.get(project, set()), slow_classes, weights)
+        else:
+            selected = (owned.get(project, set()) & set(classes or ())) | unowned
+            if not selected:
+                continue  # no class of this project is selected; nothing to run
+            runs = selection_runs(selected, slow_classes)
+        pairs.extend((project, expr, label) for expr, label in runs)
+    if not pairs:
+        print("no tests selected for any project")
+        return 0
+    print(f"running {len(pairs)} parallel dotnet test processes", file=sys.stderr)
     exit_code = 0
     total_failed = total_passed = 0
-    with concurrent.futures.ThreadPoolExecutor(max_workers=len(projects)) as pool:
+    with concurrent.futures.ThreadPoolExecutor(max_workers=len(pairs)) as pool:
         futures = {pool.submit(run_dotnet_test, root, project, expr, True, slow):
-                   (project, index) for project, index, expr in pairs}
-        for future, (project, index) in sorted(futures.items(), key=lambda item: item[1][1]):
+                   (project, label) for project, expr, label in pairs}
+        for future, (project, label) in futures.items():
             code, output = future.result()
-            header = project if len(filters) == 1 else f"{project} ({index}/{len(filters)})"
-            print(f"===== {header} =====")
+            print(f"===== {project}{label} =====")
             print(output, end="" if output.endswith("\n") else "\n")
             if code != 0:
                 exit_code = exit_code or code
             failed, passed = parse_summary(output)
+            print(f"-> failed: {failed}  passed: {passed}")
             total_failed += failed
             total_passed += passed
     print(f"selected classes: {'all' if run_all else len(classes)}")
+    print(f"processes: {len(pairs)}")
     print(f"passed: {total_passed}  failed: {total_failed}")
     return exit_code
 
