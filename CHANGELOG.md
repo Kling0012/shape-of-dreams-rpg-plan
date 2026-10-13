@@ -8,6 +8,10 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
+### 新機能 / New features
+
+- 部屋の兆しを追加しました。戦闘の部屋ごとに、攻撃力アップなどの恵みか、移動速度ダウンなどの試練がランダムに1つ付きます（試練の部屋は遺物が出やすくなります）。MOD 設定で切り替えられます。 / Added Room Omens: each combat room gets one random blessing (such as more attack) or trial (such as slower movement); trial rooms drop more relics. Toggle it in the mod settings.
+
 ---
 
 ## v2.10.30 — Minor adjustments（2026-10-13）

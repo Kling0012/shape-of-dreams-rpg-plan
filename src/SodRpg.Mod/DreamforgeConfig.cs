@@ -30,6 +30,9 @@ namespace SodRpg.Mod
         [LabelText("Overflow relics: shards + Dream Dust /\n鞄からあふれた遺物で、欠片に加えてドリームダストも受け取る")]
         public bool overflowDreamDust = false;
 
+        [LabelText("Room Omens: a blessing or trial in each combat room (the host's setting applies) /\n部屋の兆し：戦闘の部屋ごとに恵みか試練を付ける（ホストの設定が使われる）")]
+        public bool roomOmens = true;
+
         [LabelText("HUD / 左のパネルの表示")]
         public HudMode hudMode = HudMode.Full;
 

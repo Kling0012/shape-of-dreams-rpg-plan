@@ -132,6 +132,7 @@ namespace SodRpg.Mod
             public bool SpawnProcessed;
             public int DepthApplied;
             public StatBonus DepthBonus;
+            public StatBonus OmenBonus;
             public StatBonus SpecialBonus;
             public bool PressureApplied;
             public DataProcessor<FinalStats> PressureHealth;
@@ -286,6 +287,7 @@ namespace SodRpg.Mod
                     RemoveKillPeer(player);
                     _overflowBonusPeers.Remove(player); // Durable currency receipts remain keyed by guid.
                     _netLitePeers.Remove(player);
+                    _roomOmenPeers.Remove(player);
                 }
                 _pressureDirty = true;
             };
@@ -310,7 +312,7 @@ namespace SodRpg.Mod
             _onActorRemove = OnActorRemove;
             _onShrineUsed = OnShrineUsed;
             _onZoneLoaded = OnZoneLoaded;
-            _onRoomLoaded = info => _roomHasVariant = false;
+            _onRoomLoaded = OnRoomOmenLoaded;
         }
 
         public bool IsActive => _registeredOn != null;
@@ -353,7 +355,7 @@ namespace SodRpg.Mod
                 "boss effects", "boss visuals", "identity strikes", "gimmicks v129", "back-off charge", "sap prune", "attribution prune", "runtime", "run growth", "currency",
                 "shield pools", "spawns", "monster prune", "monster behaviors", "kill replay", "sunders",
                 "nightmare regen", "classification resync",
-                "overflow bonus", "culinary snap", "crowd-control recovery",
+                "overflow bonus", "culinary snap", "crowd-control recovery", "room omens",
             };
             _tickStages = new Action[]
             {
@@ -362,7 +364,7 @@ namespace SodRpg.Mod
                 StageBossEffects, TickBossVisualSnapshots, UpdateIdentityStrikes, StageGimmicksV129, StageBackOffCharge, StageSapPrune, PruneMemoryAttribution, StageRuntimes, StageRunGrowth, StageCurrency,
                 StageModShieldPools, ProcessSpawns, StageMonsterPrune, StageMonsterBehaviors, TickKillReplay, StageSunders,
                 StageNightmareRegen, StageClassificationResync,
-                TickOverflowBonus, CulinaryMagnet.SnapToOwners, StageCrowdControlRecovery,
+                TickOverflowBonus, CulinaryMagnet.SnapToOwners, StageCrowdControlRecovery, TickRoomOmens,
             };
             _tickGuard = new TickGuard(_tickStages, _tickStageNames, 10f, message => Log.Error("Host tick " + message));
         }
@@ -724,6 +726,7 @@ namespace SodRpg.Mod
                 {
                     if (rt.DepthBonus != null) m.Status.RemoveStatBonus(rt.DepthBonus);
                     if (rt.SpecialBonus != null) m.Status.RemoveStatBonus(rt.SpecialBonus);
+                    RemoveRoomOmenMonster(rt);
                 }
             }
             catch (Exception ex) { Log.Error("Host: remove monster bonuses " + ex); }
@@ -937,6 +940,7 @@ namespace SodRpg.Mod
                 if (m.owner == null || m.owner.isHumanPlayer) { _spawnQueue.RemoveAt(i); continue; }
                 if (!_monsters.TryGetValue(m, out var rt)) { _spawnQueue.RemoveAt(i); continue; }
                 ApplyPressure(rt);
+                ApplyRoomOmenMonster(rt);
                 // Pressure is already active; give the initial depth build time to arrive.
                 if (_builds.Count == 0 && now - _spawnQueue[i].Value < 15f) continue;
                 _spawnQueue.RemoveAt(i);
@@ -1233,6 +1237,10 @@ namespace SodRpg.Mod
         /// <summary>全キャラから補正を外し、登録を解除する（MODの再読み込み・終了時）。</summary>
         public void Detach()
         {
+            ClearRoomOmen();
+            _omenRoom = null;
+            _omenRunId = null;
+            _omenSetting = false;
             AutocastPressure.DetachHost(this);
             DetachCoopTrade();
             ClearAssignedMechanismSession();

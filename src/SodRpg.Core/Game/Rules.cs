@@ -170,10 +170,10 @@ namespace SodRpg.Core.Game
         }
 
         /// <summary>契約・出来事・Limbo・今日の夢を合わせた撃破報酬の補正。waypoint は戦ったときの道標（#71）。</summary>
-        public static Pacts.Totals KillModifiers(RunState run, Waypoint? waypoint = null)
+        public static Pacts.Totals KillModifiers(RunState run, Waypoint? waypoint = null, double roomOmenDropBonus = 0)
         {
             var t = Pacts.Sum(run.Pacts);
-            t.DropBonus += run.EventDropBonus;
+            t.DropBonus += run.EventDropBonus + roomOmenDropBonus;
             t.Luck += LimboLuck * run.LimboDepth + run.EventLuck;
             t.Luck += DreamDepth.RarityLuck(run.DreamDepth) + Waypoints.Sum(waypoint ?? run.ActiveWaypoint).Luck;
             var d = DailyDream.Get(run.DailyId);
@@ -188,7 +188,7 @@ namespace SodRpg.Core.Game
 
         /// <summary>撃破報酬。heat/waypoint は戦ったときの値（保留していた撃破の精算用、#71）。省略時は現在の状態。</summary>
         public static List<GameEvent> OnKill(Profile p, MonsterTier tier, int itemLevel, NightmareAffix nightmare = NightmareAffix.None, string heroKey = null, TradeLedger trades = null, string variantId = null, int? roomIndex = null, int? heat = null, Waypoint? waypoint = null,
-            string bossTypeName = null, bool bossDropNightmare = false, int bossDropDepth = 0, double rewardScale = 1, double shardDropMultiplier = 1)
+            string bossTypeName = null, bool bossDropNightmare = false, int bossDropDepth = 0, double rewardScale = 1, double shardDropMultiplier = 1, double roomOmenDropBonus = 0)
         {
             var ev = new List<GameEvent>();
             var run = p.Run;
@@ -203,7 +203,7 @@ namespace SodRpg.Core.Game
             if (Waypoints.Sum(killWaypoint).KillLootTierBonus > 0) rollTier = Nightmares.RewardTier(rollTier);
             int killHeat = heat ?? run.Heat;
             var focus = p.Focus ?? DailyDream.Get(run.DailyId)?.FeaturedLine;
-            var reward = Loot.RollKill(rng, rollTier, itemLevel, killHeat, focus, KillModifiers(run, killWaypoint), p.Stash, run.Satchel, p.Codex,
+            var reward = Loot.RollKill(rng, rollTier, itemLevel, killHeat, focus, KillModifiers(run, killWaypoint, roomOmenDropBonus), p.Stash, run.Satchel, p.Codex,
                 Rarity.Legendary, InfinityRewards.OrdinaryRelicMultiplier(run, killWaypoint, tier), shardDropMultiplier,
                 InfinityRewards.UniqueDropMultiplier(p), LimboRelicMultiplier(run.LimboDepth));
             if (variant != null && variant.ShardBonusPct != 100) reward.Shards = (int)Math.Min(int.MaxValue, (long)reward.Shards * variant.ShardBonusPct / 100 + LootBalance.VariantAdditiveShards);
