@@ -129,19 +129,26 @@ def top_level_test_classes(content: str) -> list[str]:
 
     Unlike ``declared_test_classes`` this excludes nested helper classes, whose
     real fully-qualified names (``Outer+Nested``) never match a filter anyway.
-    Files with an unusual layout fall back to the inclusive scan.
+    A file may declare several namespaces (stub api + the real test classes);
+    each declaration owns the segment up to the next one, so every class keeps
+    the namespace it is declared in. Files with an unusual layout fall back to
+    the inclusive scan.
     """
     stripped = strip_comments(content)
-    namespace_match = NAMESPACE_RE.search(stripped)
-    namespace = namespace_match.group(1) if namespace_match else ""
-    names = TOP_LEVEL_CLASS_RE.findall(stripped)
-    if not names:
+    declarations = list(NAMESPACE_RE.finditer(stripped))
+    segments = ([(None, stripped)] if not declarations else
+                [(match.group(1), stripped[match.end(): declarations[i + 1].start()
+                                               if i + 1 < len(declarations)
+                                               else len(stripped)])
+                 for i, match in enumerate(declarations)])
+    classes: list[str] = []
+    for namespace, segment in segments:
+        for name in TOP_LEVEL_CLASS_RE.findall(segment):
+            fqn = f"{namespace}.{name}" if namespace else name
+            if fqn not in classes:
+                classes.append(fqn)
+    if not classes:
         return declared_test_classes(content)
-    classes = []
-    for name in names:
-        fqn = f"{namespace}.{name}" if namespace else name
-        if fqn not in classes:
-            classes.append(fqn)
     return classes
 
 
