@@ -10,6 +10,18 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v2.10.30 — Minor adjustments（2026-10-13）
+
+細かな調整を行いました。 / Minor adjustments.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+---
+
 ## v2.10.29 — Invulnerable stones and enemies fix（2026-10-13）
 
 石や敵が無敵になって攻撃が効かなくなることがある問題を直しました。 / A fix for stones and enemies becoming invulnerable.

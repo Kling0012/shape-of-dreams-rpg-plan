@@ -1,5 +1,5 @@
-[b]A fix for stones and enemies becoming invulnerable.[/b]
-[b]石や敵が無敵になって攻撃が効かなくなる問題を直しました。[/b]
+[b]Minor adjustments.[/b]
+[b]細かな調整を行いました。[/b]
 
 [h1]Dreamforge RPG[/h1]
 Turns every run into part of a long RPG journey: relics you keep, a risky "secure or delve" choice at every zone, a star map per Traveler, a forge, and long-term goals. Co-op ready.
