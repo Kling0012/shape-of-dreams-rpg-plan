@@ -98,29 +98,58 @@ namespace SodRpg.Core.Tests
         }
 
         [Fact]
-        public void Limbo_offers_swap_endless_night_for_deepening_night()
+        public void Limbo_offers_endless_night_and_saved_deepening_night_still_works()
         {
             var limboSeen = new HashSet<Waypoint>();
             var plainSeen = new HashSet<Waypoint>();
             int offered = PactDailyWaypointTestValues.Integer("waypoints", "offered");
             for (ulong seed = 1; seed <= 400; seed++)
             {
-                var limbo = Waypoints.Offer(new Rng(seed), true);
-                var plain = Waypoints.Offer(new Rng(seed), false);
-                Assert.Equal(offered, limbo.Count);
-                Assert.Equal(offered, limbo.Distinct().Count());
-                // 同じ乱数列では、通常の候補の「明けない夜」だけが「深まる夜」に入れ替わる。
-                Assert.Equal(plain.Select(Swap), limbo);
-                limboSeen.UnionWith(limbo);
+                var plain = Waypoints.Offer(new Rng(seed));
+                Assert.Equal(offered, plain.Count);
+                Assert.Equal(offered, plain.Distinct().Count());
+                // 深まる夜は新規の候補には出ない（保存済みの選択のみ有効）。
+                Assert.DoesNotContain(Waypoint.DeepeningNight, plain);
                 plainSeen.UnionWith(plain);
+                var limboRun = Profile.CreateNew(seed);
+                Rules.BeginRun(limboRun, "limbo-waypoint-run", heroKey: "Hero_Lacerta", limboDepth: 1);
+                Rules.ReachSecurePoint(limboRun);
+                var limbo = limboRun.Run.OfferedWaypoints;
+                Assert.Equal(offered, limbo.Count);
+                Assert.DoesNotContain(Waypoint.DeepeningNight, limbo);
+                limboSeen.UnionWith(limbo);
             }
-            // Limbo では明けない夜が出ず深まる夜が出うる。通常runではその逆。
-            Assert.DoesNotContain(Waypoint.EndlessNight, limboSeen);
-            Assert.Contains(Waypoint.DeepeningNight, limboSeen);
-            Assert.DoesNotContain(Waypoint.DeepeningNight, plainSeen);
+            // Limbo でも通常と同じ候補で明けない夜が出る（#369 の入れ替えを取りやめ）。
+            Assert.Contains(Waypoint.EndlessNight, limboSeen);
             Assert.Contains(Waypoint.EndlessNight, plainSeen);
 
-            Waypoint Swap(Waypoint w) => w == Waypoint.EndlessNight ? Waypoint.DeepeningNight : w;
+            // 保存済みの深まる夜はそのまま読み込めて、効果も従来どおり働く。
+            var saved = Run(Waypoint.DeepeningNight);
+            var loaded = ProfileCodec.Read(ProfileCodec.Write(saved), new List<string>());
+            Assert.Equal(Waypoint.DeepeningNight, loaded.Run.ActiveWaypoint);
+            int dropped = 0;
+            for (ulong seed = 1; seed <= 16; seed++)
+            {
+                var deepened = FreshProfile(seed, Waypoint.DeepeningNight, saveAndLoad: true);
+                var elite = FreshProfile(seed, Waypoint.None, saveAndLoad: false);
+                Rules.OnKill(deepened, MonsterTier.Normal, 10);
+                Rules.OnKill(elite, MonsterTier.MiniBoss, 10);
+                Assert.Equal(elite.Run.SatchelShards, deepened.Run.SatchelShards);
+                Assert.Equal(elite.Run.SatchelTuning, deepened.Run.SatchelTuning);
+                Assert.Equal(elite.Run.Satchel.Select(r => (r.Rarity, r.Slot, r.ItemLevel, r.CodexId)),
+                    deepened.Run.Satchel.Select(r => (r.Rarity, r.Slot, r.ItemLevel, r.CodexId)));
+                dropped += deepened.Run.Satchel.Count;
+            }
+            Assert.True(dropped > 0);
+
+            Profile FreshProfile(ulong seed, Waypoint waypoint, bool saveAndLoad)
+            {
+                var p = Profile.CreateNew(seed);
+                Rules.BeginRun(p, "deepening-saved-run", heroKey: "Hero_Lacerta");
+                p.Run.Bounties.Clear();
+                p.Run.ActiveWaypoint = waypoint;
+                return saveAndLoad ? ProfileCodec.Read(ProfileCodec.Write(p), new List<string>()) : p;
+            }
         }
 
         [Theory]
