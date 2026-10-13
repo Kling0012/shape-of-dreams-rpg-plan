@@ -21,6 +21,7 @@ import stage6_values
 import equipment_items_values
 import powers_values
 import equipment_pools_values
+import room_omen_values
 
 ROOT = Path(__file__).resolve().parents[2]
 FORGE_PATH = ROOT / "tools" / "balance" / "forge.json"
@@ -65,6 +66,7 @@ def generate(check=False):
     outputs.update(equipment_items_values.render_outputs())
     outputs.update(powers_values.render_outputs())
     outputs.update(equipment_pools_values.render_outputs())
+    outputs.update(room_omen_values.render_outputs())
     return stars.publish_outputs(outputs, check=check)
 
 

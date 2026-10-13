@@ -441,6 +441,9 @@ namespace SodRpg.Mod
             bool compact = cfg.hudMode == HudMode.Compact;
             if (run != null && _s.ActiveRunId != null)
             {
+                string omen = RoomOmens.Describe(_s.CurrentRoomOmen);
+                if (omen != null)
+                    sb.Append("\n<size=13><color=#ffd27f>").Append(omen).Append("</color></size>");
                 var waypoint = Waypoints.Get(run.ActiveWaypoint);
                 if (waypoint != null)
                     sb.Append("\n<size=13><color=#a8e9cd>").Append(Loc.T("道標：", "Waypoint: ")).Append(waypoint.Name).Append("</color></size>");

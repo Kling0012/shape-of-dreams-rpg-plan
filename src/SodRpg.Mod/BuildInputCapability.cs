@@ -7,6 +7,7 @@ namespace SodRpg.Mod
     internal sealed partial class ClientSession
     {
         private bool _hostBuildInputCapability;
+        private bool _omenReceiveReady;
         private bool _hostNetLite;
         private bool _netLiteReceiveReady, _netLiteReceiveWarned;
         private bool _hostAutocastPressureCapability;
@@ -67,7 +68,7 @@ namespace SodRpg.Mod
         {
             if (NetworkServer.active || _hostNetLite || !_helloAnswered || Time.unscaledTime < _nextBuildInputProbe) return;
             _nextBuildInputProbe = Time.unscaledTime + 5f;
-            try { _clientRpcOn.CustomRpc_SendMessageToServer(new DreamforgeBuildInputCapabilityMsg { netLite = _netLiteReceiveReady ? 1 : 0 }); } catch (Exception) { }
+            try { _clientRpcOn.CustomRpc_SendMessageToServer(new DreamforgeBuildInputCapabilityMsg { netLite = _netLiteReceiveReady ? 1 : 0, roomOmens = _omenReceiveReady ? 1 : 0 }); } catch (Exception) { }
         }
     }
 

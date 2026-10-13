@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "blessingChance": 0.6,
+  "trialDropBonus": 0.1,
+  "defaultTrialScale": 1.0,
+  "trialScales": { "Hero_Aurena": 0.9, "Hero_Bismuth": 1.0, "Hero_Cetus": 0.9, "Hero_Husk": 0.8, "Hero_Lacerta": 1.0, "Hero_Mist": 0.95, "Hero_Nachia": 1.0, "Hero_Vesper": 0.95, "Hero_Yubar": 1.0 },
+  "effects": {
+    "Vigor": 8,
+    "Swiftness": 8,
+    "Focus": 10,
+    "Fortitude": 8,
+    "Healing": 15,
+    "Fortune": 15,
+    "Sluggishness": -6,
+    "Fragility": -6,
+    "Weariness": -6,
+    "Drought": -15,
+    "RestlessEnemies": 8,
+    "SturdyEnemies": 8
+  }
+}

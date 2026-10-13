@@ -22,6 +22,7 @@ namespace SodRpg.Mod
     public partial class DreamforgeMod : ModBehaviour
     {
         public DreamforgeConfig config = new DreamforgeConfig();
+        partial void ApplyRoomOmensConfig();
 
         private ClientSession _session;
         private HostAuthority _host;
@@ -58,6 +59,7 @@ namespace SodRpg.Mod
                 Loc.Japanese = config.japanese;
                 NetworkTrafficOptions.Configure(config.netSkipUnchanged, config.netCoalesce, config.netOwnerOnly, config.netCompact);
                 ApplyLevelEssenceConfig();
+                ApplyRoomOmensConfig();
                 // Install the generated star maps and their migration rules before any profile is loaded or any build is computed.
                 StarClusters.RegisterAllGenerated((hero, error) =>
                     Log.Warn("Generated star map disabled for " + hero + "; other features remain available: " + error));
@@ -111,6 +113,7 @@ namespace SodRpg.Mod
             _performance?.Configure(config);
             _session?.ConfigureOverflowBonus(config.overflowDreamDust);
             ApplyLevelEssenceConfig();
+            ApplyRoomOmensConfig();
         }
 
         // レベル連動のエッセンス枠（ホストの設定だけが枠に反映される）。壊れた入力でも他の機能は止めない。

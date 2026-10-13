@@ -89,13 +89,24 @@ namespace SodRpg.Mod
         public EntityStatus Status = new EntityStatus();
         public EntityRelation GetRelation(Entity other) => EntityRelation.Enemy;
     }
+    // 本体の StatBonus と同じ形。部屋の兆しの付与・解除をそのまま観測できるよう、適用中の一覧も持つ。
+    internal class StatBonus
+    {
+        public float attackDamagePercentage, abilityPowerPercentage, movementSpeedPercentage,
+            abilityHasteFlat, armorFlat, attackSpeedPercentage, maxHealthPercentage;
+    }
     internal class EntityStatus
     {
         public float currentShield;
         public float currentHealth { get; set; }
+        public float maxHealth = 100;
         public int fireStack, lightStack, darkStack;
         public bool hasCold;
         public bool isDead, isInConversation, hasInvulnerable;
+        public readonly List<StatBonus> AppliedBonuses = new List<StatBonus>();
+        public void AddStatBonus(StatBonus bonus) => AppliedBonuses.Add(bonus);
+        public void RemoveStatBonus(StatBonus bonus) => AppliedBonuses.Remove(bonus);
+        public void CalculateStatsIfDirty() { }
         // ミストの行動不能保険（HostAuthority.CrowdControlRecovery.cs）が走査する本体の効果リスト。
         private readonly List<BasicEffect> _basicEffects = new List<BasicEffect>();
         public bool HasElemental(ElementalType type) => false;
@@ -115,6 +126,7 @@ namespace SodRpg.Mod
         public readonly HeroSkill Skill = new HeroSkill();
         public bool isInCombat, isKnockedOut;
         public readonly EntityAbility Ability;
+        public readonly DataProcessorGroup<HealData, Actor, Entity> takenHealProcessor = new DataProcessorGroup<HealData, Actor, Entity>();
         public Hero() { Ability = new EntityAbility(this); }
         public void ApplyCooldownReductionByRatio(SkillTrigger skill, float ratio, bool ignore) => throw new NotSupportedException();
     }
@@ -216,6 +228,20 @@ namespace SodRpg.Mod
     internal struct ReactionChain { }
     internal enum DamageAttribute { IsCrit }
     internal struct DamageData { public float amount; public bool HasAttr(DamageAttribute attr) => false; }
+    // 本体の回復処理（takenHealProcessor）の形。倍率は生データに反映する。
+    internal struct HealData
+    {
+        public float amount;
+        public void ApplyReduction(float ratio) => amount *= 1f - ratio;
+        public void ApplyAmplification(float ratio) => amount *= 1f + ratio;
+    }
+    internal delegate void DataProcessor<TData, TActor, TTarget>(ref TData data, TActor actor, TTarget target);
+    internal sealed class DataProcessorGroup<TData, TActor, TTarget>
+    {
+        public readonly List<DataProcessor<TData, TActor, TTarget>> Processors = new List<DataProcessor<TData, TActor, TTarget>>();
+        public void Add(DataProcessor<TData, TActor, TTarget> processor, int priority) => Processors.Add(processor);
+        public void Remove(DataProcessor<TData, TActor, TTarget> processor) => Processors.Remove(processor);
+    }
     internal struct CastInfo { public Entity caster; }
     internal struct EventInfoCast { public AbilityInstance instance; public CastInfo info; }
     internal struct EventInfoAbilityInstance { public AbilityInstance instance; public Actor actor; }
@@ -262,9 +288,14 @@ namespace SodRpg.Mod
         public static T instance => softInstance;
     }
     internal static class SingletonDewNetworkBehaviour<T> { public static T softInstance; }
-    internal sealed class Room { public bool isActive, didClearRoom; }
-    internal enum WorldNodeType { Combat, ExitBoss }
-    internal sealed class WorldNode { public WorldNodeType type; }
+    internal sealed class Room { public bool isActive, didClearRoom; public readonly List<Section> sections = new List<Section>(); }
+    internal enum WorldNodeType { Combat, ExitBoss, Shop, Event }
+    internal sealed class WorldNode { public WorldNodeType type; public bool isWellRoom; }
+    // 部屋の兆し（HostAuthority.RoomOmens.cs）が資格判定で読む本体の部屋構成。
+    internal enum SectionCombatAreaType { None, Yes }
+    internal sealed class RoomMonsters { public bool isMarkedAsCombatArea; public SectionCombatAreaType combatAreaSettings; }
+    internal sealed class Section { public RoomMonsters monsters; }
+    internal struct EventInfoLoadRoom { }
     internal sealed class GameManager
     {
         public string runId;
@@ -286,7 +317,7 @@ namespace SodRpg.Mod
         public GameState state = GameState.Playing;
         public readonly Dictionary<string, string> customData = new Dictionary<string, string>();
     }
-    internal sealed class ActorManager { public Actor serverActor; }
+    internal sealed class ActorManager { public Actor serverActor; public readonly List<Hero> allHeroes = new List<Hero>(); }
     // #112: 「ロビーに戻る」の確認で呼ばれる本体の入口。isEndingSession がtrue のEndSession 系
     // (メニュー・デスクトップ復帰など)は精算対象外。仮想プロパティで判別時の例外も注入できる。
     internal class DewNetworkManager
@@ -299,10 +330,11 @@ namespace SodRpg.Mod
     internal sealed class ZoneManager
     {
         public int currentZoneIndex;
-        public bool isInAnyTransition, isVoting;
-        public int clearedCombatRooms, currentHuntLevel;
+        public bool isInAnyTransition, isVoting, isSidetracking;
+        public int clearedCombatRooms, currentHuntLevel, currentRoomIndex;
         public Zone currentZone;
         public Room currentRoom;
+        public readonly List<WorldNode> nodes = new List<WorldNode>();
         public int currentNodeIndex = -1;
         public WorldNode currentNode;
         public Action ReadyAfterTransition;
@@ -356,6 +388,8 @@ namespace SodRpg.Mod
         internal static readonly RunGrowthLedger RunGrowthLedger = new RunGrowthLedger();
         private Actor _registeredOn;
         private ZoneManager _zone;
+        private ActorManager _am;
+        private bool _roomHasVariant;
         private readonly Random _rng = new Random(1);
         private readonly Dictionary<Monster, MonsterRuntime> _monsters = new Dictionary<Monster, MonsterRuntime>();
         private readonly Dictionary<Monster, NightmareAffix> _nightmares = new Dictionary<Monster, NightmareAffix>();
@@ -369,10 +403,17 @@ namespace SodRpg.Mod
             public uint KillEventNetId, SyncNetId;
             public bool ClassificationQueued;
             public NightmareAffix ClassificationNightmare;
+            public StatBonus OmenBonus;
         }
         internal sealed class Variant { public string Id; }
         internal sealed class Behavior { public bool CueQueued; }
         private double ShardDropMultiplierForKill() => 1;
+        // HostAuthority.Waypoints.cs（リンク外）と同じ意味: 回復量の倍率を生データに反映する。
+        private static void ScaleWaypointRecovery(ref HealData data, double multiplier)
+        {
+            if (multiplier < 1) data.ApplyReduction((float)(1 - multiplier));
+            else if (multiplier > 1) data.ApplyAmplification((float)(multiplier - 1));
+        }
         internal static bool Alive(Entity entity) => entity != null && entity.isActive && entity.currentHealth > 0;
         private void SendMonsterBehaviorCue(MonsterRuntime runtime, bool force, DewPlayer target = null)
         {
@@ -522,6 +563,8 @@ namespace SodRpg.Mod
         internal static bool PartyAcknowledged(InfinityChoice choice) => throw new NotSupportedException();
         internal static bool Regenerate(string intent) => throw new NotSupportedException();
         internal static void PublishChoice(InfinityChoice choice) => _choice = choice;
+        // 本体では RoomMod_SpawnWell の修飾子で判定する。境界ではノードのフラグで代用する。
+        internal static bool IsWellRoom(WorldNode node) => node != null && node.isWellRoom;
         internal sealed class InfinityChoice
         {
             public string RunId;

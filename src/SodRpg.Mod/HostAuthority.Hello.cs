@@ -61,12 +61,15 @@ namespace SodRpg.Mod
             _versionMismatches.Clear();
             _helloPeers.Clear();
             _netLitePeers.Clear();
+            _roomOmenPeers.Clear();
             _autocastPressurePeers.Clear();
             RebuildMismatchList();
         }
 
         private Action<DreamforgeBuildInputCapabilityMsg, DewPlayer> _onBuildInputCapability;
         private readonly HashSet<DewPlayer> _netLitePeers = new HashSet<DewPlayer>();
+        private readonly HashSet<DewPlayer> _roomOmenPeers = new HashSet<DewPlayer>();
+        partial void SendRoomOmenPeer(DewPlayer player);
         internal bool HasNetLite(DewPlayer player) => player != null && _netLitePeers.Contains(player);
 
         private void RegisterBuildInputCapability(Actor actor)
@@ -91,8 +94,11 @@ namespace SodRpg.Mod
                 || !DewPlayer.gamePlayers.Contains(caller) && !DewPlayer.lobbyPlayers.Contains(caller)) return;
             if (msg.netLite == 1 && _helloPeers.Contains(caller)) _netLitePeers.Add(caller);
             else _netLitePeers.Remove(caller);
+            if (msg.roomOmens == 1 && _helloPeers.Contains(caller)) _roomOmenPeers.Add(caller);
+            else _roomOmenPeers.Remove(caller);
             try { _registeredOn?.CustomRpc_SendMessageToClient(caller,
-                new DreamforgeBuildInputCapabilityMsg { netLite = 1 }); } catch (Exception) { }
+                new DreamforgeBuildInputCapabilityMsg { netLite = 1, roomOmens = 1 }); } catch (Exception) { }
+            SendRoomOmenPeer(caller);
         }
 
         private void OnAutocastPressureCapability(DreamforgeAutocastPressureCapabilityMsg msg, DewPlayer caller)

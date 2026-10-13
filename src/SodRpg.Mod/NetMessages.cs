@@ -230,6 +230,7 @@ namespace SodRpg.Mod
         public int version = 1;
         // Optional JSON field: absent on older peers. Hello's fixed schema stays intact.
         public int netLite;
+        public int roomOmens;
     }
 
     // Optional extension: Hello and every existing packet remain unchanged (Protocol 24).
