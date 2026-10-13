@@ -10,6 +10,26 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v2.10.34 — Fix co-op trades canceling after acceptance（2026-10-14）
+
+協力交換で、相手の申し込みを承諾したあとに、切断も移動もしていないのに取引が中止されることがある不具合を修正しました。 / Fixed co-op trades sometimes being canceled after you accepted, even though no one disconnected or moved.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- **承諾後の協力交換が勝手に中止される問題**：交換を承諾したあと、渡す品を考えているあいだに、しばらくすると取引が中止されることがありました。いまは、両者が接続している限り、承諾後の取引は時間切れで終わりません。好きなだけ考えてから品を出せます。 / **Co-op trades canceling on their own after accepting**: after accepting a trade, it could be canceled after a while just because you were still deciding what to offer. Now an accepted trade no longer times out as long as both players stay connected, so you can take as long as you need to choose.
+- ゲームが一瞬セーブしただけで交換が中止されることがある問題も直しました。 / Fixed a trade sometimes being canceled just because the game saved for a moment.
+- 相手が切断したり応答しなくなったりしたときは、これまでどおり交換は中止されます。承諾後でも、交換タブの「交換を取消」ボタンでいつでも取り消せます。 / If your partner disconnects or stops responding, the trade is still canceled as before. You can also cancel at any time after accepting with the cancel button in the trade tab.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
 ## v2.10.33 — Search and filter relics in the co-op trade tab（2026-10-14）
 
 協力交換タブで、自分が渡す遺物を名前・レア度・部位で絞り込めるようにしました。 / You can now filter the relics you offer in the co-op trade tab by name, rarity and slot.
