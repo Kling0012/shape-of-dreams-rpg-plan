@@ -1,5 +1,5 @@
-[b]Added Room Omens: each combat room gets a random blessing or trial.[/b]
-[b]部屋の兆しを追加しました。戦闘の部屋ごとに恵みか試練がランダムに1つ付きます。[/b]
+[b]Endless Night is offered in Limbo again.[/b]
+[b]Limbo でも道標「明けない夜」が出るように戻しました。[/b]
 
 [h1]Dreamforge RPG[/h1]
 Turns every run into part of a long RPG journey: relics you keep, a risky "secure or delve" choice at every zone, a star map per Traveler, a forge, and long-term goals. Co-op ready.
