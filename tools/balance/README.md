@@ -45,6 +45,18 @@ python tools/balance/gen_cs.py
 python tools/balance/gen_cs.py --check
 ```
 
+`gen_cs.py --check` は内容ハッシュのキャッシュ（`tools/balance/.gen_cs-cache.json`、
+git管理外）を使う。前回の検証成功時から入力（`tools/star-manifest/`・`tools/balance/`
+配下と `src/SodRpg.Core/Game` 配下の手書き .cs 全部。生成器が今後新しい src ファイルを
+読み始めても自動的に対象になる）と生成物のどちらも変わっていなければ、
+生成を丸ごと省いて数秒で終わる。キャッシュは使う前に検証する
+（安全な相対パス・SHA256 形式のハッシュ・出力キー集合がディスク側から独立に
+導いた期待集合（生成マーカー付き .cs から本生成器が持たないものを除き、
+マーカーなしの出力を足したもの）と完全一致すること・
+出力集合全体のダイジェスト。改変・欠落・読み取り不能なら無効とみなす）。
+入力・生成物のいずれかが変われば必ず通常の生成・比較が走り、
+失敗（stale）ならキャッシュは更新しない。
+
 `run` は実行可能です。任意の作業ディレクトリから絶対パスでも呼び出せます。
 入力検証→生成→生成鮮度確認→BalanceSim Releaseビルド（1回）→
 `python tools/test_changed.py --all`（`--slow` 時は同オプション追加）→

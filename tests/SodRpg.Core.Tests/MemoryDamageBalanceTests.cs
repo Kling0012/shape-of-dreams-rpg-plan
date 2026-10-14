@@ -14,7 +14,9 @@ namespace SodRpg.Core.Tests
         [Fact]
         public void Every_private_memory_damage_effect_reaches_floor_at_its_earliest_conservative_purchase()
         {
-            StarClusters.RegisterAllGenerated();
+            // RegisterAllGenerated はプロセスで1回しか登録しない。テストごとの基準状態リセット
+            // （SharedStarRegistryResetAttribute）で登録が消えても困らないよう、毎回登録し直す。
+            foreach (string hero in StarClusters.GeneratedHeroes) StarClusters.RegisterGeneratedHero(hero);
             foreach (string hero in StarClusters.GeneratedHeroes)
             {
                 foreach (var parent in HeroSigils.TreeFor(hero))

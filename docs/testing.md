@@ -20,8 +20,9 @@ python tools/test_changed.py [--base <git ref>] [--list] [--all] [--slow]
 | なし | 変更に対応するテストクラスだけを `dotnet test` で実行する |
 | `--base <git ref>` | 比較元を指定する（既定: `origin/main` との merge-base） |
 | `--list` | 選択されたテストクラス（完全修飾名）だけを表示して終了する（テストは実行しない） |
-| `--all` | フィルタなしでスイート全体を実行する |
-| `--slow` | `Speed=Slow` の網羅テスト（`SODRPG_SLOW=1`）も実行する（既定では除外） |
+| `--all` | スイート全体を実行する（Core はクラス単位のフィルタで複数プロセスに分割） |
+| `--slow` | `Speed=Slow` の網羅テスト（`SODRPG_SLOW=1`）も実行する（既定では除外）。低速テストを持つクラスはクラスごとに別プロセスで並列に走る |
+| `--check-ci-matrix` | `ci.yml` の slow-tests matrix が低速テスト検出と一致するかだけ検査して終了する（CI の core-tests ジョブでも実行） |
 
 終了コードは最初の非ゼロの `dotnet test` 終了コード。テストに関係する変更が
 一件もない場合は「変更なし」と表示して 0 を返す。
@@ -68,14 +69,39 @@ python tools/test_changed.py [--base <git ref>] [--list] [--all] [--slow]
 ## 実行方法
 
 選択されたテストクラスから `dotnet test <project> --filter` 式を組み立てる。
-フィルタは `FullyQualifiedName~名前空間.クラス` 条件を `|` で連結した 1 本の式で、
+フィルタはクラスごとに `FullyQualifiedName~名前空間.クラス.` と
+`FullyQualifiedName~名前空間.クラス+` の 2 条件（末尾の区切り文字でクラス内だけに
+一致させ、名前が先頭一致する別クラスの二重実行を防ぐ。`+` 条件は入れ子クラス
+`Ns.Class+Nested` のテストを取りこぼさないため）を `|` で連結した式で、
 長すぎる場合（既定の上限 15000 文字）は複数回の `dotnet test` 実行に分割する。
 テストプロジェクトは `tests/` 配下の `.csproj` を再帰収集する（`bin`/`obj` を除く）。
+クラスとプロジェクトの対応は csproj から判定する: 明示的な `<Compile Include>` の
+リンク先と、`EnableDefaultCompileItems`（既定のフォルダ glob）と `<Compile Remove>` を
+考慮したフォルダ位置の両方。同じファイルを複数プロジェクトがコンパイルする場合
+（他プロジェクトからリンクされつつ相手プロジェクトのフォルダ内にある等）は
+両方のプロジェクトに割り当てる。どのプロジェクトにも属さないクラスは従来どおり
+全プロジェクトで実行する。
 
 - まず `dotnet build -c Release` をプロジェクトごとに直列に実行し
   （`obj/` の共有を守るため。Release は CPU 主体のこのスイートで
   Debug の半分以下の実時間になる）、その後 `dotnet test -c Release --no-build` を
-  プロジェクト並列で実行する（各アセンブリ内のテストは共有状態のため元々直列）。
+  複数プロセス並列で実行する（各アセンブリ内のテストは共有状態のため
+  `DisableTestParallelization` のまま直列。並列化はプロセス分割による。
+  同時実行数は CPU コア数を超えない）。
+
+- プロセス分割（#404）: `--all` では Core スイートをクラス単位のフィルタで
+  5 プロセスに分ける。所要時間の大半を占める重い 5 クラス
+  （AllocationEquivalence・GeneratedHeroAcceptance・StarMapReachability・
+  PressureRewardMultiplier・StarMapOptimize）がそれぞれ別々のプロセスの軸になり
+  （重いクラスどうしを同じプロセスにしないため、5 が最小のプロセス数）、
+  残りのクラスはテストメソッド数を重みにその 5 プロセスへ均等に振り分ける
+  （同じクラスは必ず同じプロセス）。`--slow` では Speed=Slow テストを含む
+  クラスもクラスごとに別プロセスで並列に走らせる。全プロセスの和が
+  従来のフィルタなし 1 プロセスと同じテスト集合・合否になる。
+  選択実行（`--all` 未指定）でも、`--slow` 時の低速クラスは同様に単独プロセスとする。
+  CI の slow-tests ジョブ（main マージ後）も同じクラス単位の matrix で走る。
+  matrix は手で列挙するため、`--check-ci-matrix`（CI の core-tests ジョブで実行）
+  が列挙と検出の不一致を失敗として報告する。
 
 - `dotnet` コマンド: 既定では `%LOCALAPPDATA%\dotnet-sdk\dotnet.exe` を使う。
   環境変数 `DOTNET` に実行ファイルのパスがあればそれを優先する。

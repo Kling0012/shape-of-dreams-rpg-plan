@@ -11,9 +11,20 @@ narrows the mapping to touched tokens (members, string constants), retaining
 file-level type dependencies for object initialization changes.  The selected
 classes run with ``dotnet test <project> --filter ...``.
 
-The three test projects serialize their own tests (shared game state), so the
-projects are built serially and then run in parallel for wall-clock time.
-``--slow`` additionally enables the Speed=Slow exhaustive tests (SODRPG_SLOW=1).
+The test projects serialize their own tests (shared game state:
+DisableTestParallelization), so the projects are built serially and their tests
+run as parallel ``dotnet test`` processes (at most one per CPU core). The Core
+suite is additionally split into class-filtered processes: each of the five
+heavyweight classes anchors one process and the remaining classes are
+distributed over the same processes by test-method count. With ``--slow`` (or
+the ``SODRPG_SLOW=1`` environment variable, which the release scripts and CI
+set instead of the flag), every Speed=Slow test method anchors a process of
+its own (SODRPG_SLOW=1), so the exhaustive tests of one class overlap too
+instead of serializing behind the slowest class; the class-group filters
+subtract exactly those methods. Timing-threshold classes run in one lone
+process after every parallel batch has finished, so overlapping processes
+cannot push their measured loops over the limit. The union of the processes
+always selects exactly the tests a single unfiltered run would.
 
 If nothing test-relevant changed, a message is printed and the exit code is 0.
 Otherwise the exit code is the first non-zero ``dotnet test`` exit code.
@@ -43,10 +54,51 @@ MAX_FILTER_CHARS = 15000
 # Non-code directories whose files are read by tests at run time.
 DATA_DIRS = ("tools/star-manifest", "tools/lowrarity", "tools/balance")
 
+# The Core project is split into parallel per-class-filter processes (#404):
+# each test assembly serializes its own tests (shared Loc/StarClusters state),
+# so the wall-clock win comes from separate processes. The five classes below
+# take 62% of the suite's serial run time and #404 keeps them in separate
+# processes; five is also the smallest process count that allows that, so the
+# split runs Core over exactly five processes.
+CORE_TESTS_PROJECT = "tests/SodRpg.Core.Tests/SodRpg.Core.Tests.csproj"
+HEAVY_CORE_CLASSES = frozenset({
+    "SodRpg.Core.Tests.AllocationEquivalenceV131Tests",
+    "SodRpg.Core.Tests.GeneratedHeroAcceptanceTests",
+    "SodRpg.Core.Tests.StarMapReachabilityTests",
+    "SodRpg.Core.Tests.PressureRewardMultiplierTests",
+    "SodRpg.Core.Tests.StarMapOptimizeCommandTests",
+})
+CORE_PROCESS_COUNT = 5
+
+# Threshold-sensitive timing tests (ms per kill / ms per build upper bounds).
+# Their measurements are only reliable without CPU contention, so these classes
+# run in one lone process each after every parallel batch has finished; the
+# union of the runs still selects exactly the tests one unfiltered run would.
+ISOLATED_CORE_CLASSES = frozenset({
+    "SodRpg.Core.Tests.PerformanceTests",
+})
+
 TYPE_DECL_RE = re.compile(
     r"\b(?:class|struct|enum|interface|record)(?:\s+(?:class|struct))?\s+([A-Za-z_]\w*)"
 )
 CLASS_DECL_RE = re.compile(r"\bclass\s+([A-Za-z_]\w*)")
+# A class declaration line: leading whitespace, optional modifiers, ``class``.
+# Namespace-level classes are the declarations at the smallest indentation of
+# their namespace segment (nested helper classes sit strictly deeper), so the
+# scan follows whatever indentation a file uses instead of assuming one.
+CLASS_LINE_RE = re.compile(
+    r"^([ \t]*)(?:(?:public|internal|protected|private|sealed|static|abstract|partial)\s+)*"
+    r"class\s+([A-Za-z_]\w*)",
+    re.M,
+)
+SLOW_TEST_RE = re.compile(r'\[\s*SlowFact\b|Trait\(\s*"Speed"\s*,\s*"Slow"\s*\)')
+# A Slow test's method signature: the first test-method name after its marker.
+SLOW_METHOD_RE = re.compile(r'\b(?:void|Task|ValueTask)\s+([A-Za-z_]\w*)\s*\(')
+TEST_METHOD_RE = re.compile(r"\[\s*(?:SlowFact|Fact|Theory)\b")
+COMPILE_INCLUDE_RE = re.compile(r'<Compile\s+Include="([^"]+)"', re.IGNORECASE)
+COMPILE_REMOVE_RE = re.compile(r'<Compile\s+Remove="([^"]+)"', re.IGNORECASE)
+NO_DEFAULT_COMPILE_RE = re.compile(
+    r"<EnableDefaultCompileItems\s+>\s*false\s*</", re.IGNORECASE)
 SUMMARY_RE = re.compile(r"Failed:\s*(\d+)[,，]?\s*Passed:\s*(\d+)")
 NAMESPACE_RE = re.compile(r"\bnamespace\s+([A-Za-z_][\w.]*)")
 # Identifiers worth mapping to tests when a diff narrows a production change:
@@ -94,12 +146,303 @@ def declared_test_classes(content: str) -> list[str]:
     return classes
 
 
+def top_level_test_classes(content: str) -> list[str]:
+    """Fully-qualified names of the namespace-level classes of a test .cs file.
+
+    Unlike ``declared_test_classes`` this excludes nested helper classes, whose
+    real fully-qualified names (``Outer+Nested``) never match a filter anyway.
+    A file may declare several namespaces (stub api + the real test classes);
+    each declaration owns the segment up to the next one, so every class keeps
+    the namespace it is declared in. Within a segment the namespace-level
+    classes are the ones at the smallest indentation, whatever that indentation
+    is. Files without any class declaration line fall back to the inclusive
+    scan.
+    """
+    stripped = strip_comments(content)
+    declarations = list(NAMESPACE_RE.finditer(stripped))
+    segments = ([(None, stripped)] if not declarations else
+                [(match.group(1), stripped[match.end(): declarations[i + 1].start()
+                                               if i + 1 < len(declarations)
+                                               else len(stripped)])
+                 for i, match in enumerate(declarations)])
+    classes: list[str] = []
+    for namespace, segment in segments:
+        found = CLASS_LINE_RE.findall(segment)
+        if not found:
+            continue
+        top = min(len(indent.replace("\t", "    ")) for indent, _ in found)
+        for indent, name in found:
+            if len(indent.replace("\t", "    ")) != top:
+                continue
+            fqn = f"{namespace}.{name}" if namespace else name
+            if fqn not in classes:
+                classes.append(fqn)
+    if not classes:
+        return declared_test_classes(content)
+    return classes
+
+
+def slow_test_classes(files: dict[str, str]) -> set[str]:
+    """Classes holding Speed=Slow tests ([SlowFact] / Trait("Speed","Slow"))).
+
+    Used by ``--check-ci-matrix`` to compare against the ci.yml slow-tests
+    matrix, which runs whole slow classes.
+    """
+    classes: set[str] = set()
+    for path, content in files.items():
+        if path.startswith("tests/") and path.endswith(".cs") \
+                and SLOW_TEST_RE.search(strip_comments(content)):
+            classes.update(top_level_test_classes(content))
+    return classes
+
+
+def slow_test_methods(files: dict[str, str]) -> dict[str, set[str]]:
+    """Speed=Slow test methods per declaring class, as ``{class: {class.method}}``.
+
+    Each method anchors one ``dotnet test`` process when slow tests are enabled,
+    so the exhaustive variants of one class overlap instead of serializing
+    behind the slowest of them. Only namespace-level classes are resolved; a
+    slow marker inside a nested class attributes to the outer class, whose
+    ``FullyQualifiedName=Outer.Method`` process then selects nothing while the
+    class-group term (``Outer+``) still runs the test exactly once, so the
+    union of the processes never loses a test.
+    """
+    methods: dict[str, set[str]] = {}
+    for path, content in files.items():
+        if not (path.startswith("tests/") and path.endswith(".cs")):
+            continue
+        stripped = strip_comments(content)
+        markers = list(SLOW_TEST_RE.finditer(stripped))
+        if not markers:
+            continue
+        # Namespace segments own the text from their declaration to the next
+        # one (the block body of ``namespace N { ... }`` and the whole rest of
+        # a file-scoped ``namespace N;`` alike).
+        declarations = list(NAMESPACE_RE.finditer(stripped))
+        segments = [((declarations[i].end() if i < len(declarations) else 0),
+                     declarations[i + 1].start() if i + 1 < len(declarations) else len(stripped),
+                     declarations[i].group(1) if i < len(declarations) else "")
+                    for i in range(len(declarations) + 1)]
+        classes = [(match.start(), len(match.group(1).replace("\t", "    ")), match.group(2))
+                   for match in CLASS_LINE_RE.finditer(stripped)]
+        for marker in markers:
+            segment = next(((start, end, namespace) for start, end, namespace in segments
+                            if start <= marker.start() < end), None)
+            if segment is None:
+                continue
+            start, _, namespace = segment
+            scope = [c for c in classes if start <= c[0] < marker.start()]
+            if not scope:
+                continue
+            top = min(indent for _, indent, _ in scope)
+            owners = [c for c in scope if c[1] == top]
+            fqn = f"{namespace}.{owners[-1][2]}" if namespace else owners[-1][2]
+            signature = SLOW_METHOD_RE.search(stripped, marker.end())
+            if signature is None:
+                continue
+            methods.setdefault(fqn, set()).add(f"{fqn}.{signature.group(1)}")
+    return methods
+
+
+def class_weights(files: dict[str, str]) -> dict[str, float]:
+    """Test-method count per class (shared evenly when a file declares several).
+
+    A rough proxy for run time, used only to spread the remaining classes
+    evenly over the Core processes.
+    """
+    weights: dict[str, float] = {}
+    for path, content in files.items():
+        if not (path.startswith("tests/") and path.endswith(".cs")):
+            continue
+        classes = top_level_test_classes(content)
+        if not classes:
+            continue
+        share = len(TEST_METHOD_RE.findall(strip_comments(content))) / len(classes)
+        for name in classes:
+            weights[name] = weights.get(name, 0.0) + share
+    return weights
+
+
+def core_run_groups(core_classes: set[str], weights: dict[str, float]) -> list[list[str]]:
+    """Split the Core suite's classes into one list per parallel process.
+
+    Each heavyweight class anchors a process of its own; classes with detected
+    test methods are attached to the currently least-loaded process, keeping
+    the count at ``CORE_PROCESS_COUNT`` unless the anchored classes alone
+    exceed it. The anchors are all known long runners, so every anchor starts
+    with the same load instead of its (unrepresentative) method count and the
+    remaining classes spread evenly on top; classes without test methods carry
+    no load and are spread by count to keep the filters even. Every class
+    stays in exactly one group, so the union of the groups runs exactly the
+    tests a single unfiltered process would. Slow test methods are not
+    classes' business here: they anchor their own per-method processes (see
+    ``full_project_runs``) and are subtracted from these class filters.
+    """
+    anchors = sorted(HEAVY_CORE_CLASSES & core_classes)
+    remainder = core_classes - set(anchors)
+    groups = [[name] for name in anchors]
+    while len(groups) < CORE_PROCESS_COUNT and remainder:
+        groups.append([])
+    anchor_load = max((weights.get(name, 0.0) for name in anchors), default=0.0)
+    loads = [anchor_load] * len(groups)
+    weighted = sorted((name for name in remainder if weights.get(name, 0.0) > 0.0),
+                      key=lambda c: (-weights.get(c, 0.0), c))
+    for name in weighted:
+        index = min(range(len(groups)), key=lambda i: (loads[i], i))
+        groups[index].append(name)
+        loads[index] += weights.get(name, 0.0)
+    # Classes without any detected test method (stub api types) carry no load,
+    # so spreading them by class count keeps the filter sizes even instead of
+    # letting them pile into whichever process happens to be lightest.
+    for name in sorted(remainder - set(weighted)):
+        index = min(range(len(groups)), key=lambda i: (len(groups[i]), i))
+        groups[index].append(name)
+    return [group for group in groups if group]
+
+
+def _csproj_path_pattern(base: str, rel: str) -> str:
+    """Normalize a csproj-relative Include/Remove pattern to repo-relative.
+
+    ``..`` segments pop, empty and ``.`` segments drop; wildcard characters
+    pass through for the later glob -> regex translation. Unresolvable ``..``
+    segments (path escaping the repo root) are kept, producing a pattern that
+    matches no repo-relative path.
+    """
+    parts: list[str] = []
+    for segment in f"{base}/{rel}".replace("\\", "/").split("/"):
+        if segment == "..":
+            if parts:
+                parts.pop()
+        elif segment not in ("", "."):
+            parts.append(segment)
+    return "/".join(parts)
+
+
+def _glob_regex(pattern: str) -> re.Pattern:
+    """MSBuild glob -> regex: ``*``/``?`` stay inside one path segment and
+    ``**`` matches zero or more whole segments (fnmatch would let ``*`` cross
+    ``/`` and require ``**/`` to consume one)."""
+    segments = pattern.split("/")
+    regex = ""
+    for index, segment in enumerate(segments):
+        if segment == "**":
+            regex += "(?:[^/]+/)*" if index < len(segments) - 1 else ".*"
+            continue
+        part = "".join("[^/]*" if ch == "*" else "[^/]" if ch == "?"
+                       else re.escape(ch) for ch in segment)
+        regex += part + ("/" if index < len(segments) - 1 else "")
+    return re.compile(regex + r"\Z")
+
+
+def classes_by_project(root: Path, files: dict[str, str],
+                       projects: list[str]) -> dict[str, set[str]]:
+    """Declared test classes per project.
+
+    A class belongs to every project whose assembly compiles its file: an
+    explicit ``<Compile Include>`` link, or the project's default folder glob
+    (``EnableDefaultCompileItems`` unset/false honored, ``<Compile Remove>``
+    patterns applied). A file can be owned by several projects at once — e.g.
+    shared test data linked from one project while still sitting inside
+    another project's folder — and then its classes run in each owning
+    project's processes, matching what the assemblies really compile. Files
+    owned by no project count for every project, preserving the historical
+    run-everywhere filter.
+    """
+    includes: dict[str, set[str]] = {}
+    removes: dict[str, set[re.Pattern]] = {}
+    default_globs: dict[str, bool] = {}
+    folders: dict[str, str] = {}
+    for project in projects:
+        text = read_file(root, project) or ""
+        base_dir = project.rsplit("/", 1)[0]
+        # Include/Remove attributes are semicolon-separated MSBuild item lists.
+        includes[project] = {_csproj_path_pattern(base_dir, rel)
+                             for value in COMPILE_INCLUDE_RE.findall(text)
+                             for rel in value.split(";") if rel.strip()}
+        removes[project] = {_glob_regex(_csproj_path_pattern(base_dir, rel))
+                            for value in COMPILE_REMOVE_RE.findall(text)
+                            for rel in value.split(";") if rel.strip()}
+        default_globs[project] = not NO_DEFAULT_COMPILE_RE.search(text)
+        folders[project] = base_dir
+    mapping = {project: set() for project in projects}
+    for path, content in sorted(files.items()):
+        if not (path.startswith("tests/") and path.endswith(".cs")):
+            continue
+        owners = [p for p in projects if path in includes[p]]
+        for p in projects:
+            if p in owners or not default_globs[p]:
+                continue
+            if not path.startswith(folders[p] + "/"):
+                continue
+            if any(pattern.fullmatch(path) for pattern in removes[p]):
+                continue
+            owners.append(p)  # the default glob compiles it too
+        classes = top_level_test_classes(content)
+        for owner in owners:
+            mapping[owner].update(classes)
+        if not owners:
+            for project in projects:
+                mapping[project].update(classes)
+    return mapping
+
+
 def mentions_any(content: str, names: list[str]) -> bool:
     """True if any name occurs in content as a whole word."""
     for name in names:
         if re.search(rf"\b{re.escape(name)}\b", content):
             return True
     return False
+
+
+CI_WORKFLOW_PATH = ".github/workflows/ci.yml"
+
+
+def ci_slow_matrix_classes(text: str) -> set[str]:
+    """Class entries listed in the slow-tests matrix of a ci.yml text.
+
+    The ``- <class>`` lines directly under the matrix ``class:`` key of the
+    ``slow-tests`` job. A missing job or key yields an empty set, which the
+    consistency check then reports as classes that would never run in CI.
+    """
+    classes: set[str] = set()
+    lines = text.splitlines()
+    job = next((i for i, line in enumerate(lines)
+                if re.match(r"^  slow-tests:\s*$", line)), len(lines))
+    if job == len(lines):
+        return classes
+    end = job + 1
+    while end < len(lines) and not re.match(r"^  \S", lines[end]):
+        end += 1
+    block = lines[job:end]
+    key = next((i for i, line in enumerate(block)
+                if re.match(r"^\s+class:\s*$", line)), len(block))
+    for line in block[key + 1:]:
+        entry = re.match(r"^\s+-\s+(\S+)\s*$", line)
+        if not entry:
+            break
+        classes.add(entry.group(1))
+    return classes
+
+
+def check_ci_matrix(root: Path) -> int:
+    """Fail when the ci.yml slow-tests matrix and the detected classes differ.
+
+    The matrix classes are maintained by hand; this guard (run in CI and
+    usable locally) makes a forgotten entry a visible failure instead of a
+    slow test class that silently stops running in CI.
+    """
+    detected = slow_test_classes(scan_test_files(root))
+    listed = ci_slow_matrix_classes(read_file(root, CI_WORKFLOW_PATH) or "")
+    if detected == listed:
+        print(f"ci.yml slow-tests matrix matches the {len(detected)} detected slow class(es)")
+        return 0
+    print("ci.yml slow-tests matrix does not match the Speed=Slow test classes:", file=sys.stderr)
+    for name in sorted(detected - listed):
+        print(f"  missing from the matrix (would never run in CI): {name}", file=sys.stderr)
+    for name in sorted(listed - detected):
+        print(f"  in the matrix but no Speed=Slow tests detected: {name}", file=sys.stderr)
+    print("update the slow-tests matrix in .github/workflows/ci.yml", file=sys.stderr)
+    return 1
 
 
 def is_generated_cs(path: str) -> bool:
@@ -285,20 +628,47 @@ def select_tests(changed, files, diffs=None) -> Selection:
     return selection
 
 
-def build_filters(classes, max_chars: int = MAX_FILTER_CHARS) -> list[str]:
-    """Chunk ``FullyQualifiedName~X`` terms into filter expressions."""
-    terms = [f"FullyQualifiedName~{c}" for c in sorted(classes)]
+def build_filters(classes, max_chars: int = MAX_FILTER_CHARS,
+                  exclude=()) -> list[str]:
+    """Chunk ``FullyQualifiedName~X.`` / ``FullyQualifiedName~X+`` terms.
+
+    The trailing separator keeps the contains-match scoped to class X: without
+    it a class whose fully-qualified name contains another's (X and XMore)
+    would have its tests selected by both terms. The ``+`` twin of each term
+    keeps nested classes covered: vstest writes their fully-qualified names as
+    ``Ns.X+Nested.Method``, which a dot-only term would silently miss.
+
+    ``exclude`` lists fully-qualified test-method names subtracted from every
+    chunk with ``&FullyQualifiedName!=M`` terms: methods that run in their own
+    per-method processes (the slow split) must not be selected a second time
+    here, or they would run twice and report twice. The chunk's OR terms are
+    parenthesized (``&`` binds tighter than ``|`` in the vstest grammar) and
+    the suffix is counted against ``max_chars`` so a chunk plus its exclusions
+    still fits.
+    """
+    suffix = "".join(f"&FullyQualifiedName!={method}" for method in sorted(exclude)) \
+        if exclude else ""
+    terms: list[str] = []
+    for c in sorted(classes):
+        terms.append(f"FullyQualifiedName~{c}.")
+        terms.append(f"FullyQualifiedName~{c}+")
     chunks: list[str] = []
     current: list[str] = []
+
+    def close(chunk: list[str]) -> str:
+        # Only the subtracting form needs the parentheses; a bare OR selects
+        # exactly the same tests and keeps the plain chunks unchanged.
+        return f"({'|'.join(chunk)}){suffix}" if suffix else "|".join(chunk)
+
     for term in terms:
-        joined = "|".join(current + [term])
+        joined = "|".join(current + [term]) + suffix
         if current and len(joined) > max_chars:
-            chunks.append("|".join(current))
+            chunks.append(close(current))
             current = [term]
         else:
             current.append(term)
     if current:
-        chunks.append("|".join(current))
+        chunks.append(close(current))
     return chunks
 
 
@@ -472,12 +842,82 @@ def build_projects(root: Path, projects: list[str]) -> int:
     return 0
 
 
+def full_project_runs(project: str, all_classes: set[str],
+                      slow_methods: dict[str, set[str]],
+                      weights: dict[str, float]) -> tuple[list[tuple[str | None, str]], list[tuple[str, str]]]:
+    """((filter, label) parallel runs, (filter, label) deferred runs) for a project.
+
+    Only the Core suite is split: each Speed=Slow test method anchors a process
+    of its own (an exact ``FullyQualifiedName=`` match, so one class's slow
+    variants overlap instead of serializing behind the slowest) and the classes
+    are grouped by ``core_run_groups`` so the heavyweight ones each anchor a
+    parallel process. The slow methods are subtracted from the class filters
+    (``build_filters``' ``exclude``), so every test is selected by exactly one
+    run and the union of the runs selects exactly the tests one unfiltered
+    process would. Timing-threshold classes (``ISOLATED_CORE_CLASSES``) are
+    excluded from the parallel groups and returned as deferred runs: they run
+    alone after the parallel pool drains, so overlapping processes cannot push
+    their measurements over the limit.
+    """
+    if project != CORE_TESTS_PROJECT or not all_classes:
+        return [(None, "")], []
+    labeled: list[tuple[str, str]] = []
+    for cls in sorted(slow_methods):
+        for method in sorted(slow_methods[cls]):
+            labeled.append((f"FullyQualifiedName={method}",
+                            method.rsplit(".", 1)[-1]))
+    isolated = sorted(all_classes & ISOLATED_CORE_CLASSES)
+    for group in core_run_groups(all_classes - set(isolated), weights):
+        anchor = group[0].rsplit(".", 1)[-1]
+        name = anchor if len(group) == 1 else f"{anchor}+{len(group) - 1}"
+        excluded = set().union(*(slow_methods[c] for c in group if c in slow_methods)) \
+            if any(c in slow_methods for c in group) else set()
+        for expr in build_filters(group, exclude=excluded):
+            labeled.append((expr, name))
+    parallel = [(expr, f" ({index}/{len(labeled)}: {name})")
+                for index, (expr, name) in enumerate(labeled, start=1)]
+    deferred = [(expr, f" (isolated: {name})")
+                for name in isolated for expr in build_filters([name])]
+    return parallel, deferred
+
+
+def selection_runs(selected: set[str],
+                   slow_methods: dict[str, set[str]]) -> tuple[list[tuple[str, str]], list[tuple[str, str]]]:
+    """((filter, label) parallel runs, (filter, label) deferred runs) selecting ``selected``.
+
+    With slow tests enabled every Speed=Slow method of the selected classes
+    keeps its own process so the exhaustive variants overlap; the methods are
+    subtracted from the shared class filter so nothing runs twice.
+    Timing-threshold classes run alone after the parallel pool instead
+    (``ISOLATED_CORE_CLASSES``), same as in the full run.
+    """
+    runs: list[tuple[str, str]] = []
+    excluded = set().union(*(slow_methods[c] for c in selected if c in slow_methods)) \
+        if any(c in slow_methods for c in selected) else set()
+    for method in sorted(excluded):
+        runs.append((f"FullyQualifiedName={method}", f" {method.rsplit('.', 1)[-1]}"))
+    parallel_classes = set(selected)
+    deferred_classes = sorted(parallel_classes & ISOLATED_CORE_CLASSES)
+    parallel_classes -= set(deferred_classes)
+    if parallel_classes:
+        parallel_excluded = set().union(*(slow_methods[c] for c in parallel_classes if c in slow_methods)) \
+            if any(c in slow_methods for c in parallel_classes) else set()
+        for expr in build_filters(sorted(parallel_classes), exclude=parallel_excluded):
+            runs.append((expr, ""))
+    deferred = [(expr, f" (isolated: {name})")
+                for name in deferred_classes for expr in build_filters([name])]
+    return runs, deferred
+
+
 def run_selection(root: Path, classes, run_all: bool, slow: bool = False) -> int:
     """Run the selected classes (or everything); returns the exit code.
 
-    Projects are built serially, then their tests run in parallel: the three
-    test projects serialize their own tests (shared registry state), so the
-    wall-clock win comes from overlapping the projects.
+    Projects are built serially, then their tests run in parallel: every test
+    assembly serializes its own tests (shared registry state), so the
+    wall-clock win comes from overlapping processes. The Core suite is split
+    into class-filtered processes (heavy and slow classes anchoring one each),
+    and the parallelism is capped at the CPU core count so low-core machines
+    queue processes instead of thrashing.
     """
     projects = find_test_projects(root)
     if not projects:
@@ -486,25 +926,65 @@ def run_selection(root: Path, classes, run_all: bool, slow: bool = False) -> int
     code = build_projects(root, projects)
     if code != 0:
         return code
-    filters = [None] if run_all else build_filters(classes)
-    pairs = [(project, index, expr)
-             for project in projects for index, expr in enumerate(filters, start=1)]
+    files = scan_test_files(root)
+    weights = class_weights(files)
+    slow_methods = slow_test_methods(files) if slow else {}
+    owned = classes_by_project(root, files, projects)
+    unowned: set[str] = set()
+    if not run_all and classes:
+        known = set().union(*owned.values()) if owned else set()
+        unowned = set(classes) - known
+    pairs: list[tuple[str, str | None, str]] = []  # (project, filter, label)
+    deferred_pairs: list[tuple[str, str | None, str]] = []  # alone, after the pool drains
+    for project in projects:
+        if run_all:
+            runs, deferred = full_project_runs(project, owned.get(project, set()), slow_methods, weights)
+        else:
+            selected = (owned.get(project, set()) & set(classes or ())) | unowned
+            if not selected:
+                continue  # no class of this project is selected; nothing to run
+            runs, deferred = selection_runs(selected, slow_methods)
+        pairs.extend((project, expr, label) for expr, label in runs)
+        deferred_pairs.extend((project, expr, label) for expr, label in deferred)
+    if not pairs and not deferred_pairs:
+        print("no tests selected for any project")
+        return 0
+    workers = max(1, min(len(pairs), os.cpu_count() or 1)) if pairs else 0
+    print(f"running {len(pairs)} dotnet test processes ({workers} in parallel)",
+          file=sys.stderr)
     exit_code = 0
     total_failed = total_passed = 0
-    with concurrent.futures.ThreadPoolExecutor(max_workers=len(projects)) as pool:
-        futures = {pool.submit(run_dotnet_test, root, project, expr, True, slow):
-                   (project, index) for project, index, expr in pairs}
-        for future, (project, index) in sorted(futures.items(), key=lambda item: item[1][1]):
-            code, output = future.result()
-            header = project if len(filters) == 1 else f"{project} ({index}/{len(filters)})"
-            print(f"===== {header} =====")
+    if pairs:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=workers) as pool:
+            futures = {pool.submit(run_dotnet_test, root, project, expr, True, slow):
+                       (project, label) for project, expr, label in pairs}
+            for future, (project, label) in futures.items():
+                code, output = future.result()
+                print(f"===== {project}{label} =====")
+                print(output, end="" if output.endswith("\n") else "\n")
+                if code != 0:
+                    exit_code = exit_code or code
+                failed, passed = parse_summary(output)
+                print(f"-> failed: {failed}  passed: {passed}")
+                total_failed += failed
+                total_passed += passed
+    if deferred_pairs:
+        # Timing-threshold classes: nothing else may compete for the CPU while
+        # they measure, so they wait for the pool and then run alone.
+        print(f"running {len(deferred_pairs)} isolated timing-sensitive process(es) "
+              f"after the parallel batches", file=sys.stderr)
+        for project, expr, label in deferred_pairs:
+            code, output = run_dotnet_test(root, project, expr, True, slow)
+            print(f"===== {project}{label} =====")
             print(output, end="" if output.endswith("\n") else "\n")
             if code != 0:
                 exit_code = exit_code or code
             failed, passed = parse_summary(output)
+            print(f"-> failed: {failed}  passed: {passed}")
             total_failed += failed
             total_passed += passed
     print(f"selected classes: {'all' if run_all else len(classes)}")
+    print(f"processes: {len(pairs) + len(deferred_pairs)}")
     print(f"passed: {total_passed}  failed: {total_failed}")
     return exit_code
 
@@ -525,10 +1005,19 @@ def main(argv=None) -> int:
     parser.add_argument("--all", action="store_true",
                         help="run the full test suite")
     parser.add_argument("--slow", action="store_true",
-                        help="also run Speed=Slow exhaustive tests (SODRPG_SLOW=1)")
+                        help="also run Speed=Slow exhaustive tests (SODRPG_SLOW=1); "
+                             "the SODRPG_SLOW=1 environment variable is equivalent")
+    parser.add_argument("--check-ci-matrix", action="store_true",
+                        help="verify the ci.yml slow-tests matrix lists exactly the "
+                             "classes holding Speed=Slow tests, then exit")
     args = parser.parse_args(argv)
+    # The release scripts and CI export SODRPG_SLOW=1 instead of passing --slow;
+    # treat both identically so the slow split applies to the real callers too.
+    slow = args.slow or os.environ.get("SODRPG_SLOW") == "1"
 
     root = REPO_ROOT
+    if args.check_ci_matrix:
+        return check_ci_matrix(root)
     try:
         if args.base:
             run_git(root, "rev-parse", "--verify", f"{args.base}^{{commit}}")
@@ -551,7 +1040,7 @@ def main(argv=None) -> int:
                 print(name)
             print(f"selected: {len(classes)} classes (full run)")
             return 0
-        return run_selection(root, None, run_all=True, slow=args.slow)
+        return run_selection(root, None, run_all=True, slow=slow)
 
     files = collect_files(root, changed)
     try:
@@ -569,7 +1058,7 @@ def main(argv=None) -> int:
             for name in sorted(selection.classes):
                 print(name)
             return 0
-        return run_selection(root, None, run_all=True, slow=args.slow)
+        return run_selection(root, None, run_all=True, slow=slow)
 
     if not selection.classes:
         print("nothing relevant changed; no tests to run")
@@ -582,7 +1071,7 @@ def main(argv=None) -> int:
         return 0
 
     print(f"selected classes: {len(selection.classes)}")
-    return run_selection(root, selection.classes, run_all=False, slow=args.slow)
+    return run_selection(root, selection.classes, run_all=False, slow=slow)
 
 
 if __name__ == "__main__":

@@ -69,7 +69,9 @@ namespace SodRpg.Core.Tests
         [Fact]
         public void Four_training_entrances_reach_Z4_at_depth_zero_and_Z3_at_depth_one()
         {
-            StarClusters.RegisterAllGenerated();
+            // RegisterAllGenerated はプロセスで1回しか登録しない。テストごとの基準状態リセット
+            // （SharedStarRegistryResetAttribute）で登録が消えても困らないよう、毎回登録し直す。
+            foreach (string hero in StarClusters.GeneratedHeroes) StarClusters.RegisterGeneratedHero(hero);
             var options = Options.Parse(Array.Empty<string>());
             foreach (string hero in new[] { "Hero_Vesper", "Hero_Cetus", "Hero_Mist", "Hero_Husk" })
             {

@@ -8,21 +8,29 @@ using Xunit;
 
 namespace SodRpg.Core.Tests
 {
-    public sealed class ProfileMigrationLoadTests : IDisposable
+    public sealed class ProfileMigrationLoadTests : IClassFixture<ProfileMigrationLoadTests.Registered>
     {
         private const string SaveDir = "migration-load";
         private static readonly string SoloPath = Path.Combine(SaveDir, "profile.json");
         private static readonly string MultiPath = Path.Combine(SaveDir, "profile.multi.json");
 
-        public ProfileMigrationLoadTests()
+        // テストごとの基準状態リセット（SharedStarRegistryResetAttribute）はコンストラクタより後に
+        // 走るため、生成ツリーの登録はクラス単位のフィクスチャで行う（フィクスチャを持つクラスは
+        // リセットの対象外。登録内容は旧コンストラクタと同じ全英雄で、テストごとに変わらない）。
+        public sealed class Registered : IDisposable
         {
-            foreach (string hero in StarClusters.GeneratedHeroes) StarClusters.RegisterGeneratedHero(hero);
+            public Registered()
+            {
+                foreach (string hero in StarClusters.GeneratedHeroes) StarClusters.RegisterGeneratedHero(hero);
+            }
+
+            public void Dispose()
+            {
+                foreach (string hero in StarClusters.GeneratedHeroes) StarClusters.RegisterAuthored(hero, Array.Empty<AuthoredStarDef>());
+            }
         }
 
-        public void Dispose()
-        {
-            foreach (string hero in StarClusters.GeneratedHeroes) StarClusters.RegisterAuthored(hero, Array.Empty<AuthoredStarDef>());
-        }
+        public ProfileMigrationLoadTests(Registered registered) { }
 
         [Theory]
         [InlineData(false, false)]

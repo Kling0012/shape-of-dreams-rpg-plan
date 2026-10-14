@@ -21,7 +21,9 @@ namespace SodRpg.Core.Tests
         [Fact]
         public void No_star_description_shows_an_internal_id()
         {
-            StarClusters.RegisterAllGenerated();
+            // RegisterAllGenerated はプロセスで1回しか登録しない。テストごとの基準状態リセット
+            // （SharedStarRegistryResetAttribute）で登録が消えても困らないよう、毎回登録し直す。
+            foreach (string hero in StarClusters.GeneratedHeroes) StarClusters.RegisterGeneratedHero(hero);
             try { Check(); }
             finally { foreach (string hero in StarClusters.GeneratedHeroes) StarClusters.RegisterAuthored(hero, System.Array.Empty<AuthoredStarDef>()); }
         }
