@@ -19,6 +19,10 @@ namespace SodRpg.Core.Game
         internal const double Drought = -15d;
         internal const double RestlessEnemies = 8d;
         internal const double SturdyEnemies = 8d;
+        internal const double Vitality = 10d;
+        internal const double Alacrity = 8d;
+        internal const double Feebleness = -8d;
+        internal const double Dulling = -8d;
         internal static double TrialScale(string key)
         {
             switch (key)
