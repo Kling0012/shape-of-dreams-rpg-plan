@@ -1,5 +1,5 @@
-[b]Improves the testing tools used in development; gameplay is unchanged.[/b]
-[b]開発用のテストの仕組みを改善した版で、ゲームの内容は変わりません。[/b]
+[b]The workshop now shows the actual storage limit you get after unlocking the next Wide Storage tier.[/b]
+[b]工房の「広い保管庫」で、次の段を解放したときの実際の上限が表示されるようにしました。[/b]
 
 [h1]Dreamforge RPG[/h1]
 Turns every run into part of a long RPG journey: relics you keep, a risky "secure or delve" choice at every zone, a star map per Traveler, a forge, and long-term goals. Co-op ready.
