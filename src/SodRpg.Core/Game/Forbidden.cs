@@ -58,37 +58,32 @@ namespace SodRpg.Core.Game
     /// 禁忌の装備と宿敵（#415）。対象はセットに属さない固有品（オレンジ枠）だけ。
     /// 工房の「禁忌の職人」を解放した後に、禁忌化・宿敵の出現・再調律の上限の引き上げが有効になる。
     /// 数値はレアな装備を手に入りにくくする側で決めた仮の値（実プレイで調整する）。
+    /// 調整値は tools/balance/forbidden.json（ForbiddenBalance 生成表。#423）。ここには書かない。
     /// </summary>
     public static class Forbidden
     {
         // ───── 費用と上限 ─────
         /// <summary>禁忌の職人の解放費用（1段）。</summary>
-        public static readonly (int Shards, int Tuning)[] SmithCosts = { (2000, 30) };
-        public const int CoreCost = 3;
-        public const int ShardCost = 500;
-        public const int TuningCost = 8;
+        public static readonly (int Shards, int Tuning)[] SmithCosts = ForbiddenBalance.SmithCosts;
+        public const int CoreCost = ForbiddenBalance.ForbidCoreCost;
+        public const int ShardCost = ForbiddenBalance.ForbidShardCost;
+        public const int TuningCost = ForbiddenBalance.ForbidTuningCost;
         /// <summary>禁忌の職人の解放後、オレンジ枠固有品の再調律の上限に足す回数。</summary>
-        public const int OrangeRetuneBonus = 3;
+        public const int OrangeRetuneBonus = ForbiddenBalance.OrangeRetuneBonus;
 
         // ───── 型ごとの強さ ─────
         /// <summary>過剰：既存の固有効果の倍率（%）。</summary>
-        public const int OverchargePowerPct = 160;
+        public const int OverchargePowerPct = ForbiddenBalance.OverchargePowerPct;
         /// <summary>過剰：固有効果を持たない遺物では、残る特性に掛ける倍率（%）。</summary>
-        public const int OverchargeAffixFallbackPct = 140;
+        public const int OverchargeAffixFallbackPct = ForbiddenBalance.OverchargeAffixFallbackPct;
         /// <summary>破滅の誓い：残る特性の倍率（%）と最大HPの減少。</summary>
-        public const int RuinAffixPct = 150;
-        public const int RuinMaxHealthPct = -30;
+        public const int RuinAffixPct = ForbiddenBalance.RuinAffixPct;
+        public const int RuinMaxHealthPct = ForbiddenBalance.RuinMaxHealthPct;
         /// <summary>最大HP%の合計の下限。禁忌の契約と破滅の誓いを6部位に重ねても、最大HPが0以下にならないようにする（Build.Compute で適用）。</summary>
-        public const int MaxHealthPctFloor = -75;
+        public const int MaxHealthPctFloor = ForbiddenBalance.MaxHealthPctFloor;
 
-        /// <summary>禁忌の契約の組み合わせ（利点・欠点）。値は強化や覚醒で増減しない固定値。</summary>
-        public static readonly (StatLine Boon, StatLine Bane)[] PactVariants =
-        {
-            (new StatLine(Stat.AttackSpeedPct, 40), new StatLine(Stat.MaxHealthPct, -50)),
-            (new StatLine(Stat.AttackPct, 45), new StatLine(Stat.Armor, -40)),
-            (new StatLine(Stat.PowerPct, 45), new StatLine(Stat.Haste, -30)),
-            (new StatLine(Stat.CritDamagePct, 90), new StatLine(Stat.MoveSpeedPct, -15)),
-        };
+        /// <summary>禁忌の契約の組み合わせ（利点・欠点）。値は強化や覚醒で増減しない固定値。tools/balance/forbidden.json。</summary>
+        public static readonly (StatLine Boon, StatLine Bane)[] PactVariants = ForbiddenBalance.PactVariants;
 
         /// <summary>
         /// 禁忌の契約の5つ目の組み合わせ「血の転化」：シールドを一切得られなくなる代わりに、受けた回復量の一部を
@@ -96,14 +91,14 @@ namespace SodRpg.Core.Game
         /// </summary>
         public const int TransmuteVariant = 4;
         /// <summary>禁忌の契約の組み合わせの総数（能力値の組＋血の転化）。</summary>
-        public const int PactVariantCount = 5;
+        public static int PactVariantCount => PactVariants.Length + 1;
         /// <summary>血の転化：受けた回復のうち、回復せずに攻撃力へ回す割合（%）。</summary>
-        public const int TransmuteHealPct = 35;
+        public const int TransmuteHealPct = ForbiddenBalance.TransmuteHealPct;
         /// <summary>血の転化：転化した回復量（最大HP比1%）あたりの攻撃力（%）。</summary>
-        public const float TransmuteAttackPerHealthPct = 2f;
+        public const float TransmuteAttackPerHealthPct = ForbiddenBalance.TransmuteAttackPerHealthPct;
         /// <summary>血の転化：攻撃力の上限（%）と、最後の転化からの持続（秒）。</summary>
-        public const float TransmuteAttackCap = 60f;
-        public const float TransmuteDuration = 6f;
+        public const float TransmuteAttackCap = ForbiddenBalance.TransmuteAttackCap;
+        public const float TransmuteDuration = ForbiddenBalance.TransmuteDuration;
 
         /// <summary>血の転化（シールド不可・回復の一部を攻撃力へ）を持つ禁忌化か。</summary>
         public static bool IsTransmute(Relic r) => r?.Forbidden != null && r.Forbidden.Pattern == ForbiddenPattern.Pact
@@ -111,32 +106,32 @@ namespace SodRpg.Core.Game
 
         // ───── 宿敵 ─────
         /// <summary>ボスとエリート（ミニボス）の宿敵化の確率は別。</summary>
-        public const double BossNemesisChance = 0.08;
-        public const double MiniBossNemesisChance = 0.03;
-        public const int NemesisBossHealthPct = 60;
-        public const int NemesisBossAttackPct = 25;
-        public const int NemesisMiniBossHealthPct = 100;
-        public const int NemesisMiniBossAttackPct = 35;
-        public const int NemesisArmor = 20;
+        public const double BossNemesisChance = ForbiddenBalance.BossNemesisChance;
+        public const double MiniBossNemesisChance = ForbiddenBalance.MiniBossNemesisChance;
+        public const int NemesisBossHealthPct = ForbiddenBalance.NemesisBossHealthPct;
+        public const int NemesisBossAttackPct = ForbiddenBalance.NemesisBossAttackPct;
+        public const int NemesisMiniBossHealthPct = ForbiddenBalance.NemesisMiniBossHealthPct;
+        public const int NemesisMiniBossAttackPct = ForbiddenBalance.NemesisMiniBossAttackPct;
+        public const int NemesisArmor = ForbiddenBalance.NemesisArmor;
         /// <summary>宿敵の撃破で得る禁忌の核。禁忌化には宿敵化したボスの撃破が要るので、核はボスだけが落とす（#415）。
         /// エリート（ミニボス）の宿敵は因縁を深め、追加報酬（欠片2倍・調律石・一段上の戦利品）を得られる。</summary>
-        public const int BossCores = 2;
+        public const int BossCores = ForbiddenBalance.NemesisBossCores;
         /// <summary>宿敵の撃破で欠片を上乗せする割合（%）と、追加の調律石。</summary>
-        public const int NemesisShardBonusPct = 100;
-        public const int NemesisTuningBonus = 3;
+        public const int NemesisShardBonusPct = ForbiddenBalance.NemesisShardBonusPct;
+        public const int NemesisTuningBonus = ForbiddenBalance.NemesisTuningBonus;
 
         // ───── 因縁（宿敵「深淵の追跡者」との） ─────
         /// <summary>宿敵の名。ボス・エリートを問わず、禁忌の職人を持つ者を追う同じ存在として現れる。</summary>
         public static string NemesisName => Loc.T("深淵の追跡者", "Abyssal Stalker");
         /// <summary>因縁の上限。宿敵を倒すたびに1つ深まる。</summary>
-        public const int MaxGrudge = 5;
+        public const int MaxGrudge = ForbiddenBalance.MaxGrudge;
         /// <summary>因縁1段ごとの宿敵化の確率の上乗せ（元の確率に対する%）。</summary>
-        public const int GrudgeChanceStepPct = 15;
+        public const int GrudgeChanceStepPct = ForbiddenBalance.GrudgeChanceStepPct;
         /// <summary>因縁1段ごとの宿敵のHPと攻撃力の上乗せ（%）。</summary>
-        public const int GrudgeHealthStepPct = 10;
-        public const int GrudgeAttackStepPct = 5;
+        public const int GrudgeHealthStepPct = ForbiddenBalance.GrudgeHealthStepPct;
+        public const int GrudgeAttackStepPct = ForbiddenBalance.GrudgeAttackStepPct;
         /// <summary>この段以上の因縁で宿敵を倒すと、禁忌の核を1つ多く得る。</summary>
-        public const int GrudgeBonusCoreAt = 3;
+        public const int GrudgeBonusCoreAt = ForbiddenBalance.GrudgeBonusCoreAt;
 
         public static int ClampGrudge(int grudge) => Math.Max(0, Math.Min(MaxGrudge, grudge));
 
@@ -223,7 +218,12 @@ namespace SodRpg.Core.Game
             return -1;
         }
 
-        /// <summary>特性に掛ける倍率（%）。</summary>
+        /// <summary>
+        /// 特性に掛ける倍率（%）。過剰の振り分け先は禁忌化した時点の状態に固定（#423）：固有効果の無い遺物は
+        /// 特性に 1.4倍、ある遺物は固有効果 1.6倍。禁忌化した遺物には強化の節目でも固有効果が宿らず
+        /// （代わりに特性が増える。Rules.GrantEnhanceMilestones）、固有効果を足す・替える夢の出来事の対象にも
+        /// ならないので、後から倍率の対象（Powers の有無）が変わることはない。
+        /// </summary>
         internal static int AffixPct(Relic r)
         {
             var m = r.Forbidden;
@@ -261,7 +261,14 @@ namespace SodRpg.Core.Game
             return null;
         }
 
-        /// <summary>4つの型から等確率で1つを選び、結果を作る。遺物は書き換えない。</summary>
+        /// <summary>
+        /// 4つの型から等確率で1つを選び、結果を作る。遺物は書き換えない。
+        /// 適用条件と例外（#423）：特性を1つ失う型（断絶・過剰）は、特性の無い遺物では選ばれない
+        /// （失う特性が無ければ「特性を1つ失う」という必須の欠点が成立せず、印の検証（RemovedValid は
+        /// 実在する特性を要求する）にも落ちる）。この場合は等確率で契約か破滅の誓いへ振り替わる。
+        /// 断絶は、その部位の池から「まだ持っていない固有効果」を1つ足す型なので、足せる効果が
+        /// 無ければ（池の効果をすべて持っている、または池が空なら）過剰へ振り替わる。
+        /// </summary>
         public static ForbiddenMark Roll(Rng rng, Relic r)
         {
             var pattern = (ForbiddenPattern)rng.Range(1, 4);
@@ -336,8 +343,13 @@ namespace SodRpg.Core.Game
                     return m.Variant == 0 && RemovedValid(r, m) && m.AddedPower == Power.None && m.AddedValue == 0;
                 case ForbiddenPattern.Severance:
                     if (m.Variant != 0 || !RemovedValid(r, m)) return false;
-                    foreach (var def in SeveranceCandidates(r))
-                        if (def.Power == m.AddedPower)
+                    // 検証では AddedPower 自身も候補に含める（#423）。SeveranceCandidates は「新しく足す効果」を
+                    // 選ぶ Roll の候補なので所持済みを除くが、検証を同じ集合に対照すると、禁忌化の後に同じ
+                    // 固有効果が遺物に宿ったとき（現在の経路は禁忌化した遺物を除外しているが、旧保存や将来の
+                    // 変更に備える）に、費用を払った正規の印が読み込み時・ホスト検証時に黙って捨てられる。
+                    // 効果がその部位の池に定義され、抽選範囲内の値であることだけを要求する。
+                    foreach (var def in Content.PowerPool(r.Slot))
+                        if (def.Power == m.AddedPower && Content.PowerAllowedForRarity(def.Power, r.Rarity) && def.Max > 0)
                         {
                             // 通常の抽選で出ない値（定義範囲の下半分など）は作れない組み合わせとして拒否する。
                             SeveranceBounds(def, out int low, out int high);
