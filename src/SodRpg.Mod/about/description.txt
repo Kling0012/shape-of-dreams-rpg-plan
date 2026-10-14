@@ -1,5 +1,5 @@
-[b]Adds a name search box to the Equipment and Forge tabs so you can quickly find relics.[/b]
-[b]装備タブと鍛冶タブに、遺物を名前で探せる検索欄を追加しました。[/b]
+[b]Adds the Forbidden Smith workshop upgrade, which unlocks Nemesis enemies, Forbidding for orange-frame relics, and a higher reroll limit.[/b]
+[b]工房に「禁忌の職人」を追加し、宿敵、オレンジ枠の遺物の禁忌化、再調律回数の上限の引き上げを使えるようにしました。[/b]
 
 [h1]Dreamforge RPG[/h1]
 Turns every run into part of a long RPG journey: relics you keep, a risky "secure or delve" choice at every zone, a star map per Traveler, a forge, and long-term goals. Co-op ready.
