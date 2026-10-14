@@ -22,7 +22,7 @@ namespace SodRpg.Core.Game
     public sealed class ForbiddenMark
     {
         public ForbiddenPattern Pattern { get; set; }
-        /// <summary>禁忌の契約の組み合わせ（Forbidden.PactVariants の番号）。ほかの型は0。</summary>
+        /// <summary>禁忌の契約の組み合わせ（Forbidden.PactVariants の番号。Forbidden.TransmuteVariant は血の転化）。ほかの型は0。</summary>
         public int Variant { get; set; }
         /// <summary>失った特性の能力値。特性を失わない型（契約・破滅の誓い）では -1。断絶・過剰は特性のある遺物にしか選ばれないので、常に実際の能力値。</summary>
         public int RemovedStat { get; set; } = -1;
@@ -90,6 +90,25 @@ namespace SodRpg.Core.Game
             (new StatLine(Stat.CritDamagePct, 90), new StatLine(Stat.MoveSpeedPct, -15)),
         };
 
+        /// <summary>
+        /// 禁忌の契約の5つ目の組み合わせ「血の転化」：シールドを一切得られなくなる代わりに、受けた回復量の一部を
+        /// 攻撃力へ変換する。能力値の組では表せないので、本体のシールド・回復の処理（ホストの受け取り処理）で適用する。
+        /// </summary>
+        public const int TransmuteVariant = 4;
+        /// <summary>禁忌の契約の組み合わせの総数（能力値の組＋血の転化）。</summary>
+        public const int PactVariantCount = 5;
+        /// <summary>血の転化：受けた回復のうち、回復せずに攻撃力へ回す割合（%）。</summary>
+        public const int TransmuteHealPct = 35;
+        /// <summary>血の転化：転化した回復量（最大HP比1%）あたりの攻撃力（%）。</summary>
+        public const float TransmuteAttackPerHealthPct = 2f;
+        /// <summary>血の転化：攻撃力の上限（%）と、最後の転化からの持続（秒）。</summary>
+        public const float TransmuteAttackCap = 60f;
+        public const float TransmuteDuration = 6f;
+
+        /// <summary>血の転化（シールド不可・回復の一部を攻撃力へ）を持つ禁忌化か。</summary>
+        public static bool IsTransmute(Relic r) => r?.Forbidden != null && r.Forbidden.Pattern == ForbiddenPattern.Pact
+            && r.Forbidden.Variant == TransmuteVariant;
+
         // ───── 宿敵 ─────
         /// <summary>ボスとエリート（ミニボス）の宿敵化の確率は別。</summary>
         public const double BossNemesisChance = 0.08;
@@ -134,7 +153,7 @@ namespace SodRpg.Core.Game
         {
             switch (pattern)
             {
-                case ForbiddenPattern.Pact: return Loc.T("極端な利点と、はっきりした欠点の能力値が1組付く。", "Adds one extreme boon paired with a clear drawback.");
+                case ForbiddenPattern.Pact: return Loc.T("極端な利点と、はっきりした欠点の能力が1組付く（シールド不可と回復の攻撃力への転化を含む）。", "Adds one extreme boon paired with a clear drawback (including no shields with healing turned into attack).");
                 case ForbiddenPattern.Severance: return Loc.T("特性を1つ失い、固有効果を1つ得る。", "Loses one affix and gains one power.");
                 case ForbiddenPattern.Overcharge: return Loc.T($"特性を1つ失い、固有効果が{OverchargePowerPct / 100m:0.##}倍になる。", $"Loses one affix; powers become x{OverchargePowerPct / 100m:0.##}.");
                 case ForbiddenPattern.Ruin: return Loc.T($"特性が{RuinAffixPct / 100m:0.##}倍になる代わりに、最大HP{RuinMaxHealthPct}%。", $"Affixes become x{RuinAffixPct / 100m:0.##}, but max HP {RuinMaxHealthPct}%.");
@@ -148,6 +167,9 @@ namespace SodRpg.Core.Game
             var m = r?.Forbidden;
             if (m == null) return "";
             string text = Loc.T("禁忌化：", "Forbidden: ") + PatternName(m.Pattern);
+            if (IsTransmute(r))
+                text += Loc.T($"（血の転化：シールドを得られず、受けた回復の{TransmuteHealPct}%を攻撃力に変換）",
+                    $" (Blood Transmutation: cannot gain shields; {TransmuteHealPct}% of healing received becomes attack)");
             int removed = RemovedAffixIndex(r);
             if (removed >= 0)
             {
@@ -240,7 +262,7 @@ namespace SodRpg.Core.Game
             switch (pattern)
             {
                 case ForbiddenPattern.Pact:
-                    m.Variant = rng.Range(0, PactVariants.Length - 1);
+                    m.Variant = rng.Range(0, PactVariantCount - 1);
                     break;
                 case ForbiddenPattern.Severance:
                     {
@@ -287,7 +309,7 @@ namespace SodRpg.Core.Game
             switch (m.Pattern)
             {
                 case ForbiddenPattern.Pact:
-                    return m.Variant >= 0 && m.Variant < PactVariants.Length && m.RemovedStat == -1
+                    return m.Variant >= 0 && m.Variant < PactVariantCount && m.RemovedStat == -1
                         && m.AddedPower == Power.None && m.AddedValue == 0;
                 case ForbiddenPattern.Ruin:
                     return m.Variant == 0 && m.RemovedStat == -1 && m.AddedPower == Power.None && m.AddedValue == 0;

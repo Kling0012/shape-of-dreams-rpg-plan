@@ -67,6 +67,9 @@ namespace SodRpg.Core.Game
         internal StarDependencies Dependencies { get; set; }
         internal Dictionary<string, string[]> ScopedWireRecords { get; } = new Dictionary<string, string[]>(StringComparer.Ordinal);
         public int Heat { get; set; }
+        /// <summary>禁忌の契約「血の転化」（#415）：受けた回復のうち攻撃力へ回す割合（%）。0なら無効。
+        /// 正なら同時にシールドを得られない。ホストが装備から計算し直す値で、通信の要約には含めない。</summary>
+        public int ForbiddenTransmutePct { get; set; }
         /// <summary>夢の圧へ送る進行度。欠けている旧データは夢1・星0。</summary>
         public int DreamLevel { get; set; } = 1;
         public int SpentStarPoints { get; set; }
@@ -188,7 +191,7 @@ namespace SodRpg.Core.Game
             var awakenGains = new Dictionary<Power, int>();
             var basePowers = new Dictionary<Power, decimal>();
             // 禁忌化（#415）した遺物を装備しているか。最大HP%の下限はこのときだけ掛ける（既存のビルドの値を変えない）。
-            bool anyForbidden = false;
+            bool anyForbidden = false, transmute = false;
             var equippedLinks = new Dictionary<string, (LinkDef Link, decimal Base, decimal Scaled)>(StringComparer.Ordinal);
             var equippedBossMoves = new Dictionary<string, BossMoveEntry>(StringComparer.Ordinal);
             void AddPower(Power power, int value)
@@ -226,6 +229,7 @@ namespace SodRpg.Core.Game
                 var r = p.FindStash(uid);
                 if (r == null) continue;
                 if (r.Forbidden != null) anyForbidden = true;
+                if (Forbidden.IsTransmute(r)) transmute = true;
                 var bossMove = r.EffectiveBossMove();
                 if (bossMove != null)
                 {
@@ -505,6 +509,8 @@ namespace SodRpg.Core.Game
             // 既存のビルドの値は変わらない。
             if (anyForbidden && b.Stats.TryGetValue(Stat.MaxHealthPct, out int healthPctTotal) && healthPctTotal < Forbidden.MaxHealthPctFloor)
                 b.Stats[Stat.MaxHealthPct] = Forbidden.MaxHealthPctFloor;
+            // 血の転化は重ねても強まらない（1つでも装備していれば有効）。
+            if (transmute) b.ForbiddenTransmutePct = Forbidden.TransmuteHealPct;
             var links = AggregateLinks(b.Links);
             b.Links.Clear();
             b.Links.AddRange(links);

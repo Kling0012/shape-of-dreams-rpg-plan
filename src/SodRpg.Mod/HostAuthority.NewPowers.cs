@@ -57,6 +57,7 @@ namespace SodRpg.Mod
             internal int OmenGeneration = -1;
             internal Action<EventInfoShield> TakeShield;
             internal DataProcessor<HealData, Actor, Entity> ShieldReceived;
+            internal DataProcessor<HealData, Actor, Entity> HealReceived;
             internal readonly Dictionary<int, float> Overkill = new Dictionary<int, float>();
             internal readonly List<Action> Pending = new List<Action>();
         }
@@ -267,10 +268,24 @@ namespace SodRpg.Mod
             rt.Hero.EntityEvent_OnTakeDamage += _onTakeDamage;
             rt.NewPowers.ShieldReceived = (ref HealData data, Actor actor, Entity target) =>
             {
+                // 禁忌の契約「血の転化」（#415）：シールドを一切得られない。
+                if (rt.Powers.ShieldsBlocked)
+                {
+                    if (data.currentAmount > 0f) data.ApplyReduction(1f);
+                    return;
+                }
                 float bonus = rt.Powers.ShieldGainAmplification();
                 if (bonus > 0f) data.ApplyAmplification(bonus);
             };
             rt.Hero.takenShieldProcessor.Add(rt.NewPowers.ShieldReceived);
+            // 血の転化（#415）：受けた回復の一部を回復せず、攻撃力の上乗せへ回す。
+            rt.NewPowers.HealReceived = (ref HealData data, Actor actor, Entity target) =>
+            {
+                if (target != rt.Hero || data.currentAmount <= 0f || rt.Hero == null) return;
+                float diverted = rt.Powers.TransmuteHeal(Time.time, data.currentAmount, rt.Hero.maxHealth);
+                if (diverted > 0f) data.ApplyReduction(diverted / data.currentAmount);
+            };
+            rt.Hero.takenHealProcessor.Add(rt.NewPowers.HealReceived);
         }
 
         private void ShareAcceptedWard(Hero recipient, float amount)
@@ -289,6 +304,7 @@ namespace SodRpg.Mod
                 rt.Hero.EntityEvent_OnTakeShield -= rt.NewPowers.TakeShield;
                 rt.Hero.EntityEvent_OnTakeDamage -= _onTakeDamage;
                 rt.Hero.takenShieldProcessor.Remove(rt.NewPowers.ShieldReceived);
+                if (rt.NewPowers.HealReceived != null) rt.Hero.takenHealProcessor.Remove(rt.NewPowers.HealReceived);
             }
             rt.NewPowers.Pending.Clear();
             rt.NewPowers.Overkill.Clear();
