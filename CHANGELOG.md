@@ -8,6 +8,10 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
+### 新機能 / New features
+
+- **禁忌の装備と宿敵（クラフト拡張パック）**：工房に「禁忌の職人」が加わりました。解放すると、ボスやエリートがまれに強くなった「宿敵」として現れ、倒すと禁忌の核と追加の報酬が手に入ります。禁忌の核を使うと、セットに属さない固有品（オレンジ枠）を一度だけ「禁忌化」でき、極端な効果と引き換えに明確な欠点を持つ装備になります（4つの型からランダム。禁忌化した装備は再調律できません）。あわせて、オレンジ枠固有品の再調律の上限が3回増えます。協力プレイでは、誰か1人が解放していれば宿敵が現れます。 / **Forbidden gear and nemeses (crafting expansion)**: the workshop gains the Forbidden Smith. Once unlocked, bosses and elites sometimes appear as empowered nemeses that drop forbidden cores and extra rewards. Cores let you make a non-set unique (orange frame) forbidden once, giving it an extreme effect with a clear drawback (one of four random types; forbidden gear can no longer be retuned). Orange-frame uniques also get 3 more retunes. In co-op, nemeses appear if anyone has the smith unlocked.
+
 ---
 
 ## v2.10.36 — Development testing improvements (no gameplay changes)（2026-10-14）

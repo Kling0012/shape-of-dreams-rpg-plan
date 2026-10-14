@@ -1,5 +1,6 @@
 using System;
 using Mirror;
+using SodRpg.Core.Game;
 using UnityEngine;
 
 namespace SodRpg.Mod
@@ -68,7 +69,7 @@ namespace SodRpg.Mod
         {
             if (NetworkServer.active || _hostNetLite || !_helloAnswered || Time.unscaledTime < _nextBuildInputProbe) return;
             _nextBuildInputProbe = Time.unscaledTime + 5f;
-            try { _clientRpcOn.CustomRpc_SendMessageToServer(new DreamforgeBuildInputCapabilityMsg { netLite = _netLiteReceiveReady ? 1 : 0, roomOmens = _omenReceiveReady ? 1 : 0 }); } catch (Exception) { }
+            try { _clientRpcOn.CustomRpc_SendMessageToServer(new DreamforgeBuildInputCapabilityMsg { netLite = _netLiteReceiveReady ? 1 : 0, roomOmens = _omenReceiveReady ? 1 : 0, forbiddenSmith = Forbidden.HasSmith(Profile) ? 1 : 0 }); } catch (Exception) { }
         }
     }
 

@@ -62,6 +62,7 @@ namespace SodRpg.Mod
             _helloPeers.Clear();
             _netLitePeers.Clear();
             _roomOmenPeers.Clear();
+            _forbiddenSmithPeers.Clear();
             _autocastPressurePeers.Clear();
             RebuildMismatchList();
         }
@@ -69,6 +70,8 @@ namespace SodRpg.Mod
         private Action<DreamforgeBuildInputCapabilityMsg, DewPlayer> _onBuildInputCapability;
         private readonly HashSet<DewPlayer> _netLitePeers = new HashSet<DewPlayer>();
         private readonly HashSet<DewPlayer> _roomOmenPeers = new HashSet<DewPlayer>();
+        /// <summary>禁忌の職人を解放済みと伝えてきた参加者（#415）。</summary>
+        private readonly HashSet<DewPlayer> _forbiddenSmithPeers = new HashSet<DewPlayer>();
         partial void SendRoomOmenPeer(DewPlayer player);
         internal bool HasNetLite(DewPlayer player) => player != null && _netLitePeers.Contains(player);
 
@@ -96,6 +99,8 @@ namespace SodRpg.Mod
             else _netLitePeers.Remove(caller);
             if (msg.roomOmens == 1 && _helloPeers.Contains(caller)) _roomOmenPeers.Add(caller);
             else _roomOmenPeers.Remove(caller);
+            if (msg.forbiddenSmith == 1 && _helloPeers.Contains(caller)) _forbiddenSmithPeers.Add(caller);
+            else _forbiddenSmithPeers.Remove(caller);
             try { _registeredOn?.CustomRpc_SendMessageToClient(caller,
                 new DreamforgeBuildInputCapabilityMsg { netLite = 1, roomOmens = 1 }); } catch (Exception) { }
             SendRoomOmenPeer(caller);

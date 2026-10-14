@@ -27,6 +27,9 @@ namespace SodRpg.Mod
             ? _hostSession.Profile.Run : null;
         internal static int HostChosenDepth => NetworkServer.active && _hostSession != null
             ? DreamDepth.Clamp(HostRun?.DreamDepth ?? _hostSession.Profile.LastDreamDepth) : 0;
+        /// <summary>ホスト自身が禁忌の職人を解放しているか（#415）。</summary>
+        internal static bool HostHasForbiddenSmith => NetworkServer.active && _hostSession != null
+            && Forbidden.HasSmith(_hostSession.Profile);
         internal static string HostRunChoices => NetworkServer.active ? _hostSession?.EncodeRunChoices() : null;
         internal static ulong HostAuthorityGeneration => NetworkServer.active && _hostSession != null
             ? _hostSession.ObserveHostAuthorityPublisher() : 0;

@@ -231,6 +231,8 @@ namespace SodRpg.Mod
         // Optional JSON field: absent on older peers. Hello's fixed schema stays intact.
         public int netLite;
         public int roomOmens;
+        /// <summary>この参加者が工房の「禁忌の職人」を解放済みか（#415）。誰か1人でも解放していればホストは宿敵を出す。</summary>
+        public int forbiddenSmith;
     }
 
     // Optional extension: Hello and every existing packet remain unchanged (Protocol 24).
