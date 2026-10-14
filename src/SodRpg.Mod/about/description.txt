@@ -1,5 +1,5 @@
-[b]The workshop now shows the actual storage limit you get after unlocking the next Wide Storage tier.[/b]
-[b]工房の「広い保管庫」で、次の段を解放したときの実際の上限が表示されるようにしました。[/b]
+[b]Adds a name search box to the Equipment and Forge tabs so you can quickly find relics.[/b]
+[b]装備タブと鍛冶タブに、遺物を名前で探せる検索欄を追加しました。[/b]
 
 [h1]Dreamforge RPG[/h1]
 Turns every run into part of a long RPG journey: relics you keep, a risky "secure or delve" choice at every zone, a star map per Traveler, a forge, and long-term goals. Co-op ready.
