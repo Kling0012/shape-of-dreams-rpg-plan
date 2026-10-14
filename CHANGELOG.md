@@ -10,6 +10,24 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v2.10.37 — Fix storage limit display in the workshop（2026-10-15）
+
+このバージョンでは、工房画面で保管庫の上限が正しく表示されない不具合を修正しました。 / This version fixes an issue where the workshop screen showed the wrong storage limit.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- 工房の「広い保管庫」で、「保管庫の上限 いま → 解放後」の解放後の値が、どの段でも常に +20 される形で表示されていました。この不具合を修正し、次の段を解放したときの実際の上限が表示されるようにしました。 / In the workshop, the "Storage limit now → after unlock" line for "Wide Storage" always showed an increase of +20, no matter which tier came next. This is fixed, and the line now shows the actual limit you get after unlocking the next tier.
+
+このバージョンの変更は、コードとテストで確認していますが、実際のゲームや協力プレイでの確認はまだできていません。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
 ## v2.10.36 — Development testing improvements (no gameplay changes)（2026-10-14）
 
 この版では、ゲームの内容や遊び方は変わりません。開発に使うテストの仕組みを改善したものです。 / This version brings no changes to gameplay. It improves the testing tools used in development.
