@@ -232,9 +232,10 @@ namespace SodRpg.Core.Game
                         equippedBossMoves[key] = bossMove;
                 }
                 foreach (var s in r.EffectiveStats()) Add(rawStats, s.Stat, s.Value);
-                for (int i = 0; r.BossMove == null && i < r.Powers.Count; i++)
+                var sourcePowers = Forbidden.SourcePowers(r);
+                for (int i = 0; r.BossMove == null && i < sourcePowers.Count; i++)
                 {
-                    var pw = r.Powers[i];
+                    var pw = sourcePowers[i];
                     int value = Relic.Scale(pw.Value, Content.EnhancePowerScalePct(r.Enhance));
                     if (r.Awakened) value = (int)((long)value * Content.AwakenPowerPctAt(r.AwakenLevel) / 100);
                     Add(rawPowers, pw.Power, value);
@@ -245,7 +246,7 @@ namespace SodRpg.Core.Game
                     basePowers[pw.Power] = current + basis;
                 }
                 if (r.Awakened && r.BossMove == null)
-                    foreach (var pw in r.Powers)
+                    foreach (var pw in sourcePowers)
                     {
                         if (!NewPowersV129.IsConditionalAttribute(pw.Power)) continue;
                         int before = Relic.Scale(pw.Value, Content.EnhancePowerScalePct(r.Enhance));

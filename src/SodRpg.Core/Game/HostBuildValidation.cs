@@ -65,6 +65,8 @@ namespace SodRpg.Core.Game
                     if (!lineFirst) sb.Append('+'); lineFirst = false;
                     sb.Append((int)line.Power).Append('=').Append(line.Value);
                 }
+                // 禁忌化（#415）した遺物だけ15番目の欄を足す。
+                if (relic.Forbidden != null) sb.Append(':').Append(relic.Forbidden.Encode());
             }
             sb.Append(";P:"); first = true;
             if (pacts != null) foreach (var pact in pacts)
@@ -232,7 +234,7 @@ namespace SodRpg.Core.Game
                         foreach (string entry in Entries(body, Content.SlotCount))
                         {
                             var fields = entry.Split(':');
-                            if (fields.Length != 14) throw new FormatException();
+                            if (fields.Length != 14 && fields.Length != 15) throw new FormatException();
                             int slot = Range(fields[0], 0, Content.SlotCount - 1);
                             Token(fields[1]); Token(fields[2]);
                             if (fields[3].Length > 0) Token(fields[3]);
@@ -257,6 +259,11 @@ namespace SodRpg.Core.Game
                             {
                                 var pair = line.Split('='); if (pair.Length != 2) throw new FormatException();
                                 relic.Powers.Add(new PowerLine((Power)Int(pair[0]), Int(pair[1])));
+                            }
+                            if (fields.Length == 15)
+                            {
+                                if (fields[14].Length == 0) throw new FormatException();
+                                relic.Forbidden = ForbiddenMark.Decode(fields[14]);
                             }
                             if (!HostGearValidation.TryValidate(relic, out var gear) || (int)gear.Slot != slot)
                                 throw new FormatException();

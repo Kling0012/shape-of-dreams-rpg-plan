@@ -15,7 +15,7 @@ namespace SodRpg.Core.Game
                 || source.ItemLevel < 1 || source.ItemLevel > Content.MaxItemLevel
                 || source.LimitBreaks < 0 || source.LimitBreaks > Content.MaxLimitBreaks(source.Rarity)
                 || source.Enhance < 0 || source.Enhance > Content.MaxEnhanceFor(source)
-                || source.Retunes < 0 || source.Retunes > Content.MaxRetunes
+                || source.Retunes < 0 || source.Retunes > Forbidden.RetuneCeiling(source)
                 || source.EnhanceMilestones < 0 || source.EnhanceMilestones > Content.MaxEnhanceMilestones
                 || source.AwakenLevel < 0 || source.AwakenLevel > Content.MaxAwakenLevel
                 || source.AwakenPoints < 0 || source.AwakenPoints > Content.AwakenThreshold)
@@ -147,6 +147,12 @@ namespace SodRpg.Core.Game
                     cap = Math.Max(cap, Relic.Scale(cap, Content.LimitBreakPowerPct));
                 }
                 result.Powers.Add(new PowerLine(line.Power, ClampAmount(line.Value, cap)));
+            }
+            // 禁忌化（#415）は検証済みの特性・固有効果に対して作れる組み合わせだけ受け付ける。
+            if (source.Forbidden != null)
+            {
+                if (!Forbidden.Valid(result, source.Forbidden)) return false;
+                result.Forbidden = source.Forbidden.Clone();
             }
             validated = result;
             return true;

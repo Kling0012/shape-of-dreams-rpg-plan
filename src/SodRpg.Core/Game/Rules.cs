@@ -196,10 +196,13 @@ namespace SodRpg.Core.Game
             if (string.IsNullOrEmpty(heroKey)) heroKey = run.HeroKey;
             var rng = p.TakeRng();
             var variant = Variants.Get(variantId);
+            // 宿敵（#415）は悪夢化とは別に扱う。印を外してから悪夢化を判定する。
+            bool nemesis = (nightmare & NightmareAffix.Nemesis) != 0 && Forbidden.NemesisCores(tier) > 0;
+            nightmare &= ~NightmareAffix.Nemesis;
             // 夢の変種は、悪夢と同じく一段上の戦利品・覚醒の力2倍・悪夢の依頼に数える。
             bool isNightmare = nightmare != NightmareAffix.None || variant != null;
             Waypoint killWaypoint = waypoint ?? run.ActiveWaypoint;
-            var rollTier = isNightmare ? Nightmares.RewardTier(tier) : tier;
+            var rollTier = isNightmare || nemesis ? Nightmares.RewardTier(tier) : tier;
             if (Waypoints.Sum(killWaypoint).KillLootTierBonus > 0) rollTier = Nightmares.RewardTier(rollTier);
             int killHeat = heat ?? run.Heat;
             var focus = p.Focus ?? DailyDream.Get(run.DailyId)?.FeaturedLine;
@@ -207,6 +210,11 @@ namespace SodRpg.Core.Game
                 Rarity.Legendary, InfinityRewards.OrdinaryRelicMultiplier(run, killWaypoint, tier), shardDropMultiplier,
                 InfinityRewards.UniqueDropMultiplier(p), LimboRelicMultiplier(run.LimboDepth));
             if (variant != null && variant.ShardBonusPct != 100) reward.Shards = (int)Math.Min(int.MaxValue, (long)reward.Shards * variant.ShardBonusPct / 100 + LootBalance.VariantAdditiveShards);
+            if (nemesis)
+            {
+                reward.Shards = (int)Math.Min(int.MaxValue, (long)reward.Shards * (100 + Forbidden.NemesisShardBonusPct) / 100);
+                reward.Tuning = SaturatingAdd(reward.Tuning, Forbidden.NemesisTuningBonus);
+            }
             bool hoardPayout = killWaypoint == Waypoint.BossHoard
                 && !run.WaypointHoardReleased && tier == MonsterTier.Boss;
             Waypoints.ApplyKill(p, tier, isNightmare, rng, reward, itemLevel, focus, roomIndex ?? run.RoomsCleared, killWaypoint, out int waypointStarXp, out int waypointAwakening, rewardScale: rewardScale);
@@ -255,7 +263,14 @@ namespace SodRpg.Core.Game
                 }
             }
             GameEvent killNotice = null;
-            if (variant != null)
+            if (nemesis)
+            {
+                // 禁忌の核はまれな戦利品なので、全滅でも失わないよう直接持ち帰る。
+                int cores = Forbidden.NemesisCores(tier);
+                p.AddMaterial(Materials.NemesisCore, cores);
+                killNotice = new GameEvent(EventKind.Info, Loc.T($"宿敵を倒しました！禁忌の核 +{cores}", $"Nemesis defeated! Forbidden cores +{cores}"));
+            }
+            else if (variant != null)
             {
                 p.Stats.VariantsSlain = SaturatingAdd(p.Stats.VariantsSlain, 1);
                 killNotice = new GameEvent(EventKind.Info, Loc.T($"夢の変種「{variant.Name}」を倒しました！", $"Slew the dream variant \"{variant.Name}\"!"));
@@ -1680,7 +1695,8 @@ namespace SodRpg.Core.Game
             if (p.RetuneOffer != null) throw new InvalidOperationException(Loc.T("先に、出ている再調律の候補を選んでください。", "Choose from the pending retune options first."));
             var r = p.FindStash(uid) ?? throw new InvalidOperationException(Loc.T("保管庫にない遺物です。", "That relic is not in your stash."));
             if (affixIndex < 0 || affixIndex >= r.Affixes.Count) throw new InvalidOperationException(Loc.T("特性を選んでください。", "Choose an affix."));
-            if (r.Retunes >= Content.MaxRetunes) throw new InvalidOperationException(Loc.T("再調律の回数を使い切りました。", "No retunes left."));
+            if (r.Forbidden != null) throw new InvalidOperationException(Loc.T("禁忌化した遺物は再調律できません。", "Forbidden relics cannot be retuned."));
+            if (r.Retunes >= Forbidden.RetuneCap(p, r)) throw new InvalidOperationException(Loc.T("再調律の回数を使い切りました。", "No retunes left."));
             int cost = Content.RetuneCost(r);
             if (p.Material(Materials.Tuning) < cost) throw new InvalidOperationException(Loc.T($"調律石が足りません（{cost}必要）。", $"Not enough tuning stones ({cost} needed)."));
             var others = new HashSet<Stat> { r.Base.ImplicitStat };
@@ -1767,6 +1783,7 @@ namespace SodRpg.Core.Game
             var r = p.FindStash(uid) ?? throw new InvalidOperationException(Loc.T("保管庫にない遺物です。", "That relic is not in your stash."));
             if (r.Locked) throw new InvalidOperationException(Loc.T("鍵のかかった遺物は洗い直せません。", "Locked relics cannot be rerolled."));
             if (p.IsEquippedAnywhere(uid)) throw new InvalidOperationException(Loc.T("装着中の遺物は洗い直せません。", "Equipped relics cannot be rerolled."));
+            if (r.Forbidden != null) throw new InvalidOperationException(Loc.T("禁忌化した遺物は洗い直せません。", "Forbidden relics cannot be rerolled."));
             var (shards, tuning) = AffixRerollCost(r);
             if (shards < 0 || tuning < 0) throw new InvalidOperationException(Loc.T("洗い直しの費用が不正です。", "Invalid reroll cost.")); // 負の費用は支払いが加算になるので受け付けない
             if (p.Material(Materials.Shard) < shards || p.Material(Materials.Tuning) < tuning)
@@ -1792,6 +1809,37 @@ namespace SodRpg.Core.Game
             return new GameEvent(EventKind.Info, Loc.T(
                 $"「{r.PlainName}」の特性を洗い直しました：{string.Join(sep, before)} → {after}",
                 $"Rerolled all affixes on \"{r.PlainName}\": {string.Join(sep, before)} -> {after}"), r.Rarity);
+        }
+
+        /// <summary>
+        /// 禁忌化（#415）：禁忌の核・欠片・調律石を払い、オレンジ枠固有品に一度だけ4つの型のどれかを付ける。
+        /// 結果はすぐに確定し、取り消せない。以後この遺物は再調律・洗い直しができない（強化・限界突破・覚醒はできる）。
+        /// </summary>
+        public static GameEvent Forbid(Profile p, string uid, TradeLedger trades = null)
+        {
+            RequireUnreserved(trades, uid);
+            RequireNoRetuneOffer(p, uid);
+            var r = p.FindStash(uid);
+            string reason = Forbidden.CannotForbid(p, r);
+            if (reason != null) throw new InvalidOperationException(reason);
+            var rng = p.TakeRng();
+            var mark = Forbidden.Roll(rng, r);
+            p.StoreRng(rng);
+            p.AddMaterial(Materials.NemesisCore, -Forbidden.CoreCost);
+            p.AddMaterial(Materials.Shard, -Forbidden.ShardCost);
+            p.AddMaterial(Materials.Tuning, -Forbidden.TuningCost);
+            r.Forbidden = mark;
+            string detail = Forbidden.PatternDescription(mark.Pattern);
+            if (mark.Pattern == ForbiddenPattern.Pact)
+            {
+                var pair = Forbidden.PactVariants[mark.Variant];
+                detail = Content.FormatStat(pair.Boon.Stat, pair.Boon.Value) + Loc.T("、", ", ") + Content.FormatStat(pair.Bane.Stat, pair.Bane.Value);
+            }
+            else if (mark.Pattern == ForbiddenPattern.Severance)
+                detail += " " + Content.PowerName(mark.AddedPower);
+            return new GameEvent(EventKind.LevelUp, Loc.T(
+                $"「{r.PlainName}」を禁忌化しました：{Forbidden.PatternName(mark.Pattern)}（{detail}）",
+                $"\"{r.PlainName}\" became forbidden: {Forbidden.PatternName(mark.Pattern)} ({detail})"), r.Rarity);
         }
 
         public static int CraftShardCost(bool fine) => ForgeBalance.CraftShardCosts[fine ? 1 : 0];
