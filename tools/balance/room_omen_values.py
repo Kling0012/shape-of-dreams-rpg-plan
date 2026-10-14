@@ -7,7 +7,8 @@ ROOT = Path(__file__).resolve().parents[2]
 PATH = ROOT / "tools/balance/room-omens.json"
 OUTPUT = ROOT / "src/SodRpg.Core/Game/Balance/RoomOmens.Generated.cs"
 EFFECTS = ("Vigor", "Swiftness", "Focus", "Fortitude", "Healing", "Fortune",
-           "Sluggishness", "Fragility", "Weariness", "Drought", "RestlessEnemies", "SturdyEnemies")
+           "Sluggishness", "Fragility", "Weariness", "Drought", "RestlessEnemies", "SturdyEnemies",
+           "Vitality", "Alacrity", "Feebleness", "Dulling")
 
 
 def render_outputs():

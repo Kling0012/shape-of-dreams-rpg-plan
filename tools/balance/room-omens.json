@@ -16,6 +16,10 @@
     "Weariness": -6,
     "Drought": -15,
     "RestlessEnemies": 8,
-    "SturdyEnemies": 8
+    "SturdyEnemies": 8,
+    "Vitality": 10,
+    "Alacrity": 8,
+    "Feebleness": -8,
+    "Dulling": -8
   }
 }

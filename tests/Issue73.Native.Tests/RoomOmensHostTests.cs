@@ -120,6 +120,34 @@ namespace Issue73.Native.Tests
         }
 
         [Fact]
+        public void Max_health_and_skill_haste_omens_apply_to_the_hero_and_clear_on_the_next_room()
+        {
+            string runId = RunIdWith(0, RoomOmen.Vitality, 1, RoomOmen.Dulling);
+            var session = HostSession(runId, out var actor);
+            var hero = new Hero { netId = 3, owner = new DewPlayer() };
+            var zone = Zone(CombatRoom());
+            var host = OmenHost(session, actor, zone, hero);
+
+            Call(host, "OnRoomOmenLoaded", new EventInfoLoadRoom());
+            var vitality = Assert.Single(hero.Status.AppliedBonuses);
+            Assert.Equal((float)RoomOmens.Value(RoomOmen.Vitality), vitality.maxHealthPercentage);
+            Assert.Equal(0f, vitality.abilityHasteFlat);
+            Assert.Equal("kill-1", RoomOmens.EncodeKillEventId(host, "kill-1")); // 恵みは撃破IDを書き換えない
+
+            zone.currentNodeIndex = 1;
+            zone.currentRoomIndex = 1;
+            zone.currentRoom = CombatRoom();
+            Call(host, "RefreshRoomOmen", false);
+            var dulling = Assert.Single(hero.Status.AppliedBonuses);
+            Assert.NotSame(vitality, dulling);
+            Assert.True(dulling.abilityHasteFlat < 0);
+            Assert.Equal(0f, dulling.maxHealthPercentage);
+            Assert.Equal(RoomOmens.DropBonus(RoomOmen.Dulling),
+                RoomOmens.DropBonusFromEventId(RoomOmens.EncodeKillEventId(host, "kill-9")), 6);
+            Assert.False((bool)Get(host, "_omensFailed"));
+        }
+
+        [Fact]
         public void Enemy_trial_omen_strengthens_shared_monsters_for_the_room()
         {
             string runId = RunIdWith(0, RoomOmen.SturdyEnemies, 1, RoomOmen.Vigor);

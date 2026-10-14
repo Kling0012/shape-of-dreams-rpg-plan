@@ -8,6 +8,8 @@ namespace SodRpg.Core.Game
     {
         None, Vigor, Swiftness, Focus, Fortitude, Healing, Fortune,
         Sluggishness, Fragility, Weariness, Drought, RestlessEnemies, SturdyEnemies,
+        // 追加分は番号を後ろへ足す（ネットワークで送る番号を変えないため）。
+        Vitality, Alacrity, Feebleness, Dulling,
     }
 
     public static class RoomOmens
@@ -23,8 +25,18 @@ namespace SodRpg.Core.Game
         }
         public static string EncodeKillEventId(object owner, string id) => Enabled && KillModifiers.TryGetValue(owner, out var modifier)
             ? EncodeKillEventId(id, modifier.Omen) : id;
-        public static bool IsTrial(RoomOmen omen) => omen >= RoomOmen.Sluggishness && omen <= RoomOmen.SturdyEnemies;
-        public static bool IsValid(RoomOmen omen) => omen >= RoomOmen.None && omen <= RoomOmen.SturdyEnemies;
+        private static readonly RoomOmen[] Blessings =
+        {
+            RoomOmen.Vigor, RoomOmen.Swiftness, RoomOmen.Focus, RoomOmen.Fortitude, RoomOmen.Healing, RoomOmen.Fortune,
+            RoomOmen.Vitality, RoomOmen.Alacrity,
+        };
+        private static readonly RoomOmen[] Trials =
+        {
+            RoomOmen.Sluggishness, RoomOmen.Fragility, RoomOmen.Weariness, RoomOmen.Drought,
+            RoomOmen.RestlessEnemies, RoomOmen.SturdyEnemies, RoomOmen.Feebleness, RoomOmen.Dulling,
+        };
+        public static bool IsTrial(RoomOmen omen) => Array.IndexOf(Trials, omen) >= 0;
+        public static bool IsValid(RoomOmen omen) => omen == RoomOmen.None || Array.IndexOf(Blessings, omen) >= 0 || IsTrial(omen);
         public static double TrialScale(string key) => RoomOmenBalance.TrialScale(key);
 
         // Replay the small room sequence without touching the profile's loot RNG or save format.
@@ -35,11 +47,11 @@ namespace SodRpg.Core.Game
             var previous = RoomOmen.None;
             for (int room = 0; room <= roomNumber; room++)
             {
-                int first = rng.Chance(RoomOmenBalance.BlessingChance) ? (int)RoomOmen.Vigor : (int)RoomOmen.Sluggishness;
-                int excluded = (int)previous - first;
-                int index = rng.Range(0, excluded >= 0 && excluded < 6 ? 4 : 5);
-                if (excluded >= 0 && excluded < 6 && index >= excluded) index++;
-                previous = (RoomOmen)(first + index);
+                var pool = rng.Chance(RoomOmenBalance.BlessingChance) ? Blessings : Trials;
+                int excluded = Array.IndexOf(pool, previous);
+                int index = rng.Range(0, excluded >= 0 ? pool.Length - 2 : pool.Length - 1);
+                if (excluded >= 0 && index >= excluded) index++;
+                previous = pool[index];
                 if (room == roomNumber) break;
             }
             return previous;
@@ -61,6 +73,10 @@ namespace SodRpg.Core.Game
                 case RoomOmen.Drought: return RoomOmenBalance.Drought;
                 case RoomOmen.RestlessEnemies: return RoomOmenBalance.RestlessEnemies;
                 case RoomOmen.SturdyEnemies: return RoomOmenBalance.SturdyEnemies;
+                case RoomOmen.Vitality: return RoomOmenBalance.Vitality;
+                case RoomOmen.Alacrity: return RoomOmenBalance.Alacrity;
+                case RoomOmen.Feebleness: return RoomOmenBalance.Feebleness;
+                case RoomOmen.Dulling: return RoomOmenBalance.Dulling;
                 default: return 0;
             }
         }
@@ -101,10 +117,14 @@ namespace SodRpg.Core.Game
                 case RoomOmen.Drought: name = Loc.T("枯渇", "Drought"); effect = Loc.T("受ける回復", "healing received"); break;
                 case RoomOmen.RestlessEnemies: name = Loc.T("昂る敵", "Restless enemies"); effect = Loc.T("敵の移動速度", "enemy movement speed"); break;
                 case RoomOmen.SturdyEnemies: name = Loc.T("頑強な敵", "Sturdy enemies"); effect = Loc.T("敵の最大HP", "enemy max HP"); break;
+                case RoomOmen.Vitality: name = Loc.T("活力", "Vitality"); effect = Loc.T("最大HP", "max HP"); break;
+                case RoomOmen.Alacrity: name = Loc.T("俊敏", "Alacrity"); effect = Loc.T("攻撃速度", "attack speed"); break;
+                case RoomOmen.Feebleness: name = Loc.T("虚弱", "Feebleness"); effect = Loc.T("最大HP", "max HP"); break;
+                case RoomOmen.Dulling: name = Loc.T("鈍化", "Dulling"); effect = Loc.T("スキル加速", "skill haste"); break;
                 default: return null;
             }
             double value = Value(omen);
-            string units = omen == RoomOmen.Focus || omen == RoomOmen.Fortitude || omen == RoomOmen.Fragility ? "" : "%";
+            string units = omen == RoomOmen.Focus || omen == RoomOmen.Fortitude || omen == RoomOmen.Fragility || omen == RoomOmen.Dulling ? "" : "%";
             string text = Loc.T("部屋の兆し：", "Room Omen: ") + name + Loc.T("（", " (") + effect
                 + (value >= 0 ? "+" : "−") + Math.Abs(value).ToString("0.##", CultureInfo.InvariantCulture) + units + Loc.T("）", ")");
             if (IsTrial(omen)) text += Loc.T("・遺物+", " · relics +")

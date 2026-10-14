@@ -55,6 +55,48 @@ namespace SodRpg.Core.Tests
         }
 
         [Fact]
+        public void Every_omen_is_drawn_and_classified_as_blessing_or_trial()
+        {
+            var seen = new HashSet<RoomOmen>();
+            for (ulong seed = 0; seed < 400; seed++)
+                for (int room = 0; room < 30; room++)
+                    seen.Add(RoomOmens.Roll(seed, room));
+            var all = Enum.GetValues(typeof(RoomOmen)).Cast<RoomOmen>().Where(o => o != RoomOmen.None).ToList();
+            Assert.Equal(16, all.Count);
+            Assert.True(all.All(seen.Contains), "未出現の兆し: " + string.Join(",", all.Where(o => !seen.Contains(o))));
+            Assert.Equal(8, all.Count(RoomOmens.IsTrial));
+            foreach (var omen in all)
+            {
+                Assert.True(RoomOmens.IsValid(omen));
+                Assert.False(string.IsNullOrEmpty(RoomOmens.Describe(omen)));
+            }
+            Assert.True(RoomOmens.IsValid(RoomOmen.None));
+            Assert.False(RoomOmens.IsValid((RoomOmen)99));
+        }
+
+        [Fact]
+        public void Released_omen_numbers_are_not_renumbered()
+        {
+            // ネットワークで送る番号。先に出した12種の並びは変えない。
+            Assert.Equal(1, (int)RoomOmen.Vigor);
+            Assert.Equal(6, (int)RoomOmen.Fortune);
+            Assert.Equal(7, (int)RoomOmen.Sluggishness);
+            Assert.Equal(12, (int)RoomOmen.SturdyEnemies);
+        }
+
+        [Fact]
+        public void Blessings_help_and_trials_hurt()
+        {
+            foreach (RoomOmen omen in Enum.GetValues(typeof(RoomOmen)))
+            {
+                if (omen == RoomOmen.None) continue;
+                bool enemySide = omen == RoomOmen.RestlessEnemies || omen == RoomOmen.SturdyEnemies;
+                if (RoomOmens.IsTrial(omen)) Assert.True(enemySide ? RoomOmens.Value(omen) > 0 : RoomOmens.Value(omen) < 0, omen.ToString());
+                else Assert.True(RoomOmens.Value(omen) > 0, omen.ToString());
+            }
+        }
+
+        [Fact]
         public void Omen_values_match_the_balance_table()
         {
             foreach (var property in Balance().GetProperty("effects").EnumerateObject())

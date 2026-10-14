@@ -118,9 +118,13 @@ namespace SodRpg.Mod
                 case RoomOmen.Vigor: state.Bonus = new StatBonus { attackDamagePercentage = value, abilityPowerPercentage = value }; break;
                 case RoomOmen.Swiftness:
                 case RoomOmen.Sluggishness: state.Bonus = new StatBonus { movementSpeedPercentage = value }; break;
-                case RoomOmen.Focus: state.Bonus = new StatBonus { abilityHasteFlat = value }; break;
+                case RoomOmen.Focus:
+                case RoomOmen.Dulling: state.Bonus = new StatBonus { abilityHasteFlat = value }; break;
+                case RoomOmen.Vitality:
+                case RoomOmen.Feebleness: state.Bonus = new StatBonus { maxHealthPercentage = value }; break;
                 case RoomOmen.Fortitude:
                 case RoomOmen.Fragility: state.Bonus = new StatBonus { armorFlat = value }; break;
+                case RoomOmen.Alacrity:
                 case RoomOmen.Weariness: state.Bonus = new StatBonus { attackSpeedPercentage = value }; break;
                 case RoomOmen.Healing:
                 case RoomOmen.Drought:

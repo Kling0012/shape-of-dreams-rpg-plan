@@ -8,6 +8,11 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
+### 新機能 / New features
+
+- **部屋の兆しが12種から16種に**：恵みに「活力」（最大HP+10%）と「俊敏」（攻撃速度+8%）、試練に「虚弱」（最大HP−8%）と「鈍化」（スキル加速−8）を追加しました。試練には、これまでどおり遺物が出やすくなる補正が付きます。旅人ごとの試練のやわらげ方（係数）もこれまでと同じです。 / **Room Omens grow from 12 to 16**: added the blessings Vitality (+10% max HP) and Alacrity (+8% attack speed), and the trials Feebleness (−8% max HP) and Dulling (−8 skill haste). Trials still make relics drop more, and the per-traveler trial softening is unchanged.
+- 協力プレイでは、参加者全員がこの版に更新してください。古い版の参加者には、新しい4種の兆しは表示されません（効果はホストの側で付くため、ゲームの進行は変わりません）。 / In co-op everyone should update. Players on an older version will not see the four new omens (their effect is applied on the host, so play itself is unaffected).
+
 ---
 
 ## v2.10.34 — Fix co-op trades canceling after acceptance（2026-10-14）
