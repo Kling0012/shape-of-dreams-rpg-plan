@@ -27,6 +27,11 @@ namespace SodRpg.Mod
             ? _hostSession.Profile.Run : null;
         internal static int HostChosenDepth => NetworkServer.active && _hostSession != null
             ? DreamDepth.Clamp(HostRun?.DreamDepth ?? _hostSession.Profile.LastDreamDepth) : 0;
+        /// <summary>ホスト自身が禁忌の職人を解放しているか（#415）。</summary>
+        internal static bool HostHasForbiddenSmith => NetworkServer.active && _hostSession != null
+            && Forbidden.HasSmith(_hostSession.Profile);
+        /// <summary>ホスト自身の宿敵との因縁（#415）。</summary>
+        internal static int HostNemesisGrudge => NetworkServer.active && _hostSession != null ? _hostSession.Profile.NemesisGrudge : 0;
         internal static string HostRunChoices => NetworkServer.active ? _hostSession?.EncodeRunChoices() : null;
         internal static ulong HostAuthorityGeneration => NetworkServer.active && _hostSession != null
             ? _hostSession.ObserveHostAuthorityPublisher() : 0;

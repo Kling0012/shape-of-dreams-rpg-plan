@@ -244,5 +244,7 @@ namespace SodRpg.Core.Game
         public const string Shard = "shard";
         /// <summary>調律石。再調律（特性の引き直し）に使う。</summary>
         public const string Tuning = "tuning";
+        /// <summary>禁忌の核。宿敵を倒すと手に入り、禁忌化に使う（#415）。</summary>
+        public const string NemesisCore = "nemesisCore";
     }
 }

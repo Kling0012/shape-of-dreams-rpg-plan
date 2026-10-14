@@ -390,11 +390,14 @@ namespace SodRpg.Core.Game
             {
                 case DreamEvent.MemoryWell:
                     if (string.IsNullOrEmpty(p.Run.HeroKey) || !p.Heroes.TryGetValue(p.Run.HeroKey, out var hero)) return null;
+                    // 禁忌化した遺物は対象外（#415）: 固有効果を差し替えると断絶の印（SeveranceCandidates は
+                    // 所持済みの効果を除く）の検証が壊れる。オレンジ枠は HasFixedPowers でも弾かれるが、明示的に外す。
                     pool = p.Stash.Where(r => hero.Equipped.Contains(r.Uid) && SafeTradeRelic(p, r, trades, true)
-                        && !r.HasFixedPowers && r.Powers.Count > 0 && ReplacementPowers(r).Any());
+                        && r.Forbidden == null && !r.HasFixedPowers && r.Powers.Count > 0 && ReplacementPowers(r).Any());
                     break;
                 case DreamEvent.ShadowExchange:
-                    pool = pool.Where(r => r.Affixes.Count > 0 && r.Retunes < Content.MaxRetunes
+                    // 再調律と同じ上限（#415：職人解放後のオレンジ枠は引き上げ後の回数を使う）。
+                    pool = pool.Where(r => r.Affixes.Count > 0 && r.Retunes < Forbidden.RetuneCap(p, r) && r.Forbidden == null
                         && Content.AffixPool(r.Slot).Any(a => r.Rarity >= a.MinRarity && a.Stat != r.Base.ImplicitStat
                             && !r.Affixes.Any(line => line.Stat == a.Stat)));
                     break;
@@ -402,7 +405,8 @@ namespace SodRpg.Core.Game
                     pool = pool.Where(r => r.UniqueId == null && r.Rarity < Rarity.Epic);
                     break;
                 case DreamEvent.TemperingAltar:
-                    pool = pool.Where(r => r.Affixes.Count > 0 && Content.CanGuaranteedEnhance(r, e));
+                    // 禁忌化した遺物は対象外（#415）：特性を1つ失うと失った特性の印（RemovedStat）が壊れることがある。
+                    pool = pool.Where(r => r.Forbidden == null && r.Affixes.Count > 0 && Content.CanGuaranteedEnhance(r, e));
                     break;
                 case DreamEvent.StarOffering:
                     pool = pool.Where(r => r.Rarity >= Rarity.Rare);
@@ -411,7 +415,8 @@ namespace SodRpg.Core.Game
                     pool = pool.Where(r => r.UniqueId == null && (r.Rarity == Rarity.Rare || r.Rarity == Rarity.Epic));
                     break;
                 case DreamEvent.PowerCrucible:
-                    pool = pool.Where(r => !r.HasFixedPowers && r.Powers.Count >= 2 && ReplacementPowers(r).Any());
+                    // 禁忌化した遺物は対象外（#415。MemoryWell と同じ理由で固有効果を差し替えられない）。
+                    pool = pool.Where(r => r.Forbidden == null && !r.HasFixedPowers && r.Powers.Count >= 2 && ReplacementPowers(r).Any());
                     break;
             }
             Relic selected = null;

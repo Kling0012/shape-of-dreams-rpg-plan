@@ -356,6 +356,9 @@ namespace SodRpg.Core.Game
         /// <summary>遠征を始めるときの夢の深度（深淵の段階）。確保できた最高深度まで選べる。</summary>
         public int StartDepth { get; set; }
 
+        private int _nemesisGrudge;
+        /// <summary>宿敵「深淵の追跡者」との因縁の深さ（#415）。宿敵を倒すたびに深まる。旧保存は0。</summary>
+        public int NemesisGrudge { get => _nemesisGrudge; set => _nemesisGrudge = Math.Max(0, Math.Min(Forbidden.MaxGrudge, value)); }
         private int _lastDreamDepth;
         public int LastDreamDepth { get => _lastDreamDepth; set => _lastDreamDepth = DreamDepth.Clamp(value); }
         public bool LastInfinityEnabled { get; set; }
@@ -555,6 +558,7 @@ namespace SodRpg.Core.Game
             Japanese = source.Japanese;
             StartDepth = source.StartDepth;
             LastDreamDepth = source.LastDreamDepth;
+            NemesisGrudge = source.NemesisGrudge;
             LastInfinityEnabled = source.LastInfinityEnabled;
             LastInfinityInterval = source.LastInfinityInterval;
             InfinityRewardBudget = source.InfinityRewardBudget;
@@ -649,6 +653,7 @@ namespace SodRpg.Core.Game
                 OverflowBonusPendingTotal = OverflowBonusPendingTotal,
                 StartDepth = StartDepth,
                 LastDreamDepth = LastDreamDepth,
+                NemesisGrudge = NemesisGrudge,
                 LastInfinityEnabled = LastInfinityEnabled,
                 LastInfinityInterval = LastInfinityInterval,
                 InfinityRewardBudget = InfinityRewardBudget.Clone(),

@@ -18,6 +18,8 @@ namespace SodRpg.Core.Game
         LostMap = 7,
         /// <summary>契約の星座：契約の選択肢が増える（v1.29）。</summary>
         PactStars = 8,
+        /// <summary>禁忌の職人：禁忌化・宿敵・オレンジ枠の再調律の上限の引き上げを解放する（#415）。</summary>
+        ForbiddenSmith = 9,
     }
 
     public sealed class UpgradeDef
@@ -114,6 +116,14 @@ namespace SodRpg.Core.Game
                 Name = new Txt("契約の星座", "Pact Constellation"),
                 Description = new Txt($"深く潜るときの契約の選択肢が{ForgeBalance.PactStarsOffersPerLevel}つ増えます。", $"{ForgeBalance.PactStarsOffersPerLevel} more pact(s) to choose from when you delve deeper."),
                 Costs = ForgeBalance.PactStarsCosts,
+            },
+            new UpgradeDef
+            {
+                Id = Upgrade.ForbiddenSmith, Key = "forbiddenSmith",
+                Name = new Txt("禁忌の職人", "Forbidden Smith"),
+                Description = new Txt($"ボスとエリートがまれに宿敵「深淵の追跡者」として強くなって現れ、倒すたびに因縁が深まり、追跡者はより強く、より頻繁に現れます（協力プレイでは誰か1人が解放していれば現れます）。宿敵化したボスを倒すと禁忌の核が手に入ります。鍛冶でセットに属さない固有品（オレンジ枠）を一度だけ禁忌化でき、オレンジ枠の再調律の上限が{Forbidden.OrangeRetuneBonus}回増えます。",
+                    $"Bosses and elites sometimes appear as the empowered nemesis \"Abyssal Stalker\"; each defeat deepens your grudge, making it stronger and more frequent (in co-op, anyone having this unlocked is enough). Nemesis bosses drop forbidden cores. Lets the forge make a non-set unique (orange frame) forbidden once, and raises orange-frame retunes by {Forbidden.OrangeRetuneBonus}."),
+                Costs = Forbidden.SmithCosts,
             },
         };
 

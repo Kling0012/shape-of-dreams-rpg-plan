@@ -104,7 +104,8 @@ namespace SodRpg.Mod
                     // Movement charges are reconstructed from allocations and intentionally absent
                     // from the wire summary. Equal damage totals can still change this host effect.
                     if (previous != null && previous.HeroKey == heroKey && previous.Summary == summary && !previous.ApplyFailed
-                        && Build.MovementChargeBonus(heroKey, previous.Build) == Build.MovementChargeBonus(heroKey, build))
+                        && Build.MovementChargeBonus(heroKey, previous.Build) == Build.MovementChargeBonus(heroKey, build)
+                        && previous.Build.ForbiddenTransmutePct == build.ForbiddenTransmutePct)
                     {
                         previous.Encoded = encoded;
                         SendApplied(player, hero, previous);

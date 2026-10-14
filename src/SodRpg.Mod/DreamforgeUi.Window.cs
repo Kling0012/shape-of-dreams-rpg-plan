@@ -48,8 +48,8 @@ namespace SodRpg.Mod
             bool compact = forgeTab && wh < 640f;
             if (!_s.CoopTradeLocked && !starTab && !compact && !forgeTab && !tradeTab) DrawDreamDepthChoice(); // 鍛冶と交換では一覧の高さを優先する
             if (!starTab && !compact) GUILayout.Label(Loc.T(
-                $"欠片 {p.Material(Materials.Shard)}　調律石 {p.Material(Materials.Tuning)}　保管庫 {p.Stash.Count}/{Workshop.StashCapacity(p)}　旅人：{HeroName(HeroKey)}",
-                $"Shards {p.Material(Materials.Shard)}   Tuning {p.Material(Materials.Tuning)}   Stash {p.Stash.Count}/{Workshop.StashCapacity(p)}   Traveler: {HeroName(HeroKey)}"), _st.Small);
+                $"欠片 {p.Material(Materials.Shard)}　調律石 {p.Material(Materials.Tuning)}" + (p.Material(Materials.NemesisCore) > 0 ? $"　禁忌の核 {p.Material(Materials.NemesisCore)}" : "") + $"　保管庫 {p.Stash.Count}/{Workshop.StashCapacity(p)}　旅人：{HeroName(HeroKey)}",
+                $"Shards {p.Material(Materials.Shard)}   Tuning {p.Material(Materials.Tuning)}" + (p.Material(Materials.NemesisCore) > 0 ? $"   Forbidden cores {p.Material(Materials.NemesisCore)}" : "") + $"   Stash {p.Stash.Count}/{Workshop.StashCapacity(p)}   Traveler: {HeroName(HeroKey)}"), _st.Small);
             GUILayout.Label(UiStyles.Colored(TabIntro(_tab), "#c8d0ff"), _st.Small);
 
             // 変更と払い戻しの承認・取消ボタンとステータス行は、タブの中身より先に描く（#147）。

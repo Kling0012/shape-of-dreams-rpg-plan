@@ -288,6 +288,8 @@ namespace SodRpg.Mod
                     _overflowBonusPeers.Remove(player); // Durable currency receipts remain keyed by guid.
                     _netLitePeers.Remove(player);
                     _roomOmenPeers.Remove(player);
+                    _forbiddenSmithPeers.Remove(player);
+                    _nemesisGrudgePeers.Remove(player);
                 }
                 _pressureDirty = true;
             };
@@ -949,10 +951,23 @@ namespace SodRpg.Mod
                 // 深さ0では深度ボーナス・悪夢化の初期化をしないが、処理済みとして印を付ける（#71）。
                 // 潜行で深さが1以上になれば、#60 の揃え直しの対象になる。
                 rt.SpawnProcessed = true;
+                // 宿敵（#415）は潜行の深さに関係なく、誰かが禁忌の職人を解放していれば抽選する。悪夢化・変種とは重ねない。
+                bool nemesis = false;
+                try
+                {
+                    int grudge = PartyNemesisGrudge();
+                    nemesis = Forbidden.RollNemesis(_rng, tier, AnyForbiddenSmith(), grudge);
+                    if (nemesis) MakeNemesis(rt, tier, grudge);
+                }
+                catch (Exception ex)
+                {
+                    Log.Error("Host: nemesis " + ex);
+                }
                 if (SpawnInitRules.SkipsDepthInit(depth, ActiveWaypointTotals.AllNightmares, ActiveWaypointTotals.NightmareChanceMultiplier)) continue;
                 try
                 {
                     ApplyDepthBonus(rt, tier, depth);
+                    if (nemesis) continue;
                     var variant = ActiveWaypointTotals.AllNightmares ? null : Variants.Roll(_rng, m.GetType().Name, depth, _roomHasVariant);
                     if (variant != null)
                     {
@@ -1030,6 +1045,29 @@ namespace SodRpg.Mod
             _nightmares[m] = affix;
             ApplyMonsterAffixes(rt, affix, regen);
             Log.Info($"Nightmare: {m.GetType().Name} netId={m.netId} affixes={affix}");
+            SendMonsterClassification(rt);
+        }
+
+        /// <summary>協力プレイでは、ホストか参加者の誰か1人でも禁忌の職人を解放していれば宿敵が出る（#415）。</summary>
+        private bool AnyForbiddenSmith() => ClientSession.HostHasForbiddenSmith || _forbiddenSmithPeers.Count > 0;
+
+        /// <summary>パーティで最も深い、宿敵「深淵の追跡者」との因縁（#415）。最も因縁の深い者を追って現れる。</summary>
+        private int PartyNemesisGrudge()
+        {
+            int grudge = ClientSession.HostNemesisGrudge;
+            foreach (var kv in _nemesisGrudgePeers) if (kv.Value > grudge) grudge = kv.Value;
+            return Forbidden.ClampGrudge(grudge);
+        }
+
+        /// <summary>宿敵化：能力を上乗せし、撃破の記録には悪夢化と同じ欄で宿敵の印を載せる。</summary>
+        private void MakeNemesis(MonsterRuntime rt, MonsterTier tier, int grudge)
+        {
+            var m = rt.Monster;
+            rt.SpecialBonus = ToMonsterStatBonus(Forbidden.NemesisStats(tier, grudge));
+            m.Status.AddStatBonus(rt.SpecialBonus);
+            m.Status.CalculateStatsIfDirty();
+            _nightmares[m] = NightmareAffix.Nemesis;
+            Log.Info($"Nemesis: {m.GetType().Name} netId={m.netId} tier={tier} grudge={grudge}");
             SendMonsterClassification(rt);
         }
 

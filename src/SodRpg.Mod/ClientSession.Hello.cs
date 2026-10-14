@@ -54,6 +54,9 @@ namespace SodRpg.Mod
             _hostCompatibilityWarned = false;
             _hostInfinityAvailable = false;
             _hostBuildInputCapability = false;
+            _hostForbiddenInput = false;
+            _forbiddenGearStripNotice = false;
+            ForbiddenGearHostNotice = null;
             _hostNetLite = false;
             _netLiteReceiveReady = false;
             _hostAutocastPressureCapability = false;
@@ -136,7 +139,7 @@ namespace SodRpg.Mod
                 _clientRpcOn.CustomRpc_SendMessageToServer(CreateHelloMessage());
                 if (_helloAnswered)
                     _clientRpcOn.CustomRpc_SendMessageToServer(new DreamforgeBuildInputCapabilityMsg
-                        { netLite = _netLiteReceiveReady ? 1 : 0, roomOmens = _omenReceiveReady ? 1 : 0 });
+                        { netLite = _netLiteReceiveReady ? 1 : 0, roomOmens = _omenReceiveReady ? 1 : 0, forbiddenSmith = Forbidden.HasSmith(Profile) ? 1 : 0, nemesisGrudge = Profile.NemesisGrudge });
                 // CustomRpc ignores unknown optional types; only the binary pressure packet needs a reply first.
                 if (!_hostAutocastPressureCapability)
                     _clientRpcOn.CustomRpc_SendMessageToServer(new DreamforgeAutocastPressureCapabilityMsg());

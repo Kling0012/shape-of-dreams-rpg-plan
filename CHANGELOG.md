@@ -8,6 +8,10 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
+### 新機能 / New features
+
+- **禁忌の装備と宿敵（クラフト拡張パック）**：工房に「禁忌の職人」が加わりました。解放すると、ボスやエリートがまれに強くなった宿敵「深淵の追跡者」として現れ、倒すたびに因縁が深まり、より強く・より頻繁に現れ、報酬も増えます。宿敵化したボスを倒すと禁忌の核（禁忌化に必要な素材）と追加の報酬が手に入り、エリートの宿敵には追加の報酬があります。禁忌の核を使うと、セットに属さない固有品（オレンジ枠）を一度だけ「禁忌化」でき、極端な効果と引き換えに明確な欠点を持つ装備になります（4つの型からランダム。シールドを得られなくなる代わりに回復の一部を攻撃力へ変える「血の転化」も含みます。禁忌化した装備は再調律・洗い直しや、特性・固有効果を変える夢の出来事の対象外）。あわせて、オレンジ枠固有品の再調律の上限が3回増えます（対応する前のホストでは、禁忌化した装備と旧上限を超えて再調律した装備は協力プレイに適用されません）。協力プレイでは、誰か1人が解放していれば宿敵が現れます。 / **Forbidden gear and nemeses (crafting expansion)**: the workshop gains the Forbidden Smith. Once unlocked, bosses and elites sometimes appear as the empowered nemesis "Abyssal Stalker"; each defeat deepens your grudge with it, making it stronger, more frequent and more rewarding. Nemesis bosses drop forbidden cores (the material for forbidding) plus extra rewards, while nemesis elites give extra rewards. Cores let you make a non-set unique (orange frame) forbidden once, giving it an extreme effect with a clear drawback (one of four random types, including Blood Transmutation: no shields, but part of healing becomes attack; forbidden gear can no longer be retuned, rerolled, or touched by relic-altering dream events). Orange-frame uniques also get 3 more retunes (on hosts without forbidden-gear support, forbidden and over-retuned gear is not applied in co-op). In co-op, nemeses appear if anyone has the smith unlocked.
+
 ---
 
 ## v2.10.38 — Relic name search in the Equipment and Forge tabs（2026-10-15）

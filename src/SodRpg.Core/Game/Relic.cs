@@ -70,6 +70,8 @@ namespace SodRpg.Core.Game
                 else if (AwakenLevel == 0) AwakenLevel = Content.LegacyAwakenLevel;
             }
         }
+        /// <summary>禁忌化の結果（#415）。未禁忌化は null。元の特性・固有効果は書き換えない。</summary>
+        public ForbiddenMark Forbidden { get; set; }
         public List<StatLine> Affixes { get; } = new List<StatLine>();
         public List<PowerLine> Powers { get; } = new List<PowerLine>();
 
@@ -136,12 +138,17 @@ namespace SodRpg.Core.Game
         {
             yield return Implicit;
             int pct = Content.EnhanceScalePct(Enhance);
-            foreach (var a in Affixes)
+            int removed = Game.Forbidden.RemovedAffixIndex(this), forbiddenPct = Game.Forbidden.AffixPct(this);
+            for (int i = 0; i < Affixes.Count; i++)
             {
+                if (i == removed) continue;
+                var a = Affixes[i];
                 int value = Scale(a.Value, pct);
                 if (Awakened) value = (int)((long)value * Content.AwakenAffixPctAt(AwakenLevel) / 100);
+                if (forbiddenPct != 100) value = Scale(value, forbiddenPct);
                 yield return new StatLine(a.Stat, value);
             }
+            foreach (var extra in Game.Forbidden.ExtraStats(this)) yield return extra;
         }
 
         /// <summary>表の強化倍率を反映した固有効果。覚醒の倍率は切り捨てる。</summary>
@@ -149,7 +156,7 @@ namespace SodRpg.Core.Game
         {
             if (BossMove != null) yield break;
             int pct = Content.EnhancePowerScalePct(Enhance);
-            foreach (var p in Powers)
+            foreach (var p in Game.Forbidden.SourcePowers(this))
             {
                 int value = Scale(p.Value, pct);
                 if (Awakened) value = (int)((long)value * Content.AwakenPowerPctAt(AwakenLevel) / 100);
@@ -188,6 +195,7 @@ namespace SodRpg.Core.Game
                 MilestonePowerApplied = MilestonePowerApplied,
                 AwakenPoints = AwakenPoints,
                 AwakenLevel = AwakenLevel,
+                Forbidden = Forbidden?.Clone(),
             };
             c.Affixes.AddRange(Affixes);
             c.Powers.AddRange(Powers);

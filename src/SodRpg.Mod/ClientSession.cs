@@ -1359,6 +1359,25 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
             ProbeBuildInputCapability(heroKey);
             var submissionProfile = NetworkServer.active || _hostBuildInputCapability
                 ? Profile : HostBuildValidation.CompatibleProfile(Profile, heroKey);
+            // 禁忌装備（15欄形式）を読める宣言がまだないホストには、禁忌化した遺物と旧上限（3回）を超えて
+            // 再調律した遺物を送らない（#415）。旧ホストは15欄を FormatException で、回数の超過を
+            // HostGearValidation で拒否してビルド全体を落とすので、遺物ごと外して明示的に制限する。
+            if (!NetworkServer.active && !_hostForbiddenInput)
+            {
+                var withoutForbidden = HostBuildValidation.WithoutUnsupportedGear(submissionProfile, heroKey);
+                if (!ReferenceEquals(withoutForbidden, submissionProfile))
+                {
+                    submissionProfile = withoutForbidden;
+                    if (!_forbiddenGearStripNotice)
+                    {
+                        _forbiddenGearStripNotice = true;
+                        ForbiddenGearHostNotice = Loc.T(
+                            "ホストのMODが禁忌の装備（#415）に対応していません。このセッションでは禁忌化した遺物と、上限を超えて再調律した遺物は適用されません。",
+                            "The host's mod predates forbidden gear (#415); forbidden and over-retuned relics are not applied in this session.");
+                        Log.Warn("Host MOD predates forbidden gear (#415); forbidden and over-retuned relics are not applied in this session.");
+                    }
+                }
+            }
             var submissionBuild = ReferenceEquals(submissionProfile, Profile) ? CurrentBuild(heroKey)
                 : Build.Compute(submissionProfile, heroKey, Profile.Run?.Heat ?? 0, Profile.Run?.Pacts, Profile.Run?.DailyId ?? 0);
             string encoded = HostBuildValidation.Encode(submissionBuild, submissionProfile, heroKey,

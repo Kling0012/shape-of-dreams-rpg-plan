@@ -38,6 +38,11 @@ namespace SodRpg.Core.Game
         Skittish = 1 << 17,
         Recuperating = 1 << 18,
         LastStand = 1 << 19,
+        /// <summary>
+        /// 宿敵（#415）。悪夢化とは別の仕組みで、接頭効果の一覧（AllAffixes）には含めない。
+        /// 撃破の記録・通信・保存は悪夢化と同じ欄で運ぶ。
+        /// </summary>
+        Nemesis = 1 << 24,
     }
 
     /// <summary>
@@ -302,6 +307,7 @@ namespace SodRpg.Core.Game
         /// <summary>頭上に出す名札。例：「悪夢・鋼殻・狂暴」。</summary>
         public static string Label(NightmareAffix a)
         {
+            if ((a & NightmareAffix.Nemesis) != 0) return Loc.T("宿敵・", "Nemesis: ") + Forbidden.NemesisName;
             var parts = new List<string> { Loc.T("悪夢", "Nightmare") };
             foreach (var x in AllAffixes)
                 if ((a & x) != 0) parts.Add(AffixName(x));
@@ -323,7 +329,7 @@ namespace SodRpg.Core.Game
         /// <summary>通信用：接頭効果を検証して返す（未知のビットは落とす）。</summary>
         public static NightmareAffix Sanitize(int raw)
         {
-            var all = NightmareAffix.None;
+            var all = NightmareAffix.Nemesis;
             foreach (var x in AllAffixes) all |= x;
             return (NightmareAffix)raw & all;
         }

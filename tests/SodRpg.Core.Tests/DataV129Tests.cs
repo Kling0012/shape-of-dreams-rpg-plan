@@ -78,9 +78,9 @@ namespace SodRpg.Core.Tests
         }
 
         [Fact]
-        public void Workshop_has_six_upgrades_and_the_new_ones_move_their_values()
+        public void Workshop_has_seven_upgrades_and_the_new_ones_move_their_values()
         {
-            Assert.Equal(6, Workshop.All.Count);
+            Assert.Equal(7, Workshop.All.Count); // #415 で禁忌の職人を追加
             Assert.Equal(Workshop.All.Count, Workshop.All.Select(d => d.Key).Distinct().Count());
             foreach (var d in Workshop.All)
             {

@@ -82,6 +82,8 @@ namespace SodRpg.Mod
         private int _retuneIndex = -1;
         private string _confirmSalvage;
         private string _confirmAffixReroll;
+        /// <summary>禁忌化の確認中の遺物（#415）。</summary>
+        private string _confirmForbid;
         private Relic _confirmEnhance;
         private int _confirmEnhanceTarget;
         private bool _forgeAllSlots = true;
@@ -149,6 +151,7 @@ namespace SodRpg.Mod
             if (!Open) CancelStarDrag();
             _confirmSalvage = null;
             _confirmAffixReroll = null;
+            _confirmForbid = null;
         }
 
         public void Close()
@@ -437,6 +440,8 @@ namespace SodRpg.Mod
             // 版違いは見落とすと「効果も報酬も入らない」ので、目立つ色で常に出す（mp-ui-save #4）。
             if (_s.HostVersionWarning != null)
                 sb.Append("\n<size=13><color=#ff7070>").Append(_s.HostVersionWarning).Append("</color></size>");
+            if (_s.ForbiddenGearHostNotice != null)
+                sb.Append("\n<size=13><color=#ff7070>").Append(_s.ForbiddenGearHostNotice).Append("</color></size>");
             var hostWarnings = HostAuthority.VersionWarnings;
             for (int i = 0; i < hostWarnings.Count; i++)
                 sb.Append("\n<size=13><color=#ff7070>").Append(hostWarnings[i]).Append("</color></size>");
@@ -1355,6 +1360,7 @@ namespace SodRpg.Mod
                     _confirmSalvage = null;
                     _confirmEnhance = null;
                     _confirmAffixReroll = null;
+                    _confirmForbid = null;
                 }
                 GUILayout.EndHorizontal();
             }
@@ -1595,9 +1601,11 @@ namespace SodRpg.Mod
             GUILayout.Label("<size=19><b>" + UiStyles.RelicTitle(r) + "</b></size>", _st.Label);
             GUILayout.Label($"{Content.RarityName(r.Rarity)} · {Content.SlotName(r.Slot)} · {Content.LineName(r.Base.Line)} · Lv{r.ItemLevel}"
                 + (FamilyPrefs.Label(r.Base.Family) is string familyLabel ? " · " + familyLabel : "")
-                + (r.Retunes > 0 ? Loc.T($" · 再調律{r.Retunes}/{Content.MaxRetunes}", $" · retuned {r.Retunes}/{Content.MaxRetunes}") : ""), _st.Small);
+                + (r.Retunes > 0 ? Loc.T($" · 再調律{r.Retunes}/{Forbidden.RetuneCap(_s.Profile, r)}", $" · retuned {r.Retunes}/{Forbidden.RetuneCap(_s.Profile, r)}") : ""), _st.Small);
             GUILayout.EndVertical();
             GUILayout.EndHorizontal();
+            if (r.Forbidden != null)
+                GUILayout.Label(UiStyles.Colored(Forbidden.Describe(r) + Loc.T("　再調律・洗い直しはできません。", "  Cannot be retuned or rerolled."), "#ff6a6a"), _st.Small);
             GUILayout.Label(Loc.T(
                 $"Lv1は100%。固定攻魔は1Lvごと+{GearBalance.FlatDamageGrowthPct}%、他の固定能力は+{GearBalance.OtherFixedGrowthPct}%（Lv{Content.ItemLevelScalingCap}で停止）。%能力は成長しません。保存済み特性は再抽選せず、基礎能力は再計算します。",
                 $"Lv1: 100%. Flat attack/power gain +{GearBalance.FlatDamageGrowthPct}% per level; other fixed stats +{GearBalance.OtherFixedGrowthPct}% (stops at Lv{Content.ItemLevelScalingCap}). Percent stats do not scale. Saved affixes are not rerolled; implicit stats recalculate."), _st.Small);
@@ -1826,11 +1834,12 @@ namespace SodRpg.Mod
                         _selected = offer.Uid;
                     }
                 }
-                else if (sel.Retunes >= Content.MaxRetunes)
-                    GUILayout.Label(Loc.T($"この遺物の再調律は使い切りました（{Content.MaxRetunes}/{Content.MaxRetunes}）。", $"No retunes left on this relic ({Content.MaxRetunes}/{Content.MaxRetunes})."), _st.Small);
+                else if (sel.Forbidden != null) { } // 禁忌化した遺物は再調律できない（理由は遺物の詳細に表示済み）
+                else if (sel.Retunes >= Forbidden.RetuneCap(p, sel))
+                    GUILayout.Label(Loc.T($"この遺物の再調律は使い切りました（{Forbidden.RetuneCap(p, sel)}/{Forbidden.RetuneCap(p, sel)}）。", $"No retunes left on this relic ({Forbidden.RetuneCap(p, sel)}/{Forbidden.RetuneCap(p, sel)})."), _st.Small);
                 else if (sel.Affixes.Count > 0)
                 {
-                    GUILayout.Label(Loc.T($"再調律：引き直したい特性を1つ選びます。調律石を払うと候補が{Content.RetuneChoices}つ出て、そこから選べます（この遺物はあと{Content.MaxRetunes - sel.Retunes}回）", $"Retune: pick an affix, pay tuning stones, then choose from {Content.RetuneChoices} options ({Content.MaxRetunes - sel.Retunes} left on this relic)"), _st.Small);
+                    GUILayout.Label(Loc.T($"再調律：引き直したい特性を1つ選びます。調律石を払うと候補が{Content.RetuneChoices}つ出て、そこから選べます（この遺物はあと{Forbidden.RetuneCap(p, sel) - sel.Retunes}回）", $"Retune: pick an affix, pay tuning stones, then choose from {Content.RetuneChoices} options ({Forbidden.RetuneCap(p, sel) - sel.Retunes} left on this relic)"), _st.Small);
                     GUILayout.BeginHorizontal();
                     for (int i = 0; i < sel.Affixes.Count; i++)
                     {
@@ -1854,7 +1863,7 @@ namespace SodRpg.Mod
                 }
 
                 // 特性の洗い直し（v1.31）：再調律の下に置く。候補が出ている遺物と、特性のない遺物には出さない。
-                if (sel.Affixes.Count > 0 && !(p.RetuneOffer != null && p.RetuneOffer.Uid == sel.Uid))
+                if (sel.Affixes.Count > 0 && sel.Forbidden == null && !(p.RetuneOffer != null && p.RetuneOffer.Uid == sel.Uid))
                 {
                     var (rrShards, rrTuning) = Rules.AffixRerollCost(sel);
                     bool rrAfford = p.Material(Materials.Shard) >= rrShards && p.Material(Materials.Tuning) >= rrTuning;
@@ -1873,6 +1882,33 @@ namespace SodRpg.Mod
                             Act(() => Rules.AffixReroll(p, sel.Uid, _s.Trades), true);
                         }
                         else _confirmAffixReroll = sel.Uid;
+                    }
+                    GUI.enabled = true;
+                }
+
+                // 禁忌化（#415）：禁忌の職人の解放後、未禁忌化のオレンジ枠固有品にだけ出す。
+                if (sel.Forbidden == null && Forbidden.HasSmith(p) && Forbidden.IsOrange(sel)
+                    && !(p.RetuneOffer != null && p.RetuneOffer.Uid == sel.Uid))
+                {
+                    bool fbAfford = p.Material(Materials.NemesisCore) >= Forbidden.CoreCost
+                        && p.Material(Materials.Shard) >= Forbidden.ShardCost && p.Material(Materials.Tuning) >= Forbidden.TuningCost;
+                    bool fbConfirm = _confirmForbid == sel.Uid;
+                    GUI.enabled = fbAfford && !_s.Trades.IsReserved(sel.Uid);
+                    string fbCost = Loc.T($"禁忌の核{Forbidden.CoreCost}・欠片{Forbidden.ShardCost}・調律石{Forbidden.TuningCost}",
+                        $"{Forbidden.CoreCost} forbidden cores, {Forbidden.ShardCost} shards, {Forbidden.TuningCost} tuning");
+                    string fbLabel = !fbAfford
+                        ? Loc.T($"禁忌化：素材が足りません（{fbCost}。禁忌の核は宿敵化したボスから）", $"Forbid: not enough materials ({fbCost}; cores come from nemesis bosses)")
+                        : fbConfirm ? Loc.T($"<color=#ff8080>もう一度押すと「{sel.PlainName}」を禁忌化します（結果は4つの型からランダム・以後は再調律不可・取り消せません）</color>",
+                            $"<color=#ff8080>Press again to make \"{sel.PlainName}\" forbidden (random result of 4 types; no more retunes; cannot be undone)</color>")
+                        : Loc.T($"禁忌化する（{fbCost}）", $"Make forbidden ({fbCost})");
+                    if (GUILayout.Button(fbLabel, _st.ButtonWrap, ShrinkMin30))
+                    {
+                        if (fbConfirm)
+                        {
+                            _confirmForbid = null;
+                            Act(() => Rules.Forbid(p, sel.Uid, _s.Trades), true);
+                        }
+                        else _confirmForbid = sel.Uid;
                     }
                     GUI.enabled = true;
                 }

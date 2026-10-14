@@ -88,6 +88,8 @@ namespace SodRpg.Core.Game
         private float _momentumUntil;
         private float _retaliationUntil;
         private float _tailwindUntil;
+        // 禁忌の契約「血の転化」（#415）：回復から転化した攻撃力と、その持続の終わり。
+        private float _transmuteAttack, _transmuteUntil;
         private float _nextBarrier;
         private float _secondWindReady;
         private float _lifestealReady;
@@ -380,6 +382,14 @@ namespace SodRpg.Core.Game
             LinkAttunePct = 0;
             LinkGuardHealthPct = 0;
             LinkGuardArmor = 0;
+            // 血の転化（#415）を持たないビルドへ交換したとき（装備を外すなど）は、転化で積んだ攻撃力を
+            // 残さない。ShieldsBlocked と TransmuteHeal は Build を見るので、放置すると欠点だけ消えて
+            // 利点が持続時間だけ残る。
+            if (replacement.ForbiddenTransmutePct <= 0)
+            {
+                _transmuteAttack = 0;
+                _transmuteUntil = 0;
+            }
             // SetBuild has no clock. The next timed scan still expires retained windows normally.
             RetainLinkSurges(Build.Links, float.NegativeInfinity);
             _expiredLinkSurges.Clear();
@@ -525,13 +535,32 @@ namespace SodRpg.Core.Game
                     + Math.Max(0, Build.Get(Power.Frenzy)) * Math.Min(FrenzyMaxEnemies, Math.Max(0, NearbyEnemies))
                     + (now < _sprintUntil ? Math.Max(0, Build.Get(Power.Sprint)) : 0)
                     + (now < _perfectReadUntil ? Math.Min(Content.PowerCap(Power.PerfectRead), Math.Max(0, Build.Get(Power.PerfectRead))) : 0),
-                AttackPct = conditionalTotal + linkAttack,
+                AttackPct = conditionalTotal + linkAttack + (Build.ForbiddenTransmutePct > 0 && now < _transmuteUntil ? _transmuteAttack : 0),
                 PowerPct = conditionalTotal + linkAttack,
                 MoveSpeedPct = (now < _tailwindUntil ? Build.Get(Power.Tailwind) : 0)
                     + (now < _sprintUntil ? Math.Max(0, Build.Get(Power.Sprint)) : 0),
                 MaxHealthPct = LinkGuardHealthPct,
                 Armor = (NearbyEnemies >= BulwarkEnemies ? Build.Get(Power.Bulwark) : 0) + LinkGuardArmor,
             };
+        }
+
+        /// <summary>シールドを得られないか（禁忌の契約「血の転化」#415）。</summary>
+        public bool ShieldsBlocked => Build.ForbiddenTransmutePct > 0;
+
+        /// <summary>
+        /// 血の転化（#415）：受ける回復量から攻撃力へ回す分を返し、攻撃力の上乗せを積む。
+        /// 戻り値の分だけ回復を減らすのは呼び出し側（本体の回復の受け取り処理）。無効なら0。
+        /// </summary>
+        public float TransmuteHeal(float now, float amount, float maxHealth)
+        {
+            int pct = Build.ForbiddenTransmutePct;
+            if (pct <= 0 || amount <= 0 || maxHealth <= 0) return 0;
+            float diverted = amount * pct / 100f;
+            if (now >= _transmuteUntil) _transmuteAttack = 0;
+            _transmuteAttack = Math.Min(Forbidden.TransmuteAttackCap,
+                _transmuteAttack + diverted / maxHealth * 100f * Forbidden.TransmuteAttackPerHealthPct);
+            _transmuteUntil = now + Forbidden.TransmuteDuration;
+            return diverted;
         }
 
         /// <summary>障壁の時刻なら障壁量（最大HP比）を返す。</summary>

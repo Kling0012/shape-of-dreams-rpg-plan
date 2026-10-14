@@ -15,7 +15,7 @@ namespace SodRpg.Core.Game
                 || source.ItemLevel < 1 || source.ItemLevel > Content.MaxItemLevel
                 || source.LimitBreaks < 0 || source.LimitBreaks > Content.MaxLimitBreaks(source.Rarity)
                 || source.Enhance < 0 || source.Enhance > Content.MaxEnhanceFor(source)
-                || source.Retunes < 0 || source.Retunes > Content.MaxRetunes
+                || source.Retunes < 0 || source.Retunes > Forbidden.RetuneCeiling(source)
                 || source.EnhanceMilestones < 0 || source.EnhanceMilestones > Content.MaxEnhanceMilestones
                 || source.AwakenLevel < 0 || source.AwakenLevel > Content.MaxAwakenLevel
                 || source.AwakenPoints < 0 || source.AwakenPoints > Content.AwakenThreshold)
@@ -148,6 +148,11 @@ namespace SodRpg.Core.Game
                 }
                 result.Powers.Add(new PowerLine(line.Power, ClampAmount(line.Value, cap)));
             }
+            // 禁忌化（#415）：検証済みの特性・固有効果に対して作れない組み合わせの印は捨てて、遺物は受け付ける。
+            // 印の検証でビルド全体を拒否すると、他の経路で固有効果が変わった正規の遺物まで丸ごと適用されなくなる。
+            // 捨てた印の効果はホスト側に現れないだけなので、改ざんへの防壁としても同じ効く。
+            if (source.Forbidden != null && Forbidden.Valid(result, source.Forbidden))
+                result.Forbidden = source.Forbidden.Clone();
             validated = result;
             return true;
         }

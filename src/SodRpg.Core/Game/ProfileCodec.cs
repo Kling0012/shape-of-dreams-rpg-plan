@@ -177,6 +177,8 @@ namespace SodRpg.Core.Game
                 .Add("runRecovery", WriteRunRecovery(p.RunRecovery))
                 .Add("killClassification", WriteKillClassification(p.KillClassification))
                 .Add("run", run);
+            // 宿敵との因縁（#415）も、無い保存が旧MODの書き出しと変わらないよう0なら書かない。
+            if (p.NemesisGrudge != 0) body.Add("nemesisGrudge", (long)p.NemesisGrudge);
             // 直送の使用済み遠征は、使っていない保存が旧MODの書き出しと1バイトも変わらないよう、空なら書かない。
             if (p.DirectStashUsedRunIds.Count != 0)
                 body.Add("directStashUsedRunIds", p.DirectStashUsedRunIds.OrderBy(id => id, StringComparer.Ordinal).Select(id => (object)id).ToList());
@@ -264,7 +266,7 @@ namespace SodRpg.Core.Game
             foreach (var a in r.Affixes) aff.Add(new List<object> { (long)a.Stat, (long)a.Value });
             var pw = new List<object>();
             foreach (var x in r.Powers) pw.Add(new List<object> { (long)x.Power, (long)x.Value });
-            return new JsonObject()
+            var json = new JsonObject()
                 .Add("uid", r.Uid).Add("base", r.BaseId).Add("unique", r.UniqueId).Add("named", r.NamedId)
                 .Add("rarity", (long)r.Rarity).Add("ilvl", (long)r.ItemLevel)
                 .Add("enhance", (long)r.Enhance).Add("retunes", (long)r.Retunes).Add("affixRerolls", (long)r.AffixRerolls).Add("locked", r.Locked)
@@ -274,6 +276,9 @@ namespace SodRpg.Core.Game
                 .Add("developerGranted", r.DeveloperGranted)
                 .Add("infinityFreeSupply", r.InfinityFreeSupply)
                 .Add("affixes", aff).Add("powers", pw);
+            // 禁忌化（#415）。未禁忌化の遺物には書かないので、古い保存・取引の文字列は変わらない。
+            if (r.Forbidden != null) json.Add("forbidden", r.Forbidden.Encode());
+            return json;
         }
 
         private static string StarLabel(IReadOnlyList<TalentDef> tree, string id)
@@ -302,6 +307,7 @@ namespace SodRpg.Core.Game
             p.OverflowBonusPendingTotal = Long(b, "overflowBonusPendingTotal");
             p.StartDepth = Clamp(Long(b, "startDepth"), 0, Content.MaxHeat);
             p.LastDreamDepth = Clamp(Long(b, "lastDreamDepth"), 0, DreamDepth.Maximum);
+            p.NemesisGrudge = Clamp(Long(b, "nemesisGrudge"), 0, Forbidden.MaxGrudge); // #415：旧保存には無いので0
             ReadInfinitySettings(p, b);
             p.InfinityRewardBudget = ReadInfinityRewardBudget(b);
             ReadInfinityRecords(p, b);
@@ -706,7 +712,7 @@ namespace SodRpg.Core.Game
                 ItemLevel = Clamp(Long(j, "ilvl"), 1, Content.MaxItemLevel),
                 Enhance = Clamp(Long(j, "enhance"), 0, Content.MaxEnhanceFor(rarity, limitBreaks)),
                 LimitBreaks = limitBreaks,
-                Retunes = Clamp(Long(j, "retunes"), 0, Content.MaxRetunes),
+                Retunes = Clamp(Long(j, "retunes"), 0, Content.MaxRetunes + Forbidden.OrangeRetuneBonus),
                 AffixRerolls = Clamp(Long(j, "affixRerolls"), 0, int.MaxValue), // v1.31：古い保存にはないので0
                 Locked = Bool(j, "locked", false),
                 DeveloperGranted = Bool(j, "developerGranted", false),
@@ -759,6 +765,15 @@ namespace SodRpg.Core.Game
                         r.Powers.Add(new PowerLine(pw, Clamp(v, 0, cap)));
                     }
                 }
+            }
+            // オレンジ枠以外は引き上げ前の上限に戻す。
+            r.Retunes = Math.Min(r.Retunes, Forbidden.RetuneCeiling(r));
+            // 読めない・作れない禁忌化は捨てる（遺物そのものは残す）。
+            if (Str(j, "forbidden") is string forbidden)
+            {
+                ForbiddenMark mark = null;
+                try { mark = ForbiddenMark.Decode(forbidden); } catch (FormatException) { } catch (OverflowException) { }
+                if (mark != null && Forbidden.Valid(r, mark)) r.Forbidden = mark;
             }
             return r;
         }

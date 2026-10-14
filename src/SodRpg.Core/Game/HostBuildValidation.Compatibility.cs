@@ -49,5 +49,32 @@ namespace SodRpg.Core.Game
             } while (changed);
             return snapshot;
         }
+
+        /// <summary>
+        /// 禁忌化（#415）を解釈できない旧ホストへの送信用に、旧ホストが拒否する遺物を装備から外したコピーを作る。
+        /// 対象は禁忌化した遺物（15欄形式を読めない）と、旧上限（Content.MaxRetunes）を超えて再調律した遺物
+        /// （職人解放後のオレンジ枠。旧ホストの HostGearValidation は Retunes の超過だけでビルド全体を拒否する）。
+        /// 印や回数だけを落として送るとホスト側の能力計算が変わるため、遺物ごと外して明示的な制限とする。
+        /// 外すものがなければ元の Profile を返す（コピーしない）。
+        /// </summary>
+        public static Profile WithoutUnsupportedGear(Profile profile, string heroKey)
+        {
+            bool Stripped(Relic r) => r != null && (r.Forbidden != null || r.Retunes > Content.MaxRetunes);
+            var source = profile.Hero(heroKey);
+            bool any = false;
+            foreach (string uid in source.Equipped)
+            {
+                if (uid != null && Stripped(profile.FindStash(uid))) { any = true; break; }
+            }
+            if (!any) return profile;
+            var snapshot = profile.Clone();
+            var hero = snapshot.Hero(heroKey);
+            for (int slot = 0; slot < hero.Equipped.Length; slot++)
+            {
+                string uid = hero.Equipped[slot];
+                if (uid != null && Stripped(snapshot.FindStash(uid))) hero.Equipped[slot] = null;
+            }
+            return snapshot;
+        }
     }
 }
