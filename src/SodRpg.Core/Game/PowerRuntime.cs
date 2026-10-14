@@ -382,6 +382,14 @@ namespace SodRpg.Core.Game
             LinkAttunePct = 0;
             LinkGuardHealthPct = 0;
             LinkGuardArmor = 0;
+            // 血の転化（#415）を持たないビルドへ交換したとき（装備を外すなど）は、転化で積んだ攻撃力を
+            // 残さない。ShieldsBlocked と TransmuteHeal は Build を見るので、放置すると欠点だけ消えて
+            // 利点が持続時間だけ残る。
+            if (replacement.ForbiddenTransmutePct <= 0)
+            {
+                _transmuteAttack = 0;
+                _transmuteUntil = 0;
+            }
             // SetBuild has no clock. The next timed scan still expires retained windows normally.
             RetainLinkSurges(Build.Links, float.NegativeInfinity);
             _expiredLinkSurges.Clear();
@@ -527,7 +535,7 @@ namespace SodRpg.Core.Game
                     + Math.Max(0, Build.Get(Power.Frenzy)) * Math.Min(FrenzyMaxEnemies, Math.Max(0, NearbyEnemies))
                     + (now < _sprintUntil ? Math.Max(0, Build.Get(Power.Sprint)) : 0)
                     + (now < _perfectReadUntil ? Math.Min(Content.PowerCap(Power.PerfectRead), Math.Max(0, Build.Get(Power.PerfectRead))) : 0),
-                AttackPct = conditionalTotal + linkAttack + (now < _transmuteUntil ? _transmuteAttack : 0),
+                AttackPct = conditionalTotal + linkAttack + (Build.ForbiddenTransmutePct > 0 && now < _transmuteUntil ? _transmuteAttack : 0),
                 PowerPct = conditionalTotal + linkAttack,
                 MoveSpeedPct = (now < _tailwindUntil ? Build.Get(Power.Tailwind) : 0)
                     + (now < _sprintUntil ? Math.Max(0, Build.Get(Power.Sprint)) : 0),

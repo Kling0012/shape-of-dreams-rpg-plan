@@ -24,7 +24,7 @@ namespace SodRpg.Core.Game
         public ForbiddenPattern Pattern { get; set; }
         /// <summary>禁忌の契約の組み合わせ（Forbidden.PactVariants の番号。Forbidden.TransmuteVariant は血の転化）。ほかの型は0。</summary>
         public int Variant { get; set; }
-        /// <summary>失った特性の能力値。特性を失わない型（契約・破滅の誓い）では -1。断絶・過剰は特性のある遺物にしか選ばれないので、常に実際の能力値。</summary>
+        /// <summary>失った特性の能力値。特性を失わない型（契約・破滅の誓い）では -1。断絶・過剰は特性のある遺物にしか選ばれないので、常に実際の能力値（検証でも実在する特性を要求する）。</summary>
         public int RemovedStat { get; set; } = -1;
         /// <summary>断絶で得た固有効果。ほかの型は None。</summary>
         public Power AddedPower { get; set; }
@@ -118,9 +118,9 @@ namespace SodRpg.Core.Game
         public const int NemesisMiniBossHealthPct = 100;
         public const int NemesisMiniBossAttackPct = 35;
         public const int NemesisArmor = 20;
-        /// <summary>宿敵の撃破で得る禁忌の核。</summary>
+        /// <summary>宿敵の撃破で得る禁忌の核。禁忌化には宿敵化したボスの撃破が要るので、核はボスだけが落とす（#415）。
+        /// エリート（ミニボス）の宿敵は因縁を深め、追加報酬（欠片2倍・調律石・一段上の戦利品）を得られる。</summary>
         public const int BossCores = 2;
-        public const int MiniBossCores = 1;
         /// <summary>宿敵の撃破で欠片を上乗せする割合（%）と、追加の調律石。</summary>
         public const int NemesisShardBonusPct = 100;
         public const int NemesisTuningBonus = 3;
@@ -256,8 +256,8 @@ namespace SodRpg.Core.Game
             if (!IsOrange(r)) return Loc.T("禁忌化できるのは、セットに属さない固有品（オレンジ枠）だけです。", "Only non-set uniques (orange frame) can be made forbidden.");
             if (r.Forbidden != null) return Loc.T("この遺物はすでに禁忌化しています（1つの遺物に1回だけ）。", "This relic is already forbidden (once per relic).");
             if (p.Material(Materials.NemesisCore) < CoreCost || p.Material(Materials.Shard) < ShardCost || p.Material(Materials.Tuning) < TuningCost)
-                return Loc.T($"素材が足りません（禁忌の核{CoreCost}・欠片{ShardCost}・調律石{TuningCost}）。禁忌の核は宿敵を倒すと手に入ります。",
-                    $"Not enough materials ({CoreCost} forbidden cores, {ShardCost} shards, {TuningCost} tuning). Defeat nemeses for forbidden cores.");
+                return Loc.T($"素材が足りません（禁忌の核{CoreCost}・欠片{ShardCost}・調律石{TuningCost}）。禁忌の核は宿敵化したボスを倒すと手に入ります。",
+                    $"Not enough materials ({CoreCost} forbidden cores, {ShardCost} shards, {TuningCost} tuning). Forbidden cores drop from nemesis bosses.");
             return null;
         }
 
@@ -265,9 +265,9 @@ namespace SodRpg.Core.Game
         public static ForbiddenMark Roll(Rng rng, Relic r)
         {
             var pattern = (ForbiddenPattern)rng.Range(1, 4);
-            // 特性を1つ失う型（断絶・過剰）は、特性が無い遺物では選ばない。強化の節目で特性が増えると
-            // 「失った特性が無い（RemovedStat=-1）」の印の検証（RemovedValid は Affixes.Count==0 のときだけ
-            // -1 を認める）が壊れ、保存後に印が捨てられてしまうため、特性を失わない型へ振り替える。
+            // 特性を1つ失う型（断絶・過剰）は、特性が無い遺物では選ばない。失う特性が無ければ「特性を1つ失う」
+            // という必須の欠点が成立せず、印の検証（RemovedValid は実在する特性を要求する）にも落ちるので、
+            // 特性を失わない型へ振り替える。
             if (r.Affixes.Count == 0 && (pattern == ForbiddenPattern.Severance || pattern == ForbiddenPattern.Overcharge))
                 pattern = rng.Range(0, 1) == 0 ? ForbiddenPattern.Pact : ForbiddenPattern.Ruin;
             // 断絶は足せる固有効果が無ければ過剰に替える。
@@ -351,10 +351,12 @@ namespace SodRpg.Core.Game
 
         private static bool RemovedValid(Relic r, ForbiddenMark m)
         {
-            // -1（失った特性が無い）は、今も特性が1つも無い遺物だけ。強化の節目で特性が増えた遺物は
-            // 検証に落ちるが、Roll は特性の無い遺物に断絶・過剰を選ばないので、正規に生成された印が
-            // この判定で落ちることはない（-1 の断絶・過剰は作れない印として拒否される）。
-            if (m.RemovedStat == -1) return r.Affixes.Count == 0;
+            // 断絶・過剰は「特性を1つ失う」ことが必須（#415）。失った特性の能力値として、今も実在する
+            // 特性を要求する。-1（失った特性が無い）は作れない印なので拒否する。Roll は特性の無い遺物に
+            // この2型を選ばず、禁忌化した遺物の特性は減る経路が無い（再調律・洗い直し・特性を変える夢の
+            // 出来事から外れている。強化の節目では増えるだけ）ので、正規に生成された印がこの判定で
+            // 落ちることはない。
+            if (m.RemovedStat < 0) return false;
             foreach (var a in r.Affixes) if ((int)a.Stat == m.RemovedStat) return true;
             return false;
         }
@@ -390,13 +392,16 @@ namespace SodRpg.Core.Game
             };
         }
 
-        /// <summary>宿敵の撃破で得る禁忌の核（因縁が深ければ1つ多い）。</summary>
+        /// <summary>宿敵になれる格（ボスとエリート）。この格だけ宿敵化の抽選と撃破報酬がある。</summary>
+        public static bool NemesisEligible(MonsterTier tier) => tier == MonsterTier.Boss || tier == MonsterTier.MiniBoss;
+
+        /// <summary>宿敵の撃破で得る禁忌の核（因縁が深ければ1つ多い）。核を落とすのは宿敵化したボスだけ（#415）。</summary>
         public static int NemesisCores(MonsterTier tier, int grudge)
         {
             int cores = NemesisCores(tier);
             return cores > 0 && ClampGrudge(grudge) >= GrudgeBonusCoreAt ? cores + 1 : cores;
         }
 
-        public static int NemesisCores(MonsterTier tier) => tier >= MonsterTier.Boss ? BossCores : tier == MonsterTier.MiniBoss ? MiniBossCores : 0;
+        public static int NemesisCores(MonsterTier tier) => tier == MonsterTier.Boss ? BossCores : 0;
     }
 }

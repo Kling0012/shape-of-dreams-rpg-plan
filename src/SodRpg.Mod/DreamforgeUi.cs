@@ -1865,7 +1865,7 @@ namespace SodRpg.Mod
                     string fbCost = Loc.T($"禁忌の核{Forbidden.CoreCost}・欠片{Forbidden.ShardCost}・調律石{Forbidden.TuningCost}",
                         $"{Forbidden.CoreCost} forbidden cores, {Forbidden.ShardCost} shards, {Forbidden.TuningCost} tuning");
                     string fbLabel = !fbAfford
-                        ? Loc.T($"禁忌化：素材が足りません（{fbCost}。禁忌の核は宿敵から）", $"Forbid: not enough materials ({fbCost}; cores come from nemeses)")
+                        ? Loc.T($"禁忌化：素材が足りません（{fbCost}。禁忌の核は宿敵化したボスから）", $"Forbid: not enough materials ({fbCost}; cores come from nemesis bosses)")
                         : fbConfirm ? Loc.T($"<color=#ff8080>もう一度押すと「{sel.PlainName}」を禁忌化します（結果は4つの型からランダム・以後は再調律不可・取り消せません）</color>",
                             $"<color=#ff8080>Press again to make \"{sel.PlainName}\" forbidden (random result of 4 types; no more retunes; cannot be undone)</color>")
                         : Loc.T($"禁忌化する（{fbCost}）", $"Make forbidden ({fbCost})");

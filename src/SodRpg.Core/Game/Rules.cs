@@ -197,7 +197,8 @@ namespace SodRpg.Core.Game
             var rng = p.TakeRng();
             var variant = Variants.Get(variantId);
             // 宿敵（#415）は悪夢化とは別に扱う。印を外してから悪夢化を判定する。
-            bool nemesis = (nightmare & NightmareAffix.Nemesis) != 0 && Forbidden.NemesisCores(tier) > 0;
+            // 核を落とすのはボスだけだが、エリートの宿敵にも追加報酬と因縁がある（#415）。
+            bool nemesis = (nightmare & NightmareAffix.Nemesis) != 0 && Forbidden.NemesisEligible(tier);
             nightmare &= ~NightmareAffix.Nemesis;
             // 夢の変種は、悪夢と同じく一段上の戦利品・覚醒の力2倍・悪夢の依頼に数える。
             bool isNightmare = nightmare != NightmareAffix.None || variant != null;
@@ -265,14 +266,18 @@ namespace SodRpg.Core.Game
             GameEvent killNotice = null;
             if (nemesis)
             {
-                // 禁忌の核はまれな戦利品なので、全滅でも失わないよう直接持ち帰る。
+                // 禁忌の核はまれな戦利品なので、全滅でも失わないよう直接持ち帰る。核は宿敵化したボスだけが落とす（#415）。
                 int cores = Forbidden.NemesisCores(tier, p.NemesisGrudge);
-                p.AddMaterial(Materials.NemesisCore, cores);
+                if (cores > 0) p.AddMaterial(Materials.NemesisCore, cores);
                 // 倒すたびに因縁が深まり、追跡者はより強く、より頻繁に現れる。
                 p.NemesisGrudge++;
-                killNotice = new GameEvent(EventKind.Info, Loc.T(
-                    $"宿敵「{Forbidden.NemesisName}」を倒しました！禁忌の核 +{cores}。{Forbidden.GrudgeLabel(p.NemesisGrudge)}",
-                    $"Defeated the nemesis \"{Forbidden.NemesisName}\"! Forbidden cores +{cores}. {Forbidden.GrudgeLabel(p.NemesisGrudge)}"));
+                killNotice = cores > 0
+                    ? new GameEvent(EventKind.Info, Loc.T(
+                        $"宿敵「{Forbidden.NemesisName}」を倒しました！禁忌の核 +{cores}。{Forbidden.GrudgeLabel(p.NemesisGrudge)}",
+                        $"Defeated the nemesis \"{Forbidden.NemesisName}\"! Forbidden cores +{cores}. {Forbidden.GrudgeLabel(p.NemesisGrudge)}"))
+                    : new GameEvent(EventKind.Info, Loc.T(
+                        $"宿敵「{Forbidden.NemesisName}」を倒しました！{Forbidden.GrudgeLabel(p.NemesisGrudge)}",
+                        $"Defeated the nemesis \"{Forbidden.NemesisName}\"! {Forbidden.GrudgeLabel(p.NemesisGrudge)}"));
             }
             else if (variant != null)
             {
