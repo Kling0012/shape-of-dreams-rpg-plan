@@ -10,6 +10,22 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v2.10.36 — Development testing improvements (no gameplay changes)（2026-10-14）
+
+この版では、ゲームの内容や遊び方は変わりません。開発に使うテストの仕組みを改善したものです。 / This version brings no changes to gameplay. It improves the testing tools used in development.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+この版には新機能や不具合の修正はありません。ゲーム内の動作や見た目はこれまでと同じです。 / This version contains no new features or bug fixes. The game looks and plays the same as before.
+
+この版の変更はコードとテストで確認したもので、実際のゲームや協力プレイでの確認はまだ行っていません。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
 ## v2.10.35 — Four new room omens (16 in total)（2026-10-14）
 
 部屋の兆しに新たに4種類が加わり、全16種類になりました。 / Four new room omens have been added, bringing the total to 16.
