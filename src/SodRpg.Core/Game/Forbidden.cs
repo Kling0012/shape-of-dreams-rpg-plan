@@ -24,7 +24,7 @@ namespace SodRpg.Core.Game
         public ForbiddenPattern Pattern { get; set; }
         /// <summary>禁忌の契約の組み合わせ（Forbidden.PactVariants の番号）。ほかの型は0。</summary>
         public int Variant { get; set; }
-        /// <summary>失った特性の能力値。失わない型、または特性が無い遺物では -1。</summary>
+        /// <summary>失った特性の能力値。特性を失わない型（契約・破滅の誓い）では -1。断絶・過剰は特性のある遺物にしか選ばれないので、常に実際の能力値。</summary>
         public int RemovedStat { get; set; } = -1;
         /// <summary>断絶で得た固有効果。ほかの型は None。</summary>
         public Power AddedPower { get; set; }
@@ -224,6 +224,11 @@ namespace SodRpg.Core.Game
         public static ForbiddenMark Roll(Rng rng, Relic r)
         {
             var pattern = (ForbiddenPattern)rng.Range(1, 4);
+            // 特性を1つ失う型（断絶・過剰）は、特性が無い遺物では選ばない。強化の節目で特性が増えると
+            // 「失った特性が無い（RemovedStat=-1）」の印の検証（RemovedValid は Affixes.Count==0 のときだけ
+            // -1 を認める）が壊れ、保存後に印が捨てられてしまうため、特性を失わない型へ振り替える。
+            if (r.Affixes.Count == 0 && (pattern == ForbiddenPattern.Severance || pattern == ForbiddenPattern.Overcharge))
+                pattern = rng.Range(0, 1) == 0 ? ForbiddenPattern.Pact : ForbiddenPattern.Ruin;
             // 断絶は足せる固有効果が無ければ過剰に替える。
             List<PowerRange> candidates = null;
             if (pattern == ForbiddenPattern.Severance)
@@ -305,6 +310,9 @@ namespace SodRpg.Core.Game
 
         private static bool RemovedValid(Relic r, ForbiddenMark m)
         {
+            // -1（失った特性が無い）は、今も特性が1つも無い遺物だけ。強化の節目で特性が増えた遺物は
+            // 検証に落ちるが、Roll は特性の無い遺物に断絶・過剰を選ばないので、正規に生成された印が
+            // この判定で落ちることはない（-1 の断絶・過剰は作れない印として拒否される）。
             if (m.RemovedStat == -1) return r.Affixes.Count == 0;
             foreach (var a in r.Affixes) if ((int)a.Stat == m.RemovedStat) return true;
             return false;
