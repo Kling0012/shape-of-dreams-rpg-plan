@@ -1836,7 +1836,7 @@ namespace SodRpg.Core.Game
                 detail = Content.FormatStat(pair.Boon.Stat, pair.Boon.Value) + Loc.T("、", ", ") + Content.FormatStat(pair.Bane.Stat, pair.Bane.Value);
             }
             else if (mark.Pattern == ForbiddenPattern.Severance)
-                detail += " " + Content.PowerName(mark.AddedPower);
+                detail = Loc.T($"固有効果「{Content.PowerName(mark.AddedPower)}」を得て、特性を1つ失った", $"gained the power \"{Content.PowerName(mark.AddedPower)}\" and lost one affix");
             return new GameEvent(EventKind.LevelUp, Loc.T(
                 $"「{r.PlainName}」を禁忌化しました：{Forbidden.PatternName(mark.Pattern)}（{detail}）",
                 $"\"{r.PlainName}\" became forbidden: {Forbidden.PatternName(mark.Pattern)} ({detail})"), r.Rarity);

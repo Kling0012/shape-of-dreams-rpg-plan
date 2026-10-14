@@ -42,7 +42,7 @@ namespace SodRpg.Core.Game
         /// 宿敵（#415）。悪夢化とは別の仕組みで、接頭効果の一覧（AllAffixes）には含めない。
         /// 撃破の記録・通信・保存は悪夢化と同じ欄で運ぶ。
         /// </summary>
-        Nemesis = 1 << 20,
+        Nemesis = 1 << 24,
     }
 
     /// <summary>

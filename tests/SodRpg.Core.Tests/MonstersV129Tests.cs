@@ -66,7 +66,7 @@ namespace SodRpg.Core.Tests
             }
             var all = Nightmares.AllAffixes.Aggregate(NightmareAffix.None, (a, b) => a | b);
             Assert.Equal((1 << 20) - 1, (int)all);
-            Assert.Equal(all, Nightmares.Sanitize(-1));
+            Assert.Equal(all | NightmareAffix.Nemesis, Nightmares.Sanitize(-1)); // #415：宿敵の印は接頭効果の外で保持する
         }
 
         [Theory]
