@@ -1,5 +1,5 @@
-[b]Accepted co-op trades no longer get canceled while both players are still connected.[/b]
-[b]承諾後の協力交換が、切断も移動もしていないのに中止される不具合を修正しました。[/b]
+[b]Adds two new blessings and two new trials to room omens, for 16 in total.[/b]
+[b]部屋の兆しに恵みと試練を2種類ずつ加え、全16種類にしました。[/b]
 
 [h1]Dreamforge RPG[/h1]
 Turns every run into part of a long RPG journey: relics you keep, a risky "secure or delve" choice at every zone, a star map per Traveler, a forge, and long-term goals. Co-op ready.

@@ -8,10 +8,25 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
+---
+
+## v2.10.35 — Four new room omens (16 in total)（2026-10-14）
+
+部屋の兆しに新たに4種類が加わり、全16種類になりました。 / Four new room omens have been added, bringing the total to 16.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
 ### 新機能 / New features
 
-- **部屋の兆しが12種から16種に**：恵みに「活力」（最大HP+10%）と「俊敏」（攻撃速度+8%）、試練に「虚弱」（最大HP−8%）と「鈍化」（スキル加速−8）を追加しました。試練には、これまでどおり遺物が出やすくなる補正が付きます。旅人ごとの試練のやわらげ方（係数）もこれまでと同じです。 / **Room Omens grow from 12 to 16**: added the blessings Vitality (+10% max HP) and Alacrity (+8% attack speed), and the trials Feebleness (−8% max HP) and Dulling (−8 skill haste). Trials still make relics drop more, and the per-traveler trial softening is unchanged.
-- 協力プレイでは、参加者全員がこの版に更新してください。古い版の参加者には、新しい4種の兆しは表示されません（効果はホストの側で付くため、ゲームの進行は変わりません）。 / In co-op everyone should update. Players on an older version will not see the four new omens (their effect is applied on the host, so play itself is unaffected).
+- **部屋の兆しが12種類から16種類に**：これまでは部屋をいくつも進むと同じ兆しに何度も遭遇しがちでしたが、恵みと試練が2種類ずつ増え、恵み8種類・試練8種類の計16種類になりました。 / **Room omens expanded from 12 to 16**: previously you often saw the same omens again and again over many rooms. Two new blessings and two new trials have been added, for 8 blessings and 8 trials in total.
+- 新しい恵みは2つです。「活力」は最大HPが10%増え、「俊敏」は攻撃速度が8%上がります。 / Two new blessings: **Vigor** raises your max HP by 10%, and **Swiftness** raises your attack speed by 8%.
+- 新しい試練は2つです。「虚弱」は最大HPが8%減り、「鈍化」はスキル加速が8下がります。ほかの試練と同じく、乗り越えると遺物を得やすくなる効果が付きます。 / Two new trials: **Frailty** lowers your max HP by 8%, and **Sluggish** lowers your skill haste by 8. Like the other trials, they come with a better chance at relics.
+
+今回の変更は、コードとテストで確認したもので、実際のゲームや協力プレイでの確認はまだできていません。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
 
 ---
 
