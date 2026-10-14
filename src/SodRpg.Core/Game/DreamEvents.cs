@@ -403,7 +403,8 @@ namespace SodRpg.Core.Game
                     pool = pool.Where(r => r.UniqueId == null && r.Rarity < Rarity.Epic);
                     break;
                 case DreamEvent.TemperingAltar:
-                    pool = pool.Where(r => r.Affixes.Count > 0 && Content.CanGuaranteedEnhance(r, e));
+                    // 禁忌化した遺物は対象外（#415）：特性を1つ失うと失った特性の印（RemovedStat）が壊れることがある。
+                    pool = pool.Where(r => r.Forbidden == null && r.Affixes.Count > 0 && Content.CanGuaranteedEnhance(r, e));
                     break;
                 case DreamEvent.StarOffering:
                     pool = pool.Where(r => r.Rarity >= Rarity.Rare);

@@ -1598,7 +1598,9 @@ namespace SodRpg.Core.Game
             if (r.Enhance >= Content.EnhanceMilestoneSecond && r.EnhanceMilestones < 2)
             {
                 r.EnhanceMilestones = 2;
-                if (r.AuthoredEffectCount == 0)
+                // 禁忌化した遺物には固有効果を足さない（#415）：断絶で得た効果と同じものが足えると印の検証が
+                // 壊れ（SeveranceCandidates は所持済みを除く）、過剰の特性への倍率も Powers の有無で変わってしまう。
+                if (r.AuthoredEffectCount == 0 && r.Forbidden == null)
                 {
                     var pool = Content.PowerPool(r.Slot).Where(x => Content.PowerAllowedForRarity(x.Power, r.Rarity)).ToList();
                     var pr = pool[rng.Range(0, pool.Count - 1)];

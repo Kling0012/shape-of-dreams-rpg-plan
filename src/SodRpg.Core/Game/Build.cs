@@ -187,6 +187,8 @@ namespace SodRpg.Core.Game
             var starPowers = new Dictionary<Power, int>();
             var awakenGains = new Dictionary<Power, int>();
             var basePowers = new Dictionary<Power, decimal>();
+            // 禁忌化（#415）した遺物を装備しているか。最大HP%の下限はこのときだけ掛ける（既存のビルドの値を変えない）。
+            bool anyForbidden = false;
             var equippedLinks = new Dictionary<string, (LinkDef Link, decimal Base, decimal Scaled)>(StringComparer.Ordinal);
             var equippedBossMoves = new Dictionary<string, BossMoveEntry>(StringComparer.Ordinal);
             void AddPower(Power power, int value)
@@ -223,6 +225,7 @@ namespace SodRpg.Core.Game
             {
                 var r = p.FindStash(uid);
                 if (r == null) continue;
+                if (r.Forbidden != null) anyForbidden = true;
                 var bossMove = r.EffectiveBossMove();
                 if (bossMove != null)
                 {
@@ -497,8 +500,10 @@ namespace SodRpg.Core.Game
                 if (d == null) continue;
                 foreach (var s in d.Penalties) b.Stats[s.Stat] = b.Get(s.Stat) + s.Value;
             }
-            // 禁忌化（#415）の重ねで最大HPが0以下にならないよう、最大HP%の合計（契約の罰と pact の罰を含む）に下限を設ける。
-            if (b.Stats.TryGetValue(Stat.MaxHealthPct, out int healthPctTotal) && healthPctTotal < Forbidden.MaxHealthPctFloor)
+            // 禁忌化（#415）の重ねで最大HPが0以下にならないよう、禁忌化した遺物を装備しているビルドでは
+            // 最大HP%の合計（契約の罰と pact の罰を含む）に下限を設ける。未禁忌化のビルドには掛けないので、
+            // 既存のビルドの値は変わらない。
+            if (anyForbidden && b.Stats.TryGetValue(Stat.MaxHealthPct, out int healthPctTotal) && healthPctTotal < Forbidden.MaxHealthPctFloor)
                 b.Stats[Stat.MaxHealthPct] = Forbidden.MaxHealthPctFloor;
             var links = AggregateLinks(b.Links);
             b.Links.Clear();
