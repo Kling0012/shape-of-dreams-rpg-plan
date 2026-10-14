@@ -78,6 +78,8 @@ namespace SodRpg.Core.Game
         /// <summary>破滅の誓い：残る特性の倍率（%）と最大HPの減少。</summary>
         public const int RuinAffixPct = 150;
         public const int RuinMaxHealthPct = -30;
+        /// <summary>最大HP%の合計の下限。禁忌の契約と破滅の誓いを6部位に重ねても、最大HPが0以下にならないようにする（Build.Compute で適用）。</summary>
+        public const int MaxHealthPctFloor = -75;
 
         /// <summary>禁忌の契約の組み合わせ（利点・欠点）。値は強化や覚醒で増減しない固定値。</summary>
         public static readonly (StatLine Boon, StatLine Bane)[] PactVariants =
@@ -239,8 +241,8 @@ namespace SodRpg.Core.Game
                     {
                         var def = candidates[rng.Range(0, candidates.Count - 1)];
                         m.AddedPower = def.Power;
-                        int low = Math.Max(def.Min, def.Min + (def.Max - def.Min) / 2);
-                        m.AddedValue = Math.Max(1, rng.Range(low, Math.Max(low, def.Max)));
+                        SeveranceBounds(def, out int low, out int high);
+                        m.AddedValue = Math.Max(1, rng.Range(low, high));
                         if (r.Affixes.Count > 0) m.RemovedStat = (int)r.Affixes[rng.Range(0, r.Affixes.Count - 1)].Stat;
                         break;
                     }
@@ -265,6 +267,13 @@ namespace SodRpg.Core.Game
             return list;
         }
 
+        /// <summary>断絶の固有効果の値の抽選範囲（両端を含む。定義範囲の上半分）。Roll と Valid で同じ範囲を使うための共用。</summary>
+        private static void SeveranceBounds(PowerRange def, out int low, out int high)
+        {
+            low = Math.Max(def.Min, def.Min + (def.Max - def.Min) / 2);
+            high = Math.Max(low, def.Max);
+        }
+
         /// <summary>ホストが受け取った禁忌化の結果を検証する（作れない組み合わせは拒否）。</summary>
         public static bool Valid(Relic r, ForbiddenMark m)
         {
@@ -282,7 +291,12 @@ namespace SodRpg.Core.Game
                 case ForbiddenPattern.Severance:
                     if (m.Variant != 0 || !RemovedValid(r, m)) return false;
                     foreach (var def in SeveranceCandidates(r))
-                        if (def.Power == m.AddedPower) return m.AddedValue >= 1 && m.AddedValue <= Math.Max(1, def.Max);
+                        if (def.Power == m.AddedPower)
+                        {
+                            // 通常の抽選で出ない値（定義範囲の下半分など）は作れない組み合わせとして拒否する。
+                            SeveranceBounds(def, out int low, out int high);
+                            return m.AddedValue >= Math.Max(1, low) && m.AddedValue <= Math.Max(1, high);
+                        }
                     return false;
                 default:
                     return false;

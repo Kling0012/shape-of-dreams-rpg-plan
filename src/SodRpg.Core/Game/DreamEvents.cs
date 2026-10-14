@@ -394,7 +394,8 @@ namespace SodRpg.Core.Game
                         && !r.HasFixedPowers && r.Powers.Count > 0 && ReplacementPowers(r).Any());
                     break;
                 case DreamEvent.ShadowExchange:
-                    pool = pool.Where(r => r.Affixes.Count > 0 && r.Retunes < Content.MaxRetunes && r.Forbidden == null
+                    // 再調律と同じ上限（#415：職人解放後のオレンジ枠は引き上げ後の回数を使う）。
+                    pool = pool.Where(r => r.Affixes.Count > 0 && r.Retunes < Forbidden.RetuneCap(p, r) && r.Forbidden == null
                         && Content.AffixPool(r.Slot).Any(a => r.Rarity >= a.MinRarity && a.Stat != r.Base.ImplicitStat
                             && !r.Affixes.Any(line => line.Stat == a.Stat)));
                     break;

@@ -8,12 +8,18 @@ namespace SodRpg.Mod
     internal sealed partial class ClientSession
     {
         private bool _hostBuildInputCapability;
+        /// <summary>ホストが禁忌装備入り（15欄形式）のビルド入力を受け付けられるか（#415）。旧ホスト相手では禁忌装備を送らない。</summary>
+        private bool _hostForbiddenInput;
+        private bool _forbiddenGearStripNotice;
         private bool _omenReceiveReady;
         private bool _hostNetLite;
         private bool _netLiteReceiveReady, _netLiteReceiveWarned;
         private bool _hostAutocastPressureCapability;
         private float _nextAutocastPressureReport;
         private Action<DreamforgeAutocastPressureCapabilityMsg> _onAutocastPressureCapability;
+
+        /// <summary>ホストのMODが禁忌装備（#415）を読めないため、このセッションでは禁忌化した遺物を適用していない説明。該当しなければ null。</summary>
+        public string ForbiddenGearHostNotice { get; private set; }
 
         private void RegisterAutocastPressureCapability(Actor actor)
         {
@@ -59,6 +65,8 @@ namespace SodRpg.Mod
         {
             if (msg == null || msg.version != 1) return;
             _hostNetLite = msg.netLite == 1 && _netLiteReceiveReady;
+            // 応答が一度でも届いたら確定する（旧ホストはこの欄を返さず 0 のまま）。
+            if (msg.forbiddenInput == 1) _hostForbiddenInput = true;
             if (_hostBuildInputCapability) return;
             _hostBuildInputCapability = true;
             _buildDirty = true;

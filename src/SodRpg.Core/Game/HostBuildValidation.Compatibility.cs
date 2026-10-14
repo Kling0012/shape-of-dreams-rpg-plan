@@ -49,5 +49,29 @@ namespace SodRpg.Core.Game
             } while (changed);
             return snapshot;
         }
+
+        /// <summary>
+        /// 禁忌化（#415）を解釈できない旧ホストへの送信用に、禁忌化した遺物を装備から外したコピーを作る。
+        /// 印だけを外して送るとホスト側の能力計算が変わるため、遺物ごと外して明示的な制限とする。
+        /// 外すものがなければ元の Profile を返す（コピーしない）。
+        /// </summary>
+        public static Profile WithoutForbiddenGear(Profile profile, string heroKey)
+        {
+            var source = profile.Hero(heroKey);
+            bool any = false;
+            foreach (string uid in source.Equipped)
+            {
+                if (uid != null && profile.FindStash(uid)?.Forbidden != null) { any = true; break; }
+            }
+            if (!any) return profile;
+            var snapshot = profile.Clone();
+            var hero = snapshot.Hero(heroKey);
+            for (int slot = 0; slot < hero.Equipped.Length; slot++)
+            {
+                string uid = hero.Equipped[slot];
+                if (uid != null && snapshot.FindStash(uid)?.Forbidden != null) hero.Equipped[slot] = null;
+            }
+            return snapshot;
+        }
     }
 }

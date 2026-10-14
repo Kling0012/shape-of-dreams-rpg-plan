@@ -497,6 +497,9 @@ namespace SodRpg.Core.Game
                 if (d == null) continue;
                 foreach (var s in d.Penalties) b.Stats[s.Stat] = b.Get(s.Stat) + s.Value;
             }
+            // 禁忌化（#415）の重ねで最大HPが0以下にならないよう、最大HP%の合計（契約の罰と pact の罰を含む）に下限を設ける。
+            if (b.Stats.TryGetValue(Stat.MaxHealthPct, out int healthPctTotal) && healthPctTotal < Forbidden.MaxHealthPctFloor)
+                b.Stats[Stat.MaxHealthPct] = Forbidden.MaxHealthPctFloor;
             var links = AggregateLinks(b.Links);
             b.Links.Clear();
             b.Links.AddRange(links);

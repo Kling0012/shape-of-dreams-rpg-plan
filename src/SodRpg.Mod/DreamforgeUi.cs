@@ -438,6 +438,8 @@ namespace SodRpg.Mod
             // 版違いは見落とすと「効果も報酬も入らない」ので、目立つ色で常に出す（mp-ui-save #4）。
             if (_s.HostVersionWarning != null)
                 sb.Append("\n<size=13><color=#ff7070>").Append(_s.HostVersionWarning).Append("</color></size>");
+            if (_s.ForbiddenGearHostNotice != null)
+                sb.Append("\n<size=13><color=#ff7070>").Append(_s.ForbiddenGearHostNotice).Append("</color></size>");
             var hostWarnings = HostAuthority.VersionWarnings;
             for (int i = 0; i < hostWarnings.Count; i++)
                 sb.Append("\n<size=13><color=#ff7070>").Append(hostWarnings[i]).Append("</color></size>");

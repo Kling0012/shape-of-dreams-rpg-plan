@@ -102,7 +102,7 @@ namespace SodRpg.Mod
             if (msg.forbiddenSmith == 1 && _helloPeers.Contains(caller)) _forbiddenSmithPeers.Add(caller);
             else _forbiddenSmithPeers.Remove(caller);
             try { _registeredOn?.CustomRpc_SendMessageToClient(caller,
-                new DreamforgeBuildInputCapabilityMsg { netLite = 1, roomOmens = 1 }); } catch (Exception) { }
+                new DreamforgeBuildInputCapabilityMsg { netLite = 1, roomOmens = 1, forbiddenInput = 1 }); } catch (Exception) { }
             SendRoomOmenPeer(caller);
         }
 
