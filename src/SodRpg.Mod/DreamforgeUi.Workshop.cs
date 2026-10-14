@@ -48,7 +48,7 @@ namespace SodRpg.Mod
             switch (u)
             {
                 case Upgrade.BigSatchel: now = Workshop.SatchelCapacity(p); next = now + 5; ja = "鞄の上限"; en = "Satchel"; break;
-                case Upgrade.WideStash: now = Workshop.StashCapacity(p); next = now + 20; ja = "保管庫の上限"; en = "Stash"; break;
+                case Upgrade.WideStash: now = Workshop.StashCapacity(p); next = Content.StashCapacity + Workshop.StashBonus(Workshop.Level(p, u) + 1); ja = "保管庫の上限"; en = "Stash"; break;
                 case Upgrade.BountyReroll: now = Workshop.RerollsPerRun(p); next = now + 1; ja = "引き直し"; en = "Rerolls"; break;
                 default: return "";
             }
