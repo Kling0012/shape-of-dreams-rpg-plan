@@ -1,0 +1,5 @@
+# このリポジトリはファイルごとに CRLF と LF が混在している（#423 で確認）。
+# git の自動改行変換（core.autocrlf / core.eol）を無効にして、各ファイルの改行コードを
+# コミットされたまま保つ。特に src/SodRpg.Core/Game の Nightmare.cs・PowerRuntime.cs・
+# Rules.cs は CRLF なので、変換するとファイル全体の差分になって履歴と blame が読みにくくなる。
+* -text

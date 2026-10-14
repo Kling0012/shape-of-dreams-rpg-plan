@@ -1,0 +1,52 @@
+{
+  "schemaVersion": 1,
+  "smith": {
+    "tiers": [
+      { "shards": 2000, "tuning": 30 }
+    ]
+  },
+  "forbid": {
+    "coreCost": 3,
+    "shardCost": 500,
+    "tuningCost": 8,
+    "orangeRetuneBonus": 3
+  },
+  "patterns": {
+    "overchargePowerPct": 160,
+    "overchargeAffixFallbackPct": 140,
+    "ruinAffixPct": 150,
+    "ruinMaxHealthPct": -30,
+    "maxHealthPctFloor": -75
+  },
+  "pactVariants": [
+    { "boonStat": "AttackSpeedPct", "boon": 40, "baneStat": "MaxHealthPct", "bane": -50 },
+    { "boonStat": "AttackPct", "boon": 45, "baneStat": "Armor", "bane": -40 },
+    { "boonStat": "PowerPct", "boon": 45, "baneStat": "Haste", "bane": -30 },
+    { "boonStat": "CritDamagePct", "boon": 90, "baneStat": "MoveSpeedPct", "bane": -15 }
+  ],
+  "transmute": {
+    "healPct": 35,
+    "attackPerHealthPct": 2.0,
+    "attackCap": 60.0,
+    "durationSeconds": 6.0
+  },
+  "nemesis": {
+    "bossChance": 0.08,
+    "miniBossChance": 0.03,
+    "bossHealthPct": 60,
+    "bossAttackPct": 25,
+    "miniBossHealthPct": 100,
+    "miniBossAttackPct": 35,
+    "armor": 20,
+    "bossCores": 2,
+    "shardBonusPct": 100,
+    "tuningBonus": 3
+  },
+  "grudge": {
+    "maximum": 5,
+    "chanceStepPct": 15,
+    "healthStepPct": 10,
+    "attackStepPct": 5,
+    "bonusCoreAt": 3
+  }
+}

@@ -69,6 +69,22 @@ Infinityの常用比較は `--infinity-scope comparison`：30分×通常深度0/
 人数・seedはrunの指定値、周期は現在の既定周期。長時間の保証感度は単体の `--infinity-scope full` で測ります。
 500pt星図の長時間シミュレーションは実行しません。
 
+## 禁忌の装備と宿敵の調整（Issue #423）
+
+数値原本は `forbidden.json`（#415 の調整値を #423 で移設）。1セルを編集し、`python tools/balance/gen_cs.py` で
+`src/SodRpg.Core/Game/Balance/ForbiddenBalance.Generated.cs` へ生成します。実行時にJSONは読みません。
+値は実プレイで調整する前提の仮の値です。`pactVariants` は必ず4組（5つ目は保存形式が固定の「血の転化」）。
+
+| 表のセクション | 内容 |
+| --- | --- |
+| `smith.tiers` | 禁忌の職人の解放費用（欠片・調律石、段ごと） |
+| `forbid` | 禁忌化の費用（核・欠片・調律石）とオレンジ枠の再調律上限の引き上げ回数 |
+| `patterns` | 過剰・破滅の誓いの倍率、最大HPの減少と合計の下限 |
+| `pactVariants` | 禁忌の契約の能力値の組（利点・欠点、4組） |
+| `transmute` | 血の転化（回復の転化割合・攻撃力換算・上限・持続） |
+| `nemesis` | 宿敵化の確率・強化幅・核の数・追加報酬 |
+| `grudge` | 因縁の上限・1段ごとの出現率と強さ・核が増える段 |
+
 ## 鍛冶の調整（Issue #149 段階3）
 
 数値原本は `forge.json`。1セルを編集し、`tools/balance/run` で生成・全通常テスト・比較を実行します。
