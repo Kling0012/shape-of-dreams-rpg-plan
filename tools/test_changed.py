@@ -16,11 +16,15 @@ DisableTestParallelization), so the projects are built serially and their tests
 run as parallel ``dotnet test`` processes (at most one per CPU core). The Core
 suite is additionally split into class-filtered processes: each of the five
 heavyweight classes anchors one process and the remaining classes are
-distributed over the same processes by test-method count. With ``--slow``,
-every class holding Speed=Slow tests anchors a process of its own
-(SODRPG_SLOW=1), so the exhaustive tests of different classes overlap. The
-union of the processes always selects exactly the tests a single unfiltered
-run would.
+distributed over the same processes by test-method count. With ``--slow`` (or
+the ``SODRPG_SLOW=1`` environment variable, which the release scripts and CI
+set instead of the flag), every Speed=Slow test method anchors a process of
+its own (SODRPG_SLOW=1), so the exhaustive tests of one class overlap too
+instead of serializing behind the slowest class; the class-group filters
+subtract exactly those methods. Timing-threshold classes run in one lone
+process after every parallel batch has finished, so overlapping processes
+cannot push their measured loops over the limit. The union of the processes
+always selects exactly the tests a single unfiltered run would.
 
 If nothing test-relevant changed, a message is printed and the exit code is 0.
 Otherwise the exit code is the first non-zero ``dotnet test`` exit code.
@@ -66,6 +70,14 @@ HEAVY_CORE_CLASSES = frozenset({
 })
 CORE_PROCESS_COUNT = 5
 
+# Threshold-sensitive timing tests (ms per kill / ms per build upper bounds).
+# Their measurements are only reliable without CPU contention, so these classes
+# run in one lone process each after every parallel batch has finished; the
+# union of the runs still selects exactly the tests one unfiltered run would.
+ISOLATED_CORE_CLASSES = frozenset({
+    "SodRpg.Core.Tests.PerformanceTests",
+})
+
 TYPE_DECL_RE = re.compile(
     r"\b(?:class|struct|enum|interface|record)(?:\s+(?:class|struct))?\s+([A-Za-z_]\w*)"
 )
@@ -80,6 +92,8 @@ CLASS_LINE_RE = re.compile(
     re.M,
 )
 SLOW_TEST_RE = re.compile(r'\[\s*SlowFact\b|Trait\(\s*"Speed"\s*,\s*"Slow"\s*\)')
+# A Slow test's method signature: the first test-method name after its marker.
+SLOW_METHOD_RE = re.compile(r'\b(?:void|Task|ValueTask)\s+([A-Za-z_]\w*)\s*\(')
 TEST_METHOD_RE = re.compile(r"\[\s*(?:SlowFact|Fact|Theory)\b")
 COMPILE_INCLUDE_RE = re.compile(r'<Compile\s+Include="([^"]+)"', re.IGNORECASE)
 COMPILE_REMOVE_RE = re.compile(r'<Compile\s+Remove="([^"]+)"', re.IGNORECASE)
@@ -171,8 +185,8 @@ def top_level_test_classes(content: str) -> list[str]:
 def slow_test_classes(files: dict[str, str]) -> set[str]:
     """Classes holding Speed=Slow tests ([SlowFact] / Trait("Speed","Slow"))).
 
-    Each of them keeps its own ``dotnet test`` process when ``--slow`` is on,
-    so the expensive exhaustive tests of different classes overlap.
+    Used by ``--check-ci-matrix`` to compare against the ci.yml slow-tests
+    matrix, which runs whole slow classes.
     """
     classes: set[str] = set()
     for path, content in files.items():
@@ -180,6 +194,54 @@ def slow_test_classes(files: dict[str, str]) -> set[str]:
                 and SLOW_TEST_RE.search(strip_comments(content)):
             classes.update(top_level_test_classes(content))
     return classes
+
+
+def slow_test_methods(files: dict[str, str]) -> dict[str, set[str]]:
+    """Speed=Slow test methods per declaring class, as ``{class: {class.method}}``.
+
+    Each method anchors one ``dotnet test`` process when slow tests are enabled,
+    so the exhaustive variants of one class overlap instead of serializing
+    behind the slowest of them. Only namespace-level classes are resolved; a
+    slow marker inside a nested class attributes to the outer class, whose
+    ``FullyQualifiedName=Outer.Method`` process then selects nothing while the
+    class-group term (``Outer+``) still runs the test exactly once, so the
+    union of the processes never loses a test.
+    """
+    methods: dict[str, set[str]] = {}
+    for path, content in files.items():
+        if not (path.startswith("tests/") and path.endswith(".cs")):
+            continue
+        stripped = strip_comments(content)
+        markers = list(SLOW_TEST_RE.finditer(stripped))
+        if not markers:
+            continue
+        # Namespace segments own the text from their declaration to the next
+        # one (the block body of ``namespace N { ... }`` and the whole rest of
+        # a file-scoped ``namespace N;`` alike).
+        declarations = list(NAMESPACE_RE.finditer(stripped))
+        segments = [((declarations[i].end() if i < len(declarations) else 0),
+                     declarations[i + 1].start() if i + 1 < len(declarations) else len(stripped),
+                     declarations[i].group(1) if i < len(declarations) else "")
+                    for i in range(len(declarations) + 1)]
+        classes = [(match.start(), len(match.group(1).replace("\t", "    ")), match.group(2))
+                   for match in CLASS_LINE_RE.finditer(stripped)]
+        for marker in markers:
+            segment = next(((start, end, namespace) for start, end, namespace in segments
+                            if start <= marker.start() < end), None)
+            if segment is None:
+                continue
+            start, _, namespace = segment
+            scope = [c for c in classes if start <= c[0] < marker.start()]
+            if not scope:
+                continue
+            top = min(indent for _, indent, _ in scope)
+            owners = [c for c in scope if c[1] == top]
+            fqn = f"{namespace}.{owners[-1][2]}" if namespace else owners[-1][2]
+            signature = SLOW_METHOD_RE.search(stripped, marker.end())
+            if signature is None:
+                continue
+            methods.setdefault(fqn, set()).add(f"{fqn}.{signature.group(1)}")
+    return methods
 
 
 def class_weights(files: dict[str, str]) -> dict[str, float]:
@@ -201,22 +263,22 @@ def class_weights(files: dict[str, str]) -> dict[str, float]:
     return weights
 
 
-def core_run_groups(core_classes: set[str], slow_classes: set[str],
-                    weights: dict[str, float]) -> list[list[str]]:
+def core_run_groups(core_classes: set[str], weights: dict[str, float]) -> list[list[str]]:
     """Split the Core suite's classes into one list per parallel process.
 
-    Each heavyweight class (and, with ``--slow``, every class holding slow
-    tests) anchors a process of its own; classes with detected test methods
-    are attached to the currently least-loaded process, keeping the count at
-    ``CORE_PROCESS_COUNT`` unless the anchored classes alone exceed it. The
-    anchors are all known long runners, so every anchor starts with the same
-    load instead of its (unrepresentative) method count and the remaining
-    classes spread evenly on top; classes without test methods carry no load
-    and are spread by count to keep the filters even. Every class stays in
-    exactly one group, so the union of the groups runs exactly the tests a
-    single unfiltered process would.
+    Each heavyweight class anchors a process of its own; classes with detected
+    test methods are attached to the currently least-loaded process, keeping
+    the count at ``CORE_PROCESS_COUNT`` unless the anchored classes alone
+    exceed it. The anchors are all known long runners, so every anchor starts
+    with the same load instead of its (unrepresentative) method count and the
+    remaining classes spread evenly on top; classes without test methods carry
+    no load and are spread by count to keep the filters even. Every class
+    stays in exactly one group, so the union of the groups runs exactly the
+    tests a single unfiltered process would. Slow test methods are not
+    classes' business here: they anchor their own per-method processes (see
+    ``full_project_runs``) and are subtracted from these class filters.
     """
-    anchors = sorted((HEAVY_CORE_CLASSES | slow_classes) & core_classes)
+    anchors = sorted(HEAVY_CORE_CLASSES & core_classes)
     remainder = core_classes - set(anchors)
     groups = [[name] for name in anchors]
     while len(groups) < CORE_PROCESS_COUNT and remainder:
@@ -566,7 +628,8 @@ def select_tests(changed, files, diffs=None) -> Selection:
     return selection
 
 
-def build_filters(classes, max_chars: int = MAX_FILTER_CHARS) -> list[str]:
+def build_filters(classes, max_chars: int = MAX_FILTER_CHARS,
+                  exclude=()) -> list[str]:
     """Chunk ``FullyQualifiedName~X.`` / ``FullyQualifiedName~X+`` terms.
 
     The trailing separator keeps the contains-match scoped to class X: without
@@ -574,22 +637,38 @@ def build_filters(classes, max_chars: int = MAX_FILTER_CHARS) -> list[str]:
     would have its tests selected by both terms. The ``+`` twin of each term
     keeps nested classes covered: vstest writes their fully-qualified names as
     ``Ns.X+Nested.Method``, which a dot-only term would silently miss.
+
+    ``exclude`` lists fully-qualified test-method names subtracted from every
+    chunk with ``&FullyQualifiedName!=M`` terms: methods that run in their own
+    per-method processes (the slow split) must not be selected a second time
+    here, or they would run twice and report twice. The chunk's OR terms are
+    parenthesized (``&`` binds tighter than ``|`` in the vstest grammar) and
+    the suffix is counted against ``max_chars`` so a chunk plus its exclusions
+    still fits.
     """
+    suffix = "".join(f"&FullyQualifiedName!={method}" for method in sorted(exclude)) \
+        if exclude else ""
     terms: list[str] = []
     for c in sorted(classes):
         terms.append(f"FullyQualifiedName~{c}.")
         terms.append(f"FullyQualifiedName~{c}+")
     chunks: list[str] = []
     current: list[str] = []
+
+    def close(chunk: list[str]) -> str:
+        # Only the subtracting form needs the parentheses; a bare OR selects
+        # exactly the same tests and keeps the plain chunks unchanged.
+        return f"({'|'.join(chunk)}){suffix}" if suffix else "|".join(chunk)
+
     for term in terms:
-        joined = "|".join(current + [term])
+        joined = "|".join(current + [term]) + suffix
         if current and len(joined) > max_chars:
-            chunks.append("|".join(current))
+            chunks.append(close(current))
             current = [term]
         else:
             current.append(term)
     if current:
-        chunks.append("|".join(current))
+        chunks.append(close(current))
     return chunks
 
 
@@ -763,40 +842,71 @@ def build_projects(root: Path, projects: list[str]) -> int:
     return 0
 
 
-def full_project_runs(project: str, all_classes: set[str], slow_classes: set[str],
-                      weights: dict[str, float]) -> list[tuple[str | None, str]]:
-    """(filter expression, label) runs for the unfiltered full suite of a project.
+def full_project_runs(project: str, all_classes: set[str],
+                      slow_methods: dict[str, set[str]],
+                      weights: dict[str, float]) -> tuple[list[tuple[str | None, str]], list[tuple[str, str]]]:
+    """((filter, label) parallel runs, (filter, label) deferred runs) for a project.
 
-    Only the Core suite is split: its classes are grouped by ``core_run_groups``
-    so the heavyweight (and, with ``--slow``, slow) classes each anchor a
-    parallel process. Every class stays in exactly one group, so the union of
-    the runs selects exactly the tests one unfiltered process would.
+    Only the Core suite is split: each Speed=Slow test method anchors a process
+    of its own (an exact ``FullyQualifiedName=`` match, so one class's slow
+    variants overlap instead of serializing behind the slowest) and the classes
+    are grouped by ``core_run_groups`` so the heavyweight ones each anchor a
+    parallel process. The slow methods are subtracted from the class filters
+    (``build_filters``' ``exclude``), so every test is selected by exactly one
+    run and the union of the runs selects exactly the tests one unfiltered
+    process would. Timing-threshold classes (``ISOLATED_CORE_CLASSES``) are
+    excluded from the parallel groups and returned as deferred runs: they run
+    alone after the parallel pool drains, so overlapping processes cannot push
+    their measurements over the limit.
     """
     if project != CORE_TESTS_PROJECT or not all_classes:
-        return [(None, "")]
+        return [(None, "")], []
     labeled: list[tuple[str, str]] = []
-    for group in core_run_groups(all_classes, slow_classes, weights):
+    for cls in sorted(slow_methods):
+        for method in sorted(slow_methods[cls]):
+            labeled.append((f"FullyQualifiedName={method}",
+                            method.rsplit(".", 1)[-1]))
+    isolated = sorted(all_classes & ISOLATED_CORE_CLASSES)
+    for group in core_run_groups(all_classes - set(isolated), weights):
         anchor = group[0].rsplit(".", 1)[-1]
         name = anchor if len(group) == 1 else f"{anchor}+{len(group) - 1}"
-        for expr in build_filters(group):
+        excluded = set().union(*(slow_methods[c] for c in group if c in slow_methods)) \
+            if any(c in slow_methods for c in group) else set()
+        for expr in build_filters(group, exclude=excluded):
             labeled.append((expr, name))
-    return [(expr, f" ({index}/{len(labeled)}: {name})")
-            for index, (expr, name) in enumerate(labeled, start=1)]
+    parallel = [(expr, f" ({index}/{len(labeled)}: {name})")
+                for index, (expr, name) in enumerate(labeled, start=1)]
+    deferred = [(expr, f" (isolated: {name})")
+                for name in isolated for expr in build_filters([name])]
+    return parallel, deferred
 
 
-def selection_runs(selected: set[str], slow_classes: set[str]) -> list[tuple[str, str]]:
-    """(filter expression, label) runs selecting exactly ``selected`` classes.
+def selection_runs(selected: set[str],
+                   slow_methods: dict[str, set[str]]) -> tuple[list[tuple[str, str]], list[tuple[str, str]]]:
+    """((filter, label) parallel runs, (filter, label) deferred runs) selecting ``selected``.
 
-    With ``--slow`` every slow class keeps its own process so the exhaustive
-    tests of different classes overlap; the other classes share one filter.
+    With slow tests enabled every Speed=Slow method of the selected classes
+    keeps its own process so the exhaustive variants overlap; the methods are
+    subtracted from the shared class filter so nothing runs twice.
+    Timing-threshold classes run alone after the parallel pool instead
+    (``ISOLATED_CORE_CLASSES``), same as in the full run.
     """
     runs: list[tuple[str, str]] = []
-    slow = selected & slow_classes
-    for name in sorted(slow):
-        runs.append((build_filters([name])[0], f" {name.rsplit('.', 1)[-1]}"))
-    for expr in build_filters(sorted(selected - slow)):
-        runs.append((expr, ""))
-    return runs
+    excluded = set().union(*(slow_methods[c] for c in selected if c in slow_methods)) \
+        if any(c in slow_methods for c in selected) else set()
+    for method in sorted(excluded):
+        runs.append((f"FullyQualifiedName={method}", f" {method.rsplit('.', 1)[-1]}"))
+    parallel_classes = set(selected)
+    deferred_classes = sorted(parallel_classes & ISOLATED_CORE_CLASSES)
+    parallel_classes -= set(deferred_classes)
+    if parallel_classes:
+        parallel_excluded = set().union(*(slow_methods[c] for c in parallel_classes if c in slow_methods)) \
+            if any(c in slow_methods for c in parallel_classes) else set()
+        for expr in build_filters(sorted(parallel_classes), exclude=parallel_excluded):
+            runs.append((expr, ""))
+    deferred = [(expr, f" (isolated: {name})")
+                for name in deferred_classes for expr in build_filters([name])]
+    return runs, deferred
 
 
 def run_selection(root: Path, classes, run_all: bool, slow: bool = False) -> int:
@@ -818,35 +928,53 @@ def run_selection(root: Path, classes, run_all: bool, slow: bool = False) -> int
         return code
     files = scan_test_files(root)
     weights = class_weights(files)
-    slow_classes = slow_test_classes(files) if slow else set()
+    slow_methods = slow_test_methods(files) if slow else {}
     owned = classes_by_project(root, files, projects)
     unowned: set[str] = set()
     if not run_all and classes:
         known = set().union(*owned.values()) if owned else set()
         unowned = set(classes) - known
     pairs: list[tuple[str, str | None, str]] = []  # (project, filter, label)
+    deferred_pairs: list[tuple[str, str | None, str]] = []  # alone, after the pool drains
     for project in projects:
         if run_all:
-            runs = full_project_runs(project, owned.get(project, set()), slow_classes, weights)
+            runs, deferred = full_project_runs(project, owned.get(project, set()), slow_methods, weights)
         else:
             selected = (owned.get(project, set()) & set(classes or ())) | unowned
             if not selected:
                 continue  # no class of this project is selected; nothing to run
-            runs = selection_runs(selected, slow_classes)
+            runs, deferred = selection_runs(selected, slow_methods)
         pairs.extend((project, expr, label) for expr, label in runs)
-    if not pairs:
+        deferred_pairs.extend((project, expr, label) for expr, label in deferred)
+    if not pairs and not deferred_pairs:
         print("no tests selected for any project")
         return 0
-    workers = max(1, min(len(pairs), os.cpu_count() or 1))
+    workers = max(1, min(len(pairs), os.cpu_count() or 1)) if pairs else 0
     print(f"running {len(pairs)} dotnet test processes ({workers} in parallel)",
           file=sys.stderr)
     exit_code = 0
     total_failed = total_passed = 0
-    with concurrent.futures.ThreadPoolExecutor(max_workers=workers) as pool:
-        futures = {pool.submit(run_dotnet_test, root, project, expr, True, slow):
-                   (project, label) for project, expr, label in pairs}
-        for future, (project, label) in futures.items():
-            code, output = future.result()
+    if pairs:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=workers) as pool:
+            futures = {pool.submit(run_dotnet_test, root, project, expr, True, slow):
+                       (project, label) for project, expr, label in pairs}
+            for future, (project, label) in futures.items():
+                code, output = future.result()
+                print(f"===== {project}{label} =====")
+                print(output, end="" if output.endswith("\n") else "\n")
+                if code != 0:
+                    exit_code = exit_code or code
+                failed, passed = parse_summary(output)
+                print(f"-> failed: {failed}  passed: {passed}")
+                total_failed += failed
+                total_passed += passed
+    if deferred_pairs:
+        # Timing-threshold classes: nothing else may compete for the CPU while
+        # they measure, so they wait for the pool and then run alone.
+        print(f"running {len(deferred_pairs)} isolated timing-sensitive process(es) "
+              f"after the parallel batches", file=sys.stderr)
+        for project, expr, label in deferred_pairs:
+            code, output = run_dotnet_test(root, project, expr, True, slow)
             print(f"===== {project}{label} =====")
             print(output, end="" if output.endswith("\n") else "\n")
             if code != 0:
@@ -856,7 +984,7 @@ def run_selection(root: Path, classes, run_all: bool, slow: bool = False) -> int
             total_failed += failed
             total_passed += passed
     print(f"selected classes: {'all' if run_all else len(classes)}")
-    print(f"processes: {len(pairs)}")
+    print(f"processes: {len(pairs) + len(deferred_pairs)}")
     print(f"passed: {total_passed}  failed: {total_failed}")
     return exit_code
 
@@ -877,11 +1005,15 @@ def main(argv=None) -> int:
     parser.add_argument("--all", action="store_true",
                         help="run the full test suite")
     parser.add_argument("--slow", action="store_true",
-                        help="also run Speed=Slow exhaustive tests (SODRPG_SLOW=1)")
+                        help="also run Speed=Slow exhaustive tests (SODRPG_SLOW=1); "
+                             "the SODRPG_SLOW=1 environment variable is equivalent")
     parser.add_argument("--check-ci-matrix", action="store_true",
                         help="verify the ci.yml slow-tests matrix lists exactly the "
                              "classes holding Speed=Slow tests, then exit")
     args = parser.parse_args(argv)
+    # The release scripts and CI export SODRPG_SLOW=1 instead of passing --slow;
+    # treat both identically so the slow split applies to the real callers too.
+    slow = args.slow or os.environ.get("SODRPG_SLOW") == "1"
 
     root = REPO_ROOT
     if args.check_ci_matrix:
@@ -908,7 +1040,7 @@ def main(argv=None) -> int:
                 print(name)
             print(f"selected: {len(classes)} classes (full run)")
             return 0
-        return run_selection(root, None, run_all=True, slow=args.slow)
+        return run_selection(root, None, run_all=True, slow=slow)
 
     files = collect_files(root, changed)
     try:
@@ -926,7 +1058,7 @@ def main(argv=None) -> int:
             for name in sorted(selection.classes):
                 print(name)
             return 0
-        return run_selection(root, None, run_all=True, slow=args.slow)
+        return run_selection(root, None, run_all=True, slow=slow)
 
     if not selection.classes:
         print("nothing relevant changed; no tests to run")
@@ -939,7 +1071,7 @@ def main(argv=None) -> int:
         return 0
 
     print(f"selected classes: {len(selection.classes)}")
-    return run_selection(root, selection.classes, run_all=False, slow=args.slow)
+    return run_selection(root, selection.classes, run_all=False, slow=slow)
 
 
 if __name__ == "__main__":

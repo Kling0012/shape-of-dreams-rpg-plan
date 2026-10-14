@@ -1,4 +1,9 @@
+using SodRpg.Core.Tests;
 using Xunit;
+
+// どのテストも他クラスの StarClusters/Rules 登録を受け継がないよう、テストごとに基準状態へ戻す
+// （中身は SharedStarRegistryResetAttribute を参照。IClassFixture クラスは対象外）。
+[assembly: SharedStarRegistryReset]
 
 // Test collections stay serialized: StarClusters/HeroSigils/Rules hold one process-wide registry keyed by
 // real hero IDs, and tests temporarily re-register heroes (see [Collection("Generated hero registry")]).
