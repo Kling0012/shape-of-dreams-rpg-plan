@@ -9,6 +9,7 @@ namespace SodRpg.Mod
     {
         private Slot _slot = Slot.Weapon;
         private bool _forgeAllSlots = true;
+        private string _relicSearchFolded = "";
         private string HeroKey => "hero";
         private string _selected = null;
         private readonly Dictionary<float, List<Relic>> _sortedCache = new Dictionary<float, List<Relic>>();

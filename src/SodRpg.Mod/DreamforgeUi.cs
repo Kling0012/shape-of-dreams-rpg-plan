@@ -85,6 +85,8 @@ namespace SodRpg.Mod
         private Relic _confirmEnhance;
         private int _confirmEnhanceTarget;
         private bool _forgeAllSlots = true;
+        // 装備タブと鍛冶タブの「名前で検索」（#420）。2つのタブで共通。表示の絞り込みだけで保存しない。
+        private string _relicSearch = "", _relicSearchFolded = "";
         private string _status;
         private float _statusUntil;
         // 連携（v1.26）：ローカルの旅人の装着は0.5秒に1回だけ見る（OnGUI は1フレームに何度も走るため）。
@@ -1299,7 +1301,8 @@ namespace SodRpg.Mod
                 if (GUILayout.Button(SlotTabLabel(p, slot), _slot == slot ? _st.ButtonSel : _st.Button)) _slot = slot;
             }
             GUILayout.EndHorizontal();
-            RelicList(p.Stash.Where(r => r.Slot == _slot), hero, 410);
+            DrawRelicSearch();
+            RelicList(p.Stash.Where(r => r.Slot == _slot), hero, 376);
             GUILayout.EndVertical();
 
             // 右：詳細と比較
@@ -1332,7 +1335,8 @@ namespace SodRpg.Mod
             _scrollList = flex
                 ? GUILayout.BeginScrollView(_scrollList, false, false, GUIStyle.none, GUI.skin.verticalScrollbar, ForgeListSize)
                 : GUILayout.BeginScrollView(_scrollList, GUILayout.Height(height));
-            if (list.Count == 0) GUILayout.Label(Loc.T("まだありません。遠征で敵を倒すと遺物が落ち、確保すると保管庫に入ります。", "Nothing here yet. Enemies drop relics on expeditions; secure them to bring them here."), _st.Small);
+            if (list.Count == 0 && _relicSearchFolded.Length > 0) GUILayout.Label(Loc.T("名前に検索語を含む遺物がありません。", "No relics match the search."), _st.Small);
+            else if (list.Count == 0) GUILayout.Label(Loc.T("まだありません。遠征で敵を倒すと遺物が落ち、確保すると保管庫に入ります。", "Nothing here yet. Enemies drop relics on expeditions; secure them to bring them here."), _st.Small);
             // 保管庫は工房で千個以上まで広がるので、見えている行だけを描く（行の高さは一定）。
             const float rowStep = 37f; // 行36＋余白1（GUILayout は隣り合う余白を重ねる）
             int first = Math.Max(0, (int)(_scrollList.y / rowStep) - 2);
@@ -1357,6 +1361,32 @@ namespace SodRpg.Mod
             if (last < list.Count) GUILayout.Space((list.Count - last) * rowStep);
             GUILayout.EndScrollView();
             _scrollList.y = WheelScroll(_scrollList.y, list.Count * rowStep);
+        }
+
+        private static readonly GUILayoutOption[] RelicSearchCaptionWidth = { GUILayout.Width(96) };
+        private static readonly GUILayoutOption[] RelicSearchFieldSize = { GUILayout.Height(26), GUILayout.MinWidth(0), GUILayout.ExpandWidth(true) };
+        private static readonly GUILayoutOption[] RelicSearchClearSize = { GUILayout.Height(26), GUILayout.Width(56) };
+
+        /// <summary>
+        /// 遺物の一覧の上の「名前で検索」（装備タブ・鍛冶タブで共通、#420）。名前の部分一致で一覧を絞り込む。
+        /// 検索語を畳むのは入力が変わったときだけ（毎フレームの文字列の作成を増やさない）。
+        /// </summary>
+        private void DrawRelicSearch()
+        {
+            GUILayout.BeginHorizontal();
+            GUILayout.Label(Loc.T("名前で検索", "Search name"), _st.Small, RelicSearchCaptionWidth);
+            string q = GUILayout.TextField(_relicSearch ?? "", 40, RelicSearchFieldSize);
+            bool enabled = GUI.enabled;
+            GUI.enabled = enabled && q.Length > 0;
+            if (GUILayout.Button(Loc.T("解除", "Clear"), _st.Button, RelicSearchClearSize)) q = "";
+            GUI.enabled = enabled;
+            GUILayout.EndHorizontal();
+            if (q == _relicSearch) return;
+            _relicSearch = q;
+            string folded = RelicSearch.Fold(q);
+            if (folded == _relicSearchFolded) return;
+            _relicSearchFolded = folded;
+            _scrollList.y = 0f; // 絞り込みが変わったら一覧の先頭から見せる
         }
 
         /// <summary>
@@ -1397,7 +1427,7 @@ namespace SodRpg.Mod
                 var r = stash[i];
                 state = state * 31 + (r.Locked ? 1 : 0) + r.AwakenLevel * 2 + r.Enhance * 4 + (int)r.Rarity * 64 + r.Powers.Count * 1024;
             }
-            return p.Stash.Count + ":" + state + ":" + _slot + ":" + _forgeAllSlots + ":" + HeroKey + ":" + Loc.Japanese;
+            return p.Stash.Count + ":" + state + ":" + _slot + ":" + _forgeAllSlots + ":" + HeroKey + ":" + Loc.Japanese + ":" + _relicSearchFolded;
         }
 
         /// <summary>一覧（高さで区別）の並べ替えを使い回す。中身・遺物の状態・枠が変わるか、0.3秒たったら作り直す。素材だけの増減は順序に影響しない。</summary>
@@ -1414,6 +1444,7 @@ namespace SodRpg.Mod
             if (!_sortedCache.TryGetValue(id, out var list)) _sortedCache[id] = list = new List<Relic>();
             list.Clear();
             list.AddRange(relics);
+            if (_relicSearchFolded.Length > 0) list.RemoveAll(r => !RelicSearch.Matches(r.PlainName, _relicSearchFolded));
             list.Sort((a, b) => b.Score.CompareTo(a.Score));
             _sortedKey[id] = key;
             return list;
@@ -1694,6 +1725,7 @@ namespace SodRpg.Mod
             // まとめて分解は一覧の上（#147）：一覧は下限まで縮んで余りを吸収するが、
             // 下に置くと高さが足りないときに選択肢と確定ボタンが下端から切れる。
             BulkSalvageRow();
+            DrawRelicSearch();
             RelicList(_forgeAllSlots ? p.Stash : p.Stash.Where(r => r.Slot == _slot), HeroKey, 0f);
             GUILayout.EndVertical();
 
