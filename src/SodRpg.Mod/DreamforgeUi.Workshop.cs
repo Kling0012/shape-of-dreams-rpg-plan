@@ -50,6 +50,9 @@ namespace SodRpg.Mod
                 case Upgrade.BigSatchel: now = Workshop.SatchelCapacity(p); next = now + 5; ja = "鞄の上限"; en = "Satchel"; break;
                 case Upgrade.WideStash: now = Workshop.StashCapacity(p); next = now + 20; ja = "保管庫の上限"; en = "Stash"; break;
                 case Upgrade.BountyReroll: now = Workshop.RerollsPerRun(p); next = now + 1; ja = "引き直し"; en = "Rerolls"; break;
+                // 禁忌の職人（#415）：解放後は、宿敵との因縁と手持ちの禁忌の核を出す。
+                case Upgrade.ForbiddenSmith:
+                    return canRaise ? "" : $"<color=#ff9a9a>{Forbidden.GrudgeLabel(p.NemesisGrudge)} · {Loc.T("禁忌の核", "Forbidden cores")} {p.Material(Materials.NemesisCore)}</color>";
                 default: return "";
             }
             string arrow = canRaise ? $" → <color=#7cf07c>{next}</color>" : "";

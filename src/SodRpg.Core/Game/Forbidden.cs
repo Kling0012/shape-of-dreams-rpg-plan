@@ -125,6 +125,25 @@ namespace SodRpg.Core.Game
         public const int NemesisShardBonusPct = 100;
         public const int NemesisTuningBonus = 3;
 
+        // ───── 因縁（宿敵「深淵の追跡者」との） ─────
+        /// <summary>宿敵の名。ボス・エリートを問わず、禁忌の職人を持つ者を追う同じ存在として現れる。</summary>
+        public static string NemesisName => Loc.T("深淵の追跡者", "Abyssal Stalker");
+        /// <summary>因縁の上限。宿敵を倒すたびに1つ深まる。</summary>
+        public const int MaxGrudge = 5;
+        /// <summary>因縁1段ごとの宿敵化の確率の上乗せ（元の確率に対する%）。</summary>
+        public const int GrudgeChanceStepPct = 15;
+        /// <summary>因縁1段ごとの宿敵のHPと攻撃力の上乗せ（%）。</summary>
+        public const int GrudgeHealthStepPct = 10;
+        public const int GrudgeAttackStepPct = 5;
+        /// <summary>この段以上の因縁で宿敵を倒すと、禁忌の核を1つ多く得る。</summary>
+        public const int GrudgeBonusCoreAt = 3;
+
+        public static int ClampGrudge(int grudge) => Math.Max(0, Math.Min(MaxGrudge, grudge));
+
+        /// <summary>因縁の表示（「深淵の追跡者との因縁 Lv2/5」）。</summary>
+        public static string GrudgeLabel(int grudge) => Loc.T($"{NemesisName}との因縁 Lv{ClampGrudge(grudge)}/{MaxGrudge}",
+            $"Grudge with the {NemesisName}: Lv{ClampGrudge(grudge)}/{MaxGrudge}");
+
         public static bool HasSmith(Profile p) => p != null && Workshop.Level(p, Upgrade.ForbiddenSmith) > 0;
 
         /// <summary>セットに属さない固有品（オレンジ枠）。セット品（赤枠）・ボスの技を持つ品は対象外。</summary>
@@ -351,23 +370,31 @@ namespace SodRpg.Core.Game
             }
         }
 
-        /// <summary>宿敵化の抽選。パーティの誰かが禁忌の職人を解放しているときだけ起きる。</summary>
-        public static bool RollNemesis(Rng rng, MonsterTier tier, bool anySmith)
+        /// <summary>宿敵化の抽選。パーティの誰かが禁忌の職人を解放しているときだけ起きる。因縁（パーティで最も深いもの）が深いほど現れやすい。</summary>
+        public static bool RollNemesis(Rng rng, MonsterTier tier, bool anySmith, int grudge = 0)
         {
-            double chance = NemesisChance(tier);
+            double chance = NemesisChance(tier) * (100 + GrudgeChanceStepPct * ClampGrudge(grudge)) / 100.0;
             return anySmith && chance > 0 && rng.Chance(chance);
         }
 
         /// <summary>宿敵へ付ける能力（表示単位）。</summary>
-        public static List<StatLine> NemesisStats(MonsterTier tier)
+        public static List<StatLine> NemesisStats(MonsterTier tier, int grudge = 0)
         {
             bool boss = tier >= MonsterTier.Boss;
+            int g = ClampGrudge(grudge);
             return new List<StatLine>
             {
-                new StatLine(Stat.MaxHealthPct, boss ? NemesisBossHealthPct : NemesisMiniBossHealthPct),
-                new StatLine(Stat.AttackPct, boss ? NemesisBossAttackPct : NemesisMiniBossAttackPct),
+                new StatLine(Stat.MaxHealthPct, (boss ? NemesisBossHealthPct : NemesisMiniBossHealthPct) + GrudgeHealthStepPct * g),
+                new StatLine(Stat.AttackPct, (boss ? NemesisBossAttackPct : NemesisMiniBossAttackPct) + GrudgeAttackStepPct * g),
                 new StatLine(Stat.Armor, NemesisArmor),
             };
+        }
+
+        /// <summary>宿敵の撃破で得る禁忌の核（因縁が深ければ1つ多い）。</summary>
+        public static int NemesisCores(MonsterTier tier, int grudge)
+        {
+            int cores = NemesisCores(tier);
+            return cores > 0 && ClampGrudge(grudge) >= GrudgeBonusCoreAt ? cores + 1 : cores;
         }
 
         public static int NemesisCores(MonsterTier tier) => tier >= MonsterTier.Boss ? BossCores : tier == MonsterTier.MiniBoss ? MiniBossCores : 0;

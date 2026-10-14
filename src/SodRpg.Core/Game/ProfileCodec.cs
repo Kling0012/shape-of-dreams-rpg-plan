@@ -177,6 +177,8 @@ namespace SodRpg.Core.Game
                 .Add("runRecovery", WriteRunRecovery(p.RunRecovery))
                 .Add("killClassification", WriteKillClassification(p.KillClassification))
                 .Add("run", run);
+            // 宿敵との因縁（#415）も、無い保存が旧MODの書き出しと変わらないよう0なら書かない。
+            if (p.NemesisGrudge != 0) body.Add("nemesisGrudge", (long)p.NemesisGrudge);
             // 直送の使用済み遠征は、使っていない保存が旧MODの書き出しと1バイトも変わらないよう、空なら書かない。
             if (p.DirectStashUsedRunIds.Count != 0)
                 body.Add("directStashUsedRunIds", p.DirectStashUsedRunIds.OrderBy(id => id, StringComparer.Ordinal).Select(id => (object)id).ToList());
@@ -305,6 +307,7 @@ namespace SodRpg.Core.Game
             p.OverflowBonusPendingTotal = Long(b, "overflowBonusPendingTotal");
             p.StartDepth = Clamp(Long(b, "startDepth"), 0, Content.MaxHeat);
             p.LastDreamDepth = Clamp(Long(b, "lastDreamDepth"), 0, DreamDepth.Maximum);
+            p.NemesisGrudge = Clamp(Long(b, "nemesisGrudge"), 0, Forbidden.MaxGrudge); // #415：旧保存には無いので0
             ReadInfinitySettings(p, b);
             p.InfinityRewardBudget = ReadInfinityRewardBudget(b);
             ReadInfinityRecords(p, b);

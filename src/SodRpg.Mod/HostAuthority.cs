@@ -289,6 +289,7 @@ namespace SodRpg.Mod
                     _netLitePeers.Remove(player);
                     _roomOmenPeers.Remove(player);
                     _forbiddenSmithPeers.Remove(player);
+                    _nemesisGrudgePeers.Remove(player);
                 }
                 _pressureDirty = true;
             };
@@ -954,8 +955,9 @@ namespace SodRpg.Mod
                 bool nemesis = false;
                 try
                 {
-                    nemesis = Forbidden.RollNemesis(_rng, tier, AnyForbiddenSmith());
-                    if (nemesis) MakeNemesis(rt, tier);
+                    int grudge = PartyNemesisGrudge();
+                    nemesis = Forbidden.RollNemesis(_rng, tier, AnyForbiddenSmith(), grudge);
+                    if (nemesis) MakeNemesis(rt, tier, grudge);
                 }
                 catch (Exception ex)
                 {
@@ -1049,15 +1051,23 @@ namespace SodRpg.Mod
         /// <summary>協力プレイでは、ホストか参加者の誰か1人でも禁忌の職人を解放していれば宿敵が出る（#415）。</summary>
         private bool AnyForbiddenSmith() => ClientSession.HostHasForbiddenSmith || _forbiddenSmithPeers.Count > 0;
 
+        /// <summary>パーティで最も深い、宿敵「深淵の追跡者」との因縁（#415）。最も因縁の深い者を追って現れる。</summary>
+        private int PartyNemesisGrudge()
+        {
+            int grudge = ClientSession.HostNemesisGrudge;
+            foreach (var kv in _nemesisGrudgePeers) if (kv.Value > grudge) grudge = kv.Value;
+            return Forbidden.ClampGrudge(grudge);
+        }
+
         /// <summary>宿敵化：能力を上乗せし、撃破の記録には悪夢化と同じ欄で宿敵の印を載せる。</summary>
-        private void MakeNemesis(MonsterRuntime rt, MonsterTier tier)
+        private void MakeNemesis(MonsterRuntime rt, MonsterTier tier, int grudge)
         {
             var m = rt.Monster;
-            rt.SpecialBonus = ToMonsterStatBonus(Forbidden.NemesisStats(tier));
+            rt.SpecialBonus = ToMonsterStatBonus(Forbidden.NemesisStats(tier, grudge));
             m.Status.AddStatBonus(rt.SpecialBonus);
             m.Status.CalculateStatsIfDirty();
             _nightmares[m] = NightmareAffix.Nemesis;
-            Log.Info($"Nemesis: {m.GetType().Name} netId={m.netId} tier={tier}");
+            Log.Info($"Nemesis: {m.GetType().Name} netId={m.netId} tier={tier} grudge={grudge}");
             SendMonsterClassification(rt);
         }
 

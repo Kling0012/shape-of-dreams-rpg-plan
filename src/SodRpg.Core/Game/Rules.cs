@@ -266,9 +266,13 @@ namespace SodRpg.Core.Game
             if (nemesis)
             {
                 // 禁忌の核はまれな戦利品なので、全滅でも失わないよう直接持ち帰る。
-                int cores = Forbidden.NemesisCores(tier);
+                int cores = Forbidden.NemesisCores(tier, p.NemesisGrudge);
                 p.AddMaterial(Materials.NemesisCore, cores);
-                killNotice = new GameEvent(EventKind.Info, Loc.T($"宿敵を倒しました！禁忌の核 +{cores}", $"Nemesis defeated! Forbidden cores +{cores}"));
+                // 倒すたびに因縁が深まり、追跡者はより強く、より頻繁に現れる。
+                p.NemesisGrudge++;
+                killNotice = new GameEvent(EventKind.Info, Loc.T(
+                    $"宿敵「{Forbidden.NemesisName}」を倒しました！禁忌の核 +{cores}。{Forbidden.GrudgeLabel(p.NemesisGrudge)}",
+                    $"Defeated the nemesis \"{Forbidden.NemesisName}\"! Forbidden cores +{cores}. {Forbidden.GrudgeLabel(p.NemesisGrudge)}"));
             }
             else if (variant != null)
             {
@@ -1832,7 +1836,10 @@ namespace SodRpg.Core.Game
             p.AddMaterial(Materials.Tuning, -Forbidden.TuningCost);
             r.Forbidden = mark;
             string detail = Forbidden.PatternDescription(mark.Pattern);
-            if (mark.Pattern == ForbiddenPattern.Pact)
+            if (Forbidden.IsTransmute(r))
+                detail = Loc.T($"血の転化：シールドを得られず、受けた回復の{Forbidden.TransmuteHealPct}%を攻撃力に変換",
+                    $"Blood Transmutation: no shields; {Forbidden.TransmuteHealPct}% of healing received becomes attack");
+            else if (mark.Pattern == ForbiddenPattern.Pact)
             {
                 var pair = Forbidden.PactVariants[mark.Variant];
                 detail = Content.FormatStat(pair.Boon.Stat, pair.Boon.Value) + Loc.T("、", ", ") + Content.FormatStat(pair.Bane.Stat, pair.Bane.Value);

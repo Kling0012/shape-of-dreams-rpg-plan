@@ -233,6 +233,8 @@ namespace SodRpg.Mod
         public int roomOmens;
         /// <summary>この参加者が工房の「禁忌の職人」を解放済みか（#415）。誰か1人でも解放していればホストは宿敵を出す。</summary>
         public int forbiddenSmith;
+        /// <summary>この参加者と宿敵「深淵の追跡者」との因縁の深さ（#415）。ホストはパーティで最も深い値で宿敵を出す。旧版は 0。</summary>
+        public int nemesisGrudge;
         /// <summary>ホストが禁忌装備入り（15欄形式）のビルド入力を読めるか（#415）。旧ホストは返さないので 0 扱いになり、参加者は禁忌装備を送らない。</summary>
         public int forbiddenInput;
     }

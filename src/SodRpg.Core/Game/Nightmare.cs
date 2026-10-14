@@ -307,7 +307,7 @@ namespace SodRpg.Core.Game
         /// <summary>頭上に出す名札。例：「悪夢・鋼殻・狂暴」。</summary>
         public static string Label(NightmareAffix a)
         {
-            if ((a & NightmareAffix.Nemesis) != 0) return Loc.T("宿敵", "Nemesis");
+            if ((a & NightmareAffix.Nemesis) != 0) return Loc.T("宿敵・", "Nemesis: ") + Forbidden.NemesisName;
             var parts = new List<string> { Loc.T("悪夢", "Nightmare") };
             foreach (var x in AllAffixes)
                 if ((a & x) != 0) parts.Add(AffixName(x));
