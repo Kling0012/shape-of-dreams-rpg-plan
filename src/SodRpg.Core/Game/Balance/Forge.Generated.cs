@@ -60,7 +60,7 @@ namespace SodRpg.Core.Game
         internal static readonly (int Shards, int Tuning)[] WideStashCosts = { (80, 0), (160, 1), (320, 3), (500, 5), (700, 7), (900, 9), (1200, 11), (1500, 13), (1900, 16), (2400, 20) };
         internal const int WideStashFirstBandLevels = 3;
         internal const int WideStashFirstBandCapacity = 20;
-        internal const int WideStashLaterCapacity = 40;
+        internal const int WideStashLaterCapacity = 260;
         internal static readonly (int Shards, int Tuning)[] BountyRerollCosts = { (150, 2), (300, 4) };
         internal const int BountyRerollRerollsPerLevel = 1;
         internal static readonly (int Shards, int Tuning)[] EchoLanternCosts = { (200, 2), (400, 5) };
@@ -71,6 +71,6 @@ namespace SodRpg.Core.Game
         internal const int LostMapMinimumRooms = 2;
         internal static readonly (int Shards, int Tuning)[] PactStarsCosts = { (350, 6) };
         internal const int PactStarsOffersPerLevel = 1;
-        internal static readonly string[] ContentFingerprintRecords = {  };
+        internal static readonly string[] ContentFingerprintRecords = { "balance:forge:v2:workshop/wideStash/laterCapacity:int:count:260" };
     }
 }
