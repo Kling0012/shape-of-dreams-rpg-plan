@@ -8,9 +8,31 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
+---
+
+## v2.10.39 — Forbidden Smith: Nemesis enemies and relic Forbidding（2026-10-15）
+
+このバージョンでは、工房に「禁忌の職人」を追加し、強敵「宿敵」の出現や、オレンジ枠の遺物を作り変える「禁忌化」を解禁しました。 / This version adds the Forbidden Smith to the workshop, which unlocks powerful Nemesis enemies and Forbidding, a new way to transform orange-frame relics.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
 ### 新機能 / New features
 
-- **禁忌の装備と宿敵（クラフト拡張パック）**：工房に「禁忌の職人」が加わりました。解放すると、ボスやエリートがまれに強くなった宿敵「深淵の追跡者」として現れ、倒すたびに因縁が深まり、より強く・より頻繁に現れ、報酬も増えます。宿敵化したボスを倒すと禁忌の核（禁忌化に必要な素材）と追加の報酬が手に入り、エリートの宿敵には追加の報酬があります。禁忌の核を使うと、セットに属さない固有品（オレンジ枠）を一度だけ「禁忌化」でき、極端な効果と引き換えに明確な欠点を持つ装備になります（4つの型からランダム。シールドを得られなくなる代わりに回復の一部を攻撃力へ変える「血の転化」も含みます。禁忌化した装備は再調律・洗い直しや、特性・固有効果を変える夢の出来事の対象外）。あわせて、オレンジ枠固有品の再調律の上限が3回増えます（対応する前のホストでは、禁忌化した装備と旧上限を超えて再調律した装備は協力プレイに適用されません）。協力プレイでは、誰か1人が解放していれば宿敵が現れます。 / **Forbidden gear and nemeses (crafting expansion)**: the workshop gains the Forbidden Smith. Once unlocked, bosses and elites sometimes appear as the empowered nemesis "Abyssal Stalker"; each defeat deepens your grudge with it, making it stronger, more frequent and more rewarding. Nemesis bosses drop forbidden cores (the material for forbidding) plus extra rewards, while nemesis elites give extra rewards. Cores let you make a non-set unique (orange frame) forbidden once, giving it an extreme effect with a clear drawback (one of four random types, including Blood Transmutation: no shields, but part of healing becomes attack; forbidden gear can no longer be retuned, rerolled, or touched by relic-altering dream events). Orange-frame uniques also get 3 more retunes (on hosts without forbidden-gear support, forbidden and over-retuned gear is not applied in co-op). In co-op, nemeses appear if anyone has the smith unlocked.
+- 工房に新しい項目「禁忌の職人」を追加しました。これを解放すると、本バージョンで追加された宿敵の出現、禁忌化、再調律回数の上限引き上げが有効になります。解放するまでは、これらはいずれも発生しません。 / A new workshop upgrade, "Forbidden Smith," has been added. Unlocking it turns on Nemesis enemies, Forbidding, and the higher reroll limit added in this version. None of these happen until you unlock it.
+- 職人を解放すると、ボスやエリートがまれに「宿敵」として現れるようになります。宿敵は通常より大幅に強く、頭上に「宿敵」のタグが表示されます。潜行の深さが0でも出現します。悪夢化した敵や変種が宿敵になることはありません。 / Once the Smith is unlocked, bosses and elites occasionally appear as a "Nemesis." A Nemesis is much stronger than usual and shows a "Nemesis" tag above its head. Nemeses can appear even at dive depth 0. Nightmare and variant enemies never become Nemeses.
+- 宿敵を倒すと、通常より格の高い戦利品に加え、より多くの欠片や調律石が手に入ります。さらに、新しい素材「禁忌の核」も獲得できます。禁忌の核は直接持ち帰り扱いとなるため、全滅しても失われません。宿敵の撃破は、悪夢化した敵の討伐数や依頼にはカウントされません。 / Defeating a Nemesis gives higher-grade loot, extra shards and tuning stones, and a new material, "Forbidden Core." Forbidden Cores go straight home with you, so you keep them even if your party is wiped out. Nemesis kills do not count toward nightmare kill counts or requests.
+- 協力プレイでは、ホストか参加者の誰か1人でも禁忌の職人を解放していれば、宿敵が現れます。 / In co-op, Nemeses appear if the host or any participant has unlocked the Forbidden Smith.
+- 鍛冶タブに「禁忌化」を追加しました。禁忌の核などの素材を使い、オレンジ枠の固有品を1つにつき一度だけ作り変えられます。誤操作を防ぐため、ボタンを2回押して確定します。 / A "Forbid" action has been added to the Forge tab. Using Forbidden Cores and other materials, you can transform an orange-frame unique relic once per relic. To prevent mistakes, you press the button twice to confirm.
+- 禁忌化の結果は、次の4つのタイプから均等な確率で決まります。「禁忌の契約」は大きな利点と大きな欠点が1組付与されます。「断絶」は特性を1つ失う代わりに固有効果を1つ獲得します。「過剰」は特性を1つ失う代わりに固有効果が強化されます。「破滅の誓い」は特性が強化される代わりに最大HPが減少します。 / The result is one of four types, each equally likely. "Forbidden Pact" adds one large upside paired with one large downside. "Severance" removes one trait and grants a unique effect. "Excess" removes one trait and strengthens the unique effect. "Oath of Ruin" strengthens the traits but lowers max HP.
+- 禁忌化した遺物は、再調律・特性の洗い直し・イベント「影の交換」の対象外となります。強化・限界突破・覚醒はこれまでどおり行えます。 / Forbidden relics can no longer be rerolled, have their traits reset, or be used in the "Shadow Exchange" event. You can still enhance, limit-break, and awaken them.
+- 禁忌の職人を解放すると、オレンジ枠の遺物を再調律できる回数の上限が引き上げられます。 / Unlocking the Forbidden Smith raises the reroll limit for orange-frame relics.
+- 赤枠の遺物（セット品やボスの技を持つ品）は、禁忌化および再調律回数の上限引き上げの対象外です。 / Red-frame relics (set items and items with boss skills) are not eligible for Forbidding or the higher reroll limit.
+
+このバージョンの変更内容は、コードとテストで確認したものですが、実際のゲームプレイや協力プレイでの確認はまだ行っていません。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
 
 ---
 
