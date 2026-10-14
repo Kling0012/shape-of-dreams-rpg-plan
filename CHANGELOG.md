@@ -8,10 +8,23 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
-### 修正 / Fixes
+---
 
-- 断絶の印の検証を堅くしました。禁忌化の後に同じ固有効果が遺物に宿った場合でも、正規に生成した印が読み込み時やホスト側の検証で黙って捨てられなくなります（効果はその部位の池と抽選範囲に従うものだけ受け付けます）。 / Hardened Severance mark validation: a legitimately generated mark is no longer silently dropped on load or host validation if the relic later gains the same power (the power must still belong to the slot's pool and roll range).
-- 禁忌の職人・宿敵・因縁の調整値を `tools/balance/forbidden.json` の生成表へ移しました。数値は変えていません（実プレイでの調整前提の仮の値）。 / Moved Forbidden Smith / Nemesis / grudge tuning into the generated table at `tools/balance/forbidden.json`. Values are unchanged (provisional, pending playtesting).
+## v2.10.40 — Fix Severance effects being lost on forbidden relics（2026-10-15）
+
+このバージョンでは、「断絶」で禁忌化した遺物の効果が失われることがある不具合を修正しました。 / This version fixes a bug that could cause the effect of relics forbidden with "Severance" to be lost.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- 「断絶」で禁忌化した遺物に、後から同じ固有効果が付いていると、セーブデータを読み込んだときや協力プレイに持ち込んだときに、断絶で得た効果が何の表示もなく失われることがありました。この問題を修正し、正しく禁忌化した遺物の効果は保たれるようになりました。 / If a relic forbidden with "Severance" later gained the same unique effect, the effect granted by Severance could be silently lost when loading your save or bringing the relic into co-op. This has been fixed, and relics that were properly forbidden now keep their effect.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
 
 ---
 

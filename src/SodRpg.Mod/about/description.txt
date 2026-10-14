@@ -1,5 +1,5 @@
-[b]Adds the Forbidden Smith workshop upgrade, which unlocks Nemesis enemies, Forbidding for orange-frame relics, and a higher reroll limit.[/b]
-[b]工房に「禁忌の職人」を追加し、宿敵、オレンジ枠の遺物の禁忌化、再調律回数の上限の引き上げを使えるようにしました。[/b]
+[b]Fixes a bug where the effect of relics forbidden with Severance could be lost when loading a save or joining co-op.[/b]
+[b]「断絶」で禁忌化した遺物の効果が、読み込み時や協力プレイで失われることがある不具合を修正しました。[/b]
 
 [h1]Dreamforge RPG[/h1]
 Turns every run into part of a long RPG journey: relics you keep, a risky "secure or delve" choice at every zone, a star map per Traveler, a forge, and long-term goals. Co-op ready.
