@@ -10,6 +10,27 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v2.10.38 — Relic name search in the Equipment and Forge tabs（2026-10-15）
+
+このバージョンでは、装備タブと鍛冶タブに、遺物を名前で探せる検索欄を追加しました。 / This version adds a name search box to the Equipment and Forge tabs for finding relics.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 新機能 / New features
+
+- 装備タブ（中央の保管庫の一覧）と鍛冶タブ（左の一覧）の上に、「名前で検索」欄と「解除」ボタンを追加しました。入力した文字を名前に含む遺物だけが一覧に表示されます。 / A "Search by name" box and a "Clear" button now appear above the Equipment tab list (the storage list in the center) and the Forge tab list (on the left). Only relics whose names contain the text you enter are shown.
+- 大文字と小文字、ひらがなとカタカナ、全角と半角の英数字は区別せずに検索できるので、日本語名でも入力の仕方を気にせず探せます。 / Search ignores the difference between uppercase and lowercase, hiragana and katakana, and full-width and half-width letters and numbers, so you can find Japanese names however you type them.
+- 検索語は2つのタブで共通です。装備タブで探した遺物は、鍛冶タブに移ってもそのまま扱えます。検索語は画面を開いている間だけ保持され、セーブデータには残りません。 / The search text is shared between the two tabs, so a relic you found in the Equipment tab stays in view when you switch to the Forge tab. The search text lasts only while the screen is open and is not kept in your save.
+- 一致する遺物がないときは「名前に検索語を含む遺物がありません。」と表示されます。また、選んでいる遺物が検索で一覧から外れても選択はそのまま維持され、右側の詳細の確認や装着・鍛冶の操作を続けられます。 / When no relic matches, the list shows a message saying so. If the relic you selected is filtered out of the list, it stays selected, and you can still see its details on the right and equip or forge it.
+
+このバージョンの変更は、コードとテストで確認していますが、実際のゲームや協力プレイでの確認はまだ行っていません。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
 ## v2.10.37 — Fix storage limit display in the workshop（2026-10-15）
 
 このバージョンでは、工房画面で保管庫の上限が正しく表示されない不具合を修正しました。 / This version fixes an issue where the workshop screen showed the wrong storage limit.
