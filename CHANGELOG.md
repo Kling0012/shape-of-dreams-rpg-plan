@@ -8,7 +8,25 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
-- ロビーだけにいる参加者の版・Protocol・内容に差があるとき、ホストの互換性警告一覧に表示されない不具合を修正しました。両方の参加者一覧から抜けた人は引き続き表示対象から外れます。 / Fixed missing host compatibility warnings for lobby-only peers with a different version, protocol or content registry. Peers absent from both player lists remain excluded.
+---
+
+## v2.10.50 — Fix co-op lobby version warnings, room omens across zones, and essence slots after loading（2026-10-16）
+
+このバージョンでは、協力プレイのロビーにいる参加者のバージョンが違うときに、ホストに警告が表示されない不具合を修正しました。あわせて、ゾーンが変わっても同じ部屋番号で同じ兆しが出ることがある不具合と、読み込み直後に記憶のエッセンス枠が正しい数で出ないことがある不具合も修正しました。 / This version fixes an issue where the host was not warned when a player waiting in the co-op lobby had a different version. It also fixes an issue where the same room number could show the same omen even in a different zone, and an issue where memory essence slots could show the wrong number right after loading.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- 協力プレイで、ロビーにだけいる参加者のバージョンや内容がホストと違っていても、ホストの警告一覧に表示されなかった問題を修正しました。ロビーにいる参加者の違いも警告一覧に表示されるようになりました。ゲームとロビーの両方にいる参加者の警告が二重に出ることはなく、抜けた参加者の警告は今までどおり一覧から消えます。違いがあっても、これまで使えていた機能が止まることはありません。 / Fixed an issue in co-op where the host's warning list did not show players who were only in the lobby, even when their version or content differed from the host's. These differences for lobby players now appear in the warning list. Players who are both in the game and in the lobby are not listed twice, and warnings for players who have left are still removed from the list as before. Differences do not stop any features that already worked.
+- 部屋の兆しが部屋番号だけで決まっていたため、ゾーンが変わっても同じ部屋番号なら同じ兆しになることがある問題を修正しました。 / Fixed an issue where room omens were decided only by room number, so the same room number could show the same omen even in a different zone.
+- 読み込み直後、画面表示の準備が終わる前だと、レベルに応じた記憶のエッセンス枠が4つまでに切られてしまうことがある問題を修正しました。読み込み直後からレベルに応じた正しい数の枠が出るようになりました。 / Fixed an issue where level-based memory essence slots could be cut off at 4 if the game was loaded before the HUD was ready. The correct number of slots for your level now appears right after loading.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
 
 ---
 
