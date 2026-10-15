@@ -1093,6 +1093,14 @@ class Compiler:
         rows = list(self.mapped.values())
         rows.extend("ManifestBaselinePair(" + cs(self.hero) + ", " + cs(bridge) + ")"
                     for bridge in sorted(bridges) if bridge not in self.by_id)
+        # Share identical target lists before changing the representation of the rows.
+        targets = {}
+        def share_targets(match):
+            value = match.group(1)
+            if value not in targets:
+                targets[value] = title + "TargetEffects" + str(len(targets))
+            return "TargetEffectIds = " + targets[value]
+        rows = [re.sub(r'TargetEffectIds = (new string\[\] \{ [^}]* \})', share_targets, row) for row in rows]
         needs_layout = any("ManifestRouteEntry(" in expression for expression in rows)
         layout_arg = ", baselineLayout" if needs_layout else ""
         chunks = [rows[i:i + 32] for i in range(0, len(rows), 32)]
@@ -1105,6 +1113,8 @@ class Compiler:
         for i in range(len(chunks)):
             lines.append("            Fill" + title + "Manifest" + str(i) + "(definitions" + layout_arg + ");")
         lines += ["            return definitions;", "        }"]
+        for value, field in targets.items():
+            lines.append("        private static readonly string[] " + field + " = " + value + ";")
         for i, chunk in enumerate(chunks):
             lines += ["", "        private static void Fill" + title + "Manifest" + str(i) + "(AuthoredStarDef[] definitions" + (", HeroTreeLayout baselineLayout" if needs_layout else "") + ")", "        {"]
             lines += ["            definitions[" + str(i * 32 + j) + "] = " + expression + ";" for j, expression in enumerate(chunk)]
