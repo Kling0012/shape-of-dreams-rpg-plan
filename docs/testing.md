@@ -281,6 +281,21 @@ Linux／.NET 10、Releaseの実Core DLLで、鞄30個・レア度／スコア混
   または `FullyQualifiedName~NativeAcceptanceTests`。
   実機のフレーム時間・確保量・Unity本体のRPC転送はこのハーネスの検証範囲外。
 
+## #435 宿敵の名札色（2026-10-15）
+
+引き継いだスナップショットには、`DreamforgeUi.DrawNightmareLabels` の宿敵色
+`#6ae4ff`（シアン）、悪夢化色 `#ff6ad5`（ピンク紫）、`DrawVariantLabels` の
+変種色 `#ffb347`（橙）と、宿敵がある場合に変種名札を描かない処理が含まれていた。
+再実装せず、そのまま確認した。宿敵の判定は `NightmareAffix.Nemesis` のビットで行うため、
+ボス／ミニボス共通で、ほかの接頭効果が付いていても宿敵色を優先する。
+ヴァイオレットは悪夢化のピンク紫に近いためシアンを採用した理由と、英語の説明を補った。
+
+- `dotnet build src/SodRpg.Mod -c Release -p:GameDir="/mnt/ghauto-sbx/sod-gamedata/Shape of Dreams" --nologo`：終了コード0、エラー0・警告6。ゲーム参照DLLでコンパイルした。ゲーム側に `Mods` ディレクトリがなく、配置処理は実行されない。
+- `DOTNET_ROLL_FORWARD=Major dotnet test tests/SodRpg.Core.Tests/SodRpg.Core.Tests.csproj -c Release --filter 'FullyQualifiedName~SodRpg.Core.Tests.NightmareTests.|FullyQualifiedName~SodRpg.Core.Tests.MonstersV129Tests.|FullyQualifiedName~SodRpg.Core.Tests.VariantsV124Tests.|FullyQualifiedName~SodRpg.Core.Tests.NameplateTrimTests.|FullyQualifiedName~SodRpg.Core.Tests.MonsterAuthorityStateTests.' --nologo`：終了コード0、59成功・0失敗・0スキップ。
+- 既存テストの対象は悪夢／変種のルール、宿敵ビットの保持、名札の生存管理、敵分類状態。色選択と描画の優先順はソースを確認したもので、既存テストは描画メソッドを実行しない。新しいテストは追加していない。
+- **未実行**：Unity実画面で宿敵化したボス／ミニボスの名札を比較する確認、背景別の視認性・1920×1080の実描画、実際の協力通信。ゲーム実行環境が提供されていないため、報告の画面上の状況は再現・目視確認していない。
+- **未実行**：フルテスト・Slowテスト、今回の名札表示と無関係なテスト。作業中は関連部分だけを検証し、全体検証は後続工程に委ねる指示による。
+
 ## マッピングロジックの単体テスト
 
 `tools/tests/test_test_changed.py`（unittest）がマッピングロジックの単体テストを

@@ -62,6 +62,8 @@ LastStarlight の捕捉はホスト上の生存中・登録済みの旅人が正
 | 協力 | 抽選と保存は各自のPC。能力の反映はホストが行う（ホストにMODが必要）。共鳴は近くの味方へも効果を分ける |
 | 夢の圧（v1.27） | ゲームに参加中の人間の夢レベル・使用済み星ポイントの平均で敵HPと与ダメージを乗算。圧が高まると敵の数も増えるが、ボスの数は増やさない。係数の原本は `tools/balance/pressure.json`。人数補正・深度・悪夢・変種の既存強化と併用し、HP／攻撃の倍率はボスにも有効。HUDにホストの現在値を表示 |
 
+**EN — Nemesis nameplates:** Nemesis bosses and elites (minibosses) use cyan overhead nameplates, distinct from orange dream variants and pink-purple nightmares. Cyan was chosen over violet because violet is closer to the nightmare color. The Nemesis nameplate takes priority if tags overlap, and each PC uses the same colors in co-op.
+
 装備の変更は遠征の外か確保地点でのみ、星図は遠征の外でのみ変更できる。
 
 ### 夢の圧による敵数増加（Issue #253）
