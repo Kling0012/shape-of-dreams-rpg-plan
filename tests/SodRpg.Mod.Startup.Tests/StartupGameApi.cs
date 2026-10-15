@@ -20,7 +20,7 @@ namespace UnityEngine
 {
     public static class Application { public static string persistentDataPath = System.IO.Path.GetTempPath(); }
     public static class Debug { public static void Log(object value) { } }
-    public static class Time { public static float unscaledDeltaTime, unscaledTime; }
+    public static class Time { public static float time, unscaledDeltaTime, unscaledTime; }
     public static class Mathf { public static float Clamp(float value, float min, float max) => Math.Max(min, Math.Min(max, value)); }
     public struct Vector3
     {
@@ -161,6 +161,16 @@ namespace SodRpg.Mod
         public bool isActive;
         public string name;
         public bool Destroyed;
+        public uint netId;
+        public float creationTime;
+        public UnityEngine.GameObject gameObject = new UnityEngine.GameObject();
+        public event Action<Actor> ClientActorEvent_OnDestroyed;
+        // 本体の破棄イベントの境界。寿命監視の購読をテストから起こせるようにする。
+        internal void RaiseClientActorDestroyed()
+        {
+            isActive = false;
+            ClientActorEvent_OnDestroyed?.Invoke(this);
+        }
         public void Destroy() { Destroyed = true; isActive = false; }
         // The harness records custom-RPC traffic so lobby handshake tests can observe the host's answer.
         public static readonly List<(DewPlayer player, object message)> SentToClients = new List<(DewPlayer, object)>();
@@ -440,6 +450,8 @@ namespace SodRpg.Mod
     public class Entity : Actor
     {
         public bool FailSpawn;
+        public bool isDead;
+        public EntityStatus Status = new EntityStatus();
         public UnityEngine.Vector3 agentPosition;
         public EntityRelation GetRelation(Entity entity) => EntityRelation.Ally;
         public bool CheckEnemyOrNeutral(Entity entity) => false;
@@ -450,7 +462,7 @@ namespace SodRpg.Mod
     {
         public HeroSkill Skill = new HeroSkill();
         public float currentHealth;
-        public HeroStatus Status = new HeroStatus();
+        public new HeroStatus Status = new HeroStatus();
     }
     public enum EntityRelation { Ally, Enemy }
     public sealed class HeroStatus
@@ -474,6 +486,8 @@ namespace SodRpg.Mod
     }
     public sealed class ZoneManager
     {
+        public event Action<EventInfoLoadRoom> ClientEvent_OnRoomLoaded;
+        internal void RaiseRoomLoaded() => ClientEvent_OnRoomLoaded?.Invoke(new EventInfoLoadRoom());
         public int currentNodeIndex;
         public int _nextModifierId;
         public void UpdateModifiersByHunterStatus(int currentTravelDestinationNode = -1)
