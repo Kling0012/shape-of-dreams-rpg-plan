@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace SodRpg.Core.Game
 {
@@ -488,10 +489,9 @@ namespace SodRpg.Core.Game
         public void PruneLobbyReturnReceipts(string activeRunId = null)
         {
             if (LobbyReturnedRunIds.Count <= MaxLobbyReturnedRunIds) return;
-            var expired = new List<string>();
-            foreach (string id in LobbyReturnedRunIds)
-                if (id != activeRunId && id != Run?.RunId && id != CompletedRunId && id != NativeContinueRunId
-                    && expired.Count < LobbyReturnedRunIds.Count - MaxLobbyReturnedRunIds) expired.Add(id);
+            var expired = LobbyReturnedRunIds.OrderBy(id => id, StringComparer.Ordinal)
+                .Where(id => id != activeRunId && id != Run?.RunId && id != CompletedRunId && id != NativeContinueRunId)
+                .Take(LobbyReturnedRunIds.Count - MaxLobbyReturnedRunIds).ToList();
             foreach (string id in expired) LobbyReturnedRunIds.Remove(id);
         }
 

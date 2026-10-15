@@ -40,6 +40,7 @@ namespace SodRpg.Core.Game
         // saves can change the disk. Plain store callers retain their tolerant recovery path.
         internal Profile Load(Action sourceReadsComplete)
         {
+            lock (_writeLock) _validatedFirstWrite = false;
             Notes.Clear();
             WritesBlocked = false;
             var mainRoot = ReadRoot(_path, "本体");
