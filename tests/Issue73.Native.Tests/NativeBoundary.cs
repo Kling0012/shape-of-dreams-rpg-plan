@@ -52,6 +52,11 @@ namespace Mirror
     // TrackRun の Limbo 深度の読み出しに必要な本体 API。ハーネスでは Limbo なし(0)を返す。
     internal static class Object { public static T FindObjectOfType<T>() where T : class => null; }
  }
+// The extractor preserves ClientSession.cs imports; scene event wiring is outside this harness.
+namespace UnityEngine.SceneManagement
+{
+    internal struct Scene { }
+}
 namespace SodRpg.Mod
 {
     internal class Actor
@@ -636,6 +641,8 @@ namespace SodRpg.Mod
         public bool InGame => NetworkedManagerBase<GameManager>.softInstance != null;
         private float _nextSave = float.MaxValue;
         private bool _buildDirty;
+        private bool _allocationSavePending;
+        private float _allocationBuildDue;
         private Actor _clientRpcOn;
         private string _continueReceiptRunId, _continueReceiptCheckpointId, _continueReceiptResumeSession;
         private string _sentContinueReceiptRunId, _sentContinueReceiptCheckpointId, _sentContinueReceiptResumeSession;

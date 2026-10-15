@@ -8,6 +8,8 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
+- 星図で星にポイントを振るときの処理を軽くしました。 / Allocating points on the star map is now lighter.
+
 ---
 
 ## v2.10.42 — Maintenance update with no player-facing changes（2026-10-15）
