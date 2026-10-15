@@ -107,3 +107,69 @@ ProfileCodec.Writeは0.016〜0.293msだった。直列化以外の保存準備�
 - 未実行: 実ゲームの描画・スクリーンショット・連打・払い戻し承認・タブ/シーン/終了境界保存・協力通信。
   ゲームを起動する環境がないため。`dreamforge_perf` の機能は確認したが、実コンソール計測はしていない。
   シーン/終了境界と送信待ちの組み合わせはコード確認のみ。
+
+## 追補: レビュー提案の確認（#436、2026-10-15）
+
+マージ後のレビューで挙がった軽微な指摘について、全参照箇所の洗い出しと確認結果。
+
+### ツールチップと不足条件の参照箇所の監査
+
+`node.Tooltip` と `n.MissingRequirements` の読み取りは、リポジトリ全体で次の4経路だけだった。
+いずれも読む前に `EnsureStarTooltip` が走るため、空のツールチップや古い条件文は出ない。
+
+| 経路 | 場所 | 保護 |
+|---|---|---|
+| キャンバスのホバー | `DreamforgeUi.DrawStarCanvas` 末尾 | 描画直前に `EnsureStarTooltip(hover)` |
+| 刻印バーのホバー | `DrawKeystoneBar` → `_starKeystoneHover` | バー自身はラベルと状態色だけを描く。ホバー添え字は `DrawStarCanvas` 末尾で `hover` に合流し、同じ `EnsureStarTooltip` を通る。直接読んでいる箇所は無い |
+| 左一覧（星一覧） | `DreamforgeUi.AuthoredStars.DrawStarClusterList` | 行にマウスがあるとき `EnsureStarTooltip(index)` 後に `tooltip` へコピー |
+| 二択パネル | `StarChoiceOverlayRect` → `StarBuildChoicePanel` | `EnsureStarChoiceText` → `EnsureStarTooltip` が先。遠征中とクリックできない時の「取得できません」行（`state.MissingRequirements`）もこの後で読む |
+
+ツールチップ以外の消費者も調べた。検索は `SearchDescription` だけを使い（`RefreshStarState` が変更星のみ更新）、
+凡例の吹き出しは静的テキスト、左一覧の行ラベルは `NavigationLabel`（`node.Available` を使う。`MissingRequirements` 不使用）。
+`MissingRequirements` を読むのは二択パネルの上記1か所だけで、null や古い値の利用は確認されなかった。
+したがって、EnsureStarTooltip を追加したキャンバス・左一覧・二択の3経路以外に更新処理は不要です。
+
+### 刻印配列の長さの安全化
+
+`RefreshStarState` の刻印比較と `Array.Copy` は `hs.Keystones` が `KeystoneSlots.Max` と同長である前提だった。
+将来この長さが変わると毎 Layout で例外が出てUIが閉じ続けるため、`Math.Min(_starKeystoneState.Length, hs.Keystones.Length)`
+で短い方に揃え、余った枠は空（null）扱いに変更した（比較・コピーとも）。現在は同長なので挙動は変わらない。
+
+### DeferSave の期限と連打
+
+`DeferSave` は `if (_nextSave > deadline) _nextSave = deadline;` と、既存の期限と新しい期限の早い方（min）を残す実装であり、
+既存の保存期限を後ろへ延ばさないことを確認した（変更不要）。ビルド送信も同じ形で、`MarkAllocationDirty` は
+`buildWasDirty ? buildDue : now + 0.15f` と最初の期限を維持するため、連打で送信期限（150ms）・保存期限（3秒）が後ろへ延びない。
+
+`MarkDirty(true)` は `Profile.Run == null` のとき `_allocationSavePending` を立てて `DeferSave(3f)` を呼ぶ。
+ロビーでの装備変更（`DreamforgeUi.GearDetail` の装備・解除など、`MarkDirty(true)` を通るすべて）にも同じ3秒の保存予約が付く。
+これは意図した変更（上記「変更」節のとおり、払い戻しUIの別経路も守るため）。
+
+### 例外時の Close() の挙動変更
+
+`DreamforgeUi` の描画例外時の処理を `Open = false` から `Close()` に置き換えたため、例外で閉じるときに
+`SavePendingAllocation` だけでなく `CancelStarDrag()` と確認状態（強化・再調律・分解等の `_confirm*`）のクリアも走る。
+プレイヤーから見れば「例外で閉じた際にドラッグや確認の途中状態が残らない」ことで害はないが、
+本来の範囲外の振る舞い変更なので、ここに記録しておく。
+
+### 回帰テストの現状と実機確認リスト
+
+次の3つの差分更新には直接の回帰テストが無い。`DreamforgeUi` のこれらの部分は Unity IMGUI（`Event.current`・`GUIStyle.CalcHeight`）
+に依存するprivateな内部状態で、Issue73抽出ハーネスの抽出対象にも入っていないため、既存の自動テストでは
+表示API（`StarMapPresentation` 等）の結果が旧実装と同じことしか確認できない。
+
+- 左一覧の高さの部分再計算（`RefreshStarClusters` の変更行のみの計測と `_starClusterDirtyFrom` からの加算）
+- `TextRank`/`TextChoice` による本文更新スキップ
+- ツールチップの世代管理（`TooltipVersion`/`_starTextVersion`）
+
+保存・送信側（`MarkAllocationDirty`・`SavePendingAllocation`・`DeferSave` の期限）も直接のテストは無いが、
+抽出ハーネスが `MarkDirty`・`DeferSave`・`TickPeriodicSave`・`SaveNow`・`SendBuildIfNeeded`・`Tick` を実際のソースから抽出して
+既存テストで実行しているため、これらの既存テストが通ることは確認できる（下記の実行結果）。
+
+実機で確認すべき残項目（ゲームを起動する環境が無いため未実行）:
+
+- ホバーを維持したまま別の星へ加点したとき、条件文とダメージ注記が即座に更新されること。
+- 二択を変更した後、星の本文表示と左一覧の表示が正しいこと。
+- 連打中に送信（150ms）・保存（3秒）の期限が後ろへ延びないこと。
+- メニュー・星図タブを閉じた直後、シーン遷移時、終了時に未保存の割り振りが保存されること。
+- 書き込み失敗後に既存の5秒再試行（`TickPeriodicSave`）で保存し直すこと。

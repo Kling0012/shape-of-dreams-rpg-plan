@@ -2267,8 +2267,13 @@ namespace SodRpg.Mod
             if (Event.current.type != EventType.Layout) return;
             bool changed = _starDirty || _starState != hs || _starXp != hs.StarXp || _starKills != hs.Kills
                 || _starCodex != p.CodexBonusPoints || _starTestBonus != Profile.TestBonusPoints || _starExtraPoints != hs.ExtraPoints;
-            for (int i = 0; i < _starKeystoneState.Length; i++)
+            // hs.Keystones は今は KeystoneSlots.Max と同長。将来この長さが変わっても、毎 Layout で
+            // 例外が出てUIが閉じ続けないよう、比較とコピーは短い方の長さに合わせる（余った枠は空扱い）。
+            int keystoneLength = Math.Min(_starKeystoneState.Length, hs.Keystones.Length);
+            for (int i = 0; i < keystoneLength; i++)
                 if (_starKeystoneState[i] != hs.Keystones[i]) changed = true;
+            for (int i = keystoneLength; i < _starKeystoneState.Length; i++)
+                if (_starKeystoneState[i] != null) changed = true;
             var marks = LinkMarks();
             bool matchingHero = _s.LocalHero != null && ClientSession.HeroKeyOf(_s.LocalHero) == hero;
             if (_starSumOpen)
@@ -2312,7 +2317,8 @@ namespace SodRpg.Mod
             _starCodex = p.CodexBonusPoints;
             _starTestBonus = Profile.TestBonusPoints;
             _starExtraPoints = hs.ExtraPoints;
-            Array.Copy(hs.Keystones, _starKeystoneState, _starKeystoneState.Length);
+            Array.Clear(_starKeystoneState, 0, _starKeystoneState.Length);
+            Array.Copy(hs.Keystones, _starKeystoneState, keystoneLength);
             _starSpent = spent;
             _starTextState = hs.CloneAllocation();
             _starTextVersion++;
