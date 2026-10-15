@@ -81,9 +81,9 @@ namespace SodRpg.Mod
                 || Profile.Run?.RunId != runId || Profile.ContinueResumeSession != msg.continueResumeSession) return;
             if (_continueReceiptRunId == runId && _continueReceiptCheckpointId == msg.continueCheckpointId
                 && _continueReceiptResumeSession == msg.continueResumeSession) return;
-            // 保存先があるセッションでは復元状態を書き終えてから受領を通知する。
+            // 復元状態を書き終えてから受領を通知する。保存先が無効な場合も通知しない。
             // 失敗時は未通知のままにし、次のHelloで確認付き保存を再試行する。
-            if (_store != null && !SaveNow(true)) return;
+            if (!SaveNow(true)) return;
             _continueReceiptRunId = runId;
             _continueReceiptCheckpointId = msg.continueCheckpointId;
             _continueReceiptResumeSession = msg.continueResumeSession;
