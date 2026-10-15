@@ -159,6 +159,23 @@ namespace SodRpg.Mod
             catch (Exception ex) { Log.Error("Host: RunGrowth healing received " + ex); }
         }
 
+        /// <summary>C02が認めた本体記憶の命中だけを数える。通常攻撃・召喚・生成ダメージは含めない。</summary>
+        private void OnRunGrowthMemoryHit(MemoryActivationEvent notification, Hero hero, Entity victim, float nativeDamage)
+        {
+            try
+            {
+                if (notification.EventKind != MemoryEventKind.Hit || notification.GeneratedOrigin != GeneratedOrigin.None
+                    || notification.NativePayloadKind == NativePayloadKind.MainBasicAttack
+                    || notification.NativePayloadKind == NativePayloadKind.SummonAttack
+                    || string.IsNullOrEmpty(notification.SourceMemory) || !_memoryAttribution.IsCurrent(notification)
+                    || !Alive(hero) || notification.OwnerId != hero.GetInstanceID() || victim == null
+                    || victim.GetRelation(hero) != EntityRelation.Enemy || !(nativeDamage > 0f)
+                    || !_runtimes.TryGetValue(hero, out var rt) || !HasRunGrowth(rt, RunGrowthTrigger.MemoryHit)) return;
+                GainRunGrowth(rt, RunGrowthTrigger.MemoryHit, 1d);
+            }
+            catch (Exception ex) { Log.Error("Host: RunGrowth memory hit " + ex); }
+        }
+
         private void OnRunGrowthKill(HeroRuntime rt)
         {
             try { GainRunGrowth(rt, RunGrowthTrigger.EnemyKill, 1d); }

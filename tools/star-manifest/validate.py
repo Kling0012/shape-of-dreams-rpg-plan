@@ -24,14 +24,14 @@ GAME = os.path.normpath(os.path.join(HERE, '..', '..', 'src', 'SodRpg.Core', 'Ga
 # New private IDs（docs/specs/v1.31-design-review.md の表）。外縁は共有160。
 EXPECTED = {
     'vesper': 649, 'cetus': 649, 'lacerta': 649, 'husk': 656, 'mist': 656,
-    'yubar': 650, 'aurena': 516, 'nachia': 508, 'bismuth': 510, 'outer': 169,
+    'yubar': 650, 'aurena': 516, 'nachia': 508, 'bismuth': 516, 'outer': 169,
 }
 # v1.32 B: RunGrowth is the important star that grants a run-long stacking mechanism; RunGrowthMod is a small star/option that modifies it.
 GROWTH_KINDS = {'RunGrowth', 'RunGrowthMod'}
 KINDS = {'MemoryDamage', 'MemoryHaste', 'GimmickBoost', 'GimmickParam', 'Notable', 'Choice', 'Stat', 'Keystone'} | GROWTH_KINDS
 OPTION_KINDS = KINDS - {'Choice', 'Keystone', 'RunGrowth'}
 GROWTH_TRIGGERS = {'DamageTakenMaxHpPct': 100, 'ShieldAbsorbedMaxHpPct': 100, 'ParrySuccess': 1000, 'CritBasicAttackKill': 1000,
-                   'HealSucceeded': 1000, 'EnemyKill': 1000, 'SummonHit': 1000, 'BasicAttackHit': 1000}
+                   'HealSucceeded': 1000, 'EnemyKill': 1000, 'SummonHit': 1000, 'BasicAttackHit': 1000, 'MemoryHit': 1000}
 GROWTH_KEYS = ['trigger', 'threshold', 'cap', 'effects']
 GROWTH_MOD_KEYS = ['target', 'capBonus', 'effectPct', 'doubleGain']
 GROWTH_UNSUPPORTED_STATS = {'EssenceSlotIdentity', 'EssenceSlotMovement', 'SacrificeReduction', 'FourthAttackShift'}

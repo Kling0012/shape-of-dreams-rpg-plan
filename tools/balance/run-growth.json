@@ -95,6 +95,18 @@
     "yubar.run.m1/growth/capBonus": 20,
     "yubar.run.m1/growth/effectPct": 0,
     "yubar.run.m2/growth/capBonus": 20,
-    "yubar.run.m2/growth/effectPct": 0
+    "yubar.run.m2/growth/effectPct": 0,
+    "bismuth.run.choice/options/0/growth/capBonus": 0,
+    "bismuth.run.choice/options/0/growth/effectPct": 50,
+    "bismuth.run.choice/options/1/growth/capBonus": 20,
+    "bismuth.run.choice/options/1/growth/effectPct": 0,
+    "bismuth.run.g1/growth/cap": 60,
+    "bismuth.run.g1/growth/effects/0/amount": 0.5,
+    "bismuth.run.g1/growth/effects/1/amount": 0.25,
+    "bismuth.run.g1/growth/threshold": 3,
+    "bismuth.run.m1/growth/capBonus": 20,
+    "bismuth.run.m1/growth/effectPct": 0,
+    "bismuth.run.m2/growth/capBonus": 20,
+    "bismuth.run.m2/growth/effectPct": 0
   }
 }

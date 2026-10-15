@@ -25,6 +25,8 @@ namespace SodRpg.Core.Game
         SummonHit = 7,
         /// <summary>自分の通常攻撃が敵に命中した Threshold 回ごと。</summary>
         BasicAttackHit = 8,
+        /// <summary>自分の記憶の本体ダメージが敵に命中した Threshold 回ごと。</summary>
+        MemoryHit = 9,
     }
 
     /// <summary>1スタックあたりの能力値。AmountMilli は表示単位の1/1000（0.5% = 500、攻撃力+0.5 = 500）。</summary>
@@ -321,6 +323,9 @@ namespace SodRpg.Core.Game
                 case RunGrowthTrigger.BasicAttackHit:
                     return threshold == 1 ? Loc.T("自分の通常攻撃が敵に命中するたび", "each time your basic attack hits an enemy")
                         : Loc.T($"自分の通常攻撃が敵に{threshold}回命中するたび", $"every {threshold} basic attack hits on enemies");
+                case RunGrowthTrigger.MemoryHit:
+                    return threshold == 1 ? Loc.T("自分の記憶が敵に命中するたび", "each time your memory hits an enemy")
+                        : Loc.T($"自分の記憶が敵に{threshold}回命中するたび", $"every {threshold} hits by your memories on enemies");
                 default:
                     return threshold == 1 ? Loc.T("会心の基本攻撃でとどめを刺すたび", "each time a critical basic attack lands the finishing blow")
                         : Loc.T($"会心の基本攻撃でとどめを刺すことを{threshold}回行うたび", $"every {threshold} finishing blows by critical basic attacks");

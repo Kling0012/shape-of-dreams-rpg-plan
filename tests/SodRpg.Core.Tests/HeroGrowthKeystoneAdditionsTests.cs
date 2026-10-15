@@ -242,7 +242,7 @@ namespace SodRpg.Core.Tests
             // tools/star-manifest/validate.py の EXPECTED（各自の新設行）に、共有の外周169行と移行の authored 行を足した総数。
             var authoredTotals = new Dictionary<string, int>(StringComparer.Ordinal)
             {
-                ["Hero_Aurena"] = 729, ["Hero_Bismuth"] = 716, ["Hero_Cetus"] = 873, ["Hero_Husk"] = 861,
+                ["Hero_Aurena"] = 729, ["Hero_Bismuth"] = 722, ["Hero_Cetus"] = 873, ["Hero_Husk"] = 861,
                 ["Hero_Lacerta"] = 851, ["Hero_Mist"] = 862, ["Hero_Nachia"] = 720, ["Hero_Vesper"] = 856,
                 ["Hero_Yubar"] = 855,
             };

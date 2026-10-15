@@ -8,6 +8,7 @@ namespace SodRpg.Mod
             InitializeBridgeSuccessEffects();
             InitializeMemoryPrimedRelay();
             MemoryActivationPublished += OnAuthoredMechanismEvent;
+            MemoryActivationPublished += OnRunGrowthMemoryHit;
             MemoryAttributionEquipmentChanged += OnAuthoredMechanismEquipmentChanged;
         }
 

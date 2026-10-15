@@ -151,7 +151,7 @@ namespace SodRpg.Core.Tests
         private Played Play(string hero) => installed.Play(hero);
 
         [Fact]
-        public void All_88_generated_keystones_have_no_damage_or_wound_penalties_and_no_drawback_descriptions()
+        public void All_90_generated_keystones_have_no_damage_or_wound_penalties_and_no_drawback_descriptions()
         {
             int count = 0;
             bool previous = Loc.Japanese;
@@ -197,7 +197,7 @@ namespace SodRpg.Core.Tests
                             }
                         }
                     });
-                Assert.Equal(88, count);
+                Assert.Equal(90, count);
             }
             finally { Loc.Japanese = previous; }
         }
