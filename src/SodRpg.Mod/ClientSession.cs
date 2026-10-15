@@ -1415,6 +1415,8 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
                     }
                 }
             }
+            if (!NetworkServer.active && !_hostFusionInput)
+                submissionProfile = HostBuildValidation.WithoutFusion(submissionProfile, heroKey);
             var submissionBuild = ReferenceEquals(submissionProfile, Profile) ? CurrentBuild(heroKey)
                 : Build.Compute(submissionProfile, heroKey, Profile.Run?.Heat ?? 0, Profile.Run?.Pacts, Profile.Run?.DailyId ?? 0);
             string encoded = HostBuildValidation.Encode(submissionBuild, submissionProfile, heroKey,

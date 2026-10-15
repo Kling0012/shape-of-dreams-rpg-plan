@@ -50,13 +50,15 @@ namespace SodRpg.Core.Game
         public int MaterialShards { get; set; }
         public int MaterialTuning { get; set; }
         public string CurrencyRunId { get; set; }
+        /// <summary>旧ホストに融合キーを省略して提示した取引。再接続後も同じ受領書を照合する。</summary>
+        public bool LegacyFusion { get; set; }
         public List<CoopTradeReservedRelic> Relics { get; } = new List<CoopTradeReservedRelic>();
         public CoopTradeReservation Clone()
         {
             var copy = new CoopTradeReservation
             {
                 Id = Id, HostKey = HostKey, Offer = Offer.Clone(),
-                MaterialShards = MaterialShards, MaterialTuning = MaterialTuning, CurrencyRunId = CurrencyRunId,
+                MaterialShards = MaterialShards, MaterialTuning = MaterialTuning, CurrencyRunId = CurrencyRunId, LegacyFusion = LegacyFusion,
             };
             foreach (var relic in Relics) copy.Relics.Add(relic.Clone());
             return copy;
@@ -116,7 +118,7 @@ namespace SodRpg.Core.Game
             return receipt;
         }
 
-        public static bool Prepare(Profile profile, string id, string hostKey, CoopTradeOffer own)
+        public static bool Prepare(Profile profile, string id, string hostKey, CoopTradeOffer own, bool legacyFusion = false)
         {
             if (profile == null) throw new ArgumentNullException(nameof(profile));
             if (string.IsNullOrEmpty(id) || string.IsNullOrEmpty(hostKey)) throw new InvalidOperationException(Loc.T("取引の識別情報がありません。", "Trade identity is missing."));
@@ -135,7 +137,7 @@ namespace SodRpg.Core.Game
                 Id = id, HostKey = hostKey, Offer = own.Clone(),
                 MaterialShards = Math.Min(next.Material(Materials.Shard), own.Shards),
                 MaterialTuning = Math.Min(next.Material(Materials.Tuning), own.Tuning),
-                CurrencyRunId = next.Run?.RunId,
+                CurrencyRunId = next.Run?.RunId, LegacyFusion = legacyFusion,
             };
             foreach (string uid in own.RelicUids)
             {
@@ -190,7 +192,7 @@ namespace SodRpg.Core.Game
                 || pending.CurrencyRunId != before.Run?.RunId)
                 throw new InvalidOperationException(Loc.T("受領書の素材と保存済みの預かり品が一致しません。", "Receipt materials do not match durable escrow."));
             foreach (var reserved in pending.Relics)
-                if (ProfileCodec.CheckpointRelicKey(reserved.Relic) != ProfileCodec.CheckpointRelicKey(FindOffered(before, reserved.Relic.Uid))
+                if (ReceiptRelicKey(reserved.Relic, pending.LegacyFusion) != ReceiptRelicKey(FindOffered(before, reserved.Relic.Uid), pending.LegacyFusion)
                     || (reserved.Target == CoopTradeReturnTarget.Stash) != (before.FindStash(reserved.Relic.Uid) != null)
                     || HasOwnedUid(profile, reserved.Relic.Uid)
                     || reserved.Target == CoopTradeReturnTarget.Satchel && reserved.RunId != before.Run?.RunId)
@@ -262,6 +264,12 @@ namespace SodRpg.Core.Game
             next.CoopTradePending = null;
             Finish(profile, next);
             return true;
+        }
+
+        private static string ReceiptRelicKey(Relic relic, bool legacyFusion)
+        {
+            string key = ProfileCodec.CheckpointRelicKey(relic);
+            return legacyFusion && key != null ? ProfileCodec.WithoutFusionForLegacyTrade(key) : key;
         }
 
         private static bool ReturnToSatchel(Profile profile, CoopTradeReservedRelic reserved) =>

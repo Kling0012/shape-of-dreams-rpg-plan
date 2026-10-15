@@ -12,6 +12,7 @@ namespace SodRpg.Mod
         public string action, id, target, offer, data, transferId;
         public int revision, index, count, totalLength;
         public bool safe;
+        public bool fusion;
         public BuildTransferPart Part() => new BuildTransferPart
         { Data = data, TransferId = transferId, Index = index, Count = count, TotalLength = totalLength };
     }
@@ -23,6 +24,7 @@ namespace SodRpg.Mod
         public string kind, id, hostKey, partner, ownOffer, otherOffer, offerAck, data, transferId, status;
         public int revision, index, count, totalLength;
         public bool incoming, accepted, ownConfirmed, otherConfirmed, preparing;
+        public bool fusion;
         public string[] keys, names;
         public bool[] available, ready;
         public BuildTransferPart Part() => new BuildTransferPart

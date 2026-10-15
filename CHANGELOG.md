@@ -8,6 +8,10 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
+### 新機能 / New features
+
+- 鍛冶に「融合」を追加しました。同じ名前・同じレア度の遺物を1つ材料にして、能力値を1段ごとに6%（最大5段・30%）上げられます。 / Added Fusion to the forge: consume a relic with the same name and rarity to raise a relic's stats by 6% per level (up to 5 levels, 30%).
+
 ---
 
 ## v2.10.44 — Maintenance update with no player-visible changes（2026-10-15）

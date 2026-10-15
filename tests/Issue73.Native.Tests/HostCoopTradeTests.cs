@@ -167,7 +167,14 @@ namespace Issue73.Native.Tests
             Probe(_a);
             string id = Guid.NewGuid().ToString("N");
             var journal = (CoopTradeJournal)Get(_host, "_coopJournal");
-            journal.Commit(Receipt(id));
+            var first = Profile.CreateNew(17);
+            var fused = Loot.RollRelic(new Rng(17), Rarity.Common, 1);
+            fused.FusionLevel = 4;
+            first.Stash.Add(fused);
+            var original = CoopTradeRules.CreateReceipt(id, "host-key", "player-a", first,
+                new CoopTradeOffer(), "player-b", Profile.CreateNew(18), new CoopTradeOffer());
+            string frozen = CoopTradeCodec.WriteReceipt(original);
+            journal.Commit(original);
             _a.connectionToClient.Sent.Clear();
 
             _host.ReceiveCoopTrade(new DreamforgeCoopTradeCommand { action = "cancel", id = id }, _a);
@@ -175,6 +182,13 @@ namespace Issue73.Native.Tests
             var replayed = CoopTradeCodec.ReadReceipt(ReceivedText(_a, "executed", id));
             Assert.NotNull(replayed);
             Assert.Equal(id, replayed.Id);
+            Assert.DoesNotContain("fusionLevel", replayed.FirstProfile);
+            Assert.Equal(4, fused.FusionLevel);
+            Assert.Equal(frozen, CoopTradeCodec.WriteReceipt(original));
+            _host.ReceiveCoopTrade(new DreamforgeCoopTradeCommand { action = "probe", safe = true, fusion = true }, _a);
+            _a.connectionToClient.Sent.Clear();
+            _host.ReceiveCoopTrade(new DreamforgeCoopTradeCommand { action = "query", id = id }, _a);
+            Assert.Equal(frozen, ReceivedText(_a, "executed", id));
             Assert.DoesNotContain(States(_a), state => state.kind == "cancelled");
             Assert.True(journal.TryGet(id, out _));
             Assert.False(journal.IsCancelled(id));

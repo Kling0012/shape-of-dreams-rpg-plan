@@ -1,0 +1,7 @@
+{
+  "schemaVersion": 1,
+  "maxLevel": 5,
+  "statBonusPerLevelPct": 6,
+  "shardsPerRarity": 20,
+  "uniqueTuningCost": 1
+}
