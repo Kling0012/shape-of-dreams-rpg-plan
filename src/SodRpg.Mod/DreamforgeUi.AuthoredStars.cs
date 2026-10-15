@@ -20,6 +20,7 @@ namespace SodRpg.Mod
         private string[] _starNavigationContext = Array.Empty<string>();
         private float[] _starClusterTops = Array.Empty<float>(), _starClusterHeights = Array.Empty<float>();
         private float _starClusterWidth = -1f, _starClusterHeight;
+        private int _starClusterDirtyFrom;
         private Vector2 _starClusterScroll;
         private bool _starClustersOpen = true;
         private GUIStyle _starClusterRow, _starHelpStyle, _starLegendStyle, _starChoiceBody, _starChoiceHead;
@@ -121,6 +122,7 @@ namespace SodRpg.Mod
             _starClusterTops = new float[indices.Count];
             _starClusterHeights = new float[indices.Count];
             _starClusterWidth = -1f;
+            _starClusterDirtyFrom = 0;
             _starClusterScroll = Vector2.zero;
             BuildStarLegend();
         }
@@ -131,12 +133,18 @@ namespace SodRpg.Mod
             {
                 int index = _starNavigationNodes[i];
                 var node = _starNodes[index];
+                if (node.NavigationRank == node.Rank && node.NavigationAvailable == node.Available
+                    && node.NavigationSummary == node.EffectSummary) continue;
+                node.NavigationRank = node.Rank;
+                node.NavigationAvailable = node.Available;
+                node.NavigationSummary = node.EffectSummary;
                 _starClusterLabels[i].text = "<color=#aabccc>" + _starNavigationContext[i] + "</color>\n"
                     + StarMapPresentation.NavigationLabel(_starLayout.Nodes[index].Talent,
                         node.Rank, node.Available, node.EffectSummary);
-                _starClusterLabels[i].tooltip = node.Tooltip.text;
+                // The changed row alone needs native text measurement at the current width.
+                _starClusterHeights[i] = 0;
+                _starClusterDirtyFrom = Math.Min(_starClusterDirtyFrom, i);
             }
-            _starClusterWidth = -1f;
         }
 
         private static Color StarRegionColor(ClusterRegionKind region)
@@ -220,16 +228,21 @@ namespace SodRpg.Mod
             Rect area = GUILayoutUtility.GetRect(0, 226, 0, 10000, StarClusterSize);
             if (Event.current.type == EventType.Layout) return;
             float width = Mathf.Max(1, area.width - 18);
-            if (_starClusterWidth != width)
+            bool resized = _starClusterWidth != width;
+            if (resized || _starClusterDirtyFrom < _starNavigationNodes.Length)
             {
                 _starClusterWidth = width;
-                _starClusterHeight = 0;
-                for (int i = 0; i < _starNavigationNodes.Length; i++)
+                int firstDirty = resized ? 0 : _starClusterDirtyFrom;
+                _starClusterHeight = firstDirty == 0 ? 0
+                    : _starClusterTops[firstDirty - 1] + _starClusterHeights[firstDirty - 1];
+                for (int i = firstDirty; i < _starNavigationNodes.Length; i++)
                 {
                     _starClusterTops[i] = _starClusterHeight;
-                    _starClusterHeights[i] = _starClusterRow.CalcHeight(_starClusterLabels[i], width - 6) + 4;
+                    if (resized || _starClusterHeights[i] == 0)
+                        _starClusterHeights[i] = _starClusterRow.CalcHeight(_starClusterLabels[i], width - 6) + 4;
                     _starClusterHeight += _starClusterHeights[i];
                 }
+                _starClusterDirtyFrom = _starNavigationNodes.Length;
             }
             Rect content = new Rect(0, 0, width, _starClusterHeight);
             _starClusterScroll = GUI.BeginScrollView(area, _starClusterScroll, content);
@@ -247,6 +260,11 @@ namespace SodRpg.Mod
                     int index = _starNavigationNodes[i];
                     if (_starClusterTops[i] > _starClusterScroll.y + area.height) break;
                     Rect row = new Rect(0, _starClusterTops[i], content.width, _starClusterHeights[i] - 2);
+                    if (row.Contains(Event.current.mousePosition))
+                    {
+                        EnsureStarTooltip(index);
+                        _starClusterLabels[i].tooltip = _starNodes[index].Tooltip.text;
+                    }
                     StarFillRect(new Rect(row.x, row.y, 4, row.height), _starNodes[index].Region.HasValue
                         ? StarRegionColor(_starNodes[index].Region.Value) : StarBright);
                     if (GUI.Button(new Rect(row.x + 6, row.y, row.width - 6, row.height), _starClusterLabels[i], _starClusterRow))
@@ -320,6 +338,7 @@ namespace SodRpg.Mod
             if (index < 0 || !_starLayout.Nodes[index].Talent.IsChoice)
                 throw new InvalidOperationException("Selected choice star is missing from the current layout: " + _starChoiceId);
             EnsureStarTextStyles();
+            EnsureStarChoiceText(index);
             var state = _starNodes[index];
             var t = _starLayout.Nodes[index].Talent;
             StarBuildChoicePanel(t, state, _s.CanEditTalents && _s.Profile.Run == null);
@@ -497,7 +516,7 @@ namespace SodRpg.Mod
                 if (state.Allocated && state.Choice != act) Rules.SetTalentChoice(p, hero, t.Id, act);
                 else Rules.AddTalentRank(p, hero, t.Id, act);
                 _starDirty = true;
-                _s.MarkDirty(true);
+                _s.MarkAllocationDirty();
             }
             catch (AllocationValidationException error) { OfferAllocationRefund(error, p, hero); }
             catch (InvalidOperationException error) { SetStatus(error.Message); }
