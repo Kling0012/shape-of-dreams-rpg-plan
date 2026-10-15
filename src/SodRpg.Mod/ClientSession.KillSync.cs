@@ -189,6 +189,8 @@ namespace SodRpg.Mod
         private void ReceiveAuthoritativeKill(AuthoritativeRunKill fact)
         {
             bool added = _killClassifications.ReceiveFact(fact, Time.unscaledTime);
+            if ((fact.Nightmare & NightmareAffix.Nemesis) != 0 || !string.IsNullOrEmpty(fact.BossTypeName))
+                Log.Info($"Nemesis drop: received fact netId={fact.MonsterNetId} affixes={fact.Nightmare} run={fact.RunId} stream={fact.StreamId} sequence={fact.Sequence} event={fact.EventId} added={added} runActive={RunActive} pendingDeaths={_killClassifications.PendingCount}");
             ResolveClassifiedDeaths();
             if (added) DeferKillSave();
         }

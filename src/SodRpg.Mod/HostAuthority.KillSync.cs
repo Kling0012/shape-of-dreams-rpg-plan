@@ -523,10 +523,21 @@ namespace SodRpg.Mod
 
         private void CaptureAuthoritativeRunKill(Monster monster)
         {
-            if (!NetworkServer.active || monster == null || !_monsters.TryGetValue(monster, out var runtime)
-                || monster.disableLoot) return;
+            if (!NetworkServer.active || monster == null) return;
+            bool tracked = _monsters.TryGetValue(monster, out var runtime);
+            if (!tracked || monster.disableLoot)
+            {
+                if (monster.type == Monster.MonsterType.Boss)
+                    Log.Info($"Nemesis drop: host skipped type={monster.GetType().Name} netId={monster.netId} tracked={tracked} disableLoot={monster.disableLoot}");
+                return;
+            }
             if (monster.Status != null && monster.Status.TryGetStatusEffect<Se_HunterBuff>(out var hunter)
-                && !hunter.enableGoldAndExpDrops) return;
+                && !hunter.enableGoldAndExpDrops)
+            {
+                if (monster.type == Monster.MonsterType.Boss)
+                    Log.Info($"Nemesis drop: host skipped type={monster.GetType().Name} netId={monster.netId} hunterDrops=false");
+                return;
+            }
             EnsureKillRun();
             if (runtime.KillEventId != null && runtime.KillEventStreamId == _killStreamId
                 && runtime.KillEventNetId == monster.netId) return;
@@ -561,6 +572,8 @@ namespace SodRpg.Mod
                 _zone?.currentZoneIndex ?? -1, nightmare, runtime.Variant?.Id, ++_killSequence, _killStreamId,
                 bossTypeName, bossDropNightmare, bossDropDepth, runtime.GraphEpoch, runtime.SegmentEpoch, runtime.RoomEpoch);
             RestoreHostFact(fact);
+            if (monster.type == Monster.MonsterType.Boss || (nightmare & NightmareAffix.Nemesis) != 0)
+                Log.Info($"Nemesis drop: host fact type={monster.GetType().Name} netId={monster.netId} tier={monster.type} affixes={nightmare} run={fact.RunId} stream={fact.StreamId} sequence={fact.Sequence} event={fact.EventId}");
             foreach (var pair in _killReplayPlayers)
                 if (!pair.Value.ReceiptWaitReleased) pair.Value.Participation.Through = fact.Sequence;
             ClientSession.PublishHostKillFact(fact);

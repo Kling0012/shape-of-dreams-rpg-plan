@@ -701,6 +701,9 @@ namespace SodRpg.Mod
             try
             {
                 if (!(info.victim is Monster m)) return;
+                Nightmare.TryGetValue(m.netId, out var observedAffixes);
+                if (m.type == Monster.MonsterType.Boss || (observedAffixes & NightmareAffix.Nemesis) != 0)
+                    Log.Info($"Nemesis drop: native death type={m.GetType().Name} netId={m.netId} tier={m.type} observedAffixes={observedAffixes} disableLoot={m.disableLoot} localHero={LocalHero != null} runActive={RunActive} pendingDeaths={_killClassifications.PendingCount}");
                 Nightmare.Remove(m.netId);
                 RemoveVariant(m.netId);
                 RemoveMonsterCue(m.netId);

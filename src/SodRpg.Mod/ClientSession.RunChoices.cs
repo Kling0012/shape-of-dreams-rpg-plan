@@ -245,12 +245,19 @@ namespace SodRpg.Mod
                 throw new InvalidOperationException("Infinity save receipts disagree; rewards remain pending.");
             int masteryBefore = Mastery.Level(Profile.Hero(kill.HeroKey).Kills);
             int awakenBefore = Rules.EquippedAwakenLevels(Profile, kill.HeroKey);
+            bool logNemesisDrop = kill.Tier == MonsterTier.Boss || (kill.Nightmare & NightmareAffix.Nemesis) != 0;
+            int coresBefore = logNemesisDrop ? Profile.Material(Materials.NemesisCore) : 0;
+            int grudgeBefore = Profile.NemesisGrudge;
+            if (logNemesisDrop)
+                Log.Info($"Nemesis drop: grant begin netId={kill.MonsterNetId} tier={kill.Tier} affixes={kill.Nightmare} run={kill.RunId} event={kill.EventId} coresBefore={coresBefore} grudge={grudgeBefore}");
             Emit(Rules.OnKill(Profile, kill.Tier, kill.Level, kill.Nightmare, kill.HeroKey, _trades,
                 variantId: kill.VariantId, roomIndex: kill.RoomIndex, heat: kill.Heat, waypoint: kill.Waypoint,
                 bossTypeName: kill.BossTypeName, bossDropNightmare: kill.BossDropNightmare, bossDropDepth: kill.BossDropDepth,
                 rewardScale: PressureCountRewards.ScaleFromEventId(kill.EventId),
                 shardDropMultiplier: PressureCountRewards.ShardDropMultiplierFromEventId(kill.EventId),
                 roomOmenDropBonus: RoomOmens.DropBonusFromEventId(kill.EventId)));
+            if (logNemesisDrop)
+                Log.Info($"Nemesis drop: grant end netId={kill.MonsterNetId} event={kill.EventId} coresBefore={coresBefore} coresAfter={Profile.Material(Materials.NemesisCore)} expected={((kill.Nightmare & NightmareAffix.Nemesis) != 0 ? Forbidden.NemesisCores(kill.Tier, grudgeBefore) : 0)} grudgeAfter={Profile.NemesisGrudge}");
             if (Mastery.Level(Profile.Hero(kill.HeroKey).Kills) > masteryBefore) _buildDirty = true;
             if (Rules.EquippedAwakenLevels(Profile, kill.HeroKey) > awakenBefore)
             {
