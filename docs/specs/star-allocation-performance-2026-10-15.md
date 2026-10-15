@@ -106,4 +106,133 @@ ProfileCodec.Writeは0.016〜0.293msだった。直列化以外の保存準備�
   このワーカーでは全件・低速スイートを実行しない指示に従い、パイプラインに残す。
 - 未実行: 実ゲームの描画・スクリーンショット・連打・払い戻し承認・タブ/シーン/終了境界保存・協力通信。
   ゲームを起動する環境がないため。`dreamforge_perf` の機能は確認したが、実コンソール計測はしていない。
-  シーン/終了境界と送信待ちの組み合わせはコード確認のみ。
+  シーン境界と送信待ちの組み合わせは、#438 の追補（下記）で抽出した実メソッドの直接実行により確認した。
+  終了時は既存テストが `FlushSaves` を実行している。
+
+## 追補: レビュー提案の確認（#436、2026-10-15）
+
+マージ後のレビューで挙がった軽微な指摘について、全参照箇所の洗い出しと確認結果。
+
+### ツールチップと不足条件の参照箇所の監査
+
+`node.Tooltip` と `n.MissingRequirements` の読み取りは、リポジトリ全体で次の4経路だけだった。
+いずれも読む前に `EnsureStarTooltip` が走るため、空のツールチップや古い条件文は出ない。
+
+| 経路 | 場所 | 保護 |
+|---|---|---|
+| キャンバスのホバー | `DreamforgeUi.DrawStarCanvas` 末尾 | 描画直前に `EnsureStarTooltip(hover)` |
+| 刻印バーのホバー | `DrawKeystoneBar` → `_starKeystoneHover` | バー自身はラベルと状態色だけを描く。ホバー添え字は `DrawStarCanvas` 末尾で `hover` に合流し、同じ `EnsureStarTooltip` を通る。直接読んでいる箇所は無い |
+| 左一覧（星一覧） | `DreamforgeUi.AuthoredStars.DrawStarClusterList` | 行にマウスがあるとき `EnsureStarTooltip(index)` 後に `tooltip` へコピー |
+| 二択パネル | `StarChoiceOverlayRect` → `StarBuildChoicePanel` | `EnsureStarChoiceText` → `EnsureStarTooltip` が先。遠征中とクリックできない時の「取得できません」行（`state.MissingRequirements`）もこの後で読む |
+
+ツールチップ以外の消費者も調べた。検索は `SearchDescription` だけを使い（`RefreshStarState` が変更星のみ更新）、
+凡例の吹き出しは静的テキスト、左一覧の行ラベルは `NavigationLabel`（`node.Available` を使う。`MissingRequirements` 不使用）。
+`MissingRequirements` を読むのは二択パネルの上記1か所だけで、null や古い値の利用は確認されなかった。
+したがって、EnsureStarTooltip を追加したキャンバス・左一覧・二択の3経路以外に更新処理は不要です。
+
+### 刻印配列の長さの安全化
+
+`RefreshStarState` の刻印比較と `Array.Copy` は `hs.Keystones` が `KeystoneSlots.Max` と同長である前提だった。
+将来この長さが変わると毎 Layout で例外が出てUIが閉じ続けるため、`Math.Min(_starKeystoneState.Length, hs.Keystones.Length)`
+で短い方に揃え、余った枠は空（null）扱いに変更した（比較・コピーとも）。現在は同長なので挙動は変わらない。
+
+### DeferSave の期限と連打
+
+`DeferSave` は `if (_nextSave > deadline) _nextSave = deadline;` と、既存の期限と新しい期限の早い方（min）を残す実装であり、
+既存の保存期限を後ろへ延ばさないことを確認した（変更不要）。ビルド送信も同じ形で、`MarkAllocationDirty` は
+`buildWasDirty ? buildDue : now + 0.15f` と最初の期限を維持するため、連打で送信期限（150ms）・保存期限（3秒）が後ろへ延びない。
+
+`MarkDirty(true)` は `Profile.Run == null` のとき `_allocationSavePending` を立てて `DeferSave(3f)` を呼ぶ。
+ロビーでの装備変更（`DreamforgeUi.GearDetail` の装備・解除など、`MarkDirty(true)` を通るすべて）にも同じ3秒の保存予約が付く。
+これは意図した変更（上記「変更」節のとおり、払い戻しUIの別経路も守るため）。
+
+### 例外時の Close() の挙動変更
+
+`DreamforgeUi` の描画例外時の処理を `Open = false` から `Close()` に置き換えたため、例外で閉じるときに
+`SavePendingAllocation` だけでなく `CancelStarDrag()` と確認状態（強化・再調律・分解等の `_confirm*`）のクリアも走る。
+プレイヤーから見れば「例外で閉じた際にドラッグや確認の途中状態が残らない」ことで害はないが、
+本来の範囲外の振る舞い変更なので、ここに記録しておく。
+
+### 回帰テストの現状と実機確認リスト
+
+次の3つの差分更新は `DreamforgeUi` の Unity IMGUI（`Event.current`・`GUIStyle.CalcHeight`）に依存する
+privateな内部状態で、Issue73抽出ハーネスの抽出対象にも入っていないため、リポジトリ内の既存テストでは
+直接確認できていなかった。
+
+- 左一覧の高さの部分再計算（`RefreshStarClusters` の変更行のみの計測と `_starClusterDirtyFrom` からの加算）
+- `TextRank`/`TextChoice` による本文更新スキップ
+- ツールチップの世代管理（`TooltipVersion`/`_starTextVersion`）
+
+修正ラウンド2回目（2026-10-15）で、これら3つとホバー維持加点・二択変更の表示更新を、下記
+「UI 差分更新の直接実行による確認」のシナリオランナーで実メソッドを実行して確認した
+（全項目合格）。リポジトリ内の恒常的な回帰テスト（xunit）は #440 のままで、
+抽出ハーネスへの `DreamforgeUi` 抽出の追加と IMGUI 境界スタブの用意を案としている。
+
+保存・送信側（`MarkAllocationDirty`・`SavePendingAllocation`・`DeferSave` の期限）は、#438 で抽出契約
+（`NativePersistence.targets`）に `MarkAllocationDirty`/`SavePendingAllocation`/`OnAllocationSceneChanged` を追加し
+（境界の `Scene` 型と `_allocationSavePending`/`_allocationBuildDue` フィールドは #433 の 980224b で既に準備済み）、
+実際のソースから抽出した実メソッドを一度限りのシナリオランナー（`/tmp/sod-alloc-436`、リポジトリには加えない。
+#433 の一時ベンチマークと同じ方式）でリフレクション駆動して直接確認した。条件・期待結果・実際の結果
+（2026-10-15、全項目合格、`ALL SCENARIOS PASSED`）:
+
+| シナリオ | 操作（実メソッド） | 期待結果 | 実際の結果 |
+|---|---|---|---|
+| 連打中の送信期限 | t=100 でベースライン送信後 `MarkAllocationDirty`（due=100.15）、t=100.10 で再 `MarkAllocationDirty` | 送信期限は最初の変更+150msのまま後ろへ延びない | due=100.15 のまま（100.25 に延びない）。合格 |
+| 送信ゲート | 期限内（100.10・100.149）に `SendBuildIfNeeded`、期限到達（100.16）で再実行 | 期限内は送らず、期限到達で一度だけ送る | 期限内 sent=1（不変）、100.16 で sent=2・`_buildDirty`=false。合格 |
+| 連打中の保存期限 | t=100 `MarkAllocationDirty` → t=101.5 再実行（+ `MarkDirty(true)` も） | 保存予約は最初の変更+3秒のまま | `_nextSave`=103 のまま（min）。合格 |
+| 装備変更等の保存予約 | t=100 `MarkDirty(true)`（ロビー） | `_allocationSavePending` が立ち+3秒の保存予約 | pending=true・`_nextSave`=103。合格 |
+| メニュー・タブを閉じた直後 | `MarkAllocationDirty` → `SavePendingAllocation` | 即座に1回保存し pending を落とす。保留が無いときは再保存しない | saveCount=1・pending=false・ディスクへ現行リビジョン書込・再呼び出しで saveCount=1 のまま。合格 |
+| シーン遷移時 | `MarkAllocationDirty` → `OnAllocationSceneChanged` | 未保存の割り振りを保存する | saveCount=1・pending=false・書込完了。合格 |
+| 書き込み失敗後の再試行 | 保存先を壊して `SavePendingAllocation`（背景書き込み失敗）→ t=105 `TickPeriodicSave` → t=110 再実行 | 失敗で pending を立て直し+5秒の再試行期限（30秒に延ばさない）を設け、期限で書き直し、成功後は失敗表示を消す | 失敗検知→pending 復活・`SaveError` 表示・`_nextSave`=110→t=110 で書き直し成功・pending=false→`SaveError` 消滅。合格 |
+
+UI から `SavePendingAllocation` を呼ぶ場所（メニューを閉じた時・星図タブを離れた時、`DreamforgeUi.cs` の
+`Close`・タブ切替）はコード追跡のとおり。終了時の `FlushSaves` は既存テスト（`NativeAcceptanceTests` 等）が
+後片付けで実行している。抽出契約を拡張した後の既存テストは 67件（`ContinueSave`/`ClientTickIsolation`/
+`TradeSendException`/`SatchelOverflowSave`/`LobbyReturn`/`NativeAcceptance`/`InfinityClearSave`/
+`OverflowBonusFailSoft`）すべて合格。
+
+実機で確認すべき残項目（ゲームを起動する環境が無いため未実行）:
+
+- ホバーを維持したまま別の星へ加点したとき、条件文とダメージ注記が即座に更新されること。
+- 二択を変更した後、星の本文表示と左一覧の表示が正しいこと。
+
+（連打中の送信・保存期限、メニュー・タブを閉じた直後とシーン遷移時の保存、書き込み失敗後の5秒再試行は、
+上記のシナリオランナーで対象経路（実際の `ClientSession` の各メソッド）を実行して確認済み。
+上の2項目も修正ラウンド2回目に UI シナリオランナーで対象経路（実際の `DreamforgeUi` の各メソッド）を
+実行して確認した — 次節のとおり。実機に残るのは描画・操作感の最終確認。）
+
+## 追補: UI 差分更新の直接実行による確認（#436 修正ラウンド2回目、2026-10-15）
+
+上の2項目（ホバー維持の加点・二択変更）と3つの差分更新（高さの部分再計算・TextRank スキップ・
+ツールチップの世代管理）を、保存・送信側と同じ方式の一度限りのシナリオランナー
+（`/tmp/sod-starui-436`、リポジトリには加えない）で対象経路そのものを実行して確認した。
+
+構成: `NativePersistence.targets` と同じ Roslyn 構文抽出タスクで、実ソースから
+`RefreshStarState`・`EnsureStarTooltip`・`EnsureStarChoiceText`（`DreamforgeUi.cs`）と
+`RefreshStarClusters`・`DrawStarClusterList`・`StarRegionColor`（`DreamforgeUi.AuthoredStars.cs`）を
+抽出し（実装のコピーではなく構文選択）、実 `SodRpg.Core`（`StarMapPresentation`・`HeroTreeLayout`・
+`Rules`・生成星図 `StarClusters.RegisterGeneratedHero("Hero_Yubar")` — 本体の起動処理と同じ登録）
+に対してコンパイルした。Unity IMGUI 境界（`Event`/`EventType`/`GUIContent`/`GUIStyle`/`GUILayoutUtility`/
+`GUI`）のみスタブで置き、`GUIStyle.CalcHeight` は決定的な行数換算（呼び出し記録つき、
+高さの差し替えも可能）にした。UI 状態は `RebuildStarTree`/`RebuildStarClusters` と同じ値で初期化し、
+加点は実際の割り振りと同じ状態遷移（`Talents` に1段、二択星は `TalentChoices` も設定）で行った。
+抽出契約どおり、メンバー構成が変われば抽出が失敗する。
+
+条件・期待結果・実際の結果（2026-10-15、全48項目合格、`ALL SCENARIOS PASSED`）。A=星A（ホバー中）、
+B=星B（加点対象）、C=二択星（行5、全886行）:
+
+| シナリオ | 操作（実メソッド） | 期待結果 | 実際の結果 |
+|---|---|---|---|
+| ツールチップの世代管理（R17） | `EnsureStarTooltip(A)` → もう1回 → 変化なし `RefreshStarState` → もう1回 | 生成後に `TooltipVersion` が世代に揃い、世代が同じなら再生成しない。変化がない Layout では世代も進まない | 初回生成（498文字）→ sentinel 維持 → version=1 のまま再生成なし。合格 |
+| ホバー維持の加点・ダメージ注記（R7） | `EnsureStarTooltip(A)` → B へ加点 → 次の Layout で `RefreshStarState` → `EnsureStarTooltip(A)`（キャンバス末尾のホバー経路と同じ呼び出し） | 加点直後は古いまま。世代進行後の最初の `EnsureStarTooltip` でダメージ注記が使用済み1点の倍率に更新される | 加点直後は旧文のまま → ×1（使用済み0点）が ×1.003（使用済み1点）に更新。`MissingRequirements` は現行状態と一致。合格 |
+| ホバー維持の加点・条件文（R7） | ポイント余裕1の状態で上と同じ操作 | 余裕が尽きた星Aの条件文（ポイント不足）と状態行（条件不足）が更新される | 「取得可能」→ 条件文「ポイント不足：必要1・残り0・あと1。」＋状態行「条件不足」。合格 |
+| TextRank スキップ（R16） | A・B に sentinel 本文を仕込み、B のみ加点して `RefreshStarState`。さらに変化なし `RefreshStarState` | 加点した B のみ `RankLabel`/`DisplayBody`/`SearchDescription` が再生成され、A は sentinel のまま。検索の汚れは再生成があったときのみ立つ | B は 1/3 ラベルに再生成・A は sentinel 維持・検索汚れ=立つ→変化なしでは立たない。合格 |
+| 二択変更の本文と一覧（R18） | C を選択肢0で取得し一覧を確定 → 選択肢1へ切替（無料）→ `RefreshStarState` → `EnsureStarChoiceText(C)` | 本文（`ChoiceDescription`）と効果要約が選択肢1の内容に再生成され、左一覧の行ラベルも新しい要約で再構築される。汚れは変更行からのみ（`heights[C]=0`・`dirtyFrom=行C`） | 本文・要約・一覧ラベルとも選択肢1の内容（エキゾチック物質→集まる星々）に更新・dirtyFrom=5。合格 |
+| 二択変更の選択パネル（R18/R11） | 切替後に `EnsureStarChoiceText(C)` | パネル列の本文は使用済みポイントのみに依存するため再構築されない（sentinel 維持）。パネルが読む `MissingRequirements` は現行の状態。ツールチップ本文も選択肢1に再生成 | 列は sentinel のまま・`MissingRequirements` 現行と一致・ツールチップは選択肢1の本文を含む。合格 |
+| 高さの部分再計算・冷間start（R15） | 初回 `DrawStarClusterList`（Repaint） | 未測定の全行の高さを測定する | 886行すべて測定（calcCalls=886）。合格 |
+| 高さの部分再計算・変更行のみ（R15） | 二択変更後の `DrawStarClusterList`（行C の高さを+30px に差し替え） | 変更行だけ再測定し、変更行より前の行位置は不変、より後の行位置は高さ差分（+30）だけ移動、一覧の高さ合計も差分反映、再計算後に汚れ解除 | calcCalls=1（行Cのみ）・前行不変・後続行+30・合計も+30・dirtyFrom=886。合格 |
+| 高さの部分再計算・変化なし（R15) | 追加の変更なしでもう1回 `DrawStarClusterList` | 再測定も位置計算も起きない | calcCalls=0・高さ合計不変。合格 |
+| 経路取得の汚れの局所性（R15 補助） | 経路の星を取得した後、二択星 C を取得して `RefreshStarState` | この Layout で一覧の汚れが立つのは C の行だけ | dirtyFrom=5（=行C）。合格 |
+
+実機に残るのは描画と操作感（画面上のツールチップの見え方・パネルの視覚）の確認だけで、
+上記のとおり状態・文字列・行位置そのものは実コードの実行で確認済み。
