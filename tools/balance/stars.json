@@ -18,84 +18,84 @@
     "byHero": {
       "Hero_Aurena": {
         "MemoryDamage": 1.15,
-        "GimmickBoost": 1,
-        "GimmickParam": 1,
-        "Keystone": 1,
-        "MemoryHaste": 1,
-        "Notable": 1,
-        "Stat": 1.1
+        "GimmickBoost": 1.0,
+        "GimmickParam": 1.0,
+        "Keystone": 1.0,
+        "MemoryHaste": 1.0,
+        "Notable": 1.0,
+        "Stat": 1.0
       },
       "Hero_Bismuth": {
         "MemoryDamage": 1.0,
-        "GimmickBoost": 1,
-        "GimmickParam": 1,
-        "Keystone": 1,
-        "MemoryHaste": 1,
+        "GimmickBoost": 1.0,
+        "GimmickParam": 1.0,
+        "Keystone": 1.0,
+        "MemoryHaste": 1.0,
         "Notable": 1.0,
-        "Stat": 1
+        "Stat": 1.0
       },
       "Hero_Cetus": {
         "MemoryDamage": 1.1,
-        "GimmickBoost": 1,
-        "GimmickParam": 1,
-        "Keystone": 1,
-        "MemoryHaste": 1,
-        "Notable": 1,
-        "Stat": 1
+        "GimmickBoost": 1.0,
+        "GimmickParam": 1.0,
+        "Keystone": 1.0,
+        "MemoryHaste": 1.0,
+        "Notable": 1.0,
+        "Stat": 1.0
       },
       "Hero_Husk": {
         "MemoryDamage": 1.2,
-        "GimmickBoost": 1,
-        "GimmickParam": 1,
-        "Keystone": 1,
-        "MemoryHaste": 1,
-        "Notable": 1,
-        "Stat": 1
+        "GimmickBoost": 1.0,
+        "GimmickParam": 1.0,
+        "Keystone": 1.0,
+        "MemoryHaste": 1.0,
+        "Notable": 1.0,
+        "Stat": 1.0
       },
       "Hero_Lacerta": {
         "MemoryDamage": 1.1,
-        "GimmickBoost": 1,
-        "GimmickParam": 1,
-        "Keystone": 1,
-        "MemoryHaste": 1,
-        "Notable": 1,
-        "Stat": 1.1
+        "GimmickBoost": 1.0,
+        "GimmickParam": 1.0,
+        "Keystone": 1.0,
+        "MemoryHaste": 1.0,
+        "Notable": 1.0,
+        "Stat": 1.0
       },
       "Hero_Mist": {
-        "MemoryDamage": 1,
-        "GimmickBoost": 1,
-        "GimmickParam": 1,
-        "Keystone": 1,
-        "MemoryHaste": 1,
-        "Notable": 1,
-        "Stat": 1
+        "MemoryDamage": 1.0,
+        "GimmickBoost": 1.0,
+        "GimmickParam": 1.0,
+        "Keystone": 1.0,
+        "MemoryHaste": 1.0,
+        "Notable": 1.0,
+        "Stat": 1.0
       },
       "Hero_Nachia": {
         "MemoryDamage": 1.15,
-        "GimmickBoost": 1.15,
-        "GimmickParam": 1,
-        "Keystone": 1,
-        "MemoryHaste": 1,
-        "Notable": 1,
-        "Stat": 1.1
+        "GimmickBoost": 1.0,
+        "GimmickParam": 1.0,
+        "Keystone": 1.0,
+        "MemoryHaste": 1.0,
+        "Notable": 1.0,
+        "Stat": 1.0
       },
       "Hero_Vesper": {
         "MemoryDamage": 1.05,
-        "GimmickBoost": 1,
-        "GimmickParam": 1,
-        "Keystone": 1,
-        "MemoryHaste": 1,
-        "Notable": 1,
-        "Stat": 1.05
+        "GimmickBoost": 1.0,
+        "GimmickParam": 1.0,
+        "Keystone": 1.0,
+        "MemoryHaste": 1.0,
+        "Notable": 1.0,
+        "Stat": 1.0
       },
       "Hero_Yubar": {
         "MemoryDamage": 1.15,
-        "GimmickBoost": 1,
-        "GimmickParam": 1,
-        "Keystone": 1,
-        "MemoryHaste": 1.1,
-        "Notable": 1,
-        "Stat": 1
+        "GimmickBoost": 1.0,
+        "GimmickParam": 1.0,
+        "Keystone": 1.0,
+        "MemoryHaste": 1.0,
+        "Notable": 1.0,
+        "Stat": 1.0
       }
     }
   },
