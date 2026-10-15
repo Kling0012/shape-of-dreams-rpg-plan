@@ -327,7 +327,8 @@ namespace SodRpg.Core.Game
             {
                 foreach (var kv in mats.Properties)
                 {
-                    if (kv.Key != Materials.Shard && kv.Key != Materials.Tuning)
+                    // 書き込み側は Materials の正の値をすべて書くため、読み込み側の既知素材はここに並べる（#427）。
+                    if (kv.Key != Materials.Shard && kv.Key != Materials.Tuning && kv.Key != Materials.NemesisCore)
                     {
                         notes.Add("未知の素材を除外: " + kv.Key);
                         continue;
