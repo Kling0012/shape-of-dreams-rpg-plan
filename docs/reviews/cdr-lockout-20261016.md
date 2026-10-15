@@ -168,4 +168,33 @@ Core テストは新パッチをコンパイルせず、既存 Startup テスト
   Release ビルドによる本体 DLL 参照と API 整合性のみ確認した。
 - 全テスト：**未実行**。依頼に従って関連テストのみ実行した。
 
-テスト追加、CHANGELOG、保存形式、Protocol の変更は行っていない。push は行わない。
+テスト追加（下記「境界スタブ テスト」）は行った。CHANGELOG、保存形式、Protocol の変更は行っていない。push は行わない。
+
+## 境界スタブ テスト（2026-10-16 追加）
+
+`tests/SodRpg.Mod.Startup.Tests/NativeCooldownSafetyTests.cs`（5件）。
+実 `NativeCooldownSafety` の4パッチクラスを実 Harmony デトゥアで `NativeCooldownSafetyApi.cs` の
+本体境界スタブ（逆コンパイル結果に基づく短縮・時間更新・RPC の数式）に適用して確かめる。
+
+- 正の有限倍率（0.01 未満を含む）は置換せず、本体の数式・RPC・チャージが変わらない。
+- 倍率 0 / NaN / ±Infinity は 0.01 に置換され、短縮後の残り時間と次の時間更新が有限。
+  スコープ外（短縮・時間更新の外）の倍率取得には介入しない。
+- NaN・Infinity・負の残り時間は 0 に正規化され、チャージを維持したまま本体 RPC で再同期される。
+- サーバでないときは倍率・残り時間・RPC のどれにも介入しない。
+- AttackTrigger の宣言オーバーライド欠落ではその対象だけが外れ、他の補正パッチは有効のまま動く。
+  （LogicUpdate・両短縮メソッド欠落時のクラス無効化は、起動テスト共有アセンブリの
+  preflight が Prepare=false を例外扱いにするため境界スタブでは再現していない。）
+
+テストプロジェクトの Harmony 参照を本体と同じ 2.3.6 に揃えた
+（2.3.3 には `AccessTools.MethodDelegate` の `delegateArgs` 引数が無く、
+`NativeCooldownSafety.cs` がコンパイルできないため）。
+
+実行結果（このセッション）:
+
+- 新規5件: 成功。
+- `tests/SodRpg.Mod.Startup.Tests` 全件: 130成功、1スキップ（既存の ModReloadTests 名前変更検証）。
+- `DOTNET=/usr/bin/dotnet DOTNET_ROLL_FORWARD=LatestMajor python tools/test_changed.py`:
+  全クラス選択（csproj 変更のため）、3233成功・1失敗。失敗は
+  `PerformanceTests.A_kill_takes_well_under_a_tenth_of_a_millisecond`（0.107〜0.111ms、
+  閾値0.1ms）で、単独再実行でも同様。Core.Tests は本変更のファイルをコンパイルしないため
+  環境性能依存と判断し、本件の対象外としている。
