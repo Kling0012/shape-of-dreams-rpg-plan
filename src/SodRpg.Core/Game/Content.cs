@@ -5148,6 +5148,7 @@ namespace SodRpg.Core.Game
             [Stat.ShieldPower] = EquipmentCapsBalance.Stat_ShieldPower,
             [Stat.SummonPower] = EquipmentCapsBalance.Stat_SummonPower,
             [Stat.SacrificeReduction] = EquipmentCapsBalance.Stat_SacrificeReduction,
+            [Stat.HealingReceivedPct] = EquipmentCapsBalance.Stat_HealingReceivedPct, // v2.10：遠征の鍛錬（Aurena）で受ける回復が伸びる
         };
 
         private static readonly Dictionary<string, BaseDef> BaseById = Index(Bases, b => b.Id);

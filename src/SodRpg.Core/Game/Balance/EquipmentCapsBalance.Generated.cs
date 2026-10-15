@@ -124,6 +124,7 @@ namespace SodRpg.Core.Game
         internal const int Stat_ShieldPower = 60;
         internal const int Stat_SummonPower = 80;
         internal const int Stat_SacrificeReduction = 40;
+        internal const int Stat_HealingReceivedPct = 60;
 
         internal static readonly string[] ContentFingerprintRecords = new string[]
         {
@@ -237,6 +238,7 @@ namespace SodRpg.Core.Game
             "balance:equipment:caps:v1:stat/FourthAttackShift/cap:int32:value=1",
             "balance:equipment:caps:v1:stat/Haste/cap:int32:value=100",
             "balance:equipment:caps:v1:stat/HealPower/cap:int32:value=60",
+            "balance:equipment:caps:v1:stat/HealingReceivedPct/cap:int32:value=60",
             "balance:equipment:caps:v1:stat/HealthRegen/cap:int32:value=40",
             "balance:equipment:caps:v1:stat/LightAmp/cap:int32:value=100",
             "balance:equipment:caps:v1:stat/MaxHealthFlat/cap:int32:value=600",
