@@ -437,7 +437,7 @@ namespace SodRpg.Core.Game
                 var snapshot = ProfileCodec.ReadCheckpointProfile(checkpoint.Snapshot);
                 CopyEconomics(snapshot, profile);
                 CopyDurableState(snapshot, profile);
-                refreshed.Add(new RunCheckpoint(checkpoint.Id, checkpoint.RunId, ProfileCodec.WriteCheckpointProfile(snapshot)));
+                refreshed.Add(new RunCheckpoint(checkpoint.Id, checkpoint.RunId, ProfileCodec.WriteCheckpointProfile(snapshot), checkpoint.Committed));
             }
             string baseline = null;
             if (!string.IsNullOrEmpty(profile.ContinueLobbyBaseline))
