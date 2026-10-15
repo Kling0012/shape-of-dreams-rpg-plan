@@ -6,6 +6,7 @@ using Mirror;
 using SodRpg.Core.Game;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.SceneManagement;
 
 namespace SodRpg.Mod
 {
@@ -22,6 +23,14 @@ namespace SodRpg.Mod
         private static float _nextCheck;
         private static bool _hudFailed, _hudCountLogged;
         private static int _readyTargets, _remoteCap = 4;
+        private static bool _hudScanPending = true;
+
+        static LevelEssenceRuntime()
+        {
+            SceneManager.sceneLoaded += OnSceneLoaded;
+        }
+
+        private static void OnSceneLoaded(Scene scene, LoadSceneMode mode) => _hudScanPending = true;
         internal static bool HudLimited => _hudFailed || _readyTargets != LevelEssenceSettings.TargetAll;
         internal static LevelEssenceSettings DisplaySettings => _display;
         internal static int EffectiveCap => Math.Min(_display.Ceiling, LevelEssenceSettings.RuntimeCapLimit);
@@ -53,8 +62,9 @@ namespace SodRpg.Mod
             _nextCheck = Time.unscaledTime + 1f;
             try
             {
-                if (!_hudFailed && _readyTargets != LevelEssenceSettings.TargetAll)
+                if (_hudScanPending && !_hudFailed && _readyTargets != LevelEssenceSettings.TargetAll)
                 {
+                    _hudScanPending = false;
                     foreach (var group in Resources.FindObjectsOfTypeAll<UI_InGame_SkillButton_GemGroup>())
                         if (group.gameObject.scene.IsValid()) EnsureHud(group);
                 }

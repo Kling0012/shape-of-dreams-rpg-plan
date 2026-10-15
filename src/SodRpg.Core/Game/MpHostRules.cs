@@ -205,17 +205,19 @@ namespace SodRpg.Core.Game
     public static class WaypointRoster
     {
         public static void Diff<T>(IEnumerable<T> tracked, IEnumerable<T> roster, Func<T, bool> isEligible,
-            List<T> toAdd, List<T> toRemove) where T : class
+            List<T> toAdd, List<T> toRemove, HashSet<T> eligible, HashSet<T> known) where T : class
         {
-            var eligible = new HashSet<T>();
+            eligible.Clear();
+            known.Clear();
             foreach (var hero in roster) if (hero != null && isEligible(hero)) eligible.Add(hero);
-            var known = new HashSet<T>();
             foreach (var hero in tracked)
             {
                 known.Add(hero);
                 if (hero == null || !eligible.Contains(hero)) toRemove.Add(hero);
             }
             foreach (var hero in eligible) if (!known.Contains(hero)) toAdd.Add(hero);
+            eligible.Clear();
+            known.Clear();
         }
     }
 }
