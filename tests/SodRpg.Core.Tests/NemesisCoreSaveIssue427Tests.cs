@@ -68,6 +68,25 @@ namespace SodRpg.Core.Tests
             var restored = ProfileCodec.Read(ProfileCodec.Write(p), notes);
             Assert.Equal(0, restored.Material("futureOre"));
             Assert.Contains(notes, note => note.Contains("未知の素材を除外: futureOre"));
+
+            // 負数の既存の扱い：書き込み側は正の値だけを書き、読み込み側も正の値だけを復元する（#429）。
+            p = WithAllMaterials();
+            p.Materials[Materials.Tuning] = -7;
+            restored = ProfileCodec.Read(ProfileCodec.Write(p), new List<string>());
+            Assert.Equal(0, restored.Material(Materials.Tuning));
+            string withNegative = ProfileCodec.Write(WithAllMaterials()).Replace("\"tuning\":12", "\"tuning\":-5");
+            restored = ProfileCodec.Read(withNegative, new List<string>());
+            Assert.Equal(0, restored.Material(Materials.Tuning));
+
+            // 上限の既存の扱い：int.MaxValue を超える値は int.MaxValue で打ち止め、
+            // int.MaxValue そのものは往復で維持される（#429）。
+            string overMax = ProfileCodec.Write(WithAllMaterials()).Replace("\"shard\":120", "\"shard\":99999999999");
+            restored = ProfileCodec.Read(overMax, new List<string>());
+            Assert.Equal(int.MaxValue, restored.Material(Materials.Shard));
+            p = WithAllMaterials();
+            p.Materials[Materials.NemesisCore] = int.MaxValue;
+            restored = ProfileCodec.Read(ProfileCodec.Write(p), new List<string>());
+            Assert.Equal(int.MaxValue, restored.Material(Materials.NemesisCore));
         }
 
         /// <summary>

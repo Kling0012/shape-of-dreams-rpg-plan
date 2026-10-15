@@ -246,5 +246,12 @@ namespace SodRpg.Core.Game
         public const string Tuning = "tuning";
         /// <summary>禁忌の核。宿敵を倒すと手に入り、禁忌化に使う（#415）。</summary>
         public const string NemesisCore = "nemesisCore";
+
+        /// <summary>
+        /// 既知素材の一覧の単一定義。保存の書き込みと読み込みがこの一覧を共有する（#429）。
+        /// 素材を増やすときは const とこの一覧の両方に足す。書き込み側は <see cref="Profile"/> の
+        /// 素材の正の値をすべて書くため、ここへ足し忘れると読み込みで未知の素材として除外される。
+        /// </summary>
+        public static readonly string[] Known = { Shard, Tuning, NemesisCore };
     }
 }
