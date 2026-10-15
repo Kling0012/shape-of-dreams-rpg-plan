@@ -10,6 +10,25 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v2.10.46 — Relic Fusion fixes: proper Fusion notification and lighter forge screen（2026-10-15）
+
+このバージョンでは、遺物の融合に関する不具合を修正しました。 / This version fixes issues with relic Fusion.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- 鍛冶で遺物を融合したときの通知が、レベルアップの通知として扱われていた問題を修正しました。融合は専用の通知になり、融合後の能力値は従来どおり反映されます。 / Fixed an issue where fusing a relic at the forge was announced as a level-up. Fusion now has its own notification, and the fused relic's stats are still applied as before.
+- 保管庫に遺物が多いと、鍛冶画面の融合欄の処理が重くなる問題を軽減しました。融合の候補や必要な素材の変化はこれまでどおりすぐに反映され、融合ボタンを押したときには最新の状態を確認し直します。 / Reduced the processing load of the forge's Fusion panel when your storage holds many relics. Changes to Fusion candidates and required materials still show up right away, and the latest state is rechecked when you press the Fusion button.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
 ## v2.10.45 — Relic Fusion added to the forge（2026-10-15）
 
 このバージョンでは、鍛冶に遺物を融合して強化する機能を追加しました。 / This version adds relic Fusion to the forge, letting you strengthen relics by fusing them.

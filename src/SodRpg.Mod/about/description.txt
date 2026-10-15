@@ -1,5 +1,5 @@
-[b]Fuse duplicate relics at the forge to raise their stats, up to 5 levels.[/b]
-[b]鍛冶で同じ遺物を融合し、最大5段まで能力値を強化できるようになりました。[/b]
+[b]Fusion is no longer announced as a level-up, and the forge's Fusion panel runs lighter with large storage.[/b]
+[b]融合がレベルアップとして通知される不具合を直し、保管庫が大きいときの融合欄の負荷を軽くしました。[/b]
 
 [h1]Dreamforge RPG[/h1]
 Turns every run into part of a long RPG journey: relics you keep, a risky "secure or delve" choice at every zone, a star map per Traveler, a forge, and long-term goals. Co-op ready.
