@@ -336,6 +336,7 @@ namespace SodRpg.Mod
             }
             if (!_runChoiceProgress.CanConclude(ActiveRunId, ChoiceZoneIndex, CanChooseRunRules)) return;
             bool victory = _pendingRunVictory.Value;
+            DiagnoseExpedition("client-settle-before-" + victory);
             _completedRunId = ActiveRunId;
             Profile.CompletedRunId = _completedRunId;
             if (NetworkServer.active)
@@ -350,6 +351,7 @@ namespace SodRpg.Mod
             _runChoiceProgress.ClearRun();
             PublishRunChoices();
             SaveNow();
+            DiagnoseExpedition("client-settle-after");
         }
 
         private string SecureChoiceUnavailable() => HasPendingTrades

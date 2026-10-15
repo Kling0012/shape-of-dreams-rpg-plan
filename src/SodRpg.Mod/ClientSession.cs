@@ -412,6 +412,7 @@ namespace SodRpg.Mod
                 }
                 _results = results;
                 if (results != null) results.ClientEvent_OnGameConcluded += _onConcluded;
+                DiagnoseExpedition("client-result-handler-" + (results != null ? "attached" : "detached"));
             }
             var am = NetworkedManagerBase<ActorManager>.softInstance;
             if (!NetworkServer.active && !ReferenceEquals(_hostAuthorityActor, null))
@@ -422,6 +423,7 @@ namespace SodRpg.Mod
             var actor = NetworkClient.active && am != null ? am.serverActor : null;
             if (!ReferenceEquals(actor, _clientRpcOn))
             {
+                DiagnoseExpedition("client-transport-before");
                 if (_clientRpcOn != null)
                 {
                     try { _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgeAppliedMsg>(_onApplied); } catch (Exception) { }
@@ -486,6 +488,7 @@ namespace SodRpg.Mod
                     RegisterRunGrowth(actor);
                     RegisterBossVisuals(actor);
                 }
+                DiagnoseExpedition("client-transport-after");
             }
         }
 
@@ -565,6 +568,7 @@ namespace SodRpg.Mod
         private void TrackRun()
         {
             var gm = NetworkedManagerBase<GameManager>.softInstance;
+            ObserveNativeRunForDiagnostics(gm);
             TickContinueRestore();
             if (LobbyReturnPending)
             {
@@ -577,6 +581,7 @@ namespace SodRpg.Mod
             }
             if (gm == null)
             {
+                if (ActiveRunId != null) DiagnoseExpedition("client-native-detached");
                 ActiveRunId = null;
                 return;
             }
@@ -612,6 +617,7 @@ namespace SodRpg.Mod
                 _pendingRunVictory = null;
                 _pendingResultRunId = null;
             }
+            DiagnoseExpedition("client-begin-before");
             int pacts = Profile.Run != null && Profile.Run.RunId != runId ? Profile.Run.Pacts.Count : 0;
             ActiveRunId = runId;
             PressureHealthMultiplier = PressureDamageMultiplier = 1f;
@@ -624,6 +630,7 @@ namespace SodRpg.Mod
             if (Onboarding.AutoEquipStarter(Profile, HeroKeyOf(LocalHero))) Emit(Rules.HintOnce(Profile, Hint.StarterGear));
             _buildDirty = true;
             SaveNow();
+            DiagnoseExpedition("client-begin-after");
         }
 
         /// <summary>セッションをまたいで確定しなかった結果を、BeginRun の終着判定の証拠として RunRecovery に残す。
@@ -780,15 +787,25 @@ namespace SodRpg.Mod
             try
             {
                 if (result == null) return;
+                DiagnoseExpedition("client-concluded-" + result.result);
                 // 遠征の終了時にも、部屋遷移と同じ掃除を 1 回だけ走らせる。
                 _roomSweepPendingAt = Time.unscaledTime + SweepDelaySeconds;
 if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
-                    NetworkedManagerBase<GameManager>.softInstance?.runId ?? "")) return;
-                if (ObserveInfinityConclusion(result)) return;
+                    NetworkedManagerBase<GameManager>.softInstance?.runId ?? ""))
+                {
+                    DiagnoseExpedition("client-concluded-lobby-return");
+                    return;
+                }
+                if (ObserveInfinityConclusion(result))
+                {
+                    DiagnoseExpedition("client-concluded-infinity-handled");
+                    return;
+                }
                 _pendingRunVictory = IsVictory(result.result);
                 _pendingResultRunId = ActiveRunId ?? NetworkedManagerBase<GameManager>.softInstance?.runId;
                 FlushPendingRunRewards();
                 TryConcludeRun();
+                DiagnoseExpedition("client-concluded-after");
             }
             catch (Exception ex)
             {
@@ -1226,7 +1243,11 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
                 Log.Warn("Client: rejected invalid applied-build transfer packet.");
                 return;
             }
-            if (summary != null) HostSummary = summary;
+            if (summary != null)
+            {
+                HostSummary = summary;
+                DiagnoseExpedition("client-applied-received");
+            }
         }
 
         private void OnPressure(DreamforgePressureMsg msg)
@@ -1237,6 +1258,7 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
             PressureDamageMultiplier = msg.damageMultiplier;
             ReceiveRunChoices(msg.runChoices);
             HostConfirmed = true;
+            DiagnosePressureReceipt();
             ReportPressureProgress();
         }
 
@@ -1432,6 +1454,7 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
                 _lastSentBuild = encoded; _lastBuildActor = _clientRpcOn; _lastBuildHero = hero;
                 _lastBuildHeartbeat = now;
             }
+            DiagnoseBuildSubmission(submissionBuild, submissionProfile, suppress);
             _buildDirty = false;
             _monsterAuthority.BuildSent();
             _sentDreamLevel = Profile.DreamLevel;
