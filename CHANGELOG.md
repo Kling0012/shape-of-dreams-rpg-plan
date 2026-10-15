@@ -8,7 +8,23 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
-- 星図で星にポイントを振るときの処理を軽くしました。 / Allocating points on the star map is now lighter.
+---
+
+## v2.10.43 — Smoother star map point allocation（2026-10-15）
+
+このバージョンでは、星図で星にポイントを割り振るときのカクつきを軽くしました。 / This version reduces the stutter when allocating points to stars on the star map.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- 星図で星にポイントを割り振るたびに、画面が一瞬カクついていました。この動作を軽くし、ポイントをテンポよく割り振れるようにしました。ポイントの割り振りのルールや払い戻し、星の説明文の内容は変わりません。 / The screen briefly stuttered each time you allocated a point to a star on the star map. This has been made lighter so you can allocate points smoothly. The allocation rules, refunds, and star descriptions are unchanged.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
 
 ---
 
