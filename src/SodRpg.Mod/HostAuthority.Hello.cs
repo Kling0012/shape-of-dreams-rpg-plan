@@ -15,6 +15,7 @@ namespace SodRpg.Mod
 
         private readonly Dictionary<DewPlayer, string> _versionMismatches = new Dictionary<DewPlayer, string>();
         private readonly HashSet<DewPlayer> _helloPeers = new HashSet<DewPlayer>();
+        private readonly HashSet<DewPlayer> _bountyCountPeers = new HashSet<DewPlayer>();
         private readonly HashSet<DewPlayer> _autocastPressurePeers = new HashSet<DewPlayer>();
         private Action<DreamforgeAutocastPressureCapabilityMsg, DewPlayer> _onAutocastPressureCapability;
         internal bool AutocastPressureReady;
@@ -65,6 +66,7 @@ namespace SodRpg.Mod
             _forbiddenSmithPeers.Clear();
             _nemesisGrudgePeers.Clear();
             _autocastPressurePeers.Clear();
+            _bountyCountPeers.Clear();
             RebuildMismatchList();
         }
 
@@ -100,6 +102,8 @@ namespace SodRpg.Mod
                 || !DewPlayer.gamePlayers.Contains(caller) && !DewPlayer.lobbyPlayers.Contains(caller)) return;
             if (msg.netLite == 1 && _helloPeers.Contains(caller)) _netLitePeers.Add(caller);
             else _netLitePeers.Remove(caller);
+            if (msg.bountyCounts == 1 && _helloPeers.Contains(caller)) _bountyCountPeers.Add(caller);
+            else _bountyCountPeers.Remove(caller);
             if (msg.roomOmens == 1 && _helloPeers.Contains(caller)) _roomOmenPeers.Add(caller);
             else _roomOmenPeers.Remove(caller);
             if (msg.forbiddenSmith == 1 && _helloPeers.Contains(caller)) _forbiddenSmithPeers.Add(caller);

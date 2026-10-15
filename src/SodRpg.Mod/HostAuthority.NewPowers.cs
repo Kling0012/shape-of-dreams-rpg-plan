@@ -357,8 +357,10 @@ namespace SodRpg.Mod
             var hero = rt.Hero;
             var p = rt.Powers;
             if (!Alive(hero)) { p.IsVanguard = p.IsRearguard = false; return; }
-            p.NearbyEnemies8 = CountEnemiesNear(hero, PowersBalance.DuelistsWayRange);
-            float shield = p.TakeBreakout(now, CountEnemiesNear(hero, PowersBalance.BreakoutRange), hero.maxHealth);
+            p.NearbyEnemies8 = p.Build.Get(Power.DuelistsWay) > 0
+                ? CountEnemiesNear(hero, PowersBalance.DuelistsWayRange) : 0;
+            float shield = p.Build.Get(Power.Breakout) > 0
+                ? p.TakeBreakout(now, CountEnemiesNear(hero, PowersBalance.BreakoutRange), hero.maxHealth) : 0f;
             if (shield > 0f)
             {
                 PowerShield(rt, hero, Power.Breakout, shield, PowersBalance.BreakoutShieldDuration);
@@ -373,17 +375,28 @@ namespace SodRpg.Mod
                 }
                 finally { handle.Return(); }
             }
-            float selfDistance = NearestEnemyDistance(hero);
+            bool needsPosition = p.Build.Get(Power.VanguardsOath) > 0 || p.Build.Get(Power.RearguardsWay) > 0;
+            bool needsWard = p.Build.Get(Power.WatchfulHand) > 0;
+            p.IsVanguard = p.IsRearguard = false;
+            p.LivingPartySize = 1;
+            if (!needsPosition && !needsWard) return;
+            float selfDistance = needsPosition ? NearestEnemyDistance(hero) : float.PositiveInfinity;
             bool front = !float.IsPositiveInfinity(selfDistance), rear = front;
             int party = 1;
             foreach (var ally in LivingAllies(hero, 0f))
             {
                 party++;
-                float distance = NearestEnemyDistance(ally);
-                if (distance < selfDistance) front = false;
-                if (distance > selfDistance) rear = false;
-                float ward = p.TakeWatchfulHand(now, ally.GetInstanceID(), ally.maxHealth > 0f ? ally.currentHealth / ally.maxHealth : 1f, hero.maxHealth);
-                PowerShield(rt, ally, Power.WatchfulHand, ward, PowersBalance.WatchfulHandDuration);
+                if (needsPosition)
+                {
+                    float distance = NearestEnemyDistance(ally);
+                    if (distance < selfDistance) front = false;
+                    if (distance > selfDistance) rear = false;
+                }
+                if (needsWard)
+                {
+                    float ward = p.TakeWatchfulHand(now, ally.GetInstanceID(), ally.maxHealth > 0f ? ally.currentHealth / ally.maxHealth : 1f, hero.maxHealth);
+                    PowerShield(rt, ally, Power.WatchfulHand, ward, PowersBalance.WatchfulHandDuration);
+                }
             }
             p.IsVanguard = front; p.IsRearguard = rear; p.LivingPartySize = party;
         }
@@ -435,7 +448,8 @@ namespace SodRpg.Mod
             var basic = BasicAttackContext.Current;
             if (basic == null || basic.Actor != info.actor || basic.Target != victim || basic.From != hero || !basic.Primary) return;
             p.ShieldAmount = CurrentNativeShield(hero);
-            p.NearbyEnemies8 = CountEnemiesNear(hero, PowersBalance.DuelistsWayRange);
+            p.NearbyEnemies8 = p.Build.Get(Power.DuelistsWay) > 0
+                ? CountEnemiesNear(hero, PowersBalance.DuelistsWayRange) : 0;
             p.ObserveMemoryReadiness(1, false, AllNormalMemoriesCooling(hero), UltimateReady(hero));
             var result = p.OnNewBasicHit(now, victim.GetInstanceID(), Higher(hero), info.damage.amount,
                 crit, basic.Guaranteed || !basic.CriticalAtNative && crit, primary: true,

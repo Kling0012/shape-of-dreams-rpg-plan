@@ -14,6 +14,35 @@ namespace SodRpg.Mod
         internal const string ChoiceKey = "dreamforge.infinity.choice";
         private const string HaltKey = "dreamforge.infinity.halted";
         private static string _runId;
+        private static ActorManager _soulActors;
+        private static readonly HashSet<Shrine_BossSoul> BossSouls = new HashSet<Shrine_BossSoul>();
+        private static readonly Action<Actor> SoulAdded = actor => { if (actor is Shrine_BossSoul soul) BossSouls.Add(soul); };
+        private static readonly Action<Actor> SoulRemoved = actor => { if (actor is Shrine_BossSoul soul) BossSouls.Remove(soul); };
+
+        private static bool HasActiveBossSoul()
+        {
+            var actors = NetworkedManagerBase<ActorManager>.softInstance;
+            if (!ReferenceEquals(actors, _soulActors))
+            {
+                if (_soulActors != null)
+                {
+                    _soulActors.ClientEvent_OnActorAdd -= SoulAdded;
+                    _soulActors.ClientEvent_OnActorRemove -= SoulRemoved;
+                }
+                _soulActors = actors;
+                BossSouls.Clear();
+                if (actors != null)
+                {
+                    actors.ClientEvent_OnActorAdd += SoulAdded;
+                    actors.ClientEvent_OnActorRemove += SoulRemoved;
+                    // Include souls created before the first boss tick (including Continue).
+                    foreach (var actor in actors.allActors) SoulAdded(actor);
+                }
+            }
+            foreach (var soul in BossSouls)
+                if (soul != null && soul.isActive) return true;
+            return false;
+        }
         private static InfinityRunState _initial;
         private static bool _restoring;
         private static bool _newInfinity;
@@ -518,11 +547,8 @@ namespace SodRpg.Mod
                 if (IsBossFinaleZone(zone.currentZone, state.Interval)) state.PromoteFinaleBoss();
                 state.TryEnterBoss();
                 if (beforeArrival != state.Phase) ClientSession.PersistHostInfinityState();
-                bool soul = false;
-                var actors = NetworkedManagerBase<ActorManager>.softInstance;
-                if (actors != null && (state.Phase == InfinityPhase.BossFight || state.Phase == InfinityPhase.WaitingSoulFinish))
-                    foreach (var actor in actors.allActors)
-                        if (actor is Shrine_BossSoul && actor.isActive) { soul = true; break; }
+                bool soul = (state.Phase == InfinityPhase.BossFight || state.Phase == InfinityPhase.WaitingSoulFinish)
+                    && HasActiveBossSoul();
                 var before = state.Phase;
                 bool seen = state.SoulObserved;
                 state.ObserveSoul(soul, room.didClearRoom, Rift_RoomExit.instance != null && !Rift_RoomExit.instance.isLocked);

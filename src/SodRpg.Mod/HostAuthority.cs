@@ -42,6 +42,9 @@ namespace SodRpg.Mod
             public readonly Dictionary<string, SkillTrigger> MemoryByName = new Dictionary<string, SkillTrigger>(StringComparer.Ordinal);
             // #161: 仕掛け発動の報告はティックごとにまとめて送る（合計は不変）。
             public int PendingGimmickReports;
+            public string PendingBountyRun;
+            public int PendingBountyShields, PendingBountyHeals;
+            public readonly int[] PendingElementalKills = new int[16];
             public readonly HashSet<int> GeneratedKillVictims = new HashSet<int>();
             public readonly List<GimmickRequest> GimmickRequests = new List<GimmickRequest>();
             public readonly List<PendingGimmick> PendingGimmicks = new List<PendingGimmick>();
@@ -357,7 +360,7 @@ namespace SodRpg.Mod
                 "boss effects", "boss visuals", "identity strikes", "gimmicks v129", "back-off charge", "sap prune", "attribution prune", "runtime", "run growth", "currency",
                 "shield pools", "spawns", "monster prune", "monster behaviors", "kill replay", "sunders",
                 "nightmare regen", "classification resync",
-                "overflow bonus", "culinary snap", "crowd-control recovery", "room omens",
+                "overflow bonus", "culinary snap", "crowd-control recovery", "room omens", "bounty reports",
             };
             _tickStages = new Action[]
             {
@@ -366,7 +369,7 @@ namespace SodRpg.Mod
                 StageBossEffects, TickBossVisualSnapshots, UpdateIdentityStrikes, StageGimmicksV129, StageBackOffCharge, StageSapPrune, PruneMemoryAttribution, StageRuntimes, StageRunGrowth, StageCurrency,
                 StageModShieldPools, ProcessSpawns, StageMonsterPrune, StageMonsterBehaviors, TickKillReplay, StageSunders,
                 StageNightmareRegen, StageClassificationResync,
-                TickOverflowBonus, CulinaryMagnet.SnapToOwners, StageCrowdControlRecovery, TickRoomOmens,
+                TickOverflowBonus, CulinaryMagnet.SnapToOwners, StageCrowdControlRecovery, TickRoomOmens, FlushBountyReports,
             };
             _tickGuard = new TickGuard(_tickStages, _tickStageNames, 10f, message => Log.Error("Host tick " + message));
         }
@@ -1574,14 +1577,14 @@ namespace SodRpg.Mod
                     var target = info.target as Hero;
                     if (target != null && target != hero && target.GetRelation(hero) == EntityRelation.Ally
                         && info.amount > 0f && !float.IsNaN(info.amount) && !float.IsInfinity(info.amount))
-                        SendBountyReport(captured, BountyReportKind.AllyHealed, 1);
+                        QueueBountyReport(captured, BountyReportKind.AllyHealed, 1);
                 };
                 rt.OnSupportShield = info =>
                 {
                     var target = info.target;
                     if (target != null && (target == hero || target.GetRelation(hero) == EntityRelation.Ally)
                         && info.finalAmount > 0f && !float.IsNaN(info.finalAmount) && !float.IsInfinity(info.finalAmount))
-                        SendBountyReport(captured, BountyReportKind.ShieldGranted, 1);
+                        QueueBountyReport(captured, BountyReportKind.ShieldGranted, 1);
                 };
                 hero.ActorEvent_OnDoHeal += rt.OnSupportHeal;
                 hero.ActorEvent_OnGiveShield += rt.OnSupportShield;
@@ -1665,6 +1668,7 @@ namespace SodRpg.Mod
         {
             // #161: 外す直前までに貯まった報告を落とさない。
             FlushGimmickReports(rt);
+            FlushBountyReports(rt);
             ClearBossEffects(rt);
             ForgetAssignedMechanismOwner(rt.Hero);
             if (restoreGemSlots) RestoreGemSlots(rt);
@@ -2371,7 +2375,7 @@ namespace SodRpg.Mod
             // The synchronous server death event runs before Destroy clears the victim's state.
             foreach (var rt in _runtimes.Values)
                 if (rt.Hero != null && monster.GetRelation(rt.Hero) == EntityRelation.Enemy)
-                    SendBountyReport(rt, BountyReportKind.ElementalKill, mask);
+                    QueueBountyReport(rt, BountyReportKind.ElementalKill, mask);
         }
 
         private void OnDeath(EventInfoKill info)

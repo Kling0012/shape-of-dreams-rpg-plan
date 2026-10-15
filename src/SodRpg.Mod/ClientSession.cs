@@ -125,6 +125,7 @@ namespace SodRpg.Mod
             _onMonsterCue = OnMonsterCue;
             _onTradeResult = OnTradeResult;
             _onBountyReport = OnBountyReport;
+            _onBountyCounts = OnBountyCounts;
             _onChaos = pl => { if (pl != null && pl == DewPlayer.local) GameAction(BountyKind.ChaosSeeker); };
             _onBought = (h, _) => { if (IsLocal(h)) GameAction(BountyKind.Patron); };
             _onUpgraded = (h, _) => { if (IsLocal(h)) GameAction(BountyKind.Refiner); };
@@ -1331,13 +1332,13 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
             return null;
         }
 
-        private string _curseSyncedKey = "";
+        private (string Run, int Hero, int Authority) _curseSyncedKey;
 
-        private string CurseKey()
+        private (string Run, int Hero, int Authority) CurseKey()
         {
             var hero = LocalHero;
-            if (hero == null || _clientRpcOn == null || !NetworkClient.active || !RunActive) return "";
-            return PactCurseSync.Key(ActiveRunId, hero.GetInstanceID(), _clientRpcOn.GetInstanceID());
+            if (hero == null || _clientRpcOn == null || !NetworkClient.active || !RunActive) return default;
+            return (ActiveRunId, hero.GetInstanceID(), _clientRpcOn.GetInstanceID());
         }
 
         /// <summary>再起動・ホスト権限の交代・復活のあとも契約が残っていれば、呪いを1回だけ付け直してもらう。</summary>
@@ -1345,8 +1346,8 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
         {
             var run = Profile.Run;
             if (run == null || run.Pacts.Count == 0 || LocalHero == null || !LocalHero.isActive) return;
-            string key = CurseKey();
-            if (!PactCurseSync.ShouldResend(run.Pacts.Count, _curseSyncedKey, key)) return;
+            var key = CurseKey();
+            if (string.IsNullOrEmpty(key.Run) || key == _curseSyncedKey) return;
             _curseSyncedKey = key;
             for (int i = 0; i < run.Pacts.Count; i++)
             {

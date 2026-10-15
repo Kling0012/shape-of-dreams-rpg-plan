@@ -8,6 +8,7 @@ namespace SodRpg.Mod
     internal sealed partial class ClientSession
     {
         private bool _hostBuildInputCapability;
+        private bool _bountyCountsReady;
         /// <summary>ホストが禁忌装備入り（15欄形式）のビルド入力を受け付けられるか（#415）。旧ホスト相手では禁忌装備を送らない。</summary>
         private bool _hostForbiddenInput;
         private bool _hostFusionInput;
@@ -94,7 +95,7 @@ namespace SodRpg.Mod
         {
             if (NetworkServer.active || _hostNetLite || !_helloAnswered || Time.unscaledTime < _nextBuildInputProbe) return;
             _nextBuildInputProbe = Time.unscaledTime + 5f;
-            try { _clientRpcOn.CustomRpc_SendMessageToServer(new DreamforgeBuildInputCapabilityMsg { netLite = _netLiteReceiveReady ? 1 : 0, roomOmens = _omenReceiveReady ? 1 : 0, forbiddenSmith = Forbidden.HasSmith(Profile) ? 1 : 0, nemesisGrudge = Profile.NemesisGrudge }); } catch (Exception) { }
+            try { _clientRpcOn.CustomRpc_SendMessageToServer(new DreamforgeBuildInputCapabilityMsg { bountyCounts = _bountyCountsReady ? 1 : 0, netLite = _netLiteReceiveReady ? 1 : 0, roomOmens = _omenReceiveReady ? 1 : 0, forbiddenSmith = Forbidden.HasSmith(Profile) ? 1 : 0, nemesisGrudge = Profile.NemesisGrudge }); } catch (Exception) { }
         }
     }
 

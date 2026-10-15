@@ -163,11 +163,11 @@ namespace SodRpg.Mod.Startup.Tests
             InfinityMode.OnRoomClear(SingletonDewNetworkBehaviour<Room>.softInstance);
             Assert.Equal(InfinityPhase.WaitingSoulFinish, state.Phase);
             var soul = new Shrine_BossSoul { isActive = true };
-            NetworkedManagerBase<ActorManager>.softInstance.allActors.Add(soul);
+            NetworkedManagerBase<ActorManager>.softInstance.AddActor(soul);
             Rift_RoomExit.instance = new Rift_RoomExit();
             InfinityMode.Tick();
             Assert.True(state.SoulObserved);
-            NetworkedManagerBase<ActorManager>.softInstance.allActors.Remove(soul);
+            NetworkedManagerBase<ActorManager>.softInstance.RemoveActor(soul);
             InfinityMode.Tick();
             Assert.Equal(InfinityPhase.AwaitingChoice, state.Phase);
             Assert.True(InfinityMode.Available);

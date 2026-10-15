@@ -29,6 +29,8 @@ namespace SodRpg.Mod
         private readonly Dictionary<Hero, WaypointHeroRuntime> _waypointHeroes = new Dictionary<Hero, WaypointHeroRuntime>();
         private readonly List<Hero> _waypointHeroScratch = new List<Hero>();
         private readonly List<Hero> _waypointAddScratch = new List<Hero>();
+        private readonly HashSet<Hero> _waypointEligibleScratch = new HashSet<Hero>();
+        private readonly HashSet<Hero> _waypointKnownScratch = new HashSet<Hero>();
         private readonly List<Summon> _waypointSummonScratch = new List<Summon>();
 
         private void EnsureWaypointCombatChoice()
@@ -106,7 +108,8 @@ namespace SodRpg.Mod
             _waypointHeroScratch.Clear();
             _waypointAddScratch.Clear();
             WaypointRoster.Diff(_waypointHeroes.Keys, _am != null ? _am.allHeroes : (IEnumerable<Hero>)Array.Empty<Hero>(),
-                hero => hero != null && hero.isActive && hero.Status != null, _waypointAddScratch, _waypointHeroScratch);
+                hero => hero != null && hero.isActive && hero.Status != null, _waypointAddScratch, _waypointHeroScratch,
+                _waypointEligibleScratch, _waypointKnownScratch);
             foreach (var hero in _waypointHeroScratch) RemoveWaypointHero(hero);
             foreach (var kv in _waypointHeroes) PruneWaypointSummons(kv.Value);
             foreach (var hero in _waypointAddScratch)
