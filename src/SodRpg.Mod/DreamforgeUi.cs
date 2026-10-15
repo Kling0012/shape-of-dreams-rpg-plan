@@ -37,8 +37,8 @@ namespace SodRpg.Mod
         private float _hudBottom;
         private int _hudFrame = -10;
         private float _nextHudRebuild;
-        // 悪夢化のピンク紫に近いヴァイオレットを避け、宿敵はシアンで区別する。
-        private const string NemesisNameplateColor = "#00e5ff";
+        // 宿敵（#435）はシアンで、悪夢（桃 #ff6ad5）・夢の変種（琥珀 #ffb347）と区別する。
+        private const string NemesisNameplateColor = "#4dd8ff";
         private const string NightmareNameplateColor = "#ff6ad5";
         private const string VariantNameplateColor = "#ffb347";
         private readonly Dictionary<int, Label3D> _nightmareLabelCache = new Dictionary<int, Label3D>();
