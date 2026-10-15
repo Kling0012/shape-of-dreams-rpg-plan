@@ -54,7 +54,7 @@ namespace SodRpg.Core.Game
                     .Take(Math.Max(0, snapshot.DirectStashUsedRunIds.Count - MaxDirectStashUsedRunIds)).ToList())
                     snapshot.DirectStashUsedRunIds.Remove(id);
                 replacements.Add(new RunCheckpoint(checkpoint.Id, checkpoint.RunId,
-                    WriteDirectStashCheckpoint(checkpoint, snapshot.DirectStashUsedRunIds)));
+                    WriteDirectStashCheckpoint(checkpoint, snapshot.DirectStashUsedRunIds), checkpoint.Committed));
             }
             // Decode, validate and encode every candidate before changing the live profile.
             receipts.ExceptWith(expired);

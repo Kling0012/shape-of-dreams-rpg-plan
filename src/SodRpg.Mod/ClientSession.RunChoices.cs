@@ -255,9 +255,9 @@ namespace SodRpg.Mod
             if (Rules.EquippedAwakenLevels(Profile, kill.HeroKey) > awakenBefore)
             {
                 _buildDirty = true;
-                _nextSave = 0;
+                DeferKillSave(true);
             }
-            if (kill.Tier >= MonsterTier.MiniBoss) _nextSave = 0;
+            if (kill.Tier >= MonsterTier.MiniBoss) DeferKillSave(true);
         }
 
         private void OnRunChoices(DreamforgeRunChoicesMsg msg)

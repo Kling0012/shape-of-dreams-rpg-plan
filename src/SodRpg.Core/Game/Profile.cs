@@ -451,6 +451,55 @@ namespace SodRpg.Core.Game
 
         /// <summary>Native continue points, oldest first. Snapshot strings are immutable and shared by Clone.</summary>
         public List<RunCheckpoint> ContinueCheckpoints { get; } = new List<RunCheckpoint>();
+        public const int MaxPendingContinueCheckpoints = 4;
+        public const int MaxLobbyReturnedRunIds = 256;
+        /// <summary>The native file's last confirmed run; its return receipt must outlive bounded history.</summary>
+        public string NativeContinueRunId { get; set; }
+        internal bool LegacyContinueEncoding { get; set; }
+        private string _sharedLobbySource, _sharedLobbyEconomy, _sharedLobbySnapshot;
+
+        internal string SharedLobbyBaseline()
+        {
+            if (_sharedLobbySource != ContinueLobbyBaseline || _sharedLobbyEconomy != CoopTradeEconomy)
+            {
+                _sharedLobbySnapshot = ProfileCodec.ShareCheckpointEconomy(ContinueLobbyBaseline, CoopTradeEconomy);
+                _sharedLobbySource = ContinueLobbyBaseline;
+                _sharedLobbyEconomy = CoopTradeEconomy;
+            }
+            return _sharedLobbySnapshot;
+        }
+
+        public void PrunePendingContinueCheckpoints()
+        {
+            int pending = 0;
+            for (int i = ContinueCheckpoints.Count - 1; i >= 0; i--)
+                if (!ContinueCheckpoints[i].Committed && ++pending > MaxPendingContinueCheckpoints)
+                    ContinueCheckpoints.RemoveAt(i);
+        }
+
+        public void RememberLobbyReturn(string runId)
+        {
+            if (string.IsNullOrEmpty(runId)) return;
+            LobbyReturnedRunIds.Add(runId);
+            if (NativeContinueRunId == null) NativeContinueRunId = runId;
+            PruneLobbyReturnReceipts(runId);
+        }
+
+        public void PruneLobbyReturnReceipts(string activeRunId = null)
+        {
+            if (LobbyReturnedRunIds.Count <= MaxLobbyReturnedRunIds) return;
+            var expired = new List<string>();
+            foreach (string id in LobbyReturnedRunIds)
+                if (id != activeRunId && id != Run?.RunId && id != CompletedRunId && id != NativeContinueRunId
+                    && expired.Count < LobbyReturnedRunIds.Count - MaxLobbyReturnedRunIds) expired.Add(id);
+            foreach (string id in expired) LobbyReturnedRunIds.Remove(id);
+        }
+
+        internal void DiscardCompletedContinue(string runId)
+        {
+            ContinueCheckpoints.RemoveAll(checkpoint => checkpoint.RunId == runId);
+            ContinueLobbyBaseline = null;
+        }
         /// <summary>Profile at the stable lobby boundary, without nested continue data.</summary>
         public string ContinueLobbyBaseline { get; set; }
         /// <summary>The native resume session already applied locally.</summary>
@@ -581,6 +630,8 @@ namespace SodRpg.Core.Game
             LastReport = source.LastReport;
             RetuneOffer = source.RetuneOffer;
             ContinueLobbyBaseline = source.ContinueLobbyBaseline;
+            NativeContinueRunId = source.NativeContinueRunId;
+            LegacyContinueEncoding = source.LegacyContinueEncoding;
             ContinueResumeSession = source.ContinueResumeSession;
             Materials.Clear();
             foreach (var kv in source.Materials) Materials.Add(kv.Key, kv.Value);
@@ -665,6 +716,8 @@ namespace SodRpg.Core.Game
                 RunRecovery = RunRecovery?.Clone(),
                 KillClassification = KillClassification?.Clone(),
                 ContinueLobbyBaseline = ContinueLobbyBaseline,
+                NativeContinueRunId = NativeContinueRunId,
+                LegacyContinueEncoding = LegacyContinueEncoding,
                 ContinueResumeSession = ContinueResumeSession,
                 Focus = Focus,
                 LastReport = LastReport,

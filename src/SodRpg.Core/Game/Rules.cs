@@ -144,7 +144,7 @@ namespace SodRpg.Core.Game
                     ev.Add(new GameEvent(EventKind.Warning, Loc.T("前回の遠征は確保されずに中断しました。", "Your previous expedition was interrupted unsecured.")));
                     CaptureInterruptedRelics(p, reservations, ev);
                 }
-                ev.AddRange(EndRun(p, victory: terminal == true, reservedUids: reservations));
+                ev.AddRange(EndRun(p, victory: terminal == true, reservedUids: reservations, preserveContinue: !terminal.HasValue));
             }
             // 開始深度は v1.1 で廃止（本体の Limbo 深度に統合）。
             p.Run = new RunState { RunId = runId, HeroKey = heroKey, LevelAtStart = p.DreamLevel, DailyId = daily?.Id ?? 0, LimboDepth = Math.Max(0, limboDepth), DreamDepth = dreamDepth ?? p.LastDreamDepth };
@@ -754,11 +754,12 @@ namespace SodRpg.Core.Game
             Waypoints.Expire(run);
             p.CompletedRunId = run.RunId;
             p.CompletedRunSecuredReturn = true;
+            p.DiscardCompletedContinue(run.RunId);
             p.Run = null;
             return ev;
         }
 
-        public static List<GameEvent> EndRun(Profile p, bool victory, ISet<string> reservedUids = null)
+        public static List<GameEvent> EndRun(Profile p, bool victory, ISet<string> reservedUids = null, bool preserveContinue = false)
         {
             var ev = new List<GameEvent>();
             var run = p.Run;
@@ -825,6 +826,7 @@ namespace SodRpg.Core.Game
             Waypoints.Expire(run);
             p.CompletedRunId = run.RunId;
             p.CompletedRunSecuredReturn = false;
+            if (!preserveContinue) p.DiscardCompletedContinue(run.RunId);
             p.Run = null;
             ev.AddRange(Feats.Check(p));
             return ev;

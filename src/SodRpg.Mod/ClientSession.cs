@@ -903,6 +903,11 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
                 return Loc.T("取引の記録を保存できなかったため、取引は行っていません。保存先を確認してからもう一度お試しください。",
                     "The trade was not made because its record could not be saved. Check the save location and try again.");
             }
+            return SendDurableTrade(t);
+        }
+
+        private string SendDurableTrade(PendingTrade t)
+        {
             bool sendStarted = false;
             try
             {
@@ -979,14 +984,20 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
                     Emit(new GameEvent(EventKind.Warning, Loc.T(
                         "取引の結果をホストが確認できません（本体の通貨処理で異常が起きたか、ホストが再読み込みされたか、接続が替わった可能性があります）。対価も返却も確定せず保留しています。",
                         "The host cannot confirm the result of a trade (native currency processing may have failed, the host may have reloaded, or the connection may have changed). The reward and the return are both on hold.")));
-                    SaveNow();
+                    if (t.Kind == TradeKind.SalvageForDust) DeferSave();
+                    else SaveNow();
                     return;
                 }
                 if (outcome == TradeOutcome.Failed)
                 {
                     RestoreSalvageTrade(t);
                     Emit(new GameEvent(EventKind.Warning, TradeFailText(code)));
-                    SaveNow();
+                    if (t.Kind == TradeKind.SalvageForDust)
+                    {
+                        Profile.PendingTrades.RemoveAll(pending => pending.Token == t.Token);
+                        DeferSave();
+                    }
+                    else SaveNow();
                     return;
                 }
                 switch (t.Kind)
@@ -1000,7 +1011,9 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
                     case TradeKind.SalvageForDust:
                         if (Rules.SalvageUnsecured(Profile, t.Uid) != null)
                             Emit(new GameEvent(EventKind.Info, Loc.T($"分解してドリームダスト+{t.EarnDust}", $"Salvaged for {t.EarnDust} Dream Dust")));
-                        break;
+                        Profile.PendingTrades.RemoveAll(pending => pending.Token == t.Token);
+                        DeferSave();
+                        return;
                     case TradeKind.SatchelOverflowDust:
                         Emit(Rules.CompleteSatchelOverflowDust(t));
                         // 成功のプロフィール側の反映は取引の削除だけ。未保存のまま落ちても、領収書の照会で
@@ -1049,36 +1062,61 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
         {
             sent = 0;
             remaining = 0;
+            var prepared = new List<PendingTrade>();
+            bool durable = false;
+            int attempted = 0;
             try
             {
                 var run = Profile.Run ?? throw new InvalidOperationException(Loc.T("遠征中のみ使えます。", "Only during an expedition."));
-                var targets = new List<Relic>();
-                for (int i = 0; i < run.Satchel.Count; i++)
-                    if (CanBulkSalvageUnsecured(run.Satchel[i])) targets.Add(run.Satchel[i]);
-                remaining = targets.Count;
                 string blocked = TradeUnavailable();
                 if (blocked != null) return blocked;
-                int limit = Math.Min(30, TradeLedger.MaxHeld - _trades.ManualHeldCount);
-                for (int i = 0; i < targets.Count && sent < limit; i++)
+                int limit = Math.Min(30, Math.Min(TradeLedger.MaxHeld - _trades.ManualHeldCount,
+                    TradeLedger.MaxRestored - _trades.HeldCount));
+                long ledgerId = _hostLedgerId;
+                int scale = HostAuthority.SalvageScaleFor(DewPlayer.local);
+                for (int i = 0; i < run.Satchel.Count; i++)
                 {
-                    var r = targets[i];
-                    if (!run.Satchel.Contains(r) || !CanBulkSalvageUnsecured(r))
-                    {
-                        remaining--;
-                        continue;
-                    }
-                    blocked = TradeUnavailable();
-                    if (blocked != null) return blocked;
-                    string err = SendTrade(_trades.BeginSalvage(r, Time.unscaledTime, HostAuthority.SalvageScaleFor(DewPlayer.local)));
-                    if (err != null) return err;
-                    sent++;
-                    remaining--;
+                    var relic = run.Satchel[i];
+                    if (!CanBulkSalvageUnsecured(relic)) continue;
+                    remaining++;
+                    if (prepared.Count >= limit) continue;
+                    var trade = _trades.BeginSalvage(relic, Time.unscaledTime, scale);
+                    prepared.Add(trade);
+                    trade.LedgerId = ledgerId;
+                    // Validate the whole batch before persisting any host-side obligation.
+                    TradeWire.Encode(trade, out _, out _, out _);
                 }
-                return null;
+                if (prepared.Count == 0) return null;
+                if (!SaveNow(true))
+                    return Loc.T("取引の記録を保存できなかったため、取引は行っていません。保存先を確認してからもう一度お試しください。",
+                        "The trade was not made because its record could not be saved. Check the save location and try again.");
+                durable = true;
+                string firstError = null;
+                for (int i = 0; i < prepared.Count; i++)
+                {
+                    // A transport exception may follow delivery. Never refund an attempted send.
+                    attempted++;
+                    string error = SendDurableTrade(prepared[i]);
+                    if (error == null) { sent++; remaining--; }
+                    else if (firstError == null) firstError = error;
+                }
+                return firstError;
             }
             catch (Exception ex)
             {
                 return ex.Message;
+            }
+            finally
+            {
+                int rollbackFrom = durable ? attempted : 0;
+                for (int i = rollbackFrom; i < prepared.Count; i++)
+                    RestoreSalvageTrade(_trades.Complete(prepared[i].Token, false));
+                if (rollbackFrom < prepared.Count)
+                {
+                    Profile.PendingTrades.Clear();
+                    Profile.PendingTrades.AddRange(_trades.Snapshot());
+                    SaveNow();
+                }
             }
         }
 
@@ -1506,6 +1544,7 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
             Profile.PendingTrades.AddRange(_trades.Snapshot());
             _dirty = false;
             _nextSave = Time.unscaledTime + 30f;
+            _lastKillProfileSave = Time.unscaledTime;
             if (_store == null)
             {
                 // 保存先が無効（初期のプロフィール切替に失敗した場合など）。確認付きの保存は書き込みが行われないので失敗とし、取引は送らせない。
