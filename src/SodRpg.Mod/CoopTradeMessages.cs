@@ -24,7 +24,7 @@ namespace SodRpg.Mod
         public string kind, id, hostKey, partner, ownOffer, otherOffer, offerAck, data, transferId, status;
         public int revision, index, count, totalLength;
         public bool incoming, accepted, ownConfirmed, otherConfirmed, preparing;
-        public bool fusion;
+        public bool fusion, partnerFusion;
         public string[] keys, names;
         public bool[] available, ready;
         public BuildTransferPart Part() => new BuildTransferPart
@@ -40,7 +40,7 @@ namespace SodRpg.Mod
     internal sealed class CoopTradeView
     {
         public string Id, PartnerName, Status;
-        public bool Incoming, Accepted, OwnConfirmed, OtherConfirmed, Preparing;
+        public bool Incoming, Accepted, OwnConfirmed, OtherConfirmed, Preparing, PartnerFusion;
         public int Revision;
         public CoopTradeOffer OwnOffer = new CoopTradeOffer(), OtherOffer = new CoopTradeOffer();
         public Profile OtherProfile;
