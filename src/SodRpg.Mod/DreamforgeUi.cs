@@ -1009,6 +1009,8 @@ namespace SodRpg.Mod
             if (cam == null) return;
             foreach (var kv in _s.Variant)
             {
+                // 同じ敵に表示情報が重なった場合は、シアンの宿敵名札を優先する。
+                if (_s.Nightmare.TryGetValue(kv.Key, out var affixes) && (affixes & NightmareAffix.Nemesis) != 0) continue;
                 if (!Mirror.NetworkClient.spawned.TryGetValue(kv.Key, out var id) || id == null) continue;
                 var m = LabelMonster(kv.Key, id);
                 var def = Variants.Get(kv.Value);
