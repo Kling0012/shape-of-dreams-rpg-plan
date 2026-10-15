@@ -107,3 +107,23 @@ ProfileCodec.Writeは0.016〜0.293msだった。直列化以外の保存準備�
 - 未実行: 実ゲームの描画・スクリーンショット・連打・払い戻し承認・タブ/シーン/終了境界保存・協力通信。
   ゲームを起動する環境がないため。`dreamforge_perf` の機能は確認したが、実コンソール計測はしていない。
   シーン/終了境界と送信待ちの組み合わせはコード確認のみ。
+
+## 差分更新への直接回帰テスト（#440）
+
+上記「内部動作は実機確認リストに残っている」差分更新3点を、Issue73抽出ハーネスで直接検証した
+（`tests/Issue73.Native.Tests/StarClusterDiffUpdateTests.cs`、5件）。
+
+- `NativePersistence.targets` が `RefreshStarState` / `RefreshStarClusters` / `EnsureStarTooltip` /
+  `EnsureStarChoiceText` / `DrawStarClusterList`（と `StarRegionColor`）を実ソースから抽出する。
+  境界は `NativeBoundary.cs` の Unity IMGUI スタブ（決定論的な `GUIStyle.CalcHeight`、`Event.current`、
+  `GUIContent`、呼び出し計数）と `StarClusterUiBoundary.cs` の `StarNode`・`_star*` 状態。
+- 左一覧: 加点後に高さ計測が変更行だけ（CalcHeight 1回）で、`_starClusterDirtyFrom` から位置を
+  加算し直すこと、未変更行の高さ・位置・ラベルが保たれること、幅変更時は全行を再計測すること。
+- 本文: 変更のない Layout では世代も本文も動かず、加点時に変わった星だけ `DisplayBody` が
+  新しいインスタンスに作り直され、未変更星は同じインスタンスのまま残ること（TextRank/TextChoice）。
+- ツールチップ: 同一世代では再生成せず（同じ文字列インスタンス）、加点で世代が進むと条件文と
+  ダメージ注記が再生成されること（TooltipVersion/_starTextVersion）。
+- 二択: 取得で本文と両候補が作り直され、無料切り替えで本文とツールチップは再生成・候補は
+  使用済みポイントが同じ間再利用されること（EnsureStarChoiceText/ChoicePoints）。
+- 壊し確認: 世代判定（TextRank/TextChoice と TooltipVersion）の削除、`_starClusterDirtyFrom`
+  追跡の削除で、対応するテストが失敗することを確認してから元に戻した。製品コードは変更していない。
