@@ -502,6 +502,7 @@ namespace SodRpg.Mod
             synchronize |= changed || _pressurePlayerCount != _pressureBuilds.Count;
             _pressurePlayerCount = _pressureBuilds.Count;
             _pressure = pressure;
+            DiagnoseHostPressure(_pressure, _pressureBuilds);
             if (changed)
             {
                 foreach (var rt in _monsters.Values)
@@ -1161,6 +1162,7 @@ namespace SodRpg.Mod
             var actor = am != null ? am.serverActor : null;
             if (!ReferenceEquals(actor, _registeredOn))
             {
+                DiagnoseHostTransport(actor);
                 ClearWaypointHeroes();
                 DewPlayer.onGamePlayerAdded -= _onPressurePlayerAdded;
                 DewPlayer.onGamePlayerRemoved -= _onPressurePlayerRemoved;
