@@ -8,9 +8,24 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
+---
+
+## v2.10.47 — Safer co-op trades for fused relics, plus logging to investigate a post-Polaris issue（2026-10-16）
+
+このバージョンでは、融合済みの遺物を協力取引したときに融合段階が失われる不具合を修正しました。また、ポラリス踏破後に起きる不具合の原因を調べるため、ゲームのログへ記録を追加しました。 / This version fixes an issue where fused relics could lose their Fusion level in co-op trades. It also adds log records to help investigate an issue that occurs after clearing Polaris.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
 ### 不具合の修正 / Bug fixes
 
-- 旧版のホストやプレイヤーとの交換で、融合済み遺物の融合段階が失われる問題を修正しました。対応が確認できない場合は、その遺物の交換を理由付きで拒否します。融合していない遺物や素材の交換は続けられます。 / Prevented Fusion levels from being lost when trading fused relics with older hosts or players. Trading those relics is rejected with an explanation unless Fusion support is confirmed; unfused relic and material trades remain available.
+- 融合済みの遺物を、融合に対応していない古い版のプレイヤーと協力取引すると、融合段階が失われることがある問題を修正しました。取引の相手やホストが融合に対応しているか確認できない場合、融合済みの遺物は取引に出せなくなり、その理由が取引画面に表示されます。融合していない遺物や素材は、これまでどおり交換できます。融合済みの遺物を交換するときは、参加者全員がこのバージョンに更新してください。 / Fixed an issue where trading a fused relic in co-op with a player on an older version without Fusion support could lose its Fusion level. If the trade partner or host can't be confirmed to support Fusion, fused relics can no longer be offered, and the trade screen shows the reason. Unfused relics and materials can still be traded as before. To trade fused relics, make sure everyone has updated to this version.
+- ポラリスで夢を踏破した後の次の試合で、夢の圧が下がり、装備の効果が得られないという報告（#449）について、原因を調べるための記録をゲームのログ（Player.log）に追加しました。この記録はゲームの挙動やセーブデータを変えず、ログの量も控えめにしています。この不具合はまだ修正されていません。同じ現象が起きたら、ゲームを終了した直後に Player.log を添えて報告していただけると助かります。ログの場所と送り方は README に書いてあります。 / Added log records to Player.log to investigate the reported issue (#449) where, after clearing a dream at Polaris, the next run had lower dream pressure and equipment effects did not apply. These records don't change gameplay or save data, and log output is kept small. This issue is not fixed yet. If it happens to you, please report it with your Player.log attached right after it happens. The README explains where to find the log and how to send it.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
 
 ---
 
