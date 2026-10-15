@@ -37,6 +37,9 @@ namespace SodRpg.Mod
         private float _hudBottom;
         private int _hudFrame = -10;
         private float _nextHudRebuild;
+        private const string NemesisNameplateColor = "#6ae4ff";
+        private const string NightmareNameplateColor = "#ff6ad5";
+        private const string VariantNameplateColor = "#ffb347";
         private readonly Dictionary<int, Label3D> _nightmareLabelCache = new Dictionary<int, Label3D>();
         private readonly Dictionary<string, Label3D> _variantLabelCache = new Dictionary<string, Label3D>();
 
@@ -965,7 +968,7 @@ namespace SodRpg.Mod
             return monster;
         }
 
-        /// <summary>悪夢化した敵と夢の変種の頭上に名札を出す。</summary>
+        /// <summary>宿敵・悪夢化した敵・夢の変種の頭上に名札を出す。</summary>
         private void DrawNightmareLabels(float scale)
         {
             _labelScratch.Clear();
@@ -988,7 +991,7 @@ namespace SodRpg.Mod
                 if (sp.z <= 0) continue;
                 if (!_nightmareLabelCache.TryGetValue((int)kv.Value, out var lab))
                 {
-                    string color = (kv.Value & NightmareAffix.Nemesis) != 0 ? "#6ae4ff" : "#ff6ad5";
+                    string color = (kv.Value & NightmareAffix.Nemesis) != 0 ? NemesisNameplateColor : NightmareNameplateColor;
                     string text = UiStyles.Colored(Nightmares.Label(kv.Value), color);
                     var content = new GUIContent(text);
                     lab = new Label3D { Text = text, Content = content, Size = _st.ToastMeasure.CalcSize(content) };
@@ -1014,7 +1017,7 @@ namespace SodRpg.Mod
                 if (sp.z <= 0) continue;
                 if (!_variantLabelCache.TryGetValue(kv.Value, out var lab))
                 {
-                    string text = UiStyles.Colored(Variants.Label(def), "#ffb347");
+                    string text = UiStyles.Colored(Variants.Label(def), VariantNameplateColor);
                     var content = new GUIContent(text);
                     lab = new Label3D { Text = text, Content = content, Size = _st.ToastMeasure.CalcSize(content) };
                     _variantLabelCache[kv.Value] = lab;

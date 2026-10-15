@@ -8,6 +8,8 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
+- 宿敵の頭上ネームタグをシアンに変更し、夢の変種の橙色・悪夢化のピンク紫と見分けやすくしました。協力プレイでも各PCで同じ色を表示します。 / Nemesis overhead nameplates now use cyan to distinguish them from orange dream variants and pink-purple nightmares. Each PC uses the same color in co-op.
+
 ---
 
 ## v2.10.45 — Relic Fusion added to the forge（2026-10-15）
