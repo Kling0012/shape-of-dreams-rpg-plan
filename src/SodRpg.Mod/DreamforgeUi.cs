@@ -988,7 +988,8 @@ namespace SodRpg.Mod
                 if (sp.z <= 0) continue;
                 if (!_nightmareLabelCache.TryGetValue((int)kv.Value, out var lab))
                 {
-                    string text = UiStyles.Colored(Nightmares.Label(kv.Value), "#ff6ad5");
+                    string color = (kv.Value & NightmareAffix.Nemesis) != 0 ? "#6ae4ff" : "#ff6ad5";
+                    string text = UiStyles.Colored(Nightmares.Label(kv.Value), color);
                     var content = new GUIContent(text);
                     lab = new Label3D { Text = text, Content = content, Size = _st.ToastMeasure.CalcSize(content) };
                     _nightmareLabelCache[(int)kv.Value] = lab;
