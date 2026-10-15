@@ -79,3 +79,40 @@ Assert.Single() Failure: The collection was empty
 3. capを5または8に設定し、該当レベルの新規読込／ContinueでHUD準備後のQWER枠数、5〜8番目のエッセンスの保持・編集を確認する。準備前後のログと1秒程度経過後の枠数を比較する。
 
 `dreamforge_simkill` はゲーム内実行環境がないため未実行。全テストスイートと製品MOD全体のビルドは、再現工程の対象外のため未実行。
+
+## 修正と再検証（2026-10-16 日本時間）
+
+`HostAuthority.Hello.cs` の `RebuildMismatchList` を、`gamePlayers` または `lobbyPlayers` にいる参加者を表示する条件へ変更した。辞書を1回走査するため、両方の名簿にいる参加者も警告は1件となる。nullと、両方の名簿から抜けた参加者の除外条件は維持する。Helloの受付条件と表示条件を揃える修正で、版の差があっても機能を続行する既存の動作は変えない。
+
+### 実行した検証
+
+同じ `python3 tests/repro/issue462/run.py` を、この実装工程で以下の順に前景実行した。各記録は `artifacts/` 以下のログ・TRX・`results.json`（git対象外）にある。
+
+| 状態 | 記録ディレクトリ | 終了コード | Core / 兆し |
+| --- | --- | --- | --- |
+| 修正前 | `20261015T182358512648Z` | 1 | 4成功・ロビー警告3失敗 / 8成功 |
+| 修正後 | `20261015T182648680362Z` | 0 | 7成功 / 8成功 |
+| 修正を一時的に戻した状態 | `20261015T182812488911Z` | 1 | 4成功・同じロビー警告3失敗 / 8成功 |
+| 修正を再適用した状態 | `20261015T182913880053Z` | 0 | 7成功 / 8成功 |
+
+修正を一時的に戻すと再現テストが失敗し、再適用すると成功することを確認した。
+
+追加で次の既存テストを実行し、終了コード0・43件成功・失敗0・skip0を確認した。新規テストの追加・既存テストの変更はしていない。
+
+```sh
+DOTNET_ROLL_FORWARD=Major dotnet test tests/SodRpg.Core.Tests/SodRpg.Core.Tests.csproj --filter 'FullyQualifiedName~NegotiationNativeTests|FullyQualifiedName~LevelEssenceSlotsTests|FullyQualifiedName~RoomOmensTests' --logger 'console;verbosity=minimal' -p:PythonCommand=python3 -p:WarningLevel=0
+```
+
+### 判断と要件の対応
+
+- **R1 / R5（兆し）**: 本体の `ZoneManager.LoadNode` の1125〜1130行と1299〜1316行を再確認し、通常ゾーン移動で通算部屋番号が増えることを確認した。既存の3ゾーン各6部屋のホストテストが成功し、通常移動で並びが毎回同じになる現象は未再現。既存の抽選を維持する。ゾーン内番号を与えていたと仮定して抽選の種を変更すると、既存の決定性も変わるため採用しない。
+- **R2 / R6（ロビー警告）**: 版・Protocol・内容の差について、ロビーだけの参加者がHelloで受理され返信を受けた後に、UIが読む一覧へ警告が出るところまで既存の再現テストで確認した。
+- **R3（離脱者）**: 両名簿からの離脱後、一覧を再構築すると警告が消える既存テストが引き続き成功した。離脱イベントから自動で再構築するかは、このテストでは検証していない。
+- **R4 / R7（レベル枠）**: HUD準備中の実効cap4は `docs/specs/v2.11-level-essence-slots.md` の既存仕様。`DreamforgeMod.Update` が `LevelEssenceRuntime.Tick` を先に呼び、その後ホスト側で定期再評価する経路を再確認した。既存テストで準備完了を表すcap8への変更後、次の評価でLv20・要求cap5は5枠、Lv50・要求cap8は8枠へ回復した。ホスト側に枠不足が固定化する現象は未再現のため、既存仕様を維持する。
+
+### 未実行の検証（理由付き）
+
+- UnityのHUD準備・描画、ロビーの実画面、実協力通信、実際の複数ゾーン移動・Infinityループ・新規読込／Continue: ゲームを起動する実行環境がない。テストはリンクした製品コードと本体APIのダブルを使い、HUD準備の完了信号を与えている。実機での表示・準備成功は証明していない。
+- `dreamforge_simkill`: ゲーム内実行環境がない。
+- 全テストスイート、`tools/test_changed.py --all`、`SODRPG_SLOW=1`: この工程は変更箇所に絞った検証とし、全体・長時間検証は後続パイプラインで実行する指示のため。
+- 製品MOD全体のReleaseビルド: 今回は変更した製品ファイルをリンクする対象テストプロジェクトのビルドで検証し、全体ビルドは後続パイプラインへ委ねる。
