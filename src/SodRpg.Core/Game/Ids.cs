@@ -247,11 +247,18 @@ namespace SodRpg.Core.Game
         /// <summary>禁忌の核。宿敵を倒すと手に入り、禁忌化に使う（#415）。</summary>
         public const string NemesisCore = "nemesisCore";
 
+        private static readonly string[] known = { Shard, Tuning, NemesisCore };
+
         /// <summary>
-        /// 既知素材の一覧の単一定義。保存の書き込みと読み込みがこの一覧を共有する（#429）。
+        /// 既知素材の一覧の単一定義（読み取り専用）。保存の書き込みと読み込みがこの一覧を共有する（#429）。
         /// 素材を増やすときは const とこの一覧の両方に足す。書き込み側は <see cref="Profile"/> の
         /// 素材の正の値をすべて書くため、ここへ足し忘れると読み込みで未知の素材として除外される。
+        /// 許可一覧が実行中に書き換わらないよう、配列は非公開にして読み取り専用ビューで公開する。
         /// </summary>
-        public static readonly string[] Known = { Shard, Tuning, NemesisCore };
+        public static readonly System.Collections.Generic.IReadOnlyList<string> Known =
+            new System.Collections.ObjectModel.ReadOnlyCollection<string>(known);
+
+        /// <summary>既知素材の判定。書き込み側と読み込み側がこの単一定義を共有する（#429）。</summary>
+        public static bool IsKnown(string id) => System.Array.IndexOf(known, id) >= 0;
     }
 }

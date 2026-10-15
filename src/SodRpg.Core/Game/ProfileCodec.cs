@@ -58,11 +58,11 @@ namespace SodRpg.Core.Game
         {
             var mats = new JsonObject();
             // 既知素材は Materials.Known の並びで書き、それ以外の正の値も書き残す。読み込み側の
-            // 許可一覧も同じ Materials.Known を参照するため、素材を追加するときは Known へ足す（#429）。
+            // 許可判定も同じ Materials の単一定義（IsKnown）を使うため、素材を追加するときは Known へ足す（#429）。
             foreach (string id in Materials.Known)
                 if (p.Materials.TryGetValue(id, out int known) && known > 0) mats.Add(id, (long)known);
             foreach (var kv in p.Materials)
-                if (kv.Value > 0 && System.Array.IndexOf(Materials.Known, kv.Key) < 0) mats.Add(kv.Key, (long)kv.Value);
+                if (kv.Value > 0 && !Materials.IsKnown(kv.Key)) mats.Add(kv.Key, (long)kv.Value);
             var heroes = new JsonObject();
             foreach (var kv in p.Heroes)
             {
@@ -331,9 +331,9 @@ namespace SodRpg.Core.Game
             {
                 foreach (var kv in mats.Properties)
                 {
-                    // 読み込み側の既知素材は Materials.Known の単一定義から判定する（#427、#429）。
+                    // 読み込み側の既知素材の判定も Materials の単一定義（IsKnown／Known）から行う（#427、#429）。
                     // 書き込み側も同じ定義で書くため、素材を追加するときは Known へ足すだけで両側が揃う。
-                    if (System.Array.IndexOf(Materials.Known, kv.Key) < 0)
+                    if (!Materials.IsKnown(kv.Key))
                     {
                         notes.Add("未知の素材を除外: " + kv.Key);
                         continue;

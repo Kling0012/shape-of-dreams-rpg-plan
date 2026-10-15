@@ -18,13 +18,13 @@ namespace SodRpg.Core.Tests
         private static Profile WithAllMaterials()
         {
             var p = Profile.CreateNew(29);
-            for (int i = 0; i < Materials.Known.Length; i++) p.AddMaterial(Materials.Known[i], 10 + i);
+            for (int i = 0; i < Materials.Known.Count; i++) p.AddMaterial(Materials.Known[i], 10 + i);
             return p;
         }
 
         private static void AssertKnownMaterialsKept(Profile p)
         {
-            for (int i = 0; i < Materials.Known.Length; i++) Assert.Equal(10 + i, p.Material(Materials.Known[i]));
+            for (int i = 0; i < Materials.Known.Count; i++) Assert.Equal(10 + i, p.Material(Materials.Known[i]));
         }
 
         [Fact]
@@ -77,6 +77,8 @@ namespace SodRpg.Core.Tests
             store.Save(second); // rev2：.bak に rev1 が残る
             disk.Delete(Path); // 本体が無くなる（TryRead は存在しない本体を読み飛ばす）
 
+            // ProfileStore.Load は本体も .bak も TryRead 経由で読む。本体は TryRead の存在チェックで
+            // 読み飛ばされ（「読めませんでした」の notes も出ない）、.bak の TryRead だけが成功する。
             var restore = new ProfileStore(disk, Path, 30);
             var restored = restore.Load();
             Assert.Equal(1, restored.Revision);
