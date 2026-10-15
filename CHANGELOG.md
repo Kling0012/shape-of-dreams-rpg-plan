@@ -10,6 +10,31 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v2.10.52 — Fix lost co-op bounty reports and essence slot display refresh（2026-10-16）
+
+このバージョンでは、協力プレイで依頼の数の報告が届かずに失われることがある問題を修正しました。あわせて、表示設定を変えても記憶のエッセンス枠の表示がすぐに更新されない問題も修正しました。 / This version fixes an issue in co-op where bounty count reports could be lost before reaching the host. It also fixes an issue where the memory essence slot display did not update right away after changing display settings.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- 協力プレイで、依頼の数の報告が送られる途中で中身が消え、届かないことがある問題を修正しました。 / Fixed an issue in co-op where the contents of a bounty count report could be cleared while it was being sent, so the report never arrived.
+- 協力プレイで、参加者が依頼の数の報告を受け取れなくなった後も、しばらくその参加者あてに報告が送られ、報告が失われることがある問題を修正しました。受け取りをやめたことがすぐにホストへ伝わるようになりました。 / Fixed an issue in co-op where bounty count reports could still be sent to a player for a while after they stopped receiving them, causing those reports to be lost. The host is now told right away when a player stops receiving them.
+- 遠征の終わりなどの区切りの前に依頼の報告を送る処理が、条件によっては働かないおそれがあった問題を修正しました。 / Fixed an issue where reports for bounties sent before milestones such as the end of an expedition might not work under certain conditions.
+- 表示設定を変えても、次にシーンを読み込むまで記憶のエッセンス枠の表示が更新されないことがある問題を修正しました。設定を変えたときにすぐ反映されるようになりました。 / Fixed an issue where the memory essence slot display might not update after changing display settings until the next scene loaded. Changes now apply right away.
+- 一部の能力を持っていないとき、味方の人数や周りの敵の数が実際と違う値で扱われ、それを使うほかの能力の効果が知らないうちに変わってしまうおそれがあった問題を修正しました。 / Fixed an issue where, without certain abilities, party size or nearby enemy count could be treated as the wrong value, which might silently change the effects of other abilities that use them.
+- 対象が無効になったときに、条件によってはエラーが起きるおそれがあった問題を修正しました。 / Fixed an issue where an error could occur under certain conditions when a target became invalid.
+
+これらの修正は、不具合を再現するテストではまだ確かめられていません。 / These fixes have not yet been confirmed with tests that reproduce the issues.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
 ## v2.10.51 — Faster bulk salvage and lighter saves（2026-10-16）
 
 このバージョンでは、まとめて分解を押したときに画面が止まる時間を短くし、長く遊ぶほど保存が重くなっていく問題を修正しました。あわせて、強敵を続けて倒したときの保存の重さと、中断したプレイの再開に失敗したときの扱いも改善しました。 / This version shortens the freeze when using bulk salvage and fixes an issue where saving got heavier the longer you played. It also reduces save load when defeating strong enemies in quick succession and improves how failed resumes of interrupted runs are handled.
