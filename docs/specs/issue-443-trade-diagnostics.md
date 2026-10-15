@@ -44,7 +44,7 @@ Dreamforge は `DreamforgeMod : ModBehaviour` としてゲーム標準のMODロ�
 
 ### 元 PR の範囲点検（2026-10-16）
 
-PR #450 のコメントでは、通常のビルド・生成物確認・差分テストは成功し、全件の遅いテストで `PerformanceTests.A_kill_takes_well_under_a_tenth_of_a_millisecond` と `Build_and_encode_are_fast` が失敗していた。同じコメントの main 比較でも同じ2件が失敗している。今回の単独実行では性能テスト3件が成功したが、全件実行時の失敗原因を特定・修正したとは扱わない。性能のしきい値やテスト実行基盤は変更しない。
+PR #450 のコメントでは、通常のビルド・生成物確認・差分テストは成功し、全件の遅いテストで `PerformanceTests.A_kill_takes_well_under_a_tenth_of_a_millisecond` と `Build_and_encode_are_fast` が失敗していた。同じコメントの main 比較でも同じ2件が失敗している。元 PR 時点の単独実行では性能テスト3件が成功したが、全件実行時の失敗原因を特定・修正したとは扱わない。性能のしきい値やテスト実行基盤は変更しない。
 
 マージ時に Core の `Relic.cs` と `Rules.cs` へ混入した改行だけの差分を main と同じ内容へ戻した。併せて、マージで入った空ファイル `3` を作業領域外の一時保管先へ退避し、PR差分から除いた。製品コードの差分はホスト／クライアントの観測呼出しと診断ヘルパーだけで、既存の条件・戻り値・通信・保存呼出し・保存形式に変更はない。
 
@@ -58,7 +58,7 @@ PR #450 のコメントでは、通常のビルド・生成物確認・差分テ
 DOTNET_ROLL_FORWARD=LatestMajor dotnet test tests/Issue73.Native.Tests/Issue73.Native.Tests.csproj -c Release --filter 'FullyQualifiedName~Issue443TradeCompletionTests|FullyQualifiedName~HostCoopTradeTests|FullyQualifiedName~CoopTradeClientTests|FullyQualifiedName~Issue400HostTradeIdleAbortTests|FullyQualifiedName~Issue400ClientTradeTransientAbortTests|FullyQualifiedName~TradeSendExceptionTests|FullyQualifiedName~CoopTradeSafeTests' --logger 'console;verbosity=minimal' --logger 'trx;LogFileName=issue443-round-native.trx' --results-directory /tmp/issue443-round-results
 DOTNET_ROLL_FORWARD=LatestMajor dotnet test tests/SodRpg.Core.Tests/SodRpg.Core.Tests.csproj -c Release --filter 'FullyQualifiedName~SodRpg.Core.Tests.CoopTradeTests|FullyQualifiedName~SodRpg.Core.Tests.CoopTradeMigrationTests|FullyQualifiedName~SodRpg.Core.Tests.TradeStuckPending389Tests' --logger 'console;verbosity=minimal' --logger 'trx;LogFileName=issue443-round-core.trx' --results-directory /tmp/issue443-round-results
 env -u SODRPG_SLOW DOTNET_ROLL_FORWARD=LatestMajor dotnet test tests/SodRpg.Core.Tests/SodRpg.Core.Tests.csproj -c Release --no-build --filter 'FullyQualifiedName~SodRpg.Core.Tests.PerformanceTests' --logger 'console;verbosity=normal' --logger 'trx;LogFileName=issue443-round-performance.trx' --results-directory /tmp/issue443-round-results
-dotnet build src/SodRpg.Mod/SodRpg.Mod.csproj -c Release -p:GameDir="/home/wang/dev/sod-gamedata/Shape of Dreams" -p:ModDeployDir=/tmp/issue443-round-mod-deploy -v:minimal
+dotnet build src/SodRpg.Mod/SodRpg.Mod.csproj -c Release -p:GameDir="<ゲームのインストール先>" -p:ModDeployDir=/tmp/issue443-round-mod-deploy -v:minimal
 python tools/balance/gen_cs.py --check
 git -c core.whitespace=cr-at-eol diff --check
 git -c core.whitespace=cr-at-eol diff --cached --check
@@ -94,7 +94,7 @@ git diff --exit-code origin/main -- src/SodRpg.Core
 - 修正後のnative限定テスト：26件成功、失敗0、skip0、終了コード0。フィルタは `Issue443TradeCompletionTests`、`HostCoopTradeTests`、`CoopTradeClientTests`、`Issue400HostTradeIdleAbortTests`、`Issue400ClientTradeTransientAbortTests`、`TradeSendExceptionTests`、`CoopTradeSafeTests`。実行前後の `/tmp/issue443-coop-*` を照合し、新たな残存ディレクトリ0件を確認した。
 - Core限定テスト：`CoopTradeTests`、`CoopTradeMigrationTests`、`TradeStuckPending389Tests` の45件成功、失敗0、skip0、終了コード0。
 - 以前の失敗報告に対応する `PerformanceTests` の単独実行（`SODRPG_SLOW` 無効）：2件成功、1件失敗、終了コード1。`A_kill_takes_well_under_a_tenth_of_a_millisecond` が `0.1215 ms per kill` で失敗した。`Build_and_encode_are_fast` と `Serializing_a_full_profile_takes_a_few_milliseconds` は成功。元 PR のコメントではmainでも性能失敗が記録されているが、今回mainそのものを再実行したわけではなく、原因は未確定。Coreと性能テストの内容が作業開始時から不変であることだけを差分で確認した。
-- `dotnet build src/SodRpg.Mod/SodRpg.Mod.csproj -c Release -p:GameDir='/home/wang/dev/sod-gamedata/Shape of Dreams' -p:ModDeployDir=/tmp/primpl450-mod-deploy -v:minimal`：成功、エラー0・既存警告6。ゲームへの配置はしていない。
+- `dotnet build src/SodRpg.Mod/SodRpg.Mod.csproj -c Release -p:GameDir='<ゲームのインストール先>' -p:ModDeployDir=/tmp/primpl450-mod-deploy -v:minimal`：成功、エラー0・既存警告6。ゲームへの配置はしていない。
 - `python tools/balance/gen_cs.py --check`、`git diff --check`、`git diff --exit-code HEAD -- src/SodRpg.Core tests/SodRpg.Core.Tests/PerformanceTests.cs`：終了コード0。
 - TRXのCountersで件数を照合：`/tmp/primpl450-results/primpl450-before.trx`、`primpl450-native.trx`、`primpl450-core.trx`、`primpl450-performance.trx`。修正後の限定検証は計73件成功・1件失敗、skip0。
 
@@ -102,5 +102,11 @@ git diff --exit-code origin/main -- src/SodRpg.Core
 
 - 実ゲームの停止再現、実Mirror通信、2人／3人の協力プレイ、描画、Player.log採取、Linux／Protonの実保存先：実機を使えないため。停止不具合の解決とは扱わない。
 - ロガー失敗・nullプロフィール・64件の履歴入れ替えの直接的な動的検証：該当する既存テストがなく、新規テストを作らない指示のため。コード点検と本番／抽出コードのコンパイルで確認した範囲に限る。
-- 全テスト、`test_changed.py`、`--all`、`SODRPG_SLOW=1`：限定検証だけを行う指示のため。`test_changed.py` はcsproj差分で全体実行へ進むので、対象クラスを直接指定した。性能失敗の原因調査は未解決。
+- 全テスト、`test_changed.py`、`--all`、`SODRPG_SLOW=1`：取り込み修正の実装工程では限定検証だけを行う指示のため未実行。`test_changed.py` はcsproj差分で全体実行へ進むので、対象クラスを直接指定した。後工程の再実行結果は下記を参照。
 - 別editionのビルド、`dreamforge_simkill`、revert適用：取引診断を取り込む今回の範囲外。
+
+### 後工程の再実行と追補（2026-10-16）
+
+[取り込み版 PR #484 の検証コメント](https://github.com/Kling0012/shape-of-dreams-rpg-plan/pull/484#issuecomment-6204382930) では、`test_changed --all`（SLOW）の通常テストが **3259 passed / 0 failed、終了コード0**、続く性能・Timingの分離実行も終了コード0で成功している。上記の単独性能失敗は環境負荷によるフレークの可能性がある。失敗原因は未確定だが、後工程では成功しており、継続的な性能問題が確認されたとは扱わない。この結果は後工程の記録であり、追補 Issue #485 の実装工程で全件を再実行したものではない。
+
+Issue #485 では `Issue443TradeCompletionTests.Dispose` の保存flushを `try`、静的状態の復元と一時ディレクトリの後始末を `finally` に移した。保存flushが例外を出しても後始末へ進み、例外は握りつぶさない。診断の呼び出し頻度・抑制・状態文字列・排他の挙動は変えず、今後呼び出しを増やす場合の文字列生成コスト、Unityメインスレッド前提、ログ過多時の低優先度フラグ分離をコードコメントに明記した。

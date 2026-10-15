@@ -64,25 +64,31 @@ namespace Issue73.Native.Tests
 
         public void Dispose()
         {
-            foreach (var peer in _peers) Call(peer.Session, "FlushSaves");
-            NetworkServer.active = _previousServer;
-            NetworkClient.active = _previousClient;
-            NetworkClient.connection = _previousConnection;
-            NetworkClient.SendHook = _previousSendHook;
-            NetworkClient.Sent.Clear();
-            DewNetworkManager.softInstance = _previousNetwork;
-            NetworkedManagerBase<GameSettingsManager>.softInstance = _previousSettings;
-            NetworkedManagerBase<GameManager>.softInstance = _previousGame;
-            NetworkedManagerBase<ZoneManager>.softInstance = _previousZone;
-            DewPlayer.local = _previousLocal;
-            typeof(ClientSession).GetField("_hostSession", Hidden).SetValue(null, _previousHostSession);
-            HostAuthority.NativeInstance = _previousHost;
-            DewPlayer.gamePlayers.Clear(); DewPlayer.gamePlayers.AddRange(_previousGamePlayers);
-            DewPlayer.lobbyPlayers.Clear(); DewPlayer.lobbyPlayers.AddRange(_previousLobbyPlayers);
-            DewPlayer.allHumanPlayers.Clear(); DewPlayer.allHumanPlayers.AddRange(_previousHumans);
-            Log.ErrorSink = _previousErrorSink;
-            UnityEngine.Time.unscaledTime = _previousTime;
-            if (Directory.Exists(_directory)) Directory.Delete(_directory, true);
+            try
+            {
+                foreach (var peer in _peers) Call(peer.Session, "FlushSaves");
+            }
+            finally
+            {
+                NetworkServer.active = _previousServer;
+                NetworkClient.active = _previousClient;
+                NetworkClient.connection = _previousConnection;
+                NetworkClient.SendHook = _previousSendHook;
+                NetworkClient.Sent.Clear();
+                DewNetworkManager.softInstance = _previousNetwork;
+                NetworkedManagerBase<GameSettingsManager>.softInstance = _previousSettings;
+                NetworkedManagerBase<GameManager>.softInstance = _previousGame;
+                NetworkedManagerBase<ZoneManager>.softInstance = _previousZone;
+                DewPlayer.local = _previousLocal;
+                typeof(ClientSession).GetField("_hostSession", Hidden).SetValue(null, _previousHostSession);
+                HostAuthority.NativeInstance = _previousHost;
+                DewPlayer.gamePlayers.Clear(); DewPlayer.gamePlayers.AddRange(_previousGamePlayers);
+                DewPlayer.lobbyPlayers.Clear(); DewPlayer.lobbyPlayers.AddRange(_previousLobbyPlayers);
+                DewPlayer.allHumanPlayers.Clear(); DewPlayer.allHumanPlayers.AddRange(_previousHumans);
+                Log.ErrorSink = _previousErrorSink;
+                UnityEngine.Time.unscaledTime = _previousTime;
+                if (Directory.Exists(_directory)) Directory.Delete(_directory, true);
+            }
         }
 
         private static object Get(object target, string name) => target.GetType().GetField(name, Hidden).GetValue(target);

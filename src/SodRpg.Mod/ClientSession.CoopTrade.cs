@@ -28,6 +28,10 @@ namespace SodRpg.Mod
         private float _coopWaitingAt, _coopWaitReasonAt;
         private bool _coopWaitReleased;
 
+        // Calls are limited to trade events and the existing five-second probe. Interpolation
+        // still allocates when Record suppresses a line; review that cost before adding callers.
+        // Changed flags intentionally produce distinct lines. If logs become too noisy in use,
+        // separate low-priority flags from this state rather than suppressing useful transitions.
         private void DiagnoseCoopTrade(string stage, string id = null, int revision = -1, bool onlyWhenActive = false)
         {
             try

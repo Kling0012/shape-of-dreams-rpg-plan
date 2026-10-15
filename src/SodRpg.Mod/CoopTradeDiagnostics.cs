@@ -8,6 +8,8 @@ namespace SodRpg.Mod
     internal static class CoopTradeDiagnostics
     {
         private const int HistoryLimit = 64;
+        // Current callers run on Unity's main thread. Revisit synchronization before calling
+        // Record off-thread; this history and Unity's time/log access assume that thread.
         private static readonly Dictionary<string, float> _recent = new Dictionary<string, float>(HistoryLimit);
 
         internal static void Record(string side, string stage, string id, int revision, string state)
