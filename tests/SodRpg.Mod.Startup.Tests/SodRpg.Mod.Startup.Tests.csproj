@@ -7,7 +7,7 @@
   </PropertyGroup>
   <ItemGroup>
     <!-- Keep the game's Harmony API; newer MonoMod supports rolled-forward CoreCLR. -->
-    <PackageReference Include="Lib.Harmony.Thin" Version="2.3.3" />
+    <PackageReference Include="Lib.Harmony.Thin" Version="2.3.6" />
     <PackageReference Include="Mono.Cecil" Version="0.11.6" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="MonoMod.Core" Version="1.3.6" />
@@ -37,6 +37,7 @@
   <Compile Include="../../src/SodRpg.Mod/NetworkTrafficOptions.cs" Link="ModUnderTest/NetworkTrafficOptions.cs" />
   <Compile Include="../../src/SodRpg.Mod/NetMessageDecodeWarning.cs" Link="ModUnderTest/NetMessageDecodeWarning.cs" />
   <Compile Include="../../src/SodRpg.Mod/SafeReflection.cs" Link="ModUnderTest/SafeReflection.cs" />
+  <Compile Include="../../src/SodRpg.Mod/NativeCooldownSafety.cs" Link="ModUnderTest/NativeCooldownSafety.cs" />
     <Compile Include="../../src/SodRpg.Mod/MovementGemSlotEdit.cs" Link="ModUnderTest/MovementGemSlotEdit.cs" />
   </ItemGroup>
 </Project>

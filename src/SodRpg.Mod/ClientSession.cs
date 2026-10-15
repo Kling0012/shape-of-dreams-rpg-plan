@@ -125,6 +125,7 @@ namespace SodRpg.Mod
             _onMonsterCue = OnMonsterCue;
             _onTradeResult = OnTradeResult;
             _onBountyReport = OnBountyReport;
+            _onBountyCounts = OnBountyCounts;
             _onChaos = pl => { if (pl != null && pl == DewPlayer.local) GameAction(BountyKind.ChaosSeeker); };
             _onBought = (h, _) => { if (IsLocal(h)) GameAction(BountyKind.Patron); };
             _onUpgraded = (h, _) => { if (IsLocal(h)) GameAction(BountyKind.Refiner); };
@@ -412,6 +413,7 @@ namespace SodRpg.Mod
                 }
                 _results = results;
                 if (results != null) results.ClientEvent_OnGameConcluded += _onConcluded;
+                DiagnoseExpedition("client-result-handler-" + (results != null ? "attached" : "detached"));
             }
             var am = NetworkedManagerBase<ActorManager>.softInstance;
             if (!NetworkServer.active && !ReferenceEquals(_hostAuthorityActor, null))
@@ -422,6 +424,7 @@ namespace SodRpg.Mod
             var actor = NetworkClient.active && am != null ? am.serverActor : null;
             if (!ReferenceEquals(actor, _clientRpcOn))
             {
+                DiagnoseExpedition("client-transport-before");
                 if (_clientRpcOn != null)
                 {
                     try { _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgeAppliedMsg>(_onApplied); } catch (Exception) { }
@@ -486,6 +489,7 @@ namespace SodRpg.Mod
                     RegisterRunGrowth(actor);
                     RegisterBossVisuals(actor);
                 }
+                DiagnoseExpedition("client-transport-after");
             }
         }
 
@@ -565,6 +569,7 @@ namespace SodRpg.Mod
         private void TrackRun()
         {
             var gm = NetworkedManagerBase<GameManager>.softInstance;
+            ObserveNativeRunForDiagnostics(gm);
             TickContinueRestore();
             if (LobbyReturnPending)
             {
@@ -577,6 +582,7 @@ namespace SodRpg.Mod
             }
             if (gm == null)
             {
+                if (ActiveRunId != null) DiagnoseExpedition("client-native-detached");
                 ActiveRunId = null;
                 return;
             }
@@ -612,6 +618,7 @@ namespace SodRpg.Mod
                 _pendingRunVictory = null;
                 _pendingResultRunId = null;
             }
+            DiagnoseExpedition("client-begin-before");
             int pacts = Profile.Run != null && Profile.Run.RunId != runId ? Profile.Run.Pacts.Count : 0;
             ActiveRunId = runId;
             PressureHealthMultiplier = PressureDamageMultiplier = 1f;
@@ -624,6 +631,7 @@ namespace SodRpg.Mod
             if (Onboarding.AutoEquipStarter(Profile, HeroKeyOf(LocalHero))) Emit(Rules.HintOnce(Profile, Hint.StarterGear));
             _buildDirty = true;
             SaveNow();
+            DiagnoseExpedition("client-begin-after");
         }
 
         /// <summary>セッションをまたいで確定しなかった結果を、BeginRun の終着判定の証拠として RunRecovery に残す。
@@ -687,7 +695,7 @@ namespace SodRpg.Mod
         {
             _dirty = true;
             // 潜行・覚醒・装備への出来事で変わった能力を次の送信へ反映する。
-            if (e.Kind == EventKind.Delved || e.Kind == EventKind.LevelUp) MarkDirty(true);
+            if (e.Kind == EventKind.Delved || e.Kind == EventKind.LevelUp || e.Kind == EventKind.Fused) MarkDirty(true);
             _notify?.Invoke(e);
             if (e.AdditionalEvents != null) Emit(e.AdditionalEvents);
         }
@@ -780,15 +788,25 @@ namespace SodRpg.Mod
             try
             {
                 if (result == null) return;
+                DiagnoseExpedition("client-concluded-" + result.result);
                 // 遠征の終了時にも、部屋遷移と同じ掃除を 1 回だけ走らせる。
                 _roomSweepPendingAt = Time.unscaledTime + SweepDelaySeconds;
 if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
-                    NetworkedManagerBase<GameManager>.softInstance?.runId ?? "")) return;
-                if (ObserveInfinityConclusion(result)) return;
+                    NetworkedManagerBase<GameManager>.softInstance?.runId ?? ""))
+                {
+                    DiagnoseExpedition("client-concluded-lobby-return");
+                    return;
+                }
+                if (ObserveInfinityConclusion(result))
+                {
+                    DiagnoseExpedition("client-concluded-infinity-handled");
+                    return;
+                }
                 _pendingRunVictory = IsVictory(result.result);
                 _pendingResultRunId = ActiveRunId ?? NetworkedManagerBase<GameManager>.softInstance?.runId;
                 FlushPendingRunRewards();
                 TryConcludeRun();
+                DiagnoseExpedition("client-concluded-after");
             }
             catch (Exception ex)
             {
@@ -886,6 +904,11 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
                 return Loc.T("取引の記録を保存できなかったため、取引は行っていません。保存先を確認してからもう一度お試しください。",
                     "The trade was not made because its record could not be saved. Check the save location and try again.");
             }
+            return SendDurableTrade(t);
+        }
+
+        private string SendDurableTrade(PendingTrade t)
+        {
             bool sendStarted = false;
             try
             {
@@ -962,14 +985,20 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
                     Emit(new GameEvent(EventKind.Warning, Loc.T(
                         "取引の結果をホストが確認できません（本体の通貨処理で異常が起きたか、ホストが再読み込みされたか、接続が替わった可能性があります）。対価も返却も確定せず保留しています。",
                         "The host cannot confirm the result of a trade (native currency processing may have failed, the host may have reloaded, or the connection may have changed). The reward and the return are both on hold.")));
-                    SaveNow();
+                    if (t.Kind == TradeKind.SalvageForDust) DeferSave();
+                    else SaveNow();
                     return;
                 }
                 if (outcome == TradeOutcome.Failed)
                 {
                     RestoreSalvageTrade(t);
                     Emit(new GameEvent(EventKind.Warning, TradeFailText(code)));
-                    SaveNow();
+                    if (t.Kind == TradeKind.SalvageForDust)
+                    {
+                        Profile.PendingTrades.RemoveAll(pending => pending.Token == t.Token);
+                        DeferSave();
+                    }
+                    else SaveNow();
                     return;
                 }
                 switch (t.Kind)
@@ -983,7 +1012,9 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
                     case TradeKind.SalvageForDust:
                         if (Rules.SalvageUnsecured(Profile, t.Uid) != null)
                             Emit(new GameEvent(EventKind.Info, Loc.T($"分解してドリームダスト+{t.EarnDust}", $"Salvaged for {t.EarnDust} Dream Dust")));
-                        break;
+                        Profile.PendingTrades.RemoveAll(pending => pending.Token == t.Token);
+                        DeferSave();
+                        return;
                     case TradeKind.SatchelOverflowDust:
                         Emit(Rules.CompleteSatchelOverflowDust(t));
                         // 成功のプロフィール側の反映は取引の削除だけ。未保存のまま落ちても、領収書の照会で
@@ -1032,36 +1063,61 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
         {
             sent = 0;
             remaining = 0;
+            var prepared = new List<PendingTrade>();
+            bool durable = false;
+            int attempted = 0;
             try
             {
                 var run = Profile.Run ?? throw new InvalidOperationException(Loc.T("遠征中のみ使えます。", "Only during an expedition."));
-                var targets = new List<Relic>();
-                for (int i = 0; i < run.Satchel.Count; i++)
-                    if (CanBulkSalvageUnsecured(run.Satchel[i])) targets.Add(run.Satchel[i]);
-                remaining = targets.Count;
                 string blocked = TradeUnavailable();
                 if (blocked != null) return blocked;
-                int limit = Math.Min(30, TradeLedger.MaxHeld - _trades.ManualHeldCount);
-                for (int i = 0; i < targets.Count && sent < limit; i++)
+                int limit = Math.Min(30, Math.Min(TradeLedger.MaxHeld - _trades.ManualHeldCount,
+                    TradeLedger.MaxRestored - _trades.HeldCount));
+                long ledgerId = _hostLedgerId;
+                int scale = HostAuthority.SalvageScaleFor(DewPlayer.local);
+                for (int i = 0; i < run.Satchel.Count; i++)
                 {
-                    var r = targets[i];
-                    if (!run.Satchel.Contains(r) || !CanBulkSalvageUnsecured(r))
-                    {
-                        remaining--;
-                        continue;
-                    }
-                    blocked = TradeUnavailable();
-                    if (blocked != null) return blocked;
-                    string err = SendTrade(_trades.BeginSalvage(r, Time.unscaledTime, HostAuthority.SalvageScaleFor(DewPlayer.local)));
-                    if (err != null) return err;
-                    sent++;
-                    remaining--;
+                    var relic = run.Satchel[i];
+                    if (!CanBulkSalvageUnsecured(relic)) continue;
+                    remaining++;
+                    if (prepared.Count >= limit) continue;
+                    var trade = _trades.BeginSalvage(relic, Time.unscaledTime, scale);
+                    prepared.Add(trade);
+                    trade.LedgerId = ledgerId;
+                    // Validate the whole batch before persisting any host-side obligation.
+                    TradeWire.Encode(trade, out _, out _, out _);
                 }
-                return null;
+                if (prepared.Count == 0) return null;
+                if (!SaveNow(true))
+                    return Loc.T("取引の記録を保存できなかったため、取引は行っていません。保存先を確認してからもう一度お試しください。",
+                        "The trade was not made because its record could not be saved. Check the save location and try again.");
+                durable = true;
+                string firstError = null;
+                for (int i = 0; i < prepared.Count; i++)
+                {
+                    // A transport exception may follow delivery. Never refund an attempted send.
+                    attempted++;
+                    string error = SendDurableTrade(prepared[i]);
+                    if (error == null) { sent++; remaining--; }
+                    else if (firstError == null) firstError = error;
+                }
+                return firstError;
             }
             catch (Exception ex)
             {
                 return ex.Message;
+            }
+            finally
+            {
+                int rollbackFrom = durable ? attempted : 0;
+                for (int i = rollbackFrom; i < prepared.Count; i++)
+                    RestoreSalvageTrade(_trades.Complete(prepared[i].Token, false));
+                if (rollbackFrom < prepared.Count)
+                {
+                    Profile.PendingTrades.Clear();
+                    Profile.PendingTrades.AddRange(_trades.Snapshot());
+                    SaveNow();
+                }
             }
         }
 
@@ -1226,7 +1282,11 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
                 Log.Warn("Client: rejected invalid applied-build transfer packet.");
                 return;
             }
-            if (summary != null) HostSummary = summary;
+            if (summary != null)
+            {
+                HostSummary = summary;
+                DiagnoseExpedition("client-applied-received");
+            }
         }
 
         private void OnPressure(DreamforgePressureMsg msg)
@@ -1237,6 +1297,7 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
             PressureDamageMultiplier = msg.damageMultiplier;
             ReceiveRunChoices(msg.runChoices);
             HostConfirmed = true;
+            DiagnosePressureReceipt();
             ReportPressureProgress();
         }
 
@@ -1309,13 +1370,13 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
             return null;
         }
 
-        private string _curseSyncedKey = "";
+        private (string Run, int Hero, int Authority) _curseSyncedKey;
 
-        private string CurseKey()
+        private (string Run, int Hero, int Authority) CurseKey()
         {
             var hero = LocalHero;
-            if (hero == null || _clientRpcOn == null || !NetworkClient.active || !RunActive) return "";
-            return PactCurseSync.Key(ActiveRunId, hero.GetInstanceID(), _clientRpcOn.GetInstanceID());
+            if (hero == null || _clientRpcOn == null || !NetworkClient.active || !RunActive) return default;
+            return (ActiveRunId, hero.GetInstanceID(), _clientRpcOn.GetInstanceID());
         }
 
         /// <summary>再起動・ホスト権限の交代・復活のあとも契約が残っていれば、呪いを1回だけ付け直してもらう。</summary>
@@ -1323,8 +1384,8 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
         {
             var run = Profile.Run;
             if (run == null || run.Pacts.Count == 0 || LocalHero == null || !LocalHero.isActive) return;
-            string key = CurseKey();
-            if (!PactCurseSync.ShouldResend(run.Pacts.Count, _curseSyncedKey, key)) return;
+            var key = CurseKey();
+            if (string.IsNullOrEmpty(key.Run) || key == _curseSyncedKey) return;
             _curseSyncedKey = key;
             for (int i = 0; i < run.Pacts.Count; i++)
             {
@@ -1432,6 +1493,7 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
                 _lastSentBuild = encoded; _lastBuildActor = _clientRpcOn; _lastBuildHero = hero;
                 _lastBuildHeartbeat = now;
             }
+            DiagnoseBuildSubmission(submissionBuild, submissionProfile, suppress);
             _buildDirty = false;
             _monsterAuthority.BuildSent();
             _sentDreamLevel = Profile.DreamLevel;
@@ -1483,6 +1545,7 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
             Profile.PendingTrades.AddRange(_trades.Snapshot());
             _dirty = false;
             _nextSave = Time.unscaledTime + 30f;
+            _lastKillProfileSave = Time.unscaledTime;
             if (_store == null)
             {
                 // 保存先が無効（初期のプロフィール切替に失敗した場合など）。確認付きの保存は書き込みが行われないので失敗とし、取引は送らせない。

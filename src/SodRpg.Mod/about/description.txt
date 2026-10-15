@@ -1,5 +1,5 @@
-[b]Fuse duplicate relics at the forge to raise their stats, up to 5 levels.[/b]
-[b]鍛冶で同じ遺物を融合し、最大5段まで能力値を強化できるようになりました。[/b]
+[b]Fixes bounty count reports that could be lost in co-op, and the memory essence slot display not refreshing after changing display settings.[/b]
+[b]協力プレイで依頼の数の報告が失われることがある問題と、表示設定を変えても記憶のエッセンス枠の表示が更新されない問題を修正しました。[/b]
 
 [h1]Dreamforge RPG[/h1]
 Turns every run into part of a long RPG journey: relics you keep, a risky "secure or delve" choice at every zone, a star map per Traveler, a forge, and long-term goals. Co-op ready.

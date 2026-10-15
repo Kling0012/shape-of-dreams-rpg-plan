@@ -48,6 +48,14 @@ namespace SodRpg.Mod
             && (player == DewPlayer.local || _coopHostPeers.TryGetValue(player, out var peer) && Time.unscaledTime - peer.Seen <= 20f);
         private bool CoopPeerSafe(DewPlayer player) => CoopPeerAvailable(player) && ClientSession.CoopWorldSafe(player)
             && (player == DewPlayer.local ? ClientSession.CoopHostSafe : _coopHostPeers[player].Safe);
+        private bool CoopPeerFusion(DewPlayer player) => player == DewPlayer.local
+            || _coopHostPeers.TryGetValue(player, out var peer) && peer.Fusion;
+        private string CoopFusionError(CoopHostTrade trade)
+        {
+            bool supported = CoopPeerFusion(trade.First) && CoopPeerFusion(trade.Second);
+            return CoopTradeRules.ValidateFusion(trade.FirstProfile, trade.FirstOffer, supported)
+                ?? CoopTradeRules.ValidateFusion(trade.SecondProfile, trade.SecondOffer, supported);
+        }
 
         private void TickCoopTrade()
         {
@@ -168,6 +176,11 @@ namespace SodRpg.Mod
                     peer.Seen = Time.unscaledTime;
                     peer.Safe = msg.safe;
                     peer.Fusion = msg.fusion;
+                    if (_coopHostTrade != null)
+                    {
+                        string changedCapabilityError = CoopFusionError(_coopHostTrade);
+                        if (changedCapabilityError != null) CancelHostCoopTrade(changedCapabilityError);
+                    }
                     SendCoopRoster(caller);
                     return;
                 }
@@ -230,6 +243,9 @@ namespace SodRpg.Mod
                 if (gameRun != null && profile.Run?.RunId != gameRun || profile.CoopTradePending != null
                     || CoopTradeRules.Validate(profile, offer) != null)
                 { CancelHostCoopTrade("ownership"); return; }
+                string fusionError = CoopTradeRules.ValidateFusion(profile, offer,
+                    CoopPeerFusion(trade.First) && CoopPeerFusion(trade.Second));
+                if (fusionError != null) { CancelHostCoopTrade(fusionError); return; }
                 if (msg.action == "offer")
                 {
                     if (first) { trade.FirstOffer = offer; trade.FirstProfile = profile; }
@@ -290,6 +306,8 @@ namespace SodRpg.Mod
         private void PrepareHostCoopTrade(CoopHostTrade trade)
         {
             if (!CoopPeerSafe(trade.First) || !CoopPeerSafe(trade.Second)) { CancelHostCoopTrade("safe"); return; }
+            string fusionError = CoopFusionError(trade);
+            if (fusionError != null) { CancelHostCoopTrade(fusionError); return; }
             trade.Receipt = CoopTradeRules.CreateReceipt(trade.Id, CoopHostKey,
                 trade.First.guid, trade.FirstProfile, trade.FirstOffer, trade.Second.guid, trade.SecondProfile, trade.SecondOffer);
             string receipt = CoopTradeCodec.WriteReceipt(trade.Receipt);
@@ -305,6 +323,8 @@ namespace SodRpg.Mod
         {
             if (!ClientSession.CoopWorldSafe(trade.First) || !ClientSession.CoopWorldSafe(trade.Second)
                 || ClientSession.CoopHostNativeSaving) { CancelHostCoopTrade("safe"); return; }
+            string fusionError = CoopFusionError(trade);
+            if (fusionError != null) { CancelHostCoopTrade(fusionError); return; }
             // The only commit point: a single atomic durable journal replacement containing BOTH payouts.
             // Both players acknowledged that their outgoing escrow is already on disk.
             _coopJournal.Commit(trade.Receipt);
@@ -370,7 +390,7 @@ namespace SodRpg.Mod
         {
             SendCoopState(player, new DreamforgeCoopTradeState
             {
-                kind = "view", id = trade.Id, hostKey = CoopHostKey, partner = partner.playerName,
+                kind = "view", id = trade.Id, hostKey = CoopHostKey, partner = partner.playerName, partnerFusion = CoopPeerFusion(partner),
                 revision = trade.Revision, incoming = !first, accepted = trade.Accepted, preparing = trade.Preparing,
                 ownConfirmed = first ? trade.FirstConfirmed : trade.SecondConfirmed,
                 otherConfirmed = first ? trade.SecondConfirmed : trade.FirstConfirmed,
@@ -397,8 +417,7 @@ namespace SodRpg.Mod
         }
         private void SendCoopPayload(DewPlayer player, string kind, string id, int revision, string text)
         {
-            bool fusion = player == DewPlayer.local || _coopHostPeers.TryGetValue(player, out var peer) && peer.Fusion;
-            if (!fusion)
+            if (!CoopPeerFusion(player))
             {
                 if (kind == "profile") text = ProfileCodec.WithoutFusionForLegacyTrade(text);
                 else if (kind == "prepare" || kind == "executed")

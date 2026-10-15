@@ -94,8 +94,9 @@ namespace SodRpg.Core.Tests
             int shards = FusionBalance.ShardsPerRarity * ((int)rarity + 1);
             int tuning = uniqueId == null ? 0 : FusionBalance.UniqueTuningCost;
 
-            Rules.Fuse(p, target.Uid, material.Uid);
+            var result = Rules.Fuse(p, target.Uid, material.Uid);
 
+            Assert.Equal(EventKind.Fused, result.Kind);
             Assert.Equal(2, target.FusionLevel);
             Assert.Same(target, Assert.Single(p.Stash));
             Assert.Equal(1000 - shards, p.Material(Materials.Shard));
@@ -136,8 +137,9 @@ namespace SodRpg.Core.Tests
             var stats = relic.EffectiveStats().ToList();
             var powers = relic.EffectivePowers().Select(x => (x.Power, x.Value)).ToList();
 
-            relic.FusionLevel = 3;
+            relic.FusionLevel = 5;
 
+            Assert.Contains(relic.EffectiveStats(), x => x.Stat == Stat.MaxHealthPct && x.Value == -65);
             int pct = 100 + FusionBalance.StatBonusPerLevelPct * relic.FusionLevel;
             Assert.Equal(stats.Select(x => (x.Stat, Relic.Scale(x.Value, pct))),
                 relic.EffectiveStats().Select(x => (x.Stat, x.Value)));

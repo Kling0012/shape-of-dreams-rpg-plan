@@ -14,6 +14,213 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v2.10.52 — Fix lost co-op bounty reports and essence slot display refresh（2026-10-16）
+
+このバージョンでは、協力プレイで依頼の数の報告が届かずに失われることがある問題を修正しました。あわせて、表示設定を変えても記憶のエッセンス枠の表示がすぐに更新されない問題も修正しました。 / This version fixes an issue in co-op where bounty count reports could be lost before reaching the host. It also fixes an issue where the memory essence slot display did not update right away after changing display settings.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- 協力プレイで、依頼の数の報告が送られる途中で中身が消え、届かないことがある問題を修正しました。 / Fixed an issue in co-op where the contents of a bounty count report could be cleared while it was being sent, so the report never arrived.
+- 協力プレイで、参加者が依頼の数の報告を受け取れなくなった後も、しばらくその参加者あてに報告が送られ、報告が失われることがある問題を修正しました。受け取りをやめたことがすぐにホストへ伝わるようになりました。 / Fixed an issue in co-op where bounty count reports could still be sent to a player for a while after they stopped receiving them, causing those reports to be lost. The host is now told right away when a player stops receiving them.
+- 遠征の終わりなどの区切りの前に依頼の報告を送る処理が、条件によっては働かないおそれがあった問題を修正しました。 / Fixed an issue where reports for bounties sent before milestones such as the end of an expedition might not work under certain conditions.
+- 表示設定を変えても、次にシーンを読み込むまで記憶のエッセンス枠の表示が更新されないことがある問題を修正しました。設定を変えたときにすぐ反映されるようになりました。 / Fixed an issue where the memory essence slot display might not update after changing display settings until the next scene loaded. Changes now apply right away.
+- 一部の能力を持っていないとき、味方の人数や周りの敵の数が実際と違う値で扱われ、それを使うほかの能力の効果が知らないうちに変わってしまうおそれがあった問題を修正しました。 / Fixed an issue where, without certain abilities, party size or nearby enemy count could be treated as the wrong value, which might silently change the effects of other abilities that use them.
+- 対象が無効になったときに、条件によってはエラーが起きるおそれがあった問題を修正しました。 / Fixed an issue where an error could occur under certain conditions when a target became invalid.
+
+これらの修正は、不具合を再現するテストではまだ確かめられていません。 / These fixes have not yet been confirmed with tests that reproduce the issues.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
+## v2.10.51 — Faster bulk salvage and lighter saves（2026-10-16）
+
+このバージョンでは、まとめて分解を押したときに画面が止まる時間を短くし、長く遊ぶほど保存が重くなっていく問題を修正しました。あわせて、強敵を続けて倒したときの保存の重さと、中断したプレイの再開に失敗したときの扱いも改善しました。 / This version shortens the freeze when using bulk salvage and fixes an issue where saving got heavier the longer you played. It also reduces save load when defeating strong enemies in quick succession and improves how failed resumes of interrupted runs are handled.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- まとめて分解で、遺物1つごとに保存が終わるまで画面が止まっていたため、最大30個を分解すると長く引っかかることがあった問題を修正しました。保存は全部の分解の準備が終わってから1回だけ行われるようになりました。準備や保存に失敗したときは、その回の分解はすべて取り消され、遺物は元に戻ります。協力プレイで分解の結果を受け取った側の保存も、まとめて行われるようになりました。 / Fixed an issue where bulk salvage froze the screen until the save finished for each relic, which could cause a long hitch when salvaging up to 30 relics. The game now saves once, after every salvage is ready. If preparing or saving fails, the whole batch is cancelled and your relics are returned. In co-op, saves on the side receiving the salvage results are now grouped as well.
+- 遠征の中断・再開用のデータがセーブデータの中にたまり続け、長く遊ぶほどセーブデータが大きくなって保存が重くなっていた問題を修正しました。終わった遠征のデータは消されるようになり、再開用に残すデータの数にも上限を設けました。再開用のデータに入る協力取引の情報は、変わっていないときは書き込まないようにしました。また、再開用データの確定に失敗し続けても、協力取引の控えが入れ子になってたまり、セーブデータが増え続けることはなくなりました。 / Fixed an issue where data for interrupting and resuming expeditions kept piling up in the save, making the save larger and saving slower the longer you played. Data for finished expeditions is now removed, and the amount of resume data kept is now limited. Co-op trade data in the resume data is no longer written when it has not changed. The save also no longer keeps growing with nested co-op trade backups when confirming resume data keeps failing.
+- 保存のたびに書き込んだセーブデータを全部読み直していたため、一時的にメモリを多く使い、ゲームが一瞬止まることがあった問題を修正しました。保存後の確認は書き込んだ内容との照合で行うようになり、全体の読み直しはプレイを始めて最初の保存だけになりました。 / Fixed an issue where the game re-read the whole save file after every save, using a lot of temporary memory and sometimes causing brief freezes. Saves are now checked by comparing against what was written, and the full re-read happens only on the first save of a session.
+- 強敵を続けて倒すと、1秒に何回も保存が走って重くなることがあった問題を修正しました。続けて倒したときの保存はまとめて行われるようになりました。 / Fixed an issue where defeating strong enemies in quick succession could trigger several saves per second and slow the game down. Saves after back-to-back kills are now grouped together.
+- 起動時にセーブデータを同じファイルにつき2回ずつ読み込んでいた問題を修正しました。 / Fixed an issue where each save file was read twice at startup.
+- ロビーに戻った遠征の記録が消えずにたまり続けていた問題を修正しました。記録は直近の分だけ残すようになりました。 / Fixed an issue where records of expeditions returned to the lobby kept piling up. Only recent records are now kept.
+- 中断したプレイを再開するときに中断データが読み込めないと、エラーがそのままゲームに伝わっていた問題を修正しました。今は警告が表示され、読み込めなかった遠征の報酬とビルドの反映だけが保留されます。 / Fixed an issue where an error went straight through to the game when interrupted-run data could not be read while resuming. A warning is now shown, and only the rewards and build changes for that expedition are put on hold.
+
+### 内部の改善 / Internal improvements
+
+- 星の木の画面について、テストが使う項目を明示し、木の形の前提が崩れたときに分かりやすいメッセージで失敗するようにするなど、内部の点検の仕組みを強化しました。 / Strengthened internal checks for the star tree screen, such as listing the fields the tests rely on and making tests fail with a clear message when assumptions about the tree's shape no longer hold.
+
+これらの変更でどれだけ軽くなるかは、実際のゲームではまだ測っていません。 / How much these changes improve performance has not yet been measured in the actual game.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。星の木の画面の実際のゲームでの表示（1920x1080）・マウス操作・二択パネルの見た目・フレーム時間の確認もまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. The star tree screen's display (1920x1080), mouse input, choice panel appearance, and frame time have also not yet been checked in the live game. Please report anything odd.
+
+---
+
+## v2.10.50 — Fix co-op lobby version warnings, room omens across zones, and essence slots after loading（2026-10-16）
+
+このバージョンでは、協力プレイのロビーにいる参加者のバージョンが違うときに、ホストに警告が表示されない不具合を修正しました。あわせて、ゾーンが変わっても同じ部屋番号で同じ兆しが出ることがある不具合と、読み込み直後に記憶のエッセンス枠が正しい数で出ないことがある不具合も修正しました。 / This version fixes an issue where the host was not warned when a player waiting in the co-op lobby had a different version. It also fixes an issue where the same room number could show the same omen even in a different zone, and an issue where memory essence slots could show the wrong number right after loading.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- 協力プレイで、ロビーにだけいる参加者のバージョンや内容がホストと違っていても、ホストの警告一覧に表示されなかった問題を修正しました。ロビーにいる参加者の違いも警告一覧に表示されるようになりました。ゲームとロビーの両方にいる参加者の警告が二重に出ることはなく、抜けた参加者の警告は今までどおり一覧から消えます。違いがあっても、これまで使えていた機能が止まることはありません。 / Fixed an issue in co-op where the host's warning list did not show players who were only in the lobby, even when their version or content differed from the host's. These differences for lobby players now appear in the warning list. Players who are both in the game and in the lobby are not listed twice, and warnings for players who have left are still removed from the list as before. Differences do not stop any features that already worked.
+- 部屋の兆しが部屋番号だけで決まっていたため、ゾーンが変わっても同じ部屋番号なら同じ兆しになることがある問題を修正しました。 / Fixed an issue where room omens were decided only by room number, so the same room number could show the same omen even in a different zone.
+- 読み込み直後、画面表示の準備が終わる前だと、レベルに応じた記憶のエッセンス枠が4つまでに切られてしまうことがある問題を修正しました。読み込み直後からレベルに応じた正しい数の枠が出るようになりました。 / Fixed an issue where level-based memory essence slots could be cut off at 4 if the game was loaded before the HUD was ready. The correct number of slots for your level now appears right after loading.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
+## v2.10.49 — Less per-frame work in combat and batched co-op bounty reports（2026-10-16）
+
+このバージョンでは、戦闘中とタイトル・ロビーで毎回行っていた無駄な処理を減らし、協力プレイで送られる回復・シールド・属性撃破の報告をまとめて送るようにしました。 / This version reduces unnecessary repeated processing during combat and on the title and lobby screens, and sends heal, shield, and elemental kill reports in co-op as batches instead of one at a time.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- 敵が多い戦闘で、状態異常の確認がフレームごとに大量に行われ、処理が重くなるおそれがあった問題を修正しました。問題のない状態異常については、余分な確認を行わないようにしました。 / Fixed an issue where battles with many enemies could become heavy because status effects were checked a large number of times every frame. Status effects without problems no longer go through these extra checks.
+- 協力プレイで、回復・シールド・属性撃破の報告が1件ずつ送られ、継続回復やボス撃破のときに通信が多くなっていた問題を修正しました。報告は英雄ごとにまとめて送られるようになりました。依頼の進み方は変わりません。 / Fixed an issue in co-op where heal, shield, and elemental kill reports were sent one at a time, causing heavy network traffic during healing over time or when many enemies fell at once after a boss kill. Reports are now batched per hero. Bounty progress works the same as before.
+- 戦闘中に毎フレーム行われていた余分な処理を減らしました。対象は、英雄の一覧の比較、協定の呪いの再同期の確認、周囲の確認（関係する能力を持っていないとき）、インフィニティのボス戦での魂の祠の検索です。 / Reduced unnecessary per-frame work during combat: hero list comparison, pact curse resync checks, nearby checks when no hero has a related ability, and the Soul Shrine search during Infinity boss fights.
+- 低品質設定で、敵が倒れるたびに死亡演出の光を探し直していた問題を修正しました。 / Fixed an issue on low quality settings where the death effect lights were searched for again every time an enemy died.
+- タイトル画面とロビーで、画面全体の検索を毎秒行っていた問題を修正しました。検索は起動後とシーンの読み込み後だけ行います。 / Fixed an issue where the title screen and lobby searched the whole scene every second. The search now runs only after startup and after a scene loads.
+
+これらの変更でどれだけ軽くなるかは、実際のゲームではまだ測っていません。 / How much these changes improve performance has not yet been measured in the actual game.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
+## v2.10.48 — Fix stale choice descriptions after switching on the Star Map（2026-10-16）
+
+このバージョンでは、星図で二択の選択を切り替えたときに、選択肢の説明が更新されないことがある不具合を修正しました。 / This version fixes an issue where choice descriptions on the Star Map could fail to update after switching a two-option choice.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- 星図で取得済みの二択を無料で切り替えたあと、二択の候補の説明が切り替え前のまま表示されることがある問題を修正しました。切り替えたあとは、本文、両方の候補、ツールチップが最新の内容で表示されます。 / Fixed an issue where, after a free switch on an already-acquired two-option choice on the Star Map, the option descriptions could still show their pre-switch text. After switching, the description, both options, and the tooltip now show up-to-date content.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
+## v2.10.47 — Safer co-op trades for fused relics, plus logging to investigate a post-Polaris issue（2026-10-16）
+
+このバージョンでは、融合済みの遺物を協力取引したときに融合段階が失われる不具合を修正しました。また、ポラリス踏破後に起きる不具合の原因を調べるため、ゲームのログへ記録を追加しました。 / This version fixes an issue where fused relics could lose their Fusion level in co-op trades. It also adds log records to help investigate an issue that occurs after clearing Polaris.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- 融合済みの遺物を、融合に対応していない古い版のプレイヤーと協力取引すると、融合段階が失われることがある問題を修正しました。取引の相手やホストが融合に対応しているか確認できない場合、融合済みの遺物は取引に出せなくなり、その理由が取引画面に表示されます。融合していない遺物や素材は、これまでどおり交換できます。融合済みの遺物を交換するときは、参加者全員がこのバージョンに更新してください。 / Fixed an issue where trading a fused relic in co-op with a player on an older version without Fusion support could lose its Fusion level. If the trade partner or host can't be confirmed to support Fusion, fused relics can no longer be offered, and the trade screen shows the reason. Unfused relics and materials can still be traded as before. To trade fused relics, make sure everyone has updated to this version.
+- ポラリスで夢を踏破した後の次の試合で、夢の圧が下がり、装備の効果が得られないという報告（#449）について、原因を調べるための記録をゲームのログ（Player.log）に追加しました。この記録はゲームの挙動やセーブデータを変えず、ログの量も控えめにしています。この不具合はまだ修正されていません。同じ現象が起きたら、ゲームを終了した直後に Player.log を添えて報告していただけると助かります。ログの場所と送り方は README に書いてあります。 / Added log records to Player.log to investigate the reported issue (#449) where, after clearing a dream at Polaris, the next run had lower dream pressure and equipment effects did not apply. These records don't change gameplay or save data, and log output is kept small. This issue is not fixed yet. If it happens to you, please report it with your Player.log attached right after it happens. The README explains where to find the log and how to send it.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
+## v2.10.46 — Relic Fusion fixes: proper Fusion notification and lighter forge screen（2026-10-15）
+
+このバージョンでは、遺物の融合に関する不具合を修正しました。 / This version fixes issues with relic Fusion.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- 鍛冶で遺物を融合したときの通知が、レベルアップの通知として扱われていた問題を修正しました。融合は専用の通知になり、融合後の能力値は従来どおり反映されます。 / Fixed an issue where fusing a relic at the forge was announced as a level-up. Fusion now has its own notification, and the fused relic's stats are still applied as before.
+- 保管庫に遺物が多いと、鍛冶画面の融合欄の処理が重くなる問題を軽減しました。融合の候補や必要な素材の変化はこれまでどおりすぐに反映され、融合ボタンを押したときには最新の状態を確認し直します。 / Reduced the processing load of the forge's Fusion panel when your storage holds many relics. Changes to Fusion candidates and required materials still show up right away, and the latest state is rechecked when you press the Fusion button.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
+## v2.10.45 — Relic Fusion added to the forge（2026-10-15）
+
+このバージョンでは、鍛冶に遺物を融合して強化する機能を追加しました。 / This version adds relic Fusion to the forge, letting you strengthen relics by fusing them.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 新機能 / New features
+
+- 鍛冶で遺物を融合できるようになりました。同じ名前で同じレア度の遺物を1個素材にすると融合段階が1つ上がり、最大5段まで重ねられます。段階が上がるたびに能力値が上がります。遺物の固有効果は変わりません。 / You can now fuse relics at the forge. Using one relic with the same name and rarity as material raises its Fusion level by one, up to 5 levels. Each level raises the relic's stats, while its unique effect stays the same.
+- 融合には欠片が必要で、固有品の遺物では調律石も必要です。鍛冶画面には融合できる候補、必要な素材、融合の前後で能力値がどれだけ上がるかが表示されます。素材を誤って使わないよう、融合ボタンは2回押して確定します。 / Fusion costs shards, and unique relics also need a Tuning Stone. The forge screen shows which relics can be fused, the required materials, and how much the stats rise from before to after Fusion. To prevent accidental use of materials, you press the Fusion button twice to confirm.
+- 融合段階はセーブデータに保存され、協力プレイでの取引でも引き継がれます。融合済みの遺物を協力プレイで交換するときは、参加者全員がこのバージョンに更新してください。 / Fusion levels are kept in your save data and carry over through co-op trades. When trading fused relics in co-op, make sure everyone has updated to this version.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
+## v2.10.44 — Maintenance update with no player-visible changes（2026-10-15）
+
+このバージョンには、プレイヤーから見た新機能や不具合の修正はありません。 / This version contains no new features or bug fixes visible to players.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
+## v2.10.43 — Smoother star map point allocation（2026-10-15）
+
+このバージョンでは、星図で星にポイントを割り振るときのカクつきを軽くしました。 / This version reduces the stutter when allocating points to stars on the star map.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- 星図で星にポイントを割り振るたびに、画面が一瞬カクついていました。この動作を軽くし、ポイントをテンポよく割り振れるようにしました。ポイントの割り振りのルールや払い戻し、星の説明文の内容は変わりません。 / The screen briefly stuttered each time you allocated a point to a star on the star map. This has been made lighter so you can allocate points smoothly. The allocation rules, refunds, and star descriptions are unchanged.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
 ## v2.10.42 — Maintenance update with no player-facing changes（2026-10-15）
 
 このバージョンには、プレイヤーから見た新機能や不具合の修正はありません。 / This version contains no new features or bug fixes visible to players.
@@ -2523,55 +2730,3 @@ GitHub の issue で報告された不具合を直しました。
 - 日本語/英語のUI（F6 メニュー、F7 確保、F8 深く潜る）、Workshop 登録用の about 一式。
 
 **試験**：58件追加（全308件）。実機（r.1.4.0.13_s）で読み込み・UI・能力反映・ライブリロードを確認。
-
----
-
-## v2.10.45 — Relic Fusion added to the forge（2026-10-15）
-
-このバージョンでは、鍛冶に遺物を融合して強化する機能を追加しました。 / This version adds relic Fusion to the forge, letting you strengthen relics by fusing them.
-
-### 更新前に確認 / Before updating
-
-- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
-- セーブデータはそのまま引き継げます。 / Saves carry over.
-- 更新後はゲームを再起動してください。 / Restart the game after updating.
-
-### 新機能 / New features
-
-- 鍛冶で遺物を融合できるようになりました。同じ名前で同じレア度の遺物を1個素材にすると融合段階が1つ上がり、最大5段まで重ねられます。段階が上がるたびに能力値が上がります。遺物の固有効果は変わりません。 / You can now fuse relics at the forge. Using one relic with the same name and rarity as material raises its Fusion level by one, up to 5 levels. Each level raises the relic's stats, while its unique effect stays the same.
-- 融合には欠片が必要で、固有品の遺物では調律石も必要です。鍛冶画面には融合できる候補、必要な素材、融合の前後で能力値がどれだけ上がるかが表示されます。素材を誤って使わないよう、融合ボタンは2回押して確定します。 / Fusion costs shards, and unique relics also need a Tuning Stone. The forge screen shows which relics can be fused, the required materials, and how much the stats rise from before to after Fusion. To prevent accidental use of materials, you press the Fusion button twice to confirm.
-- 融合段階はセーブデータに保存され、協力プレイでの取引でも引き継がれます。融合済みの遺物を協力プレイで交換するときは、参加者全員がこのバージョンに更新してください。 / Fusion levels are kept in your save data and carry over through co-op trades. When trading fused relics in co-op, make sure everyone has updated to this version.
-
-この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
-
----
-
-## v2.10.44 — Maintenance update with no player-visible changes（2026-10-15）
-
-このバージョンには、プレイヤーから見た新機能や不具合の修正はありません。 / This version contains no new features or bug fixes visible to players.
-
-### 更新前に確認 / Before updating
-
-- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
-- セーブデータはそのまま引き継げます。 / Saves carry over.
-- 更新後はゲームを再起動してください。 / Restart the game after updating.
-
-この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
-
----
-
-## v2.10.43 — Smoother star map point allocation（2026-10-15）
-
-このバージョンでは、星図で星にポイントを割り振るときのカクつきを軽くしました。 / This version reduces the stutter when allocating points to stars on the star map.
-
-### 更新前に確認 / Before updating
-
-- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
-- セーブデータはそのまま引き継げます。 / Saves carry over.
-- 更新後はゲームを再起動してください。 / Restart the game after updating.
-
-### 不具合の修正 / Bug fixes
-
-- 星図で星にポイントを割り振るたびに、画面が一瞬カクついていました。この動作を軽くし、ポイントをテンポよく割り振れるようにしました。ポイントの割り振りのルールや払い戻し、星の説明文の内容は変わりません。 / The screen briefly stuttered each time you allocated a point to a star on the star map. This has been made lighter so you can allocate points smoothly. The allocation rules, refunds, and star descriptions are unchanged.
-
-この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.

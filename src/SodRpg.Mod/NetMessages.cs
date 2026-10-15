@@ -109,6 +109,18 @@ namespace SodRpg.Mod
         public int value;
     }
 
+    /// <summary>Optional counted reports, sent only after the recipient advertises bountyCounts.</summary>
+    [Serializable]
+    public class DreamforgeBountyCountsMsg
+    {
+        public int version = 1;
+        public uint heroNetId;
+        public string runId;
+        public int shields, allyHeals;
+        // Index is the original four-element mask, preserving overlapping elements.
+        public int[] elementalKills;
+    }
+
     /// <summary>ホスト → 全員：この敵が悪夢化した（接頭効果のビット集合）。</summary>
     [Serializable]
     public class DreamforgeNightmareMsg
@@ -239,6 +251,8 @@ namespace SodRpg.Mod
         public int forbiddenInput;
         /// <summary>融合段階を含む16欄形式のビルド入力を読めるか。旧版は0。</summary>
         public int fusionInput;
+        // Optional JSON field; absent/zero peers keep receiving single-event reports.
+        public int bountyCounts;
     }
 
     // Optional extension: Hello and every existing packet remain unchanged (Protocol 24).

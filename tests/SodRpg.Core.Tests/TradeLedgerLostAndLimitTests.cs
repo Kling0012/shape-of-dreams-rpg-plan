@@ -127,13 +127,18 @@ namespace SodRpg.Core.Tests
             Assert.Equal(TradeOutcome.Lost, client.OnResult(t.Token, answer.Ok, ReasonCode(answer), out _));
 
             Assert.True(client.IsReserved(relic.Uid));
-            Assert.Contains(relic.Uid, client.ReservedSalvageUids());
+            var reserved = client.ReservedSalvageUids();
+            Assert.Contains(relic.Uid, reserved);
+            client.ReservedSalvageUids(reserved);
+            Assert.Equal(new[] { relic.Uid }, reserved);
             Assert.Contains(relic, p.Run.Satchel); // 鞄の対象も操作可能にならない（予約中）
 
             // 利用者が明示的に手放したときだけ、対価なしで予約が解ける。
             var taken = client.TakeLost();
             Assert.Single(taken);
             Assert.False(client.IsReserved(relic.Uid));
+            client.ReservedSalvageUids(reserved);
+            Assert.Empty(reserved);
             Assert.Equal(0, client.HeldCount);
         }
 

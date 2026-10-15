@@ -92,6 +92,7 @@ namespace SodRpg.Mod
                     if (_builds.TryGetValue(player, out var previous) && previous.HeroKey == heroKey
                         && previous.Encoded == encoded && !previous.ApplyFailed)
                     {
+                        DiagnoseHostBuild("host-build-reused", hero, previous.Build);
                         SendApplied(player, hero, previous);
                         continue;
                     }
@@ -100,6 +101,7 @@ namespace SodRpg.Mod
                         RejectBuildOnce(player, reason);
                         continue;
                     }
+                    DiagnoseHostBuild("host-build-accepted", hero, build);
                     string summary = build.Encode();
                     // Movement charges are reconstructed from allocations and intentionally absent
                     // from the wire summary. Equal damage totals can still change this host effect.
@@ -108,6 +110,7 @@ namespace SodRpg.Mod
                         && previous.Build.ForbiddenTransmutePct == build.ForbiddenTransmutePct)
                     {
                         previous.Encoded = encoded;
+                        DiagnoseHostBuild("host-build-reused", hero, previous.Build);
                         SendApplied(player, hero, previous);
                         continue;
                     }
@@ -132,6 +135,7 @@ namespace SodRpg.Mod
             try
             {
                 Apply(hero, received);
+                DiagnoseHostBuild("host-build-applied", hero, received.Build);
                 return true;
             }
             catch (Exception)
@@ -145,7 +149,10 @@ namespace SodRpg.Mod
         private void RejectBuildOnce(DewPlayer player, string reason)
         {
             if (!ReferenceEquals(player, null) && _buildRejectionsLogged.Add(player))
+            {
+                DiagnoseHostRejection(player, reason);
                 Log.Warn("Host: rejected build packet (" + reason + ").");
+            }
         }
 
         private void RemoveBuildValidationPeer(DewPlayer player)

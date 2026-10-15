@@ -2127,7 +2127,7 @@ namespace SodRpg.Mod
 
         private sealed class StarNode
         {
-            public int Rank, Choice = -1, TextRank = -1, TextChoice = -2, TooltipVersion = -1, ChoicePoints = -1;
+            public int Rank, Choice = -1, TextRank = -1, TextChoice = -2, TooltipVersion = -1, ChoiceTextVersion = -1;
             public bool Allocated, Available, Unlocked, PairEquippedA, PairEquippedB, SearchMatch, SummaryHover;
             public string Description, DisplayBody, SearchDescription, EffectSummary, MissingRequirements;
             public int NavigationRank = -1;
@@ -2464,12 +2464,14 @@ namespace SodRpg.Mod
         {
             EnsureStarTooltip(index);
             var n = _starNodes[index];
-            if (n.ChoicePoints == _starSpent) return;
+            // Same generation guard as the tooltip: a free choice switch does not change spent
+            // points, but it still expires the layout snapshot, so both cards are rebuilt (#440).
+            if (n.ChoiceTextVersion == _starTextVersion) return;
             var t = _starLayout.Nodes[index].Talent;
             for (int option = 0; option < 2; option++)
                 n.ChoiceOptions[option].text = StarMapPresentation.ChoiceOptionBody(t, option, true)
                     + "\n" + StarMapPresentation.DamageRankNote(t, option, _starSpent);
-            n.ChoicePoints = _starSpent;
+            n.ChoiceTextVersion = _starTextVersion;
         }
 
         private void DrawTalentTab()

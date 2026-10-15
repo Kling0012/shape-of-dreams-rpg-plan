@@ -66,6 +66,8 @@ namespace SodRpg.Core.Game
                     sb.Append((int)line.Power).Append('=').Append(line.Value);
                 }
                 // 禁忌は15番目、融合は16番目。未使用の遺物は従来の14欄を保つ。
+                // 禁忌なし・融合ありは「…:<powers>::<fusion>」。fields[14] == "" を残し、
+                // 読み側が fields[15] を融合として読む。空欄を詰めると禁忌として誤読する。
                 if (relic.Forbidden != null || relic.FusionLevel > 0) sb.Append(':').Append(relic.Forbidden?.Encode());
                 if (relic.FusionLevel > 0) sb.Append(':').Append(relic.FusionLevel);
             }

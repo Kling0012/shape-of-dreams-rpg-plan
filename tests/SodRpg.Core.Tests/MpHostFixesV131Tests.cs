@@ -134,11 +134,12 @@ namespace SodRpg.Core.Tests
             var modded = new Hero(); var vanilla = new Hero(); var gone = new Hero();
             var tracked = new List<Hero> { modded, gone };
             var add = new List<Hero>(); var remove = new List<Hero>();
-            WaypointRoster.Diff(tracked, new[] { modded, vanilla }, h => true, add, remove);
+            var eligible = new HashSet<Hero>(); var known = new HashSet<Hero>();
+            WaypointRoster.Diff(tracked, new[] { modded, vanilla }, h => true, add, remove, eligible, known);
             Assert.Equal(new[] { vanilla }, add);
             Assert.Equal(new[] { gone }, remove);
             add.Clear(); remove.Clear();
-            WaypointRoster.Diff(tracked, new[] { modded, vanilla }, h => h != vanilla, add, remove);
+            WaypointRoster.Diff(tracked, new[] { modded, vanilla }, h => h != vanilla, add, remove, eligible, known);
             Assert.Empty(add);
         }
 

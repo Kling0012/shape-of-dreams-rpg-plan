@@ -77,6 +77,35 @@ namespace Issue73.Native.Tests
         }
 
         [Fact]
+        public void Issue462_ordinary_zone_travel_keeps_the_run_wide_room_counter_and_does_not_repeat_the_sequence()
+        {
+            var session = HostSession("issue462-normal-zone-travel", out var actor);
+            var hero = new Hero { netId = 3, owner = new DewPlayer() };
+            var zone = Zone(CombatRoom());
+            var host = OmenHost(session, actor, zone, hero);
+            var sequences = new List<RoomOmen[]>();
+            for (int zoneIndex = 0; zoneIndex < 3; zoneIndex++)
+            {
+                var sequence = new RoomOmen[6];
+                zone.currentZoneIndex = zoneIndex;
+                for (int roomIndex = 0; roomIndex < sequence.Length; roomIndex++)
+                {
+                    // Dew.Core/ZoneManager.LoadNode increments this counter across ordinary zone
+                    // travel; only a new loop with currentZone == null resets it to zero.
+                    zone.currentRoomIndex = zoneIndex * sequence.Length + roomIndex + 1;
+                    zone.currentRoom = CombatRoom();
+                    Call(host, "OnRoomOmenLoaded", new EventInfoLoadRoom());
+                    Assert.False((bool)Get(host, "_omensFailed"));
+                    sequence[roomIndex] = (RoomOmen)Get(host, "_roomOmen");
+                    Assert.NotEqual(RoomOmen.None, sequence[roomIndex]);
+                }
+                sequences.Add(sequence);
+            }
+            Assert.False(sequences[0].SequenceEqual(sequences[1]), "Zone 1 and zone 2 must not repeat this entire sequence");
+            Assert.False(sequences[1].SequenceEqual(sequences[2]), "Zone 2 and zone 3 must not repeat this entire sequence");
+        }
+
+        [Fact]
         public void Moving_to_an_ineligible_room_clears_the_active_omen()
         {
             string runId = RunIdWith(0, RoomOmen.Vigor, 1, RoomOmen.Fortitude);

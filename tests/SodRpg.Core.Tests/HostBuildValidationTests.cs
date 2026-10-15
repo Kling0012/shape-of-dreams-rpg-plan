@@ -246,6 +246,9 @@ namespace SodRpg.Core.Tests
             var p = Funded(); Allocate(p, "h.cetus.cluster.icy-veins.5", 1);
             var relic = Loot.RollRelic(new Rng(37), Rarity.Epic, 10, Slot.Weapon);
             relic.FusionLevel = 3;
+            var unequipped = Loot.RollRelic(new Rng(38), Rarity.Rare, 1, Slot.Head);
+            unequipped.FusionLevel = 5;
+            p.Stash.Add(unequipped);
             p.Stash.Add(relic); p.Hero(Hero).Equipped[(int)relic.Slot] = relic.Uid;
             var expected = Build.Compute(p, Hero, 0); var claimed = Build.Decode(expected.Encode());
             foreach (Stat stat in Enum.GetValues(typeof(Stat))) claimed.Stats[stat] = Content.StatCap(stat);
@@ -258,6 +261,11 @@ namespace SodRpg.Core.Tests
             var legacy = HostBuildValidation.WithoutFusion(p, Hero);
             Assert.Equal(3, relic.FusionLevel);
             Assert.Equal(0, legacy.FindStash(relic.Uid).FusionLevel);
+            Assert.Equal(5, legacy.FindStash(unequipped.Uid).FusionLevel);
+            string legacyInput = Submit(legacy);
+            Assert.DoesNotContain(unequipped.Uid, legacyInput);
+            string sources = legacyInput.Split('|')[1].Split(';').Single(section => section.StartsWith("R:"));
+            Assert.Equal(14, sources.Substring(2).Split(':').Length);
             Assert.True(HostBuildValidation.TryAccept(Submit(legacy), Hero, out var legacyAccepted, out reason), reason);
             Assert.Equal(Build.Compute(legacy, Hero, 0).Encode(), legacyAccepted.Encode());
         }

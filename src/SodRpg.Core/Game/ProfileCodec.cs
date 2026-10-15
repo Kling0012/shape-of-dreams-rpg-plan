@@ -19,10 +19,11 @@ namespace SodRpg.Core.Game
         /// <summary>Encodes a snapshot without recursively retaining continue snapshots or lobby baselines.</summary>
         public static string WriteCheckpointProfile(Profile p) => WriteProfile(p, false);
 
-        private static string WriteProfile(Profile p, bool includeContinue)
+        private static string WriteProfile(Profile p, bool includeContinue, bool preserveLegacyContinue = false)
         {
             p.SettleSatchelOverflow();
-            var body = WriteBody(p, includeContinue);
+            if (!preserveLegacyContinue) p.PruneLobbyReturnReceipts();
+            var body = WriteBody(p, includeContinue, preserveLegacyContinue && p.LegacyContinueEncoding);
             var root = new JsonObject()
                 .Add("format", Format)
                 .Add("version", (long)Profile.CurrentVersion)
@@ -32,8 +33,8 @@ namespace SodRpg.Core.Game
 
         public static Profile Read(string text, List<string> notes) => ReadProfile(text, notes, true, out _);
 
-        internal static Profile ReadForStore(string text, List<string> notes, out bool migrated) =>
-            ReadProfile(text, notes, true, out migrated);
+        internal static Profile ReadForStore(JsonObject root, List<string> notes, out bool migrated) =>
+            ReadProfile(root, notes, true, out migrated);
 
         public static Profile ReadCheckpointProfile(string text, List<string> notes = null) =>
             ReadProfile(text, notes, false, out _);
@@ -45,6 +46,12 @@ namespace SodRpg.Core.Game
             Profile migrationNoticeBaseline = null)
         {
             if (!(Json.Parse(text) is JsonObject root)) throw new LedgerFormatException("最上位がオブジェクトではありません。");
+            return ReadProfile(root, notes, includeContinue, out migrated, migrationNoticeBaseline);
+        }
+
+        private static Profile ReadProfile(JsonObject root, List<string> notes, bool includeContinue, out bool migrated,
+            Profile migrationNoticeBaseline = null)
+        {
             if (Str(root, "format") != Format) throw new LedgerFormatException("形式が違います。");
             long version = Long(root, "version");
             if (version > Profile.CurrentVersion) throw new LedgerVersionException("新しすぎる版です: " + version);
@@ -54,7 +61,7 @@ namespace SodRpg.Core.Game
             return loaded;
         }
 
-        private static JsonObject WriteBody(Profile p, bool includeContinue)
+        private static JsonObject WriteBody(Profile p, bool includeContinue, bool legacyContinue = false)
         {
             var mats = new JsonObject();
             // 既知素材は Materials.Known の並びで書き、それ以外の正の値も書き残す。読み込み側の
@@ -183,6 +190,7 @@ namespace SodRpg.Core.Game
                 .Add("run", run);
             // 宿敵との因縁（#415）も、無い保存が旧MODの書き出しと変わらないよう0なら書かない。
             if (p.NemesisGrudge != 0) body.Add("nemesisGrudge", (long)p.NemesisGrudge);
+            if (p.NativeContinueRunId != null) body.Add("nativeContinueRunId", p.NativeContinueRunId);
             // 直送の使用済み遠征は、使っていない保存が旧MODの書き出しと1バイトも変わらないよう、空なら書かない。
             if (p.DirectStashUsedRunIds.Count != 0)
                 body.Add("directStashUsedRunIds", p.DirectStashUsedRunIds.OrderBy(id => id, StringComparer.Ordinal).Select(id => (object)id).ToList());
@@ -190,7 +198,7 @@ namespace SodRpg.Core.Game
                 body.Add("overflowBonusPendingRunId", p.OverflowBonusPendingRunId)
                     .Add("overflowBonusPendingLedgerId", p.OverflowBonusPendingLedgerId)
                     .Add("overflowBonusPendingTotal", p.OverflowBonusPendingTotal);
-            if (includeContinue) WriteContinueState(body, p);
+            if (includeContinue) WriteContinueState(body, p, legacyContinue);
             return body;
         }
 
@@ -318,6 +326,7 @@ namespace SodRpg.Core.Game
             p.InfinityRewardBudget = ReadInfinityRewardBudget(b);
             ReadInfinityRecords(p, b);
             p.CompletedRunId = Str(b, "completedRunId");
+            p.NativeContinueRunId = Str(b, "nativeContinueRunId");
             p.LobbyReturnAuthority = Bool(b, "lobbyReturnAuthority", false);
             if (b.TryGet("completedRunSecuredReturn", out object securedReturn))
             {
