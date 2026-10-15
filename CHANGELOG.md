@@ -8,7 +8,7 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
-- 宿敵の頭上ネームタグをシアンに変更し、夢の変種の橙色・悪夢化のピンク紫と見分けやすくしました。同じ敵に複数の表示情報がある場合も宿敵の名札を優先します。協力プレイでも各PCで同じ色を表示します。 / Nemesis overhead nameplates now use cyan to distinguish them from orange dream variants and pink-purple nightmares. The Nemesis nameplate takes priority when multiple tags refer to the same enemy. Each PC uses the same color in co-op.
+- 宿敵の頭上ネームタグをシアン（`#00E5FF`）に変更し、夢の変種の橙色・悪夢化のピンク紫と見分けやすくしました。同じ敵に複数の表示情報がある場合も宿敵の名札を優先します。協力プレイでも各PCで同じ色を表示します。 / Nemesis overhead nameplates now use cyan (`#00E5FF`) to distinguish them from orange dream variants and pink-purple nightmares. The Nemesis nameplate takes priority when multiple tags refer to the same enemy. Each PC uses the same color in co-op.
 
 ---
 
