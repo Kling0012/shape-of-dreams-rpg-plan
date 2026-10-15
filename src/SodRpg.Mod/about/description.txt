@@ -1,5 +1,5 @@
-[b]Fixes bounty count reports that could be lost in co-op, and the memory essence slot display not refreshing after changing display settings.[/b]
-[b]協力プレイで依頼の数の報告が失われることがある問題と、表示設定を変えても記憶のエッセンス枠の表示が更新されない問題を修正しました。[/b]
+[b]Adds trade progress logging to Player.log to investigate co-op trades that stall after both players accept (not fixed yet).[/b]
+[b]協力プレイの取引が双方承認後に止まる問題を調べるため、取引の進み具合をPlayer.logに記録するようにしました（問題はまだ直っていません）。[/b]
 
 [h1]Dreamforge RPG[/h1]
 Turns every run into part of a long RPG journey: relics you keep, a risky "secure or delve" choice at every zone, a star map per Traveler, a forge, and long-term goals. Co-op ready.

@@ -10,6 +10,26 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v2.10.53 — Co-op trade diagnostics logging（2026-10-16）
+
+このバージョンでは、協力プレイの取引で、双方が承認したあとに先へ進まなくなる問題の原因を調べるため、取引の進み具合をログに記録するようにしました。この問題自体はまだ直っていません。 / This version adds logging of trade progress in co-op to help find the cause of an issue where a trade does not move forward after both players accept it. The issue itself is not fixed yet.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 新機能 / New features
+
+- 協力プレイの取引で、双方が承認したあとに先へ進まなくなる問題を調べるため、取引の進み具合がゲームのログ（Player.log）に記録されるようになりました。同じ内容が短い間に何度も記録されないようにしてあります。記録の処理で問題が起きても、接続や取引の処理には影響しません。 / To investigate an issue in co-op where a trade does not move forward after both players accept it, trade progress is now recorded in the game log (Player.log). The same entry is not recorded over and over in a short time. If something goes wrong while recording, it does not affect connections or trades.
+
+この問題はまだ再現できておらず、直っていません。取引が承認済みのまま止まったときは、その時のPlayer.logを送っていただけると原因の調査に役立ちます。Player.logの集め方はREADMEに載せています。取引の条件や持ち物の扱い、セーブデータの形式は変わっていません。 / We have not yet been able to reproduce this issue, and it is not fixed. If a trade gets stuck after both players accept it, please send the Player.log from that time to help us find the cause. Instructions for collecting Player.log are in the README. Trade conditions, item handling, and the save format are unchanged.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
 ## v2.10.52 — Fix lost co-op bounty reports and essence slot display refresh（2026-10-16）
 
 このバージョンでは、協力プレイで依頼の数の報告が届かずに失われることがある問題を修正しました。あわせて、表示設定を変えても記憶のエッセンス枠の表示がすぐに更新されない問題も修正しました。 / This version fixes an issue in co-op where bounty count reports could be lost before reaching the host. It also fixes an issue where the memory essence slot display did not update right away after changing display settings.
