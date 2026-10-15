@@ -28,6 +28,19 @@ namespace SodRpg.Mod
         private float _coopWaitingAt, _coopWaitReasonAt;
         private bool _coopWaitReleased;
 
+        private void DiagnoseCoopTrade(string stage, string id = null, int revision = -1)
+        {
+            try
+            {
+                var view = CoopTrade;
+                var pending = Profile.CoopTradePending;
+                CoopTradeDiagnostics.Record(NetworkServer.active ? "host-client" : "client", stage,
+                    id ?? pending?.Id ?? view?.Id, revision < 0 ? view?.Revision ?? -1 : revision,
+                    $"place={(InGame ? "expedition" : "lobby")} confirmed={view?.OwnConfirmed}/{view?.OtherConfirmed} preparing={view?.Preparing} worldSafe={CoopLocalWorldSafe} continueReady={ContinueReady} pending={pending != null} offerPending={_coopPendingOffer != null} nativeSaving={_coopNativeSaving} settlementUnsaved={_coopSettlementUnsaved} saveError={SaveError != null} profileRevision={Profile.Revision} writtenRevision={_writer?.WrittenRevision} prepareSaveRevision={_coopPrepareSaveRevision} connected={_coopConnection != null} originalHost={pending != null && pending.HostKey == _coopHostKey}");
+            }
+            catch (Exception) { }
+        }
+
         private bool CoopPendingStale
         {
             get
@@ -147,6 +160,7 @@ namespace SodRpg.Mod
             var connection = NetworkClient.active ? NetworkClient.connection : null;
             if (!ReferenceEquals(connection, _coopConnection))
             {
+                if (CoopTrade != null || Profile.CoopTradePending != null) DiagnoseCoopTrade("connection-changed");
                 _coopConnection = connection;
                 _coopTransfer.Reset();
                 _coopPeers.Clear();
@@ -210,8 +224,10 @@ namespace SodRpg.Mod
                 {
                     if (Time.unscaledTime < _nextCoopProbe) return;
                     _nextCoopProbe = Time.unscaledTime + 5f;
+                    DiagnoseCoopTrade("settlement-save-retry");
                     if (SaveNow(true))
                     {
+                        DiagnoseCoopTrade("settlement-saved");
                         _coopSettlementUnsaved = false;
                         CoopTrade = null;
                         CoopTradeWarning = null;
@@ -243,6 +259,7 @@ namespace SodRpg.Mod
                 RetryCoopOffer();
                 if (Time.unscaledTime < _nextCoopProbe) return;
                 _nextCoopProbe = Time.unscaledTime + 5f;
+                if (CoopTrade != null || Profile.CoopTradePending != null) DiagnoseCoopTrade("waiting");
                 SendCoop(new DreamforgeCoopTradeCommand { action = "probe", safe = CoopLocalSafe });
                 var pending = Profile.CoopTradePending;
                 if (pending != null)
@@ -257,11 +274,13 @@ namespace SodRpg.Mod
                             if (_writer.WrittenRevision >= _coopPrepareSaveRevision)
                             {
                                 _coopPrepareSaveRevision = 0;
+                                DiagnoseCoopTrade("reservation-save-recovered");
                                 SendCoop(new DreamforgeCoopTradeCommand
                                 { action = "prepared", id = pending.Id, revision = CoopTrade.Revision, safe = CoopLocalWorldSafe && !_coopNativeSaving });
                             }
                             else if (_writer.HasFailedRevision(_coopPrepareSaveRevision))
                             {
+                                DiagnoseCoopTrade("reservation-save-failed");
                                 _coopPrepareSaveRevision = 0;
                                 SendCoop(new DreamforgeCoopTradeCommand { action = "cancel", id = pending.Id });
                             }
@@ -282,6 +301,7 @@ namespace SodRpg.Mod
 
         private void DisableCoopTrade(Exception ex)
         {
+            DiagnoseCoopTrade("client-failure");
             _coopDisabled = true;
             _nextCoopProbe = Time.unscaledTime + 5f;
             CoopTradeWarning = Loc.T("トレードのみ停止しました：", "Only trade has been disabled: ") + ex.Message;
@@ -305,7 +325,11 @@ namespace SodRpg.Mod
                     NetworkClient.Send(new DreamforgeCoopTradeUp { Json = json });
                 else throw new InvalidOperationException(CoopUnavailable());
             }
-            catch (Exception ex) { throw new CoopSendException(ex); }
+            catch (Exception ex)
+            {
+                DiagnoseCoopTrade("send-failed");
+                throw new CoopSendException(ex);
+            }
         }
 
         private static string CoopSnapshot(Profile profile)
@@ -329,6 +353,7 @@ namespace SodRpg.Mod
             string serializedOffer = CoopTradeCodec.WriteOffer(offer);
             string id = CoopTrade.Id;
             int revision = CoopTrade.Revision;
+            DiagnoseCoopTrade(action == "confirm" ? "confirm-send" : "offer-send", id, revision);
             try
             {
                 foreach (var part in parts)
@@ -433,9 +458,10 @@ namespace SodRpg.Mod
                         CoopTradeWarning = msg.status;
                     return;
                 }
-                if (msg.kind == "error") { CoopTradeWarning = msg.status; return; }
+                if (msg.kind == "error") { DiagnoseCoopTrade("host-error"); CoopTradeWarning = msg.status; return; }
                 if (msg.kind == "cancelled")
                 {
+                    DiagnoseCoopTrade("cancelled-received", msg.id, msg.revision);
                     if (Profile.CoopTradePending?.Id == msg.id)
                     {
                         if (Profile.CoopTradePending.HostKey != msg.hostKey) return;
@@ -476,12 +502,15 @@ namespace SodRpg.Mod
                         OwnOffer = _coopPendingOffer ?? ownOffer, OtherOffer = CoopTradeCodec.ReadOffer(msg.otherOffer),
                         OtherProfile = CoopTrade?.Id == msg.id ? CoopTrade.OtherProfile : null,
                     };
+                    DiagnoseCoopTrade("view-applied", msg.id, msg.revision);
                     if (!msg.ownConfirmed) _coopFrozenProfile = null;
                     if (msg.incoming && !msg.accepted)
                         Emit(new GameEvent(EventKind.Info, Loc.T("トレードの申し込み：", "Trade request: ") + msg.partner));
                     if (acknowledged && _coopPendingOffer != null) SendCoopProfile("offer", _coopPendingOffer);
                     return;
                 }
+                if (msg.index == 0 && (msg.kind == "prepare" || msg.kind == "executed"))
+                    DiagnoseCoopTrade(msg.kind == "prepare" ? "prepare-transfer-start" : "executed-transfer-start", msg.id, msg.revision);
                 if (!_coopTransfer.TryAccept(msg.Part(), out string encoded) || encoded == null) return;
                 string text = Encoding.UTF8.GetString(Convert.FromBase64String(encoded));
                 if (msg.kind == "profile")
@@ -491,6 +520,7 @@ namespace SodRpg.Mod
                     return;
                 }
                 if (msg.kind != "prepare" && msg.kind != "executed") return;
+                DiagnoseCoopTrade(msg.kind == "prepare" ? "prepare-assembled" : "executed-assembled", msg.id, msg.revision);
                 var receipt = CoopTradeCodec.ReadReceipt(text);
                 string key = DewPlayer.local?.guid;
                 if (receipt.Id != msg.id || receipt.HostKey != _coopHostKey
@@ -500,16 +530,22 @@ namespace SodRpg.Mod
                     if (CoopTrade?.Id != msg.id || !CoopTrade.OwnConfirmed || !CoopLocalSafe
                         || _coopFrozenProfile != CoopSnapshot(Profile))
                     {
+                        DiagnoseCoopTrade("prepare-rejected", msg.id, msg.revision);
                         SendCoop(new DreamforgeCoopTradeCommand { action = "cancel", id = msg.id });
                         return;
                     }
                     var own = key == receipt.FirstKey ? receipt.FirstOffer : receipt.SecondOffer;
                     CoopTradeRules.Prepare(Profile, msg.id, receipt.HostKey, own);
                     CoopTrade.Preparing = true;
+                    DiagnoseCoopTrade("reservation-save-start", msg.id, msg.revision);
                     if (SaveNow(true))
+                    {
+                        DiagnoseCoopTrade("reservation-saved", msg.id, msg.revision);
                         SendCoop(new DreamforgeCoopTradeCommand { action = "prepared", id = msg.id, revision = msg.revision, safe = CoopLocalWorldSafe && !_coopNativeSaving });
+                    }
                     else
                     {
+                        DiagnoseCoopTrade("reservation-save-pending", msg.id, msg.revision);
                         CoopTradeWarning = Loc.T("予約の保存に失敗しました。成立させずに結果を照会します。", "Reservation save failed. Checking the result without committing.");
                         // A confirmation timeout can still finish writing. Cancel only a
                         // completed failure or a reservation that never reached the writer.
@@ -522,6 +558,7 @@ namespace SodRpg.Mod
                 {
                     if (Profile.CoopTradePending?.Id != msg.id && !Profile.CoopTradeExecuted.Contains(msg.id)) return;
                     bool changed = CoopTradeRules.Resolve(Profile, receipt, key, out string retryReason);
+                    DiagnoseCoopTrade("result-resolved", msg.id, msg.revision);
                     if (retryReason != null) { DeferCoopSettlement(retryReason); return; }
                     CompleteCoopSettlement();
                     if (changed) Emit(new GameEvent(EventKind.Info, Loc.T("プレイヤーとの交換が成立しました。", "The player trade has committed.")));
@@ -533,6 +570,7 @@ namespace SodRpg.Mod
 
         private void DeferCoopSettlement(string reason)
         {
+            DiagnoseCoopTrade("settlement-deferred");
             _coopPrepareSaveRevision = 0;
             CoopTradeWarning = reason + " " + Loc.T("予約品を保持し、条件が回復するまで結果照会を再試行します。",
                 "Reserved assets remain held. The result will be checked again until conditions recover.");
@@ -544,8 +582,10 @@ namespace SodRpg.Mod
             _coopSettlementUnsaved = true;
             _buildDirty = true;
             _buildCacheFrame = -1;
+            DiagnoseCoopTrade("settlement-save-start");
             if (SaveNow(true))
             {
+                DiagnoseCoopTrade("settlement-saved");
                 _coopSettlementUnsaved = false;
                 CoopTrade = null;
                 _coopFrozenProfile = null;

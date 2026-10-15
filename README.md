@@ -46,6 +46,10 @@ A mod that turns Shape of Dreams into a long-term RPG built around gear you brin
 
 [Issues](https://github.com/Kling0012/shape-of-dreams-rpg-plan/issues) に、起きたこと、1人か協力プレイか、使っていた旅人を書いてください。ゲームのログ（`Player.log`）があると原因を早く特定できます。
 
+交換が双方の確認後に進まない場合は、**再発直後、ゲームを再起動する前**にホストと交換した双方の `Player.log` をコピーし、個人情報（プレイヤー名・ユーザー名を含むパス等）を除いて [Issue #443](https://github.com/Kling0012/shape-of-dreams-rpg-plan/issues/443) にファイルを添付してください。Windows の通常の場所は `%USERPROFILE%\AppData\LocalLow\Lizard Smoothie\Shape of Dreams\Player.log` です。エクスプローラーのアドレス欄に `%USERPROFILE%\AppData\LocalLow\Lizard Smoothie\Shape of Dreams` を入れると開けます。標準のMODローダーは Unity のログを使い、ゲームフォルダーの `BepInEx/LogOutput.log` には依存しません。
+
+全員のゲーム・MODの版、ホスト／参加者の別、ロビー／遠征の場所、交換品と素材数、操作順、停止時の表示と待った時間、発生頻度、再接続・Continueの有無も添えてください。診断版の `[DreamforgeRPG] CoopTrade diagnostic` 行で処理の段階を追います。原因は未確定で、不具合の修正はログ受領後に調査します。保存先の補足と収集手順は [取引の診断ログ案内](docs/specs/issue-443-trade-diagnostics.md) を参照してください。
+
 ## 開発
 
 | 場所 | 内容 |

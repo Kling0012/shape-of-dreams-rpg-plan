@@ -42,6 +42,19 @@ namespace SodRpg.Mod
         private float _nextCoopHostTick;
         private static string CoopHostKey => DewPlayer.local?.guid;
 
+        private void DiagnoseHostCoopTrade(string stage, CoopHostTrade trade, DewPlayer caller = null)
+        {
+            try
+            {
+                if (trade == null) return;
+                _coopHostPeers.TryGetValue(trade.First, out var first);
+                _coopHostPeers.TryGetValue(trade.Second, out var second);
+                CoopTradeDiagnostics.Record("host", stage, trade.Id, trade.Revision,
+                    $"caller={(caller == trade.First ? "first" : caller == trade.Second ? "second" : "-")} accepted={trade.Accepted} confirmed={trade.FirstConfirmed}/{trade.SecondConfirmed} preparing={trade.Preparing} prepared={trade.FirstPrepared}/{trade.SecondPrepared} nativeSaving={ClientSession.CoopHostNativeSaving} peerFresh={CoopPeerAvailable(trade.First)}/{CoopPeerAvailable(trade.Second)} peerSafe={first?.Safe}/{second?.Safe}");
+            }
+            catch (Exception) { }
+        }
+
         private static bool CoopPresent(DewPlayer player) => player != null && player.isHumanPlayer
             && (DewPlayer.gamePlayers.Contains(player) || DewPlayer.lobbyPlayers.Contains(player));
         private bool CoopPeerAvailable(DewPlayer player) => CoopPresent(player)
@@ -184,6 +197,7 @@ namespace SodRpg.Mod
                     if (!CoopPeerSafe(target)) { SendCoopError(caller, "peerBusy"); return; }
                     _coopHostTrade = new CoopHostTrade
                     { Id = Guid.NewGuid().ToString("N"), First = caller, Second = target, ActiveAt = Time.unscaledTime };
+                    DiagnoseHostCoopTrade("requested", _coopHostTrade, caller);
                     SendCoopViews();
                     return;
                 }
@@ -202,6 +216,7 @@ namespace SodRpg.Mod
                 {
                     if (caller == trade.First) trade.FirstPrepared = true;
                     else trade.SecondPrepared = true;
+                    DiagnoseHostCoopTrade("prepared-received", trade, caller);
                     if (trade.FirstPrepared && trade.SecondPrepared) CommitHostCoopTrade(trade);
                     return;
                 }
@@ -214,15 +229,17 @@ namespace SodRpg.Mod
                 {
                     sender.Transfer.Reset();
                     sender.Envelope = envelope;
+                    DiagnoseHostCoopTrade(msg.action == "confirm" ? "confirm-transfer-start" : "offer-transfer-start", trade, caller);
                 }
                 if (!sender.Transfer.TryAccept(msg.Part(), out string encoded) || encoded == null) return;
+                DiagnoseHostCoopTrade(msg.action == "confirm" ? "confirm-assembled" : "offer-assembled", trade, caller);
                 bool first = caller == trade.First;
                 if (msg.action == "offer")
                 {
                     if (first) trade.FirstOfferAck = msg.transferId;
                     else trade.SecondOfferAck = msg.transferId;
                 }
-                if (msg.revision != trade.Revision) { SendCoopViews(); return; }
+                if (msg.revision != trade.Revision) { DiagnoseHostCoopTrade("stale-revision", trade, caller); SendCoopViews(); return; }
                 var profile = ProfileCodec.ReadCheckpointProfile(Encoding.UTF8.GetString(Convert.FromBase64String(encoded)));
                 var offer = CoopTradeCodec.ReadOffer(msg.offer);
                 string gameRun = NetworkedManagerBase<GameManager>.softInstance?.runId;
@@ -239,7 +256,7 @@ namespace SodRpg.Mod
                 else
                 {
                     var previous = first ? trade.FirstOffer : trade.SecondOffer;
-                    if (CoopTradeCodec.WriteOffer(previous) != msg.offer) { SendCoopViews(); return; }
+                    if (CoopTradeCodec.WriteOffer(previous) != msg.offer) { DiagnoseHostCoopTrade("offer-mismatch", trade, caller); SendCoopViews(); return; }
                     var shownProfile = first ? trade.FirstProfile : trade.SecondProfile;
                     if (!CoopTradeRules.SameOfferedRelics(shownProfile, profile, offer))
                     {
@@ -248,6 +265,7 @@ namespace SodRpg.Mod
                         trade.Revision++;
                         trade.FirstConfirmed = trade.SecondConfirmed = false;
                         trade.ActiveAt = Time.unscaledTime;
+                        DiagnoseHostCoopTrade("relics-changed", trade, caller);
                         SendCoopViews();
                         return;
                     }
@@ -256,6 +274,7 @@ namespace SodRpg.Mod
                     if (!CoopReceiptFits(trade)) return;
                     if (first) trade.FirstConfirmed = true;
                     else trade.SecondConfirmed = true;
+                    DiagnoseHostCoopTrade("confirmed", trade, caller);
                 }
                 trade.ActiveAt = Time.unscaledTime;
                 if (msg.action == "offer" && !CoopReceiptFits(trade)) return;
@@ -288,6 +307,7 @@ namespace SodRpg.Mod
 
         private void PrepareHostCoopTrade(CoopHostTrade trade)
         {
+            DiagnoseHostCoopTrade("prepare-start", trade);
             if (!CoopPeerSafe(trade.First) || !CoopPeerSafe(trade.Second)) { CancelHostCoopTrade("safe"); return; }
             trade.Receipt = CoopTradeRules.CreateReceipt(trade.Id, CoopHostKey,
                 trade.First.guid, trade.FirstProfile, trade.FirstOffer, trade.Second.guid, trade.SecondProfile, trade.SecondOffer);
@@ -306,7 +326,9 @@ namespace SodRpg.Mod
                 || ClientSession.CoopHostNativeSaving) { CancelHostCoopTrade("safe"); return; }
             // The only commit point: a single atomic durable journal replacement containing BOTH payouts.
             // Both players acknowledged that their outgoing escrow is already on disk.
+            DiagnoseHostCoopTrade("journal-commit-start", trade);
             _coopJournal.Commit(trade.Receipt);
+            DiagnoseHostCoopTrade("journal-committed", trade);
             _coopHostTrade = null;
             string receipt = CoopTradeCodec.WriteReceipt(trade.Receipt);
             SendCoopPayload(trade.First, "executed", trade.Id, trade.Revision, receipt);
@@ -317,7 +339,10 @@ namespace SodRpg.Mod
         {
             var trade = _coopHostTrade;
             if (trade == null) return;
+            // All callers supply fixed reason codes, never user text or exception messages.
+            DiagnoseHostCoopTrade("cancel-" + reason, trade);
             _coopJournal.Cancel(trade.Id);
+            DiagnoseHostCoopTrade("journal-cancelled", trade);
             _coopHostTrade = null;
             var msg = new DreamforgeCoopTradeState { kind = "cancelled", id = trade.Id, hostKey = CoopHostKey, status = CoopReason(reason) };
             SendCoopState(trade.First, msg);
@@ -430,6 +455,7 @@ namespace SodRpg.Mod
         }
         private void FailHostCoopTrade(Exception ex)
         {
+            DiagnoseHostCoopTrade("host-failure", _coopHostTrade);
             _coopHostFailure = ex.Message;
             _nextCoopJournalRetry = Time.unscaledTime + 10f;
             Log.Error("Host coop trade disabled: " + ex);
