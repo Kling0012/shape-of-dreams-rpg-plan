@@ -1,5 +1,5 @@
-[b]Adds trade progress logging to Player.log to investigate co-op trades that stall after both players accept (not fixed yet).[/b]
-[b]協力プレイの取引が双方承認後に止まる問題を調べるため、取引の進み具合をPlayer.logに記録するようにしました（問題はまだ直っていません）。[/b]
+[b]Fixes the host's version mismatch warning staying on screen after a player leaves the co-op lobby.[/b]
+[b]協力プレイで、参加者がロビーから抜けたあともホストにバージョン違いの警告が残ることがある問題を修正しました。[/b]
 
 [h1]Dreamforge RPG[/h1]
 Turns every run into part of a long RPG journey: relics you keep, a risky "secure or delve" choice at every zone, a star map per Traveler, a forge, and long-term goals. Co-op ready.

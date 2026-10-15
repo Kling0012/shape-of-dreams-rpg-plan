@@ -10,6 +10,25 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v2.10.54 — Fix version mismatch warning staying after a player leaves the co-op lobby（2026-10-16）
+
+このバージョンでは、協力プレイで、参加者がロビーから抜けたあともホストにバージョン違いの警告が残ることがある問題を修正しました。 / This version fixes an issue in co-op where the host could keep seeing a version mismatch warning after a player had left the lobby.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- 協力プレイで、バージョンが違う参加者がロビーから抜けたあとも、ホストの画面にその参加者についてのバージョン違いの警告が残ることがある問題を修正しました。参加者が完全に抜けたときは、警告がすぐに消えるようになりました。 / Fixed an issue in co-op where, after a player on a different version left the lobby, the host could still see a version mismatch warning about that player. The warning now clears right away when the player fully leaves.
+- 同じ参加者がロビーからゲームへ移ったときは、警告がいったん消えたままにならず、続けて表示されるようになりました。 / When that player moves from the lobby into the game, the warning no longer disappears and now stays shown.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
 ## v2.10.53 — Co-op trade diagnostics logging（2026-10-16）
 
 このバージョンでは、協力プレイの取引で、双方が承認したあとに先へ進まなくなる問題の原因を調べるため、取引の進み具合をログに記録するようにしました。この問題自体はまだ直っていません。 / This version adds logging of trade progress in co-op to help find the cause of an issue where a trade does not move forward after both players accept it. The issue itself is not fixed yet.
