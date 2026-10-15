@@ -338,7 +338,7 @@ namespace Issue73.Native.Tests
             Assert.Contains("使用済み 0 点", optionA1);
             Assert.Contains("使用済み 0 点", optionB1);
 
-            // 使用済みポイントが同じ間は候補を再利用する。
+            // 同じ世代のうちは候補を再利用する（世代が進まなければ作り直さない）。
             ui.RunEnsureStarChoiceText(choice[0]);
             Assert.Same(optionA1, ui.StarAt(choice[0]).ChoiceOptions[0].text);
             Assert.Same(optionB1, ui.StarAt(choice[0]).ChoiceOptions[1].text);
@@ -358,7 +358,7 @@ namespace Issue73.Native.Tests
             Assert.Contains($"使用済み {spentAfterAllocation} 点", optionA2);
             Assert.Contains($"使用済み {spentAfterAllocation} 点", optionB2);
 
-            // 二択を効果Bへ切り替える（無料）：本文は選択内容で作り直される。
+            // 二択を効果Bへ切り替える（無料）：本文・両候補・ツールチップがすべて作り直される。
             ui.RunEnsureStarTooltip(choice[0]);
             string tooltipBeforeSwitch = ui.StarAt(choice[0]).Tooltip.text;
             string bodyBeforeSwitch = ui.StarAt(choice[0]).DisplayBody;
@@ -366,11 +366,15 @@ namespace Issue73.Native.Tests
             RefreshAtLayout(ui, profile);
             Assert.NotSame(bodyBeforeSwitch, ui.StarAt(choice[0]).DisplayBody); // 本文は再生成。
             Assert.Equal(StarMapPresentation.EffectSummary(talent, 1), ui.StarAt(choice[0]).EffectSummary);
-            // 使用済みポイントは変わらないので、候補は同じ世代を再利用する。
+            // 使用済みポイントは変わらずとも世代は進むので、両候補も作り直される。
             ui.RunEnsureStarChoiceText(choice[0]);
-            Assert.Same(optionA2, ui.StarAt(choice[0]).ChoiceOptions[0].text);
-            Assert.Same(optionB2, ui.StarAt(choice[0]).ChoiceOptions[1].text);
-            // ツールチップは世代が進んだので作り直される。
+            string optionA3 = ui.StarAt(choice[0]).ChoiceOptions[0].text;
+            string optionB3 = ui.StarAt(choice[0]).ChoiceOptions[1].text;
+            Assert.NotSame(optionA2, optionA3); // 候補は再生成。
+            Assert.NotSame(optionB2, optionB3);
+            Assert.Contains($"使用済み {spentAfterAllocation} 点", optionA3);
+            Assert.Contains($"使用済み {spentAfterAllocation} 点", optionB3);
+            // ツールチップも世代が進んだので作り直される。
             Assert.NotSame(tooltipBeforeSwitch, ui.StarAt(choice[0]).Tooltip.text);
             Assert.Equal("1/" + talent.MaxRank, ui.StarAt(choice[0]).RankLabel.text);
         }

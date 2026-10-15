@@ -123,7 +123,11 @@ ProfileCodec.Writeは0.016〜0.293msだった。直列化以外の保存準備�
   新しいインスタンスに作り直され、未変更星は同じインスタンスのまま残ること（TextRank/TextChoice）。
 - ツールチップ: 同一世代では再生成せず（同じ文字列インスタンス）、加点で世代が進むと条件文と
   ダメージ注記が再生成されること（TooltipVersion/_starTextVersion）。
-- 二択: 取得で本文と両候補が作り直され、無料切り替えで本文とツールチップは再生成・候補は
-  使用済みポイントが同じ間再利用されること（EnsureStarChoiceText/ChoicePoints）。
+- 二択: 取得で本文と両候補が作り直され、無料切り替えでも使用済みポイントが変わらずとも
+  世代が進むので本文・両候補・ツールチップが作り直されること（EnsureStarChoiceText/ChoiceTextVersion）。
+  これに伴い `EnsureStarChoiceText` のキャッシュ判定を使用済みポイント基準（ChoicePoints）から
+  `_starTextVersion` 世代基準（ChoiceTextVersion、TooltipVersion と同じ設計）に変えた
+  （#440 レビュー指摘。無料切り替えでも候補が再生成されるように）。
 - 壊し確認: 世代判定（TextRank/TextChoice と TooltipVersion）の削除、`_starClusterDirtyFrom`
-  追跡の削除で、対応するテストが失敗することを確認してから元に戻した。製品コードは変更していない。
+  追跡の削除で、対応するテストが失敗することを確認してから元に戻した。ChoiceTextVersion の
+  世代判定を旧来の使用済みポイント基準に戻しても `Choice_change_...` が失敗することを確認した。

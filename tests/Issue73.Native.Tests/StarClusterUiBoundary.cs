@@ -14,7 +14,7 @@ namespace SodRpg.Mod
         // DreamforgeUi.cs の StarNode と同じ形。テストから直接読むためだけに internal にする。
         internal sealed class StarNode
         {
-            public int Rank, Choice = -1, TextRank = -1, TextChoice = -2, TooltipVersion = -1, ChoicePoints = -1;
+            public int Rank, Choice = -1, TextRank = -1, TextChoice = -2, TooltipVersion = -1, ChoiceTextVersion = -1;
             public bool Allocated, Available, Unlocked, PairEquippedA, PairEquippedB, SearchMatch, SummaryHover;
             public string Description, DisplayBody, SearchDescription, EffectSummary, MissingRequirements;
             public int NavigationRank = -1;
