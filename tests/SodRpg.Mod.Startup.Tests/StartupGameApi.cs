@@ -155,6 +155,8 @@ namespace SodRpg.Mod
         public Hero hero;
         public static readonly List<DewPlayer> gamePlayers = new List<DewPlayer>();
         public static readonly List<DewPlayer> lobbyPlayers = new List<DewPlayer>();
+        public static Action<DewPlayer> onLobbyPlayerAdded, onLobbyPlayerRemoved;
+        public static Action<DewPlayer> onGamePlayerAdded, onGamePlayerRemoved;
     }
     public class Actor
     {

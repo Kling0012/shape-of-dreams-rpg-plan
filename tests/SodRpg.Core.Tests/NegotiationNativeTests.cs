@@ -5,6 +5,7 @@ using Xunit;
 
 namespace SodRpg.Core.Tests
 {
+    [Collection("Native negotiation and level slots")]
     public class NegotiationNativeTests
     {
         [Fact]

@@ -16,6 +16,7 @@ namespace SodRpg.Mod
 
 namespace SodRpg.Core.Tests
 {
+    [Collection("Native negotiation and level slots")]
     public class LevelEssenceSlotsTests
     {
         private static LevelEssenceSettings Make(int every = 10, bool q = true, bool w = true, bool e = true,
