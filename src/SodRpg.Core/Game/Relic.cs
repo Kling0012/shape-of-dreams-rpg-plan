@@ -116,6 +116,7 @@ namespace SodRpg.Core.Game
             }
         }
 
+        /// <summary>表示専用。照合は Uid/各種ID、並べ替えは Score、チェックポイントは WriteRelic の保存欄を使う。</summary>
         public string DisplayName => (Enhance > 0 ? PlainName + " +" + Enhance.ToString(CultureInfo.InvariantCulture) : PlainName)
             + (FusionLevel > 0 ? " ◆" + FusionLevel.ToString(CultureInfo.InvariantCulture) : "");
 

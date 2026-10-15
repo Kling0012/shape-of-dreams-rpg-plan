@@ -12,6 +12,26 @@ namespace SodRpg.Core.Game
         public static string WriteReceipt(CoopTradeReceipt receipt) => Json.Write(ReceiptObject(receipt));
         public static CoopTradeReceipt ReadReceipt(string text) => ParseReceipt(Object(Json.Parse(text)));
 
+        /// <summary>送信用の受領書だけを変換する。未知の欄と、融合を含まない受領書の元の文字列を保つ。</summary>
+        public static string WithoutFusionForLegacyReceipt(string text)
+        {
+            var receipt = Object(Json.Parse(text));
+            var copy = new JsonObject();
+            bool changed = false;
+            foreach (var property in receipt.Properties)
+            {
+                object value = property.Value;
+                if ((property.Key == "firstProfile" || property.Key == "secondProfile") && value is string profile)
+                {
+                    string legacy = ProfileCodec.WithoutFusionForLegacyTrade(profile);
+                    changed |= legacy != profile;
+                    value = legacy;
+                }
+                copy.Add(property.Key, value);
+            }
+            return changed ? Json.Write(copy) : text;
+        }
+
         internal static JsonObject OfferObject(CoopTradeOffer offer)
         {
             if (offer == null || offer.RelicUids == null) throw new InvalidOperationException(Loc.T("取引の提示がありません。", "Trade offer is missing."));
@@ -100,22 +120,40 @@ namespace SodRpg.Core.Game
         }
 
         /// <summary>旧版の厳密な受領書検証に渡すコピーから、未知の融合キーだけを省く。</summary>
-        public static string WithoutFusionForLegacyTrade(string text) => Json.Write(WithoutFusionValue(Json.Parse(text)));
+        public static string WithoutFusionForLegacyTrade(string text)
+        {
+            var original = Json.Parse(text);
+            var legacy = WithoutFusionValue(original);
+            return ReferenceEquals(original, legacy) ? text : Json.Write(legacy);
+        }
 
         private static object WithoutFusionValue(object value)
         {
             if (value is JsonObject obj)
             {
                 var copy = new JsonObject();
+                // パース後のキーだけで判定する。値内の文字やエスケープ表記に依存しない。
+                bool changed = obj.TryGet("fusionLevel", out _);
                 foreach (var property in obj.Properties)
-                    if (property.Key != "fusionLevel") copy.Add(property.Key, WithoutFusionValue(property.Value));
-                return copy;
+                {
+                    if (property.Key == "fusionLevel") continue;
+                    var legacy = WithoutFusionValue(property.Value);
+                    changed |= !ReferenceEquals(legacy, property.Value);
+                    copy.Add(property.Key, legacy);
+                }
+                return changed ? copy : obj;
             }
             if (value is List<object> array)
             {
                 var copy = new List<object>();
-                foreach (var item in array) copy.Add(WithoutFusionValue(item));
-                return copy;
+                bool changed = false;
+                foreach (var item in array)
+                {
+                    var legacy = WithoutFusionValue(item);
+                    changed |= !ReferenceEquals(legacy, item);
+                    copy.Add(legacy);
+                }
+                return changed ? copy : array;
             }
             return value;
         }

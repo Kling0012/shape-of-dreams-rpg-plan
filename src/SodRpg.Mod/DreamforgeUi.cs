@@ -149,7 +149,7 @@ namespace SodRpg.Mod
         {
             ResetFusionConfirmation();
             Open = !Open;
-            if (!Open) CancelStarDrag();
+            if (!Open) { CancelStarDrag(); _s.SavePendingAllocation(); }
             _confirmSalvage = null;
             _confirmAffixReroll = null;
             _confirmForbid = null;
@@ -157,6 +157,7 @@ namespace SodRpg.Mod
 
         public void Close()
         {
+            _s.SavePendingAllocation();
             ResetFusionConfirmation();
             CancelStarDrag();
             _confirmEnhance = null;
@@ -352,7 +353,15 @@ namespace SodRpg.Mod
                 if (shield) Event.current.mousePosition = new Vector2(-99999f, -99999f);
                 try
                 {
-                    if (layout && Open) DrawWindow(w, h, cfg);
+                    if (layout && Open)
+                    {
+                        int previousTab = _tab;
+                        try { DrawWindow(w, h, cfg); }
+                        finally
+                        {
+                            if (previousTab == 2 && _tab != 2) _s.SavePendingAllocation();
+                        }
+                    }
                 }
                 finally
                 {
@@ -371,7 +380,7 @@ namespace SodRpg.Mod
             catch (Exception ex)
             {
                 Log.Error("UI: " + ex);
-                Open = false;
+                Close();
             }
             finally
             {
@@ -1426,9 +1435,21 @@ namespace SodRpg.Mod
         private readonly int[] _transmuteCounts = new int[5];
         private float _transmuteUntil;
 
+        private readonly List<int> _fusionStashLevels = new List<int>();
+
         private string CacheStamp()
         {
             var p = _s.Profile;
+            bool fusionChanged = _fusionStashLevels.Count != p.Stash.Count;
+            if (!fusionChanged)
+                for (int i = 0; i < p.Stash.Count; i++)
+                    if (_fusionStashLevels[i] != p.Stash[i].FusionLevel) { fusionChanged = true; break; }
+            if (fusionChanged)
+            {
+                _fusionStashLevels.Clear();
+                foreach (var relic in p.Stash) _fusionStashLevels.Add(relic.FusionLevel);
+                _sortedKey.Clear();
+            }
             // 強化は並べ替えの基準（Score）も変えるので、鍵・覚醒・強化の状態も刻印に入れる。
             int state = 0;
             var stash = p.Stash;
@@ -1464,6 +1485,7 @@ namespace SodRpg.Mod
         private readonly Dictionary<float, List<string>> _rowCache = new Dictionary<float, List<string>>();
         private readonly Dictionary<float, List<Relic>> _rowCacheFor = new Dictionary<float, List<Relic>>();
         private readonly Dictionary<float, string> _rowCacheKey = new Dictionary<float, string>();
+        private readonly Dictionary<float, List<int>> _rowFusionLevels = new Dictionary<float, List<int>>();
         private readonly HashSet<string> _seenUids = new HashSet<string>();
         private bool _seenInit;
 
@@ -1490,8 +1512,15 @@ namespace SodRpg.Mod
                 stateHash = stateHash * 31 + (r.Powers.Count > 0 ? (int)r.Powers[0].Power : 0);
             }
             string key = _sortedKey.TryGetValue(id, out var k) ? k + ":" + _selected + ":" + _seenUids.Count + ":" + equipHash + ":" + stateHash + (Loc.Japanese ? ":j" : ":e") : null;
-            if (key != null && _rowCacheKey.TryGetValue(id, out var ck) && ck == key && _rowCacheFor.TryGetValue(id, out var forList) && forList == list && _rowCache.TryGetValue(id, out var cached))
+            bool sameFusion = _rowFusionLevels.TryGetValue(id, out var fusionLevels) && fusionLevels.Count == list.Count;
+            if (sameFusion)
+                for (int i = 0; i < list.Count; i++)
+                    if (fusionLevels[i] != list[i].FusionLevel) { sameFusion = false; break; }
+            if (sameFusion && key != null && _rowCacheKey.TryGetValue(id, out var ck) && ck == key && _rowCacheFor.TryGetValue(id, out var forList) && forList == list && _rowCache.TryGetValue(id, out var cached))
                 return cached;
+            if (fusionLevels == null) _rowFusionLevels[id] = fusionLevels = new List<int>();
+            fusionLevels.Clear();
+            foreach (var relic in list) fusionLevels.Add(relic.FusionLevel);
             if (!_rowCache.TryGetValue(id, out var rows)) _rowCache[id] = rows = new List<string>();
             rows.Clear();
             foreach (var r in list)
@@ -2091,9 +2120,12 @@ namespace SodRpg.Mod
 
         private sealed class StarNode
         {
-            public int Rank, Choice = -1;
+            public int Rank, Choice = -1, TextRank = -1, TextChoice = -2, TooltipVersion = -1, ChoicePoints = -1;
             public bool Allocated, Available, Unlocked, PairEquippedA, PairEquippedB, SearchMatch, SummaryHover;
-            public string Description, SearchDescription, EffectSummary, MissingRequirements;
+            public string Description, DisplayBody, SearchDescription, EffectSummary, MissingRequirements;
+            public int NavigationRank = -1;
+            public bool NavigationAvailable;
+            public string NavigationSummary;
             public PairComboDef PairDefinition;
             public ClusterRegionKind? Region;
             public GUIContent[] ChoiceOptions;
@@ -2109,10 +2141,13 @@ namespace SodRpg.Mod
         // Layout and localized text survive IMGUI events; only state changes rebuild descriptions.
         private HeroTreeLayout _starLayout;
         private StarNode[] _starNodes;
-        private string _starHero, _starKeystoneSignature;
+        private string _starHero, _starCapFingerprint, _starAuthoredFingerprint;
+        private readonly string[] _starKeystoneState = new string[KeystoneSlots.Max];
+        private bool[] _starReachable;
+        private int _starSpent, _starTextVersion;
         private readonly GUIContent _starPoints = new GUIContent();
         private readonly GUIContent _starProgress = new GUIContent();
-        private HeroState _starState;
+        private HeroState _starState, _starTextState;
         private bool _starJapanese, _starDirty = true, _starDragging, _starMoved;
         private int _starXp, _starKills, _starCodex, _starTestBonus, _starExtraPoints, _starFree;
         private int _starPressed = -1, _starMouseButton, _starDragControl;
@@ -2187,6 +2222,8 @@ namespace SodRpg.Mod
             _starHero = hero;
             if (newHero) { _starChoiceId = null; _starChoiceIndex = -1; }
             _starJapanese = Loc.Japanese;
+            _starCapFingerprint = FractionalScopedModifiers.CapRegistryFingerprint;
+            _starAuthoredFingerprint = StarClusters.AuthoredRegistryFingerprint;
             _starLayout = HeroTreeLayout.ForHero(hero);
             _starNodes = new StarNode[_starLayout.Nodes.Count];
             _starMatches = new int[_starNodes.Length];
@@ -2249,16 +2286,23 @@ namespace SodRpg.Mod
 
         private void RefreshStarState(Profile p, string hero, HeroState hs)
         {
-            if (_starHero != hero || _starJapanese != Loc.Japanese || _starLayout != HeroTreeLayout.ForHero(hero))
+            if (_starHero != hero || _starJapanese != Loc.Japanese || _starLayout != HeroTreeLayout.ForHero(hero)
+                || _starCapFingerprint != FractionalScopedModifiers.CapRegistryFingerprint
+                || _starAuthoredFingerprint != StarClusters.AuthoredRegistryFingerprint)
             { RebuildStarTree(hero); _starSumDirty = true; }
             // 再構築は Layout パスでのみ行う（#45）。約900星ぶんの文字列をマウスイベントのパスで作り直すと、
             // 星を選んだ直後のドラッグ開始が引っかかる。選択の可否は Rules が毎回検証するので、
             // 表示が1フレーム遅れて変わっても操作には影響しない。
             if (Event.current.type != EventType.Layout) return;
-            string keystones = string.Join("\u0001", hs.Keystones);
             bool changed = _starDirty || _starState != hs || _starXp != hs.StarXp || _starKills != hs.Kills
-                || _starCodex != p.CodexBonusPoints || _starTestBonus != Profile.TestBonusPoints || _starExtraPoints != hs.ExtraPoints
-                || _starKeystoneSignature != keystones;
+                || _starCodex != p.CodexBonusPoints || _starTestBonus != Profile.TestBonusPoints || _starExtraPoints != hs.ExtraPoints;
+            // hs.Keystones は今は KeystoneSlots.Max と同長。将来この長さが変わっても、毎 Layout で
+            // 例外が出てUIが閉じ続けないよう、比較とコピーは短い方の長さに合わせる（余った枠は空扱い）。
+            int keystoneLength = Math.Min(_starKeystoneState.Length, hs.Keystones.Length);
+            for (int i = 0; i < keystoneLength; i++)
+                if (_starKeystoneState[i] != hs.Keystones[i]) changed = true;
+            for (int i = keystoneLength; i < _starKeystoneState.Length; i++)
+                if (_starKeystoneState[i] != null) changed = true;
             var marks = LinkMarks();
             bool matchingHero = _s.LocalHero != null && ClientSession.HeroKeyOf(_s.LocalHero) == hero;
             if (_starSumOpen)
@@ -2302,7 +2346,11 @@ namespace SodRpg.Mod
             _starCodex = p.CodexBonusPoints;
             _starTestBonus = Profile.TestBonusPoints;
             _starExtraPoints = hs.ExtraPoints;
-            _starKeystoneSignature = keystones;
+            Array.Clear(_starKeystoneState, 0, _starKeystoneState.Length);
+            Array.Copy(hs.Keystones, _starKeystoneState, keystoneLength);
+            _starSpent = spent;
+            _starTextState = hs.CloneAllocation();
+            _starTextVersion++;
             _starFree = p.TalentPoints(hero) - spent;
             _starDirty = false;
             _starSumDirty = true;
@@ -2316,7 +2364,7 @@ namespace SodRpg.Mod
                 + (earned >= StarProgression.MaxPoints ? Loc.T("ポイント上限", "Point cap reached")
                 : Loc.T($"次まで {hs.StarXp - StarProgression.TotalXpForPoints(earned)}/{StarProgression.CostForPoint(earned + 1)} XP",
                     $"Next: {hs.StarXp - StarProgression.TotalXpForPoints(earned)}/{StarProgression.CostForPoint(earned + 1)} XP"));
-            var reachable = _starLayout.ReachabilitySnapshot(hs);
+            var reachable = _starReachable = _starLayout.ReachabilitySnapshot(hs);
             int slots = hs.KeystoneSlotCount;
             bool freeSlot = hs.KeystoneCount < slots;
             _starKeystoneSlots.text = StarMapPresentation.KeystoneSlotStatus(hs.KeystoneCount, slots)
@@ -2324,7 +2372,6 @@ namespace SodRpg.Mod
             for (int i = 0; i < _starNodes.Length; i++)
             {
                 var n = _starNodes[i];
-                n.TooltipWidth = 0;
                 var t = _starLayout.Nodes[i].Talent;
                 if (t == null)
                 {
@@ -2347,51 +2394,75 @@ namespace SodRpg.Mod
                     n.KeystoneLabel.text = "<color=#cc8cff>◆</color> " + n.Name.text + "  " + keystoneState;
                 }
                 n.Available = unlocked && n.Rank < t.MaxRank && !slotsFull && _starFree >= cost;
+                if (n.TextRank == n.Rank && n.TextChoice == n.Choice) continue;
+                n.TextRank = n.Rank;
+                n.TextChoice = n.Choice;
                 n.RankLabel.text = n.Rank + "/" + t.MaxRank;
-                n.MissingRequirements = StarMapPresentation.MissingRequirements(_starLayout, i, hs, _starFree, reachable[i]);
-                string condition = n.MissingRequirements;
-                string state = n.Rank >= t.MaxRank ? Loc.T("取得済み（最大段）", "Acquired (maximum rank)")
-                    : n.Available ? Loc.T("取得可能", "Available") : Loc.T("条件不足", "Requirements missing");
-                var pair = n.PairDefinition;
-                string title = pair == null ? t.Name.ToString() : pair.Name.ToString();
-                string description = pair != null && t.Mechanism == null
-                    ? StarMapPresentation.DisplayDescription(t, Math.Max(1, n.Rank)) : n.Description;
-                if (t.IsChoice)
-                {
-                    description = StarMapPresentation.ChoiceDescription(t, n.Choice, n.Rank, true);
-                    for (int optionIndex = 0; optionIndex < 2; optionIndex++)
-                        n.ChoiceOptions[optionIndex].text = StarMapPresentation.ChoiceOptionBody(t, optionIndex, true)
-                            + "\n" + StarMapPresentation.DamageRankNote(t, optionIndex, spent);
-                    n.EffectSummary = StarMapPresentation.EffectSummary(t, n.Choice);
-                }
+                if (t.IsChoice) n.EffectSummary = StarMapPresentation.EffectSummary(t, n.Choice);
+                string description = n.DisplayBody = t.IsChoice ? StarMapPresentation.ChoiceDescription(t, n.Choice, n.Rank, true)
+                    : n.PairDefinition != null && t.Mechanism == null
+                        ? StarMapPresentation.DisplayDescription(t, Math.Max(1, n.Rank)) : n.Description;
                 n.SearchDescription = StarMapPresentation.PresentationLabel(t) + "\n" + description;
-                if (pair != null)
-                {
-                    description += "\n" + (n.PairEquippedA ? "✓ " : "・ ") + Links.ItemName(pair.RouteA)
-                        + Loc.T("を装着", " equipped")
-                        + "\n" + (n.PairEquippedB ? "✓ " : "・ ") + Links.ItemName(pair.RouteB)
-                        + Loc.T("を装着", " equipped");
-                }
-                // 必要ポイントは、本文に既に書かれていれば繰り返さない（刻印は本文の末尾に入っている）。
-                bool costInBody = description.Contains(Loc.T("ポイント", "point"));
-                string readyColor = !unlocked || slotsFull ? "#ffb090" : n.Rank >= t.MaxRank ? "#ffc952" : _starFree < cost ? "#ffb090" : "#9fe0ff";
-                n.Tooltip.text = "<b>" + title + "</b>  " + n.RankLabel.text + "\n<color=#d2d2e6>" + StarMapPresentation.PresentationLabel(t) + "</color>"
-                    + "\n" + description
-                    + "\n" + StarMapPresentation.DamageRankNote(t, n.Choice, spent)
-                    + (costInBody ? "" : Loc.T($"\n必要ポイント：{(t.IsKeystone ? keyCost : t.RankCost)}", $"\nPoint cost: {(t.IsKeystone ? keyCost : t.RankCost)}"))
-                    + (condition.Length == 0 ? "" : "\n" + condition)
-                    + "\n<color=" + readyColor + ">" + state + "</color>"
-                    + (t.IsKeystone ? Loc.T("\n左クリック：選ぶ　右クリック：外す（費用は戻ります）",
-                        "\nLeft click: select. Right click: remove (its cost is refunded).")
-                        : t.IsChoice ? Loc.T("\n左クリック：選択パネルを開く（切り替えは無料・遠征外のみ）　右クリック：1段外す",
-                        "\nLeft click: open the option panel (switching is free outside expeditions). Right click: refund one rank.")
-                        : Loc.T("\n左クリック：1段振る　右クリック：1段外す",
-                            "\nLeft click: allocate one rank. Right click: refund one rank."))
-                    + Loc.T("\n残りの星が始まりにつながる場合だけ外せます。",
-                        "\nRefunds require all remaining stars to stay connected to the start.");
+                _starSearchDirty = true;
             }
             RefreshStarClusters();
-            _starSearchDirty = true;
+        }
+
+        // All tooltip inputs belong to the last Layout snapshot. Paid damage changes every note,
+        // but only the hovered star (or the open choice) needs that text materialized.
+        private void EnsureStarTooltip(int index)
+        {
+            var n = _starNodes[index];
+            if (n.TooltipVersion == _starTextVersion || n.DisplayBody == null) return;
+            var t = _starLayout.Nodes[index].Talent;
+            if (t == null) return;
+            n.MissingRequirements = StarMapPresentation.MissingRequirements(_starLayout, index, _starTextState, _starFree, _starReachable[index]);
+            string condition = n.MissingRequirements;
+            string state = n.Rank >= t.MaxRank ? Loc.T("取得済み（最大段）", "Acquired (maximum rank)")
+                : n.Available ? Loc.T("取得可能", "Available") : Loc.T("条件不足", "Requirements missing");
+            var pair = n.PairDefinition;
+            string title = pair == null ? t.Name.ToString() : pair.Name.ToString();
+            string description = n.DisplayBody;
+            if (pair != null)
+            {
+                description += "\n" + (n.PairEquippedA ? "✓ " : "・ ") + Links.ItemName(pair.RouteA)
+                    + Loc.T("を装着", " equipped")
+                    + "\n" + (n.PairEquippedB ? "✓ " : "・ ") + Links.ItemName(pair.RouteB)
+                    + Loc.T("を装着", " equipped");
+            }
+            int keyCost = t.KeystoneDefinition?.Cost ?? Content.KeystoneCost;
+            int cost = t.IsKeystone ? keyCost : t.RankCost;
+            bool slotsFull = t.IsKeystone && !n.Allocated && _starTextState.KeystoneCount >= _starTextState.KeystoneSlotCount;
+            bool costInBody = description.Contains(Loc.T("ポイント", "point"));
+            string readyColor = !n.Unlocked || slotsFull ? "#ffb090" : n.Rank >= t.MaxRank ? "#ffc952" : _starFree < cost ? "#ffb090" : "#9fe0ff";
+            n.Tooltip.text = "<b>" + title + "</b>  " + n.RankLabel.text + "\n<color=#d2d2e6>" + StarMapPresentation.PresentationLabel(t) + "</color>"
+                + "\n" + description
+                + "\n" + StarMapPresentation.DamageRankNote(t, n.Choice, _starSpent)
+                + (costInBody ? "" : Loc.T($"\n必要ポイント：{(t.IsKeystone ? keyCost : t.RankCost)}", $"\nPoint cost: {(t.IsKeystone ? keyCost : t.RankCost)}"))
+                + (condition.Length == 0 ? "" : "\n" + condition)
+                + "\n<color=" + readyColor + ">" + state + "</color>"
+                + (t.IsKeystone ? Loc.T("\n左クリック：選ぶ　右クリック：外す（費用は戻ります）",
+                    "\nLeft click: select. Right click: remove (its cost is refunded).")
+                    : t.IsChoice ? Loc.T("\n左クリック：選択パネルを開く（切り替えは無料・遠征外のみ）　右クリック：1段外す",
+                    "\nLeft click: open the option panel (switching is free outside expeditions). Right click: refund one rank.")
+                    : Loc.T("\n左クリック：1段振る　右クリック：1段外す",
+                        "\nLeft click: allocate one rank. Right click: refund one rank."))
+                + Loc.T("\n残りの星が始まりにつながる場合だけ外せます。",
+                    "\nRefunds require all remaining stars to stay connected to the start.");
+            n.TooltipWidth = 0;
+            n.TooltipVersion = _starTextVersion;
+        }
+
+        private void EnsureStarChoiceText(int index)
+        {
+            EnsureStarTooltip(index);
+            var n = _starNodes[index];
+            if (n.ChoicePoints == _starSpent) return;
+            var t = _starLayout.Nodes[index].Talent;
+            for (int option = 0; option < 2; option++)
+                n.ChoiceOptions[option].text = StarMapPresentation.ChoiceOptionBody(t, option, true)
+                    + "\n" + StarMapPresentation.DamageRankNote(t, option, _starSpent);
+            n.ChoicePoints = _starSpent;
         }
 
         private void DrawTalentTab()
@@ -2420,7 +2491,7 @@ namespace SodRpg.Mod
             {
                 Rules.ResetTalents(p, hero);
                 _starDirty = true;
-                _s.MarkDirty(true);
+                _s.MarkAllocationDirty();
                 GUIUtility.ExitGUI();
             }
             GUI.enabled = true;
@@ -2771,7 +2842,7 @@ namespace SodRpg.Mod
                                 }
                                 else Rules.AddTalentRank(p, hero, t.Id);
                                 _starDirty = true;
-                                _s.MarkDirty(true);
+                                _s.MarkAllocationDirty();
                             }
                             catch (AllocationValidationException ex) { OfferAllocationRefund(ex, p, hero); }
                             catch (InvalidOperationException ex) { SetStatus(ex.Message); }
@@ -2851,6 +2922,7 @@ namespace SodRpg.Mod
             if (hover >= 0 && !_starDragging)
             {
                 float width = Mathf.Min(480f, canvas.width - 12f);
+                EnsureStarTooltip(hover);
                 var node = _starNodes[hover];
                 if (node.TooltipWidth != width)
                 {
@@ -2946,7 +3018,7 @@ namespace SodRpg.Mod
                     {
                         Rules.RemoveKeystone(p, hero, t.Id);
                         _starDirty = true;
-                        _s.MarkDirty(true);
+                        _s.MarkAllocationDirty();
                     }
                     catch (AllocationValidationException ex) { OfferAllocationRefund(ex, p, hero); }
                     catch (InvalidOperationException ex) { SetStatus(ex.Message); }
@@ -2961,7 +3033,7 @@ namespace SodRpg.Mod
                         {
                             Rules.SetKeystone(p, hero, t.Id);
                             _starDirty = true;
-                            _s.MarkDirty(true);
+                            _s.MarkAllocationDirty();
                         }
                         catch (AllocationValidationException ex) { OfferAllocationRefund(ex, p, hero); }
                         catch (InvalidOperationException ex) { SetStatus(ex.Message); }

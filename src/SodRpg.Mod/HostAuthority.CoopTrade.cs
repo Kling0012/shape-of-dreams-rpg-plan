@@ -402,12 +402,7 @@ namespace SodRpg.Mod
             {
                 if (kind == "profile") text = ProfileCodec.WithoutFusionForLegacyTrade(text);
                 else if (kind == "prepare" || kind == "executed")
-                {
-                    var receipt = CoopTradeCodec.ReadReceipt(text);
-                    receipt.FirstProfile = ProfileCodec.WithoutFusionForLegacyTrade(receipt.FirstProfile);
-                    receipt.SecondProfile = ProfileCodec.WithoutFusionForLegacyTrade(receipt.SecondProfile);
-                    text = CoopTradeCodec.WriteReceipt(receipt);
-                }
+                    text = CoopTradeCodec.WithoutFusionForLegacyReceipt(text);
             }
             if (!CoopTradeTransport.PayloadFits(text)) { SendCoopError(player, "recordTooLarge"); return; }
             var parts = BuildTransfer.Split(Convert.ToBase64String(Encoding.UTF8.GetBytes(text)), CoopTradeTransport.MaxProfileChars);

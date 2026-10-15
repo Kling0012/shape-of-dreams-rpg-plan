@@ -5,6 +5,7 @@ using Mirror;
 using SodRpg.Core;
 using SodRpg.Core.Game;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace SodRpg.Mod
 {
@@ -85,6 +86,8 @@ namespace SodRpg.Mod
         private bool _dirty;
         private float _nextSave;
         private bool _buildDirty = true;
+        private bool _allocationSavePending;
+        private float _allocationBuildDue;
         private float _nextBuildSend;
         private int _sentDreamLevel = -1;
         private Hero _lastHero;
@@ -129,6 +132,7 @@ namespace SodRpg.Mod
             _onMerged = (h, _) => { if (IsLocal(h)) GameAction(BountyKind.Alchemist); };
             _onHuntChanged = OnHuntChanged;
             _hostSession = this;
+            SceneManager.activeSceneChanged += OnAllocationSceneChanged;
         }
 
         private bool IsLocal(Hero h) => h != null && h == LocalHero;
@@ -195,10 +199,37 @@ namespace SodRpg.Mod
             {
                 _buildDirty = true;
                 _buildCacheFrame = -1;
+                _allocationBuildDue = 0;
+                if (Profile.Run == null)
+                {
+                    _allocationSavePending = true;
+                    DeferSave(3f);
+                }
             }
             // 鍛冶・偉業の受け取り・確認用の遺物付与も、この変更通知を通る。
             Emit(Feats.Check(Profile));
         }
+
+        /// <summary>Batch lobby star edits without serializing a profile or sending a build on the click.</summary>
+        public void MarkAllocationDirty()
+        {
+            bool buildWasDirty = _buildDirty;
+            float buildDue = _allocationBuildDue;
+            MarkDirty(true);
+            _allocationSavePending = true;
+            DeferSave(3f);
+            // Keep the first deadline during repeated clicks. Expedition/other build changes bypass it.
+            if (Profile.Run == null) _allocationBuildDue = buildWasDirty ? buildDue : Time.unscaledTime + 0.15f;
+        }
+
+        public void SavePendingAllocation()
+        {
+            if (!_allocationSavePending) return;
+            try { SaveNow(); }
+            catch (Exception ex) { Log.Error("Star allocation save: " + ex); }
+        }
+
+        private void OnAllocationSceneChanged(Scene before, Scene after) => SavePendingAllocation();
 
         // Each step runs on its own: one failing step must not stop Build sending or periodic saving for everyone (mp-ui-save #5).
         private Action[] _tickSteps;
@@ -311,6 +342,7 @@ namespace SodRpg.Mod
             if (_writer != null && _writer.HasPendingFailure)
             {
                 _dirty = true;
+                _allocationSavePending = true;
                 _saveErrorFromWriteFailure = true;
                 SaveError = Loc.T("保存に失敗しました。自動で再試行します: ", "Saving failed; retrying automatically: ") + _writer.LastError;
                 float retry = Time.unscaledTime + 5f;
@@ -469,6 +501,7 @@ namespace SodRpg.Mod
 
         public void Unwire()
         {
+            SceneManager.activeSceneChanged -= OnAllocationSceneChanged;
             DewSave.onSaveStarted -= CoopSaveStarted;
             DewSave.onSaveEnded -= CoopSaveEnded;
             if (NetworkClient.active) NetworkClient.ReplaceHandler<DreamforgeCoopTradeDown>(packet => { });
@@ -654,7 +687,7 @@ namespace SodRpg.Mod
         {
             _dirty = true;
             // 潜行・覚醒・装備への出来事で変わった能力を次の送信へ反映する。
-            if (e.Kind == EventKind.Delved || e.Kind == EventKind.LevelUp) MarkDirty(true);
+            if (e.Kind == EventKind.Delved || e.Kind == EventKind.LevelUp || e.Kind == EventKind.Fused) MarkDirty(true);
             _notify?.Invoke(e);
             if (e.AdditionalEvents != null) Emit(e.AdditionalEvents);
         }
@@ -711,6 +744,7 @@ namespace SodRpg.Mod
         {
             try
             {
+                SavePendingAllocation();
                 if (TryInfinityArrival()) return;
                 if (info.isLoadingFromSave || !info.isTraveling) return;
                 string runId = NetworkedManagerBase<GameManager>.softInstance?.runId;
@@ -1347,13 +1381,16 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
             {
                 _buildDirty = true;
                 _buildCacheFrame = -1;
+                _allocationBuildDue = 0;
             }
             if (hero != _lastHero)
             {
                 _lastHero = hero;
                 _buildDirty = true;
+                _allocationBuildDue = 0;
             }
             float now = Time.unscaledTime;
+            if (Profile.Run == null && _buildDirty && now < _allocationBuildDue && !_monsterAuthority.BuildResendRequired) return;
             if (!_buildDirty && !_monsterAuthority.BuildResendRequired && now < _nextBuildSend) return;
             string heroKey = HeroKeyOf(hero);
             ProbeBuildInputCapability(heroKey);
@@ -1479,6 +1516,7 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
             if (_writer.LastError != null) SaveError = _writer.LastError;
             else if (SaveError != null && _writer.WrittenRevision > 0) SaveError = null;
             if (!ok) _dirty = true;
+            else _allocationSavePending = false;
             return ok;
         }
 

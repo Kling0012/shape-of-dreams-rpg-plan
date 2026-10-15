@@ -11,7 +11,38 @@ namespace SodRpg.Mod
         private Profile _fusionProfile;
         private string _fusionMaterial;
         private bool _fusionOpen, _confirmFusion, _fusionCacheValid;
-        private int _fusionStamp;
+        private int _fusionLevel, _fusionShards, _fusionTuning;
+        private bool _fusionJapanese, _fusionCanEdit;
+        private float _fusionCheckAt;
+        private string _fusionCachedMaterial;
+        private readonly List<FusionRelicState> _fusionStates = new List<FusionRelicState>();
+        private readonly HashSet<string> _fusionEquipped = new HashSet<string>(StringComparer.Ordinal);
+        private readonly HashSet<string> _fusionReserved = new HashSet<string>(StringComparer.Ordinal);
+
+        private struct FusionRelicState
+        {
+            public Relic Relic;
+            public string Uid, BaseId, UniqueId, NamedId;
+            public int Enhance, Level, Awakening, FusionLevel;
+            public SodRpg.Core.Game.Rarity Rarity;
+            public Power FirstPower;
+            public bool Locked, Equipped, Reserved, Retuning;
+
+            public bool Matches(FusionRelicState other) => ReferenceEquals(Relic, other.Relic)
+                && Uid == other.Uid && BaseId == other.BaseId && UniqueId == other.UniqueId && NamedId == other.NamedId
+                && Enhance == other.Enhance && Level == other.Level && Awakening == other.Awakening
+                && FusionLevel == other.FusionLevel && Rarity == other.Rarity && FirstPower == other.FirstPower
+                && Locked == other.Locked && Equipped == other.Equipped && Reserved == other.Reserved && Retuning == other.Retuning;
+        }
+
+        private FusionRelicState FusionState(Profile p, Relic relic) => new FusionRelicState
+        {
+            Relic = relic, Uid = relic.Uid, BaseId = relic.BaseId, UniqueId = relic.UniqueId, NamedId = relic.NamedId,
+            Enhance = relic.Enhance, Level = relic.ItemLevel, Awakening = relic.AwakenLevel, FusionLevel = relic.FusionLevel,
+            Rarity = relic.Rarity, FirstPower = relic.Powers.Count > 0 ? relic.Powers[0].Power : Power.None,
+            Locked = relic.Locked, Equipped = _fusionEquipped.Contains(relic.Uid), Reserved = _fusionReserved.Contains(relic.Uid),
+            Retuning = p.RetuneOffer?.Uid == relic.Uid,
+        };
         private Vector2 _fusionScroll;
         private List<Relic> _fusionParts = new List<Relic>();
         private readonly List<string> _fusionRows = new List<string>();
@@ -29,6 +60,7 @@ namespace SodRpg.Mod
         private void ResetFusionConfirmation()
         {
             _confirmFusion = false;
+            _fusionCacheValid = false;
         }
 
         private void SyncFusion(Relic target)
@@ -42,36 +74,33 @@ namespace SodRpg.Mod
                 _fusionScroll = Vector2.zero;
                 _fusionCacheValid = false;
             }
-            int stamp;
-            unchecked
-            {
-                stamp = target.FusionLevel + (Loc.Japanese ? 1024 : 0);
-                stamp = stamp * 31 + p.Material(Materials.Shard);
-                stamp = stamp * 31 + p.Material(Materials.Tuning);
-                stamp = stamp * 31 + (_s.CanEditLoadout ? 1 : 0);
-                stamp = stamp * 31 + (_s.Trades.IsReserved(target.Uid) ? 1 : 0);
-                stamp = stamp * 31 + (p.RetuneOffer?.Uid == target.Uid ? 1 : 0);
-                stamp = stamp * 31 + (_fusionMaterial?.GetHashCode() ?? 0);
-                foreach (var relic in p.Stash)
-                {
-                    stamp = stamp * 31 + relic.GetHashCode();
-                    stamp = stamp * 31 + relic.Enhance;
-                    stamp = stamp * 31 + relic.ItemLevel;
-                    stamp = stamp * 31 + relic.AwakenLevel;
-                    stamp = stamp * 31 + relic.FusionLevel;
-                    stamp = stamp * 31 + (int)relic.Rarity;
-                    stamp = stamp * 31 + (relic.BaseId?.GetHashCode() ?? 0);
-                    stamp = stamp * 31 + (relic.UniqueId?.GetHashCode() ?? 0);
-                    stamp = stamp * 31 + (relic.NamedId?.GetHashCode() ?? 0);
-                    stamp = stamp * 31 + (relic.Powers.Count > 0 ? (int)relic.Powers[0].Power : 0);
-                    stamp = stamp * 31 + (relic.Locked ? 1 : 0);
-                    stamp = stamp * 31 + (p.IsEquippedAnywhere(relic.Uid) ? 1 : 0);
-                    stamp = stamp * 31 + (_s.Trades.IsReserved(relic.Uid) ? 1 : 0);
-                    stamp = stamp * 31 + (p.RetuneOffer?.Uid == relic.Uid ? 1 : 0);
-                }
-            }
-            if (_fusionCacheValid && stamp == _fusionStamp) return;
-            _fusionStamp = stamp;
+            bool safe = _s.CanEditLoadout && !_s.Trades.IsReserved(target.Uid) && p.RetuneOffer?.Uid != target.Uid;
+            bool unchanged = _fusionCacheValid && _fusionLevel == target.FusionLevel && _fusionJapanese == Loc.Japanese
+                && _fusionShards == p.Material(Materials.Shard) && _fusionTuning == p.Material(Materials.Tuning)
+                && _fusionSafe == safe && _fusionCanEdit == _s.CanEditLoadout
+                && _fusionCachedMaterial == _fusionMaterial && _fusionStates.Count == p.Stash.Count;
+            // OnGUI は同じフレームにも複数回来る。全保管庫の比較は最大0.3秒に1回に抑える。
+            // 対象・選択・費用・操作可否の変化と明示的な無効化は待たずに反映する。
+            float now = Time.unscaledTime;
+            if (unchanged && now < _fusionCheckAt) return;
+            _fusionCheckAt = now + 0.3f;
+            _fusionEquipped.Clear();
+            foreach (var hero in p.Heroes.Values)
+                foreach (var uid in hero.Equipped)
+                    if (uid != null) _fusionEquipped.Add(uid);
+            _s.Trades.ReservedSalvageUids(_fusionReserved);
+            if (unchanged)
+                for (int i = 0; i < p.Stash.Count; i++)
+                    if (!_fusionStates[i].Matches(FusionState(p, p.Stash[i]))) { unchanged = false; break; }
+            if (unchanged) return;
+            _fusionLevel = target.FusionLevel;
+            _fusionJapanese = Loc.Japanese;
+            _fusionCanEdit = _s.CanEditLoadout;
+            _fusionShards = p.Material(Materials.Shard);
+            _fusionTuning = p.Material(Materials.Tuning);
+            _fusionCachedMaterial = _fusionMaterial;
+            _fusionStates.Clear();
+            foreach (var relic in p.Stash) _fusionStates.Add(FusionState(p, relic));
             _fusionCacheValid = true;
             _confirmFusion = false;
             _fusionParts = Rules.FusionCandidates(p, target, _s.Trades);
@@ -169,15 +198,29 @@ namespace SodRpg.Mod
             GUI.enabled = _fusionCacheValid && _fusionMaterial != null && _fusionAfford && _fusionSafe;
             if (GUILayout.Button(_confirmFusion ? _fusionConfirmAction : _fusionAction, _st.ButtonWrap, ShrinkMin30))
             {
-                if (!_confirmFusion) _confirmFusion = true;
-                else
+                try
                 {
-                    _confirmFusion = false;
-                    if (_fusionApply == null) _fusionApply = ApplyFusion;
-                    try { Act(_fusionApply, true); }
-                    catch (Exception ex) { SetStatus(Loc.T("融合のみ停止しました：", "Only Fusion stopped: ") + ex.Message); }
+                    // クリック時は期限を待たずに再比較し、変化があれば確認を取り直す。
+                    _fusionCheckAt = 0;
+                    SyncFusion(target);
+                    if (_fusionMaterial != null && _fusionAfford && _fusionSafe)
+                    {
+                        if (!_confirmFusion) _confirmFusion = true;
+                        else
+                        {
+                            _confirmFusion = false;
+                            if (_fusionApply == null) _fusionApply = ApplyFusion;
+                            Act(_fusionApply, true);
+                            _fusionCacheValid = false;
+                            _fusionMaterial = null;
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
                     _fusionCacheValid = false;
-                    _fusionMaterial = null;
+                    _confirmFusion = false;
+                    SetStatus(Loc.T("融合のみ停止しました：", "Only Fusion stopped: ") + ex.Message);
                 }
             }
             GUI.enabled = true;
