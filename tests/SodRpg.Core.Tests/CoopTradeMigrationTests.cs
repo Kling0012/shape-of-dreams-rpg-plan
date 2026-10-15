@@ -91,13 +91,14 @@ namespace SodRpg.Core.Tests
                 {
                     var profile = (JsonObject)Json.Parse((string)value);
                     profile.Add("futureProfileField", "kept-profile");
-                    value = Json.Write(profile);
+                    // JSON上でエスケープされた融合キーでも、パース後のキーとして検出する。
+                    value = Json.Write(profile).Replace("\"fusionLevel\"", "\"fusion\\u004cevel\"");
                 }
                 withUnknown.Add(property.Key, value);
             }
             withUnknown.Add("futureReceiptField", "kept-receipt");
             string encoded = Json.Write(withUnknown);
-            Assert.Contains("fusionLevel", encoded);
+            Assert.Contains("\\\\u004c", encoded);
 
             string legacy = CoopTradeCodec.WithoutFusionForLegacyReceipt(encoded);
 
@@ -109,6 +110,10 @@ namespace SodRpg.Core.Tests
             Assert.True(legacyRoot.TryGet("firstProfile", out object legacyProfile));
             Assert.True(((JsonObject)Json.Parse((string)legacyProfile)).TryGet("futureProfileField", out object profileField));
             Assert.Equal("kept-profile", profileField);
+            var parsedProfile = (JsonObject)Json.Parse((string)legacyProfile);
+            parsedProfile.TryGet("body", out object body);
+            ((JsonObject)body).TryGet("stash", out object stash);
+            Assert.False(((JsonObject)Assert.Single((List<object>)stash)).TryGet("fusionLevel", out _));
             Assert.Contains("\"fused\"", (string)legacyProfile);
             withUnknown.TryGet("secondProfile", out object secondProfile);
             legacyRoot.TryGet("secondProfile", out object legacySecond);

@@ -17,6 +17,7 @@ namespace SodRpg.Core.Game
         Warning,
         Bounty,
         Hint,
+        Fused,
     }
 
     /// <summary>画面に流す通知。文言は発生時の表示言語で作る。</summary>
@@ -1593,7 +1594,7 @@ namespace SodRpg.Core.Game
             if (tuning > 0) p.AddMaterial(Materials.Tuning, -tuning);
             p.Stash.Remove(material);
             r.FusionLevel++;
-            return new GameEvent(EventKind.LevelUp, Loc.T(
+            return new GameEvent(EventKind.Fused, Loc.T(
                 $"「{r.DisplayName}」を融合しました（能力値+{Fusion.BonusPct(r.FusionLevel)}%。材料「{material.DisplayName}」は消費されました）。",
                 $"Fused \"{r.DisplayName}\" (stats +{Fusion.BonusPct(r.FusionLevel)}%; consumed \"{material.DisplayName}\")."), r.Rarity);
         }
