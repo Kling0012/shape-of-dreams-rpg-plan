@@ -275,3 +275,23 @@ B=星B（加点対象）、C=二択星（行5、全886行）:
   世代判定を旧来の使用済みポイント基準に戻しても `Choice_change_...` が失敗することを確認した。
   取込時にも4種すべてを再実行し、対応するアサーションでの失敗を確認して復元した。
   さらに製品の `_starSpent` を一時的に改名すると、抽出処理がフィールド契約エラーで失敗することを確認して復元した。
+
+### PR #456 の追加コメント確認（2026-10-16）
+
+追加コメントは Release ビルド、生成物整合性、差分テスト482件、全件テスト3238件の成功報告であり、
+新たな不具合や期待動作の変更は含まれていなかった。受け付け審査の状態定義の手書きと既定言語依存は
+取込コミットで対応済みのため、機能・テストケースは追加変更せず、対象経路と修正の有効性を再確認した。
+以下はコメントの実行結果の転載ではなく、この修正ラウンドで実行した検証である。
+
+- `DOTNET_ROLL_FORWARD=LatestMajor dotnet test tests/Issue73.Native.Tests/Issue73.Native.Tests.csproj -c Release --filter 'FullyQualifiedName~StarClusterDiffUpdateTests' --logger 'console;verbosity=minimal'`:
+  5件成功、失敗0、スキップ0。
+- コメントと同じ `dotnet build src/SodRpg.Mod -c Release '-p:GameDir=/home/wang/dev/sod-gamedata/Shape of Dreams' -p:ModDeployDir=/tmp/gh-auto-moddeploy`:
+  成功、エラー0、警告0（増分ビルド）。
+- 言語依存の再現: `Loc` の共有既定値を一時的に英語へ変更。コンストラクターの明示設定を外した状態では
+  ツールチップ・二択の既存2件が `Assert.Contains` で失敗し、現行の明示設定ありでは2件とも成功した。
+  共有既定値とテストの一時変更は復元した。
+- 抽出契約の確認: 製品の `_starSpent` 宣言を一時改名すると、ネイティブハーネスのビルドが
+  `Native persistence field contract changed`（MSB4018）で失敗した。改名は復元した。
+- 全件・低速テスト、生成物整合性検証、Unity 実機の描画・操作確認はこのラウンドでは未実行。
+  変更は検証記録のみであり、全件・低速テストは後段の動作確認へ委ねる。生成物は変更しておらず、
+  Unity 実機の実行環境もないため、コメントの全件成功を実機描画・操作の確認済みとは扱わない。
