@@ -106,7 +106,8 @@ ProfileCodec.Writeは0.016〜0.293msだった。直列化以外の保存準備�
   このワーカーでは全件・低速スイートを実行しない指示に従い、パイプラインに残す。
 - 未実行: 実ゲームの描画・スクリーンショット・連打・払い戻し承認・タブ/シーン/終了境界保存・協力通信。
   ゲームを起動する環境がないため。`dreamforge_perf` の機能は確認したが、実コンソール計測はしていない。
-  シーン/終了境界と送信待ちの組み合わせはコード確認のみ。
+  シーン境界と送信待ちの組み合わせは、#438 の追補（下記）で抽出した実メソッドの直接実行により確認した。
+  終了時は既存テストが `FlushSaves` を実行している。
 
 ## 追補: レビュー提案の確認（#436、2026-10-15）
 
@@ -162,14 +163,36 @@ ProfileCodec.Writeは0.016〜0.293msだった。直列化以外の保存準備�
 - `TextRank`/`TextChoice` による本文更新スキップ
 - ツールチップの世代管理（`TooltipVersion`/`_starTextVersion`）
 
-保存・送信側（`MarkAllocationDirty`・`SavePendingAllocation`・`DeferSave` の期限）も直接のテストは無いが、
-抽出ハーネスが `MarkDirty`・`DeferSave`・`TickPeriodicSave`・`SaveNow`・`SendBuildIfNeeded`・`Tick` を実際のソースから抽出して
-既存テストで実行しているため、これらの既存テストが通ることは確認できる（下記の実行結果）。
+直接の回帰テストの作成は #440 として切り出した（このIssueの作業指示ではテストを新規作成しないため。
+#440 では抽出ハーネスへの `DreamforgeUi` 抽出の追加と IMGUI 境界スタブの用意を案としている）。
+
+保存・送信側（`MarkAllocationDirty`・`SavePendingAllocation`・`DeferSave` の期限）は、#438 で抽出契約
+（`NativePersistence.targets`）に `MarkAllocationDirty`/`SavePendingAllocation`/`OnAllocationSceneChanged` を追加し
+（境界の `Scene` 型と `_allocationSavePending`/`_allocationBuildDue` フィールドは #433 の 980224b で既に準備済み）、
+実際のソースから抽出した実メソッドを一度限りのシナリオランナー（`/tmp/sod-alloc-436`、リポジトリには加えない。
+#433 の一時ベンチマークと同じ方式）でリフレクション駆動して直接確認した。条件・期待結果・実際の結果
+（2026-10-15、全項目合格、`ALL SCENARIOS PASSED`）:
+
+| シナリオ | 操作（実メソッド） | 期待結果 | 実際の結果 |
+|---|---|---|---|
+| 連打中の送信期限 | t=100 でベースライン送信後 `MarkAllocationDirty`（due=100.15）、t=100.10 で再 `MarkAllocationDirty` | 送信期限は最初の変更+150msのまま後ろへ延びない | due=100.15 のまま（100.25 に延びない）。合格 |
+| 送信ゲート | 期限内（100.10・100.149）に `SendBuildIfNeeded`、期限到達（100.16）で再実行 | 期限内は送らず、期限到達で一度だけ送る | 期限内 sent=1（不変）、100.16 で sent=2・`_buildDirty`=false。合格 |
+| 連打中の保存期限 | t=100 `MarkAllocationDirty` → t=101.5 再実行（+ `MarkDirty(true)` も） | 保存予約は最初の変更+3秒のまま | `_nextSave`=103 のまま（min）。合格 |
+| 装備変更等の保存予約 | t=100 `MarkDirty(true)`（ロビー） | `_allocationSavePending` が立ち+3秒の保存予約 | pending=true・`_nextSave`=103。合格 |
+| メニュー・タブを閉じた直後 | `MarkAllocationDirty` → `SavePendingAllocation` | 即座に1回保存し pending を落とす。保留が無いときは再保存しない | saveCount=1・pending=false・ディスクへ現行リビジョン書込・再呼び出しで saveCount=1 のまま。合格 |
+| シーン遷移時 | `MarkAllocationDirty` → `OnAllocationSceneChanged` | 未保存の割り振りを保存する | saveCount=1・pending=false・書込完了。合格 |
+| 書き込み失敗後の再試行 | 保存先を壊して `SavePendingAllocation`（背景書き込み失敗）→ t=105 `TickPeriodicSave` → t=110 再実行 | 失敗で pending を立て直し+5秒の再試行期限（30秒に延ばさない）を設け、期限で書き直し、成功後は失敗表示を消す | 失敗検知→pending 復活・`SaveError` 表示・`_nextSave`=110→t=110 で書き直し成功・pending=false→`SaveError` 消滅。合格 |
+
+UI から `SavePendingAllocation` を呼ぶ場所（メニューを閉じた時・星図タブを離れた時、`DreamforgeUi.cs` の
+`Close`・タブ切替）はコード追跡のとおり。終了時の `FlushSaves` は既存テスト（`NativeAcceptanceTests` 等）が
+後片付けで実行している。抽出契約を拡張した後の既存テストは 67件（`ContinueSave`/`ClientTickIsolation`/
+`TradeSendException`/`SatchelOverflowSave`/`LobbyReturn`/`NativeAcceptance`/`InfinityClearSave`/
+`OverflowBonusFailSoft`）すべて合格。
 
 実機で確認すべき残項目（ゲームを起動する環境が無いため未実行）:
 
 - ホバーを維持したまま別の星へ加点したとき、条件文とダメージ注記が即座に更新されること。
 - 二択を変更した後、星の本文表示と左一覧の表示が正しいこと。
-- 連打中に送信（150ms）・保存（3秒）の期限が後ろへ延びないこと。
-- メニュー・星図タブを閉じた直後、シーン遷移時、終了時に未保存の割り振りが保存されること。
-- 書き込み失敗後に既存の5秒再試行（`TickPeriodicSave`）で保存し直すこと。
+
+（連打中の送信・保存期限、メニュー・タブを閉じた直後とシーン遷移時の保存、書き込み失敗後の5秒再試行は、
+上記のシナリオランナーで対象経路（実際の `ClientSession` の各メソッド）を実行して確認済み。）
