@@ -263,12 +263,12 @@ namespace SodRpg.Mod
             }
             if (msg.committed)
             {
-                if (ConfirmContinueCheckpoint(msg.runId, msg.checkpointId)) SaveNow(true);
+                if (ConfirmContinueCheckpoint(msg.runId, msg.checkpointId)) SaveNow();
                 return;
             }
             PrepareContinueSnapshot();
             RememberContinueCheckpoint(RunCheckpoint.Capture(Profile, msg.checkpointId));
-            SaveNow(true);
+            SaveNow(); // 書き込みは別スレッドに任せる（待っても後に送るものがない）。
         }
 
         private void PrepareContinueSnapshot()

@@ -262,6 +262,8 @@ namespace SodRpg.Mod
             }
         }
 
+        private readonly HashSet<string> _reservedSalvageScratch = new HashSet<string>(StringComparer.Ordinal);
+
         private void TickSalvageExpiry()
         {
             // GLM (mp-ui-save #7): the wait on screen is released for every trade kind after the timeout, but the trade
@@ -283,8 +285,16 @@ namespace SodRpg.Mod
             }
             if (Profile.PendingSalvage.Count > 0)
             {
-                var returned = Rules.RestorePendingSalvage(Profile, keepUids: _trades.ReservedSalvageUids());
-                if (returned.Count > 0) { Emit(returned); SaveNow(); }
+                // 毎フレーム通るので、予約中の集合は使い回し、戻す品があるときだけ戻し処理を呼ぶ。
+                _trades.ReservedSalvageUids(_reservedSalvageScratch);
+                bool anyReturn = false;
+                foreach (var pending in Profile.PendingSalvage)
+                    if (!_reservedSalvageScratch.Contains(pending.Relic.Uid)) { anyReturn = true; break; }
+                if (anyReturn)
+                {
+                    var returned = Rules.RestorePendingSalvage(Profile, keepUids: _reservedSalvageScratch);
+                    if (returned.Count > 0) { Emit(returned); SaveNow(); }
+                }
             }
             if (_hostLedgerId == 0) SendLedgerProbe();
             SendDueTradeQueries();
@@ -1427,7 +1437,10 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
                 if (!ReferenceEquals(withoutForbidden, submissionProfile))
                 {
                     submissionProfile = withoutForbidden;
-                    if (!_forbiddenGearStripNotice)
+                    // 対応の返事を待つ間（接続直後の1往復）は外すだけで、旧ホストと決めつけた通知は出さない。
+                    // 返事が来て未対応と分かった時か、20秒たっても返事がない時に知らせる。
+                    bool hostKnownOld = _hostBuildInputCapability || _helloFirstSent >= 0 && now - _helloFirstSent > 20f;
+                    if (!_forbiddenGearStripNotice && hostKnownOld)
                     {
                         _forbiddenGearStripNotice = true;
                         ForbiddenGearHostNotice = Loc.T(

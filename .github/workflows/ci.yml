@@ -7,11 +7,15 @@ on:
       - docs/**
       - "**.md"
       - src/SodRpg.Mod/about/**
+      # テストが読む表（SodRpg.Core.Tests.csproj が ReviewedV129.md としてコピー）は対象に戻す。
+      - "!docs/specs/v1.29-uniques-table.md"
   pull_request:
     paths-ignore:
       - docs/**
       - "**.md"
       - src/SodRpg.Mod/about/**
+      # テストが読む表（SodRpg.Core.Tests.csproj が ReviewedV129.md としてコピー）は対象に戻す。
+      - "!docs/specs/v1.29-uniques-table.md"
 
 # A newer push to the same branch (several merges in a row) supersedes the older run.
 concurrency:

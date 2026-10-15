@@ -126,5 +126,28 @@ namespace Issue73.Native.Tests
             Time.unscaledTime = 100.1f;
             Assert.Same(before, Assert.Single(ui.CachedRelicRows(profile.Stash, 410f)));
         }
+        [Fact]
+        public void Selecting_a_seen_relic_reuses_the_row_texts()
+        {
+            var profile = Profile.CreateNew(176);
+            var worn = Loot.RollRelic(new Rng(123), Rarity.Common, 10, Slot.Weapon);
+            var spare = Loot.RollRelic(new Rng(456), Rarity.Epic, 10, Slot.Weapon);
+            profile.Stash.Add(worn);
+            profile.Stash.Add(spare);
+            profile.Hero("hero").Equipped[(int)Slot.Weapon] = worn.Uid;
+            var ui = new DreamforgeUi(new ClientSession { Profile = profile });
+            Time.unscaledTime = 100;
+            var before = new List<string>(ui.CachedRelicRows(profile.Stash, 410f));
+            Assert.Equal(2, before.Count);
+            Assert.Contains(before, row => row.Contains("★") && row.Contains(worn.DisplayName));
+            Assert.Contains(before, row => (row.Contains("▲") == spare.Score > worn.Score) && row.Contains(spare.DisplayName));
+
+            // 選択は行の文字に出ないので、選び直しても同じ文字列を使い回す。
+            ui.SelectedRelic = spare.Uid;
+            Time.unscaledTime = 100.1f;
+            var after = ui.CachedRelicRows(profile.Stash, 410f);
+            Assert.Equal(before.Count, after.Count);
+            for (int i = 0; i < before.Count; i++) Assert.Same(before[i], after[i]);
+        }
     }
 }

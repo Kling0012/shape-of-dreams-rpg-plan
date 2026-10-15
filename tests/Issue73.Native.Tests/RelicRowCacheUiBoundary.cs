@@ -23,6 +23,8 @@ namespace SodRpg.Mod
         private readonly HashSet<string> _seenUids = new HashSet<string>();
         private bool _seenInit;
 
+        internal string SelectedRelic { set => _selected = value; }
+
         internal List<string> CachedRelicRows(IEnumerable<Relic> relics, float id)
             => RowTexts(SortedCached(relics, id), HeroKey, id);
     }

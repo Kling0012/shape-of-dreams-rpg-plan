@@ -15,6 +15,7 @@ namespace SodRpg.Mod
         private float _helloFirstSent = -1f, _nextHello;
         private bool _helloAnswered;
         private bool _hostCompatibilityWarned;
+        private bool _noReplyWarningJapanese;
         private bool _hostInfinityAvailable;
         private string _continueReceiptRunId, _continueReceiptCheckpointId, _continueReceiptResumeSession;
         private string _sentContinueReceiptRunId, _sentContinueReceiptCheckpointId, _sentContinueReceiptResumeSession;
@@ -147,10 +148,15 @@ namespace SodRpg.Mod
                 if (_helloFirstSent < 0) _helloFirstSent = now;
                 _nextHello = now + 5f;
             }
-            if (!_helloAnswered && _helloFirstSent >= 0 && now - _helloFirstSent > 20f)
+            // 文は一度だけ作る（毎フレーム組み立て直さない）。表示言語が変わったときだけ作り直す。
+            if (!_helloAnswered && _helloFirstSent >= 0 && now - _helloFirstSent > 20f
+                && (HostVersionWarning == null || _noReplyWarningJapanese != Loc.Japanese))
+            {
+                _noReplyWarningJapanese = Loc.Japanese;
                 HostVersionWarning = Loc.T(
                     "ホストから Dreamforge の返事がありません。ホストがこの MOD の同じ版（" + HostAuthority.ModVersion + "）を入れているか確認してください。",
                     "No Dreamforge reply from the host. Make sure the host runs the same version of this mod (" + HostAuthority.ModVersion + ").");
+            }
         }
 
         private void OnHello(DreamforgeHelloMsg msg)
