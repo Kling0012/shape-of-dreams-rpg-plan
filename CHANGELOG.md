@@ -10,6 +10,24 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v2.10.48 — Fix stale choice descriptions after switching on the Star Map（2026-10-16）
+
+このバージョンでは、星図で二択の選択を切り替えたときに、選択肢の説明が更新されないことがある不具合を修正しました。 / This version fixes an issue where choice descriptions on the Star Map could fail to update after switching a two-option choice.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- 星図で取得済みの二択を無料で切り替えたあと、二択の候補の説明が切り替え前のまま表示されることがある問題を修正しました。切り替えたあとは、本文、両方の候補、ツールチップが最新の内容で表示されます。 / Fixed an issue where, after a free switch on an already-acquired two-option choice on the Star Map, the option descriptions could still show their pre-switch text. After switching, the description, both options, and the tooltip now show up-to-date content.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
 ## v2.10.47 — Safer co-op trades for fused relics, plus logging to investigate a post-Polaris issue（2026-10-16）
 
 このバージョンでは、融合済みの遺物を協力取引したときに融合段階が失われる不具合を修正しました。また、ポラリス踏破後に起きる不具合の原因を調べるため、ゲームのログへ記録を追加しました。 / This version fixes an issue where fused relics could lose their Fusion level in co-op trades. It also adds log records to help investigate an issue that occurs after clearing Polaris.
