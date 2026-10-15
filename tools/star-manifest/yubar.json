@@ -28082,6 +28082,228 @@
       "notes": "効果は倍率修飾（C07）で、Gimmick/Powerとして表せる記述が設計表に無いため keystone 欄のみ。「T.c1.xまたはT.c2.xの奥」を requiresAny、「T.c3.n1/n2も必要」を両方必須(requires)と解釈。"
     },
     {
+      "id": "yubar.run.g1",
+      "region": "outer",
+      "cluster": "yubar.outer.run-growth",
+      "shape": "chain",
+      "anchor": "h.yubar.route.converging-stars.7",
+      "edges": [
+        "yubar.run.m1"
+      ],
+      "requires": [],
+      "requiresAny": [],
+      "kind": "RunGrowth",
+      "memory": null,
+      "value": null,
+      "param": null,
+      "receiver": null,
+      "target": null,
+      "gimmick": null,
+      "power": null,
+      "growth": {
+        "trigger": "BasicAttackHit",
+        "threshold": {
+          "valueRef": "yubar.run.g1/growth/threshold"
+        },
+        "cap": {
+          "valueRef": "yubar.run.g1/growth/cap"
+        },
+        "effects": [
+          {
+            "stat": "AttackSpeedPct",
+            "amount": {
+              "valueRef": "yubar.run.g1/growth/effects/0/amount"
+            }
+          },
+          {
+            "stat": "Haste",
+            "amount": {
+              "valueRef": "yubar.run.g1/growth/effects/1/amount"
+            }
+          }
+        ]
+      },
+      "stat": null,
+      "options": null,
+      "keystone": null,
+      "mechanisms": [
+        "C01"
+      ],
+      "maxRank": 1,
+      "rankCost": 1,
+      "nameJa": "律動の積み重ね",
+      "nameEn": "Accumulated Rhythm",
+      "notes": "v1.32 B: 遠征の鍛錬の入口（仕組みを得る重要な星）。"
+    },
+    {
+      "id": "yubar.run.m1",
+      "region": "outer",
+      "cluster": "yubar.outer.run-growth",
+      "shape": "chain",
+      "anchor": null,
+      "edges": [
+        "yubar.run.g1",
+        "yubar.run.m2"
+      ],
+      "requires": [
+        "yubar.run.g1"
+      ],
+      "requiresAny": [],
+      "kind": "RunGrowthMod",
+      "memory": null,
+      "value": null,
+      "param": null,
+      "receiver": null,
+      "target": null,
+      "gimmick": null,
+      "power": null,
+      "growth": {
+        "target": "yubar.run.g1",
+        "capBonus": {
+          "valueRef": "yubar.run.m1/growth/capBonus"
+        },
+        "effectPct": {
+          "valueRef": "yubar.run.m1/growth/effectPct"
+        },
+        "doubleGain": false
+      },
+      "stat": null,
+      "options": null,
+      "keystone": null,
+      "mechanisms": [
+        "C01"
+      ],
+      "maxRank": 1,
+      "rankCost": 1,
+      "nameJa": "重なる拍動",
+      "nameEn": "Layered Pulses",
+      "notes": "上限増分はバランス表から生成。 / Cap increase is generated from the balance table."
+    },
+    {
+      "id": "yubar.run.m2",
+      "region": "outer",
+      "cluster": "yubar.outer.run-growth",
+      "shape": "chain",
+      "anchor": null,
+      "edges": [
+        "yubar.run.m1",
+        "yubar.run.choice"
+      ],
+      "requires": [
+        "yubar.run.m1"
+      ],
+      "requiresAny": [],
+      "kind": "RunGrowthMod",
+      "memory": null,
+      "value": null,
+      "param": null,
+      "receiver": null,
+      "target": null,
+      "gimmick": null,
+      "power": null,
+      "growth": {
+        "target": "yubar.run.g1",
+        "capBonus": {
+          "valueRef": "yubar.run.m2/growth/capBonus"
+        },
+        "effectPct": {
+          "valueRef": "yubar.run.m2/growth/effectPct"
+        },
+        "doubleGain": false
+      },
+      "stat": null,
+      "options": null,
+      "keystone": null,
+      "mechanisms": [
+        "C01"
+      ],
+      "maxRank": 1,
+      "rankCost": 1,
+      "nameJa": "尽きぬ律動",
+      "nameEn": "Inexhaustible Rhythm",
+      "notes": "上限増分はバランス表から生成。 / Cap increase is generated from the balance table."
+    },
+    {
+      "id": "yubar.run.choice",
+      "region": "outer",
+      "cluster": "yubar.outer.run-growth",
+      "shape": "chain",
+      "anchor": null,
+      "edges": [
+        "yubar.run.m2"
+      ],
+      "requires": [
+        "yubar.run.m2"
+      ],
+      "requiresAny": [],
+      "kind": "Choice",
+      "memory": null,
+      "value": null,
+      "param": null,
+      "receiver": null,
+      "target": null,
+      "gimmick": null,
+      "power": null,
+      "stat": null,
+      "options": [
+        {
+          "kind": "RunGrowthMod",
+          "memory": null,
+          "value": null,
+          "param": null,
+          "receiver": null,
+          "target": null,
+          "gimmick": null,
+          "power": null,
+          "growth": {
+            "target": "yubar.run.g1",
+            "capBonus": {
+              "valueRef": "yubar.run.choice/options/0/growth/capBonus"
+            },
+            "effectPct": {
+              "valueRef": "yubar.run.choice/options/0/growth/effectPct"
+            },
+            "doubleGain": false
+          },
+          "stat": null,
+          "nameJa": "深まる律動",
+          "nameEn": "Deepening Rhythm"
+        },
+        {
+          "kind": "RunGrowthMod",
+          "memory": null,
+          "value": null,
+          "param": null,
+          "receiver": null,
+          "target": null,
+          "gimmick": null,
+          "power": null,
+          "growth": {
+            "target": "yubar.run.g1",
+            "capBonus": {
+              "valueRef": "yubar.run.choice/options/1/growth/capBonus"
+            },
+            "effectPct": {
+              "valueRef": "yubar.run.choice/options/1/growth/effectPct"
+            },
+            "doubleGain": false
+          },
+          "stat": null,
+          "nameJa": "広がる律動",
+          "nameEn": "Expanding Rhythm"
+        }
+      ],
+      "keystone": null,
+      "mechanisms": [
+        "C01"
+      ],
+      "maxRank": 1,
+      "rankCost": 1,
+      "nameJa": "律動の育て方",
+      "nameEn": "How Rhythm Grows",
+      "notes": "1スタックの効果 +50% ／ 蓄積上限 +20。 / Stat gain per stack +50% or stack cap +20."
+    },
+    {
       "id": "h.yubar.haste",
       "region": "migration",
       "kind": "Choice",

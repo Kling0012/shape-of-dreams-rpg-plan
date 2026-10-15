@@ -26246,6 +26246,228 @@
       "notes": "K1/K2/K3。配置「I-c4またはQ-c4」を、I-c4.x1をanchor、Q-c4.x1とのrequiresAnyと解釈。"
     },
     {
+      "id": "lacerta.run.g1",
+      "region": "outer",
+      "cluster": "lacerta.outer.run-growth",
+      "shape": "chain",
+      "anchor": "h.lacerta.route.double-tap.7",
+      "edges": [
+        "lacerta.run.m1"
+      ],
+      "requires": [],
+      "requiresAny": [],
+      "kind": "RunGrowth",
+      "memory": null,
+      "value": null,
+      "param": null,
+      "receiver": null,
+      "target": null,
+      "gimmick": null,
+      "power": null,
+      "growth": {
+        "trigger": "EnemyKill",
+        "threshold": {
+          "valueRef": "lacerta.run.g1/growth/threshold"
+        },
+        "cap": {
+          "valueRef": "lacerta.run.g1/growth/cap"
+        },
+        "effects": [
+          {
+            "stat": "MaxHealthPct",
+            "amount": {
+              "valueRef": "lacerta.run.g1/growth/effects/0/amount"
+            }
+          },
+          {
+            "stat": "AttackPct",
+            "amount": {
+              "valueRef": "lacerta.run.g1/growth/effects/1/amount"
+            }
+          }
+        ]
+      },
+      "stat": null,
+      "options": null,
+      "keystone": null,
+      "mechanisms": [
+        "C01"
+      ],
+      "maxRank": 1,
+      "rankCost": 1,
+      "nameJa": "狩りの積み重ね",
+      "nameEn": "Accumulated Hunts",
+      "notes": "v1.32 B: 遠征の鍛錬の入口（仕組みを得る重要な星）。"
+    },
+    {
+      "id": "lacerta.run.m1",
+      "region": "outer",
+      "cluster": "lacerta.outer.run-growth",
+      "shape": "chain",
+      "anchor": null,
+      "edges": [
+        "lacerta.run.g1",
+        "lacerta.run.m2"
+      ],
+      "requires": [
+        "lacerta.run.g1"
+      ],
+      "requiresAny": [],
+      "kind": "RunGrowthMod",
+      "memory": null,
+      "value": null,
+      "param": null,
+      "receiver": null,
+      "target": null,
+      "gimmick": null,
+      "power": null,
+      "growth": {
+        "target": "lacerta.run.g1",
+        "capBonus": {
+          "valueRef": "lacerta.run.m1/growth/capBonus"
+        },
+        "effectPct": {
+          "valueRef": "lacerta.run.m1/growth/effectPct"
+        },
+        "doubleGain": false
+      },
+      "stat": null,
+      "options": null,
+      "keystone": null,
+      "mechanisms": [
+        "C01"
+      ],
+      "maxRank": 1,
+      "rankCost": 1,
+      "nameJa": "鍛えた体幹",
+      "nameEn": "Tempered Core",
+      "notes": "上限増分はバランス表から生成。 / Cap increase is generated from the balance table."
+    },
+    {
+      "id": "lacerta.run.m2",
+      "region": "outer",
+      "cluster": "lacerta.outer.run-growth",
+      "shape": "chain",
+      "anchor": null,
+      "edges": [
+        "lacerta.run.m1",
+        "lacerta.run.choice"
+      ],
+      "requires": [
+        "lacerta.run.m1"
+      ],
+      "requiresAny": [],
+      "kind": "RunGrowthMod",
+      "memory": null,
+      "value": null,
+      "param": null,
+      "receiver": null,
+      "target": null,
+      "gimmick": null,
+      "power": null,
+      "growth": {
+        "target": "lacerta.run.g1",
+        "capBonus": {
+          "valueRef": "lacerta.run.m2/growth/capBonus"
+        },
+        "effectPct": {
+          "valueRef": "lacerta.run.m2/growth/effectPct"
+        },
+        "doubleGain": false
+      },
+      "stat": null,
+      "options": null,
+      "keystone": null,
+      "mechanisms": [
+        "C01"
+      ],
+      "maxRank": 1,
+      "rankCost": 1,
+      "nameJa": "尽きぬ狩猟",
+      "nameEn": "Inexhaustible Hunt",
+      "notes": "上限増分はバランス表から生成。 / Cap increase is generated from the balance table."
+    },
+    {
+      "id": "lacerta.run.choice",
+      "region": "outer",
+      "cluster": "lacerta.outer.run-growth",
+      "shape": "chain",
+      "anchor": null,
+      "edges": [
+        "lacerta.run.m2"
+      ],
+      "requires": [
+        "lacerta.run.m2"
+      ],
+      "requiresAny": [],
+      "kind": "Choice",
+      "memory": null,
+      "value": null,
+      "param": null,
+      "receiver": null,
+      "target": null,
+      "gimmick": null,
+      "power": null,
+      "stat": null,
+      "options": [
+        {
+          "kind": "RunGrowthMod",
+          "memory": null,
+          "value": null,
+          "param": null,
+          "receiver": null,
+          "target": null,
+          "gimmick": null,
+          "power": null,
+          "growth": {
+            "target": "lacerta.run.g1",
+            "capBonus": {
+              "valueRef": "lacerta.run.choice/options/0/growth/capBonus"
+            },
+            "effectPct": {
+              "valueRef": "lacerta.run.choice/options/0/growth/effectPct"
+            },
+            "doubleGain": false
+          },
+          "stat": null,
+          "nameJa": "深まる狩り",
+          "nameEn": "Deepening Hunt"
+        },
+        {
+          "kind": "RunGrowthMod",
+          "memory": null,
+          "value": null,
+          "param": null,
+          "receiver": null,
+          "target": null,
+          "gimmick": null,
+          "power": null,
+          "growth": {
+            "target": "lacerta.run.g1",
+            "capBonus": {
+              "valueRef": "lacerta.run.choice/options/1/growth/capBonus"
+            },
+            "effectPct": {
+              "valueRef": "lacerta.run.choice/options/1/growth/effectPct"
+            },
+            "doubleGain": false
+          },
+          "stat": null,
+          "nameJa": "広がる狩り",
+          "nameEn": "Expanding Hunt"
+        }
+      ],
+      "keystone": null,
+      "mechanisms": [
+        "C01"
+      ],
+      "maxRank": 1,
+      "rankCost": 1,
+      "nameJa": "狩りの育て方",
+      "nameEn": "How the Hunt Grows",
+      "notes": "1スタックの効果 +50% ／ 蓄積上限 +20。 / Stat gain per stack +50% or stack cap +20."
+    },
+    {
       "id": "h.lacerta.powder",
       "region": "migration",
       "kind": "Choice",

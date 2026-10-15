@@ -93,6 +93,7 @@ namespace SodRpg.Mod
             public float FrozenCrowdControlRemaining, FrozenCrowdControlSince;
             // v1.32 B: the stacks live in HostAuthority.RunGrowthLedger (outside this runtime); only their applied effect is kept here.
             public StatBonus GrowthBonus;
+            public DataProcessor<HealData, Actor, Entity> GrowthHealReceived;
             public readonly Dictionary<Stat, double> GrowthTotals = new Dictionary<Stat, double>();
             public int GrowthVersion = -1;
             public Build GrowthBuild;
@@ -1507,7 +1508,11 @@ namespace SodRpg.Mod
                 var captured = rt;
                 rt.OnFired = info => OnAttackFired(captured, info);
                 rt.OnSkill = info => OnSkillUse(captured, info);
-                rt.OnHit = _onAttackHit;
+                rt.OnHit = info =>
+                {
+                    OnRunGrowthBasicHit(captured, info);
+                    _onAttackHit(info);
+                };
                 hero.EntityEvent_OnAttackFired += rt.OnFired;
                 // Actor.DoBasicAttackHit は、この同期イベントの後で DealDamage を呼ぶ。
                 // RPC 通知の配信時点に依存せず、命中前の HP で判定する。
@@ -1568,6 +1573,7 @@ namespace SodRpg.Mod
                 hero.ActorEvent_OnKill += rt.OnMemoryKill;
                 rt.OnSupportHeal = info =>
                 {
+                    OnRunGrowthHeal(captured, info);
                     OnSupportHealingV129(captured, info);
                     var target = info.target as Hero;
                     if (target != null && target != hero && target.GetRelation(hero) == EntityRelation.Ally
@@ -1589,6 +1595,9 @@ namespace SodRpg.Mod
                     heal.ApplyAmplification(SupportStats.AmplifyHeal(1f, captured.Powers.Build.Get(Stat.HealPower) + GrowthSupport(captured, Stat.HealPower)) - 1f);
                 rt.ShieldDealt = (ref HealData shield, Actor a, Entity t) =>
                     shield.ApplyAmplification(SupportStats.AmplifyShield(1f, captured.Powers.Build.Get(Stat.ShieldPower) + GrowthSupport(captured, Stat.ShieldPower)) - 1f);
+                rt.GrowthHealReceived = (ref HealData heal, Actor a, Entity t) =>
+                    AmplifyRunGrowthHealingReceived(captured, ref heal);
+                hero.takenHealProcessor.Add(rt.GrowthHealReceived);
                 hero.dealtHealProcessor.Add(rt.HealDealt);
                 hero.dealtShieldProcessor.Add(rt.ShieldDealt);
                 rt.OnSummon = info => HookSummon(captured, info.summon);
@@ -1699,6 +1708,7 @@ namespace SodRpg.Mod
                 if (rt.OnDisplacement != null) hero.Control.ClientEvent_OnDisplacementStarted -= rt.OnDisplacement;
                 if (rt.DamageTaken != null) hero.takenDamageProcessor.Remove(rt.DamageTaken);
                 if (rt.DamageDealt != null) hero.dealtDamageProcessor.Remove(rt.DamageDealt);
+                if (rt.GrowthHealReceived != null) hero.takenHealProcessor.Remove(rt.GrowthHealReceived);
                 if (rt.HealDealt != null) hero.dealtHealProcessor.Remove(rt.HealDealt);
                 if (rt.ShieldDealt != null) hero.dealtShieldProcessor.Remove(rt.ShieldDealt);
                 if (rt.OnSummon != null) hero.ActorEvent_OnSpawnSummon -= rt.OnSummon;
@@ -1716,6 +1726,7 @@ namespace SodRpg.Mod
             rt.OnImmunity = null;
             rt.OnAbilityCreated = null;
             rt.CritBasicVictims.Clear();
+            rt.GrowthHealReceived = null;
             rt.HealDealt = null;
             rt.ShieldDealt = null;
             rt.OnSummon = null;
@@ -1998,6 +2009,7 @@ namespace SodRpg.Mod
                 case Stat.EssenceSlotMovement:
                 // Support stats are handled by combat processors, not native StatBonus fields.
                 case Stat.HealPower:
+                case Stat.HealingReceivedPct:
                 case Stat.ShieldPower:
                 case Stat.SummonPower:
                 case Stat.SacrificeReduction:
@@ -2243,6 +2255,7 @@ namespace SodRpg.Mod
                 if (generated && info.victim.currentHealth <= 0.00001f) rt.GeneratedKillVictims.Add(victimId);
                 else rt.GeneratedKillVictims.Remove(victimId);
                 if (generated) return;
+                OnRunGrowthSummonHit(rt, info);
                 TrackCritBasicDamage(rt, info, victimId);
                 OnNewPowerDamage(rt, info);
                 string memory = MemorySource(info.actor);
@@ -2263,6 +2276,7 @@ namespace SodRpg.Mod
                 if (!Alive(rt.Hero) || info.victim == null
                     || info.victim.GetRelation(rt.Hero) != EntityRelation.Enemy) return;
                 int victimId = info.victim.GetInstanceID();
+                OnRunGrowthKill(rt);
                 bool generated = rt.GeneratedKillVictims.Remove(victimId)
                     || _gimmickDamageDepth != 0 || _pairDamageDepth != 0 || _reflectingDamage || _shattering
                     || IsPairReactionSource(info.actor);

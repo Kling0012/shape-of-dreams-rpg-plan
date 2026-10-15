@@ -92,6 +92,79 @@ namespace SodRpg.Mod
             if (rt.CritBasicVictims.Remove(victimId)) GainRunGrowth(rt, RunGrowthTrigger.CritBasicAttackKill, 1d);
         }
 
+        private static bool HasRunGrowth(HeroRuntime rt, RunGrowthTrigger trigger)
+        {
+            var build = rt.Powers?.Build;
+            if (build != null)
+                foreach (var entry in build.RunGrowths)
+                    if (entry.Trigger == trigger) return true;
+            return false;
+        }
+
+        /// <summary>ActorEvent_OnDoHeal は自己回復と味方への回復を共に通知する。過剰回復だけの通知は数えない。</summary>
+        private void OnRunGrowthHeal(HeroRuntime rt, EventInfoHeal info)
+        {
+            try
+            {
+                if (!HasRunGrowth(rt, RunGrowthTrigger.HealSucceeded) || !Alive(rt.Hero) || info.target == null
+                    || !(info.amount > 0f) || float.IsInfinity(info.amount)
+                    || info.target != rt.Hero && info.target.GetRelation(rt.Hero) != EntityRelation.Ally) return;
+                GainRunGrowth(rt, RunGrowthTrigger.HealSucceeded, 1d);
+            }
+            catch (Exception ex) { Log.Error("Host: RunGrowth heal " + ex); }
+        }
+
+        /// <summary>通常攻撃の同期命中イベント。失明で外れた攻撃や、記憶が起こす攻撃効果は含めない。</summary>
+        private void OnRunGrowthBasicHit(HeroRuntime rt, EventInfoAttackHit info)
+        {
+            try
+            {
+                if (!HasRunGrowth(rt, RunGrowthTrigger.BasicAttackHit) || !Alive(rt.Hero)
+                    || info.attacker != rt.Hero || info.victim == null || !info.victim.isActive
+                    || info.victim.GetRelation(rt.Hero) != EntityRelation.Enemy
+                    || AttributionGeneratedOrigin() != GeneratedOrigin.None) return;
+                var basic = BasicAttackContext.Current;
+                if (basic == null || basic.From != rt.Hero || basic.Target != info.victim || basic.Actor != info.actor) return;
+                GainRunGrowth(rt, RunGrowthTrigger.BasicAttackHit, 1d);
+            }
+            catch (Exception ex) { Log.Error("Host: RunGrowth basic hit " + ex); }
+        }
+
+        /// <summary>本体の召喚ユニットの命中。親Actor経路で持ち主と装備記憶を確かめ、エッセンスや属性の派生を除く。</summary>
+        private void OnRunGrowthSummonHit(HeroRuntime rt, EventInfoDamage info)
+        {
+            try
+            {
+                if (!HasRunGrowth(rt, RunGrowthTrigger.SummonHit) || info.damage.HasAttr(DamageAttribute.DamageOverTime)) return;
+                var summon = info.actor != null ? info.actor.FindFirstOfType<Summon>() : null;
+                if (summon == null || !summon.isActive || summon.currentHealth <= 0f || summon.info.caster != rt.Hero) return;
+                var skill = summon.FindFirstAncestorOfType<SkillTrigger>();
+                if (skill == null || skill.owner != rt.Hero || !BossNativeEquippedSkill(rt.Hero, skill)) return;
+                int depth = 0;
+                for (var actor = info.actor; actor != null; actor = actor.parentActor)
+                    if (++depth > 64 || actor is Gem || actor is ElementalStatusEffect
+                        || actor is AbilityInstance ability && ability.gem != null) return;
+                GainRunGrowth(rt, RunGrowthTrigger.SummonHit, 1d);
+            }
+            catch (Exception ex) { Log.Error("Host: RunGrowth summon hit " + ex); }
+        }
+
+        private static void AmplifyRunGrowthHealingReceived(HeroRuntime rt, ref HealData heal)
+        {
+            try
+            {
+                float percent = GrowthSupport(rt, Stat.HealingReceivedPct);
+                if (percent > 0f) heal.ApplyAmplification(percent / 100f);
+            }
+            catch (Exception ex) { Log.Error("Host: RunGrowth healing received " + ex); }
+        }
+
+        private void OnRunGrowthKill(HeroRuntime rt)
+        {
+            try { GainRunGrowth(rt, RunGrowthTrigger.EnemyKill, 1d); }
+            catch (Exception ex) { Log.Error("Host: RunGrowth kill " + ex); }
+        }
+
         /// <summary>スタックが変わったら能力値へ反映し、持ち主へ知らせる（毎フレーム）。</summary>
         private void ApplyRunGrowth(HeroRuntime rt, float now)
         {

@@ -20912,6 +20912,228 @@
       "notes": "配置決定（2026-10-03）：効果にいちばん関係する記憶の星団の、奥の選択の星の先に置く（他の旅人の刻印と同じ置き方）。キー配置は設計表に明記なし。効果に最も近い記憶星団のq(c循c1)の先へ当初の置き場所(要確認)。 N1+N5。本体循環の毎攻撃回復・寿命延長は毎発のまま。"
     },
     {
+      "id": "nachia.run.g1",
+      "region": "outer",
+      "cluster": "nachia.outer.run-growth",
+      "shape": "chain",
+      "anchor": "h.nachia.route.moonlight-pact.7",
+      "edges": [
+        "nachia.run.m1"
+      ],
+      "requires": [],
+      "requiresAny": [],
+      "kind": "RunGrowth",
+      "memory": null,
+      "value": null,
+      "param": null,
+      "receiver": null,
+      "target": null,
+      "gimmick": null,
+      "power": null,
+      "growth": {
+        "trigger": "SummonHit",
+        "threshold": {
+          "valueRef": "nachia.run.g1/growth/threshold"
+        },
+        "cap": {
+          "valueRef": "nachia.run.g1/growth/cap"
+        },
+        "effects": [
+          {
+            "stat": "PowerPct",
+            "amount": {
+              "valueRef": "nachia.run.g1/growth/effects/0/amount"
+            }
+          },
+          {
+            "stat": "Armor",
+            "amount": {
+              "valueRef": "nachia.run.g1/growth/effects/1/amount"
+            }
+          }
+        ]
+      },
+      "stat": null,
+      "options": null,
+      "keystone": null,
+      "mechanisms": [
+        "C01"
+      ],
+      "maxRank": 1,
+      "rankCost": 1,
+      "nameJa": "群れの積み重ね",
+      "nameEn": "Accumulated Pack Bonds",
+      "notes": "v1.32 B: 遠征の鍛錬の入口（仕組みを得る重要な星）。"
+    },
+    {
+      "id": "nachia.run.m1",
+      "region": "outer",
+      "cluster": "nachia.outer.run-growth",
+      "shape": "chain",
+      "anchor": null,
+      "edges": [
+        "nachia.run.g1",
+        "nachia.run.m2"
+      ],
+      "requires": [
+        "nachia.run.g1"
+      ],
+      "requiresAny": [],
+      "kind": "RunGrowthMod",
+      "memory": null,
+      "value": null,
+      "param": null,
+      "receiver": null,
+      "target": null,
+      "gimmick": null,
+      "power": null,
+      "growth": {
+        "target": "nachia.run.g1",
+        "capBonus": {
+          "valueRef": "nachia.run.m1/growth/capBonus"
+        },
+        "effectPct": {
+          "valueRef": "nachia.run.m1/growth/effectPct"
+        },
+        "doubleGain": false
+      },
+      "stat": null,
+      "options": null,
+      "keystone": null,
+      "mechanisms": [
+        "C01"
+      ],
+      "maxRank": 1,
+      "rankCost": 1,
+      "nameJa": "育まれる絆",
+      "nameEn": "Nurtured Bonds",
+      "notes": "上限増分はバランス表から生成。 / Cap increase is generated from the balance table."
+    },
+    {
+      "id": "nachia.run.m2",
+      "region": "outer",
+      "cluster": "nachia.outer.run-growth",
+      "shape": "chain",
+      "anchor": null,
+      "edges": [
+        "nachia.run.m1",
+        "nachia.run.choice"
+      ],
+      "requires": [
+        "nachia.run.m1"
+      ],
+      "requiresAny": [],
+      "kind": "RunGrowthMod",
+      "memory": null,
+      "value": null,
+      "param": null,
+      "receiver": null,
+      "target": null,
+      "gimmick": null,
+      "power": null,
+      "growth": {
+        "target": "nachia.run.g1",
+        "capBonus": {
+          "valueRef": "nachia.run.m2/growth/capBonus"
+        },
+        "effectPct": {
+          "valueRef": "nachia.run.m2/growth/effectPct"
+        },
+        "doubleGain": false
+      },
+      "stat": null,
+      "options": null,
+      "keystone": null,
+      "mechanisms": [
+        "C01"
+      ],
+      "maxRank": 1,
+      "rankCost": 1,
+      "nameJa": "尽きぬ絆",
+      "nameEn": "Inexhaustible Bonds",
+      "notes": "上限増分はバランス表から生成。 / Cap increase is generated from the balance table."
+    },
+    {
+      "id": "nachia.run.choice",
+      "region": "outer",
+      "cluster": "nachia.outer.run-growth",
+      "shape": "chain",
+      "anchor": null,
+      "edges": [
+        "nachia.run.m2"
+      ],
+      "requires": [
+        "nachia.run.m2"
+      ],
+      "requiresAny": [],
+      "kind": "Choice",
+      "memory": null,
+      "value": null,
+      "param": null,
+      "receiver": null,
+      "target": null,
+      "gimmick": null,
+      "power": null,
+      "stat": null,
+      "options": [
+        {
+          "kind": "RunGrowthMod",
+          "memory": null,
+          "value": null,
+          "param": null,
+          "receiver": null,
+          "target": null,
+          "gimmick": null,
+          "power": null,
+          "growth": {
+            "target": "nachia.run.g1",
+            "capBonus": {
+              "valueRef": "nachia.run.choice/options/0/growth/capBonus"
+            },
+            "effectPct": {
+              "valueRef": "nachia.run.choice/options/0/growth/effectPct"
+            },
+            "doubleGain": false
+          },
+          "stat": null,
+          "nameJa": "深まる絆",
+          "nameEn": "Deepening Bonds"
+        },
+        {
+          "kind": "RunGrowthMod",
+          "memory": null,
+          "value": null,
+          "param": null,
+          "receiver": null,
+          "target": null,
+          "gimmick": null,
+          "power": null,
+          "growth": {
+            "target": "nachia.run.g1",
+            "capBonus": {
+              "valueRef": "nachia.run.choice/options/1/growth/capBonus"
+            },
+            "effectPct": {
+              "valueRef": "nachia.run.choice/options/1/growth/effectPct"
+            },
+            "doubleGain": false
+          },
+          "stat": null,
+          "nameJa": "広がる絆",
+          "nameEn": "Expanding Bonds"
+        }
+      ],
+      "keystone": null,
+      "mechanisms": [
+        "C01"
+      ],
+      "maxRank": 1,
+      "rankCost": 1,
+      "nameJa": "絆の育て方",
+      "nameEn": "How Bonds Grow",
+      "notes": "1スタックの効果 +50% ／ 蓄積上限 +20。 / Stat gain per stack +50% or stack cap +20."
+    },
+    {
       "id": "h.nachia.route.pack-heart.6",
       "region": "migration",
       "kind": "GimmickBoost",
