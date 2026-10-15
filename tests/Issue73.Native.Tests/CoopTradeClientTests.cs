@@ -133,6 +133,16 @@ namespace Issue73.Native.Tests
         {
             var session = Guest();
             session.CoopTrade = new CoopTradeView { Id = "trade-1", Accepted = true, Revision = 3 };
+            var relic = session.Profile.FindStash("own-relic");
+            relic.FusionLevel = 2;
+            string blocked = session.SetCoopTradeOffer(new CoopTradeOffer { RelicUids = new List<string> { relic.Uid } });
+            Assert.Contains("融合", blocked);
+            Assert.Empty(NetworkClient.Sent);
+            Assert.Equal(2, relic.FusionLevel);
+            Assert.Null(Get(session, "_coopPendingOffer"));
+            Set(session, "_coopHostFusion", true);
+            Assert.Contains("融合", session.SetCoopTradeOffer(new CoopTradeOffer { RelicUids = new List<string> { relic.Uid } }));
+            Assert.Empty(NetworkClient.Sent); // 新ホスト配下でも旧版の交換相手には送らない。
             NetworkClient.SendHook = _ => throw new InvalidOperationException("native send failed");
             var offer = new CoopTradeOffer();
 
@@ -288,9 +298,21 @@ namespace Issue73.Native.Tests
         public void Roster_readiness_is_parsed_separately_and_a_legacy_host_without_ready_stays_permissive()
         {
             var session = Guest();
-            DeliverState(session, new DreamforgeCoopTradeState { kind = "roster", hostKey = "host-key",
+            var capability = new DreamforgeBuildInputCapabilityMsg { fusionInput = 1, forbiddenInput = 1 };
+            string capabilityJson = Newtonsoft.Json.JsonConvert.SerializeObject(capability);
+            var oldCapability = Newtonsoft.Json.JsonConvert.DeserializeAnonymousType(capabilityJson, new { version = 0, forbiddenInput = 0 });
+            Assert.Equal(1, oldCapability.version);
+            Assert.Equal(1, oldCapability.forbiddenInput);
+            Assert.Equal(0, Newtonsoft.Json.JsonConvert.DeserializeObject<DreamforgeBuildInputCapabilityMsg>("{\"version\":1}").fusionInput);
+            var commandJson = CoopTradeTransport.Encode(new DreamforgeCoopTradeCommand { action = "probe", safe = true, fusion = true });
+            var oldCommand = Newtonsoft.Json.JsonConvert.DeserializeAnonymousType(commandJson, new { version = 0, action = "", safe = false });
+            Assert.Equal("probe", oldCommand.action);
+            Assert.True(oldCommand.safe);
+            Assert.False(CoopTradeTransport.Decode<DreamforgeCoopTradeCommand>("{\"version\":1,\"action\":\"probe\"}").fusion);
+            DeliverState(session, CoopTradeTransport.Decode<DreamforgeCoopTradeState>(CoopTradeTransport.Encode(
+                new DreamforgeCoopTradeState { kind = "roster", hostKey = "host-key", fusion = true,
                 keys = new[] { "k1", "k2" }, names = new[] { "One", "Two" },
-                available = new[] { true, true }, ready = new[] { true, false } });
+                available = new[] { true, true }, ready = new[] { true, false } })));
             var peers = (List<CoopTradePeer>)Get(session, "_coopPeers");
             Assert.Equal(2, peers.Count);
             Assert.True(peers[0].Available);

@@ -8,6 +8,10 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
+### 不具合の修正 / Bug fixes
+
+- 旧版のホストやプレイヤーとの交換で、融合済み遺物の融合段階が失われる問題を修正しました。対応が確認できない場合は、その遺物の交換を理由付きで拒否します。融合していない遺物や素材の交換は続けられます。 / Prevented Fusion levels from being lost when trading fused relics with older hosts or players. Trading those relics is rejected with an explanation unless Fusion support is confirmed; unfused relic and material trades remain available.
+
 ---
 
 ## v2.10.46 — Relic Fusion fixes: proper Fusion notification and lighter forge screen（2026-10-15）

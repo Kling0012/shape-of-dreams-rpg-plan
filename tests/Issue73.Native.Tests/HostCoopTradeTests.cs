@@ -264,6 +264,32 @@ namespace Issue73.Native.Tests
             Assert.Equal("error", error.kind);
             Assert.Equal("相手は今取引できる状態ではありません（戦闘中・保存中など）", error.status);
             Assert.Null(Get(_host, "_coopHostTrade"));
+            Probe(_b, safe: true);
+            _host.ReceiveCoopTrade(new DreamforgeCoopTradeCommand { action = "probe", safe = true, fusion = true }, _a);
+            _host.ReceiveCoopTrade(new DreamforgeCoopTradeCommand { action = "request", target = "player-b", safe = true }, _a);
+            var view = States(_a).Last(state => state.kind == "view");
+            Assert.False(view.partnerFusion);
+            _host.ReceiveCoopTrade(new DreamforgeCoopTradeCommand { action = "accept", id = view.id, safe = true }, _b);
+            var profile = Profile.CreateNew(17);
+            profile.Run = new RunState { RunId = "run-1", HeroKey = "default" };
+            var fused = Loot.RollRelic(new Rng(17), Rarity.Common, 1);
+            fused.FusionLevel = 3;
+            profile.Stash.Add(fused);
+            SendPayload(_a, "offer", view.id, 0, profile, new CoopTradeOffer { RelicUids = new List<string> { fused.Uid } });
+            Assert.Null(Get(_host, "_coopHostTrade"));
+            Assert.Null(Get(_host, "_coopHostFailure"));
+            Assert.Contains(States(_a), state => state.kind == "cancelled" && state.status.Contains("融合"));
+            Assert.Equal(3, fused.FusionLevel);
+            Assert.True(((CoopTradeJournal)Get(_host, "_coopJournal")).IsCancelled(view.id));
+            _host.ReceiveCoopTrade(new DreamforgeCoopTradeCommand { action = "probe", safe = true, fusion = true }, _b);
+            _host.ReceiveCoopTrade(new DreamforgeCoopTradeCommand { action = "request", target = "player-b", safe = true }, _a);
+            view = States(_a).Last(state => state.kind == "view");
+            Assert.True(view.partnerFusion);
+            _host.ReceiveCoopTrade(new DreamforgeCoopTradeCommand { action = "accept", id = view.id, safe = true }, _b);
+            SendPayload(_a, "offer", view.id, 0, profile, new CoopTradeOffer { RelicUids = new List<string> { fused.Uid } });
+            Assert.NotNull(Get(_host, "_coopHostTrade"));
+            var shown = ProfileCodec.ReadCheckpointProfile(ReceivedText(_b, "profile", view.id));
+            Assert.Equal(3, shown.FindStash(fused.Uid).FusionLevel);
             Assert.Empty(_errors);
         }
 
