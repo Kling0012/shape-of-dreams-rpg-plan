@@ -1,7 +1,7 @@
 # Issue #443 取引の双方確認後の停止：再現調査
 
 調査日：2026-10-15。対象：v2.10.44（調査開始時の HEAD `1b4d111`）。
-報告本文：「双方承認済みから進まない」。コメントはない。
+報告本文：「双方承認済みから進まない」。再開時に本文とコメントを再取得した。2026-10-15 11:18:59 UTC のコメントは「対応を保留しています。」のみで、再現条件の追記はない。
 
 ## 結果
 
@@ -42,6 +42,28 @@ DOTNET_ROLL_FORWARD=LatestMajor dotnet test tests/Issue73.Native.Tests/Issue73.N
 - 接続済みの前提で能力通知の鮮度を供給する。実際の接続確立・Mirrorのシリアライズ・ゲーム描画は検証範囲に含まない。
 
 再現試行の初回にはテスト自身の型指定と接続初期化に不備があり、コンパイル／取引開始前の接続確認で失敗した。これらはハーネスの不備として修正したもので、Issue #443 の再現成功には数えていない。最終の試行で、修正前の製品コードに対する失敗は得られていない。
+
+## 再開セッションでの検証
+
+既存コミット `561cf91` を引き継ぎ、再現テストを作り直さず次の限定検証を実行した。製品コードは引き続き未変更。
+
+```sh
+DOTNET_ROLL_FORWARD=LatestMajor dotnet test tests/Issue73.Native.Tests/Issue73.Native.Tests.csproj -c Release --filter 'FullyQualifiedName~Issue443TradeCompletionTests|FullyQualifiedName~HostCoopTradeTests|FullyQualifiedName~CoopTradeClientTests|FullyQualifiedName~Issue400TradeAbortTests|FullyQualifiedName~TradeSendExceptionTests|FullyQualifiedName~CoopTradeSafeTests' --logger 'console;verbosity=normal' --logger 'trx;LogFileName=issue443-resumed-native.trx' --results-directory /tmp/issue443-resumed-results
+DOTNET_ROLL_FORWARD=LatestMajor dotnet test tests/Issue73.Native.Tests/Issue73.Native.Tests.csproj -c Release --no-build --filter 'FullyQualifiedName~Issue400HostTradeIdleAbortTests|FullyQualifiedName~Issue400ClientTradeTransientAbortTests' --logger 'console;verbosity=normal' --logger 'trx;LogFileName=issue443-resumed-issue400.trx' --results-directory /tmp/issue443-resumed-results
+DOTNET_ROLL_FORWARD=LatestMajor dotnet test tests/SodRpg.Core.Tests/SodRpg.Core.Tests.csproj -c Release --filter 'FullyQualifiedName~SodRpg.Core.Tests.CoopTradeTests|FullyQualifiedName~SodRpg.Core.Tests.CoopTradeMigrationTests|FullyQualifiedName~SodRpg.Core.Tests.TradeStuckPending389Tests' --logger 'console;verbosity=normal' --logger 'trx;LogFileName=issue443-resumed-core.trx' --results-directory /tmp/issue443-resumed-results
+```
+
+| 実行 | 終了コード | 成功 | 失敗 | TRX |
+| --- | --- | --- | --- | --- |
+| 再現8条件＋ホスト・クライアント・送信例外・安全判定 | 0 | 24 | 0 | `/tmp/issue443-resumed-results/issue443-resumed-native.trx` |
+| #400 の承諾後の待機・一時的な保存処理 | 0 | 2 | 0 | `/tmp/issue443-resumed-results/issue443-resumed-issue400.trx` |
+| 協力交換の保存整合・移行、#389 の予約停止 | 0 | 44 | 0 | `/tmp/issue443-resumed-results/issue443-resumed-core.trx` |
+
+合計70件（再現試行8件・既存62件）が成功、失敗0・未実行扱い0。最初のフィルタに含めた `Issue400TradeAbortTests` はファイル名で、実際のクラス名には一致しないため、2行目で正しいクラス名を指定して2件を明示的に実行した。ビルド時は既存の未使用フィールド等の警告が出たが、コンパイルエラーはない。
+
+受け付け審査の一括性・保存整合の懸念には、既存テストの保存失敗ロールバック、ジャーナル書込み中断、二重反映防止、成立後の遅延取消、旧保存形式からの復旧を実行して確認した。これらが成功しても、実通信で発生した報告事象の安全性を証明したことにはならない。版・役割・交換品・発生場所・ログ不足は未解決のまま記録し、推測修正は行わない。
+
+再開指示にある診断ログ追加・リリースは、この依頼の「再現工程で修正しない」「push・公開をしない」という範囲に従い未実施。次工程へ渡す結果ファイルを `NOT_REPRODUCED` で確定する。
 
 ## 判断したこと
 
