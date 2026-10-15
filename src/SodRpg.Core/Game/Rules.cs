@@ -2037,7 +2037,7 @@ namespace SodRpg.Core.Game
                 n += (long)Math.Max(0, kv.Value) * (Content.TryGetTalent(kv.Key, out var t) ? t.RankCost : 1);
             foreach (string keystone in h.Keystones)
                 if (keystone != null)
-                    n += Content.TryGetTalent(keystone, out var key) ? key.KeystoneDefinition?.Cost ?? Content.KeystoneCost : Content.KeystoneCost;
+                    n += Content.TryGetTalent(keystone, out var key) ? key.KeystoneCost : Content.KeystoneCost;
             return (int)Math.Min(int.MaxValue, n);
         }
 

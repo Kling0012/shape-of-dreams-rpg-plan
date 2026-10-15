@@ -162,6 +162,8 @@ def gimmick_fields(g, prefix):
         yield g, "cooldown", prefix + "/cooldown", "float"
     if effect in ("Ricochet", "Reload"):
         yield g, "arg", prefix + "/arg", "int"
+    if effect == "Primed" and g.get("arg") != 0:
+        yield g, "arg", prefix + "/arg", "float"
     if "everyN" in g:
         yield g, "everyN", prefix + "/everyN", "int"
     for i in range(len(g.get("valuesByRank", []))):

@@ -29381,6 +29381,101 @@
       "nameJa": "星の盾",
       "nameEn": "Stellar Ward",
       "notes": "設計表C：既存IDとPowerを維持。旧Power.StarShield20を同IDで15へ明示移行（最大HPの15%、C06普通障壁プール1枚、本体の別障壁は制限しない）。代償は #47 で撤廃。機構K=C07。"
+    },
+    {
+      "id": "yubar.key.supernova-afterglow",
+      "region": "keystone",
+      "cluster": "yubar.key",
+      "shape": null,
+      "anchor": "yubar.mem.supernova.c2.x",
+      "edges": [],
+      "requires": [
+        "yubar.mem.supernova.c2.x"
+      ],
+      "requiresAny": [],
+      "kind": "Keystone",
+      "memory": "St_D_ExoticMatter",
+      "value": null,
+      "param": null,
+      "receiver": null,
+      "target": null,
+      "gimmick": null,
+      "power": null,
+      "stat": null,
+      "options": null,
+      "keystone": {
+        "upside": "超新星を使用すると、8秒以内の次の通常攻撃1回に攻撃力と魔力の高い方の25%を上乗せする。",
+        "upsideSpec": [
+          {
+            "memory": "St_Q_SuperNova",
+            "effect": "Primed",
+            "field": "Grant",
+            "gimmick": {
+              "trigger": "OnUse",
+              "effect": "Primed",
+              "value": {
+                "valueRef": "yubar.key.supernova-afterglow/keystone/upsideSpec/0/gimmick/value"
+              },
+              "arg": {
+                "valueRef": "yubar.key.supernova-afterglow/keystone/upsideSpec/0/gimmick/arg"
+              },
+              "cooldown": {
+                "valueRef": "yubar.key.supernova-afterglow/keystone/upsideSpec/0/gimmick/cooldown"
+              },
+              "target": null
+            }
+          }
+        ]
+      },
+      "mechanisms": [
+        "C01",
+        "C02",
+        "C09"
+      ],
+      "maxRank": 1,
+      "rankCost": 1,
+      "nameJa": "超新星の残光",
+      "nameEn": "Afterglow of the Supernova",
+      "notes": "MemoryPrimedを使用。8秒間の全命中追撃と魔力だけの基準は既存kindにないため、次の通常攻撃1回・攻撃力/魔力の高い方25%へ近似。本体ではSuperNovaは通常記憶で、奥義はCataclysm。指定名の超新星を起点とする。"
+    },
+    {
+      "id": "yubar.key.unstable-orbit",
+      "region": "keystone",
+      "cluster": "yubar.key",
+      "shape": null,
+      "anchor": "yubar.mem.converging-stars.c2.x",
+      "edges": [],
+      "requires": [
+        "yubar.mem.converging-stars.c2.x"
+      ],
+      "requiresAny": [],
+      "kind": "Keystone",
+      "memory": "St_D_ExoticMatter",
+      "value": null,
+      "param": null,
+      "receiver": null,
+      "target": null,
+      "gimmick": null,
+      "power": null,
+      "stat": {
+        "name": "Haste",
+        "perRank": {
+          "valueRef": "yubar.key.unstable-orbit/stat/perRank"
+        }
+      },
+      "options": null,
+      "keystone": {
+        "upside": "スキル加速が15増え、記憶のクールダウン回復が速くなる。",
+        "upsideSpec": null
+      },
+      "mechanisms": [
+        "C07"
+      ],
+      "maxRank": 1,
+      "rankCost": 1,
+      "nameJa": "不安定な軌道",
+      "nameEn": "Unstable Orbit",
+      "notes": "通常攻撃4命中ごとの次の記憶の固定1秒短縮は既存kindにないため、常時スキル加速+15へ置換。通常攻撃頻度と記憶CDに依存するため価値は近似。"
     }
   ]
 }

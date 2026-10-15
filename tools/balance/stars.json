@@ -7396,7 +7396,16 @@
     "legacy/h.bismuth.ring.recall/pair/valuesByRank/2": 4,
     "legacy/h.bismuth.ring.rhythm/pair/valuesByRank/0": 3,
     "legacy/h.bismuth.ring.rhythm/pair/valuesByRank/1": 5,
-    "legacy/h.bismuth.ring.rhythm/pair/valuesByRank/2": 7
+    "legacy/h.bismuth.ring.rhythm/pair/valuesByRank/2": 7,
+    "aurena.key.golden-afterglow/stat/perRank": 40,
+    "aurena.key.reaction-pulse/stat/perRank": 12,
+    "nachia.key.oath-of-the-pack/stat/perRank": 10,
+    "nachia.key.oath-of-the-pack/keystone/upsideSpec/0/pct": 12,
+    "nachia.key.heartbeat-of-the-grove/stat/perRank": 18,
+    "yubar.key.supernova-afterglow/keystone/upsideSpec/0/gimmick/value": 25,
+    "yubar.key.supernova-afterglow/keystone/upsideSpec/0/gimmick/arg": 8,
+    "yubar.key.supernova-afterglow/keystone/upsideSpec/0/gimmick/cooldown": 0,
+    "yubar.key.unstable-orbit/stat/perRank": 15
   },
   "rankScaling": {
     "damageGain": 1.5,

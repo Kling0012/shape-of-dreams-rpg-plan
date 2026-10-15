@@ -151,7 +151,7 @@ namespace SodRpg.Core.Tests
         private Played Play(string hero) => installed.Play(hero);
 
         [Fact]
-        public void All_82_generated_keystones_have_no_damage_or_wound_penalties_and_no_drawback_descriptions()
+        public void All_88_generated_keystones_have_no_damage_or_wound_penalties_and_no_drawback_descriptions()
         {
             int count = 0;
             bool previous = Loc.Japanese;
@@ -164,26 +164,29 @@ namespace SodRpg.Core.Tests
                         {
                             count++;
                             var key = star.KeystoneDefinition;
-                            Assert.NotNull(key);
-                            Assert.All(key.Upside.Where(t => t.Operation == KeystoneOperation.Scale),
-                                t => Assert.True(t.MagnitudeUnits.Percent >= 0, star.Id + " contains a percentage penalty"));
-                            var build = new Build { SelectedKeystone = key };
-                            var sources = tree.Select(t => t.RouteMemory)
-                                .Concat(key.RequiredMemories)
-                                .Concat(key.Upside.SelectMany(t => t.Scope.TargetMemorySet))
-                                .Append("St_C_GlacialStomp")
-                                .Where(m => m != null && !m.StartsWith("St_M_", StringComparison.Ordinal))
-                                .Distinct(StringComparer.Ordinal);
-                            foreach (string source in sources)
+                            Assert.True(key != null || star.PerRank > 0, star.Id + " has no typed or stat upside");
+                            if (key != null)
                             {
-                                var damage = new KeystonePayload(KeystoneLayer.NativeDamage, 100, new KeystoneCaps(1000));
-                                Assert.True(AuthoredKeystoneComposer.TransformAllocationPayload(build, damage, source,
-                                    heroKey: hero).Value >= damage.Value, star.Id + " penalizes " + source);
-                                var wound = new KeystonePayload(KeystoneLayer.ModEffect, 10, new KeystoneCaps(120, 60),
-                                    KeystonePayloadKind.Gimmick, GimmickEffect.Wound, durationSeconds: 3);
-                                var result = AuthoredKeystoneComposer.TransformAllocationPayload(build, wound, source, heroKey: hero);
-                                Assert.True(result.Value >= wound.Value && result.DurationSeconds >= wound.DurationSeconds,
-                                    star.Id + " disables or weakens Wound for " + source);
+                                Assert.All(key.Upside.Where(t => t.Operation == KeystoneOperation.Scale),
+                                    t => Assert.True(t.MagnitudeUnits.Percent >= 0, star.Id + " contains a percentage penalty"));
+                                var build = new Build { SelectedKeystone = key };
+                                var sources = tree.Select(t => t.RouteMemory)
+                                    .Concat(key.RequiredMemories)
+                                    .Concat(key.Upside.SelectMany(t => t.Scope.TargetMemorySet))
+                                    .Append("St_C_GlacialStomp")
+                                    .Where(m => m != null && !m.StartsWith("St_M_", StringComparison.Ordinal))
+                                    .Distinct(StringComparer.Ordinal);
+                                foreach (string source in sources)
+                                {
+                                    var damage = new KeystonePayload(KeystoneLayer.NativeDamage, 100, new KeystoneCaps(1000));
+                                    Assert.True(AuthoredKeystoneComposer.TransformAllocationPayload(build, damage, source,
+                                        heroKey: hero).Value >= damage.Value, star.Id + " penalizes " + source);
+                                    var wound = new KeystonePayload(KeystoneLayer.ModEffect, 10, new KeystoneCaps(120, 60),
+                                        KeystonePayloadKind.Gimmick, GimmickEffect.Wound, durationSeconds: 3);
+                                    var result = AuthoredKeystoneComposer.TransformAllocationPayload(build, wound, source, heroKey: hero);
+                                    Assert.True(result.Value >= wound.Value && result.DurationSeconds >= wound.DurationSeconds,
+                                        star.Id + " disables or weakens Wound for " + source);
+                                }
                             }
                             foreach (bool japanese in new[] { true, false })
                             {
@@ -194,7 +197,7 @@ namespace SodRpg.Core.Tests
                             }
                         }
                     });
-                Assert.Equal(82, count);
+                Assert.Equal(88, count);
             }
             finally { Loc.Japanese = previous; }
         }
@@ -310,7 +313,7 @@ namespace SodRpg.Core.Tests
             for (int i = 0; i < Content.MaxCodexBonus * Content.CodexPerPoint; i++) profile.Codex.Add("acceptance.codex." + i);
             Assert.Equal(StarProgression.MaxSpendablePoints, profile.TalentPoints(hero));
             var layout = HeroTreeLayout.ForHero(hero);
-            int KeyCost(HeroTreeNode node) => node.Talent.KeystoneDefinition?.Cost ?? Content.KeystoneCost;
+            int KeyCost(HeroTreeNode node) => node.Talent.KeystoneCost;
             int slots = KeystoneSlots.CountFor(StarProgression.MaxPoints);
             // 最大ポイントでは枠が3つ。そのぶんの費用を最初に確保しておく。
             int reserve = layout.Nodes.Where(n => n.Talent != null && n.Talent.IsKeystone).Select(KeyCost).OrderBy(cost => cost).Take(slots).Sum();
@@ -341,7 +344,7 @@ namespace SodRpg.Core.Tests
                     foreach (var refund in plan.Refunds)
                         Assert.True((state.Talents.TryGetValue(refund.StarId, out int refunded) ? refunded : 0) == held[refund.StarId] - refund.Ranks,
                             refund.StarId + " kept ranks the approved refund was supposed to return");
-                    Assert.Equal(spentBefore - plan.RefundCost + (node.Talent.KeystoneDefinition?.Cost ?? Content.KeystoneCost),
+                    Assert.Equal(spentBefore - plan.RefundCost + (node.Talent.KeystoneCost),
                         Rules.SpentPoints(state, hero));
                     keystones.Add(node.Id);
                 }

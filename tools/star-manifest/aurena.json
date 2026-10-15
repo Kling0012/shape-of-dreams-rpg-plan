@@ -23074,6 +23074,84 @@
       "nameJa": "満ちた聖杯",
       "nameEn": "Brimming Chalice",
       "notes": "既存IDの再設計K2(AU6/C11、核位置不変、1段)。旧OverflowingLifeの高HP/超過回復前提を除去。犠牲0なら発生0で、別の効果には置き換えない。"
+    },
+    {
+      "id": "aurena.key.golden-afterglow",
+      "region": "keystone",
+      "cluster": "aurena.key",
+      "shape": null,
+      "anchor": "aurena.mem.golden-burst.c4.q",
+      "edges": [],
+      "requires": [
+        "aurena.mem.golden-burst.c4.q"
+      ],
+      "requiresAny": [],
+      "kind": "Keystone",
+      "memory": null,
+      "value": null,
+      "param": null,
+      "receiver": null,
+      "target": null,
+      "gimmick": null,
+      "power": null,
+      "stat": {
+        "name": "ShieldPower",
+        "perRank": {
+          "valueRef": "aurena.key.golden-afterglow/stat/perRank"
+        }
+      },
+      "options": null,
+      "keystone": {
+        "upside": "自分が与える障壁の量が40%増える。",
+        "upsideSpec": null
+      },
+      "mechanisms": [
+        "C07"
+      ],
+      "maxRank": 1,
+      "rankCost": 1,
+      "nameJa": "黄金の余熱",
+      "nameEn": "Golden Afterglow",
+      "notes": "指定の超過回復40%変換・対象最大HP15%上限・8秒は既存kindでは表現できないため、常時の障壁量+40%へ置換。"
+    },
+    {
+      "id": "aurena.key.reaction-pulse",
+      "region": "keystone",
+      "cluster": "aurena.key",
+      "shape": null,
+      "anchor": "aurena.mem.chain-reaction.c1.q",
+      "edges": [],
+      "requires": [
+        "aurena.mem.chain-reaction.c1.q"
+      ],
+      "requiresAny": [],
+      "kind": "Keystone",
+      "memory": null,
+      "value": null,
+      "param": null,
+      "receiver": null,
+      "target": null,
+      "gimmick": null,
+      "power": null,
+      "stat": {
+        "name": "Haste",
+        "perRank": {
+          "valueRef": "aurena.key.reaction-pulse/stat/perRank"
+        }
+      },
+      "options": null,
+      "keystone": {
+        "upside": "スキル加速が12増え、記憶のクールダウン回復が速くなる。",
+        "upsideSpec": null
+      },
+      "mechanisms": [
+        "C07"
+      ],
+      "maxRank": 1,
+      "rankCost": 1,
+      "nameJa": "連鎖の鼓動",
+      "nameEn": "Reaction Pulse",
+      "notes": "元素反応による加速+6・4秒・3スタックは既存kindにないため、常時スキル加速+12へ置換。最大18の約2/3稼働相当を目安とした。"
     }
   ]
 }

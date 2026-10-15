@@ -104,13 +104,28 @@ namespace SodRpg.Core.Game
             {
                 var key = star.KeystoneDefinition;
                 if (key.Cost <= 0) throw new InvalidOperationException("Invalid keystone cost: " + star.Id);
-                return KeystoneSections(DescribeKeySide(key), key.Cost);
+                string combinedBenefit = DescribeKeySide(key);
+                if (star.PerRank > 0) combinedBenefit = DescribeKeystoneStat(star) + NL + combinedBenefit;
+                return KeystoneSections(combinedBenefit, star.KeystoneCost);
             }
             if (!star.IsKeystone) throw new InvalidOperationException("Not a keystone: " + star.Id);
+            if (star.PerRank > 0) return KeystoneSections(DescribeKeystoneStat(star), star.KeystoneCost);
             // 旧来の刻印：効果の本文がPowerの説明。
             string benefit = Content.FormatPower(star.Power, star.PowerValue);
             if (star.Description != null && !string.IsNullOrWhiteSpace(star.Description.ToString())) benefit += NL + star.Description;
             return KeystoneSections(benefit, Content.KeystoneCost);
+        }
+
+        private static string DescribeKeystoneStat(TalentDef star)
+        {
+            switch (star.Stat)
+            {
+                case Stat.ShieldPower: return Loc.T($"自分が与える障壁の量が{star.PerRank}%増える。", $"Increases shields you grant by {star.PerRank}%.");
+                case Stat.Haste: return Loc.T($"スキル加速が{star.PerRank}増え、記憶のクールダウン回復が速くなる。", $"Gain {star.PerRank} ability haste, speeding up memory cooldown recovery.");
+                case Stat.Armor: return Loc.T($"自分の防御が{star.PerRank}増える。", $"Gain {star.PerRank} armor.");
+                case Stat.SummonPower: return Loc.T($"自分の召喚体が与えるダメージが{star.PerRank}%増える。", $"Your summons deal {star.PerRank}% more damage.");
+                default: return Content.FormatStat(star.Stat, star.PerRank);
+            }
         }
 
         /// <summary>効果・必要ポイントを組み立てる。</summary>

@@ -22426,6 +22426,92 @@
       "nameJa": "祈りの過負荷",
       "nameEn": "Overflowing Prayer",
       "notes": "既存星の効果置換（星の追加ではない）。既存Overloadを維持（代償は #47 で撤廃）。N5。移動は起点から除外。"
+    },
+    {
+      "id": "nachia.key.oath-of-the-pack",
+      "region": "keystone",
+      "cluster": "nachia.key",
+      "shape": null,
+      "anchor": "nachia.mem.sylvan-call.c1.q",
+      "edges": [],
+      "requires": [
+        "nachia.mem.sylvan-call.c1.q"
+      ],
+      "requiresAny": [],
+      "kind": "Keystone",
+      "memory": null,
+      "value": null,
+      "param": null,
+      "receiver": null,
+      "target": null,
+      "gimmick": null,
+      "power": null,
+      "stat": {
+        "name": "Armor",
+        "perRank": {
+          "valueRef": "nachia.key.oath-of-the-pack/stat/perRank"
+        }
+      },
+      "options": null,
+      "keystone": {
+        "upside": "自分の防御が10増え、自分の召喚体が与える本体ダメージが12%増える。",
+        "upsideSpec": [
+          {
+            "effect": "SummonDirectDamage",
+            "field": "Damage",
+            "pct": {
+              "valueRef": "nachia.key.oath-of-the-pack/keystone/upsideSpec/0/pct"
+            }
+          }
+        ]
+      },
+      "mechanisms": [
+        "C07"
+      ],
+      "maxRank": 1,
+      "rankCost": 1,
+      "nameJa": "群れの誓い",
+      "nameEn": "Oath of the Pack",
+      "notes": "召喚体の存在条件と召喚体への防御付与は既存kindにないため、常時の自分の防御+10と既存SummonDirectDamage+12%へ置換。本体のCircleOfLifeによる共有は本体仕様に従う。"
+    },
+    {
+      "id": "nachia.key.heartbeat-of-the-grove",
+      "region": "keystone",
+      "cluster": "nachia.key",
+      "shape": null,
+      "anchor": "nachia.mem.circle-life.c1.q",
+      "edges": [],
+      "requires": [
+        "nachia.mem.circle-life.c1.q"
+      ],
+      "requiresAny": [],
+      "kind": "Keystone",
+      "memory": null,
+      "value": null,
+      "param": null,
+      "receiver": null,
+      "target": null,
+      "gimmick": null,
+      "power": null,
+      "stat": {
+        "name": "SummonPower",
+        "perRank": {
+          "valueRef": "nachia.key.heartbeat-of-the-grove/stat/perRank"
+        }
+      },
+      "options": null,
+      "keystone": {
+        "upside": "自分の召喚体が与えるダメージが18%増える。",
+        "upsideSpec": null
+      },
+      "mechanisms": [
+        "C07"
+      ],
+      "maxRank": 1,
+      "rankCost": 1,
+      "nameJa": "森の鼓動",
+      "nameEn": "Heartbeat of the Grove",
+      "notes": "本人の全撃破を起点とする召喚体回復・召喚体攻速バフは既存kindでは表現できないため、常時召喚威力+18%へ置換。撃破頻度に依存しない支援量として採用。"
     }
   ]
 }

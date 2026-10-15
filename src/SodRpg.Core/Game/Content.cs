@@ -333,6 +333,13 @@ namespace SodRpg.Core.Game
             Description = description;
         }
 
+        public TalentDef(string id, Line route, Txt name, Stat stat, int value, Txt description)
+            : this(id, route, name, stat, value, 1)
+        {
+            IsKeystone = true;
+            Description = description;
+        }
+
         public string Id { get; }
         public Line Route { get; }
         public Txt Name { get; }
@@ -378,6 +385,8 @@ namespace SodRpg.Core.Game
         /// <summary>1段に要るポイント（ふつうは1。連装・四の型のように強い星だけ高い）。</summary>
         public int RankCost { get; set; } = 1;
         public bool IsKeystone { get; }
+        public int KeystoneCost => KeystoneDefinition?.Cost
+            ?? (IsKeystone && PerRank > 0 ? RankCost : Content.KeystoneCost);
         public Power Power { get; }
         public int PowerValue { get; }
         public Txt Description { get; }

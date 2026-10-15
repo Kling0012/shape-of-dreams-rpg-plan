@@ -168,7 +168,7 @@ namespace SodRpg.Core.Game
                 }
                 return choices;
             }
-            var output = new NodeOutput { Cost = talent.KeystoneDefinition?.Cost ?? cost, IsKeystone = talent.IsKeystone };
+            var output = new NodeOutput { Cost = talent.IsKeystone ? talent.KeystoneCost : cost, IsKeystone = talent.IsKeystone };
             int MechanismChars(AuthoredMechanismSpec spec)
             {
                 var entry = new AuthoredMechanismEntry { StarId = talent.Id, ContributorIds = new[] { talent.Id }, Spec = spec };

@@ -451,7 +451,10 @@ class Compiler:
         elif e == "Primed":
             if not source or source.startswith("@"):
                 self.fail(sid, "memory", source, "MemoryPrimedDefinition requires one verified exact source memory")
-            members.update(Kind="AuthoredMechanismKind.MemoryPrimed", Primed="new MemoryPrimedDefinition(" + cs(sid) + ", " + cs(source) + ", MemoryEventKind." + trigger + ", " + units(g["value"]) + ", budget: AttributionBudget." + budget + ")")
+            duration = number(g["arg"])
+            if duration < 0 or duration > 10:
+                self.fail(sid, prefix + ".arg", g["arg"], "Primed duration must be 0 (default 5 seconds) or at most 10 seconds")
+            members.update(Kind="AuthoredMechanismKind.MemoryPrimed", Primed="new MemoryPrimedDefinition(" + cs(sid) + ", " + cs(source) + ", MemoryEventKind." + trigger + ", " + units(g["value"]) + (", durationSeconds: " + dec(duration)[:-1] + "f" if duration > 0 else "") + ", budget: AttributionBudget." + budget + ")")
         elif e == "RelayWindow":
             target = g.get("target")
             if source != "St_R_Tranquility" or not target or target.startswith("@"):
@@ -751,6 +754,8 @@ class Compiler:
             if baseline is None or "Power." + baseline[0] not in key["upside"]:
                 self.fail(sid, "keystone.upside", key["upside"], "retained-Power key does not name its baseline Power " + display_value(baseline))
                 return None
+        if row.get("stat") and key["upsideSpec"] is None:
+            return None
         if key["upsideSpec"] is None and not retained:
             self.fail(sid, "keystone.upsideSpec", None,
                       "prose-only key requires an explicit design-to-typed translation; no translation for this ID")
@@ -925,6 +930,11 @@ class Compiler:
                 self.fail(sid, option_path + "stat.name", stat["name"], "no concrete Stat enum member")
             members.update(Stat="Stat." + stat["name"], Amount=whole(stat["perRank"]))
         elif kind == "Keystone":
+            if row.get("stat"):
+                stat = row["stat"]
+                if stat["name"] not in self.stats or number(stat["perRank"]) <= 0:
+                    self.fail(sid, option_path + "stat", stat, "stat keystones require a defined stat and positive whole amount")
+                members.update(Stat="Stat." + stat["name"], Amount=whole(stat["perRank"]))
             expression = self.keystone(sid, row)
             if expression:
                 members["KeystoneDefinition"] = expression
