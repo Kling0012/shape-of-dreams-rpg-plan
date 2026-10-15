@@ -8,9 +8,25 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
+---
+
+## v2.10.45 — Relic Fusion added to the forge（2026-10-15）
+
+このバージョンでは、鍛冶に遺物を融合して強化する機能を追加しました。 / This version adds relic Fusion to the forge, letting you strengthen relics by fusing them.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
 ### 新機能 / New features
 
-- 鍛冶に「融合」を追加しました。同じ名前・同じレア度の遺物を1つ材料にして、能力値を1段ごとに6%（最大5段・30%）上げられます。 / Added Fusion to the forge: consume a relic with the same name and rarity to raise a relic's stats by 6% per level (up to 5 levels, 30%).
+- 鍛冶で遺物を融合できるようになりました。同じ名前で同じレア度の遺物を1個素材にすると融合段階が1つ上がり、最大5段まで重ねられます。段階が上がるたびに能力値が上がります。遺物の固有効果は変わりません。 / You can now fuse relics at the forge. Using one relic with the same name and rarity as material raises its Fusion level by one, up to 5 levels. Each level raises the relic's stats, while its unique effect stays the same.
+- 融合には欠片が必要で、固有品の遺物では調律石も必要です。鍛冶画面には融合できる候補、必要な素材、融合の前後で能力値がどれだけ上がるかが表示されます。素材を誤って使わないよう、融合ボタンは2回押して確定します。 / Fusion costs shards, and unique relics also need a Tuning Stone. The forge screen shows which relics can be fused, the required materials, and how much the stats rise from before to after Fusion. To prevent accidental use of materials, you press the Fusion button twice to confirm.
+- 融合段階はセーブデータに保存され、協力プレイでの取引でも引き継がれます。融合済みの遺物を協力プレイで交換するときは、参加者全員がこのバージョンに更新してください。 / Fusion levels are kept in your save data and carry over through co-op trades. When trading fused relics in co-op, make sure everyone has updated to this version.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
 
 ---
 
