@@ -29,7 +29,7 @@ DOTNET_ROLL_FORWARD=Major dotnet test tests/SodRpg.Core.Tests/SodRpg.Core.Tests.
   -p:GameDir='/mnt/ghauto-sbx/sod-gamedata/Shape of Dreams'
 ```
 
-2026-10-16のサンドボックスで上記コマンドを実行し、次の結果を確認した。
+2026-10-16のサンドボックスで上記コマンドを実行し、次の結果を確認した（終了コード1）。同一日の再現工程（別サンドボックス、ai/issue-457 ブランチ）で再実行しても同じ2件の失敗と終了コード1を確認した。前回作業ブランチ（ai/wip-issue-457）はこのサンドボックスから参照できないため、基本スナップショットに含まれる再現テストと本記録を用いて再検証した。
 
 ```text
 Masterwork_flurry_can_activate_in_a_legal_Mist_loadout [FAIL]
