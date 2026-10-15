@@ -14,6 +14,7 @@ namespace SodRpg.Core.Game
                 || source.Rarity < Rarity.Common || source.Rarity > Rarity.Legendary
                 || source.ItemLevel < 1 || source.ItemLevel > Content.MaxItemLevel
                 || source.LimitBreaks < 0 || source.LimitBreaks > Content.MaxLimitBreaks(source.Rarity)
+                || source.FusionLevel < 0 || source.FusionLevel > Fusion.MaxLevel
                 || source.Enhance < 0 || source.Enhance > Content.MaxEnhanceFor(source)
                 || source.Retunes < 0 || source.Retunes > Forbidden.RetuneCeiling(source)
                 || source.EnhanceMilestones < 0 || source.EnhanceMilestones > Content.MaxEnhanceMilestones
@@ -79,6 +80,7 @@ namespace SodRpg.Core.Game
                 ItemLevel = source.ItemLevel,
                 Enhance = source.Enhance,
                 LimitBreaks = source.LimitBreaks,
+                FusionLevel = source.FusionLevel,
                 Retunes = source.Retunes,
                 Locked = source.Locked,
                 DeveloperGranted = source.DeveloperGranted,

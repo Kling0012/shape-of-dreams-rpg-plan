@@ -13,6 +13,7 @@ namespace SodRpg.Core.Tests
         {
             var relic = Loot.RollRelic(new Rng(17), Rarity.Common, 1);
             relic.Uid = uid;
+            relic.FusionLevel = 3;
             return relic;
         }
 

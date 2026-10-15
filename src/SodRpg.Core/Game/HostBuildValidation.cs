@@ -65,8 +65,11 @@ namespace SodRpg.Core.Game
                     if (!lineFirst) sb.Append('+'); lineFirst = false;
                     sb.Append((int)line.Power).Append('=').Append(line.Value);
                 }
-                // 禁忌化（#415）した遺物だけ15番目の欄を足す。
-                if (relic.Forbidden != null) sb.Append(':').Append(relic.Forbidden.Encode());
+                // 禁忌は15番目、融合は16番目。未使用の遺物は従来の14欄を保つ。
+                // 禁忌なし・融合ありは「…:<powers>::<fusion>」。fields[14] == "" を残し、
+                // 読み側が fields[15] を融合として読む。空欄を詰めると禁忌として誤読する。
+                if (relic.Forbidden != null || relic.FusionLevel > 0) sb.Append(':').Append(relic.Forbidden?.Encode());
+                if (relic.FusionLevel > 0) sb.Append(':').Append(relic.FusionLevel);
             }
             sb.Append(";P:"); first = true;
             if (pacts != null) foreach (var pact in pacts)
@@ -234,7 +237,7 @@ namespace SodRpg.Core.Game
                         foreach (string entry in Entries(body, Content.SlotCount))
                         {
                             var fields = entry.Split(':');
-                            if (fields.Length != 14 && fields.Length != 15) throw new FormatException();
+                            if (fields.Length < 14 || fields.Length > 16) throw new FormatException();
                             int slot = Range(fields[0], 0, Content.SlotCount - 1);
                             Token(fields[1]); Token(fields[2]);
                             if (fields[3].Length > 0) Token(fields[3]);
@@ -260,11 +263,12 @@ namespace SodRpg.Core.Game
                                 var pair = line.Split('='); if (pair.Length != 2) throw new FormatException();
                                 relic.Powers.Add(new PowerLine((Power)Int(pair[0]), Int(pair[1])));
                             }
-                            if (fields.Length == 15)
+                            if (fields.Length >= 15)
                             {
-                                if (fields[14].Length == 0) throw new FormatException();
-                                relic.Forbidden = ForbiddenMark.Decode(fields[14]);
+                                if (fields[14].Length > 0) relic.Forbidden = ForbiddenMark.Decode(fields[14]);
+                                else if (fields.Length == 15) throw new FormatException();
                             }
+                            if (fields.Length == 16) relic.FusionLevel = Range(fields[15], 1, Fusion.MaxLevel);
                             if (!HostGearValidation.TryValidate(relic, out var gear) || (int)gear.Slot != slot)
                                 throw new FormatException();
                             input.Profile.Stash.Add(gear);

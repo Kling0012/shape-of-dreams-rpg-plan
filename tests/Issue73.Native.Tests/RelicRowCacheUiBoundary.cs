@@ -15,9 +15,11 @@ namespace SodRpg.Mod
         private readonly Dictionary<float, List<Relic>> _sortedCache = new Dictionary<float, List<Relic>>();
         private readonly Dictionary<float, string> _sortedKey = new Dictionary<float, string>();
         private float _sortedUntil;
+        private readonly List<int> _fusionStashLevels = new List<int>();
         private readonly Dictionary<float, List<string>> _rowCache = new Dictionary<float, List<string>>();
         private readonly Dictionary<float, List<Relic>> _rowCacheFor = new Dictionary<float, List<Relic>>();
         private readonly Dictionary<float, string> _rowCacheKey = new Dictionary<float, string>();
+        private readonly Dictionary<float, List<int>> _rowFusionLevels = new Dictionary<float, List<int>>();
         private readonly HashSet<string> _seenUids = new HashSet<string>();
         private bool _seenInit;
 

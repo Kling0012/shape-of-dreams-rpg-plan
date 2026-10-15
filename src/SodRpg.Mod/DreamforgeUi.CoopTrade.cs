@@ -40,7 +40,7 @@ namespace SodRpg.Mod
         private sealed class TradeRelicText
         {
             public string Uid, BaseId, UniqueId, NamedId, Name, Title, SelectedTitle, IdleTitle, Details;
-            public int Enhance, Level, Awakening, LimitBreaks;
+            public int Enhance, Level, Awakening, LimitBreaks, FusionLevel;
             public SodRpg.Core.Game.Rarity Rarity;
             public Slot Slot;
             public bool Japanese;
@@ -51,7 +51,7 @@ namespace SodRpg.Mod
             {
                 if (BaseId != r.BaseId || UniqueId != r.UniqueId || NamedId != r.NamedId
                     || Enhance != r.Enhance || Level != r.ItemLevel || Awakening != r.AwakenLevel
-                    || LimitBreaks != r.LimitBreaks || Rarity != r.Rarity || Japanese != Loc.Japanese
+                    || LimitBreaks != r.LimitBreaks || FusionLevel != r.FusionLevel || Rarity != r.Rarity || Japanese != Loc.Japanese
                     || Affixes.Length != r.Affixes.Count || Powers.Length != r.Powers.Count) return false;
                 for (int i = 0; i < Affixes.Length; i++) if (Affixes[i] != r.Affixes[i]) return false;
                 for (int i = 0; i < Powers.Length; i++) if (Powers[i] != r.Powers[i]) return false;
@@ -66,7 +66,7 @@ namespace SodRpg.Mod
             {
                 Uid = r.Uid, BaseId = r.BaseId, UniqueId = r.UniqueId, NamedId = r.NamedId,
                 Enhance = r.Enhance, Level = r.ItemLevel, Awakening = r.AwakenLevel,
-                LimitBreaks = r.LimitBreaks, Rarity = r.Rarity, Slot = r.Slot, Japanese = Loc.Japanese,
+                LimitBreaks = r.LimitBreaks, FusionLevel = r.FusionLevel, Rarity = r.Rarity, Slot = r.Slot, Japanese = Loc.Japanese,
                 Name = r.DisplayName ?? "",
                 Affixes = r.Affixes.ToArray(), Powers = r.Powers.ToArray(),
                 Title = UiStyles.RelicTitle(r) + "  <color=#bcbcd2>" + Content.RarityName(r.Rarity)

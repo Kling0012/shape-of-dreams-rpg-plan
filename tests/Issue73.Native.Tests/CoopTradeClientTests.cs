@@ -172,12 +172,18 @@ namespace Issue73.Native.Tests
         {
             var session = Guest();
             var profile = session.Profile;
+            profile.FindStash("own-relic").FusionLevel = 2;
+            var retained = Relic("retained-relic");
+            retained.FusionLevel = 5;
+            profile.Stash.Add(retained);
             var partner = Profile.CreateNew(18);
             partner.Stash.Add(Relic("partner-relic"));
-            var receipt = CoopTradeRules.CreateReceipt("executed-1", "host-key", "first", profile,
+            var legacyProfile = ProfileCodec.ReadCheckpointProfile(ProfileCodec.WithoutFusionForLegacyTrade(ProfileCodec.WriteCheckpointProfile(profile)));
+            var receipt = CoopTradeRules.CreateReceipt("executed-1", "host-key", "first", legacyProfile,
                 new CoopTradeOffer { RelicUids = new List<string> { "own-relic" } }, "second", partner,
                 new CoopTradeOffer { RelicUids = new List<string> { "partner-relic" } });
-            CoopTradeRules.Prepare(profile, receipt.Id, receipt.HostKey, receipt.FirstOffer);
+            CoopTradeRules.Prepare(profile, receipt.Id, receipt.HostKey, receipt.FirstOffer, legacyFusion: true);
+            session.Profile = profile = ProfileCodec.Read(ProfileCodec.Write(profile), new List<string>());
             while (profile.Stash.Count < Workshop.StashCapacity(profile)) profile.Stash.Add(Relic("filler-" + profile.Stash.Count));
             DeliverState(session, new DreamforgeCoopTradeState { kind = "roster", hostKey = "host-key",
                 keys = new string[0], names = new string[0], available = new bool[0] });
@@ -204,6 +210,7 @@ namespace Issue73.Native.Tests
             Assert.False((bool)Get(session, "_coopSettlementUnsaved"));
             Assert.Null(profile.FindStash("own-relic"));
             Assert.NotNull(profile.FindStash("partner-relic"));
+            Assert.Equal(5, profile.FindStash("retained-relic").FusionLevel);
             Assert.Contains(receipt.Id, profile.CoopTradeExecuted);
         }
 

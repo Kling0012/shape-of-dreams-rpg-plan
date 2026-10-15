@@ -45,6 +45,8 @@ namespace SodRpg.Core.Game
         public int Enhance { get; set; }
         /// <summary>限界突破の回数。表のレア度別上限と段階幅で強化上限が決まる。</summary>
         public int LimitBreaks { get; set; }
+        /// <summary>融合の段階（0〜5）。材料の段階や強化値は引き継がない。</summary>
+        public int FusionLevel { get; set; }
         public int Retunes { get; set; }
         /// <summary>特性の洗い直しを使った回数（v1.31）。回数の上限はない。費用はこれで増える。</summary>
         public int AffixRerolls { get; set; }
@@ -114,7 +116,9 @@ namespace SodRpg.Core.Game
             }
         }
 
-        public string DisplayName => Enhance > 0 ? PlainName + " +" + Enhance.ToString(CultureInfo.InvariantCulture) : PlainName;
+        /// <summary>表示専用。照合は Uid/各種ID、並べ替えは Score、チェックポイントは WriteRelic の保存欄を使う。</summary>
+        public string DisplayName => (Enhance > 0 ? PlainName + " +" + Enhance.ToString(CultureInfo.InvariantCulture) : PlainName)
+            + (FusionLevel > 0 ? " ◆" + FusionLevel.ToString(CultureInfo.InvariantCulture) : "");
 
         /// <summary>固有効果が固定の遺物（固有品・銘品）。固有効果を交換する出来事の対象外（設計 3.4）。</summary>
         public bool HasFixedPowers => UniqueId != null || NamedId != null;
@@ -129,11 +133,13 @@ namespace SodRpg.Core.Game
             {
                 var b = Base;
                 int level = Content.LevelScalePct(b.ImplicitStat, ItemLevel);
-                return new StatLine(b.ImplicitStat, Scale(b.ImplicitValue, level * Content.EnhanceScalePct(Enhance) / 100));
+                return FinalStat(b.ImplicitStat, Scale(b.ImplicitValue, level * Content.EnhanceScalePct(Enhance) / 100));
             }
         }
 
-        /// <summary>強化を反映した能力値の一覧。覚醒の倍率は特性だけに掛け、切り捨てる。</summary>
+        private StatLine FinalStat(Stat stat, int value) => new StatLine(stat, Fusion.ScaleStat(value, FusionLevel));
+
+        /// <summary>強化・覚醒・禁忌化の計算後、融合を最終段で掛けた能力値の一覧。</summary>
         public IEnumerable<StatLine> EffectiveStats()
         {
             yield return Implicit;
@@ -146,9 +152,10 @@ namespace SodRpg.Core.Game
                 int value = Scale(a.Value, pct);
                 if (Awakened) value = (int)((long)value * Content.AwakenAffixPctAt(AwakenLevel) / 100);
                 if (forbiddenPct != 100) value = Scale(value, forbiddenPct);
-                yield return new StatLine(a.Stat, value);
+                yield return FinalStat(a.Stat, value);
             }
-            foreach (var extra in Game.Forbidden.ExtraStats(this)) yield return extra;
+            foreach (var extra in Game.Forbidden.ExtraStats(this))
+                yield return FusionLevel > 0 ? FinalStat(extra.Stat, extra.Value) : extra;
         }
 
         /// <summary>表の強化倍率を反映した固有効果。覚醒の倍率は切り捨てる。</summary>
@@ -186,6 +193,7 @@ namespace SodRpg.Core.Game
                 ItemLevel = ItemLevel,
                 Enhance = Enhance,
                 LimitBreaks = LimitBreaks,
+                FusionLevel = FusionLevel,
                 Retunes = Retunes,
                 AffixRerolls = AffixRerolls,
                 Locked = Locked,

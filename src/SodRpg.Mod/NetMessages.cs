@@ -237,6 +237,8 @@ namespace SodRpg.Mod
         public int nemesisGrudge;
         /// <summary>ホストが禁忌装備入り（15欄形式）のビルド入力を読めるか（#415）。旧ホストは返さないので 0 扱いになり、参加者は禁忌装備を送らない。</summary>
         public int forbiddenInput;
+        /// <summary>融合段階を含む16欄形式のビルド入力を読めるか。旧版は0。</summary>
+        public int fusionInput;
     }
 
     // Optional extension: Hello and every existing packet remain unchanged (Protocol 24).

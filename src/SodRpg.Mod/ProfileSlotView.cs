@@ -315,6 +315,12 @@ namespace SodRpg.Mod
             _rowCache.Clear();
             _rowCacheFor.Clear();
             _rowCacheKey.Clear();
+            _rowFusionLevels.Clear();
+            _fusionStashLevels.Clear();
+            _fusionProfile = null;
+            _fusionTarget = null;
+            _fusionCacheValid = _fusionOpen = false;
+            ResetFusionConfirmation();
             _seenUids.Clear();
             foreach (var r in _s.Profile.Stash) _seenUids.Add(r.Uid);
             _seenInit = true;

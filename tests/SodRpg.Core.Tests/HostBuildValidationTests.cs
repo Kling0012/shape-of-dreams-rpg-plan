@@ -245,6 +245,7 @@ namespace SodRpg.Core.Tests
         {
             var p = Funded(); Allocate(p, "h.cetus.cluster.icy-veins.5", 1);
             var relic = Loot.RollRelic(new Rng(37), Rarity.Epic, 10, Slot.Weapon);
+            relic.FusionLevel = 3;
             p.Stash.Add(relic); p.Hero(Hero).Equipped[(int)relic.Slot] = relic.Uid;
             var expected = Build.Compute(p, Hero, 0); var claimed = Build.Decode(expected.Encode());
             foreach (Stat stat in Enum.GetValues(typeof(Stat))) claimed.Stats[stat] = Content.StatCap(stat);
@@ -254,6 +255,11 @@ namespace SodRpg.Core.Tests
                 if (NewPowersV129.IsConditionalAttribute(power)) claimed.ConditionalBasePowers[power] = 0;
             Assert.True(HostBuildValidation.TryAccept(Submit(p, claimed), Hero, out var accepted, out var reason), reason);
             Assert.Equal(expected.Encode(), accepted.Encode());
+            var legacy = HostBuildValidation.WithoutFusion(p, Hero);
+            Assert.Equal(3, relic.FusionLevel);
+            Assert.Equal(0, legacy.FindStash(relic.Uid).FusionLevel);
+            Assert.True(HostBuildValidation.TryAccept(Submit(legacy), Hero, out var legacyAccepted, out reason), reason);
+            Assert.Equal(Build.Compute(legacy, Hero, 0).Encode(), legacyAccepted.Encode());
         }
 
         [Fact]

@@ -282,6 +282,8 @@ namespace SodRpg.Core.Game
                 .Add("affixes", aff).Add("powers", pw);
             // 禁忌化（#415）。未禁忌化の遺物には書かないので、古い保存・取引の文字列は変わらない。
             if (r.Forbidden != null) json.Add("forbidden", r.Forbidden.Encode());
+            // 未融合は省略し、既存の保存・受領書のバイト列を保つ。旧版の通常読み込みは未知キーを無視する。
+            if (r.FusionLevel > 0) json.Add("fusionLevel", (long)r.FusionLevel);
             return json;
         }
 
@@ -718,6 +720,7 @@ namespace SodRpg.Core.Game
                 ItemLevel = Clamp(Long(j, "ilvl"), 1, Content.MaxItemLevel),
                 Enhance = Clamp(Long(j, "enhance"), 0, Content.MaxEnhanceFor(rarity, limitBreaks)),
                 LimitBreaks = limitBreaks,
+                FusionLevel = Clamp(Long(j, "fusionLevel"), 0, Fusion.MaxLevel),
                 Retunes = Clamp(Long(j, "retunes"), 0, Content.MaxRetunes + Forbidden.OrangeRetuneBonus),
                 AffixRerolls = Clamp(Long(j, "affixRerolls"), 0, int.MaxValue), // v1.31：古い保存にはないので0
                 Locked = Bool(j, "locked", false),

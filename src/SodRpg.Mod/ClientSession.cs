@@ -687,7 +687,7 @@ namespace SodRpg.Mod
         {
             _dirty = true;
             // 潜行・覚醒・装備への出来事で変わった能力を次の送信へ反映する。
-            if (e.Kind == EventKind.Delved || e.Kind == EventKind.LevelUp) MarkDirty(true);
+            if (e.Kind == EventKind.Delved || e.Kind == EventKind.LevelUp || e.Kind == EventKind.Fused) MarkDirty(true);
             _notify?.Invoke(e);
             if (e.AdditionalEvents != null) Emit(e.AdditionalEvents);
         }
@@ -1415,6 +1415,8 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
                     }
                 }
             }
+            if (!NetworkServer.active && !_hostFusionInput)
+                submissionProfile = HostBuildValidation.WithoutFusion(submissionProfile, heroKey);
             var submissionBuild = ReferenceEquals(submissionProfile, Profile) ? CurrentBuild(heroKey)
                 : Build.Compute(submissionProfile, heroKey, Profile.Run?.Heat ?? 0, Profile.Run?.Pacts, Profile.Run?.DailyId ?? 0);
             string encoded = HostBuildValidation.Encode(submissionBuild, submissionProfile, heroKey,
