@@ -17,25 +17,25 @@
     },
     "byHero": {
       "Hero_Aurena": {
-        "MemoryDamage": 1,
+        "MemoryDamage": 1.15,
         "GimmickBoost": 1,
         "GimmickParam": 1,
         "Keystone": 1,
         "MemoryHaste": 1,
         "Notable": 1,
-        "Stat": 1
+        "Stat": 1.1
       },
       "Hero_Bismuth": {
-        "MemoryDamage": 1,
+        "MemoryDamage": 0.9,
         "GimmickBoost": 1,
         "GimmickParam": 1,
         "Keystone": 1,
         "MemoryHaste": 1,
-        "Notable": 1,
+        "Notable": 0.9,
         "Stat": 1
       },
       "Hero_Cetus": {
-        "MemoryDamage": 1.2,
+        "MemoryDamage": 1.1,
         "GimmickBoost": 1,
         "GimmickParam": 1,
         "Keystone": 1,
@@ -44,7 +44,7 @@
         "Stat": 1
       },
       "Hero_Husk": {
-        "MemoryDamage": 1.15,
+        "MemoryDamage": 1.2,
         "GimmickBoost": 1,
         "GimmickParam": 1,
         "Keystone": 1,
@@ -53,13 +53,13 @@
         "Stat": 1
       },
       "Hero_Lacerta": {
-        "MemoryDamage": 1,
+        "MemoryDamage": 1.1,
         "GimmickBoost": 1,
         "GimmickParam": 1,
         "Keystone": 1,
         "MemoryHaste": 1,
         "Notable": 1,
-        "Stat": 1
+        "Stat": 1.1
       },
       "Hero_Mist": {
         "MemoryDamage": 1,
@@ -71,29 +71,29 @@
         "Stat": 1
       },
       "Hero_Nachia": {
-        "MemoryDamage": 1,
-        "GimmickBoost": 1,
+        "MemoryDamage": 1.15,
+        "GimmickBoost": 1.15,
         "GimmickParam": 1,
         "Keystone": 1,
         "MemoryHaste": 1,
         "Notable": 1,
-        "Stat": 1
+        "Stat": 1.1
       },
       "Hero_Vesper": {
-        "MemoryDamage": 1,
+        "MemoryDamage": 1.1,
         "GimmickBoost": 1,
         "GimmickParam": 1,
         "Keystone": 1,
         "MemoryHaste": 1,
         "Notable": 1,
-        "Stat": 1
+        "Stat": 1.15
       },
       "Hero_Yubar": {
-        "MemoryDamage": 1,
+        "MemoryDamage": 1.15,
         "GimmickBoost": 1,
         "GimmickParam": 1,
         "Keystone": 1,
-        "MemoryHaste": 1,
+        "MemoryHaste": 1.1,
         "Notable": 1,
         "Stat": 1
       }
