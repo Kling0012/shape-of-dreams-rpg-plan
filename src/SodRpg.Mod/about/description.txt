@@ -1,5 +1,5 @@
-[b]Fixes a bug where the effect of relics forbidden with Severance could be lost when loading a save or joining co-op.[/b]
-[b]「断絶」で禁忌化した遺物の効果が、読み込み時や協力プレイで失われることがある不具合を修正しました。[/b]
+[b]Fixes Forbidden Cores being lost when loading a save, and continuing a run failing after a co-op trade.[/b]
+[b]禁忌の核がセーブデータの読み込みで失われる不具合と、協力プレイの取引後に続きから再開できないことがある不具合を修正しました。[/b]
 
 [h1]Dreamforge RPG[/h1]
 Turns every run into part of a long RPG journey: relics you keep, a risky "secure or delve" choice at every zone, a star map per Traveler, a forge, and long-term goals. Co-op ready.

@@ -10,6 +10,25 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v2.10.41 — Fix Forbidden Cores being lost on load（2026-10-15）
+
+このバージョンでは、「禁忌の核」がセーブデータの読み込み時に失われる不具合を修正しました。 / This version fixes a bug that caused Forbidden Cores to be lost when loading your save.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- 禁忌の核を持ったままセーブし、ゲームの再起動などで読み込み直すと、禁忌の核の所持数が0になっていました。バックアップから読み込んだ場合も同じでした。この問題を修正し、禁忌の核は読み込み後や冒険を「続きから」再開した後も正しく残るようになりました。 / If you saved while holding Forbidden Cores and then loaded the save again, for example after restarting the game, your Forbidden Cores dropped to 0. Loading from a backup had the same problem. This has been fixed, and Forbidden Cores are now kept correctly after loading and when continuing your run.
+- 禁忌の核を持ったまま協力プレイで取引を終えたあと、冒険を「続きから」再開しようとすると、エラーで再開できないことがありました。この問題を修正し、禁忌の核やほかの素材、交換した遺物を保ったまま、取引の結果が二重に反映されることもなく再開できるようになりました。 / If you finished a co-op trade while holding Forbidden Cores, continuing your run afterward could fail with an error. This has been fixed, and you can now continue with your Forbidden Cores, other materials, and traded relics intact, without the trade being applied twice.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
 ## v2.10.40 — Fix Severance effects being lost on forbidden relics（2026-10-15）
 
 このバージョンでは、「断絶」で禁忌化した遺物の効果が失われることがある不具合を修正しました。 / This version fixes a bug that could cause the effect of relics forbidden with "Severance" to be lost.
