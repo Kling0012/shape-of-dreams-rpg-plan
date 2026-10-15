@@ -1,6 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Reflection.Emit;
 using HarmonyLib;
 using SodRpg.Mod;
 using UnityEngine;
@@ -15,6 +17,8 @@ namespace SodRpg.Mod.Startup.Tests
     {
         private static readonly MethodInfo PlayIntoPool =
             AccessTools.Method(typeof(DewEffect), nameof(DewEffect.PlayIntoPool));
+        private static readonly MethodInfo PrepareMethod =
+            AccessTools.Method(typeof(FrostFxLifetimePatch), "Prepare");
         private readonly Harmony owner = new Harmony("frost-fx-tests." + Guid.NewGuid().ToString("N"));
 
         public FrostFxLifetimeTests()
@@ -30,6 +34,7 @@ namespace SodRpg.Mod.Startup.Tests
             NetworkedManagerBase<ZoneManager>.softInstance = null;
             NetworkedManagerBase<GameManager>.softInstance = null;
             PerformanceTuner.Starts = 0;
+            PerformanceTuner.FailStart = false;
             // 実装のパッチクラスを設置する（前のテストで外れていれば入れ直す）。
             // Unpatch 後も GetPatchInfo は空の Patches を返すことがあるので実測で判定する。
             var frostPatches = Harmony.GetPatchInfo(PlayIntoPool);
@@ -60,24 +65,18 @@ namespace SodRpg.Mod.Startup.Tests
                     new Harmony(harmonyId).Unpatch(PlayIntoPool, HarmonyPatchType.All, harmonyId);
             AssertFrostPatchAbsent();
 
-            // 本体の更新で PlayIntoPool が消えた状況: その組の解決だけを null にする。
+            // 本体の更新で PlayIntoPool が消えた状況: Prepare 内のその組の解決だけを null にする。
+            // callee（AccessTools.DeclaredMethod）への Prefix は、他の起動テストが同じプロセスで何度も
+            // Awake を実行した後だと tiered JIT の最適化で Prepare 内に呼び出しがインライン化され、
+            // バイパスされてしまう（実行順・JIT 状態への依存）。呼び出し元 Prepare の IL を
+            // トランスパイラで書き換えれば、IL から再コンパイルされるので事前の JIT 状態に依存しない。
             var missing = new Harmony("frost-missing." + Guid.NewGuid().ToString("N"));
-            var resolvers = typeof(AccessTools).GetMethods()
-                .Where(method => method.Name == nameof(AccessTools.DeclaredMethod))
-                .Where(method =>
-                {
-                    var parameters = method.GetParameters();
-                    return parameters.Length >= 2
-                        && parameters[0].ParameterType == typeof(Type) && parameters[0].Name == "type"
-                        && parameters[1].ParameterType == typeof(string) && parameters[1].Name == "name";
-                })
-                .ToList();
-            Assert.NotEmpty(resolvers);
-            foreach (var resolver in resolvers)
-                missing.Patch(resolver, prefix: new HarmonyMethod(
-                    typeof(FrostFxLifetimeTests), nameof(NullOutFrostPlayIntoPool)));
+            RewrittenResolutions = 0;
+            missing.Patch(PrepareMethod, transpiler: new HarmonyMethod(
+                typeof(FrostFxLifetimeTests), nameof(NullOutPlayIntoPoolResolution)));
             try
             {
+                Assert.Equal(1, RewrittenResolutions);
                 var mod = new DreamforgeMod { harmony = owner };
                 Invoke(mod, "Awake");
 
@@ -265,11 +264,34 @@ namespace SodRpg.Mod.Startup.Tests
                 ?.SetValue(null, false);
         }
 
-        private static bool NullOutFrostPlayIntoPool(Type type, string name, ref MethodInfo __result)
+        // トランスパイラが Prepare の IL を書き換えた箇所数（PlayIntoPool の解決はちょうど1箇所のはず）。
+        internal static int RewrittenResolutions;
+
+        // Prepare 内の AccessTools.DeclaredMethod(typeof(DewEffect), "PlayIntoPool") 呼び出しを探し、
+        // その結果を null で差し替える。呼び出しは ldstr "PlayIntoPool" の後に省略時既定の ldnull が
+        // 並び、その直後に call が来るので、call から ldnull の連続を逆向きに辿って引数を確認する。
+        private static IEnumerable<CodeInstruction> NullOutPlayIntoPoolResolution(
+            IEnumerable<CodeInstruction> instructions)
         {
-            if (type != typeof(DewEffect) || name != nameof(DewEffect.PlayIntoPool)) return true;
-            __result = null;
-            return false;
+            var codes = instructions.ToList();
+            for (int i = 0; i < codes.Count; i++)
+            {
+                yield return codes[i];
+                if (codes[i].opcode != OpCodes.Call || codes[i].operand is not MethodInfo method
+                    || method.DeclaringType != typeof(AccessTools)
+                    || method.Name != nameof(AccessTools.DeclaredMethod))
+                    continue;
+                var parameters = method.GetParameters();
+                if (parameters.Length < 3 || parameters[0].ParameterType != typeof(Type)
+                    || parameters[1].ParameterType != typeof(string)) continue;
+                var argument = i - 1;
+                while (argument > 0 && codes[argument].opcode == OpCodes.Ldnull) argument--;
+                if (argument < 1 || codes[argument].opcode != OpCodes.Ldstr
+                    || (string)codes[argument].operand != nameof(DewEffect.PlayIntoPool)) continue;
+                RewrittenResolutions++;
+                yield return new CodeInstruction(OpCodes.Pop);
+                yield return new CodeInstruction(OpCodes.Ldnull);
+            }
         }
 
         private static void Invoke(DreamforgeMod mod, string name)
