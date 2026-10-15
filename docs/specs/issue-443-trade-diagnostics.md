@@ -38,21 +38,35 @@ Dreamforge は `DreamforgeMod : ModBehaviour` としてゲーム標準のMODロ�
 - 定期probe／rosterや分割データの各断片を毎回記録しない。既存の5秒ごとの照会時機に取引中だけ待機状態を採取し、同一内容は30秒間抑制する。抑制用辞書は最大64件で、上限時は診断用履歴だけを空にする。履歴の入れ替わりや状態変化が多い場合は30秒以内でも記録し直すことがある。
 - 新しい毎フレーム処理・タイマー・通信・保存を作らない。診断状態は保存せず、`CoopTradeDiagnostics.Record` と両側の採取ヘルパーは例外を外へ出さない。ログ失敗で取消・機能停止・戻り値変更を起こさない。
 
-## 検証
+## 修正ラウンドの範囲点検（2026-10-16）
 
-新規テストは追加せず、既存の本番抽出ハーネスに診断ヘルパーを含めた。以下をすべて前景で実行した（.NET SDK 10.0.111、runtime 10.0.11。net8.0の既存テストには `DOTNET_ROLL_FORWARD=LatestMajor` を指定）。
+PR #450 のコメントでは、通常のビルド・生成物確認・差分テストは成功し、全件の遅いテストで `PerformanceTests.A_kill_takes_well_under_a_tenth_of_a_millisecond` と `Build_and_encode_are_fast` が失敗していた。同じコメントの main 比較でも同じ2件が失敗している。今回の単独実行では性能テスト3件が成功したが、全件実行時の失敗原因を特定・修正したとは扱わない。性能のしきい値やテスト実行基盤は変更しない。
+
+マージ時に Core の `Relic.cs` と `Rules.cs` へ混入した改行だけの差分を main と同じ内容へ戻した。併せて、マージで入った空ファイル `3` を作業領域外の一時保管先へ退避し、PR差分から除いた。製品コードの差分はホスト／クライアントの観測呼出しと診断ヘルパーだけで、既存の条件・戻り値・通信・保存呼出し・保存形式に変更はない。
+
+前の再現工程で追加済みの8条件と抽出対象を維持する。診断工程で追加したのは本番診断ヘルパーのコンパイル・抽出対象への登録であり、この修正ラウンドではテストを新設・変更していない。
+
+## 今回の検証
+
+以下をすべて前景で実行した（.NET SDK 10.0.111、runtime 10.0.11。net8.0の既存テストには `DOTNET_ROLL_FORWARD=LatestMajor` を指定）。
 
 ```sh
-DOTNET_ROLL_FORWARD=LatestMajor dotnet test tests/Issue73.Native.Tests/Issue73.Native.Tests.csproj -c Release --filter 'FullyQualifiedName~Issue443TradeCompletionTests|FullyQualifiedName~HostCoopTradeTests|FullyQualifiedName~CoopTradeClientTests|FullyQualifiedName~Issue400HostTradeIdleAbortTests|FullyQualifiedName~Issue400ClientTradeTransientAbortTests|FullyQualifiedName~TradeSendExceptionTests|FullyQualifiedName~CoopTradeSafeTests' --logger 'console;verbosity=minimal' --logger 'trx;LogFileName=issue443-diagnostic-final-native.trx' --results-directory /tmp/issue443-diagnostic-results
-DOTNET_ROLL_FORWARD=LatestMajor dotnet test tests/SodRpg.Core.Tests/SodRpg.Core.Tests.csproj -c Release --filter 'FullyQualifiedName~SodRpg.Core.Tests.CoopTradeTests|FullyQualifiedName~SodRpg.Core.Tests.CoopTradeMigrationTests|FullyQualifiedName~SodRpg.Core.Tests.TradeStuckPending389Tests' --logger 'console;verbosity=minimal' --logger 'trx;LogFileName=issue443-diagnostic-core.trx' --results-directory /tmp/issue443-diagnostic-results
-dotnet build src/SodRpg.Mod/SodRpg.Mod.csproj -c Release -p:GameDir="<ゲームDLLを用意した Shape of Dreams フォルダー>" -p:ModDeployDir=/tmp/issue443-diagnostic-mod-deploy -v:minimal
-git diff --check
+DOTNET_ROLL_FORWARD=LatestMajor dotnet test tests/Issue73.Native.Tests/Issue73.Native.Tests.csproj -c Release --filter 'FullyQualifiedName~Issue443TradeCompletionTests|FullyQualifiedName~HostCoopTradeTests|FullyQualifiedName~CoopTradeClientTests|FullyQualifiedName~Issue400HostTradeIdleAbortTests|FullyQualifiedName~Issue400ClientTradeTransientAbortTests|FullyQualifiedName~TradeSendExceptionTests|FullyQualifiedName~CoopTradeSafeTests' --logger 'console;verbosity=minimal' --logger 'trx;LogFileName=issue443-round-native.trx' --results-directory /tmp/issue443-round-results
+DOTNET_ROLL_FORWARD=LatestMajor dotnet test tests/SodRpg.Core.Tests/SodRpg.Core.Tests.csproj -c Release --filter 'FullyQualifiedName~SodRpg.Core.Tests.CoopTradeTests|FullyQualifiedName~SodRpg.Core.Tests.CoopTradeMigrationTests|FullyQualifiedName~SodRpg.Core.Tests.TradeStuckPending389Tests' --logger 'console;verbosity=minimal' --logger 'trx;LogFileName=issue443-round-core.trx' --results-directory /tmp/issue443-round-results
+env -u SODRPG_SLOW DOTNET_ROLL_FORWARD=LatestMajor dotnet test tests/SodRpg.Core.Tests/SodRpg.Core.Tests.csproj -c Release --no-build --filter 'FullyQualifiedName~SodRpg.Core.Tests.PerformanceTests' --logger 'console;verbosity=normal' --logger 'trx;LogFileName=issue443-round-performance.trx' --results-directory /tmp/issue443-round-results
+dotnet build src/SodRpg.Mod/SodRpg.Mod.csproj -c Release -p:GameDir="/home/wang/dev/sod-gamedata/Shape of Dreams" -p:ModDeployDir=/tmp/issue443-round-mod-deploy -v:minimal
+python tools/balance/gen_cs.py --check
+git -c core.whitespace=cr-at-eol diff --check
+git -c core.whitespace=cr-at-eol diff --cached --check
+git diff --check origin/main
+git diff --exit-code origin/main -- src/SodRpg.Core
 ```
 
 - 取引の本番抽出ハーネス：26件成功・失敗0・skip0・終了コード0。再現試行8条件、ホスト／クライアント、#400の待機、一時保存、送信例外、安全判定を含む。
-- Coreの既存保存整合・復旧テスト：44件成功・失敗0・skip0・終了コード0。一括保存失敗時の巻き戻し、ジャーナル中断、重複防止、遅延取消、旧形式復旧の確認は既存処理の回帰確認であり、報告事象の解決の証明ではない。
-- TRX：`/tmp/issue443-diagnostic-results/issue443-diagnostic-final-native.trx`、`/tmp/issue443-diagnostic-results/issue443-diagnostic-core.trx`。
+- Coreの既存保存整合・復旧テスト：45件成功・失敗0・skip0・終了コード0。mainの融合対応を含む。一括保存失敗時の巻き戻し、ジャーナル中断、重複防止、遅延取消、旧形式復旧の確認は既存処理の回帰確認であり、報告事象の解決の証明ではない。
+- 前回失敗したクラスの単独確認：3件成功・失敗0・skip0・終了コード0。全件実行時の性能を保証する結果ではない。
+- TRX：`/tmp/issue443-round-results/issue443-round-native.trx`、`issue443-round-core.trx`、`issue443-round-performance.trx`。
 - MOD Releaseビルド：終了コード0、エラー0・既存警告6（廃止API参照3、未代入の検証フィールド3）。ゲームへの配置はせず、出力先を一時領域に指定した。
-- `git diff --check`：終了コード0。製品差分を確認し、既存条件・戻り値・通信・保存呼出しを維持、Core／プロフィール／通信メッセージの定義に変更なし。診断呼出し・例外隔離・抑制用状態だけを追加した。戻す場合は今回の診断コミットをrevertする。revert自体は未実行。
+- 生成物確認、未ステージ／ステージ済み差分の空白確認、Coreとmainの差分確認：終了コード0。Coreはmainと同一。main由来のCRLFを戻す差分は通常の `git diff --check` では末尾空白と判定されたため、`core.whitespace=cr-at-eol` を指定して確認した。mainとの差分には通常の空白確認も通る。診断の取り消し操作は未実行。
 
-未実行：実ゲーム・実Mirror通信・描画・実ログファイル採取・ロガー失敗の注入（実機を使わず、既存テストはログファイルI/Oを代替するため）、全テスト・別editionのビルド・`dreamforge_simkill`（限定検証の範囲外）。push・PR作成・リリース・Issue投稿・クローズは指示により未実施。元の不具合は未再現・未修正のまま、診断版の配布と再発ログの受領は後工程。
+未実行：実ゲーム・実Mirror通信・描画・実ログファイル採取・ロガー失敗の注入（実機を使わず、既存テストはログファイルI/Oを代替するため）、全テスト・`--all`・`SODRPG_SLOW=1`・別editionのビルド・`dreamforge_simkill`（限定検証の範囲外）。push・リリース・Issue投稿・クローズは指示により未実施。元の不具合は未再現・未修正のまま、診断版の配布と再発ログの受領は後工程。
