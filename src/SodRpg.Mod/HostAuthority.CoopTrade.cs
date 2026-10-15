@@ -13,7 +13,7 @@ namespace SodRpg.Mod
         private sealed class CoopPeerState
         {
             public float Seen;
-            public bool Safe;
+            public bool Safe, Fusion;
             public readonly BuildTransferReceiver Transfer = new BuildTransferReceiver(CoopTradeTransport.MaxProfileChars);
             public string Envelope;
         }
@@ -167,6 +167,7 @@ namespace SodRpg.Mod
                     if (!_coopHostPeers.TryGetValue(caller, out var peer)) _coopHostPeers[caller] = peer = new CoopPeerState();
                     peer.Seen = Time.unscaledTime;
                     peer.Safe = msg.safe;
+                    peer.Fusion = msg.fusion;
                     SendCoopRoster(caller);
                     return;
                 }
@@ -396,6 +397,13 @@ namespace SodRpg.Mod
         }
         private void SendCoopPayload(DewPlayer player, string kind, string id, int revision, string text)
         {
+            bool fusion = player == DewPlayer.local || _coopHostPeers.TryGetValue(player, out var peer) && peer.Fusion;
+            if (!fusion)
+            {
+                if (kind == "profile") text = ProfileCodec.WithoutFusionForLegacyTrade(text);
+                else if (kind == "prepare" || kind == "executed")
+                    text = CoopTradeCodec.WithoutFusionForLegacyReceipt(text);
+            }
             if (!CoopTradeTransport.PayloadFits(text)) { SendCoopError(player, "recordTooLarge"); return; }
             var parts = BuildTransfer.Split(Convert.ToBase64String(Encoding.UTF8.GetBytes(text)), CoopTradeTransport.MaxProfileChars);
             foreach (var part in parts)
@@ -408,6 +416,7 @@ namespace SodRpg.Mod
         private void SendCoopState(DewPlayer player, DreamforgeCoopTradeState state)
         {
             if (!CoopPresent(player)) return;
+            state.fusion = true;
             if (player == DewPlayer.local) ClientSession.ReceiveLocalCoopTrade(state);
             else if (_coopHostPeers.ContainsKey(player))
                 player.connectionToClient?.Send(new DreamforgeCoopTradeDown { Json = CoopTradeTransport.Encode(state) });

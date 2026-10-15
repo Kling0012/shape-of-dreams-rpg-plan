@@ -17,6 +17,7 @@ namespace SodRpg.Core.Game
         Warning,
         Bounty,
         Hint,
+        Fused,
     }
 
     /// <summary>画面に流す通知。文言は発生時の表示言語で作る。</summary>
@@ -1554,9 +1555,48 @@ namespace SodRpg.Core.Game
         public static List<Relic> LimitBreakCandidates(Profile p, Relic target, TradeLedger trades = null)
         {
             string offered = p.RetuneOffer?.Uid;
-            return p.Stash.Where(x => x != target && x.Slot == target.Slot && x.Rarity >= target.Rarity && !x.Locked
-                && !p.IsEquippedAnywhere(x.Uid) && x.Uid != offered && (trades == null || !trades.IsReserved(x.Uid)))
+            return p.Stash.Where(x => x != target && x.Slot == target.Slot && x.Rarity >= target.Rarity
+                && CanConsumeForgeMaterial(p, x, offered, trades))
                 .OrderBy(x => x.Score).ToList();
+        }
+
+        private static bool CanConsumeForgeMaterial(Profile p, Relic relic, string offered, TradeLedger trades)
+            => !relic.Locked && !p.IsEquippedAnywhere(relic.Uid) && relic.Uid != offered
+                && (trades == null || !trades.IsReserved(relic.Uid));
+
+        /// <summary>融合の材料。同じ名前・同じレア度で、消費できる条件は限界突破と共通。</summary>
+        public static List<Relic> FusionCandidates(Profile p, Relic target, TradeLedger trades = null)
+        {
+            string offered = p.RetuneOffer?.Uid;
+            return p.Stash.Where(x => x != target && x.Uid != target.Uid && Fusion.SameName(target, x)
+                && CanConsumeForgeMaterial(p, x, offered, trades)).OrderBy(x => x.Score).ToList();
+        }
+
+        /// <summary>材料1つと費用を消費して融合を1段上げる。全条件を消費前に検証する。</summary>
+        public static GameEvent Fuse(Profile p, string uid, string materialUid, TradeLedger trades = null, bool loadoutLocked = false)
+        {
+            if (loadoutLocked) throw new InvalidOperationException(Loc.T("融合は確保地点か遠征の外でのみ使えます。", "Fusion is available only at a secure point or outside an expedition."));
+            RequireUnreserved(trades, uid);
+            RequireNoRetuneOffer(p, uid);
+            var r = p.FindStash(uid) ?? throw new InvalidOperationException(Loc.T("保管庫にない遺物です。", "That relic is not in your stash."));
+            if (r.FusionLevel < 0 || r.FusionLevel >= Fusion.MaxLevel)
+                throw new InvalidOperationException(Loc.T("融合段階が上限、または不正です。", "Fusion level is at its cap or invalid."));
+            var material = p.FindStash(materialUid) ?? throw new InvalidOperationException(Loc.T("材料の遺物が保管庫にありません。", "The material relic is not in your stash."));
+            if (!FusionCandidates(p, r, trades).Contains(material))
+                throw new InvalidOperationException(Loc.T("材料は同じ名前・同じレア度の、鍵なし・未装着・取引中でも再調律中でもない別の遺物です。",
+                    "Use another relic of the same name and rarity that is unlocked, unequipped, unreserved and not retuning."));
+            int shards = Fusion.ShardCost(r), tuning = Fusion.TuningCost(r);
+            if (p.Material(Materials.Shard) < shards)
+                throw new InvalidOperationException(Loc.T($"欠片が足りません（{shards}必要）。", $"Not enough shards ({shards} needed)."));
+            if (p.Material(Materials.Tuning) < tuning)
+                throw new InvalidOperationException(Loc.T($"調律石が足りません（{tuning}必要）。", $"Not enough tuning stones ({tuning} needed)."));
+            p.AddMaterial(Materials.Shard, -shards);
+            if (tuning > 0) p.AddMaterial(Materials.Tuning, -tuning);
+            p.Stash.Remove(material);
+            r.FusionLevel++;
+            return new GameEvent(EventKind.Fused, Loc.T(
+                $"「{r.DisplayName}」を融合しました（能力値+{Fusion.BonusPct(r.FusionLevel)}%。材料「{material.DisplayName}」は消費されました）。",
+                $"Fused \"{r.DisplayName}\" (stats +{Fusion.BonusPct(r.FusionLevel)}%; consumed \"{material.DisplayName}\")."), r.Rarity);
         }
 
         /// <summary>

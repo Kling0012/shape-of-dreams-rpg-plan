@@ -55,6 +55,7 @@ namespace SodRpg.Mod
             _hostInfinityAvailable = false;
             _hostBuildInputCapability = false;
             _hostForbiddenInput = false;
+            _hostFusionInput = false;
             _forbiddenGearStripNotice = false;
             ForbiddenGearHostNotice = null;
             _hostNetLite = false;

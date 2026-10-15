@@ -10,6 +10,59 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v2.10.46 — Relic Fusion fixes: proper Fusion notification and lighter forge screen（2026-10-15）
+
+このバージョンでは、遺物の融合に関する不具合を修正しました。 / This version fixes issues with relic Fusion.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- 鍛冶で遺物を融合したときの通知が、レベルアップの通知として扱われていた問題を修正しました。融合は専用の通知になり、融合後の能力値は従来どおり反映されます。 / Fixed an issue where fusing a relic at the forge was announced as a level-up. Fusion now has its own notification, and the fused relic's stats are still applied as before.
+- 保管庫に遺物が多いと、鍛冶画面の融合欄の処理が重くなる問題を軽減しました。融合の候補や必要な素材の変化はこれまでどおりすぐに反映され、融合ボタンを押したときには最新の状態を確認し直します。 / Reduced the processing load of the forge's Fusion panel when your storage holds many relics. Changes to Fusion candidates and required materials still show up right away, and the latest state is rechecked when you press the Fusion button.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
+## v2.10.45 — Relic Fusion added to the forge（2026-10-15）
+
+このバージョンでは、鍛冶に遺物を融合して強化する機能を追加しました。 / This version adds relic Fusion to the forge, letting you strengthen relics by fusing them.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 新機能 / New features
+
+- 鍛冶で遺物を融合できるようになりました。同じ名前で同じレア度の遺物を1個素材にすると融合段階が1つ上がり、最大5段まで重ねられます。段階が上がるたびに能力値が上がります。遺物の固有効果は変わりません。 / You can now fuse relics at the forge. Using one relic with the same name and rarity as material raises its Fusion level by one, up to 5 levels. Each level raises the relic's stats, while its unique effect stays the same.
+- 融合には欠片が必要で、固有品の遺物では調律石も必要です。鍛冶画面には融合できる候補、必要な素材、融合の前後で能力値がどれだけ上がるかが表示されます。素材を誤って使わないよう、融合ボタンは2回押して確定します。 / Fusion costs shards, and unique relics also need a Tuning Stone. The forge screen shows which relics can be fused, the required materials, and how much the stats rise from before to after Fusion. To prevent accidental use of materials, you press the Fusion button twice to confirm.
+- 融合段階はセーブデータに保存され、協力プレイでの取引でも引き継がれます。融合済みの遺物を協力プレイで交換するときは、参加者全員がこのバージョンに更新してください。 / Fusion levels are kept in your save data and carry over through co-op trades. When trading fused relics in co-op, make sure everyone has updated to this version.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
+## v2.10.44 — Maintenance update with no player-visible changes（2026-10-15）
+
+このバージョンには、プレイヤーから見た新機能や不具合の修正はありません。 / This version contains no new features or bug fixes visible to players.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
 ## v2.10.43 — Smoother star map point allocation（2026-10-15）
 
 このバージョンでは、星図で星にポイントを割り振るときのカクつきを軽くしました。 / This version reduces the stutter when allocating points to stars on the star map.
