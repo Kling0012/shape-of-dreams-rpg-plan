@@ -5431,8 +5431,8 @@
         }
       ],
       "link": {
-        "kind": "MemoryHaste",
-        "value": 38
+        "kind": "Attune",
+        "value": 19
       }
     },
     "unique.link_husk_one_flash": {
@@ -6359,8 +6359,8 @@
         }
       ],
       "link": {
-        "kind": "MemorySurge",
-        "value": 62
+        "kind": "Attune",
+        "value": 39
       }
     },
     "unique.link3_lifeline_circle": {
@@ -13857,8 +13857,8 @@
         }
       ],
       "link": {
-        "kind": "MemorySurge",
-        "value": 36
+        "kind": "Attune",
+        "value": 23
       }
     },
     "unique.c_iris_lens": {
@@ -13921,8 +13921,8 @@
         }
       ],
       "link": {
-        "kind": "MemoryHaste",
-        "value": 30
+        "kind": "Attune",
+        "value": 15
       }
     },
     "unique.c_windscar_quill": {
@@ -13937,8 +13937,8 @@
         }
       ],
       "link": {
-        "kind": "MemorySurge",
-        "value": 34
+        "kind": "Attune",
+        "value": 21
       }
     },
     "unique.c_powderhorn": {
@@ -13969,8 +13969,8 @@
         }
       ],
       "link": {
-        "kind": "MemorySurge",
-        "value": 34
+        "kind": "Attune",
+        "value": 21
       }
     },
     "unique.c_engarde_token": {
@@ -14001,8 +14001,8 @@
         }
       ],
       "link": {
-        "kind": "MemoryHaste",
-        "value": 30
+        "kind": "Attune",
+        "value": 15
       }
     },
     "unique.c_packheart": {
@@ -14017,8 +14017,8 @@
         }
       ],
       "link": {
-        "kind": "MemorySurge",
-        "value": 30
+        "kind": "Attune",
+        "value": 19
       }
     },
     "unique.c_lifering_lotus": {
@@ -14081,8 +14081,8 @@
         }
       ],
       "link": {
-        "kind": "MemorySurge",
-        "value": 26
+        "kind": "Attune",
+        "value": 16
       }
     },
     "unique.c_convergence_comet": {
@@ -14097,8 +14097,8 @@
         }
       ],
       "link": {
-        "kind": "MemoryHaste",
-        "value": 60
+        "kind": "Attune",
+        "value": 30
       }
     },
     "unique.c_hairline_heart": {
