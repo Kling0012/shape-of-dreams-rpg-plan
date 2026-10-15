@@ -1,5 +1,5 @@
-[b]A maintenance release with no new features or bug fixes visible to players.[/b]
-[b]プレイヤーから見た変化のない保守版です。[/b]
+[b]Reduces the stutter when allocating points to stars on the star map.[/b]
+[b]星図で星にポイントを割り振るときのカクつきを軽くしました。[/b]
 
 [h1]Dreamforge RPG[/h1]
 Turns every run into part of a long RPG journey: relics you keep, a risky "secure or delve" choice at every zone, a star map per Traveler, a forge, and long-term goals. Co-op ready.
