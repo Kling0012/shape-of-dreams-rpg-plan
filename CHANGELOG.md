@@ -10,6 +10,32 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v2.10.55 — Faster star map loading at startup（2026-10-16）
+
+このバージョンでは、ゲーム起動時に Dreamforge RPG の読み込みに時間がかかる問題を改善しました。 / This version reduces the time Dreamforge RPG takes to load when the game starts.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 新機能 / New features
+
+- 起動時の読み込みのうち、Dreamforge RPG の読み込みにかかった時間がゲームのログ（Player.log）に記録されるようになりました。実際のゲームでどれだけ短くなったかを確かめるのに使います。 / The game log (Player.log) now records how long Dreamforge RPG takes to load at startup. This helps confirm how much faster loading is in the actual game.
+
+### 不具合の修正 / Bug fixes
+
+- ゲームを起動したとき、星図の準備に数秒かかり、タイトル画面までの読み込みが長くなっていた問題を改善しました。星図の準備にかかる時間を減らしました。 / Improved an issue where preparing the star map took several seconds at startup, making the load to the title screen longer. Star map preparation now takes less time.
+- 星図の内容、星の割り当て、効果は変わっていません。 / The star map contents, allocated stars, and their effects are unchanged.
+- 使われていない内部の処理を整理しました。ゲーム内の動作は変わりません。 / Removed unused internal code. Nothing changes in gameplay.
+
+開発環境での計測では星図の準備にかかる時間がおよそ半分になりましたが、実際のゲームでどれだけ短くなるかはまだ確かめていません。更新前と更新後の Player.log を送っていただけると、効果の確認に役立ちます。 / In our development environment, star map preparation took about half as long, but we have not yet confirmed how much faster it is in the actual game. Sending Player.log from before and after updating would help us check the effect.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
 ## v2.10.54 — Fix version mismatch warning staying after a player leaves the co-op lobby（2026-10-16）
 
 このバージョンでは、協力プレイで、参加者がロビーから抜けたあともホストにバージョン違いの警告が残ることがある問題を修正しました。 / This version fixes an issue in co-op where the host could keep seeing a version mismatch warning after a player had left the lobby.
