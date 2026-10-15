@@ -15,7 +15,6 @@ namespace SodRpg.Core.Game
         /// <summary>送信用の受領書だけを変換する。未知の欄と、融合を含まない受領書の元の文字列を保つ。</summary>
         public static string WithoutFusionForLegacyReceipt(string text)
         {
-            if (text.IndexOf("fusionLevel", StringComparison.Ordinal) < 0) return text;
             var receipt = Object(Json.Parse(text));
             var copy = new JsonObject();
             bool changed = false;
@@ -123,7 +122,6 @@ namespace SodRpg.Core.Game
         /// <summary>旧版の厳密な受領書検証に渡すコピーから、未知の融合キーだけを省く。</summary>
         public static string WithoutFusionForLegacyTrade(string text)
         {
-            if (text.IndexOf("fusionLevel", StringComparison.Ordinal) < 0) return text;
             var original = Json.Parse(text);
             var legacy = WithoutFusionValue(original);
             return ReferenceEquals(original, legacy) ? text : Json.Write(legacy);
@@ -134,10 +132,11 @@ namespace SodRpg.Core.Game
             if (value is JsonObject obj)
             {
                 var copy = new JsonObject();
-                bool changed = false;
+                // パース後のキーだけで判定する。値内の文字やエスケープ表記に依存しない。
+                bool changed = obj.TryGet("fusionLevel", out _);
                 foreach (var property in obj.Properties)
                 {
-                    if (property.Key == "fusionLevel") { changed = true; continue; }
+                    if (property.Key == "fusionLevel") continue;
                     var legacy = WithoutFusionValue(property.Value);
                     changed |= !ReferenceEquals(legacy, property.Value);
                     copy.Add(property.Key, legacy);

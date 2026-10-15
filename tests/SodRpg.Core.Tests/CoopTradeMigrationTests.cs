@@ -75,6 +75,51 @@ namespace SodRpg.Core.Tests
             Assert.False(journal.Commit(old));
         }
 
+        [Fact]
+        public void Fused_receipt_for_legacy_peer_drops_only_fusion_keys_and_keeps_unknown_fields()
+        {
+            var first = Profile.CreateNew(17);
+            first.Stash.Add(new Relic { Uid = "fused", BaseId = "weapon.chain_sword", Rarity = Rarity.Rare, ItemLevel = 5, FusionLevel = 3 });
+            var receipt = CoopTradeRules.CreateReceipt("fused-trade", "host", "first", first,
+                new CoopTradeOffer(), "second", Profile.CreateNew(19), new CoopTradeOffer());
+            var root = (JsonObject)Json.Parse(CoopTradeCodec.WriteReceipt(receipt));
+            var withUnknown = new JsonObject();
+            foreach (var property in root.Properties)
+            {
+                object value = property.Value;
+                if (property.Key == "firstProfile")
+                {
+                    var profile = (JsonObject)Json.Parse((string)value);
+                    profile.Add("futureProfileField", "kept-profile");
+                    // JSON上でエスケープされた融合キーでも、パース後のキーとして検出する。
+                    value = Json.Write(profile).Replace("\"fusionLevel\"", "\"fusion\\u004cevel\"");
+                }
+                withUnknown.Add(property.Key, value);
+            }
+            withUnknown.Add("futureReceiptField", "kept-receipt");
+            string encoded = Json.Write(withUnknown);
+            Assert.Contains("\\\\u004c", encoded);
+
+            string legacy = CoopTradeCodec.WithoutFusionForLegacyReceipt(encoded);
+
+            Assert.DoesNotContain("fusionLevel", legacy);
+            var legacyRoot = (JsonObject)Json.Parse(legacy);
+            Assert.Equal(withUnknown.Properties.Select(p => p.Key), legacyRoot.Properties.Select(p => p.Key));
+            Assert.True(legacyRoot.TryGet("futureReceiptField", out object receiptField));
+            Assert.Equal("kept-receipt", receiptField);
+            Assert.True(legacyRoot.TryGet("firstProfile", out object legacyProfile));
+            Assert.True(((JsonObject)Json.Parse((string)legacyProfile)).TryGet("futureProfileField", out object profileField));
+            Assert.Equal("kept-profile", profileField);
+            var parsedProfile = (JsonObject)Json.Parse((string)legacyProfile);
+            parsedProfile.TryGet("body", out object body);
+            ((JsonObject)body).TryGet("stash", out object stash);
+            Assert.False(((JsonObject)Assert.Single((List<object>)stash)).TryGet("fusionLevel", out _));
+            Assert.Contains("\"fused\"", (string)legacyProfile);
+            withUnknown.TryGet("secondProfile", out object secondProfile);
+            legacyRoot.TryGet("secondProfile", out object legacySecond);
+            Assert.Equal(secondProfile, legacySecond);
+        }
+
         [Theory]
         [InlineData("unknown-root")]
         [InlineData("unknown-body")]

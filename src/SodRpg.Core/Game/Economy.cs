@@ -288,9 +288,16 @@ namespace SodRpg.Core.Game
         public HashSet<string> ReservedSalvageUids()
         {
             var uids = new HashSet<string>(StringComparer.Ordinal);
-            foreach (var t in _pending.Values)
-                if (t.Kind == TradeKind.SalvageForDust && !string.IsNullOrEmpty(t.Uid)) uids.Add(t.Uid);
+            ReservedSalvageUids(uids);
             return uids;
+        }
+
+        /// <summary>描画側の比較用集合を再利用する。解除された予約が残らないよう、前の内容は消す。</summary>
+        public void ReservedSalvageUids(HashSet<string> destination)
+        {
+            destination.Clear();
+            foreach (var t in _pending.Values)
+                if (t.Kind == TradeKind.SalvageForDust && !string.IsNullOrEmpty(t.Uid)) destination.Add(t.Uid);
         }
 
         /// <summary>

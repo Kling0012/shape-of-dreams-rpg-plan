@@ -21,6 +21,7 @@ namespace SodRpg.Core.Game
                 && string.Equals(target.NamedId, material.NamedId, StringComparison.Ordinal);
         }
 
+        // 符号を保って全能力値を増幅する。禁忌の不利な値も対象（5段で最大HP -50% → -65%）。
         internal static int ScaleStat(int value, int level) => level <= 0 ? value : Relic.Scale(value, 100 + BonusPct(level));
     }
 }
