@@ -10,6 +10,36 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v2.10.51 — Faster bulk salvage and lighter saves（2026-10-16）
+
+このバージョンでは、まとめて分解を押したときに画面が止まる時間を短くし、長く遊ぶほど保存が重くなっていく問題を修正しました。あわせて、強敵を続けて倒したときの保存の重さと、中断したプレイの再開に失敗したときの扱いも改善しました。 / This version shortens the freeze when using bulk salvage and fixes an issue where saving got heavier the longer you played. It also reduces save load when defeating strong enemies in quick succession and improves how failed resumes of interrupted runs are handled.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- まとめて分解で、遺物1つごとに保存が終わるまで画面が止まっていたため、最大30個を分解すると長く引っかかることがあった問題を修正しました。保存は全部の分解の準備が終わってから1回だけ行われるようになりました。準備や保存に失敗したときは、その回の分解はすべて取り消され、遺物は元に戻ります。協力プレイで分解の結果を受け取った側の保存も、まとめて行われるようになりました。 / Fixed an issue where bulk salvage froze the screen until the save finished for each relic, which could cause a long hitch when salvaging up to 30 relics. The game now saves once, after every salvage is ready. If preparing or saving fails, the whole batch is cancelled and your relics are returned. In co-op, saves on the side receiving the salvage results are now grouped as well.
+- 遠征の中断・再開用のデータがセーブデータの中にたまり続け、長く遊ぶほどセーブデータが大きくなって保存が重くなっていた問題を修正しました。終わった遠征のデータは消されるようになり、再開用に残すデータの数にも上限を設けました。再開用のデータに入る協力取引の情報は、変わっていないときは書き込まないようにしました。また、再開用データの確定に失敗し続けても、協力取引の控えが入れ子になってたまり、セーブデータが増え続けることはなくなりました。 / Fixed an issue where data for interrupting and resuming expeditions kept piling up in the save, making the save larger and saving slower the longer you played. Data for finished expeditions is now removed, and the amount of resume data kept is now limited. Co-op trade data in the resume data is no longer written when it has not changed. The save also no longer keeps growing with nested co-op trade backups when confirming resume data keeps failing.
+- 保存のたびに書き込んだセーブデータを全部読み直していたため、一時的にメモリを多く使い、ゲームが一瞬止まることがあった問題を修正しました。保存後の確認は書き込んだ内容との照合で行うようになり、全体の読み直しはプレイを始めて最初の保存だけになりました。 / Fixed an issue where the game re-read the whole save file after every save, using a lot of temporary memory and sometimes causing brief freezes. Saves are now checked by comparing against what was written, and the full re-read happens only on the first save of a session.
+- 強敵を続けて倒すと、1秒に何回も保存が走って重くなることがあった問題を修正しました。続けて倒したときの保存はまとめて行われるようになりました。 / Fixed an issue where defeating strong enemies in quick succession could trigger several saves per second and slow the game down. Saves after back-to-back kills are now grouped together.
+- 起動時にセーブデータを同じファイルにつき2回ずつ読み込んでいた問題を修正しました。 / Fixed an issue where each save file was read twice at startup.
+- ロビーに戻った遠征の記録が消えずにたまり続けていた問題を修正しました。記録は直近の分だけ残すようになりました。 / Fixed an issue where records of expeditions returned to the lobby kept piling up. Only recent records are now kept.
+- 中断したプレイを再開するときに中断データが読み込めないと、エラーがそのままゲームに伝わっていた問題を修正しました。今は警告が表示され、読み込めなかった遠征の報酬とビルドの反映だけが保留されます。 / Fixed an issue where an error went straight through to the game when interrupted-run data could not be read while resuming. A warning is now shown, and only the rewards and build changes for that expedition are put on hold.
+
+### 内部の改善 / Internal improvements
+
+- 星の木の画面について、テストが使う項目を明示し、木の形の前提が崩れたときに分かりやすいメッセージで失敗するようにするなど、内部の点検の仕組みを強化しました。 / Strengthened internal checks for the star tree screen, such as listing the fields the tests rely on and making tests fail with a clear message when assumptions about the tree's shape no longer hold.
+
+これらの変更でどれだけ軽くなるかは、実際のゲームではまだ測っていません。 / How much these changes improve performance has not yet been measured in the actual game.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。星の木の画面の実際のゲームでの表示（1920x1080）・マウス操作・二択パネルの見た目・フレーム時間の確認もまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. The star tree screen's display (1920x1080), mouse input, choice panel appearance, and frame time have also not yet been checked in the live game. Please report anything odd.
+
+---
+
 ## v2.10.50 — Fix co-op lobby version warnings, room omens across zones, and essence slots after loading（2026-10-16）
 
 このバージョンでは、協力プレイのロビーにいる参加者のバージョンが違うときに、ホストに警告が表示されない不具合を修正しました。あわせて、ゾーンが変わっても同じ部屋番号で同じ兆しが出ることがある不具合と、読み込み直後に記憶のエッセンス枠が正しい数で出ないことがある不具合も修正しました。 / This version fixes an issue where the host was not warned when a player waiting in the co-op lobby had a different version. It also fixes an issue where the same room number could show the same omen even in a different zone, and an issue where memory essence slots could show the wrong number right after loading.
