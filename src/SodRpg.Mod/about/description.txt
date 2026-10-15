@@ -1,5 +1,5 @@
-[b]Reduces unnecessary per-frame processing in combat and on the title/lobby screens, and batches heal, shield, and elemental kill reports in co-op.[/b]
-[b]戦闘中とタイトル・ロビーでの無駄な処理を減らし、協力プレイの回復・シールド・属性撃破の報告をまとめて送るようにしました。[/b]
+[b]The host's warning list now shows version or content differences for players waiting in the co-op lobby. Room omens no longer repeat by room number across zones, and memory essence slots show the correct number right after loading.[/b]
+[b]協力プレイのロビーにいる参加者のバージョンや内容の違いが、ホストの警告一覧に表示されるようになりました。部屋の兆しがゾーンをまたいで部屋番号ごとに同じになる問題と、読み込み直後に記憶のエッセンス枠が正しい数で出ない問題も直しました。[/b]
 
 [h1]Dreamforge RPG[/h1]
 Turns every run into part of a long RPG journey: relics you keep, a risky "secure or delve" choice at every zone, a star map per Traveler, a forge, and long-term goals. Co-op ready.
