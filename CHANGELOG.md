@@ -8,6 +8,11 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
+- 協力プレイの参加時、ホストの返事を待つ間に「ホストのMODが禁忌の装備に対応していません」と誤って表示されることがある問題を修正しました。 / Fixed a false "the host's mod predates forbidden gear" notice that could appear while waiting for the host's reply after joining.
+- 部屋の兆しが一度エラーで止まると、ゲームを再起動するまで戻らなかった問題を修正しました。次のゲームから再び有効になります。 / Room Omens that stopped after an error now come back from the next game instead of after a restart.
+- ホスト側で、抜けた参加者の版違いの警告が残り続ける問題を修正しました。 / The host no longer keeps showing a version warning for a player who left.
+- 装備一覧の表示、中断保存の受け取り、起動時の星図の計算などで無駄な処理を減らしました。 / Reduced wasted work in the gear list, continue-save handling and star-map setup at startup.
+
 ---
 
 ## v2.10.47 — Safer co-op trades for fused relics, plus logging to investigate a post-Polaris issue（2026-10-16）
