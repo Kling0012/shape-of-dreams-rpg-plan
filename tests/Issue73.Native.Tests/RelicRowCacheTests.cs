@@ -64,6 +64,7 @@ namespace Issue73.Native.Tests
             // The event button's production sequence; no artificial profile/row invalidation.
             profile.Run.OfferedEvent = DreamEvent.MemoryWell;
             foreach (var e in Rules.UseEvent(profile, DreamEvent.MemoryWell)) _session.Emit(e);
+            relic.FusionLevel = 3;
             _session.MarkDirty(false);
             _session.SaveNow();
             Assert.NotEqual(beforePower, relic.Powers[0].Power);

@@ -107,7 +107,7 @@ namespace SodRpg.Mod
             if (_helloPeers.Contains(caller)) _nemesisGrudgePeers[caller] = Forbidden.ClampGrudge(msg.nemesisGrudge);
             else _nemesisGrudgePeers.Remove(caller);
             try { _registeredOn?.CustomRpc_SendMessageToClient(caller,
-                new DreamforgeBuildInputCapabilityMsg { netLite = 1, roomOmens = 1, forbiddenInput = 1 }); } catch (Exception) { }
+                new DreamforgeBuildInputCapabilityMsg { netLite = 1, roomOmens = 1, forbiddenInput = 1, fusionInput = 1 }); } catch (Exception) { }
             SendRoomOmenPeer(caller);
         }
 

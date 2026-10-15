@@ -62,6 +62,8 @@ namespace SodRpg.Core.Tests
             var journal = new CoopTradeJournal(fs, "journal");
             journal.TryGet("trade", out var old);
             string oldEncoded = CoopTradeCodec.WriteReceipt(old);
+            Assert.Same(oldEncoded, CoopTradeCodec.WithoutFusionForLegacyReceipt(oldEncoded));
+            Assert.Same(old.FirstProfile, ProfileCodec.WithoutFusionForLegacyTrade(old.FirstProfile));
             var next = CoopTradeRules.CreateReceipt("next", "host", "first", Profile.CreateNew(17),
                 new CoopTradeOffer(), "second", Profile.CreateNew(19), new CoopTradeOffer());
             Assert.True(journal.Commit(next));
