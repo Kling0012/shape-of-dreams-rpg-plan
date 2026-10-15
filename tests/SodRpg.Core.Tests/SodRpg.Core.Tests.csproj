@@ -41,6 +41,8 @@
     <Compile Include="../../src/SodRpg.Mod/HostAuthority.PropProtection.cs" Link="ModUnderTest/HostAuthority.PropProtection.cs" />
     <Compile Include="../../src/SodRpg.Mod/HostAuthority.GemSlots.cs" Link="ModUnderTest/HostAuthority.GemSlots.cs" />
     <Compile Include="../../src/SodRpg.Mod/HostAuthority.LevelGemSlots.cs" Link="ModUnderTest/HostAuthority.LevelGemSlots.cs" />
+    <Compile Include="../../src/SodRpg.Mod/ExpeditionDiagnostics.cs" Link="ModUnderTest/ExpeditionDiagnostics.cs" />
+    <Compile Include="../../src/SodRpg.Mod/HostAuthority.Diagnostics.cs" Link="ModUnderTest/HostAuthority.Diagnostics.cs" />
     <Compile Include="../../src/SodRpg.Mod/HostAuthority.BuildValidation.cs" Link="ModUnderTest/HostAuthority.BuildValidation.cs" />
     <Compile Include="../../src/SodRpg.Mod/HostAuthority.MovementCharges.cs" Link="ModUnderTest/HostAuthority.MovementCharges.cs" />
     <Compile Include="../../src/SodRpg.Mod/HostAuthority.PairCombos.cs" Link="ModUnderTest/HostAuthority.PairCombos.cs" />

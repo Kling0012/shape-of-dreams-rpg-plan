@@ -57,12 +57,17 @@ namespace SodRpg.Core.Tests
         }
 
         [Theory]
-        [InlineData(1, 9.8f, 510f)]
-        [InlineData(2, 9.7f, 520f)]
-        [InlineData(3, 9.5f, 530f)]
-        public void Targetless_shot_applies_remaining_cooldown_reduction_and_self_and_nearby_ally_heal(int rank, float cooldown, float health)
+        [InlineData(1)]
+        [InlineData(2)]
+        [InlineData(3)]
+        public void Targetless_shot_applies_remaining_cooldown_reduction_and_self_and_nearby_ally_heal(int rank)
         {
             var (host, rt) = Setup("Nachia", rank, 4, 5);
+            // 期待値は stars.json の合わせ技値から組み立てる。橋4=残CD短縮%、橋5=最大HP比の回復%。
+            float recharge = Def("Nachia", 4).TableRankValues[rank - 1] / 100f;
+            float heal = rt.Hero.maxHealth * Def("Nachia", 5).TableRankValues[rank - 1] / 100f;
+            float cooldown = 10f * (1f - recharge);
+            float health = 500 + heal;
             rt.Hero.currentHealth = 500;
             var near = new Hero { currentHealth = 500, position = new UnityEngine.Vector3 { x = 10 } };
             var far = new Hero { currentHealth = 500, position = new UnityEngine.Vector3 { x = 10.01f } };
@@ -84,28 +89,33 @@ namespace SodRpg.Core.Tests
         public void Multiple_hits_after_one_shot_do_not_repeat_its_support_effects()
         {
             var (host, rt) = Setup("Nachia", 1, 4, 5);
+            float recharge = Def("Nachia", 4).TableRankValues[0] / 100f;
+            float once = 10f * recharge;
+            float again = 10f * (1f - recharge) * recharge;
+            float health = 500 + rt.Hero.maxHealth * Def("Nachia", 5).TableRankValues[0] / 100f;
             rt.Hero.currentHealth = 500; OpenWolfWindow(host, rt);
             host.Shot(rt, Shot(rt));
             host.Hit(new EventInfoAttackHit { attacker = rt.Hero, victim = Enemy() });
             host.Hit(new EventInfoAttackHit { attacker = rt.Hero, victim = Enemy() });
             host.Flush(rt);
-            Assert.Equal(9.8f, Cooldown(rt), 4); Assert.Equal(510, rt.Hero.currentHealth);
+            Assert.Equal(10f - once, Cooldown(rt), 4); Assert.Equal(health, rt.Hero.currentHealth);
             host.Hit(new EventInfoAttackHit { attacker = rt.Hero, victim = Enemy() });
             host.Flush(rt);
-            Assert.Equal(9.8f, Cooldown(rt), 4); Assert.Equal(510, rt.Hero.currentHealth);
+            Assert.Equal(10f - once, Cooldown(rt), 4); Assert.Equal(health, rt.Hero.currentHealth);
             host.Shot(rt, Shot(rt)); host.Flush(rt);
-            Assert.Equal(9.604f, Cooldown(rt), 4); Assert.Equal(510, rt.Hero.currentHealth);
+            Assert.Equal(10f - once - again, Cooldown(rt), 4); Assert.Equal(health, rt.Hero.currentHealth);
         }
 
         [Fact]
         public void Wolf_heal_keeps_one_second_interval_and_exact_four_second_window()
         {
             var (host, rt) = Setup("Nachia", 1, 5); rt.Hero.currentHealth = 500;
+            float tick = rt.Hero.maxHealth * Def("Nachia", 5).TableRankValues[0] / 100f;
             OpenWolfWindow(host, rt);
-            foreach (var step in new[] { (0.5f, 510f), (1.499f, 510f), (1.5f, 520f), (3.999f, 530f), (4f, 530f), (5f, 530f) })
+            foreach (var step in new[] { (0.5f, 1), (1.499f, 1), (1.5f, 2), (3.999f, 3), (4f, 3), (5f, 3) })
             {
                 UnityEngine.Time.time = step.Item1; host.Shot(rt, Shot(rt)); host.Flush(rt);
-                Assert.Equal(step.Item2, rt.Hero.currentHealth);
+                Assert.Equal(500 + step.Item2 * tick, rt.Hero.currentHealth);
             }
         }
 
@@ -151,7 +161,8 @@ namespace SodRpg.Core.Tests
             foreach (var depth in new[] { (1, 0, 0), (0, 1, 0), (0, 0, 1) })
             { host.SetDepths(depth.Item1, depth.Item2, depth.Item3); host.Shot(rt, Shot(rt)); }
             host.SetDepths(0, 0, 0); host.Flush(rt); Assert.Equal(10, Cooldown(rt));
-            host.Shot(rt, Shot(rt)); host.Flush(rt); Assert.Equal(9.8f, Cooldown(rt), 4);
+            host.Shot(rt, Shot(rt)); host.Flush(rt);
+            Assert.Equal(10f * (1f - Def("Nachia", 4).TableRankValues[0] / 100f), Cooldown(rt), 4);
         }
 
         [Theory]

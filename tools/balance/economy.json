@@ -2,6 +2,6 @@
   "schemaVersion": 1,
   "exchange": {"dustPerBatch": 100, "shardsPerBatch": 10},
   "merchant": {"baseGold": 60, "goldPerHeat": 15},
-  "salvage": {"dustPerShard": 5, "dustPerEnhance": 10},
+  "salvage": {"dustPerShard": 1, "dustPerEnhance": 2},
   "expedition": {"limboDropBonus": 0.10, "limboLuck": 0.2, "limboExpBonus": 0.1666667, "limboExpBonusCap": 1.0, "limboRelicBonus": 0.2, "limboRelicBonusCap": 2.0, "limboRelicMultiplierCap": 6.0, "secureBonusDivisor": 4}
 }

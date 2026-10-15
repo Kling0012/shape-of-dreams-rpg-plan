@@ -50,6 +50,14 @@ A mod that turns Shape of Dreams into a long-term RPG built around gear you brin
 
 全員のゲーム・MODの版、ホスト／参加者の別、ロビー／遠征の場所、交換品と素材数、操作順、停止時の表示と待った時間、発生頻度、再接続・Continueの有無も添えてください。診断版の `[DreamforgeRPG] CoopTrade diagnostic` 行で処理の段階を追います。原因は未確定で、不具合の修正はログ受領後に調査します。保存先の補足と収集手順は [取引の診断ログ案内](docs/specs/issue-443-trade-diagnostics.md) を参照してください。
 
+ポラリス踏破後、次の遠征で夢の圧が下がる・装備効果が出ない報告（[#449](https://github.com/Kling0012/shape-of-dreams-rpg-plan/issues/449)）は、まだ原因が確定しておらず、未修正です。次の発生時に切り分けるため、既存の `[DreamforgeRPG]` ログへ `diag449` の記録を追加しています。
+
+- **ログの場所**：このMODはゲーム標準のMOD機構とUnityのロガーを使い、記録先は `Player.log` です。BepInEx の `LogOutput.log` ではありません。Windowsでは `%USERPROFILE%\AppData\LocalLow\Lizard Smoothie\Shape of Dreams\Player.log`（セーブの `QuickSave` フォルダと同じ階層）。Steamの「管理 → ローカルファイルを閲覧」で開くゲームフォルダ内ではなく、Windowsのユーザーフォルダ側にあります。LinuxでProtonを使う場合は、Steamライブラリの `steamapps/compatdata/<ゲームのAppID>/pfx/drive_c/users/steamuser/AppData/LocalLow/Lizard Smoothie/Shape of Dreams/Player.log` を探してください。起動オプションの `-logFile` を指定している場合は、その指定先です。
+- **送り方**：再発したら、ゲームを再起動する前に `Player.log` をコピーし、#449へ添付してください。再起動済みなら、直前のログ `Player-prev.log` が残っていればそちらも対象です。協力プレイではホストと症状が出た参加者それぞれのログが必要です。前後の警告・エラーも切り分けに使うため、`diag449` 行だけでなく対象ログを添付し、共有前にユーザー名・アカウントID・接続先・個人のフォルダ名などの個人情報を除いてください。セーブデータの添付は不要です。
+- **一緒に知りたいこと**：ゲームとMODの版、ソロ／ホスト／ゲスト、通常／インフィニティ（踏破した遠征と次の遠征の両方）、旅人、踏破から次の遠征までの操作（ロビー帰還・Continue・再接続・旅人や装備の変更）、前後の夢の深度と夢の圧の具体的な数値、効果が出なかった装備名と効果、再装備や再起動で戻るかを書いてください。
+
+診断は終幕通知・精算・遠征開始・ビルド送信／ホスト受付と適用・夢の圧の計算と受信を記録します。装備数、参照切れ数、夢レベル、使用星点、圧の倍率、ゲーム内オブジェクトの一時的な番号などが対象で、名前・アカウントID・セーブ全文は追加ログに含めません。同一内容を抑制し、クライアント／ホスト各48行までを本体の遠征IDが変わるごとに記録します。上限に達した最後の行には `run log limit reached` と出ます。ゲームのデータ・動作・通信は変えていません。Issueはログを待つため、診断追加のリリース後も開いたままにします。
+
 ## 開発
 
 | 場所 | 内容 |
