@@ -42,7 +42,13 @@ namespace SodRpg.Mod
             try
             {
                 if (player == null || !player.isHumanPlayer || player.hero != hero || _registeredOn == null
-                    || rt.PendingBountyRun != NetworkedManagerBase<GameManager>.softInstance?.runId) return;
+                    || rt.PendingBountyRun != NetworkedManagerBase<GameManager>.softInstance?.runId)
+                {
+                    Log.Info("Host: discarded pending bounty reports: " + (player == null ? "missing player"
+                        : !player.isHumanPlayer ? "non-human player" : player.hero != hero ? "hero changed"
+                        : _registeredOn == null ? "missing transport" : "run changed"));
+                    return;
+                }
                 if (_bountyCountPeers.Contains(player)
                     || player == DewPlayer.local && ClientSession.LocalBountyCountsReady(_registeredOn))
                 {
@@ -50,7 +56,8 @@ namespace SodRpg.Mod
                     {
                         heroNetId = hero.netId, runId = rt.PendingBountyRun,
                         shields = rt.PendingBountyShields, allyHeals = rt.PendingBountyHeals,
-                        elementalKills = rt.PendingElementalKills,
+                        // The local transport may retain this message after the counters are cleared.
+                        elementalKills = (int[])rt.PendingElementalKills.Clone(),
                     });
                 }
                 else
@@ -88,9 +95,22 @@ namespace SodRpg.Mod
 
         private void UnregisterBountyCounts(Actor actor)
         {
+            bool wasReady = _bountyCountsReady;
             _bountyCountsReady = false;
-            if (actor != null)
-                try { actor.CustomRpc_UnregisterClientMessageHandler<DreamforgeBountyCountsMsg>(_onBountyCounts); } catch (Exception) { }
+            if (actor == null) return;
+            if (wasReady && NetworkClient.active)
+            {
+                try
+                {
+                    actor.CustomRpc_SendMessageToServer(new DreamforgeBuildInputCapabilityMsg
+                    {
+                        bountyCounts = 0, netLite = _netLiteReceiveReady ? 1 : 0, roomOmens = _omenReceiveReady ? 1 : 0,
+                        forbiddenSmith = Forbidden.HasSmith(Profile) ? 1 : 0, nemesisGrudge = Profile.NemesisGrudge,
+                    });
+                }
+                catch (Exception ex) { Log.Warn("Counted bounty report withdrawal unavailable: " + ex.Message); }
+            }
+            try { actor.CustomRpc_UnregisterClientMessageHandler<DreamforgeBountyCountsMsg>(_onBountyCounts); } catch (Exception) { }
         }
 
         private void OnBountyCounts(DreamforgeBountyCountsMsg msg)
@@ -115,10 +135,10 @@ namespace SodRpg.Mod
     {
         private static IEnumerable<System.Reflection.MethodBase> TargetMethods()
         {
-            yield return AccessTools.Method(typeof(GameResultManager), nameof(GameResultManager.WrapUp));
-            yield return AccessTools.Method(typeof(DewPersistence), nameof(DewPersistence.SerializeGameData));
-            yield return AccessTools.Method(typeof(DewNetworkManager), nameof(DewNetworkManager.RestartSession));
-            yield return AccessTools.Method(typeof(Primus_Ending), nameof(Primus_Ending.StartPrimusDeath));
+            yield return AccessTools.Method(typeof(GameResultManager), nameof(GameResultManager.WrapUp), new[] { typeof(DewGameResult.ResultType) });
+            yield return AccessTools.Method(typeof(DewPersistence), nameof(DewPersistence.SerializeGameData), new[] { typeof(LoadNodeSettings) });
+            yield return AccessTools.Method(typeof(DewNetworkManager), nameof(DewNetworkManager.RestartSession), Type.EmptyTypes);
+            yield return AccessTools.Method(typeof(Primus_Ending), nameof(Primus_Ending.StartPrimusDeath), Type.EmptyTypes);
         }
 
         [HarmonyPriority(Priority.First)]
