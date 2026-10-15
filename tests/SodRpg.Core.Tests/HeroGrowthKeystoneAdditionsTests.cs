@@ -10,28 +10,30 @@ using Xunit;
 namespace SodRpg.Core.Tests
 {
     /// <summary>
-    /// v2.10 の追加分（feat/hero-run-growth-1016）：Aurena/Lacerta/Nachia/Yubar の遠征成長と
-    /// Aurena/Nachia/Yubar の刻印各2個。既存の RunGrowth（StarAdditionsV132・BalanceSimV132）と
+    /// v2.10 の追加分（feat/hero-run-growth-1016）：Aurena/Lacerta/Nachia/Yubar/Bismuth の遠征成長と
+    /// Aurena/Nachia/Yubar/Bismuth の刻印各2個。既存の RunGrowth（StarAdditionsV132・BalanceSimV132）と
     /// 生成星図（GeneratedHeroAcceptance）のテストと同じ形で、追加した分だけを確かめる。
     /// </summary>
     [Collection("Generated hero registry")]
     public class HeroGrowthKeystoneAdditionsTests
     {
-        private static readonly string[] GrowthHeroes = { "Hero_Aurena", "Hero_Lacerta", "Hero_Nachia", "Hero_Yubar" };
-        private static readonly string[] KeystoneHeroes = { "Hero_Aurena", "Hero_Nachia", "Hero_Yubar" };
+        private static readonly string[] GrowthHeroes = { "Hero_Aurena", "Hero_Lacerta", "Hero_Nachia", "Hero_Yubar", "Hero_Bismuth" };
+        private static readonly string[] KeystoneHeroes = { "Hero_Aurena", "Hero_Nachia", "Hero_Yubar", "Hero_Bismuth" };
         private static readonly string[] AddedKeystones =
         {
             "aurena.key.golden-afterglow", "aurena.key.reaction-pulse", "nachia.key.oath-of-the-pack",
             "nachia.key.heartbeat-of-the-grove", "yubar.key.supernova-afterglow", "yubar.key.unstable-orbit",
+            "bismuth.key.crystal-resonance", "bismuth.key.autocast-echo",
         };
 
         public static IEnumerable<object[]> GrowthHeroCases()
         {
-            // 追加した4人の成長条件（HostAuthority.RunGrowth の接続先）。
+            // 追加した5人の成長条件（HostAuthority.RunGrowth の接続先）。
             yield return new object[] { "Hero_Aurena", RunGrowthTrigger.HealSucceeded };
             yield return new object[] { "Hero_Lacerta", RunGrowthTrigger.EnemyKill };
             yield return new object[] { "Hero_Nachia", RunGrowthTrigger.SummonHit };
             yield return new object[] { "Hero_Yubar", RunGrowthTrigger.BasicAttackHit };
+            yield return new object[] { "Hero_Bismuth", RunGrowthTrigger.MemoryHit };
         }
 
         private static void RegisterAll()
@@ -113,7 +115,7 @@ namespace SodRpg.Core.Tests
         }
 
         [Fact]
-        public void Growth_choice_and_cap_stars_compose_for_the_four_added_travelers()
+        public void Growth_choice_and_cap_stars_compose_for_the_added_travelers()
         {
             RegisterAll();
             foreach (string hero in GrowthHeroes)
@@ -141,7 +143,7 @@ namespace SodRpg.Core.Tests
         }
 
         [Fact]
-        public void The_three_travelers_hold_eight_authored_keystones_with_the_same_rank_and_cost_rules()
+        public void The_keystone_travelers_hold_eight_authored_keystones_with_the_same_rank_and_cost_rules()
         {
             RegisterAll();
             foreach (string hero in KeystoneHeroes)
@@ -172,6 +174,8 @@ namespace SodRpg.Core.Tests
                 ("Hero_Nachia", "nachia.key.oath-of-the-pack", Stat.Armor, 10),
                 ("Hero_Nachia", "nachia.key.heartbeat-of-the-grove", Stat.SummonPower, 18),
                 ("Hero_Yubar", "yubar.key.unstable-orbit", Stat.Haste, 15),
+                ("Hero_Bismuth", "bismuth.key.crystal-resonance", Stat.Armor, 9),
+                ("Hero_Bismuth", "bismuth.key.autocast-echo", Stat.Haste, 12),
             };
             foreach (var row in cases)
             {
@@ -214,6 +218,15 @@ namespace SodRpg.Core.Tests
             Assert.Equal(25m, payload.Value);
             Assert.Equal(8m, payload.DurationSeconds);
             Assert.Equal(KeystonePayloadKind.MemoryPrimed, payload.Kind);
+
+            // 結晶の共鳴：Q・R枠の記憶使用を Empower の仕掛けとして、値12%で Build に入る。
+            var resonance = MaxedBuildWithKeystones("Hero_Bismuth", "bismuth.key.crystal-resonance", out _);
+            var crystal = Assert.Single(resonance.Mechanisms, m => m.StarId == "bismuth.key.crystal-resonance");
+            Assert.Equal(AuthoredMechanismKind.Gimmick, crystal.Spec.Kind);
+            var crystalPayload = AuthoredKeystoneComposer.MechanismPayload(crystal.Spec);
+            Assert.Equal(GimmickEffect.Empower, crystalPayload.Effect);
+            Assert.Equal(12m, crystalPayload.Value);
+            Assert.Equal(KeystonePayloadKind.Gimmick, crystalPayload.Kind);
 
             // 追加した刻印は、検証済みスロットのどの memory 由来の payload も弱めない（All_88…と同じ確認）。
             foreach (string hero in KeystoneHeroes)
