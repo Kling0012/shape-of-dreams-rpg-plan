@@ -1,5 +1,5 @@
-[b]Fixes Star Map two-option choices whose descriptions could stay outdated after a free switch.[/b]
-[b]星図で二択を無料で切り替えたあと、候補の説明が古いまま表示されることがある不具合を修正しました。[/b]
+[b]Reduces unnecessary per-frame processing in combat and on the title/lobby screens, and batches heal, shield, and elemental kill reports in co-op.[/b]
+[b]戦闘中とタイトル・ロビーでの無駄な処理を減らし、協力プレイの回復・シールド・属性撃破の報告をまとめて送るようにしました。[/b]
 
 [h1]Dreamforge RPG[/h1]
 Turns every run into part of a long RPG journey: relics you keep, a risky "secure or delve" choice at every zone, a star map per Traveler, a forge, and long-term goals. Co-op ready.
