@@ -155,16 +155,18 @@ ProfileCodec.Writeは0.016〜0.293msだった。直列化以外の保存準備�
 
 ### 回帰テストの現状と実機確認リスト
 
-次の3つの差分更新には直接の回帰テストが無い。`DreamforgeUi` のこれらの部分は Unity IMGUI（`Event.current`・`GUIStyle.CalcHeight`）
-に依存するprivateな内部状態で、Issue73抽出ハーネスの抽出対象にも入っていないため、既存の自動テストでは
-表示API（`StarMapPresentation` 等）の結果が旧実装と同じことしか確認できない。
+次の3つの差分更新は `DreamforgeUi` の Unity IMGUI（`Event.current`・`GUIStyle.CalcHeight`）に依存する
+privateな内部状態で、Issue73抽出ハーネスの抽出対象にも入っていないため、リポジトリ内の既存テストでは
+直接確認できていなかった。
 
 - 左一覧の高さの部分再計算（`RefreshStarClusters` の変更行のみの計測と `_starClusterDirtyFrom` からの加算）
 - `TextRank`/`TextChoice` による本文更新スキップ
 - ツールチップの世代管理（`TooltipVersion`/`_starTextVersion`）
 
-直接の回帰テストの作成は #440 として切り出した（このIssueの作業指示ではテストを新規作成しないため。
-#440 では抽出ハーネスへの `DreamforgeUi` 抽出の追加と IMGUI 境界スタブの用意を案としている）。
+修正ラウンド2回目（2026-10-15）で、これら3つとホバー維持加点・二択変更の表示更新を、下記
+「UI 差分更新の直接実行による確認」のシナリオランナーで実メソッドを実行して確認した
+（全項目合格）。リポジトリ内の恒常的な回帰テスト（xunit）は #440 のままで、
+抽出ハーネスへの `DreamforgeUi` 抽出の追加と IMGUI 境界スタブの用意を案としている。
 
 保存・送信側（`MarkAllocationDirty`・`SavePendingAllocation`・`DeferSave` の期限）は、#438 で抽出契約
 （`NativePersistence.targets`）に `MarkAllocationDirty`/`SavePendingAllocation`/`OnAllocationSceneChanged` を追加し
@@ -195,4 +197,42 @@ UI から `SavePendingAllocation` を呼ぶ場所（メニューを閉じた時�
 - 二択を変更した後、星の本文表示と左一覧の表示が正しいこと。
 
 （連打中の送信・保存期限、メニュー・タブを閉じた直後とシーン遷移時の保存、書き込み失敗後の5秒再試行は、
-上記のシナリオランナーで対象経路（実際の `ClientSession` の各メソッド）を実行して確認済み。）
+上記のシナリオランナーで対象経路（実際の `ClientSession` の各メソッド）を実行して確認済み。
+上の2項目も修正ラウンド2回目に UI シナリオランナーで対象経路（実際の `DreamforgeUi` の各メソッド）を
+実行して確認した — 次節のとおり。実機に残るのは描画・操作感の最終確認。）
+
+## 追補: UI 差分更新の直接実行による確認（#436 修正ラウンド2回目、2026-10-15）
+
+上の2項目（ホバー維持の加点・二択変更）と3つの差分更新（高さの部分再計算・TextRank スキップ・
+ツールチップの世代管理）を、保存・送信側と同じ方式の一度限りのシナリオランナー
+（`/tmp/sod-starui-436`、リポジトリには加えない）で対象経路そのものを実行して確認した。
+
+構成: `NativePersistence.targets` と同じ Roslyn 構文抽出タスクで、実ソースから
+`RefreshStarState`・`EnsureStarTooltip`・`EnsureStarChoiceText`（`DreamforgeUi.cs`）と
+`RefreshStarClusters`・`DrawStarClusterList`・`StarRegionColor`（`DreamforgeUi.AuthoredStars.cs`）を
+抽出し（実装のコピーではなく構文選択）、実 `SodRpg.Core`（`StarMapPresentation`・`HeroTreeLayout`・
+`Rules`・生成星図 `StarClusters.RegisterGeneratedHero("Hero_Yubar")` — 本体の起動処理と同じ登録）
+に対してコンパイルした。Unity IMGUI 境界（`Event`/`EventType`/`GUIContent`/`GUIStyle`/`GUILayoutUtility`/
+`GUI`）のみスタブで置き、`GUIStyle.CalcHeight` は決定的な行数換算（呼び出し記録つき、
+高さの差し替えも可能）にした。UI 状態は `RebuildStarTree`/`RebuildStarClusters` と同じ値で初期化し、
+加点は実際の割り振りと同じ状態遷移（`Talents` に1段、二択星は `TalentChoices` も設定）で行った。
+抽出契約どおり、メンバー構成が変われば抽出が失敗する。
+
+条件・期待結果・実際の結果（2026-10-15、全48項目合格、`ALL SCENARIOS PASSED`）。A=星A（ホバー中）、
+B=星B（加点対象）、C=二択星（行5、全886行）:
+
+| シナリオ | 操作（実メソッド） | 期待結果 | 実際の結果 |
+|---|---|---|---|
+| ツールチップの世代管理（R17） | `EnsureStarTooltip(A)` → もう1回 → 変化なし `RefreshStarState` → もう1回 | 生成後に `TooltipVersion` が世代に揃い、世代が同じなら再生成しない。変化がない Layout では世代も進まない | 初回生成（498文字）→ sentinel 維持 → version=1 のまま再生成なし。合格 |
+| ホバー維持の加点・ダメージ注記（R7） | `EnsureStarTooltip(A)` → B へ加点 → 次の Layout で `RefreshStarState` → `EnsureStarTooltip(A)`（キャンバス末尾のホバー経路と同じ呼び出し） | 加点直後は古いまま。世代進行後の最初の `EnsureStarTooltip` でダメージ注記が使用済み1点の倍率に更新される | 加点直後は旧文のまま → ×1（使用済み0点）が ×1.003（使用済み1点）に更新。`MissingRequirements` は現行状態と一致。合格 |
+| ホバー維持の加点・条件文（R7） | ポイント余裕1の状態で上と同じ操作 | 余裕が尽きた星Aの条件文（ポイント不足）と状態行（条件不足）が更新される | 「取得可能」→ 条件文「ポイント不足：必要1・残り0・あと1。」＋状態行「条件不足」。合格 |
+| TextRank スキップ（R16） | A・B に sentinel 本文を仕込み、B のみ加点して `RefreshStarState`。さらに変化なし `RefreshStarState` | 加点した B のみ `RankLabel`/`DisplayBody`/`SearchDescription` が再生成され、A は sentinel のまま。検索の汚れは再生成があったときのみ立つ | B は 1/3 ラベルに再生成・A は sentinel 維持・検索汚れ=立つ→変化なしでは立たない。合格 |
+| 二択変更の本文と一覧（R18） | C を選択肢0で取得し一覧を確定 → 選択肢1へ切替（無料）→ `RefreshStarState` → `EnsureStarChoiceText(C)` | 本文（`ChoiceDescription`）と効果要約が選択肢1の内容に再生成され、左一覧の行ラベルも新しい要約で再構築される。汚れは変更行からのみ（`heights[C]=0`・`dirtyFrom=行C`） | 本文・要約・一覧ラベルとも選択肢1の内容（エキゾチック物質→集まる星々）に更新・dirtyFrom=5。合格 |
+| 二択変更の選択パネル（R18/R11） | 切替後に `EnsureStarChoiceText(C)` | パネル列の本文は使用済みポイントのみに依存するため再構築されない（sentinel 維持）。パネルが読む `MissingRequirements` は現行の状態。ツールチップ本文も選択肢1に再生成 | 列は sentinel のまま・`MissingRequirements` 現行と一致・ツールチップは選択肢1の本文を含む。合格 |
+| 高さの部分再計算・冷間start（R15） | 初回 `DrawStarClusterList`（Repaint） | 未測定の全行の高さを測定する | 886行すべて測定（calcCalls=886）。合格 |
+| 高さの部分再計算・変更行のみ（R15） | 二択変更後の `DrawStarClusterList`（行C の高さを+30px に差し替え） | 変更行だけ再測定し、変更行より前の行位置は不変、より後の行位置は高さ差分（+30）だけ移動、一覧の高さ合計も差分反映、再計算後に汚れ解除 | calcCalls=1（行Cのみ）・前行不変・後続行+30・合計も+30・dirtyFrom=886。合格 |
+| 高さの部分再計算・変化なし（R15) | 追加の変更なしでもう1回 `DrawStarClusterList` | 再測定も位置計算も起きない | calcCalls=0・高さ合計不変。合格 |
+| 経路取得の汚れの局所性（R15 補助） | 経路の星を取得した後、二択星 C を取得して `RefreshStarState` | この Layout で一覧の汚れが立つのは C の行だけ | dirtyFrom=5（=行C）。合格 |
+
+実機に残るのは描画と操作感（画面上のツールチップの見え方・パネルの視覚）の確認だけで、
+上記のとおり状態・文字列・行位置そのものは実コードの実行で確認済み。
