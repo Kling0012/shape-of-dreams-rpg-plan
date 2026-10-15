@@ -261,6 +261,8 @@ namespace SodRpg.Mod
                 Log.Warn("Client: rejected checkpoint notification without a checkpoint ID.");
                 return;
             }
+            // 本体保存の確定通知とは別に、参加者のチェックポイントもディスクへの書き込みを確認する。
+            // 未完了の予約だけで先の通知や再開へ進めないよう、両経路の確認付き保存を維持する。
             if (msg.committed)
             {
                 if (ConfirmContinueCheckpoint(msg.runId, msg.checkpointId)) SaveNow(true);

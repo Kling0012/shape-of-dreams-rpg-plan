@@ -69,7 +69,12 @@ namespace SodRpg.Mod
             if (msg == null || msg.version != 1) return;
             _hostNetLite = msg.netLite == 1 && _netLiteReceiveReady;
             // 応答が一度でも届いたら確定する（旧ホストはこの欄を返さず 0 のまま）。
-            if (msg.forbiddenInput == 1) _hostForbiddenInput = true;
+            if (msg.forbiddenInput == 1 && !_hostForbiddenInput)
+            {
+                _hostForbiddenInput = true;
+                _buildDirty = true;
+                _buildCacheFrame = -1;
+            }
             if (msg.fusionInput == 1 && !_hostFusionInput)
             {
                 _hostFusionInput = true;

@@ -3,15 +3,21 @@ name: ci
 on:
   push:
     branches: [main]
-    paths-ignore:
-      - docs/**
-      - "**.md"
-      - src/SodRpg.Mod/about/**
+    paths:
+      - "**"
+      - "!docs/**"
+      - "!**.md"
+      - "!src/SodRpg.Mod/about/**"
+      # Tests copy this reviewed table into their output as ReviewedV129.md.
+      - docs/specs/v1.29-uniques-table.md
   pull_request:
-    paths-ignore:
-      - docs/**
-      - "**.md"
-      - src/SodRpg.Mod/about/**
+    paths:
+      - "**"
+      - "!docs/**"
+      - "!**.md"
+      - "!src/SodRpg.Mod/about/**"
+      # Tests copy this reviewed table into their output as ReviewedV129.md.
+      - docs/specs/v1.29-uniques-table.md
 
 # A newer push to the same branch (several merges in a row) supersedes the older run.
 concurrency:

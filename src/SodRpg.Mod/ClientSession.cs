@@ -263,6 +263,8 @@ namespace SodRpg.Mod
             }
         }
 
+        private readonly HashSet<string> _reservedSalvageScratch = new HashSet<string>(StringComparer.Ordinal);
+
         private void TickSalvageExpiry()
         {
             // GLM (mp-ui-save #7): the wait on screen is released for every trade kind after the timeout, but the trade
@@ -284,8 +286,16 @@ namespace SodRpg.Mod
             }
             if (Profile.PendingSalvage.Count > 0)
             {
-                var returned = Rules.RestorePendingSalvage(Profile, keepUids: _trades.ReservedSalvageUids());
-                if (returned.Count > 0) { Emit(returned); SaveNow(); }
+                // 毎フレーム通るので、予約中の集合は使い回し、戻す品があるときだけ戻し処理を呼ぶ。
+                _trades.ReservedSalvageUids(_reservedSalvageScratch);
+                bool anyReturn = false;
+                foreach (var pending in Profile.PendingSalvage)
+                    if (!_reservedSalvageScratch.Contains(pending.Relic.Uid)) { anyReturn = true; break; }
+                if (anyReturn)
+                {
+                    var returned = Rules.RestorePendingSalvage(Profile, keepUids: _reservedSalvageScratch);
+                    if (returned.Count > 0) { Emit(returned); SaveNow(); }
+                }
             }
             if (_hostLedgerId == 0) SendLedgerProbe();
             SendDueTradeQueries();
@@ -1413,9 +1423,11 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
                 _allocationBuildDue = 0;
             }
             float now = Time.unscaledTime;
+            string heroKey = HeroKeyOf(hero);
+            // 通知は送信間隔・同一ビルドの抑制に関係なく、毎tick確認する。
+            RefreshForbiddenGearNotice(heroKey, now);
             if (Profile.Run == null && _buildDirty && now < _allocationBuildDue && !_monsterAuthority.BuildResendRequired) return;
             if (!_buildDirty && !_monsterAuthority.BuildResendRequired && now < _nextBuildSend) return;
-            string heroKey = HeroKeyOf(hero);
             ProbeBuildInputCapability(heroKey);
             var submissionProfile = NetworkServer.active || _hostBuildInputCapability
                 ? Profile : HostBuildValidation.CompatibleProfile(Profile, heroKey);
@@ -1425,18 +1437,7 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
             if (!NetworkServer.active && !_hostForbiddenInput)
             {
                 var withoutForbidden = HostBuildValidation.WithoutUnsupportedGear(submissionProfile, heroKey);
-                if (!ReferenceEquals(withoutForbidden, submissionProfile))
-                {
-                    submissionProfile = withoutForbidden;
-                    if (!_forbiddenGearStripNotice)
-                    {
-                        _forbiddenGearStripNotice = true;
-                        ForbiddenGearHostNotice = Loc.T(
-                            "ホストのMODが禁忌の装備（#415）に対応していません。このセッションでは禁忌化した遺物と、上限を超えて再調律した遺物は適用されません。",
-                            "The host's mod predates forbidden gear (#415); forbidden and over-retuned relics are not applied in this session.");
-                        Log.Warn("Host MOD predates forbidden gear (#415); forbidden and over-retuned relics are not applied in this session.");
-                    }
-                }
+                submissionProfile = withoutForbidden;
             }
             if (!NetworkServer.active && !_hostFusionInput)
                 submissionProfile = HostBuildValidation.WithoutFusion(submissionProfile, heroKey);
@@ -1460,6 +1461,24 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
             _monsterAuthority.BuildSent();
             _sentDreamLevel = Profile.DreamLevel;
             _nextBuildSend = now + (HostConfirmed ? 30f : 5f);
+        }
+
+        private void RefreshForbiddenGearNotice(string heroKey, float now)
+        {
+            if (NetworkServer.active || _hostForbiddenInput || _forbiddenGearStripNotice) return;
+            // 対応の返事を待つ間は通知せず、未対応の返事か20秒の期限を待つ。
+            if (!_hostBuildInputCapability && (_helloFirstSent < 0 || now - _helloFirstSent <= 20f)) return;
+            foreach (string uid in Profile.Hero(heroKey).Equipped)
+            {
+                var relic = Profile.FindStash(uid);
+                if (relic == null || relic.Forbidden == null && relic.Retunes <= Content.MaxRetunes) continue;
+                _forbiddenGearStripNotice = true;
+                ForbiddenGearHostNotice = Loc.T(
+                    "ホストのMODが禁忌の装備（#415）に対応していません。このセッションでは禁忌化した遺物と、上限を超えて再調律した遺物は適用されません。",
+                    "The host's mod predates forbidden gear (#415); forbidden and over-retuned relics are not applied in this session.");
+                Log.Warn("Host MOD predates forbidden gear (#415); forbidden and over-retuned relics are not applied in this session.");
+                break;
+            }
         }
 
         /// <summary>One local grant and one notice/log per tick; save barriers settle credit without consuming this notice.</summary>

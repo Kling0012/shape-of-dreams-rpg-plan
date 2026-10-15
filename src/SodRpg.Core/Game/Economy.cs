@@ -388,9 +388,13 @@ namespace SodRpg.Core.Game
         private void EnsureRoom()
         {
             if (!CanBegin)
+            {
+                // 手動の取引の上限か、結果待ちを含めた全体の上限か、実際に当たった方を示す。
+                int limit = ManualHeldCount >= MaxHeld ? MaxHeld : MaxRestored;
                 throw new InvalidOperationException(Loc.T(
-                    $"未確定の取引が{MaxHeld}件に達しています。結果が確認できるまで、新しい取引はできません。",
-                    $"There are already {MaxHeld} unresolved trades. New trades are paused until their results are confirmed."));
+                    $"未確定の取引が{limit}件に達しています。結果が確認できるまで、新しい取引はできません。",
+                    $"There are already {limit} unresolved trades. New trades are paused until their results are confirmed."));
+            }
         }
 
         public PendingTrade Begin(TradeKind kind, int spendGold, int spendDust, int earnDust, string uid = null, double now = 0)

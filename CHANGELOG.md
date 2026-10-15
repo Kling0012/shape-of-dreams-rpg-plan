@@ -8,6 +8,12 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
+- 協力プレイで禁忌装備への対応確認を待っている間の誤警告を抑え、返事がない場合はビルド再送の待機中でも20秒経過後に警告を表示します。対応が後から分かった場合は装備を反映し直します。 / Avoid premature forbidden-gear warnings while waiting for the host; warn after the timeout even while build resends are throttled, and refresh the build when support is confirmed later.
+- 退出した参加者の版違い警告を片付け、例外で停止した部屋の兆しを次の遠征で再び有効にします。未確定取引の上限表示も、実際に達した上限に合わせました。 / Clear departed players' version warnings, retry failed room omens on the next expedition, and report the applicable unresolved-trade limit.
+- 中断保存の通知を受けた際の確認付き保存を維持し、保存先がある参加者は復元状態の書き込み完了を確認してから再開の受領通知を送ります。 / Preserve confirmed checkpoint writes and confirm the restored profile before sending a resume receipt in sessions with persistent storage.
+- 装備一覧・回収待ち遺物・警告文・報酬処理の不要な繰り返しと、星図の上限計算の無駄を減らしました。 / Reduce repeated work in relic lists, pending salvage, warnings, rewards, and Star Map limit calculations.
+- テスト対象の選択で複数名前空間とプロジェクトがコピーする入力を扱い、仕様表だけの変更でもCIを起動します。装備生成キャッシュには低レアリティ生成元を含め、生成結果を入力から除外します。 / Include multiple namespaces and copied inputs in test selection, run CI for the reviewed specification table, and track low-rarity generator inputs without treating generated outputs as inputs.
+
 ---
 
 ## v2.10.50 — Fix co-op lobby version warnings, room omens across zones, and essence slots after loading（2026-10-16）
