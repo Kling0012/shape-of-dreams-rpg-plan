@@ -8,6 +8,10 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
+### 変更 / Changes
+
+- 宿敵の頭上の名札の色を、悪夢化した敵（桃色）や夢の変種（琥珀色）と重ならないシアンに変えました。 / Nemesis name tags are now cyan, a color shared by neither nightmare enemies (pink) nor dream variants (amber).
+
 ---
 
 ## v2.10.42 — Maintenance update with no player-facing changes（2026-10-15）

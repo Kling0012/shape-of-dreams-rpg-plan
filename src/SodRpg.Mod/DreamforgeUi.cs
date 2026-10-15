@@ -976,7 +976,10 @@ namespace SodRpg.Mod
                 if (sp.z <= 0) continue;
                 if (!_nightmareLabelCache.TryGetValue((int)kv.Value, out var lab))
                 {
-                    string text = UiStyles.Colored(Nightmares.Label(kv.Value), "#ff6ad5");
+                    // 宿敵（#435）の名札は、悪夢（桃 #ff6ad5）・夢の変種（琥珀 #ffb347）と
+                    // 重ならないシアンで出す。
+                    string hex = (kv.Value & NightmareAffix.Nemesis) != 0 ? "#4dd8ff" : "#ff6ad5";
+                    string text = UiStyles.Colored(Nightmares.Label(kv.Value), hex);
                     var content = new GUIContent(text);
                     lab = new Label3D { Text = text, Content = content, Size = _st.ToastMeasure.CalcSize(content) };
                     _nightmareLabelCache[(int)kv.Value] = lab;
