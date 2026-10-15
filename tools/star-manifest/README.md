@@ -6,6 +6,19 @@
 
 ファイル：`tools/star-manifest/<hero>.json`（vesper, lacerta, cetus, yubar, husk, mist, nachia, aurena, bismuth）と `outer.json`（共有外縁、hero は "shared"）。10ファイルは**すべて下記の正準形に統一**されている（書式は UTF-8・LF・インデント2）。
 
+## C# の生成形式
+
+`python tools/star-manifest/gen_cs.py --all` は9人分を文字列のデータ表へ変換し、
+`ManifestReader.Generated.cs` の共通ループから元と同じコンストラクター・補助関数を呼ぶ。
+`table_cs.py` は生成器が出す限定的な式だけを読み、実行時のreflectionやJSONライブラリは使わない。
+各行は1星で、元の登録順を保つ。レコードの番号は共通の型付き読み込み処理を表し、
+保存IDとは無関係。同じ `TargetEffectIds` は共有の `static readonly` 配列へまとめ、登録時にコピーする。
+文字列内の `|`・改行・バックスラッシュはエスケープし、数値はInvariantCultureで読む。
+
+レコード番号と配列プールは9人で共通なので、旅人を1人指定した生成・`--check` でも
+全員分と共通リーダーをまとめて再生成・検査する。マニフェストと数値原本を編集し、
+生成された表や番号は直接編集しない。`tools/balance/gen_cs.py --check` も同じ出力を検査する。
+
 ## ファイルの形
 
 ```json

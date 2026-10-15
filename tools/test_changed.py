@@ -542,6 +542,27 @@ def select_tests(changed, files, diffs=None) -> Selection:
     """
     selection = Selection()
     test_files = sorted(p for p in files if p.startswith("tests/") and p.endswith(".cs"))
+    # Index whole words once rather than scanning every test for every token in
+    # large generated diffs. Keep punctuation-containing literals on the exact
+    # original boundary matcher, with a cheap substring check before the regex.
+    word_mentions: dict[str, set[str]] = {}
+    for tf in test_files:
+        for word in set(re.findall(r"\w+", files[tf])):
+            word_mentions.setdefault(word, set()).add(tf)
+    literal_mentions: dict[str, set[str]] = {}
+
+    def tests_mentioning(name: str) -> set[str]:
+        if re.fullmatch(r"\w+", name):
+            return word_mentions.get(name, set())
+        if name not in literal_mentions:
+            words = re.findall(r"\w+", name)
+            possible = word_mentions.get(max(words, key=len), set()) if words else test_files
+            matches = {tf for tf in possible if name in files[tf]}
+            if matches:
+                pattern = re.compile(rf"\b{re.escape(name)}\b")
+                matches = {tf for tf in matches if pattern.search(files[tf])}
+            literal_mentions[name] = matches
+        return literal_mentions[name]
 
     for path in sorted(changed):
         content = files.get(path, "")
@@ -584,12 +605,9 @@ def select_tests(changed, files, diffs=None) -> Selection:
                     # Keep its readers even when expectations come from a table;
                     # unrecognized hunks also retain file-level dependencies.
                     candidates.update(types)
-                mentions = {tf: {c for c in candidates
-                                 if re.search(rf"\b{re.escape(c)}\b", files[tf])}
-                            for tf in test_files}
-                wide = {c for c, count in
-                        ((c, sum(1 for tf in test_files if c in mentions[tf])) for c in candidates)
-                        if test_files and count > WIDE_TYPE_THRESHOLD * len(test_files)}
+                mentions = {c: tests_mentioning(c) for c in candidates}
+                wide = {c for c, hits in mentions.items()
+                        if test_files and len(hits) > WIDE_TYPE_THRESHOLD * len(test_files)}
                 if types and wide & set(types):
                     # The change touches a declaration of a type most tests use.
                     selection.run_all = True
@@ -598,13 +616,12 @@ def select_tests(changed, files, diffs=None) -> Selection:
                         f"most test files"
                     )
                     continue
-                usable = candidates - wide
-                for tf in test_files:
-                    if mentions[tf] & usable:
-                        selection.classes.update(declared_test_classes(files[tf]))
+                hits = set().union(*(mentions[c] for c in candidates - wide))
+                for tf in sorted(hits):
+                    selection.classes.update(declared_test_classes(files[tf]))
                 continue
             if types:
-                hits = [tf for tf in test_files if mentions_any(files[tf], types)]
+                hits = set().union(*(tests_mentioning(name) for name in types))
                 if test_files and len(hits) > WIDE_TYPE_THRESHOLD * len(test_files):
                     selection.run_all = True
                     selection.reasons.append(

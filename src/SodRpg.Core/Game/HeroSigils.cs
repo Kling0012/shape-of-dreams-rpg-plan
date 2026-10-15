@@ -19,10 +19,6 @@ namespace SodRpg.Core.Game
         public static TalentDef DeepNode(string hero, string id, string ja, string en, Stat stat, int perRank, int maxRank = 3)
             => new TalentDef("h." + id, Line.Offense, new Txt(ja, en), stat, perRank, maxRank) { HeroKey = hero, Tier = 2 };
 
-        /// <summary>手前の星のうち、段ごとに固有効果を伸ばすもの。</summary>
-        private static TalentDef PowerNode(string hero, string id, string ja, string en, Power power, int perRank, int maxRank = 3)
-            => new TalentDef("h." + id, Line.Offense, new Txt(ja, en), power, perRank, maxRank) { HeroKey = hero };
-
         public static TalentDef DeepPower(string hero, string id, string ja, string en, Power power, int perRank, int maxRank = 3)
             => new TalentDef("h." + id, Line.Offense, new Txt(ja, en), power, perRank, maxRank) { HeroKey = hero, Tier = 2 };
 
