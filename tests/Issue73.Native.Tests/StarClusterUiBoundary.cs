@@ -35,6 +35,10 @@ namespace SodRpg.Mod
         internal void RunDrawStarClusterList() => DrawStarClusterList();
 
         // RebuildStarTree 相当の初期状態。本文・EffectSummary は本物と同じ式で作る。
+        // 保守契約: RebuildStarTree / RebuildStarClusters の変更時は SeedStarTree / SeedStarNavigation の
+        // 対応する初期化式も比較する。2つの registry fingerprint は登録内容の指紋で、初期化式のずれは検知しない。
+        // 自動検知するなら Roslyn で対応する代入式・StarNode 初期化子を抽出して構文比較する。
+        // Icon・座標・スタイルと一覧の行選択は境界で省略・差し替えるため、メソッド全体の比較にはしない。
         internal void SeedStarTree(string heroKey)
         {
             _starLayout = HeroTreeLayout.ForHero(heroKey);
