@@ -8,6 +8,8 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
+- ロビーだけにいる参加者の版・Protocol・内容に差があるとき、ホストの互換性警告一覧に表示されない不具合を修正しました。両方の参加者一覧から抜けた人は引き続き表示対象から外れます。 / Fixed missing host compatibility warnings for lobby-only peers with a different version, protocol or content registry. Peers absent from both player lists remain excluded.
+
 ---
 
 ## v2.10.49 — Less per-frame work in combat and batched co-op bounty reports（2026-10-16）

@@ -199,7 +199,8 @@ namespace SodRpg.Mod
         {
             MismatchScratch.Clear();
             foreach (var kv in _versionMismatches)
-                if (kv.Key != null && DewPlayer.gamePlayers.Contains(kv.Key)) MismatchScratch.Add(kv.Value);
+                if (kv.Key != null && (DewPlayer.gamePlayers.Contains(kv.Key) || DewPlayer.lobbyPlayers.Contains(kv.Key)))
+                    MismatchScratch.Add(kv.Value);
         }
     }
 }
