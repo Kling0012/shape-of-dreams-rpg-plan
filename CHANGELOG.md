@@ -10,6 +10,30 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v2.10.49 — Less per-frame work in combat and batched co-op bounty reports（2026-10-16）
+
+このバージョンでは、戦闘中とタイトル・ロビーで毎回行っていた無駄な処理を減らし、協力プレイで送られる回復・シールド・属性撃破の報告をまとめて送るようにしました。 / This version reduces unnecessary repeated processing during combat and on the title and lobby screens, and sends heal, shield, and elemental kill reports in co-op as batches instead of one at a time.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- 敵が多い戦闘で、状態異常の確認がフレームごとに大量に行われ、処理が重くなるおそれがあった問題を修正しました。問題のない状態異常については、余分な確認を行わないようにしました。 / Fixed an issue where battles with many enemies could become heavy because status effects were checked a large number of times every frame. Status effects without problems no longer go through these extra checks.
+- 協力プレイで、回復・シールド・属性撃破の報告が1件ずつ送られ、継続回復やボス撃破のときに通信が多くなっていた問題を修正しました。報告は英雄ごとにまとめて送られるようになりました。依頼の進み方は変わりません。 / Fixed an issue in co-op where heal, shield, and elemental kill reports were sent one at a time, causing heavy network traffic during healing over time or when many enemies fell at once after a boss kill. Reports are now batched per hero. Bounty progress works the same as before.
+- 戦闘中に毎フレーム行われていた余分な処理を減らしました。対象は、英雄の一覧の比較、協定の呪いの再同期の確認、周囲の確認（関係する能力を持っていないとき）、インフィニティのボス戦での魂の祠の検索です。 / Reduced unnecessary per-frame work during combat: hero list comparison, pact curse resync checks, nearby checks when no hero has a related ability, and the Soul Shrine search during Infinity boss fights.
+- 低品質設定で、敵が倒れるたびに死亡演出の光を探し直していた問題を修正しました。 / Fixed an issue on low quality settings where the death effect lights were searched for again every time an enemy died.
+- タイトル画面とロビーで、画面全体の検索を毎秒行っていた問題を修正しました。検索は起動後とシーンの読み込み後だけ行います。 / Fixed an issue where the title screen and lobby searched the whole scene every second. The search now runs only after startup and after a scene loads.
+
+これらの変更でどれだけ軽くなるかは、実際のゲームではまだ測っていません。 / How much these changes improve performance has not yet been measured in the actual game.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
 ## v2.10.48 — Fix stale choice descriptions after switching on the Star Map（2026-10-16）
 
 このバージョンでは、星図で二択の選択を切り替えたときに、選択肢の説明が更新されないことがある不具合を修正しました。 / This version fixes an issue where choice descriptions on the Star Map could fail to update after switching a two-option choice.
