@@ -50,6 +50,22 @@ namespace SodRpg.Core.Game
             return snapshot;
         }
 
+        /// <summary>旧ホストには融合前の能力値を送る。保存中の遺物は変更しない。</summary>
+        public static Profile WithoutFusion(Profile profile, string heroKey)
+        {
+            bool any = false;
+            foreach (string uid in profile.Hero(heroKey).Equipped)
+                if (profile.FindStash(uid)?.FusionLevel > 0) { any = true; break; }
+            if (!any) return profile;
+            var copy = profile.Clone();
+            foreach (string uid in copy.Hero(heroKey).Equipped)
+            {
+                var relic = copy.FindStash(uid);
+                if (relic != null) relic.FusionLevel = 0;
+            }
+            return copy;
+        }
+
         /// <summary>
         /// 禁忌化（#415）を解釈できない旧ホストへの送信用に、旧ホストが拒否する遺物を装備から外したコピーを作る。
         /// 対象は禁忌化した遺物（15欄形式を読めない）と、旧上限（Content.MaxRetunes）を超えて再調律した遺物

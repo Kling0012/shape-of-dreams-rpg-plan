@@ -10,6 +10,7 @@ namespace SodRpg.Mod
         private bool _hostBuildInputCapability;
         /// <summary>ホストが禁忌装備入り（15欄形式）のビルド入力を受け付けられるか（#415）。旧ホスト相手では禁忌装備を送らない。</summary>
         private bool _hostForbiddenInput;
+        private bool _hostFusionInput;
         private bool _forbiddenGearStripNotice;
         private bool _omenReceiveReady;
         private bool _hostNetLite;
@@ -57,6 +58,7 @@ namespace SodRpg.Mod
 
         private void UnregisterBuildInputCapability(Actor actor)
         {
+            _hostFusionInput = false;
             if (actor != null && _onBuildInputCapability != null)
                 try { actor.CustomRpc_UnregisterClientMessageHandler<DreamforgeBuildInputCapabilityMsg>(_onBuildInputCapability); } catch (Exception) { }
         }
@@ -67,6 +69,12 @@ namespace SodRpg.Mod
             _hostNetLite = msg.netLite == 1 && _netLiteReceiveReady;
             // 応答が一度でも届いたら確定する（旧ホストはこの欄を返さず 0 のまま）。
             if (msg.forbiddenInput == 1) _hostForbiddenInput = true;
+            if (msg.fusionInput == 1 && !_hostFusionInput)
+            {
+                _hostFusionInput = true;
+                _buildDirty = true;
+                _buildCacheFrame = -1;
+            }
             // 応答を待つ間に外した禁忌装備がある場合は、対応が分かった時点で通知を解除し、
             // 装備を戻したビルドを送り直す（#415）。
             if (_hostForbiddenInput && _forbiddenGearStripNotice)

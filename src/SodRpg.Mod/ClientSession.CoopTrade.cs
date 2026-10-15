@@ -22,7 +22,7 @@ namespace SodRpg.Mod
         private CoopTradeOffer _coopPendingOffer;
         private string _coopOfferInFlight;
         private float _coopOfferSentAt, _nextCoopOfferRetry;
-        private bool _coopNativeSaving, _coopSettlementUnsaved, _coopDisabled;
+        private bool _coopNativeSaving, _coopSettlementUnsaved, _coopDisabled, _coopHostFusion;
         private long _coopPrepareSaveRevision;
         private string _coopWaitingId, _coopWaitReason;
         private float _coopWaitingAt, _coopWaitReasonAt;
@@ -158,6 +158,7 @@ namespace SodRpg.Mod
                 _coopDisabled = false;
                 CoopTradeWarning = null;
                 _coopHostKey = null;
+                _coopHostFusion = false;
                 _coopPrepareSaveRevision = 0;
                 _coopAnsweredAt = -100f;
                 _coopConnectionWarning = null;
@@ -243,7 +244,7 @@ namespace SodRpg.Mod
                 RetryCoopOffer();
                 if (Time.unscaledTime < _nextCoopProbe) return;
                 _nextCoopProbe = Time.unscaledTime + 5f;
-                SendCoop(new DreamforgeCoopTradeCommand { action = "probe", safe = CoopLocalSafe });
+                SendCoop(new DreamforgeCoopTradeCommand { action = "probe", safe = CoopLocalSafe, fusion = true });
                 var pending = Profile.CoopTradePending;
                 if (pending != null)
                 {
@@ -318,7 +319,8 @@ namespace SodRpg.Mod
         private void SendCoopProfile(string action, CoopTradeOffer offer)
         {
             string snapshot = CoopSnapshot(Profile);
-            string encoded = Convert.ToBase64String(Encoding.UTF8.GetBytes(snapshot));
+            string wireSnapshot = _coopHostFusion ? snapshot : ProfileCodec.WithoutFusionForLegacyTrade(snapshot);
+            string encoded = Convert.ToBase64String(Encoding.UTF8.GetBytes(wireSnapshot));
             var parts = BuildTransfer.Split(encoded, CoopTradeTransport.MaxProfileChars);
             if (action == "offer")
             {
@@ -415,6 +417,7 @@ namespace SodRpg.Mod
             {
                 if (msg == null || msg.version != 1) return;
                 _coopAnsweredAt = Time.unscaledTime;
+                _coopHostFusion = msg.fusion;
                 _coopConnectionWarning = null;
                 _coopHostKey = msg.hostKey;
                 if (msg.kind == "roster")
@@ -504,7 +507,7 @@ namespace SodRpg.Mod
                         return;
                     }
                     var own = key == receipt.FirstKey ? receipt.FirstOffer : receipt.SecondOffer;
-                    CoopTradeRules.Prepare(Profile, msg.id, receipt.HostKey, own);
+                    CoopTradeRules.Prepare(Profile, msg.id, receipt.HostKey, own, legacyFusion: !_coopHostFusion);
                     CoopTrade.Preparing = true;
                     if (SaveNow(true))
                         SendCoop(new DreamforgeCoopTradeCommand { action = "prepared", id = msg.id, revision = msg.revision, safe = CoopLocalWorldSafe && !_coopNativeSaving });

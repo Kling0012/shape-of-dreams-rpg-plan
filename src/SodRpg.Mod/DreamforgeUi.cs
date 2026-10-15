@@ -147,6 +147,7 @@ namespace SodRpg.Mod
 
         public void Toggle()
         {
+            ResetFusionConfirmation();
             Open = !Open;
             if (!Open) CancelStarDrag();
             _confirmSalvage = null;
@@ -156,6 +157,7 @@ namespace SodRpg.Mod
 
         public void Close()
         {
+            ResetFusionConfirmation();
             CancelStarDrag();
             _confirmEnhance = null;
             Open = false;
@@ -303,6 +305,7 @@ namespace SodRpg.Mod
         public void Draw()
         {
             ValidateEnhanceConfirmation();
+            if (!Open || _tab != 1) ResetFusionConfirmation();
             _st.EnsureBuilt();
             var cfg = _cfg();
             float scale = Mathf.Clamp(Screen.height / 1080f * Mathf.Clamp(cfg.uiScale, 0.5f, 2.5f), 0.5f, 4f);
@@ -1267,8 +1270,8 @@ namespace SodRpg.Mod
             {
                 case 0: return Loc.T("持ち帰った遺物を、旅人ごとに6つの枠（主装備・頭・防具・手・足・装飾品）へ装着します。遠征中は確保地点でだけ付け替えられます。",
                     "Equip relics you brought home into each Traveler's six slots (weapon, head, armor, hands, feet, charm). During an expedition you can only swap at secure points.");
-                case 1: return Loc.T("欠片で遺物を強くし、調律石で気に入らない特性を引き直します。いらない遺物は分解して欠片に戻せます。",
-                    "Use shards to enhance relics and tuning stones to reroll an affix you dislike. Salvage what you don't need back into shards.");
+                case 1: return Loc.T("欠片で強化、調律石で再調律。同じ名前・同じレア度の遺物を材料に融合すると能力値が上がります。不要な遺物は分解できます。",
+                    "Enhance with shards or retune with tuning stones. Fuse a relic with one of the same name and rarity to raise its stats. Salvage unwanted relics.");
                 case 2: return Loc.T("旅人ごとの星の経験で、始まりの星からつながる星へ伸ばします。振り直しは無料です。夢のレベルと振った星は夢の圧にも関わり、敵が強くなるだけでなく各ウェーブの戦闘中に敵の数も増えます。追加分の報酬は増加幅に応じて調整します。ボスの数は増えません。",
                     "Earn star XP per Traveler and grow along connections from the starting star. Respec is free. Dream Level and spent stars raise dream pressure: stronger enemies, with additions mixed into each combat wave. Their rewards scale with added density; bosses are never added.");
                 case 3: return Loc.T("余った欠片と調律石で、鞄や保管庫の拡張など、ずっと続く便利な強化を解放します。強さは上がりませんが、遠征がぐっと楽になります。",
@@ -1361,6 +1364,7 @@ namespace SodRpg.Mod
                     _confirmEnhance = null;
                     _confirmAffixReroll = null;
                     _confirmForbid = null;
+                    ResetFusionConfirmation();
                 }
                 GUILayout.EndHorizontal();
             }
@@ -1431,7 +1435,7 @@ namespace SodRpg.Mod
             for (int i = 0; i < stash.Count; i++)
             {
                 var r = stash[i];
-                state = state * 31 + (r.Locked ? 1 : 0) + r.AwakenLevel * 2 + r.Enhance * 4 + (int)r.Rarity * 64 + r.Powers.Count * 1024;
+                state = state * 31 + (r.Locked ? 1 : 0) + r.AwakenLevel * 2 + r.Enhance * 4 + (int)r.Rarity * 64 + r.Powers.Count * 1024 + r.FusionLevel * 8192;
             }
             return p.Stash.Count + ":" + state + ":" + _slot + ":" + _forgeAllSlots + ":" + HeroKey + ":" + Loc.Japanese + ":" + _relicSearchFolded;
         }
@@ -1481,7 +1485,7 @@ namespace SodRpg.Mod
             for (int i = 0; i < list.Count; i++)
             {
                 var r = list[i];
-                stateHash = stateHash * 31 + (r.Locked ? 1 : 0) + r.AwakenLevel * 2 + r.Enhance * 4 + (int)r.Rarity * 64 + r.Powers.Count * 1024;
+                stateHash = stateHash * 31 + (r.Locked ? 1 : 0) + r.AwakenLevel * 2 + r.Enhance * 4 + (int)r.Rarity * 64 + r.Powers.Count * 1024 + r.FusionLevel * 8192;
                 // 記憶の井戸で先頭の固有効果が変わると、数・Scoreが同じでもエピックの銘が変わる。
                 stateHash = stateHash * 31 + (r.Powers.Count > 0 ? (int)r.Powers[0].Power : 0);
             }
@@ -1614,6 +1618,8 @@ namespace SodRpg.Mod
             if (Content.MaxLimitBreaks(r.Rarity) > 0 && (r.LimitBreaks > 0 || r.Enhance >= Content.MaxEnhance))
                 GUILayout.Label(UiStyles.Colored(Loc.T($"限界突破 {r.LimitBreaks}/{Content.MaxLimitBreaks(r.Rarity)}（上限 +{Content.MaxEnhanceFor(r)}）",
                     $"Limit breaks {r.LimitBreaks}/{Content.MaxLimitBreaks(r.Rarity)} (cap +{Content.MaxEnhanceFor(r)})"), "#ffd36e"), _st.Small);
+            if (r.FusionLevel > 0)
+                GUILayout.Label(FusionStatsText(r), _st.Small);
             var imp = r.Implicit;
             GUILayout.Label(UiStyles.Colored(Content.FormatStat(imp.Stat, imp.Value), "#c8c8ff") + Loc.T("  <color=#aaa>（この土台に必ず付く性能）</color>", "  <color=#aaa>(always on this base)</color>"), _st.Label);
             // 固有効果は遺物の個性なので、特性より先に見せる。
@@ -1800,6 +1806,8 @@ namespace SodRpg.Mod
                 }
                 GUILayout.EndHorizontal();
                 GUI.enabled = true;
+
+                DrawFusion(sel);
 
                 // 限界突破（v1.27）：上限に達したレア以上の遺物だけ。
                 if (sel.Enhance >= maxEnhance && sel.LimitBreaks < Content.MaxLimitBreaks(sel.Rarity))
@@ -2067,6 +2075,7 @@ namespace SodRpg.Mod
         private void Act(Func<GameEvent> action, bool affectsBuild)
         {
             _confirmEnhance = null;
+            ResetFusionConfirmation();
             try
             {
                 var e = action();

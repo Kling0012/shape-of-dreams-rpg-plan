@@ -476,7 +476,7 @@ namespace SodRpg.Mod
         private sealed class CoopPeerState
         {
             public float Seen;
-            public bool Safe;
+            public bool Safe, Fusion;
             public readonly BuildTransferReceiver Transfer = new BuildTransferReceiver(CoopTradeTransport.MaxProfileChars);
             public string Envelope;
         }
@@ -614,7 +614,7 @@ namespace SodRpg.Mod
         private CoopTradeOffer _coopPendingOffer;
         private string _coopOfferInFlight;
         private float _coopOfferSentAt, _nextCoopOfferRetry;
-        private bool _coopSettlementUnsaved, _coopDisabled;
+        private bool _coopSettlementUnsaved, _coopDisabled, _coopHostFusion;
         private long _coopPrepareSaveRevision;
         private string _coopWaitingId, _coopWaitReason;
         private float _coopWaitingAt, _coopWaitReasonAt;

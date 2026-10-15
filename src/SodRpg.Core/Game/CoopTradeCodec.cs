@@ -99,6 +99,27 @@ namespace SodRpg.Core.Game
             return Json.Write(new JsonObject().Add("format", Format).Add("version", 6L).Add("body", body));
         }
 
+        /// <summary>旧版の厳密な受領書検証に渡すコピーから、未知の融合キーだけを省く。</summary>
+        public static string WithoutFusionForLegacyTrade(string text) => Json.Write(WithoutFusionValue(Json.Parse(text)));
+
+        private static object WithoutFusionValue(object value)
+        {
+            if (value is JsonObject obj)
+            {
+                var copy = new JsonObject();
+                foreach (var property in obj.Properties)
+                    if (property.Key != "fusionLevel") copy.Add(property.Key, WithoutFusionValue(property.Value));
+                return copy;
+            }
+            if (value is List<object> array)
+            {
+                var copy = new List<object>();
+                foreach (var item in array) copy.Add(WithoutFusionValue(item));
+                return copy;
+            }
+            return value;
+        }
+
         private static object WriteCoopTradeReservation(CoopTradeReservation pending)
         {
             if (pending == null) return null;
@@ -106,10 +127,12 @@ namespace SodRpg.Core.Game
             foreach (var reserved in pending.Relics)
                 relics.Add(new JsonObject().Add("relic", WriteRelic(reserved.Relic))
                     .Add("target", (long)reserved.Target).Add("runId", reserved.RunId));
-            return new JsonObject().Add("id", pending.Id).Add("hostKey", pending.HostKey)
+            var json = new JsonObject().Add("id", pending.Id).Add("hostKey", pending.HostKey)
                 .Add("offer", CoopTradeCodec.OfferObject(pending.Offer)).Add("relics", relics)
                 .Add("materialShards", (long)pending.MaterialShards).Add("materialTuning", (long)pending.MaterialTuning)
                 .Add("currencyRunId", pending.CurrencyRunId);
+            if (pending.LegacyFusion) json.Add("legacyFusion", true);
+            return json;
         }
 
         private static void ReadCoopTradeState(JsonObject body, Profile profile)
@@ -136,6 +159,7 @@ namespace SodRpg.Core.Game
                 MaterialShards = CoopTradeCodec.Amount(obj, "materialShards"),
                 MaterialTuning = CoopTradeCodec.Amount(obj, "materialTuning"),
                 CurrencyRunId = CoopTradeCodec.Value(obj, "currencyRunId") as string,
+                LegacyFusion = Bool(obj, "legacyFusion", false),
             };
             object currencyRun = CoopTradeCodec.Value(obj, "currencyRunId");
             if (pending.MaterialShards > pending.Offer.Shards || pending.MaterialTuning > pending.Offer.Tuning
