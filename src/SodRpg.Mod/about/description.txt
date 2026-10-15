@@ -1,5 +1,5 @@
-[b]Shorter freezes on bulk salvage, saves that no longer grow heavier over time, and safer resume of interrupted runs.[/b]
-[b]まとめて分解の引っかかりを短くし、長く遊ぶほど保存が重くなる問題と中断プレイの再開時の扱いを改善しました。[/b]
+[b]Fixes bounty count reports that could be lost in co-op, and the memory essence slot display not refreshing after changing display settings.[/b]
+[b]協力プレイで依頼の数の報告が失われることがある問題と、表示設定を変えても記憶のエッセンス枠の表示が更新されない問題を修正しました。[/b]
 
 [h1]Dreamforge RPG[/h1]
 Turns every run into part of a long RPG journey: relics you keep, a risky "secure or delve" choice at every zone, a star map per Traveler, a forge, and long-term goals. Co-op ready.
