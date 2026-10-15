@@ -10,6 +10,20 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v2.10.42 — Maintenance update with no player-facing changes（2026-10-15）
+
+このバージョンには、プレイヤーから見た新機能や不具合の修正はありません。 / This version contains no new features or bug fixes visible to players.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
 ## v2.10.41 — Fix Forbidden Cores being lost on load（2026-10-15）
 
 このバージョンでは、「禁忌の核」がセーブデータの読み込み時に失われる不具合を修正しました。 / This version fixes a bug that caused Forbidden Cores to be lost when loading your save.
