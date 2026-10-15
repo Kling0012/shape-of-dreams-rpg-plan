@@ -38,6 +38,7 @@ namespace SodRpg.Mod
         private void Awake()
         {
             string stage = "native preflight";
+            var startupWatch = System.Diagnostics.Stopwatch.StartNew();
             useGUILayout = false;
             Economy.SalvageScale = 1;
             try
@@ -61,8 +62,10 @@ namespace SodRpg.Mod
                 ApplyLevelEssenceConfig();
                 ApplyRoomOmensConfig();
                 // Install the generated star maps and their migration rules before any profile is loaded or any build is computed.
+                var starRegistrationWatch = System.Diagnostics.Stopwatch.StartNew();
                 StarClusters.RegisterAllGenerated((hero, error) =>
                     Log.Warn("Generated star map disabled for " + hero + "; other features remain available: " + error));
+                Log.Info("Generated star maps registered in " + starRegistrationWatch.ElapsedMilliseconds + " ms.");
                 _performance = new PerformanceTuner();
                 _performance.Start(config, _hasFocus);
                 string dir = Path.Combine(Application.persistentDataPath, "QuickSave", "Mods", "DreamforgeRPG");
@@ -92,7 +95,7 @@ namespace SodRpg.Mod
                 if (_perfLogEnabled) Log.Info("perf logging enabled (perf.flag)");
                 HostAuthority.ModVersion = (mod.metadata.modVer ?? "?")
                     + NativeDreamEdition.VersionSuffix(NativeDreamContent.SpecialEdition);
-                Log.Info($"Loaded {mod.metadata.id} {HostAuthority.ModVersion}. Profile: {_session.SavePath}");
+                Log.Info($"Loaded {mod.metadata.id} {HostAuthority.ModVersion}. Profile: {_session.SavePath}. Startup: {startupWatch.ElapsedMilliseconds} ms.");
                 _originalGameplayFlag = instance.isAlteringGameplay;
                 _gameplayFlagChanged = true;
                 instance.isAlteringGameplay = true;
