@@ -13,9 +13,9 @@ namespace SodRpg.Mod
     [HarmonyPatch(typeof(Se_Star_Bismuth_D_SkillHasteAndAutoCast), "ActiveLogicUpdate")]
     internal static class NativeBismuthAutoCast
     {
-        private const int MaxCastsPerSecond = 30;
-        private const int MinCastsPerSecond = 5;
         private const float TargetSearchDelay = 0.1f;
+        // The rolling cast window is sized by the fastest cadence the rules allow.
+        private const int RingSize = AutoCastCadence.MaxCastsPerSecond;
 
         private sealed class ScanState
         {
@@ -23,7 +23,7 @@ namespace SodRpg.Mod
             internal int NextSlot = 1;
             internal float LastCastTime = float.NegativeInfinity;
             internal float NextTargetSearchTime;
-            internal readonly float[] CastTimes = new float[MaxCastsPerSecond];
+            internal readonly float[] CastTimes = new float[RingSize];
             internal int CastHead;
             internal int CastCount;
         }
@@ -102,22 +102,17 @@ namespace SodRpg.Mod
             float pressure = Mathf.Max(over, AutocastPressure.RemoteOver);
             pressure = Mathf.Max(pressure, AutocastPressure.NetOver);
             pressure = Mathf.Clamp01(Mathf.Max(pressure, graphics != null ? graphics.perfPressureStrength : 0f));
-            float interval = Mathf.Lerp(0f, 0.3f, pressure);
-            int castsPerSecond = Mathf.RoundToInt(Mathf.Lerp(MaxCastsPerSecond, MinCastsPerSecond, pressure));
             bool coop = DewPlayer.allHumanPlayers.Count > 1;
             // Host-side selection needs no guest update. Unknown peers keep native pacing
             // even when the host opts out, as before the cooperative targeting change.
-            if (coop && (AutoCastCoopSettings.NativeCadence || !AutocastPressure.AllPeersSupported))
-            {
-                interval = Mathf.Max(interval, CoopBalance.AutoCastIntervalSeconds);
-                castsPerSecond = Math.Min(castsPerSecond, Mathf.FloorToInt(1f / CoopBalance.AutoCastIntervalSeconds));
-            }
+            AutoCastCadence.Compute(pressure, coop, AutoCastCoopSettings.NativeCadence,
+                AutocastPressure.AllPeersSupported, out float interval, out int castsPerSecond);
             if (now - state.LastCastTime < interval) return;
 
             // A fixed ring enforces a rolling one-second cap without per-tick allocations.
             while (state.CastCount > 0 && now - state.CastTimes[state.CastHead] >= 1f)
             {
-                state.CastHead = (state.CastHead + 1) % MaxCastsPerSecond;
+                state.CastHead = (state.CastHead + 1) % RingSize;
                 state.CastCount--;
             }
             if (state.CastCount >= castsPerSecond) return;
@@ -156,7 +151,7 @@ namespace SodRpg.Mod
                     if (!skill.CanBeCast() || !skill.CanBeReserved() || IsQueued(queued, skill)) continue;
                     state.NextSlot = (slot + 1) % 4;
                     state.LastCastTime = now;
-                    state.CastTimes[(state.CastHead + state.CastCount) % MaxCastsPerSecond] = now;
+                    state.CastTimes[(state.CastHead + state.CastCount) % RingSize] = now;
                     state.CastCount++;
                     hero.Control.Cast(skill, skill.currentConfigIndex, info);
                     return;
