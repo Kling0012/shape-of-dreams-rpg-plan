@@ -86,6 +86,26 @@ namespace SodRpg.Mod.FxBudget.Tests
         }
 
         [Fact]
+        public void LightBudget_CountsEachReplayOfAPooledEffect()
+        {
+            // One pooled clone replayed back to back (short hit effects): every
+            // playback must use the 0.25 s window like a distinct clone would.
+            var (effect, parent) = NewEffect(new St_R_Fireball());
+            var light = effect.AddComponent<Light>();
+            int admitted = 0;
+            for (int i = 0; i < 8; i++)
+            {
+                effect.activeInHierarchy = false;
+                NativeFxBudget.Restore(effect, parent);
+                effect.activeInHierarchy = true;
+                light.enabled = true;
+                Tick(0.02f); NativeFxBudget.Apply(effect, parent);
+                if (light.enabled) admitted++;
+            }
+            Assert.Equal(3, admitted);
+        }
+
+        [Fact]
         public void LightBudget_SuppressesLightsBeyondThreeConcurrent()
         {
             var playing = new List<(GameObject effect, NetworkIdentity parent)>();

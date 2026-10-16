@@ -381,6 +381,10 @@ namespace SodRpg.Mod
             internal void Restore()
             {
                 AppliedFrame = -1;
+                // The playback ended: free its slot so a pooled replay is counted
+                // against the 0.25 s window again instead of reusing the old slot.
+                for (int i = 0; i < ActiveLights.Length; i++)
+                    if (ReferenceEquals(ActiveLights[i], this)) ActiveLights[i] = null;
                 if (_capped)
                 {
                     if (Driver != null)
