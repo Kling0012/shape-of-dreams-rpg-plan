@@ -102,6 +102,28 @@ namespace SodRpg.Core.Tests
         }
 
         [Fact]
+        public void Tapir_pays_the_salvage_value_of_enhanced_relics()
+        {
+            var p = AtEvent(DreamEvent.Tapir);
+            var rare = Give(p, Rarity.Rare);
+            rare.Enhance = 3;
+            int expected = Rules.SalvageValue(rare);
+            Assert.True(expected > Content.SalvageShards(Rarity.Rare));
+            int before = p.Material(Materials.Shard);
+            Rules.UseEvent(p, DreamEvent.Tapir);
+            Assert.Equal(before + expected, p.Material(Materials.Shard));
+        }
+
+        [Fact]
+        public void Archive_is_unavailable_at_the_max_dream_level()
+        {
+            var p = AtEvent(DreamEvent.Archive);
+            Assert.True(DreamEvents.CanUse(p, DreamEvent.Archive, out _));
+            p.DreamLevel = Content.MaxDreamLevel;
+            Assert.False(DreamEvents.CanUse(p, DreamEvent.Archive, out _));
+        }
+
+        [Fact]
         public void Courage_gate_deepens_the_delve_and_archive_grants_experience()
         {
             var p = AtEvent(DreamEvent.CourageGate);

@@ -200,6 +200,11 @@ namespace SodRpg.Core.Game
             foreach (Slot sl in Enum.GetValues(typeof(Slot)))
                 foreach (var r in Content.PowerPool(sl))
                     powerSlots[r.Power] = (powerSlots.TryGetValue(r.Power, out int m) ? m : 0) | (1 << (int)sl);
+            // 銘品が持つ効果も、その部位で見つかる（KnownPowers は銘品の効果を発見済みに数える）。
+            foreach (var n in NamedItems.All)
+                if (Content.TryGetBase(n.BaseId, out var nb))
+                    foreach (var pw in n.Powers)
+                        powerSlots[pw.Power] = (powerSlots.TryGetValue(pw.Power, out int nm) ? nm : 0) | (1 << (int)nb.Slot);
             var powers = new List<CodexEntry>();
             const int AllLines = 7;
             foreach (Power p in Enum.GetValues(typeof(Power)))
