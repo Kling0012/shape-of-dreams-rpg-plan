@@ -271,8 +271,13 @@ namespace SodRpg.Mod
                 // The partner's profile is sent once per revision; a reset receiver (reconnect
                 // mid-trade) or an interrupted transfer can leave this view without it. Ask the
                 // host for it again while the partner has offered relics and none has arrived.
+                // Not while a split transfer is still being received — that transfer may be the
+                // profile itself, and asking now would restart the whole stash-sized send. The
+                // flag clears when the transfer completes or is rejected, so the next probe
+                // re-asks without any extra state here.
                 if (CoopTrade != null && CoopTrade.Accepted && !CoopTrade.Preparing && _coopPendingOffer == null
-                    && CoopTrade.OtherProfile == null && (CoopTrade.OtherOffer?.RelicUids?.Count ?? 0) > 0)
+                    && CoopTrade.OtherProfile == null && (CoopTrade.OtherOffer?.RelicUids?.Count ?? 0) > 0
+                    && !_coopTransfer.IsAwaitingParts)
                     SendCoop(new DreamforgeCoopTradeCommand { action = "query", id = CoopTrade.Id, wantsProfile = true });
                 var pending = Profile.CoopTradePending;
                 if (pending != null)
