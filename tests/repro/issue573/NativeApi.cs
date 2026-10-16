@@ -21,10 +21,55 @@ namespace UnityEngine
         internal static float Min(float a, float b) => a < b ? a : b;
     }
 
+    internal struct Rect
+    {
+        internal float x, y, width, height;
+        internal Rect(float x, float y, float width, float height) { this.x = x; this.y = y; this.width = width; this.height = height; }
+        internal float yMin => y;
+        internal float yMax => y + height;
+    }
+
+    internal enum EventType { Layout, Repaint }
+    internal enum TextClipping { Overflow, Clip }
+    internal sealed class Event
+    {
+        internal static Event current = new Event { type = EventType.Repaint };
+        internal EventType type;
+    }
+
+    internal class GUIContent
+    {
+        internal static readonly GUIContent none = new GUIContent("");
+        internal string text, tooltip;
+        internal GUIContent(string text, string tooltip = "") { this.text = text; this.tooltip = tooltip; }
+    }
+
+    internal sealed class GUIStyleState
+    {
+        internal object background;
+    }
+
     internal class GUIStyle
     {
         internal readonly string Name;
+        internal readonly GUIStyleState normal = new GUIStyleState();
+        internal object padding;
+        internal bool wordWrap, richText;
+        internal int fontSize;
+        internal TextClipping clipping;
         internal GUIStyle(string name) { Name = name; }
+        internal GUIStyle(GUIStyle original) { Name = original.Name; }
+    }
+
+    internal static class GUILayoutUtility
+    {
+        internal static float Cursor;
+        internal static Rect GetRect(float minWidth, float maxWidth, float minHeight, float maxHeight, params GUILayoutOption[] options)
+        {
+            var rect = new Rect(0f, Cursor, 860f, minHeight);
+            Cursor += minHeight;
+            return rect;
+        }
     }
 
     internal class GUILayoutOption
@@ -43,6 +88,9 @@ namespace UnityEngine
     internal static class GUI
     {
         internal static bool enabled = true;
+        internal static void Box(Rect rect, GUIContent content, GUIStyle style) => GUILayout.Log.Add("box[" + style.Name + "]");
+        internal static bool Button(Rect rect, GUIContent content, GUIStyle style) => GUILayout.Button(content.text, style);
+        internal static void Label(Rect rect, GUIContent content, GUIStyle style) => GUILayout.Log.Add("label[" + style.Name + "]:" + content.text);
     }
 
     internal static class GUILayout
@@ -56,6 +104,7 @@ namespace UnityEngine
             Log.Clear();
             ClickText = null;
             GUI.enabled = true;
+            GUILayoutUtility.Cursor = 0f;
         }
 
         internal static void BeginVertical(GUIStyle style, params GUILayoutOption[] options) => Log.Add("vertical[" + style.Name + "]");
@@ -76,7 +125,11 @@ namespace UnityEngine
             return GUI.enabled && text == ClickText;
         }
 
-        internal static void Label(string text, GUIStyle style, params GUILayoutOption[] options) => Log.Add("label[" + style.Name + "]:" + text);
+        internal static void Label(string text, GUIStyle style, params GUILayoutOption[] options)
+        {
+            Log.Add("label[" + style.Name + "]:" + text);
+            GUILayoutUtility.Cursor += 24f;
+        }
     }
 }
 
@@ -109,7 +162,8 @@ namespace SodRpg.Mod
     internal sealed class UiStyles
     {
         internal readonly GUIStyle Panel = new GUIStyle("panel"), Small = new GUIStyle("small"), Header = new GUIStyle("header"),
-            ButtonWrap = new GUIStyle("button-wrap"), RowWrap = new GUIStyle("row-wrap"), ButtonWrapSel = new GUIStyle("row-wrap-sel");
+            ButtonWrap = new GUIStyle("button-wrap"), RowWrap = new GUIStyle("row-wrap"), ButtonWrapSel = new GUIStyle("row-wrap-sel"),
+            Row = new GUIStyle("row"), RowSel = new GUIStyle("row-sel");
     }
 
     // 製品コード（ProductionDraw.cs、自動生成）と組み合わせる DreamforgeUi の残りの部分。
@@ -128,6 +182,13 @@ namespace SodRpg.Mod
         internal int _tradeRarityFilter = -1, _tradeSlotFilter = -1;
         internal string LastStatus;
         private static readonly GUILayoutOption[] TradeRowSize = { GUILayout.MinHeight(58), GUILayout.MinWidth(0) };
+        private const float TradeRelicRowStep = 100f;
+        private readonly List<Relic> _tradeStashChoices = new List<Relic>(), _tradeSatchelChoices = new List<Relic>();
+        private float _tradeOwnViewportHeight, _tradeOwnContentHeight;
+        private GUIStyle _tradeRelicTitleStyle, _tradeRelicSelectedStyle, _tradeRelicDetailsStyle, _tradeTooltipStyle;
+        private UiStyles _tradeRelicStylesFor;
+        private static readonly GUILayoutOption[] TradeChoicesWidth = { GUILayout.MinWidth(0), GUILayout.ExpandWidth(true) };
+        private bool CoopTradeFiltering => _tradeRarityFilter >= 0 || _tradeSlotFilter >= 0 || !string.IsNullOrEmpty(_tradeSearch);
         private static readonly Rarity[] TradeRarities =
         {
             Rarity.Common, Rarity.Uncommon, Rarity.Rare, Rarity.Epic, Rarity.Legendary,
@@ -149,6 +210,10 @@ namespace SodRpg.Mod
                 Title = title, IdleTitle = "○ " + title, SelectedTitle = "● " + title,
                 Details = title + " Lv" + r.ItemLevel.ToString(CultureInfo.InvariantCulture) + "\n効果1\n効果2",
             };
+            string tooltip = text.Title + "\n" + text.Details;
+            text.SelectedContent = new GUIContent(text.SelectedTitle, tooltip);
+            text.IdleContent = new GUIContent(text.IdleTitle, tooltip);
+            text.DetailContent = new GUIContent(text.Details, tooltip);
             _tradeRelicTexts[r] = text;
             return text;
         }
@@ -156,6 +221,7 @@ namespace SodRpg.Mod
         private sealed class TradeRelicText
         {
             public string Uid, Name, Title, SelectedTitle, IdleTitle, Details;
+            public GUIContent SelectedContent, IdleContent, DetailContent;
             public Rarity Rarity;
             public Slot Slot;
         }

@@ -20,8 +20,8 @@ run.py が既定する）。ゲームの起動・DLL 配置は不要。`artifact
   `obj/` 下に自動生成する（改変しない）。ループ本体（`IsEquippedAnywhere` と
   `MatchesCoopTradeFilters` の呼び出し、保管庫と鞄の両描画）が見つからなければ
   ビルドを失敗させる。
-- `NativeApi.cs` の代役: `UnityEngine.GUI`・`GUILayout`・`GUIStyle`・`GUILayoutOption`・
-  `Vector2`・`Mathf` は呼び出しを記録するだけの実装、`ClientSession`（`SetCoopTradeOffer`
+- `NativeApi.cs` の代役: `UnityEngine.GUI`・`GUILayout`・`GUILayoutUtility`・`GUIStyle`・
+  `GUIContent`・`GUILayoutOption`・`Rect`・`Event`・`Vector2`・`Mathf` は呼び出しを記録するだけの実装、`ClientSession`（`SetCoopTradeOffer`
   を記録）・`UiStyles`・`CoopTradeView`・`DrawCoopTradeOfferedRelics`（呼ばれたことだけ
   記録）は本件の測定に不要な簡易版。`CoopTradeRelicText` も同様の簡易版で、本番と同じ
   辞書キャッシュと `○ `/`● ` のタイトル形式だけ合わせ、行の識別用に Uid を標題に添える。
@@ -78,6 +78,21 @@ run.py が既定する）。ゲームの起動・DLL 配置は不要。`artifact
   perf の cases と同じ上限判定に含まれる）。
 - 選択（クリック→提示への追加・解除・●表示）と、取引できない状態でのクリック不発は
   対照として押さえ、修正で壊れないことを保証する。通信そのものは代役が記録するのみ。
+
+## 修正後の結果（2026-10-17）
+
+- `python3 tests/repro/issue573/run.py`: **13件全部成功**。期待値・判定条件は変更していない。
+- 行高は100px（カード96px＋間隔4px）。全行の高さを1つのレイアウト領域として確保し、
+  可視行だけを固定座標の `GUI.Box`・`GUI.Button`・`GUI.Label` で描画する。
+  領域の y 座標には選択済み欄・見出し・保管庫の高さが含まれるので、鞄にも同じスクロール位置を使える。
+- 名前・レア度・部位の絞り込みと装着中の除外を行ってから可視範囲を計算する。
+  フィルター変更で先頭へ戻し、保持するスクロール位置は内容高と表示領域高で制限する。
+- 名前は RelicList と同じ単行、説明は固定領域の折り返しプレビューにして、行外への重なりを防ぐ。
+  全文はホバー時のツールチップと既存の選択済み欄で表示する。実機の見た目は未確認。
+- `NativeApi.cs` は固定座標の描画API・レイアウト領域・キャッシュ済みGUIContentに追随した。
+  `extract.py` は製品のスタイル初期化も抽出する。新しいテストケースは追加していない。
+- 修正を一時的に戻すと **5件失敗（exit 1）**、修正を復元すると **13件成功（exit 0）**。
+  記録は `artifacts/revert-check.json` と各実行の `artifacts/<UTC時刻>/`。
 
 ## 次工程（修正）への引き継ぎ
 

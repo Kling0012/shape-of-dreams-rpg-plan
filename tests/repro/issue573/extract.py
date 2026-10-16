@@ -39,6 +39,7 @@ text = (
     "internal sealed partial class DreamforgeUi {\n"
     + own + "\n\n"
     + choices + "\n\n"
+    + (block(trade, r"private void EnsureCoopTradeRelicStyles\(") + "\n\n" if "EnsureCoopTradeRelicStyles" in choices else "")
     + block(trade, r"private bool MatchesCoopTradeFilters\(") + "\n\n"
     + block(trade, r"private bool TryCoopTradeAmounts\(") + "\n\n"
     + block(trade, r"private static CoopTradeOffer CopyCoopTradeOffer\(") + "\n"
