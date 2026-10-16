@@ -163,7 +163,9 @@ namespace SodRpg.Mod
                 if (!HostAuthority.IsBossGeneratedDamage(data)) data = data.SetElemental(null);
                 data = data.DoAttackEffect(AttackEffectType.Others, 0f);
             }
+            HostAuthority.NativeInstance?.RecordDynamicDamage(__instance, actor, data);
             HostAuthority.NativeInstance?.ApplyCoopOmenDamage(__instance, actor, ref data);
+            HostAuthority.NativeInstance?.ApplyOwnershipReceivedDamage(__instance, actor, ref data, measure: false);
         }
     }
 }

@@ -141,6 +141,7 @@ namespace SodRpg.Mod
             public StatBonus SpecialBonus;
             public bool PressureApplied;
             public DataProcessor<FinalStats> PressureHealth;
+            public DataProcessor<DamageData, Actor, Entity> PressureDamage;
             public VariantDef Variant;
             public DataProcessor<DamageData, Actor, Entity> HitCap;
             public bool DeathBurstTriggered;
@@ -152,6 +153,7 @@ namespace SodRpg.Mod
             public bool ClassificationQueued;
             public NightmareAffix ClassificationNightmare;
             public string ClassificationVariant;
+            public MonsterOwnership Ownership, ClassificationOwnership;
             public Se_GenericShield_OneShot Ward;
             public Action<EventInfoDamage> OnDamageDealt;
             public bool Reflects;
@@ -202,7 +204,6 @@ namespace SodRpg.Mod
             }
         }
         private int _pressurePlayerCount = -1;
-        private readonly DataProcessor<DamageData, Actor, Entity> _pressureDamage;
         private readonly Action<DewPlayer> _onPressurePlayerAdded;
         private readonly Action<DewPlayer> _onPressurePlayerRemoved;
         private bool _pressureDirty = true;
@@ -275,8 +276,6 @@ namespace SodRpg.Mod
             _ = _runtimes.Values; _ = _attributionEquipment.Keys; _ = _attributionEquipment.Values;
             _ = _bossHysteriaStates.Values; _ = _lastStarlights.Values;
             _dailyIdOfHost = dailyIdOfHost;
-            _pressureDamage = (ref DamageData damage, Actor actor, Entity target) =>
-                damage.ApplyAmplification((float)_pressure.DamageMultiplier - 1f);
             _onPressurePlayerAdded = player =>
             {
                 _pressureDirty = true;
@@ -300,6 +299,7 @@ namespace SodRpg.Mod
                     if (_versionMismatches.Remove(player)) RebuildMismatchList();
                 }
                 _pressureDirty = true;
+                OwnershipPlayerRemoved(player);
             };
             _onBuild = OnBuild;
             _onCurse = OnCurse;
@@ -547,7 +547,15 @@ namespace SodRpg.Mod
             var monster = rt.Monster;
             // Final processors multiply after native multiplayer, depth, nightmare and variant stats.
             InstallPressureHealthProcessor(rt);
-            monster.dealtDamageProcessor.Add(_pressureDamage);
+            rt.PressureDamage = (ref DamageData damage, Actor actor, Entity target) =>
+            {
+                // Preserve the legacy path in solo/OFF; assigned children apply pressure just once.
+                if (OwnershipReplacesAncestorPressure(actor, monster)) return;
+                float multiplier = (float)_pressure.DamageMultiplier;
+                OverrideOwnershipDamage(monster, ref multiplier);
+                damage.ApplyAmplification(multiplier - 1f);
+            };
+            monster.dealtDamageProcessor.Add(rt.PressureDamage);
             rt.PressureApplied = true;
             monster.Status.CalculateStatsIfDirty();
         }
@@ -577,6 +585,7 @@ namespace SodRpg.Mod
 
         private void OnEntityAdd(Entity e)
         {
+            OwnershipEntityAdded(e);
             if (e != null && _pairEntities.Add(e))
             {
                 e.EntityEvent_OnTakeDamage += _onPairEnemyDamage;
@@ -600,6 +609,7 @@ namespace SodRpg.Mod
 
         private void OnEntityRemove(Entity e)
         {
+            OwnershipEntityRemoved(e);
             if (e != null && _pairEntities.Remove(e))
             {
                 e.EntityEvent_OnTakeDamage -= _onPairEnemyDamage;
@@ -665,6 +675,7 @@ namespace SodRpg.Mod
             if (_monsters.TryGetValue(m, out var rt))
             {
                 _monsters.Remove(m);
+                OwnershipEntityRemoved(m);
                 SendMonsterRemoval(rt);
                 Unhook(rt);
             }
@@ -687,6 +698,7 @@ namespace SodRpg.Mod
 
         private void UnhookMonsters()
         {
+            ClearEnemyOwnership();
             foreach (var rt in _monsters.Values) { SendMonsterRemoval(rt); Unhook(rt); }
             _monsters.Clear();
             ClearPressureDividendSpawns();
@@ -714,7 +726,7 @@ namespace SodRpg.Mod
                     m.Status.CalculateStatsIfDirty();
                 }
                 catch (Exception ex) { Log.Error("Host: unhook pressure health " + ex); }
-                try { m.dealtDamageProcessor.Remove(_pressureDamage); }
+                try { m.dealtDamageProcessor.Remove(rt.PressureDamage); }
                 catch (Exception ex) { Log.Error("Host: unhook pressure damage " + ex); }
                 rt.PressureApplied = false;
             }
@@ -2074,6 +2086,7 @@ namespace SodRpg.Mod
 
         private void ScanArea()
         {
+            ScanEnemyOwnership();
             ScanCoopDistances();
             PruneMeleeBreaks();
             var list = _scanList;
