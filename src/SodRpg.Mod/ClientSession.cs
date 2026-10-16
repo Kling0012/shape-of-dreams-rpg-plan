@@ -830,6 +830,14 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
                     DiagnoseExpedition("client-concluded-lobby-return");
                     return;
                 }
+                // 純白の夢は Primus の撃破で精算を終えている（ホストもゲストも）。演出の後に届く本体の終了通知で
+                // 精算済みの遠征を保留に戻すと、保存にも残ってプロフィールの切り替えが次の遠征まで止まっていた。
+                string concludedRunId = NetworkedManagerBase<GameManager>.softInstance?.runId;
+                if (!string.IsNullOrEmpty(concludedRunId) && concludedRunId == _completedRunId)
+                {
+                    DiagnoseExpedition("client-concluded-already-settled");
+                    return;
+                }
                 if (ObserveInfinityConclusion(result))
                 {
                     DiagnoseExpedition("client-concluded-infinity-handled");
