@@ -10,6 +10,24 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v3.2.4 — Star Offering description now notes the Dream Depth XP multiplier（2026-10-17）
+
+この版は、出来事「星の捧げ物」の説明に、実際に得られる星の経験の量が正しく書かれていなかった問題を直す更新です。 / This update fixes the Star Offering event description not accurately showing how much Star XP you actually receive.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- 出来事「星の捧げ物」の説明には基礎値の星の経験40しか書かれていませんでしたが、実際には夢の深さに応じた経験の倍率が掛かります。たとえば深さ5では80を得られます。説明と実際に得られる量が違って見えていたため、日本語・英語の両方の説明に、夢の深さの経験倍率が掛かることを書き加えました。得られる経験の量そのものは変わっていません。 / The Star Offering event description showed only the base value of 40 Star XP, but the actual amount is multiplied by the Dream Depth XP multiplier. At depth 5, for example, you receive 80. Because the description did not match what you actually got, both the Japanese and English descriptions now note that the Dream Depth XP multiplier applies. The amount of XP you receive is unchanged.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
 ## v3.2.3 — Fixes for Pure White Dream profile switching, F6 language saving, and Infinity boss saves（2026-10-17）
 
 この版は、純白の夢に勝ったあとプロフィールを切り替えられなくなる問題、F6 メニューで切り替えた言語が次回起動時に元へ戻る問題、インフィニティでボスに繰り上がったあとに保存や協力プレイの同期が失敗する問題を直す更新です。インフィニティの案内に出る数値も実際の値に揃えました。 / This update fixes being unable to switch profiles after winning the Pure White Dream, the language chosen in the F6 menu reverting on the next launch, and saving and co-op syncing failing after Infinity moves you up to the boss. It also makes the numbers in the Infinity guide match the actual values.
