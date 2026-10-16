@@ -943,7 +943,7 @@ namespace SodRpg.Core.Game
                     {
                         var relic = run.Satchel[i];
                         if (relic.Rarity >= Rarity.Epic || (trades != null && trades.IsReserved(relic.Uid))) continue;
-                        shards += Content.SalvageShards(relic.Rarity);
+                        shards += SalvageValue(relic); // 説明どおり分解と同じ（強化の返還分を含む）
                         count++;
                         run.Satchel.RemoveAt(i);
                     }
