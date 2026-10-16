@@ -957,5 +957,6 @@ namespace SodRpg.Mod
         private void InitializeInfinityRun() { }
         public float PressureHealthMultiplier { get; internal set; } = 1f;
         public float PressureDamageMultiplier { get; internal set; } = 1f;
+        public float NightmareGearMultiplier { get; private set; }
     }
 }
