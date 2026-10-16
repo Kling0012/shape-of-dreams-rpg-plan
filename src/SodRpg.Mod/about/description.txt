@@ -1,5 +1,5 @@
-[b]Broken co-op trade data now cancels only that trade instead of stopping the host, and unknown kill records are no longer saved.[/b]
-[b]協力プレイの取引で壊れたデータが届いても、ホスト全体は止まらず、その取引だけが取り消されるようにしました。あわせて、知らない討伐記録を保存しないようにし、中断データが増え続ける問題を直しました。[/b]
+[b]v3.1.0: minor per-traveler adjustments, cyan Nemesis nameplates, and a fix for repeated co-op trade re-sends. Everyone in co-op should update. Saves carry over; restart the game after updating.[/b]
+[b]v3.1.0：旅人ごとの細かな調整、宿敵の名札のシアン化、協力取引の送り直しが繰り返される問題の修正。協力プレイは全員更新してください。セーブはそのまま引き継げます。更新後はゲームを再起動してください。[/b]
 
 [h1]Dreamforge RPG[/h1]
 Turns every run into part of a long RPG journey: relics you keep, a risky "secure or delve" choice at every zone, a star map per Traveler, a forge, and long-term goals. Co-op ready.

@@ -8,17 +8,28 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
+---
+
+## v3.1.0 — Per-traveler adjustments and co-op improvements（2026-10-16）
+
+旅人ごとの細かな調整と、協力プレイの改善です。 / Per-traveler adjustments and co-op improvements.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
 ### 改善 / Improvements
 
-- 協力取引で、保管庫が大きく記録の分割送信に時間がかかるとき、受け手の再請求とホストの再送が繰り返されていたのを、受け側は受信中は再請求しない・ホストは同じ参加者への再送に最低間隔を設けることで抑えました。再接続時の再送は間隔を待たずに行われ、記録が届かなくなることはありません。 / Large-stash co-op trades no longer loop between the receiver's re-request and the host's re-send: the receiver holds off while a split transfer is still arriving, and the host enforces a minimum interval between re-sends to the same participant. A reconnect still re-sends immediately, so a record is never left undelivered.
+- 宿敵の頭上の名札をシアンに変え、悪夢化した敵（桃色）や夢の変種（琥珀色）と見分けやすくしました。協力プレイでも全員に同じ色で表示されます。 / Nemesis nameplates are now cyan, so they stand out from pink nightmares and amber dream variants. Everyone in co-op sees the same color.
+- 細かな調整を行いました。 / Minor adjustments.
 
-### 変更 / Changes
+### 不具合の修正 / Bug fixes
 
-- 宿敵の頭上の名札をシアン（`#4DD8FF`）に変え、悪夢化した敵（桃色）や夢の変種（琥珀色）と区別できるようにしました。同じ敵に複数の表示情報がある場合も宿敵の名札を優先し、協力プレイでも各PCで同じ色を表示します。 / Nemesis overhead nameplates now use cyan (`#4DD8FF`), distinct from pink nightmares and amber dream variants. The Nemesis nameplate takes priority when tags overlap, and each PC uses the same color in co-op.
+- 協力プレイで保管庫が大きいとき、取引の記録の送り直しが繰り返されて通信が重くなることがあった問題を修正しました。 / Fixed co-op trades with a large stash repeatedly re-sending their records and slowing the connection.
 
-### 開発環境 / Development
-
-- 変更に応じたテスト選択で、共通の補助型・テスト用データ・BalanceSim / StarMapRender の参照元を含めるようにしました。補助ライブラリを単独のテストプロジェクトから除外し、参照のないテスト用文書による全件実行を抑えます。星図生成では旧定義の採用判定と数値解決を再利用し、入力の変更時は更新します。CI の生成チェックの重複をなくし、PR でも WikiGen をビルドします。 / Changed-test selection now covers shared helpers, fixtures and references to BalanceSim / StarMapRender. Helper libraries are excluded as standalone test projects, and unreferenced test documentation no longer triggers the full suite. Star generation reuses legacy adoption decisions and resolved sources while refreshing changed inputs. CI checks generation once and builds WikiGen on PRs.
+この版の変更は、コードとテストで確認したもので、実際のゲームでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game. Please report anything odd.
 
 ---
 
