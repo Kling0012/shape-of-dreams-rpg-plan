@@ -118,10 +118,10 @@ namespace SodRpg.Mod
                 Dwell=new InkDwell[enemies]; DwellVisuals=new long[enemies];
                 Created=OnCreated; Damaged=OnDamage; Healed=OnHeal; Processor=OnProcess;
             }
-            private void OnCreated(EventInfoAbilityInstance info) => Host.BindInkBeam(this,info);
-            private void OnDamage(EventInfoDamage info) => Host.InkBeamDamage(this,info);
-            private void OnHeal(EventInfoHeal info) => Host.InkBeamHeal(this,info);
-            private void OnProcess(ref DamageData damage,Actor actor,Entity target) => Host.InkBeamFlat(this,ref damage,actor,target);
+            private void OnCreated(EventInfoAbilityInstance info) { if(Host!=null) Host.BindInkBeam(this,info); }
+            private void OnDamage(EventInfoDamage info) { if(Host!=null) Host.InkBeamDamage(this,info); }
+            private void OnHeal(EventInfoHeal info) { if(Host!=null) Host.InkBeamHeal(this,info); }
+            private void OnProcess(ref DamageData damage,Actor actor,Entity target) { if(Host!=null) Host.InkBeamFlat(this,ref damage,actor,target); }
         }
         private static readonly BossRewardProfile InkWhiteRewardProfile=LoadInkRewardProfile(BossProfiles.WhiteNightRewardId);
         private static readonly BossRewardProfile InkDarkRewardProfile=LoadInkRewardProfile(BossProfiles.DarkMoonRewardId);
@@ -406,8 +406,10 @@ namespace SodRpg.Mod
             if(ReferenceEquals(parent,null) || !_inkBeams.TryGetValue(parent,out var state)) return;
             _inkBeams.Remove(parent);
             if(_inkStates.TryGetValue(state.Runtime,out var owner)) owner.Beams.Remove(state);
-            if(state.Parent!=null && state.Parent.creationTime==state.ParentCreation && BossNativeSameLife(state.Parent,state.ParentLife)) state.Parent.ActorEvent_OnAbilityInstanceCreated-=state.Created;
-            if(state.Beam!=null && state.Beam.creationTime==state.BeamCreation && BossNativeSameLife(state.Beam,state.BeamLife))
+            // 登録した処理はこの state 専用なので、寿命の照合なしで外す（未登録なら何もしない）。
+            // 寿命表が満杯で照合が外れると外れずに残り、返却後の state（Host==null）が次の発火で例外を出していた。
+            if(state.Parent!=null) state.Parent.ActorEvent_OnAbilityInstanceCreated-=state.Created;
+            if(state.Beam!=null)
             {
                 state.Beam.dealtDamageProcessor.Remove(state.Processor);
                 state.Beam.ActorEvent_OnDealDamage-=state.Damaged;
