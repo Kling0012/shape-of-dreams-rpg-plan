@@ -88,12 +88,13 @@ namespace SodRpg.Mod
             else InfinityMode.ConfirmAgreement();
         }
 
-        internal static bool PersistHostInfinityState() => _hostSession?.SaveInfinityState(confirm: true) == true;
+        internal static bool PersistHostInfinityState(bool writeEnvelope = true)
+            => _hostSession?.SaveInfinityState(confirm: true, writeEnvelope) == true;
 
-        private bool SaveInfinityState(bool confirm)
+        private bool SaveInfinityState(bool confirm, bool writeEnvelope = true)
         {
             if (!NetworkServer.active || Profile.Run?.Infinity == null || !InfinityMode.NativeSaveAgreement) return false;
-            InfinityMode.WriteEnvelope();
+            if (writeEnvelope) InfinityMode.WriteEnvelope();
             return SaveInfinityReceipt(Profile.Run.RunId, confirm);
         }
 
@@ -199,7 +200,15 @@ namespace SodRpg.Mod
             FlushPendingRunRewards();
             if (_pendingRunRewards.Count != 0 || _pendingPressureDividends.Count != 0 || HasPendingTrades) return;
             if (CanChooseRunRules && !HostInfinityBoundarySettled) return;
-            var sharedChoices = InfinityMode.CurrentChoice?.Before ?? _receivedRunChoices;
+            // 潜行の決定は置き換わるまで設定に残る。前の区間の決定の Before（選択待ち）で開かないよう、
+            // この区間でまだ適用していない決定のときだけ Before を使う。
+            var run = Profile.Run;
+            var state = run?.Infinity;
+            var choice = InfinityMode.CurrentChoice;
+            var sharedChoices = state != null && choice != null && choice.RunId == run.RunId
+                && choice.SegmentEpoch == state.SegmentEpoch && state.ChoiceRevision != long.MaxValue
+                && choice.Revision == state.ChoiceRevision + 1
+                ? choice.Before ?? _receivedRunChoices : _receivedRunChoices;
             if (!CanChooseRunRules && (sharedChoices == null || sharedChoices.Settled || sharedChoices.Generation == 0)) return;
             if (NetworkServer.active) PublishRunChoicesForZone(ChoiceZoneIndex);
             Emit(Rules.ReachInfinityChoice(Profile, _trades));
