@@ -83,6 +83,8 @@ namespace SodRpg.Mod
         private struct KillAssistContact
         {
             internal Hero Hero;
+            internal Actor HitActor;
+            internal uint HitActorLifetime;
             internal float ContactAt, HitAt;
             internal bool HasHit, CriticalBasic, SummonHit;
             internal float Damage;
@@ -169,7 +171,20 @@ namespace SodRpg.Mod
             _killAssistVictims.Clear();
             _killAssistPool.Clear();
             _killAssistCapacity = 0;
+            ClearNativeKillRewards();
         }
+
+        private uint KillAssistActorLifetime(Actor actor)
+        {
+            uint lifetime = 0;
+            CaptureKillAssistActorLifetime(actor, ref lifetime);
+            return lifetime;
+        }
+
+        partial void CaptureKillAssistActorLifetime(Actor actor, ref uint lifetime);
+        partial void CaptureNativeKillRewards(EventInfoKill info, KillAssistVictim state);
+        partial void DispatchNativeKillRewards(EventInfoKill info, KillAssistVictim state);
+        partial void ClearNativeKillRewards();
 
         private static Hero KillAssistOwner(Actor actor)
         {
@@ -210,6 +225,8 @@ namespace SodRpg.Mod
                 ref var contact = ref state.Contacts[slot];
                 if (contact.Hero != hero) contact = default;
                 contact.Hero = hero; contact.ContactAt = contact.HitAt = now; contact.HasHit = true;
+                contact.HitActor = info.actor;
+                contact.HitActorLifetime = KillAssistActorLifetime(info.actor);
                 contact.Damage = info.damage.amount;
                 var basic = BasicAttackContext.Current;
                 contact.CriticalBasic = info.damage.HasAttr(DamageAttribute.IsCrit) && basic != null
@@ -290,6 +307,7 @@ namespace SodRpg.Mod
                         && hero.GetRelation(state.Killer) == EntityRelation.Ally
                         && info.victim.GetRelation(hero) == EntityRelation.Enemy;
                 }
+                CaptureNativeKillRewards(info, state);
             }
             catch (Exception ex)
             {
@@ -305,6 +323,7 @@ namespace SodRpg.Mod
                 if (info.victim == null || !_killAssistVictims.TryGetValue(info.victim, out var state)
                     || !state.Dead || state.Dispatched || state.Failed) return;
                 state.Dispatched = true;
+                DispatchNativeKillRewards(info, state);
                 for (int i = 0; i < state.Contacts.Length; i++)
                 {
                     var contact = state.Contacts[i];
