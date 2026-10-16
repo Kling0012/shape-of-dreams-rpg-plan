@@ -1,5 +1,5 @@
-[b]Fixes bounties that could not be completed in solo or Infinity, relics in the Sealed Vault being treated as unowned in draws, the waypoint Codex bonus, Infinity save loading, and description text errors.[/b]
-[b]ソロ・インフィニティで達成できない依頼、宝庫の預かり品が抽選で未所持扱いになる問題、道標の図鑑補正、インフィニティのセーブ読み込み、説明文の誤りを直しました。[/b]
+[b]Recovered relics now count as found in the expedition report, and the co-op Trade tab updates a relic's description after it is made Forbidden.[/b]
+[b]取り戻した遺物が遠征の報告で発見件数に入るようにし、協力プレイの取引タブで禁忌化した遺物の説明が新しい内容に更新されるようにしました。[/b]
 
 [h1]Dreamforge RPG[/h1]
 Turns every run into part of a long RPG journey: relics you keep, a risky "secure or delve" choice at every zone, a star map per Traveler, a forge, and long-term goals. Co-op ready.
