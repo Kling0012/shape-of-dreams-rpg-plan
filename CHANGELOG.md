@@ -8,6 +8,8 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
+- 装備やビルドの計算、固有効果の抽選で、毎回くり返していた無駄な処理を減らしました（結果は同じです）。 / Reduced repeated work in build calculation and power rolls (results are unchanged).
+
 ---
 
 ## v3.1.4 — Maintenance update with no gameplay changes（2026-10-17）
