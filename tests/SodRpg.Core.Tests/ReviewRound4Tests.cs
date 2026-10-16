@@ -5,13 +5,10 @@ using Xunit;
 
 namespace SodRpg.Core.Tests
 {
-    // Loc.Japanese を書き換えるが、このテストプロジェクトは AssemblyInfo.cs でテスト並列化を
-    // 無効にしているので他クラスとの競合は起きない。Dispose で必ず元に戻す。
-    public sealed class ReviewRound4Tests : System.IDisposable
+    // Loc.Japanese は ThreadStatic。AssemblyInfo.cs でもクラス間の並列化を無効にしている。
+    // 言語は書き換えたテスト内の finally で同じスレッド上で復元する。
+    public sealed class ReviewRound4Tests
     {
-        private readonly bool _japanese = Loc.Japanese;
-        public void Dispose() => Loc.Japanese = _japanese;
-
         [Fact]
         public void Finale_promotion_in_the_first_cycle_survives_a_save_round_trip()
         {
@@ -34,12 +31,17 @@ namespace SodRpg.Core.Tests
         [InlineData(false)]
         public void Pact_descriptions_never_end_a_sentence_twice(bool japanese)
         {
-            Loc.Japanese = japanese;
-            foreach (var pact in Pacts.All)
+            bool previous = Loc.Japanese;
+            try
             {
-                Assert.DoesNotContain("。。", pact.Description);
-                Assert.DoesNotContain("..", pact.Description);
+                Loc.Japanese = japanese;
+                foreach (var pact in Pacts.All)
+                {
+                    Assert.DoesNotContain("。。", pact.Description);
+                    Assert.DoesNotContain("..", pact.Description);
+                }
             }
+            finally { Loc.Japanese = previous; }
         }
     }
 }
