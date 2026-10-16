@@ -36,16 +36,20 @@ namespace SodRpg.Mod
         [LabelText("Co-op-only Room Omens (host) / マルチ専用の兆し（ホスト）")]
         public bool coopRoomOmens = true;
 
-        [LabelText("Melee: convert equipment attack range to attack speed (host) / 近接：装備の射程を攻撃速度へ変換（ホスト）")]
+        [LabelText("Melee: convert equipment attack range to attack speed (x" + CoopBalance.RangeToSpeedMultiplierText + ", total attack speed capped at " + TravelerCombat.AttackSpeedCapText + "%; host) /\n"
+            + "近接：装備の射程を攻撃速度へ変換（射程1%につき" + CoopBalance.RangeToSpeedMultiplierText + "%、攻撃速度は合計" + TravelerCombat.AttackSpeedCapText + "%まで。ホスト）")]
         public bool meleeRangeToSpeed = true;
 
-        [LabelText("Coop: distance falloff and grace (host) / 味方距離効果の減衰と猶予（ホスト）")]
+        [LabelText("Coop: distance falloff " + CoopBalance.FullRangeText + "-" + CoopBalance.OuterRangeText + "m and " + CoopBalance.GraceSecondsText + "s grace; off: cut beyond " + CoopBalance.FullRangeText + "m (host) /\n"
+            + "味方距離効果の減衰（" + CoopBalance.FullRangeText + "～" + CoopBalance.OuterRangeText + "m）と猶予" + CoopBalance.GraceSecondsText + "秒。オフでは" + CoopBalance.FullRangeText + "mを超えると切れる（ホスト）")]
         public bool coopDistanceFalloff = true;
 
-        [LabelText("Melee: Break for allied damage (host) / 近接：崩しで味方の与ダメージを増加（ホスト）")]
+        [LabelText("Melee: Break - allies deal +" + CoopBalance.BreakDamagePercentText + "% damage to the hit enemy for " + CoopBalance.BreakSecondsText + "s (host) /\n"
+            + "近接：崩し（当てた敵へ" + CoopBalance.BreakSecondsText + "秒間、ほかの味方の与ダメージ+" + CoopBalance.BreakDamagePercentText + "%。ホスト）")]
         public bool meleeBreak = true;
 
-        [LabelText("Melee: damage reduction near enemies (host) / 近接：敵の近くで被ダメージ軽減（ホスト）")]
+        [LabelText("Melee: take " + CoopBalance.MeleeGuardReductionPercentText + "% less damage with an enemy within " + CoopBalance.MeleeGuardRangeText + "m (host) /\n"
+            + "近接：" + CoopBalance.MeleeGuardRangeText + "m以内に敵がいる間、被ダメージ" + CoopBalance.MeleeGuardReductionPercentText + "%軽減（ホスト）")]
         public bool meleeProximityGuard = true;
 
         [LabelText("Auto casting: native speed in multiplayer (host, default ON) / 自動詠唱：マルチでは本体と同じ速さ（ホスト、既定ON）")]
