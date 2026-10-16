@@ -8,7 +8,23 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
-- 装備やビルドの計算、固有効果の抽選で、毎回くり返していた無駄な処理を減らしました（結果は同じです）。 / Reduced repeated work in build calculation and power rolls (results are unchanged).
+---
+
+## v3.1.5 — Maintenance update: streamlined build and roll processing（2026-10-17）
+
+この版は内部の保守のための更新で、ゲーム内の動きや数値に変更はありません。 / This is a maintenance update with no changes to gameplay or numbers.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### この版について / About this version
+
+- 装備の能力を集計する処理と、抽選の処理を内部で整理し、無駄な繰り返しを減らしました。遊び方や効果の内容、確率、表示はこれまでと変わりません。 / We streamlined the internal processing used to total up equipment effects and to run random rolls, cutting out redundant work. How the game plays, what effects do, the odds and what is shown on screen are unchanged.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
 
 ---
 
