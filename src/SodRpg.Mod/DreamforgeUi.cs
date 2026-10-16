@@ -2061,8 +2061,8 @@ namespace SodRpg.Mod
                         Act(() =>
                         {
                             var e = Rules.Salvage(p, sel.Uid, _s.Trades, !_s.CanEditLoadout);
-                            // 分解が断られたときは選択と再調律の候補表示を残す。
-                            _selected = null;
+                            // 成功時は Info の通知、拒否時は例外。成功したときだけ選択を外す。
+                            if (e?.Kind == EventKind.Info) _selected = null;
                             return e;
                         }, true);
                         _confirmSalvage = null;
