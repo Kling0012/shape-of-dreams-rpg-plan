@@ -465,7 +465,9 @@ namespace SodRpg.Core.Game
                     if (rawPowers.TryGetValue(pw, out int v))
                     {
                         rawPowers[pw] = v + v * DailyDream.PowerBoostPct / 100;
-                        basePowers[pw] += basePowers[pw] * DailyDream.PowerBoostPct / 100m;
+                        // 上限の按分の基準も、値が実際に受けた倍率（整数の切り捨て後）で伸ばす。
+                        // 基準だけ端数込みで伸ばすと、上限を超えた効果が強化日に上限未満へ下がっていた。
+                        if (v > 0) basePowers[pw] = basePowers[pw] * rawPowers[pw] / v;
                         if (awakenGains.TryGetValue(pw, out int gain))
                         {
                             int before = v - gain;
@@ -493,7 +495,12 @@ namespace SodRpg.Core.Game
                 int cap = Content.PowerCap(kv.Key);
                 b.Powers[kv.Key] = cap > 0 ? (int)CappedContribution(basePowers[kv.Key], kv.Value, cap) : kv.Value;
                 if (NewPowersV129.IsConditionalAttribute(kv.Key) && awakenGains.TryGetValue(kv.Key, out int gain))
-                    b.ConditionalBasePowers[kv.Key] = Math.Min(b.Powers[kv.Key], Math.Max(0, kv.Value - gain));
+                {
+                    // 覚醒前の値にも同じ上限の按分を掛ける（掛けないと上限を超えた効果では覚醒分まで数えていた）。
+                    int unawakened = Math.Max(0, kv.Value - gain);
+                    if (cap > 0) unawakened = (int)CappedContribution(basePowers[kv.Key], unawakened, cap);
+                    b.ConditionalBasePowers[kv.Key] = Math.Min(b.Powers[kv.Key], unawakened);
+                }
             }
             foreach (var kv in starPowers)
             {
