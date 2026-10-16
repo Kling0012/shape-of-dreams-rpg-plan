@@ -47,32 +47,8 @@ namespace SodRpg.Mod
                 _callback = RequireField(typeof(KillTracker), "_callback", typeof(Action<EventInfoKill>));
                 _stopped = RequireField(typeof(KillTracker), "_isStopped", typeof(bool));
                 AddTracker(typeof(Gem_E_Metal), "KillCallback");
-                AddTracker(typeof(Gem_E_Predation), "OnKill");
-                AddTracker(typeof(Gem_L_Culinary), "OnKill");
-                AddTracker(typeof(Gem_L_DivineFaith), "IncreaseAmp");
-                AddTracker(typeof(Gem_R_Wealth), "Callback");
-                AddEvent(typeof(Gem_E_OurStory_Unfinished));
-                AddEvent(typeof(Gem_U_GuidingCompass_NotCharged));
-                AddEvent(typeof(Se_E_LizardlyBlessing));
-                AddEvent(typeof(Se_E_UmbralEdge));
-                AddEvent(typeof(Se_D_TheKillingFlow));
-                AddEvent(typeof(Se_Star_I_DreamDustOnKillChance));
-                AddEvent(typeof(Se_Star_I_FirstBossGemDrop), "OnKillOrAssist");
-                AddEvent(typeof(Se_Star_I_GemOnMiniBossKill));
-                AddEvent(typeof(Se_Star_L_HealOnKill));
-                AddEvent(typeof(Se_Star_Bismuth_I_KnowledgeBook));
-                AddEvent(typeof(Se_Star_Cetus_F_FR_ChangeToUltHitReset));
-                AddEvent(typeof(Se_Star_Cetus_I_GetDreamDustOnBossKill));
-                AddEvent(typeof(Se_Star_Husk_F_AS_NoShockwaveFasterAttack));
-                AddEvent(typeof(Se_Star_Husk_I_BossKillPlatinumCoin));
-                AddEvent(typeof(Se_Star_Husk_L_DodgeCooldownOnKillOrAttack));
-                AddEvent(typeof(Se_Star_Husk_L_DodgeCooldownOnKillWithEmptyCharges));
-                AddEvent(typeof(Se_Star_Lacerta_I_BossBounty));
-                AddEvent(typeof(Se_Star_Nachia_I_ForestKillDreamDust));
-                AddEvent(typeof(Se_Star_Nachia_I_SummonKillGold));
-                AddEvent(typeof(Se_Star_Yubar_I_StarCookie));
-                AddEvent(typeof(Star_Global_KillDreamDustBonus));
-                AddEvent(typeof(SkillTrigger), "ActorEventOnKill");
+                // Only temporary B effects enter the sharing ledger; the 30-second event stays native.
+                Effects.Add(new Effect { Type = typeof(SkillTrigger), Callback = RequireCallback(typeof(SkillTrigger), "ActorEventOnKill") });
                 Effects.Add(new Effect { Type = typeof(Se_Star_Aurena_F_CR_NoHealCooldownReduction), Special = 1 });
                 Effects.Add(new Effect { Type = typeof(Se_Star_Lacerta_F_PS_CooldownReset), Special = 2 });
                 Effects.Add(new Effect { Type = typeof(Se_Star_Cetus_F_BA_CdReductionOnKill), Special = 3 });
@@ -83,11 +59,13 @@ namespace SodRpg.Mod
                     ?? throw new MissingMethodException(typeof(Actor).FullName, nameof(Actor.ClearPooledEventsAndProcessors)), nameof(BeforePoolClear));
                 Patch(AccessTools.DeclaredMethod(typeof(Actor), "OnDisable")
                     ?? throw new MissingMethodException(typeof(Actor).FullName, "OnDisable"), nameof(BeforePoolClear));
-                foreach (var effect in Effects)
-                    if (effect.Callback != null && effect.Tracker == null)
-                        Patch(effect.Callback, nameof(BeforeEventReward));
+                Patch(RequireCallback(typeof(SkillTrigger), "ActorEventOnKill"), nameof(BeforeEventReward));
                 Patch(RequireCallback(typeof(Se_Star_Cetus_F_BA_CdReductionOnKill), "OnVictimDeath"), nameof(BeforeCetusReward));
-                InstallGold(harmony, patches);
+                // These native trackers also accept other players' kills. A rewards must have one recipient.
+                Patch(RequireCallback(typeof(Gem_E_Predation), "OnKill"), nameof(BeforePermanentReward));
+                Patch(RequireCallback(typeof(Gem_L_DivineFaith), "IncreaseAmp"), nameof(BeforePermanentReward));
+                Patch(RequireCallback(typeof(Gem_L_Culinary), "OnKill"), nameof(BeforePermanentReward));
+                Patch(RequireCallback(typeof(Gem_R_Wealth), "Callback"), nameof(BeforePermanentReward));
                 _enabled = true;
             }
             catch (Exception ex)
@@ -113,11 +91,6 @@ namespace SodRpg.Mod
                 Tracker = RequireField(type, "_tracker", typeof(KillTracker)) });
         }
 
-        private static void AddEvent(Type type, string method = "ClientHeroEventOnKillOrAssist")
-        {
-            Effects.Add(new Effect { Type = type, Callback = RequireCallback(type, method) });
-        }
-
         private static FieldInfo RequireField(Type type, string name, Type fieldType)
         {
             var field = AccessTools.DeclaredField(type, name);
@@ -132,7 +105,7 @@ namespace SodRpg.Mod
             return method;
         }
 
-        internal static void Stop() { _enabled = false; ClearGold(); }
+        internal static void Stop() { _enabled = false; }
 
         internal static void Fail(Exception ex)
         {
@@ -196,6 +169,18 @@ namespace SodRpg.Mod
             catch (Exception ex) { Fail(ex); return true; }
         }
 
+        private static bool BeforePermanentReward(Gem __instance, EventInfoKill __0)
+        {
+            if (!Active) return true;
+            try
+            {
+                var killer = Owner(__0.actor);
+                // Unknown attribution must never take the killer's normal reward away.
+                return killer == null || __instance.owner == null || __instance.owner == killer;
+            }
+            catch (Exception ex) { Fail(ex); return true; }
+        }
+
         private static bool BeforeEventReward(object __instance, MethodBase __originalMethod, EventInfoKill __0)
         {
             if (!Active) return true;
@@ -229,15 +214,7 @@ namespace SodRpg.Mod
             return null;
         }
 
-        private static Hero Recipient(object receiver)
-        {
-            if (receiver is Gem gem) return gem.owner;
-            if (receiver is SkillTrigger skill) return skill.owner as Hero;
-            if (receiver is Se_E_UmbralEdge edge) return edge.info.caster as Hero;
-            if (receiver is StatusEffect status) return status.victim as Hero;
-            if (receiver is DewStarItemOld oldStar) return oldStar.hero;
-            return null;
-        }
+        private static Hero Recipient(object receiver) => receiver is SkillTrigger skill ? skill.owner as Hero : null;
     }
 
     internal sealed partial class HostAuthority
@@ -307,15 +284,6 @@ namespace SodRpg.Mod
 
         private void CaptureNativeKillRecipient(List<NativeKillReward> rewards, Hero hero, Actor source)
         {
-            var handlers = NativeKillRewards.Handlers(hero.ClientHeroEvent_OnKillOrAssist);
-            if (handlers != null)
-                for (int i = 0; i < handlers.Count; i++)
-                {
-                    var handler = handlers[i];
-                    if (handler == null) continue;
-                    var effect = NativeKillRewards.Find(handler.Method);
-                    if (effect != null) AddNativeKillReward(rewards, hero, handler.Target, effect, handler, source);
-                }
             var killHandlers = NativeKillRewards.Handlers(hero.ActorEvent_OnKill);
             if (killHandlers != null)
                 for (int i = 0; i < killHandlers.Count; i++)
@@ -381,19 +349,13 @@ namespace SodRpg.Mod
                 var reward = rewards[i];
                 if (reward.Hero != hero || !ReferenceEquals(reward.Receiver, receiver) || reward.Effect != effect) continue;
                 if (reward.Applied) return false;
-                if (hero != death.Killer)
-                {
-                    // Defer native assists too: the original packet still names the killer.
-                    // Dispatch below must supply this recipient's own summon/skill source.
-                    if (effect.Special != 0 && callback != null) reward.Callback = callback;
-                    return false;
-                }
+                // Let the native callback run in place, including its original packet and closure state.
+                // The 5-second extension only fills recipients that have not received this effect yet.
                 reward.Applied = true;
                 return true;
             }
-            // Keep the killer's original rewards even when equipment changed in another listener.
-            // Other native 30-second assists must not create rewards outside the frozen 5-second set.
-            return hero == death.Killer;
+            // Native grace periods and recipients outside the MOD's 5-second set remain untouched.
+            return true;
         }
 
         private Entity _nativeKillRewardVictim;
@@ -457,22 +419,6 @@ namespace SodRpg.Mod
             }
         }
 
-        internal Hero[] NativeKillGoldRecipients(EventInfoKill info, out Hero killer)
-        {
-            killer = null;
-            PrepareNativeKillRewards(info);
-            if (!_killAssistVictims.TryGetValue(info.victim, out var state) || state.Failed || state.Killer == null) return null;
-            int count = 0;
-            for (int i = 0; i < state.Contacts.Length; i++) if (state.Contacts[i].Eligible) count++;
-            if (count == 0) return null;
-            var heroes = new Hero[count];
-            count = 0;
-            for (int i = 0; i < state.Contacts.Length; i++)
-                if (state.Contacts[i].Eligible) heroes[count++] = state.Contacts[i].Hero;
-            killer = state.Killer;
-            return heroes;
-        }
-
         internal void ForgetNativeKillRewards(Entity victim)
         {
             if (ReferenceEquals(victim, null) || !_nativeKillDeaths.TryGetValue(victim, out var death)) return;
@@ -501,7 +447,6 @@ namespace SodRpg.Mod
             _nativeKillDeaths.Clear();
             _nativeKillDeathPool.Clear();
             _nativeKillReceiverPool.Clear();
-            NativeKillRewards.ClearGold();
         }
     }
 }

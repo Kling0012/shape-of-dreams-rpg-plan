@@ -1,53 +1,56 @@
-# 本体撃破報酬の5秒アシスト共有（2026-10-16）
+# 撃破成長と一時効果のアシスト規則（2026-10-16）
 
-対象: `feat/hero-run-growth-1016`。MODの既存5秒アシストと同じ凍結済み判定を、本体の装備効果と通常撃破ゴールドへ適用する。新しい判定窓は作らない。
+対象: `feat/hero-run-growth-1016`。マルチで同じ敵の永続的な成長を人数分増やさず、戦闘中の一時的な撃破効果は既存の5秒アシストにも与える。シングルの本体処理・MOD処理は変更しない。担当制は別ブランチのため、この変更では実際の撃破Actorの親経路から旅人を求める。
 
-## 判定・配送
+## A/Bの最終分類
 
-- 敵死亡直前の5秒以内の与ダメージ、敵への制御・弱体、撃破者への有効回復・障壁を使う。撃破者本人を除き、生存している味方だけがアシスト対象。
-- `victim.EntityEvent_OnDeath` と一致する `SafeAction<EventInfoKill>.Invoke` のPrefixで既存の `CaptureKillAssists` を呼び、本体の死亡リスナーより先に対象者と装備を凍結する。撃破時回復で新しいアシストを作らない。
-- `Actor.InvokeOnKill` の既存Postfixから、凍結した本人の効果だけを呼ぶ。MODの遠征成長・装備効果の共有は既存経路を使う。
-- 本体イベント全体の再送はしない。`Hero.ClientHeroEvent_OnKillOrAssist` は本体で30秒の `KillTracker` を起点とし、統計・実績・結果画面・分析も購読するため、イベント再送は対象外への波及が大きい。
-- 代わりに下表の効果だけを明示登録する。通常の本体アシスト呼出も受信側で捕捉し、アシスト者の呼出を共有処理まで保留する。受取者・効果・敵の生成世代ごとに1回に制限する。本体の30秒だけに該当する対象者の対象効果は発火させない。
-- 撃破者は本来のコールバックを実行する。各アシスト者は自分の装備・倍率・確率・上限・同期処理を使う。召喚源は自身の直近の与ダメージ源を使い、プール再利用を `persistentNetId` で検査する。源を保持できない場合は本人へ戻すため、召喚専用条件は満たさなくなる。
-- 死亡記録はActorManagerからの除去では捨てず、プールのイベント解放またはActor無効化まで保持し、遅れて来る本体コールバックの二重発火を防ぐ。プールを使わない破棄でも解放する。
-- ホストかつ複数人のみ有効。既存のSyncVar、RPC、拾得物を使う。Protocol・保存形式の追加なし。毎フレーム処理・割り当てを追加しない。死亡・宝珠生成・支給時には記録を確保する。
-- 接続失敗・例外でこの共有拡張だけを無効化する。導入途中のパッチ失敗は自身のパッチを巻き戻す。本体の通常報酬と他MOD機能は続行する。
+Aは撃破で遠征中ずっと積み上がる成長・追加資源。MODは5秒アシストへ追加しない。Bは一時的な戦闘効果で、5秒アシストへ共有する。分類不明の効果をBへ自動登録しない。本体の30秒アシストで動く効果と、通常撃破ゴールドは別枠として本体に任せる。
 
-## 調査した本体効果
-
-以下の型名は `Dew.Contents.dll` の逆コンパイルと、`Dew.Core.dll` の呼出元から確認した。効果自身の敵種・確率・装備条件は変更しない。
-
-### KillTrackerを持つエッセンス
-
-| 型 | 本体の購読元 / コールバック | 共有する効果 |
+| 区分 | 本体効果 | 最終動作 |
 |---|---|---|
-| `Gem_E_Predation` | 所有者 `TrackKills(killGraceTime, OnKill)` | 捕食の成長拾得物。ボスは `bossMultiplier` 個（既定3）、ハンターは1個。通常敵は本体仕様で成長しない |
-| `Gem_E_Metal` | 所有者 `TrackKills(10f, KillCallback)` | 装着記憶のCD回復、演出 |
-| `Gem_L_Culinary` | 装着記憶 `TrackKills(killGraceTime, OnKill)` | 本体確率による料理素材 |
-| `Gem_L_DivineFaith` | 装着記憶 `TrackKills(gracePeriod, IncreaseAmp)` | 上限付きスタック、最大HP、ダメージ・回復増幅 |
-| `Gem_R_Wealth` | 装着記憶 `TrackKills(gracePeriod, Callback)` | 本体の遅延追加ゴールド |
+| A | `Gem_E_Predation` | ボス・ミニボス・ハンターの成長拾得物を生成するコールバックは撃破者だけ。通常敵で成長しない本体条件は維持 |
+| A | `Gem_L_DivineFaith` | 上限付きスタック・最大HP・ダメージ／回復増幅の加算は撃破者だけ |
+| A | `Gem_L_Culinary` | 料理素材の抽選・生成コールバックは撃破者だけ |
+| A | `Gem_R_Wealth` | 遅延追加ゴールドを生成するコールバックは撃破者だけ。生成されたゴールドの本体分配は変更しない |
+| B | `Gem_E_Metal` | 装着記憶のCD回復・演出を5秒アシストにも1回 |
+| B | `SkillTrigger.ActorEventOnKill` | 究極記憶の撃破チャージを5秒アシストにも1回。小型0.12750001、通常0.63750005、ミニボス12.75、ボス42.5の本体値を使用 |
+| B | `Se_Star_Aurena_F_CR_NoHealCooldownReduction` | 連鎖反応の対応記憶の割合CD回復を5秒アシストにも1回 |
+| B | `Se_Star_Lacerta_F_PS_CooldownReset` | 精密射撃の対応記憶のCDリセットを5秒アシストにも1回 |
+| B | `Se_Star_Cetus_F_BA_CdReductionOnKill` | 対応記憶のCD回復を5秒アシストにも1回 |
 
-### ClientHeroEvent_OnKillOrAssistを購読する装備・バフ
+### 本体DLLから判明した依頼前提との差
 
-| 型 | コールバック / 効果 |
+Aの4種は、本体でも単純なラストヒット限定ではない。`Dew.Contents.dll` の各型と `Dew.Core.KillTracker.ReportKill` を確認したところ、`TrackKills` は猶予時間内に命中した敵の死亡でもコールバックを実行し、4コールバック自身にも撃破者条件がない。
+
+- 捕食: 所有者の `TrackKills(killGraceTime, OnKill)`。
+- 信仰: 装着記憶の `TrackKills(gracePeriod, IncreaseAmp)`。
+- 料理: 装着記憶の `TrackKills(killGraceTime, OnKill)`（既定3秒）。
+- 富: 装着記憶の `TrackKills(gracePeriod, Callback)`（既定1.5秒）。
+
+したがって共有リストから外すだけでは「Aは撃破者だけ」を満たさない。決定済みの受取者規則を満たすため、マルチ時に限りこの4コールバックのPrefixで、`EventInfoKill.actor` の親経路上の旅人とエッセンス所有者が一致する場合だけ本体処理を続行する。召喚・弾・記憶の所有者も同じ親経路で解決する。帰属や所有者が不明な場合・フック例外時は本体を続行する（fail-soft）。死亡の保留、架空の撃破、成長拾得物の追加生成は行わない。
+
+富の `DropGold` は個人宛ではなく本体の全員分配である。Aに限定するのは「同じ撃破から追加ゴールドを生成する所有者」であり、生成後のゴールドを撃破者へ独占支給する変更ではない。
+
+## 本体の30秒アシストは触らない
+
+`Hero` は本体の `TrackKills(30f, ...)` からRPCを送り、`ClientHeroEvent_OnKillOrAssist` を呼ぶ。この経路、イベントの購読一覧、および購読する効果に対し、MODは捕捉・保留・抑止・追加発火をしない。5秒を過ぎても本体の30秒条件を満たす場合は本体どおり発動する。永続／一時の区分によってこのイベントを制限しない。
+
+前回実装の `AddEvent` 登録、購読一覧の収集、受信側Prefix、5秒対象外の本体報酬抑止は除去した。次の効果はいずれも本体のまま（5秒共有リストには含めない）。
+
+| 購読する装備・バフ | 本体効果 |
 |---|---|
-| `Gem_E_OurStory_Unfinished` | `ClientHeroEventOnKillOrAssist`: 撃破蓄積による品質成長・変化 |
-| `Gem_U_GuidingCompass_NotCharged` | 同名コールバック: ボス・ミニボスで品質成長用の弾を生成 |
-| `Se_E_LizardlyBlessing` | 同名コールバック: バフ中の個人ゴールド |
-| `Se_E_UmbralEdge` | 同名コールバック: 条件付きのバフ時間延長 |
-| `Se_D_TheKillingFlow` | 同名コールバック: ボス撃破時の回復 |
+| `Gem_E_OurStory_Unfinished` | 撃破蓄積による品質成長・変化 |
+| `Gem_U_GuidingCompass_NotCharged` | ボス・ミニボスの品質成長用の弾 |
+| `Se_E_LizardlyBlessing` | バフ中の個人ゴールド |
+| `Se_E_UmbralEdge` | 条件付きのバフ時間延長 |
+| `Se_D_TheKillingFlow` | ボス撃破時の回復 |
 
-### ClientHeroEvent_OnKillOrAssistを購読する星図
-
-既定のコールバック名は `ClientHeroEventOnKillOrAssist`。
-
-| 型 | 効果 |
+| 購読する星図 | 本体効果 |
 |---|---|
 | `Se_Star_L_HealOnKill` | 最大HP比の回復 |
 | `Se_Star_I_DreamDustOnKillChance` | 個人の夢の粉抽選 |
-| `Se_Star_I_FirstBossGemDrop` | `OnKillOrAssist`: 初回ボスのエッセンス、自身の解除を含む |
-| `Se_Star_I_GemOnMiniBossKill` | ミニボスで個人エッセンス抽選 |
+| `Se_Star_I_FirstBossGemDrop` | 初回ボスのエッセンス、自身の解除 |
+| `Se_Star_I_GemOnMiniBossKill` | ミニボスの個人エッセンス抽選 |
 | `Se_Star_Bismuth_I_KnowledgeBook` | ボスの個人能力報酬書 |
 | `Se_Star_Cetus_F_FR_ChangeToUltHitReset` | 撃破ごとの持続時間増加 |
 | `Se_Star_Cetus_I_GetDreamDustOnBossKill` | ボスの個人夢の粉 |
@@ -56,63 +59,59 @@
 | `Se_Star_Husk_L_DodgeCooldownOnKillOrAttack` | 回避CD回復 |
 | `Se_Star_Husk_L_DodgeCooldownOnKillWithEmptyCharges` | 残チャージなしの場合の回避CD回復 |
 | `Se_Star_Lacerta_I_BossBounty` | ボスの個人ゴールド |
-| `Se_Star_Nachia_I_ForestKillDreamDust` | 本体の場所条件付き個人夢の粉 |
-| `Se_Star_Nachia_I_SummonKillGold` | 本人の召喚源による撃破の個人ゴールド抽選 |
+| `Se_Star_Nachia_I_ForestKillDreamDust` | 場所条件付き個人夢の粉 |
+| `Se_Star_Nachia_I_SummonKillGold` | 召喚撃破の個人ゴールド抽選 |
 | `Se_Star_Yubar_I_StarCookie` | 敵種別のクッキー抽選 |
 | `Star_Global_KillDreamDustBonus` | 旧星図の個人夢の粉 |
 
-### 記憶と特殊CD回復
+## Bの判定・配送・重複防止
 
-| 型 | 購読・効果 |
-|---|---|
-| `SkillTrigger` | `owner.ActorEvent_OnKill` → `ActorEventOnKill`: 究極記憶の撃破チャージ。本体の敵種別の値（小型0.12750001、通常0.63750005、ミニボス12.75、ボス42.5）を元の `ChargeUltimate` へ渡す |
-| `Se_Star_Aurena_F_CR_NoHealCooldownReduction` | 連鎖反応の `TrackKills(0.5f, closure)`: 対応記憶の割合CD回復 |
-| `Se_Star_Lacerta_F_PS_CooldownReset` | 精密射撃の弾の `TrackKills(killGracePeriod, closure)`: CDリセット |
-| `Se_Star_Cetus_F_BA_CdReductionOnKill` | ヒット時刻表 + 敵死亡の `OnVictimDeath`: 対応記憶のCD回復 |
+- 敵死亡前の5秒以内の与ダメージ、敵への制御・弱体、撃破者への有効回復・障壁を使う。撃破者本人を除き、生存している味方だけを対象にする。
+- 敵の `EntityEvent_OnDeath` に一致する `SafeAction<EventInfoKill>.Invoke` のPrefixで既存の `CaptureKillAssists` を呼び、本体の死亡リスナーより先に対象者・装備を凍結する。この汎用フックは旅人の `ClientHeroEvent_OnKillOrAssist` では何もしない。撃破時回復・障壁で新しいアシストを作らない。
+- Bの本体コールバックは元の場で元の撃破情報を使って実行し、受領済みにする。保留しない。本体独自の猶予時間を満たす5秒対象外のBも抑止しない。例えば金属の本体追跡は10秒。
+- `Actor.InvokeOnKill` の既存Postfixで、5秒対象者がまだ受けていないBだけを発火する。特殊3種は本体の追跡があれば元のクロージャ・ヒット表によるコールバックを先に実行し、追跡がない支援・制御等の場合は対応星図の現在値と本体の公開CD APIを使う。
+- 受取者・効果・敵の生成世代ごとの既存受領記録を使用する。装備・発生源の `persistentNetId` を確認し、プール再利用された別世代へ共有しない。敵のプールイベント解放または無効化まで記録を保持する。
+- ホストかつ複数人だけ有効。毎フレーム処理・割り当てを追加しない。既存の同期処理を使用し、Protocol・保存形式を変更しない。
+- 導入失敗はこの拡張自身のパッチだけを巻き戻す。例外時は拡張だけを停止し、本体の撃破者処理と他のMOD機能を継続する。
 
-特殊3効果は、既に本体のヒット追跡があればそのクロージャを保持し、本体の弾ごとの状態（精密射撃の一度限りフラグ等）を使う。支援・制御だけなど本体の追跡がないアシストでは、対応する星図の現在値と本体の公開CD APIを使う。
+## MOD側の撃破依存効果
 
-### 既にラストヒットに依存しないもの・対象外
+| 区分 | 経路・効果 | 最終動作 |
+|---|---|---|
+| A | `RunGrowthTrigger.EnemyKill`（通常撃破数） | `ApplyKillAssist` の `OnRunGrowthKill` 呼出を除去。撃破者の `OnMemoryKill` は維持 |
+| A | `RunGrowthTrigger.CritBasicAttackKill`（会心通常攻撃撃破数） | アシスト者の直近会心を使った `GainRunGrowth` 呼出と、そのためだけの会心記録を除去。撃破者の `TrackCritBasicKill` は維持 |
+| A | 圧力配当・追加遠征資源 | 既存の `notification.IsAssist` 除外を維持。追加共有しない |
+| B | 装備の `Momentum`、`Tailwind`、`SoulSiphon`、`Shatter` | 時限スタック・時限バフ・撃破時回復・即時の範囲効果として5秒共有を維持 |
+| B | `ReturningBlade`、`PackFeast`、`RelayHand`、`ElementalHarvest`、`SpilloverStrike`、`UmbralHeritage` | 記憶CD回復・時限障壁・味方CD回復・即時の派生効果として5秒共有を維持 |
+| B | 記憶の仕掛け・旧ペア・型付き連携、星の撃破通知 | CD／チャージ回復、時限バフ・障壁・準備、回復、即時ダメージ・制御等の既存共有を維持。再帰防止・発火回数制限・圧力配当除外を維持 |
 
-- `Se_E_Harvest_OnVictim`: 対象の死亡確認で自分の術者を回復するため追加呼出不要。
-- `Ai_L_MentalCorruption_Projectile`: 敵の死亡イベントからCD返却するため追加呼出不要。
-- `Se_Star_Aurena_I_BonusFromStones`、`Se_Star_Lacerta_I_BonusFromStones`: 全体の死亡イベントを購読済み。
-- `Se_Star_Nachia_D_CanineLover`: 自分の召喚死亡に関する効果。
-- `Se_D_TrueDuelist_Exposed`: 対応する死亡メソッドは空。
-- `CurseStatusEffect`: 8秒の追跡は呪い解除クエスト進捗。装備の撃破報酬ではないため変更しない。
-- 実績、キル数、統計、結果画面、分析、敵側の撃破処理、MOD独自の夢の種の撃破イベントは再送しない。
+現在の `ApplyKillPowers`、`OnNewPowerKill`、`QueueGimmicks`、`PublishMemoryActivation` の購読先を点検した範囲では、上記2つのRunGrowth呼出以外に「撃破で遠征中ずっと能力値を積み上げる」追加処理はない。`Momentum` や `Crescendo` 等のスタックには期限がありB。通常攻撃命中・召喚命中・記憶命中・回復／障壁支援など、撃破共有によらない既存の成長契機は維持する。
 
-## 通常撃破ゴールド
+## ゴールドは本体どおり
 
-本体は既に全員へ分配している。宝珠の拾得者・ラストヒット担当への独占支給ではない。
+本体は通常撃破ゴールドを元から全員へ配る。`PickupManager.HandleDeathDrop` による敵・人数・ゾーン・波数等の金額算出、宝珠への分割／即時支給、`Pickup_BaseGoldOrb.GrantGold` による人数除算、各人の `killGoldMultiplier`／`monsterKillGoldMultiplier` と各人の確率丸めをそのまま使う。
 
-1. `PickupManager.HandleDeathDrop` はハンターのドロップ禁止・`disableLoot` を確認し、`GameManager.GetKillGoldAmount(victim)` を一度取得する。
-2. 元の総額は、ゾーン倍率 × 敵種の設定額 × 人数。小型・通常は人口・波数補正でも除算し、収入補正・揺らぎ・確率丸めを適用する。具体的な敵種の設定額はUnityアセット依存で、この環境では未取得。
-3. 通常は最大3個の宝珠へ分割し、負荷時は即時支給する。
-4. `Pickup_BaseGoldOrb.GrantGold` の `target == null` は総額を人数で割り、各人に `DewBuildProfile.current.killGoldMultiplier` と `monsterKillGoldMultiplier` を掛け、それぞれ確率丸めして `EarnGold` する。
+`NativeKillRewards.Gold.cs` の全フックを除去した。同ファイルは削除禁止に従って説明コメントだけを残す。`InstallGold`、`ClearGold`、死亡時の受取者収集、iterator・宝珠の弱参照記録、`EarnGold` の引数置換・支給保留・再支給は存在しない。個人倍率で従来のアシスト者の額が撃破者を上回る場合も、本体どおりその額を受け取る。通常額を撃破者に合わせて減らさない。
 
-変更後も本体の総額算出・宝珠分割・乱数処理を使う。既存の増援敵の報酬縮小もそのまま通す。その支給の撃破者の `EarnGold` 引数を記録し、5秒アシスト者の引数だけを同額へ置換する。ロビー順で撃破者より先に処理されたアシスト者は、元の額を保持して支給を保留し、同じ支給の終了時に撃破者と同額を一度だけ渡す。無効化・撃破者の退室等で撃破者額を得られなければ本体の額を使う。
+`DreamforgeMod.StartNativeKillRewards` の登録はB共有とAの受取者条件のために維持する。ゴールド専用の起動登録はない。
 
-したがって個人倍率によってアシスト者の従来額が撃破者を上回っていた場合も、指定どおり撃破者と同額になる。アシストでない人は本体額のまま。基礎分を二重に追加しない。エッセンス等の追加ゴールドは本人の装備効果であり、通常撃破ゴールドの同額化とは別に扱う。
+## この変更での検証
 
-死亡時の対象者をコルーチンのiterator・宝珠へ弱参照テーブルで引き継ぐ。宝珠再利用時は古い記録を除去する。個人指定、譲渡、非撃破ゴールド、対応する敵を持たない宝珠は同額化しない。`EarnGold` 本体実行中は支給コンテキストを外し、再入した別の報酬を混同しない。
+実行済み（2026-10-16）:
 
-## 検証
-
-この作業で実行済み:
-
-- `python3 tools/balance/gen_cs.py --check`: 成功。
-- ネイティブDLL参照のReleaseビルド: エラー0、既存警告6。
-- 既存Core関連フィルター: 87成功、失敗0、スキップ0。
-- 既存起動・再読み込みフィルター: 20成功、失敗0、既存スキップ1（ReleaseのJITインライン化に関するテスト）。
-- ゲームDLLのIL確認: `PickupManager.DropGoldRoutine` の `IteratorStateMachineAttribute` と `MoveNext` の存在を確認。
+- `python3 tools/balance/gen_cs.py --check`: 成功（入力・生成ファイル変更なし）。
+- 指定の `dotnet build src/SodRpg.Mod -c Release -p:GameDir="$HOME/dev/sod-gamedata/Shape of Dreams" -p:ModDeployDir=/tmp/x`: 成功、エラー0・既存警告6。
+- `KillAssistSupportNativeTests`: 変更前11件成功。成長共有除去後は旧仕様を期待する4件のみ失敗したため、既存の4期待値を1から0へ更新（新規テスト・テスト手順追加なし）。
+- Core関連フィルター: 183件成功・失敗0・スキップ0。対象は `KillAssistSupportNativeTests`、`RunGrowthBalanceTests`、`PowerRuntimeTests`、`NewPowersV129Tests`、`PairComboNativeTests`、`AuthoredMechanismNativeTests`、`BridgeSuccessEffectsTests`、`DirectedRechargeTests`、`MemoryPrimedTests`、`RelayWindowTests`、`PressureDividendTests`。
+- テストは `DOTNET_ROLL_FORWARD=Major` を付けて実行。最初の通常実行は.NET 8ランタイム不在（インストール済みは.NET 10.0.11）のため中断した。ランタイムのインストール・環境変更は行っていない。
+- 本体DLLと逆コンパイル資料の確認: Aの4種の `TrackKills` とコールバック、Bの5種の呼出条件、本体30秒アシストの購読・配送経路。
 - `git diff --check`: 成功。
 
-既存テストはリンクされた5秒判定・既存の成長/通貨・起動部分の検証であり、新しい本体効果・ゴールドフック自身のUnity実行検証ではない。新規テスト・CHANGELOG変更なし。
+既存境界テストはMODの5秒判定・成長・戦闘効果を駆動する。今回の本体効果フック自身をUnityで実行する検証ではない。CHANGELOG変更なし。
 
 未実行:
 
-- 報告された2人マルチの捕食成長・同額ゴールドのゲーム内再現。
-- 実ゲームのHarmony導入、Mirrorの遅延配送、宝珠回収、シングルでの動作確認。
-- 理由: この環境にはManaged DLL・逆コンパイル資料のみで、起動可能なゲーム/Unityランタイムがない。
-- 全テスト・低速スイート: 指示に従い実行しない。
+- 実際の2人マルチで、捕食等Aの増加が撃破者だけになること、Bが5秒アシストへ1回発火すること、5秒超30秒以内の本体アシスト効果が発火すること、個人倍率の異なるゴールド額を維持することの再現。
+- 実ゲームのHarmony導入、Mirrorの遅延配送、宝珠回収、特殊CDクロージャ・敵／装備プール再利用、シングルのゲーム内確認。
+- 理由: この環境のゲームデータはManaged DLL・逆コンパイル資料のみで、起動可能なゲーム実行ファイル／Unityランタイムがない。上記ゲーム内挙動は未確認。
+- 全テスト・低速スイート: 指示に従い未実行。変更関連のフィルターのみ実行した。

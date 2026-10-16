@@ -159,7 +159,7 @@ namespace SodRpg.Core.Tests
             Assert.Contains(host.NewPowerKills, entry => entry.Rt.Hero == controller);
             Assert.DoesNotContain(host.NewPowerKills, entry => entry.Rt == killerRt);
             Assert.Equal(2, host.KillPowers.Count);
-            Assert.Equal(1, Growth(striker, "growth.kill"));
+            Assert.Equal(0, Growth(striker, "growth.kill")); // 遠征成長は撃破者だけ
             Assert.Equal(0, Growth(striker, "growth.crit"));
             Assert.Equal(0, Growth(killer, "growth.kill"));
 
@@ -238,7 +238,7 @@ namespace SodRpg.Core.Tests
             Assert.True(assisted.Assist);
             Assert.DoesNotContain(host.KillPowers, entry => entry.Rt == killerRt);
             Assert.Equal(0, Growth(killer, "growth.kill"));
-            Assert.Equal(1, Growth(striker, "growth.kill"));
+            Assert.Equal(0, Growth(striker, "growth.kill")); // 遠征成長は撃破者だけ
         }
 
         [Fact]
@@ -260,7 +260,7 @@ namespace SodRpg.Core.Tests
             Assert.True(assisted.Summon); // 召喚体の命中は所有者のアシストとして扱う
             Assert.True(assisted.Assist);
             Assert.Null(assisted.Memory);
-            Assert.Equal(1, Growth(owner, "growth.kill"));
+            Assert.Equal(0, Growth(owner, "growth.kill")); // 召喚によるアシストにも遠征成長を配らない
         }
 
         [Fact]
@@ -292,7 +292,7 @@ namespace SodRpg.Core.Tests
             var host = KillAssistSupportTestRuntime.NewHost("ka-crit");
             var killer = KillAssistSupportTestRuntime.HeroWithOwner(1);
 
-            // 会心の基本攻撃が最後の命中 → 会心撃破の遠征成長がアシストでも付く。
+            // 会心の基本攻撃が最後の命中でも、アシストには会心撃破の遠征成長を配らない。
             var enemy = KillAssistSupportTestRuntime.Enemy();
             KillAssistSupportTestRuntime.TrackVictim(host, enemy);
             var striker = KillAssistSupportTestRuntime.HeroWithOwner(2);
@@ -304,7 +304,7 @@ namespace SodRpg.Core.Tests
             { actor = striker, victim = enemy, damage = new DamageData(20).SetAttr(DamageAttribute.IsCrit) });
             BasicAttackContext.Current = null;
             Kill(host, enemy, killer, 104);
-            Assert.Equal(1, Growth(striker, "growth.crit"));
+            Assert.Equal(0, Growth(striker, "growth.crit"));
 
             // 最初だけ会心で、最後の命中が非会心 → 付かない。
             var enemy2 = KillAssistSupportTestRuntime.Enemy();

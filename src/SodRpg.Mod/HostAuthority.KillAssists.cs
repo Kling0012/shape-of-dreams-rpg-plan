@@ -86,7 +86,7 @@ namespace SodRpg.Mod
             internal Actor HitActor;
             internal uint HitActorLifetime;
             internal float ContactAt, HitAt;
-            internal bool HasHit, CriticalBasic, SummonHit;
+            internal bool HasHit, SummonHit;
             internal float Damage;
             internal string Memory;
             internal bool Eligible;
@@ -228,9 +228,6 @@ namespace SodRpg.Mod
                 contact.HitActor = info.actor;
                 contact.HitActorLifetime = KillAssistActorLifetime(info.actor);
                 contact.Damage = info.damage.amount;
-                var basic = BasicAttackContext.Current;
-                contact.CriticalBasic = info.damage.HasAttr(DamageAttribute.IsCrit) && basic != null
-                    && basic.From == hero && basic.Target == info.victim && basic.Actor == info.actor && basic.Primary;
                 contact.SummonHit = info.actor != null && info.actor.FindFirstOfType<Summon>() != null;
                 contact.Memory = MemorySource(info.actor);
             }
@@ -337,7 +334,7 @@ namespace SodRpg.Mod
 
         private void ApplyKillAssist(HeroRuntime rt, EventInfoKill info, KillAssistContact contact, float diedAt, bool generated)
         {
-            OnRunGrowthKill(rt);
+            // Expedition growth stays on the killer's normal path; assists share temporary combat effects only.
             // Equipment powers have a wider native kill guard than memory effects.
             if (info.victim is Monster && _gimmickDamageDepth == 0 && _reactionEffectDepth == 0)
                 ApplyKillPowers(rt, info.victim);
@@ -345,7 +342,6 @@ namespace SodRpg.Mod
             if (generated || _gimmickDamageDepth != 0 || _pairDamageDepth != 0 || _reflectingDamage || _shattering
                 || IsPairReactionSource(info.actor)) return;
             bool recentHit = contact.HasHit && RecentKillAssist(diedAt, contact.HitAt);
-            if (recentHit && contact.CriticalBasic) GainRunGrowth(rt, RunGrowthTrigger.CritBasicAttackKill, 1d);
             var ownKill = new EventInfoKill { actor = rt.Hero, victim = info.victim };
             OnNewPowerKill(rt, ownKill, recentHit ? contact.Memory : null, recentHit && contact.SummonHit, assist: true);
             CollectPairMemories(rt);
