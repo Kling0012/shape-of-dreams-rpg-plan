@@ -14,6 +14,9 @@ namespace SodRpg.Mod
         {
             public float Seen;
             public bool Safe, Fusion;
+            // The connection this peer state belongs to. A changed id is a reconnect: the peer's
+            // client-side trade state was cleared, so what was already sent to it is gone.
+            public int ConnectionId = int.MinValue;
             public readonly BuildTransferReceiver Transfer = new BuildTransferReceiver(CoopTradeTransport.MaxProfileChars);
             public string Envelope;
         }
@@ -26,6 +29,9 @@ namespace SodRpg.Mod
             public string FirstOfferAck, SecondOfferAck;
             public bool Accepted, FirstConfirmed, SecondConfirmed, Preparing, FirstPrepared, SecondPrepared;
             public int Revision;
+            // The revision at which each side last received its partner's profile. The offered relics only change
+            // with the revision, so a confirm or a re-sent view does not need the (possibly stash-sized) profile again.
+            public int FirstProfileSentRevision = -1, SecondProfileSentRevision = -1;
             public float ActiveAt;
             public CoopTradeReceipt Receipt;
         }
@@ -195,11 +201,28 @@ namespace SodRpg.Mod
                         string changedCapabilityError = CoopFusionError(_coopHostTrade);
                         if (changedCapabilityError != null) CancelHostCoopTrade(changedCapabilityError);
                     }
+                    // A reconnecting participant restarts with a cleared client-side trade state, so the
+                    // profile already sent for the current revision would never reach it again. When the
+                    // caller's connection changes, forget the caller-side already-sent marker and re-send
+                    // the view (which then carries the partner's profile) for the trade being rejoined.
+                    int connectionId = caller == DewPlayer.local ? 0 : caller.connectionToClient?.connectionId ?? -1;
+                    if (peer.ConnectionId != connectionId)
+                    {
+                        peer.ConnectionId = connectionId;
+                        var rejoined = _coopHostTrade;
+                        if (rejoined != null && (caller == rejoined.First || caller == rejoined.Second))
+                        {
+                            if (caller == rejoined.First) rejoined.FirstProfileSentRevision = -1;
+                            else rejoined.SecondProfileSentRevision = -1;
+                            SendCoopView(caller, caller == rejoined.First ? rejoined.Second : rejoined.First,
+                                caller == rejoined.First, rejoined);
+                        }
+                    }
                     SendCoopRoster(caller);
                     return;
                 }
                 if (!CoopPeerAvailable(caller)) { SendCoopError(caller, "unsupported"); return; }
-                if (msg.action == "query") { QueryCoopTrade(caller, msg.id); return; }
+                if (msg.action == "query") { QueryCoopTrade(caller, msg.id, msg.wantsProfile); return; }
                 if (msg.action == "cancel") { CancelCoopTrade(caller, msg.id); return; }
                 if (msg.action == "request")
                 {
@@ -255,8 +278,20 @@ namespace SodRpg.Mod
                     else trade.SecondOfferAck = msg.transferId;
                 }
                 if (msg.revision != trade.Revision) { DiagnoseHostCoopTrade("stale-revision", trade, caller); SendCoopViews(); return; }
-                var profile = ProfileCodec.ReadCheckpointProfile(Encoding.UTF8.GetString(Convert.FromBase64String(encoded)));
-                var offer = CoopTradeCodec.ReadOffer(msg.offer);
+                Profile profile;
+                CoopTradeOffer offer;
+                try
+                {
+                    profile = ProfileCodec.ReadCheckpointProfile(Encoding.UTF8.GetString(Convert.FromBase64String(encoded)));
+                    offer = CoopTradeCodec.ReadOffer(msg.offer);
+                }
+                catch (Exception)
+                {
+                    // Only peer-data decoding belongs here; journal failures must still use host recovery.
+                    SendCoopError(caller, "ownership");
+                    CancelHostCoopTrade("ownership");
+                    return;
+                }
                 string gameRun = NetworkedManagerBase<GameManager>.softInstance?.runId;
                 if (gameRun != null && profile.Run?.RunId != gameRun || profile.CoopTradePending != null
                     || CoopTradeRules.Validate(profile, offer) != null)
@@ -383,7 +418,7 @@ namespace SodRpg.Mod
             QueryCoopTrade(caller, id);
         }
 
-        private void QueryCoopTrade(DewPlayer caller, string id)
+        private void QueryCoopTrade(DewPlayer caller, string id, bool wantsProfile = false)
         {
             if (!Guid.TryParseExact(id, "N", out _)) return;
             if (_coopJournal.TryGet(id, out var receipt))
@@ -395,8 +430,17 @@ namespace SodRpg.Mod
             var trade = _coopHostTrade;
             if (trade != null && trade.Id == id)
             {
-                if (caller == trade.First) SendCoopView(trade.First, trade.Second, true, trade, false);
-                else if (caller == trade.Second) SendCoopView(trade.Second, trade.First, false, trade, false);
+                bool includeProfile = wantsProfile && (caller == trade.First || caller == trade.Second);
+                if (includeProfile)
+                {
+                    // The caller holds this view but not the partner's profile for the current
+                    // revision (a reset receiver can lose a transfer mid-flight). Forget the
+                    // already-sent marker so this view re-sends the profile once.
+                    if (caller == trade.First) trade.FirstProfileSentRevision = -1;
+                    else trade.SecondProfileSentRevision = -1;
+                }
+                if (caller == trade.First) SendCoopView(trade.First, trade.Second, true, trade, includeProfile);
+                else if (caller == trade.Second) SendCoopView(trade.Second, trade.First, false, trade, includeProfile);
                 return;
             }
             // Absence in this original host's non-rewound journal is an authoritative abort.
@@ -425,7 +469,10 @@ namespace SodRpg.Mod
                 offerAck = first ? trade.FirstOfferAck : trade.SecondOfferAck,
             });
             var other = first ? trade.SecondProfile : trade.FirstProfile;
-            if (includeProfile && other != null) SendCoopPayload(player, "profile", trade.Id, trade.Revision, ProfileCodec.WriteCheckpointProfile(other));
+            if (!includeProfile || other == null || (first ? trade.FirstProfileSentRevision : trade.SecondProfileSentRevision) == trade.Revision) return;
+            SendCoopPayload(player, "profile", trade.Id, trade.Revision, ProfileCodec.WriteCheckpointProfile(other));
+            if (first) trade.FirstProfileSentRevision = trade.Revision;
+            else trade.SecondProfileSentRevision = trade.Revision;
         }
         private void SendCoopRoster(DewPlayer caller)
         {

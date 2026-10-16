@@ -29150,6 +29150,65 @@
       "nameJa": "瞬歩の刃",
       "nameEn": "Flash-Step Blade",
       "notes": "既存刻印。既存Powerは維持（代償は #47 で撤廃）。"
+    },
+    {
+      "id": "husk.key.shadow-cue",
+      "region": "keystone",
+      "cluster": "husk.key",
+      "shape": null,
+      "anchor": "husk.mem.killing-flow.c4.choice",
+      "edges": [],
+      "requires": [
+        "husk.mem.killing-flow.c4.choice"
+      ],
+      "requiresAny": [],
+      "kind": "Keystone",
+      "memory": null,
+      "value": null,
+      "param": null,
+      "receiver": null,
+      "target": null,
+      "gimmick": null,
+      "power": null,
+      "stat": null,
+      "options": null,
+      "keystone": {
+        "upside": "影の合図 / Shadow Cue",
+        "upsideSpec": [
+          {
+            "effect": "Coop",
+            "field": "Value",
+            "scope": "absenceSeconds",
+            "to": {
+              "valueRef": "husk.key.shadow-cue/keystone/upsideSpec/0/to"
+            }
+          },
+          {
+            "effect": "Coop",
+            "field": "Value",
+            "scope": "charges",
+            "to": {
+              "valueRef": "husk.key.shadow-cue/keystone/upsideSpec/1/to"
+            }
+          },
+          {
+            "effect": "Coop",
+            "field": "Value",
+            "scope": "cooldownSeconds",
+            "to": {
+              "valueRef": "husk.key.shadow-cue/keystone/upsideSpec/2/to"
+            }
+          }
+        ]
+      },
+      "mechanisms": [
+        "C07"
+      ],
+      "maxRank": 1,
+      "rankCost": 1,
+      "nameJa": "影の合図",
+      "nameEn": "Shadow Cue",
+      "notes": "同行の刻印。味方との協力距離係数を使用し、ソロでは発動しない。"
     }
   ]
 }

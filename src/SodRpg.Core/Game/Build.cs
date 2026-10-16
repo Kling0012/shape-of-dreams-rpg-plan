@@ -171,7 +171,7 @@ namespace SodRpg.Core.Game
             {
                 foreach (string keystoneId in h.Keystones)
                     if (keystoneId != null && definitions.TryGetValue(keystoneId, out var selectedKey))
-                        spent += selectedKey.KeystoneDefinition?.Cost ?? Content.KeystoneCost;
+                        spent += selectedKey.KeystoneCost;
                 foreach (var allocated in h.Talents)
                     if (definitions.TryGetValue(allocated.Key, out var talent))
                         spent += (long)Math.Max(0, allocated.Value) * talent.RankCost;
@@ -442,6 +442,11 @@ namespace SodRpg.Core.Game
                 if (key.AuthoredStar != null && !key.AuthoredStar.RetainedLegacy
                     && key.AuthoredStar.Region.Kind == ClusterRegionKind.Keystone) authoredClusterKeystone = true;
                 b.AddSelectedKeystone(key.KeystoneDefinition);
+                if (key.PerRank > 0)
+                {
+                    Add(rawStats, key.Stat, key.PerRank);
+                    dependencies?.Touch("S:" + ((int)key.Stat).ToString(CultureInfo.InvariantCulture), key.Id);
+                }
                 bool migratedStillWater = false;
                 if (key.Power == Power.StillWater && key.KeystoneDefinition != null)
                     foreach (var grant in key.KeystoneDefinition.Grants)

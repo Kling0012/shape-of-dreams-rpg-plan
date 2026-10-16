@@ -680,6 +680,46 @@ namespace SodRpg.Core.Tests
         }
 
         [Fact]
+        public void Pressure_dividend_assist_notifications_do_not_roll_expedition_rewards()
+        {
+            // アシストの撃破通知（HostAuthority.ApplyKillAssist が発行する isAssist:true の通知）は
+            // 遠征報酬（圧配当）の追加抽選をしない。撃破時の戦闘効果だけを配る。
+            var (host, runtime, transport, native, random) = DividendLifecycle(false);
+            var enemy = new Monster { Relation = EntityRelation.Enemy, owner = new DewPlayer { isHumanPlayer = false } };
+            host.SpawnIssue62Enemy(enemy, 1.25);
+            var kill = DividendDeath(host, native, enemy);
+            native.InvokeOnKill(kill); // 本来の撃破は1回だけ抽選する。
+            Assert.Equal(1, random.Rolls);
+            Assert.IsType<DreamforgePressureDividendMsg>(Assert.Single(transport.ClientMessages));
+
+            // 支援アシストと同じ作りの通知（isAssist:true）は抽選しない。
+            var assisted = SpawnDividendEnemyAndNotify(host, native, runtime, isAssist: true);
+            Assert.Equal(1, random.Rolls);
+            Assert.Single(transport.ClientMessages);
+            host.RemoveIssue62Entity(assisted);
+
+            // 同じ作りの非アシスト通知なら1回抽選する（上の0増分が通知の作り方の問題ではない裏取り）。
+            var owned = SpawnDividendEnemyAndNotify(host, native, runtime, isAssist: false);
+            Assert.Equal(2, random.Rolls);
+            Assert.Equal(2, transport.ClientMessages.Count);
+            host.RemoveIssue62Entity(owned);
+            host.RemoveIssue62Entity(enemy);
+        }
+
+        private static Monster SpawnDividendEnemyAndNotify(HostAuthority host, AbilityInstance native, HostAuthority.HeroRuntime runtime, bool isAssist)
+        {
+            var enemy = new Monster { Relation = EntityRelation.Enemy, owner = new DewPlayer { isHumanPlayer = false } };
+            host.SpawnIssue62Enemy(enemy, 1.25);
+            DividendDeath(host, native, enemy);
+            var identity = host.Activation(runtime.Hero, "St_L_CoinExplosion");
+            var notification = new MemoryActivationEvent(identity.OwnerId, identity.SourceMemory, identity.ActivationId,
+                host.Packet(), enemy.GetInstanceID(), MemoryEventKind.Kill, identity.NativePayloadKind,
+                GeneratedOrigin.None, identity.EquipmentEpoch, isAssist: isAssist);
+            host.NotifyAuthored(runtime, notification, enemy, 2000);
+            return enemy;
+        }
+
+        [Fact]
         public void Pressure_dividend_deaths_expire_at_ten_unscaled_seconds_without_entity_removal()
         {
             var (host, runtime, transport, native, random) = DividendLifecycle(false);

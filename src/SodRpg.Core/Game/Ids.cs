@@ -71,6 +71,8 @@ namespace SodRpg.Core.Game
         AttackFlat = 24,
         /// <summary>魔力（固定値）。本体の abilityPowerFlat（v1.28）。</summary>
         PowerFlat = 25,
+        /// <summary>自分が受けるHP回復量（%）。</summary>
+        HealingReceivedPct = 26,
     }
 
     /// <summary>

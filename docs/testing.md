@@ -281,6 +281,79 @@ Linux／.NET 10、Releaseの実Core DLLで、鞄30個・レア度／スコア混
   または `FullyQualifiedName~NativeAcceptanceTests`。
   実機のフレーム時間・確保量・Unity本体のRPC転送はこのハーネスの検証範囲外。
 
+## #435 宿敵の名札色（2026-10-16）
+
+引き継いだスナップショットには、`DreamforgeUi` の共通定数として宿敵色
+`#4dd8ff`（シアン）、悪夢化色 `#ff6ad5`（ピンク紫）、変種色 `#ffb347`（橙）と、
+宿敵がある場合に変種名札を描かない処理が含まれていた。READMEと検証記録には
+異なるシアン値が残っていたため、実装の `#4dd8ff` に統一し、CHANGELOGの重複した
+説明をまとめた。宿敵の判定は `NightmareAffix.Nemesis` のビットで行うため、
+ボス／ミニボス共通で、ほかの接頭効果が付いていても宿敵色を優先する。
+ヴァイオレットは悪夢化のピンク紫に近いため、前回のシアン採用と既存の名札キャッシュを
+維持した。通信・保存や毎フレームの処理は変更していない。
+
+ほかの強調表示もコードで照合した。`MonsterCues.ColorFor` は金・茶橙・青・緑、
+`BossEffectColor` は冷気の水色、闇の紫などを使うが、宿敵の `#4dd8ff` と同値ではない。
+レア度の青 `#4fa8ff`・紫 `#c475ff` とも異なる。青系の強調表示と近い色域ではあるため、
+あらゆる背景での視認性を保証する検証ではない。MODの敵名札3種の色と、
+モデルの発光・戦闘効果・装備名の色は区別して確認した。
+
+協力プレイの適用経路はソースで確認した。`HostAuthority.MakeNemesis` が宿敵ビットを
+設定し、`SendMonsterClassification`／`FlushMonsterSync` が `DreamforgeNightmareMsg.affixes`
+として個別同期／全クライアントへ送る。`ClientSession.OnNightmare` は
+`Nightmares.Sanitize` で宿敵ビットを保持し、名札用辞書へ格納する。
+`DreamforgeUi.DrawNightmareLabels` にはホスト／参加者による色の分岐がなく、
+どちらも同じ定数を使用する。本体の通常ボス／エリート名表示とは別のMODの頭上名札が対象。
+
+以下は今回のセッションで実行した検証：
+
+- `dotnet build src/SodRpg.Mod -c Release -p:GameDir="/mnt/ghauto-sbx/sod-gamedata/Shape of Dreams" --nologo`：終了コード0、エラー0・警告6。ゲーム参照DLLでコンパイルした。ゲームへの配置処理は実行されていない。
+- `DOTNET_ROLL_FORWARD=Major dotnet test tests/SodRpg.Core.Tests/SodRpg.Core.Tests.csproj -c Release --filter 'FullyQualifiedName~SodRpg.Core.Tests.NightmareTests.|FullyQualifiedName~SodRpg.Core.Tests.MonstersV129Tests.|FullyQualifiedName~SodRpg.Core.Tests.VariantsV124Tests.|FullyQualifiedName~SodRpg.Core.Tests.NameplateTrimTests.|FullyQualifiedName~SodRpg.Core.Tests.MonsterAuthorityStateTests.' --nologo`：終了コード0、59成功・0失敗・0スキップ。
+- `DOTNET_ROLL_FORWARD=Major dotnet test tests/Issue73.Native.Tests/Issue73.Native.Tests.csproj -c Release --filter 'FullyQualifiedName~Issue73.Native.Tests.NativeAcceptanceTests.DifferentialUpdatesCoalesceWithoutMovingIdsBehindTheirNeighborsAndRotateCategories' --nologo`：終了コード0、1成功・0失敗・0スキップ。既存の敵分類差分の集約・配信順をAPIダブルで確認したもので、宿敵の色や実通信の検証ではない。
+- 既存テストの対象は悪夢／変種のルール、宿敵ビットの保持、名札の生存管理、敵分類状態と差分配信。色選択と描画の優先順はソースを確認したもので、既存テストは描画メソッドを実行しない。新しいテストは追加していない。
+- **未実行**：Unity実画面で宿敵化したボス／ミニボスの名札を比較する確認、本体名札も含めた背景別の視認性・1920×1080の実描画、実際の協力通信。ゲーム実行環境が提供されていないため、報告の画面上の状況は再現・目視確認していない。
+- **未実行**：フルテスト・Slowテスト、今回の名札表示と無関係なテスト。作業中は関連部分だけを検証し、全体検証は後続工程に委ねる指示による。
+
+## PR #505 取り込み：命中時の確保削減とボス装備（2026-10-16）
+
+元PR #505の製品コード変更を取り込み、光の精霊の溜め処理で新しく読む
+`Actions[1]`には`Actions.Count >= 2`のガードを追加した。不足時はその溜め処理だけを
+見送る。`BossMoveProfile`はコンストラクターで1〜16個の非null行動を検証し、
+配列のコピーを読み取り専用で保持するため、アズラク等の`Actions[0]`は必ず存在する。
+
+設定の原本（`tools/balance/bosses/{maw,azurak,light}.json`）、生成済みの
+`BossMawBalance`／`BossAzurakBalance`／`BossLightBalance`、`BossProfiles`を突き合わせた。
+今回の読み取り先は従来の直書きと一致する。
+
+| 効果 | プロファイルの行動・値 | 従来の動作 |
+| --- | --- | --- |
+| 大顎の護符 | `charm.Actions[0]`: MainHits=4、CounterLifetimeMillis=4000 | 3回分を保持し、4回目に回復。最後の命中から4秒でリセット |
+| アズラクの2部位 | `stage2.Actions[0]`: MainHits=3、CounterLifetimeMillis=4000、RangeMilli=8000 | 3回・最後の命中から4秒・射程8m |
+| 光の精霊の手 | `hands.Actions[0]`: MainHits=3、CounterLifetimeMillis=6000 | 最初の命中から6秒以内に3回 |
+| 光の精霊の頭 | `head.Actions[0]`: RangeMilli=8000 | 射程8m |
+| 光の精霊の2部位 | `stage2.Actions[1]`: Count=3、LifetimeMillis=6000。`Actions[0]`: DelayMillis=350 | 3回溜め、最終加算から6秒保持。次の入力で消費して350ms後に発射 |
+
+`BossEquipmentSnapshot`は装備キャッシュがない場合にfalseを返す。
+`BossEnsure`はその戻り値で`ClearBossEffects`を呼び、Build=null・EquipmentDirty=trueへ
+戻す。次回はBuildの差分があるため早期成功せず再照合し、情報がそろえば再構築する。
+`changed`をfalseのまま返しても、この解除・再試行を迂回しないことをソースで確認した。
+
+刻印の`Upside`と選択子はそれぞれのコンストラクターが`Array.AsReadOnly`で保持し、
+getterのみ公開する。添字ループはこのコレクションを直接参照し、列挙子を生成しない。
+`GimmickRuntime.ActiveStates`は具体型のListを返し、各foreachで構造体列挙子を使う。
+`ForgetVictim`は逆順RemoveAtで全一致を削除し、捕捉ラムダを生成しない。
+刻印の結果オブジェクト等、ほかの経路に存在する確保をゼロにする変更ではない。
+
+実行した検証：
+
+- `DOTNET_ROLL_FORWARD=Major dotnet test tests/SodRpg.Core.Tests/SodRpg.Core.Tests.csproj -c Release -p:PythonCommand=python3 --filter '<対象11クラス>' --nologo`：194成功・0失敗・0スキップ。対象はBossStageB3NativeTests、BossRuntimeNativeTests、BossSetsStageATests、BossSetsStageB12Tests、BossResourceBoundsTests、BossBalanceMigrationTests、GimmickEffectsV129Tests、GimmickPrecisionV131Tests、HotPathQueryFlagTests、ScopedKeystoneModifiersTests、FractionalScopedModifiersTests。
+- 既存の光の精霊のケースは製品コードをリンクし、2／3／6部位で3回の溜め中は未発射、4回目の入力から350msを境に発射、終端の落雷・障壁・重複なしを確認する。ほかの既存ケースはボスの寿命管理・上限、設定JSONと行動件数／値の一致、仕掛けの期限・対象削除、刻印の対象選択・数値を確認する。
+- `dotnet build src/SodRpg.Mod -c Release -p:GameDir="/mnt/ghauto-sbx/sod-gamedata/Shape of Dreams" --nologo -v:quiet`：エラー0・警告6。参照用ディレクトリにModsがないことを確認して実行し、配置処理なし。
+- `python3 tools/balance/gen_cs.py --check`、`git diff --check`：成功。
+- `python3 tools/test_changed.py --list`は582クラスを選択したため実行には使わず、上記11クラスを明示した。新規テスト・ケースは追加せず、元PRの新規0バイト断言テストも取り込んでいない。
+
+**未実行**：Unity実機での戦闘・装備情報未準備時の例外再現／回復・協力通信は、ゲーム実行環境が提供されていないため未確認。装備キャッシュ欠落時の解除／再試行と、大顎の4回目・アズラクの3回目・光の手の6秒の同等性は設定とコードの照合によるもので、当該条件を追加ケースで実行した証拠ではない。GC割当量・フレーム時間の実測は行っていない。実行環境依存の0バイト断言を追加せず、型と生成箇所を点検した。フルテスト・Slowテスト・無関係なテストは作業中に実行しない指示に従い、後続工程へ委ねる。
+
 ## マッピングロジックの単体テスト
 
 `tools/tests/test_test_changed.py`（unittest）がマッピングロジックの単体テストを

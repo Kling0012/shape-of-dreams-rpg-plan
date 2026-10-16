@@ -1,5 +1,5 @@
-[b]Co-op trade messages such as cancellations and errors now appear in each player's own display language.[/b]
-[b]協力プレイの取引で、中止やエラーなどのメッセージが各自の表示言語で表示されるようにしました。[/b]
+[b]Broken co-op trade data now cancels only that trade instead of stopping the host, and unknown kill records are no longer saved.[/b]
+[b]協力プレイの取引で壊れたデータが届いても、ホスト全体は止まらず、その取引だけが取り消されるようにしました。あわせて、知らない討伐記録を保存しないようにし、中断データが増え続ける問題を直しました。[/b]
 
 [h1]Dreamforge RPG[/h1]
 Turns every run into part of a long RPG journey: relics you keep, a risky "secure or delve" choice at every zone, a star map per Traveler, a forge, and long-term goals. Co-op ready.
