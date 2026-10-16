@@ -8,16 +8,27 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
+---
+
+## v2.10.59 — Codex, equipment comparison, and language switch fixes（2026-10-16）
+
+このバージョンでは、図鑑と装備比較、表示言語を切り替えたときの表示に関する不具合を修正し、装備や鍛冶の画面を軽くしました。 / This version fixes issues with the codex, equipment comparison, and display after changing the language, and makes the equipment and forge screens lighter.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
 ### 不具合の修正 / Bug fixes
 
-- 遺物の強化や夢の出来事で固有効果が増えたり入れ替わったりしたとき、図鑑の「固有効果」の発見数がすぐに更新されなかった問題を修正しました。 / The codex's power count now updates right away when enhancing a relic or a dream event adds or swaps a power.
-- 装備画面の比較で、断ち切りで足された固有効果が「増える／減る」に出なかった問題を修正しました。 / The gear comparison now lists powers added by Severance as gained or lost.
-- 言語を切り替えたあと、敵の頭上の悪夢・変異の名前と、旅人選びの名前が前の言語のまま残る問題を修正しました。 / Overhead nightmare and variant names and the Traveler picker name now follow a language switch.
-- 到達刻印の案内（英語）と宝庫・工房の倍率や次の段の表示が、設定値から数値を作るようになりました（表示は変わりません）。 / The keystone hint (English) and the hoard and workshop previews now take their numbers from the balance settings (no visible change).
+- 遺物の強化や夢の出来事で、所持数が変わらないまま固有効果が増えたり減ったりしたとき、図鑑の発見数と発見状態が古いまま残らないようにしました。 / When upgrading a relic or a dream event adds or removes a unique effect without changing how many you own, the codex's discovery count and discovered status no longer stay out of date.
+- 装備を比べるとき、断ち切りで追加された固有効果も増減に表示されるようにしました。また、変化のない能力値は表示せず、同じ効果が重ねて表示されないようにしました。 / Equipment comparison now includes unique effects added by severing. Stats that do not change are no longer listed, and the same effect is no longer shown twice.
+- 表示言語を切り替えたとき、悪夢・変異の頭上の表示と、旅人選択の名前が新しい言語に切り替わるようにしました。 / After changing the display language, the overhead labels for nightmares and mutations and the names in traveler selection now switch to the new language.
+- 宝庫の倍率、工房の次の段階の表示、英語の到達刻印の案内が、実際のゲームの値と一致するようにしました。 / The hoard multiplier, the next-level info in the workshop, and the English keystone guidance now match the actual in-game values.
+- 装備・鍛冶の画面と HUD で、繰り返し行われていた計算を減らし、動作を軽くしました。表示内容や効果は変わりません。 / Reduced repeated calculations in the equipment and forge screens and the HUD to make them lighter. What is shown and how things work are unchanged.
 
-### 改善 / Improvements
-
-- 装備・鍛冶の画面を開いている間、強さの計算を毎フレームではなく0.25秒ごとに行うようにして、動作を軽くしました。 / The gear and forge screens now recompute the build every 0.25 seconds instead of every frame, which makes them lighter.
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
 
 ---
 
