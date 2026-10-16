@@ -8,6 +8,7 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
+- 遺物の抽選で、保管庫が大きいほど撃破のたびに重くなっていた処理を軽くしました（抽選結果は同じです）。 / Relic drops no longer get slower as the stash grows (drop results are unchanged).
 - 協力プレイで禁忌装備への対応確認を待っている間の誤警告を抑え、返事がない場合はビルド再送の待機中でも20秒経過後に警告を表示します。対応が後から分かった場合は装備を反映し直します。 / Avoid premature forbidden-gear warnings while waiting for the host; warn after the timeout even while build resends are throttled, and refresh the build when support is confirmed later.
 - 退出した参加者の版違い警告を片付け、例外で停止した部屋の兆しを次の遠征で再び有効にします。未確定取引の上限表示も、実際に達した上限に合わせました。 / Clear departed players' version warnings, retry failed room omens on the next expedition, and report the applicable unresolved-trade limit.
 - 中断保存の通知を受けた際の確認付き保存を維持し、参加者は復元状態の書き込み完了を確認してから再開の受領通知を送ります。保存先が無効な場合も受領通知を保留します。 / Preserve confirmed checkpoint writes and confirm the restored profile before sending a resume receipt. Hold the receipt when persistent storage is unavailable too.

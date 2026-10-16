@@ -132,6 +132,93 @@ namespace SodRpg.Core.Tests
             }
         }
 
+        // v1.32 の銘品入り抽選の凍結コピー（候補一覧＋部位ごとの保管庫走査）。所持品の集合を1回だけ作る最適化の照合用。
+        private static bool OldIsMissingMiniSetPiece(NamedDef candidate, IReadOnlyList<Relic> ownedRelics, IReadOnlyList<Relic> unsecuredRelics)
+        {
+            if (candidate.MiniSetId == null) return false;
+            bool started = false;
+            foreach (var relics in new[] { ownedRelics, unsecuredRelics })
+            {
+                if (relics == null) continue;
+                foreach (var r in relics)
+                {
+                    if (r.NamedId == candidate.Id) return false;
+                    if (!started && NamedItems.TryGetNamed(r.NamedId, out var named) && named.MiniSetId == candidate.MiniSetId)
+                        started = true;
+                }
+            }
+            return started;
+        }
+
+        private static Relic OldRollNamedTier(Rng rng, Rarity rarity, int itemLevel, Slot? slot, Line? focus,
+            ISet<string> codex, IReadOnlyList<Relic> ownedRelics, IReadOnlyList<Relic> unsecuredRelics)
+        {
+            var bases = Content.Bases.Where(b => slot == null || b.Slot == slot.Value).ToList();
+            var named = NamedItems.All.Where(n => n.Rarity == rarity && Content.TryGetBase(n.BaseId, out var nb)
+                && (slot == null || nb.Slot == slot.Value)).ToList();
+            var picks = new List<(BaseDef Base, NamedDef Named, int Weight)>();
+            int total = 0;
+            foreach (var b in bases)
+            {
+                int w = focus != null && b.Line == focus.Value ? Loot.FocusWeight : 1;
+                picks.Add((b, null, w));
+                total += w;
+            }
+            foreach (var n in named)
+            {
+                var nb = Content.GetBase(n.BaseId);
+                int w = NamedItems.RarityWeight(n.Rarity);
+                if (focus != null && nb.Line == focus.Value) w *= Loot.FocusWeight;
+                if (codex != null && !codex.Contains(NamedItems.CodexId(n.Id))) w *= NamedItems.NotInCodexMultiplier;
+                if (OldIsMissingMiniSetPiece(n, ownedRelics, unsecuredRelics)) w *= NamedItems.MissingMiniSetPieceMultiplier;
+                picks.Add((nb, n, w));
+                total += w;
+            }
+            int roll = rng.Range(0, total - 1);
+            foreach (var pick in picks)
+            {
+                if (roll < pick.Weight)
+                    return pick.Named != null ? Loot.RollNamed(rng, pick.Named, itemLevel) : Loot.RollBaseRelic(rng, pick.Base, rarity, itemLevel);
+                roll -= pick.Weight;
+            }
+            var last = picks[picks.Count - 1];
+            return last.Named != null ? Loot.RollNamed(rng, last.Named, itemLevel) : Loot.RollBaseRelic(rng, last.Base, rarity, itemLevel);
+        }
+
+        [Fact]
+        public void Named_tier_rolls_match_the_frozen_copy_with_owned_mini_set_pieces()
+        {
+            NamedItems.RegisterForTests(NamedItemsData.Named, NamedItemsData.MiniSets);
+            var withSet = NamedItemsData.Named.Where(n => n.MiniSetId != null).ToList();
+            Assert.NotEmpty(withSet);
+            // 小セットを始めた状態（部位を1つずつ保管庫と鞄に）と、伝説・通常品を混ぜる。
+            var owned = new List<Relic>
+            {
+                Loot.RollNamed(new Rng(7201), withSet[0], 10),
+                Loot.RollUnique(new Rng(7202), FirstUniqueWithSet(), 10),
+                Loot.RollRelic(new Rng(7203), Rarity.Epic, 10),
+            };
+            var unsecured = new List<Relic> { Loot.RollNamed(new Rng(7204), withSet[withSet.Count / 2], 10) };
+            var codex = new HashSet<string> { NamedItems.CodexId(withSet[0].Id) };
+            var tiers = new[] { Rarity.Uncommon, Rarity.Rare, Rarity.Epic };
+            for (int i = 0; i < 3000; i++)
+            {
+                var rarity = tiers[i % tiers.Length];
+                Slot? slot = i % 7 == 0 ? (Slot?)null : (Slot)(i % 6);
+                Line? focus = i % 4 == 0 ? (Line?)null : (Line)(i % 3);
+                int level = 1 + (i * 13) % Content.MaxItemLevel;
+                bool withLists = i % 3 != 0;
+                var oldRng = new Rng((ulong)(500000 + i));
+                var newRng = new Rng((ulong)(500000 + i));
+                var oldRelic = OldRollNamedTier(oldRng, rarity, level, slot, focus, withLists ? codex : null,
+                    withLists ? owned : null, withLists ? unsecured : null);
+                var newRelic = Loot.RollRelic(newRng, rarity, level, slot, focus,
+                    withLists ? owned : null, withLists ? unsecured : null, withLists ? codex : null);
+                Assert.Equal(Describe(oldRelic), Describe(newRelic));
+                Assert.Equal(oldRng.State, newRng.State);
+            }
+        }
+
         [Fact]
         public void Common_and_legendary_rolls_are_unchanged_with_the_production_data_registered()
         {
