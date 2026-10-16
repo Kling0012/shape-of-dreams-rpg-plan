@@ -99,6 +99,8 @@ namespace SodRpg.Mod
         private readonly BuildTransferReceiver _appliedTransfer = new BuildTransferReceiver();
         public float PressureHealthMultiplier { get; private set; } = 1f;
         public float PressureDamageMultiplier { get; private set; } = 1f;
+        /// <summary>ホストが悪夢化の抽選に掛ける装備の倍率。0は未受信（古い版のホスト）で、確保地点では最低値を表示する。</summary>
+        public float NightmareGearMultiplier { get; private set; }
         public string LoadNotes { get; private set; }
         public string SaveError { get; private set; }
 
@@ -491,6 +493,7 @@ namespace SodRpg.Mod
                 ResetRunGrowthDisplay();
                 _appliedTransfer.Reset();
                 PressureHealthMultiplier = PressureDamageMultiplier = 1f;
+                NightmareGearMultiplier = 0f;
                 if (!LobbyReturnPending) ResetRunChoiceConnection();
                 ResetMonsterAuthorityConnection();
                 _sentDreamLevel = -1;
@@ -578,6 +581,7 @@ namespace SodRpg.Mod
             HostSummary = null;
             _appliedTransfer.Reset();
             PressureHealthMultiplier = PressureDamageMultiplier = 1f;
+            NightmareGearMultiplier = 0f;
             ResetRunChoiceConnection(resetHistory: true);
             ResetMonsterAuthorityConnection();
             _pendingRunRewards.Clear();
@@ -647,7 +651,10 @@ namespace SodRpg.Mod
             DiagnoseExpedition("client-begin-before");
             int pacts = Profile.Run != null && Profile.Run.RunId != runId ? Profile.Run.Pacts.Count : 0;
             ActiveRunId = runId;
+            // The melee-classification log set is static and survives MOD reloads; a fresh run logs again (#542).
+            TravelerCombatNative.ResetReporting();
             PressureHealthMultiplier = PressureDamageMultiplier = 1f;
+            NightmareGearMultiplier = 0f;
             Emit(Rules.BeginRun(Profile, runId, DailyDream.Today, ReadLimboDepth(), _trades.ReservedSalvageUids(), heroKey: HeroKeyOf(LocalHero),
                 dreamDepth: CanChooseRunRules ? Profile.LastDreamDepth : _receivedRunChoices.Depth));
             InitializeInfinityRun();
@@ -1327,6 +1334,7 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
             Protocol.WarnMismatch(msg.protocol, nameof(DreamforgePressureMsg));
             PressureHealthMultiplier = msg.healthMultiplier;
             PressureDamageMultiplier = msg.damageMultiplier;
+            NightmareGearMultiplier = msg.nightmareGearMultiplier >= 1f && !float.IsInfinity(msg.nightmareGearMultiplier) ? msg.nightmareGearMultiplier : 0f;
             ReceiveRunChoices(msg.runChoices);
             HostConfirmed = true;
             DiagnosePressureReceipt();

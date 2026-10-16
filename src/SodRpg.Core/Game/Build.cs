@@ -224,9 +224,11 @@ namespace SodRpg.Core.Game
             }
             b.AuthoredClusterStars = authoredClusterStars;
 
-            foreach (string uid in h.Equipped)
+            // 装着品は保管庫から一度だけ引き、能力・セット・小セットの集計で使い回す。
+            var equippedRelics = new Relic[h.Equipped.Length];
+            for (int i = 0; i < equippedRelics.Length; i++) equippedRelics[i] = p.FindStash(h.Equipped[i]);
+            foreach (var r in equippedRelics)
             {
-                var r = p.FindStash(uid);
                 if (r == null) continue;
                 if (r.Forbidden != null) anyForbidden = true;
                 if (Forbidden.IsTransmute(r)) transmute = true;
@@ -293,9 +295,8 @@ namespace SodRpg.Core.Game
                 foreach (var s in Content.SetBonus(kv.Key, kv.Value)) Add(rawStats, s.Stat, s.Value);
             // 同じ部位（固有品ID）を重複して数えない。6つ装着は6種類の部位がそろった時だけ有効。
             var setPieces = new Dictionary<string, HashSet<string>>();
-            foreach (string uid in h.Equipped)
+            foreach (var r in equippedRelics)
             {
-                var r = p.FindStash(uid);
                 if (r?.UniqueId == null || !Content.TryGetUnique(r.UniqueId, out var u) || u.SetId == null) continue;
                 if (!setPieces.TryGetValue(u.SetId, out var ids)) setPieces[u.SetId] = ids = new HashSet<string>(StringComparer.Ordinal);
                 ids.Add(u.Id);
@@ -335,9 +336,8 @@ namespace SodRpg.Core.Game
                 });
             // 組（小セット・v1.32 設計 3.2/4）。同じ組の別々の銘品だけを数え、SetDef の集計とは別に足す（重複して数えない）。
             var miniPieces = new Dictionary<string, HashSet<string>>(StringComparer.Ordinal);
-            foreach (string uid in h.Equipped)
+            foreach (var r in equippedRelics)
             {
-                var r = p.FindStash(uid);
                 if (r?.NamedId == null || !NamedItems.TryGetNamed(r.NamedId, out var named) || named.MiniSetId == null) continue;
                 if (!miniPieces.TryGetValue(named.MiniSetId, out var ids))
                     miniPieces[named.MiniSetId] = ids = new HashSet<string>(StringComparer.Ordinal);

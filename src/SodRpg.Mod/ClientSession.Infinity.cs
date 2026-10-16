@@ -327,6 +327,7 @@ namespace SodRpg.Mod
                     state.DifficultyId = shared.DifficultyId;
                     state.GraphEpoch = shared.GraphEpoch; state.RoomEpoch = shared.RoomEpoch;
                     state.ClearedCombatTotal = shared.ClearedCombatTotal; state.ClearsInCycle = shared.ClearsInCycle;
+                    state.FinalePromoted = shared.FinalePromoted;
                     state.Phase = shared.Phase; state.SoulObserved = shared.SoulObserved;
                     state.TransitionIntent = shared.TransitionIntent;
                     state.LastCountedNode = shared.LastCountedNode;
@@ -344,6 +345,7 @@ namespace SodRpg.Mod
                 state.GraphEpoch = choice.Before.GraphEpoch;
                 state.ClearedCombatTotal = choice.Before.Infinity.ClearedCombatTotal;
                 state.ClearsInCycle = choice.Before.Infinity.ClearsInCycle;
+                state.FinalePromoted = choice.Before.Infinity.FinalePromoted;
                 state.SoulObserved = choice.Before.Infinity.SoulObserved;
                 ObserveInfinityRoomTotal(state.ClearedCombatTotal);
             }

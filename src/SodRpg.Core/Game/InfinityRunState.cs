@@ -21,6 +21,8 @@ namespace SodRpg.Core.Game
         public int Interval { get; set; } = DefaultInterval;
         public long ClearedCombatTotal { get; set; }
         public int ClearsInCycle { get; set; }
+        /// <summary>The current graph deliberately promoted its finale boss before the combat-clear interval.</summary>
+        public bool FinalePromoted { get; set; }
         public long GraphEpoch { get; set; }
         public long SegmentEpoch { get; set; }
         public long RoomEpoch { get; set; }
@@ -34,7 +36,7 @@ namespace SodRpg.Core.Game
         public HashSet<int> ClearedNodes { get; } = new HashSet<int>();
         public int PressureStage => ValidInterval(Interval) ? (int)Math.Min((long)MaximumPressureStage,
             ClearedCombatTotal / Interval + InfinityIntervalScaling.PressureOffset(Interval)) : 0;
-        public bool BossDue => ClearsInCycle >= Interval;
+        public bool BossDue => FinalePromoted || ClearsInCycle >= Interval;
         public static bool ValidInterval(int interval) => interval == ShortInterval || interval == MiddleInterval || interval == LongInterval;
 
         public bool TryCountCombatClear(long graph, int node, bool active, bool transitioning, bool revisit)
@@ -59,13 +61,13 @@ namespace SodRpg.Core.Game
 
         /// <summary>
         /// A graph that cannot cover the cycle interval (the pure-white route) ends at its boss:
-        /// the cycle is due on arrival, so the segment completes as entrance → boss. The counter
-        /// is raised to the interval so <see cref="TryEnterBoss"/> accepts the one-way gate entry.
+        /// the cycle is due on arrival, so the segment completes as entrance → boss. A separate
+        /// marker lets <see cref="TryEnterBoss"/> accept the one-way gate without inventing clears.
         /// </summary>
         public bool PromoteFinaleBoss()
         {
             if (Phase != InfinityPhase.Exploring && Phase != InfinityPhase.BossDue) return false;
-            if (ClearsInCycle < Interval) ClearsInCycle = Interval;
+            if (ClearsInCycle < Interval) FinalePromoted = true;
             Phase = InfinityPhase.BossDue;
             return true;
         }
@@ -104,6 +106,7 @@ namespace SodRpg.Core.Game
             GraphEpoch = graph;
             RoomEpoch++;
             LastCountedNode = -1;
+            FinalePromoted = false;
             ClearedNodes.Clear();
             TransitionIntent = null;
             Phase = BossDue ? InfinityPhase.BossDue : InfinityPhase.Exploring;
@@ -115,7 +118,8 @@ namespace SodRpg.Core.Game
             var copy = new InfinityRunState {
                 FixedZoneId = FixedZoneId, Interval = Interval, ClearedCombatTotal = ClearedCombatTotal,
                 DifficultyId = DifficultyId,
-                ClearsInCycle = ClearsInCycle, GraphEpoch = GraphEpoch, SegmentEpoch = SegmentEpoch,
+                ClearsInCycle = ClearsInCycle, FinalePromoted = FinalePromoted,
+                GraphEpoch = GraphEpoch, SegmentEpoch = SegmentEpoch,
                 RoomEpoch = RoomEpoch, Phase = Phase, LastCountedNode = LastCountedNode, SoulObserved = SoulObserved,
                 TransitionIntent = TransitionIntent, ChoiceRevision = ChoiceRevision,
                 SettledGraphEpoch = SettledGraphEpoch, SettledSegmentEpoch = SettledSegmentEpoch,
