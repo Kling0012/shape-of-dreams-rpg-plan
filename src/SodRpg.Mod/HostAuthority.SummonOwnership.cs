@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -8,6 +9,38 @@ namespace SodRpg.Mod
     {
         private bool _summonOwnershipFailed;
 
+        private readonly struct SummonGuardTarget
+        {
+            internal readonly Hero Hero;
+            internal readonly Entity Enemy;
+            internal readonly float Until;
+            internal SummonGuardTarget(Hero hero, Entity enemy, float until)
+            { Hero = hero; Enemy = enemy; Until = until; }
+        }
+
+        private readonly Dictionary<Summon, SummonGuardTarget> _summonGuardTargets =
+            new Dictionary<Summon, SummonGuardTarget>();
+        private readonly List<Summon> _summonGuardScratch = new List<Summon>();
+
+        partial void RecordSummonGuardTarget(Summon summon, Entity enemy, float seconds)
+        {
+            if (_summonOwnershipFailed || !OwnershipRunning())
+            { _summonGuardTargets.Remove(summon); return; }
+            // Value records are refreshed by the existing scan, including unchanged targets.
+            _summonGuardTargets[summon] = new SummonGuardTarget(summon.hero, enemy, Time.time + seconds);
+        }
+
+        private void ReleaseSummonGuardTarget(Entity entity)
+        {
+            if (entity is Summon summon) _summonGuardTargets.Remove(summon);
+            _summonGuardScratch.Clear();
+            foreach (var entry in _summonGuardTargets)
+                if (entry.Value.Enemy == entity || entry.Value.Hero == entity || Time.time >= entry.Value.Until)
+                    _summonGuardScratch.Add(entry.Key);
+            foreach (var expired in _summonGuardScratch) _summonGuardTargets.Remove(expired);
+            _summonGuardScratch.Clear();
+        }
+
         internal void SelectSummonOwnershipAggro(EntityAI ai, ref Entity target)
         {
             if (_summonOwnershipFailed) return;
@@ -15,6 +48,13 @@ namespace SodRpg.Mod
             {
                 if (!OwnershipRunning() || !(ai?.entity is Summon summon) || summon.hero == null
                     || summon.hero.owner == null || !summon.hero.owner.isHumanPlayer) return;
+                if (_summonGuardTargets.TryGetValue(summon, out var guard))
+                {
+                    if (Time.time < guard.Until && guard.Hero == summon.hero && summon.isActive
+                        && summon.currentHealth > 0f && SummonCandidate(ai, guard.Enemy))
+                    { target = guard.Enemy; return; }
+                    _summonGuardTargets.Remove(summon);
+                }
                 var owner = summon.hero.owner;
                 // Keep native retaliation against an enemy currently attacking this summon or its master.
                 if (SummonRetaliation(summon, target)) return;

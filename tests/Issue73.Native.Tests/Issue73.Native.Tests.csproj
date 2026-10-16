@@ -18,6 +18,7 @@
     <Compile Include="../../src/SodRpg.Mod/ClientSession.Diagnostics.cs" Link="ModUnderTest/ClientSession.Diagnostics.cs" />
     <Compile Include="../../src/SodRpg.Mod/HostAuthority.KillSync.cs" Link="ModUnderTest/HostAuthority.KillSync.cs" />
     <Compile Include="../../src/SodRpg.Mod/HostAuthority.EnemyOwnership.cs" Link="ModUnderTest/HostAuthority.EnemyOwnership.cs" />
+    <Compile Include="../../src/SodRpg.Mod/CoopDistanceNative.cs" Link="ModUnderTest/CoopDistanceNative.cs" />
     <Compile Include="../../src/SodRpg.Mod/HostAuthority.DynamicDifficulty.cs" Link="ModUnderTest/HostAuthority.DynamicDifficulty.cs" />
     <Compile Include="../../src/SodRpg.Mod/HostAuthority.EnemyOwnershipSync.cs" Link="ModUnderTest/HostAuthority.EnemyOwnershipSync.cs" />
     <Compile Include="../../src/SodRpg.Mod/HostAuthority.BossShares.cs" Link="ModUnderTest/HostAuthority.BossShares.cs" />
