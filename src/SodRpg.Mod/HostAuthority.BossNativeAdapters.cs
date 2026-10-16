@@ -235,9 +235,23 @@ namespace SodRpg.Mod
     // OnDisable runs for both pool returns and Unity destruction, while DewPool only
     // calls ClearPooledEventsAndProcessors when pooling or room reuse is enabled.
     // Keep the identity through OnDestroyActor: native death/exit attacks use its ancestry.
-    [HarmonyPatch(typeof(Actor), "OnDisable")]
+    [HarmonyPatch]
     internal static class BossNativeDisabledLifetime
     {
+        private static IEnumerable<MethodBase> TargetMethods()
+        {
+            // Resolve once at patch installation, including overrides that omit base.OnDisable.
+            var assemblies = new HashSet<Assembly> { typeof(Actor).Assembly, typeof(Se_U_Hysteria).Assembly };
+            foreach (var assembly in assemblies)
+                foreach (var type in assembly.GetTypes())
+                {
+                    if (!typeof(Actor).IsAssignableFrom(type)) continue;
+                    var method = type.GetMethod("OnDisable", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly,
+                        null, Type.EmptyTypes, null);
+                    if (method != null && !method.IsAbstract && !method.ContainsGenericParameters)
+                        yield return method;
+                }
+        }
         private static void Postfix(Actor __instance) { HostAuthority.NativeInstance?.ClearBossNativeActor(__instance); }
     }
 
@@ -342,6 +356,7 @@ namespace SodRpg.Mod
         private readonly Dictionary<Actor, long> _bossNativeActorLives = new Dictionary<Actor, long>(4096);
         private int _bossNativeActorLifePeak;
         private long _bossNativeActorLivesReleased;
+        private bool _bossNativeActorLifeLimitWarned;
         private bool _bossNativeLifetimeDiagnostics;
         private float _bossNativeLifetimeNextLog;
 
@@ -395,15 +410,24 @@ namespace SodRpg.Mod
 
         private long BossNativeActorLife(Actor actor)
         {
+            if (actor == null) return 0;
             if (!_bossNativeActorLives.TryGetValue(actor, out long life))
             {
-                if (_bossNativeActorLives.Count >= 4096) return 0;
+                if (_bossNativeActorLives.Count >= 4096)
+                {
+                    if (!_bossNativeActorLifeLimitWarned)
+                    {
+                        _bossNativeActorLifeLimitWarned = true;
+                        Log.Warn("boss native lifetime: _bossNativeActorLives.Count=4096/4096; skipping boss tracking for unregistered actors until lifetime records are released.");
+                    }
+                    return 0;
+                }
                 _bossNativeActorLives.Add(actor, life = _memoryAttribution.NewPacketId());
                 _bossNativeActorLifePeak = Math.Max(_bossNativeActorLifePeak, _bossNativeActorLives.Count);
             }
             return life;
         }
-        private bool BossNativeSameLife(Actor actor, long life) => actor != null
+        private bool BossNativeSameLife(Actor actor, long life) => life > 0 && actor != null
             && _bossNativeActorLives.TryGetValue(actor, out long current) && current == life;
         private static BossNativeOwner BossNativeOwnerState(HeroRuntime rt) => rt.BossNative;
         private bool BossNativeRuntime(Hero hero, out HeroRuntime rt)

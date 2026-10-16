@@ -26,7 +26,9 @@ LastStarlight の捕捉はホスト上の生存中・登録済みの旅人が正
 
 ## ボス実体の寿命診断（Issue #506）
 
-プール返却・通常破棄・部屋の片付け・ゾーン移動の本体経路を調査した結果、`ClearPooledEventsAndProcessors` は全経路では呼ばれません。`SpawnManager.usePooling=false` かつ `reuseInRoom=false` では `DewPool` がこの処理を省きます。既存のプール解放に加え、`Actor.OnDisable` の後処理でも寿命記録を解放します。`OnDestroyActor` 中の終了攻撃は親の寿命番号を参照するため、その時点では番号を消しません。上限4096件は維持し、生存中の記録を追い出したり、移動時に一律リセットしたりはしません。
+プール返却・通常破棄・部屋の片付け・ゾーン移動の本体経路を調査した結果、`ClearPooledEventsAndProcessors` は全経路では呼ばれません。`SpawnManager.usePooling=false` かつ `reuseInRoom=false` では `DewPool` がこの処理を省きます。既存のプール解放に加え、`Actor.OnDisable` と本体のActor派生型が宣言する同メソッドの後処理でも寿命記録を解放します。基底メソッドを呼ばない派生型も対象に含め、複数回通った場合の解放は冪等です。`OnDestroyActor` 中の終了攻撃は親の寿命番号を参照するため、その時点では番号を消しません。上限4096件は維持し、生存中の記録を追い出したり、移動時に一律リセットしたりはしません。
+
+同時に4096件の記録が必要になった場合は、ホストの寿命中に警告を1回出します。新規対象には有効な寿命番号を割り当てず、その対象の印登録と投射物の直接命中・連鎖先の追跡を見送ります。番号0を命中履歴へ記録せず、既存対象の追跡と本体の攻撃は継続します。実体の終了で空きが戻れば、新しい対象の登録も再開します。
 
 ホストの開発用コンソールで `dreamforge_bosslives 1` を実行すると、直後と30秒ごとに `Player.log` へ `_bossNativeActorLives.Count`・最大件数 `peak`・累計解放数 `released` を出します。`dreamforge_bosslives 0` は現在値を1回記録して定期出力を止めます。既存の開発コマンドと同じく保存先の `QuickSave/Mods/DreamforgeRPG/dev.flag` が起動時に必要です（開発モードは既存仕様で分解係数等にも影響するため、確認用環境で使ってください）。定期出力は既定OFFで、診断がOFFなら文字列生成も走査も追加しません。
 

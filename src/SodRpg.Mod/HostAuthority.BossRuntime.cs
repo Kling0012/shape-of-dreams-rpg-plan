@@ -112,6 +112,7 @@ namespace SodRpg.Mod
             {
                 if (victim == null || count <= 0 || lifetime <= 0) return;
                 long life = NativeInstance.BossNativeActorLife(victim);
+                if (life <= 0) return;
                 int slot = -1;
                 for (int i = 0; i < _marks.Length; i++)
                 {

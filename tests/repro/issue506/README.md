@@ -153,3 +153,28 @@ DOTNET_ROLL_FORWARD=Major dotnet test tests/SodRpg.Core.Tests/SodRpg.Core.Tests.
 ビルドはexit 0（95警告・エラー0）、対象テストはexit 0（**3成功・失敗0**）。全条件で終了後の辞書は0件、次の寿命4097・マーク1件。ログは同ディレクトリの `current-rebuild.log` と `current-rebuilt-test.log`。今回追加した変更はこの記録のみで、修正実装は後工程の判断に委ねる。
 
 **今回の未実行**: 実ゲーム起動、`dreamforge_simkill`、Unity実破棄コールバック・Harmony実適用・fake-null・Mirror実通信、既定フラグの実行時値、長時間Infinity・高密度部屋、診断コマンドの実ログ推移、実投射物の重複判定、実DLL参照のMOD全体ビルド、他のテストと全体・低速スイート。再現は逆コンパイル由来の本体境界と実MODソースによるものであり、実プレイの再現や今回の修正完了を意味しない。
+
+## 実装工程の完了確認（2026-10-17）
+
+持ち越しの解放フックと開発用ログを維持し、次の不足を補った。
+
+- R1・R2: `BossNativeDisabledLifetime.TargetMethods` は、Actor本体と本体コンテンツのアセンブリからActor派生型が宣言する `OnDisable()` も起動時に列挙する。基底処理を呼ばないoverrideも同じpostfixの対象となる。提供された `Dew.Contents` の2型はメソッド本文が省略された参照用コードなので、基底呼出しがあると推測せず対象へ含めた。`Actor.ClearPooledEventsAndProcessors` prefixも維持し、重複解放は `Dictionary.Remove` によって冪等。`Room.ClearRoom` の `Destroy`、`ZoneManager` の移動時 `Destroy`、`SpawnManager.Destroy` のプール返却／Unity破棄が共通の無効化境界へ進むことは本体コードで確認した。終了攻撃が親を参照する `OnDestroyActor` 中には消さない。
+- R3: 同時に4096件必要となる場合も黙って未登録の番号0を使わせず、ホストの寿命中に警告を1回出す。`MarkTarget` は番号が正でなければ登録せず、投射物の直接命中候補と連鎖先候補は番号0を除外する。`BossNativeSameLife` も正の番号を必須とする。既存記録・本体攻撃・他機能は続行し、空きが戻れば新規登録を再開する。上限増加、生存記録の追い出し、毎フレームの割り当ては追加していない。
+- R4: 既存の `dreamforge_bosslives` と30秒間隔のCount・peak・released出力を維持した。診断OFFなら文字列生成や辞書走査は行わない。
+
+### この工程で実行した検証
+
+- 前節の `CustomAfterMicrosoftCommonTargets=.../PreFix.targets` 付き指定コマンド: **exit 1、2成功・1失敗**。再度 `--no-build` で出力を確認し、非プール条件だけ `retained=4096, nextLife=0, nextMarks=0`。修正前の既存ソースをコンパイル入力として使った結果である。
+- **revert check**: 現在の既存テストを変更せず、`BossNativeDisabledLifetime.Postfix` の解放呼び出しだけを一時的に空にした。`DOTNET_ROLL_FORWARD=Major dotnet build tests/SodRpg.Core.Tests/SodRpg.Core.Tests.csproj -c Release --no-incremental -p:PythonCommand=python3 -v:q '-clp:ErrorsOnly;Summary'` はexit 0。続く `DOTNET_ROLL_FORWARD=Major dotnet test tests/SodRpg.Core.Tests/SodRpg.Core.Tests.csproj -c Release --no-build --filter FullyQualifiedName~BossNativeActorLifetimeReproTests --logger 'console;verbosity=detailed'` は **exit 1、2成功・1失敗**。同じ非プール条件で1024/2048/3072/4096件へ蓄積した。
+- 解放呼び出しを復元し、同じ `--no-incremental` ビルド（exit 0、95警告・エラー0）と再現テストを実行: **exit 0、3成功・失敗0**。すべての条件で1024/2048/3072/4096回終了後は0件、次の対象登録後は `retained=1, nextLife=4097, nextMarks=1`。修正を一時的に戻すと再現テストが失敗し、戻すと成功することをこの工程で確認した。
+- `DOTNET_ROLL_FORWARD=Major dotnet test tests/SodRpg.Core.Tests/SodRpg.Core.Tests.csproj -c Release --no-build --filter 'FullyQualifiedName~Boss&FullyQualifiedName!~BossNativeActorLifetimeReproTests' --logger 'console;verbosity=minimal'`: **exit 0、169成功・失敗0**。最終コードへ復元した後の結果。
+- `dotnet build src/SodRpg.Mod/SodRpg.Mod.csproj -c Release '-p:GameDir=/home/wang/dev/sod-gamedata/Shape of Dreams' -p:PythonCommand=python3 -v:q '-clp:ErrorsOnly;Summary'`: **exit 0、6警告・エラー0**。最終コードで実行。参照用フォルダには `Mods` が存在しないことを確認し、ゲームへの配置なし。
+- `DOTNET_ROLL_FORWARD=Major dotnet test tests/SodRpg.Mod.Startup.Tests/SodRpg.Mod.Startup.Tests.csproj -c Release --filter 'FullyQualifiedName~NativeStartupTests|FullyQualifiedName~ModReloadTests|FullyQualifiedName~ReloadStartupTests|FullyQualifiedName~InfinityLobbyStartTests' --logger 'console;verbosity=minimal' -p:PythonCommand=python3 -v:q '-clp:ErrorsOnly;Summary'`: **exit 0、107成功・失敗0・既存skip1**。起動・再読込・開発コマンド側の既存検証であり、今回の実Actor派生型へのHarmony適用自体はこのハーネスの対象ではない。
+- 中間ビルドではテスト用 `AccessTools.DeclaredMethod` に3引数のオーバーロードがなくCS1501でexit 1となった。標準の `Type.GetMethod` へ変更し、上記の最終ビルドで解消。新規テスト・既存テストの変更は行っていない。
+
+### この工程の未実行
+
+- R5の長時間Infinity・高密度部屋、実ゲーム起動・プレイ、診断コマンドの実コンソール呼び出しとログ推移: 明示された対象外の実機確認として未実行。
+- Unity実破棄コールバック・派生型へのHarmony実適用・fake-null・Mirror実通信: 本体実行環境なし。ソース経路と参照DLLビルドまでの確認。
+- 同時4096件の生存記録による上限警告・投射物の番号0除外・印登録拒否と空き後の再開: 既存テストに直接のケースがなく、新規テスト作成禁止のためコード点検まで。逐次4096回の解放漏れは上記再現テストで確認済み。
+- 全テストスイート、低速・タイミング依存の性能試験、他Issueの検証: 変更範囲に絞る指示に従い後工程へ残す。再読込テストの1件は既存のRelease/JIT理由のskip。
