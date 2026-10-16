@@ -16,6 +16,7 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 ### 改善 / Improvements
 
 - 協力取引で、確認のたびに相手の記録全体を送り直していたのをやめ、差し出す遺物が変わったときだけ送るようにしました。保管庫が大きいほど通信が軽くなります。 / Co-op trades no longer resend the partner's whole record on every confirm; it is sent only when the offered relics change, which lightens traffic for large stashes.
+- 協力取引で、相手の記録が同じ版のあいだに届かなかったとき（再接続や転送の途切れ）、受け手からの再請求とホストの再接続検知で記録を送り直すようにしました。 / A partner trade record that never arrived within the same revision (after a reconnect or an interrupted transfer) is now re-sent, on the receiver's re-request and on the host's reconnect detection.
 - ホストのインフィニティ確認とロビー設定の送信で、毎フレームの文字列の作成を減らしました。 / Reduced per-frame string allocation in the host's Infinity checks and lobby settings.
 
 ---

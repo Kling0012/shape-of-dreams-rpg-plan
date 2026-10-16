@@ -530,9 +530,21 @@ namespace SodRpg.Mod
 
         private static bool CurrentZoneMatches(Zone current, string fixedZoneId)
         {
-            if (current == null) return false;
+            if (current == null)
+            {
+                // Release the remembered zone as soon as there is none: after a scene switch the
+                // static reference would otherwise pin a destroyed Zone for the rest of the session.
+                _matchedZone = null;
+                _matchedZoneId = null;
+                return false;
+            }
             if (ReferenceEquals(current, _matchedZone) && string.Equals(_matchedZoneId, fixedZoneId, StringComparison.Ordinal)) return true;
-            if (current.name != fixedZoneId) return false;
+            if (current.name != fixedZoneId)
+            {
+                _matchedZone = null;
+                _matchedZoneId = null;
+                return false;
+            }
             _matchedZone = current;
             _matchedZoneId = fixedZoneId;
             return true;

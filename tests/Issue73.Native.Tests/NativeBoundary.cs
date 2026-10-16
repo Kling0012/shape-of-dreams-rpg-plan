@@ -42,6 +42,7 @@ namespace Mirror
     internal class NetworkConnection
     {
         public readonly List<object> Sent = new List<object>();
+        public int connectionId;
         public void Send<T>(T message) where T : struct, NetworkMessage => Sent.Add(message);
     }
     internal sealed class NetworkConnectionToClient : NetworkConnection { }
@@ -552,6 +553,7 @@ namespace SodRpg.Mod
         {
             public float Seen;
             public bool Safe, Fusion;
+            public int ConnectionId = int.MinValue;
             public readonly BuildTransferReceiver Transfer = new BuildTransferReceiver(CoopTradeTransport.MaxProfileChars);
             public string Envelope;
         }

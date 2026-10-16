@@ -268,6 +268,12 @@ namespace SodRpg.Mod
                 _nextCoopProbe = Time.unscaledTime + 5f;
                 DiagnoseCoopTrade("waiting", onlyWhenActive: true);
                 SendCoop(new DreamforgeCoopTradeCommand { action = "probe", safe = CoopLocalSafe, fusion = true });
+                // The partner's profile is sent once per revision; a reset receiver (reconnect
+                // mid-trade) or an interrupted transfer can leave this view without it. Ask the
+                // host for it again while the partner has offered relics and none has arrived.
+                if (CoopTrade != null && CoopTrade.Accepted && !CoopTrade.Preparing && _coopPendingOffer == null
+                    && CoopTrade.OtherProfile == null && (CoopTrade.OtherOffer?.RelicUids?.Count ?? 0) > 0)
+                    SendCoop(new DreamforgeCoopTradeCommand { action = "query", id = CoopTrade.Id, wantsProfile = true });
                 var pending = Profile.CoopTradePending;
                 if (pending != null)
                 {
