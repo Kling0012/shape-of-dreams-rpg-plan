@@ -8,18 +8,24 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
+---
+
+## v2.10.62 — Fix boss setup error and lighter hit processing（2026-10-16）
+
+このバージョンでは、ボス戦の準備中に起きることがあったエラーを修正し、命中時の処理を軽くしました。 / This version fixes an error that could occur while a boss was being set up and makes hit processing lighter.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
 ### 不具合の修正 / Bug fixes
 
-- ボス装備の効果を準備するとき、旅人の記憶の情報がまだそろっていなくても例外を出さず、情報がそろった次の確認で効果を作り直すようにしました。 / Boss-gear effects now wait without throwing when a Traveler's memory data is not ready, and rebuild on the next check after the data becomes available.
+- ボスの装備を準備するときに装備の情報がまだそろっていないと、エラーが起きることがありました。この場合はボスの効果をいったん外し、情報がそろってから改めて付け直すようにしました。 / Fixed an error that could occur when a boss's equipment was set up before its equipment info was ready. In that case, the boss's effects are now removed for the moment and applied again once the info is available.
+- 攻撃が命中したときに仕掛けや刻印の効果を調べる処理で、余分なメモリを使わないようにして、動作を軽くしました。表示内容や効果は変わりません。 / Reduced extra memory use when checking gimmick and mark effects on hit, making the game lighter. What is shown and how things work are unchanged.
 
-### 改善 / Improvements
-
-- 仕掛けの効果計算と敵の情報の後片付け、および到達刻印の効果計算で、状態や効果の列挙・削除に伴うメモリ確保を減らしました。 / Reduced memory allocations from state and effect enumeration and victim cleanup in gimmick and keystone calculations.
-- 一部のボス装備（大顎・アズラク・光の精霊）の回数・持続・射程・遅延を、効果説明と共通の設定値から読むようにしました。現在の数値は変わりません。 / Some boss gear (Maw, Azurak, Light Elemental) now reads its counts, durations, ranges and delays from the same balance values as its descriptions. Current values are unchanged.
-
-### 変更 / Changes
-
-- 宿敵の頭上の名札をシアン（`#4DD8FF`）に変え、悪夢化した敵（桃色）や夢の変種（琥珀色）と区別できるようにしました。同じ敵に複数の表示情報がある場合も宿敵の名札を優先し、協力プレイでも各PCで同じ色を表示します。 / Nemesis overhead nameplates now use cyan (`#4DD8FF`), distinct from pink nightmares and amber dream variants. The Nemesis nameplate takes priority when tags overlap, and each PC uses the same color in co-op.
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
 
 ---
 
