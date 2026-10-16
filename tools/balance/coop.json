@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "fullRange": 10,
+  "outerRange": 18,
+  "graceSeconds": 2,
+  "rangeToSpeedMultiplier": 1,
+  "breakSeconds": 3,
+  "breakDamagePercent": 12,
+  "meleeGuardRange": 3,
+  "meleeGuardReductionPercent": 12,
+  "scanSeconds": 0.25,
+  "autoCastIntervalSeconds": 0.2,
+  "autoCastOwnHitSeconds": 3,
+  "autoCastAllyHitSeconds": 2
+}

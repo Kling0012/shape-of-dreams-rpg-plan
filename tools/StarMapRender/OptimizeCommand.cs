@@ -22,7 +22,8 @@ internal static class OptimizeCommand
                 case "--iterations": options.Iterations = long.Parse(Value(), CultureInfo.InvariantCulture); break;
                 case "--seed": options.Seed = int.Parse(Value(), CultureInfo.InvariantCulture); break;
                 case "--set":
-                    string[] kv = Value().Split('=');
+                    string[] kv = Value().Split('=', 2);
+                    if (kv.Length != 2) throw new ArgumentException("--set needs Option=value");
                     var field = typeof(StarMapOptimizer.Options).GetField(kv[0]) ?? throw new ArgumentException("unknown option " + kv[0]);
                     field.SetValue(options, Convert.ChangeType(kv[1], field.FieldType, CultureInfo.InvariantCulture));
                     break;

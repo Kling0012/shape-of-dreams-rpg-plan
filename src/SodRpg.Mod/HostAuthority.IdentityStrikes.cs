@@ -309,13 +309,14 @@ namespace SodRpg.Mod
         /// </summary>
         internal float MemoryDamagePercent(HeroRuntime rt, string memory)
         {
-            long memoryAmpMilli = 0, starAmpMilli = 0;
+            float memoryAmpMilli = 0, starAmpMilli = 0;
             if (memory != null)
                 foreach (var link in rt.SatisfiedLinks)
                     if (link.Kind == LinkKind.MemoryDamage && Array.IndexOf(link.Requires, memory) >= 0)
                     {
-                        memoryAmpMilli += link.ValueMilli;
-                        starAmpMilli += link.StarValueMilli;
+                        float coefficient = rt.Powers.LinkCoefficient(link);
+                        memoryAmpMilli += link.ValueMilli * coefficient;
+                        starAmpMilli += link.StarValueMilli * coefficient;
                         LogLinkApplied(link);
                     }
             float nativeStars = FindMemory(rt.Hero, memory) != null

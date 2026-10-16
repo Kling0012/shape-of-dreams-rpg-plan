@@ -52,7 +52,7 @@ namespace SodRpg.Core.Game
             string woundDuration = Duration(def, WoundSeconds).ToString("0.#######", CultureInfo.InvariantCulture);
             string primedDuration = Duration(def, PrimedSeconds).ToString("0.#######", CultureInfo.InvariantCulture);
             string ricochetRadius = Radius(def, RicochetRadius).ToString("0.#######", CultureInfo.InvariantCulture);
-            string allyRadius = Radius(def, AllyRadius).ToString("0.#######", CultureInfo.InvariantCulture);
+            string allyRadius = Radius(def, CoopBalance.FullRange).ToString("0.#######", CultureInfo.InvariantCulture);
             int targets = TargetLimit(def);
             string maximumStun = Duration(def, Cap(GimmickEffect.Daze) / 10f).ToString("0.#######", CultureInfo.InvariantCulture);
             if (Loc.Japanese)
@@ -69,7 +69,7 @@ namespace SodRpg.Core.Game
                     text = "Ricochet damage +" + n + "% of the hit damage: damage up to " + targets + " other enemies within " + ricochetRadius + "m"; break;
                 case GimmickEffect.Siphon:
                     text = "Healing +" + n + "% of that memory's direct damage: heal yourself (excluding damage over time; at most " + SiphonCapText + "% of your maximum health per heal)"
-                        + (def.Arg == 1 ? "; allied travelers within " + allyRadius + "m receive half as much, capped at " + SiphonCapText + "% of their own maximum health" : ""); break;
+                        + (def.Arg == 1 ? "; allied travelers within " + allyRadius + "m receive half as much, capped at " + SiphonCapText + "% of their own maximum health" + (Radius(def, CoopBalance.FullRange) == CoopBalance.FullRange ? CoopDistance.Description : "") : ""); break;
                 case GimmickEffect.Rampart:
                     text = "Shield +" + n + "% of maximum health per distinct enemy hit by this cast: lasts " + duration + " seconds (up to " + targets + " enemies and " + Cap(def.Effect) + "% per enemy; one pool separate from ordinary star shields, keeping the larger remaining or new amount and refreshing duration)"; break;
                 case GimmickEffect.Primed:
@@ -124,7 +124,8 @@ namespace SodRpg.Core.Game
                 case GimmickEffect.Siphon:
                     effect = def.Arg == 1 ? "その記憶の直接ダメージの" + n + "%分、自分を回復し、" + allyRadius + "m以内の味方旅人にはその半分を回復する"
                         : "その記憶の直接ダメージの" + n + "%分、自分を回復する";
-                    extra = "継続ダメージは対象外で、1回の回復量は" + (def.Arg == 1 ? "各自" : "自分") + "の最大HPの" + SiphonCapText + "%まで。";
+                    extra = "継続ダメージは対象外で、1回の回復量は" + (def.Arg == 1 ? "各自" : "自分") + "の最大HPの" + SiphonCapText + "%まで。"
+                        + (def.Arg == 1 && Radius(def, CoopBalance.FullRange) == CoopBalance.FullRange ? CoopDistance.Description : "");
                     break;
                 case GimmickEffect.Rampart:
                     effect = "同じ発動で命中した別々の敵1体につき、最大HPの" + n + "%の障壁を" + duration + "秒間得る";
