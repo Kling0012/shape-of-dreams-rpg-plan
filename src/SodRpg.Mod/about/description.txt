@@ -1,5 +1,5 @@
-[b]The Star Offering event description now states that the Dream Depth XP multiplier applies to its Star XP.[/b]
-[b]出来事「星の捧げ物」の説明に、夢の深さの経験倍率が掛かることを書き加えました。[/b]
+[b]Fixes save and co-op trade failures after salvaging starting relics, and keeps starting relic marks for relics temporarily outside the vault.[/b]
+[b]初期遺物を分解したあとの保存・取引の失敗と、保管庫の外にある初期遺物の印が消える問題を直しました。[/b]
 
 [h1]Dreamforge RPG[/h1]
 Turns every run into part of a long RPG journey: relics you keep, a risky "secure or delve" choice at every zone, a star map per Traveler, a forge, and long-term goals. Co-op ready.
