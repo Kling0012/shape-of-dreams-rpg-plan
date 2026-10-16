@@ -299,9 +299,10 @@ namespace SodRpg.Mod
                     profile = ProfileCodec.ReadCheckpointProfile(Encoding.UTF8.GetString(Convert.FromBase64String(encoded)));
                     offer = CoopTradeCodec.ReadOffer(msg.offer);
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
                     // Only peer-data decoding belongs here; journal failures must still use host recovery.
+                    DiagnoseHostCoopTrade("decode-failed-" + ex.GetType().Name, trade, caller);
                     SendCoopError(caller, "ownership");
                     CancelHostCoopTrade("ownership");
                     return;
