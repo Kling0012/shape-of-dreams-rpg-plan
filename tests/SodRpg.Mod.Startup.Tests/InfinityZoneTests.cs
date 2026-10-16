@@ -144,7 +144,11 @@ namespace SodRpg.Mod.Startup.Tests
             // The graph cannot host the interval: the cycle is due on arrival and the boss
             // node is the one forward option, so no dead-end boundary can bounce the party.
             Assert.Equal(InfinityPhase.BossDue, state.Phase);
-            Assert.Equal(10, state.ClearsInCycle);
+            Assert.Equal(0, state.ClearsInCycle);
+            Assert.True(state.FinalePromoted);
+            Assert.True(InfinityMode.TryReadEnvelope(out var finaleEnvelope));
+            Assert.True(finaleEnvelope.State.FinalePromoted);
+            Assert.Equal(0, finaleEnvelope.State.ClearsInCycle);
             Assert.Equal(2, InfinityMode.RevealedNext(zone));
             Assert.Equal(WorldNodeType.ExitBoss, zone.nodes[2].type);
             Assert.True(InfinityMode.Available);
@@ -194,7 +198,8 @@ namespace SodRpg.Mod.Startup.Tests
             zone.SetCurrentNodeIndexAndRevealAdjacent(2);
             InfinityMode.Tick();
             Assert.Equal(InfinityPhase.BossFight, state.Phase);
-            Assert.Equal(10, state.ClearsInCycle);
+            Assert.Equal(1, state.ClearsInCycle);
+            Assert.True(state.FinalePromoted);
             Assert.True(InfinityMode.Available);
             DewResources.Zones.Clear();
         }

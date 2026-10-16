@@ -8,6 +8,9 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
+### 修正 / Fixes
+- インフィニティ：周期に足りない小さな地図（純白の道など）で最初の周期からボスへ繰り上がると、保存データが読み込めなくなる（バックアップや新しいプロフィールに戻る）問題を修正。案内の「初期の遺物を3つ」を実際に配る数（6つ）に直し、星図の上限ポイント・到達刻印の必要ポイントも実際の値から表示する。 / Infinity: a first-cycle finale promotion on a short graph no longer makes the save unreadable; the welcome hint now states the real starter relic count (6), and hint numbers come from the shared constants.
+
 ---
 
 ## v3.0.1 — Co-op trades no longer stop the host on bad data; suspend data no longer grows without limit（2026-10-16）

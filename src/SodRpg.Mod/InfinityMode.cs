@@ -380,7 +380,20 @@ namespace SodRpg.Mod
             if (settings == null || !settings.customData.TryGetValue(RuntimeKey, out var text)) return false;
             try { envelope = JsonConvert.DeserializeObject<Envelope>(text); }
             catch (JsonException ex) { Log.Warn("Infinity: discarded unreadable runtime envelope: " + ex.Message); return false; }
-            return envelope?.State != null;
+            if (envelope?.State == null) return false;
+            var state = envelope.State;
+            // Legacy finale envelopes carry no marker and contain the artificial interval counter.
+            // Normalize against the current graph receipt to match ProfileCodec's migration.
+            if (!state.FinalePromoted && state.FixedZoneId == "Zone_Primus"
+                && state.ClearsInCycle == state.Interval
+                && state.ClearedNodes.Count < state.Interval
+                && state.Phase >= InfinityPhase.BossDue && state.Phase <= InfinityPhase.Returning)
+            {
+                state.ClearsInCycle = state.ClearedNodes.Count;
+                state.Phase = InfinityPhase.Exploring;
+                state.PromoteFinaleBoss();
+            }
+            return true;
         }
 
         internal static bool MatchesProfile(RunState run)
@@ -395,6 +408,7 @@ namespace SodRpg.Mod
                 && (b.DifficultyId == null || b.DifficultyId == NetworkedManagerBase<GameManager>.softInstance?.difficulty?.name)
                 && a.GraphEpoch == b.GraphEpoch && a.SegmentEpoch == b.SegmentEpoch && a.RoomEpoch == b.RoomEpoch
                 && a.ClearedCombatTotal == b.ClearedCombatTotal && a.ClearsInCycle == b.ClearsInCycle
+                && a.BossDue == b.BossDue
                 && a.Phase == b.Phase && a.ChoiceRevision == b.ChoiceRevision
                 && a.TransitionIntent == b.TransitionIntent && a.SoulObserved == b.SoulObserved
                 && a.SettledGraphEpoch == b.SettledGraphEpoch && a.SettledSegmentEpoch == b.SettledSegmentEpoch
