@@ -421,6 +421,9 @@ azurak・primus・light・maw・obliviax・polaris）。ink.json は白夜／黒
 - チャネルの `cap` 省略は `cap == value`（InkChannel／AzurakChannel形式）。`value` は正、`cap >= value`。
   アクション欄はBossActionコンストラクタの受理範囲（`count` 1〜64、`maxInstances` 1〜4、`angleMilli` 0〜360000 等）を
   生成時に検証し、不正な表はrender前に拒否します。
+- 実行時の読み方より狭い下限が必要な欄は `boss_values.py` の `CELL_FLOORS` で追加検証します。現在は `maw` の
+  `charm` 1番目アクションの `mainHits` が2以上必須（未設定も拒否）です。大顎の護符は `mainHits - 1` 回の命中を
+  保持して次の命中で回復するため、1以下だと初回の命中から回復扱いになり、従来の挙動と変わります。
 - `order`・段番号・`BossSetStage(2/3/6)`・セットの部位数、ID・enum・説明文（Txt）・イベント順序・契約文字列は
   構造なので表へ移しません。Power定数・Mod側native adapterの数値・説明文内の数値は段階8の後半で別に扱います。
 - ボス値は既存の指紋レコード（`boss-schema`・`boss-channel`・`boss-action`・`boss-reward-action`）で全面的に照合されるため、
