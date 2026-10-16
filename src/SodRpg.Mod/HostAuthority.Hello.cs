@@ -197,6 +197,7 @@ namespace SodRpg.Mod
                     continueResumeSession = ClientSession.ContinueResumeSession,
                     continueCheckpoints = true,
                     infinityAvailable = InfinityMode.Available,
+                    meleeCoop = MeleeCoopWire,
                 });
             }
             catch (Exception ex) { Log.Error("Host: hello " + ex); }

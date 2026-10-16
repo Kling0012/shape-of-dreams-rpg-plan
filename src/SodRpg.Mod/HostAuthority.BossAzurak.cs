@@ -76,13 +76,14 @@ namespace SodRpg.Mod
                 {
                     state.LastMain = activation;
                     if (now >= state.HitsUntil) state.Hits = 0;
-                    state.Hits = Math.Min(3, state.Hits + 1);
-                    state.HitsUntil = now + 4;
-                    if (state.Hits == 3)
+                    var stageAction = stageProfile.Actions[0];
+                    state.Hits = Math.Min(stageAction.MainHits, state.Hits + 1);
+                    state.HitsUntil = now + stageAction.CounterLifetimeMillis / 1000f;
+                    if (state.Hits == stageAction.MainHits)
                     {
                         state.Hits = 0;
                         // All stages observe the identical third hit, even if another stage is cooling down or cannot reserve.
-                        if (BossGround(owner, point, 8, out var fixedPoint))
+                        if (BossGround(owner, point, stageAction.RangeMilli / 1000f, out var fixedPoint))
                         {
                             AzurakStomp(rt, stageEntry, stageProfile, fixedPoint, now);
                             if (rt.Boss.Build==null || !BossAlive(rt.Hero)) return;

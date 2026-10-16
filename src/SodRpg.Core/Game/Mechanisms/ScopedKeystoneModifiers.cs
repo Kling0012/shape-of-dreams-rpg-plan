@@ -85,8 +85,9 @@ namespace SodRpg.Core.Game
         private static bool MatchesSelectors(IReadOnlyList<MemorySelector> selectors, string memory, KeystoneContext context, bool receiver = false)
         {
             if (selectors.Count == 0) return true;
-            foreach (var selector in selectors)
+            for (int s = 0; s < selectors.Count; s++)
             {
+                var selector = selectors[s];
                 if (selector.Kind == MemorySelectorKind.Memory && selector.Alternatives.Count == 0)
                 { if (selector.Memory == memory) return true; continue; }
                 if (context.Equipment != null)
@@ -469,8 +470,12 @@ namespace SodRpg.Core.Game
                     if (context.SourceKind == KeystoneSourceKind.MovementEvent && key.KeystoneId != "h.husk.key2") continue;
                     anyApplied = true;
                     result.KeystoneId = key.KeystoneId;
-                    foreach (var transform in key.Upside)
+                    var upside = key.Upside;
+                    for (int t = 0; t < upside.Count; t++)
+                    {
+                        var transform = upside[t];
                         if (transform.TargetLayer == payload.Layer && transform.Scope.Matches(payload, context)) ApplyTransform(payload, result, transform);
+                    }
                 }
                 if (!anyApplied) result.KeystoneId = null;
                 if (context.SourceKind == KeystoneSourceKind.MovementEvent && !IsKeystoneActive("h.husk.key2"))

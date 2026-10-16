@@ -108,6 +108,7 @@ namespace SodRpg.Mod
         private Func<string, bool> _linkMarks;
         private float _nextLinkCheck;
         private bool _displayMeleeRangeConversion;
+        private int _displayMeleeAttackSpeed, _displayMeleeCoop;
 
         public bool Open { get; private set; }
 
@@ -303,7 +304,8 @@ namespace SodRpg.Mod
                             Vector3.Distance(hero.agentPosition, ally.agentPosition), now,
                             hero.isActive && hero.isAlive && !hero.isKnockedOut && ally.isActive && ally.isAlive
                                 && !ally.isKnockedOut && ally.GetRelation(hero) == EntityRelation.Ally,
-                            _cfg().coopDistanceFalloff);
+                            MeleeCoopSettings.Resolve(_s.HostMeleeCoop, MeleeCoopSettings.DistanceFalloff,
+                                _cfg().coopDistanceFalloff));
                         if (coefficient <= 0f) continue;
                         string allyKey = ally.GetType().Name;
                         _linkAllies.Add(allyKey);
@@ -345,16 +347,33 @@ namespace SodRpg.Mod
             _st.EnsureBuilt();
             var cfg = _cfg();
             var viewingHero = _s.LocalHero;
-            bool convertRange = cfg.meleeRangeToSpeed && (viewingHero != null
+            // Show what the host applies. An older host or no hello reply yet falls back to the local settings.
+            int hostMelee = _s.HostMeleeCoop;
+            int meleeCoop = MeleeCoopSettings.Encode(
+                MeleeCoopSettings.Resolve(hostMelee, MeleeCoopSettings.RangeToSpeed, cfg.meleeRangeToSpeed),
+                MeleeCoopSettings.Resolve(hostMelee, MeleeCoopSettings.DistanceFalloff, cfg.coopDistanceFalloff),
+                MeleeCoopSettings.Resolve(hostMelee, MeleeCoopSettings.Break, cfg.meleeBreak),
+                MeleeCoopSettings.Resolve(hostMelee, MeleeCoopSettings.Guard, cfg.meleeProximityGuard));
+            bool convertRange = (meleeCoop & MeleeCoopSettings.RangeToSpeed) != 0 && (viewingHero != null
                 ? TravelerCombatNative.IsMelee(viewingHero) : TravelerCombat.IsMelee(HeroKey, true));
-            if (_displayMeleeRangeConversion != convertRange)
+            // Range lines show the capped attack speed gain. Read the (shared, 0.25s) display build only with the menu open.
+            int meleeAttackSpeed = _displayMeleeAttackSpeed;
+            if (convertRange && Open)
+                try { meleeAttackSpeed = _s.DisplayBuild(HeroKey).Get(Stat.AttackSpeedPct); }
+                catch (Exception) { }
+            if (_displayMeleeRangeConversion != convertRange || _displayMeleeAttackSpeed != meleeAttackSpeed
+                || _displayMeleeCoop != meleeCoop)
             {
                 _displayMeleeRangeConversion = convertRange;
+                _displayMeleeAttackSpeed = meleeAttackSpeed;
+                _displayMeleeCoop = meleeCoop;
                 _tradeRelicTexts.Clear();
                 _starSumDirty = true;
             }
             bool previousRangeDisplay = Content.DisplayMeleeRangeConversion;
+            int previousMeleeAttackSpeed = Content.DisplayMeleeAttackSpeed;
             Content.DisplayMeleeRangeConversion = convertRange;
+            Content.DisplayMeleeAttackSpeed = meleeAttackSpeed;
             float scale = Mathf.Clamp(Screen.height / 1080f * Mathf.Clamp(cfg.uiScale, 0.5f, 2.5f), 0.5f, 4f);
             // Keep the star map's fixed header rows and two choice cards within the visible window,
             // including both optional sidebars. Honor the configured scale until it would clip that viewport.
@@ -432,6 +451,7 @@ namespace SodRpg.Mod
             finally
             {
                 Content.DisplayMeleeRangeConversion = previousRangeDisplay;
+                Content.DisplayMeleeAttackSpeed = previousMeleeAttackSpeed;
                 GUI.matrix = oldMatrix;
             }
         }
@@ -2646,6 +2666,25 @@ namespace SodRpg.Mod
             foreach (var line in lines) StarSumAddLine(line, indexOf);
         }
 
+        /// <summary>Melee travelers' co-op numbers, for the features the host has on (#522).</summary>
+        private void StarSumAddMeleeCoop(string hero, bool matching)
+        {
+            if (!(matching ? TravelerCombatNative.IsMelee(_s.LocalHero) : TravelerCombat.IsMelee(hero, true))) return;
+            int on = _displayMeleeCoop;
+            if ((on & (MeleeCoopSettings.RangeToSpeed | MeleeCoopSettings.Break | MeleeCoopSettings.Guard)) == 0) return;
+            StarSumAddTitle(Loc.T("近接の協力効果", "Melee co-op effects"));
+            if ((on & MeleeCoopSettings.RangeToSpeed) != 0) StarSumAddText(MeleeCoopText.RangeToSpeed);
+            if ((on & MeleeCoopSettings.Break) != 0) StarSumAddText(MeleeCoopText.Break);
+            if ((on & MeleeCoopSettings.Guard) != 0) StarSumAddText(MeleeCoopText.Guard);
+        }
+
+        private void StarSumAddText(string text)
+        {
+            var e = new StarSumEntry();
+            e.Content.text = text;
+            _starSumEntries.Add(e);
+        }
+
         private void StarSumAddTitle(string title)
         {
             var e = new StarSumEntry { Title = true };
@@ -2694,6 +2733,7 @@ namespace SodRpg.Mod
             for (int i = 0; i < _starLayout.Nodes.Count; i++)
                 if (_starLayout.Nodes[i].Talent != null) indexOf[_starLayout.Nodes[i].Talent.Id] = i;
             _starSumHeader.text = Loc.T($"使ったポイント {sum.Spent} / 合計 {sum.Total}", $"Points used {sum.Spent} / {sum.Total} total");
+            StarSumAddMeleeCoop(hero, matching);
             if (sum.Spent == 0) { StarSumAddTitle(Loc.T("まだ星を取得していません。", "No stars acquired yet.")); return; }
             var note = new StarSumEntry();
             note.Content.text = "<color=#9aa>" + Loc.T("発動間隔や上限は、各星の説明で確認できます。", "Cooldowns and caps are listed in each star's description.") + "</color>";
