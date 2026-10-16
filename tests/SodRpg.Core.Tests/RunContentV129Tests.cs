@@ -391,7 +391,12 @@ namespace SodRpg.Core.Tests
             var lost = p.LostAndFound.ToArray();
             foreach (var r in lost) { r.Enhance = 5; r.EnhanceMilestones = 2; }
             int shards = p.Run.SatchelShards;
+            p.Run.Bounties.Add(new Bounty { Kind = BountyKind.Treasure, Target = 1 });
+            p.Run.Bounties.Add(new Bounty { Kind = BountyKind.EpicFinder, Target = 1 });
             Rules.UseEvent(p, DreamEvent.LostMausoleum);
+            Assert.Equal(lost.Length, p.Run.RelicsFound);
+            Assert.Equal(0, p.Stats.RelicsFound);
+            Assert.All(p.Run.Bounties, b => Assert.Equal(0, b.Progress));
             Assert.Empty(p.LostAndFound);
             Assert.Equal(shards - EventBalanceTestData.Number("lostMausoleum", "shards"), p.Run.SatchelShards);
             foreach (var r in lost)
