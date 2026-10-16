@@ -181,3 +181,28 @@ TRXは`/tmp/issue457-current-results/issue457-current.trx`に保存された。�
 - 内容指紋：`ContentFingerprint.cs`が`EquipmentItemsBalanceValues.ContentFingerprintRecords`を取り込むことと、参加者全員の更新を求める日英の更新履歴が存在することを確認した。指紋関連テスト・協力通信は**未実行**（今回の再現範囲外・実機利用不可）。今回の変更は再現記録だけで、ゲーム定義には変更がない。
 - 修正前テストの失敗確認は**未実行**：修正前の履歴をこのサンドボックスから参照できず、開始時点で既存修正が含まれていたため。今回実行したテストは2件とも成功し、修正前失敗を再確認したとは報告しない。
 - Unity実機での装備・画面・戦闘・協力プレイ・`dreamforge_simkill`は**未実行**（実機利用不可）。全テスト／slowテスト・MODビルドは**未実行**（製品コード変更なし、絞り込み実行の指示）。NuGet脆弱性照会は**未実行**（ネットワーク制約に合わせ`NuGetAudit=false`）。
+
+## 診断ログ追加工程（2026-10-16）
+
+今回の開始点は`149927a`の単一スナップショット、ブランチ`work`で、リモート・`origin/main`・`ai/wip-issue-457`は存在しなかった。過去ブランチとの差分は取得できず、引き継がれたコードと本記録を確認して`ai/issue-457`を作成した。リポジトリと親ディレクトリに`AGENTS.md`／`CLAUDE.md`は存在せず、ルート・`src/`・`src/SodRpg.Mod/`のREADMEと既存の診断出力を読んだ。
+
+不具合の調査のための記録を追加。原因の確定・修正はログ受領後。過去工程の修正・失敗記録は今回の再現実績とは扱わない。今回は条件・効果量・説明生成・内容指紋・保存・通信を変更していない。Issueは診断のリリース後も閉じず、ログを待つ。
+
+`HostAuthority.UpdateLinks`の既存判定後（連携なしの早期returnも含む）から、独立した`DiagnoseLinks`へ観測値を渡す。連携定義・記憶・エッセンス・生存・成立結果が同じなら再出力せず、文字列生成は変化時のみ。ホスト全体で遠征ごとに32行を上限とし、状態ごとのIdentity連携詳細は6件まで。診断専用の再利用コレクションだけを更新し、判定や補正には書き戻さない。例外は診断内で吸収する。
+
+ゲーム標準の`Log.Info`は`UnityEngine.Debug.Log`へ出力している。ルートREADMEにある`Player.log`のWindows／Protonの保存先を使い、#457向けのコピー・個人情報除去・添付方法と追加質問を追記した。実機のログファイルそのものは取得していない。
+
+### 今回実行した検証
+
+- `DOTNET_ROLL_FORWARD=Major dotnet build src/SodRpg.Mod -c Release -p:PythonCommand=python3 -p:NuGetAudit=false -p:GameDir='/mnt/ghauto-sbx/sod-gamedata/Shape of Dreams'`：終了0、警告6件・エラー0件。診断状態の比較を最終調整後、同じコマンドで再ビルドし同じ結果を確認。警告は非推奨API3件・既存未代入フィールド3件。ゲームへの配置は実行されていない（ビルド出力に配置メッセージなし）。
+- `DOTNET_ROLL_FORWARD=Major dotnet test tests/SodRpg.Core.Tests/SodRpg.Core.Tests.csproj -c Release --filter 'FullyQualifiedName~Issue457LinkReachabilityTests|FullyQualifiedName~LinksV126Tests|FullyQualifiedName~LinkActivationV127Tests' --logger 'console;verbosity=detailed' -p:PythonCommand=python3 -p:NuGetAudit=false -p:GameDir='/mnt/ghauto-sbx/sod-gamedata/Shape of Dreams'`：終了0、既存11件成功。合法Mist構成4/8成立、固有品・セット連携393件のIdentity／Movement枠制約による到達不能0件。テストの追加・変更なし。Coreのテストであり、Unity上の診断出力を実行したものではない。
+- `git diff --check`：終了0。差分でゲームデータと判定・効果処理が変更されていないことを確認。
+
+### 今回の未実行・限界
+
+- **未実行**：利用者の症状の実機再現、実際の`Player.log`への書き込み・ログ障害時の実行確認、Unity画面・戦闘・協力通信・`dreamforge_simkill`。理由：実機利用不可。元の不具合は修正済みとしない。
+- **未実行**：全テスト・slowテスト。理由：指示に従い関連する既存テストだけを前景で実行。
+- **未実行**：修正前条件へ差し戻した失敗確認。理由：修正前履歴がなく、本工程はログだけに限定されている。
+- **未実行**：日英図鑑・Wiki生成・数値生成器・内容指紋の関連テスト。理由：今回は内容定義・数値・説明生成に差分がない。対象特定はコードで確認し、品質懸念の条件・バランス・指紋への対応はそれらを追加変更しないこととした。
+- **未実行**：NuGet脆弱性照会。理由：ネットワーク制約に合わせ`NuGetAudit=false`を使用。
+- **未実行**：push・PR作成・リリース・Issue投稿・クローズ。理由：この工程では禁止。ログ受領後の原因特定と修正は継続課題。
