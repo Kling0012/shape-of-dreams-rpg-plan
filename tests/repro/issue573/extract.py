@@ -42,7 +42,9 @@ text = (
     + (block(trade, r"private void EnsureCoopTradeRelicStyles\(") + "\n\n" if "EnsureCoopTradeRelicStyles" in choices else "")
     + block(trade, r"private bool MatchesCoopTradeFilters\(") + "\n\n"
     + block(trade, r"private bool TryCoopTradeAmounts\(") + "\n\n"
-    + block(trade, r"private static CoopTradeOffer CopyCoopTradeOffer\(") + "\n"
+    + block(trade, r"private CoopTradeOffer CopyCoopTradeOffer\(") + "\n\n"
+    + block(trade, r"private static bool CoopTradeRelicOfferable\(") + "\n\n"
+    + block(trade, r"private static Relic FindCoopTradeRelic\(") + "\n"
     + "}\n}\n"
 )
 output = Path(sys.argv[1])
