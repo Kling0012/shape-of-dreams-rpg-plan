@@ -43,8 +43,11 @@ python tools/test_changed.py [--base <git ref>] [--list] [--all] [--slow]
 変更ファイルを次の規則でテストクラス（完全修飾名）へ写す。
 
 1. **テストファイル自体の変更** — `tests/` 配下の変更された `.cs` は、
-   そのファイルが宣言するテストクラスを選択する。
-2. **製品コードの変更** — 変更された `.cs` のユニファイド diff から、その変更行に
+   そのファイルが宣言するテストクラスと、そこで宣言された型を使うテストを選択する。
+   共通の補助型や fake を変更した場合も、その利用者を含める。
+2. **製品コードの変更** — `src/` と、テストプロジェクトの `ProjectReference` が
+   参照する `tools/` 配下の `.cs` が対象。ツールの場合は宣言型に加えてツール名を
+   挙げているテストも選択する。変更された `.cs` のユニファイド diff から、その変更行に
    出てくるトークン（PascalCase の型名・メンバー名、4 文字以上の文字列リテラル）を
    抜き出し、それを単語として含むテストファイルのテストクラスを選択する
    （メンバーの変更ならその名前で絞り込める）。`new` を含む変更行は初期化データを
@@ -57,7 +60,9 @@ python tools/test_changed.py [--base <git ref>] [--list] [--all] [--slow]
    `tools/lowrarity/*.json`、生成済み `.cs`（`*.Generated.cs`、`Generated*.cs`）が
    変更された場合、そのパス（ディレクトリ名＋ファイル名、または相対パス）を
    参照しているテストファイル、および生成型を参照しているテストファイル（規則 2 と
-   同じ方法）のテストクラスを選択する。
+   同じ方法）のテストクラスを選択する。`tests/` 配下の `.cs` 以外の入力も
+   同様にパスを参照するテストを選択し、参照元不明のデータなら全体を実行する。
+   参照のない Markdown・reStructuredText 文書と `bin`/`obj` は対象外。
 4. **全体実行へのエスカレーション** — 次の場合はスイート全体を実行する。
    - ビルドファイル（`*.csproj`、`Directory.Build.*`）が変更された
    - 変更ファイルの型名がテストファイルの 60% 超に登場する
@@ -75,6 +80,11 @@ python tools/test_changed.py [--base <git ref>] [--list] [--all] [--slow]
 `Ns.Class+Nested` のテストを取りこぼさないため）を `|` で連結した式で、
 長すぎる場合（既定の上限 15000 文字）は複数回の `dotnet test` 実行に分割する。
 テストプロジェクトは `tests/` 配下の `.csproj` を再帰収集する（`bin`/`obj` を除く）。
+`Microsoft.NET.Test.Sdk` の `PackageReference` または `IsTestProject=true` があるものを
+対象とし、Culinary の補助ライブラリ等は単独で実行しない。XML のコメントは無視し、
+最寄りの `Directory.Build.props` / `.targets` とリポジトリ内のリテラルパスの
+`Import` も読む。条件付きの項目は安全側に含めるが、MSBuild のプロパティ展開や
+ワイルドカード import は評価しない。
 クラスとプロジェクトの対応は csproj から判定する: 明示的な `<Compile Include>` の
 リンク先と、`EnableDefaultCompileItems`（既定のフォルダ glob）と `<Compile Remove>` を
 考慮したフォルダ位置の両方。同じファイルを複数プロジェクトがコンパイルする場合

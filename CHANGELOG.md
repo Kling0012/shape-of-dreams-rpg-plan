@@ -8,6 +8,10 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
+### 開発環境 / Development
+
+- 変更に応じたテスト選択で、共通の補助型・テスト用データ・BalanceSim / StarMapRender の参照元を含めるようにしました。補助ライブラリを単独のテストプロジェクトから除外し、参照のないテスト用文書による全件実行を抑えます。星図生成では旧定義の採用判定と数値解決を再利用し、入力の変更時は更新します。CI の生成チェックの重複をなくし、PR でも WikiGen をビルドします。 / Changed-test selection now covers shared helpers, fixtures and references to BalanceSim / StarMapRender. Helper libraries are excluded as standalone test projects, and unreferenced test documentation no longer triggers the full suite. Star generation reuses legacy adoption decisions and resolved sources while refreshing changed inputs. CI checks generation once and builds WikiGen on PRs.
+
 ### 変更 / Changes
 
 - 宿敵の頭上の名札をシアン（`#4DD8FF`）に変え、悪夢化した敵（桃色）や夢の変種（琥珀色）と区別できるようにしました。同じ敵に複数の表示情報がある場合も宿敵の名札を優先し、協力プレイでも各PCで同じ色を表示します。 / Nemesis overhead nameplates now use cyan (`#4DD8FF`), distinct from pink nightmares and amber dream variants. The Nemesis nameplate takes priority when tags overlap, and each PC uses the same color in co-op.
