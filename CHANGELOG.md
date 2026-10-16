@@ -8,6 +8,9 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
+### 修正 / Fixes
+- 保存中に例外が起きたとき、その表示が同じ処理の中で消えてしまい、取引が「保存の完了を待っています」のまま止まって見えた問題を修正。保存失敗の理由（読み戻しの不一致など）を英語表示では英語で出す。書き込み失敗が続く間の表示文を毎フレーム作り直さない。 / A save exception no longer gets cleared by the same save call; save failure reasons follow the English UI; the retry message is no longer rebuilt every frame.
+
 ---
 
 ## v2.10.57 — Co-op warning, resume save, and room omen fixes（2026-10-16）

@@ -132,20 +132,20 @@ namespace SodRpg.Core.Game
                 {
                     _fs.WriteAllText(TempPath, text);
                     if (!string.Equals(_fs.ReadAllText(TempPath), text, StringComparison.Ordinal))
-                        throw new IOException("読み戻しの内容が一致しません。");
+                        throw new IOException(Loc.T("読み戻しの内容が一致しません。", "The saved file did not read back identically."));
                     if (!_validatedFirstWrite)
                     {
                         var notes = new List<string>();
                         var check = ProfileCodec.Read(text, notes);
                         if (check.Revision != revision || notes.Count != 0 || ProfileCodec.Write(check) != text)
-                            throw new IOException("プロフィールの往復検証で内容が一致しません。");
+                            throw new IOException(Loc.T("プロフィールの往復検証で内容が一致しません。", "The profile did not survive a save/load round trip."));
                     }
                     _fs.Replace(TempPath, _path, _fs.Exists(_path) ? BackupPath : null);
                     _validatedFirstWrite = true;
                 }
                 catch (Exception ex) when (!(ex is IOException))
                 {
-                    throw new IOException("保存に失敗しました: " + ex.Message, ex);
+                    throw new IOException(Loc.T("保存に失敗しました: ", "Saving failed: ") + ex.Message, ex);
                 }
             }
         }
@@ -259,15 +259,18 @@ namespace SodRpg.Core.Game
             try
             {
                 _fs.Copy(path, copy, overwrite: false);
-                Notes.Add("知らない内容を除外する前のデータを " + System.IO.Path.GetFileName(copy) + " に残しました。");
+                Notes.Add(Loc.T("知らない内容を除外する前のデータを " + System.IO.Path.GetFileName(copy) + " に残しました。",
+                    "Kept the data from before removing unknown content in " + System.IO.Path.GetFileName(copy) + "."));
             }
             catch (IOException ex)
             {
-                Notes.Add("除外する前のデータの写しを作れませんでした: " + ex.Message);
+                Notes.Add(Loc.T("除外する前のデータの写しを作れませんでした: ", "Could not copy the data from before the removal: ") + ex.Message);
             }
         }
 
-        private const string BlockedMessage = "前のデータの写しを作れていないため、保存を止めています。次に起動したときにもう一度試します。";
+        // 投げた時点の言語で作る（表示はその文をそのまま出す）。
+        private static string BlockedMessage => Loc.T("前のデータの写しを作れていないため、保存を止めています。次に起動したときにもう一度試します。",
+            "Saving is paused because a copy of the previous data could not be made. It will be tried again on the next launch.");
 
         private static long ReadVersion(JsonObject root) =>
             root != null && root.TryGet("version", out object value) && value is long version ? version : -1;

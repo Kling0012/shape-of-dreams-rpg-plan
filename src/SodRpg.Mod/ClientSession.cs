@@ -345,6 +345,9 @@ namespace SodRpg.Mod
         }
 
         private bool _saveErrorFromWriteFailure;
+        // 書き込み失敗中の表示文は、原因か言語が変わったときだけ作り直す（毎フレームの文字列連結を避ける）。
+        private string _writeFailureText, _writeFailureSource;
+        private bool _writeFailureJapanese;
 
         private void TickPeriodicSave()
         {
@@ -355,7 +358,14 @@ namespace SodRpg.Mod
                 _dirty = true;
                 _allocationSavePending = true;
                 _saveErrorFromWriteFailure = true;
-                SaveError = Loc.T("保存に失敗しました。自動で再試行します: ", "Saving failed; retrying automatically: ") + _writer.LastError;
+                string source = _writer.LastError;
+                if (_writeFailureText == null || _writeFailureSource != source || _writeFailureJapanese != Loc.Japanese)
+                {
+                    _writeFailureSource = source;
+                    _writeFailureJapanese = Loc.Japanese;
+                    _writeFailureText = Loc.T("保存に失敗しました。自動で再試行します: ", "Saving failed; retrying automatically: ") + source;
+                }
+                SaveError = _writeFailureText;
                 float retry = Time.unscaledTime + 5f;
                 if (_nextSave > retry) _nextSave = retry;
             }
@@ -1580,7 +1590,7 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
             if (_infinityPendingSaveRun == NetworkedManagerBase<GameManager>.softInstance?.runId)
                 _infinityPendingSaveWriter = _writer;
             var sw = System.Diagnostics.Stopwatch.StartNew();
-            bool ok = true;
+            bool ok = true, threw = false;
             try
             {
                 if (confirm) ok = AsyncProfileWriter.ConfirmPrepared(_writer, Profile);
@@ -1592,12 +1602,14 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
                 SaveError = ex.Message;
                 _dirty = true;
                 ok = false;
+                threw = true;
                 Log.Error("Save failed: " + ex.Message);
             }
             _saveMsTotal += sw.Elapsed.TotalMilliseconds;
             _saveCount++;
             if (_writer.LastError != null) SaveError = _writer.LastError;
-            else if (SaveError != null && _writer.WrittenRevision > 0) SaveError = null;
+            // この呼び出しで出た例外の表示は、以前の書き込み成功で消さない。
+            else if (!threw && SaveError != null && _writer.WrittenRevision > 0) SaveError = null;
             if (!ok) _dirty = true;
             else _allocationSavePending = false;
             return ok;
