@@ -110,3 +110,46 @@ After 4096 completed actor lifetimes (usePooling=False, reuseInRoom=False), the 
 - 同一バイナリ・同一負荷でCPU優先度だけを上げると成功する。
 - 同ファイルの兄弟テスト `A_kill_takes_well_under_a_tenth_of_a_millisecond` は前ラウンドで main でも失敗しており、gh-auto 自身が環境起因と判定済みである。
 - したがって本ラウンドではコードを変更していない。ウォールクロック閾値は過負荷時にブランチを問わず失敗するため、テスト側の変更では防止できず、負荷の静穏時に再実行することが対処になる。
+
+## 再現工程の再確認（2026-10-17）
+
+今回の再現工程は、修正と既存の再現テストを含む `6f668509` から開始した。実装・テストは変更せず、再現テスト追加時点の `475d3657` にあるアダプタとテストの2ファイルを `git show` で `tests/SodRpg.Core.Tests/obj/issue506-pre-fix/` へ取り出した。チェックアウトや履歴の巻き戻しは行っていない。Issue 本文・コメントとルートの README を確認し、追跡対象の AGENTS.md / CLAUDE.md は存在しなかった。
+
+`PreFix.targets` を同じディレクトリへ以下の内容で置き、既存プロジェクトのコンパイル入力だけを差し替えた。コピーしたファイルはそれぞれ `475d3657:src/SodRpg.Mod/HostAuthority.BossNativeAdapters.cs` と `475d3657:tests/SodRpg.Core.Tests/BossNativeActorLifetimeReproTests.cs` の内容そのままである。`obj` 内の検証ファイル・ログは追跡対象外。
+
+```xml
+<Project>
+  <Target Name="Issue506UsePreFixSources" BeforeTargets="CoreCompile" Condition="'$(MSBuildProjectName)' == 'SodRpg.Core.Tests'">
+    <ItemGroup>
+      <Compile Remove="../../src/SodRpg.Mod/HostAuthority.BossNativeAdapters.cs;BossNativeActorLifetimeReproTests.cs" />
+      <Compile Include="$(MSBuildThisFileDirectory)HostAuthority.BossNativeAdapters.cs;$(MSBuildThisFileDirectory)BossNativeActorLifetimeReproTests.cs" />
+    </ItemGroup>
+    <Message Importance="high" Text="Issue506: compiling the original adapter and reproduction test from 475d3657" />
+  </Target>
+</Project>
+```
+
+実行した修正前コマンド（プロパティのパスは worktree 内の絶対パス）:
+
+```sh
+DOTNET_ROLL_FORWARD=Major dotnet test tests/SodRpg.Core.Tests/SodRpg.Core.Tests.csproj -c Release --filter FullyQualifiedName~BossNativeActorLifetimeReproTests --logger 'console;verbosity=detailed' -p:PythonCommand=python3 -p:CustomAfterMicrosoftCommonTargets=/home/wang/.claude/gh-auto/wt/shape-of-dreams-rpg-plan-issue-506/tests/SodRpg.Core.Tests/obj/issue506-pre-fix/PreFix.targets
+```
+
+.NET SDK 10.0.111 / Runtime 10.0.11、`NUGET_PACKAGES=/home/wang/.cache/gh-auto/nuget` の環境で、終了コード **1**、**2成功・1失敗**を今回も確認した。コンパイル入力の差し替えメッセージが出ており、ビルドは成功し、非プール条件のマーク件数アサーションが失敗した。
+
+- `usePooling=false, reuseInRoom=false`: 1024/2048/3072/4096回の寿命終了後、辞書が同じ件数で増加。4097体目では `retained=4096, nextLife=0, nextMarks=0`。
+- `usePooling=true, reuseInRoom=false` と `usePooling=false, reuseInRoom=true`: 4096回終了後の辞書は0件。次の対象は `nextLife=4097, nextMarks=1`。
+- 生ログ: `tests/SodRpg.Core.Tests/obj/issue506-pre-fix/pre-fix.log`。終了コードは同ディレクトリの `pre-fix.exit` に保存した。
+
+逆コンパイル物も再確認した。`DewPool.cs:44–63` の条件により、`Actor.cs:641–654` の `OnDisable` を通っても、両フラグがfalseなら `ClearPooledEventsAndProcessors` が呼ばれない。`SpawnManager.cs:511–516` はその条件で Unity の破棄へ進む。品質懸念の「解放漏れで4096件に達する」「その後の新規寿命が0になりマークが読めない」は、この条件について再現済み。異なる実体の寿命0を使った投射物の重複判定の衝突そのものは今回再現していない。
+
+比較のため、持ち越し済み修正を含む現在ソースでも既存の対象テストだけを実行した。最初の通常 `dotnet test` は増分ビルドで修正前のバイナリを再利用し、修正前テストの `obj/issue506-pre-fix/` パスから同じ失敗を出した（exit 1、`current.log`）。その出力を現在ソースの結果とは扱わず、以下で明示的に再コンパイルした。
+
+```sh
+DOTNET_ROLL_FORWARD=Major dotnet build tests/SodRpg.Core.Tests/SodRpg.Core.Tests.csproj -c Release --no-incremental -p:PythonCommand=python3
+DOTNET_ROLL_FORWARD=Major dotnet test tests/SodRpg.Core.Tests/SodRpg.Core.Tests.csproj -c Release --no-build --filter FullyQualifiedName~BossNativeActorLifetimeReproTests --logger 'console;verbosity=detailed'
+```
+
+ビルドはexit 0（95警告・エラー0）、対象テストはexit 0（**3成功・失敗0**）。全条件で終了後の辞書は0件、次の寿命4097・マーク1件。ログは同ディレクトリの `current-rebuild.log` と `current-rebuilt-test.log`。今回追加した変更はこの記録のみで、修正実装は後工程の判断に委ねる。
+
+**今回の未実行**: 実ゲーム起動、`dreamforge_simkill`、Unity実破棄コールバック・Harmony実適用・fake-null・Mirror実通信、既定フラグの実行時値、長時間Infinity・高密度部屋、診断コマンドの実ログ推移、実投射物の重複判定、実DLL参照のMOD全体ビルド、他のテストと全体・低速スイート。再現は逆コンパイル由来の本体境界と実MODソースによるものであり、実プレイの再現や今回の修正完了を意味しない。
