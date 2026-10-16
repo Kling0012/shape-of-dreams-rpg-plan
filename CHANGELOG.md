@@ -10,6 +10,37 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v3.0.0 — Co-op rebuilt: every traveler gets their own fight（2026-10-16）
+
+このバージョンでは協力プレイを作り直しました。これまでは、一番育った人が共有の敵をまとめて倒してしまい、ほかの人の出番がなくなりがちでした。これからは、敵が湧いた時点で参加者それぞれの「担当」になり、各自が自分の育ち具合に合った敵と戦います。助けに行くこともできますが、真ん中に立っているだけで全部が消える、ということは起きません。 / This version rebuilds co-op. Until now, the most-progressed player tended to clear every shared enemy and leave nothing for anyone else. From now on, each enemy becomes one player's "assignment" when it spawns, and everyone fights enemies matched to their own progress. You can still help each other, but standing in the middle no longer wipes the whole room.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op must update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+- 新しい仕組みはすべて F6 のホスト設定で切り替えられます。ソロの遊び方は変わりません。 / Every new system can be toggled in the host settings (F6). Solo play is unchanged.
+
+### 追加要素 / New features
+
+- **敵の担当制（協力プレイ）**: 部屋の敵は湧いた時点で参加者の誰かの担当になり、その人を狙い、その人の育ち具合に合わせた強さで現れます。担当者が戦っている間、ほかの人の攻撃は手伝い程度に抑えられ、とどめは担当者が刺します。担当者が倒れそうなとき・倒れたとき・離れたときは、ほかの人が助けに入れます。 / **Enemy assignments (co-op)**: each enemy belongs to one player from the moment it spawns, targets that player, and is scaled to their progress. While the owner is fighting it, other players' attacks count as help, and the owner lands the finishing blow. When the owner is in danger, down, or away, others can step in.
+- 頭上の印「◆」（自分の担当）「◇」（ほかの人の担当）と、プレイヤーごとの色・番号で、どの敵が誰の担当か分かります。F6 に色の凡例があります。 / Overhead markers show who owns each enemy: ◆ for yours and ◇ for others, with a color and number per player. The F6 menu shows the color legend.
+- **ボスの持ち分（協力プレイ）**: ボスとミニボスは、参加者それぞれの持ち分に分かれた体力を持ちます。各自が自分の持ち分を削り、終わった人はほかの人を手伝えます。ボスの体力バーの下に持ち分が表示されます。 / **Boss shares (co-op)**: bosses and minibosses have health split into a share for each player. Everyone works down their own share, and those who finish can help the others. The shares are shown under the boss health bar.
+- **殲滅速度に合わせた難易度**: 部屋ごとに各プレイヤーの火力を測り、敵が溶けすぎる人の担当の敵を少し硬くします。苦戦している人の敵は少し易しくなります。硬くなった分は報酬も増えます。協力プレイでは既定で有効、ソロでは F6 で有効にできます。 / **Difficulty that follows your damage**: each room, every player's damage output is measured, and enemies assigned to players who melt everything get a bit tougher, while players who are struggling get a little relief. Tougher enemies give more rewards. On by default in co-op, optional in solo (F6).
+- **同行の刻印**: 9 人の旅人それぞれに、味方が近くにいるときだけ働く刻印を 1 つずつ追加しました。仲間の攻撃を活かしたり、仲間を守ったりする効果です。 / **Companion keystones**: each of the nine travelers gets a new keystone that works only while an ally is nearby, built around setting up or protecting your teammates.
+- **マルチ専用の兆し「共鳴の盾」**: 協力プレイ中の部屋に時々現れます。盾を持つ敵は、2 人以上で同時に攻撃しないと崩せません。 / **Co-op room omen "Resonant Ward"**: appears in some co-op rooms. Warded enemies can only be broken when two or more players attack them together.
+- **アシスト**: 敵を倒す直前に攻撃や支援をした人にも、クールダウン回復などの一時的な撃破時効果が届くようになりました。 / **Assists**: players who attacked or supported just before a kill now also receive temporary on-kill effects such as cooldown recovery.
+- 協力プレイでのビスマスの自動詠唱が、仲間が戦っている敵より自分の周りの敵を優先するようになりました。 / In co-op, Bismuth's automatic casting now prefers enemies around you over enemies your teammates are fighting.
+
+### 不具合の修正 / Bug fixes
+
+- エッセンスと記憶の組み合わせによっては連鎖が止まらず、処理が重くなったりゲームが落ちたりすることがあった問題を修正しました。 / Fixed some essence and memory combinations that could chain endlessly, causing heavy slowdowns or crashes.
+- 協力プレイでビスマスの自動詠唱が非常に速く連続し、ほかの参加者の動作が重くなることがあった問題を修正しました。 / Fixed Bismuth's automatic casting firing extremely fast in co-op and slowing down other players' games.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
 ## v2.10.64 — Melee co-op effect descriptions and host-synced range display（2026-10-16）
 
 このバージョンでは、近接の旅人が受ける協力効果（射程の変換・崩し・近接防御）の数値を画面で確認できるようにし、協力プレイの参加者の画面に出る射程の表示と連携の効き具合を、ホストの設定と攻撃速度の上限に合わせました。 / This version shows the numbers behind the melee co-op effects (range conversion, Break, and Melee Guard), and makes the range display and link strength on co-op participants' screens follow the host's settings and the attack speed cap.
