@@ -1,5 +1,5 @@
-[b]Fusion is no longer announced as a level-up, and the forge's Fusion panel runs lighter with large storage.[/b]
-[b]融合がレベルアップとして通知される不具合を直し、保管庫が大きいときの融合欄の負荷を軽くしました。[/b]
+[b]Tidies up development tests and documentation for co-op trading; no gameplay changes.[/b]
+[b]協力プレイの交換に関わる開発用のテストと文書を整理しました。ゲーム内の動作は変わりません。[/b]
 
 [h1]Dreamforge RPG[/h1]
 Turns every run into part of a long RPG journey: relics you keep, a risky "secure or delve" choice at every zone, a star map per Traveler, a forge, and long-term goals. Co-op ready.

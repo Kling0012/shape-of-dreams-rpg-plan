@@ -10,7 +10,7 @@ namespace SodRpg.Core.Game
         // Assemble topology in the shipped registration order. Geometry is a separate pass, so moving
         // a group cannot change an implicit attachment, a saved ID, or the order of nodes and edges.
         private static void PlaceClusters(List<HeroTreeNode> nodes, List<List<int>> neighbors,
-            List<HeroTreeEdge> edges, IReadOnlyList<TalentDef> talents)
+            List<HeroTreeEdge> edges, IReadOnlyList<TalentDef> talents, bool tuned)
         {
             var indices = new Dictionary<string, int>(StringComparer.Ordinal);
             var definitions = new Dictionary<string, TalentDef>(talents.Count, StringComparer.Ordinal);
@@ -151,7 +151,7 @@ namespace SodRpg.Core.Game
                     Join(from, to);
                 }
             }
-            PlaceSectors(nodes, neighbors, edges);
+            if (!tuned || !ApplyTunedPlacements(nodes, neighbors)) PlaceSectors(nodes, neighbors, edges);
         }
 
         private static bool IsKeystoneGroup(List<TalentDef> group) =>

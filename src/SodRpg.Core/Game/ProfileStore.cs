@@ -40,15 +40,18 @@ namespace SodRpg.Core.Game
         // saves can change the disk. Plain store callers retain their tolerant recovery path.
         internal Profile Load(Action sourceReadsComplete)
         {
+            lock (_writeLock) _validatedFirstWrite = false;
             Notes.Clear();
             WritesBlocked = false;
-            if (ResetIfOld())
+            var mainRoot = ReadRoot(_path, "本体");
+            var backupRoot = ReadRoot(BackupPath, "バックアップ");
+            if (ResetIfOld(mainRoot, backupRoot))
             {
                 sourceReadsComplete?.Invoke();
                 return Profile.CreateNew(_seed);
             }
-            Profile main = TryRead(_path, "本体", out var mainNotes, out bool mainMigrated);
-            Profile bak = TryRead(BackupPath, "バックアップ", out var bakNotes, out bool bakMigrated);
+            Profile main = TryRead(mainRoot, "本体", out var mainNotes, out bool mainMigrated);
+            Profile bak = TryRead(backupRoot, "バックアップ", out var bakNotes, out bool bakMigrated);
             sourceReadsComplete?.Invoke();
             if (!WritesBlocked)
             {
@@ -114,6 +117,7 @@ namespace SodRpg.Core.Game
         }
 
         private readonly object _writeLock = new object();
+        private bool _validatedFirstWrite;
 
         /// <summary>
         /// JSON化済みの内容を書き込む（別スレッドから呼んでよい）。一時ファイルへ書き、読み戻して確かめ、置換で確定する。
@@ -127,9 +131,17 @@ namespace SodRpg.Core.Game
                 try
                 {
                     _fs.WriteAllText(TempPath, text);
-                    var check = ProfileCodec.Read(_fs.ReadAllText(TempPath), new List<string>());
-                    if (check.Revision != revision) throw new IOException("読み戻しの内容が一致しません。");
+                    if (!string.Equals(_fs.ReadAllText(TempPath), text, StringComparison.Ordinal))
+                        throw new IOException("読み戻しの内容が一致しません。");
+                    if (!_validatedFirstWrite)
+                    {
+                        var notes = new List<string>();
+                        var check = ProfileCodec.Read(text, notes);
+                        if (check.Revision != revision || notes.Count != 0 || ProfileCodec.Write(check) != text)
+                            throw new IOException("プロフィールの往復検証で内容が一致しません。");
+                    }
                     _fs.Replace(TempPath, _path, _fs.Exists(_path) ? BackupPath : null);
+                    _validatedFirstWrite = true;
                 }
                 catch (Exception ex) when (!(ex is IOException))
                 {
@@ -138,14 +150,29 @@ namespace SodRpg.Core.Game
             }
         }
 
-        private Profile TryRead(string path, string label, out List<string> notes, out bool migrated)
+        private JsonObject ReadRoot(string path, string label)
         {
-            notes = new List<string>();
-            migrated = false;
             if (!_fs.Exists(path)) return null;
             try
             {
-                return ProfileCodec.ReadForStore(_fs.ReadAllText(path), notes, out migrated);
+                return Json.Parse(_fs.ReadAllText(path)) as JsonObject
+                    ?? throw new LedgerFormatException("最上位がオブジェクトではありません。");
+            }
+            catch (Exception ex) when (ex is LedgerFormatException || ex is IOException || ex is FormatException || ex is OverflowException)
+            {
+                Notes.Add(label + "を読めませんでした: " + ex.Message);
+                return null;
+            }
+        }
+
+        private Profile TryRead(JsonObject root, string label, out List<string> notes, out bool migrated)
+        {
+            notes = new List<string>();
+            migrated = false;
+            if (root == null) return null;
+            try
+            {
+                return ProfileCodec.ReadForStore(root, notes, out migrated);
             }
             catch (LedgerVersionException)
             {
@@ -162,10 +189,10 @@ namespace SodRpg.Core.Game
         /// 保存の版が <see cref="Profile.ResetBeforeVersion"/> より古ければ、本体と .bak を写して残し、true を返す（v1.27 のリセット）。
         /// 写しは profile.v1-archive-日時.json のように、元のファイルと同じ場所に置く。読めない・版が分からないファイルは対象にしない。
         /// </summary>
-        private bool ResetIfOld()
+        private bool ResetIfOld(JsonObject mainRoot, JsonObject backupRoot)
         {
-            long version = ReadVersion(_path);
-            if (version < 0) version = ReadVersion(BackupPath);
+            long version = ReadVersion(mainRoot);
+            if (version < 0) version = ReadVersion(backupRoot);
             if (version < 0 || version >= Profile.ResetBeforeVersion) return false;
             string archive = NewArchivePath(version);
             try
@@ -242,18 +269,8 @@ namespace SodRpg.Core.Game
 
         private const string BlockedMessage = "前のデータの写しを作れていないため、保存を止めています。次に起動したときにもう一度試します。";
 
-        private long ReadVersion(string path)
-        {
-            if (!_fs.Exists(path)) return -1;
-            try
-            {
-                return Json.Parse(_fs.ReadAllText(path)) is JsonObject root && root.TryGet("version", out object v) && v is long n ? n : -1;
-            }
-            catch (Exception)
-            {
-                return -1;
-            }
-        }
+        private static long ReadVersion(JsonObject root) =>
+            root != null && root.TryGet("version", out object value) && value is long version ? version : -1;
 
         private void Quarantine(string path)
         {

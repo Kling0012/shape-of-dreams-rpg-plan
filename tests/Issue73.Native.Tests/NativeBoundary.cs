@@ -51,6 +51,74 @@ namespace Mirror
      internal static class Time { public static int frameCount; public static float unscaledTime; }
     // TrackRun の Limbo 深度の読み出しに必要な本体 API。ハーネスでは Limbo なし(0)を返す。
     internal static class Object { public static T FindObjectOfType<T>() where T : class => null; }
+
+    // 星図の差分更新（#440）のための Unity IMGUI 境界。GUILayout / GUILayoutOption は
+    // ProfileSlotUiBoundary.cs の既存の定義をそのまま使う。GUIStyle.CalcHeight は行数と
+    // 文字数だけから決まる決定論的な値を返し、呼び出し回数を数えて部分再計算を検証する。
+    internal enum EventType { Layout, Repaint, Used, KeyDown, MouseDown, MouseUp }
+    internal sealed class Event
+    {
+        public static Event current = new Event();
+        public EventType type;
+        public Vector2 mousePosition;
+    }
+    internal sealed class GUIContent { public string text, tooltip; }
+    internal sealed class GUIStyle
+    {
+        public static int CalcHeightCalls;
+        public static void ResetCalcHeightCalls() => CalcHeightCalls = 0;
+        // 決定論的な高さ: 行数と文字数だけで決まり、同じ本文・同じ幅なら常に同じ値。
+        internal static float Measure(string text) => 16f + 6f * (text ?? "").Split('\n').Length + 0.4f * (text ?? "").Length;
+        public float CalcHeight(GUIContent content, float width)
+        {
+            CalcHeightCalls++;
+            return Measure(content.text);
+        }
+    }
+    internal struct Vector2
+    {
+        public float x, y;
+        public Vector2(float x, float y) { this.x = x; this.y = y; }
+        public static Vector2 zero => new Vector2();
+    }
+    internal struct Rect
+    {
+        public float x, y, width, height;
+        public Rect(float x, float y, float width, float height)
+        {
+            this.x = x; this.y = y; this.width = width; this.height = height;
+        }
+        public float xMax => x + width;
+        public bool Contains(Vector2 point)
+            => point.x >= x && point.x < xMax && point.y >= y && point.y < y + height;
+    }
+    internal struct Color
+    {
+        public float r, g, b, a;
+        public Color(float r, float g, float b) { this.r = r; this.g = g; this.b = b; a = 1f; }
+        public Color(float r, float g, float b, float a) { this.r = r; this.g = g; this.b = b; this.a = a; }
+    }
+    internal class Texture2D { }
+    internal static class Mathf
+    {
+        public static int Max(int a, int b) => a > b ? a : b;
+        public static float Max(float a, float b) => a > b ? a : b;
+        public static float Min(float a, float b) => a < b ? a : b;
+    }
+    internal static class GUI
+    {
+        // スクロール位置はそのまま返し、描画・入力は行わない（Button は常に押されていない）。
+        public static Vector2 BeginScrollView(Rect position, Vector2 scroll, Rect content) => scroll;
+        public static void EndScrollView() { }
+        public static bool Button(Rect rect, GUIContent content, GUIStyle style) => false;
+    }
+    internal static class GUILayoutUtility
+    {
+        // テストは幅を変えて全行再計測を引き起こせる。既定は本物の StarClusterSize と同じ幅。
+        public static Rect ClusterListArea = new Rect(0f, 0f, 270f, 226f);
+        public static Rect GetRect(float minWidth, float maxWidth, float minHeight, float maxHeight,
+            params GUILayoutOption[] options) => ClusterListArea;
+    }
  }
 // The extractor preserves ClientSession.cs imports; scene event wiring is outside this harness.
 namespace UnityEngine.SceneManagement
@@ -265,6 +333,8 @@ namespace SodRpg.Mod
         public static DewPlayer local;
         public static readonly List<DewPlayer> gamePlayers = new List<DewPlayer>();
         public static readonly List<DewPlayer> lobbyPlayers = new List<DewPlayer>();
+        public static Action<DewPlayer> onLobbyPlayerAdded, onLobbyPlayerRemoved;
+        public static Action<DewPlayer> onGamePlayerAdded, onGamePlayerRemoved;
         public static readonly List<DewPlayer> allHumanPlayers = new List<DewPlayer>();
         public string playerName;
         public uint netId;

@@ -18,6 +18,8 @@ namespace UnityEngine
             return false;
         }
         internal static GUILayoutOption Width(float width) => new GUILayoutOption();
+        internal static GUILayoutOption ExpandHeight(bool expand) => new GUILayoutOption();
+        internal static GUILayoutOption MinHeight(float height) => new GUILayoutOption();
     }
 }
 

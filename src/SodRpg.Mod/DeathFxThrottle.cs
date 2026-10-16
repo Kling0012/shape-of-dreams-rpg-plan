@@ -1,4 +1,5 @@
 using System;
+using System.Runtime.CompilerServices;
 using HarmonyLib;
 using UnityEngine;
 
@@ -112,6 +113,19 @@ namespace SodRpg.Mod
     [HarmonyPatch(typeof(EntityVisual), "UserCode_RpcHandleDeath__GibInfo")]
     internal static class DeathFxLightQualityPatch
     {
+        private sealed class LightParts
+        {
+            internal Light[] Lights;
+            internal FxPointLight[] Drivers;
+        }
+
+        private static readonly ConditionalWeakTable<GameObject, LightParts> Parts = new ConditionalWeakTable<GameObject, LightParts>();
+        private static readonly ConditionalWeakTable<GameObject, LightParts>.CreateValueCallback FindParts = fx => new LightParts
+        {
+            Lights = fx.GetComponentsInChildren<Light>(true),
+            Drivers = fx.GetComponentsInChildren<FxPointLight>(true),
+        };
+
         private static void Prefix(EntityVisual __instance)
         {
             try
@@ -121,10 +135,11 @@ namespace SodRpg.Mod
                 var model = __instance.model;
                 if (model == null || model.fxDeath == null) return;
                 // FxPointLight が再生時に Light を有効化し戻すので、ドライバ側も止める。
-                foreach (var light in model.fxDeath.GetComponentsInChildren<Light>(true))
-                    light.enabled = false;
-                foreach (var driver in model.fxDeath.GetComponentsInChildren<FxPointLight>(true))
-                    driver.enabled = false;
+                var parts = Parts.GetValue(model.fxDeath, FindParts);
+                foreach (var light in parts.Lights)
+                    if (light != null) light.enabled = false;
+                foreach (var driver in parts.Drivers)
+                    if (driver != null) driver.enabled = false;
             }
             catch (Exception ex)
             {

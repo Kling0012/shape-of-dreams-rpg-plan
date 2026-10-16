@@ -108,7 +108,6 @@ namespace SodRpg.Core.Game
         }
         public static string Key(AuthoredMechanismSpec spec) => AuthoredMechanismCodec.EncodeSpec(spec);
         public static string Describe(AuthoredMechanismSpec spec) => StarMapPresentation.DescribeMechanism(spec);
-        public static string DescribeKeystone(KeystoneDefinition definition) => StarMapPresentation.DescribeKeySide(definition);
         internal static void ValidateBindings(IReadOnlyList<TalentDef> tree)
         {
             var all = tree.SelectMany(t => t.IsChoice ? t.Choices : new[] { t }).ToArray();

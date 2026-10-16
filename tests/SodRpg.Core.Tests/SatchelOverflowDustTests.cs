@@ -290,14 +290,14 @@ namespace SodRpg.Core.Tests
             Assert.False(first.Replayed);
             Assert.Equal(Economy.SatchelOverflowDust(Rarity.Legendary), first.EarnDust);
             HostPay(first, ref paid);
-            Assert.Equal(300, paid);
+            Assert.Equal(Economy.SatchelOverflowDust(Rarity.Legendary), paid);
 
             // 再送（同じトークン）：記録済みの結果の再送で、通貨は動かない。
             var resend = host.Evaluate("owner", "run-123", RequestOf(trade), 0, 0);
             Assert.True(resend.Ok);
             Assert.True(resend.Replayed);
             HostPay(resend, ref paid);
-            Assert.Equal(300, paid);
+            Assert.Equal(Economy.SatchelOverflowDust(Rarity.Legendary), paid);
 
             // 照会（Query）：同じ記録を返すだけ。
             TradeWire.EncodeQuery(trade.LedgerId, out int qg, out int qd, out int qe);
@@ -306,7 +306,7 @@ namespace SodRpg.Core.Tests
             Assert.True(answer.Ok);
             Assert.True(answer.Replayed);
             HostPay(answer, ref paid);
-            Assert.Equal(300, paid);
+            Assert.Equal(Economy.SatchelOverflowDust(Rarity.Legendary), paid);
 
             // 同じ遺物の2度目の申告（別トークン）も「dup」で断る。
             var dupe = new PendingTrade { Token = 999, Kind = TradeKind.SatchelOverflowDust, Uid = relic.Uid, Rarity = (int)Rarity.Legendary };
@@ -314,7 +314,7 @@ namespace SodRpg.Core.Tests
             Assert.False(second.Ok);
             Assert.Equal("dup", second.Reason);
             HostPay(second, ref paid);
-            Assert.Equal(300, paid);
+            Assert.Equal(Economy.SatchelOverflowDust(Rarity.Legendary), paid);
         }
 
         // 参加者のあふれも、その参加者自身へ一度だけ支払われる。重複防止の記録は人ごとの台帳に分かれる

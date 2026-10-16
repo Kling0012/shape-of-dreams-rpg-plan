@@ -155,6 +155,8 @@ namespace SodRpg.Mod
         public Hero hero;
         public static readonly List<DewPlayer> gamePlayers = new List<DewPlayer>();
         public static readonly List<DewPlayer> lobbyPlayers = new List<DewPlayer>();
+        public static Action<DewPlayer> onLobbyPlayerAdded, onLobbyPlayerRemoved;
+        public static Action<DewPlayer> onGamePlayerAdded, onGamePlayerRemoved;
     }
     public class Actor
     {
@@ -464,7 +466,14 @@ namespace SodRpg.Mod
             armorFlat, abilityHasteFlat, movementSpeedPercentage;
     }
     public static class NetworkedManagerBase<T> { public static T softInstance; public static T instance; }
-    public sealed class ActorManager { public Actor serverActor; public readonly List<Actor> allActors = new List<Actor>(); }
+    public sealed class ActorManager
+    {
+        public Actor serverActor;
+        public readonly List<Actor> allActors = new List<Actor>();
+        public event Action<Actor> ClientEvent_OnActorAdd, ClientEvent_OnActorRemove;
+        public void AddActor(Actor actor) { allActors.Add(actor); ClientEvent_OnActorAdd?.Invoke(actor); }
+        public void RemoveActor(Actor actor) { if (allActors.Remove(actor)) ClientEvent_OnActorRemove?.Invoke(actor); }
+    }
     public static class Dew
     {
         public static T FindActorOfType<T>() where T : Actor

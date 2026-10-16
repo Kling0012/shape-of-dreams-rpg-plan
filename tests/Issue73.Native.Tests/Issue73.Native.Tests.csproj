@@ -14,6 +14,8 @@
     <ProjectReference Include="../../src/SodRpg.Core/SodRpg.Core.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="../../src/SodRpg.Mod/ExpeditionDiagnostics.cs" Link="ModUnderTest/ExpeditionDiagnostics.cs" />
+    <Compile Include="../../src/SodRpg.Mod/ClientSession.Diagnostics.cs" Link="ModUnderTest/ClientSession.Diagnostics.cs" />
     <Compile Include="../../src/SodRpg.Mod/HostAuthority.KillSync.cs" Link="ModUnderTest/HostAuthority.KillSync.cs" />
     <Compile Include="../../src/SodRpg.Mod/HostAuthority.Hello.cs" Link="ModUnderTest/HostAuthority.Hello.cs" />
     <Compile Include="../../src/SodRpg.Mod/HostAuthority.RoomOmens.cs" Link="ModUnderTest/HostAuthority.RoomOmens.cs" />
@@ -37,6 +39,7 @@
     <Compile Include="../../src/SodRpg.Mod/InfinityMode.PersonalChoices.cs" Link="ModUnderTest/InfinityMode.PersonalChoices.cs" />
     <Compile Include="../../src/SodRpg.Mod/InfinityMode.PersonalWaypoints.cs" Link="ModUnderTest/InfinityMode.PersonalWaypoints.cs" />
     <Compile Include="../../src/SodRpg.Mod/ClientSession.LobbyReturn.cs" Link="ModUnderTest/ClientSession.LobbyReturn.cs" />
+    <Compile Include="../../src/SodRpg.Mod/CoopTradeDiagnostics.cs" Link="ModUnderTest/CoopTradeDiagnostics.cs" />
     <Compile Include="../../src/SodRpg.Mod/CoopTradeTransport.cs" Link="ModUnderTest/CoopTradeTransport.cs" />
     <Compile Include="../../src/SodRpg.Mod/CoopTradeMessages.cs" Link="ModUnderTest/CoopTradeMessages.cs" />
     <Compile Include="../../src/SodRpg.Mod/NetMessages.cs" Link="ModUnderTest/NetMessages.cs" />

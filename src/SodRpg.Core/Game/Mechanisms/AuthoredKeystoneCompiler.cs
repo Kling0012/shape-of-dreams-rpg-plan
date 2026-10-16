@@ -77,12 +77,6 @@ namespace SodRpg.Core.Game
                 default: throw new ArgumentException("Grant uses a typed mechanism. Unknown numeric field: " + field);
             }
         }
-        public static KeystoneField RecipientField(string field, out KeystoneRecipientKind recipient)
-        {
-            recipient = field == "SelfValue" ? KeystoneRecipientKind.Self
-                : field == "AllyValue" ? KeystoneRecipientKind.AlliedHero : throw new ArgumentException("Expected SelfValue or AllyValue.");
-            return KeystoneField.Value;
-        }
     }
 
     public static class AuthoredKeystoneComposer

@@ -356,7 +356,6 @@ namespace SodRpg.Core.Game
         internal int? TargetMaximum, EveryNMaximum, ArgumentMaximum;
         internal long TargetWorking, EveryNWorking, ArgumentWorking;
         internal bool DurationAbsolute;
-        public decimal WoundRatePerSecond => DurationSeconds > 0 ? Value / DurationSeconds : 0;
     }
 
 

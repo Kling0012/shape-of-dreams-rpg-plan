@@ -144,7 +144,7 @@ namespace SodRpg.Core.Game
                     ev.Add(new GameEvent(EventKind.Warning, Loc.T("前回の遠征は確保されずに中断しました。", "Your previous expedition was interrupted unsecured.")));
                     CaptureInterruptedRelics(p, reservations, ev);
                 }
-                ev.AddRange(EndRun(p, victory: terminal == true, reservedUids: reservations));
+                ev.AddRange(EndRun(p, victory: terminal == true, reservedUids: reservations, preserveContinue: !terminal.HasValue));
             }
             // 開始深度は v1.1 で廃止（本体の Limbo 深度に統合）。
             p.Run = new RunState { RunId = runId, HeroKey = heroKey, LevelAtStart = p.DreamLevel, DailyId = daily?.Id ?? 0, LimboDepth = Math.Max(0, limboDepth), DreamDepth = dreamDepth ?? p.LastDreamDepth };
@@ -754,11 +754,12 @@ namespace SodRpg.Core.Game
             Waypoints.Expire(run);
             p.CompletedRunId = run.RunId;
             p.CompletedRunSecuredReturn = true;
+            p.DiscardCompletedContinue(run.RunId);
             p.Run = null;
             return ev;
         }
 
-        public static List<GameEvent> EndRun(Profile p, bool victory, ISet<string> reservedUids = null)
+        public static List<GameEvent> EndRun(Profile p, bool victory, ISet<string> reservedUids = null, bool preserveContinue = false)
         {
             var ev = new List<GameEvent>();
             var run = p.Run;
@@ -825,6 +826,7 @@ namespace SodRpg.Core.Game
             Waypoints.Expire(run);
             p.CompletedRunId = run.RunId;
             p.CompletedRunSecuredReturn = false;
+            if (!preserveContinue) p.DiscardCompletedContinue(run.RunId);
             p.Run = null;
             ev.AddRange(Feats.Check(p));
             return ev;
@@ -1189,22 +1191,23 @@ namespace SodRpg.Core.Game
         }
 
         /// <summary>ホストが撃破時に採取した、敵の元素状態。</summary>
-        public static List<GameEvent> OnElementalKill(Profile p, bool fire, bool cold, bool light, bool dark)
+        public static List<GameEvent> OnElementalKill(Profile p, bool fire, bool cold, bool light, bool dark, int count = 1)
         {
             var ev = new List<GameEvent>();
-            if (fire) AdvanceBounty(p, BountyKind.FireHunter, 1, false, ev);
-            if (cold) AdvanceBounty(p, BountyKind.ColdHunter, 1, false, ev);
-            if (light) AdvanceBounty(p, BountyKind.LightHunter, 1, false, ev);
-            if (dark) AdvanceBounty(p, BountyKind.DarkHunter, 1, false, ev);
+            if (count <= 0) return ev;
+            if (fire) AdvanceBounty(p, BountyKind.FireHunter, count, false, ev);
+            if (cold) AdvanceBounty(p, BountyKind.ColdHunter, count, false, ev);
+            if (light) AdvanceBounty(p, BountyKind.LightHunter, count, false, ev);
+            if (dark) AdvanceBounty(p, BountyKind.DarkHunter, count, false, ev);
             return ev;
         }
 
         /// <summary>確定後の有効量が正の支援だけを数える。回復は他の旅人へのもの。</summary>
-        public static List<GameEvent> OnSupportApplied(Profile p, bool shield, bool ally, float effectiveAmount)
+        public static List<GameEvent> OnSupportApplied(Profile p, bool shield, bool ally, float effectiveAmount, int count = 1)
         {
             var ev = new List<GameEvent>();
-            if (float.IsNaN(effectiveAmount) || float.IsInfinity(effectiveAmount) || effectiveAmount <= 0) return ev;
-            if (shield || ally) AdvanceBounty(p, shield ? BountyKind.ShieldGiver : BountyKind.AllyHealer, 1, false, ev);
+            if (count <= 0 || float.IsNaN(effectiveAmount) || float.IsInfinity(effectiveAmount) || effectiveAmount <= 0) return ev;
+            if (shield || ally) AdvanceBounty(p, shield ? BountyKind.ShieldGiver : BountyKind.AllyHealer, count, false, ev);
             return ev;
         }
 

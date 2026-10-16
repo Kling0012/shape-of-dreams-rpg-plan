@@ -48,7 +48,7 @@ namespace SodRpg.Mod
             if (target == null || hero == null) return;
             bool otherAlly = target is Hero && target != hero && target.GetRelation(hero) == EntityRelation.Ally;
             if (SupportBountyCredit.AllyHeal(target.currentHealth - healthBefore, otherAlly))
-                SendBountyReport(rt, BountyReportKind.AllyHealed, 1);
+                QueueBountyReport(rt, BountyReportKind.AllyHealed, 1);
         }
 
         private void CreditShieldGranted(HeroRuntime rt, Entity target, float finalAmount)
@@ -57,7 +57,7 @@ namespace SodRpg.Mod
             if (target == null || hero == null) return;
             bool selfOrAlly = target == hero || target.GetRelation(hero) == EntityRelation.Ally;
             if (SupportBountyCredit.ShieldGrant(true, finalAmount, selfOrAlly))
-                SendBountyReport(rt, BountyReportKind.ShieldGranted, 1);
+                QueueBountyReport(rt, BountyReportKind.ShieldGranted, 1);
         }
 
         // ---- kill / element attribution through summons ----

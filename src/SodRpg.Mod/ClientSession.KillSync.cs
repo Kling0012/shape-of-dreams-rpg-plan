@@ -35,6 +35,7 @@ namespace SodRpg.Mod
         private IReadOnlyList<KillReceiptState> _killDurableReceipts = Array.Empty<KillReceiptState>();
         private string _killSavedRunId, _killDurableRunId, _currentKillStreamId;
         private float _nextKillReceipt;
+        private float _lastKillProfileSave = float.NegativeInfinity;
         private string _killRetirementRunId;
         private int _killRetirementZone = -1;
         private KillClassificationCheckpoint _hostKillRestore;
@@ -227,11 +228,12 @@ namespace SodRpg.Mod
             DeferKillSave();
         }
 
-        /// <summary>Coalesce kill facts, rewards and pressure dividends into the same five-second save window.</summary>
-        private void DeferKillSave()
+        /// <summary>Coalesce kill facts and urgent rewards without saving more often than once per two seconds.</summary>
+        private void DeferKillSave(bool urgent = false)
         {
             MarkDirty(false);
-            float deadline = Time.unscaledTime + 5f;
+            float now = Time.unscaledTime;
+            float deadline = Math.Max(now + (urgent ? 0f : 5f), _lastKillProfileSave + 2f);
             if (_nextSave > deadline) _nextSave = deadline;
         }
 

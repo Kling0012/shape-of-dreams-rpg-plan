@@ -16,7 +16,18 @@ namespace SodRpg.Mod
         }
 
         private static readonly ConditionalWeakTable<Actor, Lifetime> Lifetimes = new ConditionalWeakTable<Actor, Lifetime>();
-        private static readonly ConditionalWeakTable<Actor, Lifetime>.CreateValueCallback CreateLifetime = _ => new Lifetime();
+        // Conservative count: GC can remove weak keys without decrementing this value.
+        // Only zero is significant; an overcount merely keeps the TryGetValue lookup enabled.
+        private static int _abnormalCount;
+
+        private static Lifetime AbnormalLifetime(Actor actor)
+        {
+            if (Lifetimes.TryGetValue(actor, out var life)) return life;
+            life = new Lifetime();
+            Lifetimes.Add(actor, life);
+            _abnormalCount++;
+            return life;
+        }
         private static readonly HashSet<string> Warnings = new HashSet<string>();
         private static readonly Action<Actor> FinishDestroy = FindFinishDestroy();
 
@@ -36,7 +47,10 @@ namespace SodRpg.Mod
             if (Warnings.Add(kind)) Log.Warn("Native actor lifetime: " + kind + ": " + error.GetType().Name + ": " + error.Message);
         }
 
-        internal static void Reset(Actor actor) => Lifetimes.Remove(actor);
+        internal static void Reset(Actor actor)
+        {
+            if (_abnormalCount != 0 && Lifetimes.Remove(actor)) _abnormalCount--;
+        }
 
         internal static void AfterCleanup(Actor actor)
         {
@@ -74,24 +88,32 @@ namespace SodRpg.Mod
             catch (Exception ex) { WarnOnce("client despawn", ex); }
         }
 
-        internal static bool CanUpdate(Actor actor)
+        internal static bool CanUpdate(Actor actor, bool checkVictim = true)
         {
             if (!(actor is StatusEffect effect) || !effect.isActive) return true;
-            var life = Lifetimes.GetValue(effect, CreateLifetime);
-            if (life.CleanupRequested) return false;
+            Lifetime life = null;
+            if (_abnormalCount != 0 && Lifetimes.TryGetValue(effect, out life))
+            {
+                if (life.CleanupRequested) return false;
+                if (life.Faulted) { Retire(effect); return false; }
+                if (!checkVictim) return false; // A temporarily unresolved/parked victim waits for LogicUpdate.
+            }
+            if (!checkVictim) return true;
             try
             {
-                if (life.Faulted)
-                {
-                    Retire(effect);
-                    return false;
-                }
                 Entity victim = effect.victim;
                 bool valid = IsLive(victim);
                 if (valid && effect is Se_MirageSkin_Sanctification_Protected protectedSkin)
                     valid = protectedSkin.beam != null && victim.Visual != null
                         && IsLive(effect.info.caster) && effect.info.caster.Visual != null;
-                if (valid) return true;
+                if (valid)
+                {
+                    if (life != null) Reset(effect);
+                    return true;
+                }
+                // life may still be null on this first invalid-victim update. The remaining
+                // path does not dereference it; Retire obtains the recorded lifetime itself.
+                AbnormalLifetime(effect);
                 // A missing SyncVar reference is not an authoritative despawn. Room loading
                 // and spawn ordering can take more than two frames; locally retiring here
                 // permanently unregisters a still-live effect from the update manager.
@@ -116,12 +138,12 @@ namespace SodRpg.Mod
         private static bool IsLive(Entity entity) => entity != null && entity.isActive
             && entity.gameObject.activeInHierarchy && entity.Status != null;
 
-        internal static void MarkFaulted(Actor actor) => Lifetimes.GetValue(actor, CreateLifetime).Faulted = true;
+        internal static void MarkFaulted(Actor actor) => AbnormalLifetime(actor).Faulted = true;
 
         internal static void Retire(Actor actor)
         {
             if (actor == null) return;
-            var life = Lifetimes.GetValue(actor, CreateLifetime);
+            var life = AbnormalLifetime(actor);
             if (life.CleanupRequested) return;
             life.CleanupRequested = true;
             try
@@ -167,13 +189,13 @@ namespace SodRpg.Mod
     [HarmonyPatch(typeof(Actor), nameof(Actor.FrameUpdate))]
     internal static class NativeStatusActorFrameGuard
     {
-        private static bool Prefix(Actor __instance) => NativeActorLifetime.CanUpdate(__instance);
+        private static bool Prefix(Actor __instance) => NativeActorLifetime.CanUpdate(__instance, false);
     }
 
     [HarmonyPatch(typeof(StatusEffect), nameof(StatusEffect.FrameUpdate))]
     internal static class NativeStatusFrameGuard
     {
-        private static bool Prefix(StatusEffect __instance) => NativeActorLifetime.CanUpdate(__instance);
+        private static bool Prefix(StatusEffect __instance) => NativeActorLifetime.CanUpdate(__instance, false);
     }
 
     [HarmonyPatch(typeof(Se_MirageSkin_Sanctification_Protected), "UpdateBeamPositions")]

@@ -135,26 +135,6 @@ namespace SodRpg.Core.Game
                 + NL + Loc.T($"必要ポイント：{cost}", $"Cost: {cost} {(cost == 1 ? "point" : "points")}");
         }
 
-        /// <summary>
-        /// 刻印の取得条件を、実際の数字つきの1文にする。
-        /// 例：「この旅人の星を合計6段取得し、熟練度3に達する必要があります（今は星3段・熟練度10）。」
-        /// <paramref name="masteryNeeded"/> が 0 なら熟練度は条件にしない（汎用ツリーの刻印）。
-        /// slots/starLevel にはこの旅人の刻印の枠数と星のレベルを渡し、選べる数と次の枠の条件も添える。
-        /// </summary>
-        public static string KeystoneRequirement(bool heroTree, int ranksNeeded, int ranksHave, int masteryNeeded, int masteryHave, bool connected,
-            int slots = 1, int starLevel = 0)
-        {
-            string scopeJa = heroTree ? "この旅人の星" : "同じ系統の星", scopeEn = heroTree ? "this Traveler's stars" : "stars of the same line";
-            string ja = $"{scopeJa}を合計{ranksNeeded}段取得" + (masteryNeeded > 0 ? $"し、熟練度{masteryNeeded}に達する" : "する")
-                + "必要がある（今は星" + ranksHave + "段" + (masteryNeeded > 0 ? "、熟練度" + masteryHave : "") + "）。";
-            string en = $"Acquire {ranksNeeded} ranks of {scopeEn}" + (masteryNeeded > 0 ? $" and reach mastery {masteryNeeded}" : "")
-                + " (now: " + ranksHave + " ranks" + (masteryNeeded > 0 ? ", mastery " + masteryHave : "") + ").";
-            string text = Loc.T(ja, en);
-            if (!connected) text += Loc.T("さらに、取得済みの星と線でつながっている必要がある。", " It must also connect to your acquired stars.");
-            return Loc.T($"刻印は星のレベルに応じて最大{slots}つまで選べる。", $"Up to {slots} keystones can be selected, depending on the star level. ") + text
-                + NextSlotText(starLevel);
-        }
-
         /// <summary>次の枠が開く星のレベルの1文。開く枠がなければ空文字。</summary>
         public static string NextSlotText(int starLevel)
         {
@@ -165,19 +145,6 @@ namespace SodRpg.Core.Game
         /// <summary>刻印の帯に出す「刻印 n/枠数」。</summary>
         public static string KeystoneSlotStatus(int selected, int slots)
             => Loc.T($"刻印 {selected}/{slots}", $"Keystones {selected}/{slots}");
-
-        /// <summary>
-        /// 星の状態を1文で。条件の説明と「振れます」を重ねて出さないよう、状態はここで1つだけ決める。
-        /// </summary>
-        public static string AllocationStatus(bool keystone, bool maxed, bool unlocked, bool enoughPoints)
-        {
-            if (maxed) return keystone ? Loc.T("選択中です。", "Selected.") : Loc.T("最大段です。", "Maximum rank.");
-            if (!unlocked)
-                return keystone ? Loc.T("まだ条件を満たしていません。", "Requirements not yet met.")
-                    : Loc.T("取得済みの星と線でつながると振れます。", "Requires a connection to an acquired star.");
-            if (!enoughPoints) return Loc.T("ポイントが足りません。", "Not enough points.");
-            return keystone ? Loc.T("選べます。", "Available to select.") : Loc.T("振れます。", "Available.");
-        }
 
         /// <summary>選択の星の1つの選択肢を、名前と効果の本文で（選択中の印は付けない。印は画面側で色と ✓ で出す）。</summary>
         public static string ChoiceOptionBody(TalentDef star, int option, bool bulleted = false)

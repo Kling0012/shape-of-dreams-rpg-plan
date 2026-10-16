@@ -94,6 +94,17 @@ namespace SodRpg.Core.Game
             return null;
         }
 
+        /// <summary>融合を知らない相手へは、段階を失う遺物の受け渡しだけを拒否する。</summary>
+        public static string ValidateFusion(Profile profile, CoopTradeOffer offer, bool fusionSupported)
+        {
+            if (fusionSupported || profile == null || offer?.RelicUids == null) return null;
+            foreach (string uid in offer.RelicUids)
+                if (FindOffered(profile, uid)?.FusionLevel > 0)
+                    return Loc.T("融合済みの遺物は旧版と交換できません。ホストと交換相手を融合対応版に更新してください。",
+                        "Fused relics cannot be traded with older versions. Update the host and trade partner to a version that supports Fusion.");
+            return null;
+        }
+
         public static CoopTradeReceipt CreateReceipt(string id, string hostKey, string firstKey, Profile first,
             CoopTradeOffer firstOffer, string secondKey, Profile second, CoopTradeOffer secondOffer)
         {
@@ -426,7 +437,7 @@ namespace SodRpg.Core.Game
                 var snapshot = ProfileCodec.ReadCheckpointProfile(checkpoint.Snapshot);
                 CopyEconomics(snapshot, profile);
                 CopyDurableState(snapshot, profile);
-                refreshed.Add(new RunCheckpoint(checkpoint.Id, checkpoint.RunId, ProfileCodec.WriteCheckpointProfile(snapshot)));
+                refreshed.Add(new RunCheckpoint(checkpoint.Id, checkpoint.RunId, ProfileCodec.WriteCheckpointProfile(snapshot), checkpoint.Committed));
             }
             string baseline = null;
             if (!string.IsNullOrEmpty(profile.ContinueLobbyBaseline))

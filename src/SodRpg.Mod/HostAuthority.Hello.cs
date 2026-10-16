@@ -15,6 +15,7 @@ namespace SodRpg.Mod
 
         private readonly Dictionary<DewPlayer, string> _versionMismatches = new Dictionary<DewPlayer, string>();
         private readonly HashSet<DewPlayer> _helloPeers = new HashSet<DewPlayer>();
+        private readonly HashSet<DewPlayer> _bountyCountPeers = new HashSet<DewPlayer>();
         private readonly HashSet<DewPlayer> _autocastPressurePeers = new HashSet<DewPlayer>();
         private Action<DreamforgeAutocastPressureCapabilityMsg, DewPlayer> _onAutocastPressureCapability;
         internal bool AutocastPressureReady;
@@ -27,6 +28,7 @@ namespace SodRpg.Mod
         internal static IReadOnlyList<string> VersionWarnings => MismatchScratch;
 
         private Action<DreamforgeHelloMsg, DewPlayer> _onHello;
+        private Action<DewPlayer> _onHelloPlayerChanged;
         private Actor _helloActor;
 
         private void RegisterHello(Actor actor)
@@ -38,6 +40,13 @@ namespace SodRpg.Mod
             _helloActor = actor;
             if (actor == null) return;
             if (_onHello == null) _onHello = OnHello;
+            if (_onHelloPlayerChanged == null) _onHelloPlayerChanged = OnHelloPlayerChanged;
+            // State changes remove the old roster entry before adding the new one.
+            // Observe both notifications so lobby -> game travel restores a surviving warning.
+            DewPlayer.onLobbyPlayerAdded += _onHelloPlayerChanged;
+            DewPlayer.onLobbyPlayerRemoved += _onHelloPlayerChanged;
+            DewPlayer.onGamePlayerAdded += _onHelloPlayerChanged;
+            DewPlayer.onGamePlayerRemoved += _onHelloPlayerChanged;
             actor.CustomRpc_RegisterServerMessageHandler<DreamforgeHelloMsg>(nameof(DreamforgeHelloMsg), _onHello);
             RegisterOverflowBonus(actor);
             RegisterBuildInputCapability(actor);
@@ -51,6 +60,10 @@ namespace SodRpg.Mod
 
         private void UnregisterHello(Actor actor)
         {
+            DewPlayer.onLobbyPlayerAdded -= _onHelloPlayerChanged;
+            DewPlayer.onLobbyPlayerRemoved -= _onHelloPlayerChanged;
+            DewPlayer.onGamePlayerAdded -= _onHelloPlayerChanged;
+            DewPlayer.onGamePlayerRemoved -= _onHelloPlayerChanged;
             if (actor != null && _onHello != null)
                 try { actor.CustomRpc_UnregisterServerMessageHandler<DreamforgeHelloMsg>(_onHello); } catch (Exception) { }
             UnregisterOverflowBonus(actor);
@@ -65,6 +78,7 @@ namespace SodRpg.Mod
             _forbiddenSmithPeers.Clear();
             _nemesisGrudgePeers.Clear();
             _autocastPressurePeers.Clear();
+            _bountyCountPeers.Clear();
             RebuildMismatchList();
         }
 
@@ -100,6 +114,8 @@ namespace SodRpg.Mod
                 || !DewPlayer.gamePlayers.Contains(caller) && !DewPlayer.lobbyPlayers.Contains(caller)) return;
             if (msg.netLite == 1 && _helloPeers.Contains(caller)) _netLitePeers.Add(caller);
             else _netLitePeers.Remove(caller);
+            if (msg.bountyCounts == 1 && _helloPeers.Contains(caller)) _bountyCountPeers.Add(caller);
+            else _bountyCountPeers.Remove(caller);
             if (msg.roomOmens == 1 && _helloPeers.Contains(caller)) _roomOmenPeers.Add(caller);
             else _roomOmenPeers.Remove(caller);
             if (msg.forbiddenSmith == 1 && _helloPeers.Contains(caller)) _forbiddenSmithPeers.Add(caller);
@@ -191,11 +207,14 @@ namespace SodRpg.Mod
             return string.Join(", ", items);
         }
 
+        private void OnHelloPlayerChanged(DewPlayer player) => RebuildMismatchList();
+
         private void RebuildMismatchList()
         {
             MismatchScratch.Clear();
             foreach (var kv in _versionMismatches)
-                if (kv.Key != null && DewPlayer.gamePlayers.Contains(kv.Key)) MismatchScratch.Add(kv.Value);
+                if (kv.Key != null && (DewPlayer.gamePlayers.Contains(kv.Key) || DewPlayer.lobbyPlayers.Contains(kv.Key)))
+                    MismatchScratch.Add(kv.Value);
         }
     }
 }
