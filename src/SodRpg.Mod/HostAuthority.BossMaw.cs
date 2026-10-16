@@ -102,8 +102,9 @@ namespace SodRpg.Mod
                 else if (profile.Id == "boss_maw.charm")
                 {
                     if (kind != BossEvent.MainHit) continue;
-                    state.CharmUntil = now + 4f;
-                    if (state.CharmHits < 3) { state.CharmHits++; continue; }
+                    // Retain MainHits - 1 hits, then heal on the next hit without consuming the count on failure.
+                    state.CharmUntil = now + action.CounterLifetimeMillis / 1000f;
+                    if (state.CharmHits < action.MainHits - 1) { state.CharmHits++; continue; }
                 }
                 else if (profile.Id == "boss_maw.stage2" || profile.Id == "boss_maw.stage3" || profile.Id == "boss_maw.stage6") continue;
                 else if (action.Event != kind) continue;
