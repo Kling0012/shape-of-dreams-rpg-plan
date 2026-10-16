@@ -511,6 +511,8 @@ namespace SodRpg.Mod
     internal sealed partial class HostAuthority
     {
         internal static HostAuthority NativeInstance;
+        // HostAuthority.MeleeCoop.cs is not compiled here; hello replies carry the "not sent" value.
+        internal int MeleeCoopWire => 0;
         internal static readonly RunGrowthLedger RunGrowthLedger = new RunGrowthLedger();
         private Actor _registeredOn;
         private ZoneManager _zone;
@@ -773,6 +775,7 @@ namespace SodRpg.Mod
         private Actor _sentContinueReceiptActor;
         private float _helloFirstSent = -1f, _nextHello;
         private bool _helloAnswered, _hostCompatibilityWarned, _hostInfinityAvailable;
+        private int _hostMeleeCoop;
         public string HostVersionWarning { get; private set; }
         private Build _buildCache;
         private float _buildCacheTime;

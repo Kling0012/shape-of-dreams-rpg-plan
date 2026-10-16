@@ -13,6 +13,8 @@ namespace UnityEngine
         internal static float Distance(Vector3 a, Vector3 b) => (float)Math.Sqrt((a - b).sqrMagnitude);
     }
     internal static class Time { internal static float time; }
+    internal class Component { internal T GetComponent<T>() where T : class => this as T; }
+    internal sealed class GameObject { internal object Component; internal T GetComponent<T>() where T : class => Component as T; }
     internal sealed class RangeAttribute : Attribute { internal RangeAttribute(int min, int max) { } }
 }
 namespace UnityEngine.InputSystem { public enum Key { F6, F7, F8, F9 } }
@@ -30,6 +32,7 @@ namespace SodRpg.Mod
     {
         internal static readonly List<string> Warnings = new List<string>();
         internal static void Warn(string text) => Warnings.Add(text);
+        internal static void Info(string text) { }
         internal static void Error(string text) => throw new InvalidOperationException(text);
     }
     internal enum EntityRelation { Ally, Enemy }
@@ -126,6 +129,10 @@ namespace SodRpg.Mod
     internal sealed class ClientSession
     {
         internal Hero LocalHero;
+        internal Build Build = new Build();
+        // Set by the production hello reply, as ClientSession.OnHello does.
+        internal int HostMeleeCoop;
+        internal Build DisplayBuild(string heroKey) => Build;
         internal static ulong HostAuthorityGeneration;
         internal static string ContinueRunId, ContinueCheckpointId, ContinueResumeSession;
         internal static string HeroKeyOf(Hero hero) => hero.GetType().Name;
@@ -174,6 +181,7 @@ namespace SodRpg.Mod
         private float _nextLinkCheck;
         private Func<string, bool> _linkMarks;
         private bool _displayMeleeRangeConversion, _starSumDirty;
+        private int _displayMeleeAttackSpeed, _displayMeleeCoop;
         private readonly Dictionary<string, string> _tradeRelicTexts = new Dictionary<string, string>();
         private int _tab;
         internal bool Open;

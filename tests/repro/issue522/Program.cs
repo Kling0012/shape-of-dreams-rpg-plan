@@ -86,7 +86,8 @@ internal static class Program
         var rt = Runtime(Melee(new Hero_Vesper()), speed, 30);
         var host = new HostAuthority();
         host.Scan(rt);
-        var ui = new DreamforgeUi(new ClientSession { LocalHero = rt.Hero }, new DreamforgeConfig());
+        // The equipment lines are read with the menu open, from the viewer's own display build.
+        var ui = new DreamforgeUi(new ClientSession { LocalHero = rt.Hero, Build = rt.Powers.Build }, new DreamforgeConfig()) { Open = true };
         ui.Draw();
         string text = Content.FormatStat(Stat.AttackRangePct, 30);
         float effective = rt.BaseBonus.attackSpeedPercentage - speed;
@@ -192,7 +193,7 @@ internal static class Program
             var ally = Melee(new Hero_Husk());
             ally.agentPosition = new Vector3(14, 0, 0);
             NetworkedManagerBase<ActorManager>.softInstance.allHeroes.AddRange(new[] { hero, ally });
-            var ui = new DreamforgeUi(new ClientSession { LocalHero = hero }, new DreamforgeConfig { coopDistanceFalloff = true });
+            var ui = new DreamforgeUi(new ClientSession { LocalHero = hero, HostMeleeCoop = host.ReplyForTest().meleeCoop }, new DreamforgeConfig { coopDistanceFalloff = true });
             Equal(CoopDistanceNative.Coefficient(hero, ally), ui.LinkCoefficient("Hero_Husk"),
                 "host disabled falloff at 14m, client enabled falloff: actual vs LinkMarks display");
         });
@@ -203,7 +204,7 @@ internal static class Program
             var rt = Runtime(Melee(new Hero_Vesper()), 0, 30);
             host.Scan(rt);
             Equal(30f, rt.BaseBonus.attackRangePercentage, "host preserves range");
-            var ui = new DreamforgeUi(new ClientSession { LocalHero = rt.Hero }, new DreamforgeConfig { meleeRangeToSpeed = true });
+            var ui = new DreamforgeUi(new ClientSession { LocalHero = rt.Hero, HostMeleeCoop = host.ReplyForTest().meleeCoop }, new DreamforgeConfig { meleeRangeToSpeed = true });
             ui.Draw();
             Equal(false, Content.DisplayMeleeRangeConversion,
                 "host conversion OFF must show range, even when local conversion is ON");
