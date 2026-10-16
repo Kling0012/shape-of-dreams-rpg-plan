@@ -8,9 +8,227 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
+### 修正 / Fixes
+- インフィニティ：周期に足りない小さな地図（純白の道など）で最初の周期からボスへ繰り上がると、保存データが読み込めなくなる（バックアップや新しいプロフィールに戻る）問題を修正。案内の「初期の遺物を3つ」を実際に配る数（6つ）に直し、星図の上限ポイント・到達刻印の必要ポイントも実際の値から表示する。 / Infinity: a first-cycle finale promotion on a short graph no longer makes the save unreadable; the welcome hint now states the real starter relic count (6), and hint numbers come from the shared constants.
+
+---
+
+## v3.2.2 — Smoother Trade tab with large vaults（2026-10-17）
+
+この版は、保管庫の遺物が多いときに取引タブが重くなる問題を直す更新です。 / This update fixes the Trade tab slowing down when the vault holds many relics.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- 保管庫に遺物が数百件あると、取引タブを開いている間にフレームレートが大きく落ちていた問題を直しました。工房で保管庫を最大の1960枠まで広げた場合も同じでした。これからは、保管庫と鞄の遺物一覧で画面に見えている行だけを表示するので、遺物が多くても動作が重くなりにくくなります。スクロールできる範囲は今までどおりです。 / Fixed an issue where the frame rate dropped sharply while the Trade tab was open if the vault held hundreds of relics, including a vault expanded to the maximum of 1,960 slots in the workshop. The vault and bag relic lists now show only the rows visible on screen, so the tab stays responsive even with many relics. You can still scroll through the whole list as before.
+- 取引タブの遺物一覧は、装備・鍛冶の一覧と同じく、どの行も同じ高さで並ぶようになりました。長い名前は1行で表示し、説明は行の中に収まる分だけを表示します。全文は行にカーソルを合わせると表示され、選択済みの欄でも確認できます。 / Relic rows in the Trade tab now all have the same height, like the equipment and forge lists. Long names are shown on one line, and descriptions are trimmed to fit the row. Hover over a row to see the full text, which is also shown in the selected section.
+- 名前・レア度・部位で絞り込みを変えると、一覧は先頭に戻ります。 / Changing the name, rarity, or slot filter now scrolls the list back to the top.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
+## v3.2.1 — Secure point nightmare chance now matches the actual roll（2026-10-17）
+
+この版は、確保地点のパネルに表示される悪夢化の確率を、実際の抽選と合うように直す更新です。 / This update makes the nightmare chance shown on the secure point panel match the actual roll.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- 確保地点のパネルで「通常の敵の◯%が悪夢化」と表示される確率が、実際の確率より低く出ていた問題を直しました。夢レベルが高く装備が育っているほど差が大きくなり、たとえば30%と表示されていても、実際には40〜60%前後になることがありました。これからは、夢の圧、パネルで選んでいる道標、一行の装備の効果も表示に含めるので、表示される確率が実際の確率と一致します。 / Fixed an issue where the "◯% of normal enemies become nightmares" chance on the secure point panel was lower than the real chance. The gap grew with higher dream levels and stronger gear, so a displayed 30% could actually be around 40–60%. The panel now includes Dream Pressure, the waypoint selected on the panel, and the party's gear, so the shown chance matches the real one.
+- 「明けない夜」の道標を選んでいるとき、ボス以外の敵がすべて悪夢化するのに通常の確率が表示されていた問題を直しました。これからは「ボス以外のすべての敵が悪夢化」と表示されます。 / Fixed an issue where selecting the "Endless Night" waypoint still showed a normal percentage even though every non-boss enemy becomes a nightmare. The panel now says "All non-boss enemies become nightmares."
+- 協力プレイでホストが古いバージョンのままの場合は、一行の装備の効果を確かめられないため、確率を「◯%以上」と表示します。 / In co-op, if the host is on an older version, the party's gear effect can't be checked, so the chance is shown as "at least ◯%".
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
+## v3.2.0 — Minor adjustments（2026-10-17）
+
+細かな調整を行いました。 / Minor adjustments.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game. Please report anything odd.
+
+---
+
+## v3.1.7 — Fixes for cooking ingredient limits and icon numbers（2026-10-17）
+
+この版は、料理の素材まわりの不具合を直す更新です。 / This update fixes bugs related to cooking ingredients.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- 料理の素材のうち1つでも上限の設定が正しくないと、すべての素材で、料理1回に使う量の上限が効かなくなる問題を直しました。これからは問題のある素材だけが元のゲームの動きに戻り、ほかの素材はこれまでどおり上限の量だけ使われます。 / Fixed an issue where one ingredient with an invalid limit setting turned off the per-cook usage limit for every ingredient. Now only that ingredient goes back to the base game's behavior, and the other ingredients are still used only up to their limit.
+- 素材アイコンを別の場所の表示に使い直したとき、前の数字が消えずに残ることがある問題を直しました。 / Fixed an issue where an old number could stay on an ingredient icon after the icon was reused in another place.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
+## v3.1.6 — Maintenance update: co-op processing cleanup and troubleshooting logs（2026-10-17）
+
+この版は内部の保守のための更新で、ゲーム内の動きや数値に変更はありません。 / This is a maintenance update with no changes to gameplay or numbers.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### この版について / About this version
+
+- 協力プレイで敵を倒した記録をやり取りする処理を内部で整理し、無駄な繰り返しを減らしました。遊び方や報酬、表示はこれまでと変わりません。 / We streamlined the internal processing used to exchange kill records in co-op, cutting out redundant work. How the game plays, rewards and what is shown on screen are unchanged.
+- 協力プレイの記録のやり取りや取引で問題が起きたときに原因を調べやすくするため、調査用の記録を追加しました。この版で不具合が直ったわけではありません。 / To make problems easier to investigate when exchanging records or trading in co-op, we added logging for troubleshooting. This version does not fix any bug by itself.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
+## v3.1.5 — Maintenance update: streamlined build and roll processing（2026-10-17）
+
+この版は内部の保守のための更新で、ゲーム内の動きや数値に変更はありません。 / This is a maintenance update with no changes to gameplay or numbers.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### この版について / About this version
+
+- 装備の能力を集計する処理と、抽選の処理を内部で整理し、無駄な繰り返しを減らしました。遊び方や効果の内容、確率、表示はこれまでと変わりません。 / We streamlined the internal processing used to total up equipment effects and to run random rolls, cutting out redundant work. How the game plays, what effects do, the odds and what is shown on screen are unchanged.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
+## v3.1.4 — Maintenance update with no gameplay changes（2026-10-17）
+
+この版は内部の保守のための更新で、ゲーム内の動きや数値に変更はありません。 / This is a maintenance update with no changes to gameplay or numbers.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### この版について / About this version
+
+- 今後の調整で設定の誤りが入り込まないよう、開発側の確認を強化しました。遊び方や敵の挙動、表示はこれまでと変わりません。 / We strengthened development-side checks so that configuration mistakes are less likely to slip into future updates. How the game plays, how enemies behave and what is shown on screen are unchanged.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
+## v3.1.3 — Clearer, localized co-op trade messages（2026-10-17）
+
+協力プレイの取引で表示されるメッセージを改善しました。 / This version improves the messages shown during co-op trades.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
 ### 改善 / Improvements
 
-- 協力取引で、保管庫が大きく記録の分割送信に時間がかかるとき、受け手の再請求とホストの再送が繰り返されていたのを、受け側は受信中は再請求しない・ホストは同じ参加者への再送に最低間隔を設けることで抑えました。再接続時の再送は間隔を待たずに行われ、記録が届かなくなることはありません。 / Large-stash co-op trades no longer loop between the receiver's re-request and the host's re-send: the receiver holds off while a split transfer is still arriving, and the host enforces a minimum interval between re-sends to the same participant. A reconnect still re-sends immediately, so a record is never left undelivered.
+- 協力プレイの取引で、取引が取り消されたときと、接続が切れたときのメッセージを分けました。これまではどちらも同じ文で表示されていました。今後は、取消や時間切れで取引をもう一度申し込めるのか、再接続を待っているのかが区別できます。 / In co-op trades, cancellations and connection changes now show different messages. Both used to show the same text. You can now tell whether a trade was cancelled or timed out and can be offered again, or whether the game is waiting for a player to reconnect.
+
+### 不具合の修正 / Bug fixes
+
+- 協力プレイの取引で、参加者が出した品がホストに受け付けられなかったときに、ホストの言語の内部メッセージが参加者にそのまま表示されることがありました。今後は理由が参加者自身の言語で表示されます。 / Fixed co-op trades where a participant whose offer was rejected by the host could see an internal message in the host's language. The reason is now shown in the participant's own language.
+- 協力プレイの取引で表示されるエラーや取消のメッセージが、どの場面でも参加者それぞれの言語で表示されるようにしました。取引画面の状態表示と、参加者一覧の状態表示も同じように各自の言語で表示されます。 / Error and cancellation messages in co-op trades are now shown in each player's own language in every case. The status shown on the trade screen and in the player list also appears in each player's own language.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
+## v3.1.2 — Melee co-op display polish and locale-independent numbers（2026-10-17）
+
+近接協力の表示まわりを細かく改善し、言語設定によって数値の表示が変わる不具合を修正しました。 / This version polishes how melee co-op is displayed and fixes numbers showing differently depending on language settings.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 改善 / Improvements
+
+- MOD 設定画面の近接協力の4項目で、設定名を短い1行にまとめました。倍率・上限・距離・時間などの詳しい内容は、設定名とは別の説明文に表示されます。改行が原因で文字が重なったり切れたりする心配がなくなり、数値の情報はこれまでどおりすべて確認できます。 / The four melee co-op entries in the MOD settings screen now have short one-line names. Details such as multipliers, caps, distances and durations are shown in a separate description, so the text no longer depends on line breaks that could overlap or get cut off. All the numbers are still shown.
+- 星図で自分以外の旅人のページを見ているときは、近接協力の見出しを「近接の協力効果（通常攻撃が近接の間）」にしました。遠距離攻撃をしている Aurena などが、いま近接攻撃中であるかのように読めなくなります。 / On another traveler's star chart page, the melee co-op heading now reads "Melee co-op effects (while the basic attack is melee)", so a traveler such as Aurena using a ranged attack no longer looks like they are currently melee.
+- 攻撃速度が上限に達していて近接の射程変換による増加が無いときは、「+0%」ではなく「0%」と表示するようにしました。増加が無いことがひと目でわかります。 / When attack speed is already capped and the melee range conversion adds nothing, it now shows "0%" instead of "+0%", making it clear there is no gain.
+- ランを開始するたびに診断ログの記録をリセットするようにしました。2回目以降のランでも同じログがもう一度出力されます。 / Diagnostic logs are now reset at the start of each run, so they are written again in later runs.
+
+### 不具合の修正 / Bug fixes
+
+- 小数点にカンマを使う言語設定の PC で、近接協力の説明文の数値が「0.25」ではなく「0,25」のように表示されることがありました。今後はどの言語設定でも同じ表記で表示されます。 / Fixed melee co-op descriptions showing numbers like "0,25" instead of "0.25" on PCs whose language settings use a comma as the decimal separator. Numbers now display the same way regardless of language settings.
+- 近接協力の崩しを付ける処理をすべて見直し、近接攻撃でない旅人には崩しが付かないようにしました。 / Reviewed every place that applies the melee co-op break and made sure it is not applied to travelers who are not using a melee attack.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
+## v3.1.1 — Fix repeated record re-sending in co-op trades with large stashes（2026-10-17）
+
+協力プレイで、保管庫の大きな参加者と取引するときの不具合を修正しました。 / This version fixes an issue when trading in co-op with a player who has a large stash.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- 協力プレイで保管庫の大きな参加者と取引すると、取引相手の記録の受け取りが終わる前に送信が最初からやり直され、それが何度も繰り返されることがありました。今後は受け取り中にやり直しが起きなくなり、記録は最後まで届きます。取引中に参加者が再接続したときも、これまでどおりすぐに記録が送り直されます。 / Fixed co-op trades with a player who has a large stash, where the partner's record could restart sending before it finished arriving, over and over. Records are no longer restarted mid-transfer and now arrive in full. If a player reconnects during a trade, the record is still re-sent right away as before.
+- インフィニティモードを無効にしたときや終了したときに、記憶していたゾーンの情報も消えるようにしました。 / When Infinity Mode is disabled or ended, the zone information it remembered is now cleared as well.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
+## v3.1.0 — Per-traveler adjustments and co-op improvements（2026-10-16）
+
+旅人ごとの細かな調整と、協力プレイの改善です。 / Per-traveler adjustments and co-op improvements.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 改善 / Improvements
+
+- 宿敵の頭上の名札をシアンに変え、悪夢化した敵（桃色）や夢の変種（琥珀色）と見分けやすくしました。協力プレイでも全員に同じ色で表示されます。 / Nemesis nameplates are now cyan, so they stand out from pink nightmares and amber dream variants. Everyone in co-op sees the same color.
+- 細かな調整を行いました。 / Minor adjustments.
+
+### 不具合の修正 / Bug fixes
+
+- 協力プレイで保管庫が大きいとき、取引の記録の送り直しが繰り返されて通信が重くなることがあった問題を修正しました。 / Fixed co-op trades with a large stash repeatedly re-sending their records and slowing the connection.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game. Please report anything odd.
 
 ---
 

@@ -45,11 +45,21 @@ namespace SodRpg.Core.Game
         /// <summary>悪夢化の確率にかける倍率。圧がなければ1、上限は <see cref="NightmareChanceMaximum"/>。</summary>
         public double NightmareChanceMultiplier => CappedMultiplier(NightmareChancePerPressure, NightmareChanceMaximum);
 
-        private double CappedMultiplier(double perPressure, double maximum)
+        private double CappedMultiplier(double perPressure, double maximum) => Capped(perPressure, maximum, RewardPressure);
+
+        private static double Capped(double perPressure, double maximum, double rewardPressure)
         {
-            double value = 1 + perPressure * RewardPressure;
+            double value = 1 + perPressure * rewardPressure;
             return double.IsNaN(value) ? 1 : Math.Max(1, Math.Min(maximum, value));
         }
+
+        /// <summary>
+        /// 同期された敵HPの倍率（インフィニティの段階を含まないもの）から、悪夢化の確率の倍率を求める。
+        /// <see cref="NightmareChanceMultiplier"/> と同じ式で、クライアントの表示に使う（#572）。
+        /// </summary>
+        public static double NightmareChanceMultiplierForHealth(double healthMultiplierBeforeInfinity) =>
+            double.IsInfinity(healthMultiplierBeforeInfinity) ? 1
+                : Capped(NightmareChancePerPressure, NightmareChanceMaximum, Math.Max(0, healthMultiplierBeforeInfinity - 1));
 
         /// <summary>通常の圧には段番号がないため、最終HPの増分を圧1段のHP増分で換算する。</summary>
         public double EnemyCountMultiplier => EnemyCountMultiplierForHealth(HealthMultiplier);

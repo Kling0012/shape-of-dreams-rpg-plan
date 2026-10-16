@@ -359,8 +359,8 @@ namespace SodRpg.Mod
 
         private void SendCoopProfile(string action, CoopTradeOffer offer)
         {
-            string fusionError = CoopTradeRules.ValidateFusion(Profile, offer, _coopHostFusion && CoopTrade.PartnerFusion);
-            if (fusionError != null) throw new InvalidOperationException(fusionError);
+            string fusionReason = CoopTradeRules.ValidateFusion(Profile, offer, _coopHostFusion && CoopTrade.PartnerFusion);
+            if (fusionReason != null) throw new InvalidOperationException(CoopTradeRules.ReasonText(fusionReason));
             string snapshot = CoopSnapshot(Profile);
             string wireSnapshot = _coopHostFusion ? snapshot : ProfileCodec.WithoutFusionForLegacyTrade(snapshot);
             string encoded = Convert.ToBase64String(Encoding.UTF8.GetBytes(wireSnapshot));
@@ -427,8 +427,9 @@ namespace SodRpg.Mod
                 || !CoopLocalSafe) return CoopUnavailable();
             try
             {
-                string error = CoopTradeRules.Validate(Profile, offer)
-                    ?? CoopTradeRules.ValidateFusion(Profile, offer, _coopHostFusion && CoopTrade.PartnerFusion);
+                string fusionReason = CoopTradeRules.ValidateFusion(Profile, offer, _coopHostFusion && CoopTrade.PartnerFusion);
+                string error = CoopTradeRules.Validate(Profile, offer);
+                if (error == null && fusionReason != null) error = CoopTradeRules.ReasonText(fusionReason);
                 if (error != null) return error;
                 CoopTrade.OwnOffer = offer;
                 _coopPendingOffer = offer;
@@ -558,11 +559,11 @@ namespace SodRpg.Mod
                         return;
                     }
                     var own = key == receipt.FirstKey ? receipt.FirstOffer : receipt.SecondOffer;
-                    string fusionError = CoopTradeRules.ValidateFusion(Profile, own, _coopHostFusion && CoopTrade.PartnerFusion);
-                    if (fusionError != null)
+                    string fusionReason = CoopTradeRules.ValidateFusion(Profile, own, _coopHostFusion && CoopTrade.PartnerFusion);
+                    if (fusionReason != null)
                     {
                         SendCoop(new DreamforgeCoopTradeCommand { action = "cancel", id = msg.id });
-                        CoopTradeWarning = fusionError;
+                        CoopTradeWarning = CoopTradeRules.ReasonText(fusionReason);
                         return;
                     }
                     CoopTradeRules.Prepare(Profile, msg.id, receipt.HostKey, own, legacyFusion: !_coopHostFusion);

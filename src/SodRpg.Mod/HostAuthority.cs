@@ -539,7 +539,8 @@ namespace SodRpg.Mod
                 protocol = Protocol.Version,
                 healthMultiplier = (float)_pressure.HealthMultiplier,
                 damageMultiplier = (float)_pressure.DamageMultiplier,
-                runChoices = ClientSession.HostRunChoices
+                runChoices = ClientSession.HostRunChoices,
+                nightmareGearMultiplier = (float)PartyGearChanceMult()
             });
             // Reuse the infrequent state resync for players whose run started after the first report.
             var runId = NetworkedManagerBase<GameManager>.softInstance?.runId;

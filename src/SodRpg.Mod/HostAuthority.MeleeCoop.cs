@@ -124,12 +124,16 @@ namespace SodRpg.Mod
             return false;
         }
 
-        /// <summary>Callers check <c>_meleeBreakEnabled</c> and the melee traveler first.</summary>
+        /// <summary>Callers check <c>_meleeBreakEnabled</c> and the melee traveler first. Only
+        /// <see cref="HostAuthority.OnMemoryDamage"/> calls this in production; the assert (dev builds
+        /// only, compiled out in release) catches a future caller that skips the melee check (#542).</summary>
         private void MarkMeleeBreak(Hero hero, Entity victim)
         {
             if (!_meleeBreakEnabled || !Alive(hero)
                 || victim == null || !victim.isActive || victim.currentHealth <= 0f
                 || victim.GetRelation(hero) != EntityRelation.Enemy) return;
+            Debug.Assert(TravelerCombatNative.IsMelee(hero),
+                "MarkMeleeBreak on a traveler whose basic attack is not melee; callers must check the melee traveler first");
             try
             {
                 if (!_meleeBreaks.TryGetValue(victim, out var state))

@@ -14,6 +14,11 @@ namespace UnityEngine
         public object Sibling;
         public T GetComponent<T>() where T : class => this as T ?? Sibling as T;
     }
+    // 本番 MarkMeleeBreak の Debug.Assert 用。リリースビルドと同じく何もしない。
+    internal static class Debug
+    {
+        public static void Assert(bool condition, string message) { }
+    }
 }
 
 namespace SodRpg.Mod
@@ -173,7 +178,9 @@ namespace SodRpg.Core.Tests
             {
                 Content.DisplayMeleeRangeConversion = true;
                 Content.DisplayMeleeAttackSpeed = speed;
-                Assert.Contains((gain >= 0 ? "+" : "") + gain + "%", Content.FormatStat(Stat.AttackRangePct, range));
+                Assert.Contains((gain > 0 ? "+" : "") + gain + "%", Content.FormatStat(Stat.AttackRangePct, range));
+                if (gain == 0) // 上限到達時は符号なしの 0% にする（#542）
+                    Assert.DoesNotContain("+0%", Content.FormatStat(Stat.AttackRangePct, range));
             }
             finally
             {
