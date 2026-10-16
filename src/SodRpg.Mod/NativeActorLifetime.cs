@@ -16,6 +16,8 @@ namespace SodRpg.Mod
         }
 
         private static readonly ConditionalWeakTable<Actor, Lifetime> Lifetimes = new ConditionalWeakTable<Actor, Lifetime>();
+        // Conservative count: GC can remove weak keys without decrementing this value.
+        // Only zero is significant; an overcount merely keeps the TryGetValue lookup enabled.
         private static int _abnormalCount;
 
         private static Lifetime AbnormalLifetime(Actor actor)
@@ -109,6 +111,8 @@ namespace SodRpg.Mod
                     if (life != null) Reset(effect);
                     return true;
                 }
+                // life may still be null on this first invalid-victim update. The remaining
+                // path does not dereference it; Retire obtains the recorded lifetime itself.
                 AbnormalLifetime(effect);
                 // A missing SyncVar reference is not an authoritative despawn. Room loading
                 // and spawn ordering can take more than two frames; locally retiring here

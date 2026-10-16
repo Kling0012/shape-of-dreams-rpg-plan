@@ -7,7 +7,11 @@ using Xunit.Abstractions;
 
 namespace SodRpg.Core.Tests
 {
+    [CollectionDefinition("Native negotiation and level slots", DisableParallelization = true)]
+    public sealed class NativeNegotiationAndLevelSlotsCollection { }
+
     // Issue #462 の再現。Hello とレベル枠の処理は csproj がリンクした製品コードを使う。
+    [Collection("Native negotiation and level slots")]
     public sealed class Issue462ReproductionTests
     {
         private readonly ITestOutputHelper _output;
@@ -75,7 +79,7 @@ namespace SodRpg.Core.Tests
             var host = new HostAuthority();
             host.RegisterNegotiation();
             var peer = new DewPlayer { playerName = "issue462-departed-peer" };
-            DewPlayer.gamePlayers.Add(peer);
+            DewPlayer.lobbyPlayers.Add(peer);
             try
             {
                 var hello = MatchingHello();
@@ -83,14 +87,24 @@ namespace SodRpg.Core.Tests
                 host.ReceiveNegotiation(hello, peer);
                 Assert.Single(HostAuthority.VersionWarnings);
 
+                // DewPlayer removes the roster entry before raising the native notification.
+                DewPlayer.lobbyPlayers.Remove(peer);
+                Assert.DoesNotContain(peer, DewPlayer.gamePlayers);
+                DewPlayer.onLobbyPlayerRemoved?.Invoke(peer);
+                Assert.Empty(HostAuthority.VersionWarnings);
+
+                // OnStateChanged then adds the same player to gamePlayers, without a new Hello.
+                DewPlayer.gamePlayers.Add(peer);
+                DewPlayer.onGamePlayerAdded?.Invoke(peer);
+                Assert.Single(HostAuthority.VersionWarnings);
+
                 DewPlayer.gamePlayers.Remove(peer);
-                Assert.DoesNotContain(peer, DewPlayer.lobbyPlayers);
-                typeof(HostAuthority).GetMethod("RebuildMismatchList", BindingFlags.Instance | BindingFlags.NonPublic)
-                    .Invoke(host, null);
+                DewPlayer.onGamePlayerRemoved?.Invoke(peer);
                 Assert.Empty(HostAuthority.VersionWarnings);
             }
             finally
             {
+                DewPlayer.lobbyPlayers.Remove(peer);
                 DewPlayer.gamePlayers.Remove(peer);
                 host.DetachNegotiation();
             }

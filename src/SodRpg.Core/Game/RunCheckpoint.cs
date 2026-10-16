@@ -10,12 +10,25 @@ namespace SodRpg.Core.Game
         public string Id { get; }
         public string RunId { get; }
         public string Snapshot { get; }
+        public bool Committed { get; }
+        private string _sharedEconomy, _storedSnapshot;
 
-        internal RunCheckpoint(string id, string runId, string snapshot)
+        internal RunCheckpoint(string id, string runId, string snapshot, bool committed = false)
         {
             Id = id;
             RunId = runId;
             Snapshot = snapshot;
+            Committed = committed;
+        }
+
+        internal string SnapshotForStore(string economy)
+        {
+            if (_storedSnapshot == null || _sharedEconomy != economy)
+            {
+                _storedSnapshot = ProfileCodec.ShareCheckpointEconomy(Snapshot, economy);
+                _sharedEconomy = economy;
+            }
+            return _storedSnapshot;
         }
 
         public static RunCheckpoint Capture(Profile profile, string id)
@@ -90,6 +103,8 @@ namespace SodRpg.Core.Game
             restored.LastInfinityInterval = current.LastInfinityInterval;
             restored.SeenHints.UnionWith(current.SeenHints);
             restored.LobbyReturnedRunIds.UnionWith(current.LobbyReturnedRunIds);
+            restored.NativeContinueRunId = current.NativeContinueRunId;
+            restored.PruneLobbyReturnReceipts(RunId);
             restored.ContinueCheckpoints.AddRange(current.ContinueCheckpoints);
             restored.ContinueLobbyBaseline = null;
             restored.ContinueResumeSession = current.ContinueResumeSession;

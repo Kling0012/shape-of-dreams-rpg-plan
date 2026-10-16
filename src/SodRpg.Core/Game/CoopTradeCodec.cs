@@ -97,11 +97,12 @@ namespace SodRpg.Core.Game
         // canonical comparison must still reject missing, unknown, or normalized asset data.
         internal static string WriteCoopTradeReceiptProfile(Profile profile)
         {
-            if (profile.LoadedVersion == Profile.CurrentVersion) return Write(profile);
+            if (profile.LoadedVersion == Profile.CurrentVersion)
+                return WriteProfile(profile, true, preserveLegacyContinue: true);
             if (profile.LoadedVersion != 6) return null; // Cooperative trading began in version 6.
             profile.SettleSatchelOverflow();
             var body = new JsonObject();
-            foreach (var property in WriteBody(profile, true).Properties)
+            foreach (var property in WriteBody(profile, true, legacyContinue: true).Properties)
             {
                 switch (property.Key)
                 {

@@ -84,6 +84,9 @@ namespace Issue73.Native.Tests
             var zone = Zone(CombatRoom());
             var host = OmenHost(session, actor, zone, hero);
             var sequences = new List<RoomOmen[]>();
+            // This models run-wide room numbers, not native LoadNode itself. With zone-local
+            // numbers 1..6 in every zone the same run seed draws the same six omens again:
+            // currentZoneIndex is not an input to Roll (see RoomOmensTests.Roll_is_deterministic_for_the_same_seed_and_room).
             for (int zoneIndex = 0; zoneIndex < 3; zoneIndex++)
             {
                 var sequence = new RoomOmen[6];

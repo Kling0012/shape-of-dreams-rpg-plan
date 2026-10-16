@@ -19,6 +19,13 @@ namespace Issue73.Native.Tests
 
         public StarClusterDiffUpdateTests()
         {
+            var tree = Tree;
+            var (distance, _) = BfsFromStart();
+            Assert.True(tree.Nodes.Select((_, i) => i).Any(i => distance[i] == 2 && IsPlain(i)
+                    && tree.Nodes[i].Neighbors.Any(n => distance[n] == 1 && IsPlain(n))),
+                "Hero_Cetus の木の前提が変わりました。始まりから2歩目に、1歩目の普通の星に隣接する普通の星が必要です。バランスデータとホバー検証の対象を確認してください。");
+            Assert.True(ChoiceNodes(2).Length >= 2,
+                "Hero_Cetus の木の前提が変わりました。本文の差分更新を比較するため、二択の星が2つ以上必要です。バランスデータと二択検証の対象を確認してください。");
             Loc.Japanese = true;
         }
 

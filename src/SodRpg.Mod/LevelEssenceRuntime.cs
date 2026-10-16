@@ -42,9 +42,17 @@ namespace SodRpg.Mod
         internal static void Configure(LevelEssenceSettings settings)
         {
             LevelEssenceSettings.RuntimeCapLimit = HudLimited ? 4 : 8;
-            if (!NetworkClient.active || NetworkServer.active) _display = settings;
+            if (!NetworkClient.active || NetworkServer.active) SetDisplaySettings(settings);
+            _hudScanPending = true;
             _payload = null;
             _nextCheck = 0f;
+        }
+
+        private static void SetDisplaySettings(LevelEssenceSettings settings)
+        {
+            if (ReferenceEquals(_display, settings)) return;
+            _display = settings;
+            _hudScanPending = true;
         }
 
         internal static void DisableHud(string reason)
@@ -58,11 +66,12 @@ namespace SodRpg.Mod
 
         internal static void Tick(bool force = false)
         {
+            if (force) _hudScanPending = true;
             if (!force && Time.unscaledTime < _nextCheck) return;
             _nextCheck = Time.unscaledTime + 1f;
             try
             {
-                if (_hudScanPending && !_hudFailed && _readyTargets != LevelEssenceSettings.TargetAll)
+                if (_hudScanPending && !_hudFailed)
                 {
                     _hudScanPending = false;
                     foreach (var group in Resources.FindObjectsOfTypeAll<UI_InGame_SkillButton_GemGroup>())
@@ -72,7 +81,7 @@ namespace SodRpg.Mod
                 if (!NetworkClient.active || NetworkServer.active)
                 {
                     _lastRemote = null;
-                    _display = LevelEssenceSettings.Current ?? LevelEssenceSettings.Off;
+                    SetDisplaySettings(LevelEssenceSettings.Current ?? LevelEssenceSettings.Off);
                     LevelEssenceSettings.RuntimeCapLimit = HudLimited ? 4 : 8;
                     if (NetworkServer.active && manager != null)
                     {
@@ -95,8 +104,8 @@ namespace SodRpg.Mod
                     if (parts.Length != 5 || !int.TryParse(parts[0], out int enabled) || !int.TryParse(parts[1], out int targets)
                         || !int.TryParse(parts[2], out int every) || !int.TryParse(parts[3], out int cap)
                         || !int.TryParse(parts[4], out int effective)) return;
-                    _display = LevelEssenceSettings.Create(enabled != 0, (targets & 1) != 0, (targets & 2) != 0,
-                        (targets & 4) != 0, (targets & 8) != 0, every, cap);
+                    SetDisplaySettings(LevelEssenceSettings.Create(enabled != 0, (targets & 1) != 0, (targets & 2) != 0,
+                        (targets & 4) != 0, (targets & 8) != 0, every, cap));
                     LevelEssenceSettings.RuntimeCapLimit = Math.Min(HudLimited ? 4 : 8, LevelEssenceSettings.ClampCeiling(effective));
                     _remoteCap = effective;
                     _lastRemote = value;
@@ -104,7 +113,7 @@ namespace SodRpg.Mod
                 else
                 {
                     _lastRemote = null;
-                    _display = LevelEssenceSettings.Current ?? LevelEssenceSettings.Off;
+                    SetDisplaySettings(LevelEssenceSettings.Current ?? LevelEssenceSettings.Off);
                     LevelEssenceSettings.RuntimeCapLimit = HudLimited ? 4 : 8;
                 }
             }

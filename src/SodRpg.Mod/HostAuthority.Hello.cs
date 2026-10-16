@@ -28,6 +28,7 @@ namespace SodRpg.Mod
         internal static IReadOnlyList<string> VersionWarnings => MismatchScratch;
 
         private Action<DreamforgeHelloMsg, DewPlayer> _onHello;
+        private Action<DewPlayer> _onHelloPlayerChanged;
         private Actor _helloActor;
 
         private void RegisterHello(Actor actor)
@@ -39,6 +40,13 @@ namespace SodRpg.Mod
             _helloActor = actor;
             if (actor == null) return;
             if (_onHello == null) _onHello = OnHello;
+            if (_onHelloPlayerChanged == null) _onHelloPlayerChanged = OnHelloPlayerChanged;
+            // State changes remove the old roster entry before adding the new one.
+            // Observe both notifications so lobby -> game travel restores a surviving warning.
+            DewPlayer.onLobbyPlayerAdded += _onHelloPlayerChanged;
+            DewPlayer.onLobbyPlayerRemoved += _onHelloPlayerChanged;
+            DewPlayer.onGamePlayerAdded += _onHelloPlayerChanged;
+            DewPlayer.onGamePlayerRemoved += _onHelloPlayerChanged;
             actor.CustomRpc_RegisterServerMessageHandler<DreamforgeHelloMsg>(nameof(DreamforgeHelloMsg), _onHello);
             RegisterOverflowBonus(actor);
             RegisterBuildInputCapability(actor);
@@ -52,6 +60,10 @@ namespace SodRpg.Mod
 
         private void UnregisterHello(Actor actor)
         {
+            DewPlayer.onLobbyPlayerAdded -= _onHelloPlayerChanged;
+            DewPlayer.onLobbyPlayerRemoved -= _onHelloPlayerChanged;
+            DewPlayer.onGamePlayerAdded -= _onHelloPlayerChanged;
+            DewPlayer.onGamePlayerRemoved -= _onHelloPlayerChanged;
             if (actor != null && _onHello != null)
                 try { actor.CustomRpc_UnregisterServerMessageHandler<DreamforgeHelloMsg>(_onHello); } catch (Exception) { }
             UnregisterOverflowBonus(actor);
@@ -194,6 +206,8 @@ namespace SodRpg.Mod
             if (!infinityAvailable) items.Add("Infinity is disabled on their side");
             return string.Join(", ", items);
         }
+
+        private void OnHelloPlayerChanged(DewPlayer player) => RebuildMismatchList();
 
         private void RebuildMismatchList()
         {

@@ -5,6 +5,7 @@ using HarmonyLib;
 using Mirror;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using SodRpg.Core;
 using SodRpg.Core.Game;
 using UnityEngine;
 
@@ -123,8 +124,8 @@ namespace SodRpg.Mod
 
         private void WarnUnconfirmedContinue(string reason)
         {
-            string warning = Loc.T("本体の再開保存を確認できません。チェックポイントの整理を停止し、以前の保存を保持しています。",
-                "Native resume save is unconfirmed. Checkpoint cleanup is paused; earlier saves are retained.");
+            string warning = Loc.T("本体の再開保存を確認できません。確認済みの地点と最新4件の未確定チェックポイントを保持しています。",
+                "Native resume save is unconfirmed. Confirmed checkpoints and the latest four pending attempts are retained.");
             if (ContinueWarning != warning) Log.Warn(warning + " " + reason);
             ContinueWarning = warning;
         }
@@ -142,6 +143,7 @@ namespace SodRpg.Mod
             if (!data.serverActorData.TryGetValue(ContinueIdKey, out string id)
                 || !data.serverActorData.TryGetValue(ContinueRunKey, out string runId)
                 || !data.serverActorData.TryGetValue(ContinueProfileKey, out string snapshot)) return;
+            session.Profile.NativeContinueRunId = runId;
             if (session.Profile.LobbyReturnedRunIds.Contains(runId))
             {
                 session.BlockLobbyReturnedContinue(runId);
@@ -215,6 +217,15 @@ namespace SodRpg.Mod
                     session._nativeContinueCheckpoint = null;
                 }
             }
+            catch (Exception ex) when (ex is LedgerFormatException || ex is LedgerVersionException)
+            {
+                session._continueCheckpointBlocked = true;
+                session._nativeContinueCheckpoint = null;
+                session.ContinueWarning = Loc.T(
+                    "再開地点のMOD保存を読めません。この遠征のMOD報酬・Build反映のみ保留しています。",
+                    "The MOD resume checkpoint could not be read. Only this expedition's MOD rewards and Build application are paused.");
+                Log.Warn(session.ContinueWarning + " " + ex.Message);
+            }
             finally
             {
                 // ProfileChanged/save callbacks must not expose the pre-rewind build.
@@ -238,6 +249,7 @@ namespace SodRpg.Mod
             foreach (var existing in Profile.ContinueCheckpoints)
                 if (existing.Id == checkpoint.Id) return;
             Profile.ContinueCheckpoints.Add(checkpoint);
+            Profile.PrunePendingContinueCheckpoints();
         }
 
         private bool ConfirmContinueCheckpoint(string runId, string id)
@@ -247,7 +259,12 @@ namespace SodRpg.Mod
             if (index < 0) return false;
             // Keep the committed point, its predecessor and every later unconfirmed barrier.
             // Pending writes can be coalesced; a notification must never discard a future candidate.
+            var confirmed = Profile.ContinueCheckpoints[index];
+            Profile.ContinueCheckpoints[index] = new RunCheckpoint(confirmed.Id, confirmed.RunId, confirmed.Snapshot, true);
+            Profile.NativeContinueRunId = runId;
             if (index > 1) Profile.ContinueCheckpoints.RemoveRange(0, index - 1);
+            Profile.PrunePendingContinueCheckpoints();
+            Profile.PruneLobbyReturnReceipts(runId);
             return true;
         }
 
@@ -315,7 +332,7 @@ namespace SodRpg.Mod
             Protocol.WarnContentMismatch(msg.protocol, msg.content, nameof(DreamforgeHelloMsg));
             if (msg.continueResumeSession == Protocol.LobbyReturnedResumeSession)
             {
-                Profile.LobbyReturnedRunIds.Add(runId);
+                Profile.RememberLobbyReturn(runId);
                 SaveNow();
             }
             if (BlockLobbyReturnedContinue(runId)) return;
@@ -369,7 +386,7 @@ namespace SodRpg.Mod
         }
         private void BeginLobbyReturn(string runId)
         {
-            Profile.LobbyReturnedRunIds.Add(runId);
+            Profile.RememberLobbyReturn(runId);
             Profile.LobbyReturnAuthority = NetworkServer.active;
             _pendingRunVictory = false;
             _pendingResultRunId = runId;

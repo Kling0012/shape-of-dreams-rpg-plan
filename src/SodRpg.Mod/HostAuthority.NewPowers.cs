@@ -357,6 +357,7 @@ namespace SodRpg.Mod
             var hero = rt.Hero;
             var p = rt.Powers;
             if (!Alive(hero)) { p.IsVanguard = p.IsRearguard = false; return; }
+            // NearbyEnemies8 is consumed only by DuelistsWay; extend this gate for any new consumer.
             p.NearbyEnemies8 = p.Build.Get(Power.DuelistsWay) > 0
                 ? CountEnemiesNear(hero, PowersBalance.DuelistsWayRange) : 0;
             float shield = p.Build.Get(Power.Breakout) > 0
@@ -379,6 +380,8 @@ namespace SodRpg.Mod
             bool needsWard = p.Build.Get(Power.WatchfulHand) > 0;
             p.IsVanguard = p.IsRearguard = false;
             p.LivingPartySize = 1;
+            // LivingPartySize consumers: VanguardsOath (shield gain) and RearguardsWay (memory damage).
+            // WatchfulHand needs the ally walk, not its count. Extend this gate for new count consumers.
             if (!needsPosition && !needsWard) return;
             float selfDistance = needsPosition ? NearestEnemyDistance(hero) : float.PositiveInfinity;
             bool front = !float.IsPositiveInfinity(selfDistance), rear = front;
@@ -448,6 +451,7 @@ namespace SodRpg.Mod
             var basic = BasicAttackContext.Current;
             if (basic == null || basic.Actor != info.actor || basic.Target != victim || basic.From != hero || !basic.Primary) return;
             p.ShieldAmount = CurrentNativeShield(hero);
+            // NearbyEnemies8 is consumed only by DuelistsWay; extend this gate for any new consumer.
             p.NearbyEnemies8 = p.Build.Get(Power.DuelistsWay) > 0
                 ? CountEnemiesNear(hero, PowersBalance.DuelistsWayRange) : 0;
             p.ObserveMemoryReadiness(1, false, AllNormalMemoriesCooling(hero), UltimateReady(hero));
