@@ -161,7 +161,7 @@ namespace SodRpg.Mod
             if (_am == null) yield break;
             foreach (var other in _am.allHeroes)
                 if (Alive(other) && (includeSelf && other == hero || other != hero && other.GetRelation(hero) == EntityRelation.Ally)
-                    && (range <= 0f || (other.agentPosition - hero.agentPosition).sqrMagnitude <= range * range))
+                    && (range <= 0f || CoopDistanceNative.Coefficient(hero, other, range) > 0f))
                     yield return other;
         }
 
@@ -291,7 +291,9 @@ namespace SodRpg.Mod
             if (!Alive(recipient) || !_runtimes.TryGetValue(recipient, out var owner)) return;
             float share = owner.Powers.SharedWardShield(amount);
             if (share <= 0f) return;
-            foreach (var ally in LivingAllies(recipient, PowersBalance.SharedWardAllyRange)) PowerShield(owner, ally, Power.SharedWard, share, PowersBalance.SharedWardDuration);
+            foreach (var ally in LivingAllies(recipient, PowersBalance.SharedWardAllyRange))
+                PowerShield(owner, ally, Power.SharedWard,
+                    share * CoopDistanceNative.Coefficient(recipient, ally, PowersBalance.SharedWardAllyRange), PowersBalance.SharedWardDuration);
         }
 
         private void UnhookNewPowers(HeroRuntime rt)
@@ -427,7 +429,8 @@ namespace SodRpg.Mod
             if (ultimate)
             {
                 float heal = rt.Powers.TriumphSongHeal(hero.maxHealth);
-                foreach (var ally in LivingAllies(hero, PowersBalance.TriumphSongRange, includeSelf: true)) PowerHeal(rt, ally, heal);
+                foreach (var ally in LivingAllies(hero, PowersBalance.TriumphSongRange, includeSelf: true))
+                    PowerHeal(rt, ally, heal * CoopDistanceNative.Coefficient(hero, ally, PowersBalance.TriumphSongRange));
             }
         }
 

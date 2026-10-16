@@ -43,6 +43,7 @@ import equipment_pools_values
 import room_omen_values
 import forbidden_values
 import fusion_values
+import coop_values
 
 ROOT = Path(__file__).resolve().parents[2]
 FORGE_PATH = ROOT / "tools" / "balance" / "forge.json"
@@ -119,13 +120,17 @@ def _outputs_digest(outputs: dict) -> str:
 def _generator_inputs() -> list[str]:
     """Repo-relative input paths whose content decides the generated output."""
     paths: list[str] = []
-    for folder in ("tools/star-manifest", "tools/balance"):
+    # tools/lowrarity: gen_lrdata.py / gen_named_cs.py and their JSON feed equipment outputs.
+    for folder in ("tools/star-manifest", "tools/balance", "tools/lowrarity"):
         for path in sorted((ROOT / folder).rglob("*")):
-            if path.is_file() and "__pycache__" not in path.parts and path != CACHE_PATH:
-                paths.append(path.relative_to(ROOT).as_posix())
+            rel = path.relative_to(ROOT).as_posix()
+            if path.is_file() and "__pycache__" not in path.parts and path != CACHE_PATH \
+                    and rel not in EXTRA_OUTPUT_PATHS:
+                paths.append(rel)
     for path in sorted((ROOT / GENERATOR_SRC_ROOT).rglob("*.cs")):
-        if not _is_generated_output(path):
-            paths.append(path.relative_to(ROOT).as_posix())
+        rel = path.relative_to(ROOT).as_posix()
+        if not _is_generated_output(path) and rel not in EXTRA_OUTPUT_PATHS:
+            paths.append(rel)
     return paths
 
 
@@ -255,6 +260,7 @@ def generate(check=False):
     outputs.update(room_omen_values.render_outputs())
     outputs.update(forbidden_values.render_outputs())
     outputs.update(fusion_values.render_outputs())
+    outputs.update(coop_values.render_outputs())
     ok = stars.publish_outputs(outputs, check=check)
     if ok and use_cache:
         _write_cache(inputs, outputs)

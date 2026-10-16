@@ -16,9 +16,9 @@ namespace SodRpg.Mod
         private static string GemDescription => Loc.Japanese
             ? "装着した記憶を使うと、自分に最大HPの3%の障壁を4秒間与える。8秒に1回。品質によらず同じ効果。本体の水銀と同時装着・融合はできない。"
             : "Using the equipped memory grants you a shield for 3% of maximum HP for 4 seconds. Once every 8 seconds. Fixed effect at all qualities. Cannot equip alongside or merge with native Quicksilver.";
-        private static string MemoryDescription => Loc.Japanese
-            ? "通常の記憶枠に装備する自動発動の記憶。敵を倒すたびに種が1つ増え、5つで自分と10m以内の味方の旅人を、それぞれの最大HPの8%回復する。"
-            : "A passive memory equipped in a normal memory slot. Gain one seed per enemy kill; five seeds heal you and allied travelers within 10 m for 8% of each recipient's maximum HP.";
+        private static string MemoryDescription => (Loc.Japanese
+            ? "通常の記憶枠に装備する自動発動の記憶。敵を倒すたびに種が1つ増え、5つで自分と有効範囲内の味方の旅人を、それぞれの最大HPの8%回復する。"
+            : "A passive memory equipped in a normal memory slot. Gain one seed per enemy kill; five seeds heal you and allied travelers in support range for 8% of each recipient's maximum HP.") + CoopDistance.Description;
 
         private static void InstallPresentation(Harmony harmony, bool memory)
         {

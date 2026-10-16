@@ -5512,6 +5512,9 @@ namespace SodRpg.Core.Game
             }
         }
 
+        /// <summary>Scoped by the game UI to the traveler currently viewing the equipment.</summary>
+        public static bool DisplayMeleeRangeConversion { get; set; }
+
         public static string FormatStat(Stat s, int v)
         {
             string sign = v >= 0 ? "+" : "";
@@ -5534,7 +5537,10 @@ namespace SodRpg.Core.Game
                 case Stat.FireAmp: return Loc.T($"火属性効果 {sign}{v}%", $"Fire effect strength {sign}{v}%");
                 case Stat.ColdAmp: return Loc.T($"冷気属性効果 {sign}{v}%", $"Cold effect strength {sign}{v}%");
                 case Stat.LightAmp: return Loc.T($"光属性効果 {sign}{v}%", $"Light effect strength {sign}{v}%");
-                case Stat.AttackRangePct: return Loc.T($"通常攻撃の射程 {sign}{v}%", $"Basic attack range {sign}{v}%");
+                case Stat.AttackRangePct:
+                    return DisplayMeleeRangeConversion
+                        ? Loc.T($"攻撃速度 {sign}{v}%（近接のため射程から変換）", $"Attack speed {sign}{v}% (converted from range for melee)")
+                        : Loc.T($"通常攻撃の射程 {sign}{v}%", $"Basic attack range {sign}{v}%");
                 case Stat.FourthAttackShift: return Loc.T($"強化通常攻撃までの必要回数 -{v}発（4発目の強化攻撃を早める）", $"Attacks needed for an empowered basic attack -{v} (brings the empowered fourth attack forward)");
                 case Stat.EssenceSlotIdentity: return Loc.T($"エッセンス枠 {sign}{v}。装備中のアイデンティティ記憶が対象で、星・刻印・装備の追加枠は旅人ごとに合算する。各記憶に最大 +{EssenceSlots.MaxPerLocation}、移動と合わせて最大 +{EssenceSlots.MaxAdded}まで。", $"Essence slots {sign}{v} (for your equipped Identity memory; shared across stars, keystones, engravings and equipment: +{EssenceSlots.MaxPerLocation} per memory, +{EssenceSlots.MaxAdded} total with Movement per traveler)");
                 case Stat.EssenceSlotMovement: return Loc.T($"エッセンス枠 {sign}{v}。装備中の移動の記憶が対象で、星・刻印・装備の追加枠は旅人ごとに合算する。各記憶に最大 +{EssenceSlots.MaxPerLocation}、アイデンティティと合わせて最大 +{EssenceSlots.MaxAdded}まで。", $"Essence slots {sign}{v} (for your equipped Movement memory; shared across stars, keystones, engravings and equipment: +{EssenceSlots.MaxPerLocation} per memory, +{EssenceSlots.MaxAdded} total with Identity per traveler)");
@@ -5624,7 +5630,7 @@ namespace SodRpg.Core.Game
                 case Power.Lifesteal: body = Loc.T($"通常攻撃が命中するたび、最大HPの{v / 10f:0.#}%を回復する。{PowerRuntime.LifestealInterval}秒に1回まで。", $"Health restored +{v / 10f:0.#}% of your maximum health on a basic attack hit; heals yourself (once per {PowerRuntime.LifestealInterval}s)"); break;
                 case Power.Thorns: body = Loc.T($"敵からダメージを受けたとき、受けたダメージの{v}%をその敵に返す。{PowerRuntime.ThornsInterval}秒に1回まで。反射ダメージでは発動しない。", $"Retaliatory damage +{v}% of damage received, dealt back to the attacking enemy (once per {PowerRuntime.ThornsInterval}s; reflected damage does not trigger it)"); break;
                 case Power.Executioner: body = Loc.T($"HPが{PowerRuntime.ExecuteThreshold:0%}未満の敵に通常攻撃が命中したとき、攻撃力の{v}%の追加ダメージを与える。", $"Basic attack bonus damage +{v}% of your attack damage when hitting an enemy below {PowerRuntime.ExecuteThreshold:0%} health"); break;
-                case Power.Resonance: body = Loc.T($"自分の周囲{PowerRuntime.ResonanceRange}m以内に味方がいる間、自分の攻撃力・魔力が{v}%、味方の攻撃力・魔力が{v / 2}%上がる。味方がいなければ、自分は{v / 2}%上がる。{PowerRuntime.ResonanceRange}m以内の味方への付与は重ならず、最も高い値だけを適用する。", $"Your attack damage and ability power +{v}%, nearby allies' +{v / 2}% while an ally is within {PowerRuntime.ResonanceRange}m; without one, your bonus is +{v / 2}%. Bonuses granted to allies within {PowerRuntime.ResonanceRange}m do not stack; only the highest applies"); break;
+                case Power.Resonance: body = Loc.T($"味方との距離係数が最大のとき、自分の攻撃力・魔力が{v}%、味方の攻撃力・魔力が{v / 2f:0.#}%上がる。味方がいなければ自分は{v / 2f:0.#}%上がり、味方による自分への追加分と味方への付与量に距離係数を掛ける。味方への付与は重ならず、最も高い値だけを適用する。", $"At full allied distance effectiveness, your attack damage and ability power increase by {v}% and allies' by {v / 2f:0.#}%. Your solo bonus is {v / 2f:0.#}%; distance scales your additional allied bonus and the bonus granted to allies. Bonuses granted to allies do not stack; only the highest applies") + CoopDistance.Description; break;
                 case Power.Tailwind: body = Loc.T($"敵を倒した後{PowerRuntime.TailwindDuration}秒間、移動速度が{v}%上がる。重ならず、敵を倒すと効果時間が延びる。", $"Movement speed +{v}% for {PowerRuntime.TailwindDuration}s after a kill; kills refresh it without stacking"); break;
                 case Power.Barrier: body = Loc.T($"最初は{PowerRuntime.BarrierFirstDelay}秒後、以後は{PowerRuntime.BarrierInterval}秒ごとに、最大HPの{v}%の障壁を{PowerRuntime.BarrierDuration}秒間得る。", $"Shield +{v}% of your maximum health for {PowerRuntime.BarrierDuration}s; first granted after {PowerRuntime.BarrierFirstDelay}s, then every {PowerRuntime.BarrierInterval}s"); break;
                 case Power.SecondWind: body = Loc.T($"自分のHPが{PowerRuntime.SecondWindThreshold:0%}未満のとき、最大HPの{v}%を回復する。{PowerRuntime.SecondWindCooldown}秒に1回まで。", $"Health restored +{v}% of your maximum health while below {PowerRuntime.SecondWindThreshold:0%} health (once per {PowerRuntime.SecondWindCooldown}s)"); break;

@@ -330,8 +330,8 @@ namespace SodRpg.Core.Game
             ev.AddRange(Feats.Check(p));
             if (hoardPayout)
                 ev.Add(new GameEvent(EventKind.Info, Loc.T(
-                    $"宝庫の払い出し ×3：遺物{reward.Relics.Count}個・欠片{reward.Shards}・調律石{reward.Tuning}（未確保。鞄を超えた遺物は欠片になります）。",
-                    $"Hoard payout ×3: {reward.Relics.Count} relic(s), {reward.Shards} shards, {reward.Tuning} tuning (unsecured; relics beyond satchel capacity become shards).")));
+                    $"宝庫の払い出し ×{Waypoints.HoardMultiplier}：遺物{reward.Relics.Count}個・欠片{reward.Shards}・調律石{reward.Tuning}（未確保。鞄を超えた遺物は欠片になります）。",
+                    $"Hoard payout ×{Waypoints.HoardMultiplier}: {reward.Relics.Count} relic(s), {reward.Shards} shards, {reward.Tuning} tuning (unsecured; relics beyond satchel capacity become shards).")));
             // 宝庫の一括払い出しで討伐通知がトーストの表示上限から押し出されないよう、最後に送る。
             if (killNotice != null) ev.Add(killNotice);
             return ev;

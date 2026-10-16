@@ -1,5 +1,5 @@
-[b]Tidies up development tests and documentation for co-op trading; no gameplay changes.[/b]
-[b]協力プレイの交換に関わる開発用のテストと文書を整理しました。ゲーム内の動作は変わりません。[/b]
+[b]Co-op trade messages such as cancellations and errors now appear in each player's own display language.[/b]
+[b]協力プレイの取引で、中止やエラーなどのメッセージが各自の表示言語で表示されるようにしました。[/b]
 
 [h1]Dreamforge RPG[/h1]
 Turns every run into part of a long RPG journey: relics you keep, a risky "secure or delve" choice at every zone, a star map per Traveler, a forge, and long-term goals. Co-op ready.

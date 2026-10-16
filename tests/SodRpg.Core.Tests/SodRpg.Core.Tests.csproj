@@ -47,6 +47,9 @@
     <Compile Include="../../src/SodRpg.Mod/HostAuthority.BuildValidation.cs" Link="ModUnderTest/HostAuthority.BuildValidation.cs" />
     <Compile Include="../../src/SodRpg.Mod/HostAuthority.MovementCharges.cs" Link="ModUnderTest/HostAuthority.MovementCharges.cs" />
     <Compile Include="../../src/SodRpg.Mod/HostAuthority.PairCombos.cs" Link="ModUnderTest/HostAuthority.PairCombos.cs" />
+    <Compile Include="../../src/SodRpg.Mod/CoopDistanceNative.cs" Link="ModUnderTest/CoopDistanceNative.cs" />
+    <Compile Include="../../src/SodRpg.Mod/TravelerCombatNative.cs" Link="ModUnderTest/TravelerCombatNative.cs" />
+    <Compile Include="../../src/SodRpg.Mod/HostAuthority.MeleeCoop.cs" Link="ModUnderTest/HostAuthority.MeleeCoop.cs" />
     <Compile Include="../../src/SodRpg.Mod/HostAuthority.Hello.cs" Link="ModUnderTest/HostAuthority.Hello.cs" />
     <Compile Include="../../src/SodRpg.Mod/HostAuthority.AuthoredMechanisms.cs" Link="ModUnderTest/HostAuthority.AuthoredMechanisms.cs" />
     <Compile Include="$(IntermediateOutputPath)Issue62.Native.cs" Link="ModUnderTest/Issue62.Native.cs" />

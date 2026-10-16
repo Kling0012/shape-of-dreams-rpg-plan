@@ -80,6 +80,7 @@ namespace SodRpg.Mod
                 RelicIcons.Preload();
                 _ui = new DreamforgeUi(_session, () => config, SaveLevelEssenceConfig);
                 _host = new HostAuthority(() => _session?.Profile.Run?.DailyId ?? DailyDream.Today.Id);
+                ApplyMeleeCoopConfig();
                 _session.FirstLaunch();
                 _perfLogEnabled = File.Exists(Path.Combine(dir, "perf.flag"));
                 try
@@ -120,6 +121,17 @@ namespace SodRpg.Mod
             _session?.ConfigureOverflowBonus(config.overflowDreamDust);
             ApplyLevelEssenceConfig();
             ApplyRoomOmensConfig();
+            ApplyMeleeCoopConfig();
+        }
+
+        private void ApplyMeleeCoopConfig()
+        {
+            try
+            {
+                _host?.ConfigureMeleeCoop(config.meleeRangeToSpeed, config.coopDistanceFalloff,
+                    config.meleeBreak, config.meleeProximityGuard);
+            }
+            catch (Exception ex) { Log.Warn("Melee/coop settings ignored: " + ex.Message); }
         }
 
         // レベル連動のエッセンス枠（ホストの設定だけが枠に反映される）。壊れた入力でも他の機能は止めない。

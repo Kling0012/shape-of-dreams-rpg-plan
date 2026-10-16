@@ -262,15 +262,16 @@ namespace SodRpg.Mod
                     // 出どころを変えたので、旅人の回復量はここで掛ける（v1.27.1 の能力値）。
                     int healPower = rt.Powers.Build.Get(Stat.HealPower);
                     DispatchSupportHeal(rt, hero, support.Heal(SupportStats.AmplifyHeal(hero.maxHealth * def.ValuePercent / 100f, healPower)));
-                    float healRadius = Gimmicks.Radius(def, 10f);
+                    float healRadius = Gimmicks.Radius(def, CoopBalance.FullRange);
                     if (def.Arg == 1)
                         foreach (var player in DewPlayer.gamePlayers)
                         {
                             var ally = player != null ? player.hero : null;
                             if (ally == hero || !Alive(ally) || ally.GetRelation(hero) != EntityRelation.Ally
-                                || (ally.agentPosition - hero.agentPosition).sqrMagnitude > healRadius * healRadius) continue;
+                                || CoopDistanceNative.Coefficient(hero, ally, healRadius) <= 0f) continue;
                             DispatchSupportHeal(rt, ally, support.Heal(SupportStats.AmplifyHeal(
-                                ally.maxHealth * (float)(def.EffectiveAllyValuePercent ?? def.EffectiveValueOrAuthored) / 100f, healPower)));
+                                ally.maxHealth * (float)(def.EffectiveAllyValuePercent ?? def.EffectiveValueOrAuthored) / 100f, healPower)
+                                * CoopDistanceNative.Coefficient(hero, ally, healRadius)));
                         }
                     break;
                 case GimmickEffect.Recharge:

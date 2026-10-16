@@ -69,19 +69,20 @@ namespace SodRpg.Mod
             if (msg == null || msg.version != 1) return;
             _hostNetLite = msg.netLite == 1 && _netLiteReceiveReady;
             // 応答が一度でも届いたら確定する（旧ホストはこの欄を返さず 0 のまま）。
-            if (msg.forbiddenInput == 1) _hostForbiddenInput = true;
-            if (msg.fusionInput == 1 && !_hostFusionInput)
+            // 下の _hostBuildInputCapability による早期 return より前に処理し、
+            // 通常の能力応答を受信済みでも、遅れて届いた禁忌装備対応の宣言で警告を解除する。
+            if (msg.forbiddenInput == 1 && !_hostForbiddenInput)
             {
-                _hostFusionInput = true;
+                _hostForbiddenInput = true;
+                // 20秒の期限後に対応が判明した場合も通知を解除し、装備を戻したビルドを送り直す。
+                _forbiddenGearStripNotice = false;
+                ForbiddenGearHostNotice = null;
                 _buildDirty = true;
                 _buildCacheFrame = -1;
             }
-            // 応答を待つ間に外した禁忌装備がある場合は、対応が分かった時点で通知を解除し、
-            // 装備を戻したビルドを送り直す（#415）。
-            if (_hostForbiddenInput && _forbiddenGearStripNotice)
+            if (msg.fusionInput == 1 && !_hostFusionInput)
             {
-                _forbiddenGearStripNotice = false;
-                ForbiddenGearHostNotice = null;
+                _hostFusionInput = true;
                 _buildDirty = true;
                 _buildCacheFrame = -1;
             }
