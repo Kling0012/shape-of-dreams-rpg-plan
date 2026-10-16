@@ -13,6 +13,9 @@ namespace SodRpg.Mod
         public int revision, index, count, totalLength;
         public bool safe;
         public bool fusion;
+        // Set by a participant that holds the current view but not the partner's profile for it;
+        // older hosts ignore the flag and answer with the plain view.
+        public bool wantsProfile;
         public BuildTransferPart Part() => new BuildTransferPart
         { Data = data, TransferId = transferId, Index = index, Count = count, TotalLength = totalLength };
     }
