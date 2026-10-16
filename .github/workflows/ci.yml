@@ -92,6 +92,7 @@ jobs:
         class:
           - SodRpg.Core.Tests.AllocationEquivalenceV131Tests
           - SodRpg.Core.Tests.GeneratedHeroAcceptanceTests
+          - SodRpg.Core.Tests.PerformanceTests
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v4
