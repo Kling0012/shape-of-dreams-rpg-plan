@@ -484,19 +484,19 @@ namespace SodRpg.Mod
             PowerShield(rt, hero, Power.ReadyGuard, p.TakeReadyGuard(Time.time, hero.maxHealth), PowersBalance.ReadyGuardDuration);
         }
 
-        private void OnNewPowerKill(HeroRuntime rt, EventInfoKill info)
+        private void OnNewPowerKill(HeroRuntime rt, EventInfoKill info, string assistMemory = null, bool assistSummon = false, bool assist = false)
         {
             if (_gimmickDamageDepth != 0 || _reactionEffectDepth != 0 || !Alive(rt.Hero) || !(info.victim is Monster victim)
                 || victim.GetRelation(rt.Hero) != EntityRelation.Enemy) return;
             var hero = rt.Hero;
             var p = rt.Powers;
-            string memory = MemorySource(info.actor);
+            string memory = assist ? assistMemory : MemorySource(info.actor);
             if (memory != null)
             {
                 var skill = FindMemory(hero, memory);
                 if (skill != null) ReduceNormalMemory(hero, skill, p.ReturningBladeCooldownFraction(true) * 100f);
             }
-            bool summonKill = info.actor != null && info.actor.FindFirstOfType<Summon>() is Summon summon
+            bool summonKill = assist ? assistSummon : info.actor != null && info.actor.FindFirstOfType<Summon>() is Summon summon
                 && summon.FindFirstAncestorOfType<Hero>() == hero;
             PowerShield(rt, hero, Power.PackFeast, p.PackFeastShield(hero.maxHealth, summonKill), PowersBalance.PackFeastDuration);
             Hero nearest = null;

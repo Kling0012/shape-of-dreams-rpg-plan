@@ -70,7 +70,7 @@ namespace SodRpg.Mod
         }
 
         private void QueueGimmicks(HeroRuntime rt, GimmickTrigger trigger, string memory, Entity victim, float damage, bool pairGenerated = false,
-            Actor actor = null, bool direct = true)
+            Actor actor = null, bool direct = true, long killActivation = 0)
         {
             var build = rt.Powers.Build;
             if (build.Gimmicks.Count == 0 && build.PairCombos.Count == 0) return;
@@ -81,14 +81,16 @@ namespace SodRpg.Mod
                 && FindMemory(rt.Hero, memory) != null
                 && !(trigger == GimmickTrigger.OnUse
                     && rt.Hero.Skill.GetSkill(HeroSkillLocation.Movement)?.GetType().Name == memory))
-                FireGimmicksV129(rt, trigger, memory, victim, damage, actor, direct, requests);
+                FireGimmicksV129(rt, trigger, memory, victim, damage, actor, direct, requests, killActivation);
             if (build.PairCombos.Count > 0)
             {
                 CollectPairMemories(rt);
                 rt.PairCombos.Fire((PairComboTrigger)trigger, memory, now,
                     victim != null ? victim.GetInstanceID() : 0, damage,
                     pairGenerated || _gimmickDamageDepth != 0 || _pairDamageDepth != 0,
-                    rt.PairMemories, HasOwnSummons(rt), requests, hitKind: PairHitKind(actor), activationSerial: PairActivation(rt, actor));
+                    rt.PairMemories, HasOwnSummons(rt), requests, hitKind: PairHitKind(actor),
+                    activationSerial: killActivation != 0 ? killActivation : PairActivation(rt, actor),
+                    deferKillCleanup: killActivation != 0);
             }
             QueueGimmickRequests(rt, victim, now);
         }

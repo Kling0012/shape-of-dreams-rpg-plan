@@ -120,7 +120,7 @@ namespace SodRpg.Mod
         }
 
         private void FireGimmicksV129(HeroRuntime rt, GimmickTrigger trigger, string memory, Entity victim,
-            float damage, Actor actor, bool direct, List<GimmickRequest> requests)
+            float damage, Actor actor, bool direct, List<GimmickRequest> requests, long killActivation = 0)
         {
             var state = InitializeGimmicksV129(rt);
             int id = victim != null ? victim.GetInstanceID() : 0;
@@ -151,7 +151,7 @@ namespace SodRpg.Mod
             dispatch.Hero = rt.Hero; dispatch.LegacyRuntime = rt; dispatch.Source = memory; dispatch.SourceKind = sourceKind;
             dispatch.Cooldown = skill != null ? skill.currentConfigMaxCooldownTime : 0f;
             rt.Gimmicks.Fire(trigger, memory, Time.time, id, damage, _gimmickDamageDepth != 0, requests,
-                GimmickActivation(state, actor), skill != null ? skill.currentConfigMaxCooldownTime : 0f, direct, IsGimmickBoss(victim), elements,
+                killActivation != 0 ? killActivation : GimmickActivation(state, actor), skill != null ? skill.currentConfigMaxCooldownTime : 0f, direct, IsGimmickBoss(victim), elements,
                 filter: dispatch.Filter, transform: dispatch.Transform);
             for (int i = 0; i < requests.Count; i++)
             {

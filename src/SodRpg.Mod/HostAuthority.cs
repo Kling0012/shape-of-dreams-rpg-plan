@@ -268,6 +268,7 @@ namespace SodRpg.Mod
         {
             InitializeAssignedMechanisms();
             InitializeMemoryAttribution();
+            InitializeKillAssists();
             BasicAttackContext.Prewarm(); NativeDamageContext.Prewarm(); ElementApplicationContext.Prewarm();
             BossDisplacementReuse.Prewarm(); BossBasicEffectReuse.Prewarm();
             NativeAttributedHpDamage.Prewarm(); PrewarmNativeShieldSnapshot();
@@ -857,6 +858,7 @@ namespace SodRpg.Mod
 
         private void OnActorAdd(Actor actor)
         {
+            if (actor is Entity entity) TrackKillAssistEntity(entity);
             if (actor is Summon summon)
             {
                 var hero = summon.FindFirstAncestorOfType<Hero>();
@@ -869,6 +871,7 @@ namespace SodRpg.Mod
 
         private void OnActorRemove(Actor actor)
         {
+            if (actor is Entity entity) ForgetKillAssistEntity(entity);
             if (actor is Summon summon)
             {
                 UnhookSupportSummonV129(summon);
@@ -1219,6 +1222,7 @@ namespace SodRpg.Mod
                 ClearQueuedMonsterSync();
                 ClearSunders();
                 ClearNativeDeathHooks();
+                ClearKillAssists();
                 _am = am;
                 _spawnQueue.Clear();
                 _regen.Clear();
@@ -1231,7 +1235,11 @@ namespace SodRpg.Mod
                     am.ClientEvent_OnActorAdd += _onActorAdd;
                     am.ClientEvent_OnActorRemove += _onActorRemove;
                     ScanShrines();
-                    foreach (var e in am.allEntities) OnEntityAdd(e);
+                    foreach (var e in am.allEntities)
+                    {
+                        TrackKillAssistEntity(e);
+                        OnEntityAdd(e);
+                    }
                 }
             }
             var zone = NetworkedManagerBase<ZoneManager>.softInstance;
@@ -1295,6 +1303,7 @@ namespace SodRpg.Mod
             ClearBackOffCharge();
             ClearSupportPowerStateV129();
             ClearNativeDeathHooks();
+            ClearKillAssists();
             ClearWaypointHeroes();
             DewPlayer.onGamePlayerAdded -= _onPressurePlayerAdded;
             DewPlayer.onGamePlayerRemoved -= _onPressurePlayerRemoved;
@@ -2405,19 +2414,24 @@ namespace SodRpg.Mod
                 if (_gimmickDamageDepth != 0 || _reactionEffectDepth != 0) return;
                 var rt = OwnerRuntimeOf(info.actor);
                 if (rt == null || !Alive(rt.Hero)) return;
-                var r = rt.Powers.OnKill(Time.time, Math.Max(rt.Hero.Status.attackDamage, rt.Hero.Status.abilityPower), rt.Hero.maxHealth);
-                if (r.Heal > 0) rt.Hero.Heal(r.Heal).Dispatch(rt.Hero);
-                // 爆砕で倒した敵からは爆砕しない（同時に倒した群れ全体へ連鎖しないように。v1.28）
-                if (r.ShatterDamage > 0 && !_shattering)
-                {
-                    _shattering = true;
-                    try { DamageAround(rt.Hero, info.victim.position, PowerRuntime.ShatterRadius, r.ShatterDamage, null, int.MaxValue, magic: rt.Hero.Status.abilityPower > rt.Hero.Status.attackDamage); }
-                    finally { _shattering = false; }
-                }
+                ApplyKillPowers(rt, info.victim);
             }
             catch (Exception ex)
             {
                 Log.Error("Host: OnDeath " + ex.Message);
+            }
+        }
+
+        private void ApplyKillPowers(HeroRuntime rt, Entity victim)
+        {
+            var r = rt.Powers.OnKill(Time.time, Math.Max(rt.Hero.Status.attackDamage, rt.Hero.Status.abilityPower), rt.Hero.maxHealth);
+            if (r.Heal > 0) rt.Hero.Heal(r.Heal).Dispatch(rt.Hero);
+            // 爆砕で倒した敵からは爆砕しない（同時に倒した群れ全体へ連鎖しないように。v1.28）
+            if (r.ShatterDamage > 0 && !_shattering)
+            {
+                _shattering = true;
+                try { DamageAround(rt.Hero, victim.position, PowerRuntime.ShatterRadius, r.ShatterDamage, null, int.MaxValue, magic: rt.Hero.Status.abilityPower > rt.Hero.Status.attackDamage); }
+                finally { _shattering = false; }
             }
         }
 
