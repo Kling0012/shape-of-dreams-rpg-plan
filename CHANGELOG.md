@@ -10,6 +10,33 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v2.10.64 — Melee co-op effect descriptions and host-synced range display（2026-10-16）
+
+このバージョンでは、近接の旅人が受ける協力効果（射程の変換・崩し・近接防御）の数値を画面で確認できるようにし、協力プレイの参加者の画面に出る射程の表示と連携の効き具合を、ホストの設定と攻撃速度の上限に合わせました。 / This version shows the numbers behind the melee co-op effects (range conversion, Break, and Melee Guard), and makes the range display and link strength on co-op participants' screens follow the host's settings and the attack speed cap.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 新機能 / New features
+
+- **近接の協力効果の説明**: 崩しと近接防御、射程から攻撃速度への変換の効果量を、日本語と英語の説明文で見られるようにしました。崩しは、命中した敵が3秒間12%多くダメージを受けるようになる効果です。近接防御は、3m以内に敵がいるときに受けるダメージを12%減らす効果です。MOD 設定画面の4項目の名前にも数値を入れたので、ロビーでも確認できます。 / **Melee co-op effect descriptions**: the strength of Break, Melee Guard, and the range-to-attack-speed conversion is now explained in Japanese and English. Break makes enemies you hit take 12% more damage for 3 seconds. Melee Guard reduces damage you take by 12% while an enemy is within 3 m. The four entries in the mod settings screen now include their numbers too, so you can check them in the lobby.
+- Dreamforge メニューの星図にある「獲得した効果」欄に、近接の旅人を使っているときだけ、ホストが有効にしている効果が「近接の協力効果」として出るようになりました。 / In the Dreamforge menu's star chart, the "Acquired effects" section now lists the effects the host has enabled under "Melee co-op effects". This appears only when you are playing a melee traveler.
+
+### 不具合の修正 / Bug fixes
+
+- 近接の旅人の装備にある射程の行が「攻撃速度 +◯%」と表示されるとき、攻撃速度の上限（合計80%）を考えていなかったため、実際より大きい値が出ることがありました。今後は実際に増える量と上限が表示されます。たとえば攻撃速度が70%のときに射程+30%の装備を付けると、「攻撃速度 +10%（近接のため射程 +30% から変換。攻撃速度は合計80%まで）」と出ます。 / Fixed the range line on a melee traveler's gear (shown as "Attack speed +X%") ignoring the attack speed cap (80% total), which could make it show more than you actually get. It now shows the actual increase and the cap. For example, with 70% attack speed and a +30% range item, it reads "Attack speed +10% (converted from range +30% because you are melee; attack speed caps at 80% total)".
+- 協力プレイの参加者の画面で、射程から攻撃速度への変換の表示と、連携の「現在の効き%」が、ホストではなく自分の設定をもとに出ていたため、設定がホストと違うと実際の効き方とずれていました。今後はホストの設定に合わせて表示されます。ホストが設定を変えたときも、数秒で表示に反映されます。 / Fixed co-op participants seeing the range-to-attack-speed display and the current link strength based on their own settings instead of the host's, which made the numbers wrong when their settings differed from the host's. They now follow the host's settings, and changes the host makes show up within a few seconds.
+- 距離減衰をオフにしたときの説明文から、「10mまでは全量で効き、10mを超えると切れる」という一文が抜けていたので戻しました。 / Restored the missing sentence for when distance falloff is off: effects apply in full up to 10 m and cut off past 10 m.
+- 近接の旅人の協力効果が実際のゲームで正しく発動しているかを調べるため、近接の判定結果をゲームの記録（Player.log）に残すようにしました。あわせて、攻撃のデータの形が違う場合（prefab や GameObject）でも近接の判定が働くようにしました。近接の判定が発動しない問題は、まだ実際のゲームで確かめられていません。 / To check whether the melee co-op effects actually trigger in the live game, the result of the melee check is now written to the game log (Player.log). The melee check now also works when the attack data comes in a different form (a prefab or GameObject). Whether the melee check fails to trigger has not been confirmed in the live game yet.
+- 攻撃が当たったときの処理を軽くしました。崩しがオフのときや近接の旅人でないときは余計な確認を省き、近接防御は当たるたびに調べ直さず、0.25秒ごとの周囲の確認結果を使うようにしました。 / Made hit processing lighter: extra checks are skipped when Break is off or the traveler is not melee, and Melee Guard now uses the surroundings check done every 0.25 seconds instead of re-checking on every hit.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
 ## v2.10.63 — Save error messages stay visible and follow your display language（2026-10-16）
 
 このバージョンでは、保存に失敗したときのエラー表示が消えてしまうことがあった不具合を修正し、保存失敗の理由が表示言語に合わせて出るようにしました。 / This version fixes an issue where the save error message could disappear, and shows the reason for a save failure in your display language.
