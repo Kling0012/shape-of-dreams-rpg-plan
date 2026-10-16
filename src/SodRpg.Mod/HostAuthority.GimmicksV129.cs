@@ -120,7 +120,7 @@ namespace SodRpg.Mod
         }
 
         private void FireGimmicksV129(HeroRuntime rt, GimmickTrigger trigger, string memory, Entity victim,
-            float damage, Actor actor, bool direct, List<GimmickRequest> requests)
+            float damage, Actor actor, bool direct, List<GimmickRequest> requests, long killActivation = 0)
         {
             var state = InitializeGimmicksV129(rt);
             int id = victim != null ? victim.GetInstanceID() : 0;
@@ -151,7 +151,7 @@ namespace SodRpg.Mod
             dispatch.Hero = rt.Hero; dispatch.LegacyRuntime = rt; dispatch.Source = memory; dispatch.SourceKind = sourceKind;
             dispatch.Cooldown = skill != null ? skill.currentConfigMaxCooldownTime : 0f;
             rt.Gimmicks.Fire(trigger, memory, Time.time, id, damage, _gimmickDamageDepth != 0, requests,
-                GimmickActivation(state, actor), skill != null ? skill.currentConfigMaxCooldownTime : 0f, direct, IsGimmickBoss(victim), elements,
+                killActivation != 0 ? killActivation : GimmickActivation(state, actor), skill != null ? skill.currentConfigMaxCooldownTime : 0f, direct, IsGimmickBoss(victim), elements,
                 filter: dispatch.Filter, transform: dispatch.Transform);
             for (int i = 0; i < requests.Count; i++)
             {
@@ -290,21 +290,19 @@ namespace SodRpg.Mod
                         float heal = Math.Min(hero.maxHealth * 0.015f, SupportStats.AmplifyHeal(
                             Gimmicks.SiphonHeal(request.Damage, hero.maxHealth, def.ValuePercent), rt.Powers.Build.Get(Stat.HealPower)));
                         if (heal <= 0) break;
-                        support.Heal(heal).SetAmountModifiedBy(typeof(GimmickSiphonLimit)).Dispatch(hero);
+                        DispatchSupportHeal(rt, hero, support.Heal(heal).SetAmountModifiedBy(typeof(GimmickSiphonLimit)));
                         float allyRadius = Gimmicks.Radius(def, CoopBalance.FullRange);
                         if (def.Arg == 1)
                             foreach (var ally in _am.allHeroes)
                                 if (ally != hero && Alive(ally) && ally.GetRelation(hero) == EntityRelation.Ally
                                     && CoopDistanceNative.Coefficient(hero, ally, allyRadius) > 0f)
                                 {
-                                    float allyBefore = ally.currentHealth;
                                     float allyCoefficient = (float)(def.EffectiveAllyValuePercent ?? def.EffectiveValueOrAuthored);
                                     float allyHeal = SupportStats.AmplifyHeal(Gimmicks.SiphonHeal(request.Damage, hero.maxHealth,
                                         allyCoefficient), rt.Powers.Build.Get(Stat.HealPower)) * 0.5f;
-                                    support.Heal(Math.Min(allyHeal, ally.maxHealth * 0.015f)
+                                    DispatchSupportHeal(rt, ally, support.Heal(Math.Min(allyHeal, ally.maxHealth * 0.015f)
                                         * CoopDistanceNative.Coefficient(hero, ally, allyRadius))
-                                        .SetAmountModifiedBy(typeof(GimmickSiphonLimit)).Dispatch(ally);
-                                    CreditHealRestored(rt, ally, allyBefore);
+                                        .SetAmountModifiedBy(typeof(GimmickSiphonLimit)));
                                 }
                         break;
                     case GimmickEffect.Rampart:
@@ -332,8 +330,8 @@ namespace SodRpg.Mod
                             if (entity is Summon summon && summon.hero == hero && summon.isActive && summon.currentHealth > 0f)
                                 summons.Add(summon);
                         foreach (var summon in summons)
-                            support.Heal(SupportStats.AmplifyHeal(summon.maxHealth * def.ValuePercent / 100f,
-                                rt.Powers.Build.Get(Stat.HealPower))).Dispatch(summon);
+                            DispatchSupportHeal(rt, summon, support.Heal(SupportStats.AmplifyHeal(summon.maxHealth * def.ValuePercent / 100f,
+                                rt.Powers.Build.Get(Stat.HealPower))));
                         break;
                     // Crescendo, Sap and Weakspot have already installed their pure-runtime windows.
                 }

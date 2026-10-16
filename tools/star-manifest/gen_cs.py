@@ -452,7 +452,10 @@ class Compiler:
         elif e == "Primed":
             if not source or source.startswith("@"):
                 self.fail(sid, "memory", source, "MemoryPrimedDefinition requires one verified exact source memory")
-            members.update(Kind="AuthoredMechanismKind.MemoryPrimed", Primed="new MemoryPrimedDefinition(" + cs(sid) + ", " + cs(source) + ", MemoryEventKind." + trigger + ", " + units(g["value"]) + ", budget: AttributionBudget." + budget + ")")
+            duration = number(g["arg"])
+            if duration < 0 or duration > 10:
+                self.fail(sid, prefix + ".arg", g["arg"], "Primed duration must be 0 (default 5 seconds) or at most 10 seconds")
+            members.update(Kind="AuthoredMechanismKind.MemoryPrimed", Primed="new MemoryPrimedDefinition(" + cs(sid) + ", " + cs(source) + ", MemoryEventKind." + trigger + ", " + units(g["value"]) + (", durationSeconds: " + dec(duration)[:-1] + "f" if duration > 0 else "") + ", budget: AttributionBudget." + budget + ")")
         elif e == "RelayWindow":
             target = g.get("target")
             if source != "St_R_Tranquility" or not target or target.startswith("@"):
@@ -654,6 +657,11 @@ class Compiler:
             scope += ["payloadKind: KeystonePayloadKind.DirectedRecharge", "targetEffectSet: new[] { GimmickEffect.Recharge }"]
         elif effect in WARDS:
             scope.append("payloadKind: KeystonePayloadKind.AlliedWard")
+        elif effect == "Coop":
+            parameter = spec.get("scope")
+            if not parameter or field != "Value" or "to" not in spec:
+                self.fail(sid, path, spec, "Coop requires a named numeric Value setting")
+            scope += ["payloadKind: KeystonePayloadKind.Coop", "targetEffectIds: " + array([parameter])]
         elif effect == "RelayWindow":
             scope.append("payloadKind: KeystonePayloadKind.RelayWindow")
         elif effect == "PressureDividend":
@@ -689,7 +697,7 @@ class Compiler:
                 self.memory(sid, path + ".memories", memory, source=True)
             scope.append("sourceSelectors: new[] { " + ", ".join(selector(x) for x in spec["memories"]) + " }")
         named = spec.get("scope")
-        if named:
+        if named and effect != "Coop":
             if named == "equippedQR":
                 scope.append("sourceSelectors: new[] { MemorySelector.Parse(\"@Q|@R\") }")
             elif named == "star-map MD only":
@@ -752,6 +760,8 @@ class Compiler:
             if baseline is None or "Power." + baseline[0] not in key["upside"]:
                 self.fail(sid, "keystone.upside", key["upside"], "retained-Power key does not name its baseline Power " + display_value(baseline))
                 return None
+        if row.get("stat") and key["upsideSpec"] is None:
+            return None
         if key["upsideSpec"] is None and not retained:
             self.fail(sid, "keystone.upsideSpec", None,
                       "prose-only key requires an explicit design-to-typed translation; no translation for this ID")
@@ -926,6 +936,11 @@ class Compiler:
                 self.fail(sid, option_path + "stat.name", stat["name"], "no concrete Stat enum member")
             members.update(Stat="Stat." + stat["name"], Amount=whole(stat["perRank"]))
         elif kind == "Keystone":
+            if row.get("stat"):
+                stat = row["stat"]
+                if stat["name"] not in self.stats or number(stat["perRank"]) <= 0:
+                    self.fail(sid, option_path + "stat", stat, "stat keystones require a defined stat and positive whole amount")
+                members.update(Stat="Stat." + stat["name"], Amount=whole(stat["perRank"]))
             expression = self.keystone(sid, row)
             if expression:
                 members["KeystoneDefinition"] = expression

@@ -98,6 +98,7 @@ namespace SodRpg.Mod
             public float FrozenCrowdControlRemaining, FrozenCrowdControlSince;
             // v1.32 B: the stacks live in HostAuthority.RunGrowthLedger (outside this runtime); only their applied effect is kept here.
             public StatBonus GrowthBonus;
+            public DataProcessor<HealData, Actor, Entity> GrowthHealReceived;
             public readonly Dictionary<Stat, double> GrowthTotals = new Dictionary<Stat, double>();
             public int GrowthVersion = -1;
             public Build GrowthBuild;
@@ -141,6 +142,7 @@ namespace SodRpg.Mod
             public StatBonus SpecialBonus;
             public bool PressureApplied;
             public DataProcessor<FinalStats> PressureHealth;
+            public DataProcessor<DamageData, Actor, Entity> PressureDamage;
             public VariantDef Variant;
             public DataProcessor<DamageData, Actor, Entity> HitCap;
             public bool DeathBurstTriggered;
@@ -152,6 +154,7 @@ namespace SodRpg.Mod
             public bool ClassificationQueued;
             public NightmareAffix ClassificationNightmare;
             public string ClassificationVariant;
+            public MonsterOwnership Ownership, ClassificationOwnership;
             public Se_GenericShield_OneShot Ward;
             public Action<EventInfoDamage> OnDamageDealt;
             public bool Reflects;
@@ -202,7 +205,6 @@ namespace SodRpg.Mod
             }
         }
         private int _pressurePlayerCount = -1;
-        private readonly DataProcessor<DamageData, Actor, Entity> _pressureDamage;
         private readonly Action<DewPlayer> _onPressurePlayerAdded;
         private readonly Action<DewPlayer> _onPressurePlayerRemoved;
         private bool _pressureDirty = true;
@@ -269,14 +271,13 @@ namespace SodRpg.Mod
         {
             InitializeAssignedMechanisms();
             InitializeMemoryAttribution();
+            InitializeKillAssists();
             BasicAttackContext.Prewarm(); NativeDamageContext.Prewarm(); ElementApplicationContext.Prewarm();
             BossDisplacementReuse.Prewarm(); BossBasicEffectReuse.Prewarm();
             NativeAttributedHpDamage.Prewarm(); PrewarmNativeShieldSnapshot();
             _ = _runtimes.Values; _ = _attributionEquipment.Keys; _ = _attributionEquipment.Values;
             _ = _bossHysteriaStates.Values; _ = _lastStarlights.Values;
             _dailyIdOfHost = dailyIdOfHost;
-            _pressureDamage = (ref DamageData damage, Actor actor, Entity target) =>
-                damage.ApplyAmplification((float)_pressure.DamageMultiplier - 1f);
             _onPressurePlayerAdded = player =>
             {
                 _pressureDirty = true;
@@ -300,7 +301,9 @@ namespace SodRpg.Mod
                     if (_versionMismatches.Remove(player)) RebuildMismatchList();
                 }
                 _pressureDirty = true;
+                OwnershipPlayerRemoved(player);
             };
+            _dispatchSupportHeal = DispatchSupportHealOwned;
             _onBuild = OnBuild;
             _onCurse = OnCurse;
             _onCurseClear = OnCurseClear;
@@ -449,7 +452,11 @@ namespace SodRpg.Mod
 
         private void StageCurrency() => SyncCurrency(_tickNow);
 
-        private void StageModShieldPools() => UpdateModShieldPools(_tickNow);
+        private void StageModShieldPools()
+        {
+            UpdateModShieldPools(_tickNow);
+            UpdateSupportOverheal(_tickNow);
+        }
 
         private float _nextMonsterPrune;
 
@@ -547,7 +554,15 @@ namespace SodRpg.Mod
             var monster = rt.Monster;
             // Final processors multiply after native multiplayer, depth, nightmare and variant stats.
             InstallPressureHealthProcessor(rt);
-            monster.dealtDamageProcessor.Add(_pressureDamage);
+            rt.PressureDamage = (ref DamageData damage, Actor actor, Entity target) =>
+            {
+                // Preserve the legacy path in solo/OFF; assigned children apply pressure just once.
+                if (OwnershipReplacesAncestorPressure(actor, monster)) return;
+                float multiplier = (float)_pressure.DamageMultiplier;
+                OverrideOwnershipDamage(monster, ref multiplier);
+                damage.ApplyAmplification(multiplier - 1f);
+            };
+            monster.dealtDamageProcessor.Add(rt.PressureDamage);
             rt.PressureApplied = true;
             monster.Status.CalculateStatsIfDirty();
         }
@@ -577,6 +592,7 @@ namespace SodRpg.Mod
 
         private void OnEntityAdd(Entity e)
         {
+            OwnershipEntityAdded(e);
             if (e != null && _pairEntities.Add(e))
             {
                 e.EntityEvent_OnTakeDamage += _onPairEnemyDamage;
@@ -600,6 +616,7 @@ namespace SodRpg.Mod
 
         private void OnEntityRemove(Entity e)
         {
+            OwnershipEntityRemoved(e);
             if (e != null && _pairEntities.Remove(e))
             {
                 e.EntityEvent_OnTakeDamage -= _onPairEnemyDamage;
@@ -665,6 +682,7 @@ namespace SodRpg.Mod
             if (_monsters.TryGetValue(m, out var rt))
             {
                 _monsters.Remove(m);
+                OwnershipEntityRemoved(m);
                 SendMonsterRemoval(rt);
                 Unhook(rt);
             }
@@ -687,6 +705,7 @@ namespace SodRpg.Mod
 
         private void UnhookMonsters()
         {
+            ClearEnemyOwnership();
             foreach (var rt in _monsters.Values) { SendMonsterRemoval(rt); Unhook(rt); }
             _monsters.Clear();
             ClearPressureDividendSpawns();
@@ -714,7 +733,7 @@ namespace SodRpg.Mod
                     m.Status.CalculateStatsIfDirty();
                 }
                 catch (Exception ex) { Log.Error("Host: unhook pressure health " + ex); }
-                try { m.dealtDamageProcessor.Remove(_pressureDamage); }
+                try { m.dealtDamageProcessor.Remove(rt.PressureDamage); }
                 catch (Exception ex) { Log.Error("Host: unhook pressure damage " + ex); }
                 rt.PressureApplied = false;
             }
@@ -862,6 +881,7 @@ namespace SodRpg.Mod
 
         private void OnActorAdd(Actor actor)
         {
+            if (actor is Entity entity) TrackKillAssistEntity(entity);
             if (actor is Summon summon)
             {
                 var hero = summon.FindFirstAncestorOfType<Hero>();
@@ -874,6 +894,7 @@ namespace SodRpg.Mod
 
         private void OnActorRemove(Actor actor)
         {
+            if (actor is Entity entity) ForgetKillAssistEntity(entity);
             if (actor is Summon summon)
             {
                 UnhookSupportSummonV129(summon);
@@ -914,6 +935,7 @@ namespace SodRpg.Mod
 
         private void OnZoneLoaded(EventInfoLoadZone info)
         {
+            ClearCoopKeystones();
             ClearAssignedMechanismTransients();
             _roomHasVariant = false;
             ClearZoneReactions();
@@ -1226,6 +1248,9 @@ namespace SodRpg.Mod
                 ClearQueuedMonsterSync();
                 ClearSunders();
                 ClearNativeDeathHooks();
+                ClearKillAssists();
+                ClearSupportOverheal();
+                ClearCoopKeystones();
                 _am = am;
                 _spawnQueue.Clear();
                 _regen.Clear();
@@ -1238,7 +1263,11 @@ namespace SodRpg.Mod
                     am.ClientEvent_OnActorAdd += _onActorAdd;
                     am.ClientEvent_OnActorRemove += _onActorRemove;
                     ScanShrines();
-                    foreach (var e in am.allEntities) OnEntityAdd(e);
+                    foreach (var e in am.allEntities)
+                    {
+                        TrackKillAssistEntity(e);
+                        OnEntityAdd(e);
+                    }
                 }
             }
             var zone = NetworkedManagerBase<ZoneManager>.softInstance;
@@ -1301,12 +1330,15 @@ namespace SodRpg.Mod
             ClearAssignedMechanismSession();
             if (NativeInstance == this) NativeInstance = null;
             ReleasePowerShields();
+            ClearSupportOverheal();
+            ClearCoopKeystones();
             ClearMeleeCoop();
             ClearNewPowerZone();
             ClearZoneGimmicksV129();
             ClearBackOffCharge();
             ClearSupportPowerStateV129();
             ClearNativeDeathHooks();
+            ClearKillAssists();
             ClearWaypointHeroes();
             DewPlayer.onGamePlayerAdded -= _onPressurePlayerAdded;
             DewPlayer.onGamePlayerRemoved -= _onPressurePlayerRemoved;
@@ -1525,7 +1557,11 @@ namespace SodRpg.Mod
                 var captured = rt;
                 rt.OnFired = info => OnAttackFired(captured, info);
                 rt.OnSkill = info => OnSkillUse(captured, info);
-                rt.OnHit = _onAttackHit;
+                rt.OnHit = info =>
+                {
+                    OnRunGrowthBasicHit(captured, info);
+                    _onAttackHit(info);
+                };
                 hero.EntityEvent_OnAttackFired += rt.OnFired;
                 // Actor.DoBasicAttackHit は、この同期イベントの後で DealDamage を呼ぶ。
                 // RPC 通知の配信時点に依存せず、命中前の HP で判定する。
@@ -1608,6 +1644,9 @@ namespace SodRpg.Mod
                     heal.ApplyAmplification(SupportStats.AmplifyHeal(1f, captured.Powers.Build.Get(Stat.HealPower) + GrowthSupport(captured, Stat.HealPower)) - 1f);
                 rt.ShieldDealt = (ref HealData shield, Actor a, Entity t) =>
                     shield.ApplyAmplification(SupportStats.AmplifyShield(1f, captured.Powers.Build.Get(Stat.ShieldPower) + GrowthSupport(captured, Stat.ShieldPower)) - 1f);
+                rt.GrowthHealReceived = (ref HealData heal, Actor a, Entity t) =>
+                    AmplifyRunGrowthHealingReceived(captured, ref heal);
+                hero.takenHealProcessor.Add(rt.GrowthHealReceived);
                 hero.dealtHealProcessor.Add(rt.HealDealt);
                 hero.dealtShieldProcessor.Add(rt.ShieldDealt);
                 rt.OnSummon = info => HookSummon(captured, info.summon);
@@ -1640,6 +1679,7 @@ namespace SodRpg.Mod
             ScanMeleeCoop(rt, Alive(hero));
             rt.AppliedBuild = received;
             ConfigureAuthoredKeystone(hero, build);
+            ConfigureCoopKeystones(hero, build);
             ConfigureAuthoredMechanisms(hero, build);
             BindGoldSpend(rt);
             ApplyGemSlots(rt, build);
@@ -1688,6 +1728,7 @@ namespace SodRpg.Mod
             FlushBountyReports(rt);
             ClearBossEffects(rt);
             ForgetAssignedMechanismOwner(rt.Hero);
+            ForgetCoopKeystones(rt.Hero);
             if (restoreGemSlots) RestoreGemSlots(rt);
             StopMovementCharges(rt);
             UnhookNewPowers(rt);
@@ -1722,6 +1763,7 @@ namespace SodRpg.Mod
                 if (rt.OnDisplacement != null) hero.Control.ClientEvent_OnDisplacementStarted -= rt.OnDisplacement;
                 if (rt.DamageTaken != null) hero.takenDamageProcessor.Remove(rt.DamageTaken);
                 if (rt.DamageDealt != null) hero.dealtDamageProcessor.Remove(rt.DamageDealt);
+                if (rt.GrowthHealReceived != null) hero.takenHealProcessor.Remove(rt.GrowthHealReceived);
                 if (rt.HealDealt != null) hero.dealtHealProcessor.Remove(rt.HealDealt);
                 if (rt.ShieldDealt != null) hero.dealtShieldProcessor.Remove(rt.ShieldDealt);
                 if (rt.OnSummon != null) hero.ActorEvent_OnSpawnSummon -= rt.OnSummon;
@@ -1739,6 +1781,7 @@ namespace SodRpg.Mod
             rt.OnImmunity = null;
             rt.OnAbilityCreated = null;
             rt.CritBasicVictims.Clear();
+            rt.GrowthHealReceived = null;
             rt.HealDealt = null;
             rt.ShieldDealt = null;
             rt.OnSummon = null;
@@ -1956,10 +1999,11 @@ namespace SodRpg.Mod
                 if (!Alive(hero) || info.target != hero) return;
                 OnPotionHealV129(rt, info);
                 rt.Powers.OnOverheal(Time.time, info.discardedAmount);
-                float shield = rt.Powers.TakeOverflowingLife(info.discardedAmount, hero.maxHealth);
-                if (shield <= 0) return;
-                hero.GiveShield(hero, shield, PowerRuntime.OverflowingLifeDuration);
-                LogPowerTrigger(Power.OverflowingLife);
+                // The optional global hook also covers allies without a MOD build; keep this Power if it is absent.
+                if (!NativeSupportHeal.Active || NativeSupportHeal.Current.target != hero
+                    || NativeSupportHeal.Current.actor != info.actor || NativeSupportHeal.Current.amount != info.amount
+                    || NativeSupportHeal.Current.discardedAmount != info.discardedAmount)
+                    ApplyOverhealProtection(info, null);
             }
             catch (Exception ex)
             {
@@ -2024,6 +2068,7 @@ namespace SodRpg.Mod
                 case Stat.EssenceSlotMovement:
                 // Support stats are handled by combat processors, not native StatBonus fields.
                 case Stat.HealPower:
+                case Stat.HealingReceivedPct:
                 case Stat.ShieldPower:
                 case Stat.SummonPower:
                 case Stat.SacrificeReduction:
@@ -2072,9 +2117,16 @@ namespace SodRpg.Mod
         /// <summary>鉄の輪・乱戦の敵数と、共鳴の距離判定（0.25秒ごと）。</summary>
         private readonly List<HeroRuntime> _scanList = new List<HeroRuntime>();
 
+        partial void ConfigureCoopKeystones(Hero hero, Build build);
+        partial void ScanCoopKeystones();
+        partial void ClearCoopKeystones();
+        partial void ForgetCoopKeystones(Hero hero);
+
         private void ScanArea()
         {
+            ScanEnemyOwnership();
             ScanCoopDistances();
+            ScanCoopKeystones();
             PruneMeleeBreaks();
             var list = _scanList;
             list.Clear();
@@ -2275,6 +2327,7 @@ namespace SodRpg.Mod
                 if (generated && info.victim.currentHealth <= 0.00001f) rt.GeneratedKillVictims.Add(victimId);
                 else rt.GeneratedKillVictims.Remove(victimId);
                 if (generated) return;
+                OnRunGrowthSummonHit(rt, info);
                 TrackCritBasicDamage(rt, info, victimId);
                 OnNewPowerDamage(rt, info);
                 string memory = MemorySource(info.actor);
@@ -2298,6 +2351,7 @@ namespace SodRpg.Mod
                 if (!Alive(rt.Hero) || info.victim == null
                     || info.victim.GetRelation(rt.Hero) != EntityRelation.Enemy) return;
                 int victimId = info.victim.GetInstanceID();
+                OnRunGrowthKill(rt);
                 bool generated = rt.GeneratedKillVictims.Remove(victimId)
                     || _gimmickDamageDepth != 0 || _pairDamageDepth != 0 || _reflectingDamage || _shattering
                     || IsPairReactionSource(info.actor);
@@ -2421,19 +2475,24 @@ namespace SodRpg.Mod
                 if (_gimmickDamageDepth != 0 || _reactionEffectDepth != 0) return;
                 var rt = OwnerRuntimeOf(info.actor);
                 if (rt == null || !Alive(rt.Hero)) return;
-                var r = rt.Powers.OnKill(Time.time, Math.Max(rt.Hero.Status.attackDamage, rt.Hero.Status.abilityPower), rt.Hero.maxHealth);
-                if (r.Heal > 0) rt.Hero.Heal(r.Heal).Dispatch(rt.Hero);
-                // 爆砕で倒した敵からは爆砕しない（同時に倒した群れ全体へ連鎖しないように。v1.28）
-                if (r.ShatterDamage > 0 && !_shattering)
-                {
-                    _shattering = true;
-                    try { DamageAround(rt.Hero, info.victim.position, PowerRuntime.ShatterRadius, r.ShatterDamage, null, int.MaxValue, magic: rt.Hero.Status.abilityPower > rt.Hero.Status.attackDamage); }
-                    finally { _shattering = false; }
-                }
+                ApplyKillPowers(rt, info.victim);
             }
             catch (Exception ex)
             {
                 Log.Error("Host: OnDeath " + ex.Message);
+            }
+        }
+
+        private void ApplyKillPowers(HeroRuntime rt, Entity victim)
+        {
+            var r = rt.Powers.OnKill(Time.time, Math.Max(rt.Hero.Status.attackDamage, rt.Hero.Status.abilityPower), rt.Hero.maxHealth);
+            if (r.Heal > 0) rt.Hero.Heal(r.Heal).Dispatch(rt.Hero);
+            // 爆砕で倒した敵からは爆砕しない（同時に倒した群れ全体へ連鎖しないように。v1.28）
+            if (r.ShatterDamage > 0 && !_shattering)
+            {
+                _shattering = true;
+                try { DamageAround(rt.Hero, victim.position, PowerRuntime.ShatterRadius, r.ShatterDamage, null, int.MaxValue, magic: rt.Hero.Status.abilityPower > rt.Hero.Status.attackDamage); }
+                finally { _shattering = false; }
             }
         }
 

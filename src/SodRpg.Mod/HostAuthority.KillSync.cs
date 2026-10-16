@@ -15,7 +15,9 @@ namespace SodRpg.Mod
         {
             public readonly NightmareAffix Nightmare;
             public readonly string Variant;
-            public MonsterClassificationDelta(NightmareAffix nightmare, string variant) { Nightmare = nightmare; Variant = variant; }
+            public readonly MonsterOwnership Ownership;
+            public MonsterClassificationDelta(NightmareAffix nightmare, string variant, MonsterOwnership ownership)
+            { Nightmare = nightmare; Variant = variant; Ownership = ownership; }
         }
 
         // Updating a pending ID preserves its FIFO position; cancellation removes it without leaving tombstones.
@@ -541,8 +543,10 @@ namespace SodRpg.Mod
                 if (_registeredOn != null && !pair.Value.ControlSent)
                     SendKillStreamControl(pair.Key, pair.Value);
             string eventId = RoomOmens.EncodeKillEventId(this, Guid.NewGuid().ToString("N"));
+            double dynamicReward = 1;
+            ApplyDynamicKillReward(monster, ref dynamicReward);
             runtime.KillEventId = PressureCountRewards.EncodeEventId(eventId,
-                PressureCountRewards.ScaleFromActorData(monster.persistentSyncedData), ShardDropMultiplierForKill());
+                PressureCountRewards.ScaleFromActorData(monster.persistentSyncedData), ShardDropMultiplierForKill(), dynamicReward);
             runtime.KillEventStreamId = _killStreamId;
             runtime.KillEventNetId = monster.netId;
             runtime.SyncNetId = monster.netId;
@@ -574,6 +578,8 @@ namespace SodRpg.Mod
                 DreamforgeMonsterKillMsg.FromFact(fact, ClientSession.HostAuthorityGeneration));
         }
 
+        partial void RefreshMonsterOwnership(MonsterRuntime runtime);
+
         private void SendMonsterClassification(MonsterRuntime runtime, DewPlayer target = null)
         {
             var monster = runtime.Monster;
@@ -581,16 +587,20 @@ namespace SodRpg.Mod
             if (monster.netId == 0) return;
             _nightmares.TryGetValue(monster, out var nightmare);
             string variant = runtime.Variant?.Id;
+            RefreshMonsterOwnership(runtime);
+            var ownership = runtime.Ownership;
             if (target == null && runtime.ClassificationQueued && runtime.SyncNetId == monster.netId
-                && runtime.ClassificationNightmare == nightmare && runtime.ClassificationVariant == variant) return;
+                && runtime.ClassificationNightmare == nightmare && runtime.ClassificationVariant == variant
+                && runtime.ClassificationOwnership.SameState(ownership)) return;
             if (target == null)
             {
                 runtime.SyncNetId = monster.netId;
                 runtime.ClassificationQueued = true;
                 runtime.ClassificationNightmare = nightmare;
                 runtime.ClassificationVariant = variant;
+                runtime.ClassificationOwnership = ownership;
                 _queuedMonsterRemovals.Remove(monster.netId);
-                _queuedMonsterClassifications.Set(monster.netId, new MonsterClassificationDelta(nightmare, variant));
+                _queuedMonsterClassifications.Set(monster.netId, new MonsterClassificationDelta(nightmare, variant, ownership));
                 return;
             }
             if (!ReserveMonsterSyncMessage()) return;
@@ -600,6 +610,10 @@ namespace SodRpg.Mod
                 {
                     protocol = Protocol.Version, netId = monster.netId, variantId = variant,
                     authorityGeneration = ClientSession.HostAuthorityGeneration,
+                    ownerParticipantId = ownership.ParticipantId, ownershipRevision = ownership.Revision,
+                    ownershipProtected = ownership.Protected, ownerPlayerSlot = ownership.PlayerSlot,
+                    bossShares = ownership.BossShares,
+                    dynamicDifficulty = ownership.DynamicDifficulty, dynamicRevision = ownership.DynamicRevision,
                 };
                 _registeredOn.CustomRpc_SendMessageToClient(target, msg);
             }
@@ -609,6 +623,10 @@ namespace SodRpg.Mod
                 {
                     protocol = Protocol.Version, netId = monster.netId, affixes = (int)nightmare,
                     authorityGeneration = ClientSession.HostAuthorityGeneration,
+                    ownerParticipantId = ownership.ParticipantId, ownershipRevision = ownership.Revision,
+                    ownershipProtected = ownership.Protected, ownerPlayerSlot = ownership.PlayerSlot,
+                    bossShares = ownership.BossShares,
+                    dynamicDifficulty = ownership.DynamicDifficulty, dynamicRevision = ownership.DynamicRevision,
                 };
                 _registeredOn.CustomRpc_SendMessageToClient(target, msg);
             }
@@ -694,12 +712,20 @@ namespace SodRpg.Mod
                         {
                             protocol = Protocol.Version, netId = netId, variantId = delta.Variant,
                             authorityGeneration = ClientSession.HostAuthorityGeneration,
+                            ownerParticipantId = delta.Ownership.ParticipantId, ownershipRevision = delta.Ownership.Revision,
+                            ownershipProtected = delta.Ownership.Protected, ownerPlayerSlot = delta.Ownership.PlayerSlot,
+                            bossShares = delta.Ownership.BossShares,
+                            dynamicDifficulty = delta.Ownership.DynamicDifficulty, dynamicRevision = delta.Ownership.DynamicRevision,
                         });
                     else
                         _registeredOn.CustomRpc_SendMessageToAllClients(new DreamforgeNightmareMsg
                         {
                             protocol = Protocol.Version, netId = netId, affixes = (int)delta.Nightmare,
                             authorityGeneration = ClientSession.HostAuthorityGeneration,
+                            ownerParticipantId = delta.Ownership.ParticipantId, ownershipRevision = delta.Ownership.Revision,
+                            ownershipProtected = delta.Ownership.Protected, ownerPlayerSlot = delta.Ownership.PlayerSlot,
+                            bossShares = delta.Ownership.BossShares,
+                            dynamicDifficulty = delta.Ownership.DynamicDifficulty, dynamicRevision = delta.Ownership.DynamicRevision,
                         });
                 }
                 else

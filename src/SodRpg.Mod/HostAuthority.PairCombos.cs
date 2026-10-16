@@ -19,6 +19,16 @@ namespace SodRpg.Mod
 
     internal sealed partial class HostAuthority
     {
+        private Hero _isolatedSupportHealer;
+        private Action<HeroRuntime, Entity, HealData> _dispatchSupportHeal;
+
+        private void DispatchSupportHeal(HeroRuntime owner, Entity target, HealData heal)
+        {
+            if (_dispatchSupportHeal != null) { _dispatchSupportHeal(owner, target, heal); return; }
+            // Keep native recovery available if optional support attribution is unavailable.
+            heal.Dispatch(target);
+        }
+
         internal void OnPairMemoryUnequipped(HeroSkill skill)
         {
             try
@@ -70,7 +80,7 @@ namespace SodRpg.Mod
         }
 
         private void QueueGimmicks(HeroRuntime rt, GimmickTrigger trigger, string memory, Entity victim, float damage, bool pairGenerated = false,
-            Actor actor = null, bool direct = true)
+            Actor actor = null, bool direct = true, long killActivation = 0)
         {
             var build = rt.Powers.Build;
             if (build.Gimmicks.Count == 0 && build.PairCombos.Count == 0) return;
@@ -81,14 +91,16 @@ namespace SodRpg.Mod
                 && FindMemory(rt.Hero, memory) != null
                 && !(trigger == GimmickTrigger.OnUse
                     && rt.Hero.Skill.GetSkill(HeroSkillLocation.Movement)?.GetType().Name == memory))
-                FireGimmicksV129(rt, trigger, memory, victim, damage, actor, direct, requests);
+                FireGimmicksV129(rt, trigger, memory, victim, damage, actor, direct, requests, killActivation);
             if (build.PairCombos.Count > 0)
             {
                 CollectPairMemories(rt);
                 rt.PairCombos.Fire((PairComboTrigger)trigger, memory, now,
                     victim != null ? victim.GetInstanceID() : 0, damage,
                     pairGenerated || _gimmickDamageDepth != 0 || _pairDamageDepth != 0,
-                    rt.PairMemories, HasOwnSummons(rt), requests, hitKind: PairHitKind(actor), activationSerial: PairActivation(rt, actor));
+                    rt.PairMemories, HasOwnSummons(rt), requests, hitKind: PairHitKind(actor),
+                    activationSerial: killActivation != 0 ? killActivation : PairActivation(rt, actor),
+                    deferKillCleanup: killActivation != 0);
             }
             QueueGimmickRequests(rt, victim, now);
         }
@@ -249,7 +261,7 @@ namespace SodRpg.Mod
                     var support = ActorManager.instance.serverActor;
                     // 出どころを変えたので、旅人の回復量はここで掛ける（v1.27.1 の能力値）。
                     int healPower = rt.Powers.Build.Get(Stat.HealPower);
-                    support.Heal(SupportStats.AmplifyHeal(hero.maxHealth * def.ValuePercent / 100f, healPower)).Dispatch(hero);
+                    DispatchSupportHeal(rt, hero, support.Heal(SupportStats.AmplifyHeal(hero.maxHealth * def.ValuePercent / 100f, healPower)));
                     float healRadius = Gimmicks.Radius(def, CoopBalance.FullRange);
                     if (def.Arg == 1)
                         foreach (var player in DewPlayer.gamePlayers)
@@ -257,10 +269,9 @@ namespace SodRpg.Mod
                             var ally = player != null ? player.hero : null;
                             if (ally == hero || !Alive(ally) || ally.GetRelation(hero) != EntityRelation.Ally
                                 || CoopDistanceNative.Coefficient(hero, ally, healRadius) <= 0f) continue;
-                            float allyBefore = ally.currentHealth;
-                            support.Heal(SupportStats.AmplifyHeal(ally.maxHealth * (float)(def.EffectiveAllyValuePercent ?? def.EffectiveValueOrAuthored) / 100f, healPower)
-                                * CoopDistanceNative.Coefficient(hero, ally, healRadius)).Dispatch(ally);
-                            CreditHealRestored(rt, ally, allyBefore);
+                            DispatchSupportHeal(rt, ally, support.Heal(SupportStats.AmplifyHeal(
+                                ally.maxHealth * (float)(def.EffectiveAllyValuePercent ?? def.EffectiveValueOrAuthored) / 100f, healPower)
+                                * CoopDistanceNative.Coefficient(hero, ally, healRadius)));
                         }
                     break;
                 case GimmickEffect.Recharge:
