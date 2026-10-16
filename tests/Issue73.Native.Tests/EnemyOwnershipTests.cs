@@ -553,20 +553,21 @@ namespace Issue73.Native.Tests
         {
             var session = new ClientSession();
             // 旧ホスト形式（欄なし = 既定値）でも壊れない: 担当の記録は作らない。
-            Call(session, "ReceiveMonsterOwnership", 501u, null, 0L, false, 0);
+            // 6番目の引数（bossShares）は持ち分の追加欄。旧形式相当の null を明示する。
+            Call(session, "ReceiveMonsterOwnership", 501u, null, 0L, false, 0, null);
             Assert.Empty(session.EnemyOwners);
 
-            Call(session, "ReceiveMonsterOwnership", 501u, "guid-9", 2L, true, 2);
+            Call(session, "ReceiveMonsterOwnership", 501u, "guid-9", 2L, true, 2, null);
             Assert.True(session.EnemyOwners.TryGetValue(501u, out var owned));
             Assert.Equal("guid-9", owned.ParticipantId);
             Assert.Equal(2L, owned.Revision);
             Assert.True(owned.Protected);
             Assert.Equal(2, owned.PlayerSlot);
 
-            Call(session, "ReceiveMonsterOwnership", 501u, "guid-5", 1L, true, 1); // 古いリビジョン
+            Call(session, "ReceiveMonsterOwnership", 501u, "guid-5", 1L, true, 1, null); // 古いリビジョン
             Assert.Equal(2L, session.EnemyOwners[501u].Revision); // 拒否される
 
-            Call(session, "ReceiveMonsterOwnership", 502u, "guid-13", 3L, true, 9); // 枠番号が範囲外
+            Call(session, "ReceiveMonsterOwnership", 502u, "guid-13", 3L, true, 9, null); // 枠番号が範囲外
             Assert.False(session.EnemyOwners[502u].Protected); // 保護表示にはしない
         }
     }

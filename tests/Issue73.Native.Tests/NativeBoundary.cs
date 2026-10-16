@@ -80,6 +80,8 @@ namespace Mirror
         public float x, y;
         public Vector2(float x, float y) { this.x = x; this.y = y; }
         public static Vector2 zero => new Vector2();
+        public static Vector2 operator -(Vector2 a, Vector2 b) => new Vector2(a.x - b.x, a.y - b.y);
+        public float sqrMagnitude => x * x + y * y;
         public static float Distance(Vector2 a, Vector2 b)
         {
             float dx = a.x - b.x, dy = a.y - b.y;
@@ -110,6 +112,7 @@ namespace Mirror
         public static float Max(float a, float b) => a > b ? a : b;
         public static float Min(float a, float b) => a < b ? a : b;
         public static float Clamp01(float value) => value < 0f ? 0f : value > 1f ? 1f : value;
+        public static float Clamp(float value, float min, float max) => value < min ? min : value > max ? max : value;
         public static float Floor(float value) => (float)Math.Floor(value);
     }
     internal static class GUI
@@ -213,8 +216,30 @@ namespace SodRpg.Mod
         public readonly ProcessorList<DataProcessor<FinalStats>> finalStatsProcessors
             = new ProcessorList<DataProcessor<FinalStats>>();
         public readonly List<StatBonus> AppliedBonuses = new List<StatBonus>();
-        public void AddStatBonus(StatBonus bonus) => AppliedBonuses.Add(bonus);
-        public void RemoveStatBonus(StatBonus bonus) => AppliedBonuses.Remove(bonus);
+        // 本体の加算済みボーナス（bonusStats）と同じ形。ボス持ち分が人数補正分を除外するために読む。
+        public readonly StatBonus bonusStats = new StatBonus();
+        public void AddStatBonus(StatBonus bonus)
+        {
+            AppliedBonuses.Add(bonus);
+            bonusStats.attackDamagePercentage += bonus.attackDamagePercentage;
+            bonusStats.abilityPowerPercentage += bonus.abilityPowerPercentage;
+            bonusStats.movementSpeedPercentage += bonus.movementSpeedPercentage;
+            bonusStats.abilityHasteFlat += bonus.abilityHasteFlat;
+            bonusStats.armorFlat += bonus.armorFlat;
+            bonusStats.attackSpeedPercentage += bonus.attackSpeedPercentage;
+            bonusStats.maxHealthPercentage += bonus.maxHealthPercentage;
+        }
+        public void RemoveStatBonus(StatBonus bonus)
+        {
+            AppliedBonuses.Remove(bonus);
+            bonusStats.attackDamagePercentage -= bonus.attackDamagePercentage;
+            bonusStats.abilityPowerPercentage -= bonus.abilityPowerPercentage;
+            bonusStats.movementSpeedPercentage -= bonus.movementSpeedPercentage;
+            bonusStats.abilityHasteFlat -= bonus.abilityHasteFlat;
+            bonusStats.armorFlat -= bonus.armorFlat;
+            bonusStats.attackSpeedPercentage -= bonus.attackSpeedPercentage;
+            bonusStats.maxHealthPercentage -= bonus.maxHealthPercentage;
+        }
         public void MarkStatsDirty() => _statsDirty = true;
         public void SetHealth(float value) => currentHealth = value;
         public void CalculateStatsIfDirty()
@@ -305,6 +330,8 @@ namespace SodRpg.Mod
     internal class EntityControl
     {
         public Entity entity;
+        // 本体の攻撃目標。召喚体の反撃判定（HostAuthority.SummonOwnership.cs）が読む。
+        public Entity attackTarget;
         public Displacement ongoingDisplacement;
         public int Cancels;
         public float outerRadius;
