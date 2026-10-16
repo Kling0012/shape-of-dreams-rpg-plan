@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <LangVersion>9.0</LangVersion>
+    <Nullable>disable</Nullable>
+    <IsPackable>false</IsPackable>
+    <AssemblyName>Issue535.ModUnderTest</AssemblyName>
+    <RootNamespace>SodRpg.Mod</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../NativeApi/Issue535.NativeApi.csproj" />
+    <ProjectReference Include="../../../../src/SodRpg.Core/SodRpg.Core.csproj" />
+    <PackageReference Include="Lib.Harmony" Version="2.4.2" />
+    <Compile Include="../../../../src/SodRpg.Mod/CulinaryIngredientCap.cs" Link="CulinaryIngredientCap.cs" />
+    <Compile Include="../../../../src/SodRpg.Mod/CulinaryMagnet.cs" Link="CulinaryMagnet.cs" />
+  </ItemGroup>
+</Project>
