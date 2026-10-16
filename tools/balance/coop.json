@@ -11,6 +11,9 @@
   "scanSeconds": 0.25,
   "ownership": {
     "helpFactor": 0.5,
+    "bossShareFactor": 0.8,
+    "bossDamageMin": 0.2,
+    "bossDamageMax": 3,
     "floor": 0.3,
     "rescueHp": 0.35,
     "engageWindow": 6,

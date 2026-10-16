@@ -17,6 +17,9 @@ namespace SodRpg.Core.Game
         public static class Ownership
         {
             public const float HelpFactor = 0.5f;
+            public const float BossShareFactor = 0.8f;
+            public const float BossDamageMin = 0.2f;
+            public const float BossDamageMax = 3f;
             public const float Floor = 0.3f;
             public const float RescueHp = 0.35f;
             public const float EngageWindow = 6f;

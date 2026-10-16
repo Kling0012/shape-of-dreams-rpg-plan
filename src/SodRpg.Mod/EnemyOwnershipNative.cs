@@ -88,8 +88,14 @@ namespace SodRpg.Mod
     [HarmonyPatch(typeof(EntityAI), nameof(EntityAI.Aggro))]
     internal static class EnemyOwnershipAggro
     {
-        private static bool Prefix(EntityAI __instance, ref Entity target) => !NetworkServer.active
-            || HostAuthority.NativeInstance?.SelectOwnershipAggro(__instance, ref target) != false;
+        private static bool Prefix(EntityAI __instance, ref Entity target)
+        {
+            if (!NetworkServer.active) return true;
+            var host = HostAuthority.NativeInstance;
+            // All native Summon Aggro calls (spawn, owner hit, commands and normal search) enter here.
+            host?.SelectSummonOwnershipAggro(__instance, ref target);
+            return host?.SelectOwnershipAggro(__instance, ref target) != false;
+        }
     }
 
     [HarmonyPatch(typeof(EntityAI), "UpdateAIContext")]

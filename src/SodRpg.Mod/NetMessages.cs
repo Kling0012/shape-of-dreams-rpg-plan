@@ -121,23 +121,46 @@ namespace SodRpg.Mod
         public int[] elementalKills;
     }
 
+    [Serializable]
+    public sealed class BossShareDisplay
+    {
+        public string participantId;
+        public int playerSlot;
+        // Quantized to 0..1000 so fractional HP noise does not flood the classification channel.
+        public int remaining;
+    }
+
     internal readonly struct MonsterOwnership
     {
         internal readonly string ParticipantId;
         internal readonly long Revision;
         internal readonly bool Protected;
         internal readonly int PlayerSlot;
+        internal readonly BossShareDisplay[] BossShares;
 
-        internal MonsterOwnership(string participantId, long revision, bool protectedState, int playerSlot)
+        internal MonsterOwnership(string participantId, long revision, bool protectedState, int playerSlot,
+            BossShareDisplay[] bossShares = null)
         {
             ParticipantId = participantId;
             Revision = revision;
             Protected = protectedState;
             PlayerSlot = playerSlot;
+            BossShares = bossShares;
+        }
+
+        internal static bool SameShares(BossShareDisplay[] left, BossShareDisplay[] right)
+        {
+            if (ReferenceEquals(left, right)) return true;
+            if (left == null || right == null || left.Length != right.Length) return false;
+            for (int i = 0; i < left.Length; i++)
+                if (left[i].participantId != right[i].participantId || left[i].playerSlot != right[i].playerSlot
+                    || left[i].remaining != right[i].remaining) return false;
+            return true;
         }
 
         internal bool SameState(MonsterOwnership other) => ParticipantId == other.ParticipantId
-            && Revision == other.Revision && Protected == other.Protected && PlayerSlot == other.PlayerSlot;
+            && Revision == other.Revision && Protected == other.Protected && PlayerSlot == other.PlayerSlot
+            && SameShares(BossShares, other.BossShares);
     }
 
     /// <summary>ホスト → 全員：この敵が悪夢化した（接頭効果のビット集合）。</summary>
@@ -154,6 +177,7 @@ namespace SodRpg.Mod
         public long ownershipRevision;
         public bool ownershipProtected;
         public int ownerPlayerSlot;
+        public BossShareDisplay[] bossShares;
     }
 
     /// <summary>ホスト → 全員：この敵が夢の変種になった（Core の変種ID）。</summary>
@@ -168,6 +192,7 @@ namespace SodRpg.Mod
         public long ownershipRevision;
         public bool ownershipProtected;
         public int ownerPlayerSlot;
+        public BossShareDisplay[] bossShares;
     }
 
     /// <summary>ホスト → 全員：現在の敵側の予告。0なし、1障壁予告、2守り、3隙/減速、4回復。</summary>

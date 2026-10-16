@@ -605,6 +605,7 @@ namespace SodRpg.Mod
                     authorityGeneration = ClientSession.HostAuthorityGeneration,
                     ownerParticipantId = ownership.ParticipantId, ownershipRevision = ownership.Revision,
                     ownershipProtected = ownership.Protected, ownerPlayerSlot = ownership.PlayerSlot,
+                    bossShares = ownership.BossShares,
                 };
                 _registeredOn.CustomRpc_SendMessageToClient(target, msg);
             }
@@ -616,6 +617,7 @@ namespace SodRpg.Mod
                     authorityGeneration = ClientSession.HostAuthorityGeneration,
                     ownerParticipantId = ownership.ParticipantId, ownershipRevision = ownership.Revision,
                     ownershipProtected = ownership.Protected, ownerPlayerSlot = ownership.PlayerSlot,
+                    bossShares = ownership.BossShares,
                 };
                 _registeredOn.CustomRpc_SendMessageToClient(target, msg);
             }
@@ -703,6 +705,7 @@ namespace SodRpg.Mod
                             authorityGeneration = ClientSession.HostAuthorityGeneration,
                             ownerParticipantId = delta.Ownership.ParticipantId, ownershipRevision = delta.Ownership.Revision,
                             ownershipProtected = delta.Ownership.Protected, ownerPlayerSlot = delta.Ownership.PlayerSlot,
+                            bossShares = delta.Ownership.BossShares,
                         });
                     else
                         _registeredOn.CustomRpc_SendMessageToAllClients(new DreamforgeNightmareMsg
@@ -711,6 +714,7 @@ namespace SodRpg.Mod
                             authorityGeneration = ClientSession.HostAuthorityGeneration,
                             ownerParticipantId = delta.Ownership.ParticipantId, ownershipRevision = delta.Ownership.Revision,
                             ownershipProtected = delta.Ownership.Protected, ownerPlayerSlot = delta.Ownership.PlayerSlot,
+                            bossShares = delta.Ownership.BossShares,
                         });
                 }
                 else

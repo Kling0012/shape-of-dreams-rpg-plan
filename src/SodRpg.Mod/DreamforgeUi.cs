@@ -373,6 +373,7 @@ namespace SodRpg.Mod
                     if (repaint)
                     {
                         DrawNightmareLabels(scale);
+                        DrawBossShareBars(scale);
                         if (cfg.hudMode != HudMode.Off) DrawHud(w, h, cfg);
                     }
                     bool secureWait = _s.Profile.Run != null && _s.Profile.Run.AwaitingChoice && _s.ActiveRunId != null;
@@ -1030,7 +1031,12 @@ namespace SodRpg.Mod
                     || entry.Value.Identity == null || entry.Value.Monster == null
                     || !Mirror.NetworkClient.spawned.TryGetValue(entry.Key, out var live) || live != entry.Value.Identity)
                     _labelScratch.Add(entry.Key);
-            foreach (uint netId in _labelScratch) _labelMonsters.Remove(netId);
+            foreach (uint netId in _labelScratch)
+            {
+                _labelMonsters.Remove(netId);
+                _miniBossShares.Remove(netId);
+                _miniBossShareValues.Remove(netId);
+            }
             var cam = Camera.main;
             if (cam == null) return;
             int remaining = MonsterLabelLimit;
@@ -1047,7 +1053,7 @@ namespace SodRpg.Mod
             if (_ownershipLabelsFailed || !_cfg().showEnemyOwnershipMarks) return;
             foreach (var kv in _s.EnemyOwners)
             {
-                if (kv.Value.Protected && !_s.Nightmare.ContainsKey(kv.Key) && !_s.Variant.ContainsKey(kv.Key))
+                if ((kv.Value.Protected || kv.Value.BossShares != null) && !_s.Nightmare.ContainsKey(kv.Key) && !_s.Variant.ContainsKey(kv.Key))
                     DrawMonsterLabel(kv.Key, cam, scale, ref remaining);
                 if (remaining == 0) return;
             }
@@ -1087,7 +1093,7 @@ namespace SodRpg.Mod
             }
             if (!_ownershipLabelsFailed)
             {
-                try { mark = OwnershipMark(netId); }
+                try { mark = m.type == Monster.MonsterType.MiniBoss ? MiniBossShareMark(netId) ?? OwnershipMark(netId) : OwnershipMark(netId); }
                 catch (Exception ex)
                 {
                     _ownershipLabelsFailed = true;

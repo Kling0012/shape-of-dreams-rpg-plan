@@ -92,7 +92,8 @@ namespace SodRpg.Mod
         internal readonly Dictionary<uint, MonsterOwnership> EnemyOwners = new Dictionary<uint, MonsterOwnership>();
         private bool _ownershipDisplayFailed;
 
-        private void ReceiveMonsterOwnership(uint netId, string participantId, long revision, bool protectedState, int slot)
+        private void ReceiveMonsterOwnership(uint netId, string participantId, long revision, bool protectedState, int slot,
+            BossShareDisplay[] bossShares = null)
         {
             if (_ownershipDisplayFailed || netId == 0) return;
             try
@@ -100,8 +101,21 @@ namespace SodRpg.Mod
                 if (EnemyOwners.TryGetValue(netId, out var previous) && previous.Revision > revision) return;
                 // Old hosts omit the additive fields. Keep no ownership state for their messages.
                 if (revision <= 0) { EnemyOwners.Remove(netId); return; }
+                if (bossShares != null)
+                {
+                    bool valid = bossShares.Length >= 1 && bossShares.Length <= 4;
+                    for (int i = 0; valid && i < bossShares.Length; i++)
+                    {
+                        var share = bossShares[i];
+                        valid = share != null && !string.IsNullOrEmpty(share.participantId)
+                            && share.playerSlot >= 1 && share.playerSlot <= 4 && share.remaining >= 0 && share.remaining <= 1000;
+                        for (int j = 0; valid && j < i; j++)
+                            valid = bossShares[j].participantId != share.participantId && bossShares[j].playerSlot != share.playerSlot;
+                    }
+                    if (!valid) bossShares = null;
+                }
                 EnemyOwners[netId] = new MonsterOwnership(participantId, revision,
-                    protectedState && !string.IsNullOrEmpty(participantId) && slot >= 1 && slot <= 4, slot);
+                    protectedState && !string.IsNullOrEmpty(participantId) && slot >= 1 && slot <= 4, slot, bossShares);
             }
             catch (Exception ex)
             {

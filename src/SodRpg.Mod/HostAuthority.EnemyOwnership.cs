@@ -18,6 +18,7 @@ namespace SodRpg.Mod
             internal Entity Enemy;
             internal DewPlayer Owner;
             internal bool Excluded, OwnPressureHook;
+            internal BossShares Shares;
             internal float Spawned, Changed, DownSince, AwaySince, OwnerLastEngaged;
             internal float AppliedHealth = float.NaN;
             internal readonly DewPlayer[] Fighters = new DewPlayer[16];
@@ -238,7 +239,7 @@ namespace SodRpg.Mod
                 if (enemy == null || !_enemyOwnership.TryGetValue(enemy, out var state)) return;
                 // beforeSpawn may change type after the room's general onBeforeSpawn event.
                 if (OwnershipExcluded(enemy)) { state.Excluded = true; state.Owner = null; }
-                if (!OwnershipAvailable(OwnershipPart.Strength) || state.Excluded) return;
+                if (!OwnershipAvailable(OwnershipPart.Strength) || state.Excluded && !enemy.IsAnyBoss()) return;
                 if (enemy is Monster monster)
                 {
                     if (_monsters.TryGetValue(monster, out var runtime) && !runtime.PressureApplied && monster.Status != null)
@@ -271,6 +272,7 @@ namespace SodRpg.Mod
             {
                 if (TryOwnership(enemy, OwnershipPart.Strength, out var state))
                     multiplier = (float)OwnershipPressure(state.Owner).HealthMultiplier;
+                else OverrideBossShareHealth(enemy, ref multiplier);
             }
             catch (Exception ex) { FailOwnership(OwnershipPart.Strength, ex); }
         }
@@ -366,6 +368,8 @@ namespace SodRpg.Mod
         internal void ApplyOwnershipReceivedDamage(Entity victim, Actor actor, ref DamageData damage)
         {
             if (!NetworkServer.active) return;
+            ApplyBossShareReceivedDamage(victim, actor, ref damage);
+            ApplyBossPressureDamage(victim, actor, ref damage);
             // Independent branches: a failed helper rule must not disable stray-hit protection.
             var before = damage;
             try
@@ -543,6 +547,7 @@ namespace SodRpg.Mod
                 { _ownershipScratch.Add(pair.Key); continue; }
                 try
                 {
+                    ScanBossShares(state, running);
                     if (!running) ChangeOwnership(state, null);
                     else if (!state.Excluded)
                     {
@@ -597,15 +602,20 @@ namespace SodRpg.Mod
             {
                 bool running = OwnershipRunning();
                 foreach (var state in _enemyOwnership.Values)
+                {
+                    ScanBossShares(state, running, player);
                     if (!running || state.Owner == player)
                         ChangeOwnership(state, running ? OwnershipLeastLoaded() : null);
+                }
             }
             catch (Exception ex) { FailOwnership(OwnershipPart.Reassignment, ex); }
         }
 
         internal void ReleaseEnemyOwnership(Entity enemy)
         {
-            if (ReferenceEquals(enemy, null) || !_enemyOwnership.TryGetValue(enemy, out var state)) return;
+            if (ReferenceEquals(enemy, null)) return;
+            if (enemy is Monster monster) _bossNativeHealth.Remove(monster);
+            if (!_enemyOwnership.TryGetValue(enemy, out var state)) return;
             _enemyOwnership.Remove(enemy);
             bool reusable = true;
             try
@@ -628,6 +638,7 @@ namespace SodRpg.Mod
             }
             state.Enemy = null;
             state.Owner = null;
+            state.Shares = null;
             state.Excluded = state.OwnPressureHook = false;
             state.AppliedHealth = float.NaN;
             Array.Clear(state.Fighters, 0, state.Fighters.Length);
@@ -644,6 +655,7 @@ namespace SodRpg.Mod
             _ownershipScratch.Clear();
             _ownershipPlayers.Clear();
             _ownershipCounts.Clear();
+            _bossNativeHealth.Clear();
             _ownershipWasRunning = false;
             _ownershipLastPlayer = 0;
         }

@@ -30,7 +30,9 @@ def render_outputs():
     if data["outerRange"] <= data["fullRange"] or data["meleeGuardReductionPercent"] >= 100:
         raise ValueError("coop: invalid distance or reduction")
     ownership = data["ownership"]
-    owner_fields = (("helpFactor", "HelpFactor"), ("floor", "Floor"),
+    owner_fields = (("helpFactor", "HelpFactor"), ("bossShareFactor", "BossShareFactor"),
+                    ("bossDamageMin", "BossDamageMin"), ("bossDamageMax", "BossDamageMax"),
+                    ("floor", "Floor"),
                     ("rescueHp", "RescueHp"), ("engageWindow", "EngageWindow"),
                     ("spawnGrace", "SpawnGrace"), ("detectionMultiplier", "DetectionMultiplier"),
                     ("reassignCooldown", "ReassignCooldown"), ("downDelay", "DownDelay"),

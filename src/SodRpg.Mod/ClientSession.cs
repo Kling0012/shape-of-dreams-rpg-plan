@@ -1147,7 +1147,7 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
                 return;
             }
             if (!_monsterAuthority.Set(msg.authorityGeneration, msg.netId, (NightmareAffix)msg.affixes, null)) return;
-            ReceiveMonsterOwnership(msg.netId, msg.ownerParticipantId, msg.ownershipRevision, msg.ownershipProtected, msg.ownerPlayerSlot);
+            ReceiveMonsterOwnership(msg.netId, msg.ownerParticipantId, msg.ownershipRevision, msg.ownershipProtected, msg.ownerPlayerSlot, msg.bossShares);
             var a = Nightmares.Sanitize(msg.affixes);
             if (a == NightmareAffix.None)
             {
@@ -1164,7 +1164,7 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
             if (msg == null || !ObserveMonsterAuthority(msg.authorityGeneration)
                 || !_monsterAuthority.Set(msg.authorityGeneration, msg.netId, NightmareAffix.None, msg.variantId)) return;
             Protocol.WarnMismatch(msg.protocol, nameof(DreamforgeVariantMsg));
-            ReceiveMonsterOwnership(msg.netId, msg.ownerParticipantId, msg.ownershipRevision, msg.ownershipProtected, msg.ownerPlayerSlot);
+            ReceiveMonsterOwnership(msg.netId, msg.ownerParticipantId, msg.ownershipRevision, msg.ownershipProtected, msg.ownerPlayerSlot, msg.bossShares);
             var def = Variants.Get(msg.variantId);
             if (def == null)
             {
