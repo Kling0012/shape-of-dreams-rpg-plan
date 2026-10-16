@@ -333,6 +333,13 @@ namespace SodRpg.Core.Game
             Description = description;
         }
 
+        public TalentDef(string id, Line route, Txt name, Stat stat, int value, Txt description)
+            : this(id, route, name, stat, value, 1)
+        {
+            IsKeystone = true;
+            Description = description;
+        }
+
         public string Id { get; }
         public Line Route { get; }
         public Txt Name { get; }
@@ -378,6 +385,8 @@ namespace SodRpg.Core.Game
         /// <summary>1段に要るポイント（ふつうは1。連装・四の型のように強い星だけ高い）。</summary>
         public int RankCost { get; set; } = 1;
         public bool IsKeystone { get; }
+        public int KeystoneCost => KeystoneDefinition?.Cost
+            ?? (IsKeystone && PerRank > 0 ? RankCost : Content.KeystoneCost);
         public Power Power { get; }
         public int PowerValue { get; }
         public Txt Description { get; }
@@ -5139,6 +5148,7 @@ namespace SodRpg.Core.Game
             [Stat.ShieldPower] = EquipmentCapsBalance.Stat_ShieldPower,
             [Stat.SummonPower] = EquipmentCapsBalance.Stat_SummonPower,
             [Stat.SacrificeReduction] = EquipmentCapsBalance.Stat_SacrificeReduction,
+            [Stat.HealingReceivedPct] = EquipmentCapsBalance.Stat_HealingReceivedPct, // v2.10：遠征の鍛錬（Aurena）で受ける回復が伸びる
         };
 
         private static readonly Dictionary<string, BaseDef> BaseById = Index(Bases, b => b.Id);
@@ -5543,6 +5553,7 @@ namespace SodRpg.Core.Game
                 case Stat.EssenceSlotIdentity: return Loc.T($"エッセンス枠 {sign}{v}。装備中のアイデンティティ記憶が対象で、星・刻印・装備の追加枠は旅人ごとに合算する。各記憶に最大 +{EssenceSlots.MaxPerLocation}、移動と合わせて最大 +{EssenceSlots.MaxAdded}まで。", $"Essence slots {sign}{v} (for your equipped Identity memory; shared across stars, keystones, engravings and equipment: +{EssenceSlots.MaxPerLocation} per memory, +{EssenceSlots.MaxAdded} total with Movement per traveler)");
                 case Stat.EssenceSlotMovement: return Loc.T($"エッセンス枠 {sign}{v}。装備中の移動の記憶が対象で、星・刻印・装備の追加枠は旅人ごとに合算する。各記憶に最大 +{EssenceSlots.MaxPerLocation}、アイデンティティと合わせて最大 +{EssenceSlots.MaxAdded}まで。", $"Essence slots {sign}{v} (for your equipped Movement memory; shared across stars, keystones, engravings and equipment: +{EssenceSlots.MaxPerLocation} per memory, +{EssenceSlots.MaxAdded} total with Identity per traveler)");
                 case Stat.HealPower: return Loc.T($"与えるHP回復量 {sign}{v}%。自分・味方への回復が対象で、装備・星の同じ能力値は合計で最大{StatCap(s)}%まで。", $"Healing granted {sign}{v}% (to yourself and allies; combined equipment and star bonuses to this stat capped at {StatCap(s)}%)");
+                case Stat.HealingReceivedPct: return Loc.T($"受けるHP回復量 {sign}{v}%", $"Healing received {sign}{v}%");
                 case Stat.ShieldPower: return Loc.T($"与える障壁量 {sign}{v}%。自分・味方への障壁が対象で、装備・星の同じ能力値は合計で最大{StatCap(s)}%まで。", $"Shield amount granted {sign}{v}% (to yourself and allies; combined equipment and star bonuses to this stat capped at {StatCap(s)}%)");
                 case Stat.SummonPower: return Loc.T($"自分の召喚獣の与ダメージ {sign}{v}%。装備・星の同じ能力値は合計で最大{StatCap(s)}%まで。", $"Your summons' damage {sign}{v}% (combined equipment and star bonuses to this stat capped at {StatCap(s)}%)");
                 case Stat.SacrificeReduction: return Loc.T($"HPを捧げる技のHP消費 {-v:+0;-0;0}%。装備・星の同じ能力値による軽減は合計で最大{StatCap(s)}%まで。", $"HP cost of health-sacrificing skills {-v:+0;-0;0}% (combined equipment and star reductions capped at {StatCap(s)}%)");

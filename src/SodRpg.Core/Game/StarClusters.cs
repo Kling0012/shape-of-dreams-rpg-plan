@@ -212,6 +212,14 @@ namespace SodRpg.Core.Game
                     throw Invalid(id, "A retained keystone Power must be carried by its node exactly once.");
                 return;
             }
+            if (star.Kind == ClusterStarKind.Keystone)
+            {
+                if (star.Power != Power.None || star.Gimmick != null || star.Memory != null
+                    || !Enum.IsDefined(typeof(Stat), star.Stat) || star.Amount <= 0)
+                    throw Invalid(id, "A stat keystone requires one positive stat effect.");
+                IntegerAmount(star, id);
+                return;
+            }
             if (star.Kind == ClusterStarKind.Stat)
             {
                 if (cluster.Region.Kind != ClusterRegionKind.Outer || !Enum.IsDefined(typeof(Stat), star.Stat)
@@ -316,7 +324,9 @@ namespace SodRpg.Core.Game
         {
             string id = authoredId ?? StarId(cluster, order);
             TalentDef talent;
-            if (star.KeystoneDefinition != null)
+            if (star.Kind == ClusterStarKind.Keystone && star.Power == Power.None && star.Amount > 0)
+                talent = new TalentDef(id, Line.Offense, star.Name, star.Stat, IntegerAmount(star, id), new Txt("", ""));
+            else if (star.KeystoneDefinition != null)
                 talent = new TalentDef(id, Line.Offense, star.Name, star.Power, IntegerAmount(star, id), new Txt("", ""));
             else
             if ((star.Kind == ClusterStarKind.MemoryDamage || star.Kind == ClusterStarKind.MemoryHaste) && star.NativeModifier == null)

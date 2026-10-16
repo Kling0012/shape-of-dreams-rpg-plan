@@ -162,6 +162,8 @@ namespace SodRpg.Mod
         private bool IsPairReactionSource(Actor actor) => false;
         private void TrackCritBasicDamage(HeroRuntime rt, EventInfoDamage info, int id) { }
         private void OnNewPowerDamage(HeroRuntime rt, EventInfoDamage info) { }
+        // Run growth is out of this reproduction's scope; OnMemoryDamage just calls through to it.
+        private void OnRunGrowthSummonHit(HeroRuntime rt, EventInfoDamage info) { }
         private void QueueGimmicks(HeroRuntime rt, GimmickTrigger trigger, string memory, Entity victim, float amount, bool generated, Actor actor, bool direct) { }
         internal void Scan(HeroRuntime rt) => ScanMeleeCoop(rt, Alive(rt.Hero));
         internal void Hit(HeroRuntime rt, EventInfoDamage info) => OnMemoryDamage(rt, info);

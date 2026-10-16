@@ -2556,7 +2556,7 @@ namespace SodRpg.Mod
                 }
                 bool unlocked = t.IsKeystone ? Rules.KeystoneUnlocked(p, hero, t) : _starLayout.CanReach(hs, t, reachable);
                 n.Unlocked = unlocked;
-                int keyCost = t.KeystoneDefinition?.Cost ?? Content.KeystoneCost;
+                int keyCost = t.KeystoneCost;
                 int cost = t.IsKeystone ? keyCost : t.RankCost;
                 bool slotsFull = t.IsKeystone && !n.Allocated && !freeSlot;
                 if (t.IsKeystone)
@@ -2604,7 +2604,7 @@ namespace SodRpg.Mod
                     + "\n" + (n.PairEquippedB ? "✓ " : "・ ") + Links.ItemName(pair.RouteB)
                     + Loc.T("を装着", " equipped");
             }
-            int keyCost = t.KeystoneDefinition?.Cost ?? Content.KeystoneCost;
+            int keyCost = t.KeystoneCost;
             int cost = t.IsKeystone ? keyCost : t.RankCost;
             bool slotsFull = t.IsKeystone && !n.Allocated && _starTextState.KeystoneCount >= _starTextState.KeystoneSlotCount;
             bool costInBody = description.Contains(Loc.T("ポイント", "point"));

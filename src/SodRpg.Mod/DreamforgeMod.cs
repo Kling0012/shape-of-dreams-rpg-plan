@@ -23,6 +23,8 @@ namespace SodRpg.Mod
     {
         public DreamforgeConfig config = new DreamforgeConfig();
         partial void ApplyRoomOmensConfig();
+        partial void StartNativeKillRewards();
+        partial void StopNativeKillRewards();
         partial void ApplyAutoCastCoopConfig();
         partial void TickAutoCastCoopConfig();
 
@@ -54,6 +56,7 @@ namespace SodRpg.Mod
                 stage = "patch installation";
                 PatchEachClass();
                 PressureEnemyCount.Install(harmony);
+                StartNativeKillRewards();
                 CulinaryMagnet.Install(harmony);
                 CulinaryIngredientCap.Install(harmony);
                 try { CulinaryIngredientDisplay.Install(harmony); }
@@ -390,6 +393,7 @@ namespace SodRpg.Mod
             var host = _host; _host = null;
             var ui = _ui; _ui = null;
             var performance = _performance; _performance = null;
+            StopNativeKillRewards();
             try { PressureEnemyCount.Stop(); } catch (Exception ex) { Log.Error("Startup cleanup: pressure enemy count: " + ex); }
             try { InfinityBossArena.Stop(); } catch (Exception ex) { Log.Error("Startup cleanup: Infinity boss arenas: " + ex); }
             try { CulinaryMagnet.Stop(); } catch (Exception ex) { Log.Error("Startup cleanup: culinary attraction: " + ex); }

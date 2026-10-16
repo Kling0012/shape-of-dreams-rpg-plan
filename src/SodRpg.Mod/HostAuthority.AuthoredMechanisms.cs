@@ -360,7 +360,8 @@ namespace SodRpg.Mod
         private void DispatchAuthoredDividends(HeroRuntime rt, MemoryActivationEvent notification, Entity victim,
             MechanismEquipment equipment, List<PressureDividendChannel> channels)
         {
-            if (channels == null || channels.Count == 0 || !(victim is Monster monster)
+            // Assist notifications grant combat effects, never extra expedition rewards.
+            if (notification.IsAssist || channels == null || channels.Count == 0 || !(victim is Monster monster)
                 || !_pressureDividendSpawns.TryGetValue(monster, out var spawn) || !_nativePressureLootSpawns.Contains(spawn)) return;
             var equipped = _attributionMemoryIds[rt.Hero];
             AdmitPressureDividendNativeKill(rt.Hero, monster, new PressureDividendAttribution(
