@@ -247,8 +247,11 @@ namespace SodRpg.Core.Game
                     if (r.Awakened) value = (int)((long)value * Content.AwakenPowerPctAt(r.AwakenLevel) / 100);
                     Add(rawPowers, pw.Power, value);
                     // The saved first power already includes the one-time +20 bonus.
+                    // Overcharge (x1.6, paid for with an affix) also stays out of the cap basis, like awakening:
+                    // otherwise a near-cap power was cut back to the cap and lost most of the promised boost.
+                    int unscaled = r.Forbidden?.Pattern == ForbiddenPattern.Overcharge && i < r.Powers.Count ? r.Powers[i].Value : pw.Value;
                     decimal basis = i == 0 && (r.MilestonePowerApplied || r.EnhanceMilestones >= 5)
-                        ? pw.Value * 100m / Content.LimitBreakPowerPct : pw.Value;
+                        ? unscaled * 100m / Content.LimitBreakPowerPct : unscaled;
                     basePowers.TryGetValue(pw.Power, out decimal current);
                     basePowers[pw.Power] = current + basis;
                 }
