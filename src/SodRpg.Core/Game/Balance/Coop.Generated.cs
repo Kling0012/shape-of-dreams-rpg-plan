@@ -28,6 +28,8 @@ namespace SodRpg.Core.Game
         public const string AutoCastOwnHitSecondsText = "3";
         public const float AutoCastAllyHitSeconds = 2f;
         public const string AutoCastAllyHitSecondsText = "2";
+        public const float ShieldWallTauntSeconds = 4f;
+        public const string ShieldWallTauntSecondsText = "4";
 
         public static class Ownership
         {

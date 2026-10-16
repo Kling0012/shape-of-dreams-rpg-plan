@@ -497,6 +497,8 @@ namespace SodRpg.Mod
             catch (Exception ex) { DisableCoopKey(state, ex); }
         }
 
+        partial void RecordOwnershipTaunt(Entity enemy, Hero hero, float seconds);
+
         private void CoopDrawThreats(CoopKeyState state)
         {
             if (_am == null) return;
@@ -504,7 +506,11 @@ namespace SodRpg.Mod
             {
                 if (!CoopEnemy(state.Hero, enemy) || enemy.currentHealth <= 0f) continue;
                 var ally = enemy.AI?.context.targetEnemy as Hero;
-                if (CoopPair(state.Hero, ally, state.V("radius")) > 0f) enemy.AI.Aggro(state.Hero);
+                if (CoopPair(state.Hero, ally, state.V("radius")) > 0f)
+                {
+                    RecordOwnershipTaunt(enemy, state.Hero, CoopBalance.ShieldWallTauntSeconds);
+                    enemy.AI.Aggro(state.Hero);
+                }
             }
         }
 

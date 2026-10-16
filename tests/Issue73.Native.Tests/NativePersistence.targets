@@ -172,6 +172,14 @@
     </ItemGroup>
   </Target>
 
+  <!-- 盾壁の実際の発動処理を敵担当制と同じ境界で実行する。 -->
+  <Target Name="CompileShieldWallThreats" BeforeTargets="CoreCompile">
+    <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/HostAuthority.CoopKeystones.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)ShieldWallThreats.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="HostAuthority" Methods="CoopDrawThreats;CoopPair;CoopEnemy;RecordOwnershipTaunt" />
+    <ItemGroup>
+      <Compile Include="$(IntermediateOutputPath)ShieldWallThreats.g.cs" />
+    </ItemGroup>
+  </Target>
+
   <!-- 共鳴の盾（CoopOmens.cs）の HostAuthority 部。公開ラッパー CoopOmens は NativeBoundary.cs
        に同じ式の internal 模倣（境界の Entity が internal のため直接抽出できない）。 -->
   <Target Name="CompileCoopOmensWard" BeforeTargets="CoreCompile">

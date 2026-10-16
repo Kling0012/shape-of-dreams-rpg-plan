@@ -35,6 +35,8 @@ namespace Issue73.Native.Tests
             Time.time = 1f;
             Time.frameCount = 1;
             Log.Warnings.Clear();
+            CoopDistanceNative.Clear();
+            CoopDistanceNative.Enabled = true;
         }
 
         // ---- 準備 ----
@@ -178,6 +180,158 @@ namespace Issue73.Native.Tests
             Assert.Equal(100f, enemy.Status.baseMaxHealth, 3);
             RecalcMaxHealth(enemy);
             Assert.Equal(enemy.Status.baseMaxHealth, enemy.Status.maxHealth, 3); // …部屋の圧（ここでは倍率1）へ戻る
+            Assert.Empty(Log.Warnings);
+        }
+
+        // ---- 盾壁の挑発 ----
+
+        private static void ShieldWall(HostAuthority host, Hero vesper, params Entity[] enemies)
+        {
+            var actors = new ActorManager();
+            actors.allEntities.AddRange(enemies);
+            Set(host, "_am", actors);
+            StarClusters.RegisterGeneratedHero("Hero_Vesper");
+            Assert.True(StarClusters.TryGetRegisteredTree("Hero_Vesper", out var tree));
+            var definition = tree.Single(star => star.Id == "vesper.key.shield-wall").KeystoneDefinition;
+            var state = Activator.CreateInstance(typeof(HostAuthority).GetNestedType("CoopKeyState", Hidden), true);
+            Set(state, "Hero", vesper);
+            Set(state, "Definition", definition);
+            Call(host, "CoopDrawThreats", state);
+        }
+
+        private static Entity Threat(HostAuthority host, uint id, Hero ally)
+        {
+            var enemy = Spawn(host, id);
+            enemy.AI = new EntityAI { entity = enemy };
+            enemy.AI.context.targetEnemy = ally;
+            return enemy;
+        }
+
+        [Fact]
+        public void Shield_wall_aggro_keeps_vesper_instead_of_the_assigned_owner()
+        {
+            var host = Host(out _);
+            var owner = Player(5);
+            var vesper = Player(9);
+            BuildFor(host, owner, 8, 40);
+            BuildFor(host, vesper, 2, 0);
+            var enemy = Threat(host, 100, owner.hero);
+            enemy.Status.baseMaxHealth = 1000f;
+            RecalcMaxHealth(enemy);
+            enemy.Status.SetHealth(enemy.maxHealth);
+            float help = TakenBy(host, enemy, vesper.hero);
+            var stray = new DamageData(100f) { actor = enemy };
+            host.ApplyOwnershipReceivedDamage(vesper.hero, enemy, ref stray);
+
+            ShieldWall(host, vesper.hero, enemy);
+            Assert.Same(vesper.hero, enemy.AI.context.targetEnemy); // 実際の盾壁 → Aggro 入口。
+            Entity target = owner.hero;
+            Assert.True(host.SelectOwnershipAggro(enemy.AI, ref target));
+            Assert.Same(vesper.hero, target);
+            target = new Summon { hero = owner.hero }; // 担当者の召喚体による再標的よりも優先。
+            Assert.True(host.SelectOwnershipAggro(enemy.AI, ref target));
+            Assert.Same(vesper.hero, target);
+
+            Time.time += CoopBalance.ShieldWallTauntSeconds - 0.01f;
+            int calls = enemy.AI.AggroCalls;
+            for (int i = 0; i < 10; i++) host.RetargetOwnership(enemy.AI, true);
+            Assert.Equal(calls, enemy.AI.AggroCalls); // 同じ挑発対象へ毎 tick 再設定しない。
+            enemy.AI.context.targetEnemy = owner.hero;
+            host.RetargetOwnership(enemy.AI, true);
+            Assert.Same(vesper.hero, enemy.AI.context.targetEnemy);
+            Assert.Same(owner, OwnerOf(host, enemy));
+            Assert.Equal(help, TakenBy(host, enemy, vesper.hero), 3);
+            var after = new DamageData(100f) { actor = enemy };
+            host.ApplyOwnershipReceivedDamage(vesper.hero, enemy, ref after);
+            Assert.Equal(stray.amount, after.amount, 3);
+            enemy.Status.SetHealth((float)Math.Floor(enemy.maxHealth * CoopBalance.Ownership.Floor));
+            Assert.Equal(0f, TakenBy(host, enemy, vesper.hero), 3); // HP下限も担当者基準のまま。
+            Assert.Empty(Log.Warnings);
+        }
+
+        [Fact]
+        public void Shield_wall_expiry_returns_to_the_owner_without_waiting_for_native_retarget()
+        {
+            var host = Host(out _);
+            var owner = Player(5);
+            var vesper = Player(9);
+            var enemy = Threat(host, 100, owner.hero);
+            var outside = Threat(host, 101, owner.hero);
+            owner.hero.position = new Vector3(6f, 0f, 0f);
+            ShieldWall(host, vesper.hero, enemy);
+            Assert.Same(vesper.hero, enemy.AI.context.targetEnemy); // 6m は範囲内。
+
+            owner.hero.position = new Vector3(6.01f, 0f, 0f);
+            ShieldWall(host, vesper.hero, outside);
+            Assert.Same(owner.hero, outside.AI.context.targetEnemy); // 範囲外の味方は対象外。
+            Assert.Null(Get(State(host, outside), "TauntHero"));
+
+            Time.time += CoopBalance.ShieldWallTauntSeconds;
+            host.RetargetOwnership(enemy.AI, false);
+            Assert.Same(owner.hero, enemy.AI.context.targetEnemy);
+            Assert.Null(Get(State(host, enemy), "TauntHero"));
+            Entity target = vesper.hero;
+            Assert.True(host.SelectOwnershipAggro(enemy.AI, ref target));
+            Assert.Same(owner.hero, target);
+            Assert.Same(owner, OwnerOf(host, enemy));
+            Assert.Empty(Log.Warnings);
+        }
+
+        [Fact]
+        public void Shield_wall_disabled_ownership_and_solo_preserve_previous_aggro_behavior()
+        {
+            var host = Host(out _);
+            var owner = Player(5);
+            var vesper = Player(9);
+            var enemy = Threat(host, 100, owner.hero);
+            ShieldWall(host, vesper.hero, enemy);
+            host.ConfigureEnemyOwnership(false);
+            Assert.Null(Get(State(host, enemy), "TauntHero"));
+            enemy.AI.context.targetEnemy = owner.hero;
+            ShieldWall(host, vesper.hero, enemy);
+            Assert.Same(vesper.hero, enemy.AI.context.targetEnemy);
+            Time.time += CoopBalance.ShieldWallTauntSeconds;
+            host.RetargetOwnership(enemy.AI, true);
+            Assert.Same(vesper.hero, enemy.AI.context.targetEnemy);
+            Entity target = owner.hero;
+            Assert.True(host.SelectOwnershipAggro(enemy.AI, ref target));
+            Assert.Same(owner.hero, target);
+
+            host.ConfigureEnemyOwnership(true);
+            DewPlayer.gamePlayers.Remove(owner);
+            enemy.AI.context.targetEnemy = vesper.hero;
+            ShieldWall(host, vesper.hero, enemy); // ソロには引き受ける味方の標的がない。
+            Assert.Same(vesper.hero, enemy.AI.context.targetEnemy);
+            host.RetargetOwnership(enemy.AI, true);
+            Assert.Same(vesper.hero, enemy.AI.context.targetEnemy);
+            Assert.Null(Get(State(host, enemy), "TauntHero"));
+            Assert.Empty(Log.Warnings);
+        }
+
+        [Fact]
+        public void Shield_wall_invalid_targets_and_recycled_enemy_records_do_not_keep_taunts()
+        {
+            var host = Host(out _);
+            var owner = Player(5);
+            var vesper = Player(9);
+            var enemy = Threat(host, 100, owner.hero);
+            ShieldWall(host, vesper.hero, enemy);
+            vesper.hero.isKnockedOut = true;
+            host.RetargetOwnership(enemy.AI, false);
+            Assert.Same(owner.hero, enemy.AI.context.targetEnemy);
+            Assert.Null(Get(State(host, enemy), "TauntHero"));
+
+            vesper.hero.isKnockedOut = false;
+            ShieldWall(host, vesper.hero, enemy);
+            object record = State(host, enemy);
+            host.ReleaseEnemyOwnership(enemy);
+            var reused = Threat(host, 101, owner.hero);
+            Assert.Same(record, State(host, reused));
+            Assert.Null(Get(State(host, reused), "TauntHero"));
+            Entity target = owner.hero;
+            Assert.True(host.SelectOwnershipAggro(reused.AI, ref target));
+            Assert.Same(vesper.hero, target); // 再利用先の担当者（ローテーションで2人目）。
+            Assert.Equal(0f, (float)Get(State(host, reused), "TauntUntil"));
             Assert.Empty(Log.Warnings);
         }
 

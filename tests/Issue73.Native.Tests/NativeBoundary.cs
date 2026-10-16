@@ -188,7 +188,7 @@ namespace SodRpg.Mod
             = new ProcessorList<DataProcessor<DamageData, Actor, Entity>>();
         public event Action<EventInfoDamage> EntityEvent_OnTakeDamage;
         internal void RaiseEntityEventOnTakeDamage(EventInfoDamage info) => EntityEvent_OnTakeDamage?.Invoke(info);
-        public EntityRelation GetRelation(Entity other) => EntityRelation.Enemy;
+        public EntityRelation GetRelation(Entity other) => this is Hero && other is Hero ? EntityRelation.Ally : EntityRelation.Enemy;
         public bool IsAnyBoss() => anyBoss || this is Monster monster
             && (monster.type == Monster.MonsterType.MiniBoss || monster.type == Monster.MonsterType.Boss);
         public bool CanAggroTo(Entity target) => true;
@@ -293,7 +293,7 @@ namespace SodRpg.Mod
     internal enum HeroSkillLocation { Q, W, E, R, Identity, Movement }
     internal enum SkillType { Normal, Ultimate }
     internal enum ElementalType { Fire, Cold, Light, Dark }
-    internal enum EntityRelation { Enemy }
+    internal enum EntityRelation { Enemy, Ally }
     internal class AbilityTrigger : Actor { public Entity owner; }
     internal class SkillTrigger : AbilityTrigger
     {
