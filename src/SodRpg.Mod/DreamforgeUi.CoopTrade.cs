@@ -124,6 +124,17 @@ namespace SodRpg.Mod
             if (valid && (shards > CoopTradeRules.Shards(_s.Profile) || tuning > CoopTradeRules.Tuning(_s.Profile)))
                 invalid = Loc.T("所持している素材の数を超えています。", "The offer exceeds your owned materials.");
             if (!trade.Preparing && invalid != null) GUILayout.Label(invalid, _st.Warn);
+            // 提示した遺物を後から装着・使用すると、ホストが確認時に取引を取り消す。確認の前に止める。
+            string staleOffer = null;
+            if (trade.Accepted && !trade.Preparing && !trade.OwnConfirmed && trade.OwnOffer != null)
+                foreach (string uid in trade.OwnOffer.RelicUids)
+                    if (!CoopTradeRelicOfferable(_s.Profile, uid))
+                    {
+                        staleOffer = Loc.T("提示した遺物の一部が装着中か、もうありません。遺物を選び直すか素材の数を変えると、提示から外れます。",
+                            "Some offered relics are now equipped or gone. Select a relic or change an amount to drop them from your offer.");
+                        GUILayout.Label(staleOffer, _st.Warn);
+                        break;
+                    }
 
             // Actions precede the expanding scroll panes, so no long inventory can hide them.
             bool enabled = GUI.enabled;
@@ -135,7 +146,7 @@ namespace SodRpg.Mod
             }
             else if (trade.Accepted)
             {
-                GUI.enabled = enabled && _s.CanCoopTrade && !trade.Preparing && !trade.OwnConfirmed && !_s.CoopTradeOfferPending && invalid == null;
+                GUI.enabled = enabled && _s.CanCoopTrade && !trade.Preparing && !trade.OwnConfirmed && !_s.CoopTradeOfferPending && invalid == null && staleOffer == null;
                 if (GUILayout.Button(trade.OwnConfirmed ? Loc.T("確認済み", "Confirmed") : Loc.T("この内容で交換を確認", "Confirm this trade"), _st.ButtonWrap, TradeActionSize))
                     SetStatus(_s.ConfirmCoopTrade());
             }
@@ -253,12 +264,20 @@ namespace SodRpg.Mod
             SetStatus(_s.SetCoopTradeOffer(offer));
         }
 
-        private static CoopTradeOffer CopyCoopTradeOffer(CoopTradeOffer original, int shards, int tuning)
+        private CoopTradeOffer CopyCoopTradeOffer(CoopTradeOffer original, int shards, int tuning)
         {
             var offer = new CoopTradeOffer { Shards = shards, Tuning = tuning };
-            if (original != null) offer.RelicUids.AddRange(original.RelicUids);
+            if (original != null)
+                foreach (string uid in original.RelicUids)
+                    if (CoopTradeRelicOfferable(_s.Profile, uid)) offer.RelicUids.Add(uid);
             return offer;
         }
+
+        // 提示した後に装着・合成などで提示できなくなった遺物は、次に提示を更新するときに外す
+        // （一覧に出ないので選び直せず、提示が更新できないまま確認で取消になっていた）。
+        private static bool CoopTradeRelicOfferable(Profile p, string uid)
+            => !string.IsNullOrEmpty(uid) && (p.FindStash(uid) ?? p.Run?.Satchel.Find(r => r.Uid == uid)) != null
+                && !p.IsEquippedAnywhere(uid);
 
         private void DrawCoopTradeOwnRelics(CoopTradeView trade, bool editable)
         {
