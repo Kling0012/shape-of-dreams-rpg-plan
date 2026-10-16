@@ -1344,8 +1344,34 @@ namespace SodRpg.Core.Game
 
         public static int RerollsLeft(Profile p) => p.Run == null ? 0 : Math.Max(0, Workshop.RerollsPerRun(p) - p.Run.RerollsUsed);
 
-        /// <summary>未達成の依頼を1つ、今ある依頼と重ならない種類で引き直す。</summary>
-        public static GameEvent RerollBounty(Profile p, int index)
+        /// <summary>
+        /// この遠征では進められない未着手の依頼を、進められる依頼に入れ替える（何度呼んでも同じ）。
+        /// 遠征の開始時にはソロかインフィニティかがまだ決まっていないことがあるので、決まった時点で呼ぶ。
+        /// </summary>
+        public static bool ReplaceUnreachableBounties(Profile p, bool solo)
+        {
+            var run = p.Run;
+            if (run == null) return false;
+            bool infinity = run.Infinity != null;
+            Rng rng = null;
+            bool changed = false;
+            for (int i = 0; i < run.Bounties.Count; i++)
+            {
+                var b = run.Bounties[i];
+                if (b.Done || b.Progress > 0 || Bounties.Reachable(b.Kind, solo, infinity)) continue;
+                if (rng == null) rng = p.TakeRng();
+                var existing = new HashSet<BountyKind>(run.Bounties.Select(x => x.Kind));
+                var replacement = Bounties.Roll(rng, 1, k => !existing.Contains(k) && Bounties.Reachable(k, solo, infinity));
+                if (replacement.Count == 0) continue;
+                run.Bounties[i] = replacement[0];
+                changed = true;
+            }
+            if (rng != null) p.StoreRng(rng);
+            return changed;
+        }
+
+        /// <summary>未達成の依頼を1つ、今ある依頼と重ならない進められる種類で引き直す。</summary>
+        public static GameEvent RerollBounty(Profile p, int index, bool solo = false)
         {
             var run = p.Run ?? throw new InvalidOperationException(Loc.T("遠征中のみ使えます。", "Only during an expedition."));
             if (RerollsLeft(p) <= 0) throw new InvalidOperationException(Loc.T("引き直しの回数がありません（工房で解放）。", "No rerolls left (unlock in the workshop)."));
@@ -1353,12 +1379,9 @@ namespace SodRpg.Core.Game
                 throw new InvalidOperationException(Loc.T("未達成の依頼を選んでください。", "Choose an unfinished bounty."));
             var rng = p.TakeRng();
             var existing = new HashSet<BountyKind>(run.Bounties.Select(b => b.Kind));
-            Bounty replacement = null;
-            for (int i = 0; i < 20 && replacement == null; i++)
-            {
-                var cand = Bounties.Roll(rng, 1)[0];
-                if (!existing.Contains(cand.Kind)) replacement = cand;
-            }
+            var candidates = Bounties.Roll(rng, 1,
+                k => !existing.Contains(k) && Bounties.Reachable(k, solo, run.Infinity != null));
+            var replacement = candidates.Count > 0 ? candidates[0] : null;
             p.StoreRng(rng);
             if (replacement == null) throw new InvalidOperationException(Loc.T("引き直せる依頼がありません。", "No other bounty available."));
             var old = run.Bounties[index];

@@ -244,6 +244,12 @@ namespace SodRpg.Mod
     }
     public static class ManagerBase<T> { public static T instance; public static T softInstance; }
     public sealed class SpawnManager { public int lastClearedZoneIndex = -1; }
+    public enum DewNetworkMode { Singleplayer, MultiplayerHost, MultiplayerJoinLobby, MultiplayerHostRestart, MultiplayerJoinRestart }
+    public sealed class DewNetworkStartSettings { public DewNetworkMode networkMode; }
+    public static class DewNetworkManager
+    {
+        public static DewNetworkStartSettings startSettings = new DewNetworkStartSettings();
+    }
     public sealed class GameSettingsManager
     {
         public readonly Dictionary<string, string> customData = new Dictionary<string, string>();

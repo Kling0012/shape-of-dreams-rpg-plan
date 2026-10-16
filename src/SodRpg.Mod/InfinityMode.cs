@@ -453,6 +453,7 @@ namespace SodRpg.Mod
             if (run == null || run.Infinity != null || _initial == null || _restoring) return;
             if (run.RunId != NetworkedManagerBase<GameManager>.softInstance?.runId) return;
             run.Infinity = _initial.Clone();
+            ClientSession.EnsureHostReachableBounties();
             ClientSession.PersistHostInfinityState();
         }
         internal static InfinityRunState InitialState => _initial;

@@ -3499,7 +3499,7 @@ namespace SodRpg.Mod
                     if (!b.Done && rerolls > 0)
                     {
                         int idx = i;
-                        if (GUILayout.Button(Loc.T($"引き直し（残り{rerolls}）", $"Reroll ({rerolls} left)"), _st.Button, GUILayout.Width(150))) Act(() => Rules.RerollBounty(p, idx), false);
+                        if (GUILayout.Button(Loc.T($"引き直し（残り{rerolls}）", $"Reroll ({rerolls} left)"), _st.Button, GUILayout.Width(150))) Act(() => Rules.RerollBounty(p, idx, _s.SoloBounties), false);
                     }
                     GUILayout.EndHorizontal();
                 }
