@@ -8,9 +8,23 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
+---
+
+## v2.10.60 — Co-op trade messages in each player's language（2026-10-16）
+
+このバージョンでは、協力プレイの取引で表示されるメッセージが、参加者それぞれの表示言語で出るようにしました。 / This version makes co-op trade messages appear in each player's own display language.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
 ### 不具合の修正 / Bug fixes
 
-- 協力プレイの取引で、中止や「相手は今取引できません」などのメッセージがホストの言語で表示されていた問題を修正しました。両方がこの版なら、各自の言語で表示されます。 / Co-op trade messages (cancelled, the other player can't trade right now, and so on) were shown in the host's language. When both sides run this version, each player now sees them in their own language.
+- 協力プレイの取引で、中止やエラー、「相手は今取引できる状態ではありません」などのメッセージが、ホストの言語ではなく自分の表示言語で表示されるようにしました。これまでは、たとえばホストが日本語で参加者が英語のとき、参加者にも日本語で表示されていました。 / In co-op trading, messages such as cancellations, errors, and "the other player can't trade right now" now appear in your own display language instead of the host's. Previously, for example, an English-speaking player in a Japanese host's game saw these messages in Japanese.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
 
 ---
 
