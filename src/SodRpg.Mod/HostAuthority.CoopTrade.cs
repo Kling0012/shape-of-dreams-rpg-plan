@@ -278,8 +278,20 @@ namespace SodRpg.Mod
                     else trade.SecondOfferAck = msg.transferId;
                 }
                 if (msg.revision != trade.Revision) { DiagnoseHostCoopTrade("stale-revision", trade, caller); SendCoopViews(); return; }
-                var profile = ProfileCodec.ReadCheckpointProfile(Encoding.UTF8.GetString(Convert.FromBase64String(encoded)));
-                var offer = CoopTradeCodec.ReadOffer(msg.offer);
+                Profile profile;
+                CoopTradeOffer offer;
+                try
+                {
+                    profile = ProfileCodec.ReadCheckpointProfile(Encoding.UTF8.GetString(Convert.FromBase64String(encoded)));
+                    offer = CoopTradeCodec.ReadOffer(msg.offer);
+                }
+                catch (Exception)
+                {
+                    // Only peer-data decoding belongs here; journal failures must still use host recovery.
+                    SendCoopError(caller, "ownership");
+                    CancelHostCoopTrade("ownership");
+                    return;
+                }
                 string gameRun = NetworkedManagerBase<GameManager>.softInstance?.runId;
                 if (gameRun != null && profile.Run?.RunId != gameRun || profile.CoopTradePending != null
                     || CoopTradeRules.Validate(profile, offer) != null)

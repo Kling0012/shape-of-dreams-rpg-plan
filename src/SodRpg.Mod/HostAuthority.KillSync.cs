@@ -371,6 +371,19 @@ namespace SodRpg.Mod
             return low;
         }
 
+        private bool KillReceiptStreamKnown(KillReplayPeer peer, string streamId, ref HashSet<string> historyStreams)
+        {
+            if (streamId == _killStreamId) return true;
+            foreach (var receipt in peer.Receipts) if (receipt.StreamId == streamId) return true;
+            foreach (var range in peer.Participation) if (range.StreamId == streamId) return true;
+            if (historyStreams == null)
+            {
+                historyStreams = new HashSet<string>(StringComparer.Ordinal);
+                foreach (var fact in _killHistory) historyStreams.Add(fact.StreamId);
+            }
+            return historyStreams.Contains(streamId);
+        }
+
         private void OnKillReceipt(DreamforgeKillReceiptMsg msg, DewPlayer caller)
         {
             EnsureKillRun();
@@ -431,7 +444,15 @@ namespace SodRpg.Mod
                 cursor.MonsterIndex = 0;
             }
             if (msg.receipts != null)
-                foreach (var receipt in msg.receipts) changed |= peer.AcceptReceipt(receipt.streamId, receipt.receivedThrough);
+            {
+                HashSet<string> historyStreams = null;
+                foreach (var receipt in msg.receipts)
+                {
+                    // Unknown streams must not grow the peer's durable receipt record without bound.
+                    if (!KillReceiptStreamKnown(peer, receipt.streamId, ref historyStreams)) continue;
+                    changed |= peer.AcceptReceipt(receipt.streamId, receipt.receivedThrough);
+                }
+            }
             // Requests bypass the historical cursor, including facts missed during a zone/authority transition.
             if (msg.missingFacts != null && cursor.Requested.Count == 0)
                 for (int i = 0; i < Math.Min(32, msg.missingFacts.Length); i++)

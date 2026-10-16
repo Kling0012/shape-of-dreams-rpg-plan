@@ -8,6 +8,11 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
+### 修正 / Fixes
+
+- 協力取引で壊れたパケットが届いても、ホストの取引全体を保存失敗扱いで停止しないようにしました。組み立てた取引データが読めない場合は、その取引だけを取り消し、内部の例外メッセージを相手に送らずに理由を通知します。 / Malformed co-op trade packets no longer halt trading on the host as a storage failure. Unreadable assembled trade data cancels only that trade and reports a fixed reason without exposing internal exception messages.
+- 討伐記録では、ホストが知らない記録列の受領通知を保存しないようにし、中断データが際限なく増えるのを防ぎました。 / Kill receipts for streams unknown to the host are ignored so they cannot grow the checkpoint without bound.
+
 ---
 
 ## v2.10.64 — Melee co-op effect descriptions and host-synced range display（2026-10-16）
