@@ -45,7 +45,7 @@ namespace SodRpg.Core.Game
         private int ConditionalAttributes(float now)
         {
             double actual = 0, before = 0;
-            void Add(Power power, int contribution)
+            void Add(Power power, float contribution)
             {
                 if (contribution <= 0) return;
                 actual += contribution;

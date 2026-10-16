@@ -45,11 +45,11 @@ namespace SodRpg.Core.Game
     public static class Links
     {
         /// <summary>絆を満たす、生きている味方旅人までの距離（m）。</summary>
-        public const double BondRange = 10;
+        public const double BondRange = CoopBalance.OuterRange;
 
         /// <summary>距離や生存判定はホストが渡す。無効な距離や敵の旅人は絆に数えない。</summary>
         public static bool IsBondAlly(bool living, bool allied, double distance) =>
-            living && allied && distance >= 0 && distance <= BondRange;
+            living && allied && CoopDistance.Coefficient(distance) > 0f;
 
         /// <summary>導きの羅針盤の正規形（充電前後で型が違うが、連携では同じエッセンスとして数える）。</summary>
         public const string Compass = "Gem_U_GuidingCompass_NotCharged";
@@ -272,7 +272,7 @@ namespace SodRpg.Core.Game
             return true;
         }
 
-        /// <summary>旅人は自分か10m以内の生きている味方。装着条件は自分の記憶・エッセンスだけを見る。</summary>
+        /// <summary>旅人は自分か距離係数の残る生きている味方。装着条件は自分の記憶・エッセンスだけを見る。</summary>
         public static bool RequirementSatisfied(string target, string heroKey, ICollection<string> equippedMemories, ICollection<string> equippedEssences,
             ICollection<string> nearbyAllyHeroes = null)
         {
@@ -310,6 +310,20 @@ namespace SodRpg.Core.Game
             return travelers < 2 || includesSelf;
         }
 
+        /// <summary>All required travelers contribute; the weakest required connection limits the effect.</summary>
+        public static float DistanceCoefficient(LinkDef link, string heroKey, IReadOnlyDictionary<string, float> allies)
+        {
+            if (link?.Requires == null) return 0f;
+            float coefficient = 1f;
+            foreach (string target in link.Requires)
+                if (IsTraveler(target) && target != heroKey)
+                {
+                    float value = allies != null && allies.TryGetValue(target, out float found) ? found : 0f;
+                    coefficient = Math.Min(coefficient, value);
+                }
+            return coefficient;
+        }
+
         public static string ItemName(string target)
         {
             var name = Name(target);
@@ -318,7 +332,8 @@ namespace SodRpg.Core.Game
                 : name.ToString();
         }
         /// <summary>Describe effects and their equipped-item or nearby-traveler requirements.</summary>
-        public static string Describe(LinkDef link, Func<string, bool> isSatisfied = null)
+        public static string Describe(LinkDef link, Func<string, bool> isSatisfied = null,
+            Func<string, float> travelerCoefficient = null)
         {
             if (link == null || link.Requires == null || link.Requires.Length == 0) return "";
             if (link.Kind == LinkKind.BossReward)
@@ -342,7 +357,20 @@ namespace SodRpg.Core.Game
                     limitEn = linkCap > 0 ? $" (Links of the same kind add together, capped at {linkCap}% of the original values.)" : " (Links of the same kind add together, with no total cap.)";
                     break;
             }
-            return Loc.Japanese ? DescribeJa(link, isSatisfied, value) + limitJa : DescribeEn(link, isSatisfied, value) + limitEn;
+            string text = Loc.Japanese ? DescribeJa(link, isSatisfied, value) + limitJa : DescribeEn(link, isSatisfied, value) + limitEn;
+            float coefficient = 1f;
+            bool hasTraveler = false;
+            foreach (string target in link.Requires)
+                if (IsTraveler(target))
+                {
+                    hasTraveler = true;
+                    if (travelerCoefficient != null) coefficient = Math.Min(coefficient, travelerCoefficient(target));
+                }
+            if (hasTraveler)
+                text += CoopDistance.Description;
+            if (travelerCoefficient != null && coefficient > 0f && coefficient < 1f)
+                text = "<color=#8b9aaa>" + text + Loc.T($"（現在の効果量 {coefficient * 100f:0}%）", $" (current effectiveness {coefficient * 100f:0}%)") + "</color>";
+            return text;
         }
 
         private static string Mark(string target, Func<string, bool> isSatisfied)
@@ -368,10 +396,10 @@ namespace SodRpg.Core.Game
             string travelerClause = null;
             if (travelers.Count == 1)
                 travelerClause = itemClause == null
-                    ? "自分が" + travelers[0] + "であるか、10m以内に生存中の味方の" + travelers[0] + "がいる"
-                    : "自分が" + travelers[0] + "であるか、10m以内に生存中の味方の" + travelers[0] + "がいて";
+                    ? "自分が" + travelers[0] + "であるか、有効範囲内に生存中の味方の" + travelers[0] + "がいる"
+                    : "自分が" + travelers[0] + "であるか、有効範囲内に生存中の味方の" + travelers[0] + "がいて";
             else if (travelers.Count > 1)
-                travelerClause = JoinJa(travelers) + "のうち1人が自分で、残りの旅人が10m以内に生存している味方" + (itemClause == null ? "である" : "であり");
+                travelerClause = JoinJa(travelers) + "のうち1人が自分で、残りの旅人が有効範囲内に生存している味方" + (itemClause == null ? "である" : "であり");
             if (travelerClause == null) return itemClause + "とき";
             return itemClause == null ? travelerClause + "とき" : travelerClause + "、かつ" + itemClause + "とき";
         }
@@ -426,9 +454,9 @@ namespace SodRpg.Core.Game
             }
             var conditions = new List<string>();
             if (travelers.Count == 1)
-                conditions.Add("while playing " + travelers[0] + " or with a living allied " + travelers[0] + " within 10 m");
+                conditions.Add("while playing " + travelers[0] + " or with a living allied " + travelers[0] + " within the effective range");
             else if (travelers.Count > 1)
-                conditions.Add("while playing one of " + string.Join(" and ", travelers) + ", with the other required travelers alive and allied within 10 m");
+                conditions.Add("while playing one of " + string.Join(" and ", travelers) + ", with the other required travelers alive and allied within the effective range");
             if (items.Count > 0)
                 conditions.Add("with " + string.Join(" and ", items) + (items.Count > 1 ? " all" : "") + " equipped");
             return string.Join(", and ", conditions);

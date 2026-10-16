@@ -22,11 +22,11 @@ namespace SodRpg.Core.Tests
         [Theory]
         [InlineData(true, true, 0, true)]
         [InlineData(true, true, 10, true)]
-        [InlineData(true, true, 10.001, false)]
+        [InlineData(true, true, 10.001, true)]
         [InlineData(false, true, 2, false)]
         [InlineData(true, false, 2, false)]
         [InlineData(true, true, -1, false)]
-        public void Bonds_require_a_living_ally_within_ten_metres(bool living, bool allied, double distance, bool expected)
+        public void Bonds_require_a_living_ally_within_effective_range(bool living, bool allied, double distance, bool expected)
         {
             Assert.Equal(expected, Links.IsBondAlly(living, allied, distance));
             Assert.False(Links.IsBondAlly(true, true, double.NaN));
