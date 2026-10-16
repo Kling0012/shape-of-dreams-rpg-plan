@@ -8,10 +8,24 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
-### 修正 / Fixes
+---
 
-- 協力取引で壊れたパケットが届いても、ホストの取引全体を保存失敗扱いで停止しないようにしました。組み立てた取引データが読めない場合は、その取引だけを取り消し、内部の例外メッセージを相手に送らずに理由を通知します。 / Malformed co-op trade packets no longer halt trading on the host as a storage failure. Unreadable assembled trade data cancels only that trade and reports a fixed reason without exposing internal exception messages.
-- 討伐記録では、ホストが知らない記録列の受領通知を保存しないようにし、中断データが際限なく増えるのを防ぎました。 / Kill receipts for streams unknown to the host are ignored so they cannot grow the checkpoint without bound.
+## v3.0.1 — Co-op trades no longer stop the host on bad data; suspend data no longer grows without limit（2026-10-16）
+
+このバージョンでは、協力プレイの取引で壊れたデータが届いてもホスト全体が止まらないようにし、討伐記録の受け取りで中断データが増え続ける問題を修正しました。 / This version keeps a broken co-op trade from stopping the whole host, and fixes suspend data that could keep growing when kill records were received.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- 協力プレイの取引で、壊れたデータや読み取れないデータが届くと、ホスト全体が保存に失敗した状態になることがありました。今後は、壊れたデータは無視され、進行中の取引はそのまま続きます。取引相手のプロフィールや提示内容が読み取れない場合は、その取引だけが取り消され、相手にも取り消しが伝わります。ほかの協力プレイはそのまま続けられます。 / Fixed broken or unreadable data in a co-op trade putting the whole host into a save-failure state. Broken data is now ignored and trades in progress continue. If a trading partner's profile or offer can't be read, only that trade is canceled and the other player is notified. The rest of co-op keeps going.
+- 協力プレイで、ホストが知らない討伐記録を受け取ると、そのまま保存されて中断データが際限なく大きくなることがありました。今後は、知らない記録は保存されません。 / Fixed kill records unknown to the host being saved when received in co-op, which could make suspend data grow without limit. Unknown records are no longer saved.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
 
 ---
 
