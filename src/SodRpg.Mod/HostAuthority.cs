@@ -954,7 +954,9 @@ namespace SodRpg.Mod
                 ApplyPressure(rt);
                 ApplyRoomOmenMonster(rt);
                 // Pressure is already active; give the initial depth build time to arrive.
-                if (_builds.Count == 0 && now - _spawnQueue[i].Value < 15f) continue;
+                // A co-op ward must classify its initial enemies before their first received hit.
+                if (_builds.Count == 0 && now - _spawnQueue[i].Value < 15f
+                    && _roomOmen != RoomOmen.ResonantWard) continue;
                 _spawnQueue.RemoveAt(i);
                 var tier = (MonsterTier)Math.Min((int)MonsterTier.Boss, (int)m.type);
                 if (rt.SpawnProcessed) continue;

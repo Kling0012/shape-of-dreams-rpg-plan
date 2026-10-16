@@ -62,9 +62,11 @@ namespace SodRpg.Core.Tests
                 for (int room = 0; room < 30; room++)
                     seen.Add(RoomOmens.Roll(seed, room));
             var all = Enum.GetValues(typeof(RoomOmen)).Cast<RoomOmen>().Where(o => o != RoomOmen.None).ToList();
-            Assert.Equal(16, all.Count);
-            Assert.True(all.All(seen.Contains), "未出現の兆し: " + string.Join(",", all.Where(o => !seen.Contains(o))));
-            Assert.Equal(8, all.Count(RoomOmens.IsTrial));
+            Assert.Equal(17, all.Count);
+            // マルチ専用の兆しは別の乱数列。従来のソロ抽選は16種を維持する。
+            var solo = all.Where(o => o != RoomOmen.ResonantWard).ToList();
+            Assert.True(solo.All(seen.Contains), "未出現の兆し: " + string.Join(",", solo.Where(o => !seen.Contains(o))));
+            Assert.Equal(9, all.Count(RoomOmens.IsTrial));
             foreach (var omen in all)
             {
                 Assert.True(RoomOmens.IsValid(omen));
@@ -89,7 +91,8 @@ namespace SodRpg.Core.Tests
         {
             foreach (RoomOmen omen in Enum.GetValues(typeof(RoomOmen)))
             {
-                if (omen == RoomOmen.None) continue;
+                // 共鳴の盾は単一の恒常数値ではなく、敵の被ダメージを条件付きで切り替える。
+                if (omen == RoomOmen.None || omen == RoomOmen.ResonantWard) continue;
                 bool enemySide = omen == RoomOmen.RestlessEnemies || omen == RoomOmen.SturdyEnemies;
                 if (RoomOmens.IsTrial(omen)) Assert.True(enemySide ? RoomOmens.Value(omen) > 0 : RoomOmens.Value(omen) < 0, omen.ToString());
                 else Assert.True(RoomOmens.Value(omen) > 0, omen.ToString());

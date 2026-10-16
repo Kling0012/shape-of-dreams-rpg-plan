@@ -373,6 +373,7 @@ namespace SodRpg.Mod
                     if (repaint)
                     {
                         DrawNightmareLabels(scale);
+                        DrawCoopWardLabels(scale);
                         if (cfg.hudMode != HudMode.Off) DrawHud(w, h, cfg);
                     }
                     bool secureWait = _s.Profile.Run != null && _s.Profile.Run.AwaitingChoice && _s.ActiveRunId != null;
@@ -1023,7 +1024,8 @@ namespace SodRpg.Mod
             }
             _labelScratch.Clear();
             foreach (var entry in _labelMonsters)
-                if ((!_s.Nightmare.ContainsKey(entry.Key) && !_s.Variant.ContainsKey(entry.Key))
+                if ((!_s.Nightmare.ContainsKey(entry.Key) && !_s.Variant.ContainsKey(entry.Key)
+                    && _s.CoopWardId(0) != entry.Key && _s.CoopWardId(1) != entry.Key && _s.CoopWardId(2) != entry.Key)
                     || entry.Value.Identity == null || entry.Value.Monster == null)
                     _labelScratch.Add(entry.Key);
             foreach (uint netId in _labelScratch) _labelMonsters.Remove(netId);
@@ -1048,6 +1050,51 @@ namespace SodRpg.Mod
                 }
                 float x = sp.x / scale - lab.Size.x / 2, y = (Screen.height - sp.y) / scale - lab.Size.y;
                 GUI.Label(new Rect(x, y, lab.Size.x + 4, lab.Size.y), lab.Content, _st.Toast);
+            }
+        }
+
+        private readonly Label3D[] _coopWardLabels = new Label3D[62];
+        private bool _coopWardLabelsFailed;
+
+        private void DrawCoopWardLabels(float scale)
+        {
+            if (_coopWardLabelsFailed) return;
+            try
+            {
+                var cam = Camera.main;
+                if (cam == null) return;
+                for (int slot = 0; slot < 3; slot++)
+                {
+                    uint netId = _s.CoopWardId(slot);
+                    if (netId == 0 || !Mirror.NetworkClient.spawned.TryGetValue(netId, out var identity) || identity == null) continue;
+                    var monster = LabelMonster(netId, identity);
+                    if (monster == null || !monster.isActive || monster.isDead) continue;
+                    var sp = cam.WorldToScreenPoint(monster.position + Vector3.up * 3.2f);
+                    if (sp.z <= 0) continue;
+                    int seconds = Math.Min(60, Mathf.CeilToInt(_s.CoopResonanceRemaining(slot)));
+                    int key = seconds > 0 ? seconds + 1 : 0;
+                    var label = _coopWardLabels[key];
+                    if (label == null)
+                    {
+                        string text = UiStyles.Colored(seconds > 0 ? "◉ " + seconds + "s" : "◎", seconds > 0 ? "#ffe28a" : "#8ae4ff");
+                        var content = new GUIContent(text);
+                        label = new Label3D { Text = text, Content = content, Size = _st.ToastMeasure.CalcSize(content) };
+                        _coopWardLabels[key] = label;
+                    }
+                    float offset = 0;
+                    if (_s.Nightmare.TryGetValue(netId, out var affix)
+                        && _nightmareLabelCache.TryGetValue((int)affix, out var name)) offset = name.Size.y + 3;
+                    if (_s.Variant.TryGetValue(netId, out var variant)
+                        && _variantLabelCache.TryGetValue(variant, out var variantName)) offset = Math.Max(offset, variantName.Size.y + 3);
+                    float x = sp.x / scale - label.Size.x / 2;
+                    float y = (Screen.height - sp.y) / scale - label.Size.y - offset;
+                    GUI.Label(new Rect(x, y, label.Size.x + 4, label.Size.y), label.Content, _st.Toast);
+                }
+            }
+            catch (Exception ex)
+            {
+                _coopWardLabelsFailed = true;
+                Log.Warn("Co-op ward labels disabled; combat continues: " + ex.Message);
             }
         }
 
@@ -3256,6 +3303,7 @@ namespace SodRpg.Mod
             GUILayout.EndHorizontal();
             DrawAutoCastSettings(cfg);
             DrawLevelEssenceSettings(cfg);
+            DrawCoopOmenSettings(cfg);
             if (_s.SavePath != null) GUILayout.Label(Loc.T("保存先：", "Save file: ") + _s.SavePath, _st.Small);
             if (_s.LoadNotes != null) GUILayout.Label(_s.LoadNotes, _st.Warn);
             if (_s.SaveError != null) GUILayout.Label(Loc.T("保存エラー：", "Save error: ") + _s.SaveError, _st.Warn);
@@ -3331,6 +3379,22 @@ namespace SodRpg.Mod
 
             GUILayout.EndHorizontal();
             GUILayout.EndScrollView();
+        }
+
+        private void DrawCoopOmenSettings(DreamforgeConfig cfg)
+        {
+            bool wasEnabled = GUI.enabled;
+            GUI.enabled = wasEnabled && (!Mirror.NetworkClient.active || Mirror.NetworkServer.active);
+            bool enabled = GUILayout.Toggle(cfg.coopRoomOmens, Loc.T("マルチ専用の兆し（ホスト）", "Co-op-only Room Omens (host)"));
+            if (enabled != cfg.coopRoomOmens)
+            {
+                cfg.coopRoomOmens = enabled;
+                CoopOmens.Enabled = enabled;
+                _saveLevelEssenceConfig?.Invoke();
+            }
+            GUI.enabled = wasEnabled;
+            GUILayout.Label(Loc.T("2 人以上で部屋に入ると、ときどき協力が必要な兆しが出ます。抽選は次の部屋から反映されます。",
+                "With two or more players, some rooms require cooperation. Draw changes apply from the next room."), _st.Small);
         }
 
         private void DrawLevelEssenceSettings(DreamforgeConfig cfg)
