@@ -78,12 +78,15 @@ namespace SodRpg.Mod
                     }
                 }
             }
-            // An ally's exclusive opponent stays behind every other valid candidate,
-            // even if it is currently aiming at this hero.
-            if (allyHit) return 2;
-            return ownHit || target.AI != null && target.AI.context.targetEnemy == hero
+            // Preserve ally-only hit history as the fallback, including when ownership is off.
+            // The ownership hook can promote this hero's own assignment to the first rank.
+            int priority = allyHit ? 2 : ownHit || target.AI != null && target.AI.context.targetEnemy == hero
                 || target.Control.attackTarget == hero ? 0 : 1;
+            ApplyAutoCastOwnershipPriority(hero, target, ref priority);
+            return priority;
         }
+
+        partial void ApplyAutoCastOwnershipPriority(Hero hero, Entity target, ref int priority);
 
         private void PruneAutoCastContacts(float now)
         {

@@ -17,7 +17,7 @@ namespace SodRpg.Mod
         {
             internal Entity Enemy;
             internal DewPlayer Owner;
-            internal bool Excluded, OwnPressureHook;
+            internal bool Excluded, SharedObjective, OwnPressureHook;
             internal BossShares Shares;
             internal float Spawned, Changed, DownSince, AwaySince, OwnerLastEngaged;
             internal float AppliedHealth = float.NaN;
@@ -150,7 +150,7 @@ namespace SodRpg.Mod
                 if (OwnershipAlive(player)) { _ownershipPlayers.Add(player); _ownershipCounts.Add(0); }
             foreach (var state in _enemyOwnership.Values)
             {
-                if (state.Excluded || state.Enemy == null || !state.Enemy.isActive || state.Enemy.currentHealth <= 0) continue;
+                if (state.Excluded || state.SharedObjective || state.Enemy == null || !state.Enemy.isActive || state.Enemy.currentHealth <= 0) continue;
                 int index = _ownershipPlayers.IndexOf(state.Owner);
                 if (index >= 0) _ownershipCounts[index]++;
             }
@@ -198,11 +198,12 @@ namespace SodRpg.Mod
                 var state = _ownershipPool.Count > 0 ? _ownershipPool.Pop() : CreateOwnershipState();
                 state.Enemy = enemy;
                 state.Excluded = excluded || OwnershipExcluded(enemy);
+                state.SharedObjective = CoopOmens.IsSharedObjective(enemy);
                 state.Spawned = state.OwnerLastEngaged = Time.time;
                 state.Changed = float.NegativeInfinity;
                 state.DownSince = state.AwaySince = -1f;
                 _enemyOwnership.Add(enemy, state);
-                if (!state.Excluded)
+                if (!state.Excluded && !state.SharedObjective)
                 {
                     Actor parent = enemy.parentActor;
                     bool inheritedOwner = false;
@@ -259,6 +260,7 @@ namespace SodRpg.Mod
                 if (enemy == null || !_enemyOwnership.TryGetValue(enemy, out var state)) return;
                 // beforeSpawn may change type after the room's general onBeforeSpawn event.
                 if (OwnershipExcluded(enemy)) { state.Excluded = true; state.Owner = null; }
+                RefreshSharedObjectiveOwnership(enemy);
                 if (!OwnershipAvailable(OwnershipPart.Strength) || state.Excluded && !enemy.IsAnyBoss()) return;
                 if (enemy is Monster monster)
                 {
@@ -329,11 +331,41 @@ namespace SodRpg.Mod
             catch (Exception ex) { FailOwnership(OwnershipPart.Strength, ex); }
         }
 
+        // Ward selection can follow ownership assignment, or swap an untouched initial ward.
+        // Re-evaluate only on those transitions (and the existing ownership scan).
+        internal void RefreshSharedObjectiveOwnership(Entity enemy)
+        {
+            try
+            {
+                if (enemy == null || !_enemyOwnership.TryGetValue(enemy, out var state)) return;
+                bool shared = CoopOmens.IsSharedObjective(enemy);
+                if (state.SharedObjective == shared) return;
+                state.SharedObjective = shared;
+                ChangeOwnership(state, shared || state.Excluded || !OwnershipAvailable(OwnershipPart.Assignment)
+                    ? null : OwnershipLeastLoaded());
+                if (enemy is Monster monster && _monsters.TryGetValue(monster, out var runtime))
+                    SendMonsterClassification(runtime);
+            }
+            catch (Exception ex) { FailOwnership(OwnershipPart.Assignment, ex); }
+        }
+
         private bool TryOwnership(Entity enemy, OwnershipPart part, out EnemyOwnership state)
         {
             state = null;
             return enemy != null && OwnershipAvailable(part) && _enemyOwnership.TryGetValue(enemy, out state)
-                && !state.Excluded && !enemy.IsAnyBoss() && state.Owner != null && OwnershipConnected(state.Owner);
+                && !state.Excluded && !state.SharedObjective && !CoopOmens.IsSharedObjective(enemy)
+                && !enemy.IsAnyBoss() && state.Owner != null && OwnershipConnected(state.Owner);
+        }
+
+        partial void ApplyAutoCastOwnershipPriority(Hero hero, Entity target, ref int priority)
+        {
+            try
+            {
+                if (hero == null || !TryOwnership(target, OwnershipPart.Protection, out var state)) return;
+                if (state.Owner == hero.owner) priority = 0;
+                else if (priority != 0 && OwnershipProtected(state)) priority = 2;
+            }
+            catch (Exception ex) { FailOwnership(OwnershipPart.Targeting, ex); }
         }
 
         private int OwnershipFighter(EnemyOwnership state, DewPlayer player)
@@ -578,9 +610,10 @@ namespace SodRpg.Mod
                 { _ownershipScratch.Add(pair.Key); continue; }
                 try
                 {
+                    RefreshSharedObjectiveOwnership(state.Enemy);
                     ScanBossShares(state, running);
                     if (!running) ChangeOwnership(state, null);
-                    else if (!state.Excluded)
+                    else if (!state.Excluded && !state.SharedObjective)
                     {
                         if (state.Enemy.IsAnyBoss()) { state.Excluded = true; ChangeOwnership(state, null); }
                         else if ((_ownershipFailed & OwnershipPart.Reassignment) == 0) ScanOwnershipReassignment(state);
@@ -637,7 +670,7 @@ namespace SodRpg.Mod
                 {
                     ScanBossShares(state, running, player);
                     if (!running || state.Owner == player)
-                        ChangeOwnership(state, running ? OwnershipLeastLoaded() : null);
+                        ChangeOwnership(state, running && !state.Excluded && !state.SharedObjective ? OwnershipLeastLoaded() : null);
                 }
             }
             catch (Exception ex) { FailOwnership(OwnershipPart.Reassignment, ex); }
@@ -673,7 +706,7 @@ namespace SodRpg.Mod
             state.Enemy = null;
             state.Owner = null;
             state.Shares = null;
-            state.Excluded = state.OwnPressureHook = false;
+            state.Excluded = state.SharedObjective = state.OwnPressureHook = false;
             state.AppliedHealth = float.NaN;
             Array.Clear(state.Fighters, 0, state.Fighters.Length);
             Array.Clear(state.Hits, 0, state.Hits.Length);
