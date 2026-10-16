@@ -1,5 +1,5 @@
-[b]Fixes an error during boss equipment setup and reduces memory use on hit.[/b]
-[b]ボスの装備準備時のエラーを修正し、命中時の処理を軽くしました。[/b]
+[b]Fixes save error messages disappearing and shows save failure reasons in Japanese or English to match the display language.[/b]
+[b]保存エラーの表示が消えてしまう不具合を修正し、保存失敗の理由を表示言語に合わせて出すようにしました。[/b]
 
 [h1]Dreamforge RPG[/h1]
 Turns every run into part of a long RPG journey: relics you keep, a risky "secure or delve" choice at every zone, a star map per Traveler, a forge, and long-term goals. Co-op ready.
