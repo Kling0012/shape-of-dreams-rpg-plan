@@ -10,6 +10,29 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v3.1.3 — Clearer, localized co-op trade messages（2026-10-17）
+
+協力プレイの取引で表示されるメッセージを改善しました。 / This version improves the messages shown during co-op trades.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 改善 / Improvements
+
+- 協力プレイの取引で、取引が取り消されたときと、接続が切れたときのメッセージを分けました。これまではどちらも同じ文で表示されていました。今後は、取消や時間切れで取引をもう一度申し込めるのか、再接続を待っているのかが区別できます。 / In co-op trades, cancellations and connection changes now show different messages. Both used to show the same text. You can now tell whether a trade was cancelled or timed out and can be offered again, or whether the game is waiting for a player to reconnect.
+
+### 不具合の修正 / Bug fixes
+
+- 協力プレイの取引で、参加者が出した品がホストに受け付けられなかったときに、ホストの言語の内部メッセージが参加者にそのまま表示されることがありました。今後は理由が参加者自身の言語で表示されます。 / Fixed co-op trades where a participant whose offer was rejected by the host could see an internal message in the host's language. The reason is now shown in the participant's own language.
+- 協力プレイの取引で表示されるエラーや取消のメッセージが、どの場面でも参加者それぞれの言語で表示されるようにしました。取引画面の状態表示と、参加者一覧の状態表示も同じように各自の言語で表示されます。 / Error and cancellation messages in co-op trades are now shown in each player's own language in every case. The status shown on the trade screen and in the player list also appears in each player's own language.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
 ## v3.1.2 — Melee co-op display polish and locale-independent numbers（2026-10-17）
 
 近接協力の表示まわりを細かく改善し、言語設定によって数値の表示が変わる不具合を修正しました。 / This version polishes how melee co-op is displayed and fixes numbers showing differently depending on language settings.
