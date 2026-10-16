@@ -8,5 +8,18 @@
   "breakDamagePercent": 12,
   "meleeGuardRange": 3,
   "meleeGuardReductionPercent": 12,
-  "scanSeconds": 0.25
+  "scanSeconds": 0.25,
+  "ownership": {
+    "helpFactor": 0.5,
+    "floor": 0.3,
+    "rescueHp": 0.35,
+    "engageWindow": 6,
+    "spawnGrace": 8,
+    "detectionMultiplier": 1.5,
+    "reassignCooldown": 5,
+    "downDelay": 3,
+    "releaseDistance": 30,
+    "awaySeconds": 6,
+    "idleSeconds": 10
+  }
 }

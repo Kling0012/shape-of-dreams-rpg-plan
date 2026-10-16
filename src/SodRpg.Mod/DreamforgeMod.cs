@@ -76,6 +76,7 @@ namespace SodRpg.Mod
                 RelicIcons.Init(mod?.path);
                 RelicIcons.Preload();
                 _ui = new DreamforgeUi(_session, () => config, SaveLevelEssenceConfig);
+                BindEnemyOwnershipSettings();
                 _host = new HostAuthority(() => _session?.Profile.Run?.DailyId ?? DailyDream.Today.Id);
                 ApplyMeleeCoopConfig();
                 _session.FirstLaunch();
@@ -121,14 +122,15 @@ namespace SodRpg.Mod
             ApplyMeleeCoopConfig();
         }
 
+        partial void ApplyEnemyOwnershipConfig();
+        partial void BindEnemyOwnershipSettings();
+
+        partial void ApplyMeleeCoopSettings();
+
         private void ApplyMeleeCoopConfig()
         {
-            try
-            {
-                _host?.ConfigureMeleeCoop(config.meleeRangeToSpeed, config.coopDistanceFalloff,
-                    config.meleeBreak, config.meleeProximityGuard);
-            }
-            catch (Exception ex) { Log.Warn("Melee/coop settings ignored: " + ex.Message); }
+            ApplyEnemyOwnershipConfig();
+            ApplyMeleeCoopSettings();
         }
 
         // レベル連動のエッセンス枠（ホストの設定だけが枠に反映される）。壊れた入力でも他の機能は止めない。

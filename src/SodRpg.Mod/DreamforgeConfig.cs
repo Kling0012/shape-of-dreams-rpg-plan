@@ -36,6 +36,9 @@ namespace SodRpg.Mod
         [LabelText("Melee: convert equipment attack range to attack speed (host) / 近接：装備の射程を攻撃速度へ変換（ホスト）")]
         public bool meleeRangeToSpeed = true;
 
+        [LabelText("Enemy ownership (coop, host) / 担当制（マルチ・ホスト）")]
+        public bool coopEnemyOwnership = true;
+
         [LabelText("Coop: distance falloff and grace (host) / 味方距離効果の減衰と猶予（ホスト）")]
         public bool coopDistanceFalloff = true;
 

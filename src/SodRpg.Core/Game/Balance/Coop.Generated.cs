@@ -13,5 +13,20 @@ namespace SodRpg.Core.Game
         public const float MeleeGuardRange = 3f;
         public const float MeleeGuardReductionPercent = 12f;
         public const float ScanSeconds = 0.25f;
+
+        public static class Ownership
+        {
+            public const float HelpFactor = 0.5f;
+            public const float Floor = 0.3f;
+            public const float RescueHp = 0.35f;
+            public const float EngageWindow = 6f;
+            public const float SpawnGrace = 8f;
+            public const float DetectionMultiplier = 1.5f;
+            public const float ReassignCooldown = 5f;
+            public const float DownDelay = 3f;
+            public const float ReleaseDistance = 30f;
+            public const float AwaySeconds = 6f;
+            public const float IdleSeconds = 10f;
+        }
     }
 }
