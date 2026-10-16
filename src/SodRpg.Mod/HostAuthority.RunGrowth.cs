@@ -28,6 +28,10 @@ namespace SodRpg.Mod
         {
             var owner = rt.Hero != null ? rt.Hero.owner : null;
             if (ReferenceEquals(owner, null) || owner == null) return null;
+            // 中断保存（Continue）と再接続をまたいで同じ本人を指す鍵（TradePlayerKey と同じ guid）。
+            // netId は接続ごとに振り直され、Continue 後は別のプレイヤーの番号と重なり得る。
+            string guid = owner.guid;
+            if (!string.IsNullOrEmpty(guid)) return guid;
             if (rt.GrowthOwnerKey == null || rt.GrowthOwnerNetId != owner.netId)
             {
                 rt.GrowthOwnerNetId = owner.netId;
