@@ -84,9 +84,9 @@ namespace SodRpg.Mod
         private string CoopFusionError(CoopHostTrade trade)
         {
             bool supported = CoopPeerFusion(trade.First) && CoopPeerFusion(trade.Second);
-            return CoopTradeRules.ValidateFusion(trade.FirstProfile, trade.FirstOffer, supported) != null
-                || CoopTradeRules.ValidateFusion(trade.SecondProfile, trade.SecondOffer, supported) != null
-                ? CoopTradeRules.FusionReason : null;
+            // ValidateFusion returns the fixed reason code itself; the cancel carries it unchanged.
+            return CoopTradeRules.ValidateFusion(trade.FirstProfile, trade.FirstOffer, supported)
+                ?? CoopTradeRules.ValidateFusion(trade.SecondProfile, trade.SecondOffer, supported);
         }
 
         private void TickCoopTrade()
@@ -299,9 +299,10 @@ namespace SodRpg.Mod
                     profile = ProfileCodec.ReadCheckpointProfile(Encoding.UTF8.GetString(Convert.FromBase64String(encoded)));
                     offer = CoopTradeCodec.ReadOffer(msg.offer);
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
                     // Only peer-data decoding belongs here; journal failures must still use host recovery.
+                    DiagnoseHostCoopTrade("decode-failed-" + ex.GetType().Name, trade, caller);
                     SendCoopError(caller, "ownership");
                     CancelHostCoopTrade("ownership");
                     return;
@@ -310,9 +311,9 @@ namespace SodRpg.Mod
                 if (gameRun != null && profile.Run?.RunId != gameRun || profile.CoopTradePending != null
                     || CoopTradeRules.Validate(profile, offer) != null)
                 { CancelHostCoopTrade("ownership"); return; }
-                string fusionError = CoopTradeRules.ValidateFusion(profile, offer,
-                    CoopPeerFusion(trade.First) && CoopPeerFusion(trade.Second)) != null ? CoopTradeRules.FusionReason : null;
-                if (fusionError != null) { CancelHostCoopTrade(fusionError); return; }
+                string fusionReason = CoopTradeRules.ValidateFusion(profile, offer,
+                    CoopPeerFusion(trade.First) && CoopPeerFusion(trade.Second));
+                if (fusionReason != null) { CancelHostCoopTrade(fusionReason); return; }
                 if (msg.action == "offer")
                 {
                     if (first) { trade.FirstOffer = offer; trade.FirstProfile = profile; }
@@ -350,7 +351,10 @@ namespace SodRpg.Mod
             }
             catch (InvalidOperationException ex)
             {
-                SendCoopError(caller, ex.Message);
+                // Core rules reject with localized (host-language) text; participants read the fixed
+                // "ownership" code in their own language, and the detail stays in the host log.
+                Log.Info("Coop trade rejected: " + ex.Message);
+                SendCoopError(caller, "ownership");
                 try { CancelHostCoopTrade("ownership"); } catch (Exception error) { FailHostCoopTrade(error); }
             }
             catch (Exception ex) { FailHostCoopTrade(ex); SendCoopError(caller, ex.Message); }
@@ -415,7 +419,7 @@ namespace SodRpg.Mod
             _coopJournal.Cancel(trade.Id);
             DiagnoseHostCoopTrade("journal-cancelled", trade);
             _coopHostTrade = null;
-            var msg = new DreamforgeCoopTradeState { kind = "cancelled", id = trade.Id, hostKey = CoopHostKey, status = CoopReason(reason), reasonCode = CoopReasonCode(reason) };
+            var msg = new DreamforgeCoopTradeState { kind = "cancelled", id = trade.Id, hostKey = CoopHostKey }.WithReason(reason);
             SendCoopState(trade.First, msg);
             SendCoopState(trade.Second, msg);
         }
@@ -472,7 +476,7 @@ namespace SodRpg.Mod
             // Absence in this original host's non-rewound journal is an authoritative abort.
             // Tombstone it before returning reservations, so late prepare/confirm can never execute.
             _coopJournal.Cancel(id);
-            SendCoopState(caller, new DreamforgeCoopTradeState { kind = "cancelled", id = id, hostKey = CoopHostKey, status = CoopReason("cancelled"), reasonCode = "cancelled" });
+            SendCoopState(caller, new DreamforgeCoopTradeState { kind = "cancelled", id = id, hostKey = CoopHostKey }.WithReason("cancelled"));
         }
 
         private void SendCoopViews()
@@ -542,9 +546,7 @@ namespace SodRpg.Mod
                 player.connectionToClient?.Send(new DreamforgeCoopTradeDown { Json = CoopTradeTransport.Encode(state) });
         }
         private void SendCoopError(DewPlayer player, string reason) => SendCoopState(player,
-            new DreamforgeCoopTradeState { kind = "error", hostKey = CoopHostKey, status = CoopReason(reason), reasonCode = CoopReasonCode(reason) });
-        private static string CoopReason(string reason) => CoopTradeRules.ReasonText(reason);
-        private static string CoopReasonCode(string reason) => CoopTradeRules.IsKnownReason(reason) ? reason : null;
+            new DreamforgeCoopTradeState { kind = "error", hostKey = CoopHostKey }.WithReason(reason));
         private void FailHostCoopTrade(Exception ex)
         {
             DiagnoseHostCoopTrade("host-failure", _coopHostTrade);

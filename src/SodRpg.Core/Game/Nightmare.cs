@@ -175,6 +175,11 @@ namespace SodRpg.Core.Game
         public static NightmareAffix Roll(Rng rng, MonsterTier tier, int depth, double chanceMult = 1.0)
         {
             if (!rng.Chance(Math.Min(1.0, Chance(tier, depth) * chanceMult))) return NightmareAffix.None;
+            return RollAffixes(rng, depth);
+        }
+
+        private static NightmareAffix RollAffixes(Rng rng, int depth)
+        {
             int count = AffixCount(depth);
             var pool = new List<NightmareAffix>(AllAffixes);
             var result = NightmareAffix.None;
@@ -202,10 +207,24 @@ namespace SodRpg.Core.Game
                 // One native nightmare trait keeps the opt-in rule bounded even at zero delve heat.
                 return AllAffixes[rng.Range(0, AllAffixes.Length - 1)];
             }
-            double waypointMult = waypoint != null ? waypoint.NightmareChanceMultiplier : 1.0;
-            int selectionDepth = waypointMult > 1 ? Math.Max(1, depth) : depth;
-            return Roll(rng, tier, selectionDepth, chanceMult * waypointMult);
+            if (!rng.Chance(WaypointChance(tier, depth, chanceMult, waypoint))) return NightmareAffix.None;
+            return RollAffixes(rng, WaypointSelectionDepth(depth, waypoint));
         }
+
+        /// <summary>
+        /// <see cref="RollWaypoint"/> が使う悪夢化の確率（0〜1）。確保地点の表示も同じ値を使う（#572）。
+        /// ボスは0、すべての敵が悪夢化する道標では1。
+        /// </summary>
+        public static double WaypointChance(MonsterTier tier, int depth, double chanceMult, Waypoints.Totals waypoint)
+        {
+            if (tier >= MonsterTier.Boss) return 0;
+            if (waypoint != null && waypoint.AllNightmares) return 1;
+            double waypointMult = waypoint != null ? waypoint.NightmareChanceMultiplier : 1.0;
+            return Math.Min(1.0, Chance(tier, WaypointSelectionDepth(depth, waypoint)) * (chanceMult * waypointMult));
+        }
+
+        private static int WaypointSelectionDepth(int depth, Waypoints.Totals waypoint) =>
+            waypoint != null && waypoint.NightmareChanceMultiplier > 1 ? Math.Max(1, depth) : depth;
 
         public static int Count(NightmareAffix a)
         {

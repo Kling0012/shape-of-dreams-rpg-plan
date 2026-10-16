@@ -668,12 +668,15 @@ namespace SodRpg.Mod
             GUILayout.EndArea();
         }
 
-        private (int Count, int Shards, int Tuning, int Heat, int Bonus, int Free, double NightmareMult, bool Japanese) _secureTextKey;
+        private (int Count, int Shards, int Tuning, int Heat, int Bonus, int Free, double NightmareMult, bool Japanese,
+            float PressureHealth, float NightmareGear, Waypoint Active, Waypoint Pending, bool Infinity) _secureTextKey;
         private string _secureLootText, _secureBonusText, _secureOverflowText, _secureDelveText, _secureNightmareText, _secureExtraText;
 
         private void CacheSecureText(RunState run, int bonus, int free, double nmMult)
         {
-            var key = (run.Satchel.Count, run.SatchelShards, run.SatchelTuning, run.Heat, bonus, free, nmMult, Loc.Japanese);
+            var pendingWaypoint = run.WaypointChosen ? run.PendingWaypoint : Waypoint.None;
+            var key = (run.Satchel.Count, run.SatchelShards, run.SatchelTuning, run.Heat, bonus, free, nmMult, Loc.Japanese,
+                _s.PressureHealthMultiplier, _s.NightmareGearMultiplier, run.ActiveWaypoint, pendingWaypoint, run.Infinity != null);
             if (_secureLootText != null && _secureTextKey.Equals(key)) return;
             _secureTextKey = key;
             int next = Math.Min(Content.MaxHeat, run.Heat + 1);
@@ -693,12 +696,47 @@ namespace SodRpg.Mod
                 + $"遺物の出る量が{(int)(Loot.HeatDropBonus * 100 * next)}%増えてレア度も上がりますが、受けるダメージも{Build.DamageTakenPerDelvePct * next}%増えます。全滅すると、まだ持ち帰っていない物は遺失物になります。",
                 (atCap ? $"Move on without securing; delve stays at {next} (the maximum)." : $"Move on without securing; delve becomes {next}.")
                 + $" Relic drops +{(int)(Loot.HeatDropBonus * 100 * next)}% with better rarity, but you take {Build.DamageTakenPerDelvePct * next}% more damage. If your party falls, unsecured loot becomes Lost & Found.");
-            int nmNormal = (int)(Math.Min(1.0, Nightmares.Chance(MonsterTier.Normal, next) * nmMult) * 100);
-            int nmElite = (int)(Math.Min(1.0, Nightmares.Chance(MonsterTier.MiniBoss, next) * nmMult) * 100);
-            string nmDay = nmMult > 1.0 ? Loc.T("（今日の夢で増えています）", " (raised by today's dream)") : "";
+            // ホストの抽選（ProcessSpawns → RollWaypointNightmare）と同じ倍率・同じ確率関数で表示する（#572）。
+            var waypoint = Waypoints.Sum(pendingWaypoint);
+            double pressureMult = 1.0;
+            if (run.Infinity == null)
+            {
+                // 同期された敵HPの倍率は今のゾーンの道標の圧を含むため、選択中の道標の圧に置き換える。
+                double activePressure = Waypoints.Sum(run.ActiveWaypoint).PressureMultiplier;
+                double health = _s.PressureHealthMultiplier / (activePressure > 0 ? activePressure : 1.0) * waypoint.PressureMultiplier;
+                pressureMult = DreamPressure.NightmareChanceMultiplierForHealth(health);
+            }
+            bool gearKnown = _s.NightmareGearMultiplier >= 1f;
+            double gearMult = gearKnown ? _s.NightmareGearMultiplier : 1.0;
+            double chanceMult = nmMult * pressureMult * gearMult;
+            if (waypoint.AllNightmares)
+            {
+                _secureNightmareText = UiStyles.Colored(Loc.T(
+                    $"潜行{next}では、選んだ道標により、ボス以外のすべての敵が「悪夢化」して強くなります。倒すと、一段上の戦利品が出ます。",
+                    $"At delve {next}, your waypoint makes every non-boss enemy a stronger nightmare. They drop loot a tier higher."), "#ff9ae0");
+                return;
+            }
+            int nmNormal = (int)(Nightmares.WaypointChance(MonsterTier.Normal, next, chanceMult, waypoint) * 100);
+            int nmElite = (int)(Nightmares.WaypointChance(MonsterTier.MiniBoss, next, chanceMult, waypoint) * 100);
+            string jaRaised = "", enRaised = "";
+            void Raised(bool raised, string ja, string en)
+            {
+                if (!raised) return;
+                jaRaised += (jaRaised.Length > 0 ? "・" : "") + ja;
+                enRaised += (enRaised.Length > 0 ? ", " : "") + en;
+            }
+            Raised(nmMult > 1.0, "今日の夢", "today's dream");
+            Raised(pressureMult > 1.0, "夢の圧", "dream pressure");
+            Raised(waypoint.NightmareChanceMultiplier > 1.0, "道標", "your waypoint");
+            Raised(gearMult > 1.0, "装備", "gear");
+            string nmRaised = jaRaised.Length > 0 ? Loc.T($"（{jaRaised}で増えています）", $" (raised by {enRaised})") : "";
+            string atLeastJa = gearKnown ? "" : "以上";
+            string atLeastEn = gearKnown ? "" : "at least ";
+            string gearNote = gearKnown ? "" : Loc.T("ホストの装備による増加はまだ届いていないため、最低値を表示しています。",
+                " These are minimums; the host has not reported its gear bonus yet.");
             _secureNightmareText = UiStyles.Colored(Loc.T(
-                $"潜行{next}では、通常の敵の{nmNormal}%、エリートの{nmElite}%が「悪夢化」して強くなります{nmDay}（ボスは対象外）。倒すと、一段上の戦利品が出ます。",
-                $"At delve {next}, {nmNormal}% of regular enemies and {nmElite}% of elites become stronger nightmares{nmDay} (bosses excluded). They drop loot a tier higher."), "#ff9ae0");
+                $"潜行{next}では、通常の敵の{nmNormal}%{atLeastJa}、エリートの{nmElite}%{atLeastJa}が「悪夢化」して強くなります{nmRaised}（ボスは対象外）。倒すと、一段上の戦利品が出ます。{gearNote}",
+                $"At delve {next}, {atLeastEn}{nmNormal}% of regular enemies and {atLeastEn}{nmElite}% of elites become stronger nightmares{nmRaised} (bosses excluded). They drop loot a tier higher.{gearNote}"), "#ff9ae0");
         }
 
         private void DrawSecurePrompt(float w, float h, DreamforgeConfig cfg)
@@ -2717,7 +2755,10 @@ namespace SodRpg.Mod
             if (!(matching ? TravelerCombatNative.IsMelee(_s.LocalHero) : TravelerCombat.IsMelee(hero, true))) return;
             int on = _displayMeleeCoop;
             if ((on & (MeleeCoopSettings.RangeToSpeed | MeleeCoopSettings.Break | MeleeCoopSettings.Guard)) == 0) return;
-            StarSumAddTitle(Loc.T("近接の協力効果", "Melee co-op effects"));
+            // ほかの旅人のページではその旅人の攻撃アセットを読めず、近接になり得る4人には常に
+            // 出すしかない。遠距離攻撃のAurenaに「今は近接」と読まれないよう、題に条件を添える（#542）。
+            StarSumAddTitle(matching ? Loc.T("近接の協力効果", "Melee co-op effects")
+                : Loc.T("近接の協力効果（通常攻撃が近接の間）", "Melee co-op effects (while the basic attack is melee)"));
             if ((on & MeleeCoopSettings.RangeToSpeed) != 0) StarSumAddText(MeleeCoopText.RangeToSpeed);
             if ((on & MeleeCoopSettings.Break) != 0) StarSumAddText(MeleeCoopText.Break);
             if ((on & MeleeCoopSettings.Guard) != 0) StarSumAddText(MeleeCoopText.Guard);

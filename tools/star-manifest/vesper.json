@@ -27512,6 +27512,12 @@
             "amount": {
               "valueRef": "vesper.run.g1/growth/effects/1/amount"
             }
+          },
+          {
+            "stat": "AttackSpeedPct",
+            "amount": {
+              "valueRef": "vesper.run.g1/growth/effects/2/amount"
+            }
           }
         ]
       },

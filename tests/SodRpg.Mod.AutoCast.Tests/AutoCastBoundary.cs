@@ -30,9 +30,10 @@ namespace Mirror
 }
 namespace SodRpg.Core.Game
 {
-    // The game's own mod-config base and label attribute; empty doubles.
+    // The game's own mod-config base and display attributes; empty doubles.
     public class ModConfig { }
     public sealed class LabelTextAttribute : Attribute { public LabelTextAttribute(string label) { } }
+    public sealed class DescriptionAttribute : Attribute { public DescriptionAttribute(string description) { } }
 }
 namespace SodRpg.Mod
 {

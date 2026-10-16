@@ -103,6 +103,8 @@ namespace SodRpg.Mod
                 {
                     if (kind != BossEvent.MainHit) continue;
                     // Retain MainHits - 1 hits, then heal on the next hit without consuming the count on failure.
+                    // Precondition: charm action 0 keeps MainHits >= 2, enforced as a cell floor in
+                    // tools/balance/boss_values.py; with MainHits < 2 the very first hit would already heal.
                     state.CharmUntil = now + action.CounterLifetimeMillis / 1000f;
                     if (state.CharmHits < action.MainHits - 1) { state.CharmHits++; continue; }
                 }
