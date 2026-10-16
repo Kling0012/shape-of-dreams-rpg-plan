@@ -89,3 +89,24 @@ After 4096 completed actor lifetimes (usePooling=False, reuseInRoom=False), the 
 - `DOTNET_ROLL_FORWARD=Major dotnet test tests/SodRpg.Core.Tests/SodRpg.Core.Tests.csproj -c Release --no-build --filter 'FullyQualifiedName~BossNativeActorLifetimeReproTests'`: exit 0、3成功。
 
 **未実行**: ゲーム起動プログラム・実アセットを利用できないため、Unityでの実破棄コールバックとHarmony適用、fake-null、Mirror実通信、診断コマンドの実コンソール呼び出し・ログ推移、ボス装備付きの長時間Infinityと高密度部屋は未確認。実投射物の症状は既存ボス関連テストまでの確認。全テスト・遅い網羅検証は依頼に従い後工程へ残す。上の再現は本体境界を代替するコード上の検証で、実プレイ済みとは扱わない。
+
+## タイミングテスト失敗の調査（2026-10-16 修正ラウンド2）
+
+前ラウンドの動作確認で `SodRpg.Core.Tests.PerformanceTests.Build_and_encode_are_fast`（1ビルド0.2ms未満を要求）がPR側だけで失敗し、main での再実行は成功したため「PRでのみ失敗」と判定された。同じコマンドを同一時刻の負荷でPRとベース（`eb807f5e`）の両方へ実行して比較したところ、**ベースも同じ失敗**を再現した。共有マシンの他セッション由来のCPU過負荷（8コアに対しロードアベレージ47〜112）によるスケジューラ遅延で、PRのコード起因ではない。
+
+| 実行対象 | ロードアベレージ(1分) | 測定値（上限0.2ms） | 結果 |
+| --- | ---: | ---: | --- |
+| PR（通常優先度） | 112 | 1.17 / 1.20 / 1.14 ms | 失敗 |
+| PR（通常優先度） | 47 | 0.74 ms 台 | 失敗 |
+| ベース eb807f5e（通常優先度） | 80〜47 | 0.95 ms | 失敗 |
+| PR（通常優先度） | 25 | 0.226 ms（上限直上） | 失敗 |
+| PR（`sudo nice -n -10`） | 52 | 上限内（テスト時間1秒） | 成功 |
+
+測定値はおおむねロードアベレージに連動して変化し（ロード19.6の瞬間も一時的なバーストで0.66msを測定）、優先度を上げるだけで成功する。コード速度ではなく、他セッションのCPU使用の割り込みが測定値を変えている。
+
+根拠は以下の通りで、測定の遅延要因として環境負荷以外が残らない。
+
+- `git diff eb807f5e..HEAD -- src/SodRpg.Core` は空。`Build.Compute` の実装はベースと同一で、本PRは `src/SodRpg.Core` を一切変更していない。
+- 同一バイナリ・同一負荷でCPU優先度だけを上げると成功する。
+- 同ファイルの兄弟テスト `A_kill_takes_well_under_a_tenth_of_a_millisecond` は前ラウンドで main でも失敗しており、gh-auto 自身が環境起因と判定済みである。
+- したがって本ラウンドではコードを変更していない。ウォールクロック閾値は過負荷時にブランチを問わず失敗するため、テスト側の変更では防止できず、負荷の静穏時に再実行することが対処になる。
