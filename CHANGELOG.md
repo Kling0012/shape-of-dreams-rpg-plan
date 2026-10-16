@@ -8,11 +8,28 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
-- 協力プレイで禁忌装備への対応確認を待っている間の誤警告を抑え、返事がない場合はビルド再送の待機中でも20秒経過後に警告を表示します。対応が後から分かった場合は装備を反映し直します。 / Avoid premature forbidden-gear warnings while waiting for the host; warn after the timeout even while build resends are throttled, and refresh the build when support is confirmed later.
-- 退出した参加者の版違い警告を片付け、例外で停止した部屋の兆しを次の遠征で再び有効にします。未確定取引の上限表示も、実際に達した上限に合わせました。 / Clear departed players' version warnings, retry failed room omens on the next expedition, and report the applicable unresolved-trade limit.
-- 中断保存の通知を受けた際の確認付き保存を維持し、参加者は復元状態の書き込み完了を確認してから再開の受領通知を送ります。保存先が無効な場合も受領通知を保留します。 / Preserve confirmed checkpoint writes and confirm the restored profile before sending a resume receipt. Hold the receipt when persistent storage is unavailable too.
-- 装備一覧・回収待ち遺物・警告文・報酬処理の不要な繰り返しと、星図の上限計算の無駄を減らしました。 / Reduce repeated work in relic lists, pending salvage, warnings, rewards, and Star Map limit calculations.
-- テスト対象の選択で複数名前空間とプロジェクトがコピーする入力を扱い、仕様表だけの変更でもCIを起動します。装備生成キャッシュには低レアリティ生成元を含め、生成結果を入力から除外します。 / Include multiple namespaces and copied inputs in test selection, run CI for the reviewed specification table, and track low-rarity generator inputs without treating generated outputs as inputs.
+---
+
+## v2.10.57 — Co-op warning, resume save, and room omen fixes（2026-10-16）
+
+このバージョンでは、協力プレイでの警告表示、中断データからの再開、部屋の兆しに関する不具合を修正し、装備一覧などの動作を軽くしました。 / This version fixes issues with co-op warnings, resuming from a suspended save, and room omens, and makes the equipment list and other screens lighter.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- 協力プレイで、禁忌装備の警告がほかの参加者の対応を確認してから出るようにしました。あとから対応していると分かった場合は警告が消え、装備が正しく反映されます。 / In co-op, the forbidden equipment warning now waits until other players' support has been checked. If support is confirmed later, the warning is cleared and your equipment is applied correctly.
+- 協力プレイで、退出した参加者のバージョン違いの警告が残らないようにしました。 / In co-op, version mismatch warnings no longer remain for players who have left.
+- 部屋の兆しが不具合で止まったとき、次の遠征か、ホストが再接続したときに再び動くようにしました。 / If room omens stop because of an error, they now start again on the next expedition or when the host reconnects.
+- 中断したデータから再開するとき、保存の書き込みを確認してから再開の通知を送るようにしました。保存に失敗した場合は、次に接続したときにやり直します。 / When resuming from a suspended save, the resume notice is now sent only after the save is confirmed to be written. If saving fails, it is retried the next time you connect.
+- 保留中の取引が上限に達したとき、手動取引の上限（64件）と全体の上限（4096件）のどちらに達したかが正しく表示されるようにしました。 / When pending trades reach their limit, the message now correctly shows which limit was reached: the manual trade limit (64) or the overall limit (4096).
+- 装備一覧や星図などで、繰り返し行われていた処理を減らし、動作を軽くしました。表示内容や効果は変わりません。 / Reduced repeated processing in the equipment list, star map, and elsewhere to make them lighter. What is shown and how things work are unchanged.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
 
 ---
 
