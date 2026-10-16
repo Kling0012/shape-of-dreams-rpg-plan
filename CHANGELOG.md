@@ -8,6 +8,17 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
+### 不具合の修正 / Bug fixes
+
+- 遺物の強化や夢の出来事で固有効果が増えたり入れ替わったりしたとき、図鑑の「固有効果」の発見数がすぐに更新されなかった問題を修正しました。 / The codex's power count now updates right away when enhancing a relic or a dream event adds or swaps a power.
+- 装備画面の比較で、断ち切りで足された固有効果が「増える／減る」に出なかった問題を修正しました。 / The gear comparison now lists powers added by Severance as gained or lost.
+- 言語を切り替えたあと、敵の頭上の悪夢・変異の名前と、旅人選びの名前が前の言語のまま残る問題を修正しました。 / Overhead nightmare and variant names and the Traveler picker name now follow a language switch.
+- 到達刻印の案内（英語）と宝庫・工房の倍率や次の段の表示が、設定値から数値を作るようになりました（表示は変わりません）。 / The keystone hint (English) and the hoard and workshop previews now take their numbers from the balance settings (no visible change).
+
+### 改善 / Improvements
+
+- 装備・鍛冶の画面を開いている間、強さの計算を毎フレームではなく0.25秒ごとに行うようにして、動作を軽くしました。 / The gear and forge screens now recompute the build every 0.25 seconds instead of every frame, which makes them lighter.
+
 ---
 
 ## v2.10.57 — Co-op warning, resume save, and room omen fixes（2026-10-16）

@@ -94,7 +94,7 @@ namespace SodRpg.Core.Game
             {
                 Id = Hint.KeystoneReady, Title = new Txt("到達刻印を選べるようになりました", "Keystones unlocked"),
                 Body = new Txt($"この旅人の熟練度が上がり、到達刻印を選べるようになりました。選ぶには、この旅人のツリーに{Content.KeystoneRouteRequirement}ポイント以上振っておく必要もあります。",
-                    "This Traveler's mastery now allows a keystone. You also need 6+ points in this tree."),
+                    $"This Traveler's mastery now allows a keystone. You also need {Content.KeystoneRouteRequirement}+ points in this tree."),
             },
             new HintDef
             {

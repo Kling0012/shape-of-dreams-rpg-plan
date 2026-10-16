@@ -1425,6 +1425,7 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
         private Build _buildCache;
         private string _buildCacheHero;
         private int _buildCacheFrame = -1;
+        private float _buildCacheTime;
 
         /// <summary>今回の強さ（同じフレーム・同じキャラなら使い回す。OnGUI は1フレームに何度も呼ばれるため）。</summary>
         public Build CurrentBuild(string heroKey)
@@ -1434,7 +1435,22 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
             _buildCache = Build.Compute(Profile, heroKey, Profile.Run?.Heat ?? 0, Profile.Run?.Pacts, Profile.Run?.DailyId ?? 0);
             _buildCacheHero = heroKey;
             _buildCacheFrame = frame;
+            _buildCacheTime = Time.unscaledTime;
             return _buildCache;
+        }
+
+        private const float DisplayBuildReuseSeconds = 0.25f;
+
+        /// <summary>
+        /// 画面表示用の強さ。装備・鍛冶の画面は毎フレーム描くが、強さの計算は星の多い旅人で1回0.3ms・5KB前後かかる。
+        /// 変更時の作り直し（_buildCacheFrame = -1）がない間は、実際の計算時刻から0.25秒まで使い回す。ホストへ送る強さは CurrentBuild を使う。
+        /// </summary>
+        public Build DisplayBuild(string heroKey)
+        {
+            float now = Time.unscaledTime;
+            if (_buildCache != null && _buildCacheFrame >= 0 && _buildCacheHero == heroKey && now - _buildCacheTime < DisplayBuildReuseSeconds)
+                return _buildCache;
+            return CurrentBuild(heroKey);
         }
 
         private string _lastSentBuild;
