@@ -10,6 +10,25 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v3.1.6 — Maintenance update: co-op processing cleanup and troubleshooting logs（2026-10-17）
+
+この版は内部の保守のための更新で、ゲーム内の動きや数値に変更はありません。 / This is a maintenance update with no changes to gameplay or numbers.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### この版について / About this version
+
+- 協力プレイで敵を倒した記録をやり取りする処理を内部で整理し、無駄な繰り返しを減らしました。遊び方や報酬、表示はこれまでと変わりません。 / We streamlined the internal processing used to exchange kill records in co-op, cutting out redundant work. How the game plays, rewards and what is shown on screen are unchanged.
+- 協力プレイの記録のやり取りや取引で問題が起きたときに原因を調べやすくするため、調査用の記録を追加しました。この版で不具合が直ったわけではありません。 / To make problems easier to investigate when exchanging records or trading in co-op, we added logging for troubleshooting. This version does not fix any bug by itself.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
 ## v3.1.5 — Maintenance update: streamlined build and roll processing（2026-10-17）
 
 この版は内部の保守のための更新で、ゲーム内の動きや数値に変更はありません。 / This is a maintenance update with no changes to gameplay or numbers.
