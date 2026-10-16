@@ -100,7 +100,8 @@ namespace SodRpg.Mod
         public float PressureHealthMultiplier { get; private set; } = 1f;
         public float PressureDamageMultiplier { get; private set; } = 1f;
         public string LoadNotes { get; private set; }
-        public string SaveError { get; private set; }
+        /// <summary>保存の失敗の表示文。SaveNow の catch で拾った例外は文字列に固定せず持っておき、読まれるたびにそのときの言語で Message を出す（#551）。</summary>
+        public string SaveError => _saveErrorCause != null ? _saveErrorCause.Message : _saveErrorText;
 
         public ClientSession(string saveDir, Action<GameEvent> notify)
         {
@@ -347,6 +348,30 @@ namespace SodRpg.Mod
         private bool _saveErrorFromWriteFailure;
         private string _writeFailureText, _writeFailureSource;
         private bool _writeFailureJapanese;
+        // SaveNow の catch で拾った例外と、それ以外の経路（固定文・書き込み失敗・プロフィール切替）の表示文。
+        // 例外は Message を読むたびに言語が変わるので、文字列には固定しない（#551）。
+        private Exception _saveErrorCause;
+        private string _saveErrorText;
+        // 書き込み失敗の表示に反映した writer の FailureSerial。前より新しい失敗が起きたかの判定に使う。
+        private long _writeFailureSeenSerial;
+
+        private void SetSaveErrorText(string text)
+        {
+            _saveErrorText = text;
+            _saveErrorCause = null;
+        }
+
+        private void SetSaveErrorCause(Exception cause)
+        {
+            _saveErrorCause = cause;
+            _saveErrorText = null;
+        }
+
+        private void ClearSaveError()
+        {
+            _saveErrorText = null;
+            _saveErrorCause = null;
+        }
 
         private void TickPeriodicSave()
         {
@@ -357,7 +382,9 @@ namespace SodRpg.Mod
                 _dirty = true;
                 _allocationSavePending = true;
                 // 今回の保存で出た例外など、別経路の理由を過去の書き込み失敗で隠さない。
-                if (SaveError == null || _saveErrorFromWriteFailure)
+                // ただし前より新しい書き込み失敗が起きたときは、古い例外文に代わってこちらを表示する（#551）。
+                long failureSerial = _writer.FailureSerial;
+                if (SaveError == null || _saveErrorFromWriteFailure || _writeFailureSeenSerial != failureSerial)
                 {
                     string source = _writer.LastError;
                     bool japanese = Loc.Japanese;
@@ -367,8 +394,9 @@ namespace SodRpg.Mod
                         _writeFailureJapanese = japanese;
                         _writeFailureText = (japanese ? "保存に失敗しました。自動で再試行します: " : "Saving failed; retrying automatically: ") + source;
                     }
-                    SaveError = _writeFailureText;
+                    SetSaveErrorText(_writeFailureText);
                     _saveErrorFromWriteFailure = true;
+                    _writeFailureSeenSerial = failureSerial;
                 }
                 float retry = Time.unscaledTime + 5f;
                 if (_nextSave > retry) _nextSave = retry;
@@ -376,7 +404,7 @@ namespace SodRpg.Mod
             else if (_saveErrorFromWriteFailure && SaveError != null && _writer != null && _writer.WrittenRevision > 0)
             {
                 // 書き込みが成功し直したので、この経路の失敗表示だけを消す（別の経路のエラーは残す）。
-                SaveError = null;
+                ClearSaveError();
                 _saveErrorFromWriteFailure = false;
             }
             if (_dirty && Time.unscaledTime >= _nextSave) SaveNow();
@@ -1609,7 +1637,7 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
                 // 保存先が無効（初期のプロフィール切替に失敗した場合など）。確認付きの保存は書き込みが行われないので失敗とし、取引は送らせない。
                 if (confirm)
                 {
-                    SaveError = Loc.T("保存先が無効です。", "Saving is unavailable.");
+                    SetSaveErrorText(Loc.T("保存先が無効です。", "Saving is unavailable."));
                     _dirty = true;
                 }
                 return !confirm; // 確認なしの保存は従来どおり何もしない
@@ -1627,12 +1655,13 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
             }
             catch (Exception ex)
             {
-                SaveError = ex.Message;
+                // 文字列で固定せず例外を持っておき、表示のたびに Message を読む（言語切替にも追従、#551）。
+                SetSaveErrorCause(ex);
                 _saveErrorFromWriteFailure = false;
                 _dirty = true;
                 ok = false;
                 threw = true;
-                Log.Error("Save failed: " + ex.Message);
+                Log.Error("Save failed: " + ProfileStore.EnglishMessage(ex));
             }
             _saveMsTotal += sw.Elapsed.TotalMilliseconds;
             _saveCount++;
@@ -1640,14 +1669,17 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
             if (!threw)
             {
                 string writeError = _writer.LastError;
-                if (writeError != null && (SaveError == null || _saveErrorFromWriteFailure))
+                long failureSerial = _writer.FailureSerial;
+                // 前より新しい書き込み失敗なら、古い例外の表示に代わって書き込み失敗を出す（#551）。
+                if (writeError != null && (SaveError == null || _saveErrorFromWriteFailure || _writeFailureSeenSerial != failureSerial))
                 {
-                    SaveError = writeError;
+                    _writeFailureSeenSerial = failureSerial;
+                    SetSaveErrorText(writeError);
                     _saveErrorFromWriteFailure = true;
                 }
                 else if (writeError == null && SaveError != null && _writer.WrittenRevision > 0)
                 {
-                    SaveError = null;
+                    ClearSaveError();
                     _saveErrorFromWriteFailure = false;
                 }
             }

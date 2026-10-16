@@ -906,9 +906,12 @@ namespace SodRpg.Mod
         private bool _dirty, _saveErrorFromWriteFailure;
         private string _writeFailureText, _writeFailureSource;
         private bool _writeFailureJapanese;
+        private Exception _saveErrorCause;
+        private string _saveErrorText;
+        private long _writeFailureSeenSerial;
         private int _buildCacheFrame = -1, _saveCount;
         private double _saveMsTotal;
-        public string SaveError { get; private set; }
+        public string SaveError => _saveErrorCause != null ? _saveErrorCause.Message : _saveErrorText;
         private readonly Action<GameEvent> _notify;
         private float _nextDreamEventNotice;
         private string _curseSyncedKey = "";

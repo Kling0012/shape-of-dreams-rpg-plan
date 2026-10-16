@@ -44,7 +44,11 @@ namespace SodRpg.Core.Game
 
         private long _writtenRevision;
         private long _attemptedRevision;
+        private long _failureSerial;
         private bool _failurePending;
+
+        /// <summary>書き込みの失敗が起きるごとに増える番号。LastError と違い、前より新しい失敗が起きたかの判定に使える。</summary>
+        public long FailureSerial { get { lock (_lock) return _failureSerial; } }
 
         /// <summary>
         /// 最後の書き込みが失敗したままか（成功すると false に戻る）。失敗したテキストは破棄されるので、
@@ -154,6 +158,7 @@ namespace SodRpg.Core.Game
                     {
                         _attemptedRevision = rev;
                         _failurePending = true;
+                        _failureSerial++;
                         _lastError = ex;
                         Monitor.PulseAll(_lock);
                     }

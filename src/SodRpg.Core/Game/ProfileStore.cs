@@ -287,7 +287,16 @@ namespace SodRpg.Core.Game
             }
 
             public override string Message => Loc.T(_japanese, _english);
+
+            /// <summary>UI の言語と無関係に固定される英文（ログなど、言語が変わっても同じに出したい用途）。</summary>
+            internal string EnglishMessage => _english;
         }
+
+        /// <summary>
+        /// 例外の文のうち、UI の言語と無関係に固定される方。ProfileWriteException は英文、
+        /// それ以外の例外は Message をそのまま返す（ログを固定言語で出すときに使う、#551）。
+        /// </summary>
+        public static string EnglishMessage(Exception ex) => ex is ProfileWriteException write ? write.EnglishMessage : ex.Message;
 
         private void Quarantine(string path)
         {

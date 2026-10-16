@@ -364,6 +364,30 @@ getterのみ公開する。添字ループはこのコレクションを直接�
 
 **未実行**：Unity実機での戦闘・装備情報未準備時の例外再現／回復・協力通信は、ゲーム実行環境が提供されていないため未確認。装備キャッシュ欠落時の解除／再試行と、大顎の4回目・アズラクの3回目・光の手の6秒の同等性は設定とコードの照合によるもので、当該条件を追加ケースで実行した証拠ではない。GC割当量・フレーム時間の実測は行っていない。実行環境依存の0バイト断言を追加せず、型と生成箇所を点検した。フルテスト・Slowテスト・無関係なテストは作業中に実行しない指示に従い、後続工程へ委ねる。
 
+## #551 保存エラー表示の追補（2026-10-17）
+
+PR #509 のレビューで挙がった軽微な改善（Issue #551）。`ClientSession.SaveNow` の catch は `SaveError` に `ex.Message` の文字列を固定していたのを例外オブジェクトの保持に変え、表示（`SaveError` の getter）のたびに `Message` を読む。これで表示言語を切り替えたあとも例外の理由が現在の言語で出る。`ProfileWriteException.Message` は `Loc.T` で日英を選ぶ実装なので、保存側（書き込みスレッド）は言語を読まずに済む。
+
+優先順位は次のとおり（変更後も #509 の意図を保つ）。
+
+- この呼び出しで出た例外が最優先（`threw` の間は書き込み失敗の反映をスキップ）。
+- 例外より前から残っている書き込み失敗（`LastError`）は、今回の例外を隠さない。ただし `AsyncProfileWriter.FailureSerial`（失敗のたびに増える番号）が前回表示した値より進んでいれば「新しい書き込み失敗」なので、古い例外文に代わって書き込み失敗の表示に切り替える。`TickPeriodicSave` の定期表示も同じ条件にする。
+- 書き込みが成功し直したら（`HasPendingFailure` が false・`WrittenRevision > 0`）、書き込み失敗の表示だけを消す（別経路のエラーは残す）。
+
+ログは `Log.Error("Save failed: " + …)` を `ProfileStore.EnglishMessage(ex)` で出す。`ProfileWriteException` は英文（UI 言語と無関係）、それ以外の例外は `Message` をそのまま返す。
+
+**保留中の回帰テスト（後続 PR で追加する）**：表示の消失（#509 修正済み）、古い例外と新しい書き込み失敗の競合、言語切替時の表示（`SaveError` の getter と `_writeFailureText` のキャッシュ）には直接の回帰テストがない。この変更では新規テストの追加が禁止されているため見送り、元 PR #509 で書かれたテストを取り込む。言語の切替は `Loc.Japanese` の2層（#151：スレッドローカルの上書き＋共有値）に配慮し、既存の `CodexTextConsistencyTests` と同じ形（テストのスレッドで `Loc.Japanese` を設定し、`finally` で必ず元に戻す）で書く。
+
+実行した検証：
+
+- `DOTNET_ROLL_FORWARD=Major dotnet test tests/Issue73.Native.Tests/Issue73.Native.Tests.csproj -c Release --nologo --filter "FullyQualifiedName~InfinityClearSaveTests|FullyQualifiedName~ContinueSaveTests"`：28成功・0失敗・0スキップ。抽出ハーネス（`NativePersistence.targets` に `SetSaveErrorText;SetSaveErrorCause;ClearSaveError` を追加）が新しいメンバーを本番ソースから取り込めていることもこのビルドで確認。
+- `DOTNET_ROLL_FORWARD=Major dotnet test tests/Issue73.Native.Tests/Issue73.Native.Tests.csproj -c Release --nologo --filter "FullyQualifiedName~SatchelOverflowSaveTests|FullyQualifiedName~LobbyReturnTests|FullyQualifiedName~NativeAcceptanceTests|FullyQualifiedName~HostCoopTradeTests|FullyQualifiedName~TradeSendExceptionTests"`：39成功・0失敗・0スキップ（保存とTickPeriodicSaveを広く使うスイート）。
+- `DOTNET_ROLL_FORWARD=Major dotnet test tests/SodRpg.Core.Tests/SodRpg.Core.Tests.csproj -c Release -p:PythonCommand=python3 --nologo --filter "FullyQualifiedName~AsyncProfileWriterTests|FullyQualifiedName~ProfileResetV127Tests|FullyQualifiedName~ProfileStoreRoundtripIssue429Tests|FullyQualifiedName~Issue73LedgerTests|FullyQualifiedName~OnboardingTests"`：28成功・0失敗・0スキップ。
+- `dotnet build src/SodRpg.Core -c Release --nologo -v:quiet`：エラー0・警告0。`dotnet build src/SodRpg.Mod -c Release -p:GameDir="/mnt/ghauto-sbx/sod-gamedata/Shape of Dreams" --nologo -v:quiet`：エラー0・警告6（既存と同じ6件）。
+- `git diff --check`：指摘は `docs/dreamforge-handoff.md` の追加行の行末 CRLF のみ（このファイルは CRLF で、過去のコミットと同じ扱い）。
+
+**未実行**：上記の保留中の回帰テスト（表示消失・古いエラー競合・言語切替キャッシュ）は新規テスト禁止のためこの変更では書いていない。言語切替後の表示と優先順位の入れ替わりは、getter と条件分岐のソース追跡による確認にとどまる。Unity実機での表示はゲーム実行環境がないため未確認。フルテスト・Slowテスト（`tools/test_changed.py --all`）は後続工程に委ねる。
+
 ## マッピングロジックの単体テスト
 
 `tools/tests/test_test_changed.py`（unittest）がマッピングロジックの単体テストを
