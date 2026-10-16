@@ -83,6 +83,8 @@ namespace SodRpg.Core.Game
         public Txt Name;
         /// <summary>説明文。数値から作るので、数値を変えても説明と食い違わない。</summary>
         public string Description => Pacts.Describe(this);
+        /// <summary>このプロフィールの工房強化（残響ランタン）を反映した説明文。</summary>
+        public string DescriptionFor(Profile p) => Pacts.Describe(this, p);
         public StatLine[] Penalties = Array.Empty<StatLine>();
         public StatLine[] Boons = Array.Empty<StatLine>();
         public double DropBonus;
@@ -354,7 +356,7 @@ namespace SodRpg.Core.Game
             (PactBalance.DoubleDepthBonusMultiplier == 2 ? "double" : $"x{PactBalance.DoubleDepthBonusMultiplier}") + " delve bonus when you secure";
 
         /// <summary>契約の説明を、数値から作る（代償：…。見返り：…。）。</summary>
-        public static string Describe(PactDef d)
+        public static string Describe(PactDef d, Profile p = null)
         {
             bool ja = Loc.Japanese;
             var gains = new List<string>();
@@ -369,10 +371,10 @@ namespace SodRpg.Core.Game
             if (ja)
             {
                 string cost = d.CurseStrength >= 3 ? "強い" : d.CurseStrength == 2 ? "中くらいの" : "弱い";
-                string echo = d.NoEcho ? $"。全滅したときに戻るはずの欠片（{Workshop.EchoPercent(null)}%）も戻らない" : "";
+                string echo = d.NoEcho ? $"。全滅したときに戻るはずの欠片（{Workshop.EchoPercent(p)}%）も戻らない" : "";
                 return $"代償：{cost}呪いを1つ受ける{echo}。見返り：{string.Join("。", gains)}。";
             }
-            string echoEn = d.NoEcho ? $", and the {Workshop.EchoPercent(null)}% shard echoes you would recover on a party wipe are lost instead" : "";
+            string echoEn = d.NoEcho ? $", and the {Workshop.EchoPercent(p)}% shard echoes you would recover on a party wipe are lost instead" : "";
             return $"Cost: a {curse.ToLowerInvariant()} curse{echoEn}. Reward: {string.Join("; ", gains)}.";
         }
 

@@ -826,7 +826,7 @@ namespace SodRpg.Mod
                     var id = run.OfferedPacts[i];
                     var d = Pacts.Get(id);
                     if (d == null) continue;
-                    if (GUILayout.Button($"<b>{d.Name}</b>\n<color=#ffb0a0>{d.Description}</color>", _st.RowWrap, GUILayout.Height(52)))
+                    if (GUILayout.Button($"<b>{d.Name}</b>\n<color=#ffb0a0>{d.DescriptionFor(_s.Profile)}</color>", _st.RowWrap, GUILayout.Height(52)))
                     {
                         SetStatus(run.Infinity != null && !_s.CanChooseRunRules
                             ? _s.CompleteInfinityPersonalChoice(id) : _s.Delve(id));
@@ -1152,7 +1152,7 @@ namespace SodRpg.Mod
             if (rect.Contains(Event.current.mousePosition)) MouseOverPanel = true;
             GUILayout.BeginArea(rect, _st.Window);
             GUILayout.Label(UiStyles.Colored((welcome ? "" : Loc.T("ヒント：", "Tip: ")) + def.Title, "#ffe17a"), welcome ? _st.Title : _st.Header);
-            string body = def.Body.ToString().Replace("[F6]", "[" + cfg.menuKey + "]").Replace("[F7]", "[" + cfg.secureKey + "]").Replace("[F8]", "[" + cfg.delveKey + "]");
+            string body = def.Text(_s.Profile).Replace("[F6]", "[" + cfg.menuKey + "]").Replace("[F7]", "[" + cfg.secureKey + "]").Replace("[F8]", "[" + cfg.delveKey + "]");
             if (_hintBodyHeight < 0 || _hintMeasured != id || _hintMeasuredJa != Loc.Japanese)
             {
                 _hintMeasured = id;

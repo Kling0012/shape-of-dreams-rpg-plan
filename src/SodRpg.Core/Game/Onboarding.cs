@@ -26,6 +26,10 @@ namespace SodRpg.Core.Game
         public Hint Id;
         public Txt Title;
         public Txt Body;
+        /// <summary>工房強化などプロフィールで変わる数値を含む本文。null なら Body をそのまま使う。</summary>
+        public Func<Profile, Txt> BodyFor;
+
+        public string Text(Profile p) => (p != null && BodyFor != null ? BodyFor(p) : Body).ToString();
     }
 
     /// <summary>
@@ -81,8 +85,8 @@ namespace SodRpg.Core.Game
             new HintDef
             {
                 Id = Hint.FirstDefeat, Title = new Txt("夢から覚めました", "You awoke"),
-                Body = new Txt($"まだ持ち帰っていなかった遺物は「遺失物」に移りました。次の遠征で戦闘部屋を{Content.RoomsToRecoverLost}つ突破すると、その中で一番良い物を1つ取り戻せます。まだ持ち帰っていなかった欠片の{Workshop.EchoPercent(null)}%は、残響として戻っています。",
-                    $"Your unsecured relics moved to Lost & Found. Clear {Content.RoomsToRecoverLost} combat rooms next run to recover the best one. {Workshop.EchoPercent(null)}% of your unsecured shards came back as echoes."),
+                Body = DefeatBody(Content.RoomsToRecoverLost, Workshop.EchoPercent(null)),
+                BodyFor = p => DefeatBody(Workshop.RoomsToRecover(p), Workshop.EchoPercent(p)),
             },
             new HintDef
             {
@@ -115,6 +119,10 @@ namespace SodRpg.Core.Game
                     $"You have enough shards. In the [F6] Forge tab you can enhance relics (+{Content.MaxEnhance} max) or collect the required number of relics of one rarity to transmute into a better one."),
             },
         };
+
+        private static Txt DefeatBody(int rooms, int echoPercent) => new Txt(
+            $"まだ持ち帰っていなかった遺物は「遺失物」に移りました。次の遠征で戦闘部屋を{rooms}つ突破すると、その中で一番良い物を1つ取り戻せます。まだ持ち帰っていなかった欠片の{echoPercent}%は、残響として戻っています。",
+            $"Your unsecured relics moved to Lost & Found. Clear {rooms} combat rooms next run to recover the best one. {echoPercent}% of your unsecured shards came back as echoes.");
 
         public static HintDef Get(Hint h)
         {
