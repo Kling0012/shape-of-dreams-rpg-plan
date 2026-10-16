@@ -46,6 +46,9 @@ jobs:
       - run: python tools/test_changed.py --check-ci-matrix
       - run: python -m unittest discover -s tools/tests -p "test_*.py"
       - run: dotnet build -c Release tests/SodRpg.Core.Tests
+      # WikiGen reads Core APIs directly but no test project references it, so
+      # build it here; otherwise a Core change only breaks wiki.yml after merge.
+      - run: dotnet build -c Release tools/WikiGen
       - run: dotnet test -c Release tests/SodRpg.Core.Tests --no-build
 
   mod-tests:
@@ -105,6 +108,9 @@ jobs:
           key: nuget-${{ runner.os }}-${{ hashFiles('**/*.csproj') }}
           restore-keys: nuget-${{ runner.os }}-
       - run: dotnet build -c Release tests/SodRpg.Core.Tests
+      # WikiGen reads Core APIs directly but no test project references it, so
+      # build it here; otherwise a Core change only breaks wiki.yml after merge.
+      - run: dotnet build -c Release tools/WikiGen
       - run: dotnet test -c Release tests/SodRpg.Core.Tests --no-build --filter "Speed=Slow&(FullyQualifiedName~${{ matrix.class }}.|FullyQualifiedName~${{ matrix.class }}+)"
         env:
           SODRPG_SLOW: "1"

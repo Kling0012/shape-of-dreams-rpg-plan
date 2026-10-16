@@ -1280,7 +1280,7 @@ def render_outputs(results=None, views=None, effective=None, diagnostic=False):
     failures = [f"{result.name}: {failure.star}: {failure.reason}"
                 for result in results for failure in result.failures]
     if failures:
-        raise ValueError("Refusing generated output:\\n" + "\\n".join(failures))
+        raise ValueError("Refusing generated output:\n" + "\n".join(failures))
     # Operation numbers and target pools are shared by all heroes. Render the complete set
     # even for a single-hero request, so its table never disagrees with the common reader.
     complete = {result.name: result for result in results}
