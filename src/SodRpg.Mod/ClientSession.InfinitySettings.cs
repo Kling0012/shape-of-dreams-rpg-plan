@@ -60,6 +60,7 @@ namespace SodRpg.Mod
 
         private void InitializeInfinityRun()
         {
+            EnsureReachableBounties(); // 遠征の開始ごと（ソロの判定。インフィニティが無効でもここは通る）
             if (!InfinityMode.Available || !ContinueReady || InfinityMode.Restoring
                 || _nativeContinueCheckpoint != null || Profile.Run == null
                 || _infinityInitializedRun == Profile.Run.RunId) return;
@@ -78,10 +79,27 @@ namespace SodRpg.Mod
                 }
             }
             _infinityObservedClears = Profile.Run.Infinity?.ClearedCombatTotal ?? 0;
+            EnsureReachableBounties(); // インフィニティが付いた後
             if (Profile.Run.Infinity == null) return;
             if (CanChooseRunRules && InfinityMode.InitialState == null) ValidateHostInfinityContinue();
             else if (CanChooseRunRules) PersistHostInfinityState();
         }
+
+        /// <summary>
+        /// ソロ・インフィニティでは進まない未着手の依頼を入れ替える（Rules.ReplaceUnreachableBounties）。
+        /// インフィニティは遠征の開始より後に付くことがあるので、付いた時点でも呼ぶ。
+        /// </summary>
+        private void EnsureReachableBounties()
+        {
+            try
+            {
+                if (Profile.Run != null && Rules.ReplaceUnreachableBounties(Profile, DewPlayer.allHumanPlayers.Count <= 1))
+                    MarkDirty(false);
+            }
+            catch (System.Exception ex) { Log.Warn("Client: bounty reachability check skipped: " + ex.Message); }
+        }
+
+        internal static void EnsureHostReachableBounties() => _hostSession?.EnsureReachableBounties();
 
         private int _advertisedInfinityInterval = -1;
         private string _advertisedInfinityIntervalText;

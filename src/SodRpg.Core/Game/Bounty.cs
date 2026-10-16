@@ -210,9 +210,10 @@ namespace SodRpg.Core.Game
         };
 
         /// <summary>種類の重ならない依頼を count 個作る。目標が大きいほど報酬も増える。</summary>
-        public static List<Bounty> Roll(Rng rng, int count = PerRun)
+        public static List<Bounty> Roll(Rng rng, int count = PerRun, Func<BountyKind, bool> allowed = null)
         {
             var pool = new List<Template>(Templates);
+            if (allowed != null) pool.RemoveAll(t => !allowed(t.Kind));
             var result = new List<Bounty>();
             while (result.Count < count && pool.Count > 0)
             {
@@ -246,5 +247,13 @@ namespace SodRpg.Core.Game
             }
             return result;
         }
+
+        /// <summary>
+        /// この遠征で進められる依頼か。ソロでは「別の旅人を回復」、インフィニティでは「次のゾーンへ進む」
+        /// 「確保」（インフィニティの確保は遠征を終える1回だけ）が進まない。
+        /// </summary>
+        public static bool Reachable(BountyKind kind, bool solo, bool infinity)
+            => !(solo && kind == BountyKind.AllyHealer)
+                && !(infinity && (kind == BountyKind.ZoneTraveler || kind == BountyKind.Securer));
     }
 }
