@@ -430,7 +430,7 @@ namespace SodRpg.Mod
         internal static void PrepareNativeInfinityContinue() { }
         internal static bool RemoteHostInfinityAvailable, RemoteHostHelloAnswered;
         internal static bool RunActive, InGame, CanChooseRunRules, CanChooseDepth;
-        internal static bool PersistHostInfinityState() => true;
+        internal static bool PersistHostInfinityState(bool writeEnvelope = true) => true;
         internal static bool HostInfinitySaveHoldSatisfied => true;
         internal static void CountHostInfinityRoom() { }
         internal static void OpenHostInfinityChoice() { }
