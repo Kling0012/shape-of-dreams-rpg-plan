@@ -80,4 +80,12 @@ After 4096 completed actor lifetimes (usePooling=False, reuseInRoom=False), the 
 
 開発コマンド `dreamforge_bosslives 1` で現在件数・最大件数・累計解放数を直後と30秒ごとに記録する。`0` で現在値を1回出して停止。実行場所と確認方法は [MODの診断案内](../../../src/SodRpg.Mod/README.md#ボス実体の寿命診断issue-506) に記載した。
 
+## 動作確認失敗の追修正（2026-10-16 修正ラウンド）
+
+前ラウンドの `tools/test_changed.py` が `tests/Issue73.Native.Tests/obj/Release/net8.0/StarRefreshUi.g.cs(102,38): error CS0103: The name '_linkCoefficients' does not exist` で失敗した。原因は本Issueと無関係な契約ずれで、main 系の近接協力変更（PR #515）が `DreamforgeUi.cs` に `_linkCoefficients` を追加し、`RefreshStarState` の署名計算で使った一方、`NativePersistence.targets` の `CompileStarClusterDiffUpdate` 抽出フィールド一覧へ追記していなかった。`ExtractNativePersistence` はメソッド本文を実ソースのまま切り出すため、一覧から漏れたフィールドは生成コード内で未定義になる。`Fields=` 一覧に `_linkCoefficients` を1つ追加し、生成コードが実宣言（`Dictionary<string, float>`、Unity依存なし）を含むようにしただけである。本体実装・テストのアサーションは変更していない。
+
+- `NUGET_PACKAGES=/home/wang/.cache/gh-auto/nuget dotnet build tests/Issue73.Native.Tests/Issue73.Native.Tests.csproj -c Release -v:q`: exit 0、エラー0。`StarRefreshUi.g.cs` の15行目に `_linkCoefficients` 宣言が生成される。
+- gh-auto と同じ `tools/test_changed.py ordinary`（diff 選択、`DOTNET_ROLL_FORWARD=Major`）: exit 0、2483成功・失敗0（9プロジェクト）。修正前は同じコマンドが上記CS0103で exit 1。
+- `DOTNET_ROLL_FORWARD=Major dotnet test tests/SodRpg.Core.Tests/SodRpg.Core.Tests.csproj -c Release --no-build --filter 'FullyQualifiedName~BossNativeActorLifetimeReproTests'`: exit 0、3成功。
+
 **未実行**: ゲーム起動プログラム・実アセットを利用できないため、Unityでの実破棄コールバックとHarmony適用、fake-null、Mirror実通信、診断コマンドの実コンソール呼び出し・ログ推移、ボス装備付きの長時間Infinityと高密度部屋は未確認。実投射物の症状は既存ボス関連テストまでの確認。全テスト・遅い網羅検証は依頼に従い後工程へ残す。上の再現は本体境界を代替するコード上の検証で、実プレイ済みとは扱わない。
