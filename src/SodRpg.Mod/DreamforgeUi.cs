@@ -1378,6 +1378,24 @@ namespace SodRpg.Mod
 
         // DrawWindow は DreamforgeUi.Window.cs へ移した（#147 の順序の試験と一緒に管理する）。
 
+        // 遺失物を取り戻す部屋数は工房（遺失物の地図）で減るので、今の値を表示する。
+        private const string HowToPlayRooms = "{rooms}";
+        private string _howToPlayText;
+        private bool _howToPlayJa;
+        private int _howToPlayRooms = -1;
+        private string HowToPlayText(Profile p)
+        {
+            int rooms = Workshop.RoomsToRecover(p);
+            bool ja = Loc.Japanese;
+            if (_howToPlayText == null || ja != _howToPlayJa || rooms != _howToPlayRooms)
+            {
+                _howToPlayJa = ja;
+                _howToPlayRooms = rooms;
+                _howToPlayText = HowToPlay.ToString().Replace(HowToPlayRooms, rooms.ToString(System.Globalization.CultureInfo.InvariantCulture));
+            }
+            return _howToPlayText;
+        }
+
         private static readonly Txt HowToPlay = new Txt(
             "<b>このMODの目的</b>\n" +
             "本体の遠征に「持ち帰れる装備（遺物）」が加わります。遠征のたびに少しずつ装備を集めて鍛え、次の遠征をもっと深く、もっと楽に進めるようにしていきます。\n\n" +
@@ -1387,7 +1405,7 @@ namespace SodRpg.Mod
             "3. 新しいゾーンに着くと確保地点が開きます。ここで「確保する」か「深く潜る」かを選びます。\n" +
             "4. 確保した物は保管庫に入り、遠征が終わっても残ります。\n\n" +
             "<b>確保と潜行の考え方</b>\n" +
-            "確保すれば安全ですが、深く潜ると遺物が多く、良い物が出やすくなります。そのぶん敵は強くなり、受けるダメージも増えます。全滅すると、まだ持ち帰っていない物は遺失物になり、次の遠征で戦闘部屋を" + Content.RoomsToRecoverLost + "つ突破すると一番良い物を1つだけ取り戻せます。手応えを見ながら、どこで確保するかを決めるのがこのMODの駆け引きです。\n\n" +
+            "確保すれば安全ですが、深く潜ると遺物が多く、良い物が出やすくなります。そのぶん敵は強くなり、受けるダメージも増えます。全滅すると、まだ持ち帰っていない物は遺失物になり、次の遠征で戦闘部屋を" + HowToPlayRooms + "つ突破すると一番良い物を1つだけ取り戻せます。手応えを見ながら、どこで確保するかを決めるのがこのMODの駆け引きです。\n\n" +
             "<b>装備の育て方</b>\n" +
             "・装備：旅人ごとに6つの枠（主装備・頭・防具・手・足・装飾品）に装着します。\n" +
             $"・鍛冶：欠片で強化し（+{Content.EnhanceMilestoneFirst}と+{Content.EnhanceMilestoneSecond}で特性や固有効果が増えます）、調律石で特性を{Content.RetuneChoices}つの候補から選び直します。エピック以上は強化・再調律・限界突破・特性の洗い直しの素材費用が基本の{Content.ForgeMaterialCostMultiplier(Rarity.Epic)}倍です。いらない物は分解して欠片に戻せます。\n" +
@@ -1403,7 +1421,7 @@ namespace SodRpg.Mod
             "3. Each new zone opens a secure point where you choose to Secure or Delve.\n" +
             "4. Secured relics go to your stash and stay after the expedition ends.\n\n" +
             "<b>Securing vs. delving</b>\n" +
-            "Securing is safe. Delving gives more and better relics, but enemies get tougher and you take more damage. If your party falls, unsecured loot becomes Lost & Found; clear " + Content.RoomsToRecoverLost + " combat rooms next expedition to recover the best piece. Deciding when to secure is the heart of this mod.\n\n" +
+            "Securing is safe. Delving gives more and better relics, but enemies get tougher and you take more damage. If your party falls, unsecured loot becomes Lost & Found; clear " + HowToPlayRooms + " combat rooms next expedition to recover the best piece. Deciding when to secure is the heart of this mod.\n\n" +
             "<b>Growing your gear</b>\n" +
             "- Gear: each Traveler has six slots: weapon, head, armor, hands, feet and charm.\n" +
             $"- Forge: enhance with shards (+{Content.EnhanceMilestoneFirst} and +{Content.EnhanceMilestoneSecond} add an affix or a power), reroll an affix with tuning stones and pick from {Content.RetuneChoices} options. Epics and legendaries pay x{Content.ForgeMaterialCostMultiplier(Rarity.Epic)} the base materials for enhancement, retuning, limit breaks and affix rerolls. Salvage the rest into shards.\n" +
@@ -2026,7 +2044,8 @@ namespace SodRpg.Mod
                 else GUILayout.Label(Loc.T($"強化は+{maxEnhance}が上限です", $"Enhancement is capped at +{maxEnhance}"), _st.Small);
                 bool equippedSel = p.IsEquippedAnywhere(sel.Uid);
                 bool salvageBlocked = sel.Locked || (equippedSel && !_s.CanEditLoadout);
-                GUI.enabled = !_s.Trades.IsReserved(sel.Uid) && !salvageBlocked;
+                // 再調律の候補を選んでいる途中の遺物は Rules.Salvage も断る。
+                GUI.enabled = !_s.Trades.IsReserved(sel.Uid) && !salvageBlocked && p.RetuneOffer?.Uid != sel.Uid;
                 int svShards = Rules.SalvageValue(sel), svTuning = Content.SalvageTuning(sel.Rarity);
                 string svGain = Loc.T($"欠片{svShards}" + (svTuning > 0 ? $"・調律石{svTuning}" : ""), $"{svShards} shards" + (svTuning > 0 ? $", {svTuning} tuning" : ""));
                 bool weighty = equippedSel || sel.Rarity >= Rarity.Epic || sel.AwakenPoints > 0;
@@ -2039,8 +2058,13 @@ namespace SodRpg.Mod
                 {
                     if (_confirmSalvage == sel.Uid)
                     {
-                        Act(() => Rules.Salvage(p, sel.Uid, _s.Trades, !_s.CanEditLoadout), true);
-                        _selected = null;
+                        Act(() =>
+                        {
+                            var e = Rules.Salvage(p, sel.Uid, _s.Trades, !_s.CanEditLoadout);
+                            // 分解が断られたときは選択と再調律の候補表示を残す。
+                            _selected = null;
+                            return e;
+                        }, true);
                         _confirmSalvage = null;
                     }
                     else _confirmSalvage = sel.Uid;
@@ -2191,10 +2215,11 @@ namespace SodRpg.Mod
             {
                 GUILayout.BeginHorizontal();
                 GUILayout.Label(Content.SlotName(slot).ToString(), _st.Label, GUILayout.Width(70));
-                GUI.enabled = p.Material(Materials.Shard) >= Rules.CraftShardCost(false);
+                bool stashRoom = p.Stash.Count < Workshop.StashCapacity(p); // Rules.Craft と同じ空き容量の条件
+                GUI.enabled = stashRoom && p.Material(Materials.Shard) >= Rules.CraftShardCost(false);
                 if (GUILayout.Button(Loc.T($"通常：アンコモン以上（欠片{Rules.CraftShardCost(false)}）", $"Basic: Uncommon+ ({Rules.CraftShardCost(false)} shards)"), _st.ButtonWrap, ShrinkWidth))
                     Act(() => Rules.Craft(p, slot, false), false);
-                GUI.enabled = p.Material(Materials.Shard) >= Rules.CraftShardCost(true) && p.Material(Materials.Tuning) >= Rules.CraftTuningCost(true);
+                GUI.enabled = stashRoom && p.Material(Materials.Shard) >= Rules.CraftShardCost(true) && p.Material(Materials.Tuning) >= Rules.CraftTuningCost(true);
                 if (GUILayout.Button(Loc.T($"上等：レア以上（欠片{Rules.CraftShardCost(true)}・調律石{Rules.CraftTuningCost(true)}）", $"Fine: Rare+ ({Rules.CraftShardCost(true)} shards, {Rules.CraftTuningCost(true)} tuning)"), _st.ButtonWrap, ShrinkWidth))
                     Act(() => Rules.Craft(p, slot, true), false);
                 GUI.enabled = true;
@@ -3419,7 +3444,7 @@ namespace SodRpg.Mod
 
             GUILayout.BeginVertical(_st.Panel, GUILayout.Width(480));
             GUILayout.Label(Loc.T("遊び方", "How to play"), _st.Header);
-            GUILayout.Label(HowToPlay.ToString(), _st.Small);
+            GUILayout.Label(HowToPlayText(p), _st.Small);
             GUILayout.Space(6);
             GUILayout.Label(Loc.T("設定", "Settings"), _st.Header);
             GUILayout.BeginHorizontal();
