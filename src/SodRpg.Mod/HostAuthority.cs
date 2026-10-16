@@ -79,6 +79,8 @@ namespace SodRpg.Mod
             public string HeroKey;
             public readonly HashSet<string> LinkMemories = new HashSet<string>();
             public readonly HashSet<string> LinkEssences = new HashSet<string>();
+            public float ConvertedAttackRange;
+            public bool MeleeGuard;
             public readonly List<LinkDef> SatisfiedLinks = new List<LinkDef>();
             public string BountyRunId;
             public int ReportedLinks;
@@ -179,7 +181,7 @@ namespace SodRpg.Mod
         // 連携の判定に見る枠（Identity と Movement も記憶の対象になる）。
         private static readonly HeroSkillLocation[] LinkSkills =
             { HeroSkillLocation.Q, HeroSkillLocation.W, HeroSkillLocation.E, HeroSkillLocation.R, HeroSkillLocation.Identity, HeroSkillLocation.Movement };
-        private readonly Func<int, int, bool> _resonanceNear;
+        private readonly Func<int, int, float> _resonanceNear;
         private PowerRuntime[] _scanPowers = Array.Empty<PowerRuntime>();
         private readonly HashSet<LinkKind> _triggeredLinks = new HashSet<LinkKind>();
 
@@ -393,7 +395,7 @@ namespace SodRpg.Mod
         private void StageAreaScan()
         {
             if (_tickNow < _nextAreaScan) return;
-            _nextAreaScan = _tickNow + 0.25f;
+            _nextAreaScan = _tickNow + CoopBalance.ScanSeconds;
             ScanArea();
         }
 
@@ -1294,6 +1296,7 @@ namespace SodRpg.Mod
             ClearAssignedMechanismSession();
             if (NativeInstance == this) NativeInstance = null;
             ReleasePowerShields();
+            ClearMeleeCoop();
             ClearNewPowerZone();
             ClearZoneGimmicksV129();
             ClearBackOffCharge();
@@ -1544,6 +1547,7 @@ namespace SodRpg.Mod
                         EnsureWaypointCombatChoice();
                     float reduction = captured.Powers.IncomingDamageReduction(Time.time);
                     if (reduction > 0f) d.ApplyReduction(reduction);
+                    ApplyMeleeGuard(captured, ref d, a);
                     float mult = captured.Powers.Build.DamageTakenMultiplier;
                     if (mult > 1f) d.ApplyAmplification(mult - 1f);
                     // These verified sources dispatch HP sacrifice as self-damage, not enemy attacks.
@@ -1615,6 +1619,7 @@ namespace SodRpg.Mod
             // 連携の判定結果は Build と装着に紐付くので、付け直すときに一旦空にする。
             rt.HeroKey = hero.GetType().Name;
             rt.SatisfiedLinks.Clear();
+            rt.Powers.LinkDistanceCoefficients.Clear();
             rt.LinkMemories.Clear();
             rt.LinkEssences.Clear();
             rt.Powers.SetBuild(build);
@@ -1622,10 +1627,12 @@ namespace SodRpg.Mod
             rt.GeneratedKillVictims.Clear();
             rt.PendingGimmicks.Clear();
             ModShieldEquipmentEpoch(rt);
+            rt.ConvertedAttackRange = 0f;
             rt.BaseBonus = ToStatBonus(build);
             rt.DynBonus = new StatBonus();
             hero.Status.AddStatBonus(rt.BaseBonus);
             hero.Status.AddStatBonus(rt.DynBonus);
+            ScanMeleeCoop(rt, Alive(hero));
             rt.AppliedBuild = received;
             ConfigureAuthoredKeystone(hero, build);
             ConfigureAuthoredMechanisms(hero, build);
@@ -1901,7 +1908,7 @@ namespace SodRpg.Mod
                 if (info.skill != null)
                 {
                     string used = info.skill.GetType().Name;
-                    float haste = Math.Min(100f, PowerRuntime.LinkHastePercent(rt.SatisfiedLinks, used)
+                    float haste = Math.Min(100f, PowerRuntime.LinkHastePercent(rt.SatisfiedLinks, used, rt.Powers.LinkDistanceCoefficients)
                         + FractionalScopedModifiers.NativePercent(rt.AppliedBuild?.Build.NativeModifiers, used, LinkKind.MemoryHaste));
                     if (haste > 0) hero.ApplyCooldownReductionByRatio(info.skill, haste / 100f, false);
                     foreach (var link in rt.SatisfiedLinks)
@@ -2059,6 +2066,8 @@ namespace SodRpg.Mod
 
         private void ScanArea()
         {
+            ScanCoopDistances();
+            PruneMeleeBreaks();
             var list = _scanList;
             list.Clear();
             foreach (var rt in _runtimes.Values) list.Add(rt);
@@ -2094,6 +2103,7 @@ namespace SodRpg.Mod
                     LogPowerTrigger(Power.CrystalResonance);
                 if (alive && p.Build.Get(Power.PreyPride) > 0 && huntLevel > 0)
                     LogPowerTrigger(Power.PreyPride);
+                ScanMeleeCoop(rt, alive);
                 UpdateLinks(rt, alive);
                 ScanNewPowerFacts(rt, Time.time);
             }
@@ -2106,7 +2116,9 @@ namespace SodRpg.Mod
             foreach (var rt in list)
             {
                 int v = rt.Powers.Build.Get(Power.Resonance);
-                if (v > 0 && rt.Powers.ResonanceSelf < v && AnyAllyNear(rt.Hero)) rt.Powers.ResonanceSelf = v;
+                if (v > 0)
+                    rt.Powers.ResonanceSelf = Math.Max(rt.Powers.ResonanceSelf,
+                        v * (1f + AnyAllyCoefficient(rt.Hero)) / 2f);
             }
         }
 
@@ -2124,6 +2136,7 @@ namespace SodRpg.Mod
             }
             var p = rt.Powers;
             var links = p.Build.Links;
+            p.LinkDistanceCoefficients.Clear();
             if (links.Count == 0 && p.Build.Gimmicks.Count == 0)
             {
                 if (rt.SatisfiedLinks.Count > 0)
@@ -2153,27 +2166,30 @@ namespace SodRpg.Mod
                     if (kv.Value != null) essences.Add(kv.Value.GetType().Name);
             }
             rt.SatisfiedLinks.Clear();
-            long attuneMilli = 0, guardMilli = 0;
+            double attuneMilli = 0, guardMilli = 0;
             foreach (var link in links)
             {
                 if (!alive || !Links.Satisfied(link, rt.HeroKey, memories, essences, nearbyAllies)) continue;
+                float coefficient = Links.DistanceCoefficient(link, rt.HeroKey, _bondCoefficients);
+                if (coefficient <= 0f) continue;
+                p.LinkDistanceCoefficients[link] = coefficient;
                 rt.SatisfiedLinks.Add(link);
                 switch (link.Kind)
                 {
                     case LinkKind.Attune:
-                        attuneMilli += link.ValueMilli;
+                        attuneMilli += link.ValueMilli * coefficient;
                         LogLinkApplied(link);
                         break;
                     case LinkKind.Guard:
-                        guardMilli += link.ValueMilli;
+                        guardMilli += link.ValueMilli * coefficient;
                         LogLinkApplied(link);
                         break;
                 }
             }
             p.RetainLinkSurges(rt.SatisfiedLinks, Time.time);
-            p.LinkAttunePct = attuneMilli / (float)BuildPrecision.Scale;
-            p.LinkGuardHealthPct = guardMilli / (float)BuildPrecision.Scale;
-            p.LinkGuardArmor = guardMilli / (float)BuildPrecision.Scale;
+            p.LinkAttunePct = (float)(attuneMilli / BuildPrecision.Scale);
+            p.LinkGuardHealthPct = (float)(guardMilli / BuildPrecision.Scale);
+            p.LinkGuardArmor = (float)(guardMilli / BuildPrecision.Scale);
             if (rt.SatisfiedLinks.Count > rt.ReportedLinks)
             {
                 rt.ReportedLinks = rt.SatisfiedLinks.Count;
@@ -2188,9 +2204,8 @@ namespace SodRpg.Mod
                 Log.Info("[DreamforgeRPG] link " + link.Kind + " applied: " + string.Join("+", link.Requires));
         }
 
-        private bool RuntimesNear(int i, int j) =>
-            Alive(_scanList[i].Hero) && Alive(_scanList[j].Hero)
-            && Vector3.Distance(_scanList[i].Hero.agentPosition, _scanList[j].Hero.agentPosition) <= PowerRuntime.ResonanceRange;
+        private float RuntimesNear(int i, int j) =>
+            CoopDistanceNative.Coefficient(_scanList[i].Hero, _scanList[j].Hero, PowerRuntime.ResonanceRange);
 
         private static int CountEnemiesNear(Hero hero, float radius)
         {
@@ -2207,17 +2222,15 @@ namespace SodRpg.Mod
             }
         }
 
-        private static bool AnyAllyNear(Hero hero)
+        private static float AnyAllyCoefficient(Hero hero)
         {
-            var players = DewPlayer.allHumanPlayers;
-            if (players == null) return false;
-            foreach (var p in players)
-            {
-                var h = p != null ? p.hero : null;
-                if (h == null || h == hero || !Alive(h)) continue;
-                if (Vector3.Distance(h.agentPosition, hero.agentPosition) <= PowerRuntime.ResonanceRange) return true;
-            }
-            return false;
+            var actors = NetworkedManagerBase<ActorManager>.softInstance;
+            if (actors == null) return 0f;
+            float coefficient = 0f;
+            foreach (var ally in actors.allHeroes)
+                if (ally != null && ally != hero)
+                    coefficient = Math.Max(coefficient, CoopDistanceNative.Coefficient(hero, ally, PowerRuntime.ResonanceRange));
+            return coefficient;
         }
 
         /// <summary>Use the creating actor chain, never guess St_* from an Ai_* name.</summary>
@@ -2257,6 +2270,7 @@ namespace SodRpg.Mod
                 TrackCritBasicDamage(rt, info, victimId);
                 OnNewPowerDamage(rt, info);
                 string memory = MemorySource(info.actor);
+                if (memory != null || IsNativeBasicDamage(info.actor)) MarkMeleeBreak(rt.Hero, info.victim);
                 if (memory == null) return;
                 if (rt.Powers.Build.Gimmicks.Count > 0 || rt.Powers.Build.PairCombos.Count > 0)
                     rt.MemoryHitAmounts[victimId] = info.damage.amount;

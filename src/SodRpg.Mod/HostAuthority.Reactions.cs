@@ -22,6 +22,7 @@ namespace SodRpg.Mod
 
         private void ClearZoneReactions()
         {
+            ClearMeleeCoop();
             ClearNewPowerZone();
             ClearZoneGimmicksV129();
             ClearBackOffCharge();

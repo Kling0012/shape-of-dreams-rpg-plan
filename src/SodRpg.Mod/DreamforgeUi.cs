@@ -96,8 +96,13 @@ namespace SodRpg.Mod
         private readonly HashSet<string> _linkEssences = new HashSet<string>();
         private readonly HashSet<string> _linkAllies = new HashSet<string>();
         private string _linkHeroKey;
+        private Hero _linkHero;
+        private Room _linkRoom;
+        private readonly CoopDistanceTracker _linkDistances = new CoopDistanceTracker();
+        private readonly Dictionary<string, float> _linkCoefficients = new Dictionary<string, float>();
         private Func<string, bool> _linkMarks;
         private float _nextLinkCheck;
+        private bool _displayMeleeRangeConversion;
 
         public bool Open { get; private set; }
 
@@ -108,6 +113,7 @@ namespace SodRpg.Mod
         {
             _s = session;
             _cfg = cfg;
+            _linkTravelerCoefficient = LinkTravelerCoefficient;
             _saveLevelEssenceConfig = saveLevelEssenceConfig;
             _s.ProfileChanged += ResetProfileView;
             // 起動したときに持っていた遺物は「見た」ことにする。それ以降に手に入れた物に NEW を付ける。
@@ -247,10 +253,21 @@ namespace SodRpg.Mod
             {
                 _linkMarks = null;
                 _linkHeroKey = null;
+                _linkHero = null;
+                _linkDistances.Clear();
+                _linkCoefficients.Clear();
                 return null;
             }
             string key = ClientSession.HeroKeyOf(hero);
-            float now = Time.unscaledTime;
+            var room = NetworkedManagerBase<ZoneManager>.softInstance?.currentRoom;
+            if (_linkHero != hero || _linkRoom != room)
+            {
+                _linkHero = hero;
+                _linkRoom = room;
+                _linkDistances.Clear();
+                _nextLinkCheck = 0f;
+            }
+            float now = Time.time;
             if (_linkMarks == null || key != _linkHeroKey || now >= _nextLinkCheck)
             {
                 _nextLinkCheck = now + 0.5f;
@@ -258,6 +275,7 @@ namespace SodRpg.Mod
                 _linkMemories.Clear();
                 _linkEssences.Clear();
                 _linkAllies.Clear();
+                _linkCoefficients.Clear();
                 if (hero.Skill != null)
                 {
                     foreach (var loc in LinkSkillSlots)
@@ -270,21 +288,33 @@ namespace SodRpg.Mod
                 }
                 var memories = _linkMemories;
                 var essences = _linkEssences;
-                // Replicated positions are a display estimate; the host applies the authoritative 10 m check.
+                // Replicated positions estimate the same curve/grace; the host remains authoritative.
                 var actors = NetworkedManagerBase<ActorManager>.softInstance;
                 if (actors != null)
                     foreach (var ally in actors.allHeroes)
                     {
                         if (ally == null || ally == hero) continue;
-                        if (Links.IsBondAlly(ally.isActive && ally.isAlive && !ally.isKnockedOut,
-                            ally.GetRelation(hero) == EntityRelation.Ally,
-                            Vector3.Distance(hero.agentPosition, ally.agentPosition)))
-                            _linkAllies.Add(ally.GetType().Name);
+                        float coefficient = _linkDistances.Update(hero.GetInstanceID(), ally.GetInstanceID(),
+                            Vector3.Distance(hero.agentPosition, ally.agentPosition), now,
+                            hero.isActive && hero.isAlive && !hero.isKnockedOut && ally.isActive && ally.isAlive
+                                && !ally.isKnockedOut && ally.GetRelation(hero) == EntityRelation.Ally,
+                            _cfg().coopDistanceFalloff);
+                        if (coefficient <= 0f) continue;
+                        string allyKey = ally.GetType().Name;
+                        _linkAllies.Add(allyKey);
+                        if (!_linkCoefficients.TryGetValue(allyKey, out float previous) || coefficient > previous)
+                            _linkCoefficients[allyKey] = coefficient;
                     }
                 _linkMarks = t => Links.RequirementSatisfied(t, key, memories, essences, _linkAllies);
             }
             return _linkMarks;
         }
+
+        private float LinkTravelerCoefficient(string target) => target == _linkHeroKey ? 1f
+            : _linkCoefficients.TryGetValue(target, out float value) ? value : 0f;
+
+        private string DescribeLink(LinkDef link, Func<string, bool> marks) =>
+            Links.Describe(link, marks, marks == null ? null : _linkTravelerCoefficient);
 
         private string _lobbySeen;
 
@@ -309,6 +339,17 @@ namespace SodRpg.Mod
             if (!Open || _tab != 1) ResetFusionConfirmation();
             _st.EnsureBuilt();
             var cfg = _cfg();
+            var viewingHero = _s.LocalHero;
+            bool convertRange = cfg.meleeRangeToSpeed && (viewingHero != null
+                ? TravelerCombatNative.IsMelee(viewingHero) : TravelerCombat.IsMelee(HeroKey, true));
+            if (_displayMeleeRangeConversion != convertRange)
+            {
+                _displayMeleeRangeConversion = convertRange;
+                _tradeRelicTexts.Clear();
+                _starSumDirty = true;
+            }
+            bool previousRangeDisplay = Content.DisplayMeleeRangeConversion;
+            Content.DisplayMeleeRangeConversion = convertRange;
             float scale = Mathf.Clamp(Screen.height / 1080f * Mathf.Clamp(cfg.uiScale, 0.5f, 2.5f), 0.5f, 4f);
             // Keep the star map's fixed header rows and two choice cards within the visible window,
             // including both optional sidebars. Honor the configured scale until it would clip that viewport.
@@ -384,6 +425,7 @@ namespace SodRpg.Mod
             }
             finally
             {
+                Content.DisplayMeleeRangeConversion = previousRangeDisplay;
                 GUI.matrix = oldMatrix;
             }
         }
@@ -1663,7 +1705,7 @@ namespace SodRpg.Mod
                 GUILayout.Label(UiStyles.Colored(r.DescribeBossMove(), "#e0b0ff"), _st.Label);
             // 連携（v1.26）：条件と効果を1行で。ゲームの中なら各条件に ✓／・ が付く。
             var link = r.Link;
-            if (link != null) GUILayout.Label(UiStyles.Colored(Links.Describe(link, LinkMarks()), "#7fd8ff"), _st.Small);
+            if (link != null) GUILayout.Label(UiStyles.Colored(DescribeLink(link, LinkMarks()), "#7fd8ff"), _st.Small);
             foreach (var a in r.EffectiveStats().Skip(1)) GUILayout.Label(Content.FormatStat(a.Stat, a.Value), _st.Label);
             if (r.Rarity == Rarity.Legendary) GUILayout.Label(AwakenLine(r), _st.Small);
             if (r.UniqueId != null && Content.TryGetUnique(r.UniqueId, out var u))
@@ -1696,7 +1738,7 @@ namespace SodRpg.Mod
             if (set.LinkStages.Length == 0) return;
             var marks = LinkMarks();
             var stage = set.SelectLinkStage(count) ?? set.LinkStages[0];
-            bool satisfied = marks != null && Links.Satisfied(stage.Link, _linkHeroKey, _linkMemories, _linkEssences);
+            bool satisfied = marks != null && Links.Satisfied(stage.Link, _linkHeroKey, _linkMemories, _linkEssences, _linkAllies);
             GUILayout.Label(UiStyles.Colored(set.DescribeLinkProgress(count, satisfied), "#7fd8ff"), _st.Small);
         }
 
@@ -2317,7 +2359,8 @@ namespace SodRpg.Mod
                 int sig = matchingHero ? 1 : 0;
                 foreach (string m in _linkMemories) sig ^= m.GetHashCode();
                 foreach (string m in _linkEssences) sig += m.GetHashCode();
-                foreach (string m in _linkAllies) sig -= m.GetHashCode();
+                foreach (var pair in _linkCoefficients)
+                    sig -= pair.Key.GetHashCode() ^ (int)(pair.Value * 100f);
                 // v1.32 B: the live RunGrowth stacks are part of the acquired-effects text.
                 if (matchingHero) sig += _s.RunGrowthVersion * 7919;
                 if (sig != _starSumSig) { _starSumSig = sig; _starSumDirty = true; }
@@ -2586,7 +2629,7 @@ namespace SodRpg.Mod
             _starSumWidth = -1f;
             bool matching = _s.LocalHero != null && ClientSession.HeroKeyOf(_s.LocalHero) == hero;
             var marks = matching ? LinkMarks() : null;
-            var sum = StarSummary.Compute(p, hero, marks);
+            var sum = StarSummary.Compute(p, hero, marks, matching ? _linkTravelerCoefficient : null);
             var indexOf = new Dictionary<string, int>(StringComparer.Ordinal);
             for (int i = 0; i < _starLayout.Nodes.Count; i++)
                 if (_starLayout.Nodes[i].Talent != null) indexOf[_starLayout.Nodes[i].Talent.Id] = i;
