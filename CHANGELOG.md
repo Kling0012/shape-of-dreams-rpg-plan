@@ -8,6 +8,10 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
+### 改善 / Improvements
+
+- 協力取引で、保管庫が大きく記録の分割送信に時間がかかるとき、受け手の再請求とホストの再送が繰り返されていたのを、受け側は受信中は再請求しない・ホストは同じ参加者への再送に最低間隔を設けることで抑えました。再接続時の再送は間隔を待たずに行われ、記録が届かなくなることはありません。 / Large-stash co-op trades no longer loop between the receiver's re-request and the host's re-send: the receiver holds off while a split transfer is still arriving, and the host enforces a minimum interval between re-sends to the same participant. A reconnect still re-sends immediately, so a record is never left undelivered.
+
 ### 変更 / Changes
 
 - 宿敵の頭上の名札をシアン（`#4DD8FF`）に変え、悪夢化した敵（桃色）や夢の変種（琥珀色）と区別できるようにしました。同じ敵に複数の表示情報がある場合も宿敵の名札を優先し、協力プレイでも各PCで同じ色を表示します。 / Nemesis overhead nameplates now use cyan (`#4DD8FF`), distinct from pink nightmares and amber dream variants. The Nemesis nameplate takes priority when tags overlap, and each PC uses the same color in co-op.

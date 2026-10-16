@@ -97,7 +97,7 @@
   </Target>
 
   <Target Name="CompileInfinityRestore" BeforeTargets="CoreCompile">
-    <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/InfinityMode.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)InfinityRestore.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="InfinityMode" Methods="BeginRestore;FinishRestore;Restoring" />
+    <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/InfinityMode.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)InfinityRestore.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="InfinityMode" Methods="BeginRestore;FinishRestore;Restoring;ReleaseMatchedZone" />
     <ItemGroup>
       <Compile Include="$(IntermediateOutputPath)InfinityRestore.g.cs" />
     </ItemGroup>
