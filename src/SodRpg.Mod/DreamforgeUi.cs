@@ -39,6 +39,7 @@ namespace SodRpg.Mod
         private float _nextHudRebuild;
         private readonly Dictionary<int, Label3D> _nightmareLabelCache = new Dictionary<int, Label3D>();
         private readonly Dictionary<string, Label3D> _variantLabelCache = new Dictionary<string, Label3D>();
+        private bool _labelCacheJa;
 
         /// <summary>GUILayout を使うパネル（メニュー・確保地点・結果）が出ているか。出ていなければレイアウト処理自体を止める。</summary>
         private readonly List<Hint> _hints = new List<Hint>();
@@ -484,11 +485,11 @@ namespace SodRpg.Mod
                 {
                     sb.Append("\n<size=13><color=#a8e9cd>");
                     if (run.WaypointHoardReleased)
-                        sb.Append(Loc.T("宝庫：開封済み・撃破戦利品 ×3", "Hoard: opened · kill loot ×3"));
+                        sb.Append(Loc.T($"宝庫：開封済み・撃破戦利品 ×{Waypoints.HoardMultiplier}", $"Hoard: opened · kill loot ×{Waypoints.HoardMultiplier}"));
                     else
                         sb.Append(Loc.T(
-                            $"宝庫保留（倍率前）：遺物{run.DeferredWaypointRelics.Count}・欠片{run.DeferredWaypointShards}・調律石{run.DeferredWaypointTuning}\nボス撃破で払い出し ×3・未開封で離れると失う",
-                            $"Hoard held (before ×3): {run.DeferredWaypointRelics.Count} relics, {run.DeferredWaypointShards} shards, {run.DeferredWaypointTuning} tuning\nBoss defeat pays ×3; leaving unopened forfeits it"));
+                            $"宝庫保留（倍率前）：遺物{run.DeferredWaypointRelics.Count}・欠片{run.DeferredWaypointShards}・調律石{run.DeferredWaypointTuning}\nボス撃破で払い出し ×{Waypoints.HoardMultiplier}・未開封で離れると失う",
+                            $"Hoard held (before ×{Waypoints.HoardMultiplier}): {run.DeferredWaypointRelics.Count} relics, {run.DeferredWaypointShards} shards, {run.DeferredWaypointTuning} tuning\nBoss defeat pays ×{Waypoints.HoardMultiplier}; leaving unopened forfeits it"));
                     sb.Append("</color></size>");
                 }
                 if (p.LostAndFound.Count > 0 && !run.LostRecovered)
@@ -531,7 +532,7 @@ namespace SodRpg.Mod
         {
             var hero = _s.LocalHero;
             if (hero == null) return;
-            var build = _s.CurrentBuild(ClientSession.HeroKeyOf(hero));
+            var build = _s.DisplayBuild(ClientSession.HeroKeyOf(hero));
             if (build == null) return;
             foreach (var entry in build.RunGrowths)
                 sb.Append("\n<size=13><color=#9fe3a0>").Append(RunGrowth.HudLine(entry, _s.GrowthStacks(entry.StarId))).Append("</color></size>");
@@ -761,6 +762,7 @@ namespace SodRpg.Mod
                         {
                             foreach (var x in Rules.UseEvent(_s.Profile, e, trades: _s.Trades)) _s.Emit(x);
                             _s.MarkDirty(false);
+                            _codex.Invalidate();
                             _s.SaveNow();
                         }
                         catch (InvalidOperationException ex) { SetStatus(ex.Message); }
@@ -968,6 +970,13 @@ namespace SodRpg.Mod
         /// <summary>悪夢化した敵と夢の変種の頭上に名札を出す。</summary>
         private void DrawNightmareLabels(float scale)
         {
+            // 頭上の名前は言語で変わるので、言語を切り替えたら作り直す。
+            if (_labelCacheJa != Loc.Japanese)
+            {
+                _labelCacheJa = Loc.Japanese;
+                _nightmareLabelCache.Clear();
+                _variantLabelCache.Clear();
+            }
             _labelScratch.Clear();
             foreach (var entry in _labelMonsters)
                 if ((!_s.Nightmare.ContainsKey(entry.Key) && !_s.Variant.ContainsKey(entry.Key))
@@ -1670,7 +1679,7 @@ namespace SodRpg.Mod
                 if (u.SetId != null && Content.GetSet(u.SetId) is SetDef set)
                 {
                     GUILayout.Label(UiStyles.Colored($"《{set.Name}》", "#ff8a3d") + " <color=#ccd>" + set.Describe() + "</color>", _st.Small);
-                    var build = _s.CurrentBuild(HeroKey);
+                    var build = _s.DisplayBuild(HeroKey);
                     build.Sets.TryGetValue(set.Id, out int count);
                     DrawSetLinkProgress(set, count);
                 }
@@ -1684,7 +1693,7 @@ namespace SodRpg.Mod
                 if (!string.IsNullOrEmpty(lore)) GUILayout.Label("<i>" + UiStyles.Colored(lore, "#c9a86a") + "</i>", _st.Small);
                 int worn = 0;
                 if (NamedItems.TryGetNamed(r.NamedId, out var namedDef) && namedDef.MiniSetId != null)
-                    _s.CurrentBuild(HeroKey).MiniSets.TryGetValue(namedDef.MiniSetId, out worn);
+                    _s.DisplayBuild(HeroKey).MiniSets.TryGetValue(namedDef.MiniSetId, out worn);
                 string mini = NamedItems.MiniSetLine(r, worn);
                 if (!string.IsNullOrEmpty(mini)) GUILayout.Label(UiStyles.Colored(mini, "#7fd8ff"), _st.Small);
             }
@@ -1727,18 +1736,11 @@ namespace SodRpg.Mod
         {
             GUILayout.Space(6);
             GUILayout.Label(Loc.T("いま装着している物と比べると", "Compared with what you have equipped"), _st.Header);
-            var a = new Dictionary<Stat, int>();
-            foreach (var s in sel.EffectiveStats()) { a.TryGetValue(s.Stat, out int v); a[s.Stat] = v + s.Value; }
-            foreach (var s in cur.EffectiveStats()) { a.TryGetValue(s.Stat, out int v); a[s.Stat] = v - s.Value; }
-            foreach (var kv in a.OrderBy(k => k.Key))
-            {
-                if (kv.Value == 0) continue;
-                GUILayout.Label(UiStyles.Colored(Content.FormatStat(kv.Key, kv.Value), kv.Value > 0 ? "#7cf07c" : "#ff7a7a"), _st.Small);
-            }
-            var gained = sel.Powers.Select(x => x.Power).Except(cur.Powers.Select(x => x.Power));
-            var lost = cur.Powers.Select(x => x.Power).Except(sel.Powers.Select(x => x.Power));
-            foreach (var g in gained) GUILayout.Label(UiStyles.Colored("+ " + Content.PowerName(g), "#7cf07c"), _st.Small);
-            foreach (var l in lost) GUILayout.Label(UiStyles.Colored("- " + Content.PowerName(l), "#ff7a7a"), _st.Small);
+            var diff = RelicComparison.Compare(sel, cur);
+            foreach (var d in diff.StatDeltas)
+                GUILayout.Label(UiStyles.Colored(Content.FormatStat(d.Stat, d.Value), d.Value > 0 ? "#7cf07c" : "#ff7a7a"), _st.Small);
+            foreach (var g in diff.GainedPowers) GUILayout.Label(UiStyles.Colored("+ " + Content.PowerName(g), "#7cf07c"), _st.Small);
+            foreach (var l in diff.LostPowers) GUILayout.Label(UiStyles.Colored("- " + Content.PowerName(l), "#ff7a7a"), _st.Small);
             if (sel.BossMove != cur.BossMove)
             {
                 if (sel.BossMove != null) GUILayout.Label(UiStyles.Colored("+ " + sel.DescribeBossMove(), "#7cf07c"), _st.Small);
@@ -2115,6 +2117,8 @@ namespace SodRpg.Mod
                 var e = action();
                 _s.Emit(e);
                 _s.MarkDirty(affectsBuild);
+                // 強化や付け替えは個数を変えずに固有効果を増やす・入れ替えるので、図鑑を作り直す。
+                _codex.Invalidate();
                 _s.SaveNow();
             }
             catch (InvalidOperationException ex)

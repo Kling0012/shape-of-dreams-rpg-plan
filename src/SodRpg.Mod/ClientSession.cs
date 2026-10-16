@@ -1437,6 +1437,23 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
             return _buildCache;
         }
 
+        private const float DisplayBuildReuseSeconds = 0.25f;
+        private float _displayBuildTime;
+
+        /// <summary>
+        /// 画面表示用の強さ。装備・鍛冶の画面は毎フレーム描くが、強さの計算は星の多い旅人で1回0.3ms・5KB前後かかる。
+        /// 変更時の作り直し（_buildCacheFrame = -1）がない間は、HUD の更新間隔と同じ0.25秒まで使い回す。ホストへ送る強さは CurrentBuild を使う。
+        /// </summary>
+        public Build DisplayBuild(string heroKey)
+        {
+            float now = Time.unscaledTime;
+            if (_buildCache != null && _buildCacheFrame >= 0 && _buildCacheHero == heroKey && now - _displayBuildTime < DisplayBuildReuseSeconds)
+                return _buildCache;
+            var build = CurrentBuild(heroKey);
+            _displayBuildTime = now;
+            return build;
+        }
+
         private string _lastSentBuild;
         private Actor _lastBuildActor;
         private Hero _lastBuildHero;

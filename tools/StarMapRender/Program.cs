@@ -16,7 +16,12 @@ using StarMapRender;
 // (or the path given by --metrics, "-" for stdout only).
 
 if (args.Length > 0 && args[0] == "--optimize") return StarMapRender.OptimizeCommand.Run(args);
-if (args.Length > 1 && args[0] == "--diag") return StarMapRender.DiagCommand.Run(args[1]);
+if (args.Length > 0 && args[0] == "--diag")
+{
+    if (args.Length > 1) return StarMapRender.DiagCommand.Run(args[1]);
+    Console.Error.WriteLine("usage: StarMapRender --diag <Hero_X>");
+    return 1;
+}
 if (args.Length > 0 && args[0] == "--check") return StarMapRender.CheckCommand.Run();
 if (args.Length < 1 || args[0] is "--help" or "-h" or "help")
 {
