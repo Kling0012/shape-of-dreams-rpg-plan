@@ -5207,8 +5207,14 @@ namespace SodRpg.Core.Game
         public static IReadOnlyList<AffixDef> AffixPool(Slot slot) => AffixPools[slot];
         public static IReadOnlyList<PowerRange> PowerPool(Slot slot) => PowerPools[slot];
 
+        // 定義済みの値を一度だけ集め、抽選候補ごとの箱詰めと反射を避ける。入れ子の型で静的初期化順序に依存させない。
+        private static class DefinedPowers
+        {
+            internal static readonly HashSet<Power> Set = new HashSet<Power>((Power[])Enum.GetValues(typeof(Power)));
+        }
+
         /// <summary>Direct conditional AD/AP powers may roll only on Epic or higher gear.</summary>
-        public static bool IsPowerDroppable(Power power) => Enum.IsDefined(typeof(Power), power)
+        public static bool IsPowerDroppable(Power power) => DefinedPowers.Set.Contains(power)
             && power != Power.None && power != Power.ShadowStep && !CurrencyStars.IsPower(power);
         public static bool PowerAllowedForRarity(Power power, Rarity rarity) => IsPowerDroppable(power)
             && (rarity >= Rarity.Epic || !NewPowersV129.IsConditionalAttribute(power));
@@ -5544,7 +5550,8 @@ namespace SodRpg.Core.Game
                     if (!DisplayMeleeRangeConversion) return Loc.T($"通常攻撃の射程 {sign}{v}%", $"Basic attack range {sign}{v}%");
                     {
                         int gain = TravelerCombat.RangeToSpeedGain(DisplayMeleeAttackSpeed, v);
-                        string gainSign = gain >= 0 ? "+" : "";
+                        // At the cap the gain is nothing: show "0%" without a sign so that reads at a glance (#542).
+                        string gainSign = gain > 0 ? "+" : "";
                         int cap = StatCap(Stat.AttackSpeedPct);
                         return Loc.T($"攻撃速度 {gainSign}{gain}%（近接のため射程 {sign}{v}% から変換。攻撃速度は合計{cap}%まで）",
                             $"Attack speed {gainSign}{gain}% (converted from {sign}{v}% range for melee; attack speed capped at {cap}% in total)");

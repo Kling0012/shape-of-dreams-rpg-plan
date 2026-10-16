@@ -584,6 +584,13 @@ namespace SodRpg.Mod
         public static readonly List<string> Warnings = new List<string>();
         public static void Warn(string message) { Warnings.Add(message); }
     }
+    // ClientSession.TrackRun がラン開始時に呼ぶ近接分類ログのリセット（#542）。
+    // このハーネスは TravelerCombatNative.cs をコンパイルしない（近接協力の本体は Core.Tests 側）ので、
+    // 何もしない模倣を置く。Log と同じ扱い。
+    internal static class TravelerCombatNative
+    {
+        internal static void ResetReporting() { }
+    }
     internal static class NativeAttributedMemoryCast
     {
         internal sealed class Cast { public MemoryActivationIdentity Identity; public SkillTrigger Skill; }

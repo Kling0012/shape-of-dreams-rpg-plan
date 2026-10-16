@@ -1,5 +1,5 @@
-[b]Fixes co-op trades with a large-stash player repeatedly restarting the partner's record transfer.[/b]
-[b]協力プレイで保管庫の大きな参加者と取引するとき、記録の送信が何度もやり直される問題を修正しました。[/b]
+[b]A maintenance update that strengthens development-side checks; gameplay and numbers are unchanged.[/b]
+[b]開発側の確認を強化した保守版で、ゲーム内の動きや数値に変更はありません。[/b]
 
 [h1]Dreamforge RPG[/h1]
 Turns every run into part of a long RPG journey: relics you keep, a risky "secure or delve" choice at every zone, a star map per Traveler, a forge, and long-term goals. Co-op ready.

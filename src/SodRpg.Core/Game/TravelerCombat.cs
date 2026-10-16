@@ -24,20 +24,21 @@ namespace SodRpg.Core.Game
         }
     }
 
-    /// <summary>Player-facing numbers of the melee co-op features, built from <see cref="CoopBalance"/>.</summary>
+    /// <summary>Player-facing numbers of the melee co-op features, built from <see cref="CoopBalance"/>.
+    /// Interpolations are invariant (#542) so decimal points never follow the OS locale (0.25 stays "0.25").</summary>
     public static class MeleeCoopText
     {
         public static string RangeToSpeed => Loc.T(
-            $"近接の旅人は、装備の通常攻撃の射程1%につき攻撃速度が{CoopBalance.RangeToSpeedMultiplier:0.##}%上がる（射程は上がらない）。攻撃速度は装備・星の合計で最大{Content.StatCap(Stat.AttackSpeedPct)}%まで。",
-            $"Melee travelers gain {CoopBalance.RangeToSpeedMultiplier:0.##}% attack speed per 1% equipment basic attack range instead of range. Combined equipment and star attack speed is capped at {Content.StatCap(Stat.AttackSpeedPct)}%.");
+            FormattableString.Invariant($"近接の旅人は、装備の通常攻撃の射程1%につき攻撃速度が{CoopBalance.RangeToSpeedMultiplier:0.##}%上がる（射程は上がらない）。攻撃速度は装備・星の合計で最大{Content.StatCap(Stat.AttackSpeedPct)}%まで。"),
+            FormattableString.Invariant($"Melee travelers gain {CoopBalance.RangeToSpeedMultiplier:0.##}% attack speed per 1% equipment basic attack range instead of range. Combined equipment and star attack speed is capped at {Content.StatCap(Stat.AttackSpeedPct)}%."));
 
         public static string Break => Loc.T(
-            $"崩し：近接の旅人の通常攻撃か記憶が当たった敵は{CoopBalance.BreakSeconds:0.##}秒間、ほかの味方の旅人から受けるダメージが{CoopBalance.BreakDamagePercent:0.##}%増える。重ならず、当て直すと時間が戻る。",
-            $"Break: an enemy hit by a melee traveler's basic attack or memory takes {CoopBalance.BreakDamagePercent:0.##}% more damage from other allied travelers for {CoopBalance.BreakSeconds:0.##}s. It does not stack; hitting again refreshes it.");
+            FormattableString.Invariant($"崩し：近接の旅人の通常攻撃か記憶が当たった敵は{CoopBalance.BreakSeconds:0.##}秒間、ほかの味方の旅人から受けるダメージが{CoopBalance.BreakDamagePercent:0.##}%増える。重ならず、当て直すと時間が戻る。"),
+            FormattableString.Invariant($"Break: an enemy hit by a melee traveler's basic attack or memory takes {CoopBalance.BreakDamagePercent:0.##}% more damage from other allied travelers for {CoopBalance.BreakSeconds:0.##}s. It does not stack; hitting again refreshes it."));
 
         public static string Guard => Loc.T(
-            $"近接防御：近接の旅人は、{CoopBalance.MeleeGuardRange:0.##}m以内に敵がいる間、受けるダメージが{CoopBalance.MeleeGuardReductionPercent:0.##}%減る（{CoopBalance.ScanSeconds:0.##}秒ごとに判定）。",
-            $"Melee guard: melee travelers take {CoopBalance.MeleeGuardReductionPercent:0.##}% less damage while an enemy is within {CoopBalance.MeleeGuardRange:0.##}m (checked every {CoopBalance.ScanSeconds:0.##}s).");
+            FormattableString.Invariant($"近接防御：近接の旅人は、{CoopBalance.MeleeGuardRange:0.##}m以内に敵がいる間、受けるダメージが{CoopBalance.MeleeGuardReductionPercent:0.##}%減る（{CoopBalance.ScanSeconds:0.##}秒ごとに判定）。"),
+            FormattableString.Invariant($"Melee guard: melee travelers take {CoopBalance.MeleeGuardReductionPercent:0.##}% less damage while an enemy is within {CoopBalance.MeleeGuardRange:0.##}m (checked every {CoopBalance.ScanSeconds:0.##}s)."));
     }
 
     /// <summary>

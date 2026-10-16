@@ -8,13 +8,76 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
-### 改善 / Improvements
-
 - 保存に失敗したときの理由の表示が、表示言語を切り替えたあとも現在の言語で出るようになりました。また、保存中に例外が出たあとでさらに書き込みに失敗したときは、古い例外の文が残り続けず、新しい書き込み失敗の表示に切り替わります。 / Save failure reasons on screen now follow the display language after you switch it. When a write fails again after an exception during saving, the newer write failure replaces the lingering older exception message.
 - 保存に失敗したときのログ（`Player.log` の "Save failed" 行）は、表示言語に関係なく英文で出るようになりました。 / The "Save failed" log entry is now written in English regardless of the display language.
-- 光の精霊の2部位の設定に行動が不足しているとき、溜め処理を黙って見送らず、警告を1回だけログに出すようにしました。大顎の護符の設定では、回復までの命中回数（mainHits）が2未満または未設定にならないことを生成時の検証で保証します。 / The Light Elemental stage2 gear now logs a single warning instead of silently skipping its charge handling when its table lacks the second action, and the Maw charm table is validated at generation time so its hit count (mainHits) is never below 2 or missing.
-- 協力取引の理由コードの管理を一元化し、理由を追加するときの取りこぼしを防ぎました。取引の中止理由「取り消し」と「接続の変化」は、それぞれ別の文言で表示されるようになりました。 / Co-op trade reason codes now live in a single table, so adding a reason cannot update only one of the known-code list and its text. The "cancelled" and "connection" trade aborts now have their own texts.
-- 協力取引で、参加者の提示内容がホスト側の規則で拒否されたとき、参加者にホストの言語の内部メッセージが表示されることがありました。拒否の詳細はホストのログに残し、参加者には理由コード「所持品または残高が変わった」を各自の言語で表示します。 / When the host's rules rejected a co-op trade offer, participants could see an internal message in the host's language. The detail now stays in the host log and participants read the fixed "ownership" reason in their own language.
+- 装備やビルドの計算、固有効果の抽選で、毎回くり返していた無駄な処理を減らしました（結果は同じです）。 / Reduced repeated work in build calculation and power rolls (results are unchanged).
+
+---
+
+## v3.1.4 — Maintenance update with no gameplay changes（2026-10-17）
+
+この版は内部の保守のための更新で、ゲーム内の動きや数値に変更はありません。 / This is a maintenance update with no changes to gameplay or numbers.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### この版について / About this version
+
+- 今後の調整で設定の誤りが入り込まないよう、開発側の確認を強化しました。遊び方や敵の挙動、表示はこれまでと変わりません。 / We strengthened development-side checks so that configuration mistakes are less likely to slip into future updates. How the game plays, how enemies behave and what is shown on screen are unchanged.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
+## v3.1.3 — Clearer, localized co-op trade messages（2026-10-17）
+
+協力プレイの取引で表示されるメッセージを改善しました。 / This version improves the messages shown during co-op trades.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 改善 / Improvements
+
+- 協力プレイの取引で、取引が取り消されたときと、接続が切れたときのメッセージを分けました。これまではどちらも同じ文で表示されていました。今後は、取消や時間切れで取引をもう一度申し込めるのか、再接続を待っているのかが区別できます。 / In co-op trades, cancellations and connection changes now show different messages. Both used to show the same text. You can now tell whether a trade was cancelled or timed out and can be offered again, or whether the game is waiting for a player to reconnect.
+
+### 不具合の修正 / Bug fixes
+
+- 協力プレイの取引で、参加者が出した品がホストに受け付けられなかったときに、ホストの言語の内部メッセージが参加者にそのまま表示されることがありました。今後は理由が参加者自身の言語で表示されます。 / Fixed co-op trades where a participant whose offer was rejected by the host could see an internal message in the host's language. The reason is now shown in the participant's own language.
+- 協力プレイの取引で表示されるエラーや取消のメッセージが、どの場面でも参加者それぞれの言語で表示されるようにしました。取引画面の状態表示と、参加者一覧の状態表示も同じように各自の言語で表示されます。 / Error and cancellation messages in co-op trades are now shown in each player's own language in every case. The status shown on the trade screen and in the player list also appears in each player's own language.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
+## v3.1.2 — Melee co-op display polish and locale-independent numbers（2026-10-17）
+
+近接協力の表示まわりを細かく改善し、言語設定によって数値の表示が変わる不具合を修正しました。 / This version polishes how melee co-op is displayed and fixes numbers showing differently depending on language settings.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 改善 / Improvements
+
+- MOD 設定画面の近接協力の4項目で、設定名を短い1行にまとめました。倍率・上限・距離・時間などの詳しい内容は、設定名とは別の説明文に表示されます。改行が原因で文字が重なったり切れたりする心配がなくなり、数値の情報はこれまでどおりすべて確認できます。 / The four melee co-op entries in the MOD settings screen now have short one-line names. Details such as multipliers, caps, distances and durations are shown in a separate description, so the text no longer depends on line breaks that could overlap or get cut off. All the numbers are still shown.
+- 星図で自分以外の旅人のページを見ているときは、近接協力の見出しを「近接の協力効果（通常攻撃が近接の間）」にしました。遠距離攻撃をしている Aurena などが、いま近接攻撃中であるかのように読めなくなります。 / On another traveler's star chart page, the melee co-op heading now reads "Melee co-op effects (while the basic attack is melee)", so a traveler such as Aurena using a ranged attack no longer looks like they are currently melee.
+- 攻撃速度が上限に達していて近接の射程変換による増加が無いときは、「+0%」ではなく「0%」と表示するようにしました。増加が無いことがひと目でわかります。 / When attack speed is already capped and the melee range conversion adds nothing, it now shows "0%" instead of "+0%", making it clear there is no gain.
+- ランを開始するたびに診断ログの記録をリセットするようにしました。2回目以降のランでも同じログがもう一度出力されます。 / Diagnostic logs are now reset at the start of each run, so they are written again in later runs.
+
+### 不具合の修正 / Bug fixes
+
+- 小数点にカンマを使う言語設定の PC で、近接協力の説明文の数値が「0.25」ではなく「0,25」のように表示されることがありました。今後はどの言語設定でも同じ表記で表示されます。 / Fixed melee co-op descriptions showing numbers like "0,25" instead of "0.25" on PCs whose language settings use a comma as the decimal separator. Numbers now display the same way regardless of language settings.
+- 近接協力の崩しを付ける処理をすべて見直し、近接攻撃でない旅人には崩しが付かないようにしました。 / Reviewed every place that applies the melee co-op break and made sure it is not applied to travelers who are not using a melee attack.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
 
 ---
 
