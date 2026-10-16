@@ -396,6 +396,7 @@ namespace SodRpg.Mod
         {
             if (_tickNow < _nextAreaScan) return;
             _nextAreaScan = _tickNow + CoopBalance.ScanSeconds;
+            PruneAutoCastContacts(_tickNow);
             ScanArea();
         }
 
@@ -1292,6 +1293,8 @@ namespace SodRpg.Mod
             _omensFailed = false; // 失敗で止めた部屋の兆しは、次のゲームでもう一度試す。
             _omensFailedRunId = null;
             AutocastPressure.DetachHost(this);
+            ClearAutoCastContacts();
+            _autoCastContactsFailed = false;
             DetachCoopTrade();
             ClearAssignedMechanismSession();
             if (NativeInstance == this) NativeInstance = null;
@@ -2306,6 +2309,7 @@ namespace SodRpg.Mod
 
         private void OnPairEnemyDamage(EventInfoDamage info)
         {
+            RecordAutoCastContact(info);
             if (info.victim == null || info.victim.currentHealth > 0.00001f) return;
             int id = info.victim.GetInstanceID();
             if (_gimmickDamageDepth != 0 || _pairDamageDepth != 0 || _reflectingDamage || _shattering
