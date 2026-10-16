@@ -1,5 +1,5 @@
-[b]Fixes ingredient usage limits turning off for every ingredient, and old numbers staying on reused ingredient icons.[/b]
-[b]料理の素材の上限がすべての素材で効かなくなる問題と、素材アイコンに前の数字が残る問題を直しました。[/b]
+[b]v3.2.0: minor adjustments. Everyone in co-op should update. Saves carry over; restart the game after updating.[/b]
+[b]v3.2.0：細かな調整を行いました。協力プレイは全員更新してください。セーブはそのまま引き継げます。更新後はゲームを再起動してください。[/b]
 
 [h1]Dreamforge RPG[/h1]
 Turns every run into part of a long RPG journey: relics you keep, a risky "secure or delve" choice at every zone, a star map per Traveler, a forge, and long-term goals. Co-op ready.
