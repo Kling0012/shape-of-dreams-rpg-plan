@@ -300,6 +300,8 @@
 - `IsBossFinaleZone(zone, interval)`（= `useSpecialGeneration && !CanHostInterval(...)`）：周期を賄えない特殊グラフは「完結ボスゾーン」とする。`OnGenerated` は生成直後に `PromoteFinaleBoss()`（実クリア数を変えず、明示的な完結ボス状態で `Phase = BossDue`）を呼ぶため、地図はボスノードだけを前方に出し、技術境界は一度も発生しない。区間は準備→ボス（＋任意の戦闘部屋）で完結する。
 - 扉は `LoadNode` 直行のため `RouteTravel` の `TryEnterBoss` を通らない。`TickNative` はボスノード到着時に完結ボスゾーンなら `PromoteFinaleBoss()`→`TryEnterBoss()` で `BossFight` へ入る（v2.10.8以前の保存＝`Exploring` のまま純白にいる遠征も、扉でボス戦に入って撃破後に次へ進める）。`RefreshReveal` は `BossDue` で唯一のボスノードの上にいるとき、誤って「scheduled boss なし」で機能を止めない（ボスノードが1つもないグラフだけ止める）。
 - `ChooseNativeZone`（ランダム抽選）と v2.10.8 の救済は従来どおり周期を賄える候補に限定したまま。`PrepareBossTarget` は固定ゾーンID（保存済み計画または当選ボスの専用ゾーン）で指定された純白だけを例外として許す。井戸/ショップ保証とその警告は完結ボスゾーンでは適用しない（2部屋構成に畳むため）。
+- 保存・共有snapshot・Continueは `FinalePromoted` と実クリア数を引き継ぎ、Delveで繰り上げ状態を解除する。`累計 >= 周期内の実クリア数` の検証は維持し、保存された周期長と一致することを理由に不整合を通さない。旧版の純白セーブ（`Zone_Primus`・周期到達値・`BossDue`～`AwaitingChoice`）だけは現グラフのクリア済みノード数へ正規化し、ボス戦／魂待ち／選択待ちの段階は保持する。
 
 ### 検証
 - 回帰（`tests/SodRpg.Mod.Startup.Tests/InfinityZoneTests.cs`）：Primusボス計画の潜行が純白に入り `BossDue` でボスノードを公開すること、扉到着（`SetCurrentNodeIndexAndRevealAdjacent(2)`＋`Tick`）が機能を止めず `BossFight` に入り、撃破・魂の出現で `AwaitingChoice` まで至ること、旧保存（`Exploring`）からの扉到着も `BossFight` に入ること。ランダム抽選が純白を選ばないこと、技術境界による脱出、純白からのDelveが純白へ戻らないことは v2.10.8 の回帰を維持。
+- PR #514取込：同じ既存ケースで累計0の最初の周期を使い、ボス繰り上げ・戦闘中・魂待ち・選択待ち・Delveの保存読み戻し、共有snapshotの実カウンタ、旧形式のプロフィール／native envelopeの魂待ち保持を確認。`InfinityClearSaveTests` の既存ケースは本番ClientSessionの確定保存と実ファイルの読み戻し／通知を確認し、旧カウンタ引き上げを一時的に戻すと `Inconsistent infinity state` で失敗、修正版では成功した。周期10/15/20の不整合拒否と初期装備の日英案内も既存ケースで確認。関連Core 60件・Startup 87件・Native 31件が成功。実ゲーム・実通信・フル／低速テストは未実行。

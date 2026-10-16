@@ -25,6 +25,10 @@ namespace SodRpg.Core.Tests
             Assert.Equal(relics, InfinityIntervalScaling.RelicMultiplier(loaded.Run.Infinity.Interval));
             loaded.Run.Infinity.ClearedCombatTotal = long.MaxValue;
             Assert.Equal(100, loaded.Run.Infinity.PressureStage);
+            p.Run.Infinity.ClearedCombatTotal = 0;
+            p.Run.Infinity.ClearsInCycle = interval;
+            p.Run.Infinity.Phase = InfinityPhase.BossDue;
+            Assert.Throws<LedgerFormatException>(() => ProfileCodec.Read(ProfileCodec.Write(p), new List<string>()));
         }
 
         [Fact]

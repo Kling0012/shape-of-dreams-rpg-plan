@@ -387,11 +387,10 @@ namespace SodRpg.Mod
             if (!state.FinalePromoted && state.FixedZoneId == "Zone_Primus"
                 && state.ClearsInCycle == state.Interval
                 && state.ClearedNodes.Count < state.Interval
-                && state.Phase >= InfinityPhase.BossDue && state.Phase <= InfinityPhase.Returning)
+                && state.Phase >= InfinityPhase.BossDue && state.Phase <= InfinityPhase.AwaitingChoice)
             {
                 state.ClearsInCycle = state.ClearedNodes.Count;
-                state.Phase = InfinityPhase.Exploring;
-                state.PromoteFinaleBoss();
+                state.FinalePromoted = true;
             }
             return true;
         }

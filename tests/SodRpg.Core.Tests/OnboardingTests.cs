@@ -106,7 +106,9 @@ namespace SodRpg.Core.Tests
         public void Starter_kit_auto_equips_only_into_an_empty_traveler()
         {
             var p = Profile.CreateNew(1);
-            Onboarding.GrantStarterKit(p);
+            var kit = Onboarding.GrantStarterKit(p);
+            Assert.Contains($"最初の遺物を{kit.Count}つ", Onboarding.Get(Hint.Welcome).Body.Ja);
+            Assert.Contains($"You get {kit.Count} starter relics", Onboarding.Get(Hint.Welcome).Body.En);
             Assert.True(Onboarding.AutoEquipStarter(p, "Hero_Vesper"));
             foreach (Slot slot in Enum.GetValues(typeof(Slot)))
                 Assert.Equal(slot, p.FindStash(p.Hero("Hero_Vesper").Equipped[(int)slot]).Slot);
