@@ -1008,8 +1008,10 @@ namespace SodRpg.Mod
                 if (state.RoomEpoch == long.MaxValue)
                 { InfinityMode.DisableFeature("Infinity room epoch exhausted."); return; }
                 state.RoomEpoch++;
+                // The room identity must reach the native envelope even when no host profile receipt exists yet.
+                // Persist the profile without serializing and broadcasting that same envelope a second time.
                 InfinityMode.WriteEnvelope();
-                ClientSession.PersistHostInfinityState();
+                ClientSession.PersistHostInfinityState(writeEnvelope: false);
             }
             catch (Exception ex) { InfinityMode.InterceptionFailed(nameof(InfinityRoomIdentity), ex); }
         }

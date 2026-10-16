@@ -1,5 +1,5 @@
-[b]Fixes the Trade tab slowing down when the vault holds many relics.[/b]
-[b]保管庫の遺物が多いときに取引タブが重くなる問題を直しました。[/b]
+[b]Fixes save and co-op trade failures after salvaging starting relics, and keeps starting relic marks for relics temporarily outside the vault.[/b]
+[b]初期遺物を分解したあとの保存・取引の失敗と、保管庫の外にある初期遺物の印が消える問題を直しました。[/b]
 
 [h1]Dreamforge RPG[/h1]
 Turns every run into part of a long RPG journey: relics you keep, a risky "secure or delve" choice at every zone, a star map per Traveler, a forge, and long-term goals. Co-op ready.

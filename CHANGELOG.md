@@ -8,8 +8,65 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
-### 修正 / Fixes
-- インフィニティ：周期に足りない小さな地図（純白の道など）で最初の周期からボスへ繰り上がると、保存データが読み込めなくなる（バックアップや新しいプロフィールに戻る）問題を修正。案内の「初期の遺物を3つ」を実際に配る数（6つ）に直し、星図の上限ポイント・到達刻印の必要ポイントも実際の値から表示する。 / Infinity: a first-cycle finale promotion on a short graph no longer makes the save unreadable; the welcome hint now states the real starter relic count (6), and hint numbers come from the shared constants.
+- インフィニティの協力プレイで、前の区間の潜行の決定が残っていると、ゲストがホストより先に次の選択画面を開いてしまうことがあった問題を修正。部屋ごとの状態の書き込みと送信が2回行われていたのを1回に。 / Infinity guests no longer open the next choice early from the previous segment's retained delve decision; the per-room state envelope is written and broadcast once instead of twice.
+---
+
+## v3.2.5 — Fix saving after salvaging starting relics and keep starting relic marks（2026-10-17）
+
+この版は、初期遺物を分解したあとにプロフィールの保存や協力プレイでの取引ができなくなる問題と、一時的に保管庫から出ている初期遺物の印が保存や読み込みで消えてしまう問題を直す更新です。 / This update fixes being unable to save your profile or trade in co-op after salvaging a starting relic, and starting relic marks disappearing on save or load while the relic was temporarily out of the vault.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- 初期遺物を分解したあと、プロフィールの保存に失敗するようになっていた問題を直しました。何度保存し直しても失敗が続き、協力プレイの取引も成立させられませんでした。1個ずつ分解した場合も、まとめて分解した場合も、これからは普段どおり保存でき、続きから遊べます。取引も完了できます。 / Fixed an issue where saving your profile failed after salvaging a starting relic. Saving kept failing no matter how many times you tried, and co-op trades could not be completed either. Whether you salvage starting relics one at a time or in bulk, you can now save and continue as usual, and trades can be completed.
+- 初期遺物が保管庫の外にあると、保存して読み込み直したときに初期遺物の印が消えていた問題を直しました。鞄の中、遺失物、中断した遠征から回収を待つ遺物、分解待ち、協力プレイの取引で預けている間、道標で保留している間が対象です。たとえば取引を取り消すと遺物は手元に戻りますが、印は消えたままでした。これからは、こうした状態で保存・読み込みをしても、続きからの再開でロビーでの変更を反映し直したあとも、印は残ります。分解した遺物や取引で渡した遺物の印は残りません。 / Fixed an issue where the starting relic mark disappeared after saving and reloading while a starting relic was outside the vault. This affected relics in your bag, in lost items, waiting to be recovered from an interrupted run, pending salvage, held in a co-op trade, or held at a waypoint. For example, canceling a trade returned the relic, but its mark stayed lost. Marks now stay through saving and loading in all of these cases, including when lobby changes are applied again on Continue. Relics you salvaged or traded away no longer keep their mark.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
+## v3.2.4 — Star Offering description now notes the Dream Depth XP multiplier（2026-10-17）
+
+この版は、出来事「星の捧げ物」の説明に、実際に得られる星の経験の量が正しく書かれていなかった問題を直す更新です。 / This update fixes the Star Offering event description not accurately showing how much Star XP you actually receive.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- 出来事「星の捧げ物」の説明には基礎値の星の経験40しか書かれていませんでしたが、実際には夢の深さに応じた経験の倍率が掛かります。たとえば深さ5では80を得られます。説明と実際に得られる量が違って見えていたため、日本語・英語の両方の説明に、夢の深さの経験倍率が掛かることを書き加えました。得られる経験の量そのものは変わっていません。 / The Star Offering event description showed only the base value of 40 Star XP, but the actual amount is multiplied by the Dream Depth XP multiplier. At depth 5, for example, you receive 80. Because the description did not match what you actually got, both the Japanese and English descriptions now note that the Dream Depth XP multiplier applies. The amount of XP you receive is unchanged.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
+## v3.2.3 — Fixes for Pure White Dream profile switching, F6 language saving, and Infinity boss saves（2026-10-17）
+
+この版は、純白の夢に勝ったあとプロフィールを切り替えられなくなる問題、F6 メニューで切り替えた言語が次回起動時に元へ戻る問題、インフィニティでボスに繰り上がったあとに保存や協力プレイの同期が失敗する問題を直す更新です。インフィニティの案内に出る数値も実際の値に揃えました。 / This update fixes being unable to switch profiles after winning the Pure White Dream, the language chosen in the F6 menu reverting on the next launch, and saving and co-op syncing failing after Infinity moves you up to the boss. It also makes the numbers in the Infinity guide match the actual values.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- 純白の夢に勝ったあと、終わったはずの遠征の結果がまだ反映されていない扱いのまま残っていた問題を直しました。ホストでも参加者でも起きており、保存してゲームを再起動してもこの状態が続いたため、プロフィールを切り替えられませんでした。その結果、次の遠征が以前のプロフィールに記録されることもありました。これからは、勝利後もプロフィールを普段どおり切り替えられ、次の遠征は選んだプロフィールに記録されます。 / Fixed an issue where, after winning the Pure White Dream, the finished run was still treated as having a result waiting to be applied. This happened for both the host and other players, and it continued even after saving and restarting the game, so you could not switch profiles. As a result, your next run could also be recorded to your previous profile. You can now switch profiles as usual after the win, and your next run is recorded to the profile you chose.
+- F6 メニューの記録タブで言語を切り替えても、次にゲームを起動すると前の言語に戻っていた問題を直しました。これからは切り替えた時点で設定に保存され、次回の起動でも選んだ言語で表示されます。保存できなかった場合は、画面にその旨が表示されます。 / Fixed an issue where the language you switched to in the Records tab of the F6 menu went back to the previous language the next time you started the game. Your choice is now saved as soon as you switch, so the game starts in the language you picked. If saving fails, a message is shown on screen.
+- インフィニティで、周期に必要な数より小さい地図からボスへ繰り上がったあと、プロフィールの保存や読み込みに失敗していた問題を直しました。特に最初の周期で起きやすく、協力プレイでは参加者が進行状況を受け取れないこともありました。これからは、ボス戦の途中、次の選択を待っている間、その先の地図へ進んだあとも、保存して続きから遊べます。 / Fixed an issue in Infinity where saving or loading the profile failed after a map smaller than the cycle length moved you up to the boss. It happened most often in the first cycle, and in co-op, other players could fail to receive the run's progress. You can now save and continue during the boss fight, while waiting for the next choice, and after moving on to later maps.
+- 以前の版でこの状態になったセーブも、ボス戦や選択待ちなどの進行状況を保ったまま読み込めるようになりました。 / Saves that hit this issue in an earlier version now load correctly, keeping progress such as an ongoing boss fight or a pending choice.
+- インフィニティの案内に表示される初期遺物の数、星図の上限、到達刻印の条件を、日本語・英語とも実際の値と一致するように直しました。 / The starting relic count, Star Chart limit, and milestone mark conditions shown in the Infinity guide now match the actual values in both Japanese and English.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
 
 ---
 

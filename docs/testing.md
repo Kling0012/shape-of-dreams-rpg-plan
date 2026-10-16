@@ -97,10 +97,12 @@ python tools/test_changed.py [--base <git ref>] [--list] [--all] [--slow]
   Debug の半分以下の実時間になる）、その後 `dotnet test -c Release --no-build` を
   複数プロセス並列で実行する（各アセンブリ内のテストは共有状態のため
   `DisableTestParallelization` のまま直列。並列化はプロセス分割による。
-  同時実行数は CPU コア数を超えない）。`--no-build` で実行する前に、MSBuild の
-  `TargetPath` が存在するかを確認する。別の実行環境へテストだけを移して成果物が
-  存在しない場合は、同じフィルタの `dotnet test -c Release` でビルドしてから実行する。
-  `TargetPath` の取得に失敗した場合は、そのエラーを返す。
+  同時実行数は CPU コア数を超えない）。
+  別の実行環境から `run_dotnet_test(..., no_build=True)` を呼ぶ場合も、MSBuild の
+  `TargetPath` で Release の成果物を確認し、存在しなければ同じフィルタの
+  `dotnet test -c Release` でビルドしてから実行する。通常テストと性能テストを
+  別の作業環境に分けても、前段の成果物がないことによる起動失敗を防ぐ。
+  `TargetPath` の取得に失敗した場合や取得結果が空の場合は、エラーを返す。
 
 - プロセス分割（#404）: `--all` では Core スイートをクラス単位のフィルタで
   5 プロセスに分ける。所要時間の大半を占める重い 5 クラス

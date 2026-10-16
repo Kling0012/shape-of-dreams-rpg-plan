@@ -967,9 +967,10 @@ def run_dotnet_test(root: Path, project: str, filter_expr: str | None,
     if slow:
         env["SODRPG_SLOW"] = "1"
     if no_build:
-        # A separate timing phase may run on another host without the ordinary
-        # phase's build outputs. Ask MSBuild for the actual path (including any
-        # output overrides) and only skip building when the assembly is present.
+        # A separate remote phase (such as timing) may run on another host
+        # without the earlier build's outputs. Ask MSBuild for the actual path
+        # (including output overrides) and only skip building when the assembly
+        # is present.
         target = subprocess.run(
             [dotnet, "msbuild", project, "-nologo", "-property:Configuration=Release",
              "-getProperty:TargetPath"], cwd=str(root), env=env,
@@ -979,7 +980,9 @@ def run_dotnet_test(root: Path, project: str, filter_expr: str | None,
         if target.returncode != 0:
             return target.returncode, (target.stdout or "") + (target.stderr or "")
         target_path = target.stdout.strip()
-        if target_path and (root / target_path).is_file():
+        if not target_path:
+            return 1, f"MSBuild returned no TargetPath for {project}\n"
+        if (root / target_path).is_file():
             cmd.append("--no-build")
         else:
             print(f"build output missing for {project}; building before test",

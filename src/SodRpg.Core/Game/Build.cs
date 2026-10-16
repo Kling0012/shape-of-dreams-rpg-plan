@@ -468,7 +468,10 @@ namespace SodRpg.Core.Game
                     if (rawPowers.TryGetValue(pw, out int v))
                     {
                         rawPowers[pw] = v + v * DailyDream.PowerBoostPct / 100;
-                        basePowers[pw] += basePowers[pw] * DailyDream.PowerBoostPct / 100m;
+                        // 基準も整数の切り捨て後の倍率に合わせ、強化日だけ上限未満になるのを防ぐ。
+                        if (v > 0) basePowers[pw] = basePowers[pw] * rawPowers[pw] / v;
+                        // 0以下では従来の倍率を保つ（相殺する行がある場合も基準を変えない）。
+                        else basePowers[pw] += basePowers[pw] * DailyDream.PowerBoostPct / 100m;
                         if (awakenGains.TryGetValue(pw, out int gain))
                         {
                             int before = v - gain;
@@ -496,7 +499,12 @@ namespace SodRpg.Core.Game
                 int cap = Content.PowerCap(kv.Key);
                 b.Powers[kv.Key] = cap > 0 ? (int)CappedContribution(basePowers[kv.Key], kv.Value, cap) : kv.Value;
                 if (NewPowersV129.IsConditionalAttribute(kv.Key) && awakenGains.TryGetValue(kv.Key, out int gain))
-                    b.ConditionalBasePowers[kv.Key] = Math.Min(b.Powers[kv.Key], Math.Max(0, kv.Value - gain));
+                {
+                    // 覚醒前にも同じ上限の按分を掛け、条件付きの共通上限に覚醒分を数えない。
+                    int unawakened = Math.Max(0, kv.Value - gain);
+                    if (cap > 0) unawakened = (int)CappedContribution(basePowers[kv.Key], unawakened, cap);
+                    b.ConditionalBasePowers[kv.Key] = Math.Min(b.Powers[kv.Key], unawakened);
+                }
             }
             foreach (var kv in starPowers)
             {
