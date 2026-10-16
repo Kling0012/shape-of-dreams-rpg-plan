@@ -196,9 +196,9 @@ namespace SodRpg.Core.Game
         public int MomentumStacks { get; private set; }
         public int NearbyEnemies { get; set; }
         /// <summary>共鳴：自分の分（味方が近くにいれば全量、いなければ半分）。</summary>
-        public int ResonanceSelf { get; set; }
+        public float ResonanceSelf { get; set; }
         /// <summary>共鳴：近くの味方から分けてもらった分。</summary>
-        public int ResonanceShared { get; set; }
+        public float ResonanceShared { get; set; }
 
         /// <summary>装着中のエッセンスの品質合計（%）。</summary>
         public int GemQualityTotal { get; set; }
@@ -214,6 +214,9 @@ namespace SodRpg.Core.Game
         public float LinkGuardHealthPct { get; set; }
         /// <summary>連携（守り）：条件を満たしている間の防御（ホストの定期走査で更新）。</summary>
         public float LinkGuardArmor { get; set; }
+        /// <summary>Runtime coefficients are local to this hero, not shared content definitions.</summary>
+        public Dictionary<LinkDef, float> LinkDistanceCoefficients { get; } = new Dictionary<LinkDef, float>();
+        public float LinkCoefficient(LinkDef link) => LinkDistanceCoefficients.TryGetValue(link, out float value) ? value : 1f;
 
         /// <summary>余韻は重ならない。発動元ごとに、装着中だけ5秒の期限を延長する。</summary>
         public void OnLinkSurge(float now, LinkDef source)
@@ -238,19 +241,21 @@ namespace SodRpg.Core.Game
         }
 
         /// <summary>使った記憶の連携加速を100%まで合計する。星との合算後の残りCD上限はホストで適用する。</summary>
-        public static float LinkHastePercent(IReadOnlyList<LinkDef> satisfied, string usedMemory)
+        public static float LinkHastePercent(IReadOnlyList<LinkDef> satisfied, string usedMemory,
+            IReadOnlyDictionary<LinkDef, float> coefficients = null)
         {
-            long total = 0;
+            double total = 0;
             if (satisfied == null || usedMemory == null) return 0;
             for (int i = 0; i < satisfied.Count; i++)
             {
                 var link = satisfied[i];
                 if (link == null || link.Kind != LinkKind.MemoryHaste || link.Requires == null
                     || Array.IndexOf(link.Requires, usedMemory) < 0) continue;
-                total += Math.Max(0, link.ValueMilli);
+                float coefficient = coefficients != null && coefficients.TryGetValue(link, out float value) ? value : 1f;
+                total += Math.Max(0, link.ValueMilli) * coefficient;
                 if (total >= 100 * BuildPrecision.Scale) return 100;
             }
-            return total / (float)BuildPrecision.Scale;
+            return (float)(total / BuildPrecision.Scale);
         }
 
         /// <summary>止水：自分の技によるスタンで張る障壁量。成功したときだけ内部CDを開始する。</summary>
@@ -379,6 +384,7 @@ namespace SodRpg.Core.Game
             Build = replacement;
             RetainEquippedNewPowerState();
             // Recheck passive conditions on the next scan; retain only unchanged surge sources.
+            LinkDistanceCoefficients.Clear();
             LinkAttunePct = 0;
             LinkGuardHealthPct = 0;
             LinkGuardArmor = 0;
@@ -526,7 +532,7 @@ namespace SodRpg.Core.Game
             // 連携（v1.26）：同調は常時、記憶の余韻は条件の記憶を使った後の5秒間。
             float linkSurge = 0;
             foreach (var pair in _linkSurges)
-                if (now < pair.Value) linkSurge = Math.Max(linkSurge, pair.Key.ValuePercent);
+                if (now < pair.Value) linkSurge = Math.Max(linkSurge, pair.Key.ValuePercent * LinkCoefficient(pair.Key));
             float linkAttack = LinkAttunePct + linkSurge;
             int conditionalTotal = ConditionalAttributes(now);
             return new DynamicBonus
@@ -582,7 +588,10 @@ namespace SodRpg.Core.Game
         }
 
         /// <summary>共鳴の配分を計算する。values[i] はキャラ i の共鳴値、near[i][j] は i と j が範囲内か。</summary>
-        public static void DistributeResonance(PowerRuntime[] heroes, Func<int, int, bool> near)
+        public static void DistributeResonance(PowerRuntime[] heroes, Func<int, int, bool> near) =>
+            DistributeResonance(heroes, (i, j) => near(i, j) ? 1f : 0f);
+
+        public static void DistributeResonance(PowerRuntime[] heroes, Func<int, int, float> near)
         {
             foreach (var h in heroes)
             {
@@ -594,18 +603,20 @@ namespace SodRpg.Core.Game
             {
                 int v = heroes[i].Build.Get(Power.Resonance);
                 if (v <= 0) continue;
-                bool anyAlly = false;
+                float strongest = 0f;
                 for (int j = 0; j < heroes.Length; j++)
                 {
-                    if (i == j || !near(i, j)) continue;
-                    anyAlly = true;
-                    if (v / 2 > heroes[j].ResonanceShared)
+                    if (i == j) continue;
+                    float coefficient = Math.Max(0f, Math.Min(1f, near(i, j)));
+                    strongest = Math.Max(strongest, coefficient);
+                    float share = v / 2f * coefficient;
+                    if (share > heroes[j].ResonanceShared)
                     {
-                        heroes[j].ResonanceShared = v / 2;
-                        heroes[j]._resonanceSharedBase = heroes[i].Build.ConditionalBase(Power.Resonance) / 2f;
+                        heroes[j].ResonanceShared = share;
+                        heroes[j]._resonanceSharedBase = heroes[i].Build.ConditionalBase(Power.Resonance) / 2f * coefficient;
                     }
                 }
-                heroes[i].ResonanceSelf = anyAlly ? v : v / 2;
+                heroes[i].ResonanceSelf = v * (1f + strongest) / 2f;
             }
         }
     }

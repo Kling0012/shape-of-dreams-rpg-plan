@@ -389,7 +389,8 @@ namespace SodRpg.Core.Game
         {
             if (!CanBegin)
             {
-                // 手動の取引の上限か、結果待ちを含めた全体の上限か、実際に当たった方を示す。
+                // CanBegin の2条件（ManualHeldCount < MaxHeld と HeldCount < MaxRestored）に対応する表示。
+                // 条件を追加・変更するときは、実際に当たった上限を示すこの分岐も一緒に更新する。
                 int limit = ManualHeldCount >= MaxHeld ? MaxHeld : MaxRestored;
                 throw new InvalidOperationException(Loc.T(
                     $"未確定の取引が{limit}件に達しています。結果が確認できるまで、新しい取引はできません。",

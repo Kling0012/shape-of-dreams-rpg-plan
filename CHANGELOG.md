@@ -10,6 +10,66 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v2.10.60 — Co-op trade messages in each player's language（2026-10-16）
+
+このバージョンでは、協力プレイの取引で表示されるメッセージが、参加者それぞれの表示言語で出るようにしました。 / This version makes co-op trade messages appear in each player's own display language.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- 協力プレイの取引で、中止やエラー、「相手は今取引できる状態ではありません」などのメッセージが、ホストの言語ではなく自分の表示言語で表示されるようにしました。これまでは、たとえばホストが日本語で参加者が英語のとき、参加者にも日本語で表示されていました。 / In co-op trading, messages such as cancellations, errors, and "the other player can't trade right now" now appear in your own display language instead of the host's. Previously, for example, an English-speaking player in a Japanese host's game saw these messages in Japanese.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
+## v2.10.59 — Codex, equipment comparison, and language switch fixes（2026-10-16）
+
+このバージョンでは、図鑑と装備比較、表示言語を切り替えたときの表示に関する不具合を修正し、装備や鍛冶の画面を軽くしました。 / This version fixes issues with the codex, equipment comparison, and display after changing the language, and makes the equipment and forge screens lighter.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- 遺物の強化や夢の出来事で、所持数が変わらないまま固有効果が増えたり減ったりしたとき、図鑑の発見数と発見状態が古いまま残らないようにしました。 / When upgrading a relic or a dream event adds or removes a unique effect without changing how many you own, the codex's discovery count and discovered status no longer stay out of date.
+- 装備を比べるとき、断ち切りで追加された固有効果も増減に表示されるようにしました。また、変化のない能力値は表示せず、同じ効果が重ねて表示されないようにしました。 / Equipment comparison now includes unique effects added by severing. Stats that do not change are no longer listed, and the same effect is no longer shown twice.
+- 表示言語を切り替えたとき、悪夢・変異の頭上の表示と、旅人選択の名前が新しい言語に切り替わるようにしました。 / After changing the display language, the overhead labels for nightmares and mutations and the names in traveler selection now switch to the new language.
+- 宝庫の倍率、工房の次の段階の表示、英語の到達刻印の案内が、実際のゲームの値と一致するようにしました。 / The hoard multiplier, the next-level info in the workshop, and the English keystone guidance now match the actual in-game values.
+- 装備・鍛冶の画面と HUD で、繰り返し行われていた計算を減らし、動作を軽くしました。表示内容や効果は変わりません。 / Reduced repeated calculations in the equipment and forge screens and the HUD to make them lighter. What is shown and how things work are unchanged.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
+## v2.10.58 — Co-op forbidden equipment warning fixes（2026-10-16）
+
+このバージョンでは、協力プレイでの禁忌装備の警告と、警告表示まわりの処理を整理しました。 / This version tidies up the forbidden equipment warning and related warning handling in co-op.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- 協力プレイで、禁忌装備の警告が出る条件と、実際に装備が外される条件を同じものにしました。警告の内容と、実際に外される装備が食い違わなくなります。 / In co-op, the forbidden equipment warning now uses the same rule that decides which equipment is actually removed, so the warning always matches what is removed.
+- 協力プレイで、ほかの参加者の対応があとから分かったときに、禁忌装備の警告が消えて装備が正しく反映されるようにしました。すでにほかの応答を受け取っている場合も同じです。 / In co-op, when other players' support is confirmed later, the forbidden equipment warning is cleared and your equipment is applied correctly, even if other responses were already received.
+- 協力プレイで、ホストから応答がないときの警告が、表示中のほかの警告を上書きしないようにしました。表示言語を変えたときも同じです。 / In co-op, the no-response warning no longer replaces another warning already on screen, including when you change the display language.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
 ## v2.10.57 — Co-op warning, resume save, and room omen fixes（2026-10-16）
 
 このバージョンでは、協力プレイでの警告表示、中断データからの再開、部屋の兆しに関する不具合を修正し、装備一覧などの動作を軽くしました。 / This version fixes issues with co-op warnings, resuming from a suspended save, and room omens, and makes the equipment list and other screens lighter.

@@ -140,7 +140,8 @@ namespace SodRpg.Mod
             // Each native potion tick shares half the collector's actual healing. Other recipients do not retrigger it.
             float heal = rt.Powers.ApothecaryAllyHeal(info.amount);
             if (heal <= 0f) return;
-            foreach (var ally in LivingAllies(rt.Hero, PowersBalance.ApothecaryAllyRange)) PowerHeal(rt, ally, heal);
+            foreach (var ally in LivingAllies(rt.Hero, PowersBalance.ApothecaryAllyRange))
+                PowerHeal(rt, ally, heal * CoopDistanceNative.Coefficient(rt.Hero, ally, PowersBalance.ApothecaryAllyRange));
         }
 
         private void ClearSupportPowerStateV129() => _summonLethalHits.Clear();

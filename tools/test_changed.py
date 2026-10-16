@@ -458,15 +458,20 @@ def is_build_file(path: str) -> bool:
     return path.endswith(".csproj") or name.startswith("Directory.Build.")
 
 
-_LINKED_INPUT_RE = re.compile(r'<None\s+Include="([^"]+)"')
+_LINKED_INPUT_RE = re.compile(
+    r'''<(?:None|Content)\b[^>]*?\b(?:Include|Update)\s*=\s*["']([^"']+)["']'''
+)
 
 
 @functools.lru_cache(maxsize=None)
 def linked_test_inputs(root: Path = REPO_ROOT) -> set[str]:
-    """Repo-relative files a test csproj copies into its output (``<None Include>``).
+    """Repo-relative test inputs declared by None/Content Include or Update.
 
     Tests read them under another name (``ReviewedV129.md``), so the path
     never appears in the test source and rule 3 cannot find the readers.
+    This scans literal paths in tests/*/*.csproj, not MSBuild imports,
+    properties or globs. Declarations are included even without copy metadata
+    so conditional output copies conservatively select their readers.
     """
     linked: set[str] = set()
     for csproj in sorted((root / "tests").glob("*/*.csproj")):

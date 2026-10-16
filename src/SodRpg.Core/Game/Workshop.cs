@@ -152,7 +152,9 @@ namespace SodRpg.Core.Game
 
         public static int Level(Profile p, Upgrade u) => p.Upgrades.TryGetValue(u, out int lv) ? lv : 0;
 
-        public static int SatchelCapacity(Profile p) => Content.SatchelCapacity + ForgeBalance.BigSatchelCapacityPerLevel * Level(p, Upgrade.BigSatchel);
+        public static int SatchelCapacity(Profile p) => SatchelCapacityAt(Level(p, Upgrade.BigSatchel));
+        /// <summary>大きな鞄が指定の段のときの鞄の上限。工房の「次の段」表示もこれを使う。</summary>
+        public static int SatchelCapacityAt(int level) => Content.SatchelCapacity + ForgeBalance.BigSatchelCapacityPerLevel * Math.Max(0, level);
         public static int StashCapacity(Profile p) => Content.StashCapacity + StashBonus(Level(p, Upgrade.WideStash));
 
         /// <summary>表の2つの段階帯の増分を累計する。</summary>
@@ -165,7 +167,8 @@ namespace SodRpg.Core.Game
         public static int RoomsToRecover(Profile p) => Math.Max(ForgeBalance.LostMapMinimumRooms, Content.RoomsToRecoverLost - ForgeBalance.LostMapRoomsPerLevel * Level(p, Upgrade.LostMap));
         public static int EchoPercent(Profile p) => ForgeBalance.EchoLanternBasePercent + ForgeBalance.EchoLanternPercentPerLevel * (p == null ? 0 : Level(p, Upgrade.EchoLantern));
         public static int PactsOffered(Profile p) => Pacts.Offered + ForgeBalance.PactStarsOffersPerLevel * (p == null ? 0 : Level(p, Upgrade.PactStars));
-        public static int RerollsPerRun(Profile p) => ForgeBalance.BountyRerollRerollsPerLevel * Level(p, Upgrade.BountyReroll);
+        public static int RerollsPerRun(Profile p) => RerollsAt(Level(p, Upgrade.BountyReroll));
+        public static int RerollsAt(int level) => ForgeBalance.BountyRerollRerollsPerLevel * Math.Max(0, level);
 
         /// <summary>全滅時に持ち帰る欠片（切り上げ、1以上ある場合は最低1）。</summary>
         public static int Echo(Profile p, int satchelShards)
