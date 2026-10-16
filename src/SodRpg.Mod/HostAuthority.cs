@@ -2278,7 +2278,9 @@ namespace SodRpg.Mod
                 TrackCritBasicDamage(rt, info, victimId);
                 OnNewPowerDamage(rt, info);
                 string memory = MemorySource(info.actor);
-                if (memory != null || IsNativeBasicDamage(info.actor)) MarkMeleeBreak(rt.Hero, info.victim);
+                // Check the cheap gates before the up-to-128-level ancestry walk.
+                if (_meleeBreakEnabled && TravelerCombatNative.IsMelee(rt.Hero)
+                    && (memory != null || IsNativeBasicDamage(info.actor))) MarkMeleeBreak(rt.Hero, info.victim);
                 if (memory == null) return;
                 if (rt.Powers.Build.Gimmicks.Count > 0 || rt.Powers.Build.PairCombos.Count > 0)
                     rt.MemoryHitAmounts[victimId] = info.damage.amount;
