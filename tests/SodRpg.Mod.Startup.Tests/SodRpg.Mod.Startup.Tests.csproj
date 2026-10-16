@@ -39,5 +39,6 @@
   <Compile Include="../../src/SodRpg.Mod/SafeReflection.cs" Link="ModUnderTest/SafeReflection.cs" />
   <Compile Include="../../src/SodRpg.Mod/NativeCooldownSafety.cs" Link="ModUnderTest/NativeCooldownSafety.cs" />
     <Compile Include="../../src/SodRpg.Mod/MovementGemSlotEdit.cs" Link="ModUnderTest/MovementGemSlotEdit.cs" />
+    <Compile Include="../../src/SodRpg.Mod/FrostFxLifetime.cs" Link="ModUnderTest/FrostFxLifetime.cs" />
   </ItemGroup>
 </Project>
