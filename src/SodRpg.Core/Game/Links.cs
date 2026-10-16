@@ -360,9 +360,11 @@ namespace SodRpg.Core.Game
                     limitEn = " (Only the strongest active link applies. It refreshes the duration without stacking, and ends when its equip requirements are removed.)";
                     break;
                 default:
-                    int linkCap = Cap(link.Kind, link.Requires.Length);
-                    limitJa = linkCap > 0 ? $"同じ種類の連携は足し合わされ、元の値の合計で最大{linkCap}%まで。" : "同じ種類の連携は足し合わされ、合計の上限はない。";
-                    limitEn = linkCap > 0 ? $" (Links of the same kind add together, capped at {linkCap}% of the original values.)" : " (Links of the same kind add together, with no total cap.)";
+                    // Build.Compute が装備の連携の元値合計に使う上限と同じ値を示す。
+                    decimal linkCap = EquippedCap(link.Kind, link.Requires.Length);
+                    string capText = linkCap.ToString("0.##", CultureInfo.InvariantCulture);
+                    limitJa = linkCap > 0 ? $"同じ種類・条件の連携は足し合わされ、装備の元の値の合計で最大{capText}%まで（星の連携は別に加わる）。" : "同じ種類の連携は足し合わされ、合計の上限はない。";
+                    limitEn = linkCap > 0 ? $" (Links of the same kind and requirements add together; equipped links are capped at {capText}% of the original values, and star links add on top.)" : " (Links of the same kind add together, with no total cap.)";
                     break;
             }
             string text = Loc.Japanese ? DescribeJa(link, isSatisfied, value) + limitJa : DescribeEn(link, isSatisfied, value) + limitEn;
