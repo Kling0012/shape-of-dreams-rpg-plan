@@ -293,6 +293,9 @@ namespace SodRpg.Mod
                     _roomOmenPeers.Remove(player);
                     _forbiddenSmithPeers.Remove(player);
                     _nemesisGrudgePeers.Remove(player);
+                    // 抜けた人の版違いの警告を残さない（ロビーに警告が出続けていた）。
+                    _helloPeers.Remove(player);
+                    if (_versionMismatches.Remove(player)) RebuildMismatchList();
                 }
                 _pressureDirty = true;
             };
@@ -1284,6 +1287,8 @@ namespace SodRpg.Mod
             _omenRoom = null;
             _omenRunId = null;
             _omenSetting = false;
+            _omensFailed = false; // 失敗で止めた部屋の兆しは、次のゲームでもう一度試す。
+            _omensFailedRunId = null;
             AutocastPressure.DetachHost(this);
             DetachCoopTrade();
             ClearAssignedMechanismSession();

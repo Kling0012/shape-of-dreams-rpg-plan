@@ -35,6 +35,7 @@ from __future__ import annotations
 import argparse
 import concurrent.futures
 import fnmatch
+import functools
 import os
 import re
 import subprocess
@@ -457,6 +458,31 @@ def is_build_file(path: str) -> bool:
     return path.endswith(".csproj") or name.startswith("Directory.Build.")
 
 
+_LINKED_INPUT_RE = re.compile(r'<None\s+Include="([^"]+)"')
+
+
+@functools.lru_cache(maxsize=None)
+def linked_test_inputs(root: Path = REPO_ROOT) -> set[str]:
+    """Repo-relative files a test csproj copies into its output (``<None Include>``).
+
+    Tests read them under another name (``ReviewedV129.md``), so the path
+    never appears in the test source and rule 3 cannot find the readers.
+    """
+    linked: set[str] = set()
+    for csproj in sorted((root / "tests").glob("*/*.csproj")):
+        try:
+            text = csproj.read_text(encoding="utf-8")
+        except OSError:
+            continue
+        for include in _LINKED_INPUT_RE.findall(text):
+            target = (csproj.parent / include.replace("\\", "/")).resolve()
+            try:
+                linked.add(target.relative_to(root.resolve()).as_posix())
+            except ValueError:
+                continue
+    return linked
+
+
 def is_data_file(path: str) -> bool:
     """True for the JSON data files tests read at run time."""
     return any(path.startswith(f"{d}/") for d in DATA_DIRS) and path.endswith(".json")
@@ -585,9 +611,13 @@ def select_tests(changed, files, diffs=None) -> Selection:
             selection.run_all = True
             selection.reasons.append(f"balance input changed: {path}")
             continue
+        if path in linked_test_inputs():
+            selection.run_all = True
+            selection.reasons.append(f"file copied into a test project changed: {path}")
+            continue
         if path.startswith("tests/") and path.endswith(".cs"):
             # Rule 1: the test file itself changed.
-            selection.classes.update(declared_test_classes(content))
+            selection.classes.update(top_level_test_classes(content))
         if path.startswith("src/") and path.endswith(".cs") and content:
             # Rule 2 (+ the wide-type part of rule 4).
             types = declared_types(content)
@@ -618,7 +648,7 @@ def select_tests(changed, files, diffs=None) -> Selection:
                     continue
                 hits = set().union(*(mentions[c] for c in candidates - wide))
                 for tf in sorted(hits):
-                    selection.classes.update(declared_test_classes(files[tf]))
+                    selection.classes.update(top_level_test_classes(files[tf]))
                 continue
             if types:
                 hits = set().union(*(tests_mentioning(name) for name in types))
@@ -630,17 +660,17 @@ def select_tests(changed, files, diffs=None) -> Selection:
                     )
                 else:
                     for tf in hits:
-                        selection.classes.update(declared_test_classes(files[tf]))
+                        selection.classes.update(top_level_test_classes(files[tf]))
         if (is_data_file(path) or is_generated_cs(path)) and content is not None:
             # Rule 3: test files that reference the changed data/generated file.
             for tf in test_files:
                 if references_path(files[tf], path):
-                    selection.classes.update(declared_test_classes(files[tf]))
+                    selection.classes.update(top_level_test_classes(files[tf]))
 
     if selection.run_all:
         every = set()
         for tf in test_files:
-            every.update(declared_test_classes(files[tf]))
+            every.update(top_level_test_classes(files[tf]))
         selection.classes = every
     return selection
 
@@ -1051,7 +1081,7 @@ def main(argv=None) -> int:
         if args.list:
             classes = sorted(
                 {name for content in scan_test_files(root).values()
-                 for name in declared_test_classes(content)}
+                 for name in top_level_test_classes(content)}
             )
             for name in classes:
                 print(name)

@@ -15,6 +15,7 @@ namespace SodRpg.Mod
         private float _helloFirstSent = -1f, _nextHello;
         private bool _helloAnswered;
         private bool _hostCompatibilityWarned;
+        private bool _noReplyWarningJapanese;
         private bool _hostInfinityAvailable;
         private string _continueReceiptRunId, _continueReceiptCheckpointId, _continueReceiptResumeSession;
         private string _sentContinueReceiptRunId, _sentContinueReceiptCheckpointId, _sentContinueReceiptResumeSession;
@@ -80,6 +81,9 @@ namespace SodRpg.Mod
                 || Profile.Run?.RunId != runId || Profile.ContinueResumeSession != msg.continueResumeSession) return;
             if (_continueReceiptRunId == runId && _continueReceiptCheckpointId == msg.continueCheckpointId
                 && _continueReceiptResumeSession == msg.continueResumeSession) return;
+            // 復元状態を書き終えてから受領を通知する。保存先が無効な場合も通知しない。
+            // 失敗時は未通知のままにし、次のHelloで確認付き保存を再試行する。
+            if (!SaveNow(true)) return;
             _continueReceiptRunId = runId;
             _continueReceiptCheckpointId = msg.continueCheckpointId;
             _continueReceiptResumeSession = msg.continueResumeSession;
@@ -149,10 +153,15 @@ namespace SodRpg.Mod
                 if (_helloFirstSent < 0) _helloFirstSent = now;
                 _nextHello = now + 5f;
             }
-            if (!_helloAnswered && _helloFirstSent >= 0 && now - _helloFirstSent > 20f)
+            // 文は一度だけ作る（毎フレーム組み立て直さない）。表示言語が変わったときだけ作り直す。
+            if (!_helloAnswered && _helloFirstSent >= 0 && now - _helloFirstSent > 20f
+                && (HostVersionWarning == null || _noReplyWarningJapanese != Loc.Japanese))
+            {
+                _noReplyWarningJapanese = Loc.Japanese;
                 HostVersionWarning = Loc.T(
                     "ホストから Dreamforge の返事がありません。ホストがこの MOD の同じ版（" + HostAuthority.ModVersion + "）を入れているか確認してください。",
                     "No Dreamforge reply from the host. Make sure the host runs the same version of this mod (" + HostAuthority.ModVersion + ").");
+            }
         }
 
         private void OnHello(DreamforgeHelloMsg msg)

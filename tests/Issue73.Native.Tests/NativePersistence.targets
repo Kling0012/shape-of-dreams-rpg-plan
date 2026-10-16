@@ -75,7 +75,7 @@
 
   <Target Name="CompileGuestContinueReceipt" BeforeTargets="CoreCompile">
     <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/ClientSession.Hello.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)GuestContinueReceipt.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="ClientSession" Methods="RememberContinueReceipt;HasCurrentContinueReceipt;CreateHelloMessage;SendContinueReceiptBeforeBuild;ResetHello" />
-    <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/ClientSession.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)GuestContinueBuild.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="ClientSession" Methods="CurrentBuild;SendBuildIfNeeded" />
+    <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/ClientSession.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)GuestContinueBuild.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="ClientSession" Methods="CurrentBuild;SendBuildIfNeeded;RefreshForbiddenGearNotice" />
     <ItemGroup>
       <Compile Include="$(IntermediateOutputPath)GuestContinueReceipt.g.cs" />
       <Compile Include="$(IntermediateOutputPath)GuestContinueBuild.g.cs" />

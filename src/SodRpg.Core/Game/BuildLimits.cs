@@ -235,9 +235,18 @@ namespace SodRpg.Core.Game
         {
             var best = new int[budget + 1];
             foreach (var node in nodes)
-                if (!node.IsKeystone)
-                    for (int cost = budget; cost >= node.Cost; cost--)
-                        best[cost] = Math.Max(best[cost], checked(best[cost - node.Cost] + value(node)));
+            {
+                if (node.IsKeystone) continue;
+                // 値は星ごとに1回だけ読む。best は予算について単調なので、値0の星は結果を変えない（起動時の計算を短くする）。
+                int v = value(node);
+                if (v == 0) continue;
+                int w = node.Cost;
+                for (int cost = budget; cost >= w; cost--)
+                {
+                    int candidate = checked(best[cost - w] + v);
+                    if (candidate > best[cost]) best[cost] = candidate;
+                }
+            }
             // A traveler may hold up to KeystoneSlots.Max keystones (v2.0.2), each in addition to the star ranks.
             var withKeys = new int[KeystoneSlots.Max + 1][];
             withKeys[0] = best;
@@ -245,10 +254,11 @@ namespace SodRpg.Core.Game
             foreach (var node in nodes)
             {
                 if (!node.IsKeystone) continue;
+                int v = value(node);
                 for (int k = KeystoneSlots.Max - 1; k >= 0; k--)
                     for (int cost = budget; cost >= node.Cost; cost--)
                     {
-                        int candidate = checked(withKeys[k][cost - node.Cost] + value(node));
+                        int candidate = checked(withKeys[k][cost - node.Cost] + v);
                         if (candidate > withKeys[k + 1][cost]) withKeys[k + 1][cost] = candidate;
                     }
             }

@@ -20,6 +20,7 @@ namespace SodRpg.Mod
         private RoomOmen _roomOmen;
         private Room _omenRoom;
         private string _omenRunId;
+        private string _omensFailedRunId;
         private bool _omensFailed, _omenSetting;
         private float _nextOmenTick;
 
@@ -59,6 +60,12 @@ namespace SodRpg.Mod
             try
             {
                 var run = ClientSession.HostRun;
+                // ロビーを挟んでも同じホストが生き続けるため、失敗した遠征IDが変わったら再開する。
+                if (_omensFailed && run != null && run.RunId != _omensFailedRunId)
+                {
+                    _omensFailed = false;
+                    _omensFailedRunId = null;
+                }
                 if (_omensFailed || !RoomOmensEnabled || run == null)
                 {
                     if (_roomOmen != RoomOmen.None || _omenHeroes.Count > 0) ClearRoomOmen();
@@ -202,6 +209,7 @@ namespace SodRpg.Mod
         {
             if (_omensFailed) return;
             _omensFailed = true;
+            _omensFailedRunId = ClientSession.HostRun?.RunId;
             ClearRoomOmen();
             Log.Warn("Room Omens disabled; other MOD features remain active: " + error.Message);
         }

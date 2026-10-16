@@ -1511,7 +1511,8 @@ namespace SodRpg.Mod
                 // 記憶の井戸で先頭の固有効果が変わると、数・Scoreが同じでもエピックの銘が変わる。
                 stateHash = stateHash * 31 + (r.Powers.Count > 0 ? (int)r.Powers[0].Power : 0);
             }
-            string key = _sortedKey.TryGetValue(id, out var k) ? k + ":" + _selected + ":" + _seenUids.Count + ":" + equipHash + ":" + stateHash + (Loc.Japanese ? ":j" : ":e") : null;
+            // 選択は行の文字に使わない（色だけ）。鍵に入れると行を押すたびに全行を作り直す。
+            string key = _sortedKey.TryGetValue(id, out var k) ? k + ":" + _seenUids.Count + ":" + equipHash + ":" + stateHash + (Loc.Japanese ? ":j" : ":e") : null;
             bool sameFusion = _rowFusionLevels.TryGetValue(id, out var fusionLevels) && fusionLevels.Count == list.Count;
             if (sameFusion)
                 for (int i = 0; i < list.Count; i++)
@@ -1523,10 +1524,14 @@ namespace SodRpg.Mod
             foreach (var relic in list) fusionLevels.Add(relic.FusionLevel);
             if (!_rowCache.TryGetValue(id, out var rows)) _rowCache[id] = rows = new List<string>();
             rows.Clear();
+            // 枠ごとの装着品は行ごとに保管庫を探さず、先に1回ずつ引いておく。
+            var equippedBySlot = new Relic[h.Equipped.Length];
+            for (int i = 0; i < equippedBySlot.Length; i++) equippedBySlot[i] = p.FindStash(h.Equipped[i]);
             foreach (var r in list)
             {
                 bool equipped = h.Equipped.Contains(r.Uid);
-                var cur = equipped ? null : Rules.EquippedRelic(p, hero, r.Slot);
+                int slot = (int)r.Slot;
+                var cur = equipped || slot < 0 || slot >= equippedBySlot.Length ? null : equippedBySlot[slot];
                 bool better = !equipped && (cur == null || r.Score > cur.Score);
                 string mark = equipped ? "<color=#ffe17a>★</color> " : better ? "<color=#7cf07c>▲</color> " : "";
                 string fresh = _seenUids.Contains(r.Uid) ? "" : " <color=#ffd24a><b>NEW</b></color>";
