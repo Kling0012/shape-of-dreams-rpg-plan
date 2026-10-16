@@ -99,6 +99,47 @@ namespace Issue73.Native.Tests
             Assert.Equal(Pacts.Get(pact).CurseStrength, Assert.Single(transport.Sent.Select(s => s.Message).OfType<DreamforgeCurseMsg>()).strength);
         }
 
+        [Fact]
+        public void Guest_does_not_open_the_next_choice_from_the_previous_segments_retained_delve()
+        {
+            Time.unscaledTime = 0;
+            NetworkServer.active = false;
+            NetworkClient.active = true;
+            InfinityMode.NativeSaveAgreement = true;
+            var player = new DewPlayer { guid = "stale-owner", playerName = "Guest" };
+            DewPlayer.local = player;
+            DewPlayer.gamePlayers.Add(player);
+            NetworkedManagerBase<GameManager>.softInstance = new GameManager { runId = "stale-run" };
+            NetworkedManagerBase<GameSettingsManager>.softInstance = new GameSettingsManager();
+            NetworkedManagerBase<ActorManager>.softInstance = new ActorManager { serverActor = new Actor() };
+            var profile = Profile.CreateNew(268);
+            Rules.BeginRun(profile, "stale-run");
+            var run = profile.Run;
+            // 前の区間で潜行を1回適用済み。ホストのボスの魂が済み、次の選択を待つ段階に入った。
+            run.Infinity = new InfinityRunState { Phase = InfinityPhase.AwaitingChoice, ChoiceRevision = 1, SegmentEpoch = 1, GraphEpoch = 1 };
+            var session = new ClientSession { Profile = profile, ActiveRunId = run.RunId };
+            typeof(ClientSession).GetField("_hostSession", Hidden).SetValue(null, session);
+            typeof(ClientSession).GetField("_zone", Hidden).SetValue(session, new ZoneManager { currentZoneIndex = 0 });
+            var progress = (RunChoiceProgress)typeof(ClientSession).GetField("_runChoiceProgress", Hidden).GetValue(session);
+            progress.BeginRun(run.RunId, 0);
+            Assert.False(session.CanChooseRunRules);
+            var waiting = RunChoiceSnapshot.Capture(run, 0, 0, 1, 1);
+            waiting.Generation = 1;
+            waiting.Settled = false;
+            // 潜行の決定は置き換わるまで設定に残る。その Before は前の区間の「選択待ち」のまま。
+            InfinityMode.PublishChoice(new InfinityMode.InfinityChoice {
+                RunId = run.RunId, Revision = 1, SegmentEpoch = 0, GraphEpoch = 0, Before = waiting,
+            });
+            Call(session, "TryOpenInfinityChoice");
+            Assert.False(run.AwaitingChoice);
+
+            InfinityMode.PublishChoice(new InfinityMode.InfinityChoice {
+                RunId = run.RunId, Revision = 2, SegmentEpoch = 1, GraphEpoch = 1, Before = waiting,
+            });
+            Call(session, "TryOpenInfinityChoice");
+            Assert.True(run.AwaitingChoice);
+        }
+
         private static void Call(ClientSession session, string method) =>
             typeof(ClientSession).GetMethod(method, Hidden).Invoke(session, null);
     }

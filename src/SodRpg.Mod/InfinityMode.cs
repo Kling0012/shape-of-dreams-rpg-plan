@@ -952,7 +952,8 @@ namespace SodRpg.Mod
                 if (state.RoomEpoch == long.MaxValue)
                 { InfinityMode.DisableFeature("Infinity room epoch exhausted."); return; }
                 state.RoomEpoch++;
-                InfinityMode.WriteEnvelope();
+                // 遠征側に Infinity の状態があれば PersistHostInfinityState が書き込むので、二重に直列化・送信しない。
+                if (ClientSession.HostRun?.Infinity == null) InfinityMode.WriteEnvelope();
                 ClientSession.PersistHostInfinityState();
             }
             catch (Exception ex) { InfinityMode.InterceptionFailed(nameof(InfinityRoomIdentity), ex); }

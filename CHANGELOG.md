@@ -8,6 +8,7 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
+- インフィニティの協力プレイで、前の区間の潜行の決定が残っていると、ゲストがホストより先に次の選択画面を開いてしまうことがあった問題を修正。部屋ごとの状態の書き込みと送信が2回行われていたのを1回に。 / Infinity guests no longer open the next choice early from the previous segment's retained delve decision; the per-room state envelope is written and broadcast once instead of twice.
 ---
 
 ## v2.10.60 — Co-op trade messages in each player's language（2026-10-16）
