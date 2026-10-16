@@ -43,6 +43,7 @@
     "lacerta.run.g1/growth/cap": 60,
     "lacerta.run.g1/growth/effects/0/amount": 0.8,
     "lacerta.run.g1/growth/effects/1/amount": 0.5,
+    "lacerta.run.g1/growth/effects/2/amount": 0.3,
     "lacerta.run.g1/growth/threshold": 1,
     "lacerta.run.m1/growth/capBonus": 20,
     "lacerta.run.m1/growth/effectPct": 0,
