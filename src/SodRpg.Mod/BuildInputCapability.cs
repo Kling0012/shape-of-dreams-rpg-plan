@@ -69,6 +69,8 @@ namespace SodRpg.Mod
             if (msg == null || msg.version != 1) return;
             _hostNetLite = msg.netLite == 1 && _netLiteReceiveReady;
             // 応答が一度でも届いたら確定する（旧ホストはこの欄を返さず 0 のまま）。
+            // 下の _hostBuildInputCapability による早期 return より前に処理し、
+            // 通常の能力応答を受信済みでも、遅れて届いた禁忌装備対応の宣言で警告を解除する。
             if (msg.forbiddenInput == 1 && !_hostForbiddenInput)
             {
                 _hostForbiddenInput = true;
