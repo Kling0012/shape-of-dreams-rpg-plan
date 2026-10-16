@@ -386,7 +386,7 @@ PR #509 のレビューで挙がった軽微な改善（Issue #551）。`ClientS
 - `DOTNET_ROLL_FORWARD=Major dotnet test tests/Issue73.Native.Tests/Issue73.Native.Tests.csproj -c Release --nologo --filter "FullyQualifiedName~SatchelOverflowSaveTests|FullyQualifiedName~LobbyReturnTests|FullyQualifiedName~HostCoopTradeTests|FullyQualifiedName~TradeSendExceptionTests"`：20成功・0失敗・0スキップ（保存と `TickPeriodicSave` を使う関連スイート）。
 - `DOTNET_ROLL_FORWARD=Major dotnet test tests/SodRpg.Core.Tests/SodRpg.Core.Tests.csproj -c Release -p:PythonCommand=python3 --nologo --filter "FullyQualifiedName~AsyncProfileWriterTests|FullyQualifiedName~ProfileResetV127Tests|FullyQualifiedName~ProfileStoreRoundtripIssue429Tests|FullyQualifiedName~Issue73LedgerTests|FullyQualifiedName~OnboardingTests"`：28成功・0失敗・0スキップ。
 - `dotnet build src/SodRpg.Core -c Release --nologo -v:quiet`：エラー0・警告0。`dotnet build src/SodRpg.Mod/SodRpg.Mod.csproj -c Release '-p:GameDir=/home/wang/dev/sod-gamedata/Shape of Dreams' -p:ModDeployDir=/tmp/gh-auto-moddeploy-issue551-fix --nologo -v:minimal`：エラー0・警告6（既存と同じ6件）。
-- `git diff --check`：成功。
+- `git diff --check HEAD^ HEAD`：修正コミット単体は成功。PR 全体（base `0e7c820e` から）は `docs/dreamforge-handoff.md` の追加行の行末 CRLF のみを指摘する（同ファイルの既存改行形式によるもの）。
 
 **未実行**：上記の保留中の回帰テスト（表示消失・古いエラー競合・言語切替キャッシュ）は新規テスト禁止のためこの変更では書いていない。言語切替後の表示は getter と条件分岐のソース追跡およびスクラッチでの `ProfileWriteException.Message` 確認、優先順位は上記のスクラッチ状態遷移による確認にとどまる。Unity実機での表示はゲーム実行環境がないため未確認。フルテスト・Slowテスト（`tools/test_changed.py --all`）は後続工程に委ねる。
 
