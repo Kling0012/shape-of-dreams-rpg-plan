@@ -8,8 +8,27 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
-### 修正 / Fixes
-- インフィニティ：周期に足りない小さな地図（純白の道など）で最初の周期からボスへ繰り上がると、保存データが読み込めなくなる（バックアップや新しいプロフィールに戻る）問題を修正。案内の「初期の遺物を3つ」を実際に配る数（6つ）に直し、星図の上限ポイント・到達刻印の必要ポイントも実際の値から表示する。 / Infinity: a first-cycle finale promotion on a short graph no longer makes the save unreadable; the welcome hint now states the real starter relic count (6), and hint numbers come from the shared constants.
+---
+
+## v3.2.3 — Fixes for Pure White Dream profile switching, F6 language saving, and Infinity boss saves（2026-10-17）
+
+この版は、純白の夢に勝ったあとプロフィールを切り替えられなくなる問題、F6 メニューで切り替えた言語が次回起動時に元へ戻る問題、インフィニティでボスに繰り上がったあとに保存や協力プレイの同期が失敗する問題を直す更新です。インフィニティの案内に出る数値も実際の値に揃えました。 / This update fixes being unable to switch profiles after winning the Pure White Dream, the language chosen in the F6 menu reverting on the next launch, and saving and co-op syncing failing after Infinity moves you up to the boss. It also makes the numbers in the Infinity guide match the actual values.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- 純白の夢に勝ったあと、終わったはずの遠征の結果がまだ反映されていない扱いのまま残っていた問題を直しました。ホストでも参加者でも起きており、保存してゲームを再起動してもこの状態が続いたため、プロフィールを切り替えられませんでした。その結果、次の遠征が以前のプロフィールに記録されることもありました。これからは、勝利後もプロフィールを普段どおり切り替えられ、次の遠征は選んだプロフィールに記録されます。 / Fixed an issue where, after winning the Pure White Dream, the finished run was still treated as having a result waiting to be applied. This happened for both the host and other players, and it continued even after saving and restarting the game, so you could not switch profiles. As a result, your next run could also be recorded to your previous profile. You can now switch profiles as usual after the win, and your next run is recorded to the profile you chose.
+- F6 メニューの記録タブで言語を切り替えても、次にゲームを起動すると前の言語に戻っていた問題を直しました。これからは切り替えた時点で設定に保存され、次回の起動でも選んだ言語で表示されます。保存できなかった場合は、画面にその旨が表示されます。 / Fixed an issue where the language you switched to in the Records tab of the F6 menu went back to the previous language the next time you started the game. Your choice is now saved as soon as you switch, so the game starts in the language you picked. If saving fails, a message is shown on screen.
+- インフィニティで、周期に必要な数より小さい地図からボスへ繰り上がったあと、プロフィールの保存や読み込みに失敗していた問題を直しました。特に最初の周期で起きやすく、協力プレイでは参加者が進行状況を受け取れないこともありました。これからは、ボス戦の途中、次の選択を待っている間、その先の地図へ進んだあとも、保存して続きから遊べます。 / Fixed an issue in Infinity where saving or loading the profile failed after a map smaller than the cycle length moved you up to the boss. It happened most often in the first cycle, and in co-op, other players could fail to receive the run's progress. You can now save and continue during the boss fight, while waiting for the next choice, and after moving on to later maps.
+- 以前の版でこの状態になったセーブも、ボス戦や選択待ちなどの進行状況を保ったまま読み込めるようになりました。 / Saves that hit this issue in an earlier version now load correctly, keeping progress such as an ongoing boss fight or a pending choice.
+- インフィニティの案内に表示される初期遺物の数、星図の上限、到達刻印の条件を、日本語・英語とも実際の値と一致するように直しました。 / The starting relic count, Star Chart limit, and milestone mark conditions shown in the Infinity guide now match the actual values in both Japanese and English.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
 
 ---
 
