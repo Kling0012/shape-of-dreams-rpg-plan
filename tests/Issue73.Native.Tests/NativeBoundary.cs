@@ -783,7 +783,11 @@ namespace SodRpg.Mod
         internal static void Tick() { }
         internal static void DisableFeature(string reason) => throw new NotSupportedException(reason);
         internal static void CompleteReturn(InfinityRunState state) => throw new NotSupportedException();
-        internal static void AcknowledgeLocal(InfinityChoice choice) => throw new NotSupportedException();
+        // #528: ゲストの TickInfinity が AcknowledgeLocal を呼んだ回数を数える観測点。
+        // 本体では DreamforgeInfinityAckMsg をサーバーへ送るが、境界では送信そのものを再現しない。
+        internal static int AcknowledgeCalls;
+        internal static InfinityChoice LastAcknowledgedChoice;
+        internal static void AcknowledgeLocal(InfinityChoice choice) { AcknowledgeCalls++; LastAcknowledgedChoice = choice; }
         internal static bool PartyAcknowledged(InfinityChoice choice) => throw new NotSupportedException();
         internal static bool Regenerate(string intent) => throw new NotSupportedException();
         internal static void PublishChoice(InfinityChoice choice) => _choice = choice;
