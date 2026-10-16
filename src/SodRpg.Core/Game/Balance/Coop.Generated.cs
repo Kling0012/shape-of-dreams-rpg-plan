@@ -53,14 +53,14 @@ namespace SodRpg.Core.Game
             {
                 switch (hero)
                 {
-                    case "Hero_Aurena": return 1.0d;
+                    case "Hero_Aurena": return 0.95d;
                     case "Hero_Bismuth": return 1.0d;
                     case "Hero_Cetus": return 1.0d;
-                    case "Hero_Husk": return 1.0d;
+                    case "Hero_Husk": return 0.85d;
                     case "Hero_Lacerta": return 1.0d;
-                    case "Hero_Mist": return 1.0d;
+                    case "Hero_Mist": return 0.92d;
                     case "Hero_Nachia": return 1.0d;
-                    case "Hero_Vesper": return 1.0d;
+                    case "Hero_Vesper": return 0.92d;
                     case "Hero_Yubar": return 1.0d;
                     default: return 1d;
                 }
