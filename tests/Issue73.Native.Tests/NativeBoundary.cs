@@ -721,6 +721,7 @@ namespace SodRpg.Mod
         private bool _helloAnswered, _hostCompatibilityWarned, _hostInfinityAvailable;
         public string HostVersionWarning { get; private set; }
         private Build _buildCache;
+        private float _buildCacheTime;
         private string _buildCacheHero;
         private Hero _lastHero;
         private int _sentDreamLevel;
