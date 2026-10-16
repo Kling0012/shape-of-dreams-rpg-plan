@@ -967,10 +967,10 @@ def run_dotnet_test(root: Path, project: str, filter_expr: str | None,
     if slow:
         env["SODRPG_SLOW"] = "1"
     if no_build:
-        # A separate runner may have sources but not the earlier build outputs.
-        # Ask MSBuild for the path so custom output directories are honored too.
+        # A separate remote phase may not share the earlier build's outputs.
+        # Ask MSBuild for the path so custom output directories work as well.
         target = subprocess.run(
-            [dotnet, "msbuild", project, "-property:Configuration=Release",
+            [dotnet, "msbuild", project, "-nologo", "-property:Configuration=Release",
              "-getProperty:TargetPath"], cwd=str(root), env=env,
             stdin=subprocess.DEVNULL, capture_output=True, text=True,
             encoding="utf-8", errors="replace",
@@ -978,7 +978,9 @@ def run_dotnet_test(root: Path, project: str, filter_expr: str | None,
         if target.returncode != 0:
             return target.returncode, (target.stdout or "") + (target.stderr or "")
         target_path = target.stdout.strip()
-        if target_path and (root / target_path).is_file():
+        if not target_path:
+            return 1, f"MSBuild returned no TargetPath for {project}\n"
+        if (root / target_path).is_file():
             cmd.append("--no-build")
         else:
             print(f"build output missing for {project}; building before test",
