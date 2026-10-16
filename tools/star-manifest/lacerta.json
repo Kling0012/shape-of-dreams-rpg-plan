@@ -27468,6 +27468,65 @@
       "nameJa": "一番手の銃声",
       "nameEn": "Opening Shot",
       "notes": "表C: 既存核。基礎Power.OpeningStrike70を保持（代償は #47 で撤廃）。K1。"
+    },
+    {
+      "id": "lacerta.key.shared-sights",
+      "region": "keystone",
+      "cluster": "lacerta.key",
+      "shape": null,
+      "anchor": "lacerta.mem.powder.c2.x1",
+      "edges": [],
+      "requires": [
+        "lacerta.mem.powder.c2.x1"
+      ],
+      "requiresAny": [],
+      "kind": "Keystone",
+      "memory": null,
+      "value": null,
+      "param": null,
+      "receiver": null,
+      "target": null,
+      "gimmick": null,
+      "power": null,
+      "stat": null,
+      "options": null,
+      "keystone": {
+        "upside": "照準の共有 / Shared Sights",
+        "upsideSpec": [
+          {
+            "effect": "Coop",
+            "field": "Value",
+            "scope": "markSeconds",
+            "to": {
+              "valueRef": "lacerta.key.shared-sights/keystone/upsideSpec/0/to"
+            }
+          },
+          {
+            "effect": "Coop",
+            "field": "Value",
+            "scope": "allyDamagePercent",
+            "to": {
+              "valueRef": "lacerta.key.shared-sights/keystone/upsideSpec/1/to"
+            }
+          },
+          {
+            "effect": "Coop",
+            "field": "Value",
+            "scope": "memoryDamagePercent",
+            "to": {
+              "valueRef": "lacerta.key.shared-sights/keystone/upsideSpec/2/to"
+            }
+          }
+        ]
+      },
+      "mechanisms": [
+        "C07"
+      ],
+      "maxRank": 1,
+      "rankCost": 1,
+      "nameJa": "照準の共有",
+      "nameEn": "Shared Sights",
+      "notes": "同行の刻印。味方との協力距離係数を使用し、ソロでは発動しない。"
     }
   ]
 }

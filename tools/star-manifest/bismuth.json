@@ -21869,6 +21869,73 @@
       "nameJa": "自動詠唱の余波",
       "nameEn": "Autocast Echo",
       "notes": "NativeBismuthAutoCastは使用元をC07の条件へ渡さず、自動詠唱限定のダメージと4秒・3スタックのHasteは既存kindにない。NativeDamage+15%（手動を含む本体記憶）と常時スキル加速+12（4×3の最大値）へ置換。新kindや自動詠唱フックは追加しない。"
+    },
+    {
+      "id": "bismuth.key.shared-crystal-field",
+      "region": "keystone",
+      "cluster": "bismuth.key",
+      "shape": null,
+      "anchor": "bismuth.mem.innocence.c3.q",
+      "edges": [],
+      "requires": [
+        "bismuth.mem.innocence.c3.q"
+      ],
+      "requiresAny": [],
+      "kind": "Keystone",
+      "memory": null,
+      "value": null,
+      "param": null,
+      "receiver": null,
+      "target": null,
+      "gimmick": null,
+      "power": null,
+      "stat": null,
+      "options": null,
+      "keystone": {
+        "upside": "結晶の共有域 / Shared Crystal Field",
+        "upsideSpec": [
+          {
+            "effect": "Coop",
+            "field": "Value",
+            "scope": "haste",
+            "to": {
+              "valueRef": "bismuth.key.shared-crystal-field/keystone/upsideSpec/0/to"
+            }
+          },
+          {
+            "effect": "Coop",
+            "field": "Value",
+            "scope": "allyDamagePercent",
+            "to": {
+              "valueRef": "bismuth.key.shared-crystal-field/keystone/upsideSpec/1/to"
+            }
+          },
+          {
+            "effect": "Coop",
+            "field": "Value",
+            "scope": "damagePercent",
+            "to": {
+              "valueRef": "bismuth.key.shared-crystal-field/keystone/upsideSpec/2/to"
+            }
+          },
+          {
+            "effect": "Coop",
+            "field": "Value",
+            "scope": "seconds",
+            "to": {
+              "valueRef": "bismuth.key.shared-crystal-field/keystone/upsideSpec/3/to"
+            }
+          }
+        ]
+      },
+      "mechanisms": [
+        "C07"
+      ],
+      "maxRank": 1,
+      "rankCost": 1,
+      "nameJa": "結晶の共有域",
+      "nameEn": "Shared Crystal Field",
+      "notes": "同行の刻印。味方との協力距離係数を使用し、ソロでは発動しない。"
     }
   ]
 }

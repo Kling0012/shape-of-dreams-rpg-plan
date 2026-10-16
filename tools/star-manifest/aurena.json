@@ -23152,6 +23152,65 @@
       "nameJa": "連鎖の鼓動",
       "nameEn": "Reaction Pulse",
       "notes": "元素反応による加速+6・4秒・3スタックは既存kindにないため、常時スキル加速+12へ置換。最大18の約2/3稼働相当を目安とした。"
+    },
+    {
+      "id": "aurena.key.golden-trust",
+      "region": "keystone",
+      "cluster": "aurena.key",
+      "shape": null,
+      "anchor": "aurena.mem.claw.c1.q",
+      "edges": [],
+      "requires": [
+        "aurena.mem.claw.c1.q"
+      ],
+      "requiresAny": [],
+      "kind": "Keystone",
+      "memory": null,
+      "value": null,
+      "param": null,
+      "receiver": null,
+      "target": null,
+      "gimmick": null,
+      "power": null,
+      "stat": null,
+      "options": null,
+      "keystone": {
+        "upside": "黄金の託し / Golden Trust",
+        "upsideSpec": [
+          {
+            "effect": "Coop",
+            "field": "Value",
+            "scope": "damagePercent",
+            "to": {
+              "valueRef": "aurena.key.golden-trust/keystone/upsideSpec/0/to"
+            }
+          },
+          {
+            "effect": "Coop",
+            "field": "Value",
+            "scope": "seconds",
+            "to": {
+              "valueRef": "aurena.key.golden-trust/keystone/upsideSpec/1/to"
+            }
+          },
+          {
+            "effect": "Coop",
+            "field": "Value",
+            "scope": "healPercent",
+            "to": {
+              "valueRef": "aurena.key.golden-trust/keystone/upsideSpec/2/to"
+            }
+          }
+        ]
+      },
+      "mechanisms": [
+        "C07"
+      ],
+      "maxRank": 1,
+      "rankCost": 1,
+      "nameJa": "黄金の託し",
+      "nameEn": "Golden Trust",
+      "notes": "同行の刻印。味方との協力距離係数を使用し、ソロでは発動しない。"
     }
   ]
 }

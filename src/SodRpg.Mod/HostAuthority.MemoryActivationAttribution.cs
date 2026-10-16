@@ -528,9 +528,12 @@ namespace SodRpg.Mod
                 && source.owner == owner)
                 packet.Identity = _memoryAttribution.ProjectOwnedBasicSource(packet.Identity, "native.killing-flow.main");
         }
+        partial void EndCoopKeystonePacket(NativeAttributedDamagePacket.Packet packet);
+
         internal void EndAttributedDamagePacket(NativeAttributedDamagePacket.Packet packet)
         {
             if (packet == null) return;
+            EndCoopKeystonePacket(packet);
             for (int i = 0; i <= (int)MemoryEventKind.OwnedBasicAttackHit; i++)
                 if ((packet.Notifications & (1 << i)) != 0)
                     _memoryAttribution.ForgetNotification("native.publish", packet.Identity.Event((MemoryEventKind)i, packet.Serial, packet.NotificationVictim));

@@ -657,6 +657,11 @@ class Compiler:
             scope += ["payloadKind: KeystonePayloadKind.DirectedRecharge", "targetEffectSet: new[] { GimmickEffect.Recharge }"]
         elif effect in WARDS:
             scope.append("payloadKind: KeystonePayloadKind.AlliedWard")
+        elif effect == "Coop":
+            parameter = spec.get("scope")
+            if not parameter or field != "Value" or "to" not in spec:
+                self.fail(sid, path, spec, "Coop requires a named numeric Value setting")
+            scope += ["payloadKind: KeystonePayloadKind.Coop", "targetEffectIds: " + array([parameter])]
         elif effect == "RelayWindow":
             scope.append("payloadKind: KeystonePayloadKind.RelayWindow")
         elif effect == "PressureDividend":
@@ -692,7 +697,7 @@ class Compiler:
                 self.memory(sid, path + ".memories", memory, source=True)
             scope.append("sourceSelectors: new[] { " + ", ".join(selector(x) for x in spec["memories"]) + " }")
         named = spec.get("scope")
-        if named:
+        if named and effect != "Coop":
             if named == "equippedQR":
                 scope.append("sourceSelectors: new[] { MemorySelector.Parse(\"@Q|@R\") }")
             elif named == "star-map MD only":

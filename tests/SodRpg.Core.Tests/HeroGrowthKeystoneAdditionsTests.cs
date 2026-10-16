@@ -143,7 +143,7 @@ namespace SodRpg.Core.Tests
         }
 
         [Fact]
-        public void The_keystone_travelers_hold_eight_authored_keystones_with_the_same_rank_and_cost_rules()
+        public void The_keystone_travelers_hold_nine_authored_keystones_with_the_same_rank_and_cost_rules()
         {
             RegisterAll();
             foreach (string hero in KeystoneHeroes)
@@ -152,7 +152,7 @@ namespace SodRpg.Core.Tests
                 // 刻印領域の authored（移行でなく新設）の刻印だけを数える。移行の h.*.key は除く。
                 var keystones = tree.Where(t => t.IsKeystone && t.AuthoredStar != null && !t.AuthoredStar.RetainedLegacy
                     && t.AuthoredStar.Region.Kind == ClusterRegionKind.Keystone).ToArray();
-                Assert.Equal(8, keystones.Length);
+                Assert.Equal(9, keystones.Length); // 同行の刻印を各旅人に1個追加。
                 string prefix = hero.Substring("Hero_".Length).ToLowerInvariant() + ".key.";
                 var own = AddedKeystones.Where(id => id.StartsWith(prefix, StringComparison.Ordinal)).ToArray();
                 Assert.Equal(2, own.Length);
@@ -255,9 +255,9 @@ namespace SodRpg.Core.Tests
             // tools/star-manifest/validate.py の EXPECTED（各自の新設行）に、共有の外周169行と移行の authored 行を足した総数。
             var authoredTotals = new Dictionary<string, int>(StringComparer.Ordinal)
             {
-                ["Hero_Aurena"] = 729, ["Hero_Bismuth"] = 722, ["Hero_Cetus"] = 873, ["Hero_Husk"] = 861,
-                ["Hero_Lacerta"] = 851, ["Hero_Mist"] = 862, ["Hero_Nachia"] = 720, ["Hero_Vesper"] = 856,
-                ["Hero_Yubar"] = 855,
+                ["Hero_Aurena"] = 730, ["Hero_Bismuth"] = 723, ["Hero_Cetus"] = 874, ["Hero_Husk"] = 862,
+                ["Hero_Lacerta"] = 852, ["Hero_Mist"] = 863, ["Hero_Nachia"] = 721, ["Hero_Vesper"] = 857,
+                ["Hero_Yubar"] = 856,
             };
             foreach (string hero in StarClusters.GeneratedHeroes)
             {

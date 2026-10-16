@@ -258,8 +258,10 @@ namespace SodRpg.Core.Game
             bool hasScale = false;
             if (key.RetainedPower != Power.None)
                 lines.Add(Content.FormatPower(key.RetainedPower, key.RetainedPowerValue));
+            if (CoopKeystones.TryKind(key.KeystoneId, out _)) lines.Add(CoopKeystones.Describe(key));
             foreach (var transform in key.Upside)
             {
+                if (transform.Scope.PayloadKind == KeystonePayloadKind.Coop) continue;
                 string effect = KeystoneEffectText(transform);
                 lines.Add(Loc.Japanese ? KeystoneChangeJa(transform, effect) : effect + ": " + KeystoneChangeText(transform));
                 var scope = transform.Scope;

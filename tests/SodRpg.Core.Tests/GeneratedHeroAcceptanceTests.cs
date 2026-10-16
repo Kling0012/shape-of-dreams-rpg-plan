@@ -151,7 +151,7 @@ namespace SodRpg.Core.Tests
         private Played Play(string hero) => installed.Play(hero);
 
         [Fact]
-        public void All_90_generated_keystones_have_no_damage_or_wound_penalties_and_no_drawback_descriptions()
+        public void All_99_generated_keystones_have_no_damage_or_wound_penalties_and_no_drawback_descriptions()
         {
             int count = 0;
             bool previous = Loc.Japanese;
@@ -197,7 +197,7 @@ namespace SodRpg.Core.Tests
                             }
                         }
                     });
-                Assert.Equal(90, count);
+                Assert.Equal(99, count); // 9旅人へ同行の刻印を1個ずつ追加。
             }
             finally { Loc.Japanese = previous; }
         }

@@ -22512,6 +22512,57 @@
       "nameJa": "森の鼓動",
       "nameEn": "Heartbeat of the Grove",
       "notes": "本人の全撃破を起点とする召喚体回復・召喚体攻速バフは既存kindでは表現できないため、常時召喚威力+18%へ置換。撃破頻度に依存しない支援量として採用。"
+    },
+    {
+      "id": "nachia.key.pack-guard",
+      "region": "keystone",
+      "cluster": "nachia.key",
+      "shape": null,
+      "anchor": "nachia.mem.natures-whisper.c3.q",
+      "edges": [],
+      "requires": [
+        "nachia.mem.natures-whisper.c3.q"
+      ],
+      "requiresAny": [],
+      "kind": "Keystone",
+      "memory": null,
+      "value": null,
+      "param": null,
+      "receiver": null,
+      "target": null,
+      "gimmick": null,
+      "power": null,
+      "stat": null,
+      "options": null,
+      "keystone": {
+        "upside": "群れの番犬 / Pack Guard",
+        "upsideSpec": [
+          {
+            "effect": "Coop",
+            "field": "Value",
+            "scope": "powerPercent",
+            "to": {
+              "valueRef": "nachia.key.pack-guard/keystone/upsideSpec/0/to"
+            }
+          },
+          {
+            "effect": "Coop",
+            "field": "Value",
+            "scope": "seconds",
+            "to": {
+              "valueRef": "nachia.key.pack-guard/keystone/upsideSpec/1/to"
+            }
+          }
+        ]
+      },
+      "mechanisms": [
+        "C07"
+      ],
+      "maxRank": 1,
+      "rankCost": 1,
+      "nameJa": "群れの番犬",
+      "nameEn": "Pack Guard",
+      "notes": "同行の刻印。味方との協力距離係数を使用し、ソロでは発動しない。"
     }
   ]
 }

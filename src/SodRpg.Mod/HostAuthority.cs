@@ -922,6 +922,7 @@ namespace SodRpg.Mod
 
         private void OnZoneLoaded(EventInfoLoadZone info)
         {
+            ClearCoopKeystones();
             ClearAssignedMechanismTransients();
             _roomHasVariant = false;
             ClearZoneReactions();
@@ -1234,6 +1235,7 @@ namespace SodRpg.Mod
                 ClearNativeDeathHooks();
                 ClearKillAssists();
                 ClearSupportOverheal();
+                ClearCoopKeystones();
                 _am = am;
                 _spawnQueue.Clear();
                 _regen.Clear();
@@ -1312,6 +1314,7 @@ namespace SodRpg.Mod
             if (NativeInstance == this) NativeInstance = null;
             ReleasePowerShields();
             ClearSupportOverheal();
+            ClearCoopKeystones();
             ClearMeleeCoop();
             ClearNewPowerZone();
             ClearZoneGimmicksV129();
@@ -1659,6 +1662,7 @@ namespace SodRpg.Mod
             ScanMeleeCoop(rt, Alive(hero));
             rt.AppliedBuild = received;
             ConfigureAuthoredKeystone(hero, build);
+            ConfigureCoopKeystones(hero, build);
             ConfigureAuthoredMechanisms(hero, build);
             BindGoldSpend(rt);
             ApplyGemSlots(rt, build);
@@ -1707,6 +1711,7 @@ namespace SodRpg.Mod
             FlushBountyReports(rt);
             ClearBossEffects(rt);
             ForgetAssignedMechanismOwner(rt.Hero);
+            ForgetCoopKeystones(rt.Hero);
             if (restoreGemSlots) RestoreGemSlots(rt);
             StopMovementCharges(rt);
             UnhookNewPowers(rt);
@@ -2092,9 +2097,15 @@ namespace SodRpg.Mod
         /// <summary>鉄の輪・乱戦の敵数と、共鳴の距離判定（0.25秒ごと）。</summary>
         private readonly List<HeroRuntime> _scanList = new List<HeroRuntime>();
 
+        partial void ConfigureCoopKeystones(Hero hero, Build build);
+        partial void ScanCoopKeystones();
+        partial void ClearCoopKeystones();
+        partial void ForgetCoopKeystones(Hero hero);
+
         private void ScanArea()
         {
             ScanCoopDistances();
+            ScanCoopKeystones();
             PruneMeleeBreaks();
             var list = _scanList;
             list.Clear();

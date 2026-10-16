@@ -29476,6 +29476,81 @@
       "nameJa": "不安定な軌道",
       "nameEn": "Unstable Orbit",
       "notes": "通常攻撃4命中ごとの次の記憶の固定1秒短縮は既存kindにないため、常時スキル加速+15へ置換。通常攻撃頻度と記憶CDに依存するため価値は近似。"
+    },
+    {
+      "id": "yubar.key.resonant-stardust",
+      "region": "keystone",
+      "cluster": "yubar.key",
+      "shape": null,
+      "anchor": "yubar.mem.exotic-matter.c2.x",
+      "edges": [],
+      "requires": [
+        "yubar.mem.exotic-matter.c2.x"
+      ],
+      "requiresAny": [],
+      "kind": "Keystone",
+      "memory": null,
+      "value": null,
+      "param": null,
+      "receiver": null,
+      "target": null,
+      "gimmick": null,
+      "power": null,
+      "stat": null,
+      "options": null,
+      "keystone": {
+        "upside": "共鳴する星屑 / Resonant Stardust",
+        "upsideSpec": [
+          {
+            "effect": "Coop",
+            "field": "Value",
+            "scope": "contactSeconds",
+            "to": {
+              "valueRef": "yubar.key.resonant-stardust/keystone/upsideSpec/0/to"
+            }
+          },
+          {
+            "effect": "Coop",
+            "field": "Value",
+            "scope": "damagePercent",
+            "to": {
+              "valueRef": "yubar.key.resonant-stardust/keystone/upsideSpec/1/to"
+            }
+          },
+          {
+            "effect": "Coop",
+            "field": "Value",
+            "scope": "powerPercent",
+            "to": {
+              "valueRef": "yubar.key.resonant-stardust/keystone/upsideSpec/2/to"
+            }
+          },
+          {
+            "effect": "Coop",
+            "field": "Value",
+            "scope": "radius",
+            "to": {
+              "valueRef": "yubar.key.resonant-stardust/keystone/upsideSpec/3/to"
+            }
+          },
+          {
+            "effect": "Coop",
+            "field": "Value",
+            "scope": "cooldownSeconds",
+            "to": {
+              "valueRef": "yubar.key.resonant-stardust/keystone/upsideSpec/4/to"
+            }
+          }
+        ]
+      },
+      "mechanisms": [
+        "C07"
+      ],
+      "maxRank": 1,
+      "rankCost": 1,
+      "nameJa": "共鳴する星屑",
+      "nameEn": "Resonant Stardust",
+      "notes": "同行の刻印。味方との協力距離係数を使用し、ソロでは発動しない。"
     }
   ]
 }
