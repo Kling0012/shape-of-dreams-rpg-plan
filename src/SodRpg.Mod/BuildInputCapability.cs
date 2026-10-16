@@ -72,21 +72,15 @@ namespace SodRpg.Mod
             if (msg.forbiddenInput == 1 && !_hostForbiddenInput)
             {
                 _hostForbiddenInput = true;
+                // 20秒の期限後に対応が判明した場合も通知を解除し、装備を戻したビルドを送り直す。
+                _forbiddenGearStripNotice = false;
+                ForbiddenGearHostNotice = null;
                 _buildDirty = true;
                 _buildCacheFrame = -1;
             }
             if (msg.fusionInput == 1 && !_hostFusionInput)
             {
                 _hostFusionInput = true;
-                _buildDirty = true;
-                _buildCacheFrame = -1;
-            }
-            // 応答を待つ間に外した禁忌装備がある場合は、対応が分かった時点で通知を解除し、
-            // 装備を戻したビルドを送り直す（#415）。
-            if (_hostForbiddenInput && _forbiddenGearStripNotice)
-            {
-                _forbiddenGearStripNotice = false;
-                ForbiddenGearHostNotice = null;
                 _buildDirty = true;
                 _buildCacheFrame = -1;
             }

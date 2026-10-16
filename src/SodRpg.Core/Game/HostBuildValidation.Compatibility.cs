@@ -66,6 +66,10 @@ namespace SodRpg.Core.Game
             return copy;
         }
 
+        /// <summary>禁忌装備非対応の旧ホストが拒否する遺物。送信時の除外と参加者への通知で同じ判定を使う。</summary>
+        public static bool RequiresForbiddenGearSupport(Relic relic)
+            => relic != null && (relic.Forbidden != null || relic.Retunes > Content.MaxRetunes);
+
         /// <summary>
         /// 禁忌化（#415）を解釈できない旧ホストへの送信用に、旧ホストが拒否する遺物を装備から外したコピーを作る。
         /// 対象は禁忌化した遺物（15欄形式を読めない）と、旧上限（Content.MaxRetunes）を超えて再調律した遺物
@@ -75,12 +79,11 @@ namespace SodRpg.Core.Game
         /// </summary>
         public static Profile WithoutUnsupportedGear(Profile profile, string heroKey)
         {
-            bool Stripped(Relic r) => r != null && (r.Forbidden != null || r.Retunes > Content.MaxRetunes);
             var source = profile.Hero(heroKey);
             bool any = false;
             foreach (string uid in source.Equipped)
             {
-                if (uid != null && Stripped(profile.FindStash(uid))) { any = true; break; }
+                if (uid != null && RequiresForbiddenGearSupport(profile.FindStash(uid))) { any = true; break; }
             }
             if (!any) return profile;
             var snapshot = profile.Clone();
@@ -88,7 +91,7 @@ namespace SodRpg.Core.Game
             for (int slot = 0; slot < hero.Equipped.Length; slot++)
             {
                 string uid = hero.Equipped[slot];
-                if (uid != null && Stripped(snapshot.FindStash(uid))) hero.Equipped[slot] = null;
+                if (uid != null && RequiresForbiddenGearSupport(snapshot.FindStash(uid))) hero.Equipped[slot] = null;
             }
             return snapshot;
         }
