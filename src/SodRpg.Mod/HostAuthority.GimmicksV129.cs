@@ -160,7 +160,7 @@ namespace SodRpg.Mod
                 requests[i] = request;
                 if (request.Entry.Def.Effect == GimmickEffect.Sap && victim != null) EnsureSapProcessor(victim);
                 if (request.Entry.Def.Effect == GimmickEffect.Primed)
-                    rt.Powers.PrimeNextBasic(Time.time, request.Entry.Def.ValuePercent, Gimmicks.Duration(request.Entry.Def, 5f));
+                    rt.Powers.PrimeNextBasic(Time.time, request.Entry.Def.ValuePercent, Gimmicks.Duration(request.Entry.Def, Gimmicks.PrimedSeconds));
             }
             }
             finally { ReturnMechanismDispatchBuffers(buffers); }
@@ -232,7 +232,7 @@ namespace SodRpg.Mod
             {
                 AwardModShield(rt, rt.Hero, ModShieldPoolKind.Ordinary,
                     SupportStats.AmplifyShield(rt.Hero.maxHealth * def.ValuePercent / 100f, rt.Powers.Build.Get(Stat.ShieldPower)),
-                    Gimmicks.Duration(def, 4f), request.Entry.Memory, pending.ShieldEquipmentEpoch);
+                    Gimmicks.Duration(def, Gimmicks.BuffDuration), request.Entry.Memory, pending.ShieldEquipmentEpoch);
                 return;
             }
             if (!Gimmicks.IsV129(def.Effect)) return;
@@ -251,7 +251,7 @@ namespace SodRpg.Mod
                         if (live)
                         {
                             state.Victims[target.GetInstanceID()] = target;
-                            float lifetime = Gimmicks.Duration(def, 3f);
+                            float lifetime = Gimmicks.Duration(def, Gimmicks.WoundSeconds);
                             float threeSecondAmount = high * def.ValuePercent / 100f * (def.EffectiveWoundTotal ? 3f / lifetime : 1f);
                             // The star payload is already ranked after its ordinary cap; rank only the safety budget here.
                             float maximumTotalDamage = high * (float)(Gimmicks.Cap(GimmickEffect.Wound) / 100m
@@ -269,7 +269,7 @@ namespace SodRpg.Mod
                         if (request.Damage > 0)
                         {
                             ListReturnHandle<Entity> handle;
-                            var enemies = DewPhysics.OverlapCircleAllEntities(out handle, pending.Center, Gimmicks.Radius(def, 8f), EnemyFilter, hero);
+                            var enemies = DewPhysics.OverlapCircleAllEntities(out handle, pending.Center, Gimmicks.Radius(def, Gimmicks.RicochetRadius), EnemyFilter, hero);
                             try
                             {
                                 int remaining = Gimmicks.TargetLimit(def);
@@ -287,11 +287,11 @@ namespace SodRpg.Mod
                         break;
                     case GimmickEffect.Siphon:
                         if (support == null) break;
-                        float heal = Math.Min(hero.maxHealth * 0.015f, SupportStats.AmplifyHeal(
+                        float heal = Math.Min(hero.maxHealth * Gimmicks.SiphonHealCapRatio, SupportStats.AmplifyHeal(
                             Gimmicks.SiphonHeal(request.Damage, hero.maxHealth, def.ValuePercent), rt.Powers.Build.Get(Stat.HealPower)));
                         if (heal <= 0) break;
                         support.Heal(heal).SetAmountModifiedBy(typeof(GimmickSiphonLimit)).Dispatch(hero);
-                        float allyRadius = Gimmicks.Radius(def, 10f);
+                        float allyRadius = Gimmicks.Radius(def, Gimmicks.AllyRadius);
                         if (def.Arg == 1)
                             foreach (var ally in _am.allHeroes)
                                 if (ally != hero && Alive(ally) && ally.GetRelation(hero) == EntityRelation.Ally
@@ -301,7 +301,7 @@ namespace SodRpg.Mod
                                     float allyCoefficient = (float)(def.EffectiveAllyValuePercent ?? def.EffectiveValueOrAuthored);
                                     float allyHeal = SupportStats.AmplifyHeal(Gimmicks.SiphonHeal(request.Damage, hero.maxHealth,
                                         allyCoefficient), rt.Powers.Build.Get(Stat.HealPower)) * 0.5f;
-                                    support.Heal(Math.Min(allyHeal, ally.maxHealth * 0.015f))
+                                    support.Heal(Math.Min(allyHeal, ally.maxHealth * Gimmicks.SiphonHealCapRatio))
                                         .SetAmountModifiedBy(typeof(GimmickSiphonLimit)).Dispatch(ally);
                                     CreditHealRestored(rt, ally, allyBefore);
                                 }
@@ -310,7 +310,7 @@ namespace SodRpg.Mod
                         if (support == null || request.TargetCount <= 0) break;
                         float amount = SupportStats.AmplifyShield(hero.maxHealth * Math.Min(Gimmicks.Cap(GimmickEffect.Rampart), def.ValuePercent)
                             * Math.Min(Gimmicks.TargetLimit(def), request.TargetCount) / 100f, rt.Powers.Build.Get(Stat.ShieldPower));
-                        float shieldDuration = Gimmicks.Duration(def, 4f);
+                        float shieldDuration = Gimmicks.Duration(def, Gimmicks.BuffDuration);
                         AwardModShield(rt, hero, ModShieldPoolKind.Rampart, amount, shieldDuration,
                             request.Entry.Memory, pending.ShieldEquipmentEpoch);
                         break;

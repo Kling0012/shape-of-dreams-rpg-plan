@@ -155,6 +155,13 @@ namespace SodRpg.Core.Game
         public const float MaxCooldown = 60f;
         public const float BuffDuration = 4f;
         public const float AreaRadius = 4f;
+        // 説明文と Mod の動作で同じ値を使う既定値（効果時間・半径の補正前）。
+        public const float WoundSeconds = 3f;
+        public const float PrimedSeconds = 5f;
+        public const float RicochetRadius = 8f;
+        public const float AllyRadius = 10f;
+        /// <summary>吸収（Siphon）の1回の回復の上限（最大HPに対する割合）。</summary>
+        public const float SiphonHealCapRatio = 0.015f;
 
         /// <summary>Finite transport/runtime ceilings cover all authored ranks, ordinary boosts and keystone upsides.</summary>
         public static int Cap(GimmickEffect effect)
@@ -296,7 +303,7 @@ namespace SodRpg.Core.Game
             string n = value.ToString("0.#######", CultureInfo.InvariantCulture);
             string duration = Duration(def, BuffDuration).ToString("0.#######", CultureInfo.InvariantCulture);
             string radius = Radius(def, AreaRadius).ToString("0.#######", CultureInfo.InvariantCulture);
-            string healRadius = Radius(def, 10f).ToString("0.#######", CultureInfo.InvariantCulture);
+            string healRadius = Radius(def, AllyRadius).ToString("0.#######", CultureInfo.InvariantCulture);
             if (Loc.Japanese) return DescribeJa(def, sourceText, value, n, duration, radius, healRadius, triggerText);
             string memory = sourceText;
             string trigger;

@@ -10,7 +10,7 @@ namespace SodRpg.Mod
         {
             if (!data.IsAmountModifiedBy(typeof(GimmickSiphonLimit)) || __instance == null) return;
             float amount = data.currentAmount;
-            float cap = __instance.maxHealth * 0.015f;
+            float cap = __instance.maxHealth * SodRpg.Core.Game.Gimmicks.SiphonHealCapRatio;
             if (amount > cap && amount > 0) data.ApplyReduction(1f - cap / amount);
         }
     }

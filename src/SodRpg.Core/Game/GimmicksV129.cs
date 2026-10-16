@@ -42,15 +42,17 @@ namespace SodRpg.Core.Game
             }
         }
 
+        private static readonly string SiphonCapText = ((decimal)SiphonHealCapRatio * 100m).ToString("0.#######", CultureInfo.InvariantCulture);
+
         private static string DescribeV129(GimmickDef def, string memory, int ranks, string triggerText = null)
         {
             decimal value = Math.Min(def.Value * ranks, Cap(def.Effect));
             string n = value.ToString("0.#######", CultureInfo.InvariantCulture), text;
             string duration = Duration(def, BuffDuration).ToString("0.#######", CultureInfo.InvariantCulture);
-            string woundDuration = Duration(def, 3f).ToString("0.#######", CultureInfo.InvariantCulture);
-            string primedDuration = Duration(def, 5f).ToString("0.#######", CultureInfo.InvariantCulture);
-            string ricochetRadius = Radius(def, 8f).ToString("0.#######", CultureInfo.InvariantCulture);
-            string allyRadius = Radius(def, 10f).ToString("0.#######", CultureInfo.InvariantCulture);
+            string woundDuration = Duration(def, WoundSeconds).ToString("0.#######", CultureInfo.InvariantCulture);
+            string primedDuration = Duration(def, PrimedSeconds).ToString("0.#######", CultureInfo.InvariantCulture);
+            string ricochetRadius = Radius(def, RicochetRadius).ToString("0.#######", CultureInfo.InvariantCulture);
+            string allyRadius = Radius(def, AllyRadius).ToString("0.#######", CultureInfo.InvariantCulture);
             int targets = TargetLimit(def);
             string maximumStun = Duration(def, Cap(GimmickEffect.Daze) / 10f).ToString("0.#######", CultureInfo.InvariantCulture);
             if (Loc.Japanese)
@@ -66,8 +68,8 @@ namespace SodRpg.Core.Game
                 case GimmickEffect.Ricochet:
                     text = "Ricochet damage +" + n + "% of the hit damage: damage up to " + targets + " other enemies within " + ricochetRadius + "m"; break;
                 case GimmickEffect.Siphon:
-                    text = "Healing +" + n + "% of that memory's direct damage: heal yourself (excluding damage over time; at most 1.5% of your maximum health per heal)"
-                        + (def.Arg == 1 ? "; allied travelers within " + allyRadius + "m receive half as much, capped at 1.5% of their own maximum health" : ""); break;
+                    text = "Healing +" + n + "% of that memory's direct damage: heal yourself (excluding damage over time; at most " + SiphonCapText + "% of your maximum health per heal)"
+                        + (def.Arg == 1 ? "; allied travelers within " + allyRadius + "m receive half as much, capped at " + SiphonCapText + "% of their own maximum health" : ""); break;
                 case GimmickEffect.Rampart:
                     text = "Shield +" + n + "% of maximum health per distinct enemy hit by this cast: lasts " + duration + " seconds (up to " + targets + " enemies and " + Cap(def.Effect) + "% per enemy; one pool separate from ordinary star shields, keeping the larger remaining or new amount and refreshing duration)"; break;
                 case GimmickEffect.Primed:
@@ -122,7 +124,7 @@ namespace SodRpg.Core.Game
                 case GimmickEffect.Siphon:
                     effect = def.Arg == 1 ? "その記憶の直接ダメージの" + n + "%分、自分を回復し、" + allyRadius + "m以内の味方旅人にはその半分を回復する"
                         : "その記憶の直接ダメージの" + n + "%分、自分を回復する";
-                    extra = "継続ダメージは対象外で、1回の回復量は" + (def.Arg == 1 ? "各自" : "自分") + "の最大HPの1.5%まで。";
+                    extra = "継続ダメージは対象外で、1回の回復量は" + (def.Arg == 1 ? "各自" : "自分") + "の最大HPの" + SiphonCapText + "%まで。";
                     break;
                 case GimmickEffect.Rampart:
                     effect = "同じ発動で命中した別々の敵1体につき、最大HPの" + n + "%の障壁を" + duration + "秒間得る";
@@ -162,7 +164,7 @@ namespace SodRpg.Core.Game
         public static float SiphonHeal(float damage, float maximumHealth, float percent)
         {
             if (!Finite(damage) || !Finite(maximumHealth) || !Finite(percent) || damage <= 0 || maximumHealth <= 0 || percent <= 0) return 0;
-            return Math.Min(damage * Math.Min(Cap(GimmickEffect.Siphon), percent) / 100f, maximumHealth * 0.015f);
+            return Math.Min(damage * Math.Min(Cap(GimmickEffect.Siphon), percent) / 100f, maximumHealth * SiphonHealCapRatio);
         }
 
         public static float AddedCritProbability(float currentChance, float percent)
