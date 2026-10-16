@@ -706,6 +706,8 @@ namespace SodRpg.Core.Game
             var best = p.LostAndFound.OrderByDescending(r => r.Score).First();
             p.LostAndFound.Remove(best);
             run.LostRecovered = true;
+            // 回収品は遠征の報告だけに数え、通算の発見統計や発見系の依頼には加算しない。
+            run.RelicsFound = SaturatingAdd(run.RelicsFound, 1);
             ev.Add(new GameEvent(EventKind.Recovered, Loc.T(
                 $"遺失物「{best.DisplayName}」を取り戻しました（まだ持ち帰っていません）",
                 $"Recovered lost relic \"{best.DisplayName}\" (unsecured)"), best.Rarity));
@@ -894,6 +896,7 @@ namespace SodRpg.Core.Game
                 {
                     var best = p.LostAndFound.OrderByDescending(r => r.Score).First();
                     p.LostAndFound.Remove(best);
+                    run.RelicsFound = SaturatingAdd(run.RelicsFound, 1);
                     ev.Add(new GameEvent(EventKind.Recovered, Loc.T($"迷い人の灯で、遺失物「{best.DisplayName}」を取り戻しました（まだ持ち帰っていません）。",
                         $"The lantern recovered the lost relic \"{best.DisplayName}\" (unsecured)."), best.Rarity));
                     AddToSatchel(p, best, trades);
@@ -1011,6 +1014,7 @@ namespace SodRpg.Core.Game
                     foreach (var relic in recovered)
                     {
                         p.LostAndFound.Remove(relic);
+                        run.RelicsFound = SaturatingAdd(run.RelicsFound, 1);
                         relic.Enhance = 0;
                         ev.Add(new GameEvent(EventKind.Recovered, Loc.T(
                             $"霊廟から「{relic.PlainName}」を回収しました。強化は0になり、まだ持ち帰っていません。",
