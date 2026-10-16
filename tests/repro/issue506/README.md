@@ -178,3 +178,29 @@ DOTNET_ROLL_FORWARD=Major dotnet test tests/SodRpg.Core.Tests/SodRpg.Core.Tests.
 - Unity実破棄コールバック・派生型へのHarmony実適用・fake-null・Mirror実通信: 本体実行環境なし。ソース経路と参照DLLビルドまでの確認。
 - 同時4096件の生存記録による上限警告・投射物の番号0除外・印登録拒否と空き後の再開: 既存テストに直接のケースがなく、新規テスト作成禁止のためコード点検まで。逐次4096回の解放漏れは上記再現テストで確認済み。
 - 全テストスイート、低速・タイミング依存の性能試験、他Issueの検証: 変更範囲に絞る指示に従い後工程へ残す。再読込テストの1件は既存のRelease/JIT理由のskip。
+
+## Startup CI の重複定義修正（2026-10-17）
+
+CI run `38982798048` の Startup ジョブは、PR の先端 `c7658151` 単体ではなく、main `1f67ee988d394e3d668890a1765d9101744c1152` とのマージ結果 `5f409cbf10188f7405ac661a4533d264e6dc362e` をビルドしていた。main とこのブランチがそれぞれ別の位置へ近接設定4フィールドと `ConfigureMeleeCoop` を追加したため、自動マージは成功しても C# の重複定義になる。作業ブランチ単体のビルド成功ではこの不具合を検出できなかった。
+
+`StartupGameApi.cs` の近接設定フィールドは `netCompact` の次、`ConfigureMeleeCoop` は `Detach` の次へ揃えた。値と引数は変更していない。この Issue 固有の `ConfigureBossNativeLifetimeDiagnostics` スタブは維持した。現在の main `acf1c241` も取り込み、更新履歴は双方の記載を残して競合を解消した。main との最終差分では近接設定と `ConfigureMeleeCoop` の追加差分が消え、診断スタブ1行だけが残る。
+
+### このラウンドで実行した検証
+
+- `gh pr view 524 --comments`、`gh pr diff 524`、`gh run view 38982798048 --log-failed --job 117247301877`（いずれも `-R Kling0012/shape-of-dreams-rpg-plan`）を確認。
+- **CI の失敗再現**: `git merge-tree --write-tree 1f67ee988d394e3d668890a1765d9101744c1152 c7658151` のマージツリーを `/tmp/issue506-ci-merge-before-2gs4bcgi/source` へ展開し、`dotnet build -c Release <展開先>/tests/SodRpg.Mod.Startup.Tests` を実行。**exit 1、報告と同じ CS0102 が4件・CS0111 が1件**。ログは同親ディレクトリの `build.log`。
+- **同じ CI ベースに対する修正後**: スタブ位置修正後の同ベースとのマージツリー `16552382ac0e819d537ef23ba1264df15d0bf46f` を `/tmp/issue506-ci-merge-after-fiom2a98/source` へ展開し、同じ `dotnet build -c Release <展開先>/tests/SodRpg.Mod.Startup.Tests` を実行。**exit 0、39警告・エラー0**。ログは同親ディレクトリの `build.log`。
+- **現在の main 統合後**: `dotnet build -c Release tests/SodRpg.Mod.Startup.Tests` は **exit 0、39警告・エラー0**。`DOTNET_ROLL_FORWARD=Major dotnet test -c Release tests/SodRpg.Mod.Startup.Tests --no-build --filter 'FullyQualifiedName~NativeStartupTests|FullyQualifiedName~ModReloadTests|FullyQualifiedName~ReloadStartupTests|FullyQualifiedName~InfinityLobbyStartTests' --logger 'console;verbosity=minimal'` は **107成功・失敗0・既存skip1**。
+- **寿命管理の修正前比較**: `DOTNET_ROLL_FORWARD=Major dotnet test tests/SodRpg.Core.Tests/SodRpg.Core.Tests.csproj -c Release --filter FullyQualifiedName~BossNativeActorLifetimeReproTests --logger 'console;verbosity=detailed' -p:PythonCommand=python3 -v:q '-clp:ErrorsOnly;Summary' -p:CustomAfterMicrosoftCommonTargets=<worktree>/tests/SodRpg.Core.Tests/obj/issue506-pre-fix/PreFix.targets` は **exit 1、2成功・1失敗**。既存の修正前アダプタと再現テストを用い、非プール条件で `retained=4096, nextLife=0, nextMarks=0` を確認。ログは `tests/SodRpg.Core.Tests/obj/issue506-pre-fix/round-ci-pre-fix.log`。
+- **現在コードへの復帰**: `DOTNET_ROLL_FORWARD=Major dotnet build tests/SodRpg.Core.Tests/SodRpg.Core.Tests.csproj -c Release --no-incremental -p:PythonCommand=python3 -v:q '-clp:ErrorsOnly;Summary'` は **exit 0、110警告・エラー0**。続く `DOTNET_ROLL_FORWARD=Major dotnet test tests/SodRpg.Core.Tests/SodRpg.Core.Tests.csproj -c Release --no-build --filter FullyQualifiedName~BossNativeActorLifetimeReproTests --logger 'console;verbosity=detailed'` は **exit 0、3成功**。全条件で4096回終了後は0件、次の対象は寿命4097・印1件。
+- `DOTNET_ROLL_FORWARD=Major dotnet test tests/SodRpg.Core.Tests/SodRpg.Core.Tests.csproj -c Release --no-build --filter 'FullyQualifiedName~Boss&FullyQualifiedName!~BossNativeActorLifetimeReproTests' --logger 'console;verbosity=minimal'` は **exit 0、169成功**。
+- `dotnet build src/SodRpg.Mod/SodRpg.Mod.csproj -c Release '-p:GameDir=/home/wang/dev/sod-gamedata/Shape of Dreams' -p:ModDeployDir=/tmp/issue506-moddeploy -p:PythonCommand=python3 -v:q '-clp:ErrorsOnly;Summary'` は **exit 0、6警告・エラー0**。配置先は一時ディレクトリ。
+- 中間実行では `DOTNET_ROLL_FORWARD` なしのテストが .NET 8 不在により開始不能。インストール済み .NET 10 へのロールフォワード付きで上記対象テストを成功させた。また `dotnet test --no-incremental` は未対応引数で MSB1001 となったため、`dotnet build --no-incremental` と `dotnet test --no-build` に分けて実行した。
+- マージ時に旧先端に対して実行した `git diff --cached --check` は main 由来の既存 CRLF 行を末尾空白として検出した。`git diff --cached --check origin/main` と統合後の `git diff --check origin/main...HEAD` は成功し、この PR の変更行には該当しない。
+
+### このラウンドの未実行
+
+- 実ゲーム起動・長時間Infinity・高密度部屋・診断コマンドの実ログ推移（R5）、Unity実破棄・派生型Harmony適用・Mirror実通信: 明示された対象外の実機確認。
+- 同時4096件上限の警告・番号0の投射物除外・印登録拒否と解放後の再開の直接実行: 既存テストに該当ケースがなく、新規テスト禁止のためコード点検まで。
+- 全体・低速・性能スイート、その他のテストプロジェクト: 変更範囲に絞る指示に従い後工程へ残す。Startup の再読込1件は既存のRelease/JIT理由でskip。
+- GitHub Actions の修正後実行: push は後工程が行うため未実行。同じ失敗ベースと現在の main との統合結果はローカルでビルド確認済み。
