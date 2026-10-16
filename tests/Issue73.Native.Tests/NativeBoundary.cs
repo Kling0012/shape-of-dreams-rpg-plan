@@ -955,6 +955,7 @@ namespace SodRpg.Mod
             return false;
         }
         private void InitializeInfinityRun() { }
+        private void EnsureReachableBounties() => Rules.ReplaceUnreachableBounties(Profile, solo: false);
         public float PressureHealthMultiplier { get; internal set; } = 1f;
         public float PressureDamageMultiplier { get; internal set; } = 1f;
         public float NightmareGearMultiplier { get; private set; }
