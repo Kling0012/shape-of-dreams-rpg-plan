@@ -1,5 +1,5 @@
-[b]Fixes profiles getting stuck after a Pure White Dream win, the F6 language setting not being saved, and Infinity save and co-op sync failures after moving up to the boss.[/b]
-[b]純白の夢の勝利後にプロフィールを切り替えられない問題、F6 の言語設定が保存されない問題、インフィニティでボスに繰り上がったあとの保存と協力プレイの同期の失敗を直しました。[/b]
+[b]The Star Offering event description now states that the Dream Depth XP multiplier applies to its Star XP.[/b]
+[b]出来事「星の捧げ物」の説明に、夢の深さの経験倍率が掛かることを書き加えました。[/b]
 
 [h1]Dreamforge RPG[/h1]
 Turns every run into part of a long RPG journey: relics you keep, a risky "secure or delve" choice at every zone, a star map per Traveler, a forge, and long-term goals. Co-op ready.
