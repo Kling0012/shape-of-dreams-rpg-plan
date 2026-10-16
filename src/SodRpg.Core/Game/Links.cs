@@ -248,6 +248,9 @@ namespace SodRpg.Core.Game
         }
 
         /// <summary>データとして正しいか。対象は既知で、1〜3つ、重複なし。記憶を使う効果には記憶が要る。</summary>
+        // Enum.IsDefined の代わり（ビルド計算のたびに連携ごとに呼ばれる）。
+        private static class DefinedKinds { internal static readonly HashSet<LinkKind> Set = new HashSet<LinkKind>((LinkKind[])Enum.GetValues(typeof(LinkKind))); }
+
         public static bool Validate(LinkDef link)
         {
             if (link == null || link.Requires == null) return false;
@@ -255,7 +258,7 @@ namespace SodRpg.Core.Game
             if (n < 1 || n > 3) return false;
             if (link.Kind == LinkKind.BossReward && (n != 1 || IsTraveler(link.Requires[0])
                 || link.ValueMilli < 1000 || link.ValueMilli > 3000 || link.ValueMilli % 1000 != 0)) return false;
-            if (link.Kind == LinkKind.None || !Enum.IsDefined(typeof(LinkKind), link.Kind)) return false;
+            if (link.Kind == LinkKind.None || !DefinedKinds.Set.Contains(link.Kind)) return false;
             bool hasMemory = false;
             for (int i = 0; i < n; i++)
             {

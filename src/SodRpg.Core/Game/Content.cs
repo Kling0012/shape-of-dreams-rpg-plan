@@ -5198,7 +5198,10 @@ namespace SodRpg.Core.Game
         public static IReadOnlyList<PowerRange> PowerPool(Slot slot) => PowerPools[slot];
 
         /// <summary>Direct conditional AD/AP powers may roll only on Epic or higher gear.</summary>
-        public static bool IsPowerDroppable(Power power) => Enum.IsDefined(typeof(Power), power)
+        // Enum.IsDefined は呼ぶたびに箱詰めと反射が走るので、定義済みの値は一度だけ集めておく（固有効果の抽選で候補ごとに呼ばれる）。
+        // 入れ子の型に置き、Content の静的初期化の順序に左右されないようにする。
+        private static class DefinedPowers { internal static readonly HashSet<Power> Set = new HashSet<Power>((Power[])Enum.GetValues(typeof(Power))); }
+        public static bool IsPowerDroppable(Power power) => DefinedPowers.Set.Contains(power)
             && power != Power.None && power != Power.ShadowStep && !CurrencyStars.IsPower(power);
         public static bool PowerAllowedForRarity(Power power, Rarity rarity) => IsPowerDroppable(power)
             && (rarity >= Rarity.Epic || !NewPowersV129.IsConditionalAttribute(power));
