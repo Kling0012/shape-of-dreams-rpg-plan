@@ -10,6 +10,25 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v2.10.56 — Test and documentation cleanup for co-op trading（2026-10-16）
+
+このバージョンでは、開発用のテストと文書を整理しました。ゲーム内の動作は変わりません。 / This version tidies up development tests and documentation. Nothing changes in gameplay.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 変更点 / Changes
+
+- 協力プレイでのアイテム交換に関わるテストと説明文書を整理しました。プレイヤーから見える動作は変わりません。 / Cleaned up tests and documentation related to item trading in co-op. Nothing changes for players.
+- 協力プレイでアイテム交換が止まる問題は、この版ではまだ修正されていません。 / The issue where item trading can stop in co-op is not yet fixed in this version.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
 ## v2.10.55 — Faster star map loading at startup（2026-10-16）
 
 このバージョンでは、ゲーム起動時に Dreamforge RPG の読み込みに時間がかかる問題を改善しました。 / This version reduces the time Dreamforge RPG takes to load when the game starts.
