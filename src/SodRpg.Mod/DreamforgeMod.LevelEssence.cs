@@ -48,6 +48,7 @@ namespace SodRpg.Mod
             config.levelEssenceEveryLevels = LevelEssenceSettings.ClampEveryLevels(config.levelEssenceEveryLevels);
             config.levelEssenceCap = LevelEssenceSettings.ClampCeiling(config.levelEssenceCap);
             ApplyLevelEssenceConfig();
+            ApplyAutoCastCoopConfig();
             try { SaveConfigsToDisk(); }
             catch (Exception ex)
             {

@@ -27,6 +27,7 @@ namespace SodRpg.Mod
         private void OnRoomOmenLoaded(EventInfoLoadRoom info)
         {
             _roomHasVariant = false;
+            ClearAutoCastContacts();
             RefreshRoomOmen(force: true);
         }
 

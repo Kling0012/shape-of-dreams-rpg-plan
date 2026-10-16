@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using HarmonyLib;
 using Mirror;
+using SodRpg.Core.Game;
 using UnityEngine;
 
 namespace SodRpg.Mod
@@ -53,9 +54,6 @@ namespace SodRpg.Mod
         private static bool Prefix(Se_Star_Bismuth_D_SkillHasteAndAutoCast __instance, float dt)
         {
             if (_disabled || BaseUpdate == null) return true;
-            // Unknown/older peers retain the native 0.2-second scan and behavior.
-            if (NetworkServer.active && DewPlayer.allHumanPlayers.Count > 1
-                && !AutocastPressure.AllPeersSupported) return true;
             try
             {
                 BaseUpdate(__instance, dt);
@@ -106,6 +104,14 @@ namespace SodRpg.Mod
             pressure = Mathf.Clamp01(Mathf.Max(pressure, graphics != null ? graphics.perfPressureStrength : 0f));
             float interval = Mathf.Lerp(0f, 0.3f, pressure);
             int castsPerSecond = Mathf.RoundToInt(Mathf.Lerp(MaxCastsPerSecond, MinCastsPerSecond, pressure));
+            bool coop = DewPlayer.allHumanPlayers.Count > 1;
+            // Host-side selection needs no guest update. Unknown peers keep native pacing
+            // even when the host opts out, as before the cooperative targeting change.
+            if (coop && (AutoCastCoopSettings.NativeCadence || !AutocastPressure.AllPeersSupported))
+            {
+                interval = Mathf.Max(interval, CoopBalance.AutoCastIntervalSeconds);
+                castsPerSecond = Math.Min(castsPerSecond, Mathf.FloorToInt(1f / CoopBalance.AutoCastIntervalSeconds));
+            }
             if (now - state.LastCastTime < interval) return;
 
             // A fixed ring enforces a rolling one-second cap without per-tick allocations.
@@ -135,13 +141,13 @@ namespace SodRpg.Mod
                     else
                     {
                         if (now < state.NextTargetSearchTime) continue;
-                        // Pool-backed query once per scan; select nearest without sorting or LINQ.
+                        // Pool-backed query once per scan; rank without sorting or LINQ.
                         if (!queried)
                         {
                             targets = DewPhysics.OverlapCircleAllEntities(out handle, hero.position, range);
                             queried = true;
                         }
-                        var target = FindTarget(hero, skill, targets, star.aiDetectDelay, now);
+                        var target = FindTarget(hero, skill, targets, star.aiDetectDelay, now, coop);
                         if (target == null) continue;
                         foundTarget = true;
                         info = skill.GetPredictedCastInfoToTarget(target, UnityEngine.Random.Range(0f, 0.5f));
@@ -184,10 +190,13 @@ namespace SodRpg.Mod
             return false;
         }
 
-        private static Entity FindTarget(Hero hero, SkillTrigger skill, List<Entity> targets, Vector2 aiDetectDelay, float now)
+        private static bool _targetPriorityFailed;
+
+        private static Entity FindTarget(Hero hero, SkillTrigger skill, List<Entity> targets, Vector2 aiDetectDelay, float now, bool coop)
         {
             Entity nearest = null;
             float nearestDistance = float.PositiveInfinity;
+            int bestPriority = int.MaxValue;
             float range = skill.currentConfig.effectiveRange;
             var center = hero.position;
             for (int i = 0; i < targets.Count; i++)
@@ -199,10 +208,24 @@ namespace SodRpg.Mod
                 float distance = delta.sqrMagnitude;
                 // Match the native overlap circle, including a target's collider at the range edge.
                 float overlapRange = range + target.Control.outerRadius;
-                if (delta.ToXY().sqrMagnitude > overlapRange * overlapRange || distance >= nearestDistance
+                if (delta.ToXY().sqrMagnitude > overlapRange * overlapRange) continue;
+                int priority = 1;
+                if (coop && !_targetPriorityFailed)
+                {
+                    try { priority = HostAuthority.NativeInstance?.AutoCastTargetPriority(hero, target, now) ?? 1; }
+                    catch (Exception ex)
+                    {
+                        _targetPriorityFailed = true;
+                        Log.Warn("Automatic casting target priority disabled; keeping nearest targeting: " + ex.Message);
+                        // Re-run once with nearest targeting, leaving cadence and casting active.
+                        return FindTarget(hero, skill, targets, aiDetectDelay, now, false);
+                    }
+                }
+                if (priority > bestPriority || priority == bestPriority && distance >= nearestDistance
                     || !skill.currentConfig.targetValidator.Evaluate(hero, target)) continue;
                 nearest = target;
                 nearestDistance = distance;
+                bestPriority = priority;
             }
             return nearest;
         }
