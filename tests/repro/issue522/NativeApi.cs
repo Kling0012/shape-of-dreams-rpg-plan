@@ -15,6 +15,8 @@ namespace UnityEngine
     internal static class Time { internal static float time; }
     internal class Component { internal T GetComponent<T>() where T : class => this as T; }
     internal sealed class GameObject { internal object Component; internal T GetComponent<T>() where T : class => Component as T; }
+    // 本番 MarkMeleeBreak の Debug.Assert 用。リリースビルドと同じく何もしない。
+    internal static class Debug { internal static void Assert(bool condition, string message) { } }
     internal sealed class RangeAttribute : Attribute { internal RangeAttribute(int min, int max) { } }
 }
 namespace UnityEngine.InputSystem { public enum Key { F6, F7, F8, F9 } }

@@ -5544,7 +5544,8 @@ namespace SodRpg.Core.Game
                     if (!DisplayMeleeRangeConversion) return Loc.T($"通常攻撃の射程 {sign}{v}%", $"Basic attack range {sign}{v}%");
                     {
                         int gain = TravelerCombat.RangeToSpeedGain(DisplayMeleeAttackSpeed, v);
-                        string gainSign = gain >= 0 ? "+" : "";
+                        // At the cap the gain is nothing: show "0%" without a sign so that reads at a glance (#542).
+                        string gainSign = gain > 0 ? "+" : "";
                         int cap = StatCap(Stat.AttackSpeedPct);
                         return Loc.T($"攻撃速度 {gainSign}{gain}%（近接のため射程 {sign}{v}% から変換。攻撃速度は合計{cap}%まで）",
                             $"Attack speed {gainSign}{gain}% (converted from {sign}{v}% range for melee; attack speed capped at {cap}% in total)");

@@ -91,7 +91,9 @@ internal static class Program
         ui.Draw();
         string text = Content.FormatStat(Stat.AttackRangePct, 30);
         float effective = rt.BaseBonus.attackSpeedPercentage - speed;
-        Contains("+" + Number(effective) + "%", text,
+        // 上限到達時は得るものが無いので符号なしの 0% になる（#542）。
+        string speedLabel = japanese ? "攻撃速度 " : "Attack speed ";
+        Contains(speedLabel + (effective > 0 ? "+" : "") + Number(effective) + "%", text,
             $"speed={speed}%, range=30%, multiplier={CoopBalance.RangeToSpeedMultiplier}, cap={Content.StatCap(Stat.AttackSpeedPct)}%, applied speed={rt.BaseBonus.attackSpeedPercentage}%");
     }
 
