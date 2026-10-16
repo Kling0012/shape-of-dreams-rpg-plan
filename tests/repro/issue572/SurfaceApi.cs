@@ -46,6 +46,7 @@ namespace SodRpg.Mod
 
         // One present party member is sufficient to reproduce PartyGearChanceMult's maximum.
         private double PartyGearChanceMult() => Nightmares.GearChanceMult(_build);
+        private Waypoints.Totals EnemyWaypointTotals(Monster monster) => ActiveWaypointTotals;
         internal NightmareAffix Roll(MonsterTier tier, int depth, double multiplier) =>
             RollWaypointNightmare(tier == MonsterTier.Boss ? new BossMonster() : new Monster(), tier, depth, multiplier);
     }

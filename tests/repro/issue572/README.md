@@ -14,6 +14,7 @@ python3 tests/repro/issue572/run.py
 - `DrawSecurePrompt` の実際の `CacheSecureText(...)` 呼び出しを使う。日替わり倍率の渡し方も本番と同じ。
 - `HostAuthority.ProcessSpawns` の `pressureMult` / `mult` の式、および `HostAuthority.Waypoints.RollWaypointNightmare` を変更せずに抽出する。
 - 確率曲線・装備倍率・夢の圧・道標・乱数・悪夢化抽選は、本物の `SodRpg.Core` を参照する。
+- #588でホストの抽選が `EnemyWaypointTotals` を参照する形になったため、通常モードだけを扱うこの境界にも同名の入口を置き、既存の共有道標を返す。ケース・期待値は変更しない。個人担当の解決はこのハーネスの検証対象外。
 - 参加者は1人。ホストのパーティ装備倍率の最大値はその1人の `GearChanceMult` になる。UI のセッション状態、ホストの保持状態、敵の型判定、色タグだけを狭い代替 API に置き換える。
 - 通常敵・エリート各20,000回の固定シード抽選を実行し、独立に計算した期待確率との差が2パーセントポイント以内であることも各ケースで確認する。抽選は描画前の一般的な悪夢化経路を対象とし、変種・宿敵の優先分岐は含めない。
 

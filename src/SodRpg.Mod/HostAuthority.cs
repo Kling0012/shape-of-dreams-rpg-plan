@@ -510,8 +510,10 @@ namespace SodRpg.Mod
                 _incomingBuilds.Remove(player);
                 RemoveBuildValidationPeer(player);
             }
+            // Infinity co-op keeps room pressure neutral to personal waypoints; assigned enemies add their owner's.
             var pressure = DreamPressure.Average(_pressureBuilds)
-                .WithRunModifiers(ClientSession.HostRun?.DreamDepth ?? 0, ActiveWaypointTotals.PressureMultiplier)
+                .WithRunModifiers(ClientSession.HostRun?.DreamDepth ?? 0,
+                    PersonalEnemyWaypointsRunning() ? 1 : ActiveWaypointTotals.PressureMultiplier)
                 .WithInfinityPressure(_infinityPressureStage);
             bool changed = pressure.HealthMultiplier != _pressure.HealthMultiplier
                 || pressure.DamageMultiplier != _pressure.DamageMultiplier;
@@ -998,12 +1000,13 @@ namespace SodRpg.Mod
                 {
                     Log.Error("Host: nemesis " + ex);
                 }
-                if (SpawnInitRules.SkipsDepthInit(depth, ActiveWaypointTotals.AllNightmares, ActiveWaypointTotals.NightmareChanceMultiplier)) continue;
+                var waypoint = EnemyWaypointTotals(m);
+                if (SpawnInitRules.SkipsDepthInit(depth, waypoint.AllNightmares, waypoint.NightmareChanceMultiplier)) continue;
                 try
                 {
                     ApplyDepthBonus(rt, tier, depth);
                     if (nemesis) continue;
-                    var variant = ActiveWaypointTotals.AllNightmares ? null : Variants.Roll(_rng, m.GetType().Name, depth, _roomHasVariant);
+                    var variant = waypoint.AllNightmares ? null : Variants.Roll(_rng, m.GetType().Name, depth, _roomHasVariant);
                     if (variant != null)
                     {
                         _roomHasVariant = true;
