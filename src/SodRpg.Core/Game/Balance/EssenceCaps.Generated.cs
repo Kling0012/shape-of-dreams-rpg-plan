@@ -4,23 +4,23 @@ namespace SodRpg.Core.Game
 {
     internal static class EssenceCapsBalance
     {
-        internal static readonly bool QualitySoftCapEnabled = true;
+        internal static readonly bool QualitySoftCapEnabled = false;
         internal const float QualityThreshold = 300f;
         internal const float QualityExcessDivisor = 3f;
         internal static readonly bool RicochetEnabled = true;
         internal const float RicochetMaxChance = 0.6f;
-        internal static readonly bool FeverEnabled = true;
+        internal static readonly bool FeverEnabled = false;
         internal const float FeverMaxDamageAmplification = 1.5f;
-        internal static readonly bool EmbertailEnabled = true;
+        internal static readonly bool EmbertailEnabled = false;
         internal const float EmbertailMaxCooldownReduction = 0.5f;
-        internal static readonly bool EpiphanyEnabled = true;
+        internal static readonly bool EpiphanyEnabled = false;
         internal const float EpiphanyMaxRefundFraction = 0.6f;
         internal static readonly bool MemoryReuseEnabled = true;
         internal const float MemoryReuseBaseCooldownFraction = 0.2f;
         internal const float MemoryReuseMinimumSeconds = 0.3f;
         internal static readonly bool CrystalCircuitEnabled = true;
         internal const float CrystalCircuitInternalCooldownSeconds = 0.5f;
-        internal static readonly bool MemoryHasteEnabled = true;
+        internal static readonly bool MemoryHasteEnabled = false;
         internal const float MemoryHasteMaxRemainingCooldownPercent = 60f;
     }
 }

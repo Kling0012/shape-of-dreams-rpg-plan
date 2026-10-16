@@ -13,6 +13,8 @@ namespace SodRpg.Mod.Startup.Tests
     // 実 NativeEssenceCaps / NativeMemoryReuse パッチ（a6ac439b・b8b8968d）を実 Harmony デトゥアで
     // 境界スタブに適用して確かめる。水晶回路と記憶加速は抽出した本体メソッド（Esscap.Native.cs）を直接駆動する。
     // 境界スタブは EssenceCapsNativeApi.cs の逆コンパイル基準で、実 DLL での動作確認ではない。
+    // 2026-10-16 方針変更で無効化した上限（qualitySoftCap・fever・embertail・epiphany・memoryHaste）は
+    // Prepare が false で飛ばされるので、本体値の素通しを確かめる。
     public sealed class EssenceCapsTests : IDisposable
     {
         private readonly Harmony owner = new Harmony("essence-caps-tests." + Guid.NewGuid().ToString("N"));
@@ -36,40 +38,39 @@ namespace SodRpg.Mod.Startup.Tests
                 owner.CreateClassProcessor(patchClass).Patch();
         }
 
-        /// <summary>品質ソフト上限: 300 までは線形、超えた分は 1/3 で効く。GemDefault 以外は無変更。</summary>
+        /// <summary>品質ソフト上限は無効（2026-10-16 方針変更）。パッチ適用後も本体どおりの線形のまま。</summary>
         [Fact]
-        public void QualitySoftCapStaysLinearTo300AndThirdsTheExcess()
+        public void QualitySoftCapDisabledKeepsTheVanillaLinearScaling()
         {
             var scaling = new ScalingValue { addedScalingPerLevel = 0.01f };
             const float added = 0.01f;
 
-            // 境界の品質 300（レベル 301）までは本体の線形式そのまま。
+            // 無効ならソフト上限の式に入らず、品質300超でも本体の線形式そのまま。
             Assert.Equal(1f + added * 0f, scaling.GetScalingMultiplier(1));
             Assert.Equal(1f + added * 300f, scaling.GetScalingMultiplier(301));
-            // 品質 600 → 有効値 300 + 300/3 = 400。
-            Assert.Equal(1f + added * (300f + (600f - 300f) / 3f), scaling.GetScalingMultiplier(601));
+            Assert.Equal(1f + added * 600f, scaling.GetScalingMultiplier(601));
 
-            // 宝石スケーリング以外には介入しない。
+            // 宝石スケーリング以外にも一切介入しない。
             scaling.leveling = LevelScaling.None;
             Assert.Equal(1f + added * 600f, scaling.GetScalingMultiplier(601));
         }
 
-        /// <summary>Frost と Mortality は品質ソフト上限の対象外で、効果値が線形のまま（b8b8968d）。</summary>
+        /// <summary>品質ソフト上限が無効の間は Frost・Mortality の免除パッチも入らない。全宝石が本体どおり。</summary>
         [Fact]
-        public void FrostAndMortalityGemsKeepLinearQualityScaling()
+        public void QualitySoftCapDisabledLeavesEveryGemOnTheVanillaValue()
         {
             var scaling = new ScalingValue { addedScalingPerLevel = 0.01f };
-            const float added = 0.01f;
-            const float linear = 1f + added * 600f;
-            const float softCapped = 1f + added * (300f + (600f - 300f) / 3f);
+            const float linear = 1f + 0.01f * 600f;
 
             var plain = new Gem_R_Ricochet { level = 601 };
             var frost = new Gem_R_Frost { level = 601 };
             var mortality = new Gem_R_Mortality { level = 601 };
 
-            Assert.Equal(softCapped, plain.GetValue(scaling));
+            Assert.Equal(linear, plain.GetValue(scaling));
             Assert.Equal(linear, frost.GetValue(scaling));
             Assert.Equal(linear, mortality.GetValue(scaling));
+            // 免除判定フラグも立ったままにならない（説明文のプレビューも本体どおりになる）。
+            Assert.False(NativeEssenceCaps.LinearQualityGem);
         }
 
         /// <summary>Ricochet の跳弾確率は 60% で頭打ち、60% 未満は変わらない。</summary>
@@ -83,48 +84,36 @@ namespace SodRpg.Mod.Startup.Tests
             Assert.Equal(0.4f, under.ricochetChance);
         }
 
-        /// <summary>Fever の与ダメージ増幅は +150% で頭打ち、それ未満は変わらない。</summary>
+        /// <summary>Fever の上限は無効。増幅値は本体どおりで頭打ちに入らない。</summary>
         [Fact]
-        public void FeverDamageAmplificationIsCappedAt150Percent()
+        public void FeverCapDisabledKeepsTheVanillaDamageAmplification()
         {
             var over = new Se_Gem_E_Fever_LivingBomb { damageAmp = 2.0f };
             var under = new Se_Gem_E_Fever_LivingBomb { damageAmp = 1.2f };
 
-            Assert.Equal(1.5f, over.GetDamageAmp());
+            Assert.Equal(2.0f, over.GetDamageAmp());
             Assert.Equal(1.2f, under.GetDamageAmp());
         }
 
-        /// <summary>Embertail の短縮は 50% で床付き。サーバ側だけで、それ未満・サーバ外は変わらない。</summary>
+        /// <summary>Embertail の上限は無効。サーバ側でも短縮の床付けに入らない。</summary>
         [Fact]
-        public void EmbertailCooldownReductionIsCappedAtFiftyPercent()
+        public void EmbertailCapDisabledKeepsTheVanillaCooldownMultiplier()
         {
-            var over = new Gem_L_Embertail();
-            var under = new Gem_L_Embertail();
-            over._bonus.cooldownMultiplier = 0.2f;
-            under._bonus.cooldownMultiplier = 0.8f;
-
             Mirror.NetworkServer.active = true;
-            over.ActiveLogicUpdate(0f);
-            under.ActiveLogicUpdate(0f);
-            Assert.Equal(0.5f, over._bonus.cooldownMultiplier);
-            Assert.Equal(0.8f, under._bonus.cooldownMultiplier);
-
-            // サーバでないときはクライアント側の本体挙動を変えない。
-            var client = new Gem_L_Embertail();
-            client._bonus.cooldownMultiplier = 0.2f;
-            Mirror.NetworkServer.active = false;
-            client.ActiveLogicUpdate(0f);
-            Assert.Equal(0.2f, client._bonus.cooldownMultiplier);
+            var host = new Gem_L_Embertail();
+            host._bonus.cooldownMultiplier = 0.2f;
+            host.ActiveLogicUpdate(0f);
+            Assert.Equal(0.2f, host._bonus.cooldownMultiplier);
         }
 
-        /// <summary>Epiphany の還元率は 60% で頭打ち、それ未満は変わらない。</summary>
+        /// <summary>Epiphany の上限は無効。還元率は本体どおりで頭打ちに入らない。</summary>
         [Fact]
-        public void EpiphanyRefundIsCappedAtSixtyPercent()
+        public void EpiphanyCapDisabledKeepsTheVanillaRefundRatio()
         {
             var over = new Gem_R_Epiphany { refundCooldownRatio = 0.8f };
             var under = new Gem_R_Epiphany { refundCooldownRatio = 0.5f };
 
-            Assert.Equal(0.6f, over.refundCooldownRatio);
+            Assert.Equal(0.8f, over.refundCooldownRatio);
             Assert.Equal(0.5f, under.refundCooldownRatio);
         }
 
@@ -239,16 +228,18 @@ namespace SodRpg.Mod.Startup.Tests
             Assert.Equal(0.15f, hero.RatioReductions[1].ratio);
         }
 
-        /// <summary>記憶加速: 連携と星を合算した1回の短縮は残りCDの 60% まで。60% 未満はそのまま通す。</summary>
+        /// <summary>記憶加速の上限は無効（2026-10-16 方針変更）。無効化前と同じ割合短縮が上限 100% のまま入り、
+        /// 残りCD基準の 60% 上限には入らない。</summary>
         [Fact]
-        public void MemoryHasteSingleReductionIsCappedAtSixtyPercent()
+        public void MemoryHasteCapDisabledAppliesTheUncappedRatioReduction()
         {
             Mirror.NetworkServer.active = true;
+            // 連携と星の合算 150%: 上限が有効なら残りCDの 60% だが、無効なら従来どおり最大100%の割合短縮。
             var host = NewHost(out var hero, out var memory, nativeHasteMilliPercent: 150000);
             host.InvokeOnSkillUseForTests(host._runtimes[hero], new EventInfoSkillUse { skill = memory, type = HeroSkillLocation.Q });
 
             Assert.Single(hero.RatioReductions);
-            Assert.Equal((memory, 0.6f, false), hero.RatioReductions[0]);
+            Assert.Equal((memory, 1f, false), hero.RatioReductions[0]);
 
             var modest = NewHost(out var hero2, out var memory2, nativeHasteMilliPercent: 40000);
             modest.InvokeOnSkillUseForTests(modest._runtimes[hero2], new EventInfoSkillUse { skill = memory2, type = HeroSkillLocation.Q });
