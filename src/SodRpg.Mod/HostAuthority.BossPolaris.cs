@@ -39,6 +39,9 @@ namespace SodRpg.Mod
         };
         private readonly BossObjectPool<PolarisCombat> _polarisPool = new BossObjectPool<PolarisCombat>(64, () => new PolarisCombat());
         private readonly Dictionary<HeroRuntime, PolarisCombat> _polarisCombat = new Dictionary<HeroRuntime, PolarisCombat>(64);
+        // 同じ部屋での装備の付け替え（preserveRewards）で状態を作り直しても、クールダウンは引き継ぐ。
+        // 並び：Ready[0..8]、GuardReady、StompReady、SixReady。部屋・死亡などの通常の解除で捨てる。
+        private readonly Dictionary<HeroRuntime, float[]> _polarisKeptCooldowns = new Dictionary<HeroRuntime, float[]>(64);
         private static float PolarisAmount(HeroRuntime rt, BossMoveEntry entry, BossMoveProfile profile, string channelId, bool maxHp = false)
             => Math.Max(0f, maxHp ? rt.Hero.maxHealth : Math.Max(rt.Hero.Status.attackDamage, rt.Hero.Status.abilityPower))
                 * BossCoefficient(entry, profile, channelId);
@@ -64,6 +67,12 @@ namespace SodRpg.Mod
             }
             if (mask == 0 || _polarisCombat.Count >= 64 || (state = _polarisPool.Rent()) == null) return null;
             state.Reset(); state.Mask = mask; _polarisCombat.Add(rt, state);
+            if (_polarisKeptCooldowns.TryGetValue(rt, out var kept))
+            {
+                _polarisKeptCooldowns.Remove(rt);
+                Array.Copy(kept, state.Ready, state.Ready.Length);
+                int n = state.Ready.Length; state.GuardReady = kept[n]; state.StompReady = kept[n + 1]; state.SixReady = kept[n + 2];
+            }
             return state;
         }
         private void DispatchPolarisBoss(HeroRuntime rt, BossEvent kind, long activation, Entity victim, Vector3 point, float now)
@@ -257,7 +266,15 @@ namespace SodRpg.Mod
         }
         private void ClearPolarisBoss(HeroRuntime rt, bool preserveRewards = false)
         {
+            if (!preserveRewards) _polarisKeptCooldowns.Remove(rt);
             if (!_polarisCombat.TryGetValue(rt, out var state)) return;
+            if (preserveRewards)
+            {
+                int n = state.Ready.Length;
+                var kept = new float[n + 3];
+                Array.Copy(state.Ready, kept, n); kept[n] = state.GuardReady; kept[n + 1] = state.StompReady; kept[n + 2] = state.SixReady;
+                _polarisKeptCooldowns[rt] = kept;
+            }
             float now = Time.time;
             PolarisClearSeal(rt, state, now); state.Cycle = 0; PolarisCycleVisual(rt, state, now); PolarisModeVisual(rt, state, now, true);
             for (int i = 0; i < PolarisProfiles.Length; i++)
