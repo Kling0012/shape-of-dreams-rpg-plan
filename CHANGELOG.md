@@ -8,6 +8,10 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
+### 修正 / Fixes
+
+- 保存中の例外が、以前の保存成功や書き込みエラーによって消えたり隠れたりする問題を修正。保存失敗中の表示文を再利用し、読み戻し・往復検証の不一致や保存停止の理由は表示時の言語に合わせます。 / Save exceptions are no longer cleared by an earlier successful save or hidden by an older write failure. Retry messages are reused, and read-back, round-trip validation and paused-save reasons follow the display language.
+
 ---
 
 ## v2.10.62 — Fix boss setup error and lighter hit processing（2026-10-16）

@@ -809,6 +809,8 @@ namespace SodRpg.Mod
         private string _infinitySaveHoldReleasedRun;
         private bool _infinityPendingPublication;
         private bool _dirty, _saveErrorFromWriteFailure;
+        private string _writeFailureText, _writeFailureSource;
+        private bool _writeFailureJapanese;
         private int _buildCacheFrame = -1, _saveCount;
         private double _saveMsTotal;
         public string SaveError { get; private set; }
