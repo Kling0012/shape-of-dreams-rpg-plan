@@ -1,5 +1,5 @@
-[b]A maintenance update that streamlines internal build and roll processing, with no changes to gameplay or numbers.[/b]
-[b]装備の集計と抽選の内部処理を整理した保守版で、ゲーム内の動きや数値に変更はありません。[/b]
+[b]Streamlines internal co-op kill-record processing and adds troubleshooting logs; no gameplay changes.[/b]
+[b]協力プレイの討伐記録の内部処理を整理し、調査用の記録を追加した保守版です。ゲーム内の動きに変わりはありません。[/b]
 
 [h1]Dreamforge RPG[/h1]
 Turns every run into part of a long RPG journey: relics you keep, a risky "secure or delve" choice at every zone, a star map per Traveler, a forge, and long-term goals. Co-op ready.
