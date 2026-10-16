@@ -54,8 +54,11 @@ namespace SodRpg.Mod
         {
             _enemyOwnershipEnabled = enabled;
             if (!enabled)
+            {
+                _summonGuardTargets.Clear();
                 foreach (var state in _enemyOwnership.Values)
                 { state.TauntHero = null; state.TauntUntil = 0f; }
+            }
             // The next scan/recalculation replaces personal pressure with room pressure.
         }
 
@@ -722,6 +725,7 @@ namespace SodRpg.Mod
         internal void ReleaseEnemyOwnership(Entity enemy)
         {
             if (ReferenceEquals(enemy, null)) return;
+            ReleaseSummonGuardTarget(enemy);
             CompleteDynamicSpawn(enemy);
             ReleaseDynamicEnemy(enemy);
             if (enemy is Monster monster) _bossNativeHealth.Remove(monster);
@@ -761,6 +765,8 @@ namespace SodRpg.Mod
 
         private void ClearEnemyOwnership()
         {
+            _summonGuardTargets.Clear();
+            _summonGuardScratch.Clear();
             _ownershipScratch.Clear();
             foreach (var enemy in _enemyOwnership.Keys) _ownershipScratch.Add(enemy);
             foreach (var enemy in _ownershipScratch) ReleaseEnemyOwnership(enemy);

@@ -733,6 +733,8 @@ namespace SodRpg.Mod
             public Hero Hero;
             public ReceivedBuild AppliedBuild;
             public readonly List<PendingGimmick> PendingGimmicks = new List<PendingGimmick>();
+            public readonly Dictionary<Summon, DataProcessor<DamageData, Actor, Entity>> Summons =
+                new Dictionary<Summon, DataProcessor<DamageData, Actor, Entity>>();
             public readonly Prunable Gimmicks = new Prunable(), PairCombos = new Prunable();
             // HostAuthority.cs の HeroRuntime と同じ行動不能保険の観測状態。
             public BasicEffect OrphanCrowdControl;

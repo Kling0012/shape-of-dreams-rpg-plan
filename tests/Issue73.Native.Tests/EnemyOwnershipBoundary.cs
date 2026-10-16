@@ -78,7 +78,11 @@ namespace SodRpg.Mod
         public int AggroCalls;
         public void Aggro(Entity target)
         {
-            if (HostAuthority.NativeInstance?.SelectOwnershipAggro(this, ref target) == false) return;
+            if (Mirror.NetworkServer.active)
+            {
+                HostAuthority.NativeInstance?.SelectSummonOwnershipAggro(this, ref target);
+                if (HostAuthority.NativeInstance?.SelectOwnershipAggro(this, ref target) == false) return;
+            }
             AggroCalls++;
             context.targetEnemy = target;
         }

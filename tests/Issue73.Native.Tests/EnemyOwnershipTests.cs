@@ -335,6 +335,135 @@ namespace Issue73.Native.Tests
             Assert.Empty(Log.Warnings);
         }
 
+        // ---- 群れの番犬の指示 ----
+
+        private static object PackGuard(HostAuthority host, Hero nachia, params Summon[] summons)
+        {
+            var runtime = new HostAuthority.HeroRuntime { Hero = nachia };
+            foreach (var summon in summons) runtime.Summons.Add(summon, null);
+            ((Dictionary<Hero, HostAuthority.HeroRuntime>)Get(host, "_runtimes"))[nachia] = runtime;
+            var state = Activator.CreateInstance(typeof(HostAuthority).GetNestedType("CoopKeyState", Hidden), true);
+            Set(state, "Hero", nachia);
+            Call(host, "CoopGuardTarget", state);
+            return state;
+        }
+
+        [Fact]
+        public void Pack_guard_command_survives_owned_enemy_preference_and_native_retargeting()
+        {
+            var host = Host(out _);
+            var ally = Player(5);
+            var nachia = Player(9);
+            ally.hero.currentHealth = 20f;
+            var threat = Threat(host, 100, ally.hero); // 味方の担当・保護中。
+            var owned = Spawn(host, 101); // ナキアの担当。
+            var actors = new ActorManager();
+            actors.allHeroes.AddRange(new[] { ally.hero, nachia.hero });
+            actors.allEntities.AddRange(new[] { owned, threat });
+            Set(host, "_am", actors);
+            var summon = new Summon { hero = nachia.hero };
+            summon.AI = new EntityAI { entity = summon };
+
+            var state = PackGuard(host, nachia.hero, summon);
+            Assert.Same(threat, summon.AI.context.targetEnemy); // 番犬 → Aggro の実際の経路。
+            threat.AI.context.targetEnemy = null; // 本体が再標的しても走査間隔内は指示を保つ。
+            Time.time += 0.24f;
+            summon.AI.Aggro(owned);
+            Assert.Same(threat, summon.AI.context.targetEnemy);
+
+            threat.AI.context.targetEnemy = ally.hero;
+            int calls = summon.AI.AggroCalls;
+            Call(host, "CoopGuardTarget", state); // 同じ標的でも期限は更新する。
+            Assert.Equal(calls, summon.AI.AggroCalls);
+            Time.time += 0.24f;
+            summon.AI.Aggro(owned);
+            Assert.Same(threat, summon.AI.context.targetEnemy);
+            Assert.Empty(Log.Warnings);
+        }
+
+        [Fact]
+        public void Pack_guard_expiry_invalid_target_and_pool_release_restore_owned_enemy_preference()
+        {
+            var host = Host(out _);
+            var ally = Player(5);
+            var nachia = Player(9);
+            var threat = Threat(host, 100, ally.hero);
+            var owned = Spawn(host, 101);
+            var actors = new ActorManager();
+            actors.allHeroes.AddRange(new[] { ally.hero, nachia.hero });
+            actors.allEntities.AddRange(new[] { owned, threat });
+            Set(host, "_am", actors);
+            var summon = new Summon { hero = nachia.hero };
+            summon.AI = new EntityAI { entity = summon };
+            var state = PackGuard(host, nachia.hero, summon);
+            Assert.Same(threat, summon.AI.context.targetEnemy);
+
+            Time.time += 0.25f;
+            summon.AI.Aggro(threat);
+            Assert.Same(owned, summon.AI.context.targetEnemy); // 期限ちょうどで担当優先へ戻る。
+            Assert.Empty((IDictionary)Get(host, "_summonGuardTargets"));
+
+            Call(host, "CoopGuardTarget", state);
+            Assert.Same(threat, summon.AI.context.targetEnemy);
+            threat.isActive = false;
+            summon.AI.Aggro(threat);
+            Assert.Same(owned, summon.AI.context.targetEnemy);
+            Assert.Empty((IDictionary)Get(host, "_summonGuardTargets"));
+
+            threat.isActive = true;
+            Call(host, "CoopGuardTarget", state);
+            host.ReleaseEnemyOwnership(summon); // プール返却時に指示を持ち越さない。
+            Assert.Empty((IDictionary)Get(host, "_summonGuardTargets"));
+            summon.AI.Aggro(threat);
+            Assert.Same(owned, summon.AI.context.targetEnemy);
+            Call(host, "CoopGuardTarget", state);
+            host.ReleaseEnemyOwnership(threat); // 敵の再利用時も指示を持ち越さない。
+            Assert.Empty((IDictionary)Get(host, "_summonGuardTargets"));
+            Assert.Empty(Log.Warnings);
+        }
+
+        [Fact]
+        public void Pack_guard_leaves_uncommanded_summons_disabled_ownership_and_solo_unchanged()
+        {
+            var host = Host(out _);
+            var ally = Player(5);
+            var nachia = Player(9);
+            var threat = Threat(host, 100, ally.hero);
+            var owned = Spawn(host, 101);
+            var actors = new ActorManager();
+            actors.allHeroes.AddRange(new[] { ally.hero, nachia.hero });
+            actors.allEntities.AddRange(new[] { owned, threat });
+            Set(host, "_am", actors);
+            var summon = new Summon { hero = nachia.hero };
+            summon.AI = new EntityAI { entity = summon };
+            summon.AI.Aggro(threat);
+            Assert.Same(owned, summon.AI.context.targetEnemy); // 番犬なしは担当優先。
+            var state = PackGuard(host, nachia.hero, summon);
+            var other = new Summon { hero = nachia.hero };
+            other.AI = new EntityAI { entity = other };
+            other.AI.Aggro(threat);
+            Assert.Same(owned, other.AI.context.targetEnemy); // 同じ主人でも指示なしは担当優先。
+
+            host.ConfigureEnemyOwnership(false);
+            Assert.Empty((IDictionary)Get(host, "_summonGuardTargets"));
+            summon.AI.context.targetEnemy = owned;
+            Call(host, "CoopGuardTarget", state);
+            Assert.Same(threat, summon.AI.context.targetEnemy); // OFF時の番犬発動は従来どおり。
+            summon.AI.Aggro(owned);
+            Assert.Same(owned, summon.AI.context.targetEnemy); // OFF時の本体の再標的も従来どおり。
+            Assert.Empty((IDictionary)Get(host, "_summonGuardTargets"));
+
+            host.ConfigureEnemyOwnership(true);
+            DewPlayer.gamePlayers.Remove(ally);
+            actors.allHeroes.Remove(ally.hero);
+            Call(host, "CoopGuardTarget", state); // ソロでは指示対象の味方がいない。
+            Assert.Same(owned, summon.AI.context.targetEnemy);
+            summon.AI.Aggro(threat);
+            Assert.Same(threat, summon.AI.context.targetEnemy); // ソロは本体の選択を維持。
+            Assert.Empty((IDictionary)Get(host, "_summonGuardTargets"));
+            Assert.Empty(Log.Warnings);
+        }
+
         // ---- 強さ ----
 
         [Fact]

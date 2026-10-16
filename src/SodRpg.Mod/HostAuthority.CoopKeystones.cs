@@ -601,6 +601,8 @@ namespace SodRpg.Mod
             }
         }
 
+        partial void RecordSummonGuardTarget(Summon summon, Entity enemy, float seconds);
+
         private void CoopGuardTarget(CoopKeyState state)
         {
             if (_am == null || !_runtimes.TryGetValue(state.Hero, out var rt)) return;
@@ -619,7 +621,9 @@ namespace SodRpg.Mod
                     float distance = (enemy.agentPosition - summon.agentPosition).sqrMagnitude;
                     if (distance < nearest && summon.CanAggroTo(enemy)) { selected = enemy; nearest = distance; }
                 }
-                if (selected != null && summon.AI.context.targetEnemy != selected) summon.AI.Aggro(selected);
+                if (selected == null) continue;
+                RecordSummonGuardTarget(summon, selected, 0.25f);
+                if (summon.AI.context.targetEnemy != selected) summon.AI.Aggro(selected);
             }
         }
 
