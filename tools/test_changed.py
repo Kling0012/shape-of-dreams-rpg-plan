@@ -967,8 +967,10 @@ def run_dotnet_test(root: Path, project: str, filter_expr: str | None,
     if slow:
         env["SODRPG_SLOW"] = "1"
     if no_build:
-        # A separate remote phase may not share the earlier build's outputs.
-        # Ask MSBuild for the path so custom output directories work as well.
+        # A separate remote phase (such as timing) may run on another host
+        # without the earlier build's outputs. Ask MSBuild for the actual path
+        # (including output overrides) and only skip building when the assembly
+        # is present.
         target = subprocess.run(
             [dotnet, "msbuild", project, "-nologo", "-property:Configuration=Release",
              "-getProperty:TargetPath"], cwd=str(root), env=env,

@@ -162,6 +162,41 @@ restore/build込みの実時間193.66→157.39秒（各1回の観測）。
 このコマンドは.NETのみを対象とし、変更していないPythonテストや実ゲームは今回実行していない。
 
 
+## PR #587：CI 通知 R1 と修正ラウンドの確認
+
+R1 のコメントは CI 結果の通知であり、追加の機能変更の要求ではない。
+[GitHub Actions run 38966820278](https://github.com/Kling0012/shape-of-dreams-rpg-plan/actions/runs/38966820278)
+を `gh run view` で確認し、対象コミット `c611ae7688a875234f152809db3745731a13dc2c`
+の次の9ジョブがすべて `success` だったことを確認した。
+
+- `core-tests`
+- `slow-tests (SodRpg.Core.Tests.GeneratedHeroAcceptanceTests)`
+- `slow-tests (SodRpg.Core.Tests.PerformanceTests)`
+- `slow-tests (SodRpg.Core.Tests.AllocationEquivalenceV131Tests)`
+- `mod-tests (tests/SodRpg.Mod.FxBudget.Tests)`
+- `mod-tests (tests/SodRpg.Mod.Startup.Tests)`
+- `mod-tests (tests/SodRpg.Mod.AutoCast.Tests)`
+- `mod-tests (tests/SodRpg.Culinary.Tests)`
+- `mod-tests (tests/Issue73.Native.Tests)`
+
+この結果は、main を取り込んだ後の `a2e5f5a3` や後続コミットの CI 成功を示さない。
+今回の修正ラウンドでは、取り込み後の worktree で以下を実行した。
+.NET 10 の環境で `DOTNET_ROLL_FORWARD=LatestMajor` を指定し、NuGet キャッシュは
+worktree 外の既定環境変数 `NUGET_PACKAGES` を維持した。
+
+- `dotnet test tests/SodRpg.Core.Tests/SodRpg.Core.Tests.csproj -c Release --filter 'FullyQualifiedName~OverchargeAndTollTests|FullyQualifiedName~NewPowersV129Tests' --verbosity quiet`：29件成功、失敗0件。
+- `python3 -m unittest discover -s tools/tests -p test_test_changed.py`：25件成功。
+- `python3 tools/test_changed.py --check-ci-matrix`：検出された3つの slow クラスと CI 定義が一致。
+- Startup / AutoCast を restore 後、DLL のない固有の `OutputPath` で、報告と同じ Timing フィルターを指定。固定の `--no-build` では両方とも invalid DLL・exit=1、現在の `run_dotnet_test(..., no_build=True)` ではビルドと探索が完了し exit=0。フィルターは `FullyQualifiedName~Performance|FullyQualifiedName~Timing|FullyQualifiedName~takes_well_under`。一致するテストは両方とも0件なので、性能テストの成功件数には数えない。
+- 同じ出力先の Startup DLL で `ValidPreflightConsumesContractsWithoutInstallingDetours` を `no_build=True` で実行：1件成功。
+
+未 restore の初回試行では `dotnet test --no-build` が何も出力せず exit=0 となったため、
+再現・合格の証拠には採用していない。上記の DLL 不在確認は restore 後の実行結果。
+全件・slow・Performance/Timing 全体、Lab の完全なラッパー、MOD 本体の Release ビルド、
+生成コード検査、ゲーム内確認はこのラウンドでは未実行。全体検証は後段に委ね、
+ゲーム内確認はこの環境ではゲームを起動できないため実行していない。
+新しいテストは追加していない。
+
 ## #200 ローカル欠片化と旧取引の互換復旧
 
 `tests/Issue73.Native.Tests` の現行回帰ケース：
