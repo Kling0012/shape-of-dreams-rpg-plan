@@ -136,3 +136,48 @@ DOTNET_ROLL_FORWARD=Major dotnet test tests/SodRpg.Core.Tests/SodRpg.Core.Tests.
 - 未実行：全テストスイート・slowテスト。理由：指示に従い既存の関連クラスだけを実行。
 - 未実行：NuGet脆弱性照会。理由：ネットワーク制約により`NuGetAudit=false`を指定。
 - 未実行：公開Wikiの更新。理由：ローカル生成による整合確認までが担当範囲。
+
+## 自動回復後の再現工程（2026-10-16、今回のセッション）
+
+### 引き継ぎ状態と判断したこと
+
+今回のサンドボックスは初期ブランチ`work`、コミット`65b93d0`の単一スナップショットだった。`ai/wip-issue-457`、`origin/main`、リモートの設定は存在しないため、指定された過去ブランチとの比較はできなかった。スナップショットには上記の再現テスト・修正コード・更新履歴がすでに含まれていた。作業用に`ai/issue-457`を作成して切り替えた。リポジトリ内と親ディレクトリに`AGENTS.md`／`CLAUDE.md`は存在せず、ルートと`src/`、`src/SodRpg.Mod/`のREADMEを確認した。
+
+現在の`Content.cs`では「傑作の連剣」が`Hero_Mist`＋`St_D_AstridsMasterpieceEnGarde`＋`St_M_FastFeet`を要求する。同型の残る3件もIdentity 1種＋Movementに変更済みだった。過去の失敗記録を今回実行した結果とは扱わず、既存テストで現在の状態を再検証した。再現のために修正済み製品コードを旧条件へ書き換えることはせず、今回の判定は`NOT_REPRODUCED`とする。新しい修正・テストは追加していない。
+
+### 今回実行した確認
+
+リポジトリルートで次を実行した。
+
+```sh
+DOTNET_ROLL_FORWARD=Major dotnet test tests/SodRpg.Core.Tests/SodRpg.Core.Tests.csproj \
+  -c Release --filter FullyQualifiedName~Issue457LinkReachabilityTests \
+  --logger 'console;verbosity=detailed' \
+  --logger 'trx;LogFileName=issue457-current.trx' \
+  --results-directory /tmp/issue457-current-results \
+  -p:PythonCommand=python3 -p:NuGetAudit=false \
+  -p:GameDir='/mnt/ghauto-sbx/sod-gamedata/Shape of Dreams'
+```
+
+終了コードは**0**。復元・ビルド後に対象2件が成功した。ビルドには警告が出たが、テスト失敗・テストホスト起動失敗はなかった。
+
+```text
+Passed SodRpg.Core.Tests.Issue457LinkReachabilityTests.Masterwork_flurry_can_activate_in_a_legal_Mist_loadout
+Legal Mist loadouts: 8; active: 4
+Diagnostic only, impossible dual-Identity input: active=False
+Passed SodRpg.Core.Tests.Issue457LinkReachabilityTests.Every_relic_link_can_be_satisfied_with_at_most_one_Identity_and_one_Movement
+Checked relic/set links: 393; unreachable: 0
+Test Run Successful.
+Total tests: 2
+     Passed: 2
+```
+
+TRXは`/tmp/issue457-current-results/issue457-current.trx`に保存された。全393件の検査範囲・限界は上記「根拠と検査の範囲」のとおりで、Identity／Movement枠の必要制約の確認である。
+
+### 品質懸念の確認と未実行
+
+- 対象特定：Issueの本文・コメント・添付画像へアクセスせず、コードから「傑作の連剣」`unique.link_mist_masterwork`を確認した。
+- 条件変更と説明・バランス：前工程の変更がスナップショットに含まれることを確認した。今回は再現工程のため条件・効果量・説明文を変更していない。日英の説明・図鑑・Wikiの整合を確かめる関連テストやWiki生成は**未実行**（今回の対象は既存再現クラス2件のみ）。過去セッションの成功記録を今回の検証実績とはしない。
+- 内容指紋：`ContentFingerprint.cs`が`EquipmentItemsBalanceValues.ContentFingerprintRecords`を取り込むことと、参加者全員の更新を求める日英の更新履歴が存在することを確認した。指紋関連テスト・協力通信は**未実行**（今回の再現範囲外・実機利用不可）。今回の変更は再現記録だけで、ゲーム定義には変更がない。
+- 修正前テストの失敗確認は**未実行**：修正前の履歴をこのサンドボックスから参照できず、開始時点で既存修正が含まれていたため。今回実行したテストは2件とも成功し、修正前失敗を再確認したとは報告しない。
+- Unity実機での装備・画面・戦闘・協力プレイ・`dreamforge_simkill`は**未実行**（実機利用不可）。全テスト／slowテスト・MODビルドは**未実行**（製品コード変更なし、絞り込み実行の指示）。NuGet脆弱性照会は**未実行**（ネットワーク制約に合わせ`NuGetAudit=false`）。
