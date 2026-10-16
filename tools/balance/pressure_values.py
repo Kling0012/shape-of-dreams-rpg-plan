@@ -23,6 +23,12 @@ LEGACY = {
         "shardDropPerPressure": Decimal("0"), "shardDropMaximum": Decimal("1"),
         "nightmareChancePerPressure": Decimal("0"), "nightmareChanceMaximum": Decimal("1"),
     },
+    # The historical runtime had no catch-up; zero exponents preserve that fingerprint baseline.
+    "catchup": {
+        "ratioThreshold": Decimal("1.05"), "outgoingRatioCap": Decimal("4"),
+        "outgoingExponent": Decimal("0"), "incomingRatioCap": Decimal("3"),
+        "incomingExponent": Decimal("0"),
+    },
     "dreamDepth": {
         "maximum": 5, "healthPerDepth": Decimal("0.15"), "damagePerDepth": Decimal("0.08"),
         "rarityLuckPerDepth": Decimal("0.25"), "awakeningPerDepth": Decimal("0.25"),
@@ -47,6 +53,13 @@ FIELDS = {
         "nightmareChancePerPressure": ("NightmareChancePerPressure", "double", "multiplier/hp-bonus", 0, 10),
         "nightmareChanceMaximum": ("NightmareChanceMaximum", "double", "multiplier", 1, 10),
     },
+    "catchup": {
+        "ratioThreshold": ("CatchupRatioThreshold", "double", "ratio", 1, 2),
+        "outgoingRatioCap": ("CatchupOutgoingRatioCap", "double", "ratio", 1, 100),
+        "outgoingExponent": ("CatchupOutgoingExponent", "double", "exponent", 0, 1),
+        "incomingRatioCap": ("CatchupIncomingRatioCap", "double", "ratio", 1, 100),
+        "incomingExponent": ("CatchupIncomingExponent", "double", "exponent", 0, 1),
+    },
     "dreamDepth": {
         "maximum": ("MaximumDepth", "int", "depth", 1, 5),
         "healthPerDepth": ("HealthPerDepth", "double", "ratio/depth", 0, 100),
@@ -60,8 +73,8 @@ FIELDS = {
 
 
 def validate(data):
-    if type(data) is not dict or set(data) != set(LEGACY):
-        raise ValueError("pressure: expected exactly schemaVersion, dreamPressure, dreamDepth")
+    if type(data) is not dict or set(data) != {"schemaVersion", *FIELDS}:
+        raise ValueError("pressure: expected exactly schemaVersion, dreamPressure, catchup, dreamDepth")
     if type(data["schemaVersion"]) is not int or data["schemaVersion"] != 1:
         raise ValueError("pressure.schemaVersion: expected integer 1")
     for section, fields in FIELDS.items():

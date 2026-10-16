@@ -19,6 +19,11 @@ namespace SodRpg.Core.Game
         internal const double ShardDropMaximum = 3d;
         internal const double NightmareChancePerPressure = 0.12d;
         internal const double NightmareChanceMaximum = 2.5d;
+        internal const double CatchupRatioThreshold = 1.05d;
+        internal const double CatchupOutgoingRatioCap = 4d;
+        internal const double CatchupOutgoingExponent = 0.85d;
+        internal const double CatchupIncomingRatioCap = 3d;
+        internal const double CatchupIncomingExponent = 0.7d;
         internal const int MaximumDepth = 5;
         internal const double HealthPerDepth = 0.15d;
         internal const double DamagePerDepth = 0.08d;
@@ -26,6 +31,6 @@ namespace SodRpg.Core.Game
         internal const double AwakeningPerDepth = 0.25d;
         internal const double StarXpPerDepth = 0.2d;
         internal const int ExtraNodesPerDepth = 2;
-        internal static readonly string ContentFingerprintRecord = "balance:pressure:v1:dreamPressure/healthPerLevel:double:ratio/level:0.06;dreamPressure/healthPerStarPoint:double:ratio/point:0.028;dreamPressure/damagePerLevel:double:ratio/level:0.016;dreamPressure/damagePerStarPoint:double:ratio/point:0.004;dreamPressure/enemyCountHealthPerStage:double:health-ratio/stage:0.25;dreamPressure/enemyCountPerStage:double:ratio/stage:0.08;dreamPressure/enemyCountMaximumBonus:double:ratio:4;dreamPressure/enemyCountAdditionalRewardBudget:double:ratio:0.5;dreamPressure/shardDropPerPressure:double:multiplier/hp-bonus:0.15;dreamPressure/shardDropMaximum:double:multiplier:3;dreamPressure/nightmareChancePerPressure:double:multiplier/hp-bonus:0.12;dreamPressure/nightmareChanceMaximum:double:multiplier:2.5";
+        internal static readonly string ContentFingerprintRecord = "balance:pressure:v1:dreamPressure/healthPerLevel:double:ratio/level:0.06;dreamPressure/healthPerStarPoint:double:ratio/point:0.028;dreamPressure/damagePerLevel:double:ratio/level:0.016;dreamPressure/damagePerStarPoint:double:ratio/point:0.004;dreamPressure/enemyCountHealthPerStage:double:health-ratio/stage:0.25;dreamPressure/enemyCountPerStage:double:ratio/stage:0.08;dreamPressure/enemyCountMaximumBonus:double:ratio:4;dreamPressure/enemyCountAdditionalRewardBudget:double:ratio:0.5;dreamPressure/shardDropPerPressure:double:multiplier/hp-bonus:0.15;dreamPressure/shardDropMaximum:double:multiplier:3;dreamPressure/nightmareChancePerPressure:double:multiplier/hp-bonus:0.12;dreamPressure/nightmareChanceMaximum:double:multiplier:2.5;catchup/outgoingExponent:double:exponent:0.85;catchup/incomingExponent:double:exponent:0.7";
     }
 }

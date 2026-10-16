@@ -75,6 +75,13 @@ namespace SodRpg.Mod
         public float healthMultiplier;
         public float damageMultiplier;
         public string runChoices;
+        // Optional additions: old peers ignore these fields; missing fields mean no catch-up display.
+        public bool catchupAvailable, catchupEnabled;
+        public string catchupRunId;
+        public int catchupZone, catchupNode, catchupRoom;
+        public long catchupGraph;
+        public uint[] catchupPlayerIds;
+        public float[] catchupOutgoing, catchupIncoming;
     }
 
     /// <summary>Host-only shared depth and waypoint choices; also carried by pressure catch-up messages.</summary>

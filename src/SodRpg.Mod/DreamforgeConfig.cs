@@ -33,6 +33,9 @@ namespace SodRpg.Mod
         [LabelText("Room Omens: a blessing or trial in each combat room (the host's setting applies) /\n部屋の兆し：戦闘の部屋ごとに恵みか試練を付ける（ホストの設定が使われる）")]
         public bool roomOmens = true;
 
+        [LabelText("Co-op catch-up: help less-developed travelers (the host's setting applies) /\n同行補正：育ちの低い旅人の与ダメ・被ダメを補正する（ホストの設定が使われる）")]
+        public bool coopCatchup = true;
+
         [LabelText("HUD / 左のパネルの表示")]
         public HudMode hudMode = HudMode.Full;
 

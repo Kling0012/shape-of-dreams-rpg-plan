@@ -23,6 +23,8 @@ namespace SodRpg.Mod
     {
         public DreamforgeConfig config = new DreamforgeConfig();
         partial void ApplyRoomOmensConfig();
+        partial void ApplyCatchupConfig();
+        partial void ObserveCatchupPatch(Type type, bool installed);
 
         private ClientSession _session;
         private HostAuthority _host;
@@ -61,6 +63,7 @@ namespace SodRpg.Mod
                 NetworkTrafficOptions.Configure(config.netSkipUnchanged, config.netCoalesce, config.netOwnerOnly, config.netCompact);
                 ApplyLevelEssenceConfig();
                 ApplyRoomOmensConfig();
+                ApplyCatchupConfig();
                 // Install the generated star maps and their migration rules before any profile is loaded or any build is computed.
                 var starRegistrationWatch = System.Diagnostics.Stopwatch.StartNew();
                 StarClusters.RegisterAllGenerated((hero, error) =>
@@ -117,6 +120,7 @@ namespace SodRpg.Mod
             _session?.ConfigureOverflowBonus(config.overflowDreamDust);
             ApplyLevelEssenceConfig();
             ApplyRoomOmensConfig();
+            ApplyCatchupConfig();
         }
 
         // レベル連動のエッセンス枠（ホストの設定だけが枠に反映される）。壊れた入力でも他の機能は止めない。
@@ -426,6 +430,7 @@ namespace SodRpg.Mod
                         continue;
                     }
                     var targets = harmony.CreateClassProcessor(type).Patch();
+                    ObserveCatchupPatch(type, targets != null && targets.Count > 0);
                     if (lobbyGuard && (targets == null || targets.Count == 0 || !HasInstalledClass(type)))
                     {
                         if (EarlierCopyHookIsLive(type))
@@ -470,6 +475,7 @@ namespace SodRpg.Mod
                     skipped.Add(type.FullName);
                     Log.Warn("Patch class skipped: " + type.FullName + ": " + ex.Message);
                     LevelEssencePatchUnavailable(type);
+                    ObserveCatchupPatch(type, false);
                     bool earlierCopy = EarlierCopyHookIsLive(type);
                     if (hunter)
                     {

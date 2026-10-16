@@ -379,6 +379,10 @@ namespace SodRpg.Mod
 
         private void StageBuildUpdates() => ProcessBuildUpdates(Time.unscaledTime);
 
+        partial void TickCatchup(bool pressureChanged);
+        partial void ResetCatchup();
+        partial void AddCatchupSnapshot(DreamforgePressureMsg msg);
+
         private void StagePressure()
         {
             int stage = ClientSession.HostRun?.Infinity?.PressureStage ?? 0;
@@ -387,7 +391,9 @@ namespace SodRpg.Mod
                 _infinityPressureStage = stage;
                 _pressureDirty = true;
             }
+            bool pressureChanged = _pressureDirty;
             if (_pressureDirty) RefreshPressure();
+            TickCatchup(pressureChanged);
         }
 
         private void StageAreaScan()
@@ -524,13 +530,15 @@ namespace SodRpg.Mod
 
         private void SendPressure()
         {
-            _registeredOn?.CustomRpc_SendMessageToAllClients(new DreamforgePressureMsg
+            var msg = new DreamforgePressureMsg
             {
                 protocol = Protocol.Version,
                 healthMultiplier = (float)_pressure.HealthMultiplier,
                 damageMultiplier = (float)_pressure.DamageMultiplier,
                 runChoices = ClientSession.HostRunChoices
-            });
+            };
+            AddCatchupSnapshot(msg);
+            _registeredOn?.CustomRpc_SendMessageToAllClients(msg);
             // Reuse the infrequent state resync for players whose run started after the first report.
             var runId = NetworkedManagerBase<GameManager>.softInstance?.runId;
             foreach (var rt in _runtimes.Values)
@@ -1319,6 +1327,7 @@ namespace SodRpg.Mod
             _incomingBuilds.Clear();
             ClearBuildValidationPeers();
             _pressure = DreamPressure.Neutral;
+            ResetCatchup();
             _pressurePlayerCount = -1;
             _pressureBuilds.Clear();
             _pressurePlayers.Clear();

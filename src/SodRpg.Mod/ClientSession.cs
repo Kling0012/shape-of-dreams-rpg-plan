@@ -476,6 +476,7 @@ namespace SodRpg.Mod
                 ResetRunGrowthDisplay();
                 _appliedTransfer.Reset();
                 PressureHealthMultiplier = PressureDamageMultiplier = 1f;
+                ResetCatchupDisplay();
                 if (!LobbyReturnPending) ResetRunChoiceConnection();
                 ResetMonsterAuthorityConnection();
                 _sentDreamLevel = -1;
@@ -563,6 +564,7 @@ namespace SodRpg.Mod
             HostSummary = null;
             _appliedTransfer.Reset();
             PressureHealthMultiplier = PressureDamageMultiplier = 1f;
+            ResetCatchupDisplay();
             ResetRunChoiceConnection(resetHistory: true);
             ResetMonsterAuthorityConnection();
             _pendingRunRewards.Clear();
@@ -1299,12 +1301,16 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
             }
         }
 
+        partial void ReceiveCatchup(DreamforgePressureMsg msg);
+        partial void ResetCatchupDisplay();
+
         private void OnPressure(DreamforgePressureMsg msg)
         {
             if (msg == null) return;
             Protocol.WarnMismatch(msg.protocol, nameof(DreamforgePressureMsg));
             PressureHealthMultiplier = msg.healthMultiplier;
             PressureDamageMultiplier = msg.damageMultiplier;
+            ReceiveCatchup(msg);
             ReceiveRunChoices(msg.runChoices);
             HostConfirmed = true;
             DiagnosePressureReceipt();

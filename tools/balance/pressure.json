@@ -17,6 +17,13 @@
     "nightmareChancePerPressure": 0.12,
     "nightmareChanceMaximum": 2.5
   },
+  "catchup": {
+    "ratioThreshold": 1.05,
+    "outgoingRatioCap": 4.0,
+    "outgoingExponent": 0.85,
+    "incomingRatioCap": 3.0,
+    "incomingExponent": 0.7
+  },
   "dreamDepth": {
     "maximum": 5,
     "healthPerDepth": 0.15,
