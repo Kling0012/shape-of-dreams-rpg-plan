@@ -26,6 +26,9 @@ namespace SodRpg.Mod
             public string FirstOfferAck, SecondOfferAck;
             public bool Accepted, FirstConfirmed, SecondConfirmed, Preparing, FirstPrepared, SecondPrepared;
             public int Revision;
+            // The revision at which each side last received its partner's profile. The offered relics only change
+            // with the revision, so a confirm or a re-sent view does not need the (possibly stash-sized) profile again.
+            public int FirstProfileSentRevision = -1, SecondProfileSentRevision = -1;
             public float ActiveAt;
             public CoopTradeReceipt Receipt;
         }
@@ -424,7 +427,10 @@ namespace SodRpg.Mod
                 offerAck = first ? trade.FirstOfferAck : trade.SecondOfferAck,
             });
             var other = first ? trade.SecondProfile : trade.FirstProfile;
-            if (includeProfile && other != null) SendCoopPayload(player, "profile", trade.Id, trade.Revision, ProfileCodec.WriteCheckpointProfile(other));
+            if (!includeProfile || other == null || (first ? trade.FirstProfileSentRevision : trade.SecondProfileSentRevision) == trade.Revision) return;
+            SendCoopPayload(player, "profile", trade.Id, trade.Revision, ProfileCodec.WriteCheckpointProfile(other));
+            if (first) trade.FirstProfileSentRevision = trade.Revision;
+            else trade.SecondProfileSentRevision = trade.Revision;
         }
         private void SendCoopRoster(DewPlayer caller)
         {

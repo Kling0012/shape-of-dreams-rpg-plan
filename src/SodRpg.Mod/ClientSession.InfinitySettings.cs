@@ -83,6 +83,9 @@ namespace SodRpg.Mod
             else if (CanChooseRunRules) PersistHostInfinityState();
         }
 
+        private int _advertisedInfinityInterval = -1;
+        private string _advertisedInfinityIntervalText;
+
         private void TickInfinitySettings()
         {
             InfinityMode.RecoverAfterExpedition(InGame);
@@ -92,9 +95,15 @@ namespace SodRpg.Mod
             string enabled = Profile.LastInfinityEnabled ? "1" : "0";
             if (!settings.customData.TryGetValue(InfinityEnabledKey, out var oldEnabled) || oldEnabled != enabled)
                 settings.customData[InfinityEnabledKey] = enabled;
-            string interval = (InfinityRunState.ValidInterval(Profile.LastInfinityInterval) ? Profile.LastInfinityInterval : InfinityRunState.DefaultInterval).ToString(System.Globalization.CultureInfo.InvariantCulture);
-            if (!settings.customData.TryGetValue(InfinityIntervalKey, out var oldInterval) || oldInterval != interval)
-                settings.customData[InfinityIntervalKey] = interval;
+            // Runs every lobby frame: format the interval only when it differs from what is advertised.
+            int interval = InfinityRunState.ValidInterval(Profile.LastInfinityInterval) ? Profile.LastInfinityInterval : InfinityRunState.DefaultInterval;
+            if (_advertisedInfinityInterval == interval && settings.customData.TryGetValue(InfinityIntervalKey, out var advertised)
+                && ReferenceEquals(advertised, _advertisedInfinityIntervalText)) return;
+            string text = interval.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            if (!settings.customData.TryGetValue(InfinityIntervalKey, out var oldInterval) || oldInterval != text)
+                settings.customData[InfinityIntervalKey] = text;
+            _advertisedInfinityInterval = interval;
+            _advertisedInfinityIntervalText = settings.customData[InfinityIntervalKey];
         }
     }
 

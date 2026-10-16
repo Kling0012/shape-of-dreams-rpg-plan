@@ -523,6 +523,21 @@ namespace SodRpg.Mod
             catch (Exception ex) { InterceptionFailed(nameof(Tick), ex); }
         }
 
+        // Unity's Object.name allocates a new string on every read, and TickNative runs every frame on the host.
+        // Remember the zone asset that last matched so the name is read only when the zone or fixed id changes.
+        private static Zone _matchedZone;
+        private static string _matchedZoneId;
+
+        private static bool CurrentZoneMatches(Zone current, string fixedZoneId)
+        {
+            if (current == null) return false;
+            if (ReferenceEquals(current, _matchedZone) && string.Equals(_matchedZoneId, fixedZoneId, StringComparison.Ordinal)) return true;
+            if (current.name != fixedZoneId) return false;
+            _matchedZone = current;
+            _matchedZoneId = fixedZoneId;
+            return true;
+        }
+
         private static void TickNative()
         {
             if (!NetworkServer.active || !Enabled) return;
@@ -532,7 +547,7 @@ namespace SodRpg.Mod
             RegisterAcks();
             if (!NativeSaveAgreement || !ClientSession.HostInfinitySaveHoldSatisfied) return;
             if (zone.isInAnyTransition) return;
-            if (zone.currentZone == null || zone.currentZone.name != state.FixedZoneId)
+            if (!CurrentZoneMatches(zone.currentZone, state.FixedZoneId))
             { DisableFeature("Infinity native zone does not match the fixed graph."); return; }
             var room = SingletonDewNetworkBehaviour<Room>.softInstance;
             if (room == null || !room.isActive || zone.currentNodeIndex < 0) return;
