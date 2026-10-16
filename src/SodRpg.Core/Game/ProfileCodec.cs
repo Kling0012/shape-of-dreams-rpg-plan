@@ -179,7 +179,7 @@ namespace SodRpg.Core.Game
                 .Add("hintsOff", p.HintsOff)
                 .Add("starterGranted", p.StarterGranted)
                 .Add("starterV119Granted", p.StarterV119Granted)
-                .Add("starterUids", p.StarterUids.Select(u => (object)u).ToList())
+                .Add("starterUids", p.StarterUids.Where(u => p.ContainsRelicUid(u)).Select(u => (object)u).ToList())
                 .Add("stats", stats)
                 .Add("completedRunId", p.CompletedRunId)
                 .Add("lobbyReturnedRunIds", p.LobbyReturnedRunIds.Select(id => (object)id).ToList())
@@ -464,9 +464,6 @@ namespace SodRpg.Core.Game
             p.HintsOff = Bool(b, "hintsOff", false);
             p.StarterGranted = Bool(b, "starterGranted", false);
             p.StarterV119Granted = Bool(b, "starterV119Granted", false);
-            if (b.TryGet("starterUids", out object so2) && so2 is List<object> sus)
-                foreach (var u in sus)
-                    if (u is string us && p.FindStash(us) != null) p.StarterUids.Add(us);
             if (b.TryGet("upgrades", out object uo) && uo is JsonObject ups)
             {
                 foreach (var kv in ups.Properties)
@@ -564,6 +561,10 @@ namespace SodRpg.Core.Game
                 p.Run = run;
             }
             ReadInterruptedRelics(b, p, notes);
+            // 保管庫以外の鞄・預かり品も読み終えてから、書き出しと同じ所持判定で初期印を戻す。
+            if (b.TryGet("starterUids", out object so2) && so2 is List<object> sus)
+                foreach (var u in sus)
+                    if (u is string us && p.ContainsRelicUid(us)) p.StarterUids.Add(us);
             // Preserve connected allocations; refund only this Traveler when the budget or graph is invalid.
             foreach (var kv in p.Heroes)
             {
