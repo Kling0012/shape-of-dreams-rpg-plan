@@ -10,6 +10,26 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v3.2.7 — Fixes for Baku shard refunds, Memory Archive at max Dream Level, and Codex slot filter（2026-10-17）
+
+この版は、夢喰いの獏が返す欠片に強化にかけた分が含まれていなかった問題、夢レベルが上限でも記憶の書庫が出て使えてしまう問題、図鑑を部位で絞り込むと銘品の効果が表示されなかった問題を直す更新です。 / This update fixes the Dream-Eating Baku not including upgrade costs in the shards it returns, the Memory Archive appearing and being usable at max Dream Level, and named item effects not showing up when filtering the Codex by slot.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- 出来事「夢喰いの獏」に強化済みの遺物を渡したとき、返ってくる欠片に強化にかけた費用の分が含まれていなかった問題を直しました。これからは、強化にかけた費用の返還分も含めた欠片が返ってきます。 / Fixed an issue where giving an upgraded relic to the Dream-Eating Baku event returned shards that did not include what you spent on upgrades. The returned shards now include a refund for upgrade costs.
+- 夢レベルが上限に達していて経験値を得られないのに、出来事「記憶の書庫」が出てきて使えてしまう問題を直しました。これからは、夢レベルが上限のときは記憶の書庫が出なくなります。すでに表示されている場合も使えず、使えない理由が日本語・英語で表示されます。 / Fixed the Memory Archive event appearing and being usable even at max Dream Level, where it could not grant any experience. At max Dream Level, the Memory Archive no longer appears. If it is already shown, it cannot be used, and the reason is displayed in both Japanese and English.
+- 図鑑で効果を部位で絞り込むと、銘品の効果が一覧から漏れていた問題を直しました。これからは、銘品のもとになった装備の部位でも絞り込めるようになり、該当する銘品の効果が表示されます。 / Fixed named item effects being left out when filtering effects by slot in the Codex. Named items now match the slot of the gear they are based on, so their effects appear in the filtered list.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
 ## v3.2.6 — Fixes for Infinity co-op choices, forge buttons, gear effect caps, and effect lights（2026-10-17）
 
 この版は、Infinity の協力プレイでゲストがホストより先に次の選択を始められてしまう問題、鍛冶のボタンと遊び方の表示が実際のルールと合っていなかった問題、装備の固有効果と連携の説明の問題、同じエフェクトを短い間に繰り返すと光が上限を超えて点灯する問題を直す更新です。 / This update fixes guests in Infinity co-op being able to start the next choice before the host, forge buttons and how-to text that did not match the actual rules, issues with gear unique effects and link descriptions, and lights exceeding their limit when the same effect replays in quick succession.
