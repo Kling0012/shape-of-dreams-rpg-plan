@@ -140,7 +140,7 @@ internal static class StarMapWiki
     {
         string up = Ja(() => StarMapPresentation.DisplayDescription(t)) + "\n"
             + En(() => StarMapPresentation.DisplayDescription(t));
-        int cost = t.KeystoneDefinition?.Cost ?? Content.KeystoneCost;
+        int cost = t.KeystoneCost; // ゲームが実際に払わせる値（段ごとの刻印は段の費用）
         return $"| {NameCell(t.Name)} | {Cell(up)} | {cost} |";
     }
 

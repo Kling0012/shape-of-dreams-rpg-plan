@@ -83,10 +83,12 @@ List<string> WriteTablePages(string stem, string title, string intro, string hea
     var parts = new List<List<string>>();
     var cur = new List<string>();
     int size = 0;
+    // The page also carries the title, intro, home link, page navigation and table header.
+    int limit = MaxPageBytes - Encoding.UTF8.GetByteCount(H1(title) + intro + header + "[[dreamforge:start|ホームへ戻る]]") - 1024;
     foreach (var r in rows)
     {
         int b = Encoding.UTF8.GetByteCount(r) + 1;
-        if (size + b > MaxPageBytes && cur.Count > 0) { parts.Add(cur); cur = new List<string>(); size = 0; }
+        if (size + b > limit && cur.Count > 0) { parts.Add(cur); cur = new List<string>(); size = 0; }
         cur.Add(r); size += b;
     }
     if (cur.Count > 0 || parts.Count == 0) parts.Add(cur);
@@ -318,12 +320,12 @@ string PageLinks(Slot slot, List<string> names) =>
     sb.Append(H1("Dreamforge RPG 装備ウィキ"));
     sb.Append($"Shape of Dreams 用MOD「Dreamforge RPG」（バージョン {modVersion}）の装備をまとめたウィキです。内容はゲームのデータから自動生成しています。\\\\\nEquipment reference for the Dreamforge RPG mod, generated directly from the game data.\n\n");
     sb.Append(H2("収録数"));
-    sb.Append($"  * 土台 (Bases): {Content.Bases.Count}\n  * 固有品 (Uniques): {Content.Uniques.Count}\n  * セット (Sets): {Content.Sets.Count}\n  * 固有効果 (Powers): {allPowers.Count}（うち装備の抽選で出るもの {poolRanges.Count}）\n");
+    sb.Append($"  * 土台 (Bases): {Content.Bases.Count}\n  * 固有品 (Uniques): {Content.Uniques.Count}\n  * セット (Sets): {Content.Sets.Count}\n  * 固有効果 (Powers): {powersListed}（うち装備の抽選で出るもの {poolRanges.Count}）\n");
     sb.Append($"  * 特性 (Affixes): {slots.Sum(s => Content.AffixPool(s).Count)}（部位別の合計）\n\n");
     sb.Append(H2("ページ"));
     sb.Append($"  * {Link("basics", "装備の基本")}\n  * {Link("powers", "固有効果")}\n  * {Link("affixes", "特性")}\n  * {Link("sets", "セット装備")}\n  * {Link("starmap", "星図（旅人別）")}\n\n");
     sb.Append(H2("星図（旅人別）"));
-    foreach (var sm in starMaps) sb.Append($"  * {Link(sm.Home, sm.Name)}（星 {sm.Stars} / 到達刻印 {sm.Keystones}）\n");
+    foreach (var sm in starMaps) sb.Append($"  * {Link(sm.Home, sm.Name)}（星 {sm.Stars - sm.Keystones} / 到達刻印 {sm.Keystones}）\n");
     sb.Append('\n').Append(H2("土台"));
     foreach (var (slot, n, names) in baseLinks) sb.Append($"  * {PageLinks(slot, names)}（{n}）\n");
     sb.Append('\n').Append(H2("固有品"));
@@ -332,7 +334,7 @@ string PageLinks(Slot slot, List<string> names) =>
 
     var pe = new StringBuilder();
     // 総合ポータルの表の1行（行の中の改行は DokuWiki の「\\ 」）。
-    pe.Append($"|**Dreamforge RPG**\\\\ Shape of Dreams の MOD|[[dreamforge:start|⚔ Dreamforge RPG を開く]]\\\\ 収録数：土台 {Content.Bases.Count} / 固有品 {Content.Uniques.Count} / セット {Content.Sets.Count} / 固有効果 {allPowers.Count}（v{modVersion}）|\n");
+    pe.Append($"|**Dreamforge RPG**\\\\ Shape of Dreams の MOD|[[dreamforge:start|⚔ Dreamforge RPG を開く]]\\\\ 収録数：土台 {Content.Bases.Count} / 固有品 {Content.Uniques.Count} / セット {Content.Sets.Count} / 固有効果 {powersListed}（v{modVersion}）|\n");
     WriteRaw("portal_extra.txt", pe.ToString());
 
     var se = new StringBuilder();
