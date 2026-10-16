@@ -467,10 +467,10 @@ namespace SodRpg.Mod
                             Ready = msg.ready == null || msg.ready.Length != msg.keys.Length || msg.ready[i],
                         });
                     if (Profile.CoopTradePending == null && !_coopSettlementUnsaved && !string.IsNullOrEmpty(msg.status))
-                        CoopTradeWarning = msg.status;
+                        CoopTradeWarning = msg.LocalizedStatus();
                     return;
                 }
-                if (msg.kind == "error") { DiagnoseCoopTrade("host-error"); CoopTradeWarning = msg.status; return; }
+                if (msg.kind == "error") { DiagnoseCoopTrade("host-error"); CoopTradeWarning = msg.LocalizedStatus(); return; }
                 if (msg.kind == "cancelled")
                 {
                     DiagnoseCoopTrade("cancelled-received", msg.id, msg.revision);
@@ -485,7 +485,7 @@ namespace SodRpg.Mod
                     _coopPendingOffer = null;
                     _coopOfferInFlight = null;
                     _coopFrozenProfile = null;
-                    CoopTradeWarning = msg.status;
+                    CoopTradeWarning = msg.LocalizedStatus();
                     return;
                 }
                 if (msg.kind == "view")
@@ -507,7 +507,7 @@ namespace SodRpg.Mod
                     }
                     CoopTrade = new CoopTradeView
                     {
-                        Id = msg.id, PartnerName = msg.partner, Status = msg.status, Incoming = msg.incoming,
+                        Id = msg.id, PartnerName = msg.partner, Status = msg.LocalizedStatus(), Incoming = msg.incoming,
                         Accepted = msg.accepted, OwnConfirmed = msg.ownConfirmed && _coopPendingOffer == null,
                         OtherConfirmed = msg.otherConfirmed && _coopPendingOffer == null,
                         Preparing = msg.preparing, Revision = msg.revision, PartnerFusion = msg.partnerFusion,
