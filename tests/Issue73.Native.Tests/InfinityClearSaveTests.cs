@@ -218,6 +218,32 @@ namespace Issue73.Native.Tests
             Assert.Equal(1, new ProfileStore(new RealFileSystem(), SavePath, 226).Load().Run.SatchelShards);
         }
 
+        [Fact]
+        public void Confirm_while_a_write_is_outstanding_becomes_durable_without_the_timeout()
+        {
+            _session = HostSession(out var transport);
+            CountCombatRoom();
+            var clear = Start(() => ClientSession.CountHostInfinityRoom());
+            Assert.True(_files.Started.Wait(5000));
+            clear.GetAwaiter().GetResult();
+            // 部屋の踏破の保存を書いている途中に、確定待ちの保存が呼ばれる。以前は保存待ちの目標が
+            // 書き込み済み+1 へ先送りされ続け、30秒の打ち切りでしか解除されなかった。
+            Assert.False(ClientSession.PersistHostInfinityState());
+            _files.Release.Set();
+            var writer = (AsyncProfileWriter)Get(_session, "_writer");
+            bool durable = false;
+            float start = Time.unscaledTime;
+            for (int i = 0; i < 280 && !durable; i++)
+            {
+                Time.unscaledTime = start + 0.1f * i;
+                Call(_session, "CompleteInfinityStateSave");
+                durable = ClientSession.PersistHostInfinityState() && ClientSession.HostInfinityStateDurable;
+                writer.WaitForRevision(writer.EnqueuedRevision, 2000);
+            }
+            Assert.True(durable, "保存待ちが30秒の打ち切り前に解除されない");
+            Assert.Null(Get(_session, "_infinitySaveHoldReleasedRun"));
+        }
+
         private string SavePath => Path.Combine(_directory, "profile.json");
 
         private ClientSession HostSession(out Actor transport)

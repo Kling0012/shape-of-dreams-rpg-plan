@@ -122,11 +122,13 @@ namespace SodRpg.Mod
             if (!InfinityMode.NativeSaveAgreement || string.IsNullOrEmpty(runId)
                 || runId != NetworkedManagerBase<GameManager>.softInstance?.runId) return false;
             bool waiting = _infinityPendingSaveRevision != 0 && _infinityPendingSaveRun == runId;
-            BeginInfinitySaveHold(runId);
             MarkDirty(true);
-            // Do not block the main thread again for the same outstanding receipt.
+            // Do not block the main thread again for the same outstanding receipt. Check this before
+            // moving the hold: a target of Revision+1 that is never queued here stays one ahead of
+            // every write, so the hold only cleared through the 30s timeout. SaveNow moves it when it queues.
             if (confirm && waiting && !InfinitySaveHoldReleased && Time.unscaledTime < _nextInfinitySaveRetry)
                 return false;
+            BeginInfinitySaveHold(runId);
             _nextInfinitySaveRetry = Time.unscaledTime + 5f;
             bool saved = SaveNow((confirm && !waiting && !InfinitySaveHoldReleased) || _store == null);
             if (saved && confirm) CompleteInfinityStateSave();
