@@ -491,7 +491,8 @@ namespace SodRpg.Mod
             string xp = p.DreamLevel >= Content.MaxDreamLevel ? "MAX" : (p.DreamXp * 100 / Math.Max(1, need)) + "%";
             sb.Append(Loc.T("<b>Dreamforge</b>  夢のレベル ", "<b>Dreamforge</b>  Dream Lv ")).Append(p.DreamLevel).Append("  <color=#c4c4dc>(").Append(xp).Append(")</color>");
             sb.Append("\n<size=13>").Append(Loc.T("夢の深さ ", "Dream depth ")).Append(_s.ChosenDreamDepth)
-                .Append(Loc.T("・夢の圧 ", " · Pressure "));
+                .Append(run?.Infinity != null ? Loc.T("・共通の夢の圧 ", " · Shared pressure ")
+                    : Loc.T("・夢の圧 ", " · Pressure "));
             if (_s.HostConfirmed)
                 sb.Append("HP×").Append(_s.PressureHealthMultiplier.ToString("0.00"))
                     .Append(Loc.T("・攻×", " · ATK×")).Append(_s.PressureDamageMultiplier.ToString("0.00"));
@@ -712,9 +713,12 @@ namespace SodRpg.Mod
             bool gearKnown = _s.NightmareGearMultiplier >= 1f;
             double gearMult = gearKnown ? _s.NightmareGearMultiplier : 1.0;
             double chanceMult = nmMult * pressureMult * gearMult;
+            string ownershipNote = run.Infinity != null ? Loc.T(
+                "協力プレイでは、以下の道標効果と確率は自分の担当敵が対象です。担当のない敵には道標は適用されません。\n",
+                "In co-op, these waypoint effects and chances apply to enemies assigned to you. Unassigned enemies receive no waypoint effects.\n") : "";
             if (waypoint.AllNightmares)
             {
-                _secureNightmareText = UiStyles.Colored(Loc.T(
+                _secureNightmareText = UiStyles.Colored(ownershipNote + Loc.T(
                     $"潜行{next}では、選んだ道標により、ボス以外のすべての敵が「悪夢化」して強くなります。倒すと、一段上の戦利品が出ます。",
                     $"At delve {next}, your waypoint makes every non-boss enemy a stronger nightmare. They drop loot a tier higher."), "#ff9ae0");
                 return;
@@ -737,7 +741,7 @@ namespace SodRpg.Mod
             string atLeastEn = gearKnown ? "" : "at least ";
             string gearNote = gearKnown ? "" : Loc.T("ホストの装備による増加はまだ届いていないため、最低値を表示しています。",
                 " These are minimums; the host has not reported its gear bonus yet.");
-            _secureNightmareText = UiStyles.Colored(Loc.T(
+            _secureNightmareText = UiStyles.Colored(ownershipNote + Loc.T(
                 $"潜行{next}では、通常の敵の{nmNormal}%{atLeastJa}、エリートの{nmElite}%{atLeastJa}が「悪夢化」して強くなります{nmRaised}（ボスは対象外）。倒すと、一段上の戦利品が出ます。{gearNote}",
                 $"At delve {next}, {atLeastEn}{nmNormal}% of regular enemies and {atLeastEn}{nmElite}% of elites become stronger nightmares{nmRaised} (bosses excluded). They drop loot a tier higher.{gearNote}"), "#ff9ae0");
         }

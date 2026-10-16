@@ -48,7 +48,7 @@ namespace SodRpg.Mod
                     if (!OwnershipConnected(player)) continue;
                     if (count == shares.Players.Length) throw new InvalidOperationException("Boss shares support up to four travelers.");
                     double factor = DynamicFactor(player);
-                    double baseline = OwnershipBasePressure(player).HealthMultiplier;
+                    double baseline = OwnershipBasePressure(player, sharedEnemy: true).HealthMultiplier;
                     double solo = baseline * factor;
                     if (!(solo > 0) || double.IsInfinity(solo)) throw new InvalidOperationException("Invalid solo pressure.");
                     shares.Players[count] = player;
@@ -173,14 +173,14 @@ namespace SodRpg.Mod
                 budget -= take;
             }
             bool dynamic = DynamicApplicationRunning();
-            double pressure = player == null ? 1 : OwnershipBasePressure(player).HealthMultiplier
+            double pressure = player == null ? 1 : OwnershipBasePressure(player, sharedEnemy: true).HealthMultiplier
                 * (own >= 0 ? dynamic ? shares.Dynamic[own] : 1 : DynamicFactor(player));
             for (int step = 0; step < shares.Players.Length && budget > 0; step++)
             {
                 int target = LargestBossShare(shares, planned);
                 if (target < 0) break;
                 double factor = player == null ? 1 : CoopBalance.Ownership.HelpFactor * Math.Min(1,
-                    OwnershipBasePressure(shares.Players[target]).HealthMultiplier * (dynamic ? shares.Dynamic[target] : 1) / pressure);
+                    OwnershipBasePressure(shares.Players[target], sharedEnemy: true).HealthMultiplier * (dynamic ? shares.Dynamic[target] : 1) / pressure);
                 if (!(factor > 0)) throw new InvalidOperationException("Invalid boss help pressure.");
                 double take = Math.Min(budget * factor, shares.Remaining[target] - planned[target]);
                 planned[target] += take;
@@ -306,7 +306,8 @@ namespace SodRpg.Mod
                 var player = OwnershipHuman(victim);
                 var source = OwnershipSource(damage.actor ?? actor);
                 if (player == null || source == null || !OwnershipExcluded(source)) return;
-                float factor = Mathf.Clamp((float)(OwnershipPressure(player).HealthMultiplier / _pressure.HealthMultiplier),
+                float factor = Mathf.Clamp((float)(OwnershipPressure(player, sharedEnemy: true).HealthMultiplier
+                    / OwnershipBasePressure(null).HealthMultiplier),
                     CoopBalance.Ownership.BossDamageMin, CoopBalance.Ownership.BossDamageMax);
                 if (factor <= 1) damage.ApplyReduction(1f - factor);
                 else damage.ApplyAmplification(factor - 1f);

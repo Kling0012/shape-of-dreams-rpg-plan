@@ -8,6 +8,8 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
+- インフィニティの協力プレイで、敵のHP・攻撃と悪夢化にホストの道標だけが使われていた問題を修正。担当敵には担当者本人の道標を使い、ボスなど担当のない敵には道標の効果を掛けません。通常モードとソロの扱いは従来どおりです。 / Fixed Infinity co-op enemy health, damage and nightmare rules using only the host's waypoint. Assigned enemies now use their own player's waypoint; shared enemies, including bosses, receive no waypoint effects. Ordinary mode and solo behavior are unchanged.
+
 ---
 
 ## v3.2.9 — Fixes for unreachable bounties, Sealed Vault relic draws, waypoint Codex bonus, and Infinity saves（2026-10-17）
