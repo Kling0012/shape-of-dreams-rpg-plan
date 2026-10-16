@@ -243,6 +243,30 @@ namespace Issue73.Native.Tests
         }
 
         [Fact]
+        public void Host_reasons_carry_a_code_each_player_reads_in_their_own_language()
+        {
+            bool japanese = Loc.Japanese;
+            try
+            {
+                Loc.Japanese = true; // ホストは日本語
+                CreateWorld();
+                Probe(_a);
+                Probe(_b, safe: false);
+                _a.connectionToClient.Sent.Clear();
+                _host.ReceiveCoopTrade(new DreamforgeCoopTradeCommand { action = "request", target = "player-b", safe = true }, _a);
+                var error = Assert.Single(States(_a));
+                Assert.Equal("peerBusy", error.reasonCode);
+                Assert.Equal("相手は今取引できる状態ではありません（戦闘中・保存中など）", error.status);
+
+                Loc.Japanese = false; // 受け手は英語
+                Assert.Equal("The other player can't trade right now (in combat, saving, etc.)", error.LocalizedStatus());
+                // 旧版のホストはコードを送らない：文言をそのまま出す。
+                Assert.Equal(error.status, new DreamforgeCoopTradeState { status = error.status }.LocalizedStatus());
+            }
+            finally { Loc.Japanese = japanese; }
+        }
+
+        [Fact]
         public void Roster_separates_available_from_ready_and_an_unsafe_peer_answers_peerBusy()
         {
             CreateWorld();
