@@ -40,6 +40,18 @@ namespace SodRpg.Mod
             + "近接：装備の射程を攻撃速度へ変換（射程1%につき" + CoopBalance.RangeToSpeedMultiplierText + "%、攻撃速度は合計" + TravelerCombat.AttackSpeedCapText + "%まで。ホスト）")]
         public bool meleeRangeToSpeed = true;
 
+        [LabelText("Enemy ownership (coop, host) / 担当制（マルチ・ホスト）")]
+        public bool coopEnemyOwnership = true;
+
+        [LabelText("Difficulty follows clear speed (host) / 殲滅速度に合わせた難易度（ホスト）")]
+        public bool dynamicDifficulty = true;
+
+        [LabelText("Also use in solo (host) / ソロでも使う（ホスト）")]
+        public bool dynamicDifficultySolo = false;
+
+        [LabelText("Show enemy ownership marks (client) / 担当の印を表示（クライアント）")]
+        public bool showEnemyOwnershipMarks = true;
+
         [LabelText("Coop: distance falloff " + CoopBalance.FullRangeText + "-" + CoopBalance.OuterRangeText + "m and " + CoopBalance.GraceSecondsText + "s grace; off: cut beyond " + CoopBalance.FullRangeText + "m (host) /\n"
             + "味方距離効果の減衰（" + CoopBalance.FullRangeText + "～" + CoopBalance.OuterRangeText + "m）と猶予" + CoopBalance.GraceSecondsText + "秒。オフでは" + CoopBalance.FullRangeText + "mを超えると切れる（ホスト）")]
         public bool coopDistanceFalloff = true;

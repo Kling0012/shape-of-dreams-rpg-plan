@@ -11,5 +11,45 @@
   "scanSeconds": 0.25,
   "autoCastIntervalSeconds": 0.2,
   "autoCastOwnHitSeconds": 3,
-  "autoCastAllyHitSeconds": 2
+  "autoCastAllyHitSeconds": 2,
+  "ownership": {
+    "helpFactor": 0.5,
+    "bossShareFactor": 0.8,
+    "bossDamageMin": 0.2,
+    "bossDamageMax": 3,
+    "floor": 0.3,
+    "rescueHp": 0.35,
+    "engageWindow": 6,
+    "spawnGrace": 8,
+    "detectionMultiplier": 1.5,
+    "reassignCooldown": 5,
+    "downDelay": 3,
+    "releaseDistance": 30,
+    "awaySeconds": 6,
+    "idleSeconds": 10
+  },
+  "dynamicDifficulty": {
+    "activeBucketSeconds": 0.5,
+    "targetSeconds": 3,
+    "alpha": 0.3,
+    "alphaDown": 0.5,
+    "strength": 0.5,
+    "minFactor": 0.8,
+    "maxFactor": 3.0,
+    "minActiveSeconds": 5,
+    "minRooms": 2,
+    "damageExponent": 0.25,
+    "rewardShare": 0.5,
+    "heroTargetScale": {
+      "Hero_Aurena": 0.95,
+      "Hero_Bismuth": 1.0,
+      "Hero_Cetus": 1.0,
+      "Hero_Husk": 0.85,
+      "Hero_Lacerta": 1.0,
+      "Hero_Mist": 0.92,
+      "Hero_Nachia": 1.0,
+      "Hero_Vesper": 0.92,
+      "Hero_Yubar": 1.0
+    }
+  }
 }

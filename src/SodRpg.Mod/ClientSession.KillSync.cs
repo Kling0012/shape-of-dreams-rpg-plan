@@ -89,6 +89,64 @@ namespace SodRpg.Mod
 
         internal static void DirtyHostKillReplay() => _hostSession?.DeferKillSave();
 
+        internal readonly Dictionary<uint, MonsterOwnership> EnemyOwners = new Dictionary<uint, MonsterOwnership>();
+        private bool _ownershipDisplayFailed;
+        private DynamicDifficultyDisplay[] _dynamicDifficultyDisplay;
+        private long _dynamicDifficultyRevision;
+        private string _dynamicDifficultyRun;
+
+        internal double DynamicDifficultyFor(string participant)
+        {
+            if (_dynamicDifficultyRun != NetworkedManagerBase<GameManager>.softInstance?.runId) return 1;
+            if (_dynamicDifficultyDisplay != null)
+                foreach (var state in _dynamicDifficultyDisplay)
+                    if (state.participantId == participant) return state.factor / 100d;
+            return 1;
+        }
+
+        private void ReceiveDynamicDifficulty(DynamicDifficultyDisplay[] display, long revision)
+        {
+            if (display == null || display.Length > 4 || revision <= 0 || revision < _dynamicDifficultyRevision) return;
+            foreach (var state in display)
+                if (state == null || string.IsNullOrEmpty(state.participantId) || state.factor < 1 || state.factor > 10000) return;
+            _dynamicDifficultyDisplay = display;
+            _dynamicDifficultyRevision = revision;
+            _dynamicDifficultyRun = NetworkedManagerBase<GameManager>.softInstance?.runId;
+        }
+
+        private void ReceiveMonsterOwnership(uint netId, string participantId, long revision, bool protectedState, int slot,
+            BossShareDisplay[] bossShares = null)
+        {
+            if (_ownershipDisplayFailed || netId == 0) return;
+            try
+            {
+                if (EnemyOwners.TryGetValue(netId, out var previous) && previous.Revision > revision) return;
+                // Old hosts omit the additive fields. Keep no ownership state for their messages.
+                if (revision <= 0) { EnemyOwners.Remove(netId); return; }
+                if (bossShares != null)
+                {
+                    bool valid = bossShares.Length >= 1 && bossShares.Length <= 4;
+                    for (int i = 0; valid && i < bossShares.Length; i++)
+                    {
+                        var share = bossShares[i];
+                        valid = share != null && !string.IsNullOrEmpty(share.participantId)
+                            && share.playerSlot >= 1 && share.playerSlot <= 4 && share.remaining >= 0 && share.remaining <= 1000;
+                        for (int j = 0; valid && j < i; j++)
+                            valid = bossShares[j].participantId != share.participantId && bossShares[j].playerSlot != share.playerSlot;
+                    }
+                    if (!valid) bossShares = null;
+                }
+                EnemyOwners[netId] = new MonsterOwnership(participantId, revision,
+                    protectedState && !string.IsNullOrEmpty(participantId) && slot >= 1 && slot <= 4, slot, bossShares);
+            }
+            catch (Exception ex)
+            {
+                _ownershipDisplayFailed = true;
+                EnemyOwners.Clear();
+                Log.Warn("Enemy ownership display unavailable; classification and host rules continue: " + ex.Message);
+            }
+        }
+
         private bool ObserveMonsterAuthority(ulong generation)
         {
             if (!_monsterAuthority.Observe(generation, out bool changed)) return false;
@@ -96,6 +154,9 @@ namespace SodRpg.Mod
             _currentKillStreamId = generation.ToString(CultureInfo.InvariantCulture);
             BindNativeKillStream(_currentKillStreamId);
             Nightmare.Clear();
+            EnemyOwners.Clear();
+            _dynamicDifficultyDisplay = null;
+            _dynamicDifficultyRevision = 0;
             ClearVariants();
             ClearMonsterCues();
             ClearBossDisplay();
@@ -107,6 +168,10 @@ namespace SodRpg.Mod
         private void ResetMonsterAuthorityConnection()
         {
             _monsterAuthority.ResetConnection();
+            EnemyOwners.Clear();
+            _ownershipDisplayFailed = false;
+            _dynamicDifficultyDisplay = null;
+            _dynamicDifficultyRevision = 0;
             _currentKillStreamId = null;
             _nextKillReceipt = 0f;
         }
@@ -157,6 +222,7 @@ namespace SodRpg.Mod
             if (msg.clearLiveState)
             {
                 Nightmare.Clear();
+                EnemyOwners.Clear();
                 ClearVariants();
                 ClearMonsterCues();
                 ClearBossDisplay();
