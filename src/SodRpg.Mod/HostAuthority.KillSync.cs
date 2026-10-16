@@ -538,8 +538,10 @@ namespace SodRpg.Mod
                 if (_registeredOn != null && !pair.Value.ControlSent)
                     SendKillStreamControl(pair.Key, pair.Value);
             string eventId = RoomOmens.EncodeKillEventId(this, Guid.NewGuid().ToString("N"));
+            double dynamicReward = 1;
+            ApplyDynamicKillReward(monster, ref dynamicReward);
             runtime.KillEventId = PressureCountRewards.EncodeEventId(eventId,
-                PressureCountRewards.ScaleFromActorData(monster.persistentSyncedData), ShardDropMultiplierForKill());
+                PressureCountRewards.ScaleFromActorData(monster.persistentSyncedData), ShardDropMultiplierForKill(), dynamicReward);
             runtime.KillEventStreamId = _killStreamId;
             runtime.KillEventNetId = monster.netId;
             runtime.SyncNetId = monster.netId;
@@ -606,6 +608,7 @@ namespace SodRpg.Mod
                     ownerParticipantId = ownership.ParticipantId, ownershipRevision = ownership.Revision,
                     ownershipProtected = ownership.Protected, ownerPlayerSlot = ownership.PlayerSlot,
                     bossShares = ownership.BossShares,
+                    dynamicDifficulty = ownership.DynamicDifficulty, dynamicRevision = ownership.DynamicRevision,
                 };
                 _registeredOn.CustomRpc_SendMessageToClient(target, msg);
             }
@@ -618,6 +621,7 @@ namespace SodRpg.Mod
                     ownerParticipantId = ownership.ParticipantId, ownershipRevision = ownership.Revision,
                     ownershipProtected = ownership.Protected, ownerPlayerSlot = ownership.PlayerSlot,
                     bossShares = ownership.BossShares,
+                    dynamicDifficulty = ownership.DynamicDifficulty, dynamicRevision = ownership.DynamicRevision,
                 };
                 _registeredOn.CustomRpc_SendMessageToClient(target, msg);
             }
@@ -706,6 +710,7 @@ namespace SodRpg.Mod
                             ownerParticipantId = delta.Ownership.ParticipantId, ownershipRevision = delta.Ownership.Revision,
                             ownershipProtected = delta.Ownership.Protected, ownerPlayerSlot = delta.Ownership.PlayerSlot,
                             bossShares = delta.Ownership.BossShares,
+                            dynamicDifficulty = delta.Ownership.DynamicDifficulty, dynamicRevision = delta.Ownership.DynamicRevision,
                         });
                     else
                         _registeredOn.CustomRpc_SendMessageToAllClients(new DreamforgeNightmareMsg
@@ -715,6 +720,7 @@ namespace SodRpg.Mod
                             ownerParticipantId = delta.Ownership.ParticipantId, ownershipRevision = delta.Ownership.Revision,
                             ownershipProtected = delta.Ownership.Protected, ownerPlayerSlot = delta.Ownership.PlayerSlot,
                             bossShares = delta.Ownership.BossShares,
+                            dynamicDifficulty = delta.Ownership.DynamicDifficulty, dynamicRevision = delta.Ownership.DynamicRevision,
                         });
                 }
                 else

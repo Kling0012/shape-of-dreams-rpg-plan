@@ -91,6 +91,8 @@ namespace SodRpg.Mod
         partial void OwnershipEntityAdded(Entity entity);
         partial void OwnershipEntityRemoved(Entity entity);
         partial void OverrideOwnershipHealth(Monster monster, ref float multiplier);
+        partial void RecordDynamicHealth(Entity enemy, double health, double appliedMultiplier);
+        partial void ApplyDynamicKillReward(Monster monster, ref double multiplier);
         // HostAuthority.cs（リンク外）と同じ意味: 部屋の平均圧。所有圧への差し替え元になる。
         private DreamPressure _pressure = DreamPressure.Neutral;
         private void StagePressure() { }

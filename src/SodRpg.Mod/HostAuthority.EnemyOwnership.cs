@@ -41,6 +41,7 @@ namespace SodRpg.Mod
 
         partial void OwnershipEntityAdded(Entity entity)
         {
+            PrepareDynamicEnemy(entity);
             PrepareEnemyOwnership(entity);
             FinalizeEnemyOwnership(entity);
         }
@@ -81,13 +82,29 @@ namespace SodRpg.Mod
         private static bool OwnershipAlive(DewPlayer player) => OwnershipConnected(player) && player.hero != null
             && player.hero.isActive && player.hero.Status != null && player.hero.Status.isAlive && !player.hero.isKnockedOut;
 
-        private DreamPressure OwnershipPressure(DewPlayer player)
+        private DreamPressure OwnershipBasePressure(DewPlayer player)
         {
             if (player == null || !_builds.TryGetValue(player, out var received) || received.Build == null) return _pressure;
             return DreamPressure.ForPlayer(received.Build.DreamLevel, received.Build.SpentStarPoints)
                 .WithRunModifiers(_pressure.Depth, _pressure.WaypointMultiplier)
                 .WithInfinityPressure(_pressure.InfinityStage);
         }
+
+        private readonly struct OwnershipPressureValue
+        {
+            internal readonly double HealthMultiplier, DamageMultiplier;
+            internal OwnershipPressureValue(DreamPressure pressure, double factor)
+            {
+                HealthMultiplier = pressure.HealthMultiplier * factor;
+                DamageMultiplier = pressure.DamageMultiplier * Math.Pow(factor, CoopBalance.DynamicDifficulty.DamageExponent);
+            }
+        }
+
+        private OwnershipPressureValue OwnershipPressure(DewPlayer player) =>
+            new OwnershipPressureValue(OwnershipBasePressure(player), DynamicFactor(player));
+
+        private OwnershipPressureValue OwnershipEnemyPressure(EnemyOwnership state) =>
+            new OwnershipPressureValue(OwnershipBasePressure(state.Owner), EnemyDynamicFactor(state.Enemy));
 
         // Human ancestry stops at an enemy entity. Environment/enemy damage never borrows a human owner.
         private static DewPlayer OwnershipHuman(Actor actor)
@@ -174,6 +191,7 @@ namespace SodRpg.Mod
         {
             try
             {
+                PrepareDynamicEnemy(enemy);
                 if (enemy == null || enemy is Hero || enemy is PropEntity || enemy.owner == null || enemy.owner.isHumanPlayer
                     || OwnershipHuman(enemy) != null || _enemyOwnership.ContainsKey(enemy)
                     || !OwnershipAvailable(OwnershipPart.Assignment)) return;
@@ -197,6 +215,7 @@ namespace SodRpg.Mod
                     }
                     state.Owner = (inheritedOwner ? OwnershipConnected(requested) : OwnershipAlive(requested))
                         ? requested : OwnershipLeastLoaded();
+                    AssignDynamicEnemy(enemy, state.Owner);
                     if (state.Owner != null) OwnershipFighter(state, state.Owner);
                 }
                 enemy.EntityEvent_OnTakeDamage += state.OnDamage;
@@ -218,6 +237,7 @@ namespace SodRpg.Mod
             {
                 float multiplier = OwnershipSupplementPressure(state) ? (float)_pressure.HealthMultiplier : 1f;
                 OverrideOwnershipHealth(state.Enemy, ref multiplier);
+                RecordDynamicHealth(state.Enemy, stats.maxHealth * multiplier, multiplier);
                 stats.maxHealth *= multiplier;
                 state.AppliedHealth = multiplier;
             };
@@ -271,8 +291,12 @@ namespace SodRpg.Mod
             try
             {
                 if (TryOwnership(enemy, OwnershipPart.Strength, out var state))
-                    multiplier = (float)OwnershipPressure(state.Owner).HealthMultiplier;
-                else OverrideBossShareHealth(enemy, ref multiplier);
+                    multiplier = (float)OwnershipEnemyPressure(state).HealthMultiplier;
+                else
+                {
+                    OverrideBossShareHealth(enemy, ref multiplier);
+                    ApplySoloDynamicHealth(enemy, ref multiplier);
+                }
             }
             catch (Exception ex) { FailOwnership(OwnershipPart.Strength, ex); }
         }
@@ -281,6 +305,7 @@ namespace SodRpg.Mod
         {
             try
             {
+                if (SoloDynamicReplacesAncestorPressure(actor, ancestor)) return true;
                 if (!OwnershipAvailable(OwnershipPart.Strength)) return false;
                 for (int depth = 0; actor != null && actor != ancestor && depth < 128; depth++, actor = actor.parentActor)
                 {
@@ -298,7 +323,8 @@ namespace SodRpg.Mod
             try
             {
                 if (TryOwnership(enemy, OwnershipPart.Strength, out var state))
-                    multiplier = (float)OwnershipPressure(state.Owner).DamageMultiplier;
+                    multiplier = (float)OwnershipEnemyPressure(state).DamageMultiplier;
+                else ApplySoloDynamicDamage(enemy, ref multiplier);
             }
             catch (Exception ex) { FailOwnership(OwnershipPart.Strength, ex); }
         }
@@ -368,6 +394,7 @@ namespace SodRpg.Mod
         internal void ApplyOwnershipReceivedDamage(Entity victim, Actor actor, ref DamageData damage)
         {
             if (!NetworkServer.active) return;
+            RecordDynamicDamage(victim, actor, damage);
             ApplyBossShareReceivedDamage(victim, actor, ref damage);
             ApplyBossPressureDamage(victim, actor, ref damage);
             // Independent branches: a failed helper rule must not disable stray-hit protection.
@@ -380,7 +407,7 @@ namespace SodRpg.Mod
                     if (player != null && player != state.Owner)
                     {
                         float factor = CoopBalance.Ownership.HelpFactor * (float)Math.Min(1,
-                            OwnershipPressure(state.Owner).HealthMultiplier / OwnershipPressure(player).HealthMultiplier);
+                            OwnershipEnemyPressure(state).HealthMultiplier / OwnershipPressure(player).HealthMultiplier);
                         damage.ApplyReduction(1f - factor);
                         // Match FinalDamageData's armor, then reserve the native shield absorption
                         // before capping HP damage. Shield-only hits cannot cross the HP floor.
@@ -411,7 +438,7 @@ namespace SodRpg.Mod
                 var player = victim is Hero ? OwnershipHuman(victim) : null;
                 if (player != null && TryOwnership(source, OwnershipPart.Stray, out var state) && player != state.Owner)
                     damage.ApplyReduction(1f - (float)Math.Min(1,
-                        OwnershipPressure(player).HealthMultiplier / OwnershipPressure(state.Owner).HealthMultiplier));
+                        OwnershipPressure(player).HealthMultiplier / OwnershipEnemyPressure(state).HealthMultiplier));
             }
             catch (Exception ex) { damage = before; FailOwnership(OwnershipPart.Stray, ex); }
         }
@@ -495,6 +522,7 @@ namespace SodRpg.Mod
         {
             if (state.Owner == owner) return;
             state.Owner = owner;
+            AssignDynamicEnemy(state.Enemy, owner);
             state.Changed = state.OwnerLastEngaged = Time.time;
             state.DownSince = state.AwaySince = -1f;
             try { RecalculateOwnershipHealth(state); }
@@ -539,6 +567,8 @@ namespace SodRpg.Mod
                 catch (Exception ex) { FailOwnership(OwnershipPart.Assignment, ex); }
             }
             _ownershipWasRunning = running;
+            foreach (var state in _dynamicEnemies.Values)
+                if (state.Enemy != null && state.Enemy.isActive) CompleteDynamicSpawn(state.Enemy);
             _ownershipScratch.Clear();
             foreach (var pair in _enemyOwnership)
             {
@@ -598,6 +628,7 @@ namespace SodRpg.Mod
 
         private void OwnershipPlayerRemoved(DewPlayer player)
         {
+            DynamicPlayerRemoved(player);
             try
             {
                 bool running = OwnershipRunning();
@@ -614,6 +645,8 @@ namespace SodRpg.Mod
         internal void ReleaseEnemyOwnership(Entity enemy)
         {
             if (ReferenceEquals(enemy, null)) return;
+            CompleteDynamicSpawn(enemy);
+            ReleaseDynamicEnemy(enemy);
             if (enemy is Monster monster) _bossNativeHealth.Remove(monster);
             if (!_enemyOwnership.TryGetValue(enemy, out var state)) return;
             _enemyOwnership.Remove(enemy);
@@ -656,6 +689,10 @@ namespace SodRpg.Mod
             _ownershipPlayers.Clear();
             _ownershipCounts.Clear();
             _bossNativeHealth.Clear();
+            _ownershipScratch.Clear();
+            foreach (var enemy in _dynamicEnemies.Keys) _ownershipScratch.Add(enemy);
+            foreach (var enemy in _ownershipScratch) ReleaseDynamicEnemy(enemy);
+            _ownershipScratch.Clear();
             _ownershipWasRunning = false;
             _ownershipLastPlayer = 0;
         }

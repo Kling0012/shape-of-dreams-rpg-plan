@@ -10,6 +10,8 @@ namespace SodRpg.Mod
         {
             try { _host?.ConfigureEnemyOwnership(config.coopEnemyOwnership); }
             catch (Exception ex) { Log.Warn("Enemy ownership settings ignored: " + ex.Message); }
+            try { _host?.ConfigureDynamicDifficulty(config.dynamicDifficulty, config.dynamicDifficultySolo); }
+            catch (Exception ex) { Log.Warn("Dynamic difficulty settings ignored: " + ex.Message); }
         }
 
         private void SaveEnemyOwnershipConfig()

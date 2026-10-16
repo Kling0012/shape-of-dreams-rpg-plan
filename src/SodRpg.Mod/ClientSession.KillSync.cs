@@ -91,6 +91,28 @@ namespace SodRpg.Mod
 
         internal readonly Dictionary<uint, MonsterOwnership> EnemyOwners = new Dictionary<uint, MonsterOwnership>();
         private bool _ownershipDisplayFailed;
+        private DynamicDifficultyDisplay[] _dynamicDifficultyDisplay;
+        private long _dynamicDifficultyRevision;
+        private string _dynamicDifficultyRun;
+
+        internal double DynamicDifficultyFor(string participant)
+        {
+            if (_dynamicDifficultyRun != NetworkedManagerBase<GameManager>.softInstance?.runId) return 1;
+            if (_dynamicDifficultyDisplay != null)
+                foreach (var state in _dynamicDifficultyDisplay)
+                    if (state.participantId == participant) return state.factor / 100d;
+            return 1;
+        }
+
+        private void ReceiveDynamicDifficulty(DynamicDifficultyDisplay[] display, long revision)
+        {
+            if (display == null || display.Length > 4 || revision <= 0 || revision < _dynamicDifficultyRevision) return;
+            foreach (var state in display)
+                if (state == null || string.IsNullOrEmpty(state.participantId) || state.factor < 1 || state.factor > 10000) return;
+            _dynamicDifficultyDisplay = display;
+            _dynamicDifficultyRevision = revision;
+            _dynamicDifficultyRun = NetworkedManagerBase<GameManager>.softInstance?.runId;
+        }
 
         private void ReceiveMonsterOwnership(uint netId, string participantId, long revision, bool protectedState, int slot,
             BossShareDisplay[] bossShares = null)
@@ -133,6 +155,8 @@ namespace SodRpg.Mod
             BindNativeKillStream(_currentKillStreamId);
             Nightmare.Clear();
             EnemyOwners.Clear();
+            _dynamicDifficultyDisplay = null;
+            _dynamicDifficultyRevision = 0;
             ClearVariants();
             ClearMonsterCues();
             ClearBossDisplay();
@@ -146,6 +170,8 @@ namespace SodRpg.Mod
             _monsterAuthority.ResetConnection();
             EnemyOwners.Clear();
             _ownershipDisplayFailed = false;
+            _dynamicDifficultyDisplay = null;
+            _dynamicDifficultyRevision = 0;
             _currentKillStreamId = null;
             _nextKillReceipt = 0f;
         }

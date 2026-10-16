@@ -36,10 +36,12 @@ namespace SodRpg.Mod
                     Log.Warn("Enemy ownership display sync disabled; host rules continue: " + ex.Message);
                 }
             }
+            var dynamic = DynamicSnapshot();
             var previous = runtime.Ownership;
-            if (previous.ParticipantId == participant && previous.PlayerSlot == slot && previous.Protected == protectedState
+            if (previous.DynamicRevision == _dynamicRosterRevision && previous.ParticipantId == participant && previous.PlayerSlot == slot && previous.Protected == protectedState
                 && MonsterOwnership.SameShares(previous.BossShares, shares)) return;
-            runtime.Ownership = new MonsterOwnership(participant, ++_ownershipSyncRevision, protectedState, slot, shares);
+            runtime.Ownership = new MonsterOwnership(participant, ++_ownershipSyncRevision, protectedState, slot, shares,
+                dynamic, _dynamicRosterRevision);
         }
 
         private BossShareDisplay[] BossShareSnapshot(Monster monster, BossShareDisplay[] previous)
@@ -90,6 +92,7 @@ namespace SodRpg.Mod
             {
                 // Reuse the ownership scan's 0.25s cadence and KillSync's coalesced frame budget.
                 foreach (var runtime in _monsters.Values) SendMonsterClassification(runtime);
+                SyncDynamicDifficultyLegend();
             }
             catch (Exception ex)
             {

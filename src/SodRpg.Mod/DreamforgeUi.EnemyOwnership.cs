@@ -44,7 +44,9 @@ namespace SodRpg.Mod
                     name = name.Replace("<", "〈").Replace(">", "〉");
                     if (name.Length > 12) name = name.Substring(0, 12) + "…";
                     if (i > 0) legend += "    ";
-                    legend += UiStyles.Colored("◆" + (i + 1) + " " + name, OwnershipColors[i]);
+                    string factor = player != null ? " <size=11>×" + _s.DynamicDifficultyFor(player.guid)
+                        .ToString("0.00", System.Globalization.CultureInfo.InvariantCulture) + "</size>" : "";
+                    legend += UiStyles.Colored("◆" + (i + 1) + " " + name + factor, OwnershipColors[i]);
                 }
                 _ownershipLegend = legend;
             }
@@ -72,6 +74,18 @@ namespace SodRpg.Mod
                     "Assign enemies to each traveler and scale them to their progress. Changes apply and save immediately.")
                 : Loc.T("変更はホストのみ。ホストの設定が使われます。",
                     "Only the host can change this. The host's setting applies."), _st.Small);
+            GUI.enabled = previous && editable;
+            bool dynamic = GUILayout.Toggle(cfg.dynamicDifficulty, Loc.T("殲滅速度に合わせた難易度", "Difficulty follows clear speed"));
+            bool solo = GUILayout.Toggle(cfg.dynamicDifficultySolo, Loc.T("ソロでも使う", "Also use in solo"));
+            GUI.enabled = previous;
+            if (editable && (dynamic != cfg.dynamicDifficulty || solo != cfg.dynamicDifficultySolo))
+            {
+                cfg.dynamicDifficulty = dynamic;
+                cfg.dynamicDifficultySolo = solo;
+                SaveEnemyOwnershipConfig?.Invoke();
+            }
+            GUILayout.Label(Loc.T("戦った部屋のダメージから、次の部屋の敵を調整します。強さの差を半分だけ埋めます。",
+                "Use combat damage to adjust enemies in the next room, closing half the strength gap."), _st.Small);
             if (!_ownershipLegendFailed)
             {
                 try { DrawOwnershipLegend(); }

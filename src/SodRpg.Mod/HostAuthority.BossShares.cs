@@ -10,8 +10,8 @@ namespace SodRpg.Mod
         private sealed class BossShares
         {
             internal readonly DewPlayer[] Players = new DewPlayer[4];
-            internal readonly double[] Solo = new double[4], Capacity = new double[4], Remaining = new double[4];
-            internal double Multiplier, Maximum;
+            internal readonly double[] Solo = new double[4], Capacity = new double[4], Remaining = new double[4], Dynamic = new double[4];
+            internal double Multiplier, BaseMultiplier, Maximum;
             internal bool Failed;
         }
 
@@ -42,19 +42,24 @@ namespace SodRpg.Mod
             try
             {
                 int count = 0;
-                double sum = 0;
+                double sum = 0, baseSum = 0;
                 foreach (var player in DewPlayer.gamePlayers)
                 {
                     if (!OwnershipConnected(player)) continue;
                     if (count == shares.Players.Length) throw new InvalidOperationException("Boss shares support up to four travelers.");
-                    double solo = OwnershipPressure(player).HealthMultiplier;
+                    double factor = DynamicFactor(player);
+                    double baseline = OwnershipBasePressure(player).HealthMultiplier;
+                    double solo = baseline * factor;
                     if (!(solo > 0) || double.IsInfinity(solo)) throw new InvalidOperationException("Invalid solo pressure.");
                     shares.Players[count] = player;
+                    shares.Dynamic[count] = factor;
                     shares.Solo[count++] = solo;
                     sum += solo;
+                    baseSum += baseline;
                 }
                 if (count < 2) { state.Shares = null; return null; }
                 shares.Multiplier = sum * CoopBalance.Ownership.BossShareFactor;
+                shares.BaseMultiplier = baseSum * CoopBalance.Ownership.BossShareFactor;
                 for (int i = 0; i < count; i++) shares.Capacity[i] = shares.Remaining[i] = shares.Solo[i] / sum;
                 return shares;
             }
@@ -100,7 +105,8 @@ namespace SodRpg.Mod
                 double native = _bossNativeHealth[monster].maxHealthPercentage;
                 double denominator = 100d + monster.Status.bonusStats.maxHealthPercentage;
                 double soloBonus = denominator - native;
-                double result = shares.Multiplier * soloBonus / denominator;
+                double multiplierWithDynamic = DynamicApplicationRunning() ? shares.Multiplier : shares.BaseMultiplier;
+                double result = multiplierWithDynamic * soloBonus / denominator;
                 if (!(result > 0) || double.IsInfinity(result) || result > float.MaxValue)
                     throw new InvalidOperationException("Invalid boss health multiplier.");
                 multiplier = (float)result;
@@ -166,13 +172,15 @@ namespace SodRpg.Mod
                 total += take;
                 budget -= take;
             }
-            double pressure = player != null ? OwnershipPressure(player).HealthMultiplier : 1;
+            bool dynamic = DynamicApplicationRunning();
+            double pressure = player == null ? 1 : OwnershipBasePressure(player).HealthMultiplier
+                * (own >= 0 ? dynamic ? shares.Dynamic[own] : 1 : DynamicFactor(player));
             for (int step = 0; step < shares.Players.Length && budget > 0; step++)
             {
                 int target = LargestBossShare(shares, planned);
                 if (target < 0) break;
                 double factor = player == null ? 1 : CoopBalance.Ownership.HelpFactor * Math.Min(1,
-                    OwnershipPressure(shares.Players[target]).HealthMultiplier / pressure);
+                    OwnershipBasePressure(shares.Players[target]).HealthMultiplier * (dynamic ? shares.Dynamic[target] : 1) / pressure);
                 if (!(factor > 0)) throw new InvalidOperationException("Invalid boss help pressure.");
                 double take = Math.Min(budget * factor, shares.Remaining[target] - planned[target]);
                 planned[target] += take;

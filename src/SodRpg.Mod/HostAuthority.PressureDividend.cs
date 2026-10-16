@@ -53,6 +53,8 @@ namespace SodRpg.Mod
         partial void OverrideOwnershipHealth(Monster monster, ref float multiplier);
         partial void OwnershipEntityAdded(Entity entity);
         partial void OwnershipEntityRemoved(Entity entity);
+        partial void RecordDynamicHealth(Entity enemy, double health, double appliedMultiplier);
+        partial void ApplyDynamicKillReward(Monster monster, ref double multiplier);
 
         private void InstallPressureHealthProcessor(MonsterRuntime runtime)
         {
@@ -62,6 +64,7 @@ namespace SodRpg.Mod
             {
                 float appliedMultiplier = (float)_pressure.HealthMultiplier;
                 OverrideOwnershipHealth(monster, ref appliedMultiplier);
+                RecordDynamicHealth(monster, stats.maxHealth * appliedMultiplier, appliedMultiplier);
                 stats.maxHealth *= appliedMultiplier;
                 if (_pressureDividendSpawns.TryGetValue(monster, out var spawn) && spawn.Death == null)
                     spawn.RecordAppliedHpMultiplier(appliedMultiplier);

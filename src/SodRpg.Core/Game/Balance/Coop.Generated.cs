@@ -34,5 +34,37 @@ namespace SodRpg.Core.Game
             public const float AwaySeconds = 6f;
             public const float IdleSeconds = 10f;
         }
+
+        public static class DynamicDifficulty
+        {
+            public const double ActiveBucketSeconds = 0.5d;
+            public const double TargetSeconds = 3d;
+            public const double Alpha = 0.3d;
+            public const double AlphaDown = 0.5d;
+            public const double Strength = 0.5d;
+            public const double MinFactor = 0.8d;
+            public const double MaxFactor = 3.0d;
+            public const double MinActiveSeconds = 5d;
+            public const int MinRooms = 2;
+            public const double DamageExponent = 0.25d;
+            public const double RewardShare = 0.5d;
+
+            public static double HeroTargetScale(string hero)
+            {
+                switch (hero)
+                {
+                    case "Hero_Aurena": return 1.0d;
+                    case "Hero_Bismuth": return 1.0d;
+                    case "Hero_Cetus": return 1.0d;
+                    case "Hero_Husk": return 1.0d;
+                    case "Hero_Lacerta": return 1.0d;
+                    case "Hero_Mist": return 1.0d;
+                    case "Hero_Nachia": return 1.0d;
+                    case "Hero_Vesper": return 1.0d;
+                    case "Hero_Yubar": return 1.0d;
+                    default: return 1d;
+                }
+            }
+        }
     }
 }

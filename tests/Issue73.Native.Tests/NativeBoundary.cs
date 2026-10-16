@@ -589,7 +589,7 @@ namespace SodRpg.Mod
             public NightmareAffix ClassificationNightmare;
             public MonsterOwnership Ownership, ClassificationOwnership;
             public StatBonus OmenBonus;
-            public bool PressureApplied;
+            public bool PressureApplied, SpawnProcessed;
         }
         internal sealed class Variant { public string Id; }
         internal sealed class Behavior { public bool CueQueued; }

@@ -39,6 +39,12 @@ namespace SodRpg.Mod
         [LabelText("Enemy ownership (coop, host) / 担当制（マルチ・ホスト）")]
         public bool coopEnemyOwnership = true;
 
+        [LabelText("Difficulty follows clear speed (host) / 殲滅速度に合わせた難易度（ホスト）")]
+        public bool dynamicDifficulty = true;
+
+        [LabelText("Also use in solo (host) / ソロでも使う（ホスト）")]
+        public bool dynamicDifficultySolo = false;
+
         [LabelText("Show enemy ownership marks (client) / 担当の印を表示（クライアント）")]
         public bool showEnemyOwnershipMarks = true;
 
