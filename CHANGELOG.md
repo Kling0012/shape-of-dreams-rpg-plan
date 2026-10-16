@@ -8,7 +8,24 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
-- インフィニティの協力プレイで、敵のHP・攻撃と悪夢化にホストの道標だけが使われていた問題を修正。担当敵には担当者本人の道標を使い、ボスなど担当のない敵には道標の効果を掛けません。通常モードとソロの扱いは従来どおりです。 / Fixed Infinity co-op enemy health, damage and nightmare rules using only the host's waypoint. Assigned enemies now use their own player's waypoint; shared enemies, including bosses, receive no waypoint effects. Ordinary mode and solo behavior are unchanged.
+---
+
+## v3.2.10 — Fix recovered relic counts in expedition reports and stale Forbidden descriptions in the Trade tab（2026-10-17）
+
+この版は、遺失物から取り戻した遺物が遠征の報告で発見件数に入らず、ほかの件数と合わなかった問題を直す更新です。協力プレイの取引タブで、禁忌化した遺物の説明が古いまま残っていた問題もあわせて直しています。 / This update fixes relics recovered from lost items not counting toward the found count in the expedition report, which left the report's numbers out of line. It also fixes the co-op Trade tab still showing a relic's old description after the relic was made Forbidden.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- 部屋の突破、迷い人の灯、遺失物の霊廟で取り戻した遺物が、遠征の報告で発見件数に入っていなかった問題を直しました。取り戻した遺物は確保と喪失の件数には入っていたのに、発見件数には入っていなかったため、報告の数字が合いませんでした。これからは取り戻した遺物も、その遠征の発見件数に入ります。勝利したときも全滅したときも、報告の件数が合うようになります。 / Fixed relics recovered on room clear, at the Lost Lantern, or at the Mausoleum of the Lost not counting toward the found count in the expedition report. Recovered relics were included in the secured and lost counts but not in the found count, so the report's numbers didn't match. Recovered relics now count toward that expedition's found count, and the report adds up whether you win or are wiped out.
+- 協力プレイの取引タブで遺物の説明を見たあと、まだ提示していないその遺物を鍛冶で禁忌化してから取引タブに戻ると、禁忌化する前の説明が表示されたままになっていた問題を直しました。これからは、禁忌化で変わった内容に合わせて説明とツールチップが更新されます。 / Fixed the co-op Trade tab keeping a relic's old description if you viewed it there, made that relic (not yet offered) Forbidden at the forge, and then returned to the Trade tab. The description and tooltip now update to match the changes from being made Forbidden.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
 
 ---
 
