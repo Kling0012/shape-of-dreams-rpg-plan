@@ -101,17 +101,30 @@ namespace SodRpg.Mod
             return false;
         }
 
-        /// <summary>ActorEvent_OnDoHeal は自己回復と味方への回復を共に通知する。過剰回復だけの通知は数えない。</summary>
-        private void OnRunGrowthHeal(HeroRuntime rt, EventInfoHeal info)
+        /// <summary>有効回復は自己1回分・味方2回分。味方への有効障壁も2回分。溢れ回復由来の障壁は数えない。</summary>
+        private void OnRunGrowthSupport(HeroRuntime rt, Entity target, float amount, bool shield)
         {
             try
             {
-                if (!HasRunGrowth(rt, RunGrowthTrigger.HealSucceeded) || !Alive(rt.Hero) || info.target == null
-                    || !(info.amount > 0f) || float.IsInfinity(info.amount)
-                    || info.target != rt.Hero && info.target.GetRelation(rt.Hero) != EntityRelation.Ally) return;
-                GainRunGrowth(rt, RunGrowthTrigger.HealSucceeded, 1d);
+                if (!HasRunGrowth(rt, RunGrowthTrigger.HealSucceeded) || !Alive(rt.Hero) || target == null
+                    || !(amount > 0f) || float.IsInfinity(amount) || _supportOverhealDepth != 0) return;
+                bool ally = target != rt.Hero && target.GetRelation(rt.Hero) == EntityRelation.Ally;
+                if (!ally && (target != rt.Hero || shield)) return;
+                GainRunGrowth(rt, RunGrowthTrigger.HealSucceeded, ally ? StarRankBalance.SupportAllyGrowthMultiplier : 1d);
             }
-            catch (Exception ex) { Log.Error("Host: RunGrowth heal " + ex); }
+            catch (Exception ex) { Log.Error("Host: RunGrowth support " + ex); }
+        }
+
+        internal void OnNativeSupportShield(EventInfoShield info)
+        {
+            try
+            {
+                if (!NetworkServer.active) return;
+                var hero = KillAssistOwner(info.statusEffect);
+                if (hero != null && _runtimes.TryGetValue(hero, out var rt))
+                    OnRunGrowthSupport(rt, info.target, info.finalAmount, true);
+            }
+            catch (Exception ex) { Log.Error("Host: RunGrowth shield " + ex); }
         }
 
         /// <summary>通常攻撃の同期命中イベント。失明で外れた攻撃や、記憶が起こす攻撃効果は含めない。</summary>

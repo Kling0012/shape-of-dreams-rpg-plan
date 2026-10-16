@@ -494,6 +494,18 @@ F2はVesper閾値11%HP、Cetus閾値9%HP、Mist入口cap60、
 MOD起動時の登録失敗は警告し、その旅人の生成星図・移行規則だけを外します。
 開発ツール側は失敗を非ゼロで伝えます。
 
+## マルチの支援と溢れ回復
+
+`stars.json.support` が支援の数値原本です。`overhealShieldRatio=0.5`、
+`overhealShieldMaxHealthRatio=0.15`、`overhealShieldSeconds=8`、`allyGrowthMultiplier=2` を
+`gen_cs.py` で `StarRankBalance.g.cs` へ生成し、既存の内容照合に含めます。
+別の味方旅人を回復した溢れ分だけを障壁へ変え、受け手ごとの合計残量を最大HPの15%に制限します。
+自己・召喚体への回復は変換せず、既存の障壁とは別に管理します。再付与で8秒へ延長し、
+受け手のOverflowingLifeと同じ溢れを変換するときは、変換候補量が大きい方だけを使います。
+アウレナの回復成立による遠征成長は、有効な味方回復・障壁を2回分、自己回復を1回分と数え、
+溢れ回復とそれ由来の障壁は数えません。障壁の量が増えない更新も成長に数えません。
+判定はhostで行い、本体の障壁同期と既存RunGrowth通知を使用します。Protocol・保存形式は変えません。
+
 ## 軽量な記憶効率
 
 `star-efficiency` は実登録 `HeroSigils.TreeFor` の有効MemoryDamage Linkを列挙します。

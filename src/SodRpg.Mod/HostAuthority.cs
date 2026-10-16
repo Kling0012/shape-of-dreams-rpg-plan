@@ -298,6 +298,7 @@ namespace SodRpg.Mod
                 }
                 _pressureDirty = true;
             };
+            _dispatchSupportHeal = DispatchSupportHealOwned;
             _onBuild = OnBuild;
             _onCurse = OnCurse;
             _onCurseClear = OnCurseClear;
@@ -445,7 +446,11 @@ namespace SodRpg.Mod
 
         private void StageCurrency() => SyncCurrency(_tickNow);
 
-        private void StageModShieldPools() => UpdateModShieldPools(_tickNow);
+        private void StageModShieldPools()
+        {
+            UpdateModShieldPools(_tickNow);
+            UpdateSupportOverheal(_tickNow);
+        }
 
         private float _nextMonsterPrune;
 
@@ -1223,6 +1228,7 @@ namespace SodRpg.Mod
                 ClearSunders();
                 ClearNativeDeathHooks();
                 ClearKillAssists();
+                ClearSupportOverheal();
                 _am = am;
                 _spawnQueue.Clear();
                 _regen.Clear();
@@ -1298,6 +1304,7 @@ namespace SodRpg.Mod
             ClearAssignedMechanismSession();
             if (NativeInstance == this) NativeInstance = null;
             ReleasePowerShields();
+            ClearSupportOverheal();
             ClearNewPowerZone();
             ClearZoneGimmicksV129();
             ClearBackOffCharge();
@@ -1587,7 +1594,6 @@ namespace SodRpg.Mod
                 hero.ActorEvent_OnKill += rt.OnMemoryKill;
                 rt.OnSupportHeal = info =>
                 {
-                    OnRunGrowthHeal(captured, info);
                     OnSupportHealingV129(captured, info);
                     var target = info.target as Hero;
                     if (target != null && target != hero && target.GetRelation(hero) == EntityRelation.Ally
@@ -1956,10 +1962,11 @@ namespace SodRpg.Mod
                 if (!Alive(hero) || info.target != hero) return;
                 OnPotionHealV129(rt, info);
                 rt.Powers.OnOverheal(Time.time, info.discardedAmount);
-                float shield = rt.Powers.TakeOverflowingLife(info.discardedAmount, hero.maxHealth);
-                if (shield <= 0) return;
-                hero.GiveShield(hero, shield, PowerRuntime.OverflowingLifeDuration);
-                LogPowerTrigger(Power.OverflowingLife);
+                // The optional global hook also covers allies without a MOD build; keep this Power if it is absent.
+                if (!NativeSupportHeal.Active || NativeSupportHeal.Current.target != hero
+                    || NativeSupportHeal.Current.actor != info.actor || NativeSupportHeal.Current.amount != info.amount
+                    || NativeSupportHeal.Current.discardedAmount != info.discardedAmount)
+                    ApplyOverhealProtection(info, null);
             }
             catch (Exception ex)
             {

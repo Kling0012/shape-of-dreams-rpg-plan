@@ -312,8 +312,10 @@ namespace SodRpg.Core.Game
                     return threshold == 1 ? Loc.T("パリィに成功するたび", "each time you parry successfully")
                         : Loc.T($"パリィに{threshold}回成功するたび", $"every {threshold} successful parries");
                 case RunGrowthTrigger.HealSucceeded:
-                    return threshold == 1 ? Loc.T("自分の回復が自分または味方のHPを実際に回復するたび", "each time your healing restores health to yourself or an ally")
-                        : Loc.T($"自分の回復が自分または味方のHPを実際に{threshold}回回復するたび", $"every {threshold} successful heals on yourself or allies");
+                    return (threshold == 1 ? Loc.T("自分の回復が自分または味方のHPを実際に回復するたび", "each time your healing restores health to yourself or an ally")
+                        : Loc.T($"自分の回復が自分または味方のHPを実際に{threshold}回回復するたび", $"every {threshold} successful heals on yourself or allies"))
+                        + Loc.T($"（味方への有効回復・障壁は{StarRankBalance.SupportAllyGrowthMultiplier}回分、自己回復は1回分。溢れ由来の障壁は除く）",
+                            $" (effective ally healing/shields count {StarRankBalance.SupportAllyGrowthMultiplier} times; self-heals count once; overheal shields excluded)");
                 case RunGrowthTrigger.EnemyKill:
                     return threshold == 1 ? Loc.T("敵を撃破するたび", "each time you kill an enemy")
                         : Loc.T($"敵を{threshold}体撃破するたび", $"every {threshold} enemies you kill");

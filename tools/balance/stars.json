@@ -1,5 +1,11 @@
 {
   "schemaVersion": 1,
+  "support": {
+    "overhealShieldRatio": 0.5,
+    "overhealShieldMaxHealthRatio": 0.15,
+    "overhealShieldSeconds": 8,
+    "allyGrowthMultiplier": 2
+  },
   "essenceSlots": {
     "maxAdded": 8,
     "maxPerLocation": 4,

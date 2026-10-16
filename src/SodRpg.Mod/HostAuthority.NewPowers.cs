@@ -173,10 +173,8 @@ namespace SodRpg.Mod
             var support = _am != null ? _am.serverActor : null;
             if (support == null) return;
             _powerSupportDepth++;
-            float before = target.currentHealth;
-            try { support.Heal(SupportStats.AmplifyHeal(amount, rt.Powers.Build.Get(Stat.HealPower))).Dispatch(target); }
+            try { DispatchSupportHeal(rt, target, support.Heal(SupportStats.AmplifyHeal(amount, rt.Powers.Build.Get(Stat.HealPower)))); }
             finally { _powerSupportDepth--; }
-            CreditHealRestored(rt, target, before);
         }
 
         private void PowerShield(HeroRuntime rt, Entity target, Power power, float amount, float duration)
