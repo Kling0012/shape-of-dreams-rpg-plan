@@ -290,8 +290,11 @@ namespace SodRpg.Core.Game
                 case DreamEvent.CourageGate:
                     if (run.Heat > Content.MaxHeat - EventsBalance.CourageGateHeatIncrement) reason = Loc.T("これ以上深く潜れません。", "Cannot delve any deeper.");
                     break;
-                case DreamEvent.Stargazer:
                 case DreamEvent.Archive:
+                    // 経験値は上限の夢のレベルでは入らない（夢への供物と同じ）。
+                    if (p.DreamLevel >= Content.MaxDreamLevel) reason = Loc.T("夢のレベルは上限です。", "Dream Level is at its cap.");
+                    break;
+                case DreamEvent.Stargazer:
                 case DreamEvent.LuckyStar:
                     break;
                 case DreamEvent.MemoryWell:

@@ -11,7 +11,32 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 - 道標（特定の部位・レア度に変える道など）と「最初の獲得」で出る遺物でも、図鑑に未登録の銘品が出やすくなる補正が効くようにしました。 / Waypoint-transformed drops and First Claim now also favor named items missing from your codex.
 - インフィニティの最初の周期で、短い区画の終点ボスに進んだ状態を保存すると、読み込めなくなることがある問題を修正しました。 / Fixed a save that could fail to load after reaching a short segment's finale boss in the first Infinity cycle.
 - 一部の契約の日本語の説明で「。。」と句点が重なっていた問題と、属性の組み合わせ星の英語の見出しで追加スタックの確率が抜けていた問題を修正しました。 / Fixed doubled Japanese periods in some pact descriptions and the missing extra-stack chance in English element pair headlines.
-- インフィニティの協力プレイで、前の区間の潜行の決定が残っていると、ゲストがホストより先に次の選択画面を開いてしまうことがあった問題を修正。部屋ごとの状態の書き込みと送信が2回行われていたのを1回に。 / Infinity guests no longer open the next choice early from the previous segment's retained delve decision; the per-room state envelope is written and broadcast once instead of twice.
+
+---
+
+## v3.2.6 — Fixes for Infinity co-op choices, forge buttons, gear effect caps, and effect lights（2026-10-17）
+
+この版は、Infinity の協力プレイでゲストがホストより先に次の選択を始められてしまう問題、鍛冶のボタンと遊び方の表示が実際のルールと合っていなかった問題、装備の固有効果と連携の説明の問題、同じエフェクトを短い間に繰り返すと光が上限を超えて点灯する問題を直す更新です。 / This update fixes guests in Infinity co-op being able to start the next choice before the host, forge buttons and how-to text that did not match the actual rules, issues with gear unique effects and link descriptions, and lights exceeding their limit when the same effect replays in quick succession.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- Infinity の協力プレイで、ゲストがホストより先に次の選択を始められてしまう問題を直しました。潜行で決めた内容は次に決め直すまで残ります。そのため、次の区間でボスを倒したあと、前の区間の選択をもとにゲストの画面で次の選択が開いていました。これからは、ゲストはホストの選択が届いてから次の選択を始めます。通信の状況によっては、選択が開くまで少し待つことがあります。 / Fixed an issue in Infinity co-op where guests could start the next choice before the host. The delve decision stays in effect until the next decision, so after the next segment's boss, the next choice could open for guests based on the previous segment's choice. Guests now wait for the host's choice to arrive before starting the next one. Depending on the connection, there may be a short wait before the choice opens.
+- 鍛冶で、保管庫がいっぱいでも通常・上等の製作ボタンが押せてしまっていた問題を直しました。保管庫がいっぱいだと製作はできないため、これからはどちらのボタンも押せなくなります。 / Fixed the forge's normal and fine craft buttons being clickable while the vault was full. Since crafting isn't possible with a full vault, both buttons are now disabled in that case.
+- 鍛冶で、再調律の候補を選んでいる途中の遺物にも分解ボタンが押せた問題を直しました。押しても分解はされないのに、遺物の選択と再調律の候補が画面から消えていました。これからは、再調律の候補がある遺物では分解ボタンが押せません。分解できなかったときは選択と候補の表示がそのまま残り、選択が外れるのは分解できたときだけです。 / Fixed the forge letting you click Salvage on a relic while choosing a retune option. Nothing was salvaged, but the relic selection and retune options disappeared from the screen. The Salvage button is now disabled for relics with pending retune options. If salvaging is refused, the selection and options stay on screen, and the selection is cleared only when salvaging succeeds.
+- 記録タブの遊び方で、遺失物の回収に必要な部屋数に工房の強化が反映されず、基本の数のまま表示されていた問題を直しました。これからは日本語・英語とも、実際に必要な部屋数を表示します。 / Fixed the how-to in the Records tab showing the base number of rooms needed to recover lost items, without reflecting workshop upgrades. It now shows the actual number of rooms required, in both Japanese and English.
+- 日替わり強化の日に、装備の固有効果が普段より低くなることがあった問題を直しました。たとえば勢い5を3部位に付けた場合、普段は合計10ですが、烈火の日には9に下がっていました。これからは強化の日でも10になります。 / Fixed gear unique effects sometimes ending up lower than usual on daily boost days. For example, Momentum 5 on three slots normally totals 10, but it dropped to 9 on Blaze days. It now stays at 10 on boost days as well.
+- 覚醒させた装備の条件付き効果が、共通の上限に対して実際より多く数えられていた問題を直しました。たとえば活力30を2部位に付け、片方を覚醒3にした場合、上限に数える覚醒前の値が56になっていましたが、正しく40で数えるようになりました。効果そのものの合計（56）は変わりません。 / Fixed conditional effects on awakened gear counting more than they should toward the shared cap. For example, with Vitality 30 on two slots and one of them at Awaken 3, the pre-awakening value counted toward the cap was 56; it is now correctly counted as 40. The total effect itself (56) does not change.
+- 連携の説明に出る上限の割合が、実際の値と違っていた問題を直しました。たとえば同調の条件を1つ満たした場合、説明には25%と出ていましたが、実際の上限は45%でした。これからは、装備全体にかかる実際の上限を表示します。あわせて、同じ種類・同じ条件の効果は合算されること、星の連携はそれとは別に加わることを、日本語と英語の説明に書き加えました。 / Fixed link descriptions showing a cap percentage that differed from the actual value. For example, with one Sync condition met, the description said 25% while the actual cap was 45%. Descriptions now show the real cap applied to your equipped gear as a whole. They also now explain, in both Japanese and English, that effects of the same type and condition are combined, and that star links are added separately.
+- 同じエフェクトが短い間に何度も再生されると、エフェクトの光が決められた数を超えて点灯することがあった問題を直しました。これからは、同じエフェクトを繰り返し再生した場合も、光の数が上限の中に収まります。 / Fixed effect lights sometimes exceeding their set limit when the same effect was replayed several times in quick succession. Lights now stay within the limit even when the same effect replays repeatedly.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
 ---
 
 ## v3.2.5 — Fix saving after salvaging starting relics and keep starting relic marks（2026-10-17）
