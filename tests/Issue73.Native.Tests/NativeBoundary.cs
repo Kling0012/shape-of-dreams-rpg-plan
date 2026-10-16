@@ -719,7 +719,7 @@ namespace SodRpg.Mod
         private Actor _sentContinueReceiptActor;
         private float _helloFirstSent = -1f, _nextHello;
         private bool _helloAnswered, _hostCompatibilityWarned, _hostInfinityAvailable;
-        public string HostVersionWarning { get; private set; }
+        // HostVersionWarning は #510 で ClientSession.Hello.cs から抽出される（NativePersistence.targets）。
         private Build _buildCache;
         private float _buildCacheTime;
         private string _buildCacheHero;

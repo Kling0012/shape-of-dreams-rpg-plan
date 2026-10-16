@@ -82,6 +82,15 @@
     </ItemGroup>
   </Target>
 
+  <!-- #510: ホスト版警告（互換分岐）の言語追従。OnHello と警告プロパティを実ソースから抽出し、
+       NativeBoundary.cs 側の二重定義だった HostVersionWarning はこちらへ寄せる。 -->
+  <Target Name="CompileIssue510Hello" BeforeTargets="CoreCompile">
+    <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/ClientSession.Hello.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)Issue510Hello.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="ClientSession" Methods="OnHello;HostVersionWarning" />
+    <ItemGroup>
+      <Compile Include="$(IntermediateOutputPath)Issue510Hello.g.cs" />
+    </ItemGroup>
+  </Target>
+
   <Target Name="CompileNativeBuildRestore" BeforeTargets="CoreCompile">
     <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/HostAuthority.BuildValidation.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)NativeBuildRestore.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="HostAuthority" Methods="BeginNativeContinueRestore;ClearBuildValidationPeers" />
     <ItemGroup>
@@ -148,7 +157,7 @@
   <!-- 星図の差分更新（#440）。左一覧の高さ部分再計算・TextRank/TextChoice スキップ・ツールチップ世代を
        実ソースから抽出したメソッドで直接検証する。境界は StarClusterUiBoundary.cs と NativeBoundary.cs の UnityEngine 部。 -->
   <Target Name="CompileStarClusterDiffUpdate" BeforeTargets="CoreCompile">
-    <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/DreamforgeUi.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)StarRefreshUi.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="DreamforgeUi" Methods="RefreshStarState;EnsureStarTooltip;EnsureStarChoiceText" NestedTypes="StarNode" Fields="_starLayout;_starNodes;_starHero;_starCapFingerprint;_starAuthoredFingerprint;_starKeystoneState;_starReachable;_starSpent;_starTextVersion;_starPoints;_starProgress;_starKeystoneSlots;_starState;_starJapanese;_starXp;_starSumOpen;_starSumSig;_starSearchDirty;_linkMemories;_linkEssences;_linkAllies;StarKeystone;StarBright" />
+    <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/DreamforgeUi.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)StarRefreshUi.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="DreamforgeUi" Methods="RefreshStarState;EnsureStarTooltip;EnsureStarChoiceText" NestedTypes="StarNode" Fields="_starLayout;_starNodes;_starHero;_starCapFingerprint;_starAuthoredFingerprint;_starKeystoneState;_starReachable;_starSpent;_starTextVersion;_starPoints;_starProgress;_starKeystoneSlots;_starState;_starJapanese;_starXp;_starSumOpen;_starSumSig;_starSearchDirty;_linkMemories;_linkEssences;_linkAllies;_linkCoefficients;StarKeystone;StarBright" />
     <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/DreamforgeUi.AuthoredStars.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)StarClusterListUi.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="DreamforgeUi" Methods="RefreshStarClusters;DrawStarClusterList;StarRegionColor" Fields="_starNavigationNodes;_starNavigationContext;_starClusterLabels;_starClusterTops;_starClusterHeights;_starClusterWidth;_starClusterDirtyFrom;_starClusterScroll;_starClustersOpen;_starClusterRow;_starHelpStyle;StarClusterSize" />
     <ItemGroup>
       <Compile Include="$(IntermediateOutputPath)StarRefreshUi.g.cs" />

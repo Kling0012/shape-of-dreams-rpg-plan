@@ -84,6 +84,7 @@ namespace SodRpg.Mod
         public bool levelEssenceSlots = true, levelEssenceQ = true, levelEssenceW = true, levelEssenceE = true, levelEssenceSlotsR = true;
         public int levelEssenceEveryLevels = 10, levelEssenceCap = 4;
         public bool netSkipUnchanged = true, netCoalesce = true, netOwnerOnly = true, netCompact = true;
+        public bool meleeRangeToSpeed = true, coopDistanceFalloff = true, meleeBreak = true, meleeProximityGuard = true;
         public LightweightMode lightweight;
         public Key menuKey, securePanelKey, secureKey, delveKey;
     }
@@ -407,9 +408,12 @@ namespace SodRpg.Mod
         public void FirstLaunch() { }
         public void Tick() { }
         public void DrawBossEffects() { }
-        public void SaveNow() { }
-        public void FlushSaves() { }
-        public void Unwire() { }
+        // #510: 終了時の保存回数を数える。Unwire は製品の ClientSession.Unwire と同じく
+        // シャットダウン中に SaveNow + FlushSaves を呼ぶ（src/SodRpg.Mod/ClientSession.cs）。
+        public int SaveNowCount, FlushSavesCount;
+        public void SaveNow() => SaveNowCount++;
+        public void FlushSaves() => FlushSavesCount++;
+        public void Unwire() { SaveNow(); FlushSaves(); }
         public void MarkDirty(bool dirty) { }
         public int GiveUpLostTrades() => 0;
         public object Secure() => null;
@@ -440,6 +444,7 @@ namespace SodRpg.Mod
         public static void PrewarmBossVisualTransport() { }
         public void Tick() { }
         public void RefreshLevelGemSlots() { }
+        public void ConfigureMeleeCoop(bool rangeToSpeed, bool distanceFalloff, bool meleeBreak, bool meleeGuard) { }
         public void Detach() { }
     }
     internal static class RelicIcons
