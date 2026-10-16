@@ -66,10 +66,11 @@ internal static class Program
         };
     }
 
-    private static string Labels(string field)
+    private static string SettingText(string field)
     {
-        return string.Join(" ", typeof(DreamforgeConfig).GetField(field).GetCustomAttributes(false)
-            .OfType<LabelTextAttribute>().Select(a => a.Text));
+        object[] attributes = typeof(DreamforgeConfig).GetField(field).GetCustomAttributes(false);
+        return string.Join(" ", attributes.OfType<LabelTextAttribute>().Select(a => a.Text)
+            .Concat(attributes.OfType<DescriptionAttribute>().Select(a => a.Text)));
     }
 
     private static void Contains(string expected, string actual, string detail)
@@ -162,19 +163,19 @@ internal static class Program
         }
         Check("description/break-config-numbers", () =>
         {
-            string text = Labels("meleeBreak");
+            string text = SettingText("meleeBreak");
             Contains(Number(CoopBalance.BreakDamagePercent) + "%", text, "Break setting must disclose allied damage bonus");
             Contains(Number(CoopBalance.BreakSeconds), text, "Break setting must disclose duration");
         });
         Check("description/guard-config-numbers", () =>
         {
-            string text = Labels("meleeProximityGuard");
+            string text = SettingText("meleeProximityGuard");
             Contains(Number(CoopBalance.MeleeGuardReductionPercent) + "%", text, "guard setting must disclose reduction");
             Contains(Number(CoopBalance.MeleeGuardRange) + "m", text, "guard setting must disclose radius");
         });
         Check("description/conversion-config-cap", () =>
         {
-            Contains(Content.StatCap(Stat.AttackSpeedPct) + "%", Labels("meleeRangeToSpeed"), "range conversion setting must disclose speed cap");
+            Contains(Content.StatCap(Stat.AttackSpeedPct) + "%", SettingText("meleeRangeToSpeed"), "range conversion setting must disclose speed cap");
         });
         Check("settings/hello-conveys-host-choices", () =>
         {

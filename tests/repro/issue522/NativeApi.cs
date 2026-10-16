@@ -30,6 +30,12 @@ namespace SodRpg.Mod
         internal readonly string Text;
         internal LabelTextAttribute(string text) { Text = text; }
     }
+    [AttributeUsage(AttributeTargets.Field)]
+    internal sealed class DescriptionAttribute : Attribute
+    {
+        internal readonly string Text;
+        internal DescriptionAttribute(string text) { Text = text; }
+    }
     internal static class Log
     {
         internal static readonly List<string> Warnings = new List<string>();
