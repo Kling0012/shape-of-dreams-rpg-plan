@@ -46,12 +46,15 @@ namespace SodRpg.Mod
             public bool Japanese;
             public StatLine[] Affixes;
             public PowerLine[] Powers;
+            // Forbidding replaces the mark (never mutates it) and changes the effective stats and powers.
+            public ForbiddenMark Forbidden;
 
             public bool Matches(Relic r)
             {
                 if (BaseId != r.BaseId || UniqueId != r.UniqueId || NamedId != r.NamedId
                     || Enhance != r.Enhance || Level != r.ItemLevel || Awakening != r.AwakenLevel
                     || LimitBreaks != r.LimitBreaks || FusionLevel != r.FusionLevel || Rarity != r.Rarity || Japanese != Loc.Japanese
+                    || !ReferenceEquals(Forbidden, r.Forbidden)
                     || Affixes.Length != r.Affixes.Count || Powers.Length != r.Powers.Count) return false;
                 for (int i = 0; i < Affixes.Length; i++) if (Affixes[i] != r.Affixes[i]) return false;
                 for (int i = 0; i < Powers.Length; i++) if (Powers[i] != r.Powers[i]) return false;
@@ -68,7 +71,7 @@ namespace SodRpg.Mod
                 Enhance = r.Enhance, Level = r.ItemLevel, Awakening = r.AwakenLevel,
                 LimitBreaks = r.LimitBreaks, FusionLevel = r.FusionLevel, Rarity = r.Rarity, Slot = r.Slot, Japanese = Loc.Japanese,
                 Name = r.DisplayName ?? "",
-                Affixes = r.Affixes.ToArray(), Powers = r.Powers.ToArray(),
+                Affixes = r.Affixes.ToArray(), Powers = r.Powers.ToArray(), Forbidden = r.Forbidden,
                 Title = UiStyles.RelicTitle(r) + "  <color=#bcbcd2>" + Content.RarityName(r.Rarity)
                     + " · " + Content.SlotName(r.Slot) + " · Lv" + r.ItemLevel.ToString(CultureInfo.InvariantCulture) + "</color>"
             };
