@@ -71,7 +71,8 @@ namespace SodRpg.Core.Game
         private int NewValue(Power p)
         {
             Build.StarPowers.TryGetValue(p, out int stars);
-            return Math.Max(0, Math.Min(Content.PowerCap(p), Build.Get(p) - stars)) + stars;
+            // Build.Compute caps the base before awakening; keep its final equipment ceiling and add stars separately.
+            return Math.Max(0, Math.Min((int)(Content.PowerCap(p) * BuildLimits.MaxEquipmentMultiplier), Build.Get(p) - stars)) + stars;
         }
         private static float Percent(float amount, float percent) => Math.Max(0, amount) * percent / 100f;
         private static bool Gate(Dictionary<int, float> gates, int id, float now, float interval)
