@@ -11,6 +11,7 @@ on:
       # Tests copy this reviewed table into their output as ReviewedV129.md.
       - docs/specs/v1.29-uniques-table.md
   pull_request:
+    types: [opened, synchronize, reopened, labeled]
     paths:
       - "**"
       - "!docs/**"
@@ -18,10 +19,13 @@ on:
       - "!src/SodRpg.Mod/about/**"
       # Tests copy this reviewed table into their output as ReviewedV129.md.
       - docs/specs/v1.29-uniques-table.md
+  workflow_dispatch:
 
-# A newer push to the same branch (several merges in a row) supersedes the older run.
+# A newer push to the same branch (several merges in a row) supersedes the older
+# run. Label-triggered runs get their own group (one per label) so adding a
+# label never cancels a push/synchronize run in progress, and vice versa.
 concurrency:
-  group: ci-${{ github.ref }}
+  group: ci-${{ github.event.action == 'labeled' && format('label-{0}', github.event.label.name) || 'fast' }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -30,6 +34,8 @@ jobs:
   # parallel because each test assembly serializes its own tests (shared
   # StarClusters/Loc game state).
   core-tests:
+    # A label event only re-runs slow-tests; the fast set keeps its earlier result.
+    if: github.event.action != 'labeled'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -51,6 +57,8 @@ jobs:
       - run: dotnet build -c Release tools/WikiGen
 
   mod-tests:
+    # A label event only re-runs slow-tests; the fast set keeps its earlier result.
+    if: github.event.action != 'labeled'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -71,8 +79,10 @@ jobs:
       - run: dotnet build -c Release ${{ matrix.project }}
       - run: dotnet test -c Release ${{ matrix.project }} --no-build
 
-  # Full exhaustive set (all heroes, all seeds) after merges to main and for
-  # releases; PRs only pay for the fast set above. One matrix entry per class
+  # Full exhaustive set (all heroes, all seeds) after merges to main, for
+  # releases, on manual dispatch, and on PRs carrying the ci-full label
+  # (added just before merge); other PRs only pay for the fast set above.
+  # One matrix entry per class
   # holding Speed=Slow tests, the same per-class process split as
   # tools/test_changed.py --slow (each test assembly serializes its own tests,
   # so the parallelism comes from separate processes). The trailing separator
@@ -86,7 +96,15 @@ jobs:
   # already enforced by the core-tests job on the same push, so the matrix
   # entries skip the ~2 min gen_cs --check and only build and test.
   slow-tests:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    # Main pushes, manual dispatch, and ci-full PRs. The last clause keeps a
+    # labeled event to a single label: other labels added to a PR that already
+    # carries ci-full must not re-run the heavy matrix.
+    if: >-
+      (github.event_name == 'push' && github.ref == 'refs/heads/main')
+      || github.event_name == 'workflow_dispatch'
+      || (github.event_name == 'pull_request'
+          && contains(github.event.pull_request.labels.*.name, 'ci-full')
+          && (github.event.action != 'labeled' || github.event.label.name == 'ci-full'))
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
