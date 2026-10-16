@@ -69,6 +69,51 @@ namespace SodRpg.Mod
         private static void Postfix() => NativeEssenceCaps.LinearQualityGem = false;
     }
 
+    // Description previews do not go through Gem.GetValue: DewLocalization.EvaluateAndRenderExpression
+    // evaluates gem ScalingValue fields directly (with ScalingValue.levelOverride set), so Frost and
+    // Mortality still showed the soft-capped value while their actual effects stay linear. Every gem
+    // tooltip path (UI_Tooltip_GemDescription, UI_Tooltip_EquippedGemDescriber_Item, result capture)
+    // passes the gem as DescriptionSettings.contextObject, so raise the linear flag while one of these
+    // two gems is the render context. Other gems keep rendering the soft-capped value, matching their
+    // capped effects.
+    [HarmonyPatch]
+    internal static class FrostMortalityPreviewExemption
+    {
+        private static MethodInfo _target;
+        private static FieldInfo _contextObject;
+
+        private static bool Prepare()
+        {
+            if (!EssenceCapsBalance.QualitySoftCapEnabled) return false;
+            // Resolved by name (not typeof) so the startup test project, which compiles this file against
+            // boundary stubs, needs no DewLocalization stub.
+            var localization = AccessTools.TypeByName("DewLocalization");
+            var settings = localization?.GetNestedType("DescriptionSettings");
+            _target = AccessTools.Method(localization, "EvaluateAndRenderExpression");
+            _contextObject = AccessTools.Field(settings, "contextObject");
+            if (_target?.GetMethodBody() == null || _contextObject == null)
+            {
+                Log.Warn("Essence cap target unavailable: DewLocalization.EvaluateAndRenderExpression description context");
+                return false;
+            }
+            return true;
+        }
+
+        private static MethodBase TargetMethod() => _target;
+
+        private static void Prefix(object[] __args, ref bool __state)
+        {
+            __state = NativeEssenceCaps.LinearQualityGem;
+            var context = __args != null && __args.Length > 1 ? _contextObject.GetValue(__args[1]) : null;
+            if (context is Gem_R_Frost || context is Gem_R_Mortality)
+                NativeEssenceCaps.LinearQualityGem = true;
+        }
+
+        // Runs after normal returns and exceptions alike, so a preview failure cannot leak the flag
+        // into later Gem.GetValue reads on this thread.
+        private static void Finalizer(bool __state) => NativeEssenceCaps.LinearQualityGem = __state;
+    }
+
     [HarmonyPatch]
     internal static class RicochetChanceCap
     {
