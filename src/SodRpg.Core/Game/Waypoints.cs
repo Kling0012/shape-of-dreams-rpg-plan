@@ -250,6 +250,10 @@ namespace SodRpg.Core.Game
                 return;
             }
             var t = Sum(waypoint);
+            // Thin an extra's reward first: a relic that would be thinned away must not use up
+            // the room quota, move the slot cycle or be copied. Waypoint conversions then apply
+            // to what this kill actually yields.
+            PressureCountRewards.ScaleLoot(rng, reward, rewardScale);
             if (run.WaypointRoom != roomIndex)
             {
                 run.WaypointRoom = roomIndex;
@@ -308,7 +312,6 @@ namespace SodRpg.Core.Game
                 starXp = DreamDepth.ScaleReward(reward.Shards, WaypointBalance.StarXpPerShard);
                 reward.Shards = 0;
             }
-            PressureCountRewards.ScaleLoot(rng, reward, rewardScale);
             // First Claim is a fixed room guarantee, including when an extra dies first.
             // Restore only its Rare floor; randomly rolled Epic/Legendary loot still uses
             // the extra's thinning.
