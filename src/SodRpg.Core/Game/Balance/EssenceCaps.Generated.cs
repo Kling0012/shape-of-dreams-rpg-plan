@@ -7,12 +7,8 @@ namespace SodRpg.Core.Game
         internal static readonly bool QualitySoftCapEnabled = true;
         internal const float QualityThreshold = 300f;
         internal const float QualityExcessDivisor = 3f;
-        internal static readonly bool MortalityEnabled = true;
-        internal const float MortalityMaxChance = 0.3f;
         internal static readonly bool RicochetEnabled = true;
         internal const float RicochetMaxChance = 0.6f;
-        internal static readonly bool FrostEnabled = true;
-        internal const float FrostMaxBaseHealthFraction = 1f;
         internal static readonly bool FeverEnabled = true;
         internal const float FeverMaxDamageAmplification = 1.5f;
         internal static readonly bool EmbertailEnabled = true;

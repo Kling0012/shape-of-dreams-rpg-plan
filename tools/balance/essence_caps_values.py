@@ -13,9 +13,7 @@ def render_outputs():
     fields = {
         "qualitySoftCap": (("threshold", "QualityThreshold", 0, 1000000),
                            ("excessDivisor", "QualityExcessDivisor", 1, 1000000)),
-        "mortality": (("maxChance", "MortalityMaxChance", 0, 1),),
         "ricochet": (("maxChance", "RicochetMaxChance", 0, 1),),
-        "frost": (("maxBaseHealthFraction", "FrostMaxBaseHealthFraction", 0, 100),),
         "fever": (("maxDamageAmplification", "FeverMaxDamageAmplification", 0, 100),),
         "embertail": (("maxCooldownReduction", "EmbertailMaxCooldownReduction", 0, 1),),
         "epiphany": (("maxRefundFraction", "EpiphanyMaxRefundFraction", 0, 1),),
