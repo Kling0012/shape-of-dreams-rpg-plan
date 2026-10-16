@@ -679,6 +679,7 @@ namespace SodRpg.Core.Game
                 infinity.SegmentEpoch++;
                 infinity.ChoiceRevision++;
                 infinity.ClearsInCycle = 0;
+                infinity.FinalePromoted = false;
                 infinity.SoulObserved = false;
                 infinity.Phase = InfinityPhase.Transitioning;
                 infinity.TransitionIntent = "delve";

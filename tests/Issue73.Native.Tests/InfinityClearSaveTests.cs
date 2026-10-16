@@ -89,6 +89,8 @@ namespace Issue73.Native.Tests
             _session = HostSession(out var transport);
             string before = ClientSession.HostRunChoices;
             CountCombatRoom();
+            _session.Profile.Run.Infinity.FixedZoneId = "Zone_Primus";
+            Assert.True(_session.Profile.Run.Infinity.PromoteFinaleBoss());
             var confirm = Start(() => ClientSession.PersistHostInfinityState());
             try
             {
@@ -104,7 +106,13 @@ namespace Issue73.Native.Tests
             var receipt = Assert.Single(transport.Sent.Select(s => s.Message).OfType<DreamforgeRunChoicesMsg>());
             Assert.True(RunChoiceSnapshot.TryDecode(receipt.choices, out var shared));
             Assert.Equal(1, shared.Infinity.ClearedCombatTotal);
-            Assert.Equal(1, new ProfileStore(new RealFileSystem(), SavePath, 226).Load().Run.Infinity.ClearedCombatTotal);
+            Assert.Equal(1, shared.Infinity.ClearsInCycle);
+            Assert.True(shared.Infinity.FinalePromoted);
+            var restored = new ProfileStore(new RealFileSystem(), SavePath, 226).Load().Run.Infinity;
+            Assert.Equal(1, restored.ClearedCombatTotal);
+            Assert.Equal(1, restored.ClearsInCycle);
+            Assert.True(restored.FinalePromoted);
+            Assert.Equal(InfinityPhase.BossDue, restored.Phase);
         }
 
         [Theory]

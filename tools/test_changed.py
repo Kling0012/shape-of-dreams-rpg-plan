@@ -40,6 +40,7 @@ import os
 import re
 import subprocess
 import sys
+import xml.etree.ElementTree as ET
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -488,6 +489,71 @@ def linked_test_inputs(root: Path = REPO_ROOT) -> set[str]:
     return linked
 
 
+def project_elements(project: Path, root: Path):
+    """Read project XML, nearest Directory.Build files and literal local imports.
+
+    This is a conservative dependency scan, not an MSBuild evaluator: conditional
+    items are retained, while property-expanded imports are left to MSBuild.
+    XML parsing ignores comments and accepts namespaces and any attribute order.
+    """
+    root = root.resolve()
+    pending = [project.resolve()]
+    for name in ("Directory.Build.props", "Directory.Build.targets"):
+        directory = project.resolve().parent
+        while directory.is_relative_to(root):
+            candidate = directory / name
+            if candidate.is_file():
+                pending.append(candidate)
+                break
+            directory = directory.parent
+    seen = set()
+    while pending:
+        path = pending.pop()
+        if path in seen or not path.is_relative_to(root):
+            continue
+        seen.add(path)
+        try:
+            document = ET.parse(path).getroot()
+        except (OSError, ET.ParseError):
+            continue
+        for element in document.iter():
+            tag = element.tag.rsplit("}", 1)[-1]
+            yield tag, element, path
+            if tag == "Import":
+                include = element.get("Project", "").replace("\\", "/")
+                if include and not any(char in include for char in "$*?;"):
+                    pending.append((path.parent / include).resolve())
+
+
+@functools.lru_cache(maxsize=None)
+def referenced_tool_dirs(root: Path = REPO_ROOT) -> tuple[str, ...]:
+    """Repo-relative tools/ project directories referenced by test projects."""
+    dirs: set[str] = set()
+    for csproj in sorted((root / "tests").rglob("*.csproj")):
+        if any(part in ("bin", "obj") for part in csproj.relative_to(root).parts):
+            continue
+        for tag, element, _ in project_elements(csproj, root):
+            if tag != "ProjectReference":
+                continue
+            include = element.get("Include", "").replace("\\", "/")
+            if not include or any(char in include for char in "$*?;"):
+                continue
+            target = (csproj.parent / include).resolve().parent
+            try:
+                rel = target.relative_to(root.resolve()).as_posix()
+            except ValueError:
+                continue
+            if rel.startswith("tools/"):
+                dirs.add(rel)
+    return tuple(sorted(dirs))
+
+
+def is_production_cs(path: str) -> bool:
+    """True for .cs under src/ or a tools/ project referenced by the tests."""
+    return path.endswith(".cs") and (path.startswith("src/") or any(
+        path.startswith(f"{directory}/") for directory in referenced_tool_dirs()))
+
+
 def is_data_file(path: str) -> bool:
     """True for the JSON data files tests read at run time."""
     return any(path.startswith(f"{d}/") for d in DATA_DIRS) and path.endswith(".json")
@@ -560,8 +626,11 @@ def select_tests(changed, files, diffs=None) -> Selection:
     present it narrows rule 2 to the tokens the change actually touches.
 
     Rules:
-      1. a changed test .cs under tests/ selects the classes it declares;
-      2. a changed production .cs under src/ selects, for each declared type,
+      1. a changed test .cs under tests/ selects its own classes and the tests
+         mentioning its declared types (helpers, fakes); other test inputs select
+         path readers, or everything if unknown (unreferenced docs are ignored);
+      2. a changed production .cs under src/ or a referenced tools/ project
+         selects, for each declared type,
          every test file mentioning the type as a whole word -> its classes;
          with a diff, use the tokens (members, string constants) touched by the
          change, retaining file types for object initialization or unrecognized
@@ -621,11 +690,33 @@ def select_tests(changed, files, diffs=None) -> Selection:
             selection.reasons.append(f"file copied into a test project changed: {path}")
             continue
         if path.startswith("tests/") and path.endswith(".cs"):
-            # Rule 1: the test file itself changed.
+            # Helpers and fakes also select the tests using their declared types.
             selection.classes.update(top_level_test_classes(content))
-        if path.startswith("src/") and path.endswith(".cs") and content:
+            for name in declared_types(content):
+                for tf in tests_mentioning(name):
+                    selection.classes.update(top_level_test_classes(files[tf]))
+            continue
+        if path.startswith("tests/") and not any(
+                part in ("bin", "obj") for part in path.split("/")):
+            readers = [tf for tf in test_files if references_path(files[tf], path)]
+            if not readers:
+                # Build files were handled above. Documentation without readers
+                # does not affect executable tests; unknown fixtures still do.
+                if path.lower().endswith((".md", ".rst")):
+                    continue
+                selection.run_all = True
+                selection.reasons.append(f"test fixture changed: {path}")
+                continue
+            for tf in readers:
+                selection.classes.update(top_level_test_classes(files[tf]))
+            continue
+        if is_production_cs(path) and content:
             # Rule 2 (+ the wide-type part of rule 4).
             types = declared_types(content)
+            if not path.startswith("src/"):
+                # Top-level programs and tool internals are reached via the
+                # namespace or DLL name named by their integration tests.
+                types = types + [path.split("/")[1]]
             diff = (diffs or {}).get(path)
             if diff is not None:
                 plus, minus = unified_diff_plus_minus(diff)
@@ -819,11 +910,23 @@ def collect_files(root: Path, changed) -> dict[str, str]:
 
 
 def find_test_projects(root: Path) -> list[str]:
-    projects = [
-        path.relative_to(root).as_posix()
-        for path in (root / "tests").rglob("*.csproj")
-        if not any(part in ("bin", "obj") for part in path.parts)
-    ]
+    """Find executable test projects, excluding helper-only csproj files.
+
+    Inspect actual XML items and properties, including Directory.Build files
+    and literal local imports, instead of matching text inside XML comments.
+    """
+    projects = []
+    for path in (root / "tests").rglob("*.csproj"):
+        if any(part in ("bin", "obj") for part in path.relative_to(root).parts):
+            continue
+        is_test = False
+        for tag, element, _ in project_elements(path, root):
+            if tag == "PackageReference" and element.get("Include", "").casefold() == "microsoft.net.test.sdk":
+                is_test = True
+            if tag == "IsTestProject" and (element.text or "").strip().casefold() == "true":
+                is_test = True
+        if is_test:
+            projects.append(path.relative_to(root).as_posix())
     return sorted(projects)
 
 
@@ -854,6 +957,9 @@ def run_dotnet_test(root: Path, project: str, filter_expr: str | None,
     if not Path(dotnet).exists():
         print(f"dotnet not found at {dotnet} (set DOTNET to override)", file=sys.stderr)
         return 1, ""
+    cmd = [dotnet, "test", project, "-c", "Release"]
+    if filter_expr:
+        cmd += ["--filter", filter_expr]
     env = dict(os.environ)
     env["DOTNET_ROOT"] = dotnet_root
     # Keep the console summary machine-parseable regardless of the OS locale.
@@ -864,7 +970,7 @@ def run_dotnet_test(root: Path, project: str, filter_expr: str | None,
         # A separate remote phase may not share the earlier build's outputs.
         # Ask MSBuild for the path so custom output directories work as well.
         target = subprocess.run(
-            [dotnet, "msbuild", project, "-nologo", "-p:Configuration=Release",
+            [dotnet, "msbuild", project, "-nologo", "-property:Configuration=Release",
              "-getProperty:TargetPath"], cwd=str(root), env=env,
             stdin=subprocess.DEVNULL, capture_output=True, text=True,
             encoding="utf-8", errors="replace",
@@ -874,17 +980,11 @@ def run_dotnet_test(root: Path, project: str, filter_expr: str | None,
         target_path = target.stdout.strip()
         if not target_path:
             return 1, f"MSBuild returned no TargetPath for {project}\n"
-        if not (root / target_path).is_file():
-            print(f"Release output missing for {project}; building before --no-build",
+        if (root / target_path).is_file():
+            cmd.append("--no-build")
+        else:
+            print(f"build output missing for {project}; building before test",
                   file=sys.stderr)
-            code = build_projects(root, [project])
-            if code != 0:
-                return code, f"building missing Release output failed for {project}\n"
-    cmd = [dotnet, "test", project, "-c", "Release"]
-    if filter_expr:
-        cmd += ["--filter", filter_expr]
-    if no_build:
-        cmd.append("--no-build")
     result = subprocess.run(
         cmd, cwd=str(root), env=env, stdin=subprocess.DEVNULL,
         capture_output=True, text=True, encoding="utf-8", errors="replace",

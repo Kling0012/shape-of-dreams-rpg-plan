@@ -56,7 +56,7 @@ namespace SodRpg.Core.Game
             public const double Alpha = 0.3d;
             public const double AlphaDown = 0.5d;
             public const double Strength = 0.5d;
-            public const double MinFactor = 0.8d;
+            public const double MinFactor = 0.65d;
             public const double MaxFactor = 3.0d;
             public const double MinActiveSeconds = 5d;
             public const int MinRooms = 2;
@@ -71,7 +71,7 @@ namespace SodRpg.Core.Game
                     case "Hero_Bismuth": return 1.0d;
                     case "Hero_Cetus": return 1.0d;
                     case "Hero_Husk": return 0.85d;
-                    case "Hero_Lacerta": return 1.0d;
+                    case "Hero_Lacerta": return 0.85d;
                     case "Hero_Mist": return 0.92d;
                     case "Hero_Nachia": return 1.0d;
                     case "Hero_Vesper": return 0.92d;

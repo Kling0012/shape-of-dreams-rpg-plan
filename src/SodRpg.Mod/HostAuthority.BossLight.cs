@@ -54,6 +54,8 @@ namespace SodRpg.Mod
             "boss_light_elemental.head","boss_light_elemental.hands","boss_light_elemental.feet",
             "boss_light_elemental.stage2","boss_light_elemental.stage3","boss_light_elemental.stage6",
         };
+        // Warn once per process when the stage2 table lacks the second action; the profile is static, so a static flag suffices.
+        private static bool _lightChargeProfileWarned;
         private readonly BossObjectPool<LightCombat> _lightPool = new BossObjectPool<LightCombat>(64,()=>new LightCombat());
         private readonly Dictionary<HeroRuntime,LightCombat> _lightCombat = new Dictionary<HeroRuntime,LightCombat>(64);
         private static bool LightAvailable(HeroRuntime rt,BossAction action,float now)
@@ -134,7 +136,18 @@ namespace SodRpg.Mod
         }
         private void LightChargeInput(HeroRuntime rt,LightCombat state,Vector3 origin,Vector3 direction,float now)
         {
-            if(!BossFind(rt,LightProfiles[6],out var entry,out var profile) || profile.Actions.Count<2) return;
+            if(!BossFind(rt,LightProfiles[6],out var entry,out var profile)) return;
+            if(profile.Actions.Count<2)
+            {
+                // Fail-soft: without the second action the charge count and lifetime are unknown, so only this
+                // charge handling is skipped. Surface the misconfigured table once instead of dropping input silently.
+                if(!_lightChargeProfileWarned)
+                {
+                    _lightChargeProfileWarned=true;
+                    Log.Warn("Host: "+LightProfiles[6]+" has fewer than 2 actions; Light charge input skipped. Check tools/balance/bosses/light.json");
+                }
+                return;
+            }
             if(now>=state.ChargeUntil) state.Charges=0;
             var action=profile.Actions[0];
             var charge=profile.Actions[1]; // The second action defines the charge count and sliding lifetime.

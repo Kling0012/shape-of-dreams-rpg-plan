@@ -27506,6 +27506,12 @@
             "amount": {
               "valueRef": "husk.run.g1/growth/effects/0/amount"
             }
+          },
+          {
+            "stat": "MaxHealthPct",
+            "amount": {
+              "valueRef": "husk.run.g1/growth/effects/1/amount"
+            }
           }
         ]
       },

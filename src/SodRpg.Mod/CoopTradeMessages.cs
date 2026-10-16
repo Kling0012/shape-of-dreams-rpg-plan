@@ -29,6 +29,17 @@ namespace SodRpg.Mod
         // Older peers ignore it; a missing or unknown code falls back to status.
         public string reasonCode;
         public string LocalizedStatus() => CoopTradeRules.IsKnownReason(reasonCode) ? CoopTradeRules.ReasonText(reasonCode) : status;
+        /// <summary>
+        /// The one place where the host pairs a status with its code — for every kind (error, cancelled,
+        /// view, roster), so those displays localize the same way. Unknown reasons keep no code and
+        /// travel as the raw text, which every receiver can still show.
+        /// </summary>
+        public DreamforgeCoopTradeState WithReason(string reason)
+        {
+            status = CoopTradeRules.ReasonText(reason);
+            reasonCode = CoopTradeRules.IsKnownReason(reason) ? reason : null;
+            return this;
+        }
         public int revision, index, count, totalLength;
         public bool incoming, accepted, ownConfirmed, otherConfirmed, preparing;
         public bool fusion, partnerFusion;
