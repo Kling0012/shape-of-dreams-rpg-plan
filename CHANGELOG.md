@@ -8,7 +8,24 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
-- 料理素材：上限が不正な素材を見つけても、その素材だけを本体の動作に戻し、他の素材の料理一回分の上限を維持します。元上限の記録がない旧版由来の素材は、上限を推測せず従来のまとめ調理のまま扱います。素材アイコンの表示先が変わった後に古い数字が残る問題も修正。自動詠唱は、状態を変えずに確認できる間隔・毎秒上限の判定を枠の確認より先に行い、不要なスキル確認を減らしました。 / Culinary: an unsafe stack no longer removes other stacks' cooking batch limits; legacy stacks without a recorded native limit retain native cooking. Ingredient icons redraw after reuse. Autocast checks read-only pacing limits before polling skills.
+---
+
+## v3.1.7 — Fixes for cooking ingredient limits and icon numbers（2026-10-17）
+
+この版は、料理の素材まわりの不具合を直す更新です。 / This update fixes bugs related to cooking ingredients.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- 料理の素材のうち1つでも上限の設定が正しくないと、すべての素材で、料理1回に使う量の上限が効かなくなる問題を直しました。これからは問題のある素材だけが元のゲームの動きに戻り、ほかの素材はこれまでどおり上限の量だけ使われます。 / Fixed an issue where one ingredient with an invalid limit setting turned off the per-cook usage limit for every ingredient. Now only that ingredient goes back to the base game's behavior, and the other ingredients are still used only up to their limit.
+- 素材アイコンを別の場所の表示に使い直したとき、前の数字が消えずに残ることがある問題を直しました。 / Fixed an issue where an old number could stay on an ingredient icon after the icon was reused in another place.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
 
 ---
 
