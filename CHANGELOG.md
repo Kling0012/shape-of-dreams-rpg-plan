@@ -8,6 +8,11 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
+### 改善 / Improvements
+
+- 協力取引の理由コードの管理を一元化し、理由を追加するときの取りこぼしを防ぎました。取引の中止理由「取り消し」と「接続の変化」は、それぞれ別の文言で表示されるようになりました。 / Co-op trade reason codes now live in a single table, so adding a reason cannot update only one of the known-code list and its text. The "cancelled" and "connection" trade aborts now have their own texts.
+- 協力取引で、参加者の提示内容がホスト側の規則で拒否されたとき、参加者にホストの言語の内部メッセージが表示されることがありました。拒否の詳細はホストのログに残し、参加者には理由コード「所持品または残高が変わった」を各自の言語で表示します。 / When the host's rules rejected a co-op trade offer, participants could see an internal message in the host's language. The detail now stays in the host log and participants read the fixed "ownership" reason in their own language.
+
 ---
 
 ## v3.1.1 — Fix repeated record re-sending in co-op trades with large stashes（2026-10-17）
