@@ -184,6 +184,8 @@ namespace Issue73.Native.Tests
             store.Save(profile);
             _session = new ClientSession(notify) { Profile = profile, ActiveRunId = "current", LocalHero = new Hero() };
             Set(_session, "_store", store);
+            // 書き込みを止めたまま準備保存の時間切れを待つ場面があるので、待つ上限を短くする（既定は3秒）。
+            Set(_session, "_writer", new AsyncProfileWriter(store) { ConfirmTimeoutMs = 100 });
             Set(_session, "_zone", new ZoneManager { currentZoneIndex = 0 });
             NetworkedManagerBase<GameManager>.softInstance = new GameManager { runId = "current" };
             Assert.True(_session.CanClaimInterruptedRelics);

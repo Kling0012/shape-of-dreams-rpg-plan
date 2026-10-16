@@ -68,9 +68,13 @@ namespace SodRpg.Core.Game
 
         /// <summary>
         /// 外部の決済を始める前の準備保存。writer が無い（保存先が無効な）ときは書き込みが一度も行われないので、確定できたことにはならず false。
+        /// timeoutMs に負数を渡すと <see cref="ConfirmTimeoutMs"/> を使う。
         /// </summary>
-        public static bool ConfirmPrepared(AsyncProfileWriter writer, Profile p, int timeoutMs = 3000)
-            => writer != null && writer.EnqueueAndConfirm(p, timeoutMs);
+        public static bool ConfirmPrepared(AsyncProfileWriter writer, Profile p, int timeoutMs = -1)
+            => writer != null && writer.EnqueueAndConfirm(p, timeoutMs < 0 ? writer.ConfirmTimeoutMs : timeoutMs);
+
+        /// <summary>準備保存を待つ上限（ミリ秒）。テストでは書き込みを止めたまま待つので短くする。</summary>
+        internal int ConfirmTimeoutMs { get; set; } = 3000;
 
         /// <summary>指定リビジョン以降が書き終わったら true。その書き込みが失敗に終わった、または時間切れなら false。</summary>
         public bool WaitForRevision(long revision, int timeoutMs = 3000)

@@ -1,0 +1,45 @@
+using System.Collections.Generic;
+using SodRpg.Core;
+using SodRpg.Core.Game;
+using Xunit;
+
+namespace SodRpg.Core.Tests
+{
+    // Loc.Japanese を書き換えるが、このテストプロジェクトは AssemblyInfo.cs でテスト並列化を
+    // 無効にしているので他クラスとの競合は起きない。Dispose で必ず元に戻す。
+    public sealed class ReviewRound4Tests : System.IDisposable
+    {
+        private readonly bool _japanese = Loc.Japanese;
+        public void Dispose() => Loc.Japanese = _japanese;
+
+        [Fact]
+        public void Finale_promotion_in_the_first_cycle_survives_a_save_round_trip()
+        {
+            var p = Profile.CreateNew(7);
+            Rules.BeginRun(p, "finale", heroKey: "hero", dreamDepth: 3);
+            var infinity = new InfinityRunState { FixedZoneId = "Zone_Forest", Interval = 10, DifficultyId = "diffNormal" };
+            p.Run.Infinity = infinity;
+            infinity.RoomEpoch++;
+            Assert.True(infinity.TryCountCombatClear(infinity.GraphEpoch, 1, active: true, transitioning: false, revisit: false));
+            Assert.True(infinity.PromoteFinaleBoss());
+            Assert.True(infinity.ClearedCombatTotal < infinity.ClearsInCycle);
+
+            var reloaded = ProfileCodec.Read(ProfileCodec.Write(p), new List<string>());
+            Assert.Equal(InfinityPhase.BossDue, reloaded.Run.Infinity.Phase);
+            Assert.Equal(10, reloaded.Run.Infinity.ClearsInCycle);
+        }
+
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void Pact_descriptions_never_end_a_sentence_twice(bool japanese)
+        {
+            Loc.Japanese = japanese;
+            foreach (var pact in Pacts.All)
+            {
+                Assert.DoesNotContain("。。", pact.Description);
+                Assert.DoesNotContain("..", pact.Description);
+            }
+        }
+    }
+}

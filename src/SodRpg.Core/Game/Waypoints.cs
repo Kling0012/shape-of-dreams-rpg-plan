@@ -254,7 +254,7 @@ namespace SodRpg.Core.Game
             }
             bool firstClaim = t.FirstKillRelic && run.WaypointRelicsInRoom == 0;
             if (firstClaim && reward.Relics.Count == 0)
-                reward.Relics.Add(Loot.RollRelic(rng, Rarity.Rare, itemLevel, null, focus, p.Stash, run.Satchel));
+                reward.Relics.Add(Loot.RollRelic(rng, Rarity.Rare, itemLevel, null, focus, p.Stash, run.Satchel, p.Codex));
             if (t.MaxRelicsPerRoom != int.MaxValue)
             {
                 int keep = Math.Max(0, Math.Min(reward.Relics.Count, t.MaxRelicsPerRoom - run.WaypointRelicsInRoom));
@@ -276,7 +276,7 @@ namespace SodRpg.Core.Game
                 if (rarity != r.Rarity || (slot.HasValue && r.Slot != slot.Value))
                     // The original kill roll already applied Infinity's unique drop chance.
                     // A slot/rarity transformation must not gate the same reward a second time.
-                    r = reward.Relics[i] = Loot.RollRelic(rng, rarity, r.ItemLevel, slot, focus, p.Stash, run.Satchel);
+                    r = reward.Relics[i] = Loot.RollRelic(rng, rarity, r.ItemLevel, slot, focus, p.Stash, run.Satchel, p.Codex);
                 r.Enhance = Math.Min(Content.MaxEnhanceFor(r.Rarity, r.LimitBreaks), Math.Max(r.Enhance, t.Enhancement));
                 if (t.Enhancement > 0) Rules.GrantEnhanceMilestones(rng, r);
             }
@@ -310,7 +310,7 @@ namespace SodRpg.Core.Game
             // Restore only its Rare floor; randomly rolled Epic/Legendary loot still uses
             // the extra's thinning.
             if (firstClaim && t.MaxRelicsPerRoom > 0 && reward.Relics.Count == 0)
-                reward.Relics.Add(Loot.RollRelic(rng, Rarity.Rare, itemLevel, null, focus, p.Stash, run.Satchel));
+                reward.Relics.Add(Loot.RollRelic(rng, Rarity.Rare, itemLevel, null, focus, p.Stash, run.Satchel, p.Codex));
             if (!t.DelayDropsUntilBoss) return;
             if (!run.WaypointHoardReleased)
             {
