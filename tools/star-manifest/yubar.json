@@ -28120,6 +28120,12 @@
             "amount": {
               "valueRef": "yubar.run.g1/growth/effects/1/amount"
             }
+          },
+          {
+            "stat": "MaxHealthPct",
+            "amount": {
+              "valueRef": "yubar.run.g1/growth/effects/2/amount"
+            }
           }
         ]
       },
