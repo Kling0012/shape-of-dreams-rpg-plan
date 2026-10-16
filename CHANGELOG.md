@@ -8,6 +8,16 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
+### 不具合の修正 / Bug fixes
+
+- 古い形式の討伐記録に同じ番号の敵が混じっているセーブで、ホストが討伐の同期を復元する途中で止まる問題を修正しました。 / Fixed the host stopping partway through restoring kill sync from a save whose old-format kill records reuse a monster id.
+- 協力プレイで、参加者との差（版・内容・インフィニティの有無など）が変わったときにホストの警告が古い項目のまま残る問題と、言語を切り替えても警告が前の言語のままになる問題を修正しました。 / The host's co-op compatibility warning now updates when a player's difference changes, and follows a language switch.
+
+### 改善 / Improvements
+
+- 協力取引で、確認のたびに相手の記録全体を送り直していたのをやめ、差し出す遺物が変わったときだけ送るようにしました。保管庫が大きいほど通信が軽くなります。 / Co-op trades no longer resend the partner's whole record on every confirm; it is sent only when the offered relics change, which lightens traffic for large stashes.
+- ホストのインフィニティ確認とロビー設定の送信で、毎フレームの文字列の作成を減らしました。 / Reduced per-frame string allocation in the host's Infinity checks and lobby settings.
+
 ---
 
 ## v2.10.60 — Co-op trade messages in each player's language（2026-10-16）
