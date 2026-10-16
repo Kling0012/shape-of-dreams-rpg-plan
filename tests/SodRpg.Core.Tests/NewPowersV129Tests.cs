@@ -371,6 +371,27 @@ namespace SodRpg.Core.Tests
         }
 
         [Fact]
+        public void Awakened_value_above_the_cap_is_applied_as_displayed()
+        {
+            // Build caps the base before awakening, then awakening scales it past the cap (up to 2.5x).
+            // The runtime used to clip it back to the per-power cap, so the effect was lower than shown.
+            var p = Profile.CreateNew(129);
+            foreach (var slot in new[] { Slot.Weapon, Slot.Charm })
+            {
+                var r = Loot.RollRelic(new Rng((ulong)slot + 7), Rarity.Epic, 40, slot: slot);
+                r.Powers.Clear(); r.Powers.Add(new PowerLine(Power.Overload, 20));
+                r.AwakenLevel = 3;
+                p.Stash.Add(r);
+                Rules.Equip(p, "Hero_Vesper", r.Uid);
+            }
+            var build = Build.Compute(p, "Hero_Vesper", 0);
+            Assert.True(build.Get(Power.Overload) > Content.PowerCap(Power.Overload));
+            var rt = new PowerRuntime(build, 0);
+            rt.OnSkillUsed(0, false, false);
+            Assert.Equal(build.Get(Power.Overload), rt.Current(1).AttackPct);
+        }
+
+        [Fact]
         public void Movement_never_triggers_pile_on_and_breaks_the_previous_sequence()
         {
             var rt = With((Power.PileOn, 40));
