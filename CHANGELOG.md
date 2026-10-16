@@ -8,9 +8,26 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
-- 道標（特定の部位・レア度に変える道など）と「最初の獲得」で出る遺物でも、図鑑に未登録の銘品が出やすくなる補正が効くようにしました。 / Waypoint-transformed drops and First Claim now also favor named items missing from your codex.
-- インフィニティの最初の周期で、短い区画の終点ボスに進んだ状態を保存すると、読み込めなくなることがある問題を修正しました。 / Fixed a save that could fail to load after reaching a short segment's finale boss in the first Infinity cycle.
-- 一部の契約の日本語の説明で「。。」と句点が重なっていた問題と、属性の組み合わせ星の英語の見出しで追加スタックの確率が抜けていた問題を修正しました。 / Fixed doubled Japanese periods in some pact descriptions and the missing extra-stack chance in English element pair headlines.
+---
+
+## v3.2.8 — Fix co-op trade offers with used relics and capped unique effects（2026-10-17）
+
+この版は、協力プレイの取引で、提示したあとに装着したり合成などで使ったりした遺物が提示に残り、取引を進められなくなる問題を直す更新です。あわせて、覚醒や過剰（禁忌化）で上がった装備の固有効果が、実際の効果では上限で切り詰められていた問題と、恨みの通行料が最大HPのちょうど60%を失っても発動しなかった問題も直しています。 / This update fixes relics that were equipped or used up (for example in crafting) after being offered in a co-op trade staying in the offer and blocking the trade. It also fixes gear unique effects raised by awakening or Overcharge (Forbidden) being cut back to the cap in their actual effect, and Toll of Grudge not triggering after losing exactly 60% of max HP.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- 協力プレイの取引で、遺物を提示したあとにその遺物を装着したり、合成などで保管庫や鞄から使ったりすると、使えない遺物が提示に残っていた問題を直しました。これまでは提示を更新できなくなったり、交換を確定したときに取引が取り消されたりすることがありました。これからは、素材の数を変えたり遺物を選び直したりして提示を更新すると、使えなくなった遺物が提示から外れます。使えない遺物が提示に残っている間は警告が表示され、交換の確認ボタンは押せません。 / Fixed an issue in co-op trades where a relic stayed in your offer after you equipped it, or used it up from your vault or bag (for example in crafting), after offering it. Previously, this could stop you from updating the offer or cancel the trade when you confirmed the exchange. Now, when you update the offer by changing the material amount or reselecting relics, relics that are no longer available are removed from it. While an unavailable relic remains in the offer, a warning is shown and the exchange confirm button is disabled.
+- 覚醒によって通常の上限を超えた装備の固有効果が、実際の効果では通常の上限までに切り詰められていた問題を直しました。たとえばエピックの武器とお守りに過負荷20を付けて覚醒3にした場合、合計は72%になるのに、実際の効果は50%になっていました。これからは協力プレイでも、合計どおり72%が効果に反映されます。 / Fixed gear unique effects pushed past the normal cap by awakening being cut back to that cap in their actual effect. For example, with Overload 20 on an Epic weapon and charm both at Awaken 3, the total was 72%, but only 50% was actually applied. The full 72% is now applied, in co-op as well.
+- 過剰（禁忌化）で1.6倍になった固有効果が、上限に近いと実際の効果では削られていた問題を直しました。たとえば血の渇望30・上限40の場合、表示は48なのに実際の効果は40になっていました。これからは表示どおり48が効果に反映されます。 / Fixed unique effects boosted 1.6x by Overcharge (Forbidden) being cut down in their actual effect when near the cap. For example, with Bloodlust 30 and a cap of 40, the display showed 48 but only 40 was actually applied. The displayed 48 is now applied.
+- 恨みの通行料が、最大HPのちょうど60%を失ったときに発動しなかった問題を直しました。たとえば最大HP100で60を失っても発動していませんでした。これからは、ちょうど60%を失った時点で発動します。 / Fixed Toll of Grudge not triggering when you lost exactly 60% of your max HP. For example, losing 60 out of 100 max HP did not trigger it. It now triggers at exactly 60%.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
 
 ---
 
