@@ -23,7 +23,7 @@
     },
     "byHero": {
       "Hero_Aurena": {
-        "MemoryDamage": 1.15,
+        "MemoryDamage": 1.25,
         "GimmickBoost": 1.0,
         "GimmickParam": 1.0,
         "Keystone": 1.0,
@@ -50,7 +50,7 @@
         "Stat": 1.0
       },
       "Hero_Husk": {
-        "MemoryDamage": 1.2,
+        "MemoryDamage": 1.35,
         "GimmickBoost": 1.0,
         "GimmickParam": 1.0,
         "Keystone": 1.0,
@@ -59,7 +59,7 @@
         "Stat": 1.0
       },
       "Hero_Lacerta": {
-        "MemoryDamage": 1.1,
+        "MemoryDamage": 1.5,
         "GimmickBoost": 1.0,
         "GimmickParam": 1.0,
         "Keystone": 1.0,
@@ -68,7 +68,7 @@
         "Stat": 1.0
       },
       "Hero_Mist": {
-        "MemoryDamage": 1.0,
+        "MemoryDamage": 1.05,
         "GimmickBoost": 1.0,
         "GimmickParam": 1.0,
         "Keystone": 1.0,
@@ -77,7 +77,7 @@
         "Stat": 1.0
       },
       "Hero_Nachia": {
-        "MemoryDamage": 1.15,
+        "MemoryDamage": 1.0,
         "GimmickBoost": 1.0,
         "GimmickParam": 1.0,
         "Keystone": 1.0,
@@ -86,7 +86,7 @@
         "Stat": 1.0
       },
       "Hero_Vesper": {
-        "MemoryDamage": 1.05,
+        "MemoryDamage": 1.25,
         "GimmickBoost": 1.0,
         "GimmickParam": 1.0,
         "Keystone": 1.0,
