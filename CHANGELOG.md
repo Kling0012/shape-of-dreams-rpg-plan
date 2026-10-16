@@ -8,6 +8,9 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
+### 修正 / Fixes
+- 協力プレイ：同じプレイヤーの識別子が変わると、古い識別子が討伐記録の受領待ちを抱えたまま残り、以降の討伐が整理されず、インフィニティの潜行・帰還が「仲間の討伐待ち」で止まることがあった問題を修正。本体の再開読み込みが完了しないままタイトルに戻ると、そのゲームを終えるまで以降の遠征で MOD 報酬が出なくなる問題を修正。 / Co-op: a changed client identity no longer leaves a kill-receipt debt that blocks pruning and Infinity advance; an abandoned native resume no longer pauses MOD rewards for the rest of the session.
+
 ---
 
 ## v2.10.58 — Co-op forbidden equipment warning fixes（2026-10-16）

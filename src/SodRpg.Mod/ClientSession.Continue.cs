@@ -311,6 +311,14 @@ namespace SodRpg.Mod
             ContinueWarning = null;
             _blockedContinueRunId = null;
             if (gm != null) return;
+            if (_nativeContinueRestoring && float.IsPositiveInfinity(_nativeContinueRestoreDeadline))
+            {
+                // The 30s wait already expired without the native load ever finishing, and that game
+                // is gone now: release the pause so later expeditions in this process get rewards again.
+                _nativeContinueRestoring = false;
+                _buildDirty = true;
+                _buildCacheFrame = -1;
+            }
             CaptureContinueLobbyBaseline();
             _continueCheckpointId = _continueResumeSession = null;
             if (NetworkServer.active) HostAuthority.GemContinueSources.Reset();

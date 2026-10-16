@@ -166,6 +166,49 @@ namespace Issue73.Native.Tests
             Assert.True(HostAuthority.InfinityBoundarySettled);
         }
 
+        [Theory]
+        [InlineData("s1")]
+        [InlineData("s2")]
+        public void A_changed_client_identity_leaves_no_debt_that_pins_later_kills(string secondSession)
+        {
+            var session = Session();
+            Set(typeof(ClientSession), "_hostSession", session);
+            var host = Host(new Actor());
+            var local = new DewPlayer { guid = "local", netId = 1, playerName = "host" };
+            var guest = new DewPlayer { guid = "guest", netId = 2, playerName = "guest" };
+            DewPlayer.local = local;
+            DewPlayer.gamePlayers.Add(local);
+            DewPlayer.gamePlayers.Add(guest);
+            try
+            {
+                Call(host, "TickKillReplay");
+                string stream = (string)Get(host, "_killStreamId");
+                void Receipt(string client, string observation, long through) =>
+                    Call(host, "OnKillReceipt", new DreamforgeKillReceiptMsg {
+                        protocol = Protocol.Version, authorityGeneration = ClientSession.HostAuthorityGeneration,
+                        runId = "run", clientId = client, observationSessionId = observation,
+                        receipts = new[] { new DreamforgeKillStreamReceipt { streamId = stream, receivedThrough = through } }
+                    }, guest);
+                Receipt("a", "s1", 0);
+                Receipt("b", secondSession, 0);
+                for (uint id = 20; id < 23; id++)
+                {
+                    var monster = new Monster { netId = id };
+                    ((IDictionary)Get(host, "_monsters")).Add(monster, new HostAuthority.MonsterRuntime { Monster = monster });
+                    Call(host, "CaptureAuthoritativeRunKill", monster);
+                }
+                Receipt("b", secondSession, 3);
+                Set(session, "_killDurableRunId", "run");
+                Set(session, "_killDurableReceipts", new[] { new KillReceiptState { StreamId = stream, AcknowledgedThrough = 3 } });
+                Call(host, "PruneAcknowledgedKills");
+                Assert.Empty((IDictionary)Get(host, "_killUnacknowledged"));
+            }
+            finally
+            {
+                DewPlayer.local = null;
+            }
+        }
+
         private static void V272Hello(HostAuthority host, DewPlayer guest)
         {
             Call(host, "OnHello", new DreamforgeHelloMsg {
