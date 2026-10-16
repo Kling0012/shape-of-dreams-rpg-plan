@@ -1462,7 +1462,8 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
             }
             float now = Time.unscaledTime;
             string heroKey = HeroKeyOf(hero);
-            // 通知は送信間隔・同一ビルドの抑制に関係なく、毎tick確認する。
+            // 通知はこの送信経路で、送信間隔・同一ビルドの抑制に関係なく毎tick確認する。
+            // LocalHero・RPC・接続と復元完了が前提。ロビー等でこの経路を通らない間は新しい警告を出さない。
             RefreshForbiddenGearNotice(heroKey, now);
             if (Profile.Run == null && _buildDirty && now < _allocationBuildDue && !_monsterAuthority.BuildResendRequired) return;
             if (!_buildDirty && !_monsterAuthority.BuildResendRequired && now < _nextBuildSend) return;
@@ -1509,7 +1510,7 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
             foreach (string uid in Profile.Hero(heroKey).Equipped)
             {
                 var relic = Profile.FindStash(uid);
-                if (relic == null || relic.Forbidden == null && relic.Retunes <= Content.MaxRetunes) continue;
+                if (!HostBuildValidation.RequiresForbiddenGearSupport(relic)) continue;
                 _forbiddenGearStripNotice = true;
                 ForbiddenGearHostNotice = Loc.T(
                     "ホストのMODが禁忌の装備（#415）に対応していません。このセッションでは禁忌化した遺物と、上限を超えて再調律した遺物は適用されません。",

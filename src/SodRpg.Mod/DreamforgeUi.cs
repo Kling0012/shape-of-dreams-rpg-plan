@@ -1525,6 +1525,7 @@ namespace SodRpg.Mod
             if (!_rowCache.TryGetValue(id, out var rows)) _rowCache[id] = rows = new List<string>();
             rows.Clear();
             // 枠ごとの装着品は行ごとに保管庫を探さず、先に1回ずつ引いておく。
+            // Rules.EquippedRelic と同じく、h.Equipped の添字と Slot の列挙値の一致が前提。
             var equippedBySlot = new Relic[h.Equipped.Length];
             for (int i = 0; i < equippedBySlot.Length; i++) equippedBySlot[i] = p.FindStash(h.Equipped[i]);
             foreach (var r in list)
