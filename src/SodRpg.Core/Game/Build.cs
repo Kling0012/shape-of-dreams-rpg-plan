@@ -538,7 +538,7 @@ namespace SodRpg.Core.Game
         // Every source receives the same capped-base share, then keeps its own multiplier.
         // Summing scaled contributions before applying that share is algebraically identical.
         private static decimal CappedContribution(decimal basis, decimal scaled, decimal cap)
-            => Math.Min(cap * 2.5m, basis > cap ? scaled * cap / basis : scaled);
+            => Math.Min(cap * BuildLimits.MaxEquipmentMultiplier, basis > cap ? scaled * cap / basis : scaled);
 
         private static int CappedLinkMilli(decimal basis, decimal scaled, decimal cap)
             => BuildPrecision.FromDecimal(decimal.Round(CappedContribution(basis, scaled, cap), 3, MidpointRounding.AwayFromZero));
