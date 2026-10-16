@@ -55,7 +55,10 @@ namespace SodRpg.Core.Game
                 SettledGraphEpoch = InfinityLong(j, "settledGraph", -1),
                 SettledSegmentEpoch = InfinityLong(j, "settledSegment", -1), TransitionIntent = Str(j, "intent"),
             };
-            if (state.ClearedCombatTotal < state.ClearsInCycle || state.SettledGraphEpoch > state.GraphEpoch
+            // 終点で終わる短い区画（PromoteFinaleBoss）は、累計が周期に届く前でも周期の数を満たしたことにする。
+            // 探索中だけ「累計 >= 周期の数」を要求する。
+            if ((state.Phase == InfinityPhase.Exploring && state.ClearedCombatTotal < state.ClearsInCycle)
+                || state.SettledGraphEpoch > state.GraphEpoch
                 || state.SettledSegmentEpoch > state.SegmentEpoch
                 || (state.TransitionIntent != null && state.TransitionIntent != "" && state.TransitionIntent != "delve"
                     && state.TransitionIntent != "regenerate" && state.TransitionIntent != "return")
