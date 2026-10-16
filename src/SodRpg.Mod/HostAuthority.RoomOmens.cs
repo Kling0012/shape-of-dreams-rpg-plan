@@ -27,8 +27,12 @@ namespace SodRpg.Mod
         private void OnRoomOmenLoaded(EventInfoLoadRoom info)
         {
             _roomHasVariant = false;
+            OnAutoCastRoomLoaded();
             RefreshRoomOmen(force: true);
         }
+
+        // 自動詠唱の選敵記録は AutoCastTargets 側に属するため、取り込まれないプロジェクトではこの呼び出しは消える。
+        partial void OnAutoCastRoomLoaded();
 
         private bool EligibleOmenRoom()
         {

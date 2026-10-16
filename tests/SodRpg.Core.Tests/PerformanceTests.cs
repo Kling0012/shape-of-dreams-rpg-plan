@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using SodRpg.Core.Game;
+using SodRpg.Core.Tests.Testing;
 using Xunit;
 
 namespace SodRpg.Core.Tests
@@ -20,7 +21,7 @@ namespace SodRpg.Core.Tests
             return p;
         }
 
-        [Fact]
+        [SlowFact, Trait("Speed", "Slow")]
         public void A_kill_takes_well_under_a_tenth_of_a_millisecond()
         {
             var p = Loaded();
@@ -32,7 +33,7 @@ namespace SodRpg.Core.Tests
             Assert.True(perKillMs < 0.1, $"{perKillMs:0.0000} ms per kill");
         }
 
-        [Fact]
+        [SlowFact, Trait("Speed", "Slow")]
         public void Build_and_encode_are_fast()
         {
             var p = Loaded();
@@ -43,7 +44,7 @@ namespace SodRpg.Core.Tests
             Assert.True(ms < 0.2, $"{ms:0.0000} ms per build");
         }
 
-        [Fact]
+        [SlowFact, Trait("Speed", "Slow")]
         public void Serializing_a_full_profile_takes_a_few_milliseconds()
         {
             var p = Loaded();
