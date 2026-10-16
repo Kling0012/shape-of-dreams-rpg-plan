@@ -2717,7 +2717,10 @@ namespace SodRpg.Mod
             if (!(matching ? TravelerCombatNative.IsMelee(_s.LocalHero) : TravelerCombat.IsMelee(hero, true))) return;
             int on = _displayMeleeCoop;
             if ((on & (MeleeCoopSettings.RangeToSpeed | MeleeCoopSettings.Break | MeleeCoopSettings.Guard)) == 0) return;
-            StarSumAddTitle(Loc.T("近接の協力効果", "Melee co-op effects"));
+            // ほかの旅人のページではその旅人の攻撃アセットを読めず、近接になり得る4人には常に
+            // 出すしかない。遠距離攻撃のAurenaに「今は近接」と読まれないよう、題に条件を添える（#542）。
+            StarSumAddTitle(matching ? Loc.T("近接の協力効果", "Melee co-op effects")
+                : Loc.T("近接の協力効果（通常攻撃が近接の間）", "Melee co-op effects (while the basic attack is melee)"));
             if ((on & MeleeCoopSettings.RangeToSpeed) != 0) StarSumAddText(MeleeCoopText.RangeToSpeed);
             if ((on & MeleeCoopSettings.Break) != 0) StarSumAddText(MeleeCoopText.Break);
             if ((on & MeleeCoopSettings.Guard) != 0) StarSumAddText(MeleeCoopText.Guard);
