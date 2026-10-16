@@ -10,12 +10,21 @@ namespace SodRpg.Mod
 {
     internal sealed partial class HostAuthority
     {
+        // Minimum interval between profile sends to the same trade participant (#538): a client that
+        // has not assembled a stash-sized split transfer yet asks again on every five-second probe,
+        // and without this floor the host would restart the whole send on each ask.
+        private const float CoopProfileResendInterval = 15f;
         private sealed class CoopPeerState
         {
             public float Seen;
             public bool Safe, Fusion;
             // The connection this peer state belongs to. A changed id is a reconnect: the peer's
             // client-side trade state was cleared, so what was already sent to it is gone.
+            // The initial int.MinValue matches no real id (the local host is 0 and Mirror client
+            // ids are positive), so the first probe after a host restart — or right after the peer
+            // table was rebuilt mid-trade by a server-connection change — also counts as a reconnect
+            // and re-sends the view once. Harmless: the view is idempotent and the profile re-send
+            // happens at most once per actual connection.
             public int ConnectionId = int.MinValue;
             public readonly BuildTransferReceiver Transfer = new BuildTransferReceiver(CoopTradeTransport.MaxProfileChars);
             public string Envelope;
@@ -32,6 +41,9 @@ namespace SodRpg.Mod
             // The revision at which each side last received its partner's profile. The offered relics only change
             // with the revision, so a confirm or a re-sent view does not need the (possibly stash-sized) profile again.
             public int FirstProfileSentRevision = -1, SecondProfileSentRevision = -1;
+            // When the profile was last sent to each side; wantsProfile re-requests inside CoopProfileResendInterval
+            // of that moment are answered with the plain view, so a transfer still in flight is not restarted.
+            public float FirstProfileSentAt = -1000f, SecondProfileSentAt = -1000f;
             public float ActiveAt;
             public CoopTradeReceipt Receipt;
         }
@@ -205,6 +217,8 @@ namespace SodRpg.Mod
                     // profile already sent for the current revision would never reach it again. When the
                     // caller's connection changes, forget the caller-side already-sent marker and re-send
                     // the view (which then carries the partner's profile) for the trade being rejoined.
+                    // This re-send is deliberately not held to CoopProfileResendInterval: a genuinely
+                    // new connection always gets the profile, so recovery cannot be starved by the floor.
                     int connectionId = caller == DewPlayer.local ? 0 : caller.connectionToClient?.connectionId ?? -1;
                     if (peer.ConnectionId != connectionId)
                     {
@@ -215,7 +229,7 @@ namespace SodRpg.Mod
                             if (caller == rejoined.First) rejoined.FirstProfileSentRevision = -1;
                             else rejoined.SecondProfileSentRevision = -1;
                             SendCoopView(caller, caller == rejoined.First ? rejoined.Second : rejoined.First,
-                                caller == rejoined.First, rejoined);
+                                caller == rejoined.First, rejoined, includeProfile: true);
                         }
                     }
                     SendCoopRoster(caller);
@@ -278,8 +292,20 @@ namespace SodRpg.Mod
                     else trade.SecondOfferAck = msg.transferId;
                 }
                 if (msg.revision != trade.Revision) { DiagnoseHostCoopTrade("stale-revision", trade, caller); SendCoopViews(); return; }
-                var profile = ProfileCodec.ReadCheckpointProfile(Encoding.UTF8.GetString(Convert.FromBase64String(encoded)));
-                var offer = CoopTradeCodec.ReadOffer(msg.offer);
+                Profile profile;
+                CoopTradeOffer offer;
+                try
+                {
+                    profile = ProfileCodec.ReadCheckpointProfile(Encoding.UTF8.GetString(Convert.FromBase64String(encoded)));
+                    offer = CoopTradeCodec.ReadOffer(msg.offer);
+                }
+                catch (Exception)
+                {
+                    // Only peer-data decoding belongs here; journal failures must still use host recovery.
+                    SendCoopError(caller, "ownership");
+                    CancelHostCoopTrade("ownership");
+                    return;
+                }
                 string gameRun = NetworkedManagerBase<GameManager>.softInstance?.runId;
                 if (gameRun != null && profile.Run?.RunId != gameRun || profile.CoopTradePending != null
                     || CoopTradeRules.Validate(profile, offer) != null)
@@ -421,6 +447,18 @@ namespace SodRpg.Mod
                 bool includeProfile = wantsProfile && (caller == trade.First || caller == trade.Second);
                 if (includeProfile)
                 {
+                    // A wantsProfile re-request is the receiver's own recovery for a transfer lost
+                    // mid-flight, so it must stay able to re-send at the same revision. But a client
+                    // waiting for a stash-sized split transfer asks on every five-second probe; inside
+                    // CoopProfileResendInterval of the last send, answer with the plain view only and
+                    // let the next probe past the interval get the profile. Recovery is delayed, never
+                    // lost. The reconnect path in the probe handler is not subject to this floor.
+                    if (Time.unscaledTime - (caller == trade.First ? trade.FirstProfileSentAt : trade.SecondProfileSentAt)
+                        < CoopProfileResendInterval)
+                        includeProfile = false;
+                }
+                if (includeProfile)
+                {
                     // The caller holds this view but not the partner's profile for the current
                     // revision (a reset receiver can lose a transfer mid-flight). Forget the
                     // already-sent marker so this view re-sends the profile once.
@@ -459,8 +497,10 @@ namespace SodRpg.Mod
             var other = first ? trade.SecondProfile : trade.FirstProfile;
             if (!includeProfile || other == null || (first ? trade.FirstProfileSentRevision : trade.SecondProfileSentRevision) == trade.Revision) return;
             SendCoopPayload(player, "profile", trade.Id, trade.Revision, ProfileCodec.WriteCheckpointProfile(other));
-            if (first) trade.FirstProfileSentRevision = trade.Revision;
-            else trade.SecondProfileSentRevision = trade.Revision;
+            // Every send arms the re-send interval: an offer change, a reconnection and a granted
+            // re-request all leave the receiver assembling a fresh stash-sized transfer.
+            if (first) { trade.FirstProfileSentRevision = trade.Revision; trade.FirstProfileSentAt = Time.unscaledTime; }
+            else { trade.SecondProfileSentRevision = trade.Revision; trade.SecondProfileSentAt = Time.unscaledTime; }
         }
         private void SendCoopRoster(DewPlayer caller)
         {

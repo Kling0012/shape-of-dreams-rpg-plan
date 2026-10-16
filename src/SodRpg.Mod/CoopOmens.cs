@@ -55,12 +55,14 @@ namespace SodRpg.Mod
 
         partial void ClearCoopOmen()
         {
+            _coopWardLimit = 0;
             for (int i = 0; i < _coopWards.Length; i++)
             {
+                var monster = _coopWards[i].Monster;
                 _coopWards[i].Clear();
                 _coopCandidates[i] = null;
+                RefreshSharedObjectiveOwnership(monster);
             }
-            _coopWardLimit = 0;
             _coopFirstSpawn = float.PositiveInfinity;
             _coopLastSpawn = float.NegativeInfinity;
             _coopBatchClosed = false;
@@ -175,11 +177,14 @@ namespace SodRpg.Mod
                         var selected = _coopCandidates[candidate++];
                         var monster = selected?.Monster;
                         if (ward.Monster == monster && ReferenceEquals(ward.Runtime, selected)) continue;
+                        var previous = ward.Monster;
                         ward.Clear();
                         ward.Monster = monster;
                         ward.Runtime = selected;
                         ward.NetId = monster != null ? monster.netId : 0;
                         ward.Assigned = monster != null;
+                        RefreshSharedObjectiveOwnership(previous);
+                        RefreshSharedObjectiveOwnership(monster);
                         _coopSyncDirty = true;
                     }
                     if (!float.IsPositiveInfinity(_coopFirstSpawn) && !pending && now - _coopLastSpawn > InitialSpawnGap)

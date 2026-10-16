@@ -14,7 +14,8 @@ namespace SodRpg.Mod
     internal struct EventInfoKill { public Actor actor; public Entity victim; }
     internal partial class Entity
     {
-        public event Action<EventInfoKill> EntityEvent_OnDeath;
+        // 本体（NativeKillRewards）が ReferenceEquals で読むので event ではなくフィールド。
+        public Action<EventInfoKill> EntityEvent_OnDeath;
         public event Action<EventInfoDamage> EntityEvent_OnTakeDamage;
         internal void RaiseDeath(EventInfoKill info) => EntityEvent_OnDeath?.Invoke(info);
     }

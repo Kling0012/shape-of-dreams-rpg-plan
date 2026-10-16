@@ -16,6 +16,9 @@ namespace SodRpg.Mod
         private bool _helloAnswered;
         private bool _hostCompatibilityWarned;
         private bool _hostInfinityAvailable;
+        private int _hostMeleeCoop;
+        /// <summary>ホストの近接・協力設定（hello の返事）。0 は旧版のホスト・未受信・自分がホスト。表示は自分の設定で代わりに見積もる。</summary>
+        internal int HostMeleeCoop => _hostMeleeCoop;
         private string _continueReceiptRunId, _continueReceiptCheckpointId, _continueReceiptResumeSession;
         private string _sentContinueReceiptRunId, _sentContinueReceiptCheckpointId, _sentContinueReceiptResumeSession;
         private Actor _sentContinueReceiptActor;
@@ -55,6 +58,7 @@ namespace SodRpg.Mod
             _helloAnswered = false;
             _hostCompatibilityWarned = false;
             _hostInfinityAvailable = false;
+            _hostMeleeCoop = 0;
             _hostBuildInputCapability = false;
             _hostForbiddenInput = false;
             _hostFusionInput = false;
@@ -171,6 +175,7 @@ namespace SodRpg.Mod
             bool sameContent = string.Equals(msg.content, ContentFingerprint.Value, StringComparison.Ordinal);
             bool sameVersion = string.Equals(msg.modVer, HostAuthority.ModVersion, StringComparison.Ordinal);
             _hostInfinityAvailable = msg.infinityAvailable;
+            _hostMeleeCoop = msg.meleeCoop;
             ReceiveContinueHandshake(msg);
             if (msg.authorityGeneration != 0) ObserveMonsterAuthority(msg.authorityGeneration);
             if (sameProtocol && sameContent && sameVersion && msg.continueCheckpoints)

@@ -175,6 +175,10 @@ MemoryDamage／MemoryHaste／GimmickBoost／GimmickParamの選択肢は、キー
 
 ### 刻印（Keystone）
 `keystone` は `upside`（文章）と `upsideSpec`（機械可読の配列、書いていなければ `null`）。`null` は「機械可読化していない」の意味で、**文章が正**。刻印にデバフ（代償）はもう無い。
+能力値で置換した刻印は、既存の `stat: {name, perRank}` に正の整数を指定する（`perRank` は数値原本への `valueRef`）。能力値だけなら `upsideSpec: null`、仕掛け補正を併用するなら通常の配列を指定する。1段で常時適用し、費用は新規刻印の `rankCost`。保存・Protocol の形式は増やさない。
+
+`Primed` の Grant は次の通常攻撃1回を強化する。`gimmick.arg` は準備の有効秒数（0は従来の5秒、正数は10秒まで、数値原本への `valueRef`）。値の基準は攻撃力・魔力の高い方で、連続命中への追撃にはならない。
+
 Spec の要素は次のキーだけ：
 
 | キー | 意味 |

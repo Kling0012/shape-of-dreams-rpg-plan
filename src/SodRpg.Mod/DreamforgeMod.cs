@@ -23,6 +23,8 @@ namespace SodRpg.Mod
     {
         public DreamforgeConfig config = new DreamforgeConfig();
         partial void ApplyRoomOmensConfig();
+        partial void StartNativeKillRewards();
+        partial void StopNativeKillRewards();
         partial void ApplyAutoCastCoopConfig();
         partial void TickAutoCastCoopConfig();
 
@@ -54,6 +56,7 @@ namespace SodRpg.Mod
                 stage = "patch installation";
                 PatchEachClass();
                 PressureEnemyCount.Install(harmony);
+                StartNativeKillRewards();
                 CulinaryMagnet.Install(harmony);
                 CulinaryIngredientCap.Install(harmony);
                 try { CulinaryIngredientDisplay.Install(harmony); }
@@ -79,6 +82,7 @@ namespace SodRpg.Mod
                 RelicIcons.Init(mod?.path);
                 RelicIcons.Preload();
                 _ui = new DreamforgeUi(_session, () => config, SaveLevelEssenceConfig);
+                BindEnemyOwnershipSettings();
                 _host = new HostAuthority(() => _session?.Profile.Run?.DailyId ?? DailyDream.Today.Id);
                 ApplyMeleeCoopConfig();
                 _session.FirstLaunch();
@@ -125,14 +129,15 @@ namespace SodRpg.Mod
             ApplyMeleeCoopConfig();
         }
 
+        partial void ApplyEnemyOwnershipConfig();
+        partial void BindEnemyOwnershipSettings();
+
+        partial void ApplyMeleeCoopSettings();
+
         private void ApplyMeleeCoopConfig()
         {
-            try
-            {
-                _host?.ConfigureMeleeCoop(config.meleeRangeToSpeed, config.coopDistanceFalloff,
-                    config.meleeBreak, config.meleeProximityGuard);
-            }
-            catch (Exception ex) { Log.Warn("Melee/coop settings ignored: " + ex.Message); }
+            ApplyEnemyOwnershipConfig();
+            ApplyMeleeCoopSettings();
         }
 
         // レベル連動のエッセンス枠（ホストの設定だけが枠に反映される）。壊れた入力でも他の機能は止めない。
@@ -388,6 +393,7 @@ namespace SodRpg.Mod
             var host = _host; _host = null;
             var ui = _ui; _ui = null;
             var performance = _performance; _performance = null;
+            StopNativeKillRewards();
             try { PressureEnemyCount.Stop(); } catch (Exception ex) { Log.Error("Startup cleanup: pressure enemy count: " + ex); }
             try { InfinityBossArena.Stop(); } catch (Exception ex) { Log.Error("Startup cleanup: Infinity boss arenas: " + ex); }
             try { CulinaryMagnet.Stop(); } catch (Exception ex) { Log.Error("Startup cleanup: culinary attraction: " + ex); }

@@ -86,6 +86,9 @@ namespace SodRpg.Core.Game
             if (_maxAsciiChars <= 0) throw new ArgumentOutOfRangeException(nameof(maxAsciiChars));
         }
 
+        /// <summary>True between the first accepted part of a transfer and its completion, rejection or reset.</summary>
+        public bool IsAwaitingParts => _transferId != null;
+
         public void Reset()
         {
             ClearPending();

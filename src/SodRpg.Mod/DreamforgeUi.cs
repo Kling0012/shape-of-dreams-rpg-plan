@@ -108,6 +108,7 @@ namespace SodRpg.Mod
         private Func<string, bool> _linkMarks;
         private float _nextLinkCheck;
         private bool _displayMeleeRangeConversion;
+        private int _displayMeleeAttackSpeed, _displayMeleeCoop;
 
         public bool Open { get; private set; }
 
@@ -303,7 +304,8 @@ namespace SodRpg.Mod
                             Vector3.Distance(hero.agentPosition, ally.agentPosition), now,
                             hero.isActive && hero.isAlive && !hero.isKnockedOut && ally.isActive && ally.isAlive
                                 && !ally.isKnockedOut && ally.GetRelation(hero) == EntityRelation.Ally,
-                            _cfg().coopDistanceFalloff);
+                            MeleeCoopSettings.Resolve(_s.HostMeleeCoop, MeleeCoopSettings.DistanceFalloff,
+                                _cfg().coopDistanceFalloff));
                         if (coefficient <= 0f) continue;
                         string allyKey = ally.GetType().Name;
                         _linkAllies.Add(allyKey);
@@ -345,16 +347,33 @@ namespace SodRpg.Mod
             _st.EnsureBuilt();
             var cfg = _cfg();
             var viewingHero = _s.LocalHero;
-            bool convertRange = cfg.meleeRangeToSpeed && (viewingHero != null
+            // Show what the host applies. An older host or no hello reply yet falls back to the local settings.
+            int hostMelee = _s.HostMeleeCoop;
+            int meleeCoop = MeleeCoopSettings.Encode(
+                MeleeCoopSettings.Resolve(hostMelee, MeleeCoopSettings.RangeToSpeed, cfg.meleeRangeToSpeed),
+                MeleeCoopSettings.Resolve(hostMelee, MeleeCoopSettings.DistanceFalloff, cfg.coopDistanceFalloff),
+                MeleeCoopSettings.Resolve(hostMelee, MeleeCoopSettings.Break, cfg.meleeBreak),
+                MeleeCoopSettings.Resolve(hostMelee, MeleeCoopSettings.Guard, cfg.meleeProximityGuard));
+            bool convertRange = (meleeCoop & MeleeCoopSettings.RangeToSpeed) != 0 && (viewingHero != null
                 ? TravelerCombatNative.IsMelee(viewingHero) : TravelerCombat.IsMelee(HeroKey, true));
-            if (_displayMeleeRangeConversion != convertRange)
+            // Range lines show the capped attack speed gain. Read the (shared, 0.25s) display build only with the menu open.
+            int meleeAttackSpeed = _displayMeleeAttackSpeed;
+            if (convertRange && Open)
+                try { meleeAttackSpeed = _s.DisplayBuild(HeroKey).Get(Stat.AttackSpeedPct); }
+                catch (Exception) { }
+            if (_displayMeleeRangeConversion != convertRange || _displayMeleeAttackSpeed != meleeAttackSpeed
+                || _displayMeleeCoop != meleeCoop)
             {
                 _displayMeleeRangeConversion = convertRange;
+                _displayMeleeAttackSpeed = meleeAttackSpeed;
+                _displayMeleeCoop = meleeCoop;
                 _tradeRelicTexts.Clear();
                 _starSumDirty = true;
             }
             bool previousRangeDisplay = Content.DisplayMeleeRangeConversion;
+            int previousMeleeAttackSpeed = Content.DisplayMeleeAttackSpeed;
             Content.DisplayMeleeRangeConversion = convertRange;
+            Content.DisplayMeleeAttackSpeed = meleeAttackSpeed;
             float scale = Mathf.Clamp(Screen.height / 1080f * Mathf.Clamp(cfg.uiScale, 0.5f, 2.5f), 0.5f, 4f);
             // Keep the star map's fixed header rows and two choice cards within the visible window,
             // including both optional sidebars. Honor the configured scale until it would clip that viewport.
@@ -377,7 +396,7 @@ namespace SodRpg.Mod
                     if (repaint)
                     {
                         DrawNightmareLabels(scale);
-                        DrawCoopWardLabels(scale);
+                        DrawBossShareBars(scale);
                         if (cfg.hudMode != HudMode.Off) DrawHud(w, h, cfg);
                     }
                     bool secureWait = _s.Profile.Run != null && _s.Profile.Run.AwaitingChoice && _s.ActiveRunId != null;
@@ -432,6 +451,7 @@ namespace SodRpg.Mod
             finally
             {
                 Content.DisplayMeleeRangeConversion = previousRangeDisplay;
+                Content.DisplayMeleeAttackSpeed = previousMeleeAttackSpeed;
                 GUI.matrix = oldMatrix;
             }
         }
@@ -1016,10 +1036,16 @@ namespace SodRpg.Mod
             return monster;
         }
 
-        /// <summary>宿敵・悪夢化した敵・夢の変種の頭上に名札を出す。</summary>
+        private const int MonsterLabelLimit = 64;
+        private const float MonsterLabelDistance = 60f;
+        private bool _ownershipLabelsFailed;
+        private readonly Label3D[] _coopWardLabels = new Label3D[62];
+        private bool _coopWardLabelsFailed;
+        private readonly HashSet<uint> _drawnMonsterLabels = new HashSet<uint>();
+
+        /// <summary>担当の印・共鳴の盾・分類の名札を、共通の表示枠で左から並べる。</summary>
         private void DrawNightmareLabels(float scale)
         {
-            // 頭上の名前は言語で変わるので、言語を切り替えたら作り直す。
             if (_labelCacheJa != Loc.Japanese)
             {
                 _labelCacheJa = Loc.Japanese;
@@ -1028,54 +1054,54 @@ namespace SodRpg.Mod
             }
             _labelScratch.Clear();
             foreach (var entry in _labelMonsters)
-                if ((!_s.Nightmare.ContainsKey(entry.Key) && !_s.Variant.ContainsKey(entry.Key)
+                if ((!_s.Nightmare.ContainsKey(entry.Key) && !_s.Variant.ContainsKey(entry.Key) && !_s.EnemyOwners.ContainsKey(entry.Key)
                     && _s.CoopWardId(0) != entry.Key && _s.CoopWardId(1) != entry.Key && _s.CoopWardId(2) != entry.Key)
-                    || entry.Value.Identity == null || entry.Value.Monster == null)
+                    || entry.Value.Identity == null || entry.Value.Monster == null
+                    || !Mirror.NetworkClient.spawned.TryGetValue(entry.Key, out var live) || live != entry.Value.Identity)
                     _labelScratch.Add(entry.Key);
-            foreach (uint netId in _labelScratch) _labelMonsters.Remove(netId);
-            DrawVariantLabels(scale);
-            if (_s.Nightmare.Count == 0) return;
+            foreach (uint netId in _labelScratch)
+            {
+                _labelMonsters.Remove(netId);
+                _miniBossShares.Remove(netId);
+                _miniBossShareValues.Remove(netId);
+            }
             var cam = Camera.main;
             if (cam == null) return;
+            int remaining = MonsterLabelLimit;
+            _drawnMonsterLabels.Clear();
             foreach (var kv in _s.Nightmare)
             {
-                // Delta sync retains tags outside the local spawn/interest window until host removal.
-                if (!Mirror.NetworkClient.spawned.TryGetValue(kv.Key, out var id) || id == null) continue;
-                var m = LabelMonster(kv.Key, id);
-                if (m == null || !m.isActive) continue;
-                var sp = cam.WorldToScreenPoint(m.position + Vector3.up * 3.2f);
-                if (sp.z <= 0) continue;
-                if (!_nightmareLabelCache.TryGetValue((int)kv.Value, out var lab))
-                {
-                    string color = (kv.Value & NightmareAffix.Nemesis) != 0 ? NemesisNameplateColor : NightmareNameplateColor;
-                    string text = UiStyles.Colored(Nightmares.Label(kv.Value), color);
-                    var content = new GUIContent(text);
-                    lab = new Label3D { Text = text, Content = content, Size = _st.ToastMeasure.CalcSize(content) };
-                    _nightmareLabelCache[(int)kv.Value] = lab;
-                }
-                float x = sp.x / scale - lab.Size.x / 2, y = (Screen.height - sp.y) / scale - lab.Size.y;
-                GUI.Label(new Rect(x, y, lab.Size.x + 4, lab.Size.y), lab.Content, _st.Toast);
+                DrawMonsterLabel(kv.Key, cam, scale, ref remaining);
+                if (remaining == 0) return;
+            }
+            foreach (var kv in _s.Variant)
+            {
+                if (!_s.Nightmare.ContainsKey(kv.Key)) DrawMonsterLabel(kv.Key, cam, scale, ref remaining);
+                if (remaining == 0) return;
+            }
+            for (int slot = 0; slot < 3; slot++)
+            {
+                uint netId = _s.CoopWardId(slot);
+                if (netId != 0) DrawMonsterLabel(netId, cam, scale, ref remaining);
+                if (remaining == 0) return;
+            }
+            if (_ownershipLabelsFailed || !_cfg().showEnemyOwnershipMarks) return;
+            foreach (var kv in _s.EnemyOwners)
+            {
+                if (kv.Value.Protected || kv.Value.BossShares != null)
+                    DrawMonsterLabel(kv.Key, cam, scale, ref remaining);
+                if (remaining == 0) return;
             }
         }
 
-        private readonly Label3D[] _coopWardLabels = new Label3D[62];
-        private bool _coopWardLabelsFailed;
-
-        private void DrawCoopWardLabels(float scale)
+        private Label3D CoopWardLabel(uint netId)
         {
-            if (_coopWardLabelsFailed) return;
+            if (_coopWardLabelsFailed) return null;
             try
             {
-                var cam = Camera.main;
-                if (cam == null) return;
                 for (int slot = 0; slot < 3; slot++)
                 {
-                    uint netId = _s.CoopWardId(slot);
-                    if (netId == 0 || !Mirror.NetworkClient.spawned.TryGetValue(netId, out var identity) || identity == null) continue;
-                    var monster = LabelMonster(netId, identity);
-                    if (monster == null || !monster.isActive || monster.isDead) continue;
-                    var sp = cam.WorldToScreenPoint(monster.position + Vector3.up * 3.2f);
-                    if (sp.z <= 0) continue;
+                    if (_s.CoopWardId(slot) != netId) continue;
                     int seconds = Math.Min(60, Mathf.CeilToInt(_s.CoopResonanceRemaining(slot)));
                     int key = seconds > 0 ? seconds + 1 : 0;
                     var label = _coopWardLabels[key];
@@ -1086,14 +1112,7 @@ namespace SodRpg.Mod
                         label = new Label3D { Text = text, Content = content, Size = _st.ToastMeasure.CalcSize(content) };
                         _coopWardLabels[key] = label;
                     }
-                    float offset = 0;
-                    if (_s.Nightmare.TryGetValue(netId, out var affix)
-                        && _nightmareLabelCache.TryGetValue((int)affix, out var name)) offset = name.Size.y + 3;
-                    if (_s.Variant.TryGetValue(netId, out var variant)
-                        && _variantLabelCache.TryGetValue(variant, out var variantName)) offset = Math.Max(offset, variantName.Size.y + 3);
-                    float x = sp.x / scale - label.Size.x / 2;
-                    float y = (Screen.height - sp.y) / scale - label.Size.y - offset;
-                    GUI.Label(new Rect(x, y, label.Size.x + 4, label.Size.y), label.Content, _st.Toast);
+                    return label;
                 }
             }
             catch (Exception ex)
@@ -1101,33 +1120,79 @@ namespace SodRpg.Mod
                 _coopWardLabelsFailed = true;
                 Log.Warn("Co-op ward labels disabled; combat continues: " + ex.Message);
             }
+            return null;
         }
 
-        private void DrawVariantLabels(float scale)
+        private void DrawMonsterLabel(uint netId, Camera cam, float scale, ref int remaining)
         {
-            if (_s.Variant.Count == 0) return;
-            var cam = Camera.main;
-            if (cam == null) return;
-            foreach (var kv in _s.Variant)
+            // Keep pre-spawn/out-of-interest records until authoritative removal; resolve only live identities.
+            if (!_drawnMonsterLabels.Add(netId)) return;
+            if (!Mirror.NetworkClient.spawned.TryGetValue(netId, out var id) || id == null) return;
+            var m = LabelMonster(netId, id);
+            if (m == null || !m.isActive || !m.isAlive) return;
+            var origin = _s.LocalHero != null ? _s.LocalHero.position : cam.transform.position;
+            if ((m.position - origin).sqrMagnitude > MonsterLabelDistance * MonsterLabelDistance) return;
+            var sp = cam.WorldToScreenPoint(m.position + Vector3.up * 3.2f);
+            if (sp.z <= 0 || sp.x < 0 || sp.x > Screen.width || sp.y < 0 || sp.y > Screen.height) return;
+            Label3D label = null, mark = null;
+            if (_s.Nightmare.TryGetValue(netId, out var nightmare))
             {
-                // 同じ敵に表示情報が重なった場合は、シアンの宿敵名札を優先する。
-                if (_s.Nightmare.TryGetValue(kv.Key, out var affixes) && (affixes & NightmareAffix.Nemesis) != 0) continue;
-                if (!Mirror.NetworkClient.spawned.TryGetValue(kv.Key, out var id) || id == null) continue;
-                var m = LabelMonster(kv.Key, id);
-                var def = Variants.Get(kv.Value);
-                if (m == null || def == null || !m.isActive) continue;
-                var sp = cam.WorldToScreenPoint(m.position + Vector3.up * 3.2f);
-                if (sp.z <= 0) continue;
-                if (!_variantLabelCache.TryGetValue(kv.Value, out var lab))
+                if (!_nightmareLabelCache.TryGetValue((int)nightmare, out label))
+                {
+                    string color = (nightmare & NightmareAffix.Nemesis) != 0 ? NemesisNameplateColor : NightmareNameplateColor;
+                    string text = UiStyles.Colored(Nightmares.Label(nightmare), color);
+                    var content = new GUIContent(text);
+                    label = new Label3D { Text = text, Content = content, Size = _st.ToastMeasure.CalcSize(content) };
+                    _nightmareLabelCache[(int)nightmare] = label;
+                }
+            }
+            else if (_s.Variant.TryGetValue(netId, out var variant))
+            {
+                var def = Variants.Get(variant);
+                if (def != null && !_variantLabelCache.TryGetValue(variant, out label))
                 {
                     string text = UiStyles.Colored(Variants.Label(def), VariantNameplateColor);
                     var content = new GUIContent(text);
-                    lab = new Label3D { Text = text, Content = content, Size = _st.ToastMeasure.CalcSize(content) };
-                    _variantLabelCache[kv.Value] = lab;
+                    label = new Label3D { Text = text, Content = content, Size = _st.ToastMeasure.CalcSize(content) };
+                    _variantLabelCache[variant] = label;
                 }
-                float x = sp.x / scale - lab.Size.x / 2, y = (Screen.height - sp.y) / scale - lab.Size.y;
-                GUI.Label(new Rect(x, y, lab.Size.x + 4, lab.Size.y), lab.Content, _st.Toast);
             }
+            if (!_ownershipLabelsFailed)
+            {
+                try { mark = m.type == Monster.MonsterType.MiniBoss ? MiniBossShareMark(netId) ?? OwnershipMark(netId) : OwnershipMark(netId); }
+                catch (Exception ex)
+                {
+                    _ownershipLabelsFailed = true;
+                    Log.Warn("Enemy ownership labels disabled; existing labels continue: " + ex.Message);
+                }
+            }
+            var ward = CoopWardLabel(netId);
+            if (label == null && mark == null && ward == null) return;
+            float markWidth = mark != null ? mark.Size.x + 4 : 0;
+            float wardWidth = ward != null ? ward.Size.x + 4 : 0;
+            float width = markWidth + wardWidth + (label != null ? label.Size.x + 4 : 0);
+            float height = Mathf.Max(Mathf.Max(mark != null ? mark.Size.y : 0, ward != null ? ward.Size.y : 0), label != null ? label.Size.y : 0);
+            float x = sp.x / scale - width / 2, y = (Screen.height - sp.y) / scale - height;
+            if (mark != null)
+            {
+                try { GUI.Label(new Rect(x, y, markWidth, height), mark.Content, _st.Toast); }
+                catch (Exception ex)
+                {
+                    _ownershipLabelsFailed = true;
+                    Log.Warn("Enemy ownership mark drawing disabled; existing labels continue: " + ex.Message);
+                }
+            }
+            if (ward != null)
+            {
+                try { GUI.Label(new Rect(x + markWidth, y, wardWidth, height), ward.Content, _st.Toast); }
+                catch (Exception ex)
+                {
+                    _coopWardLabelsFailed = true;
+                    Log.Warn("Co-op ward label drawing disabled; existing labels continue: " + ex.Message);
+                }
+            }
+            if (label != null) GUI.Label(new Rect(x + markWidth + wardWidth, y, label.Size.x + 4, height), label.Content, _st.Toast);
+            remaining--;
         }
 
         private bool _reportDismissed;
@@ -2491,7 +2556,7 @@ namespace SodRpg.Mod
                 }
                 bool unlocked = t.IsKeystone ? Rules.KeystoneUnlocked(p, hero, t) : _starLayout.CanReach(hs, t, reachable);
                 n.Unlocked = unlocked;
-                int keyCost = t.KeystoneDefinition?.Cost ?? Content.KeystoneCost;
+                int keyCost = t.KeystoneCost;
                 int cost = t.IsKeystone ? keyCost : t.RankCost;
                 bool slotsFull = t.IsKeystone && !n.Allocated && !freeSlot;
                 if (t.IsKeystone)
@@ -2539,7 +2604,7 @@ namespace SodRpg.Mod
                     + "\n" + (n.PairEquippedB ? "✓ " : "・ ") + Links.ItemName(pair.RouteB)
                     + Loc.T("を装着", " equipped");
             }
-            int keyCost = t.KeystoneDefinition?.Cost ?? Content.KeystoneCost;
+            int keyCost = t.KeystoneCost;
             int cost = t.IsKeystone ? keyCost : t.RankCost;
             bool slotsFull = t.IsKeystone && !n.Allocated && _starTextState.KeystoneCount >= _starTextState.KeystoneSlotCount;
             bool costInBody = description.Contains(Loc.T("ポイント", "point"));
@@ -2646,6 +2711,25 @@ namespace SodRpg.Mod
             foreach (var line in lines) StarSumAddLine(line, indexOf);
         }
 
+        /// <summary>Melee travelers' co-op numbers, for the features the host has on (#522).</summary>
+        private void StarSumAddMeleeCoop(string hero, bool matching)
+        {
+            if (!(matching ? TravelerCombatNative.IsMelee(_s.LocalHero) : TravelerCombat.IsMelee(hero, true))) return;
+            int on = _displayMeleeCoop;
+            if ((on & (MeleeCoopSettings.RangeToSpeed | MeleeCoopSettings.Break | MeleeCoopSettings.Guard)) == 0) return;
+            StarSumAddTitle(Loc.T("近接の協力効果", "Melee co-op effects"));
+            if ((on & MeleeCoopSettings.RangeToSpeed) != 0) StarSumAddText(MeleeCoopText.RangeToSpeed);
+            if ((on & MeleeCoopSettings.Break) != 0) StarSumAddText(MeleeCoopText.Break);
+            if ((on & MeleeCoopSettings.Guard) != 0) StarSumAddText(MeleeCoopText.Guard);
+        }
+
+        private void StarSumAddText(string text)
+        {
+            var e = new StarSumEntry();
+            e.Content.text = text;
+            _starSumEntries.Add(e);
+        }
+
         private void StarSumAddTitle(string title)
         {
             var e = new StarSumEntry { Title = true };
@@ -2694,6 +2778,7 @@ namespace SodRpg.Mod
             for (int i = 0; i < _starLayout.Nodes.Count; i++)
                 if (_starLayout.Nodes[i].Talent != null) indexOf[_starLayout.Nodes[i].Talent.Id] = i;
             _starSumHeader.text = Loc.T($"使ったポイント {sum.Spent} / 合計 {sum.Total}", $"Points used {sum.Spent} / {sum.Total} total");
+            StarSumAddMeleeCoop(hero, matching);
             if (sum.Spent == 0) { StarSumAddTitle(Loc.T("まだ星を取得していません。", "No stars acquired yet.")); return; }
             var note = new StarSumEntry();
             note.Content.text = "<color=#9aa>" + Loc.T("発動間隔や上限は、各星の説明で確認できます。", "Cooldowns and caps are listed in each star's description.") + "</color>";
@@ -3308,6 +3393,7 @@ namespace SodRpg.Mod
             }
             GUILayout.Label(Loc.T("キーの割り当てや表示の大きさは、ゲームのMOD設定で変えられます。", "Keys and scale can be changed in the game's mod settings."), _st.Small);
             GUILayout.EndHorizontal();
+            DrawEnemyOwnershipSettings(cfg);
             DrawAutoCastSettings(cfg);
             DrawLevelEssenceSettings(cfg);
             DrawCoopOmenSettings(cfg);

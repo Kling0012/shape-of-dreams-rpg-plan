@@ -17,6 +17,9 @@ namespace HarmonyLib
             return parameters == null ? type.GetMethod(name, Flags) : type.GetMethod(name, Flags, null, parameters, null);
         }
         public static MethodInfo DeclaredMethod(Type type, string name) => type.GetMethod(name, Flags | BindingFlags.DeclaredOnly);
+        // Install verifies optional native callbacks by exact parameter shape, not just name.
+        public static MethodInfo DeclaredMethod(Type type, string name, Type[] parameters)
+            => type.GetMethod(name, Flags | BindingFlags.DeclaredOnly, null, parameters, null);
         public static MethodInfo PropertySetter(Type type, string name) => type.GetProperty(name, Flags)?.GetSetMethod(true);
         public static FieldInfo DeclaredField(Type type, string name) => type.GetField(name, Flags | BindingFlags.DeclaredOnly);
     }
@@ -34,7 +37,7 @@ namespace UnityEngine
 }
 namespace SodRpg.Mod
 {
-    internal enum DamageAttribute { DamageOverTime = 1, IsCrit = 2 }
+    internal enum DamageAttribute { DamageOverTime = 1, IsCrit = 2, IgnoreDamageImmunity = 4 }
     internal enum AttackEffectType { None, BasicAttackMain, BasicAttackSub }
     internal enum DuplicateEffectBehavior { UsePrevious }
     internal struct ReactionChain { }
@@ -61,7 +64,7 @@ namespace SodRpg.Mod
         private readonly int _actorId = ++_nextActor;
         public virtual int GetInstanceID() => _actorId;
         public bool isActive = true;
-        public Actor firstEntity => FindFirstOfType<Entity>();
+        public Entity firstEntity => FindFirstOfType<Entity>();
         public SkillTrigger firstTrigger => FindFirstOfType<SkillTrigger>();
         public ReactionChain chain;
         public Gem gem;
@@ -200,6 +203,8 @@ namespace SodRpg.Mod
     internal sealed class GimmickSiphonLimit { }
     internal static class NativeAttributedDamagePacket
     {
+        // 本体の Actor.DealDamage パッチ（RequireCoopHook は DeclaringType だけを見る）。
+        internal static void Prefix(Actor __instance, DamageData damage, Entity target, ReactionChain chain) { }
         internal sealed class Packet
         {
             internal Actor Actor; internal Entity Victim; internal long Serial;

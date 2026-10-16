@@ -42,22 +42,17 @@ namespace SodRpg.Mod
 
         // ---- support credit for effects cast through the isolated serverActor ----
 
-        private void CreditHealRestored(HeroRuntime rt, Entity target, float healthBefore)
-        {
-            var hero = rt.Hero;
-            if (target == null || hero == null) return;
-            bool otherAlly = target is Hero && target != hero && target.GetRelation(hero) == EntityRelation.Ally;
-            if (SupportBountyCredit.AllyHeal(target.currentHealth - healthBefore, otherAlly))
-                QueueBountyReport(rt, BountyReportKind.AllyHealed, 1);
-        }
-
         private void CreditShieldGranted(HeroRuntime rt, Entity target, float finalAmount)
         {
             var hero = rt.Hero;
             if (target == null || hero == null) return;
+            OnRunGrowthSupport(rt, target, finalAmount, true);
             bool selfOrAlly = target == hero || target.GetRelation(hero) == EntityRelation.Ally;
             if (SupportBountyCredit.ShieldGrant(true, finalAmount, selfOrAlly))
+            {
+                RecordKillAssistSupport(hero, target, finalAmount);
                 QueueBountyReport(rt, BountyReportKind.ShieldGranted, 1);
+            }
         }
 
         // ---- kill / element attribution through summons ----

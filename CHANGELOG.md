@@ -12,9 +12,133 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 - 禁忌化の「断絶」で増えた固有効果を図鑑の発見数に含め、禁忌化の直後に図鑑を更新するようにしました。 / Powers gained through forbidden Severance now count as discovered in the Codex, and making a relic forbidden refreshes the Codex immediately.
 
+### 改善 / Improvements
+
+- 協力取引で、保管庫が大きく記録の分割送信に時間がかかるとき、受け手の再請求とホストの再送が繰り返されていたのを、受け側は受信中は再請求しない・ホストは同じ参加者への再送に最低間隔を設けることで抑えました。再接続時の再送は間隔を待たずに行われ、記録が届かなくなることはありません。 / Large-stash co-op trades no longer loop between the receiver's re-request and the host's re-send: the receiver holds off while a split transfer is still arriving, and the host enforces a minimum interval between re-sends to the same participant. A reconnect still re-sends immediately, so a record is never left undelivered.
+
 ### 変更 / Changes
 
 - 宿敵の頭上の名札をシアン（`#4DD8FF`）に変え、悪夢化した敵（桃色）や夢の変種（琥珀色）と区別できるようにしました。同じ敵に複数の表示情報がある場合も宿敵の名札を優先し、協力プレイでも各PCで同じ色を表示します。 / Nemesis overhead nameplates now use cyan (`#4DD8FF`), distinct from pink nightmares and amber dream variants. The Nemesis nameplate takes priority when tags overlap, and each PC uses the same color in co-op.
+
+### 開発環境 / Development
+
+- 変更に応じたテスト選択で、共通の補助型・テスト用データ・BalanceSim / StarMapRender の参照元を含めるようにしました。補助ライブラリを単独のテストプロジェクトから除外し、参照のないテスト用文書による全件実行を抑えます。星図生成では旧定義の採用判定と数値解決を再利用し、入力の変更時は更新します。CI の生成チェックの重複をなくし、PR でも WikiGen をビルドします。 / Changed-test selection now covers shared helpers, fixtures and references to BalanceSim / StarMapRender. Helper libraries are excluded as standalone test projects, and unreferenced test documentation no longer triggers the full suite. Star generation reuses legacy adoption decisions and resolved sources while refreshing changed inputs. CI checks generation once and builds WikiGen on PRs.
+
+---
+
+## v3.0.1 — Co-op trades no longer stop the host on bad data; suspend data no longer grows without limit（2026-10-16）
+
+このバージョンでは、協力プレイの取引で壊れたデータが届いてもホスト全体が止まらないようにし、討伐記録の受け取りで中断データが増え続ける問題を修正しました。 / This version keeps a broken co-op trade from stopping the whole host, and fixes suspend data that could keep growing when kill records were received.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- 協力プレイの取引で、壊れたデータや読み取れないデータが届くと、ホスト全体が保存に失敗した状態になることがありました。今後は、壊れたデータは無視され、進行中の取引はそのまま続きます。取引相手のプロフィールや提示内容が読み取れない場合は、その取引だけが取り消され、相手にも取り消しが伝わります。ほかの協力プレイはそのまま続けられます。 / Fixed broken or unreadable data in a co-op trade putting the whole host into a save-failure state. Broken data is now ignored and trades in progress continue. If a trading partner's profile or offer can't be read, only that trade is canceled and the other player is notified. The rest of co-op keeps going.
+- 協力プレイで、ホストが知らない討伐記録を受け取ると、そのまま保存されて中断データが際限なく大きくなることがありました。今後は、知らない記録は保存されません。 / Fixed kill records unknown to the host being saved when received in co-op, which could make suspend data grow without limit. Unknown records are no longer saved.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
+## v3.0.0 — Co-op rebuilt: every traveler gets their own fight（2026-10-16）
+
+このバージョンでは協力プレイを作り直しました。これまでは、一番育った人が共有の敵をまとめて倒してしまい、ほかの人の出番がなくなりがちでした。これからは、敵が湧いた時点で参加者それぞれの「担当」になり、各自が自分の育ち具合に合った敵と戦います。助けに行くこともできますが、真ん中に立っているだけで全部が消える、ということは起きません。 / This version rebuilds co-op. Until now, the most-progressed player tended to clear every shared enemy and leave nothing for anyone else. From now on, each enemy becomes one player's "assignment" when it spawns, and everyone fights enemies matched to their own progress. You can still help each other, but standing in the middle no longer wipes the whole room.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op must update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+- 新しい仕組みはすべて F6 のホスト設定で切り替えられます。ソロの遊び方は変わりません。 / Every new system can be toggled in the host settings (F6). Solo play is unchanged.
+
+### 追加要素 / New features
+
+- **敵の担当制（協力プレイ）**: 部屋の敵は湧いた時点で参加者の誰かの担当になり、その人を狙い、その人の育ち具合に合わせた強さで現れます。担当者が戦っている間、ほかの人の攻撃は手伝い程度に抑えられ、とどめは担当者が刺します。担当者が倒れそうなとき・倒れたとき・離れたときは、ほかの人が助けに入れます。 / **Enemy assignments (co-op)**: each enemy belongs to one player from the moment it spawns, targets that player, and is scaled to their progress. While the owner is fighting it, other players' attacks count as help, and the owner lands the finishing blow. When the owner is in danger, down, or away, others can step in.
+- 頭上の印「◆」（自分の担当）「◇」（ほかの人の担当）と、プレイヤーごとの色・番号で、どの敵が誰の担当か分かります。F6 に色の凡例があります。 / Overhead markers show who owns each enemy: ◆ for yours and ◇ for others, with a color and number per player. The F6 menu shows the color legend.
+- **ボスの持ち分（協力プレイ）**: ボスとミニボスは、参加者それぞれの持ち分に分かれた体力を持ちます。各自が自分の持ち分を削り、終わった人はほかの人を手伝えます。ボスの体力バーの下に持ち分が表示されます。 / **Boss shares (co-op)**: bosses and minibosses have health split into a share for each player. Everyone works down their own share, and those who finish can help the others. The shares are shown under the boss health bar.
+- **殲滅速度に合わせた難易度**: 部屋ごとに各プレイヤーの火力を測り、敵が溶けすぎる人の担当の敵を少し硬くします。苦戦している人の敵は少し易しくなります。硬くなった分は報酬も増えます。協力プレイでは既定で有効、ソロでは F6 で有効にできます。 / **Difficulty that follows your damage**: each room, every player's damage output is measured, and enemies assigned to players who melt everything get a bit tougher, while players who are struggling get a little relief. Tougher enemies give more rewards. On by default in co-op, optional in solo (F6).
+- **同行の刻印**: 9 人の旅人それぞれに、味方が近くにいるときだけ働く刻印を 1 つずつ追加しました。仲間の攻撃を活かしたり、仲間を守ったりする効果です。 / **Companion keystones**: each of the nine travelers gets a new keystone that works only while an ally is nearby, built around setting up or protecting your teammates.
+- **マルチ専用の兆し「共鳴の盾」**: 協力プレイ中の部屋に時々現れます。盾を持つ敵は、2 人以上で同時に攻撃しないと崩せません。 / **Co-op room omen "Resonant Ward"**: appears in some co-op rooms. Warded enemies can only be broken when two or more players attack them together.
+- **アシスト**: 敵を倒す直前に攻撃や支援をした人にも、クールダウン回復などの一時的な撃破時効果が届くようになりました。 / **Assists**: players who attacked or supported just before a kill now also receive temporary on-kill effects such as cooldown recovery.
+- 協力プレイでのビスマスの自動詠唱が、仲間が戦っている敵より自分の周りの敵を優先するようになりました。 / In co-op, Bismuth's automatic casting now prefers enemies around you over enemies your teammates are fighting.
+
+### 不具合の修正 / Bug fixes
+
+- エッセンスと記憶の組み合わせによっては連鎖が止まらず、処理が重くなったりゲームが落ちたりすることがあった問題を修正しました。 / Fixed some essence and memory combinations that could chain endlessly, causing heavy slowdowns or crashes.
+- 協力プレイでビスマスの自動詠唱が非常に速く連続し、ほかの参加者の動作が重くなることがあった問題を修正しました。 / Fixed Bismuth's automatic casting firing extremely fast in co-op and slowing down other players' games.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
+## v2.10.64 — Melee co-op effect descriptions and host-synced range display（2026-10-16）
+
+このバージョンでは、近接の旅人が受ける協力効果（射程の変換・崩し・近接防御）の数値を画面で確認できるようにし、協力プレイの参加者の画面に出る射程の表示と連携の効き具合を、ホストの設定と攻撃速度の上限に合わせました。 / This version shows the numbers behind the melee co-op effects (range conversion, Break, and Melee Guard), and makes the range display and link strength on co-op participants' screens follow the host's settings and the attack speed cap.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 新機能 / New features
+
+- **近接の協力効果の説明**: 崩しと近接防御、射程から攻撃速度への変換の効果量を、日本語と英語の説明文で見られるようにしました。崩しは、命中した敵が3秒間12%多くダメージを受けるようになる効果です。近接防御は、3m以内に敵がいるときに受けるダメージを12%減らす効果です。MOD 設定画面の4項目の名前にも数値を入れたので、ロビーでも確認できます。 / **Melee co-op effect descriptions**: the strength of Break, Melee Guard, and the range-to-attack-speed conversion is now explained in Japanese and English. Break makes enemies you hit take 12% more damage for 3 seconds. Melee Guard reduces damage you take by 12% while an enemy is within 3 m. The four entries in the mod settings screen now include their numbers too, so you can check them in the lobby.
+- Dreamforge メニューの星図にある「獲得した効果」欄に、近接の旅人を使っているときだけ、ホストが有効にしている効果が「近接の協力効果」として出るようになりました。 / In the Dreamforge menu's star chart, the "Acquired effects" section now lists the effects the host has enabled under "Melee co-op effects". This appears only when you are playing a melee traveler.
+
+### 不具合の修正 / Bug fixes
+
+- 近接の旅人の装備にある射程の行が「攻撃速度 +◯%」と表示されるとき、攻撃速度の上限（合計80%）を考えていなかったため、実際より大きい値が出ることがありました。今後は実際に増える量と上限が表示されます。たとえば攻撃速度が70%のときに射程+30%の装備を付けると、「攻撃速度 +10%（近接のため射程 +30% から変換。攻撃速度は合計80%まで）」と出ます。 / Fixed the range line on a melee traveler's gear (shown as "Attack speed +X%") ignoring the attack speed cap (80% total), which could make it show more than you actually get. It now shows the actual increase and the cap. For example, with 70% attack speed and a +30% range item, it reads "Attack speed +10% (converted from range +30% because you are melee; attack speed caps at 80% total)".
+- 協力プレイの参加者の画面で、射程から攻撃速度への変換の表示と、連携の「現在の効き%」が、ホストではなく自分の設定をもとに出ていたため、設定がホストと違うと実際の効き方とずれていました。今後はホストの設定に合わせて表示されます。ホストが設定を変えたときも、数秒で表示に反映されます。 / Fixed co-op participants seeing the range-to-attack-speed display and the current link strength based on their own settings instead of the host's, which made the numbers wrong when their settings differed from the host's. They now follow the host's settings, and changes the host makes show up within a few seconds.
+- 距離減衰をオフにしたときの説明文から、「10mまでは全量で効き、10mを超えると切れる」という一文が抜けていたので戻しました。 / Restored the missing sentence for when distance falloff is off: effects apply in full up to 10 m and cut off past 10 m.
+- 近接の旅人の協力効果が実際のゲームで正しく発動しているかを調べるため、近接の判定結果をゲームの記録（Player.log）に残すようにしました。あわせて、攻撃のデータの形が違う場合（prefab や GameObject）でも近接の判定が働くようにしました。近接の判定が発動しない問題は、まだ実際のゲームで確かめられていません。 / To check whether the melee co-op effects actually trigger in the live game, the result of the melee check is now written to the game log (Player.log). The melee check now also works when the attack data comes in a different form (a prefab or GameObject). Whether the melee check fails to trigger has not been confirmed in the live game yet.
+- 攻撃が当たったときの処理を軽くしました。崩しがオフのときや近接の旅人でないときは余計な確認を省き、近接防御は当たるたびに調べ直さず、0.25秒ごとの周囲の確認結果を使うようにしました。 / Made hit processing lighter: extra checks are skipped when Break is off or the traveler is not melee, and Melee Guard now uses the surroundings check done every 0.25 seconds instead of re-checking on every hit.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
+## v2.10.63 — Save error messages stay visible and follow your display language（2026-10-16）
+
+このバージョンでは、保存に失敗したときのエラー表示が消えてしまうことがあった不具合を修正し、保存失敗の理由が表示言語に合わせて出るようにしました。 / This version fixes an issue where the save error message could disappear, and shows the reason for a save failure in your display language.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- 保存中にエラーが起きたとき、その表示がすぐに消えてしまうことがありました。今後は、エラーの表示が残るようにしました。以前に起きた別の保存失敗が残っている場合も、今回の保存で起きたエラーの理由が優先して表示されます。 / Fixed an issue where the error message could disappear right after an error occurred while saving. The message now stays on screen. If an earlier save failure is still pending, the reason for the error in the current save is shown first.
+- 自動で行われる保存でも、ほかの場面で起きた保存エラーの表示が消えないようにしました。 / Automatic saves no longer clear save error messages that came from other situations.
+- 保存に失敗したときに表示される理由の文が、日本語と英語の両方に対応し、表示言語に合わせて出るようにしました。表示言語を切り替えたときや、失敗の原因が変わったときには、再試行の案内文も新しい内容に更新されます。なお、OS などゲームの外から届くエラーの文やファイル名は、調査に使えるよう元の文のまま表示されます。 / Messages explaining why a save failed now support both Japanese and English and match your display language. When you change the display language or the cause of the failure changes, the retry message is updated as well. Error text from outside the game, such as from the OS, and file names are still shown as-is so they can be used for troubleshooting.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
+## v2.10.62 — Fix boss setup error and lighter hit processing（2026-10-16）
+
+このバージョンでは、ボス戦の準備中に起きることがあったエラーを修正し、命中時の処理を軽くしました。 / This version fixes an error that could occur while a boss was being set up and makes hit processing lighter.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- ボスの装備を準備するときに装備の情報がまだそろっていないと、エラーが起きることがありました。この場合はボスの効果をいったん外し、情報がそろってから改めて付け直すようにしました。 / Fixed an error that could occur when a boss's equipment was set up before its equipment info was ready. In that case, the boss's effects are now removed for the moment and applied again once the info is available.
+- 攻撃が命中したときに仕掛けや刻印の効果を調べる処理で、余分なメモリを使わないようにして、動作を軽くしました。表示内容や効果は変わりません。 / Reduced extra memory use when checking gimmick and mark effects on hit, making the game lighter. What is shown and how things work are unchanged.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
 
 ---
 

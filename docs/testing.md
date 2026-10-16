@@ -45,8 +45,11 @@ python tools/test_changed.py [--base <git ref>] [--list] [--all] [--slow]
 変更ファイルを次の規則でテストクラス（完全修飾名）へ写す。
 
 1. **テストファイル自体の変更** — `tests/` 配下の変更された `.cs` は、
-   そのファイルが宣言するテストクラスを選択する。
-2. **製品コードの変更** — 変更された `.cs` のユニファイド diff から、その変更行に
+   そのファイルが宣言するテストクラスと、そこで宣言された型を使うテストを選択する。
+   共通の補助型や fake を変更した場合も、その利用者を含める。
+2. **製品コードの変更** — `src/` と、テストプロジェクトの `ProjectReference` が
+   参照する `tools/` 配下の `.cs` が対象。ツールの場合は宣言型に加えてツール名を
+   挙げているテストも選択する。変更された `.cs` のユニファイド diff から、その変更行に
    出てくるトークン（PascalCase の型名・メンバー名、4 文字以上の文字列リテラル）を
    抜き出し、それを単語として含むテストファイルのテストクラスを選択する
    （メンバーの変更ならその名前で絞り込める）。`new` を含む変更行は初期化データを
@@ -59,7 +62,9 @@ python tools/test_changed.py [--base <git ref>] [--list] [--all] [--slow]
    `tools/lowrarity/*.json`、生成済み `.cs`（`*.Generated.cs`、`Generated*.cs`）が
    変更された場合、そのパス（ディレクトリ名＋ファイル名、または相対パス）を
    参照しているテストファイル、および生成型を参照しているテストファイル（規則 2 と
-   同じ方法）のテストクラスを選択する。
+   同じ方法）のテストクラスを選択する。`tests/` 配下の `.cs` 以外の入力も
+   同様にパスを参照するテストを選択し、参照元不明のデータなら全体を実行する。
+   参照のない Markdown・reStructuredText 文書と `bin`/`obj` は対象外。
 4. **全体実行へのエスカレーション** — 次の場合はスイート全体を実行する。
    - ビルドファイル（`*.csproj`、`Directory.Build.*`）が変更された
    - 変更ファイルの型名がテストファイルの 60% 超に登場する
@@ -77,6 +82,11 @@ python tools/test_changed.py [--base <git ref>] [--list] [--all] [--slow]
 `Ns.Class+Nested` のテストを取りこぼさないため）を `|` で連結した式で、
 長すぎる場合（既定の上限 15000 文字）は複数回の `dotnet test` 実行に分割する。
 テストプロジェクトは `tests/` 配下の `.csproj` を再帰収集する（`bin`/`obj` を除く）。
+`Microsoft.NET.Test.Sdk` の `PackageReference` または `IsTestProject=true` があるものを
+対象とし、Culinary の補助ライブラリ等は単独で実行しない。XML のコメントは無視し、
+最寄りの `Directory.Build.props` / `.targets` とリポジトリ内のリテラルパスの
+`Import` も読む。条件付きの項目は安全側に含めるが、MSBuild のプロパティ展開や
+ワイルドカード import は評価しない。
 クラスとプロジェクトの対応は csproj から判定する: 明示的な `<Compile Include>` の
 リンク先と、`EnableDefaultCompileItems`（既定のフォルダ glob）と `<Compile Remove>` を
 考慮したフォルダ位置の両方。同じファイルを複数プロジェクトがコンパイルする場合
@@ -315,6 +325,46 @@ Linux／.NET 10、Releaseの実Core DLLで、鞄30個・レア度／スコア混
 - 既存テストの対象は悪夢／変種のルール、宿敵ビットの保持、名札の生存管理、敵分類状態と差分配信。色選択と描画の優先順はソースを確認したもので、既存テストは描画メソッドを実行しない。新しいテストは追加していない。
 - **未実行**：Unity実画面で宿敵化したボス／ミニボスの名札を比較する確認、本体名札も含めた背景別の視認性・1920×1080の実描画、実際の協力通信。ゲーム実行環境が提供されていないため、報告の画面上の状況は再現・目視確認していない。
 - **未実行**：フルテスト・Slowテスト、今回の名札表示と無関係なテスト。作業中は関連部分だけを検証し、全体検証は後続工程に委ねる指示による。
+
+## PR #505 取り込み：命中時の確保削減とボス装備（2026-10-16）
+
+元PR #505の製品コード変更を取り込み、光の精霊の溜め処理で新しく読む
+`Actions[1]`には`Actions.Count >= 2`のガードを追加した。不足時はその溜め処理だけを
+見送る。`BossMoveProfile`はコンストラクターで1〜16個の非null行動を検証し、
+配列のコピーを読み取り専用で保持するため、アズラク等の`Actions[0]`は必ず存在する。
+
+設定の原本（`tools/balance/bosses/{maw,azurak,light}.json`）、生成済みの
+`BossMawBalance`／`BossAzurakBalance`／`BossLightBalance`、`BossProfiles`を突き合わせた。
+今回の読み取り先は従来の直書きと一致する。
+
+| 効果 | プロファイルの行動・値 | 従来の動作 |
+| --- | --- | --- |
+| 大顎の護符 | `charm.Actions[0]`: MainHits=4、CounterLifetimeMillis=4000 | 3回分を保持し、4回目に回復。最後の命中から4秒でリセット |
+| アズラクの2部位 | `stage2.Actions[0]`: MainHits=3、CounterLifetimeMillis=4000、RangeMilli=8000 | 3回・最後の命中から4秒・射程8m |
+| 光の精霊の手 | `hands.Actions[0]`: MainHits=3、CounterLifetimeMillis=6000 | 最初の命中から6秒以内に3回 |
+| 光の精霊の頭 | `head.Actions[0]`: RangeMilli=8000 | 射程8m |
+| 光の精霊の2部位 | `stage2.Actions[1]`: Count=3、LifetimeMillis=6000。`Actions[0]`: DelayMillis=350 | 3回溜め、最終加算から6秒保持。次の入力で消費して350ms後に発射 |
+
+`BossEquipmentSnapshot`は装備キャッシュがない場合にfalseを返す。
+`BossEnsure`はその戻り値で`ClearBossEffects`を呼び、Build=null・EquipmentDirty=trueへ
+戻す。次回はBuildの差分があるため早期成功せず再照合し、情報がそろえば再構築する。
+`changed`をfalseのまま返しても、この解除・再試行を迂回しないことをソースで確認した。
+
+刻印の`Upside`と選択子はそれぞれのコンストラクターが`Array.AsReadOnly`で保持し、
+getterのみ公開する。添字ループはこのコレクションを直接参照し、列挙子を生成しない。
+`GimmickRuntime.ActiveStates`は具体型のListを返し、各foreachで構造体列挙子を使う。
+`ForgetVictim`は逆順RemoveAtで全一致を削除し、捕捉ラムダを生成しない。
+刻印の結果オブジェクト等、ほかの経路に存在する確保をゼロにする変更ではない。
+
+実行した検証：
+
+- `DOTNET_ROLL_FORWARD=Major dotnet test tests/SodRpg.Core.Tests/SodRpg.Core.Tests.csproj -c Release -p:PythonCommand=python3 --filter '<対象11クラス>' --nologo`：194成功・0失敗・0スキップ。対象はBossStageB3NativeTests、BossRuntimeNativeTests、BossSetsStageATests、BossSetsStageB12Tests、BossResourceBoundsTests、BossBalanceMigrationTests、GimmickEffectsV129Tests、GimmickPrecisionV131Tests、HotPathQueryFlagTests、ScopedKeystoneModifiersTests、FractionalScopedModifiersTests。
+- 既存の光の精霊のケースは製品コードをリンクし、2／3／6部位で3回の溜め中は未発射、4回目の入力から350msを境に発射、終端の落雷・障壁・重複なしを確認する。ほかの既存ケースはボスの寿命管理・上限、設定JSONと行動件数／値の一致、仕掛けの期限・対象削除、刻印の対象選択・数値を確認する。
+- `dotnet build src/SodRpg.Mod -c Release -p:GameDir="/mnt/ghauto-sbx/sod-gamedata/Shape of Dreams" --nologo -v:quiet`：エラー0・警告6。参照用ディレクトリにModsがないことを確認して実行し、配置処理なし。
+- `python3 tools/balance/gen_cs.py --check`、`git diff --check`：成功。
+- `python3 tools/test_changed.py --list`は582クラスを選択したため実行には使わず、上記11クラスを明示した。新規テスト・ケースは追加せず、元PRの新規0バイト断言テストも取り込んでいない。
+
+**未実行**：Unity実機での戦闘・装備情報未準備時の例外再現／回復・協力通信は、ゲーム実行環境が提供されていないため未確認。装備キャッシュ欠落時の解除／再試行と、大顎の4回目・アズラクの3回目・光の手の6秒の同等性は設定とコードの照合によるもので、当該条件を追加ケースで実行した証拠ではない。GC割当量・フレーム時間の実測は行っていない。実行環境依存の0バイト断言を追加せず、型と生成箇所を点検した。フルテスト・Slowテスト・無関係なテストは作業中に実行しない指示に従い、後続工程へ委ねる。
 
 ## マッピングロジックの単体テスト
 
