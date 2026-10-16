@@ -8,6 +8,9 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
+### 開発環境 / Development
+- 変更に合わせてテストを選ぶ仕組みが、テスト用の補助ファイル・テスト用データ・BalanceSim/StarMapRender の変更で必要なテストを選ばなかった問題を修正。星図データ生成のチェックを約21秒から約8秒に短縮。CI は同じ生成チェックを4回重ねて走らせるのをやめ、Wiki 生成ツールのビルド確認を PR でも行う。 / Changed-test selection now covers test helpers, fixtures and the BalanceSim/StarMapRender tools; star data generation check ~21s -> ~8s; CI drops the repeated generation checks and builds WikiGen on PRs.
+
 ---
 
 ## v2.10.57 — Co-op warning, resume save, and room omen fixes（2026-10-16）

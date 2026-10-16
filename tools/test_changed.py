@@ -483,6 +483,40 @@ def linked_test_inputs(root: Path = REPO_ROOT) -> set[str]:
     return linked
 
 
+_PROJECT_REFERENCE_RE = re.compile(r'<ProjectReference\s+Include="([^"]+)"')
+
+
+@functools.lru_cache(maxsize=None)
+def referenced_tool_dirs(root: Path = REPO_ROOT) -> tuple[str, ...]:
+    """Repo-relative tools/ project directories a test csproj references.
+
+    Core.Tests compiles against tools/BalanceSim and tools/StarMapRender, so a
+    change there must select tests the same way a src/ change does.
+    """
+    dirs: set[str] = set()
+    for csproj in sorted((root / "tests").glob("*/*.csproj")):
+        try:
+            text = csproj.read_text(encoding="utf-8")
+        except OSError:
+            continue
+        for include in _PROJECT_REFERENCE_RE.findall(text):
+            target = (csproj.parent / include.replace("\\", "/")).resolve().parent
+            try:
+                rel = target.relative_to(root.resolve()).as_posix()
+            except ValueError:
+                continue
+            if rel.startswith("tools/"):
+                dirs.add(rel)
+    return tuple(sorted(dirs))
+
+
+def is_production_cs(path: str) -> bool:
+    """True for .cs under src/ or a tools/ project the tests reference."""
+    if not path.endswith(".cs"):
+        return False
+    return path.startswith("src/") or any(path.startswith(f"{d}/") for d in referenced_tool_dirs())
+
+
 def is_data_file(path: str) -> bool:
     """True for the JSON data files tests read at run time."""
     return any(path.startswith(f"{d}/") for d in DATA_DIRS) and path.endswith(".json")
@@ -555,8 +589,11 @@ def select_tests(changed, files, diffs=None) -> Selection:
     present it narrows rule 2 to the tokens the change actually touches.
 
     Rules:
-      1. a changed test .cs under tests/ selects the classes it declares;
-      2. a changed production .cs under src/ selects, for each declared type,
+      1. a changed test .cs under tests/ selects the classes it declares and
+         the tests mentioning any type it declares (helpers, fakes); another
+         changed file under tests/ selects the tests naming it, or everything;
+      2. a changed production .cs under src/ (or a tools/ project a test
+         project references) selects, for each declared type,
          every test file mentioning the type as a whole word -> its classes;
          with a diff, use the tokens (members, string constants) touched by the
          change, retaining file types for object initialization or unrecognized
@@ -616,11 +653,32 @@ def select_tests(changed, files, diffs=None) -> Selection:
             selection.reasons.append(f"file copied into a test project changed: {path}")
             continue
         if path.startswith("tests/") and path.endswith(".cs"):
-            # Rule 1: the test file itself changed.
+            # Rule 1: the test file itself changed. Helpers (fakes, shared
+            # data builders) declare no test class, so their users are
+            # found through the types they declare.
             selection.classes.update(top_level_test_classes(content))
-        if path.startswith("src/") and path.endswith(".cs") and content:
+            for name in declared_types(content):
+                for tf in tests_mentioning(name):
+                    selection.classes.update(top_level_test_classes(files[tf]))
+            continue
+        if path.startswith("tests/") and not any(part in ("bin", "obj") for part in path.split("/")):
+            # Fixtures read at run time (JSON, text): the tests naming the file,
+            # or everything when none does (the name may be built at run time).
+            readers = [tf for tf in test_files if references_path(files[tf], path)]
+            if not readers:
+                selection.run_all = True
+                selection.reasons.append(f"test fixture changed: {path}")
+                continue
+            for tf in readers:
+                selection.classes.update(top_level_test_classes(files[tf]))
+            continue
+        if is_production_cs(path) and content:
             # Rule 2 (+ the wide-type part of rule 4).
             types = declared_types(content)
+            if not path.startswith("src/"):
+                # Tool internals (and top-level statements) are reached through
+                # the tool itself, which its tests name (namespace, dll name).
+                types = types + [path.split("/")[1]]
             diff = (diffs or {}).get(path)
             if diff is not None:
                 plus, minus = unified_diff_plus_minus(diff)
@@ -814,11 +872,21 @@ def collect_files(root: Path, changed) -> dict[str, str]:
 
 
 def find_test_projects(root: Path) -> list[str]:
-    projects = [
-        path.relative_to(root).as_posix()
-        for path in (root / "tests").rglob("*.csproj")
-        if not any(part in ("bin", "obj") for part in path.parts)
-    ]
+    """Test projects under tests/: those referencing Microsoft.NET.Test.Sdk.
+
+    Helper projects a test project builds through ProjectReference (the
+    Culinary stand-ins) are not test projects of their own.
+    """
+    projects = []
+    for path in (root / "tests").rglob("*.csproj"):
+        if any(part in ("bin", "obj") for part in path.parts):
+            continue
+        try:
+            text = path.read_text(encoding="utf-8")
+        except OSError:
+            continue
+        if "Microsoft.NET.Test.Sdk" in text:
+            projects.append(path.relative_to(root).as_posix())
     return sorted(projects)
 
 

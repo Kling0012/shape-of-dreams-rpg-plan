@@ -171,6 +171,34 @@ class SelectTestsFromContents(unittest.TestCase):
         selection = tc.select_tests(["src/SodRpg.Core/Game/StarClusters/Aurena.Generated.cs"], files)
         self.assertIn("T.AurenaTests", selection.classes)
 
+    def test_changed_test_helper_selects_its_users(self):
+        helper = "namespace T\n{\n    internal sealed class FakeDisk {}\n}\n"
+        user = "namespace T\n{\n    public class DiskTests { FakeDisk d; }\n}\n"
+        files = self.corpus({"tests/A/FakeDisk.cs": helper, "tests/A/DiskTests.cs": user})
+        selection = tc.select_tests(["tests/A/FakeDisk.cs"], files)
+        self.assertFalse(selection.run_all)
+        self.assertIn("T.DiskTests", selection.classes)
+        self.assertNotIn("SodRpg.Core.Tests.UnrelatedTests", selection.classes)
+
+    def test_changed_fixture_selects_readers_or_everything(self):
+        reader = 'namespace T\n{\n    public class FixtureTests { string p = "Fixtures/trade.json"; }\n}\n'
+        files = self.corpus({"tests/A/FixtureTests.cs": reader})
+        selection = tc.select_tests(["tests/A/Fixtures/trade.json"], files)
+        self.assertFalse(selection.run_all)
+        self.assertEqual(selection.classes, {"T.FixtureTests"})
+        selection = tc.select_tests(["tests/A/Fixtures/unnamed.json"], files)
+        self.assertTrue(selection.run_all)
+
+    def test_referenced_tool_project_counts_as_production_code(self):
+        dirs = tc.referenced_tool_dirs()
+        self.assertIn("tools/BalanceSim", dirs)
+        self.assertNotIn("tools/WikiGen", dirs)
+        sim = "namespace SodRpg.BalanceSim\n{\n    public static class SimRunner {}\n}\n"
+        user = "namespace T\n{\n    public class SimTests { void M() => SimRunner.Run(); }\n}\n"
+        files = self.corpus({"tools/BalanceSim/SimRunner.cs": sim, "tests/A/SimTests.cs": user})
+        selection = tc.select_tests(["tools/BalanceSim/SimRunner.cs"], files)
+        self.assertEqual(selection.classes, {"T.SimTests"})
+
     def test_nothing_relevant_changed(self):
         selection = tc.select_tests(["docs/specs/plan.md", "README.md"], self.corpus())
         self.assertFalse(selection.run_all)
@@ -299,6 +327,15 @@ class FilterChunkTests(unittest.TestCase):
 
 class FakeRepoLayoutTests(unittest.TestCase):
     """scan_test_files + collect_files + select_tests on a temp directory."""
+
+    def test_helper_projects_are_not_test_projects(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = fake_repo({
+                "tests/X/X.csproj": '<PackageReference Include="Microsoft.NET.Test.Sdk" />',
+                "tests/X/Helper/Helper.csproj": "<Project />",
+                "tests/X/bin/Copy.csproj": '<PackageReference Include="Microsoft.NET.Test.Sdk" />',
+            }, Path(tmp))
+            self.assertEqual(tc.find_test_projects(root), ["tests/X/X.csproj"])
 
     def test_end_to_end_mapping_from_disk(self):
         files = {
