@@ -8,6 +8,7 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
+- 料理素材：上限が不正な素材（旧版が上限を引き上げたままのもの）が1つ見つかると、料理の一回分の上限が全員分まとめて外れ、すでに上限を引き上げた素材を一度に全部調理していた問題を修正。不正な素材だけ本体の動作のままにします。素材アイコンの数字が、表示先が変わった後に古い値のまま残ることがあったのも修正。自動詠唱は間隔待ちの判定を先に行い、毎ティックのスキル確認を減らしました。 / Culinary: one stack with an unsafe native limit no longer releases the cooking batch of every other stack; ingredient icons no longer keep stale digits; autocast checks its pacing before polling skills.
 ---
 
 ## v2.10.60 — Co-op trade messages in each player's language（2026-10-16）

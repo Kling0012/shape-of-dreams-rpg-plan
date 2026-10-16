@@ -80,22 +80,6 @@ namespace SodRpg.Mod
             if (state.Frame == Time.frameCount) return;
             state.Frame = Time.frameCount;
 
-            int ready = 0;
-            float range = 0f;
-            var queued = hero.Control.queuedActions;
-            for (int slot = 0; slot < 4; slot++)
-            {
-                var skill = GetSlot(hero, slot);
-                // CanBeCast uses native charges, minimum delay, mana, validators and cast locks.
-                // A spare charge can be used while the next charge is recharging, as in the game.
-                if (skill.IsNullOrInactive() || !skill.currentConfig.isActive
-                    || !skill.CanBeCast() || !skill.CanBeReserved() || IsQueued(queued, skill)) continue;
-                ready |= 1 << slot;
-                if (skill.currentConfig.castMethod.type != CastMethodType.None)
-                    range = Mathf.Max(range, skill.currentConfig.effectiveRange);
-            }
-            if (ready == 0) return;
-
             float now = Time.time;
             float over = AutocastPressure.SampleFrame();
             var graphics = ManagerBase<GraphicsManager>.instance;
@@ -116,6 +100,24 @@ namespace SodRpg.Mod
                 state.CastCount--;
             }
             if (state.CastCount >= castsPerSecond) return;
+
+            // Check the cheap pacing first: most ticks fall inside the interval, so only then
+            // ask each slot whether it can be cast.
+            int ready = 0;
+            float range = 0f;
+            var queued = hero.Control.queuedActions;
+            for (int slot = 0; slot < 4; slot++)
+            {
+                var skill = GetSlot(hero, slot);
+                // CanBeCast uses native charges, minimum delay, mana, validators and cast locks.
+                // A spare charge can be used while the next charge is recharging, as in the game.
+                if (skill.IsNullOrInactive() || !skill.currentConfig.isActive
+                    || !skill.CanBeCast() || !skill.CanBeReserved() || IsQueued(queued, skill)) continue;
+                ready |= 1 << slot;
+                if (skill.currentConfig.castMethod.type != CastMethodType.None)
+                    range = Mathf.Max(range, skill.currentConfig.effectiveRange);
+            }
+            if (ready == 0) return;
 
             List<Entity> targets = null;
             ListReturnHandle<Entity> handle = default;

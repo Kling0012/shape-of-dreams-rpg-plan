@@ -123,17 +123,37 @@ namespace SodRpg.Culinary.Tests
         [InlineData(0)]
         [InlineData(int.MaxValue)]
         [InlineData(715827883)]
-        public void UnknownUnsafeNativeLimitsStillDisableOnlyCulinary(int maximum)
+        public void UnknownUnsafeNativeLimitsLeaveOnlyThatStackNative(int maximum)
         {
             var copy = Load();
             var effect = new Se_Gem_L_Culinary_Stack { maxStack = maximum, stack = 100 };
             Call(copy, "BeforeMutation", effect);
-            Assert.False(Enabled(copy));
+            Call(copy, "BeforeMutation", effect);
+            Assert.True(Enabled(copy));
             Assert.Equal(maximum, effect.maxStack);
             Assert.Equal(100, effect.stack);
             Assert.True((bool)Call(copy, "BeforeConsumeIngredients", Owner(effect)));
             Assert.Single(Mod.Log.Warnings);
             Assert.Contains("Native culinary cooking limit is not safe", Mod.Log.Warnings[0]);
+        }
+
+        [Fact]
+        public void AnUnsafeStackDoesNotReleaseTheBatchOfStacksAlreadyRaised()
+        {
+            var copy = Load();
+            var raised = new Se_Gem_L_Culinary_Stack { maxStack = 40, stack = 1000 };
+            Call(copy, "BeforeMutation", raised);
+            Assert.Equal(int.MaxValue, raised.maxStack);
+            // Another hero's actor still carries an old build's raised maximum.
+            var unsafeStack = new Se_Gem_L_Culinary_Stack { maxStack = int.MaxValue, stack = 50 };
+            Call(copy, "BeforeMutation", unsafeStack);
+            Assert.True(Enabled(copy));
+            Assert.Equal(40, Count(copy, Owner(raised), raised.stack));
+            Assert.False((bool)Call(copy, "BeforeConsumeIngredients", Owner(raised)));
+            Assert.Equal(960, raised.stack);
+            Assert.Equal(50, Count(copy, Owner(unsafeStack), 50));
+            Assert.True((bool)Call(copy, "BeforeConsumeIngredients", Owner(unsafeStack)));
+            Assert.Single(Mod.Log.Warnings);
         }
 
         [Fact]
