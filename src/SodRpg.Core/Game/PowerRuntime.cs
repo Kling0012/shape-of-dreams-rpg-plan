@@ -237,7 +237,7 @@ namespace SodRpg.Core.Game
             foreach (var source in _expiredLinkSurges) _linkSurges.Remove(source);
         }
 
-        /// <summary>使った記憶の連携加速を合計する。1回の発動でクールダウン全量（100%）まで。</summary>
+        /// <summary>使った記憶の連携加速を100%まで合計する。星との合算後の残りCD上限はホストで適用する。</summary>
         public static float LinkHastePercent(IReadOnlyList<LinkDef> satisfied, string usedMemory)
         {
             long total = 0;

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using HarmonyLib;
 using Mirror;
 using SodRpg.Core.Game;
@@ -78,6 +79,16 @@ namespace SodRpg.Mod
             if (heal > 0f) LogPowerTrigger(Power.KindnessReturns);
         }
 
+        private sealed class CrystalCircuitCut
+        {
+            internal float NextAllowedTime;
+        }
+
+        private readonly ConditionalWeakTable<SkillTrigger, CrystalCircuitCut> _crystalCircuitCuts =
+            new ConditionalWeakTable<SkillTrigger, CrystalCircuitCut>();
+        private static readonly ConditionalWeakTable<SkillTrigger, CrystalCircuitCut>.CreateValueCallback CreateCrystalCircuitCut =
+            skill => new CrystalCircuitCut();
+
         internal void OnNativeGemUseV129(Gem gem)
         {
             try
@@ -86,8 +97,23 @@ namespace SodRpg.Mod
                 if (!NetworkServer.active || _powerSupportDepth != 0 || _gimmickDamageDepth != 0
                     || !Alive(hero) || !_runtimes.TryGetValue(hero, out var rt)) return;
                 float percent = rt.Powers.CrystalCircuitCooldownFraction * 100f;
-                ReduceNormalMemories(hero, percent);
-                if (percent > 0f) LogPowerTrigger(Power.CrystalCircuit);
+                if (percent <= 0f) return;
+                bool applied = false;
+                float now = UnityEngine.Time.time;
+                foreach (var skill in NormalMemories(hero))
+                {
+                    if (skill.currentConfigUnscaledCooldownTime <= 0f || skill.currentConfigUnscaledMaxCooldownTime <= 0f) continue;
+                    if (EssenceCapsBalance.CrystalCircuitEnabled)
+                    {
+                        var cut = _crystalCircuitCuts.GetValue(skill, CreateCrystalCircuitCut);
+                        if (now < cut.NextAllowedTime) continue;
+                        // Arm before reducing: a reduction can synchronously trigger another essence.
+                        cut.NextAllowedTime = now + EssenceCapsBalance.CrystalCircuitInternalCooldownSeconds;
+                    }
+                    ReduceNormalMemory(hero, skill, percent);
+                    applied = true;
+                }
+                if (applied) LogPowerTrigger(Power.CrystalCircuit);
             }
             catch (Exception ex) { Log.Error("Host: essence power " + ex); }
         }

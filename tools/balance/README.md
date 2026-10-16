@@ -14,6 +14,35 @@
 段階3では鍛冶の残りを `forge.json`（schemaVersion 2）へ集約しました。
 保存済みの履歴番号・旧覚醒段・退役工房の返金原本は変更しません。
 
+## 本体エッセンスと記憶の循環抑制
+
+数値原本は `essence-caps.json`。`python tools/balance/gen_cs.py` で
+`src/SodRpg.Core/Game/Balance/EssenceCaps.Generated.cs` を生成し、MODを再ビルドします。
+各セクションの `enabled` で個別に無効化できます。実行中の設定変更ではありません。
+
+| セクション | 初期設定と対象 |
+| --- | --- |
+| `qualitySoftCap` | GemDefault の品質倍率のみ、品質300超を `300 + (q - 300) / 3` で計算。表示・保存品質は維持。NightSky・Crucible・Omegaの品質依存上限にも適用 |
+| `mortality` / `ricochet` | 即死確率30% / 跳弾確率60%。本体のボス・ミニボス即死除外は維持 |
+| `frost` | 本体の遠征永続ステータスに蓄積する最大HP加算を、補正前最大HPの100%まで |
+| `fever` | 火スタック由来の爆発ダメージ増幅項を1.5（+150%）まで |
+| `embertail` / `epiphany` | CD乗算短縮50% / Ultimate CD還元率60%まで |
+| `memoryReuse` | Q/W/E/Rの使用完了後、基礎CDの20%・最低0.3秒の再使用間隔。移動・Identityは対象外 |
+| `crystalCircuit` | 水晶回路による同じ記憶へのCD短縮に0.5秒の内部CD。対象の通常記憶は従来どおり |
+| `memoryHaste` | 連携と星の記憶加速を合算し、1回で残りCDの最大60%を短縮。無効時は従来の最大CD基準・100%上限に戻る |
+
+Frostの基礎HPは本体の `maxHealthWithoutBonus`（現在レベルの成長込み、装備等の加算・倍率適用前）を使います。
+既存の累積値が上限を超えていれば減らさず、追加増加だけを止めます。基礎HPの成長に伴って上限も増えます。
+付け外し・部屋移動・Continueでは本体の永続ステータスを引き継ぎ、新しい保存項目を追加しません。
+
+再使用間隔は本体の minimum delay と既存RPCで同期するため、CD短縮・リセット・チャージ回復とは独立します。
+全configへ設定し、発動中断には設定しません。HUDには残り間隔をCDとして表示します。
+対象メソッドやILが変わった場合は該当パッチだけを停止し、既存 `NativeCooldownSafety` は変更しません。
+保存形式・Protocolは変更しません。シングルでも同じ規則です。ホストと参加者は同じ生成設定のMODを使ってください。
+
+実ゲーム実行ファイル・アセットのない環境で実装したため、Unity上の戦闘再現、実際のHarmony適用、
+ホスト・参加者間の通信、HUD描画は未確認です。ビルドと既存の関連テストの合格だけで実プレイの動作確認とはしません。
+
 ## インフィニティのボス重み（Issue #272）
 
 `infinity-bosses.json` の各 `entries[].weight` を非負整数で調整し、`python3 tools/balance/gen_cs.py` を実行してMODを再ビルドします。実行時にJSONは読みません。
