@@ -8,16 +8,26 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
+---
+
+## v2.10.61 — Fixes for legacy kill records, co-op trade recovery, and version warning language（2026-10-16）
+
+このバージョンでは、古いセーブの討伐記録の読み込み、協力プレイの取引で再接続したときの表示、ホストの版違い警告の表示言語に関する不具合を修正しました。 / This version fixes issues with loading kill records from older saves, the co-op trade display after reconnecting, and the display language of the host's version mismatch warning.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
 ### 不具合の修正 / Bug fixes
 
-- 古い形式の討伐記録に同じ番号の敵が混じっているセーブで、ホストが討伐の同期を復元する途中で止まる問題を修正しました。 / Fixed the host stopping partway through restoring kill sync from a save whose old-format kill records reuse a monster id.
-- 協力プレイで、参加者との差（版・内容・インフィニティの有無など）が変わったときにホストの警告が古い項目のまま残る問題と、言語を切り替えても警告が前の言語のままになる問題を修正しました。 / The host's co-op compatibility warning now updates when a player's difference changes, and follows a language switch.
+- 古い形式のセーブに同じ対象の討伐記録が重なって入っていても、先の記録を残して残りの討伐記録を引き続き復元するようにしました。 / If an older save contains overlapping kill records for the same target, the earlier record is now kept and the rest of the kill records continue to be restored.
+- 協力プレイの取引中に参加者が再接続したり、通信の途中で相手の情報を受け取れなかったりしても、相手の情報が送り直され、取引画面が元に戻るようにしました。これまでは、そのまま相手の情報が表示されないことがありました。 / In co-op trading, if a player reconnects or misses the other player's info partway through, that info is now sent again and the trade screen recovers. Previously, the other player's info could stay missing.
+- ホストに出る版違いの警告が、日本語と英語の両方で表示され、表示言語を切り替えたときにも新しい言語に切り替わるようにしました。版の違いが変わったときにも警告が更新されます。 / The version mismatch warning shown to the host now supports both Japanese and English and switches when you change the display language. The warning also updates when the version difference changes.
+- インフィニティモードのホスト側で、毎フレーム行われていた表示用の処理を減らし、動作を軽くしました。表示内容や効果は変わりません。 / Reduced work done every frame on the host in Infinity mode to make it lighter. What is shown and how things work are unchanged.
 
-### 改善 / Improvements
-
-- 協力取引で、確認のたびに相手の記録全体を送り直していたのをやめ、差し出す遺物が変わったときだけ送るようにしました。保管庫が大きいほど通信が軽くなります。 / Co-op trades no longer resend the partner's whole record on every confirm; it is sent only when the offered relics change, which lightens traffic for large stashes.
-- 協力取引で、相手の記録が同じ版のあいだに届かなかったとき（再接続や転送の途切れ）、受け手からの再請求とホストの再接続検知で記録を送り直すようにしました。 / A partner trade record that never arrived within the same revision (after a reconnect or an interrupted transfer) is now re-sent, on the receiver's re-request and on the host's reconnect detection.
-- ホストのインフィニティ確認とロビー設定の送信で、毎フレームの文字列の作成を減らしました。 / Reduced per-frame string allocation in the host's Infinity checks and lobby settings.
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
 
 ---
 
