@@ -42,6 +42,7 @@ namespace Mirror
     internal class NetworkConnection
     {
         public readonly List<object> Sent = new List<object>();
+        public int connectionId;
         public void Send<T>(T message) where T : struct, NetworkMessage => Sent.Add(message);
     }
     internal sealed class NetworkConnectionToClient : NetworkConnection { }
@@ -179,6 +180,7 @@ namespace SodRpg.Mod
         public DewPlayer owner;
         public EntityAI AI;
         public bool anyBoss;
+        public bool isDead => Status.isDead;
         public readonly EntityControl Control = new EntityControl();
         public readonly EntityVisual Visual = new EntityVisual();
         public EntityStatus Status = new EntityStatus();
@@ -211,7 +213,7 @@ namespace SodRpg.Mod
         public float currentShield;
         public int fireStack, lightStack, darkStack;
         public bool hasCold;
-        public bool isDead, isInConversation, hasInvulnerable;
+        public bool isDead, isInConversation, hasInvulnerable, hasDamageImmunity;
         public readonly FinalStats finalStats = new FinalStats();
         public readonly ProcessorList<DataProcessor<FinalStats>> finalStatsProcessors
             = new ProcessorList<DataProcessor<FinalStats>>();
@@ -309,7 +311,7 @@ namespace SodRpg.Mod
         public void CallAttackCompleteBeforePrepareRoutines() { }
         public void CallAttackCompleteRoutines() { }
     }
-    internal class AbilityInstance : Actor { public Gem gem; }
+    internal class AbilityInstance : Actor { public Gem gem; public CastInfo info; }
     internal sealed class Gem : Actor { }
     internal sealed class ElementalStatusEffect : Actor { public bool isActive; }
     internal sealed class Summon : Entity
@@ -362,6 +364,21 @@ namespace SodRpg.Mod
             => entity == null || !entity.isActive || entity.currentHealth <= 0
                || entity is Hero hero && hero.isKnockedOut;
     }
+    // 本体の EntityCheck.IsAnyBoss と同じ意味（BossMonster または Boss/MiniBoss 型）。
+    internal static class EntityCheck
+    {
+        internal static bool IsAnyBoss(this Entity entity)
+            => entity is BossMonster || entity is Monster monster
+               && (monster.type == Monster.MonsterType.Boss || monster.type == Monster.MonsterType.MiniBoss);
+    }
+    // CoopOmens.cs の公開ラッパーと同じ式。本体では public だが、この境界の Entity は
+    // internal なので public 署名を作れず、同じ意味の internal 模倣として置く。
+    internal static class CoopOmens
+    {
+        internal static bool Enabled { get => HostAuthority.CoopOmensEnabled; set => HostAuthority.CoopOmensEnabled = value; }
+        internal static bool IsSharedObjective(Entity entity) => NetworkServer.active
+            && HostAuthority.NativeInstance?.IsCoopOmenWard(entity) == true;
+    }
     internal class BasicEffect { public bool isAlive = true; public StatusEffect parent; }
     internal sealed class StunEffect : BasicEffect { }
     internal sealed class RootEffect : BasicEffect { }
@@ -381,7 +398,8 @@ namespace SodRpg.Mod
     // NativeActorLifetime.cs は未リンク。この境界では警告の受け口だけが必要。
     internal static class NativeActorLifetime { internal static void WarnOnce(string kind, Exception error) { } }
     internal struct ReactionChain { }
-    internal enum DamageAttribute { IsCrit = 1, IgnoreArmor = 2, IgnoreShield = 4, DamageShieldOnly = 8 }
+    [Flags]
+    internal enum DamageAttribute { None = 0, IsCrit = 1, IgnoreArmor = 2, IgnoreShield = 4, DamageShieldOnly = 8, IgnoreDamageImmunity = 16 }
     // 本体のダメージ情報と同じ形。敵担当制の受ダメ補正はこの生データに直接掛かる。
     internal struct DamageData
     {
@@ -391,10 +409,19 @@ namespace SodRpg.Mod
         public DamageAttribute attributes;
         public SourceType source;
         public float damageToShieldMultiplier;
-        public float currentAmount => amount;
+        public bool isBlockedByImmunity;
+        public float currentAmount => Math.Max(0f, amount);
         public bool HasAttr(DamageAttribute attr) => attr != 0 && (attributes & attr) == attr;
-        public void ApplyReduction(float ratio) => amount *= 1f - ratio;
-        public void ApplyAmplification(float ratio) => amount *= 1f + ratio;
+        public DamageData ApplyReduction(float ratio)
+        {
+            amount *= 1f - Math.Max(0f, Math.Min(1f, ratio));
+            return this;
+        }
+        public DamageData ApplyAmplification(float ratio)
+        {
+            amount *= 1f + ratio;
+            return this;
+        }
         public DamageData(float value)
         {
             amount = value;
@@ -402,6 +429,7 @@ namespace SodRpg.Mod
             attributes = 0;
             source = SourceType.Normal;
             damageToShieldMultiplier = 0f;
+            isBlockedByImmunity = false;
         }
     }
     // 本体の回復処理（takenHealProcessor）の形。倍率は生データに反映する。
@@ -569,6 +597,8 @@ namespace SodRpg.Mod
     internal sealed partial class HostAuthority
     {
         internal static HostAuthority NativeInstance;
+        // HostAuthority.MeleeCoop.cs is not compiled here; hello replies carry the "not sent" value.
+        internal int MeleeCoopWire => 0;
         internal static readonly RunGrowthLedger RunGrowthLedger = new RunGrowthLedger();
         private Actor _registeredOn;
         private ZoneManager _zone;
@@ -590,6 +620,8 @@ namespace SodRpg.Mod
             public MonsterOwnership Ownership, ClassificationOwnership;
             public StatBonus OmenBonus;
             public bool PressureApplied, SpawnProcessed;
+            // 初期生成群の分類（CoopOmens）が読む登録時刻。
+            public float QueuedAt;
         }
         internal sealed class Variant { public string Id; }
         internal sealed class Behavior { public bool CueQueued; }
@@ -600,6 +632,10 @@ namespace SodRpg.Mod
             if (multiplier < 1) data.ApplyReduction((float)(1 - multiplier));
             else if (multiplier > 1) data.ApplyAmplification((float)(multiplier - 1));
         }
+        // CoopOmens.cs（リンク）が呼ぶ本体側の生成処理とC07補正。この境界では
+        // 生成分類済み・補正なしを前提に何もしない。
+        private void ProcessSpawns() { }
+        internal void ApplyAuthoredFinalNativeDamage(ref DamageData damage, Actor actor, Entity target) { }
         internal static bool Alive(Entity entity) => entity != null && entity.isActive && entity.currentHealth > 0;
         private void SendMonsterBehaviorCue(MonsterRuntime runtime, bool force, DewPlayer target = null)
         {
@@ -657,6 +693,7 @@ namespace SodRpg.Mod
         {
             public float Seen;
             public bool Safe, Fusion;
+            public int ConnectionId = int.MinValue;
             public readonly BuildTransferReceiver Transfer = new BuildTransferReceiver(CoopTradeTransport.MaxProfileChars);
             public string Envelope;
         }
@@ -669,6 +706,7 @@ namespace SodRpg.Mod
             public string FirstOfferAck, SecondOfferAck;
             public bool Accepted, FirstConfirmed, SecondConfirmed, Preparing, FirstPrepared, SecondPrepared;
             public int Revision;
+            public int FirstProfileSentRevision = -1, SecondProfileSentRevision = -1;
             public float ActiveAt;
             public CoopTradeReceipt Receipt;
         }
@@ -824,6 +862,7 @@ namespace SodRpg.Mod
         private Actor _sentContinueReceiptActor;
         private float _helloFirstSent = -1f, _nextHello;
         private bool _helloAnswered, _hostCompatibilityWarned, _hostInfinityAvailable;
+        private int _hostMeleeCoop;
         public string HostVersionWarning { get; private set; }
         private Build _buildCache;
         private float _buildCacheTime;

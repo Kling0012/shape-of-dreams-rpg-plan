@@ -37,6 +37,10 @@ namespace SodRpg.Mod
         private float _hudBottom;
         private int _hudFrame = -10;
         private float _nextHudRebuild;
+        // 宿敵（#435）はシアンで、悪夢（桃 #ff6ad5）・夢の変種（琥珀 #ffb347）と区別する。
+        private const string NemesisNameplateColor = "#4dd8ff";
+        private const string NightmareNameplateColor = "#ff6ad5";
+        private const string VariantNameplateColor = "#ffb347";
         private readonly Dictionary<int, Label3D> _nightmareLabelCache = new Dictionary<int, Label3D>();
         private readonly Dictionary<string, Label3D> _variantLabelCache = new Dictionary<string, Label3D>();
         private bool _labelCacheJa;
@@ -104,6 +108,7 @@ namespace SodRpg.Mod
         private Func<string, bool> _linkMarks;
         private float _nextLinkCheck;
         private bool _displayMeleeRangeConversion;
+        private int _displayMeleeAttackSpeed, _displayMeleeCoop;
 
         public bool Open { get; private set; }
 
@@ -299,7 +304,8 @@ namespace SodRpg.Mod
                             Vector3.Distance(hero.agentPosition, ally.agentPosition), now,
                             hero.isActive && hero.isAlive && !hero.isKnockedOut && ally.isActive && ally.isAlive
                                 && !ally.isKnockedOut && ally.GetRelation(hero) == EntityRelation.Ally,
-                            _cfg().coopDistanceFalloff);
+                            MeleeCoopSettings.Resolve(_s.HostMeleeCoop, MeleeCoopSettings.DistanceFalloff,
+                                _cfg().coopDistanceFalloff));
                         if (coefficient <= 0f) continue;
                         string allyKey = ally.GetType().Name;
                         _linkAllies.Add(allyKey);
@@ -341,16 +347,33 @@ namespace SodRpg.Mod
             _st.EnsureBuilt();
             var cfg = _cfg();
             var viewingHero = _s.LocalHero;
-            bool convertRange = cfg.meleeRangeToSpeed && (viewingHero != null
+            // Show what the host applies. An older host or no hello reply yet falls back to the local settings.
+            int hostMelee = _s.HostMeleeCoop;
+            int meleeCoop = MeleeCoopSettings.Encode(
+                MeleeCoopSettings.Resolve(hostMelee, MeleeCoopSettings.RangeToSpeed, cfg.meleeRangeToSpeed),
+                MeleeCoopSettings.Resolve(hostMelee, MeleeCoopSettings.DistanceFalloff, cfg.coopDistanceFalloff),
+                MeleeCoopSettings.Resolve(hostMelee, MeleeCoopSettings.Break, cfg.meleeBreak),
+                MeleeCoopSettings.Resolve(hostMelee, MeleeCoopSettings.Guard, cfg.meleeProximityGuard));
+            bool convertRange = (meleeCoop & MeleeCoopSettings.RangeToSpeed) != 0 && (viewingHero != null
                 ? TravelerCombatNative.IsMelee(viewingHero) : TravelerCombat.IsMelee(HeroKey, true));
-            if (_displayMeleeRangeConversion != convertRange)
+            // Range lines show the capped attack speed gain. Read the (shared, 0.25s) display build only with the menu open.
+            int meleeAttackSpeed = _displayMeleeAttackSpeed;
+            if (convertRange && Open)
+                try { meleeAttackSpeed = _s.DisplayBuild(HeroKey).Get(Stat.AttackSpeedPct); }
+                catch (Exception) { }
+            if (_displayMeleeRangeConversion != convertRange || _displayMeleeAttackSpeed != meleeAttackSpeed
+                || _displayMeleeCoop != meleeCoop)
             {
                 _displayMeleeRangeConversion = convertRange;
+                _displayMeleeAttackSpeed = meleeAttackSpeed;
+                _displayMeleeCoop = meleeCoop;
                 _tradeRelicTexts.Clear();
                 _starSumDirty = true;
             }
             bool previousRangeDisplay = Content.DisplayMeleeRangeConversion;
+            int previousMeleeAttackSpeed = Content.DisplayMeleeAttackSpeed;
             Content.DisplayMeleeRangeConversion = convertRange;
+            Content.DisplayMeleeAttackSpeed = meleeAttackSpeed;
             float scale = Mathf.Clamp(Screen.height / 1080f * Mathf.Clamp(cfg.uiScale, 0.5f, 2.5f), 0.5f, 4f);
             // Keep the star map's fixed header rows and two choice cards within the visible window,
             // including both optional sidebars. Honor the configured scale until it would clip that viewport.
@@ -428,6 +451,7 @@ namespace SodRpg.Mod
             finally
             {
                 Content.DisplayMeleeRangeConversion = previousRangeDisplay;
+                Content.DisplayMeleeAttackSpeed = previousMeleeAttackSpeed;
                 GUI.matrix = oldMatrix;
             }
         }
@@ -1015,8 +1039,11 @@ namespace SodRpg.Mod
         private const int MonsterLabelLimit = 64;
         private const float MonsterLabelDistance = 60f;
         private bool _ownershipLabelsFailed;
+        private readonly Label3D[] _coopWardLabels = new Label3D[62];
+        private bool _coopWardLabelsFailed;
+        private readonly HashSet<uint> _drawnMonsterLabels = new HashSet<uint>();
 
-        /// <summary>既存の名札と担当の印を同じ表示枠で描く。分類の名札を優先する。</summary>
+        /// <summary>担当の印・共鳴の盾・分類の名札を、共通の表示枠で左から並べる。</summary>
         private void DrawNightmareLabels(float scale)
         {
             if (_labelCacheJa != Loc.Japanese)
@@ -1027,7 +1054,8 @@ namespace SodRpg.Mod
             }
             _labelScratch.Clear();
             foreach (var entry in _labelMonsters)
-                if ((!_s.Nightmare.ContainsKey(entry.Key) && !_s.Variant.ContainsKey(entry.Key) && !_s.EnemyOwners.ContainsKey(entry.Key))
+                if ((!_s.Nightmare.ContainsKey(entry.Key) && !_s.Variant.ContainsKey(entry.Key) && !_s.EnemyOwners.ContainsKey(entry.Key)
+                    && _s.CoopWardId(0) != entry.Key && _s.CoopWardId(1) != entry.Key && _s.CoopWardId(2) != entry.Key)
                     || entry.Value.Identity == null || entry.Value.Monster == null
                     || !Mirror.NetworkClient.spawned.TryGetValue(entry.Key, out var live) || live != entry.Value.Identity)
                     _labelScratch.Add(entry.Key);
@@ -1040,6 +1068,7 @@ namespace SodRpg.Mod
             var cam = Camera.main;
             if (cam == null) return;
             int remaining = MonsterLabelLimit;
+            _drawnMonsterLabels.Clear();
             foreach (var kv in _s.Nightmare)
             {
                 DrawMonsterLabel(kv.Key, cam, scale, ref remaining);
@@ -1050,18 +1079,54 @@ namespace SodRpg.Mod
                 if (!_s.Nightmare.ContainsKey(kv.Key)) DrawMonsterLabel(kv.Key, cam, scale, ref remaining);
                 if (remaining == 0) return;
             }
+            for (int slot = 0; slot < 3; slot++)
+            {
+                uint netId = _s.CoopWardId(slot);
+                if (netId != 0) DrawMonsterLabel(netId, cam, scale, ref remaining);
+                if (remaining == 0) return;
+            }
             if (_ownershipLabelsFailed || !_cfg().showEnemyOwnershipMarks) return;
             foreach (var kv in _s.EnemyOwners)
             {
-                if ((kv.Value.Protected || kv.Value.BossShares != null) && !_s.Nightmare.ContainsKey(kv.Key) && !_s.Variant.ContainsKey(kv.Key))
+                if (kv.Value.Protected || kv.Value.BossShares != null)
                     DrawMonsterLabel(kv.Key, cam, scale, ref remaining);
                 if (remaining == 0) return;
             }
         }
 
+        private Label3D CoopWardLabel(uint netId)
+        {
+            if (_coopWardLabelsFailed) return null;
+            try
+            {
+                for (int slot = 0; slot < 3; slot++)
+                {
+                    if (_s.CoopWardId(slot) != netId) continue;
+                    int seconds = Math.Min(60, Mathf.CeilToInt(_s.CoopResonanceRemaining(slot)));
+                    int key = seconds > 0 ? seconds + 1 : 0;
+                    var label = _coopWardLabels[key];
+                    if (label == null)
+                    {
+                        string text = UiStyles.Colored(seconds > 0 ? "◉ " + seconds + "s" : "◎", seconds > 0 ? "#ffe28a" : "#8ae4ff");
+                        var content = new GUIContent(text);
+                        label = new Label3D { Text = text, Content = content, Size = _st.ToastMeasure.CalcSize(content) };
+                        _coopWardLabels[key] = label;
+                    }
+                    return label;
+                }
+            }
+            catch (Exception ex)
+            {
+                _coopWardLabelsFailed = true;
+                Log.Warn("Co-op ward labels disabled; combat continues: " + ex.Message);
+            }
+            return null;
+        }
+
         private void DrawMonsterLabel(uint netId, Camera cam, float scale, ref int remaining)
         {
             // Keep pre-spawn/out-of-interest records until authoritative removal; resolve only live identities.
+            if (!_drawnMonsterLabels.Add(netId)) return;
             if (!Mirror.NetworkClient.spawned.TryGetValue(netId, out var id) || id == null) return;
             var m = LabelMonster(netId, id);
             if (m == null || !m.isActive || !m.isAlive) return;
@@ -1074,7 +1139,8 @@ namespace SodRpg.Mod
             {
                 if (!_nightmareLabelCache.TryGetValue((int)nightmare, out label))
                 {
-                    string text = UiStyles.Colored(Nightmares.Label(nightmare), "#ff6ad5");
+                    string color = (nightmare & NightmareAffix.Nemesis) != 0 ? NemesisNameplateColor : NightmareNameplateColor;
+                    string text = UiStyles.Colored(Nightmares.Label(nightmare), color);
                     var content = new GUIContent(text);
                     label = new Label3D { Text = text, Content = content, Size = _st.ToastMeasure.CalcSize(content) };
                     _nightmareLabelCache[(int)nightmare] = label;
@@ -1085,7 +1151,7 @@ namespace SodRpg.Mod
                 var def = Variants.Get(variant);
                 if (def != null && !_variantLabelCache.TryGetValue(variant, out label))
                 {
-                    string text = UiStyles.Colored(Variants.Label(def), "#ffb347");
+                    string text = UiStyles.Colored(Variants.Label(def), VariantNameplateColor);
                     var content = new GUIContent(text);
                     label = new Label3D { Text = text, Content = content, Size = _st.ToastMeasure.CalcSize(content) };
                     _variantLabelCache[variant] = label;
@@ -1100,10 +1166,12 @@ namespace SodRpg.Mod
                     Log.Warn("Enemy ownership labels disabled; existing labels continue: " + ex.Message);
                 }
             }
-            if (label == null && mark == null) return;
+            var ward = CoopWardLabel(netId);
+            if (label == null && mark == null && ward == null) return;
             float markWidth = mark != null ? mark.Size.x + 4 : 0;
-            float width = markWidth + (label != null ? label.Size.x + 4 : 0);
-            float height = Mathf.Max(mark != null ? mark.Size.y : 0, label != null ? label.Size.y : 0);
+            float wardWidth = ward != null ? ward.Size.x + 4 : 0;
+            float width = markWidth + wardWidth + (label != null ? label.Size.x + 4 : 0);
+            float height = Mathf.Max(Mathf.Max(mark != null ? mark.Size.y : 0, ward != null ? ward.Size.y : 0), label != null ? label.Size.y : 0);
             float x = sp.x / scale - width / 2, y = (Screen.height - sp.y) / scale - height;
             if (mark != null)
             {
@@ -1114,7 +1182,16 @@ namespace SodRpg.Mod
                     Log.Warn("Enemy ownership mark drawing disabled; existing labels continue: " + ex.Message);
                 }
             }
-            if (label != null) GUI.Label(new Rect(x + markWidth, y, label.Size.x + 4, height), label.Content, _st.Toast);
+            if (ward != null)
+            {
+                try { GUI.Label(new Rect(x + markWidth, y, wardWidth, height), ward.Content, _st.Toast); }
+                catch (Exception ex)
+                {
+                    _coopWardLabelsFailed = true;
+                    Log.Warn("Co-op ward label drawing disabled; existing labels continue: " + ex.Message);
+                }
+            }
+            if (label != null) GUI.Label(new Rect(x + markWidth + wardWidth, y, label.Size.x + 4, height), label.Content, _st.Toast);
             remaining--;
         }
 
@@ -2634,6 +2711,25 @@ namespace SodRpg.Mod
             foreach (var line in lines) StarSumAddLine(line, indexOf);
         }
 
+        /// <summary>Melee travelers' co-op numbers, for the features the host has on (#522).</summary>
+        private void StarSumAddMeleeCoop(string hero, bool matching)
+        {
+            if (!(matching ? TravelerCombatNative.IsMelee(_s.LocalHero) : TravelerCombat.IsMelee(hero, true))) return;
+            int on = _displayMeleeCoop;
+            if ((on & (MeleeCoopSettings.RangeToSpeed | MeleeCoopSettings.Break | MeleeCoopSettings.Guard)) == 0) return;
+            StarSumAddTitle(Loc.T("近接の協力効果", "Melee co-op effects"));
+            if ((on & MeleeCoopSettings.RangeToSpeed) != 0) StarSumAddText(MeleeCoopText.RangeToSpeed);
+            if ((on & MeleeCoopSettings.Break) != 0) StarSumAddText(MeleeCoopText.Break);
+            if ((on & MeleeCoopSettings.Guard) != 0) StarSumAddText(MeleeCoopText.Guard);
+        }
+
+        private void StarSumAddText(string text)
+        {
+            var e = new StarSumEntry();
+            e.Content.text = text;
+            _starSumEntries.Add(e);
+        }
+
         private void StarSumAddTitle(string title)
         {
             var e = new StarSumEntry { Title = true };
@@ -2682,6 +2778,7 @@ namespace SodRpg.Mod
             for (int i = 0; i < _starLayout.Nodes.Count; i++)
                 if (_starLayout.Nodes[i].Talent != null) indexOf[_starLayout.Nodes[i].Talent.Id] = i;
             _starSumHeader.text = Loc.T($"使ったポイント {sum.Spent} / 合計 {sum.Total}", $"Points used {sum.Spent} / {sum.Total} total");
+            StarSumAddMeleeCoop(hero, matching);
             if (sum.Spent == 0) { StarSumAddTitle(Loc.T("まだ星を取得していません。", "No stars acquired yet.")); return; }
             var note = new StarSumEntry();
             note.Content.text = "<color=#9aa>" + Loc.T("発動間隔や上限は、各星の説明で確認できます。", "Cooldowns and caps are listed in each star's description.") + "</color>";
@@ -3299,6 +3396,7 @@ namespace SodRpg.Mod
             DrawEnemyOwnershipSettings(cfg);
             DrawAutoCastSettings(cfg);
             DrawLevelEssenceSettings(cfg);
+            DrawCoopOmenSettings(cfg);
             if (_s.SavePath != null) GUILayout.Label(Loc.T("保存先：", "Save file: ") + _s.SavePath, _st.Small);
             if (_s.LoadNotes != null) GUILayout.Label(_s.LoadNotes, _st.Warn);
             if (_s.SaveError != null) GUILayout.Label(Loc.T("保存エラー：", "Save error: ") + _s.SaveError, _st.Warn);
@@ -3374,6 +3472,22 @@ namespace SodRpg.Mod
 
             GUILayout.EndHorizontal();
             GUILayout.EndScrollView();
+        }
+
+        private void DrawCoopOmenSettings(DreamforgeConfig cfg)
+        {
+            bool wasEnabled = GUI.enabled;
+            GUI.enabled = wasEnabled && (!Mirror.NetworkClient.active || Mirror.NetworkServer.active);
+            bool enabled = GUILayout.Toggle(cfg.coopRoomOmens, Loc.T("マルチ専用の兆し（ホスト）", "Co-op-only Room Omens (host)"));
+            if (enabled != cfg.coopRoomOmens)
+            {
+                cfg.coopRoomOmens = enabled;
+                CoopOmens.Enabled = enabled;
+                _saveLevelEssenceConfig?.Invoke();
+            }
+            GUI.enabled = wasEnabled;
+            GUILayout.Label(Loc.T("2 人以上で部屋に入ると、ときどき協力が必要な兆しが出ます。抽選は次の部屋から反映されます。",
+                "With two or more players, some rooms require cooperation. Draw changes apply from the next room."), _st.Small);
         }
 
         private void DrawLevelEssenceSettings(DreamforgeConfig cfg)

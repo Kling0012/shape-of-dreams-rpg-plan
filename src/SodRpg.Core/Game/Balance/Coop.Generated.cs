@@ -5,17 +5,29 @@ namespace SodRpg.Core.Game
     public static class CoopBalance
     {
         public const float FullRange = 10f;
+        public const string FullRangeText = "10";
         public const float OuterRange = 18f;
+        public const string OuterRangeText = "18";
         public const float GraceSeconds = 2f;
+        public const string GraceSecondsText = "2";
         public const float RangeToSpeedMultiplier = 1f;
+        public const string RangeToSpeedMultiplierText = "1";
         public const float BreakSeconds = 3f;
+        public const string BreakSecondsText = "3";
         public const float BreakDamagePercent = 12f;
+        public const string BreakDamagePercentText = "12";
         public const float MeleeGuardRange = 3f;
+        public const string MeleeGuardRangeText = "3";
         public const float MeleeGuardReductionPercent = 12f;
+        public const string MeleeGuardReductionPercentText = "12";
         public const float ScanSeconds = 0.25f;
+        public const string ScanSecondsText = "0.25";
         public const float AutoCastIntervalSeconds = 0.2f;
+        public const string AutoCastIntervalSecondsText = "0.2";
         public const float AutoCastOwnHitSeconds = 3f;
+        public const string AutoCastOwnHitSecondsText = "3";
         public const float AutoCastAllyHitSeconds = 2f;
+        public const string AutoCastAllyHitSecondsText = "2";
 
         public static class Ownership
         {

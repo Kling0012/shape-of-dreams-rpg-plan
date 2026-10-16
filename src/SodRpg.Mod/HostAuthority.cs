@@ -966,7 +966,9 @@ namespace SodRpg.Mod
                 ApplyPressure(rt);
                 ApplyRoomOmenMonster(rt);
                 // Pressure is already active; give the initial depth build time to arrive.
-                if (_builds.Count == 0 && now - _spawnQueue[i].Value < 15f) continue;
+                // A co-op ward must classify its initial enemies before their first received hit.
+                if (_builds.Count == 0 && now - _spawnQueue[i].Value < 15f
+                    && _roomOmen != RoomOmen.ResonantWard) continue;
                 _spawnQueue.RemoveAt(i);
                 var tier = (MonsterTier)Math.Min((int)MonsterTier.Boss, (int)m.type);
                 if (rt.SpawnProcessed) continue;
@@ -2289,7 +2291,9 @@ namespace SodRpg.Mod
                 TrackCritBasicDamage(rt, info, victimId);
                 OnNewPowerDamage(rt, info);
                 string memory = MemorySource(info.actor);
-                if (memory != null || IsNativeBasicDamage(info.actor)) MarkMeleeBreak(rt.Hero, info.victim);
+                // Check the cheap gates before the up-to-128-level ancestry walk.
+                if (_meleeBreakEnabled && TravelerCombatNative.IsMelee(rt.Hero)
+                    && (memory != null || IsNativeBasicDamage(info.actor))) MarkMeleeBreak(rt.Hero, info.victim);
                 if (memory == null) return;
                 if (rt.Powers.Build.Gimmicks.Count > 0 || rt.Powers.Build.PairCombos.Count > 0)
                     rt.MemoryHitAmounts[victimId] = info.damage.amount;

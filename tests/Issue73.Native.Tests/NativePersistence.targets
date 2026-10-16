@@ -171,4 +171,13 @@
       <Compile Include="$(IntermediateOutputPath)CoopTradeHost.g.cs" />
     </ItemGroup>
   </Target>
+
+  <!-- 共鳴の盾（CoopOmens.cs）の HostAuthority 部。公開ラッパー CoopOmens は NativeBoundary.cs
+       に同じ式の internal 模倣（境界の Entity が internal のため直接抽出できない）。 -->
+  <Target Name="CompileCoopOmensWard" BeforeTargets="CoreCompile">
+    <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/CoopOmens.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)CoopOmensWard.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="HostAuthority" Methods="BeginCoopOmen;ClearCoopOmen;CoopWardRoomActive;LiveCoopWard;EligibleCoopWard;IsCoopOmenWard;StrongerCoopCandidate;TickCoopOmen;CoopDamageHuman;ApplyCoopOmenDamage;FillCoopOmenMessage;PublishHostCoopOmen;DisableCoopWards" Fields="_coopWards;_coopCandidates;_coopWardLimit;_coopFirstSpawn;_coopLastSpawn;_coopBatchClosed;_coopWardFailed;_coopSyncDirty;_coopPreparingSpawns;_nextCoopSync;InitialSpawnGap" NestedTypes="CoopWard" />
+    <ItemGroup>
+      <Compile Include="$(IntermediateOutputPath)CoopOmensWard.g.cs" />
+    </ItemGroup>
+  </Target>
 </Project>

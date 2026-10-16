@@ -175,7 +175,7 @@ namespace SodRpg.Mod
             catch (Exception ex) { FailDynamic(DynamicPart.Coefficient, ex); }
         }
 
-        private void RecordDynamicDamage(Entity victim, Actor actor, DamageData damage)
+        internal void RecordDynamicDamage(Entity victim, Actor actor, DamageData damage)
         {
             if ((_dynamicFailed & DynamicPart.Measurement) != 0) return;
             try

@@ -30,6 +30,8 @@ def render_outputs():
         if type(value) not in (int, Decimal) or not 0 < value <= 100:
             raise ValueError("coop." + key + ": expected positive number <= 100")
         lines.append(f"        public const float {name} = {value:g}f;")
+        # Constant text for attribute labels (C# 9 cannot format numbers into constants).
+        lines.append(f'        public const string {name}Text = "{value:g}";')
     if data["outerRange"] <= data["fullRange"] or data["meleeGuardReductionPercent"] >= 100:
         raise ValueError("coop: invalid distance or reduction")
     ownership = data["ownership"]

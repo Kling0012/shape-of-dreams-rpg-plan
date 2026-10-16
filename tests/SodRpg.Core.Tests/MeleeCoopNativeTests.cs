@@ -6,6 +6,16 @@ using Xunit;
 
 // 近接協力4機能（射程→攻撃速度変換・味方距離減衰・崩し・踏み込み）の検証。
 // 本体DLLは無いので、他の NativeTests と同じくスタブ群の上で本番 partial を動かす。
+namespace UnityEngine
+{
+    // 攻撃アセットがプレハブ側の部品で返る場合の判定用。
+    internal class Component
+    {
+        public object Sibling;
+        public T GetComponent<T>() where T : class => this as T ?? Sibling as T;
+    }
+}
+
 namespace SodRpg.Mod
 {
     // 基本攻撃の現在構成。TravelerCombatNative の近接判定に必要な最小限の形。
@@ -110,6 +120,81 @@ namespace SodRpg.Core.Tests
             Assert.False(TravelerCombatNative.IsMelee(aurena));
             Assert.False(TravelerCombatNative.IsMelee(new Hero_Aurena())); // 未構成
             Assert.False(TravelerCombatNative.IsMelee(null));
+        }
+
+        [Fact]
+        public void Native_melee_detection_accepts_a_prefab_or_sibling_component_asset()
+        {
+            var vesper = new Hero_Vesper();
+            SetBasicAttack(vesper, new GameObject { Component = new MeleeAttackInstance() });
+            Assert.True(TravelerCombatNative.IsMelee(vesper));
+            SetBasicAttack(vesper, new Component { Sibling = new MeleeAttackInstance() });
+            Assert.True(TravelerCombatNative.IsMelee(vesper));
+            SetBasicAttack(vesper, new GameObject());
+            Assert.False(TravelerCombatNative.IsMelee(vesper));
+        }
+
+        [Fact]
+        public void Melee_descriptions_state_the_balance_numbers_in_both_languages()
+        {
+            bool previous = Loc.Japanese;
+            try
+            {
+                Assert.Equal(Content.StatCap(Stat.AttackSpeedPct).ToString(), TravelerCombat.AttackSpeedCapText);
+                Assert.Equal("12", CoopBalance.BreakDamagePercentText);
+                Loc.Japanese = true;
+                Assert.Contains("ダメージが12%増える", MeleeCoopText.Break);
+                Assert.Contains("3秒間", MeleeCoopText.Break);
+                Assert.Contains("3m以内", MeleeCoopText.Guard);
+                Assert.Contains("12%減る", MeleeCoopText.Guard);
+                Assert.Contains("最大80%まで", MeleeCoopText.RangeToSpeed);
+                Assert.Contains("距離減衰が無効な場合は10mまで全量で、10mを超えると猶予なしで切れる", CoopDistance.Description);
+                Loc.Japanese = false;
+                Assert.Contains("12% more damage", MeleeCoopText.Break);
+                Assert.Contains("for 3s", MeleeCoopText.Break);
+                Assert.Contains("12% less damage while an enemy is within 3m", MeleeCoopText.Guard);
+                Assert.Contains("capped at 80%", MeleeCoopText.RangeToSpeed);
+                Assert.Contains("With falloff disabled, they are full through 10m and end beyond 10m", CoopDistance.Description);
+            }
+            finally { Loc.Japanese = previous; }
+        }
+
+        [Theory]
+        [InlineData(0, 30, 30)]
+        [InlineData(70, 30, 10)]
+        [InlineData(80, 30, 0)]
+        [InlineData(50, -20, -20)]
+        public void Range_to_speed_display_shows_the_capped_gain(int speed, int range, int gain)
+        {
+            Assert.Equal(gain, TravelerCombat.RangeToSpeedGain(speed, range));
+            bool previous = Content.DisplayMeleeRangeConversion;
+            int previousSpeed = Content.DisplayMeleeAttackSpeed;
+            try
+            {
+                Content.DisplayMeleeRangeConversion = true;
+                Content.DisplayMeleeAttackSpeed = speed;
+                Assert.Contains((gain >= 0 ? "+" : "") + gain + "%", Content.FormatStat(Stat.AttackRangePct, range));
+            }
+            finally
+            {
+                Content.DisplayMeleeRangeConversion = previous;
+                Content.DisplayMeleeAttackSpeed = previousSpeed;
+            }
+        }
+
+        [Fact]
+        public void Host_melee_settings_override_local_ones_only_once_received()
+        {
+            var host = new HostAuthority();
+            host.ConfigureMeleeCoop(rangeToSpeed: false, distanceFalloff: false, meleeBreak: true, meleeGuard: true);
+            int wire = host.MeleeCoopWire;
+            host.ConfigureMeleeCoop(true, true, true, true); // 静的な距離減衰の状態を他のテストへ残さない
+            Assert.False(MeleeCoopSettings.Resolve(wire, MeleeCoopSettings.RangeToSpeed, local: true));
+            Assert.False(MeleeCoopSettings.Resolve(wire, MeleeCoopSettings.DistanceFalloff, local: true));
+            Assert.True(MeleeCoopSettings.Resolve(wire, MeleeCoopSettings.Break, local: false));
+            // 旧版のホスト・未受信（0）は自分の設定で見積もる。
+            Assert.True(MeleeCoopSettings.Resolve(0, MeleeCoopSettings.RangeToSpeed, local: true));
+            Assert.False(MeleeCoopSettings.Resolve(0, MeleeCoopSettings.Guard, local: false));
         }
 
         [Fact]

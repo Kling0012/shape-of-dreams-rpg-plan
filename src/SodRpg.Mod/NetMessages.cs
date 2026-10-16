@@ -44,6 +44,8 @@ namespace SodRpg.Mod
         public string continueRunId, continueCheckpointId, continueResumeSession;
         public bool continueCheckpoints;
         public bool infinityAvailable;
+        /// <summary>ホスト→参加者：近接・協力の4設定（<see cref="MeleeCoopSettings"/>）。旧版・未受信は0で、参加者は自分の設定で表示する。</summary>
+        public int meleeCoop;
     }
 
     public class DreamforgeAppliedMsg

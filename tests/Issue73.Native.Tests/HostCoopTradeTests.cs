@@ -243,6 +243,37 @@ namespace Issue73.Native.Tests
         }
 
         [Fact]
+        public void Partner_profile_is_sent_once_per_revision_not_on_every_confirm()
+        {
+            CreateWorld();
+            Probe(_a);
+            Probe(_b);
+            _host.ReceiveCoopTrade(new DreamforgeCoopTradeCommand { action = "request", target = "player-b", safe = true }, _a);
+            var view = States(_a).Last(state => state.kind == "view");
+            _host.ReceiveCoopTrade(new DreamforgeCoopTradeCommand { action = "accept", id = view.id, safe = true }, _b);
+            var profile = Profile.CreateNew(17);
+            profile.Run = new RunState { RunId = "run-1", HeroKey = "default" };
+            var relic = Loot.RollRelic(new Rng(17), Rarity.Common, 1);
+            profile.Stash.Add(relic);
+            var offer = new CoopTradeOffer { RelicUids = new List<string> { relic.Uid } };
+            SendPayload(_a, "offer", view.id, 0, profile, offer);
+            Assert.NotNull(ReceivedText(_b, "profile", view.id));
+
+            int ProfileParts(DewPlayer player) => States(player).Count(state => state.kind == "profile");
+            int before = ProfileParts(_b);
+            SendPayload(_a, "confirm", view.id, 1, profile, offer);
+            Assert.True((bool)Get(Get(_host, "_coopHostTrade"), "FirstConfirmed"));
+            Assert.Equal(before, ProfileParts(_b)); // 同じ版のあいだは相手の記録を送り直さない
+            Assert.Contains(States(_b), state => state.kind == "view" && state.otherConfirmed);
+
+            profile.Stash.Add(Loot.RollRelic(new Rng(18), Rarity.Common, 1));
+            offer.RelicUids.Add(profile.Stash[profile.Stash.Count - 1].Uid);
+            SendPayload(_a, "offer", view.id, 1, profile, offer);
+            Assert.True(ProfileParts(_b) > before); // 差し出す遺物が変われば送る
+            Assert.Empty(_errors);
+        }
+
+        [Fact]
         public void Host_reasons_carry_a_code_each_player_reads_in_their_own_language()
         {
             bool japanese = Loc.Japanese;

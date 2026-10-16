@@ -391,10 +391,11 @@ namespace SodRpg.Mod
                 || Time.time - OwnershipLastFight(state, state.Owner) <= CoopBalance.Ownership.EngageWindow;
         }
 
-        internal void ApplyOwnershipReceivedDamage(Entity victim, Actor actor, ref DamageData damage)
+        internal void ApplyOwnershipReceivedDamage(Entity victim, Actor actor, ref DamageData damage, bool measure = true)
         {
             if (!NetworkServer.active) return;
-            RecordDynamicDamage(victim, actor, damage);
+            // The native postfix measures before wards; direct callers keep the same measurement entry.
+            if (measure) RecordDynamicDamage(victim, actor, damage);
             ApplyBossShareReceivedDamage(victim, actor, ref damage);
             ApplyBossPressureDamage(victim, actor, ref damage);
             // Independent branches: a failed helper rule must not disable stray-hit protection.

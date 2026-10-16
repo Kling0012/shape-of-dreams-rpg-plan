@@ -189,7 +189,10 @@ namespace SodRpg.Mod
             if (fact.Sequence == 0) fact = new AuthoritativeRunKill(fact.RunId, fact.EventId,
                 fact.MonsterNetId, fact.ZoneIndex, fact.Nightmare, fact.VariantId, ++_killSequence, _killLegacyStreamId,
                 fact.BossTypeName, fact.BossDropNightmare, fact.BossDropDepth, fact.GraphEpoch, fact.SegmentEpoch, fact.RoomEpoch);
-            _killHistoryByVictim.Add(new KillVictimKey(fact.StreamId, fact.MonsterNetId), fact);
+            // Legacy facts are renumbered into one stream, so facts from different streams or graph epochs
+            // can share a netId here. Keep the first (lowest sequence), as the Core ledger does, instead of throwing.
+            var victim = new KillVictimKey(fact.StreamId, fact.MonsterNetId);
+            if (!_killHistoryByVictim.ContainsKey(victim)) _killHistoryByVictim[victim] = fact;
             if (fact.StreamId.EndsWith(".legacy", StringComparison.Ordinal))
                 _legacyKillHistoryByVictim[fact.MonsterNetId] = fact;
             _killSequence = Math.Max(_killSequence, fact.Sequence);
@@ -472,7 +475,9 @@ namespace SodRpg.Mod
                     if (_killUnacknowledged.ContainsKey(fact.Sequence)) _killHistory[kept++] = fact;
                     else
                     {
-                        _killHistoryByVictim.Remove(new KillVictimKey(fact.StreamId, fact.MonsterNetId));
+                        var victim = new KillVictimKey(fact.StreamId, fact.MonsterNetId);
+                        if (_killHistoryByVictim.TryGetValue(victim, out var byVictim) && byVictim.EventId == fact.EventId)
+                            _killHistoryByVictim.Remove(victim);
                         _killHistoryEvents.Remove(fact.EventId);
                         if (_legacyKillHistoryByVictim.TryGetValue(fact.MonsterNetId, out var legacy) && legacy.EventId == fact.EventId)
                             _legacyKillHistoryByVictim.Remove(fact.MonsterNetId);

@@ -7,6 +7,11 @@ namespace SodRpg.Core.Game
         internal const double BlessingChance = 0.6d;
         internal const double TrialDropBonus = 0.1d;
         internal const double DefaultTrialScale = 1.0d;
+        internal const double CoopOmenChance = 0.25d;
+        internal const double WardReduction = 0.1d;
+        internal const double ResonanceWindow = 3d;
+        internal const double ResonanceDuration = 6d;
+        internal const double ResonanceVulnerable = 1.25d;
         internal const double Vigor = 8d;
         internal const double Swiftness = 8d;
         internal const double Focus = 10d;

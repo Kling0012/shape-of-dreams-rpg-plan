@@ -8,7 +8,12 @@ using Xunit;
 // StatusEffect.remainingDuration timers, EntityVisual spawn protections, PropEntity.hitInvulnerableTime).
 namespace UnityEngine
 {
-    internal sealed class GameObject { public bool activeInHierarchy = true; }
+    internal sealed class GameObject
+    {
+        public bool activeInHierarchy = true;
+        public object Component;
+        public T GetComponent<T>() where T : class => Component as T;
+    }
 }
 namespace SodRpg.Mod
 {
