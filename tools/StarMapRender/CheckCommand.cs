@@ -20,8 +20,9 @@ internal static class CheckCommand
         {
             var baseline = HeroTreeLayout.ForTalents(HeroSigils.TreeFor(hero), false);
             var tuned = HeroTreeLayout.ForHero(hero);
-            bool fresh = false;
-            for (int i = 0; i < tuned.Nodes.Count && !fresh; i++)
+            // 星の数が違えば配置表が古い（番号で比べられない）。
+            bool fresh = false, sameCount = tuned.Nodes.Count == baseline.Nodes.Count;
+            for (int i = 0; sameCount && i < tuned.Nodes.Count && !fresh; i++)
                 fresh = tuned.Nodes[i].X != baseline.Nodes[i].X || tuned.Nodes[i].Y != baseline.Nodes[i].Y;
             var before = StarMapQuality.Measure(baseline);
             var after = StarMapQuality.Measure(tuned);
