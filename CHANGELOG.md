@@ -8,6 +8,9 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
+### 修正 / Fixes
+- 協力の距離減衰：味方への回復・吸収の範囲を強化すると、距離減衰と2秒の猶予が外れて強化後の半径でぴったり切れるようになり、強化したのに届く距離が縮んでいた問題を修正。減衰の外端も半径に比例して伸びる。 / Co-op distance falloff: a radius upgrade on an ally heal/siphon now widens the falloff (and keeps the grace) instead of turning it into a hard cutoff that shrank its reach.
+
 ### 不具合の修正 / Bug fixes
 
 - 遺物の強化や夢の出来事で固有効果が増えたり入れ替わったりしたとき、図鑑の「固有効果」の発見数がすぐに更新されなかった問題を修正しました。 / The codex's power count now updates right away when enhancing a relic or a dream event adds or swaps a power.
