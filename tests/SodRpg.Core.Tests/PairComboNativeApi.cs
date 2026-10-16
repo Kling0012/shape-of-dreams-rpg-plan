@@ -54,7 +54,7 @@ namespace SodRpg.Mod
         public CastInfo info;
         public bool isThisAttackFourthAttack;
     }
-    internal struct EventInfoAttackHit { public Entity attacker, victim; public bool isCrit; }
+    internal partial struct EventInfoAttackHit { public Entity attacker, victim; public bool isCrit; }
     internal sealed partial class BasicAttackContext
     {
         public static BasicAttackContext Current;
