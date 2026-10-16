@@ -364,7 +364,8 @@ namespace SodRpg.Core.Game
             if (d.XpMult > 1.0) gains.Add(ja ? $"敵を倒して得る経験値が{Mult(d.XpMult)}倍になる" : $"x{Mult(d.XpMult)} experience from kills");
             if (d.TuningOnElite > 0) gains.Add(ja ? $"エリートとボスが調律石を{d.TuningOnElite}つ多く落とす" : $"elites and bosses drop {d.TuningOnElite} extra tuning stone{(d.TuningOnElite == 1 ? "" : "s")}");
             if (d.DoubleDepthBonus) gains.Add(ja ? DepthBonusJa : DepthBonusEn);
-            foreach (var b in d.Boons) gains.Add(Content.FormatStat(b.Stat, b.Value));
+            // 一部の能力値の説明は文の形（末尾が「。」）なので、つなぐ前に外して「。。」にしない。
+            foreach (var b in d.Boons) gains.Add(Content.FormatStat(b.Stat, b.Value).TrimEnd('。'));
             string curse = PactDef.StrengthName(d.CurseStrength);
             if (ja)
             {

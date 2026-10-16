@@ -8,6 +8,10 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
+- 道標（特定の部位・レア度に変える道など）と「最初の獲得」で出る遺物でも、図鑑に未登録の銘品が出やすくなる補正が効くようにしました。 / Waypoint-transformed drops and First Claim now also favor named items missing from your codex.
+- インフィニティの最初の周期で、短い区画の終点ボスに進んだ状態を保存すると、読み込めなくなることがある問題を修正しました。 / Fixed a save that could fail to load after reaching a short segment's finale boss in the first Infinity cycle.
+- 一部の契約の日本語の説明で「。。」と句点が重なっていた問題と、属性の組み合わせ星の英語の見出しで追加スタックの確率が抜けていた問題を修正しました。 / Fixed doubled Japanese periods in some pact descriptions and the missing extra-stack chance in English element pair headlines.
+
 ---
 
 ## v3.2.7 — Fixes for Baku shard refunds, Memory Archive at max Dream Level, and Codex slot filter（2026-10-17）
