@@ -116,6 +116,8 @@ namespace SodRpg.Core.Game
                 case Power.SpilloverStrike: body = Loc.T($"敵を倒したとき、倒した敵の周囲{PowersBalance.SpilloverStrikeRange}m以内の別の敵1体に、撃破した一撃の過剰ダメージの{v}%の追加ダメージを与える。連鎖しない。", $"Bonus damage +{v}% of the killing hit's excess damage to one other enemy within {PowersBalance.SpilloverStrikeRange}m of the killed enemy (does not chain)"); break;
                 default: return "-";
             }
+            if (p == Power.SharedWard || p == Power.TriumphSong || p == Power.Apothecary)
+                body += CoopDistance.Description;
             string cap = p == Power.BareHandedPride
                 ? Loc.T($"装備・星の同じ効果による1回の短縮量は合計で最大{Content.PowerCap(p) / 10f:0.#}秒まで。", $" (reduction per trigger from this effect across equipment and stars capped at {Content.PowerCap(p) / 10f:0.#}s)")
                 : p == Power.ShardBoon

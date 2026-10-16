@@ -14,6 +14,7 @@ namespace SodRpg.Mod
         };
 
         private Vector2 _scrollGear;
+        private Func<string, float> _linkTravelerCoefficient;
 
         /// <summary>
         /// 装備タブの左の欄（旅人・6つの装着枠・今回の強さ・狙い系統）。欄の中身をまるごと1つの
@@ -79,7 +80,7 @@ namespace SodRpg.Mod
                 foreach (var active in build.Links)
                 {
                     if (!Links.Satisfied(active, _linkHeroKey, _linkMemories, _linkEssences, _linkAllies)) continue;
-                    GUILayout.Label(UiStyles.Colored(Links.Describe(active, marks), "#7fd8ff"), _st.Small);
+                    GUILayout.Label(UiStyles.Colored(Links.Describe(active, marks, _linkTravelerCoefficient), "#7fd8ff"), _st.Small);
                 }
             }
             if (!_s.CanEditLoadout)
