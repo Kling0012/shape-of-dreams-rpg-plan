@@ -88,6 +88,10 @@ python tools/test_changed.py [--base <git ref>] [--list] [--all] [--slow]
   複数プロセス並列で実行する（各アセンブリ内のテストは共有状態のため
   `DisableTestParallelization` のまま直列。並列化はプロセス分割による。
   同時実行数は CPU コア数を超えない）。
+  別の実行環境から `run_dotnet_test(..., no_build=True)` を呼ぶ場合は、
+  MSBuild の `TargetPath` で Release の成果物を確認し、存在しなければ
+  そのプロジェクトをビルドしてから実行する。通常テストと性能テストを
+  別の作業環境に分けても、前段の成果物がないことによる起動失敗を防ぐ。
 
 - プロセス分割（#404）: `--all` では Core スイートをクラス単位のフィルタで
   5 プロセスに分ける。所要時間の大半を占める重い 5 クラス

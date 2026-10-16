@@ -854,17 +854,37 @@ def run_dotnet_test(root: Path, project: str, filter_expr: str | None,
     if not Path(dotnet).exists():
         print(f"dotnet not found at {dotnet} (set DOTNET to override)", file=sys.stderr)
         return 1, ""
-    cmd = [dotnet, "test", project, "-c", "Release"]
-    if filter_expr:
-        cmd += ["--filter", filter_expr]
-    if no_build:
-        cmd.append("--no-build")
     env = dict(os.environ)
     env["DOTNET_ROOT"] = dotnet_root
     # Keep the console summary machine-parseable regardless of the OS locale.
     env.setdefault("DOTNET_CLI_UI_LANGUAGE", "en")
     if slow:
         env["SODRPG_SLOW"] = "1"
+    if no_build:
+        # A separate remote phase may not share the earlier build's outputs.
+        # Ask MSBuild for the path so custom output directories work as well.
+        target = subprocess.run(
+            [dotnet, "msbuild", project, "-nologo", "-p:Configuration=Release",
+             "-getProperty:TargetPath"], cwd=str(root), env=env,
+            stdin=subprocess.DEVNULL, capture_output=True, text=True,
+            encoding="utf-8", errors="replace",
+        )
+        if target.returncode != 0:
+            return target.returncode, (target.stdout or "") + (target.stderr or "")
+        target_path = target.stdout.strip()
+        if not target_path:
+            return 1, f"MSBuild returned no TargetPath for {project}\n"
+        if not (root / target_path).is_file():
+            print(f"Release output missing for {project}; building before --no-build",
+                  file=sys.stderr)
+            code = build_projects(root, [project])
+            if code != 0:
+                return code, f"building missing Release output failed for {project}\n"
+    cmd = [dotnet, "test", project, "-c", "Release"]
+    if filter_expr:
+        cmd += ["--filter", filter_expr]
+    if no_build:
+        cmd.append("--no-build")
     result = subprocess.run(
         cmd, cwd=str(root), env=env, stdin=subprocess.DEVNULL,
         capture_output=True, text=True, encoding="utf-8", errors="replace",
