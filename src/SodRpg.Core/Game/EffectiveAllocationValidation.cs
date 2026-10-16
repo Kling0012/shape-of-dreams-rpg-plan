@@ -1128,7 +1128,10 @@ namespace SodRpg.Core.Game
                 foreach (var sourceSlot in VerifiedMechanismSlots.ForMemory(heroKey, entry.Memory))
                 {
                 var payload = AuthoredKeystoneComposer.GimmickPayload(entry.Def, entry.StarId);
+                // 本番の発動（HostAuthority.GimmicksV129）と同じく、移動の記憶は移動の出来事として変換する。
+                // 通常の記憶として渡すと変換が例外を出し、移動の記憶に付く仕掛けの星を買えなかった。
                 var transformed = AuthoredKeystoneComposer.TransformAllocationPayload(build, payload, entry.Memory,
+                    sourceKind: sourceSlot == MechanismMemorySlot.Movement ? KeystoneSourceKind.MovementEvent : KeystoneSourceKind.NativeMemory,
                     sourceSlot: sourceSlot, heroKey: heroKey);
                 var def = AuthoredKeystoneComposer.EffectiveGimmick(entry.Def, transformed);
                 if (def == null) continue;
