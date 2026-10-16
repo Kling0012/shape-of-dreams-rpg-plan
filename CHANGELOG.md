@@ -10,6 +10,25 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v3.2.5 — Fix saving after salvaging starting relics and keep starting relic marks（2026-10-17）
+
+この版は、初期遺物を分解したあとにプロフィールの保存や協力プレイでの取引ができなくなる問題と、一時的に保管庫から出ている初期遺物の印が保存や読み込みで消えてしまう問題を直す更新です。 / This update fixes being unable to save your profile or trade in co-op after salvaging a starting relic, and starting relic marks disappearing on save or load while the relic was temporarily out of the vault.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- 初期遺物を分解したあと、プロフィールの保存に失敗するようになっていた問題を直しました。何度保存し直しても失敗が続き、協力プレイの取引も成立させられませんでした。1個ずつ分解した場合も、まとめて分解した場合も、これからは普段どおり保存でき、続きから遊べます。取引も完了できます。 / Fixed an issue where saving your profile failed after salvaging a starting relic. Saving kept failing no matter how many times you tried, and co-op trades could not be completed either. Whether you salvage starting relics one at a time or in bulk, you can now save and continue as usual, and trades can be completed.
+- 初期遺物が保管庫の外にあると、保存して読み込み直したときに初期遺物の印が消えていた問題を直しました。鞄の中、遺失物、中断した遠征から回収を待つ遺物、分解待ち、協力プレイの取引で預けている間、道標で保留している間が対象です。たとえば取引を取り消すと遺物は手元に戻りますが、印は消えたままでした。これからは、こうした状態で保存・読み込みをしても、続きからの再開でロビーでの変更を反映し直したあとも、印は残ります。分解した遺物や取引で渡した遺物の印は残りません。 / Fixed an issue where the starting relic mark disappeared after saving and reloading while a starting relic was outside the vault. This affected relics in your bag, in lost items, waiting to be recovered from an interrupted run, pending salvage, held in a co-op trade, or held at a waypoint. For example, canceling a trade returned the relic, but its mark stayed lost. Marks now stay through saving and loading in all of these cases, including when lobby changes are applied again on Continue. Relics you salvaged or traded away no longer keep their mark.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
 ## v3.2.4 — Star Offering description now notes the Dream Depth XP multiplier（2026-10-17）
 
 この版は、出来事「星の捧げ物」の説明に、実際に得られる星の経験の量が正しく書かれていなかった問題を直す更新です。 / This update fixes the Star Offering event description not accurately showing how much Star XP you actually receive.
