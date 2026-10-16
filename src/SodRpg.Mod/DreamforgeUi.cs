@@ -115,6 +115,9 @@ namespace SodRpg.Mod
         /// <summary>直近の描画で、マウスが確保地点のパネルの上にあったか（クリックをゲームへ通さないため）。</summary>
         public bool MouseOverPanel { get; private set; }
 
+        /// <summary>メニューの言語の切り替えを保存する（ホストかどうかに関係なく、各自の設定）。</summary>
+        internal Action SaveLanguageConfig;
+
         public DreamforgeUi(ClientSession session, Func<DreamforgeConfig> cfg, Action saveLevelEssenceConfig = null)
         {
             _s = session;
@@ -3390,6 +3393,7 @@ namespace SodRpg.Mod
             {
                 cfg.japanese = !cfg.japanese;
                 Loc.Japanese = cfg.japanese;
+                SaveLanguageConfig?.Invoke(); // ほかのメニュー内の設定と同じく、すぐ保存する（次の起動で戻っていた）
             }
             GUILayout.Label(Loc.T("キーの割り当てや表示の大きさは、ゲームのMOD設定で変えられます。", "Keys and scale can be changed in the game's mod settings."), _st.Small);
             GUILayout.EndHorizontal();
