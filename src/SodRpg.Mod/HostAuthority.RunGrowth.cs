@@ -290,5 +290,11 @@ namespace SodRpg.Mod
         /// <summary>回復・シールド・召喚獣の強さへ足す、鍛錬の分（%）。</summary>
         private static float GrowthSupport(HeroRuntime rt, Stat stat)
             => rt.GrowthTotals.TryGetValue(stat, out double value) ? (float)value : 0f;
+
+        /// <summary>
+        /// サーバーのアクターから出す回復・シールドに掛ける強化（%）。旅人から出るものに掛かる処理器
+        /// （rt.HealDealt / rt.ShieldDealt）と同じく、装備・星の値に鍛錬の分を足す。
+        /// </summary>
+        private static float SupportPower(HeroRuntime rt, Stat stat) => rt.Powers.Build.Get(stat) + GrowthSupport(rt, stat);
     }
 }

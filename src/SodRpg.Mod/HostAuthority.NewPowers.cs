@@ -174,7 +174,7 @@ namespace SodRpg.Mod
             var support = _am != null ? _am.serverActor : null;
             if (support == null) return;
             _powerSupportDepth++;
-            try { DispatchSupportHeal(rt, target, support.Heal(amplify ? SupportStats.AmplifyHeal(amount, rt.Powers.Build.Get(Stat.HealPower)) : amount)); }
+            try { DispatchSupportHeal(rt, target, support.Heal(amplify ? SupportStats.AmplifyHeal(amount, SupportPower(rt, Stat.HealPower)) : amount)); }
             finally { _powerSupportDepth--; }
         }
 
@@ -189,7 +189,7 @@ namespace SodRpg.Mod
             try
             {
                 var shield = support.GiveShield(target, amplify ? SupportStats.AmplifyShield(amount,
-                    rt.Powers.Build.Get(Stat.ShieldPower)) : amount, duration);
+                    SupportPower(rt, Stat.ShieldPower)) : amount, duration);
                 if (shield == null) return;
                 // The ledger compares exact underlying shields, so a recycled pooled handle is never touched.
                 if (PowerShields.Offer(key, shield, duration) == PowerShieldOutcome.KeptExisting) return;

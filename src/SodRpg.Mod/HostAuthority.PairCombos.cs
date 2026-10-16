@@ -260,7 +260,7 @@ namespace SodRpg.Mod
                 case GimmickEffect.Heal:
                     var support = ActorManager.instance.serverActor;
                     // 出どころを変えたので、旅人の回復量はここで掛ける（v1.27.1 の能力値）。
-                    int healPower = rt.Powers.Build.Get(Stat.HealPower);
+                    float healPower = SupportPower(rt, Stat.HealPower);
                     DispatchSupportHeal(rt, hero, support.Heal(SupportStats.AmplifyHeal(hero.maxHealth * def.ValuePercent / 100f, healPower)));
                     float healRadius = Gimmicks.Radius(def, CoopBalance.FullRange);
                     if (def.Arg == 1)
