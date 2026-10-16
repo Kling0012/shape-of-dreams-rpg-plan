@@ -22,6 +22,17 @@ namespace SodRpg.Core.Tests
         }
 
         [Fact]
+        public void Echo_does_not_overflow_for_large_satchels()
+        {
+            var p = Profile.CreateNew(1);
+            int pct = Workshop.EchoPercent(p);
+            // int で掛け算すると負に回り込み、最低値の1になっていた。
+            Assert.Equal((int)(((long)100_000_000 * pct + 99) / 100), Workshop.Echo(p, 100_000_000));
+            Assert.True(Workshop.Echo(p, int.MaxValue) > 0);
+            Assert.Equal(1, Workshop.Echo(p, 1));
+        }
+
+        [Fact]
         public void Buying_costs_materials_and_stops_at_max()
         {
             var p = Profile.CreateNew(1);

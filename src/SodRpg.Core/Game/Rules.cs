@@ -949,7 +949,7 @@ namespace SodRpg.Core.Game
                     int tuning = count / EventsBalance.TapirRelicsPerTuning;
                     // 獏の欠片は保管庫へ直接入れ、確保時の潜行ボーナスを掛けない。
                     p.AddMaterial(Materials.Shard, shards);
-                    run.SatchelTuning += tuning;
+                    run.SatchelTuning = SaturatingAdd(run.SatchelTuning, tuning);
                     ev.Add(new GameEvent(EventKind.Info, Loc.T($"獏に遺物{count}個を食べさせ、保管庫の欠片{shards}と未確保の調律石{tuning}を得ました。",
                         $"Fed {count} relic(s) to the tapir: +{shards} stash shards, +{tuning} unsecured tuning.")));
                     break;
@@ -1032,7 +1032,7 @@ namespace SodRpg.Core.Game
                     {
                         int shards = SalvageValue(target);
                         run.Satchel.Remove(target);
-                        run.SatchelShards += shards;
+                        run.SatchelShards = SaturatingAdd(run.SatchelShards, shards);
                         ev.Add(new GameEvent(EventKind.Lost, Loc.T($"賭けに負け、「{target.DisplayName}」は未確保の欠片{shards}になりました。", $"Lost the wager: \"{target.DisplayName}\" became {shards} unsecured shards.")));
                     }
                     break;
@@ -1052,12 +1052,12 @@ namespace SodRpg.Core.Game
                 }
                 case DreamEvent.StoneBroker:
                     run.SatchelShards -= EventsBalance.StoneBrokerShards;
-                    run.SatchelTuning += EventsBalance.StoneBrokerTuning;
+                    run.SatchelTuning = SaturatingAdd(run.SatchelTuning, EventsBalance.StoneBrokerTuning);
                     ev.Add(new GameEvent(EventKind.Info, DreamEvents.Describe(e, p)));
                     break;
                 case DreamEvent.ShardKiln:
                     run.SatchelTuning -= EventsBalance.ShardKilnTuning;
-                    run.SatchelShards += EventsBalance.ShardKilnShards;
+                    run.SatchelShards = SaturatingAdd(run.SatchelShards, EventsBalance.ShardKilnShards);
                     ev.Add(new GameEvent(EventKind.Info, DreamEvents.Describe(e, p)));
                     break;
                 case DreamEvent.StarOffering:

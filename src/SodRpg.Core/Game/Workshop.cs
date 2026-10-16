@@ -175,7 +175,8 @@ namespace SodRpg.Core.Game
         {
             if (satchelShards <= 0) return 0;
             int pct = EchoPercent(p);
-            return Math.Max(1, (satchelShards * pct + 99) / 100);
+            // long で計算する（大きな鞄の欠片で int が負に回り込み、最低値の1になっていた）。
+            return (int)Math.Min(int.MaxValue, Math.Max(1L, ((long)satchelShards * pct + 99) / 100));
         }
     }
 }
