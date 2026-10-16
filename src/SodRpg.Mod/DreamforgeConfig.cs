@@ -51,6 +51,9 @@ namespace SodRpg.Mod
         [LabelText("Melee: damage reduction near enemies (host) / 近接：敵の近くで被ダメージ軽減（ホスト）")]
         public bool meleeProximityGuard = true;
 
+        [LabelText("Auto casting: native speed in multiplayer (host, default ON) / 自動詠唱：マルチでは本体と同じ速さ（ホスト、既定ON）")]
+        public bool autoCastCoopNativeCadence = true;
+
         [LabelText("HUD / 左のパネルの表示")]
         public HudMode hudMode = HudMode.Full;
 
