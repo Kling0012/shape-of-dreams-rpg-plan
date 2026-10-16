@@ -13,7 +13,7 @@ EFFECTS = ("Vigor", "Swiftness", "Focus", "Fortitude", "Healing", "Fortune",
 
 def render_outputs():
     data = read_json(PATH)
-    if set(data) != {"schemaVersion", "blessingChance", "trialDropBonus", "defaultTrialScale", "trialScales", "effects"} or data["schemaVersion"] != 1:
+    if set(data) != {"schemaVersion", "blessingChance", "trialDropBonus", "defaultTrialScale", "trialScales", "effects", "coop"} or data["schemaVersion"] != 1:
         raise ValueError("room-omens: invalid schema")
     if set(data["effects"]) != set(EFFECTS):
         raise ValueError("room-omens.effects: unexpected keys")
@@ -25,6 +25,19 @@ def render_outputs():
         value = number(data[key], "room-omens." + key)
         if not low <= value <= high:
             raise ValueError("room-omens." + key + ": out of range")
+        lines.append(f"        internal const double {name} = {value}d;")
+    coop = data["coop"]
+    coop_fields = (("coopOmenChance", "CoopOmenChance", 0, 1),
+                   ("wardReduction", "WardReduction", 0, 1),
+                   ("resonanceWindow", "ResonanceWindow", 0.01, 60),
+                   ("resonanceDuration", "ResonanceDuration", 0.01, 60),
+                   ("resonanceVulnerable", "ResonanceVulnerable", 1, 10))
+    if not isinstance(coop, dict) or set(coop) != {field[0] for field in coop_fields}:
+        raise ValueError("room-omens.coop: unexpected keys")
+    for key, name, low, high in coop_fields:
+        value = number(coop[key], "room-omens.coop." + key)
+        if not low <= value <= high:
+            raise ValueError("room-omens.coop." + key + ": out of range")
         lines.append(f"        internal const double {name} = {value}d;")
     for name in EFFECTS:
         value = number(data["effects"][name], "room-omens.effects." + name)

@@ -1,5 +1,5 @@
-[b]The co-op forbidden equipment warning now matches what is removed, and warnings no longer replace each other.[/b]
-[b]協力プレイで、禁忌装備の警告が実際に外れる装備と一致するようにし、警告どうしが上書きされないようにしました。[/b]
+[b]Fixes loading kill records from older saves, recovers the co-op trade screen after reconnecting, and localizes the host's version mismatch warning.[/b]
+[b]古いセーブの討伐記録の読み込みを修正し、協力取引で再接続しても取引画面が戻るようにして、ホストの版違い警告を表示言語に合わせました。[/b]
 
 [h1]Dreamforge RPG[/h1]
 Turns every run into part of a long RPG journey: relics you keep, a risky "secure or delve" choice at every zone, a star map per Traveler, a forge, and long-term goals. Co-op ready.

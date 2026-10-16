@@ -25,6 +25,8 @@ namespace SodRpg.Mod
         partial void ApplyRoomOmensConfig();
         partial void ApplyCatchupConfig();
         partial void ObserveCatchupPatch(Type type, bool installed);
+        partial void ApplyAutoCastCoopConfig();
+        partial void TickAutoCastCoopConfig();
 
         private ClientSession _session;
         private HostAuthority _host;
@@ -64,6 +66,7 @@ namespace SodRpg.Mod
                 ApplyLevelEssenceConfig();
                 ApplyRoomOmensConfig();
                 ApplyCatchupConfig();
+                ApplyAutoCastCoopConfig();
                 // Install the generated star maps and their migration rules before any profile is loaded or any build is computed.
                 var starRegistrationWatch = System.Diagnostics.Stopwatch.StartNew();
                 StarClusters.RegisterAllGenerated((hero, error) =>
@@ -80,6 +83,7 @@ namespace SodRpg.Mod
                 RelicIcons.Preload();
                 _ui = new DreamforgeUi(_session, () => config, SaveLevelEssenceConfig);
                 _host = new HostAuthority(() => _session?.Profile.Run?.DailyId ?? DailyDream.Today.Id);
+                ApplyMeleeCoopConfig();
                 _session.FirstLaunch();
                 _perfLogEnabled = File.Exists(Path.Combine(dir, "perf.flag"));
                 try
@@ -121,6 +125,18 @@ namespace SodRpg.Mod
             ApplyLevelEssenceConfig();
             ApplyRoomOmensConfig();
             ApplyCatchupConfig();
+            ApplyAutoCastCoopConfig();
+            ApplyMeleeCoopConfig();
+        }
+
+        private void ApplyMeleeCoopConfig()
+        {
+            try
+            {
+                _host?.ConfigureMeleeCoop(config.meleeRangeToSpeed, config.coopDistanceFalloff,
+                    config.meleeBreak, config.meleeProximityGuard);
+            }
+            catch (Exception ex) { Log.Warn("Melee/coop settings ignored: " + ex.Message); }
         }
 
         // レベル連動のエッセンス枠（ホストの設定だけが枠に反映される）。壊れた入力でも他の機能は止めない。
@@ -154,6 +170,7 @@ namespace SodRpg.Mod
             _perf.Begin();
             HandleKeys();
             LevelEssenceRuntime.Tick();
+            TickAutoCastCoopConfig();
             bool block = _ui != null && (_ui.Open || _ui.MouseOverPanel);
             BlockInputWhileMenuOpen.MenuOpen = block;
             _perf.BeginClient();

@@ -36,6 +36,24 @@ namespace SodRpg.Mod
         [LabelText("Co-op catch-up: help less-developed travelers (the host's setting applies) /\n同行補正：育ちの低い旅人の与ダメ・被ダメを補正する（ホストの設定が使われる）")]
         public bool coopCatchup = true;
 
+        [LabelText("Co-op-only Room Omens (host) / マルチ専用の兆し（ホスト）")]
+        public bool coopRoomOmens = true;
+
+        [LabelText("Melee: convert equipment attack range to attack speed (host) / 近接：装備の射程を攻撃速度へ変換（ホスト）")]
+        public bool meleeRangeToSpeed = true;
+
+        [LabelText("Coop: distance falloff and grace (host) / 味方距離効果の減衰と猶予（ホスト）")]
+        public bool coopDistanceFalloff = true;
+
+        [LabelText("Melee: Break for allied damage (host) / 近接：崩しで味方の与ダメージを増加（ホスト）")]
+        public bool meleeBreak = true;
+
+        [LabelText("Melee: damage reduction near enemies (host) / 近接：敵の近くで被ダメージ軽減（ホスト）")]
+        public bool meleeProximityGuard = true;
+
+        [LabelText("Auto casting: native speed in multiplayer (host, default ON) / 自動詠唱：マルチでは本体と同じ速さ（ホスト、既定ON）")]
+        public bool autoCastCoopNativeCadence = true;
+
         [LabelText("HUD / 左のパネルの表示")]
         public HudMode hudMode = HudMode.Full;
 

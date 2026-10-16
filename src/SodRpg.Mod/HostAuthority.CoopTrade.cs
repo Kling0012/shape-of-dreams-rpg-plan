@@ -14,6 +14,9 @@ namespace SodRpg.Mod
         {
             public float Seen;
             public bool Safe, Fusion;
+            // The connection this peer state belongs to. A changed id is a reconnect: the peer's
+            // client-side trade state was cleared, so what was already sent to it is gone.
+            public int ConnectionId = int.MinValue;
             public readonly BuildTransferReceiver Transfer = new BuildTransferReceiver(CoopTradeTransport.MaxProfileChars);
             public string Envelope;
         }
@@ -26,6 +29,9 @@ namespace SodRpg.Mod
             public string FirstOfferAck, SecondOfferAck;
             public bool Accepted, FirstConfirmed, SecondConfirmed, Preparing, FirstPrepared, SecondPrepared;
             public int Revision;
+            // The revision at which each side last received its partner's profile. The offered relics only change
+            // with the revision, so a confirm or a re-sent view does not need the (possibly stash-sized) profile again.
+            public int FirstProfileSentRevision = -1, SecondProfileSentRevision = -1;
             public float ActiveAt;
             public CoopTradeReceipt Receipt;
         }
@@ -66,8 +72,9 @@ namespace SodRpg.Mod
         private string CoopFusionError(CoopHostTrade trade)
         {
             bool supported = CoopPeerFusion(trade.First) && CoopPeerFusion(trade.Second);
-            return CoopTradeRules.ValidateFusion(trade.FirstProfile, trade.FirstOffer, supported)
-                ?? CoopTradeRules.ValidateFusion(trade.SecondProfile, trade.SecondOffer, supported);
+            return CoopTradeRules.ValidateFusion(trade.FirstProfile, trade.FirstOffer, supported) != null
+                || CoopTradeRules.ValidateFusion(trade.SecondProfile, trade.SecondOffer, supported) != null
+                ? CoopTradeRules.FusionReason : null;
         }
 
         private void TickCoopTrade()
@@ -194,11 +201,28 @@ namespace SodRpg.Mod
                         string changedCapabilityError = CoopFusionError(_coopHostTrade);
                         if (changedCapabilityError != null) CancelHostCoopTrade(changedCapabilityError);
                     }
+                    // A reconnecting participant restarts with a cleared client-side trade state, so the
+                    // profile already sent for the current revision would never reach it again. When the
+                    // caller's connection changes, forget the caller-side already-sent marker and re-send
+                    // the view (which then carries the partner's profile) for the trade being rejoined.
+                    int connectionId = caller == DewPlayer.local ? 0 : caller.connectionToClient?.connectionId ?? -1;
+                    if (peer.ConnectionId != connectionId)
+                    {
+                        peer.ConnectionId = connectionId;
+                        var rejoined = _coopHostTrade;
+                        if (rejoined != null && (caller == rejoined.First || caller == rejoined.Second))
+                        {
+                            if (caller == rejoined.First) rejoined.FirstProfileSentRevision = -1;
+                            else rejoined.SecondProfileSentRevision = -1;
+                            SendCoopView(caller, caller == rejoined.First ? rejoined.Second : rejoined.First,
+                                caller == rejoined.First, rejoined);
+                        }
+                    }
                     SendCoopRoster(caller);
                     return;
                 }
                 if (!CoopPeerAvailable(caller)) { SendCoopError(caller, "unsupported"); return; }
-                if (msg.action == "query") { QueryCoopTrade(caller, msg.id); return; }
+                if (msg.action == "query") { QueryCoopTrade(caller, msg.id, msg.wantsProfile); return; }
                 if (msg.action == "cancel") { CancelCoopTrade(caller, msg.id); return; }
                 if (msg.action == "request")
                 {
@@ -261,7 +285,7 @@ namespace SodRpg.Mod
                     || CoopTradeRules.Validate(profile, offer) != null)
                 { CancelHostCoopTrade("ownership"); return; }
                 string fusionError = CoopTradeRules.ValidateFusion(profile, offer,
-                    CoopPeerFusion(trade.First) && CoopPeerFusion(trade.Second));
+                    CoopPeerFusion(trade.First) && CoopPeerFusion(trade.Second)) != null ? CoopTradeRules.FusionReason : null;
                 if (fusionError != null) { CancelHostCoopTrade(fusionError); return; }
                 if (msg.action == "offer")
                 {
@@ -365,7 +389,7 @@ namespace SodRpg.Mod
             _coopJournal.Cancel(trade.Id);
             DiagnoseHostCoopTrade("journal-cancelled", trade);
             _coopHostTrade = null;
-            var msg = new DreamforgeCoopTradeState { kind = "cancelled", id = trade.Id, hostKey = CoopHostKey, status = CoopReason(reason) };
+            var msg = new DreamforgeCoopTradeState { kind = "cancelled", id = trade.Id, hostKey = CoopHostKey, status = CoopReason(reason), reasonCode = CoopReasonCode(reason) };
             SendCoopState(trade.First, msg);
             SendCoopState(trade.Second, msg);
         }
@@ -382,7 +406,7 @@ namespace SodRpg.Mod
             QueryCoopTrade(caller, id);
         }
 
-        private void QueryCoopTrade(DewPlayer caller, string id)
+        private void QueryCoopTrade(DewPlayer caller, string id, bool wantsProfile = false)
         {
             if (!Guid.TryParseExact(id, "N", out _)) return;
             if (_coopJournal.TryGet(id, out var receipt))
@@ -394,14 +418,23 @@ namespace SodRpg.Mod
             var trade = _coopHostTrade;
             if (trade != null && trade.Id == id)
             {
-                if (caller == trade.First) SendCoopView(trade.First, trade.Second, true, trade, false);
-                else if (caller == trade.Second) SendCoopView(trade.Second, trade.First, false, trade, false);
+                bool includeProfile = wantsProfile && (caller == trade.First || caller == trade.Second);
+                if (includeProfile)
+                {
+                    // The caller holds this view but not the partner's profile for the current
+                    // revision (a reset receiver can lose a transfer mid-flight). Forget the
+                    // already-sent marker so this view re-sends the profile once.
+                    if (caller == trade.First) trade.FirstProfileSentRevision = -1;
+                    else trade.SecondProfileSentRevision = -1;
+                }
+                if (caller == trade.First) SendCoopView(trade.First, trade.Second, true, trade, includeProfile);
+                else if (caller == trade.Second) SendCoopView(trade.Second, trade.First, false, trade, includeProfile);
                 return;
             }
             // Absence in this original host's non-rewound journal is an authoritative abort.
             // Tombstone it before returning reservations, so late prepare/confirm can never execute.
             _coopJournal.Cancel(id);
-            SendCoopState(caller, new DreamforgeCoopTradeState { kind = "cancelled", id = id, hostKey = CoopHostKey, status = CoopReason("cancelled") });
+            SendCoopState(caller, new DreamforgeCoopTradeState { kind = "cancelled", id = id, hostKey = CoopHostKey, status = CoopReason("cancelled"), reasonCode = "cancelled" });
         }
 
         private void SendCoopViews()
@@ -424,7 +457,10 @@ namespace SodRpg.Mod
                 offerAck = first ? trade.FirstOfferAck : trade.SecondOfferAck,
             });
             var other = first ? trade.SecondProfile : trade.FirstProfile;
-            if (includeProfile && other != null) SendCoopPayload(player, "profile", trade.Id, trade.Revision, ProfileCodec.WriteCheckpointProfile(other));
+            if (!includeProfile || other == null || (first ? trade.FirstProfileSentRevision : trade.SecondProfileSentRevision) == trade.Revision) return;
+            SendCoopPayload(player, "profile", trade.Id, trade.Revision, ProfileCodec.WriteCheckpointProfile(other));
+            if (first) trade.FirstProfileSentRevision = trade.Revision;
+            else trade.SecondProfileSentRevision = trade.Revision;
         }
         private void SendCoopRoster(DewPlayer caller)
         {
@@ -466,21 +502,9 @@ namespace SodRpg.Mod
                 player.connectionToClient?.Send(new DreamforgeCoopTradeDown { Json = CoopTradeTransport.Encode(state) });
         }
         private void SendCoopError(DewPlayer player, string reason) => SendCoopState(player,
-            new DreamforgeCoopTradeState { kind = "error", hostKey = CoopHostKey, status = CoopReason(reason) });
-        private static string CoopReason(string reason)
-        {
-            switch (reason)
-            {
-                case "unsupported": return Loc.T("相手がトレード非対応、または応答がありません。トレードのみ利用できません。", "The peer does not support trade or has not replied. Only trade is unavailable.");
-                case "peerBusy": return Loc.T("相手は今取引できる状態ではありません（戦闘中・保存中など）", "The other player can't trade right now (in combat, saving, etc.)");
-                case "safe": return Loc.T("安全な時・保存完了後のみ取引できます。取引は中止しました。", "Trade requires a safe moment and completed saves. The trade was cancelled.");
-                case "ownership": return Loc.T("所持品または残高が変わったため取引を中止しました。", "The trade was cancelled because inventory or balances changed.");
-                case "cancelled": case "connection": return Loc.T("取引を中止しました（取り消し・切断・時間切れ・移動）。", "Trade cancelled (cancel, disconnect, timeout or travel).");
-                case "saving": return Loc.T("トレード台帳の保存を準備中です。トレードのみ保留します。", "Preparing the trade journal. Only trade is on hold.");
-                case "recordTooLarge": return Loc.T("取引の記録が大きすぎます。保管庫を整理してから試してください", "The trade record is too large. Tidy up your stash and try again.");
-                default: return Loc.T("トレードのみ利用できません：", "Only trade is unavailable: ") + reason;
-            }
-        }
+            new DreamforgeCoopTradeState { kind = "error", hostKey = CoopHostKey, status = CoopReason(reason), reasonCode = CoopReasonCode(reason) });
+        private static string CoopReason(string reason) => CoopTradeRules.ReasonText(reason);
+        private static string CoopReasonCode(string reason) => CoopTradeRules.IsKnownReason(reason) ? reason : null;
         private void FailHostCoopTrade(Exception ex)
         {
             DiagnoseHostCoopTrade("host-failure", _coopHostTrade);

@@ -71,6 +71,7 @@ namespace SodRpg.Mod
         internal void MarkDirty(bool build) => Dirty |= build;
         internal void Emit(GameEvent notice) => Notices.Add(notice);
         internal Build CurrentBuild(string hero) => new Build();
+        internal Build DisplayBuild(string hero) => CurrentBuild(hero);
     }
     internal sealed class RefundUiStyles
     {

@@ -148,7 +148,7 @@
   <!-- 星図の差分更新（#440）。左一覧の高さ部分再計算・TextRank/TextChoice スキップ・ツールチップ世代を
        実ソースから抽出したメソッドで直接検証する。境界は StarClusterUiBoundary.cs と NativeBoundary.cs の UnityEngine 部。 -->
   <Target Name="CompileStarClusterDiffUpdate" BeforeTargets="CoreCompile">
-    <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/DreamforgeUi.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)StarRefreshUi.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="DreamforgeUi" Methods="RefreshStarState;EnsureStarTooltip;EnsureStarChoiceText" NestedTypes="StarNode" Fields="_starLayout;_starNodes;_starHero;_starCapFingerprint;_starAuthoredFingerprint;_starKeystoneState;_starReachable;_starSpent;_starTextVersion;_starPoints;_starProgress;_starKeystoneSlots;_starState;_starJapanese;_starXp;_starSumOpen;_starSumSig;_starSearchDirty;_linkMemories;_linkEssences;_linkAllies;StarKeystone;StarBright" />
+    <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/DreamforgeUi.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)StarRefreshUi.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="DreamforgeUi" Methods="RefreshStarState;EnsureStarTooltip;EnsureStarChoiceText" NestedTypes="StarNode" Fields="_starLayout;_starNodes;_starHero;_starCapFingerprint;_starAuthoredFingerprint;_starKeystoneState;_starReachable;_starSpent;_starTextVersion;_starPoints;_starProgress;_starKeystoneSlots;_starState;_starJapanese;_starXp;_starSumOpen;_starSumSig;_starSearchDirty;_linkMemories;_linkEssences;_linkAllies;_linkCoefficients;StarKeystone;StarBright" />
     <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/DreamforgeUi.AuthoredStars.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)StarClusterListUi.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="DreamforgeUi" Methods="RefreshStarClusters;DrawStarClusterList;StarRegionColor" Fields="_starNavigationNodes;_starNavigationContext;_starClusterLabels;_starClusterTops;_starClusterHeights;_starClusterWidth;_starClusterDirtyFrom;_starClusterScroll;_starClustersOpen;_starClusterRow;_starHelpStyle;StarClusterSize" />
     <ItemGroup>
       <Compile Include="$(IntermediateOutputPath)StarRefreshUi.g.cs" />
@@ -166,9 +166,18 @@
 
   <!-- 協力取引ホスト（所見03・06・08・11）。境界は NativeBoundary.cs の HostAuthority 部。 -->
   <Target Name="CompileCoopTradeHost" BeforeTargets="CoreCompile">
-    <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/HostAuthority.CoopTrade.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)CoopTradeHost.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="HostAuthority" Methods="DiagnoseHostCoopTrade;CoopHostKey;CoopPresent;CoopPeerAvailable;CoopPeerSafe;CoopPeerFusion;CoopFusionError;TickCoopTrade;ReceiveCoopPacket;ReceiveCoopTrade;EnsureCoopJournal;QueryCoopTrade;CancelCoopTrade;CancelHostCoopTrade;CommitHostCoopTrade;PrepareHostCoopTrade;CoopReceiptFits;SendCoopViews;SendCoopView;SendCoopRoster;SendCoopPayload;SendCoopState;SendCoopError;CoopReason;FailHostCoopTrade" />
+    <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/HostAuthority.CoopTrade.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)CoopTradeHost.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="HostAuthority" Methods="DiagnoseHostCoopTrade;CoopHostKey;CoopPresent;CoopPeerAvailable;CoopPeerSafe;CoopPeerFusion;CoopFusionError;TickCoopTrade;ReceiveCoopPacket;ReceiveCoopTrade;EnsureCoopJournal;QueryCoopTrade;CancelCoopTrade;CancelHostCoopTrade;CommitHostCoopTrade;PrepareHostCoopTrade;CoopReceiptFits;SendCoopViews;SendCoopView;SendCoopRoster;SendCoopPayload;SendCoopState;SendCoopError;CoopReason;CoopReasonCode;FailHostCoopTrade" />
     <ItemGroup>
       <Compile Include="$(IntermediateOutputPath)CoopTradeHost.g.cs" />
+    </ItemGroup>
+  </Target>
+
+  <!-- 共鳴の盾（CoopOmens.cs）の HostAuthority 部。公開ラッパー CoopOmens は NativeBoundary.cs
+       に同じ式の internal 模倣（境界の Entity が internal のため直接抽出できない）。 -->
+  <Target Name="CompileCoopOmensWard" BeforeTargets="CoreCompile">
+    <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/CoopOmens.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)CoopOmensWard.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="HostAuthority" Methods="BeginCoopOmen;ClearCoopOmen;CoopWardRoomActive;LiveCoopWard;EligibleCoopWard;IsCoopOmenWard;StrongerCoopCandidate;TickCoopOmen;CoopDamageHuman;ApplyCoopOmenDamage;FillCoopOmenMessage;PublishHostCoopOmen;DisableCoopWards" Fields="_coopWards;_coopCandidates;_coopWardLimit;_coopFirstSpawn;_coopLastSpawn;_coopBatchClosed;_coopWardFailed;_coopSyncDirty;_coopPreparingSpawns;_nextCoopSync;InitialSpawnGap" NestedTypes="CoopWard" />
+    <ItemGroup>
+      <Compile Include="$(IntermediateOutputPath)CoopOmensWard.g.cs" />
     </ItemGroup>
   </Target>
 </Project>

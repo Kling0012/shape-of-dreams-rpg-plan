@@ -37,8 +37,13 @@ namespace SodRpg.Mod
         private float _hudBottom;
         private int _hudFrame = -10;
         private float _nextHudRebuild;
+        // 宿敵（#435）はシアンで、悪夢（桃 #ff6ad5）・夢の変種（琥珀 #ffb347）と区別する。
+        private const string NemesisNameplateColor = "#4dd8ff";
+        private const string NightmareNameplateColor = "#ff6ad5";
+        private const string VariantNameplateColor = "#ffb347";
         private readonly Dictionary<int, Label3D> _nightmareLabelCache = new Dictionary<int, Label3D>();
         private readonly Dictionary<string, Label3D> _variantLabelCache = new Dictionary<string, Label3D>();
+        private bool _labelCacheJa;
 
         /// <summary>GUILayout を使うパネル（メニュー・確保地点・結果）が出ているか。出ていなければレイアウト処理自体を止める。</summary>
         private readonly List<Hint> _hints = new List<Hint>();
@@ -96,8 +101,13 @@ namespace SodRpg.Mod
         private readonly HashSet<string> _linkEssences = new HashSet<string>();
         private readonly HashSet<string> _linkAllies = new HashSet<string>();
         private string _linkHeroKey;
+        private Hero _linkHero;
+        private Room _linkRoom;
+        private readonly CoopDistanceTracker _linkDistances = new CoopDistanceTracker();
+        private readonly Dictionary<string, float> _linkCoefficients = new Dictionary<string, float>();
         private Func<string, bool> _linkMarks;
         private float _nextLinkCheck;
+        private bool _displayMeleeRangeConversion;
 
         public bool Open { get; private set; }
 
@@ -108,6 +118,7 @@ namespace SodRpg.Mod
         {
             _s = session;
             _cfg = cfg;
+            _linkTravelerCoefficient = LinkTravelerCoefficient;
             _saveLevelEssenceConfig = saveLevelEssenceConfig;
             _s.ProfileChanged += ResetProfileView;
             // 起動したときに持っていた遺物は「見た」ことにする。それ以降に手に入れた物に NEW を付ける。
@@ -247,10 +258,21 @@ namespace SodRpg.Mod
             {
                 _linkMarks = null;
                 _linkHeroKey = null;
+                _linkHero = null;
+                _linkDistances.Clear();
+                _linkCoefficients.Clear();
                 return null;
             }
             string key = ClientSession.HeroKeyOf(hero);
-            float now = Time.unscaledTime;
+            var room = NetworkedManagerBase<ZoneManager>.softInstance?.currentRoom;
+            if (_linkHero != hero || _linkRoom != room)
+            {
+                _linkHero = hero;
+                _linkRoom = room;
+                _linkDistances.Clear();
+                _nextLinkCheck = 0f;
+            }
+            float now = Time.time;
             if (_linkMarks == null || key != _linkHeroKey || now >= _nextLinkCheck)
             {
                 _nextLinkCheck = now + 0.5f;
@@ -258,6 +280,7 @@ namespace SodRpg.Mod
                 _linkMemories.Clear();
                 _linkEssences.Clear();
                 _linkAllies.Clear();
+                _linkCoefficients.Clear();
                 if (hero.Skill != null)
                 {
                     foreach (var loc in LinkSkillSlots)
@@ -270,21 +293,33 @@ namespace SodRpg.Mod
                 }
                 var memories = _linkMemories;
                 var essences = _linkEssences;
-                // Replicated positions are a display estimate; the host applies the authoritative 10 m check.
+                // Replicated positions estimate the same curve/grace; the host remains authoritative.
                 var actors = NetworkedManagerBase<ActorManager>.softInstance;
                 if (actors != null)
                     foreach (var ally in actors.allHeroes)
                     {
                         if (ally == null || ally == hero) continue;
-                        if (Links.IsBondAlly(ally.isActive && ally.isAlive && !ally.isKnockedOut,
-                            ally.GetRelation(hero) == EntityRelation.Ally,
-                            Vector3.Distance(hero.agentPosition, ally.agentPosition)))
-                            _linkAllies.Add(ally.GetType().Name);
+                        float coefficient = _linkDistances.Update(hero.GetInstanceID(), ally.GetInstanceID(),
+                            Vector3.Distance(hero.agentPosition, ally.agentPosition), now,
+                            hero.isActive && hero.isAlive && !hero.isKnockedOut && ally.isActive && ally.isAlive
+                                && !ally.isKnockedOut && ally.GetRelation(hero) == EntityRelation.Ally,
+                            _cfg().coopDistanceFalloff);
+                        if (coefficient <= 0f) continue;
+                        string allyKey = ally.GetType().Name;
+                        _linkAllies.Add(allyKey);
+                        if (!_linkCoefficients.TryGetValue(allyKey, out float previous) || coefficient > previous)
+                            _linkCoefficients[allyKey] = coefficient;
                     }
                 _linkMarks = t => Links.RequirementSatisfied(t, key, memories, essences, _linkAllies);
             }
             return _linkMarks;
         }
+
+        private float LinkTravelerCoefficient(string target) => target == _linkHeroKey ? 1f
+            : _linkCoefficients.TryGetValue(target, out float value) ? value : 0f;
+
+        private string DescribeLink(LinkDef link, Func<string, bool> marks) =>
+            Links.Describe(link, marks, marks == null ? null : _linkTravelerCoefficient);
 
         private string _lobbySeen;
 
@@ -309,6 +344,17 @@ namespace SodRpg.Mod
             if (!Open || _tab != 1) ResetFusionConfirmation();
             _st.EnsureBuilt();
             var cfg = _cfg();
+            var viewingHero = _s.LocalHero;
+            bool convertRange = cfg.meleeRangeToSpeed && (viewingHero != null
+                ? TravelerCombatNative.IsMelee(viewingHero) : TravelerCombat.IsMelee(HeroKey, true));
+            if (_displayMeleeRangeConversion != convertRange)
+            {
+                _displayMeleeRangeConversion = convertRange;
+                _tradeRelicTexts.Clear();
+                _starSumDirty = true;
+            }
+            bool previousRangeDisplay = Content.DisplayMeleeRangeConversion;
+            Content.DisplayMeleeRangeConversion = convertRange;
             float scale = Mathf.Clamp(Screen.height / 1080f * Mathf.Clamp(cfg.uiScale, 0.5f, 2.5f), 0.5f, 4f);
             // Keep the star map's fixed header rows and two choice cards within the visible window,
             // including both optional sidebars. Honor the configured scale until it would clip that viewport.
@@ -331,6 +377,7 @@ namespace SodRpg.Mod
                     if (repaint)
                     {
                         DrawNightmareLabels(scale);
+                        DrawCoopWardLabels(scale);
                         if (cfg.hudMode != HudMode.Off) DrawHud(w, h, cfg);
                     }
                     bool secureWait = _s.Profile.Run != null && _s.Profile.Run.AwaitingChoice && _s.ActiveRunId != null;
@@ -384,6 +431,7 @@ namespace SodRpg.Mod
             }
             finally
             {
+                Content.DisplayMeleeRangeConversion = previousRangeDisplay;
                 GUI.matrix = oldMatrix;
             }
         }
@@ -484,11 +532,11 @@ namespace SodRpg.Mod
                 {
                     sb.Append("\n<size=13><color=#a8e9cd>");
                     if (run.WaypointHoardReleased)
-                        sb.Append(Loc.T("宝庫：開封済み・撃破戦利品 ×3", "Hoard: opened · kill loot ×3"));
+                        sb.Append(Loc.T($"宝庫：開封済み・撃破戦利品 ×{Waypoints.HoardMultiplier}", $"Hoard: opened · kill loot ×{Waypoints.HoardMultiplier}"));
                     else
                         sb.Append(Loc.T(
-                            $"宝庫保留（倍率前）：遺物{run.DeferredWaypointRelics.Count}・欠片{run.DeferredWaypointShards}・調律石{run.DeferredWaypointTuning}\nボス撃破で払い出し ×3・未開封で離れると失う",
-                            $"Hoard held (before ×3): {run.DeferredWaypointRelics.Count} relics, {run.DeferredWaypointShards} shards, {run.DeferredWaypointTuning} tuning\nBoss defeat pays ×3; leaving unopened forfeits it"));
+                            $"宝庫保留（倍率前）：遺物{run.DeferredWaypointRelics.Count}・欠片{run.DeferredWaypointShards}・調律石{run.DeferredWaypointTuning}\nボス撃破で払い出し ×{Waypoints.HoardMultiplier}・未開封で離れると失う",
+                            $"Hoard held (before ×{Waypoints.HoardMultiplier}): {run.DeferredWaypointRelics.Count} relics, {run.DeferredWaypointShards} shards, {run.DeferredWaypointTuning} tuning\nBoss defeat pays ×{Waypoints.HoardMultiplier}; leaving unopened forfeits it"));
                     sb.Append("</color></size>");
                 }
                 if (p.LostAndFound.Count > 0 && !run.LostRecovered)
@@ -531,7 +579,7 @@ namespace SodRpg.Mod
         {
             var hero = _s.LocalHero;
             if (hero == null) return;
-            var build = _s.CurrentBuild(ClientSession.HeroKeyOf(hero));
+            var build = _s.DisplayBuild(ClientSession.HeroKeyOf(hero));
             if (build == null) return;
             foreach (var entry in build.RunGrowths)
                 sb.Append("\n<size=13><color=#9fe3a0>").Append(RunGrowth.HudLine(entry, _s.GrowthStacks(entry.StarId))).Append("</color></size>");
@@ -761,6 +809,9 @@ namespace SodRpg.Mod
                         {
                             foreach (var x in Rules.UseEvent(_s.Profile, e, trades: _s.Trades)) _s.Emit(x);
                             _s.MarkDirty(false);
+                            // 個数が変わらないまま固有効果が増減する出来事だけ、図鑑を作り直す。
+                            if (e == DreamEvent.ForgeShrine || e == DreamEvent.MemoryWell || e == DreamEvent.PowerCrucible)
+                                _codex.Invalidate();
                             _s.SaveNow();
                         }
                         catch (InvalidOperationException ex) { SetStatus(ex.Message); }
@@ -965,12 +1016,20 @@ namespace SodRpg.Mod
             return monster;
         }
 
-        /// <summary>悪夢化した敵と夢の変種の頭上に名札を出す。</summary>
+        /// <summary>宿敵・悪夢化した敵・夢の変種の頭上に名札を出す。</summary>
         private void DrawNightmareLabels(float scale)
         {
+            // 頭上の名前は言語で変わるので、言語を切り替えたら作り直す。
+            if (_labelCacheJa != Loc.Japanese)
+            {
+                _labelCacheJa = Loc.Japanese;
+                _nightmareLabelCache.Clear();
+                _variantLabelCache.Clear();
+            }
             _labelScratch.Clear();
             foreach (var entry in _labelMonsters)
-                if ((!_s.Nightmare.ContainsKey(entry.Key) && !_s.Variant.ContainsKey(entry.Key))
+                if ((!_s.Nightmare.ContainsKey(entry.Key) && !_s.Variant.ContainsKey(entry.Key)
+                    && _s.CoopWardId(0) != entry.Key && _s.CoopWardId(1) != entry.Key && _s.CoopWardId(2) != entry.Key)
                     || entry.Value.Identity == null || entry.Value.Monster == null)
                     _labelScratch.Add(entry.Key);
             foreach (uint netId in _labelScratch) _labelMonsters.Remove(netId);
@@ -988,13 +1047,59 @@ namespace SodRpg.Mod
                 if (sp.z <= 0) continue;
                 if (!_nightmareLabelCache.TryGetValue((int)kv.Value, out var lab))
                 {
-                    string text = UiStyles.Colored(Nightmares.Label(kv.Value), "#ff6ad5");
+                    string color = (kv.Value & NightmareAffix.Nemesis) != 0 ? NemesisNameplateColor : NightmareNameplateColor;
+                    string text = UiStyles.Colored(Nightmares.Label(kv.Value), color);
                     var content = new GUIContent(text);
                     lab = new Label3D { Text = text, Content = content, Size = _st.ToastMeasure.CalcSize(content) };
                     _nightmareLabelCache[(int)kv.Value] = lab;
                 }
                 float x = sp.x / scale - lab.Size.x / 2, y = (Screen.height - sp.y) / scale - lab.Size.y;
                 GUI.Label(new Rect(x, y, lab.Size.x + 4, lab.Size.y), lab.Content, _st.Toast);
+            }
+        }
+
+        private readonly Label3D[] _coopWardLabels = new Label3D[62];
+        private bool _coopWardLabelsFailed;
+
+        private void DrawCoopWardLabels(float scale)
+        {
+            if (_coopWardLabelsFailed) return;
+            try
+            {
+                var cam = Camera.main;
+                if (cam == null) return;
+                for (int slot = 0; slot < 3; slot++)
+                {
+                    uint netId = _s.CoopWardId(slot);
+                    if (netId == 0 || !Mirror.NetworkClient.spawned.TryGetValue(netId, out var identity) || identity == null) continue;
+                    var monster = LabelMonster(netId, identity);
+                    if (monster == null || !monster.isActive || monster.isDead) continue;
+                    var sp = cam.WorldToScreenPoint(monster.position + Vector3.up * 3.2f);
+                    if (sp.z <= 0) continue;
+                    int seconds = Math.Min(60, Mathf.CeilToInt(_s.CoopResonanceRemaining(slot)));
+                    int key = seconds > 0 ? seconds + 1 : 0;
+                    var label = _coopWardLabels[key];
+                    if (label == null)
+                    {
+                        string text = UiStyles.Colored(seconds > 0 ? "◉ " + seconds + "s" : "◎", seconds > 0 ? "#ffe28a" : "#8ae4ff");
+                        var content = new GUIContent(text);
+                        label = new Label3D { Text = text, Content = content, Size = _st.ToastMeasure.CalcSize(content) };
+                        _coopWardLabels[key] = label;
+                    }
+                    float offset = 0;
+                    if (_s.Nightmare.TryGetValue(netId, out var affix)
+                        && _nightmareLabelCache.TryGetValue((int)affix, out var name)) offset = name.Size.y + 3;
+                    if (_s.Variant.TryGetValue(netId, out var variant)
+                        && _variantLabelCache.TryGetValue(variant, out var variantName)) offset = Math.Max(offset, variantName.Size.y + 3);
+                    float x = sp.x / scale - label.Size.x / 2;
+                    float y = (Screen.height - sp.y) / scale - label.Size.y - offset;
+                    GUI.Label(new Rect(x, y, label.Size.x + 4, label.Size.y), label.Content, _st.Toast);
+                }
+            }
+            catch (Exception ex)
+            {
+                _coopWardLabelsFailed = true;
+                Log.Warn("Co-op ward labels disabled; combat continues: " + ex.Message);
             }
         }
 
@@ -1005,6 +1110,8 @@ namespace SodRpg.Mod
             if (cam == null) return;
             foreach (var kv in _s.Variant)
             {
+                // 同じ敵に表示情報が重なった場合は、シアンの宿敵名札を優先する。
+                if (_s.Nightmare.TryGetValue(kv.Key, out var affixes) && (affixes & NightmareAffix.Nemesis) != 0) continue;
                 if (!Mirror.NetworkClient.spawned.TryGetValue(kv.Key, out var id) || id == null) continue;
                 var m = LabelMonster(kv.Key, id);
                 var def = Variants.Get(kv.Value);
@@ -1013,7 +1120,7 @@ namespace SodRpg.Mod
                 if (sp.z <= 0) continue;
                 if (!_variantLabelCache.TryGetValue(kv.Value, out var lab))
                 {
-                    string text = UiStyles.Colored(Variants.Label(def), "#ffb347");
+                    string text = UiStyles.Colored(Variants.Label(def), VariantNameplateColor);
                     var content = new GUIContent(text);
                     lab = new Label3D { Text = text, Content = content, Size = _st.ToastMeasure.CalcSize(content) };
                     _variantLabelCache[kv.Value] = lab;
@@ -1663,7 +1770,7 @@ namespace SodRpg.Mod
                 GUILayout.Label(UiStyles.Colored(r.DescribeBossMove(), "#e0b0ff"), _st.Label);
             // 連携（v1.26）：条件と効果を1行で。ゲームの中なら各条件に ✓／・ が付く。
             var link = r.Link;
-            if (link != null) GUILayout.Label(UiStyles.Colored(Links.Describe(link, LinkMarks()), "#7fd8ff"), _st.Small);
+            if (link != null) GUILayout.Label(UiStyles.Colored(DescribeLink(link, LinkMarks()), "#7fd8ff"), _st.Small);
             foreach (var a in r.EffectiveStats().Skip(1)) GUILayout.Label(Content.FormatStat(a.Stat, a.Value), _st.Label);
             if (r.Rarity == Rarity.Legendary) GUILayout.Label(AwakenLine(r), _st.Small);
             if (r.UniqueId != null && Content.TryGetUnique(r.UniqueId, out var u))
@@ -1671,7 +1778,7 @@ namespace SodRpg.Mod
                 if (u.SetId != null && Content.GetSet(u.SetId) is SetDef set)
                 {
                     GUILayout.Label(UiStyles.Colored($"《{set.Name}》", "#ff8a3d") + " <color=#ccd>" + set.Describe() + "</color>", _st.Small);
-                    var build = _s.CurrentBuild(HeroKey);
+                    var build = _s.DisplayBuild(HeroKey);
                     build.Sets.TryGetValue(set.Id, out int count);
                     DrawSetLinkProgress(set, count);
                 }
@@ -1685,7 +1792,7 @@ namespace SodRpg.Mod
                 if (!string.IsNullOrEmpty(lore)) GUILayout.Label("<i>" + UiStyles.Colored(lore, "#c9a86a") + "</i>", _st.Small);
                 int worn = 0;
                 if (NamedItems.TryGetNamed(r.NamedId, out var namedDef) && namedDef.MiniSetId != null)
-                    _s.CurrentBuild(HeroKey).MiniSets.TryGetValue(namedDef.MiniSetId, out worn);
+                    _s.DisplayBuild(HeroKey).MiniSets.TryGetValue(namedDef.MiniSetId, out worn);
                 string mini = NamedItems.MiniSetLine(r, worn);
                 if (!string.IsNullOrEmpty(mini)) GUILayout.Label(UiStyles.Colored(mini, "#7fd8ff"), _st.Small);
             }
@@ -1696,7 +1803,7 @@ namespace SodRpg.Mod
             if (set.LinkStages.Length == 0) return;
             var marks = LinkMarks();
             var stage = set.SelectLinkStage(count) ?? set.LinkStages[0];
-            bool satisfied = marks != null && Links.Satisfied(stage.Link, _linkHeroKey, _linkMemories, _linkEssences);
+            bool satisfied = marks != null && Links.Satisfied(stage.Link, _linkHeroKey, _linkMemories, _linkEssences, _linkAllies);
             GUILayout.Label(UiStyles.Colored(set.DescribeLinkProgress(count, satisfied), "#7fd8ff"), _st.Small);
         }
 
@@ -1728,18 +1835,11 @@ namespace SodRpg.Mod
         {
             GUILayout.Space(6);
             GUILayout.Label(Loc.T("いま装着している物と比べると", "Compared with what you have equipped"), _st.Header);
-            var a = new Dictionary<Stat, int>();
-            foreach (var s in sel.EffectiveStats()) { a.TryGetValue(s.Stat, out int v); a[s.Stat] = v + s.Value; }
-            foreach (var s in cur.EffectiveStats()) { a.TryGetValue(s.Stat, out int v); a[s.Stat] = v - s.Value; }
-            foreach (var kv in a.OrderBy(k => k.Key))
-            {
-                if (kv.Value == 0) continue;
-                GUILayout.Label(UiStyles.Colored(Content.FormatStat(kv.Key, kv.Value), kv.Value > 0 ? "#7cf07c" : "#ff7a7a"), _st.Small);
-            }
-            var gained = sel.Powers.Select(x => x.Power).Except(cur.Powers.Select(x => x.Power));
-            var lost = cur.Powers.Select(x => x.Power).Except(sel.Powers.Select(x => x.Power));
-            foreach (var g in gained) GUILayout.Label(UiStyles.Colored("+ " + Content.PowerName(g), "#7cf07c"), _st.Small);
-            foreach (var l in lost) GUILayout.Label(UiStyles.Colored("- " + Content.PowerName(l), "#ff7a7a"), _st.Small);
+            var diff = RelicComparison.Compare(sel, cur);
+            foreach (var d in diff.StatDeltas)
+                GUILayout.Label(UiStyles.Colored(Content.FormatStat(d.Stat, d.Value), d.Value > 0 ? "#7cf07c" : "#ff7a7a"), _st.Small);
+            foreach (var g in diff.GainedPowers) GUILayout.Label(UiStyles.Colored("+ " + Content.PowerName(g), "#7cf07c"), _st.Small);
+            foreach (var l in diff.LostPowers) GUILayout.Label(UiStyles.Colored("- " + Content.PowerName(l), "#ff7a7a"), _st.Small);
             if (sel.BossMove != cur.BossMove)
             {
                 if (sel.BossMove != null) GUILayout.Label(UiStyles.Colored("+ " + sel.DescribeBossMove(), "#7cf07c"), _st.Small);
@@ -1814,7 +1914,7 @@ namespace SodRpg.Mod
                             _confirmEnhance = sel;
                             _confirmEnhanceTarget = sel.Enhance + 1;
                         }
-                        else Act(() => Rules.Enhance(p, sel.Uid, _s.Trades), true);
+                        else Act(() => Rules.Enhance(p, sel.Uid, _s.Trades), true, affectsCodex: true);
                     }
                 }
                 else GUILayout.Label(Loc.T($"強化は+{maxEnhance}が上限です", $"Enhancement is capped at +{maxEnhance}"), _st.Small);
@@ -2107,7 +2207,7 @@ namespace SodRpg.Mod
                 _confirmEnhance = null;
         }
 
-        private void Act(Func<GameEvent> action, bool affectsBuild)
+        private void Act(Func<GameEvent> action, bool affectsBuild, bool affectsCodex = false)
         {
             _confirmEnhance = null;
             ResetFusionConfirmation();
@@ -2116,6 +2216,8 @@ namespace SodRpg.Mod
                 var e = action();
                 _s.Emit(e);
                 _s.MarkDirty(affectsBuild);
+                // 所持数が同じでも固有効果が変わり得る操作だけ、図鑑を作り直す。
+                if (affectsCodex) _codex.Invalidate();
                 _s.SaveNow();
             }
             catch (InvalidOperationException ex)
@@ -2317,7 +2419,8 @@ namespace SodRpg.Mod
                 int sig = matchingHero ? 1 : 0;
                 foreach (string m in _linkMemories) sig ^= m.GetHashCode();
                 foreach (string m in _linkEssences) sig += m.GetHashCode();
-                foreach (string m in _linkAllies) sig -= m.GetHashCode();
+                foreach (var pair in _linkCoefficients)
+                    sig -= pair.Key.GetHashCode() ^ (int)(pair.Value * 100f);
                 // v1.32 B: the live RunGrowth stacks are part of the acquired-effects text.
                 if (matchingHero) sig += _s.RunGrowthVersion * 7919;
                 if (sig != _starSumSig) { _starSumSig = sig; _starSumDirty = true; }
@@ -2586,7 +2689,7 @@ namespace SodRpg.Mod
             _starSumWidth = -1f;
             bool matching = _s.LocalHero != null && ClientSession.HeroKeyOf(_s.LocalHero) == hero;
             var marks = matching ? LinkMarks() : null;
-            var sum = StarSummary.Compute(p, hero, marks);
+            var sum = StarSummary.Compute(p, hero, marks, matching ? _linkTravelerCoefficient : null);
             var indexOf = new Dictionary<string, int>(StringComparer.Ordinal);
             for (int i = 0; i < _starLayout.Nodes.Count; i++)
                 if (_starLayout.Nodes[i].Talent != null) indexOf[_starLayout.Nodes[i].Talent.Id] = i;
@@ -3206,7 +3309,9 @@ namespace SodRpg.Mod
             GUILayout.Label(Loc.T("キーの割り当てや表示の大きさは、ゲームのMOD設定で変えられます。", "Keys and scale can be changed in the game's mod settings."), _st.Small);
             GUILayout.EndHorizontal();
             DrawCatchupSettings(cfg);
+            DrawAutoCastSettings(cfg);
             DrawLevelEssenceSettings(cfg);
+            DrawCoopOmenSettings(cfg);
             if (_s.SavePath != null) GUILayout.Label(Loc.T("保存先：", "Save file: ") + _s.SavePath, _st.Small);
             if (_s.LoadNotes != null) GUILayout.Label(_s.LoadNotes, _st.Warn);
             if (_s.SaveError != null) GUILayout.Label(Loc.T("保存エラー：", "Save error: ") + _s.SaveError, _st.Warn);
@@ -3282,6 +3387,22 @@ namespace SodRpg.Mod
 
             GUILayout.EndHorizontal();
             GUILayout.EndScrollView();
+        }
+
+        private void DrawCoopOmenSettings(DreamforgeConfig cfg)
+        {
+            bool wasEnabled = GUI.enabled;
+            GUI.enabled = wasEnabled && (!Mirror.NetworkClient.active || Mirror.NetworkServer.active);
+            bool enabled = GUILayout.Toggle(cfg.coopRoomOmens, Loc.T("マルチ専用の兆し（ホスト）", "Co-op-only Room Omens (host)"));
+            if (enabled != cfg.coopRoomOmens)
+            {
+                cfg.coopRoomOmens = enabled;
+                CoopOmens.Enabled = enabled;
+                _saveLevelEssenceConfig?.Invoke();
+            }
+            GUI.enabled = wasEnabled;
+            GUILayout.Label(Loc.T("2 人以上で部屋に入ると、ときどき協力が必要な兆しが出ます。抽選は次の部屋から反映されます。",
+                "With two or more players, some rooms require cooperation. Draw changes apply from the next room."), _st.Small);
         }
 
         private void DrawLevelEssenceSettings(DreamforgeConfig cfg)

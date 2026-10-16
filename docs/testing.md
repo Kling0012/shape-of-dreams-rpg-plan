@@ -281,6 +281,39 @@ Linux／.NET 10、Releaseの実Core DLLで、鞄30個・レア度／スコア混
   または `FullyQualifiedName~NativeAcceptanceTests`。
   実機のフレーム時間・確保量・Unity本体のRPC転送はこのハーネスの検証範囲外。
 
+## #435 宿敵の名札色（2026-10-16）
+
+引き継いだスナップショットには、`DreamforgeUi` の共通定数として宿敵色
+`#4dd8ff`（シアン）、悪夢化色 `#ff6ad5`（ピンク紫）、変種色 `#ffb347`（橙）と、
+宿敵がある場合に変種名札を描かない処理が含まれていた。READMEと検証記録には
+異なるシアン値が残っていたため、実装の `#4dd8ff` に統一し、CHANGELOGの重複した
+説明をまとめた。宿敵の判定は `NightmareAffix.Nemesis` のビットで行うため、
+ボス／ミニボス共通で、ほかの接頭効果が付いていても宿敵色を優先する。
+ヴァイオレットは悪夢化のピンク紫に近いため、前回のシアン採用と既存の名札キャッシュを
+維持した。通信・保存や毎フレームの処理は変更していない。
+
+ほかの強調表示もコードで照合した。`MonsterCues.ColorFor` は金・茶橙・青・緑、
+`BossEffectColor` は冷気の水色、闇の紫などを使うが、宿敵の `#4dd8ff` と同値ではない。
+レア度の青 `#4fa8ff`・紫 `#c475ff` とも異なる。青系の強調表示と近い色域ではあるため、
+あらゆる背景での視認性を保証する検証ではない。MODの敵名札3種の色と、
+モデルの発光・戦闘効果・装備名の色は区別して確認した。
+
+協力プレイの適用経路はソースで確認した。`HostAuthority.MakeNemesis` が宿敵ビットを
+設定し、`SendMonsterClassification`／`FlushMonsterSync` が `DreamforgeNightmareMsg.affixes`
+として個別同期／全クライアントへ送る。`ClientSession.OnNightmare` は
+`Nightmares.Sanitize` で宿敵ビットを保持し、名札用辞書へ格納する。
+`DreamforgeUi.DrawNightmareLabels` にはホスト／参加者による色の分岐がなく、
+どちらも同じ定数を使用する。本体の通常ボス／エリート名表示とは別のMODの頭上名札が対象。
+
+以下は今回のセッションで実行した検証：
+
+- `dotnet build src/SodRpg.Mod -c Release -p:GameDir="/mnt/ghauto-sbx/sod-gamedata/Shape of Dreams" --nologo`：終了コード0、エラー0・警告6。ゲーム参照DLLでコンパイルした。ゲームへの配置処理は実行されていない。
+- `DOTNET_ROLL_FORWARD=Major dotnet test tests/SodRpg.Core.Tests/SodRpg.Core.Tests.csproj -c Release --filter 'FullyQualifiedName~SodRpg.Core.Tests.NightmareTests.|FullyQualifiedName~SodRpg.Core.Tests.MonstersV129Tests.|FullyQualifiedName~SodRpg.Core.Tests.VariantsV124Tests.|FullyQualifiedName~SodRpg.Core.Tests.NameplateTrimTests.|FullyQualifiedName~SodRpg.Core.Tests.MonsterAuthorityStateTests.' --nologo`：終了コード0、59成功・0失敗・0スキップ。
+- `DOTNET_ROLL_FORWARD=Major dotnet test tests/Issue73.Native.Tests/Issue73.Native.Tests.csproj -c Release --filter 'FullyQualifiedName~Issue73.Native.Tests.NativeAcceptanceTests.DifferentialUpdatesCoalesceWithoutMovingIdsBehindTheirNeighborsAndRotateCategories' --nologo`：終了コード0、1成功・0失敗・0スキップ。既存の敵分類差分の集約・配信順をAPIダブルで確認したもので、宿敵の色や実通信の検証ではない。
+- 既存テストの対象は悪夢／変種のルール、宿敵ビットの保持、名札の生存管理、敵分類状態と差分配信。色選択と描画の優先順はソースを確認したもので、既存テストは描画メソッドを実行しない。新しいテストは追加していない。
+- **未実行**：Unity実画面で宿敵化したボス／ミニボスの名札を比較する確認、本体名札も含めた背景別の視認性・1920×1080の実描画、実際の協力通信。ゲーム実行環境が提供されていないため、報告の画面上の状況は再現・目視確認していない。
+- **未実行**：フルテスト・Slowテスト、今回の名札表示と無関係なテスト。作業中は関連部分だけを検証し、全体検証は後続工程に委ねる指示による。
+
 ## マッピングロジックの単体テスト
 
 `tools/tests/test_test_changed.py`（unittest）がマッピングロジックの単体テストを

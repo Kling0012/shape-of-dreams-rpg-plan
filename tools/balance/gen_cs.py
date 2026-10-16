@@ -43,6 +43,8 @@ import equipment_pools_values
 import room_omen_values
 import forbidden_values
 import fusion_values
+import coop_values
+import essence_caps_values
 
 ROOT = Path(__file__).resolve().parents[2]
 FORGE_PATH = ROOT / "tools" / "balance" / "forge.json"
@@ -259,6 +261,8 @@ def generate(check=False):
     outputs.update(room_omen_values.render_outputs())
     outputs.update(forbidden_values.render_outputs())
     outputs.update(fusion_values.render_outputs())
+    outputs.update(coop_values.render_outputs())
+    outputs.update(essence_caps_values.render_outputs())
     ok = stars.publish_outputs(outputs, check=check)
     if ok and use_cache:
         _write_cache(inputs, outputs)

@@ -14,6 +14,7 @@ namespace SodRpg.Mod
         };
 
         private Vector2 _scrollGear;
+        private Func<string, float> _linkTravelerCoefficient;
 
         /// <summary>
         /// 装備タブの左の欄（旅人・6つの装着枠・今回の強さ・狙い系統）。欄の中身をまるごと1つの
@@ -53,7 +54,7 @@ namespace SodRpg.Mod
             }
             GUILayout.Space(6);
             GUILayout.Label(Loc.T("現在の強さ", "Current build"), _st.Header);
-            var build = _s.CurrentBuild(hero);
+            var build = _s.DisplayBuild(hero);
             if (build.Stats.Count == 0 && build.Powers.Count == 0 && build.BossMoves.Count == 0) GUILayout.Label(Loc.T("まだ何も装着していません。真ん中の一覧から遺物を選び、「装着する」を押してください。", "Nothing equipped yet. Pick a relic from the middle list and press Equip."), _st.Small);
             foreach (var kv in build.Stats) if (kv.Value != 0) GUILayout.Label(Content.FormatStat(kv.Key, kv.Value), _st.Small);
             foreach (var kv in build.Powers) GUILayout.Label(UiStyles.Colored(Content.FormatPowerBullets(kv.Key, kv.Value), "#e0b0ff"), _st.Small);
@@ -79,7 +80,7 @@ namespace SodRpg.Mod
                 foreach (var active in build.Links)
                 {
                     if (!Links.Satisfied(active, _linkHeroKey, _linkMemories, _linkEssences, _linkAllies)) continue;
-                    GUILayout.Label(UiStyles.Colored(Links.Describe(active, marks), "#7fd8ff"), _st.Small);
+                    GUILayout.Label(UiStyles.Colored(Links.Describe(active, marks, _linkTravelerCoefficient), "#7fd8ff"), _st.Small);
                 }
             }
             if (!_s.CanEditLoadout)
@@ -122,6 +123,7 @@ namespace SodRpg.Mod
         private static readonly GUILayoutOption[] PickerNameWidth = { GUILayout.Width(110) };
         private readonly GUIContent _pickerName = new GUIContent();
         private string _pickerNamedHero;
+        private bool _pickerNamedJa;
         private void HeroPicker()
         {
             if (_s.LocalHero != null) return;
@@ -135,9 +137,10 @@ namespace SodRpg.Mod
             if (GUILayout.Button("<", _st.Button, PickerArrowWidth))
                 _heroSel = _pickerHeroes[(idx - 1 + _pickerHeroes.Count) % _pickerHeroes.Count];
             string selectedHero = HeroKey;
-            if (_pickerNamedHero != selectedHero)
+            if (_pickerNamedHero != selectedHero || _pickerNamedJa != Loc.Japanese)
             {
                 _pickerNamedHero = selectedHero;
+                _pickerNamedJa = Loc.Japanese;
                 _pickerName.text = "<b>" + HeroName(selectedHero) + "</b>";
             }
             GUILayout.Label(_pickerName, _st.Label, PickerNameWidth);

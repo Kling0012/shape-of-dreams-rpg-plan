@@ -268,6 +268,12 @@ namespace SodRpg.Mod
                 _nextCoopProbe = Time.unscaledTime + 5f;
                 DiagnoseCoopTrade("waiting", onlyWhenActive: true);
                 SendCoop(new DreamforgeCoopTradeCommand { action = "probe", safe = CoopLocalSafe, fusion = true });
+                // The partner's profile is sent once per revision; a reset receiver (reconnect
+                // mid-trade) or an interrupted transfer can leave this view without it. Ask the
+                // host for it again while the partner has offered relics and none has arrived.
+                if (CoopTrade != null && CoopTrade.Accepted && !CoopTrade.Preparing && _coopPendingOffer == null
+                    && CoopTrade.OtherProfile == null && (CoopTrade.OtherOffer?.RelicUids?.Count ?? 0) > 0)
+                    SendCoop(new DreamforgeCoopTradeCommand { action = "query", id = CoopTrade.Id, wantsProfile = true });
                 var pending = Profile.CoopTradePending;
                 if (pending != null)
                 {
@@ -467,10 +473,10 @@ namespace SodRpg.Mod
                             Ready = msg.ready == null || msg.ready.Length != msg.keys.Length || msg.ready[i],
                         });
                     if (Profile.CoopTradePending == null && !_coopSettlementUnsaved && !string.IsNullOrEmpty(msg.status))
-                        CoopTradeWarning = msg.status;
+                        CoopTradeWarning = msg.LocalizedStatus();
                     return;
                 }
-                if (msg.kind == "error") { DiagnoseCoopTrade("host-error"); CoopTradeWarning = msg.status; return; }
+                if (msg.kind == "error") { DiagnoseCoopTrade("host-error"); CoopTradeWarning = msg.LocalizedStatus(); return; }
                 if (msg.kind == "cancelled")
                 {
                     DiagnoseCoopTrade("cancelled-received", msg.id, msg.revision);
@@ -485,7 +491,7 @@ namespace SodRpg.Mod
                     _coopPendingOffer = null;
                     _coopOfferInFlight = null;
                     _coopFrozenProfile = null;
-                    CoopTradeWarning = msg.status;
+                    CoopTradeWarning = msg.LocalizedStatus();
                     return;
                 }
                 if (msg.kind == "view")
@@ -507,7 +513,7 @@ namespace SodRpg.Mod
                     }
                     CoopTrade = new CoopTradeView
                     {
-                        Id = msg.id, PartnerName = msg.partner, Status = msg.status, Incoming = msg.incoming,
+                        Id = msg.id, PartnerName = msg.partner, Status = msg.LocalizedStatus(), Incoming = msg.incoming,
                         Accepted = msg.accepted, OwnConfirmed = msg.ownConfirmed && _coopPendingOffer == null,
                         OtherConfirmed = msg.otherConfirmed && _coopPendingOffer == null,
                         Preparing = msg.preparing, Revision = msg.revision, PartnerFusion = msg.partnerFusion,
