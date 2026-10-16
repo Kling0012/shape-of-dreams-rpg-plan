@@ -1,5 +1,5 @@
-[b]Co-op trade messages now tell cancellations apart from connection changes and appear in each player's own language.[/b]
-[b]協力プレイの取引で、取消と接続の変化を区別したメッセージを、参加者それぞれの言語で表示するようにしました。[/b]
+[b]A maintenance update that strengthens development-side checks; gameplay and numbers are unchanged.[/b]
+[b]開発側の確認を強化した保守版で、ゲーム内の動きや数値に変更はありません。[/b]
 
 [h1]Dreamforge RPG[/h1]
 Turns every run into part of a long RPG journey: relics you keep, a risky "secure or delve" choice at every zone, a star map per Traveler, a forge, and long-term goals. Co-op ready.
