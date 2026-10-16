@@ -10,6 +10,10 @@ namespace SodRpg.Mod
         // One line per (traveler, asset type) so the first in-game run shows how each traveler was classified.
         private static readonly HashSet<(string, Type)> Reported = new HashSet<(string, Type)>();
 
+        /// <summary>Empties the reported set so a new run logs each classification again. The static set
+        /// survives MOD reloads, so without this the lines would never come back (#542).</summary>
+        internal static void ResetReporting() => Reported.Clear();
+
         internal static bool IsMelee(Hero hero)
         {
             if (hero == null) return false;
