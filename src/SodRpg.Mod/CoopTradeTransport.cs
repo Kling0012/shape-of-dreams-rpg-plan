@@ -38,7 +38,9 @@ namespace SodRpg.Mod
         internal static T Decode<T>(string json) where T : class
         {
             if (string.IsNullOrEmpty(json) || json.Length > BuildStringLimit) return null;
-            return JsonConvert.DeserializeObject<T>(json);
+            // A malformed packet from a peer is dropped like an oversized one; it is not a storage failure.
+            try { return JsonConvert.DeserializeObject<T>(json); }
+            catch (JsonException) { return null; }
         }
     }
 }

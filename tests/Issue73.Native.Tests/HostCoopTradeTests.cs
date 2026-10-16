@@ -322,6 +322,41 @@ namespace Issue73.Native.Tests
             Assert.Empty(_errors);
         }
 
+        [Fact]
+        public void Unreadable_payload_or_packet_cancels_only_that_trade_and_never_latches_the_host()
+        {
+            CreateWorld();
+            Probe(_a);
+            Probe(_b);
+            _host.ReceiveCoopTrade(new DreamforgeCoopTradeCommand { action = "request", target = "player-b", safe = true }, _a);
+            var trade = Get(_host, "_coopHostTrade");
+            string id = (string)trade.GetType().GetField("Id").GetValue(trade);
+            _host.ReceiveCoopTrade(new DreamforgeCoopTradeCommand { action = "accept", id = id, safe = true }, _b);
+            int revision = (int)trade.GetType().GetField("Revision").GetValue(trade);
+
+            // A peer's malformed packet is dropped without touching the trade.
+            Call(_host, "ReceiveCoopPacket", _a.connectionToClient, new DreamforgeCoopTradeUp { Json = "{\"version\":1,\"index\":99999999999}" });
+            Call(_host, "ReceiveCoopPacket", _a.connectionToClient, new DreamforgeCoopTradeUp { Json = "{\"version\":" });
+            Assert.Same(trade, Get(_host, "_coopHostTrade"));
+            Assert.Null(Get(_host, "_coopHostFailure"));
+
+            // An assembled payload that is not a profile cancels this trade cleanly.
+            string encoded = Convert.ToBase64String(Encoding.UTF8.GetBytes("not a profile"));
+            foreach (var part in BuildTransfer.Split(encoded, CoopTradeTransport.MaxProfileChars))
+                _host.ReceiveCoopTrade(new DreamforgeCoopTradeCommand
+                {
+                    action = "offer", id = id, revision = revision, offer = CoopTradeCodec.WriteOffer(new CoopTradeOffer()), safe = true,
+                    data = part.Data, transferId = part.TransferId, index = part.Index,
+                    count = part.Count, totalLength = part.TotalLength,
+                }, _a);
+            Assert.Null(Get(_host, "_coopHostTrade"));
+            Assert.Null(Get(_host, "_coopHostFailure"));
+            Assert.Contains(States(_b), state => state.kind == "cancelled" && state.id == id);
+            _a.connectionToClient.Sent.Clear();
+            Probe(_a);
+            Assert.Contains(States(_a), state => state.kind == "roster");
+        }
+
         private static Profile HugeProfile()
         {
             var profile = Profile.CreateNew(17);

@@ -166,6 +166,48 @@ namespace Issue73.Native.Tests
             Assert.True(HostAuthority.InfinityBoundarySettled);
         }
 
+        [Fact]
+        public void Receipts_for_streams_the_host_never_issued_do_not_grow_the_peer_record()
+        {
+            var session = Session();
+            Set(typeof(ClientSession), "_hostSession", session);
+            var host = Host(new Actor());
+            var local = new DewPlayer { guid = "local", netId = 1, playerName = "host" };
+            var guest = new DewPlayer { guid = "guest", netId = 2, playerName = "guest" };
+            DewPlayer.local = local;
+            DewPlayer.gamePlayers.Add(local);
+            DewPlayer.gamePlayers.Add(guest);
+            try
+            {
+                Call(host, "TickKillReplay");
+                V272Hello(host, guest);
+                var monster = new Monster { netId = 20 };
+                ((IDictionary)Get(host, "_monsters")).Add(monster,
+                    new HostAuthority.MonsterRuntime { Monster = monster });
+                Call(host, "CaptureAuthoritativeRunKill", monster);
+                var junk = new DreamforgeKillStreamReceipt[1000];
+                for (int i = 0; i < junk.Length; i++)
+                    junk[i] = new DreamforgeKillStreamReceipt { streamId = "junk-" + i, receivedThrough = 5 };
+                Call(host, "OnKillReceipt", new DreamforgeKillReceiptMsg {
+                    protocol = Protocol.Version - 1, authorityGeneration = ClientSession.HostAuthorityGeneration,
+                    runId = "run", clientId = "guest-client", observationSessionId = "guest-observation", receipts = junk
+                }, guest);
+                V272Receipt(host, guest, 1);
+
+                var saved = new KillClassificationCheckpoint { RunId = "run" };
+                host.CaptureKillReplay(saved);
+                foreach (var peer in saved.HostPeers)
+                    Assert.DoesNotContain(peer.Receipts, receipt => receipt.StreamId.StartsWith("junk-", StringComparison.Ordinal));
+                // The real stream's receipt still lands: the guest acknowledged the kill.
+                string stream = (string)Get(host, "_killStreamId");
+                Assert.Contains(saved.HostPeers, peer => peer.ReceivedThrough(stream) == 1);
+            }
+            finally
+            {
+                DewPlayer.local = null;
+            }
+        }
+
         private static void V272Hello(HostAuthority host, DewPlayer guest)
         {
             Call(host, "OnHello", new DreamforgeHelloMsg {

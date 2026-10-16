@@ -254,8 +254,21 @@ namespace SodRpg.Mod
                     else trade.SecondOfferAck = msg.transferId;
                 }
                 if (msg.revision != trade.Revision) { DiagnoseHostCoopTrade("stale-revision", trade, caller); SendCoopViews(); return; }
-                var profile = ProfileCodec.ReadCheckpointProfile(Encoding.UTF8.GetString(Convert.FromBase64String(encoded)));
-                var offer = CoopTradeCodec.ReadOffer(msg.offer);
+                Profile profile;
+                CoopTradeOffer offer;
+                try
+                {
+                    profile = ProfileCodec.ReadCheckpointProfile(Encoding.UTF8.GetString(Convert.FromBase64String(encoded)));
+                    offer = CoopTradeCodec.ReadOffer(msg.offer);
+                }
+                catch (Exception ex) when (ex is FormatException || ex is LedgerFormatException
+                    || ex is Newtonsoft.Json.JsonException || ex is ArgumentException)
+                {
+                    // An unreadable payload is the sender's problem: cancel this trade, keep the host trading.
+                    SendCoopError(caller, ex.Message);
+                    CancelHostCoopTrade("ownership");
+                    return;
+                }
                 string gameRun = NetworkedManagerBase<GameManager>.softInstance?.runId;
                 if (gameRun != null && profile.Run?.RunId != gameRun || profile.CoopTradePending != null
                     || CoopTradeRules.Validate(profile, offer) != null)

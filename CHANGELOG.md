@@ -8,6 +8,9 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
+### 修正 / Fixes
+- 協力取引：1人の相手から壊れた・読めない取引データが届くと、ホストの取引全体が保存失敗扱いで約10秒止まり、ほかの2人の取引まで消えていた問題を修正。その取引だけを取り消すようにした。討伐記録の受領で、ホストが発行していない記録列の受領を記録しない（中断データが際限なく増えるのを防ぐ）。 / Co-op trade: an unreadable trade payload from one player now cancels only that trade instead of halting trading on the host; kill receipts for streams the host never issued are ignored so the checkpoint cannot grow without bound.
+
 ---
 
 ## v2.10.58 — Co-op forbidden equipment warning fixes（2026-10-16）
