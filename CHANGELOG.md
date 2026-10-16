@@ -10,6 +10,29 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v3.2.9 — Fixes for unreachable bounties, Sealed Vault relic draws, waypoint Codex bonus, and Infinity saves（2026-10-17）
+
+この版は、ソロやインフィニティで達成できない依頼が出ていた問題と、封印の宝庫に預けた遺物が遺物の抽選で持っていないものとして扱われていた問題を直す更新です。道標で遺物を引き直したときや最初の獲得で図鑑の補正がかからなかった問題、インフィニティで短い区画が終点に昇格したあとのセーブを読み込めなかった問題、契約と属性組み合わせ星の説明文の誤りもあわせて直しています。 / This update fixes bounties that could not be completed in solo or Infinity, and relics stored in the Sealed Vault being treated as unowned in relic draws. It also fixes the Codex bonus not applying to relic draws at waypoints (rerolls and first claims), saves made after a short Infinity section was promoted to its endpoint failing to load, and text errors in Pact and attribute combo star descriptions.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- ソロでは「別の旅人を回復」、インフィニティでは「次のゾーンへ進む」と「確保」の依頼が出ることがあり、達成できなかった問題を直しました。これからは、遠征の条件が決まった時点で、まだ手を付けていない達成できない依頼が、ほかの依頼と重ならない達成できる依頼に入れ替わります。進めている途中の依頼や達成済みの依頼はそのまま残ります。依頼を引き直したときも、達成できない依頼は選ばれません。 / Fixed bounties that could not be completed appearing in solo ("Heal another traveler") and Infinity ("Advance to the next zone" and "Secure"). Now, once the expedition's conditions are set, any untouched bounty that cannot be completed is replaced with a completable one that doesn't duplicate your other bounties. Bounties already in progress or completed are kept. Rerolling a bounty will no longer pick one that cannot be completed either.
+- 封印の宝庫に預けている遺物が、遺物の抽選では持っていないものとして扱われていた問題を直しました。たとえば組の欠片Aを保管庫に、欠片Bを宝庫に入れていると、Bがまだ足りないとみなされ、セット集めの補助で同じBが出やすくなっていました。これからは宝庫の預かり品も持っているものとして数えられ、伝説セットや銘品の小セットの集めやすくする補助が、本当に足りない部位に向くようになります。この修正は、敵を倒したときの抽選と、道標での引き直し・最初の獲得に効きます。 / Fixed relics stored in the Sealed Vault being treated as unowned in relic draws. For example, with set piece A in your vault and piece B in the Sealed Vault, B was considered missing, so the set-collection bonus kept making B more likely to drop. Relics in the Sealed Vault now count as owned, so the collection bonus for Legendary sets and named-item mini sets goes toward pieces you are actually missing. This applies to kill drops and to waypoint rerolls and first claims.
+- 道標で遺物の部位やレア度を変えて引き直したときと、最初の獲得のときに、図鑑に未登録の銘品への補正がかかっていなかった問題を直しました。これからは、ほかの報酬と同じように図鑑の補正が反映されます。 / Fixed the Codex bonus for unregistered named items not applying at waypoints, both when redrawing a relic after changing its slot or rarity and on the first claim. The Codex bonus now applies there just as it does for other rewards.
+- インフィニティで、短い区画が終点に昇格したあとに保存したデータが読み込めなかった問題を直しました。これからは、そのようなセーブも正しく読み込めます。 / Fixed saves made in Infinity after a short section was promoted to its endpoint failing to load. These saves now load correctly.
+- 契約の説明文で、見返りをつなげた部分に句点が「。。」と重なって表示されていた問題を直しました。 / Fixed Pact descriptions showing a doubled Japanese period ("。。") where rewards were joined together.
+- 属性組み合わせ星の英語の説明で、追加スタックの表示が正しくなかった問題を直しました。これからは、たとえば150なら「+1 stack (plus a 50% chance of one more)」、100未満なら「N% chance of +1 stack」のように、確実に増える数と追加の確率が分かる表示になります。単数・複数の書き分けや「+0 stacks」という表示も直しました。 / Fixed the English descriptions of attribute combo stars showing extra stacks incorrectly. They now show both the guaranteed stacks and the extra chance, for example "+1 stack (plus a 50% chance of one more)" for 150, or "N% chance of +1 stack" for values under 100. Singular/plural wording and the "+0 stacks" display were also fixed.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
 ## v3.2.8 — Fix co-op trade offers with used relics and capped unique effects（2026-10-17）
 
 この版は、協力プレイの取引で、提示したあとに装着したり合成などで使ったりした遺物が提示に残り、取引を進められなくなる問題を直す更新です。あわせて、覚醒や過剰（禁忌化）で上がった装備の固有効果が、実際の効果では上限で切り詰められていた問題と、恨みの通行料が最大HPのちょうど60%を失っても発動しなかった問題も直しています。 / This update fixes relics that were equipped or used up (for example in crafting) after being offered in a co-op trade staying in the offer and blocking the trade. It also fixes gear unique effects raised by awakening or Overcharge (Forbidden) being cut back to the cap in their actual effect, and Toll of Grudge not triggering after losing exactly 60% of max HP.
