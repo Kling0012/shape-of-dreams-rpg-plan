@@ -226,7 +226,7 @@ namespace SodRpg.Mod
     internal enum HeroSkillLocation { Q, W, E, R, Identity, Movement }
     internal enum SkillType { Normal, Ultimate }
     internal enum ElementalType { Fire, Cold, Light, Dark }
-    internal enum EntityRelation { Enemy }
+    internal enum EntityRelation { Enemy, Ally }
     internal class AbilityTrigger : Actor { public Entity owner; }
     internal class SkillTrigger : AbilityTrigger
     {
@@ -244,7 +244,7 @@ namespace SodRpg.Mod
         public void CallAttackCompleteBeforePrepareRoutines() { }
         public void CallAttackCompleteRoutines() { }
     }
-    internal class AbilityInstance : Actor { public Gem gem; }
+    internal class AbilityInstance : Actor { public Gem gem; public CastInfo info; }
     internal sealed class Gem : Actor { }
     internal sealed class ElementalStatusEffect : Actor { public bool isActive; }
     internal sealed class Summon : Entity
@@ -306,7 +306,21 @@ namespace SodRpg.Mod
     internal static class NativeActorLifetime { internal static void WarnOnce(string kind, Exception error) { } }
     internal struct ReactionChain { }
     internal enum DamageAttribute { IsCrit }
-    internal struct DamageData { public float amount; public bool HasAttr(DamageAttribute attr) => false; }
+    internal struct DamageData
+    {
+        public float amount;
+        public Actor actor;
+        // HostAuthority.Catchup.cs が最終ダメージ経路で読む金額。倍率は生データに反映する。
+        public float currentAmount;
+        public bool HasAttr(DamageAttribute attr) => false;
+        public void ApplyReduction(float ratio) => currentAmount *= 1f - ratio;
+        public void ApplyAmplification(float ratio) => currentAmount *= 1f + ratio;
+    }
+    // NativeCatchupDamage のパッチ先。装甲・過剰撃破の本体計算はこの境界の対象外。
+    internal class FinalDamageData
+    {
+        public FinalDamageData(DamageData data, float armor, Entity target) { }
+    }
     // 本体の回復処理（takenHealProcessor）の形。倍率は生データに反映する。
     internal struct HealData
     {
@@ -546,6 +560,42 @@ namespace SodRpg.Mod
         private float _tickNow;
         private float _nextGemSlotCheck;
         private bool _pressureDirty;
+        // 同行補正（HostAuthority.Catchup.cs はリンク済み）。HostAuthority.cs（リンク外）の圧状態と
+        // 同じ意味を境界でも用意する: 参加者は gamePlayers の人間、圧は受領済み Build の平均。
+        // 深度・道標・無限段は個人にも同じ係数で掛かるため、この境界では常に無修正にする。
+        private readonly List<Build> _pressureBuilds = new List<Build>();
+        private readonly HashSet<DewPlayer> _pressurePlayers = new HashSet<DewPlayer>();
+        private DreamPressure _pressure = DreamPressure.Neutral;
+        private int _pressurePlayerCount = -1;
+        partial void TickCatchup(bool pressureChanged);
+        partial void ResetCatchup();
+        partial void AddCatchupSnapshot(DreamforgePressureMsg msg);
+        private void RefreshPressure(bool synchronize = false)
+        {
+            _pressureDirty = false;
+            _pressureBuilds.Clear();
+            _pressurePlayers.Clear();
+            foreach (var player in DewPlayer.gamePlayers)
+            {
+                if (player == null || !player.isHumanPlayer || !_pressurePlayers.Add(player)) continue;
+                _pressureBuilds.Add(_builds.TryGetValue(player, out var received) ? received.Build : null);
+            }
+            _pressurePlayerCount = _pressureBuilds.Count;
+            _pressure = DreamPressure.Average(_pressureBuilds);
+            if (synchronize) SendPressure();
+        }
+        private void SendPressure()
+        {
+            var msg = new DreamforgePressureMsg
+            {
+                protocol = Protocol.Version,
+                healthMultiplier = (float)_pressure.HealthMultiplier,
+                damageMultiplier = (float)_pressure.DamageMultiplier,
+            };
+            AddCatchupSnapshot(msg);
+            _registeredOn?.CustomRpc_SendMessageToAllClients(msg);
+        }
+        private static bool IsHealthSacrifice(Actor source, Hero hero) => false;
         // 協力取引ホスト（HostAuthority.CoopTrade.cs は未リンク）。NativePersistence.targets が
         // 本物のハンドラ群を抽出するため、ここはその実行に必要な状態の形だけを用意する。
         private sealed class CoopPeerState
@@ -795,5 +845,8 @@ namespace SodRpg.Mod
         private void InitializeInfinityRun() { }
         public float PressureHealthMultiplier { get; internal set; } = 1f;
         public float PressureDamageMultiplier { get; internal set; } = 1f;
+        // ClientSession.cs（リンク外）が宣言する同行補正の受け口。実装はリンク済み ClientSession.Catchup.cs。
+        partial void ReceiveCatchup(DreamforgePressureMsg msg);
+        partial void ResetCatchupDisplay();
     }
 }
