@@ -719,6 +719,28 @@ namespace Issue73.Native.Tests
         }
 
         [Fact]
+        public void A_far_owner_keeps_the_enemy_while_everyone_else_is_far_too()
+        {
+            var host = Host(out _);
+            var a = Player(5);
+            var b = Player(9);
+            var enemy = Spawn(host, 100); // → a
+            a.hero.position = new Vector3(40f, 0f, 0f);
+            b.hero.position = new Vector3(-35f, 0f, 0f); // 交代先も 30m 以上離れている
+            for (float t = 2f; t <= 40f; t += 0.25f)
+            {
+                Time.time = t;
+                Call(host, "ScanEnemyOwnership");
+                Assert.Same(a, OwnerOf(host, enemy)); // 遠い人どうしで6秒ごとに持ち主が入れ替わらない
+            }
+            b.hero.position = new Vector3(-5f, 0f, 0f); // 誰かが近づけば渡す
+            Time.time = 41f;
+            Call(host, "ScanEnemyOwnership");
+            Assert.Same(b, OwnerOf(host, enemy));
+            Assert.Empty(Log.Warnings);
+        }
+
+        [Fact]
         public void An_idle_owner_keeps_the_enemy_until_someone_else_engages_it()
         {
             var host = Host(out _);

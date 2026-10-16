@@ -702,7 +702,13 @@ namespace SodRpg.Mod
             bool idle = now - state.OwnerLastEngaged >= CoopBalance.Ownership.IdleSeconds;
             if (now - state.Changed < CoopBalance.Ownership.ReassignCooldown || !(down || far || idle)) return;
             var replacement = OwnershipReplacement(state);
-            if (replacement != null && (down || far || now - OwnershipLastFight(state, replacement) <= CoopBalance.Ownership.EngageWindow))
+            bool replacementFought = replacement != null && now - OwnershipLastFight(state, replacement) <= CoopBalance.Ownership.EngageWindow;
+            // Leaving only because the owner is far: hand over to someone fighting it or actually near it.
+            // Otherwise two far players took turns every AwaySeconds, swinging the enemy's strength each time.
+            if (far && !down && !replacementFought && replacement != null
+                && (replacement.hero == null || (replacement.hero.position - state.Enemy.position).sqrMagnitude
+                    >= CoopBalance.Ownership.ReleaseDistance * CoopBalance.Ownership.ReleaseDistance)) return;
+            if (replacement != null && (down || far || replacementFought))
                 ChangeOwnership(state, replacement);
         }
 
