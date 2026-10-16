@@ -55,7 +55,10 @@ namespace SodRpg.Core.Game
                 SettledGraphEpoch = InfinityLong(j, "settledGraph", -1),
                 SettledSegmentEpoch = InfinityLong(j, "settledSegment", -1), TransitionIntent = Str(j, "intent"),
             };
-            if (state.ClearedCombatTotal < state.ClearsInCycle || state.SettledGraphEpoch > state.GraphEpoch
+            // PromoteFinaleBoss raises the cycle counter to the interval without counting combat
+            // clears (a graph too small for the cycle), so only a full cycle may exceed the total.
+            if ((state.ClearedCombatTotal < state.ClearsInCycle && state.ClearsInCycle != interval)
+                || state.SettledGraphEpoch > state.GraphEpoch
                 || state.SettledSegmentEpoch > state.SegmentEpoch
                 || (state.TransitionIntent != null && state.TransitionIntent != "" && state.TransitionIntent != "delve"
                     && state.TransitionIntent != "regenerate" && state.TransitionIntent != "return")
