@@ -1,5 +1,5 @@
-[b]Fixes co-op trades with a large-stash player repeatedly restarting the partner's record transfer.[/b]
-[b]協力プレイで保管庫の大きな参加者と取引するとき、記録の送信が何度もやり直される問題を修正しました。[/b]
+[b]Clearer melee co-op settings and star chart text, "0%" when capped, and numbers that display the same in every language setting.[/b]
+[b]近接協力の設定画面と星図の表示をわかりやすくし、上限時は「0%」と表示、どの言語設定でも数値が同じ表記になるようにしました。[/b]
 
 [h1]Dreamforge RPG[/h1]
 Turns every run into part of a long RPG journey: relics you keep, a risky "secure or delve" choice at every zone, a star map per Traveler, a forge, and long-term goals. Co-op ready.
