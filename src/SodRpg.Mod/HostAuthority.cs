@@ -399,6 +399,7 @@ namespace SodRpg.Mod
         {
             if (_tickNow < _nextAreaScan) return;
             _nextAreaScan = _tickNow + CoopBalance.ScanSeconds;
+            PruneAutoCastContacts(_tickNow);
             ScanArea();
         }
 
@@ -963,7 +964,9 @@ namespace SodRpg.Mod
                 ApplyPressure(rt);
                 ApplyRoomOmenMonster(rt);
                 // Pressure is already active; give the initial depth build time to arrive.
-                if (_builds.Count == 0 && now - _spawnQueue[i].Value < 15f) continue;
+                // A co-op ward must classify its initial enemies before their first received hit.
+                if (_builds.Count == 0 && now - _spawnQueue[i].Value < 15f
+                    && _roomOmen != RoomOmen.ResonantWard) continue;
                 _spawnQueue.RemoveAt(i);
                 var tier = (MonsterTier)Math.Min((int)MonsterTier.Boss, (int)m.type);
                 if (rt.SpawnProcessed) continue;
@@ -1309,6 +1312,8 @@ namespace SodRpg.Mod
             _omensFailed = false; // 失敗で止めた部屋の兆しは、次のゲームでもう一度試す。
             _omensFailedRunId = null;
             AutocastPressure.DetachHost(this);
+            ClearAutoCastContacts();
+            _autoCastContactsFailed = false;
             DetachCoopTrade();
             ClearAssignedMechanismSession();
             if (NativeInstance == this) NativeInstance = null;
@@ -1939,9 +1944,12 @@ namespace SodRpg.Mod
                 if (info.skill != null)
                 {
                     string used = info.skill.GetType().Name;
-                    float haste = Math.Min(100f, PowerRuntime.LinkHastePercent(rt.SatisfiedLinks, used, rt.Powers.LinkDistanceCoefficients)
-                        + FractionalScopedModifiers.NativePercent(rt.AppliedBuild?.Build.NativeModifiers, used, LinkKind.MemoryHaste));
-                    if (haste > 0) hero.ApplyCooldownReductionByRatio(info.skill, haste / 100f, false);
+                    float haste = PowerRuntime.LinkHastePercent(rt.SatisfiedLinks, used, rt.Powers.LinkDistanceCoefficients)
+                        + FractionalScopedModifiers.NativePercent(rt.AppliedBuild?.Build.NativeModifiers, used, LinkKind.MemoryHaste);
+                    if (EssenceCapsBalance.MemoryHasteEnabled)
+                        ReduceNormalMemory(hero, info.skill, Math.Min(EssenceCapsBalance.MemoryHasteMaxRemainingCooldownPercent, haste));
+                    else if (haste > 0f)
+                        hero.ApplyCooldownReductionByRatio(info.skill, Math.Min(100f, haste) / 100f, false);
                     foreach (var link in rt.SatisfiedLinks)
                     {
                         if (link.Kind != LinkKind.MemoryHaste && link.Kind != LinkKind.MemorySurge) continue;
@@ -2347,6 +2355,7 @@ namespace SodRpg.Mod
 
         private void OnPairEnemyDamage(EventInfoDamage info)
         {
+            RecordAutoCastContact(info);
             if (info.victim == null || info.victim.currentHealth > 0.00001f) return;
             int id = info.victim.GetInstanceID();
             if (_gimmickDamageDepth != 0 || _pairDamageDepth != 0 || _reflectingDamage || _shattering

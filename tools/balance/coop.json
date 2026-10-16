@@ -8,5 +8,8 @@
   "breakDamagePercent": 12,
   "meleeGuardRange": 3,
   "meleeGuardReductionPercent": 12,
-  "scanSeconds": 0.25
+  "scanSeconds": 0.25,
+  "autoCastIntervalSeconds": 0.2,
+  "autoCastOwnHitSeconds": 3,
+  "autoCastAllyHitSeconds": 2
 }

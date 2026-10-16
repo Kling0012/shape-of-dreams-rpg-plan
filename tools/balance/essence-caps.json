@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "qualitySoftCap": { "enabled": false, "threshold": 300, "excessDivisor": 3 },
+  "ricochet": { "enabled": true, "maxChance": 0.6 },
+  "fever": { "enabled": false, "maxDamageAmplification": 1.5 },
+  "embertail": { "enabled": false, "maxCooldownReduction": 0.5 },
+  "epiphany": { "enabled": false, "maxRefundFraction": 0.6 },
+  "memoryReuse": { "enabled": true, "baseCooldownFraction": 0.2, "minimumSeconds": 0.3 },
+  "crystalCircuit": { "enabled": true, "internalCooldownSeconds": 0.5 },
+  "memoryHaste": { "enabled": false, "maxRemainingCooldownPercent": 60 }
+}

@@ -14,6 +14,7 @@
     <InternalsVisibleTo Include="SodRpg.Core.Tests" />
     <InternalsVisibleTo Include="Issue73.Native.Tests" />
     <InternalsVisibleTo Include="BalanceSim" />
+    <InternalsVisibleTo Include="SodRpg.Mod.Startup.Tests" />
   </ItemGroup>
 
 </Project>

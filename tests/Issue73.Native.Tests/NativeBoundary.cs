@@ -42,13 +42,14 @@ namespace Mirror
     internal class NetworkConnection
     {
         public readonly List<object> Sent = new List<object>();
+        public int connectionId;
         public void Send<T>(T message) where T : struct, NetworkMessage => Sent.Add(message);
     }
     internal sealed class NetworkConnectionToClient : NetworkConnection { }
 }
  namespace UnityEngine
  {
-     internal static class Time { public static int frameCount; public static float unscaledTime; }
+     internal static class Time { public static int frameCount; public static float unscaledTime; public static float time; }
     // TrackRun の Limbo 深度の読み出しに必要な本体 API。ハーネスでは Limbo なし(0)を返す。
     internal static class Object { public static T FindObjectOfType<T>() where T : class => null; }
 
@@ -163,6 +164,7 @@ namespace SodRpg.Mod
         public bool isActive = true;
         public float currentHealth = 100;
         public DewPlayer owner;
+        public bool isDead => Status.isDead;
         public readonly EntityControl Control = new EntityControl();
         public readonly EntityVisual Visual = new EntityVisual();
         public EntityStatus Status = new EntityStatus();
@@ -181,7 +183,7 @@ namespace SodRpg.Mod
         public float maxHealth = 100;
         public int fireStack, lightStack, darkStack;
         public bool hasCold;
-        public bool isDead, isInConversation, hasInvulnerable;
+        public bool isDead, isInConversation, hasInvulnerable, hasDamageImmunity;
         public readonly List<StatBonus> AppliedBonuses = new List<StatBonus>();
         public void AddStatBonus(StatBonus bonus) => AppliedBonuses.Add(bonus);
         public void RemoveStatBonus(StatBonus bonus) => AppliedBonuses.Remove(bonus);
@@ -244,12 +246,14 @@ namespace SodRpg.Mod
         public void CallAttackCompleteBeforePrepareRoutines() { }
         public void CallAttackCompleteRoutines() { }
     }
-    internal class AbilityInstance : Actor { public Gem gem; }
+    internal class AbilityInstance : Actor { public Gem gem; public CastInfo info; }
     internal sealed class Gem : Actor { }
     internal sealed class ElementalStatusEffect : Actor { public bool isActive; }
     internal sealed class Summon : Entity
     {
         public CastInfo info;
+        // 本体ではSummon生成時に決まる召喚主。帰属判定（CoopOmens）が読む。
+        public Hero hero;
         public T FindFirstAncestorOfType<T>() where T : class => null;
     }
     internal sealed class Ai_D_ChargedAnguillian_Lightning : Actor { }
@@ -286,6 +290,21 @@ namespace SodRpg.Mod
             => entity == null || !entity.isActive || entity.currentHealth <= 0
                || entity is Hero hero && hero.isKnockedOut;
     }
+    // 本体の EntityCheck.IsAnyBoss と同じ意味（BossMonster または Boss/MiniBoss 型）。
+    internal static class EntityCheck
+    {
+        internal static bool IsAnyBoss(this Entity entity)
+            => entity is BossMonster || entity is Monster monster
+               && (monster.type == Monster.MonsterType.Boss || monster.type == Monster.MonsterType.MiniBoss);
+    }
+    // CoopOmens.cs の公開ラッパーと同じ式。本体では public だが、この境界の Entity は
+    // internal なので public 署名を作れず、同じ意味の internal 模倣として置く。
+    internal static class CoopOmens
+    {
+        internal static bool Enabled { get => HostAuthority.CoopOmensEnabled; set => HostAuthority.CoopOmensEnabled = value; }
+        internal static bool IsSharedObjective(Entity entity) => NetworkServer.active
+            && HostAuthority.NativeInstance?.IsCoopOmenWard(entity) == true;
+    }
     internal class BasicEffect { public bool isAlive = true; public StatusEffect parent; }
     internal sealed class StunEffect : BasicEffect { }
     internal sealed class RootEffect : BasicEffect { }
@@ -305,8 +324,34 @@ namespace SodRpg.Mod
     // NativeActorLifetime.cs は未リンク。この境界では警告の受け口だけが必要。
     internal static class NativeActorLifetime { internal static void WarnOnce(string kind, Exception error) { } }
     internal struct ReactionChain { }
-    internal enum DamageAttribute { IsCrit }
-    internal struct DamageData { public float amount; public bool HasAttr(DamageAttribute attr) => false; }
+    // 本体の DamageAttribute（フラグ）。既定のまま HasAttr は false を返す。
+    [Flags]
+    internal enum DamageAttribute { None = 0, IsCrit = 1, IgnoreDamageImmunity = 8 }
+    // 本体の DamageData と同じ倍率の意味（amount は originalAmount 相当）。共鳴の盾が読む
+    // currentAmount・免疫・倍率適用の形だけを模倣し、既存リンクファイルの amount は変えない。
+    internal struct DamageData
+    {
+        public float amount;
+        public bool isBlockedByImmunity;
+        public DamageAttribute attributes;
+        private float _multiplier;
+        private bool _scaled;
+        public float currentAmount => Math.Max(0f, amount) * (_scaled ? _multiplier : 1f);
+        public bool HasAttr(DamageAttribute attr) => attr != DamageAttribute.None && (attributes & attr) == attr;
+        public DamageData ApplyAmplification(float value)
+        {
+            _multiplier = (_scaled ? _multiplier : 1f) * (1f + value);
+            _scaled = true;
+            return this;
+        }
+        public DamageData ApplyReduction(float value)
+        {
+            float ratio = value < 0f ? 0f : value > 1f ? 1f : value;
+            _multiplier = (_scaled ? _multiplier : 1f) * (1f - ratio);
+            _scaled = true;
+            return this;
+        }
+    }
     // 本体の回復処理（takenHealProcessor）の形。倍率は生データに反映する。
     internal struct HealData
     {
@@ -485,6 +530,9 @@ namespace SodRpg.Mod
             public bool ClassificationQueued;
             public NightmareAffix ClassificationNightmare;
             public StatBonus OmenBonus;
+            // 初期生成群の分類（CoopOmens）が読む登録時刻と生成処理済みフラグ。
+            public float QueuedAt;
+            public bool SpawnProcessed;
         }
         internal sealed class Variant { public string Id; }
         internal sealed class Behavior { public bool CueQueued; }
@@ -495,6 +543,10 @@ namespace SodRpg.Mod
             if (multiplier < 1) data.ApplyReduction((float)(1 - multiplier));
             else if (multiplier > 1) data.ApplyAmplification((float)(multiplier - 1));
         }
+        // CoopOmens.cs（リンク）が呼ぶ本体側の生成処理とC07補正。この境界では
+        // 生成分類済み・補正なしを前提に何もしない。
+        private void ProcessSpawns() { }
+        internal void ApplyAuthoredFinalNativeDamage(ref DamageData damage, Actor actor, Entity target) { }
         internal static bool Alive(Entity entity) => entity != null && entity.isActive && entity.currentHealth > 0;
         private void SendMonsterBehaviorCue(MonsterRuntime runtime, bool force, DewPlayer target = null)
         {
@@ -552,6 +604,7 @@ namespace SodRpg.Mod
         {
             public float Seen;
             public bool Safe, Fusion;
+            public int ConnectionId = int.MinValue;
             public readonly BuildTransferReceiver Transfer = new BuildTransferReceiver(CoopTradeTransport.MaxProfileChars);
             public string Envelope;
         }
@@ -564,6 +617,7 @@ namespace SodRpg.Mod
             public string FirstOfferAck, SecondOfferAck;
             public bool Accepted, FirstConfirmed, SecondConfirmed, Preparing, FirstPrepared, SecondPrepared;
             public int Revision;
+            public int FirstProfileSentRevision = -1, SecondProfileSentRevision = -1;
             public float ActiveAt;
             public CoopTradeReceipt Receipt;
         }

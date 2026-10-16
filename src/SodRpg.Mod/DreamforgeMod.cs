@@ -25,6 +25,8 @@ namespace SodRpg.Mod
         partial void ApplyRoomOmensConfig();
         partial void StartNativeKillRewards();
         partial void StopNativeKillRewards();
+        partial void ApplyAutoCastCoopConfig();
+        partial void TickAutoCastCoopConfig();
 
         private ClientSession _session;
         private HostAuthority _host;
@@ -64,6 +66,7 @@ namespace SodRpg.Mod
                 NetworkTrafficOptions.Configure(config.netSkipUnchanged, config.netCoalesce, config.netOwnerOnly, config.netCompact);
                 ApplyLevelEssenceConfig();
                 ApplyRoomOmensConfig();
+                ApplyAutoCastCoopConfig();
                 // Install the generated star maps and their migration rules before any profile is loaded or any build is computed.
                 var starRegistrationWatch = System.Diagnostics.Stopwatch.StartNew();
                 StarClusters.RegisterAllGenerated((hero, error) =>
@@ -121,6 +124,7 @@ namespace SodRpg.Mod
             _session?.ConfigureOverflowBonus(config.overflowDreamDust);
             ApplyLevelEssenceConfig();
             ApplyRoomOmensConfig();
+            ApplyAutoCastCoopConfig();
             ApplyMeleeCoopConfig();
         }
 
@@ -165,6 +169,7 @@ namespace SodRpg.Mod
             _perf.Begin();
             HandleKeys();
             LevelEssenceRuntime.Tick();
+            TickAutoCastCoopConfig();
             bool block = _ui != null && (_ui.Open || _ui.MouseOverPanel);
             BlockInputWhileMenuOpen.MenuOpen = block;
             _perf.BeginClient();

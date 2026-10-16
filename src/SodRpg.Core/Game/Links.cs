@@ -341,8 +341,13 @@ namespace SodRpg.Core.Game
             switch (link.Kind)
             {
                 case LinkKind.MemoryHaste:
-                    limitJa = "1回の発動で短縮できる量は、合計で最大100%まで。";
-                    limitEn = " (Total reduction per cast is capped at 100%.)";
+                    string hasteCap = EssenceCapsBalance.MemoryHasteMaxRemainingCooldownPercent.ToString("0.##", CultureInfo.InvariantCulture);
+                    limitJa = EssenceCapsBalance.MemoryHasteEnabled
+                        ? "1回の発動で短縮できる量は、星による短縮と合計して残りクールダウンの最大" + hasteCap + "%まで。"
+                        : "1回の発動で短縮できる量は、合計で最大100%まで。";
+                    limitEn = EssenceCapsBalance.MemoryHasteEnabled
+                        ? " (Combined with star reductions, removes at most " + hasteCap + "% of remaining cooldown per cast.)"
+                        : " (Total reduction per cast is capped at 100%.)";
                     break;
                 case LinkKind.MemorySurge:
                     limitJa = "同時に有効になるのは最も大きい1つだけで、重ならずに時間が延びる。装備条件を外すと解除される。";
@@ -417,7 +422,7 @@ namespace SodRpg.Core.Game
                     return cond + "、最大HPが" + value + "%上がり、防御が" + value + "上がる。";
                 case LinkKind.MemoryHaste:
                     return cond + "、" + (MemoryCount(link) == 1 ? "その記憶を使うと、残りクールダウンが" : "条件に挙げた記憶のどれかを使うと、その記憶の残りクールダウンが")
-                        + "最大クールダウンの" + value + "%分短くなる。";
+                        + (EssenceCapsBalance.MemoryHasteEnabled ? value + "%短くなる。" : "最大クールダウンの" + value + "%分短くなる。");
                 case LinkKind.MemorySurge:
                     return cond + "、" + MemorySubjectJa(link) + "を使った後5秒間、攻撃力・魔力が" + value + "%上がる。";
                 default:
@@ -471,7 +476,8 @@ namespace SodRpg.Core.Game
                 case LinkKind.Guard:
                     return "Maximum health +" + value + "% and armor +" + value + ": " + cond + ".";
                 case LinkKind.MemoryHaste:
-                    return "Cooldown reduction +" + value + "%: " + cond + "; using " + MemorySubjectEn(link) + " removes " + value + "% of that memory's maximum cooldown from its remaining cooldown.";
+                    return "Cooldown reduction +" + value + "%: " + cond + "; using " + MemorySubjectEn(link) + " removes " + value
+                        + (EssenceCapsBalance.MemoryHasteEnabled ? "% of that memory's remaining cooldown." : "% of that memory's maximum cooldown from its remaining cooldown.");
                 case LinkKind.MemorySurge:
                     return "After using " + MemorySubjectEn(link) + ", Attack damage and ability power +" + value + "% for 5 seconds: " + cond + ".";
                 default:

@@ -21,7 +21,14 @@ namespace UnityEngine
     public static class Application { public static string persistentDataPath = System.IO.Path.GetTempPath(); }
     public static class Debug { public static void Log(object value) { } }
     public static class Time { public static float time, unscaledDeltaTime, unscaledTime; }
-    public static class Mathf { public static float Clamp(float value, float min, float max) => Math.Max(min, Math.Min(max, value)); }
+    public static class Mathf
+    {
+        public static float Clamp(float value, float min, float max) => Math.Max(min, Math.Min(max, value));
+        public static float Min(float a, float b) => Math.Min(a, b);
+        public static float Max(float a, float b) => Math.Max(a, b);
+        public static float Clamp01(float value) => Clamp(value, 0f, 1f);
+        public static int CeilToInt(float value) => (int)Math.Ceiling(value);
+    }
     public struct Vector3
     {
         public float x, y, z;
@@ -467,6 +474,18 @@ namespace SodRpg.Mod
         public HeroSkill Skill = new HeroSkill();
         public float currentHealth;
         public new HeroStatus Status = new HeroStatus();
+        public bool isKnockedOut;
+        public float maxHealth => Status.maxHealth;
+        // ホスト側の記憶短縮の観測点。本体はクールダウン演算に丸投げするが、試験は引数を記録するだけ。
+        public readonly List<(SkillTrigger skill, float ratio, bool ignore)> RatioReductions =
+            new List<(SkillTrigger, float, bool)>();
+        public readonly List<(SkillTrigger skill, float seconds)> SecondReductions =
+            new List<(SkillTrigger, float)>();
+        public void GiveShield(Entity source, float amount, float duration) { }
+        public void ApplyCooldownReductionByRatio(SkillTrigger skill, float ratio, bool ignoreCanReceiveCooldown)
+            => RatioReductions.Add((skill, ratio, ignoreCanReceiveCooldown));
+        public void ApplyCooldownReduction(SkillTrigger skill, float seconds)
+            => SecondReductions.Add((skill, seconds));
     }
     public enum EntityRelation { Ally, Enemy }
     public sealed class HeroStatus

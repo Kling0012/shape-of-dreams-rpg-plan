@@ -13,5 +13,8 @@ namespace SodRpg.Core.Game
         public const float MeleeGuardRange = 3f;
         public const float MeleeGuardReductionPercent = 12f;
         public const float ScanSeconds = 0.25f;
+        public const float AutoCastIntervalSeconds = 0.2f;
+        public const float AutoCastOwnHitSeconds = 3f;
+        public const float AutoCastAllyHitSeconds = 2f;
     }
 }
