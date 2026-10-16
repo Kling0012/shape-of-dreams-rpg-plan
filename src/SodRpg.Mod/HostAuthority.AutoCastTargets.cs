@@ -103,5 +103,7 @@ namespace SodRpg.Mod
             _enemyContacts.Clear();
             _expiredEnemyContacts.Clear();
         }
+
+        partial void OnAutoCastRoomLoaded() => ClearAutoCastContacts();
     }
 }

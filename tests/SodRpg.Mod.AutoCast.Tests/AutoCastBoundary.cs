@@ -80,6 +80,12 @@ namespace SodRpg.Mod
     }
     internal sealed partial class HostAuthority
     {
+        // RoomOmens.cs declares this partial and calls it; the implementing
+        // declaration lives in AutoCastTargets.cs. This assembly links that
+        // file without RoomOmens.cs, so the defining declaration is stubbed
+        // here to keep the implementing declaration valid (#529 style).
+        partial void OnAutoCastRoomLoaded();
+
         // Test window into the private contact recording, in the ForTest style
         // of MeleeCoopNativeTests.
         internal void RecordAutoCastContactForTest(EventInfoDamage info) => RecordAutoCastContact(info);
