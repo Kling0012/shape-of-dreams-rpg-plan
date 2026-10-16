@@ -960,14 +960,29 @@ def run_dotnet_test(root: Path, project: str, filter_expr: str | None,
     cmd = [dotnet, "test", project, "-c", "Release"]
     if filter_expr:
         cmd += ["--filter", filter_expr]
-    if no_build:
-        cmd.append("--no-build")
     env = dict(os.environ)
     env["DOTNET_ROOT"] = dotnet_root
     # Keep the console summary machine-parseable regardless of the OS locale.
     env.setdefault("DOTNET_CLI_UI_LANGUAGE", "en")
     if slow:
         env["SODRPG_SLOW"] = "1"
+    if no_build:
+        # A separate runner may have sources but not the earlier build outputs.
+        # Ask MSBuild for the path so custom output directories are honored too.
+        target = subprocess.run(
+            [dotnet, "msbuild", project, "-property:Configuration=Release",
+             "-getProperty:TargetPath"], cwd=str(root), env=env,
+            stdin=subprocess.DEVNULL, capture_output=True, text=True,
+            encoding="utf-8", errors="replace",
+        )
+        if target.returncode != 0:
+            return target.returncode, (target.stdout or "") + (target.stderr or "")
+        target_path = target.stdout.strip()
+        if target_path and (root / target_path).is_file():
+            cmd.append("--no-build")
+        else:
+            print(f"build output missing for {project}; building before test",
+                  file=sys.stderr)
     result = subprocess.run(
         cmd, cwd=str(root), env=env, stdin=subprocess.DEVNULL,
         capture_output=True, text=True, encoding="utf-8", errors="replace",
