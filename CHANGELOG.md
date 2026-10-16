@@ -10,7 +10,62 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 - 保存に失敗したときの理由の表示が、表示言語を切り替えたあとも現在の言語で出るようになりました。また、保存中に例外が出たあとでさらに書き込みに失敗したときは、古い例外の文が残り続けず、新しい書き込み失敗の表示に切り替わります。 / Save failure reasons on screen now follow the display language after you switch it. When a write fails again after an exception during saving, the newer write failure replaces the lingering older exception message.
 - 保存に失敗したときのログ（`Player.log` の "Save failed" 行）は、表示言語に関係なく英文で出るようになりました。 / The "Save failed" log entry is now written in English regardless of the display language.
-- 装備やビルドの計算、固有効果の抽選で、毎回くり返していた無駄な処理を減らしました（結果は同じです）。 / Reduced repeated work in build calculation and power rolls (results are unchanged).
+
+---
+
+## v3.1.7 — Fixes for cooking ingredient limits and icon numbers（2026-10-17）
+
+この版は、料理の素材まわりの不具合を直す更新です。 / This update fixes bugs related to cooking ingredients.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- 料理の素材のうち1つでも上限の設定が正しくないと、すべての素材で、料理1回に使う量の上限が効かなくなる問題を直しました。これからは問題のある素材だけが元のゲームの動きに戻り、ほかの素材はこれまでどおり上限の量だけ使われます。 / Fixed an issue where one ingredient with an invalid limit setting turned off the per-cook usage limit for every ingredient. Now only that ingredient goes back to the base game's behavior, and the other ingredients are still used only up to their limit.
+- 素材アイコンを別の場所の表示に使い直したとき、前の数字が消えずに残ることがある問題を直しました。 / Fixed an issue where an old number could stay on an ingredient icon after the icon was reused in another place.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
+## v3.1.6 — Maintenance update: co-op processing cleanup and troubleshooting logs（2026-10-17）
+
+この版は内部の保守のための更新で、ゲーム内の動きや数値に変更はありません。 / This is a maintenance update with no changes to gameplay or numbers.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### この版について / About this version
+
+- 協力プレイで敵を倒した記録をやり取りする処理を内部で整理し、無駄な繰り返しを減らしました。遊び方や報酬、表示はこれまでと変わりません。 / We streamlined the internal processing used to exchange kill records in co-op, cutting out redundant work. How the game plays, rewards and what is shown on screen are unchanged.
+- 協力プレイの記録のやり取りや取引で問題が起きたときに原因を調べやすくするため、調査用の記録を追加しました。この版で不具合が直ったわけではありません。 / To make problems easier to investigate when exchanging records or trading in co-op, we added logging for troubleshooting. This version does not fix any bug by itself.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
+## v3.1.5 — Maintenance update: streamlined build and roll processing（2026-10-17）
+
+この版は内部の保守のための更新で、ゲーム内の動きや数値に変更はありません。 / This is a maintenance update with no changes to gameplay or numbers.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### この版について / About this version
+
+- 装備の能力を集計する処理と、抽選の処理を内部で整理し、無駄な繰り返しを減らしました。遊び方や効果の内容、確率、表示はこれまでと変わりません。 / We streamlined the internal processing used to total up equipment effects and to run random rolls, cutting out redundant work. How the game plays, what effects do, the odds and what is shown on screen are unchanged.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
 
 ---
 

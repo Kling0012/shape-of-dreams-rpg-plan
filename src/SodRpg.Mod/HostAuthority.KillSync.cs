@@ -98,6 +98,7 @@ namespace SodRpg.Mod
             public KillParticipationRange Participation;
             public bool Started, HeardReceipt, ControlSent;
             public float NextStartRetry;
+            public float NextUnknownReceiptDiagnostic;
             public float ReceiptWaitingSince;
             public bool ReceiptWaitReleased;
             public readonly List<MonsterRuntime> Monsters = new List<MonsterRuntime>();
@@ -371,17 +372,20 @@ namespace SodRpg.Mod
             return low;
         }
 
-        private bool KillReceiptStreamKnown(KillReplayPeer peer, string streamId, ref HashSet<string> historyStreams)
+        private bool KillReceiptStreamKnown(KillReplayPeer peer, string streamId, ref HashSet<string> knownStreams)
         {
             if (streamId == _killStreamId) return true;
-            foreach (var receipt in peer.Receipts) if (receipt.StreamId == streamId) return true;
-            foreach (var range in peer.Participation) if (range.StreamId == streamId) return true;
-            if (historyStreams == null)
+            if (knownStreams == null)
             {
-                historyStreams = new HashSet<string>(StringComparer.Ordinal);
-                foreach (var fact in _killHistory) historyStreams.Add(fact.StreamId);
+                // Snapshot all known streams once per message, rather than scanning the peer for every receipt.
+                knownStreams = new HashSet<string>(StringComparer.Ordinal);
+                foreach (var receipt in peer.Receipts) knownStreams.Add(receipt.StreamId);
+                foreach (var range in peer.Participation) knownStreams.Add(range.StreamId);
+                foreach (var fact in _killHistory) knownStreams.Add(fact.StreamId);
             }
-            return historyStreams.Contains(streamId);
+            // Pruning history retires a stream only when neither participation nor a prior receipt retains it.
+            // Its facts are already durable and no longer owed to a peer, so ignoring a late receipt is safe.
+            return knownStreams.Contains(streamId);
         }
 
         private void OnKillReceipt(DreamforgeKillReceiptMsg msg, DewPlayer caller)
@@ -445,12 +449,26 @@ namespace SodRpg.Mod
             }
             if (msg.receipts != null)
             {
-                HashSet<string> historyStreams = null;
+                HashSet<string> knownStreams = null;
+                int unknownReceipts = 0;
+                // Keep every known-stream receipt, including those after the first 32 entries.
                 foreach (var receipt in msg.receipts)
                 {
-                    // Unknown streams must not grow the peer's durable receipt record without bound.
-                    if (!KillReceiptStreamKnown(peer, receipt.streamId, ref historyStreams)) continue;
+                    // Unknown receipts neither grow the durable record nor enqueue a replay request.
+                    if (!KillReceiptStreamKnown(peer, receipt.streamId, ref knownStreams)) { unknownReceipts++; continue; }
                     changed |= peer.AcceptReceipt(receipt.streamId, receipt.receivedThrough);
+                }
+                if (unknownReceipts > 0 && Time.unscaledTime >= cursor.NextUnknownReceiptDiagnostic)
+                {
+                    cursor.NextUnknownReceiptDiagnostic = Time.unscaledTime + 30f;
+                    try
+                    {
+                        // Counts only, at most once per connection per 30 seconds; no untrusted stream IDs.
+                        Log.Info("Kill replay diagnostic: ignoredUnknownReceipts=" + unknownReceipts
+                            + " pendingRequests=" + cursor.Requested.Count
+                            + " remainingHistory=" + (_killHistory.Count - cursor.FactIndex));
+                    }
+                    catch (Exception) { } // Diagnostics must not affect receipt processing.
                 }
             }
             // Requests bypass the historical cursor, including facts missed during a zone/authority transition.
