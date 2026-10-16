@@ -1,5 +1,5 @@
-[b]Fixes the secure point panel showing a lower nightmare chance than the actual roll.[/b]
-[b]確保地点のパネルに出る悪夢化の確率が、実際の抽選より低く表示されていた問題を直しました。[/b]
+[b]Fixes the Trade tab slowing down when the vault holds many relics.[/b]
+[b]保管庫の遺物が多いときに取引タブが重くなる問題を直しました。[/b]
 
 [h1]Dreamforge RPG[/h1]
 Turns every run into part of a long RPG journey: relics you keep, a risky "secure or delve" choice at every zone, a star map per Traveler, a forge, and long-term goals. Co-op ready.

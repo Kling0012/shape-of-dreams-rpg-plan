@@ -10,6 +10,26 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v3.2.2 — Smoother Trade tab with large vaults（2026-10-17）
+
+この版は、保管庫の遺物が多いときに取引タブが重くなる問題を直す更新です。 / This update fixes the Trade tab slowing down when the vault holds many relics.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- 保管庫に遺物が数百件あると、取引タブを開いている間にフレームレートが大きく落ちていた問題を直しました。工房で保管庫を最大の1960枠まで広げた場合も同じでした。これからは、保管庫と鞄の遺物一覧で画面に見えている行だけを表示するので、遺物が多くても動作が重くなりにくくなります。スクロールできる範囲は今までどおりです。 / Fixed an issue where the frame rate dropped sharply while the Trade tab was open if the vault held hundreds of relics, including a vault expanded to the maximum of 1,960 slots in the workshop. The vault and bag relic lists now show only the rows visible on screen, so the tab stays responsive even with many relics. You can still scroll through the whole list as before.
+- 取引タブの遺物一覧は、装備・鍛冶の一覧と同じく、どの行も同じ高さで並ぶようになりました。長い名前は1行で表示し、説明は行の中に収まる分だけを表示します。全文は行にカーソルを合わせると表示され、選択済みの欄でも確認できます。 / Relic rows in the Trade tab now all have the same height, like the equipment and forge lists. Long names are shown on one line, and descriptions are trimmed to fit the row. Hover over a row to see the full text, which is also shown in the selected section.
+- 名前・レア度・部位で絞り込みを変えると、一覧は先頭に戻ります。 / Changing the name, rarity, or slot filter now scrolls the list back to the top.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
 ## v3.2.1 — Secure point nightmare chance now matches the actual roll（2026-10-17）
 
 この版は、確保地点のパネルに表示される悪夢化の確率を、実際の抽選と合うように直す更新です。 / This update makes the nightmare chance shown on the secure point panel match the actual roll.
