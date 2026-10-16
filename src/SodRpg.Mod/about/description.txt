@@ -1,5 +1,5 @@
-[b]Clearer melee co-op settings and star chart text, "0%" when capped, and numbers that display the same in every language setting.[/b]
-[b]近接協力の設定画面と星図の表示をわかりやすくし、上限時は「0%」と表示、どの言語設定でも数値が同じ表記になるようにしました。[/b]
+[b]Co-op trade messages now tell cancellations apart from connection changes and appear in each player's own language.[/b]
+[b]協力プレイの取引で、取消と接続の変化を区別したメッセージを、参加者それぞれの言語で表示するようにしました。[/b]
 
 [h1]Dreamforge RPG[/h1]
 Turns every run into part of a long RPG journey: relics you keep, a risky "secure or delve" choice at every zone, a star map per Traveler, a forge, and long-term goals. Co-op ready.
