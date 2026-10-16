@@ -179,7 +179,7 @@ namespace SodRpg.Core.Game
                 .Add("hintsOff", p.HintsOff)
                 .Add("starterGranted", p.StarterGranted)
                 .Add("starterV119Granted", p.StarterV119Granted)
-                .Add("starterUids", p.StarterUids.Select(u => (object)u).ToList())
+                .Add("starterUids", p.StarterUids.Where(u => p.FindStash(u) != null).Select(u => (object)u).ToList())
                 .Add("stats", stats)
                 .Add("completedRunId", p.CompletedRunId)
                 .Add("lobbyReturnedRunIds", p.LobbyReturnedRunIds.Select(id => (object)id).ToList())
