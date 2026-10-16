@@ -39,6 +39,9 @@ namespace SodRpg.Mod
         [LabelText("Enemy ownership (coop, host) / 担当制（マルチ・ホスト）")]
         public bool coopEnemyOwnership = true;
 
+        [LabelText("Show enemy ownership marks (client) / 担当の印を表示（クライアント）")]
+        public bool showEnemyOwnershipMarks = true;
+
         [LabelText("Coop: distance falloff and grace (host) / 味方距離効果の減衰と猶予（ホスト）")]
         public bool coopDistanceFalloff = true;
 

@@ -89,6 +89,28 @@ namespace SodRpg.Mod
 
         internal static void DirtyHostKillReplay() => _hostSession?.DeferKillSave();
 
+        internal readonly Dictionary<uint, MonsterOwnership> EnemyOwners = new Dictionary<uint, MonsterOwnership>();
+        private bool _ownershipDisplayFailed;
+
+        private void ReceiveMonsterOwnership(uint netId, string participantId, long revision, bool protectedState, int slot)
+        {
+            if (_ownershipDisplayFailed || netId == 0) return;
+            try
+            {
+                if (EnemyOwners.TryGetValue(netId, out var previous) && previous.Revision > revision) return;
+                // Old hosts omit the additive fields. Keep no ownership state for their messages.
+                if (revision <= 0) { EnemyOwners.Remove(netId); return; }
+                EnemyOwners[netId] = new MonsterOwnership(participantId, revision,
+                    protectedState && !string.IsNullOrEmpty(participantId) && slot >= 1 && slot <= 4, slot);
+            }
+            catch (Exception ex)
+            {
+                _ownershipDisplayFailed = true;
+                EnemyOwners.Clear();
+                Log.Warn("Enemy ownership display unavailable; classification and host rules continue: " + ex.Message);
+            }
+        }
+
         private bool ObserveMonsterAuthority(ulong generation)
         {
             if (!_monsterAuthority.Observe(generation, out bool changed)) return false;
@@ -96,6 +118,7 @@ namespace SodRpg.Mod
             _currentKillStreamId = generation.ToString(CultureInfo.InvariantCulture);
             BindNativeKillStream(_currentKillStreamId);
             Nightmare.Clear();
+            EnemyOwners.Clear();
             ClearVariants();
             ClearMonsterCues();
             ClearBossDisplay();
@@ -107,6 +130,8 @@ namespace SodRpg.Mod
         private void ResetMonsterAuthorityConnection()
         {
             _monsterAuthority.ResetConnection();
+            EnemyOwners.Clear();
+            _ownershipDisplayFailed = false;
             _currentKillStreamId = null;
             _nextKillReceipt = 0f;
         }
@@ -157,6 +182,7 @@ namespace SodRpg.Mod
             if (msg.clearLiveState)
             {
                 Nightmare.Clear();
+                EnemyOwners.Clear();
                 ClearVariants();
                 ClearMonsterCues();
                 ClearBossDisplay();

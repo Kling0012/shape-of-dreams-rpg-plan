@@ -513,6 +513,8 @@ namespace SodRpg.Mod
             return recent ?? closest;
         }
 
+        partial void ScanMonsterOwnershipSync();
+
         private void ScanEnemyOwnership()
         {
             bool running;
@@ -561,6 +563,7 @@ namespace SodRpg.Mod
             }
             foreach (var enemy in _ownershipScratch) ReleaseEnemyOwnership(enemy);
             _ownershipScratch.Clear();
+            ScanMonsterOwnershipSync();
         }
 
         private void ScanOwnershipReassignment(EnemyOwnership state)

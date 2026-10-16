@@ -153,6 +153,7 @@ namespace SodRpg.Mod
             public bool ClassificationQueued;
             public NightmareAffix ClassificationNightmare;
             public string ClassificationVariant;
+            public MonsterOwnership Ownership, ClassificationOwnership;
             public Se_GenericShield_OneShot Ward;
             public Action<EventInfoDamage> OnDamageDealt;
             public bool Reflects;

@@ -121,6 +121,25 @@ namespace SodRpg.Mod
         public int[] elementalKills;
     }
 
+    internal readonly struct MonsterOwnership
+    {
+        internal readonly string ParticipantId;
+        internal readonly long Revision;
+        internal readonly bool Protected;
+        internal readonly int PlayerSlot;
+
+        internal MonsterOwnership(string participantId, long revision, bool protectedState, int playerSlot)
+        {
+            ParticipantId = participantId;
+            Revision = revision;
+            Protected = protectedState;
+            PlayerSlot = playerSlot;
+        }
+
+        internal bool SameState(MonsterOwnership other) => ParticipantId == other.ParticipantId
+            && Revision == other.Revision && Protected == other.Protected && PlayerSlot == other.PlayerSlot;
+    }
+
     /// <summary>ホスト → 全員：この敵が悪夢化した（接頭効果のビット集合）。</summary>
     [Serializable]
     public class DreamforgeNightmareMsg
@@ -130,6 +149,11 @@ namespace SodRpg.Mod
         public int affixes;
         public bool removed;
         public ulong authorityGeneration;
+        // Additive CustomRpc JSON fields; older clients ignore ownership.
+        public string ownerParticipantId;
+        public long ownershipRevision;
+        public bool ownershipProtected;
+        public int ownerPlayerSlot;
     }
 
     /// <summary>ホスト → 全員：この敵が夢の変種になった（Core の変種ID）。</summary>
@@ -140,6 +164,10 @@ namespace SodRpg.Mod
         public uint netId;
         public string variantId;
         public ulong authorityGeneration;
+        public string ownerParticipantId;
+        public long ownershipRevision;
+        public bool ownershipProtected;
+        public int ownerPlayerSlot;
     }
 
     /// <summary>ホスト → 全員：現在の敵側の予告。0なし、1障壁予告、2守り、3隙/減速、4回復。</summary>

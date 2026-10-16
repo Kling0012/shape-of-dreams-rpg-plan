@@ -484,6 +484,7 @@ namespace SodRpg.Mod
             public uint KillEventNetId, SyncNetId;
             public bool ClassificationQueued;
             public NightmareAffix ClassificationNightmare;
+            public MonsterOwnership Ownership, ClassificationOwnership;
             public StatBonus OmenBonus;
         }
         internal sealed class Variant { public string Id; }

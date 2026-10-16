@@ -1011,10 +1011,13 @@ namespace SodRpg.Mod
             return monster;
         }
 
-        /// <summary>悪夢化した敵と夢の変種の頭上に名札を出す。</summary>
+        private const int MonsterLabelLimit = 64;
+        private const float MonsterLabelDistance = 60f;
+        private bool _ownershipLabelsFailed;
+
+        /// <summary>既存の名札と担当の印を同じ表示枠で描く。分類の名札を優先する。</summary>
         private void DrawNightmareLabels(float scale)
         {
-            // 頭上の名前は言語で変わるので、言語を切り替えたら作り直す。
             if (_labelCacheJa != Loc.Japanese)
             {
                 _labelCacheJa = Loc.Japanese;
@@ -1023,57 +1026,90 @@ namespace SodRpg.Mod
             }
             _labelScratch.Clear();
             foreach (var entry in _labelMonsters)
-                if ((!_s.Nightmare.ContainsKey(entry.Key) && !_s.Variant.ContainsKey(entry.Key))
-                    || entry.Value.Identity == null || entry.Value.Monster == null)
+                if ((!_s.Nightmare.ContainsKey(entry.Key) && !_s.Variant.ContainsKey(entry.Key) && !_s.EnemyOwners.ContainsKey(entry.Key))
+                    || entry.Value.Identity == null || entry.Value.Monster == null
+                    || !Mirror.NetworkClient.spawned.TryGetValue(entry.Key, out var live) || live != entry.Value.Identity)
                     _labelScratch.Add(entry.Key);
             foreach (uint netId in _labelScratch) _labelMonsters.Remove(netId);
-            DrawVariantLabels(scale);
-            if (_s.Nightmare.Count == 0) return;
             var cam = Camera.main;
             if (cam == null) return;
+            int remaining = MonsterLabelLimit;
             foreach (var kv in _s.Nightmare)
             {
-                // Delta sync retains tags outside the local spawn/interest window until host removal.
-                if (!Mirror.NetworkClient.spawned.TryGetValue(kv.Key, out var id) || id == null) continue;
-                var m = LabelMonster(kv.Key, id);
-                if (m == null || !m.isActive) continue;
-                var sp = cam.WorldToScreenPoint(m.position + Vector3.up * 3.2f);
-                if (sp.z <= 0) continue;
-                if (!_nightmareLabelCache.TryGetValue((int)kv.Value, out var lab))
-                {
-                    string text = UiStyles.Colored(Nightmares.Label(kv.Value), "#ff6ad5");
-                    var content = new GUIContent(text);
-                    lab = new Label3D { Text = text, Content = content, Size = _st.ToastMeasure.CalcSize(content) };
-                    _nightmareLabelCache[(int)kv.Value] = lab;
-                }
-                float x = sp.x / scale - lab.Size.x / 2, y = (Screen.height - sp.y) / scale - lab.Size.y;
-                GUI.Label(new Rect(x, y, lab.Size.x + 4, lab.Size.y), lab.Content, _st.Toast);
+                DrawMonsterLabel(kv.Key, cam, scale, ref remaining);
+                if (remaining == 0) return;
+            }
+            foreach (var kv in _s.Variant)
+            {
+                if (!_s.Nightmare.ContainsKey(kv.Key)) DrawMonsterLabel(kv.Key, cam, scale, ref remaining);
+                if (remaining == 0) return;
+            }
+            if (_ownershipLabelsFailed || !_cfg().showEnemyOwnershipMarks) return;
+            foreach (var kv in _s.EnemyOwners)
+            {
+                if (kv.Value.Protected && !_s.Nightmare.ContainsKey(kv.Key) && !_s.Variant.ContainsKey(kv.Key))
+                    DrawMonsterLabel(kv.Key, cam, scale, ref remaining);
+                if (remaining == 0) return;
             }
         }
 
-        private void DrawVariantLabels(float scale)
+        private void DrawMonsterLabel(uint netId, Camera cam, float scale, ref int remaining)
         {
-            if (_s.Variant.Count == 0) return;
-            var cam = Camera.main;
-            if (cam == null) return;
-            foreach (var kv in _s.Variant)
+            // Keep pre-spawn/out-of-interest records until authoritative removal; resolve only live identities.
+            if (!Mirror.NetworkClient.spawned.TryGetValue(netId, out var id) || id == null) return;
+            var m = LabelMonster(netId, id);
+            if (m == null || !m.isActive || !m.isAlive) return;
+            var origin = _s.LocalHero != null ? _s.LocalHero.position : cam.transform.position;
+            if ((m.position - origin).sqrMagnitude > MonsterLabelDistance * MonsterLabelDistance) return;
+            var sp = cam.WorldToScreenPoint(m.position + Vector3.up * 3.2f);
+            if (sp.z <= 0 || sp.x < 0 || sp.x > Screen.width || sp.y < 0 || sp.y > Screen.height) return;
+            Label3D label = null, mark = null;
+            if (_s.Nightmare.TryGetValue(netId, out var nightmare))
             {
-                if (!Mirror.NetworkClient.spawned.TryGetValue(kv.Key, out var id) || id == null) continue;
-                var m = LabelMonster(kv.Key, id);
-                var def = Variants.Get(kv.Value);
-                if (m == null || def == null || !m.isActive) continue;
-                var sp = cam.WorldToScreenPoint(m.position + Vector3.up * 3.2f);
-                if (sp.z <= 0) continue;
-                if (!_variantLabelCache.TryGetValue(kv.Value, out var lab))
+                if (!_nightmareLabelCache.TryGetValue((int)nightmare, out label))
+                {
+                    string text = UiStyles.Colored(Nightmares.Label(nightmare), "#ff6ad5");
+                    var content = new GUIContent(text);
+                    label = new Label3D { Text = text, Content = content, Size = _st.ToastMeasure.CalcSize(content) };
+                    _nightmareLabelCache[(int)nightmare] = label;
+                }
+            }
+            else if (_s.Variant.TryGetValue(netId, out var variant))
+            {
+                var def = Variants.Get(variant);
+                if (def != null && !_variantLabelCache.TryGetValue(variant, out label))
                 {
                     string text = UiStyles.Colored(Variants.Label(def), "#ffb347");
                     var content = new GUIContent(text);
-                    lab = new Label3D { Text = text, Content = content, Size = _st.ToastMeasure.CalcSize(content) };
-                    _variantLabelCache[kv.Value] = lab;
+                    label = new Label3D { Text = text, Content = content, Size = _st.ToastMeasure.CalcSize(content) };
+                    _variantLabelCache[variant] = label;
                 }
-                float x = sp.x / scale - lab.Size.x / 2, y = (Screen.height - sp.y) / scale - lab.Size.y;
-                GUI.Label(new Rect(x, y, lab.Size.x + 4, lab.Size.y), lab.Content, _st.Toast);
             }
+            if (!_ownershipLabelsFailed)
+            {
+                try { mark = OwnershipMark(netId); }
+                catch (Exception ex)
+                {
+                    _ownershipLabelsFailed = true;
+                    Log.Warn("Enemy ownership labels disabled; existing labels continue: " + ex.Message);
+                }
+            }
+            if (label == null && mark == null) return;
+            float markWidth = mark != null ? mark.Size.x + 4 : 0;
+            float width = markWidth + (label != null ? label.Size.x + 4 : 0);
+            float height = Mathf.Max(mark != null ? mark.Size.y : 0, label != null ? label.Size.y : 0);
+            float x = sp.x / scale - width / 2, y = (Screen.height - sp.y) / scale - height;
+            if (mark != null)
+            {
+                try { GUI.Label(new Rect(x, y, markWidth, height), mark.Content, _st.Toast); }
+                catch (Exception ex)
+                {
+                    _ownershipLabelsFailed = true;
+                    Log.Warn("Enemy ownership mark drawing disabled; existing labels continue: " + ex.Message);
+                }
+            }
+            if (label != null) GUI.Label(new Rect(x + markWidth, y, label.Size.x + 4, height), label.Content, _st.Toast);
+            remaining--;
         }
 
         private bool _reportDismissed;

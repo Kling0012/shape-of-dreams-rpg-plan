@@ -466,6 +466,7 @@ namespace SodRpg.Mod
                     SaveNow();
                 }
                 Nightmare.Clear();
+                EnemyOwners.Clear();
                 ClearVariants();
                 ClearMonsterCues();
                 ClearBossDisplay();
@@ -570,6 +571,7 @@ namespace SodRpg.Mod
             _sentDreamLevel = -1;
             _buildDirty = true;
             Nightmare.Clear();
+            EnemyOwners.Clear();
             ClearVariants();
             ClearMonsterCues();
             ClearBossDisplay();
@@ -1138,12 +1140,14 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
             if (msg.removed)
             {
                 _monsterAuthority.Remove(msg.netId);
+                EnemyOwners.Remove(msg.netId);
                 Nightmare.Remove(msg.netId);
                 RemoveVariant(msg.netId);
                 RemoveMonsterCue(msg.netId);
                 return;
             }
             if (!_monsterAuthority.Set(msg.authorityGeneration, msg.netId, (NightmareAffix)msg.affixes, null)) return;
+            ReceiveMonsterOwnership(msg.netId, msg.ownerParticipantId, msg.ownershipRevision, msg.ownershipProtected, msg.ownerPlayerSlot);
             var a = Nightmares.Sanitize(msg.affixes);
             if (a == NightmareAffix.None)
             {
@@ -1160,6 +1164,7 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
             if (msg == null || !ObserveMonsterAuthority(msg.authorityGeneration)
                 || !_monsterAuthority.Set(msg.authorityGeneration, msg.netId, NightmareAffix.None, msg.variantId)) return;
             Protocol.WarnMismatch(msg.protocol, nameof(DreamforgeVariantMsg));
+            ReceiveMonsterOwnership(msg.netId, msg.ownerParticipantId, msg.ownershipRevision, msg.ownershipProtected, msg.ownerPlayerSlot);
             var def = Variants.Get(msg.variantId);
             if (def == null)
             {
