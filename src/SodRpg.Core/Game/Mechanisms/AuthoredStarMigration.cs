@@ -160,7 +160,7 @@ namespace SodRpg.Core.Game
                     if (!nodes.TryGetValue(selected, out key) || !layout.CanReach(candidate, key) || !EligibleKey(key))
                     {
                         refunded.Add(selected);
-                        points = checked(points + (key?.KeystoneDefinition?.Cost ?? Content.KeystoneCost));
+                        points = checked(points + (key?.KeystoneCost ?? Content.KeystoneCost));
                         candidate.RemoveKeystone(selected);
                         changed = true;
                     }
@@ -172,7 +172,7 @@ namespace SodRpg.Core.Game
             {
                 string removed = candidate.Keystones[candidate.KeystoneCount - 1];
                 refunded.Add(removed);
-                points = checked(points + (nodes.TryGetValue(removed, out var removedKey) ? removedKey.KeystoneDefinition?.Cost ?? Content.KeystoneCost : Content.KeystoneCost));
+                points = checked(points + (nodes.TryGetValue(removed, out var removedKey) ? removedKey.KeystoneCost : Content.KeystoneCost));
                 candidate.RemoveKeystone(removed);
             }
             // CanReach admits a candidate adjacent to the allocated graph; it never admits an allocated disconnected island.

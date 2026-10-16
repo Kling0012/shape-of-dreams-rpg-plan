@@ -368,7 +368,7 @@ namespace SodRpg.Core.Tests
             foreach (string bad in new[]
             {
                 ok + "x:1:10:60:0:1",                          // wrong field count
-                ok + "outer.v132.growth:9:10:60:0:1:7=1000",   // unknown trigger
+                ok + "outer.v132.growth:10:10:60:0:1:7=1000",  // unknown trigger
                 ok + "outer.v132.growth:1:0:60:0:1:7=1000",    // threshold out of range
                 ok + "outer.v132.growth:1:10:900:0:1:7=1000",  // cap out of range
                 ok + "outer.v132.growth:1:10:60:0:3:7=1000",   // gain multiplier out of range

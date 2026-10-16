@@ -28,5 +28,57 @@ namespace SodRpg.Core.Game
         public const string AutoCastOwnHitSecondsText = "3";
         public const float AutoCastAllyHitSeconds = 2f;
         public const string AutoCastAllyHitSecondsText = "2";
+        public const float ShieldWallTauntSeconds = 4f;
+        public const string ShieldWallTauntSecondsText = "4";
+
+        public static class Ownership
+        {
+            public const float HelpFactor = 0.5f;
+            public const float BossShareFactor = 0.8f;
+            public const float BossDamageMin = 0.2f;
+            public const float BossDamageMax = 3f;
+            public const float Floor = 0.3f;
+            public const float RescueHp = 0.35f;
+            public const float EngageWindow = 6f;
+            public const float SpawnGrace = 8f;
+            public const float DetectionMultiplier = 1.5f;
+            public const float ReassignCooldown = 5f;
+            public const float DownDelay = 3f;
+            public const float ReleaseDistance = 30f;
+            public const float AwaySeconds = 6f;
+            public const float IdleSeconds = 10f;
+        }
+
+        public static class DynamicDifficulty
+        {
+            public const double ActiveBucketSeconds = 0.5d;
+            public const double TargetSeconds = 3d;
+            public const double Alpha = 0.3d;
+            public const double AlphaDown = 0.5d;
+            public const double Strength = 0.5d;
+            public const double MinFactor = 0.8d;
+            public const double MaxFactor = 3.0d;
+            public const double MinActiveSeconds = 5d;
+            public const int MinRooms = 2;
+            public const double DamageExponent = 0.25d;
+            public const double RewardShare = 0.5d;
+
+            public static double HeroTargetScale(string hero)
+            {
+                switch (hero)
+                {
+                    case "Hero_Aurena": return 0.95d;
+                    case "Hero_Bismuth": return 1.0d;
+                    case "Hero_Cetus": return 1.0d;
+                    case "Hero_Husk": return 0.85d;
+                    case "Hero_Lacerta": return 1.0d;
+                    case "Hero_Mist": return 0.92d;
+                    case "Hero_Nachia": return 1.0d;
+                    case "Hero_Vesper": return 0.92d;
+                    case "Hero_Yubar": return 1.0d;
+                    default: return 1d;
+                }
+            }
+        }
     }
 }

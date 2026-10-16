@@ -23,14 +23,15 @@ GAME = os.path.normpath(os.path.join(HERE, '..', '..', 'src', 'SodRpg.Core', 'Ga
 
 # New private IDs（docs/specs/v1.31-design-review.md の表）。外縁は共有160。
 EXPECTED = {
-    'vesper': 649, 'cetus': 649, 'lacerta': 645, 'husk': 656, 'mist': 656,
-    'yubar': 644, 'aurena': 510, 'nachia': 502, 'bismuth': 510, 'outer': 169,
+    'vesper': 650, 'cetus': 650, 'lacerta': 650, 'husk': 657, 'mist': 657,
+    'yubar': 651, 'aurena': 517, 'nachia': 509, 'bismuth': 517, 'outer': 169,
 }
 # v1.32 B: RunGrowth is the important star that grants a run-long stacking mechanism; RunGrowthMod is a small star/option that modifies it.
 GROWTH_KINDS = {'RunGrowth', 'RunGrowthMod'}
 KINDS = {'MemoryDamage', 'MemoryHaste', 'GimmickBoost', 'GimmickParam', 'Notable', 'Choice', 'Stat', 'Keystone'} | GROWTH_KINDS
 OPTION_KINDS = KINDS - {'Choice', 'Keystone', 'RunGrowth'}
-GROWTH_TRIGGERS = {'DamageTakenMaxHpPct': 100, 'ShieldAbsorbedMaxHpPct': 100, 'ParrySuccess': 1000, 'CritBasicAttackKill': 1000}
+GROWTH_TRIGGERS = {'DamageTakenMaxHpPct': 100, 'ShieldAbsorbedMaxHpPct': 100, 'ParrySuccess': 1000, 'CritBasicAttackKill': 1000,
+                   'HealSucceeded': 1000, 'EnemyKill': 1000, 'SummonHit': 1000, 'BasicAttackHit': 1000, 'MemoryHit': 1000}
 GROWTH_KEYS = ['trigger', 'threshold', 'cap', 'effects']
 GROWTH_MOD_KEYS = ['target', 'capBonus', 'effectPct', 'doubleGain']
 GROWTH_UNSUPPORTED_STATS = {'EssenceSlotIdentity', 'EssenceSlotMovement', 'SacrificeReduction', 'FourthAttackShift'}
@@ -404,6 +405,22 @@ def check_spec_list(lst, ctx, legacy, hero, refs, errors):
     if not (isinstance(lst, list) and lst):
         errors.append(f'{ctx}: spec list must be null or non-empty list')
         return
+    coop_ids = {
+        'lacerta': ('lacerta.key.shared-sights', {'markSeconds', 'allyDamagePercent', 'memoryDamagePercent'}),
+        'vesper': ('vesper.key.shield-wall', {'radius', 'armorPercent'}),
+        'cetus': ('cetus.key.frost-resonance', {'allyDamagePercent', 'extendSeconds'}),
+        'husk': ('husk.key.shadow-cue', {'absenceSeconds', 'charges', 'cooldownSeconds'}),
+        'mist': ('mist.key.parry-signal', {'radius', 'damagePercent', 'seconds'}),
+        'nachia': ('nachia.key.pack-guard', {'powerPercent', 'seconds'}),
+        'aurena': ('aurena.key.golden-trust', {'damagePercent', 'seconds', 'healPercent'}),
+        'yubar': ('yubar.key.resonant-stardust', {'contactSeconds', 'damagePercent', 'powerPercent', 'radius', 'cooldownSeconds'}),
+        'bismuth': ('bismuth.key.shared-crystal-field', {'haste', 'allyDamagePercent', 'damagePercent', 'seconds'}),
+    }
+    coop = [e for e in lst if isinstance(e, dict) and e.get('effect') == 'Coop']
+    expected_id, parameters = coop_ids.get(hero, ('', set()))
+    if coop and (ctx != expected_id + '.upsideSpec' or len(coop) != len(parameters)
+                 or {e.get('scope') for e in coop} != parameters or len(coop) != len(lst)):
+        errors.append(f'{ctx}: Coop requires its canonical star and exactly one of every required parameter')
     for i, e in enumerate(lst):
         c2 = f'{ctx}[{i}]'
         if not isinstance(e, dict) or not (set(e) <= SPEC_KEYS):
@@ -411,6 +428,12 @@ def check_spec_list(lst, ctx, legacy, hero, refs, errors):
             continue
         if not (isinstance(e.get('effect'), str) and isinstance(e.get('field'), str)):
             errors.append(f'{c2}: spec needs effect and field')
+        if e.get('effect') == 'Coop':
+            if (set(e) != {'effect', 'field', 'scope', 'to'} or e.get('field') != 'Value'
+                    or e.get('scope') not in parameters
+                    or not isinstance(e.get('to'), (int, float, Decimal)) or isinstance(e.get('to'), bool)
+                    or not 0 < e.get('to', 0) <= 100):
+                errors.append(f'{c2}: invalid Coop parameter setting')
         forms = [k for k in ('pct', 'delta', 'to') if k in e]
         if e.get('field') == 'Grant':
             if forms or 'from' in e or 'max' in e:

@@ -15,6 +15,7 @@ namespace SodRpg.Mod
             public Entity Recipient;
             public Actor Root;
             public NativeModShieldAdapter Adapter;
+            public float Until;
         }
         private readonly ModShieldPools<Se_GenericShield_OneShot> _modShieldPools = new ModShieldPools<Se_GenericShield_OneShot>();
         private readonly Dictionary<ModShieldPoolKey, PoolRecipient> _modShieldRecipients = new Dictionary<ModShieldPoolKey, PoolRecipient>();
@@ -52,10 +53,17 @@ namespace SodRpg.Mod
             _gimmickDamageDepth++;
             try
             {
+                float now = Time.time;
+                float before = _modShieldPools.Contains(key) && registration.Until > now ? registration.Adapter.CurrentAmount : 0f;
                 bool awarded = _modShieldPools.Apply(key, registration.Adapter, rawAmount,
-                    recipient.maxHealth, Time.time, duration, currentEpoch, newAwardCapRatio);
-                if (awarded) _modShieldRecipients[key] = registration;
-                if (awarded) CreditShieldGranted(owner, recipient, rawAmount);
+                    recipient.maxHealth, now, duration, currentEpoch, newAwardCapRatio);
+                if (awarded)
+                {
+                    registration.Until = now + duration;
+                    _modShieldRecipients[key] = registration;
+                }
+                float added = registration.Adapter.CurrentAmount - before;
+                if (awarded && added > 0f) CreditShieldGranted(owner, recipient, added);
                 return awarded;
             }
             finally { _gimmickDamageDepth--; }
@@ -95,6 +103,8 @@ namespace SodRpg.Mod
         private readonly Actor _root;
         private readonly Entity _recipient;
         private ShieldEffect _effect;
+        private Se_GenericShield_OneShot _handle;
+        public float CurrentAmount => IsAlive(_handle) ? _effect.amount : 0f;
         internal NativeModShieldAdapter(Actor root, Entity recipient) { _root = root; _recipient = recipient; }
         public bool IsAlive(Se_GenericShield_OneShot handle) => handle != null && handle.isActive && _effect != null
             && ReferenceEquals(handle.shield, _effect) && _effect.amount > 0f;
@@ -115,6 +125,7 @@ namespace SodRpg.Mod
                     se.chain = default(ReactionChain); se.initAmount = rawAmount; se.isDecay = false; se.SetTimer(seconds);
                     NativeModShieldCreationCap.Register(se, processedCap);
                 });
+                _handle = result;
                 _effect = result != null ? result.shield : null;
                 return result;
             }

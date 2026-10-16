@@ -120,7 +120,7 @@ namespace SodRpg.Core.Game
                     reasons.Add(Loc.T($"刻印の枠がいっぱいです：{state.KeystoneCount}/{state.KeystoneSlotCount}。",
                         $"Keystone slots are full: {state.KeystoneCount}/{state.KeystoneSlotCount}.") + NextSlotText(StarProgression.Points(state.StarXp)));
             }
-            int cost = star.IsKeystone ? star.KeystoneDefinition?.Cost ?? Content.KeystoneCost : star.RankCost;
+            int cost = star.IsKeystone ? star.KeystoneCost : star.RankCost;
             if (freePoints < cost)
                 reasons.Add(Loc.T($"ポイント不足：必要{cost}・残り{freePoints}・あと{cost - freePoints}。",
                     $"Not enough points: cost {cost}, remaining {freePoints}, short by {cost - freePoints}."));
