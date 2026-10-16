@@ -562,7 +562,11 @@ namespace SodRpg.Core.Game
         // 命中ごとに走る Expose/Sap/Weakspot 参照を、その効果が1つもないビルドでは全走査なしで返す（#161）。
         private bool _hasExposeEntries, _hasSapEntries, _hasWeakspotEntries, _hasCrescendoEntries;
         private readonly List<ActiveEntry> _activeStates = new List<ActiveEntry>();
-        private IReadOnlyList<ActiveEntry> ActiveStates() => _activeStates;
+        // Keep the concrete type so hot-path foreach uses List's struct enumerator without boxing.
+        // Calling convention: consume the return value directly (foreach or List members) and never store it
+        // as IReadOnlyList<ActiveEntry>/IEnumerable<ActiveEntry> — the interface enumerator would box and
+        // reintroduce the per-hit allocations this property exists to avoid (#505 follow-up).
+        private List<ActiveEntry> ActiveStates() => _activeStates;
 
         private static bool Same(GimmickEntry a, GimmickEntry b) =>
             a.AdmittedSource == b.AdmittedSource && BuildAggregation.GimmickStateKey(a) == BuildAggregation.GimmickStateKey(b)

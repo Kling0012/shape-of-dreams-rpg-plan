@@ -99,6 +99,8 @@ namespace SodRpg.Mod
         private readonly BuildTransferReceiver _appliedTransfer = new BuildTransferReceiver();
         public float PressureHealthMultiplier { get; private set; } = 1f;
         public float PressureDamageMultiplier { get; private set; } = 1f;
+        /// <summary>ホストが悪夢化の抽選に掛ける装備の倍率。0は未受信（古い版のホスト）で、確保地点では最低値を表示する。</summary>
+        public float NightmareGearMultiplier { get; private set; }
         public string LoadNotes { get; private set; }
         public string SaveError { get; private set; }
 
@@ -345,6 +347,8 @@ namespace SodRpg.Mod
         }
 
         private bool _saveErrorFromWriteFailure;
+        private string _writeFailureText, _writeFailureSource;
+        private bool _writeFailureJapanese;
 
         private void TickPeriodicSave()
         {
@@ -354,8 +358,20 @@ namespace SodRpg.Mod
             {
                 _dirty = true;
                 _allocationSavePending = true;
-                _saveErrorFromWriteFailure = true;
-                SaveError = Loc.T("保存に失敗しました。自動で再試行します: ", "Saving failed; retrying automatically: ") + _writer.LastError;
+                // 今回の保存で出た例外など、別経路の理由を過去の書き込み失敗で隠さない。
+                if (SaveError == null || _saveErrorFromWriteFailure)
+                {
+                    string source = _writer.LastError;
+                    bool japanese = Loc.Japanese;
+                    if (_writeFailureText == null || _writeFailureSource != source || _writeFailureJapanese != japanese)
+                    {
+                        _writeFailureSource = source;
+                        _writeFailureJapanese = japanese;
+                        _writeFailureText = (japanese ? "保存に失敗しました。自動で再試行します: " : "Saving failed; retrying automatically: ") + source;
+                    }
+                    SaveError = _writeFailureText;
+                    _saveErrorFromWriteFailure = true;
+                }
                 float retry = Time.unscaledTime + 5f;
                 if (_nextSave > retry) _nextSave = retry;
             }
@@ -466,6 +482,7 @@ namespace SodRpg.Mod
                     SaveNow();
                 }
                 Nightmare.Clear();
+                EnemyOwners.Clear();
                 ClearVariants();
                 ClearMonsterCues();
                 ClearBossDisplay();
@@ -476,6 +493,7 @@ namespace SodRpg.Mod
                 ResetRunGrowthDisplay();
                 _appliedTransfer.Reset();
                 PressureHealthMultiplier = PressureDamageMultiplier = 1f;
+                NightmareGearMultiplier = 0f;
                 if (!LobbyReturnPending) ResetRunChoiceConnection();
                 ResetMonsterAuthorityConnection();
                 _sentDreamLevel = -1;
@@ -563,6 +581,7 @@ namespace SodRpg.Mod
             HostSummary = null;
             _appliedTransfer.Reset();
             PressureHealthMultiplier = PressureDamageMultiplier = 1f;
+            NightmareGearMultiplier = 0f;
             ResetRunChoiceConnection(resetHistory: true);
             ResetMonsterAuthorityConnection();
             _pendingRunRewards.Clear();
@@ -570,6 +589,7 @@ namespace SodRpg.Mod
             _sentDreamLevel = -1;
             _buildDirty = true;
             Nightmare.Clear();
+            EnemyOwners.Clear();
             ClearVariants();
             ClearMonsterCues();
             ClearBossDisplay();
@@ -631,7 +651,10 @@ namespace SodRpg.Mod
             DiagnoseExpedition("client-begin-before");
             int pacts = Profile.Run != null && Profile.Run.RunId != runId ? Profile.Run.Pacts.Count : 0;
             ActiveRunId = runId;
+            // The melee-classification log set is static and survives MOD reloads; a fresh run logs again (#542).
+            TravelerCombatNative.ResetReporting();
             PressureHealthMultiplier = PressureDamageMultiplier = 1f;
+            NightmareGearMultiplier = 0f;
             Emit(Rules.BeginRun(Profile, runId, DailyDream.Today, ReadLimboDepth(), _trades.ReservedSalvageUids(), heroKey: HeroKeyOf(LocalHero),
                 dreamDepth: CanChooseRunRules ? Profile.LastDreamDepth : _receivedRunChoices.Depth));
             InitializeInfinityRun();
@@ -805,6 +828,14 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
                     NetworkedManagerBase<GameManager>.softInstance?.runId ?? ""))
                 {
                     DiagnoseExpedition("client-concluded-lobby-return");
+                    return;
+                }
+                // 純白の夢は Primus の撃破で精算を終えている（ホストもゲストも）。演出の後に届く本体の終了通知で
+                // 精算済みの遠征を保留に戻すと、保存にも残ってプロフィールの切り替えが次の遠征まで止まっていた。
+                string concludedRunId = NetworkedManagerBase<GameManager>.softInstance?.runId;
+                if (!string.IsNullOrEmpty(concludedRunId) && concludedRunId == _completedRunId)
+                {
+                    DiagnoseExpedition("client-concluded-already-settled");
                     return;
                 }
                 if (ObserveInfinityConclusion(result))
@@ -1135,15 +1166,19 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
         {
             if (msg == null || !ObserveMonsterAuthority(msg.authorityGeneration)) return;
             Protocol.WarnMismatch(msg.protocol, nameof(DreamforgeNightmareMsg));
+            ReceiveDynamicDifficulty(msg.dynamicDifficulty, msg.dynamicRevision);
+            if (msg.netId == 0) return;
             if (msg.removed)
             {
                 _monsterAuthority.Remove(msg.netId);
+                EnemyOwners.Remove(msg.netId);
                 Nightmare.Remove(msg.netId);
                 RemoveVariant(msg.netId);
                 RemoveMonsterCue(msg.netId);
                 return;
             }
             if (!_monsterAuthority.Set(msg.authorityGeneration, msg.netId, (NightmareAffix)msg.affixes, null)) return;
+            ReceiveMonsterOwnership(msg.netId, msg.ownerParticipantId, msg.ownershipRevision, msg.ownershipProtected, msg.ownerPlayerSlot, msg.bossShares);
             var a = Nightmares.Sanitize(msg.affixes);
             if (a == NightmareAffix.None)
             {
@@ -1160,6 +1195,8 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
             if (msg == null || !ObserveMonsterAuthority(msg.authorityGeneration)
                 || !_monsterAuthority.Set(msg.authorityGeneration, msg.netId, NightmareAffix.None, msg.variantId)) return;
             Protocol.WarnMismatch(msg.protocol, nameof(DreamforgeVariantMsg));
+            ReceiveDynamicDifficulty(msg.dynamicDifficulty, msg.dynamicRevision);
+            ReceiveMonsterOwnership(msg.netId, msg.ownerParticipantId, msg.ownershipRevision, msg.ownershipProtected, msg.ownerPlayerSlot, msg.bossShares);
             var def = Variants.Get(msg.variantId);
             if (def == null)
             {
@@ -1305,6 +1342,7 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
             Protocol.WarnMismatch(msg.protocol, nameof(DreamforgePressureMsg));
             PressureHealthMultiplier = msg.healthMultiplier;
             PressureDamageMultiplier = msg.damageMultiplier;
+            NightmareGearMultiplier = msg.nightmareGearMultiplier >= 1f && !float.IsInfinity(msg.nightmareGearMultiplier) ? msg.nightmareGearMultiplier : 0f;
             ReceiveRunChoices(msg.runChoices);
             HostConfirmed = true;
             DiagnosePressureReceipt();
@@ -1596,7 +1634,7 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
             if (_infinityPendingSaveRun == NetworkedManagerBase<GameManager>.softInstance?.runId)
                 _infinityPendingSaveWriter = _writer;
             var sw = System.Diagnostics.Stopwatch.StartNew();
-            bool ok = true;
+            bool ok = true, threw = false;
             try
             {
                 if (confirm) ok = AsyncProfileWriter.ConfirmPrepared(_writer, Profile);
@@ -1606,14 +1644,29 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
             catch (Exception ex)
             {
                 SaveError = ex.Message;
+                _saveErrorFromWriteFailure = false;
                 _dirty = true;
                 ok = false;
+                threw = true;
                 Log.Error("Save failed: " + ex.Message);
             }
             _saveMsTotal += sw.Elapsed.TotalMilliseconds;
             _saveCount++;
-            if (_writer.LastError != null) SaveError = _writer.LastError;
-            else if (SaveError != null && _writer.WrittenRevision > 0) SaveError = null;
+            // 過去の成功や失敗より、この呼び出しで出た例外を優先する。
+            if (!threw)
+            {
+                string writeError = _writer.LastError;
+                if (writeError != null && (SaveError == null || _saveErrorFromWriteFailure))
+                {
+                    SaveError = writeError;
+                    _saveErrorFromWriteFailure = true;
+                }
+                else if (writeError == null && SaveError != null && _writer.WrittenRevision > 0)
+                {
+                    SaveError = null;
+                    _saveErrorFromWriteFailure = false;
+                }
+            }
             if (!ok) _dirty = true;
             else _allocationSavePending = false;
             return ok;

@@ -1,5 +1,5 @@
-[b]Fixes outdated codex discoveries, incomplete equipment comparison, and labels that kept the old language, and makes the equipment and forge screens lighter.[/b]
-[b]図鑑の更新漏れ、装備比較の表示、言語切替後の表示を修正し、装備・鍛冶の画面を軽くしました。[/b]
+[b]Fixes bounties that could not be completed in solo or Infinity, relics in the Sealed Vault being treated as unowned in draws, the waypoint Codex bonus, Infinity save loading, and description text errors.[/b]
+[b]ソロ・インフィニティで達成できない依頼、宝庫の預かり品が抽選で未所持扱いになる問題、道標の図鑑補正、インフィニティのセーブ読み込み、説明文の誤りを直しました。[/b]
 
 [h1]Dreamforge RPG[/h1]
 Turns every run into part of a long RPG journey: relics you keep, a risky "secure or delve" choice at every zone, a star map per Traveler, a forge, and long-term goals. Co-op ready.

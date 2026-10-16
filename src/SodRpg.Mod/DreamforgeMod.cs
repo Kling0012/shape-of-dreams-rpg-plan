@@ -23,6 +23,10 @@ namespace SodRpg.Mod
     {
         public DreamforgeConfig config = new DreamforgeConfig();
         partial void ApplyRoomOmensConfig();
+        partial void StartNativeKillRewards();
+        partial void StopNativeKillRewards();
+        partial void ApplyAutoCastCoopConfig();
+        partial void TickAutoCastCoopConfig();
 
         private ClientSession _session;
         private HostAuthority _host;
@@ -52,6 +56,7 @@ namespace SodRpg.Mod
                 stage = "patch installation";
                 PatchEachClass();
                 PressureEnemyCount.Install(harmony);
+                StartNativeKillRewards();
                 CulinaryMagnet.Install(harmony);
                 CulinaryIngredientCap.Install(harmony);
                 try { CulinaryIngredientDisplay.Install(harmony); }
@@ -61,6 +66,7 @@ namespace SodRpg.Mod
                 NetworkTrafficOptions.Configure(config.netSkipUnchanged, config.netCoalesce, config.netOwnerOnly, config.netCompact);
                 ApplyLevelEssenceConfig();
                 ApplyRoomOmensConfig();
+                ApplyAutoCastCoopConfig();
                 // Install the generated star maps and their migration rules before any profile is loaded or any build is computed.
                 var starRegistrationWatch = System.Diagnostics.Stopwatch.StartNew();
                 StarClusters.RegisterAllGenerated((hero, error) =>
@@ -76,6 +82,8 @@ namespace SodRpg.Mod
                 RelicIcons.Init(mod?.path);
                 RelicIcons.Preload();
                 _ui = new DreamforgeUi(_session, () => config, SaveLevelEssenceConfig);
+                BindEnemyOwnershipSettings();
+                _ui.SaveLanguageConfig = SaveLanguageConfig;
                 _host = new HostAuthority(() => _session?.Profile.Run?.DailyId ?? DailyDream.Today.Id);
                 ApplyMeleeCoopConfig();
                 _session.FirstLaunch();
@@ -118,17 +126,29 @@ namespace SodRpg.Mod
             _session?.ConfigureOverflowBonus(config.overflowDreamDust);
             ApplyLevelEssenceConfig();
             ApplyRoomOmensConfig();
+            ApplyAutoCastCoopConfig();
             ApplyMeleeCoopConfig();
         }
 
+        partial void ApplyEnemyOwnershipConfig();
+        partial void BindEnemyOwnershipSettings();
+
+        private void SaveLanguageConfig()
+        {
+            try { SaveConfigsToDisk(); }
+            catch (Exception ex)
+            {
+                Log.Warn("Language setting save failed: " + ex.Message);
+                _ui?.SetStatus(Loc.T("設定を保存できませんでした。", "Could not save settings."));
+            }
+        }
+
+        partial void ApplyMeleeCoopSettings();
+
         private void ApplyMeleeCoopConfig()
         {
-            try
-            {
-                _host?.ConfigureMeleeCoop(config.meleeRangeToSpeed, config.coopDistanceFalloff,
-                    config.meleeBreak, config.meleeProximityGuard);
-            }
-            catch (Exception ex) { Log.Warn("Melee/coop settings ignored: " + ex.Message); }
+            ApplyEnemyOwnershipConfig();
+            ApplyMeleeCoopSettings();
         }
 
         // レベル連動のエッセンス枠（ホストの設定だけが枠に反映される）。壊れた入力でも他の機能は止めない。
@@ -162,6 +182,7 @@ namespace SodRpg.Mod
             _perf.Begin();
             HandleKeys();
             LevelEssenceRuntime.Tick();
+            TickAutoCastCoopConfig();
             bool block = _ui != null && (_ui.Open || _ui.MouseOverPanel);
             BlockInputWhileMenuOpen.MenuOpen = block;
             _perf.BeginClient();
@@ -383,6 +404,7 @@ namespace SodRpg.Mod
             var host = _host; _host = null;
             var ui = _ui; _ui = null;
             var performance = _performance; _performance = null;
+            StopNativeKillRewards();
             try { PressureEnemyCount.Stop(); } catch (Exception ex) { Log.Error("Startup cleanup: pressure enemy count: " + ex); }
             try { InfinityBossArena.Stop(); } catch (Exception ex) { Log.Error("Startup cleanup: Infinity boss arenas: " + ex); }
             try { CulinaryMagnet.Stop(); } catch (Exception ex) { Log.Error("Startup cleanup: culinary attraction: " + ex); }

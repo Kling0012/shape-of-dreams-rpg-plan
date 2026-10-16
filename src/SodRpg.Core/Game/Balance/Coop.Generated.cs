@@ -5,13 +5,80 @@ namespace SodRpg.Core.Game
     public static class CoopBalance
     {
         public const float FullRange = 10f;
+        public const string FullRangeText = "10";
         public const float OuterRange = 18f;
+        public const string OuterRangeText = "18";
         public const float GraceSeconds = 2f;
+        public const string GraceSecondsText = "2";
         public const float RangeToSpeedMultiplier = 1f;
+        public const string RangeToSpeedMultiplierText = "1";
         public const float BreakSeconds = 3f;
+        public const string BreakSecondsText = "3";
         public const float BreakDamagePercent = 12f;
+        public const string BreakDamagePercentText = "12";
         public const float MeleeGuardRange = 3f;
+        public const string MeleeGuardRangeText = "3";
         public const float MeleeGuardReductionPercent = 12f;
+        public const string MeleeGuardReductionPercentText = "12";
         public const float ScanSeconds = 0.25f;
+        public const string ScanSecondsText = "0.25";
+        public const float AutoCastIntervalSeconds = 0.2f;
+        public const string AutoCastIntervalSecondsText = "0.2";
+        public const float AutoCastOwnHitSeconds = 3f;
+        public const string AutoCastOwnHitSecondsText = "3";
+        public const float AutoCastAllyHitSeconds = 2f;
+        public const string AutoCastAllyHitSecondsText = "2";
+        public const float ShieldWallTauntSeconds = 4f;
+        public const string ShieldWallTauntSecondsText = "4";
+
+        public static class Ownership
+        {
+            public const float HelpFactor = 0.5f;
+            public const float BossShareFactor = 0.8f;
+            public const float BossDamageMin = 0.2f;
+            public const float BossDamageMax = 3f;
+            public const float Floor = 0.3f;
+            public const float RescueHp = 0.35f;
+            public const float EngageWindow = 6f;
+            public const float SpawnGrace = 8f;
+            public const float DetectionMultiplier = 1.5f;
+            public const float ReassignCooldown = 5f;
+            public const float DownDelay = 3f;
+            public const float ReleaseDistance = 30f;
+            public const float AwaySeconds = 6f;
+            public const float IdleSeconds = 10f;
+        }
+
+        public static class DynamicDifficulty
+        {
+            public const double ActiveBucketSeconds = 0.5d;
+            public const double TargetSeconds = 3d;
+            public const double Alpha = 0.3d;
+            public const double AlphaDown = 0.5d;
+            public const double Strength = 0.5d;
+            public const double MinFactor = 0.65d;
+            public const double MaxFactor = 3.0d;
+            public const double MinActiveSeconds = 5d;
+            public const int MinRooms = 2;
+            public const double DamageExponent = 0.25d;
+            public const double RewardShare = 0.5d;
+
+            public static double HeroTargetScale(string hero)
+            {
+                switch (hero)
+                {
+                    case "Hero_Aurena": return 0.95d;
+                    case "Hero_Bismuth": return 1.0d;
+                    case "Hero_Cetus": return 1.0d;
+                    case "Hero_Husk": return 0.85d;
+                    case "Hero_Lacerta": return 0.85d;
+                    case "Hero_Mist": return 0.92d;
+                    case "Hero_Nachia": return 1.0d;
+                    case "Hero_Vesper": return 0.92d;
+                    case "Hero_Yubar": return 1.0d;
+                    default: return 1d;
+                }
+            }
+        }
     }
 }

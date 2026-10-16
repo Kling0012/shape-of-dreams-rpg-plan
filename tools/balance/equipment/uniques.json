@@ -5192,7 +5192,7 @@
       ],
       "link": {
         "kind": "Guard",
-        "value": 20
+        "value": 31
       }
     },
     "unique.link_vesper_charge_rampart": {
@@ -5208,7 +5208,7 @@
       ],
       "link": {
         "kind": "MemoryHaste",
-        "value": 62
+        "value": 75
       }
     },
     "unique.link_vesper_resolve_mercy": {
@@ -5224,7 +5224,7 @@
       ],
       "link": {
         "kind": "Attune",
-        "value": 46
+        "value": 72
       }
     },
     "unique.link_vesper_cruel_sun": {
@@ -5240,7 +5240,7 @@
       ],
       "link": {
         "kind": "MemoryHaste",
-        "value": 38
+        "value": 60
       }
     },
     "unique.link_lacerta_gunslinger": {
@@ -5256,7 +5256,7 @@
       ],
       "link": {
         "kind": "Attune",
-        "value": 20
+        "value": 32
       }
     },
     "unique.link_lacerta_dodge_draw": {
@@ -5272,7 +5272,7 @@
       ],
       "link": {
         "kind": "MemoryHaste",
-        "value": 62
+        "value": 75
       }
     },
     "unique.link_lacerta_powder_tap": {
@@ -5288,7 +5288,7 @@
       ],
       "link": {
         "kind": "Attune",
-        "value": 46
+        "value": 74
       }
     },
     "unique.link_lacerta_precision": {
@@ -5304,7 +5304,7 @@
       ],
       "link": {
         "kind": "MemorySurge",
-        "value": 30
+        "value": 48
       }
     },
     "unique.link_cetus_glacier_guard": {
@@ -5320,7 +5320,7 @@
       ],
       "link": {
         "kind": "Guard",
-        "value": 20
+        "value": 19
       }
     },
     "unique.link_cetus_frozen_blood": {
@@ -5336,7 +5336,7 @@
       ],
       "link": {
         "kind": "Attune",
-        "value": 30
+        "value": 28
       }
     },
     "unique.link_cetus_cold_front": {
@@ -5352,7 +5352,7 @@
       ],
       "link": {
         "kind": "MemoryHaste",
-        "value": 80
+        "value": 75
       }
     },
     "unique.link_cetus_manners": {
@@ -5368,7 +5368,7 @@
       ],
       "link": {
         "kind": "MemorySurge",
-        "value": 30
+        "value": 28
       }
     },
     "unique.link_yubar_star_traveler": {
@@ -5384,7 +5384,7 @@
       ],
       "link": {
         "kind": "Attune",
-        "value": 20
+        "value": 12
       }
     },
     "unique.link_yubar_still_clock": {
@@ -5400,7 +5400,7 @@
       ],
       "link": {
         "kind": "MemoryHaste",
-        "value": 62
+        "value": 38
       }
     },
     "unique.link_yubar_nova_end": {
@@ -5416,7 +5416,7 @@
       ],
       "link": {
         "kind": "MemorySurge",
-        "value": 66
+        "value": 41
       }
     },
     "unique.link_yubar_star_echo": {
@@ -5432,7 +5432,7 @@
       ],
       "link": {
         "kind": "MemoryHaste",
-        "value": 38
+        "value": 24
       }
     },
     "unique.link_husk_one_flash": {
@@ -5448,7 +5448,7 @@
       ],
       "link": {
         "kind": "Attune",
-        "value": 20
+        "value": 23
       }
     },
     "unique.link_husk_death_glove": {
@@ -5464,7 +5464,7 @@
       ],
       "link": {
         "kind": "MemoryHaste",
-        "value": 62
+        "value": 71
       }
     },
     "unique.link_husk_wind_scar": {
@@ -5480,7 +5480,7 @@
       ],
       "link": {
         "kind": "Attune",
-        "value": 48
+        "value": 55
       }
     },
     "unique.link_husk_vanish": {
@@ -5496,7 +5496,7 @@
       ],
       "link": {
         "kind": "MemorySurge",
-        "value": 30
+        "value": 34
       }
     },
     "unique.link_mist_swordsman": {
@@ -5512,7 +5512,7 @@
       ],
       "link": {
         "kind": "Guard",
-        "value": 20
+        "value": 19
       }
     },
     "unique.link_mist_riposte": {
@@ -5528,7 +5528,7 @@
       ],
       "link": {
         "kind": "MemoryHaste",
-        "value": 62
+        "value": 59
       }
     },
     "unique.link_mist_masterwork": {
@@ -5544,7 +5544,7 @@
       ],
       "link": {
         "kind": "Attune",
-        "value": 46
+        "value": 44
       }
     },
     "unique.link_mist_fleche": {
@@ -5560,7 +5560,7 @@
       ],
       "link": {
         "kind": "MemoryHaste",
-        "value": 38
+        "value": 36
       }
     },
     "unique.link_nachia_wolf_shaman": {
@@ -5576,7 +5576,7 @@
       ],
       "link": {
         "kind": "Guard",
-        "value": 20
+        "value": 21
       }
     },
     "unique.link_nachia_leaf_call": {
@@ -5592,7 +5592,7 @@
       ],
       "link": {
         "kind": "MemoryHaste",
-        "value": 62
+        "value": 66
       }
     },
     "unique.link_nachia_moon_circle": {
@@ -5608,7 +5608,7 @@
       ],
       "link": {
         "kind": "Attune",
-        "value": 48
+        "value": 51
       }
     },
     "unique.link_nachia_pack_heart": {
@@ -5624,7 +5624,7 @@
       ],
       "link": {
         "kind": "Attune",
-        "value": 20
+        "value": 21
       }
     },
     "unique.link_aurena_light_archer": {
@@ -5640,7 +5640,7 @@
       ],
       "link": {
         "kind": "Attune",
-        "value": 20
+        "value": 15
       }
     },
     "unique.link_aurena_golden_grace": {
@@ -5656,7 +5656,7 @@
       ],
       "link": {
         "kind": "MemoryHaste",
-        "value": 62
+        "value": 48
       }
     },
     "unique.link_aurena_return_chain": {
@@ -5672,7 +5672,7 @@
       ],
       "link": {
         "kind": "MemorySurge",
-        "value": 66
+        "value": 51
       }
     },
     "unique.link_aurena_claw": {
@@ -5688,7 +5688,7 @@
       ],
       "link": {
         "kind": "Guard",
-        "value": 20
+        "value": 15
       }
     },
     "unique.link_bismuth_facet": {
@@ -5704,7 +5704,7 @@
       ],
       "link": {
         "kind": "Attune",
-        "value": 20
+        "value": 18
       }
     },
     "unique.link_bismuth_prism_dash": {
@@ -5720,7 +5720,7 @@
       ],
       "link": {
         "kind": "MemoryHaste",
-        "value": 62
+        "value": 57
       }
     },
     "unique.link_bismuth_crimson_white": {
@@ -5736,7 +5736,7 @@
       ],
       "link": {
         "kind": "MemorySurge",
-        "value": 66
+        "value": 61
       }
     },
     "unique.link_bismuth_prism_eye": {
@@ -5752,7 +5752,7 @@
       ],
       "link": {
         "kind": "Attune",
-        "value": 20
+        "value": 18
       }
     },
     "unique.link2_frostbound_slumber": {

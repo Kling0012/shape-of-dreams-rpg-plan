@@ -6,6 +6,12 @@ namespace SodRpg.Core.Game
 {
     public static partial class Gimmicks
     {
+        /// <summary>高揚（Crescendo）の効果時間：最低8秒か、記憶のクールダウンの1.5倍の長い方（補正前の基準）。</summary>
+        public const float CrescendoMinimumSeconds = 8f;
+        public const float CrescendoCooldownFactor = 1.5f;
+        public static float CrescendoDurationBase(float cooldown) =>
+            Math.Max(CrescendoMinimumSeconds, Finite(cooldown) && cooldown > 0 ? cooldown * CrescendoCooldownFactor : 0f);
+
         public static bool IsV129(GimmickEffect effect) => effect >= GimmickEffect.Wound && effect <= GimmickEffect.Weakspot;
         public static float MinimumCooldown(GimmickEffect effect) => effect == GimmickEffect.Ricochet ? 0.3f
             : effect == GimmickEffect.Siphon ? 0.5f : 0f;
@@ -73,8 +79,8 @@ namespace SodRpg.Core.Game
                 case GimmickEffect.Primed:
                     text = "Next basic attack extra damage +" + n + "% of the higher of attack damage or ability power (does not stack; expires after " + primedDuration + " seconds; consumes only the largest next-basic-attack bonus and leaves the others ready)"; break;
                 case GimmickEffect.Crescendo:
-                    string minimum = Duration(def, 8f).ToString("0.#######", CultureInfo.InvariantCulture);
-                    string factor = Duration(def, 1.5f).ToString("0.#######", CultureInfo.InvariantCulture);
+                    string minimum = Duration(def, CrescendoMinimumSeconds).ToString("0.#######", CultureInfo.InvariantCulture);
+                    string factor = Duration(def, CrescendoCooldownFactor).ToString("0.#######", CultureInfo.InvariantCulture);
                     text = "Memory damage +" + n + "%: affects that memory (once per cast, up to 5 stacks and 40%; lasts the longer of " + minimum + " seconds or " + factor + " times that memory's cooldown; retained when using other memories; combined memory damage bonuses are capped at 120%)"; break;
                 case GimmickEffect.ElementEdge:
                     text = "Extra damage +" + n + "% of the higher of attack damage or ability power per element: count Fire, Cold, Light and Dark on the hit enemy (up to 4 types; does not consume elements)"; break;
@@ -134,8 +140,8 @@ namespace SodRpg.Core.Game
                     extra = "重ならず、" + primedDuration + "秒で消える。次の通常攻撃への上乗せが複数あるときは、最大の1つだけを使い、残りは消費しない。";
                     break;
                 case GimmickEffect.Crescendo:
-                    string minimum = Duration(def, 8f).ToString("0.#######", CultureInfo.InvariantCulture);
-                    string factor = Duration(def, 1.5f).ToString("0.#######", CultureInfo.InvariantCulture);
+                    string minimum = Duration(def, CrescendoMinimumSeconds).ToString("0.#######", CultureInfo.InvariantCulture);
+                    string factor = Duration(def, CrescendoCooldownFactor).ToString("0.#######", CultureInfo.InvariantCulture);
                     effect = "その記憶のダメージが" + n + "%増える";
                     extra = "同じ発動では1回だけ増え、重ねられるのは5回まで、最大40%まで。効果は" + minimum + "秒か、その記憶のクールダウンの" + factor
                         + "倍のうち長い方だけ続き、ほかの記憶を使っても保たれる。記憶ダメージを増やすほかの効果との合計は最大120%まで。";
@@ -212,8 +218,7 @@ namespace SodRpg.Core.Game
                     if (state.SeenCasts.ContainsKey(cast)) return false;
                     state.Stacks = state.BuffActive && now < state.BuffUntil ? Math.Min(5, state.Stacks + 1) : 1;
                     state.BuffActive = true;
-                    state.BuffUntil = now + Gimmicks.Duration(state.Entry.Def,
-                        Math.Max(8f, Gimmicks.Finite(cooldown) && cooldown > 0 ? cooldown * 1.5f : 0));
+                    state.BuffUntil = now + Gimmicks.Duration(state.Entry.Def, Gimmicks.CrescendoDurationBase(cooldown));
                 }
                 state.SeenCasts[cast] = now;
             }
@@ -281,7 +286,12 @@ namespace SodRpg.Core.Game
         {
             _dazeUntil.Remove(victimId);
             foreach (var state in ActiveStates())
-                state.Victims?.RemoveAll(v => v.VictimId == victimId);
+            {
+                var victims = state.Victims;
+                if (victims == null) continue;
+                for (int i = victims.Count - 1; i >= 0; i--)
+                    if (victims[i].VictimId == victimId) victims.RemoveAt(i);
+            }
         }
 
         public void ClearTransient()

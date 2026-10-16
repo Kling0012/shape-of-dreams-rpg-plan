@@ -268,6 +268,17 @@ namespace SodRpg.Mod
                 _nextCoopProbe = Time.unscaledTime + 5f;
                 DiagnoseCoopTrade("waiting", onlyWhenActive: true);
                 SendCoop(new DreamforgeCoopTradeCommand { action = "probe", safe = CoopLocalSafe, fusion = true });
+                // The partner's profile is sent once per revision; a reset receiver (reconnect
+                // mid-trade) or an interrupted transfer can leave this view without it. Ask the
+                // host for it again while the partner has offered relics and none has arrived.
+                // Not while a split transfer is still being received — that transfer may be the
+                // profile itself, and asking now would restart the whole stash-sized send. The
+                // flag clears when the transfer completes or is rejected, so the next probe
+                // re-asks without any extra state here.
+                if (CoopTrade != null && CoopTrade.Accepted && !CoopTrade.Preparing && _coopPendingOffer == null
+                    && CoopTrade.OtherProfile == null && (CoopTrade.OtherOffer?.RelicUids?.Count ?? 0) > 0
+                    && !_coopTransfer.IsAwaitingParts)
+                    SendCoop(new DreamforgeCoopTradeCommand { action = "query", id = CoopTrade.Id, wantsProfile = true });
                 var pending = Profile.CoopTradePending;
                 if (pending != null)
                 {
@@ -348,8 +359,8 @@ namespace SodRpg.Mod
 
         private void SendCoopProfile(string action, CoopTradeOffer offer)
         {
-            string fusionError = CoopTradeRules.ValidateFusion(Profile, offer, _coopHostFusion && CoopTrade.PartnerFusion);
-            if (fusionError != null) throw new InvalidOperationException(fusionError);
+            string fusionReason = CoopTradeRules.ValidateFusion(Profile, offer, _coopHostFusion && CoopTrade.PartnerFusion);
+            if (fusionReason != null) throw new InvalidOperationException(CoopTradeRules.ReasonText(fusionReason));
             string snapshot = CoopSnapshot(Profile);
             string wireSnapshot = _coopHostFusion ? snapshot : ProfileCodec.WithoutFusionForLegacyTrade(snapshot);
             string encoded = Convert.ToBase64String(Encoding.UTF8.GetBytes(wireSnapshot));
@@ -416,8 +427,9 @@ namespace SodRpg.Mod
                 || !CoopLocalSafe) return CoopUnavailable();
             try
             {
-                string error = CoopTradeRules.Validate(Profile, offer)
-                    ?? CoopTradeRules.ValidateFusion(Profile, offer, _coopHostFusion && CoopTrade.PartnerFusion);
+                string fusionReason = CoopTradeRules.ValidateFusion(Profile, offer, _coopHostFusion && CoopTrade.PartnerFusion);
+                string error = CoopTradeRules.Validate(Profile, offer);
+                if (error == null && fusionReason != null) error = CoopTradeRules.ReasonText(fusionReason);
                 if (error != null) return error;
                 CoopTrade.OwnOffer = offer;
                 _coopPendingOffer = offer;
@@ -467,10 +479,10 @@ namespace SodRpg.Mod
                             Ready = msg.ready == null || msg.ready.Length != msg.keys.Length || msg.ready[i],
                         });
                     if (Profile.CoopTradePending == null && !_coopSettlementUnsaved && !string.IsNullOrEmpty(msg.status))
-                        CoopTradeWarning = msg.status;
+                        CoopTradeWarning = msg.LocalizedStatus();
                     return;
                 }
-                if (msg.kind == "error") { DiagnoseCoopTrade("host-error"); CoopTradeWarning = msg.status; return; }
+                if (msg.kind == "error") { DiagnoseCoopTrade("host-error"); CoopTradeWarning = msg.LocalizedStatus(); return; }
                 if (msg.kind == "cancelled")
                 {
                     DiagnoseCoopTrade("cancelled-received", msg.id, msg.revision);
@@ -485,7 +497,7 @@ namespace SodRpg.Mod
                     _coopPendingOffer = null;
                     _coopOfferInFlight = null;
                     _coopFrozenProfile = null;
-                    CoopTradeWarning = msg.status;
+                    CoopTradeWarning = msg.LocalizedStatus();
                     return;
                 }
                 if (msg.kind == "view")
@@ -507,7 +519,7 @@ namespace SodRpg.Mod
                     }
                     CoopTrade = new CoopTradeView
                     {
-                        Id = msg.id, PartnerName = msg.partner, Status = msg.status, Incoming = msg.incoming,
+                        Id = msg.id, PartnerName = msg.partner, Status = msg.LocalizedStatus(), Incoming = msg.incoming,
                         Accepted = msg.accepted, OwnConfirmed = msg.ownConfirmed && _coopPendingOffer == null,
                         OtherConfirmed = msg.otherConfirmed && _coopPendingOffer == null,
                         Preparing = msg.preparing, Revision = msg.revision, PartnerFusion = msg.partnerFusion,
@@ -547,11 +559,11 @@ namespace SodRpg.Mod
                         return;
                     }
                     var own = key == receipt.FirstKey ? receipt.FirstOffer : receipt.SecondOffer;
-                    string fusionError = CoopTradeRules.ValidateFusion(Profile, own, _coopHostFusion && CoopTrade.PartnerFusion);
-                    if (fusionError != null)
+                    string fusionReason = CoopTradeRules.ValidateFusion(Profile, own, _coopHostFusion && CoopTrade.PartnerFusion);
+                    if (fusionReason != null)
                     {
                         SendCoop(new DreamforgeCoopTradeCommand { action = "cancel", id = msg.id });
-                        CoopTradeWarning = fusionError;
+                        CoopTradeWarning = CoopTradeRules.ReasonText(fusionReason);
                         return;
                     }
                     CoopTradeRules.Prepare(Profile, msg.id, receipt.HostKey, own, legacyFusion: !_coopHostFusion);

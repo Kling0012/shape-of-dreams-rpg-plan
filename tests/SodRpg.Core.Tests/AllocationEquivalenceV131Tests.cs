@@ -915,10 +915,23 @@ namespace SodRpg.Core.Tests
                     hero, tree, true, seed, 30, hero));
         }
 
+        // The runner partitions complete hero/seed sequences across processes; an unsharded run still covers all of them.
+        private static bool InSlowShard(int sequence)
+        {
+            string shard = Environment.GetEnvironmentVariable("SODRPG_EQUIVALENCE_SHARD");
+            if (string.IsNullOrEmpty(shard)) return true;
+            string[] parts = shard.Split('/');
+            if (parts.Length != 2 || !int.TryParse(parts[0], out int index) || !int.TryParse(parts[1], out int count)
+                || count < 1 || index < 0 || index >= count)
+                throw new InvalidOperationException("Invalid SODRPG_EQUIVALENCE_SHARD: " + shard);
+            return sequence % count == index;
+        }
+
         /// <summary>More seeds and longer sequences on the generated trees (slow: the original algorithm costs seconds per step there).</summary>
         [SlowFact, Trait("Speed", "Slow")]
         public void Extended_random_equivalence_over_the_generated_v131_hero_trees()
         {
+            int sequence = 0;
             foreach (var row in AllGeneratedHeroes())
             {
                 string hero = (string)row[0];
@@ -926,6 +939,7 @@ namespace SodRpg.Core.Tests
                 {
                     for (int seed = 500; seed < 504; seed++)
                     {
+                        if (!InSlowShard(sequence++)) continue;
                         int s = seed;
                         RunRandom(() => new Duo(tree, null, HeroTreeLayout.ForHero(hero), hero, () => FundedProfile((ulong)s, hero, 220, relics: 4)),
                             hero, tree, true, seed, 90, hero);
@@ -948,11 +962,13 @@ namespace SodRpg.Core.Tests
         [SlowFact, Trait("Speed", "Slow")]
         public void Extended_random_equivalence_over_every_real_hero_the_synthetic_tree_and_the_authored_probe()
         {
+            int sequence = 0;
             foreach (string hero in new[] { "Hero_Cetus", "Hero_Vesper", "Hero_Yubar", "Hero_Bismuth", "Hero_Aurena", "Hero_Husk" })
             {
                 var tree = HeroSigils.TreeFor(hero);
                 for (int seed = 100; seed < 103; seed++)
                 {
+                    if (!InSlowShard(sequence++)) continue;
                     int s = seed;
                     RunRandom(() => new Duo(tree, null, HeroTreeLayout.ForHero(hero), hero, () => FundedProfile((ulong)s, hero, 160, relics: 8)),
                         hero, tree, true, seed, 260, hero);
@@ -960,11 +976,13 @@ namespace SodRpg.Core.Tests
             }
             var synthetic = BuildSynthetic();
             for (int seed = 200; seed < 208; seed++)
-                RunRandom(() => SyntheticDuo(synthetic), SynHero, synthetic.Tree, true, seed, 400, "synthetic");
+                if (InSlowShard(sequence++))
+                    RunRandom(() => SyntheticDuo(synthetic), SynHero, synthetic.Tree, true, seed, 400, "synthetic");
             WithAuthoredProbe(tree =>
             {
                 for (int seed = 300; seed < 305; seed++)
-                    RunRandom(() => AuthoredDuo(tree), Yubar, tree, true, seed, 260, "authored");
+                    if (InSlowShard(sequence++))
+                        RunRandom(() => AuthoredDuo(tree), Yubar, tree, true, seed, 260, "authored");
             });
         }
 

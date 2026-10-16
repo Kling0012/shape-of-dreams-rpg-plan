@@ -171,7 +171,7 @@ namespace SodRpg.Core.Game
             {
                 foreach (string keystoneId in h.Keystones)
                     if (keystoneId != null && definitions.TryGetValue(keystoneId, out var selectedKey))
-                        spent += selectedKey.KeystoneDefinition?.Cost ?? Content.KeystoneCost;
+                        spent += selectedKey.KeystoneCost;
                 foreach (var allocated in h.Talents)
                     if (definitions.TryGetValue(allocated.Key, out var talent))
                         spent += (long)Math.Max(0, allocated.Value) * talent.RankCost;
@@ -224,9 +224,11 @@ namespace SodRpg.Core.Game
             }
             b.AuthoredClusterStars = authoredClusterStars;
 
-            foreach (string uid in h.Equipped)
+            // 装着品は保管庫から一度だけ引き、能力・セット・小セットの集計で使い回す。
+            var equippedRelics = new Relic[h.Equipped.Length];
+            for (int i = 0; i < equippedRelics.Length; i++) equippedRelics[i] = p.FindStash(h.Equipped[i]);
+            foreach (var r in equippedRelics)
             {
-                var r = p.FindStash(uid);
                 if (r == null) continue;
                 if (r.Forbidden != null) anyForbidden = true;
                 if (Forbidden.IsTransmute(r)) transmute = true;
@@ -247,8 +249,11 @@ namespace SodRpg.Core.Game
                     if (r.Awakened) value = (int)((long)value * Content.AwakenPowerPctAt(r.AwakenLevel) / 100);
                     Add(rawPowers, pw.Power, value);
                     // The saved first power already includes the one-time +20 bonus.
+                    // Overcharge (x1.6, paid for with an affix) also stays out of the cap basis, like awakening:
+                    // otherwise a near-cap power was cut back to the cap and lost most of the promised boost.
+                    int unscaled = r.Forbidden?.Pattern == ForbiddenPattern.Overcharge && i < r.Powers.Count ? r.Powers[i].Value : pw.Value;
                     decimal basis = i == 0 && (r.MilestonePowerApplied || r.EnhanceMilestones >= 5)
-                        ? pw.Value * 100m / Content.LimitBreakPowerPct : pw.Value;
+                        ? unscaled * 100m / Content.LimitBreakPowerPct : unscaled;
                     basePowers.TryGetValue(pw.Power, out decimal current);
                     basePowers[pw.Power] = current + basis;
                 }
@@ -290,9 +295,8 @@ namespace SodRpg.Core.Game
                 foreach (var s in Content.SetBonus(kv.Key, kv.Value)) Add(rawStats, s.Stat, s.Value);
             // 同じ部位（固有品ID）を重複して数えない。6つ装着は6種類の部位がそろった時だけ有効。
             var setPieces = new Dictionary<string, HashSet<string>>();
-            foreach (string uid in h.Equipped)
+            foreach (var r in equippedRelics)
             {
-                var r = p.FindStash(uid);
                 if (r?.UniqueId == null || !Content.TryGetUnique(r.UniqueId, out var u) || u.SetId == null) continue;
                 if (!setPieces.TryGetValue(u.SetId, out var ids)) setPieces[u.SetId] = ids = new HashSet<string>(StringComparer.Ordinal);
                 ids.Add(u.Id);
@@ -332,9 +336,8 @@ namespace SodRpg.Core.Game
                 });
             // 組（小セット・v1.32 設計 3.2/4）。同じ組の別々の銘品だけを数え、SetDef の集計とは別に足す（重複して数えない）。
             var miniPieces = new Dictionary<string, HashSet<string>>(StringComparer.Ordinal);
-            foreach (string uid in h.Equipped)
+            foreach (var r in equippedRelics)
             {
-                var r = p.FindStash(uid);
                 if (r?.NamedId == null || !NamedItems.TryGetNamed(r.NamedId, out var named) || named.MiniSetId == null) continue;
                 if (!miniPieces.TryGetValue(named.MiniSetId, out var ids))
                     miniPieces[named.MiniSetId] = ids = new HashSet<string>(StringComparer.Ordinal);
@@ -442,6 +445,11 @@ namespace SodRpg.Core.Game
                 if (key.AuthoredStar != null && !key.AuthoredStar.RetainedLegacy
                     && key.AuthoredStar.Region.Kind == ClusterRegionKind.Keystone) authoredClusterKeystone = true;
                 b.AddSelectedKeystone(key.KeystoneDefinition);
+                if (key.PerRank > 0)
+                {
+                    Add(rawStats, key.Stat, key.PerRank);
+                    dependencies?.Touch("S:" + ((int)key.Stat).ToString(CultureInfo.InvariantCulture), key.Id);
+                }
                 bool migratedStillWater = false;
                 if (key.Power == Power.StillWater && key.KeystoneDefinition != null)
                     foreach (var grant in key.KeystoneDefinition.Grants)
@@ -460,7 +468,10 @@ namespace SodRpg.Core.Game
                     if (rawPowers.TryGetValue(pw, out int v))
                     {
                         rawPowers[pw] = v + v * DailyDream.PowerBoostPct / 100;
-                        basePowers[pw] += basePowers[pw] * DailyDream.PowerBoostPct / 100m;
+                        // 基準も整数の切り捨て後の倍率に合わせ、強化日だけ上限未満になるのを防ぐ。
+                        if (v > 0) basePowers[pw] = basePowers[pw] * rawPowers[pw] / v;
+                        // 0以下では従来の倍率を保つ（相殺する行がある場合も基準を変えない）。
+                        else basePowers[pw] += basePowers[pw] * DailyDream.PowerBoostPct / 100m;
                         if (awakenGains.TryGetValue(pw, out int gain))
                         {
                             int before = v - gain;
@@ -488,7 +499,12 @@ namespace SodRpg.Core.Game
                 int cap = Content.PowerCap(kv.Key);
                 b.Powers[kv.Key] = cap > 0 ? (int)CappedContribution(basePowers[kv.Key], kv.Value, cap) : kv.Value;
                 if (NewPowersV129.IsConditionalAttribute(kv.Key) && awakenGains.TryGetValue(kv.Key, out int gain))
-                    b.ConditionalBasePowers[kv.Key] = Math.Min(b.Powers[kv.Key], Math.Max(0, kv.Value - gain));
+                {
+                    // 覚醒前にも同じ上限の按分を掛け、条件付きの共通上限に覚醒分を数えない。
+                    int unawakened = Math.Max(0, kv.Value - gain);
+                    if (cap > 0) unawakened = (int)CappedContribution(basePowers[kv.Key], unawakened, cap);
+                    b.ConditionalBasePowers[kv.Key] = Math.Min(b.Powers[kv.Key], unawakened);
+                }
             }
             foreach (var kv in starPowers)
             {
@@ -525,7 +541,7 @@ namespace SodRpg.Core.Game
         // Every source receives the same capped-base share, then keeps its own multiplier.
         // Summing scaled contributions before applying that share is algebraically identical.
         private static decimal CappedContribution(decimal basis, decimal scaled, decimal cap)
-            => Math.Min(cap * 2.5m, basis > cap ? scaled * cap / basis : scaled);
+            => Math.Min(cap * BuildLimits.MaxEquipmentMultiplier, basis > cap ? scaled * cap / basis : scaled);
 
         private static int CappedLinkMilli(decimal basis, decimal scaled, decimal cap)
             => BuildPrecision.FromDecimal(decimal.Round(CappedContribution(basis, scaled, cap), 3, MidpointRounding.AwayFromZero));

@@ -71,7 +71,8 @@ namespace SodRpg.Core.Game
         private int NewValue(Power p)
         {
             Build.StarPowers.TryGetValue(p, out int stars);
-            return Math.Max(0, Math.Min(Content.PowerCap(p), Build.Get(p) - stars)) + stars;
+            // Build.Compute caps the base before awakening; keep its final equipment ceiling and add stars separately.
+            return Math.Max(0, Math.Min((int)(Content.PowerCap(p) * BuildLimits.MaxEquipmentMultiplier), Build.Get(p) - stars)) + stars;
         }
         private static float Percent(float amount, float percent) => Math.Max(0, amount) * percent / 100f;
         private static bool Gate(Dictionary<int, float> gates, int id, float now, float interval)
@@ -196,8 +197,10 @@ namespace SodRpg.Core.Game
             int v = NewValue(Power.TollOfGrudge);
             if (v <= 0 || maxHealth <= 0 || actualHealthLost <= 0) return 0;
             _toll += actualHealthLost;
-            int bursts = (int)(_toll / (maxHealth * PowersBalance.TollOfGrudgeThreshold));
-            _toll -= bursts * maxHealth * PowersBalance.TollOfGrudgeThreshold;
+            // 0.6f is slightly above 0.6: compare with a small tolerance so exactly 60% lost fires now.
+            double threshold = (double)maxHealth * PowersBalance.TollOfGrudgeThreshold;
+            int bursts = (int)Math.Floor(_toll / threshold + 1e-6);
+            _toll = (float)Math.Max(0d, _toll - bursts * threshold);
             return Percent(maxHealth, v) * bursts;
         }
         public const float UnbowedMindDuration = PowersBalance.UnbowedMindDuration;

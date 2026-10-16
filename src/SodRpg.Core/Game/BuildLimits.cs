@@ -9,6 +9,8 @@ namespace SodRpg.Core.Game
         public const int MaxStarIdLength = 96;
         public const int MaxTokenLength = 96;
         public const int MaxLinkRequirements = 3;
+        // Final equipment ceiling after enhancement and awakening, shared by builds, wire validation and runtime.
+        public const decimal MaxEquipmentMultiplier = 2.5m;
         // Signed Int32 fields include the minus sign; round-trip Single text fits within 24 characters.
         public const int IntegerChars = 11;
         public const int FloatChars = 24;
@@ -168,7 +170,7 @@ namespace SodRpg.Core.Game
                 }
                 return choices;
             }
-            var output = new NodeOutput { Cost = talent.KeystoneDefinition?.Cost ?? cost, IsKeystone = talent.IsKeystone };
+            var output = new NodeOutput { Cost = talent.IsKeystone ? talent.KeystoneCost : cost, IsKeystone = talent.IsKeystone };
             int MechanismChars(AuthoredMechanismSpec spec)
             {
                 var entry = new AuthoredMechanismEntry { StarId = talent.Id, ContributorIds = new[] { talent.Id }, Spec = spec };

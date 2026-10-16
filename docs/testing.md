@@ -43,8 +43,11 @@ python tools/test_changed.py [--base <git ref>] [--list] [--all] [--slow]
 変更ファイルを次の規則でテストクラス（完全修飾名）へ写す。
 
 1. **テストファイル自体の変更** — `tests/` 配下の変更された `.cs` は、
-   そのファイルが宣言するテストクラスを選択する。
-2. **製品コードの変更** — 変更された `.cs` のユニファイド diff から、その変更行に
+   そのファイルが宣言するテストクラスと、そこで宣言された型を使うテストを選択する。
+   共通の補助型や fake を変更した場合も、その利用者を含める。
+2. **製品コードの変更** — `src/` と、テストプロジェクトの `ProjectReference` が
+   参照する `tools/` 配下の `.cs` が対象。ツールの場合は宣言型に加えてツール名を
+   挙げているテストも選択する。変更された `.cs` のユニファイド diff から、その変更行に
    出てくるトークン（PascalCase の型名・メンバー名、4 文字以上の文字列リテラル）を
    抜き出し、それを単語として含むテストファイルのテストクラスを選択する
    （メンバーの変更ならその名前で絞り込める）。`new` を含む変更行は初期化データを
@@ -57,7 +60,9 @@ python tools/test_changed.py [--base <git ref>] [--list] [--all] [--slow]
    `tools/lowrarity/*.json`、生成済み `.cs`（`*.Generated.cs`、`Generated*.cs`）が
    変更された場合、そのパス（ディレクトリ名＋ファイル名、または相対パス）を
    参照しているテストファイル、および生成型を参照しているテストファイル（規則 2 と
-   同じ方法）のテストクラスを選択する。
+   同じ方法）のテストクラスを選択する。`tests/` 配下の `.cs` 以外の入力も
+   同様にパスを参照するテストを選択し、参照元不明のデータなら全体を実行する。
+   参照のない Markdown・reStructuredText 文書と `bin`/`obj` は対象外。
 4. **全体実行へのエスカレーション** — 次の場合はスイート全体を実行する。
    - ビルドファイル（`*.csproj`、`Directory.Build.*`）が変更された
    - 変更ファイルの型名がテストファイルの 60% 超に登場する
@@ -75,6 +80,11 @@ python tools/test_changed.py [--base <git ref>] [--list] [--all] [--slow]
 `Ns.Class+Nested` のテストを取りこぼさないため）を `|` で連結した式で、
 長すぎる場合（既定の上限 15000 文字）は複数回の `dotnet test` 実行に分割する。
 テストプロジェクトは `tests/` 配下の `.csproj` を再帰収集する（`bin`/`obj` を除く）。
+`Microsoft.NET.Test.Sdk` の `PackageReference` または `IsTestProject=true` があるものを
+対象とし、Culinary の補助ライブラリ等は単独で実行しない。XML のコメントは無視し、
+最寄りの `Directory.Build.props` / `.targets` とリポジトリ内のリテラルパスの
+`Import` も読む。条件付きの項目は安全側に含めるが、MSBuild のプロパティ展開や
+ワイルドカード import は評価しない。
 クラスとプロジェクトの対応は csproj から判定する: 明示的な `<Compile Include>` の
 リンク先と、`EnableDefaultCompileItems`（既定のフォルダ glob）と `<Compile Remove>` を
 考慮したフォルダ位置の両方。同じファイルを複数プロジェクトがコンパイルする場合
@@ -88,6 +98,11 @@ python tools/test_changed.py [--base <git ref>] [--list] [--all] [--slow]
   複数プロセス並列で実行する（各アセンブリ内のテストは共有状態のため
   `DisableTestParallelization` のまま直列。並列化はプロセス分割による。
   同時実行数は CPU コア数を超えない）。
+  別の実行環境から `run_dotnet_test(..., no_build=True)` を呼ぶ場合も、MSBuild の
+  `TargetPath` で Release の成果物を確認し、存在しなければ同じフィルタの
+  `dotnet test -c Release` でビルドしてから実行する。通常テストと性能テストを
+  別の作業環境に分けても、前段の成果物がないことによる起動失敗を防ぐ。
+  `TargetPath` の取得に失敗した場合や取得結果が空の場合は、エラーを返す。
 
 - プロセス分割（#404）: `--all` では Core スイートをクラス単位のフィルタで
   5 プロセスに分ける。所要時間の大半を占める重い 5 クラス
@@ -95,11 +110,16 @@ python tools/test_changed.py [--base <git ref>] [--list] [--all] [--slow]
   PressureRewardMultiplier・StarMapOptimize）がそれぞれ別々のプロセスの軸になり
   （重いクラスどうしを同じプロセスにしないため、5 が最小のプロセス数）、
   残りのクラスはテストメソッド数を重みにその 5 プロセスへ均等に振り分ける
-  （同じクラスは必ず同じプロセス）。`--slow` では Speed=Slow テストを含む
-  クラスもクラスごとに別プロセスで並列に走らせる。全プロセスの和が
-  従来のフィルタなし 1 プロセスと同じテスト集合・合否になる。
-  選択実行（`--all` 未指定）でも、`--slow` 時の低速クラスは同様に単独プロセスとする。
-  CI の slow-tests ジョブ（main マージ後）も同じクラス単位の matrix で走る。
+  （同じクラスは必ず同じプロセス）。`--slow` では Speed=Slow の各メソッドを
+  クラス側のフィルタから除き、メソッドごとの別プロセスで実行する。
+  AllocationEquivalence の2つの Extended メソッドは、それぞれ英雄・シード単位の
+  完結した操作列を16分割する。各子プロセスだけに `SODRPG_EQUIVALENCE_SHARD=i/16`
+  （i は0始まり）を渡し、手数・シード数・照合内容を減らさず分散する。
+  このため当該2メソッドの結果件数は分割数分になるが、操作列の和は従来と同じで、
+  どれか1つの失敗も全体の失敗になる。通常のテスト実行には分割変数を引き継がない。
+  選択実行（`--all` 未指定）でも、`--slow` 時は同じ分割を行う。
+  CI の slow-tests ジョブ（main マージ後）はクラス単位の matrix で走り、
+  分割変数を設定しないため各メソッドが全操作列を実行する。
   matrix は手で列挙するため、`--check-ci-matrix`（CI の core-tests ジョブで実行）
   が列挙と検出の不一致を失敗として報告する。
 
@@ -146,6 +166,41 @@ restore/build込みの実時間193.66→157.39秒（各1回の観測）。
 884件、25.9%削減で、約4割の目安より必須保持を優先した。
 このコマンドは.NETのみを対象とし、変更していないPythonテストや実ゲームは今回実行していない。
 
+
+## PR #587：CI 通知 R1 と修正ラウンドの確認
+
+R1 のコメントは CI 結果の通知であり、追加の機能変更の要求ではない。
+[GitHub Actions run 38966820278](https://github.com/Kling0012/shape-of-dreams-rpg-plan/actions/runs/38966820278)
+を `gh run view` で確認し、対象コミット `c611ae7688a875234f152809db3745731a13dc2c`
+の次の9ジョブがすべて `success` だったことを確認した。
+
+- `core-tests`
+- `slow-tests (SodRpg.Core.Tests.GeneratedHeroAcceptanceTests)`
+- `slow-tests (SodRpg.Core.Tests.PerformanceTests)`
+- `slow-tests (SodRpg.Core.Tests.AllocationEquivalenceV131Tests)`
+- `mod-tests (tests/SodRpg.Mod.FxBudget.Tests)`
+- `mod-tests (tests/SodRpg.Mod.Startup.Tests)`
+- `mod-tests (tests/SodRpg.Mod.AutoCast.Tests)`
+- `mod-tests (tests/SodRpg.Culinary.Tests)`
+- `mod-tests (tests/Issue73.Native.Tests)`
+
+この結果は、main を取り込んだ後の `a2e5f5a3` や後続コミットの CI 成功を示さない。
+今回の修正ラウンドでは、取り込み後の worktree で以下を実行した。
+.NET 10 の環境で `DOTNET_ROLL_FORWARD=LatestMajor` を指定し、NuGet キャッシュは
+worktree 外の既定環境変数 `NUGET_PACKAGES` を維持した。
+
+- `dotnet test tests/SodRpg.Core.Tests/SodRpg.Core.Tests.csproj -c Release --filter 'FullyQualifiedName~OverchargeAndTollTests|FullyQualifiedName~NewPowersV129Tests' --verbosity quiet`：29件成功、失敗0件。
+- `python3 -m unittest discover -s tools/tests -p test_test_changed.py`：25件成功。
+- `python3 tools/test_changed.py --check-ci-matrix`：検出された3つの slow クラスと CI 定義が一致。
+- Startup / AutoCast を restore 後、DLL のない固有の `OutputPath` で、報告と同じ Timing フィルターを指定。固定の `--no-build` では両方とも invalid DLL・exit=1、現在の `run_dotnet_test(..., no_build=True)` ではビルドと探索が完了し exit=0。フィルターは `FullyQualifiedName~Performance|FullyQualifiedName~Timing|FullyQualifiedName~takes_well_under`。一致するテストは両方とも0件なので、性能テストの成功件数には数えない。
+- 同じ出力先の Startup DLL で `ValidPreflightConsumesContractsWithoutInstallingDetours` を `no_build=True` で実行：1件成功。
+
+未 restore の初回試行では `dotnet test --no-build` が何も出力せず exit=0 となったため、
+再現・合格の証拠には採用していない。上記の DLL 不在確認は restore 後の実行結果。
+全件・slow・Performance/Timing 全体、Lab の完全なラッパー、MOD 本体の Release ビルド、
+生成コード検査、ゲーム内確認はこのラウンドでは未実行。全体検証は後段に委ね、
+ゲーム内確認はこの環境ではゲームを起動できないため実行していない。
+新しいテストは追加していない。
 
 ## #200 ローカル欠片化と旧取引の互換復旧
 
@@ -280,6 +335,97 @@ Linux／.NET 10、Releaseの実Core DLLで、鞄30個・レア度／スコア混
   両プロジェクトを実行する。単独確認は `dotnet test <project> --filter FullyQualifiedName~Issue73LedgerTests`
   または `FullyQualifiedName~NativeAcceptanceTests`。
   実機のフレーム時間・確保量・Unity本体のRPC転送はこのハーネスの検証範囲外。
+
+## #435 宿敵の名札色（2026-10-16）
+
+引き継いだスナップショットには、`DreamforgeUi` の共通定数として宿敵色
+`#4dd8ff`（シアン）、悪夢化色 `#ff6ad5`（ピンク紫）、変種色 `#ffb347`（橙）と、
+宿敵がある場合に変種名札を描かない処理が含まれていた。READMEと検証記録には
+異なるシアン値が残っていたため、実装の `#4dd8ff` に統一し、CHANGELOGの重複した
+説明をまとめた。宿敵の判定は `NightmareAffix.Nemesis` のビットで行うため、
+ボス／ミニボス共通で、ほかの接頭効果が付いていても宿敵色を優先する。
+ヴァイオレットは悪夢化のピンク紫に近いため、前回のシアン採用と既存の名札キャッシュを
+維持した。通信・保存や毎フレームの処理は変更していない。
+
+ほかの強調表示もコードで照合した。`MonsterCues.ColorFor` は金・茶橙・青・緑、
+`BossEffectColor` は冷気の水色、闇の紫などを使うが、宿敵の `#4dd8ff` と同値ではない。
+レア度の青 `#4fa8ff`・紫 `#c475ff` とも異なる。青系の強調表示と近い色域ではあるため、
+あらゆる背景での視認性を保証する検証ではない。MODの敵名札3種の色と、
+モデルの発光・戦闘効果・装備名の色は区別して確認した。
+
+協力プレイの適用経路はソースで確認した。`HostAuthority.MakeNemesis` が宿敵ビットを
+設定し、`SendMonsterClassification`／`FlushMonsterSync` が `DreamforgeNightmareMsg.affixes`
+として個別同期／全クライアントへ送る。`ClientSession.OnNightmare` は
+`Nightmares.Sanitize` で宿敵ビットを保持し、名札用辞書へ格納する。
+`DreamforgeUi.DrawNightmareLabels` にはホスト／参加者による色の分岐がなく、
+どちらも同じ定数を使用する。本体の通常ボス／エリート名表示とは別のMODの頭上名札が対象。
+
+以下は今回のセッションで実行した検証：
+
+- `dotnet build src/SodRpg.Mod -c Release -p:GameDir="/mnt/ghauto-sbx/sod-gamedata/Shape of Dreams" --nologo`：終了コード0、エラー0・警告6。ゲーム参照DLLでコンパイルした。ゲームへの配置処理は実行されていない。
+- `DOTNET_ROLL_FORWARD=Major dotnet test tests/SodRpg.Core.Tests/SodRpg.Core.Tests.csproj -c Release --filter 'FullyQualifiedName~SodRpg.Core.Tests.NightmareTests.|FullyQualifiedName~SodRpg.Core.Tests.MonstersV129Tests.|FullyQualifiedName~SodRpg.Core.Tests.VariantsV124Tests.|FullyQualifiedName~SodRpg.Core.Tests.NameplateTrimTests.|FullyQualifiedName~SodRpg.Core.Tests.MonsterAuthorityStateTests.' --nologo`：終了コード0、59成功・0失敗・0スキップ。
+- `DOTNET_ROLL_FORWARD=Major dotnet test tests/Issue73.Native.Tests/Issue73.Native.Tests.csproj -c Release --filter 'FullyQualifiedName~Issue73.Native.Tests.NativeAcceptanceTests.DifferentialUpdatesCoalesceWithoutMovingIdsBehindTheirNeighborsAndRotateCategories' --nologo`：終了コード0、1成功・0失敗・0スキップ。既存の敵分類差分の集約・配信順をAPIダブルで確認したもので、宿敵の色や実通信の検証ではない。
+- 既存テストの対象は悪夢／変種のルール、宿敵ビットの保持、名札の生存管理、敵分類状態と差分配信。色選択と描画の優先順はソースを確認したもので、既存テストは描画メソッドを実行しない。新しいテストは追加していない。
+- **未実行**：Unity実画面で宿敵化したボス／ミニボスの名札を比較する確認、本体名札も含めた背景別の視認性・1920×1080の実描画、実際の協力通信。ゲーム実行環境が提供されていないため、報告の画面上の状況は再現・目視確認していない。
+- **未実行**：フルテスト・Slowテスト、今回の名札表示と無関係なテスト。作業中は関連部分だけを検証し、全体検証は後続工程に委ねる指示による。
+
+## PR #505 取り込み：命中時の確保削減とボス装備（2026-10-16）
+
+元PR #505の製品コード変更を取り込み、光の精霊の溜め処理で新しく読む
+`Actions[1]`には`Actions.Count >= 2`のガードを追加した。不足時はその溜め処理だけを
+見送る。`BossMoveProfile`はコンストラクターで1〜16個の非null行動を検証し、
+配列のコピーを読み取り専用で保持するため、アズラク等の`Actions[0]`は必ず存在する。
+
+設定の原本（`tools/balance/bosses/{maw,azurak,light}.json`）、生成済みの
+`BossMawBalance`／`BossAzurakBalance`／`BossLightBalance`、`BossProfiles`を突き合わせた。
+今回の読み取り先は従来の直書きと一致する。
+
+| 効果 | プロファイルの行動・値 | 従来の動作 |
+| --- | --- | --- |
+| 大顎の護符 | `charm.Actions[0]`: MainHits=4、CounterLifetimeMillis=4000 | 3回分を保持し、4回目に回復。最後の命中から4秒でリセット |
+| アズラクの2部位 | `stage2.Actions[0]`: MainHits=3、CounterLifetimeMillis=4000、RangeMilli=8000 | 3回・最後の命中から4秒・射程8m |
+| 光の精霊の手 | `hands.Actions[0]`: MainHits=3、CounterLifetimeMillis=6000 | 最初の命中から6秒以内に3回 |
+| 光の精霊の頭 | `head.Actions[0]`: RangeMilli=8000 | 射程8m |
+| 光の精霊の2部位 | `stage2.Actions[1]`: Count=3、LifetimeMillis=6000。`Actions[0]`: DelayMillis=350 | 3回溜め、最終加算から6秒保持。次の入力で消費して350ms後に発射 |
+
+`BossEquipmentSnapshot`は装備キャッシュがない場合にfalseを返す。
+`BossEnsure`はその戻り値で`ClearBossEffects`を呼び、Build=null・EquipmentDirty=trueへ
+戻す。次回はBuildの差分があるため早期成功せず再照合し、情報がそろえば再構築する。
+`changed`をfalseのまま返しても、この解除・再試行を迂回しないことをソースで確認した。
+
+刻印の`Upside`と選択子はそれぞれのコンストラクターが`Array.AsReadOnly`で保持し、
+getterのみ公開する。添字ループはこのコレクションを直接参照し、列挙子を生成しない。
+`GimmickRuntime.ActiveStates`は具体型のListを返し、各foreachで構造体列挙子を使う。
+`ForgetVictim`は逆順RemoveAtで全一致を削除し、捕捉ラムダを生成しない。
+刻印の結果オブジェクト等、ほかの経路に存在する確保をゼロにする変更ではない。
+
+実行した検証：
+
+- `DOTNET_ROLL_FORWARD=Major dotnet test tests/SodRpg.Core.Tests/SodRpg.Core.Tests.csproj -c Release -p:PythonCommand=python3 --filter '<対象11クラス>' --nologo`：194成功・0失敗・0スキップ。対象はBossStageB3NativeTests、BossRuntimeNativeTests、BossSetsStageATests、BossSetsStageB12Tests、BossResourceBoundsTests、BossBalanceMigrationTests、GimmickEffectsV129Tests、GimmickPrecisionV131Tests、HotPathQueryFlagTests、ScopedKeystoneModifiersTests、FractionalScopedModifiersTests。
+- 既存の光の精霊のケースは製品コードをリンクし、2／3／6部位で3回の溜め中は未発射、4回目の入力から350msを境に発射、終端の落雷・障壁・重複なしを確認する。ほかの既存ケースはボスの寿命管理・上限、設定JSONと行動件数／値の一致、仕掛けの期限・対象削除、刻印の対象選択・数値を確認する。
+- `dotnet build src/SodRpg.Mod -c Release -p:GameDir="/mnt/ghauto-sbx/sod-gamedata/Shape of Dreams" --nologo -v:quiet`：エラー0・警告6。参照用ディレクトリにModsがないことを確認して実行し、配置処理なし。
+- `python3 tools/balance/gen_cs.py --check`、`git diff --check`：成功。
+- `python3 tools/test_changed.py --list`は582クラスを選択したため実行には使わず、上記11クラスを明示した。新規テスト・ケースは追加せず、元PRの新規0バイト断言テストも取り込んでいない。
+
+**未実行**：Unity実機での戦闘・装備情報未準備時の例外再現／回復・協力通信は、ゲーム実行環境が提供されていないため未確認。装備キャッシュ欠落時の解除／再試行と、大顎の4回目・アズラクの3回目・光の手の6秒の同等性は設定とコードの照合によるもので、当該条件を追加ケースで実行した証拠ではない。GC割当量・フレーム時間の実測は行っていない。実行環境依存の0バイト断言を追加せず、型と生成箇所を点検した。フルテスト・Slowテスト・無関係なテストは作業中に実行しない指示に従い、後続工程へ委ねる。
+
+## #546 PR #505 レビュー追補：前提の明記と検証の強化（2026-10-17）
+
+コードの動きは変えず、pr #505 のレビューで挙がった前提を明示した。光の精霊の溜め処理は
+`stage2` の行動が2件未満のとき、その処理だけを見送り、警告ログを1回だけ出す
+（`HostAuthority.BossLight.LightChargeInput`、静的フラグで1回に限定）。大顎の護符の
+`MainHits - 1` 判定は、`boss_values.py` の `CELL_FLOORS` で `maw` の `charm` 1番目アクションの
+`mainHits` が2以上であることを生成時検証で保証し、判定箇所にも前提のコメントを置いた。
+`GimmickRuntime.ActiveStates` はListで受ける呼び出し規約をコメントで明示した
+（IReadOnlyListへ受けるとボクシングが復活）。表側の下限の注意書きは `tools/balance/README.md` に追加。
+
+後続の検討事項（このIssueでは対応しない）：
+
+- 装備キャッシュ欠落時に `BossEnsure` が `ClearBossEffects` → 再照合 → 再構築する経路と、
+  ボス装備の回数・持続の境界（大顎の4回目・アズラクの3回目・光の手の6秒等）へのシナリオテスト追加は、
+  後続のIssueで検討する。現在は設定JSONとコードの照合（`BossBalanceMigrationTests` 等）のみ。
+- `BossEquipmentSnapshot` 失敗後に装備情報がそろったときの効果の再構築・再照合の目視確認は
+  実機確認が必要なため、実機確認リストに残す（作業環境ではゲームを起動できない）。
 
 ## マッピングロジックの単体テスト
 
