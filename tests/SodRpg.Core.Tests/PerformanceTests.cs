@@ -37,6 +37,8 @@ namespace SodRpg.Core.Tests
         public void Build_and_encode_are_fast()
         {
             var p = Loaded();
+            // 定常時の費用を測る。初回のJITと星図の検証・キャッシュ構築は計測に含めない。
+            for (int i = 0; i < 200; i++) Build.Compute(p, "Hero_Vesper", 3, p.Run.Pacts, 1).Encode();
             var sw = Stopwatch.StartNew();
             const int n = 5000;
             for (int i = 0; i < n; i++) Build.Compute(p, "Hero_Vesper", 3, p.Run.Pacts, 1).Encode();
