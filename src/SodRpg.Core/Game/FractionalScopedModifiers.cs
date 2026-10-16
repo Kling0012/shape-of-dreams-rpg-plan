@@ -500,9 +500,17 @@ namespace SodRpg.Core.Game
         {
             bool memory = modifier.ScopeKind == ScopeKind.Receiver
                 ? (channel ?? entry.Channel)?.ReceiverMemory == modifier.ScopeMemory : entry.Memory == modifier.ScopeMemory;
-            return memory && (modifier.TargetEffectIds.Length == 0 || modifier.TargetEffectIds.Contains(entry.StarId)
-                || entry.ContributorIds.Any(id => modifier.TargetEffectIds.Contains(id)))
-                && (modifier.TargetEffects.Length == 0 || modifier.TargetEffects.Contains(entry.Def.Effect));
+            return memory && (modifier.TargetEffectIds.Length == 0 || Array.IndexOf(modifier.TargetEffectIds, entry.StarId) >= 0
+                || AnyTargeted(modifier.TargetEffectIds, entry.ContributorIds))
+                && (modifier.TargetEffects.Length == 0 || Array.IndexOf(modifier.TargetEffects, entry.Def.Effect) >= 0);
+        }
+
+        // ビルド計算の内側のループで呼ばれるので、LINQ とクロージャを使わずに調べる。
+        private static bool AnyTargeted(string[] targets, string[] contributors)
+        {
+            foreach (string id in contributors)
+                if (Array.IndexOf(targets, id) >= 0) return true;
+            return false;
         }
         public static void ValidateTree(IReadOnlyList<TalentDef> tree)
         {
@@ -600,6 +608,11 @@ namespace SodRpg.Core.Game
                 entries.Add(entry);
             }
             build.Gimmicks.Clear();
+            // 下の星単位の依存記録は、同じ記憶の強化・数値補正か、一致する ScopedModifier に限る。
+            // 3つともない星は加算も依存記録も行わない。仕掛け本体の ContributorIds は entryToken に別途記録する。
+            var contributing = new List<KeyValuePair<TalentDef, int>>(selected.Count);
+            foreach (var s in selected)
+                if (s.Key.GimmickBoost != 0 || s.Key.GimmickParameter.HasValue || s.Key.ScopedModifier != null) contributing.Add(s);
             foreach (var entry in entries)
             {
                 long boost = 0, duration = 0, radius = 0, chance = 0, targets = 0;
@@ -607,7 +620,7 @@ namespace SodRpg.Core.Game
                 ScopedModifierCapProfile boostCap = null, durationCap = null, radiusCap = null, chanceCap = null, targetsCap = null;
                 string entryToken = build.Dependencies == null ? null : "E:" + entry.StarId;
                 if (entryToken != null) build.Dependencies.Touch(entryToken, entry.ContributorIds.Length == 0 ? new[] { entry.StarId } : entry.ContributorIds);
-                foreach (var s in selected)
+                foreach (var s in contributing)
                 {
                     var t = s.Key;
                     if (t.RouteMemory == entry.Memory)
