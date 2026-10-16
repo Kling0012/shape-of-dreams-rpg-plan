@@ -208,7 +208,7 @@ namespace SodRpg.Core.Game
             if (Waypoints.Sum(killWaypoint).KillLootTierBonus > 0) rollTier = Nightmares.RewardTier(rollTier);
             int killHeat = heat ?? run.Heat;
             var focus = p.Focus ?? DailyDream.Get(run.DailyId)?.FeaturedLine;
-            var reward = Loot.RollKill(rng, rollTier, itemLevel, killHeat, focus, KillModifiers(run, killWaypoint, roomOmenDropBonus), p.Stash, run.Satchel, p.Codex,
+            var reward = Loot.RollKill(rng, rollTier, itemLevel, killHeat, focus, KillModifiers(run, killWaypoint, roomOmenDropBonus), p.Stash, run.UnsecuredForLoot(), p.Codex,
                 Rarity.Legendary, InfinityRewards.OrdinaryRelicMultiplier(run, killWaypoint, tier), shardDropMultiplier,
                 InfinityRewards.UniqueDropMultiplier(p), LimboRelicMultiplier(run.LimboDepth));
             if (variant != null && variant.ShardBonusPct != 100) reward.Shards = (int)Math.Min(int.MaxValue, (long)reward.Shards * variant.ShardBonusPct / 100 + LootBalance.VariantAdditiveShards);
