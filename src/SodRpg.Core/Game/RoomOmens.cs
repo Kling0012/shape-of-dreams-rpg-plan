@@ -9,7 +9,7 @@ namespace SodRpg.Core.Game
         None, Vigor, Swiftness, Focus, Fortitude, Healing, Fortune,
         Sluggishness, Fragility, Weariness, Drought, RestlessEnemies, SturdyEnemies,
         // 追加分は番号を後ろへ足す（ネットワークで送る番号を変えないため）。
-        Vitality, Alacrity, Feebleness, Dulling,
+        Vitality, Alacrity, Feebleness, Dulling, ResonantWard,
     }
 
     public static class RoomOmens
@@ -35,7 +35,7 @@ namespace SodRpg.Core.Game
             RoomOmen.Sluggishness, RoomOmen.Fragility, RoomOmen.Weariness, RoomOmen.Drought,
             RoomOmen.RestlessEnemies, RoomOmen.SturdyEnemies, RoomOmen.Feebleness, RoomOmen.Dulling,
         };
-        public static bool IsTrial(RoomOmen omen) => Array.IndexOf(Trials, omen) >= 0;
+        public static bool IsTrial(RoomOmen omen) => omen == RoomOmen.ResonantWard || Array.IndexOf(Trials, omen) >= 0;
         public static bool IsValid(RoomOmen omen) => omen == RoomOmen.None || Array.IndexOf(Blessings, omen) >= 0 || IsTrial(omen);
         public static double TrialScale(string key) => RoomOmenBalance.TrialScale(key);
 
@@ -55,6 +55,14 @@ namespace SodRpg.Core.Game
                 if (room == roomNumber) break;
             }
             return previous;
+        }
+
+        // A separate stream leaves Roll's released pools and every solo room unchanged.
+        public static RoomOmen RollCoop(ulong seed, int roomNumber, int humanPlayers, bool enabled = true)
+        {
+            if (!enabled || humanPlayers < 2 || roomNumber < 0) return RoomOmen.None;
+            var rng = new Rng(seed ^ 0x636f6f706f6d656eUL ^ (ulong)roomNumber);
+            return rng.Chance(RoomOmenBalance.CoopOmenChance) ? RoomOmen.ResonantWard : RoomOmen.None;
         }
 
         public static double Value(RoomOmen omen)
@@ -102,6 +110,10 @@ namespace SodRpg.Core.Game
 
         public static string Describe(RoomOmen omen)
         {
+            if (omen == RoomOmen.ResonantWard)
+                return Loc.T("部屋の兆し：共鳴の盾（2 人以上で同時に攻撃すると盾が割れる）・遺物+",
+                    "Room Omen: Resonant Ward (Two or more players attacking together break the ward) · relics +")
+                    + (RoomOmenBalance.TrialDropBonus * 100).ToString("0.##", CultureInfo.InvariantCulture) + "%";
             string name, effect;
             switch (omen)
             {

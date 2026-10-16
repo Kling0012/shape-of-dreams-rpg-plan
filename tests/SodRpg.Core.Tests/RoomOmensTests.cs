@@ -62,9 +62,11 @@ namespace SodRpg.Core.Tests
                 for (int room = 0; room < 30; room++)
                     seen.Add(RoomOmens.Roll(seed, room));
             var all = Enum.GetValues(typeof(RoomOmen)).Cast<RoomOmen>().Where(o => o != RoomOmen.None).ToList();
-            Assert.Equal(16, all.Count);
-            Assert.True(all.All(seen.Contains), "未出現の兆し: " + string.Join(",", all.Where(o => !seen.Contains(o))));
-            Assert.Equal(8, all.Count(RoomOmens.IsTrial));
+            Assert.Equal(17, all.Count);
+            // マルチ専用の兆しは別の乱数列。従来のソロ抽選は16種を維持する。
+            var solo = all.Where(o => o != RoomOmen.ResonantWard).ToList();
+            Assert.True(solo.All(seen.Contains), "未出現の兆し: " + string.Join(",", solo.Where(o => !seen.Contains(o))));
+            Assert.Equal(9, all.Count(RoomOmens.IsTrial));
             foreach (var omen in all)
             {
                 Assert.True(RoomOmens.IsValid(omen));
@@ -89,7 +91,8 @@ namespace SodRpg.Core.Tests
         {
             foreach (RoomOmen omen in Enum.GetValues(typeof(RoomOmen)))
             {
-                if (omen == RoomOmen.None) continue;
+                // 共鳴の盾は単一の恒常数値ではなく、敵の被ダメージを条件付きで切り替える。
+                if (omen == RoomOmen.None || omen == RoomOmen.ResonantWard) continue;
                 bool enemySide = omen == RoomOmen.RestlessEnemies || omen == RoomOmen.SturdyEnemies;
                 if (RoomOmens.IsTrial(omen)) Assert.True(enemySide ? RoomOmens.Value(omen) > 0 : RoomOmens.Value(omen) < 0, omen.ToString());
                 else Assert.True(RoomOmens.Value(omen) > 0, omen.ToString());
@@ -154,6 +157,66 @@ namespace SodRpg.Core.Tests
             foreach (var key in travelers)
                 if (!overridden.Contains(key))
                     Assert.Equal(1.0, RoomOmens.TrialScale(key), 10);
+        }
+
+        [Fact]
+        public void RollCoop_never_replaces_a_solo_or_disabled_party()
+        {
+            // 人間1人または設定OFFでは置換が起きないため、部屋列は従来の Roll と完全に一致する。
+            for (ulong seed = 0; seed < 200; seed++)
+                for (int room = 0; room < 20; room++)
+                {
+                    Assert.Equal(RoomOmen.None, RoomOmens.RollCoop(seed, room, 1, true));
+                    Assert.Equal(RoomOmen.None, RoomOmens.RollCoop(seed, room, 5, false));
+                    var solo = RoomOmen.None;
+                    for (int r = 0; r <= room; r++)
+                        solo = RoomOmens.RollCoop(seed, r, 1, true) != RoomOmen.None ? RoomOmen.ResonantWard : RoomOmens.Roll(seed, r);
+                    Assert.Equal(RoomOmens.Roll(seed, room), solo);
+                }
+            Assert.Equal(RoomOmen.None, RoomOmens.RollCoop(42, -1, 4, true));
+        }
+
+        [Fact]
+        public void RollCoop_is_deterministic_and_leaves_the_solo_stream_untouched()
+        {
+            for (ulong seed = 0; seed < 300; seed++)
+            {
+                var solo = new RoomOmen[20];
+                for (int room = 0; room < 20; room++) solo[room] = RoomOmens.Roll(seed, room);
+                for (int room = 0; room < 20; room++)
+                {
+                    var first = RoomOmens.RollCoop(seed, room, 2, true);
+                    Assert.Equal(first, RoomOmens.RollCoop(seed, room, 2, true));
+                    Assert.True(first == RoomOmen.None || first == RoomOmen.ResonantWard);
+                    // ホストの置換後の列: 共鳴の盾の部屋以外は従来の結果のまま。
+                    if (first == RoomOmen.None) Assert.Equal(solo[room], RoomOmens.Roll(seed, room));
+                    else Assert.NotEqual(RoomOmen.ResonantWard, solo[room]); // 通常抽選は共鳴の盾を出さない
+                    // 置換があっても次の部屋の通常の結果は変わらない。
+                    if (room + 1 < 20) Assert.Equal(solo[room + 1], RoomOmens.Roll(seed, room + 1));
+                }
+            }
+        }
+
+        [Fact]
+        public void RollCoop_hits_share_stays_close_to_the_balance_table()
+        {
+            double chance = Balance().GetProperty("coop").GetProperty("coopOmenChance").GetDouble();
+            int hits = 0, rooms = 0;
+            // ホストと同じ runId由来の種で測る（連続する小さな整数の種は最初の1回の抽選に偏る）。
+            for (int i = 0; i < 400; i++)
+            {
+                ulong seed = Rng.SeedFrom("coop-omen-share-" + i);
+                for (int room = 0; room < 40; room++)
+                {
+                    if (RoomOmens.RollCoop(seed, room, 2, true) == RoomOmen.ResonantWard) hits++;
+                    rooms++;
+                }
+            }
+            Assert.InRange((double)hits / rooms, chance - 0.02, chance + 0.02);
+            // 部屋番号は乱数列に入る: 同じseedでも部屋ごとに独立した結果になる。
+            Assert.Contains(Enumerable.Range(0, 40),
+                room => RoomOmens.RollCoop(7, room, 2, true) != RoomOmens.RollCoop(7, 0, 2, true)
+                    || RoomOmens.RollCoop(11, room, 2, true) != RoomOmens.RollCoop(11, 5, 2, true));
         }
     }
 }

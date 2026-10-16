@@ -33,6 +33,9 @@ namespace SodRpg.Mod
         [LabelText("Room Omens: a blessing or trial in each combat room (the host's setting applies) /\n部屋の兆し：戦闘の部屋ごとに恵みか試練を付ける（ホストの設定が使われる）")]
         public bool roomOmens = true;
 
+        [LabelText("Co-op-only Room Omens (host) / マルチ専用の兆し（ホスト）")]
+        public bool coopRoomOmens = true;
+
         [LabelText("Melee: convert equipment attack range to attack speed (host) / 近接：装備の射程を攻撃速度へ変換（ホスト）")]
         public bool meleeRangeToSpeed = true;
 
