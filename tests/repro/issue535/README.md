@@ -1,6 +1,6 @@
-# Issue #535 修正前の再現
+# Issue #535 再現・回帰確認
 
-製品コードを変更せず、素材の吸い寄せ主経路化・協力時の自動詠唱の実効頻度・MOD 再読込時の Harmony パッチの外れを再現する。
+素材の吸い寄せ主経路化・協力時の自動詠唱の実効頻度・MOD 再読込時の Harmony パッチの外れを確認する。修正前の実測は下に保持し、既存ケースを修正後の距離・owner・引数注入の仕様に追従した。
 
 ```sh
 python3 tests/repro/issue535/run.py
@@ -53,4 +53,17 @@ python3 tests/repro/issue535/run.py
 
 - 実機確認不可のため未実行: 参加者の画面で遠くの素材がどう見えるか（§1 の見え方）、自動詠唱の体感（§2）、実際のゲームでの MOD 読み込み順序で §3 が発生するか（本再現は順序を決め打ちしている）。
 - ゲーム同梱 Harmony 2.3.6.0 そのものでは実行していない（本ランタイムで detour が失敗するため 2.4.2 で代用）。
-- 既存テスト一式（`SodRpg.Culinary.Tests` 等）は本作業では実行していない（製品コード・既存テストは無変更のため）。
+- 再現工程では既存テスト一式（`SodRpg.Culinary.Tests` 等）は実行していない（その工程では製品コード・既存テストは無変更）。修正工程の実行結果は下記。
+
+## 修正後の結果（2026-10-16）
+
+- `python3 tests/repro/issue535/run.py`：8件成功、終了コード0。4/8/15mの通常ドロップはホスト位置書き換えなし、600mの保険移動は本体 `SyncPosition` 境界へ移動後の位置を渡す。Unityや実ソケットの同期を試験しているわけではない。
+- コピーごとのowner生成に合わせ、既存ケースの「共通ownerに2パッチ」の前提を「各コピーのownerが異なる」に追従した。古いコピーのStop後も新しいコピーの上限40を維持するアサーションは保持している。
+- Harmony注入を `__0` へ変更したため、引数名不一致の既存対照ケースは「導入失敗」から「改名しても本番postfixが上限40を適用」に追従した。nativeスタブの `hero` は `h`、`value` は `amount` に変更して導入成功を確認する。モーターのスタブには実DLLで確認したprivate `SyncPosition()` 境界を追加した。新規テストケースは追加していない。
+- `DOTNET_ROLL_FORWARD=Major dotnet test -c Release tests/SodRpg.Culinary.Tests --nologo -v:quiet`：20件成功。
+- `DOTNET_ROLL_FORWARD=Major dotnet test -c Release tests/SodRpg.Core.Tests --filter FullyQualifiedName~CulinaryPickupSnapTests --nologo -v:quiet -p:PythonCommand=python3`：2件成功。距離仕様変更により、既存300mの期待値だけ保険対象外へ追従した。
+- `DOTNET_ROLL_FORWARD=Major dotnet test -c Release tests/SodRpg.Mod.AutoCast.Tests --nologo -v:quiet`：19件成功。
+- `dotnet build src/SodRpg.Mod -c Release -p:GameDir="/home/wang/dev/sod-gamedata/Shape of Dreams" --nologo -v:quiet`：エラー0・警告6。参照ディレクトリにModsがないことを確認し、ゲームへの配置なし。
+- revert check：製品3ファイルと仕様追従した再現2ファイルをディスクへ退避し、一時的に修正前コミット `4c01c4ca` の内容へ戻した。同じ再現コマンドで元の2件が失敗（8件中6成功・終了コード1）。修正版を戻すと8件成功・終了コード0。記録は `artifacts/revert-check-20261016/{reverted-run,restored-run}.log`。
+- §2はコード不変。約4.63回/秒（平均約0.216秒）／約4.30回/秒（平均約0.233秒）は同じ観測値。各間隔が常に0.23秒以上とは限らず、float丸めとtick位相により約0.20～0.233秒になる。UIの「最大5回/秒」は上限として正しい。体感の良否は実機でのみ判断できるため、今回の実機不可方針に従い未実行と記録する。
+- 参加者画面・自動詠唱の体感・実際のゲームローダー・ゲーム同梱Harmony 2.3.6.0・フル／slow suiteは未実行。実機は利用不可、Harmony 2.3.6のdetourはこのランタイムで失敗、全体試験は後続パイプラインの担当のため。

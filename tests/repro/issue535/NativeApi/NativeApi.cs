@@ -74,7 +74,7 @@ public class StackedStatusEffect
     public int maxStack, stack, RemoveCalls, LastRemoved;
     public void OnCreate() { }
     public void SetStack(int value) { stack = Math.Min(maxStack, Math.Max(0, value)); }
-    public void AddStack(int value) { SetStack(stack + value); }
+    public void AddStack(int amount) { SetStack(stack + amount); }
     public void RemoveStack(int value)
     {
         RemoveCalls++;
@@ -87,8 +87,8 @@ public class Shrine_CookingPot
 {
     // Mirrors the decompiled Dew.Contents bodies: GetIngredientCount reads the
     // stack, ConsumeIngredients only resets it (no other side effects).
-    public int GetIngredientCount(Hero hero) => hero.Status.Effect.stack;
-    public void ConsumeIngredients(Hero hero) { hero.Status.Effect.SetStack(0); }
+    public int GetIngredientCount(Hero h) => h.Status.Effect.stack;
+    public void ConsumeIngredients(Hero h) { h.Status.Effect.SetStack(0); }
     // A renamed-parameter twin of GetIngredientCount for the injection probe.
     public int GetIngredientCountRenamed(Hero h) => h.Status.Effect.stack;
 }
@@ -100,6 +100,10 @@ public class PickupInstance : AbilityInstance
     public float velocityAccelerationMax = 30f;
     public float pickupDelay = 0.5f;
     public float attractionRange = 6f;
+    public int PositionSyncCalls;
+    public UnityEngine.Vector3 SyncedPosition;
+    // Mirrors the native SyncPosition -> RpcSyncPosition boundary; no socket or Unity physics.
+    private void SyncPosition() { PositionSyncCalls++; SyncedPosition = transform.position; }
 }
 public class Ai_Culinary_Pickup : PickupInstance
 {

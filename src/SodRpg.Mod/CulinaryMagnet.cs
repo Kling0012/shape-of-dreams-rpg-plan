@@ -15,9 +15,10 @@ namespace SodRpg.Mod
         private static Harmony _harmony;
         private static MethodInfo _create, _hook;
         private static FieldInfo _range, _delay, _speed, _accelerationMin, _accelerationMax;
+        private static Action<PickupInstance> _syncPosition;
         private static bool _enabled, _warned;
-        // Host only: live ingredient pickups. The native motor homes toward the owner, but a blinking owner can
-        // outrun it, so each frame the host also moves any pickup left far behind onto its living owner.
+        // Host only: live ingredient pickups. Leave ordinary drops to native synchronized flight.
+        // Only recover pickups beyond the motor's reach, then publish position/velocity through its native RPC.
         private static readonly List<Actor> Tracked = new List<Actor>();
 
         internal static void Install(Harmony owner)
@@ -38,6 +39,7 @@ namespace SodRpg.Mod
                 _speed = RequireField(motor, "maxVelocity");
                 _accelerationMin = RequireField(motor, "velocityAccelerationMin");
                 _accelerationMax = RequireField(motor, "velocityAccelerationMax");
+                _syncPosition = CreatePositionSync(motor);
                 _hook = AccessTools.DeclaredMethod(typeof(CulinaryMagnet), nameof(AfterCreate));
                 _harmony = new Harmony(owner.Id + ".CulinaryMagnet");
                 _harmony.Patch(_create, postfix: new HarmonyMethod(_hook));
@@ -46,6 +48,23 @@ namespace SodRpg.Mod
             catch (Exception ex)
             {
                 Disable(ex);
+            }
+        }
+
+        private static Action<PickupInstance> CreatePositionSync(Type motor)
+        {
+            try
+            {
+                var sync = AccessTools.DeclaredMethod(motor, "SyncPosition", Type.EmptyTypes);
+                if (sync == null || sync.ReturnType != typeof(void) || sync.IsStatic)
+                    throw new MissingMethodException(motor.FullName, "SyncPosition");
+                return AccessTools.MethodDelegate<Action<PickupInstance>>(sync);
+            }
+            catch (Exception ex)
+            {
+                // Native attraction remains available if only teleport recovery is incompatible.
+                Log.Warn("Culinary ingredient teleport recovery disabled; native attraction remains active: " + ex.Message);
+                return null;
             }
         }
 
@@ -64,12 +83,13 @@ namespace SodRpg.Mod
             {
                 // Applied after native variation on both host and clients. All movement,
                 // eligibility, pickup effects and Network_target synchronization stay native.
-                _range.SetValue(__instance, 500f);
+                _range.SetValue(__instance, CulinaryPickupSnap.SnapDistance);
                 _delay.SetValue(__instance, 0f);
                 _speed.SetValue(__instance, 120f);
                 _accelerationMin.SetValue(__instance, 150f);
                 _accelerationMax.SetValue(__instance, 300f);
-                if (NetworkServer.active && __instance is Actor actor) Tracked.Add(actor);
+                if (NetworkServer.active && _syncPosition != null && __instance is Actor actor && !Tracked.Contains(actor))
+                    Tracked.Add(actor);
             }
             catch (Exception ex)
             {
@@ -77,7 +97,7 @@ namespace SodRpg.Mod
             }
         }
 
-        /// <summary>毎フレーム（ホスト）：持ち主から離れすぎた食材を持ち主の位置へ移し、本体の拾得に任せる。</summary>
+        /// <summary>毎フレーム（ホスト）：吸引範囲を超えた食材だけを持ち主へ移して同期し、本体の拾得に任せる。</summary>
         internal static void SnapToOwners()
         {
             if (!_enabled || Tracked.Count == 0) return;
@@ -94,7 +114,10 @@ namespace SodRpg.Mod
                     var target = owner.agentPosition;
                     var here = actor.transform.position;
                     if (CulinaryPickupSnap.ShouldSnap(true, Vector3.Distance(here, target)))
+                    {
                         actor.transform.position = target;
+                        _syncPosition((PickupInstance)actor);
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -120,6 +143,7 @@ namespace SodRpg.Mod
         {
             _enabled = false;
             Tracked.Clear();
+            _syncPosition = null;
             try
             {
                 if (_harmony != null && _create != null && _hook != null)

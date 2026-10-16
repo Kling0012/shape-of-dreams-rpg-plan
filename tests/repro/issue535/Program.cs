@@ -10,8 +10,9 @@ using Mirror;
 using SodRpg.Mod;
 using UnityEngine;
 
-// Issue #535 reproduction, before any fix. Three reported points:
-//   §1 the host-side pickup snap (CulinaryPickupSnap.SnapDistance = 3f) preempts
+// Issue #535 reproduction with the existing cases adapted to the fixed contracts.
+// Original failures:
+//   §1 the host-side pickup snap (original SnapDistance = 3f) preempts
 //      the native synchronized pickup motor for ordinary drop distances, so
 //      ingredients teleport to their owner instead of flying in;
 //   §2 the coop native autocast interval (0.2 s) is gated on up-to-30 Hz logic
@@ -123,10 +124,12 @@ internal static class Program
         Check("control-snaps-pickup-beyond-native-reach", () =>
         {
             InstallMagnet();
-            Spawn(Owner(600f)); // beyond the raised attractionRange (500): left behind by a blink
+            var pickup = Spawn(Owner(600f)); // beyond the raised attractionRange (500): left behind by a blink
             Call(Magnet, "SnapToOwners");
             Equal(1, UnityEngine.Transform.Writes.Count, "the snap insurance still covers pickups the motor cannot reach");
             Equal(600f, UnityEngine.Transform.Writes[0].x, "snapped onto the owner");
+            Equal(1, pickup.PositionSyncCalls, "recovery publishes through native SyncPosition");
+            Equal(600f, pickup.SyncedPosition.x, "the published position matches the recovered host position");
         });
 
         Check("snap-teleports-ordinary-drops-instead-of-native-flight", () =>
@@ -161,8 +164,10 @@ internal static class Program
             Equal(40, pot.GetIngredientCount(hero), "with both copies loaded the count is bounded to the native batch");
             var count = typeof(Shrine_CookingPot).GetMethod(nameof(Shrine_CookingPot.GetIngredientCount));
             var info = Harmony.GetPatchInfo(count);
-            Equal(2, info.Postfixes.Count(p => p.owner == LoaderId + ".culinaryIngredientCap"),
-                "both copies' postfixes are registered under the one shared owner id");
+            var owners = info.Postfixes.Where(p => p.owner.StartsWith(LoaderId + ".culinaryIngredientCap", StringComparison.Ordinal))
+                .Select(p => p.owner).ToArray();
+            Equal(2, owners.Length, "both copies installed a count postfix");
+            Equal(2, owners.Distinct().Count(), "each installed copy has its own Harmony owner id");
             Call(first, "Stop"); // the game unloads the older copy while the newer one keeps running
             Equal(true, Enabled(second), "the surviving copy still reports itself enabled");
             Equal(40, pot.GetIngredientCount(hero),
@@ -187,23 +192,27 @@ internal static class Program
             Equal(40, pot.GetIngredientCount(hero), "with distinct owner ids the surviving copy keeps its patches");
         });
 
-        Check("control-argument-name-mismatch-fails-loud-at-patch-time", () =>
+        Check("control-argument-name-mismatch-uses-positional-binding", () =>
         {
-            // The production postfixes inject target parameters by name (hero, value).
-            // A game-side rename must surface as a patch-time error that Install
-            // turns into a warning plus fail-soft disable, not a silent no-op.
+            // Apply the production postfix to a native-shaped target whose argument is
+            // named h instead of hero. Positional injection must still enforce the batch.
+            var copy = LoadCopy();
+            Call(copy, "Install", new Harmony("dreamforge.repro.535.names"));
+            Equal(true, Enabled(copy), "copy installed with renamed native arguments");
+            var effect = new Se_Gem_L_Culinary_Stack { maxStack = 40, stack = 1000 };
+            effect.OnCreate();
+            var hero = new Hero();
+            hero.Status.Effect = effect;
             var target = typeof(Shrine_CookingPot).GetMethod(nameof(Shrine_CookingPot.GetIngredientCountRenamed));
+            var patchOwner = new Harmony("dreamforge.repro.535.names.probe");
             try
             {
-                new Harmony("dreamforge.repro.535.names").Patch(target,
-                    postfix: new HarmonyMethod(typeof(Program).GetMethod(nameof(CountPostfix),
-                        BindingFlags.NonPublic | BindingFlags.Static)));
-                throw new InvalidOperationException("the renamed-parameter patch applied without an error; name binding did not fail loud");
+                patchOwner.Patch(target, postfix: new HarmonyMethod(copy.GetMethod("AfterIngredientCount",
+                    BindingFlags.NonPublic | BindingFlags.Static)));
+                Equal(40, new Shrine_CookingPot().GetIngredientCountRenamed(hero),
+                    "renaming the native hero argument must not bypass the cooking cap");
             }
-            catch (Exception ex)
-            {
-                Contains("hero", ex.Message, "Harmony must reject the unbindable parameter loudly");
-            }
+            finally { patchOwner.Unpatch(target, HarmonyPatchType.All, patchOwner.Id); }
         });
 
         Check("autocast-coop-cadence-quantized-below-advertised-rate", () =>
