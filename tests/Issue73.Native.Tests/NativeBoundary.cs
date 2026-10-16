@@ -694,9 +694,8 @@ namespace SodRpg.Mod
         private string _coopWaitingId, _coopWaitReason;
         private float _coopWaitingAt, _coopWaitReasonAt;
         private bool _coopWaitReleased;
-        private string _coopTradeWarning, _coopConnectionWarning;
         public CoopTradeView CoopTrade { get; set; }
-        public string CoopTradeWarning { get => _coopTradeWarning ?? _coopConnectionWarning; set => _coopTradeWarning = value; }
+        // Warning storage/getter are extracted from production in NativePersistence.targets.
         internal static string CoopHostJournalPath => _hostSession?.CoopTradeJournalPath;
         internal static bool CoopHostSafe => _hostSession?.CoopLocalSafe == true;
         internal static bool CoopHostNativeSaving => _hostSession?._coopNativeSaving == true;

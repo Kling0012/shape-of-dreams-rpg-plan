@@ -352,9 +352,8 @@ namespace SodRpg.Mod
 
         private void OnApplicationQuit()
         {
-            if (!_running) return;
-            _session?.SaveNow();
-            _session?.FlushSaves();
+            // Stop detaches profile callbacks and saves even if Unity never calls OnDestroy.
+            Stop();
         }
 
         private void OnDestroy()

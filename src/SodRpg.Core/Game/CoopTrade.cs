@@ -122,21 +122,36 @@ namespace SodRpg.Core.Game
             }
         }
 
+        private static readonly Txt[] ReasonMessages =
+        {
+            new Txt("相手がトレード非対応、または応答がありません。トレードのみ利用できません。", "The peer does not support trade or has not replied. Only trade is unavailable."),
+            new Txt("相手は今取引できる状態ではありません（戦闘中・保存中など）", "The other player can't trade right now (in combat, saving, etc.)"),
+            new Txt("安全な時・保存完了後のみ取引できます。取引は中止しました。", "Trade requires a safe moment and completed saves. The trade was cancelled."),
+            new Txt("所持品または残高が変わったため取引を中止しました。", "The trade was cancelled because inventory or balances changed."),
+            new Txt("取引を中止しました（取り消し・切断・時間切れ・移動）。", "Trade cancelled (cancel, disconnect, timeout or travel)."),
+            new Txt("トレード台帳の保存を準備中です。トレードのみ保留します。", "Preparing the trade journal. Only trade is on hold."),
+            new Txt("取引の記録が大きすぎます。保管庫を整理してから試してください", "The trade record is too large. Tidy up your stash and try again."),
+            new Txt("融合済みの遺物は旧版と交換できません。ホストと交換相手を融合対応版に更新してください。",
+                    "Fused relics cannot be traded with older versions. Update the host and trade partner to a version that supports Fusion."),
+        };
+
         /// <summary>理由コードの説明（いまの言語）。知らないコードは、そのまま「トレードのみ利用できません：」に続ける。</summary>
-        public static string ReasonText(string code)
+        public static string ReasonText(string code) => ReasonMessage(code).ToString();
+
+        /// <summary>表示まで日英を保持する取引の理由。</summary>
+        public static Txt ReasonMessage(string code)
         {
             switch (code)
             {
-                case "unsupported": return Loc.T("相手がトレード非対応、または応答がありません。トレードのみ利用できません。", "The peer does not support trade or has not replied. Only trade is unavailable.");
-                case "peerBusy": return Loc.T("相手は今取引できる状態ではありません（戦闘中・保存中など）", "The other player can't trade right now (in combat, saving, etc.)");
-                case "safe": return Loc.T("安全な時・保存完了後のみ取引できます。取引は中止しました。", "Trade requires a safe moment and completed saves. The trade was cancelled.");
-                case "ownership": return Loc.T("所持品または残高が変わったため取引を中止しました。", "The trade was cancelled because inventory or balances changed.");
-                case "cancelled": case "connection": return Loc.T("取引を中止しました（取り消し・切断・時間切れ・移動）。", "Trade cancelled (cancel, disconnect, timeout or travel).");
-                case "saving": return Loc.T("トレード台帳の保存を準備中です。トレードのみ保留します。", "Preparing the trade journal. Only trade is on hold.");
-                case "recordTooLarge": return Loc.T("取引の記録が大きすぎます。保管庫を整理してから試してください", "The trade record is too large. Tidy up your stash and try again.");
-                case FusionReason: return Loc.T("融合済みの遺物は旧版と交換できません。ホストと交換相手を融合対応版に更新してください。",
-                    "Fused relics cannot be traded with older versions. Update the host and trade partner to a version that supports Fusion.");
-                default: return Loc.T("トレードのみ利用できません：", "Only trade is unavailable: ") + code;
+                case "unsupported": return ReasonMessages[0];
+                case "peerBusy": return ReasonMessages[1];
+                case "safe": return ReasonMessages[2];
+                case "ownership": return ReasonMessages[3];
+                case "cancelled": case "connection": return ReasonMessages[4];
+                case "saving": return ReasonMessages[5];
+                case "recordTooLarge": return ReasonMessages[6];
+                case FusionReason: return ReasonMessages[7];
+                default: return new Txt("トレードのみ利用できません：" + code, "Only trade is unavailable: " + code);
             }
         }
 

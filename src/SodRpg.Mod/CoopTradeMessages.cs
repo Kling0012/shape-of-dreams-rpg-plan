@@ -25,7 +25,9 @@ namespace SodRpg.Mod
         // A fixed reason code next to the host-language status, so each player can read it in their own language.
         // Older peers ignore it; a missing or unknown code falls back to status.
         public string reasonCode;
-        public string LocalizedStatus() => CoopTradeRules.IsKnownReason(reasonCode) ? CoopTradeRules.ReasonText(reasonCode) : status;
+        public string LocalizedStatus() => StatusText()?.ToString();
+        internal Txt StatusText() => CoopTradeRules.IsKnownReason(reasonCode)
+            ? CoopTradeRules.ReasonMessage(reasonCode) : status == null ? null : new Txt(status, status);
         public int revision, index, count, totalLength;
         public bool incoming, accepted, ownConfirmed, otherConfirmed, preparing;
         public bool fusion, partnerFusion;

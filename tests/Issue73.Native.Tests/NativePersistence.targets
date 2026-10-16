@@ -85,7 +85,7 @@
   <!-- #510: ホスト版警告（互換分岐）の言語追従。OnHello と警告プロパティを実ソースから抽出し、
        NativeBoundary.cs 側の二重定義だった HostVersionWarning はこちらへ寄せる。 -->
   <Target Name="CompileIssue510Hello" BeforeTargets="CoreCompile">
-    <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/ClientSession.Hello.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)Issue510Hello.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="ClientSession" Methods="OnHello;HostVersionWarning" />
+    <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/ClientSession.Hello.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)Issue510Hello.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="ClientSession" Methods="OnHello;HostVersionWarning" Fields="_hostVersionWarning" />
     <ItemGroup>
       <Compile Include="$(IntermediateOutputPath)Issue510Hello.g.cs" />
     </ItemGroup>
@@ -167,7 +167,7 @@
 
   <!-- 協力取引クライアント（所見01・07・09・10）。境界は NativeBoundary.cs の ClientSession 部。 -->
   <Target Name="CompileCoopTradeClient" BeforeTargets="CoreCompile">
-    <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/ClientSession.CoopTrade.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)CoopTradeClient.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="ClientSession" Methods="DiagnoseCoopTrade;CoopPendingStale;CoopWaitText;CoopTradeLocked;CoopWorldSafe;CoopLocalSafe;CoopLocalWorldSafe;CoopLocalCombatSafe;CoopLocalBlockReason;CoopTradeUnavailableReason;CanCoopTrade;WireCoopTrade;ReceiveCoopPacket;TickCoopTrade;DisableCoopTrade;SendCoop;CoopSnapshot;SendCoopProfile;RequestCoopTrade;AcceptCoopTrade;ConfirmCoopTrade;CancelCoopTrade;SetCoopTradeOffer;RetryCoopOffer;OnCoopTradeState;DeferCoopSettlement;CompleteCoopSettlement" />
+    <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/ClientSession.CoopTrade.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)CoopTradeClient.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="ClientSession" Methods="DiagnoseCoopTrade;CoopPendingStale;CoopWaitText;CoopTradeLocked;CoopWorldSafe;CoopLocalSafe;CoopLocalWorldSafe;CoopLocalCombatSafe;CoopLocalBlockReason;CoopTradeUnavailableReason;CanCoopTrade;WireCoopTrade;ReceiveCoopPacket;TickCoopTrade;DisableCoopTrade;SendCoop;CoopSnapshot;SendCoopProfile;RequestCoopTrade;AcceptCoopTrade;ConfirmCoopTrade;CancelCoopTrade;SetCoopTradeOffer;RetryCoopOffer;OnCoopTradeState;DeferCoopSettlement;CompleteCoopSettlement;CoopTradeWarning" Fields="_coopTradeWarning;_coopConnectionWarning" />
     <ItemGroup>
       <Compile Include="$(IntermediateOutputPath)CoopTradeClient.g.cs" />
     </ItemGroup>

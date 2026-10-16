@@ -40,7 +40,7 @@ namespace PressureReportUnderTest
         private bool _hostForbiddenInput, _hostFusionInput, _forbiddenGearStripNotice; // #415：禁忌装備の送信可否と通知
         private object _sentContinueReceiptActor;
         private string _sentContinueReceiptRunId, _sentContinueReceiptCheckpointId, _sentContinueReceiptResumeSession;
-        private string HostVersionWarning;
+        private SodRpg.Core.Game.Txt _hostVersionWarning;
         private string ForbiddenGearHostNotice;
         private void ResetOverflowBonusConnection() { }
         internal void Enable() => _hostAutocastPressureCapability = true;

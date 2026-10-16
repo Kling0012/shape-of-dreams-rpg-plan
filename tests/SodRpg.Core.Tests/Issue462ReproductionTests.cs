@@ -39,7 +39,7 @@ namespace SodRpg.Core.Tests
 
                 // Reply + mismatch storage prove Hello was accepted before checking the visible list.
                 Assert.IsType<DreamforgeHelloMsg>(Assert.Single(actor.ClientMessages));
-                var recorded = (System.Collections.Generic.Dictionary<DewPlayer, string>)typeof(HostAuthority)
+                var recorded = (System.Collections.Generic.Dictionary<DewPlayer, Txt>)typeof(HostAuthority)
                     .GetField("_versionMismatches", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(host);
                 Assert.True(recorded.ContainsKey(peer), "Hello must record the mismatch for this lobby peer");
                 _output.WriteLine("difference={0}, lobby member=true, game member=false, stored warnings={1}, visible warnings={2}",

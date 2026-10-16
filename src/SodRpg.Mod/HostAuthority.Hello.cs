@@ -13,7 +13,7 @@ namespace SodRpg.Mod
         /// <summary>この MOD の版（about/metadata.json の modVer）。起動時に設定する。</summary>
         internal static string ModVersion = "?";
 
-        private readonly Dictionary<DewPlayer, string> _versionMismatches = new Dictionary<DewPlayer, string>();
+        private readonly Dictionary<DewPlayer, Txt> _versionMismatches = new Dictionary<DewPlayer, Txt>();
         private readonly HashSet<DewPlayer> _helloPeers = new HashSet<DewPlayer>();
         private readonly HashSet<DewPlayer> _bountyCountPeers = new HashSet<DewPlayer>();
         private readonly HashSet<DewPlayer> _autocastPressurePeers = new HashSet<DewPlayer>();
@@ -22,10 +22,10 @@ namespace SodRpg.Mod
 
         internal bool SupportsAutocastPressure(DewPlayer player) => _autocastPressurePeers.Contains(player);
         internal void ForgetAutocastPressure(DewPlayer player) => _autocastPressurePeers.Remove(player);
-        private static readonly List<string> MismatchScratch = new List<string>();
+        private static readonly List<Txt> MismatchScratch = new List<Txt>();
 
-        /// <summary>版が違う参加者の説明（ホストの画面に出す）。無ければ空。</summary>
-        internal static IReadOnlyList<string> VersionWarnings => MismatchScratch;
+        /// <summary>版が違う参加者の説明（表示時に現在の言語で解決する）。無ければ空。</summary>
+        internal static IReadOnlyList<Txt> VersionWarnings => MismatchScratch;
 
         private Action<DreamforgeHelloMsg, DewPlayer> _onHello;
         private Action<DewPlayer> _onHelloPlayerChanged;
@@ -158,7 +158,7 @@ namespace SodRpg.Mod
                     string theirs = string.IsNullOrEmpty(msg.modVer) ? "?" : msg.modVer;
                     // Name the item that differs: version and protocol often read identical while the content
                     // fingerprint or the peer's Infinity availability is what the warning is about.
-                    _versionMismatches[caller] = Loc.T(
+                    _versionMismatches[caller] = new Txt(
                         $"{caller.playerName} の Dreamforge に差があります（{DescribeDifferencesJa(sameProtocol, sameContent, sameVersion, msg.continueCheckpoints, msg.infinityAvailable)}。版 {ModVersion}/{theirs}、Protocol {Protocol.Version}/{msg.protocol}）。機能は続行します。",
                         $"{caller.playerName}'s Dreamforge differs ({DescribeDifferencesEn(sameProtocol, sameContent, sameVersion, msg.continueCheckpoints, msg.infinityAvailable)}; version {ModVersion}/{theirs}, protocol {Protocol.Version}/{msg.protocol}). Features continue.");
                     // One warning per mismatch episode/transport, not every five-second retry.
