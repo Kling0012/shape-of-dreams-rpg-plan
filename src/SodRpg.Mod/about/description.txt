@@ -1,5 +1,5 @@
-[b]Fixes guests starting Infinity choices before the host, forge buttons and how-to text not matching the rules, gear unique effect and link description issues, and effect lights exceeding their limit.[/b]
-[b]Infinity の協力プレイでゲストが先に選択を始められる問題、鍛冶のボタンや遊び方の表示、装備の固有効果と連携の説明、エフェクトの光が上限を超える問題を直しました。[/b]
+[b]Fixes upgrade costs missing from Baku shard returns, the Memory Archive appearing at max Dream Level, and named item effects missing from the Codex slot filter.[/b]
+[b]夢喰いの獏の欠片に強化費用が含まれない問題、夢レベル上限で記憶の書庫が出る問題、図鑑の部位絞り込みで銘品の効果が出ない問題を直しました。[/b]
 
 [h1]Dreamforge RPG[/h1]
 Turns every run into part of a long RPG journey: relics you keep, a risky "secure or delve" choice at every zone, a star map per Traveler, a forge, and long-term goals. Co-op ready.
