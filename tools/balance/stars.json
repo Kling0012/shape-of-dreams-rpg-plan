@@ -32,7 +32,7 @@
         "Stat": 1.0
       },
       "Hero_Bismuth": {
-        "MemoryDamage": 0.95,
+        "MemoryDamage": 1.0,
         "GimmickBoost": 1.0,
         "GimmickParam": 1.0,
         "Keystone": 1.0,
@@ -50,7 +50,7 @@
         "Stat": 1.0
       },
       "Hero_Husk": {
-        "MemoryDamage": 1.35,
+        "MemoryDamage": 2.116,
         "GimmickBoost": 1.0,
         "GimmickParam": 1.0,
         "Keystone": 1.0,
@@ -59,7 +59,7 @@
         "Stat": 1.0
       },
       "Hero_Lacerta": {
-        "MemoryDamage": 1.5,
+        "MemoryDamage": 2.7,
         "GimmickBoost": 1.0,
         "GimmickParam": 1.0,
         "Keystone": 1.0,
@@ -77,7 +77,7 @@
         "Stat": 1.0
       },
       "Hero_Nachia": {
-        "MemoryDamage": 1.0,
+        "MemoryDamage": 1.057,
         "GimmickBoost": 1.0,
         "GimmickParam": 1.0,
         "Keystone": 1.0,
@@ -86,7 +86,7 @@
         "Stat": 1.0
       },
       "Hero_Vesper": {
-        "MemoryDamage": 1.5,
+        "MemoryDamage": 2.175,
         "GimmickBoost": 1.0,
         "GimmickParam": 1.0,
         "Keystone": 1.0,
