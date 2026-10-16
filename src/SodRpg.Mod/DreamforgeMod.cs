@@ -756,6 +756,13 @@ namespace SodRpg.Mod
             Debug.Log("[DreamforgeRPG] build: " + _session.CurrentBuild(ClientSession.HeroKeyOf(hero)).Encode() + " hostConfirmed=" + _session.HostConfirmed);
         }
 
+        [ConsoleCommand("Dreamforge (host test): log boss actor lifetime counts; 1=every 30 seconds, 0=log once and stop", "dreamforge_bosslives")]
+        private void BossLivesCommand(int periodic)
+        {
+            if (!DevAllowed() || !MakeSureServer()) return;
+            _host?.ConfigureBossNativeLifetimeDiagnostics(periodic != 0);
+        }
+
         [ConsoleCommand("Dreamforge (host test): kill enemies within radius to test drops", "dreamforge_killnear")]
         private void KillNearCommand(float radius)
         {

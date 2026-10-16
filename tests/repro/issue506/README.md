@@ -51,8 +51,33 @@ After 4096 completed actor lifetimes (usePooling=False, reuseInRoom=False), the 
 
 実機の長時間インフィニティ、敵密度の高い部屋、既定の `SpawnManager.usePooling` の実行時値、ゲーム内 `dreamforge_simkill`、ゲーム内診断ログでの推移、実 DLL を使う MOD 全体のビルド、投射物の命中重複判定の症状、全テストスイートは **未実行**。今回確認したのは「プール無効・部屋内再利用なし」の本体条件が成立する場合に、終了した実体の寿命番号が蓄積し、後続対象のマークが失われること。通常設定の長時間プレイで必ず発生するという結論ではない。
 
-この工程では本体修正・診断ログ追加は行わない。品質懸念のうち、解放漏れによる上限到達とマーク消失を再現済み。解放経路の補強・上限時の回復や警告・開発用ログは後工程の未解決事項。
+再現工程では本体修正・診断ログ追加は行わなかった。品質懸念のうち、解放漏れによる上限到達とマーク消失を再現し、解放経路の補強・開発用ログを実装工程へ引き継いだ。
 
 ## 判断したこと
 
 実機確認不可という依頼条件に従い、逆コンパイルで確認できた非プール破棄経路を、既存のソースリンク型テストの境界として採用した。4096 件を直接辞書に詰めず、実際のマーク入口を 4096 回使い、破棄完了 prefix を毎回実行して解放漏れを観測した。プール有効と部屋内再利用ありの比較ケースも同じ再現テストに含め、常に枯渇するよう作ったテストではないことを確認した。
+
+## 実装修正と再検証（2026-10-16）
+
+`Actor.OnDisable` の postfix に `ClearBossNativeActor` を追加した。プール返却、非プールのUnity破棄、部屋片付け、ゾーン移動による `Destroy()` がここへ到達する。既存の `ClearPooledEventsAndProcessors` prefix は残し、両方通った場合も辞書の `Remove` は冪等で、累計解放数は実際に削除したときだけ増やす。
+
+`CompleteBossNativeActor` の prefix では寿命番号を消さない。`Se_U_Burrow` の終了処理が生成する攻撃などは、親が非アクティブでも同じ寿命と祖先であることを照合するため。共通の `InvokeOnDestroyActorIfDidnt` の直後に消す方法も、遅延する終了攻撃より早く番号を失う可能性があるので採用しなかった。`OnDisable` は本体がプール返却時にも既に使っている寿命境界である。全件リセットや生存実体の追い出し、上限増加は行っていない。
+
+再現テストは新規追加せず、既存の `FinishNativeLifetime` 末尾で実装した postfix を呼ぶよう、本体境界だけを追随した。アサーションと3条件は変更していない。
+
+| 条件 | 4096回終了後の件数 | 次の寿命番号 | 次のマーク件数 |
+| --- | ---: | ---: | ---: |
+| pooling=true, reuse=false | 0 | 4097 | 1 |
+| pooling=false, reuse=true | 0 | 4097 | 1 |
+| pooling=false, reuse=false | 0 | 4097 | 1 |
+
+- 冒頭の再現コマンド（修正前）: exit 1、2成功・1失敗。非プール条件で1024/2048/3072/4096件へ蓄積し、次のマーク0件。
+- 同じ再現コマンド（修正後）: exit 0、3成功。1024/2048/3072/4096回終了後すべて0件。
+- **revert check**: テストを変更せず、追加postfix内の解放呼び出しだけを一時的に戻して空にすると exit 1、2成功・1失敗（非プール条件で4096件、次の寿命0・マーク0）。呼び出しを復元して同じコマンドを再実行すると exit 0、3成功（次の寿命4097・マーク1）。修正を一時的に戻すと再現テストが失敗し、戻すと成功することを確認した。
+- `DOTNET_ROLL_FORWARD=Major dotnet test tests/SodRpg.Core.Tests/SodRpg.Core.Tests.csproj -c Release --no-build --filter 'FullyQualifiedName~Boss' --logger 'console;verbosity=minimal'`: exit 0、既存ボス関連172成功・失敗0。終了攻撃、部屋変更、マーク・資源上限の既存検証を含む。
+- `dotnet build src/SodRpg.Mod/SodRpg.Mod.csproj -c Release '-p:GameDir=/home/wang/dev/sod-gamedata/Shape of Dreams' -v:q`: exit 0、警告6・エラー0。本体DLLを参照したMOD全体のビルドはこの環境で実行できた。`Mods` ディレクトリのない参照用データを使い、実ゲームへの配置はしていない。
+- `DOTNET_ROLL_FORWARD=Major dotnet test tests/SodRpg.Mod.Startup.Tests/SodRpg.Mod.Startup.Tests.csproj -c Release --filter 'FullyQualifiedName~NativeStartupTests|FullyQualifiedName~ModReloadTests|FullyQualifiedName~ReloadStartupTests|FullyQualifiedName~InfinityLobbyStartTests' --logger 'console;verbosity=minimal' -v:q`: 最初は既存ハーネスに近接設定4フィールドと `ConfigureMeleeCoop` がなくコンパイル失敗（exit 1）。そのAPI境界と今回の診断メソッドだけ追随し、再実行は exit 0、107成功・失敗0・既存skip1。新規テストやアサーション変更はしていない。
+
+開発コマンド `dreamforge_bosslives 1` で現在件数・最大件数・累計解放数を直後と30秒ごとに記録する。`0` で現在値を1回出して停止。実行場所と確認方法は [MODの診断案内](../../../src/SodRpg.Mod/README.md#ボス実体の寿命診断issue-506) に記載した。
+
+**未実行**: ゲーム起動プログラム・実アセットを利用できないため、Unityでの実破棄コールバックとHarmony適用、fake-null、Mirror実通信、診断コマンドの実コンソール呼び出し・ログ推移、ボス装備付きの長時間Infinityと高密度部屋は未確認。実投射物の症状は既存ボス関連テストまでの確認。全テスト・遅い網羅検証は依頼に従い後工程へ残す。上の再現は本体境界を代替するコード上の検証で、実プレイ済みとは扱わない。

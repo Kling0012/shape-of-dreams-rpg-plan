@@ -29,6 +29,11 @@ namespace SodRpg.Core.Tests
             if (usePooling || reuseInRoom)
                 typeof(BossNativePooledLifetime).GetMethod("Prefix", BindingFlags.Static | BindingFlags.NonPublic)
                     .Invoke(null, new object[] { target });
+
+            // The production OnDisable postfix runs after the native method, including when
+            // DewPool skips the virtual clear. Keep this after the destruction callbacks above.
+            typeof(BossNativeDisabledLifetime).GetMethod("Postfix", BindingFlags.Static | BindingFlags.NonPublic)
+                .Invoke(null, new object[] { target });
         }
 
         [Theory]

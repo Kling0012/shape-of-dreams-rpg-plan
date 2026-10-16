@@ -426,6 +426,7 @@ namespace SodRpg.Mod
 
         private void StageBossEffects()
         {
+            TickBossNativeLifetimeDiagnostics();
             foreach (var rt in _runtimes.Values) TickBossEffects(rt, _tickNow);
         }
 

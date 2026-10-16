@@ -232,6 +232,15 @@ namespace SodRpg.Mod
         private static void Prefix(Actor __instance) { HostAuthority.NativeInstance?.ClearBossNativeActor(__instance); }
     }
 
+    // OnDisable runs for both pool returns and Unity destruction, while DewPool only
+    // calls ClearPooledEventsAndProcessors when pooling or room reuse is enabled.
+    // Keep the identity through OnDestroyActor: native death/exit attacks use its ancestry.
+    [HarmonyPatch(typeof(Actor), "OnDisable")]
+    internal static class BossNativeDisabledLifetime
+    {
+        private static void Postfix(Actor __instance) { HostAuthority.NativeInstance?.ClearBossNativeActor(__instance); }
+    }
+
     internal sealed partial class HostAuthority
     {
         internal sealed class BossNativeCast
@@ -331,6 +340,26 @@ namespace SodRpg.Mod
         private readonly BossHysteriaSpeedCapture[] _bossHysteriaSpeedCaptures = new BossHysteriaSpeedCapture[64];
 
         private readonly Dictionary<Actor, long> _bossNativeActorLives = new Dictionary<Actor, long>(4096);
+        private int _bossNativeActorLifePeak;
+        private long _bossNativeActorLivesReleased;
+        private bool _bossNativeLifetimeDiagnostics;
+        private float _bossNativeLifetimeNextLog;
+
+        internal void ConfigureBossNativeLifetimeDiagnostics(bool enabled)
+        {
+            _bossNativeLifetimeDiagnostics = enabled;
+            LogBossNativeActorLives();
+        }
+        private void TickBossNativeLifetimeDiagnostics()
+        {
+            if (_bossNativeLifetimeDiagnostics && Time.unscaledTime >= _bossNativeLifetimeNextLog)
+                LogBossNativeActorLives();
+        }
+        private void LogBossNativeActorLives()
+        {
+            _bossNativeLifetimeNextLog = Time.unscaledTime + 30f;
+            Log.Info($"boss native lifetime: _bossNativeActorLives.Count={_bossNativeActorLives.Count}/4096 peak={_bossNativeActorLifePeak} released={_bossNativeActorLivesReleased} periodic={_bossNativeLifetimeDiagnostics}");
+        }
         private readonly Dictionary<Actor, BossNativeSource> _bossNativeSources = new Dictionary<Actor, BossNativeSource>(512);
         private readonly Dictionary<Displacement, BossNativeDisplacement> _bossNativeDisplacements = new Dictionary<Displacement, BossNativeDisplacement>(64);
         private readonly Dictionary<Se_U_Hysteria, BossHysteriaState> _bossHysteriaStates = new Dictionary<Se_U_Hysteria, BossHysteriaState>(64);
@@ -370,6 +399,7 @@ namespace SodRpg.Mod
             {
                 if (_bossNativeActorLives.Count >= 4096) return 0;
                 _bossNativeActorLives.Add(actor, life = _memoryAttribution.NewPacketId());
+                _bossNativeActorLifePeak = Math.Max(_bossNativeActorLifePeak, _bossNativeActorLives.Count);
             }
             return life;
         }
@@ -832,7 +862,7 @@ namespace SodRpg.Mod
             ClearBossShoutActor(actor);
             ClearBossHysteriaCapture(actor);
             RemoveBossNativeSource(actor);
-            _bossNativeActorLives.Remove(actor);
+            if (_bossNativeActorLives.Remove(actor)) _bossNativeActorLivesReleased++;
             if (actor is Ai_U_Hysteria_Claw claw) ClearBossNativeClaw(claw);
             if (actor is Se_U_Hysteria state && _bossHysteriaStates.TryGetValue(state, out var ended))
             {

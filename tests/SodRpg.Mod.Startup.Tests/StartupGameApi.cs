@@ -81,6 +81,7 @@ namespace SodRpg.Mod
     {
         public bool japanese;
         public bool overflowDreamDust;
+        public bool meleeRangeToSpeed = true, coopDistanceFalloff = true, meleeBreak = true, meleeProximityGuard = true;
         public bool levelEssenceSlots = true, levelEssenceQ = true, levelEssenceW = true, levelEssenceE = true, levelEssenceSlotsR = true;
         public int levelEssenceEveryLevels = 10, levelEssenceCap = 4;
         public bool netSkipUnchanged = true, netCoalesce = true, netOwnerOnly = true, netCompact = true;
@@ -440,6 +441,8 @@ namespace SodRpg.Mod
         public static void PrewarmBossVisualTransport() { }
         public void Tick() { }
         public void RefreshLevelGemSlots() { }
+        internal void ConfigureBossNativeLifetimeDiagnostics(bool enabled) { }
+        internal void ConfigureMeleeCoop(bool rangeToSpeed, bool distanceFalloff, bool meleeBreak, bool meleeGuard) { }
         public void Detach() { }
     }
     internal static class RelicIcons
