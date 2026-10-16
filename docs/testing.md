@@ -390,6 +390,24 @@ PR #509 のレビューで挙がった軽微な改善（Issue #551）。`ClientS
 
 **未実行**：上記の保留中の回帰テスト（表示消失・古いエラー競合・言語切替キャッシュ）は新規テスト禁止のためこの変更では書いていない。言語切替後の表示は getter と条件分岐のソース追跡およびスクラッチでの `ProfileWriteException.Message` 確認、優先順位は上記のスクラッチ状態遷移による確認にとどまる。Unity実機での表示はゲーム実行環境がないため未確認。フルテスト・Slowテスト（`tools/test_changed.py --all`）は後続工程に委ねる。
 
+## #546 PR #505 レビュー追補：前提の明記と検証の強化（2026-10-17）
+
+コードの動きは変えず、pr #505 のレビューで挙がった前提を明示した。光の精霊の溜め処理は
+`stage2` の行動が2件未満のとき、その処理だけを見送り、警告ログを1回だけ出す
+（`HostAuthority.BossLight.LightChargeInput`、静的フラグで1回に限定）。大顎の護符の
+`MainHits - 1` 判定は、`boss_values.py` の `CELL_FLOORS` で `maw` の `charm` 1番目アクションの
+`mainHits` が2以上であることを生成時検証で保証し、判定箇所にも前提のコメントを置いた。
+`GimmickRuntime.ActiveStates` はListで受ける呼び出し規約をコメントで明示した
+（IReadOnlyListへ受けるとボクシングが復活）。表側の下限の注意書きは `tools/balance/README.md` に追加。
+
+後続の検討事項（このIssueでは対応しない）：
+
+- 装備キャッシュ欠落時に `BossEnsure` が `ClearBossEffects` → 再照合 → 再構築する経路と、
+  ボス装備の回数・持続の境界（大顎の4回目・アズラクの3回目・光の手の6秒等）へのシナリオテスト追加は、
+  後続のIssueで検討する。現在は設定JSONとコードの照合（`BossBalanceMigrationTests` 等）のみ。
+- `BossEquipmentSnapshot` 失敗後に装備情報がそろったときの効果の再構築・再照合の目視確認は
+  実機確認が必要なため、実機確認リストに残す（作業環境ではゲームを起動できない）。
+
 ## マッピングロジックの単体テスト
 
 `tools/tests/test_test_changed.py`（unittest）がマッピングロジックの単体テストを
