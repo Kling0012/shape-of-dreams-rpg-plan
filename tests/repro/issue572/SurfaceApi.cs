@@ -8,6 +8,7 @@ namespace SodRpg.Mod
         internal Profile Profile = new Profile();
         internal float PressureHealthMultiplier = 1;
         internal float PressureDamageMultiplier = 1;
+        internal float NightmareGearMultiplier;
     }
 
     internal static class UiStyles
