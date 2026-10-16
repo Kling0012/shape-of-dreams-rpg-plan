@@ -81,27 +81,68 @@ List<string> WriteTablePages(string stem, string title, string intro, string hea
 {
     var names = new List<string>();
     var parts = new List<List<string>>();
-    var cur = new List<string>();
-    int size = 0;
-    foreach (var r in rows)
+    bool compactNavigation = false;
+    string PageHeader(int page, int count)
     {
-        int b = Encoding.UTF8.GetByteCount(r) + 1;
-        if (size + b > MaxPageBytes && cur.Count > 0) { parts.Add(cur); cur = new List<string>(); size = 0; }
-        cur.Add(r); size += b;
+        var sb = new StringBuilder();
+        sb.Append(H1(title + (count > 1 ? $"（{page}/{count}）" : "")));
+        sb.Append(intro).Append("\n\n");
+        sb.Append("[[dreamforge:start|ホームへ戻る]]\n\n");
+        if (count > 1)
+        {
+            sb.Append("ページ: ");
+            if (compactNavigation)
+            {
+                if (page > 1) sb.Append(Link($"{stem}_{page - 1}", "前へ"));
+                if (page > 1 && page < count) sb.Append(" / ");
+                if (page < count) sb.Append(Link($"{stem}_{page + 1}", "次へ"));
+            }
+            else
+                sb.Append(string.Join(" / ", Enumerable.Range(1, count).Select(n => n == page ? $"{n}" : Link($"{stem}_{n}", n.ToString()))));
+            sb.Append("\n\n");
+        }
+        return sb.Append(header).Append('\n').ToString();
     }
-    if (cur.Count > 0 || parts.Count == 0) parts.Add(cur);
+
+    // 分割数が変わると見出しと案内も変わるため、出力と同じ文字列の実バイト数で分け直す。
+    int pageCount = 1;
+    while (true)
+    {
+        parts.Clear();
+        var cur = new List<string>();
+        int headerBytes = Enumerable.Range(1, pageCount).Max(n => Encoding.UTF8.GetByteCount(PageHeader(n, pageCount)));
+        int size = headerBytes;
+        bool retry = false;
+        foreach (var r in rows)
+        {
+            int b = Encoding.UTF8.GetByteCount(r) + 1;
+            if (size + b > MaxPageBytes && cur.Count > 0)
+            {
+                parts.Add(cur); cur = new List<string>();
+                size = Encoding.UTF8.GetByteCount(PageHeader(parts.Count + 1, pageCount));
+            }
+            if (size + b > MaxPageBytes && cur.Count == 0 && pageCount > 1 && !compactNavigation)
+            {
+                // 全ページへの案内自体が大きすぎる場合は、前後へのリンクに切り替える。
+                compactNavigation = true; pageCount = 1; retry = true;
+                break;
+            }
+            cur.Add(r); size += b;
+        }
+        if (retry) continue;
+        if (cur.Count > 0 || parts.Count == 0) parts.Add(cur);
+        if (parts.Count == pageCount) break;
+        pageCount = parts.Count;
+    }
     for (int i = 0; i < parts.Count; i++)
     {
         string name = parts.Count == 1 ? stem : $"{stem}_{i + 1}";
-        var sb = new StringBuilder();
-        sb.Append(H1(title + (parts.Count > 1 ? $"（{i + 1}/{parts.Count}）" : "")));
-        sb.Append(intro).Append("\n\n");
-        sb.Append("[[dreamforge:start|ホームへ戻る]]\n\n");
-        if (parts.Count > 1)
-            sb.Append("ページ: ").Append(string.Join(" / ", Enumerable.Range(1, parts.Count).Select(n => n == i + 1 ? $"{n}" : Link($"{stem}_{n}", n.ToString())))).Append("\n\n");
-        sb.Append(header).Append('\n');
+        var sb = new StringBuilder(PageHeader(i + 1, parts.Count));
         foreach (var r in parts[i]) sb.Append(r).Append('\n');
-        Write(name, sb.ToString());
+        string text = sb.ToString();
+        if (Encoding.UTF8.GetByteCount(text) > MaxPageBytes)
+            Console.Error.WriteLine($"WARN: {name} exceeds {MaxPageBytes} bytes; its header and a single table row cannot fit on one page.");
+        Write(name, text);
         names.Add(name);
     }
     return names;
@@ -318,12 +359,12 @@ string PageLinks(Slot slot, List<string> names) =>
     sb.Append(H1("Dreamforge RPG 装備ウィキ"));
     sb.Append($"Shape of Dreams 用MOD「Dreamforge RPG」（バージョン {modVersion}）の装備をまとめたウィキです。内容はゲームのデータから自動生成しています。\\\\\nEquipment reference for the Dreamforge RPG mod, generated directly from the game data.\n\n");
     sb.Append(H2("収録数"));
-    sb.Append($"  * 土台 (Bases): {Content.Bases.Count}\n  * 固有品 (Uniques): {Content.Uniques.Count}\n  * セット (Sets): {Content.Sets.Count}\n  * 固有効果 (Powers): {allPowers.Count}（うち装備の抽選で出るもの {poolRanges.Count}）\n");
+    sb.Append($"  * 土台 (Bases): {Content.Bases.Count}\n  * 固有品 (Uniques): {Content.Uniques.Count}\n  * セット (Sets): {Content.Sets.Count}\n  * 固有効果 (Powers): {powersListed}（うち装備の抽選で出るもの {poolRanges.Count}）\n");
     sb.Append($"  * 特性 (Affixes): {slots.Sum(s => Content.AffixPool(s).Count)}（部位別の合計）\n\n");
     sb.Append(H2("ページ"));
     sb.Append($"  * {Link("basics", "装備の基本")}\n  * {Link("powers", "固有効果")}\n  * {Link("affixes", "特性")}\n  * {Link("sets", "セット装備")}\n  * {Link("starmap", "星図（旅人別）")}\n\n");
     sb.Append(H2("星図（旅人別）"));
-    foreach (var sm in starMaps) sb.Append($"  * {Link(sm.Home, sm.Name)}（星 {sm.Stars} / 到達刻印 {sm.Keystones}）\n");
+    foreach (var sm in starMaps) sb.Append($"  * {Link(sm.Home, sm.Name)}（星 {sm.Stars - sm.Keystones} / 到達刻印 {sm.Keystones}）\n");
     sb.Append('\n').Append(H2("土台"));
     foreach (var (slot, n, names) in baseLinks) sb.Append($"  * {PageLinks(slot, names)}（{n}）\n");
     sb.Append('\n').Append(H2("固有品"));
@@ -332,7 +373,7 @@ string PageLinks(Slot slot, List<string> names) =>
 
     var pe = new StringBuilder();
     // 総合ポータルの表の1行（行の中の改行は DokuWiki の「\\ 」）。
-    pe.Append($"|**Dreamforge RPG**\\\\ Shape of Dreams の MOD|[[dreamforge:start|⚔ Dreamforge RPG を開く]]\\\\ 収録数：土台 {Content.Bases.Count} / 固有品 {Content.Uniques.Count} / セット {Content.Sets.Count} / 固有効果 {allPowers.Count}（v{modVersion}）|\n");
+    pe.Append($"|**Dreamforge RPG**\\\\ Shape of Dreams の MOD|[[dreamforge:start|⚔ Dreamforge RPG を開く]]\\\\ 収録数：土台 {Content.Bases.Count} / 固有品 {Content.Uniques.Count} / セット {Content.Sets.Count} / 固有効果 {powersListed}（v{modVersion}）|\n");
     WriteRaw("portal_extra.txt", pe.ToString());
 
     var se = new StringBuilder();
