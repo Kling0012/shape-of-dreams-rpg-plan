@@ -1,5 +1,5 @@
-[b]v3.2.0: minor adjustments. Everyone in co-op should update. Saves carry over; restart the game after updating.[/b]
-[b]v3.2.0：細かな調整を行いました。協力プレイは全員更新してください。セーブはそのまま引き継げます。更新後はゲームを再起動してください。[/b]
+[b]Fixes the secure point panel showing a lower nightmare chance than the actual roll.[/b]
+[b]確保地点のパネルに出る悪夢化の確率が、実際の抽選より低く表示されていた問題を直しました。[/b]
 
 [h1]Dreamforge RPG[/h1]
 Turns every run into part of a long RPG journey: relics you keep, a risky "secure or delve" choice at every zone, a star map per Traveler, a forge, and long-term goals. Co-op ready.

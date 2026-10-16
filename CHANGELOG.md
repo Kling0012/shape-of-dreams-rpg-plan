@@ -10,6 +10,26 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v3.2.1 — Secure point nightmare chance now matches the actual roll（2026-10-17）
+
+この版は、確保地点のパネルに表示される悪夢化の確率を、実際の抽選と合うように直す更新です。 / This update makes the nightmare chance shown on the secure point panel match the actual roll.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- 確保地点のパネルで「通常の敵の◯%が悪夢化」と表示される確率が、実際の確率より低く出ていた問題を直しました。夢レベルが高く装備が育っているほど差が大きくなり、たとえば30%と表示されていても、実際には40〜60%前後になることがありました。これからは、夢の圧、パネルで選んでいる道標、一行の装備の効果も表示に含めるので、表示される確率が実際の確率と一致します。 / Fixed an issue where the "◯% of normal enemies become nightmares" chance on the secure point panel was lower than the real chance. The gap grew with higher dream levels and stronger gear, so a displayed 30% could actually be around 40–60%. The panel now includes Dream Pressure, the waypoint selected on the panel, and the party's gear, so the shown chance matches the real one.
+- 「明けない夜」の道標を選んでいるとき、ボス以外の敵がすべて悪夢化するのに通常の確率が表示されていた問題を直しました。これからは「ボス以外のすべての敵が悪夢化」と表示されます。 / Fixed an issue where selecting the "Endless Night" waypoint still showed a normal percentage even though every non-boss enemy becomes a nightmare. The panel now says "All non-boss enemies become nightmares."
+- 協力プレイでホストが古いバージョンのままの場合は、一行の装備の効果を確かめられないため、確率を「◯%以上」と表示します。 / In co-op, if the host is on an older version, the party's gear effect can't be checked, so the chance is shown as "at least ◯%".
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
 ## v3.2.0 — Minor adjustments（2026-10-17）
 
 細かな調整を行いました。 / Minor adjustments.
