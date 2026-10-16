@@ -908,7 +908,8 @@ namespace SodRpg.Mod
         private bool _writeFailureJapanese;
         private Exception _saveErrorCause;
         private string _saveErrorText;
-        private long _writeFailureSeenSerial;
+        private AsyncProfileWriter _writeFailureKnownWriter;
+        private long _writeFailureKnownSerial;
         private int _buildCacheFrame = -1, _saveCount;
         private double _saveMsTotal;
         public string SaveError => _saveErrorCause != null ? _saveErrorCause.Message : _saveErrorText;

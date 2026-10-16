@@ -188,6 +188,7 @@ namespace SodRpg.Mod
                 Profile = _profileSlots.Profile;
                 _store = _profileSlots.Store;
                 _writer = null; // The drained writer remains bound to the OLD ProfileStore forever.
+                RememberWriteFailureState(null, 0);
                 _dirty = false;
                 ClearSaveError();
                 _profileCopyRevision = -1;

@@ -371,7 +371,7 @@ PR #509 のレビューで挙がった軽微な改善（Issue #551）。`ClientS
 優先順位は次のとおり（変更後も #509 の意図を保つ）。
 
 - この呼び出しで出た例外が最優先（`threw` の間は書き込み失敗の反映をスキップ）。
-- 例外より前から残っている書き込み失敗（`LastError`）は、今回の例外を隠さない。ただし `AsyncProfileWriter.FailureSerial`（失敗のたびに増える番号）が前回表示した値より進んでいれば「新しい書き込み失敗」なので、古い例外文に代わって書き込み失敗の表示に切り替える。`TickPeriodicSave` の定期表示も同じ条件にする。
+- 例外より前から残っている書き込み失敗（`LastError`）は、今回の例外を隠さない。catch で例外を保持するときに、その時点の writer と `AsyncProfileWriter.FailureSerial`（失敗のたびに増える番号）を既知の組として記録する。それ以後に同じ writer の番号が進んだ場合、またはプロフィール切替後の別 writer で失敗した場合だけ「新しい書き込み失敗」として、古い例外文に代わって書き込み失敗の表示に切り替える。writer の追跡状態はプロフィール切替時にもリセットし、`TickPeriodicSave` の定期表示も同じ条件にする。
 - 書き込みが成功し直したら（`HasPendingFailure` が false・`WrittenRevision > 0`）、書き込み失敗の表示だけを消す（別経路のエラーは残す）。
 
 ログは `Log.Error("Save failed: " + …)` を `ProfileStore.EnglishMessage(ex)` で出す。`ProfileWriteException` は英文（UI 言語と無関係）、それ以外の例外は `Message` をそのまま返す。
@@ -380,13 +380,15 @@ PR #509 のレビューで挙がった軽微な改善（Issue #551）。`ClientS
 
 実行した検証：
 
-- `DOTNET_ROLL_FORWARD=Major dotnet test tests/Issue73.Native.Tests/Issue73.Native.Tests.csproj -c Release --nologo --filter "FullyQualifiedName~InfinityClearSaveTests|FullyQualifiedName~ContinueSaveTests"`：28成功・0失敗・0スキップ。抽出ハーネス（`NativePersistence.targets` に `SetSaveErrorText;SetSaveErrorCause;ClearSaveError` を追加）が新しいメンバーを本番ソースから取り込めていることもこのビルドで確認。
-- `DOTNET_ROLL_FORWARD=Major dotnet test tests/Issue73.Native.Tests/Issue73.Native.Tests.csproj -c Release --nologo --filter "FullyQualifiedName~SatchelOverflowSaveTests|FullyQualifiedName~LobbyReturnTests|FullyQualifiedName~NativeAcceptanceTests|FullyQualifiedName~HostCoopTradeTests|FullyQualifiedName~TradeSendExceptionTests"`：39成功・0失敗・0スキップ（保存とTickPeriodicSaveを広く使うスイート）。
+- `DOTNET_ROLL_FORWARD=Major dotnet test tests/Issue73.Native.Tests/Issue73.Native.Tests.csproj -c Release --nologo --filter "FullyQualifiedName~InfinityClearSaveTests|FullyQualifiedName~ContinueSaveTests|FullyQualifiedName~NativeAcceptanceTests"`：47成功・0失敗・0スキップ。抽出ハーネス（`NativePersistence.targets`）が保存エラーと writer 状態追跡のメンバーを本番ソースから取り込めていることもこのビルドで確認。
+- リポジトリ外のスクラッチコンソールから上記のネイティブ抽出ハーネスを呼び、(1) 未表示の既存 writer 失敗→実際の `SaveNow` のシリアライズ例外→`TickPeriodicSave`、(2) 旧 writer で serial 1 を表示→実際の `SaveNow` のシリアライズ例外→新 writer の serial 1→`TickPeriodicSave`、を決定的に再現した。修正前コミット `f17c355b` ではそれぞれ「既存失敗が例外を上書き」「新 writer の失敗を見落とす」がともに発生し、修正後はともに発生しないことを確認した。
+- リポジトリ外のスクラッチコンソールからビルド済み Core を呼び、同じ `ProfileWriteException` の `Message` が日本語→英語→日本語へ追従すること、`ProfileStore.EnglishMessage` が両言語で同じ英文を返すこと、外部例外は元の `Message` を返すことを確認した。
+- `DOTNET_ROLL_FORWARD=Major dotnet test tests/Issue73.Native.Tests/Issue73.Native.Tests.csproj -c Release --nologo --filter "FullyQualifiedName~SatchelOverflowSaveTests|FullyQualifiedName~LobbyReturnTests|FullyQualifiedName~HostCoopTradeTests|FullyQualifiedName~TradeSendExceptionTests"`：20成功・0失敗・0スキップ（保存と `TickPeriodicSave` を使う関連スイート）。
 - `DOTNET_ROLL_FORWARD=Major dotnet test tests/SodRpg.Core.Tests/SodRpg.Core.Tests.csproj -c Release -p:PythonCommand=python3 --nologo --filter "FullyQualifiedName~AsyncProfileWriterTests|FullyQualifiedName~ProfileResetV127Tests|FullyQualifiedName~ProfileStoreRoundtripIssue429Tests|FullyQualifiedName~Issue73LedgerTests|FullyQualifiedName~OnboardingTests"`：28成功・0失敗・0スキップ。
-- `dotnet build src/SodRpg.Core -c Release --nologo -v:quiet`：エラー0・警告0。`dotnet build src/SodRpg.Mod -c Release -p:GameDir="/mnt/ghauto-sbx/sod-gamedata/Shape of Dreams" --nologo -v:quiet`：エラー0・警告6（既存と同じ6件）。
-- `git diff --check`：指摘は `docs/dreamforge-handoff.md` の追加行の行末 CRLF のみ（このファイルは CRLF で、過去のコミットと同じ扱い）。
+- `dotnet build src/SodRpg.Core -c Release --nologo -v:quiet`：エラー0・警告0。`dotnet build src/SodRpg.Mod/SodRpg.Mod.csproj -c Release '-p:GameDir=/home/wang/dev/sod-gamedata/Shape of Dreams' -p:ModDeployDir=/tmp/gh-auto-moddeploy-issue551-fix --nologo -v:minimal`：エラー0・警告6（既存と同じ6件）。
+- `git diff --check`：成功。
 
-**未実行**：上記の保留中の回帰テスト（表示消失・古いエラー競合・言語切替キャッシュ）は新規テスト禁止のためこの変更では書いていない。言語切替後の表示と優先順位の入れ替わりは、getter と条件分岐のソース追跡による確認にとどまる。Unity実機での表示はゲーム実行環境がないため未確認。フルテスト・Slowテスト（`tools/test_changed.py --all`）は後続工程に委ねる。
+**未実行**：上記の保留中の回帰テスト（表示消失・古いエラー競合・言語切替キャッシュ）は新規テスト禁止のためこの変更では書いていない。言語切替後の表示は getter と条件分岐のソース追跡およびスクラッチでの `ProfileWriteException.Message` 確認、優先順位は上記のスクラッチ状態遷移による確認にとどまる。Unity実機での表示はゲーム実行環境がないため未確認。フルテスト・Slowテスト（`tools/test_changed.py --all`）は後続工程に委ねる。
 
 ## マッピングロジックの単体テスト
 

@@ -352,8 +352,19 @@ namespace SodRpg.Mod
         // 例外は Message を読むたびに言語が変わるので、文字列には固定しない（#551）。
         private Exception _saveErrorCause;
         private string _saveErrorText;
-        // 書き込み失敗の表示に反映した writer の FailureSerial。前より新しい失敗が起きたかの判定に使う。
-        private long _writeFailureSeenSerial;
+        // 既知の書き込み失敗は writer の同一性と FailureSerial の組で追う。
+        // プロフィール切替後の新しい writer は同じ番号でも新しい失敗として扱う（#551）。
+        private AsyncProfileWriter _writeFailureKnownWriter;
+        private long _writeFailureKnownSerial;
+
+        private bool IsNewWriteFailure(AsyncProfileWriter writer, long failureSerial) =>
+            !ReferenceEquals(_writeFailureKnownWriter, writer) || _writeFailureKnownSerial != failureSerial;
+
+        private void RememberWriteFailureState(AsyncProfileWriter writer, long failureSerial)
+        {
+            _writeFailureKnownWriter = writer;
+            _writeFailureKnownSerial = failureSerial;
+        }
 
         private void SetSaveErrorText(string text)
         {
@@ -363,6 +374,9 @@ namespace SodRpg.Mod
 
         private void SetSaveErrorCause(Exception cause)
         {
+            // この例外より前に完了していた未表示の writer 失敗は、次の Tick で例外を上書きさせない。
+            var writer = _writer;
+            RememberWriteFailureState(writer, writer?.FailureSerial ?? 0);
             _saveErrorCause = cause;
             _saveErrorText = null;
         }
@@ -384,7 +398,7 @@ namespace SodRpg.Mod
                 // 今回の保存で出た例外など、別経路の理由を過去の書き込み失敗で隠さない。
                 // ただし前より新しい書き込み失敗が起きたときは、古い例外文に代わってこちらを表示する（#551）。
                 long failureSerial = _writer.FailureSerial;
-                if (SaveError == null || _saveErrorFromWriteFailure || _writeFailureSeenSerial != failureSerial)
+                if (SaveError == null || _saveErrorFromWriteFailure || IsNewWriteFailure(_writer, failureSerial))
                 {
                     string source = _writer.LastError;
                     bool japanese = Loc.Japanese;
@@ -396,7 +410,7 @@ namespace SodRpg.Mod
                     }
                     SetSaveErrorText(_writeFailureText);
                     _saveErrorFromWriteFailure = true;
-                    _writeFailureSeenSerial = failureSerial;
+                    RememberWriteFailureState(_writer, failureSerial);
                 }
                 float retry = Time.unscaledTime + 5f;
                 if (_nextSave > retry) _nextSave = retry;
@@ -1671,9 +1685,9 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
                 string writeError = _writer.LastError;
                 long failureSerial = _writer.FailureSerial;
                 // 前より新しい書き込み失敗なら、古い例外の表示に代わって書き込み失敗を出す（#551）。
-                if (writeError != null && (SaveError == null || _saveErrorFromWriteFailure || _writeFailureSeenSerial != failureSerial))
+                if (writeError != null && (SaveError == null || _saveErrorFromWriteFailure || IsNewWriteFailure(_writer, failureSerial)))
                 {
-                    _writeFailureSeenSerial = failureSerial;
+                    RememberWriteFailureState(_writer, failureSerial);
                     SetSaveErrorText(writeError);
                     _saveErrorFromWriteFailure = true;
                 }
