@@ -211,7 +211,7 @@ namespace SodRpg.Core.Tests
             Assert.Equal(0, p.Run.Bounties[0].Progress);
 
             p.Upgrades[Upgrade.BountyReroll] = 1;
-            p.RngState = 29;
+            p.RngState = 24; // Slayer を除いた候補から PressureDiver を引く。
             Rules.RerollBounty(p, 0);
             var bounty = p.Run.Bounties[0];
             Assert.Equal(BountyKind.PressureDiver, bounty.Kind);
