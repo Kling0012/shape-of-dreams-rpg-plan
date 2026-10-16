@@ -1,5 +1,5 @@
-[b]Shows the numbers for melee co-op effects and makes participants' range and link displays follow the host's settings and the attack speed cap.[/b]
-[b]近接の協力効果の数値を表示し、参加者の射程と連携の表示をホストの設定と攻撃速度の上限に合わせました。[/b]
+[b]v3.0.0: co-op rebuilt — enemies are assigned to each player and scaled to them, boss shares, damage-based difficulty, companion keystones. Everyone in co-op must update; saves carry over; restart the game.[/b]
+[b]v3.0.0：協力プレイを作り直しました。敵は参加者ごとの担当になり、その人に合った強さで現れます。ボスの持ち分、火力に合わせた難易度、同行の刻印を追加。協力プレイは全員更新してください。セーブはそのまま、更新後は再起動してください。[/b]
 
 [h1]Dreamforge RPG[/h1]
 Turns every run into part of a long RPG journey: relics you keep, a risky "secure or delve" choice at every zone, a star map per Traveler, a forge, and long-term goals. Co-op ready.
