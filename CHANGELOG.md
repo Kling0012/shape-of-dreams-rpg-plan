@@ -10,6 +10,25 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v3.1.1 — Fix repeated record re-sending in co-op trades with large stashes（2026-10-17）
+
+協力プレイで、保管庫の大きな参加者と取引するときの不具合を修正しました。 / This version fixes an issue when trading in co-op with a player who has a large stash.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- 協力プレイで保管庫の大きな参加者と取引すると、取引相手の記録の受け取りが終わる前に送信が最初からやり直され、それが何度も繰り返されることがありました。今後は受け取り中にやり直しが起きなくなり、記録は最後まで届きます。取引中に参加者が再接続したときも、これまでどおりすぐに記録が送り直されます。 / Fixed co-op trades with a player who has a large stash, where the partner's record could restart sending before it finished arriving, over and over. Records are no longer restarted mid-transfer and now arrive in full. If a player reconnects during a trade, the record is still re-sent right away as before.
+- インフィニティモードを無効にしたときや終了したときに、記憶していたゾーンの情報も消えるようにしました。 / When Infinity Mode is disabled or ended, the zone information it remembered is now cleared as well.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
 ## v3.1.0 — Per-traveler adjustments and co-op improvements（2026-10-16）
 
 旅人ごとの細かな調整と、協力プレイの改善です。 / Per-traveler adjustments and co-op improvements.
