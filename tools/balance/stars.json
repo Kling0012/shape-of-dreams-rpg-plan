@@ -23,15 +23,6 @@
     },
     "byHero": {
       "Hero_Aurena": {
-        "MemoryDamage": 1.25,
-        "GimmickBoost": 1.0,
-        "GimmickParam": 1.0,
-        "Keystone": 1.0,
-        "MemoryHaste": 1.0,
-        "Notable": 1.0,
-        "Stat": 1.0
-      },
-      "Hero_Bismuth": {
         "MemoryDamage": 1.0,
         "GimmickBoost": 1.0,
         "GimmickParam": 1.0,
@@ -40,8 +31,17 @@
         "Notable": 1.0,
         "Stat": 1.0
       },
+      "Hero_Bismuth": {
+        "MemoryDamage": 0.95,
+        "GimmickBoost": 1.0,
+        "GimmickParam": 1.0,
+        "Keystone": 1.0,
+        "MemoryHaste": 1.0,
+        "Notable": 1.0,
+        "Stat": 1.0
+      },
       "Hero_Cetus": {
-        "MemoryDamage": 1.1,
+        "MemoryDamage": 1.0,
         "GimmickBoost": 1.0,
         "GimmickParam": 1.0,
         "Keystone": 1.0,
@@ -68,7 +68,7 @@
         "Stat": 1.0
       },
       "Hero_Mist": {
-        "MemoryDamage": 1.05,
+        "MemoryDamage": 1.0,
         "GimmickBoost": 1.0,
         "GimmickParam": 1.0,
         "Keystone": 1.0,
@@ -86,7 +86,7 @@
         "Stat": 1.0
       },
       "Hero_Vesper": {
-        "MemoryDamage": 1.25,
+        "MemoryDamage": 1.5,
         "GimmickBoost": 1.0,
         "GimmickParam": 1.0,
         "Keystone": 1.0,
@@ -95,7 +95,7 @@
         "Stat": 1.0
       },
       "Hero_Yubar": {
-        "MemoryDamage": 1.15,
+        "MemoryDamage": 1.0,
         "GimmickBoost": 1.0,
         "GimmickParam": 1.0,
         "Keystone": 1.0,
