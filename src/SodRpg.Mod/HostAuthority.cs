@@ -1911,9 +1911,12 @@ namespace SodRpg.Mod
                 if (info.skill != null)
                 {
                     string used = info.skill.GetType().Name;
-                    float haste = Math.Min(100f, PowerRuntime.LinkHastePercent(rt.SatisfiedLinks, used, rt.Powers.LinkDistanceCoefficients)
-                        + FractionalScopedModifiers.NativePercent(rt.AppliedBuild?.Build.NativeModifiers, used, LinkKind.MemoryHaste));
-                    if (haste > 0) hero.ApplyCooldownReductionByRatio(info.skill, haste / 100f, false);
+                    float haste = PowerRuntime.LinkHastePercent(rt.SatisfiedLinks, used, rt.Powers.LinkDistanceCoefficients)
+                        + FractionalScopedModifiers.NativePercent(rt.AppliedBuild?.Build.NativeModifiers, used, LinkKind.MemoryHaste);
+                    if (EssenceCapsBalance.MemoryHasteEnabled)
+                        ReduceNormalMemory(hero, info.skill, Math.Min(EssenceCapsBalance.MemoryHasteMaxRemainingCooldownPercent, haste));
+                    else if (haste > 0f)
+                        hero.ApplyCooldownReductionByRatio(info.skill, Math.Min(100f, haste) / 100f, false);
                     foreach (var link in rt.SatisfiedLinks)
                     {
                         if (link.Kind != LinkKind.MemoryHaste && link.Kind != LinkKind.MemorySurge) continue;

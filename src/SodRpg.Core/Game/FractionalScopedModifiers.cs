@@ -426,7 +426,9 @@ namespace SodRpg.Core.Game
             string memory = Links.ItemName(memoryId);
             return kind == LinkKind.MemoryDamage
                 ? Loc.T(memory + "のダメージが" + value + "%増える。", "Damage dealt by " + memory + " +" + value + "%")
-                : Loc.T(memory + "を使うと、その記憶の残りクールダウンが最大クールダウンの" + value + "%分短くなる。", "Cooldown reduction +" + value + "%: using " + memory + " removes " + value + "% of its maximum cooldown from its remaining cooldown");
+                : EssenceCapsBalance.MemoryHasteEnabled
+                    ? Loc.T(memory + "を使うと、その記憶の残りクールダウンが" + value + "%短くなる。", "Cooldown reduction +" + value + "%: using " + memory + " removes " + value + "% of its remaining cooldown") + MemoryHasteCapDescription()
+                    : Loc.T(memory + "を使うと、その記憶の残りクールダウンが最大クールダウンの" + value + "%分短くなる。", "Cooldown reduction +" + value + "%: using " + memory + " removes " + value + "% of its maximum cooldown from its remaining cooldown");
         }
 
         public static string Describe(NativeMemoryModifierDef modifier)
@@ -437,8 +439,18 @@ namespace SodRpg.Core.Game
             string memory = Links.ItemName(modifier.Memory);
             return modifier.Kind == LinkKind.MemoryDamage
                 ? Loc.T(memory + "のダメージが" + value + "%増える。星による増加は最大" + maximum + "%まで。", "Damage dealt by " + memory + " +" + value + "% (star cap " + maximum + "%)")
-                : Loc.T(memory + "を使うと、その記憶の残りクールダウンが最大クールダウンの" + value + "%分短くなる。星による短縮は最大" + maximum + "%まで。", "Cooldown reduction +" + value + "%: using " + memory + " removes " + value + "% of its maximum cooldown from its remaining cooldown (star cap " + maximum + "%)");
+                : EssenceCapsBalance.MemoryHasteEnabled
+                    ? Loc.T(memory + "を使うと、その記憶の残りクールダウンが" + value + "%短くなる。星による短縮は最大" + maximum + "%まで。", "Cooldown reduction +" + value + "%: using " + memory + " removes " + value + "% of its remaining cooldown (star cap " + maximum + "%)") + MemoryHasteCapDescription()
+                    : Loc.T(memory + "を使うと、その記憶の残りクールダウンが最大クールダウンの" + value + "%分短くなる。星による短縮は最大" + maximum + "%まで。", "Cooldown reduction +" + value + "%: using " + memory + " removes " + value + "% of its maximum cooldown from its remaining cooldown (star cap " + maximum + "%)");
         }
+
+        private static string MemoryHasteCapDescription()
+        {
+            string maximum = EssenceCapsBalance.MemoryHasteMaxRemainingCooldownPercent.ToString("0.##", CultureInfo.InvariantCulture);
+            return Loc.T("連携と星を合計して、1回の発動で短縮できる量は残りクールダウンの最大" + maximum + "%まで。",
+                " (Combined with links, removes at most " + maximum + "% of remaining cooldown per cast.)");
+        }
+
         public static void ValidateTalent(TalentDef talent)
         {
             if (talent.Gimmick != null && talent.Gimmick.ValuePrecise % 10000 != 0)

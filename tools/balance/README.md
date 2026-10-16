@@ -14,6 +14,41 @@
 段階3では鍛冶の残りを `forge.json`（schemaVersion 2）へ集約しました。
 保存済みの履歴番号・旧覚醒段・退役工房の返金原本は変更しません。
 
+## 本体エッセンスと記憶の循環抑制
+
+数値原本は `essence-caps.json`。`python tools/balance/gen_cs.py` で
+`src/SodRpg.Core/Game/Balance/EssenceCaps.Generated.cs` を生成し、MODを再ビルドします。
+各セクションの `enabled` で個別に無効化できます。実行中の設定変更ではありません。
+
+| セクション | 初期設定と対象 |
+| --- | --- |
+| `qualitySoftCap` | GemDefault の品質倍率のみ、品質300超を `300 + (q - 300) / 3` で計算。表示・保存品質は維持。NightSky・Crucible・Omegaの品質依存上限にも適用。FrostとMortalityは対象外（元の線形のまま） |
+| `ricochet` | 跳弾確率60%まで |
+| `fever` | 火スタック由来の爆発ダメージ増幅項を1.5（+150%）まで |
+| `embertail` / `epiphany` | CD乗算短縮50% / Ultimate CD還元率60%まで |
+| `memoryReuse` | Q/W/E/Rの使用完了後、基礎CDの20%・最低0.3秒の再使用間隔。移動・Identityは対象外 |
+| `crystalCircuit` | 水晶回路による同じ記憶へのCD短縮に0.5秒の内部CD。対象の通常記憶は従来どおり |
+| `memoryHaste` | 連携と星の記憶加速を合算し、1回で残りCDの最大60%を短縮。無効時は従来の最大CD基準・100%上限に戻る |
+
+2026-10-16 方針変更で、無限ループや処理落ちを止める `ricochet`・`memoryReuse`・`crystalCircuit` だけを
+有効化し、強さを削るだけの `qualitySoftCap`・`fever`・`embertail`・`epiphany`・`memoryHaste` は無効化しました。
+無効の項目は本体の値を一切変えず、説明文も無効化前の表記に戻ります。上の表は各上限が有効なときの挙動です。
+Native の事前診断（preflight）も kill switch で無効中のパッチクラスをスキップし、起動拒否にしません。
+
+Frostの恒久最大HP加算とMortalityの即死確率には上限を設定しません（2026-10-16 決定。霜のスタック伸びは
+タンク役の救済として残し、即死も品質どおり線形で伸びる）。両エッセンスは品質ソフト上限の対象からも外れ、
+効果値は `Gem.GetValue` 経由の読み出しで元の線形スケーリングに戻します。説明文の品質プレビューも
+`DewLocalization.EvaluateAndRenderExpression` の描画コンテキストで同じ線形フラグを立てるため、
+実際の効果と同じ値で表示されます（対象外の宝石はソフト上限後の値のまま）。
+
+再使用間隔は本体の minimum delay と既存RPCで同期するため、CD短縮・リセット・チャージ回復とは独立します。
+全configへ設定し、発動中断には設定しません。HUDには残り間隔をCDとして表示します。
+対象メソッドやILが変わった場合は該当パッチだけを停止し、既存 `NativeCooldownSafety` は変更しません。
+保存形式・Protocolは変更しません。シングルでも同じ規則です。ホストと参加者は同じ生成設定のMODを使ってください。
+
+実ゲーム実行ファイル・アセットのない環境で実装したため、Unity上の戦闘再現、実際のHarmony適用、
+ホスト・参加者間の通信、HUD描画は未確認です。ビルドと既存の関連テストの合格だけで実プレイの動作確認とはしません。
+
 ## インフィニティのボス重み（Issue #272）
 
 `infinity-bosses.json` の各 `entries[].weight` を非負整数で調整し、`python3 tools/balance/gen_cs.py` を実行してMODを再ビルドします。実行時にJSONは読みません。
