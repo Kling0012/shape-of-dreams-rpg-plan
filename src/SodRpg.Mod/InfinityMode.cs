@@ -157,6 +157,7 @@ namespace SodRpg.Mod
             _restoring = false;
             _refresh = false;
             _newInfinity = false;
+            ReleaseMatchedZone();
             // #144: every distinct check that stops Infinity is logged by name; the first reason
             // stays in the lobby notice. Later checks used to be swallowed silently, hiding which
             // patch or interception actually disabled the feature on a player's machine.
@@ -333,6 +334,7 @@ namespace SodRpg.Mod
             _newInfinity = ClientSession.HostChosenInfinityEnabled;
             _initial = null; _runId = null;
             _generationReportedRun = null;
+            ReleaseMatchedZone();
             _choice = null; _choiceText = null; Acks.Clear();
             _ackWaitingChoice = null;
             var settings = NetworkedManagerBase<GameSettingsManager>.softInstance;
@@ -354,6 +356,7 @@ namespace SodRpg.Mod
             ResetPersonalWaypoints(clearSettings: false);
             _hunterAdjustSuspended = false;
             _hunterMoveCounter = 0;
+            ReleaseMatchedZone();
             Acks.Clear(); _choice = null; _choiceText = null;
             _ackWaitingChoice = null;
         }
@@ -525,8 +528,21 @@ namespace SodRpg.Mod
 
         // Unity's Object.name allocates a new string on every read, and TickNative runs every frame on the host.
         // Remember the zone asset that last matched so the name is read only when the zone or fixed id changes.
+        // Assumption (#538): a Zone's name does not change while the run uses it — native never renames a
+        // live zone asset, identity changes arrive as a different Zone instance — so the remembered instance
+        // is enough and a same-instance rename would go undetected until the instance or fixed id changes.
+        // If native ever renames zones in use, clear this cache at that rename instead.
         private static Zone _matchedZone;
         private static string _matchedZoneId;
+
+        // Releasing the remembered zone must not depend on CurrentZoneMatches being reached again:
+        // once Infinity is disabled or the run moves on, TickNative stops calling it, and the static
+        // reference would pin a destroyed Zone for the rest of the session (#538).
+        private static void ReleaseMatchedZone()
+        {
+            _matchedZone = null;
+            _matchedZoneId = null;
+        }
 
         private static bool CurrentZoneMatches(Zone current, string fixedZoneId)
         {

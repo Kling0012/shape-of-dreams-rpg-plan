@@ -8,6 +8,10 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
+### 改善 / Improvements
+
+- 協力取引で、保管庫が大きく記録の分割送信に時間がかかるとき、受け手の再請求とホストの再送が繰り返されていたのを、受け側は受信中は再請求しない・ホストは同じ参加者への再送に最低間隔を設けることで抑えました。再接続時の再送は間隔を待たずに行われ、記録が届かなくなることはありません。 / Large-stash co-op trades no longer loop between the receiver's re-request and the host's re-send: the receiver holds off while a split transfer is still arriving, and the host enforces a minimum interval between re-sends to the same participant. A reconnect still re-sends immediately, so a record is never left undelivered.
+
 ---
 
 ## v3.0.1 — Co-op trades no longer stop the host on bad data; suspend data no longer grows without limit（2026-10-16）
