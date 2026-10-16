@@ -45,8 +45,8 @@ namespace SodRpg.Mod
                     foreach (var hero in actors.allHeroes)
                         if (hero != null && hero.isActive && hero.currentHealth > 0f && !hero.isKnockedOut &&
                             (hero == Owner || hero.GetRelation(Owner) == EntityRelation.Ally) &&
-                            (hero.agentPosition - Owner.agentPosition).sqrMagnitude <= 100f)
-                            Skill.Heal(hero.maxHealth * 0.08f).Dispatch(hero);
+                            CoopDistanceNative.Coefficient(Owner, hero) > 0f)
+                            Skill.Heal(hero.maxHealth * 0.08f * CoopDistanceNative.Coefficient(Owner, hero)).Dispatch(hero);
                 }
                 catch (Exception ex) { Fail(true, ex); Unbind(); }
             }

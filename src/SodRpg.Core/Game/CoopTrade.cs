@@ -94,16 +94,48 @@ namespace SodRpg.Core.Game
             return null;
         }
 
-        /// <summary>融合を知らない相手へは、段階を失う遺物の受け渡しだけを拒否する。</summary>
+        /// <summary>
+        /// 融合を知らない相手へは、段階を失う遺物の受け渡しだけを拒否する。拒否したときは理由コード
+        /// （いまは <see cref="FusionReason"/> のみ）、問題ないときは null を返す。文言は <see cref="ReasonText"/> で引き直す。
+        /// </summary>
         public static string ValidateFusion(Profile profile, CoopTradeOffer offer, bool fusionSupported)
         {
             if (fusionSupported || profile == null || offer?.RelicUids == null) return null;
             foreach (string uid in offer.RelicUids)
-                if (FindOffered(profile, uid)?.FusionLevel > 0)
-                    return Loc.T("融合済みの遺物は旧版と交換できません。ホストと交換相手を融合対応版に更新してください。",
-                        "Fused relics cannot be traded with older versions. Update the host and trade partner to a version that supports Fusion.");
+                if (FindOffered(profile, uid)?.FusionLevel > 0) return FusionReason;
             return null;
         }
+
+        /// <summary>融合の非対応で取引を止めたときの理由コード。</summary>
+        public const string FusionReason = "fusion";
+
+        /// <summary>理由コード→両言語の文言の、ただ一つの対応表。既知判定も文言もここから出すので、コードを足すときはこの表に足すだけでよい。</summary>
+        private static readonly Dictionary<string, (string Ja, string En)> Reasons = new Dictionary<string, (string, string)>
+        {
+            // cancelled は参加者の取消・時間切れ・安全でない状態、connection は接続の変化。受け手は再申し込み
+            // するかどうかをこの区別で判断できるため、文言も分けておく（コードは前から別々）。
+            ["unsupported"] = ("相手がトレード非対応、または応答がありません。トレードのみ利用できません。", "The peer does not support trade or has not replied. Only trade is unavailable."),
+            ["peerBusy"] = ("相手は今取引できる状態ではありません（戦闘中・保存中など）", "The other player can't trade right now (in combat, saving, etc.)"),
+            ["safe"] = ("安全な時・保存完了後のみ取引できます。取引は中止しました。", "Trade requires a safe moment and completed saves. The trade was cancelled."),
+            ["ownership"] = ("所持品または残高が変わったため取引を中止しました。", "The trade was cancelled because inventory or balances changed."),
+            ["cancelled"] = ("取引を中止しました（取り消し・時間切れ・安全でない状態）。", "The trade was cancelled (a cancel request, timeout or unsafe conditions)."),
+            ["connection"] = ("接続が変わったため取引を中止しました（切断・再接続・再起動）。", "The trade was cancelled because the connection changed (disconnect, reconnect or restart)."),
+            ["saving"] = ("トレード台帳の保存を準備中です。トレードのみ保留します。", "Preparing the trade journal. Only trade is on hold."),
+            ["recordTooLarge"] = ("取引の記録が大きすぎます。保管庫を整理してから試してください", "The trade record is too large. Tidy up your stash and try again."),
+            [FusionReason] = ("融合済みの遺物は旧版と交換できません。ホストと交換相手を融合対応版に更新してください。",
+                "Fused relics cannot be traded with older versions. Update the host and trade partner to a version that supports Fusion."),
+        };
+
+        /// <summary>
+        /// ホストが送る取引の理由コードか。ホストは文言と一緒にこのコードを送り、受け手は自分の言語で
+        /// <see cref="ReasonText"/> を引き直す（ホストと参加者で言語が違っても、自分の言語で読める）。
+        /// </summary>
+        public static bool IsKnownReason(string code) => code != null && Reasons.ContainsKey(code);
+
+        /// <summary>理由コードの説明（いまの言語）。知らないコードは、そのまま「トレードのみ利用できません：」に続ける。</summary>
+        public static string ReasonText(string code) => code != null && Reasons.TryGetValue(code, out var text)
+            ? Loc.T(text.Ja, text.En)
+            : Loc.T("トレードのみ利用できません：", "Only trade is unavailable: ") + code;
 
         public static CoopTradeReceipt CreateReceipt(string id, string hostKey, string firstKey, Profile first,
             CoopTradeOffer firstOffer, string secondKey, Profile second, CoopTradeOffer secondOffer)

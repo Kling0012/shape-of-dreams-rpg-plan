@@ -18,7 +18,14 @@ namespace SodRpg.Mod
         private static readonly GUILayoutOption[] TradePaneSize = { GUILayout.ExpandWidth(true), GUILayout.ExpandHeight(true), GUILayout.MinHeight(0) };
         private static readonly GUILayoutOption[] TradeFieldSize = { GUILayout.Width(105) };
         private static readonly GUILayoutOption[] TradeActionSize = { GUILayout.Height(34), GUILayout.MinWidth(0) };
-        private static readonly GUILayoutOption[] TradeRowSize = { GUILayout.MinHeight(58), GUILayout.MinWidth(0) };
+        // A 96px card and 4px gap. Reserve the complete list height, but only draw visible cards.
+        private const float TradeRelicRowStep = 100f;
+        private readonly List<Relic> _tradeStashChoices = new List<Relic>(), _tradeSatchelChoices = new List<Relic>();
+        private float _tradeOwnViewportHeight, _tradeOwnContentHeight;
+        private GUIStyle _tradeRelicTitleStyle, _tradeRelicSelectedStyle, _tradeRelicDetailsStyle, _tradeTooltipStyle;
+        private UiStyles _tradeRelicStylesFor;
+        private readonly GUIContent _tradeTooltipContent = new GUIContent();
+        private static readonly GUILayoutOption[] TradeChoicesWidth = { GUILayout.MinWidth(0), GUILayout.ExpandWidth(true) };
         private static readonly GUILayoutOption[] TradeFilterSize = { GUILayout.Height(30), GUILayout.MinWidth(0), GUILayout.ExpandWidth(true) };
         private static readonly GUILayoutOption[] TradeSearchSize = { GUILayout.MinWidth(0), GUILayout.ExpandWidth(true) };
         private static readonly SodRpg.Core.Game.Rarity[] TradeRarities =
@@ -40,6 +47,7 @@ namespace SodRpg.Mod
         private sealed class TradeRelicText
         {
             public string Uid, BaseId, UniqueId, NamedId, Name, Title, SelectedTitle, IdleTitle, Details;
+            public GUIContent SelectedContent, IdleContent, DetailContent;
             public int Enhance, Level, Awakening, LimitBreaks, FusionLevel;
             public SodRpg.Core.Game.Rarity Rarity;
             public Slot Slot;
@@ -85,6 +93,10 @@ namespace SodRpg.Mod
             if (r.BossMove != null) details.Append('\n').Append(UiStyles.Colored(r.DescribeBossMove(), "#e0b0ff"));
             if (r.Link != null) details.Append('\n').Append(UiStyles.Colored(Links.Describe(r.Link), "#7fd8ff"));
             text.Details = details.ToString();
+            string tooltip = text.Title + "\n" + text.Details;
+            text.SelectedContent = new GUIContent(text.SelectedTitle, tooltip);
+            text.IdleContent = new GUIContent(text.IdleTitle, tooltip);
+            text.DetailContent = new GUIContent(text.Details, tooltip);
             _tradeRelicTexts[r] = text;
             return text;
         }
@@ -156,10 +168,14 @@ namespace SodRpg.Mod
             DrawCoopTradeMaterialFields(trade);
             GUI.enabled = enabled;
             DrawCoopTradeFilters();
+            _tradeOwnScroll.y = Mathf.Min(_tradeOwnScroll.y, Mathf.Max(0f, _tradeOwnContentHeight - _tradeOwnViewportHeight));
             _tradeOwnScroll = GUILayout.BeginScrollView(_tradeOwnScroll, false, false, GUIStyle.none, GUI.skin.verticalScrollbar, TradePaneSize);
             DrawCoopTradeOwnRelics(trade, enabled && trade.Accepted && _s.CanCoopTrade && !trade.Preparing && invalid == null);
+            Rect contentEnd = GUILayoutUtility.GetRect(0f, 0f);
+            if (Event.current.type == EventType.Repaint) _tradeOwnContentHeight = contentEnd.yMax;
             GUILayout.EndScrollView();
-            _tradeOwnScroll.y = WheelScroll(_tradeOwnScroll.y, float.PositiveInfinity);
+            if (Event.current.type == EventType.Repaint) _tradeOwnViewportHeight = GUILayoutUtility.GetLastRect().height;
+            _tradeOwnScroll.y = WheelScroll(_tradeOwnScroll.y, _tradeOwnContentHeight);
             GUILayout.EndVertical();
 
             GUILayout.BeginVertical(_st.Panel, GUILayout.Width(columnWidth), GUILayout.ExpandHeight(true));
@@ -172,6 +188,7 @@ namespace SodRpg.Mod
             GUILayout.EndVertical();
             GUILayout.EndHorizontal();
             GUI.enabled = enabled;
+            DrawCoopTradeRelicTooltip();
         }
 
         private static string TradeConfirmation(bool confirmed) => confirmed
@@ -215,6 +232,7 @@ namespace SodRpg.Mod
                 _tradeDraftProfile = _s.Profile;
                 _tradeRelicTexts.Clear();
                 _tradeOwnScroll = _tradeOtherScroll = Vector2.zero;
+                _tradeOwnContentHeight = 0f;
             }
             if (reset || _tradeSeenShards != shards) _tradeShards = shards.ToString(CultureInfo.InvariantCulture);
             if (reset || _tradeSeenTuning != tuning) _tradeTuning = tuning.ToString(CultureInfo.InvariantCulture);
@@ -277,6 +295,8 @@ namespace SodRpg.Mod
         private void DrawCoopTradeFilters()
         {
             if (_tradeRarityLabel == null || _tradeFilterLabelsJapanese != Loc.Japanese) RefreshCoopTradeFilterLabels();
+            string previousSearch = _tradeSearch;
+            int previousRarity = _tradeRarityFilter, previousSlot = _tradeSlotFilter;
             GUILayout.BeginHorizontal();
             GUILayout.Label(Loc.T("名前で検索", "Search name"), _st.Small, GUILayout.Width(110));
             _tradeSearch = GUILayout.TextField(_tradeSearch ?? "", 40, TradeSearchSize);
@@ -304,6 +324,8 @@ namespace SodRpg.Mod
             }
             GUI.enabled = enabled;
             GUILayout.EndHorizontal();
+            if (previousSearch != _tradeSearch || previousRarity != _tradeRarityFilter || previousSlot != _tradeSlotFilter)
+                _tradeOwnScroll.y = 0f;
         }
 
         private bool CoopTradeFiltering => _tradeRarityFilter >= 0 || _tradeSlotFilter >= 0 || !string.IsNullOrEmpty(_tradeSearch);
@@ -335,19 +357,47 @@ namespace SodRpg.Mod
 
         private void DrawCoopTradeRelicChoices(Profile p, List<Relic> relics, CoopTradeView trade, bool editable)
         {
-            bool enabled = GUI.enabled;
-            bool found = false, hidden = false;
+            var list = relics == p.Stash ? _tradeStashChoices : _tradeSatchelChoices;
+            list.Clear();
+            bool hidden = false;
             for (int i = 0; i < relics.Count; i++)
             {
                 var relic = relics[i];
                 if (p.IsEquippedAnywhere(relic.Uid)) continue;
+                if (CoopTradeFiltering && !MatchesCoopTradeFilters(CoopTradeRelicText(relic))) { hidden = true; continue; }
+                list.Add(relic);
+            }
+            if (list.Count == 0)
+            {
+                GUILayout.Label(hidden
+                    ? Loc.T("条件に合う遺物がありません。", "No relics match the filters.")
+                    : Loc.T("交換できる未装着の遺物がありません。", "No unequipped relics to offer."), _st.Small);
+                return;
+            }
+
+            // One layout entry reserves both blank regions and all rows. Its content-space y
+            // includes the selected-offer summary and (for the satchel) the stash above it.
+            float contentHeight = list.Count * TradeRelicRowStep;
+            Rect area = GUILayoutUtility.GetRect(0f, 0f, contentHeight, contentHeight, TradeChoicesWidth);
+            if (Event.current.type == EventType.Layout) return;
+            float visibleHeight = _tradeOwnViewportHeight > 0f ? _tradeOwnViewportHeight : Mathf.Max(300f, _windowHeight);
+            if (_tradeOwnContentHeight > 0f
+                && (area.yMin > _tradeOwnScroll.y + visibleHeight || area.yMax < _tradeOwnScroll.y)) return;
+            float localY = Mathf.Min(Mathf.Max(0f, _tradeOwnScroll.y - area.y), Mathf.Max(0f, contentHeight - visibleHeight));
+            int first = Math.Max(0, (int)(localY / TradeRelicRowStep) - 2);
+            int last = Math.Min(list.Count, first + (int)(visibleHeight / TradeRelicRowStep) + 5);
+            EnsureCoopTradeRelicStyles();
+            bool enabled = GUI.enabled;
+            for (int i = first; i < last; i++)
+            {
+                var relic = list[i];
                 var text = CoopTradeRelicText(relic);
-                if (!MatchesCoopTradeFilters(text)) { hidden = true; continue; }
-                found = true;
                 bool selected = trade.OwnOffer != null && trade.OwnOffer.RelicUids.Contains(relic.Uid);
-                GUILayout.BeginVertical(_st.Panel);
+                Rect card = new Rect(area.x, area.y + i * TradeRelicRowStep, area.width, TradeRelicRowStep - 4f);
+                GUI.Box(card, GUIContent.none, _st.Panel);
+                Rect title = new Rect(card.x + 10f, card.y + 6f, Mathf.Max(0f, card.width - 20f), 36f);
                 GUI.enabled = enabled && editable;
-                if (GUILayout.Button(selected ? text.SelectedTitle : text.IdleTitle, selected ? _st.ButtonWrapSel : _st.RowWrap, TradeRowSize)
+                if (GUI.Button(title, selected ? text.SelectedContent : text.IdleContent, selected ? _tradeRelicSelectedStyle : _tradeRelicTitleStyle)
                     && TryCoopTradeAmounts(out int shards, out int tuning))
                 {
                     var offer = CopyCoopTradeOffer(trade.OwnOffer, shards, tuning);
@@ -355,12 +405,35 @@ namespace SodRpg.Mod
                     SetStatus(_s.SetCoopTradeOffer(offer));
                 }
                 GUI.enabled = enabled;
-                GUILayout.Label(text.Details, _st.Small);
-                GUILayout.EndVertical();
+                GUI.Label(new Rect(title.x, card.y + 44f, title.width, 46f), text.DetailContent, _tradeRelicDetailsStyle);
             }
-            if (!found) GUILayout.Label(hidden
-                ? Loc.T("条件に合う遺物がありません。", "No relics match the filters.")
-                : Loc.T("交換できる未装着の遺物がありません。", "No unequipped relics to offer."), _st.Small);
+        }
+
+        private void EnsureCoopTradeRelicStyles()
+        {
+            if (_tradeRelicStylesFor == _st) return;
+            _tradeRelicStylesFor = _st;
+            // Match RelicList's single-line title. Clip the preview inside the card;
+            // the full rich-text description remains available on hover and in the offer summary.
+            _tradeRelicTitleStyle = new GUIStyle(_st.Row) { wordWrap = false, clipping = TextClipping.Clip };
+            _tradeRelicSelectedStyle = new GUIStyle(_st.RowSel) { wordWrap = false, clipping = TextClipping.Clip };
+            _tradeRelicDetailsStyle = new GUIStyle(_st.Small) { wordWrap = true, clipping = TextClipping.Clip };
+            _tradeTooltipStyle = new GUIStyle(_st.Small) { clipping = TextClipping.Clip };
+            _tradeTooltipStyle.normal.background = _st.Panel.normal.background;
+            _tradeTooltipStyle.padding = _st.Panel.padding;
+        }
+
+        private void DrawCoopTradeRelicTooltip()
+        {
+            if (Event.current.type != EventType.Repaint || string.IsNullOrEmpty(GUI.tooltip)) return;
+            EnsureCoopTradeRelicStyles();
+            _tradeTooltipContent.text = GUI.tooltip;
+            float width = Mathf.Min(520f, _windowWidth - 24f);
+            float height = Mathf.Min(_windowHeight - 24f, _tradeTooltipStyle.CalcHeight(_tradeTooltipContent, width));
+            Vector2 mouse = Event.current.mousePosition;
+            float x = Mathf.Max(12f, Mathf.Min(mouse.x + 12f, _windowWidth - width - 12f));
+            float y = Mathf.Max(12f, Mathf.Min(mouse.y + 20f, _windowHeight - height - 12f));
+            GUI.Box(new Rect(x, y, width, height), _tradeTooltipContent, _tradeTooltipStyle);
         }
 
         private void DrawCoopTradeMaterialSummary(CoopTradeOffer offer)

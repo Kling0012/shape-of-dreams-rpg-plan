@@ -21,7 +21,14 @@ namespace UnityEngine
     public static class Application { public static string persistentDataPath = System.IO.Path.GetTempPath(); }
     public static class Debug { public static void Log(object value) { } }
     public static class Time { public static float time, unscaledDeltaTime, unscaledTime; }
-    public static class Mathf { public static float Clamp(float value, float min, float max) => Math.Max(min, Math.Min(max, value)); }
+    public static class Mathf
+    {
+        public static float Clamp(float value, float min, float max) => Math.Max(min, Math.Min(max, value));
+        public static float Min(float a, float b) => Math.Min(a, b);
+        public static float Max(float a, float b) => Math.Max(a, b);
+        public static float Clamp01(float value) => Clamp(value, 0f, 1f);
+        public static int CeilToInt(float value) => (int)Math.Ceiling(value);
+    }
     public struct Vector3
     {
         public float x, y, z;
@@ -84,6 +91,7 @@ namespace SodRpg.Mod
         public bool levelEssenceSlots = true, levelEssenceQ = true, levelEssenceW = true, levelEssenceE = true, levelEssenceSlotsR = true;
         public int levelEssenceEveryLevels = 10, levelEssenceCap = 4;
         public bool netSkipUnchanged = true, netCoalesce = true, netOwnerOnly = true, netCompact = true;
+        public bool meleeRangeToSpeed = true, coopDistanceFalloff = true, meleeBreak = true, meleeProximityGuard = true;
         public LightweightMode lightweight;
         public Key menuKey, securePanelKey, secureKey, delveKey;
     }
@@ -371,6 +379,7 @@ namespace SodRpg.Mod
     internal sealed class DreamforgeUi
     {
         public bool Open, MouseOverPanel, NeedsLayout, LayoutEnabled;
+        internal Action SaveLanguageConfig;
         public DreamforgeUi(ClientSession session, Func<DreamforgeConfig> config, Action saveConfig = null) { }
         public void Notify(GameEvent ev) { }
         public void Toggle() { }
@@ -422,7 +431,7 @@ namespace SodRpg.Mod
         internal static void PrepareNativeInfinityContinue() { }
         internal static bool RemoteHostInfinityAvailable, RemoteHostHelloAnswered;
         internal static bool RunActive, InGame, CanChooseRunRules, CanChooseDepth;
-        internal static bool PersistHostInfinityState() => true;
+        internal static bool PersistHostInfinityState(bool writeEnvelope = true) => true;
         internal static bool HostInfinitySaveHoldSatisfied => true;
         internal static void CountHostInfinityRoom() { }
         internal static void OpenHostInfinityChoice() { }
@@ -441,6 +450,7 @@ namespace SodRpg.Mod
         public void Tick() { }
         public void RefreshLevelGemSlots() { }
         public void Detach() { }
+        internal void ConfigureMeleeCoop(bool rangeToSpeed, bool distanceFalloff, bool meleeBreak, bool meleeGuard) { }
     }
     internal static class RelicIcons
     {
@@ -465,6 +475,18 @@ namespace SodRpg.Mod
         public HeroSkill Skill = new HeroSkill();
         public float currentHealth;
         public new HeroStatus Status = new HeroStatus();
+        public bool isKnockedOut;
+        public float maxHealth => Status.maxHealth;
+        // ホスト側の記憶短縮の観測点。本体はクールダウン演算に丸投げするが、試験は引数を記録するだけ。
+        public readonly List<(SkillTrigger skill, float ratio, bool ignore)> RatioReductions =
+            new List<(SkillTrigger, float, bool)>();
+        public readonly List<(SkillTrigger skill, float seconds)> SecondReductions =
+            new List<(SkillTrigger, float)>();
+        public void GiveShield(Entity source, float amount, float duration) { }
+        public void ApplyCooldownReductionByRatio(SkillTrigger skill, float ratio, bool ignoreCanReceiveCooldown)
+            => RatioReductions.Add((skill, ratio, ignoreCanReceiveCooldown));
+        public void ApplyCooldownReduction(SkillTrigger skill, float seconds)
+            => SecondReductions.Add((skill, seconds));
     }
     public enum EntityRelation { Ally, Enemy }
     public sealed class HeroStatus

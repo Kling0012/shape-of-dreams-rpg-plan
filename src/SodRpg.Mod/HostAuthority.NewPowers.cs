@@ -161,7 +161,7 @@ namespace SodRpg.Mod
             if (_am == null) yield break;
             foreach (var other in _am.allHeroes)
                 if (Alive(other) && (includeSelf && other == hero || other != hero && other.GetRelation(hero) == EntityRelation.Ally)
-                    && (range <= 0f || (other.agentPosition - hero.agentPosition).sqrMagnitude <= range * range))
+                    && (range <= 0f || CoopDistanceNative.Coefficient(hero, other, range) > 0f))
                     yield return other;
         }
 
@@ -173,10 +173,8 @@ namespace SodRpg.Mod
             var support = _am != null ? _am.serverActor : null;
             if (support == null) return;
             _powerSupportDepth++;
-            float before = target.currentHealth;
-            try { support.Heal(SupportStats.AmplifyHeal(amount, rt.Powers.Build.Get(Stat.HealPower))).Dispatch(target); }
+            try { DispatchSupportHeal(rt, target, support.Heal(SupportStats.AmplifyHeal(amount, rt.Powers.Build.Get(Stat.HealPower)))); }
             finally { _powerSupportDepth--; }
-            CreditHealRestored(rt, target, before);
         }
 
         private void PowerShield(HeroRuntime rt, Entity target, Power power, float amount, float duration)
@@ -293,7 +291,9 @@ namespace SodRpg.Mod
             if (!Alive(recipient) || !_runtimes.TryGetValue(recipient, out var owner)) return;
             float share = owner.Powers.SharedWardShield(amount);
             if (share <= 0f) return;
-            foreach (var ally in LivingAllies(recipient, PowersBalance.SharedWardAllyRange)) PowerShield(owner, ally, Power.SharedWard, share, PowersBalance.SharedWardDuration);
+            foreach (var ally in LivingAllies(recipient, PowersBalance.SharedWardAllyRange))
+                PowerShield(owner, ally, Power.SharedWard,
+                    share * CoopDistanceNative.Coefficient(recipient, ally, PowersBalance.SharedWardAllyRange), PowersBalance.SharedWardDuration);
         }
 
         private void UnhookNewPowers(HeroRuntime rt)
@@ -429,7 +429,8 @@ namespace SodRpg.Mod
             if (ultimate)
             {
                 float heal = rt.Powers.TriumphSongHeal(hero.maxHealth);
-                foreach (var ally in LivingAllies(hero, PowersBalance.TriumphSongRange, includeSelf: true)) PowerHeal(rt, ally, heal);
+                foreach (var ally in LivingAllies(hero, PowersBalance.TriumphSongRange, includeSelf: true))
+                    PowerHeal(rt, ally, heal * CoopDistanceNative.Coefficient(hero, ally, PowersBalance.TriumphSongRange));
             }
         }
 
@@ -484,19 +485,19 @@ namespace SodRpg.Mod
             PowerShield(rt, hero, Power.ReadyGuard, p.TakeReadyGuard(Time.time, hero.maxHealth), PowersBalance.ReadyGuardDuration);
         }
 
-        private void OnNewPowerKill(HeroRuntime rt, EventInfoKill info)
+        private void OnNewPowerKill(HeroRuntime rt, EventInfoKill info, string assistMemory = null, bool assistSummon = false, bool assist = false)
         {
             if (_gimmickDamageDepth != 0 || _reactionEffectDepth != 0 || !Alive(rt.Hero) || !(info.victim is Monster victim)
                 || victim.GetRelation(rt.Hero) != EntityRelation.Enemy) return;
             var hero = rt.Hero;
             var p = rt.Powers;
-            string memory = MemorySource(info.actor);
+            string memory = assist ? assistMemory : MemorySource(info.actor);
             if (memory != null)
             {
                 var skill = FindMemory(hero, memory);
                 if (skill != null) ReduceNormalMemory(hero, skill, p.ReturningBladeCooldownFraction(true) * 100f);
             }
-            bool summonKill = info.actor != null && info.actor.FindFirstOfType<Summon>() is Summon summon
+            bool summonKill = assist ? assistSummon : info.actor != null && info.actor.FindFirstOfType<Summon>() is Summon summon
                 && summon.FindFirstAncestorOfType<Hero>() == hero;
             PowerShield(rt, hero, Power.PackFeast, p.PackFeastShield(hero.maxHealth, summonKill), PowersBalance.PackFeastDuration);
             Hero nearest = null;

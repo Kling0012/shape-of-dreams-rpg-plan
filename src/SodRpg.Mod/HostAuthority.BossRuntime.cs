@@ -280,7 +280,8 @@ namespace SodRpg.Mod
 
         private bool BossEquipmentSnapshot(HeroRuntime rt, BossCombatState state, ref bool changed)
         {
-            var equipment = _attributionEquipment[rt.Hero];
+            // Skill setup may not have populated this cache yet; let BossEnsure clear and retry the effects.
+            if (!_attributionEquipment.TryGetValue(rt.Hero, out var equipment)) return false;
             for (int i = 0; i < LinkSkills.Length; i++)
             {
                 equipment.TryGetValue(LinkSkills[i], out var memory);

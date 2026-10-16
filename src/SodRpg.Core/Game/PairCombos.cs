@@ -138,7 +138,8 @@ namespace SodRpg.Core.Game
                     effect = "gain a shield equal to " + n + "% of maximum health for 4 seconds";
                     break;
                 case GimmickEffect.Heal:
-                    effect = "heal yourself" + (def.Arg == 1 ? " and allies within 10m" : "") + " for " + n + "% of maximum health";
+                    effect = "heal yourself" + (def.Arg == 1 ? " and allies in support range" : "") + " for " + n + "% of maximum health"
+                        + (def.Arg == 1 ? CoopDistance.Description : "");
                     break;
                 case GimmickEffect.Burst:
                     effect = "deal " + n + "% of the higher of attack damage or ability power as extra damage within 4m of the hit enemy (magic damage if ability power is higher)";
@@ -216,7 +217,8 @@ namespace SodRpg.Core.Game
                     effect = "自分に最大HPの" + n + "%の障壁を4秒間付与する";
                     break;
                 case GimmickEffect.Heal:
-                    effect = "自分" + (def.Arg == 1 ? "と10m以内の味方" : "") + "を最大HPの" + n + "%回復する";
+                    effect = "自分" + (def.Arg == 1 ? "と有効範囲内の味方" : "") + "を最大HPの" + n + "%回復する";
+                    if (def.Arg == 1) effectNote = CoopDistance.Description;
                     break;
                 case GimmickEffect.Burst:
                     effect = "当てた敵の周り4mに、攻撃力・魔力の高い方の" + n + "%の追加ダメージを与える";

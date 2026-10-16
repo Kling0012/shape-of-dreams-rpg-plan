@@ -105,6 +105,30 @@ namespace SodRpg.Mod
             }
         }
 
+        /// <summary>essence-caps.json の kill switch（tools/balance/README.md）で無効化中のパッチクラスか。
+        /// 無効時はパッチが入らず本体値を素通しするのが正しいので、Prepare の false とは扱いを分ける。
+        /// crystalCircuit と memoryHaste は HostAuthority 内の分岐なのでパッチクラスを持たない。</summary>
+        private static bool KilledByEssenceCapConfig(Type type)
+        {
+            if (type.Namespace != "SodRpg.Mod") return false;
+            switch (type.Name)
+            {
+                case "EssenceQualitySoftCap":
+                case "FrostMortalityQualityExemption":
+                case "FrostMortalityPreviewExemption":
+                    return !SodRpg.Core.Game.EssenceCapsBalance.QualitySoftCapEnabled;
+                case "RicochetChanceCap": return !SodRpg.Core.Game.EssenceCapsBalance.RicochetEnabled;
+                case "FeverDamageAmplificationCap": return !SodRpg.Core.Game.EssenceCapsBalance.FeverEnabled;
+                case "EmbertailCooldownCap": return !SodRpg.Core.Game.EssenceCapsBalance.EmbertailEnabled;
+                case "EpiphanyRefundCap": return !SodRpg.Core.Game.EssenceCapsBalance.EpiphanyEnabled;
+                case "MemoryReuseOnCast":
+                case "MemoryReuseCastGate":
+                case "MemoryReuseCooldownDisplay":
+                    return !SodRpg.Core.Game.EssenceCapsBalance.MemoryReuseEnabled;
+                default: return false;
+            }
+        }
+
         internal static void Validate(Harmony harmony, Assembly assembly)
         {
             var patchClasses = assembly.GetTypes();
@@ -131,6 +155,9 @@ namespace SodRpg.Mod
             foreach (var type in patchClasses)
             {
                 if (HarmonyMethodExtensions.GetFromType(type).Count == 0) continue;
+                // essence-caps.json の kill switch で無効化されたパッチクラスは素通しが正しい状態なので、
+                // Prepare の false を失敗にせず診断の対象からも外す（2026-10-16 方針変更）。
+                if (KilledByEssenceCapConfig(type)) continue;
                 try
                 {
                     var processor = harmony.CreateClassProcessor(type);

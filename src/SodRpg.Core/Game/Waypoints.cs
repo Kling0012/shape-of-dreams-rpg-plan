@@ -25,6 +25,9 @@ namespace SodRpg.Core.Game
 
     public static class Waypoints
     {
+        /// <summary>宝庫の払い出し倍率。Mod の表示から参照する。</summary>
+        public static int HoardMultiplier => WaypointBalance.HoardRewardMultiplier;
+
         public const int Offered = WaypointBalance.Offered;
         public const int MaximumDeferredRelics = 256;
 

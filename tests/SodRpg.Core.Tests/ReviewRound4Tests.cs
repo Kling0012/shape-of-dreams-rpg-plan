@@ -19,11 +19,15 @@ namespace SodRpg.Core.Tests
             infinity.RoomEpoch++;
             Assert.True(infinity.TryCountCombatClear(infinity.GraphEpoch, 1, active: true, transitioning: false, revisit: false));
             Assert.True(infinity.PromoteFinaleBoss());
-            Assert.True(infinity.ClearedCombatTotal < infinity.ClearsInCycle);
+            Assert.True(infinity.FinalePromoted);
+            Assert.Equal(1, infinity.ClearedCombatTotal);
+            Assert.Equal(1, infinity.ClearsInCycle);
 
             var reloaded = ProfileCodec.Read(ProfileCodec.Write(p), new List<string>());
             Assert.Equal(InfinityPhase.BossDue, reloaded.Run.Infinity.Phase);
-            Assert.Equal(10, reloaded.Run.Infinity.ClearsInCycle);
+            Assert.True(reloaded.Run.Infinity.FinalePromoted);
+            Assert.Equal(1, reloaded.Run.Infinity.ClearedCombatTotal);
+            Assert.Equal(1, reloaded.Run.Infinity.ClearsInCycle);
         }
 
         [Theory]

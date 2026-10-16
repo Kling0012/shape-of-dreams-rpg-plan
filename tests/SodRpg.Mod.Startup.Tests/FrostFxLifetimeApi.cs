@@ -94,9 +94,8 @@ namespace SodRpg.Mod
         public Actor parentActor;
         public string id;
     }
-    public sealed class Gem_R_Frost : Actor
+    public sealed class Gem_R_Frost : Gem
     {
-        public Hero owner;
         public float stunDuration = 2f;
         public GameObject activateEffect = new GameObject { name = "Gem_R_Frost.activateEffect" };
         public event Action<Hero, Hero> ClientEvent_OnOwnerChanged;

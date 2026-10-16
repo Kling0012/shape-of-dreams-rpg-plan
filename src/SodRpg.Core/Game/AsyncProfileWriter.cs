@@ -25,7 +25,16 @@ namespace SodRpg.Core.Game
         }
 
         /// <summary>最後の書き込みの失敗（成功したら null に戻る）。</summary>
-        public string LastError { get; private set; }
+        public string LastError
+        {
+            get
+            {
+                Exception error;
+                lock (_lock) error = _lastError;
+                return error?.Message;
+            }
+        }
+        private Exception _lastError;
 
         /// <summary>ディスクへ書き終えた最新のリビジョン。</summary>
         public long WrittenRevision { get { lock (_lock) return _writtenRevision; } }
@@ -139,7 +148,7 @@ namespace SodRpg.Core.Game
                         _writtenRevision = rev;
                         _attemptedRevision = rev;
                         _failurePending = false;
-                        LastError = null;
+                        _lastError = null;
                         Monitor.PulseAll(_lock);
                     }
                 }
@@ -149,7 +158,7 @@ namespace SodRpg.Core.Game
                     {
                         _attemptedRevision = rev;
                         _failurePending = true;
-                        LastError = ex.Message;
+                        _lastError = ex;
                         Monitor.PulseAll(_lock);
                     }
                 }

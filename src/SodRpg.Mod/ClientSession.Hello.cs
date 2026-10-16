@@ -15,8 +15,10 @@ namespace SodRpg.Mod
         private float _helloFirstSent = -1f, _nextHello;
         private bool _helloAnswered;
         private bool _hostCompatibilityWarned;
-        private bool _noReplyWarningJapanese;
         private bool _hostInfinityAvailable;
+        private int _hostMeleeCoop;
+        /// <summary>ホストの近接・協力設定（hello の返事）。0 は旧版のホスト・未受信・自分がホスト。表示は自分の設定で代わりに見積もる。</summary>
+        internal int HostMeleeCoop => _hostMeleeCoop;
         private string _continueReceiptRunId, _continueReceiptCheckpointId, _continueReceiptResumeSession;
         private string _sentContinueReceiptRunId, _sentContinueReceiptCheckpointId, _sentContinueReceiptResumeSession;
         private Actor _sentContinueReceiptActor;
@@ -56,6 +58,7 @@ namespace SodRpg.Mod
             _helloAnswered = false;
             _hostCompatibilityWarned = false;
             _hostInfinityAvailable = false;
+            _hostMeleeCoop = 0;
             _hostBuildInputCapability = false;
             _hostForbiddenInput = false;
             _hostFusionInput = false;
@@ -153,11 +156,11 @@ namespace SodRpg.Mod
                 if (_helloFirstSent < 0) _helloFirstSent = now;
                 _nextHello = now + 5f;
             }
-            // 文は一度だけ作る（毎フレーム組み立て直さない）。表示言語が変わったときだけ作り直す。
+            // 未設定のときだけ作る。言語変更時も含め、ほかの経路が設定した警告文を上書きしない。
+            // 解除後も無応答なら、その時点の表示言語で作り直す（毎フレームの文字列確保を避ける）。
             if (!_helloAnswered && _helloFirstSent >= 0 && now - _helloFirstSent > 20f
-                && (HostVersionWarning == null || _noReplyWarningJapanese != Loc.Japanese))
+                && HostVersionWarning == null)
             {
-                _noReplyWarningJapanese = Loc.Japanese;
                 HostVersionWarning = Loc.T(
                     "ホストから Dreamforge の返事がありません。ホストがこの MOD の同じ版（" + HostAuthority.ModVersion + "）を入れているか確認してください。",
                     "No Dreamforge reply from the host. Make sure the host runs the same version of this mod (" + HostAuthority.ModVersion + ").");
@@ -172,6 +175,7 @@ namespace SodRpg.Mod
             bool sameContent = string.Equals(msg.content, ContentFingerprint.Value, StringComparison.Ordinal);
             bool sameVersion = string.Equals(msg.modVer, HostAuthority.ModVersion, StringComparison.Ordinal);
             _hostInfinityAvailable = msg.infinityAvailable;
+            _hostMeleeCoop = msg.meleeCoop;
             ReceiveContinueHandshake(msg);
             if (msg.authorityGeneration != 0) ObserveMonsterAuthority(msg.authorityGeneration);
             if (sameProtocol && sameContent && sameVersion && msg.continueCheckpoints)

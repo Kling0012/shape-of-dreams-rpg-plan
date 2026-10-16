@@ -14,6 +14,41 @@
 段階3では鍛冶の残りを `forge.json`（schemaVersion 2）へ集約しました。
 保存済みの履歴番号・旧覚醒段・退役工房の返金原本は変更しません。
 
+## 本体エッセンスと記憶の循環抑制
+
+数値原本は `essence-caps.json`。`python tools/balance/gen_cs.py` で
+`src/SodRpg.Core/Game/Balance/EssenceCaps.Generated.cs` を生成し、MODを再ビルドします。
+各セクションの `enabled` で個別に無効化できます。実行中の設定変更ではありません。
+
+| セクション | 初期設定と対象 |
+| --- | --- |
+| `qualitySoftCap` | GemDefault の品質倍率のみ、品質300超を `300 + (q - 300) / 3` で計算。表示・保存品質は維持。NightSky・Crucible・Omegaの品質依存上限にも適用。FrostとMortalityは対象外（元の線形のまま） |
+| `ricochet` | 跳弾確率60%まで |
+| `fever` | 火スタック由来の爆発ダメージ増幅項を1.5（+150%）まで |
+| `embertail` / `epiphany` | CD乗算短縮50% / Ultimate CD還元率60%まで |
+| `memoryReuse` | Q/W/E/Rの使用完了後、基礎CDの20%・最低0.3秒の再使用間隔。移動・Identityは対象外 |
+| `crystalCircuit` | 水晶回路による同じ記憶へのCD短縮に0.5秒の内部CD。対象の通常記憶は従来どおり |
+| `memoryHaste` | 連携と星の記憶加速を合算し、1回で残りCDの最大60%を短縮。無効時は従来の最大CD基準・100%上限に戻る |
+
+2026-10-16 方針変更で、無限ループや処理落ちを止める `ricochet`・`memoryReuse`・`crystalCircuit` だけを
+有効化し、強さを削るだけの `qualitySoftCap`・`fever`・`embertail`・`epiphany`・`memoryHaste` は無効化しました。
+無効の項目は本体の値を一切変えず、説明文も無効化前の表記に戻ります。上の表は各上限が有効なときの挙動です。
+Native の事前診断（preflight）も kill switch で無効中のパッチクラスをスキップし、起動拒否にしません。
+
+Frostの恒久最大HP加算とMortalityの即死確率には上限を設定しません（2026-10-16 決定。霜のスタック伸びは
+タンク役の救済として残し、即死も品質どおり線形で伸びる）。両エッセンスは品質ソフト上限の対象からも外れ、
+効果値は `Gem.GetValue` 経由の読み出しで元の線形スケーリングに戻します。説明文の品質プレビューも
+`DewLocalization.EvaluateAndRenderExpression` の描画コンテキストで同じ線形フラグを立てるため、
+実際の効果と同じ値で表示されます（対象外の宝石はソフト上限後の値のまま）。
+
+再使用間隔は本体の minimum delay と既存RPCで同期するため、CD短縮・リセット・チャージ回復とは独立します。
+全configへ設定し、発動中断には設定しません。HUDには残り間隔をCDとして表示します。
+対象メソッドやILが変わった場合は該当パッチだけを停止し、既存 `NativeCooldownSafety` は変更しません。
+保存形式・Protocolは変更しません。シングルでも同じ規則です。ホストと参加者は同じ生成設定のMODを使ってください。
+
+実ゲーム実行ファイル・アセットのない環境で実装したため、Unity上の戦闘再現、実際のHarmony適用、
+ホスト・参加者間の通信、HUD描画は未確認です。ビルドと既存の関連テストの合格だけで実プレイの動作確認とはしません。
+
 ## インフィニティのボス重み（Issue #272）
 
 `infinity-bosses.json` の各 `entries[].weight` を非負整数で調整し、`python3 tools/balance/gen_cs.py` を実行してMODを再ビルドします。実行時にJSONは読みません。
@@ -386,6 +421,9 @@ azurak・primus・light・maw・obliviax・polaris）。ink.json は白夜／黒
 - チャネルの `cap` 省略は `cap == value`（InkChannel／AzurakChannel形式）。`value` は正、`cap >= value`。
   アクション欄はBossActionコンストラクタの受理範囲（`count` 1〜64、`maxInstances` 1〜4、`angleMilli` 0〜360000 等）を
   生成時に検証し、不正な表はrender前に拒否します。
+- 実行時の読み方より狭い下限が必要な欄は `boss_values.py` の `CELL_FLOORS` で追加検証します。現在は `maw` の
+  `charm` 1番目アクションの `mainHits` が2以上必須（未設定も拒否）です。大顎の護符は `mainHits - 1` 回の命中を
+  保持して次の命中で回復するため、1以下だと初回の命中から回復扱いになり、従来の挙動と変わります。
 - `order`・段番号・`BossSetStage(2/3/6)`・セットの部位数、ID・enum・説明文（Txt）・イベント順序・契約文字列は
   構造なので表へ移しません。Power定数・Mod側native adapterの数値・説明文内の数値は段階8の後半で別に扱います。
 - ボス値は既存の指紋レコード（`boss-schema`・`boss-channel`・`boss-action`・`boss-reward-action`）で全面的に照合されるため、
@@ -493,6 +531,18 @@ F2はVesper閾値11%HP、Cetus閾値9%HP、Mist入口cap60、
 戦闘中の文字列キー検索はありません。位階はBuildの再集計時に計算します。
 MOD起動時の登録失敗は警告し、その旅人の生成星図・移行規則だけを外します。
 開発ツール側は失敗を非ゼロで伝えます。
+
+## マルチの支援と溢れ回復
+
+`stars.json.support` が支援の数値原本です。`overhealShieldRatio=0.5`、
+`overhealShieldMaxHealthRatio=0.15`、`overhealShieldSeconds=8`、`allyGrowthMultiplier=2` を
+`gen_cs.py` で `StarRankBalance.g.cs` へ生成し、既存の内容照合に含めます。
+別の味方旅人を回復した溢れ分だけを障壁へ変え、受け手ごとの合計残量を最大HPの15%に制限します。
+自己・召喚体への回復は変換せず、既存の障壁とは別に管理します。再付与で8秒へ延長し、
+受け手のOverflowingLifeと同じ溢れを変換するときは、変換候補量が大きい方だけを使います。
+アウレナの回復成立による遠征成長は、有効な味方回復・障壁を2回分、自己回復を1回分と数え、
+溢れ回復とそれ由来の障壁は数えません。障壁の量が増えない更新も成長に数えません。
+判定はhostで行い、本体の障壁同期と既存RunGrowth通知を使用します。Protocol・保存形式は変えません。
 
 ## 軽量な記憶効率
 

@@ -31,6 +31,7 @@
     <Compile Include="../ProfileSlotsTests.cs" Link="ProfileSlotsTests.cs" />
     <Compile Include="../ProfileSlotLoaderTests.cs" Link="ProfileSlotLoaderTests.cs" />
     <Compile Include="../../src/SodRpg.Mod/NetMessages.cs" Link="ModUnderTest/NetMessages.cs" />
+    <Compile Include="../../src/SodRpg.Mod/NetMessages.RunGrowth.cs" Link="ModUnderTest/NetMessages.RunGrowth.cs" />
     <Compile Include="../../src/SodRpg.Mod/NetMessages.NetLite.cs" Link="ModUnderTest/NetMessages.NetLite.cs" />
     <Compile Include="../../src/SodRpg.Mod/NetworkTrafficOptions.cs" Link="ModUnderTest/NetworkTrafficOptions.cs" />
     <Compile Include="../../src/SodRpg.Mod/NetMessages.KillSync.cs" Link="ModUnderTest/NetMessages.KillSync.cs" />
@@ -46,6 +47,9 @@
     <Compile Include="../../src/SodRpg.Mod/HostAuthority.BuildValidation.cs" Link="ModUnderTest/HostAuthority.BuildValidation.cs" />
     <Compile Include="../../src/SodRpg.Mod/HostAuthority.MovementCharges.cs" Link="ModUnderTest/HostAuthority.MovementCharges.cs" />
     <Compile Include="../../src/SodRpg.Mod/HostAuthority.PairCombos.cs" Link="ModUnderTest/HostAuthority.PairCombos.cs" />
+    <Compile Include="../../src/SodRpg.Mod/CoopDistanceNative.cs" Link="ModUnderTest/CoopDistanceNative.cs" />
+    <Compile Include="../../src/SodRpg.Mod/TravelerCombatNative.cs" Link="ModUnderTest/TravelerCombatNative.cs" />
+    <Compile Include="../../src/SodRpg.Mod/HostAuthority.MeleeCoop.cs" Link="ModUnderTest/HostAuthority.MeleeCoop.cs" />
     <Compile Include="../../src/SodRpg.Mod/HostAuthority.Hello.cs" Link="ModUnderTest/HostAuthority.Hello.cs" />
     <Compile Include="../../src/SodRpg.Mod/HostAuthority.AuthoredMechanisms.cs" Link="ModUnderTest/HostAuthority.AuthoredMechanisms.cs" />
     <Compile Include="$(IntermediateOutputPath)Issue62.Native.cs" Link="ModUnderTest/Issue62.Native.cs" />
@@ -103,6 +107,11 @@
     <Compile Include="../../src/SodRpg.Mod/HostAuthority.BossVisuals.cs" Link="ModUnderTest/HostAuthority.BossVisuals.cs" />
     <Compile Include="../../src/SodRpg.Mod/NetMessages.BossEffects.cs" Link="ModUnderTest/NetMessages.BossEffects.cs" />
     <Compile Include="../../src/SodRpg.Mod/HostAuthority.BackOffCharge.cs" Link="ModUnderTest/HostAuthority.BackOffCharge.cs" />
+    <Compile Include="../../src/SodRpg.Mod/HostAuthority.KillAssists.cs" Link="ModUnderTest/HostAuthority.KillAssists.cs" />
+    <Compile Include="../../src/SodRpg.Mod/HostAuthority.CoopKeystones.cs" Link="ModUnderTest/HostAuthority.CoopKeystones.cs" />
+    <Compile Include="../../src/SodRpg.Mod/HostAuthority.NativeKillRewards.cs" Link="ModUnderTest/HostAuthority.NativeKillRewards.cs" />
+    <Compile Include="../../src/SodRpg.Mod/HostAuthority.SupportOverheal.cs" Link="ModUnderTest/HostAuthority.SupportOverheal.cs" />
+    <Compile Include="../../src/SodRpg.Mod/HostAuthority.RunGrowth.cs" Link="ModUnderTest/HostAuthority.RunGrowth.cs" />
     <Compile Include="../../src/SodRpg.Mod/NativeEntityProtectionRecovery.cs" Link="ModUnderTest/NativeEntityProtectionRecovery.cs" />
   </ItemGroup>
 
