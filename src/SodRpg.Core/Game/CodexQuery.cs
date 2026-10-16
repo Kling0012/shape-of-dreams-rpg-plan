@@ -313,7 +313,7 @@ namespace SodRpg.Core.Game
             void AddRelic(Relic r)
             {
                 if (r == null) return;
-                foreach (var pw in r.Powers) set.Add(pw.Power);
+                foreach (var pw in Forbidden.SourcePowers(r)) set.Add(pw.Power);
             }
             foreach (var r in p.Stash) AddRelic(r);
             foreach (var r in p.LostAndFound) AddRelic(r);

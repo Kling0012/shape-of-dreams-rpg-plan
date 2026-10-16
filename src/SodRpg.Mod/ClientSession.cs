@@ -1443,7 +1443,9 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
 
         /// <summary>
         /// 画面表示用の強さ。装備・鍛冶の画面は毎フレーム描くが、強さの計算は星の多い旅人で1回0.3ms・5KB前後かかる。
-        /// 変更時の作り直し（_buildCacheFrame = -1）がない間は、実際の計算時刻から0.25秒まで使い回す。ホストへ送る強さは CurrentBuild を使う。
+        /// 変更時の作り直し（_buildCacheFrame = -1）がない間は、実際の計算時刻から0.25秒まで使い回す。
+        /// MarkDirty を通らない Profile の変化（Heat・Pacts など）は、表示への反映が最大0.25秒遅れる。
+        /// 表示専用のキャッシュであり、ホストへ送る強さは CurrentBuild を使う。
         /// </summary>
         public Build DisplayBuild(string heroKey)
         {
