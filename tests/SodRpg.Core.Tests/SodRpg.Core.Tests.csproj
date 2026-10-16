@@ -108,6 +108,8 @@
     <Compile Include="../../src/SodRpg.Mod/NetMessages.BossEffects.cs" Link="ModUnderTest/NetMessages.BossEffects.cs" />
     <Compile Include="../../src/SodRpg.Mod/HostAuthority.BackOffCharge.cs" Link="ModUnderTest/HostAuthority.BackOffCharge.cs" />
     <Compile Include="../../src/SodRpg.Mod/HostAuthority.KillAssists.cs" Link="ModUnderTest/HostAuthority.KillAssists.cs" />
+    <Compile Include="../../src/SodRpg.Mod/HostAuthority.CoopKeystones.cs" Link="ModUnderTest/HostAuthority.CoopKeystones.cs" />
+    <Compile Include="../../src/SodRpg.Mod/HostAuthority.NativeKillRewards.cs" Link="ModUnderTest/HostAuthority.NativeKillRewards.cs" />
     <Compile Include="../../src/SodRpg.Mod/HostAuthority.SupportOverheal.cs" Link="ModUnderTest/HostAuthority.SupportOverheal.cs" />
     <Compile Include="../../src/SodRpg.Mod/HostAuthority.RunGrowth.cs" Link="ModUnderTest/HostAuthority.RunGrowth.cs" />
     <Compile Include="../../src/SodRpg.Mod/NativeEntityProtectionRecovery.cs" Link="ModUnderTest/NativeEntityProtectionRecovery.cs" />
