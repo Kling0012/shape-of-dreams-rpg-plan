@@ -8,10 +8,10 @@ Aは撃破で遠征中ずっと積み上がる成長・追加資源。MODは5秒
 
 | 区分 | 本体効果 | 最終動作 |
 |---|---|---|
-| A | `Gem_E_Predation` | ボス・ミニボス・ハンターの成長拾得物を生成するコールバックは撃破者だけ。通常敵で成長しない本体条件は維持 |
-| A | `Gem_L_DivineFaith` | 上限付きスタック・最大HP・ダメージ／回復増幅の加算は撃破者だけ |
-| A | `Gem_L_Culinary` | 料理素材の抽選・生成コールバックは撃破者だけ |
-| A | `Gem_R_Wealth` | 遅延追加ゴールドを生成するコールバックは撃破者だけ。生成されたゴールドの本体分配は変更しない |
+| A | `Gem_E_Predation` | 本体どおり（本体の KillTracker の猶予内アシストを含む。MOD は追加も制限もしない）。通常敵で成長しない本体条件は維持 |
+| A | `Gem_L_DivineFaith` | 本体どおり（同上）。上限付きスタック・最大HP・ダメージ／回復増幅の加算は本体の猶予条件に従う |
+| A | `Gem_L_Culinary` | 本体どおり（同上）。料理素材の抽選・生成は本体条件に従う |
+| A | `Gem_R_Wealth` | 本体どおり（同上）。遅延追加ゴールドは本体条件に従い、生成されたゴールドの本体分配も変更しない |
 | B | `Gem_E_Metal` | 装着記憶のCD回復・演出を5秒アシストにも1回 |
 | B | `SkillTrigger.ActorEventOnKill` | 究極記憶の撃破チャージを5秒アシストにも1回。小型0.12750001、通常0.63750005、ミニボス12.75、ボス42.5の本体値を使用 |
 | B | `Se_Star_Aurena_F_CR_NoHealCooldownReduction` | 連鎖反応の対応記憶の割合CD回復を5秒アシストにも1回 |
@@ -27,9 +27,9 @@ Aの4種は、本体でも単純なラストヒット限定ではない。`Dew.C
 - 料理: 装着記憶の `TrackKills(killGraceTime, OnKill)`（既定3秒）。
 - 富: 装着記憶の `TrackKills(gracePeriod, Callback)`（既定1.5秒）。
 
-したがって共有リストから外すだけでは「Aは撃破者だけ」を満たさない。決定済みの受取者規則を満たすため、マルチ時に限りこの4コールバックのPrefixで、`EventInfoKill.actor` の親経路上の旅人とエッセンス所有者が一致する場合だけ本体処理を続行する。召喚・弾・記憶の所有者も同じ親経路で解決する。帰属や所有者が不明な場合・フック例外時は本体を続行する（fail-soft）。死亡の保留、架空の撃破、成長拾得物の追加生成は行わない。
+このため A は本体どおり（本体の KillTracker の猶予内アシストを含む。MOD は追加も制限もしない）に戻した。5秒アシストからの追加発火もしないので、発火条件・回数とも完全に本体どおりである。以前入れていた「マルチ時に限り `EventInfoKill.actor` の親経路上の旅人とエッセンス所有者が一致する場合だけ本体処理を続行する」Prefix は、本体より厳しくする変更に当たるため除去した（MOD の独自発火がなくても制限だけは残ってしまうため）。
 
-富の `DropGold` は個人宛ではなく本体の全員分配である。Aに限定するのは「同じ撃破から追加ゴールドを生成する所有者」であり、生成後のゴールドを撃破者へ独占支給する変更ではない。
+富の `DropGold` は個人宛ではなく本体の全員分配である。どの所有者が同じ撃破から追加ゴールドを生成しても、生成後のゴールドを撃破者へ独占支給する変更はしない。
 
 ## 本体の30秒アシストは触らない
 
@@ -93,9 +93,17 @@ Aの4種は、本体でも単純なラストヒット限定ではない。`Dew.C
 
 `NativeKillRewards.Gold.cs` の全フックを除去した。同ファイルは削除禁止に従って説明コメントだけを残す。`InstallGold`、`ClearGold`、死亡時の受取者収集、iterator・宝珠の弱参照記録、`EarnGold` の引数置換・支給保留・再支給は存在しない。個人倍率で従来のアシスト者の額が撃破者を上回る場合も、本体どおりその額を受け取る。通常額を撃破者に合わせて減らさない。
 
-`DreamforgeMod.StartNativeKillRewards` の登録はB共有とAの受取者条件のために維持する。ゴールド専用の起動登録はない。
+`DreamforgeMod.StartNativeKillRewards` の登録はB共有のために維持する。Aの4種へのパッチは存在しない。ゴールド専用の起動登録はない。
 
 ## この変更での検証
+
+制限除去の再検証（2026-10-16、撃破者限定 Prefix 除去後）:
+
+- `python3 tools/balance/gen_cs.py --check`: 成功。
+- 指定の `dotnet build src/SodRpg.Mod -c Release ...`: 成功、エラー0・既存警告6。
+- `DOTNET=/usr/bin/dotnet DOTNET_ROLL_FORWARD=LatestMajor python3 tools/test_changed.py`: 3316件成功・失敗0。初回実行だけタイミング系の `PerformanceTests` が閾値超過で失敗し、再実行で合格（本変更はパッチを外す方向のため遅くはない）。
+- 撃破者限定 Prefix を直接検証する既存テストは存在しなかった（追加もしない）。
+- テスト境界のビルド修正: main 統合（91c6b182）で `DreamforgeUi` に追加された `_linkCoefficients` を `Issue73.Native.Tests/NativePersistence.targets` の抽出フィールドへ、`DreamforgeConfig`／`HostAuthority` の近接協力メンバーを `SodRpg.Mod.Startup.Tests/StartupGameApi.cs` のスタブへ、それぞれ main どおりに追加。本体コードは未変更。
 
 実行済み（2026-10-16）:
 

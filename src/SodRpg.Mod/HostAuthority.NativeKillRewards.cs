@@ -61,11 +61,6 @@ namespace SodRpg.Mod
                     ?? throw new MissingMethodException(typeof(Actor).FullName, "OnDisable"), nameof(BeforePoolClear));
                 Patch(RequireCallback(typeof(SkillTrigger), "ActorEventOnKill"), nameof(BeforeEventReward));
                 Patch(RequireCallback(typeof(Se_Star_Cetus_F_BA_CdReductionOnKill), "OnVictimDeath"), nameof(BeforeCetusReward));
-                // These native trackers also accept other players' kills. A rewards must have one recipient.
-                Patch(RequireCallback(typeof(Gem_E_Predation), "OnKill"), nameof(BeforePermanentReward));
-                Patch(RequireCallback(typeof(Gem_L_DivineFaith), "IncreaseAmp"), nameof(BeforePermanentReward));
-                Patch(RequireCallback(typeof(Gem_L_Culinary), "OnKill"), nameof(BeforePermanentReward));
-                Patch(RequireCallback(typeof(Gem_R_Wealth), "Callback"), nameof(BeforePermanentReward));
                 _enabled = true;
             }
             catch (Exception ex)
@@ -165,18 +160,6 @@ namespace SodRpg.Mod
                 bool run = HostAuthority.NativeInstance?.BeforeNativeKillReward(obj, hero, receiver, effect, ____callback) ?? true;
                 if (!run) ____trackingDict.Remove(obj.victim);
                 return run;
-            }
-            catch (Exception ex) { Fail(ex); return true; }
-        }
-
-        private static bool BeforePermanentReward(Gem __instance, EventInfoKill __0)
-        {
-            if (!Active) return true;
-            try
-            {
-                var killer = Owner(__0.actor);
-                // Unknown attribution must never take the killer's normal reward away.
-                return killer == null || __instance.owner == null || __instance.owner == killer;
             }
             catch (Exception ex) { Fail(ex); return true; }
         }
