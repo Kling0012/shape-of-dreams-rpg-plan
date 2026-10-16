@@ -1,5 +1,5 @@
-[b]v3.1.0: minor per-traveler adjustments, cyan Nemesis nameplates, and a fix for repeated co-op trade re-sends. Everyone in co-op should update. Saves carry over; restart the game after updating.[/b]
-[b]v3.1.0：旅人ごとの細かな調整、宿敵の名札のシアン化、協力取引の送り直しが繰り返される問題の修正。協力プレイは全員更新してください。セーブはそのまま引き継げます。更新後はゲームを再起動してください。[/b]
+[b]Fixes co-op trades with a large-stash player repeatedly restarting the partner's record transfer.[/b]
+[b]協力プレイで保管庫の大きな参加者と取引するとき、記録の送信が何度もやり直される問題を修正しました。[/b]
 
 [h1]Dreamforge RPG[/h1]
 Turns every run into part of a long RPG journey: relics you keep, a risky "secure or delve" choice at every zone, a star map per Traveler, a forge, and long-term goals. Co-op ready.
