@@ -103,9 +103,9 @@ namespace SodRpg.Mod
                 if(index==4)
                 {
                     if(now>=state.HandsUntil) state.HandsCount=0;
-                    if(state.HandsCount==0) state.HandsUntil=now+6f;
-                    state.HandsCount=Math.Min(3,state.HandsCount+1);
-                    if(state.HandsCount<3) continue;
+                    if(state.HandsCount==0) state.HandsUntil=now+action.CounterLifetimeMillis/1000f;
+                    state.HandsCount=Math.Min(action.MainHits,state.HandsCount+1);
+                    if(state.HandsCount<action.MainHits) continue;
                 }
                 if(!LightAvailable(rt,action,now)) continue;
                 float amount=LightAmount(rt,entry,profile,action.ChannelId); bool success=false;
@@ -113,7 +113,7 @@ namespace SodRpg.Mod
                 else if(index==2) success=LightPlantCrystal(rt,state,action,origin,direction,amount,now);
                 else if(index==3)
                 {
-                    if(!BossGround(origin,point,8f,out var center)) continue;
+                    if(!BossGround(origin,point,action.RangeMilli/1000f,out var center)) continue;
                     var sequence=rt.Boss.Sequence.Reset();
                     sequence.Add(new BossScheduledPulse(action,center,center,amount/2f,BossMagic(rt),450));
                     sequence.Add(new BossScheduledPulse(action,center,center,amount/2f,BossMagic(rt),750));
@@ -137,12 +137,13 @@ namespace SodRpg.Mod
             if(!BossFind(rt,LightProfiles[6],out var entry,out var profile)) return;
             if(now>=state.ChargeUntil) state.Charges=0;
             var action=profile.Actions[0];
-            if(state.Charges<3)
+            var charge=profile.Actions[1]; // the charge ledger: Count charges, each kept for LifetimeMillis
+            if(state.Charges<charge.Count)
             {
-                state.Charges++; state.ChargeUntil=now+6f; LightPublishCharges(rt,state,now); return;
+                state.Charges++; state.ChargeUntil=now+charge.LifetimeMillis/1000f; LightPublishCharges(rt,state,now); return;
             }
             if(!LightAvailable(rt,action,now) || LightBeamActive(state,profile.Id) || LightFreeBeams(state)==0) return;
-            var beam=LightAddBeam(rt,state,profile.Id,action,origin,direction,LightAmount(rt,entry,profile,action.ChannelId),now+.35f,0,0);
+            var beam=LightAddBeam(rt,state,profile.Id,action,origin,direction,LightAmount(rt,entry,profile,action.ChannelId),now+action.DelayMillis/1000f,0,0);
             if(BossFind(rt,LightProfiles[7],out var terminalEntry,out var terminalProfile))
             {
                 beam.Terminal=terminalProfile.Actions[0]; beam.TerminalAmount=LightAmount(rt,terminalEntry,terminalProfile,beam.Terminal.ChannelId);

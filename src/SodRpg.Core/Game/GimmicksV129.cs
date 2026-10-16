@@ -280,7 +280,12 @@ namespace SodRpg.Core.Game
         {
             _dazeUntil.Remove(victimId);
             foreach (var state in ActiveStates())
-                state.Victims?.RemoveAll(v => v.VictimId == victimId);
+            {
+                var victims = state.Victims;
+                if (victims == null) continue;
+                for (int i = victims.Count - 1; i >= 0; i--)
+                    if (victims[i].VictimId == victimId) victims.RemoveAt(i);
+            }
         }
 
         public void ClearTransient()

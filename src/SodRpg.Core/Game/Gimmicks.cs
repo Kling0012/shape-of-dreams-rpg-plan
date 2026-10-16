@@ -562,7 +562,8 @@ namespace SodRpg.Core.Game
         // 命中ごとに走る Expose/Sap/Weakspot 参照を、その効果が1つもないビルドでは全走査なしで返す（#161）。
         private bool _hasExposeEntries, _hasSapEntries, _hasWeakspotEntries, _hasCrescendoEntries;
         private readonly List<ActiveEntry> _activeStates = new List<ActiveEntry>();
-        private IReadOnlyList<ActiveEntry> ActiveStates() => _activeStates;
+        // 具体型で返す：foreach が List の構造体の列挙子を使い、命中ごとの箱詰め（確保）が起きない。
+        private List<ActiveEntry> ActiveStates() => _activeStates;
 
         private static bool Same(GimmickEntry a, GimmickEntry b) =>
             a.AdmittedSource == b.AdmittedSource && BuildAggregation.GimmickStateKey(a) == BuildAggregation.GimmickStateKey(b)

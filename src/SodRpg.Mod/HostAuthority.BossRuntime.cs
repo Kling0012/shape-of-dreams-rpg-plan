@@ -280,7 +280,8 @@ namespace SodRpg.Mod
 
         private bool BossEquipmentSnapshot(HeroRuntime rt, BossCombatState state, ref bool changed)
         {
-            var equipment = _attributionEquipment[rt.Hero];
+            // The map is filled only once the hero has a Skill and is cleared on death; spawn ordering can reach here first.
+            if (!_attributionEquipment.TryGetValue(rt.Hero, out var equipment)) return false;
             for (int i = 0; i < LinkSkills.Length; i++)
             {
                 equipment.TryGetValue(LinkSkills[i], out var memory);

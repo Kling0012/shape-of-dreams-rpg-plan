@@ -8,6 +8,15 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
+### 不具合の修正 / Bug fixes
+
+- ボス装備の効果の準備で、記憶の情報がまだそろっていない旅人に当たると、ホストで例外が出ることがある問題を修正しました。 / Fixed a possible host exception when boss-gear effects were prepared for a Traveler whose memory data was not ready yet.
+
+### 改善 / Improvements
+
+- 仕掛け（衰弱・弱点など）と到達刻印の効果計算で、攻撃が当たるたびに起きていたメモリ確保をなくし、ホストの動作を軽くしました。 / Removed per-hit memory allocations in gimmick (Sap, Weakspot and others) and keystone calculations, making the host lighter.
+- 一部のボス装備（大顎・アズラク・光の精霊）の回数・持続・射程を、説明文と同じ設定値から読むようにしました（今の値は変わりません）。 / Some boss gear (Maw, Azurak, Light Elemental) now reads its hit counts, durations and ranges from the same balance values as its descriptions (current values unchanged).
+
 ---
 
 ## v2.10.57 — Co-op warning, resume save, and room omen fixes（2026-10-16）
