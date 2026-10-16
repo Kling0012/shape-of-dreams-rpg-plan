@@ -66,3 +66,13 @@ DOTNET_ROLL_FORWARD=Major dotnet test tests/SodRpg.Core.Tests/SodRpg.Core.Tests.
 - Mod全体のビルド・全件/低速テスト・ゲーム内 `dreamforge_simkill`: 再現工程の範囲外として未実行。
 
 現在の再現ハーネスは次工程への証拠であり、設定同期や表示文脈のAPIが変わった際は、抽出箇所・代役を修正内容に合わせて追随させる。
+
+## 修正後の結果（2026-10-16）
+
+**19件すべて成功、終了コード0。** 修正を一時的に戻す（`src`・`tools` とこのハーネスを修正前へ戻す）と19件中15件失敗・終了コード1に戻ることを確認した。
+
+修正に合わせてハーネスを次のように追随させた。判定条件・期待値は変えていない。
+
+- 代役の `ClientSession` に `HostMeleeCoop` と `DisplayBuild` を足した。設定のケースは、本番の hello 返信 initializer（`ReplyForTest`）の `meleeCoop` を、`ClientSession.OnHello` と同じく参加者側へ渡す。
+- 射程表示のケースは、メニューを開いた状態（`Open = true`）で、閲覧者の表示用ビルドの攻撃速度を使う。
+- 本番の近接判定が prefab の `GameObject` や部品も扱うため、`UnityEngine.Component`・`GameObject` と `Log.Info` の代役を足した。
