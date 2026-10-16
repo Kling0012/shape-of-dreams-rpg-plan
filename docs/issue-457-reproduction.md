@@ -1,5 +1,11 @@
 # Issue #457 バグ再現記録
 
+## 現在の扱い（2026-10-16、診断ログの修正ラウンド）
+
+**利用者の症状は未再現・未修正。今回は診断ログの確認のみで、Issue #457 はリリース後も閉じず、ログを待つ。** 下記の過去工程にある失敗・修正・成功の記録は、今回のセッションで利用者の症状を再現・解消できたことを意味しない。
+
+今回の開始スナップショットには診断ログと過去の条件・数値変更がすでに含まれている。過去の変更を追加・差し戻しせず、ゲームデータ・判定・効果量・説明・内容指紋・保存・通信を据え置いた。今回のコミットはREADMEと本記録の更新のみ。今回実行した検証と確認できなかった範囲は末尾「診断ログの修正ラウンド」に記す。
+
 ## 修正前の再現結果
 
 修正前の本番 `Content.Uniques` と `Links.Satisfied` を使用した再現テスト2件が、期待する到達可能性を満たさず失敗した（終了コード1、2件実行／2件失敗）。製品コード・装備条件・数値・説明文は変更していない。
@@ -206,3 +212,67 @@ TRXは`/tmp/issue457-current-results/issue457-current.trx`に保存された。�
 - **未実行**：日英図鑑・Wiki生成・数値生成器・内容指紋の関連テスト。理由：今回は内容定義・数値・説明生成に差分がない。対象特定はコードで確認し、品質懸念の条件・バランス・指紋への対応はそれらを追加変更しないこととした。
 - **未実行**：NuGet脆弱性照会。理由：ネットワーク制約に合わせ`NuGetAudit=false`を使用。
 - **未実行**：push・PR作成・リリース・Issue投稿・クローズ。理由：この工程では禁止。ログ受領後の原因特定と修正は継続課題。
+
+## 診断ログの修正ラウンド（2026-10-16）
+
+### 引き継ぎと審査指摘への対応
+
+開始点は`b2b5198`の単一スナップショット、ブランチ`work`。リモート・`origin/main`・`ai/wip-issue-457`はなく、`ai/issue-457`を作成した。`gh pr view 477 -R Kling0012/shape-of-dreams-rpg-plan --comments`と`gh pr diff 477 -R Kling0012/shape-of-dreams-rpg-plan`は、いずれも`gh: command not found`で取得できなかった。GitHubへの接続・認証も利用できない。したがってPRとmainの差分全体が診断だけかは未確認であり、今回の差分が文書だけであることと区別する。
+
+提示された全体テストの失敗記録は、`dotnet restore SodRpg.sln`の終了0と復元出力の途中までで、失敗したテスト名・コマンド・エラー本文が含まれていない。失敗原因を推測してゲームの挙動やテストを変更せず、今回の許可範囲に関係する既存テスト22件とMODビルドを確認した。**前回の全体テスト失敗の解消は確認できていない。**
+
+- 対象特定の懸念：`Content.cs`の固有品「傑作の連剣」`unique.link_mist_masterwork`を再確認した。開始時点の条件は`Hero_Mist`＋`St_D_AstridsMasterpieceEnGarde`＋`St_M_FastFeet`。画像とIssue本文による照合は未実行。
+- 条件変更・バランス・説明の懸念：今回は条件緩和を選ばず、開始時点の定義・効果量を維持した。日英説明・図鑑・数値正本に関する既存テストが成功した。過去工程の条件変更を今回追加した修正と扱わない。
+- 協力プレイの内容指紋への懸念：`ContentFingerprint`とその入力に変更を加えていない。既存の指紋テスト4件は成功したが、mainとの一致や実際の通信を確認したものではない。
+- 元の不具合の扱い：READMEと本記録の冒頭に未再現・未修正を明記し、既存テストの成功だけで完了としない。Issueはリリース後も閉じず、利用者のログを待つ。
+
+### 診断コードの確認
+
+`HostAuthority.cs`の`HeroRuntime.LinkDiagnostic`と`UpdateLinks`内の2つの呼び出し、および`HostAuthority.LinkDiagnostics.cs`を確認した。既存判定の後から観測値を読み取り、比較結果とスナップショットは診断専用の状態にだけ保存する。`Requires`、`SatisfiedLinks`、装着中の記憶・エッセンス、補正値、ビルド、保存データ、通信メッセージへの書き戻しはない。
+
+遠征IDが変わるとホスト共通の出力予算を戻し、最大32行で打ち切る。同じ定義・生存状態・採取状態・記憶・エッセンス・成立結果なら文字列を生成せず戻る。状態変更時だけ再利用コレクションの中身を更新する。Identity連携の詳細は状態ごとに最大6件、残りは件数だけ。診断全体が例外を吸収する。これらはコード確認であり、Unity上での例外注入や実ログ出力の動作試験ではない。診断の実装とゲームデータは今回変更していない。
+
+### 今回実行した検証
+
+新しいテストは追加・設計しておらず、既存テストも変更していない。以下は今回のセッションで前景実行し、終了を確認した結果。
+
+```sh
+DOTNET_ROLL_FORWARD=Major dotnet test tests/SodRpg.Core.Tests/SodRpg.Core.Tests.csproj \
+  -c Release --filter 'FullyQualifiedName~Issue457LinkReachabilityTests|FullyQualifiedName~LinksV126Tests|FullyQualifiedName~LinkActivationV127Tests' \
+  --logger 'console;verbosity=detailed' \
+  -p:PythonCommand=python3 -p:NuGetAudit=false \
+  -p:GameDir='/mnt/ghauto-sbx/sod-gamedata/Shape of Dreams'
+```
+
+終了0、既存11件成功。合法Mist 8構成中4構成で成立、393連携のIdentity／Movement枠制約による到達不能0件。これは現在の定義を検査するCoreテストで、利用者の症状や診断ログの実行を再現したものではない。コンパイル時の既存スタブの警告は出たが、エラーはなかった。
+
+```sh
+DOTNET_ROLL_FORWARD=Major dotnet test tests/SodRpg.Core.Tests/SodRpg.Core.Tests.csproj \
+  -c Release --no-restore \
+  --filter 'FullyQualifiedName~ContentTableV129Tests|FullyQualifiedName~CodexTextConsistencyTests|FullyQualifiedName~ContentFingerprintTests|FullyQualifiedName~StarRoutesV127Tests' \
+  --logger 'console;verbosity=normal' \
+  -p:PythonCommand=python3 -p:NuGetAudit=false \
+  -p:GameDir='/mnt/ghauto-sbx/sod-gamedata/Shape of Dreams'
+```
+
+終了0、既存11件成功（日英説明・図鑑1件、指紋4件、装備定義・数値4件、星図・Identity連携2件）。これらの成功はmainとのゲーム内容の一致を証明しない。
+
+```sh
+DOTNET_ROLL_FORWARD=Major dotnet build src/SodRpg.Mod -c Release \
+  -p:PythonCommand=python3 -p:NuGetAudit=false \
+  -p:GameDir='/mnt/ghauto-sbx/sod-gamedata/Shape of Dreams'
+```
+
+終了0、警告6件、エラー0件。警告は既存API非推奨3件と既存診断フィールド未代入3件。参照先に`Mods`ディレクトリがなく、配置処理は走っていない。
+
+`git diff --check`は終了0。`git diff --stat`と差分本文で、今回の変更がREADMEと本記録の2ファイルだけで、製品コード・データ・テストに変更がないことを確認した。
+
+### 未実行・未解決
+
+- **未実行**：PRコメント・PR差分・mainとの比較。理由：CLI・認証・ネットワーク・比較対象の履歴が利用できない。開始スナップショット内の過去の製品変更をmainとの差分と断定できない。
+- **未実行**：前回失敗した全体テストの再実行。理由：全体・slowテスト禁止の指示に従った。提供ログに失敗箇所が含まれず、関連22件成功から全体テストの復旧を判断しない。
+- **未実行**：利用者の症状の再現、`Player.log`への書き込み、ログ障害時の例外処理、1920×1080での画面、戦闘、協力通信、`dreamforge_simkill`。理由：実機利用不可。元の不具合は未修正。
+- **未実行**：旧条件への差し戻し確認。理由：今回バグ修正や条件変更をせず、比較元の履歴もない。
+- **未実行**：Wiki生成・公開、数値生成器、その他のテスト。理由：対象ファイルを変更せず、今回は関連する既存テストだけを実行する範囲。
+- **未実行**：NuGet脆弱性照会。理由：制限されたネットワークに合わせ`NuGetAudit=false`を使用。
+- **未実行**：push、PR更新、リリース、Issue投稿・クローズ。理由：この工程では実行しない。原因特定と修正はログ受領後の継続課題。
