@@ -854,17 +854,33 @@ def run_dotnet_test(root: Path, project: str, filter_expr: str | None,
     if not Path(dotnet).exists():
         print(f"dotnet not found at {dotnet} (set DOTNET to override)", file=sys.stderr)
         return 1, ""
-    cmd = [dotnet, "test", project, "-c", "Release"]
-    if filter_expr:
-        cmd += ["--filter", filter_expr]
-    if no_build:
-        cmd.append("--no-build")
     env = dict(os.environ)
     env["DOTNET_ROOT"] = dotnet_root
     # Keep the console summary machine-parseable regardless of the OS locale.
     env.setdefault("DOTNET_CLI_UI_LANGUAGE", "en")
     if slow:
         env["SODRPG_SLOW"] = "1"
+    if no_build:
+        # A separate timing phase may run on another host without the ordinary
+        # phase's build outputs. Ask MSBuild for the actual path (including any
+        # output overrides) and only skip building when the assembly is present.
+        target = subprocess.run(
+            [dotnet, "msbuild", project, "-nologo", "-p:Configuration=Release",
+             "-getProperty:TargetPath"], cwd=str(root), env=env,
+            stdin=subprocess.DEVNULL, capture_output=True, text=True,
+            encoding="utf-8", errors="replace",
+        )
+        if target.returncode != 0:
+            return target.returncode, (target.stdout or "") + (target.stderr or "")
+        target_path = target.stdout.strip()
+        no_build = bool(target_path) and (root / target_path).is_file()
+        if not no_build:
+            print(f"build output missing; building {project} before testing", file=sys.stderr)
+    cmd = [dotnet, "test", project, "-c", "Release"]
+    if filter_expr:
+        cmd += ["--filter", filter_expr]
+    if no_build:
+        cmd.append("--no-build")
     result = subprocess.run(
         cmd, cwd=str(root), env=env, stdin=subprocess.DEVNULL,
         capture_output=True, text=True, encoding="utf-8", errors="replace",
