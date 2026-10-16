@@ -223,7 +223,7 @@ namespace SodRpg.Mod
 
     internal sealed class StatBonus
     {
-        public float attackDamagePercentage, abilityPowerPercentage, attackSpeedPercentage, critChanceFlat,
+        public float attackDamagePercentage, abilityPowerPercentage, attackSpeedPercentage, attackRangePercentage, critChanceFlat,
             critAmpFlat, maxHealthPercentage, maxHealthFlat, attackDamageFlat, abilityPowerFlat;
     }
     internal sealed class AbilityTargetValidatorWrapper { public bool Evaluate(Entity entity) => true; }
