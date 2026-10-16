@@ -10,6 +10,26 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v2.10.58 — Co-op forbidden equipment warning fixes（2026-10-16）
+
+このバージョンでは、協力プレイでの禁忌装備の警告と、警告表示まわりの処理を整理しました。 / This version tidies up the forbidden equipment warning and related warning handling in co-op.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- 協力プレイで、禁忌装備の警告が出る条件と、実際に装備が外される条件を同じものにしました。警告の内容と、実際に外される装備が食い違わなくなります。 / In co-op, the forbidden equipment warning now uses the same rule that decides which equipment is actually removed, so the warning always matches what is removed.
+- 協力プレイで、ほかの参加者の対応があとから分かったときに、禁忌装備の警告が消えて装備が正しく反映されるようにしました。すでにほかの応答を受け取っている場合も同じです。 / In co-op, when other players' support is confirmed later, the forbidden equipment warning is cleared and your equipment is applied correctly, even if other responses were already received.
+- 協力プレイで、ホストから応答がないときの警告が、表示中のほかの警告を上書きしないようにしました。表示言語を変えたときも同じです。 / In co-op, the no-response warning no longer replaces another warning already on screen, including when you change the display language.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
 ## v2.10.57 — Co-op warning, resume save, and room omen fixes（2026-10-16）
 
 このバージョンでは、協力プレイでの警告表示、中断データからの再開、部屋の兆しに関する不具合を修正し、装備一覧などの動作を軽くしました。 / This version fixes issues with co-op warnings, resuming from a suspended save, and room omens, and makes the equipment list and other screens lighter.

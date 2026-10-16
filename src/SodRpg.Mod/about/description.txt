@@ -1,5 +1,5 @@
-[b]Fixes co-op warnings, resuming from suspended saves, room omens, and the trade limit message, and makes the equipment list lighter.[/b]
-[b]協力プレイの警告、中断データからの再開、部屋の兆し、取引上限の表示を修正し、装備一覧などの動作を軽くしました。[/b]
+[b]The co-op forbidden equipment warning now matches what is removed, and warnings no longer replace each other.[/b]
+[b]協力プレイで、禁忌装備の警告が実際に外れる装備と一致するようにし、警告どうしが上書きされないようにしました。[/b]
 
 [h1]Dreamforge RPG[/h1]
 Turns every run into part of a long RPG journey: relics you keep, a risky "secure or delve" choice at every zone, a star map per Traveler, a forge, and long-term goals. Co-op ready.
