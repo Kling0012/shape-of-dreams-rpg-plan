@@ -1,5 +1,5 @@
-[b]Fixes co-op elites becoming unkillable at 0% share, enemies far from everyone switching owners repeatedly, training bonuses missing from mod heals and shields, and the codex not updating after making relics forbidden, plus several star map, loot and description fixes.[/b]
-[b]協力プレイで分担0%のエリートを倒せなくなる問題、離れた敵の担当が入れ替わり続ける問題、鍛錬の回復・シールド強化が反映されない問題、禁忌化後に図鑑が更新されない問題などを直しました。[/b]
+[b]Fixes Infinity's pure white zone boss kill not counting, co-op training progress mix-ups after continuing or reconnecting, lost cooldowns when swapping gems or memories, and set gear English names.[/b]
+[b]Infinity の純白ゾーンでボス撃破が数えられない問題や、協力プレイで続きから始めたり再接続したりしたときの鍛錬の取り違え、付け替えで技の待ち時間が消える問題、セット装備の英語名などを直しました。[/b]
 
 [h1]Dreamforge RPG[/h1]
 Turns every run into part of a long RPG journey: relics you keep, a risky "secure or delve" choice at every zone, a star map per Traveler, a forge, and long-term goals. Co-op ready.
