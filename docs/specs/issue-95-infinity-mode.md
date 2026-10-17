@@ -43,13 +43,13 @@
 - Harmony注意：MirrorのCmd/TargetRpc送信wrapperと `UserCode_*` 実行bodyを混同しない。LoadNodeはvoid内のcoroutineなので通常Postfixは完了通知ではない。ready／room-loaded／遷移解除を使い、iterator MoveNextのTranspilerは避ける。
 
 ## 4. 既存GameModの流用可否
-- **Limbo：不可**。depthを保存・同期するが、通常地図を装飾するだけ。Evil夢数一致、解放条件、diffLimbo、RejoinOnly、勝利時進捗更新がある。上限超過を無限カウンタにしない（C/GameMod_Limbo.cs:69-75,145-175,315-380,431-498）。
+- **Limbo：無限進行の代用品としての流用は不可**。depthを保存・同期するが、通常地図を装飾するだけ。Evil夢数一致、解放条件、diffLimbo、RejoinOnly、勝利時進捗更新がある。上限超過を無限カウンタにしない（C/GameMod_Limbo.cs:69-75,145-175,315-380,431-498）。#687のInfinity併用は通常のリンボ深度・制約を維持し、旅人別解禁だけを追加する（§22）。
 - **MirageSkin／CorruptedChaos：補助のみ**。前者は通常敵装飾で固定zoneIndexでは段階が伸びない。後者はExitBossへの経路を前提にするためExitBossを保持し、周期前の入場だけ禁止する（C/GameMod_MirageSkin.cs:71-157; N/GameMod_CorruptedChaos.cs:7-118）。
 - **StarlessPath：特殊招待／隠しルート、GoldenLizard：Startでの珍しい敵、DespairFixStuck：限定的な詰まり修正、MorasDomain：関連処理が空**。無限進行の代用品ではない（N/GameMod_StarlessPath.cs:117-135; N/GameMod_GoldenLizard.cs:20-45; N/GameMod_DespairFixStuck.cs:7-41; N/GameMod_MorasDomain.cs:3-27）。
 - GameModifierBaseは仕組みの参考にはなるが、新型のresource/prefab登録は別問題。既存managerのcustomDataを使う方が小さい（C/GameModifierBase.cs:1-18; C/GameSettingsManager.cs:636-642）。console bossRushModeも隣接ボス化で目的と逆、保存設定にもならない。
 
 ## 5. 推奨案の設定・状態・遷移
-- Infinityは通常本体モード上のMOD追加モードとして選び、Limboとは排他。Starlessの自動修飾子の存在だけではロビー開始を拒否せず、Infinity中の招待・sidetrack・別ゾーン遷移を止める。本体の通常難易度と通常設定保存keyは維持し、MODプロフィールの独立した省略可能設定と名前空間付きcustomDataでInfinityを保存・同期する。
+- Infinityは本体モード上のMOD追加モードとして選ぶ。#687以降、Limboでもホストの選択旅人が通常のリンボ6を踏破済みなら利用できる（§22）。Starlessの自動修飾子の存在だけではロビー開始を拒否せず、Infinity中の招待・sidetrack・別ゾーン遷移を止める。本体の通常難易度と通常設定保存keyは維持し、MODプロフィールの独立した省略可能設定と名前空間付きcustomDataでInfinityを保存・同期する。
 - ロビー：既存「夢の深さ」付近に「インフィニティモードON/OFF」「ボス周期10/15/20戦闘部屋」を追加。初期値はOFF・10。OFFは通常遠征。ボス出現のON/OFFは作らない。ホストだけ編集し、参加者は確定値を表示、遠征中は固定。
 - 既存UI／権限：R/src/SodRpg.Mod/DreamforgeUi.cs:733-750、ClientSession.RunChoices.cs:39-71。初回生成はRun生成より前なので、ロビー確定値を使うDepthRoomsと同じ順序にする。
 - 開始ゾーンは本体の従来の選択。潜行時の候補は全 `Zone_` リソースとし、通常進行のtier／content制限は抽選に使わない。共有assetの部屋プールは書き換えず、移動先の本来のプールを使う。生成に必要なnative部屋／地図が不足する候補を引いた回は、元のゾーンへfail-softする。
@@ -76,7 +76,7 @@
 - ロビーDreamDepthと本体Limboは変更しない。DreamDepthは最大5で敵倍率だけでなくluck・覚醒・星XP・部屋数にも効く（R/src/SodRpg.Core/Game/DreamDepth.cs:8-17）。これを無限加算すると報酬方針も壊れる。
 - 潜行ごとのHeat増加は既存上限5を維持。悪夢確率、非悪夢の底上げ、変種最大1体／部屋を既存処理へ載せる（R/src/SodRpg.Core/Game/Nightmare.cs:92-137; Variants.cs:353-365）。ボス悪夢化はしない。
 - 部屋由来の圧段階は `b=min(100, floor(ClearedCombatTotal/Interval)+offset)`。#270のoffsetは20部屋=0、15部屋=2、10部屋=4で開始時から加える。既存夢の圧の最終HPに `1+0.10b`、攻撃に `1+0.04b` を掛け、潜行を選べばHeatでも難化する。圧由来の敵数に別枠の0%／200%／400%を加算し、#253の同じウェーブ内に混ぜる。本体同時人口上限とウェーブ数は変更しない。
-- 人数は本体、夢レベル／星は既存平均、深さ／道標／悪夢は既存経路のまま。native zoneIndexやambientLevelを難度カウンタにしない（R/src/SodRpg.Core/Game/DreamPressure.cs:16-51; R/src/SodRpg.Mod/HostAuthority.cs:394-464）。
+- 人数は本体、夢レベル／星の共通圧は既存平均。#588ではインフィニティ協力の担当敵に使うHP・攻撃倍率と出現時の全員悪夢化・変種除外・悪夢化抽選は担当者本人の道標を参照する。担当なし・共有敵・ボス（共有HPの各持ち分を含む）には道標倍率を掛けず、共通圧も道標倍率1で敵数とHUDへ送る。途中参加・離脱による担当変更では新担当者の倍率へHP割合を維持して切り替え、悪夢・変種は出現時の分類を維持する。未着の個人道標はなし、未着Buildの基礎は共通圧としつつ受領済みの個人道標を掛ける。ソロ・通常協力は従来のホスト道標を使う。native zoneIndexやambientLevelを難度カウンタにしない。
 - 100段で圧倍率はHP11・攻撃5まで。その後も部屋は続くが難化は頭打ち、HUDに表示する。係数・上限は推奨初期値で本体の既存値ではない。全敵同時数やwave数を累計部屋数で増やさない。
 
 ## 8. 報酬速度の上限・#48
@@ -265,7 +265,7 @@
 - `noAdvance` でzoneIndex／ambientLevelを維持し、TravelToZoneだけではtier／loopも進まない（C/ZoneManager.cs:1312-1317）。native番号由来のHP／攻撃倍率、XP、Gold／物価、記憶レベル／エッセンス品質、hard variantの段階は従来のInfinityと同じ位置に留める。根拠：C/GameManager.cs:1073-1124,1354-1412、C/LootManager.cs:178-200、C/ZoneManager.cs:547,3354-3382。次ゾーンの番号を偽装して難度と供給を二重に増やさない。既存DreamDepth／Heat／夢の圧で上げ、新係数はない。敵prefab固有の基礎値・行動は移動先のものなので、全ボスが同じ強さになる保証ではない。
 - native通常ドロップは共有LootManagerのpool／rarity表で、ゾーン別の代替表は作らない。native魂はその実ボスの `GetUniqueReward` を使う。MODも実ボス型を既存の撃破factに保存し、`BossSets` で固有セットを抽選する（R/src/SodRpg.Mod/HostAuthority.KillSync.cs:527-541、R/src/SodRpg.Core/Game/BossSets.cs:9-55）。Infinityの時間／部屋／高レア／無料出力予算は引き継ぎ、既存 `ExpectedKillCosts` がそのボス限定確率も予算に含める（R/src/SodRpg.Core/Game/InfinityRewards.cs:147-150）。nativeとMODの報酬上限は別で、ゾーン切り替えを予算補充理由にしない。
 - ホストが新グラフの実ゾーンを既存 `FixedZoneId` に確定し、native currentZone／node statusと共有snapshotで送る。参加者は保存済みChoiceRevision／SegmentEpoch一致後にゾーンとGraphEpochを一緒に取り込む。Continueはnative graph-ready後に保存地点のMODチェックポイントを戻し、asset名・worldseed・epochを照合する。
-- **Protocol 24**：wire項目は増やさないが、旧参加者の純白勝利／選択停止処理との混在を拒否する。**保存形式5・Infinity codec version 1・native envelope項目は変更なし**。`FixedZoneId`／`fixedZone` は互換性のため名前を残し、現在のグラフのゾーンを表す。旧保存は保存された同ゾーンを復元し、次のDelveから新抽選を使う。Infinity欄のない旧通常保存は従来どおりOFF。
+- **Protocol 24**：旧参加者の純白勝利／選択停止処理との混在を拒否する。**保存形式5・Infinity codec version 1は維持**し、完結ボス状態と実カウンタを省略可能項目で追加する。旧reader向けsnapshotは従来の周期到達値も投影する。`FixedZoneId`／`fixedZone` は互換性のため名前を残し、現在のグラフのゾーンを表す。旧保存は保存された同ゾーンを復元し、次のDelveから新抽選を使う。Infinity欄のない旧通常保存は従来どおりOFF。
 
 ### 候補一覧の根拠と限界
 - 全件一覧の権威はUnityのMainResources `nameToGuid`（C/DewResources.cs:62-71,448-455）。手元の本体データにはManaged DLLだけがあり、このアセット／scene／現行ローカライズはない。確認できたliteral IDは `Zone_Forest`、`Zone_Despair`、`Zone_Primus`。反射一覧にはForest／SnowMountain／LavaLand／DarkCave／Ink／Sky／Despair／Primusの敵群があるが、これを全ゾーンasset名の確定一覧としてハードコードしない。
@@ -297,9 +297,22 @@
 - v2.10.8（PR #304）はこの構造のゾーンを抽選から外した。強制移動の機構推定は正しかったが、重み10のPrimusボスがインフィニティから消え、19節の「候補から黙って除外せず」に反していた。
 
 ### 修正
-- `IsBossFinaleZone(zone, interval)`（= `useSpecialGeneration && !CanHostInterval(...)`）：周期を賄えない特殊グラフは「完結ボスゾーン」とする。`OnGenerated` は生成直後に `PromoteFinaleBoss()`（`ClearsInCycle` を周期まで引き上げ `Phase = BossDue`）を呼ぶため、地図はボスノードだけを前方に出し、技術境界は一度も発生しない。区間は準備→ボス（＋任意の戦闘部屋）で完結する。
+- `IsBossFinaleZone(zone, interval)`（= `useSpecialGeneration && !CanHostInterval(...)`）：周期を賄えない特殊グラフは「完結ボスゾーン」とする。`OnGenerated` は生成直後に `PromoteFinaleBoss()`（実クリア数を変えず、明示的な完結ボス状態で `Phase = BossDue`）を呼ぶため、地図はボスノードだけを前方に出し、技術境界は一度も発生しない。区間は準備→ボス（＋任意の戦闘部屋）で完結する。
 - 扉は `LoadNode` 直行のため `RouteTravel` の `TryEnterBoss` を通らない。`TickNative` はボスノード到着時に完結ボスゾーンなら `PromoteFinaleBoss()`→`TryEnterBoss()` で `BossFight` へ入る（v2.10.8以前の保存＝`Exploring` のまま純白にいる遠征も、扉でボス戦に入って撃破後に次へ進める）。`RefreshReveal` は `BossDue` で唯一のボスノードの上にいるとき、誤って「scheduled boss なし」で機能を止めない（ボスノードが1つもないグラフだけ止める）。
 - `ChooseNativeZone`（ランダム抽選）と v2.10.8 の救済は従来どおり周期を賄える候補に限定したまま。`PrepareBossTarget` は固定ゾーンID（保存済み計画または当選ボスの専用ゾーン）で指定された純白だけを例外として許す。井戸/ショップ保証とその警告は完結ボスゾーンでは適用しない（2部屋構成に畳むため）。
+- 保存・共有snapshot・Continueは `FinalePromoted` と実クリア数を引き継ぎ、Delveで繰り上げ状態を解除する。`累計 >= 周期内の実クリア数` の検証は維持し、保存された周期長と一致することを理由に不整合を通さない。旧版の純白セーブ（`Zone_Primus`・周期到達値・`BossDue`～`AwaitingChoice`）だけは現グラフのクリア済みノード数へ正規化し、ボス戦／魂待ち／選択待ちの段階は保持する。
 
 ### 検証
 - 回帰（`tests/SodRpg.Mod.Startup.Tests/InfinityZoneTests.cs`）：Primusボス計画の潜行が純白に入り `BossDue` でボスノードを公開すること、扉到着（`SetCurrentNodeIndexAndRevealAdjacent(2)`＋`Tick`）が機能を止めず `BossFight` に入り、撃破・魂の出現で `AwaitingChoice` まで至ること、旧保存（`Exploring`）からの扉到着も `BossFight` に入ること。ランダム抽選が純白を選ばないこと、技術境界による脱出、純白からのDelveが純白へ戻らないことは v2.10.8 の回帰を維持。
+- PR #514取込：同じ既存ケースで累計0の最初の周期を使い、ボス繰り上げ・戦闘中・魂待ち・選択待ち・Delveの保存読み戻し、共有snapshotの実カウンタ、旧形式のプロフィール／native envelopeの魂待ち保持を確認。`InfinityClearSaveTests` の既存ケースは本番ClientSessionの確定保存と実ファイルの読み戻し／通知を確認し、旧カウンタ引き上げを一時的に戻すと `Inconsistent infinity state` で失敗、修正版では成功した。周期10/15/20の不整合拒否と初期装備の日英案内も既存ケースで確認。関連Core 60件・Startup 87件・Native 31件が成功。実ゲーム・実通信・フル／低速テストは未実行。
+
+## 22. #687：旅人別のリンボInfinity解禁
+
+- 解禁条件は通常のリンボ6クリア。本体の `DewSave.profileStats.heroes[heroType].completedLimboDepth >= 6` を利用する。`GameMod_Limbo.ClientEventOnGameConcluded` は勝利したローカル旅人だけを更新し、最大深度は6。既存プレイヤーへ再クリアを要求しない。本体セーブの書き換えは追加しない。
+- MOD側は `HeroState.LimboInfinityUnlocked` を保存する。`Rules.EndRun` の通常勝利・`LimboDepth >= 6`・有効な `HeroKey` で当該旅人だけを解禁する。敗北・Infinity帰還では解禁しない。ロビーで本体実績を認識したホストは当該旅人のフラグを一度保存する。
+- ロビーの判定キーは `DewPlayer.local.selectedHeroType`。前の遠征の `LocalHero` を流用しない。旅人変更のたびに判定し、選択操作・開始条件・初回生成で同じホスト側条件を適用する。開始メッセージ用のHarmonyパッチが使えなくても生成側の制約は残す。
+- 協力プレイではホストが選択中の旅人で開始可否を決定する。`dreamforge.infinity.limboUnlocked` と実効 `dreamforge.infinity.enabled` を既存のnative `customData` で同期し、参加者は自身の実績で再判定しない。未解禁時はONを無効にして条件を日英で表示する。最後のロビーtick後に旅人が変わっても、開始時に実効モードを再同期する。
+- プロフィール保存形式を7から8へ更新し、`heroes[heroKey].limboInfinityUnlocked` がない旧保存はfalse。`HeroState.CloneAllocation` 経由の複製も保持する。`ResetBeforeVersion = 3` は据え置きでリセットしない。旧MODの既存 `LedgerVersionException` により新形式の上書きを拒否し、未知の解禁項目の消失を防ぐ。Protocol 24・Infinity codec version 1は維持する。
+- 本体のリンボ深度・Evil夢数等のロビー条件・途中参加制約は維持する。Infinityの無限進行は引き続き有限グラフ再生成で行い、本体実績／ending抑止・帰還の非勝利扱いも維持する。毎フレームの解禁判定は辞書参照と固定文字列で行い、同期は値の変更時のみ更新する。
+- 検証：本体DLL参照Releaseビルド成功（エラー0・既存警告6）。既存Coreの保存・リンボ関連46件、Nativeの勝利精算・Infinity保存22件、Startupのロビー・ゾーン・起動104件が成功。Startupは途中の1回に `ExhaustionOrSingleCandidateKeepsZoneAndExistingCombatProgress` の初期化でNullReferenceExceptionが1件発生したが、当該2条件の単独実行と同じ104件の再実行では成功し、原因は未特定。新規テストは追加していない。
+- 未実行：本環境ではゲームを起動できないため、実際のリンボ6クリア・旅人切替・協力通信・Continue・1920×1080画面描画とスクリーンショットは未確認。新しい解禁条件を直接検証するテストは作成禁止のため未追加。フル／低速テストはパイプラインへ委ねる。

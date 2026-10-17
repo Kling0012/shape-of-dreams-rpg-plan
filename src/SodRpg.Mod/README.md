@@ -1,6 +1,6 @@
 # Dreamforge RPG（ゲーム内MOD）
 
-このブランチは **Protocol 24・保存形式6（プロフィールリセットなし）**。最新mainの機能に加え、#255 のプレイヤー間トレードに対応しています。既存の協力機能は版・Protocol・内容の差でも警告だけで続行し、トレードの対応確認に失敗した場合はトレードだけを利用不可にします。変更は[更新履歴](../../CHANGELOG.md)を参照。
+このブランチは **Protocol 24・保存形式8（プロフィールリセットなし）**。最新mainの機能に加え、#255 のプレイヤー間トレードに対応しています。既存の協力機能は版・Protocol・内容の差でも警告だけで続行し、トレードの対応確認に失敗した場合はトレードだけを利用不可にします。変更は[更新履歴](../../CHANGELOG.md)を参照。
 
 全14ボスセット84部位・11種のnative報酬adapterを実装済み。装備照合と報酬更新は#73の共通装備キャッシュ／epochを使い、`EntityAbility.SetAbility`／`RemoveAbility`で更新します。ボス撃破条件は共通の連番・ストリーム台帳へ記録します。[承認仕様と実装境界](../../docs/specs/issue-48-boss-sets.md)
 
@@ -23,6 +23,20 @@
 | WinterDive のテレポート帰属 | 本体列挙子またはcaster捕捉フィールドを取得できない。従来の `Prepare` 判定を維持し、無効化ログを `Log.Warn` に統一 |
 
 LastStarlight の捕捉はホスト上の生存中・登録済みの旅人が正規に装着した有効なgem／skillで、エレボス報酬段階が正の場合だけ行う。通常のLastStarlightはラップも値変更もしない。実行中に3回目の待機が現れた場合は、その列挙について警告を1回だけ出し、自分の値差分と表示を解除する。本体列挙子はそこで破棄せず、その待機から以後のyieldと完了処理をそのまま通す。正常な2回待機の遅延・持続時間の連携は維持する。保存形式・Protocolは変更しない。
+
+## ボス実体の寿命診断（Issue #506）
+
+プール返却・通常破棄・部屋の片付け・ゾーン移動の本体経路を調査した結果、`ClearPooledEventsAndProcessors` は全経路では呼ばれません。`SpawnManager.usePooling=false` かつ `reuseInRoom=false` では `DewPool` がこの処理を省きます。既存のプール解放に加え、`Actor.OnDisable` と本体のActor派生型が宣言する同メソッドの後処理でも寿命記録を解放します。基底メソッドを呼ばない派生型も対象に含め、複数回通った場合の解放は冪等です。`OnDestroyActor` 中の終了攻撃は親の寿命番号を参照するため、その時点では番号を消しません。破棄の経路では `ICleanup.OnCleanup` が先に `Entity.isActive` をfalseにするのを境界に使い、一時的に `SetActive(false)` しただけの実体（isActive が true のまま）の寿命番号は再び有効になるまで保持します。印や命中履歴の連続性が途切れないためです。上限4096件は維持し、生存中の記録を追い出したり、移動時に一律リセットしたりはしません。
+
+一時的に `SetActive(false)` した実体をそのまま破棄・プール返却すると、Unity は二度と `OnDisable` を呼ばないため、上の後処理だけでは解放が届きません。この場合も `Dew.StepDestroy` の先頭で走る `Actor` の `ICleanup.OnCleanup` の後処理で同じ解放を冪等に行います。この位置なら `isActive` がfalseになった直後で、`OnDestroyActor` の終了攻撃が親の寿命番号を使い終えた後であり、順序を変えません。
+
+同時に4096件の記録が必要になった場合は、ホストの寿命中に警告を出します。警告は上限に到達するたびに1回で、解放して件数が上限未満へ戻ると次の到達で再び出ます。新規対象には有効な寿命番号を割り当てず、その対象の印登録と投射物の直接命中・連鎖先の追跡を見送ります。番号0を命中履歴へ記録せず、既存対象の追跡と本体の攻撃は継続します。実体の終了で空きが戻れば、新しい対象の登録も再開します。
+
+ホストの開発用コンソールで `dreamforge_bosslives 1` を実行すると、直後と30秒ごとに `Player.log` へ `_bossNativeActorLives.Count`・最大件数 `peak`・累計解放数 `released` を出します。`dreamforge_bosslives 0` は現在値を1回記録して定期出力を止めます。既存の開発コマンドと同じく保存先の `QuickSave/Mods/DreamforgeRPG/dev.flag` が起動時に必要です（開発モードは既存仕様で分解係数等にも影響するため、確認用環境で使ってください）。定期出力は既定OFFで、診断がOFFなら文字列生成も走査も追加しません。
+
+長いInfinityや敵の多い部屋を、ボス装備を装着して進み、戦闘・部屋片付け・ゾーン移動の前後を比較してください。戦闘中の一時的な増加や `peak`・`released` の増加は正常です。見る値は現在件数で、終了した実体の分が戻ること、生存中の旅人や装備スキルの分は残ることを確認します。`dreamforge_simkill` は報酬だけの模擬処理なので、この診断には使えません。
+
+この変更では本体DLLを参照したReleaseビルドと、実MODソースをリンクした既存再現テストで非プール破棄4096回後の件数0・4097体目の印1件、一時無効化を挟んだ破棄での記録解放と再有効化前の番号保持を確認しました。Unityでの実破棄・実ログ推移・長時間Infinity・高密度部屋・協力プレイは未実行です。経路の根拠と検証範囲は [#506 の記録](../../tests/repro/issue506/README.md) を参照してください。
 
 ## 遊び
 
@@ -58,11 +72,21 @@ LastStarlight の捕捉はホスト上の生存中・登録済みの旅人が正
 | 限界突破 | 同じ枠・同じレア度以上の遺物1つを消費して強化上限+5。レアは1回（調律石5・欠片200）、エピック以上は1/2/3回目が調律石10/20/40・欠片400/800/1600（エピック2回まで、伝説3回まで）。+6以降の強化もエピック以上は基本費用2倍 |
 | 融合 | 同じ名前・同じレア度の遺物1つと欠片20×(レア度+1)（固有品は調律石1も）を消費して、融合段階を1上げる。最大5段、基礎・特性・追加能力値は既存の計算後に1段につき6%増幅（最大30%）。負の能力値も符号を保って増幅する仕様で、禁忌の契約の最大HP-50%は5段で-65%になり、不利な効果も強まる（装備全体の最大HP減少の下限-75%は変わらない）。固有効果は変わらず、材料の融合段階・強化値は引き継がない。材料は鍵なし・未装着・取引中でも再調律中でもない別の遺物。同じ名前の判定は固有品がUniqueId、その他がBaseId+NamedIdの一致。安全地点か遠征の外で、2回押して確定する。旧ホストでは融合前の能力値を送信し、自分の保存は保持する。ホストまたは交換相手が旧版・対応未確認なら、融合済みの遺物の提示・確定・予約は理由を表示して拒否する（融合段階は失われない）。融合していない遺物や素材は従来どおり交換でき、交換対象外の融合済み遺物は自分の保存に保持する。融合済みの遺物を交換するときは全員が対応版に更新する |
 | 覚醒 | 装着中の伝説に通常1・エリート5・ボス20の覚醒の力（悪夢化2倍）。累計5000/15000/37500で覚醒Ⅰ/Ⅱ/Ⅲ、固有効果1.25/1.5/1.8倍・特性1.1/1.2/1.3倍 |
-| 禁忌の装備と宿敵（#415） | 工房の「禁忌の職人」（欠片2000・調律石30）を解放すると有効。ボスは8%・エリートは3%で宿敵「深淵の追跡者」として現れ（HP+60%/+100%・攻撃力+25%/+35%・防御+20）、倒すと1段上の格の戦利品・欠片2倍・調律石+3。禁忌化に必要な禁忌の核は宿敵化したボスだけが落とす（ボス2・因縁3段以上で+1、確保不要で直接持ち帰り。エリートの宿敵は因縁と追加報酬のみ）。悪夢化・変種とは重ならず、深度0でも出る。因縁：宿敵を倒すたびに「深淵の追跡者との因縁」が1段深まり（最大5、保存される）、1段ごとに出現率+15%（元の確率比）・HP+10%・攻撃力+5%、3段以上で禁忌の核+1。協力プレイではパーティで最も深い因縁を使う（工房の禁忌の職人の欄に表示）。協力プレイでは誰か1人でも解放していればホストが宿敵を出す。鍛冶でセットに属さない固有品（オレンジ枠）を一度だけ禁忌化できる（禁忌の核3・欠片500・調律石8）。結果は4つの型から等確率：禁忌の契約（攻撃速度+40%と最大HP-50%など能力値の4組か、「血の転化」＝シールドを一切得られない代わりに受けた回復の35%を回復せず攻撃力へ変換（最大HP比1%あたり攻撃力+2%、上限+60%、最後の転化から6秒）の5つから1つ）、断絶（特性を1つ失い固有効果を1つ得る）、過剰（特性を1つ失い固有効果1.6倍。固有効果の無い遺物では代わりに残る特性1.4倍）、破滅の誓い（特性1.5倍・最大HP-30%）。禁忌化した遺物は再調律・洗い直しができず、特性や固有効果を失う・交換する夢の出来事（影の交換・鍛冶の祭壇・記憶の井戸・固有効果のるつぼ）の対象にもならない（強化・限界突破・覚醒はできる。強化の節目で固有効果が宿る枠では、代わりに特性が増える）。特性の無い遺物では断絶・過剰は出ず、契約か誓いに振り替わる。断絶は、その部位の池にまだ持っていない固有効果が無ければ過剰に振り替わる。過剰の倍率の対象（固有効果1.6倍か特性1.4倍か）は禁忌化した時点で固定（禁忌化した遺物に固有効果は後から宿らないため、対象が変わることはない）。解放後はオレンジ枠の再調律の上限が3回増える（夢の出来事「影の交換」の対象も同じ上限に従う）。最大HP%の減少は、禁忌化した遺物を装備している間は装備全体の合計で-75%まで（これ以上は減らない。未禁忌化のビルドは従来どおり）。禁忌の装備に対応していない旧ホストでは、禁忌化した遺物と旧上限を超えて再調律した遺物は協力プレイに適用されない（画面に表示）。赤枠（セット品）は対象外 |
+| 禁忌の装備と宿敵（#415） | 工房の「禁忌の職人」（欠片2000・調律石30）を解放すると有効。ボスは8%・エリートは3%で宿敵「深淵の追跡者」として現れ（HP+60%/+100%・攻撃力+25%/+35%・防御+20）、倒すと1段上の格の戦利品・欠片2倍・調律石+3。禁忌化に必要な禁忌の核は宿敵化したボスだけが落とす（ボス2・因縁3段以上で+1、確保不要で直接持ち帰り。エリートの宿敵は因縁と追加報酬のみ）。悪夢化・変種とは重ならず、深度0でも出る。頭上の名札はシアン `#4DD8FF`（夢の変種は橙、悪夢化はピンク紫）。表示情報が重なった場合も宿敵の名札を優先する。因縁：宿敵を倒すたびに「深淵の追跡者との因縁」が1段深まり（最大5、保存される）、1段ごとに出現率+15%（元の確率比）・HP+10%・攻撃力+5%、3段以上で禁忌の核+1。協力プレイではパーティで最も深い因縁を使う（工房の禁忌の職人の欄に表示）。協力プレイでは誰か1人でも解放していればホストが宿敵を出す。鍛冶でセットに属さない固有品（オレンジ枠）を一度だけ禁忌化できる（禁忌の核3・欠片500・調律石8）。結果は4つの型から等確率：禁忌の契約（攻撃速度+40%と最大HP-50%など能力値の4組か、「血の転化」＝シールドを一切得られない代わりに受けた回復の35%を回復せず攻撃力へ変換（最大HP比1%あたり攻撃力+2%、上限+60%、最後の転化から6秒）の5つから1つ）、断絶（特性を1つ失い固有効果を1つ得る）、過剰（特性を1つ失い固有効果1.6倍。固有効果の無い遺物では代わりに残る特性1.4倍）、破滅の誓い（特性1.5倍・最大HP-30%）。禁忌化した遺物は再調律・洗い直しができず、特性や固有効果を失う・交換する夢の出来事（影の交換・鍛冶の祭壇・記憶の井戸・固有効果のるつぼ）の対象にもならない（強化・限界突破・覚醒はできる。強化の節目で固有効果が宿る枠では、代わりに特性が増える）。特性の無い遺物では断絶・過剰は出ず、契約か誓いに振り替わる。断絶は、その部位の池にまだ持っていない固有効果が無ければ過剰に振り替わる。過剰の倍率の対象（固有効果1.6倍か特性1.4倍か）は禁忌化した時点で固定（禁忌化した遺物に固有効果は後から宿らないため、対象が変わることはない）。解放後はオレンジ枠の再調律の上限が3回増える（夢の出来事「影の交換」の対象も同じ上限に従う）。最大HP%の減少は、禁忌化した遺物を装備している間は装備全体の合計で-75%まで（これ以上は減らない。未禁忌化のビルドは従来どおり）。禁忌の装備に対応していない旧ホストでは、禁忌化した遺物と旧上限を超えて再調律した遺物は協力プレイに適用されない（画面に表示）。赤枠（セット品）は対象外 |
 | 協力 | 抽選と保存は各自のPC。能力の反映はホストが行う（ホストにMODが必要）。共鳴は近くの味方へも効果を分ける |
 | 夢の圧（v1.27） | ゲームに参加中の人間の夢レベル・使用済み星ポイントの平均で敵HPと与ダメージを乗算。圧が高まると敵の数も増えるが、ボスの数は増やさない。係数の原本は `tools/balance/pressure.json`。人数補正・深度・悪夢・変種の既存強化と併用し、HP／攻撃の倍率はボスにも有効。HUDにホストの現在値を表示 |
 
+**EN — Nemesis nameplates:** Nemesis bosses and elites (minibosses) use cyan (`#4DD8FF`) overhead nameplates, distinct from orange dream variants and pink-purple nightmares. Cyan was chosen over violet because violet is closer to the nightmare color. The Nemesis nameplate takes priority if tags overlap, and each PC uses the same colors in co-op.
+
 装備の変更は遠征の外か確保地点でのみ、星図は遠征の外でのみ変更できる。
+
+### 協力プレイの難度（Issue #601・PR #694）
+
+Issue #601の最新コメントに従い、v3.2.14で下げた敵HP・敵数は元に戻し、攻撃・魔力の緩和は残しました。HPの圧はソロと同じ式で8倍の上限はなく、圧による敵数は最大5倍、本体の人数による追加HPは本体の値です。ボスHPは各参加者の個人圧×動的難易度Dの合計の0.8倍です。Dは後続の調整でバランス上の上限を外し、報酬の増加は最大×2に保っています。
+
+人間2人以上では、深度・道標・Infinity適用後の攻撃の圧の増分を50%にし、圧の倍率を最大2倍にします。本体の人数による追加攻撃・魔力も半減し、追加分を最大+15%にします。HP・敵数・欠片・悪夢化率・ソロにはこの攻撃補正を掛けません。
+
+担当外の敵へのダメージは#701で更新した遠征内の世界順に従い100%・70%・40%・10%、5世界目以降は10%です。担当者の救援条件と、#608の0%持ち分からボスを攻撃できる処理は維持しています。悪夢化率の表示には既存のInfinity補正前の専用同期値を使います。このPRで同期経路を追加したものではありません。調整の範囲と旧仕様との差は[調整資料](../../docs/specs/issue-601-coop-difficulty.md)にあります。
 
 ### 夢の圧による敵数増加（Issue #253）
 
@@ -162,7 +186,14 @@ LastStarlight の捕捉はホスト上の生存中・登録済みの旅人が正
 - Infinityの累計Combat部屋数・周期・圧段階を決める状態、地図／区間／部屋の世代、共通選択のreceipt、報酬予算・入場済み部屋・帰還記録も同じチェックポイントへ戻す。本体の復元完了時に地図と照合し、追加のlazy-ready通知は待たず、ロード前の最新状態とは比較しない。時刻観測とACKの一時状態をリセットし、ロード・切断中の時間を予算に足さない。ロビーで選んだ次回のInfinity設定は維持する。
 - #259 続き：通常モードも含め、復元完了で共有の復元フラグを解除し、保存されたゾーン進行の追従から確保選択へ進む。完了通知が30秒届かなければ警告し、本体のrunId・ゾーンが有効で遷移終了済みの場合は保存地点を復元して進める。別の遠征IDのチェックポイントは保持して復元だけをスキップする。本体ロード自体が未完了なら完了を捏造せず、その遠征のMOD報酬・Build反映のみ保留し、実際の完了通知で回復できる。チェックポイント不足の参加者保護、台帳と交換予約、巻き戻し→受領→新しいBuildの順序は維持する。
 - **EN:** A suspended expedition locks profile switching and Star Map edits until it ends. Use Continue if a native save is available; guests follow the host. MOD checkpoints restore the same run's satchel, unsecured shards, kills and rewards to the native save's point. Each participant needs a matching local checkpoint. Legacy saves remain readable, but missing checkpoints cannot reconstruct past MOD rewards; a suspended-run notice does not guarantee that Continue is available.
-- **EN (#104):** Retained random lobby edits keep both their results and the live RNG state, including post-checkpoint expedition draws. Rejected edits or edits without RNG consumption keep the checkpoint RNG state, except for the irreversible trade economy/RNG overlay described under #255. Profile-generated relic IDs skip IDs already held in stash, lost-and-found, pending salvage, satchel, deferred rewards or cooperative escrow. Current profile format6 and co-op Protocol 24 are described above.
+- **EN (#104):** Retained random lobby edits keep both their results and the live RNG state, including post-checkpoint expedition draws. Rejected edits or edits without RNG consumption keep the checkpoint RNG state, except for the irreversible trade economy/RNG overlay described under #255. Profile-generated relic IDs skip IDs already held in stash, lost-and-found, pending salvage, satchel, deferred rewards or cooperative escrow. Current profile format 8 and co-op Protocol 24 are described below and at the top of this page.
+
+### リンボのInfinity解禁（Issue #687）
+
+- 通常のリンボ6をクリアした旅人だけ、リンボでInfinityを選べる。本体の旅人別 `completedLimboDepth >= 6` も利用し、既存のクリア記録をホストのMODプロフィールへ取り込む。今後の通常リンボ6の勝利は各プロフィールの当該旅人へ記録する。敗北・Infinity帰還では解禁しない。
+- 協力プレイの開始可否はホストがロビーで選択している旅人で判定し、解禁状態と実効モードを本体の `customData` で全員へ同期する。参加者自身の実績で共有モードを再判定しない。未解禁時はONを選べず、条件を表示する。開始直前と地図生成側にも同じ判定を適用する。
+- 保存形式8の `heroes[heroKey].limboInfinityUnlocked` は旧保存ではfalse。リセット境界は3を維持する。旧MODは新しい保存版を既存の版ガードで拒否するため、未知の解禁項目を消して上書きしない。本体のリンボ深度・通常の開始条件・実績保存は書き換えない。
+- **EN:** Limbo Infinity unlocks per traveler after a normal Limbo 6 clear, including existing native progress. Co-op uses the host's currently selected traveler and synchronizes the decision to everyone. The lobby shows the requirement while locked. Profile format 8 preserves existing progression, defaults missing unlocks to false, and prevents older mods from overwriting the new record.
 
 ### Infinity割り込みの互換性
 
@@ -178,10 +209,10 @@ LastStarlight の捕捉はホスト上の生存中・登録済みの旅人が正
 - ボス撃破後の「潜行」では本体の全 `Zone_` リソースから順序・tierに関係なく次のゾーンを抽選する。候補が複数なら直前のゾーンを避け、ボスも移動先の本来の候補から抽選する。開始ゾーンと、ボス前の部屋不足による同ゾーン更新は従来どおり。
 - ランIDから作る専用シードと保存済み区間／地図世代で抽選し、ホストのnative zone・node statusと既存共有状態を同期する。Continueも保存されたゾーンと地図へ戻る。本体のゾーン番号・ambientLevelは進めず、既存の深度・夢の圧で難化する。ゾーン切り替えが失敗した回だけ警告1回で元のゾーンを更新する。
 - #267：ボス後の帰還・潜行・移動先はホストが決め、契約・道標・出来事は各自が選ぶ。ホストの確定操作後、接続中の全員の選択完了／スキップを最大60秒待ち、未選択は契約・道標なしで進む。切断した人は待たない。待機中はホストに相手名と残り秒数、ゲストに自分の選択の案内を折りたたみパネル・通常パネル・HUD・メニューへ表示する。
-- 個人の選択は遠征・地図・区間・選択revision・本人に結び付け、1秒ごとの再送とACK、初回受領値の固定で重複適用を防ぐ。最後のパーティ決定は遅着参加者用に1件保持し、共有の道標snapshotで本人の選択を上書きしない。旅人・召喚・戦利品への道標効果は本人の値、本体の共通敵・夢の圧は従来のホスト規則を使う。保存ACKは選択完了とは別で、遠隔の追加待機は60秒期限の残りに収める。ホスト自身の保存・報酬台帳の確認は維持し、通信不一致・未着はその個人選択だけを警告して期限で解除する。地図生成・公開順、通常モード、PC要件は変更しない。
-- 協力プレイは全員Protocol 24への更新を推奨する（旧版の純白の勝利処理には意味の差がある）が、版の差を理由に機能は止めない。Infinity codec version 1・既存runtime envelopeの項目は変更なし。#267は個人選択の任意RPCとsettings receipt、最終選択envelopeの省略可能項目を追加する。旧保存は従来のゾーンのまま再開し、次の潜行から抽選する。通常モードは変更しない。[設計と根拠](../../docs/specs/issue-95-infinity-mode.md)。
-- **EN:** Infinity reveals visited rooms and one next room, with native bosses after 10/15/20 combat clears. Delve after a boss chooses among all native zones, avoiding the previous one when alternatives exist; exhaustion before a boss regenerates the same zone. Run-specific seeds and saved epochs keep zone/boss choices reproducible, with host synchronization and Continue restoration. Native zone index/ambient difficulty stays unchanged; existing depth/pressure scaling and reward limits remain. Failed switches warn once and regenerate the previous zone. Save waits retry every five seconds and, after 30 seconds, warn and lift only that expedition's save hold; unsettled rewards/trades and deduplication remain guarded. Continue may roll back rewards and their receipts together, except for the irreversible player-trade economy above. Protocol 24 is recommended; differing versions/content and missing Hello only warn, never disable existing features. Unreadable messages are individually discarded with a warning. Current profile format6 is described under #255 above.
-- **EN (#267):** The host chooses Return / Delve and the destination; each player chooses their own pact, waypoint and event. Confirmed progression waits for connected guests to finish or skip, with a 60-second deadline and missing selections treated as no pact / waypoint. Disconnected players do not hold progression. Named waiting/countdown and personal-choice prompts remain visible in the collapsed panel, choice panel, HUD and menu. Owner-scoped ACK/retransmission freezes the first accepted selection; the retained final decision tolerates delayed or reordered synchronization. Traveler, summon and loot effects use the owner's waypoint; shared enemy pressure retains the host's rules. Remote save ACK waits fit within the remaining deadline; the host's own save and reward receipts remain guarded.
+- 個人の選択は遠征・地図・区間・選択revision・本人に結び付け、1秒ごとの再送とACK、初回受領値の固定で重複適用を防ぐ。最後のパーティ決定は遅着参加者用に1件保持し、共有の道標snapshotで本人の選択を上書きしない。旅人・召喚・戦利品への道標効果は本人の値。#588ではインフィニティ協力の担当敵のHP・攻撃、出現時の全員悪夢化・変種除外・悪夢化抽選にも担当者本人の道標を使う。担当変更後は新担当者のHP・攻撃倍率へHP割合を保って更新し、出現時の悪夢・変種は再抽選しない。ボス・共有目標・担当なしの敵と、敵数やHUDに使う共通の夢の圧には個人道標の倍率を掛けない。未受信の道標はなしとして扱い、ビルド未受信でも受領済みの個人道標は反映する。通常協力とソロは従来のホスト道標を維持する。保存ACKは選択完了とは別で、遠隔の追加待機は60秒期限の残りに収める。ホスト自身の保存・報酬台帳の確認は維持し、通信不一致・未着はその個人選択だけを警告して期限で解除する。地図生成・公開順、通常モード、PC要件は変更しない。
+- 協力プレイは全員Protocol 24への更新を推奨する（旧版の純白の勝利処理には意味の差がある）が、版の差を理由に機能は止めない。Infinity codec version 1を維持し、完結ボス状態と実カウンタは省略可能項目で追加する。旧保存は従来のゾーンのまま再開し、次の潜行から抽選する。通常モードは変更しない。[設計と根拠](../../docs/specs/issue-95-infinity-mode.md)。
+- **EN:** Infinity reveals visited rooms and one next room, with native bosses after 10/15/20 combat clears. Delve after a boss chooses among all native zones, avoiding the previous one when alternatives exist; exhaustion before a boss regenerates the same zone. Run-specific seeds and saved epochs keep zone/boss choices reproducible, with host synchronization and Continue restoration. Native zone index/ambient difficulty stays unchanged; existing depth/pressure scaling and reward limits remain. Failed switches warn once and regenerate the previous zone. Save waits retry every five seconds and, after 30 seconds, warn and lift only that expedition's save hold; unsettled rewards/trades and deduplication remain guarded. Continue may roll back rewards and their receipts together, except for the irreversible player-trade economy above. Protocol 24 is recommended; differing versions/content and missing Hello only warn, never disable existing features. Unreadable messages are individually discarded with a warning. Current profile format 8 is described under #687 above.
+- **EN (#267):** The host chooses Return / Delve and the destination; each player chooses their own pact, waypoint and event. Confirmed progression waits for connected guests to finish or skip, with a 60-second deadline and missing selections treated as no pact / waypoint. Disconnected players do not hold progression. Named waiting/countdown and personal-choice prompts remain visible in the collapsed panel, choice panel, HUD and menu. Owner-scoped ACK/retransmission freezes the first accepted selection; the retained final decision tolerates delayed or reordered synchronization. Traveler, summon and loot effects use the owner's waypoint. In Infinity co-op (#588), assigned enemy health/damage and spawn nightmare/variant rules also use that player's waypoint. Reassignment preserves the HP fraction and uses the new owner's pressure without rerolling spawn classification. Bosses (including shared HP slices), shared objectives, unassigned enemies and room pressure used for enemy count/HUD have no personal waypoint multiplier. Missing choices mean no waypoint; an accepted choice still applies before a Build arrives. Ordinary co-op and solo retain the host's waypoint. Remote save ACK waits fit within the remaining deadline; the host's own save and reward receipts remain guarded.
 
 
 ### 「ロビーに戻る」の敗北精算（Issue #112）

@@ -21,7 +21,7 @@ namespace SodRpg.Core.Game
         CursedHoard = 6,
         /// <summary>乾いた夢：本体の呪い / 調律石の入手+1（エリート・ボス）</summary>
         DryDream = 7,
-        /// <summary>見えざる重荷：本体の呪い / エピック以上の確率が上がる（幸運+1.0）</summary>
+        /// <summary>見えざる重荷：本体の呪い / エピック以上の確率が上がる（幸運+1.4）</summary>
         Burden = 8,
         Glutton = 9,
         Scholar = 10,
@@ -364,7 +364,8 @@ namespace SodRpg.Core.Game
             if (d.XpMult > 1.0) gains.Add(ja ? $"敵を倒して得る経験値が{Mult(d.XpMult)}倍になる" : $"x{Mult(d.XpMult)} experience from kills");
             if (d.TuningOnElite > 0) gains.Add(ja ? $"エリートとボスが調律石を{d.TuningOnElite}つ多く落とす" : $"elites and bosses drop {d.TuningOnElite} extra tuning stone{(d.TuningOnElite == 1 ? "" : "s")}");
             if (d.DoubleDepthBonus) gains.Add(ja ? DepthBonusJa : DepthBonusEn);
-            foreach (var b in d.Boons) gains.Add(Content.FormatStat(b.Stat, b.Value));
+            // 一部の能力値の説明は文の形（末尾が「。」）なので、つなぐ前に外して「。。」にしない。
+            foreach (var b in d.Boons) gains.Add(Content.FormatStat(b.Stat, b.Value).TrimEnd('。'));
             string curse = PactDef.StrengthName(d.CurseStrength);
             if (ja)
             {

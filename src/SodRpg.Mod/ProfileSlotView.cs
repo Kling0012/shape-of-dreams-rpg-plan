@@ -231,6 +231,7 @@ namespace SodRpg.Mod
             HostSummary = null;
             _appliedTransfer.Reset();
             PressureHealthMultiplier = PressureDamageMultiplier = 1f;
+            NightmareGearMultiplier = 0f;
             _buildCache = null;
             _buildCacheFrame = -1;
             _buildDirty = true;

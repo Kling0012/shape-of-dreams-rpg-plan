@@ -118,6 +118,11 @@ namespace SodRpg.Core.Tests
             Rules.Delve(p);
             for (int i = 0; i < 3; i++) Rules.OnKill(p, MonsterTier.Boss, 10);
             int found = p.Run.RelicsFound;
+            p.LostAndFound.Add(Loot.RollRelic(new Rng(3), Rarity.Rare, 10));
+            Rules.OnRoomsCleared(p, Workshop.RoomsToRecover(p));
+            Assert.Equal(found + 1, p.Run.RelicsFound);
+            Assert.Equal(found, p.Stats.RelicsFound);
+            found++;
             Rules.EndRun(p, victory: true);
             var r = p.LastReport;
             Assert.True(r.Victory);
@@ -138,10 +143,17 @@ namespace SodRpg.Core.Tests
             int securedRelics = p.Run.Satchel.Count;
             Rules.Secure(p);
             for (int i = 0; i < 2; i++) Rules.OnKill(p, MonsterTier.Boss, 10);
+            int found = p.Run.RelicsFound;
+            p.LostAndFound.Add(Loot.RollRelic(new Rng(3), Rarity.Rare, 10));
+            Rules.OnRoomsCleared(p, Workshop.RoomsToRecover(p));
+            Assert.Equal(found + 1, p.Run.RelicsFound);
+            Assert.Equal(found, p.Stats.RelicsFound);
             int lost = p.Run.Satchel.Count;
             Rules.EndRun(p, victory: false);
             var r = p.LastReport;
             Assert.False(r.Victory);
+            Assert.Equal(found + 1, r.RelicsFound);
+            Assert.Equal(r.RelicsFound, r.RelicsSecured + r.RelicsLost);
             Assert.Equal(securedRelics, r.RelicsSecured);
             Assert.Equal(lost, r.RelicsLost);
             Assert.Equal(1, r.SecuredCount);
@@ -173,12 +185,20 @@ namespace SodRpg.Core.Tests
             var rng = new Rng(4);
             p.LostAndFound.Add(Loot.RollRelic(rng, Rarity.Legendary, 10));
             Rules.BeginRun(p, "cap");
+            p.Run.Bounties.Add(new Bounty { Kind = BountyKind.Treasure, Target = 1 });
+            p.Run.Bounties.Add(new Bounty { Kind = BountyKind.EpicFinder, Target = 1 });
+            p.Run.Bounties.Add(new Bounty { Kind = BountyKind.LegendFinder, Target = 1 });
             for (int i = 0; i < Content.SatchelCapacity; i++) p.Run.Satchel.Add(Loot.RollRelic(rng, Rarity.Common, 1));
             int shards = p.Run.SatchelShards;
             Rules.OnRoomsCleared(p, Content.RoomsToRecoverLost);
             Assert.Equal(Content.SatchelCapacity, p.Run.Satchel.Count);
             Assert.Contains(p.Run.Satchel, r => r.Rarity == Rarity.Legendary);
             Assert.Equal(shards, p.Run.SatchelShards);
+            Assert.Equal(1, p.Run.RelicsFound);
+            Assert.Equal(0, p.Stats.RelicsFound);
+            Assert.Equal(0, p.Stats.LegendariesFound);
+            Assert.All(p.Run.Bounties.Where(b => b.Kind == BountyKind.Treasure || b.Kind == BountyKind.EpicFinder || b.Kind == BountyKind.LegendFinder),
+                b => Assert.Equal(0, b.Progress));
         }
 
 

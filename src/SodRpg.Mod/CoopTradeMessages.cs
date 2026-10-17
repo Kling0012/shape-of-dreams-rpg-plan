@@ -13,6 +13,9 @@ namespace SodRpg.Mod
         public int revision, index, count, totalLength;
         public bool safe;
         public bool fusion;
+        // Set by a participant that holds the current view but not the partner's profile for it;
+        // older hosts ignore the flag and answer with the plain view.
+        public bool wantsProfile;
         public BuildTransferPart Part() => new BuildTransferPart
         { Data = data, TransferId = transferId, Index = index, Count = count, TotalLength = totalLength };
     }
@@ -22,6 +25,23 @@ namespace SodRpg.Mod
     {
         public int version = 1;
         public string kind, id, hostKey, partner, ownOffer, otherOffer, offerAck, data, transferId, status;
+        // A fixed reason code next to the host-language status, so each player can read it in their own language.
+        // Older peers ignore it; a missing or unknown code falls back to status.
+        public string reasonCode;
+        public string LocalizedStatus() => StatusText()?.ToString();
+        internal Txt StatusText() => CoopTradeRules.IsKnownReason(reasonCode)
+            ? CoopTradeRules.ReasonMessage(reasonCode) : status == null ? null : new Txt(status, status);
+        /// <summary>
+        /// The one place where the host pairs a status with its code — for every kind (error, cancelled,
+        /// view, roster), so those displays localize the same way. Unknown reasons keep no code and
+        /// travel as the raw text, which every receiver can still show.
+        /// </summary>
+        public DreamforgeCoopTradeState WithReason(string reason)
+        {
+            status = CoopTradeRules.ReasonText(reason);
+            reasonCode = CoopTradeRules.IsKnownReason(reason) ? reason : null;
+            return this;
+        }
         public int revision, index, count, totalLength;
         public bool incoming, accepted, ownConfirmed, otherConfirmed, preparing;
         public bool fusion, partnerFusion;

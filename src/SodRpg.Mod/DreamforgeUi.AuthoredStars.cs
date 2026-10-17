@@ -74,9 +74,9 @@ namespace SodRpg.Mod
                     "<b>Keystone</b>\nLarge purple stars. Up to three can be selected as the star level rises. Their effect is stated with its targets and values, and has no drawback. Selectable once its requirements are met."),
                 Loc.T("<b>紫の大きな星＝刻印</b>\n星のレベルで増える枠まで選べる特別な星です。上の「刻印」の行からも選べます。",
                     "<b>Large purple star = keystone</b>\nA special star you can hold as many of as your keystone slots allow. You can also pick it from the keystone row above."),
-                Loc.T("<b>水色＝合わせ技</b>\n水色の枠の星は、二つの記憶をつなぐ合わせ技の橋です。両方の記憶を装備していると働きます。",
+                Loc.T("<b>水色＝合わせ技</b>\n水色の枠の星は二つの記憶をつなぐ合わせ技の橋です。両方の記憶を装備していると働きます。",
                     "<b>Cyan = combo</b>\nCyan-framed stars are combo bridges between two memories. They work while both memories are equipped."),
-                Loc.T("<b>金＝取得済み</b>\n金色の星と線は、すでに取得した星とそのつながりです。",
+                Loc.T("<b>金＝取得済み</b>\n金色の星と線はすでに取得した星とそのつながりです。",
                     "<b>Gold = acquired</b>\nGold stars and lines are the stars you have already acquired and their connections."),
             };
             for (int i = 0; i < StarLegendItems; i++)

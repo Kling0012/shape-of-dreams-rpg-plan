@@ -39,7 +39,7 @@ namespace SodRpg.Core.Game
                 {
                     if (id == null || hero.HasKeystone(id)) continue;
                     var talent = engine.Talent(id);
-                    int cost = talent?.KeystoneDefinition?.Cost ?? Content.KeystoneCost;
+                    int cost = talent?.KeystoneCost ?? Content.KeystoneCost;
                     if (talent == null || remaining < cost || hero.KeystoneCount >= hero.KeystoneSlotCount
                         || !engine.KeystoneUnlocked(hero, heroKey, talent)) continue;
                     hero.AddKeystone(id);

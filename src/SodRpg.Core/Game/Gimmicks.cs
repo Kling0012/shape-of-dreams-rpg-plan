@@ -155,6 +155,14 @@ namespace SodRpg.Core.Game
         public const float MaxCooldown = 60f;
         public const float BuffDuration = 4f;
         public const float AreaRadius = 4f;
+        // 説明文と Mod の動作で同じ値を使う既定値（効果時間・半径の補正前）。
+        public const float WoundSeconds = 3f;
+        public const float PrimedSeconds = 5f;
+        public const float RicochetRadius = 8f;
+        // 味方への回復範囲は協力距離の基準を共有する。
+        public const float AllyRadius = CoopBalance.FullRange;
+        /// <summary>吸収（Siphon）の1回の回復の上限（最大HPに対する割合）。</summary>
+        public const float SiphonHealCapRatio = 0.015f;
 
         /// <summary>Finite transport/runtime ceilings cover all authored ranks, ordinary boosts and keystone upsides.</summary>
         public static int Cap(GimmickEffect effect)
@@ -296,7 +304,7 @@ namespace SodRpg.Core.Game
             string n = value.ToString("0.#######", CultureInfo.InvariantCulture);
             string duration = Duration(def, BuffDuration).ToString("0.#######", CultureInfo.InvariantCulture);
             string radius = Radius(def, AreaRadius).ToString("0.#######", CultureInfo.InvariantCulture);
-            string healRadius = Radius(def, 10f).ToString("0.#######", CultureInfo.InvariantCulture);
+            string healRadius = Radius(def, AllyRadius).ToString("0.#######", CultureInfo.InvariantCulture);
             if (Loc.Japanese) return DescribeJa(def, sourceText, value, n, duration, radius, healRadius, triggerText);
             string memory = sourceText;
             string trigger;
@@ -334,7 +342,7 @@ namespace SodRpg.Core.Game
                     effect = "Shield +" + n + "% of maximum health: shield yourself for " + duration + " seconds (one star shield per giver and recipient; keeps the larger of the remaining and new amounts and refreshes the duration)";
                     break;
                 case GimmickEffect.Heal:
-                    effect = "Healing +" + n + "% of each recipient's maximum health: heal yourself" + (def.Arg == 1 ? " and allies within " + healRadius + "m" : "");
+                    effect = "Healing +" + n + "% of each recipient's maximum health: heal yourself" + (def.Arg == 1 ? " and allies within " + healRadius + "m" + HealFalloffNote(def) : "");
                     break;
                 case GimmickEffect.Recharge:
                     effect = "Remaining cooldown -" + n + "%: shorten that memory's remaining cooldown";
@@ -373,6 +381,11 @@ namespace SodRpg.Core.Game
                 + " (" + interval + "; " + cap + stacking + "; not triggered by extra damage from stars).";
         }
 
+        // The host heals allies through the co-op distance falloff at the default radius (as Siphon does).
+        private static string HealFalloffNote(GimmickDef def)
+            => Radius(def, CoopBalance.FullRange) == CoopBalance.FullRange
+                ? (Loc.Japanese ? "。" : ".") + CoopDistance.Description.TrimEnd(Loc.Japanese ? '。' : '.') : "";
+
         /// <summary>
         /// 仕掛けの日本語の説明。1文目に「いつ・何が起きるか」、続く文に間隔・上限・重なり、最後に星の追加ダメージでは発動しない旨を書く。
         /// 星のまとめ（StarSummary.Compact）は、間隔の文から最後の文までを省く。
@@ -403,7 +416,7 @@ namespace SodRpg.Core.Game
                     extra = "星の障壁は付与者と受け手の組ごとに1つだけで、残量と新しい量の大きい方を保ち、持続時間を更新する。";
                     break;
                 case GimmickEffect.Heal:
-                    effect = def.Arg == 1 ? "自分と" + healRadius + "m以内の味方を、それぞれの最大HPの" + n + "%回復する"
+                    effect = def.Arg == 1 ? "自分と" + healRadius + "m以内の味方を、それぞれの最大HPの" + n + "%回復する" + HealFalloffNote(def)
                         : "自分の最大HPの" + n + "%を回復する";
                     break;
                 case GimmickEffect.Recharge:
@@ -429,7 +442,7 @@ namespace SodRpg.Core.Game
                     stacking = JaStrongestOnly;
                     break;
                 default:
-                    effect = "当てたダメージの" + n + "%を、追撃として0.3秒後にもう一度与える";
+                    effect = "当てたダメージの" + n + "%を追撃として0.3秒後にもう一度与える";
                     break;
             }
             return JaSentence(condition, effect) + extra + JaLimits(def.Cooldown, cap) + stacking + JaNoStarTrigger;
@@ -562,7 +575,11 @@ namespace SodRpg.Core.Game
         // 命中ごとに走る Expose/Sap/Weakspot 参照を、その効果が1つもないビルドでは全走査なしで返す（#161）。
         private bool _hasExposeEntries, _hasSapEntries, _hasWeakspotEntries, _hasCrescendoEntries;
         private readonly List<ActiveEntry> _activeStates = new List<ActiveEntry>();
-        private IReadOnlyList<ActiveEntry> ActiveStates() => _activeStates;
+        // Keep the concrete type so hot-path foreach uses List's struct enumerator without boxing.
+        // Calling convention: consume the return value directly (foreach or List members) and never store it
+        // as IReadOnlyList<ActiveEntry>/IEnumerable<ActiveEntry> — the interface enumerator would box and
+        // reintroduce the per-hit allocations this property exists to avoid (#505 follow-up).
+        private List<ActiveEntry> ActiveStates() => _activeStates;
 
         private static bool Same(GimmickEntry a, GimmickEntry b) =>
             a.AdmittedSource == b.AdmittedSource && BuildAggregation.GimmickStateKey(a) == BuildAggregation.GimmickStateKey(b)

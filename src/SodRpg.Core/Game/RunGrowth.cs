@@ -17,6 +17,16 @@ namespace SodRpg.Core.Game
         ParrySuccess = 3,
         /// <summary>会心の基本攻撃でとどめを刺す Threshold 回ごと。</summary>
         CritBasicAttackKill = 4,
+        /// <summary>自分または味方への回復が実際に成立した Threshold 回ごと。</summary>
+        HealSucceeded = 5,
+        /// <summary>敵を撃破した Threshold 回ごと。</summary>
+        EnemyKill = 6,
+        /// <summary>自分の本体召喚ユニットが敵に命中した Threshold 回ごと。</summary>
+        SummonHit = 7,
+        /// <summary>自分の通常攻撃が敵に命中した Threshold 回ごと。</summary>
+        BasicAttackHit = 8,
+        /// <summary>自分の記憶の本体ダメージが敵に命中した Threshold 回ごと。</summary>
+        MemoryHit = 9,
     }
 
     /// <summary>1スタックあたりの能力値。AmountMilli は表示単位の1/1000（0.5% = 500、攻撃力+0.5 = 500）。</summary>
@@ -301,9 +311,26 @@ namespace SodRpg.Core.Game
                 case RunGrowthTrigger.ParrySuccess:
                     return threshold == 1 ? Loc.T("パリィに成功するたび", "each time you parry successfully")
                         : Loc.T($"パリィに{threshold}回成功するたび", $"every {threshold} successful parries");
+                case RunGrowthTrigger.HealSucceeded:
+                    return (threshold == 1 ? Loc.T("自分の回復で自分または味方のHPが実際に回復するたび", "each time your healing restores health to yourself or an ally")
+                        : Loc.T($"自分の回復で自分または味方のHPが実際に{threshold}回回復するたび", $"every {threshold} successful heals on yourself or allies"))
+                        + Loc.T($"（味方への有効回復・障壁は{StarRankBalance.SupportAllyGrowthMultiplier}回分、自己回復は1回分。溢れ由来の障壁は除く）",
+                            $" (effective ally healing/shields count {StarRankBalance.SupportAllyGrowthMultiplier} times; self-heals count once; overheal shields excluded)");
+                case RunGrowthTrigger.EnemyKill:
+                    return threshold == 1 ? Loc.T("敵を撃破するたび", "each time you kill an enemy")
+                        : Loc.T($"敵を{threshold}体撃破するたび", $"every {threshold} enemies you kill");
+                case RunGrowthTrigger.SummonHit:
+                    return threshold == 1 ? Loc.T("自分の召喚獣の攻撃が敵に命中するたび", "each time your summon hits an enemy")
+                        : Loc.T($"自分の召喚獣の攻撃が敵に{threshold}回命中するたび", $"every {threshold} hits by your summons on enemies");
+                case RunGrowthTrigger.BasicAttackHit:
+                    return threshold == 1 ? Loc.T("自分の通常攻撃が敵に命中するたび", "each time your basic attack hits an enemy")
+                        : Loc.T($"自分の通常攻撃が敵に{threshold}回命中するたび", $"every {threshold} basic attack hits on enemies");
+                case RunGrowthTrigger.MemoryHit:
+                    return threshold == 1 ? Loc.T("自分の記憶が敵に命中するたび", "each time your memory hits an enemy")
+                        : Loc.T($"自分の記憶が敵に{threshold}回命中するたび", $"every {threshold} hits by your memories on enemies");
                 default:
                     return threshold == 1 ? Loc.T("会心の基本攻撃でとどめを刺すたび", "each time a critical basic attack lands the finishing blow")
-                        : Loc.T($"会心の基本攻撃でとどめを刺すことを{threshold}回行うたび", $"every {threshold} finishing blows by critical basic attacks");
+                        : Loc.T($"会心の基本攻撃でとどめを{threshold}回刺すたび", $"every {threshold} finishing blows by critical basic attacks");
             }
         }
 
@@ -324,6 +351,7 @@ namespace SodRpg.Core.Game
                 case Stat.CritDamagePct: return Loc.T($"会心ダメージ +{number}%", $"Crit Damage +{number}%");
                 case Stat.ShieldPower: return Loc.T($"シールドの強さ +{number}%", $"Shield Power +{number}%");
                 case Stat.HealPower: return Loc.T($"回復の強さ +{number}%", $"Heal Power +{number}%");
+                case Stat.HealingReceivedPct: return Loc.T($"受ける回復 +{number}%", $"Healing Received +{number}%");
                 case Stat.SummonPower: return Loc.T($"召喚獣のダメージ +{number}%", $"Summon Damage +{number}%");
                 case Stat.HealthRegen: return Loc.T($"HP自然回復 +{number}", $"Health Regen +{number}");
                 case Stat.Haste: return Loc.T($"クールダウン短縮 +{number}", $"Ability Haste +{number}");
@@ -347,6 +375,7 @@ namespace SodRpg.Core.Game
                 case Stat.CritDamagePct: return "会心ダメージ";
                 case Stat.ShieldPower: return "シールドの強さ";
                 case Stat.HealPower: return "回復の強さ";
+                case Stat.HealingReceivedPct: return "受ける回復量";
                 case Stat.SummonPower: return "召喚獣のダメージ";
                 case Stat.HealthRegen: return "HP自然回復";
                 case Stat.Haste: return "クールダウン短縮";
@@ -361,7 +390,7 @@ namespace SodRpg.Core.Game
             switch (stat)
             {
                 case Stat.MaxHealthPct: case Stat.AttackPct: case Stat.PowerPct: case Stat.AttackSpeedPct: case Stat.CritChancePct:
-                case Stat.CritDamagePct: case Stat.ShieldPower: case Stat.HealPower: case Stat.SummonPower: case Stat.MoveSpeedPct:
+                case Stat.CritDamagePct: case Stat.ShieldPower: case Stat.HealPower: case Stat.HealingReceivedPct: case Stat.SummonPower: case Stat.MoveSpeedPct:
                     return true;
                 default: return false;
             }
@@ -422,7 +451,7 @@ namespace SodRpg.Core.Game
             if (mod.CapBonus > 0) sb.Append($"鍛錬の蓄積上限が{mod.CapBonus}増える。");
             if (mod.EffectPercent > 0) sb.Append($"鍛錬1つごとの能力値の上昇量が{mod.EffectPercent}%増える。");
             if (mod.DoubleGain) sb.Append("鍛錬の獲得数が100%増え、条件を満たすたびに2つ溜まる。");
-            if (targets.Count == 0) return sb.Append("対象は、この旅人のすべての遠征の鍛錬。").ToString();
+            if (targets.Count == 0) return sb.Append("対象はこの旅人のすべての遠征の鍛錬。").ToString();
             foreach (var talent in targets)
             {
                 var growth = talent.RunGrowth;
@@ -436,7 +465,7 @@ namespace SodRpg.Core.Game
                         return StatChangeJa(effect.Stat, amount, amount * (100 + mod.EffectPercent) / 100d);
                     })) + "変わる。");
                 if (mod.CapBonus > 0) sb.Append($"鍛錬の蓄積上限は{growth.Cap}から{growth.Cap + mod.CapBonus}になる。");
-                if (mod.EffectPercent > 0 || mod.CapBonus > 0) sb.Append("これは、この星だけを基本値へ適用した場合の値である。");
+                if (mod.EffectPercent > 0 || mod.CapBonus > 0) sb.Append("これはこの星だけを基本値に適用した場合の値である。");
             }
             return sb.ToString();
         }

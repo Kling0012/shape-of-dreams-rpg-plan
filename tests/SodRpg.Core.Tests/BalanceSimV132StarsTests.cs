@@ -9,7 +9,7 @@ namespace SodRpg.Core.Tests
 {
     /// <summary>v1.32：BalanceSim の --mode v132stars が使う純粋な補助（tools/BalanceSim/V132Model.cs・V132Builds.cs）。</summary>
     [Collection("Generated hero registry")]
-    public class BalanceSimV132StarsTests
+    public class BalanceSimV132StarsTests : IClassFixture<StarRegistryCleanupFixture>
     {
         // ───── 撃破ゴールド（本体の形）─────
 

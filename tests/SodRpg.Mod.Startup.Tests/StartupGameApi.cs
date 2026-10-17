@@ -21,7 +21,14 @@ namespace UnityEngine
     public static class Application { public static string persistentDataPath = System.IO.Path.GetTempPath(); }
     public static class Debug { public static void Log(object value) { } }
     public static class Time { public static float time, unscaledDeltaTime, unscaledTime; }
-    public static class Mathf { public static float Clamp(float value, float min, float max) => Math.Max(min, Math.Min(max, value)); }
+    public static class Mathf
+    {
+        public static float Clamp(float value, float min, float max) => Math.Max(min, Math.Min(max, value));
+        public static float Min(float a, float b) => Math.Min(a, b);
+        public static float Max(float a, float b) => Math.Max(a, b);
+        public static float Clamp01(float value) => Clamp(value, 0f, 1f);
+        public static int CeilToInt(float value) => (int)Math.Ceiling(value);
+    }
     public struct Vector3
     {
         public float x, y, z;
@@ -151,6 +158,7 @@ namespace SodRpg.Mod
     {
         public string guid;
         public string playerName;
+        public string selectedHeroType;
         public bool isHumanPlayer;
         public static DewPlayer local;
         public Hero hero;
@@ -158,6 +166,15 @@ namespace SodRpg.Mod
         public static readonly List<DewPlayer> lobbyPlayers = new List<DewPlayer>();
         public static Action<DewPlayer> onLobbyPlayerAdded, onLobbyPlayerRemoved;
         public static Action<DewPlayer> onGamePlayerAdded, onGamePlayerRemoved;
+    }
+    public static class DewSave
+    {
+        public static DewProfileStats profileStats;
+    }
+    public sealed class DewProfileStats
+    {
+        public sealed class HeroData { public int completedLimboDepth; }
+        public readonly Dictionary<string, HeroData> heroes = new Dictionary<string, HeroData>();
     }
     public class Actor
     {
@@ -237,6 +254,12 @@ namespace SodRpg.Mod
     }
     public static class ManagerBase<T> { public static T instance; public static T softInstance; }
     public sealed class SpawnManager { public int lastClearedZoneIndex = -1; }
+    public enum DewNetworkMode { Singleplayer, MultiplayerHost, MultiplayerJoinLobby, MultiplayerHostRestart, MultiplayerJoinRestart }
+    public sealed class DewNetworkStartSettings { public DewNetworkMode networkMode; }
+    public static class DewNetworkManager
+    {
+        public static DewNetworkStartSettings startSettings = new DewNetworkStartSettings();
+    }
     public sealed class GameSettingsManager
     {
         public readonly Dictionary<string, string> customData = new Dictionary<string, string>();
@@ -372,6 +395,7 @@ namespace SodRpg.Mod
     internal sealed class DreamforgeUi
     {
         public bool Open, MouseOverPanel, NeedsLayout, LayoutEnabled;
+        internal Action SaveLanguageConfig;
         public DreamforgeUi(ClientSession session, Func<DreamforgeConfig> config, Action saveConfig = null) { }
         public void Notify(GameEvent ev) { }
         public void Toggle() { }
@@ -423,8 +447,9 @@ namespace SodRpg.Mod
         internal static void PrepareNativeInfinityContinue() { }
         internal static bool RemoteHostInfinityAvailable, RemoteHostHelloAnswered;
         internal static bool RunActive, InGame, CanChooseRunRules, CanChooseDepth;
-        internal static bool PersistHostInfinityState() => true;
-        internal static bool HostInfinitySaveHoldSatisfied => true;
+        internal static bool PersistHostInfinityState(bool writeEnvelope = true) => true;
+        // #528: TickNative の保存待ち早期リターンを再現するため、テストから書き換え可能にする。
+        internal static bool HostInfinitySaveHoldSatisfied = true;
         internal static void CountHostInfinityRoom() { }
         internal static void OpenHostInfinityChoice() { }
         internal static void FinishNativeContinueRestore() { }
@@ -441,8 +466,9 @@ namespace SodRpg.Mod
         public static void PrewarmBossVisualTransport() { }
         public void Tick() { }
         public void RefreshLevelGemSlots() { }
-        internal void ConfigureMeleeCoop(bool rangeToSpeed, bool distanceFalloff, bool meleeBreak, bool meleeGuard) { }
+        internal void ConfigureBossNativeLifetimeDiagnostics(bool enabled) { }
         public void Detach() { }
+        internal void ConfigureMeleeCoop(bool rangeToSpeed, bool distanceFalloff, bool meleeBreak, bool meleeGuard) { }
     }
     internal static class RelicIcons
     {
@@ -467,6 +493,18 @@ namespace SodRpg.Mod
         public HeroSkill Skill = new HeroSkill();
         public float currentHealth;
         public new HeroStatus Status = new HeroStatus();
+        public bool isKnockedOut;
+        public float maxHealth => Status.maxHealth;
+        // ホスト側の記憶短縮の観測点。本体はクールダウン演算に丸投げするが、試験は引数を記録するだけ。
+        public readonly List<(SkillTrigger skill, float ratio, bool ignore)> RatioReductions =
+            new List<(SkillTrigger, float, bool)>();
+        public readonly List<(SkillTrigger skill, float seconds)> SecondReductions =
+            new List<(SkillTrigger, float)>();
+        public void GiveShield(Entity source, float amount, float duration) { }
+        public void ApplyCooldownReductionByRatio(SkillTrigger skill, float ratio, bool ignoreCanReceiveCooldown)
+            => RatioReductions.Add((skill, ratio, ignoreCanReceiveCooldown));
+        public void ApplyCooldownReduction(SkillTrigger skill, float seconds)
+            => SecondReductions.Add((skill, seconds));
     }
     public enum EntityRelation { Ally, Enemy }
     public sealed class HeroStatus

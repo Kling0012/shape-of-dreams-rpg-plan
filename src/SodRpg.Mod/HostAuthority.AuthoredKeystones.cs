@@ -238,7 +238,7 @@ namespace SodRpg.Mod
 
         private static decimal? AuthoredGimmickDurationBase(GimmickDef def, float sourceCooldown) =>
             def.Effect == GimmickEffect.Crescendo
-                ? (decimal)Math.Max(8f, Gimmicks.Finite(sourceCooldown) && sourceCooldown > 0 ? sourceCooldown * 1.5f : 0f)
+                ? (decimal)Gimmicks.CrescendoDurationBase(sourceCooldown)
                 : (decimal?)null;
 
         private GimmickDef TransformAuthoredGimmickPayload(Hero hero, GimmickDef def, KeystonePayload payload,
