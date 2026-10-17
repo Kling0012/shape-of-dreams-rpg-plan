@@ -132,3 +132,84 @@ DOTNET_ROLL_FORWARD=Major dotnet test tests/Issue73.Native.Tests/Issue73.Native.
 実ディスク保存失敗の注入、ACK 損失・遅延・再接続、修正後の冪等性／解放順の検証、
 製品 MOD ビルド、全テストスイート。
 再現用ハーネスと対象の既存テストに限定する依頼のため、実機・全体検証は行っていない。
+
+## 実装修正と検証（2026-10-17）
+
+今回の対象は R1〜R7。Issue 末尾の「今回の PR では触っていません」は元の時点の
+説明であり、今回の二重 Tick 修正の禁止条件とは解釈しない。
+
+- `InfinityMode.TickNative` の ExitBoss 分岐で、`TryEnterBoss` 後に
+  `room.didClearRoom && state.ObserveBossClear()` を評価する。入場と取りこぼした撃破の
+  保存は同じ条件分岐へまとめ、同じ Tick でその2遷移を個別に保存しない。
+  既存の `OnRoomClear` が先に成功していても、`ObserveBossClear` は
+  `WaitingSoulFinish` 以降では false となり、撃破の重複処理・重複保存はしない。
+  魂の初観測／消失という別の遷移の保存は維持する。
+- `ClientSession.TickInfinity` は、ゲストの潜行決定が適用済みで、かつ
+  `state.GraphEpoch > choice.GraphEpoch` のとき、初回も含め ACK を送らず戻る。
+  世代が進むまでは1秒ごとの再送を維持する。ホストのローカル ACK、帰還、グラフ境界の
+  ACK も維持する。既存の `PartyAcknowledged` はリモート ACK 欠落を最大30秒で解除し、
+  個人選択が期限切れなら追加待機をしない。ホスト自身の保存受領を期限で代用しない。
+  新しいグラフを観測した後は、ホストが既に選択の待ちを解放しているため、古い決定を
+  再送する必要はない。実通信の損失・再接続を確認したという意味ではない。
+- 個人選択の毎 Tick の走査と `TryRelease` は `InfinityMode.Tick` 側に一本化する。
+  `TickInfinityPersonalChoice` からは送信・受領の管理だけを行う。送信直前のハンドラー登録は
+  `SubmitPersonalChoice` に残し、初回／Actor 交換時も送信できるようにする。
+  解放判定は従来の2回目と同じく、送信後、`TickPendingTravel`／`TickNative` 前に行う。
+  ホスト自身は個人選択の待機対象ではなく、受信 callback は同一 main-thread Tick の
+  同期処理の途中に割り込まないため、先行する走査を省いても移動の解放判定は同じ位置に残る。
+
+既存テストの最小追随:
+
+- `Issue528AckReproTests` の初回 ACK 期待を1回から0回へ変更した。初回も送らずに return
+  する R2／R6 に合わせたもので、古いグラフへの10秒間の再送なしという条件は維持する。
+- `InfinityZoneTests` の純白入場2件は、戦闘前の Room を `didClearRoom = false` とする。
+  従来は到着時から true だったため、修正後の最初の回帰実行ではこの2件が
+  `BossFight` 期待／`WaitingSoulFinish` 実値で失敗した（86成功／2失敗、終了コード1）。
+  撃破イベントを送る時点で true にすることで、通常入場と撃破後の進行を区別する。
+- 新規テストは追加していない。
+
+### 実行した検証
+
+修正前に冒頭の3コマンドを再実行し、すべて終了コード1を確認した。点1は
+`WaitingSoulFinish` 期待／`BossFight` 実値、点2は1回期待／11回実値、点3は2経路だった。
+修正後、次を実行した。
+
+```sh
+DOTNET_ROLL_FORWARD=Major dotnet test tests/SodRpg.Mod.Startup.Tests/SodRpg.Mod.Startup.Tests.csproj \
+  -c Release --filter FullyQualifiedName~InfinityLobbyStartTests -p:PythonCommand=python3 -p:WarningLevel=0
+# 終了コード0、88成功／0失敗／0skip。点1、通常ボス入場、個人選択の完了／期限切れ／切断、
+# 受信／欠落／遅い Hello の ACK、リモート欠落30秒解除・ホスト自身ACK必須を含む。
+
+DOTNET_ROLL_FORWARD=Major dotnet test tests/Issue73.Native.Tests/Issue73.Native.Tests.csproj \
+  -c Release --filter 'FullyQualifiedName~Issue528AckReproTests|FullyQualifiedName~InfinityPersonalChoiceTests|FullyQualifiedName~InfinityContinueTests|FullyQualifiedName~InfinityClearSaveTests|FullyQualifiedName~InfinitySoulPanelTests|FullyQualifiedName~PureWhiteRewardChoiceTests' \
+  -p:WarningLevel=0
+# 終了コード0、23成功／0失敗／0skip。
+
+python3 tests/repro/issue528/check_double_tick.py
+# 終了コード0。TickInfinityPersonalChoice からの辺が False、InfinityMode.Tick 側が True。
+
+dotnet build src/SodRpg.Mod/SodRpg.Mod.csproj -c Release \
+  -p:GameDir='/mnt/ghauto-sbx/sod-gamedata/Shape of Dreams' --nologo -v:quiet
+# 終了コード0、エラー0・警告6。参照先に Mods がなく配置処理は実行されない。
+
+git diff --check
+# 終了コード0。
+```
+
+修正コミット `165fcecc` の後、製品4ファイルだけをその親の状態へ一時的に戻し、
+テストの期待値は修正後のまま冒頭の3コマンドを実行した。すべて終了コード1で、点1は
+`WaitingSoulFinish` 期待／`BossFight` 実値、点2は0回期待／1回実値、点3は2経路だった。
+その後、製品4ファイルをコミット済みの修正へ復元して同じ3コマンドを実行し、点1は
+1成功、点2は1成功、点3は1経路で、すべて終了コード0となった。
+一時的に戻した変更は残っていない。
+
+### 未実行の検証（理由付き）
+
+- D1〜D3 のゲーム起動・純白での素早い撃破・実ディスク保存失敗／遅延・魂回収画面・
+  実際の Mirror 通信の ACK 損失／遅延／再接続: 依頼で実機確認は対象外と指定。
+  保存待ちの再現は境界スタブ、ACK は呼び出し回数とホスト側の既存期限テストによる。
+- 同一フレームの実行時 Tick 回数の計測、実ディスク保存回数の計測: 両ハーネスで本物の
+  ClientSession と InfinityMode を同時コンパイルしていない。二重 Tick は静的経路、
+  保存の重複排除は状態遷移と保存呼び出し条件のコード確認による。
+- 全テスト・`tools/test_changed.py --all`・`SODRPG_SLOW=1`: フル／遅いテストは依頼で禁止。
+  変更箇所に関係する既存テストと製品ビルドに限定した。
