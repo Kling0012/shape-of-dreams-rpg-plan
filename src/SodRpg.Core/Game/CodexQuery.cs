@@ -318,7 +318,9 @@ namespace SodRpg.Core.Game
             void AddRelic(Relic r)
             {
                 if (r == null) return;
-                foreach (var pw in r.Powers) set.Add(pw.Power);
+                // 断絶だけは元の一覧にない固有効果を持つ。倍率しか変えない禁忌化と通常品は従来の一覧を使う。
+                var powers = r.Forbidden?.Pattern == ForbiddenPattern.Severance ? Forbidden.SourcePowers(r) : r.Powers;
+                foreach (var pw in powers) set.Add(pw.Power);
             }
             foreach (var r in p.Stash) AddRelic(r);
             foreach (var r in p.LostAndFound) AddRelic(r);

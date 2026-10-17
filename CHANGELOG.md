@@ -8,6 +8,10 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
+### 不具合の修正 / Bug fixes
+
+- 禁忌化の「断絶」で得た固有効果が図鑑の発見数に含まれず、禁忌化後も表示が古いまま残る問題を直しました。保管庫・遺失物・鞄の断絶の追加効果を数え、禁忌化の直後に図鑑を更新します。 / Fixed powers gained through forbidden Severance missing from the Codex discovery count and leaving its display stale after making a relic forbidden. Added powers count in the stash, Lost & Found and satchel, and making a relic forbidden refreshes the Codex immediately.
+
 - 保存に失敗したときの理由の表示が、表示言語を切り替えたあとも現在の言語で出るようになりました。また、保存中に例外が出たあとでさらに書き込みに失敗したときは、古い例外の文が残り続けず、新しい書き込み失敗の表示に切り替わります。 / Save failure reasons on screen now follow the display language after you switch it. When a write fails again after an exception during saving, the newer write failure replaces the lingering older exception message.
 - 保存に失敗したときのログ（`Player.log` の "Save failed" 行）は、表示言語に関係なく英文で出るようになりました。 / The "Save failed" log entry is now written in English regardless of the display language.
 
