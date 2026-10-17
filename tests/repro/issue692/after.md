@@ -82,6 +82,22 @@ Issueには遅い段階の指定がないため、前工程の調査に沿って
 
 既存のCore関連テストは前回と同じフィルターで204件、`NativeStartupTests`・`ReloadStartupTests` は18件が成功し、いずれも失敗・スキップは0件だった。ビルド時には既存のテスト用API・アナライザーの警告が出た。新しいテストは作っていない。
 
+## CIの保存確認テストの修正
+
+2026-10-18、CIの `InterruptedRelicClaimTests.Definitive_disk_failure_restores_rights_and_existing_satchel_without_success_notice` が、ディスク失敗を解除した後の再試行で失敗した。成功を期待する箇所に「保存確認待ち」が返っていた。
+
+テストの共通準備は `AsyncProfileWriter.ConfirmTimeoutMs` をすべて100 msへ短縮していた。実際の保存は別スレッドで一時ファイルの書き込み、ディスクへのフラッシュ、読み戻しと置換を行う。100 ms以内に確認できなければ、本番コードは保存確認待ちを返す。この分岐はテストの期待と両立しないが、保存完了の遅延自体は異常ではない。CIでどの処理が遅れたかは特定していない。
+
+`CreateSession` に待機上限の任意指定を追加し、通常ケースは本番既定の3000 msを使うようにした。書き込みを止めて時間切れを確認する既存の2ケースだけ100 msを指定する。保存失敗からの復元、通知前の保存完了、遅延失敗後の再試行などのアサーションは変更していない。本番コードと起動最適化への追加変更はなく、新しいテストも作っていない。テスト準備だけの変更なので更新履歴の断片は追加していない。
+
+修正前の関連9ケースと、CIで失敗したケースを新規テストプロセスで12回実行したが、すべて成功した。手元ではCIの失敗を再現していない。修正後は次のコマンドで9件成功、失敗0件、スキップ0件を確認した。時間切れと遅延失敗のケースも成功し、ビルド時には既存の警告が118件出た。
+
+```sh
+DOTNET_ROLL_FORWARD=Major dotnet test -c Release tests/Issue73.Native.Tests --filter 'FullyQualifiedName~InterruptedRelicClaimTests' --nologo --logger 'console;verbosity=normal'
+```
+
+最初はroll-forward指定なしでビルドとテストを試みたが、手元に.NET 8ランタイムがなく、テストを開始できなかった。以後は既存の環境と同じ.NET 10.0.11で実行した。CIの.NET 8環境での再実行と、修正を戻した場合の失敗確認は未実行である。
+
 ## 未実行
 
 - ゲーム起動、タイトル画面までの時間、Unity/Mono、Player.log、`dreamforge_simkill`。この環境ではゲームを実行できないため。実機だけの確認を求めるIssueは作っていない。
