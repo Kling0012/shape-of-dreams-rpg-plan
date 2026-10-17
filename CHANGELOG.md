@@ -8,6 +8,9 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
+- リンボ6をクリアした旅人で、リンボのインフィニティを選べるようにしました。過去の本体クリア記録も利用します。協力プレイではホストが選んでいる旅人で判定し、未解禁の場合はロビーに条件を表示します。 / Travelers who have cleared Limbo 6 can now enable Infinity in Limbo, including those with existing native clear records. Co-op uses the host's selected traveler; the lobby shows the requirement while locked.
+- 保存形式を8へ更新しました。プロフィールはリセットせず、解禁記録のない旅人は未解禁として読み込みます。更新後の保存を旧版MODで開くと、追加記録を失わないよう既存の版保護が働きます。 / Profile format is now 8 without a reset. Missing traveler unlock records default to locked; the existing version guard protects updated saves from being overwritten by older mods.
+
 ---
 
 ## v3.2.15 — Help finish off other players' enemies in co-op（2026-10-17）

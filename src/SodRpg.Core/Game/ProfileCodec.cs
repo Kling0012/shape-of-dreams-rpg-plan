@@ -84,7 +84,8 @@ namespace SodRpg.Core.Game
                 for (int i = 1; i < h.Keystones.Length && h.Keystones[i] != null; i++) keystones.Add(h.Keystones[i]);
                 var hero = new JsonObject().Add("equipped", eq).Add("talents", tal).Add("talentChoices", choices)
                     .Add("keystone", h.Keystone).Add("keystones", keystones).Add("kills", (long)h.Kills).Add("starXp", (long)h.StarXp)
-                    .Add("authoredMigrationVersion", (long)h.AuthoredMigrationVersion);
+                    .Add("authoredMigrationVersion", (long)h.AuthoredMigrationVersion)
+                    .Add("limboInfinityUnlocked", h.LimboInfinityUnlocked);
                 if (h.ExtraPoints != 0) hero.Add("xp2", (long)h.ExtraPoints);
                 WriteStarLoadouts(hero, h);
                 heroes.Add(kv.Key, hero);
@@ -406,6 +407,7 @@ namespace SodRpg.Core.Game
                                 $"Refunded a star without a valid choice ({refund} points): ") + id);
                         }
                     }
+                    h.LimboInfinityUnlocked = Bool(hj, "limboInfinityUnlocked", false);
                     h.Kills = Clamp(Long(hj, "kills"), 0, int.MaxValue);
                     h.StarXp = hj.TryGet("starXp", out object sx)
                         ? Clamp(sx is long xp ? xp : 0, 0, int.MaxValue)

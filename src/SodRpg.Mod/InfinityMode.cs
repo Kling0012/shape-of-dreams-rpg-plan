@@ -95,9 +95,8 @@ namespace SodRpg.Mod
 
         internal static bool IsNativePatch(Type type) => Array.IndexOf(NativePatchClasses, type) >= 0;
 
-        // The lobby start guard (InfinityLobbyStartCondition) only turns a start into a message: "Infinity is
-        // unavailable" and "not together with Limbo". When its patch cannot be installed on the player's game build,
-        // Infinity keeps working and the one rule that must still hold (no Infinity in Limbo) is applied here instead.
+        // Lobby start messages are optional. The generation gate independently enforces the
+        // host traveler's Limbo unlock even when the lobby patch could not be installed.
         internal static bool LobbyStartGuardMissing { get; private set; }
 
         internal static void LobbyStartGuardUnavailable(string reason)
@@ -107,8 +106,8 @@ namespace SodRpg.Mod
             Log.Warn("Infinity lobby start guard unavailable; Infinity continues without its start messages. " + reason);
         }
 
-        internal static bool LimboBlocksInfinity => LobbyStartGuardMissing
-            && NetworkedManagerBase<GameSettingsManager>.softInstance?.difficulty == "diffLimbo";
+        internal static bool LimboBlocksInfinity => NetworkedManagerBase<GameSettingsManager>.softInstance?.difficulty == "diffLimbo"
+            && !ClientSession.HostLimboInfinityUnlocked;
 
         internal static void CompletePatchInstallation(int installedCount)
         {
@@ -340,6 +339,8 @@ namespace SodRpg.Mod
             var settings = NetworkedManagerBase<GameSettingsManager>.softInstance;
             if (NetworkServer.active && settings != null)
             {
+                // Freeze the effective host decision even if the traveler changed after the last lobby tick.
+                settings.customData[ClientSession.InfinityEnabledKey] = _newInfinity ? "1" : "0";
                 settings.customData.Remove(RuntimeKey);
                 settings.customData.Remove(ChoiceKey);
                 settings.customData.Remove(HaltKey);

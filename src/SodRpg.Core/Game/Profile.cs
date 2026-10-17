@@ -24,6 +24,9 @@ namespace SodRpg.Core.Game
         /// <summary>Last explicit authored-effect migration applied to this hero's saved local IDs.</summary>
         public int AuthoredMigrationVersion { get; set; }
 
+        /// <summary>通常のリンボ6をこの旅人で踏破済み。インフィニティの帰還では解禁しない。</summary>
+        public bool LimboInfinityUnlocked { get; set; }
+
         /// <summary>このキャラでの撃破数（熟練度）。</summary>
         public int Kills { get; set; }
 
@@ -60,7 +63,8 @@ namespace SodRpg.Core.Game
         /// <summary>Allocation previews do not need to clone the five saved slots.</summary>
         public HeroState CloneAllocation()
         {
-            var c = new HeroState { Kills = Kills, StarXp = StarXp, ExtraPoints = ExtraPoints, AuthoredMigrationVersion = AuthoredMigrationVersion };
+            var c = new HeroState { Kills = Kills, StarXp = StarXp, ExtraPoints = ExtraPoints, AuthoredMigrationVersion = AuthoredMigrationVersion,
+                LimboInfinityUnlocked = LimboInfinityUnlocked };
             c.CopyKeystonesFrom(this);
             Array.Copy(Equipped, c.Equipped, Equipped.Length);
             foreach (var kv in Talents) c.Talents[kv.Key] = kv.Value;
@@ -345,11 +349,11 @@ namespace SodRpg.Core.Game
         public RetuneOffer RetuneOffer { get; set; }
 
         /// <summary>
-        /// 保存の版。v1.27 で 2、v1.28 で 3、v1.31 で 4、撃破受領フロンティアで 5、協力取引の預かり品で 6、中断遺物で 7。
+        /// 保存の版。v1.27 で 2、v1.28 で 3、v1.31 で 4、撃破受領フロンティアで 5、協力取引の預かり品で 6、中断遺物で 7、リンボの旅人別解禁で 8。
         /// 古いMODは新しい版を読み取り専用で開き（LedgerVersionException）、知らない星や遺物を捨てて上書きしない。
-        /// 3→4→5→6→7 はリセットしない（ResetBeforeVersion は 3 のまま）。
+        /// 3→4→5→6→7→8 はリセットしない（ResetBeforeVersion は 3 のまま）。
         /// </summary>
-        public const int CurrentVersion = 7;
+        public const int CurrentVersion = 8;
 
         /// <summary>この版より古い保存は読み込まず、写しを残して新しいプロフィールで始める。</summary>
         public const int ResetBeforeVersion = 3;
