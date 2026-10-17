@@ -456,14 +456,53 @@ namespace SodRpg.Mod
                 || Time.time - OwnershipLastFight(state, state.Owner) <= CoopBalance.Ownership.EngageWindow;
         }
 
-        private static float OwnershipHelpFactor()
+        // The run's world order (#700): native zone indices restart in Infinity, this order never does within a run.
+        private readonly RunWorldCounter _runWorlds = new RunWorldCounter();
+        private bool _runWorldFailed;
+
+        /// <summary>0-based order of the current world in this run, or -1 outside a run.</summary>
+        internal int RunWorldIndex
         {
-            int zone = NetworkedManagerBase<ZoneManager>.softInstance?.currentZoneIndex ?? -1;
-            if (zone < 0) return 1f;
-            if (zone == 0) return CoopBalance.Ownership.FirstWorldHelpFactor;
-            if (zone == 1) return CoopBalance.Ownership.SecondWorldHelpFactor;
-            return CoopBalance.Ownership.HelpFactor;
+            get
+            {
+                ObserveRunWorld();
+                string run = NetworkedManagerBase<GameManager>.softInstance?.runId;
+                return !string.IsNullOrEmpty(run) && _runWorlds.RunId == run ? _runWorlds.Index : -1;
+            }
         }
+
+        // Polled by the ownership scan and before each helper reduction; allocation-free and idempotent per world.
+        internal void ObserveRunWorld()
+        {
+            if (_runWorldFailed) return;
+            try { ObserveRunWorldCore(); }
+            catch (Exception ex)
+            {
+                // Keep the last counted world; a failed observer must not reopen the lighter early-world decay.
+                _runWorldFailed = true;
+                Log.Warn("Host: run world order frozen at " + _runWorlds.Index + ": " + ex.Message);
+            }
+        }
+
+        private void ObserveRunWorldCore()
+        {
+            var game = NetworkedManagerBase<GameManager>.softInstance;
+            var zone = NetworkedManagerBase<ZoneManager>.softInstance;
+            if (game == null || string.IsNullOrEmpty(game.runId) || zone == null || zone.currentZoneIndex < 0
+                || zone.isInAnyTransition) return;
+            string name = zone.currentZone != null ? zone.currentZone.name : null;
+            var run = ClientSession.HostRun;
+            bool saved = run != null && run.RunId == game.runId;
+            // Continue or a rebuilt host resumes the saved order instead of restarting at the first world.
+            if (_runWorlds.RunId != game.runId && saved)
+                _runWorlds.Restore(game.runId, run.WorldIndex, run.WorldZoneIndex, run.WorldZoneName);
+            if (!_runWorlds.Observe(game.runId, zone.currentZoneIndex, name) || !saved) return;
+            run.WorldIndex = _runWorlds.Index;
+            run.WorldZoneIndex = _runWorlds.ZoneIndex;
+            run.WorldZoneName = _runWorlds.ZoneName;
+        }
+
+        private float OwnershipHelpFactor() => OwnershipHelp.Factor(RunWorldIndex);
 
         internal void ApplyOwnershipReceivedDamage(Entity victim, Actor actor, ref DamageData damage, bool measure = true)
         {
@@ -636,6 +675,7 @@ namespace SodRpg.Mod
 
         private void ScanEnemyOwnership()
         {
+            ObserveRunWorld();
             bool running;
             try { running = OwnershipRunning(); }
             catch (Exception ex) { FailOwnership(OwnershipPart.Assignment, ex); return; }

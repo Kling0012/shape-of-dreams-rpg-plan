@@ -376,22 +376,66 @@ namespace SodRpg.Mod
             catch (Exception ex) { Log.Warn("Host: dynamic difficulty display ignored: " + ex.Message); return null; }
         }
 
+        private static int[] _helpDecayTable;
+        private DynamicDifficultyStatus _dynamicStatus;
+        private long _dynamicStatusSent;
+
+        /// <summary>The traveler factors the host applies now (menu status on the host itself).</summary>
+        internal DynamicDifficultyDisplay[] HostDynamicDisplay() => DynamicSnapshot();
+
+        /// <summary>
+        /// Current dynamic-difficulty state and helper decay (#700). Reuses the cached object until a value changes,
+        /// so the 0.25s sync and the menu allocate only on a change.
+        /// </summary>
+        internal DynamicDifficultyStatus DynamicStatusSnapshot()
+        {
+            try
+            {
+                if (_helpDecayTable == null)
+                {
+                    var table = new int[Math.Max(1, CoopBalance.Ownership.HelpDecayWorlds)];
+                    for (int i = 0; i < table.Length; i++) table[i] = CoopBalance.Ownership.HelpDecayPercent(i);
+                    _helpDecayTable = table;
+                }
+                int connected = 0;
+                foreach (var player in DewPlayer.gamePlayers) if (OwnershipConnected(player)) connected++;
+                int state = DynamicApplicationRunning() ? DynamicDifficultyStatus.On
+                    : _dynamicEnabled && connected == 1 && !_dynamicSolo ? DynamicDifficultyStatus.SoloOff : DynamicDifficultyStatus.Off;
+                int world = RunWorldIndex;
+                int decay = OwnershipHelp.DecayPercent(world);
+                int exponent = (int)Math.Round(CoopBalance.DynamicDifficulty.DamageExponent * 1000);
+                int reward = (int)Math.Round(CoopBalance.DynamicDifficulty.RewardShare * 1000);
+                var previous = _dynamicStatus;
+                if (previous != null && previous.state == state && previous.world == world && previous.decayPercent == decay
+                    && previous.damageExponent == exponent && previous.rewardShare == reward) return previous;
+                return _dynamicStatus = new DynamicDifficultyStatus
+                {
+                    revision = (previous?.revision ?? 0) + 1, state = state, world = world, decayPercent = decay,
+                    decayByWorld = _helpDecayTable, damageExponent = exponent, rewardShare = reward,
+                };
+            }
+            catch (Exception ex) { Log.Warn("Host: dynamic difficulty status ignored: " + ex.Message); return null; }
+        }
+
         private void SyncDynamicDifficultyLegend()
         {
             // netId 0 carries only the optional roster extension on the ownership channel.
             // Old clients safely ignore it; no live enemy is needed after a room is cleared.
             var display = DynamicSnapshot();
+            var status = DynamicStatusSnapshot();
             if (_registeredOn == null || display == null) return;
-            if (_dynamicSentRevision == _dynamicRosterRevision && ReferenceEquals(_dynamicSyncActor, _registeredOn)
-                && Time.unscaledTime < _dynamicNextSync) return;
+            long statusRevision = status?.revision ?? 0;
+            if (_dynamicSentRevision == _dynamicRosterRevision && _dynamicStatusSent == statusRevision
+                && ReferenceEquals(_dynamicSyncActor, _registeredOn) && Time.unscaledTime < _dynamicNextSync) return;
             if (!ReserveMonsterSyncMessage()) return;
             _registeredOn.CustomRpc_SendMessageToAllClients(new DreamforgeNightmareMsg
             {
                 protocol = Protocol.Version, authorityGeneration = ClientSession.HostAuthorityGeneration,
-                dynamicDifficulty = display, dynamicRevision = _dynamicRosterRevision,
+                dynamicDifficulty = display, dynamicRevision = _dynamicRosterRevision, dynamicStatus = status,
             });
             _dynamicSyncActor = _registeredOn;
             _dynamicSentRevision = _dynamicRosterRevision;
+            _dynamicStatusSent = statusRevision;
             _dynamicNextSync = Time.unscaledTime + 5f;
         }
 

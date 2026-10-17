@@ -384,9 +384,8 @@ namespace SodRpg.Mod
 
         private void OnApplicationQuit()
         {
-            if (!_running) return;
-            _session?.SaveNow();
-            _session?.FlushSaves();
+            // Stop detaches profile callbacks and saves even if Unity never calls OnDestroy.
+            Stop();
         }
 
         private void OnDestroy()
@@ -787,6 +786,13 @@ namespace SodRpg.Mod
             Debug.Log($"[DreamforgeRPG] {ClientSession.HeroKeyOf(hero)} HP {hero.currentHealth:0}/{st.maxHealth:0} AD {st.attackDamage:0.0} AP {st.abilityPower:0.0} " +
                 $"crit {st.critChance:0.00} armor {st.armor:0.0} | bonus AD% {b.attackDamagePercentage:0.#} AS% {b.attackSpeedPercentage:0.#} HP {b.maxHealthFlat:0.#}+{b.maxHealthPercentage:0.#}% armor {b.armorFlat:0.#} haste {b.abilityHasteFlat:0.#} move% {b.movementSpeedPercentage:0.#}");
             Debug.Log("[DreamforgeRPG] build: " + _session.CurrentBuild(ClientSession.HeroKeyOf(hero)).Encode() + " hostConfirmed=" + _session.HostConfirmed);
+        }
+
+        [ConsoleCommand("Dreamforge (host test): log boss actor lifetime counts; 1=every 30 seconds, 0=log once and stop", "dreamforge_bosslives")]
+        private void BossLivesCommand(int periodic)
+        {
+            if (!DevAllowed() || !MakeSureServer()) return;
+            _host?.ConfigureBossNativeLifetimeDiagnostics(periodic != 0);
         }
 
         [ConsoleCommand("Dreamforge (host test): kill enemies within radius to test drops", "dreamforge_killnear")]

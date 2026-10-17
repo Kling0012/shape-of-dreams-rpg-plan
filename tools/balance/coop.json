@@ -14,9 +14,7 @@
   "autoCastAllyHitSeconds": 2,
   "shieldWallTauntSeconds": 4,
   "ownership": {
-    "firstWorldHelpFactor": 1,
-    "secondWorldHelpFactor": 0.75,
-    "helpFactor": 0.5,
+    "helpDecayPercentByWorld": [0, 30, 60, 90],
     "bossShareFactor": 0.8,
     "bossDamageMin": 0.2,
     "bossDamageMax": 3,

@@ -14,6 +14,9 @@ namespace SodRpg.Mod
         private string _ownershipLegend;
         private bool _ownershipLegendJa, _ownershipLegendFailed;
         private float _nextOwnershipLegend;
+        private string _dynamicStatusText;
+        private bool _dynamicStatusJa, _dynamicStatusFailed;
+        private float _nextDynamicStatus;
 
         private Label3D OwnershipMark(uint netId)
         {
@@ -53,6 +56,91 @@ namespace SodRpg.Mod
             GUILayout.Label(_ownershipLegend, _st.Label);
             GUILayout.Label(Loc.T("◆ 自分の担当　◇ 他の人の担当　印なし：共有（保護なし）",
                 "◆ Your enemy   ◇ Another player's enemy   No mark: shared (unprotected)"), _st.Small);
+        }
+
+        private static string OwnershipName(DewPlayer player)
+        {
+            string name = player != null ? player.playerName : null;
+            if (string.IsNullOrEmpty(name)) name = Loc.T("旅人", "Traveler");
+            name = name.Replace("<", "〈").Replace(">", "〉");
+            return name.Length > 12 ? name.Substring(0, 12) + "…" : name;
+        }
+
+        private static string Times(double value) =>
+            "×" + value.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture);
+
+        // #700: what dynamic difficulty and helper decay do right now. The host reads its own rules;
+        // a participant shows only values the host synced for this run, and "—" for the rest.
+        private string BuildDynamicStatus()
+        {
+            const string none = "—";
+            bool host = NetworkServer.active;
+            var authority = host ? HostAuthority.NativeInstance : null;
+            var status = host ? authority?.DynamicStatusSnapshot() : _s.DynamicStatus;
+            var display = host ? authority?.HostDynamicDisplay() : null;
+            var text = new System.Text.StringBuilder(512);
+            text.Append(Loc.T("動的難易度：", "Dynamic difficulty: "));
+            text.Append(status == null ? none
+                : status.state == DynamicDifficultyStatus.On ? Loc.T("有効", "On")
+                : status.state == DynamicDifficultyStatus.SoloOff ? Loc.T("ソロでは無効", "Off in solo")
+                : Loc.T("無効", "Off"));
+            double exponent = status != null ? status.damageExponent / 1000d : double.NaN;
+            double reward = status != null ? status.rewardShare / 1000d : double.NaN;
+            for (int i = 0; i < OwnershipColors.Length && i < DewPlayer.gamePlayers.Count; i++)
+            {
+                var player = DewPlayer.gamePlayers[i];
+                if (player == null || !player.isHumanPlayer) continue;
+                double f = double.NaN;
+                if (host)
+                {
+                    if (display != null)
+                        foreach (var entry in display)
+                            if (entry != null && entry.participantId == player.guid) { f = entry.factor / 100d; break; }
+                }
+                else if (_s.TryDynamicDifficultyFor(player.guid, out double synced)) f = synced;
+                text.Append('\n').Append(UiStyles.Colored("◆" + (i + 1) + " " + OwnershipName(player), OwnershipColors[i]));
+                if (double.IsNaN(f))
+                {
+                    text.Append("  ×").Append(none).Append('\n').Append(Loc.T("　敵の体力 ", "　Enemy HP ")).Append(none)
+                        .Append(Loc.T(" ・ 攻撃 ", " · Attack ")).Append(none).Append(Loc.T(" ・ 報酬 ", " · Rewards ")).Append(none);
+                    continue;
+                }
+                string mood = f < 0.995 ? Loc.T("やさしめ", "easier") : f > 1.005 ? Loc.T("きびしめ", "harder") : Loc.T("標準", "standard");
+                text.Append("  ").Append(Times(f)).Append(Loc.T("（", " (")).Append(mood).Append(Loc.T("）", ")"));
+                text.Append('\n').Append(Loc.T("　敵の体力 ", "　Enemy HP ")).Append(Times(f));
+                text.Append(Loc.T(" ・ 攻撃 ", " · Attack ")).Append(double.IsNaN(exponent) ? none : Times(Math.Pow(f, exponent)));
+                text.Append(Loc.T(" ・ 報酬 ", " · Rewards "))
+                    .Append(double.IsNaN(reward) ? none : Times(1 + reward * Math.Max(0, f - 1)));
+            }
+            text.Append('\n').Append(Loc.T("担当外の減衰：", "Damage to others' enemies: "));
+            if (status == null) text.Append(none);
+            else
+            {
+                // The wire carries the 0-based run order; players count worlds from 1.
+                text.Append(status.world < 0 ? Loc.T("ラン外", "Outside a run") : Loc.T("世界", "World ") + (status.world + 1))
+                    .Append(Loc.T("（減衰 ", " (")).Append(status.decayPercent).Append(Loc.T("%）", "% less)"));
+            }
+            text.Append('\n').Append(Loc.T("　段階：", "　Stages: "));
+            if (status == null) text.Append(none);
+            else
+            {
+                var table = status.decayByWorld;
+                text.Append(OwnershipHelp.StageTable(world => table[world], table.Length,
+                    Loc.T("世界", "World "), Loc.T("以降", "+")));
+            }
+            return text.ToString();
+        }
+
+        private void DrawDynamicStatus()
+        {
+            if (_dynamicStatusText == null || Time.unscaledTime >= _nextDynamicStatus || _dynamicStatusJa != Loc.Japanese)
+            {
+                _dynamicStatusJa = Loc.Japanese;
+                _nextDynamicStatus = Time.unscaledTime + 0.25f;
+                _dynamicStatusText = BuildDynamicStatus();
+            }
+            GUILayout.Label(Loc.T("現在の状況", "Current status"), _st.Label);
+            GUILayout.Label(_dynamicStatusText, _st.Small);
         }
 
         private void DrawEnemyOwnershipSettings(DreamforgeConfig cfg)
@@ -100,6 +188,15 @@ namespace SodRpg.Mod
             {
                 cfg.showEnemyOwnershipMarks = show;
                 SaveEnemyOwnershipDisplayConfig?.Invoke();
+            }
+            if (!_dynamicStatusFailed)
+            {
+                try { DrawDynamicStatus(); }
+                catch (Exception ex)
+                {
+                    _dynamicStatusFailed = true;
+                    Log.Warn("Dynamic difficulty status disabled; settings continue: " + ex.Message);
+                }
             }
         }
     }

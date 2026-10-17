@@ -193,12 +193,14 @@ namespace Issue73.Native.Tests
 
         [Theory]
         [InlineData(0, 1d)]
-        [InlineData(1, 0.75d)]
-        [InlineData(2, 0.5d)]
+        [InlineData(1, 0.7d)]
+        [InlineData(2, 0.4d)]
+        [InlineData(3, 0.1d)]
+        [InlineData(7, 0.1d)]
         public void Strikes_drain_the_own_share_first_and_help_afterwards_at_the_helper_factor(int zoneIndex, double factor)
         {
-            NetworkedManagerBase<ZoneManager>.softInstance.currentZoneIndex = zoneIndex;
             var host = Host(out _);
+            RunWorldSteps.Enter(host, zoneIndex);
             var a = Player(5);
             BuildFor(host, a, 2, 0);  // 新人
             var b = Player(9);
@@ -228,8 +230,8 @@ namespace Issue73.Native.Tests
         [Fact]
         public void Help_overflow_spills_from_the_largest_remaining_share_until_all_shares_are_gone()
         {
-            NetworkedManagerBase<ZoneManager>.softInstance.currentZoneIndex = 2;
             var host = Host(out _);
+            RunWorldSteps.Enter(host, 2);
             var a = Player(5);
             BuildFor(host, a, 2, 0);  // 1.00
             var b = Player(9);
@@ -246,7 +248,7 @@ namespace Issue73.Native.Tests
             // c を先に削って残り割合を c < b にしておく（手伝い先の選択の前提）。
             Assert.Equal(300f, Strike(host, boss, c.hero, 300f), 1);
             // a が自分の持ち分を使い切る境目の一撃: 手伝いは残り割合最大の b から。
-            double help = (250 - capA) * CoopBalance.Ownership.HelpFactor;
+            double help = (250 - capA) * OwnershipHelp.Factor(2);
             Assert.Equal(capA + help, Strike(host, boss, a.hero, 250f), 1);
             var remaining = ShareRemaining(host, boss);
             Assert.Equal(0, remaining[0], 1);
@@ -257,8 +259,9 @@ namespace Issue73.Native.Tests
             // ShareRemaining は持ち分の生配列を返すので、後続の一撃で値が書き換わる前に手元に写す。
             double remB = remaining[1], remC = remaining[2];
             double fromB = remB;
-            double fromC = Math.Min((1000 - fromB / CoopBalance.Ownership.HelpFactor) * CoopBalance.Ownership.HelpFactor, remC);
-            Assert.Equal(fromB + fromC, Strike(host, boss, a.hero, 1000f), 1);
+            // 3世界目の減衰60%でも b と c の残りを引き切れる大きさ（手伝いで通るのは 1250 × 0.4 = 500）。
+            double fromC = Math.Min((1250 - fromB / OwnershipHelp.Factor(2)) * OwnershipHelp.Factor(2), remC);
+            Assert.Equal(fromB + fromC, Strike(host, boss, a.hero, 1250f), 1);
             var after = ShareRemaining(host, boss);
             Assert.Equal(0, after[0], 1);
             Assert.Equal(0, after[1], 1);

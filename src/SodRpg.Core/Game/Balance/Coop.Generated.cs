@@ -33,9 +33,18 @@ namespace SodRpg.Core.Game
 
         public static class Ownership
         {
-            public const float FirstWorldHelpFactor = 1f;
-            public const float SecondWorldHelpFactor = 0.75f;
-            public const float HelpFactor = 0.5f;
+            // Damage lost on another player's enemy, by the run's 0-based world order; the last entry repeats.
+            public const int HelpDecayWorlds = 4;
+            public static int HelpDecayPercent(int world)
+            {
+                switch (world < 0 ? 0 : world)
+                {
+                    case 0: return 0;
+                    case 1: return 30;
+                    case 2: return 60;
+                    default: return 90;
+                }
+            }
             public const float BossShareFactor = 0.8f;
             public const float BossDamageMin = 0.2f;
             public const float BossDamageMax = 3f;

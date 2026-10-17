@@ -235,8 +235,8 @@ namespace Issue73.Native.Tests
         [Fact]
         public void Damage_is_counted_raw_with_overkill_before_help_scaling_and_follows_the_parent_chain()
         {
-            NetworkedManagerBase<ZoneManager>.softInstance.currentZoneIndex = 2;
             var host = Host(out _);
+            RunWorldSteps.Enter(host, 2);
             var a = Player(5);
             var b = Player(9);
             var enemy = SpawnFor(host, b, 100, 1000f); // b の担当敵（a は手伝い側）
@@ -247,7 +247,7 @@ namespace Issue73.Native.Tests
             float overkill = enemy.Status.maxHealth * 100f;
             float applied = Hit(host, enemy, a.hero, overkill);
             Assert.Equal((double)overkill, DamageOf(host, a), 0); // 手伝い倍率の前の値
-            Assert.Equal(overkill / 2f, applied); // 3世界目の手伝い倍率で半減（記録とは別）。
+            Assert.Equal(overkill * OwnershipHelp.Factor(2), applied, overkill * 1e-5f); // 3世界目の減衰60%（記録とは別）。
 
             // 活動時間は 0.5 秒区切り: 当てた区切りだけ。同じ区切りの複数ヒットは 1 区切り。
             Time.time = 1.4f; Hit(host, enemy, a.hero, 10f); // 区切り 2（1.0 秒と同じ）

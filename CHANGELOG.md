@@ -10,6 +10,38 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v3.4.0 — Minor adjustments（2026-10-17）
+
+細かな調整を行いました。 / Minor adjustments.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game. Please report anything odd.
+
+---
+
+## v3.3.2 — Fix double save on quit and warnings not following language changes（2026-10-17）
+
+### 不具合の修正 / Bug fixes
+- ゲームを終了したとき、MOD の保存が2回走って、バックアップ（.bak）の世代が余分に進んでいました。終了時の保存を1回だけにしました。 / On quitting the game, the mod saved twice and the backup (.bak) generation advanced an extra step. The terminal save now runs once.
+- 遠征中に言語を切り替えたとき、再開の注意文、協力トレードの警告、ホストの版違いの警告も、いまの表示言語に切り替わるようにしました。 / Switching language during an expedition now also updates the resume notice, the co-op trade warnings and the host version warning to the current display language.
+
+---
+
+## v3.3.1 — Limbo Infinity unlock for Limbo 6 clears, plus death light and boss equipment fixes（2026-10-17）
+
+### 新機能 / New features
+- リンボ6をクリアした旅人で、リンボのインフィニティを選べるようにしました。本体の過去のクリア記録も使います。協力プレイではホストが選んでいる旅人で判定し、未解禁のときはロビーに条件を表示します。 / Travelers who have cleared Limbo 6 can now enable Infinity in Limbo, including those with existing native clear records. Co-op uses the host's selected traveler, and the lobby shows the requirement while locked.
+
+### 不具合の修正 / Bug fixes
+- プールへ戻さず破棄される敵や攻撃の寿命記録も解放し、長時間の戦闘でボス装備の印や命中判定が働かなくなる原因を修正しました。コードと再現テストで確認し、実ゲームの長時間プレイは未確認です。 / Release lifetime records for enemies and attacks destroyed without pooling, fixing a cause of boss equipment marks and hit tracking failing after extended combat. Verified with code and reproduction tests; long live-game sessions remain unverified.
+
+---
+
 ## v3.3.0 — Minor adjustments（2026-10-17）
 
 細かな調整を行いました。 / Minor adjustments.
