@@ -114,12 +114,15 @@ namespace SodRpg.Mod
             Log.Warn("Culinary ingredient cap disabled; other MOD features remain active: " + ex.Message);
         }
 
-        private static void WarnUnsafe(int original)
+        // The actor's Unity name and instance id let players identify which stack
+        // stayed native when reading the game log.
+        private static void WarnUnsafe(StackedStatusEffect effect, int original)
         {
             if (_warnedUnsafe) return;
             _warnedUnsafe = true;
             Log.Warn("Native culinary cooking limit is not safe: " + original
-                + "; this ingredient stack keeps its native behavior, other stacks remain capped.");
+                + "; this ingredient stack (" + effect.name + " #" + effect.GetInstanceID()
+                + ") keeps its native behavior, other stacks remain capped.");
         }
 
         private static bool TryCapacity(StackedStatusEffect effect, out int cookingBatch)
@@ -141,7 +144,7 @@ namespace SodRpg.Mod
                         {
                             // Leave only this actor native (e.g. one raised by an old build). Disabling
                             // every hook would leave already-raised actors without their cooking batch.
-                            WarnUnsafe(original);
+                            WarnUnsafe(effect, original);
                             return false;
                         }
                         capacity = Tuple.Create(original);
