@@ -23,11 +23,18 @@ namespace SodRpg.Mod
             internal EventInfoDamage Hit;
             internal Gem_R_Ricochet Gem;
             internal readonly Action<Ai_Gem_R_Ricochet> BeforePrepare;
+            // 第3段: まとめ側の実体へ追加された通知を命中時に設定し直すときに使う。
+            // 飛行中の実体の位置を変えないため、開始位置の設定は含めない。
+            internal readonly Action<Ai_Gem_R_Ricochet> Repeat;
 
-            internal Setup() { BeforePrepare = Apply; }
+            internal Setup() { BeforePrepare = Apply; Repeat = ApplyPayload; }
             private void Apply(Ai_Gem_R_Ricochet projectile)
             {
                 projectile.SetCustomStartPosition(Start);
+                ApplyPayload(projectile);
+            }
+            private void ApplyPayload(Ai_Gem_R_Ricochet projectile)
+            {
                 projectile.isHeal = false;
                 projectile.originDamage = Hit.damage;
                 projectile.chain = Hit.chain.New(Gem);
@@ -104,8 +111,10 @@ namespace SodRpg.Mod
                     // nested damage/creation gets a different cached callback.
                     // 第2段: 重いフレームでは生成だけを次フレームへ分散する（抽選と対象はここで確定）。
                     // 持ち越されたときは生成まで Setup を貸したままにし、プールへ戻して再利用させない。
-                    var created = NativeProcSpawnSpread.Plain(__instance, start, null,
-                        new CastInfo(__instance.owner, target), setup.BeforePrepare);
+                    // 第3段: 同じフレームに同じ対象への同種弾が多いときはまとめ側の実体へ追加される。
+                    // 追加されたときも Setup は貸したままにする（Repeat がまとめ側に保持されるため）。
+                    var created = NativeProcSpawnSpread.PlainSplit(__instance, start, null,
+                        new CastInfo(__instance.owner, target), setup.BeforePrepare, setup.Repeat);
                     carried = created == null;
                     __instance.NotifyUse();
                 }
