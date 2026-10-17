@@ -10,6 +10,29 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v3.6.1 — Infinity, co-op trade and description fixes（2026-10-17）
+
+このバージョンでは、インフィニティと協力取引の不具合を直し、固有効果と連携付き固有品の説明を実際の値に合わせました。 / This version fixes bugs in Infinity and co-op trades, and makes power and linked-unique descriptions match their actual values.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- インフィニティで、行き止まりに着いて Primus の図が作り直された後に保存し、Continue すると、インフィニティが無効になることがある問題を直しました。 / Fixed Infinity sometimes being disabled after Continue when the Primus graph had been rebuilt at a dead end and the game was then saved.
+- インフィニティで同じゾーンへの潜行を繰り返すと、担当外の敵とボスの他人の持ち分に与えるダメージが、進んでも減らずに100%のままだった問題を直しました。 / Fixed damage to enemies and boss shares owned by other players staying at 100% instead of decaying when repeatedly delving into the same zone in Infinity.
+- 協力取引で、提示した遺物を後から再調律すると、警告が出ないまま確認でき、確認後に取引が取り消されていた問題を直しました。今は提示から外れ、警告が出て、確認ボタンが押せなくなります。 / Fixed co-op trades being cancelled after confirming when an offered relic had been retuned, with no warning beforehand. The relic is now removed from the offer, a warning is shown and the confirm button is disabled.
+- 過剰（禁忌化）で増えた分の条件付きの攻撃・能力ボーナスが、条件付きボーナスの共通上限（120%）に数えられ、効果が削られていた問題を直しました。 / Fixed the extra amount from Overcharge on conditional attack and power bonuses counting toward the shared 120% cap for conditional bonuses and cutting the effect short.
+- v1.29 の固有効果の説明で、上限の書き方が実際の値と食い違っていた問題を直しました。装備の元の値の上限、強化・覚醒・過剰で伸びる最大値、星の値が別に加わることを日英で説明します。 / Fixed v1.29 power descriptions stating caps that contradicted the actual values. Both languages now describe the base equipment cap, the maximum reachable through enhancement, awakening and Overcharge, and that star values are added on top.
+- 連携付き固有品4件で、図鑑と装備の説明に、実際に効く値より大きい効果量が上限と並んで表示されていた問題を直しました。実際の効果は変わりません。 / Fixed four uniques with links showing a larger effect than actually applied next to the cap in codex and gear descriptions. The actual effect is unchanged.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
 ## v3.6.0 — Minor adjustments and an Infinity fix（2026-10-17）
 
 細かな調整を行いました。 / Minor adjustments.

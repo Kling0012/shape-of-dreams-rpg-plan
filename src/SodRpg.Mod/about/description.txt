@@ -1,5 +1,5 @@
-[b]v3.6.0: Minor adjustments, and a fix for helper damage decay not advancing when repeatedly delving into the same Infinity zone. Saves carry over. Restart the game after updating.[/b]
-[b]v3.6.0：細かな調整と、インフィニティで同じゾーンへの潜行を繰り返すと担当外の敵への与ダメージの減衰が進まない問題の修正です。セーブデータはそのまま引き継げます。更新後はゲームを再起動してください。[/b]
+[b]Fixes Infinity Continue and helper damage decay, co-op trades with retuned relics, Overcharge counting toward the conditional cap, and power and link descriptions.[/b]
+[b]インフィニティの Continue と与ダメージの減衰、再調律した遺物の協力取引、過剰と共通上限、固有効果・連携の説明の不具合を直しました。[/b]
 
 [h1]Dreamforge RPG[/h1]
 Turns every run into part of a long RPG journey: relics you keep, a risky "secure or delve" choice at every zone, a star map per Traveler, a forge, and long-term goals. Co-op ready.
