@@ -77,13 +77,15 @@ def validate(data):
                   for shards, breaks in zip(forge["salvage"]["shards"], forge["limitBreak"]["maxByRarity"]))
     if maximum > 2000:
         raise ValueError("economy.salvage: adopted maximum exceeds fixed MaxDustEarnPerTrade safety ceiling 2000")
-    if data["salvage"]["dustCapBase"] < 1:
-        raise ValueError("economy.salvage: dustCapBase must stay positive so the per-world cap can bind")
     return data
 
 
 def load(path=PATH):
-    return validate(read_json(path))
+    data = validate(read_json(path))
+    # Adopted data only: the frozen LEGACY reference predates the cap and keeps 0 there.
+    if data["salvage"]["dustCapBase"] < 1:
+        raise ValueError("economy.salvage: dustCapBase must stay positive so the per-world cap can bind")
+    return data
 
 
 def _literal(value, reference):
