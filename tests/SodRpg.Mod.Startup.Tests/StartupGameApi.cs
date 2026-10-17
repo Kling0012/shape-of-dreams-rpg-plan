@@ -456,6 +456,7 @@ namespace SodRpg.Mod
         public static void PrewarmBossVisualTransport() { }
         public void Tick() { }
         public void RefreshLevelGemSlots() { }
+        internal void ConfigureBossNativeLifetimeDiagnostics(bool enabled) { }
         public void Detach() { }
         internal void ConfigureMeleeCoop(bool rangeToSpeed, bool distanceFalloff, bool meleeBreak, bool meleeGuard) { }
     }

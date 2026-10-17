@@ -232,6 +232,46 @@ namespace SodRpg.Mod
         private static void Prefix(Actor __instance) { HostAuthority.NativeInstance?.ClearBossNativeActor(__instance); }
     }
 
+    // OnDisable runs for pool returns, Unity destruction, and plain GameObject
+    // deactivation, while DewPool only calls ClearPooledEventsAndProcessors when
+    // pooling or room reuse is enabled. The destroy pipeline sets Entity.isActive
+    // to false in ICleanup.OnCleanup before the GameObject disables, so a still
+    // active entity is only hidden (its identity must survive for marks and hit
+    // history). Keep the identity through OnDestroyActor: native death/exit
+    // attacks use its ancestry.
+    [HarmonyPatch]
+    internal static class BossNativeDisabledLifetime
+    {
+        private static IEnumerable<MethodBase> TargetMethods()
+        {
+            // Resolve once at patch installation, including overrides that omit base.OnDisable.
+            var assemblies = new HashSet<Assembly> { typeof(Actor).Assembly, typeof(Se_U_Hysteria).Assembly };
+            foreach (var assembly in assemblies)
+                foreach (var type in LoadableTypes(assembly))
+                {
+                    if (!typeof(Actor).IsAssignableFrom(type)) continue;
+                    var method = type.GetMethod("OnDisable", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly,
+                        null, Type.EmptyTypes, null);
+                    if (method != null && !method.IsAbstract && !method.ContainsGenericParameters)
+                        yield return method;
+                }
+        }
+        // #506: an assembly whose types cannot all load must not abort this release hook;
+        // patch the OnDisable overrides that did load instead of failing the whole scan.
+        private static IEnumerable<Type> LoadableTypes(Assembly assembly)
+        {
+            Type[] types;
+            try { types = assembly.GetTypes(); }
+            catch (ReflectionTypeLoadException loadFailure) { types = loadFailure.Types; }
+            foreach (var type in types) if (type != null) yield return type;
+        }
+        private static void Postfix(Actor __instance)
+        {
+            if (__instance.isActive) return;
+            HostAuthority.NativeInstance?.ClearBossNativeActor(__instance);
+        }
+    }
+
     internal sealed partial class HostAuthority
     {
         internal sealed class BossNativeCast
@@ -331,6 +371,27 @@ namespace SodRpg.Mod
         private readonly BossHysteriaSpeedCapture[] _bossHysteriaSpeedCaptures = new BossHysteriaSpeedCapture[64];
 
         private readonly Dictionary<Actor, long> _bossNativeActorLives = new Dictionary<Actor, long>(4096);
+        private int _bossNativeActorLifePeak;
+        private long _bossNativeActorLivesReleased;
+        private bool _bossNativeActorLifeLimitWarned;
+        private bool _bossNativeLifetimeDiagnostics;
+        private float _bossNativeLifetimeNextLog;
+
+        internal void ConfigureBossNativeLifetimeDiagnostics(bool enabled)
+        {
+            _bossNativeLifetimeDiagnostics = enabled;
+            LogBossNativeActorLives();
+        }
+        private void TickBossNativeLifetimeDiagnostics()
+        {
+            if (_bossNativeLifetimeDiagnostics && Time.unscaledTime >= _bossNativeLifetimeNextLog)
+                LogBossNativeActorLives();
+        }
+        private void LogBossNativeActorLives()
+        {
+            _bossNativeLifetimeNextLog = Time.unscaledTime + 30f;
+            Log.Info($"boss native lifetime: _bossNativeActorLives.Count={_bossNativeActorLives.Count}/4096 peak={_bossNativeActorLifePeak} released={_bossNativeActorLivesReleased} periodic={_bossNativeLifetimeDiagnostics}");
+        }
         private readonly Dictionary<Actor, BossNativeSource> _bossNativeSources = new Dictionary<Actor, BossNativeSource>(512);
         private readonly Dictionary<Displacement, BossNativeDisplacement> _bossNativeDisplacements = new Dictionary<Displacement, BossNativeDisplacement>(64);
         private readonly Dictionary<Se_U_Hysteria, BossHysteriaState> _bossHysteriaStates = new Dictionary<Se_U_Hysteria, BossHysteriaState>(64);
@@ -366,14 +427,26 @@ namespace SodRpg.Mod
 
         private long BossNativeActorLife(Actor actor)
         {
+            if (actor == null) return 0;
             if (!_bossNativeActorLives.TryGetValue(actor, out long life))
             {
-                if (_bossNativeActorLives.Count >= 4096) return 0;
+                if (_bossNativeActorLives.Count >= 4096)
+                {
+                    // #506: warn once per cap reach; a release back below the cap re-arms the
+                    // warning so a later return to the limit is noticed in long runs.
+                    if (!_bossNativeActorLifeLimitWarned)
+                    {
+                        _bossNativeActorLifeLimitWarned = true;
+                        Log.Warn("boss native lifetime: _bossNativeActorLives.Count=4096/4096; skipping boss tracking for unregistered actors until lifetime records are released.");
+                    }
+                    return 0;
+                }
                 _bossNativeActorLives.Add(actor, life = _memoryAttribution.NewPacketId());
+                _bossNativeActorLifePeak = Math.Max(_bossNativeActorLifePeak, _bossNativeActorLives.Count);
             }
             return life;
         }
-        private bool BossNativeSameLife(Actor actor, long life) => actor != null
+        private bool BossNativeSameLife(Actor actor, long life) => life > 0 && actor != null
             && _bossNativeActorLives.TryGetValue(actor, out long current) && current == life;
         private static BossNativeOwner BossNativeOwnerState(HeroRuntime rt) => rt.BossNative;
         private bool BossNativeRuntime(Hero hero, out HeroRuntime rt)
@@ -832,7 +905,11 @@ namespace SodRpg.Mod
             ClearBossShoutActor(actor);
             ClearBossHysteriaCapture(actor);
             RemoveBossNativeSource(actor);
-            _bossNativeActorLives.Remove(actor);
+            if (_bossNativeActorLives.Remove(actor))
+            {
+                _bossNativeActorLivesReleased++;
+                if (_bossNativeActorLifeLimitWarned && _bossNativeActorLives.Count < 4096) _bossNativeActorLifeLimitWarned = false;
+            }
             if (actor is Ai_U_Hysteria_Claw claw) ClearBossNativeClaw(claw);
             if (actor is Se_U_Hysteria state && _bossHysteriaStates.TryGetValue(state, out var ended))
             {
