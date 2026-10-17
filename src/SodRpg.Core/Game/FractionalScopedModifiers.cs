@@ -536,13 +536,19 @@ namespace SodRpg.Core.Game
             if (!typed) return;
             var all = tree.SelectMany(t => t.IsChoice ? t.Choices : new[] { t }).ToArray();
             foreach (var t in all) ValidateTalent(t);
+            // Recipient identities do not change during validation; share their wrappers across modifiers.
+            var recipients = all.Where(n => n.Gimmick != null || n.Mechanism != null).Select(n => (
+                Talent: n,
+                Gimmick: n.Gimmick == null ? null : new GimmickEntry { StarId = n.Id, Memory = n.RouteMemory, Def = n.Gimmick, Channel = n.EffectChannel },
+                Mechanism: n.Mechanism == null ? null : new AuthoredMechanismEntry { StarId = n.Id, ContributorIds = new[] { n.Id }, Spec = n.Mechanism }
+            )).ToArray();
             foreach (var t in all)
             {
                 if (t.ScopedModifier == null) continue;
                 var m = t.ScopedModifier;
-                var targets = all.Where(n => n.HeroKey == t.HeroKey && (n.Gimmick != null
-                    && Matches(m, new GimmickEntry { StarId = n.Id, Memory = n.RouteMemory, Def = n.Gimmick, Channel = n.EffectChannel })
-                    || n.Mechanism != null && AuthoredMechanisms.Matches(m, new AuthoredMechanismEntry { StarId = n.Id, ContributorIds = new[] { n.Id }, Spec = n.Mechanism }))).ToArray();
+                var targets = recipients.Where(n => n.Talent.HeroKey == t.HeroKey && (n.Gimmick != null
+                    && Matches(m, n.Gimmick) || n.Mechanism != null && AuthoredMechanisms.Matches(m, n.Mechanism)))
+                    .Select(n => n.Talent).ToArray();
                 if (targets.Length == 0 || targets.Any(n => m.Param.HasValue
                     ? n.Mechanism != null ? !AuthoredMechanisms.Supports(n.Mechanism, m.Param.Value) : !Gimmicks.SupportsParameter(n.Gimmick, m.Param.Value)
                     : n.Gimmick?.Effect == GimmickEffect.Reload)) throw new InvalidOperationException("Scoped modifier has no meaningful recipient: " + t.Id);

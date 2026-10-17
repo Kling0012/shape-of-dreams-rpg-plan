@@ -12,6 +12,9 @@ using SodRpg.Core.Game;
 // 使い方:
 //   dotnet run -c Release --project tools/StartupBench -- total [--threshold-ms 1500]
 //   dotnet run -c Release --project tools/StartupBench -- stages
+//   dotnet run -c Release --project tools/StartupBench -- snapshot
+//   dotnet run -c Release --project tools/StartupBench -- snapshot-baseline
+//   dotnet run -c Release --project tools/StartupBench -- initializers
 //
 // total: 本番と同じ RegisterAllGenerated（DreamforgeMod.Awake の「Generated star maps registered」の内側）を
 //   冷えたプロセスで1回測り、続けて初回 BuildLimits.Registered、HeroSigils.All×1000、互換性の指紋を出す。
@@ -24,6 +27,10 @@ using SodRpg.Core.Game;
 // stages: 旅人ごとに、文字列表の解析だけ（CreateGeneratedAuthored）と、本番の登録1人分
 //   （RegisterGeneratedHero=解析+登録+移行規則）を分けて測る。残りボトルネックの切り分け用。
 //   登録前に解析を実行するため、そのJITや初期化は温まる。total の内訳や差分には換算できない。
+// snapshot: 生成星図全員の定義、登録順、座標、接続、移行規則をJSON行で出す。前後比較用。
+// snapshot-baseline: 登録前の旧星図全員と汎用配置を同じ形式で出す。生成星図は登録しない。
+// initializers: 旧星図の定義を先に読み、その後Cetusの配置を初めて要求する時間を分けて出す。
+//   他の初期化も含むため、total の短縮量には換算できない。
 internal static class Program
 {
     private static int Main(string[] args)
@@ -34,6 +41,16 @@ internal static class Program
             if (args[i] == "--threshold-ms") thresholdMs = int.Parse(args[i + 1]);
         string tiered = Environment.GetEnvironmentVariable("DOTNET_TieredCompilation") ?? "default";
         Console.WriteLine($"mode={mode} threshold-ms={thresholdMs} runtime={Environment.Version} tiered={tiered}");
+        if (mode == "snapshot" || mode == "snapshot-baseline") return Snapshot(mode == "snapshot");
+        if (mode == "initializers")
+        {
+            var watch = Stopwatch.StartNew();
+            Console.WriteLine($"baseline-talents: {HeroSigils.All.Count} ({watch.ElapsedMilliseconds} ms)");
+            watch.Restart();
+            GC.KeepAlive(HeroTreeLayout.ForHero("Hero_Cetus"));
+            Console.WriteLine($"layout-initialization: {watch.ElapsedMilliseconds} ms");
+            return 0;
+        }
         return mode == "stages" ? Stages() : Total(thresholdMs);
     }
 
@@ -65,6 +82,43 @@ internal static class Program
             ? $"RESULT: SLOW (register {registerMs} ms > threshold {thresholdMs} ms; benchmark threshold exceeded)"
             : $"RESULT: OK (register {registerMs} ms <= threshold {thresholdMs} ms)");
         return slow ? 3 : 0;
+    }
+
+    private static int Snapshot(bool generated)
+    {
+        if (generated) StarClusters.RegisterAllGenerated();
+        var options = new System.Text.Json.JsonSerializerOptions { IncludeFields = true };
+        foreach (string hero in StarClusters.GeneratedHeroes)
+        {
+            var tree = HeroSigils.TreeFor(hero);
+            var layout = HeroTreeLayout.ForHero(hero);
+            Console.WriteLine(System.Text.Json.JsonSerializer.Serialize(new
+            {
+                Hero = hero,
+                Talents = tree.Select(t => new
+                {
+                    t.Id, t.MaxRank, t.RankCost, t.RouteId, t.RouteOrder, t.ClusterOrder,
+                    t.IsDreamRing, t.IsOuterAnchor, t.Tier, t.Name,
+                    Definition = t.AuthoredStar
+                }),
+                Nodes = layout.Nodes.Select(n => new { n.Id, n.X, n.Y, n.Kind, n.Neighbors }),
+                Edges = layout.Edges.Select(e => new { e.A, e.B }),
+                Migrations = StarClusters.MigrationsFor(hero)
+            }, options));
+        }
+        if (!generated)
+        {
+            var layout = HeroTreeLayout.ForHero(null);
+            Console.WriteLine(System.Text.Json.JsonSerializer.Serialize(new
+            {
+                Hero = "generic",
+                Nodes = layout.Nodes.Select(n => new { n.Id, n.X, n.Y, n.Kind, n.Neighbors }),
+                Edges = layout.Edges.Select(e => new { e.A, e.B })
+            }, options));
+        }
+        Console.WriteLine($"authored-registry-fingerprint: {StarClusters.AuthoredRegistryFingerprint}");
+        Console.WriteLine($"content-fingerprint: {ContentFingerprint.Value}");
+        return 0;
     }
 
     private static int Stages()

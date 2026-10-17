@@ -55,7 +55,10 @@ namespace SodRpg.Core.Game
             ["Hero_Aurena"] = new[] { "claw", "golden-burst", "dangerous-theory", "feathery-dash", "beautiful-threat", "reduction", "chain-reaction" },
             ["Hero_Bismuth"] = new[] { "prismatic-eyes", "innocence", "distorting-sprint", "infernal-tales", "valiant-heart", "distorted-mind" },
         };
-        private static readonly Dictionary<string, HeroTreeLayout> Layouts = CreateLayouts();
+        // Generated registration builds its own layouts. Keep legacy fallback geometry off that startup path.
+        private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, Lazy<HeroTreeLayout>> Layouts =
+            new System.Collections.Concurrent.ConcurrentDictionary<string, Lazy<HeroTreeLayout>>(StringComparer.Ordinal);
+        private static readonly Func<string, Lazy<HeroTreeLayout>> FallbackLayoutFactory = CreateFallbackLayout;
         private static readonly HeroTreeLayout Generic = Create(Content.Talents, false, false);
         private readonly Dictionary<string, int> indices;
         // Reused under the lock: neither UI availability checks nor build evaluation allocate traversal buffers.
@@ -79,7 +82,7 @@ namespace SodRpg.Core.Game
 
         public static HeroTreeLayout ForHero(string heroKey) =>
             StarClusters.TryGetRegisteredLayout(heroKey, out var registered) ? registered
-                : heroKey != null && Layouts.TryGetValue(heroKey, out var layout) ? layout : Generic;
+                : HeroSigils.HasTree(heroKey) ? Layouts.GetOrAdd(heroKey, FallbackLayoutFactory).Value : Generic;
 
         /// <summary>Builds a validated generated tree for data tooling and layout stress scenarios.</summary>
         public static HeroTreeLayout ForTalents(IReadOnlyList<TalentDef> talents) => Create(talents, true, true);
@@ -87,14 +90,8 @@ namespace SodRpg.Core.Game
         /// <summary>調整済み座標（StarMapPlacements）を使うかを選ぶ。調整ツールが既定の配置を得るために false を渡す。</summary>
         public static HeroTreeLayout ForTalents(IReadOnlyList<TalentDef> talents, bool tuned) => Create(talents, true, tuned);
 
-        private static Dictionary<string, HeroTreeLayout> CreateLayouts()
-        {
-            var layouts = new Dictionary<string, HeroTreeLayout>(StringComparer.Ordinal);
-            foreach (var talent in HeroSigils.All)
-                if (!layouts.ContainsKey(talent.HeroKey))
-                    layouts.Add(talent.HeroKey, Create(HeroSigils.TreeFor(talent.HeroKey), true, true));
-            return layouts;
-        }
+        private static Lazy<HeroTreeLayout> CreateFallbackLayout(string heroKey) =>
+            new Lazy<HeroTreeLayout>(() => Create(HeroSigils.BaselineTreeFor(heroKey), true, true));
 
         private static HeroTreeNodeKind Kind(TalentDef talent)
         {
