@@ -354,7 +354,7 @@ namespace Issue73.Native.Tests
             Assert.NotEqual(withoutAlphaDown, factor);
 
             // さらに苦戦が続いても下限で止まる。
-            DriveRooms(host, b, 110, 0.3d, 2);
+            DriveRooms(host, b, 110, 0.2d, 2);
             Assert.Equal(MinFactor, FactorOf(host, b), 10);
             Assert.Empty(Log.Warnings);
         }

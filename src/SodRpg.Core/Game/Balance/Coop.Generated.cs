@@ -73,14 +73,14 @@ namespace SodRpg.Core.Game
             public const double TargetSeconds = 3d;
             public const double Alpha = 0.3d;
             public const double AlphaDown = 0.5d;
-            public const double Strength = 0.5d;
+            public const double Strength = 0.4d;
             public const double MinFactor = 0.65d;
             public const double RewardMaxMultiplier = 2.0d;
             // Numeric overflow guard for factors and float HP, not a balance cap.
             public const double SafetyMaxFactor = 1e+06d;
             public const double MinActiveSeconds = 5d;
             public const int MinRooms = 2;
-            public const double DamageExponent = 0.25d;
+            public const double DamageExponent = 0.2d;
             public const double RewardShare = 0.5d;
 
             public static double HeroTargetScale(string hero)
