@@ -693,6 +693,8 @@ namespace SodRpg.Mod
             for (int i = 0; i < nodes.Count; i++) hunterStatuses.Add(HunterStatus.None);
             SetCurrentNodeIndexAndRevealAdjacent(0);
         }
+        // Keep arrivals on Harmony's patched entry point when callers are optimized.
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
         public void SetCurrentNodeIndexAndRevealAdjacent(int index)
         {
             if (index < 0 || index >= nodes.Count) throw new ArgumentOutOfRangeException(nameof(index));

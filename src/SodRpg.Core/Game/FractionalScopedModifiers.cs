@@ -543,25 +543,12 @@ namespace SodRpg.Core.Game
                     recipients.Add((t,
                         t.Gimmick == null ? null : new GimmickEntry { StarId = t.Id, Memory = t.RouteMemory, Def = t.Gimmick, Channel = t.EffectChannel },
                         t.Mechanism == null ? null : new AuthoredMechanismEntry { StarId = t.Id, ContributorIds = new[] { t.Id }, Spec = t.Mechanism }));
-            var byId = new Dictionary<string, List<(TalentDef Talent, GimmickEntry Gimmick, AuthoredMechanismEntry Mechanism)>>(StringComparer.Ordinal);
-            foreach (var recipient in recipients)
-            {
-                if (!byId.TryGetValue(recipient.Talent.Id, out var options)) byId.Add(recipient.Talent.Id, options = new List<(TalentDef, GimmickEntry, AuthoredMechanismEntry)>());
-                options.Add(recipient);
-            }
             foreach (var t in all)
             {
                 if (t.ScopedModifier == null) continue;
                 var m = t.ScopedModifier;
-                var candidates = recipients;
-                if (m.TargetEffectIds.Length > 0)
-                {
-                    candidates = new List<(TalentDef, GimmickEntry, AuthoredMechanismEntry)>();
-                    foreach (string id in m.TargetEffectIds)
-                        if (byId.TryGetValue(id, out var options)) candidates.AddRange(options);
-                }
                 var targets = new List<TalentDef>();
-                foreach (var recipient in candidates)
+                foreach (var recipient in recipients)
                     if (recipient.Talent.HeroKey == t.HeroKey && (recipient.Gimmick != null && Matches(m, recipient.Gimmick)
                         || recipient.Mechanism != null && AuthoredMechanisms.Matches(m, recipient.Mechanism))) targets.Add(recipient.Talent);
                 if (targets.Count == 0 || targets.Any(n => m.Param.HasValue
