@@ -1,0 +1,12 @@
+temporary-directory=/home/wang/.cache/gh-auto/issue692-recovery-validation-20261018-vswj5n_8
+before=3cdf2a83 Core; after=694c5fff Core
+TMPDIR=/home/wang/.cache/gh-auto/issue692-recovery-validation-20261018-vswj5n_8/tmp
+NUGET_PACKAGES=/home/wang/.cache/gh-auto/nuget
+
+[before build]
+$ dotnet build /home/wang/.cache/gh-auto/issue692-recovery-validation-20261018-vswj5n_8/tools/StartupBench/StartupBench.csproj -c Release --nologo -p:NuGetAudit=false
+  Determining projects to restore...
+  Restored /home/wang/.cache/gh-auto/issue692-recovery-validation-20261018-vswj5n_8/tools/StartupBench/StartupBench.csproj (in 215 ms).
+  Restored /home/wang/.cache/gh-auto/issue692-recovery-validation-20261018-vswj5n_8/src/SodRpg.Core/SodRpg.Core.csproj (in 234 ms).
+
+exit=-7
