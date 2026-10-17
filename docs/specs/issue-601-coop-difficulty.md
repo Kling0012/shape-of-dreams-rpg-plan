@@ -206,3 +206,39 @@ NuGetキャッシュはworktree外の `/home/wang/.cache/gh-auto/nuget` を使�
 - フル／遅いテスト（`test_changed.py --all`・`SODRPG_SLOW=1`）、対象無指定の `test_changed.py`：依頼に従い関連テストへ限定。balance差分は全体選択になるためパイプラインへ委ねる。
 - BalanceSimの再実行とソロ全数値の再照合、本体DLLの再逆コンパイル：今回の差分は分担制のダメージ制限であり、圧・敵数・本体人数ボーナス・報酬の式は変更していない。上の初回確認結果は過去の記録として保持する。
 - GitHub CI・Labでの再実行：このラウンドではローカルの関連テスト・参照DLLビルドを実行し、外部パイプラインは起動していない。
+
+## 追加コメント対応：敵の数・HPの緩和を戻す（2026-10-17、開始点b049aee5）
+
+### 判断したこと
+
+追加コメント「敵の数やHPを下げるのは簡単になりすぎました．分担の緩和で十分でした」を、v3.2.14に入れた敵強化の緩和（`difficulty` 機構）が簡単すぎたため戻す指示と解釈した。同時に、v3.2.15の分担制の世界別緩和だけで対応する。Issueの緩和要望（序盤・高リンボ）は分担制の緩和で満たすものとし、人数ボーナス・圧・敵数・Dの各緩和はすべて元に戻す。一部だけ残す設定は実プレイされたことがないため作らない。
+
+### 戻した内容
+
+- `DreamPressure` の `_coopScaling`・`WithCoopScaling`・`CombatMultiplier` による協力用の圧緩和と敵数上限、`BossSharesNative` の本体人数ボーナス半減、`HostAuthority.DynamicDifficulty` の協力時D上限1.5を、v3.2.14の導入前の状態へ戻した。
+- `coop.json` から `difficulty` セクションを除き、`ownership.bossShareFactor` を0.8へ戻した。`Coop.Generated.cs` を再生成した。`ownership` の世界別の手伝い倍率（1・0.75・0.5）と `floor` の削除は維持する。
+- 悪夢化率の表示用に戦闘用とは別の圧を同期していた `nightmarePressureHealthMultiplier`（`NetMessages`・`ClientSession`・`DreamforgeUi`）を戻した。緩和前の圧は `PressureHealthMultiplier` 自体に戻るため、表示は同期1本で足りる。
+- BalanceSim の1／2／4人比較行、両READMEの本調整の節、関連テストのv3.2.14期待値を戻した。
+
+### 維持する内容
+
+- `OwnershipHelpFactor` の世界別倍率（`ZoneManager.currentZoneIndex` が0で100%、1で75%、2以上で50%、未取得で軽減なし）。通常敵・ボスの他人の持ち分の両方に同じ倍率を使う。
+- #608の対策は変更していない。世界別倍率は定数で0にならず、`PlanBossDamage` の `factor > 0` 検査も残している。`Issue608ZeroShareReproductionTests` を今回も通した。
+
+### 実行した検証
+
+NuGetキャッシュはworktree外の `/home/wang/.cache/gh-auto/nuget` を使用した。
+
+- `dotnet build src/SodRpg.Mod -c Release '-p:GameDir=/home/wang/dev/sod-gamedata/Shape of Dreams' --nologo -v:quiet`：終了コード0、エラー0・既存警告6件。
+- `DOTNET_ROLL_FORWARD=LatestMajor dotnet test tests/Issue73.Native.Tests/Issue73.Native.Tests.csproj -c Release '-p:GameDir=/home/wang/dev/sod-gamedata/Shape of Dreams' --filter 'FullyQualifiedName~EnemyOwnershipTests|FullyQualifiedName~BossSharesTests|FullyQualifiedName~DynamicDifficultyTests|FullyQualifiedName~Issue588PersonalWaypointPressureTests|FullyQualifiedName~CoopOmensWardTests|FullyQualifiedName~Issue608ZeroShareReproductionTests' --nologo -v:quiet`：終了コード0、73成功・失敗0・スキップ0。世界別倍率・割り当て・救援・再配分・0%持ち分からの撃破を確認した。
+- `DOTNET_ROLL_FORWARD=LatestMajor dotnet test tests/SodRpg.Core.Tests/SodRpg.Core.Tests.csproj -c Release -p:PythonCommand=python3 --filter 'FullyQualifiedName~DreamPressureTests|FullyQualifiedName~PressureBalanceTests|FullyQualifiedName~PressureRewardMultiplierTests|FullyQualifiedName~PressureDividendTests|FullyQualifiedName~PressureSuffixCompatibilityTests|FullyQualifiedName~DreamDepthV130Tests|FullyQualifiedName~DepthRealignHealthTests|FullyQualifiedName~InfinityIntervalScalingTests|FullyQualifiedName~WaypointsTests|FullyQualifiedName~NightmareTests' --nologo -v:quiet`：終了コード0、133成功・失敗0・スキップ0。
+- `python3 tests/repro/issue572/run.py`：終了コード0、15成功・失敗0。
+- `python3 -m unittest tools.tests.test_waypoint_balance tools.tests.test_stage6_balance`：終了コード0、6成功。
+- `python3 tools/balance/gen_cs.py --check`：終了コード0。
+- `git diff d9bdf45f^ HEAD -- <v3.2.14が触ったファイル>`：`DreamPressure`・`BossSharesNative`・`HostAuthority.DynamicDifficulty`・`NetMessages`・`PressureReport`・`SurfaceApi`・`Issue588` テストは差分なし。`coop.json`・`Coop.Generated.cs`・`coop_values.py` の差分は世界別の手伝い倍率のみ。
+
+### 未実行の検証
+
+- 実ゲームでの協力プレイ・高リンボの体感確認、Unity内Harmony適用・実通信・描画：ゲームを起動できない環境のため。
+- フル／遅いテスト（`test_changed.py --all`・`SODRPG_SLOW=1`）：依頼に従い関連テストへ限定し、パイプラインへ委ねる。
+- BalanceSim の再実行：`pressure/coop` 比較行を戻したため、このモードの協力行はもう出力しない。ソロの数値は `pressure.json` と生成器が不変のため再照合不要とした。
