@@ -514,7 +514,8 @@ namespace SodRpg.Mod
             var pressure = DreamPressure.Average(_pressureBuilds)
                 .WithRunModifiers(ClientSession.HostRun?.DreamDepth ?? 0,
                     PersonalEnemyWaypointsRunning() ? 1 : ActiveWaypointTotals.PressureMultiplier)
-                .WithInfinityPressure(_infinityPressureStage);
+                .WithInfinityPressure(_infinityPressureStage)
+                .WithCoopScaling(_pressureBuilds.Count);
             bool changed = pressure.HealthMultiplier != _pressure.HealthMultiplier
                 || pressure.DamageMultiplier != _pressure.DamageMultiplier;
             synchronize |= changed || _pressurePlayerCount != _pressureBuilds.Count;

@@ -87,7 +87,7 @@ namespace Issue73.Native.Tests
             var authority = new HostAuthority();
             authority.ConfigureEnemyOwnership(true);
             // HostAuthority.cs:RefreshPressure の道標を含む部屋の入力。両者とも夢1・星0。
-            Set(authority, "_pressure", DreamPressure.Neutral.WithRunModifiers(0, Waypoints.Sum(hostWaypoint).PressureMultiplier));
+            Set(authority, "_pressure", DreamPressure.Neutral.WithRunModifiers(0, Waypoints.Sum(hostWaypoint).PressureMultiplier).WithCoopScaling(2));
             var builds = (Dictionary<DewPlayer, HostAuthority.ReceivedBuild>)Get(authority, "_builds");
             builds[host] = new HostAuthority.ReceivedBuild { Build = new Build { DreamLevel = 1, SpentStarPoints = 0 } };
             builds[guest] = new HostAuthority.ReceivedBuild { Build = new Build { DreamLevel = 1, SpentStarPoints = 0 } };
@@ -138,6 +138,7 @@ namespace Issue73.Native.Tests
             var rig = Rig(hostChooses ? waypoint : Waypoint.None, hostChooses ? Waypoint.None : waypoint, true);
             var enemy = Enemy(rig.Authority, rig.Guest);
             double expected = Waypoints.Sum(hostChooses ? Waypoint.None : waypoint).PressureMultiplier;
+            if (!health) expected = 1 + Math.Min(1, (expected - 1) * 0.5);
             double actual = ObservedMultiplier(rig.Authority, enemy, health);
             _output.WriteLine($"host={ClientSession.HostRun.ActiveWaypoint}; guest={(hostChooses ? Waypoint.None : waypoint)}; stat={(health ? "HP" : "damage")}; expected={expected}; actual={actual}");
             Assert.Equal(expected, actual, 5);
@@ -159,8 +160,9 @@ namespace Issue73.Native.Tests
             var state = ((IDictionary)Get(rig.Authority, "_enemyOwnership"))[enemy];
             Assert.Same(rig.Guest, Get(state, "Owner"));
             double actual = ObservedMultiplier(rig.Authority, enemy, health);
-            _output.WriteLine($"owner changed host → guest; stat={(health ? "HP" : "damage")}; expected=1.25; actual={actual}");
-            Assert.Equal(1.25d, actual, 5);
+            double expected = health ? 1.25d : 1.125d;
+            _output.WriteLine($"owner changed host → guest; stat={(health ? "HP" : "damage")}; expected={expected}; actual={actual}");
+            Assert.Equal(expected, actual, 5);
         }
 
         [Theory]
@@ -172,7 +174,9 @@ namespace Issue73.Native.Tests
         {
             var rig = Rig(waypoint, Waypoint.None, false);
             var enemy = Enemy(rig.Authority, rig.Guest);
-            Assert.Equal(Waypoints.Sum(waypoint).PressureMultiplier, ObservedMultiplier(rig.Authority, enemy, health), 5);
+            double expected = Waypoints.Sum(waypoint).PressureMultiplier;
+            if (!health) expected = 1 + Math.Min(1, (expected - 1) * 0.5);
+            Assert.Equal(expected, ObservedMultiplier(rig.Authority, enemy, health), 5);
         }
     }
 }

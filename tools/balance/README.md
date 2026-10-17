@@ -16,7 +16,9 @@
 
 ## 協力プレイの難度（Issue #601・PR #694）
 
-v3.2.14の協力専用の緩和を撤回し、`coop.json` の `difficulty` セクションを除きました。夢の圧は `pressure.json` の共通式、本体人数ボーナスは本体の値を使います。`ownership.bossShareFactor` は0.7から0.8へ戻しました。
+Issue #601の最新コメントに従い、HP・敵数は#673より前の式、攻撃・魔力は#673の緩和を使います。HPの圧は `pressure.json` の共通式で、増分65%・上限8倍の補正はありません。圧による敵数の上限は5倍、`ownership.bossShareFactor` は0.8、本体の人数による追加HPは本体の値です。
+
+`coop.json` の `difficulty` には攻撃関連の4項目だけを置きます。人間2人以上では、深度・道標・Infinity適用後の攻撃の圧の増分を `damagePressureShare=0.5` 倍にし、`damagePressureMaximum=2` 倍で止めます。本体の人数による追加攻撃・魔力は `nativePowerBonusFactor=0.5` 倍、`nativePowerBonusMaximum=15`%までです。ソロ・HP・報酬・悪夢化率にはこの補正を掛けません。
 
 2026-10-17に動的難易度Dのバランス上の上限を外しました。大きなダメージを出すほど、次の部屋の敵を強化します。報酬上限は独立した `dynamicDifficulty.rewardMaxMultiplier=2.0` で定め、従来どおり最大×2です。`dynamicDifficulty.safetyMaxFactor=1000000` はInfinity・NaNやfloatのHPの桁あふれを防ぐためだけの安全装置で、バランス上の上限ではありません。生成器は `minFactor <= 1`、`rewardMaxMultiplier >= 1`、`1000 <= safetyMaxFactor <= 1000000` を検証します。
 

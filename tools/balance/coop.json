@@ -13,6 +13,12 @@
   "autoCastOwnHitSeconds": 3,
   "autoCastAllyHitSeconds": 2,
   "shieldWallTauntSeconds": 4,
+  "difficulty": {
+    "nativePowerBonusFactor": 0.5,
+    "nativePowerBonusMaximum": 15,
+    "damagePressureShare": 0.5,
+    "damagePressureMaximum": 2
+  },
   "ownership": {
     "helpDecayPercentByWorld": [0, 30, 60, 90],
     "bossShareFactor": 0.8,
