@@ -423,7 +423,7 @@ PR #509 のレビューで挙がった軽微な改善（Issue #551）。`ClientS
 
 ログは `Log.Error("Save failed: " + …)` を `ProfileStore.EnglishMessage(ex)` で出す。`ProfileWriteException` は英文（UI 言語と無関係）、それ以外の例外は `Message` をそのまま返す。
 
-PR #609 の取込実装では、main（`130c4caa`）の全文を基準に、`CHANGELOG.md` の未リリース欄へ保存エラーの2項目だけを追加した。元 PR の競合解決済みファイル全体を置き換えには使わず、既存の未リリース項目と全リリース節（v3.1.2〜v3.1.7・v3.2.12 を含む）を保持する。`docs/testing.md` も本 #551 節以外は main の全文を保持する。
+PR #609 の取込実装の時点（基準は main の `130c4caa`）では、`CHANGELOG.md` の未リリース欄へ保存エラーの2項目だけを追加し、元 PR の競合解決済みファイル全体は置き換えに使わなかった。その後の main で更新履歴を `changelog.d/` の断片で足す運用に切り替わったため、main を取り込んだ競合解決では、この追加を `changelog.d/667-save-error.md`（2項目・日英併記）へ切り出し、`CHANGELOG.md` 自体は main と同一の全文のまま変更していない。`docs/testing.md` も本 #551 節以外は main の全文を保持する。
 
 受け付け審査で指摘された、失敗文言と `FailureSerial` を別々に読む競合にも対応した。`AsyncProfileWriter.GetWriteState()` は例外・失敗番号・失敗継続中の印・書き込み済みリビジョンを同一ロック内で値型へコピーする。`SaveNow` の非例外経路と `TickPeriodicSave` はこの状態だけで表示の設定・解除を判断するため、古い文言を新しい番号として記録したり、回復前後の情報を混ぜたりしない。例外の `Message` はロックを解放してから読む。状態の取得でヒープ確保を追加せず、既存の文言キャッシュは言語と理由が変わったときだけ更新する。
 
@@ -436,7 +436,7 @@ PR #609 の取込実装では、main（`130c4caa`）の全文を基準に、`CHA
 - 既存の言語確認コンソールも参照先だけを今回の worktree に合わせて実行した（`DOTNET_ROLL_FORWARD=Major dotnet run --project /tmp/pr609-existing-repros-pa8hgxx0/issue551-language-check-20261017 -c Release`）。同じ `ProfileWriteException.Message` の日本語→英語→日本語、`ProfileStore.EnglishMessage` の言語によらない英文、外部例外の元の `Message` の保持はすべて `True`、終了コード0。新しい検証ケースやテストは作成していない。
 - `DOTNET_ROLL_FORWARD=Major dotnet test tests/SodRpg.Core.Tests/SodRpg.Core.Tests.csproj -c Release -p:PythonCommand=python3 --nologo --filter "FullyQualifiedName~AsyncProfileWriterTests|FullyQualifiedName~ProfileResetV127Tests|FullyQualifiedName~ProfileStoreRoundtripIssue429Tests|FullyQualifiedName~Issue73LedgerTests|FullyQualifiedName~OnboardingTests"`：28成功・0失敗・0スキップ。
 - `dotnet build src/SodRpg.Mod/SodRpg.Mod.csproj -c Release '-p:GameDir=/home/wang/dev/sod-gamedata/Shape of Dreams' -p:ModDeployDir=/tmp/pr609-moddeploy --nologo -v:minimal`：エラー0・既存警告6。Core は上記テストビルドでもコンパイルした。
-- `CHANGELOG.md` から追加2項目とその空行だけを除いた全文、および `docs/testing.md` から本 #551 節だけを除いた全文を、それぞれ `git show 130c4caa:<path>` の内容と比較して一致を確認した。CHANGELOG の全リリース見出しの並び・個数も一致し、重複はない。
+- 取込実装では、`CHANGELOG.md` から追加2項目とその空行だけを除いた全文を `git show 130c4caa:CHANGELOG.md` と比較して一致を確認した。断片への置き換え後は、`CHANGELOG.md` に main との差がないことと、`changelog.d/667-save-error.md` の2項目が置き換え前の追加項目と同じ文であることを確認した。`docs/testing.md` から本 #551 節だけを除いた全文は main と一致する。
 - `git diff --check` は `docs/dreamforge-handoff.md` の追加行の CRLF だけを指摘。既存の改行形式を保持し、`git -c core.whitespace=cr-at-eol diff --check` で成功した。
 
 **未実行**：上記の保留中の回帰テスト（表示消失・古いエラー競合・言語切替キャッシュ）は新規テスト禁止のためこの変更では書いていない。言語切替後の表示は getter と条件分岐のソース追跡およびスクラッチでの `ProfileWriteException.Message` 確認、優先順位は上記のスクラッチ状態遷移による確認にとどまる。Unity実機での表示はゲーム実行環境がないため未確認。フルテスト・Slowテスト（`tools/test_changed.py --all`）は後続工程に委ねる。
