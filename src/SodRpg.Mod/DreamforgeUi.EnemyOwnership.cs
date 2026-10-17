@@ -110,7 +110,7 @@ namespace SodRpg.Mod
                 text.Append('\n').Append(Loc.T("　敵の体力 ", "　Enemy HP ")).Append(Times(f));
                 text.Append(Loc.T(" ・ 攻撃 ", " · Attack ")).Append(double.IsNaN(exponent) ? none : Times(Math.Pow(f, exponent)));
                 text.Append(Loc.T(" ・ 報酬 ", " · Rewards "))
-                    .Append(double.IsNaN(reward) ? none : Times(1 + reward * Math.Max(0, f - 1)));
+                    .Append(double.IsNaN(reward) ? none : Times(Math.Min(CoopBalance.DynamicDifficulty.RewardMaxMultiplier, 1 + reward * Math.Max(0, f - 1))));
             }
             text.Append('\n').Append(Loc.T("担当外の減衰：", "Damage to others' enemies: "));
             if (status == null) text.Append(none);
@@ -177,9 +177,9 @@ namespace SodRpg.Mod
             GUILayout.Label(Loc.T("戦った部屋のダメージから、次の部屋の敵を調整します。強さの差を半分だけ埋めます。",
                 "Use combat damage to adjust enemies in the next room, closing half the strength gap."), _st.Small);
             string dynamicMin = CoopBalance.DynamicDifficulty.MinFactor.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
-            string dynamicMax = CoopBalance.DynamicDifficulty.MaxFactor.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
-            GUILayout.Label(Loc.T($"係数は{dynamicMin}〜{dynamicMax}です。硬くなった分だけ報酬が増え、易しくなっても報酬は減りません。",
-                $"Factor ranges from {dynamicMin} to {dynamicMax}. Tougher fights add rewards; easier ones never cut them."), _st.Small);
+            string rewardMax = CoopBalance.DynamicDifficulty.RewardMaxMultiplier.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
+            GUILayout.Label(Loc.T($"係数は{dynamicMin}以上で上限はありません。硬くなった分だけ報酬が増え（最大×{rewardMax}）、易しくなっても報酬は減りません。",
+                $"Factor starts at {dynamicMin} with no upper limit. Tougher fights add rewards (up to ×{rewardMax}); easier ones never cut them."), _st.Small);
             GUILayout.Label(Loc.T("協力プレイでは担当制と一緒に有効になります。",
                 "In co-op it runs together with enemy ownership."), _st.Small);
             if (!_ownershipLegendFailed)

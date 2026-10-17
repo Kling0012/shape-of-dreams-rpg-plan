@@ -14,4 +14,4 @@
 - `DreamforgeUi.DrawEnemyOwnershipSettings` の設定の下に表示する。文字列は0.25秒ごとに作り直し、例外が出たらこの表示だけを止める。
 - ホストは自分の規則（`HostAuthority.DynamicStatusSnapshot`・`HostDynamicDisplay`）を読む。参加者は、担当制の名簿と同じ netId 0 のメッセージに足した省略可能な `dynamicStatus` と、既存の旅人ごとの倍率だけを表示し、今のランで受け取っていない値は「—」にする。`dynamicStatus` は値が変わったときと5秒ごとの名簿の再送で送る。
 - 動的難易度の状態：有効（`DynamicApplicationRunning`）、ソロでは無効（1人で「ソロでも使う」が切）、無効（それ以外）。
-- 旅人ごと：倍率 ×f、敵の体力 ×f、敵の攻撃 ×f^damageExponent、報酬 ×(1 + rewardShare × max(0, f−1))。f<1 はやさしめ、f>1 はきびしめ、1 は標準。
+- 旅人ごと：倍率 ×f、敵の体力 ×f、敵の攻撃 ×f^damageExponent、報酬 ×min(rewardMaxMultiplier, 1 + rewardShare × max(0, f−1))。2026-10-17に倍率のバランス上の上限を外し、報酬上限を独立した `rewardMaxMultiplier=2.0` とした。f<1 はやさしめ、f>1 はきびしめ、1 は標準。
