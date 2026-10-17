@@ -475,6 +475,7 @@ namespace SodRpg.Mod
         internal void ConfigureBossNativeLifetimeDiagnostics(bool enabled) { }
         public void Detach() { }
         internal void ConfigureMeleeCoop(bool rangeToSpeed, bool distanceFalloff, bool meleeBreak, bool meleeGuard) { }
+        internal bool SpecialEnemyDiagnostics { get; set; }
     }
     internal static class RelicIcons
     {
