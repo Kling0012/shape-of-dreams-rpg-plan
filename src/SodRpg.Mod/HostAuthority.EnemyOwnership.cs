@@ -497,13 +497,17 @@ namespace SodRpg.Mod
             string name = zone.currentZone != null ? zone.currentZone.name : null;
             var run = ClientSession.HostRun;
             bool saved = run != null && run.RunId == game.runId;
+            var infinity = saved ? run.Infinity : null;
+            // Rules.Delve advances the segment before native travel; count only after arrival.
+            if (infinity?.Phase == InfinityPhase.Transitioning) return;
             // Continue or a rebuilt host resumes the saved order instead of restarting at the first world.
             if (_runWorlds.RunId != game.runId && saved)
-                _runWorlds.Restore(game.runId, run.WorldIndex, run.WorldZoneIndex, run.WorldZoneName);
-            if (!_runWorlds.Observe(game.runId, zone.currentZoneIndex, name) || !saved) return;
+                _runWorlds.Restore(game.runId, run.WorldIndex, run.WorldZoneIndex, run.WorldZoneName, run.WorldInfinitySegment);
+            if (!_runWorlds.Observe(game.runId, zone.currentZoneIndex, name, infinity?.SegmentEpoch ?? -1) || !saved) return;
             run.WorldIndex = _runWorlds.Index;
             run.WorldZoneIndex = _runWorlds.ZoneIndex;
             run.WorldZoneName = _runWorlds.ZoneName;
+            run.WorldInfinitySegment = _runWorlds.InfinitySegment;
         }
 
         private float OwnershipHelpFactor() => OwnershipHelp.Factor(RunWorldIndex);

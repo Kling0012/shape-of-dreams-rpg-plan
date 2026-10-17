@@ -143,6 +143,7 @@ namespace SodRpg.Core.Game
                 {
                     run.Add("worldIndex", (long)r.WorldIndex).Add("worldZoneIndex", (long)r.WorldZoneIndex);
                     if (r.WorldZoneName != null) run.Add("worldZoneName", r.WorldZoneName);
+                    if (r.WorldInfinitySegment >= 0) run.Add("worldInfinitySegment", r.WorldInfinitySegment);
                 }
             }
 
@@ -517,6 +518,7 @@ namespace SodRpg.Core.Game
                     WorldIndex = rj.TryGet("worldIndex", out _) && rj.TryGet("worldZoneIndex", out _) ? Clamp(Long(rj, "worldIndex"), -1, int.MaxValue) : -1,
                     WorldZoneIndex = rj.TryGet("worldIndex", out _) && rj.TryGet("worldZoneIndex", out _) ? Clamp(Long(rj, "worldZoneIndex"), -1, int.MaxValue) : -1,
                     WorldZoneName = Str(rj, "worldZoneName"),
+                    WorldInfinitySegment = rj.TryGet("worldInfinitySegment", out _) ? Math.Max(-1, Long(rj, "worldInfinitySegment")) : -1,
                     HeroKey = Str(rj, "heroKey"),
                     StarSecureRewarded = Bool(rj, "starSecureRewarded", false),
                     Heat = Loot.ClampHeat(Clamp(Long(rj, "heat"), 0, Content.MaxHeat)),

@@ -131,6 +131,8 @@ namespace SodRpg.Core.Game
         /// <summary>WorldIndex を数えたときの本体の世界番号と世界名。再開時に同じ世界を二重に数えないための印。</summary>
         public int WorldZoneIndex { get; set; } = -1;
         public string WorldZoneName { get; set; }
+        /// <summary>Last Infinity segment included in WorldIndex; -1 for ordinary runs and legacy saves.</summary>
+        public long WorldInfinitySegment { get; set; } = -1;
         /// <summary>遠征を始めた旅人。撃破がない遠征の精算にも使う。</summary>
         public string HeroKey { get; set; }
         /// <summary>同じ確保の繰り返しで星の経験を二重に得ないための印。</summary>
@@ -222,6 +224,7 @@ namespace SodRpg.Core.Game
                 WorldIndex = WorldIndex,
                 WorldZoneIndex = WorldZoneIndex,
                 WorldZoneName = WorldZoneName,
+                WorldInfinitySegment = WorldInfinitySegment,
                 HeroKey = HeroKey,
                 StarSecureRewarded = StarSecureRewarded,
                 Heat = Heat,
