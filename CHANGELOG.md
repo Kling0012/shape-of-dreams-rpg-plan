@@ -10,6 +10,16 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v3.3.1 — Limbo Infinity unlock for Limbo 6 clears, plus death light and boss equipment fixes（2026-10-17）
+
+### 新機能 / New features
+- リンボ6をクリアした旅人で、リンボのインフィニティを選べるようにしました。本体の過去のクリア記録も使います。協力プレイではホストが選んでいる旅人で判定し、未解禁のときはロビーに条件を表示します。 / Travelers who have cleared Limbo 6 can now enable Infinity in Limbo, including those with existing native clear records. Co-op uses the host's selected traveler, and the lobby shows the requirement while locked.
+
+### 不具合の修正 / Bug fixes
+- プールへ戻さず破棄される敵や攻撃の寿命記録も解放し、長時間の戦闘でボス装備の印や命中判定が働かなくなる原因を修正しました。コードと再現テストで確認し、実ゲームの長時間プレイは未確認です。 / Release lifetime records for enemies and attacks destroyed without pooling, fixing a cause of boss equipment marks and hit tracking failing after extended combat. Verified with code and reproduction tests; long live-game sessions remain unverified.
+
+---
+
 ## v3.3.0 — Minor adjustments（2026-10-17）
 
 細かな調整を行いました。 / Minor adjustments.
