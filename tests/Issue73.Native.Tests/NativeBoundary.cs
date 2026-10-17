@@ -704,6 +704,7 @@ namespace SodRpg.Mod
             public bool Safe, Fusion;
             public int ConnectionId = int.MinValue;
             public readonly BuildTransferReceiver Transfer = new BuildTransferReceiver(CoopTradeTransport.MaxProfileChars);
+            public readonly CoopTradeSendQueue Outgoing = new CoopTradeSendQueue();
             public string Envelope;
         }
         private sealed class CoopHostTrade
@@ -842,6 +843,7 @@ namespace SodRpg.Mod
         internal string CoopTradeJournalPath;
         private readonly List<CoopTradePeer> _coopPeers = new List<CoopTradePeer>();
         private readonly BuildTransferReceiver _coopTransfer = new BuildTransferReceiver(CoopTradeTransport.MaxProfileChars);
+        private readonly CoopTradeSendQueue _coopSendQueue = new CoopTradeSendQueue();
         private NetworkConnection _coopConnection;
         private GameSettingsManager _coopSettings;
         private string _coopAdvertisement;
@@ -856,9 +858,8 @@ namespace SodRpg.Mod
         private string _coopWaitingId, _coopWaitReason;
         private float _coopWaitingAt, _coopWaitReasonAt;
         private bool _coopWaitReleased;
-        private string _coopTradeWarning, _coopConnectionWarning;
         public CoopTradeView CoopTrade { get; set; }
-        public string CoopTradeWarning { get => _coopTradeWarning ?? _coopConnectionWarning; set => _coopTradeWarning = value; }
+        // Warning storage/getter are extracted from production in NativePersistence.targets.
         internal static string CoopHostJournalPath => _hostSession?.CoopTradeJournalPath;
         internal static bool CoopHostSafe => _hostSession?.CoopLocalSafe == true;
         internal static bool CoopHostNativeSaving => _hostSession?._coopNativeSaving == true;
@@ -882,7 +883,9 @@ namespace SodRpg.Mod
         private float _helloFirstSent = -1f, _nextHello;
         private bool _helloAnswered, _hostCompatibilityWarned, _hostInfinityAvailable;
         private int _hostMeleeCoop;
-        public string HostVersionWarning { get; private set; }
+        // ClientSession.Hello.cs と同じ保管（#510: Txt 保持＋getter で解決）。ResetHello の抽出が書く。
+        private Txt _hostVersionWarning;
+        public string HostVersionWarning => _hostVersionWarning?.ToString();
         private Build _buildCache;
         private float _buildCacheTime;
         private string _buildCacheHero;
@@ -917,9 +920,13 @@ namespace SodRpg.Mod
         private bool _dirty, _saveErrorFromWriteFailure;
         private string _writeFailureText, _writeFailureSource;
         private bool _writeFailureJapanese;
+        private Exception _saveErrorCause;
+        private string _saveErrorText;
+        private AsyncProfileWriter _writeFailureKnownWriter;
+        private long _writeFailureKnownSerial;
         private int _buildCacheFrame = -1, _saveCount;
         private double _saveMsTotal;
-        public string SaveError { get; private set; }
+        public string SaveError => _saveErrorCause != null ? _saveErrorCause.Message : _saveErrorText;
         private readonly Action<GameEvent> _notify;
         private float _nextDreamEventNotice;
         private string _curseSyncedKey = "";
@@ -935,7 +942,6 @@ namespace SodRpg.Mod
         private string CurseKey() => "";
         private void SendCurseClear() { }
         private void NotifyPersonalDreamEvent() { }
-        private void PublishRunChoiceHistory() { }
         private void ClearVariants() { }
         private void ClearMonsterCues() { }
         private void ClearBossDisplay() { }

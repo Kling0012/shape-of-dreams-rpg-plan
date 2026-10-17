@@ -27,7 +27,8 @@ namespace SodRpg.Mod
         internal static bool RemoteHostHelloAnswered => _hostSession?._helloAnswered == true;
 
         /// <summary>ホストと版が違う／ホストから返事がないときの説明。問題なければ null。</summary>
-        public string HostVersionWarning { get; private set; }
+        private Txt _hostVersionWarning;
+        public string HostVersionWarning => _hostVersionWarning?.ToString();
 
         private void RegisterHello(Actor actor)
         {
@@ -68,8 +69,8 @@ namespace SodRpg.Mod
             _netLiteReceiveReady = false;
             _hostAutocastPressureCapability = false;
             _nextAutocastPressureReport = 0f;
-            _nextBuildInputProbe = 0f;
-            HostVersionWarning = null;
+            ResetHelloSchedule();
+            _hostVersionWarning = null;
             ResetOverflowBonusConnection();
             _sentContinueReceiptActor = null;
             _sentContinueReceiptRunId = _sentContinueReceiptCheckpointId = _sentContinueReceiptResumeSession = null;
@@ -128,8 +129,7 @@ namespace SodRpg.Mod
             // Record transport success before sending Build; failed receipts remain retryable.
             _clientRpcOn.CustomRpc_SendMessageToServer(CreateHelloMessage());
             float now = Time.unscaledTime;
-            if (_helloFirstSent < 0) _helloFirstSent = now;
-            _nextHello = now + 5f;
+            RecordHelloSchedule(now);
             _sentContinueReceiptActor = _clientRpcOn;
             _sentContinueReceiptRunId = _continueReceiptRunId;
             _sentContinueReceiptCheckpointId = _continueReceiptCheckpointId;
@@ -144,24 +144,13 @@ namespace SodRpg.Mod
             // ホスト自身はあいさつ不要（自分の版なので必ず一致する）。
             if (_clientRpcOn == null || !NetworkClient.active || NetworkServer.active) return;
             float now = Time.unscaledTime;
-            if (now >= _nextHello)
-            {
-                _clientRpcOn.CustomRpc_SendMessageToServer(CreateHelloMessage());
-                if (_helloAnswered)
-                    _clientRpcOn.CustomRpc_SendMessageToServer(new DreamforgeBuildInputCapabilityMsg
-                        { bountyCounts = _bountyCountsReady ? 1 : 0, netLite = _netLiteReceiveReady ? 1 : 0, roomOmens = _omenReceiveReady ? 1 : 0, forbiddenSmith = Forbidden.HasSmith(Profile) ? 1 : 0, nemesisGrudge = Profile.NemesisGrudge });
-                // CustomRpc ignores unknown optional types; only the binary pressure packet needs a reply first.
-                if (!_hostAutocastPressureCapability)
-                    _clientRpcOn.CustomRpc_SendMessageToServer(new DreamforgeAutocastPressureCapabilityMsg());
-                if (_helloFirstSent < 0) _helloFirstSent = now;
-                _nextHello = now + 5f;
-            }
+            TickHelloSchedule();
             // 未設定のときだけ作る。言語変更時も含め、ほかの経路が設定した警告文を上書きしない。
-            // 解除後も無応答なら、その時点の表示言語で作り直す（毎フレームの文字列確保を避ける）。
+            // 日英を保持し、表示時に解決する（毎フレームの文字列確保を避ける）。
             if (!_helloAnswered && _helloFirstSent >= 0 && now - _helloFirstSent > 20f
                 && HostVersionWarning == null)
             {
-                HostVersionWarning = Loc.T(
+                _hostVersionWarning = new Txt(
                     "ホストから Dreamforge の返事がありません。ホストがこの MOD の同じ版（" + HostAuthority.ModVersion + "）を入れているか確認してください。",
                     "No Dreamforge reply from the host. Make sure the host runs the same version of this mod (" + HostAuthority.ModVersion + ").");
             }
@@ -181,14 +170,14 @@ namespace SodRpg.Mod
             if (sameProtocol && sameContent && sameVersion && msg.continueCheckpoints)
             {
                 _hostCompatibilityWarned = false;
-                HostVersionWarning = null;
+                _hostVersionWarning = null;
             }
             else if (!_hostCompatibilityWarned)
             {
                 _hostCompatibilityWarned = true;
                 string theirs = string.IsNullOrEmpty(msg.modVer) ? "?" : msg.modVer;
                 // The host's own Infinity availability is shown by the lobby line, so only the shared items are listed here.
-                HostVersionWarning = Loc.T(
+                _hostVersionWarning = new Txt(
                     $"ホストの Dreamforge に差があります（{HostAuthority.DescribeDifferencesJa(sameProtocol, sameContent, sameVersion, msg.continueCheckpoints, true)}。版 {theirs}/{HostAuthority.ModVersion}、Protocol {msg.protocol}/{Protocol.Version}）。機能は続行します。",
                     $"The host's Dreamforge differs ({HostAuthority.DescribeDifferencesEn(sameProtocol, sameContent, sameVersion, msg.continueCheckpoints, true)}; version {theirs}/{HostAuthority.ModVersion}, protocol {msg.protocol}/{Protocol.Version}). Features continue.");
                 Log.Warn($"Client: compatibility warning: protocol {msg.protocol}/{Protocol.Version}, mod {theirs}/{HostAuthority.ModVersion}, contentEqual={sameContent}, continueCheckpoints={msg.continueCheckpoints}; features continue.");

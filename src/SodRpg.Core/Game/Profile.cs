@@ -126,6 +126,24 @@ namespace SodRpg.Core.Game
         private long _overflowDreamDustLedgerId;
         /// <summary>Native host ledger bound before enabling overflow bonus accrual.</summary>
         public long OverflowDreamDustLedgerId { get => _overflowDreamDustLedgerId; set => _overflowDreamDustLedgerId = Math.Max(0, value); }
+        /// <summary>このランで何番目の世界か（0始まり、未到達は -1）。本体の世界番号が0へ戻っても戻らない（担当外の減衰に使う）。</summary>
+        public int WorldIndex { get; set; } = -1;
+        /// <summary>WorldIndex を数えたときの本体の世界番号と世界名。再開時に同じ世界を二重に数えないための印。</summary>
+        public int WorldZoneIndex { get; set; } = -1;
+        public string WorldZoneName { get; set; }
+        /// <summary>Last Infinity segment included in WorldIndex; -1 for ordinary runs and legacy saves.</summary>
+        public long WorldInfinitySegment { get; set; } = -1;
+        private long _salvageDustEarned;
+        /// <summary>
+        /// この世界で分解（手動・鞄あふれの追加ダスト）から得たドリームダストの表示用の計数。
+        /// 上限の判定自体はホストの TradeAuthority が行う。世界が変わると 0 に戻す。
+        /// </summary>
+        public long SalvageDustEarned { get => _salvageDustEarned; set => _salvageDustEarned = Math.Max(0, value); }
+        /// <summary>計数が対応する世界の番号（0始まり。-1 はまだ世界を知らない）。保存・再開で保つ。</summary>
+        public int SalvageDustZoneIndex { get; set; } = -1;
+        private long _salvageDustOverflowPaidSeen;
+        /// <summary>追加ダストの支払い済み累計の最後に見た値（この世界への加算に使う。ラン全体の累計）。</summary>
+        public long SalvageDustOverflowPaidSeen { get => _salvageDustOverflowPaidSeen; set => _salvageDustOverflowPaidSeen = Math.Max(0, value); }
         /// <summary>遠征を始めた旅人。撃破がない遠征の精算にも使う。</summary>
         public string HeroKey { get; set; }
         /// <summary>同じ確保の繰り返しで星の経験を二重に得ないための印。</summary>
@@ -214,6 +232,13 @@ namespace SodRpg.Core.Game
                 Infinity = Infinity?.Clone(),
                 OverflowDreamDustTotal = OverflowDreamDustTotal,
                 OverflowDreamDustLedgerId = OverflowDreamDustLedgerId,
+                WorldIndex = WorldIndex,
+                WorldZoneIndex = WorldZoneIndex,
+                WorldZoneName = WorldZoneName,
+                WorldInfinitySegment = WorldInfinitySegment,
+                SalvageDustEarned = SalvageDustEarned,
+                SalvageDustZoneIndex = SalvageDustZoneIndex,
+                SalvageDustOverflowPaidSeen = SalvageDustOverflowPaidSeen,
                 HeroKey = HeroKey,
                 StarSecureRewarded = StarSecureRewarded,
                 Heat = Heat,

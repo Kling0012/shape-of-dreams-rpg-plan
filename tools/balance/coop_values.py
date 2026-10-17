@@ -8,8 +8,21 @@ PATH = ROOT / "tools/balance/coop.json"
 OUTPUT = ROOT / "src/SodRpg.Core/Game/Balance/Coop.Generated.cs"
 
 
-def render_outputs():
-    data = read_json(PATH)
+def help_decay_percent_by_world(value):
+    """Validate the per-world helper damage decay (percent, one entry per world in run order)."""
+    path = "coop.ownership.helpDecayPercentByWorld"
+    if not isinstance(value, list) or not value:
+        raise ValueError(path + ": expected a non-empty list")
+    for index, percent in enumerate(value):
+        if type(percent) is not int or not 0 <= percent <= 100:
+            raise ValueError(f"{path}[{index}]: expected an integer percent from 0 to 100")
+        if index > 0 and percent < value[index - 1]:
+            raise ValueError(f"{path}[{index}]: expected a non-decreasing list")
+    return value
+
+
+def render_outputs(data=None):
+    data = read_json(PATH) if data is None else data
     fields = (("fullRange", "FullRange"), ("outerRange", "OuterRange"),
               ("graceSeconds", "GraceSeconds"),
               ("rangeToSpeedMultiplier", "RangeToSpeedMultiplier"),
@@ -36,16 +49,10 @@ def render_outputs():
     if data["outerRange"] <= data["fullRange"] or data["meleeGuardReductionPercent"] >= 100:
         raise ValueError("coop: invalid distance or reduction")
     difficulty = data["difficulty"]
-    difficulty_fields = (("nativeHealthBonusFactor", "NativeHealthBonusFactor"),
-                         ("nativeHealthBonusMaximum", "NativeHealthBonusMaximum"),
-                         ("nativePowerBonusFactor", "NativePowerBonusFactor"),
+    difficulty_fields = (("nativePowerBonusFactor", "NativePowerBonusFactor"),
                          ("nativePowerBonusMaximum", "NativePowerBonusMaximum"),
-                         ("healthPressureShare", "HealthPressureShare"),
-                         ("healthPressureMaximum", "HealthPressureMaximum"),
                          ("damagePressureShare", "DamagePressureShare"),
-                         ("damagePressureMaximum", "DamagePressureMaximum"),
-                         ("enemyCountMaximumBonus", "EnemyCountMaximumBonus"),
-                         ("dynamicMaximumFactor", "DynamicMaximumFactor"))
+                         ("damagePressureMaximum", "DamagePressureMaximum"))
     if not isinstance(difficulty, dict) or set(difficulty) != {key for key, _ in difficulty_fields}:
         raise ValueError("coop.difficulty: invalid schema")
     lines += ["", "        public static class Difficulty", "        {"]
@@ -53,31 +60,35 @@ def render_outputs():
         value = difficulty[key]
         if type(value) not in (int, Decimal) or not 0 < value <= 100:
             raise ValueError("coop.difficulty." + key + ": expected positive number <= 100")
-        if key.endswith(("Factor", "Share")) and key != "dynamicMaximumFactor" and value > 1:
+        if key.endswith(("Factor", "Share")) and value > 1:
             raise ValueError("coop.difficulty." + key + ": expected fraction <= 1")
-        if key in ("healthPressureMaximum", "damagePressureMaximum", "dynamicMaximumFactor") and value < 1:
+        if key == "damagePressureMaximum" and value < 1:
             raise ValueError("coop.difficulty." + key + ": expected multiplier >= 1")
         lines.append(f"            public const double {name} = {value:g}d;")
     lines += ["        }"]
     ownership = data["ownership"]
-    owner_fields = (("firstWorldHelpFactor", "FirstWorldHelpFactor"),
-                    ("secondWorldHelpFactor", "SecondWorldHelpFactor"),
-                    ("helpFactor", "HelpFactor"), ("bossShareFactor", "BossShareFactor"),
+    owner_fields = (("bossShareFactor", "BossShareFactor"),
                     ("bossDamageMin", "BossDamageMin"), ("bossDamageMax", "BossDamageMax"),
                     ("rescueHp", "RescueHp"), ("engageWindow", "EngageWindow"),
                     ("spawnGrace", "SpawnGrace"), ("detectionMultiplier", "DetectionMultiplier"),
                     ("reassignCooldown", "ReassignCooldown"), ("downDelay", "DownDelay"),
                     ("releaseDistance", "ReleaseDistance"), ("awaySeconds", "AwaySeconds"),
                     ("idleSeconds", "IdleSeconds"))
-    if not isinstance(ownership, dict) or set(ownership) != {key for key, _ in owner_fields}:
+    if not isinstance(ownership, dict) or set(ownership) != {"helpDecayPercentByWorld", *(key for key, _ in owner_fields)}:
         raise ValueError("coop.ownership: invalid schema")
-    lines += ["", "        public static class Ownership", "        {"]
+    decay = help_decay_percent_by_world(ownership["helpDecayPercentByWorld"])
+    lines += ["", "        public static class Ownership", "        {",
+              "            // Damage lost on another player's enemy, by the run's 0-based world order; the last entry repeats.",
+              f"            public const int HelpDecayWorlds = {len(decay)};",
+              "            public static int HelpDecayPercent(int world)", "            {",
+              "                switch (world < 0 ? 0 : world)", "                {"]
+    for index, percent in enumerate(decay[:-1]):
+        lines.append(f"                    case {index}: return {percent};")
+    lines += [f"                    default: return {decay[-1]};", "                }", "            }"]
     for key, name in owner_fields:
         value = ownership[key]
         if type(value) not in (int, Decimal) or not 0 < value <= 100:
             raise ValueError("coop.ownership." + key + ": expected positive number <= 100")
-        if key in ("firstWorldHelpFactor", "secondWorldHelpFactor", "helpFactor") and value > 1:
-            raise ValueError("coop.ownership." + key + ": expected fraction <= 1")
         if key == "rescueHp" and value >= 1:
             raise ValueError("coop.ownership." + key + ": expected fraction < 1")
         lines.append(f"            public const float {name} = {value:g}f;")
@@ -85,22 +96,27 @@ def render_outputs():
     dynamic = data["dynamicDifficulty"]
     dynamic_fields = (("activeBucketSeconds", "ActiveBucketSeconds"), ("targetSeconds", "TargetSeconds"),
                       ("alpha", "Alpha"), ("alphaDown", "AlphaDown"), ("strength", "Strength"),
-                      ("minFactor", "MinFactor"), ("maxFactor", "MaxFactor"),
+                      ("minFactor", "MinFactor"), ("rewardMaxMultiplier", "RewardMaxMultiplier"),
+                      ("safetyMaxFactor", "SafetyMaxFactor"),
                       ("minActiveSeconds", "MinActiveSeconds"), ("minRooms", "MinRooms"),
                       ("damageExponent", "DamageExponent"), ("rewardShare", "RewardShare"))
     if not isinstance(dynamic, dict) or set(dynamic) != {"heroTargetScale", *(key for key, _ in dynamic_fields)}:
         raise ValueError("coop.dynamicDifficulty: invalid schema")
     for key, name in dynamic_fields:
         value = dynamic[key]
-        if type(value) not in (int, Decimal) or not 0 < value <= 100:
-            raise ValueError("coop.dynamicDifficulty." + key + ": expected positive number <= 100")
+        maximum = 1000000 if key == "safetyMaxFactor" else 100
+        if type(value) not in (int, Decimal) or not 0 < value <= maximum:
+            raise ValueError("coop.dynamicDifficulty." + key + f": expected positive number <= {maximum}")
+        if key == "safetyMaxFactor":
+            lines.append("            // Numeric overflow guard for factors and float HP, not a balance cap.")
         if key in ("alpha", "alphaDown", "strength", "damageExponent", "rewardShare") and value > 1:
             raise ValueError("coop.dynamicDifficulty." + key + ": expected fraction <= 1")
         if key == "minRooms" and (type(value) is not int or value < 1):
             raise ValueError("coop.dynamicDifficulty.minRooms: expected positive integer")
         kind, suffix = ("int", "") if key == "minRooms" else ("double", "d")
         lines.append(f"            public const {kind} {name} = {value:g}{suffix};")
-    if not dynamic["minFactor"] <= 1 <= dynamic["maxFactor"] or dynamic["alphaDown"] < dynamic["alpha"]:
+    if (dynamic["minFactor"] > 1 or dynamic["rewardMaxMultiplier"] < 1
+            or dynamic["safetyMaxFactor"] < 1000 or dynamic["alphaDown"] < dynamic["alpha"]):
         raise ValueError("coop.dynamicDifficulty: invalid bounds or downward weight")
     heroes = dynamic["heroTargetScale"]
     expected = {"Hero_" + name for name in ("Aurena", "Bismuth", "Cetus", "Husk", "Lacerta", "Mist", "Nachia", "Vesper", "Yubar")}

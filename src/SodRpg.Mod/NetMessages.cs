@@ -144,6 +144,42 @@ namespace SodRpg.Mod
         public int factor;
     }
 
+    /// <summary>ホスト → 全員：動的難易度と担当外の減衰の現在の状況（メニューの表示用、#700）。</summary>
+    [Serializable]
+    public sealed class DynamicDifficultyStatus
+    {
+        internal const int Off = 1, SoloOff = 2, On = 3;
+        // 0 means not sent: older hosts omit the object (or a serializer fills its defaults).
+        public long revision;
+        public int state;
+        // The run's 0-based world order (never restarts within a run); -1 outside a run.
+        public int world;
+        public int decayPercent;
+        // Stage table from coop.json; the last entry applies to every later world.
+        public int[] decayByWorld;
+        // Thousandths of the host's damageExponent and rewardShare.
+        public int damageExponent, rewardShare;
+
+        internal bool Valid()
+        {
+            if (revision <= 0 || state < Off || state > On || world < -1 || decayPercent < 0 || decayPercent > 100
+                || damageExponent < 0 || damageExponent > 1000 || rewardShare < 0 || rewardShare > 1000
+                || decayByWorld == null || decayByWorld.Length < 1 || decayByWorld.Length > 32) return false;
+            foreach (int percent in decayByWorld) if (percent < 0 || percent > 100) return false;
+            return true;
+        }
+
+        internal bool SameAs(DynamicDifficultyStatus other)
+        {
+            if (other == null || state != other.state || world != other.world || decayPercent != other.decayPercent
+                || damageExponent != other.damageExponent || rewardShare != other.rewardShare
+                || decayByWorld?.Length != other.decayByWorld?.Length) return false;
+            for (int i = 0; decayByWorld != null && i < decayByWorld.Length; i++)
+                if (decayByWorld[i] != other.decayByWorld[i]) return false;
+            return true;
+        }
+    }
+
     internal readonly struct MonsterOwnership
     {
         internal readonly string ParticipantId;
@@ -198,6 +234,8 @@ namespace SodRpg.Mod
         public BossShareDisplay[] bossShares;
         public DynamicDifficultyDisplay[] dynamicDifficulty;
         public long dynamicRevision;
+        // Additive (#700): only the netId 0 roster message carries it.
+        public DynamicDifficultyStatus dynamicStatus;
     }
 
     /// <summary>ホスト → 全員：この敵が夢の変種になった（Core の変種ID）。</summary>
@@ -328,6 +366,11 @@ namespace SodRpg.Mod
         public int fusionInput;
         // Optional JSON field; absent/zero peers keep receiving single-event reports.
         public int bountyCounts;
+        public int stateSnapshots;
+        public int dynamicRoster;
+        public int helloSchedule;
+        public int killReceiptDelta;
+        public int autocastPressure;
     }
 
     // Optional extension: Hello and every existing packet remain unchanged (Protocol 24).
@@ -338,6 +381,7 @@ namespace SodRpg.Mod
         public bool enabled;
         public string runId;
         public long ledgerId, total;
+        public int blockedWorldAck;
     }
 
     [Serializable]
@@ -347,6 +391,8 @@ namespace SodRpg.Mod
         public bool available;
         public string runId;
         public long ledgerId, paid;
+        public bool worldBlocked;
+        public int blockedWorld;
     }
 
     [Serializable]
@@ -356,5 +402,17 @@ namespace SodRpg.Mod
         public string runId;
         public int generation;
         public int dreamEvent;
+    }
+
+    /// <summary>
+    /// クライアント → ホスト：自分のキャラのスキルが、手元では長く使えないままになっているので、
+    /// 権威のある値（チャージ・クールダウン・最低遅延）の再送を頼む（docs/specs/guest-skill-lock.md）。
+    /// この型を送るのは同じ MOD を積んだ参加者だけで、受け取らないホストは単に無視する。
+    /// </summary>
+    [Serializable]
+    public class DreamforgeSkillResyncMsg
+    {
+        public int version = 1;
+        public uint heroNetId;
     }
 }

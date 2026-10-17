@@ -36,10 +36,7 @@ namespace SodRpg.Mod
                     if (player != null && player.isHumanPlayer && ++participants >= 2) break;
                 if (participants >= 2)
                 {
-                    // This exact native bonus contains only multiplayer HP and power, not Limbo/nightmare stats.
-                    bonus.maxHealthPercentage = (float)Math.Min(bonus.maxHealthPercentage,
-                        Math.Min(CoopBalance.Difficulty.NativeHealthBonusMaximum,
-                            bonus.maxHealthPercentage * CoopBalance.Difficulty.NativeHealthBonusFactor));
+                    // This native bonus contains only multiplayer HP and power; retain its full HP bonus.
                     bonus.attackDamagePercentage = (float)Math.Min(bonus.attackDamagePercentage,
                         Math.Min(CoopBalance.Difficulty.NativePowerBonusMaximum,
                             bonus.attackDamagePercentage * CoopBalance.Difficulty.NativePowerBonusFactor));

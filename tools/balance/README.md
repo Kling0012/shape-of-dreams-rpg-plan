@@ -14,11 +14,17 @@
 段階3では鍛冶の残りを `forge.json`（schemaVersion 2）へ集約しました。
 保存済みの履歴番号・旧覚醒段・退役工房の返金原本は変更しません。
 
-## 協力プレイの難度（Issue #601）
+## 協力プレイの難度（Issue #601・PR #694）
 
-`coop.json` の `difficulty` が、協力時の本体人数ボーナスの緩和、夢の圧の増分と上限、圧由来の敵数上限、自動難易度Dの上限を持ちます。`ownership.bossShareFactor` は参加者の個人圧を合計したボスHPの係数です。`python tools/balance/gen_cs.py` で `Coop.Generated.cs` を再生成します。ソロの `pressure.json` と任意のソロD設定は維持します。
+Issue #601の最新コメントに従い、HP・敵数は#673より前の式、攻撃・魔力は#673の緩和を使います。HPの圧は `pressure.json` の共通式で、増分65%・上限8倍の補正はありません。圧による敵数の上限は5倍、`ownership.bossShareFactor` は0.8、本体の人数による追加HPは本体の値です。
 
-`BalanceSim --mode pressure` の `pressure/coop` 行で1／2／4人の戦闘倍率と報酬倍率を比較できます。調整式、変更前後の比較、本体Limboとの関係は[調整資料](../../docs/specs/issue-601-coop-difficulty.md)を参照してください。
+`coop.json` の `difficulty` には攻撃関連の4項目だけを置きます。人間2人以上では、深度・道標・Infinity適用後の攻撃の圧の増分を `damagePressureShare=0.5` 倍にし、`damagePressureMaximum=2` 倍で止めます。本体の人数による追加攻撃・魔力は `nativePowerBonusFactor=0.5` 倍、`nativePowerBonusMaximum=15`%までです。ソロ・HP・報酬・悪夢化率にはこの補正を掛けません。
+
+2026-10-17に動的難易度Dのバランス上の上限を外しました。大きなダメージを出すほど、次の部屋の敵を強化します。報酬上限は独立した `dynamicDifficulty.rewardMaxMultiplier=2.0` で定め、従来どおり最大×2です。`dynamicDifficulty.safetyMaxFactor=1000000` はInfinity・NaNやfloatのHPの桁あふれを防ぐためだけの安全装置で、バランス上の上限ではありません。生成器は `minFactor <= 1`、`rewardMaxMultiplier >= 1`、`1000 <= safetyMaxFactor <= 1000000` を検証します。
+
+2026-10-18に動的難易度を少し易しくしました。`dynamicDifficulty.strength` を0.5から0.4へ下げ、強さの差を埋める割合を半分から4割にしました。敵の攻撃に掛ける指数 `dynamicDifficulty.damageExponent` も0.25から0.2へ下げました。上限なしと報酬上限×2は変えていません。
+
+担当外のダメージ減衰は#701の `ownership.helpDecayPercentByWorld=[0,30,60,90]` を維持しています。`python3 tools/balance/gen_cs.py` で `Coop.Generated.cs` を再生成します。BalanceSimの `pressure/coop` 比較行は撤回し、`pressure/player` の共通式の列挙を残しました。撤回前後の倍率と検証範囲は[調整資料](../../docs/specs/issue-601-coop-difficulty.md)を参照してください。
 
 ## 本体エッセンスと記憶の循環抑制
 
@@ -533,6 +539,12 @@ F2はVesper閾値11%HP、Cetus閾値9%HP、Mist入口cap60、
 全プレイヤー・全深度の到達保証ではなく、守り重視など行動仮定を変えると結果は変わります。
 鍛錬は遠征ごとにリセットされるため、更新は帰還後・次遠征から適用してください。
 旧スタックを新定義へ復元する遠征中更新は安全な移行とは扱いません。
+
+2026-10-17にケトゥスの「障壁の積み重ね」（`cetus.run.g1`）の蓄積上限をなくしました。
+`growth/cap = 0` は上限なしを表し、ほかの旅人の上限は1〜500のままです。
+「凍てつく層」と「砕けぬ氷膜」は、それぞれ鍛錬の効果を25%増やします。
+閾値9%HP、1スタックの効果量、選択肢は変更していません。
+加算は整数の桁あふれを防ぐために `int.MaxValue` で止め、保存・協力プレイの同期でも蓄積数を保持します。
 
 ゲーム起動時にJSON・Python・ファイルハッシュは使いません。値は生成済み定数／星定義で、
 戦闘中の文字列キー検索はありません。位階はBuildの再集計時に計算します。

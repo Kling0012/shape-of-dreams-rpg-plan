@@ -11,7 +11,7 @@ namespace SodRpg.Mod
         {
             internal string RunId;
             internal long LedgerId, Total;
-            internal bool Pending, Disabled;
+            internal bool Pending, Disabled, BlockedWorldAck;
             internal int GrantFrame = -1;
             internal readonly DreamforgeOverflowBonusResultMsg Reply = new DreamforgeOverflowBonusResultMsg();
         }
@@ -50,6 +50,7 @@ namespace SodRpg.Mod
                     if (_overflowBonusPeers.Count >= SodRpg.Core.Game.TradeAuthority.MaxTrackedPlayers) return;
                     _overflowBonusPeers.Add(caller, peer = new OverflowBonusPeer());
                 }
+                peer.BlockedWorldAck = msg.blockedWorldAck == 1;
                 if (msg.version != 1 || msg.total < 0 || _overflowBonusDisabled)
                 {
                     ReplyOverflowBonus(caller, peer, false);
@@ -147,34 +148,41 @@ namespace SodRpg.Mod
                 }
                 if (delta > 0)
                 {
-                    int before = owner.dreamDust;
-                    peer.GrantFrame = Time.frameCount; // Set before native callbacks; never grant twice in one frame.
-                    try
+                    // 世界ごとの分解ダストの上限に合わせて支払いを削る。残りが無ければ支払わず、
+                    // 未払いの累計はそのまま残す（世界が変わればまた支払える）。
+                    long remaining = _tradeAuthority.ZoneDustRemaining(key, peer.RunId, TradeZoneIndex(), SalvageScaleFor(owner));
+                    int grant = (int)Math.Min(delta, remaining);
+                    if (grant > 0)
                     {
-                        owner.EarnDreamDust(delta); // One AddDreamDust + one native earned RPC per owner/frame.
-                        if (owner.dreamDust - (long)before != delta)
-                            throw new InvalidOperationException("Unexpected native Dream Dust balance.");
-                        if (_tradeAuthority.CommitOverflowBonus(key, peer.RunId, peer.Total, peer.LedgerId) != peer.Total)
-                            throw new InvalidOperationException("Overflow bonus receipt changed during native grant.");
-                    }
-                    catch (Exception ex)
-                    {
-                        // Mutation precedes RPC/callbacks. Exact payment is committed even if a later callback
-                        // throws, and an exactly settled balance proves the native outcome: a subscriber/RPC
-                        // callback throwing after the mutation is not a currency failure, so the optional bonus
-                        // must keep working for the rest of the session.
-                        // Partial/ambiguous native changes must never be retried against a possibly paid balance.
-                        if (owner.dreamDust - (long)before == delta)
+                        int before = owner.dreamDust;
+                        peer.GrantFrame = Time.frameCount; // Set before native callbacks; never grant twice in one frame.
+                        try
                         {
-                            _tradeAuthority.CommitOverflowBonus(key, peer.RunId, peer.Total, peer.LedgerId);
-                            Log.Warn("Overflow bonus settled exactly but a native callback threw; the bonus continues: " + ex.Message);
+                            owner.EarnDreamDust(grant); // One AddDreamDust + one native earned RPC per owner/frame.
+                            if (owner.dreamDust - (long)before != grant)
+                                throw new InvalidOperationException("Unexpected native Dream Dust balance.");
+                            if (_tradeAuthority.CommitOverflowBonusGrant(key, peer.RunId, peer.Total, grant, peer.LedgerId) < 0)
+                                throw new InvalidOperationException("Overflow bonus receipt changed during native grant.");
                         }
-                        else
+                        catch (Exception ex)
                         {
-                            peer.Disabled = true;
-                            _tradeAuthority.BlockOverflowBonus(key, peer.RunId, peer.LedgerId);
-                            _overflowBonusDisabled = true;
-                            Log.Warn("Overflow bonus native grant failed; only extra Dream Dust is disabled: " + ex.Message);
+                            // Mutation precedes RPC/callbacks. Exact payment is committed even if a later callback
+                            // throws, and an exactly settled balance proves the native outcome: a subscriber/RPC
+                            // callback throwing after the mutation is not a currency failure, so the optional bonus
+                            // must keep working for the rest of the session.
+                            // Partial/ambiguous native changes must never be retried against a possibly paid balance.
+                            if (owner.dreamDust - (long)before == grant)
+                            {
+                                _tradeAuthority.CommitOverflowBonusGrant(key, peer.RunId, peer.Total, grant, peer.LedgerId);
+                                Log.Warn("Overflow bonus settled exactly but a native callback threw; the bonus continues: " + ex.Message);
+                            }
+                            else
+                            {
+                                peer.Disabled = true;
+                                _tradeAuthority.BlockOverflowBonus(key, peer.RunId, peer.LedgerId);
+                                _overflowBonusDisabled = true;
+                                Log.Warn("Overflow bonus native grant failed; only extra Dream Dust is disabled: " + ex.Message);
+                            }
                         }
                     }
                 }
@@ -189,6 +197,8 @@ namespace SodRpg.Mod
             reply.available = true;
             reply.runId = null;
             reply.ledgerId = reply.paid = 0;
+            reply.worldBlocked = false;
+            reply.blockedWorld = -1;
             if (owner == DewPlayer.local) ClientSession.ReceiveLocalOverflowBonus(reply);
             else _registeredOn?.CustomRpc_SendMessageToClient(owner, reply);
         }
@@ -200,6 +210,10 @@ namespace SodRpg.Mod
             reply.runId = peer.RunId;
             reply.ledgerId = peer.LedgerId;
             reply.paid = _tradeAuthority.OverflowBonusPaid(TradePlayerKey(owner), peer.RunId);
+            reply.blockedWorld = TradeZoneIndex();
+            reply.worldBlocked = peer.BlockedWorldAck && available && reply.blockedWorld >= 0
+                && peer.RunId == TradeRunId() && peer.Total > reply.paid
+                && _tradeAuthority.ZoneDustRemaining(TradePlayerKey(owner), peer.RunId, reply.blockedWorld, SalvageScaleFor(owner)) == 0;
             if (owner == DewPlayer.local) ClientSession.ReceiveLocalOverflowBonus(reply);
             else _registeredOn?.CustomRpc_SendMessageToClient(owner, reply);
         }

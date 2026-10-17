@@ -13,6 +13,7 @@ namespace SodRpg.Mod
         internal string CoopTradeJournalPath;
         private readonly List<CoopTradePeer> _coopPeers = new List<CoopTradePeer>();
         private readonly BuildTransferReceiver _coopTransfer = new BuildTransferReceiver(CoopTradeTransport.MaxProfileChars);
+        private readonly CoopTradeSendQueue _coopSendQueue = new CoopTradeSendQueue();
         private NetworkConnection _coopConnection;
         private GameSettingsManager _coopSettings;
         private string _coopAdvertisement;
@@ -78,8 +79,8 @@ namespace SodRpg.Mod
         internal static void ReceiveLocalCoopTrade(DreamforgeCoopTradeState state) => _hostSession?.OnCoopTradeState(state);
         public IReadOnlyList<CoopTradePeer> CoopTradePeers => _coopPeers;
         public CoopTradeView CoopTrade { get; private set; }
-        private string _coopTradeWarning, _coopConnectionWarning;
-        public string CoopTradeWarning { get => _coopTradeWarning ?? _coopConnectionWarning; private set => _coopTradeWarning = value; }
+        private Txt _coopTradeWarning, _coopConnectionWarning;
+        public string CoopTradeWarning => (_coopTradeWarning ?? _coopConnectionWarning)?.ToString();
         public bool CoopTradeOfferPending => _coopPendingOffer != null;
         public bool CoopTradeLocked => _coopSettlementUnsaved
             || !CoopPendingStale && (Profile.CoopTradePending != null || CoopTrade?.OwnConfirmed == true || CoopTrade?.Preparing == true);
@@ -169,6 +170,7 @@ namespace SodRpg.Mod
                 DiagnoseCoopTrade("connection-changed", onlyWhenActive: true);
                 _coopConnection = connection;
                 _coopTransfer.Reset();
+                _coopSendQueue.Reset();
                 _coopPeers.Clear();
                 CoopTrade = null;
                 _coopFrozenProfile = null;
@@ -176,7 +178,7 @@ namespace SodRpg.Mod
                 _coopOfferInFlight = null;
                 _nextCoopOfferRetry = 0;
                 _coopDisabled = false;
-                CoopTradeWarning = null;
+                _coopTradeWarning = null;
                 _coopHostKey = null;
                 _coopHostFusion = false;
                 _coopPrepareSaveRevision = 0;
@@ -209,7 +211,7 @@ namespace SodRpg.Mod
         private void ReceiveCoopPacket(DreamforgeCoopTradeDown packet)
         {
             try { OnCoopTradeState(CoopTradeTransport.Decode<DreamforgeCoopTradeState>(packet.Json)); }
-            catch (CoopSendException ex) { CoopTradeWarning = ex.Message; }
+            catch (CoopSendException ex) { _coopTradeWarning = new Txt(ex.Message, ex.Message); }
             catch (Exception ex) { DisableCoopTrade(ex); }
         }
 
@@ -237,7 +239,7 @@ namespace SodRpg.Mod
                         DiagnoseCoopTrade("settlement-saved");
                         _coopSettlementUnsaved = false;
                         CoopTrade = null;
-                        CoopTradeWarning = null;
+                        _coopTradeWarning = null;
                         ProfileChanged?.Invoke();
                     }
                     return;
@@ -245,7 +247,7 @@ namespace SodRpg.Mod
                 if (_coopConnection == null || _coopDisabled) return;
                 if (!NetworkServer.active && Time.unscaledTime - _coopAdvertisementAt > 10f)
                 {
-                    _coopConnectionWarning = Loc.T("ホストがトレード非対応、または応答がありません。トレードのみ利用できません。",
+                    _coopConnectionWarning ??= new Txt("ホストがトレード非対応、または応答がありません。トレードのみ利用できません。",
                         "The host does not support trade or has not replied. Only trade is unavailable.");
                     if (Time.unscaledTime >= _nextCoopProbe)
                     {
@@ -263,6 +265,7 @@ namespace SodRpg.Mod
                     CoopTrade = null;
                     _coopFrozenProfile = null;
                 }
+                FlushCoopPayloads();
                 RetryCoopOffer();
                 if (Time.unscaledTime < _nextCoopProbe) return;
                 _nextCoopProbe = Time.unscaledTime + 5f;
@@ -282,8 +285,8 @@ namespace SodRpg.Mod
                 var pending = Profile.CoopTradePending;
                 if (pending != null)
                 {
-                    if (string.IsNullOrEmpty(_coopTradeWarning))
-                        CoopTradeWarning = Loc.T("取引結果を照会中です。予約品は成立または中止が確認できるまで保持します。",
+                    if (string.IsNullOrEmpty(_coopTradeWarning?.ToString()))
+                        _coopTradeWarning = new Txt("取引結果を照会中です。予約品は成立または中止が確認できるまで保持します。",
                             "Checking the trade result. Reserved assets remain held until commit or cancellation is confirmed.");
                     if (_coopHostKey == pending.HostKey)
                     {
@@ -306,14 +309,14 @@ namespace SodRpg.Mod
                         SendCoop(new DreamforgeCoopTradeCommand { action = CoopPendingStale ? "cancel" : "query", id = pending.Id });
                     }
                     else if (_coopHostKey != null)
-                        CoopTradeWarning = Loc.T("予約品の確認には元のホストへ再接続してください。トレード以外は続行できます。",
+                        _coopTradeWarning = new Txt("予約品の確認には元のホストへ再接続してください。トレード以外は続行できます。",
                             "Reconnect to the original host to settle reserved assets. Other features remain available.");
                 }
                 else if (!NetworkServer.active && Time.unscaledTime - _coopAnsweredAt > 20f)
-                    _coopConnectionWarning = Loc.T("ホストがトレード非対応、または応答がありません。トレードのみ利用できません。",
+                    _coopConnectionWarning ??= new Txt("ホストがトレード非対応、または応答がありません。トレードのみ利用できません。",
                         "The host does not support trade or has not replied. Only trade is unavailable.");
             }
-            catch (CoopSendException ex) { CoopTradeWarning = ex.Message; }
+            catch (CoopSendException ex) { _coopTradeWarning = new Txt(ex.Message, ex.Message); }
             catch (Exception ex) { DisableCoopTrade(ex); }
         }
 
@@ -322,7 +325,7 @@ namespace SodRpg.Mod
             DiagnoseCoopTrade("client-failure");
             _coopDisabled = true;
             _nextCoopProbe = Time.unscaledTime + 5f;
-            CoopTradeWarning = Loc.T("トレードのみ停止しました：", "Only trade has been disabled: ") + ex.Message;
+            _coopTradeWarning = new Txt("トレードのみ停止しました：" + ex.Message, "Only trade has been disabled: " + ex.Message);
             Log.Error("Coop trade: " + ex);
         }
 
@@ -333,6 +336,11 @@ namespace SodRpg.Mod
 
         private void SendCoop(DreamforgeCoopTradeCommand command)
         {
+            if (command.action == "cancel")
+            {
+                _coopSendQueue.Reset();
+                _coopOfferInFlight = null;
+            }
             // Serialization errors are data failures; delivery errors leave the outcome unknown.
             string json = NetworkServer.active ? null : CoopTradeTransport.Encode(command);
             try
@@ -357,6 +365,33 @@ namespace SodRpg.Mod
             return ProfileCodec.WriteCheckpointProfile(copy);
         }
 
+        private void FlushCoopPayloads()
+        {
+            if (!_coopSendQueue.Pending || !_coopSendQueue.BeginFlush()) return;
+            string offer = _coopOfferInFlight;
+            bool queuedOffer = offer != null && _coopSendQueue.Contains(offer);
+            try
+            {
+                while (_coopSendQueue.TryPeek(out string partJson))
+                {
+                    if (NetworkServer.active)
+                        HostAuthority.NativeInstance?.ReceiveCoopTrade(CoopTradeTransport.Decode<DreamforgeCoopTradeCommand>(partJson), DewPlayer.local);
+                    else NetworkClient.Send(new DreamforgeCoopTradeUp { Json = partJson });
+                    _coopSendQueue.Sent();
+                }
+                if (queuedOffer && offer == _coopOfferInFlight && !_coopSendQueue.Contains(offer))
+                    _coopOfferSentAt = Time.unscaledTime;
+            }
+            catch (Exception ex)
+            {
+                _coopSendQueue.Reset();
+                _coopOfferInFlight = null;
+                _nextCoopOfferRetry = Time.unscaledTime + 5f;
+                throw new CoopSendException(ex);
+            }
+            finally { _coopSendQueue.EndFlush(); }
+        }
+
         private void SendCoopProfile(string action, CoopTradeOffer offer)
         {
             string fusionReason = CoopTradeRules.ValidateFusion(Profile, offer, _coopHostFusion && CoopTrade.PartnerFusion);
@@ -364,41 +399,26 @@ namespace SodRpg.Mod
             string snapshot = CoopSnapshot(Profile);
             string wireSnapshot = _coopHostFusion ? snapshot : ProfileCodec.WithoutFusionForLegacyTrade(snapshot);
             string encoded = Convert.ToBase64String(Encoding.UTF8.GetBytes(wireSnapshot));
-            var parts = BuildTransfer.Split(encoded, CoopTradeTransport.MaxProfileChars);
+            string id = CoopTrade.Id;
+            int revision = CoopTrade.Revision;
+            string transferId = _coopSendQueue.Enqueue(new DreamforgeCoopTradeCommand
+            {
+                action = action, id = id, revision = revision, offer = CoopTradeCodec.WriteOffer(offer), safe = CoopLocalSafe,
+            }, encoded);
             if (action == "offer")
             {
-                _coopOfferInFlight = parts[0].TransferId;
+                _coopOfferInFlight = transferId;
                 _coopOfferSentAt = Time.unscaledTime;
             }
             if (action == "confirm") _coopFrozenProfile = snapshot;
-            string serializedOffer = CoopTradeCodec.WriteOffer(offer);
-            string id = CoopTrade.Id;
-            int revision = CoopTrade.Revision;
-            DiagnoseCoopTrade(action == "confirm" ? "confirm-send" : "offer-send", id, revision);
-            try
-            {
-                foreach (var part in parts)
-                    SendCoop(new DreamforgeCoopTradeCommand
-                    {
-                        action = action, id = id, revision = revision, offer = serializedOffer, safe = CoopLocalSafe,
-                        data = part.Data, transferId = part.TransferId, index = part.Index,
-                        count = part.Count, totalLength = part.TotalLength,
-                    });
-            }
-            catch
-            {
-                if (action == "offer")
-                {
-                    _coopOfferInFlight = null;
-                    _nextCoopOfferRetry = Time.unscaledTime + 5f;
-                }
-                throw;
-            }
+            DiagnoseCoopTrade(action == "confirm" ? "confirm-queued" : "offer-queued", id, revision);
+            FlushCoopPayloads();
         }
 
         private void RetryCoopOffer()
         {
-            if (_coopOfferInFlight != null && Time.unscaledTime - _coopOfferSentAt >= 5f)
+            if (_coopOfferInFlight != null && !_coopSendQueue.Contains(_coopOfferInFlight)
+                && Time.unscaledTime - _coopOfferSentAt >= 5f)
                 _coopOfferInFlight = null;
             if (_coopPendingOffer == null || _coopOfferInFlight != null || Time.unscaledTime < _nextCoopOfferRetry
                 || CoopTrade == null || !CoopTrade.Accepted || CoopTrade.Preparing) return;
@@ -406,7 +426,7 @@ namespace SodRpg.Mod
             if (!CanCoopTrade) return;
             // New transfer ID, latest host revision: stale ACKs cannot confirm an unsent edit.
             try { SendCoopProfile("offer", _coopPendingOffer); }
-            catch (Exception ex) { CoopTradeWarning = ex.Message; }
+            catch (Exception ex) { _coopTradeWarning = new Txt(ex.Message, ex.Message); }
         }
 
         public string RequestCoopTrade(string key)
@@ -479,10 +499,10 @@ namespace SodRpg.Mod
                             Ready = msg.ready == null || msg.ready.Length != msg.keys.Length || msg.ready[i],
                         });
                     if (Profile.CoopTradePending == null && !_coopSettlementUnsaved && !string.IsNullOrEmpty(msg.status))
-                        CoopTradeWarning = msg.LocalizedStatus();
+                        _coopTradeWarning = msg.StatusText();
                     return;
                 }
-                if (msg.kind == "error") { DiagnoseCoopTrade("host-error"); CoopTradeWarning = msg.LocalizedStatus(); return; }
+                if (msg.kind == "error") { DiagnoseCoopTrade("host-error"); _coopTradeWarning = msg.StatusText(); return; }
                 if (msg.kind == "cancelled")
                 {
                     DiagnoseCoopTrade("cancelled-received", msg.id, msg.revision);
@@ -494,10 +514,11 @@ namespace SodRpg.Mod
                         CompleteCoopSettlement();
                     }
                     if (CoopTrade?.Id == msg.id) CoopTrade = null;
+                    _coopSendQueue.Reset();
                     _coopPendingOffer = null;
                     _coopOfferInFlight = null;
                     _coopFrozenProfile = null;
-                    CoopTradeWarning = msg.LocalizedStatus();
+                    _coopTradeWarning = msg.StatusText();
                     return;
                 }
                 if (msg.kind == "view")
@@ -506,6 +527,7 @@ namespace SodRpg.Mod
                     if (CoopTrade != null && CoopTrade.Id == msg.id && msg.revision < CoopTrade.Revision) return;
                     if (CoopTrade?.Id != msg.id)
                     {
+                        _coopSendQueue.Reset();
                         _coopPendingOffer = null;
                         _coopOfferInFlight = null;
                     }
@@ -563,7 +585,7 @@ namespace SodRpg.Mod
                     if (fusionReason != null)
                     {
                         SendCoop(new DreamforgeCoopTradeCommand { action = "cancel", id = msg.id });
-                        CoopTradeWarning = CoopTradeRules.ReasonText(fusionReason);
+                        _coopTradeWarning = CoopTradeRules.ReasonMessage(fusionReason);
                         return;
                     }
                     CoopTradeRules.Prepare(Profile, msg.id, receipt.HostKey, own, legacyFusion: !_coopHostFusion);
@@ -577,7 +599,7 @@ namespace SodRpg.Mod
                     else
                     {
                         DiagnoseCoopTrade("reservation-save-pending", msg.id, msg.revision);
-                        CoopTradeWarning = Loc.T("予約の保存に失敗しました。成立させずに結果を照会します。", "Reservation save failed. Checking the result without committing.");
+                        _coopTradeWarning = new Txt("予約の保存に失敗しました。成立させずに結果を照会します。", "Reservation save failed. Checking the result without committing.");
                         // A confirmation timeout can still finish writing. Cancel only a
                         // completed failure or a reservation that never reached the writer.
                         if (_writer == null || _writer.EnqueuedRevision < Profile.Revision || _writer.HasFailedRevision(Profile.Revision))
@@ -595,7 +617,7 @@ namespace SodRpg.Mod
                     if (changed) Emit(new GameEvent(EventKind.Info, Loc.T("プレイヤーとの交換が成立しました。", "The player trade has committed.")));
                 }
             }
-            catch (CoopSendException ex) { CoopTradeWarning = ex.Message; }
+            catch (CoopSendException ex) { _coopTradeWarning = new Txt(ex.Message, ex.Message); }
             catch (Exception ex) { DisableCoopTrade(ex); }
         }
 
@@ -603,8 +625,8 @@ namespace SodRpg.Mod
         {
             DiagnoseCoopTrade("settlement-deferred");
             _coopPrepareSaveRevision = 0;
-            CoopTradeWarning = reason + " " + Loc.T("予約品を保持し、条件が回復するまで結果照会を再試行します。",
-                "Reserved assets remain held. The result will be checked again until conditions recover.");
+            _coopTradeWarning = new Txt(reason + " 予約品を保持し、条件が回復するまで結果照会を再試行します。",
+                reason + " Reserved assets remain held. The result will be checked again until conditions recover.");
         }
 
         private void CompleteCoopSettlement()
@@ -620,10 +642,10 @@ namespace SodRpg.Mod
                 _coopSettlementUnsaved = false;
                 CoopTrade = null;
                 _coopFrozenProfile = null;
-                CoopTradeWarning = null;
+                _coopTradeWarning = null;
                 ProfileChanged?.Invoke();
             }
-            else CoopTradeWarning = Loc.T("取引結果の保存を再試行しています。トレードのみ保留中です。", "Retrying the trade result save. Only trade is on hold.");
+            else _coopTradeWarning = new Txt("取引結果の保存を再試行しています。トレードのみ保留中です。", "Retrying the trade result save. Only trade is on hold.");
         }
     }
 }

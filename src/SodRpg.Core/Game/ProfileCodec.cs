@@ -138,6 +138,17 @@ namespace SodRpg.Core.Game
                 // Old/default runs carry no optional bonus payload.
                 if (r.OverflowDreamDustTotal != 0) run.Add("overflowDreamDustTotal", r.OverflowDreamDustTotal);
                 if (r.OverflowDreamDustLedgerId != 0) run.Add("overflowDreamDustLedgerId", r.OverflowDreamDustLedgerId);
+                // Optional run-world order (#700); old saves omit it and start counting from the current world.
+                if (r.WorldIndex >= 0 && r.WorldZoneIndex >= 0)
+                {
+                    run.Add("worldIndex", (long)r.WorldIndex).Add("worldZoneIndex", (long)r.WorldZoneIndex);
+                    if (r.WorldZoneName != null) run.Add("worldZoneName", r.WorldZoneName);
+                    if (r.WorldInfinitySegment >= 0) run.Add("worldInfinitySegment", r.WorldInfinitySegment);
+                }
+                // 旧い保存（計数がない）は 0 から始める。
+                if (r.SalvageDustEarned != 0) run.Add("salvageDustEarned", r.SalvageDustEarned);
+                if (r.SalvageDustZoneIndex != -1) run.Add("salvageDustZone", (long)r.SalvageDustZoneIndex);
+                if (r.SalvageDustOverflowPaidSeen != 0) run.Add("salvageDustOverflowSeen", r.SalvageDustOverflowPaidSeen);
             }
 
             var body = new JsonObject()
@@ -508,6 +519,13 @@ namespace SodRpg.Core.Game
                     Infinity = ReadInfinity(rj),
                     OverflowDreamDustTotal = Long(rj, "overflowDreamDustTotal"),
                     OverflowDreamDustLedgerId = Long(rj, "overflowDreamDustLedgerId"),
+                    WorldIndex = rj.TryGet("worldIndex", out _) && rj.TryGet("worldZoneIndex", out _) ? Clamp(Long(rj, "worldIndex"), -1, int.MaxValue) : -1,
+                    WorldZoneIndex = rj.TryGet("worldIndex", out _) && rj.TryGet("worldZoneIndex", out _) ? Clamp(Long(rj, "worldZoneIndex"), -1, int.MaxValue) : -1,
+                    WorldZoneName = Str(rj, "worldZoneName"),
+                    WorldInfinitySegment = rj.TryGet("worldInfinitySegment", out _) ? Math.Max(-1, Long(rj, "worldInfinitySegment")) : -1,
+                    SalvageDustEarned = Long(rj, "salvageDustEarned"),
+                    SalvageDustZoneIndex = rj.TryGet("salvageDustZone", out _) ? (int)Clamp(Long(rj, "salvageDustZone"), -1, int.MaxValue) : -1,
+                    SalvageDustOverflowPaidSeen = Long(rj, "salvageDustOverflowSeen"),
                     HeroKey = Str(rj, "heroKey"),
                     StarSecureRewarded = Bool(rj, "starSecureRewarded", false),
                     Heat = Loot.ClampHeat(Clamp(Long(rj, "heat"), 0, Content.MaxHeat)),

@@ -16,7 +16,7 @@ namespace SodRpg.Mod
         private sealed class EnemyOwnership
         {
             internal Entity Enemy;
-            internal DewPlayer Owner;
+            internal DewPlayer Owner, CountedOwner;
             internal Hero TauntHero;
             internal float TauntUntil;
             internal bool Excluded, SharedObjective, OwnPressureHook;
@@ -40,6 +40,54 @@ namespace SodRpg.Mod
         private bool _enemyOwnershipEnabled = true;
         private bool _ownershipWasRunning;
         private uint _ownershipLastPlayer;
+        private SpawnMonsterSettings _ownershipSpawnGroup;
+        private bool _ownershipSpawnCountsReady;
+        private bool _ownershipSpawnCountHooksReady;
+        private bool _ownershipSpawnCountsFailed, _ownershipSpawnCountsWarned;
+        partial void EnableOwnershipSpawnCountHooks(ref bool ready);
+
+        internal void RefreshOwnershipSpawnCount(Entity enemy)
+        {
+            if (_ownershipSpawnGroup == null || !_ownershipSpawnCountsReady || ReferenceEquals(enemy, null)) return;
+            try
+            {
+                if (_enemyOwnership.TryGetValue(enemy, out var state)) UpdateOwnershipSpawnCount(state);
+            }
+            catch (Exception ex)
+            {
+                _ownershipSpawnCountsReady = false;
+                _ownershipSpawnCountsFailed = true;
+                if (!_ownershipSpawnCountsWarned)
+                {
+                    _ownershipSpawnCountsWarned = true;
+                    Log.Warn("Host: spawn ownership counts disabled; recount retained: " + ex.Message);
+                }
+            }
+        }
+
+        private void UpdateOwnershipSpawnCount(EnemyOwnership state)
+        {
+            if (!_ownershipSpawnCountsReady) return;
+            var owner = !state.Excluded && !state.SharedObjective && state.Enemy != null
+                && state.Enemy.isActive && !(state.Enemy.currentHealth <= 0f) ? state.Owner : null;
+            if (state.CountedOwner == owner) return;
+            int previous = _ownershipPlayers.IndexOf(state.CountedOwner);
+            if (previous >= 0) _ownershipCounts[previous]--;
+            int next = _ownershipPlayers.IndexOf(owner);
+            if (next >= 0) _ownershipCounts[next]++;
+            state.CountedOwner = owner;
+        }
+
+        private bool OwnershipSpawnRosterMatches()
+        {
+            int index = 0;
+            foreach (var player in DewPlayer.gamePlayers)
+            {
+                if (!OwnershipAlive(player)) continue;
+                if (index >= _ownershipPlayers.Count || _ownershipPlayers[index++] != player) return false;
+            }
+            return index == _ownershipPlayers.Count;
+        }
 
         partial void OwnershipEntityAdded(Entity entity)
         {
@@ -53,6 +101,7 @@ namespace SodRpg.Mod
         internal void ConfigureEnemyOwnership(bool enabled)
         {
             _enemyOwnershipEnabled = enabled;
+            _ownershipSpawnCountsReady = false;
             if (!enabled)
             {
                 _summonGuardTargets.Clear();
@@ -182,7 +231,9 @@ namespace SodRpg.Mod
                 if (OwnershipAlive(player)) { _ownershipPlayers.Add(player); _ownershipCounts.Add(0); }
             foreach (var state in _enemyOwnership.Values)
             {
+                state.CountedOwner = null;
                 if (state.Excluded || state.SharedObjective || state.Enemy == null || !state.Enemy.isActive || state.Enemy.currentHealth <= 0) continue;
+                state.CountedOwner = state.Owner;
                 int index = _ownershipPlayers.IndexOf(state.Owner);
                 if (index >= 0) _ownershipCounts[index]++;
             }
@@ -190,7 +241,12 @@ namespace SodRpg.Mod
 
         private DewPlayer OwnershipLeastLoaded()
         {
-            OwnershipRoster();
+            if (_ownershipSpawnGroup == null || !_ownershipSpawnCountHooksReady || _ownershipSpawnCountsFailed
+                || !_ownershipSpawnCountsReady || !OwnershipSpawnRosterMatches())
+            {
+                OwnershipRoster();
+                _ownershipSpawnCountsReady = _ownershipSpawnGroup != null && _ownershipSpawnCountHooksReady && !_ownershipSpawnCountsFailed;
+            }
             int best = -1;
             for (int i = 0; i < _ownershipPlayers.Count; i++)
             {
@@ -214,6 +270,13 @@ namespace SodRpg.Mod
             {
                 if (!OwnershipAvailable(OwnershipPart.Assignment) || settings == null || settings.rule == null
                     || settings.rule.isBossSpawn || prefab == null || prefab.IsAnyBoss()) return null;
+                if (!_ownershipSpawnCountsFailed) EnableOwnershipSpawnCountHooks(ref _ownershipSpawnCountHooksReady);
+                else _ownershipSpawnCountHooksReady = false;
+                if (!ReferenceEquals(_ownershipSpawnGroup, settings))
+                {
+                    _ownershipSpawnGroup = settings;
+                    _ownershipSpawnCountsReady = false;
+                }
                 return OwnershipLeastLoaded();
             }
             catch (Exception ex) { FailOwnership(OwnershipPart.Assignment, ex); return null; }
@@ -251,6 +314,7 @@ namespace SodRpg.Mod
                     AssignDynamicEnemy(enemy, state.Owner);
                     if (state.Owner != null) OwnershipFighter(state, state.Owner);
                 }
+                UpdateOwnershipSpawnCount(state);
                 enemy.EntityEvent_OnTakeDamage += state.OnDamage;
             }
             catch (Exception ex) { FailOwnership(OwnershipPart.Assignment, ex); }
@@ -292,6 +356,7 @@ namespace SodRpg.Mod
                 if (enemy == null || !_enemyOwnership.TryGetValue(enemy, out var state)) return;
                 // beforeSpawn may change type after the room's general onBeforeSpawn event.
                 if (OwnershipExcluded(enemy)) { state.Excluded = true; state.Owner = null; }
+                UpdateOwnershipSpawnCount(state);
                 RefreshSharedObjectiveOwnership(enemy);
                 if (!OwnershipAvailable(OwnershipPart.Strength) || state.Excluded && !enemy.IsAnyBoss()) return;
                 if (enemy is Monster monster)
@@ -378,6 +443,7 @@ namespace SodRpg.Mod
                 bool shared = CoopOmens.IsSharedObjective(enemy);
                 if (state.SharedObjective == shared) return;
                 state.SharedObjective = shared;
+                UpdateOwnershipSpawnCount(state);
                 ChangeOwnership(state, shared || state.Excluded || !OwnershipAvailable(OwnershipPart.Assignment)
                     ? null : OwnershipLeastLoaded());
                 if (enemy is Monster monster && _monsters.TryGetValue(monster, out var runtime))
@@ -389,9 +455,9 @@ namespace SodRpg.Mod
         private bool TryOwnership(Entity enemy, OwnershipPart part, out EnemyOwnership state)
         {
             state = null;
-            return enemy != null && OwnershipAvailable(part) && _enemyOwnership.TryGetValue(enemy, out state)
-                && !state.Excluded && !state.SharedObjective && !CoopOmens.IsSharedObjective(enemy)
-                && !enemy.IsAnyBoss() && state.Owner != null && OwnershipConnected(state.Owner);
+            return enemy != null && _enemyOwnership.TryGetValue(enemy, out state)
+                && !state.Excluded && !state.SharedObjective && state.Owner != null && OwnershipAvailable(part)
+                && !CoopOmens.IsSharedObjective(enemy) && !enemy.IsAnyBoss() && OwnershipConnected(state.Owner);
         }
 
         partial void ApplyAutoCastOwnershipPriority(Hero hero, Entity target, ref int priority)
@@ -460,14 +526,57 @@ namespace SodRpg.Mod
                 || Time.time - OwnershipLastFight(state, state.Owner) <= CoopBalance.Ownership.EngageWindow;
         }
 
-        private static float OwnershipHelpFactor()
+        // The run's world order (#700): native zone indices restart in Infinity, this order never does within a run.
+        private readonly RunWorldCounter _runWorlds = new RunWorldCounter();
+        private bool _runWorldFailed;
+
+        /// <summary>0-based order of the current world in this run, or -1 outside a run.</summary>
+        internal int RunWorldIndex
         {
-            int zone = NetworkedManagerBase<ZoneManager>.softInstance?.currentZoneIndex ?? -1;
-            if (zone < 0) return 1f;
-            if (zone == 0) return CoopBalance.Ownership.FirstWorldHelpFactor;
-            if (zone == 1) return CoopBalance.Ownership.SecondWorldHelpFactor;
-            return CoopBalance.Ownership.HelpFactor;
+            get
+            {
+                ObserveRunWorld();
+                string run = NetworkedManagerBase<GameManager>.softInstance?.runId;
+                return !string.IsNullOrEmpty(run) && _runWorlds.RunId == run ? _runWorlds.Index : -1;
+            }
         }
+
+        // Polled by the ownership scan and before each helper reduction; allocation-free and idempotent per world.
+        internal void ObserveRunWorld()
+        {
+            if (_runWorldFailed) return;
+            try { ObserveRunWorldCore(); }
+            catch (Exception ex)
+            {
+                // Keep the last counted world; a failed observer must not reopen the lighter early-world decay.
+                _runWorldFailed = true;
+                Log.Warn("Host: run world order frozen at " + _runWorlds.Index + ": " + ex.Message);
+            }
+        }
+
+        private void ObserveRunWorldCore()
+        {
+            var game = NetworkedManagerBase<GameManager>.softInstance;
+            var zone = NetworkedManagerBase<ZoneManager>.softInstance;
+            if (game == null || string.IsNullOrEmpty(game.runId) || zone == null || zone.currentZoneIndex < 0
+                || zone.isInAnyTransition) return;
+            string name = zone.currentZone != null ? zone.currentZone.name : null;
+            var run = ClientSession.HostRun;
+            bool saved = run != null && run.RunId == game.runId;
+            var infinity = saved ? run.Infinity : null;
+            // Rules.Delve advances the segment before native travel; count only after arrival.
+            if (infinity?.Phase == InfinityPhase.Transitioning) return;
+            // Continue or a rebuilt host resumes the saved order instead of restarting at the first world.
+            if (_runWorlds.RunId != game.runId && saved)
+                _runWorlds.Restore(game.runId, run.WorldIndex, run.WorldZoneIndex, run.WorldZoneName, run.WorldInfinitySegment);
+            if (!_runWorlds.Observe(game.runId, zone.currentZoneIndex, name, infinity?.SegmentEpoch ?? -1) || !saved) return;
+            run.WorldIndex = _runWorlds.Index;
+            run.WorldZoneIndex = _runWorlds.ZoneIndex;
+            run.WorldZoneName = _runWorlds.ZoneName;
+            run.WorldInfinitySegment = _runWorlds.InfinitySegment;
+        }
+
+        private float OwnershipHelpFactor() => OwnershipHelp.Factor(RunWorldIndex);
 
         internal void ApplyOwnershipReceivedDamage(Entity victim, Actor actor, ref DamageData damage, bool measure = true)
         {
@@ -565,6 +674,11 @@ namespace SodRpg.Mod
             catch (Exception ex) { FailOwnership(OwnershipPart.Targeting, ex); return true; }
         }
 
+        internal bool IsOwnershipRetargetCandidate(EntityAI ai) => _enemyOwnershipEnabled
+            && (_ownershipFailed & OwnershipPart.Targeting) == 0 && ai != null && ai.entity != null
+            && _enemyOwnership.TryGetValue(ai.entity, out var state)
+            && !state.Excluded && !state.SharedObjective && state.Owner != null;
+
         internal void RetargetOwnership(EntityAI ai, bool retargetDue)
         {
             try
@@ -611,8 +725,9 @@ namespace SodRpg.Mod
 
         private void ChangeOwnership(EnemyOwnership state, DewPlayer owner)
         {
-            if (state.Owner == owner) return;
+            if (state.Owner == owner) { UpdateOwnershipSpawnCount(state); return; }
             state.Owner = owner;
+            UpdateOwnershipSpawnCount(state);
             AssignDynamicEnemy(state.Enemy, owner);
             state.Changed = state.OwnerLastEngaged = Time.time;
             state.DownSince = state.AwaySince = -1f;
@@ -640,6 +755,10 @@ namespace SodRpg.Mod
 
         private void ScanEnemyOwnership()
         {
+            // Periodic reconciliation also catches room/run changes and external native edits.
+            _ownershipSpawnCountsReady = false;
+            _ownershipSpawnGroup = null;
+            ObserveRunWorld();
             bool running;
             try { running = OwnershipRunning(); }
             catch (Exception ex) { FailOwnership(OwnershipPart.Assignment, ex); return; }
@@ -733,6 +852,7 @@ namespace SodRpg.Mod
 
         private void OwnershipPlayerRemoved(DewPlayer player)
         {
+            _ownershipSpawnCountsReady = false;
             DynamicPlayerRemoved(player);
             try
             {
@@ -756,6 +876,12 @@ namespace SodRpg.Mod
             if (enemy is Monster monster) _bossNativeHealth.Remove(monster);
             if (!_enemyOwnership.TryGetValue(enemy, out var state)) return;
             _enemyOwnership.Remove(enemy);
+            if (_ownershipSpawnCountsReady)
+            {
+                int index = _ownershipPlayers.IndexOf(state.CountedOwner);
+                if (index >= 0) _ownershipCounts[index]--;
+            }
+            state.CountedOwner = null;
             bool reusable = true;
             try
             {
@@ -790,6 +916,8 @@ namespace SodRpg.Mod
 
         private void ClearEnemyOwnership()
         {
+            _ownershipSpawnGroup = null;
+            _ownershipSpawnCountsReady = false;
             _summonGuardTargets.Clear();
             _summonGuardScratch.Clear();
             _ownershipScratch.Clear();

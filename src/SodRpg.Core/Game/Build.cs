@@ -225,6 +225,7 @@ namespace SodRpg.Core.Game
             b.AuthoredClusterStars = authoredClusterStars;
 
             // 装着品は保管庫から一度だけ引き、能力・セット・小セットの集計で使い回す。
+            // 3つの集計の間に保管庫が変わることは想定しない（途中で引き直さない）。
             var equippedRelics = new Relic[h.Equipped.Length];
             for (int i = 0; i < equippedRelics.Length; i++) equippedRelics[i] = p.FindStash(h.Equipped[i]);
             foreach (var r in equippedRelics)
@@ -264,6 +265,16 @@ namespace SodRpg.Core.Game
                         int before = Relic.Scale(pw.Value, Content.EnhancePowerScalePct(r.Enhance));
                         int after = (int)((long)before * Content.AwakenPowerPctAt(r.AwakenLevel) / 100);
                         Add(awakenGains, pw.Power, after - before);
+                    }
+                // Overcharge (x1.6) is kept out of the shared conditional budget like awakening:
+                // count only the enhanced pre-overcharge value toward it.
+                if (r.Forbidden?.Pattern == ForbiddenPattern.Overcharge && r.BossMove == null)
+                    for (int i = 0; i < r.Powers.Count && i < sourcePowers.Count; i++)
+                    {
+                        if (!NewPowersV129.IsConditionalAttribute(r.Powers[i].Power)) continue;
+                        int plain = Relic.Scale(r.Powers[i].Value, Content.EnhancePowerScalePct(r.Enhance));
+                        int charged = Relic.Scale(sourcePowers[i].Value, Content.EnhancePowerScalePct(r.Enhance));
+                        if (charged > plain) Add(awakenGains, r.Powers[i].Power, charged - plain);
                     }
                 // Equipment link bases share a cap only with matching equipment conditions.
                 var link = r.Link;

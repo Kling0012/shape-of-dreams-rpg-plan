@@ -7,6 +7,34 @@ namespace SodRpg.Mod
     internal sealed partial class DreamforgeUi
     {
         private Vector2 _scrollWorkshop;
+        private static readonly GUILayoutOption[] WorkshopTextWidth = { GUILayout.Width(560) };
+        private static readonly GUILayoutOption[] WorkshopButtonSize = { GUILayout.Width(300), GUILayout.Height(40) };
+        private static readonly GUILayoutOption[] WorkshopMaxWidth = { GUILayout.Width(300) };
+        private sealed class WorkshopRowText
+        {
+            internal int Level = -1, Grudge, Cores;
+            internal bool Japanese;
+            internal string Text, Button;
+        }
+        private readonly WorkshopRowText[] _workshopRows = new WorkshopRowText[Workshop.All.Count];
+
+        private WorkshopRowText WorkshopText(Profile p, UpgradeDef def, int index, int level)
+        {
+            var row = _workshopRows[index] ?? (_workshopRows[index] = new WorkshopRowText());
+            int cores = p.Material(Materials.NemesisCore);
+            if (row.Text != null && row.Level == level && row.Japanese == Loc.Japanese
+                && row.Grudge == p.NemesisGrudge && row.Cores == cores) return row;
+            row.Level = level; row.Japanese = Loc.Japanese; row.Grudge = p.NemesisGrudge; row.Cores = cores;
+            string pips = new string('●', level) + new string('○', def.MaxLevel - level);
+            row.Text = $"<b>{def.Name}</b>  <color=#ffd36e>{pips}</color>  {WorkshopValue(p, def.Id, level < def.MaxLevel)}\n<color=#ccd>{def.Description}</color>";
+            if (level < def.MaxLevel)
+            {
+                var cost = def.Costs[level];
+                row.Button = Loc.T($"解放（欠片{cost.Shards}" + (cost.Tuning > 0 ? $"・調律石{cost.Tuning}" : "") + "）",
+                    $"Unlock ({cost.Shards} shards" + (cost.Tuning > 0 ? $", {cost.Tuning} tuning" : "") + ")");
+            }
+            return row;
+        }
 
         private void DrawWorkshopTab()
         {
@@ -15,23 +43,22 @@ namespace SodRpg.Mod
             // 強化の行はスクロールに入れる（#147）：スクロールがないと、強化の追加や説明の長文化で
             // 一番下の行の「解放」ボタンから順に枠の外へ出る。遠征中の警告はスクロールの外に残す。
             _scrollWorkshop = GUILayout.BeginScrollView(_scrollWorkshop);
-            foreach (var def in Workshop.All)
+            for (int i = 0; i < Workshop.All.Count; i++)
             {
+                var def = Workshop.All[i];
                 int lv = Workshop.Level(p, def.Id);
+                var row = WorkshopText(p, def, i, lv);
                 GUILayout.BeginHorizontal();
-                string pips = new string('●', lv) + new string('○', def.MaxLevel - lv);
-                GUILayout.Label($"<b>{def.Name}</b>  <color=#ffd36e>{pips}</color>  {WorkshopValue(p, def.Id, lv < def.MaxLevel)}\n<color=#ccd>{def.Description}</color>", _st.Small, GUILayout.Width(560));
+                GUILayout.Label(row.Text, _st.Small, WorkshopTextWidth);
                 if (lv < def.MaxLevel)
                 {
                     var cost = def.Costs[lv];
                     bool afford = p.Material(Materials.Shard) >= cost.Shards && p.Material(Materials.Tuning) >= cost.Tuning;
                     GUI.enabled = afford && (p.Run == null || !_s.InGame);
-                    string label = Loc.T($"解放（欠片{cost.Shards}" + (cost.Tuning > 0 ? $"・調律石{cost.Tuning}" : "") + "）",
-                        $"Unlock ({cost.Shards} shards" + (cost.Tuning > 0 ? $", {cost.Tuning} tuning" : "") + ")");
-                    if (GUILayout.Button(label, _st.Button, GUILayout.Width(300), GUILayout.Height(40))) Act(() => Rules.BuyUpgrade(p, def.Id, _s.InGame && p.Run != null), false);
+                    if (GUILayout.Button(row.Button, _st.Button, WorkshopButtonSize)) Act(() => Rules.BuyUpgrade(p, def.Id, _s.InGame && p.Run != null), false);
                     GUI.enabled = true;
                 }
-                else GUILayout.Label(Loc.T("すべて解放済み", "Maxed"), _st.Header, GUILayout.Width(300));
+                else GUILayout.Label(Loc.T("すべて解放済み", "Maxed"), _st.Header, WorkshopMaxWidth);
                 GUILayout.EndHorizontal();
                 GUILayout.Space(4);
             }

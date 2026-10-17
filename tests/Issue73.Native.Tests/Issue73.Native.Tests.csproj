@@ -36,8 +36,10 @@
     <Compile Include="../../src/SodRpg.Mod/HostAuthority.Trades.cs" Link="ModUnderTest/HostAuthority.Trades.cs" />
     <Compile Include="../../src/SodRpg.Mod/HostAuthority.OverflowBonus.cs" Link="ModUnderTest/HostAuthority.OverflowBonus.cs" />
     <Compile Include="../../src/SodRpg.Mod/ClientSession.OverflowBonus.cs" Link="ModUnderTest/ClientSession.OverflowBonus.cs" />
+    <Compile Include="../../src/SodRpg.Mod/ClientSession.SalvageDustCap.cs" Link="ModUnderTest/ClientSession.SalvageDustCap.cs" />
     <Compile Include="../../src/SodRpg.Mod/ClientSession.KillSync.cs" Link="ModUnderTest/ClientSession.KillSync.cs" />
     <Compile Include="../../src/SodRpg.Mod/ClientSession.RunChoices.cs" Link="ModUnderTest/ClientSession.RunChoices.cs" />
+    <Compile Include="../../src/SodRpg.Mod/ClientSession.RunReplay.cs" Link="ModUnderTest/ClientSession.RunReplay.cs" />
     <Compile Include="../../src/SodRpg.Mod/ClientSession.Continue.cs" Link="ModUnderTest/ClientSession.Continue.cs" />
     <Compile Include="../../src/SodRpg.Mod/ClientSession.InterruptedRelics.cs" Link="ModUnderTest/ClientSession.InterruptedRelics.cs" />
     <Compile Include="../../src/SodRpg.Mod/ClientSession.PressureDividend.cs" Link="ModUnderTest/ClientSession.PressureDividend.cs" />

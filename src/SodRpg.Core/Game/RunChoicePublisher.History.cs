@@ -11,6 +11,7 @@ namespace SodRpg.Core.Game
         private string _historyRunId;
         public string TerminalChoices { get; private set; }
         public bool? TerminalVictory { get; private set; }
+        public long HistoryRevision { get; private set; }
 
         private void TrackHistoryRun(string runId)
         {
@@ -18,6 +19,7 @@ namespace SodRpg.Core.Game
             if (string.IsNullOrEmpty(runId) || runId == _historyRunId) return;
             _historyRunId = runId;
             _finalized.Clear();
+            HistoryRevision++;
             RetiredBeforeSegment = 0;
             TerminalChoices = null;
             TerminalVictory = null;
@@ -30,6 +32,7 @@ namespace SodRpg.Core.Game
             _infinityHistory = snapshot.Infinity != null;
             if (_infinityHistory && snapshot.SegmentEpoch < RetiredBeforeSegment) return;
             _finalized[snapshot.HistoryKey] = encoded;
+            HistoryRevision++;
         }
 
         public IEnumerable<string> ExportFinalized() => _finalized.Values;
@@ -42,6 +45,7 @@ namespace SodRpg.Core.Game
             _retired.Clear();
             foreach (var entry in _finalized)
                 if (entry.Key < segment) _retired.Add(entry.Key);
+            if (_retired.Count > 0) HistoryRevision++;
             foreach (long key in _retired) _finalized.Remove(key);
             _retired.Clear();
         }
@@ -57,6 +61,7 @@ namespace SodRpg.Core.Game
         public void RestoreFinalized(IEnumerable<string> history, string terminalChoices, bool? victory)
         {
             _finalized.Clear();
+            HistoryRevision++;
             _historyRunId = null;
             TerminalChoices = null;
             TerminalVictory = null;
@@ -76,6 +81,7 @@ namespace SodRpg.Core.Game
                 TerminalChoices = terminal.Encode();
                 TerminalVictory = victory;
                 _finalized[terminal.HistoryKey] = TerminalChoices;
+                HistoryRevision++;
             }
             Invalidate();
         }

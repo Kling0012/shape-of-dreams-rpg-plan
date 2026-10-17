@@ -26632,7 +26632,7 @@
       "rankCost": 1,
       "nameJa": "凍てつく層",
       "nameEn": "Frozen Layers",
-      "notes": "上限増分はバランス表から生成。 / Cap increase is generated from the balance table."
+      "notes": "効果増分はバランス表から生成。 / Effect increase is generated from the balance table."
     },
     {
       "id": "cetus.run.m2",
@@ -26676,7 +26676,7 @@
       "rankCost": 1,
       "nameJa": "砕けぬ氷膜",
       "nameEn": "Unbroken Ice Film",
-      "notes": "上限増分はバランス表から生成。 / Cap increase is generated from the balance table."
+      "notes": "効果増分はバランス表から生成。 / Effect increase is generated from the balance table."
     },
     {
       "id": "cetus.run.choice",

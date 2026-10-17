@@ -40,9 +40,7 @@ namespace SodRpg.Mod
         private bool _dynamicEnabled = true, _dynamicSolo;
         private double _dynamicRoomHealth;
         private int _dynamicRoomEnemies, _dynamicRoom;
-        private long _dynamicRosterRevision, _dynamicSentRevision;
-        private float _dynamicNextSync;
-        private Actor _dynamicSyncActor;
+        private long _dynamicRosterRevision;
         private DynamicDifficultyDisplay[] _dynamicDisplay;
 
         internal void ConfigureDynamicDifficulty(bool enabled, bool solo)
@@ -130,8 +128,11 @@ namespace SodRpg.Mod
         }
 
         // Called once by the native room-load entry, before new room actors are prepared.
+        partial void FlushSpecialEnemySummary();
+
         internal void OnDynamicRoomLoading()
         {
+            FlushSpecialEnemySummary();
             try
             {
                 EnsureDynamicRun();
@@ -159,8 +160,7 @@ namespace SodRpg.Mod
                                 state.LogAverage = average;
                                 state.Rooms++;
                                 state.Factor = state.Rooms < CoopBalance.DynamicDifficulty.MinRooms ? 1
-                                    : Math.Max(CoopBalance.DynamicDifficulty.MinFactor, Math.Min(DynamicSoloRunning() ? CoopBalance.DynamicDifficulty.MaxFactor
-                                        : Math.Min(CoopBalance.DynamicDifficulty.MaxFactor, CoopBalance.Difficulty.DynamicMaximumFactor), factor));
+                                    : Math.Max(CoopBalance.DynamicDifficulty.MinFactor, Math.Min(CoopBalance.DynamicDifficulty.SafetyMaxFactor, factor));
                             }
                         }
                     }
@@ -307,9 +307,8 @@ namespace SodRpg.Mod
             if ((_dynamicFailed & DynamicPart.Measurement) != 0) return;
             try
             {
-                if (!DynamicRunning() || enemy == null || enemy.IsAnyBoss()
-                    || !_dynamicEnemies.TryGetValue(enemy, out var state) || state.Sampled || !(health > 0)
-                    || OwnershipExcluded(enemy)) return;
+                if (enemy == null || !_dynamicEnemies.TryGetValue(enemy, out var state) || state.Sampled
+                    || !(health > 0) || !DynamicRunning() || enemy.IsAnyBoss() || OwnershipExcluded(enemy)) return;
                 double factor = EnemyDynamicFactor(enemy);
                 double personal = health / factor;
                 double room = health / appliedMultiplier;
@@ -324,8 +323,9 @@ namespace SodRpg.Mod
         {
             try
             {
-                if ((_dynamicFailed & DynamicPart.Measurement) != 0 || !DynamicRunning()
-                    || !_dynamicEnemies.TryGetValue(enemy, out var state) || state.Sampled || state.Room != _dynamicRoom || state.Run != _dynamicRun || enemy.IsAnyBoss()) return;
+                if ((_dynamicFailed & DynamicPart.Measurement) != 0 || enemy == null
+                    || !_dynamicEnemies.TryGetValue(enemy, out var state) || state.Sampled
+                    || state.Room != _dynamicRoom || state.Run != _dynamicRun || !DynamicRunning() || enemy.IsAnyBoss()) return;
                 if (_enemyOwnership.TryGetValue(enemy, out var ownership) && ownership.Excluded) return;
                 if (!combat && enemy is Monster monster && _monsters.TryGetValue(monster, out var runtime) && !runtime.SpawnProcessed) return;
                 enemy.Status?.CalculateStatsIfDirty();
@@ -346,7 +346,8 @@ namespace SodRpg.Mod
             {
                 if (!DynamicRunning() || !_dynamicEnemies.TryGetValue(monster, out var state) || state.Owner == null
                     || !state.Solo && (!TryOwnership(monster, OwnershipPart.Strength, out _) || monster.IsAnyBoss())) return;
-                multiplier *= 1 + CoopBalance.DynamicDifficulty.RewardShare * Math.Max(0, EnemyDynamicFactor(monster) - 1);
+                multiplier *= Math.Min(CoopBalance.DynamicDifficulty.RewardMaxMultiplier,
+                    1 + CoopBalance.DynamicDifficulty.RewardShare * Math.Max(0, EnemyDynamicFactor(monster) - 1));
             }
             catch (Exception ex) { FailDynamic(DynamicPart.Reward, ex); }
         }
@@ -377,23 +378,94 @@ namespace SodRpg.Mod
             catch (Exception ex) { Log.Warn("Host: dynamic difficulty display ignored: " + ex.Message); return null; }
         }
 
+        private static int[] _helpDecayTable;
+        private DynamicDifficultyStatus _dynamicStatus;
+
+        /// <summary>The traveler factors the host applies now (menu status on the host itself).</summary>
+        internal DynamicDifficultyDisplay[] HostDynamicDisplay() => DynamicSnapshot();
+
+        /// <summary>
+        /// Current dynamic-difficulty state and helper decay (#700). Reuses the cached object until a value changes,
+        /// so the 0.25s sync and the menu allocate only on a change.
+        /// </summary>
+        internal DynamicDifficultyStatus DynamicStatusSnapshot()
+        {
+            try
+            {
+                if (_helpDecayTable == null)
+                {
+                    var table = new int[Math.Max(1, CoopBalance.Ownership.HelpDecayWorlds)];
+                    for (int i = 0; i < table.Length; i++) table[i] = CoopBalance.Ownership.HelpDecayPercent(i);
+                    _helpDecayTable = table;
+                }
+                int connected = 0;
+                foreach (var player in DewPlayer.gamePlayers) if (OwnershipConnected(player)) connected++;
+                int state = DynamicApplicationRunning() ? DynamicDifficultyStatus.On
+                    : _dynamicEnabled && connected == 1 && !_dynamicSolo ? DynamicDifficultyStatus.SoloOff : DynamicDifficultyStatus.Off;
+                int world = RunWorldIndex;
+                int decay = OwnershipHelp.DecayPercent(world);
+                int exponent = (int)Math.Round(CoopBalance.DynamicDifficulty.DamageExponent * 1000);
+                int reward = (int)Math.Round(CoopBalance.DynamicDifficulty.RewardShare * 1000);
+                var previous = _dynamicStatus;
+                if (previous != null && previous.state == state && previous.world == world && previous.decayPercent == decay
+                    && previous.damageExponent == exponent && previous.rewardShare == reward) return previous;
+                return _dynamicStatus = new DynamicDifficultyStatus
+                {
+                    revision = (previous?.revision ?? 0) + 1, state = state, world = world, decayPercent = decay,
+                    decayByWorld = _helpDecayTable, damageExponent = exponent, rewardShare = reward,
+                };
+            }
+            catch (Exception ex) { Log.Warn("Host: dynamic difficulty status ignored: " + ex.Message); return null; }
+        }
+
+        private sealed class DynamicLegendPeer
+        {
+            internal Actor Actor;
+            internal object Connection;
+            internal string Run;
+            internal int Room;
+            internal ulong Authority;
+            internal long Roster, Status;
+            internal float Next;
+        }
+        private readonly Dictionary<DewPlayer, DynamicLegendPeer> _dynamicLegendPeers = new Dictionary<DewPlayer, DynamicLegendPeer>();
+
+        partial void ResetDynamicLegendPeer(DewPlayer player)
+        {
+            if (!ReferenceEquals(player, null)) _dynamicLegendPeers.Remove(player);
+        }
+
+        private bool SendDynamicLegendPeer(DewPlayer player)
+        {
+            var display = DynamicSnapshot();
+            var status = DynamicStatusSnapshot();
+            if (_registeredOn == null || display == null) return false;
+            string run = NetworkedManagerBase<GameManager>.softInstance?.runId;
+            int room = NetworkedManagerBase<ZoneManager>.softInstance?.currentRoomIndex ?? -1;
+            ulong authority = ClientSession.HostAuthorityGeneration;
+            if (!_dynamicLegendPeers.TryGetValue(player, out var peer))
+                _dynamicLegendPeers.Add(player, peer = new DynamicLegendPeer());
+            if (ReferenceEquals(peer.Actor, _registeredOn) && ReferenceEquals(peer.Connection, player.connectionToClient)
+                && peer.Run == run && peer.Room == room
+                && peer.Authority == authority && peer.Roster == _dynamicRosterRevision && peer.Status == (status?.revision ?? 0)
+                && Time.unscaledTime < peer.Next) return true;
+            if (!ReserveMonsterSyncMessage()) return false;
+            _registeredOn.CustomRpc_SendMessageToClient(player, new DreamforgeNightmareMsg
+            {
+                protocol = Protocol.Version, authorityGeneration = authority,
+                dynamicDifficulty = display, dynamicRevision = _dynamicRosterRevision, dynamicStatus = status,
+            });
+            peer.Actor = _registeredOn; peer.Connection = player.connectionToClient;
+            peer.Run = run; peer.Room = room; peer.Authority = authority;
+            peer.Roster = _dynamicRosterRevision; peer.Status = status?.revision ?? 0;
+            peer.Next = Time.unscaledTime + 5f;
+            return true;
+        }
+
         private void SyncDynamicDifficultyLegend()
         {
-            // netId 0 carries only the optional roster extension on the ownership channel.
-            // Old clients safely ignore it; no live enemy is needed after a room is cleared.
-            var display = DynamicSnapshot();
-            if (_registeredOn == null || display == null) return;
-            if (_dynamicSentRevision == _dynamicRosterRevision && ReferenceEquals(_dynamicSyncActor, _registeredOn)
-                && Time.unscaledTime < _dynamicNextSync) return;
-            if (!ReserveMonsterSyncMessage()) return;
-            _registeredOn.CustomRpc_SendMessageToAllClients(new DreamforgeNightmareMsg
-            {
-                protocol = Protocol.Version, authorityGeneration = ClientSession.HostAuthorityGeneration,
-                dynamicDifficulty = display, dynamicRevision = _dynamicRosterRevision,
-            });
-            _dynamicSyncActor = _registeredOn;
-            _dynamicSentRevision = _dynamicRosterRevision;
-            _dynamicNextSync = Time.unscaledTime + 5f;
+            foreach (var player in DewPlayer.gamePlayers)
+                if (player != null && player.isHumanPlayer) SendDynamicLegendPeer(player);
         }
 
         private void ReleaseDynamicEnemy(Entity enemy)

@@ -1,0 +1,75 @@
+[reverted build] exit=0
+
+Build succeeded.
+    0 Warning(s)
+    0 Error(s)
+
+Time Elapsed 00:00:05.73
+
+[reverted default JIT] exit=3
+mode=total threshold-ms=1500 runtime=10.0.11 tiered=default
+register-all-generated: 1789 ms (alloc 172 MB)
+first-build-limits: 87 ms (talents=7657, entries=584)
+hero-sigils-all-x1000: 0 ms
+authored-registry-fingerprint: 607b55b25354e173
+content-fingerprint: 13792-e4617232a7ce91e6
+hero-sigils-all-count: 7642
+RESULT: SLOW (register 1789 ms > threshold 1500 ms)
+
+[reverted tiered=0] exit=3
+mode=total threshold-ms=1500 runtime=10.0.11 tiered=0
+register-all-generated: 1672 ms (alloc 172 MB)
+first-build-limits: 49 ms (talents=7657, entries=584)
+hero-sigils-all-x1000: 0 ms
+authored-registry-fingerprint: 607b55b25354e173
+content-fingerprint: 13792-e4617232a7ce91e6
+hero-sigils-all-count: 7642
+RESULT: SLOW (register 1672 ms > threshold 1500 ms)
+
+[restored build] exit=0
+
+Build succeeded.
+    0 Warning(s)
+    0 Error(s)
+
+Time Elapsed 00:00:05.37
+
+[restored default JIT run 1] exit=0
+mode=total threshold-ms=1500 runtime=10.0.11 tiered=default
+register-all-generated: 1159 ms (alloc 120 MB)
+first-build-limits: 334 ms (talents=7657, entries=584)
+hero-sigils-all-x1000: 0 ms
+authored-registry-fingerprint: 607b55b25354e173
+content-fingerprint: 13792-e4617232a7ce91e6
+hero-sigils-all-count: 7642
+RESULT: OK (register 1159 ms <= threshold 1500 ms)
+
+[restored tiered=0 run 1] exit=0
+mode=total threshold-ms=1500 runtime=10.0.11 tiered=0
+register-all-generated: 1103 ms (alloc 120 MB)
+first-build-limits: 406 ms (talents=7657, entries=584)
+hero-sigils-all-x1000: 0 ms
+authored-registry-fingerprint: 607b55b25354e173
+content-fingerprint: 13792-e4617232a7ce91e6
+hero-sigils-all-count: 7642
+RESULT: OK (register 1103 ms <= threshold 1500 ms)
+
+[restored default JIT run 2] exit=0
+mode=total threshold-ms=1500 runtime=10.0.11 tiered=default
+register-all-generated: 1083 ms (alloc 120 MB)
+first-build-limits: 352 ms (talents=7657, entries=584)
+hero-sigils-all-x1000: 0 ms
+authored-registry-fingerprint: 607b55b25354e173
+content-fingerprint: 13792-e4617232a7ce91e6
+hero-sigils-all-count: 7642
+RESULT: OK (register 1083 ms <= threshold 1500 ms)
+
+[restored tiered=0 run 2] exit=0
+mode=total threshold-ms=1500 runtime=10.0.11 tiered=0
+register-all-generated: 1189 ms (alloc 120 MB)
+first-build-limits: 446 ms (talents=7657, entries=584)
+hero-sigils-all-x1000: 0 ms
+authored-registry-fingerprint: 607b55b25354e173
+content-fingerprint: 13792-e4617232a7ce91e6
+hero-sigils-all-count: 7642
+RESULT: OK (register 1189 ms <= threshold 1500 ms)

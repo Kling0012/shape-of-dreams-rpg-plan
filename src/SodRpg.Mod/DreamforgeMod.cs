@@ -27,6 +27,7 @@ namespace SodRpg.Mod
         partial void StopNativeKillRewards();
         partial void ApplyAutoCastCoopConfig();
         partial void TickAutoCastCoopConfig();
+        partial void ApplyNativePerfConfig();
 
         private ClientSession _session;
         private HostAuthority _host;
@@ -67,6 +68,7 @@ namespace SodRpg.Mod
                 ApplyLevelEssenceConfig();
                 ApplyRoomOmensConfig();
                 ApplyAutoCastCoopConfig();
+                ApplyNativePerfConfig();
                 // Install the generated star maps and their migration rules before any profile is loaded or any build is computed.
                 var starRegistrationWatch = System.Diagnostics.Stopwatch.StartNew();
                 StarClusters.RegisterAllGenerated((hero, error) =>
@@ -88,6 +90,7 @@ namespace SodRpg.Mod
                 ApplyMeleeCoopConfig();
                 _session.FirstLaunch();
                 _perfLogEnabled = File.Exists(Path.Combine(dir, "perf.flag"));
+                _host.SpecialEnemyDiagnostics = _perfLogEnabled;
                 try
                 {
                     _devCommands = File.Exists(Path.Combine(dir, "dev.flag"));
@@ -127,6 +130,7 @@ namespace SodRpg.Mod
             ApplyLevelEssenceConfig();
             ApplyRoomOmensConfig();
             ApplyAutoCastCoopConfig();
+            ApplyNativePerfConfig();
             ApplyMeleeCoopConfig();
         }
 
@@ -191,6 +195,8 @@ namespace SodRpg.Mod
             try
             {
                 _perf.BeginHost();
+                // 第2段: 重いフレームから持ち越された反応弾の生成を、ホスト処理の前に捌く。
+                NativeProcSpawnSpread.Tick();
                 _host?.Tick();
                 _perf.EndHost();
             }
@@ -384,9 +390,8 @@ namespace SodRpg.Mod
 
         private void OnApplicationQuit()
         {
-            if (!_running) return;
-            _session?.SaveNow();
-            _session?.FlushSaves();
+            // Stop detaches profile callbacks and saves even if Unity never calls OnDestroy.
+            Stop();
         }
 
         private void OnDestroy()

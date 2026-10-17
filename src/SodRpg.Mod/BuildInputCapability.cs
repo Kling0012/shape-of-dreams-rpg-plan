@@ -45,7 +45,19 @@ namespace SodRpg.Mod
                 _hostAutocastPressureCapability = true;
         }
         private float _nextBuildInputProbe;
+        private bool _hostHelloSchedule, _hostKillReceiptDelta;
+        private DreamforgeBuildInputCapabilityMsg _sentCapability;
+        private bool _sentHelloInfinity;
+        private string _sentHelloRun;
         private Action<DreamforgeBuildInputCapabilityMsg> _onBuildInputCapability;
+
+        private void ResetHelloSchedule()
+        {
+            _hostHelloSchedule = _hostKillReceiptDelta = false;
+            _sentCapability = null;
+            _sentHelloRun = null;
+            _nextBuildInputProbe = 0f;
+        }
 
         private void RegisterBuildInputCapability(Actor actor)
         {
@@ -67,6 +79,17 @@ namespace SodRpg.Mod
         private void OnBuildInputCapability(DreamforgeBuildInputCapabilityMsg msg)
         {
             if (msg == null || msg.version != 1) return;
+            bool scheduleChanged = _hostHelloSchedule != (msg.helloSchedule == 1);
+            _hostHelloSchedule = msg.helloSchedule == 1;
+            if (_hostHelloSchedule) _hostAutocastPressureCapability = msg.autocastPressure == 1;
+            bool deltaChanged = _hostKillReceiptDelta != (msg.killReceiptDelta == 1);
+            _hostKillReceiptDelta = msg.killReceiptDelta == 1;
+            if (scheduleChanged)
+            {
+                _nextHello = 0f;
+                _nextBuildInputProbe = 0f;
+            }
+            if (deltaChanged) ResetKillReceiptSchedule();
             _hostNetLite = msg.netLite == 1 && _netLiteReceiveReady;
             // 応答が一度でも届いたら確定する（旧ホストはこの欄を返さず 0 のまま）。
             // 下の _hostBuildInputCapability による早期 return より前に処理し、
@@ -92,11 +115,46 @@ namespace SodRpg.Mod
             _buildCacheFrame = -1;
         }
 
-        private void ProbeBuildInputCapability(string heroKey)
+        private void ProbeBuildInputCapability(string heroKey) => TickHelloSchedule();
+
+        private void RecordHelloSchedule(float now)
         {
-            if (NetworkServer.active || _hostNetLite || !_helloAnswered || Time.unscaledTime < _nextBuildInputProbe) return;
-            _nextBuildInputProbe = Time.unscaledTime + 5f;
-            try { _clientRpcOn.CustomRpc_SendMessageToServer(new DreamforgeBuildInputCapabilityMsg { bountyCounts = _bountyCountsReady ? 1 : 0, netLite = _netLiteReceiveReady ? 1 : 0, roomOmens = _omenReceiveReady ? 1 : 0, forbiddenSmith = Forbidden.HasSmith(Profile) ? 1 : 0, nemesisGrudge = Profile.NemesisGrudge }); } catch (Exception) { }
+            if (_helloFirstSent < 0) _helloFirstSent = now;
+            _sentHelloRun = NetworkedManagerBase<GameManager>.softInstance?.runId;
+            _sentHelloInfinity = InfinityMode.Available;
+            _nextHello = now + (_hostHelloSchedule ? 30f : 5f);
+        }
+
+        private void TickHelloSchedule()
+        {
+            if (_clientRpcOn == null || !NetworkClient.active || NetworkServer.active) return;
+            float now = Time.unscaledTime;
+            string run = NetworkedManagerBase<GameManager>.softInstance?.runId;
+            bool infinity = InfinityMode.Available;
+            if (now >= _nextHello || _sentHelloRun != run || _sentHelloInfinity != infinity)
+            {
+                _clientRpcOn.CustomRpc_SendMessageToServer(CreateHelloMessage());
+                RecordHelloSchedule(now);
+            }
+            if (!_helloAnswered) return;
+            int bounty = _bountyCountsReady ? 1 : 0, lite = _netLiteReceiveReady ? 1 : 0;
+            int omens = _omenReceiveReady ? 1 : 0, smith = Forbidden.HasSmith(Profile) ? 1 : 0;
+            int grudge = Profile.NemesisGrudge;
+            if (now < _nextBuildInputProbe && _sentCapability != null
+                && _sentCapability.bountyCounts == bounty && _sentCapability.netLite == lite
+                && _sentCapability.roomOmens == omens && _sentCapability.forbiddenSmith == smith
+                && _sentCapability.nemesisGrudge == grudge) return;
+            var capability = new DreamforgeBuildInputCapabilityMsg
+            {
+                bountyCounts = bounty, netLite = lite, stateSnapshots = 1, dynamicRoster = 1,
+                roomOmens = omens, forbiddenSmith = smith, nemesisGrudge = grudge,
+                helloSchedule = 1, killReceiptDelta = 1, autocastPressure = 1,
+            };
+            _clientRpcOn.CustomRpc_SendMessageToServer(capability);
+            if (!_hostAutocastPressureCapability && !_hostHelloSchedule)
+                _clientRpcOn.CustomRpc_SendMessageToServer(new DreamforgeAutocastPressureCapabilityMsg());
+            _sentCapability = capability;
+            _nextBuildInputProbe = now + (_hostHelloSchedule ? 30f : 5f);
         }
     }
 

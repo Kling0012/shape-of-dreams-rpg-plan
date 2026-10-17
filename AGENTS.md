@@ -12,3 +12,7 @@
 - PR では `CHANGELOG.md` を変更しない。更新履歴は `changelog.d/<Issue か PR の番号>-<短い英字>.md` にファイルを足す。
 - 書くのは新機能と不具合の修正だけ。バランスの変更や改善は書かない。日英を併記する。
 - 分類と項目の書き方は `changelog.d/README.md` に従う。リリース時に集約し、`CHANGELOG.md` の「未リリース / Unreleased」の欄は残す。
+
+## 原則
+
+- すべての変更は [docs/constitution.md](docs/constitution.md) の原則に従う。MUST の原則に反する変更はマージしない。

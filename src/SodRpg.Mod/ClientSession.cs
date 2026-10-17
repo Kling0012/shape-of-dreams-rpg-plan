@@ -103,7 +103,8 @@ namespace SodRpg.Mod
         /// <summary>ホストが悪夢化の抽選に掛ける装備の倍率。0は未受信（古い版のホスト）で、確保地点では最低値を表示する。</summary>
         public float NightmareGearMultiplier { get; private set; }
         public string LoadNotes { get; private set; }
-        public string SaveError { get; private set; }
+        /// <summary>保存の失敗の表示文。例外は保持しておき、表示時の言語で Message を読む（#551）。</summary>
+        public string SaveError => _saveErrorCause != null ? _saveErrorCause.Message : _saveErrorText;
 
         public ClientSession(string saveDir, Action<GameEvent> notify)
         {
@@ -188,6 +189,9 @@ namespace SodRpg.Mod
                 case "unknown":
                 case "cancelled": return Loc.T("取引は成立していませんでした。ゴールドとドリームダストは減っていません。", "The trade did not go through. Your gold and Dream Dust were not spent.");
                 case "conflict": return Loc.T("取引できませんでした。取引の識別が重複しました。もう一度試してください。", "Trade failed: the trade id clashed. Please try again.");
+                case "dustcap": return Loc.T(
+                    "この世界で分解から得られる夢のダストは上限に達しました（次の世界で回復します）。",
+                    "Salvage Dream Dust from relics has reached this world's cap (it recovers in the next world).");
                 default: return Loc.T("取引できませんでした。もう一度試してください。", "Trade failed. Please try again.");
             }
         }
@@ -195,6 +199,16 @@ namespace SodRpg.Mod
         public bool CanEditLoadout => Profile.Run == null || Profile.Run.AwaitingChoice || Profile.Run.GearWindow || !InGame;
 
         public bool CanEditTalents => Profile.Run == null || !InGame;
+
+        /// <summary>現在の世界の番号（0始まり）。本体の ZoneManager から読む（担当制の世界判定と同じ）。分からなければ -1。</summary>
+        internal int CurrentZoneIndex
+        {
+            get
+            {
+                try { return _zone != null ? _zone.currentZoneIndex : -1; }
+                catch (Exception) { return -1; }
+            }
+        }
 
         public long ViewRevision { get; private set; }
 
@@ -247,8 +261,8 @@ namespace SodRpg.Mod
         {
             if (_tickSteps == null)
             {
-                _tickSteps = new Action[] { TickGemSlotHudProbe, TickProfileSlots, Wire, TickInfinitySettings, UpdateVariantVisuals, UpdateMonsterCues, TickBossDisplay, TrackRun, TickKillClassification, TickRunChoices, TickCurseResync, TickSalvageExpiry, TickSatchelOverflow, SendBuildIfNeeded, TickHello, TickPeriodicSave, TickInterruptedRelics, TickDirectStash, TickKillSync, TickCoopTrade, TickRoomVisualSweep };
-                _tickStepNames = new[] { "gem slot HUD probe", "profile slots", "wire", "infinity settings", "variant visuals", "monster cues", "boss effects", "track run", "kill classification", "run choices", "curse resync", "salvage expiry", "satchel overflow", "send build", "hello", "periodic save", "interrupted relic save", "direct stash save", "kill sync", "coop trade", "room visual sweep" };
+                _tickSteps = new Action[] { TickGemSlotHudProbe, TickProfileSlots, Wire, TickInfinitySettings, UpdateVariantVisuals, UpdateMonsterCues, TickBossDisplay, TrackRun, TickKillClassification, TickRunChoices, TickCurseResync, TickSkillLockResync, TickSalvageExpiry, TickSatchelOverflow, TickSalvageDustCap, SendBuildIfNeeded, TickHello, TickPeriodicSave, TickInterruptedRelics, TickDirectStash, TickKillSync, TickCoopTrade, TickRoomVisualSweep };
+                _tickStepNames = new[] { "gem slot HUD probe", "profile slots", "wire", "infinity settings", "variant visuals", "monster cues", "boss effects", "track run", "kill classification", "run choices", "curse resync", "skill lock watchdog", "salvage expiry", "satchel overflow", "salvage dust cap", "send build", "hello", "periodic save", "interrupted relic save", "direct stash save", "kill sync", "coop trade", "room visual sweep" };
                 _tickStepNextLog = new float[_tickSteps.Length];
             }
             for (int i = 0; i < _tickSteps.Length; i++)
@@ -353,19 +367,61 @@ namespace SodRpg.Mod
         private bool _saveErrorFromWriteFailure;
         private string _writeFailureText, _writeFailureSource;
         private bool _writeFailureJapanese;
+        // SaveNow の catch で拾った例外と、それ以外の経路（固定文・書き込み失敗・プロフィール切替）の表示文。
+        // 例外は Message を読むたびに言語が変わるので、文字列には固定しない（#551）。
+        private Exception _saveErrorCause;
+        private string _saveErrorText;
+        // 既知の書き込み失敗は writer の同一性と FailureSerial の組で追う。
+        // プロフィール切替後の新しい writer は同じ番号でも新しい失敗として扱う（#551）。
+        private AsyncProfileWriter _writeFailureKnownWriter;
+        private long _writeFailureKnownSerial;
+
+        private bool IsNewWriteFailure(AsyncProfileWriter writer, long failureSerial) =>
+            !ReferenceEquals(_writeFailureKnownWriter, writer) || _writeFailureKnownSerial != failureSerial;
+
+        private void RememberWriteFailureState(AsyncProfileWriter writer, long failureSerial)
+        {
+            _writeFailureKnownWriter = writer;
+            _writeFailureKnownSerial = failureSerial;
+        }
+
+        private void SetSaveErrorText(string text)
+        {
+            _saveErrorText = text;
+            _saveErrorCause = null;
+        }
+
+        private void SetSaveErrorCause(Exception cause)
+        {
+            // この例外より前に完了していた未表示の writer 失敗は、次の Tick で例外を上書きさせない。
+            var writer = _writer;
+            RememberWriteFailureState(writer, writer?.FailureSerial ?? 0);
+            _saveErrorCause = cause;
+            _saveErrorText = null;
+        }
+
+        private void ClearSaveError()
+        {
+            _saveErrorText = null;
+            _saveErrorCause = null;
+        }
 
         private void TickPeriodicSave()
         {
+            var writer = _writer;
+            var state = writer != null ? writer.GetWriteState() : default;
             // バックグラウンド書き込みに失敗したままの保存がある：その内容は破棄されているので、
             // 「保存が必要」を立て直して定期保存で書き直す。失敗が続く間は画面にも出す（#72）。
-            if (_writer != null && _writer.HasPendingFailure)
+            if (state.HasPendingFailure)
             {
                 _dirty = true;
                 _allocationSavePending = true;
                 // 今回の保存で出た例外など、別経路の理由を過去の書き込み失敗で隠さない。
-                if (SaveError == null || _saveErrorFromWriteFailure)
+                // ただし前より新しい書き込み失敗が起きたときは、古い例外文に代わってこちらを表示する（#551）。
+                long failureSerial = state.FailureSerial;
+                if (SaveError == null || _saveErrorFromWriteFailure || IsNewWriteFailure(writer, failureSerial))
                 {
-                    string source = _writer.LastError;
+                    string source = state.LastError;
                     bool japanese = Loc.Japanese;
                     if (_writeFailureText == null || _writeFailureSource != source || _writeFailureJapanese != japanese)
                     {
@@ -373,16 +429,17 @@ namespace SodRpg.Mod
                         _writeFailureJapanese = japanese;
                         _writeFailureText = (japanese ? "保存に失敗しました。自動で再試行します: " : "Saving failed; retrying automatically: ") + source;
                     }
-                    SaveError = _writeFailureText;
+                    SetSaveErrorText(_writeFailureText);
                     _saveErrorFromWriteFailure = true;
+                    RememberWriteFailureState(writer, failureSerial);
                 }
                 float retry = Time.unscaledTime + 5f;
                 if (_nextSave > retry) _nextSave = retry;
             }
-            else if (_saveErrorFromWriteFailure && SaveError != null && _writer != null && _writer.WrittenRevision > 0)
+            else if (_saveErrorFromWriteFailure && SaveError != null && state.WrittenRevision > 0)
             {
                 // 書き込みが成功し直したので、この経路の失敗表示だけを消す（別の経路のエラーは残す）。
-                SaveError = null;
+                ClearSaveError();
                 _saveErrorFromWriteFailure = false;
             }
             if (_dirty && Time.unscaledTime >= _nextSave) SaveNow();
@@ -498,7 +555,7 @@ namespace SodRpg.Mod
                 _appliedTransfer.Reset();
                 PressureHealthMultiplier = PressureDamageMultiplier = 1f;
                 NightmareGearMultiplier = 0f;
-            NightmarePressureHealthMultiplier = 0f;
+                NightmarePressureHealthMultiplier = 0f;
                 if (!LobbyReturnPending) ResetRunChoiceConnection();
                 ResetMonsterAuthorityConnection();
                 _sentDreamLevel = -1;
@@ -721,7 +778,7 @@ namespace SodRpg.Mod
             if (Onboarding.BackfillStarterCodex(Profile) > 0) _dirty = true; // 以前の配布で銘品が図鑑に載らなかった分を補う
             // v1.20：以前に+3・+5にした遺物へ、強化の節目を一度だけ付ける。
             int milestones = Rules.ApplyEnhanceMilestones(Profile);
-            if (milestones > 0) Emit(new GameEvent(EventKind.Info, Loc.T($"強化の節目を、これまでに+{Content.EnhanceMilestoneFirst}・+{Content.EnhanceMilestoneSecond}にした遺物{milestones}個に付けました（特性や固有効果が増えています）。", $"Enhancement milestones were applied to {milestones} relic(s) you had already enhanced.")));
+            if (milestones > 0) Emit(new GameEvent(EventKind.Info, Loc.T($"強化の節目をこれまでに+{Content.EnhanceMilestoneFirst}・+{Content.EnhanceMilestoneSecond}にした遺物{milestones}個に付けました（特性や固有効果が増えています）。", $"Enhancement milestones were applied to {milestones} relic(s) you had already enhanced.")));
             if (newSlotStarters.Count > 0)
             {
                 Emit(newSlotStarters);
@@ -1040,7 +1097,8 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
                 if (outcome == TradeOutcome.Failed)
                 {
                     RestoreSalvageTrade(t);
-                    Emit(new GameEvent(EventKind.Warning, TradeFailText(code)));
+                    if (code == "dustcap") NotifySalvageDustCapReached(); // まとめて分解で大量に断られても案内は1回にまとめる
+                    else Emit(new GameEvent(EventKind.Warning, TradeFailText(code)));
                     if (t.Kind == TradeKind.SalvageForDust)
                     {
                         Profile.PendingTrades.RemoveAll(pending => pending.Token == t.Token);
@@ -1059,11 +1117,16 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
                         break;
                     case TradeKind.SalvageForDust:
                         if (Rules.SalvageUnsecured(Profile, t.Uid) != null)
-                            Emit(new GameEvent(EventKind.Info, Loc.T($"分解してドリームダスト+{t.EarnDust}", $"Salvaged for {t.EarnDust} Dream Dust")));
+                        {
+                            // 上限の残りに合わせて削られた分も、実際にもらった量で案内する。
+                            long paid = CountSalvageDustPaid(t.EarnDust);
+                            Emit(new GameEvent(EventKind.Info, Loc.T($"分解してドリームダスト+{paid}", $"Salvaged for {paid} Dream Dust")));
+                        }
                         Profile.PendingTrades.RemoveAll(pending => pending.Token == t.Token);
                         DeferSave();
                         return;
                     case TradeKind.SatchelOverflowDust:
+                        CountSalvageDustPaid(t.EarnDust);
                         Emit(Rules.CompleteSatchelOverflowDust(t));
                         // 成功のプロフィール側の反映は取引の削除だけ。未保存のまま落ちても、領収書の照会で
                         // 同じ結果に一度だけ戻る（通貨はホストが持つ）。保存は定期保存へまとめて、あふれの
@@ -1174,6 +1237,7 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
             if (msg == null || !ObserveMonsterAuthority(msg.authorityGeneration)) return;
             Protocol.WarnMismatch(msg.protocol, nameof(DreamforgeNightmareMsg));
             ReceiveDynamicDifficulty(msg.dynamicDifficulty, msg.dynamicRevision);
+            ReceiveDynamicStatus(msg.dynamicStatus);
             if (msg.netId == 0) return;
             if (msg.removed)
             {
@@ -1636,7 +1700,7 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
                 // 保存先が無効（初期のプロフィール切替に失敗した場合など）。確認付きの保存は書き込みが行われないので失敗とし、取引は送らせない。
                 if (confirm)
                 {
-                    SaveError = Loc.T("保存先が無効です。", "Saving is unavailable.");
+                    SetSaveErrorText(Loc.T("保存先が無効です。", "Saving is unavailable."));
                     _dirty = true;
                 }
                 return !confirm; // 確認なしの保存は従来どおり何もしない
@@ -1654,27 +1718,32 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
             }
             catch (Exception ex)
             {
-                SaveError = ex.Message;
+                // 文字列で固定せず例外を持っておき、表示のたびに Message を読む（言語切替にも追従、#551）。
+                SetSaveErrorCause(ex);
                 _saveErrorFromWriteFailure = false;
                 _dirty = true;
                 ok = false;
                 threw = true;
-                Log.Error("Save failed: " + ex.Message);
+                Log.Error("Save failed: " + ProfileStore.EnglishMessage(ex));
             }
             _saveMsTotal += sw.Elapsed.TotalMilliseconds;
             _saveCount++;
             // 過去の成功や失敗より、この呼び出しで出た例外を優先する。
             if (!threw)
             {
-                string writeError = _writer.LastError;
-                if (writeError != null && (SaveError == null || _saveErrorFromWriteFailure))
+                var state = _writer.GetWriteState();
+                string writeError = state.LastError;
+                long failureSerial = state.FailureSerial;
+                // 前より新しい書き込み失敗なら、古い例外の表示に代わって書き込み失敗を出す（#551）。
+                if (writeError != null && (SaveError == null || _saveErrorFromWriteFailure || IsNewWriteFailure(_writer, failureSerial)))
                 {
-                    SaveError = writeError;
+                    RememberWriteFailureState(_writer, failureSerial);
+                    SetSaveErrorText(writeError);
                     _saveErrorFromWriteFailure = true;
                 }
-                else if (writeError == null && SaveError != null && _writer.WrittenRevision > 0)
+                else if (writeError == null && SaveError != null && state.WrittenRevision > 0)
                 {
-                    SaveError = null;
+                    ClearSaveError();
                     _saveErrorFromWriteFailure = false;
                 }
             }

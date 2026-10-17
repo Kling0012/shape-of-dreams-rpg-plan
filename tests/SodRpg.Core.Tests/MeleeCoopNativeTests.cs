@@ -281,6 +281,26 @@ namespace SodRpg.Core.Tests
         }
 
         [Fact]
+        public void A_radius_upgrade_widens_the_falloff_instead_of_cutting_it_off()
+        {
+            // 半径強化（10m→11.5m）で減衰の端も比例して伸びる（11.5m全量、20.7mで0）。強化で届く距離が縮まない。
+            Assert.Equal(1f, CoopDistance.Coefficient(11.5, fullRange: 11.5), 4);
+            Assert.Equal(0.5f, CoopDistance.Coefficient(16.1, fullRange: 11.5), 3);
+            Assert.Equal(0f, CoopDistance.Coefficient(20.7, fullRange: 11.5), 4);
+            Assert.Equal(1f, CoopDistance.Coefficient(11.5, enabled: false, fullRange: 11.5), 4);
+            Assert.Equal(0f, CoopDistance.Coefficient(12, enabled: false, fullRange: 11.5), 4);
+
+            var a = new Hero_Vesper();
+            var b = new Hero_Husk();
+            b.position = new Vector3(14, 0, 0);
+            Time.time = 0f;
+            Assert.True(CoopDistanceNative.Coefficient(a, b, 11.5f) > CoopDistanceNative.Coefficient(a, b));
+            b.position = new Vector3(30, 0, 0);
+            Time.time = 1f;
+            Assert.True(CoopDistanceNative.Coefficient(a, b, 11.5f) > 0f); // 強化した効果にも猶予がある
+        }
+
+        [Fact]
         public void Melee_break_amplifies_only_other_allies_and_expires_after_three_seconds()
         {
             var host = new HostAuthority();

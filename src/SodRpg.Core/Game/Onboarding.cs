@@ -26,6 +26,10 @@ namespace SodRpg.Core.Game
         public Hint Id;
         public Txt Title;
         public Txt Body;
+        /// <summary>工房強化などプロフィールで変わる数値を含む本文。null なら Body をそのまま使う。</summary>
+        public Func<Profile, Txt> BodyFor;
+
+        public string Text(Profile p) => (p != null && BodyFor != null ? BodyFor(p) : Body).ToString();
     }
 
     /// <summary>
@@ -51,7 +55,7 @@ namespace SodRpg.Core.Game
             new HintDef
             {
                 Id = Hint.StarterGear, Title = new Txt("初期の遺物を装備しました", "Starter relics equipped"),
-                Body = new Txt("空いていた枠に初期の遺物を装備しました。左のパネルで状態を確認できます。拾った遺物は、確保して保管庫に入れると付け替えられます（遠征中は確保地点で、遠征の後ならいつでも）。",
+                Body = new Txt("空いていた枠に初期の遺物を装備しました。左のパネルで状態を確認できます。拾った遺物は確保して保管庫に入れると付け替えられます（遠征中は確保地点で、遠征の後ならいつでも）。",
                     "Your empty slots now hold starter relics. Check the Dreamforge panel on the left. Relics you pick up can be equipped once secured into your stash (at a secure point during a run, or any time after)."),
             },
             new HintDef
@@ -81,8 +85,8 @@ namespace SodRpg.Core.Game
             new HintDef
             {
                 Id = Hint.FirstDefeat, Title = new Txt("夢から覚めました", "You awoke"),
-                Body = new Txt($"まだ持ち帰っていなかった遺物は「遺失物」に移りました。次の遠征で戦闘部屋を{Content.RoomsToRecoverLost}つ突破すると、その中で一番良い物を1つ取り戻せます。まだ持ち帰っていなかった欠片の{Workshop.EchoPercent(null)}%は、残響として戻っています。",
-                    $"Your unsecured relics moved to Lost & Found. Clear {Content.RoomsToRecoverLost} combat rooms next run to recover the best one. {Workshop.EchoPercent(null)}% of your unsecured shards came back as echoes."),
+                Body = DefeatBody(Content.RoomsToRecoverLost, Workshop.EchoPercent(null)),
+                BodyFor = p => DefeatBody(Workshop.RoomsToRecover(p), Workshop.EchoPercent(p)),
             },
             new HintDef
             {
@@ -93,7 +97,7 @@ namespace SodRpg.Core.Game
             new HintDef
             {
                 Id = Hint.KeystoneReady, Title = new Txt("到達刻印を選べるようになりました", "Keystones unlocked"),
-                Body = new Txt($"この旅人の熟練度が上がり、到達刻印を選べるようになりました。選ぶには、この旅人のツリーに{Content.KeystoneRouteRequirement}ポイント以上振っておく必要もあります。",
+                Body = new Txt($"この旅人の熟練度が上がり、到達刻印を選べるようになりました。選ぶにはこの旅人のツリーに{Content.KeystoneRouteRequirement}ポイント以上振っておく必要もあります。",
                     $"This Traveler's mastery now allows a keystone. You also need {Content.KeystoneRouteRequirement}+ points in this tree."),
             },
             new HintDef
@@ -115,6 +119,10 @@ namespace SodRpg.Core.Game
                     $"You have enough shards. In the [F6] Forge tab you can enhance relics (+{Content.MaxEnhance} max) or collect the required number of relics of one rarity to transmute into a better one."),
             },
         };
+
+        private static Txt DefeatBody(int rooms, int echoPercent) => new Txt(
+            $"まだ持ち帰っていなかった遺物は「遺失物」に移りました。次の遠征で戦闘部屋を{rooms}つ突破すると、その中で一番良い物を1つ取り戻せます。まだ持ち帰っていなかった欠片の{echoPercent}%は、残響として戻っています。",
+            $"Your unsecured relics moved to Lost & Found. Clear {rooms} combat rooms next run to recover the best one. {echoPercent}% of your unsecured shards came back as echoes.");
 
         public static HintDef Get(Hint h)
         {

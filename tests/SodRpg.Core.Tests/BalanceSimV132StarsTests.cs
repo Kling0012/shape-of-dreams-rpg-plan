@@ -9,7 +9,7 @@ namespace SodRpg.Core.Tests
 {
     /// <summary>v1.32：BalanceSim の --mode v132stars が使う純粋な補助（tools/BalanceSim/V132Model.cs・V132Builds.cs）。</summary>
     [Collection("Generated hero registry")]
-    public class BalanceSimV132StarsTests
+    public class BalanceSimV132StarsTests : IClassFixture<StarRegistryCleanupFixture>
     {
         // ───── 撃破ゴールド（本体の形）─────
 
@@ -67,7 +67,7 @@ namespace SodRpg.Core.Tests
         }
 
         [Fact]
-        public void Four_training_entrances_reach_Z4_at_depth_zero_and_Z3_at_depth_one()
+        public void Capped_training_entrances_reach_Z4_at_depth_zero_and_Z3_at_depth_one()
         {
             // RegisterAllGenerated はプロセスで1回しか登録しない。テストごとの基準状態リセット
             // （SharedStarRegistryResetAttribute）で登録が消えても困らないよう、毎回登録し直す。
@@ -95,7 +95,7 @@ namespace SodRpg.Core.Tests
                             ledger.Gain("sim", entry, entry.Trigger, V132Model.BossUnits(entry.Trigger, depth, heat));
                             stacks[zone - 1] = ledger.Stacks("sim", entry.StarId);
                         }
-                        Assert.Equal(4 - depth, V132Model.FirstZoneAtCap(stacks, entry.Cap));
+                        Assert.Equal(hero == "Hero_Cetus" ? 0 : 4 - depth, V132Model.FirstZoneAtCap(stacks, entry.Cap));
                     }
             }
         }

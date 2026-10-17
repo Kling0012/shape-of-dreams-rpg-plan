@@ -7,7 +7,7 @@ using SodRpg.Core.Game;
 // 手法は docs/specs/star-registration-startup-performance-2026-10-16.md と同じ（Release・新規プロセス）。
 // この作業機に入っているのは .NET 10 のみ（net8.0 目標は RollForward で 10.0.11 で動く）ため、
 // 上記文書の .NET 8.0.32 での秒数とは絶対値を比べない。実行時の runtime= 行で実行環境を確認する。
-// DOTNET_TieredCompilation=0 も別条件として併測する。Mono の実測や所要時間の上限を表すものではない。
+// DOTNET_TieredCompilation=0 も別条件として併測する。Mono の実測や所要時間の上限を表すものではなく、換算もしない。
 //
 // 使い方:
 //   dotnet run -c Release --project tools/StartupBench -- total [--threshold-ms 1500]
@@ -22,8 +22,8 @@ using SodRpg.Core.Game;
 //   ContentFingerprint=13792-e4617232a7ce91e6、HeroSigils.All.Count=7642）は内容の追加で変わるため、
 //   #459 の文書（docs/specs/star-registration-startup-performance-2026-10-16.md）の古い値とではなく、
 //   同じ内容リビジョンでの修正前後で一致を見る。
-//   登録時間が --threshold-ms を超えたら終了コード 3 を返す。既定の 1500ms は比較用の仮基準で、
-//   Issue 報告者の許容時間ではない。この結果だけでゲーム内の症状を再現したとは判定しない。
+//   登録時間が --threshold-ms を超えたら終了コード 3 を返す。既定の 1500ms はこのツールの診断・比較用の仮基準で、
+//   Issue 報告者の許容時間やゲーム起動全体の再現を示す値ではない。この結果だけでゲーム内の症状を再現したとは判定しない。
 // stages: 旅人ごとに、文字列表の解析だけ（CreateGeneratedAuthored）と、本番の登録1人分
 //   （RegisterGeneratedHero=解析+登録+移行規則）を分けて測る。残りボトルネックの切り分け用。
 //   登録前に解析を実行するため、そのJITや初期化は温まる。total の内訳や差分には換算できない。

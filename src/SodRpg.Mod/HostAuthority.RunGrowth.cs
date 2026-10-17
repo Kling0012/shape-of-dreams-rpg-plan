@@ -199,10 +199,12 @@ namespace SodRpg.Mod
             if (hero == null || hero.Status == null || rt.Powers == null) return;
             var build = rt.Powers.Build;
             EnsureGrowthRun();
-            int version = RunGrowthLedger.Version;
             string owner = GrowthOwner(rt);
+            int version = RunGrowthLedger.OwnerVersion(owner);
+            int generation = RunGrowthLedger.Generation;
             bool ownerChanged = rt.GrowthOwnerKey != owner;
-            if (rt.GrowthVersion != version || !ReferenceEquals(rt.GrowthBuild, build) || ownerChanged)
+            if (rt.GrowthVersion != version || rt.GrowthGeneration != generation
+                || !ReferenceEquals(rt.GrowthBuild, build) || ownerChanged)
             {
                 try
                 {
@@ -230,18 +232,20 @@ namespace SodRpg.Mod
                     }
                     hero.Status.CalculateStatsIfDirty();
                     rt.GrowthVersion = version;
+                    rt.GrowthGeneration = generation;
                     rt.GrowthBuild = build;
                     rt.GrowthOwnerKey = owner;
                 }
                 catch (Exception ex)
                 {
                     rt.GrowthVersion = version;
+                    rt.GrowthGeneration = generation;
                     rt.GrowthBuild = build;
                     rt.GrowthOwnerKey = owner;
                     Log.Error("Host: RunGrowth apply " + ex);
                 }
             }
-            SendRunGrowth(rt, now, version, build);
+            SendRunGrowth(rt, now, RunGrowthLedger.Version, build);
         }
 
         private void SendRunGrowth(HeroRuntime rt, float now, int version, Build build)

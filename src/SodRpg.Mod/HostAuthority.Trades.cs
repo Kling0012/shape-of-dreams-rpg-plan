@@ -25,7 +25,7 @@ namespace SodRpg.Mod
                 return _tradeAuthority.FailSatchelOverflow(playerKey, runId, request);
             }
 
-            var decision = _tradeAuthority.Evaluate(playerKey, runId, request, owner.gold, owner.dreamDust, TradeGoldCostScale());
+            var decision = _tradeAuthority.Evaluate(playerKey, runId, request, owner.gold, owner.dreamDust, TradeGoldCostScale(), 1, TradeZoneIndex());
             if (!decision.Ok || decision.Replayed) return decision;
             int before = owner.dreamDust;
             try
@@ -123,7 +123,7 @@ namespace SodRpg.Mod
                     int goldBefore = caller.gold, dustBefore = caller.dreamDust;
                     var d = req.Kind == TradeKind.SatchelOverflowDust && !req.Query
                         ? GrantSatchelOverflow(msg, caller, req)
-                        : _tradeAuthority.Evaluate(playerKey, runId, req, goldBefore, dustBefore, TradeGoldCostScale(), SalvageScaleFor(caller));
+                        : _tradeAuthority.Evaluate(playerKey, runId, req, goldBefore, dustBefore, TradeGoldCostScale(), SalvageScaleFor(caller), TradeZoneIndex());
                     if (d.Ok && !d.Replayed && req.Kind != TradeKind.SatchelOverflowDust)
                         d = ExecuteManualTrade(caller, playerKey, runId, req, d, goldBefore, dustBefore);
                     ok = d.Ok;
@@ -158,6 +158,13 @@ namespace SodRpg.Mod
         {
             try { return NetworkedManagerBase<GameManager>.softInstance?.runId ?? ""; }
             catch (Exception) { return ""; }
+        }
+
+        /// <summary>現在の世界の番号（0始まり。-1 は不明）。分解ダストの世界ごとの上限はこの判定で切り替える（担当制と同じ）。</summary>
+        private static int TradeZoneIndex()
+        {
+            try { return NetworkedManagerBase<ZoneManager>.softInstance?.currentZoneIndex ?? -1; }
+            catch (Exception) { return -1; }
         }
 
         /// <summary>本体の価格補正（GameManager.GetAdjustedGoldAmount_Cost(1f)、ホスト側の権威ある値）。</summary>

@@ -278,6 +278,8 @@ def validate_growth_table(table, path=GROWTH_TABLE_PATH):
             if field not in bounds:
                 raise ValueError(f"{context}: unknown growth numeric field")
             lo, hi = bounds[field]
+            if key == "cetus.run.g1/growth/cap":
+                lo = 0  # Zero means no stack cap; other travelers keep their bounded caps.
             if not lo <= integer(value, context) <= hi:
                 raise ValueError(f"{context}: {field} must be an integer {lo}..{hi}")
     return table
