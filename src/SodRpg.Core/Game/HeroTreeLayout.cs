@@ -59,10 +59,7 @@ namespace SodRpg.Core.Game
         private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, Lazy<HeroTreeLayout>> Layouts =
             new System.Collections.Concurrent.ConcurrentDictionary<string, Lazy<HeroTreeLayout>>(StringComparer.Ordinal);
         private static readonly Func<string, Lazy<HeroTreeLayout>> FallbackLayoutFactory = CreateFallbackLayout;
-        private static class GenericLayout
-        {
-            internal static readonly HeroTreeLayout Value = Create(Content.Talents, false, false);
-        }
+        private static readonly HeroTreeLayout Generic = Create(Content.Talents, false, false);
         private readonly Dictionary<string, int> indices;
         // Reused under the lock: neither UI availability checks nor build evaluation allocate traversal buffers.
         private readonly bool[] reached;
@@ -83,12 +80,9 @@ namespace SodRpg.Core.Game
         public IReadOnlyList<HeroTreeEdge> Edges { get; }
         public int StartIndex => 0;
 
-        public static HeroTreeLayout ForHero(string heroKey)
-        {
-            if (StarClusters.TryGetRegisteredLayout(heroKey, out var registered)) return registered;
-            if (!Links.IsTraveler(heroKey)) return GenericLayout.Value;
-            return Layouts.GetOrAdd(heroKey, FallbackLayoutFactory).Value;
-        }
+        public static HeroTreeLayout ForHero(string heroKey) =>
+            StarClusters.TryGetRegisteredLayout(heroKey, out var registered) ? registered
+                : HeroSigils.HasTree(heroKey) ? Layouts.GetOrAdd(heroKey, FallbackLayoutFactory).Value : Generic;
 
         /// <summary>Builds a validated generated tree for data tooling and layout stress scenarios.</summary>
         public static HeroTreeLayout ForTalents(IReadOnlyList<TalentDef> talents) => Create(talents, true, true);
