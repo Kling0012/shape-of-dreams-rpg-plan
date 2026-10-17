@@ -90,6 +90,11 @@ namespace SodRpg.Mod
     [HarmonyPatch]
     internal static class MemoryReuseCastGate
     {
+        // essence-caps.json の kill switch が無効のときはパッチを外したままにする
+        // （TargetMethods が空のままだと "Undefined target method" になるため、Prepare で先に落とす）。
+        private static bool Prepare()
+            => EssenceCapsBalance.MemoryReuseEnabled && !NativeMemoryReuse.Disabled;
+
         private static IEnumerable<MethodBase> TargetMethods()
         {
             if (!EssenceCapsBalance.MemoryReuseEnabled) yield break;
@@ -134,7 +139,9 @@ namespace SodRpg.Mod
 
         private static bool Prepare()
         {
-            if (!EssenceCapsBalance.MemoryReuseEnabled || _disabled) return false;
+            // MemoryReuseOnCast と同じ判断: 設定無効、または再使用間隔そのものが入らなかったときは
+            // 表示の上書きも入れない。
+            if (!EssenceCapsBalance.MemoryReuseEnabled || NativeMemoryReuse.Disabled || _disabled) return false;
             try
             {
                 _target = NativeEssenceCaps.Find(typeof(UI_InGame_SkillButton), nameof(UI_InGame_SkillButton.FrameUpdate));
