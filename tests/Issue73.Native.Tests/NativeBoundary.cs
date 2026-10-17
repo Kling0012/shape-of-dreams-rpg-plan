@@ -963,6 +963,5 @@ namespace SodRpg.Mod
         public float PressureHealthMultiplier { get; internal set; } = 1f;
         public float PressureDamageMultiplier { get; internal set; } = 1f;
         public float NightmareGearMultiplier { get; private set; }
-        public float NightmarePressureHealthMultiplier { get; private set; }
     }
 }

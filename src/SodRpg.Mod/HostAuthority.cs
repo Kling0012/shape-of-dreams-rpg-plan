@@ -513,8 +513,7 @@ namespace SodRpg.Mod
             var pressure = DreamPressure.Average(_pressureBuilds)
                 .WithRunModifiers(ClientSession.HostRun?.DreamDepth ?? 0,
                     PersonalEnemyWaypointsRunning() ? 1 : ActiveWaypointTotals.PressureMultiplier)
-                .WithInfinityPressure(_infinityPressureStage)
-                .WithCoopScaling(_pressureBuilds.Count);
+                .WithInfinityPressure(_infinityPressureStage);
             bool changed = pressure.HealthMultiplier != _pressure.HealthMultiplier
                 || pressure.DamageMultiplier != _pressure.DamageMultiplier;
             synchronize |= changed || _pressurePlayerCount != _pressureBuilds.Count;
@@ -542,8 +541,7 @@ namespace SodRpg.Mod
                 healthMultiplier = (float)_pressure.HealthMultiplier,
                 damageMultiplier = (float)_pressure.DamageMultiplier,
                 runChoices = ClientSession.HostRunChoices,
-                nightmareGearMultiplier = (float)PartyGearChanceMult(),
-                nightmarePressureHealthMultiplier = (float)(1 + _pressure.RewardPressure)
+                nightmareGearMultiplier = (float)PartyGearChanceMult()
             });
             // Reuse the infrequent state resync for players whose run started after the first report.
             var runId = NetworkedManagerBase<GameManager>.softInstance?.runId;

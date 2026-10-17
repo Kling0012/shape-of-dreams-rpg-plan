@@ -83,10 +83,10 @@ namespace Issue73.Native.Tests
         {
             var room = (DreamPressure)Get(host, "_pressure");
             var builds = (Dictionary<DewPlayer, HostAuthority.ReceivedBuild>)Get(host, "_builds");
-            if (!builds.TryGetValue(player, out var received) || received.Build == null) return room.WithCoopScaling(DewPlayer.gamePlayers.Count);
+            if (!builds.TryGetValue(player, out var received) || received.Build == null) return room;
             return DreamPressure.ForPlayer(received.Build.DreamLevel, received.Build.SpentStarPoints)
                 .WithRunModifiers(room.Depth, room.WaypointMultiplier)
-                .WithInfinityPressure(room.InfinityStage).WithCoopScaling(DewPlayer.gamePlayers.Count);
+                .WithInfinityPressure(room.InfinityStage);
         }
 
         private static object State(HostAuthority host, Entity enemy) => ((IDictionary)Get(host, "_enemyOwnership"))[enemy];
@@ -486,7 +486,7 @@ namespace Issue73.Native.Tests
             foreach (var enemy in new[] { personal, veteran, unannounced, boss }) enemy.Status.baseMaxHealth = 200f;
             Assert.Equal(200f * (float)PressureOf(host, a).HealthMultiplier, RecalcMaxHealth(personal), 2);
             Assert.Equal(200f * (float)PressureOf(host, b).HealthMultiplier, RecalcMaxHealth(veteran), 2);
-            Assert.Equal(200f * (float)room.WithCoopScaling(DewPlayer.gamePlayers.Count).HealthMultiplier, RecalcMaxHealth(unannounced), 2); // 未受信Buildは部屋の平均で代替
+            Assert.Equal(200f * (float)room.HealthMultiplier, RecalcMaxHealth(unannounced), 2); // 未受信Buildは部屋の平均で代替
             Assert.Equal(200f, RecalcMaxHealth(boss), 2); // 担当なしは補正なし
             // 部屋の平均との二重掛けではない（room × 個人 になっていないことの明示）。
             Assert.NotEqual(200f * (float)(room.HealthMultiplier * PressureOf(host, b).HealthMultiplier), personal.Status.maxHealth, 2);

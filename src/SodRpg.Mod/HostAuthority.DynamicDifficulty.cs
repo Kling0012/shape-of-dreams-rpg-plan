@@ -159,8 +159,7 @@ namespace SodRpg.Mod
                                 state.LogAverage = average;
                                 state.Rooms++;
                                 state.Factor = state.Rooms < CoopBalance.DynamicDifficulty.MinRooms ? 1
-                                    : Math.Max(CoopBalance.DynamicDifficulty.MinFactor, Math.Min(DynamicSoloRunning() ? CoopBalance.DynamicDifficulty.MaxFactor
-                                        : Math.Min(CoopBalance.DynamicDifficulty.MaxFactor, CoopBalance.Difficulty.DynamicMaximumFactor), factor));
+                                    : Math.Max(CoopBalance.DynamicDifficulty.MinFactor, Math.Min(CoopBalance.DynamicDifficulty.MaxFactor, factor));
                             }
                         }
                     }

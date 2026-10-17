@@ -9,7 +9,6 @@ namespace SodRpg.Mod
         internal float PressureHealthMultiplier = 1;
         internal float PressureDamageMultiplier = 1;
         internal float NightmareGearMultiplier;
-        internal float NightmarePressureHealthMultiplier;
     }
 
     internal static class UiStyles
