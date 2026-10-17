@@ -66,8 +66,9 @@ namespace SodRpg.Mod
             else
             switch (_tab)
             {
-                case 0: DrawGearTab(); break;
-                case 1: DrawForgeTab(); break;
+                // 描画キャッシュ（#500）の効果を実機で比べるための計測。dreamforge_perf を使ったときだけ動く。
+                case 0: TabPerf.Begin(); DrawGearTab(); TabPerf.End(TabPerf.Gear, Event.current.type == EventType.Repaint); break;
+                case 1: TabPerf.Begin(); DrawForgeTab(); TabPerf.End(TabPerf.Forge, Event.current.type == EventType.Repaint); break;
                 case 2: DrawTalentTab(); break;
                 case 3: DrawWorkshopTab(); break;
                 case 5: DrawCoopTradeTab(); break;

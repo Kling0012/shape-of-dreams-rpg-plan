@@ -213,11 +213,12 @@ namespace SodRpg.Mod
             }
             _perf.EndUpdate();
             // GC の割り当て量は、perf.flag があるか dreamforge_perf が一度でも使われたときだけ測る（既定は無負荷）。
+            TabPerf.Enabled = _perfLogEnabled || _perfPolled;
             if (_perfLogEnabled || _perfPolled) _perf.SampleGC();
             if (_perfLogEnabled && Time.unscaledTime >= _nextPerfLog)
             {
                 _nextPerfLog = Time.unscaledTime + 10f;
-                Debug.Log("[DreamforgeRPG] perf " + _perf.Report() +
+                Debug.Log("[DreamforgeRPG] perf " + _perf.Report() + TabPerf.Report() +
                     $" | lightweight={_performance?.Mode ?? config.lightweight} background={!_hasFocus}");
             }
         }
@@ -285,7 +286,7 @@ namespace SodRpg.Mod
         {
             if (!CommandAllowed()) return;
             _perfPolled = true; // 以後のフレームで GC 割り当ても測れるようにする。
-            Debug.Log("[DreamforgeRPG] " + _perf.Report() + " | save avg " + _session.SaveMsAverage.ToString("0.00") +
+            Debug.Log("[DreamforgeRPG] " + _perf.Report() + TabPerf.Report() + " | save avg " + _session.SaveMsAverage.ToString("0.00") +
                 $"ms (main thread) | lightweight={_performance?.Mode ?? config.lightweight} background={!_hasFocus}");
         }
 

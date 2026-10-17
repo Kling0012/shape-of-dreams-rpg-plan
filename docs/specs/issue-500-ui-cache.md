@@ -24,6 +24,15 @@
 
 実機で評価するときは、変更前後で同じ保管庫（1000個以上）、装着状態、表示倍率、言語、画面解像度1920x1080を使い、装備タブと鍛冶タブをそれぞれ測る。初回の画像読み込みとキャッシュ構築を終え、同じスクロール操作と計測時間で、Unity ProfilerのOnGUI CPU時間、フレーム時間、GC Alloc/frameを比較する。計測器の設定とLayout/Repaintの回数も揃える。別途、装着・分解・取引・強化・星の変更・言語切り替え後の表示更新を確認する。これらの実機計測・目視確認は今回の依頼では対象外であり、新たな確認用Issueは作らない。
 
+### 計測の仕組み（R9）
+
+採用の判断を実測で行えるよう、装備タブと鍛冶タブの描画を個別に測る `TabPerf` を追加した。
+
+- `DreamforgeUi.Window.cs` の `DrawWindow` が `DrawGearTab` と `DrawForgeTab` の前後で `TabPerf.Begin` と `TabPerf.End` を呼ぶ。描画1回の時間（ms）と、メインスレッドのGC割り当て量（`GC.GetAllocatedBytesForCurrentThread` の差分）を、タブごと・Repaintとそれ以外（Layout・入力）ごとに集計する。
+- 計測は `dreamforge_perf` を一度実行するか、保存先に `perf.flag` があるときだけ動く。それ以外は真偽値の確認だけで、割り当ては増えない。割り当て量を読めない環境では1回の失敗で止め、`alloc n/a` と表示する。
+- 結果は `dreamforge_perf` の出力と `perf.flag` の10秒ごとのログで、既存の報告の後ろに `| gear tab repaint avg …ms max …ms alloc …KB/call (n calls) layout/input …` の形で出る。報告するたびに集計を空にする。
+- 判断の基準：変更前（このキャッシュ導入前の版）と変更後で、上の条件をそろえて `gear tab` と `forge tab` の Repaint の平均時間と `KB/call` を比べる。どちらも悪化していなければ採用を維持する。どちらかが悪化した場合は、悪化した側のキャッシュを見直す。
+
 ## 検証
 
 - ゲーム参照DLLによるReleaseビルド成功（エラー0、警告6）。参照用ゲームディレクトリに `Mods` がないため配置処理なし。
