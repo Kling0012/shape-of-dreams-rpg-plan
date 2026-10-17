@@ -388,7 +388,10 @@ namespace SodRpg.Mod
             var state = envelope.State;
             // Legacy finale envelopes carry no marker and contain the artificial interval counter.
             // Normalize against the current graph receipt to match ProfileCodec's migration.
-            if (!state.FinalePromoted && state.FixedZoneId == "Zone_Primus"
+            // Only when the marker is absent: a current envelope says FinalePromoted=false too, and a
+            // regenerated Primus graph can legitimately reach a full cycle with fewer cleared nodes.
+            bool legacy = text.IndexOf("\"" + nameof(InfinityRunState.FinalePromoted) + "\"", StringComparison.Ordinal) < 0;
+            if (legacy && !state.FinalePromoted && state.FixedZoneId == "Zone_Primus"
                 && state.ClearsInCycle == state.Interval
                 && state.ClearedNodes.Count < state.Interval
                 && state.Phase >= InfinityPhase.BossDue && state.Phase <= InfinityPhase.AwaitingChoice)

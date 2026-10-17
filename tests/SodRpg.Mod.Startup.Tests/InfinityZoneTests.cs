@@ -193,10 +193,21 @@ namespace SodRpg.Mod.Startup.Tests
             // Older envelopes stored a padded cycle; migration must keep the soul-wait phase.
             var settings = NetworkedManagerBase<GameSettingsManager>.softInstance;
             string currentEnvelope = settings.customData[InfinityMode.RuntimeKey];
-            settings.customData[InfinityMode.RuntimeKey] = currentEnvelope
-                .Replace("\"FinalePromoted\":true", "\"FinalePromoted\":false")
-                .Replace("\"ClearsInCycle\":0", "\"ClearsInCycle\":" + state.Interval);
+            var legacyEnvelope = Newtonsoft.Json.Linq.JObject.Parse(currentEnvelope);
+            ((Newtonsoft.Json.Linq.JObject)legacyEnvelope["State"]).Remove("FinalePromoted"); // older envelopes had no marker
+            legacyEnvelope["State"]["ClearsInCycle"] = state.Interval;
+            settings.customData[InfinityMode.RuntimeKey] = legacyEnvelope.ToString(Newtonsoft.Json.Formatting.None);
             Assert.True(InfinityMode.MatchesProfile(restored.Run));
+            // A current envelope that says FinalePromoted=false is not a legacy one: a regenerated Primus
+            // graph can reach a full cycle with fewer cleared nodes, and that count must survive Continue.
+            var currentUnpromoted = Newtonsoft.Json.Linq.JObject.Parse(currentEnvelope);
+            currentUnpromoted["State"]["FinalePromoted"] = false;
+            currentUnpromoted["State"]["ClearsInCycle"] = state.Interval;
+            settings.customData[InfinityMode.RuntimeKey] = currentUnpromoted.ToString(Newtonsoft.Json.Formatting.None);
+            Assert.True(InfinityMode.TryReadEnvelope(out var unpromoted));
+            Assert.False(unpromoted.State.FinalePromoted);
+            Assert.Equal(state.Interval, unpromoted.State.ClearsInCycle);
+            settings.customData[InfinityMode.RuntimeKey] = legacyEnvelope.ToString(Newtonsoft.Json.Formatting.None);
             var legacyProfile = Newtonsoft.Json.Linq.JObject.Parse(ProfileCodec.Write(session.Profile));
             var legacyState = (Newtonsoft.Json.Linq.JObject)legacyProfile["body"]["run"]["infinity"];
             legacyState.Remove("actualCycle");
