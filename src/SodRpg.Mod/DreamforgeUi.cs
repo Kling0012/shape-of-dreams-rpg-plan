@@ -3558,6 +3558,12 @@ namespace SodRpg.Mod
                 GUILayout.Label(_s.InGame
                     ? Loc.T($"今回の遠征（まだ持ち帰っていない遺物{p.Run.Satchel.Count}個）", $"This expedition ({p.Run.Satchel.Count} relics not yet secured)")
                     : Loc.T($"中断中の遠征（まだ持ち帰っていない遺物{p.Run.Satchel.Count}個）", $"Suspended expedition ({p.Run.Satchel.Count} relics not yet secured)"), _st.Header);
+                // 分解のダストは世界ごとの上限に出る。判定はホスト側。世界が変わると回復する。
+                long salvageDustCap = Economy.DustCap(p.Run.SalvageDustZoneIndex, _s.SalvageScale);
+                long salvageDustUsed = Math.Min(p.Run.SalvageDustEarned, salvageDustCap);
+                GUILayout.Label(Loc.T(
+                    $"分解のダスト（この世界）: {salvageDustUsed}/{salvageDustCap}",
+                    $"Salvage dust (this world): {salvageDustUsed}/{salvageDustCap}"), _st.Small);
                 DrawBulkUnsecuredSalvage(p.Run);
                 int rerolls = Rules.RerollsLeft(p);
                 for (int i = 0; i < p.Run.Bounties.Count; i++)

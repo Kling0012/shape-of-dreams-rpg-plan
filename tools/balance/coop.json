@@ -13,21 +13,9 @@
   "autoCastOwnHitSeconds": 3,
   "autoCastAllyHitSeconds": 2,
   "shieldWallTauntSeconds": 4,
-  "difficulty": {
-    "nativeHealthBonusFactor": 0.5,
-    "nativeHealthBonusMaximum": 100,
-    "nativePowerBonusFactor": 0.5,
-    "nativePowerBonusMaximum": 15,
-    "healthPressureShare": 0.65,
-    "healthPressureMaximum": 8,
-    "damagePressureShare": 0.5,
-    "damagePressureMaximum": 2,
-    "enemyCountMaximumBonus": 1.5,
-    "dynamicMaximumFactor": 1.5
-  },
   "ownership": {
     "helpDecayPercentByWorld": [0, 30, 60, 90],
-    "bossShareFactor": 0.7,
+    "bossShareFactor": 0.8,
     "bossDamageMin": 0.2,
     "bossDamageMax": 3,
     "rescueHp": 0.35,

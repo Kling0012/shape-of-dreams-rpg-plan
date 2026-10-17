@@ -10,6 +10,39 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v3.5.0 — Per-world salvage dust cap and clearer descriptions（2026-10-17）
+
+細かな調整を行いました。 / Minor adjustments.
+
+このバージョンでは、遠征中に分解で得られる夢のダストに世界ごとの上限を付けました。あわせて、画面の説明文を実際の動きに合わせて直し、いくつかの不具合を修正しました。/ This version adds a per-world cap on Dream Dust from salvaging during expeditions. Screen descriptions now match how things actually work, and several bugs are fixed.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。更新前に保存した遠征を再開した場合、分解の上限はその世界の 0 から数え始めます。 / Saves carry over. If you resume an expedition saved before updating, the salvage cap starts counting from zero in that world.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 変更 / Changes
+
+- 遠征中の分解で得られる夢のダストに、世界ごとの上限を付けました。手動の分解と鞄のあふれの両方が対象です。上限に達すると分解は断られ、遺物は失われません。上限は次の世界に進むか遠征が終わると元に戻ります。 / Dream Dust from salvaging relics during an expedition now has a per-world cap. It covers both manual salvage and satchel overflow. At the cap, salvage is refused and the relic is kept. The cap resets when you move to the next world or the expedition ends.
+
+### 追加要素 / New features
+
+- 遠征の分解画面に、この世界で分解から得た夢のダストの量を表示するようにしました。 / The expedition salvage screen now shows how much Dream Dust salvaging has given you in this world.
+
+### 不具合の修正 / Bug fixes
+
+- インフィニティで、行き止まりから Primus の図を作り直した後に保存して Continue すると、インフィニティが無効になることがある問題を直しました。 / Fixed Infinity being disabled on Continue after a Primus graph was regenerated at a dead end and then saved.
+- 過剰（禁忌化）で増えた条件付きの攻撃・能力ボーナスが、条件付きの共通上限（120%）に数えられて削られていた問題を直しました。 / Fixed the Overcharge boost on conditional attack and power bonuses counting toward their shared 120% cap.
+- v1.29 の固有効果の説明が、強化・覚醒・過剰や星で上限を超えた値と食い違っていた問題を直しました。装備の元の値の上限、強化後の最大値、星の加算を日英で説明します。 / Fixed v1.29 power descriptions contradicting values raised above the base cap by enhancement, awakening, Overcharge or stars. Both languages now explain the equipment base cap, the enhanced ceiling and additive star values.
+- 連携付き固有品4件で、図鑑と装備の説明に効果量と上限が矛盾して表示されていた問題を直しました。 / Fixed contradictory effect values and caps shown in codex and gear descriptions for four uniques with links.
+- 画面とMODの説明文で、実際の動きと食い違っていた箇所を直しました。協力プレイの「敵を倒したとき」の効果の発動条件（装備・星図のタブと F6 に説明を追加）、動的難易度の倍率の範囲と報酬の扱い、担当の印がない敵の説明、鍛冶の節目、図鑑のボーナス、MOD紹介文の各コンテンツの数などです。 / Fixed descriptions on screen and in the mod description that did not match actual behavior: when "on defeating an enemy" effects trigger in co-op (now explained in the gear and star map tabs and in F6), the dynamic difficulty factor range and how it affects rewards, enemies without an ownership mark, forge milestones, the codex bonus, and content counts in the mod description.
+- 画面の日本語の文言を読みやすく整えました。 / Polished Japanese wording across the screens.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
 ## v3.4.1 — Dynamic difficulty status in the menu（2026-10-17）
 
 ### 新機能 / New features

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace SodRpg.Core.Game
 {
-    /// <summary>参加中の旅人の平均から求める夢の圧。協力時は戦闘用の増分と上限を別に調整する。</summary>
+    /// <summary>参加中の旅人の平均から求める夢の圧。人数による強化は本体に任せる。</summary>
     public readonly struct DreamPressure
     {
         private readonly double _averageLevelAboveOne;
@@ -12,7 +12,6 @@ namespace SodRpg.Core.Game
         public int Depth { get; }
         public int InfinityStage { get; }
         private readonly double _waypointPressureAboveOne;
-        private readonly bool _coopScaling;
         public double WaypointMultiplier => 1 + _waypointPressureAboveOne;
         /// <summary>夢のレベルはこの値を超えた分だけ数える（序盤は夢のレベルがすぐ上がるため。v1.27 のバランス調整）。</summary>
         public const int FreeDreamLevels = PressureBalance.FreeDreamLevels;
@@ -25,14 +24,9 @@ namespace SodRpg.Core.Game
         private double LevelsOverFree => Math.Max(0, AverageDreamLevel - FreeDreamLevels);
         private double HealthMultiplierBeforeInfinity => (1 + HealthPerLevel * LevelsOverFree + HealthPerStarPoint * AverageSpentStarPoints)
             * DreamDepth.HealthMultiplier(Depth) * WaypointMultiplier;
-        public double HealthMultiplier => CombatMultiplier(HealthMultiplierBeforeInfinity * (1 + HealthPerInfinityStage * InfinityStage),
-            CoopBalance.Difficulty.HealthPressureShare, CoopBalance.Difficulty.HealthPressureMaximum);
-        public double DamageMultiplier => CombatMultiplier((1 + DamagePerLevel * LevelsOverFree + DamagePerStarPoint * AverageSpentStarPoints)
-            * DreamDepth.DamageMultiplier(Depth) * WaypointMultiplier * (1 + DamagePerInfinityStage * InfinityStage),
-            CoopBalance.Difficulty.DamagePressureShare, CoopBalance.Difficulty.DamagePressureMaximum);
-
-        private double CombatMultiplier(double multiplier, double share, double maximum) =>
-            _coopScaling ? 1 + Math.Min(maximum - 1, (multiplier - 1) * share) : multiplier;
+        public double HealthMultiplier => HealthMultiplierBeforeInfinity * (1 + HealthPerInfinityStage * InfinityStage);
+        public double DamageMultiplier => (1 + DamagePerLevel * LevelsOverFree + DamagePerStarPoint * AverageSpentStarPoints)
+            * DreamDepth.DamageMultiplier(Depth) * WaypointMultiplier * (1 + DamagePerInfinityStage * InfinityStage);
 
         public const double ShardDropPerPressure = PressureBalance.ShardDropPerPressure;
         public const double ShardDropMaximum = PressureBalance.ShardDropMaximum;
@@ -68,9 +62,7 @@ namespace SodRpg.Core.Game
                 : Capped(NightmareChancePerPressure, NightmareChanceMaximum, Math.Max(0, healthMultiplierBeforeInfinity - 1));
 
         /// <summary>通常の圧には段番号がないため、最終HPの増分を圧1段のHP増分で換算する。</summary>
-        public double EnemyCountMultiplier => _coopScaling
-            ? Math.Min(1 + CoopBalance.Difficulty.EnemyCountMaximumBonus, EnemyCountMultiplierForHealth(HealthMultiplier))
-            : EnemyCountMultiplierForHealth(HealthMultiplier);
+        public double EnemyCountMultiplier => EnemyCountMultiplierForHealth(HealthMultiplier);
 
         public static double EnemyCountMultiplierForHealth(double healthMultiplier)
         {
@@ -79,10 +71,8 @@ namespace SodRpg.Core.Game
             return 1 + Math.Min(PressureBalance.EnemyCountMaximumBonus, stages * PressureBalance.EnemyCountPerStage);
         }
 
-        private DreamPressure(double dreamLevel, double spentStarPoints, int depth = 0, double waypointMultiplier = 1, int infinityStage = 0,
-            bool coopScaling = false)
+        private DreamPressure(double dreamLevel, double spentStarPoints, int depth = 0, double waypointMultiplier = 1, int infinityStage = 0)
         {
-            _coopScaling = coopScaling;
             _averageLevelAboveOne = dreamLevel - 1;
             AverageSpentStarPoints = spentStarPoints;
             Depth = DreamDepth.Clamp(depth);
@@ -92,14 +82,10 @@ namespace SodRpg.Core.Game
         }
 
         public DreamPressure WithRunModifiers(int depth, double waypointMultiplier = 1) =>
-            new DreamPressure(AverageDreamLevel, AverageSpentStarPoints, depth, waypointMultiplier, InfinityStage, _coopScaling);
+            new DreamPressure(AverageDreamLevel, AverageSpentStarPoints, depth, waypointMultiplier, InfinityStage);
 
         public DreamPressure WithInfinityPressure(int stage) =>
-            new DreamPressure(AverageDreamLevel, AverageSpentStarPoints, Depth, WaypointMultiplier, stage, _coopScaling);
-
-        /// <summary>協力プレイだけ戦闘用の圧を緩和する。報酬と悪夢化率は元の育成値を維持する。</summary>
-        public DreamPressure WithCoopScaling(int participants) =>
-            new DreamPressure(AverageDreamLevel, AverageSpentStarPoints, Depth, WaypointMultiplier, InfinityStage, participants > 1);
+            new DreamPressure(AverageDreamLevel, AverageSpentStarPoints, Depth, WaypointMultiplier, stage);
 
         public static DreamPressure Neutral => new DreamPressure(1, 0);
 

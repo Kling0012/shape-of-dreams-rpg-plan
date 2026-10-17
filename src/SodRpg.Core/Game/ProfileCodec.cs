@@ -145,6 +145,10 @@ namespace SodRpg.Core.Game
                     if (r.WorldZoneName != null) run.Add("worldZoneName", r.WorldZoneName);
                     if (r.WorldInfinitySegment >= 0) run.Add("worldInfinitySegment", r.WorldInfinitySegment);
                 }
+                // 旧い保存（計数がない）は 0 から始める。
+                if (r.SalvageDustEarned != 0) run.Add("salvageDustEarned", r.SalvageDustEarned);
+                if (r.SalvageDustZoneIndex != -1) run.Add("salvageDustZone", (long)r.SalvageDustZoneIndex);
+                if (r.SalvageDustOverflowPaidSeen != 0) run.Add("salvageDustOverflowSeen", r.SalvageDustOverflowPaidSeen);
             }
 
             var body = new JsonObject()
@@ -519,6 +523,9 @@ namespace SodRpg.Core.Game
                     WorldZoneIndex = rj.TryGet("worldIndex", out _) && rj.TryGet("worldZoneIndex", out _) ? Clamp(Long(rj, "worldZoneIndex"), -1, int.MaxValue) : -1,
                     WorldZoneName = Str(rj, "worldZoneName"),
                     WorldInfinitySegment = rj.TryGet("worldInfinitySegment", out _) ? Math.Max(-1, Long(rj, "worldInfinitySegment")) : -1,
+                    SalvageDustEarned = Long(rj, "salvageDustEarned"),
+                    SalvageDustZoneIndex = rj.TryGet("salvageDustZone", out _) ? (int)Clamp(Long(rj, "salvageDustZone"), -1, int.MaxValue) : -1,
+                    SalvageDustOverflowPaidSeen = Long(rj, "salvageDustOverflowSeen"),
                     HeroKey = Str(rj, "heroKey"),
                     StarSecureRewarded = Bool(rj, "starSecureRewarded", false),
                     Heat = Loot.ClampHeat(Clamp(Long(rj, "heat"), 0, Content.MaxHeat)),

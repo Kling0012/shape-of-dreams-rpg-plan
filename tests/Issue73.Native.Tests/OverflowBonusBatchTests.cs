@@ -13,6 +13,7 @@ namespace Issue73.Native.Tests
         private const BindingFlags Hidden = BindingFlags.Instance | BindingFlags.Static | BindingFlags.NonPublic;
         private readonly bool _server = NetworkServer.active;
         private readonly GameManager _game = NetworkedManagerBase<GameManager>.softInstance;
+        private readonly ZoneManager _zone = NetworkedManagerBase<ZoneManager>.softInstance;
         private readonly int _frame = Time.frameCount;
         private readonly object _restore = typeof(HostAuthority).GetField("_pendingContinueTrades", Hidden).GetValue(null);
         private readonly object _session = typeof(ClientSession).GetField("_hostSession", Hidden).GetValue(null);
@@ -26,6 +27,9 @@ namespace Issue73.Native.Tests
         {
             NetworkServer.active = true;
             NetworkedManagerBase<GameManager>.softInstance = new GameManager { runId = "bonus252-run" };
+            // この試験は一括支払いの重複排除が対象。分解ダストの世界ごとの上限（別試験の対象）で
+            // 支払いが削られないよう、十分先の世界に置く。
+            NetworkedManagerBase<ZoneManager>.softInstance = new ZoneManager { currentZoneIndex = int.MaxValue };
             Time.frameCount = 252;
             typeof(HostAuthority).GetField("_pendingContinueTrades", Hidden).SetValue(null, null);
             typeof(ClientSession).GetField("_hostSession", Hidden).SetValue(null, null);
@@ -40,6 +44,7 @@ namespace Issue73.Native.Tests
             DewPlayer.gamePlayers.Remove(_owner);
             NetworkServer.active = _server;
             NetworkedManagerBase<GameManager>.softInstance = _game;
+            NetworkedManagerBase<ZoneManager>.softInstance = _zone;
             Time.frameCount = _frame;
             typeof(HostAuthority).GetField("_pendingContinueTrades", Hidden).SetValue(null, _restore);
             typeof(ClientSession).GetField("_hostSession", Hidden).SetValue(null, _session);
