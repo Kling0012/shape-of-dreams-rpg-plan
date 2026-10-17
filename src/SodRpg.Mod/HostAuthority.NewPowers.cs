@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using Mirror;
 using SodRpg.Core.Game;
 using UnityEngine;
@@ -59,7 +60,7 @@ namespace SodRpg.Mod
             internal DataProcessor<HealData, Actor, Entity> ShieldReceived;
             internal DataProcessor<HealData, Actor, Entity> HealReceived;
             internal readonly Dictionary<int, float> Overkill = new Dictionary<int, float>();
-            internal readonly List<Action> Pending = new List<Action>();
+            internal readonly PowerCommandQueue Pending = new PowerCommandQueue();
         }
 
         private int _powerSupportDepth;
@@ -239,40 +240,10 @@ namespace SodRpg.Mod
             float amount, bool magic = false, int maxTargets = int.MaxValue, Entity except = null, bool pure = false)
         {
             if (amount <= 0f) return;
-            rt.NewPowers.Pending.Add(() =>
+            rt.NewPowers.Pending.Add(new PowerCommand
             {
-                EnterGenerated(rt.Hero);
-                try
-                {
-                    if (radius > 0f)
-                    {
-                        if (!pure) DamageAround(rt.Hero, center, radius, amount, except, maxTargets, magic, gimmick: true);
-                        else
-                        {
-                            ListReturnHandle<Entity> handle;
-                            var found = DewPhysics.OverlapCircleAllEntities(out handle, center, radius, EnemyFilter, rt.Hero);
-                            try
-                            {
-                                int count = 0;
-                                foreach (var enemy in found)
-                                {
-                                    if (enemy == except || enemy == null || !enemy.isActive || enemy.currentHealth <= 0f) continue;
-                                    if (count++ >= maxTargets) break;
-                                    rt.Hero.PureDamage(amount, 0f).SetAmountModifiedBy(typeof(GimmickRuntime)).Dispatch(enemy);
-                                }
-                            }
-                            finally { handle.Return(); }
-                        }
-                    }
-                    else if (victim != null && victim.isActive && victim.currentHealth > 0f
-                        && victim.GetRelation(rt.Hero) == EntityRelation.Enemy)
-                    {
-                        var damage = pure ? rt.Hero.PureDamage(amount, 0f)
-                            : magic ? rt.Hero.MagicDamage(amount, 0f) : rt.Hero.PhysicalDamage(amount, 0f);
-                        damage.SetAmountModifiedBy(typeof(GimmickRuntime)).Dispatch(victim);
-                    }
-                }
-                finally { ExitGenerated(rt.Hero); }
+                Victim = victim, Center = center, Radius = radius, Amount = amount,
+                Magic = magic, MaxTargets = maxTargets, Except = except, Pure = pure
             });
         }
 
@@ -281,13 +252,31 @@ namespace SodRpg.Mod
             var pending = rt.NewPowers.Pending;
             if (!Alive(rt.Hero)) { pending.Clear(); return; }
             int count = pending.Count;
-            for (int i = 0; i < count; i++)
+            if (count > 0)
             {
-                try { pending[i](); }
-                catch (Exception ex) { Log.Error("Host: new power dispatch " + ex); }
+                // 第2段: 予算（件数と経過時間）を超えた残りは順序を保って次フレームへ。
+                // flush 中に追加された予約は今回の対象にしない（これまでの動きと同じ）。
+                int limit = PowerFlushBudget.Items(pending);
+                long budget = PowerFlushBudget.Ticks(pending);
+                long start = Stopwatch.GetTimestamp();
+                int done = 0;
+                while (done < count && done < limit)
+                {
+                    try { DispatchPowerCommand(rt, pending[done]); }
+                    catch (Exception ex) { Log.Error("Host: new power dispatch " + ex); }
+                    done++;
+                    if (done < limit && Stopwatch.GetTimestamp() - start >= budget) break;
+                }
+                pending.RemoveRange(0, done);
+                PowerFlushBudget.Observe(pending, pending.Count);
+                if (pending.Count > 0)
+                {
+                    // 持ち越した最古の予約の待ち時間が、この予算が作った遅れの最大値。
+                    NativeProcSpawnSpread.RecordPowerCarry(pending.Count, Time.unscaledTime - pending[0].QueuedAt);
+                }
             }
-            pending.RemoveRange(0, count);
-            rt.NewPowers.Overkill.Clear();
+            // 予約が残っている間は過剰ダメージの記録を保持する（残りの予約が読むため）。
+            if (pending.Count == 0) rt.NewPowers.Overkill.Clear();
         }
 
         private void InitializeNewPowers(HeroRuntime rt)
@@ -352,6 +341,7 @@ namespace SodRpg.Mod
             foreach (var rt in _runtimes.Values)
             {
                 rt.NewPowers.Pending.Clear();
+                rt.NewPowers.Pending.ResetBudget();
                 rt.NewPowers.Overkill.Clear();
                 rt.NewPowers.PositionKnown = false;
                 ClearUnbowedGuard(rt);
@@ -561,7 +551,7 @@ namespace SodRpg.Mod
             if (st.darkStack >= 2 && p.Build.Get(Power.UmbralHeritage) > 0)
             {
                 Vector3 center = victim.position;
-                rt.NewPowers.Pending.Add(() => SpreadUmbral(rt, victim, center));
+                rt.NewPowers.Pending.Add(new PowerCommand { Umbral = true, Victim = victim, Center = center });
             }
         }
 

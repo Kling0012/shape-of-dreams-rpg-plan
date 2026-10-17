@@ -118,6 +118,12 @@ namespace SodRpg.Mod
         internal static void Install(Harmony harmony) { }
         internal static void Stop() { }
     }
+    // Heavy-frame projectile spread lives against the real game assemblies;
+    // here only the entry-point call needs a double.
+    internal static class NativeProcSpawnSpread
+    {
+        internal static void Tick() { }
+    }
     // Native culinary adapters are exercised by a separate linked-production smoke harness.
     internal static class CulinaryMagnet
     {
