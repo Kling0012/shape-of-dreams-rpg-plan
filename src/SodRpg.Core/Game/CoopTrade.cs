@@ -95,6 +95,16 @@ namespace SodRpg.Core.Game
         }
 
         /// <summary>
+        /// この遺物を今の提示に入れられるか（Validate の遺物ごとの条件と同じ）：保管庫か鞄にあり、装着しておらず、
+        /// 取引の受領待ちや再調律の候補選びの途中でない。提示した後に変わった遺物を UI が提示から外すのに使う。
+        /// </summary>
+        public static bool RelicOfferable(Profile profile, string uid)
+            => profile != null && !string.IsNullOrEmpty(uid) && FindOffered(profile, uid) != null
+                && !profile.IsEquippedAnywhere(uid)
+                && !profile.PendingTrades.Any(t => t.Uid == uid || t.Relic?.Uid == uid)
+                && profile.RetuneOffer?.Uid != uid;
+
+        /// <summary>
         /// 融合を知らない相手へは、段階を失う遺物の受け渡しだけを拒否する。拒否したときは理由コード
         /// （いまは <see cref="FusionReason"/> のみ）、問題ないときは null を返す。文言は <see cref="ReasonText"/> で引き直す。
         /// </summary>
