@@ -55,6 +55,13 @@ namespace SodRpg.Mod
             catch (Exception ex) { FailBossShares(state, ex); return null; }
         }
 
+        private static int BossShareFraction(BossShares shares, int index)
+        {
+            if (shares.Capacity[index] <= 0 || shares.Remaining[index] <= 0) return 0;
+            // Reserve zero for an exhausted share, even below the wire's 0.1% precision.
+            return Math.Max(1, (int)Math.Round(Math.Min(1, shares.Remaining[index] / shares.Capacity[index]) * 1000));
+        }
+
         private static BossShareDisplay[] BossShareSnapshot(EnemyOwnership state, BossShares shares, BossShareDisplay[] previous)
         {
             ReconcileBossShares(state, shares);
@@ -65,8 +72,7 @@ namespace SodRpg.Mod
                 var player = shares.Players[i];
                 if (player == null) continue;
                 int slot = DewPlayer.gamePlayers.IndexOf(player) + 1;
-                int fraction = shares.Capacity[i] > 0
-                    ? (int)Math.Round(Math.Max(0, Math.Min(1, shares.Remaining[i] / shares.Capacity[i])) * 1000) : 0;
+                int fraction = BossShareFraction(shares, i);
                 if (previous == null || count >= previous.Length || previous[count].participantId != player.guid
                     || previous[count].playerSlot != slot || previous[count].remaining != fraction) same = false;
                 count++;
@@ -80,8 +86,7 @@ namespace SodRpg.Mod
                 if (player == null) continue;
                 result[next++] = new BossShareDisplay { participantId = player.guid,
                     playerSlot = DewPlayer.gamePlayers.IndexOf(player) + 1,
-                    remaining = shares.Capacity[i] > 0
-                        ? (int)Math.Round(Math.Max(0, Math.Min(1, shares.Remaining[i] / shares.Capacity[i])) * 1000) : 0 };
+                    remaining = BossShareFraction(shares, i) };
             }
             return result;
         }
