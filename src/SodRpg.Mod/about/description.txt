@@ -1,5 +1,5 @@
-[b]v3.5.0: Dream Dust from salvaging during expeditions now has a per-world cap (refused at the cap, relic kept), descriptions now match actual behavior, plus Infinity Continue and Overcharge cap fixes. Saves carry over. Restart the game after updating.[/b]
-[b]v3.5.0：遠征中の分解で得られる夢のダストに世界ごとの上限を付けました（上限では分解が断られ、遺物は残ります）。説明文を実際の動きに合わせて直し、インフィニティの Continue と過剰の上限の不具合を修正しました。セーブデータはそのまま引き継げます。更新後はゲームを再起動してください。[/b]
+[b]v3.6.0: Minor adjustments, and a fix for helper damage decay not advancing when repeatedly delving into the same Infinity zone. Saves carry over. Restart the game after updating.[/b]
+[b]v3.6.0：細かな調整と、インフィニティで同じゾーンへの潜行を繰り返すと担当外の敵への与ダメージの減衰が進まない問題の修正です。セーブデータはそのまま引き継げます。更新後はゲームを再起動してください。[/b]
 
 [h1]Dreamforge RPG[/h1]
 Turns every run into part of a long RPG journey: relics you keep, a risky "secure or delve" choice at every zone, a star map per Traveler, a forge, and long-term goals. Co-op ready.

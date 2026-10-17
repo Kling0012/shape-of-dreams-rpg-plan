@@ -10,6 +10,24 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v3.6.0 — Minor adjustments and an Infinity fix（2026-10-17）
+
+細かな調整を行いました。 / Minor adjustments.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- インフィニティで同じゾーンへの潜行を繰り返すと、担当外の敵やボスの他人の持ち分への与ダメージの減衰が進まない問題を修正しました。 / Fixed helper damage decay failing to advance for other players' enemies and boss shares when repeatedly delving into the same zone in Infinity.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
 ## v3.5.0 — Per-world salvage dust cap and clearer descriptions（2026-10-17）
 
 細かな調整を行いました。 / Minor adjustments.
