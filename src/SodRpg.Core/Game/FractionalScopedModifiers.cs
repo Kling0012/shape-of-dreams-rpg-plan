@@ -634,6 +634,9 @@ namespace SodRpg.Core.Game
                 if (entryToken != null) build.Dependencies.Touch(entryToken, entry.ContributorIds.Length == 0 ? new[] { entry.StarId } : entry.ContributorIds);
                 foreach (var s in contributing)
                 {
+                    // このループの加算と依存記録は、上の contributing フィルタの3条件
+                    // （GimmickBoost・GimmickParameter・ScopedModifier）だけを起点に起こる。
+                    // 新しい作用を足すときは、フィルタ条件も同じ条件で絞り直すこと。
                     var t = s.Key;
                     if (t.RouteMemory == entry.Memory)
                     {

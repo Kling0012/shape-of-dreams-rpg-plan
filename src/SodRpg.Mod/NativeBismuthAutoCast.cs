@@ -89,6 +89,10 @@ namespace SodRpg.Mod
             bool allPeersSupported = AutocastPressure.AllPeersSupported;
             // This pressure is a lower bound until local sampling below. Reject only ticks
             // that cannot cast even at that bound, without sampling an all-unready frame.
+            // Both early rejects are sound only while AutoCastCadence.Compute stays
+            // monotonic in pressure: at the lower-bound pressure the interval is the
+            // smallest and castsPerSecond the largest, so a tick rejected here cannot
+            // pass the cadence recomputed from the sampled pressure below.
             AutoCastCadence.Compute(pressure, coop, nativeCadence, allPeersSupported,
                 out float interval, out int castsPerSecond);
             if (now - state.LastCastTime < interval) return;

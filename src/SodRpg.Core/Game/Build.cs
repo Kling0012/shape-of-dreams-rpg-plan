@@ -225,6 +225,7 @@ namespace SodRpg.Core.Game
             b.AuthoredClusterStars = authoredClusterStars;
 
             // 装着品は保管庫から一度だけ引き、能力・セット・小セットの集計で使い回す。
+            // 3つの集計の間に保管庫が変わることは想定しない（途中で引き直さない）。
             var equippedRelics = new Relic[h.Equipped.Length];
             for (int i = 0; i < equippedRelics.Length; i++) equippedRelics[i] = p.FindStash(h.Equipped[i]);
             foreach (var r in equippedRelics)
