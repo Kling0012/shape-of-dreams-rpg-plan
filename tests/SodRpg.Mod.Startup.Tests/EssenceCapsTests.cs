@@ -13,8 +13,9 @@ namespace SodRpg.Mod.Startup.Tests
     // 実 NativeEssenceCaps / NativeMemoryReuse パッチ（a6ac439b・b8b8968d）を実 Harmony デトゥアで
     // 境界スタブに適用して確かめる。水晶回路と記憶加速は抽出した本体メソッド（Esscap.Native.cs）を直接駆動する。
     // 境界スタブは EssenceCapsNativeApi.cs の逆コンパイル基準で、実 DLL での動作確認ではない。
-    // 2026-10-16 方針変更で無効化した上限（qualitySoftCap・fever・embertail・epiphany・memoryHaste）は
-    // Prepare が false で飛ばされるので、本体値の素通しを確かめる。
+    // 2026-10-16 方針変更で無効化した上限（qualitySoftCap・fever・embertail・epiphany・memoryHaste）、
+    // 2026-10-17 で無効化した記憶の再使用間隔（memoryReuse）は Prepare が false で飛ばされるので、
+    // 本体値の素通しを確かめる。
     public sealed class EssenceCapsTests : IDisposable
     {
         private readonly Harmony owner = new Harmony("essence-caps-tests." + Guid.NewGuid().ToString("N"));
@@ -117,14 +118,16 @@ namespace SodRpg.Mod.Startup.Tests
             Assert.Equal(0.5f, under.refundCooldownRatio);
         }
 
-        /// <summary>記憶（Q/W/E/R）の再使用最短間隔: 基礎CDの 20%、最低 0.3 秒。発動中は Cast できない。</summary>
+        /// <summary>記憶の再使用最短間隔は無効（2026-10-17 方針変更）。使用後も最低待ちを足さず、
+        /// CanBeCast / CanBeReserved を本体どおり true のまま返す。</summary>
         [Fact]
-        public void MemoryReuseIntervalIsFifthOfBaseCooldownWithFloor()
+        public void MemoryReuseDisabledKeepsTheVanillaMinimumDelay()
         {
             Mirror.NetworkServer.active = true;
             var hero = new Hero();
             var memory = new SkillTrigger { owner = hero };
             memory.configs = new[] { new TriggerConfig { cooldownTime = 10f } };
+            memory.nativeMinimumDelay = 0.1f;
             hero.Skill.Q = memory;
             var shortCd = new SkillTrigger { owner = hero };
             shortCd.configs = new[] { new TriggerConfig { cooldownTime = 1f } };
@@ -133,12 +136,17 @@ namespace SodRpg.Mod.Startup.Tests
             memory.OnCastCompleteSetMinimumDelay(0, new CastInfo());
             shortCd.OnCastCompleteSetMinimumDelay(0, new CastInfo());
 
-            Assert.Equal(2f, memory.currentMinimumDelays[0]);
-            Assert.Equal(0.3f, shortCd.currentMinimumDelays[0]);
-            Assert.Contains("mindelay 0 2", memory.RpcLog);
-            // 間隔が残っている間は Cast も予約もできない。
-            Assert.False(memory.CanBeCast());
-            Assert.False(memory.CanBeReserved());
+            // 有効なら基礎CD 10 秒の 20% = 2 秒に持ち上げられ、1 秒の記憶にも床 0.3 秒が入るが、
+            // 無効なので本体が設定した最低待ち（0.1 秒・0 秒）のまま。
+            Assert.Equal(0.1f, memory.currentMinimumDelays[0]);
+            Assert.Equal(0f, shortCd.currentMinimumDelays[0]);
+            // 再使用間隔の同期 RPC も飛ばない。
+            Assert.Empty(memory.RpcLog);
+            Assert.Empty(shortCd.RpcLog);
+            // 間隔の門も入っていないので、本体どおり Cast も予約もできる。
+            Assert.True(memory.CanBeCast());
+            Assert.True(memory.CanBeReserved());
+            Assert.True(shortCd.CanBeCast());
         }
 
         /// <summary>移動・Identity（Q/W/E/R 以外）とサーバ外の発動には介入しない。</summary>
@@ -169,9 +177,10 @@ namespace SodRpg.Mod.Startup.Tests
             Assert.True(memory.CanBeCast());
         }
 
-        /// <summary>再使用間隔と既存 NativeCooldownSafety の両パッチが同じトリガー上で共存する。</summary>
+        /// <summary>再使用間隔は無効（2026-10-17 方針変更）。NativeCooldownSafety の各パッチは同じ
+        /// トリガー上でそのまま働き、再使用間隔の面は本体どおり素通りする。</summary>
         [Fact]
-        public void MemoryReuseGateCoexistsWithNativeCooldownSafety()
+        public void MemoryReuseDisabledStillCoexistsWithNativeCooldownSafety()
         {
             var safety = new Harmony("essence-caps-tests.safety." + Guid.NewGuid().ToString("N"));
             foreach (var patchClass in new[]
@@ -193,9 +202,9 @@ namespace SodRpg.Mod.Startup.Tests
 
                 // 安全側は壊れた倍率を 0.01 に置換し…
                 Assert.Equal(NativeCooldownSafety.InvalidMultiplierFallback, memory.UsedMultipliers.Single());
-                // …再使用間隔の門はそのまま有効。
-                Assert.Equal(2f, memory.currentMinimumDelays[0]);
-                Assert.False(memory.CanBeCast());
+                // …再使用間隔は無効なので最低待ちは 0 秒のまま、Cast の門も反転しない。
+                Assert.Equal(0f, memory.currentMinimumDelays[0]);
+                Assert.True(memory.CanBeCast());
             }
             finally
             {
