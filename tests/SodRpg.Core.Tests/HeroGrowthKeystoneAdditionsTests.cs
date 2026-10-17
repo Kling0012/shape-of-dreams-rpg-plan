@@ -15,7 +15,7 @@ namespace SodRpg.Core.Tests
     /// 生成星図（GeneratedHeroAcceptance）のテストと同じ形で、追加した分だけを確かめる。
     /// </summary>
     [Collection("Generated hero registry")]
-    public class HeroGrowthKeystoneAdditionsTests
+    public class HeroGrowthKeystoneAdditionsTests : IClassFixture<StarRegistryCleanupFixture>
     {
         private static readonly string[] GrowthHeroes = { "Hero_Aurena", "Hero_Lacerta", "Hero_Nachia", "Hero_Yubar", "Hero_Bismuth" };
         private static readonly string[] KeystoneHeroes = { "Hero_Aurena", "Hero_Nachia", "Hero_Yubar", "Hero_Bismuth" };

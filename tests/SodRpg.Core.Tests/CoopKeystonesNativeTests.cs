@@ -155,7 +155,7 @@ namespace SodRpg.Core.Tests
     /// 代表刻印の判定ロジック（距離係数・有効時間・内部CD・1回限り）までを確かめる。
     /// </summary>
     [Collection("Generated hero registry")]
-    public class CoopKeystonesNativeTests
+    public class CoopKeystonesNativeTests : IClassFixture<StarRegistryCleanupFixture>
     {
         private static readonly CoopKeystoneKind[] AllKinds = (CoopKeystoneKind[])Enum.GetValues(typeof(CoopKeystoneKind));
 

@@ -7,6 +7,30 @@ using Xunit.Sdk;
 namespace SodRpg.Core.Tests
 {
     /// <summary>
+    /// StarClusters の静的な登録を変えるテストクラスの後始末（IClassFixture）。テストが置き換えた登録を
+    /// クラスの終わりに基準（空）へ戻す。Before で戻す <see cref="SharedStarRegistryResetAttribute"/> は
+    /// IClassFixture を使うクラスでは走らないので、このフィクスチャで自分の後始末をする
+    /// （IClassFixture を使うクラスはテスト前に前クラスの残りも掃除されないため、登録は毎回自分で行うこと）。
+    /// </summary>
+    public sealed class StarRegistryCleanupFixture : IDisposable
+    {
+        public void Dispose()
+        {
+            try
+            {
+                foreach (string hero in StarClusters.GeneratedHeroes)
+                    if (StarClusters.TryGetRegisteredTree(hero, out _))
+                        // 空の登録は Installed と移行規則を外し、検証キャッシュをベースラインの内容で上書きする。
+                        StarClusters.RegisterAuthored(hero, Array.Empty<AuthoredStarDef>());
+            }
+            catch (Exception)
+            {
+                // fail-soft: 戻しに失敗しても後続のテストは続ける（SharedStarRegistryReset と同じ）。
+            }
+        }
+    }
+
+    /// <summary>
     /// すべてのテストを「どのクラスも StarClusters に何も登録していない基準の状態」から始める（アセンブリ属性）。
     /// RegisterAllGenerated / RegisterGeneratedHero / RegisterAuthored を後始末せず終えるテストが
     /// 生成済みツリーをプロセスに残し、クラス分割実行（#404）でクラス順が変わると後発クラスの

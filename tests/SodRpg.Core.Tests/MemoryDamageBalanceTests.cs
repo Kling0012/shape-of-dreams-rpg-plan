@@ -9,7 +9,7 @@ using Xunit;
 namespace SodRpg.Core.Tests
 {
     [Collection("Generated hero registry")]
-    public sealed class MemoryDamageBalanceTests
+    public sealed class MemoryDamageBalanceTests : IClassFixture<StarRegistryCleanupFixture>
     {
         [Fact]
         public void Every_private_memory_damage_effect_reaches_floor_at_its_earliest_conservative_purchase()
