@@ -1074,8 +1074,9 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
                     case TradeKind.SalvageForDust:
                         if (Rules.SalvageUnsecured(Profile, t.Uid) != null)
                         {
-                            CountSalvageDustPaid(t.EarnDust);
-                            Emit(new GameEvent(EventKind.Info, Loc.T($"分解してドリームダスト+{t.EarnDust}", $"Salvaged for {t.EarnDust} Dream Dust")));
+                            // 上限の残りに合わせて削られた分も、実際にもらった量で案内する。
+                            long paid = CountSalvageDustPaid(t.EarnDust);
+                            Emit(new GameEvent(EventKind.Info, Loc.T($"分解してドリームダスト+{paid}", $"Salvaged for {paid} Dream Dust")));
                         }
                         Profile.PendingTrades.RemoveAll(pending => pending.Token == t.Token);
                         DeferSave();

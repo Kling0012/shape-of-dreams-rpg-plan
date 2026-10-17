@@ -422,13 +422,6 @@ namespace SodRpg.Core.Game
             ledger.ZoneDust = 0;
         }
 
-        /// <summary>ホストが毎ティック伝える現在の世界。取引や追加ダストの支払いの前に呼んで世界の切り替えで計数を戻す。</summary>
-        public void NoteZone(string playerKey, string runId, int zoneIndex)
-        {
-            if (playerKey == null) return;
-            ApplyZone(Ledger(playerKey, runId), zoneIndex);
-        }
-
         /// <summary>そのプレイヤーが今の世界であとどれだけ分解ダストを受け取れるか（支払いの前に世界を反映する）。</summary>
         public long ZoneDustRemaining(string playerKey, string runId, int zoneIndex, int salvageScale)
         {

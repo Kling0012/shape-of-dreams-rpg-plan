@@ -11,13 +11,22 @@ namespace SodRpg.Mod
         private bool _salvageDustCapNotified;
         private float _nextSalvageDustCapNoticeAt = -1f;
 
-        /// <summary>分解でダストを受け取ったとき、この世界の計数に加える（遺物は失われていないものは数えない）。</summary>
-        internal void CountSalvageDustPaid(long dust)
+        /// <summary>
+        /// 分解でダストを受け取ったとき、この世界の計数に加える（遺物は失われていないものは数えない）。
+        /// ホストが残りに合わせて削った分は計数にも残さず、数えた量を返す（成功の案内にも使う）。
+        /// </summary>
+        internal long CountSalvageDustPaid(long dust)
         {
             var run = Profile.Run;
-            if (run == null || dust <= 0) return;
-            run.SalvageDustEarned += dust;
-            _dirty = true; // 普通の定期保存で足りる（表示の計数なので、書き込みの障壁にはしない）。
+            if (run == null || dust <= 0) return 0;
+            long room = Economy.DustCap(run.SalvageDustZoneIndex, SalvageScale) - run.SalvageDustEarned;
+            long granted = Math.Min(dust, Math.Max(0, room));
+            if (granted > 0)
+            {
+                run.SalvageDustEarned += granted;
+                _dirty = true; // 普通の定期保存で足りる（表示の計数なので、書き込みの障壁にはしない）。
+            }
+            return granted;
         }
 
         /// <summary>世界の切り替えで計数を戻し、追加ダストの支払い済み累計の増えた分を数える。上限に達したら1回だけ案内する。</summary>
