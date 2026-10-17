@@ -365,6 +365,8 @@ namespace SodRpg.Mod
             bool alreadyApplied = choice.Secure ? Profile.CompletedRunSecuredReturn && Profile.CompletedRunId == choice.RunId
                 : state != null && (choice.Boundary ? state.SettledGraphEpoch >= choice.GraphEpoch
                     : state.ChoiceRevision >= choice.Revision);
+            // The host advances the graph only after ACKs or its bounded remote wait have released.
+            if (alreadyApplied && !choice.Secure && !choice.Boundary && state.GraphEpoch > choice.GraphEpoch) return;
             if (!alreadyApplied)
             {
                 if (state == null || state.GraphEpoch != choice.GraphEpoch || state.SegmentEpoch != choice.SegmentEpoch
