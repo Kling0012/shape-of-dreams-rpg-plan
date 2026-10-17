@@ -263,7 +263,7 @@ namespace SodRpg.Mod
         private readonly Rng _rng = new Rng(Rng.SeedFrom(DateTime.UtcNow.Ticks.ToString()));
         private float _nextRegen;
         private bool _roomHasVariant;
-        private bool _loggedVariantSpawn, _loggedDeathBurst;
+        private bool _loggedDeathBurst = true;
         private readonly List<Hero> _deathBurstHeroes = new List<Hero>();
 
         public HostAuthority(Func<int> dailyIdOfHost)
@@ -292,6 +292,11 @@ namespace SodRpg.Mod
                     RemoveKillPeer(player);
                     _overflowBonusPeers.Remove(player); // Durable currency receipts remain keyed by guid.
                     _netLitePeers.Remove(player);
+                    _stateSnapshotPeers.Remove(player);
+                    _stateSnapshotEpoch++;
+                    _pressureSnapshots.Remove(player);
+                    _dynamicRosterPeers.Remove(player);
+                    ResetDynamicLegendPeer(player);
                     _roomOmenPeers.Remove(player);
                     _forbiddenSmithPeers.Remove(player);
                     _nemesisGrudgePeers.Remove(player);
@@ -392,6 +397,7 @@ namespace SodRpg.Mod
                 _pressureDirty = true;
             }
             if (_pressureDirty) RefreshPressure();
+            SendPressure();
         }
 
         private void StageAreaScan()
@@ -535,22 +541,57 @@ namespace SodRpg.Mod
             if (synchronize) SendPressure();
         }
 
+        private sealed class PressureSnapshotPeer
+        {
+            internal Actor Actor;
+            internal Hero Hero;
+            internal object Connection;
+            internal ulong Authority;
+            internal string Run, Choices;
+            internal float Health, Damage, Gear, Reward, Next;
+        }
+        private readonly Dictionary<DewPlayer, PressureSnapshotPeer> _pressureSnapshots = new Dictionary<DewPlayer, PressureSnapshotPeer>();
+        private readonly DreamforgePressureMsg _pressureMessage = new DreamforgePressureMsg();
+
+        partial void SyncStateSnapshotPeer(DewPlayer player)
+        {
+            _pressureSnapshots.Remove(player);
+            SendPressure();
+        }
+
         private void SendPressure()
         {
-            _registeredOn?.CustomRpc_SendMessageToAllClients(new DreamforgePressureMsg
+            if (_registeredOn == null) return;
+            var msg = _pressureMessage;
+            msg.protocol = Protocol.Version;
+            msg.healthMultiplier = (float)_pressure.HealthMultiplier;
+            msg.damageMultiplier = (float)_pressure.DamageMultiplier;
+            msg.runChoices = ClientSession.HostRunChoices;
+            msg.nightmareGearMultiplier = (float)PartyGearChanceMult();
+            msg.nightmarePressureHealthMultiplier = (float)(1 + _pressure.RewardPressure);
+            string runId = NetworkedManagerBase<GameManager>.softInstance?.runId;
+            ulong authority = ClientSession.HostAuthorityGeneration;
+            float now = Time.unscaledTime;
+            foreach (var player in DewPlayer.allHumanPlayers)
             {
-                protocol = Protocol.Version,
-                healthMultiplier = (float)_pressure.HealthMultiplier,
-                damageMultiplier = (float)_pressure.DamageMultiplier,
-                runChoices = ClientSession.HostRunChoices,
-                nightmareGearMultiplier = (float)PartyGearChanceMult(),
-                nightmarePressureHealthMultiplier = (float)(1 + _pressure.RewardPressure)
-            });
-            // Reuse the infrequent state resync for players whose run started after the first report.
-            var runId = NetworkedManagerBase<GameManager>.softInstance?.runId;
-            foreach (var rt in _runtimes.Values)
-                if (rt.BountyRunId == runId && rt.ReportedLinks > 0)
-                    SendBountyReport(rt, BountyReportKind.LinksSatisfied, rt.ReportedLinks);
+                if (player == null || !player.isHumanPlayer) continue;
+                if (!_pressureSnapshots.TryGetValue(player, out var peer))
+                    _pressureSnapshots.Add(player, peer = new PressureSnapshotPeer());
+                if (ReferenceEquals(peer.Actor, _registeredOn) && ReferenceEquals(peer.Hero, player.hero)
+                    && ReferenceEquals(peer.Connection, player.connectionToClient) && peer.Authority == authority && peer.Run == runId && peer.Choices == msg.runChoices
+                    && peer.Health == msg.healthMultiplier && peer.Damage == msg.damageMultiplier
+                    && peer.Gear == msg.nightmareGearMultiplier && peer.Reward == msg.nightmarePressureHealthMultiplier
+                    && now < peer.Next) continue;
+                _registeredOn.CustomRpc_SendMessageToClient(player, msg);
+                peer.Actor = _registeredOn; peer.Hero = player.hero; peer.Connection = player.connectionToClient;
+                peer.Authority = authority; peer.Run = runId; peer.Choices = msg.runChoices;
+                peer.Health = msg.healthMultiplier; peer.Damage = msg.damageMultiplier;
+                peer.Gear = msg.nightmareGearMultiplier; peer.Reward = msg.nightmarePressureHealthMultiplier;
+                peer.Next = now + (HasStateSnapshots(player) ? 30f : 5f);
+                foreach (var rt in _runtimes.Values)
+                    if (rt.Hero != null && rt.Hero.owner == player && rt.BountyRunId == runId && rt.ReportedLinks > 0)
+                        SendBountyReport(rt, BountyReportKind.LinksSatisfied, rt.ReportedLinks);
+            }
         }
 
         private void ApplyPressure(MonsterRuntime rt)
@@ -1084,7 +1125,9 @@ namespace SodRpg.Mod
                 AttachMirageSkin(m, Nightmares.Count(affix) >= 2);
             _nightmares[m] = affix;
             ApplyMonsterAffixes(rt, affix, regen);
-            Log.Info($"Nightmare: {m.GetType().Name} netId={m.netId} affixes={affix}");
+            _roomNightmareCount++;
+            _roomNightmareKinds |= affix;
+            if (SpecialEnemyDiagnostics) Log.Info($"Nightmare: {m.GetType().Name} netId={m.netId} affixes={affix}");
             SendMonsterClassification(rt);
         }
 
@@ -1107,7 +1150,8 @@ namespace SodRpg.Mod
             m.Status.AddStatBonus(rt.SpecialBonus);
             m.Status.CalculateStatsIfDirty();
             _nightmares[m] = NightmareAffix.Nemesis;
-            Log.Info($"Nemesis: {m.GetType().Name} netId={m.netId} tier={tier} grudge={grudge}");
+            _roomNemesisCount++;
+            if (SpecialEnemyDiagnostics) Log.Info($"Nemesis: {m.GetType().Name} netId={m.netId} tier={tier} grudge={grudge}");
             SendMonsterClassification(rt);
         }
 
@@ -1135,11 +1179,9 @@ namespace SodRpg.Mod
                 m.takenDamageProcessor.Add(rt.HitCap);
             }
             ApplyVariantTags(rt, variant.Tags);
-            if (!_loggedVariantSpawn)
-            {
-                _loggedVariantSpawn = true;
+            _roomVariantCount++;
+            if (SpecialEnemyDiagnostics)
                 Log.Info($"variant spawned: {variant.Id} {m.GetType().Name} netId={m.netId}");
-            }
             SendMonsterClassification(rt);
         }
 
@@ -1324,6 +1366,7 @@ namespace SodRpg.Mod
         /// <summary>全キャラから補正を外し、登録を解除する（MODの再読み込み・終了時）。</summary>
         public void Detach()
         {
+            FlushSpecialEnemySummary();
             ClearRoomOmen();
             _omenRoom = null;
             _omenRunId = null;
@@ -1350,6 +1393,8 @@ namespace SodRpg.Mod
             DewPlayer.onGamePlayerAdded -= _onPressurePlayerAdded;
             DewPlayer.onGamePlayerRemoved -= _onPressurePlayerRemoved;
             _pressureDirty = true;
+            _pressureSnapshots.Clear();
+            _dynamicLegendPeers.Clear();
             foreach (var rt in _runtimes.Values)
             {
                 RemoveBonuses(rt);
@@ -1387,7 +1432,7 @@ namespace SodRpg.Mod
             _spreadingFire = false;
             _triggeredAffixes.Clear();
             _roomHasVariant = false;
-            _loggedVariantSpawn = _loggedDeathBurst = false;
+            _loggedDeathBurst = !SpecialEnemyDiagnostics;
             _deathBurstHeroes.Clear();
             _reflectingDamage = false;
             _lucidTypes = null;

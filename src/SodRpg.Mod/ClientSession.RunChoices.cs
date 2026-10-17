@@ -17,6 +17,18 @@ namespace SodRpg.Mod
         private bool _hostAuthorityNeedsRenewal;
         private string _encodedRunChoices;
         private float _nextChoicesSync;
+        private sealed class CurrentChoicePeer
+        {
+            internal Actor Actor;
+            internal Hero Hero;
+            internal object Connection;
+            internal string Choices;
+            internal int CapabilityEpoch;
+            internal float Next;
+        }
+        private readonly System.Collections.Generic.Dictionary<DewPlayer, CurrentChoicePeer> _currentChoicePeers
+            = new System.Collections.Generic.Dictionary<DewPlayer, CurrentChoicePeer>();
+        private readonly System.Collections.Generic.List<DewPlayer> _currentChoiceDeparted = new System.Collections.Generic.List<DewPlayer>();
         private PendingRunRewards _pendingRunRewards => _runChoiceProgress.Rewards;
         private readonly Action<PendingRunKill> _grantPendingKill;
         private bool? _pendingRunVictory;
@@ -123,16 +135,42 @@ namespace SodRpg.Mod
                 RunActive ? Profile.Run : null, Profile.LastDreamDepth, _runChoiceProgress.ZoneIndex);
         }
 
-        private void PublishRunChoices()
+        private void PublishRunChoices() => PublishCurrentRunChoices(true);
+
+        private void PublishCurrentRunChoices(bool refreshHistory)
         {
             if (!NetworkServer.active || _clientRpcOn == null) return;
             if (Profile.Run?.Infinity != null && !InfinitySaveHoldSatisfied) return;
-            _clientRpcOn.CustomRpc_SendMessageToAllClients(new DreamforgeRunChoicesMsg
+            string choices = EncodeRunChoices();
+            int epoch = HostAuthority.StateSnapshotEpoch;
+            float now = Time.unscaledTime;
+            _currentChoiceDeparted.Clear();
+            foreach (var player in _currentChoicePeers.Keys)
+                if (player == null || !DewPlayer.gamePlayers.Contains(player) && !DewPlayer.lobbyPlayers.Contains(player))
+                    _currentChoiceDeparted.Add(player);
+            foreach (var player in _currentChoiceDeparted) _currentChoicePeers.Remove(player);
+            foreach (var player in DewPlayer.allHumanPlayers)
             {
-                protocol = Protocol.Version, choices = EncodeRunChoices(),
-            });
-            _nextChoicesSync = Time.unscaledTime + 5f;
-            PublishRunChoiceHistory();
+                if (player == null || !player.isHumanPlayer) continue;
+                if (!_currentChoicePeers.TryGetValue(player, out var peer))
+                    _currentChoicePeers.Add(player, peer = new CurrentChoicePeer());
+                if (ReferenceEquals(peer.Actor, _clientRpcOn) && ReferenceEquals(peer.Hero, player.hero)
+                    && ReferenceEquals(peer.Connection, player.connectionToClient) && peer.Choices == choices
+                    && peer.CapabilityEpoch == epoch && now < peer.Next) continue;
+                _clientRpcOn.CustomRpc_SendMessageToClient(player, new DreamforgeRunChoicesMsg
+                { protocol = Protocol.Version, choices = choices });
+                peer.Actor = _clientRpcOn; peer.Hero = player.hero; peer.Connection = player.connectionToClient;
+                peer.Choices = choices; peer.CapabilityEpoch = epoch;
+                peer.Next = now + (HostAuthority.ReducedStateSnapshots(player) ? 30f : 5f);
+            }
+            if (refreshHistory)
+            {
+                if (DewPlayer.allHumanPlayers.Count == 0)
+                    _clientRpcOn.CustomRpc_SendMessageToAllClients(new DreamforgeRunChoicesMsg
+                    { protocol = Protocol.Version, choices = choices });
+                _nextChoicesSync = now + 5f;
+                PublishRunChoiceHistory();
+            }
         }
 
         private void PublishRunChoicesForZone(int zoneIndex)
@@ -160,7 +198,7 @@ namespace SodRpg.Mod
             {
                 string before = _encodedRunChoices;
                 string current = EncodeRunChoices();
-                if (current != before || Time.unscaledTime >= _nextChoicesSync) PublishRunChoices();
+                PublishCurrentRunChoices(current != before || Time.unscaledTime >= _nextChoicesSync);
             }
             else
             {

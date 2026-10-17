@@ -36,12 +36,10 @@ namespace SodRpg.Mod
                     Log.Warn("Enemy ownership display sync disabled; host rules continue: " + ex.Message);
                 }
             }
-            var dynamic = DynamicSnapshot();
             var previous = runtime.Ownership;
-            if (previous.DynamicRevision == _dynamicRosterRevision && previous.ParticipantId == participant && previous.PlayerSlot == slot && previous.Protected == protectedState
+            if (previous.ParticipantId == participant && previous.PlayerSlot == slot && previous.Protected == protectedState
                 && MonsterOwnership.SameShares(previous.BossShares, shares)) return;
-            runtime.Ownership = new MonsterOwnership(participant, ++_ownershipSyncRevision, protectedState, slot, shares,
-                dynamic, _dynamicRosterRevision);
+            runtime.Ownership = new MonsterOwnership(participant, ++_ownershipSyncRevision, protectedState, slot, shares);
         }
 
         private BossShareDisplay[] BossShareSnapshot(Monster monster, BossShareDisplay[] previous)

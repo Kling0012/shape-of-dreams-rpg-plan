@@ -95,6 +95,9 @@ namespace SodRpg.Mod
             _nemesisGrudgePeers.Clear();
             _autocastPressurePeers.Clear();
             _bountyCountPeers.Clear();
+            _stateSnapshotPeers.Clear();
+            _dynamicRosterPeers.Clear();
+            _stateSnapshotEpoch++;
             RebuildMismatchList();
         }
 
@@ -107,6 +110,15 @@ namespace SodRpg.Mod
         private readonly Dictionary<DewPlayer, int> _nemesisGrudgePeers = new Dictionary<DewPlayer, int>();
         partial void SendRoomOmenPeer(DewPlayer player);
         internal bool HasNetLite(DewPlayer player) => player != null && _netLitePeers.Contains(player);
+        private readonly HashSet<DewPlayer> _stateSnapshotPeers = new HashSet<DewPlayer>();
+        private readonly HashSet<DewPlayer> _dynamicRosterPeers = new HashSet<DewPlayer>();
+        private int _stateSnapshotEpoch;
+        internal static int StateSnapshotEpoch => NativeInstance?._stateSnapshotEpoch ?? 0;
+        internal static bool ReducedStateSnapshots(DewPlayer player) => NativeInstance?.HasStateSnapshots(player) == true;
+        internal bool HasStateSnapshots(DewPlayer player) => player != null && _stateSnapshotPeers.Contains(player);
+        partial void SyncStateSnapshotPeer(DewPlayer player);
+        partial void ResetDynamicLegendPeer(DewPlayer player);
+        private bool HasDynamicRoster(DewPlayer player) => player != null && _dynamicRosterPeers.Contains(player);
 
         private void RegisterBuildInputCapability(Actor actor)
         {
@@ -128,6 +140,15 @@ namespace SodRpg.Mod
         {
             if (msg == null || msg.version != 1 || caller == null || !caller.isHumanPlayer
                 || !DewPlayer.gamePlayers.Contains(caller) && !DewPlayer.lobbyPlayers.Contains(caller)) return;
+            bool snapshots = msg.stateSnapshots == 1 && _helloPeers.Contains(caller);
+            if (snapshots ? _stateSnapshotPeers.Add(caller) : _stateSnapshotPeers.Remove(caller))
+            {
+                _stateSnapshotEpoch++;
+                SyncStateSnapshotPeer(caller);
+            }
+            bool roster = msg.dynamicRoster == 1 && _helloPeers.Contains(caller);
+            if (roster ? _dynamicRosterPeers.Add(caller) : _dynamicRosterPeers.Remove(caller))
+                ResetDynamicLegendPeer(caller);
             if (msg.netLite == 1 && _helloPeers.Contains(caller)) _netLitePeers.Add(caller);
             else _netLitePeers.Remove(caller);
             if (msg.bountyCounts == 1 && _helloPeers.Contains(caller)) _bountyCountPeers.Add(caller);
@@ -139,7 +160,7 @@ namespace SodRpg.Mod
             if (_helloPeers.Contains(caller)) _nemesisGrudgePeers[caller] = Forbidden.ClampGrudge(msg.nemesisGrudge);
             else _nemesisGrudgePeers.Remove(caller);
             try { _registeredOn?.CustomRpc_SendMessageToClient(caller,
-                new DreamforgeBuildInputCapabilityMsg { netLite = 1, roomOmens = 1, forbiddenInput = 1, fusionInput = 1 }); } catch (Exception) { }
+                new DreamforgeBuildInputCapabilityMsg { netLite = 1, roomOmens = 1, forbiddenInput = 1, fusionInput = 1, stateSnapshots = 1, dynamicRoster = 1 }); } catch (Exception) { }
             SendRoomOmenPeer(caller);
         }
 

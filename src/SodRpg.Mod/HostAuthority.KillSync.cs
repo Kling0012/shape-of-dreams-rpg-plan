@@ -648,6 +648,7 @@ namespace SodRpg.Mod
                 _queuedMonsterClassifications.Set(monster.netId, new MonsterClassificationDelta(nightmare, variant, ownership));
                 return;
             }
+            if (HasDynamicRoster(target) && !SendDynamicLegendPeer(target)) return;
             if (!ReserveMonsterSyncMessage()) return;
             if (variant != null)
             {
@@ -658,7 +659,7 @@ namespace SodRpg.Mod
                     ownerParticipantId = ownership.ParticipantId, ownershipRevision = ownership.Revision,
                     ownershipProtected = ownership.Protected, ownerPlayerSlot = ownership.PlayerSlot,
                     bossShares = ownership.BossShares,
-                    dynamicDifficulty = ownership.DynamicDifficulty, dynamicRevision = ownership.DynamicRevision,
+                    dynamicDifficulty = HasDynamicRoster(target) ? null : DynamicSnapshot(), dynamicRevision = _dynamicRosterRevision,
                 };
                 _registeredOn.CustomRpc_SendMessageToClient(target, msg);
             }
@@ -671,7 +672,7 @@ namespace SodRpg.Mod
                     ownerParticipantId = ownership.ParticipantId, ownershipRevision = ownership.Revision,
                     ownershipProtected = ownership.Protected, ownerPlayerSlot = ownership.PlayerSlot,
                     bossShares = ownership.BossShares,
-                    dynamicDifficulty = ownership.DynamicDifficulty, dynamicRevision = ownership.DynamicRevision,
+                    dynamicDifficulty = HasDynamicRoster(target) ? null : DynamicSnapshot(), dynamicRevision = _dynamicRosterRevision,
                 };
                 _registeredOn.CustomRpc_SendMessageToClient(target, msg);
             }
@@ -725,8 +726,48 @@ namespace SodRpg.Mod
             if (netId != 0 && !_queuedMonsterRemovals.Contains(netId)) _queuedMonsterCues.Set(netId, cue);
         }
 
+        private void SendClassificationDelta(uint netId, MonsterClassificationDelta delta, DewPlayer target)
+        {
+            var display = target != null && HasDynamicRoster(target) ? null : DynamicSnapshot();
+            if (delta.Variant != null)
+            {
+                var msg = new DreamforgeVariantMsg
+                {
+                    protocol = Protocol.Version, netId = netId, variantId = delta.Variant,
+                    authorityGeneration = ClientSession.HostAuthorityGeneration,
+                    ownerParticipantId = delta.Ownership.ParticipantId, ownershipRevision = delta.Ownership.Revision,
+                    ownershipProtected = delta.Ownership.Protected, ownerPlayerSlot = delta.Ownership.PlayerSlot,
+                    bossShares = delta.Ownership.BossShares,
+                    dynamicDifficulty = display, dynamicRevision = _dynamicRosterRevision,
+                };
+                if (target == null) _registeredOn.CustomRpc_SendMessageToAllClients(msg);
+                else _registeredOn.CustomRpc_SendMessageToClient(target, msg);
+            }
+            else
+            {
+                var msg = new DreamforgeNightmareMsg
+                {
+                    protocol = Protocol.Version, netId = netId, affixes = (int)delta.Nightmare,
+                    authorityGeneration = ClientSession.HostAuthorityGeneration,
+                    ownerParticipantId = delta.Ownership.ParticipantId, ownershipRevision = delta.Ownership.Revision,
+                    ownershipProtected = delta.Ownership.Protected, ownerPlayerSlot = delta.Ownership.PlayerSlot,
+                    bossShares = delta.Ownership.BossShares,
+                    dynamicDifficulty = display, dynamicRevision = _dynamicRosterRevision,
+                };
+                if (target == null) _registeredOn.CustomRpc_SendMessageToAllClients(msg);
+                else _registeredOn.CustomRpc_SendMessageToClient(target, msg);
+            }
+        }
+
         private void FlushMonsterSync(int maxMessages)
         {
+            bool splitRoster = false;
+            foreach (var player in DewPlayer.allHumanPlayers)
+            {
+                if (player == null || !player.isHumanPlayer || !HasDynamicRoster(player)) continue;
+                splitRoster = true;
+                if (_queuedMonsterClassifications.Count > 0 && !SendDynamicLegendPeer(player)) return;
+            }
             int budget = Math.Min(RemainingMonsterSyncMessages(), maxMessages);
             int emptyCategories = 0;
             // Three constant-time category probes per send at most; neither stale IDs nor dictionary scans accumulate.
@@ -737,6 +778,17 @@ namespace SodRpg.Mod
                 int count = category == 0 ? _queuedMonsterRemovals.Count
                     : category == 1 ? _queuedMonsterClassifications.Count : _queuedMonsterCues.Count;
                 if (count == 0) { emptyCategories++; continue; }
+                int recipients = 0;
+                if (category == 1)
+                {
+                    if (splitRoster)
+                    {
+                        foreach (var player in DewPlayer.allHumanPlayers)
+                            if (player != null && player.isHumanPlayer) recipients++;
+                    }
+                    else recipients = 1;
+                    if (RemainingMonsterSyncMessages() < recipients || budget < recipients) break;
+                }
                 if (!ReserveMonsterSyncMessage()) break;
                 emptyCategories = 0;
                 budget--;
@@ -752,26 +804,18 @@ namespace SodRpg.Mod
                 else if (category == 1)
                 {
                     _queuedMonsterClassifications.TryTake(out uint netId, out var delta);
-                    if (delta.Variant != null)
-                        _registeredOn.CustomRpc_SendMessageToAllClients(new DreamforgeVariantMsg
-                        {
-                            protocol = Protocol.Version, netId = netId, variantId = delta.Variant,
-                            authorityGeneration = ClientSession.HostAuthorityGeneration,
-                            ownerParticipantId = delta.Ownership.ParticipantId, ownershipRevision = delta.Ownership.Revision,
-                            ownershipProtected = delta.Ownership.Protected, ownerPlayerSlot = delta.Ownership.PlayerSlot,
-                            bossShares = delta.Ownership.BossShares,
-                            dynamicDifficulty = delta.Ownership.DynamicDifficulty, dynamicRevision = delta.Ownership.DynamicRevision,
-                        });
+                    if (!splitRoster) SendClassificationDelta(netId, delta, null);
                     else
-                        _registeredOn.CustomRpc_SendMessageToAllClients(new DreamforgeNightmareMsg
+                    {
+                        bool first = true;
+                        foreach (var player in DewPlayer.allHumanPlayers)
                         {
-                            protocol = Protocol.Version, netId = netId, affixes = (int)delta.Nightmare,
-                            authorityGeneration = ClientSession.HostAuthorityGeneration,
-                            ownerParticipantId = delta.Ownership.ParticipantId, ownershipRevision = delta.Ownership.Revision,
-                            ownershipProtected = delta.Ownership.Protected, ownerPlayerSlot = delta.Ownership.PlayerSlot,
-                            bossShares = delta.Ownership.BossShares,
-                            dynamicDifficulty = delta.Ownership.DynamicDifficulty, dynamicRevision = delta.Ownership.DynamicRevision,
-                        });
+                            if (player == null || !player.isHumanPlayer) continue;
+                            if (!first) { ReserveMonsterSyncMessage(); budget--; }
+                            first = false;
+                            SendClassificationDelta(netId, delta, player);
+                        }
+                    }
                 }
                 else
                 {
@@ -878,6 +922,10 @@ namespace SodRpg.Mod
             }
             if (cursor.MonsterIndex < cursor.Monsters.Count)
             {
+                int before = RemainingMonsterSyncMessages();
+                if (HasDynamicRoster(player) && !SendDynamicLegendPeer(player)) return 0;
+                int legendMessages = before - RemainingMonsterSyncMessages();
+                if (RemainingMonsterSyncMessages() < 2) return legendMessages;
                 var runtime = cursor.Monsters[cursor.MonsterIndex++];
                 // Both messages count against the shared frame budget; unchanged broadcast caches are untouched.
                 if (Alive(runtime.Monster) && _monsters.TryGetValue(runtime.Monster, out var current)
@@ -887,7 +935,7 @@ namespace SodRpg.Mod
                     SendMonsterBehaviorCue(runtime, true, player);
                 }
                 if (cursor.MonsterIndex == cursor.Monsters.Count) { cursor.Monsters.Clear(); cursor.MonsterIndex = 0; }
-                return 2;
+                return 2 + legendMessages;
             }
             if (cursor.FactIndex >= _killHistory.Count) return 0;
             var fact = _killHistory[cursor.FactIndex];

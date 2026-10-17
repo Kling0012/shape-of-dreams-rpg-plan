@@ -102,20 +102,65 @@ namespace SodRpg.Mod
     internal static class EnemyOwnershipRetarget
     {
         private static FieldInfo _retarget, _lost;
+        private static AccessTools.StructFieldRef<EntityAIContext, float> _retargetRef, _lostRef;
+        private static bool _warned;
+
+        private static void WarnOnce(string message)
+        {
+            if (_warned) return;
+            _warned = true;
+            Log.Warn(message);
+        }
 
         private static bool Prepare()
         {
-            _retarget = AccessTools.Field(typeof(EntityAIContext), "_retargetingTime");
-            _lost = AccessTools.Field(typeof(EntityAIContext), "_targetEnemyLoseElapsedTime");
-            if (_retarget != null && _lost != null) return true;
-            Log.Warn("Host: enemy ownership extended-range retarget unavailable; native Aggro hook retained.");
-            return false;
+            try
+            {
+                _retarget = AccessTools.Field(typeof(EntityAIContext), "_retargetingTime");
+                _lost = AccessTools.Field(typeof(EntityAIContext), "_targetEnemyLoseElapsedTime");
+                if (_retarget == null || _lost == null || _retarget.FieldType != typeof(float) || _lost.FieldType != typeof(float))
+                {
+                    WarnOnce("Host: enemy ownership extended-range retarget unavailable; native Aggro hook retained.");
+                    return false;
+                }
+                try
+                {
+                    _retargetRef = AccessTools.StructFieldRefAccess<EntityAIContext, float>(_retarget);
+                    _lostRef = AccessTools.StructFieldRefAccess<EntityAIContext, float>(_lost);
+                }
+                catch (Exception)
+                {
+                    _retargetRef = _lostRef = null;
+                    WarnOnce("Host: enemy ownership typed retarget access unavailable; reflection retained.");
+                }
+                return true;
+            }
+            catch (Exception)
+            {
+                WarnOnce("Host: enemy ownership extended-range retarget unavailable; native Aggro hook retained.");
+                return false;
+            }
+        }
+
+        private static float ReadTimer(ref EntityAIContext context, bool lost)
+        {
+            var accessor = lost ? _lostRef : _retargetRef;
+            if (accessor != null)
+            {
+                try { return accessor(ref context); }
+                catch (Exception)
+                {
+                    _retargetRef = _lostRef = null;
+                    WarnOnce("Host: enemy ownership typed retarget access failed; reflection retained.");
+                }
+            }
+            return (float)(lost ? _lost : _retarget).GetValue(context);
         }
 
         private static void Prefix(EntityAI __instance, out bool __state)
         {
             __state = false;
-            if (!NetworkServer.active) return;
+            if (!NetworkServer.active || HostAuthority.NativeInstance?.IsOwnershipRetargetCandidate(__instance) != true) return;
             try
             {
                 var context = __instance.context;
@@ -123,8 +168,8 @@ namespace SodRpg.Mod
                 float speed = target != null && (target.Status.hasInvulnerable || target.Status.hasUntargetable
                     || target.Status.isUndetectableByNonAllies) ? 1.5f : 1f;
                 __state = target == null || target.IsNullInactiveDeadOrKnockedOut()
-                    || (float)_lost.GetValue(context) > 5f || !__instance.entity.CanAggroTo(target)
-                    || context.targetEnemyElapsedTime * speed > (float)_retarget.GetValue(context);
+                    || ReadTimer(ref context, true) > 5f || !__instance.entity.CanAggroTo(target)
+                    || context.targetEnemyElapsedTime * speed > ReadTimer(ref context, false);
             }
             catch (Exception) { }
         }

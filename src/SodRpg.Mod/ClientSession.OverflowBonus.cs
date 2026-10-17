@@ -10,6 +10,9 @@ namespace SodRpg.Mod
         private float _nextOverflowBonusSend, _overflowBonusFirstSend = -1f;
         private string _overflowBonusReplyRun;
         private long _overflowBonusReplyLedger, _overflowBonusPaid;
+        private int _overflowBonusBlockedWorld = -1, _overflowBonusSentWorld = -1;
+        private string _overflowBonusBlockedRun;
+        private long _overflowBonusBlockedLedger;
         private readonly DreamforgeOverflowBonusMsg _overflowBonusMessage = new DreamforgeOverflowBonusMsg();
         private Action<DreamforgeOverflowBonusResultMsg> _onOverflowBonusResult;
         private int _overflowBonusSendFrame = -1;
@@ -44,6 +47,9 @@ namespace SodRpg.Mod
             _overflowBonusAvailable = _overflowBonusWarned = false;
             _overflowBonusReplyRun = null;
             _overflowBonusReplyLedger = _overflowBonusPaid = 0;
+            _overflowBonusBlockedWorld = _overflowBonusSentWorld = -1;
+            _overflowBonusBlockedRun = null;
+            _overflowBonusBlockedLedger = 0;
             _nextOverflowBonusSend = 0;
             _overflowBonusFirstSend = -1f;
             Profile.ReceiveOverflowDreamDust = false;
@@ -55,9 +61,15 @@ namespace SodRpg.Mod
         {
             if (msg == null || msg.version != 1) return;
             _overflowBonusAvailable = msg.available;
+            bool ledgerChanged = _overflowBonusReplyRun != msg.runId || _overflowBonusReplyLedger != msg.ledgerId;
             _overflowBonusReplyRun = msg.runId;
             _overflowBonusReplyLedger = msg.ledgerId;
             _overflowBonusPaid = msg.paid;
+            _overflowBonusBlockedWorld = msg.available && msg.worldBlocked ? msg.blockedWorld : -1;
+            _overflowBonusBlockedRun = msg.runId;
+            _overflowBonusBlockedLedger = msg.ledgerId;
+            if (ledgerChanged) _nextOverflowBonusSend = 0;
+            else if (_overflowBonusBlockedWorld >= 0) _nextOverflowBonusSend = Time.unscaledTime + 30f;
             if (!msg.available) WarnOverflowBonus("host currency/ledger unavailable");
             if (Profile.OverflowBonusPendingRunId == msg.runId && Profile.OverflowBonusPendingLedgerId == msg.ledgerId
                 && msg.paid >= Profile.OverflowBonusPendingTotal)
@@ -122,19 +134,25 @@ namespace SodRpg.Mod
             long total = Profile.OverflowBonusPendingRunId != null ? Profile.OverflowBonusPendingTotal : run?.OverflowDreamDustTotal ?? 0;
             long ledger = Profile.OverflowBonusPendingRunId != null ? Profile.OverflowBonusPendingLedgerId : run?.OverflowDreamDustLedgerId ?? 0;
             bool unpaid = total > 0 && (_overflowBonusReplyRun != runId || _overflowBonusReplyLedger != ledger || _overflowBonusPaid < total);
+            int world = NetworkedManagerBase<ZoneManager>.softInstance?.currentZoneIndex ?? -1;
+            bool blocked = world >= 0 && world == _overflowBonusBlockedWorld
+                && runId == _overflowBonusBlockedRun && ledger == _overflowBonusBlockedLedger;
             bool changed = _overflowBonusMessage.runId != runId || _overflowBonusMessage.total != total
-                || _overflowBonusMessage.ledgerId != ledger || _overflowBonusMessage.enabled != _overflowBonusChosen;
+                || _overflowBonusMessage.ledgerId != ledger || _overflowBonusMessage.enabled != _overflowBonusChosen
+                || _overflowBonusSentWorld != world;
             if (!changed && now < _nextOverflowBonusSend) return;
             if (!_overflowBonusAvailable && _overflowBonusFirstSend >= 0 && now - _overflowBonusFirstSend >= 20f)
                 WarnOverflowBonus("host has not advertised the optional capability (older MOD or missing setting)");
             if (_overflowBonusSendFrame == Time.frameCount) return;
             // Once acknowledged, idle polling is unnecessary except a slow capability/preference heartbeat.
-            _nextOverflowBonusSend = now + (unpaid ? 2f : 5f);
+            _nextOverflowBonusSend = now + (blocked ? 30f : unpaid ? 2f : 5f);
             var msg = _overflowBonusMessage;
             msg.enabled = _overflowBonusChosen;
             msg.runId = runId;
             msg.ledgerId = ledger;
             msg.total = total;
+            msg.blockedWorldAck = 1;
+            _overflowBonusSentWorld = world;
             try
             {
                 _overflowBonusSendFrame = Time.frameCount;

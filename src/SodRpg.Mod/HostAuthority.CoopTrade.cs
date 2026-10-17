@@ -27,6 +27,7 @@ namespace SodRpg.Mod
             // happens at most once per actual connection.
             public int ConnectionId = int.MinValue;
             public readonly BuildTransferReceiver Transfer = new BuildTransferReceiver(CoopTradeTransport.MaxProfileChars);
+            public readonly CoopTradeSendQueue Outgoing = new CoopTradeSendQueue();
             public string Envelope;
         }
         private sealed class CoopHostTrade
@@ -109,6 +110,14 @@ namespace SodRpg.Mod
                     settings.customData[CoopTradeTransport.CapabilityKey] = Guid.NewGuid().ToString("N");
                     _coopAdvertisedSettings = settings;
                     _nextCoopAdvertisement = Time.unscaledTime + 2f;
+                }
+                foreach (var entry in _coopHostPeers)
+                {
+                    if (entry.Key == DewPlayer.local || !CoopPresent(entry.Key)) continue;
+                    var connection = entry.Key.connectionToClient;
+                    if (connection == null || connection.connectionId != entry.Value.ConnectionId)
+                    { entry.Value.Outgoing.Reset(); continue; }
+                    FlushCoopPayloads(entry.Key, entry.Value);
                 }
                 if (Time.unscaledTime < _nextCoopHostTick) return;
                 _nextCoopHostTick = Time.unscaledTime + 0.25f;
@@ -223,6 +232,7 @@ namespace SodRpg.Mod
                     if (peer.ConnectionId != connectionId)
                     {
                         peer.ConnectionId = connectionId;
+                        peer.Outgoing.Reset();
                         var rejoined = _coopHostTrade;
                         if (rejoined != null && (caller == rejoined.First || caller == rejoined.Second))
                         {
@@ -500,7 +510,7 @@ namespace SodRpg.Mod
             });
             var other = first ? trade.SecondProfile : trade.FirstProfile;
             if (!includeProfile || other == null || (first ? trade.FirstProfileSentRevision : trade.SecondProfileSentRevision) == trade.Revision) return;
-            SendCoopPayload(player, "profile", trade.Id, trade.Revision, ProfileCodec.WriteCheckpointProfile(other));
+            if (!SendCoopPayload(player, "profile", trade.Id, trade.Revision, ProfileCodec.WriteCheckpointProfile(other))) return;
             // Every send arms the re-send interval: an offer change, a reconnection and a granted
             // re-request all leave the receiver assembling a fresh stash-sized transfer.
             if (first) { trade.FirstProfileSentRevision = trade.Revision; trade.FirstProfileSentAt = Time.unscaledTime; }
@@ -520,7 +530,33 @@ namespace SodRpg.Mod
             SendCoopState(caller, new DreamforgeCoopTradeState
             { kind = "roster", hostKey = CoopHostKey, keys = keys.ToArray(), names = names.ToArray(), available = available.ToArray(), ready = ready.ToArray() });
         }
-        private void SendCoopPayload(DewPlayer player, string kind, string id, int revision, string text)
+        private bool FlushCoopPayloads(DewPlayer player, CoopPeerState peer)
+        {
+            if (!peer.Outgoing.Pending || !peer.Outgoing.BeginFlush()) return true;
+            try
+            {
+                while (peer.Outgoing.TryPeek(out string partJson))
+                {
+                    player.connectionToClient.Send(new DreamforgeCoopTradeDown { Json = partJson });
+                    peer.Outgoing.Sent();
+                }
+                return true;
+            }
+            catch (Exception ex)
+            {
+                peer.Outgoing.Retry();
+                if (_coopHostTrade != null)
+                {
+                    if (player == _coopHostTrade.First) _coopHostTrade.FirstProfileSentRevision = -1;
+                    else if (player == _coopHostTrade.Second) _coopHostTrade.SecondProfileSentRevision = -1;
+                }
+                Log.Warn("Coop trade payload delivery deferred; reservations remain held: " + ex.Message);
+                return false;
+            }
+            finally { peer.Outgoing.EndFlush(); }
+        }
+
+        private bool SendCoopPayload(DewPlayer player, string kind, string id, int revision, string text)
         {
             if (!CoopPeerFusion(player))
             {
@@ -528,14 +564,36 @@ namespace SodRpg.Mod
                 else if (kind == "prepare" || kind == "executed")
                     text = CoopTradeCodec.WithoutFusionForLegacyReceipt(text);
             }
-            if (!CoopTradeTransport.PayloadFits(text)) { SendCoopError(player, "recordTooLarge"); return; }
-            var parts = BuildTransfer.Split(Convert.ToBase64String(Encoding.UTF8.GetBytes(text)), CoopTradeTransport.MaxProfileChars);
-            foreach (var part in parts)
-                SendCoopState(player, new DreamforgeCoopTradeState
+            if (!CoopTradeTransport.PayloadFits(text)) { SendCoopError(player, "recordTooLarge"); return false; }
+            if (player == DewPlayer.local)
+            {
+                foreach (var part in BuildTransfer.Split(Convert.ToBase64String(Encoding.UTF8.GetBytes(text)), CoopTradeTransport.MaxProfileChars))
+                    SendCoopState(player, new DreamforgeCoopTradeState
+                    {
+                        kind = kind, id = id, revision = revision, hostKey = CoopHostKey, data = part.Data,
+                        transferId = part.TransferId, index = part.Index, count = part.Count, totalLength = part.TotalLength,
+                    });
+                return true;
+            }
+            if (!_coopHostPeers.TryGetValue(player, out var peer)) return false;
+            try
+            {
+                peer.Outgoing.Enqueue(new DreamforgeCoopTradeState
+                { kind = kind, id = id, revision = revision, hostKey = CoopHostKey, fusion = true },
+                    Convert.ToBase64String(Encoding.UTF8.GetBytes(text)));
+                return FlushCoopPayloads(player, peer);
+            }
+            catch (InvalidOperationException ex)
+            {
+                // No economic state is discarded; query/profile recovery can enqueue it again.
+                Log.Warn("Coop trade payload deferred: " + ex.Message);
+                if (kind == "profile" && _coopHostTrade?.Id == id)
                 {
-                    kind = kind, id = id, revision = revision, hostKey = CoopHostKey, data = part.Data,
-                    transferId = part.TransferId, index = part.Index, count = part.Count, totalLength = part.TotalLength,
-                });
+                    if (player == _coopHostTrade.First) _coopHostTrade.FirstProfileSentRevision = -1;
+                    else if (player == _coopHostTrade.Second) _coopHostTrade.SecondProfileSentRevision = -1;
+                }
+                return false;
+            }
         }
         private void SendCoopState(DewPlayer player, DreamforgeCoopTradeState state)
         {

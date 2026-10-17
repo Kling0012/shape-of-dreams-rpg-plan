@@ -13,6 +13,7 @@ namespace SodRpg.Mod
         internal string CoopTradeJournalPath;
         private readonly List<CoopTradePeer> _coopPeers = new List<CoopTradePeer>();
         private readonly BuildTransferReceiver _coopTransfer = new BuildTransferReceiver(CoopTradeTransport.MaxProfileChars);
+        private readonly CoopTradeSendQueue _coopSendQueue = new CoopTradeSendQueue();
         private NetworkConnection _coopConnection;
         private GameSettingsManager _coopSettings;
         private string _coopAdvertisement;
@@ -169,6 +170,7 @@ namespace SodRpg.Mod
                 DiagnoseCoopTrade("connection-changed", onlyWhenActive: true);
                 _coopConnection = connection;
                 _coopTransfer.Reset();
+                _coopSendQueue.Reset();
                 _coopPeers.Clear();
                 CoopTrade = null;
                 _coopFrozenProfile = null;
@@ -263,6 +265,7 @@ namespace SodRpg.Mod
                     CoopTrade = null;
                     _coopFrozenProfile = null;
                 }
+                FlushCoopPayloads();
                 RetryCoopOffer();
                 if (Time.unscaledTime < _nextCoopProbe) return;
                 _nextCoopProbe = Time.unscaledTime + 5f;
@@ -333,6 +336,11 @@ namespace SodRpg.Mod
 
         private void SendCoop(DreamforgeCoopTradeCommand command)
         {
+            if (command.action == "cancel")
+            {
+                _coopSendQueue.Reset();
+                _coopOfferInFlight = null;
+            }
             // Serialization errors are data failures; delivery errors leave the outcome unknown.
             string json = NetworkServer.active ? null : CoopTradeTransport.Encode(command);
             try
@@ -357,6 +365,33 @@ namespace SodRpg.Mod
             return ProfileCodec.WriteCheckpointProfile(copy);
         }
 
+        private void FlushCoopPayloads()
+        {
+            if (!_coopSendQueue.Pending || !_coopSendQueue.BeginFlush()) return;
+            string offer = _coopOfferInFlight;
+            bool queuedOffer = offer != null && _coopSendQueue.Contains(offer);
+            try
+            {
+                while (_coopSendQueue.TryPeek(out string partJson))
+                {
+                    if (NetworkServer.active)
+                        HostAuthority.NativeInstance?.ReceiveCoopTrade(CoopTradeTransport.Decode<DreamforgeCoopTradeCommand>(partJson), DewPlayer.local);
+                    else NetworkClient.Send(new DreamforgeCoopTradeUp { Json = partJson });
+                    _coopSendQueue.Sent();
+                }
+                if (queuedOffer && offer == _coopOfferInFlight && !_coopSendQueue.Contains(offer))
+                    _coopOfferSentAt = Time.unscaledTime;
+            }
+            catch (Exception ex)
+            {
+                _coopSendQueue.Reset();
+                _coopOfferInFlight = null;
+                _nextCoopOfferRetry = Time.unscaledTime + 5f;
+                throw new CoopSendException(ex);
+            }
+            finally { _coopSendQueue.EndFlush(); }
+        }
+
         private void SendCoopProfile(string action, CoopTradeOffer offer)
         {
             string fusionReason = CoopTradeRules.ValidateFusion(Profile, offer, _coopHostFusion && CoopTrade.PartnerFusion);
@@ -364,41 +399,26 @@ namespace SodRpg.Mod
             string snapshot = CoopSnapshot(Profile);
             string wireSnapshot = _coopHostFusion ? snapshot : ProfileCodec.WithoutFusionForLegacyTrade(snapshot);
             string encoded = Convert.ToBase64String(Encoding.UTF8.GetBytes(wireSnapshot));
-            var parts = BuildTransfer.Split(encoded, CoopTradeTransport.MaxProfileChars);
+            string id = CoopTrade.Id;
+            int revision = CoopTrade.Revision;
+            string transferId = _coopSendQueue.Enqueue(new DreamforgeCoopTradeCommand
+            {
+                action = action, id = id, revision = revision, offer = CoopTradeCodec.WriteOffer(offer), safe = CoopLocalSafe,
+            }, encoded);
             if (action == "offer")
             {
-                _coopOfferInFlight = parts[0].TransferId;
+                _coopOfferInFlight = transferId;
                 _coopOfferSentAt = Time.unscaledTime;
             }
             if (action == "confirm") _coopFrozenProfile = snapshot;
-            string serializedOffer = CoopTradeCodec.WriteOffer(offer);
-            string id = CoopTrade.Id;
-            int revision = CoopTrade.Revision;
-            DiagnoseCoopTrade(action == "confirm" ? "confirm-send" : "offer-send", id, revision);
-            try
-            {
-                foreach (var part in parts)
-                    SendCoop(new DreamforgeCoopTradeCommand
-                    {
-                        action = action, id = id, revision = revision, offer = serializedOffer, safe = CoopLocalSafe,
-                        data = part.Data, transferId = part.TransferId, index = part.Index,
-                        count = part.Count, totalLength = part.TotalLength,
-                    });
-            }
-            catch
-            {
-                if (action == "offer")
-                {
-                    _coopOfferInFlight = null;
-                    _nextCoopOfferRetry = Time.unscaledTime + 5f;
-                }
-                throw;
-            }
+            DiagnoseCoopTrade(action == "confirm" ? "confirm-queued" : "offer-queued", id, revision);
+            FlushCoopPayloads();
         }
 
         private void RetryCoopOffer()
         {
-            if (_coopOfferInFlight != null && Time.unscaledTime - _coopOfferSentAt >= 5f)
+            if (_coopOfferInFlight != null && !_coopSendQueue.Contains(_coopOfferInFlight)
+                && Time.unscaledTime - _coopOfferSentAt >= 5f)
                 _coopOfferInFlight = null;
             if (_coopPendingOffer == null || _coopOfferInFlight != null || Time.unscaledTime < _nextCoopOfferRetry
                 || CoopTrade == null || !CoopTrade.Accepted || CoopTrade.Preparing) return;
@@ -494,6 +514,7 @@ namespace SodRpg.Mod
                         CompleteCoopSettlement();
                     }
                     if (CoopTrade?.Id == msg.id) CoopTrade = null;
+                    _coopSendQueue.Reset();
                     _coopPendingOffer = null;
                     _coopOfferInFlight = null;
                     _coopFrozenProfile = null;
@@ -506,6 +527,7 @@ namespace SodRpg.Mod
                     if (CoopTrade != null && CoopTrade.Id == msg.id && msg.revision < CoopTrade.Revision) return;
                     if (CoopTrade?.Id != msg.id)
                     {
+                        _coopSendQueue.Reset();
                         _coopPendingOffer = null;
                         _coopOfferInFlight = null;
                     }
