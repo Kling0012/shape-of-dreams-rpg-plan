@@ -1022,7 +1022,8 @@ namespace SodRpg.Mod
             GUI.enabled = _s.CanChooseDepth;
             if (GUILayout.Button(Loc.T("オフ（通常）", "Off (normal)"), !enabled ? _st.TabSel : _st.Tab, GUILayout.Width(112)))
                 SetStatus(_s.ChooseInfinity(false, interval));
-            GUI.enabled = _s.CanChooseDepth && InfinityMode.Available;
+            string limboNotice = _s.LimboInfinityNotice;
+            GUI.enabled = _s.CanChooseDepth && InfinityMode.Available && limboNotice == null;
             if (GUILayout.Button(Loc.T("オン", "On"), enabled ? _st.TabSel : _st.Tab, GUILayout.Width(64)))
                 SetStatus(_s.ChooseInfinity(true, interval));
             GUILayout.Label(Loc.T("ボス周期", "Boss interval"), _st.Small, GUILayout.Width(85));
@@ -1054,6 +1055,8 @@ namespace SodRpg.Mod
             string lobbySupportNotice = ClientSession.InfinitySupportNotice(_s.CanChooseRunRules);
             if (lobbySupportNotice != null)
                 GUILayout.Label(lobbySupportNotice, _st.Warn);
+            if (limboNotice != null)
+                GUILayout.Label(limboNotice, _st.Warn);
             if (enabled)
                 GUILayout.Label(Loc.T("同じゾーンを再生成。周期ボスの魂報酬後に、ホストが全員の帰還／続行を選びます。再生成時はKO復活・狩りの局所リセット。",
                     "Regenerates the same zone. After each boss's soul reward, the host chooses return or continue for everyone. Regeneration revives KO players and resets local hunts."), _st.Small);

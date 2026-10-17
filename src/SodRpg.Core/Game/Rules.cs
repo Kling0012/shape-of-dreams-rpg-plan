@@ -781,6 +781,8 @@ namespace SodRpg.Core.Game
             var report = new RunReport { Victory = victory, LevelBefore = run.LevelAtStart > 0 ? run.LevelAtStart : p.DreamLevel };
             if (victory)
             {
+                if (run.Infinity == null && run.LimboDepth >= 6 && !string.IsNullOrEmpty(run.HeroKey))
+                    p.Hero(run.HeroKey).LimboInfinityUnlocked = true;
                 ev.AddRange(Secure(p, false));
                 AddStarXp(p, run.HeroKey, StarProgression.VictoryXp, ev);
                 p.Stats.Victories++;
