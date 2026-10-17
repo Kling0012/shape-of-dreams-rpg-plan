@@ -1,0 +1,246 @@
+IMPLEMENTATION RESUME 2026-10-18; HEAD=23b9a1fa; baseline=3cdf2a83
+workspace=/home/wang/.cache/gh-auto/issue692-implementation-resume-20261018-efadeeo6
+NUGET_PACKAGES=/home/wang/.cache/gh-auto/nuget
+TMPDIR=/home/wang/.cache/gh-auto/issue692-implementation-resume-20261018-efadeeo6/tmp; DOTNET_EnableDiagnostics=0
+
+$ dotnet build /home/wang/.cache/gh-auto/issue692-implementation-resume-20261018-efadeeo6/tools/StartupBench/StartupBench.csproj -c Release --nologo -p:NuGetAudit=false -p:UseSharedCompilation=false -nodeReuse:false
+  Determining projects to restore...
+  Restored /home/wang/.cache/gh-auto/issue692-implementation-resume-20261018-efadeeo6/tools/StartupBench/StartupBench.csproj (in 424 ms).
+  Restored /home/wang/.cache/gh-auto/issue692-implementation-resume-20261018-efadeeo6/src/SodRpg.Core/SodRpg.Core.csproj (in 485 ms).
+  SodRpg.Core -> /home/wang/.cache/gh-auto/issue692-implementation-resume-20261018-efadeeo6/src/SodRpg.Core/bin/Release/netstandard2.0/SodRpg.Core.dll
+  StartupBench -> /home/wang/.cache/gh-auto/issue692-implementation-resume-20261018-efadeeo6/tools/StartupBench/bin/Release/net8.0/StartupBench.dll
+
+Build succeeded.
+    0 Warning(s)
+    0 Error(s)
+
+Time Elapsed 00:00:23.12
+exit=0
+
+$ dotnet build /home/wang/.claude/gh-auto/wt/shape-of-dreams-rpg-plan-issue-692/tools/StartupBench/StartupBench.csproj -c Release --nologo -p:NuGetAudit=false -p:UseSharedCompilation=false -nodeReuse:false
+  Determining projects to restore...
+  Restored /home/wang/.claude/gh-auto/wt/shape-of-dreams-rpg-plan-issue-692/src/SodRpg.Core/SodRpg.Core.csproj (in 495 ms).
+  Restored /home/wang/.claude/gh-auto/wt/shape-of-dreams-rpg-plan-issue-692/tools/StartupBench/StartupBench.csproj (in 491 ms).
+  SodRpg.Core -> /home/wang/.claude/gh-auto/wt/shape-of-dreams-rpg-plan-issue-692/src/SodRpg.Core/bin/Release/netstandard2.0/SodRpg.Core.dll
+  StartupBench -> /home/wang/.claude/gh-auto/wt/shape-of-dreams-rpg-plan-issue-692/tools/StartupBench/bin/Release/net8.0/StartupBench.dll
+
+Build succeeded.
+    0 Warning(s)
+    0 Error(s)
+
+Time Elapsed 00:00:23.23
+exit=0
+
+round=1 tiered=default source=before
+$ dotnet /home/wang/.cache/gh-auto/issue692-implementation-resume-20261018-efadeeo6/tools/StartupBench/bin/Release/net8.0/StartupBench.dll total --threshold-ms 1500
+mode=total threshold-ms=1500 runtime=10.0.11 tiered=default
+register-all-generated: 4608 ms (alloc 172 MB)
+first-build-limits: 184 ms (talents=7657, entries=584)
+hero-sigils-all-x1000: 0 ms
+authored-registry-fingerprint: 607b55b25354e173
+content-fingerprint: 13792-e4617232a7ce91e6
+hero-sigils-all-count: 7642
+RESULT: SLOW (register 4608 ms > threshold 1500 ms; benchmark threshold exceeded)
+exit=3
+
+round=1 tiered=default source=after
+$ dotnet /home/wang/.claude/gh-auto/wt/shape-of-dreams-rpg-plan-issue-692/tools/StartupBench/bin/Release/net8.0/StartupBench.dll total --threshold-ms 1500
+mode=total threshold-ms=1500 runtime=10.0.11 tiered=default
+register-all-generated: 3871 ms (alloc 118 MB)
+first-build-limits: 144 ms (talents=7657, entries=584)
+hero-sigils-all-x1000: 0 ms
+authored-registry-fingerprint: 607b55b25354e173
+content-fingerprint: 13792-e4617232a7ce91e6
+hero-sigils-all-count: 7642
+RESULT: SLOW (register 3871 ms > threshold 1500 ms; benchmark threshold exceeded)
+exit=3
+
+round=1 tiered=0 source=before
+$ dotnet /home/wang/.cache/gh-auto/issue692-implementation-resume-20261018-efadeeo6/tools/StartupBench/bin/Release/net8.0/StartupBench.dll total --threshold-ms 1500
+mode=total threshold-ms=1500 runtime=10.0.11 tiered=0
+register-all-generated: 3279 ms (alloc 172 MB)
+first-build-limits: 113 ms (talents=7657, entries=584)
+hero-sigils-all-x1000: 0 ms
+authored-registry-fingerprint: 607b55b25354e173
+content-fingerprint: 13792-e4617232a7ce91e6
+hero-sigils-all-count: 7642
+RESULT: SLOW (register 3279 ms > threshold 1500 ms; benchmark threshold exceeded)
+exit=3
+
+round=1 tiered=0 source=after
+$ dotnet /home/wang/.claude/gh-auto/wt/shape-of-dreams-rpg-plan-issue-692/tools/StartupBench/bin/Release/net8.0/StartupBench.dll total --threshold-ms 1500
+mode=total threshold-ms=1500 runtime=10.0.11 tiered=0
+register-all-generated: 3687 ms (alloc 118 MB)
+first-build-limits: 94 ms (talents=7657, entries=584)
+hero-sigils-all-x1000: 0 ms
+authored-registry-fingerprint: 607b55b25354e173
+content-fingerprint: 13792-e4617232a7ce91e6
+hero-sigils-all-count: 7642
+RESULT: SLOW (register 3687 ms > threshold 1500 ms; benchmark threshold exceeded)
+exit=3
+
+round=2 tiered=default source=after
+$ dotnet /home/wang/.claude/gh-auto/wt/shape-of-dreams-rpg-plan-issue-692/tools/StartupBench/bin/Release/net8.0/StartupBench.dll total --threshold-ms 1500
+mode=total threshold-ms=1500 runtime=10.0.11 tiered=default
+register-all-generated: 4344 ms (alloc 118 MB)
+first-build-limits: 164 ms (talents=7657, entries=584)
+hero-sigils-all-x1000: 0 ms
+authored-registry-fingerprint: 607b55b25354e173
+content-fingerprint: 13792-e4617232a7ce91e6
+hero-sigils-all-count: 7642
+RESULT: SLOW (register 4344 ms > threshold 1500 ms; benchmark threshold exceeded)
+exit=3
+
+round=2 tiered=default source=before
+$ dotnet /home/wang/.cache/gh-auto/issue692-implementation-resume-20261018-efadeeo6/tools/StartupBench/bin/Release/net8.0/StartupBench.dll total --threshold-ms 1500
+mode=total threshold-ms=1500 runtime=10.0.11 tiered=default
+register-all-generated: 5239 ms (alloc 172 MB)
+first-build-limits: 163 ms (talents=7657, entries=584)
+hero-sigils-all-x1000: 0 ms
+authored-registry-fingerprint: 607b55b25354e173
+content-fingerprint: 13792-e4617232a7ce91e6
+hero-sigils-all-count: 7642
+RESULT: SLOW (register 5239 ms > threshold 1500 ms; benchmark threshold exceeded)
+exit=3
+
+round=2 tiered=0 source=after
+$ dotnet /home/wang/.claude/gh-auto/wt/shape-of-dreams-rpg-plan-issue-692/tools/StartupBench/bin/Release/net8.0/StartupBench.dll total --threshold-ms 1500
+mode=total threshold-ms=1500 runtime=10.0.11 tiered=0
+register-all-generated: 3475 ms (alloc 118 MB)
+first-build-limits: 89 ms (talents=7657, entries=584)
+hero-sigils-all-x1000: 0 ms
+authored-registry-fingerprint: 607b55b25354e173
+content-fingerprint: 13792-e4617232a7ce91e6
+hero-sigils-all-count: 7642
+RESULT: SLOW (register 3475 ms > threshold 1500 ms; benchmark threshold exceeded)
+exit=3
+
+round=2 tiered=0 source=before
+$ dotnet /home/wang/.cache/gh-auto/issue692-implementation-resume-20261018-efadeeo6/tools/StartupBench/bin/Release/net8.0/StartupBench.dll total --threshold-ms 1500
+mode=total threshold-ms=1500 runtime=10.0.11 tiered=0
+register-all-generated: 3810 ms (alloc 172 MB)
+first-build-limits: 150 ms (talents=7657, entries=584)
+hero-sigils-all-x1000: 0 ms
+authored-registry-fingerprint: 607b55b25354e173
+content-fingerprint: 13792-e4617232a7ce91e6
+hero-sigils-all-count: 7642
+RESULT: SLOW (register 3810 ms > threshold 1500 ms; benchmark threshold exceeded)
+exit=3
+
+round=3 tiered=default source=before
+$ dotnet /home/wang/.cache/gh-auto/issue692-implementation-resume-20261018-efadeeo6/tools/StartupBench/bin/Release/net8.0/StartupBench.dll total --threshold-ms 1500
+mode=total threshold-ms=1500 runtime=10.0.11 tiered=default
+register-all-generated: 4995 ms (alloc 172 MB)
+first-build-limits: 143 ms (talents=7657, entries=584)
+hero-sigils-all-x1000: 0 ms
+authored-registry-fingerprint: 607b55b25354e173
+content-fingerprint: 13792-e4617232a7ce91e6
+hero-sigils-all-count: 7642
+RESULT: SLOW (register 4995 ms > threshold 1500 ms; benchmark threshold exceeded)
+exit=3
+
+round=3 tiered=default source=after
+$ dotnet /home/wang/.claude/gh-auto/wt/shape-of-dreams-rpg-plan-issue-692/tools/StartupBench/bin/Release/net8.0/StartupBench.dll total --threshold-ms 1500
+mode=total threshold-ms=1500 runtime=10.0.11 tiered=default
+register-all-generated: 5212 ms (alloc 118 MB)
+first-build-limits: 169 ms (talents=7657, entries=584)
+hero-sigils-all-x1000: 0 ms
+authored-registry-fingerprint: 607b55b25354e173
+content-fingerprint: 13792-e4617232a7ce91e6
+hero-sigils-all-count: 7642
+RESULT: SLOW (register 5212 ms > threshold 1500 ms; benchmark threshold exceeded)
+exit=3
+
+round=3 tiered=0 source=before
+$ dotnet /home/wang/.cache/gh-auto/issue692-implementation-resume-20261018-efadeeo6/tools/StartupBench/bin/Release/net8.0/StartupBench.dll total --threshold-ms 1500
+mode=total threshold-ms=1500 runtime=10.0.11 tiered=0
+register-all-generated: 3319 ms (alloc 172 MB)
+first-build-limits: 92 ms (talents=7657, entries=584)
+hero-sigils-all-x1000: 0 ms
+authored-registry-fingerprint: 607b55b25354e173
+content-fingerprint: 13792-e4617232a7ce91e6
+hero-sigils-all-count: 7642
+RESULT: SLOW (register 3319 ms > threshold 1500 ms; benchmark threshold exceeded)
+exit=3
+
+round=3 tiered=0 source=after
+$ dotnet /home/wang/.claude/gh-auto/wt/shape-of-dreams-rpg-plan-issue-692/tools/StartupBench/bin/Release/net8.0/StartupBench.dll total --threshold-ms 1500
+mode=total threshold-ms=1500 runtime=10.0.11 tiered=0
+register-all-generated: 3847 ms (alloc 118 MB)
+first-build-limits: 121 ms (talents=7657, entries=584)
+hero-sigils-all-x1000: 0 ms
+authored-registry-fingerprint: 607b55b25354e173
+content-fingerprint: 13792-e4617232a7ce91e6
+hero-sigils-all-count: 7642
+RESULT: SLOW (register 3847 ms > threshold 1500 ms; benchmark threshold exceeded)
+exit=3
+
+round=4 tiered=default source=after
+$ dotnet /home/wang/.claude/gh-auto/wt/shape-of-dreams-rpg-plan-issue-692/tools/StartupBench/bin/Release/net8.0/StartupBench.dll total --threshold-ms 1500
+mode=total threshold-ms=1500 runtime=10.0.11 tiered=default
+register-all-generated: 4187 ms (alloc 118 MB)
+first-build-limits: 191 ms (talents=7657, entries=584)
+hero-sigils-all-x1000: 0 ms
+authored-registry-fingerprint: 607b55b25354e173
+content-fingerprint: 13792-e4617232a7ce91e6
+hero-sigils-all-count: 7642
+RESULT: SLOW (register 4187 ms > threshold 1500 ms; benchmark threshold exceeded)
+exit=3
+
+round=4 tiered=default source=before
+$ dotnet /home/wang/.cache/gh-auto/issue692-implementation-resume-20261018-efadeeo6/tools/StartupBench/bin/Release/net8.0/StartupBench.dll total --threshold-ms 1500
+mode=total threshold-ms=1500 runtime=10.0.11 tiered=default
+register-all-generated: 4576 ms (alloc 172 MB)
+first-build-limits: 145 ms (talents=7657, entries=584)
+hero-sigils-all-x1000: 0 ms
+authored-registry-fingerprint: 607b55b25354e173
+content-fingerprint: 13792-e4617232a7ce91e6
+hero-sigils-all-count: 7642
+RESULT: SLOW (register 4576 ms > threshold 1500 ms; benchmark threshold exceeded)
+exit=3
+
+round=4 tiered=0 source=after
+$ dotnet /home/wang/.claude/gh-auto/wt/shape-of-dreams-rpg-plan-issue-692/tools/StartupBench/bin/Release/net8.0/StartupBench.dll total --threshold-ms 1500
+mode=total threshold-ms=1500 runtime=10.0.11 tiered=0
+register-all-generated: 3265 ms (alloc 118 MB)
+first-build-limits: 111 ms (talents=7657, entries=584)
+hero-sigils-all-x1000: 0 ms
+authored-registry-fingerprint: 607b55b25354e173
+content-fingerprint: 13792-e4617232a7ce91e6
+hero-sigils-all-count: 7642
+RESULT: SLOW (register 3265 ms > threshold 1500 ms; benchmark threshold exceeded)
+exit=3
+
+round=4 tiered=0 source=before
+$ dotnet /home/wang/.cache/gh-auto/issue692-implementation-resume-20261018-efadeeo6/tools/StartupBench/bin/Release/net8.0/StartupBench.dll total --threshold-ms 1500
+mode=total threshold-ms=1500 runtime=10.0.11 tiered=0
+register-all-generated: 3317 ms (alloc 172 MB)
+first-build-limits: 101 ms (talents=7657, entries=584)
+hero-sigils-all-x1000: 0 ms
+authored-registry-fingerprint: 607b55b25354e173
+content-fingerprint: 13792-e4617232a7ce91e6
+hero-sigils-all-count: 7642
+RESULT: SLOW (register 3317 ms > threshold 1500 ms; benchmark threshold exceeded)
+exit=3
+default before: median register=4801.5 ms; median register+limits=4965.0 ms
+default after: median register=4265.5 ms; median register+limits=4443.0 ms
+0 before: median register=3318.0 ms; median register+limits=3414.5 ms
+0 after: median register=3581.0 ms; median register+limits=3672.5 ms
+
+$ dotnet /home/wang/.cache/gh-auto/issue692-implementation-resume-20261018-efadeeo6/tools/StartupBench/bin/Release/net8.0/StartupBench.dll snapshot > /home/wang/.cache/gh-auto/issue692-implementation-resume-20261018-efadeeo6/before-snapshot.txt
+exit=0
+stderr=
+
+$ dotnet /home/wang/.claude/gh-auto/wt/shape-of-dreams-rpg-plan-issue-692/tools/StartupBench/bin/Release/net8.0/StartupBench.dll snapshot > /home/wang/.cache/gh-auto/issue692-implementation-resume-20261018-efadeeo6/after-snapshot.txt
+exit=0
+stderr=
+snapshot: before=15514554 bytes; after=15514554 bytes; all_bytes_equal=True
+
+$ dotnet /home/wang/.cache/gh-auto/issue692-implementation-resume-20261018-efadeeo6/tools/StartupBench/bin/Release/net8.0/StartupBench.dll snapshot-baseline > /home/wang/.cache/gh-auto/issue692-implementation-resume-20261018-efadeeo6/before-snapshot-baseline.txt
+exit=0
+stderr=
+
+$ dotnet /home/wang/.claude/gh-auto/wt/shape-of-dreams-rpg-plan-issue-692/tools/StartupBench/bin/Release/net8.0/StartupBench.dll snapshot-baseline > /home/wang/.cache/gh-auto/issue692-implementation-resume-20261018-efadeeo6/after-snapshot-baseline.txt
+exit=0
+stderr=
+snapshot-baseline: before=251195 bytes; after=251195 bytes; all_bytes_equal=True
