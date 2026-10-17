@@ -220,7 +220,13 @@ namespace SodRpg.Mod
                     ? Math.Min(amount, shield / damage.damageToShieldMultiplier) : amount : 0;
                 double budget = Math.Max(0, amount - absorbed);
                 double accepted = PlanBossDamage(shares, player, budget, scope.Planned);
-                double keep = Math.Min(1, (accepted + absorbed) / amount);
+                // Retain a little native overkill for a lethal plan below Actor.DealDamage's
+                // 0.0001 small-hit exit. Otherwise a floating-point HP remainder can be unkillable.
+                // The HP setter still settles only the planned shares after immunity and shields.
+                double retained = accepted + absorbed;
+                if (accepted > 0 && LargestBossShare(shares, scope.Planned) < 0)
+                    retained = Math.Max(retained, 0.0002);
+                double keep = Math.Min(1, retained / amount);
                 // Keep very small help factors representable without rounding 1 - keep to 1.
                 if (keep <= 0) damage.ApplyReduction(1);
                 else

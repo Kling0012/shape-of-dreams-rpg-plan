@@ -77,3 +77,28 @@ hit=4, before=6.1035156E-05, after=6.1035156E-05, processed=6.1035156E-05
 - 防御・シールド・回復・入退室・宿敵化・悪夢化との組み合わせ: 再現入力に不要だったため、新規の組み合わせ検証は未実行。既存テストの成功を全組み合わせの保証には使わない。
 - MOD全体のビルド、全件・低速テスト: 再現工程は限定実行の指示があるため未実行。
 - 受け付け審査の「割合の正体」「持ち主不在・倍率0」の懸念は、表示と計算経路、既存の切断/KOケースの結果を記録した。修正は次工程であり、本工程では行っていない。
+
+## 修正工程の検証（2026-10-17）
+
+上記は修正前の記録。修正工程では以下を確認した。
+
+- R1: `HostAuthority.BossShares.cs` の `ApplyBossShareReceivedDamage` で、手伝い倍率を適用した計画が全員の残持ち分を削り切る場合だけ、補正後ダメージの処理下限を0.0002とする（元の防御後ダメージを上限とする）。本体の小ダメージ打ち切り0.0001を通過し、既存の免疫・シールド処理とHP setterへ到達させる。HP setterは従来どおり実損失に応じて計画を確定するため、全持ち分を削る予算のない攻撃やシールドだけの攻撃は引き上げない。
+- R2: `HostAuthority.EnemyOwnershipSync.cs` は正の残持ち分を同期時に0へ丸めず、最低1/1000で送る。`DreamforgeUi.BossShares.cs` はボスバー・ミニボス頭上とも1%未満の正の残量を `<1%` とし、実際に尽きた持ち分だけ `0%` とする。整数%と通信形式は従来どおりで、表示文字列は既存キャッシュを使う。
+- 自分の持ち分を削り終えた後の0%は仕様上正しい。他の人の持ち分への手伝いを継続できることがR1の対応であり、持ち分を他人へ付け替えて表示する変更はしない。`CHANGELOG.md` のv3.0.0「ボスの持ち分」と整合する。
+- 受け付け審査の懸念: 割合は自分の持ち分の残量であり、0%そのものをダメージ倍率へ掛けたり割ったりする処理ではない。`PrepareBossShares` は正の個人圧から持ち分を作り、`PlanBossDamage` は自分の分が尽きても他人の分へ配分する。ボスに通常敵の担当者がないのは `OwnershipExcluded` による設計であり、担当者不在を推測で修正しない。
+
+### 実行した検証
+
+- 修正前に指定の `python3 tests/repro/issue608/run.py` を再実行: 終了1、1成功/1失敗。HP 0.00006103515625で256撃後も生存。ログ: `TestResults/issue608-20261017T001000322371Z/`。
+- 最終修正の同コマンド: 終了0、2成功/0失敗。問題の入力は3撃目の処理ダメージ0.00020000001でHP 0・全持ち分0・死亡、対照入力は従来どおり17撃。ログ: `TestResults/issue608-20261017T001526087579Z/`。
+- revert check: 製品3ファイルの修正をパッチで一時的に戻し、同コマンドが終了1（同じ再現assertで1失敗/対照1成功）になることを確認した。そのパッチを戻した直後、同コマンドが終了0（2成功）になることを確認した。戻した状態の失敗ログ: `TestResults/issue608-20261017T001514857560Z/`。再現テストは編集していない。
+- `DOTNET_ROLL_FORWARD=Major dotnet test tests/Issue73.Native.Tests/Issue73.Native.Tests.csproj -c Release --filter 'FullyQualifiedName~BossSharesTests|FullyQualifiedName~EnemyOwnershipTests|FullyQualifiedName~DynamicDifficultyTests|FullyQualifiedName~Issue608ZeroShareReproductionTests' --nologo -v quiet -p:WarningLevel=0`: 終了0、46成功/0失敗。ログ: `TestResults/issue608-related-final.trx`。
+- 同じ46件を再現スクリプトの `CustomBeforeMicrosoftCommonTargets` と専用 `OutputPath` で、本体と同じ遅延倍率演算に差し替えて実行: 終了0、46成功/0失敗。ログ: `TestResults/issue608-native-related.trx`。
+- `dotnet build src/SodRpg.Mod/SodRpg.Mod.csproj -c Release '-p:GameDir=/home/wang/dev/sod-gamedata/Shape of Dreams' --nologo -v minimal`: 終了0、エラー0/警告6（既存APIのobsoleteと未代入フィールド）。実ゲームDLLを参照して表示処理を含むMOD全体をコンパイルした。参照先にゲーム起動プログラムはなく、デプロイ先のModsもない。
+- `git diff --check`: 終了0。
+
+### 修正後の未実行
+
+- 実ゲーム起動・画面のスクリーンショット・実Harmonyフック・実通信/2台協力プレイ: ゲーム起動環境がないため。指定のAPI境界による再現の範囲で確認した。描画を確認したという主張はしない。
+- 全件/低速テスト、`--all`、`SODRPG_SLOW=1`: 実装工程の限定実行指示に従い後段へ委ねる。
+- 防御・シールド・回復・攻撃効果の入れ子と極端な微小値の組み合わせ: 新規テスト作成禁止のため追加ケースは実行していない。免疫/シールドと実HP確定の既存経路を維持したコード解析と、既存の手伝い・切断・KO・同期・動的難易度ケースで確認した範囲に限る。
