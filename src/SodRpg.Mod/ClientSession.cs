@@ -99,6 +99,7 @@ namespace SodRpg.Mod
         private readonly BuildTransferReceiver _appliedTransfer = new BuildTransferReceiver();
         public float PressureHealthMultiplier { get; private set; } = 1f;
         public float PressureDamageMultiplier { get; private set; } = 1f;
+        public float NightmarePressureHealthMultiplier { get; private set; }
         /// <summary>ホストが悪夢化の抽選に掛ける装備の倍率。0は未受信（古い版のホスト）で、確保地点では最低値を表示する。</summary>
         public float NightmareGearMultiplier { get; private set; }
         public string LoadNotes { get; private set; }
@@ -497,6 +498,7 @@ namespace SodRpg.Mod
                 _appliedTransfer.Reset();
                 PressureHealthMultiplier = PressureDamageMultiplier = 1f;
                 NightmareGearMultiplier = 0f;
+            NightmarePressureHealthMultiplier = 0f;
                 if (!LobbyReturnPending) ResetRunChoiceConnection();
                 ResetMonsterAuthorityConnection();
                 _sentDreamLevel = -1;
@@ -585,6 +587,7 @@ namespace SodRpg.Mod
             _appliedTransfer.Reset();
             PressureHealthMultiplier = PressureDamageMultiplier = 1f;
             NightmareGearMultiplier = 0f;
+            NightmarePressureHealthMultiplier = 0f;
             ResetRunChoiceConnection(resetHistory: true);
             ResetMonsterAuthorityConnection();
             _pendingRunRewards.Clear();
@@ -658,6 +661,7 @@ namespace SodRpg.Mod
             TravelerCombatNative.ResetReporting();
             PressureHealthMultiplier = PressureDamageMultiplier = 1f;
             NightmareGearMultiplier = 0f;
+            NightmarePressureHealthMultiplier = 0f;
             Emit(Rules.BeginRun(Profile, runId, DailyDream.Today, ReadLimboDepth(), _trades.ReservedSalvageUids(), heroKey: HeroKeyOf(LocalHero),
                 dreamDepth: CanChooseRunRules ? Profile.LastDreamDepth : _receivedRunChoices.Depth));
             InitializeInfinityRun();
@@ -1345,6 +1349,8 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
             Protocol.WarnMismatch(msg.protocol, nameof(DreamforgePressureMsg));
             PressureHealthMultiplier = msg.healthMultiplier;
             PressureDamageMultiplier = msg.damageMultiplier;
+            NightmarePressureHealthMultiplier = msg.nightmarePressureHealthMultiplier >= 1f && !float.IsInfinity(msg.nightmarePressureHealthMultiplier)
+                ? msg.nightmarePressureHealthMultiplier : 0f;
             NightmareGearMultiplier = msg.nightmareGearMultiplier >= 1f && !float.IsInfinity(msg.nightmareGearMultiplier) ? msg.nightmareGearMultiplier : 0f;
             ReceiveRunChoices(msg.runChoices);
             HostConfirmed = true;

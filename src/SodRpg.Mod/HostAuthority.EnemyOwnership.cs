@@ -115,7 +115,11 @@ namespace SodRpg.Mod
             double waypoint = _pressure.WaypointMultiplier;
             if (PersonalEnemyWaypointsRunning())
                 waypoint = sharedEnemy || player == null ? 1 : InfinityMode.WaypointTotalsForPlayer(player.guid).PressureMultiplier;
-            return pressure.WithRunModifiers(_pressure.Depth, waypoint).WithInfinityPressure(_pressure.InfinityStage);
+            int participants = 0;
+            foreach (var participant in DewPlayer.gamePlayers)
+                if (participant != null && participant.isHumanPlayer && ++participants >= 2) break;
+            return pressure.WithRunModifiers(_pressure.Depth, waypoint).WithInfinityPressure(_pressure.InfinityStage)
+                .WithCoopScaling(participants);
         }
 
         private readonly struct OwnershipPressureValue
