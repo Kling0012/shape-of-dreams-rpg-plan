@@ -411,6 +411,50 @@ getterのみ公開する。添字ループはこのコレクションを直接�
 
 **未実行**：Unity実機での戦闘・装備情報未準備時の例外再現／回復・協力通信は、ゲーム実行環境が提供されていないため未確認。装備キャッシュ欠落時の解除／再試行と、大顎の4回目・アズラクの3回目・光の手の6秒の同等性は設定とコードの照合によるもので、当該条件を追加ケースで実行した証拠ではない。GC割当量・フレーム時間の実測は行っていない。実行環境依存の0バイト断言を追加せず、型と生成箇所を点検した。フルテスト・Slowテスト・無関係なテストは作業中に実行しない指示に従い、後続工程へ委ねる。
 
+## PR #517 取り込み：近接協力追加後のテストビルド確認（2026-10-17）
+
+元PR [#517](https://github.com/Kling0012/shape-of-dreams-rpg-plan/pull/517) の変更は、
+`697f3cda`（`Fix mod test builds broken by melee/coop additions`）で既に取り込まれている。
+以下は初回の取り込み確認（確認元 `7aef08a9`、記録コミット `ade9f873`）の結果。
+変更を重ねず、受け付け審査で指摘されたビルド実績とテスト用APIの一致を確認した。
+製品コード・テストコード・抽出ターゲットの追加変更はない。
+
+- `tests/Issue73.Native.Tests/NativePersistence.targets` の `CompileStarClusterDiffUpdate` は、
+  `RefreshStarState` が参照する `_linkCoefficients` を `Fields` に含めている。
+  これにより実ソースから抽出する `StarRefreshUi.g.cs` にも欄が入り、未定義の
+  欄を参照して起きる CS0103 を避ける。
+- `tests/SodRpg.Mod.Startup.Tests/StartupGameApi.cs` の `DreamforgeConfig` は、
+  `meleeRangeToSpeed`・`coopDistanceFalloff`・`meleeBreak`・`meleeProximityGuard` を
+  すべて `public bool`、既定値 `true` で持つ。
+  `src/SodRpg.Mod/DreamforgeConfig.cs` の4欄と名前・型・既定値が一致する。
+- 同じテスト用APIの `HostAuthority.ConfigureMeleeCoop` は、製品の
+  `src/SodRpg.Mod/HostAuthority.MeleeCoop.cs` と同じ
+  `internal void ConfigureMeleeCoop(bool rangeToSpeed, bool distanceFalloff, bool meleeBreak, bool meleeGuard)`。
+  `DreamforgeMod.MeleeCoop.cs` の呼び出し順とも一致する。テスト側の本体は空なので、
+  この一致とビルド成功だけでは近接協力4機能のゲーム内動作を検証したことにはならない。
+
+元PRのCIと、初回の取り込み確認での実行は区別する。元PRのhead
+`411093621163b6a9d5c471e6767c3f7095157ac8` に対する
+[CI実行 38850454247](https://github.com/Kling0012/shape-of-dreams-rpg-plan/actions/runs/38850454247)
+は成功。対象2ジョブのログを初回の取り込み確認時に取得し、両方の Release ビルドがエラー0、
+`SodRpg.Mod.Startup.Tests` が135成功・0失敗・1スキップ、
+`Issue73.Native.Tests` が191成功・0失敗・0スキップであることを確認した。
+これは元PR本文の当時の件数を裏付ける記録であり、現在のブランチのCI結果ではない。
+
+初回の取り込み確認でローカル実行した検証（Linux・.NET SDK 10.0.111）：
+
+- `dotnet build tests/SodRpg.Mod.Startup.Tests -c Release --nologo`：終了コード0、エラー0・警告39。
+- `dotnet build tests/Issue73.Native.Tests -c Release --nologo`：終了コード0、エラー0・警告117。抽出ターゲットを含むビルドを実行した。
+- `DOTNET_ROLL_FORWARD=LatestMajor dotnet test tests/SodRpg.Mod.Startup.Tests -c Release --no-build --nologo`：147成功・0失敗・1スキップ。スキップは `ModReloadTests.SecondLoadOfRenamedModAssemblyStillVerifiesItsOwnPatch`。
+- `DOTNET_ROLL_FORWARD=LatestMajor dotnet test tests/Issue73.Native.Tests -c Release --no-build --nologo --filter FullyQualifiedName~StarClusterDiffUpdateTests`：5成功・0失敗・0スキップ。
+- `dotnet build src/SodRpg.Mod -c Release -p:GameDir="/mnt/ghauto-sbx/sod-gamedata/Shape of Dreams" --nologo -v:quiet`：終了コード0、エラー0・警告6。ゲーム参照DLLで製品側もコンパイルした。参照先に `Mods` がないことを実行前に確認し、ゲームへの配置処理は実行されていない。
+
+**初回の取り込み確認で未実行**：作業ブランチのCIはpushしない作業範囲のため未起動。
+フルテスト（`tools/test_changed.py --all`）、Slowテスト（`SODRPG_SLOW=1`）、
+`Issue73.Native.Tests` の対象5件以外と他プロジェクトのテストは、関連部分だけを
+確認する作業指示に従って後続工程へ委ねる。Unity実機の起動・描画・協力通信は、
+ゲーム実行環境が提供されていないため未確認。参照DLLを使ったビルドは実機確認を兼ねない。
+
 ## #546 PR #505 レビュー追補：前提の明記と検証の強化（2026-10-17）
 
 コードの動きは変えず、pr #505 のレビューで挙がった前提を明示した。光の精霊の溜め処理は
