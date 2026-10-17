@@ -195,8 +195,11 @@ namespace SodRpg.Mod
 
         public bool CanEditTalents => Profile.Run == null || !InGame;
 
+        public long ViewRevision { get; private set; }
+
         public void MarkDirty(bool buildChanged)
         {
+            ViewRevision++;
             _dirty = true;
             if (buildChanged)
             {
