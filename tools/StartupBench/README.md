@@ -1,22 +1,22 @@
 # Issue #692 の起動処理の計測
 
-起動時の星図登録で、旧星図9人分の不要な配置計算と、修飾対象を表すオブジェクトの繰り返し生成を省いた。2026-10-18に再開した実装工程で、同条件の新規プロセスを前後各4回測定した。星図登録の中央値は通常JITで4801.5→4265.5 msに短縮した。段階JITなしでは3318→3581 msとなり、今回の測定では短縮を確認できなかった。登録と初回容量計算の合計中央値は通常JITで4965→4443 ms、段階JITなしで3414.5→3672.5 msだった。ゲーム内の長い読み込みは未再現で、ゲーム全体の読み込み時間は測っていない。
+`DreamforgeMod.Awake` がプロフィール読み込み前に実行する `StarClusters.RegisterAllGenerated` と、初回の `BuildLimits.Registered` を計測する。MODローダー、Harmony、画像、保存データ、画面描画を含むゲーム全体の起動時間は測らない。
 
-今回の条件と結果は [再開した実装工程の検証記録](issue-692-resumed-implementation-20261018.md)、生の計測出力は [ビルド・計測・内容比較のログ](issue-692-resumed-implementation-20261018.txt) に記録した。生成星図と旧星図の出力全体が修正前後で一致し、関連する既存テスト165件が成功した。[回復工程の検証記録](issue-692-recovery-validation-20261018.md)、[実装工程の検証記録](issue-692-implementation-validation.md)、[前回の検証記録](issue-692-final-validation.md) と以下の前後比較・テスト結果は、過去の作業記録として残している。
+2026-10-18の最終比較はmain `ff9af9cf` と修正コミット `7886a827` のCoreを対象とした。同じ計測プログラムを使い、Releaseの新規プロセスで各4回測定した。今回の差分による追加の時間短縮は確認できなかった。
 
-## 対象と実行条件
+| 条件 | 登録の中央値・main→修正後 | 登録＋初回BuildLimitsの中央値・main→修正後 |
+| --- | --- | --- |
+| 通常JIT | 1118.5→1407.5 ms | 1427.5→1498 ms |
+| 段階JITなし | 1116.5→1494 ms | 1503→1541.5 ms |
 
-Issue本文は「MODの読み込みが非常に長いので，改善可能か?」のみで、場面・所要時間・版・環境は書かれておらず、コメントもなかった。`src/SodRpg.Mod/DreamforgeMod.cs` の `Awake` がプロフィール読み込みより前に同期実行する `StarClusters.RegisterAllGenerated` を対象とした。
+登録時の当該スレッドの累積確保量は120→118 MBだった。共有ホストでの測定であり、Monoや報告者の環境へ換算しない。過去のmainに対する改善率は、現在の差分の効果として扱わない。条件、各回の数値、検証結果は [最終検証記録](issue-692-final-validation.md) にまとめた。
 
-このツールは同じCoreの登録APIを呼ぶ。MODローダー、Harmonyのパッチ、画像の先読み、保存データの読み込み、タイトル画面の描画は測らない。1500 msは比較用の仮基準で、報告者の許容時間や仕様上の性能要件ではない。終了コード3は基準超過を表し、Issueの症状を再現したとは判定しない。
+## 実行方法
 
-- Linux x86_64、omarchy 4.0.2、Intel Core i7-6700HQ @ 2.60GHz、共有ホスト。
-- SDK 10.0.111、実行ランタイム10.0.11。net8.0を対象にビルドし、`RollForward=Major` で実行した。
-- Releaseビルド後、毎回新規プロセスを起動。ファイルキャッシュは消していない。
-- 通常JITと `DOTNET_TieredCompilation=0` は別条件。Monoの性能や#459の.NET 8の測定へ換算しない。
+SDK 10.0.111、実行ランタイム10.0.11、Linux x86_64で確認した。net8.0を対象にビルドし、`RollForward=Major` で実行する。パッケージキャッシュには既存のworktree外の `NUGET_PACKAGES` を使う。
 
 ```sh
-dotnet build tools/StartupBench/StartupBench.csproj -c Release --nologo
+dotnet build tools/StartupBench/StartupBench.csproj -c Release --nologo -p:NuGetAudit=false
 dotnet tools/StartupBench/bin/Release/net8.0/StartupBench.dll total --threshold-ms 1500
 DOTNET_TieredCompilation=0 dotnet tools/StartupBench/bin/Release/net8.0/StartupBench.dll total --threshold-ms 1500
 dotnet tools/StartupBench/bin/Release/net8.0/StartupBench.dll stages
@@ -25,72 +25,18 @@ dotnet tools/StartupBench/bin/Release/net8.0/StartupBench.dll snapshot-baseline 
 dotnet tools/StartupBench/bin/Release/net8.0/StartupBench.dll initializers
 ```
 
-`total` は星図登録、初回BuildLimits、一覧取得1000回の順で測る。`stages` は旅人ごとの解析を実行してから登録するため、解析のJITや型初期化が温まる。`total` の内訳や差分として扱わない。
+- `total`: 星図登録、初回容量計算、一覧取得1000回を順に測る。1500 msは比較用の仮基準で、終了コード3は登録時間が基準を超えたことだけを表す。
+- `stages`: 旅人ごとに解析のみと解析＋登録＋移行を測る。先に解析するためJITが温まり、`total` の内訳には換算できない。
+- `snapshot`: 生成星図9人分の定義、登録順、ランク、コスト、座標、接続順、移行規則と内容指紋を出す。
+- `snapshot-baseline`: 生成星図を登録せず、旧星図9人分と汎用配置を出す。
+- `initializers`: 旧星図の定義取得とCetusの初回配置取得を分けて測る。他の型初期化も含む。
 
-`snapshot` は生成星図の定義、ID、ランク、コスト、登録順、座標、接続とその順序、移行規則、内容指紋を出す。`snapshot-baseline` は生成星図を登録せず、旧星図全員と汎用配置を出す。同じ条件の変更前後で出力全体を比較する。`initializers` は旧星図の定義を先に読み、その後Cetusの配置を初めて要求する時間を分けて測る。他の初期化も含むため、登録時間の短縮量には換算しない。
+内容の比較では同じ `Program.cs` とデータ版を使ってmainと修正後を別々にビルドする。各モードの出力全体をバイト列として比較し、指紋だけの一致で判定しない。
 
-## 修正前の記録
+## 変更と確認範囲
 
-再現工程で保存した `issue-692-baseline.txt` は製品コード `f31ce810` の修正前計測である。通常JITの登録は2203／2039 ms、初回BuildLimitsは89／99 ms。段階JITなしでは登録1637／1650 ms、初回BuildLimits58／57 msだった。登録時の当該スレッドの累積確保量は各172 MB、全4回が終了コード3だった。
+旧星図の遅延生成と修飾対象オブジェクトの再利用はmainに取り込み済み。現在の製品差分は `HeroTreeLayout` の `HasTree` 分岐・即時初期化の `Generic`・並行辞書と `Lazy`、および `ValidateTree` の全候補走査である。修飾対象を `TargetEffectIds` 順に先に絞る処理を外し、照合関数が一致と判定した全対象をツリー順に検証する。
 
-当時の判定は `NOT_REPRODUCED`。ゲーム内の症状は未再現でも調査を続け、以下のコード上の原因候補を修正した。
+修正コミットで `snapshot` の15,514,924バイトと `snapshot-baseline` の251,195バイトがmainと完全一致した。既存Coreテスト165件と再読み込みテスト4件が成功した。再読み込みテストの1件は既存のSkip指定で実行されなかった。新規テストは追加していない。
 
-## 変更した処理
-
-`HeroTreeLayout` は初回利用時、旧星図全9人の配置を作っていた。生成星図の登録は別途その旅人の配置を作るため、旧星図の配置は通常の登録経路では使われない。旧星図は `ForHero` で必要になった旅人だけ生成し、`Lazy` と並行辞書で保持するようにした。登録済み配置を優先し、フォールバックには `HeroSigils.BaselineTreeFor` を使う。登録解除後に生成星図の配置がキャッシュから戻ることを避けるためである。汎用配置は従来どおり初期化し、`Content` の初期化を後段へ移さない。
-
-`FractionalScopedModifiers.ValidateTree` は修飾星ごとに全星を調べ、候補ごとに `GimmickEntry`、`AuthoredMechanismEntry` と寄与ID配列を作っていた。候補を仕掛けのある星に絞り、照合用オブジェクトを検証1回の中で共有するようにした。照合関数、旅人の条件、候補の順序、対象なし・不正な対象・上限の検証は保つ。登録をまたぐキャッシュは追加しない。
-
-## 同条件の前後比較
-
-2026-10-17に実施。修正前は `677c8431` のCoreを一時領域へ展開し、今回追加した計測コマンドと同じ `Program.cs` でビルドした。修正後は本ブランチのCoreを使った。製品変更は上記2ファイルに限る。
-
-各回で通常JIT、段階JITなしの順に測定した。奇数回は修正前→修正後、偶数回は修正後→修正前の順に、新規プロセスを起動した。次の全出力と終了コードは `issue-692-comparison.txt` に保存した。
-
-| JIT条件 | 回 | 登録・修正前 | 登録・修正後 | 初回BuildLimits・修正前 | 初回BuildLimits・修正後 |
-| --- | --- | --- | --- | --- | --- |
-| 通常 | 1 | 2040 ms | 1730 ms | 89 ms | 77 ms |
-| 通常 | 2 | 1940 ms | 1666 ms | 96 ms | 95 ms |
-| 通常 | 3 | 2467 ms | 1845 ms | 75 ms | 74 ms |
-| 通常 | 4 | 2114 ms | 1705 ms | 93 ms | 89 ms |
-| 段階JITなし | 1 | 1832 ms | 1797 ms | 64 ms | 50 ms |
-| 段階JITなし | 2 | 1541 ms | 1502 ms | 75 ms | 53 ms |
-| 段階JITなし | 3 | 1689 ms | 1588 ms | 46 ms | 61 ms |
-| 段階JITなし | 4 | 1694 ms | 1559 ms | 47 ms | 46 ms |
-
-| 条件 | 登録の中央値・前→後 | 登録＋初回BuildLimitsの中央値・前→後 |
-| --- | --- | --- |
-| 通常JIT | 2077→1717.5 ms（約17%短縮） | 2168→1800.5 ms（約17%短縮） |
-| 段階JITなし | 1691.5→1573.5 ms（約7%短縮） | 1738→1627 ms（約6%短縮） |
-
-全16プロセスで仮基準1500 msを超え、終了コード3だった。仮基準を満たしたとは報告しない。共有ホストの負荷による変動があり、短縮率はこの測定の範囲に限る。登録だけでなく初回容量計算との合計も短縮した。なお、合計の中央値は各回の合計から求めており、区間ごとの中央値を足した値とは限らない。
-
-その後、フォールバック取得に使うデリゲートも静的に保持した。最終ビルドの通常JITでの追加確認は登録2076 ms、初回BuildLimits86 ms、累積確保量118 MB、終了コード3だった。この追加確認は修正前と対にしていないため、上表の中央値には含めない。最終ビルドでも内容の全出力一致を確認した。
-
-登録時の当該スレッドの累積確保量は全回で172→118 MB（整数MB表示、約31%減）。常駐メモリの量ではない。一覧取得1000回は全回0 msだったが、整数ミリ秒表示のため処理時間がゼロという意味ではない。
-
-汎用配置も遅延生成した途中案では、初回BuildLimitsが300〜500 msへ増えたため採用しなかった。旧星図の遅延生成だけの比較では短縮が測定のばらつきに埋もれたため、上表は修飾対象の再利用を含む最終案全体の効果として扱う。
-
-## 内容と検証結果
-
-前後の `snapshot` と `snapshot-baseline` の出力全体がそれぞれ一致した。生成星図9人分、旧星図9人分と汎用配置の出力を比較した。照合した出力は約15.5 MB／0.25 MBのためリポジトリには追加していない。再実行する場合は上記コマンドを同じデータ版の前後で実行する。
-
-計測全16プロセスで以下も一致した。
-
-- `AuthoredRegistryFingerprint`: `607b55b25354e173`
-- `ContentFingerprint.Value`: `13792-e4617232a7ce91e6`
-- `HeroSigils.All.Count`: `7642`
-- `BuildLimits.Registered`: talents=`7657`、entries=`584`
-
-StartupBenchとCoreのReleaseビルドは警告0・エラー0。参照用ゲームDLLでMOD本体もビルド成功した（既存警告6件）。`ModDeployDir` は `/tmp/issue692-implementation-20261017/mod-build` に指定し、利用者のMODファイルや設定は変更していない。
-
-関連する既存テスト108件が成功した。対象は `AuthoredClusterPlacementTests`、`StarMapClusterTests`、`AuthoredStarContractTests`、`BuildLimitsV131Tests`、`FractionalScopedModifiersTests`、`ScopedKeystoneModifiersTests`、`AuthoredMechanismIntegrationTests` と、`StarMapLayoutQualityTests` の `Tuned_placements_move_stars_only_and_never_touch_the_lines`。新規テストは追加していない。
-
-## 残るコストと未実行
-
-登録は修正後も約1.5〜1.8秒かかり、定義の解析・正規化、所有記憶や参照の検証、容量解析、配置、移行規則の登録が残る。個々の処理を飛ばさず、これらの処理全体を対象にした追加の短縮は今回行わない。#459の文字列表化、TargetEffectIds共有、調整済み配置がある場合の計算省略、正規化の辞書、一覧キャッシュは既存の対策であり、今回の変更として数えない。
-
-- Unity/Monoでのゲーム起動、タイトル画面到達、Player.log計測、報告者と同じMOD構成での再現は未実行。実機環境と構成情報がないため。
-- プロフィール読み込み・ロビー・遠征開始・ゾーン移動の計測は未実行。ツールの対象外で、Issue本文にも場面の指定がないため。
-- full/slowスイートは未実行。依頼に従って変更部分に関係する既存テストに限定したため。
-- 修正を戻して再現テストを失敗させる検証は未実行。報告されたゲーム内症状の再現テストがないため。
+Unity/Monoでのゲーム起動と報告者のMOD構成での確認は、実機環境と構成情報がないため未実行。full/slowスイートは依頼に従い未実行。残る登録コストは定義の解析・正規化、参照と修飾対象の検証、容量解析、配置、移行規則の登録である。

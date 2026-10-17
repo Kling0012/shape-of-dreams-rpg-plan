@@ -1,75 +1,75 @@
 # Issue #692 最終コードの検証記録
 
-起動時の星図登録で残っていた重複処理を省く修正を確認した。最終コードの前後比較では、星図登録と初回容量計算の合計中央値が通常JITで2251.5→1855.5 ms、段階JITなしで1761→1668.5 msだった。ゲーム内の症状は未再現で、ゲーム全体の読み込み時間が短くなったとは判定していない。
+2026-10-18、修正コミット `7886a827` の読み込み結果と起動処理をmain `ff9af9cf895a75494900ed1342c42d34ee4ecaa4` と比較した。生成星図・旧星図・汎用配置の出力は全バイトが一致した。今回の差分による追加の時間短縮は確認できなかった。
 
-## 原因候補と修正
+## 修正内容
 
-`DreamforgeMod.Awake` は保存データを読む前に `StarClusters.RegisterAllGenerated` を同期実行する（`src/SodRpg.Mod/DreamforgeMod.cs:70`）。この経路では生成星図の配置を旅人ごとに登録するが、`HeroTreeLayout` の型初期化でも、使わない旧星図9人分の配置を作っていた。旧星図の配置を、その旅人のフォールバックが必要になったときだけ生成するようにした（`src/SodRpg.Core/Game/HeroTreeLayout.cs:58`）。汎用配置の初期化は残し、登録済み配置の取得を優先する。フォールバックには登録状態に左右されない `BaselineTreeFor` を使う。
+- `HeroTreeLayout.ForHero` の判定を `HeroSigils.HasTree` に戻し、汎用配置は静的フィールド `Generic` で即時初期化する。登録済み配置を優先し、旧星図のフォールバックは `BaselineTreeFor` から `Lazy` と並行辞書で保持する。
+- `FractionalScopedModifiers.ValidateTree` の `byId` と `TargetEffectIds` による事前の候補絞り込みを外した。照合用オブジェクトの再利用は残し、全候補をツリー順に走査する。`Matches` が一致と判定した全対象へ、対象なし・未対応パラメーター・Reload・未知ID・上限の検証を適用する。
+- 工程記録22件をリポジトリ外へ保管し、文書はREADMEとこの記録に絞った。容量・uid・ローカルパスを含む環境情報や失敗ビルドのログはPRに残していない。
 
-`FractionalScopedModifiers.ValidateTree` は修飾星ごとに候補を調べ、候補ごとに照合用の `GimmickEntry`、`AuthoredMechanismEntry`、寄与ID配列を作っていた。修飾星と候補が多い生成星図では同じ候補のラッパーを繰り返し作る。仕掛けを持つ候補のラッパーを検証1回の中で共有するようにした（`src/SodRpg.Core/Game/FractionalScopedModifiers.cs:539`）。候補の順序、旅人の条件、照合関数、対象の存在・パラメーター・上限の検証は変えていない。登録をまたぐ候補キャッシュは追加していない。
+旧星図の遅延生成と修飾対象オブジェクトの再利用は、比較対象のmainにも取り込み済み。過去の版との比較結果を現在のPRの改善率として引用しない。
 
-## 前後比較の条件
+## 計測条件
 
-- 修正前のCoreは `3cdf2a83`、修正後は `71d684cc` の製品コード。`21f906bc` までに製品コードの追加変更がないことを差分で確認した。
-- 修正前のCoreだけを `/tmp/issue692-final-12tuwtgz` へ展開し、両方に本ブランチの同じ `Program.cs` と `StartupBench.csproj` を使用した。
-- Linux x86_64、SDK 10.0.111、実行ランタイム10.0.11、Releaseビルド。net8.0のプログラムを `RollForward=Major` で実行した。NuGetのキャッシュは既存のworktree外の `NUGET_PACKAGES` を使用した。
-- 毎回新規プロセスで実行した。通常JITと `DOTNET_TieredCompilation=0` は別条件として各4対を測定した。奇数回は修正前→修正後、偶数回は修正後→修正前。ファイルキャッシュは消していない。
-- 生の出力、実行コマンド、終了コードは `issue-692-final-validation.txt` に記録した。
+- mainのCoreを一時領域へ展開し、修正後と同じ `Program.cs` と `StartupBench.csproj` でビルドした。
+- Linux x86_64、SDK 10.0.111、実行ランタイム10.0.11、Release、`DOTNET_ROLL_FORWARD=Major`、`DOTNET_EnableDiagnostics=0`。パッケージキャッシュは既存のworktree外の `NUGET_PACKAGES` を使った。
+- 各回は新規プロセス。通常JITと `DOTNET_TieredCompilation=0` を別条件として各4対測定した。奇数回はmain→修正後、偶数回は修正後→main。ファイルキャッシュは消していない。
+- `total --threshold-ms 1500` を使用。1500 msは計測ツールの仮基準で、ゲーム全体の性能要件ではない。
 
-| JIT条件 | 回 | 登録・修正前→後 | 初回BuildLimits・修正前→後 |
+| JIT条件 | 回 | 登録・main→修正後 | 初回BuildLimits・main→修正後 |
 | --- | --- | --- | --- |
-| 通常 | 1 | 2175→2414 ms | 94→116 ms |
-| 通常 | 2 | 2152→1736 ms | 102→74 ms |
-| 通常 | 3 | 2013→1795 ms | 94→91 ms |
-| 通常 | 4 | 2165→1694 ms | 84→131 ms |
-| 段階JITなし | 1 | 1942→1668 ms | 60→52 ms |
-| 段階JITなし | 2 | 1775→1566 ms | 57→51 ms |
-| 段階JITなし | 3 | 1629→1779 ms | 61→55 ms |
-| 段階JITなし | 4 | 1613→1524 ms | 51→50 ms |
+| 通常 | 1 | 1129→1536 ms | 316→78 ms |
+| 通常 | 2 | 1086→1429 ms | 284→96 ms |
+| 通常 | 3 | 1744→1357 ms | 401→94 ms |
+| 通常 | 4 | 1108→1386 ms | 302→85 ms |
+| 段階JITなし | 1 | 1096→1550 ms | 399→51 ms |
+| 段階JITなし | 2 | 1120→1451 ms | 424→42 ms |
+| 段階JITなし | 3 | 1117→1358 ms | 373→47 ms |
+| 段階JITなし | 4 | 1116→1537 ms | 395→53 ms |
 
-| 条件 | 登録の中央値・前→後 | 登録＋初回BuildLimitsの中央値・前→後 |
-| --- | --- | --- |
-| 通常JIT | 2158.5→1765.5 ms（約18%短縮） | 2251.5→1855.5 ms（約18%短縮） |
-| 段階JITなし | 1702→1617 ms（約5%短縮） | 1761→1668.5 ms（約5%短縮） |
+| 条件 | 登録の中央値・main→修正後 | 初回BuildLimitsの中央値・main→修正後 | 合計の中央値・main→修正後 |
+| --- | --- | --- | --- |
+| 通常JIT | 1118.5→1407.5 ms | 309→89.5 ms | 1427.5→1498 ms |
+| 段階JITなし | 1116.5→1494 ms | 397→49 ms | 1503→1541.5 ms |
 
-共有ホストの負荷による変動があり、通常JITの1回目と段階JITなしの3回目は修正後の方が遅かった。上記はこの測定の中央値であり、個々の起動やゲーム環境で同じ短縮率になることを保証しない。合計の中央値は各回の合計から求めた。
+合計の中央値は各回の合計から算出した。汎用配置の即時初期化によって、後続の容量計算に含まれていたコストも登録側で測られる。登録と容量計算の両方を比べても、今回の4対では短縮していない。共有ホストの負荷による変動があり、個々のゲーム起動へ換算しない。
 
-登録時の当該スレッドの累積確保量は全回172→118 MBで、約31%減った。常駐メモリではない。全16プロセスが仮基準1500 msを超え、終了コード3だった。1500 msは報告者の許容時間でも仕様の性能要件でもないため、この超過をゲーム内症状の再現とは扱わない。
+登録時の当該スレッドの累積確保量は全回で120→118 MBだった。常駐メモリではない。一覧取得1000回は整数ミリ秒表示で全回0 ms。mainの通常JIT3回目と、修正後の通常JIT1回目・段階JITなし1回目および4回目は終了コード3、残る12回は0だった。
 
-## 読み込み内容と更新の反映
+修正後の `stages` は解析のみの合計235 ms、解析＋登録＋移行の合計1218 msだった。解析を先に実行するため `total` の内訳には換算できない。`initializers` は旧星図663件の取得75 ms、Cetusの初回配置取得283 msだった。他の型初期化も含み、単独の改善量を示す値ではない。
 
-両方のビルドで `snapshot` と `snapshot-baseline` を新規プロセスで実行し、出力の全バイトを比較した。どちらも終了コード0で、生成星図は15,514,554バイト、旧星図と汎用配置は251,195バイトが完全一致した。生成星図9人分の定義、ID、登録順、ランク、コスト、座標、接続順、移行規則を比較した。大きな出力は一時領域に残し、リポジトリには追加していない。
+## 読み込み結果
 
-全16回の `total` で登録指紋 `607b55b25354e173`、内容指紋 `13792-e4617232a7ce91e6`、星数7642、容量のtalents=7657・entries=584が一致した。指紋は既存APIの出力を比較したもので、追加のハッシュ検証は行っていない。
+修正コミットで再ビルドして、新規プロセスの全出力を比較した。
 
-更新反映について、次の経路を確認した。
+| モード | 比較した出力 | mainとの比較 | 終了コード |
+| --- | --- | --- | --- |
+| `snapshot` | 生成星図9人分、15,514,924バイト | 全バイト一致 | 両方0 |
+| `snapshot-baseline` | 旧星図9人分と汎用配置、251,195バイト | 全バイト一致 | 両方0 |
 
-- `HeroTreeLayout.ForHero` は毎回、現在の登録済み配置を先に取得する。遅延生成の辞書は旧星図専用で、`BaselineTreeFor` から作るため、登録解除後に生成星図が残らない。
-- `RegisterAuthored` は最新の定義から配置を作り、登録を置き換える。同じ内容でも新しいインスタンスを公開するため、既存の一覧キャッシュを無効にする（`src/SodRpg.Core/Game/Mechanisms/AuthoredStarRegistration.cs:113`）。この経路は変更していない。
-- 修飾対象のラッパーは `ValidateTree` のローカル変数で、次の登録では作り直す。`Matches` と `AuthoredMechanisms.Matches` はこの照合でラッパーを書き換えない。
-- ファイルへのキャッシュ保存、MODの列挙・依存関係解決・登録順の変更、利用者のMODファイルや設定の変更はない。
+修正前のマージコミット `1be573c3` で取得した同じモードの出力とも一致した。比較にはバイト列の等値判定を使い、ハッシュを追加で計算していない。
 
-## #459との関係と残るコスト
+全16回の `total` で登録指紋 `ff472bc99d0a58e9`、内容指紋 `13792-a11e6dd41b95a76f`、星数7642、容量のtalents=7657・entries=584が一致した。
 
-#459の文字列表化と対象ID配列の共有は `StarClusters/ManifestReader.Generated.cs`、調整済み配置がそろう場合の計算省略は `HeroTreeLayout.Clusters.cs:154`、正規化の辞書と一覧キャッシュは `Mechanisms/AuthoredStarRegistration.cs:223` 以降にすでに入っている。今回の変更としては数えていない。
-
-修正後も、定義の解析・正規化、所有記憶や参照の検証、容量解析、生成星図の配置、移行規則の登録が残る。`stages` の追加計測では解析のみの合計272 ms、解析＋登録＋移行の合計1724 msだった。解析後に登録するためJITと型初期化が温まっており、`total` の内訳や差分には換算できない。`initializers` も他の型初期化を含み、単独での短縮効果は今回確認できていない。内容の検証を省いたり、読み込みを後ろへ移したりする対策は採用していない。
+更新を妨げる永続キャッシュは追加していない。`ForHero` は現在の登録済み配置を先に取得し、フォールバック専用の辞書には旧星図だけを保持する。`RegisterAuthored` は定義から配置を作り直して登録を置き換える。修飾対象の照合用オブジェクトは検証ごとのローカル変数である。MODの列挙、依存関係の解決、登録順と、利用者のMODファイルや設定への書き込みは変更していない。
 
 ## 実行した検証
 
-- `dotnet build tools/StartupBench/StartupBench.csproj -c Release --nologo -p:NuGetAudit=false`: exit 0、警告0・エラー0。修正前Coreに同じ計測プログラムを組み合わせたビルドもexit 0、警告0・エラー0。
-- `DOTNET_ROLL_FORWARD=Major dotnet test tests/SodRpg.Core.Tests/SodRpg.Core.Tests.csproj -c Release --filter 'FullyQualifiedName~AuthoredClusterPlacementTests|FullyQualifiedName~StarMapClusterTests|FullyQualifiedName~AuthoredStarContractTests|FullyQualifiedName~BuildLimitsV131Tests|FullyQualifiedName~FractionalScopedModifiersTests|FullyQualifiedName~ScopedKeystoneModifiersTests|FullyQualifiedName~AuthoredMechanismIntegrationTests|FullyQualifiedName~HeroSigilTests|FullyQualifiedName~StarCarryoverV131Tests|FullyQualifiedName~StarMigrationRefundTests|FullyQualifiedName~StarMapLayoutQualityTests.Tuned_placements_move_stars_only_and_never_touch_the_lines' --nologo -p:NuGetAudit=false`: exit 0、134件成功・失敗0・スキップ0。既存のテスト用スタブ等の警告あり。
-- `DOTNET_ROLL_FORWARD=Major dotnet test tests/SodRpg.Core.Tests/SodRpg.Core.Tests.csproj -c Release --no-build --no-restore --filter 'FullyQualifiedName~GeneratedHeroAcceptanceTests.Registration_succeeds_with_zero_rejections_and_installs_the_migration_rules|FullyQualifiedName~GeneratedHeroAcceptanceTests.Every_baseline_star_retains_its_id_ranks_and_keystone_definition|FullyQualifiedName~GeneratedHeroAcceptanceTests.Every_star_is_reachable_from_the_start|FullyQualifiedName~MovementChargeBonusTests' --nologo`: exit 0、31件成功・失敗0・スキップ0。全9旅人の登録、移行規則、旧星の保持、到達可能性と、登録解除後の旧効果への復帰を確認した。
-- `dotnet build src/SodRpg.Mod/SodRpg.Mod.csproj -c Release --nologo '-p:GameDir=/home/wang/dev/sod-gamedata/Shape of Dreams' '-p:ModDeployDir=/tmp/issue692-final-12tuwtgz/mod-build' -p:NuGetAudit=false`: exit 0、既存警告6件・エラー0。ゲームDLLを参照し、出力先を一時領域に指定した。
-- `total` の前後各4回×2条件、`snapshot`、`snapshot-baseline`、`stages`、`initializers`: 上記と生の出力を参照。新規テストは追加していない。
+- `dotnet build tools/StartupBench/StartupBench.csproj -c Release --nologo -p:NuGetAudit=false`: main比較用と修正後の両方で成功。警告0・エラー0。
+- `DOTNET_ROLL_FORWARD=Major DOTNET_EnableDiagnostics=0 dotnet test tests/SodRpg.Core.Tests/SodRpg.Core.Tests.csproj -c Release --nologo --filter FILTER -p:NuGetAudit=false`: 108件成功、失敗0、スキップ0。FILTERは `AuthoredClusterPlacementTests`、`StarMapClusterTests`、`AuthoredStarContractTests`、`BuildLimitsV131Tests`、`FractionalScopedModifiersTests`、`ScopedKeystoneModifiersTests`、`AuthoredMechanismIntegrationTests` と `StarMapLayoutQualityTests.Tuned_placements_move_stars_only_and_never_touch_the_lines` を `FullyQualifiedName~` と `|` で結んだもの。既存のスタブ等の警告あり。
+- 同じCoreテストを `--no-build --no-restore` と追加FILTERで実行: 57件成功、失敗0、スキップ0。対象は `HeroSigilTests`、`StarCarryoverV131Tests`、`StarMigrationRefundTests`、`MovementChargeBonusTests` と `GeneratedHeroAcceptanceTests` の登録成功・旧星の保持・全星の到達可能性の3メソッド。
+- `DOTNET_ROLL_FORWARD=Major DOTNET_EnableDiagnostics=0 dotnet test tests/SodRpg.Mod.Startup.Tests/SodRpg.Mod.Startup.Tests.csproj -c Release --nologo -p:NuGetAudit=false --filter 'FullyQualifiedName~ModReloadTests|FullyQualifiedName~ReloadStartupTests'`: 4件成功、失敗0、既存のSkip指定1件。ReleaseのJITインライン化によりHarmonyのパッチを観測できないため、`SecondLoadOfRenamedModAssemblyStillVerifiesItsOwnPatch` は実行されなかった。既存警告あり。
+- `dotnet build src/SodRpg.Mod/SodRpg.Mod.csproj -c Release --nologo -p:GameDir=GAME_DIR -p:ModDeployDir=TEMP_OUTPUT -p:NuGetAudit=false`: 参照用ゲームDLLで成功。既存警告6件・エラー0。出力はリポジトリ外の一時領域に指定した。
+- `total` の16プロセス、`snapshot`、`snapshot-baseline`、`stages`、`initializers`: 上記の結果。新規テストは追加していない。
 
-## 未実行の検証
+## 未実行
 
 - Unity/Monoでのゲーム起動、タイトル画面到達、Player.log計測、報告者と同じMOD構成での再現: 実機環境と構成情報がないため。
-- プロフィール読み込み、ロビー、遠征開始、ゾーン移動の計測: 計測ツールの対象外で、Issueにも場面の指定がないため。
-- full/slowスイートと全旅人の最大点数購入の網羅テスト: 依頼に従い、変更部分に関係する既存テストだけを実行したため。
-- 修正を戻して再現テストを失敗させる確認: ゲーム内症状の再現テストがブランチにないため。性能の前後比較は実施した。
+- プロフィール読み込み、ロビー、遠征開始、ゾーン移動の計測: ツールの対象外で、Issueにも場面の指定がないため。
+- full/slowスイートと全旅人の最大点数購入の網羅テスト: 依頼に従い、変更部分の既存テストに限定したため。
+- 修正を戻して再現テストを失敗させる確認: 報告されたゲーム内症状と今回の分岐・検証順の専用再現テストがないため。
 
 ## 判断したこと
 
-FR-1とFR-2は同じ要望であり、起動時のMOD初期化のうち、コードで不要な処理を特定できる星図登録を対象にした。実機未再現でも通常の処理短縮として修正し、改善の判定は同条件の計測結果に限定した。登録順、移行規則、プロフィール読み込みの前に登録を済ませる順序は変えていない。処理の軽量化は `changelog.d/README.md` で断片の対象外とされているため、CHANGELOGと更新履歴の断片は変更していない。
+FR-1とFR-2は同じ起動時の読み込み短縮要求として扱った。原因候補だった旧星図9人分の先行生成と修飾対象の重複生成はmainに取り込み済みのため、現在の差分では新たな改善として数えない。F1・F4に従ってフォールバックと検証の意味を優先し、候補の事前絞り込みを外した。残るコストは定義の解析・正規化、参照検証、容量解析、配置と移行規則の登録であり、検証や読み込み内容を省略する修正は加えていない。F3に従って最終の記録だけを残した。変更は内部処理と検証用ツール・文書に限るため、更新履歴の断片は追加していない。

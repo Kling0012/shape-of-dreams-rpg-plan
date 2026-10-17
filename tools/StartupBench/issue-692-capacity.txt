@@ -1,6 +1,0 @@
-/tmp: free=1654968320 total=8327667712
-/home/wang: free=138394021888 total=253893804032
-/mnt/disk2: [Errno 2] No such file or directory: '/mnt/disk2'
-/dev/shm: free=8312078336 total=8327663616
-uid=1000
-NUGET_PACKAGES=/home/wang/.cache/gh-auto/nuget
