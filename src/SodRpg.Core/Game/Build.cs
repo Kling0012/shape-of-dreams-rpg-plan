@@ -249,8 +249,11 @@ namespace SodRpg.Core.Game
                     if (r.Awakened) value = (int)((long)value * Content.AwakenPowerPctAt(r.AwakenLevel) / 100);
                     Add(rawPowers, pw.Power, value);
                     // The saved first power already includes the one-time +20 bonus.
+                    // Overcharge (x1.6, paid for with an affix) also stays out of the cap basis, like awakening:
+                    // otherwise a near-cap power was cut back to the cap and lost most of the promised boost.
+                    int unscaled = r.Forbidden?.Pattern == ForbiddenPattern.Overcharge && i < r.Powers.Count ? r.Powers[i].Value : pw.Value;
                     decimal basis = i == 0 && (r.MilestonePowerApplied || r.EnhanceMilestones >= 5)
-                        ? pw.Value * 100m / Content.LimitBreakPowerPct : pw.Value;
+                        ? unscaled * 100m / Content.LimitBreakPowerPct : unscaled;
                     basePowers.TryGetValue(pw.Power, out decimal current);
                     basePowers[pw.Power] = current + basis;
                 }
@@ -465,7 +468,10 @@ namespace SodRpg.Core.Game
                     if (rawPowers.TryGetValue(pw, out int v))
                     {
                         rawPowers[pw] = v + v * DailyDream.PowerBoostPct / 100;
-                        basePowers[pw] += basePowers[pw] * DailyDream.PowerBoostPct / 100m;
+                        // 基準も整数の切り捨て後の倍率に合わせ、強化日だけ上限未満になるのを防ぐ。
+                        if (v > 0) basePowers[pw] = basePowers[pw] * rawPowers[pw] / v;
+                        // 0以下では従来の倍率を保つ（相殺する行がある場合も基準を変えない）。
+                        else basePowers[pw] += basePowers[pw] * DailyDream.PowerBoostPct / 100m;
                         if (awakenGains.TryGetValue(pw, out int gain))
                         {
                             int before = v - gain;
@@ -484,16 +490,18 @@ namespace SodRpg.Core.Game
                 foreach (var s in d.Boons) Add(rawStats, s.Stat, s.Value);
             }
             foreach (var kv in rawStats)
-            {
-                int cap = Content.StatCap(kv.Key);
-                b.Stats[kv.Key] = cap > 0 ? Math.Min(kv.Value, cap) : kv.Value;
-            }
+                b.Stats[kv.Key] = BuildAggregation.CapStat(kv.Key, kv.Value);
             foreach (var kv in rawPowers)
             {
                 int cap = Content.PowerCap(kv.Key);
                 b.Powers[kv.Key] = cap > 0 ? (int)CappedContribution(basePowers[kv.Key], kv.Value, cap) : kv.Value;
                 if (NewPowersV129.IsConditionalAttribute(kv.Key) && awakenGains.TryGetValue(kv.Key, out int gain))
-                    b.ConditionalBasePowers[kv.Key] = Math.Min(b.Powers[kv.Key], Math.Max(0, kv.Value - gain));
+                {
+                    // 覚醒前にも同じ上限の按分を掛け、条件付きの共通上限に覚醒分を数えない。
+                    int unawakened = Math.Max(0, kv.Value - gain);
+                    if (cap > 0) unawakened = (int)CappedContribution(basePowers[kv.Key], unawakened, cap);
+                    b.ConditionalBasePowers[kv.Key] = Math.Min(b.Powers[kv.Key], unawakened);
+                }
             }
             foreach (var kv in starPowers)
             {
@@ -530,7 +538,7 @@ namespace SodRpg.Core.Game
         // Every source receives the same capped-base share, then keeps its own multiplier.
         // Summing scaled contributions before applying that share is algebraically identical.
         private static decimal CappedContribution(decimal basis, decimal scaled, decimal cap)
-            => Math.Min(cap * 2.5m, basis > cap ? scaled * cap / basis : scaled);
+            => Math.Min(cap * BuildLimits.MaxEquipmentMultiplier, basis > cap ? scaled * cap / basis : scaled);
 
         private static int CappedLinkMilli(decimal basis, decimal scaled, decimal cap)
             => BuildPrecision.FromDecimal(decimal.Round(CappedContribution(basis, scaled, cap), 3, MidpointRounding.AwayFromZero));

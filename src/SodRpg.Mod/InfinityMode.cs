@@ -383,7 +383,19 @@ namespace SodRpg.Mod
             if (settings == null || !settings.customData.TryGetValue(RuntimeKey, out var text)) return false;
             try { envelope = JsonConvert.DeserializeObject<Envelope>(text); }
             catch (JsonException ex) { Log.Warn("Infinity: discarded unreadable runtime envelope: " + ex.Message); return false; }
-            return envelope?.State != null;
+            if (envelope?.State == null) return false;
+            var state = envelope.State;
+            // Legacy finale envelopes carry no marker and contain the artificial interval counter.
+            // Normalize against the current graph receipt to match ProfileCodec's migration.
+            if (!state.FinalePromoted && state.FixedZoneId == "Zone_Primus"
+                && state.ClearsInCycle == state.Interval
+                && state.ClearedNodes.Count < state.Interval
+                && state.Phase >= InfinityPhase.BossDue && state.Phase <= InfinityPhase.AwaitingChoice)
+            {
+                state.ClearsInCycle = state.ClearedNodes.Count;
+                state.FinalePromoted = true;
+            }
+            return true;
         }
 
         internal static bool MatchesProfile(RunState run)
@@ -398,6 +410,7 @@ namespace SodRpg.Mod
                 && (b.DifficultyId == null || b.DifficultyId == NetworkedManagerBase<GameManager>.softInstance?.difficulty?.name)
                 && a.GraphEpoch == b.GraphEpoch && a.SegmentEpoch == b.SegmentEpoch && a.RoomEpoch == b.RoomEpoch
                 && a.ClearedCombatTotal == b.ClearedCombatTotal && a.ClearsInCycle == b.ClearsInCycle
+                && a.BossDue == b.BossDue
                 && a.Phase == b.Phase && a.ChoiceRevision == b.ChoiceRevision
                 && a.TransitionIntent == b.TransitionIntent && a.SoulObserved == b.SoulObserved
                 && a.SettledGraphEpoch == b.SettledGraphEpoch && a.SettledSegmentEpoch == b.SettledSegmentEpoch
@@ -440,6 +453,7 @@ namespace SodRpg.Mod
             if (run == null || run.Infinity != null || _initial == null || _restoring) return;
             if (run.RunId != NetworkedManagerBase<GameManager>.softInstance?.runId) return;
             run.Infinity = _initial.Clone();
+            ClientSession.EnsureHostReachableBounties();
             ClientSession.PersistHostInfinityState();
         }
         internal static InfinityRunState InitialState => _initial;
@@ -995,8 +1009,10 @@ namespace SodRpg.Mod
                 if (state.RoomEpoch == long.MaxValue)
                 { InfinityMode.DisableFeature("Infinity room epoch exhausted."); return; }
                 state.RoomEpoch++;
+                // The room identity must reach the native envelope even when no host profile receipt exists yet.
+                // Persist the profile without serializing and broadcasting that same envelope a second time.
                 InfinityMode.WriteEnvelope();
-                ClientSession.PersistHostInfinityState();
+                ClientSession.PersistHostInfinityState(writeEnvelope: false);
             }
             catch (Exception ex) { InfinityMode.InterceptionFailed(nameof(InfinityRoomIdentity), ex); }
         }

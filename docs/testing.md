@@ -7,6 +7,8 @@
 テストプロジェクトごとのテストは直列（共有状態のため）なので、3 プロジェクトを
 ビルド後に並列実行して実時間を縮める。
 
+#519 の図鑑更新・表示キャッシュについての点検、PR #540 の取り込み時に行った直接観測、性能テストの低速枠への分離と未実行の検証は [追補記録](specs/issue-519-codex-followup.md) を参照。
+
 ## 使い方
 
 リポジトリルートから実行する。
@@ -98,6 +100,11 @@ python tools/test_changed.py [--base <git ref>] [--list] [--all] [--slow]
   複数プロセス並列で実行する（各アセンブリ内のテストは共有状態のため
   `DisableTestParallelization` のまま直列。並列化はプロセス分割による。
   同時実行数は CPU コア数を超えない）。
+  別の実行環境から `run_dotnet_test(..., no_build=True)` を呼ぶ場合も、MSBuild の
+  `TargetPath` で Release の成果物を確認し、存在しなければ同じフィルタの
+  `dotnet test -c Release` でビルドしてから実行する。通常テストと性能テストを
+  別の作業環境に分けても、前段の成果物がないことによる起動失敗を防ぐ。
+  `TargetPath` の取得に失敗した場合や取得結果が空の場合は、エラーを返す。
 
 - プロセス分割（#404）: `--all` では Core スイートをクラス単位のフィルタで
   5 プロセスに分ける。所要時間の大半を占める重い 5 クラス
@@ -105,11 +112,16 @@ python tools/test_changed.py [--base <git ref>] [--list] [--all] [--slow]
   PressureRewardMultiplier・StarMapOptimize）がそれぞれ別々のプロセスの軸になり
   （重いクラスどうしを同じプロセスにしないため、5 が最小のプロセス数）、
   残りのクラスはテストメソッド数を重みにその 5 プロセスへ均等に振り分ける
-  （同じクラスは必ず同じプロセス）。`--slow` では Speed=Slow テストを含む
-  クラスもクラスごとに別プロセスで並列に走らせる。全プロセスの和が
-  従来のフィルタなし 1 プロセスと同じテスト集合・合否になる。
-  選択実行（`--all` 未指定）でも、`--slow` 時の低速クラスは同様に単独プロセスとする。
-  CI の slow-tests ジョブ（main マージ後）も同じクラス単位の matrix で走る。
+  （同じクラスは必ず同じプロセス）。`--slow` では Speed=Slow の各メソッドを
+  クラス側のフィルタから除き、メソッドごとの別プロセスで実行する。
+  AllocationEquivalence の2つの Extended メソッドは、それぞれ英雄・シード単位の
+  完結した操作列を16分割する。各子プロセスだけに `SODRPG_EQUIVALENCE_SHARD=i/16`
+  （i は0始まり）を渡し、手数・シード数・照合内容を減らさず分散する。
+  このため当該2メソッドの結果件数は分割数分になるが、操作列の和は従来と同じで、
+  どれか1つの失敗も全体の失敗になる。通常のテスト実行には分割変数を引き継がない。
+  選択実行（`--all` 未指定）でも、`--slow` 時は同じ分割を行う。
+  CI の slow-tests ジョブ（main マージ後）はクラス単位の matrix で走り、
+  分割変数を設定しないため各メソッドが全操作列を実行する。
   matrix は手で列挙するため、`--check-ci-matrix`（CI の core-tests ジョブで実行）
   が列挙と検出の不一致を失敗として報告する。
 
@@ -156,6 +168,41 @@ restore/build込みの実時間193.66→157.39秒（各1回の観測）。
 884件、25.9%削減で、約4割の目安より必須保持を優先した。
 このコマンドは.NETのみを対象とし、変更していないPythonテストや実ゲームは今回実行していない。
 
+
+## PR #587：CI 通知 R1 と修正ラウンドの確認
+
+R1 のコメントは CI 結果の通知であり、追加の機能変更の要求ではない。
+[GitHub Actions run 38966820278](https://github.com/Kling0012/shape-of-dreams-rpg-plan/actions/runs/38966820278)
+を `gh run view` で確認し、対象コミット `c611ae7688a875234f152809db3745731a13dc2c`
+の次の9ジョブがすべて `success` だったことを確認した。
+
+- `core-tests`
+- `slow-tests (SodRpg.Core.Tests.GeneratedHeroAcceptanceTests)`
+- `slow-tests (SodRpg.Core.Tests.PerformanceTests)`
+- `slow-tests (SodRpg.Core.Tests.AllocationEquivalenceV131Tests)`
+- `mod-tests (tests/SodRpg.Mod.FxBudget.Tests)`
+- `mod-tests (tests/SodRpg.Mod.Startup.Tests)`
+- `mod-tests (tests/SodRpg.Mod.AutoCast.Tests)`
+- `mod-tests (tests/SodRpg.Culinary.Tests)`
+- `mod-tests (tests/Issue73.Native.Tests)`
+
+この結果は、main を取り込んだ後の `a2e5f5a3` や後続コミットの CI 成功を示さない。
+今回の修正ラウンドでは、取り込み後の worktree で以下を実行した。
+.NET 10 の環境で `DOTNET_ROLL_FORWARD=LatestMajor` を指定し、NuGet キャッシュは
+worktree 外の既定環境変数 `NUGET_PACKAGES` を維持した。
+
+- `dotnet test tests/SodRpg.Core.Tests/SodRpg.Core.Tests.csproj -c Release --filter 'FullyQualifiedName~OverchargeAndTollTests|FullyQualifiedName~NewPowersV129Tests' --verbosity quiet`：29件成功、失敗0件。
+- `python3 -m unittest discover -s tools/tests -p test_test_changed.py`：25件成功。
+- `python3 tools/test_changed.py --check-ci-matrix`：検出された3つの slow クラスと CI 定義が一致。
+- Startup / AutoCast を restore 後、DLL のない固有の `OutputPath` で、報告と同じ Timing フィルターを指定。固定の `--no-build` では両方とも invalid DLL・exit=1、現在の `run_dotnet_test(..., no_build=True)` ではビルドと探索が完了し exit=0。フィルターは `FullyQualifiedName~Performance|FullyQualifiedName~Timing|FullyQualifiedName~takes_well_under`。一致するテストは両方とも0件なので、性能テストの成功件数には数えない。
+- 同じ出力先の Startup DLL で `ValidPreflightConsumesContractsWithoutInstallingDetours` を `no_build=True` で実行：1件成功。
+
+未 restore の初回試行では `dotnet test --no-build` が何も出力せず exit=0 となったため、
+再現・合格の証拠には採用していない。上記の DLL 不在確認は restore 後の実行結果。
+全件・slow・Performance/Timing 全体、Lab の完全なラッパー、MOD 本体の Release ビルド、
+生成コード検査、ゲーム内確認はこのラウンドでは未実行。全体検証は後段に委ね、
+ゲーム内確認はこの環境ではゲームを起動できないため実行していない。
+新しいテストは追加していない。
 
 ## #200 ローカル欠片化と旧取引の互換復旧
 
@@ -368,8 +415,9 @@ getterのみ公開する。添字ループはこのコレクションを直接�
 
 元PR [#517](https://github.com/Kling0012/shape-of-dreams-rpg-plan/pull/517) の変更は、
 `697f3cda`（`Fix mod test builds broken by melee/coop additions`）で既に取り込まれている。
-今回の確認元は `7aef08a9`。変更を重ねず、受け付け審査で指摘されたビルド実績と
-テスト用APIの一致を確認した。製品コード・テストコード・抽出ターゲットの追加変更はない。
+以下は初回の取り込み確認（確認元 `7aef08a9`、記録コミット `ade9f873`）の結果。
+変更を重ねず、受け付け審査で指摘されたビルド実績とテスト用APIの一致を確認した。
+製品コード・テストコード・抽出ターゲットの追加変更はない。
 
 - `tests/Issue73.Native.Tests/NativePersistence.targets` の `CompileStarClusterDiffUpdate` は、
   `RefreshStarState` が参照する `_linkCoefficients` を `Fields` に含めている。
@@ -385,15 +433,15 @@ getterのみ公開する。添字ループはこのコレクションを直接�
   `DreamforgeMod.MeleeCoop.cs` の呼び出し順とも一致する。テスト側の本体は空なので、
   この一致とビルド成功だけでは近接協力4機能のゲーム内動作を検証したことにはならない。
 
-元PRのCIと、今回の作業ブランチでの実行は区別する。元PRのhead
+元PRのCIと、初回の取り込み確認での実行は区別する。元PRのhead
 `411093621163b6a9d5c471e6767c3f7095157ac8` に対する
 [CI実行 38850454247](https://github.com/Kling0012/shape-of-dreams-rpg-plan/actions/runs/38850454247)
-は成功。対象2ジョブのログを今回取得し、両方の Release ビルドがエラー0、
+は成功。対象2ジョブのログを初回の取り込み確認時に取得し、両方の Release ビルドがエラー0、
 `SodRpg.Mod.Startup.Tests` が135成功・0失敗・1スキップ、
 `Issue73.Native.Tests` が191成功・0失敗・0スキップであることを確認した。
 これは元PR本文の当時の件数を裏付ける記録であり、現在のブランチのCI結果ではない。
 
-今回ローカルで実行した検証（Linux・.NET SDK 10.0.111）：
+初回の取り込み確認でローカル実行した検証（Linux・.NET SDK 10.0.111）：
 
 - `dotnet build tests/SodRpg.Mod.Startup.Tests -c Release --nologo`：終了コード0、エラー0・警告39。
 - `dotnet build tests/Issue73.Native.Tests -c Release --nologo`：終了コード0、エラー0・警告117。抽出ターゲットを含むビルドを実行した。
@@ -401,7 +449,7 @@ getterのみ公開する。添字ループはこのコレクションを直接�
 - `DOTNET_ROLL_FORWARD=LatestMajor dotnet test tests/Issue73.Native.Tests -c Release --no-build --nologo --filter FullyQualifiedName~StarClusterDiffUpdateTests`：5成功・0失敗・0スキップ。
 - `dotnet build src/SodRpg.Mod -c Release -p:GameDir="/mnt/ghauto-sbx/sod-gamedata/Shape of Dreams" --nologo -v:quiet`：終了コード0、エラー0・警告6。ゲーム参照DLLで製品側もコンパイルした。参照先に `Mods` がないことを実行前に確認し、ゲームへの配置処理は実行されていない。
 
-**未実行**：今回のブランチのCIはpushしない作業範囲のため未起動。
+**初回の取り込み確認で未実行**：作業ブランチのCIはpushしない作業範囲のため未起動。
 フルテスト（`tools/test_changed.py --all`）、Slowテスト（`SODRPG_SLOW=1`）、
 `Issue73.Native.Tests` の対象5件以外と他プロジェクトのテストは、関連部分だけを
 確認する作業指示に従って後続工程へ委ねる。Unity実機の起動・描画・協力通信は、

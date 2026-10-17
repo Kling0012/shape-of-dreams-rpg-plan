@@ -244,6 +244,12 @@ namespace SodRpg.Mod
     }
     public static class ManagerBase<T> { public static T instance; public static T softInstance; }
     public sealed class SpawnManager { public int lastClearedZoneIndex = -1; }
+    public enum DewNetworkMode { Singleplayer, MultiplayerHost, MultiplayerJoinLobby, MultiplayerHostRestart, MultiplayerJoinRestart }
+    public sealed class DewNetworkStartSettings { public DewNetworkMode networkMode; }
+    public static class DewNetworkManager
+    {
+        public static DewNetworkStartSettings startSettings = new DewNetworkStartSettings();
+    }
     public sealed class GameSettingsManager
     {
         public readonly Dictionary<string, string> customData = new Dictionary<string, string>();
@@ -379,6 +385,7 @@ namespace SodRpg.Mod
     internal sealed class DreamforgeUi
     {
         public bool Open, MouseOverPanel, NeedsLayout, LayoutEnabled;
+        internal Action SaveLanguageConfig;
         public DreamforgeUi(ClientSession session, Func<DreamforgeConfig> config, Action saveConfig = null) { }
         public void Notify(GameEvent ev) { }
         public void Toggle() { }
@@ -430,7 +437,7 @@ namespace SodRpg.Mod
         internal static void PrepareNativeInfinityContinue() { }
         internal static bool RemoteHostInfinityAvailable, RemoteHostHelloAnswered;
         internal static bool RunActive, InGame, CanChooseRunRules, CanChooseDepth;
-        internal static bool PersistHostInfinityState() => true;
+        internal static bool PersistHostInfinityState(bool writeEnvelope = true) => true;
         internal static bool HostInfinitySaveHoldSatisfied => true;
         internal static void CountHostInfinityRoom() { }
         internal static void OpenHostInfinityChoice() { }

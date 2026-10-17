@@ -195,8 +195,11 @@ namespace SodRpg.Mod
 
         public bool CanEditTalents => Profile.Run == null || !InGame;
 
+        public long ViewRevision { get; private set; }
+
         public void MarkDirty(bool buildChanged)
         {
+            ViewRevision++;
             _dirty = true;
             if (buildChanged)
             {
@@ -828,6 +831,14 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
                     NetworkedManagerBase<GameManager>.softInstance?.runId ?? ""))
                 {
                     DiagnoseExpedition("client-concluded-lobby-return");
+                    return;
+                }
+                // 純白の夢は Primus の撃破で精算を終えている（ホストもゲストも）。演出の後に届く本体の終了通知で
+                // 精算済みの遠征を保留に戻すと、保存にも残ってプロフィールの切り替えが次の遠征まで止まっていた。
+                string concludedRunId = NetworkedManagerBase<GameManager>.softInstance?.runId;
+                if (!string.IsNullOrEmpty(concludedRunId) && concludedRunId == _completedRunId)
+                {
+                    DiagnoseExpedition("client-concluded-already-settled");
                     return;
                 }
                 if (ObserveInfinityConclusion(result))
@@ -1473,7 +1484,9 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
 
         /// <summary>
         /// 画面表示用の強さ。装備・鍛冶の画面は毎フレーム描くが、強さの計算は星の多い旅人で1回0.3ms・5KB前後かかる。
-        /// 変更時の作り直し（_buildCacheFrame = -1）がない間は、実際の計算時刻から0.25秒まで使い回す。ホストへ送る強さは CurrentBuild を使う。
+        /// 変更時の作り直し（_buildCacheFrame = -1）がない間は、実際の計算時刻から0.25秒まで使い回す。
+        /// MarkDirty を通らない Profile の変化（Heat・Pacts など）は、表示への反映が最大0.25秒遅れる。
+        /// 表示専用のキャッシュであり、ホストへ送る強さは CurrentBuild を使う。
         /// </summary>
         public Build DisplayBuild(string heroKey)
         {

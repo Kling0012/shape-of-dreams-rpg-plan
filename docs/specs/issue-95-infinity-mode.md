@@ -76,7 +76,7 @@
 - ロビーDreamDepthと本体Limboは変更しない。DreamDepthは最大5で敵倍率だけでなくluck・覚醒・星XP・部屋数にも効く（R/src/SodRpg.Core/Game/DreamDepth.cs:8-17）。これを無限加算すると報酬方針も壊れる。
 - 潜行ごとのHeat増加は既存上限5を維持。悪夢確率、非悪夢の底上げ、変種最大1体／部屋を既存処理へ載せる（R/src/SodRpg.Core/Game/Nightmare.cs:92-137; Variants.cs:353-365）。ボス悪夢化はしない。
 - 部屋由来の圧段階は `b=min(100, floor(ClearedCombatTotal/Interval)+offset)`。#270のoffsetは20部屋=0、15部屋=2、10部屋=4で開始時から加える。既存夢の圧の最終HPに `1+0.10b`、攻撃に `1+0.04b` を掛け、潜行を選べばHeatでも難化する。圧由来の敵数に別枠の0%／200%／400%を加算し、#253の同じウェーブ内に混ぜる。本体同時人口上限とウェーブ数は変更しない。
-- 人数は本体、夢レベル／星は既存平均、深さ／道標／悪夢は既存経路のまま。native zoneIndexやambientLevelを難度カウンタにしない（R/src/SodRpg.Core/Game/DreamPressure.cs:16-51; R/src/SodRpg.Mod/HostAuthority.cs:394-464）。
+- 人数は本体、夢レベル／星の共通圧は既存平均。#588ではインフィニティ協力の担当敵に使うHP・攻撃倍率と出現時の全員悪夢化・変種除外・悪夢化抽選は担当者本人の道標を参照する。担当なし・共有敵・ボス（共有HPの各持ち分を含む）には道標倍率を掛けず、共通圧も道標倍率1で敵数とHUDへ送る。途中参加・離脱による担当変更では新担当者の倍率へHP割合を維持して切り替え、悪夢・変種は出現時の分類を維持する。未着の個人道標はなし、未着Buildの基礎は共通圧としつつ受領済みの個人道標を掛ける。ソロ・通常協力は従来のホスト道標を使う。native zoneIndexやambientLevelを難度カウンタにしない。
 - 100段で圧倍率はHP11・攻撃5まで。その後も部屋は続くが難化は頭打ち、HUDに表示する。係数・上限は推奨初期値で本体の既存値ではない。全敵同時数やwave数を累計部屋数で増やさない。
 
 ## 8. 報酬速度の上限・#48
@@ -265,7 +265,7 @@
 - `noAdvance` でzoneIndex／ambientLevelを維持し、TravelToZoneだけではtier／loopも進まない（C/ZoneManager.cs:1312-1317）。native番号由来のHP／攻撃倍率、XP、Gold／物価、記憶レベル／エッセンス品質、hard variantの段階は従来のInfinityと同じ位置に留める。根拠：C/GameManager.cs:1073-1124,1354-1412、C/LootManager.cs:178-200、C/ZoneManager.cs:547,3354-3382。次ゾーンの番号を偽装して難度と供給を二重に増やさない。既存DreamDepth／Heat／夢の圧で上げ、新係数はない。敵prefab固有の基礎値・行動は移動先のものなので、全ボスが同じ強さになる保証ではない。
 - native通常ドロップは共有LootManagerのpool／rarity表で、ゾーン別の代替表は作らない。native魂はその実ボスの `GetUniqueReward` を使う。MODも実ボス型を既存の撃破factに保存し、`BossSets` で固有セットを抽選する（R/src/SodRpg.Mod/HostAuthority.KillSync.cs:527-541、R/src/SodRpg.Core/Game/BossSets.cs:9-55）。Infinityの時間／部屋／高レア／無料出力予算は引き継ぎ、既存 `ExpectedKillCosts` がそのボス限定確率も予算に含める（R/src/SodRpg.Core/Game/InfinityRewards.cs:147-150）。nativeとMODの報酬上限は別で、ゾーン切り替えを予算補充理由にしない。
 - ホストが新グラフの実ゾーンを既存 `FixedZoneId` に確定し、native currentZone／node statusと共有snapshotで送る。参加者は保存済みChoiceRevision／SegmentEpoch一致後にゾーンとGraphEpochを一緒に取り込む。Continueはnative graph-ready後に保存地点のMODチェックポイントを戻し、asset名・worldseed・epochを照合する。
-- **Protocol 24**：wire項目は増やさないが、旧参加者の純白勝利／選択停止処理との混在を拒否する。**保存形式5・Infinity codec version 1・native envelope項目は変更なし**。`FixedZoneId`／`fixedZone` は互換性のため名前を残し、現在のグラフのゾーンを表す。旧保存は保存された同ゾーンを復元し、次のDelveから新抽選を使う。Infinity欄のない旧通常保存は従来どおりOFF。
+- **Protocol 24**：旧参加者の純白勝利／選択停止処理との混在を拒否する。**保存形式5・Infinity codec version 1は維持**し、完結ボス状態と実カウンタを省略可能項目で追加する。旧reader向けsnapshotは従来の周期到達値も投影する。`FixedZoneId`／`fixedZone` は互換性のため名前を残し、現在のグラフのゾーンを表す。旧保存は保存された同ゾーンを復元し、次のDelveから新抽選を使う。Infinity欄のない旧通常保存は従来どおりOFF。
 
 ### 候補一覧の根拠と限界
 - 全件一覧の権威はUnityのMainResources `nameToGuid`（C/DewResources.cs:62-71,448-455）。手元の本体データにはManaged DLLだけがあり、このアセット／scene／現行ローカライズはない。確認できたliteral IDは `Zone_Forest`、`Zone_Despair`、`Zone_Primus`。反射一覧にはForest／SnowMountain／LavaLand／DarkCave／Ink／Sky／Despair／Primusの敵群があるが、これを全ゾーンasset名の確定一覧としてハードコードしない。
@@ -297,9 +297,11 @@
 - v2.10.8（PR #304）はこの構造のゾーンを抽選から外した。強制移動の機構推定は正しかったが、重み10のPrimusボスがインフィニティから消え、19節の「候補から黙って除外せず」に反していた。
 
 ### 修正
-- `IsBossFinaleZone(zone, interval)`（= `useSpecialGeneration && !CanHostInterval(...)`）：周期を賄えない特殊グラフは「完結ボスゾーン」とする。`OnGenerated` は生成直後に `PromoteFinaleBoss()`（`ClearsInCycle` を周期まで引き上げ `Phase = BossDue`）を呼ぶため、地図はボスノードだけを前方に出し、技術境界は一度も発生しない。区間は準備→ボス（＋任意の戦闘部屋）で完結する。
+- `IsBossFinaleZone(zone, interval)`（= `useSpecialGeneration && !CanHostInterval(...)`）：周期を賄えない特殊グラフは「完結ボスゾーン」とする。`OnGenerated` は生成直後に `PromoteFinaleBoss()`（実クリア数を変えず、明示的な完結ボス状態で `Phase = BossDue`）を呼ぶため、地図はボスノードだけを前方に出し、技術境界は一度も発生しない。区間は準備→ボス（＋任意の戦闘部屋）で完結する。
 - 扉は `LoadNode` 直行のため `RouteTravel` の `TryEnterBoss` を通らない。`TickNative` はボスノード到着時に完結ボスゾーンなら `PromoteFinaleBoss()`→`TryEnterBoss()` で `BossFight` へ入る（v2.10.8以前の保存＝`Exploring` のまま純白にいる遠征も、扉でボス戦に入って撃破後に次へ進める）。`RefreshReveal` は `BossDue` で唯一のボスノードの上にいるとき、誤って「scheduled boss なし」で機能を止めない（ボスノードが1つもないグラフだけ止める）。
 - `ChooseNativeZone`（ランダム抽選）と v2.10.8 の救済は従来どおり周期を賄える候補に限定したまま。`PrepareBossTarget` は固定ゾーンID（保存済み計画または当選ボスの専用ゾーン）で指定された純白だけを例外として許す。井戸/ショップ保証とその警告は完結ボスゾーンでは適用しない（2部屋構成に畳むため）。
+- 保存・共有snapshot・Continueは `FinalePromoted` と実クリア数を引き継ぎ、Delveで繰り上げ状態を解除する。`累計 >= 周期内の実クリア数` の検証は維持し、保存された周期長と一致することを理由に不整合を通さない。旧版の純白セーブ（`Zone_Primus`・周期到達値・`BossDue`～`AwaitingChoice`）だけは現グラフのクリア済みノード数へ正規化し、ボス戦／魂待ち／選択待ちの段階は保持する。
 
 ### 検証
 - 回帰（`tests/SodRpg.Mod.Startup.Tests/InfinityZoneTests.cs`）：Primusボス計画の潜行が純白に入り `BossDue` でボスノードを公開すること、扉到着（`SetCurrentNodeIndexAndRevealAdjacent(2)`＋`Tick`）が機能を止めず `BossFight` に入り、撃破・魂の出現で `AwaitingChoice` まで至ること、旧保存（`Exploring`）からの扉到着も `BossFight` に入ること。ランダム抽選が純白を選ばないこと、技術境界による脱出、純白からのDelveが純白へ戻らないことは v2.10.8 の回帰を維持。
+- PR #514取込：同じ既存ケースで累計0の最初の周期を使い、ボス繰り上げ・戦闘中・魂待ち・選択待ち・Delveの保存読み戻し、共有snapshotの実カウンタ、旧形式のプロフィール／native envelopeの魂待ち保持を確認。`InfinityClearSaveTests` の既存ケースは本番ClientSessionの確定保存と実ファイルの読み戻し／通知を確認し、旧カウンタ引き上げを一時的に戻すと `Inconsistent infinity state` で失敗、修正版では成功した。周期10/15/20の不整合拒否と初期装備の日英案内も既存ケースで確認。関連Core 60件・Startup 87件・Native 31件が成功。実ゲーム・実通信・フル／低速テストは未実行。

@@ -97,7 +97,7 @@ namespace SodRpg.Mod
             {
                 // Keep native support notifications off the hero's parent chain, as in v1.28 gimmicks.
                 var support = _am != null ? _am.serverActor : null;
-                var granted = support != null ? support.GiveShield(hero, SupportStats.AmplifyShield(result.Shield, rt.Powers.Build.Get(Stat.ShieldPower)),
+                var granted = support != null ? support.GiveShield(hero, SupportStats.AmplifyShield(result.Shield, SupportPower(rt, Stat.ShieldPower)),
                     ElementReactionRuntime.ShieldDuration) : null;
                 if (granted != null) CreditShieldGranted(rt, hero, granted.shield != null ? granted.shield.amount : 0f);
             }

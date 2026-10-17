@@ -125,7 +125,11 @@ namespace SodRpg.Mod
             try
             {
                 _supportOverhealDepth++;
-                recipient.GiveShield(recipient, legacy, PowerRuntime.OverflowingLifeDuration);
+                // Granting from the recipient ran its shield power on top of the 10% max-HP cap.
+                // Grant from the server actor like the support conversion, so the cap holds.
+                var giver = _am != null ? _am.serverActor : null;
+                if (giver == null) return;
+                giver.GiveShield(recipient, legacy, PowerRuntime.OverflowingLifeDuration);
                 LogPowerTrigger(Power.OverflowingLife);
             }
             catch (Exception ex) { Log.Warn("Host: OverflowingLife skipped: " + ex.Message); }

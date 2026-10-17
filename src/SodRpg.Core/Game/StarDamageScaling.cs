@@ -40,11 +40,11 @@ namespace SodRpg.Core.Game
         }
 
         public static int PowerCeiling(Build build, Power power) => checked((int)decimal.Ceiling(Content.PowerCap(power)
-            * (IsDamage(power) ? 2.5m + Multiplier(build?.SpentStarPoints ?? 0) : 1m)));
+            * (IsDamage(power) ? BuildLimits.MaxEquipmentMultiplier + Multiplier(build?.SpentStarPoints ?? 0) : 1m)));
 
         public static int MaxPowerValue(Power power) => IsDamage(power)
-            ? checked((int)decimal.Ceiling(Content.PowerCap(power) * (2.5m + StarRankBalance.MaxMultiplier)))
-            : checked((int)(Content.PowerCap(power) * 2.5m));
+            ? checked((int)decimal.Ceiling(Content.PowerCap(power) * (BuildLimits.MaxEquipmentMultiplier + StarRankBalance.MaxMultiplier)))
+            : checked((int)(Content.PowerCap(power) * BuildLimits.MaxEquipmentMultiplier));
 
         public static decimal EffectCeiling(GimmickEffect effect) => Gimmicks.Cap(effect)
             * (IsDamage(effect) ? StarRankBalance.MaxMultiplier : 1m);

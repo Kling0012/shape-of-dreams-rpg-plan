@@ -142,6 +142,19 @@ namespace SodRpg.Core.Game
         public int WaypointSlotCursor { get; set; }
         public bool WaypointHoardReleased { get; set; }
         public List<Relic> DeferredWaypointRelics { get; } = new List<Relic>();
+
+        /// <summary>
+        /// 抽選の所持判定に使う未確保の遺物：鞄と、封印の宝庫で預かっている遺物。
+        /// 預かり品がなければ鞄をそのまま返すため、呼び出し側はリストと遺物を変更しないこと。
+        /// </summary>
+        public IReadOnlyList<Relic> UnsecuredForLoot()
+        {
+            if (DeferredWaypointRelics.Count == 0) return Satchel;
+            var list = new List<Relic>(Satchel.Count + DeferredWaypointRelics.Count);
+            list.AddRange(Satchel);
+            list.AddRange(DeferredWaypointRelics);
+            return list;
+        }
         public int DeferredWaypointShards { get; set; }
         public int DeferredWaypointTuning { get; set; }
         public List<Relic> Satchel { get; } = new List<Relic>();

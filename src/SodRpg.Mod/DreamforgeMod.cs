@@ -83,6 +83,7 @@ namespace SodRpg.Mod
                 RelicIcons.Preload();
                 _ui = new DreamforgeUi(_session, () => config, SaveLevelEssenceConfig);
                 BindEnemyOwnershipSettings();
+                _ui.SaveLanguageConfig = SaveLanguageConfig;
                 _host = new HostAuthority(() => _session?.Profile.Run?.DailyId ?? DailyDream.Today.Id);
                 ApplyMeleeCoopConfig();
                 _session.FirstLaunch();
@@ -131,6 +132,16 @@ namespace SodRpg.Mod
 
         partial void ApplyEnemyOwnershipConfig();
         partial void BindEnemyOwnershipSettings();
+
+        private void SaveLanguageConfig()
+        {
+            try { SaveConfigsToDisk(); }
+            catch (Exception ex)
+            {
+                Log.Warn("Language setting save failed: " + ex.Message);
+                _ui?.SetStatus(Loc.T("設定を保存できませんでした。", "Could not save settings."));
+            }
+        }
 
         partial void ApplyMeleeCoopSettings();
 

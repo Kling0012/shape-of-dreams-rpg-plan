@@ -54,6 +54,8 @@ namespace SodRpg.Mod
             public bool Japanese;
             public StatLine[] Affixes;
             public PowerLine[] Powers;
+            // Snapshot the mutable mark so in-place edits also invalidate the displayed effects.
+            public ForbiddenMark Forbidden;
 
             public bool Matches(Relic r)
             {
@@ -61,6 +63,11 @@ namespace SodRpg.Mod
                     || Enhance != r.Enhance || Level != r.ItemLevel || Awakening != r.AwakenLevel
                     || LimitBreaks != r.LimitBreaks || FusionLevel != r.FusionLevel || Rarity != r.Rarity || Japanese != Loc.Japanese
                     || Affixes.Length != r.Affixes.Count || Powers.Length != r.Powers.Count) return false;
+                var mark = r.Forbidden;
+                if ((Forbidden == null) != (mark == null)) return false;
+                if (mark != null && (Forbidden.Pattern != mark.Pattern || Forbidden.Variant != mark.Variant
+                    || Forbidden.RemovedStat != mark.RemovedStat || Forbidden.AddedPower != mark.AddedPower
+                    || Forbidden.AddedValue != mark.AddedValue)) return false;
                 for (int i = 0; i < Affixes.Length; i++) if (Affixes[i] != r.Affixes[i]) return false;
                 for (int i = 0; i < Powers.Length; i++) if (Powers[i] != r.Powers[i]) return false;
                 return true;
@@ -76,7 +83,7 @@ namespace SodRpg.Mod
                 Enhance = r.Enhance, Level = r.ItemLevel, Awakening = r.AwakenLevel,
                 LimitBreaks = r.LimitBreaks, FusionLevel = r.FusionLevel, Rarity = r.Rarity, Slot = r.Slot, Japanese = Loc.Japanese,
                 Name = r.DisplayName ?? "",
-                Affixes = r.Affixes.ToArray(), Powers = r.Powers.ToArray(),
+                Affixes = r.Affixes.ToArray(), Powers = r.Powers.ToArray(), Forbidden = r.Forbidden?.Clone(),
                 Title = UiStyles.RelicTitle(r) + "  <color=#bcbcd2>" + Content.RarityName(r.Rarity)
                     + " · " + Content.SlotName(r.Slot) + " · Lv" + r.ItemLevel.ToString(CultureInfo.InvariantCulture) + "</color>"
             };
@@ -136,6 +143,17 @@ namespace SodRpg.Mod
             if (valid && (shards > CoopTradeRules.Shards(_s.Profile) || tuning > CoopTradeRules.Tuning(_s.Profile)))
                 invalid = Loc.T("所持している素材の数を超えています。", "The offer exceeds your owned materials.");
             if (!trade.Preparing && invalid != null) GUILayout.Label(invalid, _st.Warn);
+            // 提示した遺物を後から装着・使用すると、ホストが確認時に取引を取り消す。確認の前に止める。
+            string staleOffer = null;
+            if (trade.Accepted && !trade.Preparing && !trade.OwnConfirmed && trade.OwnOffer != null)
+                foreach (string uid in trade.OwnOffer.RelicUids)
+                    if (!CoopTradeRelicOfferable(_s.Profile, uid))
+                    {
+                        staleOffer = Loc.T("提示した遺物の一部が装着中か、もうありません。遺物を選び直すか素材の数を変えると、提示から外れます。",
+                            "Some offered relics are now equipped or gone. Select a relic or change an amount to drop them from your offer.");
+                        GUILayout.Label(staleOffer, _st.Warn);
+                        break;
+                    }
 
             // Actions precede the expanding scroll panes, so no long inventory can hide them.
             bool enabled = GUI.enabled;
@@ -147,7 +165,7 @@ namespace SodRpg.Mod
             }
             else if (trade.Accepted)
             {
-                GUI.enabled = enabled && _s.CanCoopTrade && !trade.Preparing && !trade.OwnConfirmed && !_s.CoopTradeOfferPending && invalid == null;
+                GUI.enabled = enabled && _s.CanCoopTrade && !trade.Preparing && !trade.OwnConfirmed && !_s.CoopTradeOfferPending && invalid == null && staleOffer == null;
                 if (GUILayout.Button(trade.OwnConfirmed ? Loc.T("確認済み", "Confirmed") : Loc.T("この内容で交換を確認", "Confirm this trade"), _st.ButtonWrap, TradeActionSize))
                     SetStatus(_s.ConfirmCoopTrade());
             }
@@ -271,11 +289,20 @@ namespace SodRpg.Mod
             SetStatus(_s.SetCoopTradeOffer(offer));
         }
 
-        private static CoopTradeOffer CopyCoopTradeOffer(CoopTradeOffer original, int shards, int tuning)
+        private CoopTradeOffer CopyCoopTradeOffer(CoopTradeOffer original, int shards, int tuning)
         {
             var offer = new CoopTradeOffer { Shards = shards, Tuning = tuning };
-            if (original != null) offer.RelicUids.AddRange(original.RelicUids);
+            if (original != null)
+                foreach (string uid in original.RelicUids)
+                    if (CoopTradeRelicOfferable(_s.Profile, uid)) offer.RelicUids.Add(uid);
             return offer;
+        }
+
+        // 提示後に装着・合成などで使えなくなった遺物は、次の提示更新で外す。
+        private static bool CoopTradeRelicOfferable(Profile profile, string uid)
+        {
+            return !string.IsNullOrEmpty(uid) && FindCoopTradeRelic(profile, uid) != null
+                && !profile.IsEquippedAnywhere(uid);
         }
 
         private void DrawCoopTradeOwnRelics(CoopTradeView trade, bool editable)

@@ -10,6 +10,282 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v3.2.13 — Fix unkillable co-op elites, enemy owner flip-flopping, and training bonuses on mod heals and shields（2026-10-17）
+
+この版は、協力プレイでエリートの自分の分担が0%になったあと、わずかにHPが残って倒せなくなる問題を直す更新です。あわせて、全員が離れた敵の担当が入れ替わり続ける問題、鍛錬で得た回復強化・シールド強化が一部の効果に反映されていなかった問題、禁忌化のあと図鑑が更新されない問題を直しました。空殻の星図の前提の星の名前、移動の記憶に関わる星の判定、獲得効果の一覧の能力値の表示、増援の戦利品と道標の組み合わせも直し、味方も回復する記憶の仕掛けの説明には、離れると回復量が減ることを書き加えました。 / This update fixes elites in co-op becoming impossible to kill when a sliver of HP was left after your share hit 0%. It also fixes enemies far from everyone switching owners over and over, run training bonuses to healing and shields not applying to some effects, and the codex not updating after making a relic forbidden. It also fixes the prerequisite star names on 空殻's star map, how stars tied to movement memories are checked, stat values in the earned effects list, and how reinforcement loot works with waypoints, and adds the distance drop-off of healing to the descriptions of memory effects that also heal allies.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- 協力プレイで分担がオンのとき、エリートを倒せなくなることがある問題を直しました。自分の分担を使い切ったあとにごくわずかなHPが残ると、攻撃してもダメージが入らず、無敵のようになっていました。これからは残ったHPも削り切れるので、エリートを倒せます。自分の分を使い切ったあとにほかの人の分を手伝えるのは、これまでどおりです。 / Fixed elites sometimes becoming impossible to kill in co-op with shares turned on. After your own share was used up, a tiny amount of HP could be left over and attacks stopped doing damage, so the elite was effectively invincible. Now the leftover HP can be worn down and the elite can be defeated. As before, you can still help with other players' shares after using up your own.
+- エリートの分担の割合が、まだ少し残っているのに0%と表示されることがあった問題を直しました。ボスバーとエリートの頭上の表示では、残りが1%未満なら「<1%」と表示されます。「0%」と表示されるのは、自分の分を本当に使い切ったときだけです。 / Fixed an elite's share percentage sometimes showing 0% even though a little was still left. On the boss bar and the mark above elites, a share below 1% now shows as "<1%". It shows "0%" only when your share is actually used up.
+- 協力プレイで、全員が離れた場所にいる敵（部屋の奥の陣地など）の担当が、約6秒ごとに入れ替わり続けていた問題を直しました。担当が替わるたびに敵の最大HPと攻撃が新しい担当に合わせて計算し直され、◆/◇の表示も反転していました。たとえば夢レベルの違う2人が離れて立っていると、38秒で6回入れ替わり、最大HPが1000と2300の間を行き来していました。これからは、担当が離れているだけのときは、その敵と戦っている人か、実際に30m以内にいる人にだけ担当が移ります。担当が倒れたときや切断したときの付け替えはこれまでどおりです。 / Fixed enemies that everyone was far away from (such as camps at the back of a room) switching owners about every 6 seconds in co-op. Each switch recalculated the enemy's max HP and attack for the new owner and flipped the ◆/◇ mark. For example, with two players at different dream levels standing far away, the owner switched 6 times in 38 seconds and max HP went back and forth between 1000 and 2300. Now, when the owner is just far away, the enemy is only handed to someone fighting it or actually within 30 m. Reassignment when the owner goes down or disconnects works as before.
+- 遠征中の鍛錬で得た回復強化とシールド強化が、このMODで追加された記憶・星・仕掛けなどの回復とシールドに反映されていなかった問題を直しました。たとえば装備と星のシールド強化が0%で鍛錬が+30%なら、基礎100のシールドは130になります。あわせて、共有の守りと優しさの返礼で、与え手の強化が二重にかかって回復やシールドが多くなりすぎていた問題と、溢れる命のシールドに受け手の強化がもう一度かかっていた問題も直しました。これらの効果は本来の量に戻ります。 / Fixed healing and shield bonuses gained from training during a run not applying to the healing and shields from memories, stars, effects and other content added by this mod. For example, with 0% shield bonus from gear and stars and +30% from training, a base 100 shield now becomes 130. Also fixed 共有の守り and 優しさの返礼 applying the giver's bonuses twice, which made their healing or shields too large, and 溢れる命's shield getting the receiver's bonus applied again. These effects now give their intended amounts.
+- 味方も回復する記憶の仕掛けの説明に、協力プレイでは味方が離れるほど回復量が減ることが書かれていなかった問題を直しました。既定の10mの範囲では、10m以内なら回復が全部届き、そこから離れるにつれて少しずつ減って、18mで0になります。日本語と英語の説明に、この減り方と、範囲の外に出ても2秒は猶予があることが表示されます。距離による減少を無効にしているときの動きも表示されます。変わったのは説明だけで、回復量は変わりません。 / Fixed the descriptions of memory effects that also heal allies not mentioning that, in co-op, healing gets weaker the farther away an ally is. With the default 10 m range, allies within 10 m get the full heal, and it drops off gradually to 0 at 18 m. The Japanese and English descriptions now show this drop-off and the 2-second grace period after leaving the range, as well as what happens when the distance drop-off is turned off. Only the descriptions changed; heal amounts are the same.
+- 空殻の星図で、「剣気の貫禄」と「気に染まる風」の前提の星が、星図にない「夢輪の叡智」という名前で案内されていた問題を直しました。実際に必要なのは、星図に「剣気の追い裂き」と表示されている星です。これからは、まだ取得できない理由に画面と同じ名前が出るので、どの星を取ればよいか画面で探せます。星を取得できる条件は変わりません。 / Fixed two stars on 空殻's star map, 剣気の貫禄 and 気に染まる風, naming a prerequisite star called "Dream Ring Wisdom" that isn't on the star map. The star they actually need is the one shown on the star map as "Aura Follow-Slash". The reason a star can't be taken yet now uses the same name as the screen, so you can find the star you need there. The conditions for taking stars are unchanged.
+- 移動の枠に入れた記憶に関わる仕掛けを持つ星が、正しく判定されないことがあった問題を直しました。ケートスとヴェスパーの、移動の記憶に関わる星もこれに含まれます。 / Fixed stars with effects tied to the memory in the movement slot sometimes not being checked correctly. This includes Cetus's and Vesper's stars tied to movement memories.
+- 獲得効果の一覧で、エッセンス枠などの能力値が、実際に効く上限を超えた値で表示されることがあった問題を直しました。これからは、上限を当てはめた実際の値で表示されます。 / Fixed the earned effects list sometimes showing stats such as essence slots above the cap that actually applies. They now show the actual value with the cap applied.
+- 夢の圧で現れる増援の戦利品が、道標の効果とうまくかみ合っていなかった問題を直しました。増援で受け取れなかった遺物が、焼き入れの道の部屋の枠や六つの足取りの巡回を使ってしまうことはなくなりました。双子の宝箱では、受け取る遺物とその複製を一緒に受け取れます。星への供物と目覚めの巡礼で変換された分が、二重に減らされていた問題も直しました。一番槍のレアの保証はこれまでどおりです。 / Fixed loot from dream pressure reinforcements not working well with waypoint effects. Relics you didn't get from reinforcements no longer use up 焼き入れの道's room slots or 六つの足取り's rotation. With 双子の宝箱, you now receive a relic and its copy together. Also fixed the loot converted by 星への供物 and 目覚めの巡礼 being reduced twice. 一番槍's rare guarantee works as before.
+- 禁忌化の断絶で増えた固有効果が図鑑の発見数に入らず、禁忌化したあとも図鑑の表示が更新されなかった問題を直しました。保管庫・遺失物・鞄のどこにある遺物でも数えられ、たとえば発見数が2/90から3/90に増えて、「？？？」だった欄に「溢れる一撃」と効果の説明が表示されます。 / Fixed unique effects added by Severance when making a relic forbidden not counting toward the codex, and the codex not updating after making a relic forbidden. Relics in storage, lost items, and your bag are all counted; for example, the count goes from 2/90 to 3/90 and the entry that showed "???" now shows "Spillover Strike" and its description.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
+## v3.2.12 — Stocked memories no longer go on cooldown with charges left, plus wiki fixes（2026-10-17）
+
+この版は、ストックを持つ記憶で、回数が残っているのに一度クールダウンに入ってしまう問題を直す更新です。あわせて、Wiki の刻印の費用、固有効果の掲載数、旅人ごとの星数を実際の値に合わせ、容量の上限を超えていた固有品のページを分けました。 / This update fixes memories with stocks going on cooldown even though they still had charges left. It also makes the wiki's keystone costs, listed unique effect count, and per-traveler star counts match the actual values, and splits unique item pages that went over the size limit.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- Q/W/E/R のどの枠でも、ストック（複数回分の使用回数）を持つ記憶を1回使うと、まだ回数が残っているのに基礎クールダウンの20%（最低0.3秒）の待ち時間が入り、その間は使うことも予約することもできなかった問題を直しました。たとえば基礎クールダウン12秒・3回分のストックを持つ記憶では、1回使ったあと残り2回あっても約2.3秒使えず、スキルボタンにもその待ち時間が表示されていました。これからは、ストックが残っている間は続けて使ったり予約したりでき、ボタンにも余分な待ち時間は表示されません。最後の1回を使ったあとでも、先に回復したストックはすぐに使えます。ストックが回復するまでの時間はこれまでと変わりません。ストックを持たない記憶の連打防止はこれまでどおりで、移動スキルにも変更はありません。 / Fixed memories with stocks (multiple charges) in any Q/W/E/R slot getting an extra wait of 20% of their base cooldown (at least 0.3 seconds) after each use, even with charges left. During that wait they couldn't be used or queued. For example, a memory with a 12-second base cooldown and 3 charges couldn't be used for about 2.3 seconds after one use, even with 2 charges left, and the skill button showed that wait. Now you can keep using or queuing the memory while it has charges left, and the button no longer shows the extra wait. Even after using the last charge, any charge that comes back early can be used right away. The time it takes to recover a charge is unchanged. The spam guard for memories without stocks works as before, and movement skills are unchanged.
+- Wiki の刻印の費用欄がゲームでの実際の費用と食い違っていた問題を直しました。黄金の余熱・連鎖の鼓動・森の鼓動・不安定な軌道の4件は費用欄に3と出ていましたが、正しい1と表示されるようになりました。段ごとに並ぶ刻印の費用もゲームと同じ値になります。 / Fixed the wiki's keystone cost column not matching the actual in-game costs. Golden Embers, Chain Pulse, Forest Pulse, and Unstable Orbit showed a cost of 3 and now show the correct cost of 1. Keystone costs listed by tier now match the game as well.
+- Wiki のホームと総合ポータルで、固有効果の数が95件と表示されていた問題を直しました。これからは実際に掲載している90件と表示されます。 / Fixed the wiki home page and main portal showing 95 unique effects. They now show 90, the number actually listed.
+- Wiki のホームの旅人ごとの星の数に到達刻印まで含まれていて、旅人のページと数字が合わなかった問題を直しました。たとえば Aurena はホームで星759でしたが、これからは旅人のページと同じく星748・到達刻印11と分けて表示されます。 / Fixed per-traveler star counts on the wiki home page including reached keystones, so they didn't match each traveler's page. For example, Aurena showed 759 stars on the home page and now shows 748 stars and 11 reached keystones separately, the same as Aurena's page.
+- Wiki の固有品の一覧で、3つのページが1ページの容量の上限を超えていた問題を直しました。これからは土台と固有品の一覧がどのページも上限に収まるように分かれます。一覧の行は1つも欠けず、ページ間のリンクもすべて正しくつながります。 / Fixed three unique item list pages on the wiki going over the size limit for a single page. The base and unique item lists are now split so every page stays within the limit. No rows are dropped, and all links between pages work.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
+## v3.2.11 — Fix Infinity co-op waypoint enemy effects following only the host's choice（2026-10-17）
+
+この版は、インフィニティの協力プレイで、道標の敵側の効果がホストの選んだ道標だけで決まり、全員の敵にかかっていた問題を直す更新です。 / This update fixes waypoint effects on enemies in Infinity co-op being decided only by the host's waypoint and applied to everyone's enemies.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- インフィニティの協力プレイで、道標の敵側の効果（敵の体力・攻撃の倍率、全員悪夢化、悪夢化の確率）がホストの選んだ道標だけで決まり、全員の敵にかかっていた問題を直しました。参加者が選んだ道標は敵側に何も起こさず、記憶のクールダウンや撃破報酬などの見返りだけを本人が受け取る状態でした。たとえば参加者だけが「駆ける記憶」を選んでも敵は強くならず、逆にホストだけが選ぶと参加者の敵まで強くなっていました。参加者が「明けない夜」を選んでも、敵は悪夢化しませんでした。これからは、各プレイヤーに割り当てられた敵に、そのプレイヤー本人が選んだ道標の効果がかかります。参加者が「駆ける記憶」を選べば、記憶のクールダウン×0.8に加えて、その参加者の敵の体力と攻撃が説明どおり×1.25になり、ホストの選択が参加者の敵にかかることはありません。ホストが選んだ場合は、クールダウン×0.8はホスト本人だけにかかり、参加者の敵には×1.25がかかりません。参加者が「明けない夜」を選べば、その参加者に割り当てられた敵が悪夢化します。出現時の全員悪夢化の判定、変異の除外、悪夢化の抽選も、割り当てられた本人の道標で決まります。 / Fixed waypoint effects on enemies in Infinity co-op (enemy HP and attack multipliers, all-Nightmare, and Nightmare chance) being decided only by the host's waypoint and applied to everyone's enemies. Waypoints picked by other players had no effect on enemies, so they received the rewards, such as memory cooldown reduction and kill rewards, without the drawback. For example, if only a guest picked the waypoint that speeds up memory cooldowns, enemies didn't get stronger, but if only the host picked it, the guest's enemies got stronger too. A guest picking the waypoint that makes enemies Nightmares didn't turn any enemies into Nightmares. Now each player's own waypoint applies to the enemies assigned to that player. If a guest picks the cooldown waypoint, that guest gets ×0.8 memory cooldown and that guest's enemies get ×1.25 HP and attack as described, and the host's choice no longer affects the guest's enemies. If the host picks it, the ×0.8 cooldown applies only to the host, and the guest's enemies don't get ×1.25. If a guest picks the Nightmare waypoint, enemies assigned to that guest become Nightmares. The all-Nightmare check, variant exclusion, and Nightmare roll at spawn also follow the waypoint of the player the enemy is assigned to.
+- ボス、共有の目標、誰にも割り当てられていない敵には、どのプレイヤー個人の道標の効果もかからなくなりました。全員共通の夢の圧と敵の数も、ホスト個人の道標で変わらなくなりました。HUD では、表示している圧が全員共通の値であることが分かるようになりました。途中参加や離脱で敵の担当が変わったときは、残り体力の割合を保ったまま新しい担当者の道標の倍率に切り替わります。 / Personal waypoint effects no longer apply to bosses, shared objectives, or enemies not assigned to anyone. Shared Dream Pressure and enemy count no longer change based on the host's personal waypoint, and the HUD now makes clear that the pressure it shows is the shared value. When an enemy's assigned player changes because someone joins or leaves mid-run, the enemy switches to the new player's waypoint multiplier while keeping its remaining HP percentage.
+- 確保地点の確率表示に、協力プレイでは自分に割り当てられた敵が対象であることを日本語と英語で書き添えました。 / The probability display at secure points now notes, in Japanese and English, that in co-op it applies to the enemies assigned to you.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
+## v3.2.10 — Fix recovered relic counts in expedition reports and stale Forbidden descriptions in the Trade tab（2026-10-17）
+
+この版は、遺失物から取り戻した遺物が遠征の報告で発見件数に入らず、ほかの件数と合わなかった問題を直す更新です。協力プレイの取引タブで、禁忌化した遺物の説明が古いまま残っていた問題もあわせて直しています。 / This update fixes relics recovered from lost items not counting toward the found count in the expedition report, which left the report's numbers out of line. It also fixes the co-op Trade tab still showing a relic's old description after the relic was made Forbidden.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- 部屋の突破、迷い人の灯、遺失物の霊廟で取り戻した遺物が、遠征の報告で発見件数に入っていなかった問題を直しました。取り戻した遺物は確保と喪失の件数には入っていたのに、発見件数には入っていなかったため、報告の数字が合いませんでした。これからは取り戻した遺物も、その遠征の発見件数に入ります。勝利したときも全滅したときも、報告の件数が合うようになります。 / Fixed relics recovered on room clear, at the Lost Lantern, or at the Mausoleum of the Lost not counting toward the found count in the expedition report. Recovered relics were included in the secured and lost counts but not in the found count, so the report's numbers didn't match. Recovered relics now count toward that expedition's found count, and the report adds up whether you win or are wiped out.
+- 協力プレイの取引タブで遺物の説明を見たあと、まだ提示していないその遺物を鍛冶で禁忌化してから取引タブに戻ると、禁忌化する前の説明が表示されたままになっていた問題を直しました。これからは、禁忌化で変わった内容に合わせて説明とツールチップが更新されます。 / Fixed the co-op Trade tab keeping a relic's old description if you viewed it there, made that relic (not yet offered) Forbidden at the forge, and then returned to the Trade tab. The description and tooltip now update to match the changes from being made Forbidden.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
+## v3.2.9 — Fixes for unreachable bounties, Sealed Vault relic draws, waypoint Codex bonus, and Infinity saves（2026-10-17）
+
+この版は、ソロやインフィニティで達成できない依頼が出ていた問題と、封印の宝庫に預けた遺物が遺物の抽選で持っていないものとして扱われていた問題を直す更新です。道標で遺物を引き直したときや最初の獲得で図鑑の補正がかからなかった問題、インフィニティで短い区画が終点に昇格したあとのセーブを読み込めなかった問題、契約と属性組み合わせ星の説明文の誤りもあわせて直しています。 / This update fixes bounties that could not be completed in solo or Infinity, and relics stored in the Sealed Vault being treated as unowned in relic draws. It also fixes the Codex bonus not applying to relic draws at waypoints (rerolls and first claims), saves made after a short Infinity section was promoted to its endpoint failing to load, and text errors in Pact and attribute combo star descriptions.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- ソロでは「別の旅人を回復」、インフィニティでは「次のゾーンへ進む」と「確保」の依頼が出ることがあり、達成できなかった問題を直しました。これからは、遠征の条件が決まった時点で、まだ手を付けていない達成できない依頼が、ほかの依頼と重ならない達成できる依頼に入れ替わります。進めている途中の依頼や達成済みの依頼はそのまま残ります。依頼を引き直したときも、達成できない依頼は選ばれません。 / Fixed bounties that could not be completed appearing in solo ("Heal another traveler") and Infinity ("Advance to the next zone" and "Secure"). Now, once the expedition's conditions are set, any untouched bounty that cannot be completed is replaced with a completable one that doesn't duplicate your other bounties. Bounties already in progress or completed are kept. Rerolling a bounty will no longer pick one that cannot be completed either.
+- 封印の宝庫に預けている遺物が、遺物の抽選では持っていないものとして扱われていた問題を直しました。たとえば組の欠片Aを保管庫に、欠片Bを宝庫に入れていると、Bがまだ足りないとみなされ、セット集めの補助で同じBが出やすくなっていました。これからは宝庫の預かり品も持っているものとして数えられ、伝説セットや銘品の小セットの集めやすくする補助が、本当に足りない部位に向くようになります。この修正は、敵を倒したときの抽選と、道標での引き直し・最初の獲得に効きます。 / Fixed relics stored in the Sealed Vault being treated as unowned in relic draws. For example, with set piece A in your vault and piece B in the Sealed Vault, B was considered missing, so the set-collection bonus kept making B more likely to drop. Relics in the Sealed Vault now count as owned, so the collection bonus for Legendary sets and named-item mini sets goes toward pieces you are actually missing. This applies to kill drops and to waypoint rerolls and first claims.
+- 道標で遺物の部位やレア度を変えて引き直したときと、最初の獲得のときに、図鑑に未登録の銘品への補正がかかっていなかった問題を直しました。これからは、ほかの報酬と同じように図鑑の補正が反映されます。 / Fixed the Codex bonus for unregistered named items not applying at waypoints, both when redrawing a relic after changing its slot or rarity and on the first claim. The Codex bonus now applies there just as it does for other rewards.
+- インフィニティで、短い区画が終点に昇格したあとに保存したデータが読み込めなかった問題を直しました。これからは、そのようなセーブも正しく読み込めます。 / Fixed saves made in Infinity after a short section was promoted to its endpoint failing to load. These saves now load correctly.
+- 契約の説明文で、見返りをつなげた部分に句点が「。。」と重なって表示されていた問題を直しました。 / Fixed Pact descriptions showing a doubled Japanese period ("。。") where rewards were joined together.
+- 属性組み合わせ星の英語の説明で、追加スタックの表示が正しくなかった問題を直しました。これからは、たとえば150なら「+1 stack (plus a 50% chance of one more)」、100未満なら「N% chance of +1 stack」のように、確実に増える数と追加の確率が分かる表示になります。単数・複数の書き分けや「+0 stacks」という表示も直しました。 / Fixed the English descriptions of attribute combo stars showing extra stacks incorrectly. They now show both the guaranteed stacks and the extra chance, for example "+1 stack (plus a 50% chance of one more)" for 150, or "N% chance of +1 stack" for values under 100. Singular/plural wording and the "+0 stacks" display were also fixed.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
+## v3.2.8 — Fix co-op trade offers with used relics and capped unique effects（2026-10-17）
+
+この版は、協力プレイの取引で、提示したあとに装着したり合成などで使ったりした遺物が提示に残り、取引を進められなくなる問題を直す更新です。あわせて、覚醒や過剰（禁忌化）で上がった装備の固有効果が、実際の効果では上限で切り詰められていた問題と、恨みの通行料が最大HPのちょうど60%を失っても発動しなかった問題も直しています。 / This update fixes relics that were equipped or used up (for example in crafting) after being offered in a co-op trade staying in the offer and blocking the trade. It also fixes gear unique effects raised by awakening or Overcharge (Forbidden) being cut back to the cap in their actual effect, and Toll of Grudge not triggering after losing exactly 60% of max HP.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- 協力プレイの取引で、遺物を提示したあとにその遺物を装着したり、合成などで保管庫や鞄から使ったりすると、使えない遺物が提示に残っていた問題を直しました。これまでは提示を更新できなくなったり、交換を確定したときに取引が取り消されたりすることがありました。これからは、素材の数を変えたり遺物を選び直したりして提示を更新すると、使えなくなった遺物が提示から外れます。使えない遺物が提示に残っている間は警告が表示され、交換の確認ボタンは押せません。 / Fixed an issue in co-op trades where a relic stayed in your offer after you equipped it, or used it up from your vault or bag (for example in crafting), after offering it. Previously, this could stop you from updating the offer or cancel the trade when you confirmed the exchange. Now, when you update the offer by changing the material amount or reselecting relics, relics that are no longer available are removed from it. While an unavailable relic remains in the offer, a warning is shown and the exchange confirm button is disabled.
+- 覚醒によって通常の上限を超えた装備の固有効果が、実際の効果では通常の上限までに切り詰められていた問題を直しました。たとえばエピックの武器とお守りに過負荷20を付けて覚醒3にした場合、合計は72%になるのに、実際の効果は50%になっていました。これからは協力プレイでも、合計どおり72%が効果に反映されます。 / Fixed gear unique effects pushed past the normal cap by awakening being cut back to that cap in their actual effect. For example, with Overload 20 on an Epic weapon and charm both at Awaken 3, the total was 72%, but only 50% was actually applied. The full 72% is now applied, in co-op as well.
+- 過剰（禁忌化）で1.6倍になった固有効果が、上限に近いと実際の効果では削られていた問題を直しました。たとえば血の渇望30・上限40の場合、表示は48なのに実際の効果は40になっていました。これからは表示どおり48が効果に反映されます。 / Fixed unique effects boosted 1.6x by Overcharge (Forbidden) being cut down in their actual effect when near the cap. For example, with Bloodlust 30 and a cap of 40, the display showed 48 but only 40 was actually applied. The displayed 48 is now applied.
+- 恨みの通行料が、最大HPのちょうど60%を失ったときに発動しなかった問題を直しました。たとえば最大HP100で60を失っても発動していませんでした。これからは、ちょうど60%を失った時点で発動します。 / Fixed Toll of Grudge not triggering when you lost exactly 60% of your max HP. For example, losing 60 out of 100 max HP did not trigger it. It now triggers at exactly 60%.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
+## v3.2.7 — Fixes for Baku shard refunds, Memory Archive at max Dream Level, and Codex slot filter（2026-10-17）
+
+この版は、夢喰いの獏が返す欠片に強化にかけた分が含まれていなかった問題、夢レベルが上限でも記憶の書庫が出て使えてしまう問題、図鑑を部位で絞り込むと銘品の効果が表示されなかった問題を直す更新です。 / This update fixes the Dream-Eating Baku not including upgrade costs in the shards it returns, the Memory Archive appearing and being usable at max Dream Level, and named item effects not showing up when filtering the Codex by slot.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- 出来事「夢喰いの獏」に強化済みの遺物を渡したとき、返ってくる欠片に強化にかけた費用の分が含まれていなかった問題を直しました。これからは、強化にかけた費用の返還分も含めた欠片が返ってきます。 / Fixed an issue where giving an upgraded relic to the Dream-Eating Baku event returned shards that did not include what you spent on upgrades. The returned shards now include a refund for upgrade costs.
+- 夢レベルが上限に達していて経験値を得られないのに、出来事「記憶の書庫」が出てきて使えてしまう問題を直しました。これからは、夢レベルが上限のときは記憶の書庫が出なくなります。すでに表示されている場合も使えず、使えない理由が日本語・英語で表示されます。 / Fixed the Memory Archive event appearing and being usable even at max Dream Level, where it could not grant any experience. At max Dream Level, the Memory Archive no longer appears. If it is already shown, it cannot be used, and the reason is displayed in both Japanese and English.
+- 図鑑で効果を部位で絞り込むと、銘品の効果が一覧から漏れていた問題を直しました。これからは、銘品のもとになった装備の部位でも絞り込めるようになり、該当する銘品の効果が表示されます。 / Fixed named item effects being left out when filtering effects by slot in the Codex. Named items now match the slot of the gear they are based on, so their effects appear in the filtered list.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
+## v3.2.6 — Fixes for Infinity co-op choices, forge buttons, gear effect caps, and effect lights（2026-10-17）
+
+この版は、Infinity の協力プレイでゲストがホストより先に次の選択を始められてしまう問題、鍛冶のボタンと遊び方の表示が実際のルールと合っていなかった問題、装備の固有効果と連携の説明の問題、同じエフェクトを短い間に繰り返すと光が上限を超えて点灯する問題を直す更新です。 / This update fixes guests in Infinity co-op being able to start the next choice before the host, forge buttons and how-to text that did not match the actual rules, issues with gear unique effects and link descriptions, and lights exceeding their limit when the same effect replays in quick succession.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- Infinity の協力プレイで、ゲストがホストより先に次の選択を始められてしまう問題を直しました。潜行で決めた内容は次に決め直すまで残ります。そのため、次の区間でボスを倒したあと、前の区間の選択をもとにゲストの画面で次の選択が開いていました。これからは、ゲストはホストの選択が届いてから次の選択を始めます。通信の状況によっては、選択が開くまで少し待つことがあります。 / Fixed an issue in Infinity co-op where guests could start the next choice before the host. The delve decision stays in effect until the next decision, so after the next segment's boss, the next choice could open for guests based on the previous segment's choice. Guests now wait for the host's choice to arrive before starting the next one. Depending on the connection, there may be a short wait before the choice opens.
+- 鍛冶で、保管庫がいっぱいでも通常・上等の製作ボタンが押せてしまっていた問題を直しました。保管庫がいっぱいだと製作はできないため、これからはどちらのボタンも押せなくなります。 / Fixed the forge's normal and fine craft buttons being clickable while the vault was full. Since crafting isn't possible with a full vault, both buttons are now disabled in that case.
+- 鍛冶で、再調律の候補を選んでいる途中の遺物にも分解ボタンが押せた問題を直しました。押しても分解はされないのに、遺物の選択と再調律の候補が画面から消えていました。これからは、再調律の候補がある遺物では分解ボタンが押せません。分解できなかったときは選択と候補の表示がそのまま残り、選択が外れるのは分解できたときだけです。 / Fixed the forge letting you click Salvage on a relic while choosing a retune option. Nothing was salvaged, but the relic selection and retune options disappeared from the screen. The Salvage button is now disabled for relics with pending retune options. If salvaging is refused, the selection and options stay on screen, and the selection is cleared only when salvaging succeeds.
+- 記録タブの遊び方で、遺失物の回収に必要な部屋数に工房の強化が反映されず、基本の数のまま表示されていた問題を直しました。これからは日本語・英語とも、実際に必要な部屋数を表示します。 / Fixed the how-to in the Records tab showing the base number of rooms needed to recover lost items, without reflecting workshop upgrades. It now shows the actual number of rooms required, in both Japanese and English.
+- 日替わり強化の日に、装備の固有効果が普段より低くなることがあった問題を直しました。たとえば勢い5を3部位に付けた場合、普段は合計10ですが、烈火の日には9に下がっていました。これからは強化の日でも10になります。 / Fixed gear unique effects sometimes ending up lower than usual on daily boost days. For example, Momentum 5 on three slots normally totals 10, but it dropped to 9 on Blaze days. It now stays at 10 on boost days as well.
+- 覚醒させた装備の条件付き効果が、共通の上限に対して実際より多く数えられていた問題を直しました。たとえば活力30を2部位に付け、片方を覚醒3にした場合、上限に数える覚醒前の値が56になっていましたが、正しく40で数えるようになりました。効果そのものの合計（56）は変わりません。 / Fixed conditional effects on awakened gear counting more than they should toward the shared cap. For example, with Vitality 30 on two slots and one of them at Awaken 3, the pre-awakening value counted toward the cap was 56; it is now correctly counted as 40. The total effect itself (56) does not change.
+- 連携の説明に出る上限の割合が、実際の値と違っていた問題を直しました。たとえば同調の条件を1つ満たした場合、説明には25%と出ていましたが、実際の上限は45%でした。これからは、装備全体にかかる実際の上限を表示します。あわせて、同じ種類・同じ条件の効果は合算されること、星の連携はそれとは別に加わることを、日本語と英語の説明に書き加えました。 / Fixed link descriptions showing a cap percentage that differed from the actual value. For example, with one Sync condition met, the description said 25% while the actual cap was 45%. Descriptions now show the real cap applied to your equipped gear as a whole. They also now explain, in both Japanese and English, that effects of the same type and condition are combined, and that star links are added separately.
+- 同じエフェクトが短い間に何度も再生されると、エフェクトの光が決められた数を超えて点灯することがあった問題を直しました。これからは、同じエフェクトを繰り返し再生した場合も、光の数が上限の中に収まります。 / Fixed effect lights sometimes exceeding their set limit when the same effect was replayed several times in quick succession. Lights now stay within the limit even when the same effect replays repeatedly.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
+## v3.2.5 — Fix saving after salvaging starting relics and keep starting relic marks（2026-10-17）
+
+この版は、初期遺物を分解したあとにプロフィールの保存や協力プレイでの取引ができなくなる問題と、一時的に保管庫から出ている初期遺物の印が保存や読み込みで消えてしまう問題を直す更新です。 / This update fixes being unable to save your profile or trade in co-op after salvaging a starting relic, and starting relic marks disappearing on save or load while the relic was temporarily out of the vault.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- 初期遺物を分解したあと、プロフィールの保存に失敗するようになっていた問題を直しました。何度保存し直しても失敗が続き、協力プレイの取引も成立させられませんでした。1個ずつ分解した場合も、まとめて分解した場合も、これからは普段どおり保存でき、続きから遊べます。取引も完了できます。 / Fixed an issue where saving your profile failed after salvaging a starting relic. Saving kept failing no matter how many times you tried, and co-op trades could not be completed either. Whether you salvage starting relics one at a time or in bulk, you can now save and continue as usual, and trades can be completed.
+- 初期遺物が保管庫の外にあると、保存して読み込み直したときに初期遺物の印が消えていた問題を直しました。鞄の中、遺失物、中断した遠征から回収を待つ遺物、分解待ち、協力プレイの取引で預けている間、道標で保留している間が対象です。たとえば取引を取り消すと遺物は手元に戻りますが、印は消えたままでした。これからは、こうした状態で保存・読み込みをしても、続きからの再開でロビーでの変更を反映し直したあとも、印は残ります。分解した遺物や取引で渡した遺物の印は残りません。 / Fixed an issue where the starting relic mark disappeared after saving and reloading while a starting relic was outside the vault. This affected relics in your bag, in lost items, waiting to be recovered from an interrupted run, pending salvage, held in a co-op trade, or held at a waypoint. For example, canceling a trade returned the relic, but its mark stayed lost. Marks now stay through saving and loading in all of these cases, including when lobby changes are applied again on Continue. Relics you salvaged or traded away no longer keep their mark.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
+## v3.2.4 — Star Offering description now notes the Dream Depth XP multiplier（2026-10-17）
+
+この版は、出来事「星の捧げ物」の説明に、実際に得られる星の経験の量が正しく書かれていなかった問題を直す更新です。 / This update fixes the Star Offering event description not accurately showing how much Star XP you actually receive.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- 出来事「星の捧げ物」の説明には基礎値の星の経験40しか書かれていませんでしたが、実際には夢の深さに応じた経験の倍率が掛かります。たとえば深さ5では80を得られます。説明と実際に得られる量が違って見えていたため、日本語・英語の両方の説明に、夢の深さの経験倍率が掛かることを書き加えました。得られる経験の量そのものは変わっていません。 / The Star Offering event description showed only the base value of 40 Star XP, but the actual amount is multiplied by the Dream Depth XP multiplier. At depth 5, for example, you receive 80. Because the description did not match what you actually got, both the Japanese and English descriptions now note that the Dream Depth XP multiplier applies. The amount of XP you receive is unchanged.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
+## v3.2.3 — Fixes for Pure White Dream profile switching, F6 language saving, and Infinity boss saves（2026-10-17）
+
+この版は、純白の夢に勝ったあとプロフィールを切り替えられなくなる問題、F6 メニューで切り替えた言語が次回起動時に元へ戻る問題、インフィニティでボスに繰り上がったあとに保存や協力プレイの同期が失敗する問題を直す更新です。インフィニティの案内に出る数値も実際の値に揃えました。 / This update fixes being unable to switch profiles after winning the Pure White Dream, the language chosen in the F6 menu reverting on the next launch, and saving and co-op syncing failing after Infinity moves you up to the boss. It also makes the numbers in the Infinity guide match the actual values.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- 純白の夢に勝ったあと、終わったはずの遠征の結果がまだ反映されていない扱いのまま残っていた問題を直しました。ホストでも参加者でも起きており、保存してゲームを再起動してもこの状態が続いたため、プロフィールを切り替えられませんでした。その結果、次の遠征が以前のプロフィールに記録されることもありました。これからは、勝利後もプロフィールを普段どおり切り替えられ、次の遠征は選んだプロフィールに記録されます。 / Fixed an issue where, after winning the Pure White Dream, the finished run was still treated as having a result waiting to be applied. This happened for both the host and other players, and it continued even after saving and restarting the game, so you could not switch profiles. As a result, your next run could also be recorded to your previous profile. You can now switch profiles as usual after the win, and your next run is recorded to the profile you chose.
+- F6 メニューの記録タブで言語を切り替えても、次にゲームを起動すると前の言語に戻っていた問題を直しました。これからは切り替えた時点で設定に保存され、次回の起動でも選んだ言語で表示されます。保存できなかった場合は、画面にその旨が表示されます。 / Fixed an issue where the language you switched to in the Records tab of the F6 menu went back to the previous language the next time you started the game. Your choice is now saved as soon as you switch, so the game starts in the language you picked. If saving fails, a message is shown on screen.
+- インフィニティで、周期に必要な数より小さい地図からボスへ繰り上がったあと、プロフィールの保存や読み込みに失敗していた問題を直しました。特に最初の周期で起きやすく、協力プレイでは参加者が進行状況を受け取れないこともありました。これからは、ボス戦の途中、次の選択を待っている間、その先の地図へ進んだあとも、保存して続きから遊べます。 / Fixed an issue in Infinity where saving or loading the profile failed after a map smaller than the cycle length moved you up to the boss. It happened most often in the first cycle, and in co-op, other players could fail to receive the run's progress. You can now save and continue during the boss fight, while waiting for the next choice, and after moving on to later maps.
+- 以前の版でこの状態になったセーブも、ボス戦や選択待ちなどの進行状況を保ったまま読み込めるようになりました。 / Saves that hit this issue in an earlier version now load correctly, keeping progress such as an ongoing boss fight or a pending choice.
+- インフィニティの案内に表示される初期遺物の数、星図の上限、到達刻印の条件を、日本語・英語とも実際の値と一致するように直しました。 / The starting relic count, Star Chart limit, and milestone mark conditions shown in the Infinity guide now match the actual values in both Japanese and English.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
+## v3.2.2 — Smoother Trade tab with large vaults（2026-10-17）
+
+この版は、保管庫の遺物が多いときに取引タブが重くなる問題を直す更新です。 / This update fixes the Trade tab slowing down when the vault holds many relics.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- 保管庫に遺物が数百件あると、取引タブを開いている間にフレームレートが大きく落ちていた問題を直しました。工房で保管庫を最大の1960枠まで広げた場合も同じでした。これからは、保管庫と鞄の遺物一覧で画面に見えている行だけを表示するので、遺物が多くても動作が重くなりにくくなります。スクロールできる範囲は今までどおりです。 / Fixed an issue where the frame rate dropped sharply while the Trade tab was open if the vault held hundreds of relics, including a vault expanded to the maximum of 1,960 slots in the workshop. The vault and bag relic lists now show only the rows visible on screen, so the tab stays responsive even with many relics. You can still scroll through the whole list as before.
+- 取引タブの遺物一覧は、装備・鍛冶の一覧と同じく、どの行も同じ高さで並ぶようになりました。長い名前は1行で表示し、説明は行の中に収まる分だけを表示します。全文は行にカーソルを合わせると表示され、選択済みの欄でも確認できます。 / Relic rows in the Trade tab now all have the same height, like the equipment and forge lists. Long names are shown on one line, and descriptions are trimmed to fit the row. Hover over a row to see the full text, which is also shown in the selected section.
+- 名前・レア度・部位で絞り込みを変えると、一覧は先頭に戻ります。 / Changing the name, rarity, or slot filter now scrolls the list back to the top.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
+## v3.2.1 — Secure point nightmare chance now matches the actual roll（2026-10-17）
+
+この版は、確保地点のパネルに表示される悪夢化の確率を、実際の抽選と合うように直す更新です。 / This update makes the nightmare chance shown on the secure point panel match the actual roll.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- 確保地点のパネルで「通常の敵の◯%が悪夢化」と表示される確率が、実際の確率より低く出ていた問題を直しました。夢レベルが高く装備が育っているほど差が大きくなり、たとえば30%と表示されていても、実際には40〜60%前後になることがありました。これからは、夢の圧、パネルで選んでいる道標、一行の装備の効果も表示に含めるので、表示される確率が実際の確率と一致します。 / Fixed an issue where the "◯% of normal enemies become nightmares" chance on the secure point panel was lower than the real chance. The gap grew with higher dream levels and stronger gear, so a displayed 30% could actually be around 40–60%. The panel now includes Dream Pressure, the waypoint selected on the panel, and the party's gear, so the shown chance matches the real one.
+- 「明けない夜」の道標を選んでいるとき、ボス以外の敵がすべて悪夢化するのに通常の確率が表示されていた問題を直しました。これからは「ボス以外のすべての敵が悪夢化」と表示されます。 / Fixed an issue where selecting the "Endless Night" waypoint still showed a normal percentage even though every non-boss enemy becomes a nightmare. The panel now says "All non-boss enemies become nightmares."
+- 協力プレイでホストが古いバージョンのままの場合は、一行の装備の効果を確かめられないため、確率を「◯%以上」と表示します。 / In co-op, if the host is on an older version, the party's gear effect can't be checked, so the chance is shown as "at least ◯%".
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
 ## v3.2.0 — Minor adjustments（2026-10-17）
 
 細かな調整を行いました。 / Minor adjustments.

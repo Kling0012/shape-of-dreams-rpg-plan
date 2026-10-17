@@ -21,10 +21,12 @@ the ``SODRPG_SLOW=1`` environment variable, which the release scripts and CI
 set instead of the flag), every Speed=Slow test method anchors a process of
 its own (SODRPG_SLOW=1), so the exhaustive tests of one class overlap too
 instead of serializing behind the slowest class; the class-group filters
-subtract exactly those methods. Timing-threshold classes run in one lone
-process after every parallel batch has finished, so overlapping processes
-cannot push their measured loops over the limit. The union of the processes
-always selects exactly the tests a single unfiltered run would.
+subtract exactly those methods. The two extended equivalence methods further
+partition complete hero/seed sequences over 16 processes each, retaining all
+steps and assertions. Timing-threshold classes run in one lone process after
+every parallel batch has finished, so overlapping processes cannot push their
+measured loops over the limit. Together the processes cover every scenario of
+a single unfiltered run (the two sharded methods report one result per shard).
 
 If nothing test-relevant changed, a message is printed and the exit code is 0.
 Otherwise the exit code is the first non-zero ``dotnet test`` exit code.
@@ -34,6 +36,7 @@ from __future__ import annotations
 
 import argparse
 import concurrent.futures
+import contextvars
 import fnmatch
 import functools
 import os
@@ -71,6 +74,16 @@ HEAVY_CORE_CLASSES = frozenset({
     "SodRpg.Core.Tests.StarMapOptimizeCommandTests",
 })
 CORE_PROCESS_COUNT = 5
+
+# These methods contain independent hero/seed sequences. Keep every sequence,
+# but avoid one serialized test becoming the critical path of the release gate.
+EQUIVALENCE_SHARDS = {
+    "SodRpg.Core.Tests.AllocationEquivalenceV131Tests."
+    "Extended_random_equivalence_over_the_generated_v131_hero_trees": 16,
+    "SodRpg.Core.Tests.AllocationEquivalenceV131Tests."
+    "Extended_random_equivalence_over_every_real_hero_the_synthetic_tree_and_the_authored_probe": 16,
+}
+_EQUIVALENCE_SHARD = contextvars.ContextVar("equivalence_shard", default=None)
 
 # Threshold-sensitive timing tests (ms per kill / ms per build upper bounds).
 # Their measurements are only reliable without CPU contention, so these classes
@@ -960,14 +973,38 @@ def run_dotnet_test(root: Path, project: str, filter_expr: str | None,
     cmd = [dotnet, "test", project, "-c", "Release"]
     if filter_expr:
         cmd += ["--filter", filter_expr]
-    if no_build:
-        cmd.append("--no-build")
     env = dict(os.environ)
     env["DOTNET_ROOT"] = dotnet_root
     # Keep the console summary machine-parseable regardless of the OS locale.
     env.setdefault("DOTNET_CLI_UI_LANGUAGE", "en")
+    # Never inherit a partial selection from a caller's shell.
+    env.pop("SODRPG_EQUIVALENCE_SHARD", None)
+    shard = _EQUIVALENCE_SHARD.get()
+    if shard is not None:
+        env["SODRPG_EQUIVALENCE_SHARD"] = shard
     if slow:
         env["SODRPG_SLOW"] = "1"
+    if no_build:
+        # A separate remote phase (such as timing) may run on another host
+        # without the earlier build's outputs. Ask MSBuild for the actual path
+        # (including output overrides) and only skip building when the assembly
+        # is present.
+        target = subprocess.run(
+            [dotnet, "msbuild", project, "-nologo", "-property:Configuration=Release",
+             "-getProperty:TargetPath"], cwd=str(root), env=env,
+            stdin=subprocess.DEVNULL, capture_output=True, text=True,
+            encoding="utf-8", errors="replace",
+        )
+        if target.returncode != 0:
+            return target.returncode, (target.stdout or "") + (target.stderr or "")
+        target_path = target.stdout.strip()
+        if not target_path:
+            return 1, f"MSBuild returned no TargetPath for {project}\n"
+        if (root / target_path).is_file():
+            cmd.append("--no-build")
+        else:
+            print(f"build output missing for {project}; building before test",
+                  file=sys.stderr)
     result = subprocess.run(
         cmd, cwd=str(root), env=env, stdin=subprocess.DEVNULL,
         capture_output=True, text=True, encoding="utf-8", errors="replace",
@@ -1064,6 +1101,17 @@ def selection_runs(selected: set[str],
     return runs, deferred
 
 
+def run_test_process(root: Path, project: str, filter_expr: str | None,
+                     slow: bool, shard: str | None) -> tuple[int, str]:
+    # Context-local metadata preserves run_dotnet_test's public signature (the
+    # release gate wraps it to add its ordinary/timing filters).
+    token = _EQUIVALENCE_SHARD.set(shard)
+    try:
+        return run_dotnet_test(root, project, filter_expr, True, slow)
+    finally:
+        _EQUIVALENCE_SHARD.reset(token)
+
+
 def run_selection(root: Path, classes, run_all: bool, slow: bool = False) -> int:
     """Run the selected classes (or everything); returns the exit code.
 
@@ -1089,7 +1137,7 @@ def run_selection(root: Path, classes, run_all: bool, slow: bool = False) -> int
     if not run_all and classes:
         known = set().union(*owned.values()) if owned else set()
         unowned = set(classes) - known
-    pairs: list[tuple[str, str | None, str]] = []  # (project, filter, label)
+    pairs: list[tuple[str, str | None, str, str | None]] = []  # (project, filter, label, shard)
     deferred_pairs: list[tuple[str, str | None, str]] = []  # alone, after the pool drains
     for project in projects:
         if run_all:
@@ -1099,7 +1147,13 @@ def run_selection(root: Path, classes, run_all: bool, slow: bool = False) -> int
             if not selected:
                 continue  # no class of this project is selected; nothing to run
             runs, deferred = selection_runs(selected, slow_methods)
-        pairs.extend((project, expr, label) for expr, label in runs)
+        for expr, label in runs:
+            method = expr.removeprefix("FullyQualifiedName=") if expr else ""
+            count = EQUIVALENCE_SHARDS.get(method, 1) if slow and project == CORE_TESTS_PROJECT else 1
+            for index in range(count):
+                shard = f"{index}/{count}" if count > 1 else None
+                suffix = f" [sequence shard {index + 1}/{count}]" if shard else ""
+                pairs.append((project, expr, label + suffix, shard))
         deferred_pairs.extend((project, expr, label) for expr, label in deferred)
     if not pairs and not deferred_pairs:
         print("no tests selected for any project")
@@ -1111,9 +1165,10 @@ def run_selection(root: Path, classes, run_all: bool, slow: bool = False) -> int
     total_failed = total_passed = 0
     if pairs:
         with concurrent.futures.ThreadPoolExecutor(max_workers=workers) as pool:
-            futures = {pool.submit(run_dotnet_test, root, project, expr, True, slow):
-                       (project, label) for project, expr, label in pairs}
-            for future, (project, label) in futures.items():
+            futures = {pool.submit(run_test_process, root, project, expr, slow, shard):
+                       (project, label) for project, expr, label, shard in pairs}
+            for future in concurrent.futures.as_completed(futures):
+                project, label = futures[future]
                 code, output = future.result()
                 print(f"===== {project}{label} =====")
                 print(output, end="" if output.endswith("\n") else "\n")

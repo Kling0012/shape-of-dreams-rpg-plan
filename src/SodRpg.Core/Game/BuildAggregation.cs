@@ -7,6 +7,13 @@ namespace SodRpg.Core.Game
     /// <summary>Canonical conditions and exact addition; stateful applications retain their source identity.</summary>
     public static class BuildAggregation
     {
+        /// <summary>Cap an already-summed stat for both builds and summaries; StatCap 0 means no upper limit. Negative totals are preserved.</summary>
+        public static int CapStat(Stat stat, int total)
+        {
+            int cap = Content.StatCap(stat);
+            return cap > 0 ? Math.Min(total, cap) : total;
+        }
+
         public static string LinkKey(LinkDef link)
         {
             if (!Links.Validate(link)) throw new ArgumentException("Invalid link.", nameof(link));

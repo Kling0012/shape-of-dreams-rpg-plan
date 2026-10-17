@@ -60,9 +60,14 @@ namespace SodRpg.Core.Tests
             p.LostAndFound.Add(Loot.RollRelic(rng, Rarity.Common, 1));
             var best = Loot.RollRelic(rng, Rarity.Epic, 10);
             p.LostAndFound.Add(best);
+            p.Run.Bounties.Add(new Bounty { Kind = BountyKind.Treasure, Target = 1 });
+            p.Run.Bounties.Add(new Bounty { Kind = BountyKind.EpicFinder, Target = 1 });
             Rules.UseEvent(p, DreamEvent.Lantern);
             Assert.Contains(best, p.Run.Satchel);
             Assert.Single(p.LostAndFound);
+            Assert.Equal(1, p.Run.RelicsFound);
+            Assert.Equal(0, p.Stats.RelicsFound);
+            Assert.All(p.Run.Bounties, b => Assert.Equal(0, b.Progress));
         }
 
         [Fact]

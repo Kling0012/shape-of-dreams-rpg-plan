@@ -42,11 +42,11 @@ namespace SodRpg.Core.Game
                     "このMODでは、Shape of Dreams の遠征で「持ち帰れる装備（遺物）」が手に入るようになります。\n" +
                     "① 敵を倒すと遺物が落ちます。協力プレイでも一人ひとりに別々に落ちます。\n" +
                     "② 新しいゾーンに着くと「確保地点」が開きます。確保すれば拾った物を持ち帰れます。深く潜れば戦利品が増えますが、そのぶん危険も増します。\n" +
-                    "③ 装備・鍛冶・星図は [F6] のメニューから使えます。最初の遺物を3つ用意したので、初めての遠征で自動的に装備されます。",
+                    $"③ 装備・鍛冶・星図は [F6] のメニューから使えます。最初の遺物を{Content.SlotCount}つ用意したので、初めての遠征で自動的に装備されます。",
                     "This mod adds take-home gear (relics) to your Shape of Dreams runs.\n" +
                     "1) Enemies drop relics (personal loot for each player).\n" +
                     "2) Each new zone is a secure point: Secure to keep your loot, or Delve for more loot and more danger.\n" +
-                    "3) Gear, forge and the star map live in the [F6] menu. You get 3 starter relics, auto-equipped on your first run."),
+                    $"3) Gear, forge and the star map live in the [F6] menu. You get {Content.SlotCount} starter relics, auto-equipped on your first run."),
             },
             new HintDef
             {
@@ -87,8 +87,8 @@ namespace SodRpg.Core.Game
             new HintDef
             {
                 Id = Hint.TalentPoints, Title = new Txt("星図のポイントが増えました", "Star map points earned"),
-                Body = new Txt("この旅人の星の経験が溜まり、ポイントを得ました。撃破・確保・踏破で星の経験が増え、旅人ごとに最大500ポイントを得られます。図鑑のボーナスは全旅人に加わります。遠征の外で [F6] の「星図」から星に振りましょう。振り直しは無料です。",
-                    "This Traveler earned star experience and points. Kills, securing and victories earn up to 500 points independently per Traveler; codex bonuses apply to everyone. Outside a run, spend them in the [F6] Star Map. Resets are free."),
+                Body = new Txt($"この旅人の星の経験が溜まり、ポイントを得ました。撃破・確保・踏破で星の経験が増え、旅人ごとに最大{StarProgression.MaxPoints}ポイントを得られます。図鑑のボーナスは全旅人に加わります。遠征の外で [F6] の「星図」から星に振りましょう。振り直しは無料です。",
+                    $"This Traveler earned star experience and points. Kills, securing and victories earn up to {StarProgression.MaxPoints} points independently per Traveler; codex bonuses apply to everyone. Outside a run, spend them in the [F6] Star Map. Resets are free."),
             },
             new HintDef
             {
