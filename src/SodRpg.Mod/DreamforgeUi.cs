@@ -1573,6 +1573,13 @@ namespace SodRpg.Mod
 
         private string SlotTabLabel(Profile p, Slot slot)
         {
+            if (TabPerf.CacheOff)
+            {
+                // 採否の比較用（dreamforge_perf_nocache）：導入前と同じく、呼ぶたびに保管庫全体を数えて文字列を作る。
+                int n = 0;
+                foreach (var relic in p.Stash) if (relic.Slot == slot) n++;
+                return n > 0 ? $"{Content.SlotName(slot)} <color=#bcbcd2>{n}</color>" : Content.SlotName(slot).ToString();
+            }
             EnsureStashCache(p);
             return _slotTabLabels[(int)slot];
         }

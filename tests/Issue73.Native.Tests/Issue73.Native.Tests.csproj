@@ -14,6 +14,7 @@
     <ProjectReference Include="../../src/SodRpg.Core/SodRpg.Core.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="../../src/SodRpg.Mod/TabPerf.cs" Link="ModUnderTest/TabPerf.cs" />
     <Compile Include="../../src/SodRpg.Mod/ExpeditionDiagnostics.cs" Link="ModUnderTest/ExpeditionDiagnostics.cs" />
     <Compile Include="../../src/SodRpg.Mod/ClientSession.Diagnostics.cs" Link="ModUnderTest/ClientSession.Diagnostics.cs" />
     <Compile Include="../../src/SodRpg.Mod/HostAuthority.KillSync.cs" Link="ModUnderTest/HostAuthority.KillSync.cs" />

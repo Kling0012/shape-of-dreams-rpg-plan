@@ -213,11 +213,12 @@ namespace SodRpg.Mod
             }
             _perf.EndUpdate();
             // GC の割り当て量は、perf.flag があるか dreamforge_perf が一度でも使われたときだけ測る（既定は無負荷）。
+            TabPerf.Enabled = _perfLogEnabled || _perfPolled;
             if (_perfLogEnabled || _perfPolled) _perf.SampleGC();
             if (_perfLogEnabled && Time.unscaledTime >= _nextPerfLog)
             {
                 _nextPerfLog = Time.unscaledTime + 10f;
-                Debug.Log("[DreamforgeRPG] perf " + _perf.Report() +
+                Debug.Log("[DreamforgeRPG] perf " + _perf.Report() + TabPerf.Report() +
                     $" | lightweight={_performance?.Mode ?? config.lightweight} background={!_hasFocus}");
             }
         }
@@ -285,8 +286,18 @@ namespace SodRpg.Mod
         {
             if (!CommandAllowed()) return;
             _perfPolled = true; // 以後のフレームで GC 割り当ても測れるようにする。
-            Debug.Log("[DreamforgeRPG] " + _perf.Report() + " | save avg " + _session.SaveMsAverage.ToString("0.00") +
+            Debug.Log("[DreamforgeRPG] " + _perf.Report() + TabPerf.Report() + " | save avg " + _session.SaveMsAverage.ToString("0.00") +
                 $"ms (main thread) | lightweight={_performance?.Mode ?? config.lightweight} background={!_hasFocus}");
+        }
+
+        [ConsoleCommand("Dreamforge: toggle the gear/forge tab draw caches off/on to compare dreamforge_perf results (#500)", "dreamforge_perf_nocache")]
+        private void PerfNoCacheCommand()
+        {
+            if (!CommandAllowed()) return;
+            _perfPolled = true;
+            TabPerf.CacheOff = !TabPerf.CacheOff;
+            TabPerf.Report(); // 切り替え前の集計を捨て、次の報告を新しい状態だけにする。
+            Debug.Log("[DreamforgeRPG] ui cache=" + (TabPerf.CacheOff ? "off" : "on") + " (run dreamforge_perf after the same scroll/time to compare)");
         }
 
         [ConsoleCommand("Dreamforge: give up trades whose result the host could not confirm (no reward is granted; reserved relics return)", "dreamforge_trades_giveup")]
