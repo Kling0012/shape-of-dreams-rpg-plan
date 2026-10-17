@@ -1,5 +1,11 @@
 # 協力プレイの序盤・高難度の緩和（Issue #601）
 
+## PR #694取込後の仕様
+
+Issue #601の最終要望「敵の数やHPを下げるのは簡単になりすぎました．分担の緩和で十分でした」に従い、v3.2.14の協力専用の緩和を撤回した。現在の圧HP・攻撃・敵数はソロと同じ式、本体人数ボーナスは本体の値、D上限は3、ボスHP合算係数は0.8となる。担当外のダメージは後続の#701の仕様を優先し、遠征内の世界順に100%・70%・40%・10%、5世界目以降は10%を維持する。
+
+悪夢化率の専用同期経路は取込前のmainに存在した。今回の差分による表示修正や経路の復元ではない。以下の「対象と判断」から「PR #681修正ラウンド」までの式・比較表・検証記録は過去の仕様を説明しており、現行仕様との差は末尾の取込記録に示す。
+
 ## 対象と判断
 
 Issue の「高いリンボ」は本体の `GameMod_Limbo.depth` と解釈する。MOD の夢レベル、夢の深度、潜行 Heat、Infinity の圧段階とは別の設定である。本体 DLL の `GameMod_Limbo.GetStatBonus` には深さ2以上で攻撃・魔力+15%と防御+20、深さ5以上のボスに攻撃・移動速度+20%があり、深さ3以上では経験値・シールド等の制約も加わる。これらの選択した難度自体は維持し、その外側に重なる協力用強化を下げる。Limbo と Infinity は既存仕様で併用できない。
@@ -206,3 +212,55 @@ NuGetキャッシュはworktree外の `/home/wang/.cache/gh-auto/nuget` を使�
 - フル／遅いテスト（`test_changed.py --all`・`SODRPG_SLOW=1`）、対象無指定の `test_changed.py`：依頼に従い関連テストへ限定。balance差分は全体選択になるためパイプラインへ委ねる。
 - BalanceSimの再実行とソロ全数値の再照合、本体DLLの再逆コンパイル：今回の差分は分担制のダメージ制限であり、圧・敵数・本体人数ボーナス・報酬の式は変更していない。上の初回確認結果は過去の記録として保持する。
 - GitHub CI・Labでの再実行：このラウンドではローカルの関連テスト・参照DLLビルドを実行し、外部パイプラインは起動していない。
+
+## PR #694の取込記録（2026-10-17）
+
+### 判断したこと
+
+元PR #694の目的は、敵数とHPなどを下げる協力専用の緩和を戻し、分担による難度調整を残すことと解釈した。取込先の開始点 `aa53fa87` には#701が含まれ、分担倍率は遠征内の世界順に100%・70%・40%・10%へ更新されていた。元PR本文の100%・75%・50%へは戻さず、世界順の記録、動的難易度の状況表示、救援、#608のボス持ち分処理を維持した。
+
+### 撤回した緩和
+
+- `DreamPressure.WithCoopScaling` と `CombatMultiplier` を除き、部屋・担当者の双方の圧にソロと同じ式を適用した。協力専用のHP8倍・攻撃2倍・敵数2.5倍の上限も撤回した。
+- `BossShareNativeHealth.AddBonus` の本体人数ボーナスの半減と上限を撤回した。ボスHPの二重掛けを防ぐ既存の人数HP捕捉は残した。
+- 協力時D上限1.5を撤回し、`dynamicDifficulty.maxFactor=3` を使う。`ownership.bossShareFactor` は0.7から0.8へ戻した。
+- `coop.json` と生成器の `difficulty` セクションを除き、生成物を更新した。BalanceSimの `pressure/coop` 行を撤回し、READMEは現行仕様へ書き換えた。
+
+### 難度への影響
+
+次はv3.2.14の緩和あり→今回の撤回後の比較。深度0・道標なし・Infinity段階0・D=1、全員が同じ育成を仮定する。HP・攻撃・敵数は圧だけ、ボスHPは本体人数HPを除いたMOD倍率。本体Limboの能力値や悪夢の補正は含まない。
+
+| 育成 | 圧HP | 圧攻撃 | 圧敵数 | 2人ボスHP | 4人ボスHP |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| 夢Lv1・星0 | 1→1 | 1→1 | 1→1 | 1.4→1.6 | 2.8→3.2 |
+| 夢Lv5・星20 | 1.364→1.56 | 1.04→1.08 | 1.08→1.16 | 1.9096→2.496 | 3.8192→4.992 |
+| 夢Lv30・星500 | 8→16.5 | 2→3.4 | 2.5→5 | 11.2→26.4 | 22.4→52.8 |
+
+育成が進んだ協力プレイや高リンボではv3.2.14より敵が強くなる。これは最終要望に沿った緩和の撤回であり、踏破可能性を確認した結果ではない。ソロ・圧の報酬式・悪夢化率の式は変更していない。
+
+### 受付時の品質懸念への対応
+
+悪夢化率の専用同期経路は開始点に存在し、`NetMessages`・`SendPressure`・`OnPressure`・`CacheSecureText` の機能差分はない。`ClientSession` の差分は初期化行の字下げだけである。「今回同期経路を復元した」「今回表示を修正した」という説明は引き継がない。既存の再現テストには元PRのInfinity段階10と表示専用値の入力を取り込んだが、これは表示計算とキャッシュの確認であり、実通信の受信確認ではない。
+
+元PRの `changelog.d/694-nightmare-pressure.md` は取り込まない。現行mainに対する表示修正がなく、差分はバランス調整とその文書・検証の更新のため、`changelog.d/README.md` に従い更新履歴の断片を作らない。協力専用の緩和の撤回は、この節とPR本文に明記する。
+
+### 今回実行した検証
+
+NuGetキャッシュは環境変数のworktree外の `/home/wang/.cache/gh-auto/nuget` を使用した。テストは新規作成せず、元PRの既存テストの期待値変更と再現入力を取り込んだ。
+
+- 取り込み前の既存Nativeテスト6クラス：78成功・失敗0・スキップ0。
+- 取り込み後の `EnemyOwnershipTests|BossSharesTests|DynamicDifficultyTests|Issue588PersonalWaypointPressureTests|CoopOmensWardTests|Issue608ZeroShareReproductionTests`：78成功・失敗0・スキップ0。担当制、ボスHP、D上限、道標、救援、#608、#701の世界順と分担倍率を含む。
+- Coreの `DreamPressureTests|PressureBalanceTests|PressureRewardMultiplierTests|PressureDividendTests|PressureSuffixCompatibilityTests|DreamDepthV130Tests|DepthRealignHealthTests|InfinityIntervalScalingTests|WaypointsTests|NightmareTests|RunWorldOwnershipTests`：144成功・失敗0・スキップ0。
+- `python3 tests/repro/issue572/run.py`：15成功・失敗0。表示用の圧を手動設定する既存ハーネスであり、通信は対象外。
+- `python3 -m unittest tools.tests.test_coop_balance tools.tests.test_waypoint_balance tools.tests.test_stage6_balance`：9成功。
+- `python3 tools/balance/gen_cs.py` と `python3 tools/balance/gen_cs.py --check`：終了コード0。
+- `dotnet build src/SodRpg.Mod -c Release '-p:GameDir=/home/wang/dev/sod-gamedata/Shape of Dreams' -p:ModDeployDir=/tmp/pr694-build-only --nologo -v:quiet`：成功、エラー0・既存警告6。参照先にModsディレクトリがなく、ゲームへの配置なし。
+- `DOTNET_ROLL_FORWARD=LatestMajor dotnet run --project tools/BalanceSim -c Release -- --mode pressure --out /tmp/pr694-pressure.md --metrics-json /tmp/pr694-pressure.json`：成功。出力2,250値のうちHP・攻撃1,920値を `pressure.json` の共通式と照合してすべて一致し、撤回対象の `pressure/coop` 行がないことも確認した。
+
+### 今回未実行の検証
+
+- 実ゲームでの協力序盤・高リンボの体感、UnityでのHarmony適用・実通信の受信・描画：ゲームを起動できない環境のため。専用同期経路が実機で動いたことや、踏破できたことは確認済みとしない。
+- フル／遅いテスト（`test_changed.py --all`・`SODRPG_SLOW=1`）：依頼に従い関連する既存テストに限定し、後段のパイプラインへ委ねる。
+- GitHub CI・Labでの再実行：この作業はローカルのコミットまでが対象のため。
+- 本体DLLの再逆コンパイルと修正を一時的に戻す検証：既存処理を導入前の式へ戻す変更であり、関連テスト、数値照合、参照DLLビルドを実行したため。
+- yomiyasu_checkのrun/verify：ハッシュ検証を行わないという依頼に従い、指定のlintと文章・差分の目視点検を実施した。

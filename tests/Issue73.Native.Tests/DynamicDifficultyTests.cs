@@ -134,7 +134,7 @@ namespace Issue73.Native.Tests
                 average += alpha * (logRatio - average);
             }
             if (rooms < MinRooms) return 1;
-            return Math.Max(MinFactor, Math.Min(Math.Min(MaxFactor, CoopBalance.Difficulty.DynamicMaximumFactor), Math.Exp(Strength * average)));
+            return Math.Max(MinFactor, Math.Min(MaxFactor, Math.Exp(Strength * average)));
         }
 
         private static object PlayerState(HostAuthority host, DewPlayer player)
@@ -334,7 +334,7 @@ namespace Issue73.Native.Tests
 
             // 圧倒的な速さでも上限で頭打ち。
             DriveRooms(host, a, 120, 1e9, 1);
-            Assert.Equal(Math.Min(MaxFactor, CoopBalance.Difficulty.DynamicMaximumFactor), FactorOf(host, a), 10);
+            Assert.Equal(MaxFactor, FactorOf(host, a), 10);
             Assert.Empty(Log.Warnings);
         }
 

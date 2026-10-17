@@ -498,7 +498,7 @@ namespace SodRpg.Mod
                 _appliedTransfer.Reset();
                 PressureHealthMultiplier = PressureDamageMultiplier = 1f;
                 NightmareGearMultiplier = 0f;
-            NightmarePressureHealthMultiplier = 0f;
+                NightmarePressureHealthMultiplier = 0f;
                 if (!LobbyReturnPending) ResetRunChoiceConnection();
                 ResetMonsterAuthorityConnection();
                 _sentDreamLevel = -1;

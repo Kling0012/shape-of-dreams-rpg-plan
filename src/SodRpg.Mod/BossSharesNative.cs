@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Reflection.Emit;
 using HarmonyLib;
 using Mirror;
-using SodRpg.Core.Game;
 
 namespace SodRpg.Mod
 {
@@ -29,25 +28,6 @@ namespace SodRpg.Mod
 
         private static StatBonus AddBonus(EntityStatus status, StatBonus bonus)
         {
-            if (NetworkServer.active && HostAuthority.NativeInstance != null && bonus != null)
-            {
-                int participants = 0;
-                foreach (var player in DewPlayer.gamePlayers)
-                    if (player != null && player.isHumanPlayer && ++participants >= 2) break;
-                if (participants >= 2)
-                {
-                    // This exact native bonus contains only multiplayer HP and power, not Limbo/nightmare stats.
-                    bonus.maxHealthPercentage = (float)Math.Min(bonus.maxHealthPercentage,
-                        Math.Min(CoopBalance.Difficulty.NativeHealthBonusMaximum,
-                            bonus.maxHealthPercentage * CoopBalance.Difficulty.NativeHealthBonusFactor));
-                    bonus.attackDamagePercentage = (float)Math.Min(bonus.attackDamagePercentage,
-                        Math.Min(CoopBalance.Difficulty.NativePowerBonusMaximum,
-                            bonus.attackDamagePercentage * CoopBalance.Difficulty.NativePowerBonusFactor));
-                    bonus.abilityPowerPercentage = (float)Math.Min(bonus.abilityPowerPercentage,
-                        Math.Min(CoopBalance.Difficulty.NativePowerBonusMaximum,
-                            bonus.abilityPowerPercentage * CoopBalance.Difficulty.NativePowerBonusFactor));
-                }
-            }
             var result = status.AddStatBonus(bonus);
             if (NetworkServer.active && status.entity is Monster monster)
             {
