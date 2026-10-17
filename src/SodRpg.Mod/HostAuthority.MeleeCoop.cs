@@ -32,6 +32,10 @@ namespace SodRpg.Mod
             if (!meleeBreak) ClearMeleeBreaks();
         }
 
+        /// <summary>The four toggles as sent in the hello reply, so clients display what the host applies.</summary>
+        internal int MeleeCoopWire => MeleeCoopSettings.Encode(_rangeToSpeedEnabled, _distanceFalloffEnabled,
+            _meleeBreakEnabled, _meleeGuardEnabled);
+
         private Room _coopRoom;
 
         private void ScanCoopDistances()
@@ -60,9 +64,9 @@ namespace SodRpg.Mod
 
         private void ScanMeleeCoop(HeroRuntime rt, bool alive)
         {
+            bool melee = alive && TravelerCombatNative.IsMelee(rt.Hero);
             try
             {
-                bool melee = alive && TravelerCombatNative.IsMelee(rt.Hero);
                 float converted = _rangeToSpeedEnabled && melee
                     ? StatUnits.ToGame(Stat.AttackRangePct, rt.Powers.Build.Get(Stat.AttackRangePct)) : 0f;
                 if (rt.BaseBonus != null && rt.ConvertedAttackRange != converted)
@@ -83,7 +87,8 @@ namespace SodRpg.Mod
             }
             try
             {
-                rt.MeleeGuard = _meleeGuardEnabled && alive && TravelerCombatNative.IsMelee(rt.Hero)
+                // Hits reuse this result (up to ScanSeconds old) instead of re-checking the attack per hit.
+                rt.MeleeGuard = _meleeGuardEnabled && melee
                     && CountEnemiesNear(rt.Hero, CoopBalance.MeleeGuardRange) > 0;
             }
             catch (Exception ex)
@@ -97,7 +102,7 @@ namespace SodRpg.Mod
         {
             try
             {
-                if (!_meleeGuardEnabled || !rt.MeleeGuard || !TravelerCombatNative.IsMelee(rt.Hero)) return;
+                if (!_meleeGuardEnabled || !rt.MeleeGuard) return;
                 if ((damage.actor ?? actor)?.firstEntity == rt.Hero) return;
                 damage.ApplyReduction(CoopBalance.MeleeGuardReductionPercent / 100f);
             }
@@ -119,11 +124,16 @@ namespace SodRpg.Mod
             return false;
         }
 
+        /// <summary>Callers check <c>_meleeBreakEnabled</c> and the melee traveler first. Only
+        /// <see cref="HostAuthority.OnMemoryDamage"/> calls this in production; the assert (dev builds
+        /// only, compiled out in release) catches a future caller that skips the melee check (#542).</summary>
         private void MarkMeleeBreak(Hero hero, Entity victim)
         {
-            if (!_meleeBreakEnabled || !Alive(hero) || !TravelerCombatNative.IsMelee(hero)
+            if (!_meleeBreakEnabled || !Alive(hero)
                 || victim == null || !victim.isActive || victim.currentHealth <= 0f
                 || victim.GetRelation(hero) != EntityRelation.Enemy) return;
+            Debug.Assert(TravelerCombatNative.IsMelee(hero),
+                "MarkMeleeBreak on a traveler whose basic attack is not melee; callers must check the melee traveler first");
             try
             {
                 if (!_meleeBreaks.TryGetValue(victim, out var state))

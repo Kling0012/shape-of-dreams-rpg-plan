@@ -41,6 +41,27 @@ namespace SodRpg.Core.Game
         }
 
         /// <summary>
+        /// Advances the paid watermark by exactly the granted amount after a native grant that may have been
+        /// reduced by the per-world salvage dust cap: the client's cumulative total keeps growing, so the unpaid
+        /// remainder must stay pending instead of being marked paid. Also counts the granted amount toward that
+        /// world's cap. Returns the new watermark, or -1 under the same rejection conditions as
+        /// CommitOverflowBonus. Rejection never mutates any ledger.
+        /// </summary>
+        public long CommitOverflowBonusGrant(string playerKey, string runId, long cumulativeTotal, long granted, long expectedLedgerId)
+        {
+            if (!TryOverflowBonusLedger(playerKey, runId, expectedLedgerId, out var ledger) || cumulativeTotal < 0 || granted < 0)
+                return -1;
+            if (ledger.RunId != runId)
+                return cumulativeTotal <= ledger.PreviousOverflowBonusPaid ? ledger.PreviousOverflowBonusPaid : -1;
+            if (ledger.OverflowBonusBlocked) return -1;
+            if (cumulativeTotal <= ledger.OverflowBonusPaid) return ledger.OverflowBonusPaid;
+            if (granted > int.MaxValue || cumulativeTotal - ledger.OverflowBonusPaid > int.MaxValue) return -1;
+            ledger.OverflowBonusPaid = System.Math.Min(cumulativeTotal, ledger.OverflowBonusPaid + granted);
+            ledger.ZoneDust += granted;
+            return ledger.OverflowBonusPaid;
+        }
+
+        /// <summary>
         /// Permanently disables only optional overflow bonus in the existing player/run ledger after
         /// an uncertain native mutation. Returns false for missing/mismatched ledger identity or run;
         /// otherwise true, including repeated calls. Never creates a ledger or changes its run.

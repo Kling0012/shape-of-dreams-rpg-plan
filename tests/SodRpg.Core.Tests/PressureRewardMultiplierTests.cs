@@ -110,7 +110,8 @@ namespace SodRpg.Core.Tests
         [InlineData(MonsterTier.Boss, 1.35)]
         public void Expected_shards_scale_by_the_multiplier(MonsterTier tier, double multiplier)
         {
-            const int trials = 200000;
+            // 必ず落ちる段（ミニボス・ボス）は遺物の抽選も走って重いので、少ない回数で足りる（標準誤差は許容幅の1/10未満）。
+            int trials = tier >= MonsterTier.MiniBoss ? 20000 : 200000;
             double baseline = AverageShards(tier, 1, trials, 5);
             double scaled = AverageShards(tier, multiplier, trials, 6);
             Assert.InRange(scaled / baseline, multiplier * 0.96, multiplier * 1.04);

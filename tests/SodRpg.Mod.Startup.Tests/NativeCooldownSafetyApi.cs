@@ -13,6 +13,8 @@ namespace SodRpg.Mod
         public int maxCharges = 1;
         public int addedCharges = 1;
         public float maxCooldownTime = 10f;
+        // 基礎クールダウン（設定0の値。再使用間隔はこの値から計算する）。
+        public float cooldownTime = 10f;
     }
 
     public class AbilityTrigger
@@ -114,6 +116,33 @@ namespace SodRpg.Mod
             }
         }
 
+        // 本体の最低待ち時間（再使用間隔）面。OnCastCompleteSetMinimumDelay が Cast 完了時に本体側の
+        // 最低待ちを設定し、SetMinimumDelay が RpcSetMinimumDelay 経由で同期する。
+        public float[] currentMinimumDelays = { 0f };
+        public int currentConfigIndex;
+        public float nativeMinimumDelay;
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        public void OnCastCompleteSetMinimumDelay(int configIndex, CastInfo info)
+            => currentMinimumDelays[configIndex] = nativeMinimumDelay;
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        public void SetMinimumDelay(int configIndex, float delay)
+        {
+            currentMinimumDelays[configIndex] = delay;
+            RpcSetMinimumDelay(configIndex, delay);
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal void RpcSetMinimumDelay(int configIndex, float delay)
+            => RpcLog.Add("mindelay " + configIndex + " " + delay.ToString("R", System.Globalization.CultureInfo.InvariantCulture));
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        public virtual bool CanBeCast() => true;
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        public virtual bool CanBeReserved() => true;
+
         [MethodImpl(MethodImplOptions.NoInlining)]
         public virtual void LogicUpdate(float dt)
         {
@@ -139,6 +168,15 @@ namespace SodRpg.Mod
     {
         // 本体 SkillTrigger は基底の倍率に SkillBonus の積を掛けた最終結果を返す。
         public float sbCooldownMultiplier = 1f;
+        // 記憶スロット側の面: 所有者・種別・現在設定の読み出し値（抽出した HostAuthority 本体が使う）。
+        public Hero owner;
+        public SkillType type = SkillType.Normal;
+        public bool isActive = true;
+        public float currentConfigUnscaledCooldownTime = 10f;
+        public float currentConfigUnscaledMaxCooldownTime = 10f;
+        public int currentConfigCurrentCharge;
+        public float currentConfigCooldownTime = 10f;
+        public float currentConfigMaxCooldownTime = 10f;
 
         [MethodImpl(MethodImplOptions.NoInlining)]
         public override float GetCooldownTimeMultiplier(int configIndex)

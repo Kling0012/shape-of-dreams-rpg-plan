@@ -160,7 +160,7 @@ namespace SodRpg.Core.Game
             string limit = def.OncePerActivation
                 ? "; at most once per memory use, basic attack or summon attack" : "";
             if (def.OncePerVictim) limit += def.PayoffTrigger == PairComboTrigger.OnKill ? "; once per killed victim" : "; once per combo-marked victim, not once for each of the first three bonus hits";
-            if (def.KillByPayoffMemory) limit += "; only kills by the receiving memory count, not kills by allies, summons or other memories";
+            if (def.KillByPayoffMemory) limit += "; only kills by the receiving memory count, not kills by summons or other memories; in co-op it also triggers when an ally kills an enemy you attacked within 5 seconds";
             string summon = def.Trigger == PairComboTrigger.OnBasicAttack || def.PayoffTrigger == PairComboTrigger.OnBasicAttack
                 ? "Checks whenever you fire your own basic attack while summons are present; no hit is required. " : "";
             string disabled = def.MovementOrigin ? "Inactive: movement memories cannot start a combo. " : "";
@@ -170,7 +170,10 @@ namespace SodRpg.Core.Game
                 : def.Effect == GimmickEffect.Shield ? $"Shield +{n}% of maximum HP"
                 : def.Effect == GimmickEffect.Burst ? $"Area bonus damage +{n}% of the higher of attack damage or ability power"
                 : def.Effect == GimmickEffect.Echo ? $"Follow-up damage +{n}% of damage dealt"
-                : $"Element application +{entry.Value / 100} stacks";
+                : entry.Value < 100
+                    ? $"Element application: {entry.Value}% chance of +1 stack"
+                    : $"Element application +{entry.Value / 100} stack{(entry.Value / 100 == 1 ? "" : "s")}"
+                        + (entry.Value % 100 == 0 ? "" : $" (plus a {entry.Value % 100}% chance of one more)");
             var notes = new List<string>();
             if (disabled.Length > 0) notes.Add(disabled.TrimEnd());
             if (summon.Length > 0) notes.Add(summon.TrimEnd());
@@ -241,8 +244,8 @@ namespace SodRpg.Core.Game
             if (def.OncePerActivation) sb.Append("1回の使用・通常攻撃・召喚物の攻撃につき1回まで。");
             if (def.OncePerVictim)
                 sb.Append(def.PayoffTrigger == PairComboTrigger.OnKill ? "倒した敵1体につき1回まで。" : "連携印のある敵1体につき1回まで。最初の3回の追加ダメージで繰り返すことはない。");
-            if (def.KillByPayoffMemory) sb.Append("受け手の記憶で倒した敵だけが対象で、味方・召喚獣・ほかの記憶の撃破は数えない。");
-            sb.Append("追加ダメージは属性を持たず、連鎖しない。星の追加ダメージでは、連携を開始することも成立させることもできない。");
+            if (def.KillByPayoffMemory) sb.Append("受け手の記憶で倒した敵だけが対象で、召喚獣やほかの記憶の撃破は数えない。協力プレイでは5秒以内に攻撃した敵を味方が倒したときも発動する。");
+            sb.Append("追加ダメージは属性を持たず、連鎖しない。星の追加ダメージでは連携を開始することも成立させることもできない。");
             if (def.MovementOrigin) sb.Append("移動の記憶は起点にならないため、この組は発動しない。");
             if (def.Trigger == PairComboTrigger.OnBasicAttack || def.PayoffTrigger == PairComboTrigger.OnBasicAttack)
                 sb.Append("召喚獣がいるとき、自分が基本攻撃を撃つたびに判定する。命中は不要である。");

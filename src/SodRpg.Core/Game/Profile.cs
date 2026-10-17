@@ -24,6 +24,9 @@ namespace SodRpg.Core.Game
         /// <summary>Last explicit authored-effect migration applied to this hero's saved local IDs.</summary>
         public int AuthoredMigrationVersion { get; set; }
 
+        /// <summary>通常のリンボ6をこの旅人で踏破済み。インフィニティの帰還では解禁しない。</summary>
+        public bool LimboInfinityUnlocked { get; set; }
+
         /// <summary>このキャラでの撃破数（熟練度）。</summary>
         public int Kills { get; set; }
 
@@ -60,7 +63,8 @@ namespace SodRpg.Core.Game
         /// <summary>Allocation previews do not need to clone the five saved slots.</summary>
         public HeroState CloneAllocation()
         {
-            var c = new HeroState { Kills = Kills, StarXp = StarXp, ExtraPoints = ExtraPoints, AuthoredMigrationVersion = AuthoredMigrationVersion };
+            var c = new HeroState { Kills = Kills, StarXp = StarXp, ExtraPoints = ExtraPoints, AuthoredMigrationVersion = AuthoredMigrationVersion,
+                LimboInfinityUnlocked = LimboInfinityUnlocked };
             c.CopyKeystonesFrom(this);
             Array.Copy(Equipped, c.Equipped, Equipped.Length);
             foreach (var kv in Talents) c.Talents[kv.Key] = kv.Value;
@@ -122,6 +126,24 @@ namespace SodRpg.Core.Game
         private long _overflowDreamDustLedgerId;
         /// <summary>Native host ledger bound before enabling overflow bonus accrual.</summary>
         public long OverflowDreamDustLedgerId { get => _overflowDreamDustLedgerId; set => _overflowDreamDustLedgerId = Math.Max(0, value); }
+        /// <summary>このランで何番目の世界か（0始まり、未到達は -1）。本体の世界番号が0へ戻っても戻らない（担当外の減衰に使う）。</summary>
+        public int WorldIndex { get; set; } = -1;
+        /// <summary>WorldIndex を数えたときの本体の世界番号と世界名。再開時に同じ世界を二重に数えないための印。</summary>
+        public int WorldZoneIndex { get; set; } = -1;
+        public string WorldZoneName { get; set; }
+        /// <summary>Last Infinity segment included in WorldIndex; -1 for ordinary runs and legacy saves.</summary>
+        public long WorldInfinitySegment { get; set; } = -1;
+        private long _salvageDustEarned;
+        /// <summary>
+        /// この世界で分解（手動・鞄あふれの追加ダスト）から得たドリームダストの表示用の計数。
+        /// 上限の判定自体はホストの TradeAuthority が行う。世界が変わると 0 に戻す。
+        /// </summary>
+        public long SalvageDustEarned { get => _salvageDustEarned; set => _salvageDustEarned = Math.Max(0, value); }
+        /// <summary>計数が対応する世界の番号（0始まり。-1 はまだ世界を知らない）。保存・再開で保つ。</summary>
+        public int SalvageDustZoneIndex { get; set; } = -1;
+        private long _salvageDustOverflowPaidSeen;
+        /// <summary>追加ダストの支払い済み累計の最後に見た値（この世界への加算に使う。ラン全体の累計）。</summary>
+        public long SalvageDustOverflowPaidSeen { get => _salvageDustOverflowPaidSeen; set => _salvageDustOverflowPaidSeen = Math.Max(0, value); }
         /// <summary>遠征を始めた旅人。撃破がない遠征の精算にも使う。</summary>
         public string HeroKey { get; set; }
         /// <summary>同じ確保の繰り返しで星の経験を二重に得ないための印。</summary>
@@ -142,6 +164,19 @@ namespace SodRpg.Core.Game
         public int WaypointSlotCursor { get; set; }
         public bool WaypointHoardReleased { get; set; }
         public List<Relic> DeferredWaypointRelics { get; } = new List<Relic>();
+
+        /// <summary>
+        /// 抽選の所持判定に使う未確保の遺物：鞄と、封印の宝庫で預かっている遺物。
+        /// 預かり品がなければ鞄をそのまま返すため、呼び出し側はリストと遺物を変更しないこと。
+        /// </summary>
+        public IReadOnlyList<Relic> UnsecuredForLoot()
+        {
+            if (DeferredWaypointRelics.Count == 0) return Satchel;
+            var list = new List<Relic>(Satchel.Count + DeferredWaypointRelics.Count);
+            list.AddRange(Satchel);
+            list.AddRange(DeferredWaypointRelics);
+            return list;
+        }
         public int DeferredWaypointShards { get; set; }
         public int DeferredWaypointTuning { get; set; }
         public List<Relic> Satchel { get; } = new List<Relic>();
@@ -197,6 +232,13 @@ namespace SodRpg.Core.Game
                 Infinity = Infinity?.Clone(),
                 OverflowDreamDustTotal = OverflowDreamDustTotal,
                 OverflowDreamDustLedgerId = OverflowDreamDustLedgerId,
+                WorldIndex = WorldIndex,
+                WorldZoneIndex = WorldZoneIndex,
+                WorldZoneName = WorldZoneName,
+                WorldInfinitySegment = WorldInfinitySegment,
+                SalvageDustEarned = SalvageDustEarned,
+                SalvageDustZoneIndex = SalvageDustZoneIndex,
+                SalvageDustOverflowPaidSeen = SalvageDustOverflowPaidSeen,
                 HeroKey = HeroKey,
                 StarSecureRewarded = StarSecureRewarded,
                 Heat = Heat,
@@ -332,11 +374,11 @@ namespace SodRpg.Core.Game
         public RetuneOffer RetuneOffer { get; set; }
 
         /// <summary>
-        /// 保存の版。v1.27 で 2、v1.28 で 3、v1.31 で 4、撃破受領フロンティアで 5、協力取引の預かり品で 6、中断遺物で 7。
+        /// 保存の版。v1.27 で 2、v1.28 で 3、v1.31 で 4、撃破受領フロンティアで 5、協力取引の預かり品で 6、中断遺物で 7、リンボの旅人別解禁で 8。
         /// 古いMODは新しい版を読み取り専用で開き（LedgerVersionException）、知らない星や遺物を捨てて上書きしない。
-        /// 3→4→5→6→7 はリセットしない（ResetBeforeVersion は 3 のまま）。
+        /// 3→4→5→6→7→8 はリセットしない（ResetBeforeVersion は 3 のまま）。
         /// </summary>
-        public const int CurrentVersion = 7;
+        public const int CurrentVersion = 8;
 
         /// <summary>この版より古い保存は読み込まず、写しを残して新しいプロフィールで始める。</summary>
         public const int ResetBeforeVersion = 3;

@@ -102,7 +102,7 @@ namespace SodRpg.Core.Game
         /// <summary>保存する。成功すると p.Revision が1増える。失敗時は IOException を投げ、本体は変更しない。</summary>
         public void Save(Profile p)
         {
-            if (WritesBlocked) throw new IOException(BlockedMessage);
+            if (WritesBlocked) throw new ProfileWriteException(BlockedMessageJa, BlockedMessageEn);
             long prev = p.Revision;
             p.Revision = prev + 1;
             try
@@ -127,25 +127,25 @@ namespace SodRpg.Core.Game
         {
             lock (_writeLock)
             {
-                if (WritesBlocked) throw new IOException(BlockedMessage);
+                if (WritesBlocked) throw new ProfileWriteException(BlockedMessageJa, BlockedMessageEn);
                 try
                 {
                     _fs.WriteAllText(TempPath, text);
                     if (!string.Equals(_fs.ReadAllText(TempPath), text, StringComparison.Ordinal))
-                        throw new IOException("読み戻しの内容が一致しません。");
+                        throw new ProfileWriteException("読み戻しの内容が一致しません。", "The saved file did not read back identically.");
                     if (!_validatedFirstWrite)
                     {
                         var notes = new List<string>();
                         var check = ProfileCodec.Read(text, notes);
                         if (check.Revision != revision || notes.Count != 0 || ProfileCodec.Write(check) != text)
-                            throw new IOException("プロフィールの往復検証で内容が一致しません。");
+                            throw new ProfileWriteException("プロフィールの往復検証で内容が一致しません。", "The profile did not survive a save/load round trip.");
                     }
                     _fs.Replace(TempPath, _path, _fs.Exists(_path) ? BackupPath : null);
                     _validatedFirstWrite = true;
                 }
                 catch (Exception ex) when (!(ex is IOException))
                 {
-                    throw new IOException("保存に失敗しました: " + ex.Message, ex);
+                    throw new ProfileWriteException("保存に失敗しました: " + ex.Message, "Saving failed: " + ex.Message, ex);
                 }
             }
         }
@@ -259,18 +259,35 @@ namespace SodRpg.Core.Game
             try
             {
                 _fs.Copy(path, copy, overwrite: false);
-                Notes.Add("知らない内容を除外する前のデータを " + System.IO.Path.GetFileName(copy) + " に残しました。");
+                Notes.Add(Loc.T("知らない内容を除外する前のデータを " + System.IO.Path.GetFileName(copy) + " に残しました。",
+                    "Kept the data from before removing unknown content in " + System.IO.Path.GetFileName(copy) + "."));
             }
             catch (IOException ex)
             {
-                Notes.Add("除外する前のデータの写しを作れませんでした: " + ex.Message);
+                Notes.Add(Loc.T("除外する前のデータの写しを作れませんでした: ", "Could not copy the data from before the removal: ") + ex.Message);
             }
         }
 
-        private const string BlockedMessage = "前のデータの写しを作れていないため、保存を止めています。次に起動したときにもう一度試します。";
+        private const string BlockedMessageJa = "前のデータの写しを作れていないため、保存を止めています。次に起動したときにもう一度試します。";
+        private const string BlockedMessageEn = "Saving is paused because a copy of the previous data could not be made. It will be tried again on the next launch.";
 
         private static long ReadVersion(JsonObject root) =>
             root != null && root.TryGet("version", out object value) && value is long version ? version : -1;
+
+        // 書き込み側は言語を読まず、表示するスレッドで日英を選ぶ。
+        private sealed class ProfileWriteException : IOException
+        {
+            private readonly string _japanese, _english;
+
+            internal ProfileWriteException(string japanese, string english, Exception inner = null)
+                : base(japanese, inner)
+            {
+                _japanese = japanese;
+                _english = english;
+            }
+
+            public override string Message => Loc.T(_japanese, _english);
+        }
 
         private void Quarantine(string path)
         {

@@ -84,9 +84,11 @@ namespace SodRpg.Core.Game
             if (rank >= star.MaxRank) return Loc.T("最大段まで取得済みです。", "Acquired at maximum rank.");
             var reasons = new List<string>();
             bool Has(string id) => state.HasKeystone(id) || state.Talents.TryGetValue(id, out int value) && value > 0;
+            string DisplayName(TalentDef talent) => talent == null ? Loc.T("始まりの星", "Starting star")
+                : (PairCombos.ForBridge(talent.Id)?.Name ?? talent.Name).ToString();
             string Name(string id)
             {
-                foreach (var node in layout.Nodes) if (node.Id == id) return node.Talent?.Name.ToString() ?? Loc.T("始まりの星", "Starting star");
+                foreach (var node in layout.Nodes) if (node.Id == id) return DisplayName(node.Talent);
                 return Loc.T("前提の星", "prerequisite star");
             }
             var authored = star.AuthoredStar;
@@ -102,7 +104,7 @@ namespace SodRpg.Core.Game
             }
             if (!connected)
             {
-                string names = string.Join(Loc.T("、", ", "), layout.Nodes[index].Neighbors.Select(i => layout.Nodes[i].Talent?.Name.ToString() ?? Loc.T("始まりの星", "Starting star")));
+                string names = string.Join(Loc.T("、", ", "), layout.Nodes[index].Neighbors.Select(i => DisplayName(layout.Nodes[i].Talent)));
                 reasons.Add(Loc.T($"隣の星が未取得です：{names}。始まりにつながる隣の星を取得してください。",
                     $"Adjacent stars are not acquired: {names}. Acquire a neighbor connected to the start."));
             }
@@ -120,7 +122,7 @@ namespace SodRpg.Core.Game
                     reasons.Add(Loc.T($"刻印の枠がいっぱいです：{state.KeystoneCount}/{state.KeystoneSlotCount}。",
                         $"Keystone slots are full: {state.KeystoneCount}/{state.KeystoneSlotCount}.") + NextSlotText(StarProgression.Points(state.StarXp)));
             }
-            int cost = star.IsKeystone ? star.KeystoneDefinition?.Cost ?? Content.KeystoneCost : star.RankCost;
+            int cost = star.IsKeystone ? star.KeystoneCost : star.RankCost;
             if (freePoints < cost)
                 reasons.Add(Loc.T($"ポイント不足：必要{cost}・残り{freePoints}・あと{cost - freePoints}。",
                     $"Not enough points: cost {cost}, remaining {freePoints}, short by {cost - freePoints}."));

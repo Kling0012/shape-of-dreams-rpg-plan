@@ -13,6 +13,8 @@ namespace SodRpg.Core.Tests
         {
             Assert.Equal(Content.Uniques.Count, Content.Uniques.Select(u => u.Id).Distinct().Count());
             Assert.Equal(Content.Uniques.Count, Content.Uniques.Select(u => u.Name.Ja).Distinct().Count());
+            // English text (codex, wiki, tooltips) must tell uniques and set pieces apart too.
+            Assert.Equal(Content.Uniques.Count, Content.Uniques.Select(u => u.Name.En).Distinct().Count());
             Assert.Equal(Content.Bases.Count, Content.Bases.Select(b => b.Name.Ja).Distinct().Count());
             foreach (var slot in Content.SlotOrder)
             {

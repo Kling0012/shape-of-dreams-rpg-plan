@@ -1,8 +1,9 @@
 """Compile equipment numeric sources into scalar C# constants (no runtime JSON)."""
 import re
-from decimal import Decimal
+from decimal import Decimal, ROUND_HALF_UP
 from pathlib import Path
 from equipment_common import load_json, fingerprint_records, quote
+from forge_values import load as load_forge
 
 ROOT = Path(__file__).resolve().parents[2]
 TABLES = Path(__file__).resolve().parent / "equipment"
@@ -40,7 +41,13 @@ def _authored_coverage():
     section = text[text.index("IReadOnlyList<UniqueDef> Uniques"):text.index("IReadOnlyList<SetDef> Sets")]
     uniques = {}
     for item_id, body in re.findall(r'new UniqueDef\("([^"\n]+)"(.*?)(?=new UniqueDef|\Z)', section, re.S):
-        uniques[item_id] = (re.findall(r"Power\.(\w+),", body), re.search(r"Kind = LinkKind\.(\w+)", body))
+        link = re.search(r"Kind = LinkKind\.(\w+)", body)
+        if link is not None:
+            requires = re.search(r"Requires\s*=\s*new\[\]\s*\{([^}]+)\}", body)
+            if requires is None:
+                raise ValueError(f"{item_id}/link: cannot read authored requirements")
+            link = (link.group(1), len(re.findall(r'"[^"\n]+"', requires.group(1))))
+        uniques[item_id] = (re.findall(r"Power\.(\w+),", body), link)
     for path in (ROOT / "src/SodRpg.Core/Game").glob("BossProfiles.*.cs"):
         body = path.read_text(encoding="utf-8")
         for item_id in re.findall(r'new UniqueDef\("([^"\n]+)"', body):
@@ -68,12 +75,25 @@ def load_bases(path=None):
     return data["bases"]
 
 
+def _equipped_link_cap(kind, require_count, awaken_percent):
+    # Mirrors Links.Cap / EquippedCap for authored, unawakened equipment values.
+    single = {"Attune": 25, "Guard": 25, "MemoryHaste": 50,
+              "MemorySurge": 40, "MemoryDamage": 40}
+    if kind not in single or require_count not in (1, 2, 3):
+        raise ValueError(f"unsupported equipped link: {kind}, requirements={require_count}")
+    multiplier = (Decimal("1.0"), Decimal("1.6"), Decimal("2.2"))[require_count - 1]
+    cap = (single[kind] * multiplier).quantize(Decimal(1), rounding=ROUND_HALF_UP)
+    cap *= Decimal(awaken_percent) / 100
+    return min(Decimal(90), cap) if kind == "MemoryHaste" else cap
+
+
 def load_uniques(path=None):
     data = load_json(path or TABLES / "uniques.json")
     _keys(data, ("schemaVersion", "uniques"), "uniques")
     if type(data["schemaVersion"]) is not int or data["schemaVersion"] != 1 or not isinstance(data["uniques"], dict):
         raise ValueError("uniques: unsupported schema")
     _, authored = _authored_coverage()
+    awaken_percent = load_forge()["awakening"]["powerPercents"][-1]
     if set(data["uniques"]) != set(authored):
         raise ValueError("uniques: IDs must cover every authored unique exactly")
     for item_id, row in data["uniques"].items():
@@ -91,9 +111,15 @@ def load_uniques(path=None):
                 raise ValueError(f"{item_id}/link: not authored")
         else:
             _keys(row["link"], ("kind", "value"), item_id + "/link")
-            if row["link"]["kind"] != link.group(1):
+            kind, require_count = link
+            if row["link"]["kind"] != kind:
                 raise ValueError(f"{item_id}/link/kind: must match authored relation")
-            _decimal(row["link"]["value"], item_id + "/link/value")
+            value = _decimal(row["link"]["value"], item_id + "/link/value")
+            if kind != "BossReward":
+                cap = _equipped_link_cap(kind, require_count, awaken_percent)
+                if value > cap:
+                    raise ValueError(f"{item_id}/link/value: {value} exceeds equipped cap {cap} "
+                                     f"({kind}, requirements={require_count})")
     return data["uniques"]
 
 

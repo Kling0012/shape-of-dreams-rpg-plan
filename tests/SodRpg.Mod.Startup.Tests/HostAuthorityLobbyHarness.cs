@@ -13,6 +13,8 @@ namespace SodRpg.Mod
     internal sealed partial class HostAuthority
     {
         internal static HostAuthority NativeInstance;
+        // HostAuthority.MeleeCoop.cs is not compiled here; hello replies carry the "not sent" value.
+        internal int MeleeCoopWire => 0;
         internal Actor _registeredOn;
 
         private readonly SortedDictionary<long, AuthoritativeRunKill> _killUnacknowledged

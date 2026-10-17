@@ -20912,6 +20912,228 @@
       "notes": "配置決定（2026-10-03）：効果にいちばん関係する記憶の星団の、奥の選択の星の先に置く（他の旅人の刻印と同じ置き方）。キー配置は設計表に明記なし。効果に最も近い記憶星団のq(c循c1)の先へ当初の置き場所(要確認)。 N1+N5。本体循環の毎攻撃回復・寿命延長は毎発のまま。"
     },
     {
+      "id": "nachia.run.g1",
+      "region": "outer",
+      "cluster": "nachia.outer.run-growth",
+      "shape": "chain",
+      "anchor": "h.nachia.route.moonlight-pact.7",
+      "edges": [
+        "nachia.run.m1"
+      ],
+      "requires": [],
+      "requiresAny": [],
+      "kind": "RunGrowth",
+      "memory": null,
+      "value": null,
+      "param": null,
+      "receiver": null,
+      "target": null,
+      "gimmick": null,
+      "power": null,
+      "growth": {
+        "trigger": "SummonHit",
+        "threshold": {
+          "valueRef": "nachia.run.g1/growth/threshold"
+        },
+        "cap": {
+          "valueRef": "nachia.run.g1/growth/cap"
+        },
+        "effects": [
+          {
+            "stat": "PowerPct",
+            "amount": {
+              "valueRef": "nachia.run.g1/growth/effects/0/amount"
+            }
+          },
+          {
+            "stat": "Armor",
+            "amount": {
+              "valueRef": "nachia.run.g1/growth/effects/1/amount"
+            }
+          }
+        ]
+      },
+      "stat": null,
+      "options": null,
+      "keystone": null,
+      "mechanisms": [
+        "C01"
+      ],
+      "maxRank": 1,
+      "rankCost": 1,
+      "nameJa": "群れの積み重ね",
+      "nameEn": "Accumulated Pack Bonds",
+      "notes": "v1.32 B: 遠征の鍛錬の入口（仕組みを得る重要な星）。"
+    },
+    {
+      "id": "nachia.run.m1",
+      "region": "outer",
+      "cluster": "nachia.outer.run-growth",
+      "shape": "chain",
+      "anchor": null,
+      "edges": [
+        "nachia.run.g1",
+        "nachia.run.m2"
+      ],
+      "requires": [
+        "nachia.run.g1"
+      ],
+      "requiresAny": [],
+      "kind": "RunGrowthMod",
+      "memory": null,
+      "value": null,
+      "param": null,
+      "receiver": null,
+      "target": null,
+      "gimmick": null,
+      "power": null,
+      "growth": {
+        "target": "nachia.run.g1",
+        "capBonus": {
+          "valueRef": "nachia.run.m1/growth/capBonus"
+        },
+        "effectPct": {
+          "valueRef": "nachia.run.m1/growth/effectPct"
+        },
+        "doubleGain": false
+      },
+      "stat": null,
+      "options": null,
+      "keystone": null,
+      "mechanisms": [
+        "C01"
+      ],
+      "maxRank": 1,
+      "rankCost": 1,
+      "nameJa": "育まれる絆",
+      "nameEn": "Nurtured Bonds",
+      "notes": "上限増分はバランス表から生成。 / Cap increase is generated from the balance table."
+    },
+    {
+      "id": "nachia.run.m2",
+      "region": "outer",
+      "cluster": "nachia.outer.run-growth",
+      "shape": "chain",
+      "anchor": null,
+      "edges": [
+        "nachia.run.m1",
+        "nachia.run.choice"
+      ],
+      "requires": [
+        "nachia.run.m1"
+      ],
+      "requiresAny": [],
+      "kind": "RunGrowthMod",
+      "memory": null,
+      "value": null,
+      "param": null,
+      "receiver": null,
+      "target": null,
+      "gimmick": null,
+      "power": null,
+      "growth": {
+        "target": "nachia.run.g1",
+        "capBonus": {
+          "valueRef": "nachia.run.m2/growth/capBonus"
+        },
+        "effectPct": {
+          "valueRef": "nachia.run.m2/growth/effectPct"
+        },
+        "doubleGain": false
+      },
+      "stat": null,
+      "options": null,
+      "keystone": null,
+      "mechanisms": [
+        "C01"
+      ],
+      "maxRank": 1,
+      "rankCost": 1,
+      "nameJa": "尽きぬ絆",
+      "nameEn": "Inexhaustible Bonds",
+      "notes": "上限増分はバランス表から生成。 / Cap increase is generated from the balance table."
+    },
+    {
+      "id": "nachia.run.choice",
+      "region": "outer",
+      "cluster": "nachia.outer.run-growth",
+      "shape": "chain",
+      "anchor": null,
+      "edges": [
+        "nachia.run.m2"
+      ],
+      "requires": [
+        "nachia.run.m2"
+      ],
+      "requiresAny": [],
+      "kind": "Choice",
+      "memory": null,
+      "value": null,
+      "param": null,
+      "receiver": null,
+      "target": null,
+      "gimmick": null,
+      "power": null,
+      "stat": null,
+      "options": [
+        {
+          "kind": "RunGrowthMod",
+          "memory": null,
+          "value": null,
+          "param": null,
+          "receiver": null,
+          "target": null,
+          "gimmick": null,
+          "power": null,
+          "growth": {
+            "target": "nachia.run.g1",
+            "capBonus": {
+              "valueRef": "nachia.run.choice/options/0/growth/capBonus"
+            },
+            "effectPct": {
+              "valueRef": "nachia.run.choice/options/0/growth/effectPct"
+            },
+            "doubleGain": false
+          },
+          "stat": null,
+          "nameJa": "深まる絆",
+          "nameEn": "Deepening Bonds"
+        },
+        {
+          "kind": "RunGrowthMod",
+          "memory": null,
+          "value": null,
+          "param": null,
+          "receiver": null,
+          "target": null,
+          "gimmick": null,
+          "power": null,
+          "growth": {
+            "target": "nachia.run.g1",
+            "capBonus": {
+              "valueRef": "nachia.run.choice/options/1/growth/capBonus"
+            },
+            "effectPct": {
+              "valueRef": "nachia.run.choice/options/1/growth/effectPct"
+            },
+            "doubleGain": false
+          },
+          "stat": null,
+          "nameJa": "広がる絆",
+          "nameEn": "Expanding Bonds"
+        }
+      ],
+      "keystone": null,
+      "mechanisms": [
+        "C01"
+      ],
+      "maxRank": 1,
+      "rankCost": 1,
+      "nameJa": "絆の育て方",
+      "nameEn": "How Bonds Grow",
+      "notes": "1スタックの効果 +50% ／ 蓄積上限 +20。 / Stat gain per stack +50% or stack cap +20."
+    },
+    {
       "id": "h.nachia.route.pack-heart.6",
       "region": "migration",
       "kind": "GimmickBoost",
@@ -22204,6 +22426,143 @@
       "nameJa": "祈りの過負荷",
       "nameEn": "Overflowing Prayer",
       "notes": "既存星の効果置換（星の追加ではない）。既存Overloadを維持（代償は #47 で撤廃）。N5。移動は起点から除外。"
+    },
+    {
+      "id": "nachia.key.oath-of-the-pack",
+      "region": "keystone",
+      "cluster": "nachia.key",
+      "shape": null,
+      "anchor": "nachia.mem.sylvan-call.c1.q",
+      "edges": [],
+      "requires": [
+        "nachia.mem.sylvan-call.c1.q"
+      ],
+      "requiresAny": [],
+      "kind": "Keystone",
+      "memory": null,
+      "value": null,
+      "param": null,
+      "receiver": null,
+      "target": null,
+      "gimmick": null,
+      "power": null,
+      "stat": {
+        "name": "Armor",
+        "perRank": {
+          "valueRef": "nachia.key.oath-of-the-pack/stat/perRank"
+        }
+      },
+      "options": null,
+      "keystone": {
+        "upside": "自分の防御が10増え、自分の召喚体が与える本体ダメージが12%増える。",
+        "upsideSpec": [
+          {
+            "effect": "SummonDirectDamage",
+            "field": "Damage",
+            "pct": {
+              "valueRef": "nachia.key.oath-of-the-pack/keystone/upsideSpec/0/pct"
+            }
+          }
+        ]
+      },
+      "mechanisms": [
+        "C07"
+      ],
+      "maxRank": 1,
+      "rankCost": 1,
+      "nameJa": "群れの誓い",
+      "nameEn": "Oath of the Pack",
+      "notes": "召喚体の存在条件と召喚体への防御付与は既存kindにないため、常時の自分の防御+10と既存SummonDirectDamage+12%へ置換。本体のCircleOfLifeによる共有は本体仕様に従う。"
+    },
+    {
+      "id": "nachia.key.heartbeat-of-the-grove",
+      "region": "keystone",
+      "cluster": "nachia.key",
+      "shape": null,
+      "anchor": "nachia.mem.circle-life.c1.q",
+      "edges": [],
+      "requires": [
+        "nachia.mem.circle-life.c1.q"
+      ],
+      "requiresAny": [],
+      "kind": "Keystone",
+      "memory": null,
+      "value": null,
+      "param": null,
+      "receiver": null,
+      "target": null,
+      "gimmick": null,
+      "power": null,
+      "stat": {
+        "name": "SummonPower",
+        "perRank": {
+          "valueRef": "nachia.key.heartbeat-of-the-grove/stat/perRank"
+        }
+      },
+      "options": null,
+      "keystone": {
+        "upside": "自分の召喚体が与えるダメージが18%増える。",
+        "upsideSpec": null
+      },
+      "mechanisms": [
+        "C07"
+      ],
+      "maxRank": 1,
+      "rankCost": 1,
+      "nameJa": "森の鼓動",
+      "nameEn": "Heartbeat of the Grove",
+      "notes": "本人の全撃破を起点とする召喚体回復・召喚体攻速バフは既存kindでは表現できないため、常時召喚威力+18%へ置換。撃破頻度に依存しない支援量として採用。"
+    },
+    {
+      "id": "nachia.key.pack-guard",
+      "region": "keystone",
+      "cluster": "nachia.key",
+      "shape": null,
+      "anchor": "nachia.mem.natures-whisper.c3.q",
+      "edges": [],
+      "requires": [
+        "nachia.mem.natures-whisper.c3.q"
+      ],
+      "requiresAny": [],
+      "kind": "Keystone",
+      "memory": null,
+      "value": null,
+      "param": null,
+      "receiver": null,
+      "target": null,
+      "gimmick": null,
+      "power": null,
+      "stat": null,
+      "options": null,
+      "keystone": {
+        "upside": "群れの番犬 / Pack Guard",
+        "upsideSpec": [
+          {
+            "effect": "Coop",
+            "field": "Value",
+            "scope": "powerPercent",
+            "to": {
+              "valueRef": "nachia.key.pack-guard/keystone/upsideSpec/0/to"
+            }
+          },
+          {
+            "effect": "Coop",
+            "field": "Value",
+            "scope": "seconds",
+            "to": {
+              "valueRef": "nachia.key.pack-guard/keystone/upsideSpec/1/to"
+            }
+          }
+        ]
+      },
+      "mechanisms": [
+        "C07"
+      ],
+      "maxRank": 1,
+      "rankCost": 1,
+      "nameJa": "群れの番犬",
+      "nameEn": "Pack Guard",
+      "notes": "同行の刻印。味方との協力距離係数を使用し、ソロでは発動しない。"
     }
   ]
 }

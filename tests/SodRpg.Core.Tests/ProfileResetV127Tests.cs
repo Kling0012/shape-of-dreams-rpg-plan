@@ -86,8 +86,8 @@ namespace SodRpg.Core.Tests
             var p = store.Load();
             Assert.True(store.WritesBlocked);
             Assert.Contains(store.Notes, n => n.Contains("保存も止めています"));
-            Assert.Throws<IOException>(() => store.Save(p));
-            Assert.Throws<IOException>(() => store.Save(p));
+            Assert.ThrowsAny<IOException>(() => store.Save(p));
+            Assert.ThrowsAny<IOException>(() => store.Save(p));
             Assert.Equal(old, fs.ReadAllText(Path)); // 元のファイルは変わらない
             Assert.Equal(old, fs.ReadAllText(Path + ".bak"));
             Assert.DoesNotContain(fs.Inner.Files.Keys, k => k.Contains("-archive-")); // 中途の写しは残さない（#91）
