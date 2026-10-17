@@ -95,8 +95,8 @@ namespace SodRpg.Core.Game
         }
 
         /// <summary>
-        /// 遺物を抽選する。ownedRelics は保管庫（装着品を含む）、unsecuredRelics は未確保の鞄。
-        /// 所持リストを省略すると、セット部位の収集補助は行わない。
+        /// 遺物を抽選する。ownedRelics は保管庫（装着品を含む）、unsecuredRelics は鞄・宝庫の未確保品。
+        /// 所持リストとその遺物は読み取りだけに使う。省略すると、セット部位の収集補助は行わない。
         /// </summary>
         public static Relic RollRelic(Rng rng, Rarity rarity, int itemLevel, Slot? slot = null, Line? focus = null,
             IReadOnlyList<Relic> ownedRelics = null, IReadOnlyList<Relic> unsecuredRelics = null, ISet<string> codex = null,

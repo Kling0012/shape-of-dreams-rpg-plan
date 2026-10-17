@@ -2658,12 +2658,12 @@ namespace SodRpg.Core.Game
             new UniqueDef("set.starsong.head", "head.comet_diadem", new Txt("星詠みの冠", "Starsinger's Diadem"), "set.starsong"),
             new UniqueDef("set.starsong.hands", "hands.star_rings", new Txt("星詠みの指環", "Starsinger's Rings"), "set.starsong"),
             new UniqueDef("set.starsong.feet", "feet.star_slippers", new Txt("星詠みの靴", "Starsinger's Slippers"), "set.starsong"),
-            new UniqueDef("set.hunt.weapon", "weapon.hunting_bow", new Txt("狩猟団の弓", "Huntmaster's Bow"), "set.hunt"),
-            new UniqueDef("set.hunt.armor", "armor.hunter_leather", new Txt("狩猟団の革鎧", "Huntmaster's Leathers"), "set.hunt"),
-            new UniqueDef("set.hunt.charm", "charm.fang_necklace", new Txt("狩猟団の牙", "Huntmaster's Fang"), "set.hunt"),
-            new UniqueDef("set.hunt.head", "head.hunter_hood", new Txt("狩猟団の頭巾", "Huntmaster's Hood"), "set.hunt"),
-            new UniqueDef("set.hunt.hands", "hands.hunting_sinew", new Txt("狩猟団の筋帯", "Huntmaster's Sinew Wraps"), "set.hunt"),
-            new UniqueDef("set.hunt.feet", "feet.hunter_boots", new Txt("狩猟団の長靴", "Huntmaster's Boots"), "set.hunt"),
+            new UniqueDef("set.hunt.weapon", "weapon.hunting_bow", new Txt("狩猟団の弓", "Hunting Party Bow"), "set.hunt"),
+            new UniqueDef("set.hunt.armor", "armor.hunter_leather", new Txt("狩猟団の革鎧", "Hunting Party Leathers"), "set.hunt"),
+            new UniqueDef("set.hunt.charm", "charm.fang_necklace", new Txt("狩猟団の牙", "Hunting Party Fang"), "set.hunt"),
+            new UniqueDef("set.hunt.head", "head.hunter_hood", new Txt("狩猟団の頭巾", "Hunting Party Hood"), "set.hunt"),
+            new UniqueDef("set.hunt.hands", "hands.hunting_sinew", new Txt("狩猟団の筋帯", "Hunting Party Sinew Wraps"), "set.hunt"),
+            new UniqueDef("set.hunt.feet", "feet.hunter_boots", new Txt("狩猟団の長靴", "Hunting Party Boots"), "set.hunt"),
             new UniqueDef("set.bastion.weapon", "weapon.tower_lance", new Txt("不落城の槍", "Bastion Lance"), "set.bastion"),
             new UniqueDef("set.bastion.armor", "armor.bastion_shell", new Txt("不落城の甲羅", "Bastion Shell"), "set.bastion"),
             new UniqueDef("set.bastion.charm", "charm.guardian_seal", new Txt("不落城の封印", "Bastion Seal"), "set.bastion"),
@@ -2761,12 +2761,12 @@ namespace SodRpg.Core.Game
             new UniqueDef("set.myriad.weapon", "weapon.chanting_wand", new Txt("万象の詠唱杖", "Myriad Chanting Wand"), "set.myriad"),
             new UniqueDef("set.myriad.head", "head.sage_hat", new Txt("万象の賢者帽", "Myriad Sage Hat"), "set.myriad"),
             new UniqueDef("set.myriad.feet", "feet.cometstride_shoes", new Txt("万象の彗星靴", "Myriad Cometshoes"), "set.myriad"),
-            new UniqueDef("set.daybreak.weapon", "weapon.dawn_scepter", new Txt("払暁の笏", "Daybreak Scepter"), "set.daybreak"),
-            new UniqueDef("set.daybreak.head", "head.radiant_halo", new Txt("払暁の光輪", "Daybreak Halo"), "set.daybreak"),
-            new UniqueDef("set.daybreak.feet", "feet.dawn_steps", new Txt("払暁の長靴", "Daybreak Treads"), "set.daybreak"),
-            new UniqueDef("set.daybreak.armor", "armor.sun_plate", new Txt("払暁の胸甲", "Daybreak Breastplate"), "set.daybreak"),
-            new UniqueDef("set.daybreak.hands", "hands.sunfire_grips", new Txt("払暁の陽炎手", "Daybreak Sunfire Grips"), "set.daybreak"),
-            new UniqueDef("set.daybreak.charm", "charm.halo_charm", new Txt("払暁の光環御守", "Daybreak Halo Charm"), "set.daybreak"),
+            new UniqueDef("set.daybreak.weapon", "weapon.dawn_scepter", new Txt("払暁の笏", "Dawnbreak Scepter"), "set.daybreak"),
+            new UniqueDef("set.daybreak.head", "head.radiant_halo", new Txt("払暁の光輪", "Dawnbreak Halo"), "set.daybreak"),
+            new UniqueDef("set.daybreak.feet", "feet.dawn_steps", new Txt("払暁の長靴", "Dawnbreak Treads"), "set.daybreak"),
+            new UniqueDef("set.daybreak.armor", "armor.sun_plate", new Txt("払暁の胸甲", "Dawnbreak Breastplate"), "set.daybreak"),
+            new UniqueDef("set.daybreak.hands", "hands.sunfire_grips", new Txt("払暁の陽炎手", "Dawnbreak Sunfire Grips"), "set.daybreak"),
+            new UniqueDef("set.daybreak.charm", "charm.halo_charm", new Txt("払暁の光環御守", "Dawnbreak Halo Charm"), "set.daybreak"),
             // v1.29：固有品の第1段52個。この後に第2段を入力済み。P37の16個だけ保留（docs/specs/v1.29-uniques-deferred.md）。
             new UniqueDef("unique.w_palmcannon", "weapon.rockbreaker", new Txt("砕岩の砲槌", "Boulderburst Hammer"),
                 new Txt("撃ち抜いた後に、熱い岩だけが残る。", "Only hot stone remains where it struck."),
@@ -5207,8 +5207,14 @@ namespace SodRpg.Core.Game
         public static IReadOnlyList<AffixDef> AffixPool(Slot slot) => AffixPools[slot];
         public static IReadOnlyList<PowerRange> PowerPool(Slot slot) => PowerPools[slot];
 
+        // 定義済みの値を一度だけ集め、抽選候補ごとの箱詰めと反射を避ける。入れ子の型で静的初期化順序に依存させない。
+        private static class DefinedPowers
+        {
+            internal static readonly HashSet<Power> Set = new HashSet<Power>((Power[])Enum.GetValues(typeof(Power)));
+        }
+
         /// <summary>Direct conditional AD/AP powers may roll only on Epic or higher gear.</summary>
-        public static bool IsPowerDroppable(Power power) => Enum.IsDefined(typeof(Power), power)
+        public static bool IsPowerDroppable(Power power) => DefinedPowers.Set.Contains(power)
             && power != Power.None && power != Power.ShadowStep && !CurrencyStars.IsPower(power);
         public static bool PowerAllowedForRarity(Power power, Rarity rarity) => IsPowerDroppable(power)
             && (rarity >= Rarity.Epic || !NewPowersV129.IsConditionalAttribute(power));
@@ -5263,6 +5269,7 @@ namespace SodRpg.Core.Game
         public static Txt Epithet(Power p) => Epithets.TryGetValue(p, out var t) ? t : NewPowersV129.IsPower(p) ? NewPowersV129.Epithet(p) : ElementReactions.Epithet(p);
 
         public static int PowerCap(Power p) => PowerCaps.TryGetValue(p, out int c) ? c : 0;
+        /// <summary>Upper limit for a stat; 0 means no upper limit (including stats absent from StatCaps).</summary>
         public static int StatCap(Stat s) => StatCaps.TryGetValue(s, out int c) ? c : 0;
 
         public static IEnumerable<BaseDef> BasesFor(Slot slot)
@@ -5544,7 +5551,8 @@ namespace SodRpg.Core.Game
                     if (!DisplayMeleeRangeConversion) return Loc.T($"通常攻撃の射程 {sign}{v}%", $"Basic attack range {sign}{v}%");
                     {
                         int gain = TravelerCombat.RangeToSpeedGain(DisplayMeleeAttackSpeed, v);
-                        string gainSign = gain >= 0 ? "+" : "";
+                        // At the cap the gain is nothing: show "0%" without a sign so that reads at a glance (#542).
+                        string gainSign = gain > 0 ? "+" : "";
                         int cap = StatCap(Stat.AttackSpeedPct);
                         return Loc.T($"攻撃速度 {gainSign}{gain}%（近接のため射程 {sign}{v}% から変換。攻撃速度は合計{cap}%まで）",
                             $"Attack speed {gainSign}{gain}% (converted from {sign}{v}% range for melee; attack speed capped at {cap}% in total)");

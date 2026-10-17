@@ -123,15 +123,23 @@ namespace SodRpg.Culinary.Tests
         [InlineData(0)]
         [InlineData(int.MaxValue)]
         [InlineData(715827883)]
-        public void UnknownUnsafeNativeLimitsStillDisableOnlyCulinary(int maximum)
+        public void UnknownUnsafeNativeLimitsLeaveOnlyThatStackNative(int maximum)
         {
             var copy = Load();
+            var raised = new Se_Gem_L_Culinary_Stack { maxStack = 40, stack = 1000 };
+            Call(copy, "BeforeMutation", raised);
+            Assert.Equal(int.MaxValue, raised.maxStack);
             var effect = new Se_Gem_L_Culinary_Stack { maxStack = maximum, stack = 100 };
             Call(copy, "BeforeMutation", effect);
-            Assert.False(Enabled(copy));
+            Call(copy, "BeforeMutation", effect);
+            Assert.True(Enabled(copy));
             Assert.Equal(maximum, effect.maxStack);
             Assert.Equal(100, effect.stack);
+            Assert.Equal(100, Count(copy, Owner(effect), effect.stack));
             Assert.True((bool)Call(copy, "BeforeConsumeIngredients", Owner(effect)));
+            Assert.Equal(40, Count(copy, Owner(raised), raised.stack));
+            Assert.False((bool)Call(copy, "BeforeConsumeIngredients", Owner(raised)));
+            Assert.Equal(960, raised.stack);
             Assert.Single(Mod.Log.Warnings);
             Assert.Contains("Native culinary cooking limit is not safe", Mod.Log.Warnings[0]);
         }

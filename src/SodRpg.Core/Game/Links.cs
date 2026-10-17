@@ -247,6 +247,12 @@ namespace SodRpg.Core.Game
             return kind == LinkKind.MemoryHaste ? Math.Min(MaxHaste, cap) : cap;
         }
 
+        // ビルド計算で繰り返す列挙値の検証に使う。入れ子の型で静的初期化順序に依存させない。
+        private static class DefinedKinds
+        {
+            internal static readonly HashSet<LinkKind> Set = new HashSet<LinkKind>((LinkKind[])Enum.GetValues(typeof(LinkKind)));
+        }
+
         /// <summary>データとして正しいか。対象は既知で、1〜3つ、重複なし。記憶を使う効果には記憶が要る。</summary>
         public static bool Validate(LinkDef link)
         {
@@ -255,7 +261,7 @@ namespace SodRpg.Core.Game
             if (n < 1 || n > 3) return false;
             if (link.Kind == LinkKind.BossReward && (n != 1 || IsTraveler(link.Requires[0])
                 || link.ValueMilli < 1000 || link.ValueMilli > 3000 || link.ValueMilli % 1000 != 0)) return false;
-            if (link.Kind == LinkKind.None || !Enum.IsDefined(typeof(LinkKind), link.Kind)) return false;
+            if (link.Kind == LinkKind.None || !DefinedKinds.Set.Contains(link.Kind)) return false;
             bool hasMemory = false;
             for (int i = 0; i < n; i++)
             {
@@ -354,9 +360,11 @@ namespace SodRpg.Core.Game
                     limitEn = " (Only the strongest active link applies. It refreshes the duration without stacking, and ends when its equip requirements are removed.)";
                     break;
                 default:
-                    int linkCap = Cap(link.Kind, link.Requires.Length);
-                    limitJa = linkCap > 0 ? $"同じ種類の連携は足し合わされ、元の値の合計で最大{linkCap}%まで。" : "同じ種類の連携は足し合わされ、合計の上限はない。";
-                    limitEn = linkCap > 0 ? $" (Links of the same kind add together, capped at {linkCap}% of the original values.)" : " (Links of the same kind add together, with no total cap.)";
+                    // Build.Compute が装備の連携の元値合計に使う上限と同じ値を示す。
+                    decimal linkCap = EquippedCap(link.Kind, link.Requires.Length);
+                    string capText = linkCap.ToString("0.##", CultureInfo.InvariantCulture);
+                    limitJa = linkCap > 0 ? $"同じ種類・条件の連携は足し合わされ、装備の元の値の合計で最大{capText}%まで（星の連携は別に加わる）。" : "同じ種類の連携は足し合わされ、合計の上限はない。";
+                    limitEn = linkCap > 0 ? $" (Links of the same kind and requirements add together; equipped links are capped at {capText}% of the original values, and star links add on top.)" : " (Links of the same kind add together, with no total cap.)";
                     break;
             }
             string text = Loc.Japanese ? DescribeJa(link, isSatisfied, value) + limitJa : DescribeEn(link, isSatisfied, value) + limitEn;

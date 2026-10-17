@@ -223,7 +223,7 @@ namespace SodRpg.Mod
         {
             // ボスは悪夢化しない（#127）。種別・クラスのどちらで見てもボスなら、明けない夜（全敵悪夢化）でも対象外。
             if (m is BossMonster || tier == MonsterTier.Boss) return NightmareAffix.None;
-            return Nightmares.RollWaypoint(_rng, tier, depth, chanceMultiplier, ActiveWaypointTotals);
+            return Nightmares.RollWaypoint(_rng, tier, depth, chanceMultiplier, EnemyWaypointTotals(m));
         }
     }
 }

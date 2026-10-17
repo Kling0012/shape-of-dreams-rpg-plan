@@ -250,14 +250,18 @@ namespace SodRpg.Core.Game
                 return;
             }
             var t = Sum(waypoint);
+            // Thin the source loot before room limits, slot cycles, copies or conversions.
+            // Later rewards derive only from retained loot, except First Claim's room guarantee.
+            PressureCountRewards.ScaleLoot(rng, reward, rewardScale);
             if (run.WaypointRoom != roomIndex)
             {
                 run.WaypointRoom = roomIndex;
                 run.WaypointRelicsInRoom = run.WaypointLootRooms.Contains(roomIndex) ? 1 : 0;
             }
+            // The first kill guarantees a Rare floor even if an extra's rolled relic was thinned.
             bool firstClaim = t.FirstKillRelic && run.WaypointRelicsInRoom == 0;
             if (firstClaim && reward.Relics.Count == 0)
-                reward.Relics.Add(Loot.RollRelic(rng, Rarity.Rare, itemLevel, null, focus, p.Stash, run.Satchel));
+                reward.Relics.Add(Loot.RollRelic(rng, Rarity.Rare, itemLevel, null, focus, p.Stash, run.UnsecuredForLoot(), p.Codex));
             if (t.MaxRelicsPerRoom != int.MaxValue)
             {
                 int keep = Math.Max(0, Math.Min(reward.Relics.Count, t.MaxRelicsPerRoom - run.WaypointRelicsInRoom));
@@ -279,7 +283,7 @@ namespace SodRpg.Core.Game
                 if (rarity != r.Rarity || (slot.HasValue && r.Slot != slot.Value))
                     // The original kill roll already applied Infinity's unique drop chance.
                     // A slot/rarity transformation must not gate the same reward a second time.
-                    r = reward.Relics[i] = Loot.RollRelic(rng, rarity, r.ItemLevel, slot, focus, p.Stash, run.Satchel);
+                    r = reward.Relics[i] = Loot.RollRelic(rng, rarity, r.ItemLevel, slot, focus, p.Stash, run.UnsecuredForLoot(), p.Codex);
                 r.Enhance = Math.Min(Content.MaxEnhanceFor(r.Rarity, r.LimitBreaks), Math.Max(r.Enhance, t.Enhancement));
                 if (t.Enhancement > 0) Rules.GrantEnhanceMilestones(rng, r);
             }
@@ -308,12 +312,6 @@ namespace SodRpg.Core.Game
                 starXp = DreamDepth.ScaleReward(reward.Shards, WaypointBalance.StarXpPerShard);
                 reward.Shards = 0;
             }
-            PressureCountRewards.ScaleLoot(rng, reward, rewardScale);
-            // First Claim is a fixed room guarantee, including when an extra dies first.
-            // Restore only its Rare floor; randomly rolled Epic/Legendary loot still uses
-            // the extra's thinning.
-            if (firstClaim && t.MaxRelicsPerRoom > 0 && reward.Relics.Count == 0)
-                reward.Relics.Add(Loot.RollRelic(rng, Rarity.Rare, itemLevel, null, focus, p.Stash, run.Satchel));
             if (!t.DelayDropsUntilBoss) return;
             if (!run.WaypointHoardReleased)
             {

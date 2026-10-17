@@ -97,7 +97,7 @@
   </Target>
 
   <Target Name="CompileInfinityRestore" BeforeTargets="CoreCompile">
-    <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/InfinityMode.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)InfinityRestore.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="InfinityMode" Methods="BeginRestore;FinishRestore;Restoring" />
+    <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/InfinityMode.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)InfinityRestore.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="InfinityMode" Methods="BeginRestore;FinishRestore;Restoring;ReleaseMatchedZone" />
     <ItemGroup>
       <Compile Include="$(IntermediateOutputPath)InfinityRestore.g.cs" />
     </ItemGroup>
@@ -166,7 +166,7 @@
 
   <!-- 協力取引ホスト（所見03・06・08・11）。境界は NativeBoundary.cs の HostAuthority 部。 -->
   <Target Name="CompileCoopTradeHost" BeforeTargets="CoreCompile">
-    <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/HostAuthority.CoopTrade.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)CoopTradeHost.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="HostAuthority" Methods="DiagnoseHostCoopTrade;CoopHostKey;CoopPresent;CoopPeerAvailable;CoopPeerSafe;CoopPeerFusion;CoopFusionError;TickCoopTrade;ReceiveCoopPacket;ReceiveCoopTrade;EnsureCoopJournal;QueryCoopTrade;CancelCoopTrade;CancelHostCoopTrade;CommitHostCoopTrade;PrepareHostCoopTrade;CoopReceiptFits;SendCoopViews;SendCoopView;SendCoopRoster;SendCoopPayload;SendCoopState;SendCoopError;CoopReason;CoopReasonCode;FailHostCoopTrade" />
+    <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/HostAuthority.CoopTrade.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)CoopTradeHost.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="HostAuthority" Methods="DiagnoseHostCoopTrade;CoopHostKey;CoopPresent;CoopPeerAvailable;CoopPeerSafe;CoopPeerFusion;CoopFusionError;TickCoopTrade;ReceiveCoopPacket;ReceiveCoopTrade;EnsureCoopJournal;QueryCoopTrade;CancelCoopTrade;CancelHostCoopTrade;CommitHostCoopTrade;PrepareHostCoopTrade;CoopReceiptFits;SendCoopViews;SendCoopView;SendCoopRoster;SendCoopPayload;SendCoopState;SendCoopError;FailHostCoopTrade" />
     <ItemGroup>
       <Compile Include="$(IntermediateOutputPath)CoopTradeHost.g.cs" />
     </ItemGroup>

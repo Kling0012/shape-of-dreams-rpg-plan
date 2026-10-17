@@ -167,17 +167,19 @@ namespace SodRpg.Mod
 
         private static float Higher(Hero hero) => Math.Max(hero.Status.attackDamage, hero.Status.abilityPower);
 
-        private void PowerHeal(HeroRuntime rt, Entity target, float amount)
+        /// <param name="amplify">false when amount already includes the giver's heal power (a share of healing that landed).</param>
+        private void PowerHeal(HeroRuntime rt, Entity target, float amount, bool amplify = true)
         {
             if (amount <= 0f || target == null || !target.isActive || target.currentHealth <= 0f) return;
             var support = _am != null ? _am.serverActor : null;
             if (support == null) return;
             _powerSupportDepth++;
-            try { DispatchSupportHeal(rt, target, support.Heal(SupportStats.AmplifyHeal(amount, rt.Powers.Build.Get(Stat.HealPower)))); }
+            try { DispatchSupportHeal(rt, target, support.Heal(amplify ? SupportStats.AmplifyHeal(amount, SupportPower(rt, Stat.HealPower)) : amount)); }
             finally { _powerSupportDepth--; }
         }
 
-        private void PowerShield(HeroRuntime rt, Entity target, Power power, float amount, float duration)
+        /// <param name="amplify">false when amount already includes the giver's shield power (a share of a shield that landed).</param>
+        private void PowerShield(HeroRuntime rt, Entity target, Power power, float amount, float duration, bool amplify = true)
         {
             if (amount <= 0f || target == null || !target.isActive || target.currentHealth <= 0f) return;
             var support = _am != null ? _am.serverActor : null;
@@ -186,8 +188,8 @@ namespace SodRpg.Mod
             _powerSupportDepth++;
             try
             {
-                var shield = support.GiveShield(target, SupportStats.AmplifyShield(amount,
-                    rt.Powers.Build.Get(Stat.ShieldPower)), duration);
+                var shield = support.GiveShield(target, amplify ? SupportStats.AmplifyShield(amount,
+                    SupportPower(rt, Stat.ShieldPower)) : amount, duration);
                 if (shield == null) return;
                 // The ledger compares exact underlying shields, so a recycled pooled handle is never touched.
                 if (PowerShields.Offer(key, shield, duration) == PowerShieldOutcome.KeptExisting) return;
@@ -292,8 +294,10 @@ namespace SodRpg.Mod
             float share = owner.Powers.SharedWardShield(amount);
             if (share <= 0f) return;
             foreach (var ally in LivingAllies(recipient, PowersBalance.SharedWardAllyRange))
+                // The share is of the shield that landed (finalAmount already has shield power): do not amplify again.
                 PowerShield(owner, ally, Power.SharedWard,
-                    share * CoopDistanceNative.Coefficient(recipient, ally, PowersBalance.SharedWardAllyRange), PowersBalance.SharedWardDuration);
+                    share * CoopDistanceNative.Coefficient(recipient, ally, PowersBalance.SharedWardAllyRange), PowersBalance.SharedWardDuration,
+                    amplify: false);
         }
 
         private void UnhookNewPowers(HeroRuntime rt)

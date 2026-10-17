@@ -270,6 +270,29 @@ namespace Issue73.Native.Tests
             offer.RelicUids.Add(profile.Stash[profile.Stash.Count - 1].Uid);
             SendPayload(_a, "offer", view.id, 1, profile, offer);
             Assert.True(ProfileParts(_b) > before); // 差し出す遺物が変われば送る
+
+            // （#538）回復経路の再送。通常の query では同じ版の記録を送り直さない。
+            _b.connectionToClient.Sent.Clear();
+            _host.ReceiveCoopTrade(new DreamforgeCoopTradeCommand { action = "query", id = view.id }, _b);
+            Assert.Contains(States(_b), state => state.kind == "view" && state.id == view.id);
+            Assert.Equal(0, ProfileParts(_b)); // 通常の照会は見る位置情報だけ
+
+            // 再請求（wantsProfile）でも、前の送信から最低間隔（CoopProfileResendInterval=15s）の
+            // 内側では送り直さない。大きな保管庫の分割送信の途中に毎プローブ送り直すのを防ぐ。
+            _host.ReceiveCoopTrade(new DreamforgeCoopTradeCommand { action = "query", id = view.id, wantsProfile = true }, _b);
+            Assert.Equal(0, ProfileParts(_b));
+
+            // 間隔を過ぎた再請求なら、同じ版で送り済みでも送り直す（受け手の回復経路）。
+            UnityEngine.Time.unscaledTime += 15.1f;
+            _b.connectionToClient.Sent.Clear();
+            _host.ReceiveCoopTrade(new DreamforgeCoopTradeCommand { action = "query", id = view.id, wantsProfile = true }, _b);
+            Assert.Equal(1, ProfileParts(_b));
+
+            // 接続IDが変われば（再接続）、間隔を待たずに送り直す。回復が間隔で餓えないことの保証。
+            UnityEngine.Time.unscaledTime += 1f;
+            _b.connectionToClient = new NetworkConnectionToClient { connectionId = 9 };
+            Probe(_b);
+            Assert.Equal(1, ProfileParts(_b));
             Assert.Empty(_errors);
         }
 

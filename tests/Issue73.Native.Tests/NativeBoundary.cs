@@ -584,6 +584,13 @@ namespace SodRpg.Mod
         public static readonly List<string> Warnings = new List<string>();
         public static void Warn(string message) { Warnings.Add(message); }
     }
+    // ClientSession.TrackRun がラン開始時に呼ぶ近接分類ログのリセット（#542）。
+    // このハーネスは TravelerCombatNative.cs をコンパイルしない（近接協力の本体は Core.Tests 側）ので、
+    // 何もしない模倣を置く。Log と同じ扱い。
+    internal static class TravelerCombatNative
+    {
+        internal static void ResetReporting() { }
+    }
     internal static class NativeAttributedMemoryCast
     {
         internal sealed class Cast { public MemoryActivationIdentity Identity; public SkillTrigger Skill; }
@@ -689,6 +696,8 @@ namespace SodRpg.Mod
         private bool _pressureDirty;
         // 協力取引ホスト（HostAuthority.CoopTrade.cs は未リンク）。NativePersistence.targets が
         // 本物のハンドラ群を抽出するため、ここはその実行に必要な状態の形だけを用意する。
+        // HostAuthority.CoopTrade.cs の CoopProfileResendInterval と同じ値。
+        private const float CoopProfileResendInterval = 15f;
         private sealed class CoopPeerState
         {
             public float Seen;
@@ -707,6 +716,7 @@ namespace SodRpg.Mod
             public bool Accepted, FirstConfirmed, SecondConfirmed, Preparing, FirstPrepared, SecondPrepared;
             public int Revision;
             public int FirstProfileSentRevision = -1, SecondProfileSentRevision = -1;
+            public float FirstProfileSentAt = -1000f, SecondProfileSentAt = -1000f;
             public float ActiveAt;
             public CoopTradeReceipt Receipt;
         }
@@ -767,6 +777,9 @@ namespace SodRpg.Mod
         internal static bool Available { get; set; }
         private static bool _restoring, _newInfinity, _refresh, _hunterAdjustSuspended;
         private static int _hunterMoveCounter;
+        // InfinityMode.cs の区画一致キャッシュと同じ形（抽出された ReleaseMatchedZone が触る）。
+        private static Zone _matchedZone;
+        private static string _matchedZoneId;
         private static InfinityRunState _initial;
         private static InfinityChoice _choice, _ackWaitingChoice;
         private static string _choiceText;
@@ -942,7 +955,9 @@ namespace SodRpg.Mod
             return false;
         }
         private void InitializeInfinityRun() { }
+        private void EnsureReachableBounties() => Rules.ReplaceUnreachableBounties(Profile, solo: false);
         public float PressureHealthMultiplier { get; internal set; } = 1f;
         public float PressureDamageMultiplier { get; internal set; } = 1f;
+        public float NightmareGearMultiplier { get; private set; }
     }
 }
