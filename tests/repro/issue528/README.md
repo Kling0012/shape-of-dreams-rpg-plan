@@ -32,8 +32,9 @@ worktree 内には設定しない。成果物・bin・obj はコミットしな�
   代用し、実際の保存失敗・30秒タイマー・実機の保存遅延そのものは再現しない。
 - **点2**（`tests/Issue73.Native.Tests/Issue528AckReproTests.cs`）: ビルド時に本物の
   `ClientSession.TickInfinity`（NativePersistence.targets による抽出）を動かす。保存先なしの
-  確認待ちを 30 秒の待ち解除（擬似時間）で通して最初の ACK を成立させた後、適用済みで
-  世代が古い choice（`state.GraphEpoch > choice.GraphEpoch`）への追加 ACK がないことを期待する。
+  確認待ちを 30 秒の待ち解除（擬似時間）で通して同世代で最初の ACK を成立させた後、地図を
+  次の世代へ進め、適用済みで世代が古い choice（`state.GraphEpoch > choice.GraphEpoch`）への
+  追加 ACK がないことを期待する。修正工程で、初回 ACK を確立する時点を同世代へ調整した。
   ACK の観測は境界の `InfinityMode.AcknowledgeLocal` を呼び出しカウンターに変えた観測点で
   行い、実際の Mirror RPC の送受信・取りこぼしは再現しない。
 - **点3**（`check_double_tick.py`）: `ClientSession.TickInfinity` → `TickInfinityPersonalChoice` →
@@ -108,3 +109,51 @@ DOTNET_ROLL_FORWARD=Major dotnet test tests/Issue73.Native.Tests/Issue73.Native.
   確認済み（`InfinityRunState.ObserveBossClear`）。
 - 点2の期待値は「最初の ACK 確立以降の毎秒再送がないこと」とし、初期 ACK そのものの要否は
   修正の設計に委ねた（Issue の案では適用済みかつ世代が古いとき初期 ACK も送らない）。
+
+## 修正工程の結果（2026-10-17）
+
+前節までの修正前の結果・未実行事項は再現工程の記録。以下は修正工程で実行した内容。
+
+- `InfinityMode.TickNative` の ExitBoss 到着処理で `TryEnterBoss` 後に `room.didClearRoom` を
+  再確認し、`ObserveBossClear` まで進めた相位を保存する。保存待ち・遷移・部屋非アクティブで
+  callback を処理できなかった場合も、そのガードが解除された後の Tick で回収する。
+  `ObserveBossClear` の BossFight 限定条件は維持するので、callback と Tick が重なっても
+  WaitingSoulFinish／AwaitingChoice から先へ二重に進めない。
+- 潜行適用済みかつ `state.GraphEpoch > choice.GraphEpoch` なら保存 ACK 処理前に戻る。
+  同世代での1秒ごとの再送と、ホストの `PartyAcknowledged` による全員受信／最大30秒の
+  既存待ち解除は維持する。ホストも適用済みの古い決定に対する毎フレームの全員走査を省ける。
+- `TickInfinityPersonalChoice` からの `TickPersonalChoices` 呼び出しを除き、定期経路は
+  `InfinityMode.Tick` の1本にした。ローカル選択送信の後、移動・部屋進行の前に解放判定する
+  順序を維持する。`SubmitPersonalChoice` 自身が通信登録を確かめるので、定期 Tick より先に
+  完了操作が来ても初回送信・ACK 受信の登録を失わない。
+- ACK 再現ケースは初回 ACK を同世代で成立させ、その後 GraphEpoch を進める最小調整をした。
+  既存の純白入場2ケースは入場時を未クリアにそろえ、撃破時に初めてクリア済みにする。
+  新規テストは追加していない。
+
+### 実行した検証
+
+- 冒頭の再現3コマンド: 修正前はすべて終了コード1。修正後はすべて終了コード0。
+  純白ケースは WaitingSoulFinish から魂の出現・回収を経て AwaitingChoice まで成功。
+- **一時差し戻し**: 本体の修正4ファイルだけを修正前へ一時的に戻し、既存テストの調整を
+  残したまま冒頭の3コマンドを再実行。すべて終了コード1（BossFight のまま／ACK 計11回／
+  二重経路）で失敗した。本体修正を復元し、同じ3コマンドがすべて終了コード0で成功した。
+- Startup の `FullyQualifiedName~InfinityLobbyStartTests`: 終了コード0、88件成功。
+  `-c Release --no-restore -p:PythonCommand=python3 -p:WarningLevel=0` で実行。
+  全員完了・60秒期限・切断時の個人選択解放、ACK 未着の30秒待ち解除とホスト自身の保存保護を含む。
+- Native の `FullyQualifiedName~InfinityPersonalChoiceTests|FullyQualifiedName~InfinityContinueTests|FullyQualifiedName~InfinityClearSaveTests|FullyQualifiedName~Issue528AckReproTests|FullyQualifiedName~PureWhiteRewardChoiceTests`:
+  終了コード0、20件成功。`-c Release --no-restore -p:WarningLevel=0` で実行。
+  保存失敗・遅延・保存先なしの待ち解除、Continue 復元、個人選択の一度だけの適用を含む。
+- Core の `FullyQualifiedName~InfinityPersonalChoiceTests`: 終了コード0、1件成功。
+  `-c Release -p:WarningLevel=0` で実行。上記 .NET テストはすべて `DOTNET_ROLL_FORWARD=Major`。
+- `dotnet build src/SodRpg.Mod -c Release -p:GameDir="/mnt/ghauto-sbx/sod-gamedata/Shape of Dreams" --nologo -v:quiet`:
+  終了コード0、エラー0・既存警告6。参照先に Mods がないことを確認してから実行し、配置なし。
+- `git diff --check`: 終了コード0。
+
+### 未実行の検証（理由付き）
+
+- 実ゲームの起動・協力通信での保存遅延／RPC 欠落・実画面: R4／D1／D2 は対象外。
+  R2 は保存待ち解除後の本体リンク再現と既存の保存待ちテストによる検証であり、
+  実機での遅延・部屋非アクティブ／遷移中の撃破を個別に観察したものではない。
+- 全テスト・`tools/test_changed.py --all`・遅いテスト: 依頼に従い後続パイプラインへ委ねる。
+  変更した Infinity の関連テストだけを実行した。
+- バランス生成鮮度検証: バランス原本・生成物を変更していないため未実行。
