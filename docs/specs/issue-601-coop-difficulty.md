@@ -85,9 +85,8 @@ DOTNET_ROLL_FORWARD=LatestMajor dotnet run --project tools/BalanceSim -c Release
 | R1：協力序盤の緩和 | `BossShareNativeHealth.AddBonus`、`DreamPressure.WithCoopScaling`、`CoopBalance.Ownership.BossShareFactor` | 人数由来の追加HP・攻撃・魔力を半減。育成初期の圧増分と2／4人ボスHPも下げる |
 | R2：協力の高難度での跳ね上がり抑制 | `HostAuthority.RefreshPressure`、`HostAuthority.OwnershipBasePressure`、`DreamPressure.CombatMultiplier` / `EnemyCountMultiplier` | 部屋と個人の双方で深度・道標適用後の圧を制限し、担当敵・共有敵・ボス持ち分に届ける |
 | R3：高リンボ等の過剰強化の緩和 | 上記に加えて `HostAuthority.OnDynamicRoomLoading`、`HostAuthority.PrepareBossShares` | 圧HP8倍・攻撃2倍・圧敵数2.5倍・協力D1.5倍を上限とし、ボスHP合算係数も0.7へ下げる |
-| R4：利用者の追加コメント「高いリンボなどにおいて特にクリア不可能レベルに難易度が跳ね上がっている」 | R2／R3と同じ実行経路、および `BossShareNativeHealth.AddBonus` | 本体Limboの深さに関係なく、強化済みの敵へ重なる協力用の人数・圧・敵数・Dを緩和する。Limboの高深度も適用対象で、低深度限定の条件はない |
 
-R4は高リンボ帯を優先する追加指摘であり、R3と同じ原因経路を対象とする。2026-10-17の修正ラウンドで本体DLLの `GameMod_Limbo.OnActorAdd` / `GetStatBonus` と `Monster.OnStartServer` を再確認した。Limboのボーナスは前者で別に追加され、人数ボーナスだけを後者のフックで緩和する。`InstallPressureHealthProcessor` / `ApplyPressure` が最終能力値へ掛ける圧は部屋・個人の両経路で既に上限適用済みになるため、高リンボ専用の追加倍率は設けない。前ラウンドの実装でR4も対応しており、このラウンドは対応根拠と報告漏れを補う。ゲーム内の踏破可能性は未確認。
+利用者の追加コメント「高いリンボなどにおいて特にクリア不可能レベルに難易度が跳ね上がっている」はR3に対応する。本体Limboの深さに関係なく、強化済みの敵へ重なる協力用の人数・圧・敵数・Dを緩和する。低深度限定の条件はない。前ラウンドでは本体DLLの `GameMod_Limbo.OnActorAdd` / `GetStatBonus` と `Monster.OnStartServer` を確認した。Limboのボーナスは前者で別に追加され、人数ボーナスだけを後者のフックで緩和する。`InstallPressureHealthProcessor` / `ApplyPressure` が最終能力値へ掛ける圧は部屋・個人の両経路で上限適用済みになるため、高リンボ専用の追加倍率は設けない。ゲーム内の踏破可能性は未確認。
 
 ## 実行した検証
 
@@ -108,5 +107,19 @@ R4は高リンボ帯を優先する追加指摘であり、R3と同じ原因経�
 
 ## 未実行
 
-- ゲームを起動した協力序盤・Limboの踏破、Harmonyの実ゲーム適用、2台通信、確保地点の描画：ゲーム実行環境がなく、実機体感確認D1〜D4は依頼対象外。クリア可能性・体感難度を確認済みとはしない。
+- ゲームを起動した協力序盤・Limboの踏破、Harmonyの実ゲーム適用、2台通信、確保地点の描画：ゲーム実行環境がなく、実機体感確認D1〜D3は依頼対象外。クリア可能性・体感難度を確認済みとはしない。
 - フルテスト・遅いテスト：依頼に従い変更箇所の既存テストに限定し、パイプラインへ委ねる。
+
+## マージ後の再依頼での確認（2026-10-17）
+
+今回の開始点 `15a379d4` には、PR #673の上記実装（`d9bdf45f`）が既に含まれていた。Issue本文と追加コメントに新しい調整値・追加症状はないため、同じ依頼でさらに緩和を重ねない。今回の差分は、完了要件を依頼どおりR1〜R3に揃え、現在の実装を再検証した記録に限定する。上の「実行した検証」は前ラウンドの記録であり、以下が今回実際に実行した検証である。
+
+- `DOTNET_ROLL_FORWARD=LatestMajor dotnet test tests/Issue73.Native.Tests/Issue73.Native.Tests.csproj -c Release --filter 'FullyQualifiedName~EnemyOwnershipTests|FullyQualifiedName~BossSharesTests|FullyQualifiedName~DynamicDifficultyTests|FullyQualifiedName~Issue588PersonalWaypointPressureTests|FullyQualifiedName~CoopOmensWardTests' --nologo -v:quiet`：終了コード0、64件成功・失敗0・スキップ0。
+- `DOTNET_ROLL_FORWARD=LatestMajor dotnet test tests/SodRpg.Core.Tests/SodRpg.Core.Tests.csproj -c Release -p:PythonCommand=python3 --filter 'FullyQualifiedName~DreamPressureTests|FullyQualifiedName~PressureBalanceTests|FullyQualifiedName~PressureRewardMultiplierTests|FullyQualifiedName~PressureDividendTests|FullyQualifiedName~PressureSuffixCompatibilityTests|FullyQualifiedName~DreamDepthV130Tests|FullyQualifiedName~DepthRealignHealthTests|FullyQualifiedName~InfinityIntervalScalingTests|FullyQualifiedName~WaypointsTests|FullyQualifiedName~NightmareTests' --nologo -v:quiet`：終了コード0、133件成功・失敗0・スキップ0。
+- `python3 tests/repro/issue572/run.py`：終了コード0、15件成功・失敗0。
+- `python3 -m unittest tools.tests.test_waypoint_balance tools.tests.test_stage6_balance`：終了コード0、6件成功。
+- `python3 tools/balance/gen_cs.py --check`：終了コード0。
+- `dotnet build src/SodRpg.Mod -c Release '-p:GameDir=/mnt/ghauto-sbx/sod-gamedata/Shape of Dreams' --nologo -v:quiet`：終了コード0、警告6・エラー0。参照先のModsディレクトリが存在しないことを事前確認し、ゲームへ配置していない。
+- `DOTNET_ROLL_FORWARD=LatestMajor dotnet run --project tools/BalanceSim -c Release -- --mode pressure --out /tmp/issue601-current-pressure.md --metrics-json /tmp/issue601-current-pressure.json`：終了コード0。1／2／4人の比較90値は上の表と一致（ボス係数のfloat丸めを含む）。出力JSONのソロHP・攻撃1,920値を変更前から不変の `pressure.json` の式とPythonで照合し、すべて一致。協力2／4人の欠片・悪夢化率20値も同条件ソロとすべて一致した。
+
+未実行は上記D1〜D3、Unity内のHarmony適用・実通信・描画と、フル／遅いテスト。実機でのクリア可否を判定する追加調整は行っていない。
