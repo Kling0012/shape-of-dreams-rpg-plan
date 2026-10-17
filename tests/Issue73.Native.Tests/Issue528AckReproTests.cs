@@ -52,22 +52,21 @@ namespace Issue73.Native.Tests
                 RunId = "ack-run", Revision = 1, GraphEpoch = 0, SegmentEpoch = 0, Boundary = false,
             });
 
-            // 保存の確認待ち（保存先なし）を 30 秒の待ち解除で通し、最初の ACK を成立させる。
+            // 適用済みで世代が古い choice には、初回も含めて ACK を送らない。
             Call(session, "TickInfinity");
             Assert.Equal(0, InfinityMode.AcknowledgeCalls);
             Time.unscaledTime = 131;
             Call(session, "TickInfinity");
-            int established = InfinityMode.AcknowledgeCalls;
-            Assert.Equal(1, established);
-            Assert.Equal("ack-run", InfinityMode.LastAcknowledgedChoice.RunId);
+            Assert.Equal(0, InfinityMode.AcknowledgeCalls);
+            Assert.Null(InfinityMode.LastAcknowledgedChoice);
 
-            // 適用済みで世代が古い choice には、それ以降の毎秒 ACK は不要な通信。
+            // 以降も毎秒 ACK を再送しない。
             for (int second = 1; second <= 10; second++)
             {
                 Time.unscaledTime += 1;
                 Call(session, "TickInfinity");
             }
-            Assert.Equal(established, InfinityMode.AcknowledgeCalls);
+            Assert.Equal(0, InfinityMode.AcknowledgeCalls);
         }
 
         private static void ResetStatics()

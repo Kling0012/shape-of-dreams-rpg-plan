@@ -179,6 +179,8 @@ namespace SodRpg.Mod
         {
             try
             {
+                // Submission can precede Tick, including immediately after an actor reconnects.
+                RegisterPersonalChoices();
                 if (NetworkServer.active) ReceivePersonalChoice(msg, DewPlayer.local);
                 else if (_personalActor != null) _personalActor.CustomRpc_SendMessageToServer(msg);
                 else WarnPersonalChoices("transport unavailable; selections remain pending until the host deadline");

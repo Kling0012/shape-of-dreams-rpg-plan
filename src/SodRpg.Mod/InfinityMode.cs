@@ -573,7 +573,9 @@ namespace SodRpg.Mod
                 var beforeArrival = state.Phase;
                 if (IsBossFinaleZone(zone.currentZone, state.Interval)) state.PromoteFinaleBoss();
                 state.TryEnterBoss();
-                if (beforeArrival != state.Phase) ClientSession.PersistHostInfinityState();
+                // Room clear may have arrived while save/transition holds kept us in BossDue.
+                bool bossCleared = room.didClearRoom && state.ObserveBossClear();
+                if (bossCleared || beforeArrival != state.Phase) ClientSession.PersistHostInfinityState();
                 bool soul = (state.Phase == InfinityPhase.BossFight || state.Phase == InfinityPhase.WaitingSoulFinish)
                     && HasActiveBossSoul();
                 var before = state.Phase;

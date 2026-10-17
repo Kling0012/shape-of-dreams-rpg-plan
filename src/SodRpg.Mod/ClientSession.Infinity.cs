@@ -353,6 +353,10 @@ namespace SodRpg.Mod
             bool alreadyApplied = choice.Secure ? Profile.CompletedRunSecuredReturn && Profile.CompletedRunId == choice.RunId
                 : state != null && (choice.Boundary ? state.SettledGraphEpoch >= choice.GraphEpoch
                     : state.ChoiceRevision >= choice.Revision);
+            // A newer graph proves the host has released this delve decision. Keep retrying
+            // current-graph receipts (and all host receipts) until that release is observed.
+            if (!NetworkServer.active && alreadyApplied && !choice.Boundary && !choice.Secure
+                && state != null && state.GraphEpoch > choice.GraphEpoch) return;
             if (!alreadyApplied)
             {
                 if (state == null || state.GraphEpoch != choice.GraphEpoch || state.SegmentEpoch != choice.SegmentEpoch
