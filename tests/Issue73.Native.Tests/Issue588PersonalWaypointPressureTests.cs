@@ -137,7 +137,9 @@ namespace Issue73.Native.Tests
         {
             var rig = Rig(hostChooses ? waypoint : Waypoint.None, hostChooses ? Waypoint.None : waypoint, true);
             var enemy = Enemy(rig.Authority, rig.Guest);
-            double expected = Waypoints.Sum(hostChooses ? Waypoint.None : waypoint).PressureMultiplier;
+            var pressure = DreamPressure.Neutral.WithRunModifiers(0,
+                Waypoints.Sum(hostChooses ? Waypoint.None : waypoint).PressureMultiplier).WithCoopScaling(2);
+            double expected = health ? pressure.HealthMultiplier : pressure.DamageMultiplier;
             double actual = ObservedMultiplier(rig.Authority, enemy, health);
             _output.WriteLine($"host={ClientSession.HostRun.ActiveWaypoint}; guest={(hostChooses ? Waypoint.None : waypoint)}; stat={(health ? "HP" : "damage")}; expected={expected}; actual={actual}");
             Assert.Equal(expected, actual, 5);
@@ -159,8 +161,11 @@ namespace Issue73.Native.Tests
             var state = ((IDictionary)Get(rig.Authority, "_enemyOwnership"))[enemy];
             Assert.Same(rig.Guest, Get(state, "Owner"));
             double actual = ObservedMultiplier(rig.Authority, enemy, health);
-            _output.WriteLine($"owner changed host → guest; stat={(health ? "HP" : "damage")}; expected=1.25; actual={actual}");
-            Assert.Equal(1.25d, actual, 5);
+            var pressure = DreamPressure.Neutral.WithRunModifiers(0, Waypoints.Sum(Waypoint.FleetingMemories).PressureMultiplier)
+                .WithCoopScaling(2);
+            double expected = health ? pressure.HealthMultiplier : pressure.DamageMultiplier;
+            _output.WriteLine($"owner changed host → guest; stat={(health ? "HP" : "damage")}; expected={expected}; actual={actual}");
+            Assert.Equal(expected, actual, 5);
         }
 
         [Theory]
@@ -172,7 +177,9 @@ namespace Issue73.Native.Tests
         {
             var rig = Rig(waypoint, Waypoint.None, false);
             var enemy = Enemy(rig.Authority, rig.Guest);
-            Assert.Equal(Waypoints.Sum(waypoint).PressureMultiplier, ObservedMultiplier(rig.Authority, enemy, health), 5);
+            var pressure = DreamPressure.Neutral.WithRunModifiers(0, Waypoints.Sum(waypoint).PressureMultiplier).WithCoopScaling(2);
+            Assert.Equal(health ? pressure.HealthMultiplier : pressure.DamageMultiplier,
+                ObservedMultiplier(rig.Authority, enemy, health), 5);
         }
     }
 }

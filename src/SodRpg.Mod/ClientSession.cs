@@ -99,6 +99,7 @@ namespace SodRpg.Mod
         private readonly BuildTransferReceiver _appliedTransfer = new BuildTransferReceiver();
         public float PressureHealthMultiplier { get; private set; } = 1f;
         public float PressureDamageMultiplier { get; private set; } = 1f;
+        public float NightmarePressureHealthMultiplier { get; private set; }
         /// <summary>ホストが悪夢化の抽選に掛ける装備の倍率。0は未受信（古い版のホスト）で、確保地点では最低値を表示する。</summary>
         public float NightmareGearMultiplier { get; private set; }
         public string LoadNotes { get; private set; }
@@ -195,8 +196,11 @@ namespace SodRpg.Mod
 
         public bool CanEditTalents => Profile.Run == null || !InGame;
 
+        public long ViewRevision { get; private set; }
+
         public void MarkDirty(bool buildChanged)
         {
+            ViewRevision++;
             _dirty = true;
             if (buildChanged)
             {
@@ -494,6 +498,7 @@ namespace SodRpg.Mod
                 _appliedTransfer.Reset();
                 PressureHealthMultiplier = PressureDamageMultiplier = 1f;
                 NightmareGearMultiplier = 0f;
+            NightmarePressureHealthMultiplier = 0f;
                 if (!LobbyReturnPending) ResetRunChoiceConnection();
                 ResetMonsterAuthorityConnection();
                 _sentDreamLevel = -1;
@@ -582,6 +587,7 @@ namespace SodRpg.Mod
             _appliedTransfer.Reset();
             PressureHealthMultiplier = PressureDamageMultiplier = 1f;
             NightmareGearMultiplier = 0f;
+            NightmarePressureHealthMultiplier = 0f;
             ResetRunChoiceConnection(resetHistory: true);
             ResetMonsterAuthorityConnection();
             _pendingRunRewards.Clear();
@@ -655,6 +661,7 @@ namespace SodRpg.Mod
             TravelerCombatNative.ResetReporting();
             PressureHealthMultiplier = PressureDamageMultiplier = 1f;
             NightmareGearMultiplier = 0f;
+            NightmarePressureHealthMultiplier = 0f;
             Emit(Rules.BeginRun(Profile, runId, DailyDream.Today, ReadLimboDepth(), _trades.ReservedSalvageUids(), heroKey: HeroKeyOf(LocalHero),
                 dreamDepth: CanChooseRunRules ? Profile.LastDreamDepth : _receivedRunChoices.Depth));
             InitializeInfinityRun();
@@ -1342,6 +1349,8 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
             Protocol.WarnMismatch(msg.protocol, nameof(DreamforgePressureMsg));
             PressureHealthMultiplier = msg.healthMultiplier;
             PressureDamageMultiplier = msg.damageMultiplier;
+            NightmarePressureHealthMultiplier = msg.nightmarePressureHealthMultiplier >= 1f && !float.IsInfinity(msg.nightmarePressureHealthMultiplier)
+                ? msg.nightmarePressureHealthMultiplier : 0f;
             NightmareGearMultiplier = msg.nightmareGearMultiplier >= 1f && !float.IsInfinity(msg.nightmareGearMultiplier) ? msg.nightmareGearMultiplier : 0f;
             ReceiveRunChoices(msg.runChoices);
             HostConfirmed = true;
@@ -1481,7 +1490,9 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
 
         /// <summary>
         /// 画面表示用の強さ。装備・鍛冶の画面は毎フレーム描くが、強さの計算は星の多い旅人で1回0.3ms・5KB前後かかる。
-        /// 変更時の作り直し（_buildCacheFrame = -1）がない間は、実際の計算時刻から0.25秒まで使い回す。ホストへ送る強さは CurrentBuild を使う。
+        /// 変更時の作り直し（_buildCacheFrame = -1）がない間は、実際の計算時刻から0.25秒まで使い回す。
+        /// MarkDirty を通らない Profile の変化（Heat・Pacts など）は、表示への反映が最大0.25秒遅れる。
+        /// 表示専用のキャッシュであり、ホストへ送る強さは CurrentBuild を使う。
         /// </summary>
         public Build DisplayBuild(string heroKey)
         {

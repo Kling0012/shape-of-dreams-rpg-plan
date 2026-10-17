@@ -28,12 +28,9 @@ namespace SodRpg.Mod
         {
             var owner = rt.Hero != null ? rt.Hero.owner : null;
             if (ReferenceEquals(owner, null) || owner == null) return null;
-            if (rt.GrowthOwnerKey == null || rt.GrowthOwnerNetId != owner.netId)
-            {
-                rt.GrowthOwnerNetId = owner.netId;
-                rt.GrowthOwnerKey = owner.netId.ToString(CultureInfo.InvariantCulture);
-            }
-            return rt.GrowthOwnerKey;
+            // Continue・再接続でも同じ本人を指す鍵。未確定の間は記録を待つ。
+            // netId へ戻すとスタックが分裂し、旧セーブの別人の記録を拾うおそれがある。
+            return string.IsNullOrEmpty(owner.guid) ? null : owner.guid;
         }
         private static void EnsureGrowthRun()
         {
@@ -203,11 +200,13 @@ namespace SodRpg.Mod
             var build = rt.Powers.Build;
             EnsureGrowthRun();
             int version = RunGrowthLedger.Version;
-            if (rt.GrowthVersion != version || !ReferenceEquals(rt.GrowthBuild, build))
+            string owner = GrowthOwner(rt);
+            bool ownerChanged = rt.GrowthOwnerKey != owner;
+            if (rt.GrowthVersion != version || !ReferenceEquals(rt.GrowthBuild, build) || ownerChanged)
             {
                 try
                 {
-                    string owner = GrowthOwner(rt);
+                    if (ownerChanged) rt.GrowthSentVersion = -1;
                     rt.GrowthTotals.Clear();
                     var bonus = new StatBonus();
                     foreach (var entry in build.RunGrowths)
@@ -232,11 +231,13 @@ namespace SodRpg.Mod
                     hero.Status.CalculateStatsIfDirty();
                     rt.GrowthVersion = version;
                     rt.GrowthBuild = build;
+                    rt.GrowthOwnerKey = owner;
                 }
                 catch (Exception ex)
                 {
                     rt.GrowthVersion = version;
                     rt.GrowthBuild = build;
+                    rt.GrowthOwnerKey = owner;
                     Log.Error("Host: RunGrowth apply " + ex);
                 }
             }
@@ -290,5 +291,11 @@ namespace SodRpg.Mod
         /// <summary>回復・シールド・召喚獣の強さへ足す、鍛錬の分（%）。</summary>
         private static float GrowthSupport(HeroRuntime rt, Stat stat)
             => rt.GrowthTotals.TryGetValue(stat, out double value) ? (float)value : 0f;
+
+        /// <summary>
+        /// サーバーのアクターから出す回復・シールドに掛ける強化（%）。旅人から出るものに掛かる処理器
+        /// （rt.HealDealt / rt.ShieldDealt）と同じく、装備・星の値に鍛錬の分を足す。
+        /// </summary>
+        private static float SupportPower(HeroRuntime rt, Stat stat) => rt.Powers.Build.Get(stat) + GrowthSupport(rt, stat);
     }
 }

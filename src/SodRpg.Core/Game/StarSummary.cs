@@ -202,7 +202,7 @@ namespace SodRpg.Core.Game
             foreach (var total in effectOrder) total.Line.Text = total.Describe();
             foreach (var kv in stats.OrderBy(k => (int)k.Key))
             {
-                kv.Value.Text = Content.FormatStat(kv.Key, statValues[kv.Key]);
+                kv.Value.Text = Content.FormatStat(kv.Key, BuildAggregation.CapStat(kv.Key, statValues[kv.Key]));
                 if (statValues[kv.Key] != 0) summary.Stats.Add(kv.Value);
             }
             foreach (var kv in powers.OrderBy(k => (int)k.Key))

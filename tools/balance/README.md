@@ -14,6 +14,12 @@
 段階3では鍛冶の残りを `forge.json`（schemaVersion 2）へ集約しました。
 保存済みの履歴番号・旧覚醒段・退役工房の返金原本は変更しません。
 
+## 協力プレイの難度（Issue #601）
+
+`coop.json` の `difficulty` が、協力時の本体人数ボーナスの緩和、夢の圧の増分と上限、圧由来の敵数上限、自動難易度Dの上限を持ちます。`ownership.bossShareFactor` は参加者の個人圧を合計したボスHPの係数です。`python tools/balance/gen_cs.py` で `Coop.Generated.cs` を再生成します。ソロの `pressure.json` と任意のソロD設定は維持します。
+
+`BalanceSim --mode pressure` の `pressure/coop` 行で1／2／4人の戦闘倍率と報酬倍率を比較できます。調整式、変更前後の比較、本体Limboとの関係は[調整資料](../../docs/specs/issue-601-coop-difficulty.md)を参照してください。
+
 ## 本体エッセンスと記憶の循環抑制
 
 数値原本は `essence-caps.json`。`python tools/balance/gen_cs.py` で

@@ -134,7 +134,7 @@ namespace Issue73.Native.Tests
                 average += alpha * (logRatio - average);
             }
             if (rooms < MinRooms) return 1;
-            return Math.Max(MinFactor, Math.Min(MaxFactor, Math.Exp(Strength * average)));
+            return Math.Max(MinFactor, Math.Min(Math.Min(MaxFactor, CoopBalance.Difficulty.DynamicMaximumFactor), Math.Exp(Strength * average)));
         }
 
         private static object PlayerState(HostAuthority host, DewPlayer player)
@@ -235,6 +235,7 @@ namespace Issue73.Native.Tests
         [Fact]
         public void Damage_is_counted_raw_with_overkill_before_help_scaling_and_follows_the_parent_chain()
         {
+            NetworkedManagerBase<ZoneManager>.softInstance.currentZoneIndex = 2;
             var host = Host(out _);
             var a = Player(5);
             var b = Player(9);
@@ -245,8 +246,8 @@ namespace Issue73.Native.Tests
             Time.time = 1f;
             float overkill = enemy.Status.maxHealth * 100f;
             float applied = Hit(host, enemy, a.hero, overkill);
-            Assert.Equal((double)overkill, DamageOf(host, a), 0); // 手伝い倍率・下限の前の値
-            Assert.True(applied < overkill / 2f, "適用側は手伝い倍率と下限で減る（記録とは別）");
+            Assert.Equal((double)overkill, DamageOf(host, a), 0); // 手伝い倍率の前の値
+            Assert.Equal(overkill / 2f, applied); // 3世界目の手伝い倍率で半減（記録とは別）。
 
             // 活動時間は 0.5 秒区切り: 当てた区切りだけ。同じ区切りの複数ヒットは 1 区切り。
             Time.time = 1.4f; Hit(host, enemy, a.hero, 10f); // 区切り 2（1.0 秒と同じ）
@@ -333,7 +334,7 @@ namespace Issue73.Native.Tests
 
             // 圧倒的な速さでも上限で頭打ち。
             DriveRooms(host, a, 120, 1e9, 1);
-            Assert.Equal(MaxFactor, FactorOf(host, a), 10);
+            Assert.Equal(Math.Min(MaxFactor, CoopBalance.Difficulty.DynamicMaximumFactor), FactorOf(host, a), 10);
             Assert.Empty(Log.Warnings);
         }
 

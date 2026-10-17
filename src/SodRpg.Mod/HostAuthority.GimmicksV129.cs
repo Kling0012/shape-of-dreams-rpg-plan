@@ -160,7 +160,7 @@ namespace SodRpg.Mod
                 requests[i] = request;
                 if (request.Entry.Def.Effect == GimmickEffect.Sap && victim != null) EnsureSapProcessor(victim);
                 if (request.Entry.Def.Effect == GimmickEffect.Primed)
-                    rt.Powers.PrimeNextBasic(Time.time, request.Entry.Def.ValuePercent, Gimmicks.Duration(request.Entry.Def, 5f));
+                    rt.Powers.PrimeNextBasic(Time.time, request.Entry.Def.ValuePercent, Gimmicks.Duration(request.Entry.Def, Gimmicks.PrimedSeconds));
             }
             }
             finally { ReturnMechanismDispatchBuffers(buffers); }
@@ -231,8 +231,8 @@ namespace SodRpg.Mod
             if (def.Effect == GimmickEffect.Shield)
             {
                 AwardModShield(rt, rt.Hero, ModShieldPoolKind.Ordinary,
-                    SupportStats.AmplifyShield(rt.Hero.maxHealth * def.ValuePercent / 100f, rt.Powers.Build.Get(Stat.ShieldPower)),
-                    Gimmicks.Duration(def, 4f), request.Entry.Memory, pending.ShieldEquipmentEpoch);
+                    SupportStats.AmplifyShield(rt.Hero.maxHealth * def.ValuePercent / 100f, SupportPower(rt, Stat.ShieldPower)),
+                    Gimmicks.Duration(def, Gimmicks.BuffDuration), request.Entry.Memory, pending.ShieldEquipmentEpoch);
                 return;
             }
             if (!Gimmicks.IsV129(def.Effect)) return;
@@ -251,7 +251,7 @@ namespace SodRpg.Mod
                         if (live)
                         {
                             state.Victims[target.GetInstanceID()] = target;
-                            float lifetime = Gimmicks.Duration(def, 3f);
+                            float lifetime = Gimmicks.Duration(def, Gimmicks.WoundSeconds);
                             float threeSecondAmount = high * def.ValuePercent / 100f * (def.EffectiveWoundTotal ? 3f / lifetime : 1f);
                             // The star payload is already ranked after its ordinary cap; rank only the safety budget here.
                             float maximumTotalDamage = high * (float)(Gimmicks.Cap(GimmickEffect.Wound) / 100m
@@ -269,7 +269,7 @@ namespace SodRpg.Mod
                         if (request.Damage > 0)
                         {
                             ListReturnHandle<Entity> handle;
-                            var enemies = DewPhysics.OverlapCircleAllEntities(out handle, pending.Center, Gimmicks.Radius(def, 8f), EnemyFilter, hero);
+                            var enemies = DewPhysics.OverlapCircleAllEntities(out handle, pending.Center, Gimmicks.Radius(def, Gimmicks.RicochetRadius), EnemyFilter, hero);
                             try
                             {
                                 int remaining = Gimmicks.TargetLimit(def);
@@ -287,8 +287,8 @@ namespace SodRpg.Mod
                         break;
                     case GimmickEffect.Siphon:
                         if (support == null) break;
-                        float heal = Math.Min(hero.maxHealth * 0.015f, SupportStats.AmplifyHeal(
-                            Gimmicks.SiphonHeal(request.Damage, hero.maxHealth, def.ValuePercent), rt.Powers.Build.Get(Stat.HealPower)));
+                        float heal = Math.Min(hero.maxHealth * Gimmicks.SiphonHealCapRatio, SupportStats.AmplifyHeal(
+                            Gimmicks.SiphonHeal(request.Damage, hero.maxHealth, def.ValuePercent), SupportPower(rt, Stat.HealPower)));
                         if (heal <= 0) break;
                         DispatchSupportHeal(rt, hero, support.Heal(heal).SetAmountModifiedBy(typeof(GimmickSiphonLimit)));
                         float allyRadius = Gimmicks.Radius(def, CoopBalance.FullRange);
@@ -299,8 +299,8 @@ namespace SodRpg.Mod
                                 {
                                     float allyCoefficient = (float)(def.EffectiveAllyValuePercent ?? def.EffectiveValueOrAuthored);
                                     float allyHeal = SupportStats.AmplifyHeal(Gimmicks.SiphonHeal(request.Damage, hero.maxHealth,
-                                        allyCoefficient), rt.Powers.Build.Get(Stat.HealPower)) * 0.5f;
-                                    DispatchSupportHeal(rt, ally, support.Heal(Math.Min(allyHeal, ally.maxHealth * 0.015f)
+                                        allyCoefficient), SupportPower(rt, Stat.HealPower)) * 0.5f;
+                                    DispatchSupportHeal(rt, ally, support.Heal(Math.Min(allyHeal, ally.maxHealth * Gimmicks.SiphonHealCapRatio)
                                         * CoopDistanceNative.Coefficient(hero, ally, allyRadius))
                                         .SetAmountModifiedBy(typeof(GimmickSiphonLimit)));
                                 }
@@ -308,8 +308,8 @@ namespace SodRpg.Mod
                     case GimmickEffect.Rampart:
                         if (support == null || request.TargetCount <= 0) break;
                         float amount = SupportStats.AmplifyShield(hero.maxHealth * Math.Min(Gimmicks.Cap(GimmickEffect.Rampart), def.ValuePercent)
-                            * Math.Min(Gimmicks.TargetLimit(def), request.TargetCount) / 100f, rt.Powers.Build.Get(Stat.ShieldPower));
-                        float shieldDuration = Gimmicks.Duration(def, 4f);
+                            * Math.Min(Gimmicks.TargetLimit(def), request.TargetCount) / 100f, SupportPower(rt, Stat.ShieldPower));
+                        float shieldDuration = Gimmicks.Duration(def, Gimmicks.BuffDuration);
                         AwardModShield(rt, hero, ModShieldPoolKind.Rampart, amount, shieldDuration,
                             request.Entry.Memory, pending.ShieldEquipmentEpoch);
                         break;
@@ -331,7 +331,7 @@ namespace SodRpg.Mod
                                 summons.Add(summon);
                         foreach (var summon in summons)
                             DispatchSupportHeal(rt, summon, support.Heal(SupportStats.AmplifyHeal(summon.maxHealth * def.ValuePercent / 100f,
-                                rt.Powers.Build.Get(Stat.HealPower))));
+                                SupportPower(rt, Stat.HealPower))));
                         break;
                     // Crescendo, Sap and Weakspot have already installed their pure-runtime windows.
                 }

@@ -172,16 +172,12 @@ namespace SodRpg.Mod
                 total += take;
                 budget -= take;
             }
-            bool dynamic = DynamicApplicationRunning();
-            double pressure = player == null ? 1 : OwnershipBasePressure(player, sharedEnemy: true).HealthMultiplier
-                * (own >= 0 ? dynamic ? shares.Dynamic[own] : 1 : DynamicFactor(player));
+            double factor = player == null ? 1 : OwnershipHelpFactor();
             for (int step = 0; step < shares.Players.Length && budget > 0; step++)
             {
                 int target = LargestBossShare(shares, planned);
                 if (target < 0) break;
-                double factor = player == null ? 1 : CoopBalance.Ownership.HelpFactor * Math.Min(1,
-                    OwnershipBasePressure(shares.Players[target], sharedEnemy: true).HealthMultiplier * (dynamic ? shares.Dynamic[target] : 1) / pressure);
-                if (!(factor > 0)) throw new InvalidOperationException("Invalid boss help pressure.");
+                if (!(factor > 0)) throw new InvalidOperationException("Invalid boss help factor.");
                 double take = Math.Min(budget * factor, shares.Remaining[target] - planned[target]);
                 planned[target] += take;
                 total += take;
@@ -220,7 +216,13 @@ namespace SodRpg.Mod
                     ? Math.Min(amount, shield / damage.damageToShieldMultiplier) : amount : 0;
                 double budget = Math.Max(0, amount - absorbed);
                 double accepted = PlanBossDamage(shares, player, budget, scope.Planned);
-                double keep = Math.Min(1, (accepted + absorbed) / amount);
+                // Retain a little native overkill for a lethal plan below Actor.DealDamage's
+                // 0.0001 small-hit exit. Otherwise a floating-point HP remainder can be unkillable.
+                // The HP setter still settles only the planned shares after immunity and shields.
+                double retained = accepted + absorbed;
+                if (accepted > 0 && LargestBossShare(shares, scope.Planned) < 0)
+                    retained = Math.Max(retained, 0.0002);
+                double keep = Math.Min(1, retained / amount);
                 // Keep very small help factors representable without rounding 1 - keep to 1.
                 if (keep <= 0) damage.ApplyReduction(1);
                 else

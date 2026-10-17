@@ -673,14 +673,14 @@ namespace SodRpg.Mod
         }
 
         private (int Count, int Shards, int Tuning, int Heat, int Bonus, int Free, double NightmareMult, bool Japanese,
-            float PressureHealth, float NightmareGear, Waypoint Active, Waypoint Pending, bool Infinity) _secureTextKey;
+            float PressureHealth, float NightmarePressureHealth, float NightmareGear, Waypoint Active, Waypoint Pending, bool Infinity) _secureTextKey;
         private string _secureLootText, _secureBonusText, _secureOverflowText, _secureDelveText, _secureNightmareText, _secureExtraText;
 
         private void CacheSecureText(RunState run, int bonus, int free, double nmMult)
         {
             var pendingWaypoint = run.WaypointChosen ? run.PendingWaypoint : Waypoint.None;
             var key = (run.Satchel.Count, run.SatchelShards, run.SatchelTuning, run.Heat, bonus, free, nmMult, Loc.Japanese,
-                _s.PressureHealthMultiplier, _s.NightmareGearMultiplier, run.ActiveWaypoint, pendingWaypoint, run.Infinity != null);
+                _s.PressureHealthMultiplier, _s.NightmarePressureHealthMultiplier, _s.NightmareGearMultiplier, run.ActiveWaypoint, pendingWaypoint, run.Infinity != null);
             if (_secureLootText != null && _secureTextKey.Equals(key)) return;
             _secureTextKey = key;
             int next = Math.Min(Content.MaxHeat, run.Heat + 1);
@@ -707,7 +707,9 @@ namespace SodRpg.Mod
             {
                 // 同期された敵HPの倍率は今のゾーンの道標の圧を含むため、選択中の道標の圧に置き換える。
                 double activePressure = Waypoints.Sum(run.ActiveWaypoint).PressureMultiplier;
-                double health = _s.PressureHealthMultiplier / (activePressure > 0 ? activePressure : 1.0) * waypoint.PressureMultiplier;
+                double pressureHealth = _s.NightmarePressureHealthMultiplier >= 1f
+                    ? _s.NightmarePressureHealthMultiplier : _s.PressureHealthMultiplier;
+                double health = pressureHealth / (activePressure > 0 ? activePressure : 1.0) * waypoint.PressureMultiplier;
                 pressureMult = DreamPressure.NightmareChanceMultiplierForHealth(health);
             }
             bool gearKnown = _s.NightmareGearMultiplier >= 1f;
@@ -1569,11 +1571,17 @@ namespace SodRpg.Mod
             GUILayout.EndHorizontal();
         }
 
-        private static string SlotTabLabel(Profile p, Slot slot)
+        private string SlotTabLabel(Profile p, Slot slot)
         {
-            int n = 0;
-            foreach (var r in p.Stash) if (r.Slot == slot) n++;
-            return n > 0 ? $"{Content.SlotName(slot)} <color=#bcbcd2>{n}</color>" : Content.SlotName(slot).ToString();
+            if (TabPerf.CacheOff)
+            {
+                // 採否の比較用（dreamforge_perf_nocache）：導入前と同じく、呼ぶたびに保管庫全体を数えて文字列を作る。
+                int n = 0;
+                foreach (var relic in p.Stash) if (relic.Slot == slot) n++;
+                return n > 0 ? $"{Content.SlotName(slot)} <color=#bcbcd2>{n}</color>" : Content.SlotName(slot).ToString();
+            }
+            EnsureStashCache(p);
+            return _slotTabLabels[(int)slot];
         }
 
         private void RelicList(IEnumerable<Relic> relics, string hero, float height)
@@ -1663,6 +1671,12 @@ namespace SodRpg.Mod
         private readonly Dictionary<float, List<Relic>> _sortedCache = new Dictionary<float, List<Relic>>();
         private readonly Dictionary<float, string> _sortedKey = new Dictionary<float, string>();
         private float _sortedUntil;
+        private readonly int[] _slotCounts = new int[6];
+        private readonly string[] _slotTabLabels = new string[6];
+        private Profile _stashCacheProfile;
+        private long _stashCacheRevision, _stashCacheViewRevision;
+        private int _stashCacheCount;
+        private bool _stashCacheJapanese;
         private readonly List<Relic> _satchelTop = new List<Relic>();
         private float _satchelTopUntil;
         private int _satchelTopCount = -1;
@@ -1671,6 +1685,38 @@ namespace SodRpg.Mod
         private float _transmuteUntil;
 
         private readonly List<int> _fusionStashLevels = new List<int>();
+
+        // タブと一覧で同じ世代を使う。保存前の操作は ViewRevision、取引等の保存は Revision で検出する。
+        private void EnsureStashCache(Profile p)
+        {
+            float now = Time.unscaledTime;
+            if (_stashCacheProfile == p && _stashCacheRevision == p.Revision
+                && _stashCacheViewRevision == _s.ViewRevision && _stashCacheCount == p.Stash.Count
+                && _stashCacheJapanese == Loc.Japanese && now < _sortedUntil) return;
+            if (_stashCacheProfile != p || _stashCacheRevision != p.Revision
+                || _stashCacheViewRevision != _s.ViewRevision || _stashCacheJapanese != Loc.Japanese)
+                _rowCacheKey.Clear();
+            _stashCacheProfile = p;
+            _stashCacheRevision = p.Revision;
+            _stashCacheViewRevision = _s.ViewRevision;
+            _stashCacheCount = p.Stash.Count;
+            _stashCacheJapanese = Loc.Japanese;
+            _sortedUntil = now + 0.3f;
+            _sortedKey.Clear();
+            Array.Clear(_slotCounts, 0, _slotCounts.Length);
+            foreach (var relic in p.Stash)
+            {
+                int slot = (int)relic.Slot;
+                if (slot >= 0 && slot < _slotCounts.Length) _slotCounts[slot]++;
+            }
+            foreach (var slot in Content.SlotOrder)
+            {
+                int n = _slotCounts[(int)slot];
+                _slotTabLabels[(int)slot] = n > 0
+                    ? $"{Content.SlotName(slot)} <color=#bcbcd2>{n}</color>"
+                    : Content.SlotName(slot).ToString();
+            }
+        }
 
         private string CacheStamp()
         {
@@ -1696,16 +1742,11 @@ namespace SodRpg.Mod
             return p.Stash.Count + ":" + state + ":" + _slot + ":" + _forgeAllSlots + ":" + HeroKey + ":" + Loc.Japanese + ":" + _relicSearchFolded;
         }
 
-        /// <summary>一覧（高さで区別）の並べ替えを使い回す。中身・遺物の状態・枠が変わるか、0.3秒たったら作り直す。素材だけの増減は順序に影響しない。</summary>
+        /// <summary>一覧（高さで区別）の並べ替えを使い回す。変更通知・保存・言語・遺物の状態・枠が変わるか、0.3秒たったら作り直す。</summary>
         private List<Relic> SortedCached(IEnumerable<Relic> relics, float id)
         {
-            float now = Time.unscaledTime;
+            EnsureStashCache(_s.Profile);
             string key = CacheStamp();
-            if (now >= _sortedUntil)
-            {
-                _sortedUntil = now + 0.3f;
-                _sortedKey.Clear();
-            }
             if (_sortedKey.TryGetValue(id, out var k) && k == key && _sortedCache.TryGetValue(id, out var cached)) return cached;
             if (!_sortedCache.TryGetValue(id, out var list)) _sortedCache[id] = list = new List<Relic>();
             list.Clear();
@@ -2183,7 +2224,7 @@ namespace SodRpg.Mod
                         if (fbConfirm)
                         {
                             _confirmForbid = null;
-                            Act(() => Rules.Forbid(p, sel.Uid, _s.Trades), true);
+                            Act(() => Rules.Forbid(p, sel.Uid, _s.Trades), true, affectsCodex: true);
                         }
                         else _confirmForbid = sel.Uid;
                     }

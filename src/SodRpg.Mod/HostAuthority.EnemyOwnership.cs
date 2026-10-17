@@ -115,7 +115,11 @@ namespace SodRpg.Mod
             double waypoint = _pressure.WaypointMultiplier;
             if (PersonalEnemyWaypointsRunning())
                 waypoint = sharedEnemy || player == null ? 1 : InfinityMode.WaypointTotalsForPlayer(player.guid).PressureMultiplier;
-            return pressure.WithRunModifiers(_pressure.Depth, waypoint).WithInfinityPressure(_pressure.InfinityStage);
+            int participants = 0;
+            foreach (var participant in DewPlayer.gamePlayers)
+                if (participant != null && participant.isHumanPlayer && ++participants >= 2) break;
+            return pressure.WithRunModifiers(_pressure.Depth, waypoint).WithInfinityPressure(_pressure.InfinityStage)
+                .WithCoopScaling(participants);
         }
 
         private readonly struct OwnershipPressureValue
@@ -456,6 +460,15 @@ namespace SodRpg.Mod
                 || Time.time - OwnershipLastFight(state, state.Owner) <= CoopBalance.Ownership.EngageWindow;
         }
 
+        private static float OwnershipHelpFactor()
+        {
+            int zone = NetworkedManagerBase<ZoneManager>.softInstance?.currentZoneIndex ?? -1;
+            if (zone < 0) return 1f;
+            if (zone == 0) return CoopBalance.Ownership.FirstWorldHelpFactor;
+            if (zone == 1) return CoopBalance.Ownership.SecondWorldHelpFactor;
+            return CoopBalance.Ownership.HelpFactor;
+        }
+
         internal void ApplyOwnershipReceivedDamage(Entity victim, Actor actor, ref DamageData damage, bool measure = true)
         {
             if (!NetworkServer.active) return;
@@ -471,29 +484,7 @@ namespace SodRpg.Mod
                 {
                     var player = OwnershipHuman(damage.actor ?? actor);
                     if (player != null && player != state.Owner)
-                    {
-                        float factor = CoopBalance.Ownership.HelpFactor * (float)Math.Min(1,
-                            OwnershipEnemyPressure(state).HealthMultiplier / OwnershipPressure(player).HealthMultiplier);
-                        damage.ApplyReduction(1f - factor);
-                        // Match FinalDamageData's armor, then reserve the native shield absorption
-                        // before capping HP damage. Shield-only hits cannot cross the HP floor.
-                        victim.Status.CalculateStatsIfDirty();
-                        float amount = damage.currentAmount;
-                        float armor = victim.Status.finalStats.armor;
-                        float armorFactor = damage.HasAttr(DamageAttribute.IgnoreArmor) || damage.source == DamageData.SourceType.Pure
-                            ? 1f : Mathf.Max(100f / (100f + armor), 0f);
-                        float floor = Mathf.Floor(victim.maxHealth * CoopBalance.Ownership.Floor);
-                        float allowed = Mathf.Max(0f, victim.currentHealth - floor);
-                        if (damage.HasAttr(DamageAttribute.DamageShieldOnly)) allowed = float.PositiveInfinity;
-                        else if (!damage.HasAttr(DamageAttribute.IgnoreShield) && victim.Status.currentShield > 0f)
-                            allowed += damage.damageToShieldMultiplier > 0f
-                                ? victim.Status.currentShield / damage.damageToShieldMultiplier : float.PositiveInfinity;
-                        if (amount > 0f && amount * armorFactor > allowed)
-                        {
-                            float keep = allowed <= 0 || float.IsInfinity(armorFactor) ? 0f : allowed / (amount * armorFactor);
-                            damage.ApplyReduction(1f - keep);
-                        }
-                    }
+                        damage.ApplyReduction(1f - OwnershipHelpFactor());
                 }
             }
             catch (Exception ex) { damage = before; FailOwnership(OwnershipPart.Protection, ex); }
@@ -727,7 +718,16 @@ namespace SodRpg.Mod
             bool idle = now - state.OwnerLastEngaged >= CoopBalance.Ownership.IdleSeconds;
             if (now - state.Changed < CoopBalance.Ownership.ReassignCooldown || !(down || far || idle)) return;
             var replacement = OwnershipReplacement(state);
-            if (replacement != null && (down || far || now - OwnershipLastFight(state, replacement) <= CoopBalance.Ownership.EngageWindow))
+            bool replacementFought = replacement != null && now - OwnershipLastFight(state, replacement) <= CoopBalance.Ownership.EngageWindow;
+            // Leaving only because the owner is far: hand over to someone fighting it or actually near it.
+            // Otherwise two far players took turns every AwaySeconds, swinging the enemy's strength each time.
+            // A hero-less candidate counts as far as well (defensive: OwnershipReplacement only returns
+            // OwnershipAlive players, which have heroes) — it has no position to prove it is within
+            // ReleaseDistance, so the owner simply keeps the enemy until someone is near or fighting.
+            if (far && !down && !replacementFought && replacement != null
+                && (replacement.hero == null || (replacement.hero.position - state.Enemy.position).sqrMagnitude
+                    >= CoopBalance.Ownership.ReleaseDistance * CoopBalance.Ownership.ReleaseDistance)) return;
+            if (replacement != null && (down || far || replacementFought))
                 ChangeOwnership(state, replacement);
         }
 

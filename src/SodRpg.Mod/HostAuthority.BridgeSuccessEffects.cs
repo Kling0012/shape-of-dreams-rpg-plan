@@ -131,7 +131,7 @@ namespace SodRpg.Mod
                     var shield = TransformAuthoredPayload(hero, AuthoredKeystoneComposer.BridgePayload(payload),
                         transaction.Notification.SourceMemory, null, KeystoneSourceKind.NativeMemory);
                     AwardModShield(owner, hero, ModShieldPoolKind.Ordinary,
-                        SupportStats.AmplifyShield(hero.maxHealth * (float)(shield.Value / 100m), owner.Powers.Build.Get(Stat.ShieldPower)),
+                        SupportStats.AmplifyShield(hero.maxHealth * (float)(shield.Value / 100m), SupportPower(owner, Stat.ShieldPower)),
                         (float)shield.DurationSeconds, transaction.Notification.SourceMemory, ModShieldEquipmentEpoch(owner));
                     continue;
                 }

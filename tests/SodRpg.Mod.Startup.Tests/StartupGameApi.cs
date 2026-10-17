@@ -438,7 +438,8 @@ namespace SodRpg.Mod
         internal static bool RemoteHostInfinityAvailable, RemoteHostHelloAnswered;
         internal static bool RunActive, InGame, CanChooseRunRules, CanChooseDepth;
         internal static bool PersistHostInfinityState(bool writeEnvelope = true) => true;
-        internal static bool HostInfinitySaveHoldSatisfied => true;
+        // #528: TickNative の保存待ち早期リターンを再現するため、テストから書き換え可能にする。
+        internal static bool HostInfinitySaveHoldSatisfied = true;
         internal static void CountHostInfinityRoom() { }
         internal static void OpenHostInfinityChoice() { }
         internal static void FinishNativeContinueRestore() { }

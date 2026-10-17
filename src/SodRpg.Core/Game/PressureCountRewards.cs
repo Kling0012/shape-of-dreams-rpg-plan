@@ -117,7 +117,7 @@ namespace SodRpg.Core.Game
         public static double ScaleDouble(double amount, double scale) => amount * Normalize(scale);
         public static bool Retain(Rng rng, double scale) => rng.Chance(Normalize(scale));
 
-        /// <summary>Thin indivisible relics and round final currencies once, before output caps or hoard deferral.</summary>
+        /// <summary>Thin rolled loot once, before waypoint limits, copies, conversions or hoard deferral.</summary>
         public static void ScaleLoot(Rng rng, KillReward reward, double scale)
         {
             scale = Normalize(scale);

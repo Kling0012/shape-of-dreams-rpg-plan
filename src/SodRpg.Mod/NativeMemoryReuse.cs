@@ -30,10 +30,18 @@ namespace SodRpg.Mod
                 cooldown * EssenceCapsBalance.MemoryReuseBaseCooldownFraction);
         }
 
+        private static bool HasMultipleCharges(AbilityTrigger trigger, int configIndex)
+        {
+            // Live configs include charges granted by levels and skill bonuses.
+            return trigger.configs != null && configIndex >= 0 && configIndex < trigger.configs.Length
+                && trigger.configs[configIndex].maxCharges > 1;
+        }
+
         internal static float Remaining(AbilityTrigger trigger)
         {
             if (!IsMemory(trigger) || trigger.currentMinimumDelays == null
-                || trigger.currentConfigIndex < 0 || trigger.currentConfigIndex >= trigger.currentMinimumDelays.Length) return 0f;
+                || trigger.currentConfigIndex < 0 || trigger.currentConfigIndex >= trigger.currentMinimumDelays.Length
+                || HasMultipleCharges(trigger, trigger.currentConfigIndex)) return 0f;
             return trigger.currentMinimumDelays[trigger.currentConfigIndex];
         }
 
@@ -45,9 +53,13 @@ namespace SodRpg.Mod
                 float interval = Interval(trigger);
                 if (interval <= 0f || trigger.currentMinimumDelays == null) return;
                 // Native minimum delays tick in seconds on host and guests and have their own RPC.
-                // Set all configs so a temporary alternate config cannot bypass the memory's gate.
+                // Guard single-charge configs, including alternate ones. Multi-charge configs use
+                // native delays and recharge rules so both spare and newly recovered charges stay usable.
                 for (int i = 0; i < trigger.currentMinimumDelays.Length; i++)
+                {
+                    if (HasMultipleCharges(trigger, i)) continue;
                     trigger.SetMinimumDelay(i, Mathf.Max(trigger.currentMinimumDelays[i], interval));
+                }
             }
             catch (Exception ex)
             {
@@ -144,8 +156,8 @@ namespace SodRpg.Mod
             {
                 float remaining = NativeMemoryReuse.Remaining(____target);
                 if (remaining <= 0f) return;
-                // A remaining charge can be used as soon as the interval expires; its recharge
-                // countdown is separate. Show seconds here even for Ultimate's percent display.
+                // Only single-charge configs reach this overlay; stock/recharge UI stays native.
+                // Show seconds here even for Ultimate's percent display.
                 if (____target.currentConfigCurrentCharge == 0)
                     remaining = Mathf.Max(remaining, ____target.currentConfigCooldownTime);
                 float maximum = Mathf.Max(NativeMemoryReuse.Interval(____target), ____target.currentConfigMaxCooldownTime);

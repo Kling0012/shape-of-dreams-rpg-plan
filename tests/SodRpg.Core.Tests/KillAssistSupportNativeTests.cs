@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Reflection;
 using SodRpg.Core.Game;
 using Xunit;
@@ -67,7 +66,6 @@ namespace SodRpg.Mod
             public Build GrowthBuild;
             public float GrowthSentAt;
             public int GrowthSentVersion = -1;
-            public uint GrowthOwnerNetId;
             public string GrowthOwnerKey;
             public Build GrowthSentBuild;
             public string GrowthSentRun;
@@ -97,7 +95,7 @@ namespace SodRpg.Mod
             typeof(HostAuthority).GetMethod("InitializeKillAssists", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(host, null);
             return host;
         }
-        internal static Hero HeroWithOwner(uint netId) => new Hero { owner = new DewPlayer { netId = netId }, maxHealth = 1000, currentHealth = 1000 };
+        internal static Hero HeroWithOwner(uint netId) => new Hero { owner = new DewPlayer { netId = netId, guid = "growth-player-" + netId }, maxHealth = 1000, currentHealth = 1000 };
         internal static HostAuthority.HeroRuntime TrackRuntime(HostAuthority host, Hero hero, params (string StarId, RunGrowthTrigger Trigger)[] growths)
         {
             var build = new Build();
@@ -111,8 +109,7 @@ namespace SodRpg.Mod
         // TrackKillAssistEntity is private in production; the spawn hook that calls it is not compiled here.
         internal static void TrackVictim(HostAuthority host, Entity entity)
             => typeof(HostAuthority).GetMethod("TrackKillAssistEntity", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(host, new object[] { entity });
-        internal static int Stacks(Hero hero, string starId) => HostAuthority.RunGrowthLedger.Stacks(
-            hero.owner.netId.ToString(CultureInfo.InvariantCulture), starId);
+        internal static int Stacks(Hero hero, string starId) => HostAuthority.RunGrowthLedger.Stacks(hero.owner.guid, starId);
     }
 }
 
@@ -378,7 +375,7 @@ namespace SodRpg.Core.Tests
             host.Track(new HostAuthority.HeroRuntime { Hero = keeper, Powers = new PowerRuntime(keeperBuild, 0) });
             host.OnNativeSupportHeal(new EventInfoHeal { actor = healer, target = keeper, amount = 100, discardedAmount = 100 });
             Assert.Equal(100f, keeper.Status.currentShield); // OverflowingLife の 100
-            Assert.Equal(0, host.Shields); // 支援側の障壁化は起きない
+            Assert.Equal(1, host.Shields); // 従来処理の与えた障壁の記録だけ（支援変換ではない）
 
             // 支援の変換（50%）の方が大きい → 支援の障壁だけ。
             var taker = KillAssistSupportTestRuntime.HeroWithOwner(13);
@@ -386,7 +383,7 @@ namespace SodRpg.Core.Tests
             host.Track(new HostAuthority.HeroRuntime { Hero = taker, Powers = new PowerRuntime(takerBuild, 0) });
             host.OnNativeSupportHeal(new EventInfoHeal { actor = healer, target = taker, amount = 100, discardedAmount = 100 });
             Assert.Equal(50f, taker.Status.currentShield);
-            Assert.Equal(1, host.Shields);
+            Assert.Equal(2, host.Shields);
         }
 
         [Fact]

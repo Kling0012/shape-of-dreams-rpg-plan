@@ -75,7 +75,8 @@ namespace SodRpg.Mod
                 || MemorySource(info.actor) == null
                 || info.amount <= 0f || float.IsNaN(info.amount) || float.IsInfinity(info.amount)) return;
             float heal = rt.Powers.KindnessReturnsHeal(info.amount);
-            PowerHeal(rt, rt.Hero, heal);
+            // info.amount is the healing that landed (heal power already applied): do not amplify again.
+            PowerHeal(rt, rt.Hero, heal, amplify: false);
             if (heal > 0f) LogPowerTrigger(Power.KindnessReturns);
         }
 

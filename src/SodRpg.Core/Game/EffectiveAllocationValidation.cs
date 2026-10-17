@@ -1128,7 +1128,9 @@ namespace SodRpg.Core.Game
                 foreach (var sourceSlot in VerifiedMechanismSlots.ForMemory(heroKey, entry.Memory))
                 {
                 var payload = AuthoredKeystoneComposer.GimmickPayload(entry.Def, entry.StarId);
+                // Match runtime dispatch: movement memories are movement events, not native-memory sources.
                 var transformed = AuthoredKeystoneComposer.TransformAllocationPayload(build, payload, entry.Memory,
+                    sourceKind: sourceSlot == MechanismMemorySlot.Movement ? KeystoneSourceKind.MovementEvent : KeystoneSourceKind.NativeMemory,
                     sourceSlot: sourceSlot, heroKey: heroKey);
                 var def = AuthoredKeystoneComposer.EffectiveGimmick(entry.Def, transformed);
                 if (def == null) continue;
