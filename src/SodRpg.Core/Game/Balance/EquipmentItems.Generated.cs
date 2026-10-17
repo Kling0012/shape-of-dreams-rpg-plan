@@ -2215,7 +2215,7 @@ namespace SodRpg.Core.Game
         internal const decimal Unique_unique_link_aurena_claw_Link = 15m;
         internal const int Unique_unique_link_aurena_golden_grace_Power0 = 10;
         internal const int Unique_unique_link_aurena_golden_grace_Power1 = 5;
-        internal const decimal Unique_unique_link_aurena_golden_grace_Link = 48m;
+        internal const decimal Unique_unique_link_aurena_golden_grace_Link = 62m;
         internal const int Unique_unique_link_aurena_light_archer_Power0 = 88;
         internal const int Unique_unique_link_aurena_light_archer_Power1 = 10;
         internal const decimal Unique_unique_link_aurena_light_archer_Link = 15m;
@@ -2233,7 +2233,7 @@ namespace SodRpg.Core.Game
         internal const decimal Unique_unique_link_bismuth_facet_Link = 18m;
         internal const int Unique_unique_link_bismuth_prism_dash_Power0 = 78;
         internal const int Unique_unique_link_bismuth_prism_dash_Power1 = 25;
-        internal const decimal Unique_unique_link_bismuth_prism_dash_Link = 57m;
+        internal const decimal Unique_unique_link_bismuth_prism_dash_Link = 62m;
         internal const int Unique_unique_link_bismuth_prism_eye_Power0 = 50;
         internal const int Unique_unique_link_bismuth_prism_eye_Power1 = 88;
         internal const decimal Unique_unique_link_bismuth_prism_eye_Link = 18m;
@@ -2245,7 +2245,7 @@ namespace SodRpg.Core.Game
         internal const decimal Unique_unique_link_butchers_feast_Link = 26m;
         internal const int Unique_unique_link_cetus_cold_front_Power0 = 15;
         internal const int Unique_unique_link_cetus_cold_front_Power1 = 20;
-        internal const decimal Unique_unique_link_cetus_cold_front_Link = 75m;
+        internal const decimal Unique_unique_link_cetus_cold_front_Link = 80m;
         internal const int Unique_unique_link_cetus_frozen_blood_Power0 = 52;
         internal const int Unique_unique_link_cetus_frozen_blood_Power1 = 48;
         internal const decimal Unique_unique_link_cetus_frozen_blood_Link = 28m;
@@ -2317,7 +2317,7 @@ namespace SodRpg.Core.Game
         internal const decimal Unique_unique_link_husk_wind_scar_Link = 55m;
         internal const int Unique_unique_link_lacerta_dodge_draw_Power0 = 78;
         internal const int Unique_unique_link_lacerta_dodge_draw_Power1 = 5;
-        internal const decimal Unique_unique_link_lacerta_dodge_draw_Link = 75m;
+        internal const decimal Unique_unique_link_lacerta_dodge_draw_Link = 62m;
         internal const int Unique_unique_link_lacerta_gunslinger_Power0 = 80;
         internal const int Unique_unique_link_lacerta_gunslinger_Power1 = 25;
         internal const decimal Unique_unique_link_lacerta_gunslinger_Link = 32m;
@@ -2332,13 +2332,13 @@ namespace SodRpg.Core.Game
         internal const decimal Unique_unique_link_mad_laughter_fists_Link = 36m;
         internal const int Unique_unique_link_mist_fleche_Power0 = 5;
         internal const int Unique_unique_link_mist_fleche_Power1 = 5;
-        internal const decimal Unique_unique_link_mist_fleche_Link = 36m;
+        internal const decimal Unique_unique_link_mist_fleche_Link = 38m;
         internal const int Unique_unique_link_mist_masterwork_Power0 = 50;
         internal const int Unique_unique_link_mist_masterwork_Power1 = 5;
         internal const decimal Unique_unique_link_mist_masterwork_Link = 44m;
         internal const int Unique_unique_link_mist_riposte_Power0 = 25;
         internal const int Unique_unique_link_mist_riposte_Power1 = 30;
-        internal const decimal Unique_unique_link_mist_riposte_Link = 59m;
+        internal const decimal Unique_unique_link_mist_riposte_Link = 62m;
         internal const int Unique_unique_link_mist_swordsman_Power0 = 10;
         internal const int Unique_unique_link_mist_swordsman_Power1 = 16;
         internal const decimal Unique_unique_link_mist_swordsman_Link = 19m;
@@ -2416,13 +2416,13 @@ namespace SodRpg.Core.Game
         internal const decimal Unique_unique_link_yubar_nova_end_Link = 41m;
         internal const int Unique_unique_link_yubar_star_echo_Power0 = 140;
         internal const int Unique_unique_link_yubar_star_echo_Power1 = 8;
-        internal const decimal Unique_unique_link_yubar_star_echo_Link = 24m;
+        internal const decimal Unique_unique_link_yubar_star_echo_Link = 38m;
         internal const int Unique_unique_link_yubar_star_traveler_Power0 = 20;
         internal const int Unique_unique_link_yubar_star_traveler_Power1 = 78;
         internal const decimal Unique_unique_link_yubar_star_traveler_Link = 12m;
         internal const int Unique_unique_link_yubar_still_clock_Power0 = 20;
         internal const int Unique_unique_link_yubar_still_clock_Power1 = 7;
-        internal const decimal Unique_unique_link_yubar_still_clock_Link = 38m;
+        internal const decimal Unique_unique_link_yubar_still_clock_Link = 62m;
         internal const int Unique_unique_linked_coif_Power0 = 22;
         internal const int Unique_unique_linked_coif_Power1 = 18;
         internal const int Unique_unique_living_stone_Power0 = 10;
@@ -5264,7 +5264,7 @@ namespace SodRpg.Core.Game
             "balance:equipment:items:v1:unique:unique.link_aurena_claw:link:Guard:milli:15000",
             "balance:equipment:items:v1:unique:unique.link_aurena_claw:power:0:SoulSiphon:int:20",
             "balance:equipment:items:v1:unique:unique.link_aurena_claw:power:1:SecondWind:int:30",
-            "balance:equipment:items:v1:unique:unique.link_aurena_golden_grace:link:MemoryHaste:milli:48000",
+            "balance:equipment:items:v1:unique:unique.link_aurena_golden_grace:link:MemoryHaste:milli:62000",
             "balance:equipment:items:v1:unique:unique.link_aurena_golden_grace:power:0:Lifesteal:int:10",
             "balance:equipment:items:v1:unique:unique.link_aurena_golden_grace:power:1:Momentum:int:5",
             "balance:equipment:items:v1:unique:unique.link_aurena_light_archer:link:Attune:milli:15000",
@@ -5282,7 +5282,7 @@ namespace SodRpg.Core.Game
             "balance:equipment:items:v1:unique:unique.link_bismuth_facet:link:Attune:milli:18000",
             "balance:equipment:items:v1:unique:unique.link_bismuth_facet:power:0:CrystalResonance:int:2",
             "balance:equipment:items:v1:unique:unique.link_bismuth_facet:power:1:Overload:int:20",
-            "balance:equipment:items:v1:unique:unique.link_bismuth_prism_dash:link:MemoryHaste:milli:57000",
+            "balance:equipment:items:v1:unique:unique.link_bismuth_prism_dash:link:MemoryHaste:milli:62000",
             "balance:equipment:items:v1:unique:unique.link_bismuth_prism_dash:power:0:EchoingDodge:int:78",
             "balance:equipment:items:v1:unique:unique.link_bismuth_prism_dash:power:1:Tailwind:int:25",
             "balance:equipment:items:v1:unique:unique.link_bismuth_prism_eye:link:Attune:milli:18000",
@@ -5294,7 +5294,7 @@ namespace SodRpg.Core.Game
             "balance:equipment:items:v1:unique:unique.link_butchers_feast:link:MemorySurge:milli:26000",
             "balance:equipment:items:v1:unique:unique.link_butchers_feast:power:0:Lifesteal:int:10",
             "balance:equipment:items:v1:unique:unique.link_butchers_feast:power:1:OpeningStrike:int:56",
-            "balance:equipment:items:v1:unique:unique.link_cetus_cold_front:link:MemoryHaste:milli:75000",
+            "balance:equipment:items:v1:unique:unique.link_cetus_cold_front:link:MemoryHaste:milli:80000",
             "balance:equipment:items:v1:unique:unique.link_cetus_cold_front:power:0:Fetters:int:15",
             "balance:equipment:items:v1:unique:unique.link_cetus_cold_front:power:1:Overload:int:20",
             "balance:equipment:items:v1:unique:unique.link_cetus_frozen_blood:link:Attune:milli:28000",
@@ -5366,7 +5366,7 @@ namespace SodRpg.Core.Game
             "balance:equipment:items:v1:unique:unique.link_husk_wind_scar:link:Attune:milli:55000",
             "balance:equipment:items:v1:unique:unique.link_husk_wind_scar:power:0:Sprint:int:25",
             "balance:equipment:items:v1:unique:unique.link_husk_wind_scar:power:1:Momentum:int:5",
-            "balance:equipment:items:v1:unique:unique.link_lacerta_dodge_draw:link:MemoryHaste:milli:75000",
+            "balance:equipment:items:v1:unique:unique.link_lacerta_dodge_draw:link:MemoryHaste:milli:62000",
             "balance:equipment:items:v1:unique:unique.link_lacerta_dodge_draw:power:0:EchoingDodge:int:78",
             "balance:equipment:items:v1:unique:unique.link_lacerta_dodge_draw:power:1:Momentum:int:5",
             "balance:equipment:items:v1:unique:unique.link_lacerta_gunslinger:link:Attune:milli:32000",
@@ -5381,13 +5381,13 @@ namespace SodRpg.Core.Game
             "balance:equipment:items:v1:unique:unique.link_mad_laughter_fists:link:MemoryHaste:milli:36000",
             "balance:equipment:items:v1:unique:unique.link_mad_laughter_fists:power:0:Frenzy:int:3",
             "balance:equipment:items:v1:unique:unique.link_mad_laughter_fists:power:1:Executioner:int:60",
-            "balance:equipment:items:v1:unique:unique.link_mist_fleche:link:MemoryHaste:milli:36000",
+            "balance:equipment:items:v1:unique:unique.link_mist_fleche:link:MemoryHaste:milli:38000",
             "balance:equipment:items:v1:unique:unique.link_mist_fleche:power:0:Momentum:int:5",
             "balance:equipment:items:v1:unique:unique.link_mist_fleche:power:1:PreyPride:int:5",
             "balance:equipment:items:v1:unique:unique.link_mist_masterwork:link:Attune:milli:44000",
             "balance:equipment:items:v1:unique:unique.link_mist_masterwork:power:0:OpeningStrike:int:50",
             "balance:equipment:items:v1:unique:unique.link_mist_masterwork:power:1:Momentum:int:5",
-            "balance:equipment:items:v1:unique:unique.link_mist_riposte:link:MemoryHaste:milli:59000",
+            "balance:equipment:items:v1:unique:unique.link_mist_riposte:link:MemoryHaste:milli:62000",
             "balance:equipment:items:v1:unique:unique.link_mist_riposte:power:0:Retaliation:int:25",
             "balance:equipment:items:v1:unique:unique.link_mist_riposte:power:1:Bulwark:int:30",
             "balance:equipment:items:v1:unique:unique.link_mist_swordsman:link:Guard:milli:19000",
@@ -5465,13 +5465,13 @@ namespace SodRpg.Core.Game
             "balance:equipment:items:v1:unique:unique.link_yubar_nova_end:link:MemorySurge:milli:41000",
             "balance:equipment:items:v1:unique:unique.link_yubar_nova_end:power:0:UltimateSurge:int:25",
             "balance:equipment:items:v1:unique:unique.link_yubar_nova_end:power:1:Resonance:int:8",
-            "balance:equipment:items:v1:unique:unique.link_yubar_star_echo:link:MemoryHaste:milli:24000",
+            "balance:equipment:items:v1:unique:unique.link_yubar_star_echo:link:MemoryHaste:milli:38000",
             "balance:equipment:items:v1:unique:unique.link_yubar_star_echo:power:0:Convergence:int:140",
             "balance:equipment:items:v1:unique:unique.link_yubar_star_echo:power:1:Resonance:int:8",
             "balance:equipment:items:v1:unique:unique.link_yubar_star_traveler:link:Attune:milli:12000",
             "balance:equipment:items:v1:unique:unique.link_yubar_star_traveler:power:0:StarShield:int:20",
             "balance:equipment:items:v1:unique:unique.link_yubar_star_traveler:power:1:EchoingDodge:int:78",
-            "balance:equipment:items:v1:unique:unique.link_yubar_still_clock:link:MemoryHaste:milli:38000",
+            "balance:equipment:items:v1:unique:unique.link_yubar_still_clock:link:MemoryHaste:milli:62000",
             "balance:equipment:items:v1:unique:unique.link_yubar_still_clock:power:0:Finale:int:20",
             "balance:equipment:items:v1:unique:unique.link_yubar_still_clock:power:1:LucidBoon:int:7",
             "balance:equipment:items:v1:unique:unique.linked_coif:power:0:Aegis:int:22",

@@ -5272,7 +5272,7 @@
       ],
       "link": {
         "kind": "MemoryHaste",
-        "value": 75
+        "value": 62
       }
     },
     "unique.link_lacerta_powder_tap": {
@@ -5352,7 +5352,7 @@
       ],
       "link": {
         "kind": "MemoryHaste",
-        "value": 75
+        "value": 80
       }
     },
     "unique.link_cetus_manners": {
@@ -5400,7 +5400,7 @@
       ],
       "link": {
         "kind": "MemoryHaste",
-        "value": 38
+        "value": 62
       }
     },
     "unique.link_yubar_nova_end": {
@@ -5432,7 +5432,7 @@
       ],
       "link": {
         "kind": "MemoryHaste",
-        "value": 24
+        "value": 38
       }
     },
     "unique.link_husk_one_flash": {
@@ -5528,7 +5528,7 @@
       ],
       "link": {
         "kind": "MemoryHaste",
-        "value": 59
+        "value": 62
       }
     },
     "unique.link_mist_masterwork": {
@@ -5560,7 +5560,7 @@
       ],
       "link": {
         "kind": "MemoryHaste",
-        "value": 36
+        "value": 38
       }
     },
     "unique.link_nachia_wolf_shaman": {
@@ -5656,7 +5656,7 @@
       ],
       "link": {
         "kind": "MemoryHaste",
-        "value": 48
+        "value": 62
       }
     },
     "unique.link_aurena_return_chain": {
@@ -5720,7 +5720,7 @@
       ],
       "link": {
         "kind": "MemoryHaste",
-        "value": 57
+        "value": 62
       }
     },
     "unique.link_bismuth_crimson_white": {

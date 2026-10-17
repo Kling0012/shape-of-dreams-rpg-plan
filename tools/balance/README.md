@@ -38,6 +38,7 @@
 
 2026-10-16 方針変更で、無限ループや処理落ちを止める `ricochet`・`memoryReuse`・`crystalCircuit` だけを
 有効化し、強さを削るだけの `qualitySoftCap`・`fever`・`embertail`・`epiphany`・`memoryHaste` は無効化しました。
+2026-10-17 に `memoryReuse` も無効化しました。記憶の再使用間隔はクールダウン短縮の爽快感を削るだけで、本体にも最低待ち時間（0.1秒）があるため、ループ防止は `ricochet`・`crystalCircuit` で足ります。
 無効の項目は本体の値を一切変えず、説明文も無効化前の表記に戻ります。上の表は各上限が有効なときの挙動です。
 Native の事前診断（preflight）も kill switch で無効中のパッチクラスをスキップし、起動拒否にしません。
 
