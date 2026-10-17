@@ -31,7 +31,9 @@
 - `DreamforgeUi.Window.cs` の `DrawWindow` が `DrawGearTab` と `DrawForgeTab` の前後で `TabPerf.Begin` と `TabPerf.End` を呼ぶ。描画1回の時間（ms）と、メインスレッドのGC割り当て量（`GC.GetAllocatedBytesForCurrentThread` の差分）を、タブごと・Repaintとそれ以外（Layout・入力）ごとに集計する。
 - 計測は `dreamforge_perf` を一度実行するか、保存先に `perf.flag` があるときだけ動く。それ以外は真偽値の確認だけで、割り当ては増えない。割り当て量を読めない環境では1回の失敗で止め、`alloc n/a` と表示する。
 - 結果は `dreamforge_perf` の出力と `perf.flag` の10秒ごとのログで、既存の報告の後ろに `| gear tab repaint avg …ms max …ms alloc …KB/call (n calls) layout/input …` の形で出る。報告するたびに集計を空にする。
-- 判断の基準：変更前（このキャッシュ導入前の版）と変更後で、上の条件をそろえて `gear tab` と `forge tab` の Repaint の平均時間と `KB/call` を比べる。どちらも悪化していなければ採用を維持する。どちらかが悪化した場合は、悪化した側のキャッシュを見直す。
+- 比較用の切り替え：`dreamforge_perf_nocache` を実行するたびに、#500 の描画キャッシュ（スロット別の個数とタブ文字列、`(uniqueId ?? baseId)` ごとのアイコン、レア度ごとの枠色）を使わない状態と使う状態が入れ替わる。使わない状態では導入前と同じく、描画のたびに保管庫を数え直し、`RelicIconKeys.Preference` で探し直し、`ColorUtility.TryParseHtmlString` で色を読み直す。切り替え時に集計を捨てるので、次の報告は新しい状態だけの値になる。報告の末尾に `| ui cache=on` または `| ui cache=off` が付く。既定はキャッシュを使う。ファイル単位の画像キャッシュ（`icons/*.png` の読み込み結果）は導入前からあるため、どちらの状態でも使う。
+- 判断の手順：同じビルド・同じ条件で、`dreamforge_perf` を一度実行して集計を空にし、同じスクロール操作をしてから `dreamforge_perf` で `ui cache=on` の値を取る。`dreamforge_perf_nocache` で切り替えて同じ操作をし、`ui cache=off` の値を取る。これを2回以上入れ替えて繰り返す。
+- 判断の基準：キャッシュありとなし（または導入前の版と現在の版）で、上の条件をそろえて `gear tab` と `forge tab` の Repaint の平均時間と `KB/call` を比べる。どちらも悪化していなければ採用を維持する。どちらかが悪化した場合は、悪化した側のキャッシュを見直す。
 
 ## 検証
 

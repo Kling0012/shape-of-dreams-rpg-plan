@@ -290,6 +290,16 @@ namespace SodRpg.Mod
                 $"ms (main thread) | lightweight={_performance?.Mode ?? config.lightweight} background={!_hasFocus}");
         }
 
+        [ConsoleCommand("Dreamforge: toggle the gear/forge tab draw caches off/on to compare dreamforge_perf results (#500)", "dreamforge_perf_nocache")]
+        private void PerfNoCacheCommand()
+        {
+            if (!CommandAllowed()) return;
+            _perfPolled = true;
+            TabPerf.CacheOff = !TabPerf.CacheOff;
+            TabPerf.Report(); // 切り替え前の集計を捨て、次の報告を新しい状態だけにする。
+            Debug.Log("[DreamforgeRPG] ui cache=" + (TabPerf.CacheOff ? "off" : "on") + " (run dreamforge_perf after the same scroll/time to compare)");
+        }
+
         [ConsoleCommand("Dreamforge: give up trades whose result the host could not confirm (no reward is granted; reserved relics return)", "dreamforge_trades_giveup")]
         private void TradesGiveUpCommand()
         {

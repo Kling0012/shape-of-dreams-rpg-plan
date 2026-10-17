@@ -15,6 +15,13 @@ namespace SodRpg.Mod
 
         public static bool Enabled;
 
+        /// <summary>
+        /// 採否の比較用：true のあいだ、#500 の描画キャッシュ（スロット別の個数、遺物ごとのアイコン、レア度ごとの枠色）を
+        /// 使わず、導入前と同じく描画のたびに数え直し・探し直し・色の読み直しをする。dreamforge_perf_nocache で切り替える。
+        /// 同じビルドのまま、キャッシュあり／なしの計測値を並べて比べられるようにするため。既定は false（キャッシュを使う）。
+        /// </summary>
+        public static bool CacheOff;
+
         private static readonly Stopwatch Sw = Stopwatch.StartNew();
         private static long _start, _allocStart;
         private static bool _gcBroken;
@@ -62,9 +69,11 @@ namespace SodRpg.Mod
         public static string Report()
         {
             string r = "";
+            bool any = false;
             for (int t = 0; t < 2; t++)
             {
                 if (Calls[t, 0] + Calls[t, 1] == 0) continue;
+                any = true;
                 r += $" | {Names[t]} tab";
                 for (int k = 0; k < 2; k++)
                 {
@@ -77,7 +86,7 @@ namespace SodRpg.Mod
                     Calls[t, k] = 0;
                 }
             }
-            return r;
+            return any ? r + (CacheOff ? " | ui cache=off" : " | ui cache=on") : r;
         }
     }
 }

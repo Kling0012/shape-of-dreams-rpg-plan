@@ -64,15 +64,16 @@ namespace SodRpg.Mod
         {
             string id = uniqueId ?? baseId;
             if (id == null || _dir == null) return null;
+            bool useCache = !TabPerf.CacheOff;
             // 本当の null（画像なし）は覚えるが、Unity が破棄した画像は下のファイルキャッシュから読み直す。
-            if (RelicCache.TryGetValue(id, out var cached) && (ReferenceEquals(cached, null) || cached != null)) return cached;
+            if (useCache && RelicCache.TryGetValue(id, out var cached) && (ReferenceEquals(cached, null) || cached != null)) return cached;
             Texture2D resolved = null;
             foreach (string key in RelicIconKeys.Preference(uniqueId, baseId))
             {
                 resolved = For(key);
                 if (resolved != null) break;
             }
-            RelicCache[id] = resolved;
+            if (useCache) RelicCache[id] = resolved;
             return resolved;
         }
 
@@ -115,6 +116,7 @@ namespace SodRpg.Mod
             if (relic == null) return EmptyFrame;
             // セット品の橙はレア度による色より優先する（通常の伝説は金）。
             if (relic.UniqueId != null && Content.TryGetUnique(relic.UniqueId, out var unique) && unique.SetId != null) return SetFrame;
+            if (TabPerf.CacheOff) return ParseFrameColor(UiStyles.RarityHex(relic.Rarity));
             if (!FrameColors.TryGetValue(relic.Rarity, out var color))
             {
                 color = ParseFrameColor(UiStyles.RarityHex(relic.Rarity));
