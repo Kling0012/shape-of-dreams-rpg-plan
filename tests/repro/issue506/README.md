@@ -224,3 +224,29 @@ CI run `38982798048` の Startup ジョブは、PR の先端 `c7658151` 単体�
 - 同時4096件上限の再警告・番号0の投射物除外・印登録拒否と解放後の再開の直接実行: 既存テストに該当ケースがなく、新規テスト作成禁止のためコード点検まで。
 - R5の長時間Infinity・高密度部屋・診断コマンドの実ログ推移: 明示された対象外の実機確認。
 - 全体・低速・性能スイート、他のテストプロジェクト: 変更範囲に絞る指示に従い後工程へ残す。
+
+## 一時無効化した実体の破棄で解放が届かない経路の修正（2026-10-17 修正ラウンド）
+
+最終レビューで、前段の `Actor.OnDisable` 後処理だけでは解放が届かない経路が指摘された。`SetActive(false)` で一時的に隠した実体（`Entity.isActive` は true のまま）を後から破棄またはプール返却すると、Unity は有効から無効への切り替わり時だけ `OnDisable` を呼ぶため、二度目の `OnDisable` が発生しない。最初の `OnDisable` は番号保持のため解放を見送るので、誰も記録を解放せずに残る。これを繰り返すと辞書が上限へ達し、後続対象のボス装備の印と追跡が止まる。本体の該当箇所は次のとおり。
+
+- `Dew.cs` の `StepDestroy` は `DestroyPhase.InitialPoll` で全 `ICleanup` コンポーネントの `OnCleanup()` を呼ぶ。`Actor` の実装（`Actor.cs:535`）は `Network_isActive=false` を設定し、`OnIsActiveChanged` → `InvokeOnDestroyActorIfDidnt` と進んで `OnDestroyActor` の終了攻撃がこの中で完了する。
+- その後の `SpawnManager.Destroy` は、プール無効なら `UnityEngine.Object.Destroy`、プール有効なら `Park` と `SetActive(false)` へ進む。GameObject がすでに無効な場合、どちらも新しい `OnDisable` を発生させない。
+
+修正として、`Actor` の明示的インターフェース実装 `ICleanup.OnCleanup`（メタデータ名 `ICleanup.OnCleanup`、`Dew.Core.dll` の文字列へ実在を確認）に同じ解放の後処理を追加した。この位置は `isActive` が false になった直後で、`OnDestroyActor` の終了攻撃が親の寿命番号を使い終えた後であり、順序を保ったまま隠された実体の破棄・プール返却の両方を冪等に解放する。一時的な `SetActive(false)` のみでは `OnCleanup` が走らないため、番号保持の要件も変わらない。
+
+再現テストは既存の `BossNativeActorLifetimeReproTests` だけを最小限に直した。`FinishNativeLifetime` に `hiddenBeforeDestroy` を渡せるようにし、隠された経路では `isActive` が true のまま `OnDisable` 後処理を1回通した後、`OnCleanup` の境界（完了 prefix と追加した後処理）だけを通して二度目の `OnDisable` を呼ばない。4096 回の反復は偶数回を通常破棄・奇数回を隠された破棄で交互にし、毎回の終了後に残件数 0 を要求する断言を足した。あわせて、一時無効化で番号が保持され印が読めることと、隠されたままの破棄で記録が解放されることの2点を同じテスト内で確認するようにした（レビューの受け入れ条件）。
+
+### このラウンドで実行した検証
+
+- `DOTNET_ROLL_FORWARD=Major dotnet build tests/SodRpg.Core.Tests/SodRpg.Core.Tests.csproj -c Release --no-incremental -p:PythonCommand=python3 -v:q '-clp:ErrorsOnly;Summary'`: exit 0、エラー0。
+- `DOTNET_ROLL_FORWARD=Major dotnet test tests/SodRpg.Core.Tests/SodRpg.Core.Tests.csproj -c Release --no-build --filter FullyQualifiedName~BossNativeActorLifetimeReproTests --logger 'console;verbosity=detailed'`: exit 0、3成功・失敗0。全条件で1024/2048/3072/4096回終了後の残件数0、次の対象の寿命4097・印1件、一時無効化中の番号保持（restingLife=4098, hiddenLife=4098, hiddenMarks=1）、隠された破棄後の記録解放を確認。
+- **revert check**: テストを変更せず `BossNativeCleanedLifetime.Postfix` の解放呼び出しだけを一時的に無効にして `--no-incremental` ビルド（exit 0）し、同じテストを実行。**exit 1、3失敗**。全条件で「iteration 2 (hidden=True) left 1 retained identities」が出て、隠された経路の解放欠落を検出した。解放を復元して再ビルド・再実行すると exit 0、3成功。
+- `DOTNET_ROLL_FORWARD=Major dotnet test tests/SodRpg.Core.Tests/SodRpg.Core.Tests.csproj -c Release --no-build --filter 'FullyQualifiedName~Boss&FullyQualifiedName!~BossNativeActorLifetimeReproTests' --logger 'console;verbosity=minimal'`: exit 0、169成功・失敗0。最終コードでの結果。
+- `dotnet build src/SodRpg.Mod/SodRpg.Mod.csproj -c Release '-p:GameDir=<参照用ゲームデータ>' -p:ModDeployDir=<一時ディレクトリ> -p:PythonCommand=python3 -v:q '-clp:ErrorsOnly;Summary'`: exit 0、エラー0。実ゲームへの配置はしていない。
+- `DOTNET_ROLL_FORWARD=Major dotnet test tests/SodRpg.Mod.Startup.Tests/SodRpg.Mod.Startup.Tests.csproj -c Release --filter 'FullyQualifiedName~NativeStartupTests|FullyQualifiedName~ModReloadTests|FullyQualifiedName~ReloadStartupTests|FullyQualifiedName~InfinityLobbyStartTests' --logger 'console;verbosity=minimal' -p:PythonCommand=python3 -v:q`: exit 0、108成功・失敗0・既存skip1。
+
+### このラウンドの未実行
+
+- Unity実破棄コールバック・`ICleanup.OnCleanup` とActor派生型の `OnDisable` へのHarmony実適用・一時無効化した実体の実再有効化・fake-null・Mirror実通信: 実行環境なし。逆コンパイルの呼び出し順とリンク済み再現テストまでの確認。
+- R5の長時間Infinity・高密度部屋・診断コマンドの実ログ推移: 明示された対象外の実機確認。
+- 全体・低速・性能スイート、他のテストプロジェクト: 変更範囲に絞る指示に従い後工程へ残す。

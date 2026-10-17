@@ -272,6 +272,24 @@ namespace SodRpg.Mod
         }
     }
 
+    // #506: a GameObject hidden with SetActive(false) while Entity.isActive is still
+    // true keeps its record (the postfix above defers for reactivation), and Unity
+    // does not run OnDisable again when that already-hidden object is later destroyed
+    // or parked in a pool, so the deferred release never fires. Every Actor.Destroy
+    // goes through Dew.StepDestroy, whose first step is ICleanup.OnCleanup: the entity
+    // turns inactive and OnDestroyActor (death/exit attacks reading the parent's life)
+    // completes inside that call, so this postfix releases after those references and
+    // stays idempotent with the OnDisable path.
+    [HarmonyPatch(typeof(Actor), "ICleanup.OnCleanup")]
+    internal static class BossNativeCleanedLifetime
+    {
+        private static void Postfix(Actor __instance)
+        {
+            if (__instance.isActive) return;
+            HostAuthority.NativeInstance?.ClearBossNativeActor(__instance);
+        }
+    }
+
     internal sealed partial class HostAuthority
     {
         internal sealed class BossNativeCast

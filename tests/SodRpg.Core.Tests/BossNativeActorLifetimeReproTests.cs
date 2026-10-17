@@ -8,21 +8,39 @@ using Xunit.Abstractions;
 namespace SodRpg.Core.Tests
 {
     // #506: run the linked production ledger and lifecycle prefixes. The native lifecycle
-    // boundary follows Actor.OnDisable -> DewPool.ClearEventsAndProcessors, whose guard
-    // skips ClearPooledEventsAndProcessors when both pooling and room reuse are disabled.
+    // boundary follows Dew.StepDestroy (Actor.ICleanup.OnCleanup) and Actor.OnDisable ->
+    // DewPool.ClearEventsAndProcessors, whose guard skips ClearPooledEventsAndProcessors
+    // when both pooling and room reuse are disabled.
     public class BossNativeActorLifetimeReproTests
     {
         private readonly ITestOutputHelper _output;
         public BossNativeActorLifetimeReproTests(ITestOutputHelper output) { _output = output; }
 
-        private static void FinishNativeLifetime(Entity target, bool usePooling, bool reuseInRoom)
+        private static void FinishNativeLifetime(Entity target, bool usePooling, bool reuseInRoom, bool hiddenBeforeDestroy)
         {
+            if (hiddenBeforeDestroy)
+            {
+                // A plain GameObject.SetActive(false) runs OnDisable while the entity is
+                // still active, so the postfix keeps the identity for reactivation. Unity
+                // does not call OnDisable again when the already-hidden object is later
+                // destroyed or parked in a pool.
+                typeof(BossNativeDisabledLifetime).GetMethod("Postfix", BindingFlags.Static | BindingFlags.NonPublic)
+                    .Invoke(null, new object[] { target });
+            }
+
             // Actor.ICleanup.OnCleanup changes isActive; OnIsActiveChanged invokes this
             // completion prefix. These API doubles do not install Harmony automatically.
             target.isActive = false;
             ((Actor)target).isActive = false;
             typeof(BossNativeInstanceCompletion).GetMethod("Prefix", BindingFlags.Static | BindingFlags.NonPublic)
                 .Invoke(null, new object[] { target });
+
+            // The cleanup postfix releases the record inside StepDestroy even when the
+            // hidden GameObject never runs a second OnDisable.
+            typeof(BossNativeCleanedLifetime).GetMethod("Postfix", BindingFlags.Static | BindingFlags.NonPublic)
+                .Invoke(null, new object[] { target });
+
+            if (hiddenBeforeDestroy) return;
 
             // Actor.OnDisable calls DewPool.ClearEventsAndProcessors. A present SpawnManager
             // only dispatches the virtual clear (and thus its prefix) under this exact guard.
@@ -56,12 +74,18 @@ namespace SodRpg.Core.Tests
 
                 // The production boss-mark entry point allocates a native identity for each
                 // target. Only one target is active at a time; this never needs 4096 live actors.
+                // Every other lifetime ends while the GameObject is already hidden, the path
+                // where no second OnDisable runs (review on PR #689).
                 for (int i = 0; i < 4096; i++)
                 {
                     var target = new Entity { creationTime = i + 1, Relation = EntityRelation.Enemy };
                     ledger.MarkTarget(target, 1, 10f, 1f, "issue506", i + 1);
                     Assert.Equal(1, ledger.MarkCount(target, 1f, "issue506"));
-                    FinishNativeLifetime(target, usePooling, reuseInRoom);
+                    bool hidden = (i & 1) == 1;
+                    FinishNativeLifetime(target, usePooling, reuseInRoom, hidden);
+                    Assert.True(lives.Count == 0,
+                        $"iteration {i + 1} (hidden={hidden}) left {lives.Count} retained identities " +
+                        $"(usePooling={usePooling}, reuseInRoom={reuseInRoom}).");
                     if ((i + 1) % 1024 == 0)
                         _output.WriteLine("finished={0}, retained actor identities={1}", i + 1, lives.Count);
                 }
@@ -76,6 +100,25 @@ namespace SodRpg.Core.Tests
                     $"After 4096 completed actor lifetimes (usePooling={usePooling}, reuseInRoom={reuseInRoom}), " +
                     $"the next active target must retain one boss mark; actual marks={marks}, " +
                     $"native life={life}, retained identities={lives.Count}.");
+
+                // A temporarily hidden target keeps its number until it is re-enabled, and a
+                // hidden destroy without another OnDisable still releases the record.
+                var resting = new Entity { creationTime = 4098, Relation = EntityRelation.Enemy };
+                ledger.MarkTarget(resting, 1, 10f, 1f, "issue506", 4098);
+                lives.TryGetValue(resting, out long restingLife);
+                Assert.True(restingLife > 0, "A fresh active target must receive a native life.");
+                typeof(BossNativeDisabledLifetime).GetMethod("Postfix", BindingFlags.Static | BindingFlags.NonPublic)
+                    .Invoke(null, new object[] { resting });
+                lives.TryGetValue(resting, out long hiddenLife);
+                int restingMarks = ledger.MarkCount(resting, 1f, "issue506");
+                _output.WriteLine("usePooling={0}, reuseInRoom={1}, restingLife={2}, hiddenLife={3}, hiddenMarks={4}",
+                    usePooling, reuseInRoom, restingLife, hiddenLife, restingMarks);
+                Assert.Equal(restingLife, hiddenLife);
+                Assert.Equal(1, restingMarks);
+                FinishNativeLifetime(resting, usePooling, reuseInRoom, hiddenBeforeDestroy: true);
+                Assert.False(lives.ContainsKey(resting),
+                    $"A hidden destroy without a second OnDisable must release the lifetime record " +
+                    $"(usePooling={usePooling}, reuseInRoom={reuseInRoom}).");
             }
             finally
             {
