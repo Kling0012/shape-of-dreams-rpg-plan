@@ -36,17 +36,17 @@ namespace Issue73.Native.Tests
             NetworkedManagerBase<ActorManager>.softInstance = new ActorManager { serverActor = transport };
             var profile = Profile.CreateNew(528);
             Rules.BeginRun(profile, "ack-run");
-            // 潜行の決定（revision 1）は適用済みで、ローカルの地図はすでに次の世代へ進んでいる。
+            // 潜行の決定（revision 1）は適用済み。地図更新前は ACK を再送できる状態を保つ。
             profile.Run.Infinity = new InfinityRunState
             {
                 FixedZoneId = "Zone_Mist", Interval = 10, Phase = InfinityPhase.Transitioning,
-                GraphEpoch = 1, ChoiceRevision = 1,
+                GraphEpoch = 0, ChoiceRevision = 1,
             };
             var session = new ClientSession { Profile = profile, ActiveRunId = "ack-run" };
             Set(typeof(ClientSession), "_hostSession", session);
             Set(session, "_zone", new ZoneManager { currentZoneIndex = 0 });
             ((RunChoiceProgress)Get(session, "_runChoiceProgress")).BeginRun("ack-run", 0);
-            // 設定に残り続けるホスト側の潜行決定: 現在の世代より前の境界外 choice。
+            // 設定に残り続けるホスト側の潜行決定: 地図更新前は現在と同じ世代の境界外 choice。
             InfinityMode.PublishChoice(new InfinityMode.InfinityChoice
             {
                 RunId = "ack-run", Revision = 1, GraphEpoch = 0, SegmentEpoch = 0, Boundary = false,
@@ -61,7 +61,8 @@ namespace Issue73.Native.Tests
             Assert.Equal(1, established);
             Assert.Equal("ack-run", InfinityMode.LastAcknowledgedChoice.RunId);
 
-            // 適用済みで世代が古い choice には、それ以降の毎秒 ACK は不要な通信。
+            // ホストの地図更新が届き、適用済みで世代が古くなった choice への ACK を止める。
+            profile.Run.Infinity.GraphEpoch = 1;
             for (int second = 1; second <= 10; second++)
             {
                 Time.unscaledTime += 1;

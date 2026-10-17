@@ -151,7 +151,7 @@ namespace SodRpg.Mod.Startup.Tests
 
             // The preparation gate (Shrine_PrimusDoor) loads the boss node directly, without
             // the map/vote travel path: arrival must not disable Infinity or bounce back.
-            SingletonDewNetworkBehaviour<Room>.softInstance = new Room { isActive = true, didClearRoom = true };
+            SingletonDewNetworkBehaviour<Room>.softInstance = new Room { isActive = true };
             zone.SetCurrentNodeIndexAndRevealAdjacent(2);
             Assert.Equal(-1, InfinityMode.RevealedNext(zone));
             Assert.True(InfinityMode.Available);
@@ -160,6 +160,7 @@ namespace SodRpg.Mod.Startup.Tests
             Assert.True(InfinityMode.Available);
 
             // Killing the boss reaches the choice that delves into the next zone.
+            SingletonDewNetworkBehaviour<Room>.softInstance.didClearRoom = true;
             InfinityMode.OnRoomClear(SingletonDewNetworkBehaviour<Room>.softInstance);
             Assert.Equal(InfinityPhase.WaitingSoulFinish, state.Phase);
             var soul = new Shrine_BossSoul { isActive = true };
@@ -190,7 +191,7 @@ namespace SodRpg.Mod.Startup.Tests
             Assert.Equal(InfinityPhase.BossDue, state.Phase);
             Assert.Equal(2, InfinityMode.RevealedNext(zone));
 
-            SingletonDewNetworkBehaviour<Room>.softInstance = new Room { isActive = true, didClearRoom = true };
+            SingletonDewNetworkBehaviour<Room>.softInstance = new Room { isActive = true };
             zone.SetCurrentNodeIndexAndRevealAdjacent(2);
             InfinityMode.Tick();
             Assert.Equal(InfinityPhase.BossFight, state.Phase);
