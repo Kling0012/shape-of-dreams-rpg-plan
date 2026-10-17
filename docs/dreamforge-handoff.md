@@ -171,6 +171,7 @@ tools/make_about_images.py   Workshop 用画像の生成（Pillow）
 - 協力時、ホストはクライアントが送る能力の集計値を上限で丸めて受け入れる（装備データ一式の検証はしない）。信頼できる仲間との協力が前提。
 - 星座系統の日本語名（破壊・生命・想像）は直訳の仮置き。本体の表記に合わせる。
 - 保存データは `<persistentDataPath>/QuickSave/Mods/DreamforgeRPG/profile.json`。互換を崩す変更は `ProfileCodec` で移行し、未知のIDは捨てずに注記する。
+- 保存エラーの表示で、OS などゲームの外から届く例外の文（`IOException` 等）やファイル名は UI の言語と混在して表示される（#509 が明示した制約）。MOD 自身の失敗理由は日英両方を持って表示言語に合わせて出し、`Save failed` のログは `ProfileStore.EnglishMessage` で固定言語（英文）に出す（#551）。外部由来の文を言語ごとに整えるのは将来の改善候補として残す。
 - 文字列の中で `\n` を Python のヒアドキュメントで編集すると実際の改行になって C# が壊れることがあった。編集スクリプトはファイルに書いてから実行する。
 - 共有記憶（Agent Memory MCP）はこのセッションでは接続ツールが無く、保存できていない。Claude Code のローカル記憶（`~/.claude/projects/.../memory/`）には方針を保存済み。
 

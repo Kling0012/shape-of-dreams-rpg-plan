@@ -411,6 +411,36 @@ getterのみ公開する。添字ループはこのコレクションを直接�
 
 **未実行**：Unity実機での戦闘・装備情報未準備時の例外再現／回復・協力通信は、ゲーム実行環境が提供されていないため未確認。装備キャッシュ欠落時の解除／再試行と、大顎の4回目・アズラクの3回目・光の手の6秒の同等性は設定とコードの照合によるもので、当該条件を追加ケースで実行した証拠ではない。GC割当量・フレーム時間の実測は行っていない。実行環境依存の0バイト断言を追加せず、型と生成箇所を点検した。フルテスト・Slowテスト・無関係なテストは作業中に実行しない指示に従い、後続工程へ委ねる。
 
+## #551 保存エラー表示の追補（2026-10-17）
+
+PR #509 のレビューで挙がった軽微な改善（Issue #551）。`ClientSession.SaveNow` の catch は `SaveError` に `ex.Message` の文字列を固定していたのを例外オブジェクトの保持に変え、表示（`SaveError` の getter）のたびに `Message` を読む。これで表示言語を切り替えたあとも例外の理由が現在の言語で出る。`ProfileWriteException.Message` は `Loc.T` で日英を選ぶ実装なので、保存側（書き込みスレッド）は言語を読まずに済む。
+
+優先順位は次のとおり（変更後も #509 の意図を保つ）。
+
+- この呼び出しで出た例外が最優先（`threw` の間は書き込み失敗の反映をスキップ）。
+- 例外より前から残っている書き込み失敗（`LastError`）は、今回の例外を隠さない。catch で例外を保持するときに、その時点の writer と `AsyncProfileWriter.FailureSerial`（失敗のたびに増える番号）を既知の組として記録する。それ以後に同じ writer の番号が進んだ場合、またはプロフィール切替後の別 writer で失敗した場合だけ「新しい書き込み失敗」として、古い例外文に代わって書き込み失敗の表示に切り替える。writer の追跡状態はプロフィール切替時にもリセットし、`TickPeriodicSave` の定期表示も同じ条件にする。
+- 書き込みが成功し直したら（`HasPendingFailure` が false・`WrittenRevision > 0`）、書き込み失敗の表示だけを消す（別経路のエラーは残す）。
+
+ログは `Log.Error("Save failed: " + …)` を `ProfileStore.EnglishMessage(ex)` で出す。`ProfileWriteException` は英文（UI 言語と無関係）、それ以外の例外は `Message` をそのまま返す。
+
+PR #609 の取込実装の時点（基準は main の `130c4caa`）では、`CHANGELOG.md` の未リリース欄へ保存エラーの2項目だけを追加し、元 PR の競合解決済みファイル全体は置き換えに使わなかった。その後の main で更新履歴を `changelog.d/` の断片で足す運用に切り替わったため、main を取り込んだ競合解決では、この追加を `changelog.d/667-save-error.md`（2項目・日英併記）へ切り出し、`CHANGELOG.md` 自体は main と同一の全文のまま変更していない。`docs/testing.md` も本 #551 節以外は main の全文を保持する。
+
+受け付け審査で指摘された、失敗文言と `FailureSerial` を別々に読む競合にも対応した。`AsyncProfileWriter.GetWriteState()` は例外・失敗番号・失敗継続中の印・書き込み済みリビジョンを同一ロック内で値型へコピーする。`SaveNow` の非例外経路と `TickPeriodicSave` はこの状態だけで表示の設定・解除を判断するため、古い文言を新しい番号として記録したり、回復前後の情報を混ぜたりしない。例外の `Message` はロックを解放してから読む。状態の取得でヒープ確保を追加せず、既存の文言キャッシュは言語と理由が変わったときだけ更新する。
+
+**保留中の回帰テスト（後続 PR で追加する）**：表示の消失（#509 修正済み）、古い例外と新しい書き込み失敗の競合、言語切替時の表示（`SaveError` の getter と `_writeFailureText` のキャッシュ）には直接の回帰テストがない。この変更では新規テストの追加が禁止されているため見送り、元 PR #509 で書かれたテストを取り込む。言語の切替は `Loc.Japanese` の2層（#151：スレッドローカルの上書き＋共有値）に配慮し、既存の `CodexTextConsistencyTests` と同じ形（テストのスレッドで `Loc.Japanese` を設定し、`finally` で必ず元に戻す）で書く。
+
+実行した検証：
+
+- `DOTNET_ROLL_FORWARD=Major dotnet test tests/Issue73.Native.Tests/Issue73.Native.Tests.csproj -c Release --nologo --filter 'FullyQualifiedName~InfinityClearSaveTests|FullyQualifiedName~ContinueSaveTests|FullyQualifiedName~NativeAcceptanceTests|FullyQualifiedName~SatchelOverflowSaveTests|FullyQualifiedName~LobbyReturnTests|FullyQualifiedName~HostCoopTradeTests|FullyQualifiedName~TradeSendExceptionTests' -v:quiet`：変更前・変更後とも67成功・0失敗・0スキップ。抽出ハーネス（`NativePersistence.targets`）が保存エラーと writer 状態追跡の本番メソッドを取り込めることも確認した。
+- 既存のリポジトリ外の再現コンソール（`/tmp/issue551-repro-20261017-a`）を使用した。変更前のネイティブ DLL に接続すると `existing failure overwrote catch: False`、`replacement writer failure missed at same serial: True` となり、旧コミット向けの両方再現を期待する判定は終了コード1だった。今回の main で再現したのは別 writer の失敗を見落とす方だけ。既存コンソールを別の一時ディレクトリへコピーし、参照先だけを今回の worktree に変更して再ビルドした。`ISSUE551_NATIVE_ASSEMBLY="$PWD/tests/Issue73.Native.Tests/bin/Release/net8.0/Issue73.Native.Tests.dll" DOTNET_ROLL_FORWARD=Major dotnet run --project /tmp/pr609-existing-repros-pa8hgxx0/issue551-repro-20261017-a/issue551-repro.csproj -c Release -- fixed` は両方 `False`、終了コード0。これはゲーム描画の再現ではなく、本番から抽出した `SaveNow` と `TickPeriodicSave` の実行による確認。
+- 既存の言語確認コンソールも参照先だけを今回の worktree に合わせて実行した（`DOTNET_ROLL_FORWARD=Major dotnet run --project /tmp/pr609-existing-repros-pa8hgxx0/issue551-language-check-20261017 -c Release`）。同じ `ProfileWriteException.Message` の日本語→英語→日本語、`ProfileStore.EnglishMessage` の言語によらない英文、外部例外の元の `Message` の保持はすべて `True`、終了コード0。新しい検証ケースやテストは作成していない。
+- `DOTNET_ROLL_FORWARD=Major dotnet test tests/SodRpg.Core.Tests/SodRpg.Core.Tests.csproj -c Release -p:PythonCommand=python3 --nologo --filter "FullyQualifiedName~AsyncProfileWriterTests|FullyQualifiedName~ProfileResetV127Tests|FullyQualifiedName~ProfileStoreRoundtripIssue429Tests|FullyQualifiedName~Issue73LedgerTests|FullyQualifiedName~OnboardingTests"`：28成功・0失敗・0スキップ。
+- `dotnet build src/SodRpg.Mod/SodRpg.Mod.csproj -c Release '-p:GameDir=/home/wang/dev/sod-gamedata/Shape of Dreams' -p:ModDeployDir=/tmp/pr609-moddeploy --nologo -v:minimal`：エラー0・既存警告6。Core は上記テストビルドでもコンパイルした。
+- 取込実装では、`CHANGELOG.md` から追加2項目とその空行だけを除いた全文を `git show 130c4caa:CHANGELOG.md` と比較して一致を確認した。断片への置き換え後は、`CHANGELOG.md` に main との差がないことと、`changelog.d/667-save-error.md` の2項目が置き換え前の追加項目と同じ文であることを確認した。`docs/testing.md` から本 #551 節だけを除いた全文は main と一致する。
+- `git diff --check` は `docs/dreamforge-handoff.md` の追加行の CRLF だけを指摘。既存の改行形式を保持し、`git -c core.whitespace=cr-at-eol diff --check` で成功した。
+
+**未実行**：上記の保留中の回帰テスト（表示消失・古いエラー競合・言語切替キャッシュ）は新規テスト禁止のためこの変更では書いていない。言語切替後の表示は getter と条件分岐のソース追跡およびスクラッチでの `ProfileWriteException.Message` 確認、優先順位は上記のスクラッチ状態遷移による確認にとどまる。Unity実機での表示はゲーム実行環境がないため未確認。フルテスト・Slowテスト（`tools/test_changed.py --all`）は後続工程に委ねる。
+
 ## PR #517 取り込み：近接協力追加後のテストビルド確認（2026-10-17）
 
 元PR [#517](https://github.com/Kling0012/shape-of-dreams-rpg-plan/pull/517) の変更は、

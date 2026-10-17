@@ -44,7 +44,34 @@ namespace SodRpg.Core.Game
 
         private long _writtenRevision;
         private long _attemptedRevision;
+        private long _failureSerial;
         private bool _failurePending;
+
+        /// <summary>書き込みの失敗が起きるごとに増える番号。LastError と違い、前より新しい失敗が起きたかの判定に使える。</summary>
+        public long FailureSerial { get { lock (_lock) return _failureSerial; } }
+
+        /// <summary>失敗文と番号、回復状態を同じ書き込み時点で読む。値型なので毎フレーム取得しても割り当てない。</summary>
+        public WriteState GetWriteState()
+        {
+            lock (_lock) return new WriteState(_lastError, _failureSerial, _failurePending, _writtenRevision);
+        }
+
+        public readonly struct WriteState
+        {
+            private readonly Exception _error;
+            public string LastError => _error?.Message;
+            public long FailureSerial { get; }
+            public bool HasPendingFailure { get; }
+            public long WrittenRevision { get; }
+
+            internal WriteState(Exception error, long failureSerial, bool hasPendingFailure, long writtenRevision)
+            {
+                _error = error;
+                FailureSerial = failureSerial;
+                HasPendingFailure = hasPendingFailure;
+                WrittenRevision = writtenRevision;
+            }
+        }
 
         /// <summary>
         /// 最後の書き込みが失敗したままか（成功すると false に戻る）。失敗したテキストは破棄されるので、
@@ -158,6 +185,7 @@ namespace SodRpg.Core.Game
                     {
                         _attemptedRevision = rev;
                         _failurePending = true;
+                        _failureSerial++;
                         _lastError = ex;
                         Monitor.PulseAll(_lock);
                     }
