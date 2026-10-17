@@ -334,7 +334,7 @@ namespace SodRpg.Core.Game
                     effect = "Shield +" + n + "% of maximum health: shield yourself for " + duration + " seconds (one star shield per giver and recipient; keeps the larger of the remaining and new amounts and refreshes the duration)";
                     break;
                 case GimmickEffect.Heal:
-                    effect = "Healing +" + n + "% of each recipient's maximum health: heal yourself" + (def.Arg == 1 ? " and allies within " + healRadius + "m" : "");
+                    effect = "Healing +" + n + "% of each recipient's maximum health: heal yourself" + (def.Arg == 1 ? " and allies within " + healRadius + "m" + HealFalloffNote(def) : "");
                     break;
                 case GimmickEffect.Recharge:
                     effect = "Remaining cooldown -" + n + "%: shorten that memory's remaining cooldown";
@@ -373,6 +373,11 @@ namespace SodRpg.Core.Game
                 + " (" + interval + "; " + cap + stacking + "; not triggered by extra damage from stars).";
         }
 
+        // The host heals allies through the co-op distance falloff at the default radius (as Siphon does).
+        private static string HealFalloffNote(GimmickDef def)
+            => Radius(def, CoopBalance.FullRange) == CoopBalance.FullRange
+                ? (Loc.Japanese ? "。" : ".") + CoopDistance.Description.TrimEnd(Loc.Japanese ? '。' : '.') : "";
+
         /// <summary>
         /// 仕掛けの日本語の説明。1文目に「いつ・何が起きるか」、続く文に間隔・上限・重なり、最後に星の追加ダメージでは発動しない旨を書く。
         /// 星のまとめ（StarSummary.Compact）は、間隔の文から最後の文までを省く。
@@ -403,7 +408,7 @@ namespace SodRpg.Core.Game
                     extra = "星の障壁は付与者と受け手の組ごとに1つだけで、残量と新しい量の大きい方を保ち、持続時間を更新する。";
                     break;
                 case GimmickEffect.Heal:
-                    effect = def.Arg == 1 ? "自分と" + healRadius + "m以内の味方を、それぞれの最大HPの" + n + "%回復する"
+                    effect = def.Arg == 1 ? "自分と" + healRadius + "m以内の味方を、それぞれの最大HPの" + n + "%回復する" + HealFalloffNote(def)
                         : "自分の最大HPの" + n + "%を回復する";
                     break;
                 case GimmickEffect.Recharge:
