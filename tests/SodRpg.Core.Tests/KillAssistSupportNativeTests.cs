@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Reflection;
 using SodRpg.Core.Game;
 using Xunit;
@@ -67,7 +66,6 @@ namespace SodRpg.Mod
             public Build GrowthBuild;
             public float GrowthSentAt;
             public int GrowthSentVersion = -1;
-            public uint GrowthOwnerNetId;
             public string GrowthOwnerKey;
             public Build GrowthSentBuild;
             public string GrowthSentRun;
@@ -97,7 +95,7 @@ namespace SodRpg.Mod
             typeof(HostAuthority).GetMethod("InitializeKillAssists", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(host, null);
             return host;
         }
-        internal static Hero HeroWithOwner(uint netId) => new Hero { owner = new DewPlayer { netId = netId }, maxHealth = 1000, currentHealth = 1000 };
+        internal static Hero HeroWithOwner(uint netId) => new Hero { owner = new DewPlayer { netId = netId, guid = "growth-player-" + netId }, maxHealth = 1000, currentHealth = 1000 };
         internal static HostAuthority.HeroRuntime TrackRuntime(HostAuthority host, Hero hero, params (string StarId, RunGrowthTrigger Trigger)[] growths)
         {
             var build = new Build();
@@ -111,8 +109,7 @@ namespace SodRpg.Mod
         // TrackKillAssistEntity is private in production; the spawn hook that calls it is not compiled here.
         internal static void TrackVictim(HostAuthority host, Entity entity)
             => typeof(HostAuthority).GetMethod("TrackKillAssistEntity", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(host, new object[] { entity });
-        internal static int Stacks(Hero hero, string starId) => HostAuthority.RunGrowthLedger.Stacks(
-            hero.owner.netId.ToString(CultureInfo.InvariantCulture), starId);
+        internal static int Stacks(Hero hero, string starId) => HostAuthority.RunGrowthLedger.Stacks(hero.owner.guid, starId);
     }
 }
 
