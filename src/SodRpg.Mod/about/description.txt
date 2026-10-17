@@ -1,5 +1,5 @@
-[b]Travelers who have cleared Limbo 6 can play Infinity in Limbo; fixes for death effect lights and boss equipment marks in long fights.[/b]
-[b]リンボ6をクリアした旅人でリンボのインフィニティを遊べるようにし、死亡エフェクトの光とボス装備の不具合を直しました。[/b]
+[b]Fixes the mod saving twice on quit and some warnings not updating after a language switch.[/b]
+[b]終了時に保存が2回走る不具合と、言語を切り替えても一部の警告文が切り替わらない不具合を直しました。[/b]
 
 [h1]Dreamforge RPG[/h1]
 Turns every run into part of a long RPG journey: relics you keep, a risky "secure or delve" choice at every zone, a star map per Traveler, a forge, and long-term goals. Co-op ready.
