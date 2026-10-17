@@ -10,6 +10,28 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v3.2.12 — Stocked memories no longer go on cooldown with charges left, plus wiki fixes（2026-10-17）
+
+この版は、ストックを持つ記憶で、回数が残っているのに一度クールダウンに入ってしまう問題を直す更新です。あわせて、Wiki の刻印の費用、固有効果の掲載数、旅人ごとの星数を実際の値に合わせ、容量の上限を超えていた固有品のページを分けました。 / This update fixes memories with stocks going on cooldown even though they still had charges left. It also makes the wiki's keystone costs, listed unique effect count, and per-traveler star counts match the actual values, and splits unique item pages that went over the size limit.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- Q/W/E/R のどの枠でも、ストック（複数回分の使用回数）を持つ記憶を1回使うと、まだ回数が残っているのに基礎クールダウンの20%（最低0.3秒）の待ち時間が入り、その間は使うことも予約することもできなかった問題を直しました。たとえば基礎クールダウン12秒・3回分のストックを持つ記憶では、1回使ったあと残り2回あっても約2.3秒使えず、スキルボタンにもその待ち時間が表示されていました。これからは、ストックが残っている間は続けて使ったり予約したりでき、ボタンにも余分な待ち時間は表示されません。最後の1回を使ったあとでも、先に回復したストックはすぐに使えます。ストックが回復するまでの時間はこれまでと変わりません。ストックを持たない記憶の連打防止はこれまでどおりで、移動スキルにも変更はありません。 / Fixed memories with stocks (multiple charges) in any Q/W/E/R slot getting an extra wait of 20% of their base cooldown (at least 0.3 seconds) after each use, even with charges left. During that wait they couldn't be used or queued. For example, a memory with a 12-second base cooldown and 3 charges couldn't be used for about 2.3 seconds after one use, even with 2 charges left, and the skill button showed that wait. Now you can keep using or queuing the memory while it has charges left, and the button no longer shows the extra wait. Even after using the last charge, any charge that comes back early can be used right away. The time it takes to recover a charge is unchanged. The spam guard for memories without stocks works as before, and movement skills are unchanged.
+- Wiki の刻印の費用欄がゲームでの実際の費用と食い違っていた問題を直しました。黄金の余熱・連鎖の鼓動・森の鼓動・不安定な軌道の4件は費用欄に3と出ていましたが、正しい1と表示されるようになりました。段ごとに並ぶ刻印の費用もゲームと同じ値になります。 / Fixed the wiki's keystone cost column not matching the actual in-game costs. Golden Embers, Chain Pulse, Forest Pulse, and Unstable Orbit showed a cost of 3 and now show the correct cost of 1. Keystone costs listed by tier now match the game as well.
+- Wiki のホームと総合ポータルで、固有効果の数が95件と表示されていた問題を直しました。これからは実際に掲載している90件と表示されます。 / Fixed the wiki home page and main portal showing 95 unique effects. They now show 90, the number actually listed.
+- Wiki のホームの旅人ごとの星の数に到達刻印まで含まれていて、旅人のページと数字が合わなかった問題を直しました。たとえば Aurena はホームで星759でしたが、これからは旅人のページと同じく星748・到達刻印11と分けて表示されます。 / Fixed per-traveler star counts on the wiki home page including reached keystones, so they didn't match each traveler's page. For example, Aurena showed 759 stars on the home page and now shows 748 stars and 11 reached keystones separately, the same as Aurena's page.
+- Wiki の固有品の一覧で、3つのページが1ページの容量の上限を超えていた問題を直しました。これからは土台と固有品の一覧がどのページも上限に収まるように分かれます。一覧の行は1つも欠けず、ページ間のリンクもすべて正しくつながります。 / Fixed three unique item list pages on the wiki going over the size limit for a single page. The base and unique item lists are now split so every page stays within the limit. No rows are dropped, and all links between pages work.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
 ## v3.2.11 — Fix Infinity co-op waypoint enemy effects following only the host's choice（2026-10-17）
 
 この版は、インフィニティの協力プレイで、道標の敵側の効果がホストの選んだ道標だけで決まり、全員の敵にかかっていた問題を直す更新です。 / This update fixes waypoint effects on enemies in Infinity co-op being decided only by the host's waypoint and applied to everyone's enemies.
