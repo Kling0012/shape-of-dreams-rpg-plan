@@ -10,6 +10,36 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v3.7.0 — Lighter combat and co-op networking（2026-10-18）
+
+このバージョンでは、ゲーム全体の処理と協力プレイの通信を軽くしました。ラセルタの焼夷弾装填と飛び道具系エッセンスの組み合わせで処理が重くなる問題と、協力プレイの参加者側でスキルが使えなくなる不具合も直しました。強さや効果の数値は変えていません。 / This version makes the whole game and co-op networking lighter. It also fixes heavy slowdowns from Lacerta's Incendiary Rounds combined with projectile essences, and a bug that left skills unusable for co-op guests. Strength and effect values are unchanged.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。古いバージョンの相手とも遊べますが、通信の軽量化は全員が更新したときに働きます。 / Everyone in co-op should update. Older versions can still play together, but the lighter networking only works when everyone has updated.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 追加要素 / New features
+
+- MOD 設定に、ゲーム本体の処理を軽くする各項目の切り替えを追加しました（既定はすべて有効）。おかしな動きがあったときに、項目ごとに切って確かめられます。 / Added MOD settings to toggle each base-game performance tweak (all on by default), so you can turn them off one by one if something looks wrong.
+
+### 不具合の修正 / Bug fixes
+
+- 協力プレイの参加者側で、スキルのアイコンが黒くなって発動できなくなることがあった問題を直しました。処理落ちしたときに起きやすい不具合でした。 / Fixed guest-side skill icons sometimes turning dark and becoming unusable in co-op, which happened more often during frame drops.
+- ラセルタの焼夷弾装填と飛び道具系エッセンスを組み合わせると、攻撃と発動が重なって処理が極端に重くなり、ゲームが固まることがあった問題を軽くしました。重いときは処理を次のフレームへ分け、発動は捨てません。 / Reduced extreme slowdowns, sometimes freezing the game, when Lacerta's Incendiary Rounds were combined with projectile essences. Under load the work is spread over the next frames, and no proc is dropped.
+
+### 改善 / Improvements
+
+- 戦闘中の処理を軽くしました。状態異常の同期の間隔、敵の回避の設定、敵 AI、担当制と動的難易度の確認、メニューの文字の作り直しなどを減らしています。 / Combat is lighter: less work for status-effect syncing, enemy avoidance settings, enemy AI, ownership and dynamic-difficulty checks, and menu text rebuilding.
+- 同じ敵へ同時に大量に飛ぶ同じ種類の弾（跳弾など）は、まとめて1本として処理するようにしました。ダメージや発動の回数は変わりません。 / Large bursts of the same projectile (such as ricochets) flying at the same enemy at once are now handled as one. Damage and proc counts are unchanged.
+- 協力プレイの通信量を減らしました。変化のない定期送信、撃破の同期、選択の履歴、取引の大きなデータの送り方を見直しています。 / Co-op uses less bandwidth: fewer unchanged periodic messages, and lighter kill sync, choice history and large trade transfers.
+- ゲーム起動時の星図の準備を速くしました。 / Star maps get ready faster when the game starts.
+
+このバージョンの変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
 ## v3.6.2 — Co-op Infinity, MOD reward, and save error fixes（2026-10-18）
 
 ### 不具合の修正 / Bug fixes
