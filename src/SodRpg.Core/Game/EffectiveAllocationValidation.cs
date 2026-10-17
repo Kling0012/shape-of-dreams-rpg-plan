@@ -1185,8 +1185,9 @@ namespace SodRpg.Core.Game
                 result.Add(channel);
             }
             // v1.32 B: a RunGrowth is worth (cap x per-stack effect x gain speed); a modifier is effective only while it raises one of them.
+            // Uncapped growth uses MaxCap only as a comparison weight so effect/speed modifiers still count as effective.
             foreach (var growth in build.RunGrowths)
-                result.Add(Scalar("growth:" + growth.StarId, (long)growth.Cap * (100 + growth.EffectPercent) * growth.GainMultiplier,
+                result.Add(Scalar("growth:" + growth.StarId, (long)(growth.Cap == 0 ? RunGrowthDef.MaxCap : growth.Cap) * (100 + growth.EffectPercent) * growth.GainMultiplier,
                     (long)RunGrowthDef.MaxCap * (100 + RunGrowthModifierDef.MaxEffectPercent) * 2, dependencies, "W:", "growth"));
             foreach (var entry in build.Mechanisms)
                 result.AddRange(MechanismChannels(entry, build, heroKey, capFingerprint));

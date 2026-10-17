@@ -80,7 +80,7 @@ namespace SodRpg.Core.Game
             foreach (object item in Array(j, "growth"))
                 if (item is JsonObject growth)
                     state.Growth.Add(new RunGrowthSave { Owner = Str(growth, "owner"), GrowthId = Str(growth, "id"),
-                        Stacks = (int)Clamp(Long(growth, "stacks"), 0, RunGrowthDef.MaxCap), ProgressMilli = System.Math.Max(0L, Long(growth, "progress")) });
+                        Stacks = (int)Clamp(Long(growth, "stacks"), 0, int.MaxValue), ProgressMilli = System.Math.Max(0L, Long(growth, "progress")) });
             return state;
         }
 

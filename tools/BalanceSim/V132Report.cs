@@ -105,7 +105,8 @@ internal static class V132Report
                 for (int depth = 0; depth <= DreamDepth.Maximum; depth++)
                 {
                     var r = growth.FirstOrDefault(g => g.HeroKey == heroKey && g.Policy == policy && g.Depth == depth && g.Variant == variant.Key);
-                    cells.Add(r == null ? "—" : $"{r.FinalStacks}（上限{r.Cap}）{(r.CapZone == 0 ? "未到達" : $"Z{r.CapZone}")}");
+                    cells.Add(r == null ? "—" : r.Cap == 0 ? $"{r.FinalStacks}（蓄積の上限はない）"
+                        : $"{r.FinalStacks}（上限{r.Cap}）{(r.CapZone == 0 ? "未到達" : $"Z{r.CapZone}")}");
                 }
                 sb.AppendLine($"| {variant.Ja} | " + string.Join(" | ", cells) + " |");
             }
@@ -134,7 +135,8 @@ internal static class V132Report
             {
                 var r = growth.FirstOrDefault(g => g.HeroKey == heroKey && g.Policy == "secure" && g.Depth == 2 && g.Variant == variant.Key);
                 if (r == null) continue;
-                sb.AppendLine($"| {V132Simulation.GrowthHeroNames[hero]} | {variant.Ja} | {r.FinalStacks}/{r.Cap} | " +
+                string count = r.Cap == 0 ? $"{r.FinalStacks}（蓄積の上限はない）" : $"{r.FinalStacks}/{r.Cap}";
+                sb.AppendLine($"| {V132Simulation.GrowthHeroNames[hero]} | {variant.Ja} | {count} | " +
                     $"{r.EffectName} +{r.EffectText.ToString("0.#", CultureInfo.InvariantCulture)} | " +
                     (string.IsNullOrEmpty(r.EffectName2) ? "—" : $"{r.EffectName2} +{r.EffectText2.ToString("0.#", CultureInfo.InvariantCulture)}") + " |");
             }
@@ -157,7 +159,8 @@ internal static class V132Report
                 {
                     var r = sensitivity.FirstOrDefault(g => g.HeroKey == heroKey && g.Policy == "secure"
                         && g.Depth == depth && g.Variant == scenario.Label);
-                    cells.Add(r == null ? "—" : r.CapZone == 0 ? "未" : "Z" + r.CapZone.ToString(CultureInfo.InvariantCulture));
+                    cells.Add(r == null ? "—" : r.Cap == 0 ? "蓄積の上限はない"
+                        : r.CapZone == 0 ? "未" : "Z" + r.CapZone.ToString(CultureInfo.InvariantCulture));
                 }
                 sb.AppendLine($"| {scenario.Label} | {V132Simulation.GrowthHeroNames[hero]} | " + string.Join(" | ", cells) + " |");
             }
