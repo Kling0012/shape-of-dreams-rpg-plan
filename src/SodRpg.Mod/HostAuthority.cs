@@ -1226,6 +1226,7 @@ namespace SodRpg.Mod
                 ResetKillReplayConnections();
                 _registeredOn = actor;
                 RegisterHello(actor);
+                RegisterSkillResync(actor);
                 if (actor != null)
                 {
                     DewPlayer.onGamePlayerAdded += _onPressurePlayerAdded;

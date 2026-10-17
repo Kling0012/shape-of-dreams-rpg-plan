@@ -11,14 +11,22 @@ namespace SodRpg.Mod
     {
         internal const float InvalidMultiplierFallback = 0.01f;
 
+        /// <summary>純クライアント（ゲスト）側の代替値。実時間で進む 1 倍に置き換える（docs/specs/guest-skill-lock.md）。</summary>
+        internal const float ClientMultiplierFallback = 1f;
+
         [ThreadStatic] internal static AbilityTrigger Current;
 
         private static readonly Action<AbilityTrigger, int, float> SetCooldownRpc =
             ResolveRpc<Action<AbilityTrigger, int, float>>("RpcSetCooldownTime", typeof(int), typeof(float));
         private static readonly Action<AbilityTrigger, int, int> SetChargeRpc =
             ResolveRpc<Action<AbilityTrigger, int, int>>("RpcSetCharge", typeof(int), typeof(int));
+        private static readonly Action<AbilityTrigger, int, float> SetMinimumDelayRpc =
+            ResolveRpc<Action<AbilityTrigger, int, float>>("RpcSetMinimumDelay", typeof(int), typeof(float));
 
         internal static bool CanSynchronize => SetCooldownRpc != null && SetChargeRpc != null;
+
+        /// <summary>ゲストの再同期（スキル使用不可の安全装置）に必要な RPC が揃っているか。</summary>
+        internal static bool CanSynchronizeSkillResync => SetCooldownRpc != null && SetChargeRpc != null && SetMinimumDelayRpc != null;
 
         private static T ResolveRpc<T>(string name, params Type[] arguments) where T : Delegate
         {
@@ -43,10 +51,21 @@ namespace SodRpg.Mod
 
         internal static void GuardMultiplier(AbilityTrigger trigger, ref float multiplier)
         {
-            if (!NetworkServer.active || !ReferenceEquals(Current, trigger)) return;
-            // Do not clamp small positive finite values: valid native behavior is unchanged.
+            if (NetworkServer.active)
+            {
+                // Host path: only inside the guarded tick/reduction window, with the fast-recovery fallback.
+                if (!ReferenceEquals(Current, trigger)) return;
+                // Do not clamp small positive finite values: valid native behavior is unchanged.
+                if (!(multiplier > 0f) || float.IsInfinity(multiplier))
+                    multiplier = InvalidMultiplierFallback;
+                return;
+            }
+            if (!NetworkClient.active || trigger == null) return;
+            // Pure client path (docs/specs/guest-skill-lock.md): on a guest these reads only feed the
+            // local cooldown tick and display (cast authority stays with the host), so a degenerate
+            // multiplier is replaced everywhere with real time instead of freezing or running away.
             if (!(multiplier > 0f) || float.IsInfinity(multiplier))
-                multiplier = InvalidMultiplierFallback;
+                multiplier = ClientMultiplierFallback;
         }
 
         internal static void Enter(AbilityTrigger trigger, out AbilityTrigger previous)
@@ -73,6 +92,39 @@ namespace SodRpg.Mod
                 SetCooldownRpc(trigger, i, 0f);
                 SetChargeRpc(trigger, i, charges[i]);
             }
+        }
+
+        /// <summary>
+        /// 権威側の現在値を、本体の RPC 形式（RpcSetCooldownTime / RpcSetMinimumDelay / RpcSetCharge）で
+        /// そのまま再送する。ゲストのスキル使用不可の安全装置（docs/specs/guest-skill-lock.md）からの依頼専用。
+        /// 値は冪等で、受け取った側は同じ値を上書きするだけ。戻り値は送った項目数。
+        /// 呼び出し側（HostAuthority.SkillLock）が対象トリガーの生存・サーバ所属を確かめておく。
+        /// </summary>
+        internal static int ResendAuthoritative(AbilityTrigger trigger)
+        {
+            if (!NetworkServer.active || !CanSynchronizeSkillResync || trigger == null) return 0;
+            var configs = trigger.configs;
+            var times = trigger.currentUnscaledCooldownTimes;
+            var charges = trigger.currentCharges;
+            var delays = trigger.currentMinimumDelays;
+            if (configs == null || times == null || charges == null || delays == null) return 0;
+            int count = Math.Min(configs.Length, Math.Min(times.Length, Math.Min(charges.Length, delays.Length)));
+            int sent = 0;
+            for (int i = 0; i < count; i++)
+            {
+                float time = times[i];
+                float delay = delays[i];
+                int charge = charges[i];
+                // 権威側に壊れた値が残っていたとしても、非有限の値は絶対に送らない。
+                if (!(time >= 0f) || float.IsInfinity(time)) time = 0f;
+                if (!(delay >= 0f) || float.IsInfinity(delay)) delay = 0f;
+                if (charge < 0) charge = 0;
+                SetCooldownRpc(trigger, i, time);
+                SetMinimumDelayRpc(trigger, i, delay);
+                SetChargeRpc(trigger, i, charge);
+                sent++;
+            }
+            return sent;
         }
     }
 
