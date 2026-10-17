@@ -856,9 +856,8 @@ namespace SodRpg.Mod
         private string _coopWaitingId, _coopWaitReason;
         private float _coopWaitingAt, _coopWaitReasonAt;
         private bool _coopWaitReleased;
-        private string _coopTradeWarning, _coopConnectionWarning;
         public CoopTradeView CoopTrade { get; set; }
-        public string CoopTradeWarning { get => _coopTradeWarning ?? _coopConnectionWarning; set => _coopTradeWarning = value; }
+        // Warning storage/getter are extracted from production in NativePersistence.targets.
         internal static string CoopHostJournalPath => _hostSession?.CoopTradeJournalPath;
         internal static bool CoopHostSafe => _hostSession?.CoopLocalSafe == true;
         internal static bool CoopHostNativeSaving => _hostSession?._coopNativeSaving == true;
@@ -882,7 +881,9 @@ namespace SodRpg.Mod
         private float _helloFirstSent = -1f, _nextHello;
         private bool _helloAnswered, _hostCompatibilityWarned, _hostInfinityAvailable;
         private int _hostMeleeCoop;
-        public string HostVersionWarning { get; private set; }
+        // ClientSession.Hello.cs と同じ保管（#510: Txt 保持＋getter で解決）。ResetHello の抽出が書く。
+        private Txt _hostVersionWarning;
+        public string HostVersionWarning => _hostVersionWarning?.ToString();
         private Build _buildCache;
         private float _buildCacheTime;
         private string _buildCacheHero;

@@ -329,7 +329,7 @@ namespace Issue73.Native.Tests
             Assert.True(peer.Ready);
 
             // An empty roster status never clears an existing warning while a trade is pending.
-            session.CoopTradeWarning = "kept-warning";
+            typeof(ClientSession).GetField("_coopTradeWarning", Hidden).SetValue(session, new Txt("kept-warning", "kept-warning"));
             CoopTradeRules.Prepare(session.Profile, "pending-2", "host-key", new CoopTradeOffer());
             DeliverState(session, new DreamforgeCoopTradeState { kind = "roster", hostKey = "host-key",
                 keys = new[] { "k1" }, names = new[] { "One" }, available = new[] { true }, status = "" });
