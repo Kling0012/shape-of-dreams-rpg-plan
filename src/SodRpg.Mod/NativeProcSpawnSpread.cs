@@ -60,7 +60,22 @@ namespace SodRpg.Mod
 
         internal static T Plain<T>(Actor self, Vector3 position, Quaternion? rotation, CastInfo info,
             Action<T> beforePrepare) where T : AbilityInstance
+            => PlainSplit(self, position, rotation, info, beforePrepare, beforePrepare);
+
+        // 第3段: repeatApply は、まとめ側の実体へ追加された通知を命中時にもう一度設定するための
+        // delegate（作成時の設定から位置の変更などを除いたもの）。本体側の生成呼び出しは
+        // 5引数の Plain のままなので、こちらは MOD 内からだけ使う。
+        internal static T PlainSplit<T>(Actor self, Vector3 position, Quaternion? rotation, CastInfo info,
+            Action<T> beforePrepare, Action<T> repeatApply) where T : AbilityInstance
         {
+            switch (NativeProcCoalesce.Offer(self, null, info, typeof(T), repeatApply, out var group))
+            {
+                case NativeProcCoalesce.Role.Appended:
+                    return null;
+                case NativeProcCoalesce.Role.Carrier:
+                    beforePrepare = NativeProcCoalesce.Wrap(group, beforePrepare);
+                    break;
+            }
             if (!Defer()) return self.CreateAbilityInstance(position, rotation, info, beforePrepare);
             Enqueue(ShimFor(PlainShims, "DrainPlain", typeof(T)), self, null, null, position, rotation, info, beforePrepare);
             return null;
@@ -69,6 +84,14 @@ namespace SodRpg.Mod
         internal static T WithSource<T>(Gem self, Actor source, Vector3 position, Quaternion? rotation, CastInfo info,
             Action<T> beforePrepare) where T : AbilityInstance
         {
+            switch (NativeProcCoalesce.Offer(self, source, info, typeof(T), beforePrepare, out var group))
+            {
+                case NativeProcCoalesce.Role.Appended:
+                    return null;
+                case NativeProcCoalesce.Role.Carrier:
+                    beforePrepare = NativeProcCoalesce.Wrap(group, beforePrepare);
+                    break;
+            }
             if (!Defer()) return self.CreateAbilityInstanceWithSource(source, position, rotation, info, beforePrepare);
             Enqueue(ShimFor(SourceShims, "DrainWithSource", typeof(T)), null, source, self, position, rotation, info, beforePrepare);
             return null;
@@ -194,6 +217,7 @@ namespace SodRpg.Mod
             if (room == null) return;
             _roomSpawnDeferred = 0; _roomSpawnPeak = 0; _roomSpawnMaxDelay = 0f;
             _roomPowerCarryEvents = 0; _roomPowerCarryPeak = 0; _roomPowerMaxDelay = 0f;
+            NativeProcCoalesce.ResetRoom();
             _diagnostics = ReadDeveloperMode();
         }
 
@@ -207,12 +231,14 @@ namespace SodRpg.Mod
         private static void FlushRoomLog()
         {
             if (!_diagnostics) return;
-            if (_roomSpawnPeak == 0 && _roomPowerCarryPeak == 0) return;
+            if (_roomSpawnPeak == 0 && _roomPowerCarryPeak == 0 && NativeProcCoalesce.RoomMerged == 0) return;
             Log.Info("Perf carryover room=" + _room.GetInstanceID()
                 + ": deferredProjectiles total=" + _roomSpawnDeferred + " peak=" + _roomSpawnPeak
                 + " maxDelay=" + (int)(_roomSpawnMaxDelay * 1000f) + "ms"
                 + "; powerQueue carryEvents=" + _roomPowerCarryEvents + " peak=" + _roomPowerCarryPeak
-                + " maxDelay=" + (int)(_roomPowerMaxDelay * 1000f) + "ms");
+                + " maxDelay=" + (int)(_roomPowerMaxDelay * 1000f) + "ms"
+                + "; coalesced projectiles=" + NativeProcCoalesce.RoomMerged
+                + " peakGroup=" + NativeProcCoalesce.RoomPeakGroup);
         }
 
         private static void WarnOnce(string message)

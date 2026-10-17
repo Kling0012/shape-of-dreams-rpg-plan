@@ -99,6 +99,9 @@ namespace SodRpg.Mod
         [LabelText("Skip unchanged obstacle avoidance settings / 変わっていない回避設定を省く")]
         public bool nativeObstacleAvoidance = true;
 
+        [LabelText("Coalesce same-frame duplicate proc projectiles / 同一フレームの同じ対象への同種反応弾を1本にまとめる")]
+        public bool nativeProcCoalesce = true;
+
         [LabelText("Level essence slots: add essence slots as the hero levels up (the host's setting applies) /\nレベル連動のエッセンス枠：英雄のレベルに応じて記憶のエッセンス枠を増やす（ホストの設定が使われる）")]
         public bool levelEssenceSlots = true;
 
