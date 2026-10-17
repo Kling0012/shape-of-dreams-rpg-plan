@@ -15,6 +15,7 @@ namespace SodRpg.Mod.Startup.Tests
         public NativeCooldownSafetyTests()
         {
             Mirror.NetworkServer.active = false;
+            Mirror.NetworkClient.active = false;
             NativeCooldownSafety.Current = null;
             Log.Warnings.Clear();
             // PatchEachClass と同じ経路で1クラスずつ適用する（Prepare が false のクラスは飛ばされる）。
@@ -100,11 +101,12 @@ namespace SodRpg.Mod.Startup.Tests
             }, trigger.RpcLog);
         }
 
-        /// <summary>サーバでないときは倍率・残り時間・RPC のどれにも介入しない（クライアント側の本体挙動を変えない）。</summary>
+        /// <summary>サーバでもクライアントでもないときは倍率・残り時間・RPC のどれにも介入しない。</summary>
         [Fact]
         public void WithoutTheServerTheSafetyNeverIntervenes()
         {
             Mirror.NetworkServer.active = false;
+            Mirror.NetworkClient.active = false;
             var trigger = NewTrigger(float.NaN);
 
             // 本体の [Server] メソッドは何もしない。
@@ -125,6 +127,38 @@ namespace SodRpg.Mod.Startup.Tests
             // クライアント側の時間更新も本体と同じ伝播（NaN は NaN のまま）。
             trigger.LogicUpdate(0.1f);
             Assert.True(float.IsNaN(trigger.currentUnscaledCooldownTimes[0]));
+        }
+
+        /// <summary>
+        /// 純クライアント（ゲスト）では、退化倍率を窓の外でも実時間の 1 倍に置き換える
+        /// （docs/specs/guest-skill-lock.md）。サーバ側の窓・代替値は従来のまま。
+        /// </summary>
+        [Fact]
+        public void OnAPureClientDegenerateMultipliersFallBackToRealTimeEverywhere()
+        {
+            Mirror.NetworkServer.active = false;
+            Mirror.NetworkClient.active = true;
+            var trigger = NewTrigger(float.NaN);
+
+            // 窓の外の通常の倍率取得でも置き換わる（ゲストの読み出しは表示・予測だけのため）。
+            Assert.Equal(NativeCooldownSafety.ClientMultiplierFallback, trigger.GetCooldownTimeMultiplier(0));
+
+            // 負の倍率も置き換える: 0 から遠ざかる暴走の代わりに実時間で進む。
+            trigger.multiplier = -1f;
+            trigger.currentUnscaledCooldownTimes[0] = 10f;
+            trigger.LogicUpdate(0.1f);
+            Assert.Equal(10f - 0.1f, trigger.currentUnscaledCooldownTimes[0]);
+            Assert.Equal(NativeCooldownSafety.ClientMultiplierFallback, trigger.UsedMultipliers.Single());
+
+            // 正の有限倍率は従来どおり本体の値を通す。
+            trigger.multiplier = 0.5f;
+            Assert.Equal(0.5f, trigger.GetCooldownTimeMultiplier(0));
+
+            // 補正同期（RPC 再送）は引き続きサーバ専用で、ゲストからは何も送らない。
+            trigger.currentUnscaledCooldownTimes[0] = float.NaN;
+            NativeCooldownSafety.Normalize(trigger);
+            Assert.True(float.IsNaN(trigger.currentUnscaledCooldownTimes[0]));
+            Assert.Empty(trigger.RpcLog);
         }
 
         /// <summary>宣言オーバーライドが本体から消えると、その対象だけが外れ、他の補正パッチは有効のまま動く。</summary>
@@ -160,6 +194,7 @@ namespace SodRpg.Mod.Startup.Tests
         public void Dispose()
         {
             Mirror.NetworkServer.active = false;
+            Mirror.NetworkClient.active = false;
             NativeCooldownSafety.Current = null;
             foreach (var target in owner.GetPatchedMethods().ToArray())
                 owner.Unpatch(target, HarmonyPatchType.All, owner.Id);

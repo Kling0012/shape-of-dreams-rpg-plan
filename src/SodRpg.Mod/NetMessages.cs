@@ -395,4 +395,16 @@ namespace SodRpg.Mod
         public int generation;
         public int dreamEvent;
     }
+
+    /// <summary>
+    /// クライアント → ホスト：自分のキャラのスキルが、手元では長く使えないままになっているので、
+    /// 権威のある値（チャージ・クールダウン・最低遅延）の再送を頼む（docs/specs/guest-skill-lock.md）。
+    /// この型を送るのは同じ MOD を積んだ参加者だけで、受け取らないホストは単に無視する。
+    /// </summary>
+    [Serializable]
+    public class DreamforgeSkillResyncMsg
+    {
+        public int version = 1;
+        public uint heroNetId;
+    }
 }
