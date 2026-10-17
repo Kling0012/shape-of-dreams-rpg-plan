@@ -490,10 +490,7 @@ namespace SodRpg.Core.Game
                 foreach (var s in d.Boons) Add(rawStats, s.Stat, s.Value);
             }
             foreach (var kv in rawStats)
-            {
-                int cap = Content.StatCap(kv.Key);
-                b.Stats[kv.Key] = cap > 0 ? Math.Min(kv.Value, cap) : kv.Value;
-            }
+                b.Stats[kv.Key] = BuildAggregation.CapStat(kv.Key, kv.Value);
             foreach (var kv in rawPowers)
             {
                 int cap = Content.PowerCap(kv.Key);

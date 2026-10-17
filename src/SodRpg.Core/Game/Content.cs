@@ -5269,6 +5269,7 @@ namespace SodRpg.Core.Game
         public static Txt Epithet(Power p) => Epithets.TryGetValue(p, out var t) ? t : NewPowersV129.IsPower(p) ? NewPowersV129.Epithet(p) : ElementReactions.Epithet(p);
 
         public static int PowerCap(Power p) => PowerCaps.TryGetValue(p, out int c) ? c : 0;
+        /// <summary>Upper limit for a stat; 0 means no upper limit (including stats absent from StatCaps).</summary>
         public static int StatCap(Stat s) => StatCaps.TryGetValue(s, out int c) ? c : 0;
 
         public static IEnumerable<BaseDef> BasesFor(Slot slot)
