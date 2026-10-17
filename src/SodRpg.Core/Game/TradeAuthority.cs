@@ -236,6 +236,10 @@ namespace SodRpg.Core.Game
             /// <summary>One completed run receipt lets a lost final acknowledgement resolve without granting old-run dust.</summary>
             public string PreviousOverflowBonusRunId;
             public long PreviousOverflowBonusPaid;
+            /// <summary>現在の世界（0始まり。-1 は不明）。世界が変わったら <see cref="ZoneDust"/> を 0 に戻す。</summary>
+            public int ZoneIndex = -1;
+            /// <summary>この世界で分解（手動・鞄あふれ・旧あふれ取引）から支払ったドリームダスト。世界ごとの上限の計数。</summary>
+            public long ZoneDust;
             public readonly Queue<long> Order = new Queue<long>();
             public readonly Dictionary<long, TradeDecision> Executed = new Dictionary<long, TradeDecision>();
             /// <summary>実行済みの取引idの要求の中身（種別・引数）。同じidで別の要求が来たときに、過去の成功を流用しないための照合に使う。</summary>
@@ -280,6 +284,10 @@ namespace SodRpg.Core.Game
         public int TrackedSalvagedUidCount(string playerKey, string runId) =>
             _players.TryGetValue(playerKey, out var l) && l.RunId == runId ? l.SalvagedUids.Count : 0;
 
+        /// <summary>検証用：そのプレイヤーの現在の世界で分解から支払ったドリームダスト（上限の計数）。</summary>
+        public long TrackedZoneDust(string playerKey) =>
+            _players.TryGetValue(playerKey, out var l) ? l.ZoneDust : 0;
+
         /// <summary>
         /// 取引を裁定する。Ok &amp;&amp; !Replayed のときだけ本体の通貨を動かし、手動取引が成立しなかったら FailExecution で記録を訂正する。
         /// </summary>
@@ -289,7 +297,8 @@ namespace SodRpg.Core.Game
         /// <param name="gold">そのプレイヤーの現在のゴールド（本体の権威ある値）。</param>
         /// <param name="dust">そのプレイヤーの現在のドリームダスト（同上）。</param>
         /// <param name="goldCostScale">本体の価格補正（GameManager.GetAdjustedGoldAmount_Cost(1f)。ホスト側の値）。</param>
-        public TradeDecision Evaluate(string playerKey, string runId, TradeRequest req, int gold, int dust, float goldCostScale = 1f, int salvageScale = 1)
+        /// <param name="zoneIndex">現在の世界の番号（0始まり。-1 は不明）。世界が変わったら分解ダストの計数を 0 に戻す。</param>
+        public TradeDecision Evaluate(string playerKey, string runId, TradeRequest req, int gold, int dust, float goldCostScale = 1f, int salvageScale = 1, int zoneIndex = -1)
         {
             var d = new TradeDecision();
             if (req == null || req.Token <= 0) { d.Reason = "invalid"; return d; }
@@ -341,10 +350,21 @@ namespace SodRpg.Core.Game
             { d.Reason = "dup"; return d; }
             if (d.SpendGold > gold) { d.Reason = "gold"; return d; }
             if (d.SpendDust > dust) { d.Reason = "dust"; return d; }
+            // 分解系（手動・旧あふれ取引）のドリームダストは世界ごとの上限に合わせて削る。
+            // 残りが1回分より少なければ残りの分だけ支払って成立させ、残りがなければ断る（遺物は戻る）。
+            if (req.Kind == TradeKind.SalvageForDust || req.Kind == TradeKind.SatchelOverflowDust)
+            {
+                ApplyZone(ledger, zoneIndex);
+                long remaining = Economy.DustCap(ledger.ZoneIndex, salvageScale) - ledger.ZoneDust;
+                if (remaining <= 0) { d.Reason = "dustcap"; return d; }
+                if (d.EarnDust > remaining) d.EarnDust = (int)Math.Min(remaining, int.MaxValue);
+            }
             d.Ok = true;
             ledger.Executed[req.Token] = d;
             ledger.Fingerprints[req.Token] = fingerprint;
             ledger.Order.Enqueue(req.Token);
+            if (req.Kind == TradeKind.SalvageForDust || req.Kind == TradeKind.SatchelOverflowDust)
+                ledger.ZoneDust += d.EarnDust;
             while (ledger.Order.Count > MaxTokensPerPlayer)
             {
                 long old = ledger.Order.Dequeue();
@@ -393,6 +413,30 @@ namespace SodRpg.Core.Game
         }
 
         private static int ClientGeneration(long token) => (int)(token >> 32);
+
+        /// <summary>世界が変わったら分解ダストの計数を 0 に戻す。不明（負）の世界では何もしない。</summary>
+        private static void ApplyZone(PlayerLedger ledger, int zoneIndex)
+        {
+            if (zoneIndex < 0 || ledger.ZoneIndex == zoneIndex) return;
+            ledger.ZoneIndex = zoneIndex;
+            ledger.ZoneDust = 0;
+        }
+
+        /// <summary>ホストが毎ティック伝える現在の世界。取引や追加ダストの支払いの前に呼んで世界の切り替えで計数を戻す。</summary>
+        public void NoteZone(string playerKey, string runId, int zoneIndex)
+        {
+            if (playerKey == null) return;
+            ApplyZone(Ledger(playerKey, runId), zoneIndex);
+        }
+
+        /// <summary>そのプレイヤーが今の世界であとどれだけ分解ダストを受け取れるか（支払いの前に世界を反映する）。</summary>
+        public long ZoneDustRemaining(string playerKey, string runId, int zoneIndex, int salvageScale)
+        {
+            var ledger = Ledger(playerKey, runId);
+            ApplyZone(ledger, zoneIndex);
+            long remaining = Economy.DustCap(ledger.ZoneIndex, salvageScale) - ledger.ZoneDust;
+            return remaining < 0 ? 0 : remaining;
+        }
 
         /// <summary>忘れた取引idの下限を上げる。</summary>
         private static void RaiseFloor(PlayerLedger ledger, long token)
@@ -453,6 +497,8 @@ namespace SodRpg.Core.Game
                     ulong uid = ledger.SalvageOrder.Dequeue();
                     if (uid != req.SalvageUid) ledger.SalvageOrder.Enqueue(uid);
                 }
+                // 支払われなかった分は、この世界の計数からも戻す（新しい取引で数え直せるように）。
+                if (recorded.EarnDust > 0) ledger.ZoneDust = Math.Max(0, ledger.ZoneDust - recorded.EarnDust);
             }
             return failed;
         }
@@ -471,6 +517,8 @@ namespace SodRpg.Core.Game
                 if (!executionFailed || !recorded.Ok) return Replay(recorded, ledger.Id);
                 var failed = new TradeDecision { Reason = "native", LedgerId = ledger.Id };
                 ledger.Executed[req.Token] = failed;
+                // 受け取ったはずの追加ダストが付与されなかった（残高も戻った）ときは、計数からも戻す。
+                if (recorded.EarnDust > 0) ledger.ZoneDust = Math.Max(0, ledger.ZoneDust - recorded.EarnDust);
                 return failed;
             }
             if (ledger.Cancelled.Contains(req.Token))
@@ -513,6 +561,9 @@ namespace SodRpg.Core.Game
                 ledger.SalvagedUids.Clear();
                 ledger.OverflowBonusPaid = 0;
                 ledger.OverflowBonusBlocked = false;
+                // 遠征が変わったら分解ダストの世界ごとの計数も最初から。
+                ledger.ZoneIndex = -1;
+                ledger.ZoneDust = 0;
             }
             return ledger;
         }

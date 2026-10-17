@@ -188,6 +188,9 @@ namespace SodRpg.Mod
                 case "unknown":
                 case "cancelled": return Loc.T("取引は成立していませんでした。ゴールドとドリームダストは減っていません。", "The trade did not go through. Your gold and Dream Dust were not spent.");
                 case "conflict": return Loc.T("取引できませんでした。取引の識別が重複しました。もう一度試してください。", "Trade failed: the trade id clashed. Please try again.");
+                case "dustcap": return Loc.T(
+                    "この世界で分解から得られる夢のダストは上限に達しました（次の世界で回復します）。",
+                    "Salvage Dream Dust from relics has reached this world's cap (it recovers in the next world).");
                 default: return Loc.T("取引できませんでした。もう一度試してください。", "Trade failed. Please try again.");
             }
         }
@@ -195,6 +198,16 @@ namespace SodRpg.Mod
         public bool CanEditLoadout => Profile.Run == null || Profile.Run.AwaitingChoice || Profile.Run.GearWindow || !InGame;
 
         public bool CanEditTalents => Profile.Run == null || !InGame;
+
+        /// <summary>現在の世界の番号（0始まり）。本体の ZoneManager から読む（担当制の世界判定と同じ）。分からなければ -1。</summary>
+        internal int CurrentZoneIndex
+        {
+            get
+            {
+                try { return _zone != null ? _zone.currentZoneIndex : -1; }
+                catch (Exception) { return -1; }
+            }
+        }
 
         public long ViewRevision { get; private set; }
 
@@ -247,8 +260,8 @@ namespace SodRpg.Mod
         {
             if (_tickSteps == null)
             {
-                _tickSteps = new Action[] { TickGemSlotHudProbe, TickProfileSlots, Wire, TickInfinitySettings, UpdateVariantVisuals, UpdateMonsterCues, TickBossDisplay, TrackRun, TickKillClassification, TickRunChoices, TickCurseResync, TickSalvageExpiry, TickSatchelOverflow, SendBuildIfNeeded, TickHello, TickPeriodicSave, TickInterruptedRelics, TickDirectStash, TickKillSync, TickCoopTrade, TickRoomVisualSweep };
-                _tickStepNames = new[] { "gem slot HUD probe", "profile slots", "wire", "infinity settings", "variant visuals", "monster cues", "boss effects", "track run", "kill classification", "run choices", "curse resync", "salvage expiry", "satchel overflow", "send build", "hello", "periodic save", "interrupted relic save", "direct stash save", "kill sync", "coop trade", "room visual sweep" };
+                _tickSteps = new Action[] { TickGemSlotHudProbe, TickProfileSlots, Wire, TickInfinitySettings, UpdateVariantVisuals, UpdateMonsterCues, TickBossDisplay, TrackRun, TickKillClassification, TickRunChoices, TickCurseResync, TickSalvageExpiry, TickSatchelOverflow, TickSalvageDustCap, SendBuildIfNeeded, TickHello, TickPeriodicSave, TickInterruptedRelics, TickDirectStash, TickKillSync, TickCoopTrade, TickRoomVisualSweep };
+                _tickStepNames = new[] { "gem slot HUD probe", "profile slots", "wire", "infinity settings", "variant visuals", "monster cues", "boss effects", "track run", "kill classification", "run choices", "curse resync", "salvage expiry", "satchel overflow", "salvage dust cap", "send build", "hello", "periodic save", "interrupted relic save", "direct stash save", "kill sync", "coop trade", "room visual sweep" };
                 _tickStepNextLog = new float[_tickSteps.Length];
             }
             for (int i = 0; i < _tickSteps.Length; i++)
@@ -1040,7 +1053,8 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
                 if (outcome == TradeOutcome.Failed)
                 {
                     RestoreSalvageTrade(t);
-                    Emit(new GameEvent(EventKind.Warning, TradeFailText(code)));
+                    if (code == "dustcap") NotifySalvageDustCapReached(); // まとめて分解で大量に断られても案内は1回にまとめる
+                    else Emit(new GameEvent(EventKind.Warning, TradeFailText(code)));
                     if (t.Kind == TradeKind.SalvageForDust)
                     {
                         Profile.PendingTrades.RemoveAll(pending => pending.Token == t.Token);
@@ -1059,11 +1073,15 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
                         break;
                     case TradeKind.SalvageForDust:
                         if (Rules.SalvageUnsecured(Profile, t.Uid) != null)
+                        {
+                            CountSalvageDustPaid(t.EarnDust);
                             Emit(new GameEvent(EventKind.Info, Loc.T($"分解してドリームダスト+{t.EarnDust}", $"Salvaged for {t.EarnDust} Dream Dust")));
+                        }
                         Profile.PendingTrades.RemoveAll(pending => pending.Token == t.Token);
                         DeferSave();
                         return;
                     case TradeKind.SatchelOverflowDust:
+                        CountSalvageDustPaid(t.EarnDust);
                         Emit(Rules.CompleteSatchelOverflowDust(t));
                         // 成功のプロフィール側の反映は取引の削除だけ。未保存のまま落ちても、領収書の照会で
                         // 同じ結果に一度だけ戻る（通貨はホストが持つ）。保存は定期保存へまとめて、あふれの

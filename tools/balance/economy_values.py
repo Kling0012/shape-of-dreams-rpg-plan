@@ -13,7 +13,7 @@ INT_MAX = (1 << 31) - 1
 # Frozen compatibility reference, never a fallback balance source.
 LEGACY = {"schemaVersion": 1, "exchange": {"dustPerBatch": 100, "shardsPerBatch": 10},
           "merchant": {"baseGold": 60, "goldPerHeat": 15},
-          "salvage": {"dustPerShard": 5, "dustPerEnhance": 10},
+          "salvage": {"dustPerShard": 5, "dustPerEnhance": 10, "dustCapBase": 0, "dustCapPerWorld": 0},
           "expedition": {"limboDropBonus": Decimal("0.10"), "limboLuck": Decimal("0.2"), "limboExpBonus": Decimal("0.10"), "limboExpBonusCap": Decimal("1.0"), "limboRelicBonus": Decimal("0.0"), "limboRelicBonusCap": Decimal("0.0"), "limboRelicMultiplierCap": Decimal("0.0"), "secureBonusDivisor": 4}}
 FIELDS = {
     "exchange.dustPerBatch": ("DustPerBatch", "dust/batch"),
@@ -22,6 +22,8 @@ FIELDS = {
     "merchant.goldPerHeat": ("MerchantGoldPerHeat", "gold/heat"),
     "salvage.dustPerShard": ("SalvageDustPerShard", "dust/shard"),
     "salvage.dustPerEnhance": ("SalvageDustPerEnhance", "dust/enhance"),
+    "salvage.dustCapBase": ("DustCapBase", "dust/world-0"),
+    "salvage.dustCapPerWorld": ("DustCapPerWorld", "dust/world"),
     "expedition.limboDropBonus": ("LimboDropBonus", "drop-rate/limbo-depth"),
     "expedition.limboLuck": ("LimboLuck", "luck/limbo-depth"),
     "expedition.limboExpBonus": ("LimboExpBonus", "xp-mult/limbo-depth"),
@@ -75,6 +77,8 @@ def validate(data):
                   for shards, breaks in zip(forge["salvage"]["shards"], forge["limitBreak"]["maxByRarity"]))
     if maximum > 2000:
         raise ValueError("economy.salvage: adopted maximum exceeds fixed MaxDustEarnPerTrade safety ceiling 2000")
+    if data["salvage"]["dustCapBase"] < 1:
+        raise ValueError("economy.salvage: dustCapBase must stay positive so the per-world cap can bind")
     return data
 
 
