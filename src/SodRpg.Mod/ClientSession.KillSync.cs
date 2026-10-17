@@ -134,7 +134,8 @@ namespace SodRpg.Mod
         {
             if (display == null || display.Length > 4 || revision <= 0 || revision < _dynamicDifficultyRevision) return;
             foreach (var state in display)
-                if (state == null || string.IsNullOrEmpty(state.participantId) || state.factor < 1 || state.factor > 10000) return;
+                if (state == null || string.IsNullOrEmpty(state.participantId) || state.factor < 1
+                    || state.factor > CoopBalance.DynamicDifficulty.SafetyMaxFactor * 100) return;
             _dynamicDifficultyDisplay = display;
             _dynamicDifficultyRevision = revision;
             _dynamicDifficultyRun = NetworkedManagerBase<GameManager>.softInstance?.runId;

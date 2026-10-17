@@ -159,7 +159,7 @@ namespace SodRpg.Mod
                                 state.LogAverage = average;
                                 state.Rooms++;
                                 state.Factor = state.Rooms < CoopBalance.DynamicDifficulty.MinRooms ? 1
-                                    : Math.Max(CoopBalance.DynamicDifficulty.MinFactor, Math.Min(CoopBalance.DynamicDifficulty.MaxFactor, factor));
+                                    : Math.Max(CoopBalance.DynamicDifficulty.MinFactor, Math.Min(CoopBalance.DynamicDifficulty.SafetyMaxFactor, factor));
                             }
                         }
                     }
@@ -345,7 +345,8 @@ namespace SodRpg.Mod
             {
                 if (!DynamicRunning() || !_dynamicEnemies.TryGetValue(monster, out var state) || state.Owner == null
                     || !state.Solo && (!TryOwnership(monster, OwnershipPart.Strength, out _) || monster.IsAnyBoss())) return;
-                multiplier *= 1 + CoopBalance.DynamicDifficulty.RewardShare * Math.Max(0, EnemyDynamicFactor(monster) - 1);
+                multiplier *= Math.Min(CoopBalance.DynamicDifficulty.RewardMaxMultiplier,
+                    1 + CoopBalance.DynamicDifficulty.RewardShare * Math.Max(0, EnemyDynamicFactor(monster) - 1));
             }
             catch (Exception ex) { FailDynamic(DynamicPart.Reward, ex); }
         }
