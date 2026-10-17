@@ -15,6 +15,7 @@ namespace SodRpg.Mod
             internal readonly List<PressureDividendChannel> Dividends = new List<PressureDividendChannel>();
             internal readonly List<NextBasicBonusCandidate> NextBasics = new List<NextBasicBonusCandidate>();
             internal readonly Dictionary<long, Entity> Entities = new Dictionary<long, Entity>();
+            internal readonly List<Summon> Summons = new List<Summon>();
             internal readonly List<WardCandidate> Candidates = new List<WardCandidate>();
             internal readonly List<WardCandidate> Eligible = new List<WardCandidate>();
             internal readonly HashSet<long> CandidateIds = new HashSet<long>();
@@ -22,7 +23,7 @@ namespace SodRpg.Mod
             internal readonly AuthoredGimmickDispatch Gimmick;
             internal MechanismDispatchBuffers(HostAuthority host) { Gimmick = new AuthoredGimmickDispatch(host); }
             internal void Clear()
-            { Recharges.Clear(); Bridges.Clear(); Dividends.Clear(); NextBasics.Clear(); Entities.Clear(); Candidates.Clear(); Eligible.Clear(); CandidateIds.Clear(); Awards.Clear(); Gimmick.Clear(); }
+            { Recharges.Clear(); Bridges.Clear(); Dividends.Clear(); NextBasics.Clear(); Entities.Clear(); Summons.Clear(); Candidates.Clear(); Eligible.Clear(); CandidateIds.Clear(); Awards.Clear(); Gimmick.Clear(); }
         }
         private readonly List<MechanismDispatchBuffers> _mechanismDispatchBuffers = new List<MechanismDispatchBuffers>();
         private int _mechanismDispatchDepth;

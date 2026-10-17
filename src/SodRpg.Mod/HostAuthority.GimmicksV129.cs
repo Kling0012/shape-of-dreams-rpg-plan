@@ -37,8 +37,13 @@ namespace SodRpg.Mod
 
         private GimmickHostState InitializeGimmicksV129(HeroRuntime rt)
         {
-            if (_gimmickV129.TryGetValue(rt, out var state)) return state;
-            state = new GimmickHostState();
+            return _gimmickV129.TryGetValue(rt, out var state) ? state : CreateGimmicksV129(rt);
+        }
+
+        private GimmickHostState CreateGimmicksV129(HeroRuntime rt)
+        {
+            // Keep the cast-handler closure off the already initialized dispatch path.
+            var state = new GimmickHostState();
             state.CastHandler = info =>
             {
                 if (info.instance != null && info.trigger is SkillTrigger)
@@ -325,13 +330,21 @@ namespace SodRpg.Mod
                         break;
                     case GimmickEffect.PackMend:
                         if (support == null) break;
-                        var summons = new List<Summon>();
-                        foreach (var entity in _am.allEntities)
-                            if (entity is Summon summon && summon.hero == hero && summon.isActive && summon.currentHealth > 0f)
-                                summons.Add(summon);
-                        foreach (var summon in summons)
-                            DispatchSupportHeal(rt, summon, support.Heal(SupportStats.AmplifyHeal(summon.maxHealth * def.ValuePercent / 100f,
-                                SupportPower(rt, Stat.HealPower))));
+                        var buffers = RentMechanismDispatchBuffers();
+                        try
+                        {
+                            // Snapshot before Dispatch mutates actors; nested dispatches rent their own buffer.
+                            var summons = buffers.Summons;
+                            summons.Clear();
+                            foreach (var entity in _am.allEntities)
+                                if (entity is Summon summon && summon.hero == hero && summon.isActive && summon.currentHealth > 0f)
+                                    summons.Add(summon);
+                            foreach (var summon in summons)
+                                if (summon != null && summon.isActive && summon.currentHealth > 0f)
+                                    DispatchSupportHeal(rt, summon, support.Heal(SupportStats.AmplifyHeal(summon.maxHealth * def.ValuePercent / 100f,
+                                        SupportPower(rt, Stat.HealPower))));
+                        }
+                        finally { ReturnMechanismDispatchBuffers(buffers); }
                         break;
                     // Crescendo, Sap and Weakspot have already installed their pure-runtime windows.
                 }
