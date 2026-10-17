@@ -942,7 +942,6 @@ namespace SodRpg.Mod
         private string CurseKey() => "";
         private void SendCurseClear() { }
         private void NotifyPersonalDreamEvent() { }
-        private void PublishRunChoiceHistory() { }
         private void ClearVariants() { }
         private void ClearMonsterCues() { }
         private void ClearBossDisplay() { }

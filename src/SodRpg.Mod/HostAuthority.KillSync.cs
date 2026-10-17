@@ -103,6 +103,11 @@ namespace SodRpg.Mod
             public bool ReceiptWaitReleased;
             public readonly List<MonsterRuntime> Monsters = new List<MonsterRuntime>();
             public readonly Queue<RequestedKillFact> Requested = new Queue<RequestedKillFact>();
+            // Transport hints only; overwriting a slot merely permits an earlier recovery send.
+            public readonly long[] LiveSequences = new long[128];
+            public readonly float[] LiveUntil = new float[128];
+            public Actor LiveActor;
+            public object LiveConnection;
         }
 
         // Only outstanding facts for native participation intervals survive in memory or on disk.
@@ -220,6 +225,7 @@ namespace SodRpg.Mod
                     cursor.Monsters.Clear();
                     foreach (var runtime in _monsters.Values) cursor.Monsters.Add(runtime);
                     cursor.Requested.Clear();
+                    Array.Clear(cursor.LiveSequences, 0, cursor.LiveSequences.Length);
                 }
             _killReplayDeparted.Clear();
             _killReplayRound.Clear();
@@ -313,6 +319,7 @@ namespace SodRpg.Mod
             cursor.Monsters.Clear();
             foreach (var runtime in _monsters.Values) cursor.Monsters.Add(runtime);
             cursor.Requested.Clear();
+            Array.Clear(cursor.LiveSequences, 0, cursor.LiveSequences.Length);
             ClientSession.DirtyHostKillReplay();
             if (_registeredOn != null) SendKillStreamControl(player, cursor);
         }
@@ -621,6 +628,18 @@ namespace SodRpg.Mod
             var actor = NetworkedManagerBase<ActorManager>.softInstance?.serverActor;
             actor?.CustomRpc_SendMessageToAllClients(
                 DreamforgeMonsterKillMsg.FromFact(fact, ClientSession.HostAuthorityGeneration));
+            if (actor != null)
+                foreach (var pair in _killReplayPlayers)
+                {
+                    var cursor = pair.Value;
+                    if (!ReferenceEquals(cursor.LiveActor, actor) || !ReferenceEquals(cursor.LiveConnection, pair.Key.connectionToClient))
+                        Array.Clear(cursor.LiveSequences, 0, cursor.LiveSequences.Length);
+                    cursor.LiveActor = actor;
+                    cursor.LiveConnection = pair.Key.connectionToClient;
+                    int slot = (int)(fact.Sequence % cursor.LiveSequences.Length);
+                    cursor.LiveSequences[slot] = fact.Sequence;
+                    cursor.LiveUntil[slot] = Time.unscaledTime + 8f;
+                }
         }
 
         partial void RefreshMonsterOwnership(MonsterRuntime runtime);
@@ -940,6 +959,10 @@ namespace SodRpg.Mod
             if (cursor.FactIndex >= _killHistory.Count) return 0;
             var fact = _killHistory[cursor.FactIndex];
             bool needed = PeerNeedsFact(_killPeers[cursor.PeerId], fact);
+            int liveSlot = (int)(fact.Sequence % cursor.LiveSequences.Length);
+            if (needed && ReferenceEquals(cursor.LiveActor, _registeredOn) && ReferenceEquals(cursor.LiveConnection, player.connectionToClient)
+                && fact.StreamId == _killStreamId && cursor.LiveSequences[liveSlot] == fact.Sequence
+                && Time.unscaledTime < cursor.LiveUntil[liveSlot]) return 0;
             if (needed && !ReserveMonsterSyncMessage()) return 0;
             cursor.FactIndex++;
             cursor.LastFactSequence = fact.Sequence;
