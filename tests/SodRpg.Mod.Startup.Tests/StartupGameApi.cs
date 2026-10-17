@@ -158,6 +158,7 @@ namespace SodRpg.Mod
     {
         public string guid;
         public string playerName;
+        public string selectedHeroType;
         public bool isHumanPlayer;
         public static DewPlayer local;
         public Hero hero;
@@ -165,6 +166,15 @@ namespace SodRpg.Mod
         public static readonly List<DewPlayer> lobbyPlayers = new List<DewPlayer>();
         public static Action<DewPlayer> onLobbyPlayerAdded, onLobbyPlayerRemoved;
         public static Action<DewPlayer> onGamePlayerAdded, onGamePlayerRemoved;
+    }
+    public static class DewSave
+    {
+        public static DewProfileStats profileStats;
+    }
+    public sealed class DewProfileStats
+    {
+        public sealed class HeroData { public int completedLimboDepth; }
+        public readonly Dictionary<string, HeroData> heroes = new Dictionary<string, HeroData>();
     }
     public class Actor
     {
