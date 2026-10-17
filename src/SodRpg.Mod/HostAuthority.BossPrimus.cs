@@ -232,11 +232,12 @@ namespace SodRpg.Mod
             if (state.SeenKinds != 0 && now >= state.CycleUntil)
             { state.SeenKinds = 0; state.CycleUntil = 0; PrimusCycleVisual(rt, state, now); }
         }
-        private void PrimusCancelProfile(HeroRuntime rt, string id)
+        private void PrimusCancelProfile(HeroRuntime rt, string id, bool keepCooldowns = false)
         {
             BossCancelProfileReservations(rt, BossProfiles.PrimusSetId, id);
             rt.Boss.Defense.CancelSource(this, rt, id);
-            if (BossProfiles.TryGetMove(id, out var profile))
+            // 同じ部屋での装備の付け替えでは、共有のクールダウン表を残す。
+            if (!keepCooldowns && BossProfiles.TryGetMove(id, out var profile))
                 for (int i=0;i<profile.Actions.Count;i++) rt.Boss.Ready.Remove(profile.Actions[i].RuntimeKey);
         }
         private void TickPrimusBoss(HeroRuntime rt, float now)
@@ -272,7 +273,7 @@ namespace SodRpg.Mod
                 _primusCombat.Remove(rt);
                 state.Reset(); _primusPool.Return(state);
             }
-            foreach (var id in PrimusProfiles) PrimusCancelProfile(rt, id);
+            foreach (var id in PrimusProfiles) PrimusCancelProfile(rt, id, preserveRewards);
         }
     }
 }
