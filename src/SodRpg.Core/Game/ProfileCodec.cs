@@ -138,6 +138,12 @@ namespace SodRpg.Core.Game
                 // Old/default runs carry no optional bonus payload.
                 if (r.OverflowDreamDustTotal != 0) run.Add("overflowDreamDustTotal", r.OverflowDreamDustTotal);
                 if (r.OverflowDreamDustLedgerId != 0) run.Add("overflowDreamDustLedgerId", r.OverflowDreamDustLedgerId);
+                // Optional run-world order (#700); old saves omit it and start counting from the current world.
+                if (r.WorldIndex >= 0 && r.WorldZoneIndex >= 0)
+                {
+                    run.Add("worldIndex", (long)r.WorldIndex).Add("worldZoneIndex", (long)r.WorldZoneIndex);
+                    if (r.WorldZoneName != null) run.Add("worldZoneName", r.WorldZoneName);
+                }
             }
 
             var body = new JsonObject()
@@ -508,6 +514,9 @@ namespace SodRpg.Core.Game
                     Infinity = ReadInfinity(rj),
                     OverflowDreamDustTotal = Long(rj, "overflowDreamDustTotal"),
                     OverflowDreamDustLedgerId = Long(rj, "overflowDreamDustLedgerId"),
+                    WorldIndex = rj.TryGet("worldIndex", out _) && rj.TryGet("worldZoneIndex", out _) ? Clamp(Long(rj, "worldIndex"), -1, int.MaxValue) : -1,
+                    WorldZoneIndex = rj.TryGet("worldIndex", out _) && rj.TryGet("worldZoneIndex", out _) ? Clamp(Long(rj, "worldZoneIndex"), -1, int.MaxValue) : -1,
+                    WorldZoneName = Str(rj, "worldZoneName"),
                     HeroKey = Str(rj, "heroKey"),
                     StarSecureRewarded = Bool(rj, "starSecureRewarded", false),
                     Heat = Loot.ClampHeat(Clamp(Long(rj, "heat"), 0, Content.MaxHeat)),

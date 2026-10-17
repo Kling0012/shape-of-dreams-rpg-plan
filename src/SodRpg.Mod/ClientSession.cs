@@ -1174,6 +1174,7 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
             if (msg == null || !ObserveMonsterAuthority(msg.authorityGeneration)) return;
             Protocol.WarnMismatch(msg.protocol, nameof(DreamforgeNightmareMsg));
             ReceiveDynamicDifficulty(msg.dynamicDifficulty, msg.dynamicRevision);
+            ReceiveDynamicStatus(msg.dynamicStatus);
             if (msg.netId == 0) return;
             if (msg.removed)
             {

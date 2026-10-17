@@ -8,8 +8,21 @@ PATH = ROOT / "tools/balance/coop.json"
 OUTPUT = ROOT / "src/SodRpg.Core/Game/Balance/Coop.Generated.cs"
 
 
-def render_outputs():
-    data = read_json(PATH)
+def help_decay_percent_by_world(value):
+    """Validate the per-world helper damage decay (percent, one entry per world in run order)."""
+    path = "coop.ownership.helpDecayPercentByWorld"
+    if not isinstance(value, list) or not value:
+        raise ValueError(path + ": expected a non-empty list")
+    for index, percent in enumerate(value):
+        if type(percent) is not int or not 0 <= percent <= 100:
+            raise ValueError(f"{path}[{index}]: expected an integer percent from 0 to 100")
+        if index > 0 and percent < value[index - 1]:
+            raise ValueError(f"{path}[{index}]: expected a non-decreasing list")
+    return value
+
+
+def render_outputs(data=None):
+    data = read_json(PATH) if data is None else data
     fields = (("fullRange", "FullRange"), ("outerRange", "OuterRange"),
               ("graceSeconds", "GraceSeconds"),
               ("rangeToSpeedMultiplier", "RangeToSpeedMultiplier"),
@@ -60,24 +73,28 @@ def render_outputs():
         lines.append(f"            public const double {name} = {value:g}d;")
     lines += ["        }"]
     ownership = data["ownership"]
-    owner_fields = (("firstWorldHelpFactor", "FirstWorldHelpFactor"),
-                    ("secondWorldHelpFactor", "SecondWorldHelpFactor"),
-                    ("helpFactor", "HelpFactor"), ("bossShareFactor", "BossShareFactor"),
+    owner_fields = (("bossShareFactor", "BossShareFactor"),
                     ("bossDamageMin", "BossDamageMin"), ("bossDamageMax", "BossDamageMax"),
                     ("rescueHp", "RescueHp"), ("engageWindow", "EngageWindow"),
                     ("spawnGrace", "SpawnGrace"), ("detectionMultiplier", "DetectionMultiplier"),
                     ("reassignCooldown", "ReassignCooldown"), ("downDelay", "DownDelay"),
                     ("releaseDistance", "ReleaseDistance"), ("awaySeconds", "AwaySeconds"),
                     ("idleSeconds", "IdleSeconds"))
-    if not isinstance(ownership, dict) or set(ownership) != {key for key, _ in owner_fields}:
+    if not isinstance(ownership, dict) or set(ownership) != {"helpDecayPercentByWorld", *(key for key, _ in owner_fields)}:
         raise ValueError("coop.ownership: invalid schema")
-    lines += ["", "        public static class Ownership", "        {"]
+    decay = help_decay_percent_by_world(ownership["helpDecayPercentByWorld"])
+    lines += ["", "        public static class Ownership", "        {",
+              "            // Damage lost on another player's enemy, by the run's 0-based world order; the last entry repeats.",
+              f"            public const int HelpDecayWorlds = {len(decay)};",
+              "            public static int HelpDecayPercent(int world)", "            {",
+              "                switch (world < 0 ? 0 : world)", "                {"]
+    for index, percent in enumerate(decay[:-1]):
+        lines.append(f"                    case {index}: return {percent};")
+    lines += [f"                    default: return {decay[-1]};", "                }", "            }"]
     for key, name in owner_fields:
         value = ownership[key]
         if type(value) not in (int, Decimal) or not 0 < value <= 100:
             raise ValueError("coop.ownership." + key + ": expected positive number <= 100")
-        if key in ("firstWorldHelpFactor", "secondWorldHelpFactor", "helpFactor") and value > 1:
-            raise ValueError("coop.ownership." + key + ": expected fraction <= 1")
         if key == "rescueHp" and value >= 1:
             raise ValueError("coop.ownership." + key + ": expected fraction < 1")
         lines.append(f"            public const float {name} = {value:g}f;")

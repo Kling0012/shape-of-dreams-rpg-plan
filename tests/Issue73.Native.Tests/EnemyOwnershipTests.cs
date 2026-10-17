@@ -532,13 +532,15 @@ namespace Issue73.Native.Tests
 
         [Theory]
         [InlineData(0, 100f)]
-        [InlineData(1, 75f)]
-        [InlineData(2, 50f)]
-        [InlineData(3, 50f)]
+        [InlineData(1, 70f)]
+        [InlineData(2, 40f)]
+        [InlineData(3, 10f)]
+        [InlineData(4, 10f)]
+        [InlineData(7, 10f)]
         public void Helpers_fight_at_the_world_factor_regardless_of_the_owner_pressure(int zoneIndex, float expected)
         {
-            NetworkedManagerBase<ZoneManager>.softInstance.currentZoneIndex = zoneIndex;
             var host = Host(out _);
+            RunWorldSteps.Enter(host, zoneIndex);
             var a = Player(5);
             BuildFor(host, a, 2, 0); // 担当者は新人
             var b = Player(9);
@@ -562,14 +564,44 @@ namespace Issue73.Native.Tests
             Assert.Empty(Log.Warnings);
         }
 
+        [Fact]
+        public void Helper_decay_follows_the_run_world_order_even_when_the_native_zone_index_restarts()
+        {
+            var host = Host(out _);
+            RunWorldSteps.Enter(host, 3); // 4つ目の世界: 減衰90%
+            var a = Player(5);
+            BuildFor(host, a, 3, 10);
+            var b = Player(9);
+            BuildFor(host, b, 3, 10);
+            var enemy = Spawn(host, 100); // → a
+            enemy.Status.baseMaxHealth = 1000f;
+            RecalcMaxHealth(enemy);
+            enemy.Status.SetHealth(enemy.Status.maxHealth);
+            Assert.Equal(10f, TakenBy(host, enemy, b.hero), 2);
+
+            // インフィニティなどで本体の世界番号が0へ戻っても、ランの累計は戻らない（減衰は軽くならない）。
+            NetworkedManagerBase<ZoneManager>.softInstance.currentZoneIndex = 0;
+            Assert.Equal(10f, TakenBy(host, enemy, b.hero), 2);
+            Assert.Equal(4, host.RunWorldIndex);
+            // 同じ世界の再確認（部屋移動・重複通知）では数えない。
+            host.ObserveRunWorld();
+            Assert.Equal(4, host.RunWorldIndex);
+
+            // 新しいランでだけ0から数え直す。
+            NetworkedManagerBase<GameManager>.softInstance.runId = "next-run";
+            Assert.Equal(0, host.RunWorldIndex);
+            Assert.Equal(100f, TakenBy(host, enemy, b.hero), 2);
+            Assert.Empty(Log.Warnings);
+        }
+
         [Theory]
         [InlineData(0, 100f)]
-        [InlineData(1, 75f)]
-        [InlineData(2, 50f)]
+        [InlineData(1, 70f)]
+        [InlineData(2, 40f)]
         public void Helpers_keep_the_world_factor_even_below_thirty_percent_health(int zoneIndex, float expected)
         {
-            NetworkedManagerBase<ZoneManager>.softInstance.currentZoneIndex = zoneIndex;
             var host = Host(out _);
+            RunWorldSteps.Enter(host, zoneIndex);
             var a = Player(5);
             BuildFor(host, a, 3, 10);
             var b = Player(9);
@@ -594,8 +626,8 @@ namespace Issue73.Native.Tests
         [Fact]
         public void Protection_needs_an_engaged_and_healthy_owner()
         {
-            NetworkedManagerBase<ZoneManager>.softInstance.currentZoneIndex = 2;
             var host = Host(out _);
+            RunWorldSteps.Enter(host, 2);
             var a = Player(5);
             BuildFor(host, a, 3, 10);
             var b = Player(9);
@@ -607,14 +639,14 @@ namespace Issue73.Native.Tests
 
             // 湧いて8秒以内は交戦とみなす。
             Time.time = 2f;
-            Assert.Equal(50f, TakenBy(host, enemy, b.hero), 2);
+            Assert.Equal(40f, TakenBy(host, enemy, b.hero), 2);
             Time.time = 20f; // 猶予切れ・無交戦
             Assert.Equal(100f, TakenBy(host, enemy, b.hero), 2);
 
             // 担当者の命中から6秒以内は交戦中。
             enemy.RaiseEntityEventOnTakeDamage(new EventInfoDamage { actor = a.hero, damage = new DamageData(10f) });
             Time.time = 25f;
-            Assert.Equal(50f, TakenBy(host, enemy, b.hero), 2);
+            Assert.Equal(40f, TakenBy(host, enemy, b.hero), 2);
             Time.time = 31.5f; // 6秒を過ぎた
             Assert.Equal(100f, TakenBy(host, enemy, b.hero), 2);
 
@@ -622,7 +654,7 @@ namespace Issue73.Native.Tests
             enemy.AI = new EntityAI { entity = enemy };
             enemy.AI.context.targetEnemy = a.hero;
             Time.time = 33f;
-            Assert.Equal(50f, TakenBy(host, enemy, b.hero), 2);
+            Assert.Equal(40f, TakenBy(host, enemy, b.hero), 2);
 
             // 担当者のHPが35%未満なら保護しない（味方が助けに入れる）。
             a.hero.Status.SetHealth(a.hero.Status.maxHealth * 0.2f);
