@@ -69,7 +69,7 @@ namespace SodRpg.Mod
             _netLiteReceiveReady = false;
             _hostAutocastPressureCapability = false;
             _nextAutocastPressureReport = 0f;
-            _nextBuildInputProbe = 0f;
+            ResetHelloSchedule();
             _hostVersionWarning = null;
             ResetOverflowBonusConnection();
             _sentContinueReceiptActor = null;
@@ -129,8 +129,7 @@ namespace SodRpg.Mod
             // Record transport success before sending Build; failed receipts remain retryable.
             _clientRpcOn.CustomRpc_SendMessageToServer(CreateHelloMessage());
             float now = Time.unscaledTime;
-            if (_helloFirstSent < 0) _helloFirstSent = now;
-            _nextHello = now + 5f;
+            RecordHelloSchedule(now);
             _sentContinueReceiptActor = _clientRpcOn;
             _sentContinueReceiptRunId = _continueReceiptRunId;
             _sentContinueReceiptCheckpointId = _continueReceiptCheckpointId;
@@ -145,18 +144,7 @@ namespace SodRpg.Mod
             // ホスト自身はあいさつ不要（自分の版なので必ず一致する）。
             if (_clientRpcOn == null || !NetworkClient.active || NetworkServer.active) return;
             float now = Time.unscaledTime;
-            if (now >= _nextHello)
-            {
-                _clientRpcOn.CustomRpc_SendMessageToServer(CreateHelloMessage());
-                if (_helloAnswered)
-                    _clientRpcOn.CustomRpc_SendMessageToServer(new DreamforgeBuildInputCapabilityMsg
-                        { bountyCounts = _bountyCountsReady ? 1 : 0, netLite = _netLiteReceiveReady ? 1 : 0, stateSnapshots = 1, dynamicRoster = 1, roomOmens = _omenReceiveReady ? 1 : 0, forbiddenSmith = Forbidden.HasSmith(Profile) ? 1 : 0, nemesisGrudge = Profile.NemesisGrudge });
-                // CustomRpc ignores unknown optional types; only the binary pressure packet needs a reply first.
-                if (!_hostAutocastPressureCapability)
-                    _clientRpcOn.CustomRpc_SendMessageToServer(new DreamforgeAutocastPressureCapabilityMsg());
-                if (_helloFirstSent < 0) _helloFirstSent = now;
-                _nextHello = now + 5f;
-            }
+            TickHelloSchedule();
             // 未設定のときだけ作る。言語変更時も含め、ほかの経路が設定した警告文を上書きしない。
             // 日英を保持し、表示時に解決する（毎フレームの文字列確保を避ける）。
             if (!_helloAnswered && _helloFirstSent >= 0 && now - _helloFirstSent > 20f

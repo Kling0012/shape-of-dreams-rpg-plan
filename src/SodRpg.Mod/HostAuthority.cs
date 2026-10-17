@@ -101,6 +101,7 @@ namespace SodRpg.Mod
             public DataProcessor<HealData, Actor, Entity> GrowthHealReceived;
             public readonly Dictionary<Stat, double> GrowthTotals = new Dictionary<Stat, double>();
             public int GrowthVersion = -1;
+            public int GrowthGeneration = -1;
             public Build GrowthBuild;
             public Action<EventInfoAbilityInstance> OnAbilityCreated;
             public readonly HashSet<int> CritBasicVictims = new HashSet<int>();
@@ -2411,8 +2412,8 @@ namespace SodRpg.Mod
                 rt.MemoryHitAmounts.Remove(victimId);
                 if (generated) return;
                 TrackCritBasicKill(rt, victimId);
-                OnNewPowerKill(rt, info);
                 string memory = MemorySource(info.actor);
+                OnNewPowerKill(rt, info, memory);
                 if (memory != null) QueueGimmicks(rt, GimmickTrigger.OnKill, memory, info.victim, damage, generated, info.actor);
             }
             catch (Exception ex) { Log.Error("Host: memory kill " + ex); }

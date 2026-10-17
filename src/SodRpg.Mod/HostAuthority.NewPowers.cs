@@ -513,13 +513,12 @@ namespace SodRpg.Mod
             PowerShield(rt, hero, Power.ReadyGuard, p.TakeReadyGuard(Time.time, hero.maxHealth), PowersBalance.ReadyGuardDuration);
         }
 
-        private void OnNewPowerKill(HeroRuntime rt, EventInfoKill info, string assistMemory = null, bool assistSummon = false, bool assist = false)
+        private void OnNewPowerKill(HeroRuntime rt, EventInfoKill info, string memory, bool assistSummon = false, bool assist = false)
         {
             if (_gimmickDamageDepth != 0 || _reactionEffectDepth != 0 || !Alive(rt.Hero) || !(info.victim is Monster victim)
                 || victim.GetRelation(rt.Hero) != EntityRelation.Enemy) return;
             var hero = rt.Hero;
             var p = rt.Powers;
-            string memory = assist ? assistMemory : MemorySource(info.actor);
             if (memory != null)
             {
                 var skill = FindMemory(hero, memory);

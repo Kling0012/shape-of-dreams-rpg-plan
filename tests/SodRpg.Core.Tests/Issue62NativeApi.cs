@@ -49,6 +49,10 @@ namespace SodRpg.Mod
         {
             internal bool ControlSent = true;
             internal bool ReceiptWaitReleased;
+            internal readonly long[] LiveSequences = new long[128];
+            internal readonly float[] LiveUntil = new float[128];
+            internal Actor LiveActor;
+            internal object LiveConnection;
             internal readonly ParticipationRange Participation = new ParticipationRange();
         }
         private sealed class ParticipationRange { internal long Through; }

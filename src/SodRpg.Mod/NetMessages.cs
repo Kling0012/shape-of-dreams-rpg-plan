@@ -368,6 +368,9 @@ namespace SodRpg.Mod
         public int bountyCounts;
         public int stateSnapshots;
         public int dynamicRoster;
+        public int helloSchedule;
+        public int killReceiptDelta;
+        public int autocastPressure;
     }
 
     // Optional extension: Hello and every existing packet remain unchanged (Protocol 24).

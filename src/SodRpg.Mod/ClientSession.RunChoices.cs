@@ -169,8 +169,8 @@ namespace SodRpg.Mod
                     _clientRpcOn.CustomRpc_SendMessageToAllClients(new DreamforgeRunChoicesMsg
                     { protocol = Protocol.Version, choices = choices });
                 _nextChoicesSync = now + 5f;
-                PublishRunChoiceHistory();
             }
+            PublishRunChoiceHistory();
         }
 
         private void PublishRunChoicesForZone(int zoneIndex)
