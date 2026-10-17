@@ -68,7 +68,7 @@ namespace SodRpg.Mod
                 float raw = definition.AmountBasis == WardAmountBasis.RecipientMaxHP
                     ? recipient.maxHealth * (float)(definition.ValueUnits / 10000m) : award.RawAmount;
                 if (AwardModShield(owner, recipient, definition.PoolKind,
-                    SupportStats.AmplifyShield(raw, owner.Powers.Build.Get(SodRpg.Core.Game.Stat.ShieldPower)),
+                    SupportStats.AmplifyShield(raw, SupportPower(owner, SodRpg.Core.Game.Stat.ShieldPower)),
                     definition.DurationSeconds, sourceMemory, shieldEquipmentEpoch)) count++;
             }
             return count;
