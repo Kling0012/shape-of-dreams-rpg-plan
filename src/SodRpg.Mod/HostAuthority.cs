@@ -106,7 +106,6 @@ namespace SodRpg.Mod
             public readonly HashSet<int> CritBasicVictims = new HashSet<int>();
             public float GrowthSentAt;
             public int GrowthSentVersion = -1;
-            public uint GrowthOwnerNetId;
             public string GrowthOwnerKey;
             public Build GrowthSentBuild;
             public string GrowthSentRun;
@@ -430,6 +429,7 @@ namespace SodRpg.Mod
 
         private void StageBossEffects()
         {
+            TickBossNativeLifetimeDiagnostics();
             foreach (var rt in _runtimes.Values) TickBossEffects(rt, _tickNow);
         }
 
@@ -514,7 +514,8 @@ namespace SodRpg.Mod
             var pressure = DreamPressure.Average(_pressureBuilds)
                 .WithRunModifiers(ClientSession.HostRun?.DreamDepth ?? 0,
                     PersonalEnemyWaypointsRunning() ? 1 : ActiveWaypointTotals.PressureMultiplier)
-                .WithInfinityPressure(_infinityPressureStage);
+                .WithInfinityPressure(_infinityPressureStage)
+                .WithCoopScaling(_pressureBuilds.Count);
             bool changed = pressure.HealthMultiplier != _pressure.HealthMultiplier
                 || pressure.DamageMultiplier != _pressure.DamageMultiplier;
             synchronize |= changed || _pressurePlayerCount != _pressureBuilds.Count;
@@ -542,7 +543,8 @@ namespace SodRpg.Mod
                 healthMultiplier = (float)_pressure.HealthMultiplier,
                 damageMultiplier = (float)_pressure.DamageMultiplier,
                 runChoices = ClientSession.HostRunChoices,
-                nightmareGearMultiplier = (float)PartyGearChanceMult()
+                nightmareGearMultiplier = (float)PartyGearChanceMult(),
+                nightmarePressureHealthMultiplier = (float)(1 + _pressure.RewardPressure)
             });
             // Reuse the infrequent state resync for players whose run started after the first report.
             var runId = NetworkedManagerBase<GameManager>.softInstance?.runId;

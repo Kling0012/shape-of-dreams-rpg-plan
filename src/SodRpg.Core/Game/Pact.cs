@@ -21,7 +21,7 @@ namespace SodRpg.Core.Game
         CursedHoard = 6,
         /// <summary>乾いた夢：本体の呪い / 調律石の入手+1（エリート・ボス）</summary>
         DryDream = 7,
-        /// <summary>見えざる重荷：本体の呪い / エピック以上の確率が上がる（幸運+1.0）</summary>
+        /// <summary>見えざる重荷：本体の呪い / エピック以上の確率が上がる（幸運+1.4）</summary>
         Burden = 8,
         Glutton = 9,
         Scholar = 10,

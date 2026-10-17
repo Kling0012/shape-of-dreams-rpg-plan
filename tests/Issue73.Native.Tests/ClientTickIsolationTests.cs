@@ -21,21 +21,23 @@ namespace Issue73.Native.Tests
             var session = new ClientSession();
             var actions = session.PrepareTickIsolationProbe();
             Assert.Equal(actions.Length, session.TickNames.Length);
-            Assert.Equal("TickDirectStash", actions[17].Method.Name);
-            Assert.Equal("direct stash save", session.TickNames[17]);
-            Assert.Equal("TickKillSync", actions[18].Method.Name);
-            Assert.Equal("kill sync", session.TickNames[18]);
-            Assert.Equal("TickCoopTrade", actions[19].Method.Name);
-            Assert.Equal("coop trade", session.TickNames[19]);
-            Assert.Equal("TickRoomVisualSweep", actions[20].Method.Name);
-            Assert.Equal("room visual sweep", session.TickNames[20]);
+            Assert.Equal("TickSalvageDustCap", actions[13].Method.Name);
+            Assert.Equal("salvage dust cap", session.TickNames[13]);
+            Assert.Equal("TickDirectStash", actions[18].Method.Name);
+            Assert.Equal("direct stash save", session.TickNames[18]);
+            Assert.Equal("TickKillSync", actions[19].Method.Name);
+            Assert.Equal("kill sync", session.TickNames[19]);
+            Assert.Equal("TickCoopTrade", actions[20].Method.Name);
+            Assert.Equal("coop trade", session.TickNames[20]);
+            Assert.Equal("TickRoomVisualSweep", actions[21].Method.Name);
+            Assert.Equal("room visual sweep", session.TickNames[21]);
         }
 
         [Theory]
-        [InlineData(17, "direct stash save")]
-        [InlineData(18, "kill sync")]
-        [InlineData(19, "coop trade")]
-        [InlineData(20, "room visual sweep")]
+        [InlineData(18, "direct stash save")]
+        [InlineData(19, "kill sync")]
+        [InlineData(20, "coop trade")]
+        [InlineData(21, "room visual sweep")]
         public void Tail_step_failure_keeps_original_error_and_continues_with_throttled_logging(int index, string name)
         {
             var session = new ClientSession();

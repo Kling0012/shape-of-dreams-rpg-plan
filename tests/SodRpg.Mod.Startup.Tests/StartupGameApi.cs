@@ -158,6 +158,7 @@ namespace SodRpg.Mod
     {
         public string guid;
         public string playerName;
+        public string selectedHeroType;
         public bool isHumanPlayer;
         public static DewPlayer local;
         public Hero hero;
@@ -165,6 +166,15 @@ namespace SodRpg.Mod
         public static readonly List<DewPlayer> lobbyPlayers = new List<DewPlayer>();
         public static Action<DewPlayer> onLobbyPlayerAdded, onLobbyPlayerRemoved;
         public static Action<DewPlayer> onGamePlayerAdded, onGamePlayerRemoved;
+    }
+    public static class DewSave
+    {
+        public static DewProfileStats profileStats;
+    }
+    public sealed class DewProfileStats
+    {
+        public sealed class HeroData { public int completedLimboDepth; }
+        public readonly Dictionary<string, HeroData> heroes = new Dictionary<string, HeroData>();
     }
     public class Actor
     {
@@ -438,7 +448,8 @@ namespace SodRpg.Mod
         internal static bool RemoteHostInfinityAvailable, RemoteHostHelloAnswered;
         internal static bool RunActive, InGame, CanChooseRunRules, CanChooseDepth;
         internal static bool PersistHostInfinityState(bool writeEnvelope = true) => true;
-        internal static bool HostInfinitySaveHoldSatisfied => true;
+        // #528: TickNative の保存待ち早期リターンを再現するため、テストから書き換え可能にする。
+        internal static bool HostInfinitySaveHoldSatisfied = true;
         internal static void CountHostInfinityRoom() { }
         internal static void OpenHostInfinityChoice() { }
         internal static void FinishNativeContinueRestore() { }
@@ -455,6 +466,7 @@ namespace SodRpg.Mod
         public static void PrewarmBossVisualTransport() { }
         public void Tick() { }
         public void RefreshLevelGemSlots() { }
+        internal void ConfigureBossNativeLifetimeDiagnostics(bool enabled) { }
         public void Detach() { }
         internal void ConfigureMeleeCoop(bool rangeToSpeed, bool distanceFalloff, bool meleeBreak, bool meleeGuard) { }
     }

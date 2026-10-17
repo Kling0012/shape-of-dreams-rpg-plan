@@ -1,9 +1,9 @@
-[b]Fixes co-op elites becoming unkillable at 0% share, enemies far from everyone switching owners repeatedly, training bonuses missing from mod heals and shields, and the codex not updating after making relics forbidden, plus several star map, loot and description fixes.[/b]
-[b]協力プレイで分担0%のエリートを倒せなくなる問題、離れた敵の担当が入れ替わり続ける問題、鍛錬の回復・シールド強化が反映されない問題、禁忌化後に図鑑が更新されない問題などを直しました。[/b]
+[b]Fixes Infinity Continue and helper damage decay, co-op trades with retuned relics, Overcharge counting toward the conditional cap, and power and link descriptions.[/b]
+[b]インフィニティの Continue と与ダメージの減衰、再調律した遺物の協力取引、過剰と共通上限、固有効果・連携の説明の不具合を直しました。[/b]
 
 [h1]Dreamforge RPG[/h1]
 Turns every run into part of a long RPG journey: relics you keep, a risky "secure or delve" choice at every zone, a star map per Traveler, a forge, and long-term goals. Co-op ready.
-すべての遠征を、長いRPGの旅の一部にするMODです。持ち帰れる装備「遺物」、ゾーンごとの「確保するか、深く潜るか」の決断、旅人ごとの星図、鍛冶、長く遊ぶための目標を加えます。協力プレイにも対応しています。
+すべての遠征を長いRPGの旅の一部にするMODです。持ち帰れる装備「遺物」、ゾーンごとの「確保するか、深く潜るか」の決断、旅人ごとの星図、鍛冶、長く遊ぶための目標を加えます。協力プレイにも対応しています。
 
 [h2]Relics / 遺物[/h2]
 [list]
@@ -22,9 +22,9 @@ Turns every run into part of a long RPG journey: relics you keep, a risky "secur
 [h2]Secure or Delve / 確保か、深く潜るか[/h2]
 [list]
 [*] New loot starts unsecured. Each new zone is a secure point: Secure to bank everything, or Delve for more and better drops, while you take 6% more damage per delve level. Delving deeper also raises the shard bonus when you finally secure.
-[*] 拾った物は、まだ持ち帰っていない状態です。新しいゾーンに着くと確保地点が開き、「確保する」で保管庫に入れるか、「深く潜る」で遺物を多く・良くするかを選びます。潜行が1段深くなるごとに、受けるダメージが6%増えます。深く潜ってから確保すると、欠片のボーナスも増えます。
-[*] 25 dream events may appear at secure points (merchant, forge shrine, twin mirror, cauldron, gate of courage…), and 20 nightmare pacts trade a game curse for bigger rewards.
-[*] 確保地点には25種類の「夢の出来事」（夢の商人・鍛冶の祠・双子の鏡・錬金の釜・勇気の門など）が現れることがあります。20種類の「悪夢の契約」では、本体の呪いと引き換えに見返りを得られます。
+[*] 拾った物はまだ持ち帰っていない状態です。新しいゾーンに着くと確保地点が開き、「確保する」で保管庫に入れるか、「深く潜る」で遺物を多く・良くするかを選びます。潜行が1段深くなるごとに、受けるダメージが6%増えます。深く潜ってから確保すると、欠片のボーナスも増えます。
+[*] 25 dream events may appear at secure points (merchant, forge shrine, twin mirror, cauldron, gate of courage…), and 40 nightmare pacts trade a game curse for bigger rewards.
+[*] 確保地点には25種類の「夢の出来事」（夢の商人・鍛冶の祠・双子の鏡・錬金の釜・勇気の門など）が現れることがあります。40種類の「悪夢の契約」では、本体の呪いと引き換えに見返りを得られます。
 [*] Wiped? Unsecured relics go to Lost & Found. Clear 3 combat rooms next run to recover the best one.
 [*] 全滅すると、まだ持ち帰っていない遺物は遺失物になります。次の遠征で戦闘部屋を3つ突破すると、一番良い物を1つ取り戻せます。
 [/list]
@@ -34,7 +34,7 @@ Turns every run into part of a long RPG journey: relics you keep, a risky "secur
 [*] Enemies grow with your delve depth, and stronger gear draws more nightmares. Nightmares can be warded, thorned, ravenous or sundering.
 [*] 敵は深度に合わせて強くなり、強い装備で潜るほど悪夢の敵が増えます。悪夢には結界・棘皮・飢渇・破甲などの性質があります。
 [*] Dream pressure multiplies enemy HP and damage using the party's average Dream Level and spent star points, not player count. Low-level joiners lower the average. Higher pressure also mixes additional enemies into each combat wave, but never adds bosses; bosses still receive the HP and damage multipliers. Added enemies grant rewards scaled to their added density.
-[*] 「夢の圧」は、参加者の夢のレベルと振った星ポイントの平均から敵HP・与ダメージを強化します。人数の合計ではなく、低いレベルの人が加わると圧は下がります。圧が高まると敵の数も増え、戦闘中の各ウェーブに混ざって出現します。追加分の報酬は増加幅に応じて調整します。ボスの数は増やさず、HP・与ダメージの強化だけが反映されます。
+[*] 「夢の圧」は参加者の夢のレベルと振った星ポイントの平均から敵HP・与ダメージを強化します。人数の合計ではなく、低いレベルの人が加わると圧は下がります。圧が高まると敵の数も増え、戦闘中の各ウェーブに混ざって出現します。追加分の報酬は増加幅に応じて調整します。ボスの数は増やさず、HP・与ダメージの強化だけが反映されます。
 [*] Higher dream pressure also makes shards drop more often and enemies turn into nightmares more often (up to x1.5 each). Not applied in Infinity.
 [*] 夢の圧が高いほど、欠片が出やすくなり、敵も悪夢化しやすくなります（それぞれ最大1.5倍）。インフィニティでは適用されません。
 [*] 13 dream variants: base-game enemies reborn with new names, colors, abilities and better loot.
@@ -46,15 +46,15 @@ Turns every run into part of a long RPG journey: relics you keep, a risky "secur
 [*] Each Traveler earns their own star XP and up to 300 points, plus codex bonuses. Added 506 stars: memory-specific routes (7 per Traveler, 6 for Bismuth) and eight dream-ring stars each. Route stars form chains; linked bonuses work only with the matching memory equipped. Respec is free.
 [*] 星の経験とポイントは旅人ごとに独立し、最大300ポイント＋図鑑のボーナスを得ます。記憶ごとのルート（各7本、Bismuthは6本）と夢の輪8星、計506星を追加。ルートは前の星から順に開き、連携の星は対応する記憶を装着中だけ有効です。振り直しは無料です。夢のレベルは工房や夢の圧に使い、星ポイントには使いません。
 [*] Forge: enhance to +5 (milestones at +3 and +5 add an affix or a power), retune an affix choosing from 3 options, salvage, transmute (pick the result slot) and craft. The workshop unlocks convenience upgrades.
-[*] 鍛冶では強化（+5まで。+3と+5の節目で特性や固有効果が増えます）・再調律（3つの候補から選べます）・分解・合成（結果の枠を選べます）・製作ができます。工房では、鞄や保管庫の拡張などの便利な強化を解放できます。
-[*] 22 kinds of bounties each run, 30 daily dreams, 45 feats with rewards, and traveler mastery.
-[*] 遠征ごとの依頼（22種類）、日替わりの「今日の夢」（30種類）、報酬つきの偉業（45個）、旅人の熟練度があります。
+[*] 鍛冶では強化（+5まで。+3と+5の節目で特性や固有効果が増えます）・再調律（3つの候補から選べます）・分解・合成（結果の枠を選べます）・製作ができます。工房では鞄や保管庫の拡張などの便利な強化を解放できます。
+[*] 44 kinds of bounties each run, 60 daily dreams, 90 feats with rewards, and traveler mastery.
+[*] 遠征ごとの依頼（44種類）、日替わりの「今日の夢」（60種類）、報酬つきの偉業（90個）、旅人の熟練度があります。
 [/list]
 
 [h2]Performance / 軽さ[/h2]
 [list]
 [*] The mod itself costs well under 0.1 ms per frame. Optional settings lighten the whole game: an FPS cap while the game is in the background, and lighter rendering (Light / Strong / Max).
-[*] このMOD自体の処理は1フレームあたり0.1ミリ秒未満です。設定で、ゲームが裏にあるときのFPS上限や、描画の軽量化（軽め・強め・最大）を選べます。
+[*] このMOD自体の処理は1フレームあたり0.1ミリ秒未満です。設定でゲームが裏にあるときのFPS上限や、描画の軽量化（軽め・強め・最大）を選べます。
 [/list]
 
 [h2]Controls / 操作[/h2]
@@ -66,6 +66,6 @@ Turns every run into part of a long RPG journey: relics you keep, a risky "secur
 
 [h2]Multiplayer / マルチプレイ[/h2]
 Every player needs the same version of this mod. The host applies everyone's bonuses. Each player keeps their own save, and loot is rolled per player.
-参加者全員が同じ版のMODを入れてください。能力の反映はホストが行います。保存と戦利品は、プレイヤーごとに別々です。
+参加者全員が同じ版のMODを入れてください。能力の反映はホストが行います。保存と戦利品はプレイヤーごとに別々です。
 
 This mod alters gameplay. Save file: <persistentDataPath>/QuickSave/Mods/DreamforgeRPG/profile.json

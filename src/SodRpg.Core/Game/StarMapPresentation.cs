@@ -269,7 +269,7 @@ namespace SodRpg.Core.Game
                 targets.AddRange(scope.TargetMemorySet.Select(Links.ItemName));
                 targets.AddRange(scope.SourceSelectors.Select(SelectorText));
                 targets.AddRange(scope.TargetEffectIds.Select(StarName));
-                lines.Add(Loc.T("対象は、" + (targets.Count == 0
+                lines.Add(Loc.T("対象は" + (targets.Count == 0
                     ? "自分が取得した星による該当効果のすべて。"
                     : string.Join("と", targets) + "による該当効果。")
                     + (transform.TargetLayer == KeystoneLayer.NativeDamage
@@ -288,7 +288,7 @@ namespace SodRpg.Core.Game
                 if (scope.ReceiverMemorySet.Count > 0 || scope.ReceiverSelectors.Count > 0)
                 {
                     var receivers = scope.ReceiverMemorySet.Select(Links.ItemName).Concat(scope.ReceiverSelectors.Select(SelectorText)).ToList();
-                    lines.Add(Loc.T("効果の受け手は、" + string.Join("と", receivers) + "。",
+                    lines.Add(Loc.T("効果の受け手は" + string.Join("と", receivers) + "。",
                         "Effect recipient: " + string.Join(", ", receivers) + "."));
                 }
                 if (scope.Recipient != KeystoneRecipientKind.Any)
@@ -297,12 +297,12 @@ namespace SodRpg.Core.Game
                         : "Changes the effect on: " + EnumText(scope.Recipient, "everyone", "yourself", "allied travelers only (your own effect is unchanged)", "your summons") + ".");
                 if (scope.SourceKind.HasValue)
                     lines.Add(Loc.Japanese
-                        ? EnumText(scope.SourceKind.Value, "発動元は、記憶が元々持つ効果に限る。", "発動元は、自分の通常攻撃に限る。", "発動元は、自分の召喚獣に限る。", "発動元は、星による追加効果に限る。", "発動元は、自分の移動に限る。")
+                        ? EnumText(scope.SourceKind.Value, "発動元は、記憶が元々持つ効果に限る。", "発動元は自分の通常攻撃に限る。", "発動元は自分の召喚獣に限る。", "発動元は星による追加効果に限る。", "発動元は自分の移動に限る。")
                         : "Source: " + EnumText(scope.SourceKind.Value, "the memory's original effect", "your basic attacks", "your summons", "star-generated extra effects", "your displacement") + ".");
                 if (scope.Argument.HasValue)
                     lines.Add(scope.TargetEffectSet.Contains(GimmickEffect.Heal)
                         ? (scope.Argument.Value == 1
-                            ? Loc.T("対象は、自分だけでなく近くの味方旅人も回復する効果に限る。", "Applies only to effects that already heal nearby allied travelers as well as yourself.")
+                            ? Loc.T("対象は自分だけでなく近くの味方旅人も回復する効果に限る。", "Applies only to effects that already heal nearby allied travelers as well as yourself.")
                             : scope.Argument.Value == 0 ? Loc.T("対象は自分だけを回復する効果に限る。", "Applies only to effects that heal yourself alone.")
                                 : throw new InvalidOperationException("Unmapped healing condition."))
                         : KeystoneArgumentText(scope.TargetEffectSet, scope.Argument.Value));
@@ -319,7 +319,7 @@ namespace SodRpg.Core.Game
             if (key.RequiredMemories.Count > 0)
                 lines.Add(RequiredEquipText(key.RequiredMemories));
             if (key.Prerequisites.Count > 0)
-                lines.Add(Loc.T("取得するには、" + string.Join("と", key.Prerequisites.Select(StarName)) + "を" + (key.Prerequisites.Count > 1 ? "すべて" : "") + "取得している必要がある。",
+                lines.Add(Loc.T("取得するには" + string.Join("と", key.Prerequisites.Select(StarName)) + "を" + (key.Prerequisites.Count > 1 ? "すべて" : "") + "取得している必要がある。",
                     "Acquisition prerequisites (all required): " + string.Join(", ", key.Prerequisites.Select(StarName))));
             return Loc.Japanese ? string.Concat(lines.Where(line => line.Length > 0).Select(EndSentence)) : string.Join("\n", lines);
         }
@@ -367,7 +367,7 @@ namespace SodRpg.Core.Game
                 case KeystoneOperation.AddTargets:
                     result = subject + "が" + Math.Abs(transform.Count) + "体" + (transform.Count > 0 ? "増える" : "減る") + "。"; break;
                 case KeystoneOperation.SetEveryN:
-                    result = effect + "は、条件を満たす" + transform.Count + "回ごとに発動する。"; break;
+                    result = effect + "は条件を満たす" + transform.Count + "回ごとに発動する。"; break;
                 case KeystoneOperation.Set:
                     result = subject + "を" + (transform.ExpectedFrom.HasValue ? KeystoneNumericText(transform, transform.ExpectedFrom.Value) + "から" : "")
                         + KeystoneNumericText(transform, transform.Seconds) + "に変更する。"; break;
@@ -443,7 +443,7 @@ namespace SodRpg.Core.Game
                 return argument == 1 ? Loc.T("回復の対象に、近くの味方旅人が加わる。", "Healing also includes nearby allied travelers.")
                     : argument == 0 ? Loc.T("回復の対象は自分だけになる。", "Healing affects only yourself.") : throw new InvalidOperationException("Unmapped healing target.");
             if (effects.Contains(GimmickEffect.Ricochet))
-                return Loc.T("追加ダメージの対象は、近くの別の敵最大" + argument + "体になる。", "Extra damage targets: up to " + argument + " other nearby enemies.");
+                return Loc.T("追加ダメージの対象は近くの別の敵最大" + argument + "体になる。", "Extra damage targets: up to " + argument + " other nearby enemies.");
             if (effects.Contains(GimmickEffect.Element))
                 return Loc.Japanese
                     ? "付与する属性は" + EnumText((IdentityStrikeElement)(argument + 1), "", "火", "冷気", "光", "闇") + "になる。"

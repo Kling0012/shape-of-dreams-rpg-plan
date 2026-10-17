@@ -67,7 +67,7 @@
     </Task>
   </UsingTask>
   <Target Name="CompileNativePersistence" BeforeTargets="CoreCompile">
-    <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/ClientSession.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)NativePersistence.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="ClientSession" Methods="MarkDirty;MarkAllocationDirty;SavePendingAllocation;OnAllocationSceneChanged;DeferSave;TickSatchelOverflow;TickPeriodicSave;SaveNow;IsNewWriteFailure;RememberWriteFailureState;SetSaveErrorText;SetSaveErrorCause;ClearSaveError;FlushSaves;Secure;Delve;OnConcluded;IsVictory;TrackRun;CarryPendingResultIntoRecovery;ReadLimboDepth;HeroKeyOf;Emit;SendTrade;TradeUnavailable;SendLedgerProbe;SendPreparedTrade;SendDurableTrade;SendDueTradeQueries;RestoreSalvageTrade;OnTradeResult;TradeFailText;SalvageUnsecured;SalvageUnsecuredBulk;CanBulkSalvageUnsecured;SalvageScale;SalvageDust" />
+    <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/ClientSession.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)NativePersistence.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="ClientSession" Methods="ViewRevision;MarkDirty;MarkAllocationDirty;SavePendingAllocation;OnAllocationSceneChanged;DeferSave;TickSatchelOverflow;TickPeriodicSave;SaveNow;IsNewWriteFailure;RememberWriteFailureState;SetSaveErrorText;SetSaveErrorCause;ClearSaveError;FlushSaves;Secure;Delve;OnConcluded;IsVictory;TrackRun;CarryPendingResultIntoRecovery;ReadLimboDepth;HeroKeyOf;Emit;SendTrade;TradeUnavailable;SendLedgerProbe;SendPreparedTrade;SendDurableTrade;SendDueTradeQueries;RestoreSalvageTrade;OnTradeResult;TradeFailText;SalvageUnsecured;SalvageUnsecuredBulk;CanBulkSalvageUnsecured;SalvageScale;SalvageDust;CurrentZoneIndex" />
     <ItemGroup>
       <Compile Include="$(IntermediateOutputPath)NativePersistence.g.cs" />
     </ItemGroup>
@@ -124,7 +124,7 @@
   </Target>
 
   <Target Name="CompileRelicRowCacheUi" BeforeTargets="CoreCompile">
-    <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/DreamforgeUi.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)RelicRowCacheUi.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="DreamforgeUi" Methods="CacheStamp;SortedCached;RowTexts" />
+    <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/DreamforgeUi.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)RelicRowCacheUi.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="DreamforgeUi" Methods="EnsureStashCache;SlotTabLabel;CacheStamp;SortedCached;RowTexts" Fields="_slotCounts;_slotTabLabels;_stashCacheProfile;_stashCacheRevision;_stashCacheViewRevision;_stashCacheCount;_stashCacheJapanese" />
     <ItemGroup>
       <Compile Include="$(IntermediateOutputPath)RelicRowCacheUi.g.cs" />
     </ItemGroup>
@@ -158,7 +158,7 @@
 
   <!-- 協力取引クライアント（所見01・07・09・10）。境界は NativeBoundary.cs の ClientSession 部。 -->
   <Target Name="CompileCoopTradeClient" BeforeTargets="CoreCompile">
-    <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/ClientSession.CoopTrade.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)CoopTradeClient.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="ClientSession" Methods="DiagnoseCoopTrade;CoopPendingStale;CoopWaitText;CoopTradeLocked;CoopWorldSafe;CoopLocalSafe;CoopLocalWorldSafe;CoopLocalCombatSafe;CoopLocalBlockReason;CoopTradeUnavailableReason;CanCoopTrade;WireCoopTrade;ReceiveCoopPacket;TickCoopTrade;DisableCoopTrade;SendCoop;CoopSnapshot;SendCoopProfile;RequestCoopTrade;AcceptCoopTrade;ConfirmCoopTrade;CancelCoopTrade;SetCoopTradeOffer;RetryCoopOffer;OnCoopTradeState;DeferCoopSettlement;CompleteCoopSettlement" />
+    <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/ClientSession.CoopTrade.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)CoopTradeClient.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="ClientSession" Methods="DiagnoseCoopTrade;CoopPendingStale;CoopWaitText;CoopTradeLocked;CoopWorldSafe;CoopLocalSafe;CoopLocalWorldSafe;CoopLocalCombatSafe;CoopLocalBlockReason;CoopTradeUnavailableReason;CanCoopTrade;WireCoopTrade;ReceiveCoopPacket;TickCoopTrade;DisableCoopTrade;SendCoop;CoopSnapshot;SendCoopProfile;RequestCoopTrade;AcceptCoopTrade;ConfirmCoopTrade;CancelCoopTrade;SetCoopTradeOffer;RetryCoopOffer;OnCoopTradeState;DeferCoopSettlement;CompleteCoopSettlement;CoopTradeWarning" Fields="_coopTradeWarning;_coopConnectionWarning" />
     <ItemGroup>
       <Compile Include="$(IntermediateOutputPath)CoopTradeClient.g.cs" />
     </ItemGroup>

@@ -115,7 +115,11 @@ namespace SodRpg.Mod
             double waypoint = _pressure.WaypointMultiplier;
             if (PersonalEnemyWaypointsRunning())
                 waypoint = sharedEnemy || player == null ? 1 : InfinityMode.WaypointTotalsForPlayer(player.guid).PressureMultiplier;
-            return pressure.WithRunModifiers(_pressure.Depth, waypoint).WithInfinityPressure(_pressure.InfinityStage);
+            int participants = 0;
+            foreach (var participant in DewPlayer.gamePlayers)
+                if (participant != null && participant.isHumanPlayer && ++participants >= 2) break;
+            return pressure.WithRunModifiers(_pressure.Depth, waypoint).WithInfinityPressure(_pressure.InfinityStage)
+                .WithCoopScaling(participants);
         }
 
         private readonly struct OwnershipPressureValue
@@ -456,6 +460,58 @@ namespace SodRpg.Mod
                 || Time.time - OwnershipLastFight(state, state.Owner) <= CoopBalance.Ownership.EngageWindow;
         }
 
+        // The run's world order (#700): native zone indices restart in Infinity, this order never does within a run.
+        private readonly RunWorldCounter _runWorlds = new RunWorldCounter();
+        private bool _runWorldFailed;
+
+        /// <summary>0-based order of the current world in this run, or -1 outside a run.</summary>
+        internal int RunWorldIndex
+        {
+            get
+            {
+                ObserveRunWorld();
+                string run = NetworkedManagerBase<GameManager>.softInstance?.runId;
+                return !string.IsNullOrEmpty(run) && _runWorlds.RunId == run ? _runWorlds.Index : -1;
+            }
+        }
+
+        // Polled by the ownership scan and before each helper reduction; allocation-free and idempotent per world.
+        internal void ObserveRunWorld()
+        {
+            if (_runWorldFailed) return;
+            try { ObserveRunWorldCore(); }
+            catch (Exception ex)
+            {
+                // Keep the last counted world; a failed observer must not reopen the lighter early-world decay.
+                _runWorldFailed = true;
+                Log.Warn("Host: run world order frozen at " + _runWorlds.Index + ": " + ex.Message);
+            }
+        }
+
+        private void ObserveRunWorldCore()
+        {
+            var game = NetworkedManagerBase<GameManager>.softInstance;
+            var zone = NetworkedManagerBase<ZoneManager>.softInstance;
+            if (game == null || string.IsNullOrEmpty(game.runId) || zone == null || zone.currentZoneIndex < 0
+                || zone.isInAnyTransition) return;
+            string name = zone.currentZone != null ? zone.currentZone.name : null;
+            var run = ClientSession.HostRun;
+            bool saved = run != null && run.RunId == game.runId;
+            var infinity = saved ? run.Infinity : null;
+            // Rules.Delve advances the segment before native travel; count only after arrival.
+            if (infinity?.Phase == InfinityPhase.Transitioning) return;
+            // Continue or a rebuilt host resumes the saved order instead of restarting at the first world.
+            if (_runWorlds.RunId != game.runId && saved)
+                _runWorlds.Restore(game.runId, run.WorldIndex, run.WorldZoneIndex, run.WorldZoneName, run.WorldInfinitySegment);
+            if (!_runWorlds.Observe(game.runId, zone.currentZoneIndex, name, infinity?.SegmentEpoch ?? -1) || !saved) return;
+            run.WorldIndex = _runWorlds.Index;
+            run.WorldZoneIndex = _runWorlds.ZoneIndex;
+            run.WorldZoneName = _runWorlds.ZoneName;
+            run.WorldInfinitySegment = _runWorlds.InfinitySegment;
+        }
+
+        private float OwnershipHelpFactor() => OwnershipHelp.Factor(RunWorldIndex);
+
         internal void ApplyOwnershipReceivedDamage(Entity victim, Actor actor, ref DamageData damage, bool measure = true)
         {
             if (!NetworkServer.active) return;
@@ -471,29 +527,7 @@ namespace SodRpg.Mod
                 {
                     var player = OwnershipHuman(damage.actor ?? actor);
                     if (player != null && player != state.Owner)
-                    {
-                        float factor = CoopBalance.Ownership.HelpFactor * (float)Math.Min(1,
-                            OwnershipEnemyPressure(state).HealthMultiplier / OwnershipPressure(player).HealthMultiplier);
-                        damage.ApplyReduction(1f - factor);
-                        // Match FinalDamageData's armor, then reserve the native shield absorption
-                        // before capping HP damage. Shield-only hits cannot cross the HP floor.
-                        victim.Status.CalculateStatsIfDirty();
-                        float amount = damage.currentAmount;
-                        float armor = victim.Status.finalStats.armor;
-                        float armorFactor = damage.HasAttr(DamageAttribute.IgnoreArmor) || damage.source == DamageData.SourceType.Pure
-                            ? 1f : Mathf.Max(100f / (100f + armor), 0f);
-                        float floor = Mathf.Floor(victim.maxHealth * CoopBalance.Ownership.Floor);
-                        float allowed = Mathf.Max(0f, victim.currentHealth - floor);
-                        if (damage.HasAttr(DamageAttribute.DamageShieldOnly)) allowed = float.PositiveInfinity;
-                        else if (!damage.HasAttr(DamageAttribute.IgnoreShield) && victim.Status.currentShield > 0f)
-                            allowed += damage.damageToShieldMultiplier > 0f
-                                ? victim.Status.currentShield / damage.damageToShieldMultiplier : float.PositiveInfinity;
-                        if (amount > 0f && amount * armorFactor > allowed)
-                        {
-                            float keep = allowed <= 0 || float.IsInfinity(armorFactor) ? 0f : allowed / (amount * armorFactor);
-                            damage.ApplyReduction(1f - keep);
-                        }
-                    }
+                        damage.ApplyReduction(1f - OwnershipHelpFactor());
                 }
             }
             catch (Exception ex) { damage = before; FailOwnership(OwnershipPart.Protection, ex); }
@@ -649,6 +683,7 @@ namespace SodRpg.Mod
 
         private void ScanEnemyOwnership()
         {
+            ObserveRunWorld();
             bool running;
             try { running = OwnershipRunning(); }
             catch (Exception ex) { FailOwnership(OwnershipPart.Assignment, ex); return; }

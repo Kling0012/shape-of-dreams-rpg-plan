@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <LangVersion>9.0</LangVersion>
+    <Nullable>disable</Nullable>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Match the game's own 0Harmony 2.3.6 (its MethodDelegate overload set);
+         newer MonoMod supports rolled-forward CoreCLR. -->
+    <PackageReference Include="Lib.Harmony.Thin" Version="2.3.6" />
+    <PackageReference Include="Mono.Cecil" Version="0.11.6" />
+    <PackageReference Include="MonoMod.Core" Version="1.3.6" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
+    <PackageReference Include="xunit" Version="2.9.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="../../src/SodRpg.Mod/DeathFxThrottle.cs" Link="ModUnderTest/DeathFxThrottle.cs" />
+  </ItemGroup>
+
+</Project>

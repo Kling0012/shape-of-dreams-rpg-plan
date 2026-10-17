@@ -10,6 +10,7 @@ python3 tests/repro/issue605/run.py
 を使用し、worktree 内に変更していない。
 
 終了コードは 0=全条件を満たす、1=再現アサーション失敗、2=ビルド等のハーネス異常。
+記憶の再使用間隔（memoryReuse）が無効の間（2026-10-17〜）は、パッチが外れて全チャージが本体どおり使えることを確かめ、status を DISABLED として終了コード 0 で終わる。
 実行ログと構造化結果を `artifacts/<UTC時刻>/repro.log` / `results.json` に保存する。
 `artifacts/`・`bin/`・`obj/` は git 管理対象外。製品コードの修正は行っていない。
 

@@ -46,6 +46,22 @@ namespace SodRpg.Core.Game
 
         /// <summary>Unenhanced rate for optional overflow bonuses and persisted legacy overflow trades.</summary>
         public static int SatchelOverflowDust(Rarity rarity) => SalvageDust(rarity, 0);
+
+        /// <summary>
+        /// 遠征中に分解（手動・鞄あふれ）から得られるドリームダストの、世界ごとの上限。
+        /// dustCapBase + dustCapPerWorld × 世界の番号（0始まり）に SalvageScale を掛ける（量と同じ倍率で比率を保つ）。
+        /// 世界が分からない（負の）ときは最初の世界として扱う。あふれは飽和させる。
+        /// </summary>
+        public static long DustCap(int zoneIndex, int scale)
+        {
+            long cap = EconomyBalance.DustCapBase + EconomyBalance.DustCapPerWorld * (long)Math.Max(0, zoneIndex);
+            if (scale > 1)
+            {
+                if (cap > long.MaxValue / scale) return long.MaxValue;
+                cap *= scale;
+            }
+            return cap;
+        }
     }
 
     public enum TradeKind

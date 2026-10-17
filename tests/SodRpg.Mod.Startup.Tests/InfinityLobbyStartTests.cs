@@ -44,6 +44,7 @@ namespace SodRpg.Mod.Startup.Tests
             ClientSession.RemoteHostHelloAnswered = false;
             ClientSession.HostInfinityRewardsSettled = false;
             ClientSession.HostInfinityReturnCommitted = false;
+            ClientSession.HostInfinitySaveHoldSatisfied = true;
             NetworkedManagerBase<GameSettingsManager>.softInstance = null;
             NetworkedManagerBase<GameManager>.softInstance = null;
             NetworkedManagerBase<GameSettingsManager>.instance = null;

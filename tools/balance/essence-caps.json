@@ -5,7 +5,7 @@
   "fever": { "enabled": false, "maxDamageAmplification": 1.5 },
   "embertail": { "enabled": false, "maxCooldownReduction": 0.5 },
   "epiphany": { "enabled": false, "maxRefundFraction": 0.6 },
-  "memoryReuse": { "enabled": true, "baseCooldownFraction": 0.2, "minimumSeconds": 0.3 },
+  "memoryReuse": { "enabled": false, "baseCooldownFraction": 0.2, "minimumSeconds": 0.3 },
   "crystalCircuit": { "enabled": true, "internalCooldownSeconds": 0.5 },
   "memoryHaste": { "enabled": false, "maxRemainingCooldownPercent": 60 }
 }

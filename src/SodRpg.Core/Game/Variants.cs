@@ -97,7 +97,7 @@ namespace SodRpg.Core.Game
             {
                 Id = "var.mirror_scarab", MonsterType = "Mon_Forest_Scarab",
                 Name = new Txt("鏡殻のスカラベ", "Mirror Scarab"),
-                Description = new Txt("鏡のような殻が、強すぎる一撃を受け流す。手数で削るのが近道。", "Its mirrored shell caps every hit; many small hits win."),
+                Description = new Txt("鏡のような殻が強すぎる一撃を受け流す。手数で削るのが近道。", "Its mirrored shell caps every hit; many small hits win."),
                 Stats = MonstersBalance.CreateMirrorScarabStats(),
                 Traits = VariantTrait.HitCap, R = 0.85f, G = 0.9f, B = 1f, Scale = 1.15f,
             },

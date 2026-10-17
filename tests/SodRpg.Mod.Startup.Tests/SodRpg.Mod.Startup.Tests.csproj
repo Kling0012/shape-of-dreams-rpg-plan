@@ -20,6 +20,7 @@
     <Compile Include="../../src/SodRpg.Mod/NativePatchPreflight.cs" Link="ModUnderTest/NativePatchPreflight.cs" />
   <Compile Include="../../src/SodRpg.Mod/PatchMethodOwnership.cs" Link="ModUnderTest/PatchMethodOwnership.cs" />
   <Compile Include="../../src/SodRpg.Mod/DreamforgeMod.cs" Link="ModUnderTest/DreamforgeMod.cs" />
+  <Compile Include="../../src/SodRpg.Mod/TabPerf.cs" Link="ModUnderTest/TabPerf.cs" />
   <Compile Include="../../src/SodRpg.Mod/DreamforgeMod.LevelEssence.cs" Link="ModUnderTest/DreamforgeMod.LevelEssence.cs" />
   <Compile Include="../../src/SodRpg.Mod/InfinityMode.cs" Link="ModUnderTest/InfinityMode.cs" />
   <Compile Include="../../src/SodRpg.Mod/InfinityBosses.cs" Link="ModUnderTest/InfinityBosses.cs" />

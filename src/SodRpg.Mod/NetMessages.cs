@@ -79,6 +79,8 @@ namespace SodRpg.Mod
         public string runChoices;
         // Optional JSON field: absent (0) from older hosts. Party gear multiplier for the secure-panel nightmare odds (#572).
         public float nightmareGearMultiplier;
+        // Uncapped pre-Infinity pressure for nightmare odds; 0 from older hosts.
+        public float nightmarePressureHealthMultiplier;
     }
 
     /// <summary>Host-only shared depth and waypoint choices; also carried by pressure catch-up messages.</summary>
@@ -142,6 +144,42 @@ namespace SodRpg.Mod
         public int factor;
     }
 
+    /// <summary>ホスト → 全員：動的難易度と担当外の減衰の現在の状況（メニューの表示用、#700）。</summary>
+    [Serializable]
+    public sealed class DynamicDifficultyStatus
+    {
+        internal const int Off = 1, SoloOff = 2, On = 3;
+        // 0 means not sent: older hosts omit the object (or a serializer fills its defaults).
+        public long revision;
+        public int state;
+        // The run's 0-based world order (never restarts within a run); -1 outside a run.
+        public int world;
+        public int decayPercent;
+        // Stage table from coop.json; the last entry applies to every later world.
+        public int[] decayByWorld;
+        // Thousandths of the host's damageExponent and rewardShare.
+        public int damageExponent, rewardShare;
+
+        internal bool Valid()
+        {
+            if (revision <= 0 || state < Off || state > On || world < -1 || decayPercent < 0 || decayPercent > 100
+                || damageExponent < 0 || damageExponent > 1000 || rewardShare < 0 || rewardShare > 1000
+                || decayByWorld == null || decayByWorld.Length < 1 || decayByWorld.Length > 32) return false;
+            foreach (int percent in decayByWorld) if (percent < 0 || percent > 100) return false;
+            return true;
+        }
+
+        internal bool SameAs(DynamicDifficultyStatus other)
+        {
+            if (other == null || state != other.state || world != other.world || decayPercent != other.decayPercent
+                || damageExponent != other.damageExponent || rewardShare != other.rewardShare
+                || decayByWorld?.Length != other.decayByWorld?.Length) return false;
+            for (int i = 0; decayByWorld != null && i < decayByWorld.Length; i++)
+                if (decayByWorld[i] != other.decayByWorld[i]) return false;
+            return true;
+        }
+    }
+
     internal readonly struct MonsterOwnership
     {
         internal readonly string ParticipantId;
@@ -196,6 +234,8 @@ namespace SodRpg.Mod
         public BossShareDisplay[] bossShares;
         public DynamicDifficultyDisplay[] dynamicDifficulty;
         public long dynamicRevision;
+        // Additive (#700): only the netId 0 roster message carries it.
+        public DynamicDifficultyStatus dynamicStatus;
     }
 
     /// <summary>ホスト → 全員：この敵が夢の変種になった（Core の変種ID）。</summary>

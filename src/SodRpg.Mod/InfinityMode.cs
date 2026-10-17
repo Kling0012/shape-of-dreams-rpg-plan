@@ -95,9 +95,8 @@ namespace SodRpg.Mod
 
         internal static bool IsNativePatch(Type type) => Array.IndexOf(NativePatchClasses, type) >= 0;
 
-        // The lobby start guard (InfinityLobbyStartCondition) only turns a start into a message: "Infinity is
-        // unavailable" and "not together with Limbo". When its patch cannot be installed on the player's game build,
-        // Infinity keeps working and the one rule that must still hold (no Infinity in Limbo) is applied here instead.
+        // Lobby start messages are optional. The generation gate independently enforces the
+        // host traveler's Limbo unlock even when the lobby patch could not be installed.
         internal static bool LobbyStartGuardMissing { get; private set; }
 
         internal static void LobbyStartGuardUnavailable(string reason)
@@ -107,8 +106,8 @@ namespace SodRpg.Mod
             Log.Warn("Infinity lobby start guard unavailable; Infinity continues without its start messages. " + reason);
         }
 
-        internal static bool LimboBlocksInfinity => LobbyStartGuardMissing
-            && NetworkedManagerBase<GameSettingsManager>.softInstance?.difficulty == "diffLimbo";
+        internal static bool LimboBlocksInfinity => NetworkedManagerBase<GameSettingsManager>.softInstance?.difficulty == "diffLimbo"
+            && !ClientSession.HostLimboInfinityUnlocked;
 
         internal static void CompletePatchInstallation(int installedCount)
         {
@@ -265,6 +264,9 @@ namespace SodRpg.Mod
             public string RunId;
             public int NativeZoneIndex;
             public uint WorldSeed;
+            // Version 1 stores actual counters, even if default-valued state fields are omitted.
+            [JsonProperty(DefaultValueHandling = DefaultValueHandling.Include)]
+            public int StateVersion;
             public InfinityRunState State;
         }
 
@@ -340,6 +342,8 @@ namespace SodRpg.Mod
             var settings = NetworkedManagerBase<GameSettingsManager>.softInstance;
             if (NetworkServer.active && settings != null)
             {
+                // Freeze the effective host decision even if the traveler changed after the last lobby tick.
+                settings.customData[ClientSession.InfinityEnabledKey] = _newInfinity ? "1" : "0";
                 settings.customData.Remove(RuntimeKey);
                 settings.customData.Remove(ChoiceKey);
                 settings.customData.Remove(HaltKey);
@@ -381,21 +385,29 @@ namespace SodRpg.Mod
             envelope = null;
             var settings = NetworkedManagerBase<GameSettingsManager>.softInstance;
             if (settings == null || !settings.customData.TryGetValue(RuntimeKey, out var text)) return false;
-            try { envelope = JsonConvert.DeserializeObject<Envelope>(text); }
-            catch (JsonException ex) { Log.Warn("Infinity: discarded unreadable runtime envelope: " + ex.Message); return false; }
-            if (envelope?.State == null) return false;
-            var state = envelope.State;
-            // Legacy finale envelopes carry no marker and contain the artificial interval counter.
-            // Normalize against the current graph receipt to match ProfileCodec's migration.
-            if (!state.FinalePromoted && state.FixedZoneId == "Zone_Primus"
-                && state.ClearsInCycle == state.Interval
-                && state.ClearedNodes.Count < state.Interval
-                && state.Phase >= InfinityPhase.BossDue && state.Phase <= InfinityPhase.AwaitingChoice)
+            try
             {
-                state.ClearsInCycle = state.ClearedNodes.Count;
-                state.FinalePromoted = true;
+                envelope = JsonConvert.DeserializeObject<Envelope>(text);
+                if (envelope?.State == null) return false;
+                var state = envelope.State;
+                // Only unversioned finales without State.FinalePromoted used a padded counter.
+                // A regenerated current graph can legitimately have fewer receipts than clears.
+                if (envelope.StateVersion == 0 && !state.FinalePromoted && state.FixedZoneId == "Zone_Primus"
+                    && state.ClearsInCycle == state.Interval
+                    && state.ClearedNodes.Count < state.Interval
+                    && state.Phase >= InfinityPhase.BossDue && state.Phase <= InfinityPhase.AwaitingChoice)
+                {
+                    var savedState = Newtonsoft.Json.Linq.JObject.Parse(text)
+                        .GetValue(nameof(Envelope.State), StringComparison.OrdinalIgnoreCase) as Newtonsoft.Json.Linq.JObject;
+                    if (savedState != null && savedState.GetValue(nameof(InfinityRunState.FinalePromoted), StringComparison.OrdinalIgnoreCase) == null)
+                    {
+                        state.ClearsInCycle = state.ClearedNodes.Count;
+                        state.FinalePromoted = true;
+                    }
+                }
+                return true;
             }
-            return true;
+            catch (JsonException ex) { Log.Warn("Infinity: discarded unreadable runtime envelope: " + ex.Message); return false; }
         }
 
         internal static bool MatchesProfile(RunState run)
@@ -440,7 +452,8 @@ namespace SodRpg.Mod
             if (zone == null || gm == null || settings == null) return;
             settings.customData[RuntimeKey] = JsonConvert.SerializeObject(new Envelope
             {
-                RunId = gm.runId, NativeZoneIndex = zone.currentZoneIndex, WorldSeed = zone.worldSeed, State = State,
+                RunId = gm.runId, NativeZoneIndex = zone.currentZoneIndex, WorldSeed = zone.worldSeed,
+                StateVersion = 1, State = State,
             });
         }
 
@@ -603,6 +616,8 @@ namespace SodRpg.Mod
                 var beforeArrival = state.Phase;
                 if (IsBossFinaleZone(zone.currentZone, state.Interval)) state.PromoteFinaleBoss();
                 state.TryEnterBoss();
+                // A clear callback can arrive while save/transition/activity guards still hold BossDue.
+                if (room.didClearRoom) state.ObserveBossClear();
                 if (beforeArrival != state.Phase) ClientSession.PersistHostInfinityState();
                 bool soul = (state.Phase == InfinityPhase.BossFight || state.Phase == InfinityPhase.WaitingSoulFinish)
                     && HasActiveBossSoul();

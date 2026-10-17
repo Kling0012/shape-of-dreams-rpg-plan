@@ -35,7 +35,8 @@ namespace SodRpg.Core.Game
                     .Add("cancelled", cancelled).Add("salvage", salvage).Add("overflowBonusPaid", ledger.OverflowBonusPaid)
                     .Add("overflowBonusBlocked", ledger.OverflowBonusBlocked)
                     .Add("overflowBonusPreviousRunId", ledger.PreviousOverflowBonusRunId)
-                    .Add("overflowBonusPreviousPaid", ledger.PreviousOverflowBonusPaid));
+                    .Add("overflowBonusPreviousPaid", ledger.PreviousOverflowBonusPaid)
+                    .Add("zoneIndex", (long)ledger.ZoneIndex).Add("zoneDust", ledger.ZoneDust));
             }
             return Json.Write(new JsonObject().Add("version", 1L).Add("generation", (long)Generation)
                 .Add("serial", (long)_ledgerSerial).Add("players", players));
@@ -68,6 +69,9 @@ namespace SodRpg.Core.Game
                     PreviousOverflowBonusRunId = player.TryGet("overflowBonusPreviousRunId", out object previousRun) ? previousRun as string : null,
                     PreviousOverflowBonusPaid = player.TryGet("overflowBonusPreviousPaid", out _)
                         ? CheckpointLong(player, "overflowBonusPreviousPaid", 0, long.MaxValue) : 0,
+                    // 旧い保存（計数がない）は 0 から始める。
+                    ZoneIndex = player.TryGet("zoneIndex", out _) ? (int)CheckpointLong(player, "zoneIndex", -1, int.MaxValue) : -1,
+                    ZoneDust = player.TryGet("zoneDust", out _) ? CheckpointLong(player, "zoneDust", 0, long.MaxValue) : 0,
                 };
                 if ((previousRun != null && !(previousRun is string))
                     || (ledger.PreviousOverflowBonusPaid > 0 && ledger.PreviousOverflowBonusRunId == null))

@@ -59,6 +59,36 @@ internal static class Program
                     && skill.currentConfigCooldownTime > 0f && button.CooldownText == "", Observe(skill));
             });
 
+            // memoryReuse は essence-caps.json で無効（2026-10-17）。3クラスとも Prepare が false で外れ、
+            // パッチなしの本体どおり（全チャージが使える）ことを記録して正常終了する。
+            if (!SodRpg.Core.Game.EssenceCapsBalance.MemoryReuseEnabled)
+            {
+                foreach (var patch in new[] { typeof(MemoryReuseOnCast), typeof(MemoryReuseCastGate), typeof(MemoryReuseCooldownDisplay) })
+                    owner.CreateClassProcessor(patch).Patch();
+                if (NativeMemoryReuse.Disabled || Log.Warnings.Count > 0 || owner.GetPatchedMethods().Count() != 0)
+                    throw new InvalidOperationException("memoryReuse is disabled: no patch may attach: " + string.Join("; ", Log.Warnings));
+
+                foreach (string slot in new[] { "Q", "W", "E", "R" })
+                    Check("disabled/" + slot + "-vanilla-all-charges-usable", () =>
+                    {
+                        var skill = NewSkill(slot);
+                        skill.CompleteCast();
+                        skill.Tick(0.15f);
+                        return (skill.currentConfigCurrentCharge == 2 && skill.CanBeCast() && skill.CanBeReserved(),
+                            "Expected every charge usable with memoryReuse disabled; " + Observe(skill));
+                    });
+
+                Console.WriteLine(JsonSerializer.Serialize(new
+                {
+                    status = "DISABLED",
+                    total = Results.Count,
+                    passed = Results.Count - failed,
+                    failed,
+                    cases = Results
+                }, new JsonSerializerOptions { WriteIndented = true }));
+                return failed > 0 ? 1 : 0;
+            }
+
             foreach (var patch in new[] { typeof(MemoryReuseOnCast), typeof(MemoryReuseCastGate), typeof(MemoryReuseCooldownDisplay) })
                 owner.CreateClassProcessor(patch).Patch();
             if (NativeMemoryReuse.Disabled || Log.Warnings.Count > 0 || owner.GetPatchedMethods().Count() != 4)
