@@ -412,7 +412,9 @@ namespace SodRpg.Mod
                 bool provisional = cursor.PeerId.StartsWith("connection.", StringComparison.Ordinal);
                 if (provisional) _killPeers.Remove(cursor.PeerId);
                 changed = true;
-                if (cursor.HeardReceipt)
+                // A superseded client identity must not share the live range: it would keep growing
+                // under a peer that never sends another receipt and pin every later fact.
+                if (cursor.HeardReceipt || !provisional)
                 {
                     cursor.JoinSequence = _killSequence;
                     cursor.Participation = new KillParticipationRange
@@ -422,7 +424,11 @@ namespace SodRpg.Mod
                 cursor.PeerId = peerId;
                 if (!_killPeers.ContainsKey(peerId)) _killPeers.Add(peerId, new KillReplayPeer { Id = peerId, NativeOwnerId = caller.guid });
                 if (provisional) _killPeers[peerId].Participation.AddRange(previous.Participation);
-                else _killPeers[peerId].Participation.Add(cursor.Participation);
+                else
+                {
+                    _killPeers[peerId].Participation.Add(cursor.Participation);
+                    PruneKillParticipation(previous); // keep only real debts, as RemoveKillPeer does
+                }
             }
             if (cursor.ReceiptWaitReleased)
             {

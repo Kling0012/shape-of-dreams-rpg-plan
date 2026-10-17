@@ -785,6 +785,23 @@ namespace Issue73.Native.Tests
             }
         }
 
+        [Fact]
+        public void An_abandoned_native_load_stops_pausing_rewards_once_the_game_is_gone()
+        {
+            var session = HostSession();
+            Set(session, "_nativeContinueRestoring", true);
+            Set(session, "_nativeContinueRestoreDeadline", 0f);
+            NetworkedManagerBase<GameManager>.softInstance = null; // back at the title: the load never finished
+            UnityEngine.Time.unscaledTime = 31f;
+            Call(session, "TickContinueRestore");
+            Assert.True((bool)Get(session, "_nativeContinueRestoring")); // the timeout alone does not fake completion
+
+            Call(session, "ObserveContinueGame", (object)null);
+
+            Assert.False((bool)Get(session, "_nativeContinueRestoring"));
+            Assert.False(ClientSession.NativeContinueRestoring);
+        }
+
         private static ClientSession HostSession()
         {
             return HostSession(out _);
