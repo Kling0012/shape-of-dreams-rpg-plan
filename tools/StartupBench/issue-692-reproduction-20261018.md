@@ -1,6 +1,6 @@
 # Issue #692 再現工程の記録 2026-10-18
 
-判定は `NOT_REPRODUCED`。修正前コードの星図登録は新規プロセスで3801〜5257 msかかった。4回とも計測ツールの仮基準1500 msを超え、終了コード3だった。ゲームの読み込み画面で報告された症状は再現していない。
+判定は `NOT_REPRODUCED`。今回の回復工程では、修正前コードの星図登録に新規プロセスで1631〜1955 msかかった。4回とも計測ツールの仮基準1500 msを超え、終了コード3だった。ゲームの読み込み画面で報告された症状は再現していない。以下の「修正前の再現試行」は前回の記録で、今回の結果は「回復工程の再計測」に記載した。
 
 ## Issueと引き継いだ状態
 
@@ -35,6 +35,33 @@ dotnet /tmp/issue692-repro-20261018-3_wvjxh4/tools/StartupBench/bin/Release/net8
 `stages` は終了コード0。解析のみの合計577 ms、解析・登録・移行規則の合計4492 msだった。解析を先に実行するためJITや型初期化が温まり、`total` の内訳には使えない。
 
 全4回で登録指紋 `607b55b25354e173`、内容指紋 `13792-e4617232a7ce91e6`、星一覧7642件、BuildLimitsのtalents=7657・entries=584が一致した。既存APIの出力を記録したもので、追加のハッシュ検証は行っていない。この一致は修正前コードの繰り返し実行に限る。
+
+## 回復工程の再計測
+
+今回の開始時のHEADは `0e63049f` で、作業ツリーはcleanだった。Issue本文とコメントを再取得した。`gh issue view` と `rtk bypass gh issue view` は出力がなく、`gh api` で本文「MODの読み込みが非常に長いので，改善可能か?」とコメント0件を確認した。公開済みブランチの修復は担当範囲外のため行っていない。
+
+`git diff --exit-code f31ce810 3cdf2a83 -- src` は終了コード0だった。`3cdf2a83` のCoreと既存の計測ツールを `/tmp/issue692-repro-recovery-20261018-v9jk5z2k` に展開し、Releaseビルドが終了コード0、警告0件・エラー0件で成功した。製品コードと計測ツールは変更していない。
+
+```sh
+dotnet build /tmp/issue692-repro-recovery-20261018-v9jk5z2k/tools/StartupBench/StartupBench.csproj -c Release --nologo -p:NuGetAudit=false
+dotnet /tmp/issue692-repro-recovery-20261018-v9jk5z2k/tools/StartupBench/bin/Release/net8.0/StartupBench.dll total --threshold-ms 1500
+DOTNET_TieredCompilation=0 dotnet /tmp/issue692-repro-recovery-20261018-v9jk5z2k/tools/StartupBench/bin/Release/net8.0/StartupBench.dll total --threshold-ms 1500
+```
+
+Linux x86_64、SDK 10.0.111、実行ランタイム10.0.11、net8.0と `RollForward=Major`。`NUGET_PACKAGES=/home/wang/.cache/gh-auto/nuget` を使用した。通常JITと段階JITなしを交互に各2回、新規プロセスで測り、ファイルキャッシュは消していない。コマンド、出力、終了コードは [計測ログ](issue-692-reproduction-20261018.txt) の `RECOVERY REPRODUCTION SESSION` 以降に追記した。
+
+| 条件 | 星図登録 | 初回BuildLimits | 登録時の累積確保量 | 終了コード |
+| --- | --- | --- | --- | --- |
+| 通常JIT・1回目 | 1783 ms | 77 ms | 172 MB | 3 |
+| 段階JITなし・1回目 | 1775 ms | 43 ms | 172 MB | 3 |
+| 通常JIT・2回目 | 1955 ms | 76 ms | 172 MB | 3 |
+| 段階JITなし・2回目 | 1631 ms | 52 ms | 172 MB | 3 |
+
+全4回で `RESULT: SLOW` を確認した。失敗は仮基準1500 msの超過であり、ゲーム内症状の再現成功とは扱わない。登録指紋 `607b55b25354e173`、内容指紋 `13792-e4617232a7ce91e6`、星一覧7642件、BuildLimitsのtalents=7657・entries=584は全4回で一致した。今回は修正後を測っておらず、過去の計測と絶対値も異なるため、改善率を算出しない。
+
+審査の懸念について、内容の一致は今回の修正前コードの繰り返し実行に限る。キャッシュの追加・変更はない。引き継いだ実装の前後の全出力比較と更新反映の検証は [実装工程の記録](issue-692-implementation-validation.md) にあるが、本セッションでの再実行とは扱わない。報告者環境の性能も未確認である。
+
+今回未実行の項目は、Unity/Monoでのゲーム起動・読み込み画面・Player.log計測・報告者と同じMOD構成での再現、パッチ・画像・プロフィールの計測、`stages`、修正後の測定、snapshot比較、既存テスト、full/slowスイート、push・PR作成。実機と構成情報がなく、Core用ツールの対象外の処理もあるため、再現工程では修正前の `total` に限定した。full/slowスイートと公開操作は依頼で禁止されている。
 
 ## 次工程へ渡す事実
 
