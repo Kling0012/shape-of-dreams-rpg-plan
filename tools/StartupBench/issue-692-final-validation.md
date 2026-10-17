@@ -63,6 +63,22 @@
 - `dotnet build src/SodRpg.Mod/SodRpg.Mod.csproj -c Release --nologo -p:GameDir=GAME_DIR -p:ModDeployDir=TEMP_OUTPUT -p:NuGetAudit=false`: 参照用ゲームDLLで成功。既存警告6件・エラー0。出力はリポジトリ外の一時領域に指定した。
 - `total` の16プロセス、`snapshot`、`snapshot-baseline`、`stages`、`initializers`: 上記の結果。新規テストは追加していない。
 
+## CI の起動テスト失敗への対応
+
+CI run `39057378154` では `ContinueRetainsVisitedShopAndSavedWellWhileGuestOnlyProjectsMirroredNodes` の最初の到着後に、次ノードが期待値27に対して-1になった。
+
+原因候補はテスト用 `ZoneManager.SetCurrentNodeIndexAndRevealAdjacent` のインライン化によって、Harmony の `InfinityRevealArrival` が呼ばれない経路である。生成時に公開されたノード1へ到着すると、スタブ本体はそのノードを訪問済みにする。到着後の `RefreshReveal` を通らなければ次の `RevealedFull` がなくなり、`RevealedNext` は-1を返す。既存のパッチ用スタブと同様に、この到着メソッドへ `MethodImplOptions.NoInlining` を付けた。期待値、テスト本体、製品の部屋選択処理は変更していない。
+
+このラウンドではCIと同じSDK 8.0.426・ランタイム8.0.32を一時領域に用意した。修正前は単独ケース、関連88件、起動プロジェクト全体のいずれも成功し、CIの断続的な失敗は再現できなかった。したがって原因の確定や失敗から成功への変化を確認したとは扱わない。修正前のJIT逆アセンブルでも、確認した条件では到着メソッドへの呼び出しが残っていた。
+
+修正後に、このラウンドで実行した検証は次のとおり。`DOTNET_ROOT` と実行コマンドの `dotnet` は一時領域の.NET 8を指定し、NuGetキャッシュはworktree外の既存パスを使った。
+
+- `dotnet test tests/SodRpg.Mod.Startup.Tests/SodRpg.Mod.Startup.Tests.csproj -c Release --nologo -p:NuGetAudit=false --filter FullyQualifiedName~ContinueRetainsVisitedShopAndSavedWellWhileGuestOnlyProjectsMirroredNodes`: 1件成功、失敗0、スキップ0。ビルドには既存警告がある。
+- `dotnet test -c Release tests/SodRpg.Mod.Startup.Tests --no-build`: CIで失敗したジョブと同じコマンドで149件成功、失敗0、既存スキップ1件。
+- `DOTNET_TieredCompilation=0 dotnet test tests/SodRpg.Mod.Startup.Tests -c Release --no-build --no-restore --nologo --filter FullyQualifiedName~InfinityLobbyStartTests`: 88件成功、失敗0、スキップ0。
+
+このラウンドの変更はテスト用スタブと本記録のみ。読み込み時間や内容比較の値は前ラウンドの記録を保持しており、今回の再計測値ではない。新しいテストと更新履歴の断片は追加していない。
+
 ## 未実行
 
 - Unity/Monoでのゲーム起動、タイトル画面到達、Player.log計測、報告者と同じMOD構成での再現: 実機環境と構成情報がないため。
