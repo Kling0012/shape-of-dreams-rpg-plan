@@ -204,7 +204,7 @@ namespace SodRpg.Mod
                 if (binding == null) throw new InvalidOperationException("C11 award has no current host binding.");
                 try
                 {
-                    float amount = SupportStats.AmplifyShield(award.RawAmount, binding.Owner.Powers.Build.Get(Stat.ShieldPower));
+                    float amount = SupportStats.AmplifyShield(award.RawAmount, SupportPower(binding.Owner, Stat.ShieldPower));
                     AwardModShield(binding.Owner, binding.Owner.Hero, ModShieldPoolKind.Ordinary, amount,
                         award.DurationSeconds, award.SourceMemory, binding.ShieldEpoch, award.NewAwardCapRatio);
                 }

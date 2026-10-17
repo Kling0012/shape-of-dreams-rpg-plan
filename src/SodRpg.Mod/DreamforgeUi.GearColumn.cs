@@ -54,7 +54,7 @@ namespace SodRpg.Mod
             }
             GUILayout.Space(6);
             GUILayout.Label(Loc.T("現在の強さ", "Current build"), _st.Header);
-            var build = _s.CurrentBuild(hero);
+            var build = _s.DisplayBuild(hero);
             if (build.Stats.Count == 0 && build.Powers.Count == 0 && build.BossMoves.Count == 0) GUILayout.Label(Loc.T("まだ何も装着していません。真ん中の一覧から遺物を選び、「装着する」を押してください。", "Nothing equipped yet. Pick a relic from the middle list and press Equip."), _st.Small);
             foreach (var kv in build.Stats) if (kv.Value != 0) GUILayout.Label(Content.FormatStat(kv.Key, kv.Value), _st.Small);
             foreach (var kv in build.Powers) GUILayout.Label(UiStyles.Colored(Content.FormatPowerBullets(kv.Key, kv.Value), "#e0b0ff"), _st.Small);
@@ -84,7 +84,7 @@ namespace SodRpg.Mod
                 }
             }
             if (!_s.CanEditLoadout)
-                GUILayout.Label(Loc.T("遠征中は、確保地点に着いてから次の戦闘で敵を倒すまで、装備を変えられます。", "During an expedition, you can change gear from the moment you reach a secure point until you slay an enemy in the next fight."), _st.Warn);
+                GUILayout.Label(Loc.T("遠征中は確保地点に着いてから次の戦闘で敵を倒すまで、装備を変えられます。", "During an expedition, you can change gear from the moment you reach a secure point until you slay an enemy in the next fight."), _st.Warn);
             GUILayout.Label(Loc.T("同じ系統（破壊・生命・想像）の遺物を2・3・4・6個とそろえるほど、系統のボーナスが重なります。", "Equip 2, 3, 4 or 6 relics of the same line (Destruction, Life, Imagination) for stacking line bonuses."), _st.Small);
             FocusPicker();
             GUILayout.EndScrollView();
@@ -123,6 +123,7 @@ namespace SodRpg.Mod
         private static readonly GUILayoutOption[] PickerNameWidth = { GUILayout.Width(110) };
         private readonly GUIContent _pickerName = new GUIContent();
         private string _pickerNamedHero;
+        private bool _pickerNamedJa;
         private void HeroPicker()
         {
             if (_s.LocalHero != null) return;
@@ -136,9 +137,10 @@ namespace SodRpg.Mod
             if (GUILayout.Button("<", _st.Button, PickerArrowWidth))
                 _heroSel = _pickerHeroes[(idx - 1 + _pickerHeroes.Count) % _pickerHeroes.Count];
             string selectedHero = HeroKey;
-            if (_pickerNamedHero != selectedHero)
+            if (_pickerNamedHero != selectedHero || _pickerNamedJa != Loc.Japanese)
             {
                 _pickerNamedHero = selectedHero;
+                _pickerNamedJa = Loc.Japanese;
                 _pickerName.text = "<b>" + HeroName(selectedHero) + "</b>";
             }
             GUILayout.Label(_pickerName, _st.Label, PickerNameWidth);

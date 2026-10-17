@@ -102,8 +102,11 @@ namespace SodRpg.Mod
                 else if (profile.Id == "boss_maw.charm")
                 {
                     if (kind != BossEvent.MainHit) continue;
-                    state.CharmUntil = now + 4f;
-                    if (state.CharmHits < 3) { state.CharmHits++; continue; }
+                    // Retain MainHits - 1 hits, then heal on the next hit without consuming the count on failure.
+                    // Precondition: charm action 0 keeps MainHits >= 2, enforced as a cell floor in
+                    // tools/balance/boss_values.py; with MainHits < 2 the very first hit would already heal.
+                    state.CharmUntil = now + action.CounterLifetimeMillis / 1000f;
+                    if (state.CharmHits < action.MainHits - 1) { state.CharmHits++; continue; }
                 }
                 else if (profile.Id == "boss_maw.stage2" || profile.Id == "boss_maw.stage3" || profile.Id == "boss_maw.stage6") continue;
                 else if (action.Event != kind) continue;

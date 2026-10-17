@@ -14,7 +14,8 @@ namespace SodRpg.Mod
             internal readonly char[] Digits = new char[10];
             internal DewNumberLabel Label;
             internal float FontSize;
-            internal int Last = -1, Start = 10;
+            // -1 is a real value (no numberDisplay), so it cannot mark an undrawn label.
+            internal int Last = int.MinValue, Start = 10;
         }
 
         private static readonly ConditionalWeakTable<UI_InGame_StatusEffectIcons_Item, Display> Displays =
@@ -53,7 +54,7 @@ namespace SodRpg.Mod
                     if (Displays.TryGetValue(__instance, out var previous))
                     {
                         if (previous.Label != null) previous.Label.FontSize = previous.FontSize;
-                        previous.Last = -1;
+                        previous.Last = int.MinValue;
                     }
                     return true;
                 }
@@ -68,7 +69,7 @@ namespace SodRpg.Mod
                 {
                     display.Label = label;
                     display.FontSize = label.FontSize;
-                    display.Last = -1;
+                    display.Last = int.MinValue;
                 }
                 int value = effect.numberDisplay ?? -1;
                 bool changed = value != display.Last;

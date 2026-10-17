@@ -21,10 +21,12 @@ the ``SODRPG_SLOW=1`` environment variable, which the release scripts and CI
 set instead of the flag), every Speed=Slow test method anchors a process of
 its own (SODRPG_SLOW=1), so the exhaustive tests of one class overlap too
 instead of serializing behind the slowest class; the class-group filters
-subtract exactly those methods. Timing-threshold classes run in one lone
-process after every parallel batch has finished, so overlapping processes
-cannot push their measured loops over the limit. The union of the processes
-always selects exactly the tests a single unfiltered run would.
+subtract exactly those methods. The two extended equivalence methods further
+partition complete hero/seed sequences over 16 processes each, retaining all
+steps and assertions. Timing-threshold classes run in one lone process after
+every parallel batch has finished, so overlapping processes cannot push their
+measured loops over the limit. Together the processes cover every scenario of
+a single unfiltered run (the two sharded methods report one result per shard).
 
 If nothing test-relevant changed, a message is printed and the exit code is 0.
 Otherwise the exit code is the first non-zero ``dotnet test`` exit code.
@@ -34,12 +36,14 @@ from __future__ import annotations
 
 import argparse
 import concurrent.futures
+import contextvars
 import fnmatch
 import functools
 import os
 import re
 import subprocess
 import sys
+import xml.etree.ElementTree as ET
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -70,6 +74,16 @@ HEAVY_CORE_CLASSES = frozenset({
     "SodRpg.Core.Tests.StarMapOptimizeCommandTests",
 })
 CORE_PROCESS_COUNT = 5
+
+# These methods contain independent hero/seed sequences. Keep every sequence,
+# but avoid one serialized test becoming the critical path of the release gate.
+EQUIVALENCE_SHARDS = {
+    "SodRpg.Core.Tests.AllocationEquivalenceV131Tests."
+    "Extended_random_equivalence_over_the_generated_v131_hero_trees": 16,
+    "SodRpg.Core.Tests.AllocationEquivalenceV131Tests."
+    "Extended_random_equivalence_over_every_real_hero_the_synthetic_tree_and_the_authored_probe": 16,
+}
+_EQUIVALENCE_SHARD = contextvars.ContextVar("equivalence_shard", default=None)
 
 # Threshold-sensitive timing tests (ms per kill / ms per build upper bounds).
 # Their measurements are only reliable without CPU contention, so these classes
@@ -488,6 +502,71 @@ def linked_test_inputs(root: Path = REPO_ROOT) -> set[str]:
     return linked
 
 
+def project_elements(project: Path, root: Path):
+    """Read project XML, nearest Directory.Build files and literal local imports.
+
+    This is a conservative dependency scan, not an MSBuild evaluator: conditional
+    items are retained, while property-expanded imports are left to MSBuild.
+    XML parsing ignores comments and accepts namespaces and any attribute order.
+    """
+    root = root.resolve()
+    pending = [project.resolve()]
+    for name in ("Directory.Build.props", "Directory.Build.targets"):
+        directory = project.resolve().parent
+        while directory.is_relative_to(root):
+            candidate = directory / name
+            if candidate.is_file():
+                pending.append(candidate)
+                break
+            directory = directory.parent
+    seen = set()
+    while pending:
+        path = pending.pop()
+        if path in seen or not path.is_relative_to(root):
+            continue
+        seen.add(path)
+        try:
+            document = ET.parse(path).getroot()
+        except (OSError, ET.ParseError):
+            continue
+        for element in document.iter():
+            tag = element.tag.rsplit("}", 1)[-1]
+            yield tag, element, path
+            if tag == "Import":
+                include = element.get("Project", "").replace("\\", "/")
+                if include and not any(char in include for char in "$*?;"):
+                    pending.append((path.parent / include).resolve())
+
+
+@functools.lru_cache(maxsize=None)
+def referenced_tool_dirs(root: Path = REPO_ROOT) -> tuple[str, ...]:
+    """Repo-relative tools/ project directories referenced by test projects."""
+    dirs: set[str] = set()
+    for csproj in sorted((root / "tests").rglob("*.csproj")):
+        if any(part in ("bin", "obj") for part in csproj.relative_to(root).parts):
+            continue
+        for tag, element, _ in project_elements(csproj, root):
+            if tag != "ProjectReference":
+                continue
+            include = element.get("Include", "").replace("\\", "/")
+            if not include or any(char in include for char in "$*?;"):
+                continue
+            target = (csproj.parent / include).resolve().parent
+            try:
+                rel = target.relative_to(root.resolve()).as_posix()
+            except ValueError:
+                continue
+            if rel.startswith("tools/"):
+                dirs.add(rel)
+    return tuple(sorted(dirs))
+
+
+def is_production_cs(path: str) -> bool:
+    """True for .cs under src/ or a tools/ project referenced by the tests."""
+    return path.endswith(".cs") and (path.startswith("src/") or any(
+        path.startswith(f"{directory}/") for directory in referenced_tool_dirs()))
+
+
 def is_data_file(path: str) -> bool:
     """True for the JSON data files tests read at run time."""
     return any(path.startswith(f"{d}/") for d in DATA_DIRS) and path.endswith(".json")
@@ -560,8 +639,11 @@ def select_tests(changed, files, diffs=None) -> Selection:
     present it narrows rule 2 to the tokens the change actually touches.
 
     Rules:
-      1. a changed test .cs under tests/ selects the classes it declares;
-      2. a changed production .cs under src/ selects, for each declared type,
+      1. a changed test .cs under tests/ selects its own classes and the tests
+         mentioning its declared types (helpers, fakes); other test inputs select
+         path readers, or everything if unknown (unreferenced docs are ignored);
+      2. a changed production .cs under src/ or a referenced tools/ project
+         selects, for each declared type,
          every test file mentioning the type as a whole word -> its classes;
          with a diff, use the tokens (members, string constants) touched by the
          change, retaining file types for object initialization or unrecognized
@@ -621,11 +703,33 @@ def select_tests(changed, files, diffs=None) -> Selection:
             selection.reasons.append(f"file copied into a test project changed: {path}")
             continue
         if path.startswith("tests/") and path.endswith(".cs"):
-            # Rule 1: the test file itself changed.
+            # Helpers and fakes also select the tests using their declared types.
             selection.classes.update(top_level_test_classes(content))
-        if path.startswith("src/") and path.endswith(".cs") and content:
+            for name in declared_types(content):
+                for tf in tests_mentioning(name):
+                    selection.classes.update(top_level_test_classes(files[tf]))
+            continue
+        if path.startswith("tests/") and not any(
+                part in ("bin", "obj") for part in path.split("/")):
+            readers = [tf for tf in test_files if references_path(files[tf], path)]
+            if not readers:
+                # Build files were handled above. Documentation without readers
+                # does not affect executable tests; unknown fixtures still do.
+                if path.lower().endswith((".md", ".rst")):
+                    continue
+                selection.run_all = True
+                selection.reasons.append(f"test fixture changed: {path}")
+                continue
+            for tf in readers:
+                selection.classes.update(top_level_test_classes(files[tf]))
+            continue
+        if is_production_cs(path) and content:
             # Rule 2 (+ the wide-type part of rule 4).
             types = declared_types(content)
+            if not path.startswith("src/"):
+                # Top-level programs and tool internals are reached via the
+                # namespace or DLL name named by their integration tests.
+                types = types + [path.split("/")[1]]
             diff = (diffs or {}).get(path)
             if diff is not None:
                 plus, minus = unified_diff_plus_minus(diff)
@@ -819,11 +923,23 @@ def collect_files(root: Path, changed) -> dict[str, str]:
 
 
 def find_test_projects(root: Path) -> list[str]:
-    projects = [
-        path.relative_to(root).as_posix()
-        for path in (root / "tests").rglob("*.csproj")
-        if not any(part in ("bin", "obj") for part in path.parts)
-    ]
+    """Find executable test projects, excluding helper-only csproj files.
+
+    Inspect actual XML items and properties, including Directory.Build files
+    and literal local imports, instead of matching text inside XML comments.
+    """
+    projects = []
+    for path in (root / "tests").rglob("*.csproj"):
+        if any(part in ("bin", "obj") for part in path.relative_to(root).parts):
+            continue
+        is_test = False
+        for tag, element, _ in project_elements(path, root):
+            if tag == "PackageReference" and element.get("Include", "").casefold() == "microsoft.net.test.sdk":
+                is_test = True
+            if tag == "IsTestProject" and (element.text or "").strip().casefold() == "true":
+                is_test = True
+        if is_test:
+            projects.append(path.relative_to(root).as_posix())
     return sorted(projects)
 
 
@@ -857,14 +973,38 @@ def run_dotnet_test(root: Path, project: str, filter_expr: str | None,
     cmd = [dotnet, "test", project, "-c", "Release"]
     if filter_expr:
         cmd += ["--filter", filter_expr]
-    if no_build:
-        cmd.append("--no-build")
     env = dict(os.environ)
     env["DOTNET_ROOT"] = dotnet_root
     # Keep the console summary machine-parseable regardless of the OS locale.
     env.setdefault("DOTNET_CLI_UI_LANGUAGE", "en")
+    # Never inherit a partial selection from a caller's shell.
+    env.pop("SODRPG_EQUIVALENCE_SHARD", None)
+    shard = _EQUIVALENCE_SHARD.get()
+    if shard is not None:
+        env["SODRPG_EQUIVALENCE_SHARD"] = shard
     if slow:
         env["SODRPG_SLOW"] = "1"
+    if no_build:
+        # A separate remote phase (such as timing) may run on another host
+        # without the earlier build's outputs. Ask MSBuild for the actual path
+        # (including output overrides) and only skip building when the assembly
+        # is present.
+        target = subprocess.run(
+            [dotnet, "msbuild", project, "-nologo", "-property:Configuration=Release",
+             "-getProperty:TargetPath"], cwd=str(root), env=env,
+            stdin=subprocess.DEVNULL, capture_output=True, text=True,
+            encoding="utf-8", errors="replace",
+        )
+        if target.returncode != 0:
+            return target.returncode, (target.stdout or "") + (target.stderr or "")
+        target_path = target.stdout.strip()
+        if not target_path:
+            return 1, f"MSBuild returned no TargetPath for {project}\n"
+        if (root / target_path).is_file():
+            cmd.append("--no-build")
+        else:
+            print(f"build output missing for {project}; building before test",
+                  file=sys.stderr)
     result = subprocess.run(
         cmd, cwd=str(root), env=env, stdin=subprocess.DEVNULL,
         capture_output=True, text=True, encoding="utf-8", errors="replace",
@@ -961,6 +1101,17 @@ def selection_runs(selected: set[str],
     return runs, deferred
 
 
+def run_test_process(root: Path, project: str, filter_expr: str | None,
+                     slow: bool, shard: str | None) -> tuple[int, str]:
+    # Context-local metadata preserves run_dotnet_test's public signature (the
+    # release gate wraps it to add its ordinary/timing filters).
+    token = _EQUIVALENCE_SHARD.set(shard)
+    try:
+        return run_dotnet_test(root, project, filter_expr, True, slow)
+    finally:
+        _EQUIVALENCE_SHARD.reset(token)
+
+
 def run_selection(root: Path, classes, run_all: bool, slow: bool = False) -> int:
     """Run the selected classes (or everything); returns the exit code.
 
@@ -986,7 +1137,7 @@ def run_selection(root: Path, classes, run_all: bool, slow: bool = False) -> int
     if not run_all and classes:
         known = set().union(*owned.values()) if owned else set()
         unowned = set(classes) - known
-    pairs: list[tuple[str, str | None, str]] = []  # (project, filter, label)
+    pairs: list[tuple[str, str | None, str, str | None]] = []  # (project, filter, label, shard)
     deferred_pairs: list[tuple[str, str | None, str]] = []  # alone, after the pool drains
     for project in projects:
         if run_all:
@@ -996,7 +1147,13 @@ def run_selection(root: Path, classes, run_all: bool, slow: bool = False) -> int
             if not selected:
                 continue  # no class of this project is selected; nothing to run
             runs, deferred = selection_runs(selected, slow_methods)
-        pairs.extend((project, expr, label) for expr, label in runs)
+        for expr, label in runs:
+            method = expr.removeprefix("FullyQualifiedName=") if expr else ""
+            count = EQUIVALENCE_SHARDS.get(method, 1) if slow and project == CORE_TESTS_PROJECT else 1
+            for index in range(count):
+                shard = f"{index}/{count}" if count > 1 else None
+                suffix = f" [sequence shard {index + 1}/{count}]" if shard else ""
+                pairs.append((project, expr, label + suffix, shard))
         deferred_pairs.extend((project, expr, label) for expr, label in deferred)
     if not pairs and not deferred_pairs:
         print("no tests selected for any project")
@@ -1008,9 +1165,10 @@ def run_selection(root: Path, classes, run_all: bool, slow: bool = False) -> int
     total_failed = total_passed = 0
     if pairs:
         with concurrent.futures.ThreadPoolExecutor(max_workers=workers) as pool:
-            futures = {pool.submit(run_dotnet_test, root, project, expr, True, slow):
-                       (project, label) for project, expr, label in pairs}
-            for future, (project, label) in futures.items():
+            futures = {pool.submit(run_test_process, root, project, expr, slow, shard):
+                       (project, label) for project, expr, label, shard in pairs}
+            for future in concurrent.futures.as_completed(futures):
+                project, label = futures[future]
                 code, output = future.result()
                 print(f"===== {project}{label} =====")
                 print(output, end="" if output.endswith("\n") else "\n")

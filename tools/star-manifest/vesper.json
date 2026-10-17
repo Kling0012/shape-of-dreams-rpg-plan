@@ -27512,6 +27512,12 @@
             "amount": {
               "valueRef": "vesper.run.g1/growth/effects/1/amount"
             }
+          },
+          {
+            "stat": "AttackSpeedPct",
+            "amount": {
+              "valueRef": "vesper.run.g1/growth/effects/2/amount"
+            }
           }
         ]
       },
@@ -28769,6 +28775,57 @@
       "nameJa": "鉄壁の審問",
       "nameEn": "Unbreakable Inquisition",
       "notes": "既存刻印（ID・既存Powerは維持、強化なし）。被弾を強制せず決意/慈悲の両方を維持（代償は #47 で撤廃）。"
+    },
+    {
+      "id": "vesper.key.shield-wall",
+      "region": "keystone",
+      "cluster": "vesper.key",
+      "shape": null,
+      "anchor": "vesper.mem.mercy.c3.x",
+      "edges": [],
+      "requires": [
+        "vesper.mem.mercy.c3.x"
+      ],
+      "requiresAny": [],
+      "kind": "Keystone",
+      "memory": null,
+      "value": null,
+      "param": null,
+      "receiver": null,
+      "target": null,
+      "gimmick": null,
+      "power": null,
+      "stat": null,
+      "options": null,
+      "keystone": {
+        "upside": "盾壁 / Shield Wall",
+        "upsideSpec": [
+          {
+            "effect": "Coop",
+            "field": "Value",
+            "scope": "radius",
+            "to": {
+              "valueRef": "vesper.key.shield-wall/keystone/upsideSpec/0/to"
+            }
+          },
+          {
+            "effect": "Coop",
+            "field": "Value",
+            "scope": "armorPercent",
+            "to": {
+              "valueRef": "vesper.key.shield-wall/keystone/upsideSpec/1/to"
+            }
+          }
+        ]
+      },
+      "mechanisms": [
+        "C07"
+      ],
+      "maxRank": 1,
+      "rankCost": 1,
+      "nameJa": "盾壁",
+      "nameEn": "Shield Wall",
+      "notes": "同行の刻印。味方との協力距離係数を使用し、ソロでは発動しない。"
     }
   ]
 }

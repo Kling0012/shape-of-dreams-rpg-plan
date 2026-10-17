@@ -208,7 +208,7 @@ namespace SodRpg.Mod
             {
                 if (!_runtimes.TryGetValue(hero, out var rt)) return;
                 AwardModShield(rt, recipient, ModShieldPoolKind.Ordinary,
-                    SupportStats.AmplifyShield(recipient.maxHealth * (float)CalmShieldGrant.ValueUnits / 10000f, rt.Powers.Build.Get(Stat.ShieldPower)),
+                    SupportStats.AmplifyShield(recipient.maxHealth * (float)CalmShieldGrant.ValueUnits / 10000f, SupportPower(rt, Stat.ShieldPower)),
                     CalmShieldGrant.DurationSeconds, null, ModShieldEquipmentEpoch(rt));
             });
             if (sacrifice) BindAuthoredSacrificeShield(hero); else StopSacrificeShield(hero);
@@ -294,7 +294,7 @@ namespace SodRpg.Mod
             if (owner.GimmickRequests.Count > 0 && payload.Gimmick.Effect == GimmickEffect.Primed)
             {
                 var accepted = owner.GimmickRequests[0].Entry.Def;
-                owner.Powers.PrimeNextBasic(Time.time, accepted.ValuePercent, Gimmicks.Duration(accepted, 5f));
+                owner.Powers.PrimeNextBasic(Time.time, accepted.ValuePercent, Gimmicks.Duration(accepted, Gimmicks.PrimedSeconds));
             }
             int start = owner.PendingGimmicks.Count;
             QueueGimmickRequests(owner, victim, Time.time);
@@ -360,7 +360,8 @@ namespace SodRpg.Mod
         private void DispatchAuthoredDividends(HeroRuntime rt, MemoryActivationEvent notification, Entity victim,
             MechanismEquipment equipment, List<PressureDividendChannel> channels)
         {
-            if (channels == null || channels.Count == 0 || !(victim is Monster monster)
+            // Assist notifications grant combat effects, never extra expedition rewards.
+            if (notification.IsAssist || channels == null || channels.Count == 0 || !(victim is Monster monster)
                 || !_pressureDividendSpawns.TryGetValue(monster, out var spawn) || !_nativePressureLootSpawns.Contains(spawn)) return;
             var equipped = _attributionMemoryIds[rt.Hero];
             AdmitPressureDividendNativeKill(rt.Hero, monster, new PressureDividendAttribution(
@@ -428,7 +429,7 @@ namespace SodRpg.Mod
                 if (spec.Gimmick.Effect == GimmickEffect.Primed)
                 {
                     var accepted = rt.GimmickRequests[0].Entry.Def;
-                    rt.Powers.PrimeNextBasic(Time.time, accepted.ValuePercent, Gimmicks.Duration(accepted, 5f));
+                    rt.Powers.PrimeNextBasic(Time.time, accepted.ValuePercent, Gimmicks.Duration(accepted, Gimmicks.PrimedSeconds));
                 }
                 long generation = channel.Generation;
                 int start = rt.PendingGimmicks.Count;

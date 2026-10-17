@@ -33,17 +33,43 @@ namespace SodRpg.Mod
         [LabelText("Room Omens: a blessing or trial in each combat room (the host's setting applies) /\n部屋の兆し：戦闘の部屋ごとに恵みか試練を付ける（ホストの設定が使われる）")]
         public bool roomOmens = true;
 
+        [LabelText("Co-op-only Room Omens (host) / マルチ専用の兆し（ホスト）")]
+        public bool coopRoomOmens = true;
+
         [LabelText("Melee: convert equipment attack range to attack speed (host) / 近接：装備の射程を攻撃速度へ変換（ホスト）")]
+        [Description("1% equipment basic attack range gives " + CoopBalance.RangeToSpeedMultiplierText + "% attack speed instead; total attack speed is capped at " + TravelerCombat.AttackSpeedCapText + "%. / "
+            + "装備の通常攻撃射程1%につき攻撃速度が" + CoopBalance.RangeToSpeedMultiplierText + "%上がり、攻撃速度は合計" + TravelerCombat.AttackSpeedCapText + "%まで。")]
         public bool meleeRangeToSpeed = true;
 
+        [LabelText("Enemy ownership (coop, host) / 担当制（マルチ・ホスト）")]
+        public bool coopEnemyOwnership = true;
+
+        [LabelText("Difficulty follows clear speed (host) / 殲滅速度に合わせた難易度（ホスト）")]
+        public bool dynamicDifficulty = true;
+
+        [LabelText("Also use in solo (host) / ソロでも使う（ホスト）")]
+        public bool dynamicDifficultySolo = false;
+
+        [LabelText("Show enemy ownership marks (client) / 担当の印を表示（クライアント）")]
+        public bool showEnemyOwnershipMarks = true;
+
         [LabelText("Coop: distance falloff and grace (host) / 味方距離効果の減衰と猶予（ホスト）")]
+        [Description("Falloff from " + CoopBalance.FullRangeText + " to " + CoopBalance.OuterRangeText + "m with " + CoopBalance.GraceSecondsText + "s grace; when off, the effect ends beyond " + CoopBalance.FullRangeText + "m. / "
+            + CoopBalance.FullRangeText + "～" + CoopBalance.OuterRangeText + "mで減衰し、猶予は" + CoopBalance.GraceSecondsText + "秒。オフでは" + CoopBalance.FullRangeText + "mを超えると切れる。")]
         public bool coopDistanceFalloff = true;
 
         [LabelText("Melee: Break for allied damage (host) / 近接：崩しで味方の与ダメージを増加（ホスト）")]
+        [Description("Other allies deal +" + CoopBalance.BreakDamagePercentText + "% damage to an enemy hit by the melee traveler for " + CoopBalance.BreakSecondsText + "s. / "
+            + "近接の旅人が当てた敵へ" + CoopBalance.BreakSecondsText + "秒間、ほかの味方の与ダメージ+" + CoopBalance.BreakDamagePercentText + "%。")]
         public bool meleeBreak = true;
 
         [LabelText("Melee: damage reduction near enemies (host) / 近接：敵の近くで被ダメージ軽減（ホスト）")]
+        [Description("Take " + CoopBalance.MeleeGuardReductionPercentText + "% less damage while an enemy is within " + CoopBalance.MeleeGuardRangeText + "m. / "
+            + CoopBalance.MeleeGuardRangeText + "m以内に敵がいる間、被ダメージ" + CoopBalance.MeleeGuardReductionPercentText + "%軽減。")]
         public bool meleeProximityGuard = true;
+
+        [LabelText("Auto casting: native speed in multiplayer (host, default ON) / 自動詠唱：マルチでは本体と同じ速さ（ホスト、既定ON）")]
+        public bool autoCastCoopNativeCadence = true;
 
         [LabelText("HUD / 左のパネルの表示")]
         public HudMode hudMode = HudMode.Full;

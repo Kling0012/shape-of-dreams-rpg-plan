@@ -88,12 +88,13 @@ namespace SodRpg.Mod
             else InfinityMode.ConfirmAgreement();
         }
 
-        internal static bool PersistHostInfinityState() => _hostSession?.SaveInfinityState(confirm: true) == true;
+        internal static bool PersistHostInfinityState(bool writeEnvelope = true)
+            => _hostSession?.SaveInfinityState(confirm: true, writeEnvelope) == true;
 
-        private bool SaveInfinityState(bool confirm)
+        private bool SaveInfinityState(bool confirm, bool writeEnvelope = true)
         {
             if (!NetworkServer.active || Profile.Run?.Infinity == null || !InfinityMode.NativeSaveAgreement) return false;
-            InfinityMode.WriteEnvelope();
+            if (writeEnvelope) InfinityMode.WriteEnvelope();
             return SaveInfinityReceipt(Profile.Run.RunId, confirm);
         }
 
@@ -122,11 +123,12 @@ namespace SodRpg.Mod
             if (!InfinityMode.NativeSaveAgreement || string.IsNullOrEmpty(runId)
                 || runId != NetworkedManagerBase<GameManager>.softInstance?.runId) return false;
             bool waiting = _infinityPendingSaveRevision != 0 && _infinityPendingSaveRun == runId;
-            BeginInfinitySaveHold(runId);
             MarkDirty(true);
-            // Do not block the main thread again for the same outstanding receipt.
+            // Do not advance the hold for a confirmation that queues no write; otherwise its
+            // Revision+1 target stays ahead of the writer until the 30s timeout.
             if (confirm && waiting && !InfinitySaveHoldReleased && Time.unscaledTime < _nextInfinitySaveRetry)
                 return false;
+            BeginInfinitySaveHold(runId);
             _nextInfinitySaveRetry = Time.unscaledTime + 5f;
             bool saved = SaveNow((confirm && !waiting && !InfinitySaveHoldReleased) || _store == null);
             if (saved && confirm) CompleteInfinityStateSave();
@@ -199,7 +201,15 @@ namespace SodRpg.Mod
             FlushPendingRunRewards();
             if (_pendingRunRewards.Count != 0 || _pendingPressureDividends.Count != 0 || HasPendingTrades) return;
             if (CanChooseRunRules && !HostInfinityBoundarySettled) return;
-            var sharedChoices = InfinityMode.CurrentChoice?.Before ?? _receivedRunChoices;
+            // 潜行の決定は置き換わるまで設定に残る。前の区間の決定の Before（選択待ち）で開かないよう、
+            // この区間でまだ適用していない決定のときだけ Before を使う。
+            var run = Profile.Run;
+            var state = run?.Infinity;
+            var choice = InfinityMode.CurrentChoice;
+            var sharedChoices = state != null && choice != null && choice.RunId == run.RunId
+                && choice.SegmentEpoch == state.SegmentEpoch && state.ChoiceRevision != long.MaxValue
+                && choice.Revision == state.ChoiceRevision + 1
+                ? choice.Before ?? _receivedRunChoices : _receivedRunChoices;
             if (!CanChooseRunRules && (sharedChoices == null || sharedChoices.Settled || sharedChoices.Generation == 0)) return;
             if (NetworkServer.active) PublishRunChoicesForZone(ChoiceZoneIndex);
             Emit(Rules.ReachInfinityChoice(Profile, _trades));
@@ -327,6 +337,7 @@ namespace SodRpg.Mod
                     state.DifficultyId = shared.DifficultyId;
                     state.GraphEpoch = shared.GraphEpoch; state.RoomEpoch = shared.RoomEpoch;
                     state.ClearedCombatTotal = shared.ClearedCombatTotal; state.ClearsInCycle = shared.ClearsInCycle;
+                    state.FinalePromoted = shared.FinalePromoted;
                     state.Phase = shared.Phase; state.SoulObserved = shared.SoulObserved;
                     state.TransitionIntent = shared.TransitionIntent;
                     state.LastCountedNode = shared.LastCountedNode;
@@ -344,6 +355,7 @@ namespace SodRpg.Mod
                 state.GraphEpoch = choice.Before.GraphEpoch;
                 state.ClearedCombatTotal = choice.Before.Infinity.ClearedCombatTotal;
                 state.ClearsInCycle = choice.Before.Infinity.ClearsInCycle;
+                state.FinalePromoted = choice.Before.Infinity.FinalePromoted;
                 state.SoulObserved = choice.Before.Infinity.SoulObserved;
                 ObserveInfinityRoomTotal(state.ClearedCombatTotal);
             }
@@ -353,6 +365,8 @@ namespace SodRpg.Mod
             bool alreadyApplied = choice.Secure ? Profile.CompletedRunSecuredReturn && Profile.CompletedRunId == choice.RunId
                 : state != null && (choice.Boundary ? state.SettledGraphEpoch >= choice.GraphEpoch
                     : state.ChoiceRevision >= choice.Revision);
+            // The host advances the graph only after ACKs or its bounded remote wait have released.
+            if (alreadyApplied && !choice.Secure && !choice.Boundary && state.GraphEpoch > choice.GraphEpoch) return;
             if (!alreadyApplied)
             {
                 if (state == null || state.GraphEpoch != choice.GraphEpoch || state.SegmentEpoch != choice.SegmentEpoch

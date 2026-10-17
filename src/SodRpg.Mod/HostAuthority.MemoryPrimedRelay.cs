@@ -131,7 +131,7 @@ namespace SodRpg.Mod
         {
             state.Epochs.TryGetValue(value.SourceMemory, out long epoch);
             return new MemoryActivationEvent(value.OwnerId, value.SourceMemory, value.ActivationId, value.DamagePacketId,
-                value.VictimId, value.EventKind, value.NativePayloadKind, value.GeneratedOrigin, epoch);
+                value.VictimId, value.EventKind, value.NativePayloadKind, value.GeneratedOrigin, epoch, value.IsAssist);
         }
 
         private void OnMemoryPrimedRelayNotification(MemoryActivationEvent notification, Hero hero, Entity victim, float nativeDamage)

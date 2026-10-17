@@ -80,7 +80,7 @@ namespace SodRpg.Core.Game
             }
             if (feat == null) throw new InvalidOperationException(Loc.T("その偉業は見つかりません。", "That feat does not exist."));
             if (!p.Feats.Contains(featId)) throw new InvalidOperationException(Loc.T("この偉業はまだ達成していません。", "You have not completed this feat yet."));
-            if (p.FeatsClaimed.Contains(featId)) throw new InvalidOperationException(Loc.T("この偉業の報酬は、もう受け取っています。", "You already claimed this reward."));
+            if (p.FeatsClaimed.Contains(featId)) throw new InvalidOperationException(Loc.T("この偉業の報酬はもう受け取っています。", "You already claimed this reward."));
 
             p.AddMaterial(Materials.Shard, feat.RewardShards);
             p.AddMaterial(Materials.Tuning, feat.RewardTuning);
@@ -208,7 +208,7 @@ namespace SodRpg.Core.Game
             if (Waypoints.Sum(killWaypoint).KillLootTierBonus > 0) rollTier = Nightmares.RewardTier(rollTier);
             int killHeat = heat ?? run.Heat;
             var focus = p.Focus ?? DailyDream.Get(run.DailyId)?.FeaturedLine;
-            var reward = Loot.RollKill(rng, rollTier, itemLevel, killHeat, focus, KillModifiers(run, killWaypoint, roomOmenDropBonus), p.Stash, run.Satchel, p.Codex,
+            var reward = Loot.RollKill(rng, rollTier, itemLevel, killHeat, focus, KillModifiers(run, killWaypoint, roomOmenDropBonus), p.Stash, run.UnsecuredForLoot(), p.Codex,
                 Rarity.Legendary, InfinityRewards.OrdinaryRelicMultiplier(run, killWaypoint, tier), shardDropMultiplier,
                 InfinityRewards.UniqueDropMultiplier(p), LimboRelicMultiplier(run.LimboDepth));
             if (variant != null && variant.ShardBonusPct != 100) reward.Shards = (int)Math.Min(int.MaxValue, (long)reward.Shards * variant.ShardBonusPct / 100 + LootBalance.VariantAdditiveShards);
@@ -229,10 +229,9 @@ namespace SodRpg.Core.Game
             {
                 var hs = p.Hero(heroKey);
                 if (string.IsNullOrEmpty(run.HeroKey)) run.HeroKey = heroKey;
-                AddStarXp(p, heroKey, (int)Math.Min(int.MaxValue, (long)StarProgression.KillXp(tier, isNightmare) + waypointStarXp), ev, rewardScale: rewardScale, rng: rng);
-                int points = DreamDepth.ScaleReward(Content.AwakenPoints(tier, isNightmare) + waypointAwakening,
-                    DreamDepth.AwakeningMultiplier(run.DreamDepth) * Waypoints.Sum(killWaypoint).AwakeningMultiplier);
-                points = PressureCountRewards.ScaleInt(rng, points, rewardScale);
+                AddStarXp(p, heroKey, StarProgression.KillXp(tier, isNightmare), ev, rewardScale: rewardScale, rng: rng, convertedAmount: waypointStarXp);
+                int points = ScaleProgressionReward(rng, Content.AwakenPoints(tier, isNightmare), waypointAwakening,
+                    DreamDepth.AwakeningMultiplier(run.DreamDepth) * Waypoints.Sum(killWaypoint).AwakeningMultiplier, rewardScale);
                 foreach (var uid in hs.Equipped)
                 {
                     var r = p.FindStash(uid);
@@ -330,8 +329,8 @@ namespace SodRpg.Core.Game
             ev.AddRange(Feats.Check(p));
             if (hoardPayout)
                 ev.Add(new GameEvent(EventKind.Info, Loc.T(
-                    $"宝庫の払い出し ×3：遺物{reward.Relics.Count}個・欠片{reward.Shards}・調律石{reward.Tuning}（未確保。鞄を超えた遺物は欠片になります）。",
-                    $"Hoard payout ×3: {reward.Relics.Count} relic(s), {reward.Shards} shards, {reward.Tuning} tuning (unsecured; relics beyond satchel capacity become shards).")));
+                    $"宝庫の払い出し ×{Waypoints.HoardMultiplier}：遺物{reward.Relics.Count}個・欠片{reward.Shards}・調律石{reward.Tuning}（未確保。鞄を超えた遺物は欠片になります）。",
+                    $"Hoard payout ×{Waypoints.HoardMultiplier}: {reward.Relics.Count} relic(s), {reward.Shards} shards, {reward.Tuning} tuning (unsecured; relics beyond satchel capacity become shards).")));
             // 宝庫の一括払い出しで討伐通知がトーストの表示上限から押し出されないよう、最後に送る。
             if (killNotice != null) ev.Add(killNotice);
             return ev;
@@ -679,6 +678,7 @@ namespace SodRpg.Core.Game
                 infinity.SegmentEpoch++;
                 infinity.ChoiceRevision++;
                 infinity.ClearsInCycle = 0;
+                infinity.FinalePromoted = false;
                 infinity.SoulObserved = false;
                 infinity.Phase = InfinityPhase.Transitioning;
                 infinity.TransitionIntent = "delve";
@@ -705,6 +705,8 @@ namespace SodRpg.Core.Game
             var best = p.LostAndFound.OrderByDescending(r => r.Score).First();
             p.LostAndFound.Remove(best);
             run.LostRecovered = true;
+            // 回収品は遠征の報告だけに数え、通算の発見統計や発見系の依頼には加算しない。
+            run.RelicsFound = SaturatingAdd(run.RelicsFound, 1);
             ev.Add(new GameEvent(EventKind.Recovered, Loc.T(
                 $"遺失物「{best.DisplayName}」を取り戻しました（まだ持ち帰っていません）",
                 $"Recovered lost relic \"{best.DisplayName}\" (unsecured)"), best.Rarity));
@@ -779,6 +781,8 @@ namespace SodRpg.Core.Game
             var report = new RunReport { Victory = victory, LevelBefore = run.LevelAtStart > 0 ? run.LevelAtStart : p.DreamLevel };
             if (victory)
             {
+                if (run.Infinity == null && run.LimboDepth >= 6 && !string.IsNullOrEmpty(run.HeroKey))
+                    p.Hero(run.HeroKey).LimboInfinityUnlocked = true;
                 ev.AddRange(Secure(p, false));
                 AddStarXp(p, run.HeroKey, StarProgression.VictoryXp, ev);
                 p.Stats.Victories++;
@@ -893,6 +897,7 @@ namespace SodRpg.Core.Game
                 {
                     var best = p.LostAndFound.OrderByDescending(r => r.Score).First();
                     p.LostAndFound.Remove(best);
+                    run.RelicsFound = SaturatingAdd(run.RelicsFound, 1);
                     ev.Add(new GameEvent(EventKind.Recovered, Loc.T($"迷い人の灯で、遺失物「{best.DisplayName}」を取り戻しました（まだ持ち帰っていません）。",
                         $"The lantern recovered the lost relic \"{best.DisplayName}\" (unsecured)."), best.Rarity));
                     AddToSatchel(p, best, trades);
@@ -942,7 +947,7 @@ namespace SodRpg.Core.Game
                     {
                         var relic = run.Satchel[i];
                         if (relic.Rarity >= Rarity.Epic || (trades != null && trades.IsReserved(relic.Uid))) continue;
-                        shards += Content.SalvageShards(relic.Rarity);
+                        shards += SalvageValue(relic); // 説明どおり分解と同じ（強化の返還分を含む）
                         count++;
                         run.Satchel.RemoveAt(i);
                     }
@@ -1010,6 +1015,7 @@ namespace SodRpg.Core.Game
                     foreach (var relic in recovered)
                     {
                         p.LostAndFound.Remove(relic);
+                        run.RelicsFound = SaturatingAdd(run.RelicsFound, 1);
                         relic.Enhance = 0;
                         ev.Add(new GameEvent(EventKind.Recovered, Loc.T(
                             $"霊廟から「{relic.PlainName}」を回収しました。強化は0になり、まだ持ち帰っていません。",
@@ -1343,8 +1349,34 @@ namespace SodRpg.Core.Game
 
         public static int RerollsLeft(Profile p) => p.Run == null ? 0 : Math.Max(0, Workshop.RerollsPerRun(p) - p.Run.RerollsUsed);
 
-        /// <summary>未達成の依頼を1つ、今ある依頼と重ならない種類で引き直す。</summary>
-        public static GameEvent RerollBounty(Profile p, int index)
+        /// <summary>
+        /// この遠征では進められない未着手の依頼を、進められる依頼に入れ替える（何度呼んでも同じ）。
+        /// 遠征の開始時にはソロかインフィニティかがまだ決まっていないことがあるので、決まった時点で呼ぶ。
+        /// </summary>
+        public static bool ReplaceUnreachableBounties(Profile p, bool solo)
+        {
+            var run = p.Run;
+            if (run == null) return false;
+            bool infinity = run.Infinity != null;
+            Rng rng = null;
+            bool changed = false;
+            for (int i = 0; i < run.Bounties.Count; i++)
+            {
+                var b = run.Bounties[i];
+                if (b.Done || b.Progress > 0 || Bounties.Reachable(b.Kind, solo, infinity)) continue;
+                if (rng == null) rng = p.TakeRng();
+                var existing = new HashSet<BountyKind>(run.Bounties.Select(x => x.Kind));
+                var replacement = Bounties.Roll(rng, 1, k => !existing.Contains(k) && Bounties.Reachable(k, solo, infinity));
+                if (replacement.Count == 0) continue;
+                run.Bounties[i] = replacement[0];
+                changed = true;
+            }
+            if (rng != null) p.StoreRng(rng);
+            return changed;
+        }
+
+        /// <summary>未達成の依頼を1つ、今ある依頼と重ならない進められる種類で引き直す。</summary>
+        public static GameEvent RerollBounty(Profile p, int index, bool solo = false)
         {
             var run = p.Run ?? throw new InvalidOperationException(Loc.T("遠征中のみ使えます。", "Only during an expedition."));
             if (RerollsLeft(p) <= 0) throw new InvalidOperationException(Loc.T("引き直しの回数がありません（工房で解放）。", "No rerolls left (unlock in the workshop)."));
@@ -1352,12 +1384,9 @@ namespace SodRpg.Core.Game
                 throw new InvalidOperationException(Loc.T("未達成の依頼を選んでください。", "Choose an unfinished bounty."));
             var rng = p.TakeRng();
             var existing = new HashSet<BountyKind>(run.Bounties.Select(b => b.Kind));
-            Bounty replacement = null;
-            for (int i = 0; i < 20 && replacement == null; i++)
-            {
-                var cand = Bounties.Roll(rng, 1)[0];
-                if (!existing.Contains(cand.Kind)) replacement = cand;
-            }
+            var candidates = Bounties.Roll(rng, 1,
+                k => !existing.Contains(k) && Bounties.Reachable(k, solo, run.Infinity != null));
+            var replacement = candidates.Count > 0 ? candidates[0] : null;
             p.StoreRng(rng);
             if (replacement == null) throw new InvalidOperationException(Loc.T("引き直せる依頼がありません。", "No other bounty available."));
             var old = run.Bounties[index];
@@ -1380,11 +1409,20 @@ namespace SodRpg.Core.Game
             p.Focus = focus;
         }
 
-        private static void AddStarXp(Profile p, string heroKey, int amount, List<GameEvent> ev, double rewardScale = 1, Rng rng = null)
+        private static int ScaleProgressionReward(Rng rng, int amount, int convertedAmount, double multiplier, double rewardScale)
+        {
+            int total = DreamDepth.ScaleReward(SaturatingAdd(amount, convertedAmount), multiplier);
+            if (rng == null) return total;
+            // Keep combined depth rounding; waypoint conversions already thinned their source loot.
+            int converted = DreamDepth.ScaleReward(convertedAmount, multiplier);
+            return SaturatingAdd(PressureCountRewards.ScaleInt(rng, total - converted, rewardScale), converted);
+        }
+
+        private static void AddStarXp(Profile p, string heroKey, int amount, List<GameEvent> ev, double rewardScale = 1, Rng rng = null, int convertedAmount = 0)
         {
             if (string.IsNullOrEmpty(heroKey)) return;
-            amount = DreamDepth.ScaleReward(amount, DreamDepth.StarXpMultiplier(p.Run?.DreamDepth ?? 0));
-            if (rng != null) amount = PressureCountRewards.ScaleInt(rng, amount, rewardScale);
+            amount = ScaleProgressionReward(rng, amount, convertedAmount,
+                DreamDepth.StarXpMultiplier(p.Run?.DreamDepth ?? 0), rewardScale);
             var hero = p.Hero(heroKey);
             int before = StarProgression.Points(hero.StarXp);
             StarProgression.AddXp(hero, amount);
@@ -1463,7 +1501,7 @@ namespace SodRpg.Core.Game
             if (r.Locked) throw new InvalidOperationException(Loc.T("鍵のかかった遺物は分解できません。", "Locked relics cannot be salvaged."));
             if (loadoutLocked && p.IsEquippedAnywhere(uid))
             {
-                throw new InvalidOperationException(Loc.T("装着中の遺物は、確保地点か遠征の外でしか分解できません。", "Equipped relics can only be salvaged at a secure point or outside an expedition."));
+                throw new InvalidOperationException(Loc.T("装着中の遺物は確保地点か遠征の外でしか分解できません。", "Equipped relics can only be salvaged at a secure point or outside an expedition."));
             }
             int shards = SalvageValue(r);
             int tuning = Content.SalvageTuning(r.Rarity);
@@ -2040,7 +2078,7 @@ namespace SodRpg.Core.Game
                 n += (long)Math.Max(0, kv.Value) * (Content.TryGetTalent(kv.Key, out var t) ? t.RankCost : 1);
             foreach (string keystone in h.Keystones)
                 if (keystone != null)
-                    n += Content.TryGetTalent(keystone, out var key) ? key.KeystoneDefinition?.Cost ?? Content.KeystoneCost : Content.KeystoneCost;
+                    n += Content.TryGetTalent(keystone, out var key) ? key.KeystoneCost : Content.KeystoneCost;
             return (int)Math.Min(int.MaxValue, n);
         }
 

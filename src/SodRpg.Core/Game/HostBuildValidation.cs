@@ -136,8 +136,8 @@ namespace SodRpg.Core.Game
                 var definition = engine.Talent(keystone);
                 if (definition == null || !definition.IsKeystone || !Rules.BelongsTo(definition, heroKey))
                     return Reject("keystone", out reason);
-                // A typed keystone declares its own cost (every other consumer reads KeystoneDefinition.Cost); legacy keys cost Content.KeystoneCost.
-                total += definition.KeystoneDefinition?.Cost ?? Content.KeystoneCost;
+                // Typed and stat keystones declare their own cost; legacy keys keep their original cost.
+                total += definition.KeystoneCost;
             }
             foreach (var rank in hero.Talents)
             {

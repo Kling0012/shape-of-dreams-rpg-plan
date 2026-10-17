@@ -221,7 +221,7 @@ namespace SodRpg.Mod
         public ReactionChain chain; public DamageData damage;
     }
 
-    internal sealed class StatBonus
+    internal sealed partial class StatBonus
     {
         public float attackDamagePercentage, abilityPowerPercentage, attackSpeedPercentage, attackRangePercentage, critChanceFlat,
             critAmpFlat, maxHealthPercentage, maxHealthFlat, attackDamageFlat, abilityPowerFlat;
@@ -234,7 +234,7 @@ namespace SodRpg.Mod
         public void OnDealDamage(Actor actor, Entity target, ref DamageData damage, ReactionChain chain) { }
         public void OnUnequipSkill() { }
     }
-    internal sealed class Se_U_EternalFlame_Curse : StatusEffect { public float? maxDuration, remainingDuration; }
+    internal sealed class Se_U_EternalFlame_Curse : StatusEffect { public new float? maxDuration, remainingDuration; }
     internal sealed class Gem_U_GlacialCore : Gem
     {
         public readonly Dictionary<ReactionChain, float> _remainingDamages = new Dictionary<ReactionChain, float>();
@@ -245,7 +245,7 @@ namespace SodRpg.Mod
     internal partial struct EventInfoDamage { public ReactionChain chain; public DamageData damage; }
     internal partial class Entity
     {
-        public uint netId, persistentNetId;
+        public uint netId;
         private EntityControl _control;
         public EntityControl Control { get { if (_control == null) _control = new EntityControl { entity = this }; return _control; } }
         public Transform transform = new Transform();
@@ -302,7 +302,7 @@ namespace SodRpg.Mod
             return effect;
         }
         public void StopBasicEffect(BasicEffect effect) { effect.isAlive = false; basicEffects.Remove(effect); }
-        public void SetTimer(float maxDuration, float duration) { }
+        public void SetTimer(float maxDuration, float duration) { this.maxDuration = maxDuration; remainingDuration = duration; }
         public void ResetTimer() { }
         public void StopTimer() { }
         public void Destroy() => DestroyIfActive();
@@ -344,8 +344,8 @@ namespace SodRpg.Mod
         public readonly List<StatusEffect> statusEffects = new List<StatusEffect>();
         // Live status-effect registry backing TryGetStatusEffect for DiscoverBossHysteria.
         internal static readonly List<StatusEffect> LiveStatusEffects = new List<StatusEffect>();
-        public void AddStatBonus(StatBonus bonus) { }
-        public void RemoveStatBonus(StatBonus bonus) { }
+        public void AddStatBonus(StatBonus bonus) { if (bonus != null) AttachedBonuses.Add(bonus); }
+        public void RemoveStatBonus(StatBonus bonus) { if (bonus != null) AttachedBonuses.Remove(bonus); }
     }
     internal partial class Gem { public AbilityTargetValidatorWrapper tvDefaultHarmfulEffectTargets; public GemLocation location; }
     internal partial struct HealData
