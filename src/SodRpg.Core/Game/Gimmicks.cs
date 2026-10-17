@@ -442,7 +442,7 @@ namespace SodRpg.Core.Game
                     stacking = JaStrongestOnly;
                     break;
                 default:
-                    effect = "当てたダメージの" + n + "%を、追撃として0.3秒後にもう一度与える";
+                    effect = "当てたダメージの" + n + "%を追撃として0.3秒後にもう一度与える";
                     break;
             }
             return JaSentence(condition, effect) + extra + JaLimits(def.Cooldown, cap) + stacking + JaNoStarTrigger;

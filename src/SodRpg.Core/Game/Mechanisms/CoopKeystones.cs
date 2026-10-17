@@ -56,25 +56,25 @@ namespace SodRpg.Core.Game
             switch (kind)
             {
                 case CoopKeystoneKind.SharedSights:
-                    text = Loc.T($"命中した敵に{V("markSeconds")}秒の印を付け、味方からのダメージを{V("allyDamagePercent")}%増やす。味方が印の敵を倒すと、自分の次の記憶の命中1回のダメージが{V("memoryDamagePercent")}%増える。",
+                    text = Loc.T($"自分が命中した敵に{V("markSeconds")}秒の印を付け、味方からのダメージを{V("allyDamagePercent")}%増やす。味方が印の付いた敵を倒すと、自分の次の記憶の命中1回のダメージが{V("memoryDamagePercent")}%増える。",
                         $"Hits mark enemies for {V("markSeconds")}s, increasing allied damage by {V("allyDamagePercent")}%. An ally killing a marked enemy empowers your next memory hit by {V("memoryDamagePercent")}%. "); break;
                 case CoopKeystoneKind.ShieldWall:
-                    text = Loc.T($"{V("radius")}m以内の味方へ自分の防御の{V("armorPercent")}%を加算する。挑発系の記憶を使うと、その味方を狙う敵も自分へ引きつける。",
+                    text = Loc.T($"{V("radius")}m以内の味方に自分の防御の{V("armorPercent")}%を加える。挑発系の記憶を使うと、その味方を狙う敵も自分へ引きつける。",
                         $"Allies within {V("radius")}m gain {V("armorPercent")}% of your armor. Taunting memories also draw enemies targeting those allies to you. "); break;
                 case CoopKeystoneKind.FrostResonance:
                     text = Loc.T($"自分が冷気を当てた敵は、味方の冷気以外のダメージを{V("allyDamagePercent")}%多く受ける。味方の命中で冷気・凍結の持続が{V("extendSeconds")}秒延びる。",
                         $"Enemies chilled or frozen by you take {V("allyDamagePercent")}% more non-cold allied damage. Allied hits extend the cold or freeze by {V("extendSeconds")}s. "); break;
                 case CoopKeystoneKind.ShadowCue:
-                    text = Loc.T($"自分が{V("absenceSeconds")}秒以上当てていない敵への味方の命中で、その敵への次のアイデンティティ攻撃が確定会心になる。移動のチャージを{V("charges")}回復。内部クールダウン{V("cooldownSeconds")}秒。",
+                    text = Loc.T($"自分が{V("absenceSeconds")}秒以上当てていない敵に味方が命中すると、その敵への次のアイデンティティ攻撃が確定会心になる。移動のチャージを{V("charges")}回復。内部クールダウン{V("cooldownSeconds")}秒。",
                         $"An ally hitting an enemy you have not hit for {V("absenceSeconds")}s makes your next identity hit on it critical and restores {V("charges")} movement charge. Cooldown: {V("cooldownSeconds")}s. "); break;
                 case CoopKeystoneKind.ParrySignal:
                     text = Loc.T($"パリィ成功で{V("radius")}m以内の味方の次の命中1回が{V("damagePercent")}%強くなる。有効時間{V("seconds")}秒。",
                         $"A successful parry empowers the next hit of allies within {V("radius")}m by {V("damagePercent")}%, lasting {V("seconds")}s. "); break;
                 case CoopKeystoneKind.PackGuard:
-                    text = Loc.T($"召喚体はHP割合が最も低い味方を狙う敵を優先する。味方を狙う敵から召喚体がダメージを受けると魔力+{V("powerPercent")}%、{V("seconds")}秒（更新）。",
+                    text = Loc.T($"召喚体はHP割合が最も低い味方を狙う敵を優先する。味方を狙う敵から召喚体がダメージを受けると、{V("seconds")}秒間魔力が{V("powerPercent")}%増える（更新）。",
                         $"Summons prioritize enemies targeting the ally with the lowest health ratio. When such enemies damage your summons, gain {V("powerPercent")}% ability power for {V("seconds")}s (refreshes). "); break;
                 case CoopKeystoneKind.GoldenTrust:
-                    text = Loc.T($"回復した味方の与ダメージを{V("seconds")}秒間{V("damagePercent")}%増やす。その味方の与ダメージの{V("healPercent")}%で自分を回復する。",
+                    text = Loc.T($"自分が回復した味方の与ダメージを{V("seconds")}秒間{V("damagePercent")}%増やす。その味方の与ダメージの{V("healPercent")}%で自分を回復する。",
                         $"Allies you heal deal {V("damagePercent")}% more damage for {V("seconds")}s. Their damage heals you for {V("healPercent")}%. "); break;
                 case CoopKeystoneKind.ResonantStardust:
                     text = Loc.T($"直近{V("contactSeconds")}秒以内に味方が当てた敵への通常攻撃が{V("damagePercent")}%強くなり、周囲{V("radius")}mへ魔力の{V("powerPercent")}%の星屑ダメージを与える。内部クールダウン{V("cooldownSeconds")}秒。",

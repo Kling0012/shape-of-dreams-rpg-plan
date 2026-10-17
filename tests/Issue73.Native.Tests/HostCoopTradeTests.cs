@@ -389,7 +389,7 @@ namespace Issue73.Native.Tests
 
             Assert.Null(Get(_host, "_coopHostTrade"));
             Assert.Null(Get(_host, "_coopHostFailure")); // a clean cancel, not a host-wide latch
-            string tooLarge = Loc.T("取引の記録が大きすぎます。保管庫を整理してから試してください",
+            string tooLarge = Loc.T("取引の記録が大きすぎます。保管庫を整理してから試してください。",
                 "The trade record is too large. Tidy up your stash and try again.");
             Assert.Contains(States(_a), state => state.kind == "cancelled" && state.id == id && state.status == tooLarge);
             Assert.Contains(States(_b), state => state.kind == "cancelled" && state.id == id && state.status == tooLarge);

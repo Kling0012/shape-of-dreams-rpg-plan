@@ -716,12 +716,12 @@ namespace SodRpg.Mod
             double gearMult = gearKnown ? _s.NightmareGearMultiplier : 1.0;
             double chanceMult = nmMult * pressureMult * gearMult;
             string ownershipNote = run.Infinity != null ? Loc.T(
-                "協力プレイでは、以下の道標効果と確率は自分の担当敵が対象です。担当のない敵には道標は適用されません。\n",
+                "協力プレイでは以下の道標効果と確率は自分の担当敵が対象です。担当のない敵には道標は適用されません。\n",
                 "In co-op, these waypoint effects and chances apply to enemies assigned to you. Unassigned enemies receive no waypoint effects.\n") : "";
             if (waypoint.AllNightmares)
             {
                 _secureNightmareText = UiStyles.Colored(ownershipNote + Loc.T(
-                    $"潜行{next}では、選んだ道標により、ボス以外のすべての敵が「悪夢化」して強くなります。倒すと、一段上の戦利品が出ます。",
+                    $"潜行{next}では選んだ道標により、ボス以外のすべての敵が「悪夢化」して強くなります。倒すと、一段上の戦利品が出ます。",
                     $"At delve {next}, your waypoint makes every non-boss enemy a stronger nightmare. They drop loot a tier higher."), "#ff9ae0");
                 return;
             }
@@ -744,7 +744,7 @@ namespace SodRpg.Mod
             string gearNote = gearKnown ? "" : Loc.T("ホストの装備による増加はまだ届いていないため、最低値を表示しています。",
                 " These are minimums; the host has not reported its gear bonus yet.");
             _secureNightmareText = UiStyles.Colored(ownershipNote + Loc.T(
-                $"潜行{next}では、通常の敵の{nmNormal}%{atLeastJa}、エリートの{nmElite}%{atLeastJa}が「悪夢化」して強くなります{nmRaised}（ボスは対象外）。倒すと、一段上の戦利品が出ます。{gearNote}",
+                $"潜行{next}では通常の敵の{nmNormal}%{atLeastJa}、エリートの{nmElite}%{atLeastJa}が「悪夢化」して強くなります{nmRaised}（ボスは対象外）。倒すと、一段上の戦利品が出ます。{gearNote}",
                 $"At delve {next}, {atLeastEn}{nmNormal}% of regular enemies and {atLeastEn}{nmElite}% of elites become stronger nightmares{nmRaised} (bosses excluded). They drop loot a tier higher.{gearNote}"), "#ff9ae0");
         }
 
@@ -928,7 +928,7 @@ namespace SodRpg.Mod
                 return;
             }
             GUILayout.Label(run.Infinity != null
-                ? Loc.T("各自が1枚選びます。「選ばない」こともできます。戦利品・旅人への効果は各自の選択を使い、次のボス後の選択で終わります。",
+                ? Loc.T("各自が1枚選びます。「選ばない」こともできます。戦利品・旅人への効果は各自の選択に従い、次のボス後の選択で終わります。",
                     "Each player may choose one card or skip. Loot and Traveler effects use your own choice until the next post-boss choice.")
                 : Loc.T("ホストが1枚選びます。「選ばない」こともできます。次の確保地点に着くと効果が終わります。", "The host may choose one card or skip. Its effect ends at the next secure point."), _st.Small);
             GUILayout.Label(run.Infinity != null
@@ -1424,7 +1424,7 @@ namespace SodRpg.Mod
             "本体の遠征に「持ち帰れる装備（遺物）」が加わります。遠征のたびに少しずつ装備を集めて鍛え、次の遠征をもっと深く、もっと楽に進めるようにしていきます。\n\n" +
             "<b>1回の遠征の流れ</b>\n" +
             "1. 敵を倒すと遺物が落ちます。協力プレイでも各自に別々に落ちるので、取り合いにはなりません。\n" +
-            "2. 拾った物は、まだ持ち帰っていない状態（未確保）で鞄に入ります。あふれるとレア度の低い物（同じレア度ならスコアの低い物）から欠片に換え、そのティック内（先に保存・確保する場合はその前）に持ち主のプロフィールへまとめて付与・通知します。協力プレイの参加者も各自のローカルで付与し、通常のまとめて／定期保存に任せます。MOD設定で追加ドリームダストをONにすると、欠片を減らさずダストもホストがまとめて付与します（既定OFF）。道標による報酬停止中は何も得られません。\n" +
+            "2. 拾った物はまだ持ち帰っていない状態（未確保）で鞄に入ります。あふれるとレア度の低い物（同じレア度ならスコアの低い物）から欠片に換え、そのティック内（先に保存・確保する場合はその前）に持ち主のプロフィールへまとめて付与・通知します。協力プレイの参加者も各自のローカルで付与し、通常のまとめて／定期保存に任せます。MOD設定で追加ドリームダストをONにすると、欠片を減らさずダストもホストがまとめて付与します（既定OFF）。道標による報酬停止中は何も得られません。\n" +
             "3. 新しいゾーンに着くと確保地点が開きます。ここで「確保する」か「深く潜る」かを選びます。\n" +
             "4. 確保した物は保管庫に入り、遠征が終わっても残ります。\n\n" +
             "<b>確保と潜行の考え方</b>\n" +
@@ -1432,7 +1432,7 @@ namespace SodRpg.Mod
             "<b>装備の育て方</b>\n" +
             "・装備：旅人ごとに6つの枠（主装備・頭・防具・手・足・装飾品）に装着します。\n" +
             $"・鍛冶：欠片で強化し（{EnhanceMilestoneListJa()}の節目で特性や固有効果が増え、+{Content.EnhanceMilestones[Content.EnhanceMilestones.Count - 1]}で固有効果1つの値が{Content.LimitBreakPowerPct / 100m:0.##}倍になります）、調律石で特性を{Content.RetuneChoices}つの候補から選び直します。エピック以上は強化・再調律・限界突破・特性の洗い直しの素材費用が基本の{Content.ForgeMaterialCostMultiplier(Rarity.Epic)}倍です。いらない物は分解して欠片に戻せます。\n" +
-            $"・覚醒：固有品は、装着した旅人で敵を倒すと覚醒の力が溜まり、{Content.AwakenThresholdFor(1)}・{Content.AwakenThresholdFor(2)}・{Content.AwakenThresholdFor(3)}で覚醒Ⅰ・Ⅱ・Ⅲになります（固有効果は{Content.AwakenPowerPctAt(1) / 100m:0.##}・{Content.AwakenPowerPctAt(2) / 100m:0.##}・{Content.AwakenPowerPctAt(3) / 100m:0.##}倍、特性は{Content.AwakenAffixPctAt(1) / 100m:0.##}・{Content.AwakenAffixPctAt(2) / 100m:0.##}・{Content.AwakenAffixPctAt(3) / 100m:0.##}倍）。気に入った1本を使い込みましょう。\n" +
+            $"・覚醒：固有品は装着した旅人で敵を倒すと覚醒の力が溜まり、{Content.AwakenThresholdFor(1)}・{Content.AwakenThresholdFor(2)}・{Content.AwakenThresholdFor(3)}で覚醒Ⅰ・Ⅱ・Ⅲになります（固有効果は{Content.AwakenPowerPctAt(1) / 100m:0.##}・{Content.AwakenPowerPctAt(2) / 100m:0.##}・{Content.AwakenPowerPctAt(3) / 100m:0.##}倍、特性は{Content.AwakenAffixPctAt(1) / 100m:0.##}・{Content.AwakenAffixPctAt(2) / 100m:0.##}・{Content.AwakenAffixPctAt(3) / 100m:0.##}倍）。気に入った1本を使い込みましょう。\n" +
             "・星図：旅人ごとの星の経験で最大" + StarProgression.MaxPoints + "ポイントを得ます。図鑑・テスト用の追加分は別枠です。始まりの星から線でつながる星へ伸ばし、到達刻印は星のレベルに応じて最大3つまで選べます。夢のレベルは星のポイントではなく、工房や夢の圧に関わります。夢の圧が高まると敵が強くなり、各ウェーブの戦闘中に敵の数も増えます。追加分の報酬は増加幅に応じて調整します。ボスの数は増えません。\n" +
             "・工房：余った素材で、鞄や保管庫の拡張など、ずっと続く便利な強化を解放します。\n" +
             "・依頼：遠征ごとに3つ出ます。達成すると、欠片と経験値（依頼によっては調律石も）がもらえます。",
@@ -1528,7 +1528,7 @@ namespace SodRpg.Mod
 
         /// <summary>協力プレイの撃破アシストの共通説明（装備・星図・F6 のヘルプに1か所ずつ出す）。撃破時効果は倒れる5秒前までに自分が攻撃した敵でも発動するが、遠征の鍛錬はとどめだけ。</summary>
         private static string KillAssistHelp() => Loc.T(
-            "協力プレイでは、『敵を倒したとき』の効果は、倒れる5秒前までに自分が攻撃した敵が倒れたときも発動します（遠征の鍛錬の撃破数は、とどめを刺した人だけに入ります）。",
+            "協力プレイでは『敵を倒したとき』の効果は、倒れる5秒前までに自分が攻撃した敵が倒れたときも発動します（遠征の鍛錬の撃破数は、とどめを刺した人だけに入ります）。",
             "In co-op, \"when you defeat an enemy\" effects also trigger when an enemy you attacked within the last 5 seconds is defeated by someone else; expedition training kill counts still go only to whoever landed the final blow.");
 
         /// <summary>各タブの先頭に出す「ここでできること」。</summary>
@@ -1536,7 +1536,7 @@ namespace SodRpg.Mod
         {
             switch (tab)
             {
-                case 0: return Loc.T("持ち帰った遺物を、旅人ごとに6つの枠（主装備・頭・防具・手・足・装飾品）へ装着します。遠征中は確保地点でだけ付け替えられます。",
+                case 0: return Loc.T("持ち帰った遺物を旅人ごとに6つの枠（主装備・頭・防具・手・足・装飾品）へ装着します。遠征中は確保地点でだけ付け替えられます。",
                     "Equip relics you brought home into each Traveler's six slots (weapon, head, armor, hands, feet, charm). During an expedition you can only swap at secure points.")
                     + " " + KillAssistHelp();
                 case 1: return Loc.T("欠片で強化、調律石で再調律。同じ名前・同じレア度の遺物を材料に融合すると能力値が上がります。不要な遺物は分解できます。",
@@ -1890,7 +1890,7 @@ namespace SodRpg.Mod
                 }
             }
             GUI.enabled = true;
-            if (p.Run != null && _s.InGame) GUILayout.Label(Loc.T("まとめて分解は、遠征に出ていないときに使えます。", "Bulk salvage is available outside expeditions."), _st.Small);
+            if (p.Run != null && _s.InGame) GUILayout.Label(Loc.T("まとめて分解は遠征に出ていないときに使えます。", "Bulk salvage is available outside expeditions."), _st.Small);
         }
 
         private List<Relic> SortedSatchel()
@@ -2919,7 +2919,7 @@ namespace SodRpg.Mod
             StarSumAddMeleeCoop(hero, matching);
             if (sum.Spent == 0) { StarSumAddTitle(Loc.T("まだ星を取得していません。", "No stars acquired yet.")); return; }
             var note = new StarSumEntry();
-            note.Content.text = "<color=#9aa>" + Loc.T("発動間隔や上限は、各星の説明で確認できます。", "Cooldowns and caps are listed in each star's description.") + "</color>";
+            note.Content.text = "<color=#9aa>" + Loc.T("発動間隔や上限は各星の説明で確認できます。", "Cooldowns and caps are listed in each star's description.") + "</color>";
             _starSumEntries.Add(note);
             for (int i = 0; i < _starNodes.Length; i++)
                 if (_starNodes[i].Allocated && _starNodes[i].Keystone)
@@ -3530,7 +3530,7 @@ namespace SodRpg.Mod
                 Loc.Japanese = cfg.japanese;
                 SaveLanguageConfig?.Invoke(); // ほかのメニュー内の設定と同じく、すぐ保存する（次の起動で戻っていた）
             }
-            GUILayout.Label(Loc.T("キーの割り当てや表示の大きさは、ゲームのMOD設定で変えられます。", "Keys and scale can be changed in the game's mod settings."), _st.Small);
+            GUILayout.Label(Loc.T("キーの割り当てや表示の大きさはゲームのMOD設定で変えられます。", "Keys and scale can be changed in the game's mod settings."), _st.Small);
             GUILayout.EndHorizontal();
             DrawEnemyOwnershipSettings(cfg);
             DrawAutoCastSettings(cfg);

@@ -120,8 +120,8 @@ namespace SodRpg.Core.Game
             ["ownership"] = new Txt("所持品または残高が変わったため取引を中止しました。", "The trade was cancelled because inventory or balances changed."),
             ["cancelled"] = new Txt("取引を中止しました（取り消し・時間切れ・安全でない状態）。", "The trade was cancelled (a cancel request, timeout or unsafe conditions)."),
             ["connection"] = new Txt("接続が変わったため取引を中止しました（切断・再接続・再起動）。", "The trade was cancelled because the connection changed (disconnect, reconnect or restart)."),
-            ["saving"] = new Txt("トレード台帳の保存を準備中です。トレードのみ保留します。", "Preparing the trade journal. Only trade is on hold."),
-            ["recordTooLarge"] = new Txt("取引の記録が大きすぎます。保管庫を整理してから試してください", "The trade record is too large. Tidy up your stash and try again."),
+            ["saving"] = new Txt("トレードの記録を保存する準備中です。トレードのみ保留します。", "Preparing the trade journal. Only trade is on hold."),
+            ["recordTooLarge"] = new Txt("取引の記録が大きすぎます。保管庫を整理してから試してください。", "The trade record is too large. Tidy up your stash and try again."),
             [FusionReason] = new Txt("融合済みの遺物は旧版と交換できません。ホストと交換相手を融合対応版に更新してください。",
                 "Fused relics cannot be traded with older versions. Update the host and trade partner to a version that supports Fusion."),
         };

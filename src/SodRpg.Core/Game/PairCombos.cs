@@ -244,8 +244,8 @@ namespace SodRpg.Core.Game
             if (def.OncePerActivation) sb.Append("1回の使用・通常攻撃・召喚物の攻撃につき1回まで。");
             if (def.OncePerVictim)
                 sb.Append(def.PayoffTrigger == PairComboTrigger.OnKill ? "倒した敵1体につき1回まで。" : "連携印のある敵1体につき1回まで。最初の3回の追加ダメージで繰り返すことはない。");
-            if (def.KillByPayoffMemory) sb.Append("受け手の記憶で倒した敵だけが対象で、召喚獣やほかの記憶の撃破は数えない。協力プレイでは、5秒以内に攻撃した敵を味方が倒したときも発動する。");
-            sb.Append("追加ダメージは属性を持たず、連鎖しない。星の追加ダメージでは、連携を開始することも成立させることもできない。");
+            if (def.KillByPayoffMemory) sb.Append("受け手の記憶で倒した敵だけが対象で、召喚獣やほかの記憶の撃破は数えない。協力プレイでは5秒以内に攻撃した敵を味方が倒したときも発動する。");
+            sb.Append("追加ダメージは属性を持たず、連鎖しない。星の追加ダメージでは連携を開始することも成立させることもできない。");
             if (def.MovementOrigin) sb.Append("移動の記憶は起点にならないため、この組は発動しない。");
             if (def.Trigger == PairComboTrigger.OnBasicAttack || def.PayoffTrigger == PairComboTrigger.OnBasicAttack)
                 sb.Append("召喚獣がいるとき、自分が基本攻撃を撃つたびに判定する。命中は不要である。");

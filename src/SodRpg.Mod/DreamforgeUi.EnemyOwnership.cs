@@ -181,7 +181,7 @@ namespace SodRpg.Mod
             string dynamicSoloMax = CoopBalance.DynamicDifficulty.MaxFactor.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
             GUILayout.Label(Loc.T($"係数は{dynamicMin}〜（協力は{dynamicCoopMax}、ソロは{dynamicSoloMax}が上限）。硬くなった分だけ報酬が増え、易しくなっても報酬は減りません。",
                 $"Factor ranges from {dynamicMin} (capped at {dynamicCoopMax} in co-op, {dynamicSoloMax} in solo). Tougher fights add rewards; easier ones never cut them."), _st.Small);
-            GUILayout.Label(Loc.T("協力プレイでは、担当制と一緒に有効になります。",
+            GUILayout.Label(Loc.T("協力プレイでは担当制と一緒に有効になります。",
                 "In co-op it runs together with enemy ownership."), _st.Small);
             if (!_ownershipLegendFailed)
             {

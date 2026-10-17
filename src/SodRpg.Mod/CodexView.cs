@@ -312,7 +312,7 @@ namespace SodRpg.Mod
             _searchHint = Loc.T("名前・効果で検索", "Search name / effect");
             _emptyText = Loc.T("条件に合う項目がありません。絞り込みや検索を変えてみてください。", "Nothing matches. Try changing the filters or search.");
             _hint = Loc.T(
-                "固有品・セット・固有効果・銘品・組は、見つけるまで名前も効果も「？？？」と伏せられ、枠と系統だけ見えます。土台は伏せられず、未発見でも名前とアイコンが淡く表示されます。検索できるのは、見つけたものと土台の名前・効果です。",
+                "固有品・セット・固有効果・銘品・組は、見つけるまで名前も効果も「？？？」と伏せられ、枠と系統だけ見えます。土台は伏せられず、未発見でも名前とアイコンが淡く表示されます。検索できるのは見つけたものと土台の名前・効果です。",
                 "Legendaries, sets, powers, named items and mini sets keep their name and effects hidden until you find them (???; only slot and line show). Bases are not secret, so unfound ones still show a dim name and icon. Search covers found entries and base names and effects.");
 
             _summary = CodexPresenter.Summary(_res);

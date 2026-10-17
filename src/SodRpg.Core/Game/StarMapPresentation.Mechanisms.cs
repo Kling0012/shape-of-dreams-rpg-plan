@@ -141,7 +141,7 @@ namespace SodRpg.Core.Game
                 string identity = memory;
                 bool afterDisplacement = strike.Trigger == IdentityStrikeTrigger.AfterDisplacementCritical;
                 string cooldown = Number(IdentityStrikeDefinition.CriticalCooldownSeconds);
-                string strikeJa = identity + "の斬撃が、対象と" + shape + "の敵に" + basis + "の" + Percent(strike.AdUnits) + "の闇ダメージを与える。";
+                string strikeJa = identity + "の斬撃が対象と" + shape + "の敵に" + basis + "の" + Percent(strike.AdUnits) + "の闇ダメージを与える。";
                 string timing = afterDisplacement
                     ? Loc.T("ダッシュや瞬間移動の後" + Number(strike.WindowSeconds) + "秒以内の最初の通常攻撃が会心したとき、" + strikeJa + "非会心でも準備は消費される。",
                         "If the first basic attack hit within " + Number(strike.WindowSeconds) + "s after a dash or teleport is critical (a noncritical hit also consumes readiness), ")
@@ -321,7 +321,7 @@ namespace SodRpg.Core.Game
             if (eventDriven && spec.Gimmick == null && spec.Bridge == null)
                 lines.Add(Loc.T("再発動の間隔制限はない。", "No time-based cooldown."));
             if (eventDriven && spec.EveryN > 1 && spec.Recharge == null)
-                lines.Add(Loc.T($"効果は、条件を満たす{spec.EveryN}回ごとに適用される。", $"Applies every {spec.EveryN} qualifying events."));
+                lines.Add(Loc.T($"効果は条件を満たす{spec.EveryN}回ごとに適用される。", $"Applies every {spec.EveryN} qualifying events."));
             if (spec.Once && budget != AttributionBudget.PerActivation)
                 lines.Add(Loc.T("同じ使用からは1回だけ発動する。", "Only once per memory use."));
             if (spec.ValuesByRank.Length > 0)

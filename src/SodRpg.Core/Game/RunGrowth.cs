@@ -312,8 +312,8 @@ namespace SodRpg.Core.Game
                     return threshold == 1 ? Loc.T("パリィに成功するたび", "each time you parry successfully")
                         : Loc.T($"パリィに{threshold}回成功するたび", $"every {threshold} successful parries");
                 case RunGrowthTrigger.HealSucceeded:
-                    return (threshold == 1 ? Loc.T("自分の回復が自分または味方のHPを実際に回復するたび", "each time your healing restores health to yourself or an ally")
-                        : Loc.T($"自分の回復が自分または味方のHPを実際に{threshold}回回復するたび", $"every {threshold} successful heals on yourself or allies"))
+                    return (threshold == 1 ? Loc.T("自分の回復で自分または味方のHPが実際に回復するたび", "each time your healing restores health to yourself or an ally")
+                        : Loc.T($"自分の回復で自分または味方のHPが実際に{threshold}回回復するたび", $"every {threshold} successful heals on yourself or allies"))
                         + Loc.T($"（味方への有効回復・障壁は{StarRankBalance.SupportAllyGrowthMultiplier}回分、自己回復は1回分。溢れ由来の障壁は除く）",
                             $" (effective ally healing/shields count {StarRankBalance.SupportAllyGrowthMultiplier} times; self-heals count once; overheal shields excluded)");
                 case RunGrowthTrigger.EnemyKill:
@@ -330,7 +330,7 @@ namespace SodRpg.Core.Game
                         : Loc.T($"自分の記憶が敵に{threshold}回命中するたび", $"every {threshold} hits by your memories on enemies");
                 default:
                     return threshold == 1 ? Loc.T("会心の基本攻撃でとどめを刺すたび", "each time a critical basic attack lands the finishing blow")
-                        : Loc.T($"会心の基本攻撃でとどめを刺すことを{threshold}回行うたび", $"every {threshold} finishing blows by critical basic attacks");
+                        : Loc.T($"会心の基本攻撃でとどめを{threshold}回刺すたび", $"every {threshold} finishing blows by critical basic attacks");
             }
         }
 
@@ -451,7 +451,7 @@ namespace SodRpg.Core.Game
             if (mod.CapBonus > 0) sb.Append($"鍛錬の蓄積上限が{mod.CapBonus}増える。");
             if (mod.EffectPercent > 0) sb.Append($"鍛錬1つごとの能力値の上昇量が{mod.EffectPercent}%増える。");
             if (mod.DoubleGain) sb.Append("鍛錬の獲得数が100%増え、条件を満たすたびに2つ溜まる。");
-            if (targets.Count == 0) return sb.Append("対象は、この旅人のすべての遠征の鍛錬。").ToString();
+            if (targets.Count == 0) return sb.Append("対象はこの旅人のすべての遠征の鍛錬。").ToString();
             foreach (var talent in targets)
             {
                 var growth = talent.RunGrowth;
@@ -465,7 +465,7 @@ namespace SodRpg.Core.Game
                         return StatChangeJa(effect.Stat, amount, amount * (100 + mod.EffectPercent) / 100d);
                     })) + "変わる。");
                 if (mod.CapBonus > 0) sb.Append($"鍛錬の蓄積上限は{growth.Cap}から{growth.Cap + mod.CapBonus}になる。");
-                if (mod.EffectPercent > 0 || mod.CapBonus > 0) sb.Append("これは、この星だけを基本値へ適用した場合の値である。");
+                if (mod.EffectPercent > 0 || mod.CapBonus > 0) sb.Append("これはこの星だけを基本値に適用した場合の値である。");
             }
             return sb.ToString();
         }

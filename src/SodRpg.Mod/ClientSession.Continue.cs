@@ -168,7 +168,7 @@ namespace SodRpg.Mod
                 && _nativeContinueCheckpoint == null && !InfinityMode.Restoring)
                 || Time.unscaledTime < _nativeContinueRestoreDeadline) return;
             _nativeContinueRestoreDeadline = float.PositiveInfinity;
-            string warning = Loc.T("再開の完了通知が30秒届いていません。本体の復元状態を確認して待機を解除します。",
+            string warning = Loc.T("再開の完了通知が30秒間届いていません。本体の復元状態を確認して待機を解除します。",
                 "Resume completion has not arrived for 30 seconds. Checking native restore state to release the wait.");
             Log.Warn(warning);
             _notify?.Invoke(new GameEvent(EventKind.Warning, warning));
