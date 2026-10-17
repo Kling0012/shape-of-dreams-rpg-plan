@@ -32,6 +32,7 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ### 不具合の修正 / Bug fixes
 
+- 協力取引で、提示した遺物を後から再調律すると警告が出ないまま確認でき、ホストに取引を取り消されていた問題を直しました。 / Fixed co-op trades being cancelled on confirm after an offered relic was retuned, with no warning shown.
 - インフィニティで、行き止まりから Primus の図を作り直した後に保存して Continue すると、インフィニティが無効になることがある問題を直しました。 / Fixed Infinity being disabled on Continue after a Primus graph was regenerated at a dead end and then saved.
 - 過剰（禁忌化）で増えた条件付きの攻撃・能力ボーナスが、条件付きの共通上限（120%）に数えられて削られていた問題を直しました。 / Fixed the Overcharge boost on conditional attack and power bonuses counting toward their shared 120% cap.
 - v1.29 の固有効果の説明が、強化・覚醒・過剰や星で上限を超えた値と食い違っていた問題を直しました。装備の元の値の上限、強化後の最大値、星の加算を日英で説明します。 / Fixed v1.29 power descriptions contradicting values raised above the base cap by enhancement, awakening, Overcharge or stars. Both languages now explain the equipment base cap, the enhanced ceiling and additive star values.
