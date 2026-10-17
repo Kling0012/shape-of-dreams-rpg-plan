@@ -68,7 +68,7 @@ namespace Issue73.Native.Tests
         [Fact]
         public void Timeout_keeps_consumed_rights_and_notifies_only_after_delayed_write_finishes()
         {
-            var session = CreateSession();
+            var session = CreateSession(confirmTimeoutMs: 100);
             var uid = session.Profile.InterruptedRelics.Single().Uid;
             _files.HoldWrites = true;
 
@@ -92,7 +92,7 @@ namespace Issue73.Native.Tests
         [Fact]
         public void Late_failure_retries_consumed_claim_without_erasing_subsequent_local_loot()
         {
-            var session = CreateSession();
+            var session = CreateSession(confirmTimeoutMs: 100);
             string claimedUid = session.Profile.InterruptedRelics.Single().Uid;
             _files.HoldWrites = true;
             Assert.NotNull(session.ClaimInterruptedRelics());
@@ -171,7 +171,7 @@ namespace Issue73.Native.Tests
             Assert.Single(session.Profile.InterruptedRelics);
         }
 
-        private ClientSession CreateSession(Action<GameEvent> notify = null)
+        private ClientSession CreateSession(Action<GameEvent> notify = null, int? confirmTimeoutMs = null)
         {
             NetworkServer.active = false;
             NetworkClient.active = true;
@@ -184,8 +184,10 @@ namespace Issue73.Native.Tests
             store.Save(profile);
             _session = new ClientSession(notify) { Profile = profile, ActiveRunId = "current", LocalHero = new Hero() };
             Set(_session, "_store", store);
-            // 書き込みを止めたまま準備保存の時間切れを待つ場面があるので、待つ上限を短くする（既定は3秒）。
-            Set(_session, "_writer", new AsyncProfileWriter(store) { ConfirmTimeoutMs = 100 });
+            var writer = new AsyncProfileWriter(store);
+            // Only held-write timeout scenarios need a shorter wait than the production default.
+            if (confirmTimeoutMs.HasValue) writer.ConfirmTimeoutMs = confirmTimeoutMs.Value;
+            Set(_session, "_writer", writer);
             Set(_session, "_zone", new ZoneManager { currentZoneIndex = 0 });
             NetworkedManagerBase<GameManager>.softInstance = new GameManager { runId = "current" };
             Assert.True(_session.CanClaimInterruptedRelics);

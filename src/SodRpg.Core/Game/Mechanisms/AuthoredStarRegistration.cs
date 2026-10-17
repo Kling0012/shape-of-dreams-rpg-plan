@@ -240,6 +240,7 @@ namespace SodRpg.Core.Game
             var outerFallbacks = new Dictionary<(string Hero, string Cluster), string>();
             var routeEntries = new Dictionary<(string Hero, string Route), string>();
             var pairBases = new Dictionary<(string Hero, string Pair), AuthoredStarDef>();
+            var bridgePairs = new Dictionary<string, string>(StringComparer.Ordinal);
             foreach (var node in existing)
             {
                 var key = (node.HeroKey, node.RouteId);
@@ -248,6 +249,9 @@ namespace SodRpg.Core.Game
             foreach (var node in definitions)
             {
                 if (node == null) continue;
+                var bridge = (node.Mechanism ?? node.Effect?.Mechanism)?.Bridge;
+                if (node.Region?.Kind == ClusterRegionKind.Bridge && node.Region.Id != null && bridge != null && !bridgePairs.ContainsKey(node.Region.Id))
+                    bridgePairs.Add(node.Region.Id, bridge.PairId);
                 var cluster = (node.HeroKey, node.ClusterId);
                 if (node.AnchorId != null && !anchors.ContainsKey(cluster)) anchors.Add(cluster, node.AnchorId);
                 if (node.Effect?.Kind == ClusterStarKind.Stat)
@@ -295,8 +299,8 @@ namespace SodRpg.Core.Game
                     edges.Add(new AuthoredStarEdge(original.AnchorId, original.LocalStarId));
                 if (original.AnchorId != null)
                     foreach (string alternate in original.RequiredAnyStarIds) if (alternate != original.LocalStarId) edges.Add(new AuthoredStarEdge(alternate, original.LocalStarId));
-                var effect = CopyEffect(original.Effect, definitions);
-                var mechanism = CopyMechanism(original.Mechanism, definitions);
+                var effect = CopyEffect(original.Effect, bridgePairs);
+                var mechanism = CopyMechanism(original.Mechanism, bridgePairs);
                 var requiredStars = new List<string>(original.RequiredStarIds);
                 var effectiveSpec = mechanism ?? effect.Mechanism;
                 if (effectiveSpec?.Bridge != null)
@@ -329,7 +333,7 @@ namespace SodRpg.Core.Game
             }
             return result.AsReadOnly();
         }
-        private static AuthoredMechanismSpec CopyMechanism(AuthoredMechanismSpec spec, IReadOnlyList<AuthoredStarDef> definitions = null)
+        private static AuthoredMechanismSpec CopyMechanism(AuthoredMechanismSpec spec, Dictionary<string, string> bridgePairs = null)
         {
             if (spec == null) return null;
             var result = AuthoredMechanismCodec.DecodeSpec(AuthoredMechanismCodec.EncodeSpec(spec));
@@ -337,14 +341,11 @@ namespace SodRpg.Core.Game
             {
                 // A replacement dataset owns its bridge bindings. The installed registry
                 // still describes the old dataset until RegisterAuthored commits the new one.
-                if (definitions != null)
-                    foreach (var node in definitions)
-                        if (node?.Region?.Kind == ClusterRegionKind.Bridge && node.Region.Id == result.PairId
-                            && (node.Mechanism ?? node.Effect?.Mechanism)?.Bridge != null)
-                        {
-                            result.PairId = (node.Mechanism ?? node.Effect.Mechanism).Bridge.PairId;
-                            return result;
-                        }
+                if (bridgePairs != null && bridgePairs.TryGetValue(result.PairId, out string pairId))
+                {
+                    result.PairId = pairId;
+                    return result;
+                }
                 var existingPair = PairCombos.ForBridge(result.PairId);
                 if (existingPair != null) result.PairId = existingPair.Id;
             }
@@ -359,11 +360,11 @@ namespace SodRpg.Core.Game
         { OwnerId = c.OwnerId, SourceMemory = c.SourceMemory, ReceiverMemory = c.ReceiverMemory, ChannelId = c.ChannelId,
             EquipmentRequirements = c.EquipmentRequirements.ToArray(), PairSuccessId = c.PairSuccessId, ActivationBudget = c.ActivationBudget,
             ClockPolicy = c.ClockPolicy, ScopeKind = c.ScopeKind };
-        private static ClusterStarDef CopyEffect(ClusterStarDef e, IReadOnlyList<AuthoredStarDef> definitions = null) => new ClusterStarDef
+        private static ClusterStarDef CopyEffect(ClusterStarDef e, Dictionary<string, string> bridgePairs = null) => new ClusterStarDef
         { Kind = e.Kind, Name = e.Name, Memory = e.Memory, Amount = e.Amount, Param = e.Param, Power = e.Power, Stat = e.Stat,
             Gimmick = e.Gimmick == null ? null : Gimmicks.ApplyModifierUnits(e.Gimmick, 0, 0, 0, 0, 0), MaxRank = e.MaxRank, RankCost = e.RankCost,
-            Options = e.Options?.Select(option => CopyEffect(option, definitions)).ToArray(), NativeModifier = CopyNative(e.NativeModifier), ScopedModifier = CopyModifier(e.ScopedModifier),
-            EffectChannel = CopyChannel(e.EffectChannel), Mechanism = CopyMechanism(e.Mechanism, definitions),
+            Options = e.Options?.Select(option => CopyEffect(option, bridgePairs)).ToArray(), NativeModifier = CopyNative(e.NativeModifier), ScopedModifier = CopyModifier(e.ScopedModifier),
+            EffectChannel = CopyChannel(e.EffectChannel), Mechanism = CopyMechanism(e.Mechanism, bridgePairs),
             KeystoneDefinition = e.KeystoneDefinition == null ? null : AuthoredKeystoneCodec.Decode(AuthoredKeystoneCodec.Encode(e.KeystoneDefinition)),
             // Immutable typed payloads are shared safely.
             RunGrowth = e.RunGrowth, RunGrowthModifier = e.RunGrowthModifier };
