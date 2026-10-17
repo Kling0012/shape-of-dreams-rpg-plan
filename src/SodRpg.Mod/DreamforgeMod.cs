@@ -27,6 +27,7 @@ namespace SodRpg.Mod
         partial void StopNativeKillRewards();
         partial void ApplyAutoCastCoopConfig();
         partial void TickAutoCastCoopConfig();
+        partial void ApplyNativePerfConfig();
 
         private ClientSession _session;
         private HostAuthority _host;
@@ -67,6 +68,7 @@ namespace SodRpg.Mod
                 ApplyLevelEssenceConfig();
                 ApplyRoomOmensConfig();
                 ApplyAutoCastCoopConfig();
+                ApplyNativePerfConfig();
                 // Install the generated star maps and their migration rules before any profile is loaded or any build is computed.
                 var starRegistrationWatch = System.Diagnostics.Stopwatch.StartNew();
                 StarClusters.RegisterAllGenerated((hero, error) =>
@@ -127,6 +129,7 @@ namespace SodRpg.Mod
             ApplyLevelEssenceConfig();
             ApplyRoomOmensConfig();
             ApplyAutoCastCoopConfig();
+            ApplyNativePerfConfig();
             ApplyMeleeCoopConfig();
         }
 
