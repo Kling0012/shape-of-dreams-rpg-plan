@@ -130,8 +130,11 @@ namespace SodRpg.Mod
         }
 
         // Called once by the native room-load entry, before new room actors are prepared.
+        partial void FlushSpecialEnemySummary();
+
         internal void OnDynamicRoomLoading()
         {
+            FlushSpecialEnemySummary();
             try
             {
                 EnsureDynamicRun();
@@ -306,9 +309,8 @@ namespace SodRpg.Mod
             if ((_dynamicFailed & DynamicPart.Measurement) != 0) return;
             try
             {
-                if (!DynamicRunning() || enemy == null || enemy.IsAnyBoss()
-                    || !_dynamicEnemies.TryGetValue(enemy, out var state) || state.Sampled || !(health > 0)
-                    || OwnershipExcluded(enemy)) return;
+                if (enemy == null || !_dynamicEnemies.TryGetValue(enemy, out var state) || state.Sampled
+                    || !(health > 0) || !DynamicRunning() || enemy.IsAnyBoss() || OwnershipExcluded(enemy)) return;
                 double factor = EnemyDynamicFactor(enemy);
                 double personal = health / factor;
                 double room = health / appliedMultiplier;
@@ -323,8 +325,9 @@ namespace SodRpg.Mod
         {
             try
             {
-                if ((_dynamicFailed & DynamicPart.Measurement) != 0 || !DynamicRunning()
-                    || !_dynamicEnemies.TryGetValue(enemy, out var state) || state.Sampled || state.Room != _dynamicRoom || state.Run != _dynamicRun || enemy.IsAnyBoss()) return;
+                if ((_dynamicFailed & DynamicPart.Measurement) != 0 || enemy == null
+                    || !_dynamicEnemies.TryGetValue(enemy, out var state) || state.Sampled
+                    || state.Room != _dynamicRoom || state.Run != _dynamicRun || !DynamicRunning() || enemy.IsAnyBoss()) return;
                 if (_enemyOwnership.TryGetValue(enemy, out var ownership) && ownership.Excluded) return;
                 if (!combat && enemy is Monster monster && _monsters.TryGetValue(monster, out var runtime) && !runtime.SpawnProcessed) return;
                 enemy.Status?.CalculateStatsIfDirty();

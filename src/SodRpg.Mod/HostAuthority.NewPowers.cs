@@ -156,14 +156,47 @@ namespace SodRpg.Mod
             if (ratio > 0f) hero.ApplyCooldownReductionByRatio(skill, ratio, false);
         }
 
-        private IEnumerable<Hero> LivingAllies(Hero hero, float range, bool includeSelf = false)
+        private readonly struct LivingAllyEnumerable
         {
-            if (_am == null) yield break;
-            foreach (var other in _am.allHeroes)
-                if (Alive(other) && (includeSelf && other == hero || other != hero && other.GetRelation(hero) == EntityRelation.Ally)
-                    && (range <= 0f || CoopDistanceNative.Coefficient(hero, other, range) > 0f))
-                    yield return other;
+            private readonly List<Hero> _heroes;
+            private readonly Hero _hero;
+            private readonly float _range;
+            private readonly bool _includeSelf;
+            internal LivingAllyEnumerable(List<Hero> heroes, Hero hero, float range, bool includeSelf)
+            { _heroes = heroes; _hero = hero; _range = range; _includeSelf = includeSelf; }
+            public Enumerator GetEnumerator() => new Enumerator(_heroes, _hero, _range, _includeSelf);
+            public struct Enumerator
+            {
+                private List<Hero>.Enumerator _heroes;
+                private readonly bool _hasHeroes;
+                private readonly Hero _hero;
+                private readonly float _range;
+                private readonly bool _includeSelf;
+                public Hero Current { get; private set; }
+                internal Enumerator(List<Hero> heroes, Hero hero, float range, bool includeSelf)
+                {
+                    _hasHeroes = heroes != null;
+                    _heroes = heroes != null ? heroes.GetEnumerator() : default;
+                    _hero = hero; _range = range; _includeSelf = includeSelf; Current = null;
+                }
+                public bool MoveNext()
+                {
+                    if (!_hasHeroes) return false;
+                    while (_heroes.MoveNext())
+                    {
+                        var other = _heroes.Current;
+                        if (!Alive(other) || !(_includeSelf && other == _hero
+                            || other != _hero && other.GetRelation(_hero) == EntityRelation.Ally)
+                            || !(_range <= 0f || CoopDistanceNative.Coefficient(_hero, other, _range) > 0f)) continue;
+                        Current = other;
+                        return true;
+                    }
+                    return false;
+                }
+            }
         }
+        private LivingAllyEnumerable LivingAllies(Hero hero, float range, bool includeSelf = false) =>
+            new LivingAllyEnumerable(_am != null ? _am.allHeroes : null, hero, range, includeSelf);
 
         private static float Higher(Hero hero) => Math.Max(hero.Status.attackDamage, hero.Status.abilityPower);
 
@@ -433,8 +466,9 @@ namespace SodRpg.Mod
             if (ultimate)
             {
                 float heal = rt.Powers.TriumphSongHeal(hero.maxHealth);
-                foreach (var ally in LivingAllies(hero, PowersBalance.TriumphSongRange, includeSelf: true))
-                    PowerHeal(rt, ally, heal * CoopDistanceNative.Coefficient(hero, ally, PowersBalance.TriumphSongRange));
+                if (heal > 0f)
+                    foreach (var ally in LivingAllies(hero, PowersBalance.TriumphSongRange, includeSelf: true))
+                        PowerHeal(rt, ally, heal * CoopDistanceNative.Coefficient(hero, ally, PowersBalance.TriumphSongRange));
             }
         }
 
@@ -504,14 +538,17 @@ namespace SodRpg.Mod
             bool summonKill = assist ? assistSummon : info.actor != null && info.actor.FindFirstOfType<Summon>() is Summon summon
                 && summon.FindFirstAncestorOfType<Hero>() == hero;
             PowerShield(rt, hero, Power.PackFeast, p.PackFeastShield(hero.maxHealth, summonKill), PowersBalance.PackFeastDuration);
-            Hero nearest = null;
-            float distance = float.PositiveInfinity;
-            foreach (var ally in LivingAllies(hero, 0f))
+            if (p.Build.Get(Power.RelayHand) > 0)
             {
-                float d = (ally.agentPosition - hero.agentPosition).sqrMagnitude;
-                if (d < distance) { nearest = ally; distance = d; }
+                Hero nearest = null;
+                float distance = float.PositiveInfinity;
+                foreach (var ally in LivingAllies(hero, 0f))
+                {
+                    float d = (ally.agentPosition - hero.agentPosition).sqrMagnitude;
+                    if (d < distance) { nearest = ally; distance = d; }
+                }
+                if (nearest != null) ReduceNormalMemories(nearest, p.TakeRelayHand(Time.time, nearest.GetInstanceID()) * 100f, longestOnly: true);
             }
-            if (nearest != null) ReduceNormalMemories(nearest, p.TakeRelayHand(Time.time, nearest.GetInstanceID()) * 100f, longestOnly: true);
             var st = victim.Status;
             int types = (st.fireStack > 0 ? 1 : 0) + (st.hasCold ? 1 : 0) + (st.lightStack > 0 ? 1 : 0) + (st.darkStack > 0 ? 1 : 0);
             QueuePowerDamage(rt, null, victim.position, PowersBalance.ElementalHarvestRange, p.ElementalHarvestDamage(Higher(hero), types), except: victim);

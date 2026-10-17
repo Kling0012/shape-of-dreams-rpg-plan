@@ -2030,13 +2030,28 @@ namespace SodRpg.Mod
             }
         }
 
+        private sealed class SetLinkProgressText
+        {
+            internal int Count;
+            internal bool Satisfied, Japanese;
+            internal string Text;
+        }
+        private readonly Dictionary<SetDef, SetLinkProgressText> _setLinkProgressTexts = new Dictionary<SetDef, SetLinkProgressText>();
+
         private void DrawSetLinkProgress(SetDef set, int count)
         {
             if (set.LinkStages.Length == 0) return;
             var marks = LinkMarks();
             var stage = set.SelectLinkStage(count) ?? set.LinkStages[0];
             bool satisfied = marks != null && Links.Satisfied(stage.Link, _linkHeroKey, _linkMemories, _linkEssences, _linkAllies);
-            GUILayout.Label(UiStyles.Colored(set.DescribeLinkProgress(count, satisfied), "#7fd8ff"), _st.Small);
+            if (!_setLinkProgressTexts.TryGetValue(set, out var row))
+                _setLinkProgressTexts.Add(set, row = new SetLinkProgressText());
+            if (row.Text == null || row.Count != count || row.Satisfied != satisfied || row.Japanese != Loc.Japanese)
+            {
+                row.Count = count; row.Satisfied = satisfied; row.Japanese = Loc.Japanese;
+                row.Text = UiStyles.Colored(set.DescribeLinkProgress(count, satisfied), "#7fd8ff");
+            }
+            GUILayout.Label(row.Text, _st.Small);
         }
 
         /// <summary>固有品の覚醒の進み具合、または覚醒済みの印。</summary>

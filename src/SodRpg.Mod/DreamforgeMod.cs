@@ -88,6 +88,7 @@ namespace SodRpg.Mod
                 ApplyMeleeCoopConfig();
                 _session.FirstLaunch();
                 _perfLogEnabled = File.Exists(Path.Combine(dir, "perf.flag"));
+                _host.SpecialEnemyDiagnostics = _perfLogEnabled;
                 try
                 {
                     _devCommands = File.Exists(Path.Combine(dir, "dev.flag"));
