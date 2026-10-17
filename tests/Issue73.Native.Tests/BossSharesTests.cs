@@ -191,9 +191,13 @@ namespace Issue73.Native.Tests
 
         // ---- ダメージの振り分け ----
 
-        [Fact]
-        public void Strikes_drain_the_own_share_first_and_help_afterwards_at_the_helper_factor()
+        [Theory]
+        [InlineData(0, 1d)]
+        [InlineData(1, 0.75d)]
+        [InlineData(2, 0.5d)]
+        public void Strikes_drain_the_own_share_first_and_help_afterwards_at_the_helper_factor(int zoneIndex, double factor)
         {
+            NetworkedManagerBase<ZoneManager>.softInstance.currentZoneIndex = zoneIndex;
             var host = Host(out _);
             var a = Player(5);
             BuildFor(host, a, 2, 0);  // 新人
@@ -213,7 +217,6 @@ namespace Issue73.Native.Tests
 
             // a の持ち分（残り capA - 100）を境目をまたいで超える一撃: 超えた分だけ手伝い倍率。
             double rest = capA - 100;
-            double factor = CoopBalance.Ownership.HelpFactor * Math.Min(1, soloB / soloA);
             Assert.Equal(rest + (300 - rest) * factor, Strike(host, boss, a.hero, 300f), 1);
             var remaining = ShareRemaining(host, boss);
             Assert.Equal(0, remaining[0], 1); // 自分の持ち分を使い切った
@@ -225,6 +228,7 @@ namespace Issue73.Native.Tests
         [Fact]
         public void Help_overflow_spills_from_the_largest_remaining_share_until_all_shares_are_gone()
         {
+            NetworkedManagerBase<ZoneManager>.softInstance.currentZoneIndex = 2;
             var host = Host(out _);
             var a = Player(5);
             BuildFor(host, a, 2, 0);  // 1.00
@@ -324,7 +328,7 @@ namespace Issue73.Native.Tests
             Assert.Equal(ShareCapacity(host, boss)[1], capC, 1);
 
             // 他の人は手伝いで KO 中の人の持ち分を削れる（蘇生より放置が有利にならない）。
-            double factor = CoopBalance.Ownership.HelpFactor * Math.Min(1, SoloOf(host, c) / soloA);
+            double factor = 1; // 最初の世界はKO中の味方の持ち分にも全量が通る。
             Assert.Equal(rest + (400 - rest) * factor, Strike(host, boss, a.hero, 400f), 1);
             Assert.Equal(0, ShareRemaining(host, boss)[0], 1);
             Assert.Equal(remC - (400 - rest) * factor, ShareRemaining(host, boss)[1], 1);
