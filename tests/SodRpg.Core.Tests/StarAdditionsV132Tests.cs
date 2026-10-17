@@ -210,7 +210,7 @@ namespace SodRpg.Core.Tests
         {
             Assert.Throws<ArgumentException>(() => new RunGrowthDef(RunGrowthTrigger.DamageTakenMaxHpPct, 0, 60, new[] { new RunGrowthEffect(Stat.Armor, 1000) }));
             Assert.Throws<ArgumentException>(() => new RunGrowthDef(RunGrowthTrigger.DamageTakenMaxHpPct, 101, 60, new[] { new RunGrowthEffect(Stat.Armor, 1000) }));
-            Assert.Throws<ArgumentException>(() => new RunGrowthDef(RunGrowthTrigger.ParrySuccess, 1, 0, new[] { new RunGrowthEffect(Stat.Armor, 1000) }));
+            Assert.Throws<ArgumentException>(() => new RunGrowthDef(RunGrowthTrigger.ParrySuccess, 1, -1, new[] { new RunGrowthEffect(Stat.Armor, 1000) }));
             Assert.Throws<ArgumentException>(() => new RunGrowthDef(RunGrowthTrigger.ParrySuccess, 1, 600, new[] { new RunGrowthEffect(Stat.Armor, 1000) }));
             Assert.Throws<ArgumentException>(() => new RunGrowthDef(RunGrowthTrigger.ParrySuccess, 1, 5, new RunGrowthEffect[0]));
             Assert.Throws<ArgumentException>(() => new RunGrowthDef(RunGrowthTrigger.ParrySuccess, 1, 5, new[] { new RunGrowthEffect(Stat.EssenceSlotIdentity, 1000) }));
