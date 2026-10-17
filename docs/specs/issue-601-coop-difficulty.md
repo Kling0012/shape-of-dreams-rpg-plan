@@ -78,15 +78,18 @@ DOTNET_ROLL_FORWARD=LatestMajor dotnet run --project tools/BalanceSim -c Release
 
 `pressure/coop/.../1` が従来と同じ1人用の圧、`.../2` と `.../4` が緩和後。変更前ボスHPは同条件の1人用HPに人数×0.8を掛ける。報酬用の圧は協力緩和から独立し、旧ホストの省略フィールド0は従来のHP同期値へ代替する。
 
-## 要件との対応
+## 要件との対応（今回の依頼のR1〜R4）
+
+今回の依頼ではR1とR3が協力序盤、R2とR4が高リンボ等の難度上昇を指す。以下は今回の要件番号であり、後述するPR #677の過去の記録の要件番号とは区別する。
 
 | 要件 | 実装箇所 | 対応内容 |
 | --- | --- | --- |
-| R1：協力序盤の緩和 | `BossShareNativeHealth.AddBonus`、`DreamPressure.WithCoopScaling`、`CoopBalance.Ownership.BossShareFactor` | 人数由来の追加HP・攻撃・魔力を半減。育成初期の圧増分と2／4人ボスHPも下げる |
-| R2：協力の高難度での跳ね上がり抑制 | `HostAuthority.RefreshPressure`、`HostAuthority.OwnershipBasePressure`、`DreamPressure.CombatMultiplier` / `EnemyCountMultiplier` | 部屋と個人の双方で深度・道標適用後の圧を制限し、担当敵・共有敵・ボス持ち分に届ける |
-| R3：高リンボ等の過剰強化の緩和 | 上記に加えて `HostAuthority.OnDynamicRoomLoading`、`HostAuthority.PrepareBossShares` | 圧HP8倍・攻撃2倍・圧敵数2.5倍・協力D1.5倍を上限とし、ボスHP合算係数も0.7へ下げる |
+| R1：マルチの序盤の難易度を緩和する | `BossShareNativeHealth.AddBonus`、`DreamPressure.WithCoopScaling`、`CoopBalance.Ownership.BossShareFactor` | 人数由来の追加HP・攻撃・魔力を半減。育成初期の圧増分と2／4人ボスHPも下げる |
+| R2：高いリンボ等の難易度の跳ね上がりを緩和する | `HostAuthority.RefreshPressure`、`HostAuthority.OwnershipBasePressure`、`DreamPressure.CombatMultiplier` / `EnemyCountMultiplier` | 部屋と個人の双方で深度・道標適用後の圧を制限し、担当敵・共有敵・ボス持ち分に届ける |
+| R3：マルチプレイにおいて序盤から難易度が高すぎる点を緩和する | R1と同じ実装に加え `HostAuthority.PrepareBossShares` | 夢Lv1・星0では圧1倍を維持し、人数の追加補正を半減。2／4人の初期ボスHPを1.6／3.2倍から1.4／2.8倍へ下げる |
+| R4：高いリンボ等でクリア不可能レベルに跳ね上がる点を緩和する | R2と同じ実装に加え `HostAuthority.OnDynamicRoomLoading`、`HostAuthority.PrepareBossShares` | 圧HP8倍・攻撃2倍・圧敵数2.5倍・協力D1.5倍を上限とし、ボスHP合算係数も0.7へ下げる |
 
-利用者の追加コメント「高いリンボなどにおいて特にクリア不可能レベルに難易度が跳ね上がっている」はR3に対応する。本体Limboの深さに関係なく、強化済みの敵へ重なる協力用の人数・圧・敵数・Dを緩和する。低深度限定の条件はない。前ラウンドでは本体DLLの `GameMod_Limbo.OnActorAdd` / `GetStatBonus` と `Monster.OnStartServer` を確認した。Limboのボーナスは前者で別に追加され、人数ボーナスだけを後者のフックで緩和する。`InstallPressureHealthProcessor` / `ApplyPressure` が最終能力値へ掛ける圧は部屋・個人の両経路で上限適用済みになるため、高リンボ専用の追加倍率は設けない。ゲーム内の踏破可能性は未確認。
+利用者の追加コメント「高いリンボなどにおいて特にクリア不可能レベルに難易度が跳ね上がっている」は今回のR2・R4に対応する。本体Limboの深さに関係なく、強化済みの敵へ重なる協力用の人数・圧・敵数・Dを緩和する。低深度限定の条件はない。前ラウンドでは本体DLLの `GameMod_Limbo.OnActorAdd` / `GetStatBonus` と `Monster.OnStartServer` を確認した。Limboのボーナスは前者で別に追加され、人数ボーナスだけを後者のフックで緩和する。`InstallPressureHealthProcessor` / `ApplyPressure` が最終能力値へ掛ける圧は部屋・個人の両経路で上限適用済みになるため、高リンボ専用の追加倍率は設けない。ゲーム内の踏破可能性は未確認。
 
 ## PR #673で実行した検証（過去の記録）
 
@@ -128,7 +131,7 @@ PR #677の開始点 `15a379d4` には、PR #673の上記実装（`d9bdf45f`）�
 
 追加の[PRコメント](https://github.com/Kling0012/shape-of-dreams-rpg-plan/pull/677#issuecomment-6228525648)の内容は、CIが4分以内に作成されなかったため、`e8043b1175f71946564820a6ba88d869387c27ee` に対してLabで代替検証を実施したという報告である。Release MODビルド、`gen_cs.py --check`、`test_changed.py` が終了コード0と記録されている。最後のコマンドは文書1ファイルのみを検出し、実行対象テストなしと判定している。このLab結果はコメントから参照した過去の実行結果であり、今回のローカル実行とは区別する。
 
-R4はこの代替検証の確認・記録として対応する。新しい症状・調整値・CI設定の変更要求は含まれていないため、R1〜R3の既存実装と数値は維持する。CIが作成されなかった原因の特定や、ゲーム内の踏破確認を完了したとはしない。
+PR #677の修正ラウンドにおけるR4は、この代替検証の確認・記録を指す（今回の依頼の高リンボ緩和R4とは異なる）。新しい症状・調整値・CI設定の変更要求は含まれていないため、当時のR1〜R3の既存実装と数値は維持した。CIが作成されなかった原因の特定や、ゲーム内の踏破確認を完了したとはしない。
 
 今回の修正ラウンドでは、同じworktreeで以下を実際に実行した。パッケージキャッシュは既定のworktree外の `/home/wang/.cache/gh-auto/nuget` を使用した。
 
@@ -139,3 +142,31 @@ R4はこの代替検証の確認・記録として対応する。新しい症状
 - 初回確認と同じフィルター・コマンドで `SodRpg.Core.Tests` の圧・深度・報酬・道標・悪夢関連10クラスを実行：終了コード0、133成功・失敗0・スキップ0。
 
 今回未実行：ゲーム実行が必要なD1〜D3・Unity内Harmony適用・実通信・描画、フル／遅いテスト。再現ハーネスissue572・Pythonの道標／stage6テスト・BalanceSimの数値照合・本体DLLの再逆コンパイルも、実装・数値に追加変更がないため今回の修正ラウンドでは再実行していない。GitHub CIの再作成とLabでの再実行は行わず、上記ローカル検証とコメントのLab記録を区別して報告する。
+
+## Issue #601再依頼の確認（2026-10-17、開始点5569b2a8）
+
+### 判断したこと
+
+Issue本文・コメントは協力序盤の緩和と高リンボでの難度上昇の緩和であり、今回のR1／R3、R2／R4はそれぞれ同じ要望を表す。開始点には既存の緩和コミット `d9bdf45f` とPR #677のマージ `e583a536` が既に含まれることを `git merge-base --is-ancestor` で確認した。既存コードは上のR1〜R4すべてに対応し、Issueには前回調整後の新たな症状・追加の目標値はないため、同じ要望で二重に緩和しない。今回の差分は要件対応の訂正と再検証記録であり、ゲームコード・数値・テストに追加変更はない。
+
+受付時の「条件・目標値が不明」という懸念には、上の受け入れ範囲と、同一育成の1／2／4人の固定入力比較で対応する。実測の勝率や踏破可能性を完了基準に含めず、ソロと報酬を維持しながら人数由来の増分と協力用の圧・敵数・Dを制限できることを確認した。
+
+### 実行した検証
+
+以下はこの再依頼で実際に実行した結果であり、前節までの過去の実行結果とは区別する。NuGetキャッシュはworktree外の `/home/wang/.cache/gh-auto/nuget` を使用した。
+
+- `DOTNET_ROLL_FORWARD=LatestMajor dotnet test tests/Issue73.Native.Tests/Issue73.Native.Tests.csproj -c Release --filter 'FullyQualifiedName~EnemyOwnershipTests|FullyQualifiedName~BossSharesTests|FullyQualifiedName~DynamicDifficultyTests|FullyQualifiedName~Issue588PersonalWaypointPressureTests|FullyQualifiedName~CoopOmensWardTests' --nologo -v:quiet`：終了コード0、64成功・失敗0・スキップ0。
+- `DOTNET_ROLL_FORWARD=LatestMajor dotnet test tests/SodRpg.Core.Tests/SodRpg.Core.Tests.csproj -c Release -p:PythonCommand=python3 --filter 'FullyQualifiedName~DreamPressureTests|FullyQualifiedName~PressureBalanceTests|FullyQualifiedName~PressureRewardMultiplierTests|FullyQualifiedName~PressureDividendTests|FullyQualifiedName~PressureSuffixCompatibilityTests|FullyQualifiedName~DreamDepthV130Tests|FullyQualifiedName~DepthRealignHealthTests|FullyQualifiedName~InfinityIntervalScalingTests|FullyQualifiedName~WaypointsTests|FullyQualifiedName~NightmareTests' --nologo -v:quiet`：終了コード0、133成功・失敗0・スキップ0。
+- `python3 tests/repro/issue572/run.py`：終了コード0、15成功・失敗0。
+- `python3 -m unittest tools.tests.test_waypoint_balance tools.tests.test_stage6_balance`：終了コード0、6成功。
+- `python3 tools/balance/gen_cs.py --check`：終了コード0。
+- `dotnet build src/SodRpg.Mod -c Release '-p:GameDir=/home/wang/dev/sod-gamedata/Shape of Dreams' -p:ModDeployDir=/tmp/gh-auto-moddeploy --nologo -v:quiet`：終了コード0、エラー0・既存警告6件。参照先のModsディレクトリは存在せず、ゲームへの配置はない。
+- `DOTNET_ROLL_FORWARD=LatestMajor dotnet run --project tools/BalanceSim -c Release -- --mode pressure --out /tmp/issue601-rerequest-pressure.md --metrics-json /tmp/issue601-rerequest-pressure.json`：終了コード0。5条件×1／2／4人の圧HP・攻撃・敵数・ボスHPは上の比較表の値を出力した（ボス係数0.7fの丸めを含む）。出力JSONをPythonで照合し、ソロHP・攻撃1,920値は変更前から不変の `pressure.json` の式と差0、協力2／4人の欠片・悪夢化率20値は同条件ソロと差0、終了コード0。
+- `git diff d9bdf45f^ HEAD -- tools/balance/pressure.json`：終了コード0、差分なし。ソロの数値原本を変更していない。
+- `git diff --check`：終了コード0。
+
+### 未実行の検証（理由付き）
+
+- ゲームを起動した協力序盤・高リンボの再現と踏破、Unity内でのHarmony適用・実通信・描画：この環境ではゲームを実行できない。体感確認D1〜D3は対象外であり、実プレイでクリア可能と確認したという意味ではない。
+- フル／遅いテスト（`test_changed.py --all`・`SODRPG_SLOW=1`）：依頼に従い関連する既存テストへ限定し、パイプラインへ委ねる。
+- 本体DLLの再逆コンパイルと修正を戻す再現テスト：実行コード・数値に今回の差分がないため未実行。既存の倍率接続部分はコード確認と本体DLL参照ビルドで確認した。
