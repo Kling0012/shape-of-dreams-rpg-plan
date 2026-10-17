@@ -10,6 +10,35 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v3.2.15 — Help finish off other players' enemies in co-op（2026-10-17）
+
+この版は、協力プレイの分担で、ほかの人が担当する通常の敵のHPが30%以下になると手伝えなくなっていた点を改める更新です。あわせて、装備・鍛冶タブの処理を軽くし、いくつかの表示の不具合を直しています。 / This update lets you keep helping with enemies another player is responsible for in co-op, even after their HP drops to 30% or below. It also lightens the work done in the Equipment and Forge tabs and fixes several display issues.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 新機能 / New features
+
+- 協力プレイで分担がオンのとき、ほかの人が担当する通常の敵のHPが30%以下になると、攻撃してもダメージが入らなくなっていました。これからはHPが30%以下になった敵にもダメージが入るので、最後まで削り切る手伝いができます。召喚体の攻撃も同じです。自分の担当の敵や、ボスの自分の持ち分にはこれまでどおりダメージがすべて入ります。担当の人が倒れたり、HPが低かったり、戦っていなかったりするときに、ほかの人が自由に手伝えるのもこれまでどおりです。 / In co-op with shares turned on, attacks on a regular enemy another player was responsible for stopped doing damage once its HP dropped to 30% or below. Now those attacks still deal damage, so you can help finish the enemy off. The same goes for attacks by summons. Attacks on your own enemies and on your own share of a boss still deal full damage as before. As before, others can also help freely when the responsible player is down, low on HP, or not fighting.
+
+### 改善 / Improvements
+
+- 保管庫に装備がたくさんあるときの、装備・鍛冶タブの毎フレームの処理を減らしました。スロットごとの個数、遺物のアイコン、枠の色を毎回作り直さず、使い回すようにしています。 / Reduced per-frame work in the Equipment and Forge tabs when your vault is large. Per-slot counts, relic icons, and frame colors are now reused instead of being rebuilt every time.
+
+### 不具合の修正 / Bug fixes
+
+- 遺物を強化して固有効果が増えたとき、記録タブの図鑑の要約と「固有効果」の発見数がすぐに増えるようにしました。 / When upgrading a relic adds a unique effect, the codex summary and the "Unique effects" discovered count in the Records tab now update right away.
+- 断ち切り済みの遺物を選んだとき、装備比較の「＋」にその固有効果が出るようにしました。 / Selecting a severed relic now shows its unique effect under "+" in the gear comparison.
+- 遠征中に言語を切り替えたとき、敵の頭上に出る悪夢・変異の名前と、ロビーの旅人選びの名前も切り替わるようにしました。 / Switching language during an expedition now also updates the nightmare and mutation names above enemies and the names in the lobby's traveler selection.
+- 装備タブを開いたまま装着や星の割り振りを変えたとき、強さの表示がすぐに変わるようにしました。 / Changing equipment or star allocation with the Equipment tab open now updates the power display immediately.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
 ## v3.2.14 — Infinity boss-clear fix, co-op training ownership fix, and more（2026-10-17）
 
 この版は、Infinity の純白ゾーンでボスを倒しても先へ進めなくなることがある問題を直す更新です。あわせて、協力プレイで遠征を続きから始めたときや再接続したときに鍛錬の成果が別の人のものと取り違えられる問題も直しました。光の精霊・プリムス・ポラリスの技の待ち時間が宝石や記憶の付け替えで消える問題、溢れる命の障壁が依頼の回数に数えられない問題、狩猟団と払暁のセット装備の英語名が固有品と区別できなかった問題なども直しています。 / This update fixes defeating the boss in Infinity's pure white zone sometimes failing to let you move on. It also fixes training progress getting mixed up between players after continuing a run or reconnecting in co-op. Other fixes include the cooldowns of Light Spirit, Primus and Polaris being lost when swapping gems or memories, 溢れる命's shield not counting toward quests, and the English names of Hunting Party and Dawnbreak set gear being indistinguishable from unique items.
