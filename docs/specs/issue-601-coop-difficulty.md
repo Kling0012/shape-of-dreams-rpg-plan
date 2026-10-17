@@ -88,9 +88,9 @@ DOTNET_ROLL_FORWARD=LatestMajor dotnet run --project tools/BalanceSim -c Release
 
 利用者の追加コメント「高いリンボなどにおいて特にクリア不可能レベルに難易度が跳ね上がっている」はR3に対応する。本体Limboの深さに関係なく、強化済みの敵へ重なる協力用の人数・圧・敵数・Dを緩和する。低深度限定の条件はない。前ラウンドでは本体DLLの `GameMod_Limbo.OnActorAdd` / `GetStatBonus` と `Monster.OnStartServer` を確認した。Limboのボーナスは前者で別に追加され、人数ボーナスだけを後者のフックで緩和する。`InstallPressureHealthProcessor` / `ApplyPressure` が最終能力値へ掛ける圧は部屋・個人の両経路で上限適用済みになるため、高リンボ専用の追加倍率は設けない。ゲーム内の踏破可能性は未確認。
 
-## 実行した検証
+## PR #673で実行した検証（過去の記録）
 
-2026-10-17、この作業ブランチで実行。以下の63件・84件・166件・再現15件・Python6件、生成物チェック、Release MODビルド、BalanceSimは修正ラウンドでも再実行して成功した。BalanceSimの新しい出力は `/tmp/issue601-r4-pressure.md` と `/tmp/issue601-r4-pressure.json`。1／2／4人の各比較行で上表の値と報酬・悪夢化率の維持を確認した。ソロ全1920行と旧式の全件照合は前ラウンドの結果であり、修正ラウンドでは再実行していない。
+以下はPR #673の実装時とその修正ラウンド（2026-10-17）の記録であり、PR #677の今回の実行結果ではない。以下の63件・84件・166件・再現15件・Python6件、生成物チェック、Release MODビルド、BalanceSimは当時の修正ラウンドでも再実行して成功した。BalanceSimの新しい出力は `/tmp/issue601-r4-pressure.md` と `/tmp/issue601-r4-pressure.json`。1／2／4人の各比較行で上表の値と報酬・悪夢化率の維持を確認した。ソロ全1920行と旧式の全件照合は前ラウンドの結果であり、修正ラウンドでは再実行していない。
 
 - 変更前の既存協力テスト：63件成功。
 - 変更後の `EnemyOwnershipTests` / `BossSharesTests` / `DynamicDifficultyTests` / `Issue588PersonalWaypointPressureTests` / `CoopOmensWardTests`：63件成功。個人圧・担当変更・保護・流れ弾・ボスHPの合算と二重補正防止・分担・ソロ／OFF・道標の帰属を確認。協力用圧とD上限に合わせた既存期待値のみ更新し、新規テストは追加していない。
@@ -110,9 +110,9 @@ DOTNET_ROLL_FORWARD=LatestMajor dotnet run --project tools/BalanceSim -c Release
 - ゲームを起動した協力序盤・Limboの踏破、Harmonyの実ゲーム適用、2台通信、確保地点の描画：ゲーム実行環境がなく、実機体感確認D1〜D3は依頼対象外。クリア可能性・体感難度を確認済みとはしない。
 - フルテスト・遅いテスト：依頼に従い変更箇所の既存テストに限定し、パイプラインへ委ねる。
 
-## マージ後の再依頼での確認（2026-10-17）
+## PR #677の初回確認（2026-10-17、過去の記録）
 
-今回の開始点 `15a379d4` には、PR #673の上記実装（`d9bdf45f`）が既に含まれていた。Issue本文と追加コメントに新しい調整値・追加症状はないため、同じ依頼でさらに緩和を重ねない。今回の差分は、完了要件を依頼どおりR1〜R3に揃え、現在の実装を再検証した記録に限定する。上の「実行した検証」は前ラウンドの記録であり、以下が今回実際に実行した検証である。
+PR #677の開始点 `15a379d4` には、PR #673の上記実装（`d9bdf45f`）が既に含まれていた。Issue本文と追加コメントに新しい調整値・追加症状はないため、同じ依頼でさらに緩和を重ねない。このPRの差分は、難易度の完了要件をR1〜R3に揃え、現在の実装を再検証した記録に限定する。以下は初回コミット `e8043b11` の作業時に実行した検証であり、今回の修正ラウンドとは区別する。
 
 - `DOTNET_ROLL_FORWARD=LatestMajor dotnet test tests/Issue73.Native.Tests/Issue73.Native.Tests.csproj -c Release --filter 'FullyQualifiedName~EnemyOwnershipTests|FullyQualifiedName~BossSharesTests|FullyQualifiedName~DynamicDifficultyTests|FullyQualifiedName~Issue588PersonalWaypointPressureTests|FullyQualifiedName~CoopOmensWardTests' --nologo -v:quiet`：終了コード0、64件成功・失敗0・スキップ0。
 - `DOTNET_ROLL_FORWARD=LatestMajor dotnet test tests/SodRpg.Core.Tests/SodRpg.Core.Tests.csproj -c Release -p:PythonCommand=python3 --filter 'FullyQualifiedName~DreamPressureTests|FullyQualifiedName~PressureBalanceTests|FullyQualifiedName~PressureRewardMultiplierTests|FullyQualifiedName~PressureDividendTests|FullyQualifiedName~PressureSuffixCompatibilityTests|FullyQualifiedName~DreamDepthV130Tests|FullyQualifiedName~DepthRealignHealthTests|FullyQualifiedName~InfinityIntervalScalingTests|FullyQualifiedName~WaypointsTests|FullyQualifiedName~NightmareTests' --nologo -v:quiet`：終了コード0、133件成功・失敗0・スキップ0。
@@ -123,3 +123,19 @@ DOTNET_ROLL_FORWARD=LatestMajor dotnet run --project tools/BalanceSim -c Release
 - `DOTNET_ROLL_FORWARD=LatestMajor dotnet run --project tools/BalanceSim -c Release -- --mode pressure --out /tmp/issue601-current-pressure.md --metrics-json /tmp/issue601-current-pressure.json`：終了コード0。1／2／4人の比較90値は上の表と一致（ボス係数のfloat丸めを含む）。出力JSONのソロHP・攻撃1,920値を変更前から不変の `pressure.json` の式とPythonで照合し、すべて一致。協力2／4人の欠片・悪夢化率20値も同条件ソロとすべて一致した。
 
 未実行は上記D1〜D3、Unity内のHarmony適用・実通信・描画と、フル／遅いテスト。実機でのクリア可否を判定する追加調整は行っていない。
+
+## PR #677の修正ラウンド：CI代替検証（R4、2026-10-17）
+
+追加の[PRコメント](https://github.com/Kling0012/shape-of-dreams-rpg-plan/pull/677#issuecomment-6228525648)の内容は、CIが4分以内に作成されなかったため、`e8043b1175f71946564820a6ba88d869387c27ee` に対してLabで代替検証を実施したという報告である。Release MODビルド、`gen_cs.py --check`、`test_changed.py` が終了コード0と記録されている。最後のコマンドは文書1ファイルのみを検出し、実行対象テストなしと判定している。このLab結果はコメントから参照した過去の実行結果であり、今回のローカル実行とは区別する。
+
+R4はこの代替検証の確認・記録として対応する。新しい症状・調整値・CI設定の変更要求は含まれていないため、R1〜R3の既存実装と数値は維持する。CIが作成されなかった原因の特定や、ゲーム内の踏破確認を完了したとはしない。
+
+今回の修正ラウンドでは、同じworktreeで以下を実際に実行した。パッケージキャッシュは既定のworktree外の `/home/wang/.cache/gh-auto/nuget` を使用した。
+
+- `dotnet build src/SodRpg.Mod -c Release '-p:GameDir=/home/wang/dev/sod-gamedata/Shape of Dreams' -p:ModDeployDir=/tmp/gh-auto-moddeploy --nologo -v:quiet`：終了コード0、エラー0・警告6。コメントと同じ参照先・配置先指定で成功した。参照先にModsディレクトリが存在しないことを事前確認し、ゲームへの配置は行っていない。
+- `python3 tools/balance/gen_cs.py --check`：終了コード0。入力・生成物に変更なしとキャッシュ判定され、再生成は省略された。
+- `python3 tools/test_changed.py`：終了コード0。比較基準は `15a379d4`、変更は文書1ファイルのみ。実行対象テストなしという結果であり、回帰テストを実行したという意味ではない。
+- 初回確認と同じフィルター・コマンドで `Issue73.Native.Tests` の協力関連5クラスを実行：終了コード0、64成功・失敗0・スキップ0。
+- 初回確認と同じフィルター・コマンドで `SodRpg.Core.Tests` の圧・深度・報酬・道標・悪夢関連10クラスを実行：終了コード0、133成功・失敗0・スキップ0。
+
+今回未実行：ゲーム実行が必要なD1〜D3・Unity内Harmony適用・実通信・描画、フル／遅いテスト。再現ハーネスissue572・Pythonの道標／stage6テスト・BalanceSimの数値照合・本体DLLの再逆コンパイルも、実装・数値に追加変更がないため今回の修正ラウンドでは再実行していない。GitHub CIの再作成とLabでの再実行は行わず、上記ローカル検証とコメントのLab記録を区別して報告する。
