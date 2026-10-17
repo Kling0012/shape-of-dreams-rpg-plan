@@ -60,7 +60,7 @@ A mod that turns Shape of Dreams into a long-term RPG built around gear you brin
 
 ### 記憶をすべて装着する固有効果の調査（#457）
 
-連携の成立状態を調べる診断ログを追加しました。Identity記憶2種類を同時に要求する条件矛盾はCoreの再現で確認しましたが、元の不具合は未修正です。このPRは診断だけに限定し、条件・種類・効果量・保存・通信・内容指紋は main と同じです。実機の状態を調べるため、Issue はリリース後も閉じず、ログを待ちます。
+不具合の調査のための記録を追加。原因の確定・修正はログ受領後です。今回の診断追加では条件・効果量・保存・通信を変更していません。Issue はリリース後も閉じず、ログを待ちます。
 
 - **ログの場所**：上記と同じゲーム標準の `Player.log`。Windows は `%USERPROFILE%\AppData\LocalLow\Lizard Smoothie\Shape of Dreams\Player.log`。Linux（Proton）は Steam ライブラリ内の `steamapps/compatdata/<ゲームのAppID>/pfx/drive_c/users/steamuser/AppData/LocalLow/Lizard Smoothie/Shape of Dreams/Player.log`。起動オプションで `-logFile` を指定した場合は指定先です。
 - **送り方**：症状が起きた直後、ゲームを再起動する前にログをコピーし、ユーザー名・アカウントID・接続先・個人のフォルダ名などを除いて #457 に添付してください。再起動済みなら `Player-prev.log` が残っていればそちらも添付してください。協力プレイではホストと症状が出た参加者の両方のログをお願いします。前後の警告・エラーも必要なので `diag457` 行だけに切り詰めず、セーブデータは添付不要です。
