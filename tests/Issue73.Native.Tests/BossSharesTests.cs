@@ -85,10 +85,10 @@ namespace Issue73.Native.Tests
         {
             var room = (DreamPressure)Get(host, "_pressure");
             var builds = (Dictionary<DewPlayer, HostAuthority.ReceivedBuild>)Get(host, "_builds");
-            if (!builds.TryGetValue(player, out var received) || received.Build == null) return room;
+            if (!builds.TryGetValue(player, out var received) || received.Build == null) return room.WithCoopScaling(DewPlayer.gamePlayers.Count);
             return DreamPressure.ForPlayer(received.Build.DreamLevel, received.Build.SpentStarPoints)
                 .WithRunModifiers(room.Depth, room.WaypointMultiplier)
-                .WithInfinityPressure(room.InfinityStage);
+                .WithInfinityPressure(room.InfinityStage).WithCoopScaling(DewPlayer.gamePlayers.Count);
         }
 
         // 本体では NativeAttributedHpDamage / BossShareDamageScope のトランスパイラ適用時に true になる。
@@ -180,7 +180,7 @@ namespace Issue73.Native.Tests
             var miniboss = SharedBoss(host, Monster.MonsterType.MiniBoss, 101, 0f);
             float miniMultiplier = 1f;
             OverrideHealth(host, miniboss, ref miniMultiplier);
-            Assert.Equal(sum * CoopBalance.Ownership.BossShareFactor, miniMultiplier, 3);
+            Assert.Equal((float)(sum * CoopBalance.Ownership.BossShareFactor), miniMultiplier, 3);
 
             // 持ち分は一人用倍率の比で配分（湧き時点では総HPに対する割合）。
             var remaining = ShareRemaining(host, boss);
@@ -344,7 +344,7 @@ namespace Issue73.Native.Tests
             BuildFor(host, mid, 12, 30);  // 部屋の平均よりわずかに低い
             var low = Player(13);
             BuildFor(host, low, 2, 0);    // 最も低い個人圧
-            var room = DreamPressure.ForPlayer(8, 40);
+            var room = DreamPressure.ForPlayer(8, 40).WithCoopScaling(3);
             Set(host, "_pressure", room);
             PatchNativeShareHooks();
             var boss = SharedBoss(host, Monster.MonsterType.Boss, 100, 0f);
@@ -362,7 +362,7 @@ namespace Issue73.Native.Tests
             float pTop = (float)SoloOf(host, top), pMid = (float)SoloOf(host, mid), pLow = (float)SoloOf(host, low);
             Assert.Equal(100f * Math.Min(3f, pTop / pRoom), Hit(top, boss), 2); // × clamp(P(x)/P(部屋), 0.2, 3)
             Assert.Equal(100f * pMid / pRoom, Hit(mid, boss), 2); // 範囲内はそのまま
-            Set(host, "_pressure", DreamPressure.ForPlayer(30, 200)); // 部屋が非常に高い場面
+            Set(host, "_pressure", DreamPressure.ForPlayer(30, 200).WithCoopScaling(3)); // 部屋が非常に高い場面
             Assert.Equal(100f * CoopBalance.Ownership.BossDamageMin, Hit(low, boss), 2); // 下限 0.2
             Set(host, "_pressure", room);
             Assert.Equal(100f * Math.Min(3f, pTop / pRoom), Hit(top, child), 2); // ボスの子も同じ補正

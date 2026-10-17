@@ -673,14 +673,14 @@ namespace SodRpg.Mod
         }
 
         private (int Count, int Shards, int Tuning, int Heat, int Bonus, int Free, double NightmareMult, bool Japanese,
-            float PressureHealth, float NightmareGear, Waypoint Active, Waypoint Pending, bool Infinity) _secureTextKey;
+            float PressureHealth, float NightmarePressureHealth, float NightmareGear, Waypoint Active, Waypoint Pending, bool Infinity) _secureTextKey;
         private string _secureLootText, _secureBonusText, _secureOverflowText, _secureDelveText, _secureNightmareText, _secureExtraText;
 
         private void CacheSecureText(RunState run, int bonus, int free, double nmMult)
         {
             var pendingWaypoint = run.WaypointChosen ? run.PendingWaypoint : Waypoint.None;
             var key = (run.Satchel.Count, run.SatchelShards, run.SatchelTuning, run.Heat, bonus, free, nmMult, Loc.Japanese,
-                _s.PressureHealthMultiplier, _s.NightmareGearMultiplier, run.ActiveWaypoint, pendingWaypoint, run.Infinity != null);
+                _s.PressureHealthMultiplier, _s.NightmarePressureHealthMultiplier, _s.NightmareGearMultiplier, run.ActiveWaypoint, pendingWaypoint, run.Infinity != null);
             if (_secureLootText != null && _secureTextKey.Equals(key)) return;
             _secureTextKey = key;
             int next = Math.Min(Content.MaxHeat, run.Heat + 1);
@@ -707,7 +707,9 @@ namespace SodRpg.Mod
             {
                 // 同期された敵HPの倍率は今のゾーンの道標の圧を含むため、選択中の道標の圧に置き換える。
                 double activePressure = Waypoints.Sum(run.ActiveWaypoint).PressureMultiplier;
-                double health = _s.PressureHealthMultiplier / (activePressure > 0 ? activePressure : 1.0) * waypoint.PressureMultiplier;
+                double pressureHealth = _s.NightmarePressureHealthMultiplier >= 1f
+                    ? _s.NightmarePressureHealthMultiplier : _s.PressureHealthMultiplier;
+                double health = pressureHealth / (activePressure > 0 ? activePressure : 1.0) * waypoint.PressureMultiplier;
                 pressureMult = DreamPressure.NightmareChanceMultiplierForHealth(health);
             }
             bool gearKnown = _s.NightmareGearMultiplier >= 1f;
