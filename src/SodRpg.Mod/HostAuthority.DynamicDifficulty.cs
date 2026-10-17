@@ -40,9 +40,7 @@ namespace SodRpg.Mod
         private bool _dynamicEnabled = true, _dynamicSolo;
         private double _dynamicRoomHealth;
         private int _dynamicRoomEnemies, _dynamicRoom;
-        private long _dynamicRosterRevision, _dynamicSentRevision;
-        private float _dynamicNextSync;
-        private Actor _dynamicSyncActor;
+        private long _dynamicRosterRevision;
         private DynamicDifficultyDisplay[] _dynamicDisplay;
 
         internal void ConfigureDynamicDifficulty(bool enabled, bool solo)
@@ -379,7 +377,6 @@ namespace SodRpg.Mod
 
         private static int[] _helpDecayTable;
         private DynamicDifficultyStatus _dynamicStatus;
-        private long _dynamicStatusSent;
 
         /// <summary>The traveler factors the host applies now (menu status on the host itself).</summary>
         internal DynamicDifficultyDisplay[] HostDynamicDisplay() => DynamicSnapshot();
@@ -418,26 +415,54 @@ namespace SodRpg.Mod
             catch (Exception ex) { Log.Warn("Host: dynamic difficulty status ignored: " + ex.Message); return null; }
         }
 
-        private void SyncDynamicDifficultyLegend()
+        private sealed class DynamicLegendPeer
         {
-            // netId 0 carries only the optional roster extension on the ownership channel.
-            // Old clients safely ignore it; no live enemy is needed after a room is cleared.
+            internal Actor Actor;
+            internal object Connection;
+            internal string Run;
+            internal int Room;
+            internal ulong Authority;
+            internal long Roster, Status;
+            internal float Next;
+        }
+        private readonly Dictionary<DewPlayer, DynamicLegendPeer> _dynamicLegendPeers = new Dictionary<DewPlayer, DynamicLegendPeer>();
+
+        partial void ResetDynamicLegendPeer(DewPlayer player)
+        {
+            if (!ReferenceEquals(player, null)) _dynamicLegendPeers.Remove(player);
+        }
+
+        private bool SendDynamicLegendPeer(DewPlayer player)
+        {
             var display = DynamicSnapshot();
             var status = DynamicStatusSnapshot();
-            if (_registeredOn == null || display == null) return;
-            long statusRevision = status?.revision ?? 0;
-            if (_dynamicSentRevision == _dynamicRosterRevision && _dynamicStatusSent == statusRevision
-                && ReferenceEquals(_dynamicSyncActor, _registeredOn) && Time.unscaledTime < _dynamicNextSync) return;
-            if (!ReserveMonsterSyncMessage()) return;
-            _registeredOn.CustomRpc_SendMessageToAllClients(new DreamforgeNightmareMsg
+            if (_registeredOn == null || display == null) return false;
+            string run = NetworkedManagerBase<GameManager>.softInstance?.runId;
+            int room = NetworkedManagerBase<ZoneManager>.softInstance?.currentRoomIndex ?? -1;
+            ulong authority = ClientSession.HostAuthorityGeneration;
+            if (!_dynamicLegendPeers.TryGetValue(player, out var peer))
+                _dynamicLegendPeers.Add(player, peer = new DynamicLegendPeer());
+            if (ReferenceEquals(peer.Actor, _registeredOn) && ReferenceEquals(peer.Connection, player.connectionToClient)
+                && peer.Run == run && peer.Room == room
+                && peer.Authority == authority && peer.Roster == _dynamicRosterRevision && peer.Status == (status?.revision ?? 0)
+                && Time.unscaledTime < peer.Next) return true;
+            if (!ReserveMonsterSyncMessage()) return false;
+            _registeredOn.CustomRpc_SendMessageToClient(player, new DreamforgeNightmareMsg
             {
-                protocol = Protocol.Version, authorityGeneration = ClientSession.HostAuthorityGeneration,
+                protocol = Protocol.Version, authorityGeneration = authority,
                 dynamicDifficulty = display, dynamicRevision = _dynamicRosterRevision, dynamicStatus = status,
             });
-            _dynamicSyncActor = _registeredOn;
-            _dynamicSentRevision = _dynamicRosterRevision;
-            _dynamicStatusSent = statusRevision;
-            _dynamicNextSync = Time.unscaledTime + 5f;
+            peer.Actor = _registeredOn; peer.Connection = player.connectionToClient;
+            peer.Run = run; peer.Room = room; peer.Authority = authority;
+            peer.Roster = _dynamicRosterRevision; peer.Status = status?.revision ?? 0;
+            peer.Next = Time.unscaledTime + 5f;
+            return true;
+        }
+
+        private void SyncDynamicDifficultyLegend()
+        {
+            foreach (var player in DewPlayer.gamePlayers)
+                if (player != null && player.isHumanPlayer) SendDynamicLegendPeer(player);
         }
 
         private void ReleaseDynamicEnemy(Entity enemy)

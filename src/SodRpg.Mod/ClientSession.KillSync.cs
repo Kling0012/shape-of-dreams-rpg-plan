@@ -132,6 +132,12 @@ namespace SodRpg.Mod
 
         private void ReceiveDynamicDifficulty(DynamicDifficultyDisplay[] display, long revision)
         {
+            if (display == null && revision > _dynamicDifficultyRevision)
+            {
+                _dynamicDifficultyDisplay = null;
+                _dynamicStatus = null;
+                return;
+            }
             if (display == null || display.Length > 4 || revision <= 0 || revision < _dynamicDifficultyRevision) return;
             foreach (var state in display)
                 if (state == null || string.IsNullOrEmpty(state.participantId) || state.factor < 1

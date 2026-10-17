@@ -366,6 +366,8 @@ namespace SodRpg.Mod
         public int fusionInput;
         // Optional JSON field; absent/zero peers keep receiving single-event reports.
         public int bountyCounts;
+        public int stateSnapshots;
+        public int dynamicRoster;
     }
 
     // Optional extension: Hello and every existing packet remain unchanged (Protocol 24).
@@ -376,6 +378,7 @@ namespace SodRpg.Mod
         public bool enabled;
         public string runId;
         public long ledgerId, total;
+        public int blockedWorldAck;
     }
 
     [Serializable]
@@ -385,6 +388,8 @@ namespace SodRpg.Mod
         public bool available;
         public string runId;
         public long ledgerId, paid;
+        public bool worldBlocked;
+        public int blockedWorld;
     }
 
     [Serializable]
