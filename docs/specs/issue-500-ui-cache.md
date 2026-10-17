@@ -1,5 +1,20 @@
 # 装備・鍛冶タブの描画キャッシュ（#500）
 
+## 要件ごとの実装と今回の差分
+
+PR #671・#678 でキャッシュ本体と計測切り替えはすでに main に取り込まれている。PR #682 のベースはそれらを含むため、今回の差分はゲーム外の計測ツールと、この仕様書の計測結果・要件対応の記録になる。前ラウンドで `requirements_done` に R10 だけを記載したことによる未実装判定を、実装箇所を確認したうえで訂正する。
+
+| 要件 | 実装箇所 | コード上の確認結果 |
+|---|---|---|
+| R1 | `src/SodRpg.Mod/DreamforgeUi.cs` の `EnsureStashCache`・`SlotTabLabel`・`SortedCached` | 並べ替え済み一覧と同じ世代で保管庫を1回数え、6枠の件数とラベルを保持する。通常のタブ描画は保持したラベルを返す。 |
+| R2 | `src/SodRpg.Mod/RelicIcons.cs` の `For(string, string)`・`Draw` | `uniqueId ?? baseId` で解決済みテクスチャを検索し、ヒット時には候補反復子も `uniques/` の文字列も作らない。 |
+| R3 | `src/SodRpg.Mod/RelicIcons.cs` の `FrameColor` | レア度ごとの辞書を参照し、初回だけ `ColorUtility.TryParseHtmlString` を呼ぶ。 |
+| R7 | `src/SodRpg.Mod/ClientSession.cs` の `DisplayBuild`・`MarkDirty`・`MarkAllocationDirty`、`DreamforgeUi.GearColumn.cs` の `DrawGearColumn` | 計算時刻から0.25秒未満だけ再利用し、装着や星変更の通知時に失効する。詳しい操作経路は下記。 |
+| R8 | `src/SodRpg.Mod/RelicIcons.cs` の `RelicCache`・`For(string, string)` | R2と同じテクスチャキャッシュ。 |
+| R9 | `src/SodRpg.Mod/RelicIcons.cs` の `FrameColors`・`FrameColor` | R3と同じレア度別の色キャッシュ。 |
+| R10 | `tools/UiCacheBench/Program.cs` の `Bench.Run`・`Main`、`src/SodRpg.Mod/TabPerf.cs` | ゲーム外でCPU時間とGC割り当てを比較して採否を判断する。ゲーム内の実測用には既存のタブ別計測器と切り替えを使う。測定対象と限界は下記。 |
+| R11 | `src/SodRpg.Mod/ClientSession.cs` の `DisplayBuild`・`MarkDirty`・`MarkAllocationDirty` | R7と同じ表示キャッシュと即時失効。 |
+
 ## 実装
 
 - `DreamforgeUi.EnsureStashCache` は、並べ替え済み一覧と共通の0.3秒の更新周期で保管庫を1回走査し、6枠の個数とタブの文字列を保持する。`SlotTabLabel` は保持した文字列を返す。検索や選択枠によらず、個数は保管庫全体を対象にする。
@@ -43,7 +58,7 @@ Mono（ゲームの実行環境）と Unity の描画を含めた絶対値はこ
 
 実機で評価するときは、変更前後で同じ保管庫（1000個以上）、装着状態、表示倍率、言語、画面解像度1920x1080を使い、装備タブと鍛冶タブをそれぞれ測る。初回の画像読み込みとキャッシュ構築を終え、同じスクロール操作と計測時間で、Unity ProfilerのOnGUI CPU時間、フレーム時間、GC Alloc/frameを比較する。計測器の設定とLayout/Repaintの回数も揃える。別途、装着・分解・取引・強化・星の変更・言語切り替え後の表示更新を確認する。これらの実機計測・目視確認は今回の依頼では対象外であり、新たな確認用Issueは作らない。
 
-### 計測の仕組み（R9）
+### 計測の仕組み（R10）
 
 採用の判断を実測で行えるよう、装備タブと鍛冶タブの描画を個別に測る `TabPerf` を追加した。
 
@@ -62,3 +77,12 @@ Mono（ゲームの実行環境）と Unity の描画を含めた絶対値はこ
 - 新しいテストは作成していない。既存テストで使う実ソース抽出の対象メンバーだけ更新した。
 - `tools/UiCacheBench`（Release、保管庫1200個、20万イベント×3往復）：キャッシュありでどの処理も悪化なし。結果は「ゲーム外での計測と判断」の表。
 - 未実行：ゲーム内の表示確認・破棄済みテクスチャの実機再取得・Unity Profiler での実機比較（この環境ではゲームを起動できないため）、全件／低速テスト（実装工程では実行しない方針のため）。
+
+### PR #682 修正ラウンドでの再検証（2026-10-17）
+
+- `DOTNET_ROLL_FORWARD=Major dotnet test tests/Issue73.Native.Tests/Issue73.Native.Tests.csproj -c Release --filter 'FullyQualifiedName~RelicRowCacheTests|FullyQualifiedName~CoopTradeClientTests|FullyQualifiedName~StarClusterDiffUpdateTests'`：23件成功、失敗0。
+- `DOTNET_ROLL_FORWARD=Major dotnet test tests/SodRpg.Core.Tests/SodRpg.Core.Tests.csproj -c Release --filter 'FullyQualifiedName~RelicIconKeysTests|FullyQualifiedName~RelicFusionTests|FullyQualifiedName~AllocationRefundUiTests'`：19件成功、失敗0。
+- `dotnet build src/SodRpg.Mod/SodRpg.Mod.csproj -c Release '-p:GameDir=/home/wang/dev/sod-gamedata/Shape of Dreams'`：エラー0、警告6。参照用ゲームディレクトリに `Mods` がなく、配置処理は走っていない。
+- `dotnet run -c Release --project tools/UiCacheBench -- 1200 20000 3`：3往復の平均は、イベント1回あたりスロットタブ277.300→1.466µs・720→53B、アイコン3.407→0.769µs・1986→3B、枠色2.167→1.550µs・1040→0B。合計はイベント2回あたり565.746→7.569µs・7.32→0.11KB、`decision: keep`。初回の色キャッシュ計測は3.724µsで非キャッシュの2.258µsより遅く、短い計測では初期化・実行環境の揺れが残る。各往復が必ず速くなるという判断はせず、既存の20万イベントの結果と今回の平均を根拠に採用を維持する。
+- 上の既存テストは、一覧行の更新、取引、星図の差分更新、アイコン候補、融合、割り振り払い戻しを検証する。`DisplayBuild` の0.25秒境界と装着・星変更の即時失効、Unityの破棄済みテクスチャ再取得を直接実行する既存テストはなく、該当経路はコードで確認した。新しいテストは作成していない。
+- 全件／低速テスト、ゲーム内表示、Unity Profiler比較、前ラウンドの20万イベント×3往復の再実行は未実行。今回の再計測は対象を絞った2万イベント×3往復であり、Unityを含む効果の実測値とは扱わない。
