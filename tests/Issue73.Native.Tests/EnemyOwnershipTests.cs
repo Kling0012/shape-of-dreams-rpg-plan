@@ -244,8 +244,8 @@ namespace Issue73.Native.Tests
             var after = new DamageData(100f) { actor = enemy };
             host.ApplyOwnershipReceivedDamage(vesper.hero, enemy, ref after);
             Assert.Equal(stray.amount, after.amount, 3);
-            enemy.Status.SetHealth((float)Math.Floor(enemy.maxHealth * CoopBalance.Ownership.Floor));
-            Assert.Equal(0f, TakenBy(host, enemy, vesper.hero), 3); // HP下限も担当者基準のまま。
+            enemy.Status.SetHealth((float)Math.Floor(enemy.maxHealth * 0.3f));
+            Assert.Equal(100f, TakenBy(host, enemy, vesper.hero), 3); // 最初の世界は残りHPによらず全量が通る。
             Assert.Empty(Log.Warnings);
         }
 
@@ -530,9 +530,14 @@ namespace Issue73.Native.Tests
 
         // ---- 保護と手伝い ----
 
-        [Fact]
-        public void Helpers_fight_at_half_strength_scaled_by_the_owner_pressure_ratio()
+        [Theory]
+        [InlineData(0, 100f)]
+        [InlineData(1, 75f)]
+        [InlineData(2, 50f)]
+        [InlineData(3, 50f)]
+        public void Helpers_fight_at_the_world_factor_regardless_of_the_owner_pressure(int zoneIndex, float expected)
         {
+            NetworkedManagerBase<ZoneManager>.softInstance.currentZoneIndex = zoneIndex;
             var host = Host(out _);
             var a = Player(5);
             BuildFor(host, a, 2, 0); // 担当者は新人
@@ -545,46 +550,51 @@ namespace Issue73.Native.Tests
 
             float pA = (float)PressureOf(host, a).HealthMultiplier, pB = (float)PressureOf(host, b).HealthMultiplier;
             Assert.True(pA < pB, "前提: 担当者の個人圧 < 手伝う人");
-            Assert.Equal(100f * CoopBalance.Ownership.HelpFactor * (pA / pB), TakenBy(host, enemy, b.hero), 2); // 0.5 × min(1, P担当/P攻撃)
+            Assert.Equal(expected, TakenBy(host, enemy, b.hero), 2); // 育成差で指定の世界倍率を追加軽減しない。
             var equal = Player(13);
             BuildFor(host, equal, 2, 0); // 担当者と同じ育ち具合
-            Assert.Equal(100f * CoopBalance.Ownership.HelpFactor, TakenBy(host, enemy, equal.hero), 2); // 同圧なら半分
+            Assert.Equal(expected, TakenBy(host, enemy, equal.hero), 2); // 同圧でも世界倍率は同じ。
             Assert.Equal(100f, TakenBy(host, enemy, a.hero), 2); // 担当者自身は対象外
 
             // 召喚体の攻撃は親鎖で人間に帰属する。
             var summon = new Summon { hero = b.hero };
-            Assert.Equal(100f * CoopBalance.Ownership.HelpFactor * (pA / pB), TakenBy(host, enemy, summon), 2);
+            Assert.Equal(expected, TakenBy(host, enemy, summon), 2);
             Assert.Empty(Log.Warnings);
         }
 
-        [Fact]
-        public void Others_cannot_chip_an_owned_enemy_below_the_thirty_percent_floor()
+        [Theory]
+        [InlineData(0, 100f)]
+        [InlineData(1, 75f)]
+        [InlineData(2, 50f)]
+        public void Helpers_keep_the_world_factor_even_below_thirty_percent_health(int zoneIndex, float expected)
         {
+            NetworkedManagerBase<ZoneManager>.softInstance.currentZoneIndex = zoneIndex;
             var host = Host(out _);
             var a = Player(5);
             BuildFor(host, a, 3, 10);
             var b = Player(9);
-            BuildFor(host, b, 3, 10); // 同圧（手伝い係数はちょうど0.5）
+            BuildFor(host, b, 3, 10); // 同圧。
             var enemy = Spawn(host, 100); // → a
             enemy.Status.baseMaxHealth = 1000f;
             RecalcMaxHealth(enemy);
             enemy.Status.SetHealth(enemy.Status.maxHealth * 0.31f); // 下限すれすれまで削れた
 
-            float floor = (float)Math.Floor(enemy.Status.maxHealth * CoopBalance.Ownership.Floor);
+            float floor = (float)Math.Floor(enemy.Status.maxHealth * 0.3f);
             float allowed = enemy.Status.currentHealth - floor;
             Assert.True(allowed > 0f && allowed < 50f, "前提: 最初の一手で下限に届く量");
             float first = TakenBy(host, enemy, b.hero);
-            Assert.Equal(allowed, first, 2); // 下限を超える分は捨てられる
+            Assert.Equal(expected, first, 2);
             enemy.Status.SetHealth(enemy.Status.currentHealth - first);
-            Assert.Equal(floor, enemy.Status.currentHealth, 2);
-            Assert.Equal(0f, TakenBy(host, enemy, b.hero), 2); // 下限では他人のダメージは通らない
-            Assert.Equal(100f, TakenBy(host, enemy, a.hero), 2); // 担当者は下限を超えて削れる
+            Assert.True(enemy.Status.currentHealth < floor); // 他の人も30%を超えて削れる。
+            Assert.Equal(expected, TakenBy(host, enemy, b.hero), 2);
+            Assert.Equal(100f, TakenBy(host, enemy, a.hero), 2); // 担当者は全量が通る。
             Assert.Empty(Log.Warnings);
         }
 
         [Fact]
         public void Protection_needs_an_engaged_and_healthy_owner()
         {
+            NetworkedManagerBase<ZoneManager>.softInstance.currentZoneIndex = 2;
             var host = Host(out _);
             var a = Player(5);
             BuildFor(host, a, 3, 10);

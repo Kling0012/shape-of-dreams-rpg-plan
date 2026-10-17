@@ -10,6 +10,7 @@ Issue の「高いリンボ」は本体の `GameMod_Limbo.depth` と解釈する
 - 育成後：協力用の圧によるHP増分は従来の65%、攻撃増分は50%。深度・道標・Infinityまで掛け終えてから、HP8倍、攻撃2倍で止める。最低1倍を維持する。
 - 圧による追加敵数は最大2.5倍（従来5倍）。自動難易度Dの協力時上限は1.5倍（従来3倍）。Dによる攻撃は引き続き `D^0.25`、下限0.65と苦戦時の下降速度は維持する。
 - ソロは既存の圧・敵数・本体補正・任意の自動難易度を維持する。高難度の本体ルール、悪夢・変種・宿敵の性質、元敵の報酬を変更しない。
+- 追加コメントの分担制緩和：他プレイヤーの担当敵・ボス持ち分へのダメージは、最初の世界100%、2つ目75%、3つ目以降50%。個人圧比による追加軽減と通常敵のHP30%下限は廃止する。
 
 これはコード上の重複強化を抑える調整値であり、特定の構成やプレイスキルでのクリア可能性を実測したものではない。
 
@@ -20,7 +21,7 @@ Issue の「高いリンボ」は本体の `GameMod_Limbo.depth` と解釈する
 | 本体の人数補正 | `Monster.OnStartServer` が `GetMonsterBonusHealthPercentageByMultiplayer` と `GetMonsterBonusPowerPercentage` の結果を1つの `StatBonus` で追加する。生存者に加え、倒れた参加者も0.55人として補正に寄与 | 既存の `BossShareNativeHealth` フックで、このボーナスだけの追加HP・攻撃・魔力を半分にし、HP+100%、攻撃・魔力+15%までとする。Limbo等の別ボーナスは触らない |
 | 部屋の圧 | `HostAuthority.RefreshPressure` が夢レベル・使用星を平均し、深度・道標・Infinityを乗算する。最大育成は深度0でもHP16.5倍・攻撃3.4倍 | 人間2人以上なら `WithCoopScaling`。担当制OFF・共有敵の経路にも有効 |
 | 担当敵の圧 | `OwnershipBasePressure` が個人の圧を再構築するため、部屋だけの調整では担当敵とボス持ち分に届かない | 個人の圧にも同じ協力用圧を適用。担当変更・ビルド未受信の部屋圧への代替も同じ規則 |
-| ボス・ミニボスHP | `PrepareBossShares` が各人の圧×Dを合計して0.8倍する。`OverrideBossShareHealth` は捕捉した本体の人数HPだけを除去するため、人数HPの二重掛けは既に防いでいる | 協力用圧を合計し、係数を0.7へ。既存の人数HP除去を維持する。ボス子の除外・手伝い・分担の規則も維持 |
+| ボス・ミニボスHP | `PrepareBossShares` が各人の圧×Dを合計して0.8倍する。`OverrideBossShareHealth` は捕捉した本体の人数HPだけを除去するため、人数HPの二重掛けは既に防いでいる | 協力用圧を合計し、係数を0.7へ。既存の人数HP除去とボス子の除外を維持し、他人の持ち分への手伝い倍率は追加コメントの世界別指定に変更 |
 | 圧による敵数 | `PressureEnemyCountMultiplier` → `InfinityIntervalScaling` → `PressureEnemyCount`。HPから0.25ごとに段換算、段ごと+8%、最大+400%。育成後は1体の耐久増と5倍の敵数が重なる | 緩和後HPから段換算し、協力時の圧由来の増加だけ+150%まで。本体の人口上限・ウェーブ数は維持 |
 | 自動難易度 | `OnDynamicRoomLoading` が殲滅速度から次の部屋のDを決め、担当敵とボスHPに最大3倍、攻撃に `3^0.25` を乗算 | 協力時のD上限1.5。ソロの任意設定は上限3のまま |
 | 悪夢・変種・道標 | `ApplyPressure` / `InstallPressureHealthProcessor` は本体・悪夢・変種の能力値計算後に圧を掛ける。Infinityの個人道標は#588により担当者本人のものを使う | それらの外側に掛かる圧を制限。悪夢化率・欠片は元の育成値を維持。表示用に上限適用前のHPを省略可能フィールドで同期する |
@@ -29,7 +30,7 @@ Issue の「高いリンボ」は本体の `GameMod_Limbo.depth` と解釈する
 
 ## 数値原本と式
 
-原本は `tools/balance/coop.json` の `difficulty` と `ownership.bossShareFactor`。`coop_values.py` が検証し、`Coop.Generated.cs` へ生成する。実行時JSON読込やセーブ形式の変更はない。
+原本は `tools/balance/coop.json` の `difficulty` と `ownership`（ボスHP係数と世界別の手伝い倍率）。`coop_values.py` が検証し、`Coop.Generated.cs` へ生成する。実行時JSON読込やセーブ形式の変更はない。
 
 従来の圧をH（HP）、A（攻撃）とすると、人間2人以上の戦闘用圧は次の値になる。
 
@@ -78,7 +79,7 @@ DOTNET_ROLL_FORWARD=LatestMajor dotnet run --project tools/BalanceSim -c Release
 
 `pressure/coop/.../1` が従来と同じ1人用の圧、`.../2` と `.../4` が緩和後。変更前ボスHPは同条件の1人用HPに人数×0.8を掛ける。報酬用の圧は協力緩和から独立し、旧ホストの省略フィールド0は従来のHP同期値へ代替する。
 
-## 要件との対応（今回の依頼のR1〜R4）
+## 要件との対応（今回の依頼のR1〜R5）
 
 今回の依頼ではR1とR3が協力序盤、R2とR4が高リンボ等の難度上昇を指す。以下は今回の要件番号であり、後述するPR #677の過去の記録の要件番号とは区別する。
 
@@ -88,6 +89,7 @@ DOTNET_ROLL_FORWARD=LatestMajor dotnet run --project tools/BalanceSim -c Release
 | R2：高いリンボ等の難易度の跳ね上がりを緩和する | `HostAuthority.RefreshPressure`、`HostAuthority.OwnershipBasePressure`、`DreamPressure.CombatMultiplier` / `EnemyCountMultiplier` | 部屋と個人の双方で深度・道標適用後の圧を制限し、担当敵・共有敵・ボス持ち分に届ける |
 | R3：マルチプレイにおいて序盤から難易度が高すぎる点を緩和する | R1と同じ実装に加え `HostAuthority.PrepareBossShares` | 夢Lv1・星0では圧1倍を維持し、人数の追加補正を半減。2／4人の初期ボスHPを1.6／3.2倍から1.4／2.8倍へ下げる |
 | R4：高いリンボ等でクリア不可能レベルに跳ね上がる点を緩和する | R2と同じ実装に加え `HostAuthority.OnDynamicRoomLoading`、`HostAuthority.PrepareBossShares` | 圧HP8倍・攻撃2倍・圧敵数2.5倍・協力D1.5倍を上限とし、ボスHP合算係数も0.7へ下げる |
+| R5：分担制を世界ごとに緩和する | `HostAuthority.OwnershipHelpFactor`、`ApplyOwnershipReceivedDamage`、`PlanBossDamage`、`tools/balance/coop.json:ownership` | 他の人の担当敵とボス持ち分へのダメージを1／2／3世界目以降で100／75／50%へ。個人圧比と通常敵のHP30%下限を外し、指定割合が通るようにする |
 
 利用者の追加コメント「高いリンボなどにおいて特にクリア不可能レベルに難易度が跳ね上がっている」は今回のR2・R4に対応する。本体Limboの深さに関係なく、強化済みの敵へ重なる協力用の人数・圧・敵数・Dを緩和する。低深度限定の条件はない。前ラウンドでは本体DLLの `GameMod_Limbo.OnActorAdd` / `GetStatBonus` と `Monster.OnStartServer` を確認した。Limboのボーナスは前者で別に追加され、人数ボーナスだけを後者のフックで緩和する。`InstallPressureHealthProcessor` / `ApplyPressure` が最終能力値へ掛ける圧は部屋・個人の両経路で上限適用済みになるため、高リンボ専用の追加倍率は設けない。ゲーム内の踏破可能性は未確認。
 
@@ -143,11 +145,11 @@ PR #677の修正ラウンドにおけるR4は、この代替検証の確認・�
 
 今回未実行：ゲーム実行が必要なD1〜D3・Unity内Harmony適用・実通信・描画、フル／遅いテスト。再現ハーネスissue572・Pythonの道標／stage6テスト・BalanceSimの数値照合・本体DLLの再逆コンパイルも、実装・数値に追加変更がないため今回の修正ラウンドでは再実行していない。GitHub CIの再作成とLabでの再実行は行わず、上記ローカル検証とコメントのLab記録を区別して報告する。
 
-## Issue #601再依頼の確認（2026-10-17、開始点5569b2a8）
+## Issue #601再依頼の初回確認（追加コメント前の記録、2026-10-17、開始点5569b2a8）
 
 ### 判断したこと
 
-Issue本文・コメントは協力序盤の緩和と高リンボでの難度上昇の緩和であり、今回のR1／R3、R2／R4はそれぞれ同じ要望を表す。開始点には既存の緩和コミット `d9bdf45f` とPR #677のマージ `e583a536` が既に含まれることを `git merge-base --is-ancestor` で確認した。既存コードは上のR1〜R4すべてに対応し、Issueには前回調整後の新たな症状・追加の目標値はないため、同じ要望で二重に緩和しない。今回の差分は要件対応の訂正と再検証記録であり、ゲームコード・数値・テストに追加変更はない。
+Issue本文・コメントは協力序盤の緩和と高リンボでの難度上昇の緩和であり、今回のR1／R3、R2／R4はそれぞれ同じ要望を表す。開始点には既存の緩和コミット `d9bdf45f` とPR #677のマージ `e583a536` が既に含まれることを `git merge-base --is-ancestor` で確認した。既存コードは上のR1〜R4すべてに対応していたため、初回確認では同じ要望で二重に緩和せず、要件対応の訂正と再検証記録のみを追加した。その後の追加コメントR5を受け、下記の修正ラウンドでは分担制の実行コード・数値と既存テストを変更した。
 
 受付時の「条件・目標値が不明」という懸念には、上の受け入れ範囲と、同一育成の1／2／4人の固定入力比較で対応する。実測の勝率や踏破可能性を完了基準に含めず、ソロと報酬を維持しながら人数由来の増分と協力用の圧・敵数・Dを制限できることを確認した。
 
@@ -169,4 +171,38 @@ Issue本文・コメントは協力序盤の緩和と高リンボでの難度上
 
 - ゲームを起動した協力序盤・高リンボの再現と踏破、Unity内でのHarmony適用・実通信・描画：この環境ではゲームを実行できない。体感確認D1〜D3は対象外であり、実プレイでクリア可能と確認したという意味ではない。
 - フル／遅いテスト（`test_changed.py --all`・`SODRPG_SLOW=1`）：依頼に従い関連する既存テストへ限定し、パイプラインへ委ねる。
-- 本体DLLの再逆コンパイルと修正を戻す再現テスト：実行コード・数値に今回の差分がないため未実行。既存の倍率接続部分はコード確認と本体DLL参照ビルドで確認した。
+- 本体DLLの再逆コンパイルと修正を戻す再現テスト：追加コメント前の初回確認は実行コード・数値の差分がなかったため未実行。既存の倍率接続部分はコード確認と本体DLL参照ビルドで確認した。
+
+## PR #681修正ラウンド：分担制の世界別緩和（R5、2026-10-17）
+
+### 判断したこと
+
+追加コメントの「最初の世界ではお互いのダメージは完全に通り、2つ目で25%off、3で50%off」は、他プレイヤーの担当する通常敵およびボス・ミニボスの他人の持ち分に対する、分担制によるダメージ制限を指すと解釈した。味方同士への攻撃を追加する要望ではない。`ZoneManager.currentZoneIndex` は0始まりなので、0を100%、1を75%、2以上を50%とする。4世界目以降は最後に指定された50%を維持し、世界情報が未取得なら追加軽減をしない。
+
+旧処理は世界番号を見ず、通常敵では `0.5 * min(1, P担当 / P攻撃)` に加えてHP30%下限、ボスの他人の持ち分でも同様の圧比を掛けていた。そのため最初の世界から50%以下に減り、通常敵の残りHP30%以下は手伝いダメージが0になる。倍率だけを100%にしても圧比や下限が残るため、「完全に通る」を満たさない。これらを世界別倍率へ置き換え、通常敵の下限用定数も原本・生成器から除いた。
+
+- `OwnershipHelpFactor` がホストの現在世界から原本の倍率を選び、`ApplyOwnershipReceivedDamage` と `PlanBossDamage` の両方が使う。通常敵は健康かつ交戦中の担当者がいるときに軽減し、担当者の低HP・KO・無交戦時の救援解除は維持する。
+- 自分の担当・自分のボス持ち分は100%。ボスの自分の持ち分をまたぐ一撃は、超過部分だけ世界倍率を適用し、HP確定時の再配分も同じ規則を使う。
+- 割り当て・個人圧による敵の強さ・流れ弾の被害補正・召喚体の帰属・報酬・ソロ・担当制OFFの経路は維持する。追加のコレクションや毎フレームの確保はない。
+- R1〜R4は開始点に含まれる既存緩和を維持する。受付時の条件・目標値不足の懸念には上記の数値基準と固定入力の既存テストで対応し、R5には利用者指定の100／75／50%を使う。体感での踏破確認を完了基準には含めない。
+
+### この修正ラウンドで実行した検証
+
+NuGetキャッシュはworktree外の `/home/wang/.cache/gh-auto/nuget` を使用した。テストは新規作成せず、既存の担当制・ボス持ち分の入力と期待値を世界別倍率に合わせて更新し、自動難度の測定テストは3世界目の50%軽減を使うよう最小限変更した。
+
+- 実装変更前に更新済みの `EnemyOwnershipTests` / `BossSharesTests` を実行：42件中31成功・11失敗。旧実装が指定割合やHP30%以下での手伝いに一致しないことを確認した。これは本体の起動・実プレイによる再現ではなく、リンクした実ソースのダメージ入口による再現である。
+- `DOTNET_ROLL_FORWARD=LatestMajor dotnet test tests/Issue73.Native.Tests/Issue73.Native.Tests.csproj -c Release --filter 'FullyQualifiedName~EnemyOwnershipTests|FullyQualifiedName~BossSharesTests|FullyQualifiedName~DynamicDifficultyTests|FullyQualifiedName~Issue588PersonalWaypointPressureTests|FullyQualifiedName~CoopOmensWardTests|FullyQualifiedName~Issue608ZeroShareReproductionTests' --nologo -v:quiet -p:WarningLevel=0`：73成功・失敗0・スキップ0。通常敵・召喚攻撃・低HPの敵・ボス持ち分の100／75／50%、4世界目の50%、既存の割り当て・救援・再配分・0%持ち分からの撃破を確認した。
+- 初回の関連73件実行では、自動難度の測定テスト1件が旧HP下限の期待値に依存して失敗した。上記の最小限の修正後は成功した。
+- 戻し確認：実行コード2ファイルを開始点の旧実装へ一時的に戻し、除去済みのHP下限定数の参照だけ同値の `0.3f` に置換して実行。上記42件は同じ11件が失敗・31件成功、終了コード1。現行実装を復元し、関連73件の成功を再確認した。
+- 初回確認と同じCoreの10クラスを `-p:WarningLevel=0` 付きで実行：133成功・失敗0・スキップ0。圧・深度・圧報酬・配当・接尾辞・Infinity周期・道標・悪夢の既存条件を維持する。
+- `python3 tools/balance/gen_cs.py` と `python3 tools/balance/gen_cs.py --check`：終了コード0、原本から生成した `Coop.Generated.cs` と整合。
+- `dotnet build src/SodRpg.Mod -c Release '-p:GameDir=/home/wang/dev/sod-gamedata/Shape of Dreams' -p:ModDeployDir=/tmp/gh-auto-moddeploy --nologo -v:quiet`：終了コード0、エラー0・既存警告6件。参照先にModsディレクトリはなく、ゲームへの配置なし。
+- `python3 tests/repro/issue572/run.py`：15成功・失敗0、終了コード0。
+- `python3 -m unittest tools.tests.test_waypoint_balance tools.tests.test_stage6_balance`：6成功、終了コード0。
+
+### この修正ラウンドの未実行
+
+- 実ゲームでの序盤・高リンボ・世界移動・踏破確認、Unity内Harmony適用・実通信・描画：ゲームを起動できない環境のため。体感確認D1〜D3は依頼対象外。
+- フル／遅いテスト（`test_changed.py --all`・`SODRPG_SLOW=1`）、対象無指定の `test_changed.py`：依頼に従い関連テストへ限定。balance差分は全体選択になるためパイプラインへ委ねる。
+- BalanceSimの再実行とソロ全数値の再照合、本体DLLの再逆コンパイル：今回の差分は分担制のダメージ制限であり、圧・敵数・本体人数ボーナス・報酬の式は変更していない。上の初回確認結果は過去の記録として保持する。
+- GitHub CI・Labでの再実行：このラウンドではローカルの関連テスト・参照DLLビルドを実行し、外部パイプラインは起動していない。

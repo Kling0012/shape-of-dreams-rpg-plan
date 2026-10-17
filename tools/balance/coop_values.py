@@ -60,9 +60,10 @@ def render_outputs():
         lines.append(f"            public const double {name} = {value:g}d;")
     lines += ["        }"]
     ownership = data["ownership"]
-    owner_fields = (("helpFactor", "HelpFactor"), ("bossShareFactor", "BossShareFactor"),
+    owner_fields = (("firstWorldHelpFactor", "FirstWorldHelpFactor"),
+                    ("secondWorldHelpFactor", "SecondWorldHelpFactor"),
+                    ("helpFactor", "HelpFactor"), ("bossShareFactor", "BossShareFactor"),
                     ("bossDamageMin", "BossDamageMin"), ("bossDamageMax", "BossDamageMax"),
-                    ("floor", "Floor"),
                     ("rescueHp", "RescueHp"), ("engageWindow", "EngageWindow"),
                     ("spawnGrace", "SpawnGrace"), ("detectionMultiplier", "DetectionMultiplier"),
                     ("reassignCooldown", "ReassignCooldown"), ("downDelay", "DownDelay"),
@@ -75,7 +76,9 @@ def render_outputs():
         value = ownership[key]
         if type(value) not in (int, Decimal) or not 0 < value <= 100:
             raise ValueError("coop.ownership." + key + ": expected positive number <= 100")
-        if key in ("helpFactor", "floor", "rescueHp") and value >= 1:
+        if key in ("firstWorldHelpFactor", "secondWorldHelpFactor", "helpFactor") and value > 1:
+            raise ValueError("coop.ownership." + key + ": expected fraction <= 1")
+        if key == "rescueHp" and value >= 1:
             raise ValueError("coop.ownership." + key + ": expected fraction < 1")
         lines.append(f"            public const float {name} = {value:g}f;")
     lines += ["        }", "", "        public static class DynamicDifficulty", "        {"]

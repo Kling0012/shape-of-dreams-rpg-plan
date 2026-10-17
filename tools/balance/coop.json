@@ -26,11 +26,12 @@
     "dynamicMaximumFactor": 1.5
   },
   "ownership": {
+    "firstWorldHelpFactor": 1,
+    "secondWorldHelpFactor": 0.75,
     "helpFactor": 0.5,
     "bossShareFactor": 0.7,
     "bossDamageMin": 0.2,
     "bossDamageMax": 3,
-    "floor": 0.3,
     "rescueHp": 0.35,
     "engageWindow": 6,
     "spawnGrace": 8,
