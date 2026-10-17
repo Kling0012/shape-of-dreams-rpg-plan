@@ -375,7 +375,7 @@ namespace SodRpg.Core.Tests
             host.Track(new HostAuthority.HeroRuntime { Hero = keeper, Powers = new PowerRuntime(keeperBuild, 0) });
             host.OnNativeSupportHeal(new EventInfoHeal { actor = healer, target = keeper, amount = 100, discardedAmount = 100 });
             Assert.Equal(100f, keeper.Status.currentShield); // OverflowingLife の 100
-            Assert.Equal(0, host.Shields); // 支援側の障壁化は起きない
+            Assert.Equal(1, host.Shields); // 従来処理の与えた障壁の記録だけ（支援変換ではない）
 
             // 支援の変換（50%）の方が大きい → 支援の障壁だけ。
             var taker = KillAssistSupportTestRuntime.HeroWithOwner(13);
@@ -383,7 +383,7 @@ namespace SodRpg.Core.Tests
             host.Track(new HostAuthority.HeroRuntime { Hero = taker, Powers = new PowerRuntime(takerBuild, 0) });
             host.OnNativeSupportHeal(new EventInfoHeal { actor = healer, target = taker, amount = 100, discardedAmount = 100 });
             Assert.Equal(50f, taker.Status.currentShield);
-            Assert.Equal(1, host.Shields);
+            Assert.Equal(2, host.Shields);
         }
 
         [Fact]
