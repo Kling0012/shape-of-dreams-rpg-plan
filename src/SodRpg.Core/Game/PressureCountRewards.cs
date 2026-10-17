@@ -10,6 +10,7 @@ namespace SodRpg.Core.Game
         public const string ActorScaleKey = "DreamforgeRPG.pressureEnemyCount.rewardScale";
         private const string EventSuffix = "|pressure:";
         private const string ShardSuffix = "|shards:";
+        private const string DynamicSuffix = "|dynamic:";
         private const int EncodedScaleLength = 16;
 
         public static double ScaleForBonus(double bonus) => bonus > 0 && !double.IsNaN(bonus)
@@ -29,11 +30,13 @@ namespace SodRpg.Core.Game
         /// The authenticated opaque event identity is already carried by replay and pending-kill saves.
         /// Keep thinning last: released clients recognize only a trailing pressure suffix.
         /// </summary>
-        public static string EncodeEventId(string id, double scale, double shardDropMultiplier = 1)
+        public static string EncodeEventId(string id, double scale, double shardDropMultiplier = 1, double dynamicRewardMultiplier = 1)
         {
             if (string.IsNullOrEmpty(id)) throw new ArgumentException("A kill event identity is required.", nameof(id));
             scale = Normalize(scale);
             shardDropMultiplier = NormalizeShardDrop(shardDropMultiplier);
+            dynamicRewardMultiplier = NormalizeDynamicReward(dynamicRewardMultiplier);
+            if (dynamicRewardMultiplier != 1) id += DynamicSuffix + EncodeDouble(dynamicRewardMultiplier);
             if (shardDropMultiplier != 1) id += ShardSuffix + EncodeDouble(shardDropMultiplier);
             if (scale != 1) id += EventSuffix + EncodeDouble(scale);
             return id;
@@ -55,9 +58,13 @@ namespace SodRpg.Core.Game
         public static double ShardDropMultiplierFromEventId(string id)
         {
             id = StripSuffix(id, EventSuffix, out _);
-            StripSuffix(id, ShardSuffix, out double value);
-            return NormalizeShardDrop(value);
+            id = StripSuffix(id, ShardSuffix, out double value);
+            StripSuffix(id, DynamicSuffix, out double dynamicReward);
+            return NormalizeShardDrop(value) * NormalizeDynamicReward(dynamicReward);
         }
+
+        private static double NormalizeDynamicReward(double multiplier) => double.IsNaN(multiplier) || double.IsInfinity(multiplier)
+            ? 1 : Math.Max(1, Math.Min(1 + CoopBalance.DynamicDifficulty.RewardShare * (CoopBalance.DynamicDifficulty.MaxFactor - 1), multiplier));
 
         private static double NormalizeShardDrop(double multiplier) => double.IsNaN(multiplier) || double.IsInfinity(multiplier)
             ? 1 : Math.Max(1, Math.Min(DreamPressure.ShardDropMaximum, multiplier));
@@ -110,7 +117,7 @@ namespace SodRpg.Core.Game
         public static double ScaleDouble(double amount, double scale) => amount * Normalize(scale);
         public static bool Retain(Rng rng, double scale) => rng.Chance(Normalize(scale));
 
-        /// <summary>Thin indivisible relics and round final currencies once, before output caps or hoard deferral.</summary>
+        /// <summary>Thin rolled loot once, before waypoint limits, copies, conversions or hoard deferral.</summary>
         public static void ScaleLoot(Rng rng, KillReward reward, double scale)
         {
             scale = Normalize(scale);

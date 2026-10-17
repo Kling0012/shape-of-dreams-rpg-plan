@@ -365,6 +365,7 @@ namespace SodRpg.Mod
             internal readonly Light Light;
             internal readonly FxPointLight Driver;
             internal int AppliedFrame = -1;
+            internal bool PlaybackAdmitted;
             private bool _suppressed, _driverEnabled, _lightEnabled, _capped;
             private readonly float _range, _intensity, _rangeMultiplier, _intensityMultiplier;
 
@@ -381,6 +382,10 @@ namespace SodRpg.Mod
             internal void Restore()
             {
                 AppliedFrame = -1;
+                // Play_Imp also restores before playback, while this light may
+                // still be alive. Keep its concurrency slot, but charge the next
+                // playback against the time window again.
+                PlaybackAdmitted = false;
                 if (_capped)
                 {
                     if (Driver != null)
@@ -470,15 +475,19 @@ namespace SodRpg.Mod
                 for (int i = 0; i < ActiveLights.Length; i++) ActiveLights[i] = null;
             }
             _lastLightTime = now;
-            int free = -1, active = 0;
+            int free = -1, active = 0, existing = -1;
             // Fixed three slots, checked only at playback, never a per-frame scan.
             for (int i = 0; i < ActiveLights.Length; i++)
             {
                 var entry = ActiveLights[i];
                 if (entry != null && entry.IsAlive)
                 {
-                    if (entry == candidate) return true;
-                    active++;
+                    if (entry == candidate)
+                    {
+                        if (candidate.PlaybackAdmitted) return true;
+                        existing = i;
+                    }
+                    else active++;
                 }
                 else
                 {
@@ -491,8 +500,11 @@ namespace SodRpg.Mod
                 _lightHead = (_lightHead + 1) % LightTimes.Length;
                 _lightCount--;
             }
+            // A replay keeps its live slot instead of occupying a second one.
+            if (existing >= 0) free = existing;
             if (free < 0 || active >= limit || _lightCount >= limit) return false;
             ActiveLights[free] = candidate;
+            candidate.PlaybackAdmitted = true;
             LightTimes[(_lightHead + _lightCount) % LightTimes.Length] = now;
             _lightCount++;
             return true;

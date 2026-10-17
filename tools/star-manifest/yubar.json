@@ -28082,6 +28082,234 @@
       "notes": "効果は倍率修飾（C07）で、Gimmick/Powerとして表せる記述が設計表に無いため keystone 欄のみ。「T.c1.xまたはT.c2.xの奥」を requiresAny、「T.c3.n1/n2も必要」を両方必須(requires)と解釈。"
     },
     {
+      "id": "yubar.run.g1",
+      "region": "outer",
+      "cluster": "yubar.outer.run-growth",
+      "shape": "chain",
+      "anchor": "h.yubar.route.converging-stars.7",
+      "edges": [
+        "yubar.run.m1"
+      ],
+      "requires": [],
+      "requiresAny": [],
+      "kind": "RunGrowth",
+      "memory": null,
+      "value": null,
+      "param": null,
+      "receiver": null,
+      "target": null,
+      "gimmick": null,
+      "power": null,
+      "growth": {
+        "trigger": "BasicAttackHit",
+        "threshold": {
+          "valueRef": "yubar.run.g1/growth/threshold"
+        },
+        "cap": {
+          "valueRef": "yubar.run.g1/growth/cap"
+        },
+        "effects": [
+          {
+            "stat": "AttackSpeedPct",
+            "amount": {
+              "valueRef": "yubar.run.g1/growth/effects/0/amount"
+            }
+          },
+          {
+            "stat": "Haste",
+            "amount": {
+              "valueRef": "yubar.run.g1/growth/effects/1/amount"
+            }
+          },
+          {
+            "stat": "MaxHealthPct",
+            "amount": {
+              "valueRef": "yubar.run.g1/growth/effects/2/amount"
+            }
+          }
+        ]
+      },
+      "stat": null,
+      "options": null,
+      "keystone": null,
+      "mechanisms": [
+        "C01"
+      ],
+      "maxRank": 1,
+      "rankCost": 1,
+      "nameJa": "律動の積み重ね",
+      "nameEn": "Accumulated Rhythm",
+      "notes": "v1.32 B: 遠征の鍛錬の入口（仕組みを得る重要な星）。"
+    },
+    {
+      "id": "yubar.run.m1",
+      "region": "outer",
+      "cluster": "yubar.outer.run-growth",
+      "shape": "chain",
+      "anchor": null,
+      "edges": [
+        "yubar.run.g1",
+        "yubar.run.m2"
+      ],
+      "requires": [
+        "yubar.run.g1"
+      ],
+      "requiresAny": [],
+      "kind": "RunGrowthMod",
+      "memory": null,
+      "value": null,
+      "param": null,
+      "receiver": null,
+      "target": null,
+      "gimmick": null,
+      "power": null,
+      "growth": {
+        "target": "yubar.run.g1",
+        "capBonus": {
+          "valueRef": "yubar.run.m1/growth/capBonus"
+        },
+        "effectPct": {
+          "valueRef": "yubar.run.m1/growth/effectPct"
+        },
+        "doubleGain": false
+      },
+      "stat": null,
+      "options": null,
+      "keystone": null,
+      "mechanisms": [
+        "C01"
+      ],
+      "maxRank": 1,
+      "rankCost": 1,
+      "nameJa": "重なる拍動",
+      "nameEn": "Layered Pulses",
+      "notes": "上限増分はバランス表から生成。 / Cap increase is generated from the balance table."
+    },
+    {
+      "id": "yubar.run.m2",
+      "region": "outer",
+      "cluster": "yubar.outer.run-growth",
+      "shape": "chain",
+      "anchor": null,
+      "edges": [
+        "yubar.run.m1",
+        "yubar.run.choice"
+      ],
+      "requires": [
+        "yubar.run.m1"
+      ],
+      "requiresAny": [],
+      "kind": "RunGrowthMod",
+      "memory": null,
+      "value": null,
+      "param": null,
+      "receiver": null,
+      "target": null,
+      "gimmick": null,
+      "power": null,
+      "growth": {
+        "target": "yubar.run.g1",
+        "capBonus": {
+          "valueRef": "yubar.run.m2/growth/capBonus"
+        },
+        "effectPct": {
+          "valueRef": "yubar.run.m2/growth/effectPct"
+        },
+        "doubleGain": false
+      },
+      "stat": null,
+      "options": null,
+      "keystone": null,
+      "mechanisms": [
+        "C01"
+      ],
+      "maxRank": 1,
+      "rankCost": 1,
+      "nameJa": "尽きぬ律動",
+      "nameEn": "Inexhaustible Rhythm",
+      "notes": "上限増分はバランス表から生成。 / Cap increase is generated from the balance table."
+    },
+    {
+      "id": "yubar.run.choice",
+      "region": "outer",
+      "cluster": "yubar.outer.run-growth",
+      "shape": "chain",
+      "anchor": null,
+      "edges": [
+        "yubar.run.m2"
+      ],
+      "requires": [
+        "yubar.run.m2"
+      ],
+      "requiresAny": [],
+      "kind": "Choice",
+      "memory": null,
+      "value": null,
+      "param": null,
+      "receiver": null,
+      "target": null,
+      "gimmick": null,
+      "power": null,
+      "stat": null,
+      "options": [
+        {
+          "kind": "RunGrowthMod",
+          "memory": null,
+          "value": null,
+          "param": null,
+          "receiver": null,
+          "target": null,
+          "gimmick": null,
+          "power": null,
+          "growth": {
+            "target": "yubar.run.g1",
+            "capBonus": {
+              "valueRef": "yubar.run.choice/options/0/growth/capBonus"
+            },
+            "effectPct": {
+              "valueRef": "yubar.run.choice/options/0/growth/effectPct"
+            },
+            "doubleGain": false
+          },
+          "stat": null,
+          "nameJa": "深まる律動",
+          "nameEn": "Deepening Rhythm"
+        },
+        {
+          "kind": "RunGrowthMod",
+          "memory": null,
+          "value": null,
+          "param": null,
+          "receiver": null,
+          "target": null,
+          "gimmick": null,
+          "power": null,
+          "growth": {
+            "target": "yubar.run.g1",
+            "capBonus": {
+              "valueRef": "yubar.run.choice/options/1/growth/capBonus"
+            },
+            "effectPct": {
+              "valueRef": "yubar.run.choice/options/1/growth/effectPct"
+            },
+            "doubleGain": false
+          },
+          "stat": null,
+          "nameJa": "広がる律動",
+          "nameEn": "Expanding Rhythm"
+        }
+      ],
+      "keystone": null,
+      "mechanisms": [
+        "C01"
+      ],
+      "maxRank": 1,
+      "rankCost": 1,
+      "nameJa": "律動の育て方",
+      "nameEn": "How Rhythm Grows",
+      "notes": "1スタックの効果 +50% ／ 蓄積上限 +20。 / Stat gain per stack +50% or stack cap +20."
+    },
+    {
       "id": "h.yubar.haste",
       "region": "migration",
       "kind": "Choice",
@@ -29159,6 +29387,176 @@
       "nameJa": "星の盾",
       "nameEn": "Stellar Ward",
       "notes": "設計表C：既存IDとPowerを維持。旧Power.StarShield20を同IDで15へ明示移行（最大HPの15%、C06普通障壁プール1枚、本体の別障壁は制限しない）。代償は #47 で撤廃。機構K=C07。"
+    },
+    {
+      "id": "yubar.key.supernova-afterglow",
+      "region": "keystone",
+      "cluster": "yubar.key",
+      "shape": null,
+      "anchor": "yubar.mem.supernova.c2.x",
+      "edges": [],
+      "requires": [
+        "yubar.mem.supernova.c2.x"
+      ],
+      "requiresAny": [],
+      "kind": "Keystone",
+      "memory": "St_D_ExoticMatter",
+      "value": null,
+      "param": null,
+      "receiver": null,
+      "target": null,
+      "gimmick": null,
+      "power": null,
+      "stat": null,
+      "options": null,
+      "keystone": {
+        "upside": "超新星を使用すると、8秒以内の次の通常攻撃1回に攻撃力と魔力の高い方の25%を上乗せする。",
+        "upsideSpec": [
+          {
+            "memory": "St_Q_SuperNova",
+            "effect": "Primed",
+            "field": "Grant",
+            "gimmick": {
+              "trigger": "OnUse",
+              "effect": "Primed",
+              "value": {
+                "valueRef": "yubar.key.supernova-afterglow/keystone/upsideSpec/0/gimmick/value"
+              },
+              "arg": {
+                "valueRef": "yubar.key.supernova-afterglow/keystone/upsideSpec/0/gimmick/arg"
+              },
+              "cooldown": {
+                "valueRef": "yubar.key.supernova-afterglow/keystone/upsideSpec/0/gimmick/cooldown"
+              },
+              "target": null
+            }
+          }
+        ]
+      },
+      "mechanisms": [
+        "C01",
+        "C02",
+        "C09"
+      ],
+      "maxRank": 1,
+      "rankCost": 1,
+      "nameJa": "超新星の残光",
+      "nameEn": "Afterglow of the Supernova",
+      "notes": "MemoryPrimedを使用。8秒間の全命中追撃と魔力だけの基準は既存kindにないため、次の通常攻撃1回・攻撃力/魔力の高い方25%へ近似。本体ではSuperNovaは通常記憶で、奥義はCataclysm。指定名の超新星を起点とする。"
+    },
+    {
+      "id": "yubar.key.unstable-orbit",
+      "region": "keystone",
+      "cluster": "yubar.key",
+      "shape": null,
+      "anchor": "yubar.mem.converging-stars.c2.x",
+      "edges": [],
+      "requires": [
+        "yubar.mem.converging-stars.c2.x"
+      ],
+      "requiresAny": [],
+      "kind": "Keystone",
+      "memory": "St_D_ExoticMatter",
+      "value": null,
+      "param": null,
+      "receiver": null,
+      "target": null,
+      "gimmick": null,
+      "power": null,
+      "stat": {
+        "name": "Haste",
+        "perRank": {
+          "valueRef": "yubar.key.unstable-orbit/stat/perRank"
+        }
+      },
+      "options": null,
+      "keystone": {
+        "upside": "スキル加速が15増え、記憶のクールダウン回復が速くなる。",
+        "upsideSpec": null
+      },
+      "mechanisms": [
+        "C07"
+      ],
+      "maxRank": 1,
+      "rankCost": 1,
+      "nameJa": "不安定な軌道",
+      "nameEn": "Unstable Orbit",
+      "notes": "通常攻撃4命中ごとの次の記憶の固定1秒短縮は既存kindにないため、常時スキル加速+15へ置換。通常攻撃頻度と記憶CDに依存するため価値は近似。"
+    },
+    {
+      "id": "yubar.key.resonant-stardust",
+      "region": "keystone",
+      "cluster": "yubar.key",
+      "shape": null,
+      "anchor": "yubar.mem.exotic-matter.c2.x",
+      "edges": [],
+      "requires": [
+        "yubar.mem.exotic-matter.c2.x"
+      ],
+      "requiresAny": [],
+      "kind": "Keystone",
+      "memory": null,
+      "value": null,
+      "param": null,
+      "receiver": null,
+      "target": null,
+      "gimmick": null,
+      "power": null,
+      "stat": null,
+      "options": null,
+      "keystone": {
+        "upside": "共鳴する星屑 / Resonant Stardust",
+        "upsideSpec": [
+          {
+            "effect": "Coop",
+            "field": "Value",
+            "scope": "contactSeconds",
+            "to": {
+              "valueRef": "yubar.key.resonant-stardust/keystone/upsideSpec/0/to"
+            }
+          },
+          {
+            "effect": "Coop",
+            "field": "Value",
+            "scope": "damagePercent",
+            "to": {
+              "valueRef": "yubar.key.resonant-stardust/keystone/upsideSpec/1/to"
+            }
+          },
+          {
+            "effect": "Coop",
+            "field": "Value",
+            "scope": "powerPercent",
+            "to": {
+              "valueRef": "yubar.key.resonant-stardust/keystone/upsideSpec/2/to"
+            }
+          },
+          {
+            "effect": "Coop",
+            "field": "Value",
+            "scope": "radius",
+            "to": {
+              "valueRef": "yubar.key.resonant-stardust/keystone/upsideSpec/3/to"
+            }
+          },
+          {
+            "effect": "Coop",
+            "field": "Value",
+            "scope": "cooldownSeconds",
+            "to": {
+              "valueRef": "yubar.key.resonant-stardust/keystone/upsideSpec/4/to"
+            }
+          }
+        ]
+      },
+      "mechanisms": [
+        "C07"
+      ],
+      "maxRank": 1,
+      "rankCost": 1,
+      "nameJa": "共鳴する星屑",
+      "nameEn": "Resonant Stardust",
+      "notes": "同行の刻印。味方との協力距離係数を使用し、ソロでは発動しない。"
     }
   ]
 }

@@ -42,13 +42,14 @@ namespace Mirror
     internal class NetworkConnection
     {
         public readonly List<object> Sent = new List<object>();
+        public int connectionId;
         public void Send<T>(T message) where T : struct, NetworkMessage => Sent.Add(message);
     }
     internal sealed class NetworkConnectionToClient : NetworkConnection { }
 }
  namespace UnityEngine
  {
-     internal static class Time { public static int frameCount; public static float unscaledTime; }
+     internal static class Time { public static int frameCount; public static float unscaledTime; public static float time; }
     // TrackRun の Limbo 深度の読み出しに必要な本体 API。ハーネスでは Limbo なし(0)を返す。
     internal static class Object { public static T FindObjectOfType<T>() where T : class => null; }
 
@@ -80,6 +81,13 @@ namespace Mirror
         public float x, y;
         public Vector2(float x, float y) { this.x = x; this.y = y; }
         public static Vector2 zero => new Vector2();
+        public static Vector2 operator -(Vector2 a, Vector2 b) => new Vector2(a.x - b.x, a.y - b.y);
+        public float sqrMagnitude => x * x + y * y;
+        public static float Distance(Vector2 a, Vector2 b)
+        {
+            float dx = a.x - b.x, dy = a.y - b.y;
+            return (float)Math.Sqrt(dx * dx + dy * dy);
+        }
     }
     internal struct Rect
     {
@@ -104,6 +112,9 @@ namespace Mirror
         public static int Max(int a, int b) => a > b ? a : b;
         public static float Max(float a, float b) => a > b ? a : b;
         public static float Min(float a, float b) => a < b ? a : b;
+        public static float Clamp01(float value) => value < 0f ? 0f : value > 1f ? 1f : value;
+        public static float Clamp(float value, float min, float max) => value < min ? min : value > max ? max : value;
+        public static float Floor(float value) => (float)Math.Floor(value);
     }
     internal static class GUI
     {
@@ -161,13 +172,29 @@ namespace SodRpg.Mod
     {
         public uint netId;
         public bool isActive = true;
-        public float currentHealth = 100;
+        // 敵担当制（HostAuthority.EnemyOwnership.cs）は本体と同じく Status 側を正とする。
+        public float currentHealth { get => Status.currentHealth; set => Status.currentHealth = value; }
+        public float maxHealth => Status.maxHealth;
+        public UnityEngine.Vector3 position;
+        public UnityEngine.Vector3 agentPosition => position;
         public DewPlayer owner;
+        public EntityAI AI;
+        public bool anyBoss;
+        public bool isDead => Status.isDead;
         public readonly EntityControl Control = new EntityControl();
         public readonly EntityVisual Visual = new EntityVisual();
         public EntityStatus Status = new EntityStatus();
-        public EntityRelation GetRelation(Entity other) => EntityRelation.Enemy;
-    }
+        public readonly ProcessorList<DataProcessor<DamageData, Actor, Entity>> dealtDamageProcessor
+            = new ProcessorList<DataProcessor<DamageData, Actor, Entity>>();
+        public event Action<EventInfoDamage> EntityEvent_OnTakeDamage;
+        internal void RaiseEntityEventOnTakeDamage(EventInfoDamage info) => EntityEvent_OnTakeDamage?.Invoke(info);
+        public EntityRelation GetRelation(Entity other) => this is Hero && other is Hero ? EntityRelation.Ally : EntityRelation.Enemy;
+        public bool IsAnyBoss() => anyBoss || this is Monster monster
+            && (monster.type == Monster.MonsterType.MiniBoss || monster.type == Monster.MonsterType.Boss);
+        public bool CanAggroTo(Entity target) => true;
+        public UnityEngine.Vector3 GetAIPosition(Entity viewer) => position;    }
+    // 敵担当制が対象外にする本体のEntity派生。
+    internal class PropEntity : Entity { }
     // 本体の StatBonus と同じ形。部屋の兆しの付与・解除をそのまま観測できるよう、適用中の一覧も持つ。
     internal class StatBonus
     {
@@ -176,16 +203,56 @@ namespace SodRpg.Mod
     }
     internal class EntityStatus
     {
-        public float currentShield;
-        public float currentHealth { get; set; }
+        private float _currentHealth = 100f;
+        private bool _statsDirty = true;
+        public float currentHealth { get => _currentHealth; set => _currentHealth = value; }
         public float maxHealth = 100;
+        // 敵担当制のHP割合維持を観察できるよう、再計算は処理器つきの基本値から最大HPを作り直す。
+        public float baseMaxHealth = 100f;
+        public bool isAlive = true, isUndetectableByNonAllies;
+        public float currentShield;
         public int fireStack, lightStack, darkStack;
         public bool hasCold;
-        public bool isDead, isInConversation, hasInvulnerable;
+        public bool isDead, isInConversation, hasInvulnerable, hasDamageImmunity;
+        public readonly FinalStats finalStats = new FinalStats();
+        public readonly ProcessorList<DataProcessor<FinalStats>> finalStatsProcessors
+            = new ProcessorList<DataProcessor<FinalStats>>();
         public readonly List<StatBonus> AppliedBonuses = new List<StatBonus>();
-        public void AddStatBonus(StatBonus bonus) => AppliedBonuses.Add(bonus);
-        public void RemoveStatBonus(StatBonus bonus) => AppliedBonuses.Remove(bonus);
-        public void CalculateStatsIfDirty() { }
+        // 本体の加算済みボーナス（bonusStats）と同じ形。ボス持ち分が人数補正分を除外するために読む。
+        public readonly StatBonus bonusStats = new StatBonus();
+        public void AddStatBonus(StatBonus bonus)
+        {
+            AppliedBonuses.Add(bonus);
+            bonusStats.attackDamagePercentage += bonus.attackDamagePercentage;
+            bonusStats.abilityPowerPercentage += bonus.abilityPowerPercentage;
+            bonusStats.movementSpeedPercentage += bonus.movementSpeedPercentage;
+            bonusStats.abilityHasteFlat += bonus.abilityHasteFlat;
+            bonusStats.armorFlat += bonus.armorFlat;
+            bonusStats.attackSpeedPercentage += bonus.attackSpeedPercentage;
+            bonusStats.maxHealthPercentage += bonus.maxHealthPercentage;
+        }
+        public void RemoveStatBonus(StatBonus bonus)
+        {
+            AppliedBonuses.Remove(bonus);
+            bonusStats.attackDamagePercentage -= bonus.attackDamagePercentage;
+            bonusStats.abilityPowerPercentage -= bonus.abilityPowerPercentage;
+            bonusStats.movementSpeedPercentage -= bonus.movementSpeedPercentage;
+            bonusStats.abilityHasteFlat -= bonus.abilityHasteFlat;
+            bonusStats.armorFlat -= bonus.armorFlat;
+            bonusStats.attackSpeedPercentage -= bonus.attackSpeedPercentage;
+            bonusStats.maxHealthPercentage -= bonus.maxHealthPercentage;
+        }
+        public void MarkStatsDirty() => _statsDirty = true;
+        public void SetHealth(float value) => currentHealth = value;
+        public void CalculateStatsIfDirty()
+        {
+            if (!_statsDirty) return;
+            _statsDirty = false;
+            var stats = new FinalStats { maxHealth = baseMaxHealth, armor = finalStats.armor };
+            foreach (var processor in finalStatsProcessors.InOrder()) processor(ref stats);
+            maxHealth = stats.maxHealth;
+            finalStats.maxHealth = stats.maxHealth;
+        }
         // ミストの行動不能保険（HostAuthority.CrowdControlRecovery.cs）が走査する本体の効果リスト。
         private readonly List<BasicEffect> _basicEffects = new List<BasicEffect>();
         public bool HasElemental(ElementalType type) => false;
@@ -226,7 +293,7 @@ namespace SodRpg.Mod
     internal enum HeroSkillLocation { Q, W, E, R, Identity, Movement }
     internal enum SkillType { Normal, Ultimate }
     internal enum ElementalType { Fire, Cold, Light, Dark }
-    internal enum EntityRelation { Enemy }
+    internal enum EntityRelation { Enemy, Ally }
     internal class AbilityTrigger : Actor { public Entity owner; }
     internal class SkillTrigger : AbilityTrigger
     {
@@ -244,12 +311,13 @@ namespace SodRpg.Mod
         public void CallAttackCompleteBeforePrepareRoutines() { }
         public void CallAttackCompleteRoutines() { }
     }
-    internal class AbilityInstance : Actor { public Gem gem; }
+    internal class AbilityInstance : Actor { public Gem gem; public CastInfo info; }
     internal sealed class Gem : Actor { }
     internal sealed class ElementalStatusEffect : Actor { public bool isActive; }
     internal sealed class Summon : Entity
     {
         public CastInfo info;
+        public Hero hero;
         public T FindFirstAncestorOfType<T>() where T : class => null;
     }
     internal sealed class Ai_D_ChargedAnguillian_Lightning : Actor { }
@@ -264,10 +332,20 @@ namespace SodRpg.Mod
     internal class EntityControl
     {
         public Entity entity;
+        // 本体の攻撃目標。召喚体の反撃判定（HostAuthority.SummonOwnership.cs）が読む。
+        public Entity attackTarget;
         public Displacement ongoingDisplacement;
         public int Cancels;
+        public float outerRadius;
+        public int MoveToDestinationCalls;
+        public UnityEngine.Vector3 LastDestination;
         public void CancelOngoingDisplacement() { Cancels++; ongoingDisplacement = null; }
         private void CancelOngoingDisplacementLocal() { Cancels++; ongoingDisplacement = null; }
+        public void MoveToDestination(UnityEngine.Vector3 destination, bool immediately)
+        {
+            MoveToDestinationCalls++;
+            LastDestination = destination;
+        }
     }
     internal class Displacement
     {
@@ -285,6 +363,21 @@ namespace SodRpg.Mod
         internal static bool IsNullInactiveDeadOrKnockedOut(this Entity entity)
             => entity == null || !entity.isActive || entity.currentHealth <= 0
                || entity is Hero hero && hero.isKnockedOut;
+    }
+    // 本体の EntityCheck.IsAnyBoss と同じ意味（BossMonster または Boss/MiniBoss 型）。
+    internal static class EntityCheck
+    {
+        internal static bool IsAnyBoss(this Entity entity)
+            => entity is BossMonster || entity is Monster monster
+               && (monster.type == Monster.MonsterType.Boss || monster.type == Monster.MonsterType.MiniBoss);
+    }
+    // CoopOmens.cs の公開ラッパーと同じ式。本体では public だが、この境界の Entity は
+    // internal なので public 署名を作れず、同じ意味の internal 模倣として置く。
+    internal static class CoopOmens
+    {
+        internal static bool Enabled { get => HostAuthority.CoopOmensEnabled; set => HostAuthority.CoopOmensEnabled = value; }
+        internal static bool IsSharedObjective(Entity entity) => NetworkServer.active
+            && HostAuthority.NativeInstance?.IsCoopOmenWard(entity) == true;
     }
     internal class BasicEffect { public bool isAlive = true; public StatusEffect parent; }
     internal sealed class StunEffect : BasicEffect { }
@@ -305,8 +398,40 @@ namespace SodRpg.Mod
     // NativeActorLifetime.cs は未リンク。この境界では警告の受け口だけが必要。
     internal static class NativeActorLifetime { internal static void WarnOnce(string kind, Exception error) { } }
     internal struct ReactionChain { }
-    internal enum DamageAttribute { IsCrit }
-    internal struct DamageData { public float amount; public bool HasAttr(DamageAttribute attr) => false; }
+    [Flags]
+    internal enum DamageAttribute { None = 0, IsCrit = 1, IgnoreArmor = 2, IgnoreShield = 4, DamageShieldOnly = 8, IgnoreDamageImmunity = 16 }
+    // 本体のダメージ情報と同じ形。敵担当制の受ダメ補正はこの生データに直接掛かる。
+    internal struct DamageData
+    {
+        public enum SourceType { Normal, Pure }
+        public float amount;
+        public Actor actor;
+        public DamageAttribute attributes;
+        public SourceType source;
+        public float damageToShieldMultiplier;
+        public bool isBlockedByImmunity;
+        public float currentAmount => Math.Max(0f, amount);
+        public bool HasAttr(DamageAttribute attr) => attr != 0 && (attributes & attr) == attr;
+        public DamageData ApplyReduction(float ratio)
+        {
+            amount *= 1f - Math.Max(0f, Math.Min(1f, ratio));
+            return this;
+        }
+        public DamageData ApplyAmplification(float ratio)
+        {
+            amount *= 1f + ratio;
+            return this;
+        }
+        public DamageData(float value)
+        {
+            amount = value;
+            actor = null;
+            attributes = 0;
+            source = SourceType.Normal;
+            damageToShieldMultiplier = 0f;
+            isBlockedByImmunity = false;
+        }
+    }
     // 本体の回復処理（takenHealProcessor）の形。倍率は生データに反映する。
     internal struct HealData
     {
@@ -374,7 +499,7 @@ namespace SodRpg.Mod
     internal sealed class WorldNode { public WorldNodeType type; public bool isWellRoom; }
     // 部屋の兆し（HostAuthority.RoomOmens.cs）が資格判定で読む本体の部屋構成。
     internal enum SectionCombatAreaType { None, Yes }
-    internal sealed class RoomMonsters { public bool isMarkedAsCombatArea; public SectionCombatAreaType combatAreaSettings; }
+    internal sealed class RoomMonsters { public bool isMarkedAsCombatArea; public bool isBossSpawn; public SectionCombatAreaType combatAreaSettings; }
     internal sealed class Section { public RoomMonsters monsters; }
     internal struct EventInfoLoadRoom { }
     internal sealed class GameManager
@@ -398,7 +523,12 @@ namespace SodRpg.Mod
         public GameState state = GameState.Playing;
         public readonly Dictionary<string, string> customData = new Dictionary<string, string>();
     }
-    internal sealed class ActorManager { public Actor serverActor; public readonly List<Hero> allHeroes = new List<Hero>(); }
+    internal sealed class ActorManager
+    {
+        public Actor serverActor;
+        public readonly List<Hero> allHeroes = new List<Hero>();
+        public readonly List<Entity> allEntities = new List<Entity>();
+    }
     // #112: 「ロビーに戻る」の確認で呼ばれる本体の入口。isEndingSession がtrue のEndSession 系
     // (メニュー・デスクトップ復帰など)は精算対象外。仮想プロパティで判別時の例外も注入できる。
     internal class DewNetworkManager
@@ -451,7 +581,15 @@ namespace SodRpg.Mod
             if (ErrorSink != null) ErrorSink(message);
             else throw new InvalidOperationException(message);
         }
-        public static void Warn(string message) { }
+        public static readonly List<string> Warnings = new List<string>();
+        public static void Warn(string message) { Warnings.Add(message); }
+    }
+    // ClientSession.TrackRun がラン開始時に呼ぶ近接分類ログのリセット（#542）。
+    // このハーネスは TravelerCombatNative.cs をコンパイルしない（近接協力の本体は Core.Tests 側）ので、
+    // 何もしない模倣を置く。Log と同じ扱い。
+    internal static class TravelerCombatNative
+    {
+        internal static void ResetReporting() { }
     }
     internal static class NativeAttributedMemoryCast
     {
@@ -466,6 +604,8 @@ namespace SodRpg.Mod
     internal sealed partial class HostAuthority
     {
         internal static HostAuthority NativeInstance;
+        // HostAuthority.MeleeCoop.cs is not compiled here; hello replies carry the "not sent" value.
+        internal int MeleeCoopWire => 0;
         internal static readonly RunGrowthLedger RunGrowthLedger = new RunGrowthLedger();
         private Actor _registeredOn;
         private ZoneManager _zone;
@@ -484,7 +624,11 @@ namespace SodRpg.Mod
             public uint KillEventNetId, SyncNetId;
             public bool ClassificationQueued;
             public NightmareAffix ClassificationNightmare;
+            public MonsterOwnership Ownership, ClassificationOwnership;
             public StatBonus OmenBonus;
+            public bool PressureApplied, SpawnProcessed;
+            // 初期生成群の分類（CoopOmens）が読む登録時刻。
+            public float QueuedAt;
         }
         internal sealed class Variant { public string Id; }
         internal sealed class Behavior { public bool CueQueued; }
@@ -495,6 +639,10 @@ namespace SodRpg.Mod
             if (multiplier < 1) data.ApplyReduction((float)(1 - multiplier));
             else if (multiplier > 1) data.ApplyAmplification((float)(multiplier - 1));
         }
+        // CoopOmens.cs（リンク）が呼ぶ本体側の生成処理とC07補正。この境界では
+        // 生成分類済み・補正なしを前提に何もしない。
+        private void ProcessSpawns() { }
+        internal void ApplyAuthoredFinalNativeDamage(ref DamageData damage, Actor actor, Entity target) { }
         internal static bool Alive(Entity entity) => entity != null && entity.isActive && entity.currentHealth > 0;
         private void SendMonsterBehaviorCue(MonsterRuntime runtime, bool force, DewPlayer target = null)
         {
@@ -548,10 +696,13 @@ namespace SodRpg.Mod
         private bool _pressureDirty;
         // 協力取引ホスト（HostAuthority.CoopTrade.cs は未リンク）。NativePersistence.targets が
         // 本物のハンドラ群を抽出するため、ここはその実行に必要な状態の形だけを用意する。
+        // HostAuthority.CoopTrade.cs の CoopProfileResendInterval と同じ値。
+        private const float CoopProfileResendInterval = 15f;
         private sealed class CoopPeerState
         {
             public float Seen;
             public bool Safe, Fusion;
+            public int ConnectionId = int.MinValue;
             public readonly BuildTransferReceiver Transfer = new BuildTransferReceiver(CoopTradeTransport.MaxProfileChars);
             public string Envelope;
         }
@@ -564,6 +715,8 @@ namespace SodRpg.Mod
             public string FirstOfferAck, SecondOfferAck;
             public bool Accepted, FirstConfirmed, SecondConfirmed, Preparing, FirstPrepared, SecondPrepared;
             public int Revision;
+            public int FirstProfileSentRevision = -1, SecondProfileSentRevision = -1;
+            public float FirstProfileSentAt = -1000f, SecondProfileSentAt = -1000f;
             public float ActiveAt;
             public CoopTradeReceipt Receipt;
         }
@@ -590,6 +743,8 @@ namespace SodRpg.Mod
             public Hero Hero;
             public ReceivedBuild AppliedBuild;
             public readonly List<PendingGimmick> PendingGimmicks = new List<PendingGimmick>();
+            public readonly Dictionary<Summon, DataProcessor<DamageData, Actor, Entity>> Summons =
+                new Dictionary<Summon, DataProcessor<DamageData, Actor, Entity>>();
             public readonly Prunable Gimmicks = new Prunable(), PairCombos = new Prunable();
             // HostAuthority.cs の HeroRuntime と同じ行動不能保険の観測状態。
             public BasicEffect OrphanCrowdControl;
@@ -622,6 +777,9 @@ namespace SodRpg.Mod
         internal static bool Available { get; set; }
         private static bool _restoring, _newInfinity, _refresh, _hunterAdjustSuspended;
         private static int _hunterMoveCounter;
+        // InfinityMode.cs の区画一致キャッシュと同じ形（抽出された ReleaseMatchedZone が触る）。
+        private static Zone _matchedZone;
+        private static string _matchedZoneId;
         private static InfinityRunState _initial;
         private static InfinityChoice _choice, _ackWaitingChoice;
         private static string _choiceText;
@@ -640,7 +798,11 @@ namespace SodRpg.Mod
         internal static void Tick() { }
         internal static void DisableFeature(string reason) => throw new NotSupportedException(reason);
         internal static void CompleteReturn(InfinityRunState state) => throw new NotSupportedException();
-        internal static void AcknowledgeLocal(InfinityChoice choice) => throw new NotSupportedException();
+        // #528: ゲストの TickInfinity が AcknowledgeLocal を呼んだ回数を数える観測点。
+        // 本体では DreamforgeInfinityAckMsg をサーバーへ送るが、境界では送信そのものを再現しない。
+        internal static int AcknowledgeCalls;
+        internal static InfinityChoice LastAcknowledgedChoice;
+        internal static void AcknowledgeLocal(InfinityChoice choice) { AcknowledgeCalls++; LastAcknowledgedChoice = choice; }
         internal static bool PartyAcknowledged(InfinityChoice choice) => throw new NotSupportedException();
         internal static bool Regenerate(string intent) => throw new NotSupportedException();
         internal static void PublishChoice(InfinityChoice choice) => _choice = choice;
@@ -718,6 +880,7 @@ namespace SodRpg.Mod
         private Actor _sentContinueReceiptActor;
         private float _helloFirstSent = -1f, _nextHello;
         private bool _helloAnswered, _hostCompatibilityWarned, _hostInfinityAvailable;
+        private int _hostMeleeCoop;
         // HostVersionWarning は #510 で ClientSession.Hello.cs から抽出される（NativePersistence.targets）。
         private Build _buildCache;
         private float _buildCacheTime;
@@ -751,6 +914,8 @@ namespace SodRpg.Mod
         private string _infinitySaveHoldReleasedRun;
         private bool _infinityPendingPublication;
         private bool _dirty, _saveErrorFromWriteFailure;
+        private string _writeFailureText, _writeFailureSource;
+        private bool _writeFailureJapanese;
         private int _buildCacheFrame = -1, _saveCount;
         private double _saveMsTotal;
         public string SaveError { get; private set; }
@@ -793,7 +958,10 @@ namespace SodRpg.Mod
             return false;
         }
         private void InitializeInfinityRun() { }
+        private void EnsureReachableBounties() => Rules.ReplaceUnreachableBounties(Profile, solo: false);
         public float PressureHealthMultiplier { get; internal set; } = 1f;
         public float PressureDamageMultiplier { get; internal set; } = 1f;
+        public float NightmareGearMultiplier { get; private set; }
+        public float NightmarePressureHealthMultiplier { get; private set; }
     }
 }

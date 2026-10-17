@@ -312,6 +312,7 @@ namespace SodRpg.Mod
             if (Profile.Run?.Infinity != null) return;
             if (!RunActive || (_zone != null && _zone.isInAnyTransition)) return;
             if (!_runChoiceProgress.ApplyCurrent(Profile, ChoiceZoneIndex)) return;
+            EnsureReachableBounties(); // 参加者にインフィニティ設定が後から届いた場合も対象にする。
             MarkDirty(true);
             SaveNow();
         }

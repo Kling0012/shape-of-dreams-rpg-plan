@@ -22,10 +22,26 @@ namespace SodRpg.Mod
 
         internal bool SupportsAutocastPressure(DewPlayer player) => _autocastPressurePeers.Contains(player);
         internal void ForgetAutocastPressure(DewPlayer player) => _autocastPressurePeers.Remove(player);
-        private static readonly List<Txt> MismatchScratch = new List<Txt>();
+        private static readonly List<Txt> MismatchTexts = new List<Txt>();
+        private static readonly List<string> MismatchScratch = new List<string>();
+        private static bool _mismatchScratchJapanese;
 
-        /// <summary>版が違う参加者の説明（表示時に現在の言語で解決する）。無ければ空。</summary>
-        internal static IReadOnlyList<Txt> VersionWarnings => MismatchScratch;
+        /// <summary>版が違う参加者の説明（ホストの画面に出す）。無ければ空。言語を切り替えたら、その言語で作り直す。</summary>
+        internal static IReadOnlyList<string> VersionWarnings
+        {
+            get
+            {
+                if (_mismatchScratchJapanese != Loc.Japanese) FillMismatchScratch();
+                return MismatchScratch;
+            }
+        }
+
+        private static void FillMismatchScratch()
+        {
+            _mismatchScratchJapanese = Loc.Japanese;
+            MismatchScratch.Clear();
+            foreach (var text in MismatchTexts) MismatchScratch.Add(_mismatchScratchJapanese ? text.Ja : text.En);
+        }
 
         private Action<DreamforgeHelloMsg, DewPlayer> _onHello;
         private Action<DewPlayer> _onHelloPlayerChanged;
@@ -153,17 +169,22 @@ namespace SodRpg.Mod
                 bool sameVersion = string.Equals(msg.modVer, ModVersion, StringComparison.Ordinal);
                 if (sameProtocol && sameContent && sameVersion && msg.continueCheckpoints && msg.infinityAvailable)
                     _versionMismatches.Remove(caller);
-                else if (!_versionMismatches.ContainsKey(caller))
+                else
                 {
                     string theirs = string.IsNullOrEmpty(msg.modVer) ? "?" : msg.modVer;
                     // Name the item that differs: version and protocol often read identical while the content
                     // fingerprint or the peer's Infinity availability is what the warning is about.
-                    _versionMismatches[caller] = new Txt(
+                    var warning = new Txt(
                         $"{caller.playerName} の Dreamforge に差があります（{DescribeDifferencesJa(sameProtocol, sameContent, sameVersion, msg.continueCheckpoints, msg.infinityAvailable)}。版 {ModVersion}/{theirs}、Protocol {Protocol.Version}/{msg.protocol}）。機能は続行します。",
                         $"{caller.playerName}'s Dreamforge differs ({DescribeDifferencesEn(sameProtocol, sameContent, sameVersion, msg.continueCheckpoints, msg.infinityAvailable)}; version {ModVersion}/{theirs}, protocol {Protocol.Version}/{msg.protocol}). Features continue.");
-                    // One warning per mismatch episode/transport, not every five-second retry.
+                    // One warning per mismatch episode/transport, not every five-second retry. When the difference
+                    // itself changes (e.g. the peer turned Infinity on), replace the text so it names the current items.
                     // Do not call a content/capability difference a protocol mismatch.
-                    Log.Warn($"Host: compatibility warning for {caller.playerName}: protocol {msg.protocol}/{Protocol.Version}, mod {theirs}/{ModVersion}, contentEqual={sameContent}, continueCheckpoints={msg.continueCheckpoints}, infinityAvailable={msg.infinityAvailable}; features continue.");
+                    if (!_versionMismatches.TryGetValue(caller, out var previous) || previous.Ja != warning.Ja)
+                    {
+                        _versionMismatches[caller] = warning;
+                        Log.Warn($"Host: compatibility warning for {caller.playerName}: protocol {msg.protocol}/{Protocol.Version}, mod {theirs}/{ModVersion}, contentEqual={sameContent}, continueCheckpoints={msg.continueCheckpoints}, infinityAvailable={msg.infinityAvailable}; features continue.");
+                    }
                 }
                 RebuildMismatchList();
                 CheckInfinityRunCompatibility();
@@ -176,6 +197,7 @@ namespace SodRpg.Mod
                     continueResumeSession = ClientSession.ContinueResumeSession,
                     continueCheckpoints = true,
                     infinityAvailable = InfinityMode.Available,
+                    meleeCoop = MeleeCoopWire,
                 });
             }
             catch (Exception ex) { Log.Error("Host: hello " + ex); }
@@ -211,10 +233,11 @@ namespace SodRpg.Mod
 
         private void RebuildMismatchList()
         {
-            MismatchScratch.Clear();
+            MismatchTexts.Clear();
             foreach (var kv in _versionMismatches)
                 if (kv.Key != null && (DewPlayer.gamePlayers.Contains(kv.Key) || DewPlayer.lobbyPlayers.Contains(kv.Key)))
-                    MismatchScratch.Add(kv.Value);
+                    MismatchTexts.Add(kv.Value);
+            FillMismatchScratch();
         }
     }
 }

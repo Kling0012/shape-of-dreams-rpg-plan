@@ -158,9 +158,14 @@ namespace SodRpg.Mod
         private static void Postfix(Entity __instance, Actor actor, ref DamageData data)
         {
             HostAuthority.NativeInstance?.ApplyFinalGimmickDamageV129(__instance, actor, ref data);
-            if (!data.IsAmountModifiedBy(typeof(SodRpg.Core.Game.GimmickRuntime))) return;
-            if (!HostAuthority.IsBossGeneratedDamage(data)) data = data.SetElemental(null);
-            data = data.DoAttackEffect(AttackEffectType.Others, 0f);
+            if (data.IsAmountModifiedBy(typeof(SodRpg.Core.Game.GimmickRuntime)))
+            {
+                if (!HostAuthority.IsBossGeneratedDamage(data)) data = data.SetElemental(null);
+                data = data.DoAttackEffect(AttackEffectType.Others, 0f);
+            }
+            HostAuthority.NativeInstance?.RecordDynamicDamage(__instance, actor, data);
+            HostAuthority.NativeInstance?.ApplyCoopOmenDamage(__instance, actor, ref data);
+            HostAuthority.NativeInstance?.ApplyOwnershipReceivedDamage(__instance, actor, ref data, measure: false);
         }
     }
 }

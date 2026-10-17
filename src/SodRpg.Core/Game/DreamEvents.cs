@@ -195,7 +195,7 @@ namespace SodRpg.Core.Game
                 case DreamEvent.ShardKiln:
                     return Loc.T($"未確保の調律石{EventsBalance.ShardKilnTuning}を失い、未確保の欠片{EventsBalance.ShardKilnShards}を得る。", $"Trade {EventsBalance.ShardKilnTuning} unsecured tuning stones for {EventsBalance.ShardKilnShards} unsecured shards.");
                 case DreamEvent.StarOffering:
-                    return Loc.T($"レア以上の対象から一番弱い未確保の遺物を捧げ、この遠征の旅人の星の経験を{EventsBalance.StarOfferingXp}得る。", $"Sacrifice your weakest eligible unsecured relic of Rare or better for {EventsBalance.StarOfferingXp} permanent star experience for this expedition's hero.");
+                    return Loc.T($"レア以上の対象から一番弱い未確保の遺物を捧げ、この遠征の旅人の星の経験を{EventsBalance.StarOfferingXp}得る。夢の深さの経験倍率も適用される。", $"Sacrifice your weakest eligible unsecured relic of Rare or better for {EventsBalance.StarOfferingXp} permanent star experience for this expedition's hero. The dream depth experience multiplier also applies.");
                 case DreamEvent.DreamOffering:
                     return Loc.T($"対象のうち一番弱い未確保の遺物を捧げ、夢のレベルの経験値を{DreamOfferingXp(heat)}得る。", $"Sacrifice your weakest eligible unsecured relic for {DreamOfferingXp(heat)} Dream Level experience.");
                 case DreamEvent.AbyssalChest:
@@ -290,8 +290,11 @@ namespace SodRpg.Core.Game
                 case DreamEvent.CourageGate:
                     if (run.Heat > Content.MaxHeat - EventsBalance.CourageGateHeatIncrement) reason = Loc.T("これ以上深く潜れません。", "Cannot delve any deeper.");
                     break;
-                case DreamEvent.Stargazer:
                 case DreamEvent.Archive:
+                    // 経験値は上限の夢のレベルでは入らない（夢への供物と同じ）。
+                    if (p.DreamLevel >= Content.MaxDreamLevel) reason = Loc.T("夢のレベルは上限です。", "Dream Level is at its cap.");
+                    break;
+                case DreamEvent.Stargazer:
                 case DreamEvent.LuckyStar:
                     break;
                 case DreamEvent.MemoryWell:

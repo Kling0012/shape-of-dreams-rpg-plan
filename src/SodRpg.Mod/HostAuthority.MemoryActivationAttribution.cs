@@ -145,6 +145,7 @@ namespace SodRpg.Mod
         private static readonly Action<EntityStatus, float> NativeSetHealth =
             ResolveNativeHealthSetter();
         internal static void Prewarm() { _ = NativeSetHealth; }
+        internal static bool BossShareSupported { get; private set; }
         private static bool Prepare() => NativeSetHealth != null;
         private static Action<EntityStatus, float> ResolveNativeHealthSetter()
         {
@@ -170,9 +171,11 @@ namespace SodRpg.Mod
                 yield return instruction;
             }
             if (count != 1) throw new InvalidOperationException("Native HP attribution requires exactly one DealDamage health setter.");
+            BossShareSupported = true;
         }
         private static void SetHealth(EntityStatus status, float health)
         {
+            HostAuthority.NativeInstance?.ApplyBossShareHealth(status, ref health);
             var packet = NativeAttributedDamagePacket.Current;
             if (packet != null && packet.Victim != null && packet.Victim.Status == status)
                 packet.HpDamage = Math.Max(0f, status.currentHealth - Math.Max(0f, health));
@@ -234,6 +237,9 @@ namespace SodRpg.Mod
 
     internal sealed partial class HostAuthority
     {
+        partial void CommitBossShareHealth(EntityStatus status, ref float health);
+        internal void ApplyBossShareHealth(EntityStatus status, ref float health) => CommitBossShareHealth(status, ref health);
+
         private readonly MemoryActivationAttribution _memoryAttribution = new MemoryActivationAttribution();
         private readonly Dictionary<Hero, Dictionary<HeroSkillLocation, SkillTrigger>> _attributionEquipment =
             new Dictionary<Hero, Dictionary<HeroSkillLocation, SkillTrigger>>();
@@ -528,9 +534,12 @@ namespace SodRpg.Mod
                 && source.owner == owner)
                 packet.Identity = _memoryAttribution.ProjectOwnedBasicSource(packet.Identity, "native.killing-flow.main");
         }
+        partial void EndCoopKeystonePacket(NativeAttributedDamagePacket.Packet packet);
+
         internal void EndAttributedDamagePacket(NativeAttributedDamagePacket.Packet packet)
         {
             if (packet == null) return;
+            EndCoopKeystonePacket(packet);
             for (int i = 0; i <= (int)MemoryEventKind.OwnedBasicAttackHit; i++)
                 if ((packet.Notifications & (1 << i)) != 0)
                     _memoryAttribution.ForgetNotification("native.publish", packet.Identity.Event((MemoryEventKind)i, packet.Serial, packet.NotificationVictim));

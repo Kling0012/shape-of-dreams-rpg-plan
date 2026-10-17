@@ -15,8 +15,20 @@ namespace SodRpg.Mod
     public sealed class HeroSkill
     {
         public int MovementMaxGemCount;
+        // 記憶スロット（Q/W/E/R）。本体は GetSkill(HeroSkillLocation) で同じインスタンスを返す。
+        public SkillTrigger Q, W, E, R;
         public int GetMaxGemCount(HeroSkillLocation type) => type == HeroSkillLocation.Movement ? MovementMaxGemCount : 0;
-        public object GetSkill(HeroSkillLocation type) => null;
+        public SkillTrigger GetSkill(HeroSkillLocation type)
+        {
+            switch (type)
+            {
+                case HeroSkillLocation.Q: return Q;
+                case HeroSkillLocation.W: return W;
+                case HeroSkillLocation.E: return E;
+                case HeroSkillLocation.R: return R;
+                default: return null;
+            }
+        }
     }
     public sealed class EditSkillManager
     {
@@ -71,6 +83,14 @@ namespace SodRpg.Mod
     {
         public HeroSkillLocation skillType;
         public GameObject skillActivationKeyObject;
+        // 本体のクールダウン表示面（NativeMemoryReuse のパッチ対象）。観測用に最終値を残す。
+        private SkillTrigger _target;
+        public float Fill = -1f;
+        public string Text;
+        public virtual void FrameUpdate() { }
+        internal void SetCooldownFillIfChanged(float fill) => Fill = fill;
+        internal void SetCooldownTextIfChanged(string text) => Text = text;
+        internal void Bind(SkillTrigger target) => _target = target;
         private void SetTarget(object skill) { }
         protected override UnityEngine.Object Clone() => new UI_InGame_SkillButton
         {

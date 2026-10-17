@@ -219,7 +219,7 @@
       "id": "set.hunt",
       "name": {
         "ja": "狩猟団の装備",
-        "en": "Huntmaster's Kit"
+        "en": "Hunting Party Kit"
       },
       "twoPiece": [
         {
@@ -840,7 +840,7 @@
       "id": "set.daybreak",
       "name": {
         "ja": "払暁の誓い",
-        "en": "Daybreak Vow"
+        "en": "Dawnbreak Vow"
       },
       "twoPiece": [
         {

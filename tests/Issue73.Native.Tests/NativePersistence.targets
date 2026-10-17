@@ -67,7 +67,7 @@
     </Task>
   </UsingTask>
   <Target Name="CompileNativePersistence" BeforeTargets="CoreCompile">
-    <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/ClientSession.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)NativePersistence.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="ClientSession" Methods="MarkDirty;MarkAllocationDirty;SavePendingAllocation;OnAllocationSceneChanged;DeferSave;TickSatchelOverflow;TickPeriodicSave;SaveNow;FlushSaves;Secure;Delve;OnConcluded;IsVictory;TrackRun;CarryPendingResultIntoRecovery;ReadLimboDepth;HeroKeyOf;Emit;SendTrade;TradeUnavailable;SendLedgerProbe;SendPreparedTrade;SendDurableTrade;SendDueTradeQueries;RestoreSalvageTrade;OnTradeResult;TradeFailText;SalvageUnsecured;SalvageUnsecuredBulk;CanBulkSalvageUnsecured;SalvageScale;SalvageDust" />
+    <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/ClientSession.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)NativePersistence.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="ClientSession" Methods="ViewRevision;MarkDirty;MarkAllocationDirty;SavePendingAllocation;OnAllocationSceneChanged;DeferSave;TickSatchelOverflow;TickPeriodicSave;SaveNow;FlushSaves;Secure;Delve;OnConcluded;IsVictory;TrackRun;CarryPendingResultIntoRecovery;ReadLimboDepth;HeroKeyOf;Emit;SendTrade;TradeUnavailable;SendLedgerProbe;SendPreparedTrade;SendDurableTrade;SendDueTradeQueries;RestoreSalvageTrade;OnTradeResult;TradeFailText;SalvageUnsecured;SalvageUnsecuredBulk;CanBulkSalvageUnsecured;SalvageScale;SalvageDust" />
     <ItemGroup>
       <Compile Include="$(IntermediateOutputPath)NativePersistence.g.cs" />
     </ItemGroup>
@@ -106,7 +106,7 @@
   </Target>
 
   <Target Name="CompileInfinityRestore" BeforeTargets="CoreCompile">
-    <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/InfinityMode.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)InfinityRestore.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="InfinityMode" Methods="BeginRestore;FinishRestore;Restoring" />
+    <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/InfinityMode.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)InfinityRestore.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="InfinityMode" Methods="BeginRestore;FinishRestore;Restoring;ReleaseMatchedZone" />
     <ItemGroup>
       <Compile Include="$(IntermediateOutputPath)InfinityRestore.g.cs" />
     </ItemGroup>
@@ -133,7 +133,7 @@
   </Target>
 
   <Target Name="CompileRelicRowCacheUi" BeforeTargets="CoreCompile">
-    <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/DreamforgeUi.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)RelicRowCacheUi.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="DreamforgeUi" Methods="CacheStamp;SortedCached;RowTexts" />
+    <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/DreamforgeUi.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)RelicRowCacheUi.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="DreamforgeUi" Methods="EnsureStashCache;SlotTabLabel;CacheStamp;SortedCached;RowTexts" Fields="_slotCounts;_slotTabLabels;_stashCacheProfile;_stashCacheRevision;_stashCacheViewRevision;_stashCacheCount;_stashCacheJapanese" />
     <ItemGroup>
       <Compile Include="$(IntermediateOutputPath)RelicRowCacheUi.g.cs" />
     </ItemGroup>
@@ -175,9 +175,26 @@
 
   <!-- 協力取引ホスト（所見03・06・08・11）。境界は NativeBoundary.cs の HostAuthority 部。 -->
   <Target Name="CompileCoopTradeHost" BeforeTargets="CoreCompile">
-    <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/HostAuthority.CoopTrade.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)CoopTradeHost.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="HostAuthority" Methods="DiagnoseHostCoopTrade;CoopHostKey;CoopPresent;CoopPeerAvailable;CoopPeerSafe;CoopPeerFusion;CoopFusionError;TickCoopTrade;ReceiveCoopPacket;ReceiveCoopTrade;EnsureCoopJournal;QueryCoopTrade;CancelCoopTrade;CancelHostCoopTrade;CommitHostCoopTrade;PrepareHostCoopTrade;CoopReceiptFits;SendCoopViews;SendCoopView;SendCoopRoster;SendCoopPayload;SendCoopState;SendCoopError;CoopReason;CoopReasonCode;FailHostCoopTrade" />
+    <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/HostAuthority.CoopTrade.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)CoopTradeHost.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="HostAuthority" Methods="DiagnoseHostCoopTrade;CoopHostKey;CoopPresent;CoopPeerAvailable;CoopPeerSafe;CoopPeerFusion;CoopFusionError;TickCoopTrade;ReceiveCoopPacket;ReceiveCoopTrade;EnsureCoopJournal;QueryCoopTrade;CancelCoopTrade;CancelHostCoopTrade;CommitHostCoopTrade;PrepareHostCoopTrade;CoopReceiptFits;SendCoopViews;SendCoopView;SendCoopRoster;SendCoopPayload;SendCoopState;SendCoopError;FailHostCoopTrade" />
     <ItemGroup>
       <Compile Include="$(IntermediateOutputPath)CoopTradeHost.g.cs" />
+    </ItemGroup>
+  </Target>
+
+  <!-- 盾壁・群れの番犬の実際の発動処理を敵担当制と同じ境界で実行する。 -->
+  <Target Name="CompileShieldWallThreats" BeforeTargets="CoreCompile">
+    <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/HostAuthority.CoopKeystones.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)ShieldWallThreats.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="HostAuthority" Methods="CoopDrawThreats;CoopPair;CoopEnemy;RecordOwnershipTaunt;CoopGuardTarget;RecordSummonGuardTarget" />
+    <ItemGroup>
+      <Compile Include="$(IntermediateOutputPath)ShieldWallThreats.g.cs" />
+    </ItemGroup>
+  </Target>
+
+  <!-- 共鳴の盾（CoopOmens.cs）の HostAuthority 部。公開ラッパー CoopOmens は NativeBoundary.cs
+       に同じ式の internal 模倣（境界の Entity が internal のため直接抽出できない）。 -->
+  <Target Name="CompileCoopOmensWard" BeforeTargets="CoreCompile">
+    <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/CoopOmens.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)CoopOmensWard.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="HostAuthority" Methods="BeginCoopOmen;ClearCoopOmen;CoopWardRoomActive;LiveCoopWard;EligibleCoopWard;IsCoopOmenWard;StrongerCoopCandidate;TickCoopOmen;CoopDamageHuman;ApplyCoopOmenDamage;FillCoopOmenMessage;PublishHostCoopOmen;DisableCoopWards" Fields="_coopWards;_coopCandidates;_coopWardLimit;_coopFirstSpawn;_coopLastSpawn;_coopBatchClosed;_coopWardFailed;_coopSyncDirty;_coopPreparingSpawns;_nextCoopSync;InitialSpawnGap" NestedTypes="CoopWard" />
+    <ItemGroup>
+      <Compile Include="$(IntermediateOutputPath)CoopOmensWard.g.cs" />
     </ItemGroup>
   </Target>
 </Project>

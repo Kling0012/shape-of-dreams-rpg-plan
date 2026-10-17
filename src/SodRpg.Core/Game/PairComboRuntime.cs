@@ -182,7 +182,8 @@ namespace SodRpg.Core.Game
         /// </summary>
         public void Fire(PairComboTrigger trigger, string memory, float now, int victimId, float damage, bool generated,
             ICollection<string> equipped, bool hasSummons, List<GimmickRequest> results,
-            object activation = null, PairComboHitKind hitKind = PairComboHitKind.Any, long activationSerial = 0)
+            object activation = null, PairComboHitKind hitKind = PairComboHitKind.Any, long activationSerial = 0,
+            bool deferKillCleanup = false)
         {
             // Chain rejection precedes all mutations, including refresh and expiry cleanup.
             if (generated || results == null || !Gimmicks.Finite(now)
@@ -268,11 +269,17 @@ namespace SodRpg.Core.Game
                 });
             }
             // The global death event precedes the attributed kill event; only the latter consumes marks.
-            if (trigger == PairComboTrigger.OnKill)
-                foreach (var state in _states)
-                    if (state.Marks != null && memory != null)
-                        for (int i = state.Marks.Count - 1; i >= 0; i--)
-                            if (state.Marks[i].Victim == victimId) state.Marks.RemoveAt(i);
+            if (trigger == PairComboTrigger.OnKill && memory != null && !deferKillCleanup)
+                ForgetKilledVictim(victimId);
+        }
+
+        /// <summary>Finish one death after all of its assisted memory sources have been dispatched.</summary>
+        public void ForgetKilledVictim(int victimId)
+        {
+            foreach (var state in _states)
+                if (state.Marks != null)
+                    for (int i = state.Marks.Count - 1; i >= 0; i--)
+                        if (state.Marks[i].Victim == victimId) state.Marks.RemoveAt(i);
         }
     }
 }

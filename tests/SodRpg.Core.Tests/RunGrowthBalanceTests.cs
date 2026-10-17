@@ -41,7 +41,7 @@ namespace SodRpg.Core.Tests
                     actual.Add(prefix + "growth/effectPct", effect.RunGrowthModifier.EffectPercent);
                 }
             }
-            foreach (string hero in new[] { "Hero_Cetus", "Hero_Husk", "Hero_Mist", "Hero_Vesper" })
+            foreach (string hero in new[] { "Hero_Aurena", "Hero_Bismuth", "Hero_Cetus", "Hero_Husk", "Hero_Lacerta", "Hero_Mist", "Hero_Nachia", "Hero_Vesper", "Hero_Yubar" })
                 foreach (var star in StarClusters.CreateGeneratedAuthored(hero))
                 {
                     Collect(star.LocalStarId + "/", star.Effect);

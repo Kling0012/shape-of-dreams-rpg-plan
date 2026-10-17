@@ -44,14 +44,16 @@ namespace SodRpg.Core.Game
         public NativePayloadKind NativePayloadKind { get; }
         public GeneratedOrigin GeneratedOrigin { get; }
         public long EquipmentEpoch { get; }
+        public bool IsAssist { get; }
 
         public MemoryActivationEvent(long ownerId, string sourceMemory, long activationId, long damagePacketId,
             long victimId, MemoryEventKind eventKind, NativePayloadKind nativePayloadKind,
-            GeneratedOrigin generatedOrigin, long equipmentEpoch)
+            GeneratedOrigin generatedOrigin, long equipmentEpoch, bool isAssist = false)
         {
             OwnerId = ownerId; SourceMemory = sourceMemory ?? string.Empty; ActivationId = activationId;
             DamagePacketId = damagePacketId; VictimId = victimId; EventKind = eventKind;
             NativePayloadKind = nativePayloadKind; GeneratedOrigin = generatedOrigin; EquipmentEpoch = equipmentEpoch;
+            IsAssist = isAssist;
         }
     }
 

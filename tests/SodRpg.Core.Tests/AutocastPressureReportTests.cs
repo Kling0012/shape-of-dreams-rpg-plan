@@ -36,6 +36,7 @@ namespace PressureReportUnderTest
         private object _clientRpcOn = new object();
         private float _helloFirstSent, _nextHello, _nextBuildInputProbe;
         private bool _helloAnswered, _hostCompatibilityWarned, _hostInfinityAvailable;
+        private int _hostMeleeCoop;
         private bool _hostBuildInputCapability, _hostNetLite, _netLiteReceiveReady;
         private bool _hostForbiddenInput, _hostFusionInput, _forbiddenGearStripNotice; // #415：禁忌装備の送信可否と通知
         private object _sentContinueReceiptActor;

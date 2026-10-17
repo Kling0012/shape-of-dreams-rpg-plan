@@ -74,6 +74,41 @@ namespace SodRpg.Core.Tests
         }
 
         [Fact]
+        public void Warning_follows_the_language_toggle_and_a_changed_difference()
+        {
+            bool japanese = SodRpg.Core.Game.Loc.Japanese;
+            var host = new HostAuthority();
+            host.RegisterNegotiation();
+            var peer = new DewPlayer { playerName = "issue462-toggle-peer" };
+            DewPlayer.lobbyPlayers.Add(peer);
+            try
+            {
+                SodRpg.Core.Game.Loc.Japanese = true;
+                var hello = MatchingHello();
+                hello.modVer = "issue462-other-version";
+                host.ReceiveNegotiation(hello, peer);
+                Assert.Contains("版が違う", Assert.Single(HostAuthority.VersionWarnings));
+
+                SodRpg.Core.Game.Loc.Japanese = false;
+                Assert.Contains("version differs", Assert.Single(HostAuthority.VersionWarnings));
+
+                // 版は同じになったが内容がまだ違う：古い項目を残さず、いまの差を出す。
+                hello = MatchingHello();
+                hello.content = "issue462-other-registry";
+                host.ReceiveNegotiation(hello, peer);
+                string text = Assert.Single(HostAuthority.VersionWarnings);
+                Assert.DoesNotContain("version differs", text);
+                Assert.Contains("content", text);
+            }
+            finally
+            {
+                SodRpg.Core.Game.Loc.Japanese = japanese;
+                DewPlayer.lobbyPlayers.Remove(peer);
+                host.DetachNegotiation();
+            }
+        }
+
+        [Fact]
         public void Departed_peer_is_excluded_when_the_warning_list_is_rebuilt()
         {
             var host = new HostAuthority();

@@ -49,6 +49,13 @@ namespace SodRpg.Mod
                 checked(++_nextPressureDividendSpawn), infinity?.GraphEpoch ?? 0, infinity?.SegmentEpoch ?? 0, infinity?.RoomEpoch ?? 0));
         }
 
+        // Optional in native reward harnesses which compile this partial on its own.
+        partial void OverrideOwnershipHealth(Monster monster, ref float multiplier);
+        partial void OwnershipEntityAdded(Entity entity);
+        partial void OwnershipEntityRemoved(Entity entity);
+        partial void RecordDynamicHealth(Entity enemy, double health, double appliedMultiplier);
+        partial void ApplyDynamicKillReward(Monster monster, ref double multiplier);
+
         private void InstallPressureHealthProcessor(MonsterRuntime runtime)
         {
             var monster = runtime.Monster;
@@ -56,6 +63,8 @@ namespace SodRpg.Mod
             runtime.PressureHealth = (ref FinalStats stats) =>
             {
                 float appliedMultiplier = (float)_pressure.HealthMultiplier;
+                OverrideOwnershipHealth(monster, ref appliedMultiplier);
+                RecordDynamicHealth(monster, stats.maxHealth * appliedMultiplier, appliedMultiplier);
                 stats.maxHealth *= appliedMultiplier;
                 if (_pressureDividendSpawns.TryGetValue(monster, out var spawn) && spawn.Death == null)
                     spawn.RecordAppliedHpMultiplier(appliedMultiplier);

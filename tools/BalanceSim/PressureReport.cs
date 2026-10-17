@@ -11,7 +11,7 @@ internal static class PressureReport
     internal static readonly int[] Depths = [0, 1, 2, 3, 4, 5];
     internal static readonly int[] InfinityStages = [0, 1, 10, 100];
     internal static readonly Waypoint[] WaypointAxis = [Waypoint.None, Waypoint.FleetingMemories];
-    internal const string Policy = "Single-player Core projections at fixed input axes; Core clamps remain active. Delve heat is independent of DreamDepth. No combat simulation, win rates or clear-speed estimates.";
+    internal const string Policy = "Core projections at fixed input axes plus solo/co-op comparisons (D=1, equal builds); Core clamps remain active. Boss HP excludes native stats. Delve heat and native Limbo are independent of DreamDepth. No combat simulation, win rates or clear-speed estimates.";
 
     internal static List<QuantityMetricValue> Measure()
     {
@@ -38,6 +38,32 @@ internal static class PressureReport
                             Add(id + "/health", label + " HP", pressure.HealthMultiplier, "multiplier");
                             Add(id + "/damage", label + " damage", pressure.DamageMultiplier, "multiplier");
                         }
+        foreach (var scenario in new[]
+        {
+            (Level: 1, Spent: 0, Depth: 0, Waypoint: Waypoint.None, Stage: 0),
+            (Level: 5, Spent: 20, Depth: 0, Waypoint: Waypoint.None, Stage: 0),
+            (Level: 30, Spent: 500, Depth: 0, Waypoint: Waypoint.None, Stage: 0),
+            (Level: 30, Spent: 500, Depth: 5, Waypoint: Waypoint.FleetingMemories, Stage: 0),
+            (Level: 30, Spent: 500, Depth: 5, Waypoint: Waypoint.DeepeningNight, Stage: 100),
+        })
+        {
+            var solo = DreamPressure.ForPlayer(scenario.Level, scenario.Spent)
+                .WithRunModifiers(scenario.Depth, Waypoints.Sum(scenario.Waypoint).PressureMultiplier)
+                .WithInfinityPressure(scenario.Stage);
+            foreach (int players in new[] { 1, 2, 4 })
+            {
+                var pressure = solo.WithCoopScaling(players);
+                string id = $"pressure/coop/{scenario.Level}/{scenario.Spent}/{scenario.Depth}/{scenario.Waypoint}/{scenario.Stage}/{players}";
+                string label = $"Lv{scenario.Level} spent={scenario.Spent} depth={scenario.Depth} waypoint={scenario.Waypoint} stage={scenario.Stage} players={players}";
+                Add(id + "/health", label + " HP", pressure.HealthMultiplier, "multiplier");
+                Add(id + "/damage", label + " damage", pressure.DamageMultiplier, "multiplier");
+                Add(id + "/count", label + " count", pressure.EnemyCountMultiplier, "multiplier");
+                Add(id + "/shards", label + " shards", pressure.ShardDropMultiplier, "multiplier");
+                Add(id + "/nightmareChance", label + " nightmare chance", pressure.NightmareChanceMultiplier, "multiplier");
+                Add(id + "/bossHealth", label + " boss HP", pressure.HealthMultiplier
+                    * (players > 1 ? players * CoopBalance.Ownership.BossShareFactor : 1), "multiplier");
+            }
+        }
         foreach (int depth in Depths)
         {
             Add($"pressure/nightmares/affixCount/{depth}", $"Affix count heat={depth}", Nightmares.AffixCount(depth), "affixes");
@@ -172,7 +198,7 @@ internal static class PressureReport
         text.AppendLine("# Pressure and enemy profiles / 決定的な圧・敵パラメータ比較");
         text.AppendLine();
         text.AppendLine(Policy);
-        text.AppendLine("Waypoint axis: None and FleetingMemories (the pressure modifier). Nightmare/variant chance assumes an eligible enemy with no variant already in the room; single affixes are independent profiles, not combined random outcomes. Stats use display units; appearance is excluded. No seed or player count is consumed.");
+        text.AppendLine("Waypoint axis: None and FleetingMemories (the pressure modifier). Nightmare/variant chance assumes an eligible enemy with no variant already in the room; single affixes are independent profiles, not combined random outcomes. Stats use display units; appearance is excluded. The coop rows compare 1/2/4 equal-build players, with no native Limbo, armor or nightmare affix stats and no native population bonus. No seed is consumed.");
         text.AppendLine();
         text.AppendLine("| Stable ID | Projection | Value | Unit | Status |");
         text.AppendLine("|---|---|---:|---|---|");
