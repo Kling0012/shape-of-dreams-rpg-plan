@@ -10,6 +10,22 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v3.6.2 — Co-op Infinity, MOD reward, and save error fixes（2026-10-18）
+
+### 不具合の修正 / Bug fixes
+- 協力プレイで同じプレイヤーの識別子が変わると、古い識別子への討伐記録の受領待ちが残り、インフィニティの潜行・帰還が「仲間の討伐待ち」で止まることがあった問題を修正しました。 / Fixed a changed client identity leaving a kill-receipt debt that blocked Infinity delve and return in co-op.
+- 本体の再開読み込みが完了しないままタイトルに戻ると、ゲームを終了するまで以降の遠征で MOD 報酬が出なくなる問題を修正しました。 / Fixed an abandoned native resume pausing MOD rewards in later expeditions until the game was closed.
+- 協力の距離減衰：味方への回復・吸収の範囲を強化すると、距離減衰と2秒の猶予が外れて強化後の半径でぴったり切れるようになり、強化したのに届く距離が縮んでいた問題を修正。減衰の外端も半径に比例して伸びる。 / Co-op distance falloff: a radius upgrade on an ally heal/siphon now widens the falloff (and keeps the grace) instead of turning it into a hard cutoff that shrank its reach.
+- 保存に失敗したときの理由の表示が、表示言語を切り替えたあとも現在の言語で出るようになりました。また、保存中に例外が出たあとでさらに書き込みに失敗したときは、古い例外の文が残り続けず、新しい書き込み失敗の表示に切り替わります。 / Save failure reasons on screen now follow the display language after you switch it. When a write fails again after an exception during saving, the newer write failure replaces the lingering older exception message.
+- 保存に失敗したときのログ（`Player.log` の "Save failed" 行）は、表示言語に関係なく英文で出るようになりました。 / The "Save failed" log entry is now written in English regardless of the display language.
+
+### 改善 / Improvements
+- 全滅時のヒント「夢から覚めました」と、残響が戻らない悪夢の契約の説明が、工房の「遺失物の地図」「残響ランタン」の強化を反映せず初期値（3部屋・25%）のままだった問題を修正。 / The first-defeat hint and no-echo pact descriptions now show your workshop-upgraded Lost & Found rooms and echo percent.
+- 遺物の抽選で、保管庫が大きいほど撃破のたびに重くなっていた処理を軽くしました（抽選結果は同じです）。 / Relic drops no longer get slower as the stash grows (drop results are unchanged).
+- 既存機能の再案内：宿敵の頭上の名札はシアン（`#4DD8FF`）で表示され、悪夢化した敵（桃色）や夢の変種（琥珀色）と区別できます。同じ敵に複数の表示情報がある場合も宿敵の名札を優先し、協力プレイでも各PCで同じ色を表示します。 / Reminder of an existing feature: Nemesis overhead nameplates use cyan (`#4DD8FF`), distinct from pink nightmares and amber dream variants. The Nemesis nameplate takes priority when tags overlap, and each PC uses the same color in co-op.
+
+---
+
 ## v3.6.1 — Infinity, co-op trade and description fixes（2026-10-17）
 
 このバージョンでは、インフィニティと協力取引の不具合を直し、固有効果と連携付き固有品の説明を実際の値に合わせました。 / This version fixes bugs in Infinity and co-op trades, and makes power and linked-unique descriptions match their actual values.
