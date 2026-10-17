@@ -72,8 +72,20 @@ namespace SodRpg.Core.Tests
         /// </summary>
         public sealed class Installed : IDisposable
         {
-            internal readonly string Empty = StarClusters.AuthoredRegistryFingerprint;
+            internal readonly string Empty;
             private string registered;
+
+            public Installed()
+            {
+                // Classes with a class fixture are exempt from the shared pre-test reset (SharedStarRegistryReset), so a class
+                // that ran earlier in the collection may have left heroes registered. Restore the empty baseline first; otherwise
+                // Empty would capture that leftover fingerprint and the NotEqual acceptance check below would pass or fail
+                // depending on class order.
+                foreach (string hero in StarClusters.GeneratedHeroes)
+                    if (StarClusters.TryGetRegisteredTree(hero, out _))
+                        StarClusters.RegisterAuthored(hero, Array.Empty<AuthoredStarDef>());
+                Empty = StarClusters.AuthoredRegistryFingerprint;
+            }
             private readonly Dictionary<string, Exception> registrationFailures = new Dictionary<string, Exception>(StringComparer.Ordinal);
             private readonly Dictionary<string, Task<Played>> games = new Dictionary<string, Task<Played>>(StringComparer.Ordinal);
 

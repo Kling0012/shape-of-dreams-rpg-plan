@@ -133,7 +133,7 @@ namespace SodRpg.Core.Game
 
         private void EnsureHealthy()
         {
-            if (_faulted) throw new InvalidOperationException(Loc.T("協力取引の台帳を保存できませんでした。台帳を読み直すまで取引できません。", "Cooperative trade journal persistence failed; reload the journal before trading."));
+            if (_faulted) throw new InvalidOperationException(Loc.T("協力取引の記録を保存できませんでした。記録を読み直すまで取引できません。", "Cooperative trade journal persistence failed; reload the journal before trading."));
         }
     }
 }

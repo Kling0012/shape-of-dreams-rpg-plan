@@ -29,7 +29,7 @@ namespace SodRpg.Core.Game
     public static class MeleeCoopText
     {
         public static string RangeToSpeed => Loc.T(
-            FormattableString.Invariant($"近接の旅人は、装備の通常攻撃の射程1%につき攻撃速度が{CoopBalance.RangeToSpeedMultiplier:0.##}%上がる（射程は上がらない）。攻撃速度は装備・星の合計で最大{Content.StatCap(Stat.AttackSpeedPct)}%まで。"),
+            FormattableString.Invariant($"近接の旅人は装備の通常攻撃の射程1%につき攻撃速度が{CoopBalance.RangeToSpeedMultiplier:0.##}%上がる（射程は上がらない）。攻撃速度は装備・星の合計で最大{Content.StatCap(Stat.AttackSpeedPct)}%まで。"),
             FormattableString.Invariant($"Melee travelers gain {CoopBalance.RangeToSpeedMultiplier:0.##}% attack speed per 1% equipment basic attack range instead of range. Combined equipment and star attack speed is capped at {Content.StatCap(Stat.AttackSpeedPct)}%."));
 
         public static string Break => Loc.T(
