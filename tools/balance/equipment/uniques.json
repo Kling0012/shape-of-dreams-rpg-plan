@@ -5431,8 +5431,8 @@
         }
       ],
       "link": {
-        "kind": "Attune",
-        "value": 19
+        "kind": "MemoryHaste",
+        "value": 38
       }
     },
     "unique.link_husk_one_flash": {
@@ -6359,8 +6359,8 @@
         }
       ],
       "link": {
-        "kind": "Attune",
-        "value": 39
+        "kind": "MemorySurge",
+        "value": 62
       }
     },
     "unique.link3_lifeline_circle": {
@@ -13857,8 +13857,8 @@
         }
       ],
       "link": {
-        "kind": "Attune",
-        "value": 23
+        "kind": "MemorySurge",
+        "value": 36
       }
     },
     "unique.c_iris_lens": {
@@ -13921,8 +13921,8 @@
         }
       ],
       "link": {
-        "kind": "Attune",
-        "value": 15
+        "kind": "MemoryHaste",
+        "value": 30
       }
     },
     "unique.c_windscar_quill": {
@@ -13937,8 +13937,8 @@
         }
       ],
       "link": {
-        "kind": "Attune",
-        "value": 21
+        "kind": "MemorySurge",
+        "value": 34
       }
     },
     "unique.c_powderhorn": {
@@ -13969,8 +13969,8 @@
         }
       ],
       "link": {
-        "kind": "Attune",
-        "value": 21
+        "kind": "MemorySurge",
+        "value": 34
       }
     },
     "unique.c_engarde_token": {
@@ -14001,8 +14001,8 @@
         }
       ],
       "link": {
-        "kind": "Attune",
-        "value": 15
+        "kind": "MemoryHaste",
+        "value": 30
       }
     },
     "unique.c_packheart": {
@@ -14017,8 +14017,8 @@
         }
       ],
       "link": {
-        "kind": "Attune",
-        "value": 19
+        "kind": "MemorySurge",
+        "value": 30
       }
     },
     "unique.c_lifering_lotus": {
@@ -14081,8 +14081,8 @@
         }
       ],
       "link": {
-        "kind": "Attune",
-        "value": 16
+        "kind": "MemorySurge",
+        "value": 26
       }
     },
     "unique.c_convergence_comet": {
@@ -14097,8 +14097,8 @@
         }
       ],
       "link": {
-        "kind": "Attune",
-        "value": 30
+        "kind": "MemoryHaste",
+        "value": 60
       }
     },
     "unique.c_hairline_heart": {
