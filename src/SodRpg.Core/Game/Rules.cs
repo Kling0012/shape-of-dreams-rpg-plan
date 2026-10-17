@@ -229,10 +229,9 @@ namespace SodRpg.Core.Game
             {
                 var hs = p.Hero(heroKey);
                 if (string.IsNullOrEmpty(run.HeroKey)) run.HeroKey = heroKey;
-                AddStarXp(p, heroKey, (int)Math.Min(int.MaxValue, (long)StarProgression.KillXp(tier, isNightmare) + waypointStarXp), ev, rewardScale: rewardScale, rng: rng);
-                int points = DreamDepth.ScaleReward(Content.AwakenPoints(tier, isNightmare) + waypointAwakening,
-                    DreamDepth.AwakeningMultiplier(run.DreamDepth) * Waypoints.Sum(killWaypoint).AwakeningMultiplier);
-                points = PressureCountRewards.ScaleInt(rng, points, rewardScale);
+                AddStarXp(p, heroKey, StarProgression.KillXp(tier, isNightmare), ev, rewardScale: rewardScale, rng: rng, convertedAmount: waypointStarXp);
+                int points = ScaleProgressionReward(rng, Content.AwakenPoints(tier, isNightmare), waypointAwakening,
+                    DreamDepth.AwakeningMultiplier(run.DreamDepth) * Waypoints.Sum(killWaypoint).AwakeningMultiplier, rewardScale);
                 foreach (var uid in hs.Equipped)
                 {
                     var r = p.FindStash(uid);
@@ -1408,11 +1407,20 @@ namespace SodRpg.Core.Game
             p.Focus = focus;
         }
 
-        private static void AddStarXp(Profile p, string heroKey, int amount, List<GameEvent> ev, double rewardScale = 1, Rng rng = null)
+        private static int ScaleProgressionReward(Rng rng, int amount, int convertedAmount, double multiplier, double rewardScale)
+        {
+            int total = DreamDepth.ScaleReward(SaturatingAdd(amount, convertedAmount), multiplier);
+            if (rng == null) return total;
+            // Keep combined depth rounding; waypoint conversions already thinned their source loot.
+            int converted = DreamDepth.ScaleReward(convertedAmount, multiplier);
+            return SaturatingAdd(PressureCountRewards.ScaleInt(rng, total - converted, rewardScale), converted);
+        }
+
+        private static void AddStarXp(Profile p, string heroKey, int amount, List<GameEvent> ev, double rewardScale = 1, Rng rng = null, int convertedAmount = 0)
         {
             if (string.IsNullOrEmpty(heroKey)) return;
-            amount = DreamDepth.ScaleReward(amount, DreamDepth.StarXpMultiplier(p.Run?.DreamDepth ?? 0));
-            if (rng != null) amount = PressureCountRewards.ScaleInt(rng, amount, rewardScale);
+            amount = ScaleProgressionReward(rng, amount, convertedAmount,
+                DreamDepth.StarXpMultiplier(p.Run?.DreamDepth ?? 0), rewardScale);
             var hero = p.Hero(heroKey);
             int before = StarProgression.Points(hero.StarXp);
             StarProgression.AddXp(hero, amount);
