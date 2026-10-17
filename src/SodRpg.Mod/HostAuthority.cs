@@ -263,7 +263,7 @@ namespace SodRpg.Mod
         private readonly Rng _rng = new Rng(Rng.SeedFrom(DateTime.UtcNow.Ticks.ToString()));
         private float _nextRegen;
         private bool _roomHasVariant;
-        private bool _loggedVariantSpawn, _loggedDeathBurst;
+        private bool _loggedDeathBurst = true;
         private readonly List<Hero> _deathBurstHeroes = new List<Hero>();
 
         public HostAuthority(Func<int> dailyIdOfHost)
@@ -1084,7 +1084,9 @@ namespace SodRpg.Mod
                 AttachMirageSkin(m, Nightmares.Count(affix) >= 2);
             _nightmares[m] = affix;
             ApplyMonsterAffixes(rt, affix, regen);
-            Log.Info($"Nightmare: {m.GetType().Name} netId={m.netId} affixes={affix}");
+            _roomNightmareCount++;
+            _roomNightmareKinds |= affix;
+            if (SpecialEnemyDiagnostics) Log.Info($"Nightmare: {m.GetType().Name} netId={m.netId} affixes={affix}");
             SendMonsterClassification(rt);
         }
 
@@ -1107,7 +1109,8 @@ namespace SodRpg.Mod
             m.Status.AddStatBonus(rt.SpecialBonus);
             m.Status.CalculateStatsIfDirty();
             _nightmares[m] = NightmareAffix.Nemesis;
-            Log.Info($"Nemesis: {m.GetType().Name} netId={m.netId} tier={tier} grudge={grudge}");
+            _roomNemesisCount++;
+            if (SpecialEnemyDiagnostics) Log.Info($"Nemesis: {m.GetType().Name} netId={m.netId} tier={tier} grudge={grudge}");
             SendMonsterClassification(rt);
         }
 
@@ -1135,11 +1138,9 @@ namespace SodRpg.Mod
                 m.takenDamageProcessor.Add(rt.HitCap);
             }
             ApplyVariantTags(rt, variant.Tags);
-            if (!_loggedVariantSpawn)
-            {
-                _loggedVariantSpawn = true;
+            _roomVariantCount++;
+            if (SpecialEnemyDiagnostics)
                 Log.Info($"variant spawned: {variant.Id} {m.GetType().Name} netId={m.netId}");
-            }
             SendMonsterClassification(rt);
         }
 
@@ -1324,6 +1325,7 @@ namespace SodRpg.Mod
         /// <summary>全キャラから補正を外し、登録を解除する（MODの再読み込み・終了時）。</summary>
         public void Detach()
         {
+            FlushSpecialEnemySummary();
             ClearRoomOmen();
             _omenRoom = null;
             _omenRunId = null;
@@ -1387,7 +1389,7 @@ namespace SodRpg.Mod
             _spreadingFire = false;
             _triggeredAffixes.Clear();
             _roomHasVariant = false;
-            _loggedVariantSpawn = _loggedDeathBurst = false;
+            _loggedDeathBurst = !SpecialEnemyDiagnostics;
             _deathBurstHeroes.Clear();
             _reflectingDamage = false;
             _lucidTypes = null;

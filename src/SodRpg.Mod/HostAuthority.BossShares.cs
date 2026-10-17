@@ -89,7 +89,7 @@ namespace SodRpg.Mod
         {
             state = null;
             shares = null;
-            return enemy != null && OwnershipRunning() && _enemyOwnership.TryGetValue(enemy, out state)
+            return enemy != null && _enemyOwnership.TryGetValue(enemy, out state) && OwnershipRunning()
                 && (shares = PrepareBossShares(state)) != null;
         }
 

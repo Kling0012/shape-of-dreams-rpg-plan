@@ -389,9 +389,9 @@ namespace SodRpg.Mod
         private bool TryOwnership(Entity enemy, OwnershipPart part, out EnemyOwnership state)
         {
             state = null;
-            return enemy != null && OwnershipAvailable(part) && _enemyOwnership.TryGetValue(enemy, out state)
-                && !state.Excluded && !state.SharedObjective && !CoopOmens.IsSharedObjective(enemy)
-                && !enemy.IsAnyBoss() && state.Owner != null && OwnershipConnected(state.Owner);
+            return enemy != null && _enemyOwnership.TryGetValue(enemy, out state)
+                && !state.Excluded && !state.SharedObjective && state.Owner != null && OwnershipAvailable(part)
+                && !CoopOmens.IsSharedObjective(enemy) && !enemy.IsAnyBoss() && OwnershipConnected(state.Owner);
         }
 
         partial void ApplyAutoCastOwnershipPriority(Hero hero, Entity target, ref int priority)
@@ -607,6 +607,11 @@ namespace SodRpg.Mod
             }
             catch (Exception ex) { FailOwnership(OwnershipPart.Targeting, ex); return true; }
         }
+
+        internal bool IsOwnershipRetargetCandidate(EntityAI ai) => _enemyOwnershipEnabled
+            && (_ownershipFailed & OwnershipPart.Targeting) == 0 && ai != null && ai.entity != null
+            && _enemyOwnership.TryGetValue(ai.entity, out var state)
+            && !state.Excluded && !state.SharedObjective && state.Owner != null;
 
         internal void RetargetOwnership(EntityAI ai, bool retargetDue)
         {
