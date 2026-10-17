@@ -15,7 +15,7 @@ namespace SodRpg.Core.Game
         internal const float EmbertailMaxCooldownReduction = 0.5f;
         internal static readonly bool EpiphanyEnabled = false;
         internal const float EpiphanyMaxRefundFraction = 0.6f;
-        internal static readonly bool MemoryReuseEnabled = true;
+        internal static readonly bool MemoryReuseEnabled = false;
         internal const float MemoryReuseBaseCooldownFraction = 0.2f;
         internal const float MemoryReuseMinimumSeconds = 0.3f;
         internal static readonly bool CrystalCircuitEnabled = true;

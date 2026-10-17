@@ -45,7 +45,7 @@ namespace SodRpg.Core.Game
                 if(stage == 3) actions.Add(new BossRewardAction(BossRewardActionKind.NativeState,BossAzurakBalance.RewardShortenValueMilli,BossAzurakBalance.RewardShortenCapMilli,order:2));
                 return new BossRewardStage(stage,new Txt(
                     "自身が潜行（Burrow）から出現したときだけ、ボス以外で行動妨害が効く敵に対する元のスタン時間が1秒未満であれば、最大0.15秒延ばす。延ばした後も1秒を超えることはない。"
-                    +(stage >= 2 ? $"敵への元のダメージの{(stage == 3 ? 25 : 20)}%を上乗せする。上乗せの合計は全対象で攻撃力・魔力の高い方の{(stage == 3 ? 45 : 20)}%までで、再発動まで8秒かかる。この再発動待ちは、1回の出現の全対象で共有する。" : "")
+                    +(stage >= 2 ? $"敵への元のダメージの{(stage == 3 ? 25 : 20)}%を上乗せする。上乗せの合計は全対象で攻撃力・魔力の高い方の{(stage == 3 ? 45 : 20)}%までで、再発動まで8秒かかる。この再発動待ちは1回の出現の全対象で共有する。" : "")
                     +(stage == 3 ? "自身の硬直時間は0.05秒短くなる。下限は0秒である。" : "")
                     +"元の範囲、ダメージ、スタン、会心、無敵時間などは変わらない。",
                     "Only when you emerge from Burrow: extend the original stun on enemies other than bosses and enemies immune to crowd control by up to 0.15 seconds if it lasts less than 1 second, without exceeding 1 second."

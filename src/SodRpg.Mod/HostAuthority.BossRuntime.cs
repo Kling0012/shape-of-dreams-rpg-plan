@@ -112,6 +112,7 @@ namespace SodRpg.Mod
             {
                 if (victim == null || count <= 0 || lifetime <= 0) return;
                 long life = NativeInstance.BossNativeActorLife(victim);
+                if (life <= 0) return;
                 int slot = -1;
                 for (int i = 0; i < _marks.Length; i++)
                 {
@@ -436,7 +437,7 @@ namespace SodRpg.Mod
             ClearErebosBoss(rt, preserveRewards && BossRewardUnchanged(rt, BossProfiles.ErebosRewardId));
             ClearSeekerBoss(rt, preserveRewards && BossRewardUnchanged(rt, BossProfiles.SeekerRewardId, includeEquipment: false));
             ClearAzurakBoss(rt, preserveRewards && BossRewardUnchanged(rt, BossProfiles.AzurakRewardId)); ClearPrimusBoss(rt, preserveRewards);
-            ClearLightBoss(rt, preserveRewards && BossRewardUnchanged(rt, BossProfiles.LightRewardId));
+            ClearLightBoss(rt, preserveRewards && BossRewardUnchanged(rt, BossProfiles.LightRewardId), keepCooldowns: preserveRewards);
             ClearMawBoss(rt, preserveRewards && BossRewardUnchanged(rt, BossProfiles.MawRewardId));
             ClearObliviaxBoss(rt, preserveRewards && BossRewardUnchanged(rt, BossProfiles.ObliviaxRewardId)); ClearPolarisBoss(rt, preserveRewards);
             var s = rt.Boss;

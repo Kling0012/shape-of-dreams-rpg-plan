@@ -99,6 +99,7 @@ namespace SodRpg.Mod
         private readonly BuildTransferReceiver _appliedTransfer = new BuildTransferReceiver();
         public float PressureHealthMultiplier { get; private set; } = 1f;
         public float PressureDamageMultiplier { get; private set; } = 1f;
+        public float NightmarePressureHealthMultiplier { get; private set; }
         /// <summary>ホストが悪夢化の抽選に掛ける装備の倍率。0は未受信（古い版のホスト）で、確保地点では最低値を表示する。</summary>
         public float NightmareGearMultiplier { get; private set; }
         public string LoadNotes { get; private set; }
@@ -187,6 +188,9 @@ namespace SodRpg.Mod
                 case "unknown":
                 case "cancelled": return Loc.T("取引は成立していませんでした。ゴールドとドリームダストは減っていません。", "The trade did not go through. Your gold and Dream Dust were not spent.");
                 case "conflict": return Loc.T("取引できませんでした。取引の識別が重複しました。もう一度試してください。", "Trade failed: the trade id clashed. Please try again.");
+                case "dustcap": return Loc.T(
+                    "この世界で分解から得られる夢のダストは上限に達しました（次の世界で回復します）。",
+                    "Salvage Dream Dust from relics has reached this world's cap (it recovers in the next world).");
                 default: return Loc.T("取引できませんでした。もう一度試してください。", "Trade failed. Please try again.");
             }
         }
@@ -195,8 +199,21 @@ namespace SodRpg.Mod
 
         public bool CanEditTalents => Profile.Run == null || !InGame;
 
+        /// <summary>現在の世界の番号（0始まり）。本体の ZoneManager から読む（担当制の世界判定と同じ）。分からなければ -1。</summary>
+        internal int CurrentZoneIndex
+        {
+            get
+            {
+                try { return _zone != null ? _zone.currentZoneIndex : -1; }
+                catch (Exception) { return -1; }
+            }
+        }
+
+        public long ViewRevision { get; private set; }
+
         public void MarkDirty(bool buildChanged)
         {
+            ViewRevision++;
             _dirty = true;
             if (buildChanged)
             {
@@ -243,8 +260,8 @@ namespace SodRpg.Mod
         {
             if (_tickSteps == null)
             {
-                _tickSteps = new Action[] { TickGemSlotHudProbe, TickProfileSlots, Wire, TickInfinitySettings, UpdateVariantVisuals, UpdateMonsterCues, TickBossDisplay, TrackRun, TickKillClassification, TickRunChoices, TickCurseResync, TickSalvageExpiry, TickSatchelOverflow, SendBuildIfNeeded, TickHello, TickPeriodicSave, TickInterruptedRelics, TickDirectStash, TickKillSync, TickCoopTrade, TickRoomVisualSweep };
-                _tickStepNames = new[] { "gem slot HUD probe", "profile slots", "wire", "infinity settings", "variant visuals", "monster cues", "boss effects", "track run", "kill classification", "run choices", "curse resync", "salvage expiry", "satchel overflow", "send build", "hello", "periodic save", "interrupted relic save", "direct stash save", "kill sync", "coop trade", "room visual sweep" };
+                _tickSteps = new Action[] { TickGemSlotHudProbe, TickProfileSlots, Wire, TickInfinitySettings, UpdateVariantVisuals, UpdateMonsterCues, TickBossDisplay, TrackRun, TickKillClassification, TickRunChoices, TickCurseResync, TickSalvageExpiry, TickSatchelOverflow, TickSalvageDustCap, SendBuildIfNeeded, TickHello, TickPeriodicSave, TickInterruptedRelics, TickDirectStash, TickKillSync, TickCoopTrade, TickRoomVisualSweep };
+                _tickStepNames = new[] { "gem slot HUD probe", "profile slots", "wire", "infinity settings", "variant visuals", "monster cues", "boss effects", "track run", "kill classification", "run choices", "curse resync", "salvage expiry", "satchel overflow", "salvage dust cap", "send build", "hello", "periodic save", "interrupted relic save", "direct stash save", "kill sync", "coop trade", "room visual sweep" };
                 _tickStepNextLog = new float[_tickSteps.Length];
             }
             for (int i = 0; i < _tickSteps.Length; i++)
@@ -494,6 +511,7 @@ namespace SodRpg.Mod
                 _appliedTransfer.Reset();
                 PressureHealthMultiplier = PressureDamageMultiplier = 1f;
                 NightmareGearMultiplier = 0f;
+                NightmarePressureHealthMultiplier = 0f;
                 if (!LobbyReturnPending) ResetRunChoiceConnection();
                 ResetMonsterAuthorityConnection();
                 _sentDreamLevel = -1;
@@ -582,6 +600,7 @@ namespace SodRpg.Mod
             _appliedTransfer.Reset();
             PressureHealthMultiplier = PressureDamageMultiplier = 1f;
             NightmareGearMultiplier = 0f;
+            NightmarePressureHealthMultiplier = 0f;
             ResetRunChoiceConnection(resetHistory: true);
             ResetMonsterAuthorityConnection();
             _pendingRunRewards.Clear();
@@ -655,6 +674,7 @@ namespace SodRpg.Mod
             TravelerCombatNative.ResetReporting();
             PressureHealthMultiplier = PressureDamageMultiplier = 1f;
             NightmareGearMultiplier = 0f;
+            NightmarePressureHealthMultiplier = 0f;
             Emit(Rules.BeginRun(Profile, runId, DailyDream.Today, ReadLimboDepth(), _trades.ReservedSalvageUids(), heroKey: HeroKeyOf(LocalHero),
                 dreamDepth: CanChooseRunRules ? Profile.LastDreamDepth : _receivedRunChoices.Depth));
             InitializeInfinityRun();
@@ -714,7 +734,7 @@ namespace SodRpg.Mod
             if (Onboarding.BackfillStarterCodex(Profile) > 0) _dirty = true; // 以前の配布で銘品が図鑑に載らなかった分を補う
             // v1.20：以前に+3・+5にした遺物へ、強化の節目を一度だけ付ける。
             int milestones = Rules.ApplyEnhanceMilestones(Profile);
-            if (milestones > 0) Emit(new GameEvent(EventKind.Info, Loc.T($"強化の節目を、これまでに+{Content.EnhanceMilestoneFirst}・+{Content.EnhanceMilestoneSecond}にした遺物{milestones}個に付けました（特性や固有効果が増えています）。", $"Enhancement milestones were applied to {milestones} relic(s) you had already enhanced.")));
+            if (milestones > 0) Emit(new GameEvent(EventKind.Info, Loc.T($"強化の節目をこれまでに+{Content.EnhanceMilestoneFirst}・+{Content.EnhanceMilestoneSecond}にした遺物{milestones}個に付けました（特性や固有効果が増えています）。", $"Enhancement milestones were applied to {milestones} relic(s) you had already enhanced.")));
             if (newSlotStarters.Count > 0)
             {
                 Emit(newSlotStarters);
@@ -1033,7 +1053,8 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
                 if (outcome == TradeOutcome.Failed)
                 {
                     RestoreSalvageTrade(t);
-                    Emit(new GameEvent(EventKind.Warning, TradeFailText(code)));
+                    if (code == "dustcap") NotifySalvageDustCapReached(); // まとめて分解で大量に断られても案内は1回にまとめる
+                    else Emit(new GameEvent(EventKind.Warning, TradeFailText(code)));
                     if (t.Kind == TradeKind.SalvageForDust)
                     {
                         Profile.PendingTrades.RemoveAll(pending => pending.Token == t.Token);
@@ -1052,11 +1073,16 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
                         break;
                     case TradeKind.SalvageForDust:
                         if (Rules.SalvageUnsecured(Profile, t.Uid) != null)
-                            Emit(new GameEvent(EventKind.Info, Loc.T($"分解してドリームダスト+{t.EarnDust}", $"Salvaged for {t.EarnDust} Dream Dust")));
+                        {
+                            // 上限の残りに合わせて削られた分も、実際にもらった量で案内する。
+                            long paid = CountSalvageDustPaid(t.EarnDust);
+                            Emit(new GameEvent(EventKind.Info, Loc.T($"分解してドリームダスト+{paid}", $"Salvaged for {paid} Dream Dust")));
+                        }
                         Profile.PendingTrades.RemoveAll(pending => pending.Token == t.Token);
                         DeferSave();
                         return;
                     case TradeKind.SatchelOverflowDust:
+                        CountSalvageDustPaid(t.EarnDust);
                         Emit(Rules.CompleteSatchelOverflowDust(t));
                         // 成功のプロフィール側の反映は取引の削除だけ。未保存のまま落ちても、領収書の照会で
                         // 同じ結果に一度だけ戻る（通貨はホストが持つ）。保存は定期保存へまとめて、あふれの
@@ -1167,6 +1193,7 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
             if (msg == null || !ObserveMonsterAuthority(msg.authorityGeneration)) return;
             Protocol.WarnMismatch(msg.protocol, nameof(DreamforgeNightmareMsg));
             ReceiveDynamicDifficulty(msg.dynamicDifficulty, msg.dynamicRevision);
+            ReceiveDynamicStatus(msg.dynamicStatus);
             if (msg.netId == 0) return;
             if (msg.removed)
             {
@@ -1342,6 +1369,8 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
             Protocol.WarnMismatch(msg.protocol, nameof(DreamforgePressureMsg));
             PressureHealthMultiplier = msg.healthMultiplier;
             PressureDamageMultiplier = msg.damageMultiplier;
+            NightmarePressureHealthMultiplier = msg.nightmarePressureHealthMultiplier >= 1f && !float.IsInfinity(msg.nightmarePressureHealthMultiplier)
+                ? msg.nightmarePressureHealthMultiplier : 0f;
             NightmareGearMultiplier = msg.nightmareGearMultiplier >= 1f && !float.IsInfinity(msg.nightmareGearMultiplier) ? msg.nightmareGearMultiplier : 0f;
             ReceiveRunChoices(msg.runChoices);
             HostConfirmed = true;

@@ -134,7 +134,7 @@ namespace Issue73.Native.Tests
                 average += alpha * (logRatio - average);
             }
             if (rooms < MinRooms) return 1;
-            return Math.Max(MinFactor, Math.Min(MaxFactor, Math.Exp(Strength * average)));
+            return Math.Max(MinFactor, Math.Min(SafetyMaxFactor, Math.Exp(Strength * average)));
         }
 
         private static object PlayerState(HostAuthority host, DewPlayer player)
@@ -236,6 +236,7 @@ namespace Issue73.Native.Tests
         public void Damage_is_counted_raw_with_overkill_before_help_scaling_and_follows_the_parent_chain()
         {
             var host = Host(out _);
+            RunWorldSteps.Enter(host, 2);
             var a = Player(5);
             var b = Player(9);
             var enemy = SpawnFor(host, b, 100, 1000f); // b の担当敵（a は手伝い側）
@@ -245,8 +246,8 @@ namespace Issue73.Native.Tests
             Time.time = 1f;
             float overkill = enemy.Status.maxHealth * 100f;
             float applied = Hit(host, enemy, a.hero, overkill);
-            Assert.Equal((double)overkill, DamageOf(host, a), 0); // 手伝い倍率・下限の前の値
-            Assert.True(applied < overkill / 2f, "適用側は手伝い倍率と下限で減る（記録とは別）");
+            Assert.Equal((double)overkill, DamageOf(host, a), 0); // 手伝い倍率の前の値
+            Assert.Equal(overkill * OwnershipHelp.Factor(2), applied, overkill * 1e-5f); // 3世界目の減衰60%（記録とは別）。
 
             // 活動時間は 0.5 秒区切り: 当てた区切りだけ。同じ区切りの複数ヒットは 1 区切り。
             Time.time = 1.4f; Hit(host, enemy, a.hero, 10f); // 区切り 2（1.0 秒と同じ）
@@ -316,7 +317,7 @@ namespace Issue73.Native.Tests
         // ---- 係数 ----
 
         [Fact]
-        public void The_factor_follows_the_log_ema_of_the_speed_ratio_up_to_the_cap()
+        public void The_factor_follows_the_log_ema_of_the_speed_ratio_beyond_three()
         {
             var host = Host(out _);
             var a = Player(5);
@@ -331,9 +332,10 @@ namespace Issue73.Native.Tests
             Assert.Equal(ExpectedFactor(Math.Log(3d), 8), after8, 5);
             Assert.True(after2 < after8 && after8 < Math.Sqrt(3d), "差の半分: r の平方根に満たない高さへ近づく");
 
-            // 圧倒的な速さでも上限で頭打ち。
+            // 圧倒的な速さでは3倍を超え、数値あふれ用の安全装置以下に収まる。
             DriveRooms(host, a, 120, 1e9, 1);
-            Assert.Equal(MaxFactor, FactorOf(host, a), 10);
+            Assert.True(FactorOf(host, a) > 3d);
+            Assert.True(FactorOf(host, a) <= SafetyMaxFactor);
             Assert.Empty(Log.Warnings);
         }
 
@@ -460,7 +462,7 @@ namespace Issue73.Native.Tests
             var forB = SpawnMonsterFor(host, b, 201);
             var forC = SpawnMonsterFor(host, c, 202); // 戦っていない c は D = 1
 
-            Assert.Equal(1d + RewardShare * (FactorOf(host, a) - 1d), RewardOf(host, forA), 5);
+            Assert.Equal(Math.Min(RewardMaxMultiplier, 1d + RewardShare * (FactorOf(host, a) - 1d)), RewardOf(host, forA), 5);
             Assert.Equal(1d, RewardOf(host, forB), 10); // D ≤ 1 では報酬を下げない
             Assert.Equal(1d, RewardOf(host, forC), 10);
             Assert.Empty(Log.Warnings);

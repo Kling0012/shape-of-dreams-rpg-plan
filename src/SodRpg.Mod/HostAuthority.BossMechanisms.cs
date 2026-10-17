@@ -310,7 +310,7 @@ namespace SodRpg.Mod
                                     for (int j = 0; j < Math.Min(128, entities.Count); j++) if (entities[j] == e) { found = true; break; }
                                     if (!found) continue;
                                     long life = host.BossNativeActorLife(e);
-                                    if (s.Hit(life) || s.ChainRemaining > 0 && s.Wave.Find(life) >= 0) continue;
+                                    if (life <= 0 || s.Hit(life) || s.ChainRemaining > 0 && s.Wave.Find(life) >= 0) continue;
                                     nearest = e; first = hit.distance; break;
                                 }
                                 if (nearest == null) break;
@@ -375,7 +375,9 @@ namespace SodRpg.Mod
                     for (int i = 0; i < Math.Min(128, entities.Count); i++)
                     {
                         var e = entities[i];
-                        if (!BossAlive(e) || e.Status.hasUncollidable || shot.Wave.Find(host.BossNativeActorLife(e)) >= 0) continue;
+                        if (!BossAlive(e) || e.Status.hasUncollidable) continue;
+                        long life = host.BossNativeActorLife(e);
+                        if (life <= 0 || shot.Wave.Find(life) >= 0) continue;
                         float distance = (e.position - point).Flattened().sqrMagnitude;
                         if (distance < best || distance == best && (nearest == null || e.persistentNetId < nearest.persistentNetId)) { nearest = e; best = distance; }
                     }

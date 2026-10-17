@@ -64,7 +64,7 @@ namespace SodRpg.Core.Game
         }
 
         private static double NormalizeDynamicReward(double multiplier) => double.IsNaN(multiplier) || double.IsInfinity(multiplier)
-            ? 1 : Math.Max(1, Math.Min(1 + CoopBalance.DynamicDifficulty.RewardShare * (CoopBalance.DynamicDifficulty.MaxFactor - 1), multiplier));
+            ? 1 : Math.Max(1, Math.Min(CoopBalance.DynamicDifficulty.RewardMaxMultiplier, multiplier));
 
         private static double NormalizeShardDrop(double multiplier) => double.IsNaN(multiplier) || double.IsInfinity(multiplier)
             ? 1 : Math.Max(1, Math.Min(DreamPressure.ShardDropMaximum, multiplier));

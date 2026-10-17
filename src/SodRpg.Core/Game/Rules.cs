@@ -80,7 +80,7 @@ namespace SodRpg.Core.Game
             }
             if (feat == null) throw new InvalidOperationException(Loc.T("その偉業は見つかりません。", "That feat does not exist."));
             if (!p.Feats.Contains(featId)) throw new InvalidOperationException(Loc.T("この偉業はまだ達成していません。", "You have not completed this feat yet."));
-            if (p.FeatsClaimed.Contains(featId)) throw new InvalidOperationException(Loc.T("この偉業の報酬は、もう受け取っています。", "You already claimed this reward."));
+            if (p.FeatsClaimed.Contains(featId)) throw new InvalidOperationException(Loc.T("この偉業の報酬はもう受け取っています。", "You already claimed this reward."));
 
             p.AddMaterial(Materials.Shard, feat.RewardShards);
             p.AddMaterial(Materials.Tuning, feat.RewardTuning);
@@ -781,6 +781,8 @@ namespace SodRpg.Core.Game
             var report = new RunReport { Victory = victory, LevelBefore = run.LevelAtStart > 0 ? run.LevelAtStart : p.DreamLevel };
             if (victory)
             {
+                if (run.Infinity == null && run.LimboDepth >= 6 && !string.IsNullOrEmpty(run.HeroKey))
+                    p.Hero(run.HeroKey).LimboInfinityUnlocked = true;
                 ev.AddRange(Secure(p, false));
                 AddStarXp(p, run.HeroKey, StarProgression.VictoryXp, ev);
                 p.Stats.Victories++;
@@ -1499,7 +1501,7 @@ namespace SodRpg.Core.Game
             if (r.Locked) throw new InvalidOperationException(Loc.T("鍵のかかった遺物は分解できません。", "Locked relics cannot be salvaged."));
             if (loadoutLocked && p.IsEquippedAnywhere(uid))
             {
-                throw new InvalidOperationException(Loc.T("装着中の遺物は、確保地点か遠征の外でしか分解できません。", "Equipped relics can only be salvaged at a secure point or outside an expedition."));
+                throw new InvalidOperationException(Loc.T("装着中の遺物は確保地点か遠征の外でしか分解できません。", "Equipped relics can only be salvaged at a secure point or outside an expedition."));
             }
             int shards = SalvageValue(r);
             int tuning = Content.SalvageTuning(r.Rarity);

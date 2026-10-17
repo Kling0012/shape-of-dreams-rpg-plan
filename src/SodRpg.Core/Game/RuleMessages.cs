@@ -12,13 +12,13 @@ namespace SodRpg.Core.Game
             "払い戻しの確認のあとで、星・装備・仕掛けの内容が変わりました。もう一度確認してください。",
             "The allocation, equipment or shared mechanism registry changed after this refund preview. Preview again.");
         public static readonly Txt NotEnoughStarPoints = new Txt(
-            "この振り方には、星のポイントが足りません。",
+            "この振り方には星のポイントが足りません。",
             "Not enough star points for the proposed allocation.");
         public static readonly Txt RelicNotInStash = new Txt(
             "その遺物は保管庫にありません。",
             "The relic is not in the stash.");
         public static readonly Txt RelicWrongSlot = new Txt(
-            "その遺物は、この装備枠には入れられません。",
+            "その遺物はこの装備枠には入れられません。",
             "The relic does not belong to that slot.");
         public static readonly Txt KeystoneNotReady = new Txt(
             "この刻印はまだ選べません。取得済みの星とのつながり、取得した段数、熟練度の条件を満たしてください。",
@@ -39,7 +39,7 @@ namespace SodRpg.Core.Game
             "その星はまだ取得していません。",
             "That star is not acquired.");
         public static readonly Txt UseKeystoneChange = new Txt(
-            "刻印は、刻印の選択操作で変更してください。",
+            "刻印は刻印の選択操作で変更してください。",
             "Use the keystone selection to change a keystone.");
         public static readonly Txt AlreadyMaxRank = new Txt(
             "これ以上は上げられません（最大段です）。",
@@ -48,13 +48,13 @@ namespace SodRpg.Core.Game
             "先に、線でつながっている手前の星を取得してください。",
             "Allocate the connected prerequisite stars first.");
         public static readonly Txt ChoiceNotAllocated = new Txt(
-            "その選択の星は、まだ取得していません。",
+            "その選択の星はまだ取得していません。",
             "That choice star is not allocated.");
         public static readonly Txt SelectOneEffect = new Txt(
             "二つの効果のうち、1つを選んでください。",
             "Explicitly select one of the two effects.");
         public static readonly Txt SameOptionOnly = new Txt(
-            "選択の星は、全ての段で同じ効果になります。先に効果を切り替えてください。",
+            "選択の星は全ての段で同じ効果になります。先に効果を切り替えてください。",
             "All ranks of a choice must use the same option. Change the choice explicitly first.");
         public static readonly Txt NotChoiceStar = new Txt(
             "この星には選択肢がありません。",

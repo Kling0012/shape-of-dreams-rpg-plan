@@ -298,12 +298,9 @@ namespace SodRpg.Mod
             return offer;
         }
 
-        // 提示後に装着・合成などで使えなくなった遺物は、次の提示更新で外す。
+        // 提示後に装着・合成・再調律などで使えなくなった遺物は、次の提示更新で外す（ホストの検証と同じ条件）。
         private static bool CoopTradeRelicOfferable(Profile profile, string uid)
-        {
-            return !string.IsNullOrEmpty(uid) && FindCoopTradeRelic(profile, uid) != null
-                && !profile.IsEquippedAnywhere(uid);
-        }
+            => CoopTradeRules.RelicOfferable(profile, uid);
 
         private void DrawCoopTradeOwnRelics(CoopTradeView trade, bool editable)
         {

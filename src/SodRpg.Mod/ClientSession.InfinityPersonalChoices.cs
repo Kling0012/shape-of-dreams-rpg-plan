@@ -114,7 +114,6 @@ namespace SodRpg.Mod
 
         private void TickInfinityPersonalChoice()
         {
-            InfinityMode.TickPersonalChoices();
             if (_infinityPersonalSelection != null && !InfinityPersonalSelectionMatchesCurrent)
             {
                 _infinityPersonalSelection = null;

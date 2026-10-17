@@ -246,7 +246,7 @@ namespace SodRpg.Core.Game
                 case DreamEvent.Fountain:
                     if (run.Satchel.Count(r => trades == null || !trades.IsReserved(r.Uid)) < 2
                         || !run.Satchel.Where(r => trades == null || !trades.IsReserved(r.Uid)).OrderBy(r => r.Score).Skip(1).Any(r => Content.CanGuaranteedEnhance(r, e)))
-                        reason = Loc.T("まだ持ち帰っていない遺物が2つ以上必要です（そのうち1つは、まだ強化できる物）。", "Need 2+ unsecured relics (one enhanceable).");
+                        reason = Loc.T("まだ持ち帰っていない遺物が2つ以上必要です（そのうち1つはまだ強化できる物）。", "Need 2+ unsecured relics (one enhanceable).");
                     break;
                 case DreamEvent.Chalice:
                     if (run.SatchelShards <= 0) reason = Loc.T("賭ける欠片がありません。", "No shards to wager.");

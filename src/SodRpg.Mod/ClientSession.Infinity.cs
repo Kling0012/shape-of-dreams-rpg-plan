@@ -123,11 +123,12 @@ namespace SodRpg.Mod
             if (!InfinityMode.NativeSaveAgreement || string.IsNullOrEmpty(runId)
                 || runId != NetworkedManagerBase<GameManager>.softInstance?.runId) return false;
             bool waiting = _infinityPendingSaveRevision != 0 && _infinityPendingSaveRun == runId;
-            BeginInfinitySaveHold(runId);
             MarkDirty(true);
-            // Do not block the main thread again for the same outstanding receipt.
+            // Do not advance the hold for a confirmation that queues no write; otherwise its
+            // Revision+1 target stays ahead of the writer until the 30s timeout.
             if (confirm && waiting && !InfinitySaveHoldReleased && Time.unscaledTime < _nextInfinitySaveRetry)
                 return false;
+            BeginInfinitySaveHold(runId);
             _nextInfinitySaveRetry = Time.unscaledTime + 5f;
             bool saved = SaveNow((confirm && !waiting && !InfinitySaveHoldReleased) || _store == null);
             if (saved && confirm) CompleteInfinityStateSave();
@@ -364,6 +365,8 @@ namespace SodRpg.Mod
             bool alreadyApplied = choice.Secure ? Profile.CompletedRunSecuredReturn && Profile.CompletedRunId == choice.RunId
                 : state != null && (choice.Boundary ? state.SettledGraphEpoch >= choice.GraphEpoch
                     : state.ChoiceRevision >= choice.Revision);
+            // The host advances the graph only after ACKs or its bounded remote wait have released.
+            if (alreadyApplied && !choice.Secure && !choice.Boundary && state.GraphEpoch > choice.GraphEpoch) return;
             if (!alreadyApplied)
             {
                 if (state == null || state.GraphEpoch != choice.GraphEpoch || state.SegmentEpoch != choice.SegmentEpoch

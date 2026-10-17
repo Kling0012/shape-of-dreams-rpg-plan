@@ -51,7 +51,7 @@ namespace SodRpg.Core.Game
             new HintDef
             {
                 Id = Hint.StarterGear, Title = new Txt("初期の遺物を装備しました", "Starter relics equipped"),
-                Body = new Txt("空いていた枠に初期の遺物を装備しました。左のパネルで状態を確認できます。拾った遺物は、確保して保管庫に入れると付け替えられます（遠征中は確保地点で、遠征の後ならいつでも）。",
+                Body = new Txt("空いていた枠に初期の遺物を装備しました。左のパネルで状態を確認できます。拾った遺物は確保して保管庫に入れると付け替えられます（遠征中は確保地点で、遠征の後ならいつでも）。",
                     "Your empty slots now hold starter relics. Check the Dreamforge panel on the left. Relics you pick up can be equipped once secured into your stash (at a secure point during a run, or any time after)."),
             },
             new HintDef
@@ -93,7 +93,7 @@ namespace SodRpg.Core.Game
             new HintDef
             {
                 Id = Hint.KeystoneReady, Title = new Txt("到達刻印を選べるようになりました", "Keystones unlocked"),
-                Body = new Txt($"この旅人の熟練度が上がり、到達刻印を選べるようになりました。選ぶには、この旅人のツリーに{Content.KeystoneRouteRequirement}ポイント以上振っておく必要もあります。",
+                Body = new Txt($"この旅人の熟練度が上がり、到達刻印を選べるようになりました。選ぶにはこの旅人のツリーに{Content.KeystoneRouteRequirement}ポイント以上振っておく必要もあります。",
                     $"This Traveler's mastery now allows a keystone. You also need {Content.KeystoneRouteRequirement}+ points in this tree."),
             },
             new HintDef

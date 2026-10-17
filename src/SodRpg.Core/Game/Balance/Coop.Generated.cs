@@ -31,13 +31,31 @@ namespace SodRpg.Core.Game
         public const float ShieldWallTauntSeconds = 4f;
         public const string ShieldWallTauntSecondsText = "4";
 
+        public static class Difficulty
+        {
+            public const double NativePowerBonusFactor = 0.5d;
+            public const double NativePowerBonusMaximum = 15d;
+            public const double DamagePressureShare = 0.5d;
+            public const double DamagePressureMaximum = 2d;
+        }
+
         public static class Ownership
         {
-            public const float HelpFactor = 0.5f;
+            // Damage lost on another player's enemy, by the run's 0-based world order; the last entry repeats.
+            public const int HelpDecayWorlds = 4;
+            public static int HelpDecayPercent(int world)
+            {
+                switch (world < 0 ? 0 : world)
+                {
+                    case 0: return 0;
+                    case 1: return 30;
+                    case 2: return 60;
+                    default: return 90;
+                }
+            }
             public const float BossShareFactor = 0.8f;
             public const float BossDamageMin = 0.2f;
             public const float BossDamageMax = 3f;
-            public const float Floor = 0.3f;
             public const float RescueHp = 0.35f;
             public const float EngageWindow = 6f;
             public const float SpawnGrace = 8f;
@@ -57,7 +75,9 @@ namespace SodRpg.Core.Game
             public const double AlphaDown = 0.5d;
             public const double Strength = 0.5d;
             public const double MinFactor = 0.65d;
-            public const double MaxFactor = 3.0d;
+            public const double RewardMaxMultiplier = 2.0d;
+            // Numeric overflow guard for factors and float HP, not a balance cap.
+            public const double SafetyMaxFactor = 1e+06d;
             public const double MinActiveSeconds = 5d;
             public const int MinRooms = 2;
             public const double DamageExponent = 0.25d;

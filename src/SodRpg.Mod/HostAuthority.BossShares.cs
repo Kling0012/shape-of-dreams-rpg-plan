@@ -172,16 +172,12 @@ namespace SodRpg.Mod
                 total += take;
                 budget -= take;
             }
-            bool dynamic = DynamicApplicationRunning();
-            double pressure = player == null ? 1 : OwnershipBasePressure(player, sharedEnemy: true).HealthMultiplier
-                * (own >= 0 ? dynamic ? shares.Dynamic[own] : 1 : DynamicFactor(player));
+            double factor = player == null ? 1 : OwnershipHelpFactor();
             for (int step = 0; step < shares.Players.Length && budget > 0; step++)
             {
                 int target = LargestBossShare(shares, planned);
                 if (target < 0) break;
-                double factor = player == null ? 1 : CoopBalance.Ownership.HelpFactor * Math.Min(1,
-                    OwnershipBasePressure(shares.Players[target], sharedEnemy: true).HealthMultiplier * (dynamic ? shares.Dynamic[target] : 1) / pressure);
-                if (!(factor > 0)) throw new InvalidOperationException("Invalid boss help pressure.");
+                if (!(factor > 0)) throw new InvalidOperationException("Invalid boss help factor.");
                 double take = Math.Min(budget * factor, shares.Remaining[target] - planned[target]);
                 planned[target] += take;
                 total += take;

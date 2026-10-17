@@ -14,6 +14,16 @@
 段階3では鍛冶の残りを `forge.json`（schemaVersion 2）へ集約しました。
 保存済みの履歴番号・旧覚醒段・退役工房の返金原本は変更しません。
 
+## 協力プレイの難度（Issue #601・PR #694）
+
+Issue #601の最新コメントに従い、HP・敵数は#673より前の式、攻撃・魔力は#673の緩和を使います。HPの圧は `pressure.json` の共通式で、増分65%・上限8倍の補正はありません。圧による敵数の上限は5倍、`ownership.bossShareFactor` は0.8、本体の人数による追加HPは本体の値です。
+
+`coop.json` の `difficulty` には攻撃関連の4項目だけを置きます。人間2人以上では、深度・道標・Infinity適用後の攻撃の圧の増分を `damagePressureShare=0.5` 倍にし、`damagePressureMaximum=2` 倍で止めます。本体の人数による追加攻撃・魔力は `nativePowerBonusFactor=0.5` 倍、`nativePowerBonusMaximum=15`%までです。ソロ・HP・報酬・悪夢化率にはこの補正を掛けません。
+
+2026-10-17に動的難易度Dのバランス上の上限を外しました。大きなダメージを出すほど、次の部屋の敵を強化します。報酬上限は独立した `dynamicDifficulty.rewardMaxMultiplier=2.0` で定め、従来どおり最大×2です。`dynamicDifficulty.safetyMaxFactor=1000000` はInfinity・NaNやfloatのHPの桁あふれを防ぐためだけの安全装置で、バランス上の上限ではありません。生成器は `minFactor <= 1`、`rewardMaxMultiplier >= 1`、`1000 <= safetyMaxFactor <= 1000000` を検証します。
+
+担当外のダメージ減衰は#701の `ownership.helpDecayPercentByWorld=[0,30,60,90]` を維持しています。`python3 tools/balance/gen_cs.py` で `Coop.Generated.cs` を再生成します。BalanceSimの `pressure/coop` 比較行は撤回し、`pressure/player` の共通式の列挙を残しました。撤回前後の倍率と検証範囲は[調整資料](../../docs/specs/issue-601-coop-difficulty.md)を参照してください。
+
 ## 本体エッセンスと記憶の循環抑制
 
 数値原本は `essence-caps.json`。`python tools/balance/gen_cs.py` で
@@ -32,6 +42,7 @@
 
 2026-10-16 方針変更で、無限ループや処理落ちを止める `ricochet`・`memoryReuse`・`crystalCircuit` だけを
 有効化し、強さを削るだけの `qualitySoftCap`・`fever`・`embertail`・`epiphany`・`memoryHaste` は無効化しました。
+2026-10-17 に `memoryReuse` も無効化しました。記憶の再使用間隔はクールダウン短縮の爽快感を削るだけで、本体にも最低待ち時間（0.1秒）があるため、ループ防止は `ricochet`・`crystalCircuit` で足ります。
 無効の項目は本体の値を一切変えず、説明文も無効化前の表記に戻ります。上の表は各上限が有効なときの挙動です。
 Native の事前診断（preflight）も kill switch で無効中のパッチクラスをスキップし、起動拒否にしません。
 

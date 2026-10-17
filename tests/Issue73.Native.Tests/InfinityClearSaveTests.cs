@@ -50,6 +50,10 @@ namespace Issue73.Native.Tests
                 Call(_session, "PublishRunChoices");
                 Call(_session, "PublishRunChoicesForZone", 0);
                 Assert.Empty(transport.Sent);
+                // A confirmation while this write is outstanding must keep its queued revision.
+                Assert.False(ClientSession.PersistHostInfinityState());
+                Assert.Equal(before, ClientSession.HostRunChoices);
+                Assert.Empty(transport.Sent);
             }
             finally { _files.Release.Set(); }
             clear.GetAwaiter().GetResult();

@@ -22,6 +22,21 @@ namespace SodRpg.Core.Tests
             Assert.Equal(shown, Build.Compute(p, "Hero_Vesper", 0).Get(Power.Bloodlust));
         }
 
+        /// <summary>過剰の x1.6 は、覚醒と同じく条件付きの共通上限（覚醒前で数える）に数えない。</summary>
+        [Fact]
+        public void Overcharge_gain_is_not_counted_toward_the_conditional_budget()
+        {
+            var p = Profile.CreateNew(62);
+            var r = Loot.RollRelic(new Rng(62), Rarity.Epic, 40, slot: Slot.Weapon);
+            r.Powers.Clear(); r.Powers.Add(new PowerLine(Power.Overload, 30));
+            r.Forbidden = new ForbiddenMark { Pattern = ForbiddenPattern.Overcharge };
+            p.Stash.Add(r);
+            Rules.Equip(p, "Hero_Vesper", r.Uid);
+            var build = Build.Compute(p, "Hero_Vesper", 0);
+            Assert.Equal(Relic.Scale(30, Forbidden.OverchargePowerPct), build.Get(Power.Overload));
+            Assert.Equal(30, build.ConditionalBase(Power.Overload));
+        }
+
         /// <summary>恨みの通行料は、失ったHPがちょうど最大HPの60%でも発動する（float の 0.6 の誤差で次の被弾まで遅れていた）。</summary>
         [Theory]
         [InlineData(60f, 100f)]

@@ -798,7 +798,11 @@ namespace SodRpg.Mod
         internal static void Tick() { }
         internal static void DisableFeature(string reason) => throw new NotSupportedException(reason);
         internal static void CompleteReturn(InfinityRunState state) => throw new NotSupportedException();
-        internal static void AcknowledgeLocal(InfinityChoice choice) => throw new NotSupportedException();
+        // #528: ゲストの TickInfinity が AcknowledgeLocal を呼んだ回数を数える観測点。
+        // 本体では DreamforgeInfinityAckMsg をサーバーへ送るが、境界では送信そのものを再現しない。
+        internal static int AcknowledgeCalls;
+        internal static InfinityChoice LastAcknowledgedChoice;
+        internal static void AcknowledgeLocal(InfinityChoice choice) { AcknowledgeCalls++; LastAcknowledgedChoice = choice; }
         internal static bool PartyAcknowledged(InfinityChoice choice) => throw new NotSupportedException();
         internal static bool Regenerate(string intent) => throw new NotSupportedException();
         internal static void PublishChoice(InfinityChoice choice) => _choice = choice;
@@ -852,9 +856,8 @@ namespace SodRpg.Mod
         private string _coopWaitingId, _coopWaitReason;
         private float _coopWaitingAt, _coopWaitReasonAt;
         private bool _coopWaitReleased;
-        private string _coopTradeWarning, _coopConnectionWarning;
         public CoopTradeView CoopTrade { get; set; }
-        public string CoopTradeWarning { get => _coopTradeWarning ?? _coopConnectionWarning; set => _coopTradeWarning = value; }
+        // Warning storage/getter are extracted from production in NativePersistence.targets.
         internal static string CoopHostJournalPath => _hostSession?.CoopTradeJournalPath;
         internal static bool CoopHostSafe => _hostSession?.CoopLocalSafe == true;
         internal static bool CoopHostNativeSaving => _hostSession?._coopNativeSaving == true;
@@ -878,7 +881,9 @@ namespace SodRpg.Mod
         private float _helloFirstSent = -1f, _nextHello;
         private bool _helloAnswered, _hostCompatibilityWarned, _hostInfinityAvailable;
         private int _hostMeleeCoop;
-        public string HostVersionWarning { get; private set; }
+        // ClientSession.Hello.cs と同じ保管（#510: Txt 保持＋getter で解決）。ResetHello の抽出が書く。
+        private Txt _hostVersionWarning;
+        public string HostVersionWarning => _hostVersionWarning?.ToString();
         private Build _buildCache;
         private float _buildCacheTime;
         private string _buildCacheHero;
@@ -959,5 +964,6 @@ namespace SodRpg.Mod
         public float PressureHealthMultiplier { get; internal set; } = 1f;
         public float PressureDamageMultiplier { get; internal set; } = 1f;
         public float NightmareGearMultiplier { get; private set; }
+        public float NightmarePressureHealthMultiplier { get; private set; }
     }
 }
