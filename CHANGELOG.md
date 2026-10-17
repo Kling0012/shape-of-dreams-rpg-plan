@@ -10,6 +10,13 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v3.4.1 — Dynamic difficulty status in the menu（2026-10-17）
+
+### 新機能 / New features
+- メニューのホスト設定に「現在の状況」を追加しました。動的難易度が有効かどうか、旅人ごとの倍率と敵の体力・攻撃・報酬への効き方（やさしめ／標準／きびしめ）、担当外の敵へのダメージ減衰と今いる世界の段階を確認できます。参加者には、ホストから届いた値だけを表示します。 / Added a "Current status" section under the host settings menu. It shows whether dynamic difficulty is on, each traveler's factor and how it changes enemy HP, enemy attack and rewards (easier / standard / harder), and the damage reduction on other players' enemies for the current world. Participants see only values received from the host.
+
+---
+
 ## v3.4.0 — Minor adjustments（2026-10-17）
 
 細かな調整を行いました。 / Minor adjustments.

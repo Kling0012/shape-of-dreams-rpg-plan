@@ -1,5 +1,5 @@
-[b]v3.4.0: minor adjustments. Everyone in co-op should update. Saves carry over; restart the game after updating.[/b]
-[b]v3.4.0：細かな調整を行いました。協力プレイは全員更新してください。セーブはそのまま引き継げます。更新後はゲームを再起動してください。[/b]
+[b]Adds a "Current status" section to the host settings menu showing how dynamic difficulty and the damage reduction on other players' enemies currently apply.[/b]
+[b]メニューのホスト設定に「現在の状況」欄を追加し、動的難易度と担当外の敵へのダメージ減衰が今どう効いているかを確認できるようにしました。[/b]
 
 [h1]Dreamforge RPG[/h1]
 Turns every run into part of a long RPG journey: relics you keep, a risky "secure or delve" choice at every zone, a star map per Traveler, a forge, and long-term goals. Co-op ready.
