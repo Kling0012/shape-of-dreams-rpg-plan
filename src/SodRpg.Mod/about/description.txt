@@ -1,5 +1,5 @@
-[b]Fixes stuck Infinity delves in co-op, lost MOD rewards after an abandoned resume, upgraded ally effect reach, save error language, and workshop values in hints and pacts.[/b]
-[b]協力プレイのインフィニティの停止、再開読み込みの中断後に MOD 報酬が出ない問題、強化した味方効果の届く距離、保存エラーの言語、ヒントと契約に出る工房の値を直しました。[/b]
+[b]v3.7.0: Lighter combat and co-op networking, a fix for heavy slowdowns with Lacerta's Incendiary Rounds and projectile essences, and a fix for guests' skills becoming unusable. Strength is unchanged. Saves carry over. Restart the game after updating.[/b]
+[b]v3.7.0：戦闘の処理と協力プレイの通信を軽くし、ラセルタの焼夷弾装填と飛び道具系エッセンスで重くなる問題と、参加者側でスキルが使えなくなる不具合を直しました。強さは変わりません。セーブデータはそのまま引き継げます。更新後はゲームを再起動してください。[/b]
 
 [h1]Dreamforge RPG[/h1]
 Turns every run into part of a long RPG journey: relics you keep, a risky "secure or delve" choice at every zone, a star map per Traveler, a forge, and long-term goals. Co-op ready.
