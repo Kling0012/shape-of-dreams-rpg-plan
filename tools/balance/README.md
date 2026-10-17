@@ -22,6 +22,8 @@ Issue #601の最新コメントに従い、HP・敵数は#673より前の式、�
 
 2026-10-17に動的難易度Dのバランス上の上限を外しました。大きなダメージを出すほど、次の部屋の敵を強化します。報酬上限は独立した `dynamicDifficulty.rewardMaxMultiplier=2.0` で定め、従来どおり最大×2です。`dynamicDifficulty.safetyMaxFactor=1000000` はInfinity・NaNやfloatのHPの桁あふれを防ぐためだけの安全装置で、バランス上の上限ではありません。生成器は `minFactor <= 1`、`rewardMaxMultiplier >= 1`、`1000 <= safetyMaxFactor <= 1000000` を検証します。
 
+2026-10-18に動的難易度を少し易しくしました。`dynamicDifficulty.strength` を0.5から0.4へ下げ、強さの差を埋める割合を半分から4割にしました。敵の攻撃に掛ける指数 `dynamicDifficulty.damageExponent` も0.25から0.2へ下げました。上限なしと報酬上限×2は変えていません。
+
 担当外のダメージ減衰は#701の `ownership.helpDecayPercentByWorld=[0,30,60,90]` を維持しています。`python3 tools/balance/gen_cs.py` で `Coop.Generated.cs` を再生成します。BalanceSimの `pressure/coop` 比較行は撤回し、`pressure/player` の共通式の列挙を残しました。撤回前後の倍率と検証範囲は[調整資料](../../docs/specs/issue-601-coop-difficulty.md)を参照してください。
 
 ## 本体エッセンスと記憶の循環抑制

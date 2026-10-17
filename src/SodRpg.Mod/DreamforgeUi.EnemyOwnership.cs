@@ -174,8 +174,9 @@ namespace SodRpg.Mod
                 cfg.dynamicDifficultySolo = solo;
                 SaveEnemyOwnershipConfig?.Invoke();
             }
-            GUILayout.Label(Loc.T("戦った部屋のダメージから、次の部屋の敵を調整します。強さの差を半分だけ埋めます。",
-                "Use combat damage to adjust enemies in the next room, closing half the strength gap."), _st.Small);
+            int dynamicClose = (int)Math.Round(CoopBalance.DynamicDifficulty.Strength * 100);
+            GUILayout.Label(Loc.T($"戦った部屋のダメージから、次の部屋の敵を調整します。強さの差の{dynamicClose}%だけを埋めます。",
+                $"Use combat damage to adjust enemies in the next room, closing {dynamicClose}% of the strength gap."), _st.Small);
             string dynamicMin = CoopBalance.DynamicDifficulty.MinFactor.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
             string rewardMax = CoopBalance.DynamicDifficulty.RewardMaxMultiplier.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
             GUILayout.Label(Loc.T($"係数は{dynamicMin}以上で上限はありません。硬くなった分だけ報酬が増え（最大×{rewardMax}）、易しくなっても報酬は減りません。",
