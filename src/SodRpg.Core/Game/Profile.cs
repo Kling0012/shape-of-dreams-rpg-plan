@@ -131,6 +131,8 @@ namespace SodRpg.Core.Game
         /// <summary>WorldIndex を数えたときの本体の世界番号と世界名。再開時に同じ世界を二重に数えないための印。</summary>
         public int WorldZoneIndex { get; set; } = -1;
         public string WorldZoneName { get; set; }
+        /// <summary>Last Infinity segment included in WorldIndex; -1 for ordinary runs and legacy saves.</summary>
+        public long WorldInfinitySegment { get; set; } = -1;
         private long _salvageDustEarned;
         /// <summary>
         /// この世界で分解（手動・鞄あふれの追加ダスト）から得たドリームダストの表示用の計数。
@@ -233,6 +235,7 @@ namespace SodRpg.Core.Game
                 WorldIndex = WorldIndex,
                 WorldZoneIndex = WorldZoneIndex,
                 WorldZoneName = WorldZoneName,
+                WorldInfinitySegment = WorldInfinitySegment,
                 SalvageDustEarned = SalvageDustEarned,
                 SalvageDustZoneIndex = SalvageDustZoneIndex,
                 SalvageDustOverflowPaidSeen = SalvageDustOverflowPaidSeen,

@@ -11,11 +11,12 @@ namespace SodRpg.Core.Game
         public string RunId { get; private set; }
         public int ZoneIndex { get; private set; } = -1;
         public string ZoneName { get; private set; }
+        public long InfinitySegment { get; private set; } = -1;
         /// <summary>0始まりの世界の累計。最初の世界を見るまでは -1。</summary>
         public int Index { get; private set; } = -1;
 
-        /// <summary>今いる世界を知らせる。同じ世界（同じ番号と名前）なら数えない。数えたら true。</summary>
-        public bool Observe(string runId, int zoneIndex, string zoneName)
+        // Infinity counts delve segments, including same-zone arrivals. Graph regeneration is not a new world.
+        public bool Observe(string runId, int zoneIndex, string zoneName, long infinitySegment = -1)
         {
             if (string.IsNullOrEmpty(runId) || zoneIndex < 0) return false;
             if (runId != RunId)
@@ -23,7 +24,19 @@ namespace SodRpg.Core.Game
                 RunId = runId;
                 ZoneIndex = zoneIndex;
                 ZoneName = zoneName;
-                Index = 0;
+                InfinitySegment = infinitySegment;
+                Index = (int)Math.Min(int.MaxValue, Math.Max(0, infinitySegment));
+                return true;
+            }
+            if (infinitySegment >= 0)
+            {
+                if (InfinitySegment >= 0 && infinitySegment <= InfinitySegment) return false;
+                // Legacy saves have no segment receipt. Preserve their total, with the current segment as a floor.
+                long advance = InfinitySegment < 0 ? Math.Max(0, infinitySegment - Index) : infinitySegment - InfinitySegment;
+                Index += (int)Math.Min(int.MaxValue - Index, advance);
+                InfinitySegment = infinitySegment;
+                ZoneIndex = zoneIndex;
+                ZoneName = zoneName;
                 return true;
             }
             if (zoneIndex == ZoneIndex && zoneName == ZoneName) return false;
@@ -34,13 +47,14 @@ namespace SodRpg.Core.Game
         }
 
         /// <summary>保存から戻す（中断からの再開・ホストの作り直し）。不正な値は無視する。</summary>
-        public bool Restore(string runId, int index, int zoneIndex, string zoneName)
+        public bool Restore(string runId, int index, int zoneIndex, string zoneName, long infinitySegment = -1)
         {
             if (string.IsNullOrEmpty(runId) || index < 0 || zoneIndex < 0) return false;
             RunId = runId;
             Index = index;
             ZoneIndex = zoneIndex;
             ZoneName = zoneName;
+            InfinitySegment = Math.Max(-1, infinitySegment);
             return true;
         }
     }

@@ -71,17 +71,20 @@ namespace SodRpg.Core.Tests
             p.Run.WorldIndex = 4;
             p.Run.WorldZoneIndex = 0;
             p.Run.WorldZoneName = "Zone9";
+            p.Run.WorldInfinitySegment = 3;
             var run = ProfileCodec.Read(ProfileCodec.Write(p), new List<string>()).Run;
             Assert.Equal(4, run.WorldIndex);
             Assert.Equal(0, run.WorldZoneIndex);
             Assert.Equal("Zone9", run.WorldZoneName);
+            Assert.Equal(3, run.WorldInfinitySegment);
             Assert.Equal(4, run.Clone().WorldIndex);
+            Assert.Equal(3, run.Clone().WorldInfinitySegment);
 
             // 再開後の同じ世界は数え直さず、次の世界で続きから数える。
             var counter = new RunWorldCounter();
-            Assert.True(counter.Restore("run", run.WorldIndex, run.WorldZoneIndex, run.WorldZoneName));
-            Assert.False(counter.Observe("run", 0, "Zone9"));
-            Assert.True(counter.Observe("run", 1, "Zone10"));
+            Assert.True(counter.Restore("run", run.WorldIndex, run.WorldZoneIndex, run.WorldZoneName, run.WorldInfinitySegment));
+            Assert.False(counter.Observe("run", 0, "Zone9", 3));
+            Assert.True(counter.Observe("run", 0, "Zone9", 4));
             Assert.Equal(5, counter.Index);
         }
 
