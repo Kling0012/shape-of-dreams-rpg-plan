@@ -67,7 +67,7 @@
     </Task>
   </UsingTask>
   <Target Name="CompileNativePersistence" BeforeTargets="CoreCompile">
-    <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/ClientSession.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)NativePersistence.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="ClientSession" Methods="MarkDirty;MarkAllocationDirty;SavePendingAllocation;OnAllocationSceneChanged;DeferSave;TickSatchelOverflow;TickPeriodicSave;SaveNow;FlushSaves;Secure;Delve;OnConcluded;IsVictory;TrackRun;CarryPendingResultIntoRecovery;ReadLimboDepth;HeroKeyOf;Emit;SendTrade;TradeUnavailable;SendLedgerProbe;SendPreparedTrade;SendDurableTrade;SendDueTradeQueries;RestoreSalvageTrade;OnTradeResult;TradeFailText;SalvageUnsecured;SalvageUnsecuredBulk;CanBulkSalvageUnsecured;SalvageScale;SalvageDust" />
+    <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/ClientSession.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)NativePersistence.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="ClientSession" Methods="ViewRevision;MarkDirty;MarkAllocationDirty;SavePendingAllocation;OnAllocationSceneChanged;DeferSave;TickSatchelOverflow;TickPeriodicSave;SaveNow;FlushSaves;Secure;Delve;OnConcluded;IsVictory;TrackRun;CarryPendingResultIntoRecovery;ReadLimboDepth;HeroKeyOf;Emit;SendTrade;TradeUnavailable;SendLedgerProbe;SendPreparedTrade;SendDurableTrade;SendDueTradeQueries;RestoreSalvageTrade;OnTradeResult;TradeFailText;SalvageUnsecured;SalvageUnsecuredBulk;CanBulkSalvageUnsecured;SalvageScale;SalvageDust" />
     <ItemGroup>
       <Compile Include="$(IntermediateOutputPath)NativePersistence.g.cs" />
     </ItemGroup>
@@ -124,7 +124,7 @@
   </Target>
 
   <Target Name="CompileRelicRowCacheUi" BeforeTargets="CoreCompile">
-    <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/DreamforgeUi.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)RelicRowCacheUi.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="DreamforgeUi" Methods="CacheStamp;SortedCached;RowTexts" />
+    <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/DreamforgeUi.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)RelicRowCacheUi.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="DreamforgeUi" Methods="EnsureStashCache;SlotTabLabel;CacheStamp;SortedCached;RowTexts" Fields="_slotCounts;_slotTabLabels;_stashCacheProfile;_stashCacheRevision;_stashCacheViewRevision;_stashCacheCount;_stashCacheJapanese" />
     <ItemGroup>
       <Compile Include="$(IntermediateOutputPath)RelicRowCacheUi.g.cs" />
     </ItemGroup>

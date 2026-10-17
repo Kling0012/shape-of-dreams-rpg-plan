@@ -1569,11 +1569,10 @@ namespace SodRpg.Mod
             GUILayout.EndHorizontal();
         }
 
-        private static string SlotTabLabel(Profile p, Slot slot)
+        private string SlotTabLabel(Profile p, Slot slot)
         {
-            int n = 0;
-            foreach (var r in p.Stash) if (r.Slot == slot) n++;
-            return n > 0 ? $"{Content.SlotName(slot)} <color=#bcbcd2>{n}</color>" : Content.SlotName(slot).ToString();
+            EnsureStashCache(p);
+            return _slotTabLabels[(int)slot];
         }
 
         private void RelicList(IEnumerable<Relic> relics, string hero, float height)
@@ -1663,6 +1662,12 @@ namespace SodRpg.Mod
         private readonly Dictionary<float, List<Relic>> _sortedCache = new Dictionary<float, List<Relic>>();
         private readonly Dictionary<float, string> _sortedKey = new Dictionary<float, string>();
         private float _sortedUntil;
+        private readonly int[] _slotCounts = new int[6];
+        private readonly string[] _slotTabLabels = new string[6];
+        private Profile _stashCacheProfile;
+        private long _stashCacheRevision, _stashCacheViewRevision;
+        private int _stashCacheCount;
+        private bool _stashCacheJapanese;
         private readonly List<Relic> _satchelTop = new List<Relic>();
         private float _satchelTopUntil;
         private int _satchelTopCount = -1;
@@ -1671,6 +1676,38 @@ namespace SodRpg.Mod
         private float _transmuteUntil;
 
         private readonly List<int> _fusionStashLevels = new List<int>();
+
+        // タブと一覧で同じ世代を使う。保存前の操作は ViewRevision、取引等の保存は Revision で検出する。
+        private void EnsureStashCache(Profile p)
+        {
+            float now = Time.unscaledTime;
+            if (_stashCacheProfile == p && _stashCacheRevision == p.Revision
+                && _stashCacheViewRevision == _s.ViewRevision && _stashCacheCount == p.Stash.Count
+                && _stashCacheJapanese == Loc.Japanese && now < _sortedUntil) return;
+            if (_stashCacheProfile != p || _stashCacheRevision != p.Revision
+                || _stashCacheViewRevision != _s.ViewRevision || _stashCacheJapanese != Loc.Japanese)
+                _rowCacheKey.Clear();
+            _stashCacheProfile = p;
+            _stashCacheRevision = p.Revision;
+            _stashCacheViewRevision = _s.ViewRevision;
+            _stashCacheCount = p.Stash.Count;
+            _stashCacheJapanese = Loc.Japanese;
+            _sortedUntil = now + 0.3f;
+            _sortedKey.Clear();
+            Array.Clear(_slotCounts, 0, _slotCounts.Length);
+            foreach (var relic in p.Stash)
+            {
+                int slot = (int)relic.Slot;
+                if (slot >= 0 && slot < _slotCounts.Length) _slotCounts[slot]++;
+            }
+            foreach (var slot in Content.SlotOrder)
+            {
+                int n = _slotCounts[(int)slot];
+                _slotTabLabels[(int)slot] = n > 0
+                    ? $"{Content.SlotName(slot)} <color=#bcbcd2>{n}</color>"
+                    : Content.SlotName(slot).ToString();
+            }
+        }
 
         private string CacheStamp()
         {
@@ -1696,16 +1733,11 @@ namespace SodRpg.Mod
             return p.Stash.Count + ":" + state + ":" + _slot + ":" + _forgeAllSlots + ":" + HeroKey + ":" + Loc.Japanese + ":" + _relicSearchFolded;
         }
 
-        /// <summary>一覧（高さで区別）の並べ替えを使い回す。中身・遺物の状態・枠が変わるか、0.3秒たったら作り直す。素材だけの増減は順序に影響しない。</summary>
+        /// <summary>一覧（高さで区別）の並べ替えを使い回す。変更通知・保存・言語・遺物の状態・枠が変わるか、0.3秒たったら作り直す。</summary>
         private List<Relic> SortedCached(IEnumerable<Relic> relics, float id)
         {
-            float now = Time.unscaledTime;
+            EnsureStashCache(_s.Profile);
             string key = CacheStamp();
-            if (now >= _sortedUntil)
-            {
-                _sortedUntil = now + 0.3f;
-                _sortedKey.Clear();
-            }
             if (_sortedKey.TryGetValue(id, out var k) && k == key && _sortedCache.TryGetValue(id, out var cached)) return cached;
             if (!_sortedCache.TryGetValue(id, out var list)) _sortedCache[id] = list = new List<Relic>();
             list.Clear();
