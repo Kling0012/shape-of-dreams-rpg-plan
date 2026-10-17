@@ -59,7 +59,7 @@ namespace SodRpg.Mod
             internal DataProcessor<HealData, Actor, Entity> ShieldReceived;
             internal DataProcessor<HealData, Actor, Entity> HealReceived;
             internal readonly Dictionary<int, float> Overkill = new Dictionary<int, float>();
-            internal readonly List<Action> Pending = new List<Action>();
+            internal readonly PowerCommandQueue Pending = new PowerCommandQueue();
         }
 
         private int _powerSupportDepth;
@@ -206,40 +206,10 @@ namespace SodRpg.Mod
             float amount, bool magic = false, int maxTargets = int.MaxValue, Entity except = null, bool pure = false)
         {
             if (amount <= 0f) return;
-            rt.NewPowers.Pending.Add(() =>
+            rt.NewPowers.Pending.Add(new PowerCommand
             {
-                EnterGenerated(rt.Hero);
-                try
-                {
-                    if (radius > 0f)
-                    {
-                        if (!pure) DamageAround(rt.Hero, center, radius, amount, except, maxTargets, magic, gimmick: true);
-                        else
-                        {
-                            ListReturnHandle<Entity> handle;
-                            var found = DewPhysics.OverlapCircleAllEntities(out handle, center, radius, EnemyFilter, rt.Hero);
-                            try
-                            {
-                                int count = 0;
-                                foreach (var enemy in found)
-                                {
-                                    if (enemy == except || enemy == null || !enemy.isActive || enemy.currentHealth <= 0f) continue;
-                                    if (count++ >= maxTargets) break;
-                                    rt.Hero.PureDamage(amount, 0f).SetAmountModifiedBy(typeof(GimmickRuntime)).Dispatch(enemy);
-                                }
-                            }
-                            finally { handle.Return(); }
-                        }
-                    }
-                    else if (victim != null && victim.isActive && victim.currentHealth > 0f
-                        && victim.GetRelation(rt.Hero) == EntityRelation.Enemy)
-                    {
-                        var damage = pure ? rt.Hero.PureDamage(amount, 0f)
-                            : magic ? rt.Hero.MagicDamage(amount, 0f) : rt.Hero.PhysicalDamage(amount, 0f);
-                        damage.SetAmountModifiedBy(typeof(GimmickRuntime)).Dispatch(victim);
-                    }
-                }
-                finally { ExitGenerated(rt.Hero); }
+                Victim = victim, Center = center, Radius = radius, Amount = amount,
+                Magic = magic, MaxTargets = maxTargets, Except = except, Pure = pure
             });
         }
 
@@ -250,7 +220,7 @@ namespace SodRpg.Mod
             int count = pending.Count;
             for (int i = 0; i < count; i++)
             {
-                try { pending[i](); }
+                try { DispatchPowerCommand(rt, pending[i]); }
                 catch (Exception ex) { Log.Error("Host: new power dispatch " + ex); }
             }
             pending.RemoveRange(0, count);
@@ -524,7 +494,7 @@ namespace SodRpg.Mod
             if (st.darkStack >= 2 && p.Build.Get(Power.UmbralHeritage) > 0)
             {
                 Vector3 center = victim.position;
-                rt.NewPowers.Pending.Add(() => SpreadUmbral(rt, victim, center));
+                rt.NewPowers.Pending.Add(new PowerCommand { Umbral = true, Victim = victim, Center = center });
             }
         }
 
