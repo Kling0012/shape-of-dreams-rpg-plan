@@ -10,6 +10,32 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v3.2.14 — Infinity boss-clear fix, co-op training ownership fix, and more（2026-10-17）
+
+この版は、Infinity の純白ゾーンでボスを倒しても先へ進めなくなることがある問題を直す更新です。あわせて、協力プレイで遠征を続きから始めたときや再接続したときに鍛錬の成果が別の人のものと取り違えられる問題も直しました。光の精霊・プリムス・ポラリスの技の待ち時間が宝石や記憶の付け替えで消える問題、溢れる命の障壁が依頼の回数に数えられない問題、狩猟団と払暁のセット装備の英語名が固有品と区別できなかった問題なども直しています。 / This update fixes defeating the boss in Infinity's pure white zone sometimes failing to let you move on. It also fixes training progress getting mixed up between players after continuing a run or reconnecting in co-op. Other fixes include the cooldowns of Light Spirit, Primus and Polaris being lost when swapping gems or memories, 溢れる命's shield not counting toward quests, and the English names of Hunting Party and Dawnbreak set gear being indistinguishable from unique items.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- Infinity の純白ゾーンで、準備の門からボスの部屋に入ってすぐにボスを倒すと、撃破が数えられずにボス戦のまま先へ進めなくなることがある問題を直しました。そのような場合でも撃破が数えられ、魂の回収から選択画面まで進めるようになりました。 / Fixed defeating the boss right after entering from the preparation gate in Infinity's pure white zone sometimes not counting, which left you stuck in the boss fight. The kill now counts in that case too, and you can go on through collecting the soul to the choice screen.
+- Infinity で保存の完了が正しく確かめられず、最大30秒待たされることがあった問題を直しました。 / Fixed Infinity sometimes failing to confirm that a save had finished, which could leave you waiting for up to 30 seconds.
+- Infinity で潜行を選んで次の区間に入ったあとも、ゲストがホストへ不要な通信を毎秒送り続けていた問題を直しました。通信を取りこぼしても、ホストはこれまでどおり先へ進めます。あわせて、個人選択の処理が1フレームに2回行われていた無駄をなくしました。選択の結果は変わりません。 / Fixed guests in Infinity sending unnecessary messages to the host every second after a dive had been applied and the next section had started. The host can still move on even if a message is lost. Also removed wasted work where personal choices were processed twice per frame. The results of choices are unchanged.
+- 協力プレイで遠征を続きから始めたときや再接続したときに、遠征中の鍛錬の成果が見つからなくなることや、別の参加者のものと取り違えられることがある問題を直しました。鍛錬の成果は、プレイヤーごとに正しく引き継がれるようになりました。ただし、この版より前に保存した遠征を続きから始めると、鍛錬は0からやり直しになります。 / Fixed training progress during a run sometimes going missing or getting mixed up with another player's after continuing a run or reconnecting in co-op. Training progress now carries over correctly for each player. Note that if you continue a run saved before this version, training starts again from 0.
+- 光の精霊・プリムス・ポラリスの装備で、同じ部屋のなかで宝石や記憶を付け替えると技の待ち時間が消えていた問題を直しました。付け替えたあとも、待ち時間はそのまま続きます。ポラリスのモード・紋印・コンボの進み具合は、これまでどおり引き継がれません。 / Fixed the cooldowns of Light Spirit, Primus and Polaris gear skills being lost when you swapped gems or memories in the same room. Cooldowns now keep running after a swap. As before, Polaris's mode, marks and combo progress do not carry over.
+- 溢れる命で自分に付けた障壁が、「自分か味方に障壁をN回付ける」依頼の回数に数えられていなかった問題を直しました。 / Fixed shields that 溢れる命 gives to yourself not counting toward the "give shields to yourself or allies N times" quest.
+- 狩猟団と払暁のセットの武器が、英語表示では固有品の「Huntmaster's Bow」「Daybreak Scepter」と区別できなかった問題を直しました。セットの武器の英語名は「Hunting Party Bow」「Dawnbreak Scepter」になります。英語表示ではセット内の名前もそろっていなかったため、狩猟団の6部位は「Hunting Party」で始まる名前に、払暁の6部位は「Dawnbreak」で始まる名前にそろえました。セット名も「Hunting Party Kit」「Dawnbreak Vow」にしています。日本語名と装備の効果は変わりません。 / Fixed the Hunting Party and Dawnbreak set weapons being indistinguishable in English from the unique items "Huntmaster's Bow" and "Daybreak Scepter". The set weapons are now named "Hunting Party Bow" and "Dawnbreak Scepter". The English names within each set were also inconsistent, so all six Hunting Party pieces now use "Hunting Party", all six Dawnbreak pieces use "Dawnbreak", and the sets are named "Hunting Party Kit" and "Dawnbreak Vow". Japanese names and gear effects are unchanged.
+- 装備タブと鍛冶タブでは、画面を描くたびにスロットごとの個数を数え直し、遺物アイコンや枠の色を読み込み直していました。これを毎回行わないようにして、処理を減らしました。 / Reduced the work the Gear and Forge tabs did every time they were drawn. Item counts per slot, relic icons and frame colors are no longer recomputed each time.
+- 処理を減らしたあとも、表示はすぐに切り替わります。遺物を強化して固有効果が増えたときは、記録タブの図鑑の要約と「固有効果」の発見数がすぐに増えます。断ち切り済みの遺物を選んだときは、装備比較の「＋」にその固有効果が出ます。遠征中に言語を切り替えたときは、敵の頭上の悪夢・変異の名前と、ロビーの旅人選びの名前も切り替わります。装備タブを開いたまま装着や星の割り振りを変えたときも、強さの表示にすぐ反映されます。 / Displays still update right away after this change. When upgrading a relic adds a unique effect, the codex summary and the "Unique effects" discovery count in the Records tab go up right away. When you select a severed relic, its unique effect appears in the "+" of the gear comparison. Switching language during a run also switches nightmare and mutation names above enemies and traveler names in the lobby selection. Changing equipped gear or star allocation with the Gear tab open updates the power display right away.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
 ## v3.2.13 — Fix unkillable co-op elites, enemy owner flip-flopping, and training bonuses on mod heals and shields（2026-10-17）
 
 この版は、協力プレイでエリートの自分の分担が0%になったあと、わずかにHPが残って倒せなくなる問題を直す更新です。あわせて、全員が離れた敵の担当が入れ替わり続ける問題、鍛錬で得た回復強化・シールド強化が一部の効果に反映されていなかった問題、禁忌化のあと図鑑が更新されない問題を直しました。空殻の星図の前提の星の名前、移動の記憶に関わる星の判定、獲得効果の一覧の能力値の表示、増援の戦利品と道標の組み合わせも直し、味方も回復する記憶の仕掛けの説明には、離れると回復量が減ることを書き加えました。 / This update fixes elites in co-op becoming impossible to kill when a sliver of HP was left after your share hit 0%. It also fixes enemies far from everyone switching owners over and over, run training bonuses to healing and shields not applying to some effects, and the codex not updating after making a relic forbidden. It also fixes the prerequisite star names on 空殻's star map, how stars tied to movement memories are checked, stat values in the earned effects list, and how reinforcement loot works with waypoints, and adds the distance drop-off of healing to the descriptions of memory effects that also heal allies.
