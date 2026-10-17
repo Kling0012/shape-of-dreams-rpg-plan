@@ -1,5 +1,5 @@
-[b]In Infinity co-op, each player's own waypoint now applies to the enemies assigned to them, instead of the host's waypoint applying to everyone's enemies.[/b]
-[b]インフィニティの協力プレイで、ホストの道標が全員の敵にかかるのではなく、各プレイヤーの道標がそれぞれ割り当てられた敵にかかるように直しました。[/b]
+[b]Memories with stocks can now be used back to back while charges remain, and the wiki's keystone costs, counts, and oversized pages are fixed.[/b]
+[b]ストックを持つ記憶を、回数が残っている間は続けて使えるようにし、Wiki の刻印の費用・掲載数・容量オーバーのページも直しました。[/b]
 
 [h1]Dreamforge RPG[/h1]
 Turns every run into part of a long RPG journey: relics you keep, a risky "secure or delve" choice at every zone, a star map per Traveler, a forge, and long-term goals. Co-op ready.
