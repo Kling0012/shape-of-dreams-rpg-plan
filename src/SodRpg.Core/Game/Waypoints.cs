@@ -250,11 +250,15 @@ namespace SodRpg.Core.Game
                 return;
             }
             var t = Sum(waypoint);
+            // Thin the source loot before room limits, slot cycles, copies or conversions.
+            // Later rewards derive only from retained loot, except First Claim's room guarantee.
+            PressureCountRewards.ScaleLoot(rng, reward, rewardScale);
             if (run.WaypointRoom != roomIndex)
             {
                 run.WaypointRoom = roomIndex;
                 run.WaypointRelicsInRoom = run.WaypointLootRooms.Contains(roomIndex) ? 1 : 0;
             }
+            // The first kill guarantees a Rare floor even if an extra's rolled relic was thinned.
             bool firstClaim = t.FirstKillRelic && run.WaypointRelicsInRoom == 0;
             if (firstClaim && reward.Relics.Count == 0)
                 reward.Relics.Add(Loot.RollRelic(rng, Rarity.Rare, itemLevel, null, focus, p.Stash, run.UnsecuredForLoot(), p.Codex));
@@ -308,12 +312,6 @@ namespace SodRpg.Core.Game
                 starXp = DreamDepth.ScaleReward(reward.Shards, WaypointBalance.StarXpPerShard);
                 reward.Shards = 0;
             }
-            PressureCountRewards.ScaleLoot(rng, reward, rewardScale);
-            // First Claim is a fixed room guarantee, including when an extra dies first.
-            // Restore only its Rare floor; randomly rolled Epic/Legendary loot still uses
-            // the extra's thinning.
-            if (firstClaim && t.MaxRelicsPerRoom > 0 && reward.Relics.Count == 0)
-                reward.Relics.Add(Loot.RollRelic(rng, Rarity.Rare, itemLevel, null, focus, p.Stash, run.UnsecuredForLoot(), p.Codex));
             if (!t.DelayDropsUntilBoss) return;
             if (!run.WaypointHoardReleased)
             {
