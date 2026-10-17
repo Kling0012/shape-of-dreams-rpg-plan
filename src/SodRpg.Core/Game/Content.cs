@@ -502,6 +502,8 @@ namespace SodRpg.Core.Game
         public const int EnhanceMilestoneThird = ForgeBalance.MilestoneThird;
         public const int EnhanceMilestoneFourth = ForgeBalance.MilestoneFourth;
         public const int EnhanceMilestoneFifth = ForgeBalance.MilestoneFifth;
+        /// <summary>強化の節目の昇順の一覧（forge の milestones）。最後の節目だけ効果が違い、固有効果の値を伸ばす。</summary>
+        public static readonly IReadOnlyList<int> EnhanceMilestones = ForgeBalance.Milestones;
         /// <summary>保存される強化節目の序数の数（調整値ではない）。</summary>
         public const int MaxEnhanceMilestones = 5;
         /// <summary>最後の強化節目で固有効果に掛ける倍率（%）。</summary>

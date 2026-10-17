@@ -255,10 +255,13 @@ namespace SodRpg.Core.Game
                         lines.Add(Loc.T("", "Trigger: " + source + EventText(spec.Trigger) + "."));
                     break;
                 case AuthoredMechanismKind.PressureDividend:
-                    lines.Add(Loc.T(source + "で、夢の圧により最大HPが25%以上増えた敵を倒したとき、" + Percent(spec.Dividend.ProbabilityUnits)
-                            + "の確率（上限40%）で未確保の欠片を1個獲得する。同じ敵から獲得できるのは1人につき最大1個まで。",
-                        "Unsecured shards +1 (chance " + Percent(spec.Dividend.ProbabilityUnits) + ", capped at 40%)."));
-                    lines.Add(Loc.T("", source + " must kill an enemy whose maximum HP was increased by at least 25% by dream pressure. You can receive at most 1 shard from the same enemy."));
+                    // しきい値と上限は定数から組み立てる（PressureDividendChannel.MinimumAppliedHpMultiplier・MaximumProbabilityUnits）。
+                    int dividendHpGain = (int)Math.Round((PressureDividendChannel.MinimumAppliedHpMultiplier - 1.0) * 100.0, MidpointRounding.AwayFromZero);
+                    int dividendCap = PressureDividendChannel.MaximumProbabilityUnits / 100;
+                    lines.Add(Loc.T(source + "で、夢の圧により最大HPが" + dividendHpGain + "%以上増えた敵を倒したとき、" + Percent(spec.Dividend.ProbabilityUnits)
+                            + "の確率（上限" + dividendCap + "%）で未確保の欠片を1個獲得する。同じ敵から獲得できるのは1人につき最大1個まで。",
+                        "Unsecured shards +1 (chance " + Percent(spec.Dividend.ProbabilityUnits) + ", capped at " + dividendCap + "%)."));
+                    lines.Add(Loc.T("", source + " must kill an enemy whose maximum HP was increased by at least " + dividendHpGain + "% by dream pressure. You can receive at most 1 shard from the same enemy."));
                     if (spec.Dividend.RequiredMemories.Count > 0)
                         lines.Add(RequiredEquipText(spec.Dividend.RequiredMemories));
                     break;

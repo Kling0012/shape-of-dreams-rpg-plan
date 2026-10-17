@@ -54,8 +54,8 @@ namespace SodRpg.Mod
                 _ownershipLegend = legend;
             }
             GUILayout.Label(_ownershipLegend, _st.Label);
-            GUILayout.Label(Loc.T("◆ 自分の担当　◇ 他の人の担当　印なし：共有（保護なし）",
-                "◆ Your enemy   ◇ Another player's enemy   No mark: shared (unprotected)"), _st.Small);
+            GUILayout.Label(Loc.T("◆ 自分の担当　◇ 他の人の担当　印なし：保護なし（担当外でも削れる）",
+                "◆ Your enemy   ◇ Another player's enemy   No mark: unprotected (damageable by anyone)"), _st.Small);
         }
 
         private static string OwnershipName(DewPlayer player)
@@ -162,6 +162,8 @@ namespace SodRpg.Mod
                     "Assign enemies to each traveler and scale them to their progress. Changes apply and save immediately.")
                 : Loc.T("変更はホストのみ。ホストの設定が使われます。",
                     "Only the host can change this. The host's setting applies."), _st.Small);
+            GUILayout.Label(Loc.T("担当制を切っても、人数による敵の強化の緩和は常に働きます。",
+                "Even with ownership off, player-count enemy scaling stays softened."), _st.Small);
             GUI.enabled = previous && editable;
             bool dynamic = GUILayout.Toggle(cfg.dynamicDifficulty, Loc.T("殲滅速度に合わせた難易度", "Difficulty follows clear speed"));
             bool solo = GUILayout.Toggle(cfg.dynamicDifficultySolo, Loc.T("ソロでも使う", "Also use in solo"));
@@ -174,6 +176,13 @@ namespace SodRpg.Mod
             }
             GUILayout.Label(Loc.T("戦った部屋のダメージから、次の部屋の敵を調整します。強さの差を半分だけ埋めます。",
                 "Use combat damage to adjust enemies in the next room, closing half the strength gap."), _st.Small);
+            string dynamicMin = CoopBalance.DynamicDifficulty.MinFactor.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
+            string dynamicCoopMax = CoopBalance.Difficulty.DynamicMaximumFactor.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
+            string dynamicSoloMax = CoopBalance.DynamicDifficulty.MaxFactor.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
+            GUILayout.Label(Loc.T($"係数は{dynamicMin}〜（協力は{dynamicCoopMax}、ソロは{dynamicSoloMax}が上限）。硬くなった分だけ報酬が増え、易しくなっても報酬は減りません。",
+                $"Factor ranges from {dynamicMin} (capped at {dynamicCoopMax} in co-op, {dynamicSoloMax} in solo). Tougher fights add rewards; easier ones never cut them."), _st.Small);
+            GUILayout.Label(Loc.T("協力プレイでは、担当制と一緒に有効になります。",
+                "In co-op it runs together with enemy ownership."), _st.Small);
             if (!_ownershipLegendFailed)
             {
                 try { DrawOwnershipLegend(); }
@@ -198,6 +207,7 @@ namespace SodRpg.Mod
                     Log.Warn("Dynamic difficulty status disabled; settings continue: " + ex.Message);
                 }
             }
+            GUILayout.Label(KillAssistHelp(), _st.Small);
         }
     }
 }

@@ -23,8 +23,8 @@ Turns every run into part of a long RPG journey: relics you keep, a risky "secur
 [list]
 [*] New loot starts unsecured. Each new zone is a secure point: Secure to bank everything, or Delve for more and better drops, while you take 6% more damage per delve level. Delving deeper also raises the shard bonus when you finally secure.
 [*] 拾った物は、まだ持ち帰っていない状態です。新しいゾーンに着くと確保地点が開き、「確保する」で保管庫に入れるか、「深く潜る」で遺物を多く・良くするかを選びます。潜行が1段深くなるごとに、受けるダメージが6%増えます。深く潜ってから確保すると、欠片のボーナスも増えます。
-[*] 25 dream events may appear at secure points (merchant, forge shrine, twin mirror, cauldron, gate of courage…), and 20 nightmare pacts trade a game curse for bigger rewards.
-[*] 確保地点には25種類の「夢の出来事」（夢の商人・鍛冶の祠・双子の鏡・錬金の釜・勇気の門など）が現れることがあります。20種類の「悪夢の契約」では、本体の呪いと引き換えに見返りを得られます。
+[*] 25 dream events may appear at secure points (merchant, forge shrine, twin mirror, cauldron, gate of courage…), and 40 nightmare pacts trade a game curse for bigger rewards.
+[*] 確保地点には25種類の「夢の出来事」（夢の商人・鍛冶の祠・双子の鏡・錬金の釜・勇気の門など）が現れることがあります。40種類の「悪夢の契約」では、本体の呪いと引き換えに見返りを得られます。
 [*] Wiped? Unsecured relics go to Lost & Found. Clear 3 combat rooms next run to recover the best one.
 [*] 全滅すると、まだ持ち帰っていない遺物は遺失物になります。次の遠征で戦闘部屋を3つ突破すると、一番良い物を1つ取り戻せます。
 [/list]
@@ -47,8 +47,8 @@ Turns every run into part of a long RPG journey: relics you keep, a risky "secur
 [*] 星の経験とポイントは旅人ごとに独立し、最大300ポイント＋図鑑のボーナスを得ます。記憶ごとのルート（各7本、Bismuthは6本）と夢の輪8星、計506星を追加。ルートは前の星から順に開き、連携の星は対応する記憶を装着中だけ有効です。振り直しは無料です。夢のレベルは工房や夢の圧に使い、星ポイントには使いません。
 [*] Forge: enhance to +5 (milestones at +3 and +5 add an affix or a power), retune an affix choosing from 3 options, salvage, transmute (pick the result slot) and craft. The workshop unlocks convenience upgrades.
 [*] 鍛冶では強化（+5まで。+3と+5の節目で特性や固有効果が増えます）・再調律（3つの候補から選べます）・分解・合成（結果の枠を選べます）・製作ができます。工房では、鞄や保管庫の拡張などの便利な強化を解放できます。
-[*] 22 kinds of bounties each run, 30 daily dreams, 45 feats with rewards, and traveler mastery.
-[*] 遠征ごとの依頼（22種類）、日替わりの「今日の夢」（30種類）、報酬つきの偉業（45個）、旅人の熟練度があります。
+[*] 44 kinds of bounties each run, 60 daily dreams, 90 feats with rewards, and traveler mastery.
+[*] 遠征ごとの依頼（44種類）、日替わりの「今日の夢」（60種類）、報酬つきの偉業（90個）、旅人の熟練度があります。
 [/list]
 
 [h2]Performance / 軽さ[/h2]

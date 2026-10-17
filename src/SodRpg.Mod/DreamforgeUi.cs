@@ -1405,6 +1405,20 @@ namespace SodRpg.Mod
             return _howToPlayText;
         }
 
+        /// <summary>強化の節目のうち特性や固有効果が増えるもの（最後の節目を除く）を「+3・+5・+10・+15」の形に組み立てる。</summary>
+        private static string EnhanceMilestoneListJa() =>
+            "+" + string.Join("・+", Content.EnhanceMilestones.Take(Content.EnhanceMilestones.Count - 1)
+                .Select(m => m.ToString(System.Globalization.CultureInfo.InvariantCulture)));
+
+        /// <summary>同じ節目を英語の列挙「+3, +5, +10 and +15」に組み立てる。</summary>
+        private static string EnhanceMilestoneListEn()
+        {
+            var milestones = Content.EnhanceMilestones.Take(Content.EnhanceMilestones.Count - 1)
+                .Select(m => m.ToString(System.Globalization.CultureInfo.InvariantCulture)).ToList();
+            return milestones.Count == 1 ? "+" + milestones[0]
+                : "+" + string.Join(", +", milestones.Take(milestones.Count - 1)) + " and +" + milestones[milestones.Count - 1];
+        }
+
         private static readonly Txt HowToPlay = new Txt(
             "<b>このMODの目的</b>\n" +
             "本体の遠征に「持ち帰れる装備（遺物）」が加わります。遠征のたびに少しずつ装備を集めて鍛え、次の遠征をもっと深く、もっと楽に進めるようにしていきます。\n\n" +
@@ -1417,7 +1431,7 @@ namespace SodRpg.Mod
             "確保すれば安全ですが、深く潜ると遺物が多く、良い物が出やすくなります。そのぶん敵は強くなり、受けるダメージも増えます。全滅すると、まだ持ち帰っていない物は遺失物になり、次の遠征で戦闘部屋を" + HowToPlayRooms + "つ突破すると一番良い物を1つだけ取り戻せます。手応えを見ながら、どこで確保するかを決めるのがこのMODの駆け引きです。\n\n" +
             "<b>装備の育て方</b>\n" +
             "・装備：旅人ごとに6つの枠（主装備・頭・防具・手・足・装飾品）に装着します。\n" +
-            $"・鍛冶：欠片で強化し（+{Content.EnhanceMilestoneFirst}と+{Content.EnhanceMilestoneSecond}で特性や固有効果が増えます）、調律石で特性を{Content.RetuneChoices}つの候補から選び直します。エピック以上は強化・再調律・限界突破・特性の洗い直しの素材費用が基本の{Content.ForgeMaterialCostMultiplier(Rarity.Epic)}倍です。いらない物は分解して欠片に戻せます。\n" +
+            $"・鍛冶：欠片で強化し（{EnhanceMilestoneListJa()}の節目で特性や固有効果が増え、+{Content.EnhanceMilestones[Content.EnhanceMilestones.Count - 1]}で固有効果1つの値が{Content.LimitBreakPowerPct / 100m:0.##}倍になります）、調律石で特性を{Content.RetuneChoices}つの候補から選び直します。エピック以上は強化・再調律・限界突破・特性の洗い直しの素材費用が基本の{Content.ForgeMaterialCostMultiplier(Rarity.Epic)}倍です。いらない物は分解して欠片に戻せます。\n" +
             $"・覚醒：固有品は、装着した旅人で敵を倒すと覚醒の力が溜まり、{Content.AwakenThresholdFor(1)}・{Content.AwakenThresholdFor(2)}・{Content.AwakenThresholdFor(3)}で覚醒Ⅰ・Ⅱ・Ⅲになります（固有効果は{Content.AwakenPowerPctAt(1) / 100m:0.##}・{Content.AwakenPowerPctAt(2) / 100m:0.##}・{Content.AwakenPowerPctAt(3) / 100m:0.##}倍、特性は{Content.AwakenAffixPctAt(1) / 100m:0.##}・{Content.AwakenAffixPctAt(2) / 100m:0.##}・{Content.AwakenAffixPctAt(3) / 100m:0.##}倍）。気に入った1本を使い込みましょう。\n" +
             "・星図：旅人ごとの星の経験で最大" + StarProgression.MaxPoints + "ポイントを得ます。図鑑・テスト用の追加分は別枠です。始まりの星から線でつながる星へ伸ばし、到達刻印は星のレベルに応じて最大3つまで選べます。夢のレベルは星のポイントではなく、工房や夢の圧に関わります。夢の圧が高まると敵が強くなり、各ウェーブの戦闘中に敵の数も増えます。追加分の報酬は増加幅に応じて調整します。ボスの数は増えません。\n" +
             "・工房：余った素材で、鞄や保管庫の拡張など、ずっと続く便利な強化を解放します。\n" +
@@ -1433,7 +1447,7 @@ namespace SodRpg.Mod
             "Securing is safe. Delving gives more and better relics, but enemies get tougher and you take more damage. If your party falls, unsecured loot becomes Lost & Found; clear " + HowToPlayRooms + " combat rooms next expedition to recover the best piece. Deciding when to secure is the heart of this mod.\n\n" +
             "<b>Growing your gear</b>\n" +
             "- Gear: each Traveler has six slots: weapon, head, armor, hands, feet and charm.\n" +
-            $"- Forge: enhance with shards (+{Content.EnhanceMilestoneFirst} and +{Content.EnhanceMilestoneSecond} add an affix or a power), reroll an affix with tuning stones and pick from {Content.RetuneChoices} options. Epics and legendaries pay x{Content.ForgeMaterialCostMultiplier(Rarity.Epic)} the base materials for enhancement, retuning, limit breaks and affix rerolls. Salvage the rest into shards.\n" +
+            $"- Forge: enhance with shards ({EnhanceMilestoneListEn()} add an affix or a power; +{Content.EnhanceMilestones[Content.EnhanceMilestones.Count - 1]} grows one power's value {Content.LimitBreakPowerPct / 100m:0.##}x), reroll an affix with tuning stones and pick from {Content.RetuneChoices} options. Epics and legendaries pay x{Content.ForgeMaterialCostMultiplier(Rarity.Epic)} the base materials for enhancement, retuning, limit breaks and affix rerolls. Salvage the rest into shards.\n" +
             $"- Awakening: legendaries gather power as the Traveler wearing them defeats enemies; at {Content.AwakenThresholdFor(1)}, {Content.AwakenThresholdFor(2)} and {Content.AwakenThresholdFor(3)} they reach Awakening I, II and III (powers x{Content.AwakenPowerPctAt(1) / 100m:0.##}, x{Content.AwakenPowerPctAt(2) / 100m:0.##}, x{Content.AwakenPowerPctAt(3) / 100m:0.##}; affixes x{Content.AwakenAffixPctAt(1) / 100m:0.##}, x{Content.AwakenAffixPctAt(2) / 100m:0.##}, x{Content.AwakenAffixPctAt(3) / 100m:0.##}). Pick a favourite and keep using it.\n" +
             "- Star Map: each Traveler earns up to " + StarProgression.MaxPoints + " points from their own star XP, plus separate codex/test bonuses. Grow along connections from the starting star; choose up to three keystones as your star level rises. Dream Level affects workshop access and dream pressure, not star points. Higher pressure strengthens enemies and mixes additional enemies into each combat wave. Their rewards scale with added density; bosses are never added.\n" +
             "- Workshop: unlock permanent upgrades shared by all Travelers.\n" +
@@ -1512,17 +1526,24 @@ namespace SodRpg.Mod
                     + Nightmares.AffixDescription(affix) + "</color>", _st.Small);
         }
 
+        /// <summary>協力プレイの撃破アシストの共通説明（装備・星図・F6 のヘルプに1か所ずつ出す）。撃破時効果は倒れる5秒前までに自分が攻撃した敵でも発動するが、遠征の鍛錬はとどめだけ。</summary>
+        private static string KillAssistHelp() => Loc.T(
+            "協力プレイでは、『敵を倒したとき』の効果は、倒れる5秒前までに自分が攻撃した敵が倒れたときも発動します（遠征の鍛錬の撃破数は、とどめを刺した人だけに入ります）。",
+            "In co-op, \"when you defeat an enemy\" effects also trigger when an enemy you attacked within the last 5 seconds is defeated by someone else; expedition training kill counts still go only to whoever landed the final blow.");
+
         /// <summary>各タブの先頭に出す「ここでできること」。</summary>
         private static string TabIntro(int tab)
         {
             switch (tab)
             {
                 case 0: return Loc.T("持ち帰った遺物を、旅人ごとに6つの枠（主装備・頭・防具・手・足・装飾品）へ装着します。遠征中は確保地点でだけ付け替えられます。",
-                    "Equip relics you brought home into each Traveler's six slots (weapon, head, armor, hands, feet, charm). During an expedition you can only swap at secure points.");
+                    "Equip relics you brought home into each Traveler's six slots (weapon, head, armor, hands, feet, charm). During an expedition you can only swap at secure points.")
+                    + " " + KillAssistHelp();
                 case 1: return Loc.T("欠片で強化、調律石で再調律。同じ名前・同じレア度の遺物を材料に融合すると能力値が上がります。不要な遺物は分解できます。",
                     "Enhance with shards or retune with tuning stones. Fuse a relic with one of the same name and rarity to raise its stats. Salvage unwanted relics.");
                 case 2: return Loc.T("旅人ごとの星の経験で、始まりの星からつながる星へ伸ばします。振り直しは無料です。夢のレベルと振った星は夢の圧にも関わり、敵が強くなるだけでなく各ウェーブの戦闘中に敵の数も増えます。追加分の報酬は増加幅に応じて調整します。ボスの数は増えません。",
-                    "Earn star XP per Traveler and grow along connections from the starting star. Respec is free. Dream Level and spent stars raise dream pressure: stronger enemies, with additions mixed into each combat wave. Their rewards scale with added density; bosses are never added.");
+                    "Earn star XP per Traveler and grow along connections from the starting star. Respec is free. Dream Level and spent stars raise dream pressure: stronger enemies, with additions mixed into each combat wave. Their rewards scale with added density; bosses are never added.")
+                    + " " + KillAssistHelp();
                 case 3: return Loc.T("余った欠片と調律石で、鞄や保管庫の拡張など、ずっと続く便利な強化を解放します。強さは上がりませんが、遠征がぐっと楽になります。",
                     "Spend spare shards and tuning stones on permanent conveniences such as a bigger satchel and stash. They don't make you stronger, but they make expeditions much easier.");
                 case 5: return Loc.T("同じセッションの相手と、未装着の保管庫・鞄の遺物、所持している欠片・調律石（鞄の所持分を含む）を交換します。双方が内容を確認した後、ホストが確定します。",
@@ -3583,6 +3604,8 @@ namespace SodRpg.Mod
             GUILayout.Label(Loc.T("図鑑", "Codex"), _st.Header);
             GUILayout.Label(UiStyles.Colored(_codex.Summary(p), "#c8c8e0"), _st.Small);
             if (GUILayout.Button(Loc.T("図鑑を開く（土台・固有品・セット・固有効果・銘品・組）", "Open the codex (bases, legendaries, sets, powers, named items, mini sets)"), _st.Button)) _codexOpen = true;
+            GUILayout.Label(Loc.T($"図鑑{Content.CodexPerPoint}項目ごとに星ポイント+1（現在+{p.CodexBonusPoints}、最大+{Content.MaxCodexBonus}）。",
+                $"Every {Content.CodexPerPoint} codex entries grant +1 star point (now +{p.CodexBonusPoints}, up to +{Content.MaxCodexBonus})."), _st.Small);
             GUILayout.Label(Loc.T(
                 "<color=#8a8aa0>見つけていない固有品・セット・固有効果・銘品・組は、見つけるまで名前も効果も伏せられています。</color>",
                 "<color=#8a8aa0>Unfound legendaries, sets, powers, named items and mini sets stay hidden until you find them.</color>"), _st.Small);
