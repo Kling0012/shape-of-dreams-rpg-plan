@@ -224,7 +224,7 @@ namespace SodRpg.Core.Game
         {
             long spent = 0;
             foreach (string keystone in hero.Keystones)
-                if (keystone != null) spent += Talent(keystone)?.KeystoneDefinition?.Cost ?? Content.KeystoneCost;
+                if (keystone != null) spent += Talent(keystone)?.KeystoneCost ?? Content.KeystoneCost;
             foreach (var rank in hero.Talents)
             {
                 var talent = Talent(rank.Key) ?? throw new InvalidOperationException(RuleMessages.UnknownStarId.ToString() + rank.Key);
@@ -388,12 +388,12 @@ namespace SodRpg.Core.Game
             }
             // Explicitly requested refunds count too, using the original definition's actual cost.
             if (change.Kind == AllocationChangeKind.Refund)
-                RecordRefund(refunds, candidate.Id, 1, candidate.IsKeystone ? candidate.KeystoneDefinition?.Cost ?? Content.KeystoneCost : candidate.RankCost);
+                RecordRefund(refunds, candidate.Id, 1, candidate.IsKeystone ? candidate.KeystoneCost : candidate.RankCost);
             if (change.Kind == AllocationChangeKind.Keystone)
                 foreach (string selected in original.Keystones)
                 {
                     if (selected == null || proposed.HasKeystone(selected) || refunds.ContainsKey(selected)) continue;
-                    RecordRefund(refunds, selected, 1, Talent(selected)?.KeystoneDefinition?.Cost ?? Content.KeystoneCost);
+                    RecordRefund(refunds, selected, 1, Talent(selected)?.KeystoneCost ?? Content.KeystoneCost);
                 }
             var ids = new List<string>(refunds.Keys);
             var refundRows = new List<AllocationRefund>(refunds.Values);
@@ -1128,7 +1128,9 @@ namespace SodRpg.Core.Game
                 foreach (var sourceSlot in VerifiedMechanismSlots.ForMemory(heroKey, entry.Memory))
                 {
                 var payload = AuthoredKeystoneComposer.GimmickPayload(entry.Def, entry.StarId);
+                // Match runtime dispatch: movement memories are movement events, not native-memory sources.
                 var transformed = AuthoredKeystoneComposer.TransformAllocationPayload(build, payload, entry.Memory,
+                    sourceKind: sourceSlot == MechanismMemorySlot.Movement ? KeystoneSourceKind.MovementEvent : KeystoneSourceKind.NativeMemory,
                     sourceSlot: sourceSlot, heroKey: heroKey);
                 var def = AuthoredKeystoneComposer.EffectiveGimmick(entry.Def, transformed);
                 if (def == null) continue;
@@ -1183,8 +1185,9 @@ namespace SodRpg.Core.Game
                 result.Add(channel);
             }
             // v1.32 B: a RunGrowth is worth (cap x per-stack effect x gain speed); a modifier is effective only while it raises one of them.
+            // Uncapped growth uses MaxCap only as a comparison weight so effect/speed modifiers still count as effective.
             foreach (var growth in build.RunGrowths)
-                result.Add(Scalar("growth:" + growth.StarId, (long)growth.Cap * (100 + growth.EffectPercent) * growth.GainMultiplier,
+                result.Add(Scalar("growth:" + growth.StarId, (long)(growth.Cap == 0 ? RunGrowthDef.MaxCap : growth.Cap) * (100 + growth.EffectPercent) * growth.GainMultiplier,
                     (long)RunGrowthDef.MaxCap * (100 + RunGrowthModifierDef.MaxEffectPercent) * 2, dependencies, "W:", "growth"));
             foreach (var entry in build.Mechanisms)
                 result.AddRange(MechanismChannels(entry, build, heroKey, capFingerprint));
@@ -1491,7 +1494,7 @@ namespace SodRpg.Core.Game
             if (talent == null) throw new InvalidOperationException(RuleMessages.UnknownStarId.ToString() + id);
             if (talent.IsKeystone) hero.RemoveKeystone(id);
             else SetRank(hero, id, hero.Talents[id] - ranks);
-            RecordRefund(refunds, id, ranks, checked(ranks * (talent.IsKeystone ? talent.KeystoneDefinition?.Cost ?? Content.KeystoneCost : talent.RankCost)));
+            RecordRefund(refunds, id, ranks, checked(ranks * (talent.IsKeystone ? talent.KeystoneCost : talent.RankCost)));
         }
 
         private static bool SameState(HeroState a, HeroState b)

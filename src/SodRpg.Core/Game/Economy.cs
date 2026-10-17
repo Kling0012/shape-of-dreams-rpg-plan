@@ -46,6 +46,22 @@ namespace SodRpg.Core.Game
 
         /// <summary>Unenhanced rate for optional overflow bonuses and persisted legacy overflow trades.</summary>
         public static int SatchelOverflowDust(Rarity rarity) => SalvageDust(rarity, 0);
+
+        /// <summary>
+        /// 遠征中に分解（手動・鞄あふれ）から得られるドリームダストの、世界ごとの上限。
+        /// dustCapBase + dustCapPerWorld × 世界の番号（0始まり）に SalvageScale を掛ける（量と同じ倍率で比率を保つ）。
+        /// 世界が分からない（負の）ときは最初の世界として扱う。あふれは飽和させる。
+        /// </summary>
+        public static long DustCap(int zoneIndex, int scale)
+        {
+            long cap = EconomyBalance.DustCapBase + EconomyBalance.DustCapPerWorld * (long)Math.Max(0, zoneIndex);
+            if (scale > 1)
+            {
+                if (cap > long.MaxValue / scale) return long.MaxValue;
+                cap *= scale;
+            }
+            return cap;
+        }
     }
 
     public enum TradeKind
@@ -388,9 +404,14 @@ namespace SodRpg.Core.Game
         private void EnsureRoom()
         {
             if (!CanBegin)
+            {
+                // CanBegin の2条件（ManualHeldCount < MaxHeld と HeldCount < MaxRestored）に対応する表示。
+                // 条件を追加・変更するときは、実際に当たった上限を示すこの分岐も一緒に更新する。
+                int limit = ManualHeldCount >= MaxHeld ? MaxHeld : MaxRestored;
                 throw new InvalidOperationException(Loc.T(
-                    $"未確定の取引が{MaxHeld}件に達しています。結果が確認できるまで、新しい取引はできません。",
-                    $"There are already {MaxHeld} unresolved trades. New trades are paused until their results are confirmed."));
+                    $"未確定の取引が{limit}件に達しています。結果が確認できるまで、新しい取引はできません。",
+                    $"There are already {limit} unresolved trades. New trades are paused until their results are confirmed."));
+            }
         }
 
         public PendingTrade Begin(TradeKind kind, int spendGold, int spendDust, int earnDust, string uid = null, double now = 0)

@@ -9,6 +9,8 @@
       <RoslynPath ParameterType="System.String" Required="true" />
       <ClassName ParameterType="System.String" Required="true" />
       <Methods ParameterType="System.String" Required="true" />
+      <Fields ParameterType="System.String" Required="false" />
+      <NestedTypes ParameterType="System.String" Required="false" />
     </ParameterGroup>
     <Task>
       <Using Namespace="System.Linq" />
@@ -32,22 +34,40 @@
         System.Func<object, string> sourceText = node => (string)node.GetType().GetMethod("ToFullString", System.Type.EmptyTypes).Invoke(node, null);
         var wanted = Methods.Split(';');
         var session = nodes.Single(n => n.GetType().Name == "ClassDeclarationSyntax" && identifier(n) == ClassName);
-        var members = ((System.Collections.IEnumerable)session.GetType().GetProperty("Members").GetValue(session)).Cast<object>();
+        var members = ((System.Collections.IEnumerable)session.GetType().GetProperty("Members").GetValue(session)).Cast<object>().ToArray();
         var methods = members.Where(m => (m.GetType().Name == "MethodDeclarationSyntax"
             || m.GetType().Name == "PropertyDeclarationSyntax") && wanted.Contains(identifier(m))).ToArray();
         if (methods.Length == 0 || wanted.Any(w => !methods.Any(m => identifier(m) == w))) throw new System.InvalidOperationException("Native persistence member contract changed; review the harness extraction.");
+        // Keep field types, grouped declarations and initializers exactly as authored in production.
+        var wantedFields = (Fields ?? "").Split(new[] { ';' }, System.StringSplitOptions.RemoveEmptyEntries);
+        System.Func<object, string[]> fieldNames = member => {
+          var declaration = member.GetType().GetProperty("Declaration").GetValue(member);
+          var variables = ((System.Collections.IEnumerable)declaration.GetType().GetProperty("Variables").GetValue(declaration)).Cast<object>();
+          return variables.Select(identifier).ToArray();
+        };
+        var fields = members.Where(m => m.GetType().Name == "FieldDeclarationSyntax"
+            && fieldNames(m).Any(wantedFields.Contains)).ToArray();
+        if (wantedFields.Any(w => !fields.Any(f => fieldNames(f).Contains(w))))
+          throw new System.InvalidOperationException("Native persistence field contract changed; review the harness extraction.");
+        var wantedTypes = (NestedTypes ?? "").Split(new[] { ';' }, System.StringSplitOptions.RemoveEmptyEntries);
+        var nestedTypes = members.Where(m => m.GetType().Name == "ClassDeclarationSyntax" && wantedTypes.Contains(identifier(m))).ToArray();
+        if (wantedTypes.Any(w => !nestedTypes.Any(t => identifier(t) == w)))
+          throw new System.InvalidOperationException("Native persistence nested type contract changed; review the harness extraction.");
+        // Expose only the first type declaration; nested private classes and member defaults stay unchanged.
+        var typeAccess = new System.Text.RegularExpressions.Regex(@"\bprivate(?=\s+(?:sealed\s+)?class\s+)");
+        System.Func<object, string> exposeType = type => typeAccess.Replace(sourceText(type), "internal", 1);
         var imports = ((System.Collections.IEnumerable)root.GetType().GetProperty("Usings").GetValue(root)).Cast<object>();
         var modifiers = session.GetType().GetProperty("Modifiers").GetValue(session).ToString();
         if (!modifiers.Split(' ').Contains("partial")) modifiers += " partial";
         var source = string.Concat(imports.Select(sourceText)) + "\nnamespace SodRpg.Mod { " + modifiers + " class " + ClassName + " {\n"
-            + string.Join("\n", methods.Select(sourceText)) + "\n} }\n";
+            + string.Join("\n", fields.Select(sourceText).Concat(nestedTypes.Select(exposeType)).Concat(methods.Select(sourceText))) + "\n} }\n";
         System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(OutputPath));
         System.IO.File.WriteAllText(OutputPath, source);
       ]]></Code>
     </Task>
   </UsingTask>
   <Target Name="CompileNativePersistence" BeforeTargets="CoreCompile">
-    <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/ClientSession.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)NativePersistence.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="ClientSession" Methods="MarkDirty;MarkAllocationDirty;SavePendingAllocation;OnAllocationSceneChanged;DeferSave;TickSatchelOverflow;TickPeriodicSave;SaveNow;FlushSaves;Secure;Delve;OnConcluded;IsVictory;TrackRun;CarryPendingResultIntoRecovery;ReadLimboDepth;HeroKeyOf;Emit;SendTrade;TradeUnavailable;SendLedgerProbe;SendPreparedTrade;SendDueTradeQueries;RestoreSalvageTrade;OnTradeResult;TradeFailText;SalvageUnsecured;SalvageUnsecuredBulk;CanBulkSalvageUnsecured;SalvageScale;SalvageDust" />
+    <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/ClientSession.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)NativePersistence.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="ClientSession" Methods="ViewRevision;MarkDirty;MarkAllocationDirty;SavePendingAllocation;OnAllocationSceneChanged;DeferSave;TickSatchelOverflow;TickPeriodicSave;SaveNow;IsNewWriteFailure;RememberWriteFailureState;SetSaveErrorText;SetSaveErrorCause;ClearSaveError;FlushSaves;Secure;Delve;OnConcluded;IsVictory;TrackRun;CarryPendingResultIntoRecovery;ReadLimboDepth;HeroKeyOf;Emit;SendTrade;TradeUnavailable;SendLedgerProbe;SendPreparedTrade;SendDurableTrade;SendDueTradeQueries;RestoreSalvageTrade;OnTradeResult;TradeFailText;SalvageUnsecured;SalvageUnsecuredBulk;CanBulkSalvageUnsecured;SalvageScale;SalvageDust;CurrentZoneIndex" />
     <ItemGroup>
       <Compile Include="$(IntermediateOutputPath)NativePersistence.g.cs" />
     </ItemGroup>
@@ -55,7 +75,7 @@
 
   <Target Name="CompileGuestContinueReceipt" BeforeTargets="CoreCompile">
     <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/ClientSession.Hello.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)GuestContinueReceipt.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="ClientSession" Methods="RememberContinueReceipt;HasCurrentContinueReceipt;CreateHelloMessage;SendContinueReceiptBeforeBuild;ResetHello" />
-    <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/ClientSession.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)GuestContinueBuild.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="ClientSession" Methods="CurrentBuild;SendBuildIfNeeded" />
+    <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/ClientSession.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)GuestContinueBuild.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="ClientSession" Methods="CurrentBuild;SendBuildIfNeeded;RefreshForbiddenGearNotice" />
     <ItemGroup>
       <Compile Include="$(IntermediateOutputPath)GuestContinueReceipt.g.cs" />
       <Compile Include="$(IntermediateOutputPath)GuestContinueBuild.g.cs" />
@@ -77,7 +97,7 @@
   </Target>
 
   <Target Name="CompileInfinityRestore" BeforeTargets="CoreCompile">
-    <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/InfinityMode.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)InfinityRestore.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="InfinityMode" Methods="BeginRestore;FinishRestore;Restoring" />
+    <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/InfinityMode.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)InfinityRestore.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="InfinityMode" Methods="BeginRestore;FinishRestore;Restoring;ReleaseMatchedZone" />
     <ItemGroup>
       <Compile Include="$(IntermediateOutputPath)InfinityRestore.g.cs" />
     </ItemGroup>
@@ -104,7 +124,7 @@
   </Target>
 
   <Target Name="CompileRelicRowCacheUi" BeforeTargets="CoreCompile">
-    <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/DreamforgeUi.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)RelicRowCacheUi.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="DreamforgeUi" Methods="CacheStamp;SortedCached;RowTexts" />
+    <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/DreamforgeUi.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)RelicRowCacheUi.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="DreamforgeUi" Methods="EnsureStashCache;SlotTabLabel;CacheStamp;SortedCached;RowTexts" Fields="_slotCounts;_slotTabLabels;_stashCacheProfile;_stashCacheRevision;_stashCacheViewRevision;_stashCacheCount;_stashCacheJapanese" />
     <ItemGroup>
       <Compile Include="$(IntermediateOutputPath)RelicRowCacheUi.g.cs" />
     </ItemGroup>
@@ -125,9 +145,20 @@
     </ItemGroup>
   </Target>
 
+  <!-- 星図の差分更新（#440）。左一覧の高さ部分再計算・TextRank/TextChoice スキップ・ツールチップ世代を
+       実ソースから抽出したメソッドで直接検証する。境界は StarClusterUiBoundary.cs と NativeBoundary.cs の UnityEngine 部。 -->
+  <Target Name="CompileStarClusterDiffUpdate" BeforeTargets="CoreCompile">
+    <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/DreamforgeUi.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)StarRefreshUi.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="DreamforgeUi" Methods="RefreshStarState;EnsureStarTooltip;EnsureStarChoiceText" NestedTypes="StarNode" Fields="_starLayout;_starNodes;_starHero;_starCapFingerprint;_starAuthoredFingerprint;_starKeystoneState;_starReachable;_starSpent;_starTextVersion;_starPoints;_starProgress;_starKeystoneSlots;_starState;_starJapanese;_starXp;_starSumOpen;_starSumSig;_starSearchDirty;_linkMemories;_linkEssences;_linkAllies;_linkCoefficients;StarKeystone;StarBright" />
+    <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/DreamforgeUi.AuthoredStars.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)StarClusterListUi.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="DreamforgeUi" Methods="RefreshStarClusters;DrawStarClusterList;StarRegionColor" Fields="_starNavigationNodes;_starNavigationContext;_starClusterLabels;_starClusterTops;_starClusterHeights;_starClusterWidth;_starClusterDirtyFrom;_starClusterScroll;_starClustersOpen;_starClusterRow;_starHelpStyle;StarClusterSize" />
+    <ItemGroup>
+      <Compile Include="$(IntermediateOutputPath)StarRefreshUi.g.cs" />
+      <Compile Include="$(IntermediateOutputPath)StarClusterListUi.g.cs" />
+    </ItemGroup>
+  </Target>
+
   <!-- 協力取引クライアント（所見01・07・09・10）。境界は NativeBoundary.cs の ClientSession 部。 -->
   <Target Name="CompileCoopTradeClient" BeforeTargets="CoreCompile">
-    <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/ClientSession.CoopTrade.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)CoopTradeClient.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="ClientSession" Methods="CoopPendingStale;CoopWaitText;CoopTradeLocked;CoopWorldSafe;CoopLocalSafe;CoopLocalWorldSafe;CoopLocalCombatSafe;CoopLocalBlockReason;CoopTradeUnavailableReason;CanCoopTrade;WireCoopTrade;ReceiveCoopPacket;TickCoopTrade;DisableCoopTrade;SendCoop;CoopSnapshot;SendCoopProfile;SetCoopTradeOffer;RetryCoopOffer;OnCoopTradeState;DeferCoopSettlement;CompleteCoopSettlement" />
+    <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/ClientSession.CoopTrade.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)CoopTradeClient.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="ClientSession" Methods="DiagnoseCoopTrade;CoopPendingStale;CoopWaitText;CoopTradeLocked;CoopWorldSafe;CoopLocalSafe;CoopLocalWorldSafe;CoopLocalCombatSafe;CoopLocalBlockReason;CoopTradeUnavailableReason;CanCoopTrade;WireCoopTrade;ReceiveCoopPacket;TickCoopTrade;DisableCoopTrade;SendCoop;CoopSnapshot;FlushCoopPayloads;SendCoopProfile;RequestCoopTrade;AcceptCoopTrade;ConfirmCoopTrade;CancelCoopTrade;SetCoopTradeOffer;RetryCoopOffer;OnCoopTradeState;DeferCoopSettlement;CompleteCoopSettlement;CoopTradeWarning" Fields="_coopTradeWarning;_coopConnectionWarning" />
     <ItemGroup>
       <Compile Include="$(IntermediateOutputPath)CoopTradeClient.g.cs" />
     </ItemGroup>
@@ -135,9 +166,26 @@
 
   <!-- 協力取引ホスト（所見03・06・08・11）。境界は NativeBoundary.cs の HostAuthority 部。 -->
   <Target Name="CompileCoopTradeHost" BeforeTargets="CoreCompile">
-    <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/HostAuthority.CoopTrade.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)CoopTradeHost.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="HostAuthority" Methods="CoopHostKey;CoopPresent;CoopPeerAvailable;CoopPeerSafe;CoopPeerFusion;CoopFusionError;TickCoopTrade;ReceiveCoopPacket;ReceiveCoopTrade;EnsureCoopJournal;QueryCoopTrade;CancelCoopTrade;CancelHostCoopTrade;CommitHostCoopTrade;PrepareHostCoopTrade;CoopReceiptFits;SendCoopViews;SendCoopView;SendCoopRoster;SendCoopPayload;SendCoopState;SendCoopError;CoopReason;FailHostCoopTrade" />
+    <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/HostAuthority.CoopTrade.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)CoopTradeHost.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="HostAuthority" Methods="DiagnoseHostCoopTrade;CoopHostKey;CoopPresent;CoopPeerAvailable;CoopPeerSafe;CoopPeerFusion;CoopFusionError;TickCoopTrade;ReceiveCoopPacket;ReceiveCoopTrade;EnsureCoopJournal;QueryCoopTrade;CancelCoopTrade;CancelHostCoopTrade;CommitHostCoopTrade;PrepareHostCoopTrade;CoopReceiptFits;SendCoopViews;SendCoopView;SendCoopRoster;FlushCoopPayloads;SendCoopPayload;SendCoopState;SendCoopError;FailHostCoopTrade" />
     <ItemGroup>
       <Compile Include="$(IntermediateOutputPath)CoopTradeHost.g.cs" />
+    </ItemGroup>
+  </Target>
+
+  <!-- 盾壁・群れの番犬の実際の発動処理を敵担当制と同じ境界で実行する。 -->
+  <Target Name="CompileShieldWallThreats" BeforeTargets="CoreCompile">
+    <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/HostAuthority.CoopKeystones.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)ShieldWallThreats.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="HostAuthority" Methods="CoopDrawThreats;CoopPair;CoopEnemy;RecordOwnershipTaunt;CoopGuardTarget;RecordSummonGuardTarget" />
+    <ItemGroup>
+      <Compile Include="$(IntermediateOutputPath)ShieldWallThreats.g.cs" />
+    </ItemGroup>
+  </Target>
+
+  <!-- 共鳴の盾（CoopOmens.cs）の HostAuthority 部。公開ラッパー CoopOmens は NativeBoundary.cs
+       に同じ式の internal 模倣（境界の Entity が internal のため直接抽出できない）。 -->
+  <Target Name="CompileCoopOmensWard" BeforeTargets="CoreCompile">
+    <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/CoopOmens.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)CoopOmensWard.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="HostAuthority" Methods="BeginCoopOmen;ClearCoopOmen;CoopWardRoomActive;LiveCoopWard;EligibleCoopWard;IsCoopOmenWard;StrongerCoopCandidate;TickCoopOmen;CoopDamageHuman;ApplyCoopOmenDamage;FillCoopOmenMessage;PublishHostCoopOmen;DisableCoopWards" Fields="_coopWards;_coopCandidates;_coopWardLimit;_coopFirstSpawn;_coopLastSpawn;_coopBatchClosed;_coopWardFailed;_coopSyncDirty;_coopPreparingSpawns;_nextCoopSync;InitialSpawnGap" NestedTypes="CoopWard" />
+    <ItemGroup>
+      <Compile Include="$(IntermediateOutputPath)CoopOmensWard.g.cs" />
     </ItemGroup>
   </Target>
 </Project>

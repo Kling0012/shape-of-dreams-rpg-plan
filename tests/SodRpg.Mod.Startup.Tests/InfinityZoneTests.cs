@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using SodRpg.Core.Game;
 using Xunit;
 
@@ -127,6 +128,7 @@ namespace SodRpg.Mod.Startup.Tests
             var (session, zone) = StartZoneTransition("pure-white-plan");
             var state = session.Profile.Run.Infinity;
             PrepareDelve(state);
+            state.ClearedCombatTotal = 0; // A finale can be the first cycle, before any combat clears.
             NetworkedManagerBase<GameSettingsManager>.softInstance.customData[InfinityMode.BossKey] =
                 Newtonsoft.Json.JsonConvert.SerializeObject(new InfinityMode.BossPlan
                 {
@@ -144,32 +146,109 @@ namespace SodRpg.Mod.Startup.Tests
             // The graph cannot host the interval: the cycle is due on arrival and the boss
             // node is the one forward option, so no dead-end boundary can bounce the party.
             Assert.Equal(InfinityPhase.BossDue, state.Phase);
-            Assert.Equal(10, state.ClearsInCycle);
+            Assert.Equal(0, state.ClearsInCycle);
+            Assert.True(state.FinalePromoted);
+            Assert.True(InfinityMode.TryReadEnvelope(out var finaleEnvelope));
+            Assert.True(finaleEnvelope.State.FinalePromoted);
+            Assert.Equal(0, finaleEnvelope.State.ClearsInCycle);
+            var restored = ProfileCodec.Read(ProfileCodec.Write(session.Profile), new List<string>());
+            Assert.Equal(0, restored.Run.Infinity.ClearedCombatTotal);
+            Assert.True(restored.Run.Infinity.FinalePromoted);
+            Assert.True(InfinityMode.MatchesProfile(restored.Run));
+            Assert.True(RunChoiceSnapshot.TryDecode(RunChoiceSnapshot.Capture(session.Profile.Run, 3, 0, 1).Encode(), out var shared));
+            Assert.Equal(0, shared.Infinity.ClearedCombatTotal);
+            Assert.Equal(0, shared.Infinity.ClearsInCycle);
+            Assert.True(shared.Infinity.BossDue);
             Assert.Equal(2, InfinityMode.RevealedNext(zone));
             Assert.Equal(WorldNodeType.ExitBoss, zone.nodes[2].type);
             Assert.True(InfinityMode.Available);
 
             // The preparation gate (Shrine_PrimusDoor) loads the boss node directly, without
             // the map/vote travel path: arrival must not disable Infinity or bounce back.
-            SingletonDewNetworkBehaviour<Room>.softInstance = new Room { isActive = true, didClearRoom = true };
+            SingletonDewNetworkBehaviour<Room>.softInstance = new Room { isActive = true };
             zone.SetCurrentNodeIndexAndRevealAdjacent(2);
             Assert.Equal(-1, InfinityMode.RevealedNext(zone));
             Assert.True(InfinityMode.Available);
             InfinityMode.Tick();
             Assert.Equal(InfinityPhase.BossFight, state.Phase);
+            // PersistHostInfinityState is stubbed in this harness; publish its native half explicitly.
+            InfinityMode.WriteEnvelope();
+            restored = ProfileCodec.Read(ProfileCodec.Write(session.Profile), new List<string>());
+            Assert.True(InfinityMode.MatchesProfile(restored.Run));
             Assert.True(InfinityMode.Available);
 
             // Killing the boss reaches the choice that delves into the next zone.
+            SingletonDewNetworkBehaviour<Room>.softInstance.didClearRoom = true;
             InfinityMode.OnRoomClear(SingletonDewNetworkBehaviour<Room>.softInstance);
             Assert.Equal(InfinityPhase.WaitingSoulFinish, state.Phase);
             var soul = new Shrine_BossSoul { isActive = true };
-            NetworkedManagerBase<ActorManager>.softInstance.allActors.Add(soul);
+            NetworkedManagerBase<ActorManager>.softInstance.AddActor(soul);
             Rift_RoomExit.instance = new Rift_RoomExit();
             InfinityMode.Tick();
             Assert.True(state.SoulObserved);
-            NetworkedManagerBase<ActorManager>.softInstance.allActors.Remove(soul);
+            // PersistHostInfinityState is stubbed in this harness; publish its native half explicitly.
+            InfinityMode.WriteEnvelope();
+            restored = ProfileCodec.Read(ProfileCodec.Write(session.Profile), new List<string>());
+            Assert.True(InfinityMode.MatchesProfile(restored.Run));
+            // Older envelopes stored a padded cycle; migration must keep the soul-wait phase.
+            var settings = NetworkedManagerBase<GameSettingsManager>.softInstance;
+            string currentEnvelope = settings.customData[InfinityMode.RuntimeKey];
+            var legacyEnvelope = Newtonsoft.Json.Linq.JObject.Parse(currentEnvelope);
+            legacyEnvelope.Remove("StateVersion");
+            ((Newtonsoft.Json.Linq.JObject)legacyEnvelope["State"]).Remove("FinalePromoted");
+            legacyEnvelope["State"]["ClearsInCycle"] = state.Interval;
+            // Names outside State's direct properties do not identify the save format.
+            legacyEnvelope["FinalePromoted"] = false;
+            legacyEnvelope["State"]["Metadata"] = new Newtonsoft.Json.Linq.JObject { ["FinalePromoted"] = false };
+            settings.customData[InfinityMode.RuntimeKey] = legacyEnvelope.ToString(Newtonsoft.Json.Formatting.Indented);
+            Assert.True(InfinityMode.MatchesProfile(restored.Run));
+            // A regenerated Primus graph can finish a cycle with fewer current-graph clears.
+            var currentUnpromoted = Newtonsoft.Json.Linq.JObject.Parse(currentEnvelope);
+            currentUnpromoted.Remove("StateVersion"); // Current saves made before versioning still carry the marker.
+            currentUnpromoted["State"]["FinalePromoted"] = false;
+            currentUnpromoted["State"]["ClearsInCycle"] = state.Interval;
+            settings.customData[InfinityMode.RuntimeKey] = currentUnpromoted.ToString(Newtonsoft.Json.Formatting.Indented)
+                .Replace("\"FinalePromoted\"", "\"Finale\\u0050romoted\"");
+            Assert.True(InfinityMode.TryReadEnvelope(out var unpromoted));
+            Assert.False(unpromoted.State.FinalePromoted);
+            Assert.Equal(state.Interval, unpromoted.State.ClearsInCycle);
+            // The version survives default-value omission, so false need not be serialized.
+            Assert.Equal(1, (int)Newtonsoft.Json.Linq.JObject.Parse(currentEnvelope)["StateVersion"]);
+            unpromoted.StateVersion = 1;
+            settings.customData[InfinityMode.RuntimeKey] = Newtonsoft.Json.JsonConvert.SerializeObject(unpromoted,
+                new Newtonsoft.Json.JsonSerializerSettings { DefaultValueHandling = Newtonsoft.Json.DefaultValueHandling.Ignore });
+            var omittedDefaults = Newtonsoft.Json.Linq.JObject.Parse(settings.customData[InfinityMode.RuntimeKey]);
+            Assert.Equal(1, (int)omittedDefaults["StateVersion"]);
+            Assert.Null(omittedDefaults["State"]["FinalePromoted"]);
+            Assert.True(InfinityMode.TryReadEnvelope(out var versioned));
+            Assert.False(versioned.State.FinalePromoted);
+            Assert.Equal(state.Interval, versioned.State.ClearsInCycle);
+            settings.customData[InfinityMode.RuntimeKey] = legacyEnvelope.ToString(Newtonsoft.Json.Formatting.None);
+            Assert.True(InfinityMode.MatchesProfile(restored.Run));
+            var legacyProfile = Newtonsoft.Json.Linq.JObject.Parse(ProfileCodec.Write(session.Profile));
+            var legacyState = (Newtonsoft.Json.Linq.JObject)legacyProfile["body"]["run"]["infinity"];
+            legacyState.Remove("actualCycle");
+            legacyState.Remove("actualTotal");
+            legacyState.Remove("finalePromoted");
+            legacyState["cycle"] = state.Interval;
+            restored = ProfileCodec.Read(legacyProfile.ToString(), new List<string>());
+            Assert.Equal(InfinityPhase.WaitingSoulFinish, restored.Run.Infinity.Phase);
+            Assert.Equal(0, restored.Run.Infinity.ClearsInCycle);
+            Assert.True(InfinityMode.MatchesProfile(restored.Run));
+            settings.customData[InfinityMode.RuntimeKey] = currentEnvelope;
+            NetworkedManagerBase<ActorManager>.softInstance.RemoveActor(soul);
             InfinityMode.Tick();
             Assert.Equal(InfinityPhase.AwaitingChoice, state.Phase);
+            // PersistHostInfinityState is stubbed in this harness; publish its native half explicitly.
+            InfinityMode.WriteEnvelope();
+            restored = ProfileCodec.Read(ProfileCodec.Write(session.Profile), new List<string>());
+            Assert.True(InfinityMode.MatchesProfile(restored.Run));
+            Rules.ReachInfinityChoice(restored);
+            Rules.Delve(restored);
+            restored = ProfileCodec.Read(ProfileCodec.Write(restored), new List<string>());
+            Assert.Equal(InfinityPhase.Transitioning, restored.Run.Infinity.Phase);
+            Assert.False(restored.Run.Infinity.FinalePromoted);
+            Assert.Equal(0, restored.Run.Infinity.ClearedCombatTotal);
             Assert.True(InfinityMode.Available);
             DewResources.Zones.Clear();
         }
@@ -190,11 +269,12 @@ namespace SodRpg.Mod.Startup.Tests
             Assert.Equal(InfinityPhase.BossDue, state.Phase);
             Assert.Equal(2, InfinityMode.RevealedNext(zone));
 
-            SingletonDewNetworkBehaviour<Room>.softInstance = new Room { isActive = true, didClearRoom = true };
+            SingletonDewNetworkBehaviour<Room>.softInstance = new Room { isActive = true };
             zone.SetCurrentNodeIndexAndRevealAdjacent(2);
             InfinityMode.Tick();
             Assert.Equal(InfinityPhase.BossFight, state.Phase);
-            Assert.Equal(10, state.ClearsInCycle);
+            Assert.Equal(1, state.ClearsInCycle);
+            Assert.True(state.FinalePromoted);
             Assert.True(InfinityMode.Available);
             DewResources.Zones.Clear();
         }

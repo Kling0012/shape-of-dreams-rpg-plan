@@ -257,8 +257,7 @@ namespace SodRpg.Core.Game
             // Preserve the two early direct access edges; the sector pass may move their endpoints.
             Join(branchNodes[1][2], branchNodes[2][2]);
             Join(branchNodes[4][2], branchNodes[5][2]);
-            PlaceClusters(nodes, neighbors, edges, talents);
-            if (tuned) ApplyTunedPlacements(nodes, neighbors);
+            PlaceClusters(nodes, neighbors, edges, talents, tuned);
             return new HeroTreeLayout(nodes, edges);
         }
 

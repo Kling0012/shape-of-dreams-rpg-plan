@@ -184,7 +184,7 @@ public static class V132Builds
     /// <summary>成長の星 g1 に掛かる修飾の星（RunGrowthModifier を持つ小さな星、選択肢を除く）のID。</summary>
     public static List<string> GrowthCapStarIds(IReadOnlyList<TalentDef> tree, string growthId) =>
         tree.Where(t => t.RunGrowthModifier != null && !t.IsChoice && t.RunGrowthModifier.TargetStarId == growthId
-                && t.RunGrowthModifier.CapBonus > 0)
+                && (t.RunGrowthModifier.CapBonus > 0 || t.RunGrowthModifier.EffectPercent > 0))
             .Select(t => t.Id).ToList();
 
     /// <summary>成長の星 g1 用の選択肢の星のIDと、選ぶ番号。kind が "effect" なら効果+50%、"double" なら溜まる速さ2倍。</summary>

@@ -9,7 +9,22 @@ namespace SodRpg.Mod
     internal sealed partial class HostAuthority
     {
         internal static bool RoomOmensEnabled { get => RoomOmens.Enabled; set => RoomOmens.Enabled = value; }
+        internal static bool CoopOmensEnabled { get; set; } = true;
         partial void SendRoomOmenPeer(DewPlayer player) => SendRoomOmen(player);
+        partial void BeginCoopOmen(int humans);
+        partial void ClearCoopOmen();
+        partial void TickCoopOmen();
+        partial void FillCoopOmenMessage(DreamforgeRoomOmenMsg msg);
+        partial void PublishHostCoopOmen(DreamforgeRoomOmenMsg msg);
+
+        private int HumanOmenPlayers()
+        {
+            int count = 0;
+            // Count players once even if a native transition briefly exposes multiple heroes.
+            foreach (var player in DewPlayer.gamePlayers)
+                if (player != null && player.isHumanPlayer) count++;
+            return count;
+        }
         private sealed class OmenHeroRuntime
         {
             internal StatBonus Bonus;
@@ -20,14 +35,19 @@ namespace SodRpg.Mod
         private RoomOmen _roomOmen;
         private Room _omenRoom;
         private string _omenRunId;
+        private string _omensFailedRunId;
         private bool _omensFailed, _omenSetting;
         private float _nextOmenTick;
 
         private void OnRoomOmenLoaded(EventInfoLoadRoom info)
         {
             _roomHasVariant = false;
+            OnAutoCastRoomLoaded();
             RefreshRoomOmen(force: true);
         }
+
+        // 自動詠唱の選敵記録は AutoCastTargets 側に属するため、取り込まれないプロジェクトではこの呼び出しは消える。
+        partial void OnAutoCastRoomLoaded();
 
         private bool EligibleOmenRoom()
         {
@@ -51,6 +71,7 @@ namespace SodRpg.Mod
             if (Time.unscaledTime < _nextOmenTick) return;
             _nextOmenTick = Time.unscaledTime + 0.25f;
             RefreshRoomOmen(force: false);
+            TickCoopOmen();
         }
 
         private void RefreshRoomOmen(bool force)
@@ -59,6 +80,12 @@ namespace SodRpg.Mod
             try
             {
                 var run = ClientSession.HostRun;
+                // ロビーを挟んでも同じホストが生き続けるため、失敗した遠征IDが変わったら再開する。
+                if (_omensFailed && run != null && run.RunId != _omensFailedRunId)
+                {
+                    _omensFailed = false;
+                    _omensFailedRunId = null;
+                }
                 if (_omensFailed || !RoomOmensEnabled || run == null)
                 {
                     if (_roomOmen != RoomOmen.None || _omenHeroes.Count > 0) ClearRoomOmen();
@@ -76,7 +103,30 @@ namespace SodRpg.Mod
                     _omenRoom = room;
                     _omenRunId = run.RunId;
                     _omenSetting = true;
-                    if (EligibleOmenRoom()) _roomOmen = RoomOmens.Roll(Rng.SeedFrom(run.RunId), _zone.currentRoomIndex);
+                    if (EligibleOmenRoom())
+                    {
+                        ulong seed = Rng.SeedFrom(run.RunId);
+                        _roomOmen = RoomOmens.Roll(seed, _zone.currentRoomIndex);
+                        try
+                        {
+                            int humans = HumanOmenPlayers();
+                            var coop = RoomOmens.RollCoop(seed, _zone.currentRoomIndex, humans, CoopOmensEnabled);
+                            if (coop != RoomOmen.None)
+                            {
+                                _roomOmen = coop;
+                                BeginCoopOmen(humans);
+                            }
+                        }
+                        catch (Exception ex) { Log.Warn("Co-op Omen draw skipped: " + ex.Message); }
+                    }
+                    RoomOmens.SetKillModifier(this, _roomOmen);
+                    foreach (var monster in _monsters.Values) ApplyRoomOmenMonster(monster);
+                    publish = true;
+                }
+                if (_roomOmen == RoomOmen.ResonantWard && !CoopOmensEnabled)
+                {
+                    ClearRoomOmen();
+                    _roomOmen = RoomOmens.Roll(Rng.SeedFrom(run.RunId), _zone.currentRoomIndex);
                     RoomOmens.SetKillModifier(this, _roomOmen);
                     foreach (var monster in _monsters.Values) ApplyRoomOmenMonster(monster);
                     publish = true;
@@ -184,6 +234,7 @@ namespace SodRpg.Mod
 
         private void ClearRoomOmen()
         {
+            ClearCoopOmen();
             _roomOmen = RoomOmen.None;
             RoomOmens.SetKillModifier(this, RoomOmen.None);
             _omenHeroScratch.Clear();
@@ -202,15 +253,19 @@ namespace SodRpg.Mod
         {
             if (_omensFailed) return;
             _omensFailed = true;
+            _omensFailedRunId = ClientSession.HostRun?.RunId;
             ClearRoomOmen();
             Log.Warn("Room Omens disabled; other MOD features remain active: " + error.Message);
         }
 
         private void SendRoomOmen(DewPlayer target = null)
         {
-            if (_registeredOn == null) return;
             var msg = new DreamforgeRoomOmenMsg { omen = (int)_roomOmen, runId = ClientSession.HostRun?.RunId,
                 room = _zone?.currentRoomIndex ?? -1, zone = _zone?.currentZoneIndex ?? -1, node = _zone?.currentNodeIndex ?? -1 };
+            try { FillCoopOmenMessage(msg); }
+            catch (Exception ex) { Log.Warn("Co-op Omen snapshot skipped: " + ex.Message); }
+            if (target == null) PublishHostCoopOmen(msg);
+            if (_registeredOn == null) return;
             if (target != null)
             {
                 if (_roomOmenPeers.Contains(target))

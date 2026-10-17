@@ -60,7 +60,7 @@ namespace SodRpg.Core.Game
             }
         }
 
-        /// <summary>The generated authored of one compiled hero (registration diagnostics).</summary>
+        /// <summary>The generated authored stars of one compiled hero (registration diagnostics).</summary>
         public static AuthoredStarDef[] CreateGeneratedAuthored(string heroKey)
         {
             switch (heroKey)
@@ -74,24 +74,6 @@ namespace SodRpg.Core.Game
                 case "Hero_Nachia": return CreateNachiaAuthored();
                 case "Hero_Vesper": return CreateVesperAuthored();
                 case "Hero_Yubar": return CreateYubarAuthored();
-                default: throw new ArgumentException("No generated star map for " + heroKey);
-            }
-        }
-
-        /// <summary>The generated migrations of one compiled hero (registration diagnostics).</summary>
-        public static LegacyStarMigration[] CreateGeneratedMigrations(string heroKey)
-        {
-            switch (heroKey)
-            {
-                case "Hero_Aurena": return CreateAurenaMigrations();
-                case "Hero_Bismuth": return CreateBismuthMigrations();
-                case "Hero_Cetus": return CreateCetusMigrations();
-                case "Hero_Husk": return CreateHuskMigrations();
-                case "Hero_Lacerta": return CreateLacertaMigrations();
-                case "Hero_Mist": return CreateMistMigrations();
-                case "Hero_Nachia": return CreateNachiaMigrations();
-                case "Hero_Vesper": return CreateVesperMigrations();
-                case "Hero_Yubar": return CreateYubarMigrations();
                 default: throw new ArgumentException("No generated star map for " + heroKey);
             }
         }

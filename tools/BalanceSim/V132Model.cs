@@ -113,7 +113,7 @@ public static class V132Model
     /// <summary>ゾーンごとのスタック数から、上限に初めて届いたゾーン（1始まり）。届かないときは 0。</summary>
     public static int FirstZoneAtCap(int[] stacksAfterZone, int cap)
     {
-        if (stacksAfterZone == null) return 0;
+        if (stacksAfterZone == null || cap == 0) return 0;
         for (int i = 0; i < stacksAfterZone.Length; i++)
             if (stacksAfterZone[i] >= cap) return i + 1;
         return 0;

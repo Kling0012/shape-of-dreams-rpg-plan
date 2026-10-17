@@ -32,6 +32,8 @@ namespace SodRpg.Mod
             catch (ArgumentException ex) { Log.Error("Client: invalid pressure dividend receipt " + ex.Message); }
         }
 
+        private Action<GameEvent> _emitPressureDividend;
+
         private void FlushPendingPressureDividends()
         {
             if (!RunActive) return;
@@ -39,7 +41,9 @@ namespace SodRpg.Mod
             // While Infinity rewards are halted, authenticated receipts stay queued (AddAuthenticated
             // already deduplicated them); budget and satchel change only once agreement recovers.
             if (Profile.Run.Infinity != null && !InfinityMode.NativeSaveAgreement) return;
-            int awarded = _pendingPressureDividends.Drain(Profile, e => Emit(new[] { e }));
+            // 毎フレーム呼ばれるので、通知用のデリゲートは一度だけ作る。
+            if (_emitPressureDividend == null) _emitPressureDividend = e => Emit(new[] { e });
+            int awarded = _pendingPressureDividends.Drain(Profile, _emitPressureDividend);
             if (awarded > 0) DeferKillSave();
         }
     }

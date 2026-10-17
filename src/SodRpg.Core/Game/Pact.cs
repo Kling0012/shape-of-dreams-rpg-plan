@@ -21,7 +21,7 @@ namespace SodRpg.Core.Game
         CursedHoard = 6,
         /// <summary>乾いた夢：本体の呪い / 調律石の入手+1（エリート・ボス）</summary>
         DryDream = 7,
-        /// <summary>見えざる重荷：本体の呪い / エピック以上の確率が上がる（幸運+1.0）</summary>
+        /// <summary>見えざる重荷：本体の呪い / エピック以上の確率が上がる（幸運+1.4）</summary>
         Burden = 8,
         Glutton = 9,
         Scholar = 10,
@@ -83,6 +83,8 @@ namespace SodRpg.Core.Game
         public Txt Name;
         /// <summary>説明文。数値から作るので、数値を変えても説明と食い違わない。</summary>
         public string Description => Pacts.Describe(this);
+        /// <summary>このプロフィールの工房強化（残響ランタン）を反映した説明文。</summary>
+        public string DescriptionFor(Profile p) => Pacts.Describe(this, p);
         public StatLine[] Penalties = Array.Empty<StatLine>();
         public StatLine[] Boons = Array.Empty<StatLine>();
         public double DropBonus;
@@ -354,7 +356,7 @@ namespace SodRpg.Core.Game
             (PactBalance.DoubleDepthBonusMultiplier == 2 ? "double" : $"x{PactBalance.DoubleDepthBonusMultiplier}") + " delve bonus when you secure";
 
         /// <summary>契約の説明を、数値から作る（代償：…。見返り：…。）。</summary>
-        public static string Describe(PactDef d)
+        public static string Describe(PactDef d, Profile p = null)
         {
             bool ja = Loc.Japanese;
             var gains = new List<string>();
@@ -364,15 +366,16 @@ namespace SodRpg.Core.Game
             if (d.XpMult > 1.0) gains.Add(ja ? $"敵を倒して得る経験値が{Mult(d.XpMult)}倍になる" : $"x{Mult(d.XpMult)} experience from kills");
             if (d.TuningOnElite > 0) gains.Add(ja ? $"エリートとボスが調律石を{d.TuningOnElite}つ多く落とす" : $"elites and bosses drop {d.TuningOnElite} extra tuning stone{(d.TuningOnElite == 1 ? "" : "s")}");
             if (d.DoubleDepthBonus) gains.Add(ja ? DepthBonusJa : DepthBonusEn);
-            foreach (var b in d.Boons) gains.Add(Content.FormatStat(b.Stat, b.Value));
+            // 一部の能力値の説明は文の形（末尾が「。」）なので、つなぐ前に外して「。。」にしない。
+            foreach (var b in d.Boons) gains.Add(Content.FormatStat(b.Stat, b.Value).TrimEnd('。'));
             string curse = PactDef.StrengthName(d.CurseStrength);
             if (ja)
             {
                 string cost = d.CurseStrength >= 3 ? "強い" : d.CurseStrength == 2 ? "中くらいの" : "弱い";
-                string echo = d.NoEcho ? $"。全滅したときに戻るはずの欠片（{Workshop.EchoPercent(null)}%）も戻らない" : "";
+                string echo = d.NoEcho ? $"。全滅したときに戻るはずの欠片（{Workshop.EchoPercent(p)}%）も戻らない" : "";
                 return $"代償：{cost}呪いを1つ受ける{echo}。見返り：{string.Join("。", gains)}。";
             }
-            string echoEn = d.NoEcho ? $", and the {Workshop.EchoPercent(null)}% shard echoes you would recover on a party wipe are lost instead" : "";
+            string echoEn = d.NoEcho ? $", and the {Workshop.EchoPercent(p)}% shard echoes you would recover on a party wipe are lost instead" : "";
             return $"Cost: a {curse.ToLowerInvariant()} curse{echoEn}. Reward: {string.Join("; ", gains)}.";
         }
 

@@ -11,6 +11,8 @@ namespace UnityEngine
         internal float X, Y, Width, Height;
     }
     internal static class GUI { public static bool enabled = true; }
+    internal enum EventType { Layout, Repaint }
+    internal sealed class Event { public static Event current = new Event(); public EventType type; }
     internal sealed class GUILayoutOption { internal float Height, Width; }
     internal sealed class GUIContent { public string text; }
     internal static class GUILayout
@@ -71,6 +73,7 @@ namespace SodRpg.Mod
         internal void MarkDirty(bool build) => Dirty |= build;
         internal void Emit(GameEvent notice) => Notices.Add(notice);
         internal Build CurrentBuild(string hero) => new Build();
+        internal Build DisplayBuild(string hero) => CurrentBuild(hero);
     }
     internal sealed class RefundUiStyles
     {

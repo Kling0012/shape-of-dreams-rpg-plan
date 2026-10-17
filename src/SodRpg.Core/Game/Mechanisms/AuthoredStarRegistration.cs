@@ -32,6 +32,8 @@ namespace SodRpg.Core.Game
         private static readonly Dictionary<string, IReadOnlyList<LegacyStarMigration>> Migrations
             = new Dictionary<string, IReadOnlyList<LegacyStarMigration>>(StringComparer.Ordinal);
         private static string registryFingerprint = RegistryHash("");
+        private static string installedTalentsFingerprint;
+        private static IReadOnlyList<TalentDef> installedTalents;
         public static string AuthoredRegistryFingerprint
         {
             get
@@ -68,6 +70,7 @@ namespace SodRpg.Core.Game
                 // A dry run on an empty hero validates every rule (ID, rank, cost) against the installed tree without side effects.
                 AuthoredStarMigration.Apply(new HeroState(), installed.Tree, input);
                 if (input.Length == 0) Migrations.Remove(heroKey); else Migrations[heroKey] = Array.AsReadOnly(input);
+                installedTalents = null;
                 registryFingerprint = ComputeRegistryFingerprint();
             }
         }
@@ -102,6 +105,7 @@ namespace SodRpg.Core.Game
                 Installed.Remove(heroKey);
                 Migrations.Remove(heroKey);
                 Rules.RegisterAllocationValidation(heroKey, null);
+                installedTalents = null;
                 registryFingerprint = ComputeRegistryFingerprint();
             }
         }
@@ -128,6 +132,8 @@ namespace SodRpg.Core.Game
                 Rules.RegisterAllocationValidation(heroKey, validator);
                 if (input.Length == 0) Installed.Remove(heroKey); else Installed[heroKey] = installed;
                 Migrations.Remove(heroKey); // rules were validated against the previous tree
+                // Identical content still publishes new TalentDef instances, so the fingerprint alone is insufficient.
+                installedTalents = null;
                 registryFingerprint = ComputeRegistryFingerprint();
             }
             return registry;
@@ -219,14 +225,41 @@ namespace SodRpg.Core.Game
             lock (AuthoredLock)
             {
                 if (Installed.Count == 0) return baseline;
+                if (installedTalents != null && installedTalentsFingerprint == registryFingerprint) return installedTalents;
                 var result = new List<TalentDef>();
                 foreach (var node in baseline) if (!Installed.ContainsKey(node.HeroKey)) result.Add(node);
                 foreach (var pair in Installed.OrderBy(x => x.Key, StringComparer.Ordinal)) result.AddRange(pair.Value.Tree);
-                return result.AsReadOnly();
+                installedTalentsFingerprint = registryFingerprint;
+                return installedTalents = result.AsReadOnly();
             }
         }
         private static IReadOnlyList<AuthoredStarDef> NormalizeAuthored(IReadOnlyList<AuthoredStarDef> definitions, IReadOnlyList<TalentDef> existing)
         {
+            var anchors = new Dictionary<(string Hero, string Cluster), string>();
+            var outerRoots = new Dictionary<(string Hero, string Cluster), AuthoredStarDef>();
+            var outerFallbacks = new Dictionary<(string Hero, string Cluster), string>();
+            var routeEntries = new Dictionary<(string Hero, string Route), string>();
+            var pairBases = new Dictionary<(string Hero, string Pair), AuthoredStarDef>();
+            foreach (var node in existing)
+            {
+                var key = (node.HeroKey, node.RouteId);
+                if (!routeEntries.ContainsKey(key)) routeEntries.Add(key, node.Id);
+            }
+            foreach (var node in definitions)
+            {
+                if (node == null) continue;
+                var cluster = (node.HeroKey, node.ClusterId);
+                if (node.AnchorId != null && !anchors.ContainsKey(cluster)) anchors.Add(cluster, node.AnchorId);
+                if (node.Effect?.Kind == ClusterStarKind.Stat)
+                {
+                    var fallback = ((string)null, node.ClusterId);
+                    if (!outerFallbacks.ContainsKey(fallback)) outerFallbacks.Add(fallback, node.LocalStarId);
+                    if (node.Effect.Amount > 0 && !outerRoots.ContainsKey(cluster)) outerRoots.Add(cluster, node);
+                }
+                var pair = (node.HeroKey, (node.Mechanism ?? node.Effect?.Mechanism)?.Bridge?.PairId);
+                // Preserve SingleOrDefault semantics: reject duplicates only when that pair is requested.
+                if (pairBases.ContainsKey(pair)) pairBases[pair] = null; else pairBases.Add(pair, node);
+            }
             var result = new List<AuthoredStarDef>(definitions.Count);
             foreach (var original in definitions)
             {
@@ -237,11 +270,9 @@ namespace SodRpg.Core.Game
                 string anchor = original.AnchorId;
                 if (anchor == null)
                 {
-                    foreach (var other in definitions)
-                        if (other != null && other.HeroKey == original.HeroKey && other.ClusterId == original.ClusterId && other.AnchorId != null) { anchor = other.AnchorId; break; }
+                    anchors.TryGetValue((original.HeroKey, original.ClusterId), out anchor);
                     if (anchor == null && original.Region.Kind == ClusterRegionKind.Outer)
-                        foreach (var other in definitions)
-                            if (other != null && other.ClusterId == original.ClusterId && other.Effect?.Kind == ClusterStarKind.Stat) { anchor = other.LocalStarId; break; }
+                        outerFallbacks.TryGetValue((null, original.ClusterId), out anchor);
                     if (anchor == null && original.Region.Kind == ClusterRegionKind.Keystone)
                         anchor = original.RequiredStarIds.FirstOrDefault() ?? original.RequiredAnyStarIds.FirstOrDefault();
                 }
@@ -251,14 +282,12 @@ namespace SodRpg.Core.Game
                 if (!original.RetainedLegacy)
                 {
                     if (original.Region.Kind == ClusterRegionKind.Memory)
-                        anchor = existing.FirstOrDefault(x => x.HeroKey == original.HeroKey && x.RouteId == original.Region.Id)?.Id ?? anchor;
+                        anchor = routeEntries.TryGetValue((original.HeroKey, original.Region.Id), out string entry) ? entry : anchor;
                     else if (original.Region.Kind == ClusterRegionKind.Bridge)
                         anchor = PairCombos.ForBridge(original.Region.Id)?.BridgeId ?? anchor;
                     else if (original.Region.Kind == ClusterRegionKind.Outer)
                     {
-                        var root = definitions.FirstOrDefault(x => x != null && x.HeroKey == original.HeroKey && x.ClusterId == original.ClusterId
-                            && x.Effect?.Kind == ClusterStarKind.Stat && x.Effect.Amount > 0);
-                        if (root != null) anchor = root.LocalStarId;
+                        if (outerRoots.TryGetValue((original.HeroKey, original.ClusterId), out var root)) anchor = root.LocalStarId;
                     }
                 }
                 var edges = new List<AuthoredStarEdge>(original.Edges ?? Array.Empty<AuthoredStarEdge>());
@@ -275,9 +304,11 @@ namespace SodRpg.Core.Game
                         if (!requiredStars.Contains(endpoint.StarId)) requiredStars.Add(endpoint.StarId);
                 if (effectiveSpec != null && effectiveSpec.Condition != AuthoredMechanismCondition.Always)
                 {
-                    var baseNode = definitions.SingleOrDefault(x => x != null && x.HeroKey == original.HeroKey
-                        && (x.Mechanism ?? x.Effect?.Mechanism)?.Bridge?.PairId == effectiveSpec.PairId);
-                    if (baseNode != null && !requiredStars.Contains(baseNode.LocalStarId)) requiredStars.Add(baseNode.LocalStarId);
+                    if (pairBases.TryGetValue((original.HeroKey, effectiveSpec.PairId), out var baseNode))
+                    {
+                        if (baseNode == null) throw new InvalidOperationException("Sequence contains more than one matching element");
+                        if (!requiredStars.Contains(baseNode.LocalStarId)) requiredStars.Add(baseNode.LocalStarId);
+                    }
                 }
                 if (original.KeystoneDefinition != null) effect.KeystoneDefinition = AuthoredKeystoneCodec.Decode(AuthoredKeystoneCodec.Encode(original.KeystoneDefinition));
                 if (effect.KeystoneDefinition != null && !original.RetainedLegacy) effect.RankCost = effect.KeystoneDefinition.Cost;

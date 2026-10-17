@@ -128,23 +128,4 @@ namespace SodRpg.Core.Game
             }
         }
     }
-
-    /// <summary>C02 supplies the real activation serial. Call CompleteActivation/Reset on lifecycle boundaries.</summary>
-    public sealed class AlliedWardRuntime
-    {
-        private readonly HashSet<(long Owner, string Channel, long Epoch, long Activation, long Victim)> _admitted =
-            new HashSet<(long, string, long, long, long)>();
-        public bool TryAdmit(AlliedWardDefinition definition, long ownerId, long epoch, long activationId, long victimId, bool conditionSucceeded)
-        {
-            if (definition == null || ownerId == 0 || activationId <= 0 || epoch < 0
-                || definition.Budget == WardActivationBudget.PerActivationVictim && victimId == 0) throw new ArgumentException("Invalid ward activation identity.");
-            if (!conditionSucceeded) return false;
-            return _admitted.Add((ownerId, definition.ChannelId, epoch, activationId,
-                definition.Budget == WardActivationBudget.PerActivationVictim ? victimId : 0));
-        }
-        public void CompleteActivation(long ownerId, long epoch, long activationId) =>
-            _admitted.RemoveWhere(x => x.Owner == ownerId && x.Epoch == epoch && x.Activation == activationId);
-        public void Reset(long ownerId) => _admitted.RemoveWhere(x => x.Owner == ownerId);
-        public void Clear() => _admitted.Clear();
-    }
 }

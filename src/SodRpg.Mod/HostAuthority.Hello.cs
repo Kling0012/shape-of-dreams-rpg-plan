@@ -13,20 +13,38 @@ namespace SodRpg.Mod
         /// <summary>この MOD の版（about/metadata.json の modVer）。起動時に設定する。</summary>
         internal static string ModVersion = "?";
 
-        private readonly Dictionary<DewPlayer, string> _versionMismatches = new Dictionary<DewPlayer, string>();
+        private readonly Dictionary<DewPlayer, Txt> _versionMismatches = new Dictionary<DewPlayer, Txt>();
         private readonly HashSet<DewPlayer> _helloPeers = new HashSet<DewPlayer>();
+        private readonly HashSet<DewPlayer> _bountyCountPeers = new HashSet<DewPlayer>();
         private readonly HashSet<DewPlayer> _autocastPressurePeers = new HashSet<DewPlayer>();
         private Action<DreamforgeAutocastPressureCapabilityMsg, DewPlayer> _onAutocastPressureCapability;
         internal bool AutocastPressureReady;
 
         internal bool SupportsAutocastPressure(DewPlayer player) => _autocastPressurePeers.Contains(player);
         internal void ForgetAutocastPressure(DewPlayer player) => _autocastPressurePeers.Remove(player);
+        private static readonly List<Txt> MismatchTexts = new List<Txt>();
         private static readonly List<string> MismatchScratch = new List<string>();
+        private static bool _mismatchScratchJapanese;
 
-        /// <summary>版が違う参加者の説明（ホストの画面に出す）。無ければ空。</summary>
-        internal static IReadOnlyList<string> VersionWarnings => MismatchScratch;
+        /// <summary>版が違う参加者の説明（ホストの画面に出す）。無ければ空。言語を切り替えたら、その言語で作り直す。</summary>
+        internal static IReadOnlyList<string> VersionWarnings
+        {
+            get
+            {
+                if (_mismatchScratchJapanese != Loc.Japanese) FillMismatchScratch();
+                return MismatchScratch;
+            }
+        }
+
+        private static void FillMismatchScratch()
+        {
+            _mismatchScratchJapanese = Loc.Japanese;
+            MismatchScratch.Clear();
+            foreach (var text in MismatchTexts) MismatchScratch.Add(_mismatchScratchJapanese ? text.Ja : text.En);
+        }
 
         private Action<DreamforgeHelloMsg, DewPlayer> _onHello;
+        private Action<DewPlayer> _onHelloPlayerChanged;
         private Actor _helloActor;
 
         private void RegisterHello(Actor actor)
@@ -38,6 +56,13 @@ namespace SodRpg.Mod
             _helloActor = actor;
             if (actor == null) return;
             if (_onHello == null) _onHello = OnHello;
+            if (_onHelloPlayerChanged == null) _onHelloPlayerChanged = OnHelloPlayerChanged;
+            // State changes remove the old roster entry before adding the new one.
+            // Observe both notifications so lobby -> game travel restores a surviving warning.
+            DewPlayer.onLobbyPlayerAdded += _onHelloPlayerChanged;
+            DewPlayer.onLobbyPlayerRemoved += _onHelloPlayerChanged;
+            DewPlayer.onGamePlayerAdded += _onHelloPlayerChanged;
+            DewPlayer.onGamePlayerRemoved += _onHelloPlayerChanged;
             actor.CustomRpc_RegisterServerMessageHandler<DreamforgeHelloMsg>(nameof(DreamforgeHelloMsg), _onHello);
             RegisterOverflowBonus(actor);
             RegisterBuildInputCapability(actor);
@@ -51,6 +76,10 @@ namespace SodRpg.Mod
 
         private void UnregisterHello(Actor actor)
         {
+            DewPlayer.onLobbyPlayerAdded -= _onHelloPlayerChanged;
+            DewPlayer.onLobbyPlayerRemoved -= _onHelloPlayerChanged;
+            DewPlayer.onGamePlayerAdded -= _onHelloPlayerChanged;
+            DewPlayer.onGamePlayerRemoved -= _onHelloPlayerChanged;
             if (actor != null && _onHello != null)
                 try { actor.CustomRpc_UnregisterServerMessageHandler<DreamforgeHelloMsg>(_onHello); } catch (Exception) { }
             UnregisterOverflowBonus(actor);
@@ -65,6 +94,10 @@ namespace SodRpg.Mod
             _forbiddenSmithPeers.Clear();
             _nemesisGrudgePeers.Clear();
             _autocastPressurePeers.Clear();
+            _bountyCountPeers.Clear();
+            _stateSnapshotPeers.Clear();
+            _dynamicRosterPeers.Clear();
+            _stateSnapshotEpoch++;
             RebuildMismatchList();
         }
 
@@ -77,6 +110,15 @@ namespace SodRpg.Mod
         private readonly Dictionary<DewPlayer, int> _nemesisGrudgePeers = new Dictionary<DewPlayer, int>();
         partial void SendRoomOmenPeer(DewPlayer player);
         internal bool HasNetLite(DewPlayer player) => player != null && _netLitePeers.Contains(player);
+        private readonly HashSet<DewPlayer> _stateSnapshotPeers = new HashSet<DewPlayer>();
+        private readonly HashSet<DewPlayer> _dynamicRosterPeers = new HashSet<DewPlayer>();
+        private int _stateSnapshotEpoch;
+        internal static int StateSnapshotEpoch => NativeInstance?._stateSnapshotEpoch ?? 0;
+        internal static bool ReducedStateSnapshots(DewPlayer player) => NativeInstance?.HasStateSnapshots(player) == true;
+        internal bool HasStateSnapshots(DewPlayer player) => player != null && _stateSnapshotPeers.Contains(player);
+        partial void SyncStateSnapshotPeer(DewPlayer player);
+        partial void ResetDynamicLegendPeer(DewPlayer player);
+        private bool HasDynamicRoster(DewPlayer player) => player != null && _dynamicRosterPeers.Contains(player);
 
         private void RegisterBuildInputCapability(Actor actor)
         {
@@ -98,8 +140,19 @@ namespace SodRpg.Mod
         {
             if (msg == null || msg.version != 1 || caller == null || !caller.isHumanPlayer
                 || !DewPlayer.gamePlayers.Contains(caller) && !DewPlayer.lobbyPlayers.Contains(caller)) return;
+            bool snapshots = msg.stateSnapshots == 1 && _helloPeers.Contains(caller);
+            if (snapshots ? _stateSnapshotPeers.Add(caller) : _stateSnapshotPeers.Remove(caller))
+            {
+                _stateSnapshotEpoch++;
+                SyncStateSnapshotPeer(caller);
+            }
+            bool roster = msg.dynamicRoster == 1 && _helloPeers.Contains(caller);
+            if (roster ? _dynamicRosterPeers.Add(caller) : _dynamicRosterPeers.Remove(caller))
+                ResetDynamicLegendPeer(caller);
             if (msg.netLite == 1 && _helloPeers.Contains(caller)) _netLitePeers.Add(caller);
             else _netLitePeers.Remove(caller);
+            if (msg.bountyCounts == 1 && _helloPeers.Contains(caller)) _bountyCountPeers.Add(caller);
+            else _bountyCountPeers.Remove(caller);
             if (msg.roomOmens == 1 && _helloPeers.Contains(caller)) _roomOmenPeers.Add(caller);
             else _roomOmenPeers.Remove(caller);
             if (msg.forbiddenSmith == 1 && _helloPeers.Contains(caller)) _forbiddenSmithPeers.Add(caller);
@@ -107,7 +160,7 @@ namespace SodRpg.Mod
             if (_helloPeers.Contains(caller)) _nemesisGrudgePeers[caller] = Forbidden.ClampGrudge(msg.nemesisGrudge);
             else _nemesisGrudgePeers.Remove(caller);
             try { _registeredOn?.CustomRpc_SendMessageToClient(caller,
-                new DreamforgeBuildInputCapabilityMsg { netLite = 1, roomOmens = 1, forbiddenInput = 1, fusionInput = 1 }); } catch (Exception) { }
+                new DreamforgeBuildInputCapabilityMsg { netLite = 1, roomOmens = 1, forbiddenInput = 1, fusionInput = 1, stateSnapshots = 1, dynamicRoster = 1 }); } catch (Exception) { }
             SendRoomOmenPeer(caller);
         }
 
@@ -137,17 +190,22 @@ namespace SodRpg.Mod
                 bool sameVersion = string.Equals(msg.modVer, ModVersion, StringComparison.Ordinal);
                 if (sameProtocol && sameContent && sameVersion && msg.continueCheckpoints && msg.infinityAvailable)
                     _versionMismatches.Remove(caller);
-                else if (!_versionMismatches.ContainsKey(caller))
+                else
                 {
                     string theirs = string.IsNullOrEmpty(msg.modVer) ? "?" : msg.modVer;
                     // Name the item that differs: version and protocol often read identical while the content
                     // fingerprint or the peer's Infinity availability is what the warning is about.
-                    _versionMismatches[caller] = Loc.T(
+                    var warning = new Txt(
                         $"{caller.playerName} の Dreamforge に差があります（{DescribeDifferencesJa(sameProtocol, sameContent, sameVersion, msg.continueCheckpoints, msg.infinityAvailable)}。版 {ModVersion}/{theirs}、Protocol {Protocol.Version}/{msg.protocol}）。機能は続行します。",
                         $"{caller.playerName}'s Dreamforge differs ({DescribeDifferencesEn(sameProtocol, sameContent, sameVersion, msg.continueCheckpoints, msg.infinityAvailable)}; version {ModVersion}/{theirs}, protocol {Protocol.Version}/{msg.protocol}). Features continue.");
-                    // One warning per mismatch episode/transport, not every five-second retry.
+                    // One warning per mismatch episode/transport, not every five-second retry. When the difference
+                    // itself changes (e.g. the peer turned Infinity on), replace the text so it names the current items.
                     // Do not call a content/capability difference a protocol mismatch.
-                    Log.Warn($"Host: compatibility warning for {caller.playerName}: protocol {msg.protocol}/{Protocol.Version}, mod {theirs}/{ModVersion}, contentEqual={sameContent}, continueCheckpoints={msg.continueCheckpoints}, infinityAvailable={msg.infinityAvailable}; features continue.");
+                    if (!_versionMismatches.TryGetValue(caller, out var previous) || previous.Ja != warning.Ja)
+                    {
+                        _versionMismatches[caller] = warning;
+                        Log.Warn($"Host: compatibility warning for {caller.playerName}: protocol {msg.protocol}/{Protocol.Version}, mod {theirs}/{ModVersion}, contentEqual={sameContent}, continueCheckpoints={msg.continueCheckpoints}, infinityAvailable={msg.infinityAvailable}; features continue.");
+                    }
                 }
                 RebuildMismatchList();
                 CheckInfinityRunCompatibility();
@@ -160,6 +218,7 @@ namespace SodRpg.Mod
                     continueResumeSession = ClientSession.ContinueResumeSession,
                     continueCheckpoints = true,
                     infinityAvailable = InfinityMode.Available,
+                    meleeCoop = MeleeCoopWire,
                 });
             }
             catch (Exception ex) { Log.Error("Host: hello " + ex); }
@@ -191,11 +250,15 @@ namespace SodRpg.Mod
             return string.Join(", ", items);
         }
 
+        private void OnHelloPlayerChanged(DewPlayer player) => RebuildMismatchList();
+
         private void RebuildMismatchList()
         {
-            MismatchScratch.Clear();
+            MismatchTexts.Clear();
             foreach (var kv in _versionMismatches)
-                if (kv.Key != null && DewPlayer.gamePlayers.Contains(kv.Key)) MismatchScratch.Add(kv.Value);
+                if (kv.Key != null && (DewPlayer.gamePlayers.Contains(kv.Key) || DewPlayer.lobbyPlayers.Contains(kv.Key)))
+                    MismatchTexts.Add(kv.Value);
+            FillMismatchScratch();
         }
     }
 }

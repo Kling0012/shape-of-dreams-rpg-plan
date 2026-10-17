@@ -14,9 +14,16 @@
     <ProjectReference Include="../../src/SodRpg.Core/SodRpg.Core.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="../../src/SodRpg.Mod/TabPerf.cs" Link="ModUnderTest/TabPerf.cs" />
     <Compile Include="../../src/SodRpg.Mod/ExpeditionDiagnostics.cs" Link="ModUnderTest/ExpeditionDiagnostics.cs" />
     <Compile Include="../../src/SodRpg.Mod/ClientSession.Diagnostics.cs" Link="ModUnderTest/ClientSession.Diagnostics.cs" />
     <Compile Include="../../src/SodRpg.Mod/HostAuthority.KillSync.cs" Link="ModUnderTest/HostAuthority.KillSync.cs" />
+    <Compile Include="../../src/SodRpg.Mod/HostAuthority.EnemyOwnership.cs" Link="ModUnderTest/HostAuthority.EnemyOwnership.cs" />
+    <Compile Include="../../src/SodRpg.Mod/CoopDistanceNative.cs" Link="ModUnderTest/CoopDistanceNative.cs" />
+    <Compile Include="../../src/SodRpg.Mod/HostAuthority.DynamicDifficulty.cs" Link="ModUnderTest/HostAuthority.DynamicDifficulty.cs" />
+    <Compile Include="../../src/SodRpg.Mod/HostAuthority.EnemyOwnershipSync.cs" Link="ModUnderTest/HostAuthority.EnemyOwnershipSync.cs" />
+    <Compile Include="../../src/SodRpg.Mod/HostAuthority.BossShares.cs" Link="ModUnderTest/HostAuthority.BossShares.cs" />
+    <Compile Include="../../src/SodRpg.Mod/HostAuthority.SummonOwnership.cs" Link="ModUnderTest/HostAuthority.SummonOwnership.cs" />
     <Compile Include="../../src/SodRpg.Mod/HostAuthority.Hello.cs" Link="ModUnderTest/HostAuthority.Hello.cs" />
     <Compile Include="../../src/SodRpg.Mod/HostAuthority.RoomOmens.cs" Link="ModUnderTest/HostAuthority.RoomOmens.cs" />
     <Compile Include="../../src/SodRpg.Mod/ClientSession.RoomOmens.cs" Link="ModUnderTest/ClientSession.RoomOmens.cs" />
@@ -29,6 +36,7 @@
     <Compile Include="../../src/SodRpg.Mod/HostAuthority.Trades.cs" Link="ModUnderTest/HostAuthority.Trades.cs" />
     <Compile Include="../../src/SodRpg.Mod/HostAuthority.OverflowBonus.cs" Link="ModUnderTest/HostAuthority.OverflowBonus.cs" />
     <Compile Include="../../src/SodRpg.Mod/ClientSession.OverflowBonus.cs" Link="ModUnderTest/ClientSession.OverflowBonus.cs" />
+    <Compile Include="../../src/SodRpg.Mod/ClientSession.SalvageDustCap.cs" Link="ModUnderTest/ClientSession.SalvageDustCap.cs" />
     <Compile Include="../../src/SodRpg.Mod/ClientSession.KillSync.cs" Link="ModUnderTest/ClientSession.KillSync.cs" />
     <Compile Include="../../src/SodRpg.Mod/ClientSession.RunChoices.cs" Link="ModUnderTest/ClientSession.RunChoices.cs" />
     <Compile Include="../../src/SodRpg.Mod/ClientSession.Continue.cs" Link="ModUnderTest/ClientSession.Continue.cs" />
@@ -39,6 +47,7 @@
     <Compile Include="../../src/SodRpg.Mod/InfinityMode.PersonalChoices.cs" Link="ModUnderTest/InfinityMode.PersonalChoices.cs" />
     <Compile Include="../../src/SodRpg.Mod/InfinityMode.PersonalWaypoints.cs" Link="ModUnderTest/InfinityMode.PersonalWaypoints.cs" />
     <Compile Include="../../src/SodRpg.Mod/ClientSession.LobbyReturn.cs" Link="ModUnderTest/ClientSession.LobbyReturn.cs" />
+    <Compile Include="../../src/SodRpg.Mod/CoopTradeDiagnostics.cs" Link="ModUnderTest/CoopTradeDiagnostics.cs" />
     <Compile Include="../../src/SodRpg.Mod/CoopTradeTransport.cs" Link="ModUnderTest/CoopTradeTransport.cs" />
     <Compile Include="../../src/SodRpg.Mod/CoopTradeMessages.cs" Link="ModUnderTest/CoopTradeMessages.cs" />
     <Compile Include="../../src/SodRpg.Mod/NetMessages.cs" Link="ModUnderTest/NetMessages.cs" />
@@ -49,6 +58,7 @@
     <Compile Include="../../src/SodRpg.Mod/NativeMistLifetime.cs" Link="ModUnderTest/NativeMistLifetime.cs" />
     <Compile Include="../../src/SodRpg.Mod/HostAuthority.CrowdControlRecovery.cs" Link="ModUnderTest/HostAuthority.CrowdControlRecovery.cs" />
     <Compile Include="../SodRpg.Core.Tests/EventBalanceTestData.cs" Link="EventBalanceTestData.cs" />
+    <Compile Include="../SodRpg.Core.Tests/Testing/InMemoryFileSystem.cs" Link="Testing/InMemoryFileSystem.cs" />
   </ItemGroup>
   <Import Project="NativePersistence.targets" />
 </Project>

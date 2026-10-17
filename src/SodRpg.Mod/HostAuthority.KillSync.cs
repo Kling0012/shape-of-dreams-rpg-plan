@@ -15,7 +15,9 @@ namespace SodRpg.Mod
         {
             public readonly NightmareAffix Nightmare;
             public readonly string Variant;
-            public MonsterClassificationDelta(NightmareAffix nightmare, string variant) { Nightmare = nightmare; Variant = variant; }
+            public readonly MonsterOwnership Ownership;
+            public MonsterClassificationDelta(NightmareAffix nightmare, string variant, MonsterOwnership ownership)
+            { Nightmare = nightmare; Variant = variant; Ownership = ownership; }
         }
 
         // Updating a pending ID preserves its FIFO position; cancellation removes it without leaving tombstones.
@@ -96,6 +98,7 @@ namespace SodRpg.Mod
             public KillParticipationRange Participation;
             public bool Started, HeardReceipt, ControlSent;
             public float NextStartRetry;
+            public float NextUnknownReceiptDiagnostic;
             public float ReceiptWaitingSince;
             public bool ReceiptWaitReleased;
             public readonly List<MonsterRuntime> Monsters = new List<MonsterRuntime>();
@@ -187,7 +190,10 @@ namespace SodRpg.Mod
             if (fact.Sequence == 0) fact = new AuthoritativeRunKill(fact.RunId, fact.EventId,
                 fact.MonsterNetId, fact.ZoneIndex, fact.Nightmare, fact.VariantId, ++_killSequence, _killLegacyStreamId,
                 fact.BossTypeName, fact.BossDropNightmare, fact.BossDropDepth, fact.GraphEpoch, fact.SegmentEpoch, fact.RoomEpoch);
-            _killHistoryByVictim.Add(new KillVictimKey(fact.StreamId, fact.MonsterNetId), fact);
+            // Legacy facts are renumbered into one stream, so facts from different streams or graph epochs
+            // can share a netId here. Keep the first (lowest sequence), as the Core ledger does, instead of throwing.
+            var victim = new KillVictimKey(fact.StreamId, fact.MonsterNetId);
+            if (!_killHistoryByVictim.ContainsKey(victim)) _killHistoryByVictim[victim] = fact;
             if (fact.StreamId.EndsWith(".legacy", StringComparison.Ordinal))
                 _legacyKillHistoryByVictim[fact.MonsterNetId] = fact;
             _killSequence = Math.Max(_killSequence, fact.Sequence);
@@ -366,6 +372,22 @@ namespace SodRpg.Mod
             return low;
         }
 
+        private bool KillReceiptStreamKnown(KillReplayPeer peer, string streamId, ref HashSet<string> knownStreams)
+        {
+            if (streamId == _killStreamId) return true;
+            if (knownStreams == null)
+            {
+                // Snapshot all known streams once per message, rather than scanning the peer for every receipt.
+                knownStreams = new HashSet<string>(StringComparer.Ordinal);
+                foreach (var receipt in peer.Receipts) knownStreams.Add(receipt.StreamId);
+                foreach (var range in peer.Participation) knownStreams.Add(range.StreamId);
+                foreach (var fact in _killHistory) knownStreams.Add(fact.StreamId);
+            }
+            // Pruning history retires a stream only when neither participation nor a prior receipt retains it.
+            // Its facts are already durable and no longer owed to a peer, so ignoring a late receipt is safe.
+            return knownStreams.Contains(streamId);
+        }
+
         private void OnKillReceipt(DreamforgeKillReceiptMsg msg, DewPlayer caller)
         {
             EnsureKillRun();
@@ -390,7 +412,9 @@ namespace SodRpg.Mod
                 bool provisional = cursor.PeerId.StartsWith("connection.", StringComparison.Ordinal);
                 if (provisional) _killPeers.Remove(cursor.PeerId);
                 changed = true;
-                if (cursor.HeardReceipt)
+                // A superseded client identity must not share the live range: it would keep growing
+                // under a peer that never sends another receipt and pin every later fact.
+                if (cursor.HeardReceipt || !provisional)
                 {
                     cursor.JoinSequence = _killSequence;
                     cursor.Participation = new KillParticipationRange
@@ -400,7 +424,11 @@ namespace SodRpg.Mod
                 cursor.PeerId = peerId;
                 if (!_killPeers.ContainsKey(peerId)) _killPeers.Add(peerId, new KillReplayPeer { Id = peerId, NativeOwnerId = caller.guid });
                 if (provisional) _killPeers[peerId].Participation.AddRange(previous.Participation);
-                else _killPeers[peerId].Participation.Add(cursor.Participation);
+                else
+                {
+                    _killPeers[peerId].Participation.Add(cursor.Participation);
+                    PruneKillParticipation(previous); // keep only real debts, as RemoveKillPeer does
+                }
             }
             if (cursor.ReceiptWaitReleased)
             {
@@ -426,7 +454,29 @@ namespace SodRpg.Mod
                 cursor.MonsterIndex = 0;
             }
             if (msg.receipts != null)
-                foreach (var receipt in msg.receipts) changed |= peer.AcceptReceipt(receipt.streamId, receipt.receivedThrough);
+            {
+                HashSet<string> knownStreams = null;
+                int unknownReceipts = 0;
+                // Keep every known-stream receipt, including those after the first 32 entries.
+                foreach (var receipt in msg.receipts)
+                {
+                    // Unknown receipts neither grow the durable record nor enqueue a replay request.
+                    if (!KillReceiptStreamKnown(peer, receipt.streamId, ref knownStreams)) { unknownReceipts++; continue; }
+                    changed |= peer.AcceptReceipt(receipt.streamId, receipt.receivedThrough);
+                }
+                if (unknownReceipts > 0 && Time.unscaledTime >= cursor.NextUnknownReceiptDiagnostic)
+                {
+                    cursor.NextUnknownReceiptDiagnostic = Time.unscaledTime + 30f;
+                    try
+                    {
+                        // Counts only, at most once per connection per 30 seconds; no untrusted stream IDs.
+                        Log.Info("Kill replay diagnostic: ignoredUnknownReceipts=" + unknownReceipts
+                            + " pendingRequests=" + cursor.Requested.Count
+                            + " remainingHistory=" + (_killHistory.Count - cursor.FactIndex));
+                    }
+                    catch (Exception) { } // Diagnostics must not affect receipt processing.
+                }
+            }
             // Requests bypass the historical cursor, including facts missed during a zone/authority transition.
             if (msg.missingFacts != null && cursor.Requested.Count == 0)
                 for (int i = 0; i < Math.Min(32, msg.missingFacts.Length); i++)
@@ -470,7 +520,9 @@ namespace SodRpg.Mod
                     if (_killUnacknowledged.ContainsKey(fact.Sequence)) _killHistory[kept++] = fact;
                     else
                     {
-                        _killHistoryByVictim.Remove(new KillVictimKey(fact.StreamId, fact.MonsterNetId));
+                        var victim = new KillVictimKey(fact.StreamId, fact.MonsterNetId);
+                        if (_killHistoryByVictim.TryGetValue(victim, out var byVictim) && byVictim.EventId == fact.EventId)
+                            _killHistoryByVictim.Remove(victim);
                         _killHistoryEvents.Remove(fact.EventId);
                         if (_legacyKillHistoryByVictim.TryGetValue(fact.MonsterNetId, out var legacy) && legacy.EventId == fact.EventId)
                             _legacyKillHistoryByVictim.Remove(fact.MonsterNetId);
@@ -536,8 +588,10 @@ namespace SodRpg.Mod
                 if (_registeredOn != null && !pair.Value.ControlSent)
                     SendKillStreamControl(pair.Key, pair.Value);
             string eventId = RoomOmens.EncodeKillEventId(this, Guid.NewGuid().ToString("N"));
+            double dynamicReward = 1;
+            ApplyDynamicKillReward(monster, ref dynamicReward);
             runtime.KillEventId = PressureCountRewards.EncodeEventId(eventId,
-                PressureCountRewards.ScaleFromActorData(monster.persistentSyncedData), ShardDropMultiplierForKill());
+                PressureCountRewards.ScaleFromActorData(monster.persistentSyncedData), ShardDropMultiplierForKill(), dynamicReward);
             runtime.KillEventStreamId = _killStreamId;
             runtime.KillEventNetId = monster.netId;
             runtime.SyncNetId = monster.netId;
@@ -569,6 +623,8 @@ namespace SodRpg.Mod
                 DreamforgeMonsterKillMsg.FromFact(fact, ClientSession.HostAuthorityGeneration));
         }
 
+        partial void RefreshMonsterOwnership(MonsterRuntime runtime);
+
         private void SendMonsterClassification(MonsterRuntime runtime, DewPlayer target = null)
         {
             var monster = runtime.Monster;
@@ -576,18 +632,23 @@ namespace SodRpg.Mod
             if (monster.netId == 0) return;
             _nightmares.TryGetValue(monster, out var nightmare);
             string variant = runtime.Variant?.Id;
+            RefreshMonsterOwnership(runtime);
+            var ownership = runtime.Ownership;
             if (target == null && runtime.ClassificationQueued && runtime.SyncNetId == monster.netId
-                && runtime.ClassificationNightmare == nightmare && runtime.ClassificationVariant == variant) return;
+                && runtime.ClassificationNightmare == nightmare && runtime.ClassificationVariant == variant
+                && runtime.ClassificationOwnership.SameState(ownership)) return;
             if (target == null)
             {
                 runtime.SyncNetId = monster.netId;
                 runtime.ClassificationQueued = true;
                 runtime.ClassificationNightmare = nightmare;
                 runtime.ClassificationVariant = variant;
+                runtime.ClassificationOwnership = ownership;
                 _queuedMonsterRemovals.Remove(monster.netId);
-                _queuedMonsterClassifications.Set(monster.netId, new MonsterClassificationDelta(nightmare, variant));
+                _queuedMonsterClassifications.Set(monster.netId, new MonsterClassificationDelta(nightmare, variant, ownership));
                 return;
             }
+            if (HasDynamicRoster(target) && !SendDynamicLegendPeer(target)) return;
             if (!ReserveMonsterSyncMessage()) return;
             if (variant != null)
             {
@@ -595,6 +656,10 @@ namespace SodRpg.Mod
                 {
                     protocol = Protocol.Version, netId = monster.netId, variantId = variant,
                     authorityGeneration = ClientSession.HostAuthorityGeneration,
+                    ownerParticipantId = ownership.ParticipantId, ownershipRevision = ownership.Revision,
+                    ownershipProtected = ownership.Protected, ownerPlayerSlot = ownership.PlayerSlot,
+                    bossShares = ownership.BossShares,
+                    dynamicDifficulty = HasDynamicRoster(target) ? null : DynamicSnapshot(), dynamicRevision = _dynamicRosterRevision,
                 };
                 _registeredOn.CustomRpc_SendMessageToClient(target, msg);
             }
@@ -604,6 +669,10 @@ namespace SodRpg.Mod
                 {
                     protocol = Protocol.Version, netId = monster.netId, affixes = (int)nightmare,
                     authorityGeneration = ClientSession.HostAuthorityGeneration,
+                    ownerParticipantId = ownership.ParticipantId, ownershipRevision = ownership.Revision,
+                    ownershipProtected = ownership.Protected, ownerPlayerSlot = ownership.PlayerSlot,
+                    bossShares = ownership.BossShares,
+                    dynamicDifficulty = HasDynamicRoster(target) ? null : DynamicSnapshot(), dynamicRevision = _dynamicRosterRevision,
                 };
                 _registeredOn.CustomRpc_SendMessageToClient(target, msg);
             }
@@ -657,8 +726,48 @@ namespace SodRpg.Mod
             if (netId != 0 && !_queuedMonsterRemovals.Contains(netId)) _queuedMonsterCues.Set(netId, cue);
         }
 
+        private void SendClassificationDelta(uint netId, MonsterClassificationDelta delta, DewPlayer target)
+        {
+            var display = target != null && HasDynamicRoster(target) ? null : DynamicSnapshot();
+            if (delta.Variant != null)
+            {
+                var msg = new DreamforgeVariantMsg
+                {
+                    protocol = Protocol.Version, netId = netId, variantId = delta.Variant,
+                    authorityGeneration = ClientSession.HostAuthorityGeneration,
+                    ownerParticipantId = delta.Ownership.ParticipantId, ownershipRevision = delta.Ownership.Revision,
+                    ownershipProtected = delta.Ownership.Protected, ownerPlayerSlot = delta.Ownership.PlayerSlot,
+                    bossShares = delta.Ownership.BossShares,
+                    dynamicDifficulty = display, dynamicRevision = _dynamicRosterRevision,
+                };
+                if (target == null) _registeredOn.CustomRpc_SendMessageToAllClients(msg);
+                else _registeredOn.CustomRpc_SendMessageToClient(target, msg);
+            }
+            else
+            {
+                var msg = new DreamforgeNightmareMsg
+                {
+                    protocol = Protocol.Version, netId = netId, affixes = (int)delta.Nightmare,
+                    authorityGeneration = ClientSession.HostAuthorityGeneration,
+                    ownerParticipantId = delta.Ownership.ParticipantId, ownershipRevision = delta.Ownership.Revision,
+                    ownershipProtected = delta.Ownership.Protected, ownerPlayerSlot = delta.Ownership.PlayerSlot,
+                    bossShares = delta.Ownership.BossShares,
+                    dynamicDifficulty = display, dynamicRevision = _dynamicRosterRevision,
+                };
+                if (target == null) _registeredOn.CustomRpc_SendMessageToAllClients(msg);
+                else _registeredOn.CustomRpc_SendMessageToClient(target, msg);
+            }
+        }
+
         private void FlushMonsterSync(int maxMessages)
         {
+            bool splitRoster = false;
+            foreach (var player in DewPlayer.allHumanPlayers)
+            {
+                if (player == null || !player.isHumanPlayer || !HasDynamicRoster(player)) continue;
+                splitRoster = true;
+                if (_queuedMonsterClassifications.Count > 0 && !SendDynamicLegendPeer(player)) return;
+            }
             int budget = Math.Min(RemainingMonsterSyncMessages(), maxMessages);
             int emptyCategories = 0;
             // Three constant-time category probes per send at most; neither stale IDs nor dictionary scans accumulate.
@@ -669,6 +778,17 @@ namespace SodRpg.Mod
                 int count = category == 0 ? _queuedMonsterRemovals.Count
                     : category == 1 ? _queuedMonsterClassifications.Count : _queuedMonsterCues.Count;
                 if (count == 0) { emptyCategories++; continue; }
+                int recipients = 0;
+                if (category == 1)
+                {
+                    if (splitRoster)
+                    {
+                        foreach (var player in DewPlayer.allHumanPlayers)
+                            if (player != null && player.isHumanPlayer) recipients++;
+                    }
+                    else recipients = 1;
+                    if (RemainingMonsterSyncMessages() < recipients || budget < recipients) break;
+                }
                 if (!ReserveMonsterSyncMessage()) break;
                 emptyCategories = 0;
                 budget--;
@@ -684,18 +804,18 @@ namespace SodRpg.Mod
                 else if (category == 1)
                 {
                     _queuedMonsterClassifications.TryTake(out uint netId, out var delta);
-                    if (delta.Variant != null)
-                        _registeredOn.CustomRpc_SendMessageToAllClients(new DreamforgeVariantMsg
-                        {
-                            protocol = Protocol.Version, netId = netId, variantId = delta.Variant,
-                            authorityGeneration = ClientSession.HostAuthorityGeneration,
-                        });
+                    if (!splitRoster) SendClassificationDelta(netId, delta, null);
                     else
-                        _registeredOn.CustomRpc_SendMessageToAllClients(new DreamforgeNightmareMsg
+                    {
+                        bool first = true;
+                        foreach (var player in DewPlayer.allHumanPlayers)
                         {
-                            protocol = Protocol.Version, netId = netId, affixes = (int)delta.Nightmare,
-                            authorityGeneration = ClientSession.HostAuthorityGeneration,
-                        });
+                            if (player == null || !player.isHumanPlayer) continue;
+                            if (!first) { ReserveMonsterSyncMessage(); budget--; }
+                            first = false;
+                            SendClassificationDelta(netId, delta, player);
+                        }
+                    }
                 }
                 else
                 {
@@ -802,6 +922,10 @@ namespace SodRpg.Mod
             }
             if (cursor.MonsterIndex < cursor.Monsters.Count)
             {
+                int before = RemainingMonsterSyncMessages();
+                if (HasDynamicRoster(player) && !SendDynamicLegendPeer(player)) return 0;
+                int legendMessages = before - RemainingMonsterSyncMessages();
+                if (RemainingMonsterSyncMessages() < 2) return legendMessages;
                 var runtime = cursor.Monsters[cursor.MonsterIndex++];
                 // Both messages count against the shared frame budget; unchanged broadcast caches are untouched.
                 if (Alive(runtime.Monster) && _monsters.TryGetValue(runtime.Monster, out var current)
@@ -811,7 +935,7 @@ namespace SodRpg.Mod
                     SendMonsterBehaviorCue(runtime, true, player);
                 }
                 if (cursor.MonsterIndex == cursor.Monsters.Count) { cursor.Monsters.Clear(); cursor.MonsterIndex = 0; }
-                return 2;
+                return 2 + legendMessages;
             }
             if (cursor.FactIndex >= _killHistory.Count) return 0;
             var fact = _killHistory[cursor.FactIndex];

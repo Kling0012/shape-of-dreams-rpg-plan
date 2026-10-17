@@ -45,11 +45,11 @@ namespace SodRpg.Core.Game
     public static class Links
     {
         /// <summary>絆を満たす、生きている味方旅人までの距離（m）。</summary>
-        public const double BondRange = 10;
+        public const double BondRange = CoopBalance.OuterRange;
 
         /// <summary>距離や生存判定はホストが渡す。無効な距離や敵の旅人は絆に数えない。</summary>
         public static bool IsBondAlly(bool living, bool allied, double distance) =>
-            living && allied && distance >= 0 && distance <= BondRange;
+            living && allied && CoopDistance.Coefficient(distance) > 0f;
 
         /// <summary>導きの羅針盤の正規形（充電前後で型が違うが、連携では同じエッセンスとして数える）。</summary>
         public const string Compass = "Gem_U_GuidingCompass_NotCharged";
@@ -247,6 +247,12 @@ namespace SodRpg.Core.Game
             return kind == LinkKind.MemoryHaste ? Math.Min(MaxHaste, cap) : cap;
         }
 
+        // ビルド計算で繰り返す列挙値の検証に使う。入れ子の型で静的初期化順序に依存させない。
+        private static class DefinedKinds
+        {
+            internal static readonly HashSet<LinkKind> Set = new HashSet<LinkKind>((LinkKind[])Enum.GetValues(typeof(LinkKind)));
+        }
+
         /// <summary>データとして正しいか。対象は既知で、1〜3つ、重複なし。記憶を使う効果には記憶が要る。</summary>
         public static bool Validate(LinkDef link)
         {
@@ -255,7 +261,7 @@ namespace SodRpg.Core.Game
             if (n < 1 || n > 3) return false;
             if (link.Kind == LinkKind.BossReward && (n != 1 || IsTraveler(link.Requires[0])
                 || link.ValueMilli < 1000 || link.ValueMilli > 3000 || link.ValueMilli % 1000 != 0)) return false;
-            if (link.Kind == LinkKind.None || !Enum.IsDefined(typeof(LinkKind), link.Kind)) return false;
+            if (link.Kind == LinkKind.None || !DefinedKinds.Set.Contains(link.Kind)) return false;
             bool hasMemory = false;
             for (int i = 0; i < n; i++)
             {
@@ -269,7 +275,7 @@ namespace SodRpg.Core.Game
             return true;
         }
 
-        /// <summary>旅人は自分か10m以内の生きている味方。装着条件は自分の記憶・エッセンスだけを見る。</summary>
+        /// <summary>旅人は自分か距離係数の残る生きている味方。装着条件は自分の記憶・エッセンスだけを見る。</summary>
         public static bool RequirementSatisfied(string target, string heroKey, ICollection<string> equippedMemories, ICollection<string> equippedEssences,
             ICollection<string> nearbyAllyHeroes = null)
         {
@@ -307,6 +313,20 @@ namespace SodRpg.Core.Game
             return travelers < 2 || includesSelf;
         }
 
+        /// <summary>All required travelers contribute; the weakest required connection limits the effect.</summary>
+        public static float DistanceCoefficient(LinkDef link, string heroKey, IReadOnlyDictionary<string, float> allies)
+        {
+            if (link?.Requires == null) return 0f;
+            float coefficient = 1f;
+            foreach (string target in link.Requires)
+                if (IsTraveler(target) && target != heroKey)
+                {
+                    float value = allies != null && allies.TryGetValue(target, out float found) ? found : 0f;
+                    coefficient = Math.Min(coefficient, value);
+                }
+            return coefficient;
+        }
+
         public static string ItemName(string target)
         {
             var name = Name(target);
@@ -315,7 +335,8 @@ namespace SodRpg.Core.Game
                 : name.ToString();
         }
         /// <summary>Describe effects and their equipped-item or nearby-traveler requirements.</summary>
-        public static string Describe(LinkDef link, Func<string, bool> isSatisfied = null)
+        public static string Describe(LinkDef link, Func<string, bool> isSatisfied = null,
+            Func<string, float> travelerCoefficient = null)
         {
             if (link == null || link.Requires == null || link.Requires.Length == 0) return "";
             if (link.Kind == LinkKind.BossReward)
@@ -326,20 +347,40 @@ namespace SodRpg.Core.Game
             switch (link.Kind)
             {
                 case LinkKind.MemoryHaste:
-                    limitJa = "1回の発動で短縮できる量は、合計で最大100%まで。";
-                    limitEn = " (Total reduction per cast is capped at 100%.)";
+                    string hasteCap = EssenceCapsBalance.MemoryHasteMaxRemainingCooldownPercent.ToString("0.##", CultureInfo.InvariantCulture);
+                    limitJa = EssenceCapsBalance.MemoryHasteEnabled
+                        ? "1回の発動で短縮できる量は、星による短縮と合計して残りクールダウンの最大" + hasteCap + "%まで。"
+                        : "1回の発動で短縮できる量は、合計で最大100%まで。";
+                    limitEn = EssenceCapsBalance.MemoryHasteEnabled
+                        ? " (Combined with star reductions, removes at most " + hasteCap + "% of remaining cooldown per cast.)"
+                        : " (Total reduction per cast is capped at 100%.)";
                     break;
                 case LinkKind.MemorySurge:
                     limitJa = "同時に有効になるのは最も大きい1つだけで、重ならずに時間が延びる。装備条件を外すと解除される。";
                     limitEn = " (Only the strongest active link applies. It refreshes the duration without stacking, and ends when its equip requirements are removed.)";
                     break;
                 default:
-                    int linkCap = Cap(link.Kind, link.Requires.Length);
-                    limitJa = linkCap > 0 ? $"同じ種類の連携は足し合わされ、元の値の合計で最大{linkCap}%まで。" : "同じ種類の連携は足し合わされ、合計の上限はない。";
-                    limitEn = linkCap > 0 ? $" (Links of the same kind add together, capped at {linkCap}% of the original values.)" : " (Links of the same kind add together, with no total cap.)";
+                    // Build.Compute が装備の連携の元値合計に使う上限と同じ値を示す。
+                    decimal linkCap = EquippedCap(link.Kind, link.Requires.Length);
+                    string capText = linkCap.ToString("0.##", CultureInfo.InvariantCulture);
+                    limitJa = linkCap > 0 ? $"同じ種類・条件の連携は足し合わされ、装備の元の値の合計で最大{capText}%まで（星の連携は別に加わる）。" : "同じ種類の連携は足し合わされ、合計の上限はない。";
+                    limitEn = linkCap > 0 ? $" (Links of the same kind and requirements add together; equipped links are capped at {capText}% of the original values, and star links add on top.)" : " (Links of the same kind add together, with no total cap.)";
                     break;
             }
-            return Loc.Japanese ? DescribeJa(link, isSatisfied, value) + limitJa : DescribeEn(link, isSatisfied, value) + limitEn;
+            string text = Loc.Japanese ? DescribeJa(link, isSatisfied, value) + limitJa : DescribeEn(link, isSatisfied, value) + limitEn;
+            float coefficient = 1f;
+            bool hasTraveler = false;
+            foreach (string target in link.Requires)
+                if (IsTraveler(target))
+                {
+                    hasTraveler = true;
+                    if (travelerCoefficient != null) coefficient = Math.Min(coefficient, travelerCoefficient(target));
+                }
+            if (hasTraveler)
+                text += CoopDistance.Description;
+            if (travelerCoefficient != null && coefficient > 0f && coefficient < 1f)
+                text = "<color=#8b9aaa>" + text + Loc.T($"（現在の効果量 {coefficient * 100f:0}%）", $" (current effectiveness {coefficient * 100f:0}%)") + "</color>";
+            return text;
         }
 
         private static string Mark(string target, Func<string, bool> isSatisfied)
@@ -365,10 +406,10 @@ namespace SodRpg.Core.Game
             string travelerClause = null;
             if (travelers.Count == 1)
                 travelerClause = itemClause == null
-                    ? "自分が" + travelers[0] + "であるか、10m以内に生存中の味方の" + travelers[0] + "がいる"
-                    : "自分が" + travelers[0] + "であるか、10m以内に生存中の味方の" + travelers[0] + "がいて";
+                    ? "自分が" + travelers[0] + "であるか、有効範囲内に生存中の味方の" + travelers[0] + "がいる"
+                    : "自分が" + travelers[0] + "であるか、有効範囲内に生存中の味方の" + travelers[0] + "がいて";
             else if (travelers.Count > 1)
-                travelerClause = JoinJa(travelers) + "のうち1人が自分で、残りの旅人が10m以内に生存している味方" + (itemClause == null ? "である" : "であり");
+                travelerClause = JoinJa(travelers) + "のうち1人が自分で、残りの旅人が有効範囲内に生存している味方" + (itemClause == null ? "である" : "であり");
             if (travelerClause == null) return itemClause + "とき";
             return itemClause == null ? travelerClause + "とき" : travelerClause + "、かつ" + itemClause + "とき";
         }
@@ -389,7 +430,7 @@ namespace SodRpg.Core.Game
                     return cond + "、最大HPが" + value + "%上がり、防御が" + value + "上がる。";
                 case LinkKind.MemoryHaste:
                     return cond + "、" + (MemoryCount(link) == 1 ? "その記憶を使うと、残りクールダウンが" : "条件に挙げた記憶のどれかを使うと、その記憶の残りクールダウンが")
-                        + "最大クールダウンの" + value + "%分短くなる。";
+                        + (EssenceCapsBalance.MemoryHasteEnabled ? value + "%短くなる。" : "最大クールダウンの" + value + "%分短くなる。");
                 case LinkKind.MemorySurge:
                     return cond + "、" + MemorySubjectJa(link) + "を使った後5秒間、攻撃力・魔力が" + value + "%上がる。";
                 default:
@@ -423,9 +464,9 @@ namespace SodRpg.Core.Game
             }
             var conditions = new List<string>();
             if (travelers.Count == 1)
-                conditions.Add("while playing " + travelers[0] + " or with a living allied " + travelers[0] + " within 10 m");
+                conditions.Add("while playing " + travelers[0] + " or with a living allied " + travelers[0] + " within the effective range");
             else if (travelers.Count > 1)
-                conditions.Add("while playing one of " + string.Join(" and ", travelers) + ", with the other required travelers alive and allied within 10 m");
+                conditions.Add("while playing one of " + string.Join(" and ", travelers) + ", with the other required travelers alive and allied within the effective range");
             if (items.Count > 0)
                 conditions.Add("with " + string.Join(" and ", items) + (items.Count > 1 ? " all" : "") + " equipped");
             return string.Join(", and ", conditions);
@@ -443,7 +484,8 @@ namespace SodRpg.Core.Game
                 case LinkKind.Guard:
                     return "Maximum health +" + value + "% and armor +" + value + ": " + cond + ".";
                 case LinkKind.MemoryHaste:
-                    return "Cooldown reduction +" + value + "%: " + cond + "; using " + MemorySubjectEn(link) + " removes " + value + "% of that memory's maximum cooldown from its remaining cooldown.";
+                    return "Cooldown reduction +" + value + "%: " + cond + "; using " + MemorySubjectEn(link) + " removes " + value
+                        + (EssenceCapsBalance.MemoryHasteEnabled ? "% of that memory's remaining cooldown." : "% of that memory's maximum cooldown from its remaining cooldown.");
                 case LinkKind.MemorySurge:
                     return "After using " + MemorySubjectEn(link) + ", Attack damage and ability power +" + value + "% for 5 seconds: " + cond + ".";
                 default:

@@ -25,7 +25,16 @@ namespace SodRpg.Core.Game
         }
 
         /// <summary>最後の書き込みの失敗（成功したら null に戻る）。</summary>
-        public string LastError { get; private set; }
+        public string LastError
+        {
+            get
+            {
+                Exception error;
+                lock (_lock) error = _lastError;
+                return error?.Message;
+            }
+        }
+        private Exception _lastError;
 
         /// <summary>ディスクへ書き終えた最新のリビジョン。</summary>
         public long WrittenRevision { get { lock (_lock) return _writtenRevision; } }
@@ -35,7 +44,34 @@ namespace SodRpg.Core.Game
 
         private long _writtenRevision;
         private long _attemptedRevision;
+        private long _failureSerial;
         private bool _failurePending;
+
+        /// <summary>書き込みの失敗が起きるごとに増える番号。LastError と違い、前より新しい失敗が起きたかの判定に使える。</summary>
+        public long FailureSerial { get { lock (_lock) return _failureSerial; } }
+
+        /// <summary>失敗文と番号、回復状態を同じ書き込み時点で読む。値型なので毎フレーム取得しても割り当てない。</summary>
+        public WriteState GetWriteState()
+        {
+            lock (_lock) return new WriteState(_lastError, _failureSerial, _failurePending, _writtenRevision);
+        }
+
+        public readonly struct WriteState
+        {
+            private readonly Exception _error;
+            public string LastError => _error?.Message;
+            public long FailureSerial { get; }
+            public bool HasPendingFailure { get; }
+            public long WrittenRevision { get; }
+
+            internal WriteState(Exception error, long failureSerial, bool hasPendingFailure, long writtenRevision)
+            {
+                _error = error;
+                FailureSerial = failureSerial;
+                HasPendingFailure = hasPendingFailure;
+                WrittenRevision = writtenRevision;
+            }
+        }
 
         /// <summary>
         /// 最後の書き込みが失敗したままか（成功すると false に戻る）。失敗したテキストは破棄されるので、
@@ -68,9 +104,13 @@ namespace SodRpg.Core.Game
 
         /// <summary>
         /// 外部の決済を始める前の準備保存。writer が無い（保存先が無効な）ときは書き込みが一度も行われないので、確定できたことにはならず false。
+        /// timeoutMs に負数を渡すと <see cref="ConfirmTimeoutMs"/> を使う。
         /// </summary>
-        public static bool ConfirmPrepared(AsyncProfileWriter writer, Profile p, int timeoutMs = 3000)
-            => writer != null && writer.EnqueueAndConfirm(p, timeoutMs);
+        public static bool ConfirmPrepared(AsyncProfileWriter writer, Profile p, int timeoutMs = -1)
+            => writer != null && writer.EnqueueAndConfirm(p, timeoutMs < 0 ? writer.ConfirmTimeoutMs : timeoutMs);
+
+        /// <summary>準備保存を待つ上限（ミリ秒）。テストでは書き込みを止めたまま待つので短くする。</summary>
+        internal int ConfirmTimeoutMs { get; set; } = 3000;
 
         /// <summary>指定リビジョン以降が書き終わったら true。その書き込みが失敗に終わった、または時間切れなら false。</summary>
         public bool WaitForRevision(long revision, int timeoutMs = 3000)
@@ -135,7 +175,7 @@ namespace SodRpg.Core.Game
                         _writtenRevision = rev;
                         _attemptedRevision = rev;
                         _failurePending = false;
-                        LastError = null;
+                        _lastError = null;
                         Monitor.PulseAll(_lock);
                     }
                 }
@@ -145,7 +185,8 @@ namespace SodRpg.Core.Game
                     {
                         _attemptedRevision = rev;
                         _failurePending = true;
-                        LastError = ex.Message;
+                        _failureSerial++;
+                        _lastError = ex;
                         Monitor.PulseAll(_lock);
                     }
                 }

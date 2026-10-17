@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <LangVersion>9.0</LangVersion>
+    <!-- Reuse Core's existing friend assembly access for the unchanged UI method. -->
+    <AssemblyName>SodRpg.Core.Tests</AssemblyName>
+    <Nullable>disable</Nullable>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../../src/SodRpg.Core/SodRpg.Core.csproj" />
+    <Compile Include="Program.cs" />
+    <Compile Include="SurfaceApi.cs" />
+    <Compile Include="$(IntermediateOutputPath)ProductionMethods.cs" />
+  </ItemGroup>
+  <Target Name="ExtractProductionMethods" BeforeTargets="CoreCompile">
+    <Exec Command="python3 &quot;$(MSBuildProjectDirectory)/extract.py&quot; &quot;$(MSBuildProjectDirectory)/$(IntermediateOutputPath)ProductionMethods.cs&quot;" />
+  </Target>
+</Project>

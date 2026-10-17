@@ -99,8 +99,12 @@ namespace SodRpg.Mod
         private readonly BuildTransferReceiver _appliedTransfer = new BuildTransferReceiver();
         public float PressureHealthMultiplier { get; private set; } = 1f;
         public float PressureDamageMultiplier { get; private set; } = 1f;
+        public float NightmarePressureHealthMultiplier { get; private set; }
+        /// <summary>ホストが悪夢化の抽選に掛ける装備の倍率。0は未受信（古い版のホスト）で、確保地点では最低値を表示する。</summary>
+        public float NightmareGearMultiplier { get; private set; }
         public string LoadNotes { get; private set; }
-        public string SaveError { get; private set; }
+        /// <summary>保存の失敗の表示文。例外は保持しておき、表示時の言語で Message を読む（#551）。</summary>
+        public string SaveError => _saveErrorCause != null ? _saveErrorCause.Message : _saveErrorText;
 
         public ClientSession(string saveDir, Action<GameEvent> notify)
         {
@@ -125,6 +129,7 @@ namespace SodRpg.Mod
             _onMonsterCue = OnMonsterCue;
             _onTradeResult = OnTradeResult;
             _onBountyReport = OnBountyReport;
+            _onBountyCounts = OnBountyCounts;
             _onChaos = pl => { if (pl != null && pl == DewPlayer.local) GameAction(BountyKind.ChaosSeeker); };
             _onBought = (h, _) => { if (IsLocal(h)) GameAction(BountyKind.Patron); };
             _onUpgraded = (h, _) => { if (IsLocal(h)) GameAction(BountyKind.Refiner); };
@@ -184,6 +189,9 @@ namespace SodRpg.Mod
                 case "unknown":
                 case "cancelled": return Loc.T("取引は成立していませんでした。ゴールドとドリームダストは減っていません。", "The trade did not go through. Your gold and Dream Dust were not spent.");
                 case "conflict": return Loc.T("取引できませんでした。取引の識別が重複しました。もう一度試してください。", "Trade failed: the trade id clashed. Please try again.");
+                case "dustcap": return Loc.T(
+                    "この世界で分解から得られる夢のダストは上限に達しました（次の世界で回復します）。",
+                    "Salvage Dream Dust from relics has reached this world's cap (it recovers in the next world).");
                 default: return Loc.T("取引できませんでした。もう一度試してください。", "Trade failed. Please try again.");
             }
         }
@@ -192,8 +200,21 @@ namespace SodRpg.Mod
 
         public bool CanEditTalents => Profile.Run == null || !InGame;
 
+        /// <summary>現在の世界の番号（0始まり）。本体の ZoneManager から読む（担当制の世界判定と同じ）。分からなければ -1。</summary>
+        internal int CurrentZoneIndex
+        {
+            get
+            {
+                try { return _zone != null ? _zone.currentZoneIndex : -1; }
+                catch (Exception) { return -1; }
+            }
+        }
+
+        public long ViewRevision { get; private set; }
+
         public void MarkDirty(bool buildChanged)
         {
+            ViewRevision++;
             _dirty = true;
             if (buildChanged)
             {
@@ -240,8 +261,8 @@ namespace SodRpg.Mod
         {
             if (_tickSteps == null)
             {
-                _tickSteps = new Action[] { TickGemSlotHudProbe, TickProfileSlots, Wire, TickInfinitySettings, UpdateVariantVisuals, UpdateMonsterCues, TickBossDisplay, TrackRun, TickKillClassification, TickRunChoices, TickCurseResync, TickSalvageExpiry, TickSatchelOverflow, SendBuildIfNeeded, TickHello, TickPeriodicSave, TickInterruptedRelics, TickDirectStash, TickKillSync, TickCoopTrade, TickRoomVisualSweep };
-                _tickStepNames = new[] { "gem slot HUD probe", "profile slots", "wire", "infinity settings", "variant visuals", "monster cues", "boss effects", "track run", "kill classification", "run choices", "curse resync", "salvage expiry", "satchel overflow", "send build", "hello", "periodic save", "interrupted relic save", "direct stash save", "kill sync", "coop trade", "room visual sweep" };
+                _tickSteps = new Action[] { TickGemSlotHudProbe, TickProfileSlots, Wire, TickInfinitySettings, UpdateVariantVisuals, UpdateMonsterCues, TickBossDisplay, TrackRun, TickKillClassification, TickRunChoices, TickCurseResync, TickSkillLockResync, TickSalvageExpiry, TickSatchelOverflow, TickSalvageDustCap, SendBuildIfNeeded, TickHello, TickPeriodicSave, TickInterruptedRelics, TickDirectStash, TickKillSync, TickCoopTrade, TickRoomVisualSweep };
+                _tickStepNames = new[] { "gem slot HUD probe", "profile slots", "wire", "infinity settings", "variant visuals", "monster cues", "boss effects", "track run", "kill classification", "run choices", "curse resync", "skill lock watchdog", "salvage expiry", "satchel overflow", "salvage dust cap", "send build", "hello", "periodic save", "interrupted relic save", "direct stash save", "kill sync", "coop trade", "room visual sweep" };
                 _tickStepNextLog = new float[_tickSteps.Length];
             }
             for (int i = 0; i < _tickSteps.Length; i++)
@@ -261,6 +282,8 @@ namespace SodRpg.Mod
                 }
             }
         }
+
+        private readonly HashSet<string> _reservedSalvageScratch = new HashSet<string>(StringComparer.Ordinal);
 
         private void TickSalvageExpiry()
         {
@@ -283,8 +306,16 @@ namespace SodRpg.Mod
             }
             if (Profile.PendingSalvage.Count > 0)
             {
-                var returned = Rules.RestorePendingSalvage(Profile, keepUids: _trades.ReservedSalvageUids());
-                if (returned.Count > 0) { Emit(returned); SaveNow(); }
+                // 毎フレーム通るので、予約中の集合は使い回し、戻す品があるときだけ戻し処理を呼ぶ。
+                _trades.ReservedSalvageUids(_reservedSalvageScratch);
+                bool anyReturn = false;
+                foreach (var pending in Profile.PendingSalvage)
+                    if (!_reservedSalvageScratch.Contains(pending.Relic.Uid)) { anyReturn = true; break; }
+                if (anyReturn)
+                {
+                    var returned = Rules.RestorePendingSalvage(Profile, keepUids: _reservedSalvageScratch);
+                    if (returned.Count > 0) { Emit(returned); SaveNow(); }
+                }
             }
             if (_hostLedgerId == 0) SendLedgerProbe();
             SendDueTradeQueries();
@@ -334,24 +365,81 @@ namespace SodRpg.Mod
         }
 
         private bool _saveErrorFromWriteFailure;
+        private string _writeFailureText, _writeFailureSource;
+        private bool _writeFailureJapanese;
+        // SaveNow の catch で拾った例外と、それ以外の経路（固定文・書き込み失敗・プロフィール切替）の表示文。
+        // 例外は Message を読むたびに言語が変わるので、文字列には固定しない（#551）。
+        private Exception _saveErrorCause;
+        private string _saveErrorText;
+        // 既知の書き込み失敗は writer の同一性と FailureSerial の組で追う。
+        // プロフィール切替後の新しい writer は同じ番号でも新しい失敗として扱う（#551）。
+        private AsyncProfileWriter _writeFailureKnownWriter;
+        private long _writeFailureKnownSerial;
+
+        private bool IsNewWriteFailure(AsyncProfileWriter writer, long failureSerial) =>
+            !ReferenceEquals(_writeFailureKnownWriter, writer) || _writeFailureKnownSerial != failureSerial;
+
+        private void RememberWriteFailureState(AsyncProfileWriter writer, long failureSerial)
+        {
+            _writeFailureKnownWriter = writer;
+            _writeFailureKnownSerial = failureSerial;
+        }
+
+        private void SetSaveErrorText(string text)
+        {
+            _saveErrorText = text;
+            _saveErrorCause = null;
+        }
+
+        private void SetSaveErrorCause(Exception cause)
+        {
+            // この例外より前に完了していた未表示の writer 失敗は、次の Tick で例外を上書きさせない。
+            var writer = _writer;
+            RememberWriteFailureState(writer, writer?.FailureSerial ?? 0);
+            _saveErrorCause = cause;
+            _saveErrorText = null;
+        }
+
+        private void ClearSaveError()
+        {
+            _saveErrorText = null;
+            _saveErrorCause = null;
+        }
 
         private void TickPeriodicSave()
         {
+            var writer = _writer;
+            var state = writer != null ? writer.GetWriteState() : default;
             // バックグラウンド書き込みに失敗したままの保存がある：その内容は破棄されているので、
             // 「保存が必要」を立て直して定期保存で書き直す。失敗が続く間は画面にも出す（#72）。
-            if (_writer != null && _writer.HasPendingFailure)
+            if (state.HasPendingFailure)
             {
                 _dirty = true;
                 _allocationSavePending = true;
-                _saveErrorFromWriteFailure = true;
-                SaveError = Loc.T("保存に失敗しました。自動で再試行します: ", "Saving failed; retrying automatically: ") + _writer.LastError;
+                // 今回の保存で出た例外など、別経路の理由を過去の書き込み失敗で隠さない。
+                // ただし前より新しい書き込み失敗が起きたときは、古い例外文に代わってこちらを表示する（#551）。
+                long failureSerial = state.FailureSerial;
+                if (SaveError == null || _saveErrorFromWriteFailure || IsNewWriteFailure(writer, failureSerial))
+                {
+                    string source = state.LastError;
+                    bool japanese = Loc.Japanese;
+                    if (_writeFailureText == null || _writeFailureSource != source || _writeFailureJapanese != japanese)
+                    {
+                        _writeFailureSource = source;
+                        _writeFailureJapanese = japanese;
+                        _writeFailureText = (japanese ? "保存に失敗しました。自動で再試行します: " : "Saving failed; retrying automatically: ") + source;
+                    }
+                    SetSaveErrorText(_writeFailureText);
+                    _saveErrorFromWriteFailure = true;
+                    RememberWriteFailureState(writer, failureSerial);
+                }
                 float retry = Time.unscaledTime + 5f;
                 if (_nextSave > retry) _nextSave = retry;
             }
-            else if (_saveErrorFromWriteFailure && SaveError != null && _writer != null && _writer.WrittenRevision > 0)
+            else if (_saveErrorFromWriteFailure && SaveError != null && state.WrittenRevision > 0)
             {
                 // 書き込みが成功し直したので、この経路の失敗表示だけを消す（別の経路のエラーは残す）。
-                SaveError = null;
+                ClearSaveError();
                 _saveErrorFromWriteFailure = false;
             }
             if (_dirty && Time.unscaledTime >= _nextSave) SaveNow();
@@ -455,6 +543,7 @@ namespace SodRpg.Mod
                     SaveNow();
                 }
                 Nightmare.Clear();
+                EnemyOwners.Clear();
                 ClearVariants();
                 ClearMonsterCues();
                 ClearBossDisplay();
@@ -465,6 +554,8 @@ namespace SodRpg.Mod
                 ResetRunGrowthDisplay();
                 _appliedTransfer.Reset();
                 PressureHealthMultiplier = PressureDamageMultiplier = 1f;
+                NightmareGearMultiplier = 0f;
+                NightmarePressureHealthMultiplier = 0f;
                 if (!LobbyReturnPending) ResetRunChoiceConnection();
                 ResetMonsterAuthorityConnection();
                 _sentDreamLevel = -1;
@@ -552,6 +643,8 @@ namespace SodRpg.Mod
             HostSummary = null;
             _appliedTransfer.Reset();
             PressureHealthMultiplier = PressureDamageMultiplier = 1f;
+            NightmareGearMultiplier = 0f;
+            NightmarePressureHealthMultiplier = 0f;
             ResetRunChoiceConnection(resetHistory: true);
             ResetMonsterAuthorityConnection();
             _pendingRunRewards.Clear();
@@ -559,6 +652,7 @@ namespace SodRpg.Mod
             _sentDreamLevel = -1;
             _buildDirty = true;
             Nightmare.Clear();
+            EnemyOwners.Clear();
             ClearVariants();
             ClearMonsterCues();
             ClearBossDisplay();
@@ -620,7 +714,11 @@ namespace SodRpg.Mod
             DiagnoseExpedition("client-begin-before");
             int pacts = Profile.Run != null && Profile.Run.RunId != runId ? Profile.Run.Pacts.Count : 0;
             ActiveRunId = runId;
+            // The melee-classification log set is static and survives MOD reloads; a fresh run logs again (#542).
+            TravelerCombatNative.ResetReporting();
             PressureHealthMultiplier = PressureDamageMultiplier = 1f;
+            NightmareGearMultiplier = 0f;
+            NightmarePressureHealthMultiplier = 0f;
             Emit(Rules.BeginRun(Profile, runId, DailyDream.Today, ReadLimboDepth(), _trades.ReservedSalvageUids(), heroKey: HeroKeyOf(LocalHero),
                 dreamDepth: CanChooseRunRules ? Profile.LastDreamDepth : _receivedRunChoices.Depth));
             InitializeInfinityRun();
@@ -680,7 +778,7 @@ namespace SodRpg.Mod
             if (Onboarding.BackfillStarterCodex(Profile) > 0) _dirty = true; // 以前の配布で銘品が図鑑に載らなかった分を補う
             // v1.20：以前に+3・+5にした遺物へ、強化の節目を一度だけ付ける。
             int milestones = Rules.ApplyEnhanceMilestones(Profile);
-            if (milestones > 0) Emit(new GameEvent(EventKind.Info, Loc.T($"強化の節目を、これまでに+{Content.EnhanceMilestoneFirst}・+{Content.EnhanceMilestoneSecond}にした遺物{milestones}個に付けました（特性や固有効果が増えています）。", $"Enhancement milestones were applied to {milestones} relic(s) you had already enhanced.")));
+            if (milestones > 0) Emit(new GameEvent(EventKind.Info, Loc.T($"強化の節目をこれまでに+{Content.EnhanceMilestoneFirst}・+{Content.EnhanceMilestoneSecond}にした遺物{milestones}個に付けました（特性や固有効果が増えています）。", $"Enhancement milestones were applied to {milestones} relic(s) you had already enhanced.")));
             if (newSlotStarters.Count > 0)
             {
                 Emit(newSlotStarters);
@@ -796,6 +894,14 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
                     DiagnoseExpedition("client-concluded-lobby-return");
                     return;
                 }
+                // 純白の夢は Primus の撃破で精算を終えている（ホストもゲストも）。演出の後に届く本体の終了通知で
+                // 精算済みの遠征を保留に戻すと、保存にも残ってプロフィールの切り替えが次の遠征まで止まっていた。
+                string concludedRunId = NetworkedManagerBase<GameManager>.softInstance?.runId;
+                if (!string.IsNullOrEmpty(concludedRunId) && concludedRunId == _completedRunId)
+                {
+                    DiagnoseExpedition("client-concluded-already-settled");
+                    return;
+                }
                 if (ObserveInfinityConclusion(result))
                 {
                     DiagnoseExpedition("client-concluded-infinity-handled");
@@ -903,6 +1009,11 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
                 return Loc.T("取引の記録を保存できなかったため、取引は行っていません。保存先を確認してからもう一度お試しください。",
                     "The trade was not made because its record could not be saved. Check the save location and try again.");
             }
+            return SendDurableTrade(t);
+        }
+
+        private string SendDurableTrade(PendingTrade t)
+        {
             bool sendStarted = false;
             try
             {
@@ -979,14 +1090,21 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
                     Emit(new GameEvent(EventKind.Warning, Loc.T(
                         "取引の結果をホストが確認できません（本体の通貨処理で異常が起きたか、ホストが再読み込みされたか、接続が替わった可能性があります）。対価も返却も確定せず保留しています。",
                         "The host cannot confirm the result of a trade (native currency processing may have failed, the host may have reloaded, or the connection may have changed). The reward and the return are both on hold.")));
-                    SaveNow();
+                    if (t.Kind == TradeKind.SalvageForDust) DeferSave();
+                    else SaveNow();
                     return;
                 }
                 if (outcome == TradeOutcome.Failed)
                 {
                     RestoreSalvageTrade(t);
-                    Emit(new GameEvent(EventKind.Warning, TradeFailText(code)));
-                    SaveNow();
+                    if (code == "dustcap") NotifySalvageDustCapReached(); // まとめて分解で大量に断られても案内は1回にまとめる
+                    else Emit(new GameEvent(EventKind.Warning, TradeFailText(code)));
+                    if (t.Kind == TradeKind.SalvageForDust)
+                    {
+                        Profile.PendingTrades.RemoveAll(pending => pending.Token == t.Token);
+                        DeferSave();
+                    }
+                    else SaveNow();
                     return;
                 }
                 switch (t.Kind)
@@ -999,9 +1117,16 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
                         break;
                     case TradeKind.SalvageForDust:
                         if (Rules.SalvageUnsecured(Profile, t.Uid) != null)
-                            Emit(new GameEvent(EventKind.Info, Loc.T($"分解してドリームダスト+{t.EarnDust}", $"Salvaged for {t.EarnDust} Dream Dust")));
-                        break;
+                        {
+                            // 上限の残りに合わせて削られた分も、実際にもらった量で案内する。
+                            long paid = CountSalvageDustPaid(t.EarnDust);
+                            Emit(new GameEvent(EventKind.Info, Loc.T($"分解してドリームダスト+{paid}", $"Salvaged for {paid} Dream Dust")));
+                        }
+                        Profile.PendingTrades.RemoveAll(pending => pending.Token == t.Token);
+                        DeferSave();
+                        return;
                     case TradeKind.SatchelOverflowDust:
+                        CountSalvageDustPaid(t.EarnDust);
                         Emit(Rules.CompleteSatchelOverflowDust(t));
                         // 成功のプロフィール側の反映は取引の削除だけ。未保存のまま落ちても、領収書の照会で
                         // 同じ結果に一度だけ戻る（通貨はホストが持つ）。保存は定期保存へまとめて、あふれの
@@ -1049,36 +1174,61 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
         {
             sent = 0;
             remaining = 0;
+            var prepared = new List<PendingTrade>();
+            bool durable = false;
+            int attempted = 0;
             try
             {
                 var run = Profile.Run ?? throw new InvalidOperationException(Loc.T("遠征中のみ使えます。", "Only during an expedition."));
-                var targets = new List<Relic>();
-                for (int i = 0; i < run.Satchel.Count; i++)
-                    if (CanBulkSalvageUnsecured(run.Satchel[i])) targets.Add(run.Satchel[i]);
-                remaining = targets.Count;
                 string blocked = TradeUnavailable();
                 if (blocked != null) return blocked;
-                int limit = Math.Min(30, TradeLedger.MaxHeld - _trades.ManualHeldCount);
-                for (int i = 0; i < targets.Count && sent < limit; i++)
+                int limit = Math.Min(30, Math.Min(TradeLedger.MaxHeld - _trades.ManualHeldCount,
+                    TradeLedger.MaxRestored - _trades.HeldCount));
+                long ledgerId = _hostLedgerId;
+                int scale = HostAuthority.SalvageScaleFor(DewPlayer.local);
+                for (int i = 0; i < run.Satchel.Count; i++)
                 {
-                    var r = targets[i];
-                    if (!run.Satchel.Contains(r) || !CanBulkSalvageUnsecured(r))
-                    {
-                        remaining--;
-                        continue;
-                    }
-                    blocked = TradeUnavailable();
-                    if (blocked != null) return blocked;
-                    string err = SendTrade(_trades.BeginSalvage(r, Time.unscaledTime, HostAuthority.SalvageScaleFor(DewPlayer.local)));
-                    if (err != null) return err;
-                    sent++;
-                    remaining--;
+                    var relic = run.Satchel[i];
+                    if (!CanBulkSalvageUnsecured(relic)) continue;
+                    remaining++;
+                    if (prepared.Count >= limit) continue;
+                    var trade = _trades.BeginSalvage(relic, Time.unscaledTime, scale);
+                    prepared.Add(trade);
+                    trade.LedgerId = ledgerId;
+                    // Validate the whole batch before persisting any host-side obligation.
+                    TradeWire.Encode(trade, out _, out _, out _);
                 }
-                return null;
+                if (prepared.Count == 0) return null;
+                if (!SaveNow(true))
+                    return Loc.T("取引の記録を保存できなかったため、取引は行っていません。保存先を確認してからもう一度お試しください。",
+                        "The trade was not made because its record could not be saved. Check the save location and try again.");
+                durable = true;
+                string firstError = null;
+                for (int i = 0; i < prepared.Count; i++)
+                {
+                    // A transport exception may follow delivery. Never refund an attempted send.
+                    attempted++;
+                    string error = SendDurableTrade(prepared[i]);
+                    if (error == null) { sent++; remaining--; }
+                    else if (firstError == null) firstError = error;
+                }
+                return firstError;
             }
             catch (Exception ex)
             {
                 return ex.Message;
+            }
+            finally
+            {
+                int rollbackFrom = durable ? attempted : 0;
+                for (int i = rollbackFrom; i < prepared.Count; i++)
+                    RestoreSalvageTrade(_trades.Complete(prepared[i].Token, false));
+                if (rollbackFrom < prepared.Count)
+                {
+                    Profile.PendingTrades.Clear();
+                    Profile.PendingTrades.AddRange(_trades.Snapshot());
+                    SaveNow();
+                }
             }
         }
 
@@ -1086,15 +1236,20 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
         {
             if (msg == null || !ObserveMonsterAuthority(msg.authorityGeneration)) return;
             Protocol.WarnMismatch(msg.protocol, nameof(DreamforgeNightmareMsg));
+            ReceiveDynamicDifficulty(msg.dynamicDifficulty, msg.dynamicRevision);
+            ReceiveDynamicStatus(msg.dynamicStatus);
+            if (msg.netId == 0) return;
             if (msg.removed)
             {
                 _monsterAuthority.Remove(msg.netId);
+                EnemyOwners.Remove(msg.netId);
                 Nightmare.Remove(msg.netId);
                 RemoveVariant(msg.netId);
                 RemoveMonsterCue(msg.netId);
                 return;
             }
             if (!_monsterAuthority.Set(msg.authorityGeneration, msg.netId, (NightmareAffix)msg.affixes, null)) return;
+            ReceiveMonsterOwnership(msg.netId, msg.ownerParticipantId, msg.ownershipRevision, msg.ownershipProtected, msg.ownerPlayerSlot, msg.bossShares);
             var a = Nightmares.Sanitize(msg.affixes);
             if (a == NightmareAffix.None)
             {
@@ -1111,6 +1266,8 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
             if (msg == null || !ObserveMonsterAuthority(msg.authorityGeneration)
                 || !_monsterAuthority.Set(msg.authorityGeneration, msg.netId, NightmareAffix.None, msg.variantId)) return;
             Protocol.WarnMismatch(msg.protocol, nameof(DreamforgeVariantMsg));
+            ReceiveDynamicDifficulty(msg.dynamicDifficulty, msg.dynamicRevision);
+            ReceiveMonsterOwnership(msg.netId, msg.ownerParticipantId, msg.ownershipRevision, msg.ownershipProtected, msg.ownerPlayerSlot, msg.bossShares);
             var def = Variants.Get(msg.variantId);
             if (def == null)
             {
@@ -1256,6 +1413,9 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
             Protocol.WarnMismatch(msg.protocol, nameof(DreamforgePressureMsg));
             PressureHealthMultiplier = msg.healthMultiplier;
             PressureDamageMultiplier = msg.damageMultiplier;
+            NightmarePressureHealthMultiplier = msg.nightmarePressureHealthMultiplier >= 1f && !float.IsInfinity(msg.nightmarePressureHealthMultiplier)
+                ? msg.nightmarePressureHealthMultiplier : 0f;
+            NightmareGearMultiplier = msg.nightmareGearMultiplier >= 1f && !float.IsInfinity(msg.nightmareGearMultiplier) ? msg.nightmareGearMultiplier : 0f;
             ReceiveRunChoices(msg.runChoices);
             HostConfirmed = true;
             DiagnosePressureReceipt();
@@ -1331,13 +1491,13 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
             return null;
         }
 
-        private string _curseSyncedKey = "";
+        private (string Run, int Hero, int Authority) _curseSyncedKey;
 
-        private string CurseKey()
+        private (string Run, int Hero, int Authority) CurseKey()
         {
             var hero = LocalHero;
-            if (hero == null || _clientRpcOn == null || !NetworkClient.active || !RunActive) return "";
-            return PactCurseSync.Key(ActiveRunId, hero.GetInstanceID(), _clientRpcOn.GetInstanceID());
+            if (hero == null || _clientRpcOn == null || !NetworkClient.active || !RunActive) return default;
+            return (ActiveRunId, hero.GetInstanceID(), _clientRpcOn.GetInstanceID());
         }
 
         /// <summary>再起動・ホスト権限の交代・復活のあとも契約が残っていれば、呪いを1回だけ付け直してもらう。</summary>
@@ -1345,8 +1505,8 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
         {
             var run = Profile.Run;
             if (run == null || run.Pacts.Count == 0 || LocalHero == null || !LocalHero.isActive) return;
-            string key = CurseKey();
-            if (!PactCurseSync.ShouldResend(run.Pacts.Count, _curseSyncedKey, key)) return;
+            var key = CurseKey();
+            if (string.IsNullOrEmpty(key.Run) || key == _curseSyncedKey) return;
             _curseSyncedKey = key;
             for (int i = 0; i < run.Pacts.Count; i++)
             {
@@ -1376,6 +1536,7 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
         private Build _buildCache;
         private string _buildCacheHero;
         private int _buildCacheFrame = -1;
+        private float _buildCacheTime;
 
         /// <summary>今回の強さ（同じフレーム・同じキャラなら使い回す。OnGUI は1フレームに何度も呼ばれるため）。</summary>
         public Build CurrentBuild(string heroKey)
@@ -1385,7 +1546,24 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
             _buildCache = Build.Compute(Profile, heroKey, Profile.Run?.Heat ?? 0, Profile.Run?.Pacts, Profile.Run?.DailyId ?? 0);
             _buildCacheHero = heroKey;
             _buildCacheFrame = frame;
+            _buildCacheTime = Time.unscaledTime;
             return _buildCache;
+        }
+
+        private const float DisplayBuildReuseSeconds = 0.25f;
+
+        /// <summary>
+        /// 画面表示用の強さ。装備・鍛冶の画面は毎フレーム描くが、強さの計算は星の多い旅人で1回0.3ms・5KB前後かかる。
+        /// 変更時の作り直し（_buildCacheFrame = -1）がない間は、実際の計算時刻から0.25秒まで使い回す。
+        /// MarkDirty を通らない Profile の変化（Heat・Pacts など）は、表示への反映が最大0.25秒遅れる。
+        /// 表示専用のキャッシュであり、ホストへ送る強さは CurrentBuild を使う。
+        /// </summary>
+        public Build DisplayBuild(string heroKey)
+        {
+            float now = Time.unscaledTime;
+            if (_buildCache != null && _buildCacheFrame >= 0 && _buildCacheHero == heroKey && now - _buildCacheTime < DisplayBuildReuseSeconds)
+                return _buildCache;
+            return CurrentBuild(heroKey);
         }
 
         private string _lastSentBuild;
@@ -1412,9 +1590,12 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
                 _allocationBuildDue = 0;
             }
             float now = Time.unscaledTime;
+            string heroKey = HeroKeyOf(hero);
+            // 通知はこの送信経路で、送信間隔・同一ビルドの抑制に関係なく毎tick確認する。
+            // LocalHero・RPC・接続と復元完了が前提。ロビー等でこの経路を通らない間は新しい警告を出さない。
+            RefreshForbiddenGearNotice(heroKey, now);
             if (Profile.Run == null && _buildDirty && now < _allocationBuildDue && !_monsterAuthority.BuildResendRequired) return;
             if (!_buildDirty && !_monsterAuthority.BuildResendRequired && now < _nextBuildSend) return;
-            string heroKey = HeroKeyOf(hero);
             ProbeBuildInputCapability(heroKey);
             var submissionProfile = NetworkServer.active || _hostBuildInputCapability
                 ? Profile : HostBuildValidation.CompatibleProfile(Profile, heroKey);
@@ -1424,18 +1605,7 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
             if (!NetworkServer.active && !_hostForbiddenInput)
             {
                 var withoutForbidden = HostBuildValidation.WithoutUnsupportedGear(submissionProfile, heroKey);
-                if (!ReferenceEquals(withoutForbidden, submissionProfile))
-                {
-                    submissionProfile = withoutForbidden;
-                    if (!_forbiddenGearStripNotice)
-                    {
-                        _forbiddenGearStripNotice = true;
-                        ForbiddenGearHostNotice = Loc.T(
-                            "ホストのMODが禁忌の装備（#415）に対応していません。このセッションでは禁忌化した遺物と、上限を超えて再調律した遺物は適用されません。",
-                            "The host's mod predates forbidden gear (#415); forbidden and over-retuned relics are not applied in this session.");
-                        Log.Warn("Host MOD predates forbidden gear (#415); forbidden and over-retuned relics are not applied in this session.");
-                    }
-                }
+                submissionProfile = withoutForbidden;
             }
             if (!NetworkServer.active && !_hostFusionInput)
                 submissionProfile = HostBuildValidation.WithoutFusion(submissionProfile, heroKey);
@@ -1459,6 +1629,24 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
             _monsterAuthority.BuildSent();
             _sentDreamLevel = Profile.DreamLevel;
             _nextBuildSend = now + (HostConfirmed ? 30f : 5f);
+        }
+
+        private void RefreshForbiddenGearNotice(string heroKey, float now)
+        {
+            if (NetworkServer.active || _hostForbiddenInput || _forbiddenGearStripNotice) return;
+            // 対応の返事を待つ間は通知せず、未対応の返事か20秒の期限を待つ。
+            if (!_hostBuildInputCapability && (_helloFirstSent < 0 || now - _helloFirstSent <= 20f)) return;
+            foreach (string uid in Profile.Hero(heroKey).Equipped)
+            {
+                var relic = Profile.FindStash(uid);
+                if (!HostBuildValidation.RequiresForbiddenGearSupport(relic)) continue;
+                _forbiddenGearStripNotice = true;
+                ForbiddenGearHostNotice = Loc.T(
+                    "ホストのMODが禁忌の装備（#415）に対応していません。このセッションでは禁忌化した遺物と、上限を超えて再調律した遺物は適用されません。",
+                    "The host's mod predates forbidden gear (#415); forbidden and over-retuned relics are not applied in this session.");
+                Log.Warn("Host MOD predates forbidden gear (#415); forbidden and over-retuned relics are not applied in this session.");
+                break;
+            }
         }
 
         /// <summary>One local grant and one notice/log per tick; save barriers settle credit without consuming this notice.</summary>
@@ -1506,12 +1694,13 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
             Profile.PendingTrades.AddRange(_trades.Snapshot());
             _dirty = false;
             _nextSave = Time.unscaledTime + 30f;
+            _lastKillProfileSave = Time.unscaledTime;
             if (_store == null)
             {
                 // 保存先が無効（初期のプロフィール切替に失敗した場合など）。確認付きの保存は書き込みが行われないので失敗とし、取引は送らせない。
                 if (confirm)
                 {
-                    SaveError = Loc.T("保存先が無効です。", "Saving is unavailable.");
+                    SetSaveErrorText(Loc.T("保存先が無効です。", "Saving is unavailable."));
                     _dirty = true;
                 }
                 return !confirm; // 確認なしの保存は従来どおり何もしない
@@ -1520,7 +1709,7 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
             if (_infinityPendingSaveRun == NetworkedManagerBase<GameManager>.softInstance?.runId)
                 _infinityPendingSaveWriter = _writer;
             var sw = System.Diagnostics.Stopwatch.StartNew();
-            bool ok = true;
+            bool ok = true, threw = false;
             try
             {
                 if (confirm) ok = AsyncProfileWriter.ConfirmPrepared(_writer, Profile);
@@ -1529,15 +1718,35 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
             }
             catch (Exception ex)
             {
-                SaveError = ex.Message;
+                // 文字列で固定せず例外を持っておき、表示のたびに Message を読む（言語切替にも追従、#551）。
+                SetSaveErrorCause(ex);
+                _saveErrorFromWriteFailure = false;
                 _dirty = true;
                 ok = false;
-                Log.Error("Save failed: " + ex.Message);
+                threw = true;
+                Log.Error("Save failed: " + ProfileStore.EnglishMessage(ex));
             }
             _saveMsTotal += sw.Elapsed.TotalMilliseconds;
             _saveCount++;
-            if (_writer.LastError != null) SaveError = _writer.LastError;
-            else if (SaveError != null && _writer.WrittenRevision > 0) SaveError = null;
+            // 過去の成功や失敗より、この呼び出しで出た例外を優先する。
+            if (!threw)
+            {
+                var state = _writer.GetWriteState();
+                string writeError = state.LastError;
+                long failureSerial = state.FailureSerial;
+                // 前より新しい書き込み失敗なら、古い例外の表示に代わって書き込み失敗を出す（#551）。
+                if (writeError != null && (SaveError == null || _saveErrorFromWriteFailure || IsNewWriteFailure(_writer, failureSerial)))
+                {
+                    RememberWriteFailureState(_writer, failureSerial);
+                    SetSaveErrorText(writeError);
+                    _saveErrorFromWriteFailure = true;
+                }
+                else if (writeError == null && SaveError != null && state.WrittenRevision > 0)
+                {
+                    ClearSaveError();
+                    _saveErrorFromWriteFailure = false;
+                }
+            }
             if (!ok) _dirty = true;
             else _allocationSavePending = false;
             return ok;

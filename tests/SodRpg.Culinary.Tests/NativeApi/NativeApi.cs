@@ -6,6 +6,11 @@ using System.Reflection;
 // tests invoke the real production callbacks, not Harmony detours or Unity code.
 public class StackedStatusEffect
 {
+    // UnityEngine.Object surface the MOD reads for diagnostics (actor name, instance id).
+    public string name;
+    private static int _instanceCounter;
+    public readonly int instanceId = System.Threading.Interlocked.Increment(ref _instanceCounter);
+    public int GetInstanceID() => instanceId;
     public int maxStack, stack, RemoveCalls, LastRemoved;
     public void OnCreate() { }
     public void SetStack(int value) { stack = Math.Min(maxStack, Math.Max(0, value)); }

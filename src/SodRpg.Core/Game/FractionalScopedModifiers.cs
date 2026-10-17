@@ -426,7 +426,9 @@ namespace SodRpg.Core.Game
             string memory = Links.ItemName(memoryId);
             return kind == LinkKind.MemoryDamage
                 ? Loc.T(memory + "のダメージが" + value + "%増える。", "Damage dealt by " + memory + " +" + value + "%")
-                : Loc.T(memory + "を使うと、その記憶の残りクールダウンが最大クールダウンの" + value + "%分短くなる。", "Cooldown reduction +" + value + "%: using " + memory + " removes " + value + "% of its maximum cooldown from its remaining cooldown");
+                : EssenceCapsBalance.MemoryHasteEnabled
+                    ? Loc.T(memory + "を使うと、その記憶の残りクールダウンが" + value + "%短くなる。", "Cooldown reduction +" + value + "%: using " + memory + " removes " + value + "% of its remaining cooldown") + MemoryHasteCapDescription()
+                    : Loc.T(memory + "を使うと、その記憶の残りクールダウンが最大クールダウンの" + value + "%分短くなる。", "Cooldown reduction +" + value + "%: using " + memory + " removes " + value + "% of its maximum cooldown from its remaining cooldown");
         }
 
         public static string Describe(NativeMemoryModifierDef modifier)
@@ -437,8 +439,18 @@ namespace SodRpg.Core.Game
             string memory = Links.ItemName(modifier.Memory);
             return modifier.Kind == LinkKind.MemoryDamage
                 ? Loc.T(memory + "のダメージが" + value + "%増える。星による増加は最大" + maximum + "%まで。", "Damage dealt by " + memory + " +" + value + "% (star cap " + maximum + "%)")
-                : Loc.T(memory + "を使うと、その記憶の残りクールダウンが最大クールダウンの" + value + "%分短くなる。星による短縮は最大" + maximum + "%まで。", "Cooldown reduction +" + value + "%: using " + memory + " removes " + value + "% of its maximum cooldown from its remaining cooldown (star cap " + maximum + "%)");
+                : EssenceCapsBalance.MemoryHasteEnabled
+                    ? Loc.T(memory + "を使うと、その記憶の残りクールダウンが" + value + "%短くなる。星による短縮は最大" + maximum + "%まで。", "Cooldown reduction +" + value + "%: using " + memory + " removes " + value + "% of its remaining cooldown (star cap " + maximum + "%)") + MemoryHasteCapDescription()
+                    : Loc.T(memory + "を使うと、その記憶の残りクールダウンが最大クールダウンの" + value + "%分短くなる。星による短縮は最大" + maximum + "%まで。", "Cooldown reduction +" + value + "%: using " + memory + " removes " + value + "% of its maximum cooldown from its remaining cooldown (star cap " + maximum + "%)");
         }
+
+        private static string MemoryHasteCapDescription()
+        {
+            string maximum = EssenceCapsBalance.MemoryHasteMaxRemainingCooldownPercent.ToString("0.##", CultureInfo.InvariantCulture);
+            return Loc.T("連携と星を合計して、1回の発動で短縮できる量は残りクールダウンの最大" + maximum + "%まで。",
+                " (Combined with links, removes at most " + maximum + "% of remaining cooldown per cast.)");
+        }
+
         public static void ValidateTalent(TalentDef talent)
         {
             if (talent.Gimmick != null && talent.Gimmick.ValuePrecise % 10000 != 0)
@@ -500,9 +512,17 @@ namespace SodRpg.Core.Game
         {
             bool memory = modifier.ScopeKind == ScopeKind.Receiver
                 ? (channel ?? entry.Channel)?.ReceiverMemory == modifier.ScopeMemory : entry.Memory == modifier.ScopeMemory;
-            return memory && (modifier.TargetEffectIds.Length == 0 || modifier.TargetEffectIds.Contains(entry.StarId)
-                || entry.ContributorIds.Any(id => modifier.TargetEffectIds.Contains(id)))
-                && (modifier.TargetEffects.Length == 0 || modifier.TargetEffects.Contains(entry.Def.Effect));
+            return memory && (modifier.TargetEffectIds.Length == 0 || Array.IndexOf(modifier.TargetEffectIds, entry.StarId) >= 0
+                || AnyTargeted(modifier.TargetEffectIds, entry.ContributorIds))
+                && (modifier.TargetEffects.Length == 0 || Array.IndexOf(modifier.TargetEffects, entry.Def.Effect) >= 0);
+        }
+
+        // ビルド計算の内側のループで呼ばれるので、LINQ とクロージャを使わずに調べる。
+        private static bool AnyTargeted(string[] targets, string[] contributors)
+        {
+            foreach (string id in contributors)
+                if (Array.IndexOf(targets, id) >= 0) return true;
+            return false;
         }
         public static void ValidateTree(IReadOnlyList<TalentDef> tree)
         {
@@ -600,6 +620,11 @@ namespace SodRpg.Core.Game
                 entries.Add(entry);
             }
             build.Gimmicks.Clear();
+            // 下の星単位の依存記録は、同じ記憶の強化・数値補正か、一致する ScopedModifier に限る。
+            // 3つともない星は加算も依存記録も行わない。仕掛け本体の ContributorIds は entryToken に別途記録する。
+            var contributing = new List<KeyValuePair<TalentDef, int>>(selected.Count);
+            foreach (var s in selected)
+                if (s.Key.GimmickBoost != 0 || s.Key.GimmickParameter.HasValue || s.Key.ScopedModifier != null) contributing.Add(s);
             foreach (var entry in entries)
             {
                 long boost = 0, duration = 0, radius = 0, chance = 0, targets = 0;
@@ -607,8 +632,11 @@ namespace SodRpg.Core.Game
                 ScopedModifierCapProfile boostCap = null, durationCap = null, radiusCap = null, chanceCap = null, targetsCap = null;
                 string entryToken = build.Dependencies == null ? null : "E:" + entry.StarId;
                 if (entryToken != null) build.Dependencies.Touch(entryToken, entry.ContributorIds.Length == 0 ? new[] { entry.StarId } : entry.ContributorIds);
-                foreach (var s in selected)
+                foreach (var s in contributing)
                 {
+                    // このループの加算と依存記録は、上の contributing フィルタの3条件
+                    // （GimmickBoost・GimmickParameter・ScopedModifier）だけを起点に起こる。
+                    // 新しい作用を足すときは、フィルタ条件も同じ条件で絞り直すこと。
                     var t = s.Key;
                     if (t.RouteMemory == entry.Memory)
                     {

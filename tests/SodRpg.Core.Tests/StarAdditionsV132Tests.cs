@@ -210,7 +210,7 @@ namespace SodRpg.Core.Tests
         {
             Assert.Throws<ArgumentException>(() => new RunGrowthDef(RunGrowthTrigger.DamageTakenMaxHpPct, 0, 60, new[] { new RunGrowthEffect(Stat.Armor, 1000) }));
             Assert.Throws<ArgumentException>(() => new RunGrowthDef(RunGrowthTrigger.DamageTakenMaxHpPct, 101, 60, new[] { new RunGrowthEffect(Stat.Armor, 1000) }));
-            Assert.Throws<ArgumentException>(() => new RunGrowthDef(RunGrowthTrigger.ParrySuccess, 1, 0, new[] { new RunGrowthEffect(Stat.Armor, 1000) }));
+            Assert.Throws<ArgumentException>(() => new RunGrowthDef(RunGrowthTrigger.ParrySuccess, 1, -1, new[] { new RunGrowthEffect(Stat.Armor, 1000) }));
             Assert.Throws<ArgumentException>(() => new RunGrowthDef(RunGrowthTrigger.ParrySuccess, 1, 600, new[] { new RunGrowthEffect(Stat.Armor, 1000) }));
             Assert.Throws<ArgumentException>(() => new RunGrowthDef(RunGrowthTrigger.ParrySuccess, 1, 5, new RunGrowthEffect[0]));
             Assert.Throws<ArgumentException>(() => new RunGrowthDef(RunGrowthTrigger.ParrySuccess, 1, 5, new[] { new RunGrowthEffect(Stat.EssenceSlotIdentity, 1000) }));
@@ -368,7 +368,7 @@ namespace SodRpg.Core.Tests
             foreach (string bad in new[]
             {
                 ok + "x:1:10:60:0:1",                          // wrong field count
-                ok + "outer.v132.growth:9:10:60:0:1:7=1000",   // unknown trigger
+                ok + "outer.v132.growth:10:10:60:0:1:7=1000",  // unknown trigger
                 ok + "outer.v132.growth:1:0:60:0:1:7=1000",    // threshold out of range
                 ok + "outer.v132.growth:1:10:900:0:1:7=1000",  // cap out of range
                 ok + "outer.v132.growth:1:10:60:0:3:7=1000",   // gain multiplier out of range

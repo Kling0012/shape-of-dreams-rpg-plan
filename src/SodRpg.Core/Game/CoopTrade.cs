@@ -94,16 +94,61 @@ namespace SodRpg.Core.Game
             return null;
         }
 
-        /// <summary>融合を知らない相手へは、段階を失う遺物の受け渡しだけを拒否する。</summary>
+        /// <summary>
+        /// この遺物を今の提示に入れられるか（Validate の遺物ごとの条件と同じ）：保管庫か鞄にあり、装着しておらず、
+        /// 取引の受領待ちや再調律の候補選びの途中でない。提示した後に変わった遺物を UI が提示から外すのに使う。
+        /// </summary>
+        public static bool RelicOfferable(Profile profile, string uid)
+            => profile != null && !string.IsNullOrEmpty(uid) && FindOffered(profile, uid) != null
+                && !profile.IsEquippedAnywhere(uid)
+                && !profile.PendingTrades.Any(t => t.Uid == uid || t.Relic?.Uid == uid)
+                && profile.RetuneOffer?.Uid != uid;
+
+        /// <summary>
+        /// 融合を知らない相手へは、段階を失う遺物の受け渡しだけを拒否する。拒否したときは理由コード
+        /// （いまは <see cref="FusionReason"/> のみ）、問題ないときは null を返す。文言は <see cref="ReasonText"/> で引き直す。
+        /// </summary>
         public static string ValidateFusion(Profile profile, CoopTradeOffer offer, bool fusionSupported)
         {
             if (fusionSupported || profile == null || offer?.RelicUids == null) return null;
             foreach (string uid in offer.RelicUids)
-                if (FindOffered(profile, uid)?.FusionLevel > 0)
-                    return Loc.T("融合済みの遺物は旧版と交換できません。ホストと交換相手を融合対応版に更新してください。",
-                        "Fused relics cannot be traded with older versions. Update the host and trade partner to a version that supports Fusion.");
+                if (FindOffered(profile, uid)?.FusionLevel > 0) return FusionReason;
             return null;
         }
+
+        /// <summary>融合の非対応で取引を止めたときの理由コード。</summary>
+        public const string FusionReason = "fusion";
+
+        /// <summary>理由コード→両言語の文言の、ただ一つの対応表。既知判定も文言もここから出すので、コードを足すときはこの表に足すだけでよい。</summary>
+        private static readonly Dictionary<string, Txt> Reasons = new Dictionary<string, Txt>
+        {
+            // cancelled は参加者の取消・時間切れ・安全でない状態、connection は接続の変化。受け手は再申し込み
+            // するかどうかをこの区別で判断できるため、文言も分けておく（コードは前から別々）。
+            ["unsupported"] = new Txt("相手がトレード非対応、または応答がありません。トレードのみ利用できません。", "The peer does not support trade or has not replied. Only trade is unavailable."),
+            ["peerBusy"] = new Txt("相手は今取引できる状態ではありません（戦闘中・保存中など）", "The other player can't trade right now (in combat, saving, etc.)"),
+            ["safe"] = new Txt("安全な時・保存完了後のみ取引できます。取引は中止しました。", "Trade requires a safe moment and completed saves. The trade was cancelled."),
+            ["ownership"] = new Txt("所持品または残高が変わったため取引を中止しました。", "The trade was cancelled because inventory or balances changed."),
+            ["cancelled"] = new Txt("取引を中止しました（取り消し・時間切れ・安全でない状態）。", "The trade was cancelled (a cancel request, timeout or unsafe conditions)."),
+            ["connection"] = new Txt("接続が変わったため取引を中止しました（切断・再接続・再起動）。", "The trade was cancelled because the connection changed (disconnect, reconnect or restart)."),
+            ["saving"] = new Txt("トレードの記録を保存する準備中です。トレードのみ保留します。", "Preparing the trade journal. Only trade is on hold."),
+            ["recordTooLarge"] = new Txt("取引の記録が大きすぎます。保管庫を整理してから試してください。", "The trade record is too large. Tidy up your stash and try again."),
+            [FusionReason] = new Txt("融合済みの遺物は旧版と交換できません。ホストと交換相手を融合対応版に更新してください。",
+                "Fused relics cannot be traded with older versions. Update the host and trade partner to a version that supports Fusion."),
+        };
+
+        /// <summary>
+        /// ホストが送る取引の理由コードか。ホストは文言と一緒にこのコードを送り、受け手は自分の言語で
+        /// <see cref="ReasonText"/> を引き直す（ホストと参加者で言語が違っても、自分の言語で読める）。
+        /// </summary>
+        public static bool IsKnownReason(string code) => code != null && Reasons.ContainsKey(code);
+
+        /// <summary>理由コードの説明（いまの言語）。知らないコードは、そのまま「トレードのみ利用できません：」に続ける。</summary>
+        public static string ReasonText(string code) => ReasonMessage(code).ToString();
+
+        /// <summary>表示まで日英を保持する取引の理由。</summary>
+        public static Txt ReasonMessage(string code) => code != null && Reasons.TryGetValue(code, out var message)
+            ? message
+            : new Txt("トレードのみ利用できません：" + code, "Only trade is unavailable: " + code);
 
         public static CoopTradeReceipt CreateReceipt(string id, string hostKey, string firstKey, Profile first,
             CoopTradeOffer firstOffer, string secondKey, Profile second, CoopTradeOffer secondOffer)
@@ -437,7 +482,7 @@ namespace SodRpg.Core.Game
                 var snapshot = ProfileCodec.ReadCheckpointProfile(checkpoint.Snapshot);
                 CopyEconomics(snapshot, profile);
                 CopyDurableState(snapshot, profile);
-                refreshed.Add(new RunCheckpoint(checkpoint.Id, checkpoint.RunId, ProfileCodec.WriteCheckpointProfile(snapshot)));
+                refreshed.Add(new RunCheckpoint(checkpoint.Id, checkpoint.RunId, ProfileCodec.WriteCheckpointProfile(snapshot), checkpoint.Committed));
             }
             string baseline = null;
             if (!string.IsNullOrEmpty(profile.ContinueLobbyBaseline))
@@ -519,6 +564,10 @@ namespace SodRpg.Core.Game
                 target.Run.DeferredWaypointTuning = source.Run?.DeferredWaypointTuning ?? 0;
                 target.Run.OverflowDreamDustTotal = source.Run?.OverflowDreamDustTotal ?? 0;
                 target.Run.OverflowDreamDustLedgerId = source.Run?.OverflowDreamDustLedgerId ?? 0;
+                // 表示用の分解ダストの計数も同じ経済状態の一部として運ぶ（上限の判定はホスト側）。
+                target.Run.SalvageDustEarned = source.Run?.SalvageDustEarned ?? 0;
+                target.Run.SalvageDustZoneIndex = source.Run?.SalvageDustZoneIndex ?? -1;
+                target.Run.SalvageDustOverflowPaidSeen = source.Run?.SalvageDustOverflowPaidSeen ?? 0;
             }
         }
 
