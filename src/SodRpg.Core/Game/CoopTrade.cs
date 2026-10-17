@@ -554,6 +554,10 @@ namespace SodRpg.Core.Game
                 target.Run.DeferredWaypointTuning = source.Run?.DeferredWaypointTuning ?? 0;
                 target.Run.OverflowDreamDustTotal = source.Run?.OverflowDreamDustTotal ?? 0;
                 target.Run.OverflowDreamDustLedgerId = source.Run?.OverflowDreamDustLedgerId ?? 0;
+                // 表示用の分解ダストの計数も同じ経済状態の一部として運ぶ（上限の判定はホスト側）。
+                target.Run.SalvageDustEarned = source.Run?.SalvageDustEarned ?? 0;
+                target.Run.SalvageDustZoneIndex = source.Run?.SalvageDustZoneIndex ?? -1;
+                target.Run.SalvageDustOverflowPaidSeen = source.Run?.SalvageDustOverflowPaidSeen ?? 0;
             }
         }
 
