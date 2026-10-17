@@ -10,6 +10,26 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v3.2.11 — Fix Infinity co-op waypoint enemy effects following only the host's choice（2026-10-17）
+
+この版は、インフィニティの協力プレイで、道標の敵側の効果がホストの選んだ道標だけで決まり、全員の敵にかかっていた問題を直す更新です。 / This update fixes waypoint effects on enemies in Infinity co-op being decided only by the host's waypoint and applied to everyone's enemies.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- インフィニティの協力プレイで、道標の敵側の効果（敵の体力・攻撃の倍率、全員悪夢化、悪夢化の確率）がホストの選んだ道標だけで決まり、全員の敵にかかっていた問題を直しました。参加者が選んだ道標は敵側に何も起こさず、記憶のクールダウンや撃破報酬などの見返りだけを本人が受け取る状態でした。たとえば参加者だけが「駆ける記憶」を選んでも敵は強くならず、逆にホストだけが選ぶと参加者の敵まで強くなっていました。参加者が「明けない夜」を選んでも、敵は悪夢化しませんでした。これからは、各プレイヤーに割り当てられた敵に、そのプレイヤー本人が選んだ道標の効果がかかります。参加者が「駆ける記憶」を選べば、記憶のクールダウン×0.8に加えて、その参加者の敵の体力と攻撃が説明どおり×1.25になり、ホストの選択が参加者の敵にかかることはありません。ホストが選んだ場合は、クールダウン×0.8はホスト本人だけにかかり、参加者の敵には×1.25がかかりません。参加者が「明けない夜」を選べば、その参加者に割り当てられた敵が悪夢化します。出現時の全員悪夢化の判定、変異の除外、悪夢化の抽選も、割り当てられた本人の道標で決まります。 / Fixed waypoint effects on enemies in Infinity co-op (enemy HP and attack multipliers, all-Nightmare, and Nightmare chance) being decided only by the host's waypoint and applied to everyone's enemies. Waypoints picked by other players had no effect on enemies, so they received the rewards, such as memory cooldown reduction and kill rewards, without the drawback. For example, if only a guest picked the waypoint that speeds up memory cooldowns, enemies didn't get stronger, but if only the host picked it, the guest's enemies got stronger too. A guest picking the waypoint that makes enemies Nightmares didn't turn any enemies into Nightmares. Now each player's own waypoint applies to the enemies assigned to that player. If a guest picks the cooldown waypoint, that guest gets ×0.8 memory cooldown and that guest's enemies get ×1.25 HP and attack as described, and the host's choice no longer affects the guest's enemies. If the host picks it, the ×0.8 cooldown applies only to the host, and the guest's enemies don't get ×1.25. If a guest picks the Nightmare waypoint, enemies assigned to that guest become Nightmares. The all-Nightmare check, variant exclusion, and Nightmare roll at spawn also follow the waypoint of the player the enemy is assigned to.
+- ボス、共有の目標、誰にも割り当てられていない敵には、どのプレイヤー個人の道標の効果もかからなくなりました。全員共通の夢の圧と敵の数も、ホスト個人の道標で変わらなくなりました。HUD では、表示している圧が全員共通の値であることが分かるようになりました。途中参加や離脱で敵の担当が変わったときは、残り体力の割合を保ったまま新しい担当者の道標の倍率に切り替わります。 / Personal waypoint effects no longer apply to bosses, shared objectives, or enemies not assigned to anyone. Shared Dream Pressure and enemy count no longer change based on the host's personal waypoint, and the HUD now makes clear that the pressure it shows is the shared value. When an enemy's assigned player changes because someone joins or leaves mid-run, the enemy switches to the new player's waypoint multiplier while keeping its remaining HP percentage.
+- 確保地点の確率表示に、協力プレイでは自分に割り当てられた敵が対象であることを日本語と英語で書き添えました。 / The probability display at secure points now notes, in Japanese and English, that in co-op it applies to the enemies assigned to you.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
 ## v3.2.10 — Fix recovered relic counts in expedition reports and stale Forbidden descriptions in the Trade tab（2026-10-17）
 
 この版は、遺失物から取り戻した遺物が遠征の報告で発見件数に入らず、ほかの件数と合わなかった問題を直す更新です。協力プレイの取引タブで、禁忌化した遺物の説明が古いまま残っていた問題もあわせて直しています。 / This update fixes relics recovered from lost items not counting toward the found count in the expedition report, which left the report's numbers out of line. It also fixes the co-op Trade tab still showing a relic's old description after the relic was made Forbidden.

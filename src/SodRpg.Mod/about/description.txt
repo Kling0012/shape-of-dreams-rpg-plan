@@ -1,5 +1,5 @@
-[b]Recovered relics now count as found in the expedition report, and the co-op Trade tab updates a relic's description after it is made Forbidden.[/b]
-[b]取り戻した遺物が遠征の報告で発見件数に入るようにし、協力プレイの取引タブで禁忌化した遺物の説明が新しい内容に更新されるようにしました。[/b]
+[b]In Infinity co-op, each player's own waypoint now applies to the enemies assigned to them, instead of the host's waypoint applying to everyone's enemies.[/b]
+[b]インフィニティの協力プレイで、ホストの道標が全員の敵にかかるのではなく、各プレイヤーの道標がそれぞれ割り当てられた敵にかかるように直しました。[/b]
 
 [h1]Dreamforge RPG[/h1]
 Turns every run into part of a long RPG journey: relics you keep, a risky "secure or delve" choice at every zone, a star map per Traveler, a forge, and long-term goals. Co-op ready.
