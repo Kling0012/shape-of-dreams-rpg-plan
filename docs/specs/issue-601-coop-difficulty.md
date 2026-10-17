@@ -78,9 +78,20 @@ DOTNET_ROLL_FORWARD=LatestMajor dotnet run --project tools/BalanceSim -c Release
 
 `pressure/coop/.../1` が従来と同じ1人用の圧、`.../2` と `.../4` が緩和後。変更前ボスHPは同条件の1人用HPに人数×0.8を掛ける。報酬用の圧は協力緩和から独立し、旧ホストの省略フィールド0は従来のHP同期値へ代替する。
 
+## 要件との対応
+
+| 要件 | 実装箇所 | 対応内容 |
+| --- | --- | --- |
+| R1：協力序盤の緩和 | `BossShareNativeHealth.AddBonus`、`DreamPressure.WithCoopScaling`、`CoopBalance.Ownership.BossShareFactor` | 人数由来の追加HP・攻撃・魔力を半減。育成初期の圧増分と2／4人ボスHPも下げる |
+| R2：協力の高難度での跳ね上がり抑制 | `HostAuthority.RefreshPressure`、`HostAuthority.OwnershipBasePressure`、`DreamPressure.CombatMultiplier` / `EnemyCountMultiplier` | 部屋と個人の双方で深度・道標適用後の圧を制限し、担当敵・共有敵・ボス持ち分に届ける |
+| R3：高リンボ等の過剰強化の緩和 | 上記に加えて `HostAuthority.OnDynamicRoomLoading`、`HostAuthority.PrepareBossShares` | 圧HP8倍・攻撃2倍・圧敵数2.5倍・協力D1.5倍を上限とし、ボスHP合算係数も0.7へ下げる |
+| R4：利用者の追加コメント「高いリンボなどにおいて特にクリア不可能レベルに難易度が跳ね上がっている」 | R2／R3と同じ実行経路、および `BossShareNativeHealth.AddBonus` | 本体Limboの深さに関係なく、強化済みの敵へ重なる協力用の人数・圧・敵数・Dを緩和する。Limboの高深度も適用対象で、低深度限定の条件はない |
+
+R4は高リンボ帯を優先する追加指摘であり、R3と同じ原因経路を対象とする。2026-10-17の修正ラウンドで本体DLLの `GameMod_Limbo.OnActorAdd` / `GetStatBonus` と `Monster.OnStartServer` を再確認した。Limboのボーナスは前者で別に追加され、人数ボーナスだけを後者のフックで緩和する。`InstallPressureHealthProcessor` / `ApplyPressure` が最終能力値へ掛ける圧は部屋・個人の両経路で既に上限適用済みになるため、高リンボ専用の追加倍率は設けない。前ラウンドの実装でR4も対応しており、このラウンドは対応根拠と報告漏れを補う。ゲーム内の踏破可能性は未確認。
+
 ## 実行した検証
 
-2026-10-17、この作業ブランチで実行。
+2026-10-17、この作業ブランチで実行。以下の63件・84件・166件・再現15件・Python6件、生成物チェック、Release MODビルド、BalanceSimは修正ラウンドでも再実行して成功した。BalanceSimの新しい出力は `/tmp/issue601-r4-pressure.md` と `/tmp/issue601-r4-pressure.json`。1／2／4人の各比較行で上表の値と報酬・悪夢化率の維持を確認した。ソロ全1920行と旧式の全件照合は前ラウンドの結果であり、修正ラウンドでは再実行していない。
 
 - 変更前の既存協力テスト：63件成功。
 - 変更後の `EnemyOwnershipTests` / `BossSharesTests` / `DynamicDifficultyTests` / `Issue588PersonalWaypointPressureTests` / `CoopOmensWardTests`：63件成功。個人圧・担当変更・保護・流れ弾・ボスHPの合算と二重補正防止・分担・ソロ／OFF・道標の帰属を確認。協力用圧とD上限に合わせた既存期待値のみ更新し、新規テストは追加していない。
