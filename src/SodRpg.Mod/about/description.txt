@@ -1,5 +1,5 @@
-[b]Adds a "Current status" section to the host settings menu showing how dynamic difficulty and the damage reduction on other players' enemies currently apply.[/b]
-[b]メニューのホスト設定に「現在の状況」欄を追加し、動的難易度と担当外の敵へのダメージ減衰が今どう効いているかを確認できるようにしました。[/b]
+[b]v3.5.0: Dream Dust from salvaging during expeditions now has a per-world cap (refused at the cap, relic kept), descriptions now match actual behavior, plus Infinity Continue and Overcharge cap fixes. Saves carry over. Restart the game after updating.[/b]
+[b]v3.5.0：遠征中の分解で得られる夢のダストに世界ごとの上限を付けました（上限では分解が断られ、遺物は残ります）。説明文を実際の動きに合わせて直し、インフィニティの Continue と過剰の上限の不具合を修正しました。セーブデータはそのまま引き継げます。更新後はゲームを再起動してください。[/b]
 
 [h1]Dreamforge RPG[/h1]
 Turns every run into part of a long RPG journey: relics you keep, a risky "secure or delve" choice at every zone, a star map per Traveler, a forge, and long-term goals. Co-op ready.
