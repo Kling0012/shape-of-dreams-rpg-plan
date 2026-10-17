@@ -44,6 +44,7 @@ namespace PressureReportUnderTest
         private SodRpg.Core.Game.Txt _hostVersionWarning;
         private string ForbiddenGearHostNotice;
         private void ResetOverflowBonusConnection() { }
+        private void ResetHelloSchedule() => _nextBuildInputProbe = 0f;
         internal void Enable() => _hostAutocastPressureCapability = true;
         internal void ResetConnection() => ResetHello();
         internal void Tick(float now, float over)
