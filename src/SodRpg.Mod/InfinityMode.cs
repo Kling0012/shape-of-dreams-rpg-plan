@@ -264,6 +264,9 @@ namespace SodRpg.Mod
             public string RunId;
             public int NativeZoneIndex;
             public uint WorldSeed;
+            // Version 1 stores actual counters, even if default-valued state fields are omitted.
+            [JsonProperty(DefaultValueHandling = DefaultValueHandling.Include)]
+            public int StateVersion;
             public InfinityRunState State;
         }
 
@@ -382,21 +385,29 @@ namespace SodRpg.Mod
             envelope = null;
             var settings = NetworkedManagerBase<GameSettingsManager>.softInstance;
             if (settings == null || !settings.customData.TryGetValue(RuntimeKey, out var text)) return false;
-            try { envelope = JsonConvert.DeserializeObject<Envelope>(text); }
-            catch (JsonException ex) { Log.Warn("Infinity: discarded unreadable runtime envelope: " + ex.Message); return false; }
-            if (envelope?.State == null) return false;
-            var state = envelope.State;
-            // Legacy finale envelopes carry no marker and contain the artificial interval counter.
-            // Normalize against the current graph receipt to match ProfileCodec's migration.
-            if (!state.FinalePromoted && state.FixedZoneId == "Zone_Primus"
-                && state.ClearsInCycle == state.Interval
-                && state.ClearedNodes.Count < state.Interval
-                && state.Phase >= InfinityPhase.BossDue && state.Phase <= InfinityPhase.AwaitingChoice)
+            try
             {
-                state.ClearsInCycle = state.ClearedNodes.Count;
-                state.FinalePromoted = true;
+                envelope = JsonConvert.DeserializeObject<Envelope>(text);
+                if (envelope?.State == null) return false;
+                var state = envelope.State;
+                // Only unversioned finales without State.FinalePromoted used a padded counter.
+                // A regenerated current graph can legitimately have fewer receipts than clears.
+                if (envelope.StateVersion == 0 && !state.FinalePromoted && state.FixedZoneId == "Zone_Primus"
+                    && state.ClearsInCycle == state.Interval
+                    && state.ClearedNodes.Count < state.Interval
+                    && state.Phase >= InfinityPhase.BossDue && state.Phase <= InfinityPhase.AwaitingChoice)
+                {
+                    var savedState = Newtonsoft.Json.Linq.JObject.Parse(text)
+                        .GetValue(nameof(Envelope.State), StringComparison.OrdinalIgnoreCase) as Newtonsoft.Json.Linq.JObject;
+                    if (savedState != null && savedState.GetValue(nameof(InfinityRunState.FinalePromoted), StringComparison.OrdinalIgnoreCase) == null)
+                    {
+                        state.ClearsInCycle = state.ClearedNodes.Count;
+                        state.FinalePromoted = true;
+                    }
+                }
+                return true;
             }
-            return true;
+            catch (JsonException ex) { Log.Warn("Infinity: discarded unreadable runtime envelope: " + ex.Message); return false; }
         }
 
         internal static bool MatchesProfile(RunState run)
@@ -441,7 +452,8 @@ namespace SodRpg.Mod
             if (zone == null || gm == null || settings == null) return;
             settings.customData[RuntimeKey] = JsonConvert.SerializeObject(new Envelope
             {
-                RunId = gm.runId, NativeZoneIndex = zone.currentZoneIndex, WorldSeed = zone.worldSeed, State = State,
+                RunId = gm.runId, NativeZoneIndex = zone.currentZoneIndex, WorldSeed = zone.worldSeed,
+                StateVersion = 1, State = State,
             });
         }
 
