@@ -10,6 +10,20 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v3.3.0 — Minor adjustments（2026-10-17）
+
+細かな調整を行いました。 / Minor adjustments.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game. Please report anything odd.
+
+---
+
 ## v3.2.15 — Help finish off other players' enemies in co-op（2026-10-17）
 
 この版は、協力プレイの分担で、ほかの人が担当する通常の敵のHPが30%以下になると手伝えなくなっていた点を改める更新です。あわせて、装備・鍛冶タブの処理を軽くし、いくつかの表示の不具合を直しています。 / This update lets you keep helping with enemies another player is responsible for in co-op, even after their HP drops to 30% or below. It also lightens the work done in the Equipment and Forge tabs and fixes several display issues.
