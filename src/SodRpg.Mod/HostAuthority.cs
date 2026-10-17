@@ -106,7 +106,6 @@ namespace SodRpg.Mod
             public readonly HashSet<int> CritBasicVictims = new HashSet<int>();
             public float GrowthSentAt;
             public int GrowthSentVersion = -1;
-            public uint GrowthOwnerNetId;
             public string GrowthOwnerKey;
             public Build GrowthSentBuild;
             public string GrowthSentRun;
