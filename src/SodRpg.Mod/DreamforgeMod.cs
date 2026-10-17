@@ -191,6 +191,8 @@ namespace SodRpg.Mod
             try
             {
                 _perf.BeginHost();
+                // 第2段: 重いフレームから持ち越された反応弾の生成を、ホスト処理の前に捌く。
+                NativeProcSpawnSpread.Tick();
                 _host?.Tick();
                 _perf.EndHost();
             }

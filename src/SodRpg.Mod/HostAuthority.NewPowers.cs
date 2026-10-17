@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using Mirror;
 using SodRpg.Core.Game;
 using UnityEngine;
@@ -218,13 +219,31 @@ namespace SodRpg.Mod
             var pending = rt.NewPowers.Pending;
             if (!Alive(rt.Hero)) { pending.Clear(); return; }
             int count = pending.Count;
-            for (int i = 0; i < count; i++)
+            if (count > 0)
             {
-                try { DispatchPowerCommand(rt, pending[i]); }
-                catch (Exception ex) { Log.Error("Host: new power dispatch " + ex); }
+                // 第2段: 予算（件数と経過時間）を超えた残りは順序を保って次フレームへ。
+                // flush 中に追加された予約は今回の対象にしない（これまでの動きと同じ）。
+                int limit = PowerFlushBudget.Items(pending);
+                long budget = PowerFlushBudget.Ticks(pending);
+                long start = Stopwatch.GetTimestamp();
+                int done = 0;
+                while (done < count && done < limit)
+                {
+                    try { DispatchPowerCommand(rt, pending[done]); }
+                    catch (Exception ex) { Log.Error("Host: new power dispatch " + ex); }
+                    done++;
+                    if (done < limit && Stopwatch.GetTimestamp() - start >= budget) break;
+                }
+                pending.RemoveRange(0, done);
+                PowerFlushBudget.Observe(pending, pending.Count);
+                if (pending.Count > 0)
+                {
+                    // 持ち越した最古の予約の待ち時間が、この予算が作った遅れの最大値。
+                    NativeProcSpawnSpread.RecordPowerCarry(pending.Count, Time.unscaledTime - pending[0].QueuedAt);
+                }
             }
-            pending.RemoveRange(0, count);
-            rt.NewPowers.Overkill.Clear();
+            // 予約が残っている間は過剰ダメージの記録を保持する（残りの予約が読むため）。
+            if (pending.Count == 0) rt.NewPowers.Overkill.Clear();
         }
 
         private void InitializeNewPowers(HeroRuntime rt)
@@ -289,6 +308,7 @@ namespace SodRpg.Mod
             foreach (var rt in _runtimes.Values)
             {
                 rt.NewPowers.Pending.Clear();
+                rt.NewPowers.Pending.ResetBudget();
                 rt.NewPowers.Overkill.Clear();
                 rt.NewPowers.PositionKnown = false;
                 ClearUnbowedGuard(rt);

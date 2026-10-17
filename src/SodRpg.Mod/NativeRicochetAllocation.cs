@@ -97,19 +97,26 @@ namespace SodRpg.Mod
                 setup.Start = start;
                 setup.Hit = obj;
                 setup.Gem = __instance;
+                bool carried = false;
                 try
                 {
                     // Setup remains rented until synchronous creation returns;
                     // nested damage/creation gets a different cached callback.
-                    __instance.CreateAbilityInstance<Ai_Gem_R_Ricochet>(start, null,
+                    // 第2段: 重いフレームでは生成だけを次フレームへ分散する（抽選と対象はここで確定）。
+                    // 持ち越されたときは生成まで Setup を貸したままにし、プールへ戻して再利用させない。
+                    var created = NativeProcSpawnSpread.Plain(__instance, start, null,
                         new CastInfo(__instance.owner, target), setup.BeforePrepare);
+                    carried = created == null;
                     __instance.NotifyUse();
                 }
                 finally
                 {
-                    setup.Hit = default;
-                    setup.Gem = null;
-                    Available.Push(setup);
+                    if (!carried)
+                    {
+                        setup.Hit = default;
+                        setup.Gem = null;
+                        Available.Push(setup);
+                    }
                 }
                 return false;
             }
