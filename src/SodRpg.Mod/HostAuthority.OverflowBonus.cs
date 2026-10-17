@@ -11,7 +11,7 @@ namespace SodRpg.Mod
         {
             internal string RunId;
             internal long LedgerId, Total;
-            internal bool Pending, Disabled;
+            internal bool Pending, Disabled, BlockedWorldAck;
             internal int GrantFrame = -1;
             internal readonly DreamforgeOverflowBonusResultMsg Reply = new DreamforgeOverflowBonusResultMsg();
         }
@@ -50,6 +50,7 @@ namespace SodRpg.Mod
                     if (_overflowBonusPeers.Count >= SodRpg.Core.Game.TradeAuthority.MaxTrackedPlayers) return;
                     _overflowBonusPeers.Add(caller, peer = new OverflowBonusPeer());
                 }
+                peer.BlockedWorldAck = msg.blockedWorldAck == 1;
                 if (msg.version != 1 || msg.total < 0 || _overflowBonusDisabled)
                 {
                     ReplyOverflowBonus(caller, peer, false);
@@ -196,6 +197,8 @@ namespace SodRpg.Mod
             reply.available = true;
             reply.runId = null;
             reply.ledgerId = reply.paid = 0;
+            reply.worldBlocked = false;
+            reply.blockedWorld = -1;
             if (owner == DewPlayer.local) ClientSession.ReceiveLocalOverflowBonus(reply);
             else _registeredOn?.CustomRpc_SendMessageToClient(owner, reply);
         }
@@ -207,6 +210,10 @@ namespace SodRpg.Mod
             reply.runId = peer.RunId;
             reply.ledgerId = peer.LedgerId;
             reply.paid = _tradeAuthority.OverflowBonusPaid(TradePlayerKey(owner), peer.RunId);
+            reply.blockedWorld = TradeZoneIndex();
+            reply.worldBlocked = peer.BlockedWorldAck && available && reply.blockedWorld >= 0
+                && peer.RunId == TradeRunId() && peer.Total > reply.paid
+                && _tradeAuthority.ZoneDustRemaining(TradePlayerKey(owner), peer.RunId, reply.blockedWorld, SalvageScaleFor(owner)) == 0;
             if (owner == DewPlayer.local) ClientSession.ReceiveLocalOverflowBonus(reply);
             else _registeredOn?.CustomRpc_SendMessageToClient(owner, reply);
         }

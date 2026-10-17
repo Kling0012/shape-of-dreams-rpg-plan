@@ -704,6 +704,7 @@ namespace SodRpg.Mod
             public bool Safe, Fusion;
             public int ConnectionId = int.MinValue;
             public readonly BuildTransferReceiver Transfer = new BuildTransferReceiver(CoopTradeTransport.MaxProfileChars);
+            public readonly CoopTradeSendQueue Outgoing = new CoopTradeSendQueue();
             public string Envelope;
         }
         private sealed class CoopHostTrade
@@ -842,6 +843,7 @@ namespace SodRpg.Mod
         internal string CoopTradeJournalPath;
         private readonly List<CoopTradePeer> _coopPeers = new List<CoopTradePeer>();
         private readonly BuildTransferReceiver _coopTransfer = new BuildTransferReceiver(CoopTradeTransport.MaxProfileChars);
+        private readonly CoopTradeSendQueue _coopSendQueue = new CoopTradeSendQueue();
         private NetworkConnection _coopConnection;
         private GameSettingsManager _coopSettings;
         private string _coopAdvertisement;
