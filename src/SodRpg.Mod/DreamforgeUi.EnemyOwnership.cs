@@ -177,10 +177,9 @@ namespace SodRpg.Mod
             GUILayout.Label(Loc.T("戦った部屋のダメージから、次の部屋の敵を調整します。強さの差を半分だけ埋めます。",
                 "Use combat damage to adjust enemies in the next room, closing half the strength gap."), _st.Small);
             string dynamicMin = CoopBalance.DynamicDifficulty.MinFactor.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
-            string dynamicCoopMax = CoopBalance.Difficulty.DynamicMaximumFactor.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
-            string dynamicSoloMax = CoopBalance.DynamicDifficulty.MaxFactor.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
-            GUILayout.Label(Loc.T($"係数は{dynamicMin}〜（協力は{dynamicCoopMax}、ソロは{dynamicSoloMax}が上限）。硬くなった分だけ報酬が増え、易しくなっても報酬は減りません。",
-                $"Factor ranges from {dynamicMin} (capped at {dynamicCoopMax} in co-op, {dynamicSoloMax} in solo). Tougher fights add rewards; easier ones never cut them."), _st.Small);
+            string dynamicMax = CoopBalance.DynamicDifficulty.MaxFactor.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
+            GUILayout.Label(Loc.T($"係数は{dynamicMin}〜{dynamicMax}です。硬くなった分だけ報酬が増え、易しくなっても報酬は減りません。",
+                $"Factor ranges from {dynamicMin} to {dynamicMax}. Tougher fights add rewards; easier ones never cut them."), _st.Small);
             GUILayout.Label(Loc.T("協力プレイでは担当制と一緒に有効になります。",
                 "In co-op it runs together with enemy ownership."), _st.Small);
             if (!_ownershipLegendFailed)

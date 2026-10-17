@@ -12,6 +12,8 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## v3.5.0 — Per-world salvage dust cap and clearer descriptions（2026-10-17）
 
+細かな調整を行いました。 / Minor adjustments.
+
 このバージョンでは、遠征中に分解で得られる夢のダストに世界ごとの上限を付けました。あわせて、画面の説明文を実際の動きに合わせて直し、いくつかの不具合を修正しました。/ This version adds a per-world cap on Dream Dust from salvaging during expeditions. Screen descriptions now match how things actually work, and several bugs are fixed.
 
 ### 更新前に確認 / Before updating
