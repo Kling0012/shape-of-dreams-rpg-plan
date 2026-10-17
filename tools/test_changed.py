@@ -561,10 +561,10 @@ def referenced_tool_dirs(root: Path = REPO_ROOT) -> tuple[str, ...]:
     return tuple(sorted(dirs))
 
 
-def is_production_cs(path: str) -> bool:
+def is_production_cs(path: str, root: Path = REPO_ROOT) -> bool:
     """True for .cs under src/ or a tools/ project referenced by the tests."""
     return path.endswith(".cs") and (path.startswith("src/") or any(
-        path.startswith(f"{directory}/") for directory in referenced_tool_dirs()))
+        path.startswith(f"{directory}/") for directory in referenced_tool_dirs(root)))
 
 
 def is_data_file(path: str) -> bool:
@@ -630,7 +630,7 @@ class Selection:
         self.classes: set[str] = set()
 
 
-def select_tests(changed, files, diffs=None) -> Selection:
+def select_tests(changed, files, diffs=None, root: Path = REPO_ROOT) -> Selection:
     """Map changed repo-relative paths to test classes.
 
     ``files`` maps repo-relative posix paths to file contents; it must include
@@ -654,7 +654,8 @@ def select_tests(changed, files, diffs=None) -> Selection:
          used by more than 60% of the test files select everything.
     """
     selection = Selection()
-    test_files = sorted(p for p in files if p.startswith("tests/") and p.endswith(".cs"))
+    test_files = sorted(p for p in files if p.startswith("tests/") and p.endswith(".cs")
+                        and not any(part in ("bin", "obj") for part in p.split("/")))
     # Index whole words once rather than scanning every test for every token in
     # large generated diffs. Keep punctuation-containing literals on the exact
     # original boundary matcher, with a cheap substring check before the regex.
@@ -678,6 +679,9 @@ def select_tests(changed, files, diffs=None) -> Selection:
         return literal_mentions[name]
 
     for path in sorted(changed):
+        if path.startswith("tests/") and any(
+                part in ("bin", "obj") for part in path.split("/")):
+            continue
         content = files.get(path, "")
         if is_build_file(path):
             selection.run_all = True
@@ -698,7 +702,7 @@ def select_tests(changed, files, diffs=None) -> Selection:
             selection.run_all = True
             selection.reasons.append(f"balance input changed: {path}")
             continue
-        if path in linked_test_inputs():
+        if path in linked_test_inputs(root):
             selection.run_all = True
             selection.reasons.append(f"file copied into a test project changed: {path}")
             continue
@@ -708,9 +712,8 @@ def select_tests(changed, files, diffs=None) -> Selection:
             for name in declared_types(content):
                 for tf in tests_mentioning(name):
                     selection.classes.update(top_level_test_classes(files[tf]))
-            continue
-        if path.startswith("tests/") and not any(
-                part in ("bin", "obj") for part in path.split("/")):
+            # Generated helpers can also be read as text by path (rule 3).
+        elif path.startswith("tests/"):
             readers = [tf for tf in test_files if references_path(files[tf], path)]
             if not readers:
                 # Build files were handled above. Documentation without readers
@@ -723,13 +726,15 @@ def select_tests(changed, files, diffs=None) -> Selection:
             for tf in readers:
                 selection.classes.update(top_level_test_classes(files[tf]))
             continue
-        if is_production_cs(path) and content:
+        if is_production_cs(path, root) and content:
             # Rule 2 (+ the wide-type part of rule 4).
             types = declared_types(content)
             if not path.startswith("src/"):
                 # Top-level programs and tool internals are reached via the
                 # namespace or DLL name named by their integration tests.
-                types = types + [path.split("/")[1]]
+                types = types + [directory.rsplit("/", 1)[-1]
+                                 for directory in referenced_tool_dirs(root)
+                                 if path.startswith(f"{directory}/")]
             diff = (diffs or {}).get(path)
             if diff is not None:
                 plus, minus = unified_diff_plus_minus(diff)
@@ -1258,7 +1263,7 @@ def main(argv=None) -> int:
     except RuntimeError as error:
         print(f"warning: diff collection failed ({error}); using file-level mapping", file=sys.stderr)
         diffs = None
-    selection = select_tests(changed, files, diffs)
+    selection = select_tests(changed, files, diffs, root=root)
     for reason in selection.reasons:
         print(f"full run: {reason}", file=sys.stderr)
 
