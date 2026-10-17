@@ -190,25 +190,26 @@ namespace SodRpg.Core.Tests
             Assert.Equal(120, a.CommitOverflowBonusGrant("p", "run", 120, grant, ledger));
             Assert.Equal(120, a.TrackedZoneDust("p"));
 
-            // 累計500: 未払い380のうち、この世界の残り180までしか支払えない。
-            delta = a.PendingOverflowBonus("p", "run", 500, ledger);
-            Assert.Equal(380, delta);
+            // 累計 上限+200: 未払い 上限+80 のうち、この世界の残り 上限−120 までしか支払えない。
+            long total = cap + 200;
+            delta = a.PendingOverflowBonus("p", "run", total, ledger);
+            Assert.Equal(cap + 80, delta);
             grant = Math.Min(delta, a.ZoneDustRemaining("p", "run", 0, 1));
-            Assert.Equal(180, grant);
-            Assert.Equal(300, a.CommitOverflowBonusGrant("p", "run", 500, grant, ledger));
+            Assert.Equal(cap - 120, grant);
+            Assert.Equal(cap, a.CommitOverflowBonusGrant("p", "run", total, grant, ledger));
             Assert.Equal(cap, a.TrackedZoneDust("p"));
             Assert.Equal(0, a.ZoneDustRemaining("p", "run", 0, 1));
             // 世界の上限で止まった分は、未払いの累計として残る。
-            Assert.Equal(200, a.PendingOverflowBonus("p", "run", 500, ledger));
+            Assert.Equal(200, a.PendingOverflowBonus("p", "run", total, ledger));
             var refused = a.Evaluate("p", "run", Salvage(1, 1), 0, 0, zoneIndex: 0);
             Assert.False(refused.Ok);
             Assert.Equal("dustcap", refused.Reason);
 
             // 次の世界では上限が回復し、未払いの累計からまた支払える。
             Assert.Equal(cap + CapPerWorld(), a.ZoneDustRemaining("p", "run", 1, 1));
-            Assert.Equal(500, a.CommitOverflowBonusGrant("p", "run", 500, 200, ledger));
+            Assert.Equal(total, a.CommitOverflowBonusGrant("p", "run", total, 200, ledger));
             Assert.Equal(200, a.TrackedZoneDust("p"));
-            Assert.Equal(0, a.PendingOverflowBonus("p", "run", 500, ledger));
+            Assert.Equal(0, a.PendingOverflowBonus("p", "run", total, ledger));
         }
 
         [Fact]
