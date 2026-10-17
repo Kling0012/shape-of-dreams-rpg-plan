@@ -63,6 +63,7 @@ namespace SodRpg.Mod
             public StatBonus GrowthBonus;
             public readonly Dictionary<Stat, double> GrowthTotals = new Dictionary<Stat, double>();
             public int GrowthVersion = -1;
+            public int GrowthGeneration = -1;
             public Build GrowthBuild;
             public float GrowthSentAt;
             public int GrowthSentVersion = -1;

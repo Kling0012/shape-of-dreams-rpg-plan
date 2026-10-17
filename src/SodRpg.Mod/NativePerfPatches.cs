@@ -16,6 +16,8 @@ namespace SodRpg.Mod
             NativePerfOptions.StatusDuration = config.nativeStatusDurationSync;
             NativePerfOptions.WeaponFx = config.nativeWeaponFxScan;
             NativePerfOptions.ObstacleAvoidance = config.nativeObstacleAvoidance;
+            NativePerfOptions.AggroPropagation = config.nativeAggroPropagation;
+            NativePerfOptions.OwnershipSpawnCounts = config.nativeOwnershipSpawnCounts;
         }
     }
 
@@ -24,6 +26,8 @@ namespace SodRpg.Mod
         internal static bool StatusDuration = true;
         internal static bool WeaponFx = true;
         internal static bool ObstacleAvoidance = true;
+        internal static bool AggroPropagation = true;
+        internal static bool OwnershipSpawnCounts = true;
     }
 
     internal static class NativePerfPatch

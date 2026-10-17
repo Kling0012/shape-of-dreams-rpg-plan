@@ -558,11 +558,22 @@ namespace SodRpg.Core.Game
             public long ProgressMilli;
         }
 
-        private readonly Dictionary<string, Dictionary<string, Slot>> _owners = new Dictionary<string, Dictionary<string, Slot>>(StringComparer.Ordinal);
+        private sealed class OwnerState
+        {
+            internal readonly Dictionary<string, Slot> Slots = new Dictionary<string, Slot>(StringComparer.Ordinal);
+            internal int Version;
+        }
+
+        private readonly Dictionary<string, OwnerState> _owners = new Dictionary<string, OwnerState>(StringComparer.Ordinal);
 
         public string RunId { get; private set; }
         /// <summary>スタックが変わるたびに増える。表示の作り直しの目印。</summary>
         public int Version { get; private set; }
+        /// <summary>遠征の変更・リセット・復元のたびに増える。持ち主のスタックが同じでも再適用する。</summary>
+        public int Generation { get; private set; }
+
+        public int OwnerVersion(string owner)
+            => owner != null && _owners.TryGetValue(owner, out var state) ? state.Version : 0;
 
         /// <summary>遠征の識別子が前と違えば全部を0に戻す。戻したら true。</summary>
         public bool EnsureRun(string runId)
@@ -571,6 +582,7 @@ namespace SodRpg.Core.Game
             if (runId == RunId) return false;
             bool had = _owners.Count > 0;
             _owners.Clear();
+            Generation++;
             RunId = runId;
             if (had) Version++;
             return true;
@@ -581,14 +593,15 @@ namespace SodRpg.Core.Game
         {
             if (_owners.Count > 0) Version++;
             _owners.Clear();
+            Generation++;
             RunId = null;
         }
 
         public int Stacks(string owner, string growthId)
-            => owner != null && growthId != null && _owners.TryGetValue(owner, out var slots) && slots.TryGetValue(growthId, out var slot) ? slot.Stacks : 0;
+            => owner != null && growthId != null && _owners.TryGetValue(owner, out var state) && state.Slots.TryGetValue(growthId, out var slot) ? slot.Stacks : 0;
 
         public long ProgressMilli(string owner, string growthId)
-            => owner != null && growthId != null && _owners.TryGetValue(owner, out var slots) && slots.TryGetValue(growthId, out var slot) ? slot.ProgressMilli : 0;
+            => owner != null && growthId != null && _owners.TryGetValue(owner, out var state) && state.Slots.TryGetValue(growthId, out var slot) ? slot.ProgressMilli : 0;
 
         /// <summary>
         /// 出来事を数える。units は HP系なら最大HPに対する%（例 3.5）、それ以外は出来事の回数（1）。
@@ -597,8 +610,8 @@ namespace SodRpg.Core.Game
         public int Gain(string owner, RunGrowthEntry entry, RunGrowthTrigger trigger, double units)
         {
             if (string.IsNullOrEmpty(owner) || entry == null || entry.Trigger != trigger || !(units > 0d) || double.IsInfinity(units)) return 0;
-            if (!_owners.TryGetValue(owner, out var slots)) _owners.Add(owner, slots = new Dictionary<string, Slot>(StringComparer.Ordinal));
-            if (!slots.TryGetValue(entry.StarId, out var slot)) slots.Add(entry.StarId, slot = new Slot());
+            if (!_owners.TryGetValue(owner, out var state)) _owners.Add(owner, state = new OwnerState());
+            if (!state.Slots.TryGetValue(entry.StarId, out var slot)) state.Slots.Add(entry.StarId, slot = new Slot());
             // Cap == 0 は上限なし。int.MaxValue は整数の桁あふれを防ぐためだけに使う。
             int limit = entry.Cap == 0 ? int.MaxValue : entry.Cap;
             if (slot.Stacks >= limit)
@@ -616,7 +629,7 @@ namespace SodRpg.Core.Game
             long add = Math.Min((long)limit - slot.Stacks, steps * entry.GainMultiplier);
             slot.Stacks += (int)add;
             if (slot.Stacks >= limit) slot.ProgressMilli = 0;
-            if (add > 0) Version++;
+            if (add > 0) { Version++; state.Version++; }
             return (int)add;
         }
 
@@ -626,7 +639,7 @@ namespace SodRpg.Core.Game
         {
             var list = new List<RunGrowthSave>();
             foreach (var owner in _owners.OrderBy(x => x.Key, StringComparer.Ordinal))
-                foreach (var slot in owner.Value.OrderBy(x => x.Key, StringComparer.Ordinal))
+                foreach (var slot in owner.Value.Slots.OrderBy(x => x.Key, StringComparer.Ordinal))
                     if (slot.Value.Stacks > 0 || slot.Value.ProgressMilli > 0)
                         list.Add(new RunGrowthSave { Owner = owner.Key, GrowthId = slot.Key, Stacks = slot.Value.Stacks, ProgressMilli = slot.Value.ProgressMilli });
             return list;
@@ -642,6 +655,7 @@ namespace SodRpg.Core.Game
         public void Restore(RunRecoveryState state)
         {
             _owners.Clear();
+            Generation++;
             RunId = null;
             Version++;
             if (state == null || string.IsNullOrEmpty(state.GrowthRunId)) return;
@@ -650,8 +664,8 @@ namespace SodRpg.Core.Game
             {
                 if (save == null || string.IsNullOrEmpty(save.Owner) || !Gimmicks.ValidStarId(save.GrowthId)
                     || save.Stacks < 0 || save.ProgressMilli < 0) continue;
-                if (!_owners.TryGetValue(save.Owner, out var slots)) _owners.Add(save.Owner, slots = new Dictionary<string, Slot>(StringComparer.Ordinal));
-                slots[save.GrowthId] = new Slot { Stacks = save.Stacks, ProgressMilli = save.ProgressMilli };
+                if (!_owners.TryGetValue(save.Owner, out var owner)) _owners.Add(save.Owner, owner = new OwnerState());
+                owner.Slots[save.GrowthId] = new Slot { Stacks = save.Stacks, ProgressMilli = save.ProgressMilli };
             }
         }
     }
