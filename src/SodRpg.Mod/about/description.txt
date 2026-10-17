@@ -1,5 +1,5 @@
-[b]Fixes Infinity Continue and helper damage decay, co-op trades with retuned relics, Overcharge counting toward the conditional cap, and power and link descriptions.[/b]
-[b]インフィニティの Continue と与ダメージの減衰、再調律した遺物の協力取引、過剰と共通上限、固有効果・連携の説明の不具合を直しました。[/b]
+[b]Fixes stuck Infinity delves in co-op, lost MOD rewards after an abandoned resume, upgraded ally effect reach, save error language, and workshop values in hints and pacts.[/b]
+[b]協力プレイのインフィニティの停止、再開読み込みの中断後に MOD 報酬が出ない問題、強化した味方効果の届く距離、保存エラーの言語、ヒントと契約に出る工房の値を直しました。[/b]
 
 [h1]Dreamforge RPG[/h1]
 Turns every run into part of a long RPG journey: relics you keep, a risky "secure or delve" choice at every zone, a star map per Traveler, a forge, and long-term goals. Co-op ready.
