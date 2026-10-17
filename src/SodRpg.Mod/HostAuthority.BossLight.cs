@@ -345,11 +345,12 @@ namespace SodRpg.Mod
                 element:BossElement.Light,count:state.Charges,budget:3-state.Charges,targetNetId:rt.Hero.netId);
             state.ChargeRefresh=now+1f; if(state.Charges==0) state.ChargeVisual=0;
         }
-        private void LightCancelProfile(HeroRuntime rt,LightCombat state,int index,float now)
+        private void LightCancelProfile(HeroRuntime rt,LightCombat state,int index,float now,bool keepCooldowns=false)
         {
             string id=LightProfiles[index]; BossCancelProfileReservations(rt,BossProfiles.LightSetId,id); rt.Boss.Defense.CancelSource(this,rt,id);
             for(int i=0;i<state.Beams.Length;i++) if(state.Beams[i].Active && state.Beams[i].Profile==id) LightStopBeam(rt,state.Beams[i],now);
-            if(BossProfiles.TryGetMove(id,out var profile)) for(int i=0;i<profile.Actions.Count;i++) rt.Boss.Ready.Remove(profile.Actions[i].RuntimeKey);
+            // 装備の付け替えでは、報酬効果の継続可否とは別にクールダウンを残す。
+            if(!keepCooldowns && BossProfiles.TryGetMove(id,out var profile)) for(int i=0;i<profile.Actions.Count;i++) rt.Boss.Ready.Remove(profile.Actions[i].RuntimeKey);
             if(index==2 || index==8) LightClearCrystals(rt,state,now);
             if(index==4) { state.HandsCount=0; state.HandsUntil=0; }
             if(index==6) { state.Charges=0; state.ChargeUntil=0; LightPublishCharges(rt,state,now); }
@@ -375,12 +376,12 @@ namespace SodRpg.Mod
                 if(!_lightCombat.TryGetValue(rt,out var current) || current!=state) return;
             }
         }
-        private void ClearLightBoss(HeroRuntime rt,bool preserveRewards=false)
+        private void ClearLightBoss(HeroRuntime rt,bool preserveRewards=false,bool keepCooldowns=false)
         {
             if(!preserveRewards) ClearWorldCrackers(rt);
             if(!_lightCombat.TryGetValue(rt,out var state)) return;
             float now=Time.time;
-            for(int i=0;i<LightProfiles.Length;i++) LightCancelProfile(rt,state,i,now);
+            for(int i=0;i<LightProfiles.Length;i++) LightCancelProfile(rt,state,i,now,keepCooldowns);
             LightClearCrystals(rt,state,now); state.Charges=0; LightPublishCharges(rt,state,now);
             state.HandsCount=0; state.ChargeUntil=state.HandsUntil=0; state.Mask=0; state.Epoch=state.OwnerLife=0;
             state.Room=null; state.Run=null; Array.Clear(state.Seen,0,state.Seen.Length); Array.Clear(state.Next,0,state.Next.Length);

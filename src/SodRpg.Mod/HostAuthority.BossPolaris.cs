@@ -12,9 +12,8 @@ namespace SodRpg.Mod
         {
             internal readonly long[] Seen = new long[256];
             internal readonly int[] SeenNext = new int[4];
-            internal readonly float[] Ready = new float[9];
             internal int Mask, Mode, Cycle;
-            internal float GateUntil, GuardReady, StompReady, SixReady, CounterUntil, SealUntil, CycleUntil, ModeRefresh;
+            internal float CounterUntil, SealUntil, CycleUntil, ModeRefresh;
             internal bool GuardLive;
             internal Vector3 Seal;
             internal long ModeVisual, SealVisual, CycleVisual;
@@ -27,8 +26,8 @@ namespace SodRpg.Mod
             }
             internal void Reset()
             {
-                Array.Clear(Seen, 0, Seen.Length); Array.Clear(SeenNext, 0, SeenNext.Length); Array.Clear(Ready, 0, Ready.Length);
-                Mask = Mode = Cycle = 0; GateUntil = GuardReady = StompReady = SixReady = CounterUntil = SealUntil = CycleUntil = ModeRefresh = 0;
+                Array.Clear(Seen, 0, Seen.Length); Array.Clear(SeenNext, 0, SeenNext.Length);
+                Mask = Mode = Cycle = 0; CounterUntil = SealUntil = CycleUntil = ModeRefresh = 0;
                 GuardLive = false; Seal = Vector3.zero; ModeVisual = SealVisual = CycleVisual = 0;
             }
         }
@@ -39,6 +38,11 @@ namespace SodRpg.Mod
         };
         private readonly BossObjectPool<PolarisCombat> _polarisPool = new BossObjectPool<PolarisCombat>(64, () => new PolarisCombat());
         private readonly Dictionary<HeroRuntime, PolarisCombat> _polarisCombat = new Dictionary<HeroRuntime, PolarisCombat>(64);
+        // 控え用の所有者辞書を作らず、ほかのボス装備と同じ寿命・上限の共有表で保持する。
+        private static bool PolarisAvailable(HeroRuntime rt, BossAction action, float now)
+            => rt.Boss.Ready.TryGetValue(action.RuntimeKey, out var due) ? now >= due : rt.Boss.Ready.Count < 128;
+        private static void PolarisCommit(HeroRuntime rt, BossAction action, float now)
+            => BossReady(rt, action.RuntimeKey, now, action.CooldownMillis);
         private static float PolarisAmount(HeroRuntime rt, BossMoveEntry entry, BossMoveProfile profile, string channelId, bool maxHp = false)
             => Math.Max(0f, maxHp ? rt.Hero.maxHealth : Math.Max(rt.Hero.Status.attackDamage, rt.Hero.Status.abilityPower))
                 * BossCoefficient(entry, profile, channelId);
@@ -90,10 +94,10 @@ namespace SodRpg.Mod
             PolarisPhase(rt, state, kind, point, now);
             for (int i = 0; i < 6; i++)
             {
-                if ((state.Mask & (1 << i)) == 0 || now < state.Ready[i]
+                if ((state.Mask & (1 << i)) == 0
                     || !BossFind(rt, PolarisProfiles[i], out var entry, out var profile)) continue;
                 var action = profile.Actions[0];
-                if (action.Event != kind) continue;
+                if (action.Event != kind || !PolarisAvailable(rt, action, now)) continue;
                 var center = kind == BossEvent.MovementCompleted ? point : rt.Hero.agentPosition;
                 if (!BossFinite(center)) continue;
                 bool success;
@@ -126,7 +130,7 @@ namespace SodRpg.Mod
                     }
                     success = pulses.Count > 0 && BossReserveSequence(rt, entry.SetId, profile.Id, pulses, now, 1);
                 }
-                if (success) state.Ready[i] = now + action.CooldownMillis / 1000f;
+                if (success) PolarisCommit(rt, action, now);
             }
         }
         private void PolarisPhase(HeroRuntime rt, PolarisCombat state, BossEvent kind, Vector3 point, float now)
@@ -137,8 +141,8 @@ namespace SodRpg.Mod
                 if (state.Mode == 1 && state.SealUntil > now) PolarisStomp(rt, state, entry, profile, rt.Hero.agentPosition, now);
                 return;
             }
-            if (kind != BossEvent.MemoryUse && kind != BossEvent.MovementCompleted || now < state.GateUntil) return;
-            state.GateUntil = now + .5f;
+            if (kind != BossEvent.MemoryUse && kind != BossEvent.MovementCompleted
+                || !BossReady(rt, profile.Actions[0].RuntimeKey, now, profile.Actions[0].CooldownMillis)) return;
             if (kind == BossEvent.MovementCompleted)
             {
                 if (state.Mode == 0)
@@ -156,10 +160,10 @@ namespace SodRpg.Mod
             { state.Cycle = 1; state.CycleUntil = now + 8f; PolarisCycleVisual(rt, state, now); }
             PolarisClearSeal(rt, state, now);
             PolarisModeVisual(rt, state, now);
-            if (replaced || now < state.GuardReady) return;
             var guard = profile.Actions[1];
+            if (replaced || !PolarisAvailable(rt, guard, now)) return;
             if (rt.Boss.Defense.Execute(this, rt, profile.Id, guard, PolarisAmount(rt, entry, profile, guard.ChannelId, true), now))
-            { state.GuardLive = true; state.GuardReady = now + 8f; }
+            { state.GuardLive = true; PolarisCommit(rt, guard, now); }
         }
         private void PolarisEnterBeast(HeroRuntime rt, PolarisCombat state, Vector3 departure, float now, bool sealAllowed = true)
         {
@@ -185,18 +189,20 @@ namespace SodRpg.Mod
         }
         private void PolarisStomp(HeroRuntime rt, PolarisCombat state, BossMoveEntry entry, BossMoveProfile profile, Vector3 landing, float now)
         {
-            if (now < state.StompReady || !BossFinite(landing)) return;
+            var action = profile.Actions[2];
+            if (!PolarisAvailable(rt, action, now) || !BossFinite(landing)) return;
             bool seal = PolarisSealOrigin(rt, state, now, out var origin);
             if (!seal) origin = landing;
-            var action = profile.Actions[2]; var pulses = rt.Boss.Sequence.Reset();
+            var pulses = rt.Boss.Sequence.Reset();
             pulses.Add(new BossScheduledPulse(action, origin, origin, PolarisAmount(rt, entry, profile, action.ChannelId), BossMagic(rt), seal ? 350 : action.DelayMillis));
             if (!BossReserveSequence(rt, entry.SetId, profile.Id, pulses, now, 4)) return;
-            state.StompReady = now + 4f;
+            PolarisCommit(rt, action, now);
             if (seal) PolarisClearSeal(rt, state, now);
         }
         private bool PolarisFinish(HeroRuntime rt, PolarisCombat state, float now)
         {
-            if (now < state.SixReady || !BossFind(rt, PolarisProfiles[8], out var entry, out var profile)) return false;
+            if (!BossFind(rt, PolarisProfiles[8], out var entry, out var profile)
+                || !PolarisAvailable(rt, profile.Actions[0], now)) return false;
             if (!rt.Boss.MemoryDirectionValid || !BossFinite(rt.Boss.MemoryDirection) || rt.Boss.MemoryDirection.Flattened().sqrMagnitude <= .0001f) return false;
             PolarisSealOrigin(rt, state, now, out var origin);
             var direction = PolarisForward(rt, true); var spear = profile.Actions[1]; var stomp = profile.Actions[2];
@@ -204,7 +210,7 @@ namespace SodRpg.Mod
             var terminal = new BossScheduledPulse(stomp, origin, origin, amount, BossMagic(rt), 500);
             if (!rt.Boss.Projectiles.Execute(this, rt, entry.SetId, spear, origin, origin + direction * 8f, amount, BossMagic(rt), now,
                 profile: profile.Id, terminalPulse: terminal, terminalAtWall: true)) return false;
-            state.SixReady = now + 18f; state.GuardLive = false;
+            PolarisCommit(rt, profile.Actions[0], now); state.GuardLive = false;
             rt.Boss.Defense.CancelSource(this, rt, PolarisProfiles[6]);
             var guard = profile.Actions[3];
             rt.Boss.Defense.Execute(this, rt, profile.Id, guard, PolarisAmount(rt, entry, profile, guard.ChannelId, true), now, linearDecay: true);
@@ -257,6 +263,10 @@ namespace SodRpg.Mod
         }
         private void ClearPolarisBoss(HeroRuntime rt, bool preserveRewards = false)
         {
+            if (!preserveRewards)
+                for (int i = 0; i < PolarisProfiles.Length; i++)
+                    if (BossProfiles.TryGetMove(PolarisProfiles[i], out var profile))
+                        for (int j = 0; j < profile.Actions.Count; j++) rt.Boss.Ready.Remove(profile.Actions[j].RuntimeKey);
             if (!_polarisCombat.TryGetValue(rt, out var state)) return;
             float now = Time.time;
             PolarisClearSeal(rt, state, now); state.Cycle = 0; PolarisCycleVisual(rt, state, now); PolarisModeVisual(rt, state, now, true);
