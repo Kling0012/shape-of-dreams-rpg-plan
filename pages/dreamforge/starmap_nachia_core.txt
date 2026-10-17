@@ -1,0 +1,15 @@
+====== Nachiaの星図：核の星 ======
+
+旅人の根もとにある星です。能力値や固有効果を伸ばします。
+
+[[dreamforge:starmap|星図の一覧へ]] / [[dreamforge:start|ホームへ戻る]]
+
+[[dreamforge:starmap_nachia|Nachiaの星図トップ]]
+
+==== 奥の星 ====
+
+^ 星 ^ 星群 ^ 最大段 ^ 1段の費用 ^ 効果 ^
+| 響き合う心 (Hearts in Tune) | - | 3 | 1 | 味方との距離係数が最大のとき、自分の攻撃力・魔力が2%、味方の攻撃力・魔力が1%上がる。味方がいなければ自分は1%上がり、味方による自分への追加分と味方への付与量に距離係数を掛ける。味方への付与は重ならず、最も高い値だけを適用する。 距離減衰が有効な場合、味方への効果量は10mまで全量、10～18mで線形に0まで減衰する。範囲外へ出てから2秒は直前の係数を保持する。距離減衰が無効な場合は10mまで全量で、10mを超えると猶予なしで切れる。条件つきの攻撃力・魔力の増加は、覚醒前の数値で全効果の合計が最大120%まで。（数値は1段ごと。最大3段、1段につき1ポイント） \\ At full allied distance effectiveness, your attack damage and ability power increase by 2% and allies' by 1% \\ ・Your solo bonus is 1% \\ ・distance scales your additional allied bonus and the bonus granted to allies \\ ・Bonuses granted to allies do not stack \\ ・only the highest applies With distance falloff enabled, allied effects are full through 10m, fade linearly to zero from 10 to 18m, and retain the last coefficient for 2s after leaving range \\ ・With falloff disabled, they are full through 10m and end beyond 10m with no grace \\ ・Conditional attack damage and ability power bonuses together are capped at +120%, counted before awakening \\ ・(values per rank; maximum 3 ranks; 1 point per rank) |
+| 守りの灯 (Guarding Light) | - | 3 | 1 | 最大HPを超える回復が出たとき、超過回復量の10%の障壁を3秒間得る。1回に得る障壁は最大HPの10%までで、段数を上げてもこの10%の上限は増えない。（数値は1段ごと。最大3段、1段につき1ポイント） \\ Shield +10% of overhealing, granted to yourself for 3s \\ ・each grant is capped at 10% of your maximum health \\ ・this 10% limit does not increase with ranks \\ ・(values per rank; maximum 3 ranks; 1 point per rank) |
+| 灯を絶やさず (Keep the Light) | - | 3 | 1 | 自分の技で敵をスタンさせたとき、最大HPの3%の障壁を3秒間得る。2秒に1回まで。装備・星の同じ効果は合計で最大15%まで。（数値は1段ごと。最大3段、1段につき1ポイント） \\ Shield +3% of your maximum health for 3s when your own skill stuns an enemy \\ ・once per 2s \\ ・combined across equipment and stars, this effect is capped at 15% \\ ・(values per rank; maximum 3 ranks; 1 point per rank) |
+
