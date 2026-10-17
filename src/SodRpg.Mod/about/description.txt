@@ -1,5 +1,5 @@
-[b]Fixes Infinity's pure white zone boss kill not counting, co-op training progress mix-ups after continuing or reconnecting, lost cooldowns when swapping gems or memories, and set gear English names.[/b]
-[b]Infinity の純白ゾーンでボス撃破が数えられない問題や、協力プレイで続きから始めたり再接続したりしたときの鍛錬の取り違え、付け替えで技の待ち時間が消える問題、セット装備の英語名などを直しました。[/b]
+[b]In co-op with shares on, you can now keep damaging enemies another player is responsible for, even below 30% HP. Also lighter Equipment/Forge tabs and display fixes.[/b]
+[b]協力プレイの分担で、ほかの人が担当する敵のHPが30%以下になっても手伝えるようにしました。装備・鍛冶タブの軽量化と表示の修正も含みます。[/b]
 
 [h1]Dreamforge RPG[/h1]
 Turns every run into part of a long RPG journey: relics you keep, a risky "secure or delve" choice at every zone, a star map per Traveler, a forge, and long-term goals. Co-op ready.
