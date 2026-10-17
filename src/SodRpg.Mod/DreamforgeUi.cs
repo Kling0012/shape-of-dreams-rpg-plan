@@ -748,6 +748,30 @@ namespace SodRpg.Mod
                 $"At delve {next}, {atLeastEn}{nmNormal}% of regular enemies and {atLeastEn}{nmElite}% of elites become stronger nightmares{nmRaised} (bosses excluded). They drop loot a tier higher.{gearNote}"), "#ff9ae0");
         }
 
+        private readonly Dictionary<Pact, string> _pactButtons = new Dictionary<Pact, string>();
+        private Profile _pactButtonsProfile;
+        private int _pactButtonsEchoPercent;
+        private bool _pactButtonsJapanese;
+
+        private string PactButtonText(PactDef def)
+        {
+            var profile = _s.Profile;
+            int echoPercent = Workshop.EchoPercent(profile);
+            if (_pactButtonsProfile != profile || _pactButtonsEchoPercent != echoPercent || _pactButtonsJapanese != Loc.Japanese)
+            {
+                _pactButtonsProfile = profile;
+                _pactButtonsEchoPercent = echoPercent;
+                _pactButtonsJapanese = Loc.Japanese;
+                _pactButtons.Clear();
+            }
+            if (!_pactButtons.TryGetValue(def.Id, out var text))
+            {
+                text = $"<b>{def.Name}</b>\n<color=#ffb0a0>{def.DescriptionFor(profile)}</color>";
+                _pactButtons[def.Id] = text;
+            }
+            return text;
+        }
+
         private void DrawSecurePrompt(float w, float h, DreamforgeConfig cfg)
         {
             CacheSecureButtons(cfg);
@@ -898,7 +922,7 @@ namespace SodRpg.Mod
                     var id = run.OfferedPacts[i];
                     var d = Pacts.Get(id);
                     if (d == null) continue;
-                    if (GUILayout.Button($"<b>{d.Name}</b>\n<color=#ffb0a0>{d.Description}</color>", _st.RowWrap, GUILayout.Height(52)))
+                    if (GUILayout.Button(PactButtonText(d), _st.RowWrap, GUILayout.Height(52)))
                     {
                         SetStatus(run.Infinity != null && !_s.CanChooseRunRules
                             ? _s.CompleteInfinityPersonalChoice(id) : _s.Delve(id));
@@ -1291,10 +1315,25 @@ namespace SodRpg.Mod
             GUILayout.EndArea();
         }
 
-        // ヒントの本文の高さ（ヒントと言語ごとに測って使い回す）。
+        // ヒントの本文と高さは、表示に使う値が変わったときだけ作り直す。
+        private (HintDef Def, Profile Profile, int Rooms, int EchoPercent, int Menu, int Secure, int Delve, bool Japanese) _hintTextKey;
+        private string _hintText;
         private Hint _hintMeasured;
         private bool _hintMeasuredJa;
         private float _hintBodyHeight = -1;
+
+        private string HintBodyText(HintDef def, DreamforgeConfig cfg)
+        {
+            var profile = _s.Profile;
+            var key = (def, profile, Workshop.RoomsToRecover(profile), Workshop.EchoPercent(profile),
+                (int)cfg.menuKey, (int)cfg.secureKey, (int)cfg.delveKey, Loc.Japanese);
+            if (_hintText != null && _hintTextKey.Equals(key)) return _hintText;
+            _hintTextKey = key;
+            _hintText = def.Text(profile).Replace("[F6]", "[" + cfg.menuKey + "]")
+                .Replace("[F7]", "[" + cfg.secureKey + "]").Replace("[F8]", "[" + cfg.delveKey + "]");
+            _hintBodyHeight = -1;
+            return _hintText;
+        }
 
         private Rect HintRect(float w, float h)
         {
@@ -1317,11 +1356,11 @@ namespace SodRpg.Mod
                 return;
             }
             bool welcome = id == Hint.Welcome;
+            string body = HintBodyText(def, cfg);
             var rect = HintRect(w, h);
             if (rect.Contains(Event.current.mousePosition)) MouseOverPanel = true;
             GUILayout.BeginArea(rect, _st.Window);
             GUILayout.Label(UiStyles.Colored((welcome ? "" : Loc.T("ヒント：", "Tip: ")) + def.Title, "#ffe17a"), welcome ? _st.Title : _st.Header);
-            string body = def.Body.ToString().Replace("[F6]", "[" + cfg.menuKey + "]").Replace("[F7]", "[" + cfg.secureKey + "]").Replace("[F8]", "[" + cfg.delveKey + "]");
             if (_hintBodyHeight < 0 || _hintMeasured != id || _hintMeasuredJa != Loc.Japanese)
             {
                 _hintMeasured = id;

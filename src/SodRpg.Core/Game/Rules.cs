@@ -664,7 +664,7 @@ namespace SodRpg.Core.Game
                 p.Stats.PactsSworn = SaturatingAdd(p.Stats.PactsSworn, 1);
                 AdvanceBounty(p, BountyKind.PactBearer, 1, false, ev);
                 var d = Pacts.Get(pact);
-                ev.Add(new GameEvent(EventKind.Delved, Loc.T($"悪夢の契約「{d.Name}」を結びました。{d.Description}", $"Swore the nightmare pact \"{d.Name}\". {d.Description}")));
+                ev.Add(new GameEvent(EventKind.Delved, Loc.T($"悪夢の契約「{d.Name}」を結びました。{d.DescriptionFor(p)}", $"Swore the nightmare pact \"{d.Name}\". {d.DescriptionFor(p)}")));
             }
             run.OfferedPacts.Clear();
             run.OfferedEvent = DreamEvent.None;
