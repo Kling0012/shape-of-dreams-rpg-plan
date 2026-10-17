@@ -2183,7 +2183,7 @@ namespace SodRpg.Mod
                         if (fbConfirm)
                         {
                             _confirmForbid = null;
-                            Act(() => Rules.Forbid(p, sel.Uid, _s.Trades), true);
+                            Act(() => Rules.Forbid(p, sel.Uid, _s.Trades), true, affectsCodex: true);
                         }
                         else _confirmForbid = sel.Uid;
                     }
