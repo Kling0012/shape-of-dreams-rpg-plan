@@ -5224,7 +5224,7 @@
       ],
       "link": {
         "kind": "Attune",
-        "value": 105
+        "value": 99
       }
     },
     "unique.link_vesper_cruel_sun": {
@@ -5288,7 +5288,7 @@
       ],
       "link": {
         "kind": "Attune",
-        "value": 104
+        "value": 99
       }
     },
     "unique.link_lacerta_precision": {
@@ -5448,7 +5448,7 @@
       ],
       "link": {
         "kind": "Attune",
-        "value": 46
+        "value": 45
       }
     },
     "unique.link_husk_death_glove": {
@@ -5480,7 +5480,7 @@
       ],
       "link": {
         "kind": "Attune",
-        "value": 110
+        "value": 99
       }
     },
     "unique.link_husk_vanish": {

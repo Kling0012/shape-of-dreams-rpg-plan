@@ -2308,13 +2308,13 @@ namespace SodRpg.Core.Game
         internal const decimal Unique_unique_link_husk_death_glove_Link = 71m;
         internal const int Unique_unique_link_husk_one_flash_Power0 = 45;
         internal const int Unique_unique_link_husk_one_flash_Power1 = 3;
-        internal const decimal Unique_unique_link_husk_one_flash_Link = 46m;
+        internal const decimal Unique_unique_link_husk_one_flash_Link = 45m;
         internal const int Unique_unique_link_husk_vanish_Power0 = 25;
         internal const int Unique_unique_link_husk_vanish_Power1 = 25;
         internal const decimal Unique_unique_link_husk_vanish_Link = 68m;
         internal const int Unique_unique_link_husk_wind_scar_Power0 = 25;
         internal const int Unique_unique_link_husk_wind_scar_Power1 = 5;
-        internal const decimal Unique_unique_link_husk_wind_scar_Link = 110m;
+        internal const decimal Unique_unique_link_husk_wind_scar_Link = 99m;
         internal const int Unique_unique_link_lacerta_dodge_draw_Power0 = 78;
         internal const int Unique_unique_link_lacerta_dodge_draw_Power1 = 5;
         internal const decimal Unique_unique_link_lacerta_dodge_draw_Link = 62m;
@@ -2323,7 +2323,7 @@ namespace SodRpg.Core.Game
         internal const decimal Unique_unique_link_lacerta_gunslinger_Link = 45m;
         internal const int Unique_unique_link_lacerta_powder_tap_Power0 = 70;
         internal const int Unique_unique_link_lacerta_powder_tap_Power1 = 5;
-        internal const decimal Unique_unique_link_lacerta_powder_tap_Link = 104m;
+        internal const decimal Unique_unique_link_lacerta_powder_tap_Link = 99m;
         internal const int Unique_unique_link_lacerta_precision_Power0 = 45;
         internal const int Unique_unique_link_lacerta_precision_Power1 = 50;
         internal const decimal Unique_unique_link_lacerta_precision_Link = 67m;
@@ -2407,7 +2407,7 @@ namespace SodRpg.Core.Game
         internal const decimal Unique_unique_link_vesper_holy_vow_Link = 45m;
         internal const int Unique_unique_link_vesper_resolve_mercy_Power0 = 10;
         internal const int Unique_unique_link_vesper_resolve_mercy_Power1 = 16;
-        internal const decimal Unique_unique_link_vesper_resolve_mercy_Link = 105m;
+        internal const decimal Unique_unique_link_vesper_resolve_mercy_Link = 99m;
         internal const int Unique_unique_link_white_flash_Power0 = 88;
         internal const int Unique_unique_link_white_flash_Power1 = 40;
         internal const decimal Unique_unique_link_white_flash_Link = 17m;
@@ -5357,13 +5357,13 @@ namespace SodRpg.Core.Game
             "balance:equipment:items:v1:unique:unique.link_husk_death_glove:link:MemoryHaste:milli:71000",
             "balance:equipment:items:v1:unique:unique.link_husk_death_glove:power:0:CriticalEcho:int:4",
             "balance:equipment:items:v1:unique:unique.link_husk_death_glove:power:1:Executioner:int:40",
-            "balance:equipment:items:v1:unique:unique.link_husk_one_flash:link:Attune:milli:46000",
+            "balance:equipment:items:v1:unique:unique.link_husk_one_flash:link:Attune:milli:45000",
             "balance:equipment:items:v1:unique:unique.link_husk_one_flash:power:0:Executioner:int:45",
             "balance:equipment:items:v1:unique:unique.link_husk_one_flash:power:1:Frenzy:int:3",
             "balance:equipment:items:v1:unique:unique.link_husk_vanish:link:MemorySurge:milli:68000",
             "balance:equipment:items:v1:unique:unique.link_husk_vanish:power:0:Sprint:int:25",
             "balance:equipment:items:v1:unique:unique.link_husk_vanish:power:1:Retaliation:int:25",
-            "balance:equipment:items:v1:unique:unique.link_husk_wind_scar:link:Attune:milli:110000",
+            "balance:equipment:items:v1:unique:unique.link_husk_wind_scar:link:Attune:milli:99000",
             "balance:equipment:items:v1:unique:unique.link_husk_wind_scar:power:0:Sprint:int:25",
             "balance:equipment:items:v1:unique:unique.link_husk_wind_scar:power:1:Momentum:int:5",
             "balance:equipment:items:v1:unique:unique.link_lacerta_dodge_draw:link:MemoryHaste:milli:62000",
@@ -5372,7 +5372,7 @@ namespace SodRpg.Core.Game
             "balance:equipment:items:v1:unique:unique.link_lacerta_gunslinger:link:Attune:milli:45000",
             "balance:equipment:items:v1:unique:unique.link_lacerta_gunslinger:power:0:Whirlwind:int:80",
             "balance:equipment:items:v1:unique:unique.link_lacerta_gunslinger:power:1:Sprint:int:25",
-            "balance:equipment:items:v1:unique:unique.link_lacerta_powder_tap:link:Attune:milli:104000",
+            "balance:equipment:items:v1:unique:unique.link_lacerta_powder_tap:link:Attune:milli:99000",
             "balance:equipment:items:v1:unique:unique.link_lacerta_powder_tap:power:0:Blaze:int:70",
             "balance:equipment:items:v1:unique:unique.link_lacerta_powder_tap:power:1:Momentum:int:5",
             "balance:equipment:items:v1:unique:unique.link_lacerta_precision:link:MemorySurge:milli:67000",
@@ -5456,7 +5456,7 @@ namespace SodRpg.Core.Game
             "balance:equipment:items:v1:unique:unique.link_vesper_holy_vow:link:Guard:milli:45000",
             "balance:equipment:items:v1:unique:unique.link_vesper_holy_vow:power:0:Barrier:int:10",
             "balance:equipment:items:v1:unique:unique.link_vesper_holy_vow:power:1:Vigor:int:20",
-            "balance:equipment:items:v1:unique:unique.link_vesper_resolve_mercy:link:Attune:milli:105000",
+            "balance:equipment:items:v1:unique:unique.link_vesper_resolve_mercy:link:Attune:milli:99000",
             "balance:equipment:items:v1:unique:unique.link_vesper_resolve_mercy:power:0:Lifesteal:int:10",
             "balance:equipment:items:v1:unique:unique.link_vesper_resolve_mercy:power:1:Vigor:int:16",
             "balance:equipment:items:v1:unique:unique.link_white_flash:link:Attune:milli:17000",
