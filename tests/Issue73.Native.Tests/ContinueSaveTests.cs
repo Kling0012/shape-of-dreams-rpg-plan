@@ -21,6 +21,7 @@ namespace Issue73.Native.Tests
     public sealed class ContinueSaveTests : IDisposable
     {
         private const BindingFlags Hidden = BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic;
+        private ClientSession _receiptSession;
 
         public ContinueSaveTests()
         {
@@ -29,6 +30,7 @@ namespace Issue73.Native.Tests
 
         public void Dispose()
         {
+            _receiptSession?.FlushSaves();
             ResetStatics();
         }
 
@@ -415,6 +417,8 @@ namespace Issue73.Native.Tests
         public void Guest_rewind_receipt_precedes_build_retries_failed_transport_and_rebinds()
         {
             var guest = GuestInGame("run");
+            _receiptSession = guest;
+            Set(guest, "_store", new ProfileStore(new SodRpg.Core.Tests.Testing.InMemoryFileSystem(), "receipt.json", 97));
             var actor = new Actor();
             Set(guest, "_clientRpcOn", actor);
             Call(guest, "OnContinueCheckpoint", new DreamforgeContinueCheckpointMsg
@@ -779,6 +783,23 @@ namespace Issue73.Native.Tests
                 session.FlushSaves();
                 if (Directory.Exists(directory)) Directory.Delete(directory, true);
             }
+        }
+
+        [Fact]
+        public void An_abandoned_native_load_stops_pausing_rewards_once_the_game_is_gone()
+        {
+            var session = HostSession();
+            Set(session, "_nativeContinueRestoring", true);
+            Set(session, "_nativeContinueRestoreDeadline", 0f);
+            NetworkedManagerBase<GameManager>.softInstance = null; // back at the title: the load never finished
+            UnityEngine.Time.unscaledTime = 31f;
+            Call(session, "TickContinueRestore");
+            Assert.True((bool)Get(session, "_nativeContinueRestoring")); // the timeout alone does not fake completion
+
+            Call(session, "ObserveContinueGame", (object)null);
+
+            Assert.False((bool)Get(session, "_nativeContinueRestoring"));
+            Assert.False(ClientSession.NativeContinueRestoring);
         }
 
         private static ClientSession HostSession()

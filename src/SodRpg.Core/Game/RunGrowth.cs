@@ -17,6 +17,16 @@ namespace SodRpg.Core.Game
         ParrySuccess = 3,
         /// <summary>会心の基本攻撃でとどめを刺す Threshold 回ごと。</summary>
         CritBasicAttackKill = 4,
+        /// <summary>自分または味方への回復が実際に成立した Threshold 回ごと。</summary>
+        HealSucceeded = 5,
+        /// <summary>敵を撃破した Threshold 回ごと。</summary>
+        EnemyKill = 6,
+        /// <summary>自分の本体召喚ユニットが敵に命中した Threshold 回ごと。</summary>
+        SummonHit = 7,
+        /// <summary>自分の通常攻撃が敵に命中した Threshold 回ごと。</summary>
+        BasicAttackHit = 8,
+        /// <summary>自分の記憶の本体ダメージが敵に命中した Threshold 回ごと。</summary>
+        MemoryHit = 9,
     }
 
     /// <summary>1スタックあたりの能力値。AmountMilli は表示単位の1/1000（0.5% = 500、攻撃力+0.5 = 500）。</summary>
@@ -54,6 +64,7 @@ namespace SodRpg.Core.Game
         public RunGrowthTrigger Trigger { get; }
         /// <summary>HP系の契機は最大HPに対する%（1〜100）。出来事の契機は出来事の回数。</summary>
         public int Threshold { get; }
+        /// <summary>0なら蓄積の上限なし。正の値は蓄積の上限。</summary>
         public int Cap { get; }
         public IReadOnlyList<RunGrowthEffect> Effects { get; }
 
@@ -76,7 +87,7 @@ namespace SodRpg.Core.Game
         {
             if (!Enum.IsDefined(typeof(RunGrowthTrigger), Trigger)) throw new ArgumentException("Unknown RunGrowth trigger.");
             if (Threshold < 1 || Threshold > (IsHealthTrigger(Trigger) ? 100 : MaxThreshold)) throw new ArgumentException("RunGrowth threshold is out of range.");
-            if (Cap < 1 || Cap > MaxCap) throw new ArgumentException("RunGrowth cap is out of range.");
+            if (Cap < 0 || Cap > MaxCap) throw new ArgumentException("RunGrowth cap is out of range.");
             if (Effects.Count < 1 || Effects.Count > MaxEffects) throw new ArgumentException("RunGrowth needs 1 to 4 stat effects.");
             var seen = new HashSet<Stat>();
             foreach (var effect in Effects)
@@ -122,6 +133,7 @@ namespace SodRpg.Core.Game
         public string[] ContributorIds { get; set; } = Array.Empty<string>();
         public RunGrowthTrigger Trigger { get; set; }
         public int Threshold { get; set; }
+        /// <summary>0なら蓄積の上限なし。</summary>
         public int Cap { get; set; }
         /// <summary>1スタックの効果への上乗せ（%）。</summary>
         public int EffectPercent { get; set; }
@@ -166,7 +178,7 @@ namespace SodRpg.Core.Game
                 foreach (var entry in growths)
                 {
                     if (mod.TargetStarId != null && mod.TargetStarId != entry.StarId) continue;
-                    entry.Cap = Math.Min(RunGrowthDef.MaxCap, checked(entry.Cap + mod.CapBonus * row.Value));
+                    if (entry.Cap > 0) entry.Cap = Math.Min(RunGrowthDef.MaxCap, checked(entry.Cap + mod.CapBonus * row.Value));
                     entry.EffectPercent = Math.Min(RunGrowthModifierDef.MaxEffectPercent, checked(entry.EffectPercent + mod.EffectPercent * row.Value));
                     if (mod.DoubleGain) entry.GainMultiplier = 2;
                     var ids = new List<string>(entry.ContributorIds) { row.Key.Id };
@@ -252,7 +264,7 @@ namespace SodRpg.Core.Game
         {
             if (e == null || !Gimmicks.ValidStarId(e.StarId) || !Enum.IsDefined(typeof(RunGrowthTrigger), e.Trigger)
                 || e.Threshold < 1 || e.Threshold > (RunGrowthDef.IsHealthTrigger(e.Trigger) ? 100 : RunGrowthDef.MaxThreshold)
-                || e.Cap < 1 || e.Cap > RunGrowthDef.MaxCap || e.EffectPercent < 0 || e.EffectPercent > RunGrowthModifierDef.MaxEffectPercent
+                || e.Cap < 0 || e.Cap > RunGrowthDef.MaxCap || e.EffectPercent < 0 || e.EffectPercent > RunGrowthModifierDef.MaxEffectPercent
                 || e.GainMultiplier < 1 || e.GainMultiplier > 2 || e.Effects == null
                 || e.Effects.Count < 1 || e.Effects.Count > RunGrowthDef.MaxEffects) return false;
             var seen = new HashSet<Stat>();
@@ -277,10 +289,14 @@ namespace SodRpg.Core.Game
 
         // ───── 数値 ─────
 
+        /// <summary>実際に適用・表示する蓄積数。上限なしでも int の範囲に収まる。</summary>
+        public static int EffectiveStacks(RunGrowthEntry entry, int stacks)
+            => Math.Max(0, entry.Cap == 0 ? stacks : Math.Min(stacks, entry.Cap));
+
         /// <summary>stacks（上限を超えない）に応じた能力値の合計。表示単位（% や固定値）で返す。</summary>
         public static double StatTotal(RunGrowthEntry entry, RunGrowthEffect effect, int stacks)
         {
-            int effective = Math.Max(0, Math.Min(stacks, entry.Cap));
+            int effective = EffectiveStacks(entry, stacks);
             return effective * (effect.AmountMilli / 1000d) * (100 + entry.EffectPercent) / 100d;
         }
 
@@ -301,9 +317,26 @@ namespace SodRpg.Core.Game
                 case RunGrowthTrigger.ParrySuccess:
                     return threshold == 1 ? Loc.T("パリィに成功するたび", "each time you parry successfully")
                         : Loc.T($"パリィに{threshold}回成功するたび", $"every {threshold} successful parries");
+                case RunGrowthTrigger.HealSucceeded:
+                    return (threshold == 1 ? Loc.T("自分の回復で自分または味方のHPが実際に回復するたび", "each time your healing restores health to yourself or an ally")
+                        : Loc.T($"自分の回復で自分または味方のHPが実際に{threshold}回回復するたび", $"every {threshold} successful heals on yourself or allies"))
+                        + Loc.T($"（味方への有効回復・障壁は{StarRankBalance.SupportAllyGrowthMultiplier}回分、自己回復は1回分。溢れ由来の障壁は除く）",
+                            $" (effective ally healing/shields count {StarRankBalance.SupportAllyGrowthMultiplier} times; self-heals count once; overheal shields excluded)");
+                case RunGrowthTrigger.EnemyKill:
+                    return threshold == 1 ? Loc.T("敵を撃破するたび", "each time you kill an enemy")
+                        : Loc.T($"敵を{threshold}体撃破するたび", $"every {threshold} enemies you kill");
+                case RunGrowthTrigger.SummonHit:
+                    return threshold == 1 ? Loc.T("自分の召喚獣の攻撃が敵に命中するたび", "each time your summon hits an enemy")
+                        : Loc.T($"自分の召喚獣の攻撃が敵に{threshold}回命中するたび", $"every {threshold} hits by your summons on enemies");
+                case RunGrowthTrigger.BasicAttackHit:
+                    return threshold == 1 ? Loc.T("自分の通常攻撃が敵に命中するたび", "each time your basic attack hits an enemy")
+                        : Loc.T($"自分の通常攻撃が敵に{threshold}回命中するたび", $"every {threshold} basic attack hits on enemies");
+                case RunGrowthTrigger.MemoryHit:
+                    return threshold == 1 ? Loc.T("自分の記憶が敵に命中するたび", "each time your memory hits an enemy")
+                        : Loc.T($"自分の記憶が敵に{threshold}回命中するたび", $"every {threshold} hits by your memories on enemies");
                 default:
                     return threshold == 1 ? Loc.T("会心の基本攻撃でとどめを刺すたび", "each time a critical basic attack lands the finishing blow")
-                        : Loc.T($"会心の基本攻撃でとどめを刺すことを{threshold}回行うたび", $"every {threshold} finishing blows by critical basic attacks");
+                        : Loc.T($"会心の基本攻撃でとどめを{threshold}回刺すたび", $"every {threshold} finishing blows by critical basic attacks");
             }
         }
 
@@ -324,6 +357,7 @@ namespace SodRpg.Core.Game
                 case Stat.CritDamagePct: return Loc.T($"会心ダメージ +{number}%", $"Crit Damage +{number}%");
                 case Stat.ShieldPower: return Loc.T($"シールドの強さ +{number}%", $"Shield Power +{number}%");
                 case Stat.HealPower: return Loc.T($"回復の強さ +{number}%", $"Heal Power +{number}%");
+                case Stat.HealingReceivedPct: return Loc.T($"受ける回復 +{number}%", $"Healing Received +{number}%");
                 case Stat.SummonPower: return Loc.T($"召喚獣のダメージ +{number}%", $"Summon Damage +{number}%");
                 case Stat.HealthRegen: return Loc.T($"HP自然回復 +{number}", $"Health Regen +{number}");
                 case Stat.Haste: return Loc.T($"クールダウン短縮 +{number}", $"Ability Haste +{number}");
@@ -347,6 +381,7 @@ namespace SodRpg.Core.Game
                 case Stat.CritDamagePct: return "会心ダメージ";
                 case Stat.ShieldPower: return "シールドの強さ";
                 case Stat.HealPower: return "回復の強さ";
+                case Stat.HealingReceivedPct: return "受ける回復量";
                 case Stat.SummonPower: return "召喚獣のダメージ";
                 case Stat.HealthRegen: return "HP自然回復";
                 case Stat.Haste: return "クールダウン短縮";
@@ -361,7 +396,7 @@ namespace SodRpg.Core.Game
             switch (stat)
             {
                 case Stat.MaxHealthPct: case Stat.AttackPct: case Stat.PowerPct: case Stat.AttackSpeedPct: case Stat.CritChancePct:
-                case Stat.CritDamagePct: case Stat.ShieldPower: case Stat.HealPower: case Stat.SummonPower: case Stat.MoveSpeedPct:
+                case Stat.CritDamagePct: case Stat.ShieldPower: case Stat.HealPower: case Stat.HealingReceivedPct: case Stat.SummonPower: case Stat.MoveSpeedPct:
                     return true;
                 default: return false;
             }
@@ -396,8 +431,10 @@ namespace SodRpg.Core.Game
         {
             int gain = Math.Max(1, entry.GainMultiplier);
             string rise = RiseJa(entry.Effects.Select(x => StatAmountJa(x.Stat, x.AmountMilli / 1000d * (100 + entry.EffectPercent) / 100d)).ToList());
-            return Loc.T($"{TriggerText(entry.Trigger, entry.Threshold)}、鍛錬が{gain}つ溜まる。鍛錬1つにつき、{rise}。鍛錬は最大{entry.Cap}つまで溜まり、遠征の間は死亡やゾーン移動でも失われず、遠征の開始で0に戻る。",
-                $"{PerStack(entry)} per training stack: gain {gain} stack{(gain == 1 ? "" : "s")} {TriggerText(entry.Trigger, entry.Threshold)} (up to {entry.Cap} stacks; kept through death and zone changes for the whole expedition, reset when a new expedition begins)");
+            string capJa = entry.Cap == 0 ? "蓄積の上限はない。" : $"鍛錬は最大{entry.Cap}つまで溜まり、";
+            string capEn = entry.Cap == 0 ? "no stack cap" : $"up to {entry.Cap} stacks";
+            return Loc.T($"{TriggerText(entry.Trigger, entry.Threshold)}、鍛錬が{gain}つ溜まる。鍛錬1つにつき、{rise}。{capJa}遠征の間は死亡やゾーン移動でも失われず、遠征の開始で0に戻る。",
+                $"{PerStack(entry)} per training stack: gain {gain} stack{(gain == 1 ? "" : "s")} {TriggerText(entry.Trigger, entry.Threshold)} ({capEn}; kept through death and zone changes for the whole expedition, reset when a new expedition begins)");
         }
 
         public static string Describe(RunGrowthDef def)
@@ -419,10 +456,13 @@ namespace SodRpg.Core.Game
         private static string DescribeModifierJa(RunGrowthModifierDef mod, List<TalentDef> targets)
         {
             var sb = new StringBuilder();
-            if (mod.CapBonus > 0) sb.Append($"鍛錬の蓄積上限が{mod.CapBonus}増える。");
-            if (mod.EffectPercent > 0) sb.Append($"鍛錬1つごとの能力値の上昇量が{mod.EffectPercent}%増える。");
+            bool hasCappedTarget = targets.Count == 0 || targets.Any(t => t.RunGrowth.Cap > 0);
+            if (mod.CapBonus > 0 && hasCappedTarget) sb.Append($"鍛錬の蓄積上限が{mod.CapBonus}増える。");
+            if (mod.EffectPercent > 0) sb.Append(hasCappedTarget
+                ? $"鍛錬1つごとの能力値の上昇量が{mod.EffectPercent}%増える。"
+                : $"鍛錬の効果が{mod.EffectPercent}%増える。");
             if (mod.DoubleGain) sb.Append("鍛錬の獲得数が100%増え、条件を満たすたびに2つ溜まる。");
-            if (targets.Count == 0) return sb.Append("対象は、この旅人のすべての遠征の鍛錬。").ToString();
+            if (targets.Count == 0) return sb.Append("対象はこの旅人のすべての遠征の鍛錬。").ToString();
             foreach (var talent in targets)
             {
                 var growth = talent.RunGrowth;
@@ -435,8 +475,9 @@ namespace SodRpg.Core.Game
                         double amount = effect.AmountMilli / 1000d;
                         return StatChangeJa(effect.Stat, amount, amount * (100 + mod.EffectPercent) / 100d);
                     })) + "変わる。");
-                if (mod.CapBonus > 0) sb.Append($"鍛錬の蓄積上限は{growth.Cap}から{growth.Cap + mod.CapBonus}になる。");
-                if (mod.EffectPercent > 0 || mod.CapBonus > 0) sb.Append("これは、この星だけを基本値へ適用した場合の値である。");
+                if (growth.Cap == 0) sb.Append("蓄積の上限はない。");
+                else if (mod.CapBonus > 0) sb.Append($"鍛錬の蓄積上限は{growth.Cap}から{Math.Min(RunGrowthDef.MaxCap, growth.Cap + mod.CapBonus)}になる。");
+                if (mod.EffectPercent > 0 || mod.CapBonus > 0) sb.Append("これはこの星だけを基本値に適用した場合の値である。");
             }
             return sb.ToString();
         }
@@ -444,7 +485,8 @@ namespace SodRpg.Core.Game
         private static string DescribeModifierEn(RunGrowthModifierDef mod, List<TalentDef> targets)
         {
             var parts = new List<string>();
-            if (mod.CapBonus > 0) parts.Add($"training stack cap +{mod.CapBonus}");
+            if (mod.CapBonus > 0 && (targets.Count == 0 || targets.Any(t => t.RunGrowth.Cap > 0)))
+                parts.Add($"training stack cap +{mod.CapBonus}");
             if (mod.EffectPercent > 0) parts.Add($"stat gain per training stack +{mod.EffectPercent}%");
             if (mod.DoubleGain) parts.Add("training stack gain +100% (2 stacks per completed condition)");
             string TargetText(TalentDef talent)
@@ -458,8 +500,9 @@ namespace SodRpg.Core.Game
                         : before + " → " + StatText(effect.Stat, amount * (100 + mod.EffectPercent) / 100d);
                 }));
                 string detail = ". Per training stack: " + gains;
-                if (mod.CapBonus > 0)
-                    detail += $". Stack cap: {growth.Cap} → {growth.Cap + mod.CapBonus}";
+                if (growth.Cap == 0) detail += ". no stack cap";
+                else if (mod.CapBonus > 0)
+                    detail += $". Stack cap: {growth.Cap} → {Math.Min(RunGrowthDef.MaxCap, growth.Cap + mod.CapBonus)}";
                 if (mod.EffectPercent > 0 || mod.CapBonus > 0)
                     detail += " (with only this star applied to the base values)";
                 return "star “" + talent.Name + "”: "
@@ -474,16 +517,22 @@ namespace SodRpg.Core.Game
         /// <summary>HUDの小さな1行。</summary>
         public static string HudLine(RunGrowthEntry entry, int stacks)
         {
-            int shown = Math.Max(0, Math.Min(stacks, entry.Cap));
-            return Loc.T($"鍛錬 {shown}/{entry.Cap}", $"Training {shown}/{entry.Cap}") + (shown > 0
+            int shown = EffectiveStacks(entry, stacks);
+            string count = entry.Cap == 0
+                ? Loc.T($"鍛錬 {shown}（蓄積の上限はない）", $"Training {shown} (no stack cap)")
+                : Loc.T($"鍛錬 {shown}/{entry.Cap}", $"Training {shown}/{entry.Cap}");
+            return count + (shown > 0
                 ? " <color=#c4c4dc>(" + string.Join(" ", entry.Effects.Select(x => StatText(x.Stat, StatTotal(entry, x, shown)))) + ")</color>" : "");
         }
 
         /// <summary>取得した効果の一覧に出す、現在のスタックの1行。</summary>
         public static string SummaryLine(RunGrowthEntry entry, int stacks)
         {
-            int shown = Math.Max(0, Math.Min(stacks, entry.Cap));
-            return Describe(entry) + "\n" + Loc.T($"現在 {shown}/{entry.Cap}つ", $"Now {shown}/{entry.Cap} stacks")
+            int shown = EffectiveStacks(entry, stacks);
+            string count = entry.Cap == 0
+                ? Loc.T($"現在 {shown}つ（蓄積の上限はない）", $"Now {shown} stacks (no stack cap)")
+                : Loc.T($"現在 {shown}/{entry.Cap}つ", $"Now {shown}/{entry.Cap} stacks");
+            return Describe(entry) + "\n" + count
                 + (shown > 0 ? "（" + string.Join(Loc.T("、", ", "), entry.Effects.Select(x => StatText(x.Stat, StatTotal(entry, x, shown)))) + "）" : "");
         }
     }
@@ -550,20 +599,23 @@ namespace SodRpg.Core.Game
             if (string.IsNullOrEmpty(owner) || entry == null || entry.Trigger != trigger || !(units > 0d) || double.IsInfinity(units)) return 0;
             if (!_owners.TryGetValue(owner, out var slots)) _owners.Add(owner, slots = new Dictionary<string, Slot>(StringComparer.Ordinal));
             if (!slots.TryGetValue(entry.StarId, out var slot)) slots.Add(entry.StarId, slot = new Slot());
-            if (slot.Stacks >= entry.Cap)
+            // Cap == 0 は上限なし。int.MaxValue は整数の桁あふれを防ぐためだけに使う。
+            int limit = entry.Cap == 0 ? int.MaxValue : entry.Cap;
+            if (slot.Stacks >= limit)
             {
                 // 上限では進行を貯めない（上限が後から増えても一気に増えない）。
                 slot.ProgressMilli = 0;
                 return 0;
             }
             long per = (long)entry.Threshold * 1000L;
-            slot.ProgressMilli += (long)Math.Round(Math.Min(units, 1000000d) * 1000d);
+            long progress = (long)Math.Round(Math.Min(units, 1000000d) * 1000d);
+            slot.ProgressMilli = Math.Min(slot.ProgressMilli, long.MaxValue - progress) + progress;
             long steps = slot.ProgressMilli / per;
             slot.ProgressMilli -= steps * per;
             if (steps <= 0) return 0;
-            long add = Math.Min((long)entry.Cap - slot.Stacks, steps * entry.GainMultiplier);
+            long add = Math.Min((long)limit - slot.Stacks, steps * entry.GainMultiplier);
             slot.Stacks += (int)add;
-            if (slot.Stacks >= entry.Cap) slot.ProgressMilli = 0;
+            if (slot.Stacks >= limit) slot.ProgressMilli = 0;
             if (add > 0) Version++;
             return (int)add;
         }
@@ -597,7 +649,7 @@ namespace SodRpg.Core.Game
             foreach (var save in state.Growth)
             {
                 if (save == null || string.IsNullOrEmpty(save.Owner) || !Gimmicks.ValidStarId(save.GrowthId)
-                    || save.Stacks < 0 || save.Stacks > RunGrowthDef.MaxCap || save.ProgressMilli < 0) continue;
+                    || save.Stacks < 0 || save.ProgressMilli < 0) continue;
                 if (!_owners.TryGetValue(save.Owner, out var slots)) _owners.Add(save.Owner, slots = new Dictionary<string, Slot>(StringComparer.Ordinal));
                 slots[save.GrowthId] = new Slot { Stacks = save.Stacks, ProgressMilli = save.ProgressMilli };
             }

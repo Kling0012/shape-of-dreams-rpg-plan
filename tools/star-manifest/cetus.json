@@ -26632,7 +26632,7 @@
       "rankCost": 1,
       "nameJa": "凍てつく層",
       "nameEn": "Frozen Layers",
-      "notes": "上限増分はバランス表から生成。 / Cap increase is generated from the balance table."
+      "notes": "効果増分はバランス表から生成。 / Effect increase is generated from the balance table."
     },
     {
       "id": "cetus.run.m2",
@@ -26676,7 +26676,7 @@
       "rankCost": 1,
       "nameJa": "砕けぬ氷膜",
       "nameEn": "Unbroken Ice Film",
-      "notes": "上限増分はバランス表から生成。 / Cap increase is generated from the balance table."
+      "notes": "効果増分はバランス表から生成。 / Effect increase is generated from the balance table."
     },
     {
       "id": "cetus.run.choice",
@@ -28611,6 +28611,57 @@
       "nameJa": "凪",
       "nameEn": "Calm Sea",
       "notes": "設計表C: 凪（既存）。Power.StillWater=6（Q/R本体記憶でスタン成功時、最大HP6%の盾3秒、既存2秒間隔）。必要機構M4/M6（C07/C08）、既存核位置。集団スタンの多重盾を抑える既存間隔だけ残す（代償は #47 で撤廃）。"
+    },
+    {
+      "id": "cetus.key.frost-resonance",
+      "region": "keystone",
+      "cluster": "cetus.key",
+      "shape": null,
+      "anchor": "cetus.outer.o2.choice",
+      "edges": [],
+      "requires": [
+        "cetus.outer.o2.choice"
+      ],
+      "requiresAny": [],
+      "kind": "Keystone",
+      "memory": null,
+      "value": null,
+      "param": null,
+      "receiver": null,
+      "target": null,
+      "gimmick": null,
+      "power": null,
+      "stat": null,
+      "options": null,
+      "keystone": {
+        "upside": "凍結共鳴 / Frost Resonance",
+        "upsideSpec": [
+          {
+            "effect": "Coop",
+            "field": "Value",
+            "scope": "allyDamagePercent",
+            "to": {
+              "valueRef": "cetus.key.frost-resonance/keystone/upsideSpec/0/to"
+            }
+          },
+          {
+            "effect": "Coop",
+            "field": "Value",
+            "scope": "extendSeconds",
+            "to": {
+              "valueRef": "cetus.key.frost-resonance/keystone/upsideSpec/1/to"
+            }
+          }
+        ]
+      },
+      "mechanisms": [
+        "C07"
+      ],
+      "maxRank": 1,
+      "rankCost": 1,
+      "nameJa": "凍結共鳴",
+      "nameEn": "Frost Resonance",
+      "notes": "同行の刻印。味方との協力距離係数を使用し、ソロでは発動しない。"
     }
   ]
 }

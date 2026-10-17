@@ -77,12 +77,6 @@ namespace SodRpg.Core.Game
                 default: throw new ArgumentException("Grant uses a typed mechanism. Unknown numeric field: " + field);
             }
         }
-        public static KeystoneField RecipientField(string field, out KeystoneRecipientKind recipient)
-        {
-            recipient = field == "SelfValue" ? KeystoneRecipientKind.Self
-                : field == "AllyValue" ? KeystoneRecipientKind.AlliedHero : throw new ArgumentException("Expected SelfValue or AllyValue.");
-            return KeystoneField.Value;
-        }
     }
 
     public static class AuthoredKeystoneComposer
@@ -106,7 +100,7 @@ namespace SodRpg.Core.Game
         public static decimal GimmickDurationBase(GimmickDef def, decimal? valuePercent = null) =>
             def.Effect == GimmickEffect.Wound ? 3m : def.Effect == GimmickEffect.Primed ? 5m
                 : def.Effect == GimmickEffect.Daze ? (valuePercent ?? def.UncappedValue ?? def.EffectiveValueOrAuthored) / 10m
-                : def.Effect == GimmickEffect.Crescendo ? 8m : (decimal)Gimmicks.BuffDuration;
+                : def.Effect == GimmickEffect.Crescendo ? (decimal)Gimmicks.CrescendoMinimumSeconds : (decimal)Gimmicks.BuffDuration;
 
         public static decimal GimmickRadiusBase(GimmickDef def) => def.Effect == GimmickEffect.Ricochet ? 8m
             : def.Effect == GimmickEffect.Heal || def.Effect == GimmickEffect.Siphon ? 10m : (decimal)Gimmicks.AreaRadius;

@@ -5,6 +5,7 @@ using HarmonyLib;
 using Mirror;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using SodRpg.Core;
 using SodRpg.Core.Game;
 using UnityEngine;
 
@@ -50,7 +51,8 @@ namespace SodRpg.Mod
         private GameManager _continueGame;
         private bool ContinueReady => !_nativeContinueRestoring && (LobbyReturnPending
             || (_blockedContinueRunId == null && !_continueCheckpointBlocked));
-        public string ContinueWarning { get; private set; }
+        private Txt _continueWarning;
+        public string ContinueWarning => _continueWarning?.ToString();
 
         // The ID travels in the native save itself: same runId alone cannot identify a save point.
         internal static void CaptureNativeContinue(DewPersistence.GameData data)
@@ -111,7 +113,7 @@ namespace SodRpg.Mod
                 if (session._pendingContinueId == id)
                 {
                     session._pendingContinueId = null;
-                    session.ContinueWarning = null;
+                    session._continueWarning = null;
                 }
                 else session.WarnUnconfirmedContinue("The native file still contains an earlier checkpoint.");
             }
@@ -123,10 +125,10 @@ namespace SodRpg.Mod
 
         private void WarnUnconfirmedContinue(string reason)
         {
-            string warning = Loc.T("本体の再開保存を確認できません。チェックポイントの整理を停止し、以前の保存を保持しています。",
-                "Native resume save is unconfirmed. Checkpoint cleanup is paused; earlier saves are retained.");
-            if (ContinueWarning != warning) Log.Warn(warning + " " + reason);
-            ContinueWarning = warning;
+            var warning = new Txt("本体の再開保存を確認できません。確認済みの地点と最新4件の未確定チェックポイントを保持しています。",
+                "Native resume save is unconfirmed. Confirmed checkpoints and the latest four pending attempts are retained.");
+            if (ContinueWarning != warning.ToString()) Log.Warn(warning + " " + reason);
+            _continueWarning = warning;
         }
 
         internal static void LoadNativeContinue(DewPersistence.GameData data)
@@ -142,6 +144,7 @@ namespace SodRpg.Mod
             if (!data.serverActorData.TryGetValue(ContinueIdKey, out string id)
                 || !data.serverActorData.TryGetValue(ContinueRunKey, out string runId)
                 || !data.serverActorData.TryGetValue(ContinueProfileKey, out string snapshot)) return;
+            session.Profile.NativeContinueRunId = runId;
             if (session.Profile.LobbyReturnedRunIds.Contains(runId))
             {
                 session.BlockLobbyReturnedContinue(runId);
@@ -165,7 +168,7 @@ namespace SodRpg.Mod
                 && _nativeContinueCheckpoint == null && !InfinityMode.Restoring)
                 || Time.unscaledTime < _nativeContinueRestoreDeadline) return;
             _nativeContinueRestoreDeadline = float.PositiveInfinity;
-            string warning = Loc.T("再開の完了通知が30秒届いていません。本体の復元状態を確認して待機を解除します。",
+            string warning = Loc.T("再開の完了通知が30秒間届いていません。本体の復元状態を確認して待機を解除します。",
                 "Resume completion has not arrived for 30 seconds. Checking native restore state to release the wait.");
             Log.Warn(warning);
             _notify?.Invoke(new GameEvent(EventKind.Warning, warning));
@@ -175,7 +178,7 @@ namespace SodRpg.Mod
             {
                 // The native load itself has not finished: pause only restored rewards/builds.
                 // A real completion can still install the retained checkpoint; do not fake it.
-                ContinueWarning = Loc.T("本体の復元完了を確認できないため、この遠征のMOD報酬・Build反映のみ保留しています。",
+                _continueWarning = new Txt("本体の復元完了を確認できないため、この遠征のMOD報酬・Build反映のみ保留しています。",
                     "Native restore is not ready. Only this expedition's MOD rewards and Build application are paused.");
                 Log.Warn(ContinueWarning);
                 return;
@@ -188,7 +191,7 @@ namespace SodRpg.Mod
                 _nativeContinueCheckpoint = null;
                 _continueCheckpointId = _continueResumeSession = null;
                 HostAuthority.GemContinueSources.Reset();
-                ContinueWarning = Loc.T("再開地点と本体の遠征が一致しないため、復元をスキップして遠征を続けます。以前の保存は保持しています。",
+                _continueWarning = new Txt("再開地点と本体の遠征が一致しないため、復元をスキップして遠征を続けます。以前の保存は保持しています。",
                     "Resume checkpoint does not match the native expedition. Skipping restore and continuing; earlier saves are retained.");
                 Log.Warn(ContinueWarning);
             }
@@ -215,6 +218,15 @@ namespace SodRpg.Mod
                     session._nativeContinueCheckpoint = null;
                 }
             }
+            catch (Exception ex) when (ex is LedgerFormatException || ex is LedgerVersionException)
+            {
+                session._continueCheckpointBlocked = true;
+                session._nativeContinueCheckpoint = null;
+                session._continueWarning = new Txt(
+                    "再開地点のMOD保存を読めません。この遠征のMOD報酬・Build反映のみ保留しています。",
+                    "The MOD resume checkpoint could not be read. Only this expedition's MOD rewards and Build application are paused.");
+                Log.Warn(session.ContinueWarning + " " + ex.Message);
+            }
             finally
             {
                 // ProfileChanged/save callbacks must not expose the pre-rewind build.
@@ -238,6 +250,7 @@ namespace SodRpg.Mod
             foreach (var existing in Profile.ContinueCheckpoints)
                 if (existing.Id == checkpoint.Id) return;
             Profile.ContinueCheckpoints.Add(checkpoint);
+            Profile.PrunePendingContinueCheckpoints();
         }
 
         private bool ConfirmContinueCheckpoint(string runId, string id)
@@ -247,7 +260,12 @@ namespace SodRpg.Mod
             if (index < 0) return false;
             // Keep the committed point, its predecessor and every later unconfirmed barrier.
             // Pending writes can be coalesced; a notification must never discard a future candidate.
+            var confirmed = Profile.ContinueCheckpoints[index];
+            Profile.ContinueCheckpoints[index] = new RunCheckpoint(confirmed.Id, confirmed.RunId, confirmed.Snapshot, true);
+            Profile.NativeContinueRunId = runId;
             if (index > 1) Profile.ContinueCheckpoints.RemoveRange(0, index - 1);
+            Profile.PrunePendingContinueCheckpoints();
+            Profile.PruneLobbyReturnReceipts(runId);
             return true;
         }
 
@@ -261,6 +279,8 @@ namespace SodRpg.Mod
                 Log.Warn("Client: rejected checkpoint notification without a checkpoint ID.");
                 return;
             }
+            // 本体保存の確定通知とは別に、参加者のチェックポイントもディスクへの書き込みを確認する。
+            // 未完了の予約だけで先の通知や再開へ進めないよう、両経路の確認付き保存を維持する。
             if (msg.committed)
             {
                 if (ConfirmContinueCheckpoint(msg.runId, msg.checkpointId)) SaveNow(true);
@@ -289,9 +309,17 @@ namespace SodRpg.Mod
             }
             _continueGame = gm;
             _continueCheckpointBlocked = false;
-            ContinueWarning = null;
+            _continueWarning = null;
             _blockedContinueRunId = null;
             if (gm != null) return;
+            if (_nativeContinueRestoring && float.IsPositiveInfinity(_nativeContinueRestoreDeadline))
+            {
+                // The 30s wait already expired without the native load ever finishing, and that game
+                // is gone now: release the pause so later expeditions in this process get rewards again.
+                _nativeContinueRestoring = false;
+                _buildDirty = true;
+                _buildCacheFrame = -1;
+            }
             CaptureContinueLobbyBaseline();
             _continueCheckpointId = _continueResumeSession = null;
             if (NetworkServer.active) HostAuthority.GemContinueSources.Reset();
@@ -313,7 +341,7 @@ namespace SodRpg.Mod
             Protocol.WarnContentMismatch(msg.protocol, msg.content, nameof(DreamforgeHelloMsg));
             if (msg.continueResumeSession == Protocol.LobbyReturnedResumeSession)
             {
-                Profile.LobbyReturnedRunIds.Add(runId);
+                Profile.RememberLobbyReturn(runId);
                 SaveNow();
             }
             if (BlockLobbyReturnedContinue(runId)) return;
@@ -327,7 +355,7 @@ namespace SodRpg.Mod
                     if (candidate.Id == msg.continueCheckpointId && candidate.RunId == runId) { checkpoint = candidate; break; }
                 if (checkpoint == null)
                 {
-                    ContinueWarning = Loc.T("再開地点のMOD保存がありません。遠征の報酬は停止中です。", "MOD resume save missing. Expedition rewards are paused.");
+                    _continueWarning = new Txt("再開地点のMOD保存がありません。遠征の報酬は停止中です。", "MOD resume save missing. Expedition rewards are paused.");
                     return;
                 }
                 RestoreContinueCheckpoint(checkpoint, msg.continueResumeSession);
@@ -362,12 +390,12 @@ namespace SodRpg.Mod
             _buildCacheFrame = -1;
             ProfileChanged?.Invoke();
             foreach (string note in notes) Emit(new GameEvent(EventKind.Info, note));
-            ContinueWarning = notes.Count == 0 ? null : string.Join("\n", notes);
+            _continueWarning = notes.Count == 0 ? null : new Txt(string.Join("\n", notes), string.Join("\n", notes));
             SaveNow();
         }
         private void BeginLobbyReturn(string runId)
         {
-            Profile.LobbyReturnedRunIds.Add(runId);
+            Profile.RememberLobbyReturn(runId);
             Profile.LobbyReturnAuthority = NetworkServer.active;
             _pendingRunVictory = false;
             _pendingResultRunId = runId;
@@ -447,7 +475,7 @@ namespace SodRpg.Mod
             if (_blockedContinueRunId != runId)
             {
                 _blockedContinueRunId = runId;
-                ContinueWarning = Loc.T(
+                _continueWarning = new Txt(
                     "この遠征は『ロビーに戻る』で終了済みのため、MOD の報酬は出ません。",
                     "This expedition ended with Return to Lobby. No MOD rewards will be granted.");
                 _notify?.Invoke(new GameEvent(EventKind.Info, ContinueWarning));

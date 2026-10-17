@@ -88,7 +88,15 @@ namespace UnityEngine
         public T GetComponentInChildren<T>(bool includeInactive = false) where T : Component
             => GetComponent<T>() ?? FindComponent<T>(transform, includeInactive);
         public T GetComponent<T>() where T : Component => component as T;
-        public T AddComponent<T>() where T : Component, new() => new T();
+        public T AddComponent<T>() where T : Component, new()
+        {
+            var created = new T();
+            // Components must observe the GameObject they were added to (the frost FX
+            // lifetime releases its own host), so attach MonoBehaviours like Unity does.
+            if (created is MonoBehaviour behaviour) behaviour.AttachTo(this);
+            if (component == null) component = created;
+            return created;
+        }
         private static T FindComponent<T>(Transform node, bool includeInactive) where T : Component
         {
             for (int i = 0; i < node.childCount; i++)

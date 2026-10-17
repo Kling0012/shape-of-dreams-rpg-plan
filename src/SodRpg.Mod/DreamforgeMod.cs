@@ -23,6 +23,11 @@ namespace SodRpg.Mod
     {
         public DreamforgeConfig config = new DreamforgeConfig();
         partial void ApplyRoomOmensConfig();
+        partial void StartNativeKillRewards();
+        partial void StopNativeKillRewards();
+        partial void ApplyAutoCastCoopConfig();
+        partial void TickAutoCastCoopConfig();
+        partial void ApplyNativePerfConfig();
 
         private ClientSession _session;
         private HostAuthority _host;
@@ -38,6 +43,7 @@ namespace SodRpg.Mod
         private void Awake()
         {
             string stage = "native preflight";
+            var startupWatch = System.Diagnostics.Stopwatch.StartNew();
             useGUILayout = false;
             Economy.SalvageScale = 1;
             try
@@ -51,6 +57,7 @@ namespace SodRpg.Mod
                 stage = "patch installation";
                 PatchEachClass();
                 PressureEnemyCount.Install(harmony);
+                StartNativeKillRewards();
                 CulinaryMagnet.Install(harmony);
                 CulinaryIngredientCap.Install(harmony);
                 try { CulinaryIngredientDisplay.Install(harmony); }
@@ -60,9 +67,13 @@ namespace SodRpg.Mod
                 NetworkTrafficOptions.Configure(config.netSkipUnchanged, config.netCoalesce, config.netOwnerOnly, config.netCompact);
                 ApplyLevelEssenceConfig();
                 ApplyRoomOmensConfig();
+                ApplyAutoCastCoopConfig();
+                ApplyNativePerfConfig();
                 // Install the generated star maps and their migration rules before any profile is loaded or any build is computed.
+                var starRegistrationWatch = System.Diagnostics.Stopwatch.StartNew();
                 StarClusters.RegisterAllGenerated((hero, error) =>
                     Log.Warn("Generated star map disabled for " + hero + "; other features remain available: " + error));
+                Log.Info("Generated star maps registered in " + starRegistrationWatch.ElapsedMilliseconds + " ms.");
                 _performance = new PerformanceTuner();
                 _performance.Start(config, _hasFocus);
                 string dir = Path.Combine(Application.persistentDataPath, "QuickSave", "Mods", "DreamforgeRPG");
@@ -73,9 +84,13 @@ namespace SodRpg.Mod
                 RelicIcons.Init(mod?.path);
                 RelicIcons.Preload();
                 _ui = new DreamforgeUi(_session, () => config, SaveLevelEssenceConfig);
+                BindEnemyOwnershipSettings();
+                _ui.SaveLanguageConfig = SaveLanguageConfig;
                 _host = new HostAuthority(() => _session?.Profile.Run?.DailyId ?? DailyDream.Today.Id);
+                ApplyMeleeCoopConfig();
                 _session.FirstLaunch();
                 _perfLogEnabled = File.Exists(Path.Combine(dir, "perf.flag"));
+                _host.SpecialEnemyDiagnostics = _perfLogEnabled;
                 try
                 {
                     _devCommands = File.Exists(Path.Combine(dir, "dev.flag"));
@@ -92,7 +107,7 @@ namespace SodRpg.Mod
                 if (_perfLogEnabled) Log.Info("perf logging enabled (perf.flag)");
                 HostAuthority.ModVersion = (mod.metadata.modVer ?? "?")
                     + NativeDreamEdition.VersionSuffix(NativeDreamContent.SpecialEdition);
-                Log.Info($"Loaded {mod.metadata.id} {HostAuthority.ModVersion}. Profile: {_session.SavePath}");
+                Log.Info($"Loaded {mod.metadata.id} {HostAuthority.ModVersion}. Profile: {_session.SavePath}. Startup: {startupWatch.ElapsedMilliseconds} ms.");
                 _originalGameplayFlag = instance.isAlteringGameplay;
                 _gameplayFlagChanged = true;
                 instance.isAlteringGameplay = true;
@@ -114,6 +129,30 @@ namespace SodRpg.Mod
             _session?.ConfigureOverflowBonus(config.overflowDreamDust);
             ApplyLevelEssenceConfig();
             ApplyRoomOmensConfig();
+            ApplyAutoCastCoopConfig();
+            ApplyNativePerfConfig();
+            ApplyMeleeCoopConfig();
+        }
+
+        partial void ApplyEnemyOwnershipConfig();
+        partial void BindEnemyOwnershipSettings();
+
+        private void SaveLanguageConfig()
+        {
+            try { SaveConfigsToDisk(); }
+            catch (Exception ex)
+            {
+                Log.Warn("Language setting save failed: " + ex.Message);
+                _ui?.SetStatus(Loc.T("設定を保存できませんでした。", "Could not save settings."));
+            }
+        }
+
+        partial void ApplyMeleeCoopSettings();
+
+        private void ApplyMeleeCoopConfig()
+        {
+            ApplyEnemyOwnershipConfig();
+            ApplyMeleeCoopSettings();
         }
 
         // レベル連動のエッセンス枠（ホストの設定だけが枠に反映される）。壊れた入力でも他の機能は止めない。
@@ -147,6 +186,7 @@ namespace SodRpg.Mod
             _perf.Begin();
             HandleKeys();
             LevelEssenceRuntime.Tick();
+            TickAutoCastCoopConfig();
             bool block = _ui != null && (_ui.Open || _ui.MouseOverPanel);
             BlockInputWhileMenuOpen.MenuOpen = block;
             _perf.BeginClient();
@@ -155,6 +195,8 @@ namespace SodRpg.Mod
             try
             {
                 _perf.BeginHost();
+                // 第2段: 重いフレームから持ち越された反応弾の生成を、ホスト処理の前に捌く。
+                NativeProcSpawnSpread.Tick();
                 _host?.Tick();
                 _perf.EndHost();
             }
@@ -177,11 +219,12 @@ namespace SodRpg.Mod
             }
             _perf.EndUpdate();
             // GC の割り当て量は、perf.flag があるか dreamforge_perf が一度でも使われたときだけ測る（既定は無負荷）。
+            TabPerf.Enabled = _perfLogEnabled || _perfPolled;
             if (_perfLogEnabled || _perfPolled) _perf.SampleGC();
             if (_perfLogEnabled && Time.unscaledTime >= _nextPerfLog)
             {
                 _nextPerfLog = Time.unscaledTime + 10f;
-                Debug.Log("[DreamforgeRPG] perf " + _perf.Report() +
+                Debug.Log("[DreamforgeRPG] perf " + _perf.Report() + TabPerf.Report() +
                     $" | lightweight={_performance?.Mode ?? config.lightweight} background={!_hasFocus}");
             }
         }
@@ -249,8 +292,18 @@ namespace SodRpg.Mod
         {
             if (!CommandAllowed()) return;
             _perfPolled = true; // 以後のフレームで GC 割り当ても測れるようにする。
-            Debug.Log("[DreamforgeRPG] " + _perf.Report() + " | save avg " + _session.SaveMsAverage.ToString("0.00") +
+            Debug.Log("[DreamforgeRPG] " + _perf.Report() + TabPerf.Report() + " | save avg " + _session.SaveMsAverage.ToString("0.00") +
                 $"ms (main thread) | lightweight={_performance?.Mode ?? config.lightweight} background={!_hasFocus}");
+        }
+
+        [ConsoleCommand("Dreamforge: toggle the gear/forge tab draw caches off/on to compare dreamforge_perf results (#500)", "dreamforge_perf_nocache")]
+        private void PerfNoCacheCommand()
+        {
+            if (!CommandAllowed()) return;
+            _perfPolled = true;
+            TabPerf.CacheOff = !TabPerf.CacheOff;
+            TabPerf.Report(); // 切り替え前の集計を捨て、次の報告を新しい状態だけにする。
+            Debug.Log("[DreamforgeRPG] ui cache=" + (TabPerf.CacheOff ? "off" : "on") + " (run dreamforge_perf after the same scroll/time to compare)");
         }
 
         [ConsoleCommand("Dreamforge: give up trades whose result the host could not confirm (no reward is granted; reserved relics return)", "dreamforge_trades_giveup")]
@@ -337,9 +390,8 @@ namespace SodRpg.Mod
 
         private void OnApplicationQuit()
         {
-            if (!_running) return;
-            _session?.SaveNow();
-            _session?.FlushSaves();
+            // Stop detaches profile callbacks and saves even if Unity never calls OnDestroy.
+            Stop();
         }
 
         private void OnDestroy()
@@ -368,6 +420,7 @@ namespace SodRpg.Mod
             var host = _host; _host = null;
             var ui = _ui; _ui = null;
             var performance = _performance; _performance = null;
+            StopNativeKillRewards();
             try { PressureEnemyCount.Stop(); } catch (Exception ex) { Log.Error("Startup cleanup: pressure enemy count: " + ex); }
             try { InfinityBossArena.Stop(); } catch (Exception ex) { Log.Error("Startup cleanup: Infinity boss arenas: " + ex); }
             try { CulinaryMagnet.Stop(); } catch (Exception ex) { Log.Error("Startup cleanup: culinary attraction: " + ex); }
@@ -739,6 +792,13 @@ namespace SodRpg.Mod
             Debug.Log($"[DreamforgeRPG] {ClientSession.HeroKeyOf(hero)} HP {hero.currentHealth:0}/{st.maxHealth:0} AD {st.attackDamage:0.0} AP {st.abilityPower:0.0} " +
                 $"crit {st.critChance:0.00} armor {st.armor:0.0} | bonus AD% {b.attackDamagePercentage:0.#} AS% {b.attackSpeedPercentage:0.#} HP {b.maxHealthFlat:0.#}+{b.maxHealthPercentage:0.#}% armor {b.armorFlat:0.#} haste {b.abilityHasteFlat:0.#} move% {b.movementSpeedPercentage:0.#}");
             Debug.Log("[DreamforgeRPG] build: " + _session.CurrentBuild(ClientSession.HeroKeyOf(hero)).Encode() + " hostConfirmed=" + _session.HostConfirmed);
+        }
+
+        [ConsoleCommand("Dreamforge (host test): log boss actor lifetime counts; 1=every 30 seconds, 0=log once and stop", "dreamforge_bosslives")]
+        private void BossLivesCommand(int periodic)
+        {
+            if (!DevAllowed() || !MakeSureServer()) return;
+            _host?.ConfigureBossNativeLifetimeDiagnostics(periodic != 0);
         }
 
         [ConsoleCommand("Dreamforge (host test): kill enemies within radius to test drops", "dreamforge_killnear")]

@@ -517,6 +517,7 @@ namespace SodRpg.Core.Tests.Testing
                 {
                 var payload = AuthoredKeystoneComposer.GimmickPayload(entry.Def, entry.StarId);
                 var transformed = AuthoredKeystoneComposer.TransformAllocationPayload(build, payload, entry.Memory,
+                    sourceKind: sourceSlot == MechanismMemorySlot.Movement ? KeystoneSourceKind.MovementEvent : KeystoneSourceKind.NativeMemory,
                     sourceSlot: sourceSlot, heroKey: heroKey);
                 var def = AuthoredKeystoneComposer.EffectiveGimmick(entry.Def, transformed);
                 if (def == null) continue;

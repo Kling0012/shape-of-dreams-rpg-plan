@@ -54,7 +54,7 @@ namespace SodRpg.Mod
         public CastInfo info;
         public bool isThisAttackFourthAttack;
     }
-    internal struct EventInfoAttackHit { public Entity attacker, victim; public bool isCrit; }
+    internal partial struct EventInfoAttackHit { public Entity attacker, victim; public bool isCrit; }
     internal sealed partial class BasicAttackContext
     {
         public static BasicAttackContext Current;
@@ -69,7 +69,7 @@ namespace SodRpg.Mod
         public int currentConfigCurrentCharge, currentConfigIndex;
         public SkillType type;
         public TriggerConfig currentConfig = new TriggerConfig();
-        public void SetCharge(int index, int value) => currentConfigCurrentCharge = value;
+        public void SetCharge(int index, int value) => currentConfigCurrentCharge = currentCharges[index] = value;
     }
     internal sealed class TriggerConfig { public int maxCharges; }
     internal sealed class St_M_DreamyWaltz : SkillTrigger { }
@@ -171,6 +171,7 @@ namespace SodRpg.Mod
         public Entity serverActor = new Entity();
         public readonly List<Hero> allHeroes = new List<Hero>();
         public readonly List<Entity> allEntities = new List<Entity>();
+        public readonly List<Actor> allActors = new List<Actor>();
     }
     internal sealed class ListReturnHandle<T> { public void Return() { } }
     internal static partial class DewPhysics

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using Mirror;
 using SodRpg.Core.Game;
 using UnityEngine;
@@ -59,7 +60,7 @@ namespace SodRpg.Mod
             internal DataProcessor<HealData, Actor, Entity> ShieldReceived;
             internal DataProcessor<HealData, Actor, Entity> HealReceived;
             internal readonly Dictionary<int, float> Overkill = new Dictionary<int, float>();
-            internal readonly List<Action> Pending = new List<Action>();
+            internal readonly PowerCommandQueue Pending = new PowerCommandQueue();
         }
 
         private int _powerSupportDepth;
@@ -156,30 +157,63 @@ namespace SodRpg.Mod
             if (ratio > 0f) hero.ApplyCooldownReductionByRatio(skill, ratio, false);
         }
 
-        private IEnumerable<Hero> LivingAllies(Hero hero, float range, bool includeSelf = false)
+        private readonly struct LivingAllyEnumerable
         {
-            if (_am == null) yield break;
-            foreach (var other in _am.allHeroes)
-                if (Alive(other) && (includeSelf && other == hero || other != hero && other.GetRelation(hero) == EntityRelation.Ally)
-                    && (range <= 0f || (other.agentPosition - hero.agentPosition).sqrMagnitude <= range * range))
-                    yield return other;
+            private readonly List<Hero> _heroes;
+            private readonly Hero _hero;
+            private readonly float _range;
+            private readonly bool _includeSelf;
+            internal LivingAllyEnumerable(List<Hero> heroes, Hero hero, float range, bool includeSelf)
+            { _heroes = heroes; _hero = hero; _range = range; _includeSelf = includeSelf; }
+            public Enumerator GetEnumerator() => new Enumerator(_heroes, _hero, _range, _includeSelf);
+            public struct Enumerator
+            {
+                private List<Hero>.Enumerator _heroes;
+                private readonly bool _hasHeroes;
+                private readonly Hero _hero;
+                private readonly float _range;
+                private readonly bool _includeSelf;
+                public Hero Current { get; private set; }
+                internal Enumerator(List<Hero> heroes, Hero hero, float range, bool includeSelf)
+                {
+                    _hasHeroes = heroes != null;
+                    _heroes = heroes != null ? heroes.GetEnumerator() : default;
+                    _hero = hero; _range = range; _includeSelf = includeSelf; Current = null;
+                }
+                public bool MoveNext()
+                {
+                    if (!_hasHeroes) return false;
+                    while (_heroes.MoveNext())
+                    {
+                        var other = _heroes.Current;
+                        if (!Alive(other) || !(_includeSelf && other == _hero
+                            || other != _hero && other.GetRelation(_hero) == EntityRelation.Ally)
+                            || !(_range <= 0f || CoopDistanceNative.Coefficient(_hero, other, _range) > 0f)) continue;
+                        Current = other;
+                        return true;
+                    }
+                    return false;
+                }
+            }
         }
+        private LivingAllyEnumerable LivingAllies(Hero hero, float range, bool includeSelf = false) =>
+            new LivingAllyEnumerable(_am != null ? _am.allHeroes : null, hero, range, includeSelf);
 
         private static float Higher(Hero hero) => Math.Max(hero.Status.attackDamage, hero.Status.abilityPower);
 
-        private void PowerHeal(HeroRuntime rt, Entity target, float amount)
+        /// <param name="amplify">false when amount already includes the giver's heal power (a share of healing that landed).</param>
+        private void PowerHeal(HeroRuntime rt, Entity target, float amount, bool amplify = true)
         {
             if (amount <= 0f || target == null || !target.isActive || target.currentHealth <= 0f) return;
             var support = _am != null ? _am.serverActor : null;
             if (support == null) return;
             _powerSupportDepth++;
-            float before = target.currentHealth;
-            try { support.Heal(SupportStats.AmplifyHeal(amount, rt.Powers.Build.Get(Stat.HealPower))).Dispatch(target); }
+            try { DispatchSupportHeal(rt, target, support.Heal(amplify ? SupportStats.AmplifyHeal(amount, SupportPower(rt, Stat.HealPower)) : amount)); }
             finally { _powerSupportDepth--; }
-            CreditHealRestored(rt, target, before);
         }
 
-        private void PowerShield(HeroRuntime rt, Entity target, Power power, float amount, float duration)
+        /// <param name="amplify">false when amount already includes the giver's shield power (a share of a shield that landed).</param>
+        private void PowerShield(HeroRuntime rt, Entity target, Power power, float amount, float duration, bool amplify = true)
         {
             if (amount <= 0f || target == null || !target.isActive || target.currentHealth <= 0f) return;
             var support = _am != null ? _am.serverActor : null;
@@ -188,8 +222,8 @@ namespace SodRpg.Mod
             _powerSupportDepth++;
             try
             {
-                var shield = support.GiveShield(target, SupportStats.AmplifyShield(amount,
-                    rt.Powers.Build.Get(Stat.ShieldPower)), duration);
+                var shield = support.GiveShield(target, amplify ? SupportStats.AmplifyShield(amount,
+                    SupportPower(rt, Stat.ShieldPower)) : amount, duration);
                 if (shield == null) return;
                 // The ledger compares exact underlying shields, so a recycled pooled handle is never touched.
                 if (PowerShields.Offer(key, shield, duration) == PowerShieldOutcome.KeptExisting) return;
@@ -206,40 +240,10 @@ namespace SodRpg.Mod
             float amount, bool magic = false, int maxTargets = int.MaxValue, Entity except = null, bool pure = false)
         {
             if (amount <= 0f) return;
-            rt.NewPowers.Pending.Add(() =>
+            rt.NewPowers.Pending.Add(new PowerCommand
             {
-                EnterGenerated(rt.Hero);
-                try
-                {
-                    if (radius > 0f)
-                    {
-                        if (!pure) DamageAround(rt.Hero, center, radius, amount, except, maxTargets, magic, gimmick: true);
-                        else
-                        {
-                            ListReturnHandle<Entity> handle;
-                            var found = DewPhysics.OverlapCircleAllEntities(out handle, center, radius, EnemyFilter, rt.Hero);
-                            try
-                            {
-                                int count = 0;
-                                foreach (var enemy in found)
-                                {
-                                    if (enemy == except || enemy == null || !enemy.isActive || enemy.currentHealth <= 0f) continue;
-                                    if (count++ >= maxTargets) break;
-                                    rt.Hero.PureDamage(amount, 0f).SetAmountModifiedBy(typeof(GimmickRuntime)).Dispatch(enemy);
-                                }
-                            }
-                            finally { handle.Return(); }
-                        }
-                    }
-                    else if (victim != null && victim.isActive && victim.currentHealth > 0f
-                        && victim.GetRelation(rt.Hero) == EntityRelation.Enemy)
-                    {
-                        var damage = pure ? rt.Hero.PureDamage(amount, 0f)
-                            : magic ? rt.Hero.MagicDamage(amount, 0f) : rt.Hero.PhysicalDamage(amount, 0f);
-                        damage.SetAmountModifiedBy(typeof(GimmickRuntime)).Dispatch(victim);
-                    }
-                }
-                finally { ExitGenerated(rt.Hero); }
+                Victim = victim, Center = center, Radius = radius, Amount = amount,
+                Magic = magic, MaxTargets = maxTargets, Except = except, Pure = pure
             });
         }
 
@@ -248,13 +252,31 @@ namespace SodRpg.Mod
             var pending = rt.NewPowers.Pending;
             if (!Alive(rt.Hero)) { pending.Clear(); return; }
             int count = pending.Count;
-            for (int i = 0; i < count; i++)
+            if (count > 0)
             {
-                try { pending[i](); }
-                catch (Exception ex) { Log.Error("Host: new power dispatch " + ex); }
+                // 第2段: 予算（件数と経過時間）を超えた残りは順序を保って次フレームへ。
+                // flush 中に追加された予約は今回の対象にしない（これまでの動きと同じ）。
+                int limit = PowerFlushBudget.Items(pending);
+                long budget = PowerFlushBudget.Ticks(pending);
+                long start = Stopwatch.GetTimestamp();
+                int done = 0;
+                while (done < count && done < limit)
+                {
+                    try { DispatchPowerCommand(rt, pending[done]); }
+                    catch (Exception ex) { Log.Error("Host: new power dispatch " + ex); }
+                    done++;
+                    if (done < limit && Stopwatch.GetTimestamp() - start >= budget) break;
+                }
+                pending.RemoveRange(0, done);
+                PowerFlushBudget.Observe(pending, pending.Count);
+                if (pending.Count > 0)
+                {
+                    // 持ち越した最古の予約の待ち時間が、この予算が作った遅れの最大値。
+                    NativeProcSpawnSpread.RecordPowerCarry(pending.Count, Time.unscaledTime - pending[0].QueuedAt);
+                }
             }
-            pending.RemoveRange(0, count);
-            rt.NewPowers.Overkill.Clear();
+            // 予約が残っている間は過剰ダメージの記録を保持する（残りの予約が読むため）。
+            if (pending.Count == 0) rt.NewPowers.Overkill.Clear();
         }
 
         private void InitializeNewPowers(HeroRuntime rt)
@@ -293,7 +315,11 @@ namespace SodRpg.Mod
             if (!Alive(recipient) || !_runtimes.TryGetValue(recipient, out var owner)) return;
             float share = owner.Powers.SharedWardShield(amount);
             if (share <= 0f) return;
-            foreach (var ally in LivingAllies(recipient, PowersBalance.SharedWardAllyRange)) PowerShield(owner, ally, Power.SharedWard, share, PowersBalance.SharedWardDuration);
+            foreach (var ally in LivingAllies(recipient, PowersBalance.SharedWardAllyRange))
+                // The share is of the shield that landed (finalAmount already has shield power): do not amplify again.
+                PowerShield(owner, ally, Power.SharedWard,
+                    share * CoopDistanceNative.Coefficient(recipient, ally, PowersBalance.SharedWardAllyRange), PowersBalance.SharedWardDuration,
+                    amplify: false);
         }
 
         private void UnhookNewPowers(HeroRuntime rt)
@@ -315,6 +341,7 @@ namespace SodRpg.Mod
             foreach (var rt in _runtimes.Values)
             {
                 rt.NewPowers.Pending.Clear();
+                rt.NewPowers.Pending.ResetBudget();
                 rt.NewPowers.Overkill.Clear();
                 rt.NewPowers.PositionKnown = false;
                 ClearUnbowedGuard(rt);
@@ -357,8 +384,11 @@ namespace SodRpg.Mod
             var hero = rt.Hero;
             var p = rt.Powers;
             if (!Alive(hero)) { p.IsVanguard = p.IsRearguard = false; return; }
-            p.NearbyEnemies8 = CountEnemiesNear(hero, PowersBalance.DuelistsWayRange);
-            float shield = p.TakeBreakout(now, CountEnemiesNear(hero, PowersBalance.BreakoutRange), hero.maxHealth);
+            // NearbyEnemies8 is consumed only by DuelistsWay; extend this gate for any new consumer.
+            p.NearbyEnemies8 = p.Build.Get(Power.DuelistsWay) > 0
+                ? CountEnemiesNear(hero, PowersBalance.DuelistsWayRange) : 0;
+            float shield = p.Build.Get(Power.Breakout) > 0
+                ? p.TakeBreakout(now, CountEnemiesNear(hero, PowersBalance.BreakoutRange), hero.maxHealth) : 0f;
             if (shield > 0f)
             {
                 PowerShield(rt, hero, Power.Breakout, shield, PowersBalance.BreakoutShieldDuration);
@@ -373,17 +403,30 @@ namespace SodRpg.Mod
                 }
                 finally { handle.Return(); }
             }
-            float selfDistance = NearestEnemyDistance(hero);
+            bool needsPosition = p.Build.Get(Power.VanguardsOath) > 0 || p.Build.Get(Power.RearguardsWay) > 0;
+            bool needsWard = p.Build.Get(Power.WatchfulHand) > 0;
+            p.IsVanguard = p.IsRearguard = false;
+            p.LivingPartySize = 1;
+            // LivingPartySize consumers: VanguardsOath (shield gain) and RearguardsWay (memory damage).
+            // WatchfulHand needs the ally walk, not its count. Extend this gate for new count consumers.
+            if (!needsPosition && !needsWard) return;
+            float selfDistance = needsPosition ? NearestEnemyDistance(hero) : float.PositiveInfinity;
             bool front = !float.IsPositiveInfinity(selfDistance), rear = front;
             int party = 1;
             foreach (var ally in LivingAllies(hero, 0f))
             {
                 party++;
-                float distance = NearestEnemyDistance(ally);
-                if (distance < selfDistance) front = false;
-                if (distance > selfDistance) rear = false;
-                float ward = p.TakeWatchfulHand(now, ally.GetInstanceID(), ally.maxHealth > 0f ? ally.currentHealth / ally.maxHealth : 1f, hero.maxHealth);
-                PowerShield(rt, ally, Power.WatchfulHand, ward, PowersBalance.WatchfulHandDuration);
+                if (needsPosition)
+                {
+                    float distance = NearestEnemyDistance(ally);
+                    if (distance < selfDistance) front = false;
+                    if (distance > selfDistance) rear = false;
+                }
+                if (needsWard)
+                {
+                    float ward = p.TakeWatchfulHand(now, ally.GetInstanceID(), ally.maxHealth > 0f ? ally.currentHealth / ally.maxHealth : 1f, hero.maxHealth);
+                    PowerShield(rt, ally, Power.WatchfulHand, ward, PowersBalance.WatchfulHandDuration);
+                }
             }
             p.IsVanguard = front; p.IsRearguard = rear; p.LivingPartySize = party;
         }
@@ -413,7 +456,9 @@ namespace SodRpg.Mod
             if (ultimate)
             {
                 float heal = rt.Powers.TriumphSongHeal(hero.maxHealth);
-                foreach (var ally in LivingAllies(hero, PowersBalance.TriumphSongRange, includeSelf: true)) PowerHeal(rt, ally, heal);
+                if (heal > 0f)
+                    foreach (var ally in LivingAllies(hero, PowersBalance.TriumphSongRange, includeSelf: true))
+                        PowerHeal(rt, ally, heal * CoopDistanceNative.Coefficient(hero, ally, PowersBalance.TriumphSongRange));
             }
         }
 
@@ -435,7 +480,9 @@ namespace SodRpg.Mod
             var basic = BasicAttackContext.Current;
             if (basic == null || basic.Actor != info.actor || basic.Target != victim || basic.From != hero || !basic.Primary) return;
             p.ShieldAmount = CurrentNativeShield(hero);
-            p.NearbyEnemies8 = CountEnemiesNear(hero, PowersBalance.DuelistsWayRange);
+            // NearbyEnemies8 is consumed only by DuelistsWay; extend this gate for any new consumer.
+            p.NearbyEnemies8 = p.Build.Get(Power.DuelistsWay) > 0
+                ? CountEnemiesNear(hero, PowersBalance.DuelistsWayRange) : 0;
             p.ObserveMemoryReadiness(1, false, AllNormalMemoriesCooling(hero), UltimateReady(hero));
             var result = p.OnNewBasicHit(now, victim.GetInstanceID(), Higher(hero), info.damage.amount,
                 crit, basic.Guaranteed || !basic.CriticalAtNative && crit, primary: true,
@@ -466,29 +513,32 @@ namespace SodRpg.Mod
             PowerShield(rt, hero, Power.ReadyGuard, p.TakeReadyGuard(Time.time, hero.maxHealth), PowersBalance.ReadyGuardDuration);
         }
 
-        private void OnNewPowerKill(HeroRuntime rt, EventInfoKill info)
+        private void OnNewPowerKill(HeroRuntime rt, EventInfoKill info, string assistMemory = null, bool assistSummon = false, bool assist = false)
         {
             if (_gimmickDamageDepth != 0 || _reactionEffectDepth != 0 || !Alive(rt.Hero) || !(info.victim is Monster victim)
                 || victim.GetRelation(rt.Hero) != EntityRelation.Enemy) return;
             var hero = rt.Hero;
             var p = rt.Powers;
-            string memory = MemorySource(info.actor);
+            string memory = assist ? assistMemory : MemorySource(info.actor);
             if (memory != null)
             {
                 var skill = FindMemory(hero, memory);
                 if (skill != null) ReduceNormalMemory(hero, skill, p.ReturningBladeCooldownFraction(true) * 100f);
             }
-            bool summonKill = info.actor != null && info.actor.FindFirstOfType<Summon>() is Summon summon
+            bool summonKill = assist ? assistSummon : info.actor != null && info.actor.FindFirstOfType<Summon>() is Summon summon
                 && summon.FindFirstAncestorOfType<Hero>() == hero;
             PowerShield(rt, hero, Power.PackFeast, p.PackFeastShield(hero.maxHealth, summonKill), PowersBalance.PackFeastDuration);
-            Hero nearest = null;
-            float distance = float.PositiveInfinity;
-            foreach (var ally in LivingAllies(hero, 0f))
+            if (p.Build.Get(Power.RelayHand) > 0)
             {
-                float d = (ally.agentPosition - hero.agentPosition).sqrMagnitude;
-                if (d < distance) { nearest = ally; distance = d; }
+                Hero nearest = null;
+                float distance = float.PositiveInfinity;
+                foreach (var ally in LivingAllies(hero, 0f))
+                {
+                    float d = (ally.agentPosition - hero.agentPosition).sqrMagnitude;
+                    if (d < distance) { nearest = ally; distance = d; }
+                }
+                if (nearest != null) ReduceNormalMemories(nearest, p.TakeRelayHand(Time.time, nearest.GetInstanceID()) * 100f, longestOnly: true);
             }
-            if (nearest != null) ReduceNormalMemories(nearest, p.TakeRelayHand(Time.time, nearest.GetInstanceID()) * 100f, longestOnly: true);
             var st = victim.Status;
             int types = (st.fireStack > 0 ? 1 : 0) + (st.hasCold ? 1 : 0) + (st.lightStack > 0 ? 1 : 0) + (st.darkStack > 0 ? 1 : 0);
             QueuePowerDamage(rt, null, victim.position, PowersBalance.ElementalHarvestRange, p.ElementalHarvestDamage(Higher(hero), types), except: victim);
@@ -501,7 +551,7 @@ namespace SodRpg.Mod
             if (st.darkStack >= 2 && p.Build.Get(Power.UmbralHeritage) > 0)
             {
                 Vector3 center = victim.position;
-                rt.NewPowers.Pending.Add(() => SpreadUmbral(rt, victim, center));
+                rt.NewPowers.Pending.Add(new PowerCommand { Umbral = true, Victim = victim, Center = center });
             }
         }
 

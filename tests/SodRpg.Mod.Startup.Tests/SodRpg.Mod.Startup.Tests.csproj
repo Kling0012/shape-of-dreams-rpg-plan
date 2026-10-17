@@ -7,7 +7,7 @@
   </PropertyGroup>
   <ItemGroup>
     <!-- Keep the game's Harmony API; newer MonoMod supports rolled-forward CoreCLR. -->
-    <PackageReference Include="Lib.Harmony.Thin" Version="2.3.3" />
+    <PackageReference Include="Lib.Harmony.Thin" Version="2.3.6" />
     <PackageReference Include="Mono.Cecil" Version="0.11.6" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="MonoMod.Core" Version="1.3.6" />
@@ -20,6 +20,7 @@
     <Compile Include="../../src/SodRpg.Mod/NativePatchPreflight.cs" Link="ModUnderTest/NativePatchPreflight.cs" />
   <Compile Include="../../src/SodRpg.Mod/PatchMethodOwnership.cs" Link="ModUnderTest/PatchMethodOwnership.cs" />
   <Compile Include="../../src/SodRpg.Mod/DreamforgeMod.cs" Link="ModUnderTest/DreamforgeMod.cs" />
+  <Compile Include="../../src/SodRpg.Mod/TabPerf.cs" Link="ModUnderTest/TabPerf.cs" />
   <Compile Include="../../src/SodRpg.Mod/DreamforgeMod.LevelEssence.cs" Link="ModUnderTest/DreamforgeMod.LevelEssence.cs" />
   <Compile Include="../../src/SodRpg.Mod/InfinityMode.cs" Link="ModUnderTest/InfinityMode.cs" />
   <Compile Include="../../src/SodRpg.Mod/InfinityBosses.cs" Link="ModUnderTest/InfinityBosses.cs" />
@@ -37,6 +38,23 @@
   <Compile Include="../../src/SodRpg.Mod/NetworkTrafficOptions.cs" Link="ModUnderTest/NetworkTrafficOptions.cs" />
   <Compile Include="../../src/SodRpg.Mod/NetMessageDecodeWarning.cs" Link="ModUnderTest/NetMessageDecodeWarning.cs" />
   <Compile Include="../../src/SodRpg.Mod/SafeReflection.cs" Link="ModUnderTest/SafeReflection.cs" />
+  <Compile Include="../../src/SodRpg.Mod/NativeCooldownSafety.cs" Link="ModUnderTest/NativeCooldownSafety.cs" />
+  <Compile Include="../../src/SodRpg.Mod/NativeEssenceCaps.cs" Link="ModUnderTest/NativeEssenceCaps.cs" />
+  <Compile Include="../../src/SodRpg.Mod/NativeMemoryReuse.cs" Link="ModUnderTest/NativeMemoryReuse.cs" />
     <Compile Include="../../src/SodRpg.Mod/MovementGemSlotEdit.cs" Link="ModUnderTest/MovementGemSlotEdit.cs" />
+    <Compile Include="../../src/SodRpg.Mod/FrostFxLifetime.cs" Link="ModUnderTest/FrostFxLifetime.cs" />
+    <Compile Include="$(IntermediateOutputPath)Esscap.Native.cs" Link="ModUnderTest/Esscap.Native.cs" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="../../tools/balance/essence-caps.json" Link="EssenceCaps.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <!-- Extract the shipped crystal-circuit / memory-haste bodies for the essence-cap tests.
+       Same contract as Core.Tests' Issue62 extraction: rewrite only on content change. -->
+  <Target Name="ExtractEsscapNativeCallbacks" BeforeTargets="CoreCompile">
+    <PropertyGroup>
+      <PythonCommand Condition="'$(PythonCommand)' == ''">python</PythonCommand>
+    </PropertyGroup>
+    <Exec Command="$(PythonCommand) &quot;$(MSBuildProjectDirectory)/extract_esscap_native.py&quot; &quot;$(MSBuildProjectDirectory)/$(IntermediateOutputPath)Esscap.Native.cs&quot;" />
+  </Target>
 </Project>

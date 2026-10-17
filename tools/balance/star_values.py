@@ -78,33 +78,64 @@ def migrated_ids(manifests):
             if s.get("region") == "migration" and s.get("kind") is not None}
 
 
-def legacy_adopted(key, manifests):
-    if "/native/" in key or "/example/" in key:
-        return True
-    sid = key.removeprefix("legacy/").split("/", 1)[0]
-    if sid not in migrated_ids(manifests):
-        return True
+def legacy_adoption(manifests):
+    """Build a legacy-key predicate with one scan of each manifest."""
+    migrated = migrated_ids(manifests)
     # These keys' typed upside is explicitly their existing baseline Power.
-    return any(s["id"] == sid and s.get("kind") == "Keystone"
-               and s["keystone"]["upsideSpec"] is None and not s.get("power")
-               for data in manifests.values() for s in data["stars"])
+    baseline = {s["id"] for data in manifests.values() for s in data["stars"]
+                if s["id"] in migrated and s.get("kind") == "Keystone"
+                and isinstance(s.get("keystone"), dict)
+                and "upsideSpec" in s["keystone"]
+                and s["keystone"]["upsideSpec"] is None and not s.get("power")}
+
+    def adopted(key):
+        if "/native/" in key or "/example/" in key:
+            return True
+        sid = key.removeprefix("legacy/").split("/", 1)[0]
+        return sid not in migrated or sid in baseline
+    return adopted
+
+
+def legacy_adopted(key, manifests):
+    return legacy_adoption(manifests)(key)
+
+
+_LEGACY_SOURCE_CACHE = {}
 
 
 def legacy_numeric_source(path, table=None):
-    """Feed legacy topology parsers resolved factory arguments, never stale literals."""
-    table = load_table() if table is None else table
+    """Feed legacy topology parsers resolved factory arguments, never stale literals.
+
+    Load current inputs even on a cache hit. Compare the loaded table and the
+    adoption decisions rather than a hard-coded list of dependency files, so
+    additional files read by either loader cannot leave cached results stale.
+    Keep only the latest result per source path; explicit tables bypass reuse.
+    """
+    reuse = table is None
+    table = load_table() if reuse else table
     manifests = load_manifests()
     fields = {field_name(key): key for key in table["effects"] if key.startswith("legacy/")}
+    adopted = legacy_adoption(manifests)
+    adopted_keys = frozenset(key for key in fields.values() if adopted(key))
+    source = (ROOT / path).resolve()
+    text = source.read_text(encoding="utf-8")
+    inputs = (text, table, adopted_keys)
+    cached = _LEGACY_SOURCE_CACHE.get(source) if reuse else None
+    if cached is not None and cached[0] == inputs:
+        return cached[1]
+
     def replacement(match):
         field = match[1]
         if field not in fields:
             raise ValueError(f"{path}: missing numeric original for {field}")
         key = fields[field]
         kind, owner, unit = legacy_metadata(key)
-        value = effective_value(table, key, owner, key, kind, unit) if legacy_adopted(key, manifests) else number(table["effects"][key], key)
+        value = effective_value(table, key, owner, key, kind, unit) if key in adopted_keys else number(table["effects"][key], key)
         return format(number(value, key), "f") + ("f" if unit == "float" else "")
-    text = (ROOT / path).read_text(encoding="utf-8")
-    return re.sub(r"MemoryDamageBalance\.(Effect_legacy_\w+)", replacement, text)
+    result = re.sub(r"MemoryDamageBalance\.(Effect_legacy_\w+)", replacement, text)
+    if reuse:
+        _LEGACY_SOURCE_CACHE[source] = ((text, deepcopy(table), adopted_keys), result)
+    return result
 
 # Identity of the stage2 adopted semantic payloads at the initial cutover.
 INITIAL_STAGE2_IDENTITY = 13790957529443898316
@@ -162,6 +193,8 @@ def gimmick_fields(g, prefix):
         yield g, "cooldown", prefix + "/cooldown", "float"
     if effect in ("Ricochet", "Reload"):
         yield g, "arg", prefix + "/arg", "int"
+    if effect == "Primed" and g.get("arg") != 0:
+        yield g, "arg", prefix + "/arg", "float"
     if "everyN" in g:
         yield g, "everyN", prefix + "/everyN", "int"
     for i in range(len(g.get("valuesByRank", []))):
@@ -245,14 +278,16 @@ def validate_growth_table(table, path=GROWTH_TABLE_PATH):
             if field not in bounds:
                 raise ValueError(f"{context}: unknown growth numeric field")
             lo, hi = bounds[field]
+            if key == "cetus.run.g1/growth/cap":
+                lo = 0  # Zero means no stack cap; other travelers keep their bounded caps.
             if not lo <= integer(value, context) <= hi:
                 raise ValueError(f"{context}: {field} must be an integer {lo}..{hi}")
     return table
 
 
 def validate_table(table, path=TABLE_PATH):
-    if not isinstance(table, dict) or set(table) != {"schemaVersion", "multipliers", "effects", "rankScaling", "essenceSlots"}:
-        raise ValueError(f"{path}: expected exactly schemaVersion, multipliers, effects, rankScaling, essenceSlots")
+    if not isinstance(table, dict) or set(table) != {"schemaVersion", "multipliers", "effects", "rankScaling", "essenceSlots", "support"}:
+        raise ValueError(f"{path}: expected exactly schemaVersion, multipliers, effects, rankScaling, essenceSlots, support")
     if type(table["schemaVersion"]) is not int or table["schemaVersion"] != 1:
         raise ValueError(f"{path}/schemaVersion: expected integer 1")
     multipliers = table["multipliers"]
@@ -293,6 +328,15 @@ def validate_table(table, path=TABLE_PATH):
     for key in ("pointDenominator", "maxPoints"):
         if type(rank[key]) is not int or rank[key] <= 0:
             raise ValueError(f"{path}/rankScaling/{key}: expected positive integer")
+    support = table["support"]
+    if not isinstance(support, dict) or set(support) != {"overhealShieldRatio", "overhealShieldMaxHealthRatio", "overhealShieldSeconds", "allyGrowthMultiplier"}:
+        raise ValueError(f"{path}/support: expected overheal shield ratios, seconds and allyGrowthMultiplier")
+    for key in ("overhealShieldRatio", "overhealShieldMaxHealthRatio"):
+        if not 0 < number(support[key], f"{path}/support/{key}") <= 1:
+            raise ValueError(f"{path}/support/{key}: expected ratio in (0, 1]")
+    for key in ("overhealShieldSeconds", "allyGrowthMultiplier"):
+        if type(support[key]) is not int or not 0 < support[key] <= INT_MAX:
+            raise ValueError(f"{path}/support/{key}: expected positive int32")
     slots = table["essenceSlots"]
     if not isinstance(slots, dict) or set(slots) != {"maxAdded", "maxPerLocation", "starAmount"}:
         raise ValueError(f"{path}/essenceSlots: expected maxAdded, maxPerLocation and starAmount")
@@ -465,12 +509,13 @@ def resolve_all(table=None, manifests=None, root=ROOT, growth_table=None):
         resolved[name] = data
         effective.update(references)
     legacy = legacy_components(root)
+    adopted = legacy_adoption(resolved)
     for key, owner in legacy.items():
         effective[key] = effective_value(table, key, owner, f"tools/balance/stars.json/effects/{key}")
     for key, (kind, owner, unit) in legacy_fields(table, root).items():
         # Obsolete same-ID effects exist only in the baseline construction path.
         effective[key] = (effective_value(table, key, owner, key, kind, unit)
-                          if legacy_adopted(key, resolved) else number(table["effects"][key], key))
+                          if adopted(key) else number(table["effects"][key], key))
     extra_growth = growth_table["effects"].keys() - effective.keys()
     if extra_growth:
         raise ValueError(f"tools/balance/run-growth.json/effects/{sorted(extra_growth)[0]}: extra unreferenced effect")
@@ -511,11 +556,12 @@ def canonical_number(value):
 
 def stage2_record(manifests, effective):
     schema = effect_schema(manifests, effective)
+    adopted = legacy_adoption(manifests)
     return "balance:stars:semantic:v2|" + "|".join(
         f"{key}:{schema[key][0]}:{schema[key][1]}:{canonical_number(value)}"
         for key, value in sorted(effective.items())
         if key in schema and schema[key][0] != "MemoryDamage"
-        and (not key.startswith("legacy/") or legacy_adopted(key, manifests)))
+        and (not key.startswith("legacy/") or adopted(key)))
 
 
 def fingerprint_record(manifests, effective):
@@ -580,6 +626,9 @@ def render_rank_balance(table=None, growth_table=None):
     gain = number(rank["damageGain"], "rankScaling/damageGain") / rank["pointDenominator"]
     maximum = 1 + gain * rank["maxPoints"]
     record = rank_fingerprint_record(table, growth_table)
+    support = table["support"]
+    record += "\nbalance:stars:support:v1|" + "|".join(
+        f"{key}:{format(number(value, 'support/' + key).normalize(), 'f')}" for key, value in sorted(support.items()))
     return "\n".join([
         "// <auto-generated />",
         "// Sources: tools/balance/stars.json, tools/balance/run-growth.json; regenerate with python tools/balance/gen_cs.py.",
@@ -590,5 +639,9 @@ def render_rank_balance(table=None, growth_table=None):
         f"        internal const int EssenceSlotsMaxAdded = {table['essenceSlots']['maxAdded']};",
         f"        internal const int EssenceSlotsMaxPerLocation = {table['essenceSlots']['maxPerLocation']};",
         f"        internal const int EssenceSlotStarAmount = {table['essenceSlots']['starAmount']};",
+        f"        internal const float SupportOverhealShieldRatio = {format(number(support['overhealShieldRatio'], 'support/overhealShieldRatio'), 'f')}f;",
+        f"        internal const float SupportOverhealShieldMaxHealthRatio = {format(number(support['overhealShieldMaxHealthRatio'], 'support/overhealShieldMaxHealthRatio'), 'f')}f;",
+        f"        internal const float SupportOverhealShieldSeconds = {support['overhealShieldSeconds']}f;",
+        f"        internal const int SupportAllyGrowthMultiplier = {support['allyGrowthMultiplier']};",
         "        internal static readonly string ContentFingerprintRecord = " + json.dumps(record) + ";",
         "    }", "}", ""])

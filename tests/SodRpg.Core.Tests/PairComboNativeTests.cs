@@ -80,7 +80,8 @@ namespace SodRpg.Core.Tests
             host.Flush(rt);
             Assert.Equal(cooldown, Cooldown(rt), 4);
             Assert.Equal(health, rt.Hero.currentHealth); Assert.Equal(health, near.currentHealth);
-            Assert.Equal(500, far.currentHealth);
+            // 10mを越えても18mまでは線形減衰した回復が届く。
+            Assert.Equal(500 + heal * ((18f - 10.01f) / 8f), far.currentHealth, 4);
             host.Flush(rt);
             Assert.Equal(cooldown, Cooldown(rt), 4); Assert.Equal(health, rt.Hero.currentHealth);
         }

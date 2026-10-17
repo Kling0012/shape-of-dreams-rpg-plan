@@ -22,7 +22,8 @@ internal static class OptimizeCommand
                 case "--iterations": options.Iterations = long.Parse(Value(), CultureInfo.InvariantCulture); break;
                 case "--seed": options.Seed = int.Parse(Value(), CultureInfo.InvariantCulture); break;
                 case "--set":
-                    string[] kv = Value().Split('=');
+                    string[] kv = Value().Split('=', 2);
+                    if (kv.Length != 2) throw new ArgumentException("--set needs Option=value");
                     var field = typeof(StarMapOptimizer.Options).GetField(kv[0]) ?? throw new ArgumentException("unknown option " + kv[0]);
                     field.SetValue(options, Convert.ChangeType(kv[1], field.FieldType, CultureInfo.InvariantCulture));
                     break;
@@ -59,10 +60,13 @@ internal static class OptimizeCommand
             for (int i = 1; i < layout.Nodes.Count; i++)
             {
                 double x = Math.Round(optimizer.X(i), 1), y = Math.Round(optimizer.Y(i), 1);
-                if (Math.Abs(x - layout.Nodes[i].X) < 0.05 && Math.Abs(y - layout.Nodes[i].Y) < 0.05) continue;
-                changed++;
-                data.Append(layout.Nodes[i].Id).Append('|').Append(x.ToString("0.#", CultureInfo.InvariantCulture)).Append('|')
-                    .Append(y.ToString("0.#", CultureInfo.InvariantCulture)).Append('\n');
+                bool moved = Math.Abs(x - layout.Nodes[i].X) >= 0.05 || Math.Abs(y - layout.Nodes[i].Y) >= 0.05;
+                if (moved) changed++;
+                // Include unchanged stars too: a complete table can bypass sector placement.
+                float storedX = moved ? (float)x : layout.Nodes[i].X;
+                float storedY = moved ? (float)y : layout.Nodes[i].Y;
+                data.Append(layout.Nodes[i].Id).Append('|').Append(storedX.ToString("R", CultureInfo.InvariantCulture)).Append('|')
+                    .Append(storedY.ToString("R", CultureInfo.InvariantCulture)).Append('\n');
             }
             ulong fingerprint = StarMapPlacements.Fingerprint(layout.Nodes.Skip(1).Select(n => n.Id));
             lock (lockObject)

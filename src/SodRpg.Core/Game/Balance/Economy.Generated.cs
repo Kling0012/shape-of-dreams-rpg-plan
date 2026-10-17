@@ -10,6 +10,8 @@ namespace SodRpg.Core.Game
         internal const int MerchantGoldPerHeat = 15;
         internal const int SalvageDustPerShard = 1;
         internal const int SalvageDustPerEnhance = 2;
+        internal const int DustCapBase = 5000;
+        internal const int DustCapPerWorld = 3000;
         internal const double LimboDropBonus = 0.1;
         internal const double LimboLuck = 0.2;
         internal const double LimboExpBonus = 0.1666667;
@@ -18,6 +20,6 @@ namespace SodRpg.Core.Game
         internal const double LimboRelicBonusCap = 2.0;
         internal const double LimboRelicMultiplierCap = 6.0;
         internal const int SecureBonusDivisor = 4;
-        internal static readonly string ContentFingerprintRecord = "balance:economy:v1:salvage/dustPerShard:int:dust/shard:1;salvage/dustPerEnhance:int:dust/enhance:2;expedition/limboExpBonus:double:xp-mult/limbo-depth:0.1666667;expedition/limboRelicBonus:double:relic-mult/limbo-depth:0.2;expedition/limboRelicBonusCap:double:relic-bonus-cap:2.0;expedition/limboRelicMultiplierCap:double:relic-mult-cap:6.0";
+        internal static readonly string ContentFingerprintRecord = "balance:economy:v1:salvage/dustPerShard:int:dust/shard:1;salvage/dustPerEnhance:int:dust/enhance:2;salvage/dustCapBase:int:dust/world-0:5000;salvage/dustCapPerWorld:int:dust/world:3000;expedition/limboExpBonus:double:xp-mult/limbo-depth:0.1666667;expedition/limboRelicBonus:double:relic-mult/limbo-depth:0.2;expedition/limboRelicBonusCap:double:relic-bonus-cap:2.0;expedition/limboRelicMultiplierCap:double:relic-mult-cap:6.0";
     }
 }

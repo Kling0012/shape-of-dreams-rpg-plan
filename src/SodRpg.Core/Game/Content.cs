@@ -333,6 +333,13 @@ namespace SodRpg.Core.Game
             Description = description;
         }
 
+        public TalentDef(string id, Line route, Txt name, Stat stat, int value, Txt description)
+            : this(id, route, name, stat, value, 1)
+        {
+            IsKeystone = true;
+            Description = description;
+        }
+
         public string Id { get; }
         public Line Route { get; }
         public Txt Name { get; }
@@ -378,6 +385,8 @@ namespace SodRpg.Core.Game
         /// <summary>1段に要るポイント（ふつうは1。連装・四の型のように強い星だけ高い）。</summary>
         public int RankCost { get; set; } = 1;
         public bool IsKeystone { get; }
+        public int KeystoneCost => KeystoneDefinition?.Cost
+            ?? (IsKeystone && PerRank > 0 ? RankCost : Content.KeystoneCost);
         public Power Power { get; }
         public int PowerValue { get; }
         public Txt Description { get; }
@@ -493,6 +502,8 @@ namespace SodRpg.Core.Game
         public const int EnhanceMilestoneThird = ForgeBalance.MilestoneThird;
         public const int EnhanceMilestoneFourth = ForgeBalance.MilestoneFourth;
         public const int EnhanceMilestoneFifth = ForgeBalance.MilestoneFifth;
+        /// <summary>強化の節目の昇順の一覧（forge の milestones）。最後の節目だけ効果が違い、固有効果の値を伸ばす。</summary>
+        public static readonly IReadOnlyList<int> EnhanceMilestones = ForgeBalance.Milestones;
         /// <summary>保存される強化節目の序数の数（調整値ではない）。</summary>
         public const int MaxEnhanceMilestones = 5;
         /// <summary>最後の強化節目で固有効果に掛ける倍率（%）。</summary>
@@ -2649,12 +2660,12 @@ namespace SodRpg.Core.Game
             new UniqueDef("set.starsong.head", "head.comet_diadem", new Txt("星詠みの冠", "Starsinger's Diadem"), "set.starsong"),
             new UniqueDef("set.starsong.hands", "hands.star_rings", new Txt("星詠みの指環", "Starsinger's Rings"), "set.starsong"),
             new UniqueDef("set.starsong.feet", "feet.star_slippers", new Txt("星詠みの靴", "Starsinger's Slippers"), "set.starsong"),
-            new UniqueDef("set.hunt.weapon", "weapon.hunting_bow", new Txt("狩猟団の弓", "Huntmaster's Bow"), "set.hunt"),
-            new UniqueDef("set.hunt.armor", "armor.hunter_leather", new Txt("狩猟団の革鎧", "Huntmaster's Leathers"), "set.hunt"),
-            new UniqueDef("set.hunt.charm", "charm.fang_necklace", new Txt("狩猟団の牙", "Huntmaster's Fang"), "set.hunt"),
-            new UniqueDef("set.hunt.head", "head.hunter_hood", new Txt("狩猟団の頭巾", "Huntmaster's Hood"), "set.hunt"),
-            new UniqueDef("set.hunt.hands", "hands.hunting_sinew", new Txt("狩猟団の筋帯", "Huntmaster's Sinew Wraps"), "set.hunt"),
-            new UniqueDef("set.hunt.feet", "feet.hunter_boots", new Txt("狩猟団の長靴", "Huntmaster's Boots"), "set.hunt"),
+            new UniqueDef("set.hunt.weapon", "weapon.hunting_bow", new Txt("狩猟団の弓", "Hunting Party Bow"), "set.hunt"),
+            new UniqueDef("set.hunt.armor", "armor.hunter_leather", new Txt("狩猟団の革鎧", "Hunting Party Leathers"), "set.hunt"),
+            new UniqueDef("set.hunt.charm", "charm.fang_necklace", new Txt("狩猟団の牙", "Hunting Party Fang"), "set.hunt"),
+            new UniqueDef("set.hunt.head", "head.hunter_hood", new Txt("狩猟団の頭巾", "Hunting Party Hood"), "set.hunt"),
+            new UniqueDef("set.hunt.hands", "hands.hunting_sinew", new Txt("狩猟団の筋帯", "Hunting Party Sinew Wraps"), "set.hunt"),
+            new UniqueDef("set.hunt.feet", "feet.hunter_boots", new Txt("狩猟団の長靴", "Hunting Party Boots"), "set.hunt"),
             new UniqueDef("set.bastion.weapon", "weapon.tower_lance", new Txt("不落城の槍", "Bastion Lance"), "set.bastion"),
             new UniqueDef("set.bastion.armor", "armor.bastion_shell", new Txt("不落城の甲羅", "Bastion Shell"), "set.bastion"),
             new UniqueDef("set.bastion.charm", "charm.guardian_seal", new Txt("不落城の封印", "Bastion Seal"), "set.bastion"),
@@ -2752,12 +2763,12 @@ namespace SodRpg.Core.Game
             new UniqueDef("set.myriad.weapon", "weapon.chanting_wand", new Txt("万象の詠唱杖", "Myriad Chanting Wand"), "set.myriad"),
             new UniqueDef("set.myriad.head", "head.sage_hat", new Txt("万象の賢者帽", "Myriad Sage Hat"), "set.myriad"),
             new UniqueDef("set.myriad.feet", "feet.cometstride_shoes", new Txt("万象の彗星靴", "Myriad Cometshoes"), "set.myriad"),
-            new UniqueDef("set.daybreak.weapon", "weapon.dawn_scepter", new Txt("払暁の笏", "Daybreak Scepter"), "set.daybreak"),
-            new UniqueDef("set.daybreak.head", "head.radiant_halo", new Txt("払暁の光輪", "Daybreak Halo"), "set.daybreak"),
-            new UniqueDef("set.daybreak.feet", "feet.dawn_steps", new Txt("払暁の長靴", "Daybreak Treads"), "set.daybreak"),
-            new UniqueDef("set.daybreak.armor", "armor.sun_plate", new Txt("払暁の胸甲", "Daybreak Breastplate"), "set.daybreak"),
-            new UniqueDef("set.daybreak.hands", "hands.sunfire_grips", new Txt("払暁の陽炎手", "Daybreak Sunfire Grips"), "set.daybreak"),
-            new UniqueDef("set.daybreak.charm", "charm.halo_charm", new Txt("払暁の光環御守", "Daybreak Halo Charm"), "set.daybreak"),
+            new UniqueDef("set.daybreak.weapon", "weapon.dawn_scepter", new Txt("払暁の笏", "Dawnbreak Scepter"), "set.daybreak"),
+            new UniqueDef("set.daybreak.head", "head.radiant_halo", new Txt("払暁の光輪", "Dawnbreak Halo"), "set.daybreak"),
+            new UniqueDef("set.daybreak.feet", "feet.dawn_steps", new Txt("払暁の長靴", "Dawnbreak Treads"), "set.daybreak"),
+            new UniqueDef("set.daybreak.armor", "armor.sun_plate", new Txt("払暁の胸甲", "Dawnbreak Breastplate"), "set.daybreak"),
+            new UniqueDef("set.daybreak.hands", "hands.sunfire_grips", new Txt("払暁の陽炎手", "Dawnbreak Sunfire Grips"), "set.daybreak"),
+            new UniqueDef("set.daybreak.charm", "charm.halo_charm", new Txt("払暁の光環御守", "Dawnbreak Halo Charm"), "set.daybreak"),
             // v1.29：固有品の第1段52個。この後に第2段を入力済み。P37の16個だけ保留（docs/specs/v1.29-uniques-deferred.md）。
             new UniqueDef("unique.w_palmcannon", "weapon.rockbreaker", new Txt("砕岩の砲槌", "Boulderburst Hammer"),
                 new Txt("撃ち抜いた後に、熱い岩だけが残る。", "Only hot stone remains where it struck."),
@@ -5139,6 +5150,7 @@ namespace SodRpg.Core.Game
             [Stat.ShieldPower] = EquipmentCapsBalance.Stat_ShieldPower,
             [Stat.SummonPower] = EquipmentCapsBalance.Stat_SummonPower,
             [Stat.SacrificeReduction] = EquipmentCapsBalance.Stat_SacrificeReduction,
+            [Stat.HealingReceivedPct] = EquipmentCapsBalance.Stat_HealingReceivedPct, // v2.10：遠征の鍛錬（Aurena）で受ける回復が伸びる
         };
 
         private static readonly Dictionary<string, BaseDef> BaseById = Index(Bases, b => b.Id);
@@ -5197,8 +5209,14 @@ namespace SodRpg.Core.Game
         public static IReadOnlyList<AffixDef> AffixPool(Slot slot) => AffixPools[slot];
         public static IReadOnlyList<PowerRange> PowerPool(Slot slot) => PowerPools[slot];
 
+        // 定義済みの値を一度だけ集め、抽選候補ごとの箱詰めと反射を避ける。入れ子の型で静的初期化順序に依存させない。
+        private static class DefinedPowers
+        {
+            internal static readonly HashSet<Power> Set = new HashSet<Power>((Power[])Enum.GetValues(typeof(Power)));
+        }
+
         /// <summary>Direct conditional AD/AP powers may roll only on Epic or higher gear.</summary>
-        public static bool IsPowerDroppable(Power power) => Enum.IsDefined(typeof(Power), power)
+        public static bool IsPowerDroppable(Power power) => DefinedPowers.Set.Contains(power)
             && power != Power.None && power != Power.ShadowStep && !CurrencyStars.IsPower(power);
         public static bool PowerAllowedForRarity(Power power, Rarity rarity) => IsPowerDroppable(power)
             && (rarity >= Rarity.Epic || !NewPowersV129.IsConditionalAttribute(power));
@@ -5253,6 +5271,7 @@ namespace SodRpg.Core.Game
         public static Txt Epithet(Power p) => Epithets.TryGetValue(p, out var t) ? t : NewPowersV129.IsPower(p) ? NewPowersV129.Epithet(p) : ElementReactions.Epithet(p);
 
         public static int PowerCap(Power p) => PowerCaps.TryGetValue(p, out int c) ? c : 0;
+        /// <summary>Upper limit for a stat; 0 means no upper limit (including stats absent from StatCaps).</summary>
         public static int StatCap(Stat s) => StatCaps.TryGetValue(s, out int c) ? c : 0;
 
         public static IEnumerable<BaseDef> BasesFor(Slot slot)
@@ -5502,6 +5521,12 @@ namespace SodRpg.Core.Game
             }
         }
 
+        /// <summary>Scoped by the game UI to the traveler currently viewing the equipment.</summary>
+        public static bool DisplayMeleeRangeConversion { get; set; }
+
+        /// <summary>The viewing traveler's attack speed before range conversion, scoped with <see cref="DisplayMeleeRangeConversion"/>.</summary>
+        public static int DisplayMeleeAttackSpeed { get; set; }
+
         public static string FormatStat(Stat s, int v)
         {
             string sign = v >= 0 ? "+" : "";
@@ -5524,11 +5549,21 @@ namespace SodRpg.Core.Game
                 case Stat.FireAmp: return Loc.T($"火属性効果 {sign}{v}%", $"Fire effect strength {sign}{v}%");
                 case Stat.ColdAmp: return Loc.T($"冷気属性効果 {sign}{v}%", $"Cold effect strength {sign}{v}%");
                 case Stat.LightAmp: return Loc.T($"光属性効果 {sign}{v}%", $"Light effect strength {sign}{v}%");
-                case Stat.AttackRangePct: return Loc.T($"通常攻撃の射程 {sign}{v}%", $"Basic attack range {sign}{v}%");
+                case Stat.AttackRangePct:
+                    if (!DisplayMeleeRangeConversion) return Loc.T($"通常攻撃の射程 {sign}{v}%", $"Basic attack range {sign}{v}%");
+                    {
+                        int gain = TravelerCombat.RangeToSpeedGain(DisplayMeleeAttackSpeed, v);
+                        // At the cap the gain is nothing: show "0%" without a sign so that reads at a glance (#542).
+                        string gainSign = gain > 0 ? "+" : "";
+                        int cap = StatCap(Stat.AttackSpeedPct);
+                        return Loc.T($"攻撃速度 {gainSign}{gain}%（近接のため射程 {sign}{v}% から変換。攻撃速度は合計{cap}%まで）",
+                            $"Attack speed {gainSign}{gain}% (converted from {sign}{v}% range for melee; attack speed capped at {cap}% in total)");
+                    }
                 case Stat.FourthAttackShift: return Loc.T($"強化通常攻撃までの必要回数 -{v}発（4発目の強化攻撃を早める）", $"Attacks needed for an empowered basic attack -{v} (brings the empowered fourth attack forward)");
                 case Stat.EssenceSlotIdentity: return Loc.T($"エッセンス枠 {sign}{v}。装備中のアイデンティティ記憶が対象で、星・刻印・装備の追加枠は旅人ごとに合算する。各記憶に最大 +{EssenceSlots.MaxPerLocation}、移動と合わせて最大 +{EssenceSlots.MaxAdded}まで。", $"Essence slots {sign}{v} (for your equipped Identity memory; shared across stars, keystones, engravings and equipment: +{EssenceSlots.MaxPerLocation} per memory, +{EssenceSlots.MaxAdded} total with Movement per traveler)");
                 case Stat.EssenceSlotMovement: return Loc.T($"エッセンス枠 {sign}{v}。装備中の移動の記憶が対象で、星・刻印・装備の追加枠は旅人ごとに合算する。各記憶に最大 +{EssenceSlots.MaxPerLocation}、アイデンティティと合わせて最大 +{EssenceSlots.MaxAdded}まで。", $"Essence slots {sign}{v} (for your equipped Movement memory; shared across stars, keystones, engravings and equipment: +{EssenceSlots.MaxPerLocation} per memory, +{EssenceSlots.MaxAdded} total with Identity per traveler)");
                 case Stat.HealPower: return Loc.T($"与えるHP回復量 {sign}{v}%。自分・味方への回復が対象で、装備・星の同じ能力値は合計で最大{StatCap(s)}%まで。", $"Healing granted {sign}{v}% (to yourself and allies; combined equipment and star bonuses to this stat capped at {StatCap(s)}%)");
+                case Stat.HealingReceivedPct: return Loc.T($"受けるHP回復量 {sign}{v}%", $"Healing received {sign}{v}%");
                 case Stat.ShieldPower: return Loc.T($"与える障壁量 {sign}{v}%。自分・味方への障壁が対象で、装備・星の同じ能力値は合計で最大{StatCap(s)}%まで。", $"Shield amount granted {sign}{v}% (to yourself and allies; combined equipment and star bonuses to this stat capped at {StatCap(s)}%)");
                 case Stat.SummonPower: return Loc.T($"自分の召喚獣の与ダメージ {sign}{v}%。装備・星の同じ能力値は合計で最大{StatCap(s)}%まで。", $"Your summons' damage {sign}{v}% (combined equipment and star bonuses to this stat capped at {StatCap(s)}%)");
                 case Stat.SacrificeReduction: return Loc.T($"HPを捧げる技のHP消費 {-v:+0;-0;0}%。装備・星の同じ能力値による軽減は合計で最大{StatCap(s)}%まで。", $"HP cost of health-sacrificing skills {-v:+0;-0;0}% (combined equipment and star reductions capped at {StatCap(s)}%)");
@@ -5613,7 +5648,7 @@ namespace SodRpg.Core.Game
                 case Power.Lifesteal: body = Loc.T($"通常攻撃が命中するたび、最大HPの{v / 10f:0.#}%を回復する。{PowerRuntime.LifestealInterval}秒に1回まで。", $"Health restored +{v / 10f:0.#}% of your maximum health on a basic attack hit; heals yourself (once per {PowerRuntime.LifestealInterval}s)"); break;
                 case Power.Thorns: body = Loc.T($"敵からダメージを受けたとき、受けたダメージの{v}%をその敵に返す。{PowerRuntime.ThornsInterval}秒に1回まで。反射ダメージでは発動しない。", $"Retaliatory damage +{v}% of damage received, dealt back to the attacking enemy (once per {PowerRuntime.ThornsInterval}s; reflected damage does not trigger it)"); break;
                 case Power.Executioner: body = Loc.T($"HPが{PowerRuntime.ExecuteThreshold:0%}未満の敵に通常攻撃が命中したとき、攻撃力の{v}%の追加ダメージを与える。", $"Basic attack bonus damage +{v}% of your attack damage when hitting an enemy below {PowerRuntime.ExecuteThreshold:0%} health"); break;
-                case Power.Resonance: body = Loc.T($"自分の周囲{PowerRuntime.ResonanceRange}m以内に味方がいる間、自分の攻撃力・魔力が{v}%、味方の攻撃力・魔力が{v / 2}%上がる。味方がいなければ、自分は{v / 2}%上がる。{PowerRuntime.ResonanceRange}m以内の味方への付与は重ならず、最も高い値だけを適用する。", $"Your attack damage and ability power +{v}%, nearby allies' +{v / 2}% while an ally is within {PowerRuntime.ResonanceRange}m; without one, your bonus is +{v / 2}%. Bonuses granted to allies within {PowerRuntime.ResonanceRange}m do not stack; only the highest applies"); break;
+                case Power.Resonance: body = Loc.T($"味方との距離係数が最大のとき、自分の攻撃力・魔力が{v}%、味方の攻撃力・魔力が{v / 2f:0.#}%上がる。味方がいなければ自分は{v / 2f:0.#}%上がり、味方による自分への追加分と味方への付与量に距離係数を掛ける。味方への付与は重ならず、最も高い値だけを適用する。", $"At full allied distance effectiveness, your attack damage and ability power increase by {v}% and allies' by {v / 2f:0.#}%. Your solo bonus is {v / 2f:0.#}%; distance scales your additional allied bonus and the bonus granted to allies. Bonuses granted to allies do not stack; only the highest applies") + CoopDistance.Description; break;
                 case Power.Tailwind: body = Loc.T($"敵を倒した後{PowerRuntime.TailwindDuration}秒間、移動速度が{v}%上がる。重ならず、敵を倒すと効果時間が延びる。", $"Movement speed +{v}% for {PowerRuntime.TailwindDuration}s after a kill; kills refresh it without stacking"); break;
                 case Power.Barrier: body = Loc.T($"最初は{PowerRuntime.BarrierFirstDelay}秒後、以後は{PowerRuntime.BarrierInterval}秒ごとに、最大HPの{v}%の障壁を{PowerRuntime.BarrierDuration}秒間得る。", $"Shield +{v}% of your maximum health for {PowerRuntime.BarrierDuration}s; first granted after {PowerRuntime.BarrierFirstDelay}s, then every {PowerRuntime.BarrierInterval}s"); break;
                 case Power.SecondWind: body = Loc.T($"自分のHPが{PowerRuntime.SecondWindThreshold:0%}未満のとき、最大HPの{v}%を回復する。{PowerRuntime.SecondWindCooldown}秒に1回まで。", $"Health restored +{v}% of your maximum health while below {PowerRuntime.SecondWindThreshold:0%} health (once per {PowerRuntime.SecondWindCooldown}s)"); break;
@@ -5637,7 +5672,7 @@ namespace SodRpg.Core.Game
                 case Power.Sprint: body = Loc.T($"移動の記憶を使った後{PowerRuntime.SprintDuration}秒間、移動速度・攻撃速度が{v}%上がる。重ならず、再使用すると効果時間が延びる。", $"Movement speed and attack speed +{v}% for {PowerRuntime.SprintDuration}s after using a Movement memory; refreshes without stacking"); break;
                 case Power.Vigor: body = Loc.T($"自分のHPが{PowerRuntime.VigorThreshold:0%}以上の間、攻撃力・魔力が{v}%上がる。", $"Attack damage and ability power +{v}% while your health is at or above {PowerRuntime.VigorThreshold:0%}"); break;
                 case Power.Overload: body = Loc.T($"通常記憶を使った後{PowerRuntime.OverloadDuration}秒間、攻撃力・魔力が{v}%上がる。移動・奥義・アイデンティティの記憶は対象外。重ならず、再使用すると効果時間が延びる。", $"Attack damage and ability power +{v}% for {PowerRuntime.OverloadDuration}s after using an ordinary memory; excludes Movement, Ultimate and Identity memories; refreshes without stacking"); break;
-                case Power.Finale: body = Loc.T($"通常記憶の3枠すべてを{PowerRuntime.FinaleWindow}秒以内に使ったとき、奥義の残りクールダウンが{v}%短くなる。{PowerRuntime.FinaleCooldown}秒に1回まで。次の発動には、3枠をもう一度使う必要がある。", $"Ultimate remaining cooldown -{v}% when all 3 ordinary-memory slots are used within {PowerRuntime.FinaleWindow}s (once per {PowerRuntime.FinaleCooldown}s; all 3 must be used again for the next trigger)"); break;
+                case Power.Finale: body = Loc.T($"通常記憶の3枠すべてを{PowerRuntime.FinaleWindow}秒以内に使ったとき、奥義の残りクールダウンが{v}%短くなる。{PowerRuntime.FinaleCooldown}秒に1回まで。次の発動には3枠をもう一度使う必要がある。", $"Ultimate remaining cooldown -{v}% when all 3 ordinary-memory slots are used within {PowerRuntime.FinaleWindow}s (once per {PowerRuntime.FinaleCooldown}s; all 3 must be used again for the next trigger)"); break;
                 case Power.CriticalEcho: body = Loc.T($"通常攻撃が会心で命中したとき、通常記憶3枠の残りクールダウンが{v / 10f:0.#}秒短くなる。{PowerRuntime.CriticalEchoCooldown}秒に1回まで。", $"Remaining cooldown of all 3 ordinary-memory slots -{v / 10f:0.#}s on a critical basic attack hit (once per {PowerRuntime.CriticalEchoCooldown}s)"); break;
                 case Power.Fetters: body = Loc.T($"スタン・スロウ・冷気のいずれかを受けている敵に与えるダメージが{v}%増える。", $"Damage dealt +{v}% to enemies that are stunned, slowed or chilled"); break;
                 case Power.CrystalResonance: body = Loc.T($"装着中の全エッセンスの品質の合計100%ごとに、攻撃力・魔力が{v}%上がる。100%未満の端数は数えず、最大{PowerRuntime.CrystalResonanceMaxTiers * 100}%分まで数える。", $"Attack damage and ability power +{v}% per 100% total quality across all equipped Essences; ignores incomplete hundreds, counts up to {PowerRuntime.CrystalResonanceMaxTiers * 100}%"); break;

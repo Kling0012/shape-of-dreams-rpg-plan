@@ -41,7 +41,8 @@ namespace SodRpg.Core.Game
             && Choices.Count == 0 && Keystone.Count == 0 && RunGrowths.Count == 0;
 
         /// <param name="isEquipped">記憶の型名が装着中か。null なら印を付けない。</param>
-        public static StarSummary Compute(Profile p, string heroKey, Func<string, bool> isEquipped = null)
+        public static StarSummary Compute(Profile p, string heroKey, Func<string, bool> isEquipped = null,
+            Func<string, float> travelerCoefficient = null)
         {
             var summary = new StarSummary();
             var h = p.Hero(heroKey);
@@ -201,7 +202,7 @@ namespace SodRpg.Core.Game
             foreach (var total in effectOrder) total.Line.Text = total.Describe();
             foreach (var kv in stats.OrderBy(k => (int)k.Key))
             {
-                kv.Value.Text = Content.FormatStat(kv.Key, statValues[kv.Key]);
+                kv.Value.Text = Content.FormatStat(kv.Key, BuildAggregation.CapStat(kv.Key, statValues[kv.Key]));
                 if (statValues[kv.Key] != 0) summary.Stats.Add(kv.Value);
             }
             foreach (var kv in powers.OrderBy(k => (int)k.Key))
@@ -212,7 +213,7 @@ namespace SodRpg.Core.Game
             foreach (var item in linkOrder)
             {
                 var entry = linkLines[item.Value];
-                entry.Key.Text = Links.Describe(entry.Value, isEquipped);
+                entry.Key.Text = Links.Describe(entry.Value, isEquipped, travelerCoefficient);
                 Group(item.Key).Lines.Add(entry.Key);
             }
             foreach (var item in pairLines) Group(item.Key).Lines.Add(item.Value);

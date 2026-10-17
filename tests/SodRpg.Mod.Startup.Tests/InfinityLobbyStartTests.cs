@@ -44,6 +44,7 @@ namespace SodRpg.Mod.Startup.Tests
             ClientSession.RemoteHostHelloAnswered = false;
             ClientSession.HostInfinityRewardsSettled = false;
             ClientSession.HostInfinityReturnCommitted = false;
+            ClientSession.HostInfinitySaveHoldSatisfied = true;
             NetworkedManagerBase<GameSettingsManager>.softInstance = null;
             NetworkedManagerBase<GameManager>.softInstance = null;
             NetworkedManagerBase<GameSettingsManager>.instance = null;
@@ -374,7 +375,7 @@ namespace SodRpg.Mod.Startup.Tests
             FeedHello(authority, participant, Protocol.Version, ContentFingerprint.Value, infinityAvailable: false);
 
             var mismatches = (System.Collections.IDictionary)AccessTools.Field(typeof(HostAuthority), "_versionMismatches").GetValue(authority);
-            string text = (string)mismatches[participant];
+            string text = ((SodRpg.Core.Game.Txt)mismatches[participant]).Ja;
             Assert.Contains("相手側でインフィニティが無効", text);
             Assert.DoesNotContain("Protocolが違う", text);
             Assert.DoesNotContain("版が違う", text);

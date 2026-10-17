@@ -47,6 +47,12 @@ CHANNEL_ID = re.compile(r"^[A-Z][A-Za-z0-9]*$")
 # these cells are intentionally negative or unconstrained by construction order.
 SHARED_NEGATIVE_OK = {"nativeHysteriaSpeedMilli"}
 CAP_KEYS = {"cap", "capMilli", "targetCapMilli", "budgetMilli"}
+# Cells that need a tighter floor than the constructor bounds above. HostAuthority.BossMaw
+# reads charm action 0's MainHits - 1 as the hits retained before the healing hit, so a
+# MainHits below 2 (a missing mainHits defaults to 0) would heal on the very first hit.
+CELL_FLOORS = {
+    ("maw", "charm", 0, "mainHits"): 2,
+}
 
 
 def _int(value, path):
@@ -113,6 +119,13 @@ def validate(boss, data):
                 _int(value, f"{path}/moves/{pid}/actions/{i}/{field}")
                 if not low <= value <= high:
                     raise ValueError(f"{path}/moves/{pid}/actions/{i}/{field}: {value} outside {low}..{high}")
+            floor = CELL_FLOORS.get((boss, pid, i, "mainHits"))
+            if floor is not None:
+                value = action.get("mainHits")
+                if value is None:
+                    raise ValueError(f"{path}/moves/{pid}/actions/{i}/mainHits: required (cell floor {floor})")
+                if value < floor:
+                    raise ValueError(f"{path}/moves/{pid}/actions/{i}/mainHits: {value} below cell floor {floor} (MainHits - 1 hits are retained, so MainHits < 2 heals on the first hit)")
     rewards = data["rewards"]
     if not isinstance(rewards, dict) or not all(IDENT.match(k) for k in rewards):
         raise ValueError(f"{path}/rewards: expected camelCase cell names")

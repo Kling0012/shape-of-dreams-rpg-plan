@@ -41,24 +41,38 @@ namespace SodRpg.Core.Game
         /// 調整済みの座標を当てはめる。星の集合が表の作成時と違うとき（星の追加・削除の後）は何もしない＝
         /// 既定の配置のまま。壊れた配置を出さず、再生成が必要なことは検査（テストと StarMapRender --check）が知らせる。
         /// </summary>
-        private static void ApplyTunedPlacements(List<HeroTreeNode> nodes, List<List<int>> neighbors)
+        private static bool ApplyTunedPlacements(List<HeroTreeNode> nodes, List<List<int>> neighbors)
         {
-            if (nodes.Count < 2 || nodes[1].Talent == null) return;
-            if (!StarMapPlacements.TryGet(nodes[1].Talent.HeroKey, out int count, out ulong fingerprint, out string data)) return;
-            if (nodes.Count - 1 != count) return;
+            if (nodes.Count < 2 || nodes[1].Talent == null) return false;
+            if (!StarMapPlacements.TryGet(nodes[1].Talent.HeroKey, out int count, out ulong fingerprint, out string data)) return false;
+            if (nodes.Count - 1 != count) return false;
             var ids = new List<string>(count);
             var index = new Dictionary<string, int>(count, StringComparer.Ordinal);
             for (int i = 1; i < nodes.Count; i++) { ids.Add(nodes[i].Id); index[nodes[i].Id] = i; }
-            if (StarMapPlacements.Fingerprint(ids) != fingerprint) return;
+            if (StarMapPlacements.Fingerprint(ids) != fingerprint) return false;
+            // Validate complete coverage before changing any node. A missing, duplicate or invalid
+            // row must keep the entire layout on the ordinary sector-placement path.
+            var covered = new bool[nodes.Count];
+            var xs = new float[nodes.Count];
+            var ys = new float[nodes.Count];
+            int placed = 0;
             foreach (string line in data.Split('\n'))
             {
                 if (line.Length == 0) continue;
                 string[] part = line.Split('|');
-                if (part.Length != 3 || !index.TryGetValue(part[0], out int i)) continue;
-                var old = nodes[i];
-                nodes[i] = new HeroTreeNode(old.Id, float.Parse(part[1], CultureInfo.InvariantCulture),
-                    float.Parse(part[2], CultureInfo.InvariantCulture), old.Kind, old.Talent, neighbors[i]);
+                if (part.Length != 3 || !index.TryGetValue(part[0], out int i) || covered[i]
+                    || !float.TryParse(part[1], NumberStyles.Float, CultureInfo.InvariantCulture, out float x)
+                    || !float.TryParse(part[2], NumberStyles.Float, CultureInfo.InvariantCulture, out float y)
+                    || float.IsNaN(x) || float.IsInfinity(x) || float.IsNaN(y) || float.IsInfinity(y)) return false;
+                covered[i] = true; xs[i] = x; ys[i] = y; placed++;
             }
+            if (placed != count) return false;
+            for (int i = 1; i < nodes.Count; i++)
+            {
+                var old = nodes[i];
+                nodes[i] = new HeroTreeNode(old.Id, xs[i], ys[i], old.Kind, old.Talent, neighbors[i]);
+            }
+            return true;
         }
     }
 }

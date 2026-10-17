@@ -40,15 +40,18 @@ namespace SodRpg.Core.Game
         // saves can change the disk. Plain store callers retain their tolerant recovery path.
         internal Profile Load(Action sourceReadsComplete)
         {
+            lock (_writeLock) _validatedFirstWrite = false;
             Notes.Clear();
             WritesBlocked = false;
-            if (ResetIfOld())
+            var mainRoot = ReadRoot(_path, "本体");
+            var backupRoot = ReadRoot(BackupPath, "バックアップ");
+            if (ResetIfOld(mainRoot, backupRoot))
             {
                 sourceReadsComplete?.Invoke();
                 return Profile.CreateNew(_seed);
             }
-            Profile main = TryRead(_path, "本体", out var mainNotes, out bool mainMigrated);
-            Profile bak = TryRead(BackupPath, "バックアップ", out var bakNotes, out bool bakMigrated);
+            Profile main = TryRead(mainRoot, "本体", out var mainNotes, out bool mainMigrated);
+            Profile bak = TryRead(backupRoot, "バックアップ", out var bakNotes, out bool bakMigrated);
             sourceReadsComplete?.Invoke();
             if (!WritesBlocked)
             {
@@ -99,7 +102,7 @@ namespace SodRpg.Core.Game
         /// <summary>保存する。成功すると p.Revision が1増える。失敗時は IOException を投げ、本体は変更しない。</summary>
         public void Save(Profile p)
         {
-            if (WritesBlocked) throw new IOException(BlockedMessage);
+            if (WritesBlocked) throw new ProfileWriteException(BlockedMessageJa, BlockedMessageEn);
             long prev = p.Revision;
             p.Revision = prev + 1;
             try
@@ -114,6 +117,7 @@ namespace SodRpg.Core.Game
         }
 
         private readonly object _writeLock = new object();
+        private bool _validatedFirstWrite;
 
         /// <summary>
         /// JSON化済みの内容を書き込む（別スレッドから呼んでよい）。一時ファイルへ書き、読み戻して確かめ、置換で確定する。
@@ -123,29 +127,52 @@ namespace SodRpg.Core.Game
         {
             lock (_writeLock)
             {
-                if (WritesBlocked) throw new IOException(BlockedMessage);
+                if (WritesBlocked) throw new ProfileWriteException(BlockedMessageJa, BlockedMessageEn);
                 try
                 {
                     _fs.WriteAllText(TempPath, text);
-                    var check = ProfileCodec.Read(_fs.ReadAllText(TempPath), new List<string>());
-                    if (check.Revision != revision) throw new IOException("読み戻しの内容が一致しません。");
+                    if (!string.Equals(_fs.ReadAllText(TempPath), text, StringComparison.Ordinal))
+                        throw new ProfileWriteException("読み戻しの内容が一致しません。", "The saved file did not read back identically.");
+                    if (!_validatedFirstWrite)
+                    {
+                        var notes = new List<string>();
+                        var check = ProfileCodec.Read(text, notes);
+                        if (check.Revision != revision || notes.Count != 0 || ProfileCodec.Write(check) != text)
+                            throw new ProfileWriteException("プロフィールの往復検証で内容が一致しません。", "The profile did not survive a save/load round trip.");
+                    }
                     _fs.Replace(TempPath, _path, _fs.Exists(_path) ? BackupPath : null);
+                    _validatedFirstWrite = true;
                 }
                 catch (Exception ex) when (!(ex is IOException))
                 {
-                    throw new IOException("保存に失敗しました: " + ex.Message, ex);
+                    throw new ProfileWriteException("保存に失敗しました: " + ex.Message, "Saving failed: " + ex.Message, ex);
                 }
             }
         }
 
-        private Profile TryRead(string path, string label, out List<string> notes, out bool migrated)
+        private JsonObject ReadRoot(string path, string label)
         {
-            notes = new List<string>();
-            migrated = false;
             if (!_fs.Exists(path)) return null;
             try
             {
-                return ProfileCodec.ReadForStore(_fs.ReadAllText(path), notes, out migrated);
+                return Json.Parse(_fs.ReadAllText(path)) as JsonObject
+                    ?? throw new LedgerFormatException("最上位がオブジェクトではありません。");
+            }
+            catch (Exception ex) when (ex is LedgerFormatException || ex is IOException || ex is FormatException || ex is OverflowException)
+            {
+                Notes.Add(label + "を読めませんでした: " + ex.Message);
+                return null;
+            }
+        }
+
+        private Profile TryRead(JsonObject root, string label, out List<string> notes, out bool migrated)
+        {
+            notes = new List<string>();
+            migrated = false;
+            if (root == null) return null;
+            try
+            {
+                return ProfileCodec.ReadForStore(root, notes, out migrated);
             }
             catch (LedgerVersionException)
             {
@@ -162,10 +189,10 @@ namespace SodRpg.Core.Game
         /// 保存の版が <see cref="Profile.ResetBeforeVersion"/> より古ければ、本体と .bak を写して残し、true を返す（v1.27 のリセット）。
         /// 写しは profile.v1-archive-日時.json のように、元のファイルと同じ場所に置く。読めない・版が分からないファイルは対象にしない。
         /// </summary>
-        private bool ResetIfOld()
+        private bool ResetIfOld(JsonObject mainRoot, JsonObject backupRoot)
         {
-            long version = ReadVersion(_path);
-            if (version < 0) version = ReadVersion(BackupPath);
+            long version = ReadVersion(mainRoot);
+            if (version < 0) version = ReadVersion(backupRoot);
             if (version < 0 || version >= Profile.ResetBeforeVersion) return false;
             string archive = NewArchivePath(version);
             try
@@ -232,28 +259,44 @@ namespace SodRpg.Core.Game
             try
             {
                 _fs.Copy(path, copy, overwrite: false);
-                Notes.Add("知らない内容を除外する前のデータを " + System.IO.Path.GetFileName(copy) + " に残しました。");
+                Notes.Add(Loc.T("知らない内容を除外する前のデータを " + System.IO.Path.GetFileName(copy) + " に残しました。",
+                    "Kept the data from before removing unknown content in " + System.IO.Path.GetFileName(copy) + "."));
             }
             catch (IOException ex)
             {
-                Notes.Add("除外する前のデータの写しを作れませんでした: " + ex.Message);
+                Notes.Add(Loc.T("除外する前のデータの写しを作れませんでした: ", "Could not copy the data from before the removal: ") + ex.Message);
             }
         }
 
-        private const string BlockedMessage = "前のデータの写しを作れていないため、保存を止めています。次に起動したときにもう一度試します。";
+        private const string BlockedMessageJa = "前のデータの写しを作れていないため、保存を止めています。次に起動したときにもう一度試します。";
+        private const string BlockedMessageEn = "Saving is paused because a copy of the previous data could not be made. It will be tried again on the next launch.";
 
-        private long ReadVersion(string path)
+        private static long ReadVersion(JsonObject root) =>
+            root != null && root.TryGet("version", out object value) && value is long version ? version : -1;
+
+        // 書き込み側は言語を読まず、表示するスレッドで日英を選ぶ。
+        private sealed class ProfileWriteException : IOException
         {
-            if (!_fs.Exists(path)) return -1;
-            try
+            private readonly string _japanese, _english;
+
+            internal ProfileWriteException(string japanese, string english, Exception inner = null)
+                : base(japanese, inner)
             {
-                return Json.Parse(_fs.ReadAllText(path)) is JsonObject root && root.TryGet("version", out object v) && v is long n ? n : -1;
+                _japanese = japanese;
+                _english = english;
             }
-            catch (Exception)
-            {
-                return -1;
-            }
+
+            public override string Message => Loc.T(_japanese, _english);
+
+            /// <summary>UI の言語と無関係に固定される英文（ログなど、言語が変わっても同じに出したい用途）。</summary>
+            internal string EnglishMessage => _english;
         }
+
+        /// <summary>
+        /// 例外の文のうち、UI の言語と無関係に固定される方。ProfileWriteException は英文、
+        /// それ以外の例外は Message をそのまま返す（ログを固定言語で出すときに使う、#551）。
+        /// </summary>
+        public static string EnglishMessage(Exception ex) => ex is ProfileWriteException write ? write.EnglishMessage : ex.Message;
 
         private void Quarantine(string path)
         {

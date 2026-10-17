@@ -187,6 +187,15 @@ namespace Issue73.Native.Tests
             Assert.Equal(3, session.Profile.Stats.BestHeatSecured);
             Assert.Equal(reference.Material(Materials.Shard), session.Profile.Material(Materials.Shard));
             Assert.Equal(reference.Stash.Select(r => r.Uid), session.Profile.Stash.Select(r => r.Uid));
+
+            // 演出の後に本体の終了通知が同じ遠征で届いても、精算済みの遠征を再び待たない（#88 の後の保留が残ると
+            // プロフィールの切り替えが次の遠征まで止まっていた）。
+            int victories = session.Profile.Stats.Victories;
+            Call(session, "OnConcluded", new DewGameResult { result = DewGameResult.ResultType.PureWhiteDream });
+            Call(session, "TickRunChoices");
+            Assert.Null(Get(session, "_pendingRunVictory"));
+            Assert.Null(Get(session, "_pendingResultRunId"));
+            Assert.Equal(victories, session.Profile.Stats.Victories);
         }
 
         [Fact]

@@ -53,6 +53,8 @@ namespace SodRpg.Mod
     internal sealed partial class DewPlayer
     {
         public static readonly List<DewPlayer> lobbyPlayers = new List<DewPlayer>();
+        public static Action<DewPlayer> onLobbyPlayerAdded, onLobbyPlayerRemoved;
+        public static Action<DewPlayer> onGamePlayerAdded, onGamePlayerRemoved;
     }
 
     // Product ClientSession exposes the native continue point in its hello reply.

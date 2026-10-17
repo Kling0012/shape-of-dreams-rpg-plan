@@ -19,10 +19,11 @@ namespace SodRpg.Core.Game
         /// <summary>Encodes a snapshot without recursively retaining continue snapshots or lobby baselines.</summary>
         public static string WriteCheckpointProfile(Profile p) => WriteProfile(p, false);
 
-        private static string WriteProfile(Profile p, bool includeContinue)
+        private static string WriteProfile(Profile p, bool includeContinue, bool preserveLegacyContinue = false)
         {
             p.SettleSatchelOverflow();
-            var body = WriteBody(p, includeContinue);
+            if (!preserveLegacyContinue) p.PruneLobbyReturnReceipts();
+            var body = WriteBody(p, includeContinue, preserveLegacyContinue && p.LegacyContinueEncoding);
             var root = new JsonObject()
                 .Add("format", Format)
                 .Add("version", (long)Profile.CurrentVersion)
@@ -32,8 +33,8 @@ namespace SodRpg.Core.Game
 
         public static Profile Read(string text, List<string> notes) => ReadProfile(text, notes, true, out _);
 
-        internal static Profile ReadForStore(string text, List<string> notes, out bool migrated) =>
-            ReadProfile(text, notes, true, out migrated);
+        internal static Profile ReadForStore(JsonObject root, List<string> notes, out bool migrated) =>
+            ReadProfile(root, notes, true, out migrated);
 
         public static Profile ReadCheckpointProfile(string text, List<string> notes = null) =>
             ReadProfile(text, notes, false, out _);
@@ -45,6 +46,12 @@ namespace SodRpg.Core.Game
             Profile migrationNoticeBaseline = null)
         {
             if (!(Json.Parse(text) is JsonObject root)) throw new LedgerFormatException("最上位がオブジェクトではありません。");
+            return ReadProfile(root, notes, includeContinue, out migrated, migrationNoticeBaseline);
+        }
+
+        private static Profile ReadProfile(JsonObject root, List<string> notes, bool includeContinue, out bool migrated,
+            Profile migrationNoticeBaseline = null)
+        {
             if (Str(root, "format") != Format) throw new LedgerFormatException("形式が違います。");
             long version = Long(root, "version");
             if (version > Profile.CurrentVersion) throw new LedgerVersionException("新しすぎる版です: " + version);
@@ -54,7 +61,7 @@ namespace SodRpg.Core.Game
             return loaded;
         }
 
-        private static JsonObject WriteBody(Profile p, bool includeContinue)
+        private static JsonObject WriteBody(Profile p, bool includeContinue, bool legacyContinue = false)
         {
             var mats = new JsonObject();
             // 既知素材は Materials.Known の並びで書き、それ以外の正の値も書き残す。読み込み側の
@@ -77,7 +84,8 @@ namespace SodRpg.Core.Game
                 for (int i = 1; i < h.Keystones.Length && h.Keystones[i] != null; i++) keystones.Add(h.Keystones[i]);
                 var hero = new JsonObject().Add("equipped", eq).Add("talents", tal).Add("talentChoices", choices)
                     .Add("keystone", h.Keystone).Add("keystones", keystones).Add("kills", (long)h.Kills).Add("starXp", (long)h.StarXp)
-                    .Add("authoredMigrationVersion", (long)h.AuthoredMigrationVersion);
+                    .Add("authoredMigrationVersion", (long)h.AuthoredMigrationVersion)
+                    .Add("limboInfinityUnlocked", h.LimboInfinityUnlocked);
                 if (h.ExtraPoints != 0) hero.Add("xp2", (long)h.ExtraPoints);
                 WriteStarLoadouts(hero, h);
                 heroes.Add(kv.Key, hero);
@@ -130,6 +138,17 @@ namespace SodRpg.Core.Game
                 // Old/default runs carry no optional bonus payload.
                 if (r.OverflowDreamDustTotal != 0) run.Add("overflowDreamDustTotal", r.OverflowDreamDustTotal);
                 if (r.OverflowDreamDustLedgerId != 0) run.Add("overflowDreamDustLedgerId", r.OverflowDreamDustLedgerId);
+                // Optional run-world order (#700); old saves omit it and start counting from the current world.
+                if (r.WorldIndex >= 0 && r.WorldZoneIndex >= 0)
+                {
+                    run.Add("worldIndex", (long)r.WorldIndex).Add("worldZoneIndex", (long)r.WorldZoneIndex);
+                    if (r.WorldZoneName != null) run.Add("worldZoneName", r.WorldZoneName);
+                    if (r.WorldInfinitySegment >= 0) run.Add("worldInfinitySegment", r.WorldInfinitySegment);
+                }
+                // 旧い保存（計数がない）は 0 から始める。
+                if (r.SalvageDustEarned != 0) run.Add("salvageDustEarned", r.SalvageDustEarned);
+                if (r.SalvageDustZoneIndex != -1) run.Add("salvageDustZone", (long)r.SalvageDustZoneIndex);
+                if (r.SalvageDustOverflowPaidSeen != 0) run.Add("salvageDustOverflowSeen", r.SalvageDustOverflowPaidSeen);
             }
 
             var body = new JsonObject()
@@ -172,7 +191,7 @@ namespace SodRpg.Core.Game
                 .Add("hintsOff", p.HintsOff)
                 .Add("starterGranted", p.StarterGranted)
                 .Add("starterV119Granted", p.StarterV119Granted)
-                .Add("starterUids", p.StarterUids.Select(u => (object)u).ToList())
+                .Add("starterUids", p.StarterUids.Where(u => p.ContainsRelicUid(u)).Select(u => (object)u).ToList())
                 .Add("stats", stats)
                 .Add("completedRunId", p.CompletedRunId)
                 .Add("lobbyReturnedRunIds", p.LobbyReturnedRunIds.Select(id => (object)id).ToList())
@@ -183,6 +202,7 @@ namespace SodRpg.Core.Game
                 .Add("run", run);
             // 宿敵との因縁（#415）も、無い保存が旧MODの書き出しと変わらないよう0なら書かない。
             if (p.NemesisGrudge != 0) body.Add("nemesisGrudge", (long)p.NemesisGrudge);
+            if (p.NativeContinueRunId != null) body.Add("nativeContinueRunId", p.NativeContinueRunId);
             // 直送の使用済み遠征は、使っていない保存が旧MODの書き出しと1バイトも変わらないよう、空なら書かない。
             if (p.DirectStashUsedRunIds.Count != 0)
                 body.Add("directStashUsedRunIds", p.DirectStashUsedRunIds.OrderBy(id => id, StringComparer.Ordinal).Select(id => (object)id).ToList());
@@ -190,7 +210,7 @@ namespace SodRpg.Core.Game
                 body.Add("overflowBonusPendingRunId", p.OverflowBonusPendingRunId)
                     .Add("overflowBonusPendingLedgerId", p.OverflowBonusPendingLedgerId)
                     .Add("overflowBonusPendingTotal", p.OverflowBonusPendingTotal);
-            if (includeContinue) WriteContinueState(body, p);
+            if (includeContinue) WriteContinueState(body, p, legacyContinue);
             return body;
         }
 
@@ -318,6 +338,7 @@ namespace SodRpg.Core.Game
             p.InfinityRewardBudget = ReadInfinityRewardBudget(b);
             ReadInfinityRecords(p, b);
             p.CompletedRunId = Str(b, "completedRunId");
+            p.NativeContinueRunId = Str(b, "nativeContinueRunId");
             p.LobbyReturnAuthority = Bool(b, "lobbyReturnAuthority", false);
             if (b.TryGet("completedRunSecuredReturn", out object securedReturn))
             {
@@ -397,6 +418,7 @@ namespace SodRpg.Core.Game
                                 $"Refunded a star without a valid choice ({refund} points): ") + id);
                         }
                     }
+                    h.LimboInfinityUnlocked = Bool(hj, "limboInfinityUnlocked", false);
                     h.Kills = Clamp(Long(hj, "kills"), 0, int.MaxValue);
                     h.StarXp = hj.TryGet("starXp", out object sx)
                         ? Clamp(sx is long xp ? xp : 0, 0, int.MaxValue)
@@ -455,9 +477,6 @@ namespace SodRpg.Core.Game
             p.HintsOff = Bool(b, "hintsOff", false);
             p.StarterGranted = Bool(b, "starterGranted", false);
             p.StarterV119Granted = Bool(b, "starterV119Granted", false);
-            if (b.TryGet("starterUids", out object so2) && so2 is List<object> sus)
-                foreach (var u in sus)
-                    if (u is string us && p.FindStash(us) != null) p.StarterUids.Add(us);
             if (b.TryGet("upgrades", out object uo) && uo is JsonObject ups)
             {
                 foreach (var kv in ups.Properties)
@@ -500,6 +519,13 @@ namespace SodRpg.Core.Game
                     Infinity = ReadInfinity(rj),
                     OverflowDreamDustTotal = Long(rj, "overflowDreamDustTotal"),
                     OverflowDreamDustLedgerId = Long(rj, "overflowDreamDustLedgerId"),
+                    WorldIndex = rj.TryGet("worldIndex", out _) && rj.TryGet("worldZoneIndex", out _) ? Clamp(Long(rj, "worldIndex"), -1, int.MaxValue) : -1,
+                    WorldZoneIndex = rj.TryGet("worldIndex", out _) && rj.TryGet("worldZoneIndex", out _) ? Clamp(Long(rj, "worldZoneIndex"), -1, int.MaxValue) : -1,
+                    WorldZoneName = Str(rj, "worldZoneName"),
+                    WorldInfinitySegment = rj.TryGet("worldInfinitySegment", out _) ? Math.Max(-1, Long(rj, "worldInfinitySegment")) : -1,
+                    SalvageDustEarned = Long(rj, "salvageDustEarned"),
+                    SalvageDustZoneIndex = rj.TryGet("salvageDustZone", out _) ? (int)Clamp(Long(rj, "salvageDustZone"), -1, int.MaxValue) : -1,
+                    SalvageDustOverflowPaidSeen = Long(rj, "salvageDustOverflowSeen"),
                     HeroKey = Str(rj, "heroKey"),
                     StarSecureRewarded = Bool(rj, "starSecureRewarded", false),
                     Heat = Loot.ClampHeat(Clamp(Long(rj, "heat"), 0, Content.MaxHeat)),
@@ -555,6 +581,10 @@ namespace SodRpg.Core.Game
                 p.Run = run;
             }
             ReadInterruptedRelics(b, p, notes);
+            // 保管庫以外の鞄・預かり品も読み終えてから、書き出しと同じ所持判定で初期印を戻す。
+            if (b.TryGet("starterUids", out object so2) && so2 is List<object> sus)
+                foreach (var u in sus)
+                    if (u is string us && p.ContainsRelicUid(us)) p.StarterUids.Add(us);
             // Preserve connected allocations; refund only this Traveler when the budget or graph is invalid.
             foreach (var kv in p.Heroes)
             {

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using SodRpg.Core.Game;
 using UnityEngine;
+using RelicRarity = SodRpg.Core.Game.Rarity;
 
 namespace SodRpg.Mod
 {
@@ -14,12 +15,18 @@ namespace SodRpg.Mod
     internal static class RelicIcons
     {
         private static readonly Dictionary<string, Texture2D> Cache = new Dictionary<string, Texture2D>(StringComparer.Ordinal);
+        private static readonly Dictionary<string, Texture2D> RelicCache = new Dictionary<string, Texture2D>(StringComparer.Ordinal);
+        private static readonly Dictionary<RelicRarity, Color> FrameColors = new Dictionary<RelicRarity, Color>();
+        private static readonly Color EmptyFrame = new Color(0.32f, 0.32f, 0.42f, 1f);
+        private static readonly Color SetFrame = ParseFrameColor("#ff8a3d");
         private static string _dir;
         private static Texture2D _white;
 
         public static void Init(string modPath)
         {
-            _dir = string.IsNullOrEmpty(modPath) ? null : Path.Combine(modPath, "icons");
+            string dir = string.IsNullOrEmpty(modPath) ? null : Path.Combine(modPath, "icons");
+            if (_dir != dir) Dispose();
+            _dir = dir;
         }
 
         /// <summary>同梱の画像をすべて先に読み込む（メニューを初めて開いたときに一度に読み込んで止まらないように）。</summary>
@@ -44,6 +51,8 @@ namespace SodRpg.Mod
         {
             foreach (var t in Cache.Values) if (t != null) UnityEngine.Object.Destroy(t);
             Cache.Clear();
+            RelicCache.Clear();
+            FrameColors.Clear();
             if (_white != null) UnityEngine.Object.Destroy(_white);
             _white = null;
         }
@@ -53,18 +62,25 @@ namespace SodRpg.Mod
         /// <summary>固有品専用のアイコン（uniques/&lt;固有品id&gt;）があればそれを、無ければ土台のアイコンを返す。</summary>
         public static Texture2D For(string uniqueId, string baseId)
         {
+            string id = uniqueId ?? baseId;
+            if (id == null || _dir == null) return null;
+            bool useCache = !TabPerf.CacheOff;
+            // 本当の null（画像なし）は覚えるが、Unity が破棄した画像は下のファイルキャッシュから読み直す。
+            if (useCache && RelicCache.TryGetValue(id, out var cached) && (ReferenceEquals(cached, null) || cached != null)) return cached;
+            Texture2D resolved = null;
             foreach (string key in RelicIconKeys.Preference(uniqueId, baseId))
             {
-                var tex = For(key);
-                if (tex != null) return tex;
+                resolved = For(key);
+                if (resolved != null) break;
             }
-            return null;
+            if (useCache) RelicCache[id] = resolved;
+            return resolved;
         }
 
         public static Texture2D For(string baseId)
         {
             if (string.IsNullOrEmpty(baseId) || _dir == null) return null;
-            if (Cache.TryGetValue(baseId, out var tex)) return tex;
+            if (Cache.TryGetValue(baseId, out var tex) && (ReferenceEquals(tex, null) || tex != null)) return tex;
             tex = null;
             try
             {
@@ -87,6 +103,26 @@ namespace SodRpg.Mod
             }
             Cache[baseId] = tex;
             return tex;
+        }
+
+        private static Color ParseFrameColor(string hex)
+        {
+            ColorUtility.TryParseHtmlString(hex, out var color);
+            return color;
+        }
+
+        private static Color FrameColor(Relic relic)
+        {
+            if (relic == null) return EmptyFrame;
+            // セット品の橙はレア度による色より優先する（通常の伝説は金）。
+            if (relic.UniqueId != null && Content.TryGetUnique(relic.UniqueId, out var unique) && unique.SetId != null) return SetFrame;
+            if (TabPerf.CacheOff) return ParseFrameColor(UiStyles.RarityHex(relic.Rarity));
+            if (!FrameColors.TryGetValue(relic.Rarity, out var color))
+            {
+                color = ParseFrameColor(UiStyles.RarityHex(relic.Rarity));
+                FrameColors[relic.Rarity] = color;
+            }
+            return color;
         }
 
         /// <summary>挿絵（例：events/Merchant）を枠なしで描く。無ければ何も描かない。</summary>
@@ -114,9 +150,7 @@ namespace SodRpg.Mod
             var old = GUI.color;
             GUI.color = new Color(0.08f, 0.08f, 0.12f, 0.95f);
             GUI.DrawTexture(rect, _white);
-            Color frame = new Color(0.32f, 0.32f, 0.42f, 1f);
-            if (r != null) ColorUtility.TryParseHtmlString(UiStyles.RelicHex(r), out frame);
-            GUI.color = frame;
+            GUI.color = FrameColor(r);
             float b = rect.width >= 48 ? 2f : 1f;
             GUI.DrawTexture(new Rect(rect.x, rect.y, rect.width, b), _white);
             GUI.DrawTexture(new Rect(rect.x, rect.yMax - b, rect.width, b), _white);

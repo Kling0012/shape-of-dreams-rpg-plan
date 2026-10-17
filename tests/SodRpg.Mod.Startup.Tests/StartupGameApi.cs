@@ -20,8 +20,15 @@ namespace UnityEngine
 {
     public static class Application { public static string persistentDataPath = System.IO.Path.GetTempPath(); }
     public static class Debug { public static void Log(object value) { } }
-    public static class Time { public static float unscaledDeltaTime, unscaledTime; }
-    public static class Mathf { public static float Clamp(float value, float min, float max) => Math.Max(min, Math.Min(max, value)); }
+    public static class Time { public static float time, unscaledDeltaTime, unscaledTime; }
+    public static class Mathf
+    {
+        public static float Clamp(float value, float min, float max) => Math.Max(min, Math.Min(max, value));
+        public static float Min(float a, float b) => Math.Min(a, b);
+        public static float Max(float a, float b) => Math.Max(a, b);
+        public static float Clamp01(float value) => Clamp(value, 0f, 1f);
+        public static int CeilToInt(float value) => (int)Math.Ceiling(value);
+    }
     public struct Vector3
     {
         public float x, y, z;
@@ -84,6 +91,7 @@ namespace SodRpg.Mod
         public bool levelEssenceSlots = true, levelEssenceQ = true, levelEssenceW = true, levelEssenceE = true, levelEssenceSlotsR = true;
         public int levelEssenceEveryLevels = 10, levelEssenceCap = 4;
         public bool netSkipUnchanged = true, netCoalesce = true, netOwnerOnly = true, netCompact = true;
+        public bool meleeRangeToSpeed = true, coopDistanceFalloff = true, meleeBreak = true, meleeProximityGuard = true;
         public LightweightMode lightweight;
         public Key menuKey, securePanelKey, secureKey, delveKey;
     }
@@ -109,6 +117,12 @@ namespace SodRpg.Mod
     {
         internal static void Install(Harmony harmony) { }
         internal static void Stop() { }
+    }
+    // Heavy-frame projectile spread lives against the real game assemblies;
+    // here only the entry-point call needs a double.
+    internal static class NativeProcSpawnSpread
+    {
+        internal static void Tick() { }
     }
     // Native culinary adapters are exercised by a separate linked-production smoke harness.
     internal static class CulinaryMagnet
@@ -150,17 +164,39 @@ namespace SodRpg.Mod
     {
         public string guid;
         public string playerName;
+        public string selectedHeroType;
         public bool isHumanPlayer;
         public static DewPlayer local;
         public Hero hero;
         public static readonly List<DewPlayer> gamePlayers = new List<DewPlayer>();
         public static readonly List<DewPlayer> lobbyPlayers = new List<DewPlayer>();
+        public static Action<DewPlayer> onLobbyPlayerAdded, onLobbyPlayerRemoved;
+        public static Action<DewPlayer> onGamePlayerAdded, onGamePlayerRemoved;
+    }
+    public static class DewSave
+    {
+        public static DewProfileStats profileStats;
+    }
+    public sealed class DewProfileStats
+    {
+        public sealed class HeroData { public int completedLimboDepth; }
+        public readonly Dictionary<string, HeroData> heroes = new Dictionary<string, HeroData>();
     }
     public class Actor
     {
         public bool isActive;
         public string name;
         public bool Destroyed;
+        public uint netId;
+        public float creationTime;
+        public UnityEngine.GameObject gameObject = new UnityEngine.GameObject();
+        public event Action<Actor> ClientActorEvent_OnDestroyed;
+        // 本体の破棄イベントの境界。寿命監視の購読をテストから起こせるようにする。
+        internal void RaiseClientActorDestroyed()
+        {
+            isActive = false;
+            ClientActorEvent_OnDestroyed?.Invoke(this);
+        }
         public void Destroy() { Destroyed = true; isActive = false; }
         // The harness records custom-RPC traffic so lobby handshake tests can observe the host's answer.
         public static readonly List<(DewPlayer player, object message)> SentToClients = new List<(DewPlayer, object)>();
@@ -224,6 +260,12 @@ namespace SodRpg.Mod
     }
     public static class ManagerBase<T> { public static T instance; public static T softInstance; }
     public sealed class SpawnManager { public int lastClearedZoneIndex = -1; }
+    public enum DewNetworkMode { Singleplayer, MultiplayerHost, MultiplayerJoinLobby, MultiplayerHostRestart, MultiplayerJoinRestart }
+    public sealed class DewNetworkStartSettings { public DewNetworkMode networkMode; }
+    public static class DewNetworkManager
+    {
+        public static DewNetworkStartSettings startSettings = new DewNetworkStartSettings();
+    }
     public sealed class GameSettingsManager
     {
         public readonly Dictionary<string, string> customData = new Dictionary<string, string>();
@@ -359,6 +401,7 @@ namespace SodRpg.Mod
     internal sealed class DreamforgeUi
     {
         public bool Open, MouseOverPanel, NeedsLayout, LayoutEnabled;
+        internal Action SaveLanguageConfig;
         public DreamforgeUi(ClientSession session, Func<DreamforgeConfig> config, Action saveConfig = null) { }
         public void Notify(GameEvent ev) { }
         public void Toggle() { }
@@ -410,8 +453,9 @@ namespace SodRpg.Mod
         internal static void PrepareNativeInfinityContinue() { }
         internal static bool RemoteHostInfinityAvailable, RemoteHostHelloAnswered;
         internal static bool RunActive, InGame, CanChooseRunRules, CanChooseDepth;
-        internal static bool PersistHostInfinityState() => true;
-        internal static bool HostInfinitySaveHoldSatisfied => true;
+        internal static bool PersistHostInfinityState(bool writeEnvelope = true) => true;
+        // #528: TickNative の保存待ち早期リターンを再現するため、テストから書き換え可能にする。
+        internal static bool HostInfinitySaveHoldSatisfied = true;
         internal static void CountHostInfinityRoom() { }
         internal static void OpenHostInfinityChoice() { }
         internal static void FinishNativeContinueRestore() { }
@@ -428,7 +472,10 @@ namespace SodRpg.Mod
         public static void PrewarmBossVisualTransport() { }
         public void Tick() { }
         public void RefreshLevelGemSlots() { }
+        internal void ConfigureBossNativeLifetimeDiagnostics(bool enabled) { }
         public void Detach() { }
+        internal void ConfigureMeleeCoop(bool rangeToSpeed, bool distanceFalloff, bool meleeBreak, bool meleeGuard) { }
+        internal bool SpecialEnemyDiagnostics { get; set; }
     }
     internal static class RelicIcons
     {
@@ -440,6 +487,8 @@ namespace SodRpg.Mod
     public class Entity : Actor
     {
         public bool FailSpawn;
+        public bool isDead;
+        public EntityStatus Status = new EntityStatus();
         public UnityEngine.Vector3 agentPosition;
         public EntityRelation GetRelation(Entity entity) => EntityRelation.Ally;
         public bool CheckEnemyOrNeutral(Entity entity) => false;
@@ -450,7 +499,19 @@ namespace SodRpg.Mod
     {
         public HeroSkill Skill = new HeroSkill();
         public float currentHealth;
-        public HeroStatus Status = new HeroStatus();
+        public new HeroStatus Status = new HeroStatus();
+        public bool isKnockedOut;
+        public float maxHealth => Status.maxHealth;
+        // ホスト側の記憶短縮の観測点。本体はクールダウン演算に丸投げするが、試験は引数を記録するだけ。
+        public readonly List<(SkillTrigger skill, float ratio, bool ignore)> RatioReductions =
+            new List<(SkillTrigger, float, bool)>();
+        public readonly List<(SkillTrigger skill, float seconds)> SecondReductions =
+            new List<(SkillTrigger, float)>();
+        public void GiveShield(Entity source, float amount, float duration) { }
+        public void ApplyCooldownReductionByRatio(SkillTrigger skill, float ratio, bool ignoreCanReceiveCooldown)
+            => RatioReductions.Add((skill, ratio, ignoreCanReceiveCooldown));
+        public void ApplyCooldownReduction(SkillTrigger skill, float seconds)
+            => SecondReductions.Add((skill, seconds));
     }
     public enum EntityRelation { Ally, Enemy }
     public sealed class HeroStatus
@@ -464,7 +525,14 @@ namespace SodRpg.Mod
             armorFlat, abilityHasteFlat, movementSpeedPercentage;
     }
     public static class NetworkedManagerBase<T> { public static T softInstance; public static T instance; }
-    public sealed class ActorManager { public Actor serverActor; public readonly List<Actor> allActors = new List<Actor>(); }
+    public sealed class ActorManager
+    {
+        public Actor serverActor;
+        public readonly List<Actor> allActors = new List<Actor>();
+        public event Action<Actor> ClientEvent_OnActorAdd, ClientEvent_OnActorRemove;
+        public void AddActor(Actor actor) { allActors.Add(actor); ClientEvent_OnActorAdd?.Invoke(actor); }
+        public void RemoveActor(Actor actor) { if (allActors.Remove(actor)) ClientEvent_OnActorRemove?.Invoke(actor); }
+    }
     public static class Dew
     {
         public static T FindActorOfType<T>() where T : Actor
@@ -474,6 +542,8 @@ namespace SodRpg.Mod
     }
     public sealed class ZoneManager
     {
+        public event Action<EventInfoLoadRoom> ClientEvent_OnRoomLoaded;
+        internal void RaiseRoomLoaded() => ClientEvent_OnRoomLoaded?.Invoke(new EventInfoLoadRoom());
         public int currentNodeIndex;
         public int _nextModifierId;
         public void UpdateModifiersByHunterStatus(int currentTravelDestinationNode = -1)

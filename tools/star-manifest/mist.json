@@ -30131,6 +30131,65 @@
       "nameJa": "受けて返す型",
       "nameEn": "Form of the Counter",
       "notes": "既存刻印。既存ID/Power値は保持（代償は #47 で撤廃）。回避成功・PA成功を被弾と読み替えない。"
+    },
+    {
+      "id": "mist.key.parry-signal",
+      "region": "keystone",
+      "cluster": "mist.key",
+      "shape": null,
+      "anchor": "mist.mem.en-garde.c4.x",
+      "edges": [],
+      "requires": [
+        "mist.mem.en-garde.c4.x"
+      ],
+      "requiresAny": [],
+      "kind": "Keystone",
+      "memory": null,
+      "value": null,
+      "param": null,
+      "receiver": null,
+      "target": null,
+      "gimmick": null,
+      "power": null,
+      "stat": null,
+      "options": null,
+      "keystone": {
+        "upside": "受け流しの合図 / Parry Signal",
+        "upsideSpec": [
+          {
+            "effect": "Coop",
+            "field": "Value",
+            "scope": "radius",
+            "to": {
+              "valueRef": "mist.key.parry-signal/keystone/upsideSpec/0/to"
+            }
+          },
+          {
+            "effect": "Coop",
+            "field": "Value",
+            "scope": "damagePercent",
+            "to": {
+              "valueRef": "mist.key.parry-signal/keystone/upsideSpec/1/to"
+            }
+          },
+          {
+            "effect": "Coop",
+            "field": "Value",
+            "scope": "seconds",
+            "to": {
+              "valueRef": "mist.key.parry-signal/keystone/upsideSpec/2/to"
+            }
+          }
+        ]
+      },
+      "mechanisms": [
+        "C07"
+      ],
+      "maxRank": 1,
+      "rankCost": 1,
+      "nameJa": "受け流しの合図",
+      "nameEn": "Parry Signal",
+      "notes": "同行の刻印。味方との協力距離係数を使用し、ソロでは発動しない。"
     }
   ]
 }

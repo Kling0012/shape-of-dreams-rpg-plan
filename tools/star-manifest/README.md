@@ -6,6 +6,19 @@
 
 ファイル：`tools/star-manifest/<hero>.json`（vesper, lacerta, cetus, yubar, husk, mist, nachia, aurena, bismuth）と `outer.json`（共有外縁、hero は "shared"）。10ファイルは**すべて下記の正準形に統一**されている（書式は UTF-8・LF・インデント2）。
 
+## C# の生成形式
+
+`python tools/star-manifest/gen_cs.py --all` は9人分を文字列のデータ表へ変換し、
+`ManifestReader.Generated.cs` の共通ループから元と同じコンストラクター・補助関数を呼ぶ。
+`table_cs.py` は生成器が出す限定的な式だけを読み、実行時のreflectionやJSONライブラリは使わない。
+各行は1星で、元の登録順を保つ。レコードの番号は共通の型付き読み込み処理を表し、
+保存IDとは無関係。同じ `TargetEffectIds` は共有の `static readonly` 配列へまとめ、登録時にコピーする。
+文字列内の `|`・改行・バックスラッシュはエスケープし、数値はInvariantCultureで読む。
+
+レコード番号と配列プールは9人で共通なので、旅人を1人指定した生成・`--check` でも
+全員分と共通リーダーをまとめて再生成・検査する。マニフェストと数値原本を編集し、
+生成された表や番号は直接編集しない。`tools/balance/gen_cs.py --check` も同じ出力を検査する。
+
 ## ファイルの形
 
 ```json
@@ -162,6 +175,10 @@ MemoryDamage／MemoryHaste／GimmickBoost／GimmickParamの選択肢は、キー
 
 ### 刻印（Keystone）
 `keystone` は `upside`（文章）と `upsideSpec`（機械可読の配列、書いていなければ `null`）。`null` は「機械可読化していない」の意味で、**文章が正**。刻印にデバフ（代償）はもう無い。
+能力値で置換した刻印は、既存の `stat: {name, perRank}` に正の整数を指定する（`perRank` は数値原本への `valueRef`）。能力値だけなら `upsideSpec: null`、仕掛け補正を併用するなら通常の配列を指定する。1段で常時適用し、費用は新規刻印の `rankCost`。保存・Protocol の形式は増やさない。
+
+`Primed` の Grant は次の通常攻撃1回を強化する。`gimmick.arg` は準備の有効秒数（0は従来の5秒、正数は10秒まで、数値原本への `valueRef`）。値の基準は攻撃力・魔力の高い方で、連続命中への追撃にはならない。
+
 Spec の要素は次のキーだけ：
 
 | キー | 意味 |

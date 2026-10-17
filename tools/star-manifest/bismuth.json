@@ -20527,6 +20527,228 @@
       "notes": "配置: S.c1奥。この100%の刻印行はChance補正対象外、通常50%の受信行には補正を保持。"
     },
     {
+      "id": "bismuth.run.g1",
+      "region": "outer",
+      "cluster": "bismuth.outer.run-growth",
+      "shape": "chain",
+      "anchor": "h.bismuth.route.prismatic-eyes.7",
+      "edges": [
+        "bismuth.run.m1"
+      ],
+      "requires": [],
+      "requiresAny": [],
+      "kind": "RunGrowth",
+      "memory": null,
+      "value": null,
+      "param": null,
+      "receiver": null,
+      "target": null,
+      "gimmick": null,
+      "power": null,
+      "growth": {
+        "trigger": "MemoryHit",
+        "threshold": {
+          "valueRef": "bismuth.run.g1/growth/threshold"
+        },
+        "cap": {
+          "valueRef": "bismuth.run.g1/growth/cap"
+        },
+        "effects": [
+          {
+            "stat": "PowerPct",
+            "amount": {
+              "valueRef": "bismuth.run.g1/growth/effects/0/amount"
+            }
+          },
+          {
+            "stat": "Haste",
+            "amount": {
+              "valueRef": "bismuth.run.g1/growth/effects/1/amount"
+            }
+          }
+        ]
+      },
+      "stat": null,
+      "options": null,
+      "keystone": null,
+      "mechanisms": [
+        "C01"
+      ],
+      "maxRank": 1,
+      "rankCost": 1,
+      "nameJa": "結晶の積み重ね",
+      "nameEn": "Accumulated Crystals",
+      "notes": "C02の帰属済み本体記憶命中を数える。通常攻撃・召喚・エッセンス・MOD生成ダメージは除外する。3命中ごとに1スタック。"
+    },
+    {
+      "id": "bismuth.run.m1",
+      "region": "outer",
+      "cluster": "bismuth.outer.run-growth",
+      "shape": "chain",
+      "anchor": null,
+      "edges": [
+        "bismuth.run.g1",
+        "bismuth.run.m2"
+      ],
+      "requires": [
+        "bismuth.run.g1"
+      ],
+      "requiresAny": [],
+      "kind": "RunGrowthMod",
+      "memory": null,
+      "value": null,
+      "param": null,
+      "receiver": null,
+      "target": null,
+      "gimmick": null,
+      "power": null,
+      "growth": {
+        "target": "bismuth.run.g1",
+        "capBonus": {
+          "valueRef": "bismuth.run.m1/growth/capBonus"
+        },
+        "effectPct": {
+          "valueRef": "bismuth.run.m1/growth/effectPct"
+        },
+        "doubleGain": false
+      },
+      "stat": null,
+      "options": null,
+      "keystone": null,
+      "mechanisms": [
+        "C01"
+      ],
+      "maxRank": 1,
+      "rankCost": 1,
+      "nameJa": "重なる結晶",
+      "nameEn": "Layered Crystals",
+      "notes": "上限増分はバランス表から生成。 / Cap increase is generated from the balance table."
+    },
+    {
+      "id": "bismuth.run.m2",
+      "region": "outer",
+      "cluster": "bismuth.outer.run-growth",
+      "shape": "chain",
+      "anchor": null,
+      "edges": [
+        "bismuth.run.m1",
+        "bismuth.run.choice"
+      ],
+      "requires": [
+        "bismuth.run.m1"
+      ],
+      "requiresAny": [],
+      "kind": "RunGrowthMod",
+      "memory": null,
+      "value": null,
+      "param": null,
+      "receiver": null,
+      "target": null,
+      "gimmick": null,
+      "power": null,
+      "growth": {
+        "target": "bismuth.run.g1",
+        "capBonus": {
+          "valueRef": "bismuth.run.m2/growth/capBonus"
+        },
+        "effectPct": {
+          "valueRef": "bismuth.run.m2/growth/effectPct"
+        },
+        "doubleGain": false
+      },
+      "stat": null,
+      "options": null,
+      "keystone": null,
+      "mechanisms": [
+        "C01"
+      ],
+      "maxRank": 1,
+      "rankCost": 1,
+      "nameJa": "尽きぬ結晶",
+      "nameEn": "Inexhaustible Crystals",
+      "notes": "上限増分はバランス表から生成。 / Cap increase is generated from the balance table."
+    },
+    {
+      "id": "bismuth.run.choice",
+      "region": "outer",
+      "cluster": "bismuth.outer.run-growth",
+      "shape": "chain",
+      "anchor": null,
+      "edges": [
+        "bismuth.run.m2"
+      ],
+      "requires": [
+        "bismuth.run.m2"
+      ],
+      "requiresAny": [],
+      "kind": "Choice",
+      "memory": null,
+      "value": null,
+      "param": null,
+      "receiver": null,
+      "target": null,
+      "gimmick": null,
+      "power": null,
+      "stat": null,
+      "options": [
+        {
+          "kind": "RunGrowthMod",
+          "memory": null,
+          "value": null,
+          "param": null,
+          "receiver": null,
+          "target": null,
+          "gimmick": null,
+          "power": null,
+          "growth": {
+            "target": "bismuth.run.g1",
+            "capBonus": {
+              "valueRef": "bismuth.run.choice/options/0/growth/capBonus"
+            },
+            "effectPct": {
+              "valueRef": "bismuth.run.choice/options/0/growth/effectPct"
+            },
+            "doubleGain": false
+          },
+          "stat": null,
+          "nameJa": "深まる結晶",
+          "nameEn": "Deepening Crystals"
+        },
+        {
+          "kind": "RunGrowthMod",
+          "memory": null,
+          "value": null,
+          "param": null,
+          "receiver": null,
+          "target": null,
+          "gimmick": null,
+          "power": null,
+          "growth": {
+            "target": "bismuth.run.g1",
+            "capBonus": {
+              "valueRef": "bismuth.run.choice/options/1/growth/capBonus"
+            },
+            "effectPct": {
+              "valueRef": "bismuth.run.choice/options/1/growth/effectPct"
+            },
+            "doubleGain": false
+          },
+          "stat": null,
+          "nameJa": "広がる結晶",
+          "nameEn": "Expanding Crystals"
+        }
+      ],
+      "keystone": null,
+      "mechanisms": [
+        "C01"
+      ],
+      "maxRank": 1,
+      "rankCost": 1,
+      "nameJa": "結晶の育て方",
+      "nameEn": "How Crystals Grow",
+      "notes": "1スタックの効果 +50% ／ 蓄積上限 +20。 / Stat gain per stack +50% or stack cap +20."
+    },
+    {
       "id": "h.bismuth.fire",
       "region": "migration",
       "kind": "MemoryDamage",
@@ -21541,6 +21763,179 @@
       "nameJa": "雷鳴の章",
       "nameEn": "Chapter of Thunder",
       "notes": "旧Power.ChainLightningの本人通常攻撃条件を除去し、同IDで本由来命中へ明示改訂。最大2体、0.3秒は多重探索防止。元の25%抽選は使わない。既存の選択状態を同IDで保持。"
+    },
+    {
+      "id": "bismuth.key.crystal-resonance",
+      "region": "keystone",
+      "cluster": "bismuth.key",
+      "shape": null,
+      "anchor": "bismuth.mem.innocence.c2.q",
+      "edges": [],
+      "requires": [
+        "bismuth.mem.innocence.c2.q"
+      ],
+      "requiresAny": [],
+      "kind": "Keystone",
+      "memory": null,
+      "value": null,
+      "param": null,
+      "receiver": null,
+      "target": null,
+      "gimmick": null,
+      "power": null,
+      "stat": {
+        "name": "Armor",
+        "perRank": {
+          "valueRef": "bismuth.key.crystal-resonance/stat/perRank"
+        }
+      },
+      "options": null,
+      "keystone": {
+        "upside": "防御が9増える。Q・R枠の記憶を使用すると、4秒間、自分の攻撃力と魔力が12%増える。効果は重ならず、再使用で時間を延長する。",
+        "upsideSpec": [
+          {
+            "memory": "@Q|@R",
+            "effect": "Empower",
+            "field": "Grant",
+            "gimmick": {
+              "trigger": "OnUse",
+              "effect": "Empower",
+              "value": {
+                "valueRef": "bismuth.key.crystal-resonance/keystone/upsideSpec/0/gimmick/value"
+              },
+              "arg": 0,
+              "cooldown": 0,
+              "target": null
+            }
+          }
+        ]
+      },
+      "mechanisms": [
+        "C01",
+        "C02",
+        "C07"
+      ],
+      "maxRank": 1,
+      "rankCost": 1,
+      "nameJa": "結晶の共鳴",
+      "nameEn": "Crystal Resonance",
+      "notes": "領域滞在の条件と被ダメージ-8%は既存kindにないため、常時防御+9と記憶使用後4秒のEmpower+12%へ置換。防御0を基準に9防御は被ダメージ約8.26%軽減。Empowerは魔力に加えて攻撃力も増やす。領域の内外では判定しない。"
+    },
+    {
+      "id": "bismuth.key.autocast-echo",
+      "region": "keystone",
+      "cluster": "bismuth.key",
+      "shape": null,
+      "anchor": "bismuth.mem.infernal-tales.c2.q",
+      "edges": [],
+      "requires": [
+        "bismuth.mem.infernal-tales.c2.q"
+      ],
+      "requiresAny": [],
+      "kind": "Keystone",
+      "memory": null,
+      "value": null,
+      "param": null,
+      "receiver": null,
+      "target": null,
+      "gimmick": null,
+      "power": null,
+      "stat": {
+        "name": "Haste",
+        "perRank": {
+          "valueRef": "bismuth.key.autocast-echo/stat/perRank"
+        }
+      },
+      "options": null,
+      "keystone": {
+        "upside": "自分の本体記憶が与えるダメージが15%増え、スキル加速が常時12増える。手動で使用した記憶にも適用する。",
+        "upsideSpec": [
+          {
+            "effect": "NativeDamage",
+            "field": "Damage",
+            "pct": {
+              "valueRef": "bismuth.key.autocast-echo/keystone/upsideSpec/0/pct"
+            }
+          }
+        ]
+      },
+      "mechanisms": [
+        "C01",
+        "C02",
+        "C07"
+      ],
+      "maxRank": 1,
+      "rankCost": 1,
+      "nameJa": "自動詠唱の余波",
+      "nameEn": "Autocast Echo",
+      "notes": "NativeBismuthAutoCastは使用元をC07の条件へ渡さず、自動詠唱限定のダメージと4秒・3スタックのHasteは既存kindにない。NativeDamage+15%（手動を含む本体記憶）と常時スキル加速+12（4×3の最大値）へ置換。新kindや自動詠唱フックは追加しない。"
+    },
+    {
+      "id": "bismuth.key.shared-crystal-field",
+      "region": "keystone",
+      "cluster": "bismuth.key",
+      "shape": null,
+      "anchor": "bismuth.mem.innocence.c3.q",
+      "edges": [],
+      "requires": [
+        "bismuth.mem.innocence.c3.q"
+      ],
+      "requiresAny": [],
+      "kind": "Keystone",
+      "memory": null,
+      "value": null,
+      "param": null,
+      "receiver": null,
+      "target": null,
+      "gimmick": null,
+      "power": null,
+      "stat": null,
+      "options": null,
+      "keystone": {
+        "upside": "結晶の共有域 / Shared Crystal Field",
+        "upsideSpec": [
+          {
+            "effect": "Coop",
+            "field": "Value",
+            "scope": "haste",
+            "to": {
+              "valueRef": "bismuth.key.shared-crystal-field/keystone/upsideSpec/0/to"
+            }
+          },
+          {
+            "effect": "Coop",
+            "field": "Value",
+            "scope": "allyDamagePercent",
+            "to": {
+              "valueRef": "bismuth.key.shared-crystal-field/keystone/upsideSpec/1/to"
+            }
+          },
+          {
+            "effect": "Coop",
+            "field": "Value",
+            "scope": "damagePercent",
+            "to": {
+              "valueRef": "bismuth.key.shared-crystal-field/keystone/upsideSpec/2/to"
+            }
+          },
+          {
+            "effect": "Coop",
+            "field": "Value",
+            "scope": "seconds",
+            "to": {
+              "valueRef": "bismuth.key.shared-crystal-field/keystone/upsideSpec/3/to"
+            }
+          }
+        ]
+      },
+      "mechanisms": [
+        "C07"
+      ],
+      "maxRank": 1,
+      "rankCost": 1,
+      "nameJa": "結晶の共有域",
+      "nameEn": "Shared Crystal Field",
+      "notes": "同行の刻印。味方との協力距離係数を使用し、ソロでは発動しない。"
     }
   ]
 }

@@ -55,7 +55,8 @@ namespace SodRpg.Core.Game
             a == null ? b == null : b != null && a.FixedZoneId == b.FixedZoneId && a.Interval == b.Interval
                 && a.GraphEpoch == b.GraphEpoch && a.SegmentEpoch == b.SegmentEpoch && a.RoomEpoch == b.RoomEpoch
                 && a.ClearedCombatTotal == b.ClearedCombatTotal && a.ClearsInCycle == b.ClearsInCycle
-                && a.Phase == b.Phase && a.SoulObserved == b.SoulObserved && a.ChoiceRevision == b.ChoiceRevision
+                && a.FinalePromoted == b.FinalePromoted && a.Phase == b.Phase
+                && a.SoulObserved == b.SoulObserved && a.ChoiceRevision == b.ChoiceRevision
                 && a.TransitionIntent == b.TransitionIntent && a.LastCountedNode == b.LastCountedNode
                 && a.SettledGraphEpoch == b.SettledGraphEpoch && a.SettledSegmentEpoch == b.SettledSegmentEpoch
                 && a.ClearedNodes.Count == b.ClearedNodes.Count;

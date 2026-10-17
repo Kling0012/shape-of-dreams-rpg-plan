@@ -42,6 +42,9 @@ namespace SodRpg.Mod
             public readonly Dictionary<string, SkillTrigger> MemoryByName = new Dictionary<string, SkillTrigger>(StringComparer.Ordinal);
             // #161: 仕掛け発動の報告はティックごとにまとめて送る（合計は不変）。
             public int PendingGimmickReports;
+            public string PendingBountyRun;
+            public int PendingBountyShields, PendingBountyHeals;
+            public readonly int[] PendingElementalKills = new int[16];
             public readonly HashSet<int> GeneratedKillVictims = new HashSet<int>();
             public readonly List<GimmickRequest> GimmickRequests = new List<GimmickRequest>();
             public readonly List<PendingGimmick> PendingGimmicks = new List<PendingGimmick>();
@@ -76,6 +79,8 @@ namespace SodRpg.Mod
             public string HeroKey;
             public readonly HashSet<string> LinkMemories = new HashSet<string>();
             public readonly HashSet<string> LinkEssences = new HashSet<string>();
+            public float ConvertedAttackRange;
+            public bool MeleeGuard;
             public readonly List<LinkDef> SatisfiedLinks = new List<LinkDef>();
             internal readonly LinkDiagnosticState LinkDiagnostic = new LinkDiagnosticState();
             public string BountyRunId;
@@ -94,6 +99,7 @@ namespace SodRpg.Mod
             public float FrozenCrowdControlRemaining, FrozenCrowdControlSince;
             // v1.32 B: the stacks live in HostAuthority.RunGrowthLedger (outside this runtime); only their applied effect is kept here.
             public StatBonus GrowthBonus;
+            public DataProcessor<HealData, Actor, Entity> GrowthHealReceived;
             public readonly Dictionary<Stat, double> GrowthTotals = new Dictionary<Stat, double>();
             public int GrowthVersion = -1;
             public Build GrowthBuild;
@@ -101,7 +107,6 @@ namespace SodRpg.Mod
             public readonly HashSet<int> CritBasicVictims = new HashSet<int>();
             public float GrowthSentAt;
             public int GrowthSentVersion = -1;
-            public uint GrowthOwnerNetId;
             public string GrowthOwnerKey;
             public Build GrowthSentBuild;
             public string GrowthSentRun;
@@ -137,6 +142,7 @@ namespace SodRpg.Mod
             public StatBonus SpecialBonus;
             public bool PressureApplied;
             public DataProcessor<FinalStats> PressureHealth;
+            public DataProcessor<DamageData, Actor, Entity> PressureDamage;
             public VariantDef Variant;
             public DataProcessor<DamageData, Actor, Entity> HitCap;
             public bool DeathBurstTriggered;
@@ -148,6 +154,7 @@ namespace SodRpg.Mod
             public bool ClassificationQueued;
             public NightmareAffix ClassificationNightmare;
             public string ClassificationVariant;
+            public MonsterOwnership Ownership, ClassificationOwnership;
             public Se_GenericShield_OneShot Ward;
             public Action<EventInfoDamage> OnDamageDealt;
             public bool Reflects;
@@ -177,7 +184,7 @@ namespace SodRpg.Mod
         // 連携の判定に見る枠（Identity と Movement も記憶の対象になる）。
         private static readonly HeroSkillLocation[] LinkSkills =
             { HeroSkillLocation.Q, HeroSkillLocation.W, HeroSkillLocation.E, HeroSkillLocation.R, HeroSkillLocation.Identity, HeroSkillLocation.Movement };
-        private readonly Func<int, int, bool> _resonanceNear;
+        private readonly Func<int, int, float> _resonanceNear;
         private PowerRuntime[] _scanPowers = Array.Empty<PowerRuntime>();
         private readonly HashSet<LinkKind> _triggeredLinks = new HashSet<LinkKind>();
 
@@ -198,7 +205,6 @@ namespace SodRpg.Mod
             }
         }
         private int _pressurePlayerCount = -1;
-        private readonly DataProcessor<DamageData, Actor, Entity> _pressureDamage;
         private readonly Action<DewPlayer> _onPressurePlayerAdded;
         private readonly Action<DewPlayer> _onPressurePlayerRemoved;
         private bool _pressureDirty = true;
@@ -258,21 +264,20 @@ namespace SodRpg.Mod
         private readonly Rng _rng = new Rng(Rng.SeedFrom(DateTime.UtcNow.Ticks.ToString()));
         private float _nextRegen;
         private bool _roomHasVariant;
-        private bool _loggedVariantSpawn, _loggedDeathBurst;
+        private bool _loggedDeathBurst = true;
         private readonly List<Hero> _deathBurstHeroes = new List<Hero>();
 
         public HostAuthority(Func<int> dailyIdOfHost)
         {
             InitializeAssignedMechanisms();
             InitializeMemoryAttribution();
+            InitializeKillAssists();
             BasicAttackContext.Prewarm(); NativeDamageContext.Prewarm(); ElementApplicationContext.Prewarm();
             BossDisplacementReuse.Prewarm(); BossBasicEffectReuse.Prewarm();
             NativeAttributedHpDamage.Prewarm(); PrewarmNativeShieldSnapshot();
             _ = _runtimes.Values; _ = _attributionEquipment.Keys; _ = _attributionEquipment.Values;
             _ = _bossHysteriaStates.Values; _ = _lastStarlights.Values;
             _dailyIdOfHost = dailyIdOfHost;
-            _pressureDamage = (ref DamageData damage, Actor actor, Entity target) =>
-                damage.ApplyAmplification((float)_pressure.DamageMultiplier - 1f);
             _onPressurePlayerAdded = player =>
             {
                 _pressureDirty = true;
@@ -288,12 +293,22 @@ namespace SodRpg.Mod
                     RemoveKillPeer(player);
                     _overflowBonusPeers.Remove(player); // Durable currency receipts remain keyed by guid.
                     _netLitePeers.Remove(player);
+                    _stateSnapshotPeers.Remove(player);
+                    _stateSnapshotEpoch++;
+                    _pressureSnapshots.Remove(player);
+                    _dynamicRosterPeers.Remove(player);
+                    ResetDynamicLegendPeer(player);
                     _roomOmenPeers.Remove(player);
                     _forbiddenSmithPeers.Remove(player);
                     _nemesisGrudgePeers.Remove(player);
+                    // 抜けた人の版違いの警告を残さない（ロビーに警告が出続けていた）。
+                    _helloPeers.Remove(player);
+                    if (_versionMismatches.Remove(player)) RebuildMismatchList();
                 }
                 _pressureDirty = true;
+                OwnershipPlayerRemoved(player);
             };
+            _dispatchSupportHeal = DispatchSupportHealOwned;
             _onBuild = OnBuild;
             _onCurse = OnCurse;
             _onCurseClear = OnCurseClear;
@@ -358,7 +373,7 @@ namespace SodRpg.Mod
                 "boss effects", "boss visuals", "identity strikes", "gimmicks v129", "back-off charge", "sap prune", "attribution prune", "runtime", "run growth", "currency",
                 "shield pools", "spawns", "monster prune", "monster behaviors", "kill replay", "sunders",
                 "nightmare regen", "classification resync",
-                "overflow bonus", "culinary snap", "crowd-control recovery", "room omens",
+                "overflow bonus", "culinary snap", "crowd-control recovery", "room omens", "bounty reports",
             };
             _tickStages = new Action[]
             {
@@ -367,7 +382,7 @@ namespace SodRpg.Mod
                 StageBossEffects, TickBossVisualSnapshots, UpdateIdentityStrikes, StageGimmicksV129, StageBackOffCharge, StageSapPrune, PruneMemoryAttribution, StageRuntimes, StageRunGrowth, StageCurrency,
                 StageModShieldPools, ProcessSpawns, StageMonsterPrune, StageMonsterBehaviors, TickKillReplay, StageSunders,
                 StageNightmareRegen, StageClassificationResync,
-                TickOverflowBonus, CulinaryMagnet.SnapToOwners, StageCrowdControlRecovery, TickRoomOmens,
+                TickOverflowBonus, CulinaryMagnet.SnapToOwners, StageCrowdControlRecovery, TickRoomOmens, FlushBountyReports,
             };
             _tickGuard = new TickGuard(_tickStages, _tickStageNames, 10f, message => Log.Error("Host tick " + message));
         }
@@ -383,12 +398,14 @@ namespace SodRpg.Mod
                 _pressureDirty = true;
             }
             if (_pressureDirty) RefreshPressure();
+            SendPressure();
         }
 
         private void StageAreaScan()
         {
             if (_tickNow < _nextAreaScan) return;
-            _nextAreaScan = _tickNow + 0.25f;
+            _nextAreaScan = _tickNow + CoopBalance.ScanSeconds;
+            PruneAutoCastContacts(_tickNow);
             ScanArea();
         }
 
@@ -419,6 +436,7 @@ namespace SodRpg.Mod
 
         private void StageBossEffects()
         {
+            TickBossNativeLifetimeDiagnostics();
             foreach (var rt in _runtimes.Values) TickBossEffects(rt, _tickNow);
         }
 
@@ -441,7 +459,11 @@ namespace SodRpg.Mod
 
         private void StageCurrency() => SyncCurrency(_tickNow);
 
-        private void StageModShieldPools() => UpdateModShieldPools(_tickNow);
+        private void StageModShieldPools()
+        {
+            UpdateModShieldPools(_tickNow);
+            UpdateSupportOverheal(_tickNow);
+        }
 
         private float _nextMonsterPrune;
 
@@ -495,9 +517,12 @@ namespace SodRpg.Mod
                 _incomingBuilds.Remove(player);
                 RemoveBuildValidationPeer(player);
             }
+            // Infinity co-op keeps room pressure neutral to personal waypoints; assigned enemies add their owner's.
             var pressure = DreamPressure.Average(_pressureBuilds)
-                .WithRunModifiers(ClientSession.HostRun?.DreamDepth ?? 0, ActiveWaypointTotals.PressureMultiplier)
-                .WithInfinityPressure(_infinityPressureStage);
+                .WithRunModifiers(ClientSession.HostRun?.DreamDepth ?? 0,
+                    PersonalEnemyWaypointsRunning() ? 1 : ActiveWaypointTotals.PressureMultiplier)
+                .WithInfinityPressure(_infinityPressureStage)
+                .WithCoopScaling(_pressureBuilds.Count);
             bool changed = pressure.HealthMultiplier != _pressure.HealthMultiplier
                 || pressure.DamageMultiplier != _pressure.DamageMultiplier;
             synchronize |= changed || _pressurePlayerCount != _pressureBuilds.Count;
@@ -517,20 +542,57 @@ namespace SodRpg.Mod
             if (synchronize) SendPressure();
         }
 
+        private sealed class PressureSnapshotPeer
+        {
+            internal Actor Actor;
+            internal Hero Hero;
+            internal object Connection;
+            internal ulong Authority;
+            internal string Run, Choices;
+            internal float Health, Damage, Gear, Reward, Next;
+        }
+        private readonly Dictionary<DewPlayer, PressureSnapshotPeer> _pressureSnapshots = new Dictionary<DewPlayer, PressureSnapshotPeer>();
+        private readonly DreamforgePressureMsg _pressureMessage = new DreamforgePressureMsg();
+
+        partial void SyncStateSnapshotPeer(DewPlayer player)
+        {
+            _pressureSnapshots.Remove(player);
+            SendPressure();
+        }
+
         private void SendPressure()
         {
-            _registeredOn?.CustomRpc_SendMessageToAllClients(new DreamforgePressureMsg
+            if (_registeredOn == null) return;
+            var msg = _pressureMessage;
+            msg.protocol = Protocol.Version;
+            msg.healthMultiplier = (float)_pressure.HealthMultiplier;
+            msg.damageMultiplier = (float)_pressure.DamageMultiplier;
+            msg.runChoices = ClientSession.HostRunChoices;
+            msg.nightmareGearMultiplier = (float)PartyGearChanceMult();
+            msg.nightmarePressureHealthMultiplier = (float)(1 + _pressure.RewardPressure);
+            string runId = NetworkedManagerBase<GameManager>.softInstance?.runId;
+            ulong authority = ClientSession.HostAuthorityGeneration;
+            float now = Time.unscaledTime;
+            foreach (var player in DewPlayer.allHumanPlayers)
             {
-                protocol = Protocol.Version,
-                healthMultiplier = (float)_pressure.HealthMultiplier,
-                damageMultiplier = (float)_pressure.DamageMultiplier,
-                runChoices = ClientSession.HostRunChoices
-            });
-            // Reuse the infrequent state resync for players whose run started after the first report.
-            var runId = NetworkedManagerBase<GameManager>.softInstance?.runId;
-            foreach (var rt in _runtimes.Values)
-                if (rt.BountyRunId == runId && rt.ReportedLinks > 0)
-                    SendBountyReport(rt, BountyReportKind.LinksSatisfied, rt.ReportedLinks);
+                if (player == null || !player.isHumanPlayer) continue;
+                if (!_pressureSnapshots.TryGetValue(player, out var peer))
+                    _pressureSnapshots.Add(player, peer = new PressureSnapshotPeer());
+                if (ReferenceEquals(peer.Actor, _registeredOn) && ReferenceEquals(peer.Hero, player.hero)
+                    && ReferenceEquals(peer.Connection, player.connectionToClient) && peer.Authority == authority && peer.Run == runId && peer.Choices == msg.runChoices
+                    && peer.Health == msg.healthMultiplier && peer.Damage == msg.damageMultiplier
+                    && peer.Gear == msg.nightmareGearMultiplier && peer.Reward == msg.nightmarePressureHealthMultiplier
+                    && now < peer.Next) continue;
+                _registeredOn.CustomRpc_SendMessageToClient(player, msg);
+                peer.Actor = _registeredOn; peer.Hero = player.hero; peer.Connection = player.connectionToClient;
+                peer.Authority = authority; peer.Run = runId; peer.Choices = msg.runChoices;
+                peer.Health = msg.healthMultiplier; peer.Damage = msg.damageMultiplier;
+                peer.Gear = msg.nightmareGearMultiplier; peer.Reward = msg.nightmarePressureHealthMultiplier;
+                peer.Next = now + (HasStateSnapshots(player) ? 30f : 5f);
+                foreach (var rt in _runtimes.Values)
+                    if (rt.Hero != null && rt.Hero.owner == player && rt.BountyRunId == runId && rt.ReportedLinks > 0)
+                        SendBountyReport(rt, BountyReportKind.LinksSatisfied, rt.ReportedLinks);
+            }
         }
 
         private void ApplyPressure(MonsterRuntime rt)
@@ -539,7 +601,15 @@ namespace SodRpg.Mod
             var monster = rt.Monster;
             // Final processors multiply after native multiplayer, depth, nightmare and variant stats.
             InstallPressureHealthProcessor(rt);
-            monster.dealtDamageProcessor.Add(_pressureDamage);
+            rt.PressureDamage = (ref DamageData damage, Actor actor, Entity target) =>
+            {
+                // Preserve the legacy path in solo/OFF; assigned children apply pressure just once.
+                if (OwnershipReplacesAncestorPressure(actor, monster)) return;
+                float multiplier = (float)_pressure.DamageMultiplier;
+                OverrideOwnershipDamage(monster, ref multiplier);
+                damage.ApplyAmplification(multiplier - 1f);
+            };
+            monster.dealtDamageProcessor.Add(rt.PressureDamage);
             rt.PressureApplied = true;
             monster.Status.CalculateStatsIfDirty();
         }
@@ -569,6 +639,7 @@ namespace SodRpg.Mod
 
         private void OnEntityAdd(Entity e)
         {
+            OwnershipEntityAdded(e);
             if (e != null && _pairEntities.Add(e))
             {
                 e.EntityEvent_OnTakeDamage += _onPairEnemyDamage;
@@ -592,6 +663,7 @@ namespace SodRpg.Mod
 
         private void OnEntityRemove(Entity e)
         {
+            OwnershipEntityRemoved(e);
             if (e != null && _pairEntities.Remove(e))
             {
                 e.EntityEvent_OnTakeDamage -= _onPairEnemyDamage;
@@ -657,6 +729,7 @@ namespace SodRpg.Mod
             if (_monsters.TryGetValue(m, out var rt))
             {
                 _monsters.Remove(m);
+                OwnershipEntityRemoved(m);
                 SendMonsterRemoval(rt);
                 Unhook(rt);
             }
@@ -679,6 +752,7 @@ namespace SodRpg.Mod
 
         private void UnhookMonsters()
         {
+            ClearEnemyOwnership();
             foreach (var rt in _monsters.Values) { SendMonsterRemoval(rt); Unhook(rt); }
             _monsters.Clear();
             ClearPressureDividendSpawns();
@@ -706,7 +780,7 @@ namespace SodRpg.Mod
                     m.Status.CalculateStatsIfDirty();
                 }
                 catch (Exception ex) { Log.Error("Host: unhook pressure health " + ex); }
-                try { m.dealtDamageProcessor.Remove(_pressureDamage); }
+                try { m.dealtDamageProcessor.Remove(rt.PressureDamage); }
                 catch (Exception ex) { Log.Error("Host: unhook pressure damage " + ex); }
                 rt.PressureApplied = false;
             }
@@ -854,6 +928,7 @@ namespace SodRpg.Mod
 
         private void OnActorAdd(Actor actor)
         {
+            if (actor is Entity entity) TrackKillAssistEntity(entity);
             if (actor is Summon summon)
             {
                 var hero = summon.FindFirstAncestorOfType<Hero>();
@@ -866,6 +941,7 @@ namespace SodRpg.Mod
 
         private void OnActorRemove(Actor actor)
         {
+            if (actor is Entity entity) ForgetKillAssistEntity(entity);
             if (actor is Summon summon)
             {
                 UnhookSupportSummonV129(summon);
@@ -906,6 +982,7 @@ namespace SodRpg.Mod
 
         private void OnZoneLoaded(EventInfoLoadZone info)
         {
+            ClearCoopKeystones();
             ClearAssignedMechanismTransients();
             _roomHasVariant = false;
             ClearZoneReactions();
@@ -946,7 +1023,9 @@ namespace SodRpg.Mod
                 ApplyPressure(rt);
                 ApplyRoomOmenMonster(rt);
                 // Pressure is already active; give the initial depth build time to arrive.
-                if (_builds.Count == 0 && now - _spawnQueue[i].Value < 15f) continue;
+                // A co-op ward must classify its initial enemies before their first received hit.
+                if (_builds.Count == 0 && now - _spawnQueue[i].Value < 15f
+                    && _roomOmen != RoomOmen.ResonantWard) continue;
                 _spawnQueue.RemoveAt(i);
                 var tier = (MonsterTier)Math.Min((int)MonsterTier.Boss, (int)m.type);
                 if (rt.SpawnProcessed) continue;
@@ -965,12 +1044,13 @@ namespace SodRpg.Mod
                 {
                     Log.Error("Host: nemesis " + ex);
                 }
-                if (SpawnInitRules.SkipsDepthInit(depth, ActiveWaypointTotals.AllNightmares, ActiveWaypointTotals.NightmareChanceMultiplier)) continue;
+                var waypoint = EnemyWaypointTotals(m);
+                if (SpawnInitRules.SkipsDepthInit(depth, waypoint.AllNightmares, waypoint.NightmareChanceMultiplier)) continue;
                 try
                 {
                     ApplyDepthBonus(rt, tier, depth);
                     if (nemesis) continue;
-                    var variant = ActiveWaypointTotals.AllNightmares ? null : Variants.Roll(_rng, m.GetType().Name, depth, _roomHasVariant);
+                    var variant = waypoint.AllNightmares ? null : Variants.Roll(_rng, m.GetType().Name, depth, _roomHasVariant);
                     if (variant != null)
                     {
                         _roomHasVariant = true;
@@ -1046,7 +1126,9 @@ namespace SodRpg.Mod
                 AttachMirageSkin(m, Nightmares.Count(affix) >= 2);
             _nightmares[m] = affix;
             ApplyMonsterAffixes(rt, affix, regen);
-            Log.Info($"Nightmare: {m.GetType().Name} netId={m.netId} affixes={affix}");
+            _roomNightmareCount++;
+            _roomNightmareKinds |= affix;
+            if (SpecialEnemyDiagnostics) Log.Info($"Nightmare: {m.GetType().Name} netId={m.netId} affixes={affix}");
             SendMonsterClassification(rt);
         }
 
@@ -1069,7 +1151,8 @@ namespace SodRpg.Mod
             m.Status.AddStatBonus(rt.SpecialBonus);
             m.Status.CalculateStatsIfDirty();
             _nightmares[m] = NightmareAffix.Nemesis;
-            Log.Info($"Nemesis: {m.GetType().Name} netId={m.netId} tier={tier} grudge={grudge}");
+            _roomNemesisCount++;
+            if (SpecialEnemyDiagnostics) Log.Info($"Nemesis: {m.GetType().Name} netId={m.netId} tier={tier} grudge={grudge}");
             SendMonsterClassification(rt);
         }
 
@@ -1097,11 +1180,9 @@ namespace SodRpg.Mod
                 m.takenDamageProcessor.Add(rt.HitCap);
             }
             ApplyVariantTags(rt, variant.Tags);
-            if (!_loggedVariantSpawn)
-            {
-                _loggedVariantSpawn = true;
+            _roomVariantCount++;
+            if (SpecialEnemyDiagnostics)
                 Log.Info($"variant spawned: {variant.Id} {m.GetType().Name} netId={m.netId}");
-            }
             SendMonsterClassification(rt);
         }
 
@@ -1188,6 +1269,7 @@ namespace SodRpg.Mod
                 ResetKillReplayConnections();
                 _registeredOn = actor;
                 RegisterHello(actor);
+                RegisterSkillResync(actor);
                 if (actor != null)
                 {
                     DewPlayer.onGamePlayerAdded += _onPressurePlayerAdded;
@@ -1216,6 +1298,9 @@ namespace SodRpg.Mod
                 ClearQueuedMonsterSync();
                 ClearSunders();
                 ClearNativeDeathHooks();
+                ClearKillAssists();
+                ClearSupportOverheal();
+                ClearCoopKeystones();
                 _am = am;
                 _spawnQueue.Clear();
                 _regen.Clear();
@@ -1228,7 +1313,11 @@ namespace SodRpg.Mod
                     am.ClientEvent_OnActorAdd += _onActorAdd;
                     am.ClientEvent_OnActorRemove += _onActorRemove;
                     ScanShrines();
-                    foreach (var e in am.allEntities) OnEntityAdd(e);
+                    foreach (var e in am.allEntities)
+                    {
+                        TrackKillAssistEntity(e);
+                        OnEntityAdd(e);
+                    }
                 }
             }
             var zone = NetworkedManagerBase<ZoneManager>.softInstance;
@@ -1278,24 +1367,35 @@ namespace SodRpg.Mod
         /// <summary>全キャラから補正を外し、登録を解除する（MODの再読み込み・終了時）。</summary>
         public void Detach()
         {
+            FlushSpecialEnemySummary();
             ClearRoomOmen();
             _omenRoom = null;
             _omenRunId = null;
             _omenSetting = false;
+            _omensFailed = false; // 失敗で止めた部屋の兆しは、次のゲームでもう一度試す。
+            _omensFailedRunId = null;
             AutocastPressure.DetachHost(this);
+            ClearAutoCastContacts();
+            _autoCastContactsFailed = false;
             DetachCoopTrade();
             ClearAssignedMechanismSession();
             if (NativeInstance == this) NativeInstance = null;
             ReleasePowerShields();
+            ClearSupportOverheal();
+            ClearCoopKeystones();
+            ClearMeleeCoop();
             ClearNewPowerZone();
             ClearZoneGimmicksV129();
             ClearBackOffCharge();
             ClearSupportPowerStateV129();
             ClearNativeDeathHooks();
+            ClearKillAssists();
             ClearWaypointHeroes();
             DewPlayer.onGamePlayerAdded -= _onPressurePlayerAdded;
             DewPlayer.onGamePlayerRemoved -= _onPressurePlayerRemoved;
             _pressureDirty = true;
+            _pressureSnapshots.Clear();
+            _dynamicLegendPeers.Clear();
             foreach (var rt in _runtimes.Values)
             {
                 RemoveBonuses(rt);
@@ -1333,7 +1433,7 @@ namespace SodRpg.Mod
             _spreadingFire = false;
             _triggeredAffixes.Clear();
             _roomHasVariant = false;
-            _loggedVariantSpawn = _loggedDeathBurst = false;
+            _loggedDeathBurst = !SpecialEnemyDiagnostics;
             _deathBurstHeroes.Clear();
             _reflectingDamage = false;
             _lucidTypes = null;
@@ -1510,7 +1610,11 @@ namespace SodRpg.Mod
                 var captured = rt;
                 rt.OnFired = info => OnAttackFired(captured, info);
                 rt.OnSkill = info => OnSkillUse(captured, info);
-                rt.OnHit = _onAttackHit;
+                rt.OnHit = info =>
+                {
+                    OnRunGrowthBasicHit(captured, info);
+                    _onAttackHit(info);
+                };
                 hero.EntityEvent_OnAttackFired += rt.OnFired;
                 // Actor.DoBasicAttackHit は、この同期イベントの後で DealDamage を呼ぶ。
                 // RPC 通知の配信時点に依存せず、命中前の HP で判定する。
@@ -1537,6 +1641,7 @@ namespace SodRpg.Mod
                         EnsureWaypointCombatChoice();
                     float reduction = captured.Powers.IncomingDamageReduction(Time.time);
                     if (reduction > 0f) d.ApplyReduction(reduction);
+                    ApplyMeleeGuard(captured, ref d, a);
                     float mult = captured.Powers.Build.DamageTakenMultiplier;
                     if (mult > 1f) d.ApplyAmplification(mult - 1f);
                     // These verified sources dispatch HP sacrifice as self-damage, not enemy attacks.
@@ -1575,14 +1680,14 @@ namespace SodRpg.Mod
                     var target = info.target as Hero;
                     if (target != null && target != hero && target.GetRelation(hero) == EntityRelation.Ally
                         && info.amount > 0f && !float.IsNaN(info.amount) && !float.IsInfinity(info.amount))
-                        SendBountyReport(captured, BountyReportKind.AllyHealed, 1);
+                        QueueBountyReport(captured, BountyReportKind.AllyHealed, 1);
                 };
                 rt.OnSupportShield = info =>
                 {
                     var target = info.target;
                     if (target != null && (target == hero || target.GetRelation(hero) == EntityRelation.Ally)
                         && info.finalAmount > 0f && !float.IsNaN(info.finalAmount) && !float.IsInfinity(info.finalAmount))
-                        SendBountyReport(captured, BountyReportKind.ShieldGranted, 1);
+                        QueueBountyReport(captured, BountyReportKind.ShieldGranted, 1);
                 };
                 hero.ActorEvent_OnDoHeal += rt.OnSupportHeal;
                 hero.ActorEvent_OnGiveShield += rt.OnSupportShield;
@@ -1592,6 +1697,9 @@ namespace SodRpg.Mod
                     heal.ApplyAmplification(SupportStats.AmplifyHeal(1f, captured.Powers.Build.Get(Stat.HealPower) + GrowthSupport(captured, Stat.HealPower)) - 1f);
                 rt.ShieldDealt = (ref HealData shield, Actor a, Entity t) =>
                     shield.ApplyAmplification(SupportStats.AmplifyShield(1f, captured.Powers.Build.Get(Stat.ShieldPower) + GrowthSupport(captured, Stat.ShieldPower)) - 1f);
+                rt.GrowthHealReceived = (ref HealData heal, Actor a, Entity t) =>
+                    AmplifyRunGrowthHealingReceived(captured, ref heal);
+                hero.takenHealProcessor.Add(rt.GrowthHealReceived);
                 hero.dealtHealProcessor.Add(rt.HealDealt);
                 hero.dealtShieldProcessor.Add(rt.ShieldDealt);
                 rt.OnSummon = info => HookSummon(captured, info.summon);
@@ -1608,6 +1716,7 @@ namespace SodRpg.Mod
             // 連携の判定結果は Build と装着に紐付くので、付け直すときに一旦空にする。
             rt.HeroKey = hero.GetType().Name;
             rt.SatisfiedLinks.Clear();
+            rt.Powers.LinkDistanceCoefficients.Clear();
             rt.LinkMemories.Clear();
             rt.LinkEssences.Clear();
             rt.Powers.SetBuild(build);
@@ -1615,12 +1724,15 @@ namespace SodRpg.Mod
             rt.GeneratedKillVictims.Clear();
             rt.PendingGimmicks.Clear();
             ModShieldEquipmentEpoch(rt);
+            rt.ConvertedAttackRange = 0f;
             rt.BaseBonus = ToStatBonus(build);
             rt.DynBonus = new StatBonus();
             hero.Status.AddStatBonus(rt.BaseBonus);
             hero.Status.AddStatBonus(rt.DynBonus);
+            ScanMeleeCoop(rt, Alive(hero));
             rt.AppliedBuild = received;
             ConfigureAuthoredKeystone(hero, build);
+            ConfigureCoopKeystones(hero, build);
             ConfigureAuthoredMechanisms(hero, build);
             BindGoldSpend(rt);
             ApplyGemSlots(rt, build);
@@ -1666,8 +1778,10 @@ namespace SodRpg.Mod
         {
             // #161: 外す直前までに貯まった報告を落とさない。
             FlushGimmickReports(rt);
+            FlushBountyReports(rt);
             ClearBossEffects(rt);
             ForgetAssignedMechanismOwner(rt.Hero);
+            ForgetCoopKeystones(rt.Hero);
             if (restoreGemSlots) RestoreGemSlots(rt);
             StopMovementCharges(rt);
             UnhookNewPowers(rt);
@@ -1702,6 +1816,7 @@ namespace SodRpg.Mod
                 if (rt.OnDisplacement != null) hero.Control.ClientEvent_OnDisplacementStarted -= rt.OnDisplacement;
                 if (rt.DamageTaken != null) hero.takenDamageProcessor.Remove(rt.DamageTaken);
                 if (rt.DamageDealt != null) hero.dealtDamageProcessor.Remove(rt.DamageDealt);
+                if (rt.GrowthHealReceived != null) hero.takenHealProcessor.Remove(rt.GrowthHealReceived);
                 if (rt.HealDealt != null) hero.dealtHealProcessor.Remove(rt.HealDealt);
                 if (rt.ShieldDealt != null) hero.dealtShieldProcessor.Remove(rt.ShieldDealt);
                 if (rt.OnSummon != null) hero.ActorEvent_OnSpawnSummon -= rt.OnSummon;
@@ -1719,6 +1834,7 @@ namespace SodRpg.Mod
             rt.OnImmunity = null;
             rt.OnAbilityCreated = null;
             rt.CritBasicVictims.Clear();
+            rt.GrowthHealReceived = null;
             rt.HealDealt = null;
             rt.ShieldDealt = null;
             rt.OnSummon = null;
@@ -1893,9 +2009,12 @@ namespace SodRpg.Mod
                 if (info.skill != null)
                 {
                     string used = info.skill.GetType().Name;
-                    float haste = Math.Min(100f, PowerRuntime.LinkHastePercent(rt.SatisfiedLinks, used)
-                        + FractionalScopedModifiers.NativePercent(rt.AppliedBuild?.Build.NativeModifiers, used, LinkKind.MemoryHaste));
-                    if (haste > 0) hero.ApplyCooldownReductionByRatio(info.skill, haste / 100f, false);
+                    float haste = PowerRuntime.LinkHastePercent(rt.SatisfiedLinks, used, rt.Powers.LinkDistanceCoefficients)
+                        + FractionalScopedModifiers.NativePercent(rt.AppliedBuild?.Build.NativeModifiers, used, LinkKind.MemoryHaste);
+                    if (EssenceCapsBalance.MemoryHasteEnabled)
+                        ReduceNormalMemory(hero, info.skill, Math.Min(EssenceCapsBalance.MemoryHasteMaxRemainingCooldownPercent, haste));
+                    else if (haste > 0f)
+                        hero.ApplyCooldownReductionByRatio(info.skill, Math.Min(100f, haste) / 100f, false);
                     foreach (var link in rt.SatisfiedLinks)
                     {
                         if (link.Kind != LinkKind.MemoryHaste && link.Kind != LinkKind.MemorySurge) continue;
@@ -1933,10 +2052,11 @@ namespace SodRpg.Mod
                 if (!Alive(hero) || info.target != hero) return;
                 OnPotionHealV129(rt, info);
                 rt.Powers.OnOverheal(Time.time, info.discardedAmount);
-                float shield = rt.Powers.TakeOverflowingLife(info.discardedAmount, hero.maxHealth);
-                if (shield <= 0) return;
-                hero.GiveShield(hero, shield, PowerRuntime.OverflowingLifeDuration);
-                LogPowerTrigger(Power.OverflowingLife);
+                // The optional global hook also covers allies without a MOD build; keep this Power if it is absent.
+                if (!NativeSupportHeal.Active || NativeSupportHeal.Current.target != hero
+                    || NativeSupportHeal.Current.actor != info.actor || NativeSupportHeal.Current.amount != info.amount
+                    || NativeSupportHeal.Current.discardedAmount != info.discardedAmount)
+                    ApplyOverhealProtection(info, null);
             }
             catch (Exception ex)
             {
@@ -2001,6 +2121,7 @@ namespace SodRpg.Mod
                 case Stat.EssenceSlotMovement:
                 // Support stats are handled by combat processors, not native StatBonus fields.
                 case Stat.HealPower:
+                case Stat.HealingReceivedPct:
                 case Stat.ShieldPower:
                 case Stat.SummonPower:
                 case Stat.SacrificeReduction:
@@ -2049,8 +2170,17 @@ namespace SodRpg.Mod
         /// <summary>鉄の輪・乱戦の敵数と、共鳴の距離判定（0.25秒ごと）。</summary>
         private readonly List<HeroRuntime> _scanList = new List<HeroRuntime>();
 
+        partial void ConfigureCoopKeystones(Hero hero, Build build);
+        partial void ScanCoopKeystones();
+        partial void ClearCoopKeystones();
+        partial void ForgetCoopKeystones(Hero hero);
+
         private void ScanArea()
         {
+            ScanEnemyOwnership();
+            ScanCoopDistances();
+            ScanCoopKeystones();
+            PruneMeleeBreaks();
             var list = _scanList;
             list.Clear();
             foreach (var rt in _runtimes.Values) list.Add(rt);
@@ -2086,6 +2216,7 @@ namespace SodRpg.Mod
                     LogPowerTrigger(Power.CrystalResonance);
                 if (alive && p.Build.Get(Power.PreyPride) > 0 && huntLevel > 0)
                     LogPowerTrigger(Power.PreyPride);
+                ScanMeleeCoop(rt, alive);
                 UpdateLinks(rt, alive);
                 ScanNewPowerFacts(rt, Time.time);
             }
@@ -2098,7 +2229,9 @@ namespace SodRpg.Mod
             foreach (var rt in list)
             {
                 int v = rt.Powers.Build.Get(Power.Resonance);
-                if (v > 0 && rt.Powers.ResonanceSelf < v && AnyAllyNear(rt.Hero)) rt.Powers.ResonanceSelf = v;
+                if (v > 0)
+                    rt.Powers.ResonanceSelf = Math.Max(rt.Powers.ResonanceSelf,
+                        v * (1f + AnyAllyCoefficient(rt.Hero)) / 2f);
             }
         }
 
@@ -2116,6 +2249,7 @@ namespace SodRpg.Mod
             }
             var p = rt.Powers;
             var links = p.Build.Links;
+            p.LinkDistanceCoefficients.Clear();
             if (links.Count == 0 && p.Build.Gimmicks.Count == 0)
             {
                 if (rt.SatisfiedLinks.Count > 0)
@@ -2146,27 +2280,30 @@ namespace SodRpg.Mod
                     if (kv.Value != null) essences.Add(kv.Value.GetType().Name);
             }
             rt.SatisfiedLinks.Clear();
-            long attuneMilli = 0, guardMilli = 0;
+            double attuneMilli = 0, guardMilli = 0;
             foreach (var link in links)
             {
                 if (!alive || !Links.Satisfied(link, rt.HeroKey, memories, essences, nearbyAllies)) continue;
+                float coefficient = Links.DistanceCoefficient(link, rt.HeroKey, _bondCoefficients);
+                if (coefficient <= 0f) continue;
+                p.LinkDistanceCoefficients[link] = coefficient;
                 rt.SatisfiedLinks.Add(link);
                 switch (link.Kind)
                 {
                     case LinkKind.Attune:
-                        attuneMilli += link.ValueMilli;
+                        attuneMilli += link.ValueMilli * coefficient;
                         LogLinkApplied(link);
                         break;
                     case LinkKind.Guard:
-                        guardMilli += link.ValueMilli;
+                        guardMilli += link.ValueMilli * coefficient;
                         LogLinkApplied(link);
                         break;
                 }
             }
             p.RetainLinkSurges(rt.SatisfiedLinks, Time.time);
-            p.LinkAttunePct = attuneMilli / (float)BuildPrecision.Scale;
-            p.LinkGuardHealthPct = guardMilli / (float)BuildPrecision.Scale;
-            p.LinkGuardArmor = guardMilli / (float)BuildPrecision.Scale;
+            p.LinkAttunePct = (float)(attuneMilli / BuildPrecision.Scale);
+            p.LinkGuardHealthPct = (float)(guardMilli / BuildPrecision.Scale);
+            p.LinkGuardArmor = (float)(guardMilli / BuildPrecision.Scale);
             if (rt.SatisfiedLinks.Count > rt.ReportedLinks)
             {
                 rt.ReportedLinks = rt.SatisfiedLinks.Count;
@@ -2182,9 +2319,8 @@ namespace SodRpg.Mod
                 Log.Info("[DreamforgeRPG] link " + link.Kind + " applied: " + string.Join("+", link.Requires));
         }
 
-        private bool RuntimesNear(int i, int j) =>
-            Alive(_scanList[i].Hero) && Alive(_scanList[j].Hero)
-            && Vector3.Distance(_scanList[i].Hero.agentPosition, _scanList[j].Hero.agentPosition) <= PowerRuntime.ResonanceRange;
+        private float RuntimesNear(int i, int j) =>
+            CoopDistanceNative.Coefficient(_scanList[i].Hero, _scanList[j].Hero, PowerRuntime.ResonanceRange);
 
         private static int CountEnemiesNear(Hero hero, float radius)
         {
@@ -2201,17 +2337,15 @@ namespace SodRpg.Mod
             }
         }
 
-        private static bool AnyAllyNear(Hero hero)
+        private static float AnyAllyCoefficient(Hero hero)
         {
-            var players = DewPlayer.allHumanPlayers;
-            if (players == null) return false;
-            foreach (var p in players)
-            {
-                var h = p != null ? p.hero : null;
-                if (h == null || h == hero || !Alive(h)) continue;
-                if (Vector3.Distance(h.agentPosition, hero.agentPosition) <= PowerRuntime.ResonanceRange) return true;
-            }
-            return false;
+            var actors = NetworkedManagerBase<ActorManager>.softInstance;
+            if (actors == null) return 0f;
+            float coefficient = 0f;
+            foreach (var ally in actors.allHeroes)
+                if (ally != null && ally != hero)
+                    coefficient = Math.Max(coefficient, CoopDistanceNative.Coefficient(hero, ally, PowerRuntime.ResonanceRange));
+            return coefficient;
         }
 
         /// <summary>Use the creating actor chain, never guess St_* from an Ai_* name.</summary>
@@ -2248,9 +2382,13 @@ namespace SodRpg.Mod
                 if (generated && info.victim.currentHealth <= 0.00001f) rt.GeneratedKillVictims.Add(victimId);
                 else rt.GeneratedKillVictims.Remove(victimId);
                 if (generated) return;
+                OnRunGrowthSummonHit(rt, info);
                 TrackCritBasicDamage(rt, info, victimId);
                 OnNewPowerDamage(rt, info);
                 string memory = MemorySource(info.actor);
+                // Check the cheap gates before the up-to-128-level ancestry walk.
+                if (_meleeBreakEnabled && TravelerCombatNative.IsMelee(rt.Hero)
+                    && (memory != null || IsNativeBasicDamage(info.actor))) MarkMeleeBreak(rt.Hero, info.victim);
                 if (memory == null) return;
                 if (rt.Powers.Build.Gimmicks.Count > 0 || rt.Powers.Build.PairCombos.Count > 0)
                     rt.MemoryHitAmounts[victimId] = info.damage.amount;
@@ -2268,6 +2406,7 @@ namespace SodRpg.Mod
                 if (!Alive(rt.Hero) || info.victim == null
                     || info.victim.GetRelation(rt.Hero) != EntityRelation.Enemy) return;
                 int victimId = info.victim.GetInstanceID();
+                OnRunGrowthKill(rt);
                 bool generated = rt.GeneratedKillVictims.Remove(victimId)
                     || _gimmickDamageDepth != 0 || _pairDamageDepth != 0 || _reflectingDamage || _shattering
                     || IsPairReactionSource(info.actor);
@@ -2286,6 +2425,7 @@ namespace SodRpg.Mod
 
         private void OnPairEnemyDamage(EventInfoDamage info)
         {
+            RecordAutoCastContact(info);
             if (info.victim == null || info.victim.currentHealth > 0.00001f) return;
             int id = info.victim.GetInstanceID();
             if (_gimmickDamageDepth != 0 || _pairDamageDepth != 0 || _reflectingDamage || _shattering
@@ -2374,7 +2514,7 @@ namespace SodRpg.Mod
             // The synchronous server death event runs before Destroy clears the victim's state.
             foreach (var rt in _runtimes.Values)
                 if (rt.Hero != null && monster.GetRelation(rt.Hero) == EntityRelation.Enemy)
-                    SendBountyReport(rt, BountyReportKind.ElementalKill, mask);
+                    QueueBountyReport(rt, BountyReportKind.ElementalKill, mask);
         }
 
         private void OnDeath(EventInfoKill info)
@@ -2390,19 +2530,24 @@ namespace SodRpg.Mod
                 if (_gimmickDamageDepth != 0 || _reactionEffectDepth != 0) return;
                 var rt = OwnerRuntimeOf(info.actor);
                 if (rt == null || !Alive(rt.Hero)) return;
-                var r = rt.Powers.OnKill(Time.time, Math.Max(rt.Hero.Status.attackDamage, rt.Hero.Status.abilityPower), rt.Hero.maxHealth);
-                if (r.Heal > 0) rt.Hero.Heal(r.Heal).Dispatch(rt.Hero);
-                // 爆砕で倒した敵からは爆砕しない（同時に倒した群れ全体へ連鎖しないように。v1.28）
-                if (r.ShatterDamage > 0 && !_shattering)
-                {
-                    _shattering = true;
-                    try { DamageAround(rt.Hero, info.victim.position, PowerRuntime.ShatterRadius, r.ShatterDamage, null, int.MaxValue, magic: rt.Hero.Status.abilityPower > rt.Hero.Status.attackDamage); }
-                    finally { _shattering = false; }
-                }
+                ApplyKillPowers(rt, info.victim);
             }
             catch (Exception ex)
             {
                 Log.Error("Host: OnDeath " + ex.Message);
+            }
+        }
+
+        private void ApplyKillPowers(HeroRuntime rt, Entity victim)
+        {
+            var r = rt.Powers.OnKill(Time.time, Math.Max(rt.Hero.Status.attackDamage, rt.Hero.Status.abilityPower), rt.Hero.maxHealth);
+            if (r.Heal > 0) rt.Hero.Heal(r.Heal).Dispatch(rt.Hero);
+            // 爆砕で倒した敵からは爆砕しない（同時に倒した群れ全体へ連鎖しないように。v1.28）
+            if (r.ShatterDamage > 0 && !_shattering)
+            {
+                _shattering = true;
+                try { DamageAround(rt.Hero, victim.position, PowerRuntime.ShatterRadius, r.ShatterDamage, null, int.MaxValue, magic: rt.Hero.Status.abilityPower > rt.Hero.Status.attackDamage); }
+                finally { _shattering = false; }
             }
         }
 

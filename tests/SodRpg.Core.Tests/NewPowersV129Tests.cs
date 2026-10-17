@@ -401,16 +401,25 @@ namespace SodRpg.Core.Tests
         public void Actual_awakened_gear_build_preserves_unawakened_budget_values()
         {
             var p = Profile.CreateNew(129);
-            var r = Loot.RollRelic(new Rng(129), Rarity.Epic, 40, slot: Slot.Weapon);
-            r.Powers.Clear(); r.Powers.Add(new PowerLine(Power.Overload, 20));
-            r.AwakenLevel = 3;
-            p.Stash.Add(r);
-            Rules.Equip(p, "Hero_Vesper", r.Uid);
+            foreach (var slot in new[] { Slot.Weapon, Slot.Charm })
+            {
+                var r = Loot.RollRelic(new Rng((ulong)slot + 7), Rarity.Epic, 40, slot: slot);
+                r.Powers.Clear(); r.Powers.Add(new PowerLine(Power.Overload, 20));
+                r.AwakenLevel = 3;
+                p.Stash.Add(r);
+                Rules.Equip(p, "Hero_Vesper", r.Uid);
+            }
             var build = Build.Compute(p, "Hero_Vesper", 0);
-            Assert.Equal(36, build.Get(Power.Overload));
-            Assert.Equal(20, build.ConditionalBase(Power.Overload));
+            Assert.Equal(72, build.Get(Power.Overload));
+            Assert.Equal(40, build.ConditionalBase(Power.Overload));
             var roundtrip = Build.Decode(build.Encode());
-            Assert.Equal(20, roundtrip.ConditionalBase(Power.Overload));
+            Assert.Equal(72, roundtrip.Get(Power.Overload));
+            Assert.Equal(40, roundtrip.ConditionalBase(Power.Overload));
+            var rt = new PowerRuntime(build, 0);
+            rt.OnSkillUsed(0, false, false);
+            Assert.Equal(build.Get(Power.Overload), rt.Current(1).AttackPct);
+            rt.SetBuild(roundtrip);
+            Assert.Equal(build.Get(Power.Overload), rt.Current(1).AttackPct);
         }
 
         [Fact]

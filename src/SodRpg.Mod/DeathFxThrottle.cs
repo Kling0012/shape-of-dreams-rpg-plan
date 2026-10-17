@@ -1,4 +1,5 @@
 using System;
+using System.Runtime.CompilerServices;
 using HarmonyLib;
 using UnityEngine;
 
@@ -112,19 +113,69 @@ namespace SodRpg.Mod
     [HarmonyPatch(typeof(EntityVisual), "UserCode_RpcHandleDeath__GibInfo")]
     internal static class DeathFxLightQualityPatch
     {
+        private sealed class LightParts
+        {
+            internal readonly Light[] Lights;
+            internal readonly FxPointLight[] Drivers;
+            internal readonly bool[] SuppressedLights;
+            internal readonly bool[] SuppressedDrivers;
+
+            internal LightParts(GameObject fx)
+            {
+                Lights = fx.GetComponentsInChildren<Light>(true);
+                Drivers = fx.GetComponentsInChildren<FxPointLight>(true);
+                SuppressedLights = new bool[Lights.Length];
+                SuppressedDrivers = new bool[Drivers.Length];
+            }
+        }
+
+        // fxDeath の寿命に追従し、プール再利用時も同じ部品と抑止記録を使う。
+        private static readonly ConditionalWeakTable<GameObject, LightParts> Parts = new ConditionalWeakTable<GameObject, LightParts>();
+        private static readonly ConditionalWeakTable<GameObject, LightParts>.CreateValueCallback FindParts = fx => new LightParts(fx);
+
+        private static void SetSuppressed(Behaviour[] components, bool[] suppressed, bool lowQuality)
+        {
+            for (int i = 0; i < components.Length; i++)
+            {
+                var component = components[i];
+                if (component == null)
+                {
+                    components[i] = null;
+                    suppressed[i] = false;
+                    continue;
+                }
+                if (lowQuality)
+                {
+                    // 元から無効な部品は記録しない。Low が続いても記録を残す。
+                    if (!component.enabled) continue;
+                    suppressed[i] = true;
+                    component.enabled = false;
+                }
+                else if (suppressed[i])
+                {
+                    component.enabled = true;
+                    suppressed[i] = false;
+                }
+            }
+        }
+
         private static void Prefix(EntityVisual __instance)
         {
             try
             {
                 var graphics = ManagerBase<GraphicsManager>.instance;
-                if (graphics == null || graphics.currentEffectQuality != Quality3Levels.Low) return;
+                if (graphics == null) return;
                 var model = __instance.model;
                 if (model == null || model.fxDeath == null) return;
+                bool lowQuality = graphics.currentEffectQuality == Quality3Levels.Low;
+                LightParts parts;
+                if (lowQuality)
+                    parts = Parts.GetValue(model.fxDeath, FindParts);
+                else if (!Parts.TryGetValue(model.fxDeath, out parts))
+                    return;
                 // FxPointLight が再生時に Light を有効化し戻すので、ドライバ側も止める。
-                foreach (var light in model.fxDeath.GetComponentsInChildren<Light>(true))
-                    light.enabled = false;
-                foreach (var driver in model.fxDeath.GetComponentsInChildren<FxPointLight>(true))
-                    driver.enabled = false;
+                SetSuppressed(parts.Drivers, parts.SuppressedDrivers, lowQuality);
+                SetSuppressed(parts.Lights, parts.SuppressedLights, lowQuality);
             }
             catch (Exception ex)
             {

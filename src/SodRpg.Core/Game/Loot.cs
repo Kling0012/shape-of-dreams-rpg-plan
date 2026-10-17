@@ -95,8 +95,8 @@ namespace SodRpg.Core.Game
         }
 
         /// <summary>
-        /// 遺物を抽選する。ownedRelics は保管庫（装着品を含む）、unsecuredRelics は未確保の鞄。
-        /// 所持リストを省略すると、セット部位の収集補助は行わない。
+        /// 遺物を抽選する。ownedRelics は保管庫（装着品を含む）、unsecuredRelics は鞄・宝庫の未確保品。
+        /// 所持リストとその遺物は読み取りだけに使う。省略すると、セット部位の収集補助は行わない。
         /// </summary>
         public static Relic RollRelic(Rng rng, Rarity rarity, int itemLevel, Slot? slot = null, Line? focus = null,
             IReadOnlyList<Relic> ownedRelics = null, IReadOnlyList<Relic> unsecuredRelics = null, ISet<string> codex = null,
@@ -106,8 +106,11 @@ namespace SodRpg.Core.Game
             // The extra draw happens only when the multiplier is active.
             if (rarity == Rarity.Legendary && uniqueDropMultiplier < 1 && !rng.Chance(uniqueDropMultiplier))
                 rarity = Rarity.Epic;
+            // 所持品の集合は抽選1回につき1度だけ作る（候補ごとに保管庫を走査しない）。銘品のない低レアでは作らない。
+            OwnedSets owned = null;
             if (rarity == Rarity.Legendary)
             {
+                owned = OwnedSets.From(ownedRelics, unsecuredRelics);
                 var candidates = new List<(UniqueDef Unique, int Weight)>();
                 int total = 0;
                 foreach (var u in Content.Uniques)
@@ -116,7 +119,7 @@ namespace SodRpg.Core.Game
                     if (slot != null && Content.GetBase(u.BaseId).Slot != slot.Value) continue;
                     int weight = focus != null && Content.GetBase(u.BaseId).Line == focus.Value ? FocusWeight : 1;
                     if (u.SetId != null) weight *= SetPieceWeight;
-                    if (IsMissingSetPiece(u, ownedRelics, unsecuredRelics)) weight *= SetCompletionWeight;
+                    if (owned.IsMissingSetPiece(u)) weight *= SetCompletionWeight;
                     candidates.Add((u, weight));
                     total += weight;
                 }
@@ -134,41 +137,44 @@ namespace SodRpg.Core.Game
                 rarity = Rarity.Epic;
             }
 
-            var bases = new List<BaseDef>();
-            foreach (var b in Content.Bases)
-                if (slot == null || b.Slot == slot.Value) bases.Add(b);
             // v1.32（設計 3.4）：低レアは「その枠の土台」（重み1）と「その枠・そのレア度の銘品」（レア度ごとの定数）から抽選する。
             // 銘品が1つもなければ今までどおり土台だけの抽選（乱数列も同じ）。
             var named = NamedCandidates(rarity, slot);
             if (named.Count == 0)
             {
+                var bases = new List<BaseDef>();
+                foreach (var b in Content.Bases)
+                    if (slot == null || b.Slot == slot.Value) bases.Add(b);
                 var only = PickWeighted(rng, bases, b => b.Line, focus);
                 return RollBaseRelic(rng, only, rarity, itemLevel);
             }
-            var picks = new List<(BaseDef Base, NamedDef Named, int Weight)>(bases.Count + named.Count);
+            // 土台→銘品の順に重みを足し、同じ順に1回の乱数で選ぶ（候補の一覧は作らない）。
             int totalWeight = 0;
-            foreach (var b in bases)
+            foreach (var b in Content.Bases)
+                if (slot == null || b.Slot == slot.Value) totalWeight += focus != null && b.Line == focus.Value ? FocusWeight : 1;
+            // 伝説候補がなくEpicへ降格した場合も、同じ呼び出し中は所持品が変わらないので伝説側で作った集合を再利用する。
+            // 集合には伝説セットと銘品の小セットを両方含む。倍率で先に降格した場合や通常の低レアではここで初めて作る。
+            if (owned == null) owned = OwnedSets.From(ownedRelics, unsecuredRelics);
+            var namedWeights = new int[named.Count];
+            for (int i = 0; i < named.Count; i++)
             {
-                int w = focus != null && b.Line == focus.Value ? FocusWeight : 1;
-                picks.Add((b, null, w));
-                totalWeight += w;
-            }
-            foreach (var n in named)
-            {
-                var baseDef = Content.GetBase(n.BaseId);
-                int w = NamedWeight(n, baseDef, focus, codex, ownedRelics, unsecuredRelics);
-                picks.Add((baseDef, n, w));
-                totalWeight += w;
+                namedWeights[i] = NamedWeight(named[i], Content.GetBase(named[i].BaseId), focus, codex, owned);
+                totalWeight += namedWeights[i];
             }
             int roll = rng.Range(0, totalWeight - 1);
-            foreach (var pick in picks)
+            foreach (var b in Content.Bases)
             {
-                if (roll < pick.Weight)
-                    return pick.Named != null ? RollNamed(rng, pick.Named, itemLevel) : RollBaseRelic(rng, pick.Base, rarity, itemLevel);
-                roll -= pick.Weight;
+                if (slot != null && b.Slot != slot.Value) continue;
+                int w = focus != null && b.Line == focus.Value ? FocusWeight : 1;
+                if (roll < w) return RollBaseRelic(rng, b, rarity, itemLevel);
+                roll -= w;
             }
-            var last = picks[picks.Count - 1];
-            return last.Named != null ? RollNamed(rng, last.Named, itemLevel) : RollBaseRelic(rng, last.Base, rarity, itemLevel);
+            for (int i = 0; i < named.Count; i++)
+            {
+                if (roll < namedWeights[i]) return RollNamed(rng, named[i], itemLevel);
+                roll -= namedWeights[i];
+            }
+            return RollNamed(rng, named[named.Count - 1], itemLevel);
         }
 
         /// <summary>その枠・そのレア度の銘品の候補。土台が定義にない銘品は候補に入れない（データ検証で弾く前提）。</summary>
@@ -189,12 +195,15 @@ namespace SodRpg.Core.Game
         /// <summary>銘品1種の重み（設計 3.4）。レア度・狙い系統・図鑑・始めた組の未所持部位の倍率を掛け合わせる。
         /// 図鑑を受け取らない呼び出しでは未発見の倍率を掛けない。</summary>
         internal static int NamedWeight(NamedDef def, BaseDef baseDef, Line? focus, ISet<string> codex,
-            IReadOnlyList<Relic> ownedRelics, IReadOnlyList<Relic> unsecuredRelics)
+            IReadOnlyList<Relic> ownedRelics, IReadOnlyList<Relic> unsecuredRelics) =>
+            NamedWeight(def, baseDef, focus, codex, OwnedSets.From(ownedRelics, unsecuredRelics));
+
+        private static int NamedWeight(NamedDef def, BaseDef baseDef, Line? focus, ISet<string> codex, OwnedSets owned)
         {
             int w = NamedItems.RarityWeight(def.Rarity);
             if (focus != null && baseDef.Line == focus.Value) w *= FocusWeight;
             if (codex != null && !codex.Contains(NamedItems.CodexId(def.Id))) w *= NamedItems.NotInCodexMultiplier;
-            if (IsMissingMiniSetPiece(def, ownedRelics, unsecuredRelics)) w *= NamedItems.MissingMiniSetPieceMultiplier;
+            if (owned.IsMissingMiniSetPiece(def)) w *= NamedItems.MissingMiniSetPieceMultiplier;
             return w;
         }
 
@@ -286,43 +295,47 @@ namespace SodRpg.Core.Game
 
         public const int SetCompletionWeight = LootBalance.SetCompletionWeight;
 
-        private static bool IsMissingSetPiece(UniqueDef candidate, IReadOnlyList<Relic> ownedRelics, IReadOnlyList<Relic> unsecuredRelics)
+        /// <summary>
+        /// 保管庫と鞄にある伝説・銘品のIDと、始めているセット・小セット。抽選1回につき1度だけ作る。
+        /// 「未所持部位」＝その組を始めていて、その部位自体は持っていない（設計 3.4）。
+        /// </summary>
+        private sealed class OwnedSets
         {
-            if (candidate.SetId == null) return false;
-            bool started = false;
-            for (int source = 0; source < 2; source++)
-            {
-                var relics = source == 0 ? ownedRelics : unsecuredRelics;
-                if (relics == null) continue;
-                for (int i = 0; i < relics.Count; i++)
-                {
-                    string id = relics[i].UniqueId;
-                    if (id == candidate.Id) return false;
-                    if (!started && Content.TryGetUnique(id, out var unique) && unique.SetId == candidate.SetId)
-                        started = true;
-                }
-            }
-            return started;
-        }
+            private static readonly OwnedSets Empty = new OwnedSets();
+            private readonly HashSet<string> _uniques = new HashSet<string>(StringComparer.Ordinal);
+            private readonly HashSet<string> _sets = new HashSet<string>(StringComparer.Ordinal);
+            private readonly HashSet<string> _named = new HashSet<string>(StringComparer.Ordinal);
+            private readonly HashSet<string> _miniSets = new HashSet<string>(StringComparer.Ordinal);
 
-        /// <summary>始めた組（小セット）の未所持部位か（設計 3.4）。既に持っている部位は false、組を始めていなければ false。</summary>
-        private static bool IsMissingMiniSetPiece(NamedDef candidate, IReadOnlyList<Relic> ownedRelics, IReadOnlyList<Relic> unsecuredRelics)
-        {
-            if (candidate.MiniSetId == null) return false;
-            bool started = false;
-            for (int source = 0; source < 2; source++)
+            public static OwnedSets From(IReadOnlyList<Relic> ownedRelics, IReadOnlyList<Relic> unsecuredRelics)
             {
-                var relics = source == 0 ? ownedRelics : unsecuredRelics;
-                if (relics == null) continue;
+                if (ownedRelics == null && unsecuredRelics == null) return Empty;
+                var owned = new OwnedSets();
+                owned.Add(ownedRelics);
+                owned.Add(unsecuredRelics);
+                return owned;
+            }
+
+            private void Add(IReadOnlyList<Relic> relics)
+            {
+                if (relics == null) return;
                 for (int i = 0; i < relics.Count; i++)
                 {
-                    string id = relics[i].NamedId;
-                    if (id == candidate.Id) return false;
-                    if (!started && NamedItems.TryGetNamed(id, out var named) && named.MiniSetId == candidate.MiniSetId)
-                        started = true;
+                    var r = relics[i];
+                    if (r.UniqueId != null && _uniques.Add(r.UniqueId)
+                        && Content.TryGetUnique(r.UniqueId, out var unique) && unique.SetId != null)
+                        _sets.Add(unique.SetId);
+                    if (r.NamedId != null && _named.Add(r.NamedId)
+                        && NamedItems.TryGetNamed(r.NamedId, out var named) && named.MiniSetId != null)
+                        _miniSets.Add(named.MiniSetId);
                 }
             }
-            return started;
+
+            public bool IsMissingSetPiece(UniqueDef candidate) =>
+                candidate.SetId != null && !_uniques.Contains(candidate.Id) && _sets.Contains(candidate.SetId);
+
+            public bool IsMissingMiniSetPiece(NamedDef candidate) =>
+                candidate.MiniSetId != null && !_named.Contains(candidate.Id) && _miniSets.Contains(candidate.MiniSetId);
         }
 
         private static T PickWeighted<T>(Rng rng, List<T> items, Func<T, Line> lineOf, Line? focus)
