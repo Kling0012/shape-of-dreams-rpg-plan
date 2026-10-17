@@ -86,7 +86,8 @@ namespace Issue73.Native.Tests
             if (!builds.TryGetValue(player, out var received) || received.Build == null) return room;
             return DreamPressure.ForPlayer(received.Build.DreamLevel, received.Build.SpentStarPoints)
                 .WithRunModifiers(room.Depth, room.WaypointMultiplier)
-                .WithInfinityPressure(room.InfinityStage);
+                .WithInfinityPressure(room.InfinityStage)
+                .WithCoopScaling(DewPlayer.gamePlayers.Count);
         }
 
         private static object State(HostAuthority host, Entity enemy) => ((IDictionary)Get(host, "_enemyOwnership"))[enemy];

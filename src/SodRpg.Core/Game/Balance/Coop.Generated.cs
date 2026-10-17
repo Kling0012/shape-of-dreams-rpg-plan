@@ -31,6 +31,14 @@ namespace SodRpg.Core.Game
         public const float ShieldWallTauntSeconds = 4f;
         public const string ShieldWallTauntSecondsText = "4";
 
+        public static class Difficulty
+        {
+            public const double NativePowerBonusFactor = 0.5d;
+            public const double NativePowerBonusMaximum = 15d;
+            public const double DamagePressureShare = 0.5d;
+            public const double DamagePressureMaximum = 2d;
+        }
+
         public static class Ownership
         {
             // Damage lost on another player's enemy, by the run's 0-based world order; the last entry repeats.
