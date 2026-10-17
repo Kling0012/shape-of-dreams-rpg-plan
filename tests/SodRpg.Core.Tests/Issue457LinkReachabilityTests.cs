@@ -54,10 +54,10 @@ namespace SodRpg.Core.Tests
             foreach (var stage in set.LinkStages)
                 Check(set.Id + "/" + stage.RequiredPieces, stage.Link);
 
-            output.WriteLine("Checked relic/set links: {0}; unreachable: {1}", checkedLinks, failures.Count);
+            output.WriteLine("Checked relic/set links: {0}; unreachable or untriggerable: {1}", checkedLinks, failures.Count);
             foreach (string failure in failures) output.WriteLine(failure);
             Assert.True(failures.Count == 0,
-                "Relic links with no witness under the native Identity/Movement slot limits:\n" +
+                "Relic links with no slot-limited witness or no usable memory trigger:\n" +
                 string.Join("\n", failures));
 
             void Check(string id, LinkDef link)
@@ -65,6 +65,12 @@ namespace SodRpg.Core.Tests
                 checkedLinks++;
                 if (!HasSlotLimitedWitness(link))
                     failures.Add(id + ": " + string.Join(" + ", link.Requires));
+                // HostAuthority.OnSkillUse only triggers haste/surge for a used memory in Requires.
+                // Passive Identity memories never produce that use event.
+                if ((link.Kind == LinkKind.MemoryHaste || link.Kind == LinkKind.MemorySurge)
+                    && !link.Requires.Any(r => Links.IsMemory(r) && !IsIdentity(r)))
+                    failures.Add(id + ": " + link.Kind + " has no non-Identity memory trigger: " +
+                        string.Join(" + ", link.Requires));
             }
         }
 
