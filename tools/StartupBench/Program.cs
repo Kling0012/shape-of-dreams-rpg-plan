@@ -7,7 +7,7 @@ using SodRpg.Core.Game;
 // 手法は docs/specs/star-registration-startup-performance-2026-10-16.md と同じ（Release・新規プロセス）。
 // この作業機に入っているのは .NET 10 のみ（net8.0 目標は RollForward で 10.0.11 で動く）ため、
 // 上記文書の .NET 8.0.32 での秒数とは絶対値を比べない。実行時の runtime= 行で実行環境を確認する。
-// 実機の Mono は段階JITがないため、DOTNET_TieredCompilation=0 の実行を近似的な上限値として併測する。
+// DOTNET_TieredCompilation=0 も別条件として併測する。Mono の所要時間や上限値への換算はしない。
 //
 // 使い方:
 //   dotnet run -c Release --project tools/StartupBench -- total [--threshold-ms 1500]
@@ -19,7 +19,8 @@ using SodRpg.Core.Game;
 //   ContentFingerprint=13792-e4617232a7ce91e6、HeroSigils.All.Count=7642）は内容の追加で変わるため、
 //   #459 の文書（docs/specs/star-registration-startup-performance-2026-10-16.md）の古い値とではなく、
 //   同じ内容リビジョンでの修正前後で一致を見る。
-//   登録時間が --threshold-ms を超えたら終了コード 3（=再現、まだ遅い）を返す。既定は 1500ms。
+//   登録時間が --threshold-ms を超えたら終了コード 3 を返す。既定の 1500ms はこのツールの診断用基準で、
+//   Issue の許容時間やゲーム起動全体の再現を示す値ではない。
 // stages: 旅人ごとに、文字列表の解析だけ（CreateGeneratedAuthored）と、本番の登録1人分
 //   （RegisterGeneratedHero=解析+登録+移行規則）を分けて測る。残りボトルネックの切り分け用。
 internal static class Program
@@ -60,7 +61,7 @@ internal static class Program
         Console.WriteLine($"hero-sigils-all-count: {HeroSigils.All.Count}");
         bool slow = registerMs > thresholdMs;
         Console.WriteLine(slow
-            ? $"RESULT: SLOW (register {registerMs} ms > threshold {thresholdMs} ms) — Issue #692 再現"
+            ? $"RESULT: SLOW (register {registerMs} ms > threshold {thresholdMs} ms)"
             : $"RESULT: OK (register {registerMs} ms <= threshold {thresholdMs} ms)");
         return slow ? 3 : 0;
     }
