@@ -104,6 +104,32 @@ namespace SodRpg.Mod
             return 1;
         }
 
+        private DynamicDifficultyStatus _dynamicStatus;
+        private string _dynamicStatusRun;
+
+        /// <summary>The host's synced factor for this run only; false when nothing was received (menu shows "—").</summary>
+        internal bool TryDynamicDifficultyFor(string participant, out double factor)
+        {
+            factor = 1;
+            if (_dynamicDifficultyDisplay == null || string.IsNullOrEmpty(participant)
+                || _dynamicDifficultyRun != NetworkedManagerBase<GameManager>.softInstance?.runId) return false;
+            foreach (var state in _dynamicDifficultyDisplay)
+                if (state.participantId == participant) { factor = state.factor / 100d; return true; }
+            return false;
+        }
+
+        /// <summary>The host's synced status (#700) for this run, or null when not received.</summary>
+        internal DynamicDifficultyStatus DynamicStatus =>
+            _dynamicStatus != null && _dynamicStatusRun == NetworkedManagerBase<GameManager>.softInstance?.runId ? _dynamicStatus : null;
+
+        // The reliable ordered channel delivers the latest status last; a rebuilt host may restart its revision.
+        private void ReceiveDynamicStatus(DynamicDifficultyStatus status)
+        {
+            if (status == null || !status.Valid()) return;
+            _dynamicStatus = status;
+            _dynamicStatusRun = NetworkedManagerBase<GameManager>.softInstance?.runId;
+        }
+
         private void ReceiveDynamicDifficulty(DynamicDifficultyDisplay[] display, long revision)
         {
             if (display == null || display.Length > 4 || revision <= 0 || revision < _dynamicDifficultyRevision) return;

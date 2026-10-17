@@ -126,6 +126,11 @@ namespace SodRpg.Core.Game
         private long _overflowDreamDustLedgerId;
         /// <summary>Native host ledger bound before enabling overflow bonus accrual.</summary>
         public long OverflowDreamDustLedgerId { get => _overflowDreamDustLedgerId; set => _overflowDreamDustLedgerId = Math.Max(0, value); }
+        /// <summary>このランで何番目の世界か（0始まり、未到達は -1）。本体の世界番号が0へ戻っても戻らない（担当外の減衰に使う）。</summary>
+        public int WorldIndex { get; set; } = -1;
+        /// <summary>WorldIndex を数えたときの本体の世界番号と世界名。再開時に同じ世界を二重に数えないための印。</summary>
+        public int WorldZoneIndex { get; set; } = -1;
+        public string WorldZoneName { get; set; }
         /// <summary>遠征を始めた旅人。撃破がない遠征の精算にも使う。</summary>
         public string HeroKey { get; set; }
         /// <summary>同じ確保の繰り返しで星の経験を二重に得ないための印。</summary>
@@ -214,6 +219,9 @@ namespace SodRpg.Core.Game
                 Infinity = Infinity?.Clone(),
                 OverflowDreamDustTotal = OverflowDreamDustTotal,
                 OverflowDreamDustLedgerId = OverflowDreamDustLedgerId,
+                WorldIndex = WorldIndex,
+                WorldZoneIndex = WorldZoneIndex,
+                WorldZoneName = WorldZoneName,
                 HeroKey = HeroKey,
                 StarSecureRewarded = StarSecureRewarded,
                 Heat = Heat,
