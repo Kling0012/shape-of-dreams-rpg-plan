@@ -1,5 +1,5 @@
-[b]In co-op with shares on, you can now keep damaging enemies another player is responsible for, even below 30% HP. Also lighter Equipment/Forge tabs and display fixes.[/b]
-[b]協力プレイの分担で、ほかの人が担当する敵のHPが30%以下になっても手伝えるようにしました。装備・鍛冶タブの軽量化と表示の修正も含みます。[/b]
+[b]v3.3.0: minor adjustments. Everyone in co-op should update. Saves carry over; restart the game after updating.[/b]
+[b]v3.3.0：細かな調整を行いました。協力プレイは全員更新してください。セーブはそのまま引き継げます。更新後はゲームを再起動してください。[/b]
 
 [h1]Dreamforge RPG[/h1]
 Turns every run into part of a long RPG journey: relics you keep, a risky "secure or delve" choice at every zone, a star map per Traveler, a forge, and long-term goals. Co-op ready.
