@@ -59,9 +59,9 @@ namespace SodRpg.Mod
             _profileSlots = null;
             Profile = _profileLoader.FallbackProfile;
             _store = null;
-            SaveError = Loc.T("保存データを読み込めませんでした。今回は保存を止めて続けます（保存データは変更していません）。少し待って自動で読み込み直します：",
+            SetSaveErrorText(Loc.T("保存データを読み込めませんでした。今回は保存を止めて続けます（保存データは変更していません）。少し待って自動で読み込み直します：",
                 "Could not load your save. Saving is disabled for this session (your save files were not changed); loading retries automatically: ")
-                + _profileLoader.Error;
+                + _profileLoader.Error);
             if (_profileLoadErrorLogged != _profileLoader.Error)
             {
                 _profileLoadErrorLogged = _profileLoader.Error;
@@ -82,7 +82,7 @@ namespace SodRpg.Mod
             }
             ApplyProfileLoadResult(true);
             _dirty = false;
-            SaveError = null;
+            ClearSaveError();
             _profileCopyRevision = -1;
             ResetProfileSession();
             RestoreRunDurability();
@@ -188,8 +188,9 @@ namespace SodRpg.Mod
                 Profile = _profileSlots.Profile;
                 _store = _profileSlots.Store;
                 _writer = null; // The drained writer remains bound to the OLD ProfileStore forever.
+                RememberWriteFailureState(null, 0);
                 _dirty = false;
-                SaveError = null;
+                ClearSaveError();
                 _profileCopyRevision = -1;
                 ResetProfileSession();
                 RestoreRunDurability();
@@ -201,7 +202,7 @@ namespace SodRpg.Mod
             catch (Exception ex)
             {
                 if (SaveError != ex.Message) Log.Error("Profile switch: " + ex.Message);
-                SaveError = ex.Message;
+                SetSaveErrorText(ex.Message);
             }
             finally
             {
