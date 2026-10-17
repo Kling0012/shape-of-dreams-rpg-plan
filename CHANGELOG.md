@@ -8,6 +8,10 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
+### 改善 / Improvements
+
+- 仕掛けの既定値（吸収の1回の回復上限1.5%、傷3秒、準備5秒、跳弾8m、味方への範囲10m、障壁4秒）を、説明文と動作で同じ定数から読むようにしました。味方への回復範囲は協力距離の基準を共有し、現在の値と距離減衰の動作は変わりません。 / Gimmick defaults (Siphon's 1.5% per-heal cap, Wound 3s, Primed 5s, Ricochet 8m, ally radius 10m, shield 4s) now use shared constants for descriptions and behaviour. Allied healing shares the co-op distance baseline; current values and distance falloff are unchanged.
+
 ---
 
 ## v3.2.12 — Stocked memories no longer go on cooldown with charges left, plus wiki fixes（2026-10-17）
