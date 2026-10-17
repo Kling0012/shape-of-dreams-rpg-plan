@@ -13,6 +13,9 @@ def block(path, declaration):
     if match is None:
         raise ValueError(f"Missing production declaration: {path}: {declaration}")
     opening = source.index("{", match.start())
+    arrow = source.find("=>", match.end(), opening)
+    if arrow >= 0:
+        return source[match.start():source.index(";", arrow) + 1]
     depth = 0
     for token in TOKENS.finditer(source, opening):
         if token.group() == "{":
