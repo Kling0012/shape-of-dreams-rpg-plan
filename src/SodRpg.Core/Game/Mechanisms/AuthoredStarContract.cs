@@ -198,6 +198,7 @@ namespace SodRpg.Core.Game
                 }
                 heroes.Add(def.HeroKey);
             }
+            var definitionsById = definitions.ToDictionary(x => x.Key);
             foreach (string hero in heroes)
             {
                 var existing = new Dictionary<string, TalentDef>(StringComparer.Ordinal);
@@ -226,7 +227,7 @@ namespace SodRpg.Core.Game
                         effects.Add(EffectiveDefinition(def));
                         edges.AddRange(def.Edges);
                         var owned = new HashSet<string>(StringComparer.Ordinal);
-                        VerifyOwnership(def, existing, definitions, owned);
+                        VerifyOwnership(def, existing, definitions, definitionsById, owned);
                         starMemories.Add(new List<string>(owned).AsReadOnly());
                         memories.UnionWith(owned);
                     }
@@ -277,7 +278,8 @@ namespace SodRpg.Core.Game
             return new AuthoredStarRegistry(result);
         }
 
-        private static void VerifyOwnership(AuthoredStarDef def, Dictionary<string, TalentDef> existing, IReadOnlyList<AuthoredStarDef> group, HashSet<string> memories)
+        private static void VerifyOwnership(AuthoredStarDef def, Dictionary<string, TalentDef> existing, IReadOnlyList<AuthoredStarDef> group,
+            Dictionary<AuthoredStarKey, AuthoredStarDef> definitionsById, HashSet<string> memories)
         {
             bool HeroMemory(string memory)
             {
@@ -305,7 +307,7 @@ namespace SodRpg.Core.Game
                 if (def.ReceiverOnlyBridge)
                 {
                     if (!Verified(target) || def.MemoryOwnership?.SourceMemories == null || def.MemoryOwnership.SourceMemories.Count == 0
-                        || !existing.ContainsKey(def.AnchorId) && !group.Any(x => x.HeroKey == def.HeroKey && x.LocalStarId == def.AnchorId))
+                        || !existing.ContainsKey(def.AnchorId) && !definitionsById.ContainsKey(new AuthoredStarKey(def.HeroKey, def.AnchorId)))
                         throw Invalid(def.LocalStarId, "Receiver-only bridge requires its real anchor, target and verified sources.");
                     memories.Add(target);
                 }
@@ -335,10 +337,9 @@ namespace SodRpg.Core.Game
                 bool validAnchor = def.AnchorId != null && existing.TryGetValue(def.AnchorId, out var anchor)
                     && (anchor.IsOuterAnchor && anchor.PerRank > 0 && !anchor.IsPowerNode && anchor.Gimmick == null
                         || anchor.RouteId != null && HeroMemory(anchor.RouteMemory));
-                foreach (var candidate in group)
-                    if (candidate.HeroKey == def.HeroKey && candidate.LocalStarId == def.AnchorId
-                        && (candidate.ClusterId == def.ClusterId && candidate.Effect.Kind == ClusterStarKind.Stat && candidate.Effect.Amount > 0
-                            || candidate.Region.Kind == ClusterRegionKind.Memory)) validAnchor = true;
+                if (def.AnchorId != null && definitionsById.TryGetValue(new AuthoredStarKey(def.HeroKey, def.AnchorId), out var candidate)
+                    && (candidate.ClusterId == def.ClusterId && candidate.Effect.Kind == ClusterStarKind.Stat && candidate.Effect.Amount > 0
+                        || candidate.Region.Kind == ClusterRegionKind.Memory)) validAnchor = true;
                 if (!validAnchor) throw Invalid(def.LocalStarId, "Outer anchor must be an effectful stat star or a hero-owned route/memory entrance.");
                 foreach (var talent in existing.Values) if (talent.RouteId != null && talent.RouteMemory != null) memories.Add(talent.RouteMemory);
                 foreach (string common in CommonForAuthoring()) memories.Add(common);

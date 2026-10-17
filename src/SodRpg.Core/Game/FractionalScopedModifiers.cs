@@ -536,14 +536,35 @@ namespace SodRpg.Core.Game
             if (!typed) return;
             var all = tree.SelectMany(t => t.IsChoice ? t.Choices : new[] { t }).ToArray();
             foreach (var t in all) ValidateTalent(t);
+            // Recipient entries depend only on the tree, not on the modifier being checked.
+            var recipients = new List<(TalentDef Talent, GimmickEntry Gimmick, AuthoredMechanismEntry Mechanism)>();
+            foreach (var t in all)
+                if (t.Gimmick != null || t.Mechanism != null)
+                    recipients.Add((t,
+                        t.Gimmick == null ? null : new GimmickEntry { StarId = t.Id, Memory = t.RouteMemory, Def = t.Gimmick, Channel = t.EffectChannel },
+                        t.Mechanism == null ? null : new AuthoredMechanismEntry { StarId = t.Id, ContributorIds = new[] { t.Id }, Spec = t.Mechanism }));
+            var byId = new Dictionary<string, List<(TalentDef Talent, GimmickEntry Gimmick, AuthoredMechanismEntry Mechanism)>>(StringComparer.Ordinal);
+            foreach (var recipient in recipients)
+            {
+                if (!byId.TryGetValue(recipient.Talent.Id, out var options)) byId.Add(recipient.Talent.Id, options = new List<(TalentDef, GimmickEntry, AuthoredMechanismEntry)>());
+                options.Add(recipient);
+            }
             foreach (var t in all)
             {
                 if (t.ScopedModifier == null) continue;
                 var m = t.ScopedModifier;
-                var targets = all.Where(n => n.HeroKey == t.HeroKey && (n.Gimmick != null
-                    && Matches(m, new GimmickEntry { StarId = n.Id, Memory = n.RouteMemory, Def = n.Gimmick, Channel = n.EffectChannel })
-                    || n.Mechanism != null && AuthoredMechanisms.Matches(m, new AuthoredMechanismEntry { StarId = n.Id, ContributorIds = new[] { n.Id }, Spec = n.Mechanism }))).ToArray();
-                if (targets.Length == 0 || targets.Any(n => m.Param.HasValue
+                var candidates = recipients;
+                if (m.TargetEffectIds.Length > 0)
+                {
+                    candidates = new List<(TalentDef, GimmickEntry, AuthoredMechanismEntry)>();
+                    foreach (string id in m.TargetEffectIds)
+                        if (byId.TryGetValue(id, out var options)) candidates.AddRange(options);
+                }
+                var targets = new List<TalentDef>();
+                foreach (var recipient in candidates)
+                    if (recipient.Talent.HeroKey == t.HeroKey && (recipient.Gimmick != null && Matches(m, recipient.Gimmick)
+                        || recipient.Mechanism != null && AuthoredMechanisms.Matches(m, recipient.Mechanism))) targets.Add(recipient.Talent);
+                if (targets.Count == 0 || targets.Any(n => m.Param.HasValue
                     ? n.Mechanism != null ? !AuthoredMechanisms.Supports(n.Mechanism, m.Param.Value) : !Gimmicks.SupportsParameter(n.Gimmick, m.Param.Value)
                     : n.Gimmick?.Effect == GimmickEffect.Reload)) throw new InvalidOperationException("Scoped modifier has no meaningful recipient: " + t.Id);
                 foreach (string id in m.TargetEffectIds) if (!targets.Any(n => n.Id == id)) throw new InvalidOperationException("Unknown scoped recipient: " + id);

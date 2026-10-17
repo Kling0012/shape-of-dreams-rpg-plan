@@ -1,0 +1,69 @@
+# Issue #692 起動時の星図登録の改善
+
+2026-10-17、MOD初期化が同期実行する `StarClusters.RegisterAllGenerated` の重複処理を減らした。同じホストで修正を一時的に戻して測ると登録1789 ms、修正を復元した2回は1159 msと1083 msだった。登録中の割り当て量は172 MiBから120 MiBに減った。
+
+## 原因と変更
+
+`HeroTreeLayout` は型の初期化時に全旅人の基準配置を作っていた。登録済みの配置を使う場合にも、使わない基準配置を作る費用が発生していた。基準配置を旅人ごとに必要時に作って保持する方式へ変更し、汎用配置も必要時に作るようにした。登録済み配置を優先する順序は変えていない。
+
+登録時の所有権検証では、各星のアンカーを探すたびに定義全件を走査していた。旅人とローカルIDを組にした辞書を用意し、参照先を直接調べるようにした。橋IDからペアIDを解決するコピー処理も事前辞書を使う。同じ橋IDに複数の定義がある場合は、従来と同じ先頭の定義を使う。
+
+`FractionalScopedModifiers.ValidateTree` は、各強化星の検証で候補全件を調べ、その都度効果用のエントリを生成していた。エントリを検証中に共用し、対象IDが指定された強化星はID辞書で候補を絞るようにした。同じIDを持つ選択肢はすべて候補に残し、旅人・メモリー・効果の一致は従来の判定で検証する。
+
+これらは初期化と登録の変更である。星のデータ、保存ID、配線、効果量、必要ポイント、通信上限を変更せず、既存の検証と旅人単位の登録失敗処理も残した。
+
+## 同じ条件での比較
+
+環境と計測範囲は [修正前の記録](README.md) と同じ。Linux、.NET 10.0.11、Releaseビルドの新規プロセスを使った。OSのファイルキャッシュは消していない。1500 msは既存プログラムの診断用基準で、Issueの許容時間ではない。
+
+修正した4ファイルをメモリと一時ディレクトリに保全し、`HEAD` の修正前コードへ一時的に戻してビルドした。通常JITと段階JITなしを測定後、修正を復元して再ビルドし、同じ順序で2回ずつ測った。生の出力と終了コードは [revert-check.txt](revert-check.txt) に保存した。
+
+| コードと条件 | 登録 | 初回BuildLimits集計 | 2区間の合計 | 登録中の割り当て量 | 終了コード |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| 一時取り消し・通常JIT | 1789 ms | 87 ms | 1876 ms | 172 MiB | 3 |
+| 復元後1回目・通常JIT | 1159 ms | 334 ms | 1493 ms | 120 MiB | 0 |
+| 復元後2回目・通常JIT | 1083 ms | 352 ms | 1435 ms | 120 MiB | 0 |
+| 一時取り消し・段階JITなし | 1672 ms | 49 ms | 1721 ms | 172 MiB | 3 |
+| 復元後1回目・段階JITなし | 1103 ms | 406 ms | 1509 ms | 120 MiB | 0 |
+| 復元後2回目・段階JITなし | 1189 ms | 446 ms | 1635 ms | 120 MiB | 0 |
+
+通常JITの登録は直前の修正前測定に対して約35〜39%短縮し、登録中の割り当て量は約30%減った。初回BuildLimits集計は増えている。原因は今回確定していないため、登録だけの短縮率を起動全体の短縮率とは扱わない。表の2区間の合計では通常JITが約20〜24%、段階JITなしが約5〜12%短縮した。共有ホストの測定値にはばらつきがあり、Unity/Monoやゲーム起動全体の秒数へは換算できない。
+
+最適化途中の値は最終比較から除外した。一時計測出力を除去した後の通常JITは1202 ms、1329 msでも成功し、段階JITなしは1109 msでも成功した。最終比較の前後では毎回次の値が一致した。
+
+- 登録指紋: `607b55b25354e173`
+- 内容指紋: `13792-e4617232a7ce91e6`
+- 星一覧: 7642件
+- BuildLimits: talents=7657、entries=584
+- `HeroSigils.All` 1000回: 0 ms。整数表示のため、厳密にゼロという意味ではない。
+
+## 実行した検証
+
+再現コマンドは変更せず、修正を一時的に戻すと終了コード3、復元すると終了コード0になることを実行して確認した。両コードのReleaseビルドは終了コード0、警告0、エラー0だった。
+
+```sh
+dotnet build tools/StartupBench/StartupBench.csproj -c Release --nologo -v:q
+dotnet tools/StartupBench/bin/Release/net8.0/StartupBench.dll total --threshold-ms 1500
+DOTNET_TieredCompilation=0 dotnet tools/StartupBench/bin/Release/net8.0/StartupBench.dll total --threshold-ms 1500
+```
+
+既存の関連テストを最終コードでまとめて実行し、204件成功、失敗0件、スキップ0件だった。`DOTNET_ROLL_FORWARD=Major dotnet test tests/SodRpg.Core.Tests/SodRpg.Core.Tests.csproj -c Release --no-restore --nologo --filter '<対象>&Speed!=Slow'` を使った。対象は次のクラスとメソッドで、新しいテストは作っていない。
+
+- `AuthoredStarContractTests`、`FractionalScopedModifiersTests`、`AuthoredMechanismIntegrationTests`、`AuthoredKeystoneIntegrationTests`、`ScopedKeystoneModifiersTests`
+- `GeneratedHeroAcceptanceTests`、`BuildLimitsV131Tests`、`ContentFingerprintTests`、`BridgeRenewalAuthoredTests`、`AuthoredClusterPlacementTests`
+- `StarMigrationRefundTests`、`ProfileMigrationLoadTests`、`LegacyKeystoneMigrationTests`
+- `StarMapLayoutQualityTests.Tuned_placements_move_stars_only_and_never_touch_the_lines` と `The_placement_table_matches_the_current_stars`。ノード・隣接順・辺の順序と座標表の一致を検証した。
+
+MODのReleaseビルドも `-p:GameDir=/mnt/ghauto-sbx/sod-gamedata/Shape of Dreams` を指定して実行し、終了コード0、エラー0だった。既存APIの非推奨などの警告が6件あった。テストのビルドにも既存のテスト用API・アナライザーの警告がある。参照先にはModsディレクトリがないため、ゲームへの配置処理は実行されなかった。
+
+## 判断したこと
+
+Issueには遅い段階の指定がないため、前工程の調査に沿ってMOD初期化内の同期登録を改善対象とした。#459の既存対策が入っていることを確認し、残っていた重複生成と全件走査を減らした。ゲームでの再現が必要な挙動を推測して変更していない。
+
+起動処理の内部的な軽量化に当たるため、`changelog.d/README.md` の規則に従い更新履歴の断片は追加していない。`CHANGELOG.md` も変更していない。
+
+## 未実行
+
+- ゲーム起動、タイトル画面までの時間、Unity/Mono、Player.log、`dreamforge_simkill`。この環境ではゲームを実行できないため。実機だけの確認を求めるIssueは作っていない。
+- プロフィール読み込み、Harmonyパッチ導入、アイコン先読みを含むAwake全体の時間。既存のCore計測プログラムの対象外のため。
+- full/slowスイート、関連範囲外の.NET/Pythonテスト、配置品質テストの残り。依頼に従い変更箇所に関係する既存テストに絞ったため。

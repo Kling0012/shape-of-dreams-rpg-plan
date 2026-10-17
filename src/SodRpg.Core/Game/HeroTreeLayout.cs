@@ -55,8 +55,11 @@ namespace SodRpg.Core.Game
             ["Hero_Aurena"] = new[] { "claw", "golden-burst", "dangerous-theory", "feathery-dash", "beautiful-threat", "reduction", "chain-reaction" },
             ["Hero_Bismuth"] = new[] { "prismatic-eyes", "innocence", "distorting-sprint", "infernal-tales", "valiant-heart", "distorted-mind" },
         };
-        private static readonly Dictionary<string, HeroTreeLayout> Layouts = CreateLayouts();
-        private static readonly HeroTreeLayout Generic = Create(Content.Talents, false, false);
+        private static readonly Dictionary<string, HeroTreeLayout> Layouts = new Dictionary<string, HeroTreeLayout>(StringComparer.Ordinal);
+        private static class GenericLayout
+        {
+            internal static readonly HeroTreeLayout Value = Create(Content.Talents, false, false);
+        }
         private readonly Dictionary<string, int> indices;
         // Reused under the lock: neither UI availability checks nor build evaluation allocate traversal buffers.
         private readonly bool[] reached;
@@ -77,24 +80,23 @@ namespace SodRpg.Core.Game
         public IReadOnlyList<HeroTreeEdge> Edges { get; }
         public int StartIndex => 0;
 
-        public static HeroTreeLayout ForHero(string heroKey) =>
-            StarClusters.TryGetRegisteredLayout(heroKey, out var registered) ? registered
-                : heroKey != null && Layouts.TryGetValue(heroKey, out var layout) ? layout : Generic;
+        public static HeroTreeLayout ForHero(string heroKey)
+        {
+            if (StarClusters.TryGetRegisteredLayout(heroKey, out var registered)) return registered;
+            if (!Links.IsTraveler(heroKey)) return GenericLayout.Value;
+            lock (Layouts)
+            {
+                if (!Layouts.TryGetValue(heroKey, out var layout))
+                    Layouts.Add(heroKey, layout = Create(HeroSigils.BaselineTreeFor(heroKey), true, true));
+                return layout;
+            }
+        }
 
         /// <summary>Builds a validated generated tree for data tooling and layout stress scenarios.</summary>
         public static HeroTreeLayout ForTalents(IReadOnlyList<TalentDef> talents) => Create(talents, true, true);
 
         /// <summary>調整済み座標（StarMapPlacements）を使うかを選ぶ。調整ツールが既定の配置を得るために false を渡す。</summary>
         public static HeroTreeLayout ForTalents(IReadOnlyList<TalentDef> talents, bool tuned) => Create(talents, true, tuned);
-
-        private static Dictionary<string, HeroTreeLayout> CreateLayouts()
-        {
-            var layouts = new Dictionary<string, HeroTreeLayout>(StringComparer.Ordinal);
-            foreach (var talent in HeroSigils.All)
-                if (!layouts.ContainsKey(talent.HeroKey))
-                    layouts.Add(talent.HeroKey, Create(HeroSigils.TreeFor(talent.HeroKey), true, true));
-            return layouts;
-        }
 
         private static HeroTreeNodeKind Kind(TalentDef talent)
         {
