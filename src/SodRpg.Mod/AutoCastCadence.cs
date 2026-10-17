@@ -17,6 +17,9 @@ namespace SodRpg.Mod
         // raised to at least CoopBalance.AutoCastIntervalSeconds and the rolling
         // per-second cap is lowered to its floor when the host uses native
         // cadence, or any peer without this MOD build is present.
+        // The output is monotonic in pressure: a higher pressure widens the
+        // interval and lowers the per-second cap. The early cadence reject in
+        // NativeBismuthAutoCast depends on this, so keep it when changing this method.
         internal static void Compute(float pressure, bool coop, bool nativeCadence, bool allPeersSupported,
             out float interval, out int castsPerSecond)
         {
