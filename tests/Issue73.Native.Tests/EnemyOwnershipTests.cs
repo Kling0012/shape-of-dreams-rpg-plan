@@ -35,6 +35,8 @@ namespace Issue73.Native.Tests
             Time.time = 1f;
             Time.frameCount = 1;
             Log.Warnings.Clear();
+            CoopDistanceNative.Clear();
+            CoopDistanceNative.Enabled = true;
         }
 
         // ---- 準備 ----
@@ -178,6 +180,287 @@ namespace Issue73.Native.Tests
             Assert.Equal(100f, enemy.Status.baseMaxHealth, 3);
             RecalcMaxHealth(enemy);
             Assert.Equal(enemy.Status.baseMaxHealth, enemy.Status.maxHealth, 3); // …部屋の圧（ここでは倍率1）へ戻る
+            Assert.Empty(Log.Warnings);
+        }
+
+        // ---- 盾壁の挑発 ----
+
+        private static void ShieldWall(HostAuthority host, Hero vesper, params Entity[] enemies)
+        {
+            var actors = new ActorManager();
+            actors.allEntities.AddRange(enemies);
+            Set(host, "_am", actors);
+            StarClusters.RegisterGeneratedHero("Hero_Vesper");
+            Assert.True(StarClusters.TryGetRegisteredTree("Hero_Vesper", out var tree));
+            var definition = tree.Single(star => star.Id == "vesper.key.shield-wall").KeystoneDefinition;
+            var state = Activator.CreateInstance(typeof(HostAuthority).GetNestedType("CoopKeyState", Hidden), true);
+            Set(state, "Hero", vesper);
+            Set(state, "Definition", definition);
+            Call(host, "CoopDrawThreats", state);
+        }
+
+        private static Entity Threat(HostAuthority host, uint id, Hero ally)
+        {
+            var enemy = Spawn(host, id);
+            enemy.AI = new EntityAI { entity = enemy };
+            enemy.AI.context.targetEnemy = ally;
+            return enemy;
+        }
+
+        [Fact]
+        public void Shield_wall_aggro_keeps_vesper_instead_of_the_assigned_owner()
+        {
+            var host = Host(out _);
+            var owner = Player(5);
+            var vesper = Player(9);
+            BuildFor(host, owner, 8, 40);
+            BuildFor(host, vesper, 2, 0);
+            var enemy = Threat(host, 100, owner.hero);
+            enemy.Status.baseMaxHealth = 1000f;
+            RecalcMaxHealth(enemy);
+            enemy.Status.SetHealth(enemy.maxHealth);
+            float help = TakenBy(host, enemy, vesper.hero);
+            var stray = new DamageData(100f) { actor = enemy };
+            host.ApplyOwnershipReceivedDamage(vesper.hero, enemy, ref stray);
+
+            ShieldWall(host, vesper.hero, enemy);
+            Assert.Same(vesper.hero, enemy.AI.context.targetEnemy); // 実際の盾壁 → Aggro 入口。
+            Entity target = owner.hero;
+            Assert.True(host.SelectOwnershipAggro(enemy.AI, ref target));
+            Assert.Same(vesper.hero, target);
+            target = new Summon { hero = owner.hero }; // 担当者の召喚体による再標的よりも優先。
+            Assert.True(host.SelectOwnershipAggro(enemy.AI, ref target));
+            Assert.Same(vesper.hero, target);
+
+            Time.time += CoopBalance.ShieldWallTauntSeconds - 0.01f;
+            int calls = enemy.AI.AggroCalls;
+            for (int i = 0; i < 10; i++) host.RetargetOwnership(enemy.AI, true);
+            Assert.Equal(calls, enemy.AI.AggroCalls); // 同じ挑発対象へ毎 tick 再設定しない。
+            enemy.AI.context.targetEnemy = owner.hero;
+            host.RetargetOwnership(enemy.AI, true);
+            Assert.Same(vesper.hero, enemy.AI.context.targetEnemy);
+            Assert.Same(owner, OwnerOf(host, enemy));
+            Assert.Equal(help, TakenBy(host, enemy, vesper.hero), 3);
+            var after = new DamageData(100f) { actor = enemy };
+            host.ApplyOwnershipReceivedDamage(vesper.hero, enemy, ref after);
+            Assert.Equal(stray.amount, after.amount, 3);
+            enemy.Status.SetHealth((float)Math.Floor(enemy.maxHealth * CoopBalance.Ownership.Floor));
+            Assert.Equal(0f, TakenBy(host, enemy, vesper.hero), 3); // HP下限も担当者基準のまま。
+            Assert.Empty(Log.Warnings);
+        }
+
+        [Fact]
+        public void Shield_wall_expiry_returns_to_the_owner_without_waiting_for_native_retarget()
+        {
+            var host = Host(out _);
+            var owner = Player(5);
+            var vesper = Player(9);
+            var enemy = Threat(host, 100, owner.hero);
+            var outside = Threat(host, 101, owner.hero);
+            owner.hero.position = new Vector3(6f, 0f, 0f);
+            ShieldWall(host, vesper.hero, enemy);
+            Assert.Same(vesper.hero, enemy.AI.context.targetEnemy); // 6m は範囲内。
+
+            owner.hero.position = new Vector3(6.01f, 0f, 0f);
+            ShieldWall(host, vesper.hero, outside);
+            Assert.Same(owner.hero, outside.AI.context.targetEnemy); // 範囲外の味方は対象外。
+            Assert.Null(Get(State(host, outside), "TauntHero"));
+
+            Time.time += CoopBalance.ShieldWallTauntSeconds;
+            host.RetargetOwnership(enemy.AI, false);
+            Assert.Same(owner.hero, enemy.AI.context.targetEnemy);
+            Assert.Null(Get(State(host, enemy), "TauntHero"));
+            Entity target = vesper.hero;
+            Assert.True(host.SelectOwnershipAggro(enemy.AI, ref target));
+            Assert.Same(owner.hero, target);
+            Assert.Same(owner, OwnerOf(host, enemy));
+            Assert.Empty(Log.Warnings);
+        }
+
+        [Fact]
+        public void Shield_wall_disabled_ownership_and_solo_preserve_previous_aggro_behavior()
+        {
+            var host = Host(out _);
+            var owner = Player(5);
+            var vesper = Player(9);
+            var enemy = Threat(host, 100, owner.hero);
+            ShieldWall(host, vesper.hero, enemy);
+            host.ConfigureEnemyOwnership(false);
+            Assert.Null(Get(State(host, enemy), "TauntHero"));
+            enemy.AI.context.targetEnemy = owner.hero;
+            ShieldWall(host, vesper.hero, enemy);
+            Assert.Same(vesper.hero, enemy.AI.context.targetEnemy);
+            Time.time += CoopBalance.ShieldWallTauntSeconds;
+            host.RetargetOwnership(enemy.AI, true);
+            Assert.Same(vesper.hero, enemy.AI.context.targetEnemy);
+            Entity target = owner.hero;
+            Assert.True(host.SelectOwnershipAggro(enemy.AI, ref target));
+            Assert.Same(owner.hero, target);
+
+            host.ConfigureEnemyOwnership(true);
+            DewPlayer.gamePlayers.Remove(owner);
+            enemy.AI.context.targetEnemy = vesper.hero;
+            ShieldWall(host, vesper.hero, enemy); // ソロには引き受ける味方の標的がない。
+            Assert.Same(vesper.hero, enemy.AI.context.targetEnemy);
+            host.RetargetOwnership(enemy.AI, true);
+            Assert.Same(vesper.hero, enemy.AI.context.targetEnemy);
+            Assert.Null(Get(State(host, enemy), "TauntHero"));
+            Assert.Empty(Log.Warnings);
+        }
+
+        [Fact]
+        public void Shield_wall_invalid_targets_and_recycled_enemy_records_do_not_keep_taunts()
+        {
+            var host = Host(out _);
+            var owner = Player(5);
+            var vesper = Player(9);
+            var enemy = Threat(host, 100, owner.hero);
+            ShieldWall(host, vesper.hero, enemy);
+            vesper.hero.isKnockedOut = true;
+            host.RetargetOwnership(enemy.AI, false);
+            Assert.Same(owner.hero, enemy.AI.context.targetEnemy);
+            Assert.Null(Get(State(host, enemy), "TauntHero"));
+
+            vesper.hero.isKnockedOut = false;
+            ShieldWall(host, vesper.hero, enemy);
+            object record = State(host, enemy);
+            host.ReleaseEnemyOwnership(enemy);
+            var reused = Threat(host, 101, owner.hero);
+            Assert.Same(record, State(host, reused));
+            Assert.Null(Get(State(host, reused), "TauntHero"));
+            Entity target = owner.hero;
+            Assert.True(host.SelectOwnershipAggro(reused.AI, ref target));
+            Assert.Same(vesper.hero, target); // 再利用先の担当者（ローテーションで2人目）。
+            Assert.Equal(0f, (float)Get(State(host, reused), "TauntUntil"));
+            Assert.Empty(Log.Warnings);
+        }
+
+        // ---- 群れの番犬の指示 ----
+
+        private static object PackGuard(HostAuthority host, Hero nachia, params Summon[] summons)
+        {
+            var runtime = new HostAuthority.HeroRuntime { Hero = nachia };
+            foreach (var summon in summons) runtime.Summons.Add(summon, null);
+            ((Dictionary<Hero, HostAuthority.HeroRuntime>)Get(host, "_runtimes"))[nachia] = runtime;
+            var state = Activator.CreateInstance(typeof(HostAuthority).GetNestedType("CoopKeyState", Hidden), true);
+            Set(state, "Hero", nachia);
+            Call(host, "CoopGuardTarget", state);
+            return state;
+        }
+
+        [Fact]
+        public void Pack_guard_command_survives_owned_enemy_preference_and_native_retargeting()
+        {
+            var host = Host(out _);
+            var ally = Player(5);
+            var nachia = Player(9);
+            ally.hero.currentHealth = 20f;
+            var threat = Threat(host, 100, ally.hero); // 味方の担当・保護中。
+            var owned = Spawn(host, 101); // ナキアの担当。
+            var actors = new ActorManager();
+            actors.allHeroes.AddRange(new[] { ally.hero, nachia.hero });
+            actors.allEntities.AddRange(new[] { owned, threat });
+            Set(host, "_am", actors);
+            var summon = new Summon { hero = nachia.hero };
+            summon.AI = new EntityAI { entity = summon };
+
+            var state = PackGuard(host, nachia.hero, summon);
+            Assert.Same(threat, summon.AI.context.targetEnemy); // 番犬 → Aggro の実際の経路。
+            threat.AI.context.targetEnemy = null; // 本体が再標的しても走査間隔内は指示を保つ。
+            Time.time += 0.24f;
+            summon.AI.Aggro(owned);
+            Assert.Same(threat, summon.AI.context.targetEnemy);
+
+            threat.AI.context.targetEnemy = ally.hero;
+            int calls = summon.AI.AggroCalls;
+            Call(host, "CoopGuardTarget", state); // 同じ標的でも期限は更新する。
+            Assert.Equal(calls, summon.AI.AggroCalls);
+            Time.time += 0.24f;
+            summon.AI.Aggro(owned);
+            Assert.Same(threat, summon.AI.context.targetEnemy);
+            Assert.Empty(Log.Warnings);
+        }
+
+        [Fact]
+        public void Pack_guard_expiry_invalid_target_and_pool_release_restore_owned_enemy_preference()
+        {
+            var host = Host(out _);
+            var ally = Player(5);
+            var nachia = Player(9);
+            var threat = Threat(host, 100, ally.hero);
+            var owned = Spawn(host, 101);
+            var actors = new ActorManager();
+            actors.allHeroes.AddRange(new[] { ally.hero, nachia.hero });
+            actors.allEntities.AddRange(new[] { owned, threat });
+            Set(host, "_am", actors);
+            var summon = new Summon { hero = nachia.hero };
+            summon.AI = new EntityAI { entity = summon };
+            var state = PackGuard(host, nachia.hero, summon);
+            Assert.Same(threat, summon.AI.context.targetEnemy);
+
+            Time.time += 0.25f;
+            summon.AI.Aggro(threat);
+            Assert.Same(owned, summon.AI.context.targetEnemy); // 期限ちょうどで担当優先へ戻る。
+            Assert.Empty((IDictionary)Get(host, "_summonGuardTargets"));
+
+            Call(host, "CoopGuardTarget", state);
+            Assert.Same(threat, summon.AI.context.targetEnemy);
+            threat.isActive = false;
+            summon.AI.Aggro(threat);
+            Assert.Same(owned, summon.AI.context.targetEnemy);
+            Assert.Empty((IDictionary)Get(host, "_summonGuardTargets"));
+
+            threat.isActive = true;
+            Call(host, "CoopGuardTarget", state);
+            host.ReleaseEnemyOwnership(summon); // プール返却時に指示を持ち越さない。
+            Assert.Empty((IDictionary)Get(host, "_summonGuardTargets"));
+            summon.AI.Aggro(threat);
+            Assert.Same(owned, summon.AI.context.targetEnemy);
+            Call(host, "CoopGuardTarget", state);
+            host.ReleaseEnemyOwnership(threat); // 敵の再利用時も指示を持ち越さない。
+            Assert.Empty((IDictionary)Get(host, "_summonGuardTargets"));
+            Assert.Empty(Log.Warnings);
+        }
+
+        [Fact]
+        public void Pack_guard_leaves_uncommanded_summons_disabled_ownership_and_solo_unchanged()
+        {
+            var host = Host(out _);
+            var ally = Player(5);
+            var nachia = Player(9);
+            var threat = Threat(host, 100, ally.hero);
+            var owned = Spawn(host, 101);
+            var actors = new ActorManager();
+            actors.allHeroes.AddRange(new[] { ally.hero, nachia.hero });
+            actors.allEntities.AddRange(new[] { owned, threat });
+            Set(host, "_am", actors);
+            var summon = new Summon { hero = nachia.hero };
+            summon.AI = new EntityAI { entity = summon };
+            summon.AI.Aggro(threat);
+            Assert.Same(owned, summon.AI.context.targetEnemy); // 番犬なしは担当優先。
+            var state = PackGuard(host, nachia.hero, summon);
+            var other = new Summon { hero = nachia.hero };
+            other.AI = new EntityAI { entity = other };
+            other.AI.Aggro(threat);
+            Assert.Same(owned, other.AI.context.targetEnemy); // 同じ主人でも指示なしは担当優先。
+
+            host.ConfigureEnemyOwnership(false);
+            Assert.Empty((IDictionary)Get(host, "_summonGuardTargets"));
+            summon.AI.context.targetEnemy = owned;
+            Call(host, "CoopGuardTarget", state);
+            Assert.Same(threat, summon.AI.context.targetEnemy); // OFF時の番犬発動は従来どおり。
+            summon.AI.Aggro(owned);
+            Assert.Same(owned, summon.AI.context.targetEnemy); // OFF時の本体の再標的も従来どおり。
+            Assert.Empty((IDictionary)Get(host, "_summonGuardTargets"));
+
+            host.ConfigureEnemyOwnership(true);
+            DewPlayer.gamePlayers.Remove(ally);
+            actors.allHeroes.Remove(ally.hero);
+            Call(host, "CoopGuardTarget", state); // ソロでは指示対象の味方がいない。
+            Assert.Same(owned, summon.AI.context.targetEnemy);
+            summon.AI.Aggro(threat);
+            Assert.Same(threat, summon.AI.context.targetEnemy); // ソロは本体の選択を維持。
+            Assert.Empty((IDictionary)Get(host, "_summonGuardTargets"));
             Assert.Empty(Log.Warnings);
         }
 
@@ -432,6 +715,28 @@ namespace Issue73.Native.Tests
             Time.time = 10.1f;
             Call(host, "ScanEnemyOwnership");
             Assert.Same(b, OwnerOf(host, enemy)); // 6秒で最も近い生存者へ
+            Assert.Empty(Log.Warnings);
+        }
+
+        [Fact]
+        public void A_far_owner_keeps_the_enemy_while_everyone_else_is_far_too()
+        {
+            var host = Host(out _);
+            var a = Player(5);
+            var b = Player(9);
+            var enemy = Spawn(host, 100); // → a
+            a.hero.position = new Vector3(40f, 0f, 0f);
+            b.hero.position = new Vector3(-35f, 0f, 0f); // 交代先も 30m 以上離れている
+            for (float t = 2f; t <= 40f; t += 0.25f)
+            {
+                Time.time = t;
+                Call(host, "ScanEnemyOwnership");
+                Assert.Same(a, OwnerOf(host, enemy)); // 遠い人どうしで6秒ごとに持ち主が入れ替わらない
+            }
+            b.hero.position = new Vector3(-5f, 0f, 0f); // 誰かが近づけば渡す
+            Time.time = 41f;
+            Call(host, "ScanEnemyOwnership");
+            Assert.Same(b, OwnerOf(host, enemy));
             Assert.Empty(Log.Warnings);
         }
 

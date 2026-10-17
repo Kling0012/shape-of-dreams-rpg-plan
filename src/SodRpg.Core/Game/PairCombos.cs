@@ -170,7 +170,10 @@ namespace SodRpg.Core.Game
                 : def.Effect == GimmickEffect.Shield ? $"Shield +{n}% of maximum HP"
                 : def.Effect == GimmickEffect.Burst ? $"Area bonus damage +{n}% of the higher of attack damage or ability power"
                 : def.Effect == GimmickEffect.Echo ? $"Follow-up damage +{n}% of damage dealt"
-                : $"Element application +{entry.Value / 100} stacks";
+                : entry.Value < 100
+                    ? $"Element application: {entry.Value}% chance of +1 stack"
+                    : $"Element application +{entry.Value / 100} stack{(entry.Value / 100 == 1 ? "" : "s")}"
+                        + (entry.Value % 100 == 0 ? "" : $" (plus a {entry.Value % 100}% chance of one more)");
             var notes = new List<string>();
             if (disabled.Length > 0) notes.Add(disabled.TrimEnd());
             if (summon.Length > 0) notes.Add(summon.TrimEnd());

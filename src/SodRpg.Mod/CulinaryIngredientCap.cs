@@ -37,7 +37,7 @@ namespace SodRpg.Mod
         private static readonly List<MethodInfo> Targets = new List<MethodInfo>();
         private static Harmony _harmony;
         private static Type _ingredientType;
-        private static bool _enabled, _warned;
+        private static bool _enabled, _warned, _warnedUnsafe;
 
         internal static void Install(Harmony harmony)
         {
@@ -114,6 +114,14 @@ namespace SodRpg.Mod
             Log.Warn("Culinary ingredient cap disabled; other MOD features remain active: " + ex.Message);
         }
 
+        private static void WarnUnsafe(int original)
+        {
+            if (_warnedUnsafe) return;
+            _warnedUnsafe = true;
+            Log.Warn("Native culinary cooking limit is not safe: " + original
+                + "; this ingredient stack keeps its native behavior, other stacks remain capped.");
+        }
+
         private static bool TryCapacity(StackedStatusEffect effect, out int cookingBatch)
         {
             cookingBatch = 0;
@@ -130,7 +138,12 @@ namespace SodRpg.Mod
                         // actors and clients. Never guess the serialized prefab's native limit.
                         int original = effect.maxStack;
                         if (original <= 0 || (double)(3f * original) > int.MaxValue)
-                            throw new InvalidOperationException("Native culinary cooking limit is not safe: " + original);
+                        {
+                            // Leave only this actor native (e.g. one raised by an old build). Disabling
+                            // every hook would leave already-raised actors without their cooking batch.
+                            WarnUnsafe(original);
+                            return false;
+                        }
                         capacity = Tuple.Create(original);
                         capacities.Add(effect, capacity);
                     }

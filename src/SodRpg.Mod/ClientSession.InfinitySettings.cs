@@ -58,11 +58,15 @@ namespace SodRpg.Mod
             return null;
         }
 
+        // 起動モードは一覧へのプレイヤー追加より先に決まる。協力ホストが一時的に1人でもソロにしない。
+        internal bool SoloBounties => CanChooseRunRules
+            && DewNetworkManager.startSettings?.networkMode == DewNetworkMode.Singleplayer;
+
         private void InitializeInfinityRun()
         {
-            if (!InfinityMode.Available || !ContinueReady || InfinityMode.Restoring
-                || _nativeContinueCheckpoint != null || Profile.Run == null
-                || _infinityInitializedRun == Profile.Run.RunId) return;
+            if (!ContinueReady || InfinityMode.Restoring || _nativeContinueCheckpoint != null || Profile.Run == null) return;
+            EnsureReachableBounties(); // 通常モードの遠征も対象にする。
+            if (!InfinityMode.Available || _infinityInitializedRun == Profile.Run.RunId) return;
             _infinityInitializedRun = Profile.Run.RunId;
             _infinityResultStarted = false;
             ResetInfinitySaveHold();
@@ -78,10 +82,24 @@ namespace SodRpg.Mod
                 }
             }
             _infinityObservedClears = Profile.Run.Infinity?.ClearedCombatTotal ?? 0;
+            EnsureReachableBounties(); // インフィニティが付いた後。
             if (Profile.Run.Infinity == null) return;
             if (CanChooseRunRules && InfinityMode.InitialState == null) ValidateHostInfinityContinue();
             else if (CanChooseRunRules) PersistHostInfinityState();
         }
+
+        /// <summary>ソロ・インフィニティでは進まない未着手の依頼を、進められる依頼に入れ替える。</summary>
+        private void EnsureReachableBounties()
+        {
+            try
+            {
+                if (Profile.Run != null && Rules.ReplaceUnreachableBounties(Profile, SoloBounties))
+                    MarkDirty(false);
+            }
+            catch (System.Exception ex) { Log.Warn("Client: bounty reachability check skipped: " + ex.Message); }
+        }
+
+        internal static void EnsureHostReachableBounties() => _hostSession?.EnsureReachableBounties();
 
         private int _advertisedInfinityInterval = -1;
         private string _advertisedInfinityIntervalText;

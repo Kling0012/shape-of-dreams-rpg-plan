@@ -497,6 +497,8 @@ namespace SodRpg.Mod
             catch (Exception ex) { DisableCoopKey(state, ex); }
         }
 
+        partial void RecordOwnershipTaunt(Entity enemy, Hero hero, float seconds);
+
         private void CoopDrawThreats(CoopKeyState state)
         {
             if (_am == null) return;
@@ -504,7 +506,11 @@ namespace SodRpg.Mod
             {
                 if (!CoopEnemy(state.Hero, enemy) || enemy.currentHealth <= 0f) continue;
                 var ally = enemy.AI?.context.targetEnemy as Hero;
-                if (CoopPair(state.Hero, ally, state.V("radius")) > 0f) enemy.AI.Aggro(state.Hero);
+                if (CoopPair(state.Hero, ally, state.V("radius")) > 0f)
+                {
+                    RecordOwnershipTaunt(enemy, state.Hero, CoopBalance.ShieldWallTauntSeconds);
+                    enemy.AI.Aggro(state.Hero);
+                }
             }
         }
 
@@ -595,6 +601,8 @@ namespace SodRpg.Mod
             }
         }
 
+        partial void RecordSummonGuardTarget(Summon summon, Entity enemy, float seconds);
+
         private void CoopGuardTarget(CoopKeyState state)
         {
             if (_am == null || !_runtimes.TryGetValue(state.Hero, out var rt)) return;
@@ -613,7 +621,9 @@ namespace SodRpg.Mod
                     float distance = (enemy.agentPosition - summon.agentPosition).sqrMagnitude;
                     if (distance < nearest && summon.CanAggroTo(enemy)) { selected = enemy; nearest = distance; }
                 }
-                if (selected != null && summon.AI.context.targetEnemy != selected) summon.AI.Aggro(selected);
+                if (selected == null) continue;
+                RecordSummonGuardTarget(summon, selected, 0.25f);
+                if (summon.AI.context.targetEnemy != selected) summon.AI.Aggro(selected);
             }
         }
 

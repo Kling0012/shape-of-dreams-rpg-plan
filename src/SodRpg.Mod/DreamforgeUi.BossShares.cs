@@ -49,16 +49,20 @@ namespace SodRpg.Mod
 
         private static string[] MakeBossShareLabels()
         {
-            var result = new string[8 * 101];
+            var result = new string[8 * 102];
             for (int slot = 0; slot < 4; slot++)
                 for (int own = 0; own < 2; own++)
-                    for (int percent = 0; percent <= 100; percent++)
-                        result[(slot * 2 + own) * 101 + percent] = (own == 1 ? "◆" : "◇") + (slot + 1) + " " + percent + "%";
+                    for (int percent = 0; percent <= 101; percent++)
+                        result[(slot * 2 + own) * 102 + percent] = (own == 1 ? "◆" : "◇") + (slot + 1) + " "
+                            + (percent == 101 ? "<1" : percent.ToString()) + "%";
             return result;
         }
 
+        private static int BossSharePercent(BossShareDisplay share) =>
+            share.remaining > 0 && share.remaining < 10 ? 101 : Mathf.Clamp((share.remaining + 5) / 10, 0, 100);
+
         private static string BossShareText(BossShareDisplay share, bool own) =>
-            BossShareLabels[((share.playerSlot - 1) * 2 + (own ? 1 : 0)) * 101 + Mathf.Clamp((share.remaining + 5) / 10, 0, 100)];
+            BossShareLabels[((share.playerSlot - 1) * 2 + (own ? 1 : 0)) * 102 + BossSharePercent(share)];
 
         private static void ShareFill(Rect rect, Color color)
         {
@@ -121,11 +125,12 @@ namespace SodRpg.Mod
             foreach (var share in ownership.BossShares)
             {
                 if (share.participantId != DewPlayer.local.guid) continue;
-                int key = share.playerSlot * 101 + (share.remaining + 5) / 10;
+                int percent = BossSharePercent(share);
+                int key = share.playerSlot * 102 + percent;
                 if (_miniBossShareValues.TryGetValue(netId, out int previous) && previous == key
                     && _miniBossShares.TryGetValue(netId, out var cached)) return cached;
                 string text = UiStyles.Colored("◆" + share.playerSlot, OwnershipColors[share.playerSlot - 1])
-                    + " " + ((share.remaining + 5) / 10) + "%";
+                    + " " + (percent == 101 ? "<1" : percent.ToString()) + "%";
                 var content = new GUIContent(text);
                 var label = new Label3D { Text = text, Content = content, Size = _st.ToastMeasure.CalcSize(content) };
                 _miniBossShareValues[netId] = key;

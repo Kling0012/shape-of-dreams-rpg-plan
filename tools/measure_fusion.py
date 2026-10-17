@@ -19,8 +19,8 @@ def main():
     parser.add_argument("--revision", help="read SyncFusion from this git revision")
     args = parser.parse_args()
     source_path = "src/SodRpg.Mod/DreamforgeUi.Fusion.cs"
-    source = (subprocess.check_output(["git", "show", f"{args.revision}:{source_path}"], cwd=ROOT, text=True)
-              if args.revision else (ROOT / source_path).read_text())
+    source = (subprocess.check_output(["git", "show", f"{args.revision}:{source_path}"], cwd=ROOT, text=True, encoding="utf-8")
+              if args.revision else (ROOT / source_path).read_text(encoding="utf-8"))
     # Keep production fields, FusionRelicState, FusionState and SyncFusion verbatim.
     source = source.split("        private void DrawFusion(Relic target)")[0]
     source += """
@@ -32,17 +32,17 @@ def main():
 """
     build = ROOT / "tools/obj/fusion-perf"
     build.mkdir(parents=True, exist_ok=True)
-    (build / "FusionSource.cs").write_text(source)
+    (build / "FusionSource.cs").write_text(source, encoding="utf-8")
     # Use the production title formatting as well (all static helpers at the end).
-    styles = (ROOT / "src/SodRpg.Mod/UiStyles.cs").read_text()
+    styles = (ROOT / "src/SodRpg.Mod/UiStyles.cs").read_text(encoding="utf-8")
     styles = styles[styles.index("        public static string RarityHex"):]
-    (build / "UiStyles.cs").write_text("using SodRpg.Core.Game;\nnamespace SodRpg.Mod { internal partial class UiStyles {\n" + styles)
+    (build / "UiStyles.cs").write_text("using SodRpg.Core.Game;\nnamespace SodRpg.Mod { internal partial class UiStyles {\n" + styles, encoding="utf-8")
     (build / "FusionPerf.csproj").write_text(f"""<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net10.0</TargetFramework><NoWarn>CS0169;CS0649;CS0414</NoWarn><NuGetAudit>false</NuGetAudit></PropertyGroup>
   <ItemGroup><ProjectReference Include="{ROOT / 'src/SodRpg.Core/SodRpg.Core.csproj'}" /></ItemGroup>
 </Project>
-""")
-    (build / "Program.cs").write_text(PROGRAM)
+""", encoding="utf-8")
+    (build / "Program.cs").write_text(PROGRAM, encoding="utf-8")
     subprocess.run(["dotnet", "run", "--project", str(build / "FusionPerf.csproj"), "-c", "Release"],
                    cwd=ROOT, env={**os.environ, "DOTNET_TieredCompilation": "0"}, check=True)
 

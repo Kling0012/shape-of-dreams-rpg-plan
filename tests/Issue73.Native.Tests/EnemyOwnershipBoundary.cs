@@ -76,7 +76,16 @@ namespace SodRpg.Mod
         public float detectionRange = 20f;
         public readonly EntityAIContext context = new EntityAIContext();
         public int AggroCalls;
-        public void Aggro(Entity target) { AggroCalls++; context.targetEnemy = target; }
+        public void Aggro(Entity target)
+        {
+            if (Mirror.NetworkServer.active)
+            {
+                HostAuthority.NativeInstance?.SelectSummonOwnershipAggro(this, ref target);
+                if (HostAuthority.NativeInstance?.SelectOwnershipAggro(this, ref target) == false) return;
+            }
+            AggroCalls++;
+            context.targetEnemy = target;
+        }
     }
 
     // RoomMonsters.SpawnMonsterImp が受ける本体の湧き設定。rule.isBossSpawn だけが担当判定に入る。
@@ -87,6 +96,14 @@ namespace SodRpg.Mod
 
     internal sealed partial class HostAuthority
     {
+        // 刻印の選択状態のみ境界で保持。盾壁の標的選択と挑発記録は実ソースを実行する。
+        private sealed class CoopKeyState
+        {
+            internal Hero Hero;
+            internal KeystoneDefinition Definition;
+            internal float V(string name) => CoopKeystones.Value(Definition, name);
+        }
+
         // HostAuthority.cs / HostAuthority.PressureDividend.cs（リンク外）が呼び出し元の定義宣言。
         partial void OwnershipEntityAdded(Entity entity);
         partial void OwnershipEntityRemoved(Entity entity);

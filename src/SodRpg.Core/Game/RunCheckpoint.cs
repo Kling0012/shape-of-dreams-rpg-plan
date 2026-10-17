@@ -203,7 +203,7 @@ namespace SodRpg.Core.Game
             // Non-random lobby edits and rejected transactions keep the checkpoint cursor.
             if (current.RngState != baseline.RngState) restored.RngState = current.RngState;
             if (restored.RetuneOffer != null && restored.FindStash(restored.RetuneOffer.Uid) == null) restored.RetuneOffer = null;
-            restored.StarterUids.RemoveAll(uid => restored.FindStash(uid) == null);
+            restored.StarterUids.RemoveAll(uid => !restored.ContainsRelicUid(uid));
             return true;
         }
 

@@ -54,6 +54,8 @@ namespace SodRpg.Mod
             "boss_light_elemental.head","boss_light_elemental.hands","boss_light_elemental.feet",
             "boss_light_elemental.stage2","boss_light_elemental.stage3","boss_light_elemental.stage6",
         };
+        // Warn once per process when the stage2 table lacks the second action; the profile is static, so a static flag suffices.
+        private static bool _lightChargeProfileWarned;
         private readonly BossObjectPool<LightCombat> _lightPool = new BossObjectPool<LightCombat>(64,()=>new LightCombat());
         private readonly Dictionary<HeroRuntime,LightCombat> _lightCombat = new Dictionary<HeroRuntime,LightCombat>(64);
         private static bool LightAvailable(HeroRuntime rt,BossAction action,float now)
@@ -134,7 +136,18 @@ namespace SodRpg.Mod
         }
         private void LightChargeInput(HeroRuntime rt,LightCombat state,Vector3 origin,Vector3 direction,float now)
         {
-            if(!BossFind(rt,LightProfiles[6],out var entry,out var profile) || profile.Actions.Count<2) return;
+            if(!BossFind(rt,LightProfiles[6],out var entry,out var profile)) return;
+            if(profile.Actions.Count<2)
+            {
+                // Fail-soft: without the second action the charge count and lifetime are unknown, so only this
+                // charge handling is skipped. Surface the misconfigured table once instead of dropping input silently.
+                if(!_lightChargeProfileWarned)
+                {
+                    _lightChargeProfileWarned=true;
+                    Log.Warn("Host: "+LightProfiles[6]+" has fewer than 2 actions; Light charge input skipped. Check tools/balance/bosses/light.json");
+                }
+                return;
+            }
             if(now>=state.ChargeUntil) state.Charges=0;
             var action=profile.Actions[0];
             var charge=profile.Actions[1]; // The second action defines the charge count and sliding lifetime.
@@ -332,11 +345,12 @@ namespace SodRpg.Mod
                 element:BossElement.Light,count:state.Charges,budget:3-state.Charges,targetNetId:rt.Hero.netId);
             state.ChargeRefresh=now+1f; if(state.Charges==0) state.ChargeVisual=0;
         }
-        private void LightCancelProfile(HeroRuntime rt,LightCombat state,int index,float now)
+        private void LightCancelProfile(HeroRuntime rt,LightCombat state,int index,float now,bool keepCooldowns=false)
         {
             string id=LightProfiles[index]; BossCancelProfileReservations(rt,BossProfiles.LightSetId,id); rt.Boss.Defense.CancelSource(this,rt,id);
             for(int i=0;i<state.Beams.Length;i++) if(state.Beams[i].Active && state.Beams[i].Profile==id) LightStopBeam(rt,state.Beams[i],now);
-            if(BossProfiles.TryGetMove(id,out var profile)) for(int i=0;i<profile.Actions.Count;i++) rt.Boss.Ready.Remove(profile.Actions[i].RuntimeKey);
+            // 装備の付け替えでは、報酬効果の継続可否とは別にクールダウンを残す。
+            if(!keepCooldowns && BossProfiles.TryGetMove(id,out var profile)) for(int i=0;i<profile.Actions.Count;i++) rt.Boss.Ready.Remove(profile.Actions[i].RuntimeKey);
             if(index==2 || index==8) LightClearCrystals(rt,state,now);
             if(index==4) { state.HandsCount=0; state.HandsUntil=0; }
             if(index==6) { state.Charges=0; state.ChargeUntil=0; LightPublishCharges(rt,state,now); }
@@ -362,12 +376,12 @@ namespace SodRpg.Mod
                 if(!_lightCombat.TryGetValue(rt,out var current) || current!=state) return;
             }
         }
-        private void ClearLightBoss(HeroRuntime rt,bool preserveRewards=false)
+        private void ClearLightBoss(HeroRuntime rt,bool preserveRewards=false,bool keepCooldowns=false)
         {
             if(!preserveRewards) ClearWorldCrackers(rt);
             if(!_lightCombat.TryGetValue(rt,out var state)) return;
             float now=Time.time;
-            for(int i=0;i<LightProfiles.Length;i++) LightCancelProfile(rt,state,i,now);
+            for(int i=0;i<LightProfiles.Length;i++) LightCancelProfile(rt,state,i,now,keepCooldowns);
             LightClearCrystals(rt,state,now); state.Charges=0; LightPublishCharges(rt,state,now);
             state.HandsCount=0; state.ChargeUntil=state.HandsUntil=0; state.Mask=0; state.Epoch=state.OwnerLife=0;
             state.Room=null; state.Run=null; Array.Clear(state.Seen,0,state.Seen.Length); Array.Clear(state.Next,0,state.Next.Length);

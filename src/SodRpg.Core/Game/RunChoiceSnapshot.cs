@@ -61,7 +61,8 @@ namespace SodRpg.Core.Game
             }
             text.Append('|').Append(AuthorityGeneration.ToString(CultureInfo.InvariantCulture));
             if (Infinity != null)
-                text.Append('|').Append(Convert.ToBase64String(Encoding.UTF8.GetBytes(Json.Write(ProfileCodec.WriteInfinity(Infinity)))));
+                text.Append('|').Append(Convert.ToBase64String(Encoding.UTF8.GetBytes(
+                    Json.Write(ProfileCodec.WriteInfinity(Infinity, protocol24Projection: true)))));
             return text.ToString();
         }
 

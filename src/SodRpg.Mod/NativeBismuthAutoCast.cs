@@ -80,6 +80,29 @@ namespace SodRpg.Mod
             if (state.Frame == Time.frameCount) return;
             state.Frame = Time.frameCount;
 
+            float now = Time.time;
+            var graphics = ManagerBase<GraphicsManager>.instance;
+            float pressure = Mathf.Max(AutocastPressure.RemoteOver, AutocastPressure.NetOver);
+            pressure = Mathf.Clamp01(Mathf.Max(pressure, graphics != null ? graphics.perfPressureStrength : 0f));
+            bool coop = DewPlayer.allHumanPlayers.Count > 1;
+            bool nativeCadence = AutoCastCoopSettings.NativeCadence;
+            bool allPeersSupported = AutocastPressure.AllPeersSupported;
+            // This pressure is a lower bound until local sampling below. Reject only ticks
+            // that cannot cast even at that bound, without sampling an all-unready frame.
+            AutoCastCadence.Compute(pressure, coop, nativeCadence, allPeersSupported,
+                out float interval, out int castsPerSecond);
+            if (now - state.LastCastTime < interval) return;
+
+            // Inspect expiry without changing the ring: idle ticks must not update history.
+            int head = state.CastHead;
+            int count = state.CastCount;
+            while (count > 0 && now - state.CastTimes[head] >= 1f)
+            {
+                head = (head + 1) % RingSize;
+                count--;
+            }
+            if (count >= castsPerSecond) return;
+
             int ready = 0;
             float range = 0f;
             var queued = hero.Control.queuedActions;
@@ -96,17 +119,11 @@ namespace SodRpg.Mod
             }
             if (ready == 0) return;
 
-            float now = Time.time;
             float over = AutocastPressure.SampleFrame();
-            var graphics = ManagerBase<GraphicsManager>.instance;
-            float pressure = Mathf.Max(over, AutocastPressure.RemoteOver);
-            pressure = Mathf.Max(pressure, AutocastPressure.NetOver);
-            pressure = Mathf.Clamp01(Mathf.Max(pressure, graphics != null ? graphics.perfPressureStrength : 0f));
-            bool coop = DewPlayer.allHumanPlayers.Count > 1;
-            // Host-side selection needs no guest update. Unknown peers keep native pacing
-            // even when the host opts out, as before the cooperative targeting change.
-            AutoCastCadence.Compute(pressure, coop, AutoCastCoopSettings.NativeCadence,
-                AutocastPressure.AllPeersSupported, out float interval, out int castsPerSecond);
+            pressure = Mathf.Clamp01(Mathf.Max(pressure, over));
+            // Unknown peers keep native pacing even when the host opts out.
+            AutoCastCadence.Compute(pressure, coop, nativeCadence, allPeersSupported,
+                out interval, out castsPerSecond);
             if (now - state.LastCastTime < interval) return;
 
             // A fixed ring enforces a rolling one-second cap without per-tick allocations.

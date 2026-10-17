@@ -17,6 +17,8 @@ namespace SodRpg.Mod
         {
             internal Entity Enemy;
             internal DewPlayer Owner;
+            internal Hero TauntHero;
+            internal float TauntUntil;
             internal bool Excluded, SharedObjective, OwnPressureHook;
             internal BossShares Shares;
             internal float Spawned, Changed, DownSince, AwaySince, OwnerLastEngaged;
@@ -51,6 +53,12 @@ namespace SodRpg.Mod
         internal void ConfigureEnemyOwnership(bool enabled)
         {
             _enemyOwnershipEnabled = enabled;
+            if (!enabled)
+            {
+                _summonGuardTargets.Clear();
+                foreach (var state in _enemyOwnership.Values)
+                { state.TauntHero = null; state.TauntUntil = 0f; }
+            }
             // The next scan/recalculation replaces personal pressure with room pressure.
         }
 
@@ -82,12 +90,32 @@ namespace SodRpg.Mod
         private static bool OwnershipAlive(DewPlayer player) => OwnershipConnected(player) && player.hero != null
             && player.hero.isActive && player.hero.Status != null && player.hero.Status.isAlive && !player.hero.isKnockedOut;
 
-        private DreamPressure OwnershipBasePressure(DewPlayer player)
+        private bool PersonalEnemyWaypointsRunning()
         {
-            if (player == null || !_builds.TryGetValue(player, out var received) || received.Build == null) return _pressure;
-            return DreamPressure.ForPlayer(received.Build.DreamLevel, received.Build.SpentStarPoints)
-                .WithRunModifiers(_pressure.Depth, _pressure.WaypointMultiplier)
-                .WithInfinityPressure(_pressure.InfinityStage);
+            if (ClientSession.HostRun?.Infinity == null) return false;
+            int count = 0;
+            foreach (var player in DewPlayer.gamePlayers)
+                if (OwnershipConnected(player) && ++count >= 2) return true;
+            return false;
+        }
+
+        // Shared enemies have no personal cost. Solo and ordinary co-op retain the host's rule.
+        private Waypoints.Totals EnemyWaypointTotals(Entity enemy)
+        {
+            if (!PersonalEnemyWaypointsRunning())
+                return Waypoints.Sum(ClientSession.HostRun?.ActiveWaypoint ?? Waypoint.None);
+            return TryOwnership(enemy, OwnershipPart.Assignment, out var state)
+                ? InfinityMode.WaypointTotalsForPlayer(state.Owner.guid) : Waypoints.Sum(Waypoint.None);
+        }
+
+        private DreamPressure OwnershipBasePressure(DewPlayer player, bool sharedEnemy = false)
+        {
+            var pressure = player != null && _builds.TryGetValue(player, out var received) && received.Build != null
+                ? DreamPressure.ForPlayer(received.Build.DreamLevel, received.Build.SpentStarPoints) : _pressure;
+            double waypoint = _pressure.WaypointMultiplier;
+            if (PersonalEnemyWaypointsRunning())
+                waypoint = sharedEnemy || player == null ? 1 : InfinityMode.WaypointTotalsForPlayer(player.guid).PressureMultiplier;
+            return pressure.WithRunModifiers(_pressure.Depth, waypoint).WithInfinityPressure(_pressure.InfinityStage);
         }
 
         private readonly struct OwnershipPressureValue
@@ -100,8 +128,8 @@ namespace SodRpg.Mod
             }
         }
 
-        private OwnershipPressureValue OwnershipPressure(DewPlayer player) =>
-            new OwnershipPressureValue(OwnershipBasePressure(player), DynamicFactor(player));
+        private OwnershipPressureValue OwnershipPressure(DewPlayer player, bool sharedEnemy = false) =>
+            new OwnershipPressureValue(OwnershipBasePressure(player, sharedEnemy), DynamicFactor(player));
 
         private OwnershipPressureValue OwnershipEnemyPressure(EnemyOwnership state) =>
             new OwnershipPressureValue(OwnershipBasePressure(state.Owner), EnemyDynamicFactor(state.Enemy));
@@ -296,6 +324,7 @@ namespace SodRpg.Mod
                     multiplier = (float)OwnershipEnemyPressure(state).HealthMultiplier;
                 else
                 {
+                    if (PersonalEnemyWaypointsRunning()) multiplier = (float)OwnershipBasePressure(null).HealthMultiplier;
                     OverrideBossShareHealth(enemy, ref multiplier);
                     ApplySoloDynamicHealth(enemy, ref multiplier);
                 }
@@ -326,7 +355,11 @@ namespace SodRpg.Mod
             {
                 if (TryOwnership(enemy, OwnershipPart.Strength, out var state))
                     multiplier = (float)OwnershipEnemyPressure(state).DamageMultiplier;
-                else ApplySoloDynamicDamage(enemy, ref multiplier);
+                else
+                {
+                    if (PersonalEnemyWaypointsRunning()) multiplier = (float)OwnershipBasePressure(null).DamageMultiplier;
+                    ApplySoloDynamicDamage(enemy, ref multiplier);
+                }
             }
             catch (Exception ex) { FailOwnership(OwnershipPart.Strength, ex); }
         }
@@ -498,11 +531,36 @@ namespace SodRpg.Mod
                     ai.entity.agentPosition, hero.agentPosition) == NavMeshPathStatus.PathComplete);
         }
 
+        partial void RecordOwnershipTaunt(Entity enemy, Hero hero, float seconds)
+        {
+            try
+            {
+                if (hero == null || !(seconds > 0f) || float.IsInfinity(seconds)
+                    || !TryOwnership(enemy, OwnershipPart.Targeting, out var state)) return;
+                state.TauntHero = hero;
+                state.TauntUntil = Time.time + seconds;
+            }
+            catch (Exception ex) { FailOwnership(OwnershipPart.Targeting, ex); }
+        }
+
+        private static bool TryOwnershipTaunt(EnemyOwnership state, out Hero hero)
+        {
+            hero = state.TauntHero;
+            if (hero != null && Time.time < state.TauntUntil && OwnershipAlive(hero.owner)
+                && hero.owner.hero == hero && state.Enemy.CanAggroTo(hero)
+                && state.Enemy.GetRelation(hero) == EntityRelation.Enemy) return true;
+            state.TauntHero = null;
+            state.TauntUntil = 0f;
+            hero = null;
+            return false;
+        }
+
         internal bool SelectOwnershipAggro(EntityAI ai, ref Entity target)
         {
             try
             {
                 if (ai == null || !TryOwnership(ai.entity, OwnershipPart.Targeting, out var state)) return true;
+                if (TryOwnershipTaunt(state, out var taunt)) { target = taunt; return true; }
                 var player = OwnershipHuman(target);
                 if (target is Summon) return player == null || player == state.Owner || !OwnershipProtected(state);
                 // Keep a valid native taunt until native AI actually drops that summon.
@@ -521,7 +579,16 @@ namespace SodRpg.Mod
             try
             {
                 if (ai == null || !TryOwnership(ai.entity, OwnershipPart.Targeting, out var state)) return;
+                bool hadTaunt = !ReferenceEquals(state.TauntHero, null);
+                if (TryOwnershipTaunt(state, out var taunt))
+                {
+                    if (ai.context.targetEnemy != taunt) ai.Aggro(taunt);
+                    RecordOwnershipTarget(state);
+                    return;
+                }
                 RecordOwnershipTarget(state);
+                // An expired/invalid taunt returns to ownership on this update, even before the native timer.
+                retargetDue |= hadTaunt;
                 // Native Aggro calls cover ordinary searches. This covers the extra 1.5x range
                 // when native overlap finds nobody, without resetting the timer every AI tick.
                 if ((retargetDue || ai.context.targetEnemy == null) && OwnershipAlive(state.Owner)
@@ -612,7 +679,11 @@ namespace SodRpg.Mod
                 {
                     RefreshSharedObjectiveOwnership(state.Enemy);
                     ScanBossShares(state, running);
-                    if (!running) ChangeOwnership(state, null);
+                    if (!running)
+                    {
+                        state.TauntHero = null; state.TauntUntil = 0f;
+                        ChangeOwnership(state, null);
+                    }
                     else if (!state.Excluded && !state.SharedObjective)
                     {
                         if (state.Enemy.IsAnyBoss()) { state.Excluded = true; ChangeOwnership(state, null); }
@@ -656,7 +727,16 @@ namespace SodRpg.Mod
             bool idle = now - state.OwnerLastEngaged >= CoopBalance.Ownership.IdleSeconds;
             if (now - state.Changed < CoopBalance.Ownership.ReassignCooldown || !(down || far || idle)) return;
             var replacement = OwnershipReplacement(state);
-            if (replacement != null && (down || far || now - OwnershipLastFight(state, replacement) <= CoopBalance.Ownership.EngageWindow))
+            bool replacementFought = replacement != null && now - OwnershipLastFight(state, replacement) <= CoopBalance.Ownership.EngageWindow;
+            // Leaving only because the owner is far: hand over to someone fighting it or actually near it.
+            // Otherwise two far players took turns every AwaySeconds, swinging the enemy's strength each time.
+            // A hero-less candidate counts as far as well (defensive: OwnershipReplacement only returns
+            // OwnershipAlive players, which have heroes) — it has no position to prove it is within
+            // ReleaseDistance, so the owner simply keeps the enemy until someone is near or fighting.
+            if (far && !down && !replacementFought && replacement != null
+                && (replacement.hero == null || (replacement.hero.position - state.Enemy.position).sqrMagnitude
+                    >= CoopBalance.Ownership.ReleaseDistance * CoopBalance.Ownership.ReleaseDistance)) return;
+            if (replacement != null && (down || far || replacementFought))
                 ChangeOwnership(state, replacement);
         }
 
@@ -679,6 +759,7 @@ namespace SodRpg.Mod
         internal void ReleaseEnemyOwnership(Entity enemy)
         {
             if (ReferenceEquals(enemy, null)) return;
+            ReleaseSummonGuardTarget(enemy);
             CompleteDynamicSpawn(enemy);
             ReleaseDynamicEnemy(enemy);
             if (enemy is Monster monster) _bossNativeHealth.Remove(monster);
@@ -705,6 +786,8 @@ namespace SodRpg.Mod
             }
             state.Enemy = null;
             state.Owner = null;
+            state.TauntHero = null;
+            state.TauntUntil = 0f;
             state.Shares = null;
             state.Excluded = state.SharedObjective = state.OwnPressureHook = false;
             state.AppliedHealth = float.NaN;
@@ -716,6 +799,8 @@ namespace SodRpg.Mod
 
         private void ClearEnemyOwnership()
         {
+            _summonGuardTargets.Clear();
+            _summonGuardScratch.Clear();
             _ownershipScratch.Clear();
             foreach (var enemy in _enemyOwnership.Keys) _ownershipScratch.Add(enemy);
             foreach (var enemy in _ownershipScratch) ReleaseEnemyOwnership(enemy);

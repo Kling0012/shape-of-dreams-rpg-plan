@@ -157,6 +157,7 @@ namespace SodRpg.Mod
             _restoring = false;
             _refresh = false;
             _newInfinity = false;
+            ReleaseMatchedZone();
             // #144: every distinct check that stops Infinity is logged by name; the first reason
             // stays in the lobby notice. Later checks used to be swallowed silently, hiding which
             // patch or interception actually disabled the feature on a player's machine.
@@ -333,6 +334,7 @@ namespace SodRpg.Mod
             _newInfinity = ClientSession.HostChosenInfinityEnabled;
             _initial = null; _runId = null;
             _generationReportedRun = null;
+            ReleaseMatchedZone();
             _choice = null; _choiceText = null; Acks.Clear();
             _ackWaitingChoice = null;
             var settings = NetworkedManagerBase<GameSettingsManager>.softInstance;
@@ -354,6 +356,7 @@ namespace SodRpg.Mod
             ResetPersonalWaypoints(clearSettings: false);
             _hunterAdjustSuspended = false;
             _hunterMoveCounter = 0;
+            ReleaseMatchedZone();
             Acks.Clear(); _choice = null; _choiceText = null;
             _ackWaitingChoice = null;
         }
@@ -380,7 +383,19 @@ namespace SodRpg.Mod
             if (settings == null || !settings.customData.TryGetValue(RuntimeKey, out var text)) return false;
             try { envelope = JsonConvert.DeserializeObject<Envelope>(text); }
             catch (JsonException ex) { Log.Warn("Infinity: discarded unreadable runtime envelope: " + ex.Message); return false; }
-            return envelope?.State != null;
+            if (envelope?.State == null) return false;
+            var state = envelope.State;
+            // Legacy finale envelopes carry no marker and contain the artificial interval counter.
+            // Normalize against the current graph receipt to match ProfileCodec's migration.
+            if (!state.FinalePromoted && state.FixedZoneId == "Zone_Primus"
+                && state.ClearsInCycle == state.Interval
+                && state.ClearedNodes.Count < state.Interval
+                && state.Phase >= InfinityPhase.BossDue && state.Phase <= InfinityPhase.AwaitingChoice)
+            {
+                state.ClearsInCycle = state.ClearedNodes.Count;
+                state.FinalePromoted = true;
+            }
+            return true;
         }
 
         internal static bool MatchesProfile(RunState run)
@@ -395,6 +410,7 @@ namespace SodRpg.Mod
                 && (b.DifficultyId == null || b.DifficultyId == NetworkedManagerBase<GameManager>.softInstance?.difficulty?.name)
                 && a.GraphEpoch == b.GraphEpoch && a.SegmentEpoch == b.SegmentEpoch && a.RoomEpoch == b.RoomEpoch
                 && a.ClearedCombatTotal == b.ClearedCombatTotal && a.ClearsInCycle == b.ClearsInCycle
+                && a.BossDue == b.BossDue
                 && a.Phase == b.Phase && a.ChoiceRevision == b.ChoiceRevision
                 && a.TransitionIntent == b.TransitionIntent && a.SoulObserved == b.SoulObserved
                 && a.SettledGraphEpoch == b.SettledGraphEpoch && a.SettledSegmentEpoch == b.SettledSegmentEpoch
@@ -437,6 +453,7 @@ namespace SodRpg.Mod
             if (run == null || run.Infinity != null || _initial == null || _restoring) return;
             if (run.RunId != NetworkedManagerBase<GameManager>.softInstance?.runId) return;
             run.Infinity = _initial.Clone();
+            ClientSession.EnsureHostReachableBounties();
             ClientSession.PersistHostInfinityState();
         }
         internal static InfinityRunState InitialState => _initial;
@@ -525,8 +542,21 @@ namespace SodRpg.Mod
 
         // Unity's Object.name allocates a new string on every read, and TickNative runs every frame on the host.
         // Remember the zone asset that last matched so the name is read only when the zone or fixed id changes.
+        // Assumption (#538): a Zone's name does not change while the run uses it — native never renames a
+        // live zone asset, identity changes arrive as a different Zone instance — so the remembered instance
+        // is enough and a same-instance rename would go undetected until the instance or fixed id changes.
+        // If native ever renames zones in use, clear this cache at that rename instead.
         private static Zone _matchedZone;
         private static string _matchedZoneId;
+
+        // Releasing the remembered zone must not depend on CurrentZoneMatches being reached again:
+        // once Infinity is disabled or the run moves on, TickNative stops calling it, and the static
+        // reference would pin a destroyed Zone for the rest of the session (#538).
+        private static void ReleaseMatchedZone()
+        {
+            _matchedZone = null;
+            _matchedZoneId = null;
+        }
 
         private static bool CurrentZoneMatches(Zone current, string fixedZoneId)
         {
@@ -981,8 +1011,10 @@ namespace SodRpg.Mod
                 if (state.RoomEpoch == long.MaxValue)
                 { InfinityMode.DisableFeature("Infinity room epoch exhausted."); return; }
                 state.RoomEpoch++;
+                // The room identity must reach the native envelope even when no host profile receipt exists yet.
+                // Persist the profile without serializing and broadcasting that same envelope a second time.
                 InfinityMode.WriteEnvelope();
-                ClientSession.PersistHostInfinityState();
+                ClientSession.PersistHostInfinityState(writeEnvelope: false);
             }
             catch (Exception ex) { InfinityMode.InterceptionFailed(nameof(InfinityRoomIdentity), ex); }
         }

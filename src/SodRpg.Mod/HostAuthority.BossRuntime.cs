@@ -436,7 +436,7 @@ namespace SodRpg.Mod
             ClearErebosBoss(rt, preserveRewards && BossRewardUnchanged(rt, BossProfiles.ErebosRewardId));
             ClearSeekerBoss(rt, preserveRewards && BossRewardUnchanged(rt, BossProfiles.SeekerRewardId, includeEquipment: false));
             ClearAzurakBoss(rt, preserveRewards && BossRewardUnchanged(rt, BossProfiles.AzurakRewardId)); ClearPrimusBoss(rt, preserveRewards);
-            ClearLightBoss(rt, preserveRewards && BossRewardUnchanged(rt, BossProfiles.LightRewardId));
+            ClearLightBoss(rt, preserveRewards && BossRewardUnchanged(rt, BossProfiles.LightRewardId), keepCooldowns: preserveRewards);
             ClearMawBoss(rt, preserveRewards && BossRewardUnchanged(rt, BossProfiles.MawRewardId));
             ClearObliviaxBoss(rt, preserveRewards && BossRewardUnchanged(rt, BossProfiles.ObliviaxRewardId)); ClearPolarisBoss(rt, preserveRewards);
             var s = rt.Boss;

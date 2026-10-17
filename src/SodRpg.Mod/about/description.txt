@@ -1,5 +1,5 @@
-[b]Fixes save error messages disappearing and shows save failure reasons in Japanese or English to match the display language.[/b]
-[b]保存エラーの表示が消えてしまう不具合を修正し、保存失敗の理由を表示言語に合わせて出すようにしました。[/b]
+[b]Fixes co-op elites becoming unkillable at 0% share, enemies far from everyone switching owners repeatedly, training bonuses missing from mod heals and shields, and the codex not updating after making relics forbidden, plus several star map, loot and description fixes.[/b]
+[b]協力プレイで分担0%のエリートを倒せなくなる問題、離れた敵の担当が入れ替わり続ける問題、鍛錬の回復・シールド強化が反映されない問題、禁忌化後に図鑑が更新されない問題などを直しました。[/b]
 
 [h1]Dreamforge RPG[/h1]
 Turns every run into part of a long RPG journey: relics you keep, a risky "secure or delve" choice at every zone, a star map per Traveler, a forge, and long-term goals. Co-op ready.

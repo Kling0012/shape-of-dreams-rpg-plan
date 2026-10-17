@@ -26284,6 +26284,18 @@
             "amount": {
               "valueRef": "lacerta.run.g1/growth/effects/1/amount"
             }
+          },
+          {
+            "stat": "Armor",
+            "amount": {
+              "valueRef": "lacerta.run.g1/growth/effects/2/amount"
+            }
+          },
+          {
+            "stat": "AttackSpeedPct",
+            "amount": {
+              "valueRef": "lacerta.run.g1/growth/effects/3/amount"
+            }
           }
         ]
       },

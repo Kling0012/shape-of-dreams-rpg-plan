@@ -115,6 +115,9 @@ namespace SodRpg.Mod
         /// <summary>直近の描画で、マウスが確保地点のパネルの上にあったか（クリックをゲームへ通さないため）。</summary>
         public bool MouseOverPanel { get; private set; }
 
+        /// <summary>メニューの言語の切り替えを保存する（ホストかどうかに関係なく、各自の設定）。</summary>
+        internal Action SaveLanguageConfig;
+
         public DreamforgeUi(ClientSession session, Func<DreamforgeConfig> cfg, Action saveLevelEssenceConfig = null)
         {
             _s = session;
@@ -488,7 +491,8 @@ namespace SodRpg.Mod
             string xp = p.DreamLevel >= Content.MaxDreamLevel ? "MAX" : (p.DreamXp * 100 / Math.Max(1, need)) + "%";
             sb.Append(Loc.T("<b>Dreamforge</b>  夢のレベル ", "<b>Dreamforge</b>  Dream Lv ")).Append(p.DreamLevel).Append("  <color=#c4c4dc>(").Append(xp).Append(")</color>");
             sb.Append("\n<size=13>").Append(Loc.T("夢の深さ ", "Dream depth ")).Append(_s.ChosenDreamDepth)
-                .Append(Loc.T("・夢の圧 ", " · Pressure "));
+                .Append(run?.Infinity != null ? Loc.T("・共通の夢の圧 ", " · Shared pressure ")
+                    : Loc.T("・夢の圧 ", " · Pressure "));
             if (_s.HostConfirmed)
                 sb.Append("HP×").Append(_s.PressureHealthMultiplier.ToString("0.00"))
                     .Append(Loc.T("・攻×", " · ATK×")).Append(_s.PressureDamageMultiplier.ToString("0.00"));
@@ -668,12 +672,15 @@ namespace SodRpg.Mod
             GUILayout.EndArea();
         }
 
-        private (int Count, int Shards, int Tuning, int Heat, int Bonus, int Free, double NightmareMult, bool Japanese) _secureTextKey;
+        private (int Count, int Shards, int Tuning, int Heat, int Bonus, int Free, double NightmareMult, bool Japanese,
+            float PressureHealth, float NightmareGear, Waypoint Active, Waypoint Pending, bool Infinity) _secureTextKey;
         private string _secureLootText, _secureBonusText, _secureOverflowText, _secureDelveText, _secureNightmareText, _secureExtraText;
 
         private void CacheSecureText(RunState run, int bonus, int free, double nmMult)
         {
-            var key = (run.Satchel.Count, run.SatchelShards, run.SatchelTuning, run.Heat, bonus, free, nmMult, Loc.Japanese);
+            var pendingWaypoint = run.WaypointChosen ? run.PendingWaypoint : Waypoint.None;
+            var key = (run.Satchel.Count, run.SatchelShards, run.SatchelTuning, run.Heat, bonus, free, nmMult, Loc.Japanese,
+                _s.PressureHealthMultiplier, _s.NightmareGearMultiplier, run.ActiveWaypoint, pendingWaypoint, run.Infinity != null);
             if (_secureLootText != null && _secureTextKey.Equals(key)) return;
             _secureTextKey = key;
             int next = Math.Min(Content.MaxHeat, run.Heat + 1);
@@ -693,12 +700,50 @@ namespace SodRpg.Mod
                 + $"遺物の出る量が{(int)(Loot.HeatDropBonus * 100 * next)}%増えてレア度も上がりますが、受けるダメージも{Build.DamageTakenPerDelvePct * next}%増えます。全滅すると、まだ持ち帰っていない物は遺失物になります。",
                 (atCap ? $"Move on without securing; delve stays at {next} (the maximum)." : $"Move on without securing; delve becomes {next}.")
                 + $" Relic drops +{(int)(Loot.HeatDropBonus * 100 * next)}% with better rarity, but you take {Build.DamageTakenPerDelvePct * next}% more damage. If your party falls, unsecured loot becomes Lost & Found.");
-            int nmNormal = (int)(Math.Min(1.0, Nightmares.Chance(MonsterTier.Normal, next) * nmMult) * 100);
-            int nmElite = (int)(Math.Min(1.0, Nightmares.Chance(MonsterTier.MiniBoss, next) * nmMult) * 100);
-            string nmDay = nmMult > 1.0 ? Loc.T("（今日の夢で増えています）", " (raised by today's dream)") : "";
-            _secureNightmareText = UiStyles.Colored(Loc.T(
-                $"潜行{next}では、通常の敵の{nmNormal}%、エリートの{nmElite}%が「悪夢化」して強くなります{nmDay}（ボスは対象外）。倒すと、一段上の戦利品が出ます。",
-                $"At delve {next}, {nmNormal}% of regular enemies and {nmElite}% of elites become stronger nightmares{nmDay} (bosses excluded). They drop loot a tier higher."), "#ff9ae0");
+            // ホストの抽選（ProcessSpawns → RollWaypointNightmare）と同じ倍率・同じ確率関数で表示する（#572）。
+            var waypoint = Waypoints.Sum(pendingWaypoint);
+            double pressureMult = 1.0;
+            if (run.Infinity == null)
+            {
+                // 同期された敵HPの倍率は今のゾーンの道標の圧を含むため、選択中の道標の圧に置き換える。
+                double activePressure = Waypoints.Sum(run.ActiveWaypoint).PressureMultiplier;
+                double health = _s.PressureHealthMultiplier / (activePressure > 0 ? activePressure : 1.0) * waypoint.PressureMultiplier;
+                pressureMult = DreamPressure.NightmareChanceMultiplierForHealth(health);
+            }
+            bool gearKnown = _s.NightmareGearMultiplier >= 1f;
+            double gearMult = gearKnown ? _s.NightmareGearMultiplier : 1.0;
+            double chanceMult = nmMult * pressureMult * gearMult;
+            string ownershipNote = run.Infinity != null ? Loc.T(
+                "協力プレイでは、以下の道標効果と確率は自分の担当敵が対象です。担当のない敵には道標は適用されません。\n",
+                "In co-op, these waypoint effects and chances apply to enemies assigned to you. Unassigned enemies receive no waypoint effects.\n") : "";
+            if (waypoint.AllNightmares)
+            {
+                _secureNightmareText = UiStyles.Colored(ownershipNote + Loc.T(
+                    $"潜行{next}では、選んだ道標により、ボス以外のすべての敵が「悪夢化」して強くなります。倒すと、一段上の戦利品が出ます。",
+                    $"At delve {next}, your waypoint makes every non-boss enemy a stronger nightmare. They drop loot a tier higher."), "#ff9ae0");
+                return;
+            }
+            int nmNormal = (int)(Nightmares.WaypointChance(MonsterTier.Normal, next, chanceMult, waypoint) * 100);
+            int nmElite = (int)(Nightmares.WaypointChance(MonsterTier.MiniBoss, next, chanceMult, waypoint) * 100);
+            string jaRaised = "", enRaised = "";
+            void Raised(bool raised, string ja, string en)
+            {
+                if (!raised) return;
+                jaRaised += (jaRaised.Length > 0 ? "・" : "") + ja;
+                enRaised += (enRaised.Length > 0 ? ", " : "") + en;
+            }
+            Raised(nmMult > 1.0, "今日の夢", "today's dream");
+            Raised(pressureMult > 1.0, "夢の圧", "dream pressure");
+            Raised(waypoint.NightmareChanceMultiplier > 1.0, "道標", "your waypoint");
+            Raised(gearMult > 1.0, "装備", "gear");
+            string nmRaised = jaRaised.Length > 0 ? Loc.T($"（{jaRaised}で増えています）", $" (raised by {enRaised})") : "";
+            string atLeastJa = gearKnown ? "" : "以上";
+            string atLeastEn = gearKnown ? "" : "at least ";
+            string gearNote = gearKnown ? "" : Loc.T("ホストの装備による増加はまだ届いていないため、最低値を表示しています。",
+                " These are minimums; the host has not reported its gear bonus yet.");
+            _secureNightmareText = UiStyles.Colored(ownershipNote + Loc.T(
+                $"潜行{next}では、通常の敵の{nmNormal}%{atLeastJa}、エリートの{nmElite}%{atLeastJa}が「悪夢化」して強くなります{nmRaised}（ボスは対象外）。倒すと、一段上の戦利品が出ます。{gearNote}",
+                $"At delve {next}, {atLeastEn}{nmNormal}% of regular enemies and {atLeastEn}{nmElite}% of elites become stronger nightmares{nmRaised} (bosses excluded). They drop loot a tier higher.{gearNote}"), "#ff9ae0");
         }
 
         private void DrawSecurePrompt(float w, float h, DreamforgeConfig cfg)
@@ -1337,6 +1382,24 @@ namespace SodRpg.Mod
 
         // DrawWindow は DreamforgeUi.Window.cs へ移した（#147 の順序の試験と一緒に管理する）。
 
+        // 遺失物を取り戻す部屋数は工房（遺失物の地図）で減るので、今の値を表示する。
+        private const string HowToPlayRooms = "{rooms}";
+        private string _howToPlayText;
+        private bool _howToPlayJa;
+        private int _howToPlayRooms = -1;
+        private string HowToPlayText(Profile p)
+        {
+            int rooms = Workshop.RoomsToRecover(p);
+            bool ja = Loc.Japanese;
+            if (_howToPlayText == null || ja != _howToPlayJa || rooms != _howToPlayRooms)
+            {
+                _howToPlayJa = ja;
+                _howToPlayRooms = rooms;
+                _howToPlayText = HowToPlay.ToString().Replace(HowToPlayRooms, rooms.ToString(System.Globalization.CultureInfo.InvariantCulture));
+            }
+            return _howToPlayText;
+        }
+
         private static readonly Txt HowToPlay = new Txt(
             "<b>このMODの目的</b>\n" +
             "本体の遠征に「持ち帰れる装備（遺物）」が加わります。遠征のたびに少しずつ装備を集めて鍛え、次の遠征をもっと深く、もっと楽に進めるようにしていきます。\n\n" +
@@ -1346,7 +1409,7 @@ namespace SodRpg.Mod
             "3. 新しいゾーンに着くと確保地点が開きます。ここで「確保する」か「深く潜る」かを選びます。\n" +
             "4. 確保した物は保管庫に入り、遠征が終わっても残ります。\n\n" +
             "<b>確保と潜行の考え方</b>\n" +
-            "確保すれば安全ですが、深く潜ると遺物が多く、良い物が出やすくなります。そのぶん敵は強くなり、受けるダメージも増えます。全滅すると、まだ持ち帰っていない物は遺失物になり、次の遠征で戦闘部屋を" + Content.RoomsToRecoverLost + "つ突破すると一番良い物を1つだけ取り戻せます。手応えを見ながら、どこで確保するかを決めるのがこのMODの駆け引きです。\n\n" +
+            "確保すれば安全ですが、深く潜ると遺物が多く、良い物が出やすくなります。そのぶん敵は強くなり、受けるダメージも増えます。全滅すると、まだ持ち帰っていない物は遺失物になり、次の遠征で戦闘部屋を" + HowToPlayRooms + "つ突破すると一番良い物を1つだけ取り戻せます。手応えを見ながら、どこで確保するかを決めるのがこのMODの駆け引きです。\n\n" +
             "<b>装備の育て方</b>\n" +
             "・装備：旅人ごとに6つの枠（主装備・頭・防具・手・足・装飾品）に装着します。\n" +
             $"・鍛冶：欠片で強化し（+{Content.EnhanceMilestoneFirst}と+{Content.EnhanceMilestoneSecond}で特性や固有効果が増えます）、調律石で特性を{Content.RetuneChoices}つの候補から選び直します。エピック以上は強化・再調律・限界突破・特性の洗い直しの素材費用が基本の{Content.ForgeMaterialCostMultiplier(Rarity.Epic)}倍です。いらない物は分解して欠片に戻せます。\n" +
@@ -1362,7 +1425,7 @@ namespace SodRpg.Mod
             "3. Each new zone opens a secure point where you choose to Secure or Delve.\n" +
             "4. Secured relics go to your stash and stay after the expedition ends.\n\n" +
             "<b>Securing vs. delving</b>\n" +
-            "Securing is safe. Delving gives more and better relics, but enemies get tougher and you take more damage. If your party falls, unsecured loot becomes Lost & Found; clear " + Content.RoomsToRecoverLost + " combat rooms next expedition to recover the best piece. Deciding when to secure is the heart of this mod.\n\n" +
+            "Securing is safe. Delving gives more and better relics, but enemies get tougher and you take more damage. If your party falls, unsecured loot becomes Lost & Found; clear " + HowToPlayRooms + " combat rooms next expedition to recover the best piece. Deciding when to secure is the heart of this mod.\n\n" +
             "<b>Growing your gear</b>\n" +
             "- Gear: each Traveler has six slots: weapon, head, armor, hands, feet and charm.\n" +
             $"- Forge: enhance with shards (+{Content.EnhanceMilestoneFirst} and +{Content.EnhanceMilestoneSecond} add an affix or a power), reroll an affix with tuning stones and pick from {Content.RetuneChoices} options. Epics and legendaries pay x{Content.ForgeMaterialCostMultiplier(Rarity.Epic)} the base materials for enhancement, retuning, limit breaks and affix rerolls. Salvage the rest into shards.\n" +
@@ -1985,7 +2048,8 @@ namespace SodRpg.Mod
                 else GUILayout.Label(Loc.T($"強化は+{maxEnhance}が上限です", $"Enhancement is capped at +{maxEnhance}"), _st.Small);
                 bool equippedSel = p.IsEquippedAnywhere(sel.Uid);
                 bool salvageBlocked = sel.Locked || (equippedSel && !_s.CanEditLoadout);
-                GUI.enabled = !_s.Trades.IsReserved(sel.Uid) && !salvageBlocked;
+                // 再調律の候補を選んでいる途中の遺物は Rules.Salvage も断る。
+                GUI.enabled = !_s.Trades.IsReserved(sel.Uid) && !salvageBlocked && p.RetuneOffer?.Uid != sel.Uid;
                 int svShards = Rules.SalvageValue(sel), svTuning = Content.SalvageTuning(sel.Rarity);
                 string svGain = Loc.T($"欠片{svShards}" + (svTuning > 0 ? $"・調律石{svTuning}" : ""), $"{svShards} shards" + (svTuning > 0 ? $", {svTuning} tuning" : ""));
                 bool weighty = equippedSel || sel.Rarity >= Rarity.Epic || sel.AwakenPoints > 0;
@@ -1998,8 +2062,13 @@ namespace SodRpg.Mod
                 {
                     if (_confirmSalvage == sel.Uid)
                     {
-                        Act(() => Rules.Salvage(p, sel.Uid, _s.Trades, !_s.CanEditLoadout), true);
-                        _selected = null;
+                        Act(() =>
+                        {
+                            var e = Rules.Salvage(p, sel.Uid, _s.Trades, !_s.CanEditLoadout);
+                            // 成功時は Info の通知、拒否時は例外。成功したときだけ選択を外す。
+                            if (e?.Kind == EventKind.Info) _selected = null;
+                            return e;
+                        }, true);
                         _confirmSalvage = null;
                     }
                     else _confirmSalvage = sel.Uid;
@@ -2114,7 +2183,7 @@ namespace SodRpg.Mod
                         if (fbConfirm)
                         {
                             _confirmForbid = null;
-                            Act(() => Rules.Forbid(p, sel.Uid, _s.Trades), true);
+                            Act(() => Rules.Forbid(p, sel.Uid, _s.Trades), true, affectsCodex: true);
                         }
                         else _confirmForbid = sel.Uid;
                     }
@@ -2150,10 +2219,11 @@ namespace SodRpg.Mod
             {
                 GUILayout.BeginHorizontal();
                 GUILayout.Label(Content.SlotName(slot).ToString(), _st.Label, GUILayout.Width(70));
-                GUI.enabled = p.Material(Materials.Shard) >= Rules.CraftShardCost(false);
+                bool stashRoom = p.Stash.Count < Workshop.StashCapacity(p); // Rules.Craft と同じ空き容量の条件
+                GUI.enabled = stashRoom && p.Material(Materials.Shard) >= Rules.CraftShardCost(false);
                 if (GUILayout.Button(Loc.T($"通常：アンコモン以上（欠片{Rules.CraftShardCost(false)}）", $"Basic: Uncommon+ ({Rules.CraftShardCost(false)} shards)"), _st.ButtonWrap, ShrinkWidth))
                     Act(() => Rules.Craft(p, slot, false), false);
-                GUI.enabled = p.Material(Materials.Shard) >= Rules.CraftShardCost(true) && p.Material(Materials.Tuning) >= Rules.CraftTuningCost(true);
+                GUI.enabled = stashRoom && p.Material(Materials.Shard) >= Rules.CraftShardCost(true) && p.Material(Materials.Tuning) >= Rules.CraftTuningCost(true);
                 if (GUILayout.Button(Loc.T($"上等：レア以上（欠片{Rules.CraftShardCost(true)}・調律石{Rules.CraftTuningCost(true)}）", $"Fine: Rare+ ({Rules.CraftShardCost(true)} shards, {Rules.CraftTuningCost(true)} tuning)"), _st.ButtonWrap, ShrinkWidth))
                     Act(() => Rules.Craft(p, slot, true), false);
                 GUI.enabled = true;
@@ -2717,7 +2787,10 @@ namespace SodRpg.Mod
             if (!(matching ? TravelerCombatNative.IsMelee(_s.LocalHero) : TravelerCombat.IsMelee(hero, true))) return;
             int on = _displayMeleeCoop;
             if ((on & (MeleeCoopSettings.RangeToSpeed | MeleeCoopSettings.Break | MeleeCoopSettings.Guard)) == 0) return;
-            StarSumAddTitle(Loc.T("近接の協力効果", "Melee co-op effects"));
+            // ほかの旅人のページではその旅人の攻撃アセットを読めず、近接になり得る4人には常に
+            // 出すしかない。遠距離攻撃のAurenaに「今は近接」と読まれないよう、題に条件を添える（#542）。
+            StarSumAddTitle(matching ? Loc.T("近接の協力効果", "Melee co-op effects")
+                : Loc.T("近接の協力効果（通常攻撃が近接の間）", "Melee co-op effects (while the basic attack is melee)"));
             if ((on & MeleeCoopSettings.RangeToSpeed) != 0) StarSumAddText(MeleeCoopText.RangeToSpeed);
             if ((on & MeleeCoopSettings.Break) != 0) StarSumAddText(MeleeCoopText.Break);
             if ((on & MeleeCoopSettings.Guard) != 0) StarSumAddText(MeleeCoopText.Guard);
@@ -3375,7 +3448,7 @@ namespace SodRpg.Mod
 
             GUILayout.BeginVertical(_st.Panel, GUILayout.Width(480));
             GUILayout.Label(Loc.T("遊び方", "How to play"), _st.Header);
-            GUILayout.Label(HowToPlay.ToString(), _st.Small);
+            GUILayout.Label(HowToPlayText(p), _st.Small);
             GUILayout.Space(6);
             GUILayout.Label(Loc.T("設定", "Settings"), _st.Header);
             GUILayout.BeginHorizontal();
@@ -3390,6 +3463,7 @@ namespace SodRpg.Mod
             {
                 cfg.japanese = !cfg.japanese;
                 Loc.Japanese = cfg.japanese;
+                SaveLanguageConfig?.Invoke(); // ほかのメニュー内の設定と同じく、すぐ保存する（次の起動で戻っていた）
             }
             GUILayout.Label(Loc.T("キーの割り当てや表示の大きさは、ゲームのMOD設定で変えられます。", "Keys and scale can be changed in the game's mod settings."), _st.Small);
             GUILayout.EndHorizontal();
@@ -3429,7 +3503,7 @@ namespace SodRpg.Mod
                     if (!b.Done && rerolls > 0)
                     {
                         int idx = i;
-                        if (GUILayout.Button(Loc.T($"引き直し（残り{rerolls}）", $"Reroll ({rerolls} left)"), _st.Button, GUILayout.Width(150))) Act(() => Rules.RerollBounty(p, idx), false);
+                        if (GUILayout.Button(Loc.T($"引き直し（残り{rerolls}）", $"Reroll ({rerolls} left)"), _st.Button, GUILayout.Width(150))) Act(() => Rules.RerollBounty(p, idx, _s.SoloBounties), false);
                     }
                     GUILayout.EndHorizontal();
                 }
