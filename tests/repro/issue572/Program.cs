@@ -48,6 +48,7 @@ internal static class Program
         };
         session.PressureHealthMultiplier = (float)pressure.HealthMultiplier;
         session.PressureDamageMultiplier = (float)pressure.DamageMultiplier;
+        session.NightmarePressureHealthMultiplier = (float)(1 + pressure.RewardPressure);
         return session;
     }
 
@@ -57,7 +58,7 @@ internal static class Program
         Loc.Japanese = japanese;
         var build = new Build { DreamLevel = level, SpentStarPoints = stars };
         if (strongGear) build.Stats[Stat.AttackPct] = 1000;
-        var pressure = DreamPressure.Average(new[] { build });
+        var pressure = DreamPressure.Average(new[] { build }).WithInfinityPressure(10);
         var session = Session(dailyId, pressure, waypoint);
         string text = new DreamforgeUi(session).PanelText();
         int[] shown = Percentages(text);
@@ -127,8 +128,7 @@ internal static class Program
         else
         {
             var pressure = DreamPressure.ForPlayer(30, 100);
-            session.PressureHealthMultiplier = (float)pressure.HealthMultiplier;
-            session.PressureDamageMultiplier = (float)pressure.DamageMultiplier;
+            session.NightmarePressureHealthMultiplier = (float)(1 + pressure.RewardPressure);
         }
         string after = ui.PanelText();
         Require(before != after, $"Only {(changeWaypoint ? "selected waypoint" : "synchronized pressure")} changed; panel remains stale: {after}");

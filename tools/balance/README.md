@@ -14,11 +14,11 @@
 段階3では鍛冶の残りを `forge.json`（schemaVersion 2）へ集約しました。
 保存済みの履歴番号・旧覚醒段・退役工房の返金原本は変更しません。
 
-## 協力プレイの難度（Issue #601）
+## 協力プレイの難度（Issue #601・PR #694）
 
-`coop.json` の `difficulty` が、協力時の本体人数ボーナスの緩和、夢の圧の増分と上限、圧由来の敵数上限、自動難易度Dの上限を持ちます。`ownership.bossShareFactor` は参加者の個人圧を合計したボスHPの係数です。`python tools/balance/gen_cs.py` で `Coop.Generated.cs` を再生成します。ソロの `pressure.json` と任意のソロD設定は維持します。
+v3.2.14の協力専用の緩和を撤回し、`coop.json` の `difficulty` セクションを除きました。夢の圧は `pressure.json` の共通式、本体人数ボーナスは本体の値、自動難易度Dは `dynamicDifficulty.maxFactor=3` を使います。`ownership.bossShareFactor` は0.7から0.8へ戻しました。
 
-`BalanceSim --mode pressure` の `pressure/coop` 行で1／2／4人の戦闘倍率と報酬倍率を比較できます。調整式、変更前後の比較、本体Limboとの関係は[調整資料](../../docs/specs/issue-601-coop-difficulty.md)を参照してください。
+担当外のダメージ減衰は#701の `ownership.helpDecayPercentByWorld=[0,30,60,90]` を維持しています。`python3 tools/balance/gen_cs.py` で `Coop.Generated.cs` を再生成します。BalanceSimの `pressure/coop` 比較行は撤回し、`pressure/player` の共通式の列挙を残しました。撤回前後の倍率と検証範囲は[調整資料](../../docs/specs/issue-601-coop-difficulty.md)を参照してください。
 
 ## 本体エッセンスと記憶の循環抑制
 
