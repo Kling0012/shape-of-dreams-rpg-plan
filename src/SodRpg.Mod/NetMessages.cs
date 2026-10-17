@@ -79,6 +79,8 @@ namespace SodRpg.Mod
         public string runChoices;
         // Optional JSON field: absent (0) from older hosts. Party gear multiplier for the secure-panel nightmare odds (#572).
         public float nightmareGearMultiplier;
+        // Uncapped pre-Infinity pressure for nightmare odds; 0 from older hosts.
+        public float nightmarePressureHealthMultiplier;
     }
 
     /// <summary>Host-only shared depth and waypoint choices; also carried by pressure catch-up messages.</summary>

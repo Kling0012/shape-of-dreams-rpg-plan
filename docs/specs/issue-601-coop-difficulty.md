@@ -217,7 +217,7 @@ NuGetキャッシュはworktree外の `/home/wang/.cache/gh-auto/nuget` を使�
 
 - `DreamPressure` の `_coopScaling`・`WithCoopScaling`・`CombatMultiplier` による協力用の圧緩和と敵数上限、`BossSharesNative` の本体人数ボーナス半減、`HostAuthority.DynamicDifficulty` の協力時D上限1.5を、v3.2.14の導入前の状態へ戻した。
 - `coop.json` から `difficulty` セクションを除き、`ownership.bossShareFactor` を0.8へ戻した。`Coop.Generated.cs` を再生成した。`ownership` の世界別の手伝い倍率（1・0.75・0.5）と `floor` の削除は維持する。
-- 悪夢化率の表示用に戦闘用とは別の圧を同期していた `nightmarePressureHealthMultiplier`（`NetMessages`・`ClientSession`・`DreamforgeUi`）を戻した。緩和前の圧は `PressureHealthMultiplier` 自体に戻るため、表示は同期1本で足りる。
+- 悪夢化率の表示には、Infinity補正前の圧を専用の `nightmarePressureHealthMultiplier`（`NetMessages`・`ClientSession`・`DreamforgeUi`）で同期する。戦闘用の `PressureHealthMultiplier` にはInfinity補正が含まれるため、この経路は維持する。下のレビュー対応で、専用値を除いていた変更を戻した。
 - BalanceSim の1／2／4人比較行、両READMEの本調整の節、関連テストのv3.2.14期待値を戻した。
 
 ### 維持する内容
@@ -242,3 +242,28 @@ NuGetキャッシュはworktree外の `/home/wang/.cache/gh-auto/nuget` を使�
 - 実ゲームでの協力プレイ・高リンボの体感確認、Unity内Harmony適用・実通信・描画：ゲームを起動できない環境のため。
 - フル／遅いテスト（`test_changed.py --all`・`SODRPG_SLOW=1`）：依頼に従い関連テストへ限定し、パイプラインへ委ねる。
 - BalanceSim の再実行：`pressure/coop` 比較行を戻したため、このモードの協力行はもう出力しない。ソロの数値は `pressure.json` と生成器が不変のため再照合不要とした。
+
+## レビュー対応：悪夢化率の表示用の圧
+
+### 原因と修正
+
+協力用の圧緩和を撤回しても、`DreamPressure.HealthMultiplier` には `1 + HealthPerInfinityStage * InfinityStage` が掛かる。ホストの悪夢化率はInfinity補正前の `RewardPressure` を入力とするため、戦闘用のHP倍率を表示に使うと、Infinity段階が正で確率が上限未満のときに表示だけが高くなる。
+
+`SendPressure` から `1 + _pressure.RewardPressure` を専用フィールドで送り、`OnPressure` で受けて `CacheSecureText` に渡す経路を復元した。専用値は接続切替・切断・遠征開始で初期化し、表示キャッシュのキーにも含める。専用値のない古いホストでは従来のHP倍率へフォールバックする。協力用のHP・攻撃・敵数・Dの緩和の撤回と、世界別の分担緩和は維持した。
+
+### このラウンドで実行した検証
+
+- 既存の `tests/repro/issue572/run.py` の確率ケースにInfinity段階10を入力し、表示用の圧も渡した。修正前は15件中8件失敗した。通常敵の表示43%に対しホストの計算は30.32%、2万回の抽選では30.11%だった。
+- 修正後はInfinity段階0・10でそれぞれ15件成功。段階だけを変えても表示は同じ30%となり、ホストの計算に一致した。既存のキャッシュ更新ケースも、表示用の圧だけを変える入力へ修正して成功した。新しいテストは作成していない。
+- 表示の入力だけを修正前のHP倍率へ戻すと15件中10件失敗し、修正を復元すると15件すべて成功した。
+- MODのReleaseビルド：終了コード0、エラー0・既存警告6件。
+- 分担・ボス・D・個人道標・協力予兆・#608の既存テスト：73成功・失敗0・スキップ0。
+- 圧・報酬・深度・Infinity・道標・悪夢の既存Coreテスト：133成功・失敗0・スキップ0。
+- `python3 -m unittest tools.tests.test_waypoint_balance tools.tests.test_stage6_balance`：6成功。
+- `python3 tools/balance/gen_cs.py --check`：終了コード0。
+
+### このラウンドで未実行の検証
+
+- 実ゲームでの序盤・高リンボの体感、Unity内の実通信・Harmony適用・描画：ゲームを起動できない環境のため。表示と抽選は本番メソッドを抽出する既存の再現テストで照合した。
+- フル／遅いテスト（`test_changed.py --all`・`SODRPG_SLOW=1`）：依頼に従いパイプラインへ委ねる。
+- BalanceSimと本体DLLの再逆コンパイル：今回の修正は既存の表示用の同期経路の復元であり、対象の関連テストと参照DLLビルドで確認した。
