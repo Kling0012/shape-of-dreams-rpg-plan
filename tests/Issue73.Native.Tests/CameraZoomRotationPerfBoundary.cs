@@ -22,6 +22,28 @@ namespace UnityEngine
         public static bool operator !=(Quaternion a, Quaternion b) => !a.Equals(b);
         public override string ToString() => "Euler(" + x + ", " + y + ", " + z + ")";
     }
+
+    // NativeOcclusionShaderIdlePerf のコンパイル用の境界。実物の Vector4 同士の比較は
+    // 成分の完全一致なので、同じ意味の等価だけを用意する。
+    internal struct Vector4 : IEquatable<Vector4>
+    {
+        public float x, y, z, w;
+        public Vector4(float x, float y, float z, float w) { this.x = x; this.y = y; this.z = z; this.w = w; }
+        public bool Equals(Vector4 other) => x == other.x && y == other.y && z == other.z && w == other.w;
+        public override bool Equals(object obj) => obj is Vector4 other && Equals(other);
+        public override int GetHashCode() => (((x.GetHashCode() * 397) ^ y.GetHashCode()) * 397 ^ z.GetHashCode()) * 397 ^ w.GetHashCode();
+        public static bool operator ==(Vector4 a, Vector4 b) => a.Equals(b);
+        public static bool operator !=(Vector4 a, Vector4 b) => !a.Equals(b);
+    }
+
+    // グローバルシェーダー値の受け口。テストからは呼ばれないため、呼び形だけを用意する。
+    internal static class Shader
+    {
+        public static void SetGlobalInt(int nameID, int value) { }
+        public static void SetGlobalFloat(int nameID, float value) { }
+        public static void SetGlobalVector(int nameID, Vector4 value) { }
+        public static void SetGlobalVectorArray(int nameID, Vector4[] values) { }
+    }
 }
 
 namespace SodRpg.Mod

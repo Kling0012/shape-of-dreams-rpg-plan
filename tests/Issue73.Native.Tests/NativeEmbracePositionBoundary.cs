@@ -60,6 +60,7 @@ namespace SodRpg.Mod
             nativeAttachFaceIdle = true, nativeEmbracePositionReuse = true, nativeAccessoryOffsetCache = true,
             nativeCooldownIdleMultiplier = true, nativeTransformSyncIdle = true,
             nativeSleepPositionReuse = true, nativeCastIndicatorCircle = true, nativeCameraZoomRotation = true,
+            nativeOcclusionIdle = true,
             nativeCharacterModelDisplayBounds = true, nativeKillTrackerCullThrottle = true,
             nativeCursorIdle = true, guestSkillLockRecovery = true;
     }
