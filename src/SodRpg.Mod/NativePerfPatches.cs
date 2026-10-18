@@ -370,7 +370,12 @@ namespace SodRpg.Mod
         // AttachToFace queries the shared baked-mesh cache every frame although a bake
         // happens at most once per Dew.BakeMeshInterval. Between bakes the query can only
         // find the same fresh entry, avoid re-baking and report "not new", so the caller
-        // dead-reckons exactly as it does without the query.
+        // dead-reckons exactly as it does without the query. The native gate itself is
+        // Time.unscaledTime-based (decompiled Dew.GetBakedMeshOptimized re-bakes only when
+        // Time.unscaledTime - bakeUnscaledTime > BakeMeshInterval and reports isNew only
+        // when bakeUnscaledTime == Time.unscaledTime), so this tracker records and compares
+        // the same clock and a non-default timeScale cannot desynchronize the two.
+        private const int PruneThreshold = 64;
         private static readonly Dictionary<int, float> LastNewBake = new Dictionary<int, float>();
         private static MethodInfo _target;
         private static bool _warned;
@@ -395,10 +400,38 @@ namespace SodRpg.Mod
 
         internal static void RecordNewBake(SkinnedMeshRenderer skin)
         {
-            LastNewBake[skin.GetInstanceID()] = Time.unscaledTime;
-            // Destroyed skins must not grow the table forever; relearning is harmless.
-            if (LastNewBake.Count > 64) LastNewBake.Clear();
+            float now = Time.unscaledTime;
+            // Prune entries that can no longer gate a lookup instead of clearing the table:
+            // a full clear would also erase fresh records, so in scenes with many baking
+            // renderers (many enemies, many FxMeshTrail) the skip would stop working
+            // exactly where it matters most.
+            if (LastNewBake.Count > PruneThreshold) PruneStale(now);
+            LastNewBake[skin.GetInstanceID()] = now;
         }
+
+        // Entries older than the bake interval never gate a lookup (the Prefix hands those
+        // back to the original), so removing them cannot change behavior; it only bounds
+        // the table that destroyed skins would otherwise grow forever.
+        internal static void PruneStale(float now)
+        {
+            List<int> stale = null;
+            foreach (KeyValuePair<int, float> pair in LastNewBake)
+                if (now - pair.Value > Dew.BakeMeshInterval)
+                {
+                    if (stale == null) stale = new List<int>();
+                    stale.Add(pair.Key);
+                }
+            if (stale == null) return;
+            for (int i = 0; i < stale.Count; i++)
+                LastNewBake.Remove(stale[i]);
+        }
+
+        // Skip only when the newest bake is from an earlier frame and still fresh: the
+        // native lookup cannot re-bake (that needs an older entry) and its dictionary and
+        // pool churn has no visible effect. On the bake frame itself (baked >= now) and
+        // once the entry ages past the interval the original must run again.
+        internal static bool ShouldSkipLookup(float baked, float now, float interval)
+            => baked < now && now - baked <= interval;
 
         private static bool Prefix(AttachToFace __instance, ref bool __result)
         {
@@ -408,11 +441,7 @@ namespace SodRpg.Mod
                 SkinnedMeshRenderer skin = __instance.targetRenderer;
                 if (skin == null || __instance.vertexIndex0 < 0) return true;
                 if (!LastNewBake.TryGetValue(skin.GetInstanceID(), out float baked)) return true;
-                float now = Time.unscaledTime;
-                // Skip only when the newest bake is from an earlier frame and still fresh:
-                // the native lookup cannot re-bake (that needs an older entry) and its
-                // dictionary and pool churn has no visible effect.
-                if (baked >= now || now - baked > Dew.BakeMeshInterval)
+                if (!ShouldSkipLookup(baked, Time.unscaledTime, Dew.BakeMeshInterval))
                     return true;
                 __result = false;
                 return false;
