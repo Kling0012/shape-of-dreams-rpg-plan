@@ -1,0 +1,7 @@
+- [ホーム / Home](Home)
+- [導入と基本操作 / Getting started](Getting-Started)
+- [遺物と鍛冶 / Relics and forge](Relics-and-Forge)
+- [旅人と星図 / Travelers and Star Map](Star-Map)
+- [インフィニティ / Infinity](Infinity)
+- [協力取引 / Co-op trade](Co-op-Trade)
+- [保存と続きから / Saves and Continue](Saves-and-Continue)
