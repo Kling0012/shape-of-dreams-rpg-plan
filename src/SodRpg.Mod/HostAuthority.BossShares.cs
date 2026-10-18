@@ -7,6 +7,12 @@ namespace SodRpg.Mod
 {
     internal sealed partial class HostAuthority
     {
+        // Actor.DealDamage (Dew.Core/Actor.cs:900) exits at or below this amount.
+        // Keep the lethal floor above that exit; native death uses HP <= 0.00001f (:1054).
+        // Recheck both native thresholds when updating the game reference.
+        private const double NativeSmallDamageCutoff = 0.0001;
+        private const double BossShareLethalDamageFloor = 2 * NativeSmallDamageCutoff;
+
         private sealed class BossShares
         {
             internal readonly DewPlayer[] Players = new DewPlayer[4];
@@ -216,12 +222,12 @@ namespace SodRpg.Mod
                     ? Math.Min(amount, shield / damage.damageToShieldMultiplier) : amount : 0;
                 double budget = Math.Max(0, amount - absorbed);
                 double accepted = PlanBossDamage(shares, player, budget, scope.Planned);
-                // Retain a little native overkill for a lethal plan below Actor.DealDamage's
-                // 0.0001 small-hit exit. Otherwise a floating-point HP remainder can be unkillable.
+                // Retain a little native overkill for a lethal plan below the small-hit exit.
+                // Otherwise a floating-point HP remainder can be unkillable.
                 // The HP setter still settles only the planned shares after immunity and shields.
                 double retained = accepted + absorbed;
                 if (accepted > 0 && LargestBossShare(shares, scope.Planned) < 0)
-                    retained = Math.Max(retained, 0.0002);
+                    retained = Math.Max(retained, BossShareLethalDamageFloor);
                 double keep = Math.Min(1, retained / amount);
                 // Keep very small help factors representable without rounding 1 - keep to 1.
                 if (keep <= 0) damage.ApplyReduction(1);
@@ -308,6 +314,8 @@ namespace SodRpg.Mod
                 var player = OwnershipHuman(victim);
                 var source = OwnershipSource(damage.actor ?? actor);
                 if (player == null || source == null || !OwnershipExcluded(source)) return;
+                // Normalize both sides through the helper: Infinity co-op excludes personal waypoints,
+                // even when _pressure still contains the host waypoint before RefreshPressure runs.
                 float factor = Mathf.Clamp((float)(OwnershipPressure(player, sharedEnemy: true).HealthMultiplier
                     / OwnershipBasePressure(null).HealthMultiplier),
                     CoopBalance.Ownership.BossDamageMin, CoopBalance.Ownership.BossDamageMax);

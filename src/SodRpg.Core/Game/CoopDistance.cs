@@ -6,9 +6,11 @@ namespace SodRpg.Core.Game
     /// <summary>Shared distance curve. State is transient and belongs to one ordered hero pair.</summary>
     public static class CoopDistance
     {
-        public static string Description => Loc.T(
-            $" 距離減衰が有効な場合、味方への効果量は{CoopBalance.FullRange}mまで全量、{CoopBalance.FullRange}～{CoopBalance.OuterRange}mで線形に0まで減衰する。範囲外へ出てから{CoopBalance.GraceSeconds}秒は直前の係数を保持する。距離減衰が無効な場合は{CoopBalance.FullRange}mまで全量で、{CoopBalance.FullRange}mを超えると猶予なしで切れる。",
-            $" With distance falloff enabled, allied effects are full through {CoopBalance.FullRange}m, fade linearly to zero from {CoopBalance.FullRange} to {CoopBalance.OuterRange}m, and retain the last coefficient for {CoopBalance.GraceSeconds}s after leaving range. With falloff disabled, they are full through {CoopBalance.FullRange}m and end beyond {CoopBalance.FullRange}m with no grace.");
+        public static string Description => Describe(Loc.Japanese);
+
+        public static string Describe(bool japanese) => japanese
+            ? $" 距離減衰が有効な場合、味方への効果量は{CoopBalance.FullRange}mまで全量、{CoopBalance.FullRange}～{CoopBalance.OuterRange}mで線形に0まで減衰する。範囲外へ出てから{CoopBalance.GraceSeconds}秒は直前の係数を保持する。距離減衰が無効な場合は{CoopBalance.FullRange}mまで全量で、{CoopBalance.FullRange}mを超えると猶予なしで切れる。"
+            : $" With distance falloff enabled, allied effects are full through {CoopBalance.FullRange}m, fade linearly to zero from {CoopBalance.FullRange} to {CoopBalance.OuterRange}m, and retain the last coefficient for {CoopBalance.GraceSeconds}s after leaving range. With falloff disabled, they are full through {CoopBalance.FullRange}m and end beyond {CoopBalance.FullRange}m with no grace.";
 
         /// <param name="fullRange">The effect's own full-strength radius (a radius upgrade widens it);
         /// the fade-out edge scales with it so the curve keeps its shape.</param>

@@ -62,7 +62,7 @@ namespace SodRpg.Core.Tests
             Assert.Null(loader.Error);
             Assert.Equal(8, loader.Slots.Profile.DreamLevel);
             Assert.Equal(13, loader.Slots.Profile.Revision);
-            Assert.Equal(2, loader.Slots.Profile.Hero("Hero_Husk").AuthoredMigrationVersion);
+            Assert.Equal(3, loader.Slots.Profile.Hero("Hero_Husk").AuthoredMigrationVersion);
             Assert.Equal(before[SoloPath], disk.ReadAllText(SoloPath + ".bak"));
         }
 
@@ -96,7 +96,7 @@ namespace SodRpg.Core.Tests
             Assert.True(loader.TryLoad(0, ProfileSessionKind.Solo, NoWriter));
             Assert.Equal(8, loader.Slots.Profile.DreamLevel);
             Assert.Equal(13, loader.Slots.Profile.Revision);
-            Assert.Equal(2, ProfileCodec.Read(disk.ReadAllText(SoloPath), null).Hero("Hero_Husk").AuthoredMigrationVersion);
+            Assert.Equal(3, ProfileCodec.Read(disk.ReadAllText(SoloPath), null).Hero("Hero_Husk").AuthoredMigrationVersion);
             Assert.Contains(SoloPath, fs.Mutations);
 
             fs.Mutations.Clear();
@@ -123,7 +123,7 @@ namespace SodRpg.Core.Tests
             Assert.Null(loader.Error);
             Assert.Equal(8, loader.Slots.Profile.DreamLevel);
             Assert.Equal(12, loader.Slots.Profile.Revision);
-            Assert.Equal(2, loader.Slots.Profile.Hero("Hero_Husk").AuthoredMigrationVersion);
+            Assert.Equal(3, loader.Slots.Profile.Hero("Hero_Husk").AuthoredMigrationVersion);
             Assert.Contains("injected migration " + operation, loader.Slots.Note);
             Assert.Equal(main, disk.ReadAllText(SoloPath));
             Assert.Equal(backup, disk.ReadAllText(SoloPath + ".bak"));
@@ -162,7 +162,7 @@ namespace SodRpg.Core.Tests
             Assert.Equal(ProfileSlot.Multi, slots.ActiveSlot);
             Assert.Equal(8, slots.Profile.DreamLevel);
             Assert.Equal(13, slots.Profile.Revision);
-            Assert.Equal(2, slots.Profile.Hero("Hero_Husk").AuthoredMigrationVersion);
+            Assert.Equal(3, slots.Profile.Hero("Hero_Husk").AuthoredMigrationVersion);
         }
 
         private static InMemoryFileSystem Saves(string path, bool newestInBackup = false)

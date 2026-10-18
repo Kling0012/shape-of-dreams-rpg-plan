@@ -47,6 +47,7 @@ namespace SodRpg.Mod
                 foreach (string part in msg.stacks.Split(','))
                 {
                     int eq = part.IndexOf('=');
+                    if (eq > 0 && RunGrowth.IsRemovedStar(part.Substring(0, eq))) continue;
                     if (eq <= 0 || !Gimmicks.ValidStarId(part.Substring(0, eq))
                         || !int.TryParse(part.Substring(eq + 1), NumberStyles.Integer, CultureInfo.InvariantCulture, out int stacks)
                         || stacks < 0)

@@ -16,7 +16,7 @@ namespace SodRpg.Core.Game
             {
                 string hero = "Hero_" + char.ToUpperInvariant(slug[0]) + slug.Substring(1);
                 foreach (var talent in HeroSigils.TreeFor(hero))
-                    if (talent.Id == id) return Loc.T("星『" + talent.Name.Ja + "』", "star “" + talent.Name.En + "”");
+                    if (talent.Id == id) return Loc.T("星『" + talent.DisplayName.Ja + "』", "star “" + talent.DisplayName.En + "”");
             }
             return Loc.T("（名前のない星）", "(unnamed star)");
         }

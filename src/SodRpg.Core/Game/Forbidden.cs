@@ -35,6 +35,10 @@ namespace SodRpg.Core.Game
             Pattern = Pattern, Variant = Variant, RemovedStat = RemovedStat, AddedPower = AddedPower, AddedValue = AddedValue,
         };
 
+        public bool SameAs(ForbiddenMark other) => other != null
+            && Pattern == other.Pattern && Variant == other.Variant && RemovedStat == other.RemovedStat
+            && AddedPower == other.AddedPower && AddedValue == other.AddedValue;
+
         /// <summary>通信用の短い文字列（区切りは「.」）。</summary>
         public string Encode() => string.Join(".", new[]
         {
