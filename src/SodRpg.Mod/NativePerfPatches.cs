@@ -1675,7 +1675,7 @@ namespace SodRpg.Mod
                 var replacement = new List<CodeInstruction>
                 {
                     // data.timestamp
-                    new CodeInstruction(OpCodes.Ldarga_S, DataArgIndex),
+                    new CodeInstruction(OpCodes.Ldarga_S, (byte)DataArgIndex),
                     new CodeInstruction(OpCodes.Ldfld, _timestamp),
                     // last.timestamp
                     new CodeInstruction(OpCodes.Ldarg_0),
@@ -1685,19 +1685,19 @@ namespace SodRpg.Mod
                     new CodeInstruction(OpCodes.Ldarg_0),
                     new CodeInstruction(OpCodes.Ldflda, _syncDataField),
                     new CodeInstruction(OpCodes.Ldfld, _position),
-                    new CodeInstruction(OpCodes.Ldarga_S, DataArgIndex),
+                    new CodeInstruction(OpCodes.Ldarga_S, (byte)DataArgIndex),
                     new CodeInstruction(OpCodes.Ldfld, _position),
                     // last.velocity, data.velocity
                     new CodeInstruction(OpCodes.Ldarg_0),
                     new CodeInstruction(OpCodes.Ldflda, _syncDataField),
                     new CodeInstruction(OpCodes.Ldfld, _velocity),
-                    new CodeInstruction(OpCodes.Ldarga_S, DataArgIndex),
+                    new CodeInstruction(OpCodes.Ldarga_S, (byte)DataArgIndex),
                     new CodeInstruction(OpCodes.Ldfld, _velocity),
                     // last.desiredAngle, data.desiredAngle
                     new CodeInstruction(OpCodes.Ldarg_0),
                     new CodeInstruction(OpCodes.Ldflda, _syncDataField),
                     new CodeInstruction(OpCodes.Ldfld, _desiredAngle),
-                    new CodeInstruction(OpCodes.Ldarga_S, DataArgIndex),
+                    new CodeInstruction(OpCodes.Ldarga_S, (byte)DataArgIndex),
                     new CodeInstruction(OpCodes.Ldfld, _desiredAngle),
                     new CodeInstruction(OpCodes.Call, AccessTools.Method(
                         typeof(NativePositionSyncIdlePerf), nameof(ShouldSendChange))),
@@ -1719,11 +1719,16 @@ namespace SodRpg.Mod
 
         // Pins the shipped gate body so the replacement above can only ever take over the
         // exact arithmetic it mirrors: one double constant (1.0), the float thresholds
-        // 0.0001/0.0001/0.1, exactly two reads of each of the four sync fields, and the
-        // subtraction/sqrMagnitude/DeltaAngle/Abs calls — with no other member reference.
-        // A game update that retunes a threshold or restructures the gate leaves the patch
-        // off (one warning) instead of silently overriding the new native formula.
-        private static bool ValidateNativeFormula()
+        // 0.0001/0.0001/0.1, exactly two reads of each of the four sync fields, the
+        // subtraction/sqrMagnitude/DeltaAngle/Abs calls — with no other member reference —
+        // and the comparison wiring (bge/bgt/bgt/cgt after the four constants, the three
+        // branches all jumping to one ldc.i4.1; ret tail, data.timestamp loaded before
+        // this._positionSyncData.timestamp around the sub). The comparison directions and
+        // the subtraction order decide the exact boundary values (>= 1.0 vs > 1.0, which
+        // side is subtracted), so a game update that flips either of them — or retunes a
+        // threshold or restructures the gate — leaves the patch off (one warning) instead
+        // of silently overriding the new native formula.
+        internal static bool ValidateNativeFormula()
         {
             try
             {
@@ -1735,17 +1740,28 @@ namespace SodRpg.Mod
                 var abs = AccessTools.Method(typeof(Mathf), nameof(Mathf.Abs), new[] { typeof(float) });
                 int r8 = 0;
                 double r8Value = 0;
+                int r8Index = -1;
                 var r4 = new List<float>();
                 var fieldReads = new Dictionary<string, int>();
                 int calls = 0;
+                var comparisons = new List<string>();
+                var comparisonIndices = new List<int>();
                 for (int i = 0; i < code.Count; i++)
                 {
-                    if (code[i].opcode == OpCodes.Ldc_R8)
+                    if (code[i].opcode == OpCodes.Ldc_R8 || code[i].opcode == OpCodes.Ldc_R4)
                     {
-                        r8++;
-                        r8Value = (double)code[i].operand;
+                        if (code[i].opcode == OpCodes.Ldc_R8)
+                        {
+                            r8++;
+                            r8Value = (double)code[i].operand;
+                            r8Index = i;
+                        }
+                        else r4.Add((float)code[i].operand);
+                        // The comparison each constant feeds (bge/bgt/... ; .s forms mean
+                        // the same comparison), in order of appearance.
+                        comparisons.Add(i + 1 < code.Count ? NormalizedComparison(code[i + 1].opcode) : null);
+                        comparisonIndices.Add(i + 1);
                     }
-                    else if (code[i].opcode == OpCodes.Ldc_R4) r4.Add((float)code[i].operand);
                     else if (code[i].opcode == OpCodes.Ldfld)
                     {
                         if (!(code[i].operand is FieldInfo field) || field.DeclaringType != _nested) return false;
@@ -1769,7 +1785,8 @@ namespace SodRpg.Mod
                     && fieldReads.TryGetValue("position", out int pos) && pos == 2
                     && fieldReads.TryGetValue("velocity", out int vel) && vel == 2
                     && fieldReads.TryGetValue("desiredAngle", out int ang) && ang == 2;
-                if (r8 == 1 && r8Value == 1.0 && r4Matches && fieldsMatch && calls == 6) return true;
+                if (r8 == 1 && r8Value == 1.0 && r4Matches && fieldsMatch && calls == 6
+                    && ComparisonsMatchNativeGate(code, comparisons, comparisonIndices, r8Index)) return true;
                 NativePerfPatch.Warn(ref _warned, "position sync idle", "native gate formula changed");
                 return false;
             }
@@ -1778,6 +1795,60 @@ namespace SodRpg.Mod
                 NativePerfPatch.Warn(ref _warned, "position sync idle", ex.Message);
                 return false;
             }
+        }
+
+        // The native gate compares in this order: data.timestamp - last.timestamp >= 1.0
+        // (bge), position delta sqrMagnitude > 0.0001 (bgt), velocity delta > 0.0001 (bgt),
+        // Abs(DeltaAngle(desiredAngle, lastDesiredAngle)) > 0.1 (cgt). Any other comparison
+        // opcode, a branch that no longer jumps to the common return-true tail, a missing
+        // ret after the cgt, or the timestamp subtraction loading the operands the other
+        // way around means the body no longer computes what ShouldSendChange mirrors.
+        private static bool ComparisonsMatchNativeGate(IList<CodeInstruction> code,
+            List<string> comparisons, List<int> comparisonIndices, int r8Index)
+        {
+            if (comparisons.Count != 4
+                || comparisons[0] != "bge" || comparisons[1] != "bgt"
+                || comparisons[2] != "bgt" || comparisons[3] != "cgt")
+                return false;
+            // The cgt feeds the return value directly.
+            if (comparisonIndices[3] + 1 >= code.Count
+                || code[comparisonIndices[3] + 1].opcode != OpCodes.Ret)
+                return false;
+            // The first three comparisons all jump to the same "return true" tail.
+            int tail = IndexOfLabel(code, code[comparisonIndices[0]].operand);
+            if (tail < 0 || tail + 1 >= code.Count
+                || code[tail].opcode != OpCodes.Ldc_I4_1 || code[tail + 1].opcode != OpCodes.Ret)
+                return false;
+            for (int b = 1; b < 3; b++)
+                if (IndexOfLabel(code, code[comparisonIndices[b]].operand) != tail) return false;
+            // data.timestamp first, then this._positionSyncData.timestamp, then sub, then
+            // the 1.0 constant (IL_0000..IL_001b of the shipped body).
+            return r8Index >= 6
+                && code[r8Index - 1].opcode == OpCodes.Sub
+                && code[r8Index - 2].opcode == OpCodes.Ldfld && Equals(code[r8Index - 2].operand, _timestamp)
+                && code[r8Index - 3].opcode == OpCodes.Ldflda && Equals(code[r8Index - 3].operand, _syncDataField)
+                && LoadsArg(code[r8Index - 4], 0)
+                && code[r8Index - 5].opcode == OpCodes.Ldfld && Equals(code[r8Index - 5].operand, _timestamp)
+                && LoadsArg(code[r8Index - 6], DataArgIndex);
+        }
+
+        // Name of a comparison opcode with the short-branch suffix normalized away
+        // (bge.s and bge compare the same way). .un variants stay distinct because they
+        // treat NaN differently and are not what the shipped body uses.
+        private static string NormalizedComparison(OpCode opcode)
+        {
+            string name = opcode.Name;
+            return name != null && name.EndsWith(".s", StringComparison.Ordinal)
+                ? name.Substring(0, name.Length - 2)
+                : name;
+        }
+
+        // Index of the instruction a branch operand (a Label) points at, or -1.
+        private static int IndexOfLabel(IList<CodeInstruction> code, object operand)
+        {
+            for (int i = 0; i < code.Count; i++)
+                if (operand is Label target && code[i].labels.Contains(target)) return i;
+            return -1;
         }
 
         private static bool ValidateCallsites(MethodBase method, int expected)
@@ -1808,14 +1879,35 @@ namespace SodRpg.Mod
             }
         }
 
+        // The shipped callsites are `[ldarg.0, ldarga.s data, call]`, and Harmony reads a
+        // short-form argument opcode's operand as a boxed byte (its own IsLdarg/IsLdarga
+        // normalize with Convert.ToInt32), not as an int. Accept every boxed integer width
+        // the readers can produce plus explicit ParameterInfo/LocalBuilder operands.
         private static bool LoadsArg(CodeInstruction instruction, int index)
             => instruction.opcode == OpCodes.Ldarg_0 && index == 0
             || instruction.opcode == OpCodes.Ldarg_1 && index == 1
             || (instruction.opcode == OpCodes.Ldarg || instruction.opcode == OpCodes.Ldarg_S)
-               && instruction.operand is int i && i == index;
+               && ArgOperandIndex(instruction) == index;
 
         private static bool LoadsArgAddress(CodeInstruction instruction, int index)
             => (instruction.opcode == OpCodes.Ldarga || instruction.opcode == OpCodes.Ldarga_S)
-               && instruction.operand is int i && i == index;
+               && ArgOperandIndex(instruction) == index;
+
+        // The argument index a variable-loading instruction refers to, or a value that
+        // matches no index. A ParameterInfo counts the declared parameters only, so an
+        // instance method's first declared parameter (IL slot 1, `this` being slot 0)
+        // still resolves to 1 here.
+        private static int? ArgOperandIndex(CodeInstruction instruction)
+        {
+            var operand = instruction.operand;
+            if (operand == null) return null;
+            if (operand is ParameterInfo parameter)
+                return parameter.Position + (parameter.Member is MethodInfo method && !method.IsStatic ? 1 : 0);
+            if (operand is LocalBuilder local) return local.LocalIndex;
+            if (operand is int || operand is uint || operand is byte || operand is sbyte
+                || operand is short || operand is ushort)
+                return Convert.ToInt32(operand);
+            return null;
+        }
     }
 }
