@@ -399,6 +399,20 @@ namespace SodRpg.Mod
         // Time.unscaledTime - bakeUnscaledTime > BakeMeshInterval and reports isNew only
         // when bakeUnscaledTime == Time.unscaledTime), so this tracker records and compares
         // the same clock and a non-default timeScale cannot desynchronize the two.
+        //
+        // Cache-lifetime audit (2026-10-18, decompiled Dew.Core Dew.cs): nothing on the
+        // game side clears the skin->bake table while an entry is still fresh. Its only
+        // removal paths are the maintenance sweep and the re-bake branch inside
+        // GetBakedMeshOptimized plus BakedMeshHandle.Return, and each of them removes an
+        // entry only after Time.unscaledTime - bakeUnscaledTime > BakeMeshInterval —
+        // exactly the entries this gate already hands back to the original. Room loads
+        // (OnRoomLoadedBakeMesh) destroy only the idle-Mesh reuse pool, and the one full
+        // reset (OnInitBakeMesh, RuntimeInitializeOnLoadMethod) runs at player startup,
+        // before any play-mode bake can be recorded, so there is no Clear-like method to
+        // mirror with a LastNewBake reset. Residual assumption: a future game update that
+        // adds a mid-session clear (or a Unity instance-ID reuse by a recreated renderer)
+        // could mask one re-bake for at most BakeMeshInterval — a brief accessory follow
+        // lag that the next bake heals; the nativeAttachFaceIdle option turns the skip off.
         private const int PruneThreshold = 64;
         private static readonly Dictionary<int, float> LastNewBake = new Dictionary<int, float>();
         // Reused sweep scratch: RecordNewBake fires on every new bake (several per frame
