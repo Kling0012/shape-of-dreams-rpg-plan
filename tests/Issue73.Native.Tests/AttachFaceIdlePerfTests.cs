@@ -15,7 +15,8 @@ namespace Issue73.Native.Tests
     /// ShouldSkipLookup は境界（焼き直しと同じフレーム・記録の方が新しい時刻・間隔ちょうど・間隔内・
     /// 間隔超過）、Prefix は記録なし・設定 OFF で本体に戻ることと、焼き直し後の間隔内の照会だけを
     /// 偽で省略すること、Postfix は isNew のときだけ記録すること、RecordNewBake はしきい値超過時に
-    /// 間隔を過ぎた項目だけを掃除して省略を続けることを確かめる。
+    /// 間隔を過ぎた項目だけを掃除して省略を続けること、PruneStale は前回の掃除から間隔が過ぎるまで
+    /// 再走査しないことを確かめる。
     /// </summary>
     public sealed class AttachFaceIdlePerfTests
     {
@@ -23,6 +24,11 @@ namespace Issue73.Native.Tests
 
         private static Dictionary<int, float> LastNewBake()
             => (Dictionary<int, float>)typeof(NativeAttachFaceIdlePerf).GetField("LastNewBake", Hidden).GetValue(null);
+
+        // PruneStale は前回の掃除から間隔が過ぎたときだけ走査する。テストは時刻を飛ばすので、
+        // 順序に依存しないように掃除の時刻を毎回初期化する。
+        private static void ResetPruneClock()
+            => typeof(NativeAttachFaceIdlePerf).GetField("_lastPruneTime", Hidden).SetValue(null, 0f);
 
         private static bool Prefix(AttachToFace face, out bool result)
         {
@@ -145,6 +151,7 @@ namespace Issue73.Native.Tests
             {
                 Dew.BakeMeshInterval = 0.1f;
                 LastNewBake().Clear();
+                ResetPruneClock();
                 Time.unscaledTime = 50f;
                 var old = new SkinnedMeshRenderer();
                 NativeAttachFaceIdlePerf.RecordNewBake(old);
@@ -167,6 +174,7 @@ namespace Issue73.Native.Tests
             {
                 Dew.BakeMeshInterval = 0.1f;
                 LastNewBake().Clear();
+                ResetPruneClock();
                 Time.unscaledTime = 100f;
                 var oldest = new SkinnedMeshRenderer();
                 NativeAttachFaceIdlePerf.RecordNewBake(oldest);
@@ -188,6 +196,38 @@ namespace Issue73.Native.Tests
                 Assert.False(Prefix(face, out _));
             }
             finally { Time.unscaledTime = savedTime; }
+        }
+
+        [Fact]
+        public void PruneStaleScansAtMostOncePerBakeInterval()
+        {
+            var savedTime = Time.unscaledTime;
+            try
+            {
+                Dew.BakeMeshInterval = 0.25f; // 浮動小数点でちょうど表れる間隔
+                LastNewBake().Clear();
+                ResetPruneClock();
+                Time.unscaledTime = 10f;
+                var a = new SkinnedMeshRenderer();
+                NativeAttachFaceIdlePerf.RecordNewBake(a);
+                NativeAttachFaceIdlePerf.PruneStale(10.1f); // 最初の掃除: まだ間隔内なので何も消えない
+                Time.unscaledTime = 10.2f;
+                var b = new SkinnedMeshRenderer();
+                NativeAttachFaceIdlePerf.RecordNewBake(b);
+
+                Time.unscaledTime = 10.3f; // a は間隔超過（0.3 > 0.25）だが前回の掃除からは間隔内
+                NativeAttachFaceIdlePerf.PruneStale(10.3f);
+                Assert.Contains(a.GetInstanceID(), LastNewBake().Keys); // 間隔内の2回目は走査しない
+
+                NativeAttachFaceIdlePerf.PruneStale(10.36f); // 前回の掃除から 0.26f > 0.25f
+                Assert.DoesNotContain(a.GetInstanceID(), LastNewBake().Keys); // 間隔が過ぎたら改めて掃除する
+                Assert.Contains(b.GetInstanceID(), LastNewBake().Keys); // 間隔内の項目は残す
+            }
+            finally
+            {
+                Dew.BakeMeshInterval = 0.1f;
+                Time.unscaledTime = savedTime;
+            }
         }
     }
 }

@@ -401,6 +401,10 @@ namespace SodRpg.Mod
         // the same clock and a non-default timeScale cannot desynchronize the two.
         private const int PruneThreshold = 64;
         private static readonly Dictionary<int, float> LastNewBake = new Dictionary<int, float>();
+        // Reused sweep scratch: RecordNewBake fires on every new bake (several per frame
+        // in crowded scenes), so the sweep itself must not allocate (principle II).
+        private static readonly List<int> StaleScratch = new List<int>();
+        private static float _lastPruneTime;
         private static MethodInfo _target;
         private static bool _warned;
 
@@ -435,19 +439,21 @@ namespace SodRpg.Mod
 
         // Entries older than the bake interval never gate a lookup (the Prefix hands those
         // back to the original), so removing them cannot change behavior; it only bounds
-        // the table that destroyed skins would otherwise grow forever.
+        // the table that destroyed skins would otherwise grow forever. The sweep scans at
+        // most once per Dew.BakeMeshInterval: the native gate only re-bakes after that
+        // interval, so the stale set cannot change faster, and RecordNewBake calls this
+        // on every bake — a per-call full scan would cost more than the skip saves in
+        // exactly the crowded scenes the skip targets.
         internal static void PruneStale(float now)
         {
-            List<int> stale = null;
+            if (now - _lastPruneTime <= Dew.BakeMeshInterval) return;
+            _lastPruneTime = now;
             foreach (KeyValuePair<int, float> pair in LastNewBake)
                 if (now - pair.Value > Dew.BakeMeshInterval)
-                {
-                    if (stale == null) stale = new List<int>();
-                    stale.Add(pair.Key);
-                }
-            if (stale == null) return;
-            for (int i = 0; i < stale.Count; i++)
-                LastNewBake.Remove(stale[i]);
+                    StaleScratch.Add(pair.Key);
+            for (int i = 0; i < StaleScratch.Count; i++)
+                LastNewBake.Remove(StaleScratch[i]);
+            StaleScratch.Clear();
         }
 
         // Skip only when the newest bake is from an earlier frame and still fresh: the
@@ -491,6 +497,24 @@ namespace SodRpg.Mod
                 _target = AccessTools.DeclaredMethod(typeof(Dew), nameof(Dew.GetBakedMeshOptimized));
                 if (_target == null || !_target.IsStatic)
                     throw new MissingMethodException("Dew.GetBakedMeshOptimized");
+                // The Postfix below binds by argument name. Decompiled base signature
+                // (2026-10-18, Dew.Core Dew.GetBakedMeshOptimized): `static void
+                // GetBakedMeshOptimized(SkinnedMeshRenderer skin, out Mesh mesh, out
+                // BakedMeshHandle handle, out bool isNew)` — skin is by value, isNew is
+                // an out argument, which Harmony's 2.x parameter injection reads into
+                // the by-value `bool isNew` below (binding verified on the game's
+                // Harmony generation). If a game update renames or retypes either
+                // binding parameter, Harmony throws while applying the patch (outside
+                // this fail-soft Prepare), so require them here and give up softly
+                // instead. Byref declarations are matched on their element type because
+                // isNew is out today.
+                if (!HasInjectableParameter(typeof(SkinnedMeshRenderer), "skin")
+                    || !HasInjectableParameter(typeof(bool), "isNew"))
+                {
+                    NativePerfPatch.Warn(ref _warned, "attach face bake record",
+                        "native GetBakedMeshOptimized parameters renamed or retyped");
+                    return false;
+                }
                 return true;
             }
             catch (Exception ex)
@@ -500,14 +524,35 @@ namespace SodRpg.Mod
             }
         }
 
+        private static bool HasInjectableParameter(Type type, string name)
+        {
+            foreach (ParameterInfo parameter in _target.GetParameters())
+            {
+                Type parameterType = parameter.ParameterType;
+                if (parameterType.IsByRef) parameterType = parameterType.GetElementType();
+                if (parameter.Name == name && parameterType == type) return true;
+            }
+            return false;
+        }
+
         private static MethodBase TargetMethod() => _target;
 
         // Every play-mode bake goes through this method, including bakes triggered by
         // other users of the same renderer, so the tracker above never misses a new mesh.
         private static void Postfix(SkinnedMeshRenderer skin, bool isNew)
         {
-            if (isNew && NativePerfOptions.AttachFaceIdle)
-                NativeAttachFaceIdlePerf.RecordNewBake(skin);
+            try
+            {
+                if (isNew && NativePerfOptions.AttachFaceIdle)
+                    NativeAttachFaceIdlePerf.RecordNewBake(skin);
+            }
+            catch (Exception ex)
+            {
+                // A missing record only widens the safe side (the Prefix then hands the
+                // lookup back to the original), so drop the tracker instead of letting a
+                // bookkeeping failure propagate into the game's bake callers.
+                NativePerfPatch.Warn(ref _warned, "attach face bake record", ex.Message);
+            }
         }
     }
 
