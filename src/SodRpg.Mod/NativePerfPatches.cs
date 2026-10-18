@@ -1327,7 +1327,7 @@ namespace SodRpg.Mod
         private static Quaternion FollowRotation(CameraManager camera)
         {
             if (!NativePerfOptions.CameraZoomRotation) return Quaternion.Euler(0f, camera.entityCamAngle, 0f);
-            return camera.entityCamAngle == 0f ? Quaternion.Euler(0f, 0f, 0f) : camera.entityCamAngleRotation;
+            return camera.entityCamAngle == 0f ? Quaternion.Euler(0f, camera.entityCamAngle, 0f) : camera.entityCamAngleRotation;
         }
     }
 

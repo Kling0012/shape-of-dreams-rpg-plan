@@ -101,6 +101,7 @@ namespace SodRpg.Mod
         private float _nextBossDisplayPrune, _nextBossRenderRefresh;
         // Per-Repaint invariants (camera position, screen metrics, white texture); read once per
         // DrawBossEffects so the per-line and per-visual paths stop re-entering native property getters.
+        // Call BossDisplayVisible and DrawBossWorldLine only within DrawBossEffects (including its helpers).
         private Vector3 _bossCameraPosition;
         private int _bossScreenWidth, _bossScreenHeight;
         private Texture2D _bossWhiteTexture;
