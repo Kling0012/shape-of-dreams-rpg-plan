@@ -511,6 +511,8 @@ namespace SodRpg.Mod
             int dirty = 0;
             // Frontiers only change by replacing the whole list (capture, durable promotion, restore),
             // so an unchanged reference cannot turn this scan dirty; wait for the next ack gate instead.
+            // KillClassificationTests.Receipt_snapshots_change_by_replacement_and_stay_frozen_once_published
+            // guards this premise at every publication source (Capture, Clone, save round-trip).
             if (heartbeat || now >= _nextKillAck || !ReferenceEquals(acknowledged, _killReceiptScanSource))
             {
                 _killReceiptScanSource = acknowledged;
