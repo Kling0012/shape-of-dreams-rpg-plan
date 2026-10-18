@@ -237,7 +237,7 @@ namespace SodRpg.Mod
             var run = Profile.Run;
             if (run?.Infinity == null || !InfinityMode.NativeSaveAgreement || HasPendingKillClassification) return;
             _runChoiceProgress.Arrive(run.RunId, ChoiceZoneIndex, run.Infinity.GraphEpoch, run.Infinity.SegmentEpoch);
-            _runChoiceProgress.TryAdvance(Profile, CanChooseRunRules, _trades, Emit, _grantPendingKill);
+            _runChoiceProgress.TryAdvance(Profile, CanChooseRunRules, _trades, EmitEvents, _grantPendingKill);
             if (CanChooseRunRules && !_runChoiceProgress.HasPendingArrival)
                 _choicePublisher.RetireBeforeSegment(HostInfinityRetireBeforeSegment(run.Infinity.SegmentEpoch));
         }

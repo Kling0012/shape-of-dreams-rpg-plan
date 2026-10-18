@@ -401,8 +401,8 @@ namespace SodRpg.Mod
     internal sealed class DreamforgeUi
     {
         public bool Open, MouseOverPanel, NeedsLayout, LayoutEnabled;
-        internal Action SaveLanguageConfig;
-        public DreamforgeUi(ClientSession session, Func<DreamforgeConfig> config, Action saveConfig = null) { }
+        public DreamforgeUi(ClientSession session, Func<DreamforgeConfig> config, Action saveConfig = null,
+            Action saveLanguageConfig = null) { }
         public void Notify(GameEvent ev) { }
         public void Toggle() { }
         public void Close() { }

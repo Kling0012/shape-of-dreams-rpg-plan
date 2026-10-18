@@ -28,6 +28,12 @@ namespace SodRpg.Mod
         private string _coopWaitingId, _coopWaitReason;
         private float _coopWaitingAt, _coopWaitReasonAt;
         private bool _coopWaitReleased;
+        // CoopLocalBlockReason is read for every OnGUI control while the trade tab is open, so its
+        // count texts are memoized and rebuilt only when the branch, the count or the language changes.
+        private const int CoopWaitTextSalvage = 0, CoopWaitTextHeld = 1, CoopWaitTextRewards = 2;
+        private int _coopWaitTextKind = -1, _coopWaitTextCount = -1;
+        private bool _coopWaitTextJapanese;
+        private string _coopWaitText;
 
         // Calls are limited to trade events and the existing five-second probe. Interpolation
         // still allocates when Record suppresses a line; review that cost before adding callers.
@@ -112,6 +118,26 @@ namespace SodRpg.Mod
         // Combat or travel only. Transient saves and pending replies block new actions but never end a trade (#400).
         private bool CoopLocalCombatSafe => CoopLocalWorldSafe && !(InGame && !CanEditLoadout
             && !(NetworkServer.active && NetworkedManagerBase<ZoneManager>.softInstance?.currentRoom?.didClearRoom == true));
+        // Same (kind, count, language) always formats the same text; the returned string is only
+        // compared and drawn by value, so reusing the cached instance changes no observable result.
+        private string CoopCountWaitText(int kind, int count)
+        {
+            if (_coopWaitTextKind == kind && _coopWaitTextCount == count && _coopWaitTextJapanese == Loc.Japanese)
+                return _coopWaitText;
+            _coopWaitTextKind = kind;
+            _coopWaitTextCount = count;
+            _coopWaitTextJapanese = Loc.Japanese;
+            switch (kind)
+            {
+                case CoopWaitTextSalvage:
+                    return _coopWaitText = Loc.T($"分解の応答を待っています（{count}件）", $"Waiting for salvage responses ({count})");
+                case CoopWaitTextHeld:
+                    return _coopWaitText = Loc.T($"取引結果をホストに照会しています（{count}件）", $"Checking trade results with the host ({count})");
+                default:
+                    return _coopWaitText = Loc.T($"遠征報酬の精算を待っています（{count}件）", $"Waiting for expedition rewards to settle ({count})");
+            }
+        }
+
         private string CoopLocalBlockReason
         {
             get
@@ -126,11 +152,10 @@ namespace SodRpg.Mod
                 foreach (var pending in Profile.PendingSalvage)
                     if (_trades.IsActiveReservation(pending.Relic.Uid)) activeSalvage++;
                 if (_trades.ActiveHeldCount != 0 || activeSalvage != 0)
-                    return CoopWaitText(salvage > 0
-                        ? Loc.T($"分解の応答を待っています（{salvage}件）", $"Waiting for salvage responses ({salvage})")
-                        : Loc.T($"取引結果をホストに照会しています（{_trades.ActiveHeldCount}件）", $"Checking trade results with the host ({_trades.ActiveHeldCount})"));
+                    return CoopWaitText(salvage > 0 ? CoopCountWaitText(CoopWaitTextSalvage, salvage)
+                        : CoopCountWaitText(CoopWaitTextHeld, _trades.ActiveHeldCount));
                 if (_pendingRunRewards.Count != 0)
-                    return CoopWaitText(Loc.T($"遠征報酬の精算を待っています（{_pendingRunRewards.Count}件）", $"Waiting for expedition rewards to settle ({_pendingRunRewards.Count})"));
+                    return CoopWaitText(CoopCountWaitText(CoopWaitTextRewards, _pendingRunRewards.Count));
                 CoopWaitText(null);
                 if (!CoopLocalCombatSafe)
                     return Loc.T("戦闘中・移動中は取引できません（部屋を片付けた後や確保地点で使えます）",

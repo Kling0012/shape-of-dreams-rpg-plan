@@ -109,10 +109,13 @@ python tools/test_changed.py [--base <git ref>] [--list] [--all] [--slow]
   `DisableTestParallelization` のまま直列。並列化はプロセス分割による。
   同時実行数は CPU コア数を超えない）。
   別の実行環境から `run_dotnet_test(..., no_build=True)` を呼ぶ場合も、MSBuild の
-  `TargetPath` で Release の成果物を確認し、存在しなければ同じフィルタの
-  `dotnet test -c Release` でビルドしてから実行する。通常テストと性能テストを
-  別の作業環境に分けても、前段の成果物がないことによる起動失敗を防ぐ。
-  `TargetPath` の取得に失敗した場合や取得結果が空の場合は、エラーを返す。
+  `TargetPath` で Release の成果物を確認し、存在しなければ `--no-build` を付けず、
+  同じフィルタの `dotnet test -c Release` を1回実行する。この1回でビルドと
+  テストの実行を行う。通常テストと性能テストを別の作業環境に分けても、
+  前段の成果物がないことによる起動失敗を防ぐ。
+  `TargetPath` の取得に使う `dotnet msbuild -getProperty` には .NET 8 SDK 以降が必要
+  （テストプロジェクトも `net8.0`）。取得に失敗した場合や取得結果が空の場合は、
+  エラーを返す。
 
 - プロセス分割（#404）: `--all` では Core スイートをクラス単位のフィルタで
   5 プロセスに分ける。所要時間の大半を占める重い 5 クラス
@@ -232,7 +235,14 @@ worktree 外の既定環境変数 `NUGET_PACKAGES` を維持した。
 全件・slow・Performance/Timing 全体、Lab の完全なラッパー、MOD 本体の Release ビルド、
 生成コード検査、ゲーム内確認はこのラウンドでは未実行。全体検証は後段に委ね、
 ゲーム内確認はこの環境ではゲームを起動できないため実行していない。
-新しいテストは追加していない。
+この修正ラウンドでは新しいテストを追加していない。
+`OverchargeAndTollTests.cs` は PR #587 の前ラウンドで追加したものであり、PR 全体では新規ファイルに当たる。
+
+マージ後の `run_dotnet_test(..., no_build=True)` は、`TargetPath` が空なら終了コード1を返す。
+空の結果から通常ビルドへ進む経路はない。パスを取得でき、成果物だけがない場合はビルド付きテストへ進む。
+最終マージ `b1d6e71f` の main 側の親にも空の結果をエラーにする処理があり、
+その親と比べた `tools/test_changed.py` の差分はコメントだけだった。
+この比較結果と、空の結果をエラーにする実際の動作は分けて扱う。
 
 ## #200 ローカル欠片化と旧取引の互換復旧
 
@@ -534,6 +544,51 @@ PR #609 の取込実装の時点（基準は main の `130c4caa`）では、`CHA
   後続のIssueで検討する。現在は設定JSONとコードの照合（`BossBalanceMigrationTests` 等）のみ。
 - `BossEquipmentSnapshot` 失敗後に装備情報がそろったときの効果の再構築・再照合の目視確認は
   実機確認が必要なため、実機確認リストに残す（作業環境ではゲームを起動できない）。
+
+## #623 PR #581・#582・#583 のレビュー提案の確認（2026-10-18）
+
+言語設定の保存コールバックを、末尾の省略可能なコンストラクタ引数へ移した。
+起動テストの代替APIも同じ引数を受ける。保存失敗時にメモリ上の言語を戻さない動作と、
+精算済みの遠征の終了通知を結果の種類によらず無視する意図をコメントに書いた。
+テストランナーの動作は変えず、`TargetPath` が絶対パスでも扱えることをコメントで補った。
+
+この作業で実行した検証は次のとおり。Linux・.NET SDK 10.0.111 を使い、
+net8.0 のテストには `DOTNET_ROLL_FORWARD=Major` を指定した。
+
+- `python3 -m unittest discover -s tools/tests -p test_test_changed.py`：25件合格。
+- `dotnet test tests/SodRpg.Mod.Startup.Tests/SodRpg.Mod.Startup.Tests.csproj -c Release --filter 'FullyQualifiedName~SodRpg.Mod.Startup.Tests.ModReloadTests|FullyQualifiedName~SodRpg.Mod.Startup.Tests.ReloadStartupTests|FullyQualifiedName~SodRpg.Mod.Startup.Tests.NativeStartupTests|FullyQualifiedName~SodRpg.Mod.Startup.Tests.LevelEssenceConfigTests' --nologo -v:minimal`：22件合格、既存指定による1件のスキップ。
+- `dotnet test tests/SodRpg.Core.Tests/SodRpg.Core.Tests.csproj -c Release --filter 'FullyQualifiedName~GeneratedHeroAcceptanceTests.Registration_succeeds_with_zero_rejections_and_installs_the_migration_rules' -p:PythonCommand=python3 --nologo -v:quiet`：9件合格。報告された不安定な失敗は、この実行では再現しなかった。
+- `dotnet build src/SodRpg.Mod/SodRpg.Mod.csproj -c Release -p:GameDir="<参照用ゲームDLLのフォルダ>" --nologo -v:quiet`：エラー0・警告6。参照先に `Mods` がないことを確認し、配置処理を実行せずビルドした。
+- 復元済みの Startup プロジェクトで `dotnet msbuild -getProperty:TargetPath` が成功し、`run_dotnet_test(..., no_build=True)` で `LevelEssenceConfigTests` の2件が合格した。CIもビルド後に `--no-build` で実行する順序になっている。
+
+未実行：フルテストとSlowテストは対象を絞る作業指示のため実行していない。
+ゲーム内での言語切り替えと保存失敗、終了通知の確認はゲーム実行環境がないため未実行。
+スキップされた既存テストは、Release時のJITインライン化でHarmonyパッチを観測できないため。
+追加確認の複合コマンド1回は600秒で時間切れになり停止した。出力がなく停止箇所は未特定で、
+上記の `run_dotnet_test` の確認は単独で実行して得た結果である。
+
+## #623 PR #587・#504 のレビュー提案の確認（2026-10-18）
+
+`ReviewRound4Tests.cs` は PR #504 の前ラウンドで追加したファイルであり、
+同 PR 本文の「既存」「今回、新しいテストは追加していません」は修正ラウンド内の説明に限る。
+PR 全体でテストを追加していないという意味ではない。過去の PR 本文はこの作業では更新していない。
+
+`PairCombos.All` の属性付与5組は、どれもランク1/2/3の値が100/150/200だった。
+`Describe` はランク0以下を除外するため、現行データでは英語説明に0%の確率は出ない。
+`ConfirmPrepared` の呼び出し元は製品コードの引数省略と `OnboardingTests` の5000ms指定だけで、
+負数を明示して渡す呼び出しはなかった。外部の未収録コードは確認対象に含まない。
+
+部屋ごとの状態の書き込み・送信を2回から1回にした説明は、`664b83a2` で追加され、
+v3.2.6 のリリース編集 `3923d578` で省かれていた。現行コードは `WriteEnvelope()` の後に
+`PersistHostInfinityState(writeEnvelope: false)` を呼ぶ。PR で `CHANGELOG.md` を変更しない規則に従い、
+履歴の復元は見送った。リリース済みの修正なので、新しい修正としての断片も追加していない。
+
+今回の変更はコメントと文書だけで、抽選回数・許容幅・ゲームの動作は変えていない。
+過剰・通行料・抽選倍率・属性連携・保存確認の既存テスト86件と、テスト選択ツールの既存25件が合格した。
+.NET SDK 10.0.111、`DOTNET_ROLL_FORWARD=LatestMajor`、既定の worktree 外の NuGet キャッシュを使った。
+20,000回・シード5/6の抽選を別の計測コンソールでも実行し、平均の期待値と標準誤差をコメントに残した。
+未実行：全件・低速テストは対象を絞る指示のため、MOD 本体のビルドと生成コード検査は実行コード・生成入力を
+変更していないため実行していない。ゲーム内の動作確認はゲームを起動できないため未実行。
 
 ## マッピングロジックの単体テスト
 

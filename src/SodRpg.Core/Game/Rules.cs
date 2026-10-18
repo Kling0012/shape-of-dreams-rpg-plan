@@ -897,6 +897,7 @@ namespace SodRpg.Core.Game
                 {
                     var best = p.LostAndFound.OrderByDescending(r => r.Score).First();
                     p.LostAndFound.Remove(best);
+                    // 回収品は報告だけに数え、通算の発見統計や発見系の依頼には加算しない。
                     run.RelicsFound = SaturatingAdd(run.RelicsFound, 1);
                     ev.Add(new GameEvent(EventKind.Recovered, Loc.T($"迷い人の灯で、遺失物「{best.DisplayName}」を取り戻しました（まだ持ち帰っていません）。",
                         $"The lantern recovered the lost relic \"{best.DisplayName}\" (unsecured)."), best.Rarity));
@@ -1015,6 +1016,7 @@ namespace SodRpg.Core.Game
                     foreach (var relic in recovered)
                     {
                         p.LostAndFound.Remove(relic);
+                        // 回収品は報告だけに数え、通算の発見統計や発見系の依頼には加算しない。
                         run.RelicsFound = SaturatingAdd(run.RelicsFound, 1);
                         relic.Enhance = 0;
                         ev.Add(new GameEvent(EventKind.Recovered, Loc.T(
@@ -1486,6 +1488,8 @@ namespace SodRpg.Core.Game
 
         // ───────────── 鍛冶 ─────────────
 
+        // Shared shard yield for salvage and DreamEvent.Tapir; keep the tapir's
+        // description in sync when changing it. Tuning is calculated by each caller.
         public static int SalvageValue(Relic r)
         {
             int refund = 0;
