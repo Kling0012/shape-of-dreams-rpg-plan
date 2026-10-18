@@ -393,7 +393,10 @@ namespace SodRpg.Mod
 
         private static MethodBase TargetMethod() => _target;
 
+        // Prefix clears whatever a previous check left; Postfix drops the reference once the
+        // check finishes, so no entity stays cached between the once-per-second ticks.
         private static void Prefix() => _cachedEntity = null;
+        private static void Postfix() => _cachedEntity = null;
 
         private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
         {
