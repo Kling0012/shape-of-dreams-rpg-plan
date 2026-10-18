@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  配布用 DLL の名前の難読化に使う Obfuscar の設定。MSBuild ターゲット ObfuscateReleaseDll
+  （src/SodRpg.Mod/SodRpg.Mod.csproj）が作業ディレクトリでこのファイルをそのまま使う。
+  InPath / OutPath は作業ディレクトリからの相対（in/ = ビルド出力と参照 DLL、out/ = 難読化結果）。
+
+  除外の分類（docs/specs/release-obfuscation.md 参照）:
+  1. 完全除外: MOD の入口・Unity が名前で呼ぶ MonoBehaviour・設定クラス。
+     DreamforgeMod は型名とフィールド名から作られる設定ファイル名（DreamforgeMod.config.json）と
+     ゲームの ModBehaviour 探索・Unity のコールバック名 (Awake/Update/OnGUI/...) の両方に関わる。
+  2. 通信・保存の JSON: 型名が通信の宛先鍵（Actor CustomRpc は typeof(T).Name で照合）になる
+     Dreamforge*Msg / DreamforgeCoopTradeUp / DreamforgeCoopTradeDown と、Mirror の
+     NetworkMessageId が FullName のハッシュを鍵にする DreamforgePerfPressureMsg。
+     それに加え、Newtonsoft.Json で保存・同期・送信される DTO（フィールド名が JSON の鍵）。
+     新しく Msg や JSON で書く型を足したら、ここに足すこと（tools/obfuscation/check.py が取りこぼしを検出する）。
+  3. 型名の保持: essence-caps.json の kill switch が型名の文字列比較で探すパッチクラスと、
+     NetMessageDecodeWarning が名前空間比較に使う Protocol。パッチには分類4も適用する。
+  4. HarmonyPatch の型・メソッド・引数名、手動登録パッチと文字列で検索するメソッドを保つ。
+     enum の型名・列挙値と、入れ子の DTO・enum の親型名も保つ。
+-->
+<Obfuscator>
+  <Var name="InPath" value="in" />
+  <Var name="OutPath" value="out" />
+  <Var name="KeepPublicApi" value="false" />
+  <Var name="HidePrivateApi" value="true" />
+  <Var name="HideStrings" value="false" />
+  <Var name="OptimizeMethods" value="false" />
+  <Var name="SuppressIldasm" value="false" />
+  <Var name="RegenerateDebugInfo" value="false" />
+  <Var name="KeepProperties" value="true" />
+  <Var name="RenameProperties" value="true" />
+  <Var name="RenameEvents" value="true" />
+  <Var name="RenameFields" value="true" />
+  <Var name="ReuseNames" value="true" />
+  <Var name="UseUnicodeNames" value="false" />
+  <Var name="UseKoreanNames" value="false" />
+  <Var name="MarkedOnly" value="false" />
+  <Module file="in/DreamforgeRPG.dll">
+
+    <!-- 1. 入口と Unity・ゲームが名前で触る型 -->
+    <SkipType name="SodRpg.Mod.DreamforgeMod" skipMethods="true" skipFields="true" skipProperties="true" skipEvents="true" />
+    <SkipType name="SodRpg.Mod.DreamforgeConfig" skipMethods="true" skipFields="true" skipProperties="true" skipEvents="true" />
+    <SkipType name="SodRpg.Mod.FrostFxLifetime" skipMethods="true" skipFields="true" skipProperties="true" skipEvents="true" />
+    <SkipType name="SodRpg.Mod.NativeDreamContent/SeedTemplateTag" skipMethods="true" skipFields="true" skipProperties="true" skipEvents="true" />
+
+    <!-- 2. 通信と保存の JSON で名前が外に出る型（新しい Msg・DTO を足したらここにも） -->
+    <SkipType name="SodRpg.Core.Game.DreamEvent" skipFields="true" skipProperties="true" skipEvents="true" />
+    <SkipType name="SodRpg.Core.Game.InfinityPersonalChoice" skipFields="true" skipProperties="true" skipEvents="true" />
+    <SkipType name="SodRpg.Core.Game.InfinityPhase" skipFields="true" skipProperties="true" skipEvents="true" />
+    <SkipType name="SodRpg.Core.Game.InfinityRunState" skipFields="true" skipProperties="true" skipEvents="true" />
+    <SkipType name="SodRpg.Core.Game.Pact" skipFields="true" skipProperties="true" skipEvents="true" />
+    <SkipType name="SodRpg.Core.Game.RunChoiceSnapshot" skipFields="true" skipProperties="true" skipEvents="true" />
+    <SkipType name="SodRpg.Core.Game.Waypoint" skipFields="true" skipProperties="true" skipEvents="true" />
+    <SkipType name="SodRpg.Mod.BossShareDisplay" skipFields="true" skipProperties="true" skipEvents="true" />
+    <SkipType name="SodRpg.Mod.DreamforgeAppliedMsg" skipFields="true" skipProperties="true" skipEvents="true" />
+    <SkipType name="SodRpg.Mod.DreamforgeAutocastPressureCapabilityMsg" skipFields="true" skipProperties="true" skipEvents="true" />
+    <SkipType name="SodRpg.Mod.DreamforgeBossEffect" skipFields="true" skipProperties="true" skipEvents="true" />
+    <SkipType name="SodRpg.Mod.DreamforgeBossEffectsMsg" skipFields="true" skipProperties="true" skipEvents="true" />
+    <SkipType name="SodRpg.Mod.DreamforgeBossLiteEffect" skipFields="true" skipProperties="true" skipEvents="true" />
+    <SkipType name="SodRpg.Mod.DreamforgeBossLiteMsg" skipFields="true" skipProperties="true" skipEvents="true" />
+    <SkipType name="SodRpg.Mod.DreamforgeBountyCountsMsg" skipFields="true" skipProperties="true" skipEvents="true" />
+    <SkipType name="SodRpg.Mod.DreamforgeBountyReportMsg" skipFields="true" skipProperties="true" skipEvents="true" />
+    <SkipType name="SodRpg.Mod.DreamforgeBuildInputCapabilityMsg" skipFields="true" skipProperties="true" skipEvents="true" />
+    <SkipType name="SodRpg.Mod.DreamforgeBuildMsg" skipFields="true" skipProperties="true" skipEvents="true" />
+    <SkipType name="SodRpg.Mod.DreamforgeConfig" skipFields="true" skipProperties="true" skipEvents="true" />
+    <SkipType name="SodRpg.Mod.DreamforgeContinueCheckpointMsg" skipFields="true" skipProperties="true" skipEvents="true" />
+    <SkipType name="SodRpg.Mod.DreamforgeCoopTradeCommand" skipFields="true" skipProperties="true" skipEvents="true" />
+    <SkipType name="SodRpg.Mod.DreamforgeCoopTradeDown" skipFields="true" skipProperties="true" skipEvents="true" />
+    <SkipType name="SodRpg.Mod.DreamforgeCoopTradeState" skipFields="true" skipProperties="true" skipEvents="true" />
+    <SkipType name="SodRpg.Mod.DreamforgeCoopTradeUp" skipFields="true" skipProperties="true" skipEvents="true" />
+    <SkipType name="SodRpg.Mod.DreamforgeCurseClearMsg" skipFields="true" skipProperties="true" skipEvents="true" />
+    <SkipType name="SodRpg.Mod.DreamforgeCurseMsg" skipFields="true" skipProperties="true" skipEvents="true" />
+    <SkipType name="SodRpg.Mod.DreamforgeDreamEventStartedMsg" skipFields="true" skipProperties="true" skipEvents="true" />
+    <SkipType name="SodRpg.Mod.DreamforgeGemSlotConflictMsg" skipFields="true" skipProperties="true" skipEvents="true" />
+    <SkipType name="SodRpg.Mod.DreamforgeHelloMsg" skipFields="true" skipProperties="true" skipEvents="true" />
+    <SkipType name="SodRpg.Mod.DreamforgeInfinityAckMsg" skipFields="true" skipProperties="true" skipEvents="true" />
+    <SkipType name="SodRpg.Mod.DreamforgeInfinityPersonalChoiceAckMsg" skipFields="true" skipProperties="true" skipEvents="true" />
+    <SkipType name="SodRpg.Mod.DreamforgeInfinityPersonalChoiceMsg" skipFields="true" skipProperties="true" skipEvents="true" />
+    <SkipType name="SodRpg.Mod.DreamforgeKillReceiptMsg" skipFields="true" skipProperties="true" skipEvents="true" />
+    <SkipType name="SodRpg.Mod.DreamforgeKillReplayStartMsg" skipFields="true" skipProperties="true" skipEvents="true" />
+    <SkipType name="SodRpg.Mod.DreamforgeKillStreamReceipt" skipFields="true" skipProperties="true" skipEvents="true" />
+    <SkipType name="SodRpg.Mod.DreamforgeMissingKillFact" skipFields="true" skipProperties="true" skipEvents="true" />
+    <SkipType name="SodRpg.Mod.DreamforgeMonsterCueMsg" skipFields="true" skipProperties="true" skipEvents="true" />
+    <SkipType name="SodRpg.Mod.DreamforgeMonsterKillMsg" skipFields="true" skipProperties="true" skipEvents="true" />
+    <SkipType name="SodRpg.Mod.DreamforgeNightmareMsg" skipFields="true" skipProperties="true" skipEvents="true" />
+    <SkipType name="SodRpg.Mod.DreamforgeOverflowBonusMsg" skipFields="true" skipProperties="true" skipEvents="true" />
+    <SkipType name="SodRpg.Mod.DreamforgeOverflowBonusResultMsg" skipFields="true" skipProperties="true" skipEvents="true" />
+    <SkipType name="SodRpg.Mod.DreamforgePerfPressureMsg" skipFields="true" skipProperties="true" skipEvents="true" />
+    <SkipType name="SodRpg.Mod.DreamforgePressureDividendMsg" skipFields="true" skipProperties="true" skipEvents="true" />
+    <SkipType name="SodRpg.Mod.DreamforgePressureMsg" skipFields="true" skipProperties="true" skipEvents="true" />
+    <SkipType name="SodRpg.Mod.DreamforgeRoomOmenMsg" skipFields="true" skipProperties="true" skipEvents="true" />
+    <SkipType name="SodRpg.Mod.DreamforgeRunChoicesMsg" skipFields="true" skipProperties="true" skipEvents="true" />
+    <SkipType name="SodRpg.Mod.DreamforgeRunGrowthMsg" skipFields="true" skipProperties="true" skipEvents="true" />
+    <SkipType name="SodRpg.Mod.DreamforgeSkillResyncMsg" skipFields="true" skipProperties="true" skipEvents="true" />
+    <SkipType name="SodRpg.Mod.DreamforgeTradeMsg" skipFields="true" skipProperties="true" skipEvents="true" />
+    <SkipType name="SodRpg.Mod.DreamforgeTradeResultMsg" skipFields="true" skipProperties="true" skipEvents="true" />
+    <SkipType name="SodRpg.Mod.DreamforgeVariantMsg" skipFields="true" skipProperties="true" skipEvents="true" />
+    <SkipType name="SodRpg.Mod.DynamicDifficultyDisplay" skipFields="true" skipProperties="true" skipEvents="true" />
+    <SkipType name="SodRpg.Mod.DynamicDifficultyStatus" skipFields="true" skipProperties="true" skipEvents="true" />
+    <SkipType name="SodRpg.Mod.HudMode" skipFields="true" skipProperties="true" skipEvents="true" />
+    <SkipType name="SodRpg.Mod.InfinityMode/BossPlan" skipFields="true" skipProperties="true" skipEvents="true" />
+    <SkipType name="SodRpg.Mod.InfinityMode/Envelope" skipFields="true" skipProperties="true" skipEvents="true" />
+    <SkipType name="SodRpg.Mod.InfinityMode/InfinityChoice" skipFields="true" skipProperties="true" skipEvents="true" />
+    <SkipType name="SodRpg.Mod.InfinityMode/PersonalChoiceWait" skipFields="true" skipProperties="true" skipEvents="true" />
+    <SkipType name="SodRpg.Mod.InfinityMode/PersonalWaypointReceipt" skipFields="true" skipProperties="true" skipEvents="true" />
+    <SkipType name="SodRpg.Mod.LightweightMode" skipFields="true" skipProperties="true" skipEvents="true" />
+
+    <!-- 3. 型名の文字列比較で探されるパッチクラスと Protocol（メンバーは難読化する） -->
+    <SkipType name="SodRpg.Mod.EssenceQualitySoftCap" />
+    <SkipType name="SodRpg.Mod.FrostMortalityQualityExemption" />
+    <SkipType name="SodRpg.Mod.FrostMortalityPreviewExemption" />
+    <SkipType name="SodRpg.Mod.RicochetChanceCap" />
+    <SkipType name="SodRpg.Mod.FeverDamageAmplificationCap" />
+    <SkipType name="SodRpg.Mod.EmbertailCooldownCap" />
+    <SkipType name="SodRpg.Mod.EpiphanyRefundCap" />
+    <SkipType name="SodRpg.Mod.MemoryReuseOnCast" />
+    <SkipType name="SodRpg.Mod.MemoryReuseCastGate" />
+    <SkipType name="SodRpg.Mod.MemoryReuseCooldownDisplay" />
+    <SkipType name="SodRpg.Mod.Protocol" />
+
+    <!-- 4. パッチの型・メソッド・注入引数と、文字列の鍵になる列挙値を保持する。 -->
+    <SkipType name="*" decorator="HarmonyLib.HarmonyPatch" skipMethods="true" skipProperties="true" />
+    <SkipType name="*" typeinherits="System.Enum" skipFields="true" />
+    <SkipMethod rx="^(?i:prefix|postfix|transpiler|finalizer|targetmethods?|prepare|cleanup)$" />
+
+    <!-- 手動パッチの登録と、変数経由の名前検索に使うメソッド。 -->
+    <SkipType name="SodRpg.Mod.NativeDreamContent" skipMethods="true" skipProperties="true" />
+    <SkipType name="SodRpg.Mod.NativeProcSpawnSpread" skipMethods="true" />
+    <SkipType name="SodRpg.Mod.PressureEnemyNativeRewards" skipMethods="true" />
+    <SkipType name="SodRpg.Mod.NativeKillRewards" skipMethods="true" skipProperties="true" />
+    <SkipType name="SodRpg.Mod.CulinaryIngredientCap" skipMethods="true" skipProperties="true" />
+    <SkipType name="SodRpg.Mod.CulinaryIngredientDisplay" skipMethods="true" skipProperties="true" />
+    <SkipType name="SodRpg.Mod.CulinaryMagnet" skipMethods="true" skipProperties="true" />
+    <SkipType name="SodRpg.Mod.InfinityBossArena" skipMethods="true" skipProperties="true" />
+    <SkipType name="SodRpg.Mod.InfinityMapPresentation" skipMethods="true" skipProperties="true" />
+    <SkipType name="SodRpg.Mod.PressureEnemyCount" skipMethods="true" skipProperties="true" />
+
+    <!-- 入れ子の DTO・enum の完全名を保つため、親の型名も保持する。 -->
+    <SkipType name="SodRpg.Mod.InfinityMode" />
+    <SkipType name="SodRpg.Core.Game.GemSlotContinueSources" />
+    <SkipType name="SodRpg.Mod.DreamforgeUi" />
+    <SkipType name="SodRpg.Mod.HostAuthority" />
+    <SkipType name="SodRpg.Mod.NativePatchPreflight" />
+    <SkipType name="SodRpg.Mod.NativeProcCoalesce" />
+  </Module>
+</Obfuscator>
