@@ -55,6 +55,12 @@ namespace SodRpg.Mod
         /// </summary>
         private long _hostLedgerId;
         private double _nextLedgerProbeAt;
+        private int _ledgerProbeMisses;
+        // 台帳の照会は、MOD のないホストには永遠に答えが届かない。最初の数回は2秒間隔で急ぎ、
+        // 答えがなければ15秒間隔に緩める（接続が替わったら数える直し、最初の間隔に戻す）。
+        private const int LedgerProbeFastTries = 5;
+        private const double LedgerProbeFastInterval = 2.0;
+        private const double LedgerProbeSlowInterval = 15.0;
         private readonly Action<DewPlayer> _onChaos;
         private readonly Action<Hero, Mirror.NetworkBehaviour> _onBought, _onUpgraded, _onDismantled;
         private readonly Action<Hero, Gem> _onMerged;
@@ -321,11 +327,12 @@ namespace SodRpg.Mod
             SendDueTradeQueries();
         }
 
-        /// <summary>ホストの取引台帳の識別子を尋ねる（台帳には何も書かれない）。答えが届くまで、数秒おきに繰り返す。</summary>
+        /// <summary>ホストの取引台帳の識別子を尋ねる（台帳には何も書かれない）。答えが届くまで、最初は2秒・以降は15秒おきに繰り返す。</summary>
         private void SendLedgerProbe()
         {
             if (_clientRpcOn == null || !NetworkClient.active || Time.unscaledTime < _nextLedgerProbeAt) return;
-            _nextLedgerProbeAt = Time.unscaledTime + 2.0;
+            _nextLedgerProbeAt = Time.unscaledTime + (_ledgerProbeMisses < LedgerProbeFastTries ? LedgerProbeFastInterval : LedgerProbeSlowInterval);
+            _ledgerProbeMisses++;
             try
             {
                 TradeWire.EncodeQuery(0, out int spendGold, out int spendDust, out int earnDust);
@@ -537,6 +544,7 @@ namespace SodRpg.Mod
                 _trades.MarkAllUnresolved(Time.unscaledTime);
                 _hostLedgerId = 0; // 接続先が替わったので、新しい接続の台帳の識別子を尋ね直す（それまで新しい取引は始めない）
                 _nextLedgerProbeAt = 0;
+                _ledgerProbeMisses = 0;
                 if (Profile.PendingSalvage.Count > 0)
                 {
                     Emit(Rules.RestorePendingSalvage(Profile, keepUids: _trades.ReservedSalvageUids()));
