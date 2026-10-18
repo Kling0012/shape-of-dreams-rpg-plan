@@ -561,10 +561,6 @@ namespace SodRpg.Mod
                         _coopPendingOffer = null;
                         _coopOfferInFlight = null;
                     }
-                    // The host echoes our last acknowledged offer in every view. While an edit is
-                    // still awaiting its ack, that echo is discarded below (OwnOffer keeps the
-                    // pending draft), so only decode it when the result is actually used.
-                    var ownOffer = _coopPendingOffer ?? CoopTradeCodec.ReadOffer(msg.ownOffer);
                     bool acknowledged = _coopOfferInFlight != null && msg.offerAck == _coopOfferInFlight;
                     if (acknowledged)
                     {
@@ -572,6 +568,13 @@ namespace SodRpg.Mod
                         if (_coopPendingOffer != null && CoopTradeCodec.WriteOffer(_coopPendingOffer) == msg.ownOffer)
                             _coopPendingOffer = null;
                     }
+                    // The host echoes our last acknowledged offer in every view. While an edit is
+                    // still awaiting its ack (or the host echoed something else), that echo is
+                    // discarded (OwnOffer keeps the pending draft), so only decode it when the
+                    // result is actually used. Reading _coopPendingOffer here — after the ack block,
+                    // right before the view is built — keeps the exact evaluation point the code
+                    // had before the decode was made conditional.
+                    var ownOffer = _coopPendingOffer ?? CoopTradeCodec.ReadOffer(msg.ownOffer);
                     CoopTrade = new CoopTradeView
                     {
                         Id = msg.id, PartnerName = msg.partner, Status = msg.LocalizedStatus(), Incoming = msg.incoming,
