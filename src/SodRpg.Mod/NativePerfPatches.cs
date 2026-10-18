@@ -19,6 +19,7 @@ namespace SodRpg.Mod
             NativePerfOptions.AggroPropagation = config.nativeAggroPropagation;
             NativePerfOptions.OwnershipSpawnCounts = config.nativeOwnershipSpawnCounts;
             NativePerfOptions.ProcCoalesce = config.nativeProcCoalesce;
+            NativePerfOptions.EmbracePosition = config.nativeEmbracePositionReuse;
         }
     }
 
@@ -30,6 +31,7 @@ namespace SodRpg.Mod
         internal static bool AggroPropagation = true;
         internal static bool OwnershipSpawnCounts = true;
         internal static bool ProcCoalesce = true;
+        internal static bool EmbracePosition = true;
     }
 
     internal static class NativePerfPatch
@@ -357,6 +359,64 @@ namespace SodRpg.Mod
                 }
             }
             agent.obstacleAvoidanceType = value;
+        }
+    }
+
+    [HarmonyPatch]
+    internal static class NativeEmbracePositionPerf
+    {
+        private static AccessTools.FieldRef<Ai_EmbraceNewIdentity, Vector3> _initPos;
+        private static AccessTools.FieldRef<Ai_EmbraceNewIdentity, EaseFunction> _easeFunc;
+        private static MethodBase _target;
+        private static bool _disabled;
+        private static bool _warned;
+
+        private static bool Prepare()
+        {
+            _target = NativePerfPatch.Find(typeof(Ai_EmbraceNewIdentity), "UpdatePositions", ref _warned);
+            if (_target == null) return false;
+            try
+            {
+                _initPos = AccessTools.FieldRefAccess<Ai_EmbraceNewIdentity, Vector3>("_targetSkillInitPos");
+                _easeFunc = AccessTools.FieldRefAccess<Ai_EmbraceNewIdentity, EaseFunction>("_easeFunc");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                NativePerfPatch.Warn(ref _warned, "embrace position", ex.Message);
+                return false;
+            }
+        }
+
+        private static MethodBase TargetMethod() => _target;
+
+        private static bool Prefix(Ai_EmbraceNewIdentity __instance)
+        {
+            if (_disabled || !NativePerfOptions.EmbracePosition) return true;
+            try
+            {
+                // Identical computation to the native UpdatePositions. Every client-side
+                // NetworktargetSkill read resolves the netId through NetworkClient.spawned,
+                // so the skill reference, its world position and the ease delegate are each
+                // read once instead of once per onSkillTransform element.
+                SkillTrigger skill = __instance.NetworktargetSkill;
+                if (skill == null) return false;
+                float v = Mathf.Clamp01((Time.time - __instance.creationTime) / __instance.channelTime);
+                skill.transform.position = Vector3.Lerp(_initPos(__instance), __instance.info.caster.position,
+                    _easeFunc(__instance)(0f, 1f, v));
+                Vector3 pos = skill.transform.position;
+                Transform[] array = __instance.onSkillTransform;
+                for (int i = 0; i < array.Length; i++)
+                    if (array[i] != null)
+                        array[i].position = pos;
+                return false;
+            }
+            catch (Exception ex)
+            {
+                _disabled = true;
+                NativePerfPatch.Warn(ref _warned, "embrace position", ex.Message);
+                return true;
+            }
         }
     }
 }
