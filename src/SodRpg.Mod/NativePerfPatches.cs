@@ -21,6 +21,7 @@ namespace SodRpg.Mod
             NativePerfOptions.ProcCoalesce = config.nativeProcCoalesce;
             NativePerfOptions.SleepPosition = config.nativeSleepPositionReuse;
             NativePerfOptions.CameraZoomRotation = config.nativeCameraZoomRotation;
+            NativePerfOptions.CharacterModelDisplayBounds = config.nativeCharacterModelDisplayBounds;
         }
     }
 
@@ -34,6 +35,7 @@ namespace SodRpg.Mod
         internal static bool ProcCoalesce = true;
         internal static bool SleepPosition = true;
         internal static bool CameraZoomRotation = true;
+        internal static bool CharacterModelDisplayBounds = true;
     }
 
     internal static class NativePerfPatch
