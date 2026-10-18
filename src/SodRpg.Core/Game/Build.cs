@@ -251,6 +251,8 @@ namespace SodRpg.Core.Game
                 }
                 foreach (var s in r.EffectiveStats()) Add(rawStats, s.Stat, s.Value);
                 var sourcePowers = Forbidden.SourcePowers(r);
+                // Boss relics use EffectiveBossMove channels above, not legacy Powers;
+                // exclude those rows from power totals and the awakening / Overcharge budget adjustments below.
                 for (int i = 0; r.BossMove == null && i < sourcePowers.Count; i++)
                 {
                     var pw = sourcePowers[i];
@@ -260,7 +262,8 @@ namespace SodRpg.Core.Game
                     // The saved first power already includes the one-time +20 bonus.
                     // Overcharge (x1.6, paid for with an affix) also stays out of the cap basis, like awakening:
                     // otherwise a near-cap power was cut back to the cap and lost most of the promised boost.
-                    // Overcharge SourcePowers preserves r.Powers' count, order and power IDs; only values change.
+                    // Forbidden.SourcePowers copies r.Powers in its foreach loop; Overcharge changes only values
+                    // and does not enter Severance's append branch, preserving count, order and power IDs.
                     // Both this basis and the conditional budget below rely on that index correspondence.
                     // The bounds check is defensive; pw.Value is the fallback if an unmatched entry ever appears.
                     int unscaled = r.Forbidden?.Pattern == ForbiddenPattern.Overcharge && i < r.Powers.Count ? r.Powers[i].Value : pw.Value;
