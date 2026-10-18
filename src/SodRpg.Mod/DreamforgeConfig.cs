@@ -111,6 +111,9 @@ namespace SodRpg.Mod
         [LabelText("Skip unchanged baked-mesh lookups for face attachments / 面に付ける装飾の変わっていない焼きメッシュの照会を省く")]
         public bool nativeAttachFaceIdle = true;
 
+        [LabelText("Read the checked entity position once per sleep check (host) / 眠り判定で読む敵の位置を英雄全員分で1回にまとめる（ホスト）")]
+        public bool nativeSleepPositionReuse = true;
+
         [LabelText("Level essence slots: add essence slots as the hero levels up (the host's setting applies) /\nレベル連動のエッセンス枠：英雄のレベルに応じて記憶のエッセンス枠を増やす（ホストの設定が使われる）")]
         public bool levelEssenceSlots = true;
 

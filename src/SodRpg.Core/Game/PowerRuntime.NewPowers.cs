@@ -72,6 +72,8 @@ namespace SodRpg.Core.Game
         {
             Build.StarPowers.TryGetValue(p, out int stars);
             // Build.Compute caps the base before awakening; keep its final equipment ceiling and add stars separately.
+            // Truncate fractional equipment caps (15 * 2.5 = 37.5 -> 37), as MaxPowerValue does for non-damage powers;
+            // PowerCeiling rounds ranked damage upward and is not the equipment-only limit.
             return Math.Max(0, Math.Min((int)(Content.PowerCap(p) * BuildLimits.MaxEquipmentMultiplier), Build.Get(p) - stars)) + stars;
         }
         private static float Percent(float amount, float percent) => Math.Max(0, amount) * percent / 100f;
@@ -197,7 +199,9 @@ namespace SodRpg.Core.Game
             int v = NewValue(Power.TollOfGrudge);
             if (v <= 0 || maxHealth <= 0 || actualHealthLost <= 0) return 0;
             _toll += actualHealthLost;
-            // 0.6f is slightly above 0.6: compare with a small tolerance so exactly 60% lost fires now.
+            // 0.6f is slightly above 0.6: tolerate 1e-6 of one threshold in the ratio below.
+            // This intentionally admits slightly smaller losses (59.99995f at max HP 100).
+            // It is not an absolute HP tolerance or a bound on error from repeated float accumulation.
             double threshold = (double)maxHealth * PowersBalance.TollOfGrudgeThreshold;
             int bursts = (int)Math.Floor(_toll / threshold + 1e-6);
             _toll = (float)Math.Max(0d, _toll - bursts * threshold);

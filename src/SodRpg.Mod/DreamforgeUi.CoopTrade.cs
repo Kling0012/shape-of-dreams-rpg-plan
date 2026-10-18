@@ -150,9 +150,16 @@ namespace SodRpg.Mod
                 foreach (string uid in trade.OwnOffer.RelicUids)
                     if (!CoopTradeRelicOfferable(_s.Profile, uid))
                     {
-                        staleOffer = Loc.T("提示した遺物の一部が装着中か、もうありません。遺物を選び直すか素材の数を変えると、提示から外れます。",
-                            "Some offered relics are now equipped or gone. Select a relic or change an amount to drop them from your offer.");
-                        GUILayout.Label(staleOffer, _st.Warn);
+                        staleOffer = Loc.T("提示できない遺物が含まれています。提示から外して続けてください。",
+                            "Some relics can no longer be offered. Remove them from your offer to continue.");
+                        GUILayout.BeginHorizontal();
+                        GUILayout.Label(staleOffer, _st.Warn, TradeChoicesWidth);
+                        bool staleEnabled = GUI.enabled;
+                        GUI.enabled = staleEnabled && _s.CanCoopTrade && !_s.CoopTradeOfferPending;
+                        if (GUILayout.Button(Loc.T("無効な遺物を提示から外す", "Remove invalid relics"), _st.ButtonWrap, TradeActionSize))
+                            SetStatus(_s.SetCoopTradeOffer(CopyCoopTradeOffer(trade.OwnOffer, trade.OwnOffer.Shards, trade.OwnOffer.Tuning)));
+                        GUI.enabled = staleEnabled;
+                        GUILayout.EndHorizontal();
                         break;
                     }
 
