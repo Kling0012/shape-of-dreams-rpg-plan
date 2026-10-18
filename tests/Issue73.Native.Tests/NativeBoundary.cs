@@ -48,13 +48,24 @@ namespace Mirror
     }
     internal sealed class NetworkConnectionToClient : NetworkConnection { }
     // NativeStatsCalcRpcPerf が typeof で参照する本体 Mirror API。実物の syncVarDirtyBits は
-    // protected で、MOD は Prepare で作った getter デリゲート経由でのみ読む。境界は 0 固定
-    // （このパッチのスキップ判定を動かすテストはこのプロジェクトに無い）。
+    // protected で、MOD は Prepare で作った getter デリゲート経由でのみ読む。境界では
+    // テストから代入できる自動プロパティにする（既定 false / 0 は実機の未接続状態と同じ）。
+    // StatsCalcRpcPerfTests が Prefix/Capture の送る・省く判定を動かすために書き換える。
+    // SendRPCInternal は送信側の形検査（ValidateRpcBody）が NetworkBehaviour のメンバーとして
+    // 数えるため、このクラスに置く。本体では引数は writer と rpc 名の文字列。
     internal class NetworkBehaviour
     {
-        public bool isServer => false;
-        public bool isClient => false;
-        public ulong syncVarDirtyBits => 0UL;
+        public bool isServer { get; set; }
+        public bool isClient { get; set; }
+        public ulong syncVarDirtyBits { get; set; }
+        public void SendRPCInternal(NetworkWriter writer, string rpcName) { }
+    }
+    // 同じく形検査が Mirror.NetworkWriterPool の Get・Return という名前で数えるための境界。
+    // 呼び出しの有無は IL で確かめるため、中身は空でよい。
+    internal static class NetworkWriterPool
+    {
+        public static NetworkWriter Get() => null;
+        public static void Return(NetworkWriter writer) { }
     }
 }
  namespace UnityEngine
@@ -302,6 +313,22 @@ namespace SodRpg.Mod
             foreach (var processor in finalStatsProcessors.InOrder()) processor(ref stats);
             maxHealth = stats.maxHealth;
             finalStats.maxHealth = stats.maxHealth;
+        }
+        // 本体 EntityStatus.CalculateStats と、その末尾で毎回呼ばれる weaver 生成の空 ClientRpc
+        // RpcInvokeStatsCalculated。NativeStatsCalcRpcPerf.SharedPrepare がこの2つを typeof で
+        // 解決し、送信側の形検査（NetworkWriterPool.Get・SendRPCInternal・
+        // NetworkWriterPool.Return の3呼び出しのみ）と通知呼び出し1つの検査に通る形で再現する。
+        // 再計算の中身は CalculateStatsIfDirty 側にあるため、ここは通知の呼び出し構造だけを模す。
+        // StatsCalcRpcPerfTests は Capture/Prefix を直接動かすため、この本体を実行しない。
+        public void CalculateStats()
+        {
+            RpcInvokeStatsCalculated();
+        }
+        internal void RpcInvokeStatsCalculated()
+        {
+            NetworkWriter writer = NetworkWriterPool.Get();
+            SendRPCInternal(writer, "System.Void EntityStatus::RpcInvokeStatsCalculated()");
+            NetworkWriterPool.Return(writer);
         }
         // ミストの行動不能保険（HostAuthority.CrowdControlRecovery.cs）が走査する本体の効果リスト。
         private readonly List<BasicEffect> _basicEffects = new List<BasicEffect>();

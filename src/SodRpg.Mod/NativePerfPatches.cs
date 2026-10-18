@@ -1571,13 +1571,25 @@ namespace SodRpg.Mod
         // (host) or nothing (remote clients). syncVarDirtyBits is exactly Mirror's own
         // "what changed" summary for every client-visible output of CalculateStats — bonusStats,
         // finalStats, the ratio rewrites of currentHealth/currentMana, basicEffectMask, the
-        // status totals, the shield, the stealth flags and overridenAttack — so the gate
-        // compares the bits captured at method entry with the bits at the notification and
-        // skips only when they are identical. Any real change still notifies exactly as the
-        // native code does. The bits are cleared during network broadcasts, never inside the
-        // synchronous CalculateStats window, so the entry/exit pair cannot lose a bit; the
-        // notification has exactly one caller (validated below), so a pending baseline always
-        // belongs to the call that consumes it.
+        // status totals, the shield, the stealth flags and overridenAttack — so the gate reads
+        // the bits at method entry and again at the notification. Every value change through a
+        // weaver setter raises its bit, and bits are only cleared during network broadcasts,
+        // never inside the synchronous CalculateStats window — so when the entry bits are zero,
+        // a change made by this very call must still be visible in the exit bits. The gate
+        // therefore skips only when both readings are zero: nothing was left unsent by an
+        // earlier recalculation and nothing changed now. Any real change still notifies exactly
+        // as the native code does.
+        //
+        // Equal bits alone must NOT be the skip condition. The weaver's setter only ORs the
+        // dirty bit again when it is already set, so inside the sync window that follows a real
+        // change (bits stay set until the next broadcast) a second value change of the same
+        // SyncVar leaves the bit set identical while the value differs. The subscriber reads
+        // values, not bits, so such a rewrite must still notify. Whenever the entry bits are
+        // non-zero the gate conservatively sends — even for a recalculation that changed
+        // nothing, which only re-runs the idempotent handler; the extra sends last at most one
+        // syncInterval per real change, and the steady state of hundreds of changeless
+        // recalculations per second still skips. The notification has exactly one caller
+        // (validated below), so a pending baseline always belongs to the call that consumes it.
         //
         // Residual assumption, same class as the other unchanged-resend skips: a third-party
         // client-side subscriber that does per-event side effects unrelated to entity state
@@ -1678,7 +1690,10 @@ namespace SodRpg.Mod
                 if (!__instance.isServer || !Baselines.TryGetValue(__instance, out var baseline)
                     || !baseline.Pending) return true;
                 baseline.Pending = false;
-                if (baseline.Bits == _dirtyBits(__instance)) return false;
+                // Skip only when no unsent change existed at entry and none exists now. Bits
+                // already set at entry can hide a second value change of the same SyncVar (the
+                // weaver only ORs the bit again), so any pending dirt at entry must send.
+                if (baseline.Bits == 0UL && _dirtyBits(__instance) == 0UL) return false;
             }
             catch (Exception ex)
             {
