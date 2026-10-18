@@ -196,11 +196,11 @@
        NativePerfOptions・NativePerfPatch は SleepPositionPerfBoundary.cs、Dew・AttachToFace・
        SkinnedMeshRenderer は AttachFaceIdlePerfBoundary.cs の境界。 -->
   <Target Name="CompileAttachFaceIdlePerf" BeforeTargets="CoreCompile">
-    <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/NativePerfPatches.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)AttachFaceIdlePerf.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="NativeAttachFaceIdlePerf" Methods="RecordNewBake;PruneStale;ShouldSkipLookup;Prefix" Fields="LastNewBake;PruneThreshold;_warned" />
+    <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/NativePerfPatches.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)AttachFaceIdlePerf.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="NativeAttachFaceIdlePerf" Methods="RecordNewBake;PruneStale;ShouldSkipLookup;Prefix" Fields="LastNewBake;StaleScratch;PruneThreshold;_lastPruneTime;_warned" />
     <ItemGroup>
       <Compile Include="$(IntermediateOutputPath)AttachFaceIdlePerf.g.cs" />
     </ItemGroup>
-    <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/NativePerfPatches.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)AttachFaceBakeRecord.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="NativeAttachFaceBakeRecord" Methods="Postfix" />
+    <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/NativePerfPatches.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)AttachFaceBakeRecord.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="NativeAttachFaceBakeRecord" Methods="Postfix" Fields="_warned" />
     <ItemGroup>
       <Compile Include="$(IntermediateOutputPath)AttachFaceBakeRecord.g.cs" />
     </ItemGroup>
