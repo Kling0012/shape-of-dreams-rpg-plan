@@ -16,7 +16,8 @@ namespace Issue73.Native.Tests
     /// _fillProgress）の回数が1つでも崩れた形と、回数が同じまま追跡していない入力を
     /// 読み足した形を拒否することを確かめる。ShouldSkip は前回値と今回値だけからスキップ
     /// 可否を判定する純粋な関数として確かめる。Prefix/Postfix は、前回値の確定が本体の
-    /// 正常終了後（Postfix）だけに行われること、fill を FillProgress プロパティではなく
+    /// 正常終了後（Postfix）だけに行われること、本体を通す経路（入力の変化・null マテリアル・
+    /// 設定無効）では前回の確定値が無効化されること、fill を FillProgress プロパティではなく
     /// _fillProgress フィールドから読むことを確かめる。
     /// </summary>
     public sealed class CastIndicatorPerfTests
@@ -226,9 +227,12 @@ namespace Issue73.Native.Tests
             Assert.True(RunPrefix(region, out var state));
             RunPostfix(region, state);                        // 0.5 を確定
             region._fillProgress = 0.75f;                     // プロパティの値（常に -1）は変わらない
-            Assert.True(RunPrefix(region, out _));            // 生値が変わったので再実行（確定はしない）
-            region._fillProgress = 0.5f;                      // 生値が確定値へ戻れば省く
-            Assert.False(RunPrefix(region, out _));
+            Assert.True(RunPrefix(region, out state));        // 生値が変わったので再実行
+            RunPostfix(region, state);                        // 0.75 を確定し直す
+            region._fillProgress = 0.5f;                      // 生値が確定値と違えば再実行
+            Assert.True(RunPrefix(region, out state));
+            RunPostfix(region, state);
+            Assert.False(RunPrefix(region, out _));           // 生値が確定値へ戻れば省く
         }
 
         [Fact]
@@ -239,6 +243,62 @@ namespace Issue73.Native.Tests
             region._circleRenderer.sharedMaterial = null;
             Assert.True(RunPrefix(region, out var state));   // null は本体側の経路のまま
             Assert.Null(state);                              // 確定候補も作らない
+        }
+
+        [Fact]
+        public void ABodyInterruptedAfterAnInputChangeDropsTheOldConfirmation()
+        {
+            // 確定値 S のあと入力が Y へ変わったフレームで本体が例外で中断しても（Postfix なし
+            // で再現）、Prefix が確定値を無効化しているため、入力が S へ戻ったフレームは省かず
+            // 再実行する。パッチなしでは S で書き直るため、transform に Y の書きかけを残さない。
+            PrepareExtractedPatch();
+            var region = NewRegion(5f, 1f, 2f, 0.5f);
+            Assert.True(RunPrefix(region, out var state));
+            RunPostfix(region, state);                       // 5f を確定
+            region.Radius = 6f;                              // 入力 Y へ変わる
+            Assert.True(RunPrefix(region, out state));       // 本体へ（Postfix なし＝中断）
+            Assert.NotNull(state);                           // 候補は作るが確定はされない
+            region.Radius = 5f;                              // 入力が確定値 S へ戻る
+            Assert.True(RunPrefix(region, out _));           // 古い確定値では省かない
+        }
+
+        [Fact]
+        public void ANullMaterialFrameDropsTheConfirmedSnapshot()
+        {
+            // 確定値 S のあと sharedMaterial が null になったフレームは本体を素通しする。その
+            // 本体が書きかけで例外を出しても、以降のフレームが古い S で省かれないよう、null
+            // マテリアルで本体へ回すときも確定値を無効化する（マテリアル実体が戻れば再実行）。
+            PrepareExtractedPatch();
+            var region = NewRegion(5f, 1f, 2f, 0.5f);
+            Assert.True(RunPrefix(region, out var state));
+            RunPostfix(region, state);                       // 同一実体のマテリアルで確定
+            Material material = region._circleRenderer.sharedMaterial;
+            region._circleRenderer.sharedMaterial = null;    // 本体は null.SetFloat で例外を出す経路
+            Assert.True(RunPrefix(region, out state));       // null は本体側の経路のまま
+            Assert.Null(state);
+            region._circleRenderer.sharedMaterial = material;// 同じ実体が戻り、入力も S のまま
+            Assert.True(RunPrefix(region, out _));           // 無効化済みなので省かず再実行
+        }
+
+        [Fact]
+        public void FramesWhileThePatchIsOffDropTheConfirmedSnapshot()
+        {
+            // 設定を無効にしている間は本体だけが追跡なしで走る。再び有効にしたフレームが古い
+            // 確定値と同じ入力でも、無効の間に描かれた内容を確定値が打ち消さないよう省かない。
+            PrepareExtractedPatch();
+            var region = NewRegion(5f, 1f, 2f, 0.5f);
+            Assert.True(RunPrefix(region, out var state));
+            RunPostfix(region, state);
+            bool saved = NativePerfOptions.CastIndicatorCircle;
+            try
+            {
+                NativePerfOptions.CastIndicatorCircle = false;
+                Assert.True(RunPrefix(region, out state));   // 無効の間は本体だけが走る
+                Assert.Null(state);
+                NativePerfOptions.CastIndicatorCircle = true;
+                Assert.True(RunPrefix(region, out _));       // 確定値は捨ててあるので省かない
+            }
+            finally { NativePerfOptions.CastIndicatorCircle = saved; }
         }
     }
 }

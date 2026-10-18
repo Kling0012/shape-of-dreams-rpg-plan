@@ -752,21 +752,39 @@ namespace SodRpg.Mod
         // into the per-region record is the postfix's job, because Harmony does not run
         // postfixes when the original threw: a body interrupted mid-write leaves the previous
         // snapshot in place, so the next frame retries the body exactly as without this patch.
+        // Every path that hands the region to the body — snapshot miss, null material, or the
+        // patch being off — drops the record's confirmation first, so a frame the body may have
+        // interrupted can never be mistaken for already-applied on a later frame either.
         private static bool Prefix(DTT.AreaOfEffectRegions.CircleRegion __instance, ref CircleInputs __state)
         {
             __state = null;
-            if (_disabled || !NativePerfOptions.CastIndicatorCircle) return true;
+            if (_disabled || !NativePerfOptions.CastIndicatorCircle)
+            {
+                // While the patch is off the body runs untracked, so the transform may no longer
+                // match the confirmed snapshot once the patch comes back.
+                ForgetConfirmed(__instance);
+                return true;
+            }
             try
             {
                 Material material = _renderer(__instance).sharedMaterial;
-                // Keep a null material on the native path, exactly as without this patch.
-                if (material == null) return true;
+                // Keep a null material on the native path, exactly as without this patch, but
+                // drop the confirmation: the body runs untracked through here too, and may
+                // throw partway (null SetFloat) leaving writes the snapshot must not cover.
+                if (material == null)
+                {
+                    ForgetConfirmed(__instance);
+                    return true;
+                }
                 var inputs = TrackedInputs.GetValue(__instance, CreateInputs);
                 float radius = __instance.Radius;
                 Vector2 offset = __instance.Offset;
                 float fill = _fillProgressField(__instance);
                 if (ShouldSkip(inputs.Has, inputs.Radius, inputs.Offset, inputs.Fill, inputs.Material, radius, offset, fill, material))
                     return false;
+                // The body is about to run and Harmony will not call the postfix if it throws,
+                // so un-confirm now; only a clean run re-confirms through the postfix.
+                inputs.Has = false;
                 CircleInputs pending = _pending ?? new CircleInputs();
                 _pending = null;
                 pending.Has = true;
@@ -786,8 +804,9 @@ namespace SodRpg.Mod
         }
 
         // Commits the snapshot candidate the prefix prepared, only on the frames where the body
-        // ran to completion. On skipped frames the postfix still runs but receives a null state
-        // (the snapshot already matches the inputs, so there is nothing to record).
+        // ran to completion — this is the sole place a dropped confirmation comes back. On
+        // skipped frames the postfix still runs but receives a null state (the snapshot already
+        // matches the inputs, so there is nothing to record).
         private static void Postfix(DTT.AreaOfEffectRegions.CircleRegion __instance, CircleInputs __state)
         {
             if (__state == null) return;
@@ -806,6 +825,13 @@ namespace SodRpg.Mod
                 _disabled = true;
                 NativePerfPatch.Warn(ref _warned, "cast indicator circle", ex.Message);
             }
+        }
+
+        // Drops a record's confirmation for a region handed back to the body untracked. TryGetValue
+        // allocates nothing and creates no record for regions that were never tracked.
+        private static void ForgetConfirmed(DTT.AreaOfEffectRegions.CircleRegion region)
+        {
+            if (TrackedInputs.TryGetValue(region, out CircleInputs inputs)) inputs.Has = false;
         }
     }
 
