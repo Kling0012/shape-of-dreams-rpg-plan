@@ -138,6 +138,9 @@ namespace SodRpg.Mod
         [LabelText("Recompute character model bounds only when read / キャラ表示モデルの範囲を読まれるときだけ計算する")]
         public bool nativeCharacterModelDisplayBounds = true;
 
+        [LabelText("Throttle kill-tracker cleanup scans to once per second (host) / 撃破追跡の掃除走査を1秒に1回に間引く（ホスト）")]
+        public bool nativeKillTrackerCullThrottle = true;
+
         [LabelText("Skip repeated default-cursor resets (software cursor off) / ソフトウェアカーソル無効中の同じ既定カーソルの再設定を省く")]
         public bool nativeCursorIdle = true;
 
