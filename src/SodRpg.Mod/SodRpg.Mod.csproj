@@ -47,6 +47,41 @@
     <None Include="icons\**\*" />
   </ItemGroup>
 
+  <!--
+    配布用ビルドの名前の難読化（docs/specs/release-obfuscation.md）。
+    -p:Obfuscate=true のときだけ Build の後に DreamforgeRPG.dll を Obfuscar で難読化して置き換える。
+    既定（プロパティなし）のビルド・テストは一切変わらない。Obfuscar・検査スクリプトが無い場合や
+    どちらかが失敗した場合はビルドを失敗させる（難読化していない DLL を配布経路に出さないため）。
+  -->
+  <Target Name="ObfuscateReleaseDll" AfterTargets="Build" BeforeTargets="DeployToGame" Condition="'$(Obfuscate)' == 'true'">
+    <PropertyGroup>
+      <!-- 道具を探す（PATH → ~/.dotnet/tools）。無ければ下の Exec が失敗しビルドが止まる。 -->
+      <ObfuscarCommand Condition="'$(ObfuscarCommand)' == '' and Exists('$(HOME)/.dotnet/tools/obfuscar.console')">$(HOME)/.dotnet/tools/obfuscar.console</ObfuscarCommand>
+      <ObfuscarCommand Condition="'$(ObfuscarCommand)' == ''">obfuscar.console</ObfuscarCommand>
+      <ObfuscationRoot>$(MSBuildThisFileDirectory)..\..\tools\obfuscation\</ObfuscationRoot>
+      <ObfuscateWorkDir>$(IntermediateOutputPath)obfuscate\</ObfuscateWorkDir>
+    </PropertyGroup>
+    <Message Importance="high" Text="Obfuscating $(TargetFileName) (Obfuscar, config: $(ObfuscationRoot)obfuscar.xml)" />
+    <MakeDir Directories="$(ObfuscateWorkDir)in" />
+    <MakeDir Directories="$(ObfuscateWorkDir)out" />
+    <ItemGroup>
+      <!-- Obfuscar は参照アセンブリを作業ディレクトリから解決するため、ゲームの参照 DLL を一緒に置く。 -->
+      <ObfuscateReference Include="@(GameRef->'$(GameManagedDir)\%(Identity).dll')" />
+    </ItemGroup>
+    <!-- obj のコンパイラ出力を使い、増分ビルドでも難読化を二重に掛けない。 -->
+    <Copy SourceFiles="$(IntermediateOutputPath)$(TargetFileName)" DestinationFiles="$(ObfuscateWorkDir)in\DreamforgeRPG.dll" />
+    <Copy SourceFiles="@(ObfuscateReference)" DestinationFolder="$(ObfuscateWorkDir)in\" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="$(ObfuscationRoot)obfuscar.xml" DestinationFolder="$(ObfuscateWorkDir)" />
+    <Copy SourceFiles="$(ObfuscateWorkDir)in\DreamforgeRPG.dll" DestinationFiles="$(ObfuscateWorkDir)DreamforgeRPG.plain.dll" OverwriteReadOnlyFiles="true" />
+    <Exec Command="&quot;$(ObfuscarCommand)&quot; obfuscar.xml" WorkingDirectory="$(ObfuscateWorkDir)" />
+    <Error Condition="!Exists('$(ObfuscateWorkDir)out\DreamforgeRPG.dll')"
+           Text="Obfuscar did not produce an obfuscated DreamforgeRPG.dll; refusing to ship a plain DLL." />
+    <!-- 検査に通った DLL だけを bin と配布先へ出す。 -->
+    <Exec Command="python3 &quot;$(ObfuscationRoot)check.py&quot; &quot;$(ObfuscateWorkDir)DreamforgeRPG.plain.dll&quot; &quot;$(ObfuscateWorkDir)out/DreamforgeRPG.dll&quot; &quot;$(ObfuscateWorkDir)obfuscar.xml&quot;" />
+    <Copy SourceFiles="$(ObfuscateWorkDir)out/DreamforgeRPG.dll" DestinationFiles="$(TargetPath)" OverwriteReadOnlyFiles="true" />
+    <Message Importance="high" Text="Obfuscated DLL replaced $(TargetPath). Mapping: $(ObfuscateWorkDir)out\Mapping.txt (配布物には含めない)" />
+  </Target>
+
   <Target Name="DeployToGame" AfterTargets="Build" Condition="Exists('$(GameDir)\Mods')">
     <ItemGroup>
       <AboutFiles Include="about\**\*" />

@@ -76,7 +76,7 @@ def check_growth(o, ctx, kind, hero, refs, errors, S):
             errors.append(f'{ctx}: bad growth.trigger {trig!r} (one of {sorted(GROWTH_TRIGGERS)})')
         elif not (isinstance(g['threshold'], int) and not isinstance(g['threshold'], bool) and 1 <= g['threshold'] <= GROWTH_TRIGGERS[trig]):
             errors.append(f'{ctx}: growth.threshold must be an int 1..{GROWTH_TRIGGERS[trig]} for {trig} (percent of max HP for the HP triggers, event count otherwise)')
-        min_cap = 0 if hero == 'cetus' and o.get('id') == 'cetus.run.g1' else 1
+        min_cap = 0 if o.get('id') in ('cetus.run.g1', 'vesper.run.g1') else 1
         if not (isinstance(g['cap'], int) and not isinstance(g['cap'], bool) and min_cap <= g['cap'] <= GROWTH_MAX_CAP):
             errors.append(f'{ctx}: growth.cap must be an int {min_cap}..{GROWTH_MAX_CAP} (0 means no stack cap)')
         effs = g['effects']
