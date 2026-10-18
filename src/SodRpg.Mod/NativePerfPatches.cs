@@ -1161,7 +1161,10 @@ namespace SodRpg.Mod
 
         private sealed class CullBook
         {
-            internal float Time;
+            // Time.time restarts near zero on every scene load, so a fresh book must predate the
+            // clock: with the default 0 the first CullInterval of play fails now - Time <
+            // CullInterval and skips the tracker's first scans.
+            internal float Time = -CullInterval;
         }
 
         private static readonly ConditionalWeakTable<KillTracker, CullBook> Books =

@@ -86,6 +86,27 @@ namespace Issue73.Native.Tests
         }
 
         [Fact]
+        public void PrefixScansTheFirstCallOfATrackerBornBeforeTheFirstSecondElapses()
+        {
+            ResetPatchState();
+            var saved = Time.time;
+            try
+            {
+                // 場面の読み込み直後（Time.time が CullInterval 未満）に生まれた追跡器も
+                // 初回は必ず走査する。CullBook.Time の初期値が0だと初回から間引き側に
+                // 落ち、最初の掃除が最大1秒遅れていた（レビュー指摘 F1）。
+                Time.time = 0.2f;
+                var tracker = new KillTracker();
+                Assert.True(RunPrefix(tracker)); // 初回の走査はする
+                Time.time = 0.8f;
+                Assert.False(RunPrefix(tracker)); // 以後は通常どおり1秒以内の2回目を飛ばす
+                Time.time = 1.5f;
+                Assert.True(RunPrefix(tracker)); // 1秒経てば再び走査する
+            }
+            finally { Time.time = saved; }
+        }
+
+        [Fact]
         public void PrefixScansAgainAfterASecondAndWhenTimeGoesBackwards()
         {
             ResetPatchState();
