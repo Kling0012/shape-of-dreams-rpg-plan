@@ -11,7 +11,7 @@ namespace SodRpg.Mod
     internal sealed class GameSettingsManager { public int maxPlayers = 4; }
     internal sealed class NativeDamageContext { internal static NativeDamageContext Current; internal Entity Target; internal float Health, Shield; }
     internal sealed class Se_R_Parry_End : AbilityInstance { public Entity victim; public float blockedDamage; }
-    internal sealed class Se_FishScales : StatusEffect { public float Amount; public float GetAmount() => Amount; }
+    internal sealed class Se_FishScales : StatusEffect { public float Amount; public float GetAmount() => Amount; public void SetAmount(float value) => Amount = value; }
     internal partial struct EventInfoShield { public StatusEffect statusEffect; public Entity target; public float finalAmount; }
     internal partial struct EventInfoStatusEffect { public StatusEffect effect; public Entity victim; }
     internal partial struct EventInfoDamage { public float negatedAmountByShield; }

@@ -1,56 +1,48 @@
-# Issue #781 修正前の再現記録
+# Issue #781 の再現と検証の記録
 
-ヴェスパーの遠征の鍛錬 `vesper.run.g1`（傷を糧にする）が、本体の明晰夢「魚の鱗」（LucidDream_FishScales）と組み合わせたときだけ速く溜まることを、模型シミュレーションで再現した。同じ傷（同じ絶対ダメージ列）を与えても、魚の鱗ありでは常に鍛錬が先行し、育った旅人では上限60への到達が1ゾーン早まる。本工程では製品コードを変更していない。
+ヴェスパーの遠征の鍛錬 `vesper.run.g1`（傷を糧にする）と本体の明晰夢「魚の鱗」（`LucidDream_FishScales`）の組み合わせについて、本体とMODの両方のコードから仕組みを確かめ、2026-10-18 の指示による修正（鍛錬が1段増えるたびに、魚の鱗で減っている最大HPの25%を取り戻す）を検証した記録。
 
-## 実行
+## 本体側のコード（Dew.Contents.dll / Dew.Core.dll を ilspycmd で逆コンパイル、2026-10-18）
+
+- `LucidDream_FishScales` は全ヒーローに状態 `Se_FishScales` を付けるだけの入れ物（`ClientEventOnHeroAdd` → `CreateStatusEffect<Se_FishScales>`）。
+- `Se_FishScales.EntityEventOnTakeDamage`: モンスターからの被ダメージについて `失ったHP（= damage.amount - negatedAmountByShield、1未満は無視）` に通常敵 `normalRatio 0.3`・ボス `bossRatio 0.4`（近接旅人 `hero.IsMeleeHero()` は `meleeMultiplier 0.65`。ヴェスパーは近接）を掛けた値を累積し、`SetAmount(GetAmount() + 増分)` を呼ぶ。
+- `Se_FishScales.SetAmount(decreasedAmount)`: `_currentAmount` のほか `StatBonus.maxHealthFlat = -decreasedAmount` と `FakeMaxHealthEffect.strength` を設定する。`StatBonus.maxHealthFlat` のsetterは `_isDirty = true` を立て、本体の再計算で実際の最大HPへ反映される（下限つき）。表示だけの値ではない。
+- 障壁の上限: `TakenShieldProcessor` が受けた障壁を `GetMaxShieldAmount() = victim.maxHealth × maxShieldHpRatio(1.0)`（0.5秒キャッシュ）で抑える。上限が現在の最大HPから決まるため、被弾で最大HPが削られると障壁の上限も下がり、最大HPが戻れば並んで戻る。
+- 減少のリセット: ゾーン移動（`ClientEventOnZoneLoaded` の `isTraveling`）とノックアウトで `SetAmount(0)`。導の社・祝福された導は `guidanceRestoreMaxHpRatio 0.25`・`blessedGuidanceRestoreMaxHpRatio 0.5` で一部を戻す（`SetAmount` の公開APIを本体自身も使っている）。
+
+## MOD側のコードと問題の仕組み
+
+- `src/SodRpg.Mod/HostAuthority.RunGrowth.cs` `OnRunGrowthDamage`: 鍛錬の溜まりは `RunGrowth.HealthPercent(失ったHP, hero.maxHealth)`、つまり「その瞬間の」最大HPへの%で数える。ヴェスパーの鍛錬 `vesper.run.g1` の契機は `DamageTakenMaxHpPct`（失ったHP。障壁の吸収を除く）だけ（`tools/star-manifest/vesper.json`・`tools/balance/run-growth.json`。閾値11%・上限60・1段に最大HP+13.25・防御+3.32・攻撃速度+1.32%）。障壁の吸収で溜まる `ShieldAbsorbedMaxHpPct` はケトゥスの鍛錬だけで、ヴェスパーは体で受けたダメージでしか溜まらない。
+- この2つを合わせると、鍛錬を溜めようとして体で受けるダメージ1回ごとに最大HPが削られ（近接なら失ったHP×0.195〜0.26）、障壁の上限も下がる。修復はゾーン移動かノックアウトまで待つしかない。よって組み合わせは「溜まりすぎて強すぎる」のではなく「溜めようとするほど急死しやすく、弱い」（2026-10-18 の判断）。
+- 補足: 最大HPが減って分母が縮むため、同じ傷がより大きな%として数え直され、溜まり自体はいくらか速くなる。この観察は最初の調査（同じ傷を与える模型シミュレーションで魚の鱗ありのほうが毎ゾーン鍛錬が先行した）で確認したが、本件の直し方としては採用していない（下記）。
+
+## 決めた修正と実装
+
+- 溜まり方（換算・閾値）もクールダウンも変えず、鍛錬が1段増えるたびに、その時点で魚の鱗によって減っている最大HPの25%を取り戻す（2026-10-18 の指示）。
+- `HostAuthority.RunGrowth.cs` の `GainRunGrowth`: `RunGrowthLedger.Gain` の返す増加段数を受け取り、`RestoreFishScalesMaxHealth` で `Se_FishScales.SetAmount(現在の削り × 0.75^増加段数)` を呼ぶ（1段ずつに分けた複利）。対象は `vesper.run.g1` だけ。魚の鱗の状態がないとき・削りが0のときは何もしない。取り戻すのは最大HPの上限だけで現在HPは回復しない。障壁の上限は本体の仕組み（`GetMaxShieldAmount` が現在の最大HPから決まる）に従って並んで戻る。fail-soft（例外では鍛錬を止めない）。
+- 25% は `tools/balance/run-growth.json` の `fishScales.vesperRunG1RestorePercent` に置き、生成された `StarRankBalance.VesperRunG1FishScalesRestorePercent` から使う。内容指紋は変えない。
+- 最初の案だった「`RunGrowth.HealthPercent` の分母へ魚の鱗の減少を足し戻す」修正（同じ傷で鍛錬が速く溜まりすぎるのを防ぐ方向）は、溜まり方を変えるため取りやめ、`HealthPercent` と `OnRunGrowthDamage` は本体変更前の実装に戻した。
+
+## 実行した検証
+
+- 再現テスト `tests/SodRpg.Core.Tests/Issue781FishScalesGrowthReproTests.cs`（4件）: 受け入れの例（最大HPが200減った状態で1段増えると50戻る）、1段ずつの複利（1回の到達で2段増えたとき 0.75²）、魚の鱗がないときは取り戻しも働かず同じ傷で変わらず溜まる、ケトゥスの鍛錬（`cetus.run.g1`・閾値9%）には付かない、溜まり方と効果量（閾値11・上限60・1段の効果）は不変。`HostAuthority.RunGrowth.cs` をスタブ境界（`KillAssistSupportNativeTests.cs` の `Se_FishScales` スタブに `SetAmount` を追加）で駆動する。実行ログは `tests/SodRpg.Core.Tests/TestResults/issue781-repro.trx`。
+- 戻し確認: `RestoreFishScalesMaxHealth` の呼び出しを無効化すると受け入れ例のテストが失敗（200のまま戻らない）し、戻すと成功することを確認した。
+- 周辺の既存テスト: `KillAssistSupportNativeTests`・`StarAdditionsV132Tests`・`RunGrowthBalanceTests`・`BalanceSimV132StarsTests`・`FlatGearGrowthTests`（合計59件）と `tools/tests/test_run_growth_balance.py`（指紋のバイト同一性を含む2件）、`python tools/balance/gen_cs.py --check` が成功。
+- 実際のゲームDLLに対するMODのReleaseビルドが成功（`Se_FishScales.GetAmount/SetAmount`・`TryGetStatusEffect`・`CalculateStatsIfDirty` が実APIと一致することの確認を兼ねる）。
+
+## 実行コマンド
 
 ```sh
-DOTNET_ROLL_FORWARD=Major NUGET_PACKAGES=/home/wang/.cache/gh-auto/nuget dotnet test tests/SodRpg.Core.Tests/SodRpg.Core.Tests.csproj -c Release --filter 'FullyQualifiedName~Issue781FishScalesGrowthReproTests' --verbosity quiet -p:WarningLevel=0 --logger 'trx;LogFileName=issue781-repro.trx' --logger 'console;verbosity=normal'
+DOTNET_ROLL_FORWARD=Major NUGET_PACKAGES=/home/wang/.cache/gh-auto/nuget dotnet test tests/SodRpg.Core.Tests/SodRpg.Core.Tests.csproj -c Release --filter 'FullyQualifiedName~Issue781FishScalesGrowthReproTests|FullyQualifiedName~KillAssistSupportNativeTests|FullyQualifiedName~StarAdditionsV132Tests|FullyQualifiedName~RunGrowthBalanceTests|FullyQualifiedName~BalanceSimV132StarsTests|FullyQualifiedName~FlatGearGrowthTests' --verbosity quiet -p:WarningLevel=0
+python3 tools/tests/test_run_growth_balance.py
+python3 tools/balance/gen_cs.py --check
+DOTNET_ROLL_FORWARD=Major NUGET_PACKAGES=/home/wang/.cache/gh-auto/nuget dotnet build src/SodRpg.Mod -c Release -p:GameDir="<本体データ>/Shape of Dreams" -p:ModDeployDir=<出力先>
 ```
 
-再現テストは `tests/SodRpg.Core.Tests/Issue781FishScalesGrowthReproTests.cs`。修正前の実行は終了コード1（Test Run Failed）、1件中1件失敗。失敗箇所は最初の想定（最大HP280）のゾーン1の比較で、`魚の鱗あり 14 なし 12（許容 ±1）`。ログは `tests/SodRpg.Core.Tests/TestResults/issue781-repro.trx`。
-
-## 再現の構成
-
-本体とMODの両方のコードから、次の3点をそのまま模型に写した。
-
-1. 魚の鱗の効果（本体 `Dew.Contents.dll` を ilspycmd で逆コンパイル、2026-10-18）:
-   `LucidDream_FishScales` は全ヒーローに状態 `Se_FishScales` を付ける。モンスターからの被ダメージについて `失ったHP（= damage.amount - negatedAmountByShield）` に通常敵0.3・ボス0.4（近接旅人は×0.65）を掛けた値を累積し、`StatBonus.maxHealthFlat = -累積値` で最大HPを減らす。減少はゾーン移動とノックアウトで0に戻る。導の社・祝福された導で一部戻るが、再現では使わない想定とした。
-2. 鍛錬の溜まり方（MOD `src/SodRpg.Mod/HostAuthority.RunGrowth.cs` の `OnRunGrowthDamage`）:
-   `RunGrowth.HealthPercent(失ったHP, hero.maxHealth)`、つまり「その瞬間の」最大HPへの比で数える。上限60・閾値11%は `tools/balance/run-growth.json` の実値（テスト内で `Build.Compute` から取得し確認）。
-3. 最大HPの移り変わり: `基礎 + 13.25×段数（鍛錬の最大HP上昇） - 魚の鱗の累積減少`。鍛錬の能力値は毎フレーム反映されるため、毎ヒット後に更新する。敵の攻撃力は旅人の最大HPに連動しないため、失うHPは絶対値で固定した。
-
-balance模型（`tools/BalanceSim/V132Model.cs`）と同じ想定（戦闘部屋で基礎最大HPの25%・ボス戦は2倍、深度0・熱度0・4ゾーン・部屋5+ボス）を使う。ヴェスパーの基礎最大HP280は `docs/specs/v1.27-sigil-scaling-review.md` の記録。700と2000は装備と星図が揃った中盤〜終盤の目安。
-
-## 入力と結果
-
-```text
-基礎最大HP   魚の鱗   ゾーン1   2    3    4
-280          なし      12    21   29   35
-280          あり      14    23   31   38
-700          なし      14    26   36   45
-700          あり      16    29   40   50
-2000         なし      15    29   42   54
-2000         あり      17    34   49   60   ← 上限60に到達（なしだと54）
-```
-
-同じ傷を与えているのに、魚の鱗ありでは毎ゾーン鍛錬が先行する。基礎値280では約+9%、育った旅人では差が広がり、基礎最大HP2000では4ゾーン目に上限へ達する。あわせて、魚の鱗ありの最大HPはゾーン内で魚の鱗なしの65〜70%まで下がる（次項）。
-
-## 判断したこと
-
-- **方向は「溜まりすぎて強くなりすぎる」**。逆（溜まらず弱くなる）は起こらない。魚の鱗は最大HPを減らすだけなので、鍛錬の計算の分母が縮み、同じ傷がより大きな%として数え直される。魚の鱗ありの最大HPは常になしより低く保たれるため、溜まり方は単調に速くなる。
-- **悪夢の代償が鍛錬に相殺される**。魚の鱗の最大HP減少は、鍛錬の効果（1段につき最大HP+13.25・防御+3.32・攻撃速度+1.32%）で大部分が埋め戻される。上限到達時には最大HP+795・防御+199・攻撃速度+79%が付く。ヴェスパーにとって魚の鱗は、他の旅人より安くつく。
-- 本体側の減少が実際の `maxHealth` に反映されることは、`StatBonus.maxHealthFlat` のsetterがdirtyを立て、本体のダメージ処理（逆コンパイル `Actor.cs` の `CalculateStatsIfDirty`）で再計算されることから確認した。表示だけの値ではない。
-- 本再現は模型シミュレーションである。ただし、閾値・上限・効果量・スタック累積の計算（`RunGrowthLedger.Gain`）・`RunGrowth.HealthPercent` はすべて製品コードそのもので、魚の鱗の定数だけ逆コンパイル結果を写した。
-- 魚の鱗なしの列（280なら[12, 21, 29, 35]）は、本Issueの対象外である鍛錬自身の最大HP上昇による減速（設計模型の「毎部屋25%固定」より遅くなる）も含んだ実動作の記録である。修正ではこの列が変わらないことを確かめる基準に使える。
-
-## 実行した確認
-
-再現テスト（修正前）は終了コード1で1件失敗（上記のとおり）。ログは `TestResults/issue781-repro.trx`。逆コンパイルは `LucidDream_FishScales`・`Se_FishScales`・`FakeMaxHealthEffect`・`EntityStatus`・`Actor` の5点（`~/dev/sod-gamedata/` の `Dew.Contents.dll`・`Dew.Core.dll` を ilspycmd で出力）。環境は SDK 10.0.111・ランタイム10.0.11へ `DOTNET_ROLL_FORWARD=Major` で切り替え、`NUGET_PACKAGES=/home/wang/.cache/gh-auto/nuget` を使用した（issue704の再現記録と同じ手順）。
+環境は SDK 10.0.111・ランタイム10.0.11へ `DOTNET_ROLL_FORWARD=Major` で切り替え、`NUGET_PACKAGES=/home/wang/.cache/gh-auto/nuget` を使用した（issue704の再現記録と同じ手順）。
 
 ## 未実行と未解決
 
-- 実ゲームでの再現（魚の鱗を付けたヴェスパーの遠征）、`dreamforge_simkill`、実Harmonyパッチ、画面表示: この環境ではゲームを起動できないため未実行。
-- 導の社・祝福された導による減少の戻り、ノックアウトでのリセット、協力プレイ: 模型に含めていない。戻りがあれば差は縮むが、方向（あり方が速い）は変わらない。
-- ヴェスパーが近接旅人であることは武器（ハンマー）と役割から近接側（×0.65）で計算した。`Hero.classType` は本体のアセット側の値でコードからは読めなかったため、遠接だった場合の確認は未実行（遠接なら比率が0.3/0.4のままなので、差はさらに広がる）。
-- 修正は次工程で行う。本工程の製品コード変更はない。
+- 実ゲームでの再現と確認（魚の鱗を付けたヴェスパーの遠征で、最大HPの減り方・戻り方、障壁の上限の移り変わり、体感の釣り合い）: この環境ではゲームを起動できないため未実行。
+- 25% という戻し幅が十分か（急死しやすさが実感として解消されるか）、導の社・祝福された導の戻りとの併用の体感: 実機での確認が必要。
+- 鍛錬の説明文（ゲーム内の星の説明）への取り戻しの記載: 共通の契機テキスト（`RunGrowth.TriggerText`）をヴェスパー専用に変える箇所がなく、今回は付けていない。

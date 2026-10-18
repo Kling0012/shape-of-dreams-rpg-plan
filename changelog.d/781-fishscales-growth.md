@@ -1,2 +1,2 @@
 ### 不具合の修正 / Bug fixes
-- 悪夢「魚の鱗」で最大HPが減っているとき、遠征の鍛錬が同じ傷で速く溜まりすぎるのを直しました。 / Fixed expedition training filling too fast from the same wounds while the lucid dream "Fish Scales" reduces max health.
+- 悪夢「魚の鱗」で最大HPを削られながらヴェスパーの鍛錬（傷を糧にする）を溜めるとき、鍛錬が1段増えるたびに、その時点で削られている最大HPの25%が戻るようにしました。 / While the lucid dream "Fish Scales" shaves max health on every hit taken, each stack gained by Vesper's expedition training now restores 25% of the max health it has currently shaved.

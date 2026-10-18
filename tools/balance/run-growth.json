@@ -1,5 +1,8 @@
 {
   "schemaVersion": 1,
+  "fishScales": {
+    "vesperRunG1RestorePercent": 25
+  },
   "effects": {
     "cetus.run.choice/options/0/growth/capBonus": 0,
     "cetus.run.choice/options/0/growth/effectPct": 50,

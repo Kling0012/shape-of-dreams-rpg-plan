@@ -316,16 +316,7 @@ namespace SodRpg.Core.Game
 
         /// <summary>HP系の契機で閾値に数える量（最大HPに対する%）。最大HPが不正なら0。</summary>
         public static double HealthPercent(float amount, float maxHealth)
-            => HealthPercent(amount, maxHealth, 0f);
-
-        /// <summary>HP系の契機で閾値に数える量。見かけ上減った最大HP（魚の鱗 Se_FishScales の減少）は fakeMaxHealth で分母へ戻す（Issue #781）。
-        /// 悪夢で最大HPを削られているとき、同じ傷がより大きな%として数え直されて鍛錬が速く溜まりすぎるのを防ぐ。</summary>
-        public static double HealthPercent(float amount, float maxHealth, float fakeMaxHealth)
-        {
-            double denominator = (double)maxHealth + Math.Max(0f, fakeMaxHealth);
-            return denominator > 0d && amount > 0f && !float.IsNaN(amount) && !float.IsInfinity(amount)
-                ? amount / denominator * 100d : 0d;
-        }
+            => maxHealth > 0f && amount > 0f && !float.IsNaN(amount) && !float.IsInfinity(amount) ? amount / (double)maxHealth * 100d : 0d;
 
         // ───── 説明文 ─────
 
