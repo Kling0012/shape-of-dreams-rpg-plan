@@ -11,16 +11,23 @@ namespace SodRpg.Mod
     // 30 Hz logic tick, but the stored bounds are only consumed by the one-time lobby rotation
     // tutorial (PlayLobby_RotateCharacterTutorial). On the title screen, in the skin preview
     // and in any lobby after that tutorial the walk is unobserved work. The prefix parks the
-    // renderer list where the native walk cannot see it; the getter postfixes recompute the
-    // bounds on read, keeping the same 1/30-second freshness the native tick provided.
+    // renderer list where the native walk cannot see it; the getter prefixes refresh the
+    // stored bounds on read (keeping the 1/30-second freshness the native tick provided) and
+    // leave the result to the native getters, so no native expression is copied here.
     internal static class NativeCharacterModelDisplayBounds
     {
-        internal const float RefreshInterval = 1f / 30f; // LogicUpdateManager's logic interval
+        // LogicUpdateManager.DoLogicUpdates gates the native 30 Hz logic tick with
+        // (double)Time.time - _lastLogicUpdateTime < 0.03333333507180214 on the scaled
+        // clock. The refresh throttle uses the same clock and the same threshold
+        // (1f/30f widened to double is exactly that constant), so freshness tracks the
+        // native tick - including the stall while Time.timeScale is 0, where the native
+        // walk would not recompute either.
+        internal const double LogicTickInterval = 1f / 30f;
 
         private sealed class State
         {
             internal List<Renderer> Renderers;
-            internal float LastRefresh = float.NegativeInfinity;
+            internal double LastRefresh = double.NegativeInfinity;
         }
 
         private static readonly ConditionalWeakTable<CharacterModelDisplay, State> States =
@@ -67,7 +74,7 @@ namespace SodRpg.Mod
                 // The adopted list is never mutated by native code afterwards: Setup repopulates
                 // whatever list the field points to, so the snapshot stays a stable input.
                 state.Renderers = list;
-                state.LastRefresh = float.NegativeInfinity; // the first read recomputes immediately
+                state.LastRefresh = double.NegativeInfinity; // the first read recomputes immediately
                 _renderers(instance) = new List<Renderer>(); // Count == 0 makes the native bounds walk skip
             }
             catch (Exception ex)
@@ -86,13 +93,16 @@ namespace SodRpg.Mod
             state.Renderers = null;
         }
 
-        internal static Bounds Refresh(CharacterModelDisplay instance)
+        // Updates the stored bounds when the adopted renderer list is due for a recompute.
+        // The native getters read the field right after this and compute their results with
+        // their own expressions; nothing here touches a return value, so the patched getters
+        // return the native value in every state (feature on, throttled, off or disabled).
+        internal static void Refresh(CharacterModelDisplay instance)
         {
-            Bounds current = _bounds(instance);
-            if (_disabled || !NativePerfOptions.CharacterModelDisplayBounds) return current;
-            if (!States.TryGetValue(instance, out State state) || state.Renderers == null) return current;
-            float now = Time.time;
-            if (now - state.LastRefresh < RefreshInterval) return current;
+            if (_disabled || !NativePerfOptions.CharacterModelDisplayBounds) return;
+            if (!States.TryGetValue(instance, out State state) || state.Renderers == null) return;
+            double now = Time.timeAsDouble;
+            if (now - state.LastRefresh < LogicTickInterval) return;
             state.LastRefresh = now;
             List<Renderer> list = state.Renderers;
             Bounds computed = default;
@@ -111,9 +121,8 @@ namespace SodRpg.Mod
                     computed.Encapsulate(renderer.bounds);
                 }
             }
-            if (!any) return current; // mirrors the native skip when the renderer list is empty
+            if (!any) return; // mirrors the native skip when the renderer list is empty
             _bounds(instance) = computed;
-            return computed;
         }
 
         internal static void Disable(Exception ex)
@@ -170,11 +179,14 @@ namespace SodRpg.Mod
 
         private static MethodBase TargetMethod() => _target;
 
-        private static void Postfix(CharacterModelDisplay __instance, ref Vector3 __result)
+        // Only refreshes the stored bounds before the native body runs. The native getter
+        // computes the result from _bounds itself, so the returned value equals the native
+        // one whenever the getter runs, patched or not.
+        private static void Prefix(CharacterModelDisplay __instance)
         {
             try
             {
-                __result = NativeCharacterModelDisplayBounds.Refresh(__instance).center;
+                NativeCharacterModelDisplayBounds.Refresh(__instance);
             }
             catch (Exception ex)
             {
@@ -198,16 +210,13 @@ namespace SodRpg.Mod
 
         private static MethodBase TargetMethod() => _target;
 
-        private static void Postfix(CharacterModelDisplay __instance, ref Vector3 __result)
+        // Same contract as the center prefix: refresh the stored bounds, never touch the
+        // result. The above expression stays native, so the tutorial position cannot drift.
+        private static void Prefix(CharacterModelDisplay __instance)
         {
             try
             {
-                Bounds bounds = NativeCharacterModelDisplayBounds.Refresh(__instance);
-                Vector3 position = __instance.transform.position;
-                Vector3 result = bounds.center + Vector3.up * bounds.extents.y;
-                result.x = position.x;
-                result.z = position.z;
-                __result = result;
+                NativeCharacterModelDisplayBounds.Refresh(__instance);
             }
             catch (Exception ex)
             {
