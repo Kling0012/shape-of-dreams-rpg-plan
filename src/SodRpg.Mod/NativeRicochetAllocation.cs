@@ -114,7 +114,7 @@ namespace SodRpg.Mod
                     // 第3段: 同じフレームに同じ対象への同種弾が多いときはまとめ側の実体へ追加される。
                     // 追加されたときも Setup は貸したままにする（Repeat がまとめ側に保持されるため）。
                     var created = NativeProcSpawnSpread.PlainSplit(__instance, start, null,
-                        new CastInfo(__instance.owner, target), setup.BeforePrepare, setup.Repeat);
+                        new CastInfo(__instance.owner, target), setup.BeforePrepare, setup.Repeat, setup.Start);
                     carried = created == null;
                     __instance.NotifyUse();
                 }
