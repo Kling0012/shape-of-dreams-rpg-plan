@@ -82,7 +82,6 @@ namespace SodRpg.Mod
             public float ConvertedAttackRange;
             public bool MeleeGuard;
             public readonly List<LinkDef> SatisfiedLinks = new List<LinkDef>();
-            internal readonly LinkDiagnosticState LinkDiagnostic = new LinkDiagnosticState();
             public string BountyRunId;
             public int ReportedLinks;
             // Runtime retains only the component reference; ownership lives in its weak-key ledger.
@@ -2260,7 +2259,6 @@ namespace SodRpg.Mod
                     p.LinkGuardArmor = 0;
                 }
                 p.RetainLinkSurges(rt.SatisfiedLinks, Time.time);
-                DiagnoseLinks(rt, alive, false);
                 return;
             }
             var hero = rt.Hero;
@@ -2309,7 +2307,6 @@ namespace SodRpg.Mod
                 rt.ReportedLinks = rt.SatisfiedLinks.Count;
                 SendBountyReport(rt, BountyReportKind.LinksSatisfied, rt.ReportedLinks);
             }
-            DiagnoseLinks(rt, alive, true);
         }
 
         /// <summary>連携が最初に効いたときだけ、種類ごとに1行ログを残す。</summary>
