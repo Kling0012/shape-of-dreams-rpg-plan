@@ -26,6 +26,7 @@ namespace SodRpg.Mod
         private UiStyles _tradeRelicStylesFor;
         private readonly GUIContent _tradeTooltipContent = new GUIContent();
         private static readonly GUILayoutOption[] TradeChoicesWidth = { GUILayout.MinWidth(0), GUILayout.ExpandWidth(true) };
+        private static readonly GUIContent TradePreviewOverflow = new GUIContent("…");
         private static readonly GUILayoutOption[] TradeFilterSize = { GUILayout.Height(30), GUILayout.MinWidth(0), GUILayout.ExpandWidth(true) };
         private static readonly GUILayoutOption[] TradeSearchSize = { GUILayout.MinWidth(0), GUILayout.ExpandWidth(true) };
         private static readonly SodRpg.Core.Game.Rarity[] TradeRarities =
@@ -402,7 +403,7 @@ namespace SodRpg.Mod
             // One layout entry reserves both blank regions and all rows. Its content-space y
             // includes the selected-offer summary and (for the satchel) the stash above it.
             float contentHeight = list.Count * TradeRelicRowStep;
-            Rect area = GUILayoutUtility.GetRect(0f, 0f, contentHeight, contentHeight, TradeChoicesWidth);
+            Rect area = GUILayoutUtility.GetRect(0f, float.MaxValue, contentHeight, contentHeight, TradeChoicesWidth);
             if (Event.current.type == EventType.Layout) return;
             float visibleHeight = _tradeOwnViewportHeight > 0f ? _tradeOwnViewportHeight : Mathf.Max(300f, _windowHeight);
             if (_tradeOwnContentHeight > 0f
@@ -429,7 +430,16 @@ namespace SodRpg.Mod
                     SetStatus(_s.SetCoopTradeOffer(offer));
                 }
                 GUI.enabled = enabled;
-                GUI.Label(new Rect(title.x, card.y + 44f, title.width, 46f), text.DetailContent, _tradeRelicDetailsStyle);
+                Rect preview = new Rect(title.x, card.y + 44f, title.width, 46f);
+                bool clipped = _tradeRelicDetailsStyle.CalcHeight(text.DetailContent, preview.width) > preview.height;
+                if (clipped) preview.width = Mathf.Max(0f, preview.width - 24f);
+                GUI.Label(preview, text.DetailContent, _tradeRelicDetailsStyle);
+                if (clipped)
+                {
+                    TradePreviewOverflow.tooltip = text.DetailContent.tooltip;
+                    GUI.Label(new Rect(preview.x + preview.width, preview.y + preview.height - 20f, 24f, 20f),
+                        TradePreviewOverflow, _tradeRelicDetailsStyle);
+                }
             }
         }
 

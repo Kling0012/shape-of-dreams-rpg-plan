@@ -3,8 +3,7 @@
     <OutputType>Exe</OutputType>
     <TargetFramework>net8.0</TargetFramework>
     <LangVersion>9.0</LangVersion>
-    <!-- Reuse Core's existing friend assembly access for the unchanged UI method. -->
-    <AssemblyName>SodRpg.Core.Tests</AssemblyName>
+    <AssemblyName>Issue572.Repro</AssemblyName>
     <Nullable>disable</Nullable>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
   </PropertyGroup>

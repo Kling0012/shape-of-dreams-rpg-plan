@@ -18,7 +18,8 @@ python3 tests/repro/issue572/run.py
 - 参加者は1人。ホストのパーティ装備倍率の最大値はその1人の `GearChanceMult` になる。UI のセッション状態、ホストの保持状態、敵の型判定、色タグだけを狭い代替 API に置き換える。
 - 通常敵・エリート各20,000回の固定シード抽選を実行し、独立に計算した期待確率との差が2パーセントポイント以内であることも各ケースで確認する。抽選は描画前の一般的な悪夢化経路を対象とし、変種・宿敵の優先分岐は含めない。
 
-既存の Core の friend assembly を利用するため、実行ファイルの assembly 名は `SodRpg.Core.Tests` とする。既存テストプロジェクトと出力先は共有しない。
+実行ファイルの assembly 名は専用の `Issue572.Repro` とし、Core の `InternalsVisibleTo` にも
+この名前を指定する。既存の `SodRpg.Core.Tests` と assembly 名・出力先を共有しない。
 
 ## 修正前の結果
 
