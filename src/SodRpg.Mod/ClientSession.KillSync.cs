@@ -46,6 +46,7 @@ namespace SodRpg.Mod
         private readonly List<KillVictimKey> _killMissingRetired = new List<KillVictimKey>();
         private readonly List<PendingMonsterDeath> _killMissingRequests = new List<PendingMonsterDeath>(32);
         private readonly Dictionary<string, long> _killSentReceipts = new Dictionary<string, long>(StringComparer.Ordinal);
+        private IReadOnlyList<KillReceiptState> _killReceiptScanSource;
 
         private void ResetKillReceiptSchedule()
         {
@@ -54,6 +55,7 @@ namespace SodRpg.Mod
             _killReceiptActor = null;
             _killMissingRetries.Clear();
             _killSentReceipts.Clear();
+            _killReceiptScanSource = null;
         }
         private float _lastKillProfileSave = float.NegativeInfinity;
         private string _killRetirementRunId;
@@ -507,10 +509,16 @@ namespace SodRpg.Mod
             bool heartbeat = now >= _nextKillReceipt;
             var acknowledged = KillReceiptsForProgress(runId);
             int dirty = 0;
-            if (heartbeat || now >= _nextKillAck)
+            // Frontiers only change by replacing the whole list (capture, durable promotion, restore),
+            // so an unchanged reference cannot turn this scan dirty; wait for the next ack gate instead.
+            if (heartbeat || now >= _nextKillAck || !ReferenceEquals(acknowledged, _killReceiptScanSource))
+            {
+                _killReceiptScanSource = acknowledged;
                 for (int i = 0; i < acknowledged.Count; i++)
                     if (heartbeat || !_killSentReceipts.TryGetValue(acknowledged[i].StreamId, out long sent)
                         || sent != acknowledged[i].AcknowledgedThrough) dirty++;
+                if (dirty == 0) _nextKillAck = now + 0.25f;
+            }
             _killMissingRequests.Clear();
             if (now >= _nextKillMissing)
             {
