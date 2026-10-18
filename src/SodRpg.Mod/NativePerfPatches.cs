@@ -26,6 +26,7 @@ namespace SodRpg.Mod
             NativePerfOptions.CastIndicatorCircle = config.nativeCastIndicatorCircle;
             NativePerfOptions.CameraZoomRotation = config.nativeCameraZoomRotation;
             NativePerfOptions.CharacterModelDisplayBounds = config.nativeCharacterModelDisplayBounds;
+            NativePerfOptions.KillTrackerCull = config.nativeKillTrackerCullThrottle;
         }
     }
 
@@ -44,6 +45,7 @@ namespace SodRpg.Mod
         internal static bool CastIndicatorCircle = true;
         internal static bool CameraZoomRotation = true;
         internal static bool CharacterModelDisplayBounds = true;
+        internal static bool KillTrackerCull = true;
     }
 
     internal static class NativePerfPatch
@@ -989,6 +991,88 @@ namespace SodRpg.Mod
         {
             if (!NativePerfOptions.CameraZoomRotation) return Quaternion.Euler(0f, camera.entityCamAngle, 0f);
             return camera.entityCamAngle == 0f ? Quaternion.Euler(0f, 0f, 0f) : camera.entityCamAngleRotation;
+        }
+    }
+
+    [HarmonyPatch]
+    internal static class NativeKillTrackerCullPerf
+    {
+        // Every damage event dealt by a tracked actor walks the whole tracking dictionary in
+        // CullExpiredEntities. Every hero carries a 30-second tracker (assist attribution,
+        // Hero.OnStartServer) and each curse adds an 8-second one (CurseStatusEffect.OnCreate),
+        // so horde fights run dozens-to-hundreds of iterations per hit. ReportKill re-checks
+        // the grace period itself, so thinning the cleanup scan to once per second cannot
+        // change which kills are reported: an expired entry only ever fails ReportKill's own
+        // check, and TrackDamagedVictims refreshes its timestamp instead of re-adding it (the
+        // native re-add would only stack a redundant OnDeath subscription whose later
+        // invocation finds no entry and does nothing). Culling itself only removes expired or
+        // destroyed entries; the OnDeath removals it performs are no-ops because the cached
+        // delegate is never assigned.
+        private const float CullInterval = 1f;
+
+        private sealed class CullBook
+        {
+            internal float Time;
+        }
+
+        private static readonly ConditionalWeakTable<KillTracker, CullBook> Books =
+            new ConditionalWeakTable<KillTracker, CullBook>();
+
+        private static readonly ConditionalWeakTable<KillTracker, CullBook>.CreateValueCallback CreateBook =
+            _ => new CullBook();
+
+        private static MethodBase _target;
+        private static bool _disabled;
+        private static bool _warned;
+
+        private static bool Prepare()
+        {
+            _target = NativePerfPatch.Find(typeof(KillTracker), "CullExpiredEntities", ref _warned);
+            if (_target == null) return false;
+            try { return ValidateBody(PatchProcessor.GetOriginalInstructions(_target)); }
+            catch (Exception ex)
+            {
+                NativePerfPatch.Warn(ref _warned, "kill tracker cull", ex.Message);
+                return false;
+            }
+        }
+
+        private static MethodBase TargetMethod() => _target;
+
+        internal static bool ValidateBody(IList<CodeInstruction> code)
+        {
+            var tracking = AccessTools.Field(typeof(KillTracker), "_trackingDict");
+            int reads = 0, removes = 0;
+            for (int i = 0; i < code.Count; i++)
+            {
+                if (code[i].LoadsField(tracking)) reads++;
+                if (code[i].operand is MethodInfo method && method.Name == nameof(Dictionary<Entity, float>.Remove)
+                    && method.DeclaringType != null && method.DeclaringType.IsGenericType
+                    && method.DeclaringType.GetGenericTypeDefinition() == typeof(Dictionary<,>)) removes++;
+            }
+            if (reads >= 1 && removes >= 1) return true;
+            NativePerfPatch.Warn(ref _warned, "kill tracker cull", "native cull loop changed");
+            return false;
+        }
+
+        // Skipping only postpones cleanup of expired entries by at most CullInterval; the
+        // dictionary stays bounded by the entities damaged within grace plus one interval.
+        private static bool Prefix(KillTracker __instance)
+        {
+            if (_disabled || !NativePerfOptions.KillTrackerCull) return true;
+            try
+            {
+                CullBook book = Books.GetValue(__instance, CreateBook);
+                float now = Time.time;
+                if (now >= book.Time && now - book.Time < CullInterval) return false;
+                book.Time = now;
+            }
+            catch (Exception ex)
+            {
+                _disabled = true;
+                NativePerfPatch.Warn(ref _warned, "kill tracker cull", ex.Message);
+            }
+            return true;
         }
     }
 }
