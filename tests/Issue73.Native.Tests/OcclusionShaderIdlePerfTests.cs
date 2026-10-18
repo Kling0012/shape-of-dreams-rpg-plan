@@ -10,8 +10,10 @@ namespace Issue73.Native.Tests
     /// 記録で、前回送った値と完全一致したときだけネイティブ呼び出しを省くこと、値・
     /// プロパティID・成分のどれかが変われば送ること、設定 OFF の素通し、null と長さ違い
     /// の配列でのキャッシュ無効化、Prefix のインスタンス交代と OnDestroy の Postfix に
-    /// よるキャッシュ破棄を確かめる。Vector4 の省略判定は Unity の operator==（成分差の
-    /// 二乗和が kEpsilon² 未満を一致とする近似）を使わず成分ごとの完全一致で行うため、
+    /// よるキャッシュ破棄を確かめる。設定を OFF にした間の素通し書き込みも各ガードが
+    /// 自分のキャッシュを捨て、ON に戻した最初の書き込みがすべてのガードで送り直される
+    /// ことも確かめる。Vector4 の省略判定は Unity の operator==（成分差の二乗和が
+    /// kEpsilon² 未満を一致とする近似）を使わず成分ごとの完全一致で行うため、
     /// 1e-6 程度の変化も省かれずに送られることがここで保証される。
     /// </summary>
     public sealed class OcclusionShaderIdlePerfTests
@@ -136,6 +138,59 @@ namespace Issue73.Native.Tests
                 NativeOcclusionShaderIdlePerf.GuardVectorArray(4, values);
                 NativeOcclusionShaderIdlePerf.GuardVectorArray(4, values);
                 Assert.Equal(new[] { "int 3 1", "int 3 1", "vectorarray 4 16", "vectorarray 4 16" }, Shader.Calls);
+            }
+            finally { NativePerfOptions.OcclusionIdle = true; }
+        }
+
+        [Fact]
+        public void OptionToggleInvalidatesEveryGuardCache()
+        {
+            // レビューで指摘された経路: ON で送った値がキャッシュに残る → 実行中に OFF に
+            // すると素通しが別の値を GPU へ直接書く（キャッシュは更新されない）→ 再び ON に
+            // したとき、計算値が古いキャッシュと一致すると省略され、GPU 側に OFF 中の値が
+            // 残り続ける。OFF の素通しでも各ガードが自分のキャッシュを捨てるため、ON に戻った
+            // 最初の書き込みは必ず送られ、以後の完全一致だけが再び省かれる。
+            var camera = new CameraManager();
+            ResetState(camera);
+            var position = new Vector4(1f, 2f, 3f, 4f);
+            var values = new Vector4[16];
+            NativeOcclusionShaderIdlePerf.GuardInt(7, 3);
+            NativeOcclusionShaderIdlePerf.GuardFloat(9, 1.5f);
+            NativeOcclusionShaderIdlePerf.GuardVector(11, position);
+            NativeOcclusionShaderIdlePerf.GuardVectorArray(12, values);
+            NativePerfOptions.OcclusionIdle = false;
+            try
+            {
+                var moved = new Vector4[16];
+                moved[0] = new Vector4(1f, 1f, 1f, 1f);
+                NativeOcclusionShaderIdlePerf.GuardInt(7, 5); // 素通しはキャッシュと違う値を書く
+                NativeOcclusionShaderIdlePerf.GuardFloat(9, 2.5f);
+                NativeOcclusionShaderIdlePerf.GuardVector(11, new Vector4(9f, 9f, 9f, 9f));
+                NativeOcclusionShaderIdlePerf.GuardVectorArray(12, moved);
+                NativePerfOptions.OcclusionIdle = true;
+                NativeOcclusionShaderIdlePerf.GuardInt(7, 3); // 計算値は OFF 前と同じでも送り直す
+                NativeOcclusionShaderIdlePerf.GuardInt(7, 3); // 送り直した後は再び省く
+                NativeOcclusionShaderIdlePerf.GuardFloat(9, 1.5f);
+                NativeOcclusionShaderIdlePerf.GuardFloat(9, 1.5f);
+                NativeOcclusionShaderIdlePerf.GuardVector(11, position);
+                NativeOcclusionShaderIdlePerf.GuardVector(11, position);
+                NativeOcclusionShaderIdlePerf.GuardVectorArray(12, values);
+                NativeOcclusionShaderIdlePerf.GuardVectorArray(12, values);
+                Assert.Equal(new[]
+                {
+                    "int 7 3",
+                    "float 9 1.5",
+                    "vector 11 " + Shader.Format(position),
+                    "vectorarray 12 16",
+                    "int 7 5",
+                    "float 9 2.5",
+                    "vector 11 " + Shader.Format(new Vector4(9f, 9f, 9f, 9f)),
+                    "vectorarray 12 16",
+                    "int 7 3",
+                    "float 9 1.5",
+                    "vector 11 " + Shader.Format(position),
+                    "vectorarray 12 16",
+                }, Shader.Calls);
             }
             finally { NativePerfOptions.OcclusionIdle = true; }
         }

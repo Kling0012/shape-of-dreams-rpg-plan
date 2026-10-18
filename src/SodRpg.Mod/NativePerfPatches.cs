@@ -1340,10 +1340,11 @@ namespace SodRpg.Mod
         // tick while the see-through test is disabled. Global property values only matter at draw
         // time, so rewriting an unchanged value is a no-op for rendering. CameraManager is the only
         // writer of these four properties in the game, so a last-sent cache can only disagree with
-        // the GPU state after a write outside the guards — OnDestroy's direct 0/1 reset, which runs
-        // on any destroyed duplicate, not just the ticking one. The prefix below drops the cache
-        // whenever a different manager instance ticks, and a postfix on OnDestroy drops it after
-        // every reset, so whichever instance writes next always re-sends. Idle play —
+        // the GPU state after a write the guards did not bookkeep — the pass-through while the
+        // option is off, and OnDestroy's direct 0/1 reset, which runs on any destroyed duplicate,
+        // not just the ticking one. The pass-through branch drops its cache entry, the prefix below
+        // drops the cache whenever a different manager instance ticks, and a postfix on OnDestroy
+        // drops it after every reset, so whichever instance writes next always re-sends. Idle play —
         // stationary player, settled transparency ramps, fixed zoom, between-room states with no
         // controlling entity — then stops issuing the native setter calls and the 256-byte array
         // copy per tick; moving play still sends everything, exactly as before.
@@ -1418,10 +1419,18 @@ namespace SodRpg.Mod
         }
 
         // Each guard keeps the exact signature of the native setter it replaces, so the call
-        // sites' stack shape is untouched. An option turned off passes straight through.
+        // sites' stack shape is untouched. An option turned off passes straight through and,
+        // like GuardVectorArray below, drops its own cache entry: a value written while the
+        // option is off reaches the GPU without updating the cache, so the first guarded call
+        // after the option comes back must re-send instead of trusting a stale match.
         internal static void GuardInt(int id, int value)
         {
-            if (!NativePerfOptions.OcclusionIdle) { Shader.SetGlobalInt(id, value); return; }
+            if (!NativePerfOptions.OcclusionIdle)
+            {
+                _hasInt = false;
+                Shader.SetGlobalInt(id, value);
+                return;
+            }
             if (_hasInt && _sentIntId == id && _sentInt == value) return;
             _hasInt = true;
             _sentIntId = id;
@@ -1431,7 +1440,12 @@ namespace SodRpg.Mod
 
         internal static void GuardFloat(int id, float value)
         {
-            if (!NativePerfOptions.OcclusionIdle) { Shader.SetGlobalFloat(id, value); return; }
+            if (!NativePerfOptions.OcclusionIdle)
+            {
+                _hasFloat = false;
+                Shader.SetGlobalFloat(id, value);
+                return;
+            }
             if (_hasFloat && _sentFloatId == id && _sentFloat == value) return;
             _hasFloat = true;
             _sentFloatId = id;
@@ -1441,7 +1455,12 @@ namespace SodRpg.Mod
 
         internal static void GuardVector(int id, Vector4 value)
         {
-            if (!NativePerfOptions.OcclusionIdle) { Shader.SetGlobalVector(id, value); return; }
+            if (!NativePerfOptions.OcclusionIdle)
+            {
+                _hasVector = false;
+                Shader.SetGlobalVector(id, value);
+                return;
+            }
             // Unity's Vector4 operator== treats a summed squared difference below kEpsilon as equal,
             // which would silently swallow sub-1e-5 drift and leave a slightly stale value on the
             // GPU. Compare per component so only a bit-exact repeat is skipped.
