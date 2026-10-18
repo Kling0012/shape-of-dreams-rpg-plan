@@ -43,6 +43,13 @@ namespace SodRpg.Mod
             => rt.Boss.Ready.TryGetValue(action.RuntimeKey, out var due) ? now >= due : rt.Boss.Ready.Count < 128;
         private static void PolarisCommit(HeroRuntime rt, BossAction action, float now)
             => BossReady(rt, action.RuntimeKey, now, action.CooldownMillis);
+        // 入力間隔のゲート（Actions[0] の CooldownMillis＝仕様0.5秒）。共有表が満杯でキーを登録できないときは
+        // ゲートを緩めてでもモード切替自体は止めない（技の発動側は PolarisAvailable のとおり表の空きが要る）。
+        private static bool PolarisInputGated(HeroRuntime rt, BossAction gate, float now)
+        {
+            if (rt.Boss.Ready.TryGetValue(gate.RuntimeKey, out float due) && now < due) return true;
+            return !BossReady(rt, gate.RuntimeKey, now, gate.CooldownMillis) && rt.Boss.Ready.ContainsKey(gate.RuntimeKey);
+        }
         private static float PolarisAmount(HeroRuntime rt, BossMoveEntry entry, BossMoveProfile profile, string channelId, bool maxHp = false)
             => Math.Max(0f, maxHp ? rt.Hero.maxHealth : Math.Max(rt.Hero.Status.attackDamage, rt.Hero.Status.abilityPower))
                 * BossCoefficient(entry, profile, channelId);
@@ -142,7 +149,7 @@ namespace SodRpg.Mod
                 return;
             }
             if (kind != BossEvent.MemoryUse && kind != BossEvent.MovementCompleted
-                || !BossReady(rt, profile.Actions[0].RuntimeKey, now, profile.Actions[0].CooldownMillis)) return;
+                || PolarisInputGated(rt, profile.Actions[0], now)) return;
             if (kind == BossEvent.MovementCompleted)
             {
                 if (state.Mode == 0)
