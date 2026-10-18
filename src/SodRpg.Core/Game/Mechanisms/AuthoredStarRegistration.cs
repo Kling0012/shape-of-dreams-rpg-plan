@@ -225,6 +225,8 @@ namespace SodRpg.Core.Game
             lock (AuthoredLock)
             {
                 if (Installed.Count == 0) return baseline;
+                // The sole caller, HeroSigils.All, always supplies the same readonly BaselineAll instance.
+                // If another baseline is supported, its identity must also be part of the cache key.
                 if (installedTalents != null && installedTalentsFingerprint == registryFingerprint) return installedTalents;
                 var result = new List<TalentDef>();
                 foreach (var node in baseline) if (!Installed.ContainsKey(node.HeroKey)) result.Add(node);
@@ -310,6 +312,7 @@ namespace SodRpg.Core.Game
                 {
                     if (pairBases.TryGetValue((original.HeroKey, effectiveSpec.PairId), out var baseNode))
                     {
+                        // Keep the exception type and message of the former SingleOrDefault lookup.
                         if (baseNode == null) throw new InvalidOperationException("Sequence contains more than one matching element");
                         if (!requiredStars.Contains(baseNode.LocalStarId)) requiredStars.Add(baseNode.LocalStarId);
                     }
