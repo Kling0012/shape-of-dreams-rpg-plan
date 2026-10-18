@@ -1,5 +1,5 @@
-[b]v3.7.0: Lighter combat and co-op networking, a fix for heavy slowdowns with Lacerta's Incendiary Rounds and projectile essences, and a fix for guests' skills becoming unusable. Strength is unchanged. Saves carry over. Restart the game after updating.[/b]
-[b]v3.7.0：戦闘の処理と協力プレイの通信を軽くし、ラセルタの焼夷弾装填と飛び道具系エッセンスで重くなる問題と、参加者側でスキルが使えなくなる不具合を直しました。強さは変わりません。セーブデータはそのまま引き継げます。更新後はゲームを再起動してください。[/b]
+[b]Fixes 14 unique links whose conditions could never be met, so they now trigger with equippable memory setups.[/b]
+[b]条件を満たせず発動できなかった固有品の連携14件を、装着できる記憶の組み合わせで発動するように直しました。[/b]
 
 [h1]Dreamforge RPG[/h1]
 Turns every run into part of a long RPG journey: relics you keep, a risky "secure or delve" choice at every zone, a star map per Traveler, a forge, and long-term goals. Co-op ready.

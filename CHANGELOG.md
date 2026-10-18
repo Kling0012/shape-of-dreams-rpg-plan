@@ -10,6 +10,15 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v3.7.1 — Fix 14 unique links that could never trigger（2026-10-18）
+
+### 不具合の修正 / Bug fixes
+- 「傑作の連剣」「決意と慈悲」「双発の火薬庫」「風傷の殺陣」の連携が、同時に装着できない Identity 記憶2種を条件にしていて、発動できなかった問題を直しました。今は、その旅人の Identity 記憶1種と移動の記憶で発動します。 / Fixed the links on Masterwork Flurry, Resolve and Mercy, Twin-Shot Powder Keg and Wind-Scar Melee requiring two Identity memories that cannot be equipped together. They now trigger with one Identity memory and that traveler's Movement memory.
+- 受け身の Identity 記憶を「使う」ことを条件にしていて、発動できなかった固有品10件の連携を直しました。今は、装着しているあいだ攻撃力と魔力が上がります。 / Fixed ten unique links that required casting passive Identity memories and so could never trigger. They now raise attack damage and ability power while equipped.
+- **協力プレイでは参加者全員を更新してください。** 装備の内容が変わるため、古い版と混ぜると内容の不一致の警告が出ます。 / **Everyone in co-op should update.** Equipment content changes, so mixing with older versions shows a content mismatch warning.
+
+---
+
 ## v3.7.0 — Lighter combat and co-op networking（2026-10-18）
 
 このバージョンでは、ゲーム全体の処理と協力プレイの通信を軽くしました。ラセルタの焼夷弾装填と飛び道具系エッセンスの組み合わせで処理が重くなる問題と、協力プレイの参加者側でスキルが使えなくなる不具合も直しました。強さや効果の数値は変えていません。 / This version makes the whole game and co-op networking lighter. It also fixes heavy slowdowns from Lacerta's Incendiary Rounds combined with projectile essences, and a bug that left skills unusable for co-op guests. Strength and effect values are unchanged.
