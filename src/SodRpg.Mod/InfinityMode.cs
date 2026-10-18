@@ -452,11 +452,19 @@ namespace SodRpg.Mod
             var gm = NetworkedManagerBase<GameManager>.softInstance;
             var settings = NetworkedManagerBase<GameSettingsManager>.softInstance;
             if (zone == null || gm == null || settings == null) return;
-            settings.customData[RuntimeKey] = JsonConvert.SerializeObject(new Envelope
+            string text = JsonConvert.SerializeObject(new Envelope
             {
                 RunId = gm.runId, NativeZoneIndex = zone.currentZoneIndex, WorldSeed = zone.worldSeed,
                 StateVersion = 1, State = State,
             });
+            // Mirror's SyncDictionary records and broadcasts every set, including a same-value
+            // rewrite (SyncIDictionary's indexer has no equality check). Native continue saves
+            // repeat this envelope — SaveContinueData runs on every node travel and again on
+            // each 20 s mid-run lock — so an unchanged graph re-sent its full envelope to every
+            // client. Skip the write when the synchronized text is already this exact value.
+            if (settings.customData.TryGetValue(RuntimeKey, out var current)
+                && string.Equals(current, text, StringComparison.Ordinal)) return;
+            settings.customData[RuntimeKey] = text;
         }
 
         // #144: BeginRun can fire (TrackRun) before the first zone generates, so
