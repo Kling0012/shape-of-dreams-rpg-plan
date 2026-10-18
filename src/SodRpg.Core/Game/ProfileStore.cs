@@ -43,8 +43,8 @@ namespace SodRpg.Core.Game
             lock (_writeLock) _validatedFirstWrite = false;
             Notes.Clear();
             WritesBlocked = false;
-            var mainRoot = ReadRoot(_path, "本体");
-            var backupRoot = ReadRoot(BackupPath, "バックアップ");
+            var mainRoot = ReadRoot(_path, "本体", out bool mainExists);
+            var backupRoot = ReadRoot(BackupPath, "バックアップ", out bool backupExists);
             if (ResetIfOld(mainRoot, backupRoot))
             {
                 sourceReadsComplete?.Invoke();
@@ -71,12 +71,12 @@ namespace SodRpg.Core.Game
             if (bak != null)
             {
                 Notes.Add("本体が読めないため、バックアップから復旧しました（rev " + bak.Revision + "）。");
-                if (_fs.Exists(_path)) Quarantine(_path);
+                if (mainExists) Quarantine(_path);
                 return CompleteLoad(bak, "バックアップ", bakNotes, bakMigrated);
             }
-            if (_fs.Exists(_path) || _fs.Exists(BackupPath))
+            if (mainExists || backupExists)
             {
-                if (_fs.Exists(_path)) Quarantine(_path);
+                if (mainExists) Quarantine(_path);
                 Notes.Add("保存データが読めないため、新しいプロフィールで始めます。壊れたファイルは .corrupt として残しました。");
             }
             return Profile.CreateNew(_seed);
@@ -150,11 +150,13 @@ namespace SodRpg.Core.Game
             }
         }
 
-        private JsonObject ReadRoot(string path, string label)
+        private JsonObject ReadRoot(string path, string label, out bool exists)
         {
+            exists = false;
             try
             {
-                if (!_fs.Exists(path)) return null;
+                exists = _fs.Exists(path);
+                if (!exists) return null;
                 return Json.Parse(_fs.ReadAllText(path)) as JsonObject
                     ?? throw new LedgerFormatException("最上位がオブジェクトではありません。");
             }
@@ -195,9 +197,10 @@ namespace SodRpg.Core.Game
             long version = ReadVersion(mainRoot);
             if (version < 0) version = ReadVersion(backupRoot);
             if (version < 0 || version >= Profile.ResetBeforeVersion) return false;
-            string archive = NewArchivePath(version);
+            string archive = null;
             try
             {
+                archive = NewArchivePath(version);
                 // 読めないファイルへの写しは始めない（#91）。中途の写しを残すと、初回読み込みの自動再試行（#89）のたびに
                 // 写しが増え続けるため、まず読み取れることを確かめる。
                 if (_fs.Exists(_path)) _fs.ReadAllText(_path);
@@ -210,8 +213,11 @@ namespace SodRpg.Core.Game
                 // 写しが作れなければリセットせず、保存も止める（前のデータを失わないため。issue #17）。次の起動でもう一度試す。
                 // この試行で作りかけた写しだけは片付ける（#91）。名前は存在しないものから選んだので、
                 // 消せるのは今回作ったファイルだけで、元のファイルや前の写しには触れない。
-                TryDelete(archive);
-                TryDelete(archive + ".bak");
+                if (archive != null)
+                {
+                    TryDelete(archive);
+                    TryDelete(archive + ".bak");
+                }
                 WritesBlocked = true;
                 Notes.Add("前のデータの写しを作れなかったため、今回はリセットせず、保存も止めています。次に起動したときにもう一度試します: " + ex.Message);
                 return false;
@@ -251,14 +257,15 @@ namespace SodRpg.Core.Game
         /// </summary>
         private void PreserveBeforeExclusion(string path, bool excluded)
         {
-            if (!excluded || !_fs.Exists(path)) return;
-            string stamp = DateTime.UtcNow.ToString("yyyyMMdd-HHmmss", System.Globalization.CultureInfo.InvariantCulture);
-            string dir = System.IO.Path.GetDirectoryName(path) ?? "";
-            string name = System.IO.Path.GetFileNameWithoutExtension(path);
-            string copy = System.IO.Path.Combine(dir, name + ".excluded-" + stamp + ".json");
-            for (int i = 2; _fs.Exists(copy); i++) copy = System.IO.Path.Combine(dir, name + ".excluded-" + stamp + "-" + i + ".json");
+            if (!excluded) return;
             try
             {
+                if (!_fs.Exists(path)) return;
+                string stamp = DateTime.UtcNow.ToString("yyyyMMdd-HHmmss", System.Globalization.CultureInfo.InvariantCulture);
+                string dir = System.IO.Path.GetDirectoryName(path) ?? "";
+                string name = System.IO.Path.GetFileNameWithoutExtension(path);
+                string copy = System.IO.Path.Combine(dir, name + ".excluded-" + stamp + ".json");
+                for (int i = 2; _fs.Exists(copy); i++) copy = System.IO.Path.Combine(dir, name + ".excluded-" + stamp + "-" + i + ".json");
                 _fs.Copy(path, copy, overwrite: false);
                 Notes.Add(Loc.T("知らない内容を除外する前のデータを " + System.IO.Path.GetFileName(copy) + " に残しました。",
                     "Kept the data from before removing unknown content in " + System.IO.Path.GetFileName(copy) + "."));

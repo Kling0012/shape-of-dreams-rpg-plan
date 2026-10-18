@@ -377,7 +377,16 @@ namespace SodRpg.Core.Game
                 _loading = false;
             }
 
-            public bool Exists(string path) => _inner.Exists(path);
+            public bool Exists(string path)
+            {
+                try { return _inner.Exists(path); }
+                catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException || ex is System.Security.SecurityException)
+                {
+                    var io = ex as IOException ?? new IOException(ex.Message, ex);
+                    if (_loading && _readError == null) _readError = io;
+                    throw io;
+                }
+            }
             public string ReadAllText(string path)
             {
                 try { return _inner.ReadAllText(path); }
