@@ -1607,7 +1607,7 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
             // 旧ホスト相手の毎フレームの装備と倉庫の走査を省く（#415 の宣言がない間はここを毎tick通るため）。
             // LocalHero・RPC・接続と復元完了が前提。ロビー等でこの経路を通らない間は新しい警告を出さない。
             // 装備の変化は MarkDirty を、能力の応答は _buildDirty を通るので、警告は遅れても
-            // ハートビート1回分（応答のないホストで5秒）の中で出る。
+            // ハートビート1回分（確認応答のあるホストで30秒、無いホストで5秒）の中で出る。
             RefreshForbiddenGearNotice(heroKey, now);
             ProbeBuildInputCapability(heroKey);
             var submissionProfile = NetworkServer.active || _hostBuildInputCapability

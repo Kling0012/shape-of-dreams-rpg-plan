@@ -1411,12 +1411,24 @@ namespace SodRpg.Core.Game
             p.Focus = focus;
         }
 
+        private static int _progressionRewardWarning;
+
         private static int ScaleProgressionReward(Rng rng, int amount, int convertedAmount, double multiplier, double rewardScale)
         {
             int total = DreamDepth.ScaleReward(SaturatingAdd(amount, convertedAmount), multiplier);
             if (rng == null) return total;
             // Keep combined depth rounding; waypoint conversions already thinned their source loot.
             int converted = DreamDepth.ScaleReward(convertedAmount, multiplier);
+            if (total < converted && System.Threading.Interlocked.Exchange(ref _progressionRewardWarning, 1) == 0)
+            {
+                try
+                {
+                    System.Diagnostics.Trace.TraceWarning(
+                        "Progression reward scaling is not monotonic: total={0}, converted={1}, amount={2}, convertedAmount={3}, multiplier={4}",
+                        total, converted, amount, convertedAmount, multiplier);
+                }
+                catch (Exception) { /* A failing trace listener must not interrupt rewards. */ }
+            }
             return SaturatingAdd(PressureCountRewards.ScaleInt(rng, Math.Max(0, total - converted), rewardScale), converted);
         }
 

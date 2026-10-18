@@ -431,6 +431,7 @@ namespace SodRpg.Mod
         private static readonly List<int> StaleScratch = new List<int>();
         private static float _lastPruneTime;
         private static MethodInfo _target;
+        internal static bool Disabled;
         private static bool _warned;
 
         private static bool Prepare()
@@ -490,7 +491,7 @@ namespace SodRpg.Mod
 
         private static bool Prefix(AttachToFace __instance, ref bool __result)
         {
-            if (!NativePerfOptions.AttachFaceIdle) return true;
+            if (Disabled || !NativePerfOptions.AttachFaceIdle) return true;
             try
             {
                 SkinnedMeshRenderer skin = __instance.targetRenderer;
@@ -503,6 +504,7 @@ namespace SodRpg.Mod
             }
             catch (Exception ex)
             {
+                Disabled = true;
                 NativePerfPatch.Warn(ref _warned, "attach face idle", ex.Message);
             }
             return true;
@@ -566,6 +568,7 @@ namespace SodRpg.Mod
         // other users of the same renderer, so the tracker above never misses a new mesh.
         private static void Postfix(SkinnedMeshRenderer skin, bool isNew)
         {
+            if (NativeAttachFaceIdlePerf.Disabled) return;
             try
             {
                 if (isNew && NativePerfOptions.AttachFaceIdle)
@@ -573,9 +576,9 @@ namespace SodRpg.Mod
             }
             catch (Exception ex)
             {
-                // A missing record only widens the safe side (the Prefix then hands the
-                // lookup back to the original), so drop the tracker instead of letting a
-                // bookkeeping failure propagate into the game's bake callers.
+                // Stop both tracking and skipping: an unrecorded bake could leave an older
+                // timestamp active. Other native patches and the game's bake callers continue.
+                NativeAttachFaceIdlePerf.Disabled = true;
                 NativePerfPatch.Warn(ref _warned, "attach face bake record", ex.Message);
             }
         }
@@ -706,14 +709,15 @@ namespace SodRpg.Mod
                 SkillTrigger skill = __instance.NetworktargetSkill;
                 if (skill == null) return false;
                 float v = ChannelProgress(Time.time, __instance.creationTime, __instance.channelTime);
-                skill.transform.position = EasedSkillPosition(_initPos(__instance),
+                Transform skillTransform = skill.transform;
+                skillTransform.position = EasedSkillPosition(_initPos(__instance),
                     __instance.info.caster.position, _easeFunc(__instance), v);
                 // The distributed value is read through the same Actor.position property the
                 // native loop uses, so the result never depends on that getter's definition.
                 // An element that is the skill transform itself or one of its ancestors makes
                 // the native loop's later reads see the skill move mid-loop; run the native
                 // body for this frame instead of distributing one up-front value.
-                if (HasAncestorElement(__instance.onSkillTransform, skill.transform)) return true;
+                if (HasAncestorElement(__instance.onSkillTransform, skillTransform)) return true;
                 DistributePosition(__instance.onSkillTransform, skill.position);
                 return false;
             }

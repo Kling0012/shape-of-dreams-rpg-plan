@@ -21,6 +21,7 @@
 - **鍛錬が1段増えるたびに、その時点で魚の鱗によって減っている最大HPの25%を取り戻す**。`HostAuthority.RunGrowth.cs` の `GainRunGrowth` が `RunGrowthLedger.Gain` の返す増加段数を受け取り、`RestoreFishScalesMaxHealth` が `Se_FishScales.SetAmount(現在の削り × 0.75^増加段数)` を呼ぶ。1回の閾値到達でまとめて段が増えたとき（`GainMultiplier` 2倍の星）も1段ずつに分けて数える。
 - 取り戻すのは最大HPの上限だけで、現在HPは回復しない。残す削りは0未満にならないので、魚の鱗が削る前の最大HPを超えることはない。障壁の上限は本体が現在の最大HPから決めるため、最大HPの回復に従って並んで戻る。
 - **鍛錬の溜まり方（受けたダメージの換算・閾値）もクールダウンも変えていない**。`OnRunGrowthDamage` と `RunGrowth.HealthPercent` は本体変更前の実装に戻した（最初の案だった「分母へ魚の鱗の減少を足し戻す」修正は、溜まり方を変えるため取りやめ）。
+- 本体の `Se_FishScales` とMODの `OnTakeDamage` はどちらも `Hero.EntityEvent_OnTakeDamage` に購読し、購読順に動く。本体の削りが先なら閾値に届いた被弾の削りも25%の戻しに含み、MODが先ならその被弾の削りは含まない。戻すのは `RestoreFishScalesMaxHealth` が呼ばれた時点で減っている分であり、両者の購読順は固定しない。
 - 対象はヴェスパーの鍛錬 `vesper.run.g1` だけ。ケトゥスの鍛錬には付けない。魚の鱗の状態がないとき・削りが0のときは何もしない。失敗しても鍛錬自体は止めない（fail-soft）。
 - 25% という値は mod 側の設定 `tools/balance/run-growth.json` の `fishScales.vesperRunG1RestorePercent` に置き、生成された `StarRankBalance.VesperRunG1FishScalesRestorePercent`（`src/SodRpg.Core/Game/StarRankBalance.g.cs`）を通して使う。本体には手を入れない。この値は挙動の修正であり、鍛錬の数値（閾値・上限・効果量）を変えないため、内容指紋（`ContentFingerprintRecord`）は変えない。
 - ヴェスパーの鍛錬そのものは削除しない（鍛錬はヴェスパーとケトゥスにだけ残す方針、2026-10-18 決定）。
