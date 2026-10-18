@@ -133,6 +133,14 @@ namespace Mirror
         // NativePerfPatches.cs が nameof / AccessTools.Method で参照する本体 API。
         public static float MoveTowards(float current, float target, float maxDelta)
             => Math.Abs(target - current) <= maxDelta ? target : current + Math.Sign(target - current) * maxDelta;
+        // NativePositionSyncIdlePerf（位置同期のゲート置き換え）が参照する本体 API。本体と同じ式。
+        public static float Abs(float value) => Math.Abs(value);
+        public static float DeltaAngle(float current, float target)
+        {
+            float delta = target - current;
+            delta -= Mathf.Floor(delta / 360f) * 360f;
+            return delta > 180f ? delta - 360f : delta;
+        }
     }
     internal static class GUI
     {
@@ -412,6 +420,77 @@ namespace SodRpg.Mod
         {
             MoveToDestinationCalls++;
             LastDestination = destination;
+        }
+
+        // （#813）本体 Dew.Core EntityControl.PositionSyncData（ネストした struct、
+        // public フィールド。2026-10-19 逆コンパイル確認）。
+        internal struct PositionSyncData
+        {
+            public double timestamp;
+            public UnityEngine.Vector3 position;
+            public UnityEngine.Vector3 velocity;
+            public float desiredAngle;
+        }
+
+        // NativePositionSyncIdlePerf が AccessTools.Field で参照する本体フィールド。
+        internal PositionSyncData _positionSyncData;
+
+        // ゲートが受理した回数（本体は SyncVar へ書き込む。ここでは判定の結果だけ数える）。
+        internal int GateAccepts, UserCodeAccepts;
+
+        // 本体 HasMeaningfulSyncDataChange と同じ命令並び（逆コンパイル、2026-10-19 確認）。
+        // 出力される IL の形は this/_positionSyncData を読む NativeBoundary 側の見本と
+        // NativePerfPatches 側の指紋（定数・フィールド読み出し・呼び出し・比較・減算の向き）が
+        // 同じ本体の形であることを前提にしている。
+        private bool HasMeaningfulSyncDataChange(in PositionSyncData data)
+        {
+            if (!(data.timestamp - _positionSyncData.timestamp >= 1.0) && !((data.position - _positionSyncData.position).sqrMagnitude > 0.0001f) && !((data.velocity - _positionSyncData.velocity).sqrMagnitude > 0.0001f))
+            {
+                return Mathf.Abs(Mathf.DeltaAngle(data.desiredAngle, _positionSyncData.desiredAngle)) > 0.1f;
+            }
+            return true;
+        }
+
+        // 検証の否側の見本: タイムスタンプの比較だけ > に変えた書き換え（境界値が変わる）。
+        private bool HasMeaningfulSyncDataChangeStrictTimestamp(in PositionSyncData data)
+        {
+            if (!(data.timestamp - _positionSyncData.timestamp > 1.0) && !((data.position - _positionSyncData.position).sqrMagnitude > 0.0001f) && !((data.velocity - _positionSyncData.velocity).sqrMagnitude > 0.0001f))
+            {
+                return Mathf.Abs(Mathf.DeltaAngle(data.desiredAngle, _positionSyncData.desiredAngle)) > 0.1f;
+            }
+            return true;
+        }
+
+        // 検証の否側の見本: タイムスタンプの減算の向きだけ逆にした書き換え。
+        private bool HasMeaningfulSyncDataChangeSwappedSubtraction(in PositionSyncData data)
+        {
+            if (!(_positionSyncData.timestamp - data.timestamp >= 1.0) && !((data.position - _positionSyncData.position).sqrMagnitude > 0.0001f) && !((data.velocity - _positionSyncData.velocity).sqrMagnitude > 0.0001f))
+            {
+                return Mathf.Abs(Mathf.DeltaAngle(data.desiredAngle, _positionSyncData.desiredAngle)) > 0.1f;
+            }
+            return true;
+        }
+
+        // 本体 UpdatePositionSyncData のうち指紋の対象であるゲート呼び出し2箇所
+        // （ldarg.0 / ldarga.s data / call）だけを残した見本。
+        internal void UpdatePositionSyncData(PositionSyncData data)
+        {
+            if (HasMeaningfulSyncDataChange(in data)) GateAccepts++;
+            if (HasMeaningfulSyncDataChange(in data)) GateAccepts++;
+        }
+
+        // 本体 UserCode_CmdPositionSyncData__PositionSyncData のうちゲート呼び出し1箇所
+        // （ldarg.0 / ldarga.s data / call）だけを残した見本。
+        private void UserCode_CmdPositionSyncData__PositionSyncData(PositionSyncData data)
+        {
+            if (HasMeaningfulSyncDataChange(in data)) UserCodeAccepts++;
+        }
+
+        // 検証の否側の見本: ゲートに渡すのが引数でなくローカルの写し（ldloca.s になる）。
+        private void UpdatePositionSyncDataOnLocalCopy(PositionSyncData data)
+        {
+            PositionSyncData copy = data;
+            if (HasMeaningfulSyncDataChange(in copy)) GateAccepts++;
         }
     }
     internal class Displacement

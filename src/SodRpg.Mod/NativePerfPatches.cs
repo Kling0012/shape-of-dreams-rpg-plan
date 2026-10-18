@@ -32,6 +32,7 @@ namespace SodRpg.Mod
             NativePerfOptions.KillTrackerCull = config.nativeKillTrackerCullThrottle;
             NativePerfOptions.CursorIdle = config.nativeCursorIdle;
             NativePerfOptions.StatsCalcRpcIdle = config.nativeStatsCalcRpcIdle;
+            NativePerfOptions.PositionSyncIdle = config.nativePositionSyncIdle;
         }
     }
 
@@ -55,6 +56,7 @@ namespace SodRpg.Mod
         internal static bool KillTrackerCull = true;
         internal static bool CursorIdle = true;
         internal static bool StatsCalcRpcIdle = true;
+        internal static bool PositionSyncIdle = true;
     }
 
     internal static class NativePerfPatch
@@ -1738,5 +1740,381 @@ namespace SodRpg.Mod
         // Runs synchronously at the top of every CalculateStats, so the notification at the
         // end of the same call always compares against this call's own entry bits.
         private static void Prefix(EntityStatus __instance) => NativeStatsCalcRpcPerf.Capture(__instance);
+    }
+
+    [HarmonyPatch]
+    internal static class NativePositionSyncIdlePerf
+    {
+        // EntityControl's position-sync gate HasMeaningfulSyncDataChange accepts an update
+        // when ANY of these holds: the timestamp is one second newer than the last accepted
+        // one, the position moved, the velocity changed, or the facing rotated. That first
+        // clause is a heartbeat: for an entity that stands still it fires once per second
+        // forever and admits an update whose only new information is the timestamp — the
+        // position, velocity and desiredAngle it carries are byte-identical to the last
+        // accepted state, because the gate itself is the only path that advances that state
+        // (owner clients via CmdPositionSyncData → UserCode → the SyncVar; server-controlled
+        // entities directly via the SyncVar setter).
+        //
+        // Dropping that heartbeat does change one observer-side thing: the receiver's
+        // last-received clock stops advancing, and that clock drives the display
+        // (OnMovementSyncDataReceived / DoMovementObserverFrameUpdate smooth toward the
+        // last received state for 0.5 s, then keep moving by its velocity, and zero that
+        // velocity after 1 s without an update). Whether that can move the display depends
+        // on the velocity the suppressed update carries, so the heartbeat is dropped only
+        // while the update's own velocity is at or below 0.0001 squared magnitude (the
+        // gate's velocity threshold — extrapolation is then bounded by the gate's own
+        // 1 cm position tolerance). An update that still carries real velocity — a monster
+        // pressed against a wall keeps trying to move while its position stays put —
+        // keeps its heartbeat, so observers keep being pulled back to the true position
+        // every second exactly as in vanilla. Every real change (position > 1 cm,
+        // velocity change, facing > 0.1°) still sends exactly as before through the same
+        // two callsites, the owner's 60 Hz send rate and the 0.2° angle tolerance are
+        // untouched, and EntityControl.Teleport publishes its fresh sync directly without
+        // going through this gate. No message format changes, so vanilla peers (MOD on
+        // one side only) interoperate unchanged; they simply never receive the redundant
+        // identical updates of entities that are truly at rest.
+        private const int DataArgIndex = 1;
+
+        private static Type _nested;
+        private static FieldInfo _timestamp;
+        private static FieldInfo _position;
+        private static FieldInfo _velocity;
+        private static FieldInfo _desiredAngle;
+        private static FieldInfo _syncDataField;
+        private static MethodInfo _hasMeaningful;
+        private static MethodBase _updateTarget;
+        private static MethodBase _userCodeTarget;
+        private static bool _warned;
+
+        private static bool Prepare()
+        {
+            try
+            {
+                // Shipped Dew.Core r1.4.1.2 declares this `private struct PositionSyncData`
+                // (nested private; ilspycmd 2026-10-19). NonPublic alone would resolve it,
+                // but accept public too so a later visibility change cannot silently
+                // disable the patch through a null lookup.
+                _nested = typeof(EntityControl).GetNestedType("PositionSyncData",
+                    BindingFlags.Public | BindingFlags.NonPublic);
+                if (_nested == null || !_nested.IsValueType)
+                    throw new MissingMethodException("EntityControl/PositionSyncData");
+                _timestamp = _nested.GetField("timestamp");
+                _position = _nested.GetField("position");
+                _velocity = _nested.GetField("velocity");
+                _desiredAngle = _nested.GetField("desiredAngle");
+                if (_timestamp == null || _timestamp.FieldType != typeof(double)
+                    || _position == null || _position.FieldType != typeof(Vector3)
+                    || _velocity == null || _velocity.FieldType != typeof(Vector3)
+                    || _desiredAngle == null || _desiredAngle.FieldType != typeof(float))
+                    throw new MissingMethodException("EntityControl/PositionSyncData fields renamed or retyped");
+                _syncDataField = AccessTools.Field(typeof(EntityControl), "_positionSyncData");
+                if (_syncDataField == null || _syncDataField.FieldType != _nested)
+                    throw new MissingMethodException("EntityControl._positionSyncData");
+                _hasMeaningful = AccessTools.DeclaredMethod(typeof(EntityControl),
+                    "HasMeaningfulSyncDataChange", new[] { _nested.MakeByRefType() });
+                _updateTarget = AccessTools.DeclaredMethod(typeof(EntityControl),
+                    "UpdatePositionSyncData", new[] { _nested });
+                _userCodeTarget = AccessTools.DeclaredMethod(typeof(EntityControl),
+                    "UserCode_CmdPositionSyncData__PositionSyncData", new[] { _nested });
+                if (_hasMeaningful == null || _hasMeaningful.GetMethodBody() == null
+                    || _updateTarget == null || _updateTarget.GetMethodBody() == null
+                    || _userCodeTarget == null || _userCodeTarget.GetMethodBody() == null)
+                {
+                    NativePerfPatch.Warn(ref _warned, "position sync idle", "native methods unavailable");
+                    return false;
+                }
+                if (!ValidateNativeFormula()) return false;
+                // Both gate callsites are `[ldarg.0, ldarga.s data, call]` in the shipped
+                // Dew.Core (2026-10-19): two in UpdatePositionSyncData (owner send gate,
+                // server SyncVar gate) and one in UserCode_CmdPositionSyncData (server
+                // acceptance of an owner's Cmd, which also rebroadcasts to observers).
+                if (!ValidateCallsites(_updateTarget, 2) || !ValidateCallsites(_userCodeTarget, 1))
+                {
+                    NativePerfPatch.Warn(ref _warned, "position sync idle", "native gate callsites changed or already patched");
+                    return false;
+                }
+                return true;
+            }
+            catch (Exception ex)
+            {
+                NativePerfPatch.Warn(ref _warned, "position sync idle", ex.Message);
+                return false;
+            }
+        }
+
+        private static IEnumerable<MethodBase> TargetMethods()
+        {
+            yield return _updateTarget;
+            yield return _userCodeTarget;
+        }
+
+        // The native formula (140-byte body, fingerprinted below): true when the data's
+        // timestamp is >= 1s newer than the last accepted one, or its position differs by
+        // more than 0.0001 squared magnitude, or its velocity does, or its facing differs
+        // by more than 0.1 degrees. The replacement drops the timestamp clause only while
+        // the option is on AND the update itself carries a velocity at or below 0.0001
+        // squared magnitude (then observers cannot extrapolate it anywhere the gate would
+        // count as meaningful); whenever the option is off or the update still carries
+        // real velocity, it reimplements the formula exactly.
+        internal static bool ShouldSendChange(double dataTimestamp, double lastTimestamp,
+            Vector3 lastPosition, Vector3 position, Vector3 lastVelocity, Vector3 velocity,
+            float lastDesiredAngle, float desiredAngle)
+        {
+            if ((!NativePerfOptions.PositionSyncIdle || velocity.sqrMagnitude > 0.0001f)
+                && dataTimestamp - lastTimestamp >= 1.0) return true;
+            return (position - lastPosition).sqrMagnitude > 0.0001f
+                || (velocity - lastVelocity).sqrMagnitude > 0.0001f
+                || Mathf.Abs(Mathf.DeltaAngle(desiredAngle, lastDesiredAngle)) > 0.1f;
+        }
+
+        private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+        {
+            var code = new List<CodeInstruction>(instructions);
+            for (int i = code.Count - 1; i >= 2; i--)
+            {
+                if (!code[i].Calls(_hasMeaningful)) continue;
+                if (!LoadsArg(code[i - 2], 0) || !LoadsArgAddress(code[i - 1], DataArgIndex)
+                    || code[i - 2].blocks.Count > 0 || code[i - 1].blocks.Count > 0 || code[i].blocks.Count > 0)
+                {
+                    NativePerfPatch.Warn(ref _warned, "position sync idle", "native gate callsite shape changed");
+                    return code;
+                }
+                var replacement = new List<CodeInstruction>
+                {
+                    // data.timestamp
+                    new CodeInstruction(OpCodes.Ldarga_S, (byte)DataArgIndex),
+                    new CodeInstruction(OpCodes.Ldfld, _timestamp),
+                    // last.timestamp
+                    new CodeInstruction(OpCodes.Ldarg_0),
+                    new CodeInstruction(OpCodes.Ldflda, _syncDataField),
+                    new CodeInstruction(OpCodes.Ldfld, _timestamp),
+                    // last.position, data.position
+                    new CodeInstruction(OpCodes.Ldarg_0),
+                    new CodeInstruction(OpCodes.Ldflda, _syncDataField),
+                    new CodeInstruction(OpCodes.Ldfld, _position),
+                    new CodeInstruction(OpCodes.Ldarga_S, (byte)DataArgIndex),
+                    new CodeInstruction(OpCodes.Ldfld, _position),
+                    // last.velocity, data.velocity
+                    new CodeInstruction(OpCodes.Ldarg_0),
+                    new CodeInstruction(OpCodes.Ldflda, _syncDataField),
+                    new CodeInstruction(OpCodes.Ldfld, _velocity),
+                    new CodeInstruction(OpCodes.Ldarga_S, (byte)DataArgIndex),
+                    new CodeInstruction(OpCodes.Ldfld, _velocity),
+                    // last.desiredAngle, data.desiredAngle
+                    new CodeInstruction(OpCodes.Ldarg_0),
+                    new CodeInstruction(OpCodes.Ldflda, _syncDataField),
+                    new CodeInstruction(OpCodes.Ldfld, _desiredAngle),
+                    new CodeInstruction(OpCodes.Ldarga_S, (byte)DataArgIndex),
+                    new CodeInstruction(OpCodes.Ldfld, _desiredAngle),
+                    new CodeInstruction(OpCodes.Call, AccessTools.Method(
+                        typeof(NativePositionSyncIdlePerf), nameof(ShouldSendChange))),
+                };
+                // A branch that targeted any replaced instruction must land before the whole
+                // argument sequence, never mid-sequence.
+                var labels = new List<Label>();
+                for (int j = i - 2; j <= i; j++)
+                {
+                    labels.AddRange(code[j].labels);
+                    code[j].labels.Clear();
+                }
+                replacement[0].labels = labels;
+                code.RemoveRange(i - 2, 3);
+                code.InsertRange(i - 2, replacement);
+            }
+            return code;
+        }
+
+        // Pins the shipped gate body so the replacement above can only ever take over the
+        // exact arithmetic it mirrors: one double constant (1.0), the float thresholds
+        // 0.0001/0.0001/0.1, exactly two reads of each of the four sync fields, the
+        // subtraction/sqrMagnitude/DeltaAngle/Abs calls — with no other member reference —
+        // and the comparison wiring (bge/bgt/bgt/cgt after the four constants, the three
+        // branches all jumping to one ldc.i4.1; ret tail, data.timestamp loaded before
+        // this._positionSyncData.timestamp around the sub). The comparison directions and
+        // the subtraction order decide the exact boundary values (>= 1.0 vs > 1.0, which
+        // side is subtracted), so a game update that flips either of them — or retunes a
+        // threshold or restructures the gate — leaves the patch off (one warning) instead
+        // of silently overriding the new native formula.
+        internal static bool ValidateNativeFormula()
+        {
+            try
+            {
+                var code = PatchProcessor.GetOriginalInstructions(_hasMeaningful);
+                var subtraction = AccessTools.Method(typeof(Vector3), "op_Subtraction");
+                var sqrMagnitude = AccessTools.PropertyGetter(typeof(Vector3), nameof(Vector3.sqrMagnitude));
+                var deltaAngle = AccessTools.Method(typeof(Mathf), nameof(Mathf.DeltaAngle),
+                    new[] { typeof(float), typeof(float) });
+                var abs = AccessTools.Method(typeof(Mathf), nameof(Mathf.Abs), new[] { typeof(float) });
+                int r8 = 0;
+                double r8Value = 0;
+                int r8Index = -1;
+                var r4 = new List<float>();
+                var fieldReads = new Dictionary<string, int>();
+                int calls = 0;
+                var comparisons = new List<string>();
+                var comparisonIndices = new List<int>();
+                for (int i = 0; i < code.Count; i++)
+                {
+                    if (code[i].opcode == OpCodes.Ldc_R8 || code[i].opcode == OpCodes.Ldc_R4)
+                    {
+                        if (code[i].opcode == OpCodes.Ldc_R8)
+                        {
+                            r8++;
+                            r8Value = (double)code[i].operand;
+                            r8Index = i;
+                        }
+                        else r4.Add((float)code[i].operand);
+                        // The comparison each constant feeds (bge/bgt/... ; .s forms mean
+                        // the same comparison), in order of appearance.
+                        comparisons.Add(i + 1 < code.Count ? NormalizedComparison(code[i + 1].opcode) : null);
+                        comparisonIndices.Add(i + 1);
+                    }
+                    else if (code[i].opcode == OpCodes.Ldfld)
+                    {
+                        if (!(code[i].operand is FieldInfo field) || field.DeclaringType != _nested) return false;
+                        fieldReads.TryGetValue(field.Name, out int count);
+                        fieldReads[field.Name] = count + 1;
+                    }
+                    else if (code[i].opcode == OpCodes.Call || code[i].opcode == OpCodes.Callvirt)
+                    {
+                        calls++;
+                        if (Equals(code[i].operand, subtraction)) continue;
+                        if (Equals(code[i].operand, sqrMagnitude)) continue;
+                        if (Equals(code[i].operand, deltaAngle)) continue;
+                        if (Equals(code[i].operand, abs)) continue;
+                        return false;
+                    }
+                }
+                r4.Sort();
+                bool r4Matches = r4.Count == 3 && r4[0] == 0.0001f && r4[1] == 0.0001f && r4[2] == 0.1f;
+                bool fieldsMatch = fieldReads.Count == 4
+                    && fieldReads.TryGetValue("timestamp", out int ts) && ts == 2
+                    && fieldReads.TryGetValue("position", out int pos) && pos == 2
+                    && fieldReads.TryGetValue("velocity", out int vel) && vel == 2
+                    && fieldReads.TryGetValue("desiredAngle", out int ang) && ang == 2;
+                if (r8 == 1 && r8Value == 1.0 && r4Matches && fieldsMatch && calls == 6
+                    && ComparisonsMatchNativeGate(code, comparisons, comparisonIndices, r8Index)) return true;
+                NativePerfPatch.Warn(ref _warned, "position sync idle", "native gate formula changed");
+                return false;
+            }
+            catch (Exception ex)
+            {
+                NativePerfPatch.Warn(ref _warned, "position sync idle", ex.Message);
+                return false;
+            }
+        }
+
+        // The native gate compares in this order: data.timestamp - last.timestamp >= 1.0
+        // (bge), position delta sqrMagnitude > 0.0001 (bgt), velocity delta > 0.0001 (bgt),
+        // Abs(DeltaAngle(desiredAngle, lastDesiredAngle)) > 0.1 (cgt). Any other comparison
+        // opcode, a branch that no longer jumps to the common return-true tail, a missing
+        // ret after the cgt, or the timestamp subtraction loading the operands the other
+        // way around means the body no longer computes what ShouldSendChange mirrors.
+        private static bool ComparisonsMatchNativeGate(IList<CodeInstruction> code,
+            List<string> comparisons, List<int> comparisonIndices, int r8Index)
+        {
+            if (comparisons.Count != 4
+                || comparisons[0] != "bge" || comparisons[1] != "bgt"
+                || comparisons[2] != "bgt" || comparisons[3] != "cgt")
+                return false;
+            // The cgt feeds the return value directly.
+            if (comparisonIndices[3] + 1 >= code.Count
+                || code[comparisonIndices[3] + 1].opcode != OpCodes.Ret)
+                return false;
+            // The first three comparisons all jump to the same "return true" tail.
+            int tail = IndexOfLabel(code, code[comparisonIndices[0]].operand);
+            if (tail < 0 || tail + 1 >= code.Count
+                || code[tail].opcode != OpCodes.Ldc_I4_1 || code[tail + 1].opcode != OpCodes.Ret)
+                return false;
+            for (int b = 1; b < 3; b++)
+                if (IndexOfLabel(code, code[comparisonIndices[b]].operand) != tail) return false;
+            // data.timestamp first, then this._positionSyncData.timestamp, then sub, then
+            // the 1.0 constant (IL_0000..IL_001b of the shipped body).
+            return r8Index >= 6
+                && code[r8Index - 1].opcode == OpCodes.Sub
+                && code[r8Index - 2].opcode == OpCodes.Ldfld && Equals(code[r8Index - 2].operand, _timestamp)
+                && code[r8Index - 3].opcode == OpCodes.Ldflda && Equals(code[r8Index - 3].operand, _syncDataField)
+                && LoadsArg(code[r8Index - 4], 0)
+                && code[r8Index - 5].opcode == OpCodes.Ldfld && Equals(code[r8Index - 5].operand, _timestamp)
+                && LoadsArg(code[r8Index - 6], DataArgIndex);
+        }
+
+        // Name of a comparison opcode with the short-branch suffix normalized away
+        // (bge.s and bge compare the same way). .un variants stay distinct because they
+        // treat NaN differently and are not what the shipped body uses.
+        private static string NormalizedComparison(OpCode opcode)
+        {
+            string name = opcode.Name;
+            return name != null && name.EndsWith(".s", StringComparison.Ordinal)
+                ? name.Substring(0, name.Length - 2)
+                : name;
+        }
+
+        // Index of the instruction a branch operand (a Label) points at, or -1.
+        private static int IndexOfLabel(IList<CodeInstruction> code, object operand)
+        {
+            for (int i = 0; i < code.Count; i++)
+                if (operand is Label target && code[i].labels.Contains(target)) return i;
+            return -1;
+        }
+
+        private static bool ValidateCallsites(MethodBase method, int expected)
+        {
+            try
+            {
+                var code = PatchProcessor.GetOriginalInstructions(method);
+                int found = 0;
+                for (int i = 2; i < code.Count; i++)
+                {
+                    if (!code[i].Calls(_hasMeaningful)) continue;
+                    if (!LoadsArg(code[i - 2], 0) || !LoadsArgAddress(code[i - 1], DataArgIndex))
+                    {
+                        NativePerfPatch.Warn(ref _warned, "position sync idle", "native gate callsite shape changed");
+                        return false;
+                    }
+                    found++;
+                }
+                if (found == expected) return true;
+                NativePerfPatch.Warn(ref _warned, "position sync idle",
+                    "native gate callsite count changed (" + found + " of " + expected + ")");
+                return false;
+            }
+            catch (Exception ex)
+            {
+                NativePerfPatch.Warn(ref _warned, "position sync idle", ex.Message);
+                return false;
+            }
+        }
+
+        // The shipped callsites are `[ldarg.0, ldarga.s data, call]`, and Harmony reads a
+        // short-form argument opcode's operand as a boxed byte (its own IsLdarg/IsLdarga
+        // normalize with Convert.ToInt32), not as an int. Accept every boxed integer width
+        // the readers can produce plus explicit ParameterInfo/LocalBuilder operands.
+        private static bool LoadsArg(CodeInstruction instruction, int index)
+            => instruction.opcode == OpCodes.Ldarg_0 && index == 0
+            || instruction.opcode == OpCodes.Ldarg_1 && index == 1
+            || (instruction.opcode == OpCodes.Ldarg || instruction.opcode == OpCodes.Ldarg_S)
+               && ArgOperandIndex(instruction) == index;
+
+        private static bool LoadsArgAddress(CodeInstruction instruction, int index)
+            => (instruction.opcode == OpCodes.Ldarga || instruction.opcode == OpCodes.Ldarga_S)
+               && ArgOperandIndex(instruction) == index;
+
+        // The argument index a variable-loading instruction refers to, or a value that
+        // matches no index. A ParameterInfo counts the declared parameters only, so an
+        // instance method's first declared parameter (IL slot 1, `this` being slot 0)
+        // still resolves to 1 here.
+        private static int? ArgOperandIndex(CodeInstruction instruction)
+        {
+            var operand = instruction.operand;
+            if (operand == null) return null;
+            if (operand is ParameterInfo parameter)
+                return parameter.Position + (parameter.Member is MethodInfo method && !method.IsStatic ? 1 : 0);
+            if (operand is LocalBuilder local) return local.LocalIndex;
+            if (operand is int || operand is uint || operand is byte || operand is sbyte
+                || operand is short || operand is ushort)
+                return Convert.ToInt32(operand);
+            return null;
+        }
     }
 }
