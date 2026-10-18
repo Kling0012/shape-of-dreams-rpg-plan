@@ -1565,16 +1565,24 @@ namespace SodRpg.Mod
         // (owner clients via CmdPositionSyncData → UserCode → the SyncVar; server-controlled
         // entities directly via the SyncVar setter).
         //
-        // Dropping only the heartbeat clause therefore cannot change any field any peer
-        // holds: every real change (position > 1 cm, velocity change, facing > 0.1°) still
-        // sends exactly as before through the same two callsites, the owner's 60 Hz send
-        // rate and the 0.2° angle tolerance are untouched, and EntityControl.Teleport
-        // publishes its fresh sync directly without going through this gate, so the
-        // observer-side timestamp lower bound set by teleport/displacement events is always
-        // answered by a newer timestamp from real state. While idle, observers keep their
-        // last received state — which equals what the suppressed update would have carried.
-        // No message format changes, so vanilla peers (MOD on one side only) interoperate
-        // unchanged; they simply never receive the redundant identical updates.
+        // Dropping that heartbeat does change one observer-side thing: the receiver's
+        // last-received clock stops advancing, and that clock drives the display
+        // (OnMovementSyncDataReceived / DoMovementObserverFrameUpdate smooth toward the
+        // last received state for 0.5 s, then keep moving by its velocity, and zero that
+        // velocity after 1 s without an update). Whether that can move the display depends
+        // on the velocity the suppressed update carries, so the heartbeat is dropped only
+        // while the update's own velocity is at or below 0.0001 squared magnitude (the
+        // gate's velocity threshold — extrapolation is then bounded by the gate's own
+        // 1 cm position tolerance). An update that still carries real velocity — a monster
+        // pressed against a wall keeps trying to move while its position stays put —
+        // keeps its heartbeat, so observers keep being pulled back to the true position
+        // every second exactly as in vanilla. Every real change (position > 1 cm,
+        // velocity change, facing > 0.1°) still sends exactly as before through the same
+        // two callsites, the owner's 60 Hz send rate and the 0.2° angle tolerance are
+        // untouched, and EntityControl.Teleport publishes its fresh sync directly without
+        // going through this gate. No message format changes, so vanilla peers (MOD on
+        // one side only) interoperate unchanged; they simply never receive the redundant
+        // identical updates of entities that are truly at rest.
         private const int DataArgIndex = 1;
 
         private static Type _nested;
@@ -1653,13 +1661,17 @@ namespace SodRpg.Mod
         // The native formula (140-byte body, fingerprinted below): true when the data's
         // timestamp is >= 1s newer than the last accepted one, or its position differs by
         // more than 0.0001 squared magnitude, or its velocity does, or its facing differs
-        // by more than 0.1 degrees. The replacement reimplements it minus the timestamp
-        // clause; when the option is off it reimplements it exactly.
+        // by more than 0.1 degrees. The replacement drops the timestamp clause only while
+        // the option is on AND the update itself carries a velocity at or below 0.0001
+        // squared magnitude (then observers cannot extrapolate it anywhere the gate would
+        // count as meaningful); whenever the option is off or the update still carries
+        // real velocity, it reimplements the formula exactly.
         internal static bool ShouldSendChange(double dataTimestamp, double lastTimestamp,
             Vector3 lastPosition, Vector3 position, Vector3 lastVelocity, Vector3 velocity,
             float lastDesiredAngle, float desiredAngle)
         {
-            if (!NativePerfOptions.PositionSyncIdle && dataTimestamp - lastTimestamp >= 1.0) return true;
+            if ((!NativePerfOptions.PositionSyncIdle || velocity.sqrMagnitude > 0.0001f)
+                && dataTimestamp - lastTimestamp >= 1.0) return true;
             return (position - lastPosition).sqrMagnitude > 0.0001f
                 || (velocity - lastVelocity).sqrMagnitude > 0.0001f
                 || Mathf.Abs(Mathf.DeltaAngle(desiredAngle, lastDesiredAngle)) > 0.1f;

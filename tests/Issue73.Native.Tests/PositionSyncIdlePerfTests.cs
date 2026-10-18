@@ -14,9 +14,10 @@ namespace Issue73.Native.Tests
     /// ゲート本体（HasMeaningfulSyncDataChange）と呼び出し元3箇所は NativeBoundary.cs の
     /// EntityControl 見本（本体 Dew.Core と同じ命令並び。Harmony は ldarga.s data を
     /// byte オペランドの命令として読む）を Prepare・ValidateNativeFormula・
-    /// ValidateCallsites・Transpiler に通す。置き換え式 ShouldSendChange は、設定 ON の
-    /// 間は心拍（中身が前回と同じでタイムスタンプだけ1秒以上新しい更新）だけを落とし、
-    /// OFF の間は本体の式（心拍込み）に正確に戻ることを境界値で確かめる。
+    /// ValidateCallsites・Transpiler に通す。置き換え式 ShouldSendChange は、設定 ON で
+    /// 更新の持つ速度がほぼ0（二乗距離0.0001以下）のときだけ心拍（中身が前回と同じで
+    /// タイムスタンプだけ1秒以上新しい更新）を落とし、OFF の間・速度が0でない更新では
+    /// 本体の式（心拍込み）に正確に戻ることを境界値で確かめる。
     /// </summary>
     public sealed class PositionSyncIdlePerfTests
     {
@@ -147,12 +148,44 @@ namespace Issue73.Native.Tests
             NativePerfOptions.PositionSyncIdle = true;
             try
             {
-                var last = Data(10.0, new Vector3(1f, 0f, 0f), new Vector3(0.5f, 0f, 0f), 30f);
+                // 速度0の静止実体（受信側の外挿が動かない）の心拍だけの更新が対象。
+                var last = Data(10.0, new Vector3(1f, 0f, 0f), Zero, 30f);
                 // 中身が同じでタイムスタンプだけ新しい（1秒ちょうど・5秒）→ 送らない
                 Assert.False(Send(last, Data(11.0, last.position, last.velocity, 30f)));
                 Assert.False(Send(last, Data(15.0, last.position, last.velocity, 30f)));
                 // 全要素同一（タイムスタンプも同じ）→ 偽
                 Assert.False(Send(last, last));
+            }
+            finally { NativePerfOptions.PositionSyncIdle = true; }
+        }
+
+        [Fact]
+        public void EnabledKeepsTheHeartbeatForUpdatesThatStillCarryVelocity()
+        {
+            NativePerfOptions.PositionSyncIdle = true;
+            try
+            {
+                var position = new Vector3(1f, 0f, 0f);
+                var control = new EntityControl();
+                // 速度が0でないのに位置が止まっている実体（壁やほかの実体に塞がれた場合）。
+                // 心拍だけの更新でも、速度ぶんの外挿で表示がずれる受信側時計を毎秒
+                // リセットしなければならないので、ON でも心拍を通す（レビュー指摘 F1）。
+                var blocked = Data(10.0, position, new Vector3(0.5f, 0f, 0f), 30f);
+                var heartbeat = Data(11.0, position, blocked.velocity, 30f);
+                control._positionSyncData = blocked;
+                Assert.True(NativeGate(control, heartbeat)); // 本体は心拍で受け入れる
+                Assert.True(Send(blocked, heartbeat));       // ON でも本体と同じ判定
+
+                // 境界値: 速度の二乗距離がちょうど 0.0001（1cm/s）は「超える」ではない
+                // → 心拍を落とす（外挿は高々1cm/s×1秒で、ゲート自身の位置の閾値以内）。
+                var atThreshold = Data(11.0, position, new Vector3(0.01f, 0f, 0f), 30f);
+                Assert.Equal(0.0001f, atThreshold.velocity.sqrMagnitude); // 境界値の前提
+                control._positionSyncData = Data(10.0, position, Zero, 30f);
+                Assert.True(NativeGate(control, atThreshold));  // 本体は心拍で受け入れる
+                Assert.False(Send(Data(10.0, position, Zero, 30f), atThreshold)); // ON は落とす
+
+                // 速度0の静止実体の心拍だけの更新は落とす（従来どおり）。
+                Assert.False(Send(Data(10.0, position, Zero, 30f), Data(11.0, position, Zero, 30f)));
             }
             finally { NativePerfOptions.PositionSyncIdle = true; }
         }
@@ -208,10 +241,11 @@ namespace Issue73.Native.Tests
         [Fact]
         public void OffMatchesTheNativeGateAndOnDiffersOnlyByTheTimestampClause()
         {
-            // 見本のゲート（本体と同じ命令並び）・OFF（心拍込みの再現）・ON（心拍だけ除く）
-            // の3つが、境界値を含む全ケースでこの関係を保つこと。
+            // 見本のゲート（本体と同じ命令並び）・OFF（心拍込みの再現）・ON（速度0の
+            // 更新では心拍だけ除く）の3つが、境界値を含む全ケースでこの関係を保つこと。
+            // 速度が0でない更新の心拍は ON でも落とさない（別テストで確かめる）。
             var position = new Vector3(1f, 0f, 0f);
-            var velocity = new Vector3(0.5f, 0f, 0f);
+            var velocity = Zero;
             var cases = new (EntityControl.PositionSyncData Last, EntityControl.PositionSyncData Data, bool Native, bool HeartbeatOnly)[]
             {
                 (Data(10.0, position, velocity, 30f), Data(11.0, position, velocity, 30f), true, true),    // 心拍のみ（ちょうど1秒）
@@ -220,7 +254,7 @@ namespace Issue73.Native.Tests
                 (Data(10.0, position, velocity, 30f), Data(10.0, position, velocity, 30f), false, false),  // 全要素同一
                 (Data(10.0, Zero, velocity, 30f), Data(10.0, new Vector3(0.01f, 0f, 0f), velocity, 30f), false, false), // 位置がちょうど閾値
                 (Data(10.0, position, velocity, 30f), Data(10.0, new Vector3(1.02f, 0f, 0f), velocity, 30f), true, false),  // 位置が閾値超
-                (Data(10.0, position, Zero, 30f), Data(10.0, position, new Vector3(0.01f, 0f, 0f), 30f), false, false), // 速度がちょうど閾値
+                (Data(10.0, position, velocity, 30f), Data(10.0, position, new Vector3(0.01f, 0f, 0f), 30f), false, false), // 速度がちょうど閾値
                 (Data(10.0, position, velocity, 30f), Data(10.0, position, new Vector3(0.52f, 0f, 0f), 30f), true, false),  // 速度が閾値超
                 (Data(10.0, position, velocity, 0.2f), Data(10.0, position, velocity, 0.1f), false, false), // 角度差がちょうど0.1度（0.2f-0.1f）
                 (Data(10.0, position, velocity, 30f), Data(10.0, position, velocity, 30.2f), true, false),  // 角度が0.2度
@@ -231,16 +265,19 @@ namespace Issue73.Native.Tests
                 (Data(10.0, position, velocity, 30f), Data(9.0, new Vector3(2f, 0f, 0f), velocity, 30f), true, false),      // 古いタイムスタンプでも移動
             };
             var control = new EntityControl();
-            foreach (var (last, data, nativeExpected, heartbeatOnly) in cases)
+            try
             {
-                control._positionSyncData = last;
-                Assert.Equal(nativeExpected, NativeGate(control, data)); // 見本は本体の式どおり
-                NativePerfOptions.PositionSyncIdle = false;
-                Assert.Equal(nativeExpected, Send(last, data)); // OFF は本体と一致
-                NativePerfOptions.PositionSyncIdle = true;
-                Assert.Equal(nativeExpected && !heartbeatOnly, Send(last, data)); // ON の違いは心拍だけ
+                foreach (var (last, data, nativeExpected, heartbeatOnly) in cases)
+                {
+                    control._positionSyncData = last;
+                    Assert.Equal(nativeExpected, NativeGate(control, data)); // 見本は本体の式どおり
+                    NativePerfOptions.PositionSyncIdle = false;
+                    Assert.Equal(nativeExpected, Send(last, data)); // OFF は本体と一致
+                    NativePerfOptions.PositionSyncIdle = true;
+                    Assert.Equal(nativeExpected && !heartbeatOnly, Send(last, data)); // ON の違いは心拍だけ
+                }
             }
-            NativePerfOptions.PositionSyncIdle = true;
+            finally { NativePerfOptions.PositionSyncIdle = true; } // 途中で失敗しても既定ONに戻す
         }
 
         [Fact]
