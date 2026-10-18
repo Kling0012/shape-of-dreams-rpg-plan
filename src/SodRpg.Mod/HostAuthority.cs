@@ -107,6 +107,7 @@ namespace SodRpg.Mod
             public readonly HashSet<int> CritBasicVictims = new HashSet<int>();
             public float GrowthSentAt;
             public int GrowthSentVersion = -1;
+            // Owner last processed by ApplyRunGrowth (including its fail-soft catch), not the live owner GUID.
             public string GrowthOwnerKey;
             public Build GrowthSentBuild;
             public string GrowthSentRun;
@@ -501,6 +502,7 @@ namespace SodRpg.Mod
             _pressureBuilds.Clear();
             _pressurePlayers.Clear();
             // The game roster includes dead participants, but excludes lobby players and spectators.
+            // Keep a null entry until a Build arrives so co-op scaling also counts that participant.
             foreach (var player in DewPlayer.gamePlayers)
             {
                 if (player == null || !player.isHumanPlayer || !_pressurePlayers.Add(player)) continue;

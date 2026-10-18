@@ -1,36 +1,7 @@
 using System;
 using System.Collections.Generic;
-using System.Reflection;
 using SodRpg.Mod;
 using UnityEngine;
-
-namespace SodRpg.Mod
-{
-    // （#751・#763・#770）本体 NativePerfPatches.cs の NativePerfOptions / NativePerfPatch のうち、
-    // NativeSleepPositionPerf・NativeCameraZoomRotationPerf・NativeCharacterModelDisplayBounds の
-    // 抽出部分から参照される範囲の境界。Warn のログ出力は本体の Log 依存のためここには置かない。
-    internal static class NativePerfOptions
-    {
-        internal static bool SleepPosition = true;
-        internal static bool CameraZoomRotation = true;
-        internal static bool CastIndicatorCircle = true;
-        internal static bool CharacterModelDisplayBounds = true;
-        internal static bool CursorIdle = true;
-    }
-
-    internal static class NativePerfPatch
-    {
-        internal static void Warn(ref bool warned, string feature, string reason)
-        {
-            if (warned) return;
-            warned = true;
-        }
-
-        // 実ソースの NativeCharacterModelDisplayBounds 系パッチの Prepare が呼ぶ検索。
-        internal static MethodBase Find(Type type, string method, ref bool warned)
-            => HarmonyLib.AccessTools.DeclaredMethod(type, method, Type.EmptyTypes);
-    }
-}
 
 // 本体の VectorPlaneTransformExtension（グローバル名前空間、ToXY(this Vector3)）と同じ意味の境界。
 // 拡張メソッドの形にすると既存の Vector3Extensions.ToXY と呼び出し構文が衝突するため、

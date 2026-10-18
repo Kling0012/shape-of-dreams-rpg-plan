@@ -135,9 +135,11 @@
     <SkipType name="SodRpg.Mod.InfinityMapPresentation" skipMethods="true" skipProperties="true" />
     <SkipType name="SodRpg.Mod.PressureEnemyCount" skipMethods="true" skipProperties="true" />
 
-    <!-- 入れ子の DTO・enum の完全名を保つため、親の型名も保持する。 -->
+    <!-- 入れ子の DTO・enum の完全名を保つため、親の型名も保持する。
+         enum や DTO を型に入れ子で足したら、親型をここに足すこと（check.py が取りこぼしを検出する）。 -->
     <SkipType name="SodRpg.Mod.InfinityMode" />
     <SkipType name="SodRpg.Core.Game.GemSlotContinueSources" />
+    <SkipType name="SodRpg.Mod.ClientSession" />
     <SkipType name="SodRpg.Mod.DreamforgeUi" />
     <SkipType name="SodRpg.Mod.HostAuthority" />
     <SkipType name="SodRpg.Mod.NativePatchPreflight" />

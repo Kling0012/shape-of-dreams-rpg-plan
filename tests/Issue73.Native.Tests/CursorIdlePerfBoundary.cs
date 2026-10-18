@@ -2,10 +2,9 @@ using System.Collections.Generic;
 using SodRpg.Mod;
 using UnityEngine;
 
-// （#801）本体 NativePerfPatches.cs の NativeCursorIdlePerf のうち、抽出部分
-// （ValidateBody・IndexOfLabel・Prefix・Postfix）から参照される範囲の境界。
-// NativePerfOptions・NativePerfPatch・UnityEngine.Vector2・Texture2D は既存の境界
-// （SleepPositionPerfBoundary.cs・NativeBoundary.cs）をそのまま使うため、ここには置かない。
+// （#801）直接リンクした NativePerfPatches.cs の NativeCursorIdlePerf が参照する本体 API 境界。
+// NativePerfOptions・NativePerfPatch は実ソース、UnityEngine.Vector2・Texture2D は
+// NativeBoundary.cs の定義を使う。
 namespace UnityEngine
 {
     internal enum CursorMode { Auto, ForceSoftware }
@@ -25,6 +24,7 @@ namespace SodRpg.Mod
     internal class CursorManager
     {
         public bool disableSoftwareCursor;
+        public void ApplyCursor(int index) { }
     }
 
     // 本体 DewSave.platformSettings の先の実体。実物はどちらも public フィールドで、

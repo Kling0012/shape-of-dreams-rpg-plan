@@ -15,6 +15,9 @@ namespace SodRpg.Mod
         private sealed class Transfer
         {
             internal string Encoded, Id, Json;
+            // Utf8 byte count of Json, set whenever Json is built. TryPeek runs every frame
+            // while the rate limiter holds the same chunk; this avoids rescanning it each time.
+            internal int JsonBytes;
             internal object Envelope;
             internal int Index, Count;
             internal bool Started;
@@ -121,8 +124,9 @@ namespace SodRpg.Mod
                     state.count = transfer.Count; state.totalLength = transfer.Encoded.Length;
                 }
                 transfer.Json = CoopTradeTransport.Encode(transfer.Envelope);
+                transfer.JsonBytes = System.Text.Encoding.UTF8.GetByteCount(transfer.Json);
             }
-            int bytes = System.Text.Encoding.UTF8.GetByteCount(transfer.Json) + 4;
+            int bytes = transfer.JsonBytes + 4;
             if (_frameBytes + bytes > BytesPerFrame || bytes > _tokens) return false;
             // Delivery can fail after enqueueing in the transport; never replace a possibly started ID.
             transfer.Started = true;

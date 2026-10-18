@@ -108,6 +108,12 @@ namespace SodRpg.Mod
         [LabelText("Coalesce same-frame duplicate proc projectiles / 同一フレームの同じ対象への同種反応弾を1本にまとめる")]
         public bool nativeProcCoalesce = true;
 
+        [LabelText("Skip unchanged baked-mesh lookups for face attachments / 面に付ける装飾の変わっていない焼きメッシュの照会を省く")]
+        public bool nativeAttachFaceIdle = true;
+
+        [LabelText("Reuse embrace skill position reads / 取り込み中の記憶の座標読み出しを毎フレーム1回にまとめる")]
+        public bool nativeEmbracePositionReuse = true;
+
         [LabelText("Reuse accessory attach offset lookups / 装飾品の取り付け位置の検索結果を使い回す")]
         public bool nativeAccessoryOffsetCache = true;
 
