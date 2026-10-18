@@ -517,8 +517,11 @@ namespace SodRpg.Mod
         // The entityCamAngle setter stores exactly Euler(0, entityCamAngle, 0) into the public
         // entityCamAngleRotation field, and Euler is a pure call, so after any set the cached field
         // is bit-identical to the rebuilt quaternion. Nothing outside CameraManager writes either
-        // the backing field or the cached rotation. An angle of exactly zero keeps the native
-        // expression so the never-set initial frames (identity initializer) stay bit-identical.
+        // the backing field or the cached rotation, and neither is serialized (the backing field is
+        // private without SerializeField; the cached rotation is NonSerialized), so no scene,
+        // prefab or deserialization can set the angle without the setter either. An angle of
+        // exactly zero keeps the native expression so the never-set initial frames (identity
+        // initializer) stay bit-identical.
         private static Quaternion FollowRotation(CameraManager camera)
         {
             if (!NativePerfOptions.CameraZoomRotation) return Quaternion.Euler(0f, camera.entityCamAngle, 0f);
