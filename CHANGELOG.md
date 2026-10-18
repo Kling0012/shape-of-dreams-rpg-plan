@@ -10,6 +10,16 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v3.8.5 — Fixes for allied effects, ingredient warnings, and star map layouts, plus wiki updates（2026-10-19）
+
+### 不具合の修正 / Bug fixes
+- 味方への効果で、10m未満の範囲にも距離減衰と猶予が付く問題を修正しました。回復・吸収の範囲が変わっても、それぞれの猶予の履歴を引き継ぐようにしました。 / Fixed allied effects with radii below 10m receiving falloff and grace. Heal and Siphon now retain their respective grace histories when their radii change.
+- 元の調理上限が不正な料理素材が複数ある場合に、最初の素材しか警告されない問題を修正しました。警告は素材のスタックごとに一度表示します。 / Fixed warnings identifying only the first ingredient when multiple stacks have unsafe native cooking limits. Each ingredient stack now receives one warning.
+- 専用の星図がない旅人に、汎用の星図が専用の配置として生成される問題を修正しました。追加登録された星図を優先し、それ以外は汎用の配置を使います。 / Fixed travelers without a dedicated tree generating the generic tree with a hero layout. Registered trees retain priority; other travelers without a dedicated tree use the generic layout.
+- 世界順の観察で例外が起きた後、次の遠征でも担当外ダメージの減衰が適用されなくなる問題を修正しました。 / Fixed helper damage decay remaining disabled in subsequent runs after a world-order observation failure.
+
+---
+
 ## v3.8.4 — Lighter co-op processing（2026-10-19）
 
 協力プレイ中の通信まわりで不要な処理を省き、動作を少し軽くしました。 / Reduced unnecessary processing in co-op communication to slightly lighten the load.

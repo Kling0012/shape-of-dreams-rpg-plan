@@ -1,5 +1,5 @@
-[b]Removes unnecessary processing in co-op communication to slightly reduce load.[/b]
-[b]協力プレイ中の通信まわりで不要な処理を省き、動作を少し軽くしました。[/b]
+[b]Fixes allied effect falloff, cooking ingredient warnings, generic star map layouts, and helper damage decay across runs. Also adds missing wiki topics and updates existing pages.[/b]
+[b]味方への効果の距離減衰、料理素材の警告、汎用星図の配置、遠征をまたぐ担当外ダメージの減衰に関する不具合を直しました。Wiki に足りなかった項目を追加し、既存の内容も今の状態に合わせて更新しました。[/b]
 
 [h1]Dreamforge RPG[/h1]
 Turns every run into part of a long RPG journey: relics you keep, a "secure or delve" choice at every zone, a star map per Traveler, a forge and long-term goals. Co-op ready.
