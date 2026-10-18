@@ -610,6 +610,14 @@ namespace SodRpg.Mod
         private static readonly ConditionalWeakTable<DTT.AreaOfEffectRegions.CircleRegion, CircleInputs>.CreateValueCallback CreateInputs =
             _ => new CircleInputs();
         private static AccessTools.FieldRef<DTT.AreaOfEffectRegions.CircleRegion, MeshRenderer> _renderer;
+        // The prefix reads the same storage the body reads (ldfld _fillProgress), not the
+        // FillProgress property, so the skip decision and the body can never see two different
+        // values even if a future game version wraps that property around a conversion.
+        private static AccessTools.FieldRef<DTT.AreaOfEffectRegions.CircleRegion, float> _fillProgressField;
+        // Reusable snapshot candidate handed from the prefix to the postfix. The prefix takes it
+        // (nulling the slot) and the postfix returns it after committing, so the steady-state
+        // skip path allocates nothing.
+        [ThreadStatic] private static CircleInputs _pending;
         private static MethodBase _target;
         private static bool _disabled;
         private static bool _warned;
@@ -621,6 +629,7 @@ namespace SodRpg.Mod
             try
             {
                 _renderer = AccessTools.FieldRefAccess<DTT.AreaOfEffectRegions.CircleRegion, MeshRenderer>("_circleRenderer");
+                _fillProgressField = AccessTools.FieldRefAccess<DTT.AreaOfEffectRegions.CircleRegion, float>("_fillProgress");
                 return ValidateBody(PatchProcessor.GetOriginalInstructions(_target));
             }
             catch (Exception ex)
@@ -632,6 +641,37 @@ namespace SodRpg.Mod
 
         private static MethodBase TargetMethod() => _target;
 
+        // Every member the native CircleRegion.UpdateProperties references, captured from the
+        // shipped DTT.AreaOfEffectRegions.Runtime.dll (2026-10-18), kept sorted (ordinal) and
+        // written the way MemberIdentity normalizes instructions (callvirt counts as call).
+        // Beyond the four counted reads below, this list is what actually guarantees the skip
+        // is equivalence-preserving: a future body that keeps those four counts but reads
+        // anything else (an untracked field, an extra call) no longer matches.
+        private static readonly string[] ExpectedMembers =
+        {
+            "call DTT.AreaOfEffectRegions.CircleRegionBase::get_Offset/0",
+            "call DTT.AreaOfEffectRegions.CircleRegionBase::get_Offset/0",
+            "call DTT.AreaOfEffectRegions.CircleRegionBase::get_Radius/0",
+            "call UnityEngine.Material::SetFloat/2",
+            "call UnityEngine.Renderer::get_sharedMaterial/0",
+            "call UnityEngine.Transform::get_localPosition/0",
+            "call UnityEngine.Transform::set_localPosition/1",
+            "call UnityEngine.Transform::set_localScale/1",
+            "call UnityEngine.Vector3::get_one/0",
+            "call UnityEngine.Vector3::op_Multiply/2",
+            "call UnityEngine.Vector3::op_Multiply/2",
+            "ldfld DTT.AreaOfEffectRegions.CircleRegion::_circle",
+            "ldfld DTT.AreaOfEffectRegions.CircleRegion::_circle",
+            "ldfld DTT.AreaOfEffectRegions.CircleRegion::_circle",
+            "ldfld DTT.AreaOfEffectRegions.CircleRegion::_circleRenderer",
+            "ldfld DTT.AreaOfEffectRegions.CircleRegion::_fillProgress",
+            "ldfld UnityEngine.Vector2::x",
+            "ldfld UnityEngine.Vector2::y",
+            "ldfld UnityEngine.Vector3::y",
+            "ldsfld DTT.AreaOfEffectRegions.CircleRegion::ProgressShaderID",
+            "newobj UnityEngine.Vector3::.ctor/3",
+        };
+
         internal static bool ValidateBody(IList<CodeInstruction> code)
         {
             var radius = AccessTools.PropertyGetter(typeof(DTT.AreaOfEffectRegions.CircleRegionBase), nameof(DTT.AreaOfEffectRegions.CircleRegionBase.Radius));
@@ -639,18 +679,58 @@ namespace SodRpg.Mod
             var setFloat = AccessTools.Method(typeof(Material), nameof(Material.SetFloat), new[] { typeof(int), typeof(float) });
             var fill = AccessTools.Field(typeof(DTT.AreaOfEffectRegions.CircleRegion), "_fillProgress");
             int radii = 0, offsets = 0, floats = 0, fills = 0;
+            var members = new List<string>();
             for (int i = 0; i < code.Count; i++)
             {
                 if (code[i].Calls(radius)) radii++;
                 if (code[i].Calls(offset)) offsets++;
                 if (code[i].Calls(setFloat)) floats++;
                 if (code[i].opcode == OpCodes.Ldfld && Equals(code[i].operand, fill)) fills++;
+                var identity = MemberIdentity(code[i]);
+                if (identity != null) members.Add(identity);
             }
             // The cast indicator's circle rewrite is only worth skipping while it stays this
-            // exact shape: one range read, two offset reads, one material float from _fillProgress.
-            if (radii == 1 && offsets == 2 && floats == 1 && fills == 1) return true;
+            // exact shape: one range read, two offset reads, one material float from _fillProgress,
+            // and no other member read or write besides the ones in ExpectedMembers.
+            if (radii == 1 && offsets == 2 && floats == 1 && fills == 1 && MatchesExpectedMembers(members)) return true;
             NativePerfPatch.Warn(ref _warned, "cast indicator circle", "native circle region body changed");
             return false;
+        }
+
+        // Identity of a member-referencing instruction, or null when the instruction references
+        // no method or field. Opcodes that can carry a member operand are all counted so an
+        // untracked read cannot hide behind a less common form (ldsfld, ldftn, ldtoken, ...).
+        private static string MemberIdentity(CodeInstruction instruction)
+        {
+            string name = instruction.opcode.Name;
+            if (instruction.operand is MethodBase method)
+            {
+                if (name != OpCodes.Call.Name && name != OpCodes.Callvirt.Name
+                    && name != OpCodes.Newobj.Name && name != OpCodes.Ldftn.Name
+                    && name != OpCodes.Ldvirtftn.Name && name != OpCodes.Ldtoken.Name)
+                    return null;
+                if (name == OpCodes.Callvirt.Name) name = OpCodes.Call.Name;
+                return name + " " + method.DeclaringType?.FullName + "::" + method.Name + "/" + method.GetParameters().Length;
+            }
+            if (instruction.operand is FieldInfo field)
+            {
+                if (name != OpCodes.Ldfld.Name && name != OpCodes.Stfld.Name
+                    && name != OpCodes.Ldsfld.Name && name != OpCodes.Stsfld.Name
+                    && name != OpCodes.Ldflda.Name && name != OpCodes.Ldsflda.Name
+                    && name != OpCodes.Ldtoken.Name)
+                    return null;
+                return name + " " + field.DeclaringType?.FullName + "::" + field.Name;
+            }
+            return null;
+        }
+
+        private static bool MatchesExpectedMembers(List<string> members)
+        {
+            if (members.Count != ExpectedMembers.Length) return false;
+            members.Sort(StringComparer.Ordinal);
+            for (int i = 0; i < members.Count; i++)
+                if (string.CompareOrdinal(members[i], ExpectedMembers[i]) != 0) return false;
+            return true;
         }
 
         // Pure skip decision, extracted so the native test harness can exercise it without the
@@ -668,8 +748,13 @@ namespace SodRpg.Mod
         // those inputs move only when the drawn range actually changes. While they are unchanged
         // the rewrite would store the same values again, so skip it. The renderer's material
         // instance is compared as well, so a replaced material always gets its float set again.
-        private static bool Prefix(DTT.AreaOfEffectRegions.CircleRegion __instance)
+        // The prefix only reads the inputs and prepares the snapshot candidate; committing it
+        // into the per-region record is the postfix's job, because Harmony does not run
+        // postfixes when the original threw: a body interrupted mid-write leaves the previous
+        // snapshot in place, so the next frame retries the body exactly as without this patch.
+        private static bool Prefix(DTT.AreaOfEffectRegions.CircleRegion __instance, ref CircleInputs __state)
         {
+            __state = null;
             if (_disabled || !NativePerfOptions.CastIndicatorCircle) return true;
             try
             {
@@ -679,21 +764,48 @@ namespace SodRpg.Mod
                 var inputs = TrackedInputs.GetValue(__instance, CreateInputs);
                 float radius = __instance.Radius;
                 Vector2 offset = __instance.Offset;
-                float fill = __instance.FillProgress;
+                float fill = _fillProgressField(__instance);
                 if (ShouldSkip(inputs.Has, inputs.Radius, inputs.Offset, inputs.Fill, inputs.Material, radius, offset, fill, material))
                     return false;
-                inputs.Has = true;
-                inputs.Material = material;
-                inputs.Radius = radius;
-                inputs.Offset = offset;
-                inputs.Fill = fill;
+                CircleInputs pending = _pending ?? new CircleInputs();
+                _pending = null;
+                pending.Has = true;
+                pending.Material = material;
+                pending.Radius = radius;
+                pending.Offset = offset;
+                pending.Fill = fill;
+                __state = pending;
+            }
+            catch (Exception ex)
+            {
+                _disabled = true;
+                NativePerfPatch.Warn(ref _warned, "cast indicator circle", ex.Message);
+                __state = null;
+            }
+            return true;
+        }
+
+        // Commits the snapshot candidate the prefix prepared, only on the frames where the body
+        // ran to completion. On skipped frames the postfix still runs but receives a null state
+        // (the snapshot already matches the inputs, so there is nothing to record).
+        private static void Postfix(DTT.AreaOfEffectRegions.CircleRegion __instance, CircleInputs __state)
+        {
+            if (__state == null) return;
+            try
+            {
+                var inputs = TrackedInputs.GetValue(__instance, CreateInputs);
+                inputs.Has = __state.Has;
+                inputs.Material = __state.Material;
+                inputs.Radius = __state.Radius;
+                inputs.Offset = __state.Offset;
+                inputs.Fill = __state.Fill;
+                _pending = __state;
             }
             catch (Exception ex)
             {
                 _disabled = true;
                 NativePerfPatch.Warn(ref _warned, "cast indicator circle", ex.Message);
             }
-            return true;
         }
     }
 

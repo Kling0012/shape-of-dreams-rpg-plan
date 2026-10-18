@@ -11,11 +11,13 @@ namespace Issue73.Native.Tests
     /// <summary>
     /// （#766）照準円の変わっていない再描画を省く NativeCastIndicatorCirclePerf の検証。
     /// ValidateBody は実ソースから抽出した本体そのものに、本体 CircleRegion.UpdateProperties
-    /// と同じ読み出し回数の見本（CastIndicatorIlShapes）を PatchProcessor.GetOriginalInstructions
-    /// で読んで渡し、読み出し回数が1つでも崩れた形は拒否することを確かめる。ShouldSkip は
-    /// 前回値と今回値だけからスキップ可否を判定する純粋な関数として確かめる: 全入力が同じ
-    /// ときだけ true、Radius・Offset（成分ごとの厳密比較）・Fill・マテリアル実体のどれかが
-    /// 変われば false、スナップショットがないときと material が null のときも false。
+    /// と同じ読み出し・書き込み一式の見本（CastIndicatorIlShapes）を PatchProcessor.
+    /// GetOriginalInstructions で読んで渡し、追跡する4種（get_Radius・get_Offset・SetFloat・
+    /// _fillProgress）の回数が1つでも崩れた形と、回数が同じまま追跡していない入力を
+    /// 読み足した形を拒否することを確かめる。ShouldSkip は前回値と今回値だけからスキップ
+    /// 可否を判定する純粋な関数として確かめる。Prefix/Postfix は、前回値の確定が本体の
+    /// 正常終了後（Postfix）だけに行われること、fill を FillProgress プロパティではなく
+    /// _fillProgress フィールドから読むことを確かめる。
     /// </summary>
     public sealed class CastIndicatorPerfTests
     {
@@ -61,6 +63,15 @@ namespace Issue73.Native.Tests
         {
             Assert.False(NativeCastIndicatorCirclePerf.ValidateBody(
                 InstructionsOf(nameof(CastIndicatorIlShapes.WithoutFillField))));
+        }
+
+        [Fact]
+        public void ValidateBodyRejectsAnUntrackedExtraInputRead()
+        {
+            // 追跡する4種の回数は同じまま、追跡していない入力（_opacity）を1つ読み足した形。
+            // 回数の検証だけでは受理されてしまうため、メンバー一式の照合で拒否する。
+            Assert.False(NativeCastIndicatorCirclePerf.ValidateBody(
+                InstructionsOf(nameof(CastIndicatorIlShapes.UntrackedExtraInput))));
         }
 
         private static bool ShouldSkip(bool has, float prevRadius, Vector2 prevOffset, float prevFill, Material prevMaterial,
@@ -139,6 +150,95 @@ namespace Issue73.Native.Tests
                 5f, new Vector2(1f, 2f), 0.5f, null));
             Assert.False(ShouldSkip(true, 5f, new Vector2(1f, 2f), 0.5f, null,
                 5f, new Vector2(1f, 2f), 0.5f, null));
+        }
+
+        private static DTT.AreaOfEffectRegions.CircleRegion NewRegion(float radius, float ox, float oy, float fill)
+            => new DTT.AreaOfEffectRegions.CircleRegion
+            {
+                Radius = radius,
+                Offset = new Vector2(ox, oy),
+                _fillProgress = fill,
+                _circle = new Transform(),
+                _circleRenderer = new MeshRenderer { sharedMaterial = new Material() },
+            };
+
+        // 抽出部分の静的欄を整える（FieldRef は本体では Prepare が用意するが、抽出には含まれない）。
+        private static void PrepareExtractedPatch()
+        {
+            var type = typeof(NativeCastIndicatorCirclePerf);
+            type.GetField("_disabled", Hidden).SetValue(null, false);
+            if (type.GetField("_renderer", Hidden).GetValue(null) == null)
+                type.GetField("_renderer", Hidden).SetValue(null,
+                    AccessTools.FieldRefAccess<DTT.AreaOfEffectRegions.CircleRegion, MeshRenderer>("_circleRenderer"));
+            if (type.GetField("_fillProgressField", Hidden).GetValue(null) == null)
+                type.GetField("_fillProgressField", Hidden).SetValue(null,
+                    AccessTools.FieldRefAccess<DTT.AreaOfEffectRegions.CircleRegion, float>("_fillProgress"));
+        }
+
+        private static bool RunPrefix(DTT.AreaOfEffectRegions.CircleRegion region, out object state)
+        {
+            var args = new object[] { region, null };
+            var result = (bool)typeof(NativeCastIndicatorCirclePerf).GetMethod("Prefix", Hidden).Invoke(null, args);
+            state = args[1];
+            return result;
+        }
+
+        private static void RunPostfix(DTT.AreaOfEffectRegions.CircleRegion region, object state)
+            => typeof(NativeCastIndicatorCirclePerf).GetMethod("Postfix", Hidden).Invoke(null, new[] { region, state });
+
+        [Fact]
+        public void TheSnapshotIsCommittedOnlyAfterTheBodyRan()
+        {
+            PrepareExtractedPatch();
+            var region = NewRegion(5f, 1f, 2f, 0.5f);
+            Assert.True(RunPrefix(region, out var state));   // 初回は必ず本体を通す
+            Assert.NotNull(state);                           // 確定候補が Prefix から Postfix へ渡る
+            RunPostfix(region, state);                       // 本体が正常に終わったフレーム
+            Assert.False(RunPrefix(region, out state));      // 同じ入力の再描画は省く
+            Assert.Null(state);                              // 省いたフレームは確定候補を作らない
+            RunPostfix(region, null);                        // Postfix は null では何もしない
+            Assert.False(RunPrefix(region, out _));          // 省けたまま
+        }
+
+        [Fact]
+        public void ABodyInterruptedByAnExceptionLeavesTheSnapshotUncommitted()
+        {
+            // 本体が例外で中断したとき Harmony は Postfix を実行しない。そのフレームを
+            // Postfix なしで再現すると、書きかけの入力が「反映済み」と記録されないため、
+            // 同じ入力の次のフレームも本体を再実行する（パッチなしと同じ動き）。
+            PrepareExtractedPatch();
+            var region = NewRegion(5f, 1f, 2f, 0.5f);
+            Assert.True(RunPrefix(region, out _));           // Postfix なし＝本体が例外で終わった
+            Assert.True(RunPrefix(region, out _));           // まだ同じ入力でも省かない
+            Assert.True(RunPrefix(region, out var state));
+            RunPostfix(region, state);                       // 正常に終わったフレームだけ確定
+            Assert.False(RunPrefix(region, out _));
+        }
+
+        [Fact]
+        public void TheFillIsReadFromTheFieldNotTheFillProgressProperty()
+        {
+            // Prefix は本体と同じ _fillProgress フィールドを直接読む。境界の FillProgress は
+            // 意図的に常に -1 を返すため、プロパティ経由だと生値の変化（0.5→0.75）が
+            // 見逃されて省いてしまう。フィールドを読む限り変わったと判定する。
+            PrepareExtractedPatch();
+            var region = NewRegion(5f, 1f, 2f, 0.5f);
+            Assert.True(RunPrefix(region, out var state));
+            RunPostfix(region, state);                        // 0.5 を確定
+            region._fillProgress = 0.75f;                     // プロパティの値（常に -1）は変わらない
+            Assert.True(RunPrefix(region, out _));            // 生値が変わったので再実行（確定はしない）
+            region._fillProgress = 0.5f;                      // 生値が確定値へ戻れば省く
+            Assert.False(RunPrefix(region, out _));
+        }
+
+        [Fact]
+        public void ANullMaterialKeepsTheNativePathAndRecordsNothing()
+        {
+            PrepareExtractedPatch();
+            var region = NewRegion(5f, 1f, 2f, 0.5f);
+            region._circleRenderer.sharedMaterial = null;
+            Assert.True(RunPrefix(region, out var state));   // null は本体側の経路のまま
+            Assert.Null(state);                              // 確定候補も作らない
         }
     }
 }

@@ -191,11 +191,12 @@
     </ItemGroup>
   </Target>
 
-  <!-- 照準円の再描画省略（#766）。NativeCastIndicatorCirclePerf の IL 形状検証とスキップ判定を
-       実ソースから抽出し、本体 CircleRegion.UpdateProperties と同じ読み出し回数の見本に当てる。
-       DTT の CircleRegion と UnityEngine の Material は CastIndicatorPerfBoundary.cs の境界。 -->
+  <!-- 照準円の再描画省略（#766）。NativeCastIndicatorCirclePerf の IL 形状検証・スキップ判定・
+       Prefix/Postfix を実ソースから抽出し、本体 CircleRegion.UpdateProperties と同じ読み出し回数の
+       見本に当てる。DTT の CircleRegion と UnityEngine の Material・Transform・Renderer は
+       CastIndicatorPerfBoundary.cs の境界。 -->
   <Target Name="CompileCastIndicatorPerf" BeforeTargets="CoreCompile">
-    <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/NativePerfPatches.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)CastIndicatorPerf.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="NativeCastIndicatorCirclePerf" Methods="ValidateBody;ShouldSkip" Fields="_warned" />
+    <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/NativePerfPatches.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)CastIndicatorPerf.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="NativeCastIndicatorCirclePerf" Methods="ValidateBody;MemberIdentity;MatchesExpectedMembers;ShouldSkip;Prefix;Postfix" Fields="TrackedInputs;CreateInputs;_renderer;_fillProgressField;_pending;_target;_disabled;_warned;ExpectedMembers" NestedTypes="CircleInputs" />
     <ItemGroup>
       <Compile Include="$(IntermediateOutputPath)CastIndicatorPerf.g.cs" />
     </ItemGroup>
