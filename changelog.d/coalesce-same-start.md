@@ -1,0 +1,1 @@
+- 協力プレイなどで、跳弾などの弾がまとめて当たる場面で、命中の時刻が本来と少しずれることがあった問題を直しました。 / Fixed hit timing sometimes drifting slightly when many projectiles such as ricochets landed together.
