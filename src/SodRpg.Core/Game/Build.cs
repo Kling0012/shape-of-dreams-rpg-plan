@@ -103,6 +103,14 @@ namespace SodRpg.Core.Game
                 validatedDefinitions: ValidatedDefinitions(tree));
         }
 
+        internal static Build ComputeBeforeRemovedGrowth(Profile p, string heroKey, int heat,
+            IEnumerable<Pact> pacts, int dailyId, int paidPoints)
+        {
+            var tree = HeroSigils.TreeFor(heroKey);
+            return ComputeTree(p, heroKey, heat, tree, HeroTreeLayout.ForHero(heroKey), pacts, dailyId,
+                validatedDefinitions: ValidatedDefinitions(tree), paidPoints: paidPoints);
+        }
+
         private sealed class ValidatedTree
         {
             public string CapFingerprint, AuthoredFingerprint;

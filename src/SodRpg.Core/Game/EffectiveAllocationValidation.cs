@@ -439,6 +439,9 @@ namespace SodRpg.Core.Game
         {
             var hero = profile.Hero(heroKey);
             bool refunded = false, changed;
+            foreach (string id in new List<string>(hero.Talents.Keys))
+                if (Talent(id) == null && RunGrowth.IsRemovedStar(id))
+                { hero.Talents.Remove(id); hero.TalentChoices.Remove(id); refunded = true; }
             do
             {
                 changed = false;

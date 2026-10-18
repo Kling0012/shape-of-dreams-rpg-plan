@@ -1,0 +1,1 @@
+- 細かな調整を行いました。 / Minor adjustments.

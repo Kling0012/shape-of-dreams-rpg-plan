@@ -48,7 +48,7 @@ namespace SodRpg.Core.Game
             // Migration rules change what a loaded profile looks like, so peers must agree on them.
             string rules = string.Join("|", Migrations.OrderBy(x => x.Key, StringComparer.Ordinal).Select(x => x.Key + "=" + string.Join(",",
                 x.Value.OrderBy(r => r.LocalStarId, StringComparer.Ordinal).Select(r => r.LocalStarId + "/" + r.MaxRank + "/" + r.RankCost + "/" + (r.ChangedEffect ? "1" : "0")
-                    + (r.Revision > 1 ? "/r" + r.Revision + (r.LegacyWasChoice ? "c" : "") : "")))));
+                    + (r.Revision > 1 ? "/r" + r.Revision + (r.LegacyWasChoice ? "c" : "") : "") + (r.Removed ? "/removed" : "")))));
             return RegistryHash(trees + "#migrations:" + rules);
         }
         /// <summary>

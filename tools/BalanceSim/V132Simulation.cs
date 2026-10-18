@@ -188,8 +188,8 @@ internal sealed class GrowthResult
 internal static class V132Simulation
 {
     public const string EconomyHero = "Hero_Vesper"; // 巡る富は全旅人共通の外縁星団。代表として Vesper。
-    public static readonly string[] GrowthHeroes = { "Hero_Vesper", "Hero_Cetus", "Hero_Mist", "Hero_Husk" };
-    public static readonly string[] GrowthHeroNames = { "Vesper", "Cetus", "Mist", "空殻" };
+    public static readonly string[] GrowthHeroes = { "Hero_Vesper", "Hero_Cetus" };
+    public static readonly string[] GrowthHeroNames = { "Vesper", "Cetus" };
     /// <summary>鍛錬の星の組み合わせ（表示順）。</summary>
     public static readonly (string Key, string Ja, string PurchasesKind)[] GrowthVariants =
     {

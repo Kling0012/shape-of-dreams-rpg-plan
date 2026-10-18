@@ -103,13 +103,17 @@ namespace SodRpg.Core.Game
                 var engine = Rules.AllocationValidationForHero(heroKey);
                 if (!TryValidateAllocation(hero, heroKey, engine, out int spent, out reason)) return false;
                 var expected = Build.Compute(input.Profile, heroKey, input.Heat, input.Pacts, input.DailyId);
-                if (claimed.SpentStarPoints != spent || claimed.DreamLevel != expected.DreamLevel || claimed.Heat != expected.Heat)
+                int originalSpent = checked(spent + input.RemovedGrowthPoints);
+                if (originalSpent > StarProgression.MaxSpendablePoints + hero.ExtraPoints
+                    || claimed.SpentStarPoints != originalSpent || claimed.DreamLevel != expected.DreamLevel || claimed.Heat != expected.Heat)
                     return Reject("progression", out reason);
 
                 // Scalar totals are discarded in favor of legal equipped + star source values.
                 // Compare the ORIGINAL effect sections: Decode's generic Clamp must not erase
                 // an attacker's unsupported parameters, excessive values or fake contributors.
-                if (!EffectsMatch(derivedText, expected.Encode())) return Reject("derived-effects", out reason);
+                var comparison = input.RemovedGrowthPoints == 0 ? expected
+                    : Build.ComputeBeforeRemovedGrowth(input.Profile, heroKey, input.Heat, input.Pacts, input.DailyId, originalSpent);
+                if (!EffectsMatch(derivedText, comparison.Encode())) return Reject("derived-effects", out reason);
                 expected.SpentStarPoints = spent;
                 validated = expected;
                 reason = null;
@@ -182,7 +186,16 @@ namespace SodRpg.Core.Game
                 int colon = section.IndexOf(':');
                 string kind = section.Substring(0, colon);
                 if (kind == "g" || kind == "l" || kind == "c" || kind == "f" || kind == "n" || kind == "j" || kind == "v" || kind == "w" || kind == "b" || kind == "z")
-                    effects.Add(kind, section.Substring(colon + 1));
+                {
+                    string body = section.Substring(colon + 1);
+                    if (kind == "w")
+                        body = string.Join(",", body.Split(',').Where(entry =>
+                        {
+                            int separator = entry.IndexOf(':');
+                            return !RunGrowth.IsRemovedStar(separator < 0 ? entry : entry.Substring(0, separator));
+                        }));
+                    if (kind != "w" || body.Length > 0) effects.Add(kind, body);
+                }
             }
             return effects;
         }
@@ -192,7 +205,7 @@ namespace SodRpg.Core.Game
         {
             public readonly Profile Profile = new Profile();
             public readonly List<Pact> Pacts = new List<Pact>();
-            public int Heat, DailyId;
+            public int Heat, DailyId, RemovedGrowthPoints;
         }
 
         private static Inputs ReadInputs(string text, string heroKey)
@@ -200,6 +213,7 @@ namespace SodRpg.Core.Game
             var input = new Inputs();
             var hero = input.Profile.Hero(heroKey);
             var seen = new HashSet<string>(StringComparer.Ordinal);
+            var removedGrowth = new HashSet<string>(StringComparer.Ordinal);
             foreach (string section in text.Split(';'))
             {
                 int colon = section.IndexOf(':');
@@ -227,8 +241,20 @@ namespace SodRpg.Core.Game
                             var fields = entry.Split('=');
                             if (fields.Length != 3) throw new FormatException();
                             Token(fields[0]);
-                            hero.Talents.Add(fields[0], Range(fields[1], 1, StarProgression.MaxAllocationPoints));
+                            int rank = Range(fields[1], 1, StarProgression.MaxAllocationPoints);
                             int choice = Range(fields[2], -1, StarProgression.MaxAllocationPoints);
+                            if (RunGrowth.IsRemovedStar(fields[0]))
+                            {
+                                string prefix = heroKey.StartsWith("Hero_", StringComparison.Ordinal)
+                                    ? heroKey.Substring(5).ToLowerInvariant() + ".run." : "";
+                                if (prefix.Length == 0 || !fields[0].StartsWith(prefix, StringComparison.Ordinal)
+                                    || rank != 1 || !removedGrowth.Add(fields[0])
+                                    || (fields[0].EndsWith(".choice", StringComparison.Ordinal) ? choice < 0 || choice > 1 : choice != -1))
+                                    throw new FormatException();
+                                input.RemovedGrowthPoints++;
+                                continue;
+                            }
+                            hero.Talents.Add(fields[0], rank);
                             if (choice >= 0) hero.TalentChoices.Add(fields[0], choice);
                         }
                         break;
