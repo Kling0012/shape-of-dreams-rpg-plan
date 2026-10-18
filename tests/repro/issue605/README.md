@@ -6,8 +6,8 @@ python3 tests/repro/issue605/run.py
 
 .NET SDK と Python 3 が必要。net8.0 の実行は `DOTNET_ROLL_FORWARD=LatestMajor`
 を既定にする。この環境では SDK 10.0.111 / runtime 10.0.11 を使用した。
-パッケージキャッシュは既存の `NUGET_PACKAGES=/home/wang/.cache/gh-auto/nuget`
-を使用し、worktree 内に変更していない。
+パッケージキャッシュは環境変数 `NUGET_PACKAGES` で指定する worktree 外の場所を使う。
+例: `export NUGET_PACKAGES="${XDG_CACHE_HOME:-$HOME/.cache}/nuget/packages"`。
 
 終了コードは 0=全条件を満たす、1=再現アサーション失敗、2=ビルド等のハーネス異常。
 記憶の再使用間隔（memoryReuse）が無効の間（2026-10-17〜）は、パッチが外れて全チャージが本体どおり使えることを確かめ、status を DISABLED として終了コード 0 で終わる。
@@ -32,16 +32,16 @@ python3 tests/repro/issue605/run.py
 `SurfaceApi.cs` は以下の本体コードで確認したチャージと最低待ち時間の関係をモデル化する。
 本体ソース・DLL はコミットしない。
 
-- `/home/wang/dev/sod-gamedata/decompiled/sod-decomp/Dew.Core/AbilityTrigger.cs:949`:
+- 逆コンパイル資料の `Dew.Core/AbilityTrigger.cs:949`
   `OnCastComplete` は CD 設定→チャージ消費→最低待ち時間設定の順に呼ぶ。
 - 同 `:1149` / `:1157` / `:1162`: `OnCastCompleteSetCooldownTime` は回復時間を設定し、
   `OnCastCompleteSetCharge` は1を消費し、`OnCastCompleteSetMinimumDelay` は設定の最低待ちを設定する。
 - 同 `:1214` / `:1407`: 回復時間と最低待ちは別々に進み、回復時間ゼロでチャージが回復する。
 - 同 `:1502` / `:1511`: `CanBeCast` / `CanBeReserved` は正のチャージ数と最低待ちゼロを要求する。
   **チャージ回復用 CD が残っていること自体は、残りチャージの使用を禁止しない。**
-- `/home/wang/dev/sod-gamedata/decompiled/sod-decomp/Dew.UI/UI_InGame_SkillButton.cs:383` / `:415`:
+- 逆コンパイル資料の `Dew.UI/UI_InGame_SkillButton.cs:383` / `:415`
   maxCharges > 1 かつ残りチャージ > 0 なら、チャージ表示を用い、メイン CD の数値・塗りを消す。
-- `/home/wang/.claude/work/herobal/decomp-ess/St_Q_Fleche.cs:1`:
+- 記憶の逆コンパイル資料の `St_Q_Fleche.cs:1`
   フレッシュにはこのキャスト消費処理のオーバーライドがなく、レベルによる追加チャージと
   条件付きのチャージ還元がある。ただしこの解析資産と報告されたゲーム版の一致は未確認。
 

@@ -20,7 +20,13 @@ namespace SodRpg.Mod
             NativePerfOptions.OwnershipSpawnCounts = config.nativeOwnershipSpawnCounts;
             NativePerfOptions.ProcCoalesce = config.nativeProcCoalesce;
             NativePerfOptions.AttachFaceIdle = config.nativeAttachFaceIdle;
+            NativePerfOptions.AccessoryOffset = config.nativeAccessoryOffsetCache;
+            NativePerfOptions.CooldownIdleMultiplier = config.nativeCooldownIdleMultiplier;
+            NativePerfOptions.TransformSyncIdle = config.nativeTransformSyncIdle;
             NativePerfOptions.SleepPosition = config.nativeSleepPositionReuse;
+            NativePerfOptions.CastIndicatorCircle = config.nativeCastIndicatorCircle;
+            NativePerfOptions.CameraZoomRotation = config.nativeCameraZoomRotation;
+            NativePerfOptions.CharacterModelDisplayBounds = config.nativeCharacterModelDisplayBounds;
         }
     }
 
@@ -33,7 +39,13 @@ namespace SodRpg.Mod
         internal static bool OwnershipSpawnCounts = true;
         internal static bool ProcCoalesce = true;
         internal static bool AttachFaceIdle = true;
+        internal static bool AccessoryOffset = true;
+        internal static bool CooldownIdleMultiplier = true;
+        internal static bool TransformSyncIdle = true;
         internal static bool SleepPosition = true;
+        internal static bool CastIndicatorCircle = true;
+        internal static bool CameraZoomRotation = true;
+        internal static bool CharacterModelDisplayBounds = true;
     }
 
     internal static class NativePerfPatch
@@ -43,6 +55,18 @@ namespace SodRpg.Mod
             try
             {
                 var target = AccessTools.DeclaredMethod(type, method, Type.EmptyTypes);
+                if (target != null && target.GetMethodBody() != null) return target;
+                Warn(ref warned, type.Name + "." + method, "native method unavailable");
+            }
+            catch (Exception ex) { Warn(ref warned, type.Name + "." + method, ex.Message); }
+            return null;
+        }
+
+        internal static MethodBase Find(Type type, string method, Type[] arguments, ref bool warned)
+        {
+            try
+            {
+                var target = AccessTools.DeclaredMethod(type, method, arguments);
                 if (target != null && target.GetMethodBody() != null) return target;
                 Warn(ref warned, type.Name + "." + method, "native method unavailable");
             }
@@ -488,6 +512,189 @@ namespace SodRpg.Mod
     }
 
     [HarmonyPatch]
+    internal static class NativeAccessoryOffsetPerf
+    {
+        private static readonly ConditionalWeakTable<Accessory_AttachPoint, AccessoryOffsetCache<Accessory_AttachPoint.AttachOffset>> Caches =
+            new ConditionalWeakTable<Accessory_AttachPoint, AccessoryOffsetCache<Accessory_AttachPoint.AttachOffset>>();
+        private static readonly ConditionalWeakTable<Accessory_AttachPoint, AccessoryOffsetCache<Accessory_AttachPoint.AttachOffset>>.CreateValueCallback CreateCache =
+            _ => new AccessoryOffsetCache<Accessory_AttachPoint.AttachOffset>();
+        private static MethodBase _target;
+        private static bool _disabled;
+        private static bool _warned;
+
+        private static bool Prepare()
+        {
+            try
+            {
+                _target = AccessTools.DeclaredMethod(typeof(Accessory_AttachPoint), nameof(Accessory_AttachPoint.FindOffset),
+                    new[] { typeof(string) });
+                if (_target != null && _target.GetMethodBody() != null) return true;
+                NativePerfPatch.Warn(ref _warned, "Accessory_AttachPoint.FindOffset", "native method unavailable");
+            }
+            catch (Exception ex) { NativePerfPatch.Warn(ref _warned, "Accessory_AttachPoint.FindOffset", ex.Message); }
+            return false;
+        }
+
+        private static MethodBase TargetMethod() => _target;
+
+        private static bool Prefix(Accessory_AttachPoint __instance, string entityOrSkinName,
+            ref Accessory_AttachPoint.AttachOffset __result)
+        {
+            if (_disabled || !NativePerfOptions.AccessoryOffset) return true;
+            try
+            {
+                // The inspected game does not mutate customOffsets at runtime. The key detects
+                // model-name, list, count and element reference changes (same-count in-place
+                // replacements included), but not entityName value edits on a kept element.
+                // Disable this option if another mod makes those edits.
+                if (Caches.TryGetValue(__instance, out var cache)
+                    && cache.TryGet(entityOrSkinName, __instance.customOffsets, out var cached))
+                {
+                    __result = cached;
+                    return false;
+                }
+            }
+            catch (Exception ex)
+            {
+                _disabled = true;
+                NativePerfPatch.Warn(ref _warned, "accessory offset", ex.Message);
+                return true;
+            }
+            return true;
+        }
+
+        private static void Postfix(Accessory_AttachPoint __instance, string entityOrSkinName,
+            Accessory_AttachPoint.AttachOffset __result, bool __runOriginal)
+        {
+            // Cache only what the native search itself produced. When another mod's prefix
+            // skips the original (__runOriginal false), its substituted result must not
+            // enter this cache; the next call then runs the native search again. The option
+            // check keeps the disabled path equal to the Prefix: no store, no key snapshot
+            // allocation, only the native search runs.
+            if (!AccessoryOffsetStoreGate.ShouldStore(_disabled, NativePerfOptions.AccessoryOffset, __runOriginal)) return;
+            try
+            {
+                Caches.GetValue(__instance, CreateCache)
+                    .Store(entityOrSkinName, __instance.customOffsets, __result);
+            }
+            catch (Exception ex)
+            {
+                _disabled = true;
+                NativePerfPatch.Warn(ref _warned, "accessory offset", ex.Message);
+            }
+        }
+    }
+
+    [HarmonyPatch]
+    internal static class NativeCooldownIdlePerf
+    {
+        private static MethodBase _target;
+        private static bool _disabled;
+        private static bool _warned;
+
+        private static bool Prepare()
+        {
+            _target = NativePerfPatch.Find(typeof(AbilityTrigger), nameof(AbilityTrigger.LogicUpdate),
+                new[] { typeof(float) }, ref _warned);
+            return _target != null;
+        }
+
+        private static MethodBase TargetMethod() => _target;
+
+        private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+        {
+            var code = new List<CodeInstruction>(instructions);
+            var multiplier = AccessTools.DeclaredMethod(typeof(AbilityTrigger),
+                nameof(AbilityTrigger.GetCooldownTimeMultiplier), new[] { typeof(int) });
+            int site = -1, count = 0;
+            if (multiplier != null)
+                for (int i = 0; i < code.Count; i++)
+                    if (code[i].Calls(multiplier)) { site = i; count++; }
+            // Only the per-frame cooldown tick call is redirected. SetCooldownTime, max time and
+            // reduction paths call the multiplier outside this method and stay untouched.
+            if (multiplier == null || count != 1)
+            {
+                NativePerfPatch.Warn(ref _warned, "cooldown idle", "native multiplier callsite changed or already patched");
+                return code;
+            }
+            code[site].opcode = OpCodes.Call;
+            code[site].operand = AccessTools.Method(typeof(NativeCooldownIdlePerf), nameof(TickMultiplier));
+            return code;
+        }
+
+        private static float TickMultiplier(AbilityTrigger trigger, int configIndex)
+        {
+            if (!_disabled && NativePerfOptions.CooldownIdleMultiplier)
+            {
+                try
+                {
+                    // The tick only feeds the multiplier into MoveTowards as maxDelta, which
+                    // keeps an already-resting cooldown at zero while maxDelta is non-negative
+                    // and non-NaN. Equivalence relies on GuardMultiplier's postfixes keeping
+                    // this tick's multiplier positive, as they do in normal operation; 1 here
+                    // means maxDelta = dt, keeping zero the same way. A degenerate unguarded
+                    // multiplier (negative or NaN) could only have moved zero in the original
+                    // (Mathf.Sign(0) * maxDelta), so this path is at least as stable. The
+                    // virtual call (and its safety postfixes) still runs for moving cooldowns.
+                    var times = trigger.currentUnscaledCooldownTimes;
+                    if (times != null && configIndex >= 0 && configIndex < times.Length && times[configIndex] == 0f)
+                        return 1f;
+                }
+                catch (Exception ex)
+                {
+                    _disabled = true;
+                    NativePerfPatch.Warn(ref _warned, "cooldown idle", ex.Message);
+                }
+            }
+            return trigger.GetCooldownTimeMultiplier(configIndex);
+        }
+    }
+
+    [HarmonyPatch]
+    internal static class NativeTransformSyncIdlePerf
+    {
+        private static AccessTools.FieldRef<ActorTransformSync, SyncMovementData> _syncData;
+        private static MethodBase _target;
+        private static bool _disabled;
+        private static bool _warned;
+
+        private static bool Prepare()
+        {
+            try
+            {
+                _target = AccessTools.PropertySetter(typeof(ActorTransformSync), "Network_syncData");
+                if (_target == null || _target.GetMethodBody() == null)
+                    throw new MissingMethodException("ActorTransformSync.Network_syncData setter unavailable");
+                _syncData = AccessTools.FieldRefAccess<ActorTransformSync, SyncMovementData>("_syncData");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                NativePerfPatch.Warn(ref _warned, "transform sync idle", ex.Message);
+                return false;
+            }
+        }
+
+        private static MethodBase TargetMethod() => _target;
+
+        private static bool Prefix(ActorTransformSync __instance, SyncMovementData value)
+        {
+            if (_disabled || !NativePerfOptions.TransformSyncIdle) return true;
+            try
+            {
+                if (NativeTransformSyncIdle.IsIdleRefresh(_syncData(__instance), value))
+                    return false;
+            }
+            catch (Exception ex)
+            {
+                _disabled = true;
+                NativePerfPatch.Warn(ref _warned, "transform sync idle", ex.Message);
+            }
+            return true;
+        }
+    }
+
+    [HarmonyPatch]
     internal static class NativeSleepPositionPerf
     {
         private static Entity _cachedEntity;
@@ -584,6 +791,329 @@ namespace SodRpg.Mod
             _cachedXY = xy;
             _cachedEntity = e;
             return xy;
+        }
+    }
+
+    [HarmonyPatch]
+    internal static class NativeCastIndicatorCirclePerf
+    {
+        // Fully qualified on purpose: the native test harness extracts classes from this file
+        // together with its using directives, and it has no DTT assembly reference.
+        private sealed class CircleInputs
+        {
+            internal bool Has;
+            internal float Radius;
+            internal Vector2 Offset;
+            internal float Fill;
+            internal Material Material;
+        }
+
+        private static readonly ConditionalWeakTable<DTT.AreaOfEffectRegions.CircleRegion, CircleInputs> TrackedInputs =
+            new ConditionalWeakTable<DTT.AreaOfEffectRegions.CircleRegion, CircleInputs>();
+        private static readonly ConditionalWeakTable<DTT.AreaOfEffectRegions.CircleRegion, CircleInputs>.CreateValueCallback CreateInputs =
+            _ => new CircleInputs();
+        private static AccessTools.FieldRef<DTT.AreaOfEffectRegions.CircleRegion, MeshRenderer> _renderer;
+        // The prefix reads the same storage the body reads (ldfld _fillProgress), not the
+        // FillProgress property, so the skip decision and the body can never see two different
+        // values even if a future game version wraps that property around a conversion.
+        private static AccessTools.FieldRef<DTT.AreaOfEffectRegions.CircleRegion, float> _fillProgressField;
+        // Reusable snapshot candidate handed from the prefix to the postfix. The prefix takes it
+        // (nulling the slot) and the postfix returns it after committing; when the body throws,
+        // the postfix never runs and the finalizer returns it instead, so neither the
+        // steady-state skip path nor a run of throwing frames allocates.
+        [ThreadStatic] private static CircleInputs _pending;
+        private static MethodBase _target;
+        private static bool _disabled;
+        private static bool _warned;
+
+        private static bool Prepare()
+        {
+            _target = NativePerfPatch.Find(typeof(DTT.AreaOfEffectRegions.CircleRegion), nameof(DTT.AreaOfEffectRegions.CircleRegion.UpdateProperties), ref _warned);
+            if (_target == null) return false;
+            try
+            {
+                _renderer = AccessTools.FieldRefAccess<DTT.AreaOfEffectRegions.CircleRegion, MeshRenderer>("_circleRenderer");
+                _fillProgressField = AccessTools.FieldRefAccess<DTT.AreaOfEffectRegions.CircleRegion, float>("_fillProgress");
+                return ValidateBody(PatchProcessor.GetOriginalInstructions(_target));
+            }
+            catch (Exception ex)
+            {
+                NativePerfPatch.Warn(ref _warned, "cast indicator circle", ex.Message);
+                return false;
+            }
+        }
+
+        private static MethodBase TargetMethod() => _target;
+
+        // Every member the native CircleRegion.UpdateProperties references, captured from the
+        // shipped DTT.AreaOfEffectRegions.Runtime.dll (2026-10-18), kept sorted (ordinal) and
+        // written the way MemberIdentity normalizes instructions (callvirt counts as call).
+        // Beyond the four counted reads below, this list is what actually guarantees the skip
+        // is equivalence-preserving: a future body that keeps those four counts but reads
+        // anything else (an untracked field, an extra call) no longer matches.
+        private static readonly string[] ExpectedMembers =
+        {
+            "call DTT.AreaOfEffectRegions.CircleRegionBase::get_Offset/0",
+            "call DTT.AreaOfEffectRegions.CircleRegionBase::get_Offset/0",
+            "call DTT.AreaOfEffectRegions.CircleRegionBase::get_Radius/0",
+            "call UnityEngine.Material::SetFloat/2",
+            "call UnityEngine.Renderer::get_sharedMaterial/0",
+            "call UnityEngine.Transform::get_localPosition/0",
+            "call UnityEngine.Transform::set_localPosition/1",
+            "call UnityEngine.Transform::set_localScale/1",
+            "call UnityEngine.Vector3::get_one/0",
+            "call UnityEngine.Vector3::op_Multiply/2",
+            "call UnityEngine.Vector3::op_Multiply/2",
+            "ldfld DTT.AreaOfEffectRegions.CircleRegion::_circle",
+            "ldfld DTT.AreaOfEffectRegions.CircleRegion::_circle",
+            "ldfld DTT.AreaOfEffectRegions.CircleRegion::_circle",
+            "ldfld DTT.AreaOfEffectRegions.CircleRegion::_circleRenderer",
+            "ldfld DTT.AreaOfEffectRegions.CircleRegion::_fillProgress",
+            "ldfld UnityEngine.Vector2::x",
+            "ldfld UnityEngine.Vector2::y",
+            "ldfld UnityEngine.Vector3::y",
+            "ldsfld DTT.AreaOfEffectRegions.CircleRegion::ProgressShaderID",
+            "newobj UnityEngine.Vector3::.ctor/3",
+        };
+
+        internal static bool ValidateBody(IList<CodeInstruction> code)
+        {
+            var radius = AccessTools.PropertyGetter(typeof(DTT.AreaOfEffectRegions.CircleRegionBase), nameof(DTT.AreaOfEffectRegions.CircleRegionBase.Radius));
+            var offset = AccessTools.PropertyGetter(typeof(DTT.AreaOfEffectRegions.CircleRegionBase), nameof(DTT.AreaOfEffectRegions.CircleRegionBase.Offset));
+            var setFloat = AccessTools.Method(typeof(Material), nameof(Material.SetFloat), new[] { typeof(int), typeof(float) });
+            var fill = AccessTools.Field(typeof(DTT.AreaOfEffectRegions.CircleRegion), "_fillProgress");
+            int radii = 0, offsets = 0, floats = 0, fills = 0;
+            var members = new List<string>();
+            for (int i = 0; i < code.Count; i++)
+            {
+                if (code[i].Calls(radius)) radii++;
+                if (code[i].Calls(offset)) offsets++;
+                if (code[i].Calls(setFloat)) floats++;
+                if (code[i].opcode == OpCodes.Ldfld && Equals(code[i].operand, fill)) fills++;
+                var identity = MemberIdentity(code[i]);
+                if (identity != null) members.Add(identity);
+            }
+            // The cast indicator's circle rewrite is only worth skipping while it stays this
+            // exact shape: one range read, two offset reads, one material float from _fillProgress,
+            // and no other member read or write besides the ones in ExpectedMembers.
+            if (radii == 1 && offsets == 2 && floats == 1 && fills == 1 && MatchesExpectedMembers(members)) return true;
+            NativePerfPatch.Warn(ref _warned, "cast indicator circle", "native circle region body changed");
+            return false;
+        }
+
+        // Identity of a member-referencing instruction, or null when the instruction references
+        // no method or field. Opcodes that can carry a member operand are all counted so an
+        // untracked read cannot hide behind a less common form (ldsfld, ldftn, ldtoken, ...).
+        private static string MemberIdentity(CodeInstruction instruction)
+        {
+            string name = instruction.opcode.Name;
+            if (instruction.operand is MethodBase method)
+            {
+                if (name != OpCodes.Call.Name && name != OpCodes.Callvirt.Name
+                    && name != OpCodes.Newobj.Name && name != OpCodes.Ldftn.Name
+                    && name != OpCodes.Ldvirtftn.Name && name != OpCodes.Ldtoken.Name)
+                    return null;
+                if (name == OpCodes.Callvirt.Name) name = OpCodes.Call.Name;
+                return name + " " + method.DeclaringType?.FullName + "::" + method.Name + "/" + method.GetParameters().Length;
+            }
+            if (instruction.operand is FieldInfo field)
+            {
+                if (name != OpCodes.Ldfld.Name && name != OpCodes.Stfld.Name
+                    && name != OpCodes.Ldsfld.Name && name != OpCodes.Stsfld.Name
+                    && name != OpCodes.Ldflda.Name && name != OpCodes.Ldsflda.Name
+                    && name != OpCodes.Ldtoken.Name)
+                    return null;
+                return name + " " + field.DeclaringType?.FullName + "::" + field.Name;
+            }
+            return null;
+        }
+
+        private static bool MatchesExpectedMembers(List<string> members)
+        {
+            if (members.Count != ExpectedMembers.Length) return false;
+            members.Sort(StringComparer.Ordinal);
+            for (int i = 0; i < members.Count; i++)
+                if (string.CompareOrdinal(members[i], ExpectedMembers[i]) != 0) return false;
+            return true;
+        }
+
+        // Pure skip decision, extracted so the native test harness can exercise it without the
+        // DTT assembly. The offset is compared per component, as strict as the radius and fill
+        // floats, instead of Unity's Vector2== which tolerates ~1e-5 differences; a missing
+        // snapshot or a null material always runs the body.
+        internal static bool ShouldSkip(bool has, float prevRadius, Vector2 prevOffset, float prevFill, Material prevMaterial,
+            float radius, Vector2 offset, float fill, Material material)
+            => has && material != null && ReferenceEquals(prevMaterial, material) && prevRadius == radius
+               && prevOffset.x == offset.x && prevOffset.y == offset.y && prevFill == fill;
+
+        // CircleRegion.UpdateProperties only rewrites the child transform scale/offset and one
+        // material float from Radius, Offset and FillProgress. CastIndicatorManager and the
+        // region's own Update both call it every frame while the indicator is on screen, yet
+        // those inputs move only when the drawn range actually changes. While they are unchanged
+        // the rewrite would store the same values again, so skip it. The renderer's material
+        // instance is compared as well, so a replaced material always gets its float set again.
+        // The prefix only reads the inputs and prepares the snapshot candidate; committing it
+        // into the per-region record is the postfix's job, because Harmony does not run
+        // postfixes when the original threw: a body interrupted mid-write leaves the previous
+        // snapshot in place, so the next frame retries the body exactly as without this patch.
+        // Every path that hands the region to the body — snapshot miss, null material, or the
+        // patch being off — drops the record's confirmation first, so a frame the body may have
+        // interrupted can never be mistaken for already-applied on a later frame either.
+        private static bool Prefix(DTT.AreaOfEffectRegions.CircleRegion __instance, ref CircleInputs __state)
+        {
+            __state = null;
+            if (_disabled || !NativePerfOptions.CastIndicatorCircle)
+            {
+                // While the patch is off the body runs untracked, so the transform may no longer
+                // match the confirmed snapshot once the patch comes back.
+                ForgetConfirmed(__instance);
+                return true;
+            }
+            try
+            {
+                Material material = _renderer(__instance).sharedMaterial;
+                // Keep a null material on the native path, exactly as without this patch, but
+                // drop the confirmation: the body runs untracked through here too, and may
+                // throw partway (null SetFloat) leaving writes the snapshot must not cover.
+                if (material == null)
+                {
+                    ForgetConfirmed(__instance);
+                    return true;
+                }
+                var inputs = TrackedInputs.GetValue(__instance, CreateInputs);
+                float radius = __instance.Radius;
+                Vector2 offset = __instance.Offset;
+                float fill = _fillProgressField(__instance);
+                if (ShouldSkip(inputs.Has, inputs.Radius, inputs.Offset, inputs.Fill, inputs.Material, radius, offset, fill, material))
+                    return false;
+                // The body is about to run and Harmony will not call the postfix if it throws,
+                // so un-confirm now; only a clean run re-confirms through the postfix.
+                inputs.Has = false;
+                CircleInputs pending = _pending ?? new CircleInputs();
+                _pending = null;
+                pending.Has = true;
+                pending.Material = material;
+                pending.Radius = radius;
+                pending.Offset = offset;
+                pending.Fill = fill;
+                __state = pending;
+            }
+            catch (Exception ex)
+            {
+                _disabled = true;
+                NativePerfPatch.Warn(ref _warned, "cast indicator circle", ex.Message);
+                __state = null;
+            }
+            return true;
+        }
+
+        // Commits the snapshot candidate the prefix prepared, only on the frames where the body
+        // ran to completion — this is the sole place a dropped confirmation comes back. On
+        // skipped frames the postfix still runs but receives a null state (the snapshot already
+        // matches the inputs, so there is nothing to record).
+        private static void Postfix(DTT.AreaOfEffectRegions.CircleRegion __instance, CircleInputs __state)
+        {
+            if (__state == null) return;
+            try
+            {
+                var inputs = TrackedInputs.GetValue(__instance, CreateInputs);
+                inputs.Has = __state.Has;
+                inputs.Material = __state.Material;
+                inputs.Radius = __state.Radius;
+                inputs.Offset = __state.Offset;
+                inputs.Fill = __state.Fill;
+                _pending = __state;
+            }
+            catch (Exception ex)
+            {
+                _disabled = true;
+                NativePerfPatch.Warn(ref _warned, "cast indicator circle", ex.Message);
+            }
+        }
+
+        // The postfix never runs when the body threw, so without this hook the candidate the
+        // prefix took from the pool slot would be dropped and every throwing frame would allocate
+        // a replacement. The finalizer is the one patch method Harmony calls on that path too;
+        // it hands the candidate back for the next frame to reuse. It returns void, so the
+        // body's exception keeps propagating untouched — only the buffer is recycled — and on a
+        // clean frame the postfix has already returned the candidate, leaving the slot non-null
+        // and this a no-op.
+        private static void Finalizer(CircleInputs __state)
+        {
+            if (__state == null || _pending != null) return;
+            _pending = __state;
+        }
+
+        // Drops a record's confirmation for a region handed back to the body untracked. TryGetValue
+        // allocates nothing and creates no record for regions that were never tracked.
+        private static void ForgetConfirmed(DTT.AreaOfEffectRegions.CircleRegion region)
+        {
+            if (TrackedInputs.TryGetValue(region, out CircleInputs inputs)) inputs.Has = false;
+        }
+    }
+
+    [HarmonyPatch]
+    internal static class NativeCameraZoomRotationPerf
+    {
+        private static MethodBase _target;
+        private static bool _warned;
+
+        private static bool Prepare()
+        {
+            _target = NativePerfPatch.Find(typeof(CameraManager), "GetFollowOffsetTarget", ref _warned);
+            return _target != null;
+        }
+
+        private static MethodBase TargetMethod() => _target;
+
+        private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+        {
+            var code = new List<CodeInstruction>(instructions);
+            var euler = AccessTools.Method(typeof(Quaternion), nameof(Quaternion.Euler),
+                new[] { typeof(float), typeof(float), typeof(float) });
+            var angle = AccessTools.PropertyGetter(typeof(CameraManager), "entityCamAngle");
+            int site = -1, calls = 0;
+            for (int i = 0; i < code.Count; i++)
+            {
+                if (!code[i].Calls(euler)) continue;
+                calls++;
+                site = i;
+            }
+            // The zoom lerp, modifier scan and spectating branch stay native. Only the rebuild of
+            // Euler(0, entityCamAngle, 0) from the angle property is replaced by a read of the
+            // rotation the manager itself keeps.
+            if (calls != 1 || site < 4
+                || code[site - 4].opcode != OpCodes.Ldc_R4 || !(code[site - 4].operand is float low) || low != 0f
+                || code[site - 3].opcode != OpCodes.Ldarg_0
+                || !code[site - 2].Calls(angle)
+                || code[site - 1].opcode != OpCodes.Ldc_R4 || !(code[site - 1].operand is float high) || high != 0f)
+            {
+                NativePerfPatch.Warn(ref _warned, "camera zoom rotation", "native euler callsite changed or already patched");
+                return code;
+            }
+            code[site - 4].opcode = OpCodes.Nop;
+            code[site - 4].operand = null;
+            code[site - 2].opcode = OpCodes.Call;
+            code[site - 2].operand = AccessTools.Method(typeof(NativeCameraZoomRotationPerf), nameof(FollowRotation));
+            code[site - 1].opcode = OpCodes.Nop;
+            code[site - 1].operand = null;
+            code[site].opcode = OpCodes.Nop;
+            code[site].operand = null;
+            return code;
+        }
+
+        // The entityCamAngle setter stores exactly Euler(0, entityCamAngle, 0) into the public
+        // entityCamAngleRotation field, and Euler is a pure call, so after any set the cached field
+        // is bit-identical to the rebuilt quaternion. Nothing outside CameraManager writes either
+        // the backing field or the cached rotation, and neither is serialized (the backing field is
+        // private without SerializeField; the cached rotation is NonSerialized), so no scene,
+        // prefab or deserialization can set the angle without the setter either. An angle of
+        // exactly zero keeps the native expression so the never-set initial frames (identity
+        // initializer) stay bit-identical.
+        private static Quaternion FollowRotation(CameraManager camera)
+        {
+            if (!NativePerfOptions.CameraZoomRotation) return Quaternion.Euler(0f, camera.entityCamAngle, 0f);
+            return camera.entityCamAngle == 0f ? Quaternion.Euler(0f, 0f, 0f) : camera.entityCamAngleRotation;
         }
     }
 }

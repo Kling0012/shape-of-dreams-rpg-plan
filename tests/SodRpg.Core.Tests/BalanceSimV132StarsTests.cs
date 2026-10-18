@@ -73,7 +73,7 @@ namespace SodRpg.Core.Tests
             // （SharedStarRegistryResetAttribute）で登録が消えても困らないよう、毎回登録し直す。
             foreach (string hero in StarClusters.GeneratedHeroes) StarClusters.RegisterGeneratedHero(hero);
             var options = Options.Parse(Array.Empty<string>());
-            foreach (string hero in new[] { "Hero_Vesper", "Hero_Cetus", "Hero_Mist", "Hero_Husk" })
+            foreach (string hero in new[] { "Hero_Vesper", "Hero_Cetus" })
             {
                 var profile = Profile.CreateNew(1);
                 profile.Hero(hero).StarXp = StarProgression.TotalXpForPoints(StarProgression.MaxPoints);

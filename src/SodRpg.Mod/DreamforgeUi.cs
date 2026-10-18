@@ -492,7 +492,7 @@ namespace SodRpg.Mod
             string xp = p.DreamLevel >= Content.MaxDreamLevel ? "MAX" : (p.DreamXp * 100 / Math.Max(1, need)) + "%";
             sb.Append(Loc.T("<b>Dreamforge</b>  夢のレベル ", "<b>Dreamforge</b>  Dream Lv ")).Append(p.DreamLevel).Append("  <color=#c4c4dc>(").Append(xp).Append(")</color>");
             sb.Append("\n<size=13>").Append(Loc.T("夢の深さ ", "Dream depth ")).Append(_s.ChosenDreamDepth)
-                .Append(run?.Infinity != null ? Loc.T("・共通の夢の圧 ", " · Shared pressure ")
+                .Append(_s.PersonalEnemyWaypointsActive ? Loc.T("・共通の夢の圧 ", " · Shared pressure ")
                     : Loc.T("・夢の圧 ", " · Pressure "));
             if (_s.HostConfirmed)
                 sb.Append("HP×").Append(_s.PressureHealthMultiplier.ToString("0.00"))
@@ -674,14 +674,15 @@ namespace SodRpg.Mod
         }
 
         private (int Count, int Shards, int Tuning, int Heat, int Bonus, int Free, double NightmareMult, bool Japanese,
-            float PressureHealth, float NightmarePressureHealth, float NightmareGear, Waypoint Active, Waypoint Pending, bool Infinity) _secureTextKey;
+            float PressureHealth, float NightmarePressureHealth, float NightmareGear, Waypoint Active, Waypoint Pending, bool Infinity, bool PersonalWaypoints) _secureTextKey;
         private string _secureLootText, _secureBonusText, _secureOverflowText, _secureDelveText, _secureNightmareText, _secureExtraText;
 
         private void CacheSecureText(RunState run, int bonus, int free, double nmMult)
         {
             var pendingWaypoint = run.WaypointChosen ? run.PendingWaypoint : Waypoint.None;
+            bool personalWaypoints = _s.PersonalEnemyWaypointsActive;
             var key = (run.Satchel.Count, run.SatchelShards, run.SatchelTuning, run.Heat, bonus, free, nmMult, Loc.Japanese,
-                _s.PressureHealthMultiplier, _s.NightmarePressureHealthMultiplier, _s.NightmareGearMultiplier, run.ActiveWaypoint, pendingWaypoint, run.Infinity != null);
+                _s.PressureHealthMultiplier, _s.NightmarePressureHealthMultiplier, _s.NightmareGearMultiplier, run.ActiveWaypoint, pendingWaypoint, run.Infinity != null, personalWaypoints);
             if (_secureLootText != null && _secureTextKey.Equals(key)) return;
             _secureTextKey = key;
             int next = Math.Min(Content.MaxHeat, run.Heat + 1);
@@ -716,7 +717,7 @@ namespace SodRpg.Mod
             bool gearKnown = _s.NightmareGearMultiplier >= 1f;
             double gearMult = gearKnown ? _s.NightmareGearMultiplier : 1.0;
             double chanceMult = nmMult * pressureMult * gearMult;
-            string ownershipNote = run.Infinity != null ? Loc.T(
+            string ownershipNote = personalWaypoints ? Loc.T(
                 "協力プレイでは以下の道標効果と確率は自分の担当敵が対象です。担当のない敵には道標は適用されません。\n",
                 "In co-op, these waypoint effects and chances apply to enemies assigned to you. Unassigned enemies receive no waypoint effects.\n") : "";
             if (waypoint.AllNightmares)
@@ -2615,7 +2616,7 @@ namespace SodRpg.Mod
                     PairDefinition = pair,
                     Region = t?.Cluster?.Region.Kind,
                 };
-                _starNodes[i].Name.text = t == null ? Loc.T("始まり", "Start") : pair != null ? pair.Name.ToString() : t.Name.ToString();
+                _starNodes[i].Name.text = t == null ? Loc.T("始まり", "Start") : t.DisplayName.ToString();
                 _starNodes[i].EffectSummary = t == null ? "" : t.IsChoice ? StarMapPresentation.EffectSummary(t)
                     : StarMapPresentation.EffectSummary(_starNodes[i].Description);
                 if (t != null && t.IsKeystone) keystones.Add(i);
@@ -2789,7 +2790,7 @@ namespace SodRpg.Mod
             string state = n.Rank >= t.MaxRank ? Loc.T("取得済み（最大段）", "Acquired (maximum rank)")
                 : n.Available ? Loc.T("取得可能", "Available") : Loc.T("条件不足", "Requirements missing");
             var pair = n.PairDefinition;
-            string title = pair == null ? t.Name.ToString() : pair.Name.ToString();
+            string title = t.DisplayName.ToString();
             string description = n.DisplayBody;
             if (pair != null)
             {

@@ -18,6 +18,8 @@ namespace SodRpg.Mod
         private bool _hostAuthorityNeedsRenewal;
         private string _encodedRunChoices;
         private float _nextChoicesSync;
+        private Zone _pureWhiteZone;
+        private bool _pureWhiteZoneIsPrimus;
         private sealed class CurrentChoicePeer
         {
             internal Actor Actor;
@@ -73,7 +75,17 @@ namespace SodRpg.Mod
             && NetworkedManagerBase<GameManager>.softInstance?.runId != _pendingResultRunId
                 ? _runChoiceProgress.ZoneIndex : _zone != null ? _zone.currentZoneIndex : -1;
         private bool InPureWhiteRoute => Profile.Run?.Infinity == null
-            && _zone != null && _zone.currentZone != null && _zone.currentZone.name == "Zone_Primus";
+            && _zone != null && IsPureWhiteZone(_zone.currentZone);
+        // currentZone.name は Unity 側の呼び出しで毎回新しい文字列を確保する。名前は Zone ごとに不変なので、
+        // Zone が入れ替わったときだけ名前を調べ、同じ Zone では結果を使い回す。キャッシュは強参照を保持するため、
+        // 破棄済み Zone のラッパーと別の Zone が参照同一になって誤ることもない。
+        private bool IsPureWhiteZone(Zone zone)
+        {
+            if (zone == null) return false;
+            if (ReferenceEquals(zone, _pureWhiteZone)) return _pureWhiteZoneIsPrimus;
+            _pureWhiteZone = zone;
+            return _pureWhiteZoneIsPrimus = zone.name == "Zone_Primus";
+        }
 
         internal static void OnPureWhiteBossDefeated()
         {

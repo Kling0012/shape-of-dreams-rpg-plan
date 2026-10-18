@@ -21,7 +21,17 @@ namespace Mirror
 }
 namespace UnityEngine
 {
-    public struct Quaternion { }
+    public struct Quaternion
+    {
+        public float x, y, z, w;
+        public Quaternion(float x, float y, float z, float w) { this.x = x; this.y = y; this.z = z; this.w = w; }
+        // 本体と同じ Unity の近似等価（内積が 0.999999f を超えれば等しい）。
+        public static bool operator ==(Quaternion lhs, Quaternion rhs)
+            => lhs.x * rhs.x + lhs.y * rhs.y + lhs.z * rhs.z + lhs.w * rhs.w > 0.999999f;
+        public static bool operator !=(Quaternion lhs, Quaternion rhs) => !(lhs == rhs);
+        public override bool Equals(object other) => other is Quaternion value && this == value;
+        public override int GetHashCode() => (x.GetHashCode() ^ (y.GetHashCode() << 2)) ^ (z.GetHashCode() >> 2) ^ (w.GetHashCode() << 4);
+    }
     public enum ParticleSystemStopBehavior { None, StopEmitting, StopEmittingAndClear }
     public sealed class ParticleSystem : Component
     {

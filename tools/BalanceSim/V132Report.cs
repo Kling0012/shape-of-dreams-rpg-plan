@@ -22,7 +22,7 @@ internal static class V132Report
         sb.AppendLine("- 巡る富の効果は、星図なし／全取得（撃破ゴールド+12%・エリート/ボス+25%・夢のダスト+22%（潜行中+32%）＝実装どおりの合計）の2構成で、`Rules.AddTalentRank` で実際に星を買った `Build` を通して測ります。金額・丸めは本体と同じ形（`CurrencyStars.RandomRound`＝本体の `DewMath.RandomRoundToInt`）。");
         sb.AppendLine("- 撃破ゴールドは本体の `GameManager.GetKillGoldAmount` の式（ゾーン倍率 (1+0.4x)×(1+0.20x)、種別ごとの基礎値、±10%のぶれ、確率丸め）で落とし、各人の受け取りは `Pickup_BaseGoldOrb.GrantGold` と同じく人数割り→プロファイル倍率→`monsterKillGoldMultiplier`（巡る富の+12%を含む）→確率丸め。エリート（MiniBoss/Boss）の上乗せは `HostAuthority.GrantEliteKillGold` と同じ式です。種別ごとの基礎額（Lesser 1・Normal 2・MiniBoss 10・Boss 25）は本体アセットの値が読めないための仮定で、変化率にはほぼ効きません。");
         sb.AppendLine("- 夢のダストは、部屋ごとに 5×4 回・ボスごとに 10×4 回を自分で拾う仮定（本体の星の説明の規模感：1ゾーン+100・ボス+40）。上乗せは `Pickup_DreamDust.onGiveDreamDust` 経由（`CurrencyStars.DreamDustBonusForPickup`）、潜行中かは `CurrencyStars.IsDelving` の実式です。MODの取引（未確保のコモン・アンコモンを確保地点で `TradeAuthority` + `Economy.SalvageDust` でダストに換える遊び方）の分は星が掛からないので別掲します。ダスト→欠片は `Rules.ConvertDust`（100→10、1取引10束まで）で実際に換えます。");
-        sb.AppendLine("- 星経験は `StarProgression`（撃破・確保・踏破）の実経路の増減。遠征の鍛錬は、`RunGrowthLedger.Gain`（本体のホストと同じ集計）に模型化した出来事を流し、上限への到達はゾーンごとのスタック数で判断します。被ダメージ・障壁の吸収は、夢の深度は `DreamDepth.DamageMultiplier`（+8%/深度）、潜行は `Build.DamageTakenPerDelvePct`（+6%/深度）の実係数を掛けた「1戦闘部屋で最大HPの25%／20%を失う・吸収する」仮定、ボス戦はその2倍。パリィは部屋2回・ボス6回、会心の基本攻撃でのとどめは撃破の 12.5%（基本攻撃50%×会心25%）の仮定です（ボスは数えません）。");
+        sb.AppendLine("- 星経験は `StarProgression`（撃破・確保・踏破）の実経路の増減。遠征の鍛錬は、`RunGrowthLedger.Gain`（本体のホストと同じ集計）に模型化した出来事を流し、上限への到達はゾーンごとのスタック数で判断します。被ダメージ・障壁の吸収は、夢の深度は `DreamDepth.DamageMultiplier`（+8%/深度）、潜行は `Build.DamageTakenPerDelvePct`（+6%/深度）の実係数を掛けた「1戦闘部屋で最大HPの25%／20%を失う・吸収する」仮定で、ボス戦はその2倍です。対象はヴェスパーとケトゥスです。");
         sb.AppendLine("- 通貨の乱数は構成（星のあり／なし）によらず同じ本数を引きますが、あり構成は欠片が増えて遠征間の強化の回数が変わるため、依頼の計画を通じてわずかにずれます（観測されるぶれはゴールド・ダストとも±2%弱）。遠征の鍛錬の表は決定的な平均値（乱数なし）です。");
         if (V132Simulation.DirectWrites > 0)
             sb.AppendLine($"- 補足：星図への割り当ては `Rules.AddTalentRank`（コアの割り当て検証つき）で行いましたが、記憶にスコープされた選択肢の星など、装備のないこのシミュレーターでは「効果が出る購入」として認められない経路の星 {V132Simulation.DirectWrites} 個は、コアのテスト（`AuthoredStarContractTests.AllocatePath`）と同じ直接割り当てで足しました。`Build.Compute`（効果の集計）と `RunGrowthLedger`（スタック）は常に実経路です。");
@@ -117,9 +117,9 @@ internal static class V132Report
     /// <summary>感度分析の条件（既定・守り重視・攻め重視）。Label=行ラベル、残りは模型の仮定（被ダメージ%・吸収%・パリィ回数・会心どめ割合）。</summary>
     public static readonly (string Label, double Damage, double Shield, double Parries, double CritShare)[] SensitivityScenarios =
     {
-        ("守り重視（被ダメージ15%・吸収12%・パリィ1回・会心どめ8%）", 15, 12, 1, 0.08),
-        ("既定（25%・20%・2回・12.5%）", 25, 20, 2, 0.125),
-        ("攻め重視（35%・28%・3回・20%）", 35, 28, 3, 0.20),
+        ("守り重視（被ダメージ15%・吸収12%）", 15, 12, 1, 0.08),
+        ("既定（被ダメージ25%・吸収20%）", 25, 20, 2, 0.125),
+        ("攻め重視（被ダメージ35%・吸収28%）", 35, 28, 3, 0.20),
     };
 
     private static void RenderEffectTotals(StringBuilder sb, IReadOnlyList<GrowthResult> growth)

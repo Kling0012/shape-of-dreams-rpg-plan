@@ -22,7 +22,7 @@ concurrency:
 
 jobs:
   generate:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, lab]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v4

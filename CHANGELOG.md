@@ -10,6 +10,74 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v3.8.1 — Performance tweaks（2026-10-18）
+
+動作を軽くするための細かな調整を行いました。 / Minor adjustments to reduce processing load.
+
+### 更新前に確認 / Before updating
+
+- 協力プレイでは、参加者全員がこのバージョンに更新してください。 / Everyone in co-op should update to this version.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 調整 / Adjustments
+
+- 照準円の表示、キャラクターの表示、純白の入口の判定で、毎フレームの不要な処理を省き、動作を軽くしました。ゲームの動きや見た目は変わりません。 / Reduced unnecessary per-frame work for cast indicator circles, character display, and the Pure White entrance check. Gameplay and visuals are unchanged.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
+## v3.8.0 — 細かな調整と不具合の修正 / Minor adjustments and a fix（2026-10-18）
+
+細かな調整と、不具合の修正を行いました。 / Minor adjustments and a bug fix.
+
+### 更新前に確認 / Before updating
+
+- 協力プレイでは、参加者全員がこのバージョンに更新してください。 / Everyone in co-op should update to this version.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- 協力プレイなどで、跳弾などの弾がまとめて当たる場面で、命中の時刻が本来と少しずれることがあった問題を直しました。 / Fixed hit timing sometimes drifting slightly when many projectiles such as ricochets landed together.
+
+### 調整 / Adjustments
+
+- 細かな調整を行いました。 / Minor adjustments.
+
+---
+
+## v3.7.7 — Bridge star names now match the star map（2026-10-18）
+
+### 不具合の修正 / Bug fixes
+- 橋の星がナビゲーション、星の参照文、払い戻し画面、割り当てエラー、Wikiで星図と異なる名前になる問題を直しました。 / Fixed bridge stars showing different names from the star map in navigation, star references, refund screens, allocation errors, and the wiki.
+
+---
+
+## v3.7.6 — 細かな調整 / Minor adjustments（2026-10-18）
+
+細かな調整を行い、協力プレイ用の表示の問題を1つ直しました。 / Minor adjustments, plus one fix for a co-op display issue.
+
+### 更新前に確認 / Before updating
+
+- 協力プレイでは、参加者全員がこのバージョンに更新してください。 / Everyone in co-op should update to this version.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 修正 / Fixes
+
+- インフィニティを1人で遊んでいるときも、協力プレイ用の共有圧と担当の敵の注記が出ていた問題を直しました。2人以上が接続しているときだけ出ます。 / Fixed the co-op shared pressure and assigned-enemy notes showing in solo Infinity. They now appear only when two or more players are connected.
+
+---
+
+## v3.7.5 — Remove unofferable relics from a trade in one click, plus cooking and mod-loading fixes（2026-10-18）
+
+### 新機能 / New features
+- 交換画面で、提示できなくなった遺物を警告横のボタンからまとめて外せるようにしました。提示中の欠片と調律石の数は保ちます。 / Added a button beside the trade warning to remove all relics that can no longer be offered while preserving the offered shard and tuning amounts.
+
+---
+
 ## v3.7.4 — Trade tab relic description fix（2026-10-18）
 
 ### 不具合の修正 / Bug fixes

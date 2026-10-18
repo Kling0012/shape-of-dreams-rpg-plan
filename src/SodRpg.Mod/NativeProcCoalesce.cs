@@ -8,7 +8,7 @@ using UnityEngine;
 
 namespace SodRpg.Mod
 {
-    // 第3段: 同じフレーム・同じ生成元・同じ対象へ向かう同種の反応弾がしきい値を超えたとき、
+    // 第3段: 同じフレーム・同じ生成元・同じ出発位置・同じ対象へ向かう同種の反応弾がしきい値を超えたとき、
     // 実体を1本にまとめる。命中時にまとめた分のダメージ通知を1件ずつ行うので、
     // 与えるダメージの合計、命中時効果の抽選と発動回数、状態異常の付与はまとめ前と同じである。
     // まとめはホスト側だけで行い、まとめ側の1本は本体の通常の同期でゲストへ届く。
@@ -32,13 +32,19 @@ namespace SodRpg.Mod
         {
             private readonly Type _type;
             private readonly int _creator, _source, _caster, _target;
-            internal Key(Type type, int creator, int source, int caster, int target)
-            { _type = type; _creator = creator; _source = source; _caster = caster; _target = target; }
+            private readonly int _startX, _startY, _startZ;
+            internal Key(Type type, int creator, int source, int caster, int target, int startX, int startY, int startZ)
+            {
+                _type = type; _creator = creator; _source = source; _caster = caster; _target = target;
+                _startX = startX; _startY = startY; _startZ = startZ;
+            }
             public bool Equals(Key other) => _type == other._type && _creator == other._creator
-                && _source == other._source && _caster == other._caster && _target == other._target;
+                && _source == other._source && _caster == other._caster && _target == other._target
+                && _startX == other._startX && _startY == other._startY && _startZ == other._startZ;
             public override bool Equals(object obj) => obj is Key other && Equals(other);
             public override int GetHashCode()
-                => unchecked(((_creator * 397 ^ _source) * 397 ^ _caster) * 397 ^ _target ^ RuntimeHelpers.GetHashCode(_type));
+                => unchecked(((((((_creator * 397 ^ _source) * 397 ^ _caster) * 397 ^ _target)
+                    * 397 ^ _startX) * 397 ^ _startY) * 397 ^ _startZ) ^ RuntimeHelpers.GetHashCode(_type));
         }
 
         private static readonly Dictionary<Key, int> Counts = new Dictionary<Key, int>(32);
@@ -78,7 +84,8 @@ namespace SodRpg.Mod
             try { ReadyTypes.Remove(type); } catch { }
         }
 
-        internal static Role Offer(Actor creator, Actor source, CastInfo info, Type type, Delegate repeatApply, out Group group)
+        internal static Role Offer(Actor creator, Actor source, CastInfo info, Type type, Vector3? start,
+            Delegate repeatApply, out Group group)
         {
             group = null;
             try
@@ -86,6 +93,12 @@ namespace SodRpg.Mod
                 if (!NativePerfOptions.ProcCoalesce || !NetworkServer.active || !ReadyTypes.Contains(type)
                     || creator == null || info == null || info.caster == null || info.target == null)
                     return Role.Individual;
+                if (!start.HasValue || !TryQuantize(start.Value.x, out int startX)
+                    || !TryQuantize(start.Value.y, out int startY) || !TryQuantize(start.Value.z, out int startZ))
+                {
+                    WarnOnce("start position unavailable; individual creation retained.");
+                    return Role.Individual;
+                }
                 if (_frame != Time.frameCount)
                 {
                     Counts.Clear();
@@ -93,7 +106,7 @@ namespace SodRpg.Mod
                     _frame = Time.frameCount;
                 }
                 var key = new Key(type, creator.GetInstanceID(), source == null ? 0 : source.GetInstanceID(),
-                    info.caster.GetInstanceID(), info.target.GetInstanceID());
+                    info.caster.GetInstanceID(), info.target.GetInstanceID(), startX, startY, startZ);
                 // しきい値までは数えるだけにして、普段の経路の確保を増やさない。
                 Counts.TryGetValue(key, out int count);
                 count++;
@@ -126,6 +139,16 @@ namespace SodRpg.Mod
                 WarnOnce("coalescing unavailable; individual creation retained: " + ex.Message);
                 return Role.Individual;
             }
+        }
+
+        // キーだけを1cm単位に丸める。実体に渡す開始位置は変えない。
+        private static bool TryQuantize(float coordinate, out int quantized)
+        {
+            quantized = 0;
+            double rounded = Math.Round((double)coordinate * 100d);
+            if (double.IsNaN(rounded) || rounded < int.MinValue || rounded > int.MaxValue) return false;
+            quantized = (int)rounded;
+            return true;
         }
 
         internal static Action<T> Wrap<T>(Group group, Action<T> beforePrepare) where T : AbilityInstance
