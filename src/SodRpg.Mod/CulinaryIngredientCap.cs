@@ -56,9 +56,8 @@ namespace SodRpg.Mod
                 var remove = Require(typeof(StackedStatusEffect), "RemoveStack", typeof(int));
                 var count = Require(cookingPot, "GetIngredientCount", typeof(Hero));
                 var consume = Require(cookingPot, "ConsumeIngredients", typeof(Hero));
-                // Each installation needs its own owner: loader IDs and even MVIDs can be
-                // shared by live MOD copies. Stop/rollback must unpatch only this installation.
-                _harmony = new Harmony(harmony.Id + ".culinaryIngredientCap." + Guid.NewGuid().ToString("N"));
+                // A separate owner makes rollback/Stop unable to remove unrelated MOD hooks.
+                _harmony = new Harmony(harmony.Id + ".culinaryIngredientCap");
                 Patch(create, nameof(BeforeMutation));
                 Patch(set, nameof(BeforeMutation));
                 Patch(add, nameof(BeforeAdd));
@@ -153,14 +152,13 @@ namespace SodRpg.Mod
             TryCapacity(__instance, out _);
         }
 
-        private static void BeforeAdd(StackedStatusEffect __instance, ref int __0)
+        private static void BeforeAdd(StackedStatusEffect __instance, ref int value)
         {
-            if (!TryCapacity(__instance, out _) || __0 < 0) return;
-            // Bind the first native argument by position, independent of its parameter name.
+            if (!TryCapacity(__instance, out _) || value < 0) return;
             // Bound only the positive operand; run native AddStack so its timer, negative
             // warning, clamp and Network_stack setter retain their original behavior.
-            if ((long)__instance.stack + __0 > int.MaxValue)
-                __0 = int.MaxValue - __instance.stack;
+            if ((long)__instance.stack + value > int.MaxValue)
+                value = int.MaxValue - __instance.stack;
         }
 
         private static StackedStatusEffect Ingredients(Hero hero)
@@ -169,11 +167,11 @@ namespace SodRpg.Mod
             return hero.Status.GetStatusEffect(_ingredientType) as StackedStatusEffect;
         }
 
-        private static void AfterIngredientCount(Hero __0, ref int __result)
+        private static void AfterIngredientCount(Hero hero, ref int __result)
         {
             try
             {
-                var effect = Ingredients(__0);
+                var effect = Ingredients(hero);
                 if (TryCapacity(effect, out var cookingBatch))
                     __result = Math.Min(__result, cookingBatch);
                 // Native OnUse transmits this bounded count to the client UI; native Apply
@@ -182,15 +180,14 @@ namespace SodRpg.Mod
             catch (Exception ex) { Disable(ex); }
         }
 
-        private static bool BeforeConsumeIngredients(Hero __0)
+        private static bool BeforeConsumeIngredients(Hero hero)
         {
             try
             {
-                var effect = Ingredients(__0);
+                var effect = Ingredients(hero);
                 if (!TryCapacity(effect, out var cookingBatch)) return true;
                 effect.RemoveStack(Math.Min(Math.Max(0, effect.stack), cookingBatch));
-                // Native ConsumeIngredients only calls SetStack(0); rewards and FX run in
-                // Apply before this method. Consume the displayed batch and preserve the rest.
+                // Match the displayed/rewarded batch, preserving the remaining inventory.
                 return false;
             }
             catch (Exception ex)

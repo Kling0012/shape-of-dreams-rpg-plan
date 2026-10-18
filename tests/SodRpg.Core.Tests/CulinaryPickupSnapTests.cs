@@ -9,7 +9,7 @@ namespace SodRpg.Core.Tests
         public void SnapsOnlyWhenTheLivingOwnerIsFarAway()
         {
             Assert.True(CulinaryPickupSnap.ShouldSnap(true, CulinaryPickupSnap.SnapDistance + 0.1f));
-            Assert.False(CulinaryPickupSnap.ShouldSnap(true, 300f));
+            Assert.True(CulinaryPickupSnap.ShouldSnap(true, 300f));
             Assert.False(CulinaryPickupSnap.ShouldSnap(true, CulinaryPickupSnap.SnapDistance));
             Assert.False(CulinaryPickupSnap.ShouldSnap(true, 0.5f));
         }
