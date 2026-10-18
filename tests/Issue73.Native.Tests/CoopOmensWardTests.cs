@@ -288,6 +288,111 @@ namespace Issue73.Native.Tests
             Assert.Equal(0f, session.CoopResonanceRemaining(1), 3);
         }
 
+        [Fact]
+        public void After_the_last_ward_falls_no_idle_resend_goes_out_but_a_change_still_sends()
+        {
+            string runId = CoopRunId(hitRoom0: true, hitRoom1: false);
+            var session = HostSession(runId, out var actor);
+            var hero1 = new Hero { netId = 3 };
+            var hero2 = new Hero { netId = 4 };
+            Human(31, hero1);
+            Human(32, hero2);
+            var zone = Zone(CombatRoom());
+            var host = OmenHost(session, actor, zone, hero1, hero2);
+            HostAuthority.NativeInstance = host;
+            Call(host, "OnRoomOmenLoaded", new EventInfoLoadRoom());
+            Time.time = 100f;
+            var ward = new Monster { netId = 21 };
+            SpawnMonster(host, ward, 10, maxHealth: 500);
+            // 観測用の受信者: gamePlayers に入れないので人間数は2人のまま。
+            var peer = new DewPlayer { netId = 33 };
+            ((HashSet<DewPlayer>)Get(host, "_roomOmenPeers")).Add(peer);
+            Call(host, "TickCoopOmen");
+            Assert.True(CoopOmens.IsSharedObjective(ward));
+
+            // 最後の盾が倒れる: 枠のretireで内容が変わるため、このティックは1通送る。
+            ward.isActive = false;
+            Time.time = 100.5f;
+            Time.unscaledTime = 100.5f;
+            Call(host, "TickCoopOmen");
+            Assert.False(CoopOmens.IsSharedObjective(ward));
+            int sentWhenRetired = actor.Sent.Count;
+            float snapshotExpires = (float)Get(session, "_coopSnapshotExpires");
+
+            // 1秒を超えてティックを進めても、同じ内容の再送は起きない。
+            for (int i = 0; i < 7; i++)
+            {
+                Time.time += 0.25f;
+                Time.unscaledTime += 0.25f;
+                Call(host, "TickCoopOmen");
+            }
+            Assert.Equal(sentWhenRetired, actor.Sent.Count);
+            Assert.Equal(snapshotExpires, (float)Get(session, "_coopSnapshotExpires"));
+
+            // 内容が変わった（_coopSyncDirty が立った）ときは即座に送る。
+            Set(host, "_coopSyncDirty", true);
+            Time.time += 0.25f;
+            Time.unscaledTime += 0.25f;
+            Call(host, "TickCoopOmen");
+            Assert.Equal(sentWhenRetired + 1, actor.Sent.Count);
+            var resent = (DreamforgeRoomOmenMsg)actor.Sent[actor.Sent.Count - 1].Message;
+            Assert.Equal(1, resent.coopVersion);
+            Assert.All(new[] { resent.ward0, resent.ward1 }, netId => Assert.Equal(0u, netId));
+        }
+
+        [Fact]
+        public void Falling_to_one_human_clears_and_sends_once_with_unchanged_receiver_values()
+        {
+            string runId = CoopRunId(hitRoom0: true, hitRoom1: false);
+            var session = HostSession(runId, out var actor);
+            var hero1 = new Hero { netId = 3 };
+            var hero2 = new Hero { netId = 4 };
+            var p1 = Human(31, hero1);
+            Human(32, hero2);
+            var zone = Zone(CombatRoom());
+            var host = OmenHost(session, actor, zone, hero1, hero2);
+            HostAuthority.NativeInstance = host;
+            Set(session, "_zone", zone); // CoopWardId の表示条件（部屋と区域の一致）を満たす
+            Call(host, "OnRoomOmenLoaded", new EventInfoLoadRoom());
+            Time.time = 100f;
+            var ward = new Monster { netId = 21 };
+            SpawnMonster(host, ward, 10, maxHealth: 500);
+            var peer = new DewPlayer { netId = 33 };
+            ((HashSet<DewPlayer>)Get(host, "_roomOmenPeers")).Add(peer);
+            Call(host, "TickCoopOmen");
+            Assert.True(CoopOmens.IsSharedObjective(ward));
+            Assert.Equal(ward.netId, session.CoopWardId(0)); // 2人いる間は受け側に盾が見えている
+
+            // 相方が抜ける: 解除の1通だけを送り、以後のティック（旧実装では0.25秒ごと）は送らない。
+            DewPlayer.gamePlayers.Remove(p1);
+            int sentAtDeparture = actor.Sent.Count;
+            for (int i = 0; i < 8; i++)
+            {
+                Time.time += 0.25f;
+                Time.unscaledTime += 0.25f;
+                Call(host, "TickCoopOmen");
+            }
+            Assert.Equal(sentAtDeparture + 1, actor.Sent.Count);
+            Assert.Equal(0, (int)Get(host, "_coopWardLimit")); // ClearCoopOmen が0に戻す: ガードの根拠
+            Assert.False(CoopOmens.IsSharedObjective(ward));
+            var cleared = (DreamforgeRoomOmenMsg)actor.Sent[sentAtDeparture].Message;
+            Assert.Equal(0, cleared.coopVersion); // 盾欄なしの旧形式で「盾なし」を伝える
+
+            // 受け側の CoopWardId と CoopResonanceRemaining は、旧実装と同じ値になる。
+            Assert.Equal(0u, session.CoopWardId(0));
+            Assert.Equal(0u, session.CoopWardId(1));
+            Assert.Equal(0f, session.CoopResonanceRemaining(0), 3);
+            Assert.Equal(0f, session.CoopResonanceRemaining(1), 3);
+
+            // 旧実装の再送（同じ内容の毎ティック送信）を手動で重ねても、受け側の値は変わらない。
+            Call(host, "SendRoomOmen", new object[] { null });
+            Call(host, "SendRoomOmen", new object[] { null });
+            Assert.Equal(0u, session.CoopWardId(0));
+            Assert.Equal(0u, session.CoopWardId(1));
+            Assert.Equal(0f, session.CoopResonanceRemaining(0), 3);
+            Assert.Equal(0f, session.CoopResonanceRemaining(1), 3);
+        }
+
         private static float Hit(HostAuthority host, Entity target, Actor source)
         {
             var data = new DamageData { amount = 100f };
