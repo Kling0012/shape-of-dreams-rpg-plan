@@ -1,5 +1,5 @@
-[b]Fixes profile loading and recovery when the game cannot access save files.[/b]
-[b]ファイルにアクセスできないときのプロフィールの読み込みと復旧を直しました。[/b]
+[b]Long relic descriptions in the Trade tab now show an ellipsis, and you can hover to read the full text.[/b]
+[b]取引タブの遺物一覧で、行に収まらない説明に「…」を表示し、カーソルを合わせると全文を読めるようにしました。[/b]
 
 [h1]Dreamforge RPG[/h1]
 Turns every run into part of a long RPG journey: relics you keep, a risky "secure or delve" choice at every zone, a star map per Traveler, a forge, and long-term goals. Co-op ready.
