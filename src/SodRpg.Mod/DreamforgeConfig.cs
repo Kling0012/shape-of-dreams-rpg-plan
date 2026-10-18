@@ -147,6 +147,9 @@ namespace SodRpg.Mod
         [LabelText("Skip repeated default-cursor resets (software cursor off) / ソフトウェアカーソル無効中の同じ既定カーソルの再設定を省く")]
         public bool nativeCursorIdle = true;
 
+        [LabelText("Skip unchanged stats-recalc notifications (host) / 変わっていないステータス再計算の通知を省く（ホスト）")]
+        public bool nativeStatsCalcRpcIdle = true;
+
         [LabelText("Skip idle position-sync re-sends / 動いていない実体の位置同期の同じ再送を省く")]
         public bool nativePositionSyncIdle = true;
 

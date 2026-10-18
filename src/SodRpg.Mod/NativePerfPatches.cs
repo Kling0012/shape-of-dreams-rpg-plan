@@ -32,6 +32,7 @@ namespace SodRpg.Mod
             NativePerfOptions.CharacterModelDisplayBounds = config.nativeCharacterModelDisplayBounds;
             NativePerfOptions.KillTrackerCull = config.nativeKillTrackerCullThrottle;
             NativePerfOptions.CursorIdle = config.nativeCursorIdle;
+            NativePerfOptions.StatsCalcRpcIdle = config.nativeStatsCalcRpcIdle;
             NativePerfOptions.PositionSyncIdle = config.nativePositionSyncIdle;
         }
     }
@@ -56,6 +57,7 @@ namespace SodRpg.Mod
         internal static bool CharacterModelDisplayBounds = true;
         internal static bool KillTrackerCull = true;
         internal static bool CursorIdle = true;
+        internal static bool StatsCalcRpcIdle = true;
         internal static bool PositionSyncIdle = true;
     }
 
@@ -1757,6 +1759,209 @@ namespace SodRpg.Mod
         {
             if (__state && __runOriginal) _defaultCursorApplied = true;
         }
+    }
+
+    [HarmonyPatch]
+    internal static class NativeStatsCalcRpcPerf
+    {
+        // EntityStatus.CalculateStats ends with a weaver-generated empty-payload ClientRpc
+        // (RpcInvokeStatsCalculated) that fires once per recalculation on the host: one pooled
+        // writer, one SendRPCInternal, one Return — no data. Its only effect on clients is
+        // ClientEvent_OnStatsCalculated. The shipped game has exactly one subscriber
+        // (Se_GenericStealth, subscribed inside its `if (isServer)` block): it re-reads
+        // EntityStatus.isUndetectableByNonAllies — a SyncVar — and writes StatusEffect.showIcon
+        // only when the value differs. Remote clients never subscribe, so for them the RPC is
+        // received and does nothing at all.
+        //
+        // A recalculation that leaves every SyncVar untouched therefore delivers zero
+        // information: its notification would run an idempotent handler over unchanged state
+        // (host) or nothing (remote clients). syncVarDirtyBits is exactly Mirror's own
+        // "what changed" summary for every client-visible output of CalculateStats — bonusStats,
+        // finalStats, the ratio rewrites of currentHealth/currentMana, basicEffectMask, the
+        // status totals, the shield, the stealth flags and overridenAttack — so the gate reads
+        // the bits at method entry and again at the notification. Every value change through a
+        // weaver setter raises its bit, and bits are only cleared during network broadcasts,
+        // never inside the synchronous CalculateStats window — so when the entry bits are zero,
+        // a change made by this very call must still be visible in the exit bits. The gate
+        // therefore skips only when both readings are zero: nothing was left unsent by an
+        // earlier recalculation and nothing changed now. Any real change still notifies exactly
+        // as the native code does.
+        //
+        // Equal bits alone must NOT be the skip condition. The weaver's setter only ORs the
+        // dirty bit again when it is already set, so inside the sync window that follows a real
+        // change (bits stay set until the next broadcast) a second value change of the same
+        // SyncVar leaves the bit set identical while the value differs. The subscriber reads
+        // values, not bits, so such a rewrite must still notify. Whenever the entry bits are
+        // non-zero the gate conservatively sends — even for a recalculation that changed
+        // nothing, which only re-runs the idempotent handler; the extra sends last at most one
+        // syncInterval per real change, and the steady state of hundreds of changeless
+        // recalculations per second still skips. The notification has exactly one caller
+        // (validated below), so a pending baseline always belongs to the call that consumes it.
+        //
+        // Residual assumption, same class as the other unchanged-resend skips: a third-party
+        // client-side subscriber that does per-event side effects unrelated to entity state
+        // would see fewer events; the nativeStatsCalcRpcIdle option turns the skip off.
+        private sealed class Baseline
+        {
+            internal ulong Bits;
+            internal bool Pending;
+        }
+
+        private static readonly ConditionalWeakTable<EntityStatus, Baseline> Baselines =
+            new ConditionalWeakTable<EntityStatus, Baseline>();
+        private static readonly ConditionalWeakTable<EntityStatus, Baseline>.CreateValueCallback CreateBaseline =
+            _ => new Baseline();
+
+        private static Func<Mirror.NetworkBehaviour, ulong> _dirtyBits;
+        private static MethodBase _calc;
+        private static System.Reflection.MethodInfo _rpc;
+        private static bool _disabled;
+        private static bool _warned;
+
+        // Shared by both patch classes below so a rejected shape keeps the capture side and
+        // the skip side off together.
+        internal static bool SharedPrepare()
+        {
+            if (_rpc != null) return true;
+            try
+            {
+                _calc = NativePerfPatch.Find(typeof(EntityStatus), "CalculateStats", ref _warned);
+                if (_calc == null) return false;
+                _rpc = NativePerfPatch.Find(typeof(EntityStatus), "RpcInvokeStatsCalculated", ref _warned) as System.Reflection.MethodInfo;
+                if (_rpc == null) return false;
+                var getter = AccessTools.PropertyGetter(typeof(Mirror.NetworkBehaviour), "syncVarDirtyBits");
+                if (getter == null)
+                {
+                    WarnOnce("Mirror syncVarDirtyBits getter unavailable");
+                    return false;
+                }
+                _dirtyBits = (Func<Mirror.NetworkBehaviour, ulong>)Delegate.CreateDelegate(
+                    typeof(Func<Mirror.NetworkBehaviour, ulong>), getter);
+                if (!ValidateRpcBody(PatchProcessor.GetOriginalInstructions(_rpc))
+                    || !ValidateCalcBody(PatchProcessor.GetOriginalInstructions(_calc)))
+                    return false;
+                return true;
+            }
+            catch (Exception ex)
+            {
+                WarnOnce(ex.Message);
+                return false;
+            }
+        }
+
+        // The weaver's sender must stay a pure send — one pooled writer, one SendRPCInternal,
+        // one Return and nothing else callable — so skipping it can never skip side effects,
+        // and an empty payload means the network message itself carried no data.
+        internal static bool ValidateRpcBody(IList<CodeInstruction> code)
+        {
+            int gets = 0, sends = 0, returns = 0;
+            for (int i = 0; i < code.Count; i++)
+            {
+                if (!(code[i].operand is MethodBase method)
+                    || !(code[i].opcode == OpCodes.Call || code[i].opcode == OpCodes.Callvirt))
+                    continue;
+                if (method.Name == "Get" && Equals(method.DeclaringType?.FullName, "Mirror.NetworkWriterPool")) gets++;
+                else if (method.Name == "SendRPCInternal" && method.DeclaringType == typeof(Mirror.NetworkBehaviour)) sends++;
+                else if (method.Name == "Return" && Equals(method.DeclaringType?.FullName, "Mirror.NetworkWriterPool")) returns++;
+                else
+                {
+                    WarnOnce("native rpc sender gained a call: " + method.DeclaringType?.FullName + "::" + method.Name);
+                    return false;
+                }
+            }
+            if (gets == 1 && sends == 1 && returns == 1) return true;
+            WarnOnce("native rpc sender shape changed");
+            return false;
+        }
+
+        // Exactly one notification per recalculation, so the pending baseline maps 1:1 onto it.
+        internal static bool ValidateCalcBody(IList<CodeInstruction> code)
+        {
+            int calls = 0;
+            for (int i = 0; i < code.Count; i++)
+                if (code[i].Calls(_rpc)) calls++;
+            if (calls == 1) return true;
+            WarnOnce("native CalculateStats notification callsite changed");
+            return false;
+        }
+
+        private static bool Prepare() => SharedPrepare();
+
+        private static MethodBase TargetMethod() => _rpc;
+
+        private static bool Prefix(EntityStatus __instance)
+        {
+            if (_disabled || !NativePerfOptions.StatsCalcRpcIdle) return true;
+            try
+            {
+                if (!__instance.isServer || !Baselines.TryGetValue(__instance, out var baseline)
+                    || !baseline.Pending) return true;
+                baseline.Pending = false;
+                // Skip only when no unsent change existed at entry and none exists now. Bits
+                // already set at entry can hide a second value change of the same SyncVar (the
+                // weaver only ORs the bit again), so any pending dirt at entry must send.
+                if (baseline.Bits == 0UL && _dirtyBits(__instance) == 0UL) return false;
+            }
+            catch (Exception ex)
+            {
+                _disabled = true;
+                WarnOnce(ex.Message);
+            }
+            return true;
+        }
+
+        internal static void Capture(EntityStatus status)
+        {
+            if (_disabled || !NativePerfOptions.StatsCalcRpcIdle) return;
+            try
+            {
+                // CalculateStats is server-only; pure clients never reach the notification.
+                if (!status.isServer) return;
+                Baseline baseline = Baselines.GetValue(status, CreateBaseline);
+                baseline.Bits = _dirtyBits(status);
+                baseline.Pending = true;
+            }
+            catch (Exception ex)
+            {
+                _disabled = true;
+                WarnOnce(ex.Message);
+            }
+        }
+
+        private static void WarnOnce(string reason) => NativePerfPatch.Warn(ref _warned, "stats calc rpc", reason);
+    }
+
+    [HarmonyPatch]
+    internal static class NativeStatsCalcRpcBaseline
+    {
+        private static MethodBase _target;
+        private static bool _warned;
+
+        private static bool Prepare()
+        {
+            if (!NativeStatsCalcRpcPerf.SharedPrepare()) return false;
+            try
+            {
+                _target = AccessTools.DeclaredMethod(typeof(EntityStatus), "CalculateStats", Type.EmptyTypes);
+            }
+            catch (Exception ex)
+            {
+                NativePerfPatch.Warn(ref _warned, "stats calc rpc", ex.Message);
+                return false;
+            }
+            if (_target == null || _target.GetMethodBody() == null)
+            {
+                NativePerfPatch.Warn(ref _warned, "stats calc rpc", "native CalculateStats unavailable");
+                return false;
+            }
+            return true;
+        }
+
+        private static MethodBase TargetMethod() => _target;
+
+        // Runs synchronously at the top of every CalculateStats, so the notification at the
+        // end of the same call always compares against this call's own entry bits.
+        private static void Prefix(EntityStatus __instance) => NativeStatsCalcRpcPerf.Capture(__instance);
     }
 
     [HarmonyPatch]
