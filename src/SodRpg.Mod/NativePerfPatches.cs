@@ -1592,7 +1592,12 @@ namespace SodRpg.Mod
         {
             try
             {
-                _nested = typeof(EntityControl).GetNestedType("PositionSyncData", BindingFlags.NonPublic);
+                // Shipped Dew.Core r1.4.1.2 declares this `private struct PositionSyncData`
+                // (nested private; ilspycmd 2026-10-19). NonPublic alone would resolve it,
+                // but accept public too so a later visibility change cannot silently
+                // disable the patch through a null lookup.
+                _nested = typeof(EntityControl).GetNestedType("PositionSyncData",
+                    BindingFlags.Public | BindingFlags.NonPublic);
                 if (_nested == null || !_nested.IsValueType)
                     throw new MissingMethodException("EntityControl/PositionSyncData");
                 _timestamp = _nested.GetField("timestamp");

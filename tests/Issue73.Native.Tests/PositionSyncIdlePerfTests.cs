@@ -266,13 +266,18 @@ namespace Issue73.Native.Tests
                     .Invoke(control, new object[] { Data(12.2, new Vector3(1.5f, 0f, 0f), Zero, 30f) });
                 Assert.Equal(1, control.UserCodeAccepts); // サーバー受容の呼び出し元も同じ置き換え
                 NativePerfOptions.PositionSyncIdle = false;
-                control.UpdatePositionSyncData(Data(13.2, new Vector3(1.5f, 0f, 0f), Zero, 30f));
+                // 中身は比較先と完全に同一（模倣は _positionSyncData を書き戻さないため
+                // 比較先は最初の 10.0/(1,0,0) のまま）で、タイムスタンプだけ+1.0秒。
+                // 位置・速度・角度のどの句も偽なので、GateAccepts 2→4 は心拍句だけで起きる
+                control.UpdatePositionSyncData(Data(11.0, new Vector3(1f, 0f, 0f), Zero, 30f));
                 Assert.Equal(4, control.GateAccepts); // 設定 OFF（本体の式）では心拍も通す
             }
             finally
             {
                 NativePerfOptions.PositionSyncIdle = true;
-                harmony.UnpatchAll();
+                // このテストが当てたパッチだけを外す（引数なしはプロセス内の全所有者の
+                // パッチを外し、並列実行中のほかのテストを壊し得るため）
+                harmony.UnpatchAll(harmony.Id);
             }
         }
     }
