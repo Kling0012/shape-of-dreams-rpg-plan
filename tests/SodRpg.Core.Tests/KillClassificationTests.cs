@@ -149,6 +149,56 @@ namespace SodRpg.Core.Tests
             Assert.False(client.TryResolve(out _, now: 0.0));
         }
 
+        [Fact]
+        public void Receipt_snapshots_change_by_replacement_and_stay_frozen_once_published()
+        {
+            // PR #765: ClientSession.TickKillReceiptDelta は受領リストの参照比較で差分検査を間引く。
+            // その前提「中身が変わるときはリストごと差し替わる（公開後は場所を書き換えない）」を
+            // 公開元（Capture・Clone・保存往返し）で固定する。前提が崩れる変更はこの試験が検出する。
+            var ledger = new KillClassificationLedger();
+            ledger.BeginRun("run");
+            ledger.AcceptReceiptBaseline("s1", 5, now: 0.0);
+
+            var first = ledger.Capture(now: 1.0);
+            var firstReceipts = first.Receipts;
+            var firstState = Assert.Single(firstReceipts);
+            Assert.Equal("s1", firstState.StreamId);
+            Assert.Equal(5L, firstState.AcknowledgedThrough);
+
+            // 台帳の内部状態が前進しても、公開済みスナップショットの参照・要素・値は変わらない。
+            ledger.AcceptReceiptBaseline("s1", 9, now: 2.0);
+            ledger.AcceptReceiptBaseline("s2", 3, now: 2.0);
+            Assert.Same(firstReceipts, first.Receipts);
+            Assert.Same(firstState, Assert.Single(firstReceipts));
+            Assert.Equal(5L, firstState.AcknowledgedThrough);
+
+            // 変化は次の Capture によるリストごとの差し替えとして現れ、要素も複製される。
+            var second = ledger.Capture(now: 3.0);
+            Assert.NotSame(firstReceipts, second.Receipts);
+            Assert.NotSame(firstState, second.Receipts.Single(r => r.StreamId == "s1"));
+            Assert.Equal(new[] { ("s1", 9L), ("s2", 3L) },
+                second.Receipts.OrderBy(r => r.StreamId)
+                    .Select(r => (r.StreamId, r.AcknowledgedThrough)).ToArray());
+            Assert.Same(firstState, Assert.Single(firstReceipts));
+            Assert.Equal(5L, firstState.AcknowledgedThrough);
+
+            // Profile.Clone の経路（チェックポイントの Clone）も複製であって共有ではない。
+            var profile = NewProfile();
+            profile.KillClassification = second;
+            var cloned = profile.Clone().KillClassification;
+            Assert.NotSame(second.Receipts, cloned.Receipts);
+            Assert.NotSame(second.Receipts.Single(r => r.StreamId == "s1"),
+                cloned.Receipts.Single(r => r.StreamId == "s1"));
+            Assert.Equal(2, cloned.Receipts.Count);
+
+            // 保存往返し（復元）も、別のリスト・別の要素として読み込む。
+            var reloaded = RoundTrip(profile);
+            Assert.NotSame(profile.KillClassification.Receipts, reloaded.KillClassification.Receipts);
+            Assert.Equal(new[] { ("s1", 9L), ("s2", 3L) },
+                reloaded.KillClassification.Receipts.OrderBy(r => r.StreamId)
+                    .Select(r => (r.StreamId, r.AcknowledgedThrough)).ToArray());
+        }
+
         private static PendingMonsterDeath NativeDeath(uint id, int zone, int room) => new PendingMonsterDeath(id,
             new PendingRunKill("run", zone, room, MonsterTier.Normal, 4, NightmareAffix.None, null, "hero"));
 
