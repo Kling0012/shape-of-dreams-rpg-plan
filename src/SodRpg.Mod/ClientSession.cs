@@ -1186,6 +1186,7 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
                     TradeLedger.MaxRestored - _trades.HeldCount));
                 long ledgerId = _hostLedgerId;
                 int scale = HostAuthority.SalvageScaleFor(DewPlayer.local);
+                // BeginSalvage only reserves ledger entries; replies remove relics after this batch is prepared.
                 for (int i = 0; i < run.Satchel.Count; i++)
                 {
                     var relic = run.Satchel[i];

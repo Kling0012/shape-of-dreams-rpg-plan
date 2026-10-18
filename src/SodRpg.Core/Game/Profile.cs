@@ -516,8 +516,12 @@ namespace SodRpg.Core.Game
         {
             int pending = 0;
             for (int i = ContinueCheckpoints.Count - 1; i >= 0; i--)
-                if (!ContinueCheckpoints[i].Committed && ++pending > MaxPendingContinueCheckpoints)
-                    ContinueCheckpoints.RemoveAt(i);
+            {
+                // The predecessor of a confirmed point is retained separately from pending attempts.
+                if (ContinueCheckpoints[i].Committed
+                    || (i + 1 < ContinueCheckpoints.Count && ContinueCheckpoints[i + 1].Committed)) continue;
+                if (++pending > MaxPendingContinueCheckpoints) ContinueCheckpoints.RemoveAt(i);
+            }
         }
 
         public void RememberLobbyReturn(string runId)
@@ -540,6 +544,7 @@ namespace SodRpg.Core.Game
         internal void DiscardCompletedContinue(string runId)
         {
             ContinueCheckpoints.RemoveAll(checkpoint => checkpoint.RunId == runId);
+            // EndRun calls this before BeginRun installs the next run; its lobby baseline is captured later.
             ContinueLobbyBaseline = null;
         }
         /// <summary>Profile at the stable lobby boundary, without nested continue data.</summary>

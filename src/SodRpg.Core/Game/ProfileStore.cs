@@ -152,13 +152,14 @@ namespace SodRpg.Core.Game
 
         private JsonObject ReadRoot(string path, string label)
         {
-            if (!_fs.Exists(path)) return null;
             try
             {
+                if (!_fs.Exists(path)) return null;
                 return Json.Parse(_fs.ReadAllText(path)) as JsonObject
                     ?? throw new LedgerFormatException("最上位がオブジェクトではありません。");
             }
-            catch (Exception ex) when (ex is LedgerFormatException || ex is IOException || ex is FormatException || ex is OverflowException)
+            catch (Exception ex) when (ex is LedgerFormatException || ex is IOException || ex is UnauthorizedAccessException
+                || ex is System.Security.SecurityException || ex is FormatException || ex is OverflowException)
             {
                 Notes.Add(label + "を読めませんでした: " + ex.Message);
                 return null;
@@ -204,7 +205,7 @@ namespace SodRpg.Core.Game
                 if (_fs.Exists(_path)) _fs.Copy(_path, archive, overwrite: false);
                 if (_fs.Exists(BackupPath)) _fs.Copy(BackupPath, archive + ".bak", overwrite: false);
             }
-            catch (IOException ex)
+            catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException || ex is System.Security.SecurityException)
             {
                 // 写しが作れなければリセットせず、保存も止める（前のデータを失わないため。issue #17）。次の起動でもう一度試す。
                 // この試行で作りかけた写しだけは片付ける（#91）。名前は存在しないものから選んだので、
@@ -239,7 +240,7 @@ namespace SodRpg.Core.Game
             {
                 if (_fs.Exists(path)) _fs.Delete(path);
             }
-            catch (IOException)
+            catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException || ex is System.Security.SecurityException)
             {
             }
         }
@@ -262,7 +263,7 @@ namespace SodRpg.Core.Game
                 Notes.Add(Loc.T("知らない内容を除外する前のデータを " + System.IO.Path.GetFileName(copy) + " に残しました。",
                     "Kept the data from before removing unknown content in " + System.IO.Path.GetFileName(copy) + "."));
             }
-            catch (IOException ex)
+            catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException || ex is System.Security.SecurityException)
             {
                 Notes.Add(Loc.T("除外する前のデータの写しを作れませんでした: ", "Could not copy the data from before the removal: ") + ex.Message);
             }
@@ -304,7 +305,7 @@ namespace SodRpg.Core.Game
             {
                 _fs.Copy(path, path + ".corrupt-" + DateTime.UtcNow.Ticks, overwrite: false);
             }
-            catch (IOException)
+            catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException || ex is System.Security.SecurityException)
             {
                 // 退避に失敗しても読み込みは続ける（次回の保存で本体は置き換わる）。
             }
