@@ -153,6 +153,8 @@ namespace SodRpg.Mod
             {
                 Profile.Hero(heroKey).LimboInfinityUnlocked = true;
                 MarkDirty(false);
+                // Import once in memory. SaveNow/TickPeriodicSave report write failures and retry
+                // persistence without repeating this lobby import or blocking native gameplay.
                 SaveNow();
             }
             string unlock = unlocked ? "1" : "0";

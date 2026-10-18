@@ -57,6 +57,7 @@ namespace SodRpg.Mod
             yield return AccessTools.DeclaredMethod(typeof(Actor), nameof(Actor.LogicUpdate));
             yield return AccessTools.DeclaredMethod(typeof(Actor), nameof(Actor.FrameUpdate));
             yield return AccessTools.DeclaredMethod(typeof(Actor), "InvokeOnCreateIfDidnt");
+            // Se_U_Hysteria anchors Dew.Contents so content actors are scanned alongside Dew.Core actors.
             var assemblies = new HashSet<Assembly> { typeof(Actor).Assembly, typeof(Se_U_Hysteria).Assembly };
             foreach (var assembly in assemblies)
                 foreach (var type in assembly.GetTypes())
@@ -245,6 +246,7 @@ namespace SodRpg.Mod
         private static IEnumerable<MethodBase> TargetMethods()
         {
             // Resolve once at patch installation, including overrides that omit base.OnDisable.
+            // Se_U_Hysteria anchors Dew.Contents so content actors are scanned alongside Dew.Core actors.
             var assemblies = new HashSet<Assembly> { typeof(Actor).Assembly, typeof(Se_U_Hysteria).Assembly };
             foreach (var assembly in assemblies)
                 foreach (var type in LoadableTypes(assembly))
@@ -275,11 +277,11 @@ namespace SodRpg.Mod
     // #506: a GameObject hidden with SetActive(false) while Entity.isActive is still
     // true keeps its record (the postfix above defers for reactivation), and Unity
     // does not run OnDisable again when that already-hidden object is later destroyed
-    // or parked in a pool, so the deferred release never fires. Every Actor.Destroy
-    // goes through Dew.StepDestroy, whose first step is ICleanup.OnCleanup: the entity
-    // turns inactive and OnDestroyActor (death/exit attacks reading the parent's life)
-    // completes inside that call, so this postfix releases after those references and
-    // stays idempotent with the OnDisable path.
+    // or parked in a pool, so the deferred release never fires. Dew.StepDestroy first
+    // invokes ICleanup.OnCleanup, which turns the actor inactive and invokes OnDestroyActor.
+    // This postfix currently also releases normally visible actors, before StepDestroy's
+    // RPC wait and canDestroy polling. Completion of OnDestroyActor alone does not prove
+    // that delayed exit attacks have finished reading the parent's life (see issue506 README).
     [HarmonyPatch(typeof(Actor), "ICleanup.OnCleanup")]
     internal static class BossNativeCleanedLifetime
     {

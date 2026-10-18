@@ -106,6 +106,8 @@ namespace SodRpg.Mod
             Log.Warn("Infinity lobby start guard unavailable; Infinity continues without its start messages. " + reason);
         }
 
+        // Host-only input to HostChosenInfinityEnabled, which first checks NetworkServer.active.
+        // Guests use the host's synchronized customData through ClientSession instead.
         internal static bool LimboBlocksInfinity => NetworkedManagerBase<GameSettingsManager>.softInstance?.difficulty == "diffLimbo"
             && !ClientSession.HostLimboInfinityUnlocked;
 
