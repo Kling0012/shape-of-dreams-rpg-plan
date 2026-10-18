@@ -29,6 +29,7 @@ namespace SodRpg.Mod
             NativePerfOptions.CastIndicatorCircle = config.nativeCastIndicatorCircle;
             NativePerfOptions.CameraZoomRotation = config.nativeCameraZoomRotation;
             NativePerfOptions.CharacterModelDisplayBounds = config.nativeCharacterModelDisplayBounds;
+            NativePerfOptions.CursorIdle = config.nativeCursorIdle;
         }
     }
 
@@ -49,6 +50,7 @@ namespace SodRpg.Mod
         internal static bool CastIndicatorCircle = true;
         internal static bool CameraZoomRotation = true;
         internal static bool CharacterModelDisplayBounds = true;
+        internal static bool CursorIdle = true;
     }
 
     internal static class NativePerfPatch
@@ -1322,6 +1324,142 @@ namespace SodRpg.Mod
         {
             if (!NativePerfOptions.CameraZoomRotation) return Quaternion.Euler(0f, camera.entityCamAngle, 0f);
             return camera.entityCamAngle == 0f ? Quaternion.Euler(0f, 0f, 0f) : camera.entityCamAngleRotation;
+        }
+    }
+
+    [HarmonyPatch]
+    internal static class NativeCursorIdlePerf
+    {
+        private static bool _defaultCursorApplied;
+        private static MethodBase _target;
+        private static bool _disabled;
+        private static bool _warned;
+
+        private static bool Prepare()
+        {
+            _target = NativePerfPatch.Find(typeof(CursorManager), nameof(CursorManager.ApplyCursor),
+                new[] { typeof(int) }, ref _warned);
+            if (_target == null) return false;
+            try
+            {
+                return ValidateBody(PatchProcessor.GetOriginalInstructions(_target));
+            }
+            catch (Exception ex)
+            {
+                NativePerfPatch.Warn(ref _warned, "cursor idle", ex.Message);
+                return false;
+            }
+        }
+
+        private static MethodBase TargetMethod() => _target;
+
+        // The skip is only equivalence-preserving while the body's disabled branch stays this
+        // exact shape, captured from the shipped Dew.Core.dll (2026-10-19): the guard reads
+        // the instance flag and the platform setting in this order, both branches frame the
+        // reset, and the reset is one Cursor.SetCursor(null, Vector2.zero, CursorMode.Auto)
+        // followed by an early return:
+        //   ldarg / ldfld CursorManager::disableSoftwareCursor / brtrue
+        //   ldsfld DewSave::platformSettings / ldfld gameplay / ldfld disableSoftwareCursor / brfalse
+        //   ldnull / Vector2::get_zero / ldc.i4.0 (CursorMode.Auto) / Cursor::SetCursor / ret
+        // A future body that also branches on the index argument, drops or reorders a guard
+        // input, or does more inside the disabled branch than reset the cursor no longer
+        // matches, so the patch stays off (one warning, native per-frame retries) instead of
+        // skipping a call the body would not make.
+        internal static bool ValidateBody(IList<CodeInstruction> code)
+        {
+            var instanceFlag = AccessTools.Field(typeof(CursorManager), nameof(CursorManager.disableSoftwareCursor));
+            var settings = AccessTools.Field(typeof(DewSave), nameof(DewSave.platformSettings));
+            var gameplay = AccessTools.Field(typeof(DewPlatformSettings), nameof(DewPlatformSettings.gameplay));
+            var platformFlag = AccessTools.Field(typeof(DewGameplaySettings_Platform), nameof(DewGameplaySettings_Platform.disableSoftwareCursor));
+            var zero = AccessTools.PropertyGetter(typeof(Vector2), nameof(Vector2.zero));
+            var setCursor = AccessTools.Method(typeof(Cursor), nameof(Cursor.SetCursor),
+                new[] { typeof(Texture2D), typeof(Vector2), typeof(CursorMode) });
+            bool Brtrue(CodeInstruction i) => i.opcode == OpCodes.Brtrue || i.opcode == OpCodes.Brtrue_S;
+            bool Brfalse(CodeInstruction i) => i.opcode == OpCodes.Brfalse || i.opcode == OpCodes.Brfalse_S;
+            bool Ldarg(CodeInstruction i) => i.opcode == OpCodes.Ldarg || i.opcode == OpCodes.Ldarg_S
+                || i.opcode == OpCodes.Ldarg_0 || i.opcode == OpCodes.Ldarg_1
+                || i.opcode == OpCodes.Ldarg_2 || i.opcode == OpCodes.Ldarg_3;
+            if (code.Count >= 13 && Ldarg(code[0])
+                && code[1].opcode == OpCodes.Ldfld && Equals(code[1].operand, instanceFlag)
+                && Brtrue(code[2])
+                && code[3].opcode == OpCodes.Ldsfld && Equals(code[3].operand, settings)
+                && code[4].opcode == OpCodes.Ldfld && Equals(code[4].operand, gameplay)
+                && code[5].opcode == OpCodes.Ldfld && Equals(code[5].operand, platformFlag)
+                && Brfalse(code[6])
+                && code[7].opcode == OpCodes.Ldnull
+                && code[8].Calls(zero)
+                && code[9].opcode == OpCodes.Ldc_I4_0
+                && code[10].Calls(setCursor)
+                && code[11].opcode == OpCodes.Ret
+                && IndexOfLabel(code, code[2].operand) == 7
+                && IndexOfLabel(code, code[6].operand) == 12)
+                return true;
+            NativePerfPatch.Warn(ref _warned, "cursor idle", "native apply cursor guard changed");
+            return false;
+        }
+
+        // Index of the instruction a branch operand (a Label) points at, or -1.
+        private static int IndexOfLabel(IList<CodeInstruction> code, object label)
+        {
+            for (int i = 0; i < code.Count; i++)
+                if (label is Label target && code[i].labels.Contains(target)) return i;
+            return -1;
+        }
+
+        // FrameUpdate calls ApplyCursor every rendered frame. While the software cursor is
+        // disabled (the platform setting or the cinematic helper's toggle), every one of those
+        // calls asks Unity to reset the cursor to the OS default (null texture, Auto mode) —
+        // an unchanged repeat of the previous frame's request. Nothing else in the shipped
+        // game calls Cursor.SetCursor (only CursorManager does), Unity keeps the request
+        // until someone changes it, and neither scene loads nor Cursor.lockState/visible
+        // writes reset the cursor texture, so the repeats cannot become observable. The
+        // first disabled call still runs the original and applies the reset; only the
+        // unchanged repeats are skipped. CursorManager.ApplyCursor is also the only path
+        // that can put a cursor image back, and every one of its calls passes through this
+        // prefix, so dropping the confirmation on every call that may reach the enabled
+        // path is enough to keep it accurate: a live software-cursor frame, or any frame
+        // while the setting is off. After those, the next disabled frame re-applies exactly
+        // as without this patch; no separate reset on re-applying the config is needed.
+        private static bool Prefix(CursorManager __instance, ref bool __state)
+        {
+            __state = false;
+            if (_disabled) return true;
+            if (!NativePerfOptions.CursorIdle)
+            {
+                // While the setting is off the body runs untracked and may apply a software
+                // cursor texture through the enabled path, so the confirmed default-cursor
+                // reset must not survive into the frames after the setting comes back.
+                _defaultCursorApplied = false;
+                return true;
+            }
+            try
+            {
+                bool disabled = __instance.disableSoftwareCursor
+                    || DewSave.platformSettings.gameplay.disableSoftwareCursor;
+                if (!disabled)
+                {
+                    _defaultCursorApplied = false;
+                    return true;
+                }
+                if (_defaultCursorApplied) return false;
+                __state = true;
+            }
+            catch (Exception ex)
+            {
+                _disabled = true;
+                NativePerfPatch.Warn(ref _warned, "cursor idle", ex.Message);
+            }
+            return true;
+        }
+
+        // The marker only confirms a reset the original actually completed: Harmony skips
+        // postfixes when the original threw (__state stays a one-shot candidate), and a
+        // substitute from another mod's prefix must not be covered either. Both leave the
+        // marker clear, so the next frame hands the call back to the original, matching the
+        // unpatched per-frame retry.
+        private static void Postfix(bool __state, bool __runOriginal)
+        {
+            if (__state && __runOriginal) _defaultCursorApplied = true;
         }
     }
 }

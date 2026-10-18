@@ -630,6 +630,9 @@ namespace SodRpg.Mod
     {
         public static string profileContinuePath;
         public static Action onSaveEnded;
+        // NativeCursorIdlePerf 抽出が読む本体のプラットフォーム設定（実物は public static フィールド）。
+        // 先の実体（gameplay.disableSoftwareCursor）は CursorIdlePerfBoundary.cs の境界。
+        public static DewPlatformSettings platformSettings = new DewPlatformSettings();
     }
     internal sealed class InGameUIManager { public static InGameUIManager instance; public bool isDoingEnding; }
     internal sealed class Primus_Ending { public static void StartPrimusDeath() { } }
