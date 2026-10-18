@@ -16,6 +16,8 @@ namespace SodRpg.Mod
         private static bool _personalServerRegistered, _personalClientRegistered, _personalWarned;
         private static string _personalWaitText;
         private static PersonalChoiceWait _personalWait;
+        private static string _personalWaitPublished;
+        private static GameSettingsManager _personalWaitPublishedTarget;
         private static float _nextPersonalWaitPublish;
         private static readonly Action<DreamforgeInfinityPersonalChoiceMsg, DewPlayer> OnPersonalChoice = ReceivePersonalChoice;
         private static readonly Action<DreamforgeInfinityPersonalChoiceAckMsg> OnPersonalChoiceAck = ReceivePersonalChoiceAck;
@@ -71,6 +73,7 @@ namespace SodRpg.Mod
         {
             _personalBarrier = null; _personalIntent = null;
             _personalWait = null; _personalWaitText = null; _nextPersonalWaitPublish = 0;
+            _personalWaitPublished = null; _personalWaitPublishedTarget = null;
             _personalWarned = false;
             if (NetworkServer.active)
                 NetworkedManagerBase<GameSettingsManager>.softInstance?.customData.Remove(PersonalWaitKey);
@@ -132,7 +135,7 @@ namespace SodRpg.Mod
         {
             var settings = NetworkedManagerBase<GameSettingsManager>.softInstance;
             if (settings == null || _personalBarrier == null) return;
-            settings.customData[PersonalWaitKey] = JsonConvert.SerializeObject(new PersonalChoiceWait
+            string json = JsonConvert.SerializeObject(new PersonalChoiceWait
             {
                 RunId = _personalBarrier.RunId, GraphEpoch = _personalBarrier.GraphEpoch,
                 SegmentEpoch = _personalBarrier.SegmentEpoch, Revision = _personalBarrier.Revision,
@@ -141,6 +144,15 @@ namespace SodRpg.Mod
                     ? Math.Max(0, (int)Math.Ceiling(_personalBarrier.Deadline - Time.unscaledTime)) : 60,
             });
             _nextPersonalWaitPublish = Time.unscaledTime + 1f;
+            // Mirror's SyncDictionary has no value-equality check: every indexer write queues a
+            // delta and re-sends the full value to every observer. Before a personal wait starts,
+            // the published text is identical every second for as long as players linger, so skip
+            // re-writes instead of re-broadcasting the same payload (removals bypass this cache:
+            // ResetPersonalChoices clears it, so the next publish after a Remove always writes).
+            if (ReferenceEquals(settings, _personalWaitPublishedTarget) && json == _personalWaitPublished) return;
+            _personalWaitPublishedTarget = settings;
+            _personalWaitPublished = json;
+            settings.customData[PersonalWaitKey] = json;
         }
 
         private static void RegisterPersonalChoices()
