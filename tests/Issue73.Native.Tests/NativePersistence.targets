@@ -213,6 +213,17 @@
     </ItemGroup>
   </Target>
 
+  <!-- 撃破追跡の掃除走査の間引き（#798）。NativeKillTrackerCullPerf の IL 形状検証と Prefix を
+       実ソースから抽出し、本体 KillTracker.CullExpiredEntities と同じ命令並びの見本に当てる。
+       KillTracker と見本（掃除・ReportKill）は KillTrackerCullPerfBoundary.cs、
+       NativePerfOptions・NativePerfPatch は SleepPositionPerfBoundary.cs の境界。 -->
+  <Target Name="CompileKillTrackerCullPerf" BeforeTargets="CoreCompile">
+    <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/NativePerfPatches.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)KillTrackerCullPerf.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="NativeKillTrackerCullPerf" Methods="ValidateBody;Prefix" Fields="CullInterval;Books;CreateBook;_target;_disabled;_warned" NestedTypes="CullBook" />
+    <ItemGroup>
+      <Compile Include="$(IntermediateOutputPath)KillTrackerCullPerf.g.cs" />
+    </ItemGroup>
+  </Target>
+
   <!-- 共鳴の盾（CoopOmens.cs）の HostAuthority 部。公開ラッパー CoopOmens は NativeBoundary.cs
        に同じ式の internal 模倣（境界の Entity が internal のため直接抽出できない）。 -->
   <Target Name="CompileCoopOmensWard" BeforeTargets="CoreCompile">

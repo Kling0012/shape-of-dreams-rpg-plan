@@ -191,6 +191,8 @@ namespace SodRpg.Mod
             = new ProcessorList<DataProcessor<DamageData, Actor, Entity>>();
         public event Action<EventInfoDamage> EntityEvent_OnTakeDamage;
         internal void RaiseEntityEventOnTakeDamage(EventInfoDamage info) => EntityEvent_OnTakeDamage?.Invoke(info);
+        // （#798）本体 KillTracker の掃除・停止が登録解除する死亡イベント。
+        public event Action<EventInfoKill> EntityEvent_OnDeath;
         public EntityRelation GetRelation(Entity other) => this is Hero && other is Hero ? EntityRelation.Ally : EntityRelation.Enemy;
         public bool IsAnyBoss() => anyBoss || this is Monster monster
             && (monster.type == Monster.MonsterType.MiniBoss || monster.type == Monster.MonsterType.Boss);
