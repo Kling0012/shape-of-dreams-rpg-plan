@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using SodRpg.Core.Game;
 using UnityEngine;
@@ -114,20 +113,38 @@ namespace SodRpg.Mod
             GUI.Label(new Rect(sr.xMax + 6f, y, w - (sr.xMax - x) - 6f, BarH), _status, _hintStyle);
             y += BarH + 4f;
 
-            // 3段目：枠・系統
+            // 3段目：枠・系統（クロージャを作らないため、代入は呼び出し側で直接行う）
             float sbw = 82f;
-            DrawChip(new Rect(x, y, sbw, BarH), 0, _slotLabels, _filter.Slot == null, () => _filter.Slot = null);
+            if (DrawChip(new Rect(x, y, sbw, BarH), _slotLabels[0], _filter.Slot == null))
+            {
+                _filter.Slot = null;
+                _listScroll = Vector2.zero;
+                _dirty = true;
+            }
             for (int i = 0; i < 6; i++)
             {
-                int k = i;
-                DrawChip(new Rect(x + (i + 1) * (sbw + 3f), y, sbw, BarH), i + 1, _slotLabels, _filter.Slot == Slots[i], () => _filter.Slot = Slots[k]);
+                if (DrawChip(new Rect(x + (i + 1) * (sbw + 3f), y, sbw, BarH), _slotLabels[i + 1], _filter.Slot == Slots[i]))
+                {
+                    _filter.Slot = Slots[i];
+                    _listScroll = Vector2.zero;
+                    _dirty = true;
+                }
             }
             float lx = x + 7 * (sbw + 3f) + 14f, lw = Mathf.Min(130f, Mathf.Max(70f, (w - (lx - x)) / 4f - 3f));
-            DrawChip(new Rect(lx, y, lw, BarH), 0, _lineLabels, _filter.Line == null, () => _filter.Line = null);
+            if (DrawChip(new Rect(lx, y, lw, BarH), _lineLabels[0], _filter.Line == null))
+            {
+                _filter.Line = null;
+                _listScroll = Vector2.zero;
+                _dirty = true;
+            }
             for (int i = 0; i < 3; i++)
             {
-                int k = i;
-                DrawChip(new Rect(lx + (i + 1) * (lw + 3f), y, lw, BarH), i + 1, _lineLabels, _filter.Line == Lines[i], () => _filter.Line = Lines[k]);
+                if (DrawChip(new Rect(lx + (i + 1) * (lw + 3f), y, lw, BarH), _lineLabels[i + 1], _filter.Line == Lines[i]))
+                {
+                    _filter.Line = Lines[i];
+                    _listScroll = Vector2.zero;
+                    _dirty = true;
+                }
             }
             y += BarH + 6f;
 
@@ -142,12 +159,10 @@ namespace SodRpg.Mod
             return back;
         }
 
-        private void DrawChip(Rect r, int index, string[] labels, bool on, Action apply)
+        /// <summary>チップを描く。押されて切り替えられるときだけ true（今選ばれているものは描くだけ）。</summary>
+        private bool DrawChip(Rect r, string label, bool on)
         {
-            if (!GUI.Button(r, labels[index], on ? _btnSel : _btn) || on) return;
-            apply();
-            _listScroll = Vector2.zero;
-            _dirty = true;
+            return GUI.Button(r, label, on ? _btnSel : _btn) && !on;
         }
 
         private void DrawList(Rect r)
