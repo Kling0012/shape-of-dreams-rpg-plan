@@ -108,6 +108,9 @@ namespace SodRpg.Mod
         [LabelText("Coalesce same-frame duplicate proc projectiles / 同一フレームの同じ対象への同種反応弾を1本にまとめる")]
         public bool nativeProcCoalesce = true;
 
+        [LabelText("Read the checked entity position once per sleep check (host) / 眠り判定で読む敵の位置を英雄全員分で1回にまとめる（ホスト）")]
+        public bool nativeSleepPositionReuse = true;
+
         [LabelText("Level essence slots: add essence slots as the hero levels up (the host's setting applies) /\nレベル連動のエッセンス枠：英雄のレベルに応じて記憶のエッセンス枠を増やす（ホストの設定が使われる）")]
         public bool levelEssenceSlots = true;
 
