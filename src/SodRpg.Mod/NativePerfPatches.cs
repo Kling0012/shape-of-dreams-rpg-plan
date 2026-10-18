@@ -19,6 +19,7 @@ namespace SodRpg.Mod
             NativePerfOptions.AggroPropagation = config.nativeAggroPropagation;
             NativePerfOptions.OwnershipSpawnCounts = config.nativeOwnershipSpawnCounts;
             NativePerfOptions.ProcCoalesce = config.nativeProcCoalesce;
+            NativePerfOptions.TransformSyncIdle = config.nativeTransformSyncIdle;
         }
     }
 
@@ -30,6 +31,7 @@ namespace SodRpg.Mod
         internal static bool AggroPropagation = true;
         internal static bool OwnershipSpawnCounts = true;
         internal static bool ProcCoalesce = true;
+        internal static bool TransformSyncIdle = true;
     }
 
     internal static class NativePerfPatch
@@ -357,6 +359,60 @@ namespace SodRpg.Mod
                 }
             }
             agent.obstacleAvoidanceType = value;
+        }
+    }
+
+    [HarmonyPatch]
+    internal static class NativeTransformSyncIdlePerf
+    {
+        private static AccessTools.FieldRef<ActorTransformSync, SyncMovementData> _syncData;
+        private static MethodBase _target;
+        private static bool _disabled;
+        private static bool _warned;
+
+        private static bool Prepare()
+        {
+            try
+            {
+                _target = AccessTools.PropertySetter(typeof(ActorTransformSync), "Network_syncData");
+                if (_target == null || _target.GetMethodBody() == null)
+                    throw new MissingMethodException("ActorTransformSync.Network_syncData setter unavailable");
+                _syncData = AccessTools.FieldRefAccess<ActorTransformSync, SyncMovementData>("_syncData");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                NativePerfPatch.Warn(ref _warned, "transform sync idle", ex.Message);
+                return false;
+            }
+        }
+
+        private static MethodBase TargetMethod() => _target;
+
+        private static bool Prefix(ActorTransformSync __instance, SyncMovementData value)
+        {
+            if (_disabled || !NativePerfOptions.TransformSyncIdle) return true;
+            try
+            {
+                // A capture of a stationary actor differs from the stored sample only by its
+                // timestamp. That timestamp feeds client extrapolation, which multiplies the
+                // stored velocity; the equality below keeps every velocity at zero, so the
+                // withheld refresh leaves the rendered pose untouched while Mirror stops
+                // reserializing and resending the unchanged sample. Teleports and the last
+                // sample of a movement always differ and still go through.
+                SyncMovementData current = _syncData(__instance);
+                if (value.channels == current.channels && value.isTeleport == current.isTeleport
+                    && value.position == current.position && value.velocity == current.velocity
+                    && value.rotation == current.rotation && value.angularVelocity == current.angularVelocity
+                    && value.scale == current.scale && value.scaleVelocity == current.scaleVelocity)
+                    return false;
+            }
+            catch (Exception ex)
+            {
+                _disabled = true;
+                NativePerfPatch.Warn(ref _warned, "transform sync idle", ex.Message);
+            }
+            return true;
         }
     }
 }
