@@ -1428,6 +1428,7 @@ namespace SodRpg.Mod
         // DrawWindow は DreamforgeUi.Window.cs へ移した（#147 の順序の試験と一緒に管理する）。
 
         // 遺失物を取り戻す部屋数は工房（遺失物の地図）で減るので、今の値を表示する。
+        // {rooms} は部屋数専用の目印。HowToPlay のほかの文面には使わず、表示は HowToPlayText を通す。
         private const string HowToPlayRooms = "{rooms}";
         private string _howToPlayText;
         private bool _howToPlayJa;
@@ -1436,6 +1437,8 @@ namespace SodRpg.Mod
         {
             int rooms = Workshop.RoomsToRecover(p);
             bool ja = Loc.Japanese;
+            // HowToPlay の日英の本文は静的で、Txt.ToString() が参照するのは言語だけ。
+            // 部屋数以外の動的な値を足すときは、キャッシュの更新条件にも含める。
             if (_howToPlayText == null || ja != _howToPlayJa || rooms != _howToPlayRooms)
             {
                 _howToPlayJa = ja;
@@ -2168,7 +2171,7 @@ namespace SodRpg.Mod
                 else GUILayout.Label(Loc.T($"強化は+{maxEnhance}が上限です", $"Enhancement is capped at +{maxEnhance}"), _st.Small);
                 bool equippedSel = p.IsEquippedAnywhere(sel.Uid);
                 bool salvageBlocked = sel.Locked || (equippedSel && !_s.CanEditLoadout);
-                // 再調律の候補を選んでいる途中の遺物は Rules.Salvage も断る。
+                // Rules.Salvage の RequireNoRetuneOffer と同じ条件。Core の拒否条件を変えるときはここも見直す。
                 GUI.enabled = !_s.Trades.IsReserved(sel.Uid) && !salvageBlocked && p.RetuneOffer?.Uid != sel.Uid;
                 int svShards = Rules.SalvageValue(sel), svTuning = Content.SalvageTuning(sel.Rarity);
                 string svGain = Loc.T($"欠片{svShards}" + (svTuning > 0 ? $"・調律石{svTuning}" : ""), $"{svShards} shards" + (svTuning > 0 ? $", {svTuning} tuning" : ""));
@@ -2335,11 +2338,12 @@ namespace SodRpg.Mod
             }
             GUILayout.EndHorizontal();
             GUILayout.Label(Loc.T($"製作：欠片で新しい遺物を作ります（Lv{Math.Max(1, p.BestItemLevel)}＝これまでの最高）", $"Craft: make a new relic with shards (Lv{Math.Max(1, p.BestItemLevel)}, your best so far)"), _st.Header);
+            // Rules.Craft と同じ空き容量の条件。Core の拒否条件を変えるときはボタンの条件も見直す。
+            bool stashRoom = p.Stash.Count < Workshop.StashCapacity(p);
             foreach (Slot slot in Content.SlotOrder)
             {
                 GUILayout.BeginHorizontal();
                 GUILayout.Label(Content.SlotName(slot).ToString(), _st.Label, GUILayout.Width(70));
-                bool stashRoom = p.Stash.Count < Workshop.StashCapacity(p); // Rules.Craft と同じ空き容量の条件
                 GUI.enabled = stashRoom && p.Material(Materials.Shard) >= Rules.CraftShardCost(false);
                 if (GUILayout.Button(Loc.T($"通常：アンコモン以上（欠片{Rules.CraftShardCost(false)}）", $"Basic: Uncommon+ ({Rules.CraftShardCost(false)} shards)"), _st.ButtonWrap, ShrinkWidth))
                     Act(() => Rules.Craft(p, slot, false), false);
