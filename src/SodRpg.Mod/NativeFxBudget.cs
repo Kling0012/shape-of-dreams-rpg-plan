@@ -365,6 +365,8 @@ namespace SodRpg.Mod
             internal readonly Light Light;
             internal readonly FxPointLight Driver;
             internal int AppliedFrame = -1;
+            // Actor and FX Apply calls can share one playback. A new playback must
+            // pass through Restore (Play_Imp prefix or Actor pool reset) to charge again.
             internal bool PlaybackAdmitted;
             private bool _suppressed, _driverEnabled, _lightEnabled, _capped;
             private readonly float _range, _intensity, _rangeMultiplier, _intensityMultiplier;
@@ -471,6 +473,9 @@ namespace SodRpg.Mod
             float now = Time.time;
             if (now < _lastLightTime)
             {
+                // Clock rollback starts a new budget epoch. PlaybackAdmitted is
+                // reused only while the candidate is still in ActiveLights; the
+                // first Actor/FX Apply after this reset charges even a live playback.
                 _lightHead = _lightCount = 0;
                 for (int i = 0; i < ActiveLights.Length; i++) ActiveLights[i] = null;
             }

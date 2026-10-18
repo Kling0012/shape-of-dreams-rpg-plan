@@ -20,6 +20,7 @@ namespace SodRpg.Mod
             NativePerfOptions.OwnershipSpawnCounts = config.nativeOwnershipSpawnCounts;
             NativePerfOptions.ProcCoalesce = config.nativeProcCoalesce;
             NativePerfOptions.AttachFaceIdle = config.nativeAttachFaceIdle;
+            NativePerfOptions.SleepPosition = config.nativeSleepPositionReuse;
         }
     }
 
@@ -32,6 +33,7 @@ namespace SodRpg.Mod
         internal static bool OwnershipSpawnCounts = true;
         internal static bool ProcCoalesce = true;
         internal static bool AttachFaceIdle = true;
+        internal static bool SleepPosition = true;
     }
 
     internal static class NativePerfPatch
@@ -453,6 +455,106 @@ namespace SodRpg.Mod
         {
             if (isNew && NativePerfOptions.AttachFaceIdle)
                 NativeAttachFaceIdlePerf.RecordNewBake(skin);
+        }
+    }
+
+    [HarmonyPatch]
+    internal static class NativeSleepPositionPerf
+    {
+        private static Entity _cachedEntity;
+        private static Vector2 _cachedXY;
+        private static MethodBase _target;
+        private static bool _warned;
+
+        private static bool Prepare()
+        {
+            try
+            {
+                _target = AccessTools.DeclaredMethod(typeof(ActorManager), "CanEntitySleep", new[] { typeof(Entity) });
+            }
+            catch (Exception ex)
+            {
+                NativePerfPatch.Warn(ref _warned, "sleep position", ex.Message);
+                return false;
+            }
+            if (_target == null || _target.GetMethodBody() == null)
+            {
+                NativePerfPatch.Warn(ref _warned, "ActorManager.CanEntitySleep", "native method unavailable");
+                return false;
+            }
+            try { return ValidateBody(PatchProcessor.GetOriginalInstructions(_target)); }
+            catch (Exception ex) { NativePerfPatch.Warn(ref _warned, "sleep position", ex.Message); }
+            return false;
+        }
+
+        private static MethodBase TargetMethod() => _target;
+
+        // Prefix clears whatever a previous check left; Postfix drops the reference once the
+        // check finishes, so no entity stays cached between the once-per-second ticks.
+        private static void Prefix() => _cachedEntity = null;
+        private static void Postfix() => _cachedEntity = null;
+
+        private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+        {
+            var code = new List<CodeInstruction>(instructions);
+            int entity = FindEntityRead(code, out int reads, out int converts);
+            // The type checks, CanSleep, the 1600 threshold and the try/catch all stay native.
+            // Only the repeated read of the checked entity's position inside the hero loop is
+            // deduplicated; the hero positions are still read fresh on every iteration.
+            if (reads != 2 || converts != 2 || entity < 0)
+            {
+                NativePerfPatch.Warn(ref _warned, "sleep position", "native distance loop changed or already patched");
+                return code;
+            }
+            code[entity].opcode = OpCodes.Call;
+            code[entity].operand = AccessTools.Method(typeof(NativeSleepPositionPerf), nameof(EntityXY));
+            code[entity + 1].opcode = OpCodes.Nop;
+            code[entity + 1].operand = null;
+            return code;
+        }
+
+        internal static bool ValidateBody(IList<CodeInstruction> code)
+        {
+            int entity = FindEntityRead(code, out int reads, out int converts);
+            if (reads == 2 && converts == 2 && entity >= 0) return true;
+            NativePerfPatch.Warn(ref _warned, "sleep position", "native distance loop changed");
+            return false;
+        }
+
+        private static int FindEntityRead(IList<CodeInstruction> code, out int reads, out int converts)
+        {
+            var position = AccessTools.PropertyGetter(typeof(Actor), nameof(Actor.position));
+            var toXY = AccessTools.Method(typeof(VectorPlaneTransformExtension), nameof(VectorPlaneTransformExtension.ToXY));
+            var subtract = AccessTools.Method(typeof(Vector2), "op_Subtraction");
+            reads = 0;
+            converts = 0;
+            int entity = -1;
+            for (int i = 0; i < code.Count; i++)
+            {
+                if (code[i].Calls(position)) reads++;
+                if (code[i].Calls(toXY)) converts++;
+                if (i >= 1 && i + 2 < code.Count && LoadsEntityArg(code[i - 1])
+                    && code[i].Calls(position) && code[i + 1].Calls(toXY) && code[i + 2].Calls(subtract))
+                    entity = i;
+            }
+            return entity;
+        }
+
+        private static bool LoadsEntityArg(CodeInstruction instruction)
+            => instruction.opcode == OpCodes.Ldarg_1
+            || (instruction.opcode == OpCodes.Ldarg_S && instruction.operand is int index && index == 1);
+
+        // Reference equality on purpose: Entity inherits Unity's == where two destroyed objects
+        // compare equal, while this cache must only reuse the identical reference within one call.
+        // Exceptions from a destroyed entity's transform propagate to the native catch unchanged.
+        private static Vector2 EntityXY(Entity e)
+        {
+            if (!NativePerfOptions.SleepPosition) return e.position.ToXY();
+            if (ReferenceEquals(_cachedEntity, e)) return _cachedXY;
+            Vector2 xy = e.position.ToXY();
+            _cachedXY = xy;
+            _cachedEntity = e;
+            return xy;
         }
     }
 }

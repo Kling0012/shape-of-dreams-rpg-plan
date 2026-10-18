@@ -403,6 +403,7 @@ namespace SodRpg.Core.Tests
             var p = Profile.CreateNew(129);
             foreach (var slot in new[] { Slot.Weapon, Slot.Charm })
             {
+                // Offset the slot seeds from zero while keeping each gear roll deterministic.
                 var r = Loot.RollRelic(new Rng((ulong)slot + 7), Rarity.Epic, 40, slot: slot);
                 r.Powers.Clear(); r.Powers.Add(new PowerLine(Power.Overload, 20));
                 r.AwakenLevel = 3;

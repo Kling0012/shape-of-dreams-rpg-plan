@@ -1486,6 +1486,8 @@ namespace SodRpg.Core.Game
 
         // ───────────── 鍛冶 ─────────────
 
+        // Shared shard yield for salvage and DreamEvent.Tapir; keep the tapir's
+        // description in sync when changing it. Tuning is calculated by each caller.
         public static int SalvageValue(Relic r)
         {
             int refund = 0;
