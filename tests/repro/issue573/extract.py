@@ -28,6 +28,14 @@ def block(path, declaration):
 
 
 trade = "src/SodRpg.Mod/DreamforgeUi.CoopTrade.cs"
+source = (ROOT / trade).read_text(encoding="utf-8")
+# Keep the row geometry, choice buffers and styles in sync with production.
+fields = re.search(
+    r"private const float TradeRelicRowStep\b.*?(?=private static readonly GUILayoutOption\[\] TradeFilterSize\b)",
+    source, re.S,
+)
+if fields is None:
+    raise ValueError("Trade row fields moved; update the extractor")
 own = block(trade, r"private void DrawCoopTradeOwnRelics\(")
 choices = block(trade, r"private void DrawCoopTradeRelicChoices\(")
 # 抽出対象が描画ループそのものであることを保証する。修正で本体が動いたらここでビルドを失敗させる。
@@ -40,6 +48,7 @@ text = (
     "// 自動生成: tests/repro/issue573/extract.py が src/SodRpg.Mod/DreamforgeUi.CoopTrade.cs から取り出した製品コード（改変しない）。\n"
     "namespace SodRpg.Mod {\n"
     "internal sealed partial class DreamforgeUi {\n"
+    + fields.group().strip() + "\n\n"
     + own + "\n\n"
     + choices + "\n\n"
     + (block(trade, r"private void EnsureCoopTradeRelicStyles\(") + "\n\n" if "EnsureCoopTradeRelicStyles" in choices else "")

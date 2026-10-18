@@ -41,7 +41,7 @@ namespace UnityEngine
     {
         internal static readonly GUIContent none = new GUIContent("");
         internal string text, tooltip;
-        internal GUIContent(string text, string tooltip = "") { this.text = text; this.tooltip = tooltip; }
+        internal GUIContent(string text = "", string tooltip = "") { this.text = text; this.tooltip = tooltip; }
     }
 
     internal sealed class GUIStyleState
@@ -59,6 +59,7 @@ namespace UnityEngine
         internal TextClipping clipping;
         internal GUIStyle(string name) { Name = name; }
         internal GUIStyle(GUIStyle original) { Name = original.Name; }
+        internal float CalcHeight(GUIContent content, float width) => content.text.Split('\n').Length * 24f;
     }
 
     internal static class GUILayoutUtility
@@ -181,13 +182,7 @@ namespace SodRpg.Mod
         internal string _tradeSearch = "";
         internal int _tradeRarityFilter = -1, _tradeSlotFilter = -1;
         internal string LastStatus;
-        private static readonly GUILayoutOption[] TradeRowSize = { GUILayout.MinHeight(58), GUILayout.MinWidth(0) };
-        private const float TradeRelicRowStep = 100f;
-        private readonly List<Relic> _tradeStashChoices = new List<Relic>(), _tradeSatchelChoices = new List<Relic>();
-        private float _tradeOwnViewportHeight, _tradeOwnContentHeight;
-        private GUIStyle _tradeRelicTitleStyle, _tradeRelicSelectedStyle, _tradeRelicDetailsStyle, _tradeTooltipStyle;
-        private UiStyles _tradeRelicStylesFor;
-        private static readonly GUILayoutOption[] TradeChoicesWidth = { GUILayout.MinWidth(0), GUILayout.ExpandWidth(true) };
+        // Row geometry, choice buffers and styles are extracted from production.
         private bool CoopTradeFiltering => _tradeRarityFilter >= 0 || _tradeSlotFilter >= 0 || !string.IsNullOrEmpty(_tradeSearch);
         private static readonly Rarity[] TradeRarities =
         {
