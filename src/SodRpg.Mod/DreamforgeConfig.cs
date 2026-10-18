@@ -108,6 +108,9 @@ namespace SodRpg.Mod
         [LabelText("Coalesce same-frame duplicate proc projectiles / 同一フレームの同じ対象への同種反応弾を1本にまとめる")]
         public bool nativeProcCoalesce = true;
 
+        [LabelText("Skip unchanged baked-mesh lookups for face attachments / 面に付ける装飾の変わっていない焼きメッシュの照会を省く")]
+        public bool nativeAttachFaceIdle = true;
+
         [LabelText("Level essence slots: add essence slots as the hero levels up (the host's setting applies) /\nレベル連動のエッセンス枠：英雄のレベルに応じて記憶のエッセンス枠を増やす（ホストの設定が使われる）")]
         public bool levelEssenceSlots = true;
 
