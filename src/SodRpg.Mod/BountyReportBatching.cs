@@ -120,8 +120,9 @@ namespace SodRpg.Mod
             if (hero == null || msg.heroNetId != hero.netId || msg.shields < 0 || msg.allyHeals < 0
                 || msg.elementalKills == null || msg.elementalKills.Length != 16) return;
             for (int mask = 0; mask < 16; mask++) if (msg.elementalKills[mask] < 0) return;
-            Emit(Rules.OnSupportApplied(Profile, true, false, 1f, msg.shields));
-            Emit(Rules.OnSupportApplied(Profile, false, true, 1f, msg.allyHeals));
+            // A zero count would only allocate an empty event list inside Rules, so skip it here.
+            if (msg.shields > 0) Emit(Rules.OnSupportApplied(Profile, true, false, 1f, msg.shields));
+            if (msg.allyHeals > 0) Emit(Rules.OnSupportApplied(Profile, false, true, 1f, msg.allyHeals));
             for (int mask = 1; mask < 16; mask++)
                 if (msg.elementalKills[mask] > 0)
                     Emit(Rules.OnElementalKill(Profile, (mask & 1) != 0, (mask & 2) != 0,

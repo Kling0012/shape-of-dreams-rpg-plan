@@ -83,9 +83,8 @@ namespace SodRpg.Mod
                 _iconsStarted = true;
                 RelicIcons.Init(mod?.path);
                 RelicIcons.Preload();
-                _ui = new DreamforgeUi(_session, () => config, SaveLevelEssenceConfig);
+                _ui = new DreamforgeUi(_session, () => config, SaveLevelEssenceConfig, SaveLanguageConfig);
                 BindEnemyOwnershipSettings();
-                _ui.SaveLanguageConfig = SaveLanguageConfig;
                 _host = new HostAuthority(() => _session?.Profile.Run?.DailyId ?? DailyDream.Today.Id);
                 ApplyMeleeCoopConfig();
                 _session.FirstLaunch();

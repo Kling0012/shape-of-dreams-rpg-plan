@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using HarmonyLib;
 using Mirror;
 using SodRpg.Core.Game;
@@ -31,6 +32,13 @@ namespace SodRpg.Mod
         private readonly System.Collections.Generic.List<DewPlayer> _currentChoiceDeparted = new System.Collections.Generic.List<DewPlayer>();
         private PendingRunRewards _pendingRunRewards => _runChoiceProgress.Rewards;
         private readonly Action<PendingRunKill> _grantPendingKill;
+        // C# 9 has no cached method group conversions: passing Emit/PublishRunChoicesForZone directly into the
+        // per-frame settlement calls allocates a fresh delegate on every tick. Bind once, lazily, so sessions
+        // assembled without the production constructor (native tests) still work.
+        private Action<IEnumerable<GameEvent>> _emitEvents;
+        private Action<int> _publishZoneChoices;
+        private Action<IEnumerable<GameEvent>> EmitEvents => _emitEvents ??= Emit;
+        private Action<int> PublishZoneChoices => _publishZoneChoices ??= PublishRunChoicesForZone;
         private bool? _pendingRunVictory;
         private string _pendingResultRunId;
         private string _completedRunId;
@@ -225,7 +233,7 @@ namespace SodRpg.Mod
             // Shared waypoint settlement unlocks the participant's buttons, not their personal choice (#88).
             // Pure White keeps the personal choice pending until an explicit choice or the run's conclusion.
             if (InPureWhiteRoute && Profile.Run.AwaitingChoice && !_pendingRunVictory.HasValue) return;
-            _runChoiceProgress.FlushRewards(Profile, ChoiceZoneIndex, CanChooseRunRules, Emit, _grantPendingKill);
+            _runChoiceProgress.FlushRewards(Profile, ChoiceZoneIndex, CanChooseRunRules, EmitEvents, _grantPendingKill);
         }
 
         private bool CommitCombatChoice(bool publish = true, bool concluding = false)
@@ -248,7 +256,7 @@ namespace SodRpg.Mod
         {
             if (Profile.Run?.Infinity != null) return;
             if (!RunActive || HasPendingKillClassification || _runChoiceProgress.TryAdvance(Profile, CanChooseRunRules, _trades,
-                Emit, _grantPendingKill, PublishRunChoicesForZone) == 0) return;
+                EmitEvents, _grantPendingKill, PublishZoneChoices) == 0) return;
             MarkDirty(true);
             _nextDreamEventNotice = 0f;
             ApplyHostRunChoices();
