@@ -1339,10 +1339,11 @@ namespace SodRpg.Mod
         // entity position and the zoom distance multiplier — and two more (count, multiplier) per
         // tick while the see-through test is disabled. Global property values only matter at draw
         // time, so rewriting an unchanged value is a no-op for rendering. CameraManager is the only
-        // writer of these four properties in the game (OnDestroy's direct 0/1 reset apart), so a
-        // last-sent cache can only disagree with the GPU state after that reset; the prefix below
-        // drops the cache whenever a different manager instance ticks, which keeps a recreated
-        // manager from trusting the dead instance's cache across OnDestroy's resets. Idle play —
+        // writer of these four properties in the game, so a last-sent cache can only disagree with
+        // the GPU state after a write outside the guards — OnDestroy's direct 0/1 reset, which runs
+        // on any destroyed duplicate, not just the ticking one. The prefix below drops the cache
+        // whenever a different manager instance ticks, and a postfix on OnDestroy drops it after
+        // every reset, so whichever instance writes next always re-sends. Idle play —
         // stationary player, settled transparency ramps, fixed zoom, between-room states with no
         // controlling entity — then stops issuing the native setter calls and the 256-byte array
         // copy per tick; moving play still sends everything, exactly as before.
@@ -1441,7 +1442,12 @@ namespace SodRpg.Mod
         internal static void GuardVector(int id, Vector4 value)
         {
             if (!NativePerfOptions.OcclusionIdle) { Shader.SetGlobalVector(id, value); return; }
-            if (_hasVector && _sentVectorId == id && _sentVector == value) return;
+            // Unity's Vector4 operator== treats a summed squared difference below kEpsilon as equal,
+            // which would silently swallow sub-1e-5 drift and leave a slightly stale value on the
+            // GPU. Compare per component so only a bit-exact repeat is skipped.
+            if (_hasVector && _sentVectorId == id
+                && value.x == _sentVector.x && value.y == _sentVector.y
+                && value.z == _sentVector.z && value.w == _sentVector.w) return;
             _hasVector = true;
             _sentVectorId = id;
             _sentVector = value;
@@ -1467,11 +1473,47 @@ namespace SodRpg.Mod
 
         private static bool SameArray(Vector4[] values)
         {
+            // Per-component comparison for the same reason as GuardVector: Unity's operator==
+            // approximates, so an exact repeat is the only safe skip.
             for (int i = 0; i < values.Length; i++)
             {
-                if (values[i] != _sentArray[i]) return false;
+                if (values[i].x != _sentArray[i].x || values[i].y != _sentArray[i].y
+                    || values[i].z != _sentArray[i].z || values[i].w != _sentArray[i].w) return false;
             }
             return true;
+        }
+
+        // CameraManager.OnDestroy resets the count and multiplier directly, outside the guards, and
+        // runs for any destroyed manager — including duplicates that never ticked. After any such
+        // write the cache no longer matches the GPU state, so drop it entirely; the next guard call
+        // from any instance re-sends.
+        internal static void InvalidateCache()
+        {
+            _owner = null;
+            _hasInt = false;
+            _hasFloat = false;
+            _hasVector = false;
+            _hasArray = false;
+        }
+    }
+
+    [HarmonyPatch]
+    internal static class NativeOcclusionShaderIdlePerfReset
+    {
+        private static MethodBase _target;
+        private static bool _warned;
+
+        private static bool Prepare()
+        {
+            _target = NativePerfPatch.Find(typeof(CameraManager), "OnDestroy", ref _warned);
+            return _target != null;
+        }
+
+        private static MethodBase TargetMethod() => _target;
+
+        private static void Postfix()
+        {
+            NativeOcclusionShaderIdlePerf.InvalidateCache();
         }
     }
 
