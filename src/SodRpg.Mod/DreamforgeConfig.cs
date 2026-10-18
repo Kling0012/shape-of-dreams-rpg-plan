@@ -111,6 +111,9 @@ namespace SodRpg.Mod
         [LabelText("Reuse embrace skill position reads / 取り込み中の記憶の座標読み出しを毎フレーム1回にまとめる")]
         public bool nativeEmbracePositionReuse = true;
 
+        [LabelText("Reuse accessory attach offset lookups / 装飾品の取り付け位置の検索結果を使い回す")]
+        public bool nativeAccessoryOffsetCache = true;
+
         [LabelText("Skip idle cooldown multiplier math / 待機中のクールダウンの倍率計算を省く")]
         public bool nativeCooldownIdleMultiplier = true;
 

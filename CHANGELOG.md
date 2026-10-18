@@ -10,6 +10,24 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v3.8.1 — Performance tweaks（2026-10-18）
+
+動作を軽くするための細かな調整を行いました。 / Minor adjustments to reduce processing load.
+
+### 更新前に確認 / Before updating
+
+- 協力プレイでは、参加者全員がこのバージョンに更新してください。 / Everyone in co-op should update to this version.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 調整 / Adjustments
+
+- 照準円の表示、キャラクターの表示、純白の入口の判定で、毎フレームの不要な処理を省き、動作を軽くしました。ゲームの動きや見た目は変わりません。 / Reduced unnecessary per-frame work for cast indicator circles, character display, and the Pure White entrance check. Gameplay and visuals are unchanged.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
 ## v3.8.0 — 細かな調整と不具合の修正 / Minor adjustments and a fix（2026-10-18）
 
 細かな調整と、不具合の修正を行いました。 / Minor adjustments and a bug fix.

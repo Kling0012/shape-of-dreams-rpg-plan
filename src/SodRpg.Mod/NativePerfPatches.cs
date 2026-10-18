@@ -20,6 +20,7 @@ namespace SodRpg.Mod
             NativePerfOptions.OwnershipSpawnCounts = config.nativeOwnershipSpawnCounts;
             NativePerfOptions.ProcCoalesce = config.nativeProcCoalesce;
             NativePerfOptions.EmbracePosition = config.nativeEmbracePositionReuse;
+            NativePerfOptions.AccessoryOffset = config.nativeAccessoryOffsetCache;
             NativePerfOptions.CooldownIdleMultiplier = config.nativeCooldownIdleMultiplier;
             NativePerfOptions.TransformSyncIdle = config.nativeTransformSyncIdle;
             NativePerfOptions.SleepPosition = config.nativeSleepPositionReuse;
@@ -38,6 +39,7 @@ namespace SodRpg.Mod
         internal static bool OwnershipSpawnCounts = true;
         internal static bool ProcCoalesce = true;
         internal static bool EmbracePosition = true;
+        internal static bool AccessoryOffset = true;
         internal static bool CooldownIdleMultiplier = true;
         internal static bool TransformSyncIdle = true;
         internal static bool SleepPosition = true;
@@ -527,6 +529,80 @@ namespace SodRpg.Mod
                 _disabled = true;
                 NativePerfPatch.Warn(ref _warned, "embrace position", ex.Message);
                 return true;
+            }
+        }
+    }
+
+    [HarmonyPatch]
+    internal static class NativeAccessoryOffsetPerf
+    {
+        private static readonly ConditionalWeakTable<Accessory_AttachPoint, AccessoryOffsetCache<Accessory_AttachPoint.AttachOffset>> Caches =
+            new ConditionalWeakTable<Accessory_AttachPoint, AccessoryOffsetCache<Accessory_AttachPoint.AttachOffset>>();
+        private static readonly ConditionalWeakTable<Accessory_AttachPoint, AccessoryOffsetCache<Accessory_AttachPoint.AttachOffset>>.CreateValueCallback CreateCache =
+            _ => new AccessoryOffsetCache<Accessory_AttachPoint.AttachOffset>();
+        private static MethodBase _target;
+        private static bool _disabled;
+        private static bool _warned;
+
+        private static bool Prepare()
+        {
+            try
+            {
+                _target = AccessTools.DeclaredMethod(typeof(Accessory_AttachPoint), nameof(Accessory_AttachPoint.FindOffset),
+                    new[] { typeof(string) });
+                if (_target != null && _target.GetMethodBody() != null) return true;
+                NativePerfPatch.Warn(ref _warned, "Accessory_AttachPoint.FindOffset", "native method unavailable");
+            }
+            catch (Exception ex) { NativePerfPatch.Warn(ref _warned, "Accessory_AttachPoint.FindOffset", ex.Message); }
+            return false;
+        }
+
+        private static MethodBase TargetMethod() => _target;
+
+        private static bool Prefix(Accessory_AttachPoint __instance, string entityOrSkinName,
+            ref Accessory_AttachPoint.AttachOffset __result)
+        {
+            if (_disabled || !NativePerfOptions.AccessoryOffset) return true;
+            try
+            {
+                // The inspected game does not mutate customOffsets at runtime. The key detects
+                // model-name, list, count and element reference changes (same-count in-place
+                // replacements included), but not entityName value edits on a kept element.
+                // Disable this option if another mod makes those edits.
+                if (Caches.TryGetValue(__instance, out var cache)
+                    && cache.TryGet(entityOrSkinName, __instance.customOffsets, out var cached))
+                {
+                    __result = cached;
+                    return false;
+                }
+            }
+            catch (Exception ex)
+            {
+                _disabled = true;
+                NativePerfPatch.Warn(ref _warned, "accessory offset", ex.Message);
+                return true;
+            }
+            return true;
+        }
+
+        private static void Postfix(Accessory_AttachPoint __instance, string entityOrSkinName,
+            Accessory_AttachPoint.AttachOffset __result, bool __runOriginal)
+        {
+            // Cache only what the native search itself produced. When another mod's prefix
+            // skips the original (__runOriginal false), its substituted result must not
+            // enter this cache; the next call then runs the native search again. The option
+            // check keeps the disabled path equal to the Prefix: no store, no key snapshot
+            // allocation, only the native search runs.
+            if (!AccessoryOffsetStoreGate.ShouldStore(_disabled, NativePerfOptions.AccessoryOffset, __runOriginal)) return;
+            try
+            {
+                Caches.GetValue(__instance, CreateCache)
+                    .Store(entityOrSkinName, __instance.customOffsets, __result);
+            }
+            catch (Exception ex)
+            {
+                _disabled = true;
+                NativePerfPatch.Warn(ref _warned, "accessory offset", ex.Message);
             }
         }
     }
