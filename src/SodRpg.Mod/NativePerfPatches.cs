@@ -20,6 +20,7 @@ namespace SodRpg.Mod
             NativePerfOptions.OwnershipSpawnCounts = config.nativeOwnershipSpawnCounts;
             NativePerfOptions.ProcCoalesce = config.nativeProcCoalesce;
             NativePerfOptions.SleepPosition = config.nativeSleepPositionReuse;
+            NativePerfOptions.CameraZoomRotation = config.nativeCameraZoomRotation;
         }
     }
 
@@ -32,6 +33,7 @@ namespace SodRpg.Mod
         internal static bool OwnershipSpawnCounts = true;
         internal static bool ProcCoalesce = true;
         internal static bool SleepPosition = true;
+        internal static bool CameraZoomRotation = true;
     }
 
     internal static class NativePerfPatch
@@ -459,6 +461,68 @@ namespace SodRpg.Mod
             _cachedXY = xy;
             _cachedEntity = e;
             return xy;
+        }
+    }
+
+    [HarmonyPatch]
+    internal static class NativeCameraZoomRotationPerf
+    {
+        private static MethodBase _target;
+        private static bool _warned;
+
+        private static bool Prepare()
+        {
+            _target = NativePerfPatch.Find(typeof(CameraManager), "GetFollowOffsetTarget", ref _warned);
+            return _target != null;
+        }
+
+        private static MethodBase TargetMethod() => _target;
+
+        private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+        {
+            var code = new List<CodeInstruction>(instructions);
+            var euler = AccessTools.Method(typeof(Quaternion), nameof(Quaternion.Euler),
+                new[] { typeof(float), typeof(float), typeof(float) });
+            var angle = AccessTools.PropertyGetter(typeof(CameraManager), "entityCamAngle");
+            int site = -1, calls = 0;
+            for (int i = 0; i < code.Count; i++)
+            {
+                if (!code[i].Calls(euler)) continue;
+                calls++;
+                site = i;
+            }
+            // The zoom lerp, modifier scan and spectating branch stay native. Only the rebuild of
+            // Euler(0, entityCamAngle, 0) from the angle property is replaced by a read of the
+            // rotation the manager itself keeps.
+            if (calls != 1 || site < 4
+                || code[site - 4].opcode != OpCodes.Ldc_R4 || !(code[site - 4].operand is float low) || low != 0f
+                || code[site - 3].opcode != OpCodes.Ldarg_0
+                || !code[site - 2].Calls(angle)
+                || code[site - 1].opcode != OpCodes.Ldc_R4 || !(code[site - 1].operand is float high) || high != 0f)
+            {
+                NativePerfPatch.Warn(ref _warned, "camera zoom rotation", "native euler callsite changed or already patched");
+                return code;
+            }
+            code[site - 4].opcode = OpCodes.Nop;
+            code[site - 4].operand = null;
+            code[site - 2].opcode = OpCodes.Call;
+            code[site - 2].operand = AccessTools.Method(typeof(NativeCameraZoomRotationPerf), nameof(FollowRotation));
+            code[site - 1].opcode = OpCodes.Nop;
+            code[site - 1].operand = null;
+            code[site].opcode = OpCodes.Nop;
+            code[site].operand = null;
+            return code;
+        }
+
+        // The entityCamAngle setter stores exactly Euler(0, entityCamAngle, 0) into the public
+        // entityCamAngleRotation field, and Euler is a pure call, so after any set the cached field
+        // is bit-identical to the rebuilt quaternion. Nothing outside CameraManager writes either
+        // the backing field or the cached rotation. An angle of exactly zero keeps the native
+        // expression so the never-set initial frames (identity initializer) stay bit-identical.
+        private static Quaternion FollowRotation(CameraManager camera)
+        {
+            if (!NativePerfOptions.CameraZoomRotation) return Quaternion.Euler(0f, camera.entityCamAngle, 0f);
+            return camera.entityCamAngle == 0f ? Quaternion.Euler(0f, 0f, 0f) : camera.entityCamAngleRotation;
         }
     }
 }
