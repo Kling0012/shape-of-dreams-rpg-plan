@@ -19,6 +19,7 @@ namespace SodRpg.Mod
             NativePerfOptions.AggroPropagation = config.nativeAggroPropagation;
             NativePerfOptions.OwnershipSpawnCounts = config.nativeOwnershipSpawnCounts;
             NativePerfOptions.ProcCoalesce = config.nativeProcCoalesce;
+            NativePerfOptions.AttachFaceIdle = config.nativeAttachFaceIdle;
         }
     }
 
@@ -30,6 +31,7 @@ namespace SodRpg.Mod
         internal static bool AggroPropagation = true;
         internal static bool OwnershipSpawnCounts = true;
         internal static bool ProcCoalesce = true;
+        internal static bool AttachFaceIdle = true;
     }
 
     internal static class NativePerfPatch
@@ -357,6 +359,100 @@ namespace SodRpg.Mod
                 }
             }
             agent.obstacleAvoidanceType = value;
+        }
+    }
+
+    [HarmonyPatch]
+    internal static class NativeAttachFaceIdlePerf
+    {
+        // AttachToFace queries the shared baked-mesh cache every frame although a bake
+        // happens at most once per Dew.BakeMeshInterval. Between bakes the query can only
+        // find the same fresh entry, avoid re-baking and report "not new", so the caller
+        // dead-reckons exactly as it does without the query.
+        private static readonly Dictionary<int, float> LastNewBake = new Dictionary<int, float>();
+        private static MethodInfo _target;
+        private static bool _warned;
+
+        private static bool Prepare()
+        {
+            try
+            {
+                _target = AccessTools.DeclaredMethod(typeof(AttachToFace), "TryGetWorldPositionAndRotation");
+                if (_target == null || _target.IsStatic || _target.ReturnType != typeof(bool))
+                    throw new MissingMethodException("AttachToFace.TryGetWorldPositionAndRotation");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                NativePerfPatch.Warn(ref _warned, "attach face idle", ex.Message);
+                return false;
+            }
+        }
+
+        private static MethodInfo TargetMethod() => _target;
+
+        internal static void RecordNewBake(SkinnedMeshRenderer skin)
+        {
+            LastNewBake[skin.GetInstanceID()] = Time.unscaledTime;
+            // Destroyed skins must not grow the table forever; relearning is harmless.
+            if (LastNewBake.Count > 64) LastNewBake.Clear();
+        }
+
+        private static bool Prefix(AttachToFace __instance, ref bool __result)
+        {
+            if (!NativePerfOptions.AttachFaceIdle) return true;
+            try
+            {
+                SkinnedMeshRenderer skin = __instance.targetRenderer;
+                if (skin == null || __instance.vertexIndex0 < 0) return true;
+                if (!LastNewBake.TryGetValue(skin.GetInstanceID(), out float baked)) return true;
+                float now = Time.unscaledTime;
+                // Skip only when the newest bake is from an earlier frame and still fresh:
+                // the native lookup cannot re-bake (that needs an older entry) and its
+                // dictionary and pool churn has no visible effect.
+                if (baked >= now || now - baked > Dew.BakeMeshInterval)
+                    return true;
+                __result = false;
+                return false;
+            }
+            catch (Exception ex)
+            {
+                NativePerfPatch.Warn(ref _warned, "attach face idle", ex.Message);
+            }
+            return true;
+        }
+    }
+
+    [HarmonyPatch]
+    internal static class NativeAttachFaceBakeRecord
+    {
+        private static MethodBase _target;
+        private static bool _warned;
+
+        private static bool Prepare()
+        {
+            try
+            {
+                _target = AccessTools.DeclaredMethod(typeof(Dew), nameof(Dew.GetBakedMeshOptimized));
+                if (_target == null || !_target.IsStatic)
+                    throw new MissingMethodException("Dew.GetBakedMeshOptimized");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                NativePerfPatch.Warn(ref _warned, "attach face bake record", ex.Message);
+                return false;
+            }
+        }
+
+        private static MethodBase TargetMethod() => _target;
+
+        // Every play-mode bake goes through this method, including bakes triggered by
+        // other users of the same renderer, so the tracker above never misses a new mesh.
+        private static void Postfix(SkinnedMeshRenderer skin, bool isNew)
+        {
+            if (isNew && NativePerfOptions.AttachFaceIdle)
+                NativeAttachFaceIdlePerf.RecordNewBake(skin);
         }
     }
 }
