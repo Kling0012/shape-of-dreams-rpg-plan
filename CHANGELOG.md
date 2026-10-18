@@ -10,6 +10,24 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v3.8.4 — Lighter co-op processing（2026-10-19）
+
+協力プレイ中の通信まわりで不要な処理を省き、動作を少し軽くしました。 / Reduced unnecessary processing in co-op communication to slightly lighten the load.
+
+### 更新前に確認 / Before updating
+
+- 協力プレイでは、参加者全員がこのバージョンに更新してください。 / Everyone in co-op should update to this version.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 調整 / Adjustments
+
+- 協力プレイ中、ホストが参加者へ選択の履歴を届ける処理で、不要な処理を省きました。動作がわずかに軽くなります。ゲームの動きや見た目、届く内容は変わりません。 / Removed unnecessary work when the host sends choice history to co-op guests, making things slightly lighter. Gameplay, visuals, and the information guests receive are unchanged.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
 ## v3.8.3 — Japanese IME input in search fields and support for game r1.4.1.2（2026-10-19）
 
 ### 不具合の修正 / Bug fixes
