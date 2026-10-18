@@ -384,6 +384,7 @@ namespace SodRpg.Core.Game
                 {
                     var io = ex as IOException ?? new IOException(ex.Message, ex);
                     if (_loading && _readError == null) _readError = io;
+                    if (ex is IOException) throw;
                     throw io;
                 }
             }
@@ -395,6 +396,7 @@ namespace SodRpg.Core.Game
                     // Access failures must reach the same pre-mutation boundary as other source I/O errors.
                     var io = ex as IOException ?? new IOException(ex.Message, ex);
                     if (_loading && _readError == null) _readError = io;
+                    if (ex is IOException) throw;
                     throw io;
                 }
             }

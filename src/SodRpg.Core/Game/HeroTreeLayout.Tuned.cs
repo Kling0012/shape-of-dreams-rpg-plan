@@ -37,6 +37,9 @@ namespace SodRpg.Core.Game
 
     public sealed partial class HeroTreeLayout
     {
+        /// <summary>Receives rejected tuned-placement warnings; tools default to Trace.</summary>
+        public static Action<string> PlacementWarning { get; set; }
+
         /// <summary>
         /// 調整済みの座標を当てはめる。星の集合が表の作成時と違うとき（星の追加・削除の後）は何もしない＝
         /// 既定の配置のまま。壊れた配置を出さず、再生成が必要なことは検査（テストと StarMapRender --check）が知らせる。
@@ -55,8 +58,9 @@ namespace SodRpg.Core.Game
             var covered = new bool[nodes.Count];
             var xs = new float[nodes.Count];
             var ys = new float[nodes.Count];
-            // Include the starting star, whose position is not stored in the table.
-            var positions = new HashSet<(float X, float Y)> { (nodes[0].X, nodes[0].Y) };
+            // Create puts tree.start at index 0; the count guard above also rejects empty lists.
+            // Include that starting star, whose position is not stored in the table.
+            var positions = new Dictionary<(float X, float Y), string> { [(nodes[0].X, nodes[0].Y)] = nodes[0].Id };
             int placed = 0;
             foreach (string line in data.Split('\n'))
             {
@@ -65,8 +69,21 @@ namespace SodRpg.Core.Game
                 if (part.Length != 3 || !index.TryGetValue(part[0], out int i) || covered[i]
                     || !float.TryParse(part[1], NumberStyles.Float, CultureInfo.InvariantCulture, out float x)
                     || !float.TryParse(part[2], NumberStyles.Float, CultureInfo.InvariantCulture, out float y)
-                    || float.IsNaN(x) || float.IsInfinity(x) || float.IsNaN(y) || float.IsInfinity(y)
-                    || !positions.Add((x, y))) return false;
+                    || float.IsNaN(x) || float.IsInfinity(x) || float.IsNaN(y) || float.IsInfinity(y)) return false;
+                if (positions.TryGetValue((x, y), out string otherId))
+                {
+                    string warning = string.Format(CultureInfo.InvariantCulture,
+                        "Tuned star placement rejected: {0} and {1} overlap at ({2}, {3}); using sector layout.",
+                        otherId, nodes[i].Id, x, y);
+                    try
+                    {
+                        if (PlacementWarning != null) PlacementWarning(warning);
+                        else System.Diagnostics.Trace.TraceWarning(warning);
+                    }
+                    catch (Exception) { } // A diagnostic failure must not prevent sector placement.
+                    return false;
+                }
+                positions.Add((x, y), nodes[i].Id);
                 covered[i] = true; xs[i] = x; ys[i] = y; placed++;
             }
             if (placed != count) return false;

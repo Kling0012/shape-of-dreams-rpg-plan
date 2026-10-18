@@ -30,7 +30,7 @@ namespace SodRpg.Core.Game
         public List<string> Notes { get; } = new List<string>();
 
         /// <summary>
-        /// リセットに必要な写しが作れなかったので、保存を止めている（issue #17）。写しがそろうまで元のファイルを変えない。
+        /// 保存データの存在を確認できないか、リセットに必要な写しを作れないため、元のファイルを守るために保存を止めている。
         /// </summary>
         public bool WritesBlocked { get; private set; }
 
@@ -43,9 +43,15 @@ namespace SodRpg.Core.Game
             lock (_writeLock) _validatedFirstWrite = false;
             Notes.Clear();
             WritesBlocked = false;
-            var mainRoot = ReadRoot(_path, "本体", out bool mainExists);
-            var backupRoot = ReadRoot(BackupPath, "バックアップ", out bool backupExists);
-            if (ResetIfOld(mainRoot, backupRoot))
+            var mainRoot = ReadRoot(_path, "本体", out bool? mainExists);
+            var backupRoot = ReadRoot(BackupPath, "バックアップ", out bool? backupExists);
+            if (!mainExists.HasValue || !backupExists.HasValue)
+            {
+                WritesBlocked = true;
+                Notes.Add(Loc.T("保存データの存在を確認できないため、前のデータを保護するために保存を止めています。次に起動したときにもう一度試します。",
+                    "Saving is paused to protect existing data because a save file's existence could not be checked. It will be tried again on the next launch."));
+            }
+            if (!WritesBlocked && ResetIfOld(mainRoot, backupRoot))
             {
                 sourceReadsComplete?.Invoke();
                 return Profile.CreateNew(_seed);
@@ -65,18 +71,19 @@ namespace SodRpg.Core.Game
             }
             if (main != null && (bak == null || main.Revision >= bak.Revision))
             {
-                PreserveBeforeExclusion(_path, mainNotes.Exists(n => n.Contains("除外")));
+                if (!WritesBlocked) PreserveBeforeExclusion(_path, mainNotes.Exists(n => n.Contains("除外")));
                 return CompleteLoad(main, "本体", mainNotes, mainMigrated);
             }
             if (bak != null)
             {
                 Notes.Add("本体が読めないため、バックアップから復旧しました（rev " + bak.Revision + "）。");
-                if (mainExists) Quarantine(_path);
+                if (!WritesBlocked && mainExists == true) Quarantine(_path);
                 return CompleteLoad(bak, "バックアップ", bakNotes, bakMigrated);
             }
-            if (mainExists || backupExists)
+            if (WritesBlocked) return Profile.CreateNew(_seed);
+            if (mainExists == true || backupExists == true)
             {
-                if (mainExists) Quarantine(_path);
+                if (mainExists == true) Quarantine(_path);
                 Notes.Add("保存データが読めないため、新しいプロフィールで始めます。壊れたファイルは .corrupt として残しました。");
             }
             return Profile.CreateNew(_seed);
@@ -150,13 +157,13 @@ namespace SodRpg.Core.Game
             }
         }
 
-        private JsonObject ReadRoot(string path, string label, out bool exists)
+        private JsonObject ReadRoot(string path, string label, out bool? exists)
         {
-            exists = false;
+            exists = null;
             try
             {
                 exists = _fs.Exists(path);
-                if (!exists) return null;
+                if (exists == false) return null;
                 return Json.Parse(_fs.ReadAllText(path)) as JsonObject
                     ?? throw new LedgerFormatException("最上位がオブジェクトではありません。");
             }
@@ -276,8 +283,8 @@ namespace SodRpg.Core.Game
             }
         }
 
-        private const string BlockedMessageJa = "前のデータの写しを作れていないため、保存を止めています。次に起動したときにもう一度試します。";
-        private const string BlockedMessageEn = "Saving is paused because a copy of the previous data could not be made. It will be tried again on the next launch.";
+        private const string BlockedMessageJa = "前のデータを安全に保護できないため、保存を止めています。次に起動したときにもう一度試します。";
+        private const string BlockedMessageEn = "Saving is paused because the previous data cannot be safely preserved. It will be tried again on the next launch.";
 
         private static long ReadVersion(JsonObject root) =>
             root != null && root.TryGet("version", out object value) && value is long version ? version : -1;

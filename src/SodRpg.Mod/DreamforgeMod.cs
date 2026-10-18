@@ -70,6 +70,7 @@ namespace SodRpg.Mod
                 ApplyAutoCastCoopConfig();
                 ApplyNativePerfConfig();
                 // Install the generated star maps and their migration rules before any profile is loaded or any build is computed.
+                HeroTreeLayout.PlacementWarning = Log.Warn;
                 var starRegistrationWatch = System.Diagnostics.Stopwatch.StartNew();
                 StarClusters.RegisterAllGenerated((hero, error) =>
                     Log.Warn("Generated star map disabled for " + hero + "; other features remain available: " + error));
