@@ -1593,11 +1593,14 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
             }
             float now = Time.unscaledTime;
             string heroKey = HeroKeyOf(hero);
-            // 通知はこの送信経路で、送信間隔・同一ビルドの抑制に関係なく毎tick確認する。
-            // LocalHero・RPC・接続と復元完了が前提。ロビー等でこの経路を通らない間は新しい警告を出さない。
-            RefreshForbiddenGearNotice(heroKey, now);
             if (Profile.Run == null && _buildDirty && now < _allocationBuildDue && !_monsterAuthority.BuildResendRequired) return;
             if (!_buildDirty && !_monsterAuthority.BuildResendRequired && now < _nextBuildSend) return;
+            // 通知はこの送信経路で、ビルドを実際に評価するtick（変更・強制再送・ハートビート）でのみ確認する。
+            // 旧ホスト相手の毎フレームの装備と倉庫の走査を省く（#415 の宣言がない間はここを毎tick通るため）。
+            // LocalHero・RPC・接続と復元完了が前提。ロビー等でこの経路を通らない間は新しい警告を出さない。
+            // 装備の変化は MarkDirty を、能力の応答は _buildDirty を通るので、警告は遅れても
+            // ハートビート1回分（応答のないホストで5秒）の中で出る。
+            RefreshForbiddenGearNotice(heroKey, now);
             ProbeBuildInputCapability(heroKey);
             var submissionProfile = NetworkServer.active || _hostBuildInputCapability
                 ? Profile : HostBuildValidation.CompatibleProfile(Profile, heroKey);
