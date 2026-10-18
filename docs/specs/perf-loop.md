@@ -13,3 +13,13 @@
 - DestroyOnDeath のデリゲート確保（1回の登録で4〜5件）。状態効果の付与時にしか呼ばれず頻度が低い。調査中に本体の不具合も見つけた（キャッシュ用のフィールドへ代入し忘れたため、購読の解除が機能していない）。直すには購読の管理を変えることになり、結果が変わらないと保証できないため触らない。
 - OnDestroyActor の StartCoroutine とクロージャ（破棄ごと）。開始効果を止めるために2フレーム待っており、別の待ち方に置き換えると停止のタイミングが変わるおそれがあるため見送り。
 - HandleSequence の enumerator.Current の重複読み出し（1ステップで最大5回）。Transpiler が必要な割に効果は毎フレーム数ナノ秒の桁のため見送り。
+
+## perf-loop/20261018-1433
+
+対象: mod src/SodRpg.Mod/BountyReportBatching.cs
+
+直した内容: クライアントの `OnBountyCounts`（`DreamforgeBountyCountsMsg` 受信ごと）で、`Rules.OnSupportApplied` を `msg.shields`・`msg.allyHeals` が 0 でも無条件に呼んでいた。0 件の呼び出しは Rules.cs の冒頭で空の `List<GameEvent>` を確保して返すだけで、`Emit(IEnumerable)` は空のリストを反復するだけなので、件数が 0 のときは呼び出し自体を省き、確保と反復をなくした。
+
+結果が変わらない理由: `OnSupportApplied` は `count <= 0` を最初に検査してプロフィールに触れず空リストを返し、空リストの `Emit` は何も起きない（`_dirty` も立たない）。0 件のときの外部から見える作用は無く、1 件以上のときは従前どおり。元素撃破のみの報告（`ReportElementalDeath` 由来）では毎回 ShieldGranted・AllyHealed 両方の空リスト確保が発生していた。
+
+効果の見込み（推定）: 撃取報告メッセージ1通あたり最大2件の `List<GameEvent>` 確保と2回の空反復を削減。元素ビルドで敵を倒し続ける場面でクライアント側の GC 負荷が減る見込み（推定。頻度は戦闘中のホストティックごと・英雄ごと最大1通）。
