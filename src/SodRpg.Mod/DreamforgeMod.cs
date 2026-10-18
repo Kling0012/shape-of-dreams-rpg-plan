@@ -172,6 +172,7 @@ namespace SodRpg.Mod
         private void OnApplicationFocus(bool hasFocus)
         {
             _hasFocus = hasFocus;
+            _ui?.SetInputFocus(hasFocus);
             if (!_running) return;
             _performance?.SetFocus(hasFocus);
         }
@@ -240,7 +241,8 @@ namespace SodRpg.Mod
         {
             var kb = Keyboard.current;
             if (kb == null) return;
-            if (_ui == null) return;
+            if (_ui == null || !_hasFocus) return;
+            if (_ui.TextInputFocused) return;
             if (Pressed(kb, config.menuKey)) _ui.Toggle();
             if (_ui.Open && kb.escapeKey.wasPressedThisFrame) _ui.Close();
             var run = _session.Profile.Run;
@@ -391,6 +393,11 @@ namespace SodRpg.Mod
         {
             // Stop detaches profile callbacks and saves even if Unity never calls OnDestroy.
             Stop();
+        }
+
+        private void OnDisable()
+        {
+            _ui?.ReleaseTextInput();
         }
 
         private void OnDestroy()

@@ -130,6 +130,24 @@
     </ItemGroup>
   </Target>
 
+  <!-- MOD 検索欄での IME 入力（#771）。装備・鍛冶共通の名前検索と星図の星検索を実ソースから抽出する。
+       IME・フォーカス・GUI の境界は Issue771ImeUiBoundary.cs と共用スタブ。抽出した描画は、
+       検索欄にフォーカスがある間 Input.imeCompositionMode が On になっていることを検証する。 -->
+  <Target Name="CompileIssue771ImeSearchUi" BeforeTargets="CoreCompile">
+    <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/DreamforgeUi.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)Issue771ImeSearchUi.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="DreamforgeUi" Methods="DrawRelicSearch;StarDrawSearch" Fields="_scrollList;RelicSearchCaptionWidth;RelicSearchFieldSize;RelicSearchClearSize;_ime" />
+    <ItemGroup>
+      <Compile Include="$(IntermediateOutputPath)Issue771ImeSearchUi.g.cs" />
+    </ItemGroup>
+  </Target>
+
+  <!-- 交換タブの検索欄（#771・#407）。絞り込みの描画・フィルタのラベル作成を実ソースから抽出する。 -->
+  <Target Name="CompileIssue771ImeTradeUi" BeforeTargets="CoreCompile">
+    <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/DreamforgeUi.CoopTrade.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)Issue771ImeTradeUi.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="DreamforgeUi" Methods="DrawCoopTradeFilters;CycleCoopTradeFilter;RefreshCoopTradeFilterLabels;CoopTradeFiltering" Fields="_tradeOwnScroll;TradeFilterSize;TradeSearchSize;TradeRarities;TradeSlots;_tradeSearch;_tradeRarityFilter;_tradeSlotFilter;_tradeRarityLabel;_tradeSlotLabel;_tradeFilterLabelsJapanese" />
+    <ItemGroup>
+      <Compile Include="$(IntermediateOutputPath)Issue771ImeTradeUi.g.cs" />
+    </ItemGroup>
+  </Target>
+
   <Target Name="CompileSecurePanelUi" BeforeTargets="CoreCompile">
     <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/DreamforgeUi.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)SecurePanelUi.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="DreamforgeUi" Methods="UpdateSecurePanel;ToggleSecurePanel" />
     <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/DreamforgeUi.Window.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)InfinityChoiceNoticeUi.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="DreamforgeUi" Methods="DrawInfinityChoiceNotice" />

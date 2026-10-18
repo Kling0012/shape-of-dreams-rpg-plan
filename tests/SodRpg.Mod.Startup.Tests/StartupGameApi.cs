@@ -411,6 +411,9 @@ namespace SodRpg.Mod
     internal sealed class DreamforgeUi
     {
         public bool Open, MouseOverPanel, NeedsLayout, LayoutEnabled;
+        internal bool TextInputFocused => false;
+        internal void SetInputFocus(bool hasFocus) { }
+        internal void ReleaseTextInput() { }
         public DreamforgeUi(ClientSession session, Func<DreamforgeConfig> config, Action saveConfig = null,
             Action saveLanguageConfig = null) { }
         public void Notify(GameEvent ev) { }
