@@ -590,6 +590,49 @@ v3.2.6 のリリース編集 `3923d578` で省かれていた。現行コード�
 未実行：全件・低速テストは対象を絞る指示のため、MOD 本体のビルドと生成コード検査は実行コード・生成入力を
 変更していないため実行していない。ゲーム内の動作確認はゲームを起動できないため未実行。
 
+## #623 Issue #608・PR #507・#578 のレビュー提案の確認（2026-10-18）
+
+ボス持ち分の致死ダメージ下限を `BossShareLethalDamageFloor` として定数化し、
+本体の小ダメージ打ち切り `NativeSmallDamageCutoff` の2倍とした。
+値は従来どおり0.0002で、本体の打ち切り0.0001と死亡閾値0.00001の参照箇所もコメントに記した。
+#608の再現READMEではローカル環境の絶対パスを環境変数名・資料内のパス・置き換え用の表記へ改めた。
+`StarSummary` は上限をかけた値を変数で受け、表示と非ゼロ判定に同じ値を使うようにした。
+
+確認だけで対応できた提案もある。1%未満の残持ち分を `<1%` とする変更は、
+すでに `CHANGELOG.md` に日英で記載されているため、同じ修正の断片を追加していない。
+`tools/balance/coop.json` の `fullRange` と生成済み `CoopBalance.FullRange` は10で、
+`Gimmicks.AllyRadius` は後者の別名である。既存コメントどおり、非V129の味方回復の説明も
+協力距離の基準を共有する。将来の基準値変更はその説明にも反映されるが、過去の更新履歴は変更当時の値を記録する。
+`Content.StatCap` と `BuildAggregation.CapStat` には0が上限なしであることが明記され、
+`Build.Compute` と `StarSummary` が同じ関数を使っていることも確認した。
+
+未解決の提案は次のとおり。
+
+- PR #507の審査では、並列実行時に `GeneratedHeroAcceptanceTests` のHero_* 9件と
+  `PerformanceTests.A_kill_takes_well_under_a_tenth_of_a_millisecond` が不安定だったと報告されている。
+  依頼に記載された当時のCI core-tests成功だけでは、この問題の解消を確認できない。
+  今回は同じ並列条件での再現を実行していない。別Issueの作成とテストの変更は行わず、未解決事項として残した。
+- 獲得効果一覧は星だけを集計する。装備・契約も含めた実効値との差分表示は、
+  何を星の寄与として示すかの設計が必要なため見送った。
+- Powerの上限は現行の `Build.Compute` では装備の基礎値に応じた按分と倍率、
+  星の位階による加算を含む。`CapStat` と同じ単純な上限制限へ置き換えず、
+  `CapPower` の共通化は見送った。
+
+今回の検証では .NET SDK 10.0.111 と、環境変数 `NUGET_PACKAGES` が指すworktree外の
+キャッシュを使った。net8.0のテストは `DOTNET_ROLL_FORWARD=Major` で実行した。
+
+- `python3 tests/repro/issue608/run.py`：変更前・変更後ともに2件成功。
+  製品ソースをリンクし、本体と同じ遅延倍率演算に差し替えた既存の再現ケースで確認した。
+- `dotnet test tests/Issue73.Native.Tests/Issue73.Native.Tests.csproj -c Release --filter 'FullyQualifiedName~BossSharesTests|FullyQualifiedName~EnemyOwnershipTests|FullyQualifiedName~DynamicDifficultyTests|FullyQualifiedName~Issue608ZeroShareReproductionTests' --nologo -v:minimal`：59件成功。
+- `dotnet test tests/SodRpg.Core.Tests/SodRpg.Core.Tests.csproj -c Release --filter 'FullyQualifiedName~StarSummaryTests|FullyQualifiedName~StarMapPolishV131Tests|FullyQualifiedName~StarAdditionsV132Tests' -p:PythonCommand=python3 --nologo -v:quiet`：33件成功。
+- `dotnet build src/SodRpg.Mod/SodRpg.Mod.csproj -c Release -p:GameDir="<参照用ゲームDLLのフォルダ>" --nologo -v:quiet`：エラー0・警告6。
+  参照先に `Mods` がないことを確認し、配置処理を実行せずビルドした。
+
+未実行：全件・低速テストと並列不安定性の再現は、変更部分だけを検証する指示のため実行していない。
+生成コード検査は生成入力を変更していないため未実行。実ゲーム起動・画面・実Harmonyフック・
+実通信による協力プレイは、ゲームを起動できる環境がないため未実行。
+テストの追加・変更は行っていない。今回の変更は内部処理の整理と文書だけなので、更新履歴の断片は追加していない。
+
 ## マッピングロジックの単体テスト
 
 `tools/tests/test_test_changed.py`（unittest）がマッピングロジックの単体テストを

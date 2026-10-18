@@ -396,6 +396,9 @@ namespace SodRpg.Core.Game
                                 if (Rules.BelongsTo(def, kv.Key)) h.Talents[t.Key] = (int)Math.Min(def.MaxRank, rank);
                                 else notes.Add($"{kv.Key}: 旅人の刻印へ移行したため汎用ノードのポイントを戻しました: {t.Key}");
                             }
+                            else if (t.Value is long removedRank && removedRank > 0
+                                && StarClusters.MigrationsFor(kv.Key).FirstOrDefault(rule => rule.Removed && rule.LocalStarId == t.Key) is LegacyStarMigration removed)
+                                h.Talents[t.Key] = (int)System.Math.Min(removed.MaxRank, removedRank);
                             else
                                 notes.Add("未知の専門化ノードを除外: " + t.Key);
                         }
@@ -452,8 +455,15 @@ namespace SodRpg.Core.Game
                             notes.Add(Loc.T($"{kv.Key}: 効果が変わった星の取得を解除し、使っていたポイントを全額戻しました（{refund.ChangedRefundCost}ポイント）。星の盤で取り直せます: ",
                                 $"{kv.Key}: Stars whose effect changed were cleared and their spent points fully returned ({refund.ChangedRefundCost} points). You can re-spend them on the star map: ")
                                 + string.Join(", ", refund.ChangedStarIds.Select(id => StarLabel(tree, id))));
-                        int otherCost = refund.RefundCost - refund.ChangedRefundCost;
-                        var otherIds = refund.StarIds.Where(id => !refund.ChangedStarIds.Contains(id)).ToList();
+                        var removedRules = StarClusters.MigrationsFor(kv.Key).Where(rule => rule.Removed).ToDictionary(rule => rule.LocalStarId);
+                        var removedIds = refund.StarIds.Where(id => removedRules.ContainsKey(id)).ToList();
+                        int removedCost = removedIds.Sum(id => removedRules[id].RankCost);
+                        if (!alreadyReported && removedIds.Count > 0)
+                            notes.Add(Loc.T($"{kv.Key}: 廃止した星の取得を解除し、使っていたポイントを全額戻しました（{removedCost}ポイント）。星の盤でほかの星に使えます: ",
+                                $"{kv.Key}: Removed stars were cleared and their spent points fully returned ({removedCost} points). You can re-spend them on the star map: ")
+                                + string.Join(", ", removedIds));
+                        int otherCost = refund.RefundCost - refund.ChangedRefundCost - removedCost;
+                        var otherIds = refund.StarIds.Where(id => !refund.ChangedStarIds.Contains(id) && !removedRules.ContainsKey(id)).ToList();
                         if (!alreadyReported && otherIds.Count > 0)
                             notes.Add(Loc.T($"{kv.Key}: 選択や前提が無効になった星も払い戻しました（{otherCost}ポイント）: ",
                                 $"{kv.Key}: Stars left with an invalid choice or prerequisite were also refunded ({otherCost} points): ")

@@ -20,7 +20,11 @@ namespace SodRpg.Mod
             NativePerfOptions.OwnershipSpawnCounts = config.nativeOwnershipSpawnCounts;
             NativePerfOptions.ProcCoalesce = config.nativeProcCoalesce;
             NativePerfOptions.AccessoryOffset = config.nativeAccessoryOffsetCache;
+            NativePerfOptions.CooldownIdleMultiplier = config.nativeCooldownIdleMultiplier;
+            NativePerfOptions.TransformSyncIdle = config.nativeTransformSyncIdle;
             NativePerfOptions.SleepPosition = config.nativeSleepPositionReuse;
+            NativePerfOptions.CameraZoomRotation = config.nativeCameraZoomRotation;
+            NativePerfOptions.CharacterModelDisplayBounds = config.nativeCharacterModelDisplayBounds;
         }
     }
 
@@ -33,7 +37,11 @@ namespace SodRpg.Mod
         internal static bool OwnershipSpawnCounts = true;
         internal static bool ProcCoalesce = true;
         internal static bool AccessoryOffset = true;
+        internal static bool CooldownIdleMultiplier = true;
+        internal static bool TransformSyncIdle = true;
         internal static bool SleepPosition = true;
+        internal static bool CameraZoomRotation = true;
+        internal static bool CharacterModelDisplayBounds = true;
     }
 
     internal static class NativePerfPatch
@@ -43,6 +51,18 @@ namespace SodRpg.Mod
             try
             {
                 var target = AccessTools.DeclaredMethod(type, method, Type.EmptyTypes);
+                if (target != null && target.GetMethodBody() != null) return target;
+                Warn(ref warned, type.Name + "." + method, "native method unavailable");
+            }
+            catch (Exception ex) { Warn(ref warned, type.Name + "." + method, ex.Message); }
+            return null;
+        }
+
+        internal static MethodBase Find(Type type, string method, Type[] arguments, ref bool warned)
+        {
+            try
+            {
+                var target = AccessTools.DeclaredMethod(type, method, arguments);
                 if (target != null && target.GetMethodBody() != null) return target;
                 Warn(ref warned, type.Name + "." + method, "native method unavailable");
             }
@@ -439,6 +459,115 @@ namespace SodRpg.Mod
     }
 
     [HarmonyPatch]
+    internal static class NativeCooldownIdlePerf
+    {
+        private static MethodBase _target;
+        private static bool _disabled;
+        private static bool _warned;
+
+        private static bool Prepare()
+        {
+            _target = NativePerfPatch.Find(typeof(AbilityTrigger), nameof(AbilityTrigger.LogicUpdate),
+                new[] { typeof(float) }, ref _warned);
+            return _target != null;
+        }
+
+        private static MethodBase TargetMethod() => _target;
+
+        private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+        {
+            var code = new List<CodeInstruction>(instructions);
+            var multiplier = AccessTools.DeclaredMethod(typeof(AbilityTrigger),
+                nameof(AbilityTrigger.GetCooldownTimeMultiplier), new[] { typeof(int) });
+            int site = -1, count = 0;
+            if (multiplier != null)
+                for (int i = 0; i < code.Count; i++)
+                    if (code[i].Calls(multiplier)) { site = i; count++; }
+            // Only the per-frame cooldown tick call is redirected. SetCooldownTime, max time and
+            // reduction paths call the multiplier outside this method and stay untouched.
+            if (multiplier == null || count != 1)
+            {
+                NativePerfPatch.Warn(ref _warned, "cooldown idle", "native multiplier callsite changed or already patched");
+                return code;
+            }
+            code[site].opcode = OpCodes.Call;
+            code[site].operand = AccessTools.Method(typeof(NativeCooldownIdlePerf), nameof(TickMultiplier));
+            return code;
+        }
+
+        private static float TickMultiplier(AbilityTrigger trigger, int configIndex)
+        {
+            if (!_disabled && NativePerfOptions.CooldownIdleMultiplier)
+            {
+                try
+                {
+                    // The tick only feeds the multiplier into MoveTowards as maxDelta, which
+                    // keeps an already-resting cooldown at zero while maxDelta is non-negative
+                    // and non-NaN. Equivalence relies on GuardMultiplier's postfixes keeping
+                    // this tick's multiplier positive, as they do in normal operation; 1 here
+                    // means maxDelta = dt, keeping zero the same way. A degenerate unguarded
+                    // multiplier (negative or NaN) could only have moved zero in the original
+                    // (Mathf.Sign(0) * maxDelta), so this path is at least as stable. The
+                    // virtual call (and its safety postfixes) still runs for moving cooldowns.
+                    var times = trigger.currentUnscaledCooldownTimes;
+                    if (times != null && configIndex >= 0 && configIndex < times.Length && times[configIndex] == 0f)
+                        return 1f;
+                }
+                catch (Exception ex)
+                {
+                    _disabled = true;
+                    NativePerfPatch.Warn(ref _warned, "cooldown idle", ex.Message);
+                }
+            }
+            return trigger.GetCooldownTimeMultiplier(configIndex);
+        }
+    }
+
+    [HarmonyPatch]
+    internal static class NativeTransformSyncIdlePerf
+    {
+        private static AccessTools.FieldRef<ActorTransformSync, SyncMovementData> _syncData;
+        private static MethodBase _target;
+        private static bool _disabled;
+        private static bool _warned;
+
+        private static bool Prepare()
+        {
+            try
+            {
+                _target = AccessTools.PropertySetter(typeof(ActorTransformSync), "Network_syncData");
+                if (_target == null || _target.GetMethodBody() == null)
+                    throw new MissingMethodException("ActorTransformSync.Network_syncData setter unavailable");
+                _syncData = AccessTools.FieldRefAccess<ActorTransformSync, SyncMovementData>("_syncData");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                NativePerfPatch.Warn(ref _warned, "transform sync idle", ex.Message);
+                return false;
+            }
+        }
+
+        private static MethodBase TargetMethod() => _target;
+
+        private static bool Prefix(ActorTransformSync __instance, SyncMovementData value)
+        {
+            if (_disabled || !NativePerfOptions.TransformSyncIdle) return true;
+            try
+            {
+                if (NativeTransformSyncIdle.IsIdleRefresh(_syncData(__instance), value))
+                    return false;
+            }
+            catch (Exception ex)
+            {
+                _disabled = true;
+                NativePerfPatch.Warn(ref _warned, "transform sync idle", ex.Message);
+            }
+            return true;
+        }
+    }
+
+    [HarmonyPatch]
     internal static class NativeSleepPositionPerf
     {
         private static Entity _cachedEntity;
@@ -535,6 +664,71 @@ namespace SodRpg.Mod
             _cachedXY = xy;
             _cachedEntity = e;
             return xy;
+        }
+    }
+
+    [HarmonyPatch]
+    internal static class NativeCameraZoomRotationPerf
+    {
+        private static MethodBase _target;
+        private static bool _warned;
+
+        private static bool Prepare()
+        {
+            _target = NativePerfPatch.Find(typeof(CameraManager), "GetFollowOffsetTarget", ref _warned);
+            return _target != null;
+        }
+
+        private static MethodBase TargetMethod() => _target;
+
+        private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+        {
+            var code = new List<CodeInstruction>(instructions);
+            var euler = AccessTools.Method(typeof(Quaternion), nameof(Quaternion.Euler),
+                new[] { typeof(float), typeof(float), typeof(float) });
+            var angle = AccessTools.PropertyGetter(typeof(CameraManager), "entityCamAngle");
+            int site = -1, calls = 0;
+            for (int i = 0; i < code.Count; i++)
+            {
+                if (!code[i].Calls(euler)) continue;
+                calls++;
+                site = i;
+            }
+            // The zoom lerp, modifier scan and spectating branch stay native. Only the rebuild of
+            // Euler(0, entityCamAngle, 0) from the angle property is replaced by a read of the
+            // rotation the manager itself keeps.
+            if (calls != 1 || site < 4
+                || code[site - 4].opcode != OpCodes.Ldc_R4 || !(code[site - 4].operand is float low) || low != 0f
+                || code[site - 3].opcode != OpCodes.Ldarg_0
+                || !code[site - 2].Calls(angle)
+                || code[site - 1].opcode != OpCodes.Ldc_R4 || !(code[site - 1].operand is float high) || high != 0f)
+            {
+                NativePerfPatch.Warn(ref _warned, "camera zoom rotation", "native euler callsite changed or already patched");
+                return code;
+            }
+            code[site - 4].opcode = OpCodes.Nop;
+            code[site - 4].operand = null;
+            code[site - 2].opcode = OpCodes.Call;
+            code[site - 2].operand = AccessTools.Method(typeof(NativeCameraZoomRotationPerf), nameof(FollowRotation));
+            code[site - 1].opcode = OpCodes.Nop;
+            code[site - 1].operand = null;
+            code[site].opcode = OpCodes.Nop;
+            code[site].operand = null;
+            return code;
+        }
+
+        // The entityCamAngle setter stores exactly Euler(0, entityCamAngle, 0) into the public
+        // entityCamAngleRotation field, and Euler is a pure call, so after any set the cached field
+        // is bit-identical to the rebuilt quaternion. Nothing outside CameraManager writes either
+        // the backing field or the cached rotation, and neither is serialized (the backing field is
+        // private without SerializeField; the cached rotation is NonSerialized), so no scene,
+        // prefab or deserialization can set the angle without the setter either. An angle of
+        // exactly zero keeps the native expression so the never-set initial frames (identity
+        // initializer) stay bit-identical.
+        private static Quaternion FollowRotation(CameraManager camera)
+        {
+            if (!NativePerfOptions.CameraZoomRotation) return Quaternion.Euler(0f, camera.entityCamAngle, 0f);
+            return camera.entityCamAngle == 0f ? Quaternion.Euler(0f, 0f, 0f) : camera.entityCamAngleRotation;
         }
     }
 }

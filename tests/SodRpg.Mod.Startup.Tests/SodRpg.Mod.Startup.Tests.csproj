@@ -44,7 +44,9 @@
   <Compile Include="../../src/SodRpg.Mod/AccessoryOffsetCacheKey.cs" Link="ModUnderTest/AccessoryOffsetCacheKey.cs" />
     <Compile Include="../../src/SodRpg.Mod/MovementGemSlotEdit.cs" Link="ModUnderTest/MovementGemSlotEdit.cs" />
     <Compile Include="../../src/SodRpg.Mod/FrostFxLifetime.cs" Link="ModUnderTest/FrostFxLifetime.cs" />
+  <Compile Include="../../src/SodRpg.Mod/NativeTransformSyncIdle.cs" Link="ModUnderTest/NativeTransformSyncIdle.cs" />
     <Compile Include="$(IntermediateOutputPath)Esscap.Native.cs" Link="ModUnderTest/Esscap.Native.cs" />
+    <Compile Include="$(IntermediateOutputPath)CooldownIdle.Native.cs" Link="ModUnderTest/CooldownIdle.Native.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="../../tools/balance/essence-caps.json" Link="EssenceCaps.json" CopyToOutputDirectory="PreserveNewest" />
@@ -57,5 +59,6 @@
       <PythonCommand Condition="'$(PythonCommand)' == ''">python</PythonCommand>
     </PropertyGroup>
     <Exec Command="$(PythonCommand) &quot;$(MSBuildProjectDirectory)/extract_esscap_native.py&quot; &quot;$(MSBuildProjectDirectory)/$(IntermediateOutputPath)Esscap.Native.cs&quot;" />
+    <Exec Command="$(PythonCommand) &quot;$(MSBuildProjectDirectory)/extract_cooldown_idle_native.py&quot; &quot;$(MSBuildProjectDirectory)/$(IntermediateOutputPath)CooldownIdle.Native.cs&quot;" />
   </Target>
 </Project>

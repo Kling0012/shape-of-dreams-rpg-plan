@@ -9,3 +9,4 @@ tools/balance/.gen_cs-cache.json
 __pycache__/
 .nuget-pkgs/
 tests/repro/issue573/artifacts/
+.ci-logs/
