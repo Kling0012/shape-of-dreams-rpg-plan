@@ -45,7 +45,7 @@ namespace SodRpg.Core.Tests
         [Fact]
         public void Vesper_growth_definition_is_kept_with_unchanged_fill_and_effects()
         {
-            // FR-4: ヴェスパーの鍛錬は残す。FR-3 の境界: 溜まり方（閾値11%・上限60）と
+            // FR-4: ヴェスパーの鍛錬は残す。FR-3 の境界: 溜まり方（閾値11%・上限なし）と
             // 1段あたりの効果量（最大HP +13.25・防御 +3.32・攻撃速度 +1.32%）は変更前のまま。
             foreach (string hero in StarClusters.GeneratedHeroes) StarClusters.RegisterGeneratedHero(hero);
             var profile = Profile.CreateNew(1);
@@ -55,7 +55,7 @@ namespace SodRpg.Core.Tests
             var entry = Assert.Single(Build.Compute(profile, "Hero_Vesper", 0).RunGrowths);
             Assert.Equal(RunGrowthTrigger.DamageTakenMaxHpPct, entry.Trigger);
             Assert.Equal(11, entry.Threshold);
-            Assert.Equal(60, entry.Cap);
+            Assert.Equal(0, entry.Cap);   // 2026-10-18: 上限なし（ケトゥスと同じ）
             Assert.Equal(1, entry.GainMultiplier);
             double hpPerStack = entry.Effects.Where(e => e.Stat == Stat.MaxHealthFlat)
                 .Select(e => e.AmountMilli / 1000d * (100 + entry.EffectPercent) / 100d).Single();
