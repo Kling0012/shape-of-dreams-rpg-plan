@@ -1417,7 +1417,7 @@ namespace SodRpg.Core.Game
             if (rng == null) return total;
             // Keep combined depth rounding; waypoint conversions already thinned their source loot.
             int converted = DreamDepth.ScaleReward(convertedAmount, multiplier);
-            return SaturatingAdd(PressureCountRewards.ScaleInt(rng, total - converted, rewardScale), converted);
+            return SaturatingAdd(PressureCountRewards.ScaleInt(rng, Math.Max(0, total - converted), rewardScale), converted);
         }
 
         private static void AddStarXp(Profile p, string heroKey, int amount, List<GameEvent> ev, double rewardScale = 1, Rng rng = null, int convertedAmount = 0)

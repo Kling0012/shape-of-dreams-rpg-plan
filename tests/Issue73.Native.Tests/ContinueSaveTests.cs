@@ -497,6 +497,80 @@ namespace Issue73.Native.Tests
             Assert.Null(((DreamforgeHelloMsg)Call(guest, "CreateHelloMessage")).continueCheckpointId);
         }
 
+        /// <summary>
+        /// #415: 旧ホスト（MOD なし・旧版）相手の禁忌装備の警告が、送信スロットルの早期 return をまたいで
+        /// いつ出るか。警告は SendBuildIfNeeded の評価tick（変更・強制再送・ハートビート）でのみ確認するため、
+        /// 変化が MarkDirty（_buildDirty）を通るかどうかで出る時期が決まる。3つの場面（装備の変更・能力の応答・
+        /// 倉庫だけの変更）での遅れの上限を確かめる。
+        /// </summary>
+        private static ClientSession OldHostGuest(out Actor actor, bool capabilityAnswered)
+        {
+            var guest = GuestInGame("run");
+            actor = new Actor();
+            Set(guest, "_clientRpcOn", actor);
+            var relic = Loot.RollRelic(new Rng(785), Rarity.Epic, 60, Content.SlotOrder[0]);
+            guest.Profile.Stash.Add(relic);
+            Rules.Equip(guest.Profile, "Hero", relic.Uid); // HeroKeyOf(LocalHero) = "Hero"
+            if (capabilityAnswered) Set(guest, "_hostBuildInputCapability", true); // 応答はあるが #415 未対応
+            // 参加直後の初回送信（英雄・夢の階層の変化フラグの解消）を済ませ、ハートビート待ちの状態を作る。
+            Call(guest, "SendBuildIfNeeded");
+            Set(guest, "_buildDirty", false);
+            Set(guest, "_nextBuildSend", Time.unscaledTime + 30f); // 確認応答済みホストのハートビート間隔
+            actor.Sent.Clear();
+            return guest;
+        }
+
+        [Fact]
+        public void Forbidden_gear_notice_follows_markdirty_equipment_changes_despite_build_throttle()
+        {
+            var guest = OldHostGuest(out var actor, capabilityAnswered: true);
+            var relic = guest.Profile.Stash.Single(r => guest.Profile.Hero("Hero").Equipped.Contains(r.Uid));
+            Call(guest, "SendBuildIfNeeded"); // ハートビート待ちの早期 return: 警告もビルド送信もない
+            Assert.Null(guest.ForbiddenGearHostNotice);
+            Assert.DoesNotContain(actor.Sent, sent => sent.Message is DreamforgeBuildMsg);
+
+            // 再調律で上限を超えた遺物が装備のまま残る。UI の Act(..., true) と同じ MarkDirty(true) を通る。
+            relic.Retunes = Content.MaxRetunes + 1;
+            Call(guest, "MarkDirty", true);
+            Call(guest, "SendBuildIfNeeded"); // ハートビートを待たず、変更の次の評価tickで出る
+            Assert.NotNull(guest.ForbiddenGearHostNotice);
+        }
+
+        [Fact]
+        public void Forbidden_gear_notice_follows_capability_responses_and_clears_without_waiting_for_a_tick()
+        {
+            var guest = OldHostGuest(out _, capabilityAnswered: false);
+            guest.Profile.Stash.Single(r => guest.Profile.Hero("Hero").Equipped.Contains(r.Uid)).Retunes = Content.MaxRetunes + 1;
+            Call(guest, "SendBuildIfNeeded"); // 応答待ち（20秒の窓）とスロットルの中: まだ警告はない
+            Assert.Null(guest.ForbiddenGearHostNotice);
+
+            // ホストの能力応答（#415 未対応の旧ホスト）が OnBuildInputCapability の _buildDirty を立てる。
+            Call(guest, "OnBuildInputCapability", new DreamforgeBuildInputCapabilityMsg { version = 1 });
+            Call(guest, "SendBuildIfNeeded"); // スロットルはまだ効いているが、変更の評価tickで出る
+            Assert.NotNull(guest.ForbiddenGearHostNotice);
+
+            // #415 対応の宣言が届いたら、警告は次のtickを待たずにその場で消える。
+            Call(guest, "OnBuildInputCapability", new DreamforgeBuildInputCapabilityMsg { version = 1, forbiddenInput = 1 });
+            Assert.Null(guest.ForbiddenGearHostNotice);
+        }
+
+        [Fact]
+        public void Forbidden_gear_notice_from_stash_only_changes_waits_at_most_one_build_heartbeat()
+        {
+            var guest = OldHostGuest(out var actor, capabilityAnswered: true);
+            var relic = guest.Profile.Stash.Single(r => guest.Profile.Hero("Hero").Equipped.Contains(r.Uid));
+            // 倉庫の記録だけを変える（MarkDirty を通らない変化）。本番で警告の条件を変える経路は
+            // 装備・再調律・禁忌化のいずれも MarkDirty(true) を通るため、ここは直接書き換えて上限を確かめる。
+            relic.Retunes = Content.MaxRetunes + 1;
+            Call(guest, "SendBuildIfNeeded"); // ハートビートの前の早期 return: 警告は出ない
+            Assert.Null(guest.ForbiddenGearHostNotice);
+            Assert.DoesNotContain(actor.Sent, sent => sent.Message is DreamforgeBuildMsg);
+
+            Time.unscaledTime += 30f; // 次のビルド評価tick（ハートビート1回）
+            Call(guest, "SendBuildIfNeeded");
+            Assert.NotNull(guest.ForbiddenGearHostNotice); // 遅れはハートビート1回以内に収まる
+        }
+
         [Theory]
         [InlineData(false)]
         [InlineData(true)]

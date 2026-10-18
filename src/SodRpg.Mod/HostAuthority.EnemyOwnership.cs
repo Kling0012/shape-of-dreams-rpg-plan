@@ -837,6 +837,8 @@ namespace SodRpg.Mod
             bool idle = now - state.OwnerLastEngaged >= CoopBalance.Ownership.IdleSeconds;
             if (now - state.Changed < CoopBalance.Ownership.ReassignCooldown || !(down || far || idle)) return;
             var replacement = OwnershipReplacement(state);
+            System.Diagnostics.Debug.Assert(replacement == null || replacement.hero != null,
+                "OwnershipReplacement must return OwnershipAlive players, which always have heroes");
             bool replacementFought = replacement != null && now - OwnershipLastFight(state, replacement) <= CoopBalance.Ownership.EngageWindow;
             // Leaving only because the owner is far: hand over to someone fighting it or actually near it.
             // Otherwise two far players took turns every AwaySeconds, swinging the enemy's strength each time.

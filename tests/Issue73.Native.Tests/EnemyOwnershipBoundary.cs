@@ -23,6 +23,12 @@ namespace UnityEngine
         public static bool operator !=(Vector3 a, Vector3 b) => !(a == b);
         public static Vector3 LerpUnclamped(Vector3 a, Vector3 b, float t) => a + (b - a) * t;
         public float sqrMagnitude => x * x + y * y + z * z;
+        // 本体 UnityEngine.Vector3.Lerp と同じ式（t を Clamp01 して各軸を補間する）。
+        public static Vector3 Lerp(Vector3 a, Vector3 b, float t)
+        {
+            t = Mathf.Clamp01(t);
+            return new Vector3(a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t, a.z + (b.z - a.z) * t);
+        }
     }
 }
 namespace UnityEngine.AI
@@ -35,6 +41,16 @@ namespace UnityEngine.AI
 internal static class Dew
 {
     internal static float BakeMeshInterval = 0.1f;
+
+    internal struct BakedMeshHandle { }
+
+    internal static void GetBakedMeshOptimized(SkinnedMeshRenderer skin, out Mesh mesh,
+        out BakedMeshHandle handle, out bool isNew)
+    {
+        mesh = null;
+        handle = default;
+        isNew = false;
+    }
 
     internal static UnityEngine.AI.NavMeshPathStatus GetNavMeshPathStatusCached(
         SodRpg.Mod.Entity from, SodRpg.Mod.Entity to, UnityEngine.Vector3 start, UnityEngine.Vector3 end)

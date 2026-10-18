@@ -27575,7 +27575,7 @@
       "rankCost": 1,
       "nameJa": "積もる傷痕",
       "nameEn": "Deepening Scars",
-      "notes": "上限増分はバランス表から生成。 / Cap increase is generated from the balance table."
+      "notes": "効果増分はバランス表から生成。 / Effect increase is generated from the balance table."
     },
     {
       "id": "vesper.run.m2",
@@ -27619,7 +27619,7 @@
       "rankCost": 1,
       "nameJa": "耐え抜いた証",
       "nameEn": "Mark of Endurance",
-      "notes": "上限増分はバランス表から生成。 / Cap increase is generated from the balance table."
+      "notes": "効果増分はバランス表から生成。 / Effect increase is generated from the balance table."
     },
     {
       "id": "vesper.run.choice",

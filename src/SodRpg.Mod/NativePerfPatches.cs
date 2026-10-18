@@ -20,8 +20,10 @@ namespace SodRpg.Mod
             NativePerfOptions.OwnershipSpawnCounts = config.nativeOwnershipSpawnCounts;
             NativePerfOptions.ProcCoalesce = config.nativeProcCoalesce;
             NativePerfOptions.AttachFaceIdle = config.nativeAttachFaceIdle;
+            NativePerfOptions.EmbracePosition = config.nativeEmbracePositionReuse;
             NativePerfOptions.AccessoryOffset = config.nativeAccessoryOffsetCache;
             NativePerfOptions.CooldownIdleMultiplier = config.nativeCooldownIdleMultiplier;
+            NativeSkillLockRecovery.Enabled = config.guestSkillLockRecovery;
             NativePerfOptions.TransformSyncIdle = config.nativeTransformSyncIdle;
             NativePerfOptions.SleepPosition = config.nativeSleepPositionReuse;
             NativePerfOptions.CastIndicatorCircle = config.nativeCastIndicatorCircle;
@@ -39,6 +41,7 @@ namespace SodRpg.Mod
         internal static bool OwnershipSpawnCounts = true;
         internal static bool ProcCoalesce = true;
         internal static bool AttachFaceIdle = true;
+        internal static bool EmbracePosition = true;
         internal static bool AccessoryOffset = true;
         internal static bool CooldownIdleMultiplier = true;
         internal static bool TransformSyncIdle = true;
@@ -571,6 +574,151 @@ namespace SodRpg.Mod
     }
 
     [HarmonyPatch]
+    internal static class NativeEmbracePositionPerf
+    {
+        // Fingerprint of the shipped Dew.Core (r1.4.0.13) Ai_EmbraceNewIdentity.UpdatePositions
+        // body: IL byte length, FNV-1a hash, local count and exception clause count. The prefix
+        // repeats the native computation, so a game update that edits that body must turn the
+        // patch off instead of silently overriding the new behavior with the old arithmetic.
+        internal const int NativeIlLength = 159;
+        internal const ulong NativeIlHash = 7063811622246808011UL;
+        internal const int NativeLocals = 4;
+        internal const int NativeExceptionClauses = 0;
+
+        private static AccessTools.FieldRef<Ai_EmbraceNewIdentity, Vector3> _initPos;
+        private static AccessTools.FieldRef<Ai_EmbraceNewIdentity, EaseFunction> _easeFunc;
+        private static MethodBase _target;
+        private static bool _disabled;
+        private static bool _warned;
+
+        private static bool Prepare()
+        {
+            _target = NativePerfPatch.Find(typeof(Ai_EmbraceNewIdentity), "UpdatePositions", ref _warned);
+            if (_target == null) return false;
+            if (!GuardNativeBody(_target)) return false;
+            try
+            {
+                _initPos = AccessTools.FieldRefAccess<Ai_EmbraceNewIdentity, Vector3>("_targetSkillInitPos");
+                _easeFunc = AccessTools.FieldRefAccess<Ai_EmbraceNewIdentity, EaseFunction>("_easeFunc");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                NativePerfPatch.Warn(ref _warned, "embrace position", ex.Message);
+                return false;
+            }
+        }
+
+        private static MethodBase TargetMethod() => _target;
+
+        // Native expression: Mathf.Clamp01((Time.time - creationTime) / channelTime).
+        internal static float ChannelProgress(float time, float creationTime, float channelTime)
+            => Mathf.Clamp01((time - creationTime) / channelTime);
+
+        // Native expression: Vector3.Lerp(_targetSkillInitPos, info.caster.position, _easeFunc(0f, 1f, v)).
+        internal static Vector3 EasedSkillPosition(Vector3 initPos, Vector3 casterPos, EaseFunction ease, float v)
+            => Vector3.Lerp(initPos, casterPos, ease(0f, 1f, v));
+
+        // Native loop: every non-null onSkillTransform element receives the skill position.
+        internal static void DistributePosition(Transform[] onSkillTransform, Vector3 position)
+        {
+            for (int i = 0; i < onSkillTransform.Length; i++)
+                if (onSkillTransform[i] != null)
+                    onSkillTransform[i].position = position;
+        }
+
+        // True when an onSkillTransform element is the skill transform itself or one of its
+        // ancestors. Writing a world position into such an element drags the skill along with
+        // it (children keep their local position), so the native loop would hand every later
+        // element a different NetworktargetSkill.position. The single-read shortcut cannot
+        // reproduce that, so the caller runs the native body instead. The chain walk starts
+        // at the skill transform (self counts); ReferenceEquals is enough because the walk
+        // only happens right after a successful write, so the skill transform and every
+        // ancestor on the chain are alive, and a destroyed array element never shares a
+        // reference with a live transform.
+        internal static bool HasAncestorElement(Transform[] onSkillTransform, Transform skillTransform)
+        {
+            for (Transform t = skillTransform; t != null; t = t.parent)
+                for (int i = 0; i < onSkillTransform.Length; i++)
+                    if (ReferenceEquals(onSkillTransform[i], t))
+                        return true;
+            return false;
+        }
+
+        // Apply the patch only while the recorded body still matches the shipped IL. Never
+        // throws: a body-less method (extern/abstract after a game update) or an unreadable
+        // body only disables this feature with one warning, like the other native guards.
+        internal static bool GuardNativeBody(MethodBase method)
+        {
+            try
+            {
+                var body = method.GetMethodBody();
+                if (body == null)
+                {
+                    NativePerfPatch.Warn(ref _warned, "embrace position",
+                        "native UpdatePositions body unavailable");
+                    return false;
+                }
+                var il = body.GetILAsByteArray();
+                if (il.Length == NativeIlLength && Fnv1a(il) == NativeIlHash
+                    && body.LocalVariables.Count == NativeLocals
+                    && body.ExceptionHandlingClauses.Count == NativeExceptionClauses)
+                    return true;
+                NativePerfPatch.Warn(ref _warned, "embrace position",
+                    "native UpdatePositions body changed (il " + il.Length + ")");
+                return false;
+            }
+            catch (Exception ex)
+            {
+                NativePerfPatch.Warn(ref _warned, "embrace position", ex.Message);
+                return false;
+            }
+        }
+
+        internal static ulong Fnv1a(byte[] bytes)
+        {
+            ulong hash = 14695981039346656037UL;
+            for (int i = 0; i < bytes.Length; i++)
+            {
+                hash ^= bytes[i];
+                hash *= 1099511628211UL;
+            }
+            return hash;
+        }
+
+        private static bool Prefix(Ai_EmbraceNewIdentity __instance)
+        {
+            if (_disabled || !NativePerfOptions.EmbracePosition) return true;
+            try
+            {
+                // Identical computation to the native UpdatePositions. Every client-side
+                // NetworktargetSkill read resolves the netId through NetworkClient.spawned,
+                // so the skill reference, its position and the ease delegate are each read
+                // once instead of once per onSkillTransform element.
+                SkillTrigger skill = __instance.NetworktargetSkill;
+                if (skill == null) return false;
+                float v = ChannelProgress(Time.time, __instance.creationTime, __instance.channelTime);
+                skill.transform.position = EasedSkillPosition(_initPos(__instance),
+                    __instance.info.caster.position, _easeFunc(__instance), v);
+                // The distributed value is read through the same Actor.position property the
+                // native loop uses, so the result never depends on that getter's definition.
+                // An element that is the skill transform itself or one of its ancestors makes
+                // the native loop's later reads see the skill move mid-loop; run the native
+                // body for this frame instead of distributing one up-front value.
+                if (HasAncestorElement(__instance.onSkillTransform, skill.transform)) return true;
+                DistributePosition(__instance.onSkillTransform, skill.position);
+                return false;
+            }
+            catch (Exception ex)
+            {
+                _disabled = true;
+                NativePerfPatch.Warn(ref _warned, "embrace position", ex.Message);
+                return true;
+            }
+        }
+    }
+
+    [HarmonyPatch]
     internal static class NativeAccessoryOffsetPerf
     {
         private static readonly ConditionalWeakTable<Accessory_AttachPoint, AccessoryOffsetCache<Accessory_AttachPoint.AttachOffset>> Caches =
@@ -856,8 +1004,9 @@ namespace SodRpg.Mod
     [HarmonyPatch]
     internal static class NativeCastIndicatorCirclePerf
     {
-        // Fully qualified on purpose: the native test harness extracts classes from this file
-        // together with its using directives, and it has no DTT assembly reference.
+        // Plain data snapshot. The native test harness compiles this whole file as-is and
+        // resolves DTT.AreaOfEffectRegions from its own mock namespace, so the DTT references
+        // in this patch class stay fully qualified rather than adding a using directive.
         private sealed class CircleInputs
         {
             internal bool Has;
@@ -996,10 +1145,10 @@ namespace SodRpg.Mod
             return true;
         }
 
-        // Pure skip decision, extracted so the native test harness can exercise it without the
-        // DTT assembly. The offset is compared per component, as strict as the radius and fill
-        // floats, instead of Unity's Vector2== which tolerates ~1e-5 differences; a missing
-        // snapshot or a null material always runs the body.
+        // Pure skip decision, kept as a standalone method with primitive parameters so the
+        // native test harness can exercise it directly. The offset is compared per component,
+        // as strict as the radius and fill floats, instead of Unity's Vector2== which
+        // tolerates ~1e-5 differences; a missing snapshot or a null material always runs the body.
         internal static bool ShouldSkip(bool has, float prevRadius, Vector2 prevOffset, float prevFill, Material prevMaterial,
             float radius, Vector2 offset, float fill, Material material)
             => has && material != null && ReferenceEquals(prevMaterial, material) && prevRadius == radius
