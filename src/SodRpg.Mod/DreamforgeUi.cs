@@ -1642,19 +1642,22 @@ namespace SodRpg.Mod
         private string SlotTabLabel(Profile p, Slot slot)
         {
             if (TabPerf.CacheOff)
-            {
                 // 採否の比較用（dreamforge_perf_nocache）：導入前と同じく、呼ぶたびに保管庫全体を数えて文字列を作る。
-                int n = 0;
-                foreach (var relic in p.Stash) if (relic.Slot == slot) n++;
-                return n > 0 ? $"{Content.SlotName(slot)} <color=#bcbcd2>{n}</color>" : Content.SlotName(slot).ToString();
-            }
+                return CountedTabLabel(p, slot);
             EnsureStashCache(p);
             // 呼び出し元は Content.SlotOrder の枠だけを渡す前提。将来、枠が増えて範囲外・未設定の値が来ても
-            // 例外を出さず、従来と同じ文字列を作って返す。
+            // 例外を出さず、その場で保管庫を数えて導入前と同じ文字列を作って返す。
             int index = (int)slot;
             return (uint)index < (uint)_slotTabLabels.Length && _slotTabLabels[index] != null
                 ? _slotTabLabels[index]
-                : Content.SlotName(slot).ToString();
+                : CountedTabLabel(p, slot);
+        }
+
+        private static string CountedTabLabel(Profile p, Slot slot)
+        {
+            int n = 0;
+            foreach (var relic in p.Stash) if (relic.Slot == slot) n++;
+            return n > 0 ? $"{Content.SlotName(slot)} <color=#bcbcd2>{n}</color>" : Content.SlotName(slot).ToString();
         }
 
         private void RelicList(IEnumerable<Relic> relics, string hero, float height)
