@@ -1,5 +1,5 @@
-[b]Keeps the checkpoint before a confirmed resume point and handles access errors when loading profiles.[/b]
-[b]確認済みの再開地点の直前のチェックポイントを残すようにし、プロフィール読み込み時のアクセス拒否に対応しました。[/b]
+[b]Fixes profile loading and recovery when the game cannot access save files.[/b]
+[b]ファイルにアクセスできないときのプロフィールの読み込みと復旧を直しました。[/b]
 
 [h1]Dreamforge RPG[/h1]
 Turns every run into part of a long RPG journey: relics you keep, a risky "secure or delve" choice at every zone, a star map per Traveler, a forge, and long-term goals. Co-op ready.
