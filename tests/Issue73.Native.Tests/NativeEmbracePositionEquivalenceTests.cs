@@ -213,5 +213,67 @@ namespace Issue73.Native.Tests
             Assert.Equal(position, first.position);
             Assert.Equal(position, second.position);
         }
+
+        [Fact]
+        public void HasAncestorElementDetectsSelfAndAncestorsOnly()
+        {
+            var skill = new Transform();
+            var parent = new Transform();
+            var grandparent = new Transform();
+            var child = new Transform();
+            var unrelated = new Transform();
+            skill.parent = parent;
+            parent.parent = grandparent;
+            child.parent = skill;
+
+            Assert.True(NativeEmbracePositionPerf.HasAncestorElement(new Transform[] { skill }, skill));   // 自身
+            Assert.True(NativeEmbracePositionPerf.HasAncestorElement(new Transform[] { unrelated, parent }, skill));   // 親
+            Assert.True(NativeEmbracePositionPerf.HasAncestorElement(new Transform[] { grandparent }, skill));   // 祖先
+            Assert.False(NativeEmbracePositionPerf.HasAncestorElement(
+                new Transform[] { unrelated, null, child }, skill));   // 子・無関係・null は対象外
+        }
+
+        [Fact]
+        public void AncestorElementReturnsThePrefixToTheNativeBody()
+        {
+            // onSkillTransform[1] を skill.transform の親にする。実機の Transform ではこの要素への
+            // 書き込みが skill のワールド座標を動かし、本体ループの後続要素は移動後の別の値を
+            // 受け取る。一括配布はその差を再現できないため、Prefix は本体経路へ戻る合図を出す
+            // （模倣の Transform は座標の連鎖を模かないので、このテストは合図と本体の結果で確かめる）。
+            var patch = CreateWorld(3f, new Transform[] { new Transform(), new Transform(), new Transform() });
+            patch.Skill.transform.parent = patch.Elements[1];
+
+            bool runOriginal = InvokePrefix(patch.Instance);
+
+            Assert.True(runOriginal);   // 祖先の要素がある → 本体を走らせる合図
+            for (int i = 0; i < patch.Elements.Length; i++)
+                Assert.Equal(default(Vector3), patch.Elements[i].position);   // Prefix は配布しない
+
+            // 本体（転写）を続けて実行すれば通常の結果になる。
+            InvokeNativeUpdate(patch.Instance);
+            var reference = CreateWorld(3f, new Transform[] { new Transform(), new Transform(), new Transform() });
+            InvokeNativeUpdate(reference.Instance);
+            Assert.Equal(reference.Skill.transform.position, patch.Skill.transform.position);
+            for (int i = 0; i < patch.Elements.Length; i++)
+                Assert.Equal(reference.Elements[i].position, patch.Elements[i].position);
+        }
+
+        [Fact]
+        public void DescendantElementIsStillDistributedByThePrefix()
+        {
+            // 要素が skill.transform の子孫のときは書き込みが skill を動かさないため、
+            // Prefix がそのまま一括配布する。本体と同じ結果になる。
+            var native = CreateWorld(3f, new Transform[] { new Transform() });
+            var patch = CreateWorld(3f, new Transform[] { new Transform() });
+            native.Elements[0].parent = native.Skill.transform;
+            patch.Elements[0].parent = patch.Skill.transform;
+
+            InvokeNativeUpdate(native.Instance);
+            bool runOriginal = InvokePrefix(patch.Instance);
+
+            Assert.False(runOriginal);   // 子孫は祖先ではない → Prefix が本体を置き換える
+            Assert.Equal(native.Elements[0].position, patch.Elements[0].position);
+            Assert.Equal(native.Skill.transform.position, patch.Elements[0].position);
+        }
     }
 }

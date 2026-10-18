@@ -440,6 +440,24 @@ namespace SodRpg.Mod
                     onSkillTransform[i].position = position;
         }
 
+        // True when an onSkillTransform element is the skill transform itself or one of its
+        // ancestors. Writing a world position into such an element drags the skill along with
+        // it (children keep their local position), so the native loop would hand every later
+        // element a different NetworktargetSkill.position. The single-read shortcut cannot
+        // reproduce that, so the caller runs the native body instead. The chain walk starts
+        // at the skill transform (self counts); ReferenceEquals is enough because the walk
+        // only happens right after a successful write, so the skill transform and every
+        // ancestor on the chain are alive, and a destroyed array element never shares a
+        // reference with a live transform.
+        internal static bool HasAncestorElement(Transform[] onSkillTransform, Transform skillTransform)
+        {
+            for (Transform t = skillTransform; t != null; t = t.parent)
+                for (int i = 0; i < onSkillTransform.Length; i++)
+                    if (ReferenceEquals(onSkillTransform[i], t))
+                        return true;
+            return false;
+        }
+
         // Apply the patch only while the recorded body still matches the shipped IL. Never
         // throws: a body-less method (extern/abstract after a game update) or an unreadable
         // body only disables this feature with one warning, like the other native guards.
@@ -497,6 +515,10 @@ namespace SodRpg.Mod
                     __instance.info.caster.position, _easeFunc(__instance), v);
                 // The distributed value is read through the same Actor.position property the
                 // native loop uses, so the result never depends on that getter's definition.
+                // An element that is the skill transform itself or one of its ancestors makes
+                // the native loop's later reads see the skill move mid-loop; run the native
+                // body for this frame instead of distributing one up-front value.
+                if (HasAncestorElement(__instance.onSkillTransform, skill.transform)) return true;
                 DistributePosition(__instance.onSkillTransform, skill.position);
                 return false;
             }
@@ -721,8 +743,9 @@ namespace SodRpg.Mod
     [HarmonyPatch]
     internal static class NativeCastIndicatorCirclePerf
     {
-        // Fully qualified on purpose: the native test harness extracts classes from this file
-        // together with its using directives, and it has no DTT assembly reference.
+        // Plain data snapshot. The native test harness compiles this whole file as-is and
+        // resolves DTT.AreaOfEffectRegions from its own mock namespace, so the DTT references
+        // in this patch class stay fully qualified rather than adding a using directive.
         private sealed class CircleInputs
         {
             internal bool Has;
@@ -861,10 +884,10 @@ namespace SodRpg.Mod
             return true;
         }
 
-        // Pure skip decision, extracted so the native test harness can exercise it without the
-        // DTT assembly. The offset is compared per component, as strict as the radius and fill
-        // floats, instead of Unity's Vector2== which tolerates ~1e-5 differences; a missing
-        // snapshot or a null material always runs the body.
+        // Pure skip decision, kept as a standalone method with primitive parameters so the
+        // native test harness can exercise it directly. The offset is compared per component,
+        // as strict as the radius and fill floats, instead of Unity's Vector2== which
+        // tolerates ~1e-5 differences; a missing snapshot or a null material always runs the body.
         internal static bool ShouldSkip(bool has, float prevRadius, Vector2 prevOffset, float prevFill, Material prevMaterial,
             float radius, Vector2 offset, float fill, Material material)
             => has && material != null && ReferenceEquals(prevMaterial, material) && prevRadius == radius

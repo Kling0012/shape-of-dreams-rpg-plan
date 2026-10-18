@@ -12,6 +12,18 @@ namespace UnityEngine.AI
         public ObstacleAvoidanceType obstacleAvoidanceType { get; set; }
     }
 }
+namespace UnityEngine
+{
+    // 実機 UnityEngine.Transform の親子関係のうち、取り込み位置パッチ（HasAncestorElement）が
+    // 読む範囲の境界。実機の Transform.position への書き込みが子を連れて動く座標の連鎖は
+    // 模かない（境界の position はただの値）。そのため「要素が skill.transform の祖先なら
+    // 本体ループの後続要素が別の値を受け取る」という差そのものはこの模倣では再現できず、
+    // Prefix がその場面で本体経路へ戻る合図を出すこと（AncestorElement… のテスト）で担保する。
+    internal partial class Transform
+    {
+        internal Transform parent { get; set; }
+    }
+}
 namespace SodRpg.Mod
 {
     // 本体のグローバル名前空間にあるデリゲートと同じ形。
@@ -38,6 +50,9 @@ namespace SodRpg.Mod
     }
 
     // NativePerfPatches.cs の DreamforgeMod 部分が設定を読むための最小限の形。
+    // ApplyNativePerfConfig（NativePerfPatches.cs）に設定を足したら、ここにも同じ名前の
+    // フィールドを足す。足し忘れると、リンクした NativePerfPatches.cs がこの模倣にない
+    // 設定フィールドを参照して、このテストプロジェクトのコンパイルが壊れる。
     internal class DreamforgeConfig
     {
         public bool nativeStatusDurationSync = true, nativeWeaponFxScan = true, nativeObstacleAvoidance = true,
@@ -59,8 +74,14 @@ namespace SodRpg.Mod
     // null 要素を飛ばして各要素へ NetworktargetSkill.position（Actor.position）を配る。
     // 本体の Actor.position は r1.4.0.13 では get { return transform.position; }（ilspycmd で確認）。
     // Prefix も配布値を同じ Actor.position から読むため、getter の定義が変わっても
-    // パッチと本体の配布座標は一致し続ける。指紋が変わったときの見直し手順は
-    // docs/specs/perf-loop/20261018-1653.md。
+    // パッチと本体の配布座標は一致し続ける。
+    // 前提（実機の Transform のみ成立）: 本体ループは要素ごとに NetworktargetSkill.position を
+    // 読み直すため、要素が skill.transform 自身かその祖先だと、その要素への書き込みが skill の
+    // ワールド座標を動かし、後の要素は移動後の別の値を受け取る。Prefix の一括配布はこの差を
+    // 再現できないため、Prefix（NativePerfPatches.cs の HasAncestorElement）はこの場面を検出して
+    // 本体経路へ戻る。この模倣の Transform は親子の座標の連鎖を模かないため上記の差は再現できず、
+    // テストは「祖先の要素があるとき Prefix が本体経路へ戻る合図を出す」ことで確かめる。
+    // 指紋が変わったときの見直し手順は docs/specs/perf-loop/20261018-1653.md。
     internal class Ai_EmbraceNewIdentity : AbilityInstance
     {
         public SkillTrigger NetworktargetSkill { get; set; }
