@@ -1,5 +1,5 @@
-[b]v3.8.0: Minor adjustments and a hit-timing fix.[/b]
-[b]v3.8.0：細かな調整と、弾の命中の時刻の修正を行いました。[/b]
+[b]Minor adjustments to reduce processing load; gameplay and visuals are unchanged.[/b]
+[b]動作を軽くするための細かな調整を行いました。ゲームの動きや見た目は変わりません。[/b]
 
 [h1]Dreamforge RPG[/h1]
 Turns every run into part of a long RPG journey: relics you keep, a "secure or delve" choice at every zone, a star map per Traveler, a forge and long-term goals. Co-op ready.
