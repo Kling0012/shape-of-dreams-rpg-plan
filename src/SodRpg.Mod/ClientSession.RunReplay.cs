@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Mirror;
 using SodRpg.Core.Game;
 using UnityEngine;
 
@@ -115,10 +116,13 @@ namespace SodRpg.Mod
 
         private void PublishChoiceHistoryTo(IList<DewPlayer> players, bool returned, string terminalRun)
         {
+            // The host's own client handlers drop run-choice messages (NetworkServer.active), so history
+            // for DewPlayer.local is only a wasted local JSON round-trip that spends the shared send budget.
+            var local = NetworkServer.active ? DewPlayer.local : null;
             for (int i = 0; i < players.Count; i++)
             {
                 var player = players[i];
-                if (player == null || !player.isHumanPlayer || _choiceHistoryTargets.Contains(player)) continue;
+                if (player == null || !player.isHumanPlayer || player == local || _choiceHistoryTargets.Contains(player)) continue;
                 _choiceHistoryTargets.Add(player);
                 if (!_choiceHistoryPeers.TryGetValue(player, out var peer))
                 {
