@@ -31,6 +31,10 @@ namespace SodRpg.Mod
         private void PublishRunChoiceHistory()
         {
             if (_clientRpcOn == null) return;
+            // 履歴の走査（離脱掃除・新規参加の検知・変化の検知）と送信は、送信バジェットと同じ 0.1 秒周期で十分。
+            // TickRunChoices は毎フレーム呼ぶので、ここで毎フレームの辞書走査と全員の再検査を省く。
+            // 共有選択情報（PublishCurrentRunChoices）は変化時に即送信されるため、この間引きの影響を受けない。
+            if (Time.unscaledTime < _nextChoiceHistoryBatch) return;
             string run = Profile.Run?.RunId;
             if (!ReferenceEquals(_historyPublisher, _choicePublisher) || !ReferenceEquals(_historyActor, _clientRpcOn)
                 || run != _historyRun)
@@ -83,7 +87,6 @@ namespace SodRpg.Mod
                 _choiceHistoryFrame = Time.frameCount;
                 _choiceHistoryMessages = _choiceHistoryBytes = 0;
             }
-            if (Time.unscaledTime < _nextChoiceHistoryBatch) return;
             _nextChoiceHistoryBatch = Time.unscaledTime + 0.1f;
             int count = _choiceHistoryTargets.Count, idle = 0;
             while (count > 0 && _choiceHistoryMessages < 4 && idle < count)
