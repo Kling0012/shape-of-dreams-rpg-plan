@@ -72,6 +72,8 @@ namespace SodRpg.Core.Game
         {
             Build.StarPowers.TryGetValue(p, out int stars);
             // Build.Compute caps the base before awakening; keep its final equipment ceiling and add stars separately.
+            // Truncate fractional equipment caps (15 * 2.5 = 37.5 -> 37), as MaxPowerValue does for non-damage powers;
+            // PowerCeiling rounds ranked damage upward and is not the equipment-only limit.
             return Math.Max(0, Math.Min((int)(Content.PowerCap(p) * BuildLimits.MaxEquipmentMultiplier), Build.Get(p) - stars)) + stars;
         }
         private static float Percent(float amount, float percent) => Math.Max(0, amount) * percent / 100f;
