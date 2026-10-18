@@ -529,6 +529,9 @@ namespace SodRpg.Mod
         // The run's world order (#700): native zone indices restart in Infinity, this order never does within a run.
         private readonly RunWorldCounter _runWorlds = new RunWorldCounter();
         private bool _runWorldFailed;
+        private string _runWorldObservedRunId;
+        private Zone _runWorldZone;
+        private string _runWorldZoneName;
 
         /// <summary>0-based order of the current world in this run, or -1 outside a run.</summary>
         internal int RunWorldIndex
@@ -541,26 +544,41 @@ namespace SodRpg.Mod
             }
         }
 
-        // Polled by the ownership scan and before each helper reduction; allocation-free and idempotent per world.
+        // Polled by the ownership scan and before each helper reduction; zone names are cached per native object.
         internal void ObserveRunWorld()
         {
-            if (_runWorldFailed) return;
-            try { ObserveRunWorldCore(); }
+            try
+            {
+                var game = NetworkedManagerBase<GameManager>.softInstance;
+                if (game == null || string.IsNullOrEmpty(game.runId)) return;
+                if (_runWorldObservedRunId != game.runId)
+                {
+                    _runWorldObservedRunId = game.runId;
+                    _runWorldFailed = false;
+                    _runWorldZone = null;
+                    _runWorldZoneName = null;
+                }
+                if (!_runWorldFailed) ObserveRunWorldCore(game);
+            }
             catch (Exception ex)
             {
-                // Keep the last counted world; a failed observer must not reopen the lighter early-world decay.
+                // Keep the last counted world for this run; retry only after a new run starts.
                 _runWorldFailed = true;
                 Log.Warn("Host: run world order frozen at " + _runWorlds.Index + ": " + ex.Message);
             }
         }
 
-        private void ObserveRunWorldCore()
+        private void ObserveRunWorldCore(GameManager game)
         {
-            var game = NetworkedManagerBase<GameManager>.softInstance;
             var zone = NetworkedManagerBase<ZoneManager>.softInstance;
             if (game == null || string.IsNullOrEmpty(game.runId) || zone == null || zone.currentZoneIndex < 0
                 || zone.isInAnyTransition) return;
-            string name = zone.currentZone != null ? zone.currentZone.name : null;
+            var currentZone = zone.currentZone;
+            if (!ReferenceEquals(currentZone, _runWorldZone))
+            {
+                _runWorldZoneName = currentZone != null ? currentZone.name : null;
+                _runWorldZone = currentZone;
+            }
             var run = ClientSession.HostRun;
             bool saved = run != null && run.RunId == game.runId;
             var infinity = saved ? run.Infinity : null;
@@ -569,7 +587,7 @@ namespace SodRpg.Mod
             // Continue or a rebuilt host resumes the saved order instead of restarting at the first world.
             if (_runWorlds.RunId != game.runId && saved)
                 _runWorlds.Restore(game.runId, run.WorldIndex, run.WorldZoneIndex, run.WorldZoneName, run.WorldInfinitySegment);
-            if (!_runWorlds.Observe(game.runId, zone.currentZoneIndex, name, infinity?.SegmentEpoch ?? -1) || !saved) return;
+            if (!_runWorlds.Observe(game.runId, zone.currentZoneIndex, _runWorldZoneName, infinity?.SegmentEpoch ?? -1) || !saved) return;
             run.WorldIndex = _runWorlds.Index;
             run.WorldZoneIndex = _runWorlds.ZoneIndex;
             run.WorldZoneName = _runWorlds.ZoneName;
