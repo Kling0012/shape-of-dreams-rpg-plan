@@ -416,18 +416,34 @@ namespace SodRpg.Mod
                     onSkillTransform[i].position = position;
         }
 
-        // Apply the patch only while the recorded body still matches the shipped IL.
+        // Apply the patch only while the recorded body still matches the shipped IL. Never
+        // throws: a body-less method (extern/abstract after a game update) or an unreadable
+        // body only disables this feature with one warning, like the other native guards.
         internal static bool GuardNativeBody(MethodBase method)
         {
-            var body = method.GetMethodBody();
-            var il = body.GetILAsByteArray();
-            if (il.Length == NativeIlLength && Fnv1a(il) == NativeIlHash
-                && body.LocalVariables.Count == NativeLocals
-                && body.ExceptionHandlingClauses.Count == NativeExceptionClauses)
-                return true;
-            NativePerfPatch.Warn(ref _warned, "embrace position",
-                "native UpdatePositions body changed (il " + il.Length + ")");
-            return false;
+            try
+            {
+                var body = method.GetMethodBody();
+                if (body == null)
+                {
+                    NativePerfPatch.Warn(ref _warned, "embrace position",
+                        "native UpdatePositions body unavailable");
+                    return false;
+                }
+                var il = body.GetILAsByteArray();
+                if (il.Length == NativeIlLength && Fnv1a(il) == NativeIlHash
+                    && body.LocalVariables.Count == NativeLocals
+                    && body.ExceptionHandlingClauses.Count == NativeExceptionClauses)
+                    return true;
+                NativePerfPatch.Warn(ref _warned, "embrace position",
+                    "native UpdatePositions body changed (il " + il.Length + ")");
+                return false;
+            }
+            catch (Exception ex)
+            {
+                NativePerfPatch.Warn(ref _warned, "embrace position", ex.Message);
+                return false;
+            }
         }
 
         internal static ulong Fnv1a(byte[] bytes)
@@ -448,14 +464,16 @@ namespace SodRpg.Mod
             {
                 // Identical computation to the native UpdatePositions. Every client-side
                 // NetworktargetSkill read resolves the netId through NetworkClient.spawned,
-                // so the skill reference, its world position and the ease delegate are each
-                // read once instead of once per onSkillTransform element.
+                // so the skill reference, its position and the ease delegate are each read
+                // once instead of once per onSkillTransform element.
                 SkillTrigger skill = __instance.NetworktargetSkill;
                 if (skill == null) return false;
                 float v = ChannelProgress(Time.time, __instance.creationTime, __instance.channelTime);
                 skill.transform.position = EasedSkillPosition(_initPos(__instance),
                     __instance.info.caster.position, _easeFunc(__instance), v);
-                DistributePosition(__instance.onSkillTransform, skill.transform.position);
+                // The distributed value is read through the same Actor.position property the
+                // native loop uses, so the result never depends on that getter's definition.
+                DistributePosition(__instance.onSkillTransform, skill.position);
                 return false;
             }
             catch (Exception ex)

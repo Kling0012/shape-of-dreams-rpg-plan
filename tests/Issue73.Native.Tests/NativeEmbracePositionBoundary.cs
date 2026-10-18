@@ -42,10 +42,15 @@ namespace SodRpg.Mod
         partial void ApplyNativePerfConfig();
     }
 
-    // 本体 Dew.Core r1.4.0.13 Ai_EmbraceNewIdentity。UpdatePositions は IL 転写:
-    // NetworktargetSkill の null 早期 return、Clamp01((Time.time - creationTime) / channelTime)、
+    // 本体 Dew.Core r1.4.0.13 Ai_EmbraceNewIdentity。UpdatePositions は IL 転写（ilspycmd の
+    // 逆コンパイルと -il 出力の双方で同じ分岐であることを確認）: NetworktargetSkill の null 早期 return、
+    // Clamp01((Time.time - creationTime) / channelTime)、
     // Lerp(_targetSkillInitPos, info.caster.position, _easeFunc(0f, 1f, v)) を skill.transform へ書き、
-    // null 要素を飛ばして各要素へ NetworktargetSkill.position（Actor.position = transform.position）を配る。
+    // null 要素を飛ばして各要素へ NetworktargetSkill.position（Actor.position）を配る。
+    // 本体の Actor.position は r1.4.0.13 では get { return transform.position; }（ilspycmd で確認）。
+    // Prefix も配布値を同じ Actor.position から読むため、getter の定義が変わっても
+    // パッチと本体の配布座標は一致し続ける。指紋が変わったときの見直し手順は
+    // docs/specs/perf-loop/20261018-1653.md。
     internal class Ai_EmbraceNewIdentity : AbilityInstance
     {
         public SkillTrigger NetworktargetSkill { get; set; }
