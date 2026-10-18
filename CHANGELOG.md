@@ -10,6 +10,22 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v3.7.6 — 細かな調整 / Minor adjustments（2026-10-18）
+
+細かな調整を行い、協力プレイ用の表示の問題を1つ直しました。 / Minor adjustments, plus one fix for a co-op display issue.
+
+### 更新前に確認 / Before updating
+
+- 協力プレイでは、参加者全員がこのバージョンに更新してください。 / Everyone in co-op should update to this version.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 修正 / Fixes
+
+- インフィニティを1人で遊んでいるときも、協力プレイ用の共有圧と担当の敵の注記が出ていた問題を直しました。2人以上が接続しているときだけ出ます。 / Fixed the co-op shared pressure and assigned-enemy notes showing in solo Infinity. They now appear only when two or more players are connected.
+
+---
+
 ## v3.7.5 — Remove unofferable relics from a trade in one click, plus cooking and mod-loading fixes（2026-10-18）
 
 ### 新機能 / New features

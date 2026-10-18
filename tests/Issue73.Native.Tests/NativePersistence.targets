@@ -191,6 +191,17 @@
     </ItemGroup>
   </Target>
 
+  <!-- ズーム目標のカメラ角度回転の使い回し（#763）。NativeCameraZoomRotationPerf の
+       トランスポイラと FollowRotation を実ソースから抽出し、本体 GetFollowOffsetTarget と
+       同じ命令並びの見本に当てる。Quaternion・修飾子・見本は CameraZoomRotationPerfBoundary.cs、
+       CameraManager と NativePerfOptions は NativeBoundary.cs・SleepPositionPerfBoundary.cs の境界。 -->
+  <Target Name="CompileCameraZoomRotationPerf" BeforeTargets="CoreCompile">
+    <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/NativePerfPatches.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)CameraZoomRotationPerf.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="NativeCameraZoomRotationPerf" Methods="Transpiler;FollowRotation" Fields="_target;_warned" />
+    <ItemGroup>
+      <Compile Include="$(IntermediateOutputPath)CameraZoomRotationPerf.g.cs" />
+    </ItemGroup>
+  </Target>
+
   <!-- 共鳴の盾（CoopOmens.cs）の HostAuthority 部。公開ラッパー CoopOmens は NativeBoundary.cs
        に同じ式の internal 模倣（境界の Entity が internal のため直接抽出できない）。 -->
   <Target Name="CompileCoopOmensWard" BeforeTargets="CoreCompile">

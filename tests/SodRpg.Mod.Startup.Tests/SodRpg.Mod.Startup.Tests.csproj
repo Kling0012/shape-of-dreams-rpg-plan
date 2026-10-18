@@ -43,6 +43,7 @@
   <Compile Include="../../src/SodRpg.Mod/NativeMemoryReuse.cs" Link="ModUnderTest/NativeMemoryReuse.cs" />
     <Compile Include="../../src/SodRpg.Mod/MovementGemSlotEdit.cs" Link="ModUnderTest/MovementGemSlotEdit.cs" />
     <Compile Include="../../src/SodRpg.Mod/FrostFxLifetime.cs" Link="ModUnderTest/FrostFxLifetime.cs" />
+  <Compile Include="../../src/SodRpg.Mod/NativeTransformSyncIdle.cs" Link="ModUnderTest/NativeTransformSyncIdle.cs" />
     <Compile Include="$(IntermediateOutputPath)Esscap.Native.cs" Link="ModUnderTest/Esscap.Native.cs" />
     <Compile Include="$(IntermediateOutputPath)CooldownIdle.Native.cs" Link="ModUnderTest/CooldownIdle.Native.cs" />
   </ItemGroup>
