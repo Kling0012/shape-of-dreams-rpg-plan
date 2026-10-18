@@ -34,13 +34,13 @@ namespace UnityEngine
     }
 
     // transform.position の読み出しの境界。移動・回転の意味はこの検証では不要。
-    internal class Transform
+    internal partial class Transform
     {
         public Vector3 position;
     }
 
     // 本体のレンダラーの境界。Renderer.bounds の読み出しだけが必要。
-    internal class Renderer
+    internal partial class Renderer
     {
         public Bounds bounds { get; set; }
     }
