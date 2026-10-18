@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using Mirror;
 using SodRpg.Core.Game;
+using UnityEngine;
 using Xunit;
 
 [assembly: CollectionBehavior(DisableTestParallelization = true)]
@@ -49,7 +50,7 @@ namespace Mirror
 }
  namespace UnityEngine
  {
-     internal static class Time { public static int frameCount; public static float unscaledTime; public static float time; }
+     internal static class Time { public static int frameCount; public static float unscaledTime; public static float time; public static double timeAsDouble; }
     // TrackRun の Limbo 深度の読み出しに必要な本体 API。ハーネスでは Limbo なし(0)を返す。
     internal static class Object { public static T FindObjectOfType<T>() where T : class => null; }
 
@@ -301,7 +302,13 @@ namespace SodRpg.Mod
     internal enum SkillType { Normal, Ultimate }
     internal enum ElementalType { Fire, Cold, Light, Dark }
     internal enum EntityRelation { Enemy, Ally }
-    internal class AbilityTrigger : Actor { public Entity owner; }
+    internal class AbilityTrigger : Actor
+    {
+        public Entity owner;
+        public float[] currentUnscaledCooldownTimes;
+        public void LogicUpdate(float dt) { }
+        public virtual float GetCooldownTimeMultiplier(int configIndex) => 1f;
+    }
     internal class SkillTrigger : AbilityTrigger
     {
         public SkillType type;
@@ -410,7 +417,27 @@ namespace SodRpg.Mod
     }
     internal sealed class Se_GenericEffectContainer : StatusEffect { public string id; }
     internal static class ManagerBase<T> { public static T softInstance; }
-    internal sealed class CameraManager { public bool isPlayingCutscene; }
+    // （#763）本体と同じ意味のカメラ角度。実物は get が public のプロパティで、セッターが
+    // entityCamAngleRotation へ Euler(0, 角度, 0) を同じ式で保持する（CameraManager.cs:122-132）。
+    // 角度・保持値ともシリアライズ対象外のため、境界も同じ不変だけを保つ。
+    internal class CameraManager
+    {
+        public bool isPlayingCutscene;
+        public int zoomSteps = 5;
+        public Vector3 farZoomBody = new Vector3(0f, 12f, -14f);
+        public Vector3 midZoombody = new Vector3(0f, 10f, -10f);
+        public Vector3 closeZoomBody = new Vector3(0f, 8f, -6f);
+        public List<CameraModifierBase> _cameraModifiers = new List<CameraModifierBase>();
+        public bool isSpectating { get; private set; }
+        public int currentZoomIndex { get; private set; }
+        private float _entityCamAngle;
+        [NonSerialized] public Quaternion entityCamAngleRotation = Quaternion.identity;
+        public float entityCamAngle
+        {
+            get { return _entityCamAngle; }
+            set { _entityCamAngle = value; entityCamAngleRotation = Quaternion.Euler(0f, _entityCamAngle, 0f); }
+        }
+    }
     // NativeActorLifetime.cs は未リンク。この境界では警告の受け口だけが必要。
     internal static class NativeActorLifetime { internal static void WarnOnce(string kind, Exception error) { } }
     internal struct ReactionChain { }

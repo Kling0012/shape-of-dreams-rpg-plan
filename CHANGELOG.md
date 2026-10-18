@@ -10,6 +10,49 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v3.8.0 — 細かな調整と不具合の修正 / Minor adjustments and a fix（2026-10-18）
+
+細かな調整と、不具合の修正を行いました。 / Minor adjustments and a bug fix.
+
+### 更新前に確認 / Before updating
+
+- 協力プレイでは、参加者全員がこのバージョンに更新してください。 / Everyone in co-op should update to this version.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- 協力プレイなどで、跳弾などの弾がまとめて当たる場面で、命中の時刻が本来と少しずれることがあった問題を直しました。 / Fixed hit timing sometimes drifting slightly when many projectiles such as ricochets landed together.
+
+### 調整 / Adjustments
+
+- 細かな調整を行いました。 / Minor adjustments.
+
+---
+
+## v3.7.7 — Bridge star names now match the star map（2026-10-18）
+
+### 不具合の修正 / Bug fixes
+- 橋の星がナビゲーション、星の参照文、払い戻し画面、割り当てエラー、Wikiで星図と異なる名前になる問題を直しました。 / Fixed bridge stars showing different names from the star map in navigation, star references, refund screens, allocation errors, and the wiki.
+
+---
+
+## v3.7.6 — 細かな調整 / Minor adjustments（2026-10-18）
+
+細かな調整を行い、協力プレイ用の表示の問題を1つ直しました。 / Minor adjustments, plus one fix for a co-op display issue.
+
+### 更新前に確認 / Before updating
+
+- 協力プレイでは、参加者全員がこのバージョンに更新してください。 / Everyone in co-op should update to this version.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 修正 / Fixes
+
+- インフィニティを1人で遊んでいるときも、協力プレイ用の共有圧と担当の敵の注記が出ていた問題を直しました。2人以上が接続しているときだけ出ます。 / Fixed the co-op shared pressure and assigned-enemy notes showing in solo Infinity. They now appear only when two or more players are connected.
+
+---
+
 ## v3.7.5 — Remove unofferable relics from a trade in one click, plus cooking and mod-loading fixes（2026-10-18）
 
 ### 新機能 / New features

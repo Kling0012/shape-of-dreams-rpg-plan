@@ -73,11 +73,11 @@ namespace SodRpg.Core.Tests
                 foreach (string hero in StarClusters.GeneratedHeroes) StarClusters.RegisterGeneratedHero(hero);
                 var revised = StarClusters.MigrationsFor(Husk).Where(r => r.Revision == 2).Select(r => r.LocalStarId).ToArray();
                 Assert.Equal(ids.Concat(new[] { "h.husk.ring.vessel", "h.husk.ring.recall" }).OrderBy(x => x, StringComparer.Ordinal), revised.OrderBy(x => x, StringComparer.Ordinal));
-                Assert.Equal(2, StarClusters.MigrationVersionFor(Husk));
+                Assert.Equal(3, StarClusters.MigrationVersionFor(Husk));
                 foreach (string hero in StarClusters.GeneratedHeroes.Where(h => h != Husk))
                 {
-                    Assert.DoesNotContain(StarClusters.MigrationsFor(hero), r => r.Revision != 1);
-                    Assert.Equal(1, StarClusters.MigrationVersionFor(hero));
+                    Assert.DoesNotContain(StarClusters.MigrationsFor(hero), r => !r.Removed && r.Revision != 1);
+                    Assert.Equal(hero == "Hero_Cetus" || hero == "Hero_Vesper" ? 1 : 3, StarClusters.MigrationVersionFor(hero));
                 }
             }
             finally { foreach (string hero in StarClusters.GeneratedHeroes) StarClusters.RegisterAuthored(hero, Array.Empty<AuthoredStarDef>()); }
@@ -128,7 +128,7 @@ namespace SodRpg.Core.Tests
                 Assert.True(loaded.Talents.ContainsKey(kept));
                 Assert.False(loaded.Talents.ContainsKey(redefined));
                 Assert.False(loaded.Talents.ContainsKey(dependent));
-                Assert.Equal(2, loaded.AuthoredMigrationVersion);
+                Assert.Equal(3, loaded.AuthoredMigrationVersion);
                 Assert.Equal(points, q.TalentPoints(Husk));
                 Assert.True(Rules.SpentPoints(loaded, Husk) < spent);
                 Assert.Equal(points, Rules.SpentPoints(loaded, Husk) + Rules.FreePoints(q, Husk));
@@ -154,7 +154,7 @@ namespace SodRpg.Core.Tests
                 var nextStore = new ProfileStore(fs, path, 41);
                 var r = nextStore.Load(); // before any ordinary game save
                 Assert.Equal(free, Rules.FreePoints(r, Husk));
-                Assert.Equal(2, r.Hero(Husk).AuthoredMigrationVersion);
+                Assert.Equal(3, r.Hero(Husk).AuthoredMigrationVersion);
                 bool committed = faultAt < 0 || faultMode == FaultMode.CrashAfter;
                 if (committed) Assert.Empty(nextStore.Notes); // the old backup must stay silent
                 else
@@ -185,9 +185,9 @@ namespace SodRpg.Core.Tests
             {
                 foreach (string hero in StarClusters.GeneratedHeroes) StarClusters.RegisterGeneratedHero(hero);
                 var p = Profile.CreateNew(43);
-                Assert.Equal(2, p.Hero(Husk).AuthoredMigrationVersion);
+                Assert.Equal(3, p.Hero(Husk).AuthoredMigrationVersion);
                 var q = ProfileCodec.Read(ProfileCodec.Write(p), new List<string>());
-                Assert.Equal(2, q.Hero(Husk).AuthoredMigrationVersion);
+                Assert.Equal(3, q.Hero(Husk).AuthoredMigrationVersion);
             }
             finally { foreach (string hero in StarClusters.GeneratedHeroes) StarClusters.RegisterAuthored(hero, Array.Empty<AuthoredStarDef>()); }
         }

@@ -82,6 +82,7 @@ namespace SodRpg.Mod
         }
 
         // 起動モードは一覧へのプレイヤー追加より先に決まる。協力ホストが一時的に1人でもソロにしない。
+        // 参加者は常に false。味方を回復できる協力プレイでは AllyHealer を残す。
         internal bool SoloBounties => CanChooseRunRules
             && DewNetworkManager.startSettings?.networkMode == DewNetworkMode.Singleplayer;
 
@@ -111,13 +112,26 @@ namespace SodRpg.Mod
             else if (CanChooseRunRules) PersistHostInfinityState();
         }
 
+        private RunState _bountiesCheckedRun;
+        private bool _bountiesCheckedSolo;
+        private bool _bountiesCheckedInfinity;
+
         /// <summary>ソロ・インフィニティでは進まない未着手の依頼を、進められる依頼に入れ替える。</summary>
         private void EnsureReachableBounties()
         {
             try
             {
-                if (Profile.Run != null && Rules.ReplaceUnreachableBounties(Profile, SoloBounties))
-                    MarkDirty(false);
+                var run = Profile.Run;
+                if (run == null) return;
+                bool solo = SoloBounties;
+                bool infinity = run.Infinity != null;
+                // Recheck late mode settings and restored runs, even when the RunId is unchanged.
+                if (ReferenceEquals(_bountiesCheckedRun, run) && _bountiesCheckedSolo == solo
+                    && _bountiesCheckedInfinity == infinity) return;
+                if (Rules.ReplaceUnreachableBounties(Profile, solo)) MarkDirty(false);
+                _bountiesCheckedRun = run;
+                _bountiesCheckedSolo = solo;
+                _bountiesCheckedInfinity = infinity;
             }
             catch (System.Exception ex) { Log.Warn("Client: bounty reachability check skipped: " + ex.Message); }
         }

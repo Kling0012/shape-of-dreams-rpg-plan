@@ -126,7 +126,7 @@ class RunGrowthBalanceTests(unittest.TestCase):
         growth = star_values.load_growth_table()
         # First prove the unmodified fixture resolves, so unrelated failures cannot mask a rejection.
         star_values.resolve_all(table, manifests, growth_table=growth)
-        for key in ("husk.run.m1/growth/effectPct", "husk.run.choice/options/0/growth/effectPct"):
+        for key in ("vesper.run.m1/growth/effectPct", "vesper.run.choice/options/0/growth/effectPct"):
             for invalid in (True, "50", -1, 501, Decimal("0.1"), Decimal("NaN")):
                 changed = copy.deepcopy(growth)
                 changed["effects"][key] = invalid
@@ -140,13 +140,13 @@ class RunGrowthBalanceTests(unittest.TestCase):
         changed["effects"]["unused/growth/capBonus"] = 1
         with self.assertRaisesRegex(ValueError, "unused/growth/capBonus: extra unreferenced effect"):
             star_values.resolve_all(table, manifests, growth_table=changed)
-        raw = copy.deepcopy(manifests["husk"])
-        choice = next(row for row in raw["stars"] if row["id"] == "husk.run.choice")
-        key = "husk.run.choice/options/0/growth/effectPct"
+        raw = copy.deepcopy(manifests["vesper"])
+        choice = next(row for row in raw["stars"] if row["id"] == "vesper.run.choice")
+        key = "vesper.run.choice/options/0/growth/effectPct"
         for invalid in (58, {"valueRef": key, "value": 58}, {"valueRef": key + "-wrong"}):
             choice["options"][0]["growth"]["effectPct"] = invalid
             with self.subTest(reference=invalid), self.assertRaisesRegex(ValueError, "canonical valueRef " + re.escape(key)):
-                star_values.resolve_manifest("husk", raw, table, growth)
+                star_values.resolve_manifest("vesper", raw, table, growth)
 
 
 if __name__ == "__main__":

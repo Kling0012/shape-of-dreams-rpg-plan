@@ -6,6 +6,8 @@ namespace SodRpg.Mod
     internal sealed class ClientSession
     {
         internal Profile Profile = new Profile();
+        // This probability harness has no connected peers.
+        internal bool PersonalEnemyWaypointsActive => false;
         internal float PressureHealthMultiplier = 1;
         internal float PressureDamageMultiplier = 1;
         internal float NightmareGearMultiplier;

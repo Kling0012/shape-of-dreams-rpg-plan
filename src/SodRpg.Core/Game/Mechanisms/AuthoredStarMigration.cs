@@ -5,11 +5,11 @@ namespace SodRpg.Core.Game
 {
     public sealed class LegacyStarMigration
     {
-        public LegacyStarMigration(string localStarId, int maxRank, int rankCost, bool changedEffect = false, int revision = 1, bool wasChoice = false)
+        public LegacyStarMigration(string localStarId, int maxRank, int rankCost, bool changedEffect = false, int revision = 1, bool wasChoice = false, bool removed = false)
         {
             if (revision < 1) throw new ArgumentOutOfRangeException(nameof(revision));
             LocalStarId = localStarId; MaxRank = maxRank; RankCost = rankCost; ChangedEffect = changedEffect;
-            Revision = revision; LegacyWasChoice = wasChoice;
+            Revision = revision; LegacyWasChoice = wasChoice; Removed = removed;
         }
         public string LocalStarId { get; }
         /// <summary>
@@ -21,6 +21,7 @@ namespace SodRpg.Core.Game
         public int MaxRank { get; }
         public int RankCost { get; }
         public bool ChangedEffect { get; }
+        public bool Removed { get; }
         /// <summary>
         /// The original star was itself a Choice, so a stored option index belongs to the old effect and cannot be kept.
         /// Set by StarClusters.RegisterMigrations from the baseline tree for revision-1 rules (a star that was not a choice but now is keeps an explicit pick);
@@ -81,8 +82,9 @@ namespace SodRpg.Core.Game
             {
                 // A keystone keeps its ID and single rank; its old cost is the rule's RankCost (legacy keys cost Content.KeystoneCost).
                 if (rule == null || rule.MaxRank <= 0 || rule.RankCost <= 0 || costs.ContainsKey(rule.LocalStarId)
-                    || !nodes.TryGetValue(rule.LocalStarId, out var node) || node.MaxRank != rule.MaxRank
-                    || !node.IsKeystone && node.RankCost != rule.RankCost)
+                    || (rule.Removed ? rule.Revision < 2 || nodes.ContainsKey(rule.LocalStarId)
+                        : !nodes.TryGetValue(rule.LocalStarId, out var node) || node.MaxRank != rule.MaxRank
+                          || !node.IsKeystone && node.RankCost != rule.RankCost))
                     throw new InvalidOperationException("Migration must retain original ID, rank and cost: " + rule?.LocalStarId);
                 costs.Add(rule.LocalStarId, rule);
             }
@@ -93,7 +95,9 @@ namespace SodRpg.Core.Game
             var candidate = new HeroState { Kills = hero.Kills, StarXp = hero.StarXp, ExtraPoints = hero.ExtraPoints };
             foreach (var allocation in hero.Talents)
             {
-                if (!nodes.TryGetValue(allocation.Key, out var node) || allocation.Value <= 0 || allocation.Value > node.MaxRank)
+                bool removed = costs.TryGetValue(allocation.Key, out var old) && old.Removed;
+                if ((!removed && !nodes.ContainsKey(allocation.Key)) || allocation.Value <= 0
+                    || allocation.Value > (removed ? old.MaxRank : nodes[allocation.Key].MaxRank))
                     throw new InvalidOperationException("Invalid migration allocation: " + allocation.Key);
                 candidate.Talents.Add(allocation.Key, allocation.Value);
             }
@@ -113,6 +117,7 @@ namespace SodRpg.Core.Game
             var invalid = new List<string>();
             foreach (var allocation in candidate.Talents)
             {
+                if (costs.TryGetValue(allocation.Key, out var old) && old.Removed) { invalid.Add(allocation.Key); continue; }
                 var node = nodes[allocation.Key];
                 // A redefined effect never keeps ranks bought under the old meaning. The one exception is a star that became a
                 // Choice: it has no old option index, so an explicit pick already recorded for it is the new design's.

@@ -4,14 +4,6 @@ using UnityEngine;
 // 本体 API 境界。Ai_EmbraceNewIdentity.UpdatePositions は本体 Dew.Core r1.4.0.13 の逆コンパイル
 // 結果（ilspycmd の IL と同じ分岐）の忠実な転写で、等価性テストの「パッチ無効側」として動く。
 // ここには本体の処理を書き直さない: 補間と配布の計算はリンクされた実ソース側が実行する。
-namespace UnityEngine
-{
-    internal class Transform
-    {
-        public Vector3 position { get; set; }
-    }
-    internal class Renderer { }
-}
 namespace UnityEngine.AI
 {
     internal enum ObstacleAvoidanceType { NoAvoidance, LowQualityObstacleAvoidance, GoodQualityObstacleAvoidance, HighQualityObstacleAvoidance }
@@ -29,12 +21,29 @@ namespace SodRpg.Mod
     internal class EntityModel { public Transform holsteredWeapon; }
     internal class FxAttachToEntity { }
 
+    internal enum SyncTransformChannel : byte { None = 0, Position = 1, Rotation = 2, Scale = 4 }
+    internal struct SyncMovementData
+    {
+        public SyncTransformChannel channels;
+        public bool isTeleport;
+        public double timestamp;
+        public Vector3 position, velocity;
+        public Quaternion rotation;
+        public Vector3 angularVelocity, scale, scaleVelocity;
+    }
+    internal class ActorTransformSync
+    {
+        private SyncMovementData _syncData;
+        public SyncMovementData Network_syncData { get => _syncData; set => _syncData = value; }
+    }
+
     // NativePerfPatches.cs の DreamforgeMod 部分が設定を読むための最小限の形。
     internal class DreamforgeConfig
     {
         public bool nativeStatusDurationSync = true, nativeWeaponFxScan = true, nativeObstacleAvoidance = true,
             nativeAggroPropagation = true, nativeOwnershipSpawnCounts = true, nativeProcCoalesce = true,
-            nativeEmbracePositionReuse = true, nativeSleepPositionReuse = true;
+            nativeEmbracePositionReuse = true, nativeCooldownIdleMultiplier = true, nativeTransformSyncIdle = true,
+            nativeSleepPositionReuse = true, nativeCameraZoomRotation = true, nativeCharacterModelDisplayBounds = true;
     }
     public partial class DreamforgeMod
     {

@@ -55,10 +55,10 @@ hit=4, before=6.1035156E-05, after=6.1035156E-05, processed=6.1035156E-05
 ## 環境とテストの境界
 
 - 基点 `c5488cd6`、ブランチ `ai/issue-608`、Linux、SDK 10.0.111、実行ランタイム .NET 10.0.11。
-- net8.0プロジェクトを `DOTNET_ROLL_FORWARD=Major` で実行。`NUGET_PACKAGES=/home/wang/.cache/gh-auto/nuget` を維持し、キャッシュをworktreeへ移していない。
+- net8.0プロジェクトを `DOTNET_ROLL_FORWARD=Major` で実行。環境変数 `NUGET_PACKAGES` が指すworktree外のキャッシュを維持した。
 - `HostAuthority.EnemyOwnership.cs` / `HostAuthority.BossShares.cs` / `HostAuthority.EnemyOwnershipSync.cs` は既存テストプロジェクトが製品コードをそのままリンクする。分配計算をテスト側へコピーしていない。
 - ゲームAPIは既存NativeBoundary等の代替。本体の `Actor.DealDamage` 全体、Harmonyの実パッチ、Unityを動かすテストではない。既存境界の `CalculateStatsIfDirty` は本体の全能力・人数補正を再現しないため、22946.146484375は戦闘開始時の実HPに相当するテスト入力として扱う。
-- 本再現のStrikeには、`/home/wang/dev/sod-gamedata/decompiled/sod-decomp/Dew.Core/Actor.cs:900` の小ダメージ打ち切りと `:1054` の死亡閾値を反映する。`FinalDamageData.cs:29` のオーバーキル分離も反映し、過剰ダメージを捨てたせいで閾値に入る誤再現を避ける。
+- 本再現のStrikeには本体の逆コンパイル資料 `Dew.Core/Actor.cs:900` の小ダメージ打ち切りと `:1054` の死亡閾値を反映する。`FinalDamageData.cs:29` のオーバーキル分離も反映し、過剰ダメージを捨てたせいで閾値に入る誤再現を避ける。
 - 補助スクリプトは `NativeBoundary.cs` のコピーを除外済みの `obj/issue608/<日時>/` に生成し、DamageDataだけ本体と同じ `originalAmount * amplificationMultiplier * reductionMultiplier` の順序へ置換する。ターゲットは `Issue73.Native.Tests` だけに適用し、通常の共有スタブ・製品コードは編集しない。
 - 入力探索中の補助スクリプトは、1回目にCoreまで境界を適用してコンパイルエラー、2回目に他テストのamount代入との互換不足でコンパイルエラーになった。対象制限と代入用互換プロパティを直した後、上記の実行はビルド・探索・assert実行まで完了している。これらの初期失敗は再現結果に数えない。
 
@@ -94,7 +94,7 @@ hit=4, before=6.1035156E-05, after=6.1035156E-05, processed=6.1035156E-05
 - revert check: 製品3ファイルの修正をパッチで一時的に戻し、同コマンドが終了1（同じ再現assertで1失敗/対照1成功）になることを確認した。そのパッチを戻した直後、同コマンドが終了0（2成功）になることを確認した。戻した状態の失敗ログ: `TestResults/issue608-20261017T001514857560Z/`。再現テストは編集していない。
 - `DOTNET_ROLL_FORWARD=Major dotnet test tests/Issue73.Native.Tests/Issue73.Native.Tests.csproj -c Release --filter 'FullyQualifiedName~BossSharesTests|FullyQualifiedName~EnemyOwnershipTests|FullyQualifiedName~DynamicDifficultyTests|FullyQualifiedName~Issue608ZeroShareReproductionTests' --nologo -v quiet -p:WarningLevel=0`: 終了0、46成功/0失敗。ログ: `TestResults/issue608-related-final.trx`。
 - 同じ46件を再現スクリプトの `CustomBeforeMicrosoftCommonTargets` と専用 `OutputPath` で、本体と同じ遅延倍率演算に差し替えて実行: 終了0、46成功/0失敗。ログ: `TestResults/issue608-native-related.trx`。
-- `dotnet build src/SodRpg.Mod/SodRpg.Mod.csproj -c Release '-p:GameDir=/home/wang/dev/sod-gamedata/Shape of Dreams' --nologo -v minimal`: 終了0、エラー0/警告6（既存APIのobsoleteと未代入フィールド）。実ゲームDLLを参照して表示処理を含むMOD全体をコンパイルした。参照先にゲーム起動プログラムはなく、デプロイ先のModsもない。
+- `dotnet build src/SodRpg.Mod/SodRpg.Mod.csproj -c Release -p:GameDir="<参照用ゲームDLLのフォルダ>" --nologo -v minimal`: 終了0、エラー0/警告6（既存APIのobsoleteと未代入フィールド）。実ゲームDLLを参照して表示処理を含むMOD全体をコンパイルした。参照先にゲーム起動プログラムはなく、デプロイ先のModsもない。
 - `git diff --check`: 終了0。
 
 ### 修正後の未実行

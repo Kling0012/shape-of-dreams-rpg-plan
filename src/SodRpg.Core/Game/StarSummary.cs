@@ -108,7 +108,7 @@ namespace SodRpg.Core.Game
                     string mark = isEquipped == null ? "" : a && b ? "✓ " : "・ ";
                     var line = new StarSummaryLine
                     {
-                        Text = mark + pair.Name + Loc.T($"（{rank}段）", $" ({rank} {(rank == 1 ? "rank" : "ranks")})")
+                        Text = mark + star.DisplayName + Loc.T($"（{rank}段）", $" ({rank} {(rank == 1 ? "rank" : "ranks")})")
                             + (entry == null
                                 ? Loc.T("　<color=#888>両隣の4番目の星が未取得</color>", "  <color=#888>adjacent fourth stars not acquired</color>")
                                 : "\n" + StarMapPresentation.EffectDescription(t, rank))
@@ -202,8 +202,9 @@ namespace SodRpg.Core.Game
             foreach (var total in effectOrder) total.Line.Text = total.Describe();
             foreach (var kv in stats.OrderBy(k => (int)k.Key))
             {
-                kv.Value.Text = Content.FormatStat(kv.Key, BuildAggregation.CapStat(kv.Key, statValues[kv.Key]));
-                if (statValues[kv.Key] != 0) summary.Stats.Add(kv.Value);
+                int value = BuildAggregation.CapStat(kv.Key, statValues[kv.Key]);
+                kv.Value.Text = Content.FormatStat(kv.Key, value);
+                if (value != 0) summary.Stats.Add(kv.Value);
             }
             foreach (var kv in powers.OrderBy(k => (int)k.Key))
             {

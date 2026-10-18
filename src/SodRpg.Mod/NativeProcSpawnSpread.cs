@@ -60,15 +60,16 @@ namespace SodRpg.Mod
 
         internal static T Plain<T>(Actor self, Vector3 position, Quaternion? rotation, CastInfo info,
             Action<T> beforePrepare) where T : AbilityInstance
-            => PlainSplit(self, position, rotation, info, beforePrepare, beforePrepare);
+            => PlainSplit(self, position, rotation, info, beforePrepare, beforePrepare,
+                typeof(T) == typeof(Ai_Gem_R_Spiral_Fireball) ? position : (Vector3?)null);
 
         // 第3段: repeatApply は、まとめ側の実体へ追加された通知を命中時にもう一度設定するための
         // delegate（作成時の設定から位置の変更などを除いたもの）。本体側の生成呼び出しは
         // 5引数の Plain のままなので、こちらは MOD 内からだけ使う。
         internal static T PlainSplit<T>(Actor self, Vector3 position, Quaternion? rotation, CastInfo info,
-            Action<T> beforePrepare, Action<T> repeatApply) where T : AbilityInstance
+            Action<T> beforePrepare, Action<T> repeatApply, Vector3? start) where T : AbilityInstance
         {
-            switch (NativeProcCoalesce.Offer(self, null, info, typeof(T), repeatApply, out var group))
+            switch (NativeProcCoalesce.Offer(self, null, info, typeof(T), start, repeatApply, out var group))
             {
                 case NativeProcCoalesce.Role.Appended:
                     return null;
@@ -84,7 +85,10 @@ namespace SodRpg.Mod
         internal static T WithSource<T>(Gem self, Actor source, Vector3 position, Quaternion? rotation, CastInfo info,
             Action<T> beforePrepare) where T : AbilityInstance
         {
-            switch (NativeProcCoalesce.Offer(self, source, info, typeof(T), beforePrepare, out var group))
+            // 照準・炭火の設定 callback は鎖・データ・強度だけを設定し、生成位置は変えない。
+            Vector3? start = typeof(T) == typeof(Ai_Gem_R_Accuracy_Projectile)
+                || typeof(T) == typeof(Ai_Gem_C_Charcoal_Projectile) ? position : (Vector3?)null;
+            switch (NativeProcCoalesce.Offer(self, source, info, typeof(T), start, beforePrepare, out var group))
             {
                 case NativeProcCoalesce.Role.Appended:
                     return null;
