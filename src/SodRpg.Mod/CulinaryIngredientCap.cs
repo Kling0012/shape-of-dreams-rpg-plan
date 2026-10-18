@@ -37,7 +37,10 @@ namespace SodRpg.Mod
         private static readonly List<MethodInfo> Targets = new List<MethodInfo>();
         private static Harmony _harmony;
         private static Type _ingredientType;
-        private static bool _enabled, _warned, _warnedUnsafe;
+        private static bool _enabled, _warned;
+        private static readonly ConditionalWeakTable<StackedStatusEffect, object> WarnedUnsafe =
+            new ConditionalWeakTable<StackedStatusEffect, object>();
+        private static readonly object UnsafeWarning = new object();
 
         internal static void Install(Harmony harmony)
         {
@@ -118,8 +121,12 @@ namespace SodRpg.Mod
         // stayed native when reading the game log.
         private static void WarnUnsafe(StackedStatusEffect effect, int original)
         {
-            if (_warnedUnsafe) return;
-            _warnedUnsafe = true;
+            // Warn once per actor without keeping destroyed stacks alive or reusing Unity ids.
+            lock (WarnedUnsafe)
+            {
+                if (WarnedUnsafe.TryGetValue(effect, out _)) return;
+                WarnedUnsafe.Add(effect, UnsafeWarning);
+            }
             Log.Warn("Native culinary cooking limit is not safe: " + original
                 + "; this ingredient stack (" + effect.name + " #" + effect.GetInstanceID()
                 + ") keeps its native behavior, other stacks remain capped.");

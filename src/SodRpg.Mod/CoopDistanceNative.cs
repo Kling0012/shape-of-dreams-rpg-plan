@@ -8,12 +8,14 @@ namespace SodRpg.Mod
     internal static class CoopDistanceNative
     {
         private static readonly CoopDistanceTracker Pairs = new CoopDistanceTracker();
-        // Radius-upgraded effects keep their own pair history so their grace does not mix with the base range.
-        private static readonly System.Collections.Generic.Dictionary<float, CoopDistanceTracker> ScaledPairs =
-            new System.Collections.Generic.Dictionary<float, CoopDistanceTracker>();
+        // Keep a fixed tracker per effect: runtime radius changes must not split its grace history.
+        private static readonly CoopDistanceTracker HealPairs = new CoopDistanceTracker();
+        private static readonly CoopDistanceTracker SiphonPairs = new CoopDistanceTracker();
+        private static readonly CoopDistanceTracker ScaledPairs = new CoopDistanceTracker();
         internal static bool Enabled = true;
 
-        internal static float Coefficient(Hero source, Hero target, float legacyRange = CoopBalance.FullRange)
+        internal static float Coefficient(Hero source, Hero target, float legacyRange = CoopBalance.FullRange,
+            GimmickEffect? effect = null)
         {
             if (source == null || target == null) return 0f;
             bool eligible = source.isActive && source.currentHealth > 0f && !source.isKnockedOut
@@ -21,15 +23,20 @@ namespace SodRpg.Mod
                 && (source == target || target.GetRelation(source) == EntityRelation.Ally);
             if (source == target) return eligible ? 1f : 0f;
             double distance = Math.Sqrt((source.agentPosition - target.agentPosition).sqrMagnitude);
-            var pairs = Pairs;
-            if (legacyRange != CoopBalance.FullRange && !ScaledPairs.TryGetValue(legacyRange, out pairs))
-                ScaledPairs[legacyRange] = pairs = new CoopDistanceTracker();
+            // Smaller legacy radii retain their original hard cutoff without falloff or grace.
+            if (legacyRange < CoopBalance.FullRange)
+                return eligible ? CoopDistance.Coefficient(distance, false, legacyRange) : 0f;
+            var pairs = effect == GimmickEffect.Heal ? HealPairs
+                : effect == GimmickEffect.Siphon ? SiphonPairs
+                : legacyRange == CoopBalance.FullRange ? Pairs : ScaledPairs;
             return pairs.Update(source.GetInstanceID(), target.GetInstanceID(), distance, Time.time, eligible, Enabled, legacyRange);
         }
 
         internal static void Clear()
         {
             Pairs.Clear();
+            HealPairs.Clear();
+            SiphonPairs.Clear();
             ScaledPairs.Clear();
         }
     }
