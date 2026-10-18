@@ -47,8 +47,15 @@ namespace SodRpg.Mod
             EnsureGrowthRun();
             if (RunGrowthLedger.RunId == null) return;
             foreach (var entry in build.RunGrowths)
-                if (entry.Trigger == trigger) RunGrowthLedger.Gain(owner, entry, trigger, units);
+                if (entry.Trigger == trigger)
+                {
+                    int gained = RunGrowthLedger.Gain(owner, entry, trigger, units);
+                    if (gained > 0) RestoreFishScalesMaxHealth(rt, entry, gained);
+                }
         }
+
+        /// <summary>Issue #781 の戻し対象はヴェスパーの鍛錬（傷を糧にする）だけ。ケトゥスの鍛錬には付けない。</summary>
+        private const string VesperRunGrowthStarId = "vesper.run.g1";
 
         /// <summary>敵から受けたダメージ：失ったHPと、障壁が吸収した量を最大HPに対する%で数える（TollOfGrudge と同じ見方）。</summary>
         private void OnRunGrowthDamage(HeroRuntime rt, EventInfoDamage info, bool enemy)
@@ -62,6 +69,31 @@ namespace SodRpg.Mod
             if (native != null && native.Target == hero) lost = Math.Min(lost, Math.Max(0f, native.Health));
             GainRunGrowth(rt, RunGrowthTrigger.DamageTakenMaxHpPct, RunGrowth.HealthPercent(lost, hero.maxHealth));
             GainRunGrowth(rt, RunGrowthTrigger.ShieldAbsorbedMaxHpPct, RunGrowth.HealthPercent(absorbed, hero.maxHealth));
+        }
+
+        /// <summary>
+        /// ヴェスパーの鍛錬（vesper.run.g1）が1段増えるたび、魚の鱗（Se_FishScales）に削られている最大HPの
+        /// StarRankBalance.VesperRunG1FishScalesRestorePercent% を取り戻す（Issue #781）。溜まり方・閾値・クールダウンは変えない。
+        /// 取り戻すのは最大HPの上限だけで、現在HPは回復しない。本体の魚の鱗は受けた障壁を現在の最大HPで抑える
+        /// （TakenShieldProcessor の GetMaxShieldAmount = victim.maxHealth × maxShieldHpRatio）ため、
+        /// 最大HPが戻れば障壁の上限もそれに合わせて戻る。残す削りを0.75倍にするので、減る前の最大HPを超えることはない。
+        /// 魚の鱗を付けていないとき（状態がない／削りが0）は何もしない。失敗しても鍛錬自体は止めない（fail-soft）。
+        /// </summary>
+        private static void RestoreFishScalesMaxHealth(HeroRuntime rt, RunGrowthEntry entry, int gainedStacks)
+        {
+            try
+            {
+                if (entry.StarId != VesperRunGrowthStarId) return;
+                var hero = rt.Hero;
+                if (hero == null || hero.Status == null || !hero.Status.TryGetStatusEffect<Se_FishScales>(out var scales)) return;
+                float lost = scales.GetAmount();
+                if (!(lost > 0f) || float.IsNaN(lost) || float.IsInfinity(lost)) return;
+                // 1段ごとに「その時点で削られている分」から25%を取り戻す。閾値到達でまとめて段が増えたときも1段ずつに分けて数える。
+                double keep = Math.Pow(1d - StarRankBalance.VesperRunG1FishScalesRestorePercent / 100d, gainedStacks);
+                scales.SetAmount((float)(lost * keep));
+                hero.Status.CalculateStatsIfDirty();
+            }
+            catch (Exception ex) { Log.Error("Host: RunGrowth fish scales restore " + ex); }
         }
 
         /// <summary>St_R_Parry の成功：Se_R_Parry_Start が防いだダメージを持つ Se_R_Parry_End を作った瞬間（本体の「チャージされたサーベル」と同じ検出）。</summary>

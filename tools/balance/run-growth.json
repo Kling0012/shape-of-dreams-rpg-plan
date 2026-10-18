@@ -1,5 +1,8 @@
 {
   "schemaVersion": 1,
+  "fishScales": {
+    "vesperRunG1RestorePercent": 25
+  },
   "effects": {
     "cetus.run.choice/options/0/growth/capBonus": 0,
     "cetus.run.choice/options/0/growth/effectPct": 50,
@@ -17,14 +20,14 @@
     "vesper.run.choice/options/0/growth/effectPct": 50,
     "vesper.run.choice/options/1/growth/capBonus": 0,
     "vesper.run.choice/options/1/growth/effectPct": 0,
-    "vesper.run.g1/growth/cap": 60,
+    "vesper.run.g1/growth/cap": 0,
     "vesper.run.g1/growth/effects/0/amount": 3.32,
     "vesper.run.g1/growth/effects/1/amount": 13.25,
     "vesper.run.g1/growth/effects/2/amount": 1.32,
     "vesper.run.g1/growth/threshold": 11,
-    "vesper.run.m1/growth/capBonus": 20,
-    "vesper.run.m1/growth/effectPct": 0,
-    "vesper.run.m2/growth/capBonus": 20,
-    "vesper.run.m2/growth/effectPct": 0
+    "vesper.run.m1/growth/capBonus": 0,
+    "vesper.run.m1/growth/effectPct": 25,
+    "vesper.run.m2/growth/capBonus": 0,
+    "vesper.run.m2/growth/effectPct": 25
   }
 }

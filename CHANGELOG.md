@@ -22,7 +22,7 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ### 調整 / Adjustments
 
-- 照準円の表示、キャラクターの表示、純白の入口の判定で、毎フレームの不要な処理を省き、動作を軽くしました。ゲームの動きや見た目は変わりません。 / Reduced unnecessary per-frame work for cast indicator circles, character display, and the Pure White entrance check. Gameplay and visuals are unchanged.
+- 照準円の表示で、変わっていない円の再描画を省き、動作を軽くしました。ゲームの動きや見た目は変わりません。 / Skipped redrawing cast indicator circles that have not changed, reducing load. Gameplay and visuals are unchanged.
 
 この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
 
@@ -45,6 +45,7 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 ### 調整 / Adjustments
 
 - 細かな調整を行いました。 / Minor adjustments.
+- キャラクターの表示と純白の入口の判定で、毎フレームの不要な処理を省き、動作を軽くしました。ゲームの動きや見た目は変わりません。 / Reduced unnecessary per-frame work for character display and the Pure White entrance check. Gameplay and visuals are unchanged.
 
 ---
 

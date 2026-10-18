@@ -108,11 +108,17 @@ namespace SodRpg.Mod
         [LabelText("Coalesce same-frame duplicate proc projectiles / 同一フレームの同じ対象への同種反応弾を1本にまとめる")]
         public bool nativeProcCoalesce = true;
 
+        [LabelText("Reuse embrace skill position reads / 取り込み中の記憶の座標読み出しを毎フレーム1回にまとめる")]
+        public bool nativeEmbracePositionReuse = true;
+
         [LabelText("Reuse accessory attach offset lookups / 装飾品の取り付け位置の検索結果を使い回す")]
         public bool nativeAccessoryOffsetCache = true;
 
         [LabelText("Skip idle cooldown multiplier math / 待機中のクールダウンの倍率計算を省く")]
         public bool nativeCooldownIdleMultiplier = true;
+
+        [LabelText("Recover stuck guest skill state / 参加者のスキル使用不可が続いたら再同期する")]
+        public bool guestSkillLockRecovery = true;
 
         [LabelText("Skip transform sync of stationary actors (host) / 動いていないアクターの座標同期を省く（ホスト）")]
         public bool nativeTransformSyncIdle = true;

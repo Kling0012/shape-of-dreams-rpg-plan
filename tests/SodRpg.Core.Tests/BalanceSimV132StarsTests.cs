@@ -67,7 +67,7 @@ namespace SodRpg.Core.Tests
         }
 
         [Fact]
-        public void Capped_training_entrances_reach_Z4_at_depth_zero_and_Z3_at_depth_one()
+        public void Uncapped_training_entrances_never_report_a_cap_zone()
         {
             // RegisterAllGenerated はプロセスで1回しか登録しない。テストごとの基準状態リセット
             // （SharedStarRegistryResetAttribute）で登録が消えても困らないよう、毎回登録し直す。
@@ -95,7 +95,7 @@ namespace SodRpg.Core.Tests
                             ledger.Gain("sim", entry, entry.Trigger, V132Model.BossUnits(entry.Trigger, depth, heat));
                             stacks[zone - 1] = ledger.Stacks("sim", entry.StarId);
                         }
-                        Assert.Equal(hero == "Hero_Cetus" ? 0 : 4 - depth, V132Model.FirstZoneAtCap(stacks, entry.Cap));
+                        Assert.Equal(0, V132Model.FirstZoneAtCap(stacks, entry.Cap));   // 両旅人とも蓄積の上限はない
                     }
             }
         }
