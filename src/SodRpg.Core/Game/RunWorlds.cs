@@ -15,7 +15,7 @@ namespace SodRpg.Core.Game
         /// <summary>0始まりの世界の累計。最初の世界を見るまでは -1。</summary>
         public int Index { get; private set; } = -1;
 
-        // Infinity counts delve segments, including same-zone arrivals. Graph regeneration is not a new world.
+        // インフィニティでは同じゾーンへの到着も含めて潜行の区間を数える。マップの再生成は新しい世界に数えない。
         public bool Observe(string runId, int zoneIndex, string zoneName, long infinitySegment = -1)
         {
             if (string.IsNullOrEmpty(runId) || zoneIndex < 0) return false;
@@ -31,7 +31,7 @@ namespace SodRpg.Core.Game
             if (infinitySegment >= 0)
             {
                 if (InfinitySegment >= 0 && infinitySegment <= InfinitySegment) return false;
-                // Legacy saves have no segment receipt. Preserve their total, with the current segment as a floor.
+                // 区間の記録がない旧保存では累計を保ち、現在の区間番号を下限にする。
                 long advance = InfinitySegment < 0 ? Math.Max(0, infinitySegment - Index) : infinitySegment - InfinitySegment;
                 Index += (int)Math.Min(int.MaxValue - Index, advance);
                 InfinitySegment = infinitySegment;
