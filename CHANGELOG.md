@@ -10,6 +10,26 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v3.8.0 — 細かな調整と不具合の修正 / Minor adjustments and a fix（2026-10-18）
+
+細かな調整と、不具合の修正を行いました。 / Minor adjustments and a bug fix.
+
+### 更新前に確認 / Before updating
+
+- 協力プレイでは、参加者全員がこのバージョンに更新してください。 / Everyone in co-op should update to this version.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- 協力プレイなどで、跳弾などの弾がまとめて当たる場面で、命中の時刻が本来と少しずれることがあった問題を直しました。 / Fixed hit timing sometimes drifting slightly when many projectiles such as ricochets landed together.
+
+### 調整 / Adjustments
+
+- 細かな調整を行いました。 / Minor adjustments.
+
+---
+
 ## v3.7.7 — Bridge star names now match the star map（2026-10-18）
 
 ### 不具合の修正 / Bug fixes
