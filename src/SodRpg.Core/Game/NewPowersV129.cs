@@ -119,14 +119,14 @@ namespace SodRpg.Core.Game
             if (p == Power.SharedWard || p == Power.TriumphSong || p == Power.Apothecary)
                 body += CoopDistance.Description;
             // Equipment bases share a cap before enhancement, awakening and Overcharge; stars add on top.
-            // Match PowerRuntime.NewValue's truncation before converting display units (15 * 2.5 => 37).
+            // Use the runtime's equipment ceiling before converting display units (15 * 2.5 => 37).
             int capValue = Content.PowerCap(p);
-            int ceiling = (int)(capValue * BuildLimits.MaxEquipmentMultiplier);
+            int ceiling = PowerRuntime.EquipmentCeiling(p);
             string cap = p == Power.BareHandedPride
-                ? Loc.T($"装備の元の値による1回の短縮量は合計で最大{capValue / 10f:0.#}秒で、強化・覚醒・過剰で最大{ceiling / 10f:0.#}秒まで伸びる。星の分はその上に加わる。", $" (reduction per trigger from equipment base values capped at {capValue / 10f:0.#}s, raised up to {ceiling / 10f:0.#}s by enhancement, awakening and Overcharge; star values add on top)")
+                ? Loc.T($"装備の元の値による1回の短縮量は合計で最大{capValue / 10f:0.#}秒で、強化・覚醒・過剰で最大{ceiling / 10f:0.#}秒まで伸びる。星の分はその上に加わる。", $" (reduction per trigger from equipment base values capped at {capValue / 10f:0.#}s, raised up to {ceiling / 10f:0.#}s by enhancement, awakening and Overcharge). Star values add on top of this equipment cap")
                 : p == Power.ShardBoon
-                    ? Loc.T($"装備の元の値による1回の回復量は合計で最大HPの{capValue / 10f:0.#}%で、強化・覚醒・過剰で最大{ceiling / 10f:0.#}%まで伸びる。星の分はその上に加わる。", $" (healing per trigger from equipment base values capped at {capValue / 10f:0.#}% of your maximum health, raised up to {ceiling / 10f:0.#}% by enhancement, awakening and Overcharge; star values add on top)")
-                    : Loc.T($"装備の元の値は合計で最大{capValue}%で、強化・覚醒・過剰で最大{ceiling}%まで伸びる。星の分はその上に加わる。1回の効果量に対する上限で、敵の数や発動回数は合算しない。", $" (equipment base values combined are capped at {capValue}% per activation, raised up to {ceiling}% by enhancement, awakening and Overcharge; star values add on top; targets and triggers are not summed)");
+                    ? Loc.T($"装備の元の値による1回の回復量は合計で最大HPの{capValue / 10f:0.#}%で、強化・覚醒・過剰で最大{ceiling / 10f:0.#}%まで伸びる。星の分はその上に加わる。", $" (healing per trigger from equipment base values capped at {capValue / 10f:0.#}% of your maximum health, raised up to {ceiling / 10f:0.#}% by enhancement, awakening and Overcharge). Star values add on top of this equipment cap")
+                    : Loc.T($"装備の元の値は合計で最大{capValue}%で、強化・覚醒・過剰で最大{ceiling}%まで伸びる。星の分はその上に加わる。1回の効果量に対する上限で、敵の数や発動回数は合算しない。", $" (equipment base values combined are capped at {capValue}% per activation, raised up to {ceiling}% by enhancement, awakening and Overcharge; targets and triggers are not summed). Star values add on top of this equipment cap");
             if (p == Power.ElementalHarvest || p == Power.PilingLuck || p == Power.Medley)
                 cap += p == Power.ElementalHarvest
                     ? Loc.T("この上限は属性1種類あたりの割合に適用される。", ". This cap applies to the percentage per element type")

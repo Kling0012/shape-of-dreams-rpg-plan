@@ -68,13 +68,16 @@ namespace SodRpg.Core.Game
             return (int)Math.Min(int.MaxValue, Math.Floor(actual * (before > ConditionalPowerCap ? ConditionalPowerCap / before : 1d) + .000001d));
         }
 
+        // Shared by runtime values and descriptions. Truncate fractional equipment caps
+        // (15 * 2.5 = 37.5 -> 37), as MaxPowerValue does for non-damage powers;
+        // PowerCeiling rounds ranked damage upward and is not the equipment-only limit.
+        internal static int EquipmentCeiling(Power p) => (int)(Content.PowerCap(p) * BuildLimits.MaxEquipmentMultiplier);
+
         private int NewValue(Power p)
         {
             Build.StarPowers.TryGetValue(p, out int stars);
             // Build.Compute caps the base before awakening; keep its final equipment ceiling and add stars separately.
-            // Truncate fractional equipment caps (15 * 2.5 = 37.5 -> 37), as MaxPowerValue does for non-damage powers;
-            // PowerCeiling rounds ranked damage upward and is not the equipment-only limit.
-            return Math.Max(0, Math.Min((int)(Content.PowerCap(p) * BuildLimits.MaxEquipmentMultiplier), Build.Get(p) - stars)) + stars;
+            return Math.Max(0, Math.Min(EquipmentCeiling(p), Build.Get(p) - stars)) + stars;
         }
         private static float Percent(float amount, float percent) => Math.Max(0, amount) * percent / 100f;
         private static bool Gate(Dictionary<int, float> gates, int id, float now, float interval)

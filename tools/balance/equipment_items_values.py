@@ -43,10 +43,14 @@ def _authored_coverage():
     for item_id, body in re.findall(r'new UniqueDef\("([^"\n]+)"(.*?)(?=new UniqueDef|\Z)', section, re.S):
         link = re.search(r"Kind = LinkKind\.(\w+)", body)
         if link is not None:
-            requires = re.search(r"Requires\s*=\s*new\[\]\s*\{([^}]+)\}", body)
-            if requires is None:
-                raise ValueError(f"{item_id}/link: cannot read authored requirements")
-            link = (link.group(1), len(re.findall(r'"[^"\n]+"', requires.group(1))))
+            requires = re.search(r"Requires\s*=\s*new\s*(?:string\s*)?\[\s*\]\s*\{([^}]*)\}", body)
+            # Only the element count is needed; constant references count just like string literals.
+            target = r'"(?:[^"\\\r\n]|\\.)*"|[A-Za-z_]\w*(?:\.[A-Za-z_]\w*)*'
+            elements = rf"\s*(?:{target})(?:\s*,\s*(?:{target}))*\s*,?\s*"
+            if requires is None or re.fullmatch(elements, requires.group(1)) is None:
+                raise ValueError(f"{item_id}/link: cannot read authored requirements; "
+                                 "expected a string array of literals or constant references")
+            link = (link.group(1), len(re.findall(target, requires.group(1))))
         uniques[item_id] = (re.findall(r"Power\.(\w+),", body), link)
     for path in (ROOT / "src/SodRpg.Core/Game").glob("BossProfiles.*.cs"):
         body = path.read_text(encoding="utf-8")
@@ -76,7 +80,10 @@ def load_bases(path=None):
 
 
 def _equipped_link_cap(kind, require_count, awaken_percent):
-    # Mirrors Links.Cap / EquippedCap for authored, unawakened equipment values.
+    # Equipment base cap includes the maximum awakening multiplier (currently 180%).
+    # Keep single / requirement multipliers / rounding in sync with Links.Cap, and
+    # awakening / MemoryHaste limits with Links.EquippedCap in Game/Links.cs.
+    # When adding a LinkKind, review this non-BossReward equipment mapping as well.
     single = {"Attune": 25, "Guard": 25, "MemoryHaste": 50,
               "MemorySurge": 40, "MemoryDamage": 40}
     if kind not in single or require_count not in (1, 2, 3):
@@ -115,6 +122,8 @@ def load_uniques(path=None):
             if row["link"]["kind"] != kind:
                 raise ValueError(f"{item_id}/link/kind: must match authored relation")
             value = _decimal(row["link"]["value"], item_id + "/link/value")
+            # Only authored unique equipment links are checked here, not star or set links.
+            # BossReward uses its own rules; other kinds must appear in _equipped_link_cap's single map.
             if kind != "BossReward":
                 cap = _equipped_link_cap(kind, require_count, awaken_percent)
                 if value > cap:
