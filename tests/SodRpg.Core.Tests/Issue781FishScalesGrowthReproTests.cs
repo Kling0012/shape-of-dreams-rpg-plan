@@ -27,8 +27,8 @@ namespace SodRpg.Core.Tests
     ///
     /// このテストは、同じ傷（同じ絶対ダメージ列）を与えたとき、魚の鱗の有無で
     /// 鍛錬の溜まり方がほぼ変わらないことを要求する（悪夢は最大HPを削る代物であり、
-    /// 傷そのものを増やすわけではないため）。現行コードでは魚の鱗ありのほうが
-    /// 常に先へ進み、終盤の育った旅人では上限到達が1ゾーン早まる。
+    /// 傷そのものを増やすわけではないため）。修正前は魚の鱗ありのほうが常に先へ進み、
+    /// 終盤の育った旅人では上限到達が1ゾーン早まった（Issue #781 で分母へ戻すように直した）。
     /// </summary>
     [Collection("Generated hero registry")]
     public sealed class Issue781FishScalesGrowthReproTests : IClassFixture<StarRegistryCleanupFixture>
@@ -77,9 +77,10 @@ namespace SodRpg.Core.Tests
         /// V132 のbalance模型と同じ想定（戦闘部屋で基礎最大HPの25%・ボス戦は2倍のHPを失う。
         /// 夢の深度0・熱度0・4ゾーン・部屋5+ボス）で1遠征を進め、ゾーンごとの鍛錬の段数を返す。
         /// 敵の攻撃は旅人の最大HPに連動しないので、失うHPは絶対値として固定する。
-        /// 最大HPは現行のコードと同じく「基礎 + 鍛錬の最大HP増加 − 魚の鱗の減少」で毎Hit後に更新する
-        /// （魚の鱗の減少はゾーン移動で0に戻す。導の社は使わない想定）。魚の鱗の減少は
-        /// そのHitの鍛錬の加算より後に適用する（本体の処理順で先になる場合も方向は同じ）。
+        /// 最大HPは「基礎 + 鍛錬の最大HP増加 − 魚の鱗の減少」で毎Hit後に更新する
+        /// （魚の鱗の減少はゾーン移動で0に戻す。導の社は使わない想定）。鍛錬の%は
+        /// 修正後の OnRunGrowthDamage と同じく、その見かけの最大HPに魚の鱗の減少を足した分母で数える。
+        /// 魚の鱗の減少はそのHitの鍛錬の加算より後に適用する（本体の処理順で先になる場合も方向は同じ）。
         /// </summary>
         private static int[] SimulateExpedition(RunGrowthEntry entry, double hpPerStack, double baseMaxHp,
             bool fishScales, Options options)
@@ -101,7 +102,7 @@ namespace SodRpg.Core.Tests
                     for (int hit = 0; hit < hits; hit++)
                     {
                         ledger.Gain("sim", entry, RunGrowthTrigger.DamageTakenMaxHpPct,
-                            RunGrowth.HealthPercent((float)lost, (float)maxHp));
+                            RunGrowth.HealthPercent((float)lost, (float)maxHp, (float)fishPenalty));
                         if (fishScales) fishPenalty += lost * ratio;
                         maxHp = Math.Max(1d, baseMaxHp + hpPerStack * ledger.Stacks("sim", entry.StarId) - fishPenalty);
                     }

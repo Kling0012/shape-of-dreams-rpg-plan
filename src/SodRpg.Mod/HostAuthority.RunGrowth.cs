@@ -50,7 +50,8 @@ namespace SodRpg.Mod
                 if (entry.Trigger == trigger) RunGrowthLedger.Gain(owner, entry, trigger, units);
         }
 
-        /// <summary>敵から受けたダメージ：失ったHPと、障壁が吸収した量を最大HPに対する%で数える（TollOfGrudge と同じ見方）。</summary>
+        /// <summary>敵から受けたダメージ：失ったHPと、障壁が吸収した量を最大HPに対する%で数える（TollOfGrudge と同じ見方）。
+        /// 魚の鱗（Se_FishScales）で最大HPが減っているときはその分を分母へ戻し、同じ傷が魚の鱗の有無で変わらず溜まるようにする（Issue #781）。</summary>
         private void OnRunGrowthDamage(HeroRuntime rt, EventInfoDamage info, bool enemy)
         {
             var build = rt.Powers?.Build;
@@ -60,8 +61,10 @@ namespace SodRpg.Mod
             float lost = Math.Max(0f, info.damage.amount - absorbed);
             var native = NativeDamageContext.Current;
             if (native != null && native.Target == hero) lost = Math.Min(lost, Math.Max(0f, native.Health));
-            GainRunGrowth(rt, RunGrowthTrigger.DamageTakenMaxHpPct, RunGrowth.HealthPercent(lost, hero.maxHealth));
-            GainRunGrowth(rt, RunGrowthTrigger.ShieldAbsorbedMaxHpPct, RunGrowth.HealthPercent(absorbed, hero.maxHealth));
+            float fishScales = hero.Status != null && hero.Status.TryGetStatusEffect<Se_FishScales>(out var scales)
+                ? Math.Max(0f, scales.GetAmount()) : 0f;
+            GainRunGrowth(rt, RunGrowthTrigger.DamageTakenMaxHpPct, RunGrowth.HealthPercent(lost, hero.maxHealth, fishScales));
+            GainRunGrowth(rt, RunGrowthTrigger.ShieldAbsorbedMaxHpPct, RunGrowth.HealthPercent(absorbed, hero.maxHealth, fishScales));
         }
 
         /// <summary>St_R_Parry の成功：Se_R_Parry_Start が防いだダメージを持つ Se_R_Parry_End を作った瞬間（本体の「チャージされたサーベル」と同じ検出）。</summary>
