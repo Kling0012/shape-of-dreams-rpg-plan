@@ -66,7 +66,12 @@ namespace SodRpg.Mod
             {
                 List<Renderer> list = _renderers(instance);
                 if (list == null) return;
-                if (_disabled || !NativePerfOptions.CharacterModelDisplayBounds)
+                // The list can only be parked when both readers and the Setup invalidation
+                // hook are available. Partial preparation must leave the native walk intact.
+                if (_disabled || !NativePerfOptions.CharacterModelDisplayBounds
+                    || !NativeCharacterModelDisplayBoundsSetup.Prepared
+                    || !NativeCharacterModelDisplayBoundsCenter.Prepared
+                    || !NativeCharacterModelDisplayBoundsAbove.Prepared)
                 {
                     Restore(instance, list);
                     return;
@@ -190,9 +195,11 @@ namespace SodRpg.Mod
     {
         private static MethodBase _target;
         private static bool _warned;
+        internal static bool Prepared { get; private set; }
 
         private static bool Prepare()
         {
+            Prepared = false;
             try
             {
                 _target = AccessTools.DeclaredMethod(typeof(CharacterModelDisplay), "Setup",
@@ -208,7 +215,7 @@ namespace SodRpg.Mod
                 NativePerfPatch.Warn(ref _warned, "CharacterModelDisplay.Setup", "native method unavailable");
                 return false;
             }
-            return NativeCharacterModelDisplayBounds.Prepare();
+            return Prepared = NativeCharacterModelDisplayBounds.Prepare();
         }
 
         private static MethodBase TargetMethod() => _target;
@@ -222,12 +229,14 @@ namespace SodRpg.Mod
     {
         private static MethodBase _target;
         private static bool _warned;
+        internal static bool Prepared { get; private set; }
 
         private static bool Prepare()
         {
+            Prepared = false;
             _target = NativePerfPatch.Find(typeof(CharacterModelDisplay),
                 nameof(CharacterModelDisplay.GetCenterPosition), ref _warned);
-            return _target != null && NativeCharacterModelDisplayBounds.Prepare();
+            return Prepared = _target != null && NativeCharacterModelDisplayBounds.Prepare();
         }
 
         private static MethodBase TargetMethod() => _target;
@@ -253,12 +262,14 @@ namespace SodRpg.Mod
     {
         private static MethodBase _target;
         private static bool _warned;
+        internal static bool Prepared { get; private set; }
 
         private static bool Prepare()
         {
+            Prepared = false;
             _target = NativePerfPatch.Find(typeof(CharacterModelDisplay),
                 nameof(CharacterModelDisplay.GetAbovePosition), ref _warned);
-            return _target != null && NativeCharacterModelDisplayBounds.Prepare();
+            return Prepared = _target != null && NativeCharacterModelDisplayBounds.Prepare();
         }
 
         private static MethodBase TargetMethod() => _target;

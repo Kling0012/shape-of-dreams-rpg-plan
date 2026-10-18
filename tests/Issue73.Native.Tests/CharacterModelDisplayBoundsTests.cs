@@ -37,6 +37,11 @@ namespace Issue73.Native.Tests
             feature.GetField("_disabled", Hidden).SetValue(null, false);
             feature.GetField("_warned", Hidden).SetValue(null, false);
             Assert.True(NativeCharacterModelDisplayBounds.Prepare());
+            foreach (Type patch in new[] { typeof(NativeCharacterModelDisplayBoundsSetup),
+                typeof(NativeCharacterModelDisplayBoundsCenter), typeof(NativeCharacterModelDisplayBoundsAbove) })
+            {
+                Assert.True((bool)patch.GetMethod("Prepare", Hidden).Invoke(null, null));
+            }
         }
 
         private static void CenterPrefix(CharacterModelDisplay display)

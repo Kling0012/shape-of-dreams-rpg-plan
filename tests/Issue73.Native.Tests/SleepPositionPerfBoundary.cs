@@ -25,8 +25,8 @@ namespace SodRpg.Mod
         }
 
         // 実ソースの NativeCharacterModelDisplayBounds 系パッチの Prepare が呼ぶ検索。
-        // テストでは Harmony のパッチ適用は行わないため、見つからない（null）ままでも呼ばれない。
-        internal static MethodBase Find(Type type, string method, ref bool warned) => null;
+        internal static MethodBase Find(Type type, string method, ref bool warned)
+            => HarmonyLib.AccessTools.DeclaredMethod(type, method, Type.EmptyTypes);
     }
 }
 
