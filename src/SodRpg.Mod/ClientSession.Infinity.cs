@@ -123,6 +123,8 @@ namespace SodRpg.Mod
             if (!InfinityMode.NativeSaveAgreement || string.IsNullOrEmpty(runId)
                 || runId != NetworkedManagerBase<GameManager>.softInstance?.runId) return false;
             bool waiting = _infinityPendingSaveRevision != 0 && _infinityPendingSaveRun == runId;
+            // Keep changes made during confirmation dirty even if throttling returns below.
+            // The next write (including the 5s retry) captures them without moving the queued hold target here.
             MarkDirty(true);
             // Do not advance the hold for a confirmation that queues no write; otherwise its
             // Revision+1 target stays ahead of the writer until the 30s timeout.
