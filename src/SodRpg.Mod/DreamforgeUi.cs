@@ -2616,7 +2616,7 @@ namespace SodRpg.Mod
                     PairDefinition = pair,
                     Region = t?.Cluster?.Region.Kind,
                 };
-                _starNodes[i].Name.text = t == null ? Loc.T("始まり", "Start") : pair != null ? pair.Name.ToString() : t.Name.ToString();
+                _starNodes[i].Name.text = t == null ? Loc.T("始まり", "Start") : t.DisplayName.ToString();
                 _starNodes[i].EffectSummary = t == null ? "" : t.IsChoice ? StarMapPresentation.EffectSummary(t)
                     : StarMapPresentation.EffectSummary(_starNodes[i].Description);
                 if (t != null && t.IsKeystone) keystones.Add(i);
@@ -2790,7 +2790,7 @@ namespace SodRpg.Mod
             string state = n.Rank >= t.MaxRank ? Loc.T("取得済み（最大段）", "Acquired (maximum rank)")
                 : n.Available ? Loc.T("取得可能", "Available") : Loc.T("条件不足", "Requirements missing");
             var pair = n.PairDefinition;
-            string title = pair == null ? t.Name.ToString() : pair.Name.ToString();
+            string title = t.DisplayName.ToString();
             string description = n.DisplayBody;
             if (pair != null)
             {

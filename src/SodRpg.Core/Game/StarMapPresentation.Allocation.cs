@@ -70,7 +70,7 @@ namespace SodRpg.Core.Game
         {
             string status = rank > 0 ? Loc.T("取得済み", "Acquired")
                 : available ? Loc.T("取得可能", "Available") : Loc.T("条件不足", "Requirements missing");
-            return "<b>" + star.Name + "</b>  〈" + status + "〉\n" + summary
+            return "<b>" + star.DisplayName + "</b>  〈" + status + "〉\n" + summary
                 + Loc.T($"\n{rank}/{star.MaxRank}段", $"\nRank {rank}/{star.MaxRank}");
         }
 
@@ -85,7 +85,7 @@ namespace SodRpg.Core.Game
             var reasons = new List<string>();
             bool Has(string id) => state.HasKeystone(id) || state.Talents.TryGetValue(id, out int value) && value > 0;
             string DisplayName(TalentDef talent) => talent == null ? Loc.T("始まりの星", "Starting star")
-                : (PairCombos.ForBridge(talent.Id)?.Name ?? talent.Name).ToString();
+                : talent.DisplayName.ToString();
             string Name(string id)
             {
                 foreach (var node in layout.Nodes) if (node.Id == id) return DisplayName(node.Talent);

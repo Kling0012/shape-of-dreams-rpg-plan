@@ -141,7 +141,7 @@ namespace SodRpg.Core.Game
                 var talent = plan.Owner?.Talent(id);
                 if (talent == null) { yield return raw; continue; }
                 string rank = hash < 0 ? null : raw.Substring(hash + 1);
-                yield return talent.Name.ToString() + (rank == null ? "" : Loc.T($"（{rank}段目）", $" (rank {rank})"));
+                yield return talent.DisplayName.ToString() + (rank == null ? "" : Loc.T($"（{rank}段目）", $" (rank {rank})"));
             }
         }
         public EffectiveAllocationPlan Plan { get; }
