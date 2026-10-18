@@ -17,7 +17,7 @@ namespace UnityEngine
 
     // 本体の CircleRegion が sharedMaterial を読むのは MeshRenderer の継承元 UnityEngine.Renderer。
     // 実 DLL の IL も callvirt Renderer::get_sharedMaterial なので、この継承関係が必要。
-    internal class Renderer
+    internal partial class Renderer
     {
         internal Material sharedMaterial { get; set; }
     }
@@ -27,7 +27,7 @@ namespace UnityEngine
     }
 
     // 本体 UpdateProperties が書き換える子トランスフォームの境界。
-    internal sealed class Transform
+    internal sealed partial class Transform
     {
         internal Vector3 localScale { get; set; }
         internal Vector3 localPosition { get; set; }
