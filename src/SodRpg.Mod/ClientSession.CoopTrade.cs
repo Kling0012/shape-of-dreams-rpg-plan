@@ -86,6 +86,15 @@ namespace SodRpg.Mod
         public IReadOnlyList<CoopTradePeer> CoopTradePeers => _coopPeers;
         public CoopTradeView CoopTrade { get; private set; }
         private Txt _coopTradeWarning, _coopConnectionWarning;
+        private static readonly Txt CoopHostUnavailableWarning = new Txt(
+            "ホストがトレード非対応、または応答がありません。トレードのみ利用できません。",
+            "The host does not support trade or has not replied. Only trade is unavailable.");
+        private static readonly Txt CoopResultQueryWarning = new Txt(
+            "取引結果を照会中です。予約品は成立または中止が確認できるまで保持します。",
+            "Checking the trade result. Reserved assets remain held until commit or cancellation is confirmed.");
+        private static readonly Txt CoopOriginalHostWarning = new Txt(
+            "予約品の確認には元のホストへ再接続してください。トレード以外は続行できます。",
+            "Reconnect to the original host to settle reserved assets. Other features remain available.");
         public string CoopTradeWarning => (_coopTradeWarning ?? _coopConnectionWarning)?.ToString();
         public bool CoopTradeOfferPending => _coopPendingOffer != null;
         public bool CoopTradeLocked => _coopSettlementUnsaved
@@ -272,8 +281,7 @@ namespace SodRpg.Mod
                 if (_coopConnection == null || _coopDisabled) return;
                 if (!NetworkServer.active && Time.unscaledTime - _coopAdvertisementAt > 10f)
                 {
-                    _coopConnectionWarning ??= new Txt("ホストがトレード非対応、または応答がありません。トレードのみ利用できません。",
-                        "The host does not support trade or has not replied. Only trade is unavailable.");
+                    _coopConnectionWarning ??= CoopHostUnavailableWarning;
                     if (Time.unscaledTime >= _nextCoopProbe)
                     {
                         _nextCoopProbe = Time.unscaledTime + 5f;
@@ -311,8 +319,7 @@ namespace SodRpg.Mod
                 if (pending != null)
                 {
                     if (string.IsNullOrEmpty(_coopTradeWarning?.ToString()))
-                        _coopTradeWarning = new Txt("取引結果を照会中です。予約品は成立または中止が確認できるまで保持します。",
-                            "Checking the trade result. Reserved assets remain held until commit or cancellation is confirmed.");
+                        _coopTradeWarning = CoopResultQueryWarning;
                     if (_coopHostKey == pending.HostKey)
                     {
                         if (_coopPrepareSaveRevision > 0 && CoopTrade?.Id == pending.Id && CoopTrade.Preparing)
@@ -334,12 +341,10 @@ namespace SodRpg.Mod
                         SendCoop(new DreamforgeCoopTradeCommand { action = CoopPendingStale ? "cancel" : "query", id = pending.Id });
                     }
                     else if (_coopHostKey != null)
-                        _coopTradeWarning = new Txt("予約品の確認には元のホストへ再接続してください。トレード以外は続行できます。",
-                            "Reconnect to the original host to settle reserved assets. Other features remain available.");
+                        _coopTradeWarning = CoopOriginalHostWarning;
                 }
                 else if (!NetworkServer.active && Time.unscaledTime - _coopAnsweredAt > 20f)
-                    _coopConnectionWarning ??= new Txt("ホストがトレード非対応、または応答がありません。トレードのみ利用できません。",
-                        "The host does not support trade or has not replied. Only trade is unavailable.");
+                    _coopConnectionWarning ??= CoopHostUnavailableWarning;
             }
             catch (CoopSendException ex) { _coopTradeWarning = new Txt(ex.Message, ex.Message); }
             catch (Exception ex) { DisableCoopTrade(ex); }

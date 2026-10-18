@@ -168,16 +168,6 @@ namespace SodRpg.Mod
             foreach (int percent in decayByWorld) if (percent < 0 || percent > 100) return false;
             return true;
         }
-
-        internal bool SameAs(DynamicDifficultyStatus other)
-        {
-            if (other == null || state != other.state || world != other.world || decayPercent != other.decayPercent
-                || damageExponent != other.damageExponent || rewardShare != other.rewardShare
-                || decayByWorld?.Length != other.decayByWorld?.Length) return false;
-            for (int i = 0; decayByWorld != null && i < decayByWorld.Length; i++)
-                if (decayByWorld[i] != other.decayByWorld[i]) return false;
-            return true;
-        }
     }
 
     internal readonly struct MonsterOwnership
