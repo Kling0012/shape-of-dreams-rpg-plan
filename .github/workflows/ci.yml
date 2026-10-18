@@ -36,7 +36,7 @@ jobs:
   core-tests:
     # A label event only re-runs slow-tests; the fast set keeps its earlier result.
     if: github.event.action != 'labeled'
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, lab]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v4
@@ -59,7 +59,7 @@ jobs:
   mod-tests:
     # A label event only re-runs slow-tests; the fast set keeps its earlier result.
     if: github.event.action != 'labeled'
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, lab]
     strategy:
       fail-fast: false
       matrix:
@@ -105,7 +105,7 @@ jobs:
       || (github.event_name == 'pull_request'
           && contains(github.event.pull_request.labels.*.name, 'ci-full')
           && (github.event.action != 'labeled' || github.event.label.name == 'ci-full'))
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, lab]
     strategy:
       fail-fast: false
       matrix:
