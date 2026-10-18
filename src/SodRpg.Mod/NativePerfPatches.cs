@@ -365,20 +365,13 @@ namespace SodRpg.Mod
     [HarmonyPatch]
     internal static class NativeAccessoryOffsetPerf
     {
-        private sealed class OffsetCache
-        {
-            internal AccessoryOffsetCacheKey Key;
-            internal Accessory_AttachPoint.AttachOffset Result;
-        }
-
-        private static readonly ConditionalWeakTable<Accessory_AttachPoint, OffsetCache> Caches =
-            new ConditionalWeakTable<Accessory_AttachPoint, OffsetCache>();
-        private static readonly ConditionalWeakTable<Accessory_AttachPoint, OffsetCache>.CreateValueCallback CreateCache =
-            _ => new OffsetCache();
+        private static readonly ConditionalWeakTable<Accessory_AttachPoint, AccessoryOffsetCache<Accessory_AttachPoint.AttachOffset>> Caches =
+            new ConditionalWeakTable<Accessory_AttachPoint, AccessoryOffsetCache<Accessory_AttachPoint.AttachOffset>>();
+        private static readonly ConditionalWeakTable<Accessory_AttachPoint, AccessoryOffsetCache<Accessory_AttachPoint.AttachOffset>>.CreateValueCallback CreateCache =
+            _ => new AccessoryOffsetCache<Accessory_AttachPoint.AttachOffset>();
         private static MethodBase _target;
         private static bool _disabled;
         private static bool _warned;
-        private static bool _ranOriginal;
 
         private static bool Prepare()
         {
@@ -398,17 +391,17 @@ namespace SodRpg.Mod
         private static bool Prefix(Accessory_AttachPoint __instance, string entityOrSkinName,
             ref Accessory_AttachPoint.AttachOffset __result)
         {
-            _ranOriginal = false;
             if (_disabled || !NativePerfOptions.AccessoryOffset) return true;
             try
             {
-                // The inspected game does not mutate customOffsets at runtime. This key detects
-                // model-name reference, list reference and count changes, but not same-count element
-                // replacements or entityName edits. Disable this option if another mod makes those edits.
+                // The inspected game does not mutate customOffsets at runtime. The key detects
+                // model-name, list, count and element reference changes (same-count in-place
+                // replacements included), but not entityName value edits on a kept element.
+                // Disable this option if another mod makes those edits.
                 if (Caches.TryGetValue(__instance, out var cache)
-                    && cache.Key.Matches(entityOrSkinName, __instance.customOffsets, __instance.customOffsets.Count))
+                    && cache.TryGet(entityOrSkinName, __instance.customOffsets, out var cached))
                 {
-                    __result = cache.Result;
+                    __result = cached;
                     return false;
                 }
             }
@@ -418,20 +411,20 @@ namespace SodRpg.Mod
                 NativePerfPatch.Warn(ref _warned, "accessory offset", ex.Message);
                 return true;
             }
-            _ranOriginal = true;
             return true;
         }
 
         private static void Postfix(Accessory_AttachPoint __instance, string entityOrSkinName,
-            Accessory_AttachPoint.AttachOffset __result)
+            Accessory_AttachPoint.AttachOffset __result, bool __runOriginal)
         {
-            if (_disabled || !_ranOriginal) return;
-            _ranOriginal = false;
+            // Cache only what the native search itself produced. When another mod's prefix
+            // skips the original (__runOriginal false), its substituted result must not
+            // enter this cache; the next call then runs the native search again.
+            if (_disabled || !__runOriginal) return;
             try
             {
-                OffsetCache cache = Caches.GetValue(__instance, CreateCache);
-                cache.Key = new AccessoryOffsetCacheKey(entityOrSkinName, __instance.customOffsets, __instance.customOffsets.Count);
-                cache.Result = __result;
+                Caches.GetValue(__instance, CreateCache)
+                    .Store(entityOrSkinName, __instance.customOffsets, __result);
             }
             catch (Exception ex)
             {
