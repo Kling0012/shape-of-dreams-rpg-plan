@@ -99,6 +99,11 @@ namespace SodRpg.Mod
         private string _bossVisualRun;
         private int _bossVisualZone = -1, _bossVisualRoom = -1, _bossRenderCount, _bossSegmentsLeft;
         private float _nextBossDisplayPrune, _nextBossRenderRefresh;
+        // Per-Repaint invariants (camera position, screen metrics, white texture); read once per
+        // DrawBossEffects so the per-line and per-visual paths stop re-entering native property getters.
+        private Vector3 _bossCameraPosition;
+        private int _bossScreenWidth, _bossScreenHeight;
+        private Texture2D _bossWhiteTexture;
         // The game's effect-quality setting (and the PerformanceTuner override) also governs
         // how much the mod's telegraphs draw; refreshed with the render list, not per line.
         private Quality3Levels _bossVisualQuality = Quality3Levels.High;
@@ -309,12 +314,12 @@ namespace SodRpg.Mod
                 && target != null) return target.transform.position;
             return effect.center;
         }
-        private bool BossDisplayVisible(Camera camera, DreamforgeBossEffect effect, Vector3 center, out float distance)
+        private bool BossDisplayVisible(DreamforgeBossEffect effect, Vector3 center, out float distance)
         {
             float extent = Mathf.Max(effect.radius, Mathf.Max(effect.finalRadius, effect.range)) + effect.width + 2f;
             var midpoint = (center + effect.end) * .5f;
             extent += (effect.end - center).magnitude * .5f;
-            distance = (midpoint - camera.transform.position).sqrMagnitude;
+            distance = (midpoint - _bossCameraPosition).sqrMagnitude;
             float far = (BossQualityLow ? BossDisplayDistanceLow : BossDisplayDistance) + extent;
             if (distance > far * far) return false;
             for (int i = 0; i < _bossVisualPlanes.Length; i++)
@@ -352,7 +357,7 @@ namespace SodRpg.Mod
                 {
                     var visual = owner.Effects[j];
                     var effect = visual.Effect;
-                    if (effect.expires <= now || !BossDisplayVisible(camera, effect, BossDisplayCenter(effect), out float distance)) continue;
+                    if (effect.expires <= now || !BossDisplayVisible(effect, BossDisplayCenter(effect), out float distance)) continue;
                     if (effect.kind == 9) distance -= 2000000f;
                     else if (effect.kind == 1) distance -= 1000000f;
                     int index = _bossRenderCount;
@@ -379,8 +384,12 @@ namespace SodRpg.Mod
             var camera = Camera.main;
             if (camera == null) return;
             double now = Time.time;
+            _bossCameraPosition = camera.transform.position;
             RefreshBossRenderVisuals(camera, now);
             if (_bossRenderCount == 0) return;
+            _bossScreenWidth = Screen.width;
+            _bossScreenHeight = Screen.height;
+            _bossWhiteTexture = Texture2D.whiteTexture;
             _bossSegmentsLeft = BossQualityLow ? BossDisplaySegmentLimitLow : BossDisplaySegmentLimit;
             int captionGlyphsLeft = BossQualityLow ? BossCaptionGlyphLimitLow : BossCaptionGlyphLimit;
             var oldColor = GUI.color;
@@ -393,7 +402,7 @@ namespace SodRpg.Mod
                     var effect = visual.Effect;
                     if (effect.expires <= now) continue;
                     var center = BossDisplayCenter(effect);
-                    if (!BossDisplayVisible(camera, effect, center, out float distance)) continue;
+                    if (!BossDisplayVisible(effect, center, out float distance)) continue;
                     bool pending = effect.due > now;
                     GUI.color = BossEffectColor(effect.kind, effect.element, pending);
                     if (effect.kind == 5)
@@ -463,9 +472,9 @@ namespace SodRpg.Mod
                     if (visual.CaptionLength > 0 && captionGlyphsLeft > 0)
                     {
                         var at = camera.WorldToScreenPoint(center + Vector3.up * .7f);
-                        if (at.z > 0 && at.x >= 0 && at.x <= Screen.width && at.y >= 0 && at.y <= Screen.height)
+                        if (at.z > 0 && at.x >= 0 && at.x <= _bossScreenWidth && at.y >= 0 && at.y <= _bossScreenHeight)
                             for (int i = 0; i < visual.CaptionLength && captionGlyphsLeft > 0; i++, captionGlyphsLeft--)
-                                GUI.Label(new Rect(at.x - 40f + i * 7f, Screen.height - at.y - 10f, 16f, 22f),
+                                GUI.Label(new Rect(at.x - 40f + i * 7f, _bossScreenHeight - at.y - 10f, 16f, 22f),
                                     BossCaptionGlyphs[visual.Caption[i]]);
                     }
                 }
@@ -542,15 +551,15 @@ namespace SodRpg.Mod
             _bossSegmentsLeft--;
             Vector3 a = camera.WorldToScreenPoint(from), b = camera.WorldToScreenPoint(to);
             if (!BossFinite(a) || !BossFinite(b) || a.z <= 0f || b.z <= 0f
-                || a.x < 0 && b.x < 0 || a.x > Screen.width && b.x > Screen.width
-                || a.y < 0 && b.y < 0 || a.y > Screen.height && b.y > Screen.height) return;
-            var start = new Vector2(a.x, Screen.height - a.y);
+                || a.x < 0 && b.x < 0 || a.x > _bossScreenWidth && b.x > _bossScreenWidth
+                || a.y < 0 && b.y < 0 || a.y > _bossScreenHeight && b.y > _bossScreenHeight) return;
+            var start = new Vector2(a.x, _bossScreenHeight - a.y);
             var difference = new Vector2(b.x - a.x, a.y - b.y);
             float length = difference.magnitude;
             if (length < .1f) return;
             Matrix4x4 matrix = GUI.matrix;
             GUIUtility.RotateAroundPivot(Mathf.Atan2(difference.y, difference.x) * Mathf.Rad2Deg, start);
-            GUI.DrawTexture(new Rect(start.x, start.y - width * .5f, length, width), Texture2D.whiteTexture);
+            GUI.DrawTexture(new Rect(start.x, start.y - width * .5f, length, width), _bossWhiteTexture);
             GUI.matrix = matrix;
         }
     }
