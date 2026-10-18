@@ -21,6 +21,8 @@ namespace SodRpg.Mod
                 Log.Warn("Boss solo HP unavailable: native multiplayer bonus call changed; room HP retained.");
                 return result;
             }
+            // Assumes this sole AddStatBonus call contains only the native multiplayer bonus.
+            // The count check cannot detect other bonuses merged into that call; recheck after game updates.
             var capture = AccessTools.Method(typeof(BossShareNativeHealth), nameof(AddBonus));
             foreach (var instruction in result)
                 if (instruction.Calls(add)) { instruction.opcode = OpCodes.Call; instruction.operand = capture; }
