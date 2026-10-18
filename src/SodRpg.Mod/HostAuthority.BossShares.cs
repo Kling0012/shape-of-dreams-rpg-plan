@@ -308,6 +308,8 @@ namespace SodRpg.Mod
                 var player = OwnershipHuman(victim);
                 var source = OwnershipSource(damage.actor ?? actor);
                 if (player == null || source == null || !OwnershipExcluded(source)) return;
+                // Normalize both sides through the helper: Infinity co-op excludes personal waypoints,
+                // even when _pressure still contains the host waypoint before RefreshPressure runs.
                 float factor = Mathf.Clamp((float)(OwnershipPressure(player, sharedEnemy: true).HealthMultiplier
                     / OwnershipBasePressure(null).HealthMultiplier),
                     CoopBalance.Ownership.BossDamageMin, CoopBalance.Ownership.BossDamageMax);
