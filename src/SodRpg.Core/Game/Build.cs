@@ -252,6 +252,9 @@ namespace SodRpg.Core.Game
                     // The saved first power already includes the one-time +20 bonus.
                     // Overcharge (x1.6, paid for with an affix) also stays out of the cap basis, like awakening:
                     // otherwise a near-cap power was cut back to the cap and lost most of the promised boost.
+                    // Overcharge SourcePowers preserves r.Powers' count, order and power IDs; only values change.
+                    // Both this basis and the conditional budget below rely on that index correspondence.
+                    // The bounds check is defensive; pw.Value is the fallback if an unmatched entry ever appears.
                     int unscaled = r.Forbidden?.Pattern == ForbiddenPattern.Overcharge && i < r.Powers.Count ? r.Powers[i].Value : pw.Value;
                     decimal basis = i == 0 && (r.MilestonePowerApplied || r.EnhanceMilestones >= 5)
                         ? unscaled * 100m / Content.LimitBreakPowerPct : unscaled;

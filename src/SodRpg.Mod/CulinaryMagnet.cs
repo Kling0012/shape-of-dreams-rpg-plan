@@ -8,16 +8,19 @@ using UnityEngine;
 
 namespace SodRpg.Mod
 {
-    // Use the native non-allocating pickup motor and its synchronized target, not host-only
-    // transform writes. Culinary pickups remain usable only by their living caster.
+    // Use the native non-allocating pickup motor and its synchronized target for native movement.
+    // Exception: the main attraction path snaps pickups more than 3m away onto their living caster
+    // on the host each tick. These host-only transform writes let native host-authoritative pickup
+    // collect the ingredients; their position is not separately synchronized to clients.
+    // Culinary pickups remain usable only by their living caster.
     internal static class CulinaryMagnet
     {
         private static Harmony _harmony;
         private static MethodInfo _create, _hook;
         private static FieldInfo _range, _delay, _speed, _accelerationMin, _accelerationMax;
         private static bool _enabled, _warned;
-        // Host only: live ingredient pickups. The native motor homes toward the owner, but a blinking owner can
-        // outrun it, so each frame the host also moves any pickup left far behind onto its living owner.
+        // Host only: live ingredient pickups. The main attraction path moves pickups more than 3m away
+        // onto their living owner each tick, then leaves collection to the native pickup logic.
         private static readonly List<Actor> Tracked = new List<Actor>();
 
         internal static void Install(Harmony owner)
@@ -62,8 +65,9 @@ namespace SodRpg.Mod
             if (!_enabled) return;
             try
             {
-                // Applied after native variation on both host and clients. All movement,
-                // eligibility, pickup effects and Network_target synchronization stay native.
+                // Applied after native variation on both host and clients. The native motor,
+                // eligibility, pickup effects and Network_target synchronization stay native;
+                // SnapToOwners supplies the main host-side attraction path.
                 _range.SetValue(__instance, 500f);
                 _delay.SetValue(__instance, 0f);
                 _speed.SetValue(__instance, 120f);
@@ -77,7 +81,7 @@ namespace SodRpg.Mod
             }
         }
 
-        /// <summary>毎フレーム（ホスト）：持ち主から離れすぎた食材を持ち主の位置へ移し、本体の拾得に任せる。</summary>
+        /// <summary>吸い寄せの主な経路。毎ティック（ホスト）、生きている持ち主から3mを超えて離れた食材を持ち主の位置へ移し、本体の拾得に任せる。</summary>
         internal static void SnapToOwners()
         {
             if (!_enabled || Tracked.Count == 0) return;

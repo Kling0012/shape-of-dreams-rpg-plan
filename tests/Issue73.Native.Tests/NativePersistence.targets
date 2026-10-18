@@ -158,7 +158,7 @@
 
   <!-- 協力取引クライアント（所見01・07・09・10）。境界は NativeBoundary.cs の ClientSession 部。 -->
   <Target Name="CompileCoopTradeClient" BeforeTargets="CoreCompile">
-    <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/ClientSession.CoopTrade.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)CoopTradeClient.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="ClientSession" Methods="DiagnoseCoopTrade;CoopPendingStale;CoopWaitText;CoopTradeLocked;CoopWorldSafe;CoopLocalSafe;CoopLocalWorldSafe;CoopLocalCombatSafe;CoopLocalBlockReason;CoopTradeUnavailableReason;CanCoopTrade;WireCoopTrade;ReceiveCoopPacket;TickCoopTrade;DisableCoopTrade;SendCoop;CoopSnapshot;FlushCoopPayloads;SendCoopProfile;RequestCoopTrade;AcceptCoopTrade;ConfirmCoopTrade;CancelCoopTrade;SetCoopTradeOffer;RetryCoopOffer;OnCoopTradeState;DeferCoopSettlement;CompleteCoopSettlement;CoopTradeWarning" Fields="_coopTradeWarning;_coopConnectionWarning" />
+    <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/ClientSession.CoopTrade.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)CoopTradeClient.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="ClientSession" Methods="DiagnoseCoopTrade;CoopPendingStale;CoopWaitText;CoopCountWaitText;CoopTradeLocked;CoopWorldSafe;CoopLocalSafe;CoopLocalWorldSafe;CoopLocalCombatSafe;CoopLocalBlockReason;CoopTradeUnavailableReason;CanCoopTrade;WireCoopTrade;ReceiveCoopPacket;TickCoopTrade;DisableCoopTrade;SendCoop;CoopSnapshot;FlushCoopPayloads;SendCoopProfile;RequestCoopTrade;AcceptCoopTrade;ConfirmCoopTrade;CancelCoopTrade;SetCoopTradeOffer;RetryCoopOffer;OnCoopTradeState;DeferCoopSettlement;CompleteCoopSettlement;CoopTradeWarning" Fields="_coopTradeWarning;_coopConnectionWarning;CoopWaitTextSalvage;CoopWaitTextHeld;CoopWaitTextRewards;_coopWaitTextKind;_coopWaitTextCount;_coopWaitTextJapanese;_coopWaitText" />
     <ItemGroup>
       <Compile Include="$(IntermediateOutputPath)CoopTradeClient.g.cs" />
     </ItemGroup>
@@ -177,6 +177,17 @@
     <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/HostAuthority.CoopKeystones.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)ShieldWallThreats.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="HostAuthority" Methods="CoopDrawThreats;CoopPair;CoopEnemy;RecordOwnershipTaunt;CoopGuardTarget;RecordSummonGuardTarget" />
     <ItemGroup>
       <Compile Include="$(IntermediateOutputPath)ShieldWallThreats.g.cs" />
+    </ItemGroup>
+  </Target>
+
+  <!-- 眠り判定の位置読み出しのまとめ（#751）。NativeSleepPositionPerf の IL 検証・キャッシュ・
+       Prefix/Postfix を実ソースから抽出し、本体 CanEntitySleep と同じ命令並びの見本と
+       EntityXY の使い回し判定に当てる。NativePerfOptions・NativePerfPatch・ToXY・見本は
+       SleepPositionPerfBoundary.cs の境界。 -->
+  <Target Name="CompileSleepPositionPerf" BeforeTargets="CoreCompile">
+    <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/NativePerfPatches.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)SleepPositionPerf.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="NativeSleepPositionPerf" Methods="ValidateBody;FindEntityRead;LoadsEntityArg;EntityXY;Prefix;Postfix" Fields="_cachedEntity;_cachedXY;_target;_warned" />
+    <ItemGroup>
+      <Compile Include="$(IntermediateOutputPath)SleepPositionPerf.g.cs" />
     </ItemGroup>
   </Target>
 

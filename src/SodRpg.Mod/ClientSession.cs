@@ -896,6 +896,7 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
                 }
                 // 純白の夢は Primus の撃破で精算を終えている（ホストもゲストも）。演出の後に届く本体の終了通知で
                 // 精算済みの遠征を保留に戻すと、保存にも残ってプロフィールの切り替えが次の遠征まで止まっていた。
+                // 結果の種類を問わず、同じ遠征が精算済みなら終了通知を無視する。
                 string concludedRunId = NetworkedManagerBase<GameManager>.softInstance?.runId;
                 if (!string.IsNullOrEmpty(concludedRunId) && concludedRunId == _completedRunId)
                 {
