@@ -60,8 +60,10 @@ namespace SodRpg.Mod
             nativeEmbracePositionReuse = true, nativeAccessoryOffsetCache = true,
             nativeCooldownIdleMultiplier = true, nativeTransformSyncIdle = true,
             nativeSleepPositionReuse = true, nativeCastIndicatorCircle = true, nativeCameraZoomRotation = true,
-            nativeCharacterModelDisplayBounds = true;
+            nativeCharacterModelDisplayBounds = true, guestSkillLockRecovery = true;
     }
+    // NativePerfPatches.cs が設定を写す先（本物は NativeSkillLockRecovery.cs。本体 API に依存するため、ここでは切り替えだけ模倣）。
+    internal static class NativeSkillLockRecovery { internal static bool Enabled = true; }
     public partial class DreamforgeMod
     {
         internal DreamforgeConfig config = new DreamforgeConfig();
