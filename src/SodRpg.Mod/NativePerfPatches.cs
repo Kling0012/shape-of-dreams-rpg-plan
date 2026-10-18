@@ -20,6 +20,7 @@ namespace SodRpg.Mod
             NativePerfOptions.OwnershipSpawnCounts = config.nativeOwnershipSpawnCounts;
             NativePerfOptions.ProcCoalesce = config.nativeProcCoalesce;
             NativePerfOptions.SleepPosition = config.nativeSleepPositionReuse;
+            NativePerfOptions.CastIndicatorCircle = config.nativeCastIndicatorCircle;
         }
     }
 
@@ -32,6 +33,7 @@ namespace SodRpg.Mod
         internal static bool OwnershipSpawnCounts = true;
         internal static bool ProcCoalesce = true;
         internal static bool SleepPosition = true;
+        internal static bool CastIndicatorCircle = true;
     }
 
     internal static class NativePerfPatch
@@ -459,6 +461,104 @@ namespace SodRpg.Mod
             _cachedXY = xy;
             _cachedEntity = e;
             return xy;
+        }
+    }
+
+    [HarmonyPatch]
+    internal static class NativeCastIndicatorCirclePerf
+    {
+        // Fully qualified on purpose: the native test harness extracts classes from this file
+        // together with its using directives, and it has no DTT assembly reference.
+        private sealed class CircleInputs
+        {
+            internal bool Has;
+            internal float Radius;
+            internal Vector2 Offset;
+            internal float Fill;
+            internal Material Material;
+        }
+
+        private static readonly ConditionalWeakTable<DTT.AreaOfEffectRegions.CircleRegion, CircleInputs> TrackedInputs =
+            new ConditionalWeakTable<DTT.AreaOfEffectRegions.CircleRegion, CircleInputs>();
+        private static readonly ConditionalWeakTable<DTT.AreaOfEffectRegions.CircleRegion, CircleInputs>.CreateValueCallback CreateInputs =
+            _ => new CircleInputs();
+        private static AccessTools.FieldRef<DTT.AreaOfEffectRegions.CircleRegion, MeshRenderer> _renderer;
+        private static MethodBase _target;
+        private static bool _disabled;
+        private static bool _warned;
+
+        private static bool Prepare()
+        {
+            _target = NativePerfPatch.Find(typeof(DTT.AreaOfEffectRegions.CircleRegion), nameof(DTT.AreaOfEffectRegions.CircleRegion.UpdateProperties), ref _warned);
+            if (_target == null) return false;
+            try
+            {
+                _renderer = AccessTools.FieldRefAccess<DTT.AreaOfEffectRegions.CircleRegion, MeshRenderer>("_circleRenderer");
+                return ValidateBody(PatchProcessor.GetOriginalInstructions(_target));
+            }
+            catch (Exception ex)
+            {
+                NativePerfPatch.Warn(ref _warned, "cast indicator circle", ex.Message);
+                return false;
+            }
+        }
+
+        private static MethodBase TargetMethod() => _target;
+
+        internal static bool ValidateBody(IList<CodeInstruction> code)
+        {
+            var radius = AccessTools.PropertyGetter(typeof(DTT.AreaOfEffectRegions.CircleRegionBase), nameof(DTT.AreaOfEffectRegions.CircleRegionBase.Radius));
+            var offset = AccessTools.PropertyGetter(typeof(DTT.AreaOfEffectRegions.CircleRegionBase), nameof(DTT.AreaOfEffectRegions.CircleRegionBase.Offset));
+            var setFloat = AccessTools.Method(typeof(Material), nameof(Material.SetFloat), new[] { typeof(int), typeof(float) });
+            var fill = AccessTools.Field(typeof(DTT.AreaOfEffectRegions.CircleRegion), "_fillProgress");
+            int radii = 0, offsets = 0, floats = 0, fills = 0;
+            for (int i = 0; i < code.Count; i++)
+            {
+                if (code[i].Calls(radius)) radii++;
+                if (code[i].Calls(offset)) offsets++;
+                if (code[i].Calls(setFloat)) floats++;
+                if (code[i].opcode == OpCodes.Ldfld && Equals(code[i].operand, fill)) fills++;
+            }
+            // The cast indicator's circle rewrite is only worth skipping while it stays this
+            // exact shape: one range read, two offset reads, one material float from _fillProgress.
+            if (radii == 1 && offsets == 2 && floats == 1 && fills == 1) return true;
+            NativePerfPatch.Warn(ref _warned, "cast indicator circle", "native circle region body changed");
+            return false;
+        }
+
+        // CircleRegion.UpdateProperties only rewrites the child transform scale/offset and one
+        // material float from Radius, Offset and FillProgress. CastIndicatorManager and the
+        // region's own Update both call it every frame while the indicator is on screen, yet
+        // those inputs move only when the drawn range actually changes. While they are unchanged
+        // the rewrite would store the same values again, so skip it. The renderer's material
+        // instance is compared as well, so a replaced material always gets its float set again.
+        private static bool Prefix(DTT.AreaOfEffectRegions.CircleRegion __instance)
+        {
+            if (_disabled || !NativePerfOptions.CastIndicatorCircle) return true;
+            try
+            {
+                Material material = _renderer(__instance).sharedMaterial;
+                // Keep a null material on the native path, exactly as without this patch.
+                if (material == null) return true;
+                var inputs = TrackedInputs.GetValue(__instance, CreateInputs);
+                float radius = __instance.Radius;
+                Vector2 offset = __instance.Offset;
+                float fill = __instance.FillProgress;
+                if (inputs.Has && ReferenceEquals(inputs.Material, material) && inputs.Radius == radius
+                    && inputs.Offset == offset && inputs.Fill == fill)
+                    return false;
+                inputs.Has = true;
+                inputs.Material = material;
+                inputs.Radius = radius;
+                inputs.Offset = offset;
+                inputs.Fill = fill;
+            }
+            catch (Exception ex)
+            {
+                _disabled = true;
+                NativePerfPatch.Warn(ref _warned, "cast indicator circle", ex.Message);
+            }
+            return true;
         }
     }
 }

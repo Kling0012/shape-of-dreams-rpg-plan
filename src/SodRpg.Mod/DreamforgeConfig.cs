@@ -111,6 +111,9 @@ namespace SodRpg.Mod
         [LabelText("Read the checked entity position once per sleep check (host) / 眠り判定で読む敵の位置を英雄全員分で1回にまとめる（ホスト）")]
         public bool nativeSleepPositionReuse = true;
 
+        [LabelText("Skip unchanged cast indicator circle updates / 変わっていない照準円の描画更新を省く")]
+        public bool nativeCastIndicatorCircle = true;
+
         [LabelText("Level essence slots: add essence slots as the hero levels up (the host's setting applies) /\nレベル連動のエッセンス枠：英雄のレベルに応じて記憶のエッセンス枠を増やす（ホストの設定が使われる）")]
         public bool levelEssenceSlots = true;
 
