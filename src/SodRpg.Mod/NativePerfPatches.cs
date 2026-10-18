@@ -27,6 +27,7 @@ namespace SodRpg.Mod
             NativePerfOptions.CastIndicatorCircle = config.nativeCastIndicatorCircle;
             NativePerfOptions.CameraZoomRotation = config.nativeCameraZoomRotation;
             NativePerfOptions.CharacterModelDisplayBounds = config.nativeCharacterModelDisplayBounds;
+            NativePerfOptions.CursorIdle = config.nativeCursorIdle;
         }
     }
 
@@ -45,6 +46,7 @@ namespace SodRpg.Mod
         internal static bool CastIndicatorCircle = true;
         internal static bool CameraZoomRotation = true;
         internal static bool CharacterModelDisplayBounds = true;
+        internal static bool CursorIdle = true;
     }
 
     internal static class NativePerfPatch
@@ -990,6 +992,69 @@ namespace SodRpg.Mod
         {
             if (!NativePerfOptions.CameraZoomRotation) return Quaternion.Euler(0f, camera.entityCamAngle, 0f);
             return camera.entityCamAngle == 0f ? Quaternion.Euler(0f, 0f, 0f) : camera.entityCamAngleRotation;
+        }
+    }
+
+    [HarmonyPatch]
+    internal static class NativeCursorIdlePerf
+    {
+        private static bool _defaultCursorApplied;
+        private static MethodBase _target;
+        private static bool _disabled;
+        private static bool _warned;
+
+        private static bool Prepare()
+        {
+            _target = NativePerfPatch.Find(typeof(CursorManager), nameof(CursorManager.ApplyCursor),
+                new[] { typeof(int) }, ref _warned);
+            return _target != null;
+        }
+
+        private static MethodBase TargetMethod() => _target;
+
+        // FrameUpdate calls ApplyCursor every rendered frame. While the software cursor is
+        // disabled (the platform setting or the cinematic helper's toggle), every one of those
+        // calls asks Unity to reset the cursor to the OS default (null texture, Auto mode) —
+        // an unchanged repeat of the previous frame's request. Nothing else in the shipped
+        // game calls Cursor.SetCursor (only CursorManager does), Unity keeps the request
+        // until someone changes it, and neither scene loads nor Cursor.lockState/visible
+        // writes reset the cursor texture, so the repeats cannot become observable. The
+        // first disabled call still runs the original and applies the reset; only the
+        // unchanged repeats are skipped. Every enabled-path call clears the marker, so
+        // toggling the software cursor off and on again re-applies on the first disabled
+        // frame exactly as without this patch.
+        private static bool Prefix(CursorManager __instance, ref bool __state)
+        {
+            __state = false;
+            if (_disabled || !NativePerfOptions.CursorIdle) return true;
+            try
+            {
+                bool disabled = __instance.disableSoftwareCursor
+                    || DewSave.platformSettings.gameplay.disableSoftwareCursor;
+                if (!disabled)
+                {
+                    _defaultCursorApplied = false;
+                    return true;
+                }
+                if (_defaultCursorApplied) return false;
+                __state = true;
+            }
+            catch (Exception ex)
+            {
+                _disabled = true;
+                NativePerfPatch.Warn(ref _warned, "cursor idle", ex.Message);
+            }
+            return true;
+        }
+
+        // The marker only confirms a reset the original actually completed: Harmony skips
+        // postfixes when the original threw (__state stays a one-shot candidate), and a
+        // substitute from another mod's prefix must not be covered either. Both leave the
+        // marker clear, so the next frame hands the call back to the original, matching the
+        // unpatched per-frame retry.
+        private static void Postfix(bool __state, bool __runOriginal)
+        {
+            if (__state && __runOriginal) _defaultCursorApplied = true;
         }
     }
 }
