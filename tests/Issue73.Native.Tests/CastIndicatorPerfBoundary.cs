@@ -56,6 +56,7 @@ namespace DTT.AreaOfEffectRegions
         internal static readonly int ProgressShaderID = 7;
         // 追跡していない入力の見本（拒否の見本 UntrackedExtraInput が読む）。
         internal float _opacity;
+        internal void UpdateProperties() { }
     }
 }
 

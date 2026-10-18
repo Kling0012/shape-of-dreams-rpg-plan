@@ -180,39 +180,6 @@
     </ItemGroup>
   </Target>
 
-  <!-- 眠り判定の位置読み出しのまとめ（#751）。NativeSleepPositionPerf の IL 検証・キャッシュ・
-       Prefix/Postfix を実ソースから抽出し、本体 CanEntitySleep と同じ命令並びの見本と
-       EntityXY の使い回し判定に当てる。NativePerfOptions・NativePerfPatch・ToXY・見本は
-       SleepPositionPerfBoundary.cs の境界。 -->
-  <Target Name="CompileSleepPositionPerf" BeforeTargets="CoreCompile">
-    <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/NativePerfPatches.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)SleepPositionPerf.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="NativeSleepPositionPerf" Methods="ValidateBody;FindEntityRead;LoadsEntityArg;EntityXY;Prefix;Postfix" Fields="_cachedEntity;_cachedXY;_target;_warned" />
-    <ItemGroup>
-      <Compile Include="$(IntermediateOutputPath)SleepPositionPerf.g.cs" />
-    </ItemGroup>
-  </Target>
-
-  <!-- 照準円の再描画省略（#766）。NativeCastIndicatorCirclePerf の IL 形状検証・スキップ判定・
-       Prefix/Postfix/Finalizer を実ソースから抽出し、本体 CircleRegion.UpdateProperties と同じ読み出し回数の
-       見本に当てる。DTT の CircleRegion と UnityEngine の Material・Transform・Renderer は
-       CastIndicatorPerfBoundary.cs の境界。 -->
-  <Target Name="CompileCastIndicatorPerf" BeforeTargets="CoreCompile">
-    <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/NativePerfPatches.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)CastIndicatorPerf.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="NativeCastIndicatorCirclePerf" Methods="ValidateBody;MemberIdentity;MatchesExpectedMembers;ShouldSkip;Prefix;Postfix;Finalizer;ForgetConfirmed" Fields="TrackedInputs;CreateInputs;_renderer;_fillProgressField;_pending;_target;_disabled;_warned;ExpectedMembers" NestedTypes="CircleInputs" />
-    <ItemGroup>
-      <Compile Include="$(IntermediateOutputPath)CastIndicatorPerf.g.cs" />
-    </ItemGroup>
-  </Target>
-
-  <!-- ズーム目標のカメラ角度回転の使い回し（#763）。NativeCameraZoomRotationPerf の
-       トランスポイラと FollowRotation を実ソースから抽出し、本体 GetFollowOffsetTarget と
-       同じ命令並びの見本に当てる。Quaternion・修飾子・見本は CameraZoomRotationPerfBoundary.cs、
-       CameraManager と NativePerfOptions は NativeBoundary.cs・SleepPositionPerfBoundary.cs の境界。 -->
-  <Target Name="CompileCameraZoomRotationPerf" BeforeTargets="CoreCompile">
-    <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/NativePerfPatches.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)CameraZoomRotationPerf.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="NativeCameraZoomRotationPerf" Methods="Transpiler;FollowRotation" Fields="_target;_warned" />
-    <ItemGroup>
-      <Compile Include="$(IntermediateOutputPath)CameraZoomRotationPerf.g.cs" />
-    </ItemGroup>
-  </Target>
-
   <!-- 共鳴の盾（CoopOmens.cs）の HostAuthority 部。公開ラッパー CoopOmens は NativeBoundary.cs
        に同じ式の internal 模倣（境界の Entity が internal のため直接抽出できない）。 -->
   <Target Name="CompileCoopOmensWard" BeforeTargets="CoreCompile">
