@@ -35,6 +35,16 @@ namespace UnityEngine
         public Vector3(float x, float y, float z = 0) { this.x = x; this.y = y; this.z = z; }
         public static implicit operator Vector2(Vector3 value) => new Vector2(value.x, value.y);
         public static implicit operator Vector3(Vector2 value) => new Vector3(value.x, value.y);
+        // 本体と同じ Unity の近似等価（差の二乗和が 9.99999944E-11f 未満なら等しい）。
+        // リンクした NativeTransformSyncIdle.cs の判定が本体と同じ比較意味で動くために必要。
+        public static bool operator ==(Vector3 lhs, Vector3 rhs)
+        {
+            float dx = lhs.x - rhs.x, dy = lhs.y - rhs.y, dz = lhs.z - rhs.z;
+            return dx * dx + dy * dy + dz * dz < 9.99999944E-11f;
+        }
+        public static bool operator !=(Vector3 lhs, Vector3 rhs) => !(lhs == rhs);
+        public override bool Equals(object other) => other is Vector3 value && this == value;
+        public override int GetHashCode() => (x.GetHashCode() ^ (y.GetHashCode() << 2)) ^ (z.GetHashCode() >> 2);
     }
 }
 namespace UnityEngine.EventSystems

@@ -394,17 +394,7 @@ namespace SodRpg.Mod
             if (_disabled || !NativePerfOptions.TransformSyncIdle) return true;
             try
             {
-                // A capture of a stationary actor differs from the stored sample only by its
-                // timestamp. That timestamp feeds client extrapolation, which multiplies the
-                // stored velocity; the equality below keeps every velocity at zero, so the
-                // withheld refresh leaves the rendered pose untouched while Mirror stops
-                // reserializing and resending the unchanged sample. Teleports and the last
-                // sample of a movement always differ and still go through.
-                SyncMovementData current = _syncData(__instance);
-                if (value.channels == current.channels && value.isTeleport == current.isTeleport
-                    && value.position == current.position && value.velocity == current.velocity
-                    && value.rotation == current.rotation && value.angularVelocity == current.angularVelocity
-                    && value.scale == current.scale && value.scaleVelocity == current.scaleVelocity)
+                if (NativeTransformSyncIdle.IsIdleRefresh(_syncData(__instance), value))
                     return false;
             }
             catch (Exception ex)
