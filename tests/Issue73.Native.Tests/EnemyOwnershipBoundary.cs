@@ -24,8 +24,12 @@ namespace UnityEngine.AI
     internal enum NavMeshPathStatus { PathComplete, PathPartial, PathInvalid }
 }
 // 本体のグローバル名前空間の Dew。ナビメッシュ判定は常に到達可能とする境界。
+// BakeMeshInterval は焼き込みメッシュの間隔（#760、本体 Dew.cs の既定値 0.1 秒、
+// 2026-10-18 逆コンパイル確認）。
 internal static class Dew
 {
+    internal static float BakeMeshInterval = 0.1f;
+
     internal static UnityEngine.AI.NavMeshPathStatus GetNavMeshPathStatusCached(
         SodRpg.Mod.Entity from, SodRpg.Mod.Entity to, UnityEngine.Vector3 start, UnityEngine.Vector3 end)
         => UnityEngine.AI.NavMeshPathStatus.PathComplete;

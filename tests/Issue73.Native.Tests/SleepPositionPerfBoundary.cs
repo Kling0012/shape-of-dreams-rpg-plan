@@ -6,11 +6,12 @@ using UnityEngine;
 namespace SodRpg.Mod
 {
     // （#751）本体 NativePerfPatches.cs の NativePerfOptions / NativePerfPatch のうち、
-    // NativeSleepPositionPerf の抽出部分（ValidateBody・EntityXY・Prefix・Postfix）から
-    // 参照される範囲だけの境界。Warn のログ出力は本体の Log 依存のためここには置かない。
+    // NativeSleepPositionPerf と NativeAttachFaceIdlePerf / NativeAttachFaceBakeRecord（#760）の
+    // 抽出部分から参照される範囲だけの境界。Warn のログ出力は本体の Log 依存のためここには置かない。
     internal static class NativePerfOptions
     {
         internal static bool SleepPosition = true;
+        internal static bool AttachFaceIdle = true;
     }
 
     internal static class NativePerfPatch
