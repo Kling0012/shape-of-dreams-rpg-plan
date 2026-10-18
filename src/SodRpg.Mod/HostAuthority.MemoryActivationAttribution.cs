@@ -24,10 +24,42 @@ namespace SodRpg.Mod
         {
             if (NetworkServer.active) HostAuthority.NativeInstance?.BindAttributedBasicAttack(__instance, cast.instance, cast.info);
         }
-        private static void Postfix(AttackTrigger __instance, EventInfoCast cast, int ____nextEveryFourAttackIndex)
+        private static Func<AttackTrigger, int> _nextIndex;
+        private static bool _warned;
+
+        private static void Prepare()
         {
-            if (NetworkServer.active && ____nextEveryFourAttackIndex == 3)
-                HostAuthority.NativeInstance?.BindResolveBeforePrepare(__instance, cast);
+            try
+            {
+                // r1.4.1.2 stores the shared counter on EntityAbility; read through the native property.
+                var getter = AccessTools.PropertyGetter(typeof(AttackTrigger), "_nextEveryFourAttackIndex");
+                if (getter == null || getter.ReturnType != typeof(int) || getter.GetParameters().Length != 0)
+                    throw new MissingMethodException(typeof(AttackTrigger).FullName, "get__nextEveryFourAttackIndex");
+                _nextIndex = AccessTools.MethodDelegate<Func<AttackTrigger, int>>(getter);
+            }
+            catch (Exception ex)
+            {
+                _nextIndex = null;
+                Warn(ex);
+            }
+        }
+
+        private static void Postfix(AttackTrigger __instance, EventInfoCast cast)
+        {
+            if (!NetworkServer.active || _nextIndex == null) return;
+            try
+            {
+                if (_nextIndex(__instance) == 3)
+                    HostAuthority.NativeInstance?.BindResolveBeforePrepare(__instance, cast);
+            }
+            catch (Exception ex) { _nextIndex = null; Warn(ex); }
+        }
+
+        private static void Warn(Exception ex)
+        {
+            if (_warned) return;
+            _warned = true;
+            Log.Warn("Resolve fourth-attack attribution disabled: " + ex.Message);
         }
     }
 

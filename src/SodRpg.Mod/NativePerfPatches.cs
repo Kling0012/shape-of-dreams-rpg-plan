@@ -580,12 +580,12 @@ namespace SodRpg.Mod
     [HarmonyPatch]
     internal static class NativeEmbracePositionPerf
     {
-        // Fingerprint of the shipped Dew.Core (r1.4.0.13) Ai_EmbraceNewIdentity.UpdatePositions
+        // Fingerprint of the shipped Dew.Core (r1.4.1.2) Ai_EmbraceNewIdentity.UpdatePositions
         // body: IL byte length, FNV-1a hash, local count and exception clause count. The prefix
         // repeats the native computation, so a game update that edits that body must turn the
         // patch off instead of silently overriding the new behavior with the old arithmetic.
         internal const int NativeIlLength = 159;
-        internal const ulong NativeIlHash = 7063811622246808011UL;
+        internal const ulong NativeIlHash = 8607548223805543170UL;
         internal const int NativeLocals = 4;
         internal const int NativeExceptionClauses = 0;
 
