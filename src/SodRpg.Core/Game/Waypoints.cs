@@ -260,8 +260,12 @@ namespace SodRpg.Core.Game
             }
             // The first kill guarantees a Rare floor even if an extra's rolled relic was thinned.
             bool firstClaim = t.FirstKillRelic && run.WaypointRelicsInRoom == 0;
+            IReadOnlyList<Relic> unsecured = null;
             if (firstClaim && reward.Relics.Count == 0)
-                reward.Relics.Add(Loot.RollRelic(rng, Rarity.Rare, itemLevel, null, focus, p.Stash, run.UnsecuredForLoot(), p.Codex));
+            {
+                unsecured = run.UnsecuredForLoot();
+                reward.Relics.Add(Loot.RollRelic(rng, Rarity.Rare, itemLevel, null, focus, p.Stash, unsecured, p.Codex));
+            }
             if (t.MaxRelicsPerRoom != int.MaxValue)
             {
                 int keep = Math.Max(0, Math.Min(reward.Relics.Count, t.MaxRelicsPerRoom - run.WaypointRelicsInRoom));
@@ -281,9 +285,13 @@ namespace SodRpg.Core.Game
                 Rarity rarity = t.ForcedRarity ?? (Rarity)Math.Max((int)r.Rarity, (int)t.MinimumRarity);
                 if (t.NonBossRelicsToTuning && tier == MonsterTier.Boss) rarity = (Rarity)Math.Max((int)rarity, (int)Rarity.Epic);
                 if (rarity != r.Rarity || (slot.HasValue && r.Slot != slot.Value))
+                {
+                    // Inventory stays unchanged until all transformations finish; reuse the read-only view.
+                    if (unsecured == null) unsecured = run.UnsecuredForLoot();
                     // The original kill roll already applied Infinity's unique drop chance.
                     // A slot/rarity transformation must not gate the same reward a second time.
-                    r = reward.Relics[i] = Loot.RollRelic(rng, rarity, r.ItemLevel, slot, focus, p.Stash, run.UnsecuredForLoot(), p.Codex);
+                    r = reward.Relics[i] = Loot.RollRelic(rng, rarity, r.ItemLevel, slot, focus, p.Stash, unsecured, p.Codex);
+                }
                 r.Enhance = Math.Min(Content.MaxEnhanceFor(r.Rarity, r.LimitBreaks), Math.Max(r.Enhance, t.Enhancement));
                 if (t.Enhancement > 0) Rules.GrantEnhanceMilestones(rng, r);
             }
