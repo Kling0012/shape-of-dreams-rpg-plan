@@ -13,7 +13,9 @@ namespace SodRpg.Mod
     // and in any lobby after that tutorial the walk is unobserved work. The prefix parks the
     // renderer list where the native walk cannot see it; the getter prefixes refresh the
     // stored bounds on read (keeping the 1/30-second freshness the native tick provided) and
-    // leave the result to the native getters, so no native expression is copied here.
+    // leave the result to the native getters, so no native expression is copied here. A
+    // postfix on Setup drops the adopted snapshot whenever the model is rebuilt, so even a
+    // refill that leaves no body renderer cannot resurrect the replaced model's renderers.
     internal static class NativeCharacterModelDisplayBounds
     {
         // LogicUpdateManager.DoLogicUpdates gates the native 30 Hz logic tick with
@@ -85,12 +87,31 @@ namespace SodRpg.Mod
 
         // Returning the list lets the native 30 Hz walk resume unchanged when the feature turns
         // off or fails. A populated native list means Setup already refilled it, so the stale
-        // snapshot is dropped instead of overwriting the newer renderers.
+        // snapshot is dropped instead of overwriting the newer renderers; a refill that left
+        // the list empty has already dropped the snapshot in the Setup postfix.
         private static void Restore(CharacterModelDisplay instance, List<Renderer> list)
         {
             if (!States.TryGetValue(instance, out State state) || state.Renderers == null) return;
             if (list.Count == 0) _renderers(instance) = state.Renderers;
             state.Renderers = null;
+        }
+
+        // Setup destroyed the model the adopted renderers came from and refilled the field's
+        // list - possibly to empty, when the new skin exposes no body renderer. The snapshot
+        // describes the replaced model either way, so it is dropped here regardless of the
+        // refill size: after an empty refill the native walk skips on its own, and no stale
+        // renderer survives for Refresh to recompute from or for Restore to hand back.
+        internal static void AfterSetup(CharacterModelDisplay instance)
+        {
+            try
+            {
+                if (!States.TryGetValue(instance, out State state)) return;
+                state.Renderers = null;
+            }
+            catch (Exception ex)
+            {
+                Disable(ex);
+            }
         }
 
         // Updates the stored bounds when the adopted renderer list is due for a recompute.
@@ -162,6 +183,38 @@ namespace SodRpg.Mod
 
         private static void Prefix(CharacterModelDisplay __instance) =>
             NativeCharacterModelDisplayBounds.BeforeLogicUpdate(__instance);
+    }
+
+    [HarmonyPatch]
+    internal static class NativeCharacterModelDisplayBoundsSetup
+    {
+        private static MethodBase _target;
+        private static bool _warned;
+
+        private static bool Prepare()
+        {
+            try
+            {
+                _target = AccessTools.DeclaredMethod(typeof(CharacterModelDisplay), "Setup",
+                    new[] { typeof(string) });
+            }
+            catch (Exception ex)
+            {
+                NativePerfPatch.Warn(ref _warned, "CharacterModelDisplay.Setup", ex.Message);
+                return false;
+            }
+            if (_target == null || _target.GetMethodBody() == null)
+            {
+                NativePerfPatch.Warn(ref _warned, "CharacterModelDisplay.Setup", "native method unavailable");
+                return false;
+            }
+            return NativeCharacterModelDisplayBounds.Prepare();
+        }
+
+        private static MethodBase TargetMethod() => _target;
+
+        private static void Postfix(CharacterModelDisplay __instance) =>
+            NativeCharacterModelDisplayBounds.AfterSetup(__instance);
     }
 
     [HarmonyPatch]

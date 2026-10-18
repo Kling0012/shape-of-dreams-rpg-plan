@@ -14,7 +14,8 @@ namespace Issue73.Native.Tests
     /// 走査・Setup のリスト埋め直し・2つのゲッターを書いたもの（検証対象の実ソースは
     /// csproj でそのままリンク）。確かめるのは: 再計算が本体の走査と同じ結果になること、
     /// 1/30秒の間引き、設定解除・失敗時にリストが本体へ戻ること、Setup の埋め直しを
-    /// 次の Tick で取り込むこと、ゲッターの Prefix が返り値を書き換えないこと。
+    /// 次の Tick で取り込むこと、空の埋め直しでスナップショットを捨てること、
+    /// ゲッターの Prefix が返り値を書き換えないこと。
     /// </summary>
     public sealed class CharacterModelDisplayBoundsTests
     {
@@ -44,6 +45,11 @@ namespace Issue73.Native.Tests
 
         private static void AbovePrefix(CharacterModelDisplay display)
             => typeof(NativeCharacterModelDisplayBoundsAbove).GetMethod("Prefix", Hidden)
+                .Invoke(null, new object[] { display });
+
+        // 実行時は Setup の直後に Harmony の Postfix が走る。検証でも同じ順で呼ぶ。
+        private static void SetupPostfix(CharacterModelDisplay display)
+            => typeof(NativeCharacterModelDisplayBoundsSetup).GetMethod("Postfix", Hidden)
                 .Invoke(null, new object[] { display });
 
         [Fact]
@@ -132,6 +138,7 @@ namespace Issue73.Native.Tests
             Renderer fresh = Box(10, 20, 30, 2, 2, 2);
             display.NextSetupRenderers = new List<Renderer> { fresh };
             display.Setup("skin2");
+            SetupPostfix(display); // スナップショットは捨てられる
 
             NativeCharacterModelDisplayBounds.BeforeLogicUpdate(display); // 次のTick: 新しいリストを取り込む
             Time.timeAsDouble += 1.0;
@@ -199,6 +206,7 @@ namespace Issue73.Native.Tests
             Renderer fresh = Box(10, 20, 30, 2, 2, 2);
             display.NextSetupRenderers = new List<Renderer> { fresh };
             display.Setup("skin2"); // 埋め直し済み
+            SetupPostfix(display);
             List<Renderer> refilled = RenderersField(display);
 
             var saved = NativePerfOptions.CharacterModelDisplayBounds;
@@ -212,6 +220,58 @@ namespace Issue73.Native.Tests
                 Time.timeAsDouble += 1.0;
                 NativeCharacterModelDisplayBounds.Refresh(display);
                 Assert.Equal(before, BoundsField(display)); // スナップショットは捨てられている
+            }
+            finally { NativePerfOptions.CharacterModelDisplayBounds = saved; }
+        }
+
+        [Fact]
+        public void AnEmptyRefillBySetupDropsTheStaleSnapshot()
+        {
+            ResetFeature();
+            Time.timeAsDouble = 800.0;
+            var display = new CharacterModelDisplay();
+            Renderer old = Box(0, 1, 0, 1, 2, 1);
+            RenderersField(display).Add(old);
+            NativeCharacterModelDisplayBounds.BeforeLogicUpdate(display);
+            Bounds sentinel = new Bounds(new Vector3(5, 5, 5), new Vector3(1, 1, 1));
+            BoundsField(display) = sentinel;
+
+            display.NextSetupRenderers = null;
+            display.Setup("skin-without-body"); // 埋め直しの結果が空（体のレンダラーが0個のスキン）
+            SetupPostfix(display);
+
+            NativeCharacterModelDisplayBounds.BeforeLogicUpdate(display); // 次のTick: 空なので預け直さない
+            old.bounds = new Bounds(new Vector3(90, 90, 90), new Vector3(1, 1, 1)); // 置き換え前のレンダラーが動いても
+            Time.timeAsDouble += 1.0;
+            NativeCharacterModelDisplayBounds.Refresh(display);
+            Assert.Equal(sentinel, BoundsField(display)); // 置き換え前のレンダラーから再計算しない
+        }
+
+        [Fact]
+        public void AnEmptyRefillBySetupReturnsNothingStaleToTheNativeWalkWhenTheFeatureTurnsOff()
+        {
+            ResetFeature();
+            Time.timeAsDouble = 900.0;
+            var display = new CharacterModelDisplay();
+            Renderer alive = Box(0, 1, 0, 1, 2, 1);
+            RenderersField(display).AddRange(new List<Renderer> { null, alive }); // 破棄済み混じりの古いモデル
+            NativeCharacterModelDisplayBounds.BeforeLogicUpdate(display);
+
+            display.NextSetupRenderers = null;
+            display.Setup("skin-without-body"); // 空の埋め直し
+            SetupPostfix(display);
+            List<Renderer> refilled = RenderersField(display);
+            Assert.Empty(refilled);
+
+            var saved = NativePerfOptions.CharacterModelDisplayBounds;
+            NativePerfOptions.CharacterModelDisplayBounds = false;
+            try
+            {
+                NativeCharacterModelDisplayBounds.BeforeLogicUpdate(display); // 設定解除の次のTick
+                Assert.Same(refilled, RenderersField(display)); // 破棄済み混じりのスナップショットを戻さない
+                Bounds before = BoundsField(display);
+                display.LogicUpdate(1f / 30f); // 本体の30Hz走査（境界は逆コンパイルと同じ式）
+                Assert.Equal(before, BoundsField(display)); // 空リストで走査を飛ばす＝例外も出ない
             }
             finally { NativePerfOptions.CharacterModelDisplayBounds = saved; }
         }
