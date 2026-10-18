@@ -6,15 +6,16 @@ using UnityEngine;
 
 namespace SodRpg.Mod
 {
-    // （#751・#763・#770）本体 NativePerfPatches.cs の NativePerfOptions / NativePerfPatch のうち、
-    // NativeSleepPositionPerf・NativeCameraZoomRotationPerf・NativeCharacterModelDisplayBounds の
-    // 抽出部分から参照される範囲の境界。Warn のログ出力は本体の Log 依存のためここには置かない。
+    // （#751・#763・#770・#798）本体 NativePerfPatches.cs の NativePerfOptions / NativePerfPatch のうち、
+    // NativeSleepPositionPerf・NativeCameraZoomRotationPerf・NativeCharacterModelDisplayBounds・
+    // NativeKillTrackerCullPerf の抽出部分から参照される範囲の境界。Warn のログ出力は本体の Log 依存のためここには置かない。
     internal static class NativePerfOptions
     {
         internal static bool SleepPosition = true;
         internal static bool CameraZoomRotation = true;
         internal static bool CastIndicatorCircle = true;
         internal static bool CharacterModelDisplayBounds = true;
+        internal static bool KillTrackerCull = true;
     }
 
     internal static class NativePerfPatch
