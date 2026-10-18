@@ -335,5 +335,83 @@ namespace Issue73.Native.Tests
                 keys = new[] { "k1" }, names = new[] { "One" }, available = new[] { true }, status = "" });
             Assert.Equal("kept-warning", session.CoopTradeWarning);
         }
+
+        // #825：ack待ちの間に届くview。ホストは前回承認済みの提示を返すが、下書き優先は変更前と同じ。
+        [Fact]
+        public void A_view_while_the_offer_awaits_its_ack_keeps_the_pending_draft_as_own_offer()
+        {
+            var session = Guest();
+            session.Profile.FindStash("own-relic").FusionLevel = 0;
+            session.CoopTrade = new CoopTradeView { Id = "trade-1", Accepted = true, Revision = 3 };
+            var draft = new CoopTradeOffer { RelicUids = new List<string> { "own-relic" } };
+            Assert.Null(session.SetCoopTradeOffer(draft));
+            string inFlight = (string)Get(session, "_coopOfferInFlight");
+            Assert.NotNull(inFlight);
+
+            DeliverState(session, new DreamforgeCoopTradeState { kind = "view", id = "trade-1", revision = 4,
+                hostKey = "host-key", partner = "Two", accepted = true, ownConfirmed = true,
+                ownOffer = CoopTradeCodec.WriteOffer(new CoopTradeOffer()),
+                otherOffer = CoopTradeCodec.WriteOffer(new CoopTradeOffer()) });
+
+            Assert.Same(draft, session.CoopTrade.OwnOffer); // 変更前と同じく下書きが表示される
+            Assert.Equal(new[] { "own-relic" }, session.CoopTrade.OwnOffer.RelicUids);
+            Assert.False(session.CoopTrade.OwnConfirmed); // 下書きがある間は確定表示を抑制
+            Assert.Same(draft, Get(session, "_coopPendingOffer"));
+            Assert.Equal(inFlight, Get(session, "_coopOfferInFlight"));
+        }
+
+        // #825：ackが届いたview。下書きは消費され、OwnOffer はホストの返送（展開結果）で組み立てられる。
+        // 展開を省く変更の前後で、評価時点と中身が同じであることを確かめる。
+        [Fact]
+        public void An_acknowledging_view_decodes_the_echoed_offer_once_the_pending_draft_is_cleared()
+        {
+            var session = Guest();
+            session.Profile.FindStash("own-relic").FusionLevel = 0;
+            session.CoopTrade = new CoopTradeView { Id = "trade-1", Accepted = true, Revision = 3 };
+            var draft = new CoopTradeOffer { RelicUids = new List<string> { "own-relic" } };
+            Assert.Null(session.SetCoopTradeOffer(draft));
+            string inFlight = (string)Get(session, "_coopOfferInFlight");
+
+            DeliverState(session, new DreamforgeCoopTradeState { kind = "view", id = "trade-1", revision = 4,
+                hostKey = "host-key", partner = "Two", accepted = true, ownConfirmed = true, offerAck = inFlight,
+                ownOffer = CoopTradeCodec.WriteOffer(draft),
+                otherOffer = CoopTradeCodec.WriteOffer(new CoopTradeOffer()) });
+
+            Assert.Null(Get(session, "_coopPendingOffer")); // ackで下書きは確定した
+            Assert.Null(Get(session, "_coopOfferInFlight"));
+            Assert.True(session.CoopTrade.OwnConfirmed);
+            // 消費済みの下書きオブジェクトではなく、返送された提示の展開結果が入る（変更前と同じ）。
+            Assert.NotSame(draft, session.CoopTrade.OwnOffer);
+            Assert.Equal(new[] { "own-relic" }, session.CoopTrade.OwnOffer.RelicUids);
+            Assert.Single(SentCommands("offer")); // 再送しない
+        }
+
+        // #825：ホストが下書きと違う提示を返した（補正された）view。下書きは残り、再送される。
+        [Fact]
+        public void A_corrected_host_echo_keeps_the_pending_draft_and_resends_the_offer()
+        {
+            var session = Guest();
+            session.Profile.FindStash("own-relic").FusionLevel = 0;
+            session.CoopTrade = new CoopTradeView { Id = "trade-1", Accepted = true, Revision = 3 };
+            var draft = new CoopTradeOffer { RelicUids = new List<string> { "own-relic" } };
+            Assert.Null(session.SetCoopTradeOffer(draft));
+            string inFlight = (string)Get(session, "_coopOfferInFlight");
+            NetworkClient.Sent.Clear();
+
+            DeliverState(session, new DreamforgeCoopTradeState { kind = "view", id = "trade-1", revision = 4,
+                hostKey = "host-key", partner = "Two", accepted = true, ownConfirmed = true, offerAck = inFlight,
+                ownOffer = CoopTradeCodec.WriteOffer(new CoopTradeOffer()), // 下書きから外された提示（補正）
+                otherOffer = CoopTradeCodec.WriteOffer(new CoopTradeOffer()) });
+
+            Assert.Same(draft, session.CoopTrade.OwnOffer); // 変更前と同じく下書き優先
+            Assert.Equal(new[] { "own-relic" }, session.CoopTrade.OwnOffer.RelicUids);
+            Assert.Same(draft, Get(session, "_coopPendingOffer")); // 補正値では下書きを確定させない
+            Assert.False(session.CoopTrade.OwnConfirmed);
+            var resent = Assert.Single(SentCommands("offer")); // 下書きを新しい転送IDで送り直す
+            Assert.Equal(CoopTradeCodec.WriteOffer(draft), resent.offer);
+            string retry = (string)Get(session, "_coopOfferInFlight");
+            Assert.NotNull(retry);
+            Assert.NotEqual(inFlight, retry);
+        }
     }
 }
