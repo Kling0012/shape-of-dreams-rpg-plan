@@ -45,8 +45,8 @@ worktree 内には設定しない。成果物・bin・obj はコミットしな�
 
 ## 修正前の結果（2026-10-17 再実行）
 
-実行環境: .NET SDK 10.0.111、net8.0 を Major roll-forward で実行、
-`NUGET_PACKAGES=/home/wang/.cache/gh-auto/nuget`。
+実行環境: .NET SDK 10.0.111、net8.0 を Major roll-forward で実行。
+`NUGET_PACKAGES` は worktree 外のキャッシュを指定した。再実行時も呼び出し元の設定を使う。
 
 | 点 | 修正前の観測 | 終了コード |
 | --- | --- | --- |
@@ -120,6 +120,11 @@ DOTNET_ROLL_FORWARD=Major dotnet test tests/Issue73.Native.Tests/Issue73.Native.
   `ObserveBossClear` の BossFight 限定条件は維持するので、callback と Tick が重なっても
   WaitingSoulFinish／AwaitingChoice から先へ二重に進めない。
 - 潜行適用済みかつ `state.GraphEpoch > choice.GraphEpoch` なら保存 ACK 処理前に戻る。
+  `ClientSession.TickInfinity` の先頭では `CompleteInfinityStateSave()`、
+  `TickInfinityPersonalChoice()`、`InfinityMode.Tick()` をこの順に呼ぶ。
+  この早期 return は3つの呼び出しより後ろにあるため、個人選択の送信や定期 Tick を飛ばさない。
+  この順序は製品ソースで確認した。Native ハーネスの `InfinityMode.Tick` は空実装なので、
+  ACK テストの合格だけではこの点を検証できない。
   同世代での1秒ごとの再送と、ホストの `PartyAcknowledged` による全員受信／最大30秒の
   既存待ち解除は維持する。ホストも適用済みの古い決定に対する毎フレームの全員走査を省ける。
 - `TickInfinityPersonalChoice` からの `TickPersonalChoices` 呼び出しを除き、定期経路は
@@ -145,7 +150,7 @@ DOTNET_ROLL_FORWARD=Major dotnet test tests/Issue73.Native.Tests/Issue73.Native.
   保存失敗・遅延・保存先なしの待ち解除、Continue 復元、個人選択の一度だけの適用を含む。
 - Core の `FullyQualifiedName~InfinityPersonalChoiceTests`: 終了コード0、1件成功。
   `-c Release -p:WarningLevel=0` で実行。上記 .NET テストはすべて `DOTNET_ROLL_FORWARD=Major`。
-- `dotnet build src/SodRpg.Mod -c Release -p:GameDir="/mnt/ghauto-sbx/sod-gamedata/Shape of Dreams" --nologo -v:quiet`:
+- `dotnet build src/SodRpg.Mod -c Release -p:GameDir="<参照用ゲームDLLのフォルダ>" --nologo -v:quiet`:
   終了コード0、エラー0・既存警告6。参照先に Mods がないことを確認してから実行し、配置なし。
 - `git diff --check`: 終了コード0。
 
