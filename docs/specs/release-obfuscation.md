@@ -39,7 +39,7 @@ DeployToGame は従来どおり `$(GameDir)/Mods` が存在するときだけ動
 | Harmony の属性付きパッチ | 298型 | HarmonyPatch の付いた型。型・メソッド・プロパティの名前とメソッドの引数名を保つ。508個のパッチメソッド、642個の引数名を比較する。 |
 | enum | 104型 | 全 enum の型名・列挙値・数値を保つ。ToString や名前による変換が保存・通信・表示のキーを変えないようにする。 |
 | 手動パッチと変数経由の検索 | 10型 | NativeDreamContent、NativeProcSpawnSpread、NativeKillRewards、PressureEnemyCount、CulinaryIngredientCap など。nameof を含む文字列でメソッドを探す。 |
-| 入れ子の型の親 | 6型の明示指定と手動パッチ側の親 | InfinityMode、HostAuthority、DreamforgeUi など。子の DTO・enum の完全名が変わらないよう、親の型名を保つ。 |
+| 入れ子の型の親 | 7型の明示指定と手動パッチ側の親 | InfinityMode、HostAuthority、DreamforgeUi、ClientSession など。子の DTO・enum の完全名が変わらないよう、親の型名を保つ。 |
 | 型名による判定 | 11型の明示指定 | essence-caps の10パッチと Protocol。設定によるパッチの選択、通信エラーを記録する名前空間の判定を保つ。パッチには Harmony の除外規則も適用する。 |
 
 DewMod は metadata.json の assemblies にある `DreamforgeRPG.dll` を読み、ModBehaviour を継承する型を列挙して AddComponent する。ModBehaviour は公開フィールドから設定を探し、`GetType().Name + "." + field.Name + ".json"` で設定ファイル名を作る。そのため DreamforgeMod と config の名前を保つ。
@@ -47,6 +47,8 @@ DewMod は metadata.json の assemblies にある `DreamforgeRPG.dll` を読み�
 profile.json と途中再開データの ProfileCodec は、明示した文字列のキーと数値で読み書きする。Profile や ProfileCodec の内部名を難読化しても、そのキーは変わらない。Newtonsoft.Json がフィールドを列挙する DTO は別に除外し、参照先をたどった161型について設定の漏れを検査する。通信の JSON と enum の名前も保つため、旧版との通信形式は変更しない。
 
 リソース名と IL の文字列リテラルも難読化前後で比較する。Loc のキー、固定のログ文、保存・通信のキーはこの比較で確認する。将来、MOD 内の型やメンバーを名前で検索する処理、DTO、Unity のコンポーネントを追加するときは除外設定も更新する。検査の名前検索の検出は型トークンと文字列の照合であり、任意の動的なリフレクションを証明するものではない。
+
+enum はすべて一括規則（`typeinherits="System.Enum"`）で型名と列挙値を保つため、トップレベルに enum を足しても obfuscar.xml への個別の指定は要らない。enum や DTO を型に入れ子にしたときだけ親型の指定を足す必要があり、取りこぼしは check.py が検出する（2026-10-18、`ClientSession/SkillBlock` で検出し、親の `ClientSession` を追加した）。
 
 ## 検査コマンドと結果
 
