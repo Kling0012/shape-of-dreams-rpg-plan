@@ -86,10 +86,8 @@ namespace SodRpg.Core.Game
             foreach (string uid in offer.RelicUids)
             {
                 if (string.IsNullOrEmpty(uid) || !offered.Add(uid)) return Loc.T("同じ遺物を二度提示できません。", "Trade relic IDs must be unique.");
-                if (FindOffered(profile, uid) == null) return Loc.T("提示した遺物が保管庫や鞄にありません。", "An offered relic is not in your stash or satchel.");
-                if (profile.IsEquippedAnywhere(uid)) return Loc.T("装着中の遺物は取引できません。", "An offered relic is equipped.");
-                if (profile.PendingTrades.Any(t => t.Uid == uid || t.Relic?.Uid == uid)
-                    || profile.RetuneOffer?.Uid == uid) return Loc.T("提示した遺物は別の処理の応答待ちです。", "An offered relic has another pending operation.");
+                string relicError = ValidateRelicOffer(profile, uid);
+                if (relicError != null) return relicError;
             }
             return null;
         }
@@ -99,10 +97,16 @@ namespace SodRpg.Core.Game
         /// 取引の受領待ちや再調律の候補選びの途中でない。提示した後に変わった遺物を UI が提示から外すのに使う。
         /// </summary>
         public static bool RelicOfferable(Profile profile, string uid)
-            => profile != null && !string.IsNullOrEmpty(uid) && FindOffered(profile, uid) != null
-                && !profile.IsEquippedAnywhere(uid)
-                && !profile.PendingTrades.Any(t => t.Uid == uid || t.Relic?.Uid == uid)
-                && profile.RetuneOffer?.Uid != uid;
+            => profile != null && !string.IsNullOrEmpty(uid) && ValidateRelicOffer(profile, uid) == null;
+
+        private static string ValidateRelicOffer(Profile profile, string uid)
+        {
+            if (FindOffered(profile, uid) == null) return Loc.T("提示した遺物が保管庫や鞄にありません。", "An offered relic is not in your stash or satchel.");
+            if (profile.IsEquippedAnywhere(uid)) return Loc.T("装着中の遺物は取引できません。", "An offered relic is equipped.");
+            if (profile.PendingTrades.Any(t => t.Uid == uid || t.Relic?.Uid == uid)
+                || profile.RetuneOffer?.Uid == uid) return Loc.T("提示した遺物は別の処理の応答待ちです。", "An offered relic has another pending operation.");
+            return null;
+        }
 
         /// <summary>
         /// 融合を知らない相手へは、段階を失う遺物の受け渡しだけを拒否する。拒否したときは理由コード

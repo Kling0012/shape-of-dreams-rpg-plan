@@ -131,7 +131,7 @@ namespace SodRpg.Core.Game
         /// <summary>WorldIndex を数えたときの本体の世界番号と世界名。再開時に同じ世界を二重に数えないための印。</summary>
         public int WorldZoneIndex { get; set; } = -1;
         public string WorldZoneName { get; set; }
-        /// <summary>Last Infinity segment included in WorldIndex; -1 for ordinary runs and legacy saves.</summary>
+        /// <summary>WorldIndex に数えた最後のインフィニティ区間。通常モードや区間の記録がない旧保存では -1。</summary>
         public long WorldInfinitySegment { get; set; } = -1;
         private long _salvageDustEarned;
         /// <summary>
