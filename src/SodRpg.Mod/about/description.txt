@@ -1,5 +1,5 @@
-[b]Vesper's training now restores max health shaved by "Fish Scales", co-op guests recover from unusable skills in more cases, and several processes run lighter.[/b]
-[b]「魚の鱗」で削られた最大HPがヴェスパーの鍛錬で戻るようにし、協力プレイでスキルが使えなくなる問題への対策を広げ、動作も軽くしました。[/b]
+[b]Japanese IME input now works in gear, forge, star map, trade, and codex search fields, and the mod now supports game version r1.4.1.2.[/b]
+[b]装備・鍛冶・星図・交換・図鑑の検索欄で日本語を入力できるようにし、ゲーム本体 r1.4.1.2 に対応しました。[/b]
 
 [h1]Dreamforge RPG[/h1]
 Turns every run into part of a long RPG journey: relics you keep, a "secure or delve" choice at every zone, a star map per Traveler, a forge and long-term goals. Co-op ready.

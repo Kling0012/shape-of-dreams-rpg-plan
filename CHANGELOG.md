@@ -10,6 +10,14 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v3.8.3 — Japanese IME input in search fields and support for game r1.4.1.2（2026-10-19）
+
+### 不具合の修正 / Bug fixes
+- 装備・鍛冶・星図・交換・図鑑の検索欄で日本語の IME 入力ができない問題を直しました。検索欄の編集中は、変換の確定・取り消しや入力したキーでメニューが閉じたり、ゲームのショートカットが動いたりしないようにしました。 / Fixed Japanese IME input in gear, forge, star map, trade, and codex search fields. Confirming or cancelling a composition and typing in a search field no longer close the menu or trigger game shortcuts.
+- ゲーム本体 r1.4.1.2 に対応しました。 / Added support for game version r1.4.1.2.
+
+---
+
 ## v3.8.2 — Fish Scales fix for Vesper's training, co-op skill recovery, and performance tweaks（2026-10-19）
 
 ### 不具合の修正 / Bug fixes
