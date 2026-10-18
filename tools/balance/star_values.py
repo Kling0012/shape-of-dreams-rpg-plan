@@ -256,7 +256,7 @@ def load_growth_table(path=GROWTH_TABLE_PATH):
 
 
 def validate_growth_table(table, path=GROWTH_TABLE_PATH):
-    if not isinstance(table, dict) or not set(table) <= {"schemaVersion", "effects", "fishScales"}:
+    if not isinstance(table, dict) or not {"schemaVersion", "effects"} <= set(table) <= {"schemaVersion", "effects", "fishScales"}:
         raise ValueError(f"{path}: expected schemaVersion, effects and optional fishScales")
     if type(table["schemaVersion"]) is not int or table["schemaVersion"] != 1:
         raise ValueError(f"{path}/schemaVersion: expected integer 1")
