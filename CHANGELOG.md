@@ -10,6 +10,13 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v3.7.3 — Fix profile recovery on file access failures（2026-10-18）
+
+### 不具合の修正 / Bug fixes
+- プロフィールの読み込みや復旧用の写し先の確認でアクセスに失敗したとき、例外が復旧処理の外へ漏れる経路を修正しました。プロフィール切替中の存在確認の失敗も、読み取り失敗と同じく切替前に検出します。 / Fixed access failures escaping profile recovery while checking save files or choosing recovery copy paths. File-existence failures during a profile switch are now detected before switching, like read failures.
+
+---
+
 ## v3.7.2 — Resume checkpoint retention and profile access error fixes（2026-10-18）
 
 ### 不具合の修正 / Bug fixes
