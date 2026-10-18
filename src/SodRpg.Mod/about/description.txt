@@ -1,5 +1,5 @@
-[b]v3.7.6: Minor adjustments.[/b]
-[b]v3.7.6：細かな調整を行いました。[/b]
+[b]Fixes bridge stars showing names that differ from the star map.[/b]
+[b]橋の星の名前が星図と食い違う問題を直しました。[/b]
 
 [h1]Dreamforge RPG[/h1]
 Turns every run into part of a long RPG journey: relics you keep, a "secure or delve" choice at every zone, a star map per Traveler, a forge and long-term goals. Co-op ready.
