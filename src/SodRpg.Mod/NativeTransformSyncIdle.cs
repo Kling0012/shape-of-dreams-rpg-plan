@@ -1,3 +1,5 @@
+using UnityEngine;
+
 namespace SodRpg.Mod
 {
     /// <summary>
@@ -8,18 +10,28 @@ namespace SodRpg.Mod
     {
         /// <summary>
         /// A capture of a stationary actor differs from the stored sample only by its
-        /// timestamp. That timestamp feeds client extrapolation, which multiplies the
-        /// stored velocity; the equality below keeps every velocity at zero, so the
-        /// withheld refresh leaves the rendered pose untouched while Mirror stops
-        /// reserializing and resending the unchanged sample. Teleports and the last
+        /// timestamp. Withholding such a refresh stops Mirror from reserializing and
+        /// resending the unchanged sample. While the omission lasts the client keeps
+        /// extrapolating from the stored timestamp, so every velocity must be exactly
+        /// zero component-wise: Unity's approximate == would treat a residual velocity
+        /// below 1e-5 as "equal to zero", and the leftover extrapolation term
+        /// velocity * (now - timestamp) would then grow with the length of the
+        /// omission. With exact zeros that term is zero no matter how stale the
+        /// timestamp is, so the rendered pose stays untouched. Teleports and the last
         /// sample of a movement always differ and still go through.
         /// </summary>
         internal static bool IsIdleRefresh(in SyncMovementData current, in SyncMovementData next)
         {
             return next.channels == current.channels && next.isTeleport == current.isTeleport
-                && next.position == current.position && next.velocity == current.velocity
-                && next.rotation == current.rotation && next.angularVelocity == current.angularVelocity
-                && next.scale == current.scale && next.scaleVelocity == current.scaleVelocity;
+                && next.position == current.position
+                && IsExactlyZero(current.velocity) && IsExactlyZero(next.velocity)
+                && next.rotation == current.rotation
+                && IsExactlyZero(current.angularVelocity) && IsExactlyZero(next.angularVelocity)
+                && next.scale == current.scale
+                && IsExactlyZero(current.scaleVelocity) && IsExactlyZero(next.scaleVelocity);
         }
+
+        /// <summary>速度の外挿項が厳密に 0 になるのは成分ごとの float 比較で 0 のときだけ。</summary>
+        private static bool IsExactlyZero(Vector3 value) => value.x == 0f && value.y == 0f && value.z == 0f;
     }
 }

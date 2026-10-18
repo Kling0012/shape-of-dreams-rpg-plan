@@ -78,5 +78,39 @@ namespace SodRpg.Mod.Startup.Tests
             next.timestamp = 100.1;
             Assert.False(NativeTransformSyncIdle.IsIdleRefresh(in current, in next));
         }
+
+        [Fact]
+        public void TinyResidualVelocityForcesTheRefreshThrough()
+        {
+            // Unity の近似の == は 1e-5 未満の差を等価と見なすため、送信済みの速度が微小値のまま
+            // 次の標本の速度 0 と「同じ」と判定され、省略が続く余地があった。省略の間はクライアントの
+            // timestamp が古いまま外挿時間が伸びるため、三つの速度のどれかに微小値が残る標本は
+            // 位置が同じでも省略しない（成分ごとの厳密な 0 だけを静止と見なす）。
+            var tiny = new Vector3(1e-06f, 0f, 0f);
+
+            var storedTinyVelocity = StationarySample();
+            storedTinyVelocity.velocity = tiny;
+            var nextZero = StationarySample();
+            nextZero.timestamp = 100.5;
+            Assert.False(NativeTransformSyncIdle.IsIdleRefresh(in storedTinyVelocity, in nextZero),
+                "保存側の velocity に微小値が残る標本は省略してはならない");
+
+            var storedTinyAngular = StationarySample();
+            storedTinyAngular.angularVelocity = tiny;
+            Assert.False(NativeTransformSyncIdle.IsIdleRefresh(in storedTinyAngular, in nextZero),
+                "保存側の angularVelocity に微小値が残る標本は省略してはならない");
+
+            var storedTinyScale = StationarySample();
+            storedTinyScale.scaleVelocity = tiny;
+            Assert.False(NativeTransformSyncIdle.IsIdleRefresh(in storedTinyScale, in nextZero),
+                "保存側の scaleVelocity に微小値が残る標本は省略してはならない");
+
+            var currentZero = StationarySample();
+            var nextTinyVelocity = StationarySample();
+            nextTinyVelocity.timestamp = 100.5;
+            nextTinyVelocity.velocity = tiny;
+            Assert.False(NativeTransformSyncIdle.IsIdleRefresh(in currentZero, in nextTinyVelocity),
+                "新しい標本の velocity が微小値のときも省略してはならない");
+        }
     }
 }
