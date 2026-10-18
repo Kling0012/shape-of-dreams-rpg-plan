@@ -17,6 +17,12 @@ namespace UnityEngine
         public static Vector3 operator +(Vector3 a, Vector3 b) => new Vector3(a.x + b.x, a.y + b.y, a.z + b.z);
         public static Vector3 operator *(Vector3 a, float d) => new Vector3(a.x * d, a.y * d, a.z * d);
         public float sqrMagnitude => x * x + y * y + z * z;
+        // 本体 UnityEngine.Vector3.Lerp と同じ式（t を Clamp01 して各軸を補間する）。
+        public static Vector3 Lerp(Vector3 a, Vector3 b, float t)
+        {
+            t = Mathf.Clamp01(t);
+            return new Vector3(a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t, a.z + (b.z - a.z) * t);
+        }
     }
 }
 namespace UnityEngine.AI

@@ -115,6 +115,9 @@ namespace Mirror
         public static float Clamp01(float value) => value < 0f ? 0f : value > 1f ? 1f : value;
         public static float Clamp(float value, float min, float max) => value < min ? min : value > max ? max : value;
         public static float Floor(float value) => (float)Math.Floor(value);
+        // NativePerfPatches.cs が nameof / AccessTools.Method で参照する本体 API。
+        public static float MoveTowards(float current, float target, float maxDelta)
+            => Math.Abs(target - current) <= maxDelta ? target : current + Math.Sign(target - current) * maxDelta;
     }
     internal static class GUI
     {
@@ -275,6 +278,8 @@ namespace SodRpg.Mod
         public readonly DataProcessorGroup<HealData, Actor, Entity> takenHealProcessor = new DataProcessorGroup<HealData, Actor, Entity>();
         public Hero() { Ability = new EntityAbility(this); }
         public void ApplyCooldownReductionByRatio(SkillTrigger skill, float ratio, bool ignore) => throw new NotSupportedException();
+        // NativeWeaponFxPerf が nameof(Hero.FrameUpdate) で対象を解決するための本体 API。
+        public void FrameUpdate() { }
     }
     internal sealed class HeroSkill
     {
@@ -300,6 +305,10 @@ namespace SodRpg.Mod
         public SkillType type;
         public float currentConfigUnscaledCooldownTime, currentConfigUnscaledMaxCooldownTime;
         public void OnCastComplete() { }
+        // 本体 Actor の transform / position（position は transform.position の読み書き）。
+        // Ai_EmbraceNewIdentity.UpdatePositions の転写がこの形を通る。
+        public UnityEngine.Transform transform = new UnityEngine.Transform();
+        public UnityEngine.Vector3 position => transform.position;
     }
     internal sealed class St_D_CircleOfLife : SkillTrigger { }
     internal sealed class St_D_TheKillingFlow : SkillTrigger { }
@@ -326,7 +335,7 @@ namespace SodRpg.Mod
     internal sealed class Se_HunterBuff { public bool enableGoldAndExpDrops; }
     // ここから下はミストの行動不能修正（NativeMistLifetime.cs / HostAuthority.CrowdControlRecovery.cs）用の
     // 本体 API。移動・中断・効果保持の記録だけを模倣し、時間は _tickNow で進める。
-    internal sealed class EntityVisual { public bool isSpawning; }
+    internal sealed class EntityVisual { public bool isSpawning; public EntityModel model; }
     internal sealed class Hero_Mist : Hero { }
     internal sealed class Ai_Q_Fleche_Dash { public void OnCancel() { } }
     internal class EntityControl
@@ -391,6 +400,11 @@ namespace SodRpg.Mod
         public void SetTimer(float duration) { maxDuration = duration; remainingDuration = duration; }
         public void SetTimer(float duration, float usePrevious) { maxDuration = duration; }
         public void StopBasicEffect(BasicEffect effect) => effect.isAlive = false;
+        // NativePerfPatches.cs の StatusDuration 系パッチが参照する本体 API。
+        public void FrameUpdate() { }
+        public bool isServer;
+        public float? Network_remainingDuration { get; set; }
+        public void SetSyncVarDirtyBit(ulong dirtyBit) { }
     }
     internal sealed class Se_GenericEffectContainer : StatusEffect { public string id; }
     internal static class ManagerBase<T> { public static T softInstance; }

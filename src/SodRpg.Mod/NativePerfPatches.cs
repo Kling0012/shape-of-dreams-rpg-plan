@@ -365,6 +365,15 @@ namespace SodRpg.Mod
     [HarmonyPatch]
     internal static class NativeEmbracePositionPerf
     {
+        // Fingerprint of the shipped Dew.Core (r1.4.0.13) Ai_EmbraceNewIdentity.UpdatePositions
+        // body: IL byte length, FNV-1a hash, local count and exception clause count. The prefix
+        // repeats the native computation, so a game update that edits that body must turn the
+        // patch off instead of silently overriding the new behavior with the old arithmetic.
+        internal const int NativeIlLength = 159;
+        internal const ulong NativeIlHash = 7063811622246808011UL;
+        internal const int NativeLocals = 4;
+        internal const int NativeExceptionClauses = 0;
+
         private static AccessTools.FieldRef<Ai_EmbraceNewIdentity, Vector3> _initPos;
         private static AccessTools.FieldRef<Ai_EmbraceNewIdentity, EaseFunction> _easeFunc;
         private static MethodBase _target;
@@ -375,6 +384,7 @@ namespace SodRpg.Mod
         {
             _target = NativePerfPatch.Find(typeof(Ai_EmbraceNewIdentity), "UpdatePositions", ref _warned);
             if (_target == null) return false;
+            if (!GuardNativeBody(_target)) return false;
             try
             {
                 _initPos = AccessTools.FieldRefAccess<Ai_EmbraceNewIdentity, Vector3>("_targetSkillInitPos");
@@ -390,6 +400,47 @@ namespace SodRpg.Mod
 
         private static MethodBase TargetMethod() => _target;
 
+        // Native expression: Mathf.Clamp01((Time.time - creationTime) / channelTime).
+        internal static float ChannelProgress(float time, float creationTime, float channelTime)
+            => Mathf.Clamp01((time - creationTime) / channelTime);
+
+        // Native expression: Vector3.Lerp(_targetSkillInitPos, info.caster.position, _easeFunc(0f, 1f, v)).
+        internal static Vector3 EasedSkillPosition(Vector3 initPos, Vector3 casterPos, EaseFunction ease, float v)
+            => Vector3.Lerp(initPos, casterPos, ease(0f, 1f, v));
+
+        // Native loop: every non-null onSkillTransform element receives the skill position.
+        internal static void DistributePosition(Transform[] onSkillTransform, Vector3 position)
+        {
+            for (int i = 0; i < onSkillTransform.Length; i++)
+                if (onSkillTransform[i] != null)
+                    onSkillTransform[i].position = position;
+        }
+
+        // Apply the patch only while the recorded body still matches the shipped IL.
+        internal static bool GuardNativeBody(MethodBase method)
+        {
+            var body = method.GetMethodBody();
+            var il = body.GetILAsByteArray();
+            if (il.Length == NativeIlLength && Fnv1a(il) == NativeIlHash
+                && body.LocalVariables.Count == NativeLocals
+                && body.ExceptionHandlingClauses.Count == NativeExceptionClauses)
+                return true;
+            NativePerfPatch.Warn(ref _warned, "embrace position",
+                "native UpdatePositions body changed (il " + il.Length + ")");
+            return false;
+        }
+
+        internal static ulong Fnv1a(byte[] bytes)
+        {
+            ulong hash = 14695981039346656037UL;
+            for (int i = 0; i < bytes.Length; i++)
+            {
+                hash ^= bytes[i];
+                hash *= 1099511628211UL;
+            }
+            return hash;
+        }
+
         private static bool Prefix(Ai_EmbraceNewIdentity __instance)
         {
             if (_disabled || !NativePerfOptions.EmbracePosition) return true;
@@ -401,14 +452,10 @@ namespace SodRpg.Mod
                 // read once instead of once per onSkillTransform element.
                 SkillTrigger skill = __instance.NetworktargetSkill;
                 if (skill == null) return false;
-                float v = Mathf.Clamp01((Time.time - __instance.creationTime) / __instance.channelTime);
-                skill.transform.position = Vector3.Lerp(_initPos(__instance), __instance.info.caster.position,
-                    _easeFunc(__instance)(0f, 1f, v));
-                Vector3 pos = skill.transform.position;
-                Transform[] array = __instance.onSkillTransform;
-                for (int i = 0; i < array.Length; i++)
-                    if (array[i] != null)
-                        array[i].position = pos;
+                float v = ChannelProgress(Time.time, __instance.creationTime, __instance.channelTime);
+                skill.transform.position = EasedSkillPosition(_initPos(__instance),
+                    __instance.info.caster.position, _easeFunc(__instance), v);
+                DistributePosition(__instance.onSkillTransform, skill.transform.position);
                 return false;
             }
             catch (Exception ex)

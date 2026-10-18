@@ -57,6 +57,7 @@
     <Compile Include="../../src/SodRpg.Mod/PressureDividendMessages.cs" Link="ModUnderTest/PressureDividendMessages.cs" />
     <Compile Include="../../src/SodRpg.Mod/SafeReflection.cs" Link="ModUnderTest/SafeReflection.cs" />
     <Compile Include="../../src/SodRpg.Mod/NativeMistLifetime.cs" Link="ModUnderTest/NativeMistLifetime.cs" />
+    <Compile Include="../../src/SodRpg.Mod/NativePerfPatches.cs" Link="ModUnderTest/NativePerfPatches.cs" />
     <Compile Include="../../src/SodRpg.Mod/HostAuthority.CrowdControlRecovery.cs" Link="ModUnderTest/HostAuthority.CrowdControlRecovery.cs" />
     <Compile Include="../SodRpg.Core.Tests/EventBalanceTestData.cs" Link="EventBalanceTestData.cs" />
     <Compile Include="../SodRpg.Core.Tests/Testing/InMemoryFileSystem.cs" Link="Testing/InMemoryFileSystem.cs" />
