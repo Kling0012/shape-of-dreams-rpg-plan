@@ -344,14 +344,17 @@ int powersListed = 0;
             sb.Append($"| {TxtBi(Content.RarityName(rarity))} | {done} | +{Content.MaxEnhanceFor(rarity, done)} | {(cap ? "—" : Content.LimitBreakTuningCost(done + 1, rarity).ToString())} | {(cap ? "—" : Content.LimitBreakShardCost(done + 1, rarity).ToString())} |\n");
         }
     sb.Append('\n').Append(H2("覚醒 (Awakening)"));
-    sb.Append("装備を使うと覚醒の力が溜まり、段が上がると固有効果（と連携）と特性が強くなります。\n\n^ 段 ^ 必要な覚醒の力（累計） ^ 固有効果の倍率 ^ 特性の倍率 ^\n");
+    sb.Append("装着した旅人で敵を倒すと、伝説の遺物に覚醒の力が溜まります。段が上がると固有効果（と連携）と特性が強くなります。\nLegendary relics gain awakening power when the traveler wearing them defeats enemies. Higher stages strengthen powers (and links) and affixes.\n\n^ 段 ^ 必要な覚醒の力（累計） ^ 固有効果の倍率 ^ 特性の倍率 ^\n");
     for (int l = 1; l <= Content.MaxAwakenLevel; l++)
         sb.Append($"| {Content.AwakenNumeral(l)} | {Content.AwakenThresholdFor(l)} | {Content.AwakenPowerPctAt(l)}% | {Content.AwakenAffixPctAt(l)}% |\n");
     sb.Append('\n').Append(H2("再調律 (Retune)"));
-    sb.Append($"特性を引き直します。毎回{Content.RetuneChoices}つの候補から選び、1装備につき最大{Content.MaxRetunes}回までです。\n\n^ レア度 ^ 再調律済み回数 ^ 次の調律石 ^\n");
+    sb.Append($"特性を引き直します。毎回{Content.RetuneChoices}つの候補から選びます。通常は1装備につき最大{Content.MaxRetunes}回です。工房の「禁忌の職人」を解放すると、セットに属さずボスの技も持たないオレンジ枠の固有品は上限が{Forbidden.OrangeRetuneBonus}回増え、最大{Content.MaxRetunes + Forbidden.OrangeRetuneBonus}回になります。禁忌化した遺物は再調律できません。候補を出した時点で調律石と回数を使い、元の特性を残しても戻りません。\nRetuning offers {Content.RetuneChoices} choices for one affix. The normal cap is {Content.MaxRetunes} uses. Unlocking the Forbidden Smith adds {Forbidden.OrangeRetuneBonus} uses (up to {Content.MaxRetunes + Forbidden.OrangeRetuneBonus}) for orange-frame uniques without a set or boss move. Forbidden relics cannot be retuned. Generating choices consumes stones and one use even if you keep the original.\n\n^ レア度 ^ 再調律済み回数 ^ 次の調律石 ^\n");
     foreach (var rarity in Enum.GetValues<Rarity>())
         for (int done = 0; done < Content.MaxRetunes; done++)
             sb.Append($"| {TxtBi(Content.RarityName(rarity))} | {done} | {Content.RetuneCost(new Relic { Rarity = rarity, Retunes = done })} |\n");
+    sb.Append('\n').Append("禁忌の職人を解放した対象のオレンジ枠固有品の追加分 / Extra uses for eligible orange-frame uniques after unlocking the Forbidden Smith:\n\n^ 再調律済み回数 ^ 次の調律石 ^\n");
+    for (int done = Content.MaxRetunes; done < Content.MaxRetunes + Forbidden.OrangeRetuneBonus; done++)
+        sb.Append($"| {done} | {Content.RetuneCost(new Relic { Rarity = Rarity.Legendary, Retunes = done })} |\n");
     sb.Append('\n');
     sb.Append(H2("系統 (Lines)"));
     foreach (var l in Enum.GetValues<Line>()) sb.Append($"  * {TxtBi(Content.LineName(l))}\n");
