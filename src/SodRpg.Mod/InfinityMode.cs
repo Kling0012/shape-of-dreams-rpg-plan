@@ -457,15 +457,19 @@ namespace SodRpg.Mod
                 RunId = gm.runId, NativeZoneIndex = zone.currentZoneIndex, WorldSeed = zone.worldSeed,
                 StateVersion = 1, State = State,
             });
-            // Mirror's SyncDictionary records and broadcasts every set, including a same-value
-            // rewrite (SyncIDictionary's indexer has no equality check). Native continue saves
-            // repeat this envelope — SaveContinueData runs on every node travel and again on
-            // each 20 s mid-run lock — so an unchanged graph re-sent its full envelope to every
-            // client. Skip the write when the synchronized text is already this exact value.
-            if (settings.customData.TryGetValue(RuntimeKey, out var current)
-                && string.Equals(current, text, StringComparison.Ordinal)) return;
+            var hasCurrent = settings.customData.TryGetValue(RuntimeKey, out var current);
+            if (!EnvelopeNeedsWrite(hasCurrent, current, text)) return;
             settings.customData[RuntimeKey] = text;
         }
+
+        // Mirror's SyncDictionary records and broadcasts every set, including a same-value
+        // rewrite (SyncIDictionary's indexer has no equality check). Native continue saves
+        // repeat this envelope — SaveContinueData runs on every node travel and again on
+        // each 20 s mid-run lock — so WriteEnvelope must skip a synchronized text that is
+        // already this exact value; only an absent key or an ordinally different text
+        // needs the write (and the full-envelope resend it triggers).
+        internal static bool EnvelopeNeedsWrite(bool hasCurrent, string current, string text)
+            => !hasCurrent || !string.Equals(current, text, StringComparison.Ordinal);
 
         // #144: BeginRun can fire (TrackRun) before the first zone generates, so
         // InitializeInfinityRun found no InitialState to clone and Profile.Run.Infinity stayed
