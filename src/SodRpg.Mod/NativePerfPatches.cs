@@ -367,9 +367,7 @@ namespace SodRpg.Mod
     {
         private sealed class OffsetCache
         {
-            internal string Name;
-            internal List<Accessory_AttachPoint.AttachOffset> Offsets;
-            internal int Count = -1;
+            internal AccessoryOffsetCacheKey Key;
             internal Accessory_AttachPoint.AttachOffset Result;
         }
 
@@ -404,12 +402,11 @@ namespace SodRpg.Mod
             if (_disabled || !NativePerfOptions.AccessoryOffset) return true;
             try
             {
-                // LateUpdate passes the same cached model-name string every frame and the game never
-                // mutates customOffsets at runtime, so a hit returns the identical lookup result.
+                // The inspected game does not mutate customOffsets at runtime. This key detects
+                // model-name reference, list reference and count changes, but not same-count element
+                // replacements or entityName edits. Disable this option if another mod makes those edits.
                 if (Caches.TryGetValue(__instance, out var cache)
-                    && ReferenceEquals(cache.Name, entityOrSkinName)
-                    && ReferenceEquals(cache.Offsets, __instance.customOffsets)
-                    && cache.Count == __instance.customOffsets.Count)
+                    && cache.Key.Matches(entityOrSkinName, __instance.customOffsets, __instance.customOffsets.Count))
                 {
                     __result = cache.Result;
                     return false;
@@ -433,9 +430,7 @@ namespace SodRpg.Mod
             try
             {
                 OffsetCache cache = Caches.GetValue(__instance, CreateCache);
-                cache.Name = entityOrSkinName;
-                cache.Offsets = __instance.customOffsets;
-                cache.Count = __instance.customOffsets.Count;
+                cache.Key = new AccessoryOffsetCacheKey(entityOrSkinName, __instance.customOffsets, __instance.customOffsets.Count);
                 cache.Result = __result;
             }
             catch (Exception ex)
