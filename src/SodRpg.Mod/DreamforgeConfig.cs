@@ -114,6 +114,9 @@ namespace SodRpg.Mod
         [LabelText("Skip idle cooldown multiplier math / 待機中のクールダウンの倍率計算を省く")]
         public bool nativeCooldownIdleMultiplier = true;
 
+        [LabelText("Recover stuck guest skill state / 参加者のスキル使用不可が続いたら再同期する")]
+        public bool guestSkillLockRecovery = true;
+
         [LabelText("Skip transform sync of stationary actors (host) / 動いていないアクターの座標同期を省く（ホスト）")]
         public bool nativeTransformSyncIdle = true;
 
