@@ -561,7 +561,10 @@ namespace SodRpg.Mod
                         _coopPendingOffer = null;
                         _coopOfferInFlight = null;
                     }
-                    var ownOffer = CoopTradeCodec.ReadOffer(msg.ownOffer);
+                    // The host echoes our last acknowledged offer in every view. While an edit is
+                    // still awaiting its ack, that echo is discarded below (OwnOffer keeps the
+                    // pending draft), so only decode it when the result is actually used.
+                    var ownOffer = _coopPendingOffer ?? CoopTradeCodec.ReadOffer(msg.ownOffer);
                     bool acknowledged = _coopOfferInFlight != null && msg.offerAck == _coopOfferInFlight;
                     if (acknowledged)
                     {
@@ -575,7 +578,7 @@ namespace SodRpg.Mod
                         Accepted = msg.accepted, OwnConfirmed = msg.ownConfirmed && _coopPendingOffer == null,
                         OtherConfirmed = msg.otherConfirmed && _coopPendingOffer == null,
                         Preparing = msg.preparing, Revision = msg.revision, PartnerFusion = msg.partnerFusion,
-                        OwnOffer = _coopPendingOffer ?? ownOffer, OtherOffer = CoopTradeCodec.ReadOffer(msg.otherOffer),
+                        OwnOffer = ownOffer, OtherOffer = CoopTradeCodec.ReadOffer(msg.otherOffer),
                         OtherProfile = CoopTrade?.Id == msg.id ? CoopTrade.OtherProfile : null,
                     };
                     DiagnoseCoopTrade("view-applied", msg.id, msg.revision);
