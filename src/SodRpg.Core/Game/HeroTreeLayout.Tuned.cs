@@ -55,6 +55,8 @@ namespace SodRpg.Core.Game
             var covered = new bool[nodes.Count];
             var xs = new float[nodes.Count];
             var ys = new float[nodes.Count];
+            // Include the starting star, whose position is not stored in the table.
+            var positions = new HashSet<(float X, float Y)> { (nodes[0].X, nodes[0].Y) };
             int placed = 0;
             foreach (string line in data.Split('\n'))
             {
@@ -63,7 +65,8 @@ namespace SodRpg.Core.Game
                 if (part.Length != 3 || !index.TryGetValue(part[0], out int i) || covered[i]
                     || !float.TryParse(part[1], NumberStyles.Float, CultureInfo.InvariantCulture, out float x)
                     || !float.TryParse(part[2], NumberStyles.Float, CultureInfo.InvariantCulture, out float y)
-                    || float.IsNaN(x) || float.IsInfinity(x) || float.IsNaN(y) || float.IsInfinity(y)) return false;
+                    || float.IsNaN(x) || float.IsInfinity(x) || float.IsNaN(y) || float.IsInfinity(y)
+                    || !positions.Add((x, y))) return false;
                 covered[i] = true; xs[i] = x; ys[i] = y; placed++;
             }
             if (placed != count) return false;
