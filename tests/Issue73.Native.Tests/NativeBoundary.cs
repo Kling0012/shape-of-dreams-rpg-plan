@@ -47,6 +47,15 @@ namespace Mirror
         public void Send<T>(T message) where T : struct, NetworkMessage => Sent.Add(message);
     }
     internal sealed class NetworkConnectionToClient : NetworkConnection { }
+    // NativeStatsCalcRpcPerf が typeof で参照する本体 Mirror API。実物の syncVarDirtyBits は
+    // protected で、MOD は Prepare で作った getter デリゲート経由でのみ読む。境界は 0 固定
+    // （このパッチのスキップ判定を動かすテストはこのプロジェクトに無い）。
+    internal class NetworkBehaviour
+    {
+        public bool isServer => false;
+        public bool isClient => false;
+        public ulong syncVarDirtyBits => 0UL;
+    }
 }
  namespace UnityEngine
  {
@@ -234,7 +243,7 @@ namespace SodRpg.Mod
         public float attackDamagePercentage, abilityPowerPercentage, movementSpeedPercentage,
             abilityHasteFlat, armorFlat, attackSpeedPercentage, maxHealthPercentage;
     }
-    internal class EntityStatus
+    internal class EntityStatus : NetworkBehaviour
     {
         private float _currentHealth = 100f;
         private bool _statsDirty = true;
