@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using SodRpg.Mod;
 using UnityEngine;
 
@@ -21,6 +22,40 @@ namespace UnityEngine
         public static bool operator ==(Quaternion a, Quaternion b) => a.Equals(b);
         public static bool operator !=(Quaternion a, Quaternion b) => !a.Equals(b);
         public override string ToString() => "Euler(" + x + ", " + y + ", " + z + ")";
+    }
+
+    // NativeOcclusionShaderIdlePerf のコンパイル用の境界。実物の Vector4.operator== は
+    // 成分差の二乗和が kEpsilon² 未満を等しいとする近似だが、ガードの省略判定は
+    // 成分ごとの完全一致で自分で比べる。このスタブの等価も同じ完全一致に合わせる。
+    internal struct Vector4 : IEquatable<Vector4>
+    {
+        public float x, y, z, w;
+        public Vector4(float x, float y, float z, float w) { this.x = x; this.y = y; this.z = z; this.w = w; }
+        public bool Equals(Vector4 other) => x == other.x && y == other.y && z == other.z && w == other.w;
+        public override bool Equals(object obj) => obj is Vector4 other && Equals(other);
+        public override int GetHashCode() => (((x.GetHashCode() * 397) ^ y.GetHashCode()) * 397 ^ z.GetHashCode()) * 397 ^ w.GetHashCode();
+        public static bool operator ==(Vector4 a, Vector4 b) => a.Equals(b);
+        public static bool operator !=(Vector4 a, Vector4 b) => !a.Equals(b);
+    }
+
+    // グローバルシェーダー値の受け口。ガードがネイティブ呼び出しを本当に省いたかを
+    // 見えるように、呼び出しを記録する。テストは ResetCalls してから使う。
+    internal static class Shader
+    {
+        internal static readonly List<string> Calls = new List<string>();
+        internal static void ResetCalls() => Calls.Clear();
+        public static void SetGlobalInt(int nameID, int value)
+            => Calls.Add("int " + nameID.ToString(CultureInfo.InvariantCulture) + " " + value.ToString(CultureInfo.InvariantCulture));
+        public static void SetGlobalFloat(int nameID, float value)
+            => Calls.Add("float " + nameID.ToString(CultureInfo.InvariantCulture) + " " + value.ToString("R", CultureInfo.InvariantCulture));
+        public static void SetGlobalVector(int nameID, Vector4 value)
+            => Calls.Add("vector " + nameID.ToString(CultureInfo.InvariantCulture) + " " + Format(value));
+        public static void SetGlobalVectorArray(int nameID, Vector4[] values)
+            => Calls.Add("vectorarray " + nameID.ToString(CultureInfo.InvariantCulture) + " "
+                + (values == null ? "null" : values.Length.ToString(CultureInfo.InvariantCulture)));
+        internal static string Format(Vector4 value)
+            => value.x.ToString("R", CultureInfo.InvariantCulture) + "," + value.y.ToString("R", CultureInfo.InvariantCulture)
+                + "," + value.z.ToString("R", CultureInfo.InvariantCulture) + "," + value.w.ToString("R", CultureInfo.InvariantCulture);
     }
 }
 

@@ -28,6 +28,7 @@ namespace SodRpg.Mod
             NativePerfOptions.SleepPosition = config.nativeSleepPositionReuse;
             NativePerfOptions.CastIndicatorCircle = config.nativeCastIndicatorCircle;
             NativePerfOptions.CameraZoomRotation = config.nativeCameraZoomRotation;
+            NativePerfOptions.OcclusionIdle = config.nativeOcclusionIdle;
             NativePerfOptions.CharacterModelDisplayBounds = config.nativeCharacterModelDisplayBounds;
             NativePerfOptions.KillTrackerCull = config.nativeKillTrackerCullThrottle;
             NativePerfOptions.CursorIdle = config.nativeCursorIdle;
@@ -51,6 +52,7 @@ namespace SodRpg.Mod
         internal static bool SleepPosition = true;
         internal static bool CastIndicatorCircle = true;
         internal static bool CameraZoomRotation = true;
+        internal static bool OcclusionIdle = true;
         internal static bool CharacterModelDisplayBounds = true;
         internal static bool KillTrackerCull = true;
         internal static bool CursorIdle = true;
@@ -1328,6 +1330,211 @@ namespace SodRpg.Mod
         {
             if (!NativePerfOptions.CameraZoomRotation) return Quaternion.Euler(0f, camera.entityCamAngle, 0f);
             return camera.entityCamAngle == 0f ? Quaternion.Euler(0f, 0f, 0f) : camera.entityCamAngleRotation;
+        }
+    }
+
+    [HarmonyPatch]
+    internal static class NativeOcclusionShaderIdlePerf
+    {
+        // CameraManager.LogicUpdateOcclusionTest re-sends four global shader properties on every
+        // logic tick — the occluded-character position array (16 Vector4s), its count, the focused
+        // entity position and the zoom distance multiplier — and two more (count, multiplier) per
+        // tick while the see-through test is disabled. Global property values only matter at draw
+        // time, so rewriting an unchanged value is a no-op for rendering. CameraManager is the only
+        // writer of these four properties in the game, so a last-sent cache can only disagree with
+        // the GPU state after a write the guards did not bookkeep — the pass-through while the
+        // option is off, and OnDestroy's direct 0/1 reset, which runs on any destroyed duplicate,
+        // not just the ticking one. The pass-through branch drops its cache entry, the prefix below
+        // drops the cache whenever a different manager instance ticks, and a postfix on OnDestroy
+        // drops it after every reset, so whichever instance writes next always re-sends. Idle play —
+        // stationary player, settled transparency ramps, fixed zoom, between-room states with no
+        // controlling entity — then stops issuing the native setter calls and the 256-byte array
+        // copy per tick; moving play still sends everything, exactly as before.
+        private static readonly MethodInfo _guardInt = AccessTools.Method(typeof(NativeOcclusionShaderIdlePerf), nameof(GuardInt), new[] { typeof(int), typeof(int) });
+        private static readonly MethodInfo _guardFloat = AccessTools.Method(typeof(NativeOcclusionShaderIdlePerf), nameof(GuardFloat), new[] { typeof(int), typeof(float) });
+        private static readonly MethodInfo _guardVector = AccessTools.Method(typeof(NativeOcclusionShaderIdlePerf), nameof(GuardVector), new[] { typeof(int), typeof(Vector4) });
+        private static readonly MethodInfo _guardArray = AccessTools.Method(typeof(NativeOcclusionShaderIdlePerf), nameof(GuardVectorArray), new[] { typeof(int), typeof(Vector4[]) });
+
+        private static CameraManager _owner;
+        private static bool _hasInt;
+        private static int _sentIntId = int.MinValue;
+        private static int _sentInt;
+        private static bool _hasFloat;
+        private static int _sentFloatId = int.MinValue;
+        private static float _sentFloat;
+        private static bool _hasVector;
+        private static int _sentVectorId = int.MinValue;
+        private static Vector4 _sentVector;
+        private static bool _hasArray;
+        private static int _sentArrayId = int.MinValue;
+        private static readonly Vector4[] _sentArray = new Vector4[16];
+
+        private static MethodBase _target;
+        private static bool _warned;
+
+        private static bool Prepare()
+        {
+            _target = NativePerfPatch.Find(typeof(CameraManager), "LogicUpdateOcclusionTest", new[] { typeof(float) }, ref _warned);
+            return _target != null;
+        }
+
+        private static MethodBase TargetMethod() => _target;
+
+        private static void Prefix(CameraManager __instance)
+        {
+            if (ReferenceEquals(_owner, __instance)) return;
+            _owner = __instance;
+            _hasInt = false;
+            _hasFloat = false;
+            _hasVector = false;
+            _hasArray = false;
+        }
+
+        private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+        {
+            var code = new List<CodeInstruction>(instructions);
+            var setInt = AccessTools.Method(typeof(Shader), nameof(Shader.SetGlobalInt), new[] { typeof(int), typeof(int) });
+            var setFloat = AccessTools.Method(typeof(Shader), nameof(Shader.SetGlobalFloat), new[] { typeof(int), typeof(float) });
+            var setVector = AccessTools.Method(typeof(Shader), nameof(Shader.SetGlobalVector), new[] { typeof(int), typeof(Vector4) });
+            var setArray = AccessTools.Method(typeof(Shader), nameof(Shader.SetGlobalVectorArray), new[] { typeof(int), typeof(Vector4[]) });
+            int ints = 0, floats = 0, vectors = 0, arrays = 0;
+            for (int i = 0; i < code.Count; i++)
+            {
+                if (code[i].Calls(setInt)) ints++;
+                else if (code[i].Calls(setFloat)) floats++;
+                else if (code[i].Calls(setVector)) vectors++;
+                else if (code[i].Calls(setArray)) arrays++;
+            }
+            if (ints != 2 || floats != 2 || vectors != 1 || arrays != 1)
+            {
+                NativePerfPatch.Warn(ref _warned, "camera occlusion shader", "native global-property callsites changed");
+                return code;
+            }
+            for (int i = 0; i < code.Count; i++)
+            {
+                if (code[i].Calls(setInt)) code[i].operand = _guardInt;
+                else if (code[i].Calls(setFloat)) code[i].operand = _guardFloat;
+                else if (code[i].Calls(setVector)) code[i].operand = _guardVector;
+                else if (code[i].Calls(setArray)) code[i].operand = _guardArray;
+            }
+            return code;
+        }
+
+        // Each guard keeps the exact signature of the native setter it replaces, so the call
+        // sites' stack shape is untouched. An option turned off passes straight through and,
+        // like GuardVectorArray below, drops its own cache entry: a value written while the
+        // option is off reaches the GPU without updating the cache, so the first guarded call
+        // after the option comes back must re-send instead of trusting a stale match.
+        internal static void GuardInt(int id, int value)
+        {
+            if (!NativePerfOptions.OcclusionIdle)
+            {
+                _hasInt = false;
+                Shader.SetGlobalInt(id, value);
+                return;
+            }
+            if (_hasInt && _sentIntId == id && _sentInt == value) return;
+            _hasInt = true;
+            _sentIntId = id;
+            _sentInt = value;
+            Shader.SetGlobalInt(id, value);
+        }
+
+        internal static void GuardFloat(int id, float value)
+        {
+            if (!NativePerfOptions.OcclusionIdle)
+            {
+                _hasFloat = false;
+                Shader.SetGlobalFloat(id, value);
+                return;
+            }
+            if (_hasFloat && _sentFloatId == id && _sentFloat == value) return;
+            _hasFloat = true;
+            _sentFloatId = id;
+            _sentFloat = value;
+            Shader.SetGlobalFloat(id, value);
+        }
+
+        internal static void GuardVector(int id, Vector4 value)
+        {
+            if (!NativePerfOptions.OcclusionIdle)
+            {
+                _hasVector = false;
+                Shader.SetGlobalVector(id, value);
+                return;
+            }
+            // Unity's Vector4 operator== treats a summed squared difference below kEpsilon as equal,
+            // which would silently swallow sub-1e-5 drift and leave a slightly stale value on the
+            // GPU. Compare per component so only a bit-exact repeat is skipped.
+            if (_hasVector && _sentVectorId == id
+                && value.x == _sentVector.x && value.y == _sentVector.y
+                && value.z == _sentVector.z && value.w == _sentVector.w) return;
+            _hasVector = true;
+            _sentVectorId = id;
+            _sentVector = value;
+            Shader.SetGlobalVector(id, value);
+        }
+
+        internal static void GuardVectorArray(int id, Vector4[] values)
+        {
+            // Null or a differently sized array never happens with the native 16-slot buffer;
+            // pass them through and stop trusting the cache rather than compare against it.
+            if (!NativePerfOptions.OcclusionIdle || values == null || values.Length != _sentArray.Length)
+            {
+                _hasArray = false;
+                Shader.SetGlobalVectorArray(id, values);
+                return;
+            }
+            if (_hasArray && _sentArrayId == id && SameArray(values)) return;
+            _hasArray = true;
+            _sentArrayId = id;
+            Array.Copy(values, _sentArray, values.Length);
+            Shader.SetGlobalVectorArray(id, values);
+        }
+
+        private static bool SameArray(Vector4[] values)
+        {
+            // Per-component comparison for the same reason as GuardVector: Unity's operator==
+            // approximates, so an exact repeat is the only safe skip.
+            for (int i = 0; i < values.Length; i++)
+            {
+                if (values[i].x != _sentArray[i].x || values[i].y != _sentArray[i].y
+                    || values[i].z != _sentArray[i].z || values[i].w != _sentArray[i].w) return false;
+            }
+            return true;
+        }
+
+        // CameraManager.OnDestroy resets the count and multiplier directly, outside the guards, and
+        // runs for any destroyed manager — including duplicates that never ticked. After any such
+        // write the cache no longer matches the GPU state, so drop it entirely; the next guard call
+        // from any instance re-sends.
+        internal static void InvalidateCache()
+        {
+            _owner = null;
+            _hasInt = false;
+            _hasFloat = false;
+            _hasVector = false;
+            _hasArray = false;
+        }
+    }
+
+    [HarmonyPatch]
+    internal static class NativeOcclusionShaderIdlePerfReset
+    {
+        private static MethodBase _target;
+        private static bool _warned;
+
+        private static bool Prepare()
+        {
+            _target = NativePerfPatch.Find(typeof(CameraManager), "OnDestroy", ref _warned);
+            return _target != null;
+        }
+
+        private static MethodBase TargetMethod() => _target;
+
+        private static void Postfix()
+        {
+            NativeOcclusionShaderIdlePerf.InvalidateCache();
         }
     }
 

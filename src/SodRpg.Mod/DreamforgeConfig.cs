@@ -135,6 +135,9 @@ namespace SodRpg.Mod
         [LabelText("Reuse the unchanged camera-angle rotation / 変わっていないカメラ角度回転を使い回す")]
         public bool nativeCameraZoomRotation = true;
 
+        [LabelText("Skip unchanged occlusion see-through shader uploads / 変わっていない遮蔽透過のシェーダー値の再送を省く")]
+        public bool nativeOcclusionIdle = true;
+
         [LabelText("Recompute character model bounds only when read / キャラ表示モデルの範囲を読まれるときだけ計算する")]
         public bool nativeCharacterModelDisplayBounds = true;
 
