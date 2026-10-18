@@ -583,7 +583,9 @@ namespace SodRpg.Core.Game
                 p.Run = run;
             }
             ReadInterruptedRelics(b, p, notes);
-            // 保管庫以外の鞄・預かり品も読み終えてから、書き出しと同じ所持判定で初期印を戻す。
+            // ContainsRelicUid が参照する保管庫・遺失物・分解待ち・協力取引の預かり品・
+            // Run（鞄・道標の保留品）・中断回収品をすべて読んでから初期印を戻す。
+            // 所持先を追加するときも、この判定より前に読み込みを終える。書き出し側も同じ所持判定を使う。
             if (b.TryGet("starterUids", out object so2) && so2 is List<object> sus)
                 foreach (var u in sus)
                     if (u is string us && p.ContainsRelicUid(us)) p.StarterUids.Add(us);
