@@ -1,5 +1,5 @@
-[b]Minor adjustments to reduce processing load; gameplay and visuals are unchanged.[/b]
-[b]動作を軽くするための細かな調整を行いました。ゲームの動きや見た目は変わりません。[/b]
+[b]Vesper's training now restores max health shaved by "Fish Scales", co-op guests recover from unusable skills in more cases, and several processes run lighter.[/b]
+[b]「魚の鱗」で削られた最大HPがヴェスパーの鍛錬で戻るようにし、協力プレイでスキルが使えなくなる問題への対策を広げ、動作も軽くしました。[/b]
 
 [h1]Dreamforge RPG[/h1]
 Turns every run into part of a long RPG journey: relics you keep, a "secure or delve" choice at every zone, a star map per Traveler, a forge and long-term goals. Co-op ready.
