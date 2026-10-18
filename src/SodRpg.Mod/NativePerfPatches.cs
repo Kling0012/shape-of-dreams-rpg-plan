@@ -19,6 +19,7 @@ namespace SodRpg.Mod
             NativePerfOptions.AggroPropagation = config.nativeAggroPropagation;
             NativePerfOptions.OwnershipSpawnCounts = config.nativeOwnershipSpawnCounts;
             NativePerfOptions.ProcCoalesce = config.nativeProcCoalesce;
+            NativePerfOptions.AccessoryOffset = config.nativeAccessoryOffsetCache;
         }
     }
 
@@ -30,6 +31,7 @@ namespace SodRpg.Mod
         internal static bool AggroPropagation = true;
         internal static bool OwnershipSpawnCounts = true;
         internal static bool ProcCoalesce = true;
+        internal static bool AccessoryOffset = true;
     }
 
     internal static class NativePerfPatch
@@ -357,6 +359,90 @@ namespace SodRpg.Mod
                 }
             }
             agent.obstacleAvoidanceType = value;
+        }
+    }
+
+    [HarmonyPatch]
+    internal static class NativeAccessoryOffsetPerf
+    {
+        private sealed class OffsetCache
+        {
+            internal string Name;
+            internal List<Accessory_AttachPoint.AttachOffset> Offsets;
+            internal int Count = -1;
+            internal Accessory_AttachPoint.AttachOffset Result;
+        }
+
+        private static readonly ConditionalWeakTable<Accessory_AttachPoint, OffsetCache> Caches =
+            new ConditionalWeakTable<Accessory_AttachPoint, OffsetCache>();
+        private static readonly ConditionalWeakTable<Accessory_AttachPoint, OffsetCache>.CreateValueCallback CreateCache =
+            _ => new OffsetCache();
+        private static MethodBase _target;
+        private static bool _disabled;
+        private static bool _warned;
+        private static bool _ranOriginal;
+
+        private static bool Prepare()
+        {
+            try
+            {
+                _target = AccessTools.DeclaredMethod(typeof(Accessory_AttachPoint), nameof(Accessory_AttachPoint.FindOffset),
+                    new[] { typeof(string) });
+                if (_target != null && _target.GetMethodBody() != null) return true;
+                NativePerfPatch.Warn(ref _warned, "Accessory_AttachPoint.FindOffset", "native method unavailable");
+            }
+            catch (Exception ex) { NativePerfPatch.Warn(ref _warned, "Accessory_AttachPoint.FindOffset", ex.Message); }
+            return false;
+        }
+
+        private static MethodBase TargetMethod() => _target;
+
+        private static bool Prefix(Accessory_AttachPoint __instance, string entityOrSkinName,
+            ref Accessory_AttachPoint.AttachOffset __result)
+        {
+            _ranOriginal = false;
+            if (_disabled || !NativePerfOptions.AccessoryOffset) return true;
+            try
+            {
+                // LateUpdate passes the same cached model-name string every frame and the game never
+                // mutates customOffsets at runtime, so a hit returns the identical lookup result.
+                if (Caches.TryGetValue(__instance, out var cache)
+                    && ReferenceEquals(cache.Name, entityOrSkinName)
+                    && ReferenceEquals(cache.Offsets, __instance.customOffsets)
+                    && cache.Count == __instance.customOffsets.Count)
+                {
+                    __result = cache.Result;
+                    return false;
+                }
+            }
+            catch (Exception ex)
+            {
+                _disabled = true;
+                NativePerfPatch.Warn(ref _warned, "accessory offset", ex.Message);
+                return true;
+            }
+            _ranOriginal = true;
+            return true;
+        }
+
+        private static void Postfix(Accessory_AttachPoint __instance, string entityOrSkinName,
+            Accessory_AttachPoint.AttachOffset __result)
+        {
+            if (_disabled || !_ranOriginal) return;
+            _ranOriginal = false;
+            try
+            {
+                OffsetCache cache = Caches.GetValue(__instance, CreateCache);
+                cache.Name = entityOrSkinName;
+                cache.Offsets = __instance.customOffsets;
+                cache.Count = __instance.customOffsets.Count;
+                cache.Result = __result;
+            }
+            catch (Exception ex)
+            {
+                _disabled = true;
+                NativePerfPatch.Warn(ref _warned, "accessory offset", ex.Message);
+            }
         }
     }
 }
