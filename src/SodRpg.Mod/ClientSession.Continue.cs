@@ -4,7 +4,6 @@ using System.IO;
 using HarmonyLib;
 using Mirror;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using SodRpg.Core;
 using SodRpg.Core.Game;
 using UnityEngine;
@@ -87,14 +86,19 @@ namespace SodRpg.Mod
             if (!NetworkServer.active || session == null || session._pendingContinueId == null) return;
             try
             {
-                JObject file;
+                // The file embeds the whole native game state plus this MOD's own snapshot strings,
+                // yet only two short keys are evidence here. Stream the tokens instead of loading
+                // JObject DOMs: this callback runs on the main thread after every save batch.
+                string payload;
                 using (var text = File.OpenText(DewSave.profileContinuePath))
-                using (var json = new JsonTextReader(text))
-                    file = JObject.Load(json);
-                string payload = (string)file["root"]?["continueData"];
-                var actorData = JObject.Parse(payload)["serverActorData"];
-                string id = (string)actorData?[ContinueIdKey];
-                string runId = (string)actorData?[ContinueRunKey];
+                using (var json = ContinueJsonReader(text))
+                    payload = ReadContinuePayload(json);
+                if (payload == null)
+                    throw new InvalidOperationException("The native file has no continue payload to confirm.");
+                string id, runId;
+                using (var payloadText = new StringReader(payload))
+                using (var json = ContinueJsonReader(payloadText))
+                    ReadContinueCheckpointKeys(json, out id, out runId);
                 if (!session.ConfirmContinueCheckpoint(runId, id))
                     throw new InvalidOperationException("The native file has no matching MOD checkpoint.");
                 if (session._confirmedContinueId != id)
@@ -120,6 +124,62 @@ namespace SodRpg.Mod
             catch (Exception ex)
             {
                 session.WarnUnconfirmedContinue(ex.Message);
+            }
+        }
+
+        // A nested JSON document read as raw tokens: values keep the exact text the file holds.
+        private static JsonTextReader ContinueJsonReader(TextReader text) => new JsonTextReader(text)
+        {
+            DateParseHandling = DateParseHandling.None,
+        };
+
+        // File shape (QuickSave): { "root": { "continueData": "<serialized GameData>" } }.
+        // Returns null when the shape is absent; the caller treats that as an unconfirmed save.
+        private static string ReadContinuePayload(JsonTextReader json)
+        {
+            while (json.Read())
+            {
+                if (json.TokenType != JsonToken.PropertyName) continue;
+                if ((string)json.Value != "root") { json.Skip(); continue; }
+                if (!json.Read() || json.TokenType != JsonToken.StartObject) return null;
+                while (json.Read())
+                {
+                    if (json.TokenType == JsonToken.EndObject) return null;
+                    if (json.TokenType != JsonToken.PropertyName) continue;
+                    if ((string)json.Value != "continueData") { json.Skip(); continue; }
+                    json.Read();
+                    return json.TokenType == JsonToken.String ? (string)json.Value : null;
+                }
+                return null;
+            }
+            return null;
+        }
+
+        // Reads only the two checkpoint keys out of GameData.serverActorData and skips every other
+        // value — including this MOD's large Continue.Profile/Trades snapshot strings — without
+        // materializing them. Returns nulls when the keys are absent (same as missing JObject entries).
+        private static void ReadContinueCheckpointKeys(JsonTextReader json, out string id, out string runId)
+        {
+            id = runId = null;
+            while (json.Read())
+            {
+                if (json.TokenType != JsonToken.PropertyName) continue;
+                if ((string)json.Value != "serverActorData") { json.Skip(); continue; }
+                if (!json.Read() || json.TokenType != JsonToken.StartObject) return;
+                while (json.Read())
+                {
+                    if (json.TokenType == JsonToken.EndObject) return;
+                    if (json.TokenType != JsonToken.PropertyName) continue;
+                    string key = (string)json.Value;
+                    bool idKey = key == ContinueIdKey, runKey = key == ContinueRunKey;
+                    if (!idKey && !runKey) { json.Skip(); continue; }
+                    if (!json.Read() || (json.TokenType != JsonToken.String && json.TokenType != JsonToken.Null))
+                        throw new InvalidOperationException("The native continue checkpoint entry is malformed.");
+                    if (idKey) id = (string)json.Value;
+                    else runId = (string)json.Value;
+                    if (id != null && runId != null) return;
+                }
+                return;
             }
         }
 
