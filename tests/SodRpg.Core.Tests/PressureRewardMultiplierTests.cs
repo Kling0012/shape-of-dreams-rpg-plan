@@ -110,7 +110,11 @@ namespace SodRpg.Core.Tests
         [InlineData(MonsterTier.Boss, 1.35)]
         public void Expected_shards_scale_by_the_multiplier(MonsterTier tier, double multiplier)
         {
-            // 必ず落ちる段（ミニボス・ボス）は遺物の抽選も走って重いので、少ない回数で足りる（標準誤差は許容幅の1/10未満）。
+            // 必ず落ちる段（ミニボス・ボス）は遺物の抽選も走って重いので、少ない回数で足りる。
+            // n=20000、seed=5/6。平均の期待値は MiniBoss 7.5/11.25、Boss 25/33.75。
+            // 倍率の標準誤差（独立した平均の比をデルタ法で近似）は理論値 0.003432/0.001711、
+            // 同条件の抽選で得た標本分散からの推定値は 0.003436/0.001717（2026-10-18）。
+            // いずれも許容幅 0.06/0.054 の1/10未満。量・倍率・回数を変えるときは見直す。
             int trials = tier >= MonsterTier.MiniBoss ? 20000 : 200000;
             double baseline = AverageShards(tier, 1, trials, 5);
             double scaled = AverageShards(tier, multiplier, trials, 6);
