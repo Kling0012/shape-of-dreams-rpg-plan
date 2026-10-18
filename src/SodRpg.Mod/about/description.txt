@@ -6,6 +6,8 @@ Turns every run into part of a long RPG journey: relics you keep, a "secure or d
 すべての遠征を長いRPGの旅の一部にするMODです。持ち帰れる装備「遺物」、ゾーンごとの「確保するか、深く潜るか」の決断、旅人ごとの星図、鍛冶、長く遊ぶための目標を加えます。協力プレイにも対応しています。
 
 [h2]Bug reports / 不具合の報告[/h2]
+This mod is made entirely by AI and has not been play-tested. Reports from players are very welcome.
+このMODは、すべてAIが作成しています。テストプレイは行っていません。プレイヤーの皆さんからの積極的な報告を歓迎します。
 Bug reports and requests / 不具合の報告と要望: [url=https://github.com/Kling0012/dreamforge-rpg/issues]github.com/Kling0012/dreamforge-rpg/issues[/url]
 Patch notes / パッチノート: [url=https://github.com/Kling0012/dreamforge-rpg/releases]github.com/Kling0012/dreamforge-rpg/releases[/url]
 
