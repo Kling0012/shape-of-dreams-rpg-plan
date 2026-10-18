@@ -15,6 +15,7 @@ namespace SodRpg.Mod
         internal static bool CameraZoomRotation = true;
         internal static bool CastIndicatorCircle = true;
         internal static bool CharacterModelDisplayBounds = true;
+        internal static bool CursorIdle = true;
     }
 
     internal static class NativePerfPatch
