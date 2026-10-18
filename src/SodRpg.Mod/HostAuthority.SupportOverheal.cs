@@ -67,6 +67,7 @@ namespace SodRpg.Mod
         private readonly Dictionary<Hero, SupportOverhealWard> _supportOverhealWards = new Dictionary<Hero, SupportOverhealWard>();
         private readonly List<Hero> _supportOverhealScratch = new List<Hero>();
         private int _supportOverhealDepth;
+        private bool _supportOverhealActorWarned;
 
         private void DispatchSupportHealOwned(HeroRuntime owner, Entity target, HealData heal)
         {
@@ -107,6 +108,14 @@ namespace SodRpg.Mod
             catch (Exception ex) { Log.Warn("Host: support overheal skipped: " + ex.Message); }
         }
 
+        // One line per host session keeps a skipped shield traceable without spamming the log.
+        private void WarnSupportActorMissing()
+        {
+            if (_supportOverhealActorWarned) return;
+            _supportOverhealActorWarned = true;
+            Log.Warn("Host: support overheal skipped; the server support actor is unavailable.");
+        }
+
         private void ApplyOverhealProtection(EventInfoHeal info, Hero healer)
         {
             if (!(info.target is Hero recipient) || !Alive(recipient)
@@ -128,7 +137,7 @@ namespace SodRpg.Mod
                 // Granting from the recipient ran its shield power on top of the 10% max-HP cap.
                 // Grant from the server actor like the support conversion, so the cap holds.
                 var giver = _am != null ? _am.serverActor : null;
-                if (giver == null) return;
+                if (giver == null) { WarnSupportActorMissing(); return; }
                 var ward = giver.GiveShield(recipient, legacy, PowerRuntime.OverflowingLifeDuration);
                 // The isolated grant also skips the recipient's own give-shield event, so the
                 // shield-granted record is credited here like every other server-actor ward.
@@ -143,6 +152,7 @@ namespace SodRpg.Mod
         private bool TrySupportOverheal(Hero healer, Hero recipient, float discarded, float legacy)
         {
             var root = _am != null ? _am.serverActor : null;
+            if (root == null) WarnSupportActorMissing();
             if (root == null || !(recipient.maxHealth > 0f) || float.IsInfinity(recipient.maxHealth)) return false;
             float now = Time.time;
             _supportOverhealWards.TryGetValue(recipient, out var ward);
