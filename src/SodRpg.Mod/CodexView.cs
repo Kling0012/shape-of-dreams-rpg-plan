@@ -60,7 +60,7 @@ namespace SodRpg.Mod
         }
 
         /// <summary>図鑑を描く。戻る操作が押されたら true。</summary>
-        public bool Draw(Profile p, UiStyles st)
+        public bool Draw(Profile p, UiStyles st, ImeInput ime)
         {
             Sync(p);
             EnsureStyles(st);
@@ -101,7 +101,9 @@ namespace SodRpg.Mod
             }
             float sx = x + 3 * (fw + 4f) + 6f, sw = Mathf.Max(120f, w - (sx - x) - 220f);
             var sr = new Rect(sx, y + 1f, sw, 26f);
+            ime.BeginField("DreamforgeCodexSearch");
             string q = GUI.TextField(sr, _search, 40, _searchStyle);
+            ime.Track("DreamforgeCodexSearch");
             if (q != _search)
             {
                 _search = q;
