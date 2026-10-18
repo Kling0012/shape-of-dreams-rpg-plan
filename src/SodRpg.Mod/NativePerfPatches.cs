@@ -19,6 +19,7 @@ namespace SodRpg.Mod
             NativePerfOptions.AggroPropagation = config.nativeAggroPropagation;
             NativePerfOptions.OwnershipSpawnCounts = config.nativeOwnershipSpawnCounts;
             NativePerfOptions.ProcCoalesce = config.nativeProcCoalesce;
+            NativePerfOptions.AttachFaceIdle = config.nativeAttachFaceIdle;
             NativePerfOptions.EmbracePosition = config.nativeEmbracePositionReuse;
             NativePerfOptions.AccessoryOffset = config.nativeAccessoryOffsetCache;
             NativePerfOptions.CooldownIdleMultiplier = config.nativeCooldownIdleMultiplier;
@@ -39,6 +40,7 @@ namespace SodRpg.Mod
         internal static bool AggroPropagation = true;
         internal static bool OwnershipSpawnCounts = true;
         internal static bool ProcCoalesce = true;
+        internal static bool AttachFaceIdle = true;
         internal static bool EmbracePosition = true;
         internal static bool AccessoryOffset = true;
         internal static bool CooldownIdleMultiplier = true;
@@ -386,6 +388,188 @@ namespace SodRpg.Mod
                 }
             }
             agent.obstacleAvoidanceType = value;
+        }
+    }
+
+    [HarmonyPatch]
+    internal static class NativeAttachFaceIdlePerf
+    {
+        // AttachToFace queries the shared baked-mesh cache every frame although a bake
+        // happens at most once per Dew.BakeMeshInterval. Between bakes the query can only
+        // find the same fresh entry, avoid re-baking and report "not new", so the caller
+        // dead-reckons exactly as it does without the query. The native gate itself is
+        // Time.unscaledTime-based (decompiled Dew.GetBakedMeshOptimized re-bakes only when
+        // Time.unscaledTime - bakeUnscaledTime > BakeMeshInterval and reports isNew only
+        // when bakeUnscaledTime == Time.unscaledTime), so this tracker records and compares
+        // the same clock and a non-default timeScale cannot desynchronize the two.
+        //
+        // Cache-lifetime audit (2026-10-18, decompiled Dew.Core Dew.cs): nothing on the
+        // game side clears the skin->bake table while an entry is still fresh. Its only
+        // removal paths are the maintenance sweep and the re-bake branch inside
+        // GetBakedMeshOptimized plus BakedMeshHandle.Return, and each of them removes an
+        // entry only after Time.unscaledTime - bakeUnscaledTime > BakeMeshInterval —
+        // exactly the entries this gate already hands back to the original. Room loads
+        // (OnRoomLoadedBakeMesh) destroy only the idle-Mesh reuse pool, and the one full
+        // reset (OnInitBakeMesh, RuntimeInitializeOnLoadMethod) runs at player startup,
+        // before any play-mode bake can be recorded, so there is no Clear-like method to
+        // mirror with a LastNewBake reset. Residual assumption: a future game update that
+        // adds a mid-session clear (or a Unity instance-ID reuse by a recreated renderer)
+        // could mask one re-bake for at most BakeMeshInterval — a brief accessory follow
+        // lag that the next bake heals; the nativeAttachFaceIdle option turns the skip off.
+        private const int PruneThreshold = 64;
+        private static readonly Dictionary<int, float> LastNewBake = new Dictionary<int, float>();
+        // Reused sweep scratch: RecordNewBake fires on every new bake (several per frame
+        // in crowded scenes), so the sweep itself must not allocate (principle II).
+        private static readonly List<int> StaleScratch = new List<int>();
+        private static float _lastPruneTime;
+        private static MethodInfo _target;
+        private static bool _warned;
+
+        private static bool Prepare()
+        {
+            try
+            {
+                _target = AccessTools.DeclaredMethod(typeof(AttachToFace), "TryGetWorldPositionAndRotation");
+                if (_target == null || _target.IsStatic || _target.ReturnType != typeof(bool))
+                    throw new MissingMethodException("AttachToFace.TryGetWorldPositionAndRotation");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                NativePerfPatch.Warn(ref _warned, "attach face idle", ex.Message);
+                return false;
+            }
+        }
+
+        private static MethodInfo TargetMethod() => _target;
+
+        internal static void RecordNewBake(SkinnedMeshRenderer skin)
+        {
+            float now = Time.unscaledTime;
+            // Prune entries that can no longer gate a lookup instead of clearing the table:
+            // a full clear would also erase fresh records, so in scenes with many baking
+            // renderers (many enemies, many FxMeshTrail) the skip would stop working
+            // exactly where it matters most.
+            if (LastNewBake.Count > PruneThreshold) PruneStale(now);
+            LastNewBake[skin.GetInstanceID()] = now;
+        }
+
+        // Entries older than the bake interval never gate a lookup (the Prefix hands those
+        // back to the original), so removing them cannot change behavior; it only bounds
+        // the table that destroyed skins would otherwise grow forever. The sweep scans at
+        // most once per Dew.BakeMeshInterval: the native gate only re-bakes after that
+        // interval, so the stale set cannot change faster, and RecordNewBake calls this
+        // on every bake — a per-call full scan would cost more than the skip saves in
+        // exactly the crowded scenes the skip targets.
+        internal static void PruneStale(float now)
+        {
+            if (now - _lastPruneTime <= Dew.BakeMeshInterval) return;
+            _lastPruneTime = now;
+            foreach (KeyValuePair<int, float> pair in LastNewBake)
+                if (now - pair.Value > Dew.BakeMeshInterval)
+                    StaleScratch.Add(pair.Key);
+            for (int i = 0; i < StaleScratch.Count; i++)
+                LastNewBake.Remove(StaleScratch[i]);
+            StaleScratch.Clear();
+        }
+
+        // Skip only when the newest bake is from an earlier frame and still fresh: the
+        // native lookup cannot re-bake (that needs an older entry) and its dictionary and
+        // pool churn has no visible effect. On the bake frame itself (baked >= now) and
+        // once the entry ages past the interval the original must run again.
+        internal static bool ShouldSkipLookup(float baked, float now, float interval)
+            => baked < now && now - baked <= interval;
+
+        private static bool Prefix(AttachToFace __instance, ref bool __result)
+        {
+            if (!NativePerfOptions.AttachFaceIdle) return true;
+            try
+            {
+                SkinnedMeshRenderer skin = __instance.targetRenderer;
+                if (skin == null || __instance.vertexIndex0 < 0) return true;
+                if (!LastNewBake.TryGetValue(skin.GetInstanceID(), out float baked)) return true;
+                if (!ShouldSkipLookup(baked, Time.unscaledTime, Dew.BakeMeshInterval))
+                    return true;
+                __result = false;
+                return false;
+            }
+            catch (Exception ex)
+            {
+                NativePerfPatch.Warn(ref _warned, "attach face idle", ex.Message);
+            }
+            return true;
+        }
+    }
+
+    [HarmonyPatch]
+    internal static class NativeAttachFaceBakeRecord
+    {
+        private static MethodBase _target;
+        private static bool _warned;
+
+        private static bool Prepare()
+        {
+            try
+            {
+                _target = AccessTools.DeclaredMethod(typeof(Dew), nameof(Dew.GetBakedMeshOptimized));
+                if (_target == null || !_target.IsStatic)
+                    throw new MissingMethodException("Dew.GetBakedMeshOptimized");
+                // The Postfix below binds by argument name. Decompiled base signature
+                // (2026-10-18, Dew.Core Dew.GetBakedMeshOptimized): `static void
+                // GetBakedMeshOptimized(SkinnedMeshRenderer skin, out Mesh mesh, out
+                // BakedMeshHandle handle, out bool isNew)` — skin is by value, isNew is
+                // an out argument, which Harmony's 2.x parameter injection reads into
+                // the by-value `bool isNew` below (binding verified on the game's
+                // Harmony generation). If a game update renames or retypes either
+                // binding parameter, Harmony throws while applying the patch (outside
+                // this fail-soft Prepare), so require them here and give up softly
+                // instead. Byref declarations are matched on their element type because
+                // isNew is out today.
+                if (!HasInjectableParameter(typeof(SkinnedMeshRenderer), "skin")
+                    || !HasInjectableParameter(typeof(bool), "isNew"))
+                {
+                    NativePerfPatch.Warn(ref _warned, "attach face bake record",
+                        "native GetBakedMeshOptimized parameters renamed or retyped");
+                    return false;
+                }
+                return true;
+            }
+            catch (Exception ex)
+            {
+                NativePerfPatch.Warn(ref _warned, "attach face bake record", ex.Message);
+                return false;
+            }
+        }
+
+        private static bool HasInjectableParameter(Type type, string name)
+        {
+            foreach (ParameterInfo parameter in _target.GetParameters())
+            {
+                Type parameterType = parameter.ParameterType;
+                if (parameterType.IsByRef) parameterType = parameterType.GetElementType();
+                if (parameter.Name == name && parameterType == type) return true;
+            }
+            return false;
+        }
+
+        private static MethodBase TargetMethod() => _target;
+
+        // Every play-mode bake goes through this method, including bakes triggered by
+        // other users of the same renderer, so the tracker above never misses a new mesh.
+        private static void Postfix(SkinnedMeshRenderer skin, bool isNew)
+        {
+            try
+            {
+                if (isNew && NativePerfOptions.AttachFaceIdle)
+                    NativeAttachFaceIdlePerf.RecordNewBake(skin);
+            }
+            catch (Exception ex)
+            {
+                // A missing record only widens the safe side (the Prefix then hands the
+                // lookup back to the original), so drop the tracker instead of letting a
+                // bookkeeping failure propagate into the game's bake callers.
+                NativePerfPatch.Warn(ref _warned, "attach face bake record", ex.Message);
+            }
         }
     }
 
