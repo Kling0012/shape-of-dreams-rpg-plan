@@ -1,0 +1,4 @@
+### 不具合の修正 / Bug fixes
+- 「傑作の連剣」「決意と慈悲」「双発の火薬庫」「風傷の殺陣」の連携が、同時に装着できない Identity 記憶2種を条件にしていて、発動できなかった問題を直しました。今は、その旅人の Identity 記憶1種と移動の記憶で発動します。 / Fixed the links on Masterwork Flurry, Resolve and Mercy, Twin-Shot Powder Keg and Wind-Scar Melee requiring two Identity memories that cannot be equipped together. They now trigger with one Identity memory and that traveler's Movement memory.
+- 受け身の Identity 記憶を「使う」ことを条件にしていて、発動できなかった固有品10件の連携を直しました。今は、装着しているあいだ攻撃力と魔力が上がります。 / Fixed ten unique links that required casting passive Identity memories and so could never trigger. They now raise attack damage and ability power while equipped.
+- **協力プレイでは参加者全員を更新してください。** 装備の内容が変わるため、古い版と混ぜると内容の不一致の警告が出ます。 / **Everyone in co-op should update.** Equipment content changes, so mixing with older versions shows a content mismatch warning.

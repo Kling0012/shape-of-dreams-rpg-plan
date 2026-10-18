@@ -947,7 +947,7 @@ namespace SodRpg.Core.Game
         internal const decimal Unique_unique_c_compass_clock_Link = 30m;
         internal const int Unique_unique_c_convergence_comet_Power0 = 5;
         internal const int Unique_unique_c_convergence_comet_Power1 = 18;
-        internal const decimal Unique_unique_c_convergence_comet_Link = 60m;
+        internal const decimal Unique_unique_c_convergence_comet_Link = 30m;
         internal const int Unique_unique_c_cooks_hearthstone_Power0 = 10;
         internal const int Unique_unique_c_cooks_hearthstone_Power1 = 7;
         internal const decimal Unique_unique_c_cooks_hearthstone_Link = 30m;
@@ -984,10 +984,10 @@ namespace SodRpg.Core.Game
         internal const decimal Unique_unique_c_exotic_cataclysm_Link = 50m;
         internal const int Unique_unique_c_exotic_inkstone_Power0 = 28;
         internal const int Unique_unique_c_exotic_inkstone_Power1 = 85;
-        internal const decimal Unique_unique_c_exotic_inkstone_Link = 26m;
+        internal const decimal Unique_unique_c_exotic_inkstone_Link = 16m;
         internal const int Unique_unique_c_flowkill_seal_Power0 = 2;
         internal const int Unique_unique_c_flowkill_seal_Power1 = 6;
-        internal const decimal Unique_unique_c_flowkill_seal_Link = 30m;
+        internal const decimal Unique_unique_c_flowkill_seal_Link = 15m;
         internal const int Unique_unique_c_gleaming_hearth_Power0 = 10;
         internal const int Unique_unique_c_gleaming_hearth_Power1 = 20;
         internal const int Unique_unique_c_gleaming_lamp_Power0 = 8;
@@ -1031,7 +1031,7 @@ namespace SodRpg.Core.Game
         internal const int Unique_unique_c_medley_ring_Power1 = 16;
         internal const int Unique_unique_c_menace_locket_Power0 = 8;
         internal const int Unique_unique_c_menace_locket_Power1 = 14;
-        internal const decimal Unique_unique_c_menace_locket_Link = 36m;
+        internal const decimal Unique_unique_c_menace_locket_Link = 23m;
         internal const int Unique_unique_c_mercy_sanctuary_seal_Power0 = 6;
         internal const int Unique_unique_c_mercy_sanctuary_seal_Power1 = 28;
         internal const decimal Unique_unique_c_mercy_sanctuary_seal_Link = 60m;
@@ -1052,7 +1052,7 @@ namespace SodRpg.Core.Game
         internal const int Unique_unique_c_packfeast_thorn_Power1 = 30;
         internal const int Unique_unique_c_packheart_Power0 = 3;
         internal const int Unique_unique_c_packheart_Power1 = 25;
-        internal const decimal Unique_unique_c_packheart_Link = 30m;
+        internal const decimal Unique_unique_c_packheart_Link = 19m;
         internal const int Unique_unique_c_perfect_stardust_Power0 = 20;
         internal const int Unique_unique_c_perfect_stardust_Power1 = 2;
         internal const decimal Unique_unique_c_perfect_stardust_Link = 34m;
@@ -1079,7 +1079,7 @@ namespace SodRpg.Core.Game
         internal const decimal Unique_unique_c_resolute_stoneheart_Link = 17m;
         internal const int Unique_unique_c_rightofway_feather_Power0 = 4;
         internal const int Unique_unique_c_rightofway_feather_Power1 = 22;
-        internal const decimal Unique_unique_c_rightofway_feather_Link = 30m;
+        internal const decimal Unique_unique_c_rightofway_feather_Link = 15m;
         internal const int Unique_unique_c_sacrifice_brooch_Power0 = 55;
         internal const int Unique_unique_c_sacrifice_brooch_Power1 = 28;
         internal const decimal Unique_unique_c_sacrifice_brooch_Link = 30m;
@@ -1105,7 +1105,7 @@ namespace SodRpg.Core.Game
         internal const int Unique_unique_c_triumph_pin_Power1 = 18;
         internal const int Unique_unique_c_twobeat_sight_Power0 = 1;
         internal const int Unique_unique_c_twobeat_sight_Power1 = 85;
-        internal const decimal Unique_unique_c_twobeat_sight_Link = 34m;
+        internal const decimal Unique_unique_c_twobeat_sight_Link = 21m;
         internal const int Unique_unique_c_umbral_heir_Power0 = 55;
         internal const int Unique_unique_c_umbral_heir_Power1 = 80;
         internal const int Unique_unique_c_unbinding_horn_Power0 = 14;
@@ -1130,7 +1130,7 @@ namespace SodRpg.Core.Game
         internal const decimal Unique_unique_c_whitesun_pin_Link = 36m;
         internal const int Unique_unique_c_windscar_quill_Power0 = 10;
         internal const int Unique_unique_c_windscar_quill_Power1 = 22;
-        internal const decimal Unique_unique_c_windscar_quill_Link = 34m;
+        internal const decimal Unique_unique_c_windscar_quill_Link = 21m;
         internal const int Unique_unique_cantrip_fingers_Power0 = 48;
         internal const int Unique_unique_cantrip_fingers_Power1 = 19;
         internal const int Unique_unique_carnage_mask_Power0 = 3;
@@ -2176,7 +2176,7 @@ namespace SodRpg.Core.Game
         internal const decimal Unique_unique_link3_crimson_cannon_Link = 82m;
         internal const int Unique_unique_link3_dawnless_slash_Power0 = 4;
         internal const int Unique_unique_link3_dawnless_slash_Power1 = 20;
-        internal const decimal Unique_unique_link3_dawnless_slash_Link = 62m;
+        internal const decimal Unique_unique_link3_dawnless_slash_Link = 39m;
         internal const int Unique_unique_link3_frenzied_claws_Power0 = 3;
         internal const int Unique_unique_link3_frenzied_claws_Power1 = 75;
         internal const decimal Unique_unique_link3_frenzied_claws_Link = 78m;
@@ -2416,7 +2416,7 @@ namespace SodRpg.Core.Game
         internal const decimal Unique_unique_link_yubar_nova_end_Link = 33m;
         internal const int Unique_unique_link_yubar_star_echo_Power0 = 140;
         internal const int Unique_unique_link_yubar_star_echo_Power1 = 8;
-        internal const decimal Unique_unique_link_yubar_star_echo_Link = 38m;
+        internal const decimal Unique_unique_link_yubar_star_echo_Link = 19m;
         internal const int Unique_unique_link_yubar_star_traveler_Power0 = 20;
         internal const int Unique_unique_link_yubar_star_traveler_Power1 = 78;
         internal const decimal Unique_unique_link_yubar_star_traveler_Link = 10m;
@@ -3996,7 +3996,7 @@ namespace SodRpg.Core.Game
             "balance:equipment:items:v1:unique:unique.c_compass_clock:link:Attune:milli:30000",
             "balance:equipment:items:v1:unique:unique.c_compass_clock:power:0:DreamOmen:int:18",
             "balance:equipment:items:v1:unique:unique.c_compass_clock:power:1:Overload:int:20",
-            "balance:equipment:items:v1:unique:unique.c_convergence_comet:link:MemoryHaste:milli:60000",
+            "balance:equipment:items:v1:unique:unique.c_convergence_comet:link:Attune:milli:30000",
             "balance:equipment:items:v1:unique:unique.c_convergence_comet:power:0:Medley:int:5",
             "balance:equipment:items:v1:unique:unique.c_convergence_comet:power:1:Overload:int:18",
             "balance:equipment:items:v1:unique:unique.c_cooks_hearthstone:link:Attune:milli:30000",
@@ -4033,10 +4033,10 @@ namespace SodRpg.Core.Game
             "balance:equipment:items:v1:unique:unique.c_exotic_cataclysm:link:MemoryDamage:milli:50000",
             "balance:equipment:items:v1:unique:unique.c_exotic_cataclysm:power:0:AceInHand:int:12",
             "balance:equipment:items:v1:unique:unique.c_exotic_cataclysm:power:1:Radiance:int:100",
-            "balance:equipment:items:v1:unique:unique.c_exotic_inkstone:link:MemorySurge:milli:26000",
+            "balance:equipment:items:v1:unique:unique.c_exotic_inkstone:link:Attune:milli:16000",
             "balance:equipment:items:v1:unique:unique.c_exotic_inkstone:power:0:ElementalHarvest:int:28",
             "balance:equipment:items:v1:unique:unique.c_exotic_inkstone:power:1:Radiance:int:85",
-            "balance:equipment:items:v1:unique:unique.c_flowkill_seal:link:MemoryHaste:milli:30000",
+            "balance:equipment:items:v1:unique:unique.c_flowkill_seal:link:Attune:milli:15000",
             "balance:equipment:items:v1:unique:unique.c_flowkill_seal:power:0:BareHandedPride:int:2",
             "balance:equipment:items:v1:unique:unique.c_flowkill_seal:power:1:Momentum:int:6",
             "balance:equipment:items:v1:unique:unique.c_gleaming_hearth:power:0:GleamingWard:int:10",
@@ -4080,7 +4080,7 @@ namespace SodRpg.Core.Game
             "balance:equipment:items:v1:unique:unique.c_medley_horn:power:1:UltimateSurge:int:20",
             "balance:equipment:items:v1:unique:unique.c_medley_ring:power:0:Medley:int:5",
             "balance:equipment:items:v1:unique:unique.c_medley_ring:power:1:Vigor:int:16",
-            "balance:equipment:items:v1:unique:unique.c_menace_locket:link:MemorySurge:milli:36000",
+            "balance:equipment:items:v1:unique:unique.c_menace_locket:link:Attune:milli:23000",
             "balance:equipment:items:v1:unique:unique.c_menace_locket:power:0:RelayHand:int:8",
             "balance:equipment:items:v1:unique:unique.c_menace_locket:power:1:Apothecary:int:14",
             "balance:equipment:items:v1:unique:unique.c_mercy_sanctuary_seal:link:MemorySurge:milli:60000",
@@ -4101,7 +4101,7 @@ namespace SodRpg.Core.Game
             "balance:equipment:items:v1:unique:unique.c_packfeast_charm:power:1:Frenzy:int:3",
             "balance:equipment:items:v1:unique:unique.c_packfeast_thorn:power:0:PackFeast:int:3",
             "balance:equipment:items:v1:unique:unique.c_packfeast_thorn:power:1:Thorns:int:30",
-            "balance:equipment:items:v1:unique:unique.c_packheart:link:MemorySurge:milli:30000",
+            "balance:equipment:items:v1:unique:unique.c_packheart:link:Attune:milli:19000",
             "balance:equipment:items:v1:unique:unique.c_packheart:power:0:PackFeast:int:3",
             "balance:equipment:items:v1:unique:unique.c_packheart:power:1:SharedWard:int:25",
             "balance:equipment:items:v1:unique:unique.c_perfect_stardust:link:Attune:milli:34000",
@@ -4128,7 +4128,7 @@ namespace SodRpg.Core.Game
             "balance:equipment:items:v1:unique:unique.c_resolute_stoneheart:link:Guard:milli:17000",
             "balance:equipment:items:v1:unique:unique.c_resolute_stoneheart:power:0:ReadyGuard:int:8",
             "balance:equipment:items:v1:unique:unique.c_resolute_stoneheart:power:1:VanguardsOath:int:20",
-            "balance:equipment:items:v1:unique:unique.c_rightofway_feather:link:MemoryHaste:milli:30000",
+            "balance:equipment:items:v1:unique:unique.c_rightofway_feather:link:Attune:milli:15000",
             "balance:equipment:items:v1:unique:unique.c_rightofway_feather:power:0:Medley:int:4",
             "balance:equipment:items:v1:unique:unique.c_rightofway_feather:power:1:Tailwind:int:22",
             "balance:equipment:items:v1:unique:unique.c_sacrifice_brooch:link:Attune:milli:30000",
@@ -4154,7 +4154,7 @@ namespace SodRpg.Core.Game
             "balance:equipment:items:v1:unique:unique.c_triumph_lotus:power:1:SecondWind:int:28",
             "balance:equipment:items:v1:unique:unique.c_triumph_pin:power:0:TriumphSong:int:6",
             "balance:equipment:items:v1:unique:unique.c_triumph_pin:power:1:StarShield:int:18",
-            "balance:equipment:items:v1:unique:unique.c_twobeat_sight:link:MemorySurge:milli:34000",
+            "balance:equipment:items:v1:unique:unique.c_twobeat_sight:link:Attune:milli:21000",
             "balance:equipment:items:v1:unique:unique.c_twobeat_sight:power:0:BareHandedPride:int:1",
             "balance:equipment:items:v1:unique:unique.c_twobeat_sight:power:1:EchoingDodge:int:85",
             "balance:equipment:items:v1:unique:unique.c_umbral_heir:power:0:UmbralHeritage:int:55",
@@ -4179,7 +4179,7 @@ namespace SodRpg.Core.Game
             "balance:equipment:items:v1:unique:unique.c_whitesun_pin:link:Attune:milli:36000",
             "balance:equipment:items:v1:unique:unique.c_whitesun_pin:power:0:CoStar:int:12",
             "balance:equipment:items:v1:unique:unique.c_whitesun_pin:power:1:Radiance:int:80",
-            "balance:equipment:items:v1:unique:unique.c_windscar_quill:link:MemorySurge:milli:34000",
+            "balance:equipment:items:v1:unique:unique.c_windscar_quill:link:Attune:milli:21000",
             "balance:equipment:items:v1:unique:unique.c_windscar_quill:power:0:AceInHand:int:10",
             "balance:equipment:items:v1:unique:unique.c_windscar_quill:power:1:Sprint:int:22",
             "balance:equipment:items:v1:unique:unique.cantrip_fingers:power:0:Ember:int:48",
@@ -5225,7 +5225,7 @@ namespace SodRpg.Core.Game
             "balance:equipment:items:v1:unique:unique.link3_crimson_cannon:link:MemoryHaste:milli:82000",
             "balance:equipment:items:v1:unique:unique.link3_crimson_cannon:power:0:Blaze:int:70",
             "balance:equipment:items:v1:unique:unique.link3_crimson_cannon:power:1:Wildfire:int:30",
-            "balance:equipment:items:v1:unique:unique.link3_dawnless_slash:link:MemorySurge:milli:62000",
+            "balance:equipment:items:v1:unique:unique.link3_dawnless_slash:link:Attune:milli:39000",
             "balance:equipment:items:v1:unique:unique.link3_dawnless_slash:power:0:CriticalEcho:int:4",
             "balance:equipment:items:v1:unique:unique.link3_dawnless_slash:power:1:Bloodlust:int:20",
             "balance:equipment:items:v1:unique:unique.link3_frenzied_claws:link:MemoryHaste:milli:78000",
@@ -5465,7 +5465,7 @@ namespace SodRpg.Core.Game
             "balance:equipment:items:v1:unique:unique.link_yubar_nova_end:link:MemorySurge:milli:33000",
             "balance:equipment:items:v1:unique:unique.link_yubar_nova_end:power:0:UltimateSurge:int:25",
             "balance:equipment:items:v1:unique:unique.link_yubar_nova_end:power:1:Resonance:int:8",
-            "balance:equipment:items:v1:unique:unique.link_yubar_star_echo:link:MemoryHaste:milli:38000",
+            "balance:equipment:items:v1:unique:unique.link_yubar_star_echo:link:Attune:milli:19000",
             "balance:equipment:items:v1:unique:unique.link_yubar_star_echo:power:0:Convergence:int:140",
             "balance:equipment:items:v1:unique:unique.link_yubar_star_echo:power:1:Resonance:int:8",
             "balance:equipment:items:v1:unique:unique.link_yubar_star_traveler:link:Attune:milli:10000",
