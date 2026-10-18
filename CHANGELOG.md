@@ -10,6 +10,16 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v3.8.6 — Fixes for face attachments, balance tables, saving, and camera rotation（2026-10-19）
+
+### 不具合の修正 / Bug fixes
+- 装飾品の顔への追従を軽くする処理で例外が起きたあと、同じ処理を毎フレーム再試行する問題を直しました。失敗後はこの軽量化だけを止め、本体の追従処理を使います。 / Fixed the face-attachment optimization retrying every frame after an exception. A failure now disables only this optimization and uses the game's attachment behavior.
+- 鍛錬の数値表で必須キーが欠けたとき、KeyError ではなく入力形式を示す ValueError を返すように直しました。 / Fixed missing required keys in run-growth balance tables raising KeyError instead of a descriptive ValueError.
+- 保存ファイルの存在確認に失敗したときは、既存データを保護するために保存を止めるようにしました。 / Saving now pauses when a save file's existence cannot be checked, protecting existing data.
+- カメラ角度が負のゼロ（`-0f`）のときも、元の角度を使って回転を計算するようにしました。 / Camera rotation now uses the original angle when it is negative zero (`-0f`).
+
+---
+
 ## v3.8.5 — Fixes for allied effects, ingredient warnings, and star map layouts, plus wiki updates（2026-10-19）
 
 ### 不具合の修正 / Bug fixes
