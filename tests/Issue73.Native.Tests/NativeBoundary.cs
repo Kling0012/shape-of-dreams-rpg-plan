@@ -124,6 +124,14 @@ namespace Mirror
         // NativePerfPatches.cs が nameof / AccessTools.Method で参照する本体 API。
         public static float MoveTowards(float current, float target, float maxDelta)
             => Math.Abs(target - current) <= maxDelta ? target : current + Math.Sign(target - current) * maxDelta;
+        // NativePositionSyncIdlePerf（位置同期のゲート置き換え）が参照する本体 API。本体と同じ式。
+        public static float Abs(float value) => Math.Abs(value);
+        public static float DeltaAngle(float current, float target)
+        {
+            float delta = target - current;
+            delta -= Mathf.Floor(delta / 360f) * 360f;
+            return delta > 180f ? delta - 360f : delta;
+        }
     }
     internal static class GUI
     {
