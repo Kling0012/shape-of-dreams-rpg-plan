@@ -21,6 +21,7 @@ namespace SodRpg.Mod
             NativePerfOptions.ProcCoalesce = config.nativeProcCoalesce;
             NativePerfOptions.AccessoryOffset = config.nativeAccessoryOffsetCache;
             NativePerfOptions.CooldownIdleMultiplier = config.nativeCooldownIdleMultiplier;
+            NativeSkillLockRecovery.Enabled = config.guestSkillLockRecovery;
             NativePerfOptions.TransformSyncIdle = config.nativeTransformSyncIdle;
             NativePerfOptions.SleepPosition = config.nativeSleepPositionReuse;
             NativePerfOptions.CastIndicatorCircle = config.nativeCastIndicatorCircle;
