@@ -15,7 +15,9 @@ namespace SodRpg.Mod
     internal static class RelicIcons
     {
         private static readonly Dictionary<string, Texture2D> Cache = new Dictionary<string, Texture2D>(StringComparer.Ordinal);
-        private static readonly Dictionary<string, Texture2D> RelicCache = new Dictionary<string, Texture2D>(StringComparer.Ordinal);
+        // 固有品IDと土台IDが同じ文字列でも衝突しないように、キャッシュを2つに分けて覚える。
+        private static readonly Dictionary<string, Texture2D> RelicUniqueCache = new Dictionary<string, Texture2D>(StringComparer.Ordinal);
+        private static readonly Dictionary<string, Texture2D> RelicBaseCache = new Dictionary<string, Texture2D>(StringComparer.Ordinal);
         private static readonly Dictionary<RelicRarity, Color> FrameColors = new Dictionary<RelicRarity, Color>();
         private static readonly Color EmptyFrame = new Color(0.32f, 0.32f, 0.42f, 1f);
         private static readonly Color SetFrame = ParseFrameColor("#ff8a3d");
@@ -51,7 +53,8 @@ namespace SodRpg.Mod
         {
             foreach (var t in Cache.Values) if (t != null) UnityEngine.Object.Destroy(t);
             Cache.Clear();
-            RelicCache.Clear();
+            RelicUniqueCache.Clear();
+            RelicBaseCache.Clear();
             FrameColors.Clear();
             if (_white != null) UnityEngine.Object.Destroy(_white);
             _white = null;
@@ -65,22 +68,23 @@ namespace SodRpg.Mod
             string id = uniqueId ?? baseId;
             if (id == null || _dir == null) return null;
             bool useCache = !TabPerf.CacheOff;
+            var cache = uniqueId != null ? RelicUniqueCache : RelicBaseCache;
             // 本当の null（画像なし）は覚えるが、Unity が破棄した画像は下のファイルキャッシュから読み直す。
-            if (useCache && RelicCache.TryGetValue(id, out var cached) && (ReferenceEquals(cached, null) || cached != null)) return cached;
+            if (useCache && cache.TryGetValue(id, out var cached) && IsUsable(cached)) return cached;
             Texture2D resolved = null;
             foreach (string key in RelicIconKeys.Preference(uniqueId, baseId))
             {
                 resolved = For(key);
                 if (resolved != null) break;
             }
-            if (useCache) RelicCache[id] = resolved;
+            if (useCache) cache[id] = resolved;
             return resolved;
         }
 
         public static Texture2D For(string baseId)
         {
             if (string.IsNullOrEmpty(baseId) || _dir == null) return null;
-            if (Cache.TryGetValue(baseId, out var tex) && (ReferenceEquals(tex, null) || tex != null)) return tex;
+            if (Cache.TryGetValue(baseId, out var tex) && IsUsable(tex)) return tex;
             tex = null;
             try
             {
@@ -104,6 +108,9 @@ namespace SodRpg.Mod
             Cache[baseId] = tex;
             return tex;
         }
+
+        /// <summary>キャッシュに入れた値をそのまま返せるか（画像なしを示す本当の null、または Unity に破棄されていない画像）。</summary>
+        private static bool IsUsable(Texture2D tex) => ReferenceEquals(tex, null) || tex != null;
 
         private static Color ParseFrameColor(string hex)
         {
