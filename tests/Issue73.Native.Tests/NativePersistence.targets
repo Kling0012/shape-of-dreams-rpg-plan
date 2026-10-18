@@ -134,7 +134,7 @@
        IME・フォーカス・GUI の境界は Issue771ImeUiBoundary.cs と共用スタブ。抽出した描画は、
        検索欄にフォーカスがある間 Input.imeCompositionMode が On になっていることを検証する。 -->
   <Target Name="CompileIssue771ImeSearchUi" BeforeTargets="CoreCompile">
-    <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/DreamforgeUi.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)Issue771ImeSearchUi.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="DreamforgeUi" Methods="DrawRelicSearch;StarDrawSearch" Fields="_scrollList;RelicSearchCaptionWidth;RelicSearchFieldSize;RelicSearchClearSize" />
+    <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/DreamforgeUi.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)Issue771ImeSearchUi.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="DreamforgeUi" Methods="DrawRelicSearch;StarDrawSearch" Fields="_scrollList;RelicSearchCaptionWidth;RelicSearchFieldSize;RelicSearchClearSize;_ime" />
     <ItemGroup>
       <Compile Include="$(IntermediateOutputPath)Issue771ImeSearchUi.g.cs" />
     </ItemGroup>
