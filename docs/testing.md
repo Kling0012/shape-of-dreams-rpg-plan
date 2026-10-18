@@ -512,6 +512,8 @@ PR #609 の取込実装の時点（基準は main の `130c4caa`）では、`CHA
 `SodRpg.Mod.Startup.Tests` が135成功・0失敗・1スキップ、
 `Issue73.Native.Tests` が191成功・0失敗・0スキップであることを確認した。
 これは元PR本文の当時の件数を裏付ける記録であり、現在のブランチのCI結果ではない。
+Startup の135成功と次の147成功の差は確認時点の違いによるもので、元PRのhead `41109362` から
+初回確認元 `7aef08a9` までに `EssenceCapsTests` の12ケースが追加されている。
 
 初回の取り込み確認でローカル実行した検証（Linux・.NET SDK 10.0.111）：
 
@@ -519,13 +521,29 @@ PR #609 の取込実装の時点（基準は main の `130c4caa`）では、`CHA
 - `dotnet build tests/Issue73.Native.Tests -c Release --nologo`：終了コード0、エラー0・警告117。抽出ターゲットを含むビルドを実行した。
 - `DOTNET_ROLL_FORWARD=LatestMajor dotnet test tests/SodRpg.Mod.Startup.Tests -c Release --no-build --nologo`：147成功・0失敗・1スキップ。スキップは `ModReloadTests.SecondLoadOfRenamedModAssemblyStillVerifiesItsOwnPatch`。
 - `DOTNET_ROLL_FORWARD=LatestMajor dotnet test tests/Issue73.Native.Tests -c Release --no-build --nologo --filter FullyQualifiedName~StarClusterDiffUpdateTests`：5成功・0失敗・0スキップ。
-- `dotnet build src/SodRpg.Mod -c Release -p:GameDir="/mnt/ghauto-sbx/sod-gamedata/Shape of Dreams" --nologo -v:quiet`：終了コード0、エラー0・警告6。ゲーム参照DLLで製品側もコンパイルした。参照先に `Mods` がないことを実行前に確認し、ゲームへの配置処理は実行されていない。
+- `dotnet build src/SodRpg.Mod -c Release -p:GameDir="<参照用ゲームDLLのフォルダ>" --nologo -v:quiet`：終了コード0、エラー0・警告6。ゲーム参照DLLで製品側もコンパイルした。参照先に `Mods` がないことを実行前に確認し、ゲームへの配置処理は実行されていない。
 
 **初回の取り込み確認で未実行**：作業ブランチのCIはpushしない作業範囲のため未起動。
 フルテスト（`tools/test_changed.py --all`）、Slowテスト（`SODRPG_SLOW=1`）、
 `Issue73.Native.Tests` の対象5件以外と他プロジェクトのテストは、関連部分だけを
 確認する作業指示に従って後続工程へ委ねる。Unity実機の起動・描画・協力通信は、
 ゲーム実行環境が提供されていないため未確認。参照DLLを使ったビルドは実機確認を兼ねない。
+
+取り込みPR [#628](https://github.com/Kling0012/shape-of-dreams-rpg-plan/pull/628) はマージ済み。
+最終head `5a78f744` と当時のmain `347c63aa` の差分は、PR #628 時点のこの節の44行追加だけだった。
+2026-10-19 にGitHub Actions APIを確認したが、このheadとマージコミット `0bfc3671` に
+対応する実行はどちらも0件だった。最終headとマージ後のmainのCI成功は未確認であり、
+上記の元PRのCI成功や初回ローカル検証の結果で代用しない。
+
+## #623 PR #585 の検証結果の区分（2026-10-19）
+
+PR [#585](https://github.com/Kling0012/shape-of-dreams-rpg-plan/pull/585) はクローズ済みで、
+マージコミットはない。当時のhead `91a3f37a` に対する
+[CI実行 38911315881](https://github.com/Kling0012/shape-of-dreams-rpg-plan/actions/runs/38911315881)
+のジョブ結果を確認した。`core-tests` と5つの `mod-tests` は成功し、
+`slow-tests` は `skipped` だった。Slowテストの成功としては数えない。
+この作業ではテストを再実行していない。ゲーム内動作の確認も未実行であり、
+通常CIの成功は実機確認を兼ねない。
 
 ## #546 PR #505 レビュー追補：前提の明記と検証の強化（2026-10-17）
 
