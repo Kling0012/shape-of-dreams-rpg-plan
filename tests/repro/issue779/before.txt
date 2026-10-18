@@ -1,0 +1,16 @@
+Command: python3 tests/repro/issue779/run.py
+Exit code: 1
+Production code: unchanged from 2982879e
+Runtime: Microsoft.NETCore.App 10.0.11 (DOTNET_ROLL_FORWARD=Major)
+Scope: actual ClientSession.SkillLock.cs linked against SurfaceApi.cs; no game runtime or transport
+
+PASS ready but uncharged already requests resync at 10 seconds
+PASS NaN cooldown already requests resync at 10 seconds
+PASS normal progressing cooldown remains excluded
+PASS undercharge lasting less than 10 seconds remains excluded
+PASS legitimate long cast does not cause a resync
+FAIL REPRO stale cast flag hides zero charges and zero timers for 30 seconds: expected a resync for the persistent charge mismatch; actual requests=0
+FAIL REPRO remaining channel suppresses all undercharge scans for 30 seconds: expected a resync for the persistent charge mismatch; actual requests=0
+FAIL REPRO config cast lock with full charge and zero timers is never scanned: expected a resync for a persistent config lock; actual requests=0
+FAIL REPRO diagnostic log is suppressed after recovery and a second black episode: one diagnostic log per black episode: expected=2, actual=1
+RESULT passed=5 failed=4
