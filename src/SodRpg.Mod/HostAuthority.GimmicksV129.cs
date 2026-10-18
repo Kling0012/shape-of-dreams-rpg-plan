@@ -300,13 +300,13 @@ namespace SodRpg.Mod
                         if (def.Arg == 1)
                             foreach (var ally in _am.allHeroes)
                                 if (ally != hero && Alive(ally) && ally.GetRelation(hero) == EntityRelation.Ally
-                                    && CoopDistanceNative.Coefficient(hero, ally, allyRadius) > 0f)
+                                    && CoopDistanceNative.Coefficient(hero, ally, allyRadius, GimmickEffect.Siphon) > 0f)
                                 {
                                     float allyCoefficient = (float)(def.EffectiveAllyValuePercent ?? def.EffectiveValueOrAuthored);
                                     float allyHeal = SupportStats.AmplifyHeal(Gimmicks.SiphonHeal(request.Damage, hero.maxHealth,
                                         allyCoefficient), SupportPower(rt, Stat.HealPower)) * 0.5f;
                                     DispatchSupportHeal(rt, ally, support.Heal(Math.Min(allyHeal, ally.maxHealth * Gimmicks.SiphonHealCapRatio)
-                                        * CoopDistanceNative.Coefficient(hero, ally, allyRadius))
+                                        * CoopDistanceNative.Coefficient(hero, ally, allyRadius, GimmickEffect.Siphon))
                                         .SetAmountModifiedBy(typeof(GimmickSiphonLimit)));
                                 }
                         break;

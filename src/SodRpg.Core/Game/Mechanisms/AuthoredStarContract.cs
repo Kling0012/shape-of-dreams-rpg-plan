@@ -198,6 +198,7 @@ namespace SodRpg.Core.Game
                 }
                 heroes.Add(def.HeroKey);
             }
+            // authoredKeys above rejects duplicate hero/local IDs with a domain error before indexing.
             var definitionsById = definitions.ToDictionary(x => x.Key);
             foreach (string hero in heroes)
             {

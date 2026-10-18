@@ -268,10 +268,10 @@ namespace SodRpg.Mod
                         {
                             var ally = player != null ? player.hero : null;
                             if (ally == hero || !Alive(ally) || ally.GetRelation(hero) != EntityRelation.Ally
-                                || CoopDistanceNative.Coefficient(hero, ally, healRadius) <= 0f) continue;
+                                || CoopDistanceNative.Coefficient(hero, ally, healRadius, GimmickEffect.Heal) <= 0f) continue;
                             DispatchSupportHeal(rt, ally, support.Heal(SupportStats.AmplifyHeal(
                                 ally.maxHealth * (float)(def.EffectiveAllyValuePercent ?? def.EffectiveValueOrAuthored) / 100f, healPower)
-                                * CoopDistanceNative.Coefficient(hero, ally, healRadius)));
+                                * CoopDistanceNative.Coefficient(hero, ally, healRadius, GimmickEffect.Heal)));
                         }
                     break;
                 case GimmickEffect.Recharge:
