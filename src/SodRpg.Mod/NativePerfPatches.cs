@@ -526,6 +526,15 @@ namespace SodRpg.Mod
             return false;
         }
 
+        // Pure skip decision, extracted so the native test harness can exercise it without the
+        // DTT assembly. The offset is compared per component, as strict as the radius and fill
+        // floats, instead of Unity's Vector2== which tolerates ~1e-5 differences; a missing
+        // snapshot or a null material always runs the body.
+        internal static bool ShouldSkip(bool has, float prevRadius, Vector2 prevOffset, float prevFill, Material prevMaterial,
+            float radius, Vector2 offset, float fill, Material material)
+            => has && material != null && ReferenceEquals(prevMaterial, material) && prevRadius == radius
+               && prevOffset.x == offset.x && prevOffset.y == offset.y && prevFill == fill;
+
         // CircleRegion.UpdateProperties only rewrites the child transform scale/offset and one
         // material float from Radius, Offset and FillProgress. CastIndicatorManager and the
         // region's own Update both call it every frame while the indicator is on screen, yet
@@ -544,8 +553,7 @@ namespace SodRpg.Mod
                 float radius = __instance.Radius;
                 Vector2 offset = __instance.Offset;
                 float fill = __instance.FillProgress;
-                if (inputs.Has && ReferenceEquals(inputs.Material, material) && inputs.Radius == radius
-                    && inputs.Offset == offset && inputs.Fill == fill)
+                if (ShouldSkip(inputs.Has, inputs.Radius, inputs.Offset, inputs.Fill, inputs.Material, radius, offset, fill, material))
                     return false;
                 inputs.Has = true;
                 inputs.Material = material;
