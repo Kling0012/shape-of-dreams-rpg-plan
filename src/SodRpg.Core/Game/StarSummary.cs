@@ -108,7 +108,7 @@ namespace SodRpg.Core.Game
                     string mark = isEquipped == null ? "" : a && b ? "✓ " : "・ ";
                     var line = new StarSummaryLine
                     {
-                        Text = mark + pair.Name + Loc.T($"（{rank}段）", $" ({rank} {(rank == 1 ? "rank" : "ranks")})")
+                        Text = mark + star.DisplayName + Loc.T($"（{rank}段）", $" ({rank} {(rank == 1 ? "rank" : "ranks")})")
                             + (entry == null
                                 ? Loc.T("　<color=#888>両隣の4番目の星が未取得</color>", "  <color=#888>adjacent fourth stars not acquired</color>")
                                 : "\n" + StarMapPresentation.EffectDescription(t, rank))
