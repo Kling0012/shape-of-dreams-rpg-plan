@@ -43,7 +43,7 @@ namespace SodRpg.Mod
         private static void Finalizer(NativeMemoryPayloadScope __state) => NativeMemoryPayloadScope.Current = __state;
     }
 
-    [HarmonyPatch(typeof(Se_R_DangerousTheory), "<EntityEventOnAttackFiredBeforePrepare>b__21_0")]
+    [HarmonyPatch(typeof(Se_R_DangerousTheory), "<EntityEventOnAttackFiredBeforePrepare>b__20_0")]
     internal static class NativeDangerousTheoryAddedPacket
     {
         private static void Prefix(Se_R_DangerousTheory __instance, EventInfoAttackEffect effect, out NativeMemoryPayloadScope __state)
