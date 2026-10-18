@@ -13,7 +13,7 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 ## v3.8.2 — Fish Scales fix for Vesper's training, co-op skill recovery, and performance tweaks（2026-10-19）
 
 ### 不具合の修正 / Bug fixes
-- 悪夢「魚の鱗」で最大HPを削られながらヴェスパーの鍛錬（傷を糧にする）を溜めるとき、鍛錬が1段増えるたびに、その時点で削られている最大HPの25%が戻るようにしました。 / While the lucid dream "Fish Scales" shaves max health on every hit taken, each stack gained by Vesper's expedition training now restores 25% of the max health it has currently shaved.
+- 「魚の鱗」で最大HPを削られながらヴェスパーの鍛錬（傷を糧にする）を溜めると、溜めるほど倒れやすくなっていた問題を直しました。鍛錬が1段増えるたびに、削られた最大HPの一部が戻ります。現在のHPは回復せず、鍛錬の溜まり方とクールダウンも変わりません。 / Fixed Vesper's expedition training making you more fragile the more you built it under "Fish Scales", which shaves max health on every hit. Each stack gained now restores part of the shaved max health. Current health is not restored, and how training stacks build up and its cooldown are unchanged.
 - 協力プレイの参加者でスキルを使えない状態が続いたときの検知を広げ、ホストがロックや参照も再送するように直しました。 / Expanded detection of persistent unusable skills on co-op guests and fixed host resynchronization to also resend locks and references.
 
 ---
