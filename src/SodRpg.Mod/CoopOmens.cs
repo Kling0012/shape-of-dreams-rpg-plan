@@ -122,7 +122,9 @@ namespace SodRpg.Mod
                 if (HumanOmenPlayers() < 2)
                 {
                     // A departed partner must not leave a lone traveler behind a 90% ward.
-                    // Clear once; afterwards this room's message content can never change again.
+                    // ClearCoopOmen zeroes _coopWardLimit and a ward room only begins with two
+                    // or more humans (RollCoop never draws one for a solo party), so this runs
+                    // exactly once per room; afterwards the message content cannot change again.
                     if (_coopWardLimit > 0)
                     {
                         ClearCoopOmen();
