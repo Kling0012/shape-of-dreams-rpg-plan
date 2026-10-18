@@ -342,6 +342,19 @@ namespace SodRpg.Mod
     internal sealed class Ai_D_IcyVeins_Damage : Actor { }
     internal sealed class Ai_D_BeautifulThreat_Feather : Actor { }
     internal sealed class Se_HunterBuff { public bool enableGoldAndExpDrops; }
+    // NativePerfPatches.cs の NativeAccessoryOffsetPerf が typeof / nameof で参照する本体 API
+    // （Dew.Core/Accessory_AttachPoint.cs）。このプロジェクトでは検索そのものは実行せず、
+    // 本体の線形探索の模倣は Startup.Tests の AccessoryOffsetCacheTests が持つ。
+    internal class Accessory_AttachPoint
+    {
+        public readonly List<AttachOffset> customOffsets = new List<AttachOffset>();
+        public AttachOffset FindOffset(string entityOrSkinName) => null;
+
+        public sealed class AttachOffset
+        {
+            public string entityName;
+        }
+    }
     // ここから下はミストの行動不能修正（NativeMistLifetime.cs / HostAuthority.CrowdControlRecovery.cs）用の
     // 本体 API。移動・中断・効果保持の記録だけを模倣し、時間は _tickNow で進める。
     internal sealed class EntityVisual { public bool isSpawning; public EntityModel model; }
