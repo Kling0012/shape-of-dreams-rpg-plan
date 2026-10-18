@@ -1005,6 +1005,7 @@ def run_dotnet_test(root: Path, project: str, filter_expr: str | None,
         target_path = target.stdout.strip()
         if not target_path:
             return 1, f"MSBuild returned no TargetPath for {project}\n"
+        # Absolute TargetPath values stay absolute; relative values use the repo root.
         if (root / target_path).is_file():
             cmd.append("--no-build")
         else:
