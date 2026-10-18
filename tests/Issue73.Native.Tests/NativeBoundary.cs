@@ -143,6 +143,9 @@ namespace SodRpg.Mod
         private static int _nextId;
         private readonly int _id = ++_nextId;
         public int GetInstanceID() => _id;
+        // 本体では Actor のプロパティ。NativeSleepPositionPerf（#751）の IL 照合が
+        // typeof(Actor) の getter を探すため、フィールドではなくプロパティにする。
+        public UnityEngine.Vector3 position { get; set; }
         public Actor parentActor;
         public readonly Dictionary<string, string> persistentSyncedData = new Dictionary<string, string>();
         public readonly List<(DewPlayer Target, object Message)> Sent = new List<(DewPlayer, object)>();
@@ -175,7 +178,6 @@ namespace SodRpg.Mod
         // 敵担当制（HostAuthority.EnemyOwnership.cs）は本体と同じく Status 側を正とする。
         public float currentHealth { get => Status.currentHealth; set => Status.currentHealth = value; }
         public float maxHealth => Status.maxHealth;
-        public UnityEngine.Vector3 position;
         public UnityEngine.Vector3 agentPosition => position;
         public DewPlayer owner;
         public EntityAI AI;
