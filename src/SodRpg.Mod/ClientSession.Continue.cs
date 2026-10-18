@@ -155,9 +155,10 @@ namespace SodRpg.Mod
             return null;
         }
 
-        // Reads only the two checkpoint keys out of GameData.serverActorData and skips every other
-        // value — including this MOD's large Continue.Profile/Trades snapshot strings — without
-        // materializing them. Returns nulls when the keys are absent (same as missing JObject entries).
+        // Reads only the two checkpoint keys out of GameData.serverActorData without retaining other
+        // values in a DOM, including this MOD's large Continue.Profile/Trades snapshot strings.
+        // Skip() still temporarily allocates string values it reads; object/array structures are skipped.
+        // Returns nulls when the keys are absent (same as missing JObject entries).
         private static void ReadContinueCheckpointKeys(JsonTextReader json, out string id, out string runId)
         {
             id = runId = null;
