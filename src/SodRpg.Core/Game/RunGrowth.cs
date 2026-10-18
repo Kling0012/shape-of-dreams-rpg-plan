@@ -153,6 +153,18 @@ namespace SodRpg.Core.Game
     {
         public const int MaxEntries = 16;
 
+        private static readonly HashSet<string> RemovedStars = CreateRemovedStars();
+
+        private static HashSet<string> CreateRemovedStars()
+        {
+            var ids = new HashSet<string>(StringComparer.Ordinal);
+            foreach (string hero in new[] { "aurena", "bismuth", "husk", "lacerta", "mist", "nachia", "yubar" })
+                foreach (string suffix in new[] { "g1", "m1", "m2", "choice" }) ids.Add(hero + ".run." + suffix);
+            return ids;
+        }
+
+        public static bool IsRemovedStar(string id) => id != null && RemovedStars.Contains(id);
+
         /// <summary>取得した星から RunGrowth と修飾を集め、Build.RunGrowths を作る。</summary>
         internal static void Compose(Build build, IReadOnlyList<KeyValuePair<TalentDef, int>> selected)
         {
@@ -221,6 +233,8 @@ namespace SodRpg.Core.Game
 
         internal static bool Read(string encoded, Build build)
         {
+            int colon = encoded.IndexOf(':');
+            if (IsRemovedStar(colon < 0 ? encoded : encoded.Substring(0, colon))) return true;
             string[] f = encoded.Split(':');
             if (f.Length != 7 || build.RunGrowths.Count >= MaxEntries) return false;
             var effects = new List<RunGrowthEffect>();
@@ -609,7 +623,7 @@ namespace SodRpg.Core.Game
         /// </summary>
         public int Gain(string owner, RunGrowthEntry entry, RunGrowthTrigger trigger, double units)
         {
-            if (string.IsNullOrEmpty(owner) || entry == null || entry.Trigger != trigger || !(units > 0d) || double.IsInfinity(units)) return 0;
+            if (string.IsNullOrEmpty(owner) || entry == null || RunGrowth.IsRemovedStar(entry.StarId) || entry.Trigger != trigger || !(units > 0d) || double.IsInfinity(units)) return 0;
             if (!_owners.TryGetValue(owner, out var state)) _owners.Add(owner, state = new OwnerState());
             if (!state.Slots.TryGetValue(entry.StarId, out var slot)) state.Slots.Add(entry.StarId, slot = new Slot());
             // Cap == 0 は上限なし。int.MaxValue は整数の桁あふれを防ぐためだけに使う。
@@ -662,7 +676,7 @@ namespace SodRpg.Core.Game
             RunId = state.GrowthRunId;
             foreach (var save in state.Growth)
             {
-                if (save == null || string.IsNullOrEmpty(save.Owner) || !Gimmicks.ValidStarId(save.GrowthId)
+                if (save == null || string.IsNullOrEmpty(save.Owner) || !Gimmicks.ValidStarId(save.GrowthId) || RunGrowth.IsRemovedStar(save.GrowthId)
                     || save.Stacks < 0 || save.ProgressMilli < 0) continue;
                 if (!_owners.TryGetValue(save.Owner, out var owner)) _owners.Add(save.Owner, owner = new OwnerState());
                 owner.Slots[save.GrowthId] = new Slot { Stacks = save.Stacks, ProgressMilli = save.ProgressMilli };

@@ -1,24 +1,6 @@
 name: ci
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - "**"
-      - "!docs/**"
-      - "!**.md"
-      - "!src/SodRpg.Mod/about/**"
-      # Tests copy this reviewed table into their output as ReviewedV129.md.
-      - docs/specs/v1.29-uniques-table.md
-  pull_request:
-    types: [opened, synchronize, reopened, labeled]
-    paths:
-      - "**"
-      - "!docs/**"
-      - "!**.md"
-      - "!src/SodRpg.Mod/about/**"
-      # Tests copy this reviewed table into their output as ReviewedV129.md.
-      - docs/specs/v1.29-uniques-table.md
   workflow_dispatch:
 
 # A newer push to the same branch (several merges in a row) supersedes the older

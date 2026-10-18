@@ -120,6 +120,9 @@ namespace SodRpg.Mod
         [LabelText("Reuse the unchanged camera-angle rotation / 変わっていないカメラ角度回転を使い回す")]
         public bool nativeCameraZoomRotation = true;
 
+        [LabelText("Recompute character model bounds only when read / キャラ表示モデルの範囲を読まれるときだけ計算する")]
+        public bool nativeCharacterModelDisplayBounds = true;
+
         [LabelText("Level essence slots: add essence slots as the hero levels up (the host's setting applies) /\nレベル連動のエッセンス枠：英雄のレベルに応じて記憶のエッセンス枠を増やす（ホストの設定が使われる）")]
         public bool levelEssenceSlots = true;
 

@@ -214,6 +214,7 @@ MemoryDamage／MemoryHaste／GimmickBoost／GimmickParamの移行行は `value` 
 すでに作った星（新規星や輪の中心）の中身をあとから作り替えるときは、その星のIDを `revisions.json` の `<hero>.stars` に列挙し、`revision`（2以上）を付ける。`gen_cs.py` が `AuthoredStarMigration` の改訂ルールを出力し、`AuthoredMigrationVersion` が改訂より古いセーブはその星を払い戻して取り直しにする（新規プロフィールは最初から最新の改訂）。
 - ID は `<hero>.json` の星、または輪の中心（`h.<hero>.ring.*`）。同じIDを移行行（revision 1）と二重に挙げない。
 - 空殻の改訂2は設計 [v2.4-husk-trio-starmap.md](../../docs/specs/v2.4-husk-trio-starmap.md)。
+- 廃止した星は `<hero>.removed` に `{"id":"aurena.run.g1","maxRank":1,"rankCost":1,"revision":3}` の形で記録する。IDは現行のmanifestに存在せず、元の段数と費用を保つ。生成器は削除用の移行ルールを出力し、取得済みの星を外して使っていたポイントを全額戻す。空殻の改訂2はそのまま残し、削除行だけに改訂3を付ける。対象は [遠征の鍛錬の変更仕様](../../docs/specs/run-growth-tanks-only.md) を参照。
 - 橋の星が**隣の橋の印**を `gimmick.condition` に使うときは、生成器がその記憶を `MemoryOwnership.SourceMemories` に明示する（自分の橋の2記憶以外を使うための所有の宣言）。
 
 ### その他
@@ -242,6 +243,8 @@ MemoryDamage／MemoryHaste／GimmickBoost／GimmickParamの移行行は `value` 
 
 ### B. 遠征の鍛錬（`kind: "RunGrowth"` と `"RunGrowthMod"`、任意の欄 `growth`）
 
+現行の対象はヴェスパーとケトゥスだけ。ほかの7人の削除星と旧セーブの扱いは [run-growth-tanks-only.md](../../docs/specs/run-growth-tanks-only.md) を参照。
+
 `growth` 欄は `power` の直後に置く**任意の欄**で、`kind` が `RunGrowth` / `RunGrowthMod` の行（と、Choice の選択肢）にだけ付く。ほかの効果欄（memory/value/param/receiver/target/gimmick/power/stat/options/keystone）は null。移行行には使えない。
 
 入口の重要な星（仕組みを得る。生成物は `ClusterStarKind.Notable` + `RunGrowthDef`）：
@@ -260,14 +263,14 @@ MemoryDamage／MemoryHaste／GimmickBoost／GimmickParamの移行行は `value` 
 
 - `trigger`：`DamageTakenMaxHpPct`（受けて失ったHPが最大HPの threshold% に達するたび）、`ShieldAbsorbedMaxHpPct`（障壁が吸収した量が最大HPの threshold% に達するたび）、`ParrySuccess`（ミストのパリィ `St_R_Parry` の成功 threshold 回ごと）、`CritBasicAttackKill`（会心の基本攻撃でとどめ threshold 回ごと）。
 - `threshold`：HP系は 1〜100（最大HPに対する%）、出来事系は 1〜1000（回数。ふつう 1）。
-- `cap`：1〜500。`effects`：1〜4個。`stat` は `Stat` の名前（エッセンス枠・`SacrificeReduction`・`FourthAttackShift` は不可）、`amount` は**1スタックあたり**で、千分の一まで（0.5、0.3 など）。`ShieldPower` / `HealPower` / `SummonPower` は戦闘の処理器が読み、そのほかはヒーローの能力値に足される。
+- `cap`：1〜500。`cetus.run.g1` だけは0（スタック上限なし）も使える。`effects`：1〜4個。`stat` は `Stat` の名前（エッセンス枠・`SacrificeReduction`・`FourthAttackShift` は不可）、`amount` は**1スタックあたり**で、千分の一まで（0.5、0.3 など）。`ShieldPower` / `HealPower` / `SummonPower` は戦闘の処理器が読み、そのほかはヒーローの能力値に足される。
 
 修飾（上限 +N／1スタックの効果 +X%／溜まる速さ2倍）。小さな星は `kind: "RunGrowthMod"`、2択は Choice の `options` の各要素に同じ形で書く：
 
 ```json
 "kind": "RunGrowthMod",
 "memory": null, "value": null, "param": null, "receiver": null, "target": null, "gimmick": null, "power": null,
-"growth": { "target": "husk.run.g1", "capBonus": 20, "effectPct": 0, "doubleGain": false },
+"growth": { "target": "vesper.run.g1", "capBonus": 20, "effectPct": 0, "doubleGain": false },
 "stat": null, "options": null, "keystone": null
 ```
 

@@ -1152,6 +1152,15 @@ def revision_rules(result, skip=()):
                      + ", " + ("true" if row["kind"] == "Choice" else "false") + ", " + str(revision) + ")")
     for sid in entry.get("centers", []):
         rules.append("ManifestRevisedBaseline(" + cs(result.hero) + ", " + cs(sid) + ", " + str(revision) + ")")
+    for removed in entry.get("removed", []):
+        sid = removed["id"]
+        if sid in result.by_id or not sid.startswith(result.name + "."):
+            raise SystemExit("revisions.json: removed star must be absent from its hero manifest: " + sid)
+        max_rank, rank_cost, removed_revision = (removed[k] for k in ("maxRank", "rankCost", "revision"))
+        if any(type(v) is not int or v < 1 for v in (max_rank, rank_cost)) or type(removed_revision) is not int or removed_revision < 2:
+            raise SystemExit("revisions.json: invalid removed star cost or revision: " + sid)
+        rules.append("new LegacyStarMigration(" + cs(sid) + ", " + str(max_rank) + ", " + str(rank_cost)
+                     + ", revision: " + str(removed_revision) + ", removed: true)")
     return rules
 
 
