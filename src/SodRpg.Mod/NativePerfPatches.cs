@@ -615,8 +615,9 @@ namespace SodRpg.Mod
         // values even if a future game version wraps that property around a conversion.
         private static AccessTools.FieldRef<DTT.AreaOfEffectRegions.CircleRegion, float> _fillProgressField;
         // Reusable snapshot candidate handed from the prefix to the postfix. The prefix takes it
-        // (nulling the slot) and the postfix returns it after committing, so the steady-state
-        // skip path allocates nothing.
+        // (nulling the slot) and the postfix returns it after committing; when the body throws,
+        // the postfix never runs and the finalizer returns it instead, so neither the
+        // steady-state skip path nor a run of throwing frames allocates.
         [ThreadStatic] private static CircleInputs _pending;
         private static MethodBase _target;
         private static bool _disabled;
@@ -825,6 +826,19 @@ namespace SodRpg.Mod
                 _disabled = true;
                 NativePerfPatch.Warn(ref _warned, "cast indicator circle", ex.Message);
             }
+        }
+
+        // The postfix never runs when the body threw, so without this hook the candidate the
+        // prefix took from the pool slot would be dropped and every throwing frame would allocate
+        // a replacement. The finalizer is the one patch method Harmony calls on that path too;
+        // it hands the candidate back for the next frame to reuse. It returns void, so the
+        // body's exception keeps propagating untouched — only the buffer is recycled — and on a
+        // clean frame the postfix has already returned the candidate, leaving the slot non-null
+        // and this a no-op.
+        private static void Finalizer(CircleInputs __state)
+        {
+            if (__state == null || _pending != null) return;
+            _pending = __state;
         }
 
         // Drops a record's confirmation for a region handed back to the body untracked. TryGetValue

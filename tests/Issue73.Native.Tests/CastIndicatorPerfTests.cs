@@ -18,7 +18,9 @@ namespace Issue73.Native.Tests
     /// 可否を判定する純粋な関数として確かめる。Prefix/Postfix は、前回値の確定が本体の
     /// 正常終了後（Postfix）だけに行われること、本体を通す経路（入力の変化・null マテリアル・
     /// 設定無効）では前回の確定値が無効化されること、fill を FillProgress プロパティではなく
-    /// _fillProgress フィールドから読むことを確かめる。
+    /// _fillProgress フィールドから読むことを確かめる。Finalizer は、本体が例外で中断して
+    /// Postfix が走らないフレームでも再利用候補が pool 欄へ返され、次のフレームの確保が
+    /// 起こらないことを確かめる。
     /// </summary>
     public sealed class CastIndicatorPerfTests
     {
@@ -187,6 +189,14 @@ namespace Issue73.Native.Tests
         private static void RunPostfix(DTT.AreaOfEffectRegions.CircleRegion region, object state)
             => typeof(NativeCastIndicatorCirclePerf).GetMethod("Postfix", Hidden).Invoke(null, new[] { region, state });
 
+        private static void RunFinalizer(object state)
+            => typeof(NativeCastIndicatorCirclePerf).GetMethod("Finalizer", Hidden).Invoke(null, new[] { state });
+
+        // pool 欄（[ThreadStatic] な _pending）を空に戻す。実体の同一性で判定するテストが、
+        // 他のテストが返却した候補の影響を受けないようにするため。
+        private static void ResetPoolSlot()
+            => typeof(NativeCastIndicatorCirclePerf).GetField("_pending", Hidden).SetValue(null, null);
+
         [Fact]
         public void TheSnapshotIsCommittedOnlyAfterTheBodyRan()
         {
@@ -214,6 +224,43 @@ namespace Issue73.Native.Tests
             Assert.True(RunPrefix(region, out var state));
             RunPostfix(region, state);                       // 正常に終わったフレームだけ確定
             Assert.False(RunPrefix(region, out _));
+        }
+
+        [Fact]
+        public void AnExceptionFrameRecyclesTheCandidateForTheNextFrame()
+        {
+            // 本体が例外で中断したフレームでは Harmony は Postfix を実行しないため、Prefix が
+            // pool 欄から取り出した再利用候補がそのまま失われると、例外が続く限り毎フレームの
+            // 確保が起こる。Finalizer は例外経路でも Harmony が実行する唯一の hook なので、
+            // Postfix を省いた（＝例外中断の）フレームに相当する呼び出しで候補を pool 欄へ
+            // 返し、次のフレームが同じ実体を再利用することを確かめる。
+            PrepareExtractedPatch();
+            ResetPoolSlot();
+            var region = NewRegion(5f, 1f, 2f, 0.5f);
+            Assert.True(RunPrefix(region, out var candidate));  // 候補を確保して本体へ渡す
+            RunFinalizer(candidate);                            // 例外フレーム：Finalizer だけ走る
+            Assert.True(RunPrefix(region, out var reused));     // 確定値がないので次も本体を通す
+            Assert.Same(candidate, reused);                     // 新しい確保をせず同じ実体を使う
+            RunPostfix(region, reused);
+        }
+
+        [Fact]
+        public void TheFinalizerLeavesACleanFrameAlone()
+        {
+            // 正常終了のフレームでは Postfix が候補を pool 欄へ返却済みなので、その後に走る
+            // Finalizer は欄を書き換えない。state が null の呼び出し（省略フレームなど）も
+            // 何もしない。
+            PrepareExtractedPatch();
+            ResetPoolSlot();
+            var region = NewRegion(5f, 1f, 2f, 0.5f);
+            Assert.True(RunPrefix(region, out var candidate));
+            RunPostfix(region, candidate);                      // Postfix が返却する
+            RunFinalizer(candidate);                            // 重複して走っても上書きしない
+            RunFinalizer(null);                                 // null では何もしない
+            region.Radius = 6f;                                 // 入力を変えて pool 欄を使う経路へ
+            Assert.True(RunPrefix(region, out var reused));
+            Assert.Same(candidate, reused);                     // Postfix が返した実体のまま
+            RunPostfix(region, reused);
         }
 
         [Fact]
