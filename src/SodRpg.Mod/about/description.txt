@@ -1,5 +1,5 @@
-[b]Adds a button beside the trade warning that removes every relic that can no longer be offered, while keeping the offered shard and tuning amounts. Moving cooking ingredients to their owner now works only as a fallback for teleports, and loading two copies of the mod no longer turns off the newer copy's ingredient cap.[/b]
-[b]交換画面で、提示できなくなった遺物を警告の横のボタンからまとめて外せるようになりました。料理の素材を持ち主へ移す処理は瞬間移動したときの保険としてだけ働くようにし、MOD を2つ読み込んだときに新しい方の素材上限処理が外れる問題も直しました。[/b]
+[b]v3.7.6: Minor adjustments.[/b]
+[b]v3.7.6：細かな調整を行いました。[/b]
 
 [h1]Dreamforge RPG[/h1]
 Turns every run into part of a long RPG journey: relics you keep, a risky "secure or delve" choice at every zone, a star map per Traveler, a forge, and long-term goals. Co-op ready.

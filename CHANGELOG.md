@@ -10,6 +10,18 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v3.7.6 — 細かな調整 / Minor adjustments（2026-10-18）
+
+細かな調整を行いました。 / Minor adjustments.
+
+### 更新前に確認 / Before updating
+
+- 協力プレイでは、参加者全員がこのバージョンに更新してください。 / Everyone in co-op should update to this version.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+---
+
 ## v3.7.5 — Remove unofferable relics from a trade in one click, plus cooking and mod-loading fixes（2026-10-18）
 
 ### 新機能 / New features
