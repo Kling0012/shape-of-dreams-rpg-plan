@@ -10,6 +10,13 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v3.7.4 — Trade tab relic description fix（2026-10-18）
+
+### 不具合の修正 / Bug fixes
+- 取引タブの遺物一覧で、説明が行内に収まらない場合に「…」を表示するようにしました。説明の続きは行や「…」にカーソルを合わせると確認できます。 / Relic descriptions in the Trade tab now show an ellipsis when they do not fit in the row. Hover over the row or ellipsis to read the full description.
+
+---
+
 ## v3.7.3 — Fix profile recovery on file access failures（2026-10-18）
 
 ### 不具合の修正 / Bug fixes
