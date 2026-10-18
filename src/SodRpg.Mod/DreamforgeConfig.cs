@@ -117,6 +117,9 @@ namespace SodRpg.Mod
         [LabelText("Read the checked entity position once per sleep check (host) / 眠り判定で読む敵の位置を英雄全員分で1回にまとめる（ホスト）")]
         public bool nativeSleepPositionReuse = true;
 
+        [LabelText("Skip unchanged cast indicator circle updates / 変わっていない照準円の描画更新を省く")]
+        public bool nativeCastIndicatorCircle = true;
+
         [LabelText("Reuse the unchanged camera-angle rotation / 変わっていないカメラ角度回転を使い回す")]
         public bool nativeCameraZoomRotation = true;
 

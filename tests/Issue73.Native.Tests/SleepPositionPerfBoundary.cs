@@ -13,6 +13,7 @@ namespace SodRpg.Mod
     {
         internal static bool SleepPosition = true;
         internal static bool CameraZoomRotation = true;
+        internal static bool CastIndicatorCircle = true;
         internal static bool CharacterModelDisplayBounds = true;
     }
 
