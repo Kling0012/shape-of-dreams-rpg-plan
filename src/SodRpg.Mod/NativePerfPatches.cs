@@ -19,6 +19,7 @@ namespace SodRpg.Mod
             NativePerfOptions.AggroPropagation = config.nativeAggroPropagation;
             NativePerfOptions.OwnershipSpawnCounts = config.nativeOwnershipSpawnCounts;
             NativePerfOptions.ProcCoalesce = config.nativeProcCoalesce;
+            NativePerfOptions.TransformSyncIdle = config.nativeTransformSyncIdle;
             NativePerfOptions.SleepPosition = config.nativeSleepPositionReuse;
             NativePerfOptions.CameraZoomRotation = config.nativeCameraZoomRotation;
         }
@@ -32,6 +33,7 @@ namespace SodRpg.Mod
         internal static bool AggroPropagation = true;
         internal static bool OwnershipSpawnCounts = true;
         internal static bool ProcCoalesce = true;
+        internal static bool TransformSyncIdle = true;
         internal static bool SleepPosition = true;
         internal static bool CameraZoomRotation = true;
     }
@@ -361,6 +363,50 @@ namespace SodRpg.Mod
                 }
             }
             agent.obstacleAvoidanceType = value;
+        }
+    }
+
+    [HarmonyPatch]
+    internal static class NativeTransformSyncIdlePerf
+    {
+        private static AccessTools.FieldRef<ActorTransformSync, SyncMovementData> _syncData;
+        private static MethodBase _target;
+        private static bool _disabled;
+        private static bool _warned;
+
+        private static bool Prepare()
+        {
+            try
+            {
+                _target = AccessTools.PropertySetter(typeof(ActorTransformSync), "Network_syncData");
+                if (_target == null || _target.GetMethodBody() == null)
+                    throw new MissingMethodException("ActorTransformSync.Network_syncData setter unavailable");
+                _syncData = AccessTools.FieldRefAccess<ActorTransformSync, SyncMovementData>("_syncData");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                NativePerfPatch.Warn(ref _warned, "transform sync idle", ex.Message);
+                return false;
+            }
+        }
+
+        private static MethodBase TargetMethod() => _target;
+
+        private static bool Prefix(ActorTransformSync __instance, SyncMovementData value)
+        {
+            if (_disabled || !NativePerfOptions.TransformSyncIdle) return true;
+            try
+            {
+                if (NativeTransformSyncIdle.IsIdleRefresh(_syncData(__instance), value))
+                    return false;
+            }
+            catch (Exception ex)
+            {
+                _disabled = true;
+                NativePerfPatch.Warn(ref _warned, "transform sync idle", ex.Message);
+            }
+            return true;
         }
     }
 

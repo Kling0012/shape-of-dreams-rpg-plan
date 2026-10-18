@@ -108,6 +108,9 @@ namespace SodRpg.Mod
         [LabelText("Coalesce same-frame duplicate proc projectiles / 同一フレームの同じ対象への同種反応弾を1本にまとめる")]
         public bool nativeProcCoalesce = true;
 
+        [LabelText("Skip transform sync of stationary actors (host) / 動いていないアクターの座標同期を省く（ホスト）")]
+        public bool nativeTransformSyncIdle = true;
+
         [LabelText("Read the checked entity position once per sleep check (host) / 眠り判定で読む敵の位置を英雄全員分で1回にまとめる（ホスト）")]
         public bool nativeSleepPositionReuse = true;
 
