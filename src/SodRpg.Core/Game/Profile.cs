@@ -194,6 +194,7 @@ namespace SodRpg.Core.Game
         public int Kills { get; set; }
         /// <summary>このランで最も深かった深度。</summary>
         public int PeakHeat { get; set; }
+        /// <summary>回収品も含む遠征内の件数（報告用）。懸賞・実績・スコアへ使う場合は回収3経路の扱いを再確認する。</summary>
         public int RelicsFound { get; set; }
         public int RelicsSecured { get; set; }
         public int ShardsSecured { get; set; }
