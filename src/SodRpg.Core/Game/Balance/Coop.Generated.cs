@@ -91,7 +91,7 @@ namespace SodRpg.Core.Game
                     case "Hero_Bismuth": return 1.0d;
                     case "Hero_Cetus": return 1.0d;
                     case "Hero_Husk": return 0.85d;
-                    case "Hero_Lacerta": return 0.85d;
+                    case "Hero_Lacerta": return 1.0d;
                     case "Hero_Mist": return 0.92d;
                     case "Hero_Nachia": return 1.0d;
                     case "Hero_Vesper": return 0.92d;
