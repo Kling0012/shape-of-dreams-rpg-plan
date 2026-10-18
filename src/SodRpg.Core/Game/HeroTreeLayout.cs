@@ -83,7 +83,7 @@ namespace SodRpg.Core.Game
         public static HeroTreeLayout ForHero(string heroKey)
         {
             if (StarClusters.TryGetRegisteredLayout(heroKey, out var registered)) return registered;
-            if (!Links.IsTraveler(heroKey)) return GenericLayout.Value;
+            if (!HeroSigils.HasTree(heroKey)) return GenericLayout.Value;
             lock (Layouts)
             {
                 if (!Layouts.TryGetValue(heroKey, out var layout))
