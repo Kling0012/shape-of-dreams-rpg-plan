@@ -24,6 +24,7 @@ namespace SodRpg.Mod
             NativePerfOptions.SleepPosition = config.nativeSleepPositionReuse;
             NativePerfOptions.CastIndicatorCircle = config.nativeCastIndicatorCircle;
             NativePerfOptions.CameraZoomRotation = config.nativeCameraZoomRotation;
+            NativePerfOptions.CharacterModelDisplayBounds = config.nativeCharacterModelDisplayBounds;
         }
     }
 
@@ -40,6 +41,7 @@ namespace SodRpg.Mod
         internal static bool SleepPosition = true;
         internal static bool CastIndicatorCircle = true;
         internal static bool CameraZoomRotation = true;
+        internal static bool CharacterModelDisplayBounds = true;
     }
 
     internal static class NativePerfPatch

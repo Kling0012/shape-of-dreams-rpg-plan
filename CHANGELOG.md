@@ -10,6 +10,13 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v3.7.7 — Bridge star names now match the star map（2026-10-18）
+
+### 不具合の修正 / Bug fixes
+- 橋の星がナビゲーション、星の参照文、払い戻し画面、割り当てエラー、Wikiで星図と異なる名前になる問題を直しました。 / Fixed bridge stars showing different names from the star map in navigation, star references, refund screens, allocation errors, and the wiki.
+
+---
+
 ## v3.7.6 — 細かな調整 / Minor adjustments（2026-10-18）
 
 細かな調整を行い、協力プレイ用の表示の問題を1つ直しました。 / Minor adjustments, plus one fix for a co-op display issue.
