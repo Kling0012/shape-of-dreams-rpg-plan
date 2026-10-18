@@ -419,9 +419,14 @@ namespace SodRpg.Mod
             {
                 try
                 {
-                    // The tick only feeds the multiplier into MoveTowards, which keeps an
-                    // already-resting cooldown at zero for any positive maxDelta. The virtual
-                    // call (and its safety postfixes) still runs whenever a cooldown is moving.
+                    // The tick only feeds the multiplier into MoveTowards as maxDelta, which
+                    // keeps an already-resting cooldown at zero while maxDelta is non-negative
+                    // and non-NaN. Equivalence relies on GuardMultiplier's postfixes keeping
+                    // this tick's multiplier positive, as they do in normal operation; 1 here
+                    // means maxDelta = dt, keeping zero the same way. A degenerate unguarded
+                    // multiplier (negative or NaN) could only have moved zero in the original
+                    // (Mathf.Sign(0) * maxDelta), so this path is at least as stable. The
+                    // virtual call (and its safety postfixes) still runs for moving cooldowns.
                     var times = trigger.currentUnscaledCooldownTimes;
                     if (times != null && configIndex >= 0 && configIndex < times.Length && times[configIndex] == 0f)
                         return 1f;

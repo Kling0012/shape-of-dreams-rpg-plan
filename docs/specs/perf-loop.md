@@ -30,6 +30,6 @@
 
 直した内容: クールダウンティックの `maxDelta = dt / GetCooldownTimeMultiplier(i)` は、残り時間がすでに 0 の設定（大半を占める待機状態）でも毎フレーム乗数計算を辿っていた（owner 解決 → `Status.finalStats` の構造体コピー → `GameManager.ges` 参照 → 除算と `Lerp`、さらに既存の安全装置 Postfix）。`NativePerfPatches.cs` に `NativeCooldownIdlePerf` を足し、`LogicUpdate` 内のこの1箇所の呼び出しだけを Transpiler で置き換え、残り時間が 0 のときは乗数計算を飛ばして 1 を返すようにした。設定は `nativeCooldownIdleMultiplier`（既定で有効）。ほかの呼び出し元（`SetCooldownTime`、`GetMaxCooldownTime`、クールダウン減少）は元の仮想呼び出しのまま。
 
-結果が変わらない理由: このループで乗数は `Mathf.MoveTowards(残り, 0, maxDelta)` の `maxDelta` にだけ使われ、残りが 0 のときは移動量がどうであっても結果は 0 に保たれる。残りが 0 以外のときは従来どおり仮想呼び出し（オーバーライドと `NativeCooldownSafety` の Postfix も含む）を使う。パッチ先の形が変われば警告を1回出して無効になる。
+結果が変わらない理由: このループで乗数は `Mathf.MoveTowards(残り, 0, maxDelta)` の `maxDelta` にだけ使われる。`MoveTowards(0, 0, maxDelta)` が 0 を返すのは maxDelta が 0 以上で NaN でないときで、負や NaN なら `Mathf.Sign(0) * maxDelta`（= maxDelta）を返して 0 から動く。つまり同値性は乗数が正のときに成り立ち、その前提は既存の `NativeCooldownSafety` の Postfix（`GuardMultiplier`）がこのティック経路の乗数を正の有限値へ補正することで満たされる（ホストはティック保護の窓内、純クライアントは常時。安全装置に設定の切り替えは無く、本体メソッドが失われたときだけ働かなくなる）。残りが 0 以外のときは従来どおり仮想呼び出し（オーバーライドと `NativeCooldownSafety` の Postfix も含む）を使う。パッチ先の形が変われば警告を1回出して無効になる。なお残り 0 かつ乗数が NaN か負のときだけ、安全装置の効かない本体では元の経路は残りをその値へ動かし得たが、置き換え後は maxDelta = dt の正有限で 0 に保たれる（置き換え後のほうが安定）。
 
 効果の見込み（推定）: トリガー × 設定 × フレームのうち待機状態の呼び出しを丸ごと省く。部屋の中位の規模でトリガー 100〜200、待機が8〜9割として、毎秒数千〜1万回の呼び出し分（推定で毎秒0.5〜2ミリ秒程度）を削れる見込み。実機での計測はしていない。
