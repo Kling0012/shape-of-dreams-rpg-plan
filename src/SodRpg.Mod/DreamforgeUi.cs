@@ -72,6 +72,8 @@ namespace SodRpg.Mod
         private readonly ClientSession _s;
         private readonly Func<DreamforgeConfig> _cfg;
         private readonly Action _saveLevelEssenceConfig;
+        // メニューの言語はホストかどうかに関係なく各自の設定へ保存する。
+        private readonly Action _saveLanguageConfig;
         private readonly UiStyles _st = new UiStyles();
         private readonly List<Toast> _toasts = new List<Toast>();
 
@@ -115,15 +117,14 @@ namespace SodRpg.Mod
         /// <summary>直近の描画で、マウスが確保地点のパネルの上にあったか（クリックをゲームへ通さないため）。</summary>
         public bool MouseOverPanel { get; private set; }
 
-        /// <summary>メニューの言語の切り替えを保存する（ホストかどうかに関係なく、各自の設定）。</summary>
-        internal Action SaveLanguageConfig;
-
-        public DreamforgeUi(ClientSession session, Func<DreamforgeConfig> cfg, Action saveLevelEssenceConfig = null)
+        public DreamforgeUi(ClientSession session, Func<DreamforgeConfig> cfg, Action saveLevelEssenceConfig = null,
+            Action saveLanguageConfig = null)
         {
             _s = session;
             _cfg = cfg;
             _linkTravelerCoefficient = LinkTravelerCoefficient;
             _saveLevelEssenceConfig = saveLevelEssenceConfig;
+            _saveLanguageConfig = saveLanguageConfig;
             _s.ProfileChanged += ResetProfileView;
             // 起動したときに持っていた遺物は「見た」ことにする。それ以降に手に入れた物に NEW を付ける。
             foreach (var r in session.Profile.Stash) _seenUids.Add(r.Uid);
@@ -3582,7 +3583,8 @@ namespace SodRpg.Mod
             {
                 cfg.japanese = !cfg.japanese;
                 Loc.Japanese = cfg.japanese;
-                SaveLanguageConfig?.Invoke(); // ほかのメニュー内の設定と同じく、すぐ保存する（次の起動で戻っていた）
+                // 保存に失敗しても cfg と表示の言語は戻さない。再起動時は最後に保存できた設定を読む。
+                _saveLanguageConfig?.Invoke();
             }
             GUILayout.Label(Loc.T("キーの割り当てや表示の大きさはゲームのMOD設定で変えられます。", "Keys and scale can be changed in the game's mod settings."), _st.Small);
             GUILayout.EndHorizontal();
