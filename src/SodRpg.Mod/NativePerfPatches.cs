@@ -19,6 +19,7 @@ namespace SodRpg.Mod
             NativePerfOptions.AggroPropagation = config.nativeAggroPropagation;
             NativePerfOptions.OwnershipSpawnCounts = config.nativeOwnershipSpawnCounts;
             NativePerfOptions.ProcCoalesce = config.nativeProcCoalesce;
+            NativePerfOptions.CooldownIdleMultiplier = config.nativeCooldownIdleMultiplier;
         }
     }
 
@@ -30,6 +31,7 @@ namespace SodRpg.Mod
         internal static bool AggroPropagation = true;
         internal static bool OwnershipSpawnCounts = true;
         internal static bool ProcCoalesce = true;
+        internal static bool CooldownIdleMultiplier = true;
     }
 
     internal static class NativePerfPatch
@@ -39,6 +41,18 @@ namespace SodRpg.Mod
             try
             {
                 var target = AccessTools.DeclaredMethod(type, method, Type.EmptyTypes);
+                if (target != null && target.GetMethodBody() != null) return target;
+                Warn(ref warned, type.Name + "." + method, "native method unavailable");
+            }
+            catch (Exception ex) { Warn(ref warned, type.Name + "." + method, ex.Message); }
+            return null;
+        }
+
+        internal static MethodBase Find(Type type, string method, Type[] arguments, ref bool warned)
+        {
+            try
+            {
+                var target = AccessTools.DeclaredMethod(type, method, arguments);
                 if (target != null && target.GetMethodBody() != null) return target;
                 Warn(ref warned, type.Name + "." + method, "native method unavailable");
             }
@@ -357,6 +371,66 @@ namespace SodRpg.Mod
                 }
             }
             agent.obstacleAvoidanceType = value;
+        }
+    }
+
+    [HarmonyPatch]
+    internal static class NativeCooldownIdlePerf
+    {
+        private static MethodBase _target;
+        private static bool _disabled;
+        private static bool _warned;
+
+        private static bool Prepare()
+        {
+            _target = NativePerfPatch.Find(typeof(AbilityTrigger), nameof(AbilityTrigger.LogicUpdate),
+                new[] { typeof(float) }, ref _warned);
+            return _target != null;
+        }
+
+        private static MethodBase TargetMethod() => _target;
+
+        private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+        {
+            var code = new List<CodeInstruction>(instructions);
+            var multiplier = AccessTools.DeclaredMethod(typeof(AbilityTrigger),
+                nameof(AbilityTrigger.GetCooldownTimeMultiplier), new[] { typeof(int) });
+            int site = -1, count = 0;
+            if (multiplier != null)
+                for (int i = 0; i < code.Count; i++)
+                    if (code[i].Calls(multiplier)) { site = i; count++; }
+            // Only the per-frame cooldown tick call is redirected. SetCooldownTime, max time and
+            // reduction paths call the multiplier outside this method and stay untouched.
+            if (multiplier == null || count != 1)
+            {
+                NativePerfPatch.Warn(ref _warned, "cooldown idle", "native multiplier callsite changed or already patched");
+                return code;
+            }
+            code[site].opcode = OpCodes.Call;
+            code[site].operand = AccessTools.Method(typeof(NativeCooldownIdlePerf), nameof(TickMultiplier));
+            return code;
+        }
+
+        private static float TickMultiplier(AbilityTrigger trigger, int configIndex)
+        {
+            if (!_disabled && NativePerfOptions.CooldownIdleMultiplier)
+            {
+                try
+                {
+                    // The tick only feeds the multiplier into MoveTowards, which keeps an
+                    // already-resting cooldown at zero for any positive maxDelta. The virtual
+                    // call (and its safety postfixes) still runs whenever a cooldown is moving.
+                    var times = trigger.currentUnscaledCooldownTimes;
+                    if (times != null && configIndex >= 0 && configIndex < times.Length && times[configIndex] == 0f)
+                        return 1f;
+                }
+                catch (Exception ex)
+                {
+                    _disabled = true;
+                    NativePerfPatch.Warn(ref _warned, "cooldown idle", ex.Message);
+                }
+            }
+            return trigger.GetCooldownTimeMultiplier(configIndex);
         }
     }
 }
