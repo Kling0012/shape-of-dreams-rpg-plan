@@ -49,6 +49,9 @@ namespace SodRpg.Mod
             return method != null && method.GetMethodBody() != null ? method : null;
         }
 
+        // The multiplier postfixes only correct their ref return value. They do not mutate
+        // trigger state or stats, send RPCs, or fire charge events; skipping an idle tick's
+        // multiplier read therefore skips no side effects from these safety postfixes.
         internal static void GuardMultiplier(AbilityTrigger trigger, ref float multiplier)
         {
             if (NetworkServer.active)

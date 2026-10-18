@@ -133,7 +133,7 @@ internal static class StarMapWiki
         var t = r.T;
         string effect = Ja(() => StarMapPresentation.DisplayDescription(t)) + "\n"
             + En(() => StarMapPresentation.DisplayDescription(t));
-        return $"| {NameCell(t.Name)} | {(r.Cluster == "" ? "-" : Cell(r.Cluster))} | {t.MaxRank} | {t.RankCost} | {Cell(effect)} |";
+        return $"| {NameCell(t.DisplayName)} | {(r.Cluster == "" ? "-" : Cell(r.Cluster))} | {t.MaxRank} | {t.RankCost} | {Cell(effect)} |";
     }
 
     private static string KeystoneRow(TalentDef t)

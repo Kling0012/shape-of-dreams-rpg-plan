@@ -343,6 +343,7 @@ namespace SodRpg.Core.Game
         public string Id { get; }
         public Line Route { get; }
         public Txt Name { get; }
+        public Txt DisplayName => PairCombo?.Name ?? Name;
         public Stat Stat { get; }
         public int PerRank { get; }
         public int MaxRank { get; }

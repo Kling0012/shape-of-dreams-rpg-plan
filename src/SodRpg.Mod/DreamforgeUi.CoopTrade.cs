@@ -66,9 +66,7 @@ namespace SodRpg.Mod
                     || Affixes.Length != r.Affixes.Count || Powers.Length != r.Powers.Count) return false;
                 var mark = r.Forbidden;
                 if ((Forbidden == null) != (mark == null)) return false;
-                if (mark != null && (Forbidden.Pattern != mark.Pattern || Forbidden.Variant != mark.Variant
-                    || Forbidden.RemovedStat != mark.RemovedStat || Forbidden.AddedPower != mark.AddedPower
-                    || Forbidden.AddedValue != mark.AddedValue)) return false;
+                if (mark != null && !Forbidden.SameAs(mark)) return false;
                 for (int i = 0; i < Affixes.Length; i++) if (Affixes[i] != r.Affixes[i]) return false;
                 for (int i = 0; i < Powers.Length; i++) if (Powers[i] != r.Powers[i]) return false;
                 return true;

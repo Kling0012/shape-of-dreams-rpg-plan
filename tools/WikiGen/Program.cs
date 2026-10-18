@@ -33,6 +33,7 @@ try
 catch (Exception e) { Console.Error.WriteLine("metadata.json: " + e.Message); }
 
 var written = new List<(string File, int Bytes)>();
+int paginationFallbacks = 0;
 
 // 日英同時取得（Loc は静的な切替なので、順に切り替えて両方を得る）
 (string Ja, string En) Both(Func<string> f)
@@ -63,7 +64,10 @@ void WriteRaw(string relPath, string text)
     string full = Path.Combine(pagesDir, relPath);
     Directory.CreateDirectory(Path.GetDirectoryName(full)!);
     File.WriteAllText(full, text, new UTF8Encoding(false));
-    written.Add((relPath.Replace('\\', '/'), Encoding.UTF8.GetByteCount(text)));
+    int bytes = Encoding.UTF8.GetByteCount(text);
+    written.Add((relPath.Replace('\\', '/'), bytes));
+    if (bytes > MaxPageBytes)
+        Console.Error.WriteLine($"WARN: {relPath} exceeds {MaxPageBytes} bytes ({bytes} bytes).");
 }
 void Write(string page, string text) => WriteRaw("dreamforge/" + page + ".txt", text);
 
@@ -106,7 +110,9 @@ List<string> WriteTablePages(string stem, string title, string intro, string hea
 
     // 分割数が変わると見出しと案内も変わるため、出力と同じ文字列の実バイト数で分け直す。
     int pageCount = 1;
-    while (true)
+    bool converged = false;
+    const int MaxPaginationAttempts = 64;
+    for (int attempt = 0; attempt < MaxPaginationAttempts; attempt++)
     {
         parts.Clear();
         var cur = new List<string>();
@@ -119,7 +125,7 @@ List<string> WriteTablePages(string stem, string title, string intro, string hea
             if (size + b > MaxPageBytes && cur.Count > 0)
             {
                 parts.Add(cur); cur = new List<string>();
-                size = Encoding.UTF8.GetByteCount(PageHeader(parts.Count + 1, pageCount));
+                size = headerBytes;
             }
             if (size + b > MaxPageBytes && cur.Count == 0 && pageCount > 1 && !compactNavigation)
             {
@@ -131,8 +137,18 @@ List<string> WriteTablePages(string stem, string title, string intro, string hea
         }
         if (retry) continue;
         if (cur.Count > 0 || parts.Count == 0) parts.Add(cur);
-        if (parts.Count == pageCount) break;
+        if (parts.Count == pageCount) { converged = true; break; }
         pageCount = parts.Count;
+    }
+    if (!converged)
+    {
+        // Keep every row and finish this table without delaying the other pages.
+        compactNavigation = true;
+        parts.Clear();
+        foreach (var row in rows) parts.Add(new List<string> { row });
+        if (parts.Count == 0) parts.Add(new List<string>());
+        paginationFallbacks++;
+        Console.Error.WriteLine($"WARN: {stem} pagination did not converge after {MaxPaginationAttempts} attempts; using one row per page.");
     }
     for (int i = 0; i < parts.Count; i++)
     {
@@ -140,8 +156,6 @@ List<string> WriteTablePages(string stem, string title, string intro, string hea
         var sb = new StringBuilder(PageHeader(i + 1, parts.Count));
         foreach (var r in parts[i]) sb.Append(r).Append('\n');
         string text = sb.ToString();
-        if (Encoding.UTF8.GetByteCount(text) > MaxPageBytes)
-            Console.Error.WriteLine($"WARN: {name} exceeds {MaxPageBytes} bytes; its header and a single table row cannot fit on one page.");
         Write(name, text);
         names.Add(name);
     }
@@ -394,7 +408,9 @@ foreach (var (f, _) in written)
         if (t.Contains(bw, StringComparison.OrdinalIgnoreCase)) Console.Error.WriteLine($"WARN: {f} contains '{bw}'");
 }
 
-foreach (var (f, b) in written.OrderBy(x => x.File, StringComparer.Ordinal)) Console.WriteLine($"{f}\t{b} bytes");
+foreach (var (f, b) in written.OrderBy(x => x.File, StringComparer.Ordinal)) Console.WriteLine($"{f}\t{b} bytes{(b > MaxPageBytes ? " OVERSIZE" : "")}");
+int oversizedPages = written.Count(x => x.Bytes > MaxPageBytes);
+Console.WriteLine($"pages={written.Count} oversized={oversizedPages} pagination_fallbacks={paginationFallbacks} status={(oversizedPages == 0 && paginationFallbacks == 0 ? "ok" : "warning")}");
 Console.WriteLine($"starmap heroes={starMaps.Count} stars={starMaps.Sum(x => x.Stars)} pages={starMaps.Sum(x => x.Pages) + 1} entry={starMapEntry ?? "(none)"}");
 Console.WriteLine($"bases={Content.Bases.Count} uniques={Content.Uniques.Count} sets={Content.Sets.Count} powers={allPowers.Count} listed={powersListed}");
 return 0;

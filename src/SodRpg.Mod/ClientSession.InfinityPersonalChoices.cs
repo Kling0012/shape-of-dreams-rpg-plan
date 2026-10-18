@@ -19,6 +19,21 @@ namespace SodRpg.Mod
         private InfinityPersonalChoiceBarrier _infinityNoticeBarrier;
         private InfinityMode.PersonalChoiceWait _infinityNoticeWait;
 
+        internal bool PersonalEnemyWaypointsActive
+        {
+            get
+            {
+                if (Profile.Run?.Infinity == null) return false;
+                int count = 0;
+                // Clients use the synchronized roster; connectionToClient is server-only.
+                foreach (var player in DewPlayer.gamePlayers)
+                    if (player != null && player.isHumanPlayer
+                        && (!NetworkServer.active || player == DewPlayer.local || player.connectionToClient != null)
+                        && ++count >= 2) return true;
+                return false;
+            }
+        }
+
         public bool CanChooseInfinityPersonal => !CanChooseRunRules && ContinueReady && RunActive
             && InfinityMode.NativeSaveAgreement && Profile.Run.Infinity?.Phase == InfinityPhase.AwaitingChoice
             && Profile.Run.AwaitingChoice && !HasPendingKillClassification && !HasPendingTrades
