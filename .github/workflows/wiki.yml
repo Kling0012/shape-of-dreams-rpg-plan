@@ -3,6 +3,14 @@ name: wiki
 # 装備のデータ・アイコン・生成ツールが変わったら、DokuWiki 用のページを生成して wiki-pages ブランチへ置く。
 # Wiki のサーバーはこのブランチを定期的に取りに行って反映する（サーバー側の秘密情報は GitHub に置かない）。
 on:
+  push:
+    branches: [claude/dreamforge-playable-v0.1, main]
+    paths:
+      - src/SodRpg.Core/**
+      - src/SodRpg.Mod/icons/**
+      - src/SodRpg.Mod/about/metadata.json
+      - tools/WikiGen/**
+      - .github/workflows/wiki.yml
   workflow_dispatch:
 
 permissions:
