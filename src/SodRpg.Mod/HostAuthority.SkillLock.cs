@@ -61,13 +61,19 @@ namespace SodRpg.Mod
                 var hero = caller.hero;
                 if (hero == null || !hero.isActive || !hero.isServer) return;
                 if (msg.heroNetId != 0 && hero.netId != msg.heroNetId) return;
-                float now = Time.time;
+                float now = Time.unscaledTime;
                 if (_skillResyncNext.TryGetValue(caller, out float next) && now < next) return;
                 if (_skillResyncNext.Count > 32) _skillResyncNext.Clear();
                 _skillResyncNext[caller] = now + SkillResyncMinInterval;
-                int sent = ResendHeroSkills(hero);
-                if (sent > 0)
-                    Log.Info("Skill lock watchdog: resent " + sent + " skill state entr" + (sent == 1 ? "y" : "ies") + " for " + caller.playerName + ".");
+                hero.Ability?.SetDirty();
+                hero.Control?.SetDirty();
+                hero.Status?.SetDirty();
+                int sent = ResendHeroSkills(hero, msg.diagnosticSlots);
+                if (sent > 0 && msg.diagnosticSlots != 0)
+                    Log.Info("Skill lock watchdog: resent " + sent + " authoritative skill entries for hero=" + hero.netId
+                        + NativeSkillLockState.DescribeChannels(hero)
+                        + " abilityLocks=" + (hero.Ability == null ? 0UL : hero.Ability.Network_abilityCastLockBitmap)
+                        + " stun=" + (hero.Status != null && hero.Status.hasStun) + ".");
             }
             catch (Exception ex)
             {
@@ -75,15 +81,24 @@ namespace SodRpg.Mod
             }
         }
 
-        private static int ResendHeroSkills(Hero hero)
+        private static int ResendHeroSkills(Hero hero, int diagnosticSlots)
         {
             var manager = hero.Skill;
             if (manager == null) return 0;
-            return Resend(manager.Q) + Resend(manager.W) + Resend(manager.E) + Resend(manager.R)
-                + Resend(manager.Identity) + Resend(manager.Movement);
+            return Resend(hero, manager.Q, diagnosticSlots, 0) + Resend(hero, manager.W, diagnosticSlots, 1)
+                + Resend(hero, manager.E, diagnosticSlots, 2) + Resend(hero, manager.R, diagnosticSlots, 3)
+                + Resend(hero, manager.Identity, diagnosticSlots, 4) + Resend(hero, manager.Movement, diagnosticSlots, 5);
         }
 
-        private static int Resend(SkillTrigger skill)
-            => skill.IsNullOrInactive() || !skill.isServer ? 0 : NativeCooldownSafety.ResendAuthoritative(skill);
+        private static int Resend(Hero hero, SkillTrigger skill, int diagnosticSlots, int slot)
+        {
+            if (skill.IsNullOrInactive() || !skill.isServer) return 0;
+            if ((diagnosticSlots & (1 << slot)) != 0)
+                Log.Info("Skill lock watchdog: host snapshot hero=" + hero.netId + " slot=" + slot
+                    + " skill=" + skill.netId + " casting=" + skill.Network_isCasting
+                    + NativeSkillLockState.DescribeInstances(skill));
+            NativeSkillLockState.Resend(hero, skill);
+            return NativeCooldownSafety.ResendAuthoritative(skill);
+        }
     }
 }

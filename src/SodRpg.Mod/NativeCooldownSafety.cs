@@ -100,7 +100,8 @@ namespace SodRpg.Mod
         /// <summary>
         /// 権威側の現在値を、本体の RPC 形式（RpcSetCooldownTime / RpcSetMinimumDelay / RpcSetCharge）で
         /// そのまま再送する。ゲストのスキル使用不可の安全装置（docs/specs/guest-skill-lock.md）からの依頼専用。
-        /// 値は冪等で、受け取った側は同じ値を上書きするだけ。戻り値は送った項目数。
+        /// Reads current host values at send time. The native reliable channel preserves their order
+        /// with later cast RPCs; no delayed custom snapshot is applied on top. Returns entries sent.
         /// 呼び出し側（HostAuthority.SkillLock）が対象トリガーの生存・サーバ所属を確かめておく。
         /// </summary>
         internal static int ResendAuthoritative(AbilityTrigger trigger)

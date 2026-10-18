@@ -1,0 +1,2 @@
+### 不具合の修正 / Bug fixes
+- 協力プレイの参加者側で、詠唱フラグや発動ロックが残ると記憶の再同期が行われない問題を修正しました。チャージ・詠唱・発動制限をホストの状態から再送し、継続中の能力や状態異常を解除せずに回復を試みます。黒くなった状態が続いたときの診断を、記憶ごとに一度だけ記録します。協力プレイでは全員が同じ版に更新してください。 / Fixed guest skill resync being skipped when casting flags or cast locks remain in co-op. Resync now includes authoritative charges, casting state and ability locks while preserving active abilities and status effects, with one diagnostic snapshot per persistent lock episode and skill. All co-op players must update to the same version.

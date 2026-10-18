@@ -9,7 +9,7 @@ namespace Mirror
 
 namespace UnityEngine
 {
-    public static class Time { public static float unscaledTime; }
+    public static class Time { public static float unscaledTime; public static float timeScale = 1f; }
 }
 
 namespace SodRpg.Core.Game { }
@@ -20,10 +20,19 @@ namespace SodRpg.Mod
     {
         public bool isActive = true;
         public int maxCharges = 1;
+        public float manaCost;
+        public bool ignoreBlock;
+        public bool lockCooldownUntilKilled;
+        public TriggerChannelData channel = new TriggerChannelData();
     }
+
+    public sealed class TriggerChannelData { public float duration = 60f; }
+
+    public enum SkillType { Normal, Ultimate }
 
     public sealed class SkillTrigger
     {
+        public SkillType type;
         public bool isActive = true;
         public bool Network_isCasting;
         public int currentConfigIndex;
@@ -32,6 +41,9 @@ namespace SodRpg.Mod
         public float[] currentMinimumDelays = { 0f };
         public int[] currentCharges = { 1 };
         public bool configCastLocked;
+        public uint netId = 1779;
+        public float GetChannelDurationMultiplier() => 1f;
+        public bool IsConfigLocked(int index) => configCastLocked;
 
         // AbilityTrigger.CanBeReserved/CanBeCast: valid owner, sufficient mana,
         // true self-validator and no EntityAbility bitmap lock in this fixture.
@@ -53,6 +65,9 @@ namespace SodRpg.Mod
         public uint netId = 779;
         public SkillManager Skill = new SkillManager();
         public EntityControl Control = new EntityControl();
+        public EntityAbility Ability = new EntityAbility();
+        public EntityStatus Status = new EntityStatus();
+        public float currentMana = 100f;
     }
 
     public sealed class SkillManager
@@ -61,10 +76,34 @@ namespace SodRpg.Mod
         public SkillTrigger W, E, R, Identity, Movement;
     }
 
-    public sealed class EntityControl { public readonly List<object> ongoingChannels = new List<object>(); }
+    public sealed class Channel
+    {
+        public bool isAlive;
+        public float elapsedTime, duration;
+    }
+    public sealed class EntityControl
+    {
+        public enum BlockableAction { Ability, Dodge }
+        public enum BlockStatus { Allowed, Blocked, BlockedCancelable }
+        public readonly List<object> ongoingChannels = new List<object>();
+        public byte Network_blockAbility, Network_blockAbilityCancelable, Network_blockDodge, Network_blockDodgeCancelable;
+        public BlockStatus IsActionBlocked(BlockableAction action) => BlockStatus.Allowed;
+    }
+    public sealed class EntityAbility { public ulong Network_abilityCastLockBitmap; }
+    public sealed class EntityStatus
+    {
+        public bool hasStun;
+        public readonly List<StatusEffect> statusEffects = new List<StatusEffect>();
+    }
+    public sealed class StatusEffect
+    {
+        public uint netId;
+        public bool isActive;
+        public float? remainingDuration;
+    }
     public sealed class ZoneManager { public bool isInAnyTransition; }
     public static class NetworkedManagerBase<T> { public static T instance; }
-    public sealed class DreamforgeSkillResyncMsg { public int version; public uint heroNetId; }
+    public sealed class DreamforgeSkillResyncMsg { public int version; public uint heroNetId; public int diagnosticSlots; }
 
     public sealed class Actor
     {

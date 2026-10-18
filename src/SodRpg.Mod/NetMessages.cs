@@ -414,5 +414,6 @@ namespace SodRpg.Mod
     {
         public int version = 1;
         public uint heroNetId;
+        public int diagnosticSlots;
     }
 }
