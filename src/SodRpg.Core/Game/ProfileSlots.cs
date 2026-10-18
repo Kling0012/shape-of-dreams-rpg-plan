@@ -381,10 +381,12 @@ namespace SodRpg.Core.Game
             public string ReadAllText(string path)
             {
                 try { return _inner.ReadAllText(path); }
-                catch (IOException ex)
+                catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException || ex is System.Security.SecurityException)
                 {
-                    if (_loading && _readError == null) _readError = ex;
-                    throw;
+                    // Access failures must reach the same pre-mutation boundary as other source I/O errors.
+                    var io = ex as IOException ?? new IOException(ex.Message, ex);
+                    if (_loading && _readError == null) _readError = io;
+                    throw io;
                 }
             }
             public void WriteAllText(string path, string contents) => _inner.WriteAllText(path, contents);

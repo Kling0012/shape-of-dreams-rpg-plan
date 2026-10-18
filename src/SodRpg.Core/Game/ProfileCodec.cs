@@ -36,6 +36,8 @@ namespace SodRpg.Core.Game
         internal static Profile ReadForStore(JsonObject root, List<string> notes, out bool migrated) =>
             ReadProfile(root, notes, true, out migrated);
 
+        // Standalone readers require full snapshots. ReadContinueState expands stored
+        // coopTradeEconomyShared references with the enclosing profile's economy before exposing them.
         public static Profile ReadCheckpointProfile(string text, List<string> notes = null) =>
             ReadProfile(text, notes, false, out _);
 

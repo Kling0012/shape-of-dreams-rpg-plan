@@ -125,8 +125,9 @@ namespace SodRpg.Mod
 
         private void WarnUnconfirmedContinue(string reason)
         {
-            var warning = new Txt("本体の再開保存を確認できません。確認済みの地点と最新4件の未確定チェックポイントを保持しています。",
-                "Native resume save is unconfirmed. Confirmed checkpoints and the latest four pending attempts are retained.");
+            int limit = SodRpg.Core.Game.Profile.MaxPendingContinueCheckpoints;
+            var warning = new Txt($"本体の再開保存を確認できません。確認済みの地点と最新{limit}件の未確定チェックポイントを保持しています。",
+                $"Native resume save is unconfirmed. Confirmed checkpoints and the latest {limit} pending attempts are retained.");
             if (ContinueWarning != warning.ToString()) Log.Warn(warning + " " + reason);
             _continueWarning = warning;
         }

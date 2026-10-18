@@ -44,6 +44,8 @@ namespace SodRpg.Core.Game
             }
         }
 
+        // Store-only representation: the shared marker needs the outer profile's economy.
+        // Native Continue and trade payloads must keep using full WriteCheckpointProfile snapshots.
         internal static string ShareCheckpointEconomy(string snapshot, string economy)
         {
             if (string.IsNullOrEmpty(snapshot) || string.IsNullOrEmpty(economy)) return snapshot;
