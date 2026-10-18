@@ -63,10 +63,8 @@ namespace SodRpg.Mod
             nativeCharacterModelDisplayBounds = true, nativeKillTrackerCullThrottle = true,
             guestSkillLockRecovery = true;
     }
-    internal static class NativeSkillLockRecovery
-    {
-        internal static bool Enabled = true;
-    }
+    // NativePerfPatches.cs が設定を写す先（本物は NativeSkillLockRecovery.cs。本体 API に依存するため、ここでは切り替えだけ模倣）。
+    internal static class NativeSkillLockRecovery { internal static bool Enabled = true; }
     public partial class DreamforgeMod
     {
         internal DreamforgeConfig config = new DreamforgeConfig();
