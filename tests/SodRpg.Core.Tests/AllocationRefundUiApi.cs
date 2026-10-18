@@ -134,6 +134,7 @@ namespace SodRpg.Mod
         private static string HeroName(string key) => key;
         private static string TabIntro(int tab) => "";
         private void CancelStarDrag() { }
+        private void ReleaseTextInput() { }
         private void Close() { }
         private void Act(Func<GameEvent> action, bool affectsBuild) { }
         private void DrawGearTab() { UnityEngine.GUILayout.Ops.Add("tab-content:0"); }

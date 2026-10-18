@@ -329,7 +329,9 @@ namespace SodRpg.Mod
             int previousRarity = _tradeRarityFilter, previousSlot = _tradeSlotFilter;
             GUILayout.BeginHorizontal();
             GUILayout.Label(Loc.T("名前で検索", "Search name"), _st.Small, GUILayout.Width(110));
+            _ime.BeginField("DreamforgeTradeSearch");
             _tradeSearch = GUILayout.TextField(_tradeSearch ?? "", 40, TradeSearchSize);
+            _ime.Track("DreamforgeTradeSearch");
             GUILayout.EndHorizontal();
             GUILayout.BeginHorizontal();
             // Left click advances, right click goes back; "all" sits between the ends of each cycle.

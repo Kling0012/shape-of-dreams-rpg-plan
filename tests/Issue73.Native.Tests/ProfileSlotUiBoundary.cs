@@ -20,6 +20,22 @@ namespace UnityEngine
         internal static GUILayoutOption Width(float width) => new GUILayoutOption();
         internal static GUILayoutOption ExpandHeight(bool expand) => new GUILayoutOption();
         internal static GUILayoutOption MinHeight(float height) => new GUILayoutOption();
+        // #771: 検索欄の IME 再現で抽出した検索欄描画が使う、残りのレイアウト幅。
+        internal static GUILayoutOption Height(float height) => new GUILayoutOption();
+        internal static GUILayoutOption MinWidth(float width) => new GUILayoutOption();
+        internal static GUILayoutOption ExpandWidth(bool expand) => new GUILayoutOption();
+        // テキスト欄は描くたびにコントロール ID を1つ進め、名前付けを受けて編集前の文字列を返す。
+        internal static int TextFieldCount;
+        internal static string TextField(string text, int maxLength, params GUILayoutOption[] options) => DrawnTextField(text);
+        internal static string TextField(string text, GUIStyle style, params GUILayoutOption[] options) => DrawnTextField(text);
+        private static string DrawnTextField(string text)
+        {
+            int id = ++TextFieldCount;
+            GUI.NameNextDrawnControl(id);
+            return text;
+        }
+        internal static void Label(string text, GUIStyle style, params GUILayoutOption[] options) => Labels.Add(text);
+        internal static void Label(GUIContent content, GUIStyle style, params GUILayoutOption[] options) => Labels.Add(content.text);
     }
 }
 
@@ -52,5 +68,7 @@ namespace SodRpg.Mod
     {
         public readonly object Header = new object(), Small = new object(), Warn = new object(),
             Button = new object(), ButtonSel = new object();
+        // #771: 交換タブの検索欄（DrawCoopTradeFilters）が使う折り返しボタン。
+        public readonly object ButtonWrap = new object();
     }
 }

@@ -63,6 +63,11 @@ namespace Mirror
         public static Event current = new Event();
         public EventType type;
         public Vector2 mousePosition;
+        // #771: 検索欄の IME 再現で使うキー入力の境界（ExtractNativePersistence は本文を改めない）。
+        public KeyCode keyCode;
+        public char character;
+        public int button;
+        public void Use() => type = EventType.Used;
     }
     internal sealed class GUIContent { public string text, tooltip; }
     internal sealed class GUIStyle
@@ -126,6 +131,26 @@ namespace Mirror
         public static Vector2 BeginScrollView(Rect position, Vector2 scroll, Rect content) => scroll;
         public static void EndScrollView() { }
         public static bool Button(Rect rect, GUIContent content, GUIStyle style) => false;
+        // #771: 検索欄の IME 再現のための、IMGUI の有効状態と名前付きコントロールの境界。
+        // 本物と同じく SetNextControlName は「次に描くコントロール」への名前付けで、
+        // GetNameOfFocusedControl はキーボードフォーカス中のコントロールの名前を返す。
+        public static bool enabled = true;
+        private static string _nextControlName;
+        private static readonly Dictionary<int, string> ControlNames = new Dictionary<int, string>();
+        public static void SetNextControlName(string name) => _nextControlName = name;
+        public static string GetNameOfFocusedControl()
+            => ControlNames.TryGetValue(GUIUtility.keyboardControl, out string name) ? name : "";
+        internal static void NameNextDrawnControl(int id)
+        {
+            if (_nextControlName == null) return;
+            ControlNames[id] = _nextControlName;
+            _nextControlName = null;
+        }
+        internal static void ResetNamedControls()
+        {
+            _nextControlName = null;
+            ControlNames.Clear();
+        }
     }
     internal static class GUILayoutUtility
     {

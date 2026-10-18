@@ -39,7 +39,7 @@ namespace SodRpg.Mod
                     case 4: label = Loc.T("記録", "Records"); break;
                     default: label = CoopTradeTabLabel(); break;
                 }
-                if (GUILayout.Button(label, i == _tab ? _st.TabSel : _st.Tab)) { CancelStarDrag(); _tab = i; _confirmSalvage = null; _confirmEnhance = null; _confirmBulk = false; _retuneIndex = -1; _confirmAffixReroll = null; }
+                if (GUILayout.Button(label, i == _tab ? _st.TabSel : _st.Tab)) { ReleaseTextInput(); CancelStarDrag(); _tab = i; _confirmSalvage = null; _confirmEnhance = null; _confirmBulk = false; _retuneIndex = -1; _confirmAffixReroll = null; }
             }
             GUILayout.EndHorizontal();
             if (!_s.CoopTradeLocked) DrawProfileSlots();

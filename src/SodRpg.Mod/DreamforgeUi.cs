@@ -75,6 +75,17 @@ namespace SodRpg.Mod
         // メニューの言語はホストかどうかに関係なく各自の設定へ保存する。
         private readonly Action _saveLanguageConfig;
         private readonly UiStyles _st = new UiStyles();
+        private readonly ImeInput _ime = new ImeInput();
+
+        internal bool TextInputFocused => Open && _ime.Focused;
+        internal void ReleaseTextInput() => _ime.Release();
+        private bool _inputFocus = true;
+
+        internal void SetInputFocus(bool hasFocus)
+        {
+            _inputFocus = hasFocus;
+            if (!hasFocus) ReleaseTextInput();
+        }
         private readonly List<Toast> _toasts = new List<Toast>();
 
         private int _tab;
@@ -163,6 +174,7 @@ namespace SodRpg.Mod
 
         public void Toggle()
         {
+            ReleaseTextInput();
             ResetFusionConfirmation();
             Open = !Open;
             if (!Open) { CancelStarDrag(); _s.SavePendingAllocation(); }
@@ -173,6 +185,7 @@ namespace SodRpg.Mod
 
         public void Close()
         {
+            ReleaseTextInput();
             _s.SavePendingAllocation();
             ResetFusionConfirmation();
             CancelStarDrag();
@@ -182,6 +195,7 @@ namespace SodRpg.Mod
 
         public void Dispose()
         {
+            ReleaseTextInput();
             _s.ProfileChanged -= ResetProfileView;
             _st.Dispose();
         }
@@ -390,6 +404,7 @@ namespace SodRpg.Mod
             bool repaint = type == EventType.Repaint;
             if (repaint) MouseOverPanel = false;
             bool layout = LayoutEnabled;
+            _ime.BeginDraw();
             try
             {
                 UpdateSecurePanel();
@@ -454,6 +469,8 @@ namespace SodRpg.Mod
             }
             finally
             {
+                _ime.EndDraw();
+                if (!Open || !_inputFocus) ReleaseTextInput();
                 Content.DisplayMeleeRangeConversion = previousRangeDisplay;
                 Content.DisplayMeleeAttackSpeed = previousMeleeAttackSpeed;
                 GUI.matrix = oldMatrix;
@@ -1710,7 +1727,9 @@ namespace SodRpg.Mod
         {
             GUILayout.BeginHorizontal();
             GUILayout.Label(Loc.T("名前で検索", "Search name"), _st.Small, RelicSearchCaptionWidth);
+            _ime.BeginField("DreamforgeRelicSearch");
             string q = GUILayout.TextField(_relicSearch ?? "", 40, RelicSearchFieldSize);
+            _ime.Track("DreamforgeRelicSearch");
             bool enabled = GUI.enabled;
             GUI.enabled = enabled && q.Length > 0;
             if (GUILayout.Button(Loc.T("解除", "Clear"), _st.Button, RelicSearchClearSize)) q = "";
@@ -3113,13 +3132,14 @@ namespace SodRpg.Mod
             StarRefreshSearch();
             GUILayout.BeginHorizontal();
             GUILayout.Label(Loc.T("星を探す", "Find star"), _starHelpStyle, StarKeystoneHeaderWidth);
-            GUI.SetNextControlName("DreamforgeStarSearch");
+            _ime.BeginField("DreamforgeStarSearch");
             // Handle Enter before TextField can consume it; leave IME composition to the text field.
             var e = Event.current;
             bool next = e.type == EventType.KeyDown && (e.keyCode == KeyCode.Return || e.keyCode == KeyCode.KeypadEnter)
-                && GUI.GetNameOfFocusedControl() == "DreamforgeStarSearch" && Input.compositionString.Length == 0;
+                && GUI.GetNameOfFocusedControl() == "DreamforgeStarSearch" && !_ime.Composing;
             if (next) e.Use();
             string query = GUILayout.TextField(_starSearch, _starSearchStyle, StarFill);
+            _ime.Track("DreamforgeStarSearch");
             if (query != _starSearch)
             {
                 _starSearch = query;
@@ -3572,7 +3592,7 @@ namespace SodRpg.Mod
             var p = _s.Profile;
             if (_codexOpen)
             {
-                if (_codex.Draw(p, _st)) _codexOpen = false;
+                if (_codex.Draw(p, _st, _ime)) { ReleaseTextInput(); _codexOpen = false; }
                 return;
             }
             _scrollRecords = GUILayout.BeginScrollView(_scrollRecords);
