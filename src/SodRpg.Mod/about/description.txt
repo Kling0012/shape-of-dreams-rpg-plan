@@ -2,64 +2,56 @@
 [b]v3.7.6：細かな調整を行いました。[/b]
 
 [h1]Dreamforge RPG[/h1]
-Turns every run into part of a long RPG journey: relics you keep, a risky "secure or delve" choice at every zone, a star map per Traveler, a forge, and long-term goals. Co-op ready.
+Turns every run into part of a long RPG journey: relics you keep, a "secure or delve" choice at every zone, a star map per Traveler, a forge and long-term goals. Co-op ready.
 すべての遠征を長いRPGの旅の一部にするMODです。持ち帰れる装備「遺物」、ゾーンごとの「確保するか、深く潜るか」の決断、旅人ごとの星図、鍛冶、長く遊ぶための目標を加えます。協力プレイにも対応しています。
 
 [h2]Bug reports / 不具合の報告[/h2]
-Bug reports and requests / 不具合の報告と要望: [url=https://github.com/Kling0012/dreamforge-rpg/issues]https://github.com/Kling0012/dreamforge-rpg/issues[/url]
-Patch notes / パッチノート: [url=https://github.com/Kling0012/dreamforge-rpg/releases]https://github.com/Kling0012/dreamforge-rpg/releases[/url]
+Bug reports and requests / 不具合の報告と要望: [url=https://github.com/Kling0012/dreamforge-rpg/issues]github.com/Kling0012/dreamforge-rpg/issues[/url]
+Patch notes / パッチノート: [url=https://github.com/Kling0012/dreamforge-rpg/releases]github.com/Kling0012/dreamforge-rpg/releases[/url]
 
 [h2]Relics / 遺物[/h2]
 [list]
-[*] Enemies drop personal relics for every player (weapon / head / armor / hands / feet / charm), each with its own hand-painted icon. 6 slots, 5 rarities, 360 bases, 1,190 legendary relics and 48 sets. v1.30 adds 44 new powers, 62 memory-pair combos, waypoints, dream depth and elemental reactions.
-[*] 敵を倒すと、プレイヤーごとに別々の遺物が落ちます（主装備・頭・防具・手・足・装飾品の6枠）。遺物には1つずつ絵が付いています。レア度は5段階、土台360種、固有品1,190個、セット48種。v1.30では新しい固有効果44個、合わせ技62個、道標、夢の深さ、属性の反応を追加しました。
-[*] Rare relics carry a minor power; Epics carry two and an epithet named after their first power.
-[*] レアは弱い固有効果を1つ、エピックは固有効果を2つと、1つ目の固有効果にちなんだ銘を持ちます。
-[*] Powers that react to the base game: Q/W/E rotations, critical hits, stuns and slows, overhealing, Essence quality, hunters, shrines and spreading fire.
-[*] 本体の仕組みに反応する固有効果：Q・W・Eの使い分け、会心、スタンやスロウ、超過回復、エッセンスの品質、ハンター、聖堂、燃え広がる火。
-[*] Sets help you complete what you have started: the missing pieces of a set you own drop more often.
-[*] すでに持っているセットの、まだ持っていない部位は出やすくなります。
-[*] Legendaries awaken with use: the Traveler wearing one fills its awakening as they defeat enemies (elites and bosses count more, nightmares double). Awakening has 3 levels; powers grow to 1.25x, 1.5x and 1.8x, and affixes to 1.1x, 1.2x and 1.3x.
-[*] 固有品は使い込むほど目覚めます。装着した旅人で敵を倒すと覚醒の力が溜まり（エリートやボスは多く、悪夢化した敵は2倍）、覚醒は3段階で、固有効果は1.25・1.5・1.8倍、特性は1.1・1.2・1.3倍になります。
+[*] Personal drops for every player in 6 slots and 5 rarities, each with its own icon, including legendary relics and sets.
+[*] 敵を倒すと、プレイヤーごとに別々の遺物が落ちます。部位は6つ、レア度は5段階で、遺物には1つずつ絵が付いています。固有品とセットもあります。
+[*] Rares carry one power and Epics two. Powers react to the base game: Q/W/E rotations, crits, stuns, overhealing, Essence quality and more.
+[*] レアは固有効果を1つ、エピックは2つ持ちます。固有効果は、Q・W・Eの使い分け、会心、スタン、超過回復、エッセンスの品質など、本体の仕組みに反応します。
+[*] Legendaries awaken in 3 levels as you defeat enemies while wearing them.
+[*] 固有品は、装着して敵を倒すほど目覚めます。覚醒は3段階です。
 [/list]
 
 [h2]Secure or Delve / 確保か、深く潜るか[/h2]
 [list]
-[*] New loot starts unsecured. Each new zone is a secure point: Secure to bank everything, or Delve for more and better drops, while you take 6% more damage per delve level. Delving deeper also raises the shard bonus when you finally secure.
-[*] 拾った物はまだ持ち帰っていない状態です。新しいゾーンに着くと確保地点が開き、「確保する」で保管庫に入れるか、「深く潜る」で遺物を多く・良くするかを選びます。潜行が1段深くなるごとに、受けるダメージが6%増えます。深く潜ってから確保すると、欠片のボーナスも増えます。
-[*] 25 dream events may appear at secure points (merchant, forge shrine, twin mirror, cauldron, gate of courage…), and 40 nightmare pacts trade a game curse for bigger rewards.
-[*] 確保地点には25種類の「夢の出来事」（夢の商人・鍛冶の祠・双子の鏡・錬金の釜・勇気の門など）が現れることがあります。40種類の「悪夢の契約」では、本体の呪いと引き換えに見返りを得られます。
+[*] At each new zone, Secure to bank your loot, or Delve for more and better drops while taking 6% more damage per level.
+[*] 新しいゾーンに着くたびに、拾った物を「確保する」で保管庫に入れるか、「深く潜る」で戦利品を増やすかを選びます。1段潜るごとに、受けるダメージが6%増えます。
+[*] Dream events and nightmare pacts may appear at secure points.
+[*] 確保地点には「夢の出来事」や、呪いと引き換えに見返りを得る「悪夢の契約」が現れることがあります。
 [*] Wiped? Unsecured relics go to Lost & Found. Clear 3 combat rooms next run to recover the best one.
-[*] 全滅すると、まだ持ち帰っていない遺物は遺失物になります。次の遠征で戦闘部屋を3つ突破すると、一番良い物を1つ取り戻せます。
+[*] 全滅すると、持ち帰っていない遺物は遺失物になります。次の遠征で戦闘部屋を3つ突破すると、一番良い物を1つ取り戻せます。
 [/list]
 
-[h2]Monsters / 敵[/h2]
+[h2]Enemies / 敵[/h2]
 [list]
-[*] Enemies grow with your delve depth, and stronger gear draws more nightmares. Nightmares can be warded, thorned, ravenous or sundering.
-[*] 敵は深度に合わせて強くなり、強い装備で潜るほど悪夢の敵が増えます。悪夢には結界・棘皮・飢渇・破甲などの性質があります。
-[*] Dream pressure multiplies enemy HP and damage using the party's average Dream Level and spent star points, not player count. Low-level joiners lower the average. Higher pressure also mixes additional enemies into each combat wave, but never adds bosses; bosses still receive the HP and damage multipliers. Added enemies grant rewards scaled to their added density.
-[*] 「夢の圧」は参加者の夢のレベルと振った星ポイントの平均から敵HP・与ダメージを強化します。人数の合計ではなく、低いレベルの人が加わると圧は下がります。圧が高まると敵の数も増え、戦闘中の各ウェーブに混ざって出現します。追加分の報酬は増加幅に応じて調整します。ボスの数は増やさず、HP・与ダメージの強化だけが反映されます。
-[*] Higher dream pressure also makes shards drop more often and enemies turn into nightmares more often (up to x1.5 each). Not applied in Infinity.
-[*] 夢の圧が高いほど、欠片が出やすくなり、敵も悪夢化しやすくなります（それぞれ最大1.5倍）。インフィニティでは適用されません。
-[*] 13 dream variants: base-game enemies reborn with new names, colors, abilities and better loot.
-[*] 本体の敵をもとにした「夢の変種」13種。名前・色・能力が変わり、倒すと良い戦利品が出ます。
+[*] Enemies grow with delve depth, and stronger gear draws more nightmares with extra traits.
+[*] 敵は深さに合わせて強くなり、強い装備で潜るほど、特別な性質を持つ悪夢の敵が増えます。
+[*] Dream pressure raises enemy HP, damage and numbers from the party's average progress, not player count. Bosses are never added.
+[*] 「夢の圧」は、人数ではなく参加者の成長の平均から、敵のHP・与ダメージ・数を強化します。ボスの数は増えません。
+[*] Dream variants: base-game enemies reborn with new looks, abilities and better loot.
+[*] 本体の敵をもとにした「夢の変種」は、見た目と能力が変わり、良い戦利品を落とします。
 [/list]
 
 [h2]Growth / 成長[/h2]
 [list]
-[*] Each Traveler earns their own star XP and up to 300 points, plus codex bonuses. Added 506 stars: memory-specific routes (7 per Traveler, 6 for Bismuth) and eight dream-ring stars each. Route stars form chains; linked bonuses work only with the matching memory equipped. Respec is free.
-[*] 星の経験とポイントは旅人ごとに独立し、最大300ポイント＋図鑑のボーナスを得ます。記憶ごとのルート（各7本、Bismuthは6本）と夢の輪8星、計506星を追加。ルートは前の星から順に開き、連携の星は対応する記憶を装着中だけ有効です。振り直しは無料です。夢のレベルは工房や夢の圧に使い、星ポイントには使いません。
-[*] Forge: enhance to +5 (milestones at +3 and +5 add an affix or a power), retune an affix choosing from 3 options, salvage, transmute (pick the result slot) and craft. The workshop unlocks convenience upgrades.
-[*] 鍛冶では強化（+5まで。+3と+5の節目で特性や固有効果が増えます）・再調律（3つの候補から選べます）・分解・合成（結果の枠を選べます）・製作ができます。工房では鞄や保管庫の拡張などの便利な強化を解放できます。
-[*] 44 kinds of bounties each run, 60 daily dreams, 90 feats with rewards, and traveler mastery.
-[*] 遠征ごとの依頼（44種類）、日替わりの「今日の夢」（60種類）、報酬つきの偉業（90個）、旅人の熟練度があります。
+[*] Each Traveler has their own star map, star XP and points. Route stars strengthen specific memories. Respec is free.
+[*] 旅人ごとに星図があり、星の経験とポイントも旅人ごとに別です。記憶ごとのルートの星は、その記憶を強くします。振り直しは無料です。
+[*] Forge: enhance, retune, salvage, transmute and craft. The workshop unlocks convenience upgrades.
+[*] 鍛冶では強化・再調律・分解・合成・製作ができます。工房では鞄や保管庫の拡張などを解放できます。
+[*] Bounties every run, daily dreams, feats with rewards and Traveler mastery.
+[*] 遠征ごとの依頼、日替わりの「今日の夢」、報酬つきの偉業、旅人の熟練度があります。
 [/list]
 
 [h2]Performance / 軽さ[/h2]
-[list]
-[*] The mod itself costs well under 0.1 ms per frame. Optional settings lighten the whole game: an FPS cap while the game is in the background, and lighter rendering (Light / Strong / Max).
-[*] このMOD自体の処理は1フレームあたり0.1ミリ秒未満です。設定でゲームが裏にあるときのFPS上限や、描画の軽量化（軽め・強め・最大）を選べます。
-[/list]
+Optional settings lighten the whole game: an FPS cap in the background and lighter rendering.
+設定でゲーム全体を軽くできます。裏にあるときのFPS上限や、描画の軽量化を選べます。
 
 [h2]Controls / 操作[/h2]
 [list]
