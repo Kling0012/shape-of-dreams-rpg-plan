@@ -254,6 +254,43 @@ namespace SodRpg.Mod.Startup.Tests
             Assert.Null(driver.Find(offsets, "Skin_"));
         }
 
+        [Fact]
+        public void Cache_EntityNameValueEditOnKeptElement_IsNotDetected_DocumentedLimitation()
+        {
+            // Documented limitation (docs/specs/perf-loop/20261018-1503.md): the key compares
+            // references only, so rewriting entityName on a kept element changes nothing the
+            // key checks. The stale result keeps serving and the search does not re-run, even
+            // though a fresh search (SimulatedFindOffset) would now return null. The mod
+            // guides users to disable nativeAccessoryOffsetCache for such edits instead; the
+            // snapshot-entityName-references fix stays recorded as an unimplemented idea.
+            var driver = new CacheDriver();
+            List<TestOffset> offsets = SampleList();
+            Assert.Same(offsets[0], driver.Find(offsets, "Hero_A"));
+            Assert.Equal(1, driver.Searches);
+
+            offsets[0].entityName = "Hero_X";
+
+            Assert.Same(offsets[0], driver.Find(offsets, "Hero_A"));
+            Assert.Equal(1, driver.Searches);
+            Assert.Null(SimulatedFindOffset(offsets, "Hero_A"));
+        }
+
+        [Fact]
+        public void StoreGate_StoresOnlyWhenEnabledAndNativeSearchRan()
+        {
+            // Postfix gate: with the option off, the Postfix must not store even though the
+            // native search ran (__runOriginal true) — the Prefix then re-runs the search
+            // every call, and storing would allocate the key snapshot every frame.
+            Assert.False(AccessoryOffsetStoreGate.ShouldStore(disabled: false, optionEnabled: false, ranOriginal: true));
+            Assert.False(AccessoryOffsetStoreGate.ShouldStore(disabled: false, optionEnabled: false, ranOriginal: false));
+            // Another mod's prefix substituted the result: never store it.
+            Assert.False(AccessoryOffsetStoreGate.ShouldStore(disabled: false, optionEnabled: true, ranOriginal: false));
+            // Runtime failure latched the patch off: never store again.
+            Assert.False(AccessoryOffsetStoreGate.ShouldStore(disabled: true, optionEnabled: true, ranOriginal: true));
+            // The one storing combination.
+            Assert.True(AccessoryOffsetStoreGate.ShouldStore(disabled: false, optionEnabled: true, ranOriginal: true));
+        }
+
         private static string Describe(TestOffset offset)
             => offset == null ? "null" : offset.entityName + "@" + RuntimeHelpers.GetHashCode(offset).ToString();
     }

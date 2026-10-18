@@ -419,8 +419,10 @@ namespace SodRpg.Mod
         {
             // Cache only what the native search itself produced. When another mod's prefix
             // skips the original (__runOriginal false), its substituted result must not
-            // enter this cache; the next call then runs the native search again.
-            if (_disabled || !__runOriginal) return;
+            // enter this cache; the next call then runs the native search again. The option
+            // check keeps the disabled path equal to the Prefix: no store, no key snapshot
+            // allocation, only the native search runs.
+            if (!AccessoryOffsetStoreGate.ShouldStore(_disabled, NativePerfOptions.AccessoryOffset, __runOriginal)) return;
             try
             {
                 Caches.GetValue(__instance, CreateCache)

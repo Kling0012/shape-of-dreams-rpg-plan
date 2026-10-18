@@ -53,4 +53,16 @@ namespace SodRpg.Mod
             _stored = true;
         }
     }
+
+    // Store gate for NativeAccessoryOffsetPerf's Postfix. Kept free of game types, like the
+    // key and cache above, so the startup test suite links this file directly.
+    internal static class AccessoryOffsetStoreGate
+    {
+        // Store only what the native search itself produced (ranOriginal) and only while the
+        // option is enabled. With the option off the Prefix skips the cache and lets the
+        // native search run every call; a store here would then allocate the key's element
+        // snapshot every frame (principle II) and make "disabled" heavier than no patch.
+        internal static bool ShouldStore(bool disabled, bool optionEnabled, bool ranOriginal)
+            => optionEnabled && !disabled && ranOriginal;
+    }
 }
