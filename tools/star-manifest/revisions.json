@@ -33,6 +33,212 @@
     "centers": [
       "h.husk.ring.vessel",
       "h.husk.ring.recall"
+    ],
+    "removed": [
+      {
+        "id": "husk.run.g1",
+        "maxRank": 1,
+        "rankCost": 1,
+        "revision": 3
+      },
+      {
+        "id": "husk.run.m1",
+        "maxRank": 1,
+        "rankCost": 1,
+        "revision": 3
+      },
+      {
+        "id": "husk.run.m2",
+        "maxRank": 1,
+        "rankCost": 1,
+        "revision": 3
+      },
+      {
+        "id": "husk.run.choice",
+        "maxRank": 1,
+        "rankCost": 1,
+        "revision": 3
+      }
+    ]
+  },
+  "aurena": {
+    "revision": 3,
+    "source": "docs/specs/run-growth-tanks-only.md",
+    "removed": [
+      {
+        "id": "aurena.run.g1",
+        "maxRank": 1,
+        "rankCost": 1,
+        "revision": 3
+      },
+      {
+        "id": "aurena.run.m1",
+        "maxRank": 1,
+        "rankCost": 1,
+        "revision": 3
+      },
+      {
+        "id": "aurena.run.m2",
+        "maxRank": 1,
+        "rankCost": 1,
+        "revision": 3
+      },
+      {
+        "id": "aurena.run.choice",
+        "maxRank": 1,
+        "rankCost": 1,
+        "revision": 3
+      }
+    ]
+  },
+  "bismuth": {
+    "revision": 3,
+    "source": "docs/specs/run-growth-tanks-only.md",
+    "removed": [
+      {
+        "id": "bismuth.run.g1",
+        "maxRank": 1,
+        "rankCost": 1,
+        "revision": 3
+      },
+      {
+        "id": "bismuth.run.m1",
+        "maxRank": 1,
+        "rankCost": 1,
+        "revision": 3
+      },
+      {
+        "id": "bismuth.run.m2",
+        "maxRank": 1,
+        "rankCost": 1,
+        "revision": 3
+      },
+      {
+        "id": "bismuth.run.choice",
+        "maxRank": 1,
+        "rankCost": 1,
+        "revision": 3
+      }
+    ]
+  },
+  "lacerta": {
+    "revision": 3,
+    "source": "docs/specs/run-growth-tanks-only.md",
+    "removed": [
+      {
+        "id": "lacerta.run.g1",
+        "maxRank": 1,
+        "rankCost": 1,
+        "revision": 3
+      },
+      {
+        "id": "lacerta.run.m1",
+        "maxRank": 1,
+        "rankCost": 1,
+        "revision": 3
+      },
+      {
+        "id": "lacerta.run.m2",
+        "maxRank": 1,
+        "rankCost": 1,
+        "revision": 3
+      },
+      {
+        "id": "lacerta.run.choice",
+        "maxRank": 1,
+        "rankCost": 1,
+        "revision": 3
+      }
+    ]
+  },
+  "mist": {
+    "revision": 3,
+    "source": "docs/specs/run-growth-tanks-only.md",
+    "removed": [
+      {
+        "id": "mist.run.g1",
+        "maxRank": 1,
+        "rankCost": 1,
+        "revision": 3
+      },
+      {
+        "id": "mist.run.m1",
+        "maxRank": 1,
+        "rankCost": 1,
+        "revision": 3
+      },
+      {
+        "id": "mist.run.m2",
+        "maxRank": 1,
+        "rankCost": 1,
+        "revision": 3
+      },
+      {
+        "id": "mist.run.choice",
+        "maxRank": 1,
+        "rankCost": 1,
+        "revision": 3
+      }
+    ]
+  },
+  "nachia": {
+    "revision": 3,
+    "source": "docs/specs/run-growth-tanks-only.md",
+    "removed": [
+      {
+        "id": "nachia.run.g1",
+        "maxRank": 1,
+        "rankCost": 1,
+        "revision": 3
+      },
+      {
+        "id": "nachia.run.m1",
+        "maxRank": 1,
+        "rankCost": 1,
+        "revision": 3
+      },
+      {
+        "id": "nachia.run.m2",
+        "maxRank": 1,
+        "rankCost": 1,
+        "revision": 3
+      },
+      {
+        "id": "nachia.run.choice",
+        "maxRank": 1,
+        "rankCost": 1,
+        "revision": 3
+      }
+    ]
+  },
+  "yubar": {
+    "revision": 3,
+    "source": "docs/specs/run-growth-tanks-only.md",
+    "removed": [
+      {
+        "id": "yubar.run.g1",
+        "maxRank": 1,
+        "rankCost": 1,
+        "revision": 3
+      },
+      {
+        "id": "yubar.run.m1",
+        "maxRank": 1,
+        "rankCost": 1,
+        "revision": 3
+      },
+      {
+        "id": "yubar.run.m2",
+        "maxRank": 1,
+        "rankCost": 1,
+        "revision": 3
+      },
+      {
+        "id": "yubar.run.choice",
+        "maxRank": 1,
+        "rankCost": 1,
+        "revision": 3
+      }
     ]
   }
 }

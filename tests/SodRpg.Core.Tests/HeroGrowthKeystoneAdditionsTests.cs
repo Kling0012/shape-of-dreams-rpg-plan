@@ -1,18 +1,13 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Text.Json;
-using BalanceSim;
 using SodRpg.Core.Game;
 using Xunit;
 
 namespace SodRpg.Core.Tests
 {
     /// <summary>
-    /// v2.10 の追加分（feat/hero-run-growth-1016）：Aurena/Lacerta/Nachia/Yubar/Bismuth の遠征成長と
-    /// Aurena/Nachia/Yubar/Bismuth の刻印各2個。既存の RunGrowth（StarAdditionsV132・BalanceSimV132）と
-    /// 生成星図（GeneratedHeroAcceptance）のテストと同じ形で、追加した分だけを確かめる。
+    /// v2.10 で追加した刻印と、タンク以外の遠征の鍛錬を外したあとの星図を確かめる。
     /// </summary>
     [Collection("Generated hero registry")]
     public class HeroGrowthKeystoneAdditionsTests : IClassFixture<StarRegistryCleanupFixture>
@@ -52,93 +47,25 @@ namespace SodRpg.Core.Tests
 
         private static string Local(string hero, string suffix) => hero.Substring("Hero_".Length).ToLowerInvariant() + suffix;
 
-        /// <summary>tools/balance/run-growth.json の effects 表（生成定数）。</summary>
-        private static Dictionary<string, decimal> BalanceEffects()
-        {
-            string path = null;
-            for (var dir = new DirectoryInfo(AppContext.BaseDirectory); dir != null; dir = dir.Parent)
-            {
-                string candidate = Path.Combine(dir.FullName, "tools", "balance", "run-growth.json");
-                if (File.Exists(candidate)) { path = candidate; break; }
-            }
-            Assert.NotNull(path);
-            var effects = new Dictionary<string, decimal>(StringComparer.Ordinal);
-            using (var document = JsonDocument.Parse(File.ReadAllText(path)))
-                foreach (var field in document.RootElement.GetProperty("effects").EnumerateObject())
-                    effects.Add(field.Name, field.Value.GetDecimal());
-            return effects;
-        }
-
-        private static RunGrowthEntry BuyGrowth(string hero, params string[] extra)
-        {
-            var profile = Funded(hero);
-            var purchases = new List<StarPurchase> { new StarPurchase(Local(hero, ".run.g1")) };
-            foreach (string id in extra) purchases.Add(new StarPurchase(id));
-            V132Builds.BuyStars(profile, hero, purchases);
-            return Assert.Single(Build.Compute(profile, hero, 0).RunGrowths);
-        }
-
         [Theory, MemberData(nameof(GrowthHeroCases))]
-        public void Growth_stacks_on_the_added_condition_and_stops_at_the_cap_from_the_balance_table(string hero, RunGrowthTrigger trigger)
+        public void Growth_is_absent_for_the_former_added_condition(string hero, RunGrowthTrigger trigger)
         {
             RegisterAll();
-            var effects = BalanceEffects();
-            string prefix = Local(hero, ".run.g1");
-            var entry = BuyGrowth(hero);
-            Assert.Equal(prefix, entry.StarId);
-            Assert.Equal(trigger, entry.Trigger);
-            Assert.Equal((int)effects[prefix + "/growth/threshold"], entry.Threshold);
-            Assert.Equal((int)effects[prefix + "/growth/cap"], entry.Cap);
-            Assert.Equal(0, entry.EffectPercent);
-            Assert.Equal(1, entry.GainMultiplier);
-
-            // 条件の出来事（このトリガー）だけで溜まり、ほかのトリガーは数えない。
-            var ledger = new RunGrowthLedger();
-            ledger.EnsureRun("test");
-            RunGrowthTrigger other = trigger == RunGrowthTrigger.EnemyKill ? RunGrowthTrigger.ParrySuccess : RunGrowthTrigger.EnemyKill;
-            Assert.Equal(0, ledger.Gain("owner", entry, other, 1d));
-            for (int i = 1; i < entry.Threshold; i++)
-                Assert.Equal(0, ledger.Gain("owner", entry, trigger, 1d)); // 閾値の直前までは進行だけが溜まる
-            Assert.Equal(1, ledger.Gain("owner", entry, trigger, 1d));
-            Assert.Equal(1, ledger.Stacks("owner", entry.StarId));
-
-            // 上限を超えて与えても cap で止まり、効果量はバランス表の1スタック分 × cap。
-            for (int i = 0; i < entry.Cap * entry.Threshold + entry.Threshold; i++) ledger.Gain("owner", entry, trigger, 1d);
-            Assert.Equal(entry.Cap, ledger.Stacks("owner", entry.StarId));
-            Assert.Equal(0, ledger.Gain("owner", entry, trigger, 1d)); // 上限では進行も貯めない
-            for (int i = 0; i < entry.Effects.Count; i++)
-            {
-                decimal perStack = effects[prefix + "/growth/effects/" + i + "/amount"];
-                Assert.Equal(perStack, Math.Round((decimal)RunGrowth.StatTotal(entry, entry.Effects[i], 1), 6));
-                Assert.Equal(entry.Cap * perStack, Math.Round((decimal)RunGrowth.StatTotal(entry, entry.Effects[i], entry.Cap), 6));
-            }
+            string prefix = Local(hero, ".run.");
+            Assert.DoesNotContain(HeroSigils.TreeFor(hero), node => node.Id.StartsWith(prefix, StringComparison.Ordinal));
+            Assert.Empty(Build.Compute(Funded(hero), hero, 0).RunGrowths);
         }
 
         [Fact]
-        public void Growth_choice_and_cap_stars_compose_for_the_added_travelers()
+        public void Growth_choice_and_cap_stars_are_absent_for_the_removed_travelers()
         {
             RegisterAll();
-            foreach (string hero in GrowthHeroes)
+            foreach (string hero in GrowthHeroes.Concat(new[] { "Hero_Husk", "Hero_Mist" }))
             {
-                // 既存4人と同じ型：choice は2つの RunGrowthModifier の桁で、g1＋m1＋m2 に重なる。
-                var profile = Funded(hero);
-                V132Builds.BuyStars(profile, hero, new[]
-                {
-                    new StarPurchase(Local(hero, ".run.g1")), new StarPurchase(Local(hero, ".run.m1")),
-                    new StarPurchase(Local(hero, ".run.m2")), new StarPurchase(Local(hero, ".run.choice"), 0),
-                });
-                var boosted = Assert.Single(Build.Compute(profile, hero, 0).RunGrowths);
-                Assert.Equal(100, boosted.Cap);  // 60 + 20 + 20
-                Assert.Equal(50, boosted.EffectPercent);
-                Assert.Equal(1, boosted.GainMultiplier);
-                Assert.Contains(Local(hero, ".run.m1"), boosted.ContributorIds);
-                Assert.Contains(Local(hero, ".run.choice"), boosted.ContributorIds);
-
-                profile.Hero(hero).TalentChoices[Local(hero, ".run.choice")] = 1; // 上限 +20 の選択肢
-                var raised = Assert.Single(Build.Compute(profile, hero, 0).RunGrowths);
-                Assert.Equal(120, raised.Cap);
-                Assert.Equal(0, raised.EffectPercent);
-                Assert.Equal(1, raised.GainMultiplier);
+                var tree = HeroSigils.TreeFor(hero);
+                foreach (string suffix in new[] { ".run.g1", ".run.m1", ".run.m2", ".run.choice" })
+                    Assert.DoesNotContain(tree, node => node.Id == Local(hero, suffix));
+                Assert.Empty(Build.Compute(Funded(hero), hero, 0).RunGrowths);
             }
         }
 
@@ -255,9 +182,9 @@ namespace SodRpg.Core.Tests
             // tools/star-manifest/validate.py の EXPECTED（各自の新設行）に、共有の外周169行と移行の authored 行を足した総数。
             var authoredTotals = new Dictionary<string, int>(StringComparer.Ordinal)
             {
-                ["Hero_Aurena"] = 730, ["Hero_Bismuth"] = 723, ["Hero_Cetus"] = 874, ["Hero_Husk"] = 862,
-                ["Hero_Lacerta"] = 852, ["Hero_Mist"] = 863, ["Hero_Nachia"] = 721, ["Hero_Vesper"] = 857,
-                ["Hero_Yubar"] = 856,
+                ["Hero_Aurena"] = 726, ["Hero_Bismuth"] = 719, ["Hero_Cetus"] = 874, ["Hero_Husk"] = 858,
+                ["Hero_Lacerta"] = 848, ["Hero_Mist"] = 859, ["Hero_Nachia"] = 717, ["Hero_Vesper"] = 857,
+                ["Hero_Yubar"] = 852,
             };
             foreach (string hero in StarClusters.GeneratedHeroes)
             {
