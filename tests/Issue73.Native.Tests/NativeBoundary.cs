@@ -146,6 +146,9 @@ namespace SodRpg.Mod
         private static int _nextId;
         private readonly int _id = ++_nextId;
         public int GetInstanceID() => _id;
+        // 本体では Actor のプロパティ。NativeSleepPositionPerf（#751）の IL 照合が
+        // typeof(Actor) の getter を探すため、フィールドではなくプロパティにする。
+        public UnityEngine.Vector3 position { get; set; }
         public Actor parentActor;
         public readonly Dictionary<string, string> persistentSyncedData = new Dictionary<string, string>();
         public readonly List<(DewPlayer Target, object Message)> Sent = new List<(DewPlayer, object)>();
@@ -178,7 +181,6 @@ namespace SodRpg.Mod
         // 敵担当制（HostAuthority.EnemyOwnership.cs）は本体と同じく Status 側を正とする。
         public float currentHealth { get => Status.currentHealth; set => Status.currentHealth = value; }
         public float maxHealth => Status.maxHealth;
-        public UnityEngine.Vector3 position;
         public UnityEngine.Vector3 agentPosition => position;
         public DewPlayer owner;
         public EntityAI AI;
@@ -567,6 +569,11 @@ namespace SodRpg.Mod
     }
     internal class GameMod_Limbo { public int depth; }
     internal sealed class Zone { public string name; }
+    // BountyReportBatching.cs（リンク）の境界判定（BountyReportsBeforeBoundary）が対象に取る
+    // 本体の結果確定入口。ハーネスでは Harmony の検証は行わないため、型とメソッドの形だけ。
+    internal sealed class GameResultManager { public void WrapUp(DewGameResult.ResultType type) { } }
+    // DewPersistence.SerializeGameData(LoadNodeSettings) の引数の型（本体と同じ名前）。
+    internal sealed class LoadNodeSettings { }
     internal static class DewPersistence
     {
         internal sealed class GameData
@@ -576,6 +583,7 @@ namespace SodRpg.Mod
         }
         internal sealed class PlayerData { public string playerGuid; }
         public static GameData SerializeGameData() => new GameData();
+        public static GameData SerializeGameData(LoadNodeSettings settings) => new GameData();
         public static void ApplyGameData(GameData data, Action onFinish = null) => onFinish?.Invoke();
     }
     internal static class DewSave
@@ -699,6 +707,11 @@ namespace SodRpg.Mod
         }
         private readonly Dictionary<int, MemoryActivationIdentity> _nativeBaptismEndings = new Dictionary<int, MemoryActivationIdentity>();
         private readonly Dictionary<Hero, HeroRuntime> _runtimes = new Dictionary<Hero, HeroRuntime>();
+        // HostAuthority.cs（リンク外）の単発報告の送信。ここでは境界として呼び出しの記録だけを残す。
+        internal readonly List<(HeroRuntime Rt, BountyReportKind Kind, int Value)> SentBountyReports
+            = new List<(HeroRuntime, BountyReportKind, int)>();
+        private void SendBountyReport(HeroRuntime rt, BountyReportKind kind, int value) =>
+            SentBountyReports.Add((rt, kind, value));
         private readonly Dictionary<DewPlayer, ReceivedBuild> _builds = new Dictionary<DewPlayer, ReceivedBuild>();
         private readonly Dictionary<DewPlayer, BuildTransferReceiver> _incomingBuilds = new Dictionary<DewPlayer, BuildTransferReceiver>();
         private readonly Dictionary<DewPlayer, BuildUpdateCoalescer> _buildUpdates = new Dictionary<DewPlayer, BuildUpdateCoalescer>();
@@ -757,6 +770,10 @@ namespace SodRpg.Mod
         {
             public Hero Hero;
             public ReceivedBuild AppliedBuild;
+            // HostAuthority.cs の HeroRuntime と同じ、集計報告の未送信カウンタ（BountyReportBatching.cs）。
+            public string PendingBountyRun;
+            public int PendingBountyShields, PendingBountyHeals;
+            public readonly int[] PendingElementalKills = new int[16];
             public readonly List<PendingGimmick> PendingGimmicks = new List<PendingGimmick>();
             public readonly Dictionary<Summon, DataProcessor<DamageData, Actor, Entity>> Summons =
                 new Dictionary<Summon, DataProcessor<DamageData, Actor, Entity>>();

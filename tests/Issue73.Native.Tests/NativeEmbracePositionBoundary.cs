@@ -34,7 +34,7 @@ namespace SodRpg.Mod
     {
         public bool nativeStatusDurationSync = true, nativeWeaponFxScan = true, nativeObstacleAvoidance = true,
             nativeAggroPropagation = true, nativeOwnershipSpawnCounts = true, nativeProcCoalesce = true,
-            nativeEmbracePositionReuse = true;
+            nativeEmbracePositionReuse = true, nativeSleepPositionReuse = true;
     }
     public partial class DreamforgeMod
     {

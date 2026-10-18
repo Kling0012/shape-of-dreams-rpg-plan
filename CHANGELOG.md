@@ -10,6 +10,13 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v3.7.5 — Remove unofferable relics from a trade in one click, plus cooking and mod-loading fixes（2026-10-18）
+
+### 新機能 / New features
+- 交換画面で、提示できなくなった遺物を警告横のボタンからまとめて外せるようにしました。提示中の欠片と調律石の数は保ちます。 / Added a button beside the trade warning to remove all relics that can no longer be offered while preserving the offered shard and tuning amounts.
+
+---
+
 ## v3.7.4 — Trade tab relic description fix（2026-10-18）
 
 ### 不具合の修正 / Bug fixes
