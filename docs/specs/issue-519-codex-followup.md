@@ -21,7 +21,7 @@
 
 ## 受け付け審査の懸念への対応
 
-新規テスト・テストケースは追加していない。既存テストだけでは直接の証明にならないため、一時コンソールで本番ソースの処理を実行し、変更前後を観測した。保存先は `/tmp/pr540-codex-observation-Ec6nD3oD/`。実行コマンドは `python3 /tmp/pr540-codex-observation-Ec6nD3oD/observe.py <mode>`（`original` / `no-invalidation` / `no-discovery` / `current`）。ここには一時ソースと各モードのログを残したが、恒久的な回帰テストではない。
+新規テスト・テストケースは追加していない。既存テストだけでは直接の証明にならないため、一時コンソールで本番ソースの処理を実行し、変更前後を観測した。保存先は `/tmp/pr540-codex-observation-Ec6nD3oD/`。実行コマンドは `python3 /tmp/pr540-codex-observation-Ec6nD3oD/observe.py <mode>`（`original` / `no-invalidation` / `no-discovery` / `current`）。ここには一時ソースと各モードのログを残したが、恒久的な回帰テストではない。上の `/tmp` のパスは作業時だけの一時領域で、後から再現することはできない。観測の内容は、この文書の表と本文の記録がすべてである。
 
 既存の `tests/repro/issue522/extract.py` と同じブロック抽出で、鍛冶の `if (fbConfirm)`、`Act`、`CodexView` の `Summary`・`Sync`・文字列再構築を本番から取り出した。`CodexPresenter` と Core のソースも実行した。セッションの通知・保存・MarkDirty、色の解析は境界代替で、ボタン描画・入力処理は含まない。元実装と片側を外す比較は一時ソースだけで行い、作業ツリーは戻していない。
 

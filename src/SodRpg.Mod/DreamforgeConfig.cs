@@ -108,6 +108,9 @@ namespace SodRpg.Mod
         [LabelText("Coalesce same-frame duplicate proc projectiles / 同一フレームの同じ対象への同種反応弾を1本にまとめる")]
         public bool nativeProcCoalesce = true;
 
+        [LabelText("Skip unchanged baked-mesh lookups for face attachments / 面に付ける装飾の変わっていない焼きメッシュの照会を省く")]
+        public bool nativeAttachFaceIdle = true;
+
         [LabelText("Reuse embrace skill position reads / 取り込み中の記憶の座標読み出しを毎フレーム1回にまとめる")]
         public bool nativeEmbracePositionReuse = true;
 
@@ -137,6 +140,9 @@ namespace SodRpg.Mod
 
         [LabelText("Throttle kill-tracker cleanup scans to once per second (host) / 撃破追跡の掃除走査を1秒に1回に間引く（ホスト）")]
         public bool nativeKillTrackerCullThrottle = true;
+
+        [LabelText("Skip repeated default-cursor resets (software cursor off) / ソフトウェアカーソル無効中の同じ既定カーソルの再設定を省く")]
+        public bool nativeCursorIdle = true;
 
         [LabelText("Level essence slots: add essence slots as the hero levels up (the host's setting applies) /\nレベル連動のエッセンス枠：英雄のレベルに応じて記憶のエッセンス枠を増やす（ホストの設定が使われる）")]
         public bool levelEssenceSlots = true;

@@ -122,9 +122,15 @@ namespace SodRpg.Mod
                 if (HumanOmenPlayers() < 2)
                 {
                     // A departed partner must not leave a lone traveler behind a 90% ward.
-                    ClearCoopOmen();
-                    _coopBatchClosed = true;
-                    SendRoomOmen();
+                    // ClearCoopOmen zeroes _coopWardLimit and a ward room only begins with two
+                    // or more humans (RollCoop never draws one for a solo party), so this runs
+                    // exactly once per room; afterwards the message content cannot change again.
+                    if (_coopWardLimit > 0)
+                    {
+                        ClearCoopOmen();
+                        _coopBatchClosed = true;
+                        SendRoomOmen();
+                    }
                     return;
                 }
                 float now = Time.time;
@@ -190,6 +196,7 @@ namespace SodRpg.Mod
                     if (!float.IsPositiveInfinity(_coopFirstSpawn) && !pending && now - _coopLastSpawn > InitialSpawnGap)
                         _coopBatchClosed = true;
                 }
+                bool anyWardLive = false;
                 for (int i = 0; i < _coopWardLimit; i++)
                 {
                     var ward = _coopWards[i];
@@ -206,8 +213,12 @@ namespace SodRpg.Mod
                         ward.LastHit = float.NegativeInfinity;
                         _coopSyncDirty = true;
                     }
+                    if (ward.Monster != null) anyWardLive = true;
                 }
-                if (_coopSyncDirty || Time.unscaledTime >= _nextCoopSync)
+                // Clients expire the ward snapshot after 4 seconds, so a live ward needs the 1 Hz
+                // keepalive and countdown refresh. With no live ward left, the message is identical
+                // to the client's own expired state and idle resends are skipped.
+                if (_coopSyncDirty || anyWardLive && Time.unscaledTime >= _nextCoopSync)
                 {
                     _coopSyncDirty = false;
                     _nextCoopSync = Time.unscaledTime + 1f;

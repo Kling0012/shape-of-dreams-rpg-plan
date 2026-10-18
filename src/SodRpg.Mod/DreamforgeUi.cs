@@ -1649,7 +1649,12 @@ namespace SodRpg.Mod
                 return n > 0 ? $"{Content.SlotName(slot)} <color=#bcbcd2>{n}</color>" : Content.SlotName(slot).ToString();
             }
             EnsureStashCache(p);
-            return _slotTabLabels[(int)slot];
+            // 呼び出し元は Content.SlotOrder の枠だけを渡す前提。将来、枠が増えて範囲外・未設定の値が来ても
+            // 例外を出さず、従来と同じ文字列を作って返す。
+            int index = (int)slot;
+            return (uint)index < (uint)_slotTabLabels.Length && _slotTabLabels[index] != null
+                ? _slotTabLabels[index]
+                : Content.SlotName(slot).ToString();
         }
 
         private void RelicList(IEnumerable<Relic> relics, string hero, float height)
@@ -1758,6 +1763,8 @@ namespace SodRpg.Mod
         private void EnsureStashCache(Profile p)
         {
             float now = Time.unscaledTime;
+            // 早期リターンの条件に件数一致を含む。将来、件数が変わらないまま中身が変わる操作（スロットの再割当相当）を
+            // 追加するときは、MarkDirty か ViewRevision を通して再構築の条件に入れること（現状は0.3秒で自己修復する）。
             if (_stashCacheProfile == p && _stashCacheRevision == p.Revision
                 && _stashCacheViewRevision == _s.ViewRevision && _stashCacheCount == p.Stash.Count
                 && _stashCacheJapanese == Loc.Japanese && now < _sortedUntil) return;
