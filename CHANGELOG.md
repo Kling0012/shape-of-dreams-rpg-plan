@@ -10,6 +10,24 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v3.8.18 — Lighter guest processing for repeated choice updates（2026-10-19）
+
+参加者が受け取る選択状態の処理から無駄を省き、参加者側の動作を軽くしました。 / Made guests' games lighter by cutting unnecessary work when receiving choice updates.
+
+### 更新前に確認 / Before updating
+
+- 協力プレイでは、参加者全員がこのバージョンに更新してください。 / Everyone in co-op should update to this version.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- 協力プレイで、ホストから定期的に届く選択状態について、参加者のゲームが前回とまったく同じ内容でも毎回すべてを読み直していた問題を直しました。内容が変わっていないときは読み直しを省くので、参加者のゲームの処理が少し軽くなります。この再送は1分に最大24回あり、そのすべてが無駄な処理でした。内容が変わったときや、勝利や帰還の知らせが一緒に届いたときは、これまでどおり処理します。ホスト側の動作、通信の量、ゲームの判定、見た目は、これまでと変わりません。 / Fixed guests' games fully re-reading the choice updates the host sends periodically, even when the content was exactly the same as last time. Unchanged updates are now skipped, so guests' games get a little lighter. The host resends these updates up to 24 times a minute, and every unchanged resend was wasted work. Updates with new content, or that come with a victory or return notice, are handled as before. Host behavior, network traffic, game rules, and visuals are unchanged.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
 ## v3.8.17 — Lighter host: skip a wasted step in dash attacks（2026-10-19）
 
 ダッシュ攻撃の処理から無駄を省き、ホストの動作を軽くしました。 / Made the host lighter by cutting unnecessary work in dash attacks.
