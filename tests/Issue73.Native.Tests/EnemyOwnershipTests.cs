@@ -832,6 +832,118 @@ namespace Issue73.Native.Tests
             Assert.Empty(Log.Warnings);
         }
 
+        // ---- 再照準の候補判定（#862 の軽量化とその等価性） ----
+
+        // EnemyOwnershipRetarget（EnemyOwnershipNative.cs）は Prefix の
+        // IsOwnershipRetargetCandidate が偽の刻みでは Postfix から RetargetOwnership を呼ばない。
+        // 呼ばなくてよい根拠は「偽になる全条件で RetargetOwnership 冒頭の TryOwnership(Targeting)
+        // も失敗し、観測できる副作用が何も起きない」ことである。各条件で実際に確かめる。
+        // 標的には生存中の別担当者のヒーローを与える: ゲートが漏れていれば
+        // Aggro と交戦記録が動いて検出できる。
+        [Theory]
+        [InlineData("dictMissSummon")]     // 召喚体は担当表に入らない（軽量化の主対象）
+        [InlineData("dictMissUnspawned")]  // スポーンを通っていないエンティティも入らない
+        [InlineData("excludedBoss")]       // ボスは除外（Owner も立たない）
+        [InlineData("sharedObjective")]    // 共有目標の状態
+        [InlineData("ownerNull")]          // 担当者が外れた状態
+        [InlineData("ownershipDisabled")]  // 所有権の設定が無効
+        [InlineData("targetingFailed")]    // Targeting 部の失敗フラグ
+        public void Every_non_candidate_skip_condition_leaves_RetargetOwnership_an_observable_no_op(string mode)
+        {
+            var host = Host(out _);
+            var a = Player(5);
+            Player(9);
+            Player(13);
+            Entity enemy;
+            object state = null;
+            switch (mode)
+            {
+                case "dictMissSummon":
+                    enemy = new Summon { netId = 200, hero = a.hero, owner = new DewPlayer { isHumanPlayer = false } };
+                    break;
+                case "dictMissUnspawned":
+                    enemy = new Entity { netId = 201, owner = new DewPlayer { isHumanPlayer = false } };
+                    break;
+                case "excludedBoss":
+                    enemy = Spawn(host, 100, new Monster { type = Monster.MonsterType.Boss });
+                    state = State(host, enemy);
+                    Assert.True(ExcludedOf(host, enemy), "前提: ボスは除外");
+                    break;
+                default: // 担当済みの敵の状態・設定を1つずつ候補外へ傾ける（走査は呼ばないので Owner は残る）。
+                    enemy = Spawn(host, 100);
+                    state = State(host, enemy);
+                    Assert.NotNull(OwnerOf(host, enemy));
+                    if (mode == "sharedObjective") Set(state, "SharedObjective", true);
+                    else if (mode == "ownerNull") Set(state, "Owner", null);
+                    else if (mode == "ownershipDisabled") host.ConfigureEnemyOwnership(false);
+                    else
+                    {
+                        var field = host.GetType().GetField("_ownershipFailed", Hidden);
+                        Set(host, "_ownershipFailed", Enum.Parse(field.FieldType, "Targeting"));
+                    }
+                    break;
+            }
+            enemy.AI = new EntityAI { entity = enemy };
+            enemy.AI.context.targetEnemy = a.hero;
+            AssertRetargetNoOp(host, enemy.AI, state);
+        }
+
+        // 候補でない AI に retargetDue の両値で RetargetOwnership を呼んでも、
+        // Aggro・標的・交戦記録・挑発・ログのすべてが動かないこと。
+        private static void AssertRetargetNoOp(HostAuthority host, EntityAI ai, object state)
+        {
+            Assert.False(host.IsOwnershipRetargetCandidate(ai), "候補判定は偽");
+            Entity target = ai.context.targetEnemy;
+            int calls = ai.AggroCalls;
+            int warnings = Log.Warnings.Count;
+            Hero taunt = state == null ? null : (Hero)Get(state, "TauntHero");
+            float tauntUntil = state == null ? 0f : (float)Get(state, "TauntUntil");
+            DewPlayer[] fighters = state == null ? null : ((DewPlayer[])Get(state, "Fighters")).ToArray();
+            float[] hits = state == null ? null : ((float[])Get(state, "Hits")).ToArray();
+            float[] targeted = state == null ? null : ((float[])Get(state, "Targeted")).ToArray();
+
+            host.RetargetOwnership(ai, true);
+            host.RetargetOwnership(ai, false);
+
+            Assert.Equal(calls, ai.AggroCalls); // Aggro を呼ばない
+            Assert.Same(target, ai.context.targetEnemy); // 標的も変えない
+            Assert.Equal(warnings, Log.Warnings.Count); // 警告も出さない
+            if (state == null) return;
+            Assert.Same(taunt, (Hero)Get(state, "TauntHero")); // 挑発の整理も起きない
+            Assert.Equal(tauntUntil, (float)Get(state, "TauntUntil"));
+            Assert.Equal(fighters, (DewPlayer[])Get(state, "Fighters")); // 交戦記録も伸びない
+            Assert.Equal(hits, (float[])Get(state, "Hits"));
+            Assert.Equal(targeted, (float[])Get(state, "Targeted"));
+        }
+
+        // 候補の刻みは省かれず、retargetDue の真偽で従来どおり動く。
+        [Fact]
+        public void Candidates_keep_retargeting_by_retargetDue_as_before()
+        {
+            var host = Host(out _);
+            var a = Player(5);
+            var b = Player(9);
+            Player(13);
+            var enemy = Spawn(host, 100); // → a の担当
+            enemy.AI = new EntityAI { entity = enemy };
+            Assert.True(host.IsOwnershipRetargetCandidate(enemy.AI), "担当済みの敵は候補");
+
+            host.RetargetOwnership(enemy.AI, false); // retargetDue 偽でも標的がなければ担当者へ向ける
+            Assert.Same(a.hero, enemy.AI.context.targetEnemy);
+            Assert.Equal(1, enemy.AI.AggroCalls);
+
+            int calls = enemy.AI.AggroCalls;
+            host.RetargetOwnership(enemy.AI, false); // 担当者を見ているときは retargetDue 偽では再標的しない
+            Assert.Equal(calls, enemy.AI.AggroCalls);
+            Assert.Same(a.hero, enemy.AI.context.targetEnemy);
+
+            enemy.AI.context.targetEnemy = b.hero; // 他の生存ヒーローを見ている
+            host.RetargetOwnership(enemy.AI, true); // retargetDue 真なら担当者へ戻す
+            Assert.Same(a.hero, enemy.AI.context.targetEnemy);
+            Assert.Equal(calls + 1, enemy.AI.AggroCalls);
+            Assert.Empty(Log.Warnings);
+        }
+
         // ---- 同期 ----
 
         private static (HostAuthority Host, Actor Actor, HostAuthority.MonsterRuntime Runtime, Monster Monster) SyncRig(DewPlayer owner)
