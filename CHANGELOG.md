@@ -10,6 +10,24 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v3.8.10 — Lighter host load with Glacial Core（2026-10-19）
+
+Glacial Core を装備しているときのホストの処理を軽くしました。 / Reduced host processing load while Glacial Core is equipped.
+
+### 更新前に確認 / Before updating
+
+- 協力プレイでは、参加者全員がこのバージョンに更新してください。 / Everyone in co-op should update to this version.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- Glacial Core を装備しているとき、同じ確認を毎フレーム何度も繰り返していた問題を直しました。協力プレイではホストが全員分の Glacial Core をまとめて処理するので、装備している人が多いほどホストの負担が軽くなります。連射の間隔や発射のタイミングは、これまでと変わりません。 / Fixed Glacial Core repeating the same checks several times every frame. In co-op the host handles every player's Glacial Core, so the more players have it equipped, the more the host's load goes down. Firing intervals and timing are unchanged.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
 ## v3.8.9 — Lighter co-op traffic for fully charged ultimates and a boss ability fix（2026-10-19）
 
 ### 不具合の修正 / Bug fixes
