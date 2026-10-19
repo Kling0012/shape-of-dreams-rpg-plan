@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using Mirror;
 using SodRpg.Core.Game;
 using UnityEngine;
@@ -821,7 +822,19 @@ namespace SodRpg.Mod
             foreach (var m in _monsterScratch) RemoveMonster(m);
         }
 
-        private readonly Dictionary<KeyValuePair<Monster, Hero>, float> _thornsNextReflect = new Dictionary<KeyValuePair<Monster, Hero>, float>();
+        // Same pattern as EnemyContactComparer: the default comparer for a KeyValuePair struct key
+        // falls back to ValueType.Equals, which boxes the key and reflects over the fields on every
+        // Thorned-hit lookup and every prune scan.
+        private sealed class ThornsKeyComparer : IEqualityComparer<KeyValuePair<Monster, Hero>>
+        {
+            public bool Equals(KeyValuePair<Monster, Hero> x, KeyValuePair<Monster, Hero> y) =>
+                ReferenceEquals(x.Key, y.Key) && ReferenceEquals(x.Value, y.Value);
+            public int GetHashCode(KeyValuePair<Monster, Hero> pair) =>
+                unchecked(RuntimeHelpers.GetHashCode(pair.Key) * 397 ^ RuntimeHelpers.GetHashCode(pair.Value));
+        }
+
+        private readonly Dictionary<KeyValuePair<Monster, Hero>, float> _thornsNextReflect =
+            new Dictionary<KeyValuePair<Monster, Hero>, float>(new ThornsKeyComparer());
         private readonly List<KeyValuePair<Monster, Hero>> _thornsScratch = new List<KeyValuePair<Monster, Hero>>();
 
         private void PruneThornsTimers(float now)
