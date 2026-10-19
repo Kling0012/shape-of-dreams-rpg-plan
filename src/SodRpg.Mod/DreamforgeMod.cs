@@ -28,6 +28,8 @@ namespace SodRpg.Mod
         partial void ApplyAutoCastCoopConfig();
         partial void TickAutoCastCoopConfig();
         partial void ApplyNativePerfConfig();
+        partial void InstallLacertaMemories(Harmony patches);
+        partial void StopLacertaMemories();
 
         private ClientSession _session;
         private HostAuthority _host;
@@ -104,6 +106,8 @@ namespace SodRpg.Mod
                     NativeDreamEdition.EnableContent(NativeDreamContent.SpecialEdition, _devCommands, nativeDreamFlag),
                     NativeDreamContent.SpecialEdition); }
                 catch (Exception ex) { Log.Warn("Native dream prototypes unavailable; other features remain active: " + ex.Message); }
+                try { InstallLacertaMemories(harmony); }
+                catch (Exception ex) { Log.Warn("Lacerta mutated memories unavailable: " + ex.Message); }
                 if (_perfLogEnabled) Log.Info("perf logging enabled (perf.flag)");
                 HostAuthority.ModVersion = (mod.metadata.modVer ?? "?")
                     + NativeDreamEdition.VersionSuffix(NativeDreamContent.SpecialEdition);
@@ -433,6 +437,7 @@ namespace SodRpg.Mod
             try { CulinaryMagnet.Stop(); } catch (Exception ex) { Log.Error("Startup cleanup: culinary attraction: " + ex); }
             try { CulinaryIngredientCap.Stop(); } catch (Exception ex) { Log.Error("Startup cleanup: culinary ingredients: " + ex); }
             try { CulinaryIngredientDisplay.Stop(); } catch (Exception ex) { Log.Error("Startup cleanup: culinary ingredient display: " + ex); }
+            try { StopLacertaMemories(); } catch (Exception ex) { Log.Warn("Lacerta memory cleanup: " + ex.Message); }
             try { NativeDreamContent.Stop(); } catch (Exception ex) { Log.Warn("Native dream cleanup: " + ex.Message); }
             try { host?.Detach(); } catch (Exception ex) { Log.Error("Startup cleanup: host detach: " + ex); }
             try { session?.Unwire(); } catch (Exception ex) { Log.Error("Startup cleanup: session unwire: " + ex); }
