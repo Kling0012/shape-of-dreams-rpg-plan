@@ -157,9 +157,11 @@ namespace SodRpg.Mod
             return (float)(lost ? _lost : _retarget).GetValue(context);
         }
 
-        private static void Prefix(EntityAI __instance, out bool __state)
+        // __state: 0 = not an ownership candidate (Postfix skips; RetargetOwnership would
+        // early-return anyway), 1 = candidate without retarget, 2 = candidate with retarget.
+        private static void Prefix(EntityAI __instance, out byte __state)
         {
-            __state = false;
+            __state = 0;
             if (!NetworkServer.active || HostAuthority.NativeInstance?.IsOwnershipRetargetCandidate(__instance) != true) return;
             try
             {
@@ -169,14 +171,15 @@ namespace SodRpg.Mod
                     || target.Status.isUndetectableByNonAllies) ? 1.5f : 1f;
                 __state = target == null || target.IsNullInactiveDeadOrKnockedOut()
                     || ReadTimer(ref context, true) > 5f || !__instance.entity.CanAggroTo(target)
-                    || context.targetEnemyElapsedTime * speed > ReadTimer(ref context, false);
+                    || context.targetEnemyElapsedTime * speed > ReadTimer(ref context, false) ? (byte)2 : (byte)1;
             }
-            catch (Exception) { }
+            catch (Exception) { __state = 1; }
         }
 
-        private static void Postfix(EntityAI __instance, bool __state)
+        private static void Postfix(EntityAI __instance, byte __state)
         {
-            if (NetworkServer.active) HostAuthority.NativeInstance?.RetargetOwnership(__instance, __state);
+            if (__state == 0) return;
+            HostAuthority.NativeInstance?.RetargetOwnership(__instance, __state == 2);
         }
     }
 }
