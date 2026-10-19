@@ -4,8 +4,8 @@
 日文说明位于发布页面和仓库的 [README](../README.md)。
 英文说明见 [docs/README.en.md](README.en.md)。
 
-- 最新版本与安装用 ZIP：[Releases](https://github.com/Kling0012/shape-of-dreams-rpg-plan/releases)
-- 各版本更新内容：[CHANGELOG](../../CHANGELOG.md)
+- 下载：[Steam 创意工坊](https://steamcommunity.com/sharedfiles/filedetails/?id=3822274988)
+- 各版本更新内容：[CHANGELOG](../CHANGELOG.md)
 
 Dreamforge RPG 将每一次远征变成长篇 RPG 旅程的一部分：可以带回来的「遗物」、每个区域都要做出的「存入仓库还是继续下潜」的抉择、每位旅人各自的星图、锻造以及长期目标。支持多人协作游玩。
 
@@ -18,10 +18,10 @@ Dreamforge RPG 将每一次远征变成长篇 RPG 旅程的一部分：可以带
 
 ## 安装方法
 
-1. 从 [Releases](https://github.com/Kling0012/shape-of-dreams-rpg-plan/releases) 下载 `DreamforgeRPG-vX.Y.Z.zip`。
-2. 解压后，将其中的 `DreamforgeRPG` 文件夹放入游戏的 `Mods` 文件夹（`<Shape of Dreams>/Mods/DreamforgeRPG/`）。
+1. 在 [Steam 创意工坊](https://steamcommunity.com/sharedfiles/filedetails/?id=3822274988) 订阅 Dreamforge RPG。
+2. Steam 会自动下载并保持最新版本。
 3. 启动游戏，在 MOD 管理界面中启用 Dreamforge RPG。
-4. 更新时，用新文件夹替换 `DreamforgeRPG` 文件夹并重启游戏。存档会继承。
+4. 更新后请重新启动游戏。存档会继承。
 
 - **多人游玩时，所有参与者需要使用相同版本的 MOD。** 属性加成由主机负责应用。
 - 存档保存在 `<persistentDataPath>/QuickSave/Mods/DreamforgeRPG/`（Windows 下为 `%USERPROFILE%/AppData/LocalLow/Lizard Smoothie/Shape of Dreams/QuickSave/Mods/DreamforgeRPG/`）。上一次的存档会以 `.bak` 保留。
