@@ -33,6 +33,7 @@ namespace SodRpg.Mod
             NativePerfOptions.KillTrackerCull = config.nativeKillTrackerCullThrottle;
             NativePerfOptions.CursorIdle = config.nativeCursorIdle;
             NativePerfOptions.StatsCalcRpcIdle = config.nativeStatsCalcRpcIdle;
+            NativePerfOptions.UltChargeRpcIdle = config.nativeUltChargeRpcIdle;
             NativePerfOptions.PositionSyncIdle = config.nativePositionSyncIdle;
             NativePerfOptions.LobbyAccessoryIdle = config.nativeLobbyAccessoryIdle;
         }
@@ -59,6 +60,7 @@ namespace SodRpg.Mod
         internal static bool KillTrackerCull = true;
         internal static bool CursorIdle = true;
         internal static bool StatsCalcRpcIdle = true;
+        internal static bool UltChargeRpcIdle = true;
         internal static bool PositionSyncIdle = true;
         internal static bool LobbyAccessoryIdle = true;
     }
@@ -1973,6 +1975,86 @@ namespace SodRpg.Mod
         // Runs synchronously at the top of every CalculateStats, so the notification at the
         // end of the same call always compares against this call's own entry bits.
         private static void Prefix(EntityStatus __instance) => NativeStatsCalcRpcPerf.Capture(__instance);
+    }
+
+    [HarmonyPatch]
+    internal static class NativeUltChargeRpcIdlePerf
+    {
+        // SkillTrigger.ChargeUltimate is the host-side feed of an Ultimate skill's charges:
+        // every damage dealt, attack hit, kill and damage taken by the owning hero calls it
+        // (OnEquip subscribes the four events for every equipped skill, server side). Its
+        // trailing broadcasts are unconditional:
+        //
+        //     RpcSetCooldownTime(0, currentUnscaledCooldownTimes[0]);
+        //     RpcSetCharge(0, currentCharges[0]);
+        //
+        // Yet the only state mutations live inside `while (num2 > 0f && currentCharges[num]
+        // < configs[num].maxCharges)`. While the ultimate already sits at max charges — its
+        // normal state for most of a run — the loop body never executes: no cooldown
+        // arithmetic, no charge gain, no InvokeCurrentConfigCharged. The two RPCs then
+        // re-broadcast values every peer already holds, once per damage event per ready
+        // ultimate, to every client.
+        //
+        // Dropping those two sends is lossless because every server-side write to
+        // currentUnscaledCooldownTimes / currentCharges is paired with a send of the written
+        // value: SetCooldownTime / SetCharge send directly, ApplyCooldownReductionWithMinimum_Imp
+        // and ApplyCooldownReductionByRatio_Imp send after their loops, the LogicUpdate refill
+        // and overage clamp go through SetCooldownTime / SetCharge, casting goes through
+        // OnCastCompleteSetCooldownTime / OnCastCompleteSetCharge, and SkillTrigger's own loop
+        // sends after mutating. Writes without a send happen only before observers exist
+        // (OnStartServer seeds the arrays; OnSerialize carries them in the spawn payload), so
+        // late joiners are covered too. On the receiving side UserCode_RpcSetCooldownTime /
+        // UserCode_RpcSetCharge merely assign the received value when !NetworkServer.active
+        // and do nothing on the host — re-receiving an identical value is a no-op. Mirror's
+        // reliable ordered channel keeps clients from missing the value that preceded any
+        // later one. SkillTrigger.ShouldTickCooldown returns false for the ultimate config, so
+        // neither side ticks it down locally; the authoritative value changes only through the
+        // paired-send paths above, which this patch does not touch.
+        //
+        // Shrinkage of configs[0].maxCharges below the current charge count (UpdateSkillBonus
+        // recompute) leaves charges >= max, so this patch skips ChargeUltimate calls in that
+        // window; the LogicUpdate overage clamp `SetCharge(i, configs[i].maxCharges)` still
+        // runs and broadcasts the corrected count exactly as in vanilla. NativeCooldownSafety
+        // pushes authority values through RpcSetCooldownTime / RpcSetCharge directly and never
+        // through ChargeUltimate, so it is unaffected. When charges are below max the prefix
+        // defers to the original: the loop's float decrement is a genuine change on every hit
+        // and must keep broadcasting, and charge-boundary crossings keep firing
+        // InvokeCurrentConfigCharged.
+        private static MethodBase _target;
+        private static bool _warned;
+        private static bool _disabled;
+
+        private static bool Prepare()
+        {
+            _target = NativePerfPatch.Find(typeof(SkillTrigger), "ChargeUltimate",
+                new[] { typeof(float) }, ref _warned);
+            return _target != null;
+        }
+
+        private static MethodBase TargetMethod() => _target;
+
+        private static bool Prefix(SkillTrigger __instance)
+        {
+            if (!NativePerfOptions.UltChargeRpcIdle || _disabled) return true;
+            try
+            {
+                if (!Mirror.NetworkServer.active) return true; // keep the native [Server] warning
+                TriggerConfig[] configs = __instance.configs;
+                int[] charges = __instance.currentCharges;
+                if (configs == null || configs.Length == 0 || charges == null || charges.Length == 0) return true;
+                if (__instance.type != SkillType.Ultimate) return true;
+                // At max charges the native body runs zero loop iterations and only
+                // re-broadcasts the unchanged cooldown time and charge count.
+                if (charges[0] < configs[0].maxCharges) return true;
+                return false;
+            }
+            catch (Exception ex)
+            {
+                _disabled = true;
+                NativePerfPatch.Warn(ref _warned, "ultimate charge idle", ex.Message);
+                return true;
+            }
+        }
     }
 
     [HarmonyPatch]

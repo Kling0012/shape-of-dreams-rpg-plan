@@ -373,10 +373,16 @@ namespace SodRpg.Mod
     internal enum SkillType { Normal, Ultimate }
     internal enum ElementalType { Fire, Cold, Light, Dark }
     internal enum EntityRelation { Enemy, Ally }
+    internal class TriggerConfig
+    {
+        public int maxCharges;
+    }
     internal class AbilityTrigger : Actor
     {
         public Entity owner;
+        public TriggerConfig[] configs;
         public float[] currentUnscaledCooldownTimes;
+        public int[] currentCharges;
         public void LogicUpdate(float dt) { }
         public virtual float GetCooldownTimeMultiplier(int configIndex) => 1f;
     }
