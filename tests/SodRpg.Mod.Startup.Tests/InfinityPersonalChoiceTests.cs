@@ -227,6 +227,41 @@ namespace SodRpg.Mod.Startup.Tests
             finally { InfinityMode.ResetPersonalChoices(); }
         }
 
+        [Fact]
+        public void Personal_wait_skips_duplicate_dictionary_writes_while_the_text_is_unchanged()
+        {
+            var (session, _, _) = StartRevealGraph();
+            try
+            {
+                var guest = JoinLobbyParticipant("lingering-skip-guest");
+                DewPlayer.gamePlayers.Add(guest);
+                var run = session.Profile.Run;
+                run.Infinity.Phase = InfinityPhase.AwaitingChoice;
+                run.AwaitingChoice = true;
+                InfinityMode.ResetPersonalChoices(); // Statics from an earlier test must not leak in.
+                InfinityMode.BeginPersonalChoice(run);
+                var settings = NetworkedManagerBase<GameSettingsManager>.softInstance;
+                int writes = settings.customData.Writes;
+
+                // A skipped re-write is invisible through the values (writing the same text again
+                // changes nothing), so count writes instead: the shipped SyncDictionary queues an
+                // operation per write, and unchanged seconds must not add one.
+                Time.unscaledTime += 2;
+                InfinityMode.TickPersonalChoices();
+                Time.unscaledTime += 2;
+                InfinityMode.TickPersonalChoices();
+                Assert.Equal(writes, settings.customData.Writes);
+                Assert.True(settings.customData.ContainsKey(InfinityMode.PersonalWaitKey));
+
+                // Once the deadline runs, the text changes each second and is written again.
+                InfinityMode.StartPersonalTravelWait();
+                Time.unscaledTime += 1;
+                InfinityMode.TickPersonalChoices();
+                Assert.Equal(writes + 1, settings.customData.Writes);
+            }
+            finally { InfinityMode.ResetPersonalChoices(); }
+        }
+
         private static void FeedPersonalChoice(DewPlayer player, Pact pact, bool skip = false)
         {
             var barrier = InfinityMode.PersonalBarrier;
