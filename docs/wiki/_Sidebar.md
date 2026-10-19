@@ -5,3 +5,4 @@
 - [インフィニティ / Infinity](Infinity)
 - [協力取引 / Co-op trade](Co-op-Trade)
 - [保存と続きから / Saves and Continue](Saves-and-Continue)
+- [下方修正の履歴 / Nerf history](Nerf-History)

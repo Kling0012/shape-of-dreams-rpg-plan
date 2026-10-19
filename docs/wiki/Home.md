@@ -16,6 +16,7 @@ These guides describe v3.8.4. Check Releases and the changelog when updating.
 | [インフィニティ / Infinity](Infinity) | 開始条件、ボス周期、帰還、協力時の選択 / Requirements, boss intervals, return and co-op choices |
 | [協力取引 / Co-op trade](Co-op-Trade) | 申込、提示、双方確認、時間制限、未確定の取引 / Requests, offers, confirmations, timeouts and unresolved trades |
 | [保存と続きから / Saves and Continue](Saves-and-Continue) | 保存先、中断、再開、中断した鞄の受け取り / Save location, suspension, resume and interrupted satchels |
+| [下方修正の履歴 / Nerf history](Nerf-History) | エッセンスと記憶の下方修正の一覧と前後の値 / List of nerfed essences and memories with before/after values |
 
 ## 装備と星の一覧 / Equipment and star catalogs
 

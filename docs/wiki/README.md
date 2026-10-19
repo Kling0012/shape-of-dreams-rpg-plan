@@ -26,6 +26,10 @@ GitHub の設定では Wiki は有効ですが、認証付きの `git ls-remote`
 
 各ガイド末尾の Sources に、コード・数値の原本・導入文書への参照があります。履歴を含む MOD README は古い数値も残るため、星図・鍛冶・融合・禁忌化・インフィニティの数値は現行の Core と `tools/balance/*.json` を優先しました。
 
+## 追加ページ（Issue #5、2026-10-19）
+
+Issue #5（エッセンスと記憶の下方修正の一覧）向けに `Nerf-History.md` を追加しました。更新履歴と `tools/balance/essence-caps.json`・`tools/balance/README.md`（本体エッセンスと記憶の循環抑制）から、現在も有効な下方修正・後に戻した下方修正・公開版では無効の上限を表にしています。`Home.md` と `_Sidebar.md` に案内を足しました。前後の値が記録にない欄は「不明」と書き、推測の数値は載せていません。
+
 ## 生成と公開の扱い
 
 DokuWiki の既存ページは従来のコマンドで再生成できます。出力先には worktree 外の一時ディレクトリなどを指定します。
@@ -34,7 +38,7 @@ DokuWiki の既存ページは従来のコマンドで再生成できます。�
 DOTNET_ROLL_FORWARD=Major dotnet run -c Release --project tools/WikiGen -- <出力先>
 ```
 
-GitHub Wiki へ反映する原稿は、このフォルダの `README.md` を除く Markdown 8ファイルです。ページ間リンクは GitHub Wiki のページ名に合わせています。既存ページと名前が重なる場合は、取得した本文を残して差分を反映する必要があります。今回、GitHub Wiki のページ削除・リネーム・上書き・push・公開は行っていません。公開用ブランチや CI 設定も変更していません。
+GitHub Wiki へ反映する原稿は、このフォルダの `README.md` を除く Markdown 9ファイルです。ページ間リンクは GitHub Wiki のページ名に合わせています。既存ページと名前が重なる場合は、取得した本文を残して差分を反映する必要があります。今回、GitHub Wiki のページ削除・リネーム・上書き・push・公開は行っていません。公開用ブランチや CI 設定も変更していません。
 
 既存の DokuWiki 生成器は基本説明の訂正だけに変更を絞りました。新しいガイドを DokuWiki に公開したり、GitHub Wiki の公開経路を新設したりする変更は含めていません。
 
@@ -44,7 +48,7 @@ GitHub Wiki へ反映する原稿は、このフォルダの `README.md` を除�
 
 1. GitHub API の `repos/Kling0012/shape-of-dreams-rpg-plan` で `full_name` を確認します。2026-10-19 の再確認では正式名は `Kling0012/shape-of-dreams-rpg-plan` で、原稿の Sources と一致しました。名前が変わっていた場合は、以下のURLと原稿の根拠リンクを現行名にそろえます。
 2. [GitHub Wiki](https://github.com/Kling0012/shape-of-dreams-rpg-plan/wiki) を開きます。最初のページがまだなければ、Web画面で `Home` を作成して保存し、`.wiki.git` を作成します。既存ページがある場合は先にその本文を取得して控えを残します。
-3. worktree 外の作業用ディレクトリへ `https://github.com/Kling0012/shape-of-dreams-rpg-plan.wiki.git` を clone します。`Home.md`、`_Sidebar.md`、`Getting-Started.md`、`Relics-and-Forge.md`、`Star-Map.md`、`Infinity.md`、`Co-op-Trade.md`、`Saves-and-Continue.md` の8ファイルを比較して反映します。GitHub Wiki にだけある本文は残し、ページの削除やリネームは行いません。README はコピーしません。
-4. 差分を確認して Wiki 側へ commit・push し、Web画面で8ページの本文、Home とサイドバーからのリンク、Sources が開くことを確認します。
+3. worktree 外の作業用ディレクトリへ `https://github.com/Kling0012/shape-of-dreams-rpg-plan.wiki.git` を clone します。`Home.md`、`_Sidebar.md`、`Getting-Started.md`、`Relics-and-Forge.md`、`Star-Map.md`、`Infinity.md`、`Co-op-Trade.md`、`Saves-and-Continue.md`、`Nerf-History.md` の9ファイルを比較して反映します。GitHub Wiki にだけある本文は残し、ページの削除やリネームは行いません。README はコピーしません。
+4. 差分を確認して Wiki 側へ commit・push し、Web画面で9ページの本文、Home とサイドバーからのリンク、Sources が開くことを確認します。
 5. DokuWiki 用には、上のコマンドでマージ後の `dev` から生成します。`wiki-pages` の最新内容を別の作業用 checkout で取得し、生成した `pages/dreamforge/basics.txt` の差分を比較して反映します。既存ページや手書きの追記を一括で上書きせず、公開先へ反映する前に差分を確認します。再調律の追加費用表は伝説のオレンジ枠固有品を対象とする表記も確認します。
 6. 公開したページのURL、反映したソースのコミット、Wiki と `wiki-pages` の反映コミット、閲覧確認の結果を #818 に記録します。未反映の公開先や確認できなかった項目があれば、残作業として記録します。
