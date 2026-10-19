@@ -16,6 +16,7 @@ namespace SodRpg.Mod
         partial void ApplyNativePerfConfig()
         {
             NativePerfOptions.StatusDuration = config.nativeStatusDurationSync;
+            NativePerfOptions.GemCooldown = config.nativeGemCooldownSync;
             NativePerfOptions.WeaponFx = config.nativeWeaponFxScan;
             NativePerfOptions.ObstacleAvoidance = config.nativeObstacleAvoidance;
             NativePerfOptions.AggroPropagation = config.nativeAggroPropagation;
@@ -52,6 +53,7 @@ namespace SodRpg.Mod
     internal static class NativePerfOptions
     {
         internal static bool StatusDuration = true;
+        internal static bool GemCooldown = true;
         internal static bool WeaponFx = true;
         internal static bool ObstacleAvoidance = true;
         internal static bool AggroPropagation = true;
@@ -3453,5 +3455,181 @@ namespace SodRpg.Mod
                 || instruction.opcode == OpCodes.Stloc_0 || instruction.opcode == OpCodes.Stloc_1
                 || instruction.opcode == OpCodes.Stloc_2 || instruction.opcode == OpCodes.Stloc_3)
                && LocalOperandIndex(instruction).HasValue;
+    }
+
+    // Gem のクールダウン減算（Gem.LogicUpdate のサーバー経路）は、値が動く毎ロジックフレームで
+    // SyncVar の差分を全参加者に配る。クールダウンの判定（IsReady、発動、準備完了イベント）は
+    // すべてサーバー側のローカル値と専用 RPC で決まり、参加者側でこの値を読むのは
+    // UI_InGame_GemSlot の表示だけなので、残り時間と同じ方式（NativeStatusDurationPerf）で
+    // 周期減算の送信を 0.5 秒間隔に間引く。0 到達の書き込みと明示的な
+    // StartCooldown／ApplyCooldownReduction(ByRatio)／ResetCooldown はネイティブのまま即時送る。
+    [HarmonyPatch]
+    internal static class NativeGemCooldownPerf
+    {
+        private const float SyncInterval = 0.5f;
+        private const float ImmediateChange = 0.1f;
+        private const ulong CooldownDirtyBit = 2048UL;
+        private sealed class Publication
+        {
+            internal float Time;
+            internal bool Suppressed;
+        }
+
+        private static readonly ConditionalWeakTable<Gem, Publication> Publications =
+            new ConditionalWeakTable<Gem, Publication>();
+        private static readonly ConditionalWeakTable<Gem, Publication>.CreateValueCallback CreatePublication =
+            _ => new Publication();
+        private static AccessTools.FieldRef<Gem, float> _current;
+        private static MethodBase _target;
+        private static bool _disabled;
+        private static bool _warned;
+
+        private static bool Prepare()
+        {
+            _target = NativePerfPatch.Find(typeof(Gem), nameof(Gem.LogicUpdate), new[] { typeof(float) }, ref _warned);
+            if (_target == null) return false;
+            try
+            {
+                _current = AccessTools.FieldRefAccess<Gem, float>("_currentCooldown");
+                return ValidateSetter(AccessTools.PropertySetter(typeof(Gem), "Network_currentCooldown"));
+            }
+            catch (Exception ex)
+            {
+                NativePerfPatch.Warn(ref _warned, "gem cooldown", ex.Message);
+                return false;
+            }
+        }
+
+        private static MethodBase TargetMethod() => _target;
+
+        private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+        {
+            var code = new List<CodeInstruction>(instructions);
+            var setter = AccessTools.PropertySetter(typeof(Gem), "Network_currentCooldown");
+            var move = AccessTools.Method(typeof(Mathf), nameof(Mathf.MoveTowards),
+                new[] { typeof(float), typeof(float), typeof(float) });
+            int periodic = -1, setters = 0, moves = 0;
+            for (int i = 0; i < code.Count; i++)
+            {
+                if (code[i].Calls(move)) moves++;
+                if (!code[i].Calls(setter)) continue;
+                setters++;
+                if (i >= 1 && code[i - 1].Calls(move)) periodic = i;
+            }
+            // Leave the rate-limit tick, dismantle reset, base update and the 0-reached event intact.
+            // A second copy sees an already replaced callsite and leaves it alone.
+            if (setters != 1 || moves != 2 || periodic < 0)
+            {
+                NativePerfPatch.Warn(ref _warned, "gem cooldown", "native cooldown callsite changed or already patched");
+                return code;
+            }
+            code[periodic].opcode = OpCodes.Call;
+            code[periodic].operand = AccessTools.Method(typeof(NativeGemCooldownPerf), nameof(WriteCooldown));
+            return code;
+        }
+
+        internal static bool ValidateSetter(MethodBase setter)
+        {
+            try
+            {
+                if (setter == null || setter.GetMethodBody() == null)
+                    throw new MissingMethodException("Gem.Network_currentCooldown setter unavailable");
+                var field = AccessTools.Field(typeof(Gem), "_currentCooldown");
+                var code = PatchProcessor.GetOriginalInstructions(setter);
+                for (int i = 0; i + 1 < code.Count; i++)
+                    if (code[i].opcode == OpCodes.Ldflda && Equals(code[i].operand, field)
+                        && code[i + 1].opcode == OpCodes.Ldc_I8
+                        && code[i + 1].operand is long bit && (ulong)bit == CooldownDirtyBit)
+                        return true;
+                NativePerfPatch.Warn(ref _warned, "gem cooldown", "native SyncVar field/dirty bit changed");
+            }
+            catch (Exception ex) { NativePerfPatch.Warn(ref _warned, "gem cooldown", ex.Message); }
+            _disabled = true;
+            return false;
+        }
+
+        internal static void Publishing(Gem gem)
+        {
+            if (_disabled) return;
+            try
+            {
+                // An explicit write can equal the silently advanced backing value. Mirror's
+                // equality check would otherwise omit it even though observers still have an
+                // older baseline. Do not clear dirty bits belonging to any other field.
+                if (gem.isServer && Publications.TryGetValue(gem, out var publication)
+                    && publication.Suppressed)
+                    gem.SetSyncVarDirtyBit(CooldownDirtyBit);
+            }
+            catch (Exception ex)
+            {
+                _disabled = true;
+                NativePerfPatch.Warn(ref _warned, "gem cooldown", ex.Message);
+            }
+        }
+
+        internal static void Published(Gem gem)
+        {
+            if (_disabled || !gem.isServer) return;
+            try
+            {
+                if (!NativePerfOptions.GemCooldown && !Publications.TryGetValue(gem, out _)) return;
+                var publication = Publications.GetValue(gem, CreatePublication);
+                publication.Time = Time.time;
+                publication.Suppressed = false;
+            }
+            catch (Exception ex)
+            {
+                _disabled = true;
+                NativePerfPatch.Warn(ref _warned, "gem cooldown", ex.Message);
+            }
+        }
+
+        private static void WriteCooldown(Gem gem, float value)
+        {
+            if (!_disabled && NativePerfOptions.GemCooldown)
+            {
+                try
+                {
+                    float previous = _current(gem);
+                    // Only this native arithmetic callsite is throttled. StartCooldown,
+                    // ApplyCooldownReduction(ByRatio), ResetCooldown and the 0-reached write
+                    // always use the native setter.
+                    if (value > 0f && previous - value >= 0f && previous - value < ImmediateChange
+                        && Publications.TryGetValue(gem, out var publication)
+                        && Time.time >= publication.Time && Time.time - publication.Time < SyncInterval)
+                    {
+                        // Keep the exact native MoveTowards result. The server getter, IsReady,
+                        // the 0-reached event and the initial observer snapshot must see the current value.
+                        _current(gem) = value;
+                        publication.Suppressed = true;
+                        return;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _disabled = true;
+                    NativePerfPatch.Warn(ref _warned, "gem cooldown", ex.Message);
+                }
+            }
+            gem.Network_currentCooldown = value;
+        }
+    }
+
+    [HarmonyPatch]
+    internal static class NativeGemCooldownPublication
+    {
+        private static MethodBase _target;
+        private static bool _warned;
+
+        private static bool Prepare()
+        {
+            try { _target = AccessTools.PropertySetter(typeof(Gem), "Network_currentCooldown"); }
+            catch (Exception ex) { NativePerfPatch.Warn(ref _warned, "gem cooldown publication", ex.Message); }
+            return NativeGemCooldownPerf.ValidateSetter(_target);
+        }
+
+        private static MethodBase TargetMethod() => _target;
+        private static void Prefix(Gem __instance) => NativeGemCooldownPerf.Publishing(__instance);
+        private static void Postfix(Gem __instance) => NativeGemCooldownPerf.Published(__instance);
     }
 }

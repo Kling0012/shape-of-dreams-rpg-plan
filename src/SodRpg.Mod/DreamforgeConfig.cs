@@ -93,6 +93,9 @@ namespace SodRpg.Mod
         [LabelText("Status effect duration sync: 0.5 seconds (host) / 状態効果の残り時間を0.5秒間隔で同期（ホスト）")]
         public bool nativeStatusDurationSync = true;
 
+        [LabelText("Gem cooldown sync: 0.5 seconds (host) / 宝石のクールダウンを0.5秒間隔で同期（ホスト）")]
+        public bool nativeGemCooldownSync = true;
+
         [LabelText("Skip unused weapon FX work / 結果に影響しない武器FXの処理を省く")]
         public bool nativeWeaponFxScan = true;
 
