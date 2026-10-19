@@ -428,29 +428,42 @@ namespace SodRpg.Mod
 
         // Same signature as Vector3.SmoothDamp(current, target, ref velocity, smoothTime).
         // Only the exact-rest state is bypassed; every other input reaches the native call.
+        // The rest judgment is handed to the StoreLocalScale that the transpiler always
+        // places right after this call: Transform access is main-thread only, so nothing
+        // can run between the adjacent pair.
+        private static bool _lastDampWasIdle;
+
         private static Vector3 WeaponSmoothDamp(Vector3 current, Vector3 target, ref Vector3 currentVelocity, float smoothTime)
         {
             if (NativePerfOptions.HeroWeaponIdle
                 && currentVelocity.x == 0f && currentVelocity.y == 0f && currentVelocity.z == 0f
                 && current.x == target.x && current.y == target.y && current.z == target.z)
             {
+                _lastDampWasIdle = true;
                 return current;
             }
+            _lastDampWasIdle = false;
             return Vector3.SmoothDamp(current, target, ref currentVelocity, smoothTime);
         }
 
-        // Same signature as the Transform.localScale setter call. A same-value write is
-        // invisible to every reader, so it can be dropped; the follow-up localScale read
-        // and SetActive comparison in the native body stay untouched and see the same value.
+        // Same signature as the Transform.localScale setter call. With the setting on and the
+        // damp at rest, `value` came from this very transform: each patched site reads
+        // get_localScale straight into the SmoothDamp `current` argument (verified in the
+        // native IL), so the stored value equals transform.localScale and the write is skipped
+        // without re-reading it — no native getter is added on any path. Every other frame
+        // writes unconditionally, exactly like the native body, and the follow-up localScale
+        // read and SetActive comparison in the native body see the same value either way.
+        // Skipping the same-value write also leaves Transform.hasChanged unset on idle frames.
+        // Verified against the game's Managed assemblies (2026-10-19): no Dew.* / Assembly-
+        // CSharp / Mirror code references hasChanged (decompiled sources and binaries), and
+        // the only get_hasChanged readers are engine packages touching their own transforms
+        // (SRP anchor/camera, URP fog volume's own transform, an editor-only gizmo helper);
+        // TextMeshPro only sets hasChanged on its own rect transform. Nothing reads a hero
+        // weapon transform's hasChanged, and a same-value skip is the correct state for a
+        // genuinely unchanged transform.
         private static void StoreLocalScale(Transform transform, Vector3 value)
         {
-            if (!NativePerfOptions.HeroWeaponIdle)
-            {
-                transform.localScale = value;
-                return;
-            }
-            Vector3 current = transform.localScale;
-            if (current.x != value.x || current.y != value.y || current.z != value.z)
+            if (!NativePerfOptions.HeroWeaponIdle || !_lastDampWasIdle)
             {
                 transform.localScale = value;
             }
