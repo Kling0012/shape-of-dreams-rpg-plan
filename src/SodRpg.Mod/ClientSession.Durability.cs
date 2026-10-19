@@ -30,6 +30,7 @@ namespace SodRpg.Mod
             _completedRunId = Profile.CompletedRunId;
             var state = Profile.RunRecovery;
             _runChoiceProgress.Restore(state);
+            _processedChoicesPayload = null; // 同期状態を作り直したので、処理済み再送の読み捨てを解除する。
             _pendingResultRunId = state?.PendingResultRunId;
             _pendingRunVictory = state?.PendingVictory;
             _choicePublisher.RestoreFinalized(state?.PublisherHistory, state?.PublisherTerminalChoices, state?.PublisherVictory);
