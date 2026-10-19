@@ -10,6 +10,24 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v3.8.12 — Lighter host processing on every hit（2026-10-19）
+
+攻撃が当たるたびに行っていたホストの処理を軽くしました。 / Reduced the host's processing load each time an attack hits.
+
+### 更新前に確認 / Before updating
+
+- 協力プレイでは、参加者全員がこのバージョンに更新してください。 / Everyone in co-op should update to this version.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- 攻撃が当たるたびに、同じ確認を2回繰り返していた問題を直しました。協力プレイでは、ホストが全員の攻撃をまとめて処理します。そのため、攻撃が多く当たる激しい戦闘ほど、ホストの負担が軽くなります。ダメージの結果やその扱いは、これまでと変わりません。 / Fixed the same check being run twice every time an attack hits. In co-op the host processes every player's attacks, so the host's load goes down most in heavy fights with many hits. Damage results and how they are handled are unchanged.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
 ## v3.8.11 — Glacial Core firing interval fixes（2026-10-19）
 
 ### 不具合の修正 / Bug fixes
