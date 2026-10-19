@@ -52,6 +52,7 @@ namespace SodRpg.Mod
             NativePerfOptions.RoomStartDependency = config.nativeRoomStartDependency;
             NativePerfOptions.ChatMuteCheckAlloc = config.nativeChatMuteCheckAlloc;
             NativePerfOptions.ProxyPositionIdle = config.nativeProxyPositionIdle;
+            NativePerfOptions.EnemyHitFxBudget = config.nativeEnemyHitFxBudget;
         }
     }
 
@@ -93,6 +94,7 @@ namespace SodRpg.Mod
         internal static bool RoomStartDependency = true;
         internal static bool ChatMuteCheckAlloc = true;
         internal static bool ProxyPositionIdle = true;
+        internal static bool EnemyHitFxBudget = true;
     }
 
     internal static class NativePerfPatch
