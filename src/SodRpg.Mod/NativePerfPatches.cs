@@ -37,6 +37,7 @@ namespace SodRpg.Mod
             NativePerfOptions.PositionSyncIdle = config.nativePositionSyncIdle;
             NativePerfOptions.ChargeRpcIdle = config.nativeChargeRpcIdle;
             NativePerfOptions.LobbyAccessoryIdle = config.nativeLobbyAccessoryIdle;
+            NativePerfOptions.ProjectileIdleRpc = config.nativeProjectileIdleRpc;
         }
     }
 
@@ -65,6 +66,7 @@ namespace SodRpg.Mod
         internal static bool PositionSyncIdle = true;
         internal static bool ChargeRpcIdle = true;
         internal static bool LobbyAccessoryIdle = true;
+        internal static bool ProjectileIdleRpc = true;
     }
 
     internal static class NativePerfPatch
@@ -2541,6 +2543,67 @@ namespace SodRpg.Mod
                 NativePerfPatch.Warn(ref _warned, "charge rpc idle", ex.Message);
             }
             return true;
+        }
+    }
+
+    [HarmonyPatch]
+    internal static class NativeProjectileIdleRpcPerf
+    {
+        // Every projectile entity hit ends with the weaver's RpcPlayOnEntityEffect ClientRpc,
+        // and every dissipate / complete / flight stop ends with RpcPlayOnDissipateEffect,
+        // RpcPlayOnCompleteEffect or RpcStopOnFlyEffect. Each receiver (UserCode_*) begins by
+        // returning when its serialized effect prefab field is null, so on a projectile whose
+        // field is null the message carries no information for anyone: the host's local
+        // dispatch and every remote client's handler are no-ops. This prefix skips exactly
+        // those sends, reading the same field storage the receiver reads.
+        //
+        // Nothing in the shipped game or contents assigns effectOnEntity, effectOnComplete or
+        // effectOnDissipate at runtime (full Dew.Contents decompile, 2026-10-19), and every
+        // effectOnFly writer (DarkBolt, Scattershot and ShadowOverdrive save/swap inside
+        // Awake/OnCreate/OnDisable; the single AddEffect call site, Ai_Q_IncendiaryRounds_Attack,
+        // sits inside OnCreate) runs the same assignments on every machine, so all machines gate
+        // on the same value and a skipped send is one whose handler would have done nothing on
+        // each of them. The senders are pure weaver bodies (pooled writer, payload write,
+        // SendRPCInternal, Return), so skipping cannot skip a side effect either. A third-party
+        // mod that hooks these senders to play its own hit effects would see fewer calls; the
+        // nativeProjectileIdleRpc option turns the skip off.
+        private static MethodBase[] _targets = Array.Empty<MethodBase>();
+        private static bool _warned;
+
+        private static bool Prepare()
+        {
+            var targets = new List<MethodBase>(4);
+            Collect(targets, "RpcPlayOnEntityEffect", new[] { typeof(Projectile.EntityHit) });
+            Collect(targets, "RpcPlayOnDissipateEffect", Type.EmptyTypes);
+            Collect(targets, "RpcStopOnFlyEffect", Type.EmptyTypes);
+            Collect(targets, "RpcPlayOnCompleteEffect", Type.EmptyTypes);
+            _targets = targets.ToArray();
+            // Fail soft per class like the other native patches: if none of the four senders
+            // survived a game update, Find has warned once and this patch stays off entirely.
+            return _targets.Length > 0;
+        }
+
+        private static void Collect(List<MethodBase> targets, string name, Type[] parameters)
+        {
+            var target = NativePerfPatch.Find(typeof(Projectile), name, parameters, ref _warned);
+            if (target != null) targets.Add(target);
+        }
+
+        private static IEnumerable<MethodBase> TargetMethods() => _targets;
+
+        private static bool Prefix(Projectile __instance, MethodBase __originalMethod)
+        {
+            if (!NativePerfOptions.ProjectileIdleRpc) return true;
+            // Managed field reads only — no native call, so nothing here can throw. The
+            // original runs unchanged whenever the effect exists; Adaptive_ShouldPlayEffects
+            // stays receiver-side on purpose (it is random and per-machine).
+            switch (__originalMethod.Name)
+            {
+                case "RpcPlayOnEntityEffect": return __instance.effectOnEntity != null;
+                case "RpcPlayOnDissipateEffect": return __instance.effectOnDissipate != null;
+                case "RpcStopOnFlyEffect": return __instance.effectOnFly != null;
+                default: return __instance.effectOnComplete != null;
+            }
         }
     }
 }
