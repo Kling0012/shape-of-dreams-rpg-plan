@@ -4,12 +4,14 @@
 [h1]Dreamforge RPG[/h1]
 Turns every run into part of a long RPG journey: relics you keep, a "secure or delve" choice at every zone, a star map per Traveler, a forge and long-term goals. Co-op ready.
 すべての遠征を長いRPGの旅の一部にするMODです。持ち帰れる装備「遺物」、ゾーンごとの「確保するか、深く潜るか」の決断、旅人ごとの星図、鍛冶、長く遊ぶための目標を加えます。協力プレイにも対応しています。
+让每一次远征都成为漫长 RPG 旅程的一部分：可以带回的装备“遗物”、每个区域“确保还是深入”的抉择、每位旅人专属的星图、锻造，以及长期目标。支持多人合作。
 
-[h2]Bug reports / 不具合の報告[/h2]
+[h2]Bug reports / 不具合の報告 / 问题反馈[/h2]
 This mod is made entirely by AI and has not been play-tested. Reports from players are very welcome.
 このMODは、すべてAIが作成しています。テストプレイは行っていません。プレイヤーの皆さんからの積極的な報告を歓迎します。
-Bug reports and requests / 不具合の報告と要望: [url=https://github.com/Kling0012/dreamforge-rpg/issues]github.com/Kling0012/dreamforge-rpg/issues[/url]
-Patch notes / パッチノート: [url=https://github.com/Kling0012/dreamforge-rpg/releases]github.com/Kling0012/dreamforge-rpg/releases[/url]
+本MOD完全由AI制作，尚未经过试玩测试。非常欢迎玩家积极反馈。
+Bug reports and requests / 不具合の報告と要望 / 问题反馈与建议: [url=https://github.com/Kling0012/dreamforge-rpg/issues]github.com/Kling0012/dreamforge-rpg/issues[/url]
+Patch notes / パッチノート / 更新说明: [url=https://github.com/Kling0012/dreamforge-rpg/releases]github.com/Kling0012/dreamforge-rpg/releases[/url]
 
 [h2]Relics / 遺物[/h2]
 [list]
@@ -60,10 +62,12 @@ Optional settings lighten the whole game: an FPS cap in the background and light
 [*] F6: Dreamforge menu / Dreamforge のメニュー
 [*] F7: Secure / 確保する　F8: Delve / 深く潜る
 [*] Keys, language and UI scale can be changed in the mod settings. / キー・言語・表示の大きさは、MOD設定で変えられます。
+[*] Note: the in-game UI is in English and Japanese. / 注意：游戏内界面目前只有英文和日文。
 [/list]
 
-[h2]Multiplayer / マルチプレイ[/h2]
+[h2]Multiplayer / マルチプレイ / 多人游戏[/h2]
 Every player needs the same version of this mod. The host applies everyone's bonuses. Each player keeps their own save, and loot is rolled per player.
 参加者全員が同じ版のMODを入れてください。能力の反映はホストが行います。保存と戦利品はプレイヤーごとに別々です。
+所有玩家都需要安装同一版本的本MOD。加成由房主统一应用。存档和战利品按玩家分别保存。
 
 This mod alters gameplay. Save file: <persistentDataPath>/QuickSave/Mods/DreamforgeRPG/profile.json
