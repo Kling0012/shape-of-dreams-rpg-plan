@@ -10,6 +10,25 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v3.8.8 — Less redundant co-op network traffic（2026-10-19）
+
+協力プレイで、変化のない情報を何度も送っていた通信を減らしました。 / Reduced redundant network traffic in co-op.
+
+### 更新前に確認 / Before updating
+
+- 協力プレイでは、参加者全員がこのバージョンに更新してください。 / Everyone in co-op should update to this version.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- 協力プレイで、能力のチャージ数が変わっていないときも全員に送り直していた問題を直しました。クールダウンを短くする効果を多く使う構成で、戦闘中の通信が軽くなります。チャージ数が変わったときは、これまでどおり全員に伝わります。 / Fixed ability charge counts being re-sent to everyone in co-op even when they had not changed. This lightens network traffic in combat, especially with builds that rely heavily on cooldown reduction. Actual changes to charge counts are still sent to everyone as before.
+- 協力プレイのボス戦で、すでに無い演出や一度も出ていない演出を消す通知を送り続けていた問題を直しました。黒穴の演出では、この不要な通知が1秒に数回送られていました。表示中の演出の追加・更新・削除は、これまでどおり伝わります。 / Fixed co-op boss fights repeatedly sending removal notices for visual effects that were already gone or had never appeared. With the black hole effect, these unneeded notices were sent several times per second. Adding, updating, and removing visible effects works as before.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
 ## v3.8.7 — Fixes for Polaris mode switching, relic icons, and stat-recalculation patches（2026-10-19）
 
 ### 不具合の修正 / Bug fixes
