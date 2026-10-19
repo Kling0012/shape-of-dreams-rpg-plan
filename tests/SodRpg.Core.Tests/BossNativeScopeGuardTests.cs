@@ -89,10 +89,12 @@ namespace SodRpg.Core.Tests
             {
                 var args = new object[] { new AbilityTrigger(), new CastInfo(), null };
                 InvokeStatic(typeof(BossNativeCastScope), "Prefix", args);
-                Assert.Null(args[2]); // the participant saves nothing
+                var state = Assert.IsType<ValueTuple<bool, HostAuthority.BossNativeCast>>(args[2]);
+                Assert.False(state.Item1);
+                Assert.Null(state.Item2); // the participant saves nothing
                 Assert.Same(outer, BossNativeCastScope.Current);
 
-                InvokeStatic(typeof(BossNativeCastScope), "Finalizer", new object[] { null });
+                InvokeStatic(typeof(BossNativeCastScope), "Finalizer", new object[] { state });
                 Assert.Same(outer, BossNativeCastScope.Current); // and restores nothing
             }
             finally
@@ -115,8 +117,9 @@ namespace SodRpg.Core.Tests
             {
                 var args = new object[] { rig.Skill, new CastInfo(rig.Hero), null };
                 InvokeStatic(typeof(BossNativeCastScope), "Prefix", args);
-                var state = Assert.IsType<HostAuthority.BossNativeCast>(args[2]);
-                Assert.Same(outer, state); // the host saves the previous scope
+                var state = Assert.IsType<ValueTuple<bool, HostAuthority.BossNativeCast>>(args[2]);
+                Assert.True(state.Item1);
+                Assert.Same(outer, state.Item2); // the host saves the previous scope
                 var inner = BossNativeCastScope.Current;
                 Assert.NotNull(inner); // and begins a fresh native cast
                 Assert.NotSame(outer, inner);
