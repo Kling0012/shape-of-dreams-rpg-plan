@@ -13,10 +13,12 @@ internal class AttachToFace
 
 // 本体 Dew.Core/RoomComponent.cs と RoomComponentStartDependencyAttribute.cs の境界。
 // NativeRoomStartDependencyPerf が依存関係の並べ替えで使う型と属性の実体だけ。
+// AttributeUsage は本体と同じ AllowMultiple = true（Inherited は省略時の true）。
 internal class RoomComponent
 {
 }
 
+[AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
 internal class RoomComponentStartDependencyAttribute : Attribute
 {
     internal Type targetRoomComponent;
