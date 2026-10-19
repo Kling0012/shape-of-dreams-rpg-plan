@@ -470,6 +470,15 @@ namespace SodRpg.Mod
                 _memoryAttribution.BeginActivation(hero.GetInstanceID(), NativeActorTypeName(trigger), NativePayloadKind.SummonAttack));
         }
 
+        // ペア反応の起源になるノード（Gem・要素状態効果・gem 付き AbilityInstance）かどうかの単一の述語。
+        // TryGetMemoryActivation の祖先走査と IsPairReactionSource（HostAuthority.PairCombos.cs）の
+        // 走査が同じ条件を使うことを、この1つの定義で保証する。TryGetMemoryActivation が true を
+        // 返すのは祖先のどこにもこの述語に当たるノードがないときだけなので、そのような連鎖で
+        // IsPairReactionSource が true になることはない。
+        internal static bool IsPairReactionSourceNode(Actor actor)
+            => actor is Gem || actor is ElementalStatusEffect
+                || actor is AbilityInstance instance && instance.gem != null;
+
         internal bool TryGetMemoryActivation(Actor actor, out MemoryActivationIdentity identity)
         {
             identity = default(MemoryActivationIdentity);
@@ -483,8 +492,7 @@ namespace SodRpg.Mod
                 slow = slow != null ? slow.parentActor : null;
                 fast = fast != null && fast.parentActor != null ? fast.parentActor.parentActor : null;
                 if (slow != null && slow == fast) throw new InvalidOperationException("Native actor ancestry contains a cycle.");
-                if (current is Gem || current is ElementalStatusEffect
-                    || current is AbilityInstance ability && ability.gem != null) return false;
+                if (IsPairReactionSourceNode(current)) return false;
                 bool tagged = _memoryAttribution.TryGetInstance(current.GetInstanceID(), out var tag);
                 if (RequiresExactNativeInstanceScope(current) && !tagged) return false;
                 if (!found && tagged) { identity = tag; found = true; }
@@ -556,8 +564,14 @@ namespace SodRpg.Mod
             if (!main && direct != null && direct.Source == actor && direct.ChildType == null)
                 packet.Admitted = TryGetExactNativeDirectPayload(actor, target, chain, out packet.Identity);
             else
+                // IsPairReactionSource が評価されるのは TryGetMemoryActivation が true のときだけだが、
+                // true は祖先走査が根まで完了したときにしか返らず、その走査は IsPairReactionSourceNode
+                // （Gem・要素効果・gem 付き AbilityInstance）に当たれば false を返す。IsPairReactionSource
+                // も同じ述語で祖先を探すだけなので、この経路では常に false になり、2度目の走査は省いてよい
+                // （gem のない AbilityInstance では読むたびに本体の遅延検索 FindFirstOfType<Gem> が祖先を
+                // たどるため、2度目の省略がそのまま効く）。
                 packet.Admitted = TryGetMemoryActivation(actor, out packet.Identity) && ExactNativeChainMatches(actor, chain)
-                    && !IsPairReactionSource(actor) && _memoryAttribution.CanAdmit(packet.Identity, false, false, !chain.Equals(default(ReactionChain)));
+                    && _memoryAttribution.CanAdmit(packet.Identity, false, false, !chain.Equals(default(ReactionChain)));
             if (main && packet.Identity.OwnerId != basicOwner) packet.Admitted = false;
             packet.MainBasic = main && packet.Identity.OwnerId == basicOwner && packet.Identity.NativePayloadKind == NativePayloadKind.MainBasicAttack;
             if (packet.Admitted && packet.MainBasic && packet.Identity.SourceMemory.Length == 0

@@ -232,5 +232,21 @@ namespace SodRpg.Core.Tests
             rt.Hero.Skill.Skills[HeroSkillLocation.Q] = removed;
             Assert.Equal(100, host.ExposedDamage(rt, victim));
         }
+
+        [Fact]
+        public void Pair_reaction_source_is_true_only_for_chains_with_a_shared_origin_node()
+        {
+            // perf-loop/20261019-1346: TryGetMemoryActivation が true を返す連鎖では
+            // IsPairReactionSource が false になる、という前提のこの走査側の裏付け。
+            // 述語は TryGetMemoryActivation と共通の IsPairReactionSourceNode なので、
+            // ここで true になる連鎖は向こうの走査で必ず false を返す（Issue73 ハーネスの
+            // MemoryActivationPairReactionPremiseTests が逆向きを検証する）。
+            Assert.False(HostAuthority.IsPairReactionSource(new Actor()));
+            Assert.False(HostAuthority.IsPairReactionSource(new Actor { parentActor = new Hero() }));
+            Assert.False(HostAuthority.IsPairReactionSource(new Actor { parentActor = new AbilityInstance() }));
+            Assert.True(HostAuthority.IsPairReactionSource(new Actor { parentActor = new Gem() }));
+            Assert.True(HostAuthority.IsPairReactionSource(new Actor { parentActor = new ElementalStatusEffect() }));
+            Assert.True(HostAuthority.IsPairReactionSource(new Actor { parentActor = new AbilityInstance { gem = new Gem() } }));
+        }
     }
 }
