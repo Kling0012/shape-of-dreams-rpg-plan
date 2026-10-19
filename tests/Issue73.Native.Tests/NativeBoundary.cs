@@ -377,6 +377,7 @@ namespace SodRpg.Mod
     {
         public Entity owner;
         public float[] currentUnscaledCooldownTimes;
+        public int[] currentCharges;
         public void LogicUpdate(float dt) { }
         public virtual float GetCooldownTimeMultiplier(int configIndex) => 1f;
     }

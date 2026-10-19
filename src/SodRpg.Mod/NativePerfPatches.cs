@@ -34,6 +34,7 @@ namespace SodRpg.Mod
             NativePerfOptions.CursorIdle = config.nativeCursorIdle;
             NativePerfOptions.StatsCalcRpcIdle = config.nativeStatsCalcRpcIdle;
             NativePerfOptions.PositionSyncIdle = config.nativePositionSyncIdle;
+            NativePerfOptions.ChargeRpcIdle = config.nativeChargeRpcIdle;
         }
     }
 
@@ -59,6 +60,7 @@ namespace SodRpg.Mod
         internal static bool CursorIdle = true;
         internal static bool StatsCalcRpcIdle = true;
         internal static bool PositionSyncIdle = true;
+        internal static bool ChargeRpcIdle = true;
     }
 
     internal static class NativePerfPatch
@@ -2342,6 +2344,92 @@ namespace SodRpg.Mod
                 || operand is short || operand is ushort)
                 return Convert.ToInt32(operand);
             return null;
+        }
+    }
+
+    [HarmonyPatch]
+    internal static class NativeChargeRpcIdlePerf
+    {
+        // AbilityTrigger.SetCharge, both ApplyCooldownReduction implementations and
+        // SkillTrigger's own reduction path all finish with an unconditional RpcSetCharge
+        // broadcast of currentCharges[configIndex] — even when the reduction never rolled
+        // a charge over and the int did not change. Clients never mutate currentCharges
+        // themselves: LogicUpdate's charge block is server-only, so a guest only receives
+        // charges through this RPC, the spawn payload (OnSerialize) or the post-spawn
+        // array RPC (RpcSyncAfterFrameDelayStates_Imp), all carrying host values over
+        // Mirror's reliable channel. The RPC body (UserCode_RpcSetCharge) does nothing
+        // but write that int. Suppressing a repeat of the last value we sent therefore
+        // writes the identical int on every client and changes nothing else; every real
+        // charge change still broadcasts as before, spawn payload and the mod's
+        // NativeCooldownSafety resends included (the repaired value is the cooldown RPC,
+        // which this patch does not touch, and a no-change charge resend of the same int
+        // is equivalent to none). The tracking resets whenever the trigger's charge
+        // array is a different instance: Dew pools and reuses actors, OnStartServer
+        // allocates fresh arrays per spawn, and every client was re-seeded from the new
+        // spawn payload, so a previous life's last-sent values must not suppress anything.
+        private sealed class Slots
+        {
+            internal int[] Charges; // the array instance the tracked values were sent from
+            internal int[] Values; // last value sent per config index; -1 = nothing sent yet
+        }
+
+        private static readonly ConditionalWeakTable<AbilityTrigger, Slots> LastSent =
+            new ConditionalWeakTable<AbilityTrigger, Slots>();
+
+        private static MethodBase _target;
+        private static bool _disabled;
+        private static bool _warned;
+
+        private static bool Prepare()
+        {
+            _target = NativePerfPatch.Find(typeof(AbilityTrigger), "RpcSetCharge",
+                new[] { typeof(int), typeof(int) }, ref _warned);
+            return _target != null;
+        }
+
+        private static MethodBase TargetMethod() => _target;
+
+        private static int[] NewValues(int count)
+        {
+            var values = new int[count];
+            for (int i = 0; i < values.Length; i++) values[i] = -1;
+            return values;
+        }
+
+        private static Slots CreateSlots(AbilityTrigger trigger)
+        {
+            var charges = trigger.currentCharges;
+            return new Slots
+            {
+                Charges = charges,
+                Values = NewValues(charges != null ? charges.Length : 1)
+            };
+        }
+
+        private static bool Prefix(AbilityTrigger __instance, int configIndex, int charge)
+        {
+            if (_disabled || !NativePerfOptions.ChargeRpcIdle) return true;
+            try
+            {
+                // Only the authority knows what it last sent; other paths keep vanilla behavior.
+                if (!Mirror.NetworkServer.active) return true;
+                var charges = __instance.currentCharges;
+                if (charges == null || (uint)configIndex >= (uint)charges.Length) return true;
+                var slots = LastSent.GetValue(__instance, CreateSlots);
+                if (!ReferenceEquals(slots.Charges, charges) || configIndex >= slots.Values.Length)
+                {
+                    slots.Charges = charges;
+                    slots.Values = NewValues(charges.Length);
+                }
+                if (slots.Values[configIndex] == charge) return false;
+                slots.Values[configIndex] = charge;
+            }
+            catch (Exception ex)
+            {
+                _disabled = true;
+                NativePerfPatch.Warn(ref _warned, "charge rpc idle", ex.Message);
+            }
+            return true;
         }
     }
 }
