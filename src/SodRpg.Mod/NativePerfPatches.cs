@@ -43,6 +43,7 @@ namespace SodRpg.Mod
             NativePerfOptions.ProjectileIdleRpc = config.nativeProjectileIdleRpc;
             NativePerfOptions.CustomRpcDispatch = config.nativeCustomRpcDispatch;
             NativePerfOptions.SampleUpdateIdle = config.nativeSampleUpdateIdle;
+            NativePerfOptions.DashSweepStep = config.nativeDashSweepStep;
             NativePerfOptions.HeroWeaponIdle = config.nativeHeroWeaponIdle;
             NativePerfOptions.PlayerTimerIdle = config.nativePlayerTimerIdle;
         }
@@ -77,6 +78,7 @@ namespace SodRpg.Mod
         internal static bool ProjectileIdleRpc = true;
         internal static bool CustomRpcDispatch = true;
         internal static bool SampleUpdateIdle = true;
+        internal static bool DashSweepStep = true;
         internal static bool HeroWeaponIdle = true;
         internal static bool PlayerTimerIdle = true;
     }
@@ -3263,5 +3265,193 @@ namespace SodRpg.Mod
                 NativePerfPatch.Warn(ref NativePlayerTimerIdlePerf._warned, "player on-screen timer forget", ex.Message);
             }
         }
+    }
+
+    // DashAttackInstance.ActiveLogicUpdate sweeps the hit range from last tick's caster
+    // position toward the current one, running DoCollisionChecks at each step. Every step
+    // but the last ends with the range transform being moved one step forward; the final
+    // "move past the destination" write is immediately overwritten by the localPosition
+    // restore right after the loop and is read by nobody: no further query happens inside
+    // the tick, the physics proxy resyncs from the restored transform on the next sweep,
+    // and the restore runs in both code paths. The patch inserts the exact complement of
+    // the native loop back-edge in front of that write so the discarded get/set pair is
+    // skipped. Judgement, timing and visuals are unchanged: the collision check at each
+    // step still runs before the skip point, and the NaN path (C# '>' is false, native
+    // ble.un keeps looping) behaves exactly like the shipped loop.
+    [HarmonyPatch]
+    internal static class NativeDashSweepStepPerf
+    {
+        private static MethodBase _target;
+        private static bool _warned;
+
+        private static bool Prepare()
+        {
+            // Name-only lookup like NativeChaosShrineHitScanPerf: the mod never references
+            // the native class, so the harness can stand in for it and a game update that
+            // renames it degrades this patch alone.
+            var type = AccessTools.TypeByName("DashAttackInstance");
+            if (type == null)
+            {
+                NativePerfPatch.Warn(ref _warned, "dash sweep step", "DashAttackInstance unavailable");
+                return false;
+            }
+            _target = NativePerfPatch.Find(type, "ActiveLogicUpdate", new[] { typeof(float) }, ref _warned);
+            return _target != null;
+        }
+
+        private static MethodBase TargetMethod() => _target;
+
+        // Called only from the inserted branch right after the native "num += step".
+        // C# '>' is false on NaN, which is exactly the complement of the native loop's
+        // ble.un back-edge, so an unordered sweep keeps walking and writing as shipped.
+        private static bool SkipTailStep(float num, float dist)
+            => NativePerfOptions.DashSweepStep && num > dist;
+
+        private static IEnumerable<CodeInstruction> Transpiler(ILGenerator il, IEnumerable<CodeInstruction> instructions)
+        {
+            var code = new List<CodeInstruction>(instructions);
+            try
+            {
+                // DoCollisionChecks and range are declared on the base DamageInstance; the
+                // transform getter lives on UnityEngine.Component, which the test harness
+                // does not stub, so both resolve at runtime by shape rather than by
+                // compile-time reference.
+                var baseType = _target.DeclaringType?.BaseType;
+                var check = baseType != null ? AccessTools.Method(baseType, "DoCollisionChecks") : null;
+                var range = baseType != null ? AccessTools.Field(baseType, "range") : null;
+                var component = AccessTools.TypeByName("UnityEngine.Component");
+                var getTransform = component != null ? AccessTools.PropertyGetter(component, "transform") : null;
+                var getPosition = AccessTools.PropertyGetter(typeof(Transform), "position");
+                var setPosition = AccessTools.PropertySetter(typeof(Transform), "position");
+                var subtraction = AccessTools.Method(typeof(Vector3), "op_Subtraction");
+                var normalized = AccessTools.PropertyGetter(typeof(Vector3), "normalized");
+                var multiply = AccessTools.Method(typeof(Vector3), "op_Multiply",
+                    new[] { typeof(Vector3), typeof(float) });
+                var addition = AccessTools.Method(typeof(Vector3), "op_Addition");
+                if (check == null || range == null || getTransform == null || getPosition == null
+                    || setPosition == null || subtraction == null || normalized == null
+                    || multiply == null || addition == null)
+                    throw new MissingMemberException("DashAttackInstance.ActiveLogicUpdate API unavailable");
+                int checks = 0, directions = 0, stepMultiplies = 0, positionReads = 0, positionWrites = 0, additions = 0;
+                for (int i = 0; i < code.Count; i++)
+                {
+                    if (code[i].Calls(check)) checks++;
+                    if (code[i].Calls(normalized)) directions++;
+                    if (code[i].Calls(multiply)) stepMultiplies++;
+                    if (code[i].Calls(getPosition)) positionReads++;
+                    if (code[i].Calls(setPosition)) positionWrites++;
+                    if (code[i].Calls(addition)) additions++;
+                }
+                // One collision check, one direction computation, and exactly the two
+                // position accesses of the loop write plus the loop-less initial write.
+                if (checks != 1 || directions != 1 || stepMultiplies != 1
+                    || positionReads != 2 || positionWrites != 2 || additions != 2)
+                    throw new InvalidOperationException("native sweep shape changed or already patched");
+                int head = -1;
+                for (int i = 0; i < code.Count; i++)
+                    if (code[i].Calls(check)) { head = i; break; }
+                if (head < 1 || head + 23 >= code.Count)
+                    throw new InvalidOperationException("native sweep window out of range");
+                for (int i = head - 1; i <= head + 23; i++)
+                    if (code[i].blocks.Count > 0)
+                        throw new InvalidOperationException("native sweep window inside a handler");
+                // Shipped window (Dew.Core.dll 2026-10-19), fixed offsets from the single
+                // DoCollisionChecks call at `head`:
+                //   head-1        ldarg.0                    ← loop head, ble.un target
+                //   head          call DoCollisionChecks
+                //   head+1/+2     ldloc num, ldloc step      head+3 add, head+4 stloc num
+                //   head+5/+6     ldarg.0, ldfld range       head+7 callvirt get_transform
+                //   head+8        dup                        head+9 callvirt get_position
+                //   head+10/+11   ldloc dest, ldloc from     head+12 call op_Subtraction
+                //   head+13       stloc tmp                  head+14 ldloca tmp
+                //   head+15       call get_normalized        head+16 ldloc step
+                //   head+17       call op_Multiply(V3,f32)   head+18 call op_Addition
+                //   head+19       callvirt set_position
+                //   head+20/+21   ldloc num, ldloc dist      head+22 ble.un.s → head-1
+                //   head+23       ldarg.0 (restore block; every skipped write lands here)
+                if (code[head - 1].opcode != OpCodes.Ldarg_0
+                    || !LoadsLocal(code[head + 1]) || !LoadsLocal(code[head + 2])
+                    || code[head + 3].opcode != OpCodes.Add || !StoresLocal(code[head + 4])
+                    || code[head + 5].opcode != OpCodes.Ldarg_0
+                    || code[head + 6].opcode != OpCodes.Ldfld || !Equals(code[head + 6].operand, range)
+                    || !code[head + 7].Calls(getTransform) || code[head + 8].opcode != OpCodes.Dup
+                    || !code[head + 9].Calls(getPosition)
+                    || !LoadsLocal(code[head + 10]) || !LoadsLocal(code[head + 11])
+                    || !code[head + 12].Calls(subtraction) || !StoresLocal(code[head + 13])
+                    || !(code[head + 14].opcode == OpCodes.Ldloca || code[head + 14].opcode == OpCodes.Ldloca_S)
+                    || !code[head + 15].Calls(normalized) || !LoadsLocal(code[head + 16])
+                    || !code[head + 17].Calls(multiply) || !code[head + 18].Calls(addition)
+                    || !code[head + 19].Calls(setPosition)
+                    || !LoadsLocal(code[head + 20]) || !LoadsLocal(code[head + 21])
+                    || code[head + 22].opcode != OpCodes.Ble_Un_S
+                    || code[head + 23].opcode != OpCodes.Ldarg_0)
+                    throw new InvalidOperationException("native sweep instruction shape changed");
+                int num = LocalOperandIndex(code[head + 1]) ?? -1;
+                int step = LocalOperandIndex(code[head + 2]) ?? -1;
+                int dest = LocalOperandIndex(code[head + 10]) ?? -1;
+                int from = LocalOperandIndex(code[head + 11]) ?? -1;
+                int tmp = LocalOperandIndex(code[head + 13]) ?? -1;
+                int dist = LocalOperandIndex(code[head + 21]) ?? -1;
+                if (LocalOperandIndex(code[head + 4]) != num || LocalOperandIndex(code[head + 20]) != num
+                    || LocalOperandIndex(code[head + 16]) != step
+                    || LocalOperandIndex(code[head + 14]) != tmp
+                    || num < 0 || step < 0 || dist < 0 || tmp < 0
+                    || dest < 0 || from < 0 || dest == from || dist == num)
+                    throw new InvalidOperationException("native sweep locals changed");
+                if (!(code[head + 22].operand is Label back && code[head - 1].labels.Contains(back)))
+                    throw new InvalidOperationException("native sweep back-edge changed");
+                // Insert the exit check between "num += step" and the write it guards: when
+                // the increment already passed the distance, jump straight to the restore.
+                var exit = code[head + 23];
+                var skip = new List<CodeInstruction>
+                {
+                    new CodeInstruction(code[head + 1]),
+                    new CodeInstruction(code[head + 21]),
+                    new CodeInstruction(OpCodes.Call, AccessTools.Method(
+                        typeof(NativeDashSweepStepPerf), nameof(SkipTailStep))),
+                };
+                var exitLabel = il.DefineLabel();
+                skip.Add(new CodeInstruction(OpCodes.Brtrue_S, exitLabel));
+                exit.labels.Add(exitLabel);
+                code.InsertRange(head + 5, skip);
+            }
+            catch (Exception ex)
+            {
+                NativePerfPatch.Warn(ref _warned, "dash sweep step", ex.Message);
+            }
+            return code;
+        }
+
+        // Harmony reads local-variable opcodes with a LocalBuilder or a boxed index for
+        // the long forms, and a null operand for the short ldloc.N/stloc.N forms (checked
+        // against the shipped Dew.Core.dll), so the short forms resolve from the opcode.
+        private static int? LocalOperandIndex(CodeInstruction instruction)
+        {
+            switch (instruction.opcode.Name)
+            {
+                case "ldloc.0": case "stloc.0": return 0;
+                case "ldloc.1": case "stloc.1": return 1;
+                case "ldloc.2": case "stloc.2": return 2;
+                case "ldloc.3": case "stloc.3": return 3;
+            }
+            var operand = instruction.operand;
+            if (operand is LocalBuilder local) return local.LocalIndex;
+            if (operand is int || operand is uint || operand is byte || operand is sbyte
+                || operand is short || operand is ushort)
+                return Convert.ToInt32(operand);
+            return null;
+        }
+
+        private static bool LoadsLocal(CodeInstruction instruction)
+            => (instruction.opcode == OpCodes.Ldloc || instruction.opcode == OpCodes.Ldloc_S
+                || instruction.opcode == OpCodes.Ldloc_0 || instruction.opcode == OpCodes.Ldloc_1
+                || instruction.opcode == OpCodes.Ldloc_2 || instruction.opcode == OpCodes.Ldloc_3)
+               && LocalOperandIndex(instruction).HasValue;
+
+        private static bool StoresLocal(CodeInstruction instruction)
+            => (instruction.opcode == OpCodes.Stloc || instruction.opcode == OpCodes.Stloc_S
+                || instruction.opcode == OpCodes.Stloc_0 || instruction.opcode == OpCodes.Stloc_1
+                || instruction.opcode == OpCodes.Stloc_2 || instruction.opcode == OpCodes.Stloc_3)
+               && LocalOperandIndex(instruction).HasValue;
     }
 }

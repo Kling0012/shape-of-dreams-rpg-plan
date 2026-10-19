@@ -10,6 +10,25 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v3.8.16 — Lighter hero weapon display and build checks（2026-10-19）
+
+英雄の武器の表示と、ビルドを送るかどうかの確認から無駄を省き、動作を軽くしました。 / Made the game lighter by cutting unnecessary work in hero weapon display and in checking whether to send your build.
+
+### 更新前に確認 / Before updating
+
+- 協力プレイでは、参加者全員がこのバージョンに更新してください。 / Everyone in co-op should update to this version.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- 英雄の武器の大きさが変わり終わったあとも、手に持った武器と納めた武器の両方について、同じ大きさを毎フレーム計算して設定し直していた問題を直しました。今は大きさが落ち着いている間はこの処理を省くので、ホストと参加者の両方で処理が少し軽くなります。英雄が武器を構えたまま、または納めたままでいる場面ほど効果があります。武器の見た目や大きさの変わり方は、これまでと変わりません。 / Fixed the game recalculating and reapplying the same size to each hero's held and sheathed weapons every frame, even after the size had stopped changing. This work is now skipped while the size is settled, so the game gets a little lighter for both host and guests. The benefit is largest while heroes keep their weapons drawn or sheathed without changing. Weapon appearance and how its size changes are unchanged.
+- プレイ中、自分のビルドを送る必要のないフレームでも、英雄の種類を毎フレーム調べ直していた問題を直しました。今はビルドを送るかどうかを確かめるときだけ調べるので、ホストと参加者の両方でメモリの使い方に無駄がなくなり、動作が少し安定します。ゲームの判定や数値、通信の量、見た目は、これまでと変わりません。 / Fixed the game looking up your hero type every frame, even on frames where your build did not need to be sent. The lookup now happens only when the game checks whether to send your build, which cuts wasted memory use for both host and guests and makes play a little smoother. Game rules, numbers, network traffic, and visuals are unchanged.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
 ## v3.8.15 — Lighter host processing for enemy AI（2026-10-19）
 
 ホスト上の敵の処理から無駄を省き、動作を軽くしました。 / Made the host lighter by cutting unnecessary work on enemies.
