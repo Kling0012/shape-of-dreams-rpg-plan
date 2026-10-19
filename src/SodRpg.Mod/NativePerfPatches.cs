@@ -38,6 +38,7 @@ namespace SodRpg.Mod
             NativePerfOptions.ChargeRpcIdle = config.nativeChargeRpcIdle;
             NativePerfOptions.LobbyAccessoryIdle = config.nativeLobbyAccessoryIdle;
             NativePerfOptions.ProjectileIdleRpc = config.nativeProjectileIdleRpc;
+            NativePerfOptions.SampleUpdateIdle = config.nativeSampleUpdateIdle;
         }
     }
 
@@ -67,6 +68,7 @@ namespace SodRpg.Mod
         internal static bool ChargeRpcIdle = true;
         internal static bool LobbyAccessoryIdle = true;
         internal static bool ProjectileIdleRpc = true;
+        internal static bool SampleUpdateIdle = true;
     }
 
     internal static class NativePerfPatch
@@ -2608,6 +2610,52 @@ namespace SodRpg.Mod
                 // receiver would act on, while a wrong send only costs vanilla bandwidth.
                 default: return true;
             }
+        }
+    }
+
+    [HarmonyPatch]
+    internal static class NativeSampleUpdateIdlePerf
+    {
+        // ControlManager.ProcessCastInfoSampling is the game's only DispatchSample_Update
+        // sender: while a sampled cast is active it Commands the full CastInfo preview to the
+        // host at most every 0.05s (20/s). The game creates exactly one sampling context
+        // (ChargingChannel.StartSampleCastInfo), and the sole effect of the receive side
+        // (UserCode_DispatchSample_Update) is storing the struct into the context and
+        // re-invoking ChargingChannel.HandleInfoUpdate, whose body is `castInfo = info;` plus
+        // setting an already-true level-triggered flag. So a re-send whose CastInfo is
+        // Equals-equal (IEquatable over the same five fields the weaver serializes) writes the
+        // same bytes and changes nothing on the host. This prefix remembers the last CastInfo
+        // each DewPlayer actually sent and skips exactly those repeats; a changed value still
+        // goes out on the next 0.05s slot, so the worst-case preview delay matches vanilla.
+        // The final value reaches the host through DispatchSample_Cast, which this patch does
+        // not touch. A third-party mod hooking the sender or registering its own
+        // updateCallback would see fewer calls; the nativeSampleUpdateIdle option turns the
+        // skip off.
+        private static MethodBase[] _targets = Array.Empty<MethodBase>();
+        private static bool _warned;
+        private static DewPlayer _lastSender;
+        private static CastInfo _lastInfo;
+
+        private static bool Prepare()
+        {
+            var target = NativePerfPatch.Find(typeof(DewPlayer), "DispatchSample_Update", new[] { typeof(CastInfo) }, ref _warned);
+            _targets = target != null ? new MethodBase[] { target } : Array.Empty<MethodBase>();
+            // Fail soft like the other native patches: if the sender did not survive a game
+            // update, Find has warned once and this patch stays off entirely.
+            return _targets.Length > 0;
+        }
+
+        private static IEnumerable<MethodBase> TargetMethods() => _targets;
+
+        private static bool Prefix(DewPlayer __instance, CastInfo info)
+        {
+            if (!NativePerfOptions.SampleUpdateIdle) return true;
+            // Only the local player has authority for this command, but key by instance
+            // anyway so a second sender can never suppress another's message.
+            if (ReferenceEquals(__instance, _lastSender) && info.Equals(_lastInfo)) return false;
+            _lastSender = __instance;
+            _lastInfo = info;
+            return true;
         }
     }
 }
