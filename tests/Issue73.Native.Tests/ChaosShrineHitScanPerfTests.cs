@@ -70,10 +70,14 @@ namespace Issue73.Native.Tests
 
         // (d) 読み取りで例外が出たときはその場は走らせ、以後の呼び出しは常に走らせる。
         // 型の違うインスタンスを読ませると、式木の読み取りデリゲートが例外を出す。
+        // この例外で修正は無効化され（_disabled）、警告は1回だけ出る（_warned）。
         [Fact]
         public void AReadFailureRunsEverythingAfterwards()
         {
+            var type = typeof(NativeChaosShrineHitScanPerf);
             Assert.True(Run(new object()));
+            Assert.True((bool)type.GetField("_disabled", Hidden).GetValue(null));
+            Assert.True((bool)type.GetField("_warned", Hidden).GetValue(null));
             Assert.True(Run(new Se_Shrine_Chaos_StatBonus()));
         }
 
