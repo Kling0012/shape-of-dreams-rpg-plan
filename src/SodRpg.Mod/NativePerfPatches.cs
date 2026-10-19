@@ -50,6 +50,7 @@ namespace SodRpg.Mod
             NativePerfOptions.PlayerTimerIdle = config.nativePlayerTimerIdle;
             NativePerfOptions.EntityRotationIdle = config.nativeEntityRotationIdle;
             NativePerfOptions.RoomStartDependency = config.nativeRoomStartDependency;
+            NativePerfOptions.ChatMuteCheckAlloc = config.nativeChatMuteCheckAlloc;
         }
     }
 
@@ -89,6 +90,7 @@ namespace SodRpg.Mod
         internal static bool PlayerTimerIdle = true;
         internal static bool EntityRotationIdle = true;
         internal static bool RoomStartDependency = true;
+        internal static bool ChatMuteCheckAlloc = true;
     }
 
     internal static class NativePerfPatch
@@ -4174,6 +4176,72 @@ namespace SodRpg.Mod
             if (sorted.Count < count)
                 throw new Exception("Circular dependency detected.");
             return sorted.ToArray();
+        }
+    }
+
+    [HarmonyPatch]
+    internal static class NativeChatMuteAllocPerf
+    {
+        // ChatManager.IsPlayerMutedByNetId runs once per received Chat or UnlockedAchievement
+        // message on every client (UserCode_BroadcastMessage / UserCode_TargetBroadcastMessage),
+        // guests included. The native body resolves the sender through
+        // DewPlayer.allHumanPlayers.Find with a lambda capturing playerNetId, so every received
+        // message allocates a display-class closure plus a delegate just to compare uint netIds
+        // against a list that holds one entry per human player (typically <= 4). The loop below
+        // is the same first-match scan with the identical verdict — including "netId not among
+        // human players counts as muted" — and allocates nothing. The mute-list decision itself
+        // stays native (IsPlayerMuted), so any future change to that logic keeps applying.
+        private static MethodBase _target;
+        private static bool _disabled;
+        private static bool _warned;
+
+        private static bool Prepare()
+        {
+            _target = NativePerfPatch.Find(typeof(ChatManager), "IsPlayerMutedByNetId",
+                new[] { typeof(uint) }, ref _warned);
+            if (_target == null) return false;
+            try
+            {
+                // Harmony binds the prefix's playerNetId by name; give up softly if renamed.
+                foreach (ParameterInfo parameter in _target.GetParameters())
+                    if (parameter.Name == "playerNetId" && parameter.ParameterType == typeof(uint))
+                        return true;
+                NativePerfPatch.Warn(ref _warned, "chat mute alloc", "native parameter renamed");
+                return false;
+            }
+            catch (Exception ex)
+            {
+                NativePerfPatch.Warn(ref _warned, "chat mute alloc", ex.Message);
+                return false;
+            }
+        }
+
+        private static MethodBase TargetMethod() => _target;
+
+        private static bool Prefix(ChatManager __instance, uint playerNetId, ref bool __result)
+        {
+            if (_disabled || !NativePerfOptions.ChatMuteCheckAlloc) return true;
+            try
+            {
+                List<DewPlayer> players = DewPlayer.allHumanPlayers;
+                DewPlayer found = null;
+                for (int i = 0; i < players.Count; i++)
+                {
+                    if (players[i].netId == playerNetId)
+                    {
+                        found = players[i];
+                        break;
+                    }
+                }
+                __result = found == null || __instance.IsPlayerMuted(found);
+                return false;
+            }
+            catch (Exception ex)
+            {
+                _disabled = true;
+                NativePerfPatch.Warn(ref _warned, "chat mute alloc", ex.Message);
+            }
+            return true;
         }
     }
 }

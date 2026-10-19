@@ -195,6 +195,9 @@ namespace SodRpg.Mod
         [LabelText("Cache room-start dependency attribute lookups across rooms / 部屋開始時の依存属性の解決を部屋をまたいでキャッシュする")]
         public bool nativeRoomStartDependency = true;
 
+        [LabelText("Allocate no closure for the per-message chat mute check / チャット受信ごとのミュート判定でクロージャを確保しない")]
+        public bool nativeChatMuteCheckAlloc = true;
+
         [LabelText("Level essence slots: add essence slots as the hero levels up (the host's setting applies) /\nレベル連動のエッセンス枠：英雄のレベルに応じて記憶のエッセンス枠を増やす（ホストの設定が使われる）")]
         public bool levelEssenceSlots = true;
 
