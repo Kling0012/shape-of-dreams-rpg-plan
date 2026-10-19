@@ -177,6 +177,9 @@ namespace SodRpg.Mod
         [LabelText("Skip dash sweeps' discarded final step write (host) / ダッシュ攻撃の掃引で捨てられる最後の1歩の範囲移動の書き込みを省く（ホスト）")]
         public bool nativeDashSweepStep = true;
 
+        [LabelText("Skip idle weapon-scale writes on heroes / 英雄の武器スケールが止まっているときの同じ書き込みを省く")]
+        public bool nativeHeroWeaponIdle = true;
+
         [LabelText("Level essence slots: add essence slots as the hero levels up (the host's setting applies) /\nレベル連動のエッセンス枠：英雄のレベルに応じて記憶のエッセンス枠を増やす（ホストの設定が使われる）")]
         public bool levelEssenceSlots = true;
 

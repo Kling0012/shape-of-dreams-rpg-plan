@@ -29,7 +29,15 @@ namespace UnityEngine
     // 本体 UpdateProperties が書き換える子トランスフォームの境界。
     internal sealed partial class Transform
     {
-        internal Vector3 localScale { get; set; }
+        // 値の意味は本体と同じ。書き込んだ回数も数える（NativeHeroWeaponIdlePerf が
+        // 同じ値の書き込みを省くかどうかの検証に使う）。
+        private Vector3 _localScale;
+        internal int localScaleWrites;
+        internal Vector3 localScale
+        {
+            get => _localScale;
+            set { _localScale = value; localScaleWrites++; }
+        }
         internal Vector3 localPosition { get; set; }
     }
 }

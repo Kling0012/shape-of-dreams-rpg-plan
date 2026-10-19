@@ -79,6 +79,7 @@ namespace SodRpg.Mod
             nativeCustomRpcDispatch = true,
             nativeSampleUpdateIdle = true,
             nativeDashSweepStep = true,
+            nativeHeroWeaponIdle = true,
             nativeLobbyAccessoryIdle = true, nativeUltChargeRpcIdle = true,
             nativeChaosShrineHitScan = true,
             guestSkillLockRecovery = true;

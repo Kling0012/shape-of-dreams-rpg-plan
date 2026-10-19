@@ -29,6 +29,33 @@ namespace UnityEngine
             t = Mathf.Clamp01(t);
             return new Vector3(a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t, a.z + (b.z - a.z) * t);
         }
+        // 本体 UnityEngine.Vector3.SmoothDamp（4 引数）と同じ式（NativeHeroWeaponIdlePerf が参照）。
+        // 4 引数は最大速度が無制限なので速度クランプは決して作動せず、等価になるよう省いた。
+        public static Vector3 SmoothDamp(Vector3 current, Vector3 target, ref Vector3 currentVelocity, float smoothTime)
+        {
+            smoothTime = Mathf.Max(0.0001f, smoothTime);
+            float omega = 2f / smoothTime;
+            float x = omega * Time.deltaTime;
+            float exp = 1f / (1f + x + 0.48f * x * x + 0.235f * x * x * x);
+            Vector3 change = current - target;
+            Vector3 originalTo = target;
+            target = current - change;
+            Vector3 temp = (currentVelocity + change * omega) * Time.deltaTime;
+            currentVelocity = (currentVelocity - temp * omega) * exp;
+            Vector3 output = target + (change + temp) * exp;
+            // 追い越し防止（本体は Dot(originalTo - current, output - originalTo) > 0 で判定）。
+            Vector3 from = originalTo - current;
+            Vector3 over = output - originalTo;
+            if (from.x * over.x + from.y * over.y + from.z * over.z > 0f)
+            {
+                output = originalTo;
+                currentVelocity = new Vector3(
+                    (output.x - originalTo.x) / Time.deltaTime,
+                    (output.y - originalTo.y) / Time.deltaTime,
+                    (output.z - originalTo.z) / Time.deltaTime);
+            }
+            return output;
+        }
     }
 }
 namespace UnityEngine.AI
