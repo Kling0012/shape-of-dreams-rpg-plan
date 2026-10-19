@@ -4183,18 +4183,25 @@ namespace SodRpg.Mod
         // floats and re-marks the proxy transform every tick.
         //
         // The prefix reads the live proxy transform and skips the call only when the write
-        // would store exactly the bits already there (per-component float ==; +0 and -0
-        // compare equal, which cannot matter because the y component is discarded by the
-        // 2D proxy and x/z go into the same physics pose either way; NaN fails every
-        // comparison and reaches the native write, which recovers it the same way vanilla
-        // does). Because the comparison is against the live transform — not a remembered
-        // last-sent value — anything that moves the proxy between two calls makes the next
-        // comparison fail and the native body runs, exactly as without this patch. The
-        // skipped write changes no bit anywhere: the transform keeps its old (identical)
-        // value, Transform.hasChanged semantics aside (a same-value write sets it, nothing
-        // in the shipped game reads it — verified by grep over the decompiled assemblies),
-        // Physics2D copies collider poses from transforms on its simulation step regardless
-        // of a setter call, and a same-value write cannot alter that pose.
+        // would store exactly the bits already there — i.e. the transform already holds
+        // (position.x, position.z, 0f), component for component (per-component float ==;
+        // +0 and -0 compare equal, which cannot matter because the y component is
+        // discarded by the 2D proxy and x/z go into the same physics pose either way;
+        // NaN fails every comparison and reaches the native write, which recovers it the
+        // same way vanilla does). Because the comparison is against the live transform —
+        // not a remembered last-sent value — anything that moves the proxy between two
+        // calls makes the next comparison fail and the native body runs, exactly as
+        // without this patch. The skipped write changes no bit anywhere: the transform
+        // keeps its old (identical) value, Transform.hasChanged semantics aside (a
+        // same-value write sets it, and nothing in the shipped game reads it — verified
+        // by grep over the decompiled assemblies). Physics2D copies collider poses from
+        // transforms on its simulation step regardless of a setter call, and a
+        // same-value write cannot alter that pose.
+        // A proxy that is null or already missing its transform (pooled/destroyed between
+        // the caller's check and here) is not this patch's business: it goes straight to
+        // the native body — which handles or throws on it exactly as without the patch —
+        // and only a genuinely unexpected exception disables this optimization (one
+        // warning) for the session.
         private static MethodBase _target;
         private static bool _disabled;
         private static bool _warned;
@@ -4211,10 +4218,13 @@ namespace SodRpg.Mod
         private static bool Prefix(ProxyCollider proxy, Vector3 position)
         {
             if (_disabled || !NativePerfOptions.ProxyPositionIdle) return true;
+            // Pooled or destroyed proxies are handed to the native body untouched; one
+            // bad proxy must not switch this optimization off for every other entity.
+            if (proxy == null || proxy.transform == null) return true;
             try
             {
                 Vector3 current = proxy.transform.position;
-                if (current.x == position.x && current.y == 0f && current.z == position.z)
+                if (current.x == position.x && current.y == position.z && current.z == 0f)
                     return false;
             }
             catch (Exception ex)
