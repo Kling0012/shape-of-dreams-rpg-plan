@@ -147,9 +147,11 @@ namespace SodRpg.Mod
             // Mirror's SyncDictionary has no value-equality check: every indexer write queues a
             // delta and re-sends the full value to every observer. Before a personal wait starts,
             // the published text is identical every second for as long as players linger, so skip
-            // re-writes instead of re-broadcasting the same payload (removals bypass this cache:
-            // ResetPersonalChoices clears it, so the next publish after a Remove always writes).
-            if (ReferenceEquals(settings, _personalWaitPublishedTarget) && json == _personalWaitPublished) return;
+            // re-writes instead of re-broadcasting the same payload. The dictionary is consulted
+            // as well, so the skip holds only while it still carries this exact text: an entry
+            // removed by any path (not only ResetPersonalChoices) is written back on the next tick.
+            if (ReferenceEquals(settings, _personalWaitPublishedTarget) && json == _personalWaitPublished
+                && settings.customData.TryGetValue(PersonalWaitKey, out var published) && published == json) return;
             _personalWaitPublishedTarget = settings;
             _personalWaitPublished = json;
             settings.customData[PersonalWaitKey] = json;

@@ -155,8 +155,10 @@ namespace SodRpg.Mod.Startup.Tests
             Assert.True(InfinityMode.PartyAcknowledged(choice)); // No additional 30-second silence hold.
         }
 
-        [Fact]
-        public void Identical_personal_wait_is_not_rewritten_while_players_linger()
+        [Theory]
+        [InlineData("remove")]
+        [InlineData("clear")]
+        public void Personal_wait_is_written_back_when_the_entry_vanishes_outside_reset(string vanish)
         {
             var (session, _, _) = StartRevealGraph();
             try
@@ -174,13 +176,14 @@ namespace SodRpg.Mod.Startup.Tests
                 Assert.False(wait.Started); // Until someone confirms, the wait text is identical every second.
                 Assert.Equal(60, wait.RemainingSeconds);
 
-                // The stub customData is a plain dictionary, so an equal-value rewrite is invisible.
-                // Dropping the entry behind the cache's back makes the next publish observable:
-                // a skipped rewrite leaves the entry absent, an unconditional rewrite would restore it.
-                settings.customData.Remove(InfinityMode.PersonalWaitKey);
+                // The skip cache must follow the dictionary, not just its own memory: when the
+                // entry vanishes without ResetPersonalChoices, the unchanged text is written back
+                // so a client's wait display cannot stay missing while the barrier holds.
+                if (vanish == "remove") settings.customData.Remove(InfinityMode.PersonalWaitKey);
+                else settings.customData.Clear();
                 Time.unscaledTime += 5;
                 InfinityMode.TickPersonalChoices();
-                Assert.False(settings.customData.ContainsKey(InfinityMode.PersonalWaitKey));
+                Assert.Equal(first, settings.customData[InfinityMode.PersonalWaitKey]);
 
                 // Once the deadline runs, the content changes each second and must be rewritten.
                 InfinityMode.StartPersonalTravelWait();
