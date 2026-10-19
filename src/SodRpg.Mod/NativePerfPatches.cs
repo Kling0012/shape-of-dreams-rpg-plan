@@ -3129,6 +3129,10 @@ namespace SodRpg.Mod
         // so a missing native method warns once.
         internal static bool _warned;
         private static bool _disabled;
+        // The skip failing disables the feature, and that reason must reach the log even
+        // when a seed or forget warning already consumed the shared flag above: the
+        // disable keeps its own once-flag.
+        private static bool _disableWarned;
 
         internal static readonly ConditionalWeakTable<DewPlayer, Dictionary<int, float>> LastHeld =
             new ConditionalWeakTable<DewPlayer, Dictionary<int, float>>();
@@ -3179,7 +3183,7 @@ namespace SodRpg.Mod
             catch (Exception ex)
             {
                 _disabled = true;
-                NativePerfPatch.Warn(ref _warned, "player on-screen timer idle", ex.Message);
+                NativePerfPatch.Warn(ref _disableWarned, "player on-screen timer idle", ex.Message);
                 return true;
             }
         }
