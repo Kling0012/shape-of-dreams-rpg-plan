@@ -214,10 +214,90 @@ namespace SodRpg.Mod
             BeforeSendToServer?.Invoke(message);
             Sent.Add((null, message));
         }
-        public void CustomRpc_RegisterServerMessageHandler<T>(string name, Action<T, DewPlayer> handler) { }
-        public void CustomRpc_UnregisterServerMessageHandler<T>(Action<T, DewPlayer> handler) { }
-        public void CustomRpc_RegisterClientMessageHandler<T>(Action<T> handler) { }
-        public void CustomRpc_UnregisterClientMessageHandler<T>(Action<T> handler) { }
+        // --- #857 NativeCustomRpcDispatchPerf: 本体 Dew.Core Actor.cs（r1.4.1.2 逆コンパイル）
+        // の CustomRpc の登録・解除・受信の切り分けの写し。辞書の形・列挙の順・例外の飲み込み
+        // （復元失敗は次のエントリへ、ハンドラの例外は1件ずつ Debug.LogException）まで
+        // 本体どおりに動かし、Prefix との結果比較の基準にする。 ---
+        private Dictionary<Type, List<RpcHandler>> _clientRpcHandlers = new Dictionary<Type, List<RpcHandler>>();
+        private Dictionary<Type, List<RpcHandler>> _serverRpcHandlers = new Dictionary<Type, List<RpcHandler>>();
+        private DewPlayer _serverRpcCaller;
+        private class RpcHandler
+        {
+            public Action<object> wrappedAction;
+            public object originalAction;
+        }
+        public void CustomRpc_RegisterClientMessageHandler<T>(Action<T> handler)
+        {
+            if (!_clientRpcHandlers.TryGetValue(typeof(T), out var value))
+            {
+                value = new List<RpcHandler>();
+                _clientRpcHandlers[typeof(T)] = value;
+            }
+            value.Add(new RpcHandler
+            {
+                wrappedAction = obj =>
+                {
+                    if (obj is T typed) handler(typed);
+                },
+                originalAction = handler
+            });
+        }
+        public void CustomRpc_UnregisterClientMessageHandler<T>()
+        {
+            _clientRpcHandlers.Remove(typeof(T));
+        }
+        public void CustomRpc_UnregisterClientMessageHandler<T>(Action<T> handler)
+        {
+            // 本体は List.FilterInPlace（一致する物だけ残す）。同じ意味の RemoveAll で写す。
+            if (_clientRpcHandlers.TryGetValue(typeof(T), out var value))
+                value.RemoveAll(h => !h.originalAction.Equals(handler));
+        }
+        public void CustomRpc_RegisterServerMessageHandler<T>(string name, Action<T, DewPlayer> handler)
+        {
+            if (!_serverRpcHandlers.TryGetValue(typeof(T), out var value))
+            {
+                value = new List<RpcHandler>();
+                _serverRpcHandlers[typeof(T)] = value;
+            }
+            value.Add(new RpcHandler
+            {
+                wrappedAction = obj =>
+                {
+                    if (!(_serverRpcCaller == null) && obj is T arg) handler(arg, _serverRpcCaller);
+                },
+                originalAction = handler
+            });
+        }
+        public void CustomRpc_UnregisterServerMessageHandler<T>(Action<T, DewPlayer> handler)
+        {
+            if (_serverRpcHandlers.TryGetValue(typeof(T), out var value))
+                value.RemoveAll(h => !h.originalAction.Equals(handler));
+        }
+        // 本体 HandleRpc_Imp の写し。登録済みハンドラの辞書を最初から最後まで列挙し、
+        // Type.Name が電文の型名と一致したら FromJson で復元してその型のハンドラを
+        // 生の List に対して foreach する（List の変更を検知して例外で止まるのも含め本体と同じ）。
+        private void HandleRpc_Imp(string type, string serialized, DewPlayer caller)
+        {
+            _serverRpcCaller = caller;
+            foreach (KeyValuePair<Type, List<RpcHandler>> item in (caller != null) ? _serverRpcHandlers : _clientRpcHandlers)
+            {
+                object obj;
+                try
+                {
+                    if (item.Key.Name != type) continue;
+                    obj = DewPersistence.FromJson(serialized, item.Key);
+                }
+                catch
+                {
+                    continue;
+                }
+                foreach (RpcHandler item2 in item.Value)
+                {
+                    try { item2.wrappedAction(obj); }
+                    catch (Exception exception) { UnityEngine.Debug.LogException(exception); }
+                }
+            }
+        }
         public Action<DamageData, Entity, ReactionChain> DamageSink;
         public void DealDamage(DamageData damage, Entity target, ReactionChain chain) => DamageSink?.Invoke(damage, target, chain);
         public void DoBasicAttackHit() { }
@@ -816,8 +896,8 @@ namespace SodRpg.Mod
         public static GameData SerializeGameData(LoadNodeSettings settings) => new GameData();
         public static void ApplyGameData(GameData data, Action onFinish = null) => onFinish?.Invoke();
         // NativeCustomRpcDispatchPerf 抽出が呼ぶ本体の JSON 受け口（実物は Newtonsoft 経路）。
-        // ハーネスでは Harmony の検証は行わないため、型とメソッドの形だけ。
-        public static object FromJson(string json, Type type) => null;
+        // 検証では実際に JSON を復元し、壊れた電文では本物と同じく例外を出す。
+        public static object FromJson(string json, Type type) => Newtonsoft.Json.JsonConvert.DeserializeObject(json, type);
     }
     internal static class DewSave
     {
