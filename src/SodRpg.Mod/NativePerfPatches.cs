@@ -49,6 +49,7 @@ namespace SodRpg.Mod
             NativePerfOptions.HeroWeaponIdle = config.nativeHeroWeaponIdle;
             NativePerfOptions.PlayerTimerIdle = config.nativePlayerTimerIdle;
             NativePerfOptions.EntityRotationIdle = config.nativeEntityRotationIdle;
+            NativePerfOptions.RoomStartDependency = config.nativeRoomStartDependency;
         }
     }
 
@@ -87,6 +88,7 @@ namespace SodRpg.Mod
         internal static bool HeroWeaponIdle = true;
         internal static bool PlayerTimerIdle = true;
         internal static bool EntityRotationIdle = true;
+        internal static bool RoomStartDependency = true;
     }
 
     internal static class NativePerfPatch
@@ -4049,5 +4051,120 @@ namespace SodRpg.Mod
         private static MethodBase TargetMethod() => _target;
         private static void Prefix(Gem __instance) => NativeGemCooldownPerf.Publishing(__instance);
         private static void Postfix(Gem __instance) => NativeGemCooldownPerf.Published(__instance);
+    }
+
+    [HarmonyPatch]
+    internal static class NativeRoomStartDependencyPerf
+    {
+        // Room.GetSortedByStartDependency runs on every room start — on the host from
+        // StartRoom and on every guest through RpcInvokeRoomStart. Each call re-reads
+        // RoomComponentStartDependencyAttribute via GetCustomAttributes (the runtime
+        // re-creates the attribute instances and arrays on every call) and rebuilds the
+        // topological order with LINQ Any/Where enumerators and a closure per dequeued
+        // component. The attribute set depends only on the component Type, so it is
+        // cached across rooms; SortByStartDependency is the same first-in first-out
+        // sort over the same arrays: it keeps the original order, the type-based
+        // filtering and the "Circular dependency detected." throw, and replaces slots
+        // with freshly allocated filtered arrays exactly like the native Where().ToArray(),
+        // so the shared cache entries are never mutated.
+        private static readonly Dictionary<Type, RoomComponentStartDependencyAttribute[]> AttributeCache
+            = new Dictionary<Type, RoomComponentStartDependencyAttribute[]>();
+
+        private static MethodInfo _target;
+        private static bool _warned;
+
+        private static bool Prepare()
+        {
+            try
+            {
+                _target = AccessTools.DeclaredMethod(typeof(Room), "GetSortedByStartDependency", new[] { typeof(RoomComponent[]) });
+                if (_target == null || _target.IsStatic || _target.ReturnType != typeof(RoomComponent[]))
+                    throw new MissingMethodException("Room.GetSortedByStartDependency");
+                // Harmony binds the Prefix's `arr` by name; give up softly if renamed.
+                foreach (ParameterInfo parameter in _target.GetParameters())
+                    if (parameter.Name == "arr" && parameter.ParameterType == typeof(RoomComponent[]))
+                        return true;
+                throw new MissingMethodException("Room.GetSortedByStartDependency(RoomComponent[] arr)");
+            }
+            catch (Exception ex)
+            {
+                NativePerfPatch.Warn(ref _warned, "room start dependency", ex.Message);
+                return false;
+            }
+        }
+
+        private static MethodBase TargetMethod() => _target;
+
+        private static bool Prefix(RoomComponent[] arr, ref RoomComponent[] __result)
+        {
+            if (!NativePerfOptions.RoomStartDependency) return true;
+            try
+            {
+                __result = SortByStartDependency(arr);
+                return false;
+            }
+            catch (Exception ex)
+            {
+                // The copy mirrors the native algorithm, so a throw here is either a
+                // genuine circular dependency (the original throws the same way) or a
+                // defect in this copy; running the original reproduces both exactly.
+                NativePerfPatch.Warn(ref _warned, "room start dependency", ex.Message);
+                return true;
+            }
+        }
+
+        private static RoomComponentStartDependencyAttribute[] AttributeArrayOf(Type type)
+        {
+            if (!AttributeCache.TryGetValue(type, out RoomComponentStartDependencyAttribute[] cached))
+            {
+                object[] customAttributes = type.GetCustomAttributes(typeof(RoomComponentStartDependencyAttribute), inherit: true);
+                cached = new RoomComponentStartDependencyAttribute[customAttributes.Length];
+                for (int i = 0; i < customAttributes.Length; i++)
+                    cached[i] = (RoomComponentStartDependencyAttribute)customAttributes[i];
+                AttributeCache[type] = cached;
+            }
+            return cached;
+        }
+
+        private static RoomComponent[] SortByStartDependency(RoomComponent[] arr)
+        {
+            int count = arr.Length;
+            RoomComponentStartDependencyAttribute[][] attributes = new RoomComponentStartDependencyAttribute[count][];
+            for (int i = 0; i < count; i++)
+                attributes[i] = AttributeArrayOf(arr[i].GetType());
+
+            List<RoomComponent> sorted = new List<RoomComponent>(count);
+            Queue<RoomComponent> queue = new Queue<RoomComponent>(count);
+            for (int i = 0; i < count; i++)
+                if (attributes[i].Length == 0)
+                    queue.Enqueue(arr[i]);
+
+            while (queue.Count > 0)
+            {
+                RoomComponent rc = queue.Dequeue();
+                sorted.Add(rc);
+                Type rcType = rc.GetType();
+                for (int m = 0; m < count; m++)
+                {
+                    RoomComponentStartDependencyAttribute[] deps = attributes[m];
+                    if (deps.Length == 0) continue;
+                    int matches = 0;
+                    for (int d = 0; d < deps.Length; d++)
+                        if (deps[d].targetRoomComponent == rcType) matches++;
+                    if (matches == 0) continue;
+                    RoomComponentStartDependencyAttribute[] remaining = new RoomComponentStartDependencyAttribute[deps.Length - matches];
+                    int write = 0;
+                    for (int d = 0; d < deps.Length; d++)
+                        if (deps[d].targetRoomComponent != rcType) remaining[write++] = deps[d];
+                    attributes[m] = remaining;
+                    if (remaining.Length == 0)
+                        queue.Enqueue(arr[m]);
+                }
+            }
+
+            if (sorted.Count < count)
+                throw new Exception("Circular dependency detected.");
+            return sorted.ToArray();
+        }
     }
 }
