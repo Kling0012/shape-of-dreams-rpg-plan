@@ -10,6 +10,25 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v3.8.26 — Lighter combat with idle characters and Thorned enemies（2026-10-20）
+
+止まっている敵や仲間の当たり判定の位置を、毎回同じ値で書き直さないようにしました。トゲ付きの敵に攻撃を当てたときの余分な処理も省き、戦闘中のゲームの動作を軽くしました。 / The game no longer rewrites the same collision position for idle enemies and allies, and it does less extra work when you hit Thorned enemies, making combat a little lighter.
+
+### 更新前に確認 / Before updating
+
+- 協力プレイでは、参加者全員がこのバージョンに更新してください。 / Everyone in co-op should update to this version.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- 敵や召喚体、ほかのプレイヤーの英雄が止まっているあいだも、当たり判定の位置を毎回同じ値で書き直していました。この無駄な処理をする問題を直しました。位置が変わっていないときは書き直しを省くので、止まっているものが多い場面ほど軽くなります。特に協力プレイの参加者のゲームで効果があります。止まっているものが40体いる場面では、1秒あたりおよそ1200回の無駄な書き込みが減る見込みです。動いているものやテレポートしたものは、これまでどおり位置が更新されます。当たり判定や動きはこれまでと変わりません。 / Fixed the game rewriting the same collision position every update for enemies, summons, and other players' heroes, even while they were standing still. The rewrite is now skipped when the position has not changed, so scenes with many idle characters get lighter, especially for guests in co-op. With 40 idle characters on screen, this is expected to cut roughly 1,200 wasted writes per second. Moving or teleporting characters still update their position as before. Collisions and movement are unchanged.
+- トゲ付きの敵に攻撃を当てるたびに、反射の間隔を確かめる処理が、毎回わずかに余分なメモリを使っていました。この問題を直しました。トゲ付きの敵がいる戦闘で、ホストのゲームが少し軽くなります。1回あたりの効果は小さく、トゲ付きの敵がいない場面では変わりません。反射が起きる時機やダメージは、これまでと変わりません。 / Fixed the game using a little extra memory every time you hit a Thorned enemy, while checking when it can reflect damage next. Fights with Thorned enemies are now slightly lighter for the host. The gain per hit is small, and nothing changes when no Thorned enemies are present. When reflections happen and how much damage they deal are unchanged.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
 ## v3.8.25 — Lighter co-op enemy resync（2026-10-20）
 
 協力プレイで敵の情報を送り直すときに、意味のない通信を送らないようにし、部屋を移るときのゲームの動作を軽くしました。 / Co-op no longer sends pointless messages when enemy information is resent, making the game lighter when you move between rooms.
