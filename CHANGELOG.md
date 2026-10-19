@@ -10,6 +10,13 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v3.8.21 — Dynamic difficulty in the HUD summary and lighter co-op（2026-10-20）
+
+### 新機能 / New features
+- 画面左上のまとめ表示に、動的難易度で敵の体力と報酬がどれだけ変わっているかを出すようにしました。 / The top-left HUD summary now shows how much dynamic difficulty changes enemy HP and rewards.
+
+---
+
 ## v3.8.20 — Lighter co-op: less work for still units, kill handling, and gem cooldowns（2026-10-19）
 
 ### 不具合の修正 / Bug fixes
