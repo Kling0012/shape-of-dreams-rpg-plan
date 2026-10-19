@@ -1,5 +1,5 @@
-[b]Cut unnecessary host work on enemies that do not need to switch targets.[/b]
-[b]標的を付け替える必要のない敵に対するホストの無駄な処理を省きました。[/b]
+[b]Cuts unnecessary per-frame work in hero weapon display and build sending checks, with no change to gameplay or visuals.[/b]
+[b]英雄の武器の表示とビルドを送るかどうかの確認から、毎フレームの無駄な処理を省きました。遊び方や見た目は変わりません。[/b]
 
 [h1]Dreamforge RPG[/h1]
 Turns every run into part of a long RPG journey: relics you keep, a "secure or delve" choice at every zone, a star map per Traveler, a forge and long-term goals. Co-op ready.
