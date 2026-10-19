@@ -1,5 +1,5 @@
-[b]Fixed issues with Polaris mode switching, relic icon caching, and the stat-recalculation optimization patches.[/b]
-[b]ポラリスのモード切替、遺物のアイコン、能力再計算の軽量化に関する不具合を直しました。[/b]
+[b]Stops co-op from re-sending unchanged ability charges and needless boss effect removal notices.[/b]
+[b]協力プレイで、変わっていないチャージ数や不要な演出削除の通知を送らないようにしました。[/b]
 
 [h1]Dreamforge RPG[/h1]
 Turns every run into part of a long RPG journey: relics you keep, a "secure or delve" choice at every zone, a star map per Traveler, a forge and long-term goals. Co-op ready.
