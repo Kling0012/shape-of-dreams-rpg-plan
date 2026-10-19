@@ -483,7 +483,7 @@ Nは、同frame・同じ鍵で、適用条件を満たした1型の生成数と�
 
 ## 10. 実装の束
 
-1束を1回のワーカー作業とする。今回実行したのは調査と文書化だけであり、以下のコード作業は未実行。束0の条件を満たさないまま、後続の型を有効にしない。型の条件が成立しなければ、その型だけ通常公開を維持して次の候補へ進む。
+1束を1回のワーカー作業とする。束0は12節のとおり実装した。ほかの束のコード作業は未実行。束0の条件を満たさないまま、後続の型を有効にしない。束0の条件を満たさないまま、後続の型を有効にしない。型の条件が成立しなければ、その型だけ通常公開を維持して次の候補へ進む。
 
 | 順序・束 | 目的と範囲 | 受け入れの例 | 境界の例・してはいけないこと |
 |---|---|---|---|
@@ -516,7 +516,44 @@ Nは、同frame・同じ鍵で、適用条件を満たした1型の生成数と�
 - **Bのサーバ個体を減らす設計は未完了。** 表の非強化規則は個別判定保持であり、ゲスト公開を減らす代案である。Mirrorの差し込み候補は見つかったが、型別の公開参照・ゲストイベントをすべて解決したわけではない。実装可能と確定した型数は0で、削減の実績も0。Aの確定型も0。
 - **全182記憶の生成経路は未完了。** コードで対応を説明できた28件と、名前だけの候補対応を区別した。生成元欠落でも実行時集計は可能だが、未確認の対応や頻度が確定するわけではない。
 - **プレハブ・asset bundleの検査は未実行。** 資料に含まれておらず、基底の軌道設定、Collider、range、描画用transform、追加NetworkBehaviour、イベント配線の実値は未確認。本文が読めない25型の元の処理も復元していない。
-- **MODのコード変更・ビルド・テストは未実行。** 今回は仕様書だけを変更した。新しいテストの設計・作成は依頼範囲外として行っていない。後続実装の結果不変の確認はconstitutionの条件に従う。
+- **MODのコード変更・ビルド・テストは未実行。** 今回は仕様書だけを変更した。新しいテストの設計・作成は依頼範囲外として行っていない。後続実装の結果不変の確認はconstitutionの条件に従う。束0の実装はこのあと12節のとおり行った。
 - **実機・協力プレイ・専用サーバ・途中参加の確認、Profiler、生成数・SyncVar・RPC・粒子の実測は未実行。** この環境ではゲームを起動できない。実機確認だけのIssueは作らない。
 
 文書の分類表・型別規則・条件付き推定・実装束は作成したが、サーバ実体の集約方法とB案の適用可能性の確定は残っている。この追記を、そのまま56型の有効化を許す完成仕様として使わない。
+
+## 12. 束0の実装（2026-10-20）
+
+`src/SodRpg.Mod/NativeGuestPublishLimit.cs` に実装した。型の登録表は空のまま起動するため、すべての Actor は今までどおり Spawn され、全接続へ公開される。ゲーム効果も見た目も変わらない。既存の `NativeProcCoalesce`（エッセンス4型）には触れていない。設定は `DreamforgeConfig.nativeGuestPublishLimit`（既定ON）で、`NativePerfPatches` の `NativePerfOptions.GuestPublishLimit` へ反映する。設定の配線に合わせて、tests/Issue73.Native.Tests の DreamforgeConfig 模倣（NativeEmbracePositionBoundary.cs）へ同じ名前のフィールドを足した。
+
+### 12.1 パッチ先
+
+現行 `Mirror.dll` と `Dew.Core.dll` の逆コンパイルを読んで決めた。どの経路でも Spawn とローカルホスト側の初期化（OnStartClient・OnCreate）は省かない。
+
+| パッチ先 | 位置 | 役割 |
+|---|---|---|
+| `NetworkServer.SpawnObject(GameObject, NetworkConnection)` | Prefix | 生成時の区分け。`Dew.CreateAbilityInstance` は parentActor と info を設定してから Spawn するため、この時点で鍵に必要な値が揃い、同じ呼び出し内で後に出る初回の observer 追加より前に区分が確定する |
+| `NetworkIdentity.AddObserver(NetworkConnectionToClient)` | Prefix | AOI を使わない初回公開（RebuildObserversDefault）と、途中参加（SpawnObserversForConnection） |
+| `DewInterestManagement.OnRebuildObservers(NetworkIdentity, HashSet<NetworkConnectionToClient>)` | Postfix | AOI の初回・再構築。`InterestManagement.Rebuild` は AddObserver を通らず observers を組み直すため、返しの集合から非公開候補へのリモート接続を除く |
+| `NetworkServer.ShowForConnection(NetworkIdentity, NetworkConnection)` | Prefix | 明示的な Show。SpawnMessage を送る前に同じ判定を通す |
+| `NetworkServer.DestroyObject(NetworkIdentity, DestroyMode)` | Postfix | 区分の解除。破棄とプール返却（UnSpawn・Reset）のどちらもこの経路を通る |
+
+初回・途中参加・再構築・Show の4経路は、同じ `AllowObserver(identity, connection)` で判定する。ローカルホストの接続は常に通常どおり公開する。AddObserver のみを抑えて AOI を放置すると、SpawnMessage が送られないまま observers へ加わった接続へ、ゲストの知らない netId への更新が届く。このため OnRebuildObservers の集合の整理を必須の蓋とし、どれかのパッチ先が取り付かないときは機能全体を登録拒否にして通常公開へ戻す（Prepare で対象を探し、見つからなければ警告を1回出す）。DestroyObject の DestroyMode は private のため、名前と第1引数の形で探す。
+
+### 12.2 区分けと解除
+
+- 鍵は8.4のとおり、型、creator/source（parentActor）、caster、対象指定（target の有無と point・angle）、開始位置、向き、設定の版。位置と向きは丸めずに float の値そのもので比較し、NaN・Infinity が混ざれば鍵が作れないものとして扱う。
+- フレーム集計は固定容量512の開放アドレス表を、フレームの刻印で使い回す。フレームごとに辞書・リスト・クロージャは作らない。1〜4個目は通常公開、5個目は表示代表、6個目以降は非公開候補で、各フレーム・各鍵の公開は5個まで。
+- 非公開候補の区分は NetworkIdentity を鍵とする弱参照表に置き、DestroyObject の Postfix で必ず外す。プールで再利用した個体に前の区分は残らない。
+- 権限を持つ接続のある個体（ownerConnection が null でない）と、非公開候補を親に持つ子は通常公開する。ゲストは親の parentActorNetId を解決できないためである。この親の判定は実行時の防波囲で、登録前の参照審査（12.4）の代わりにはならない。
+
+### 12.3 失敗時の動作
+
+鍵が作れない、枠を使い尽くす、専用サーバ（NetworkServer.localConnection がない）、判定中の例外、のいずれかでは、該当する個体を通常公開し、その型の登録を外して警告を1回出す。専用サーバと、型が定まらないままの例外は全型の登録を外す。判定に失敗しても Spawn は妨げず、MOD全体は止まらない。登録0件の現在は判定の入り口で毎回返るため、どの場面でも何も起きない。
+
+### 12.4 型の登録前の検証
+
+`NativeGuestPublishLimit.TryRegister` を用意した。機械的に確かめる条件は、AbilityInstance の具象サブクラスであること、Summon を継承しないこと、宣言している ClientRpc・Command・TargetRpc が表示だけだと申し立てられていること。加えて、公開される Actor から parentActor・CastInfo・SyncVar でこの型の個体が参照されないことを審査済みという申し立てを必須にする。参照の有無は機械的には確かめられないため、申し立てのない型は拒否する。条件を満たさない型は登録せず、理由を文字列で返す。この時点での呼び出し元はない。
+
+### 12.5 検証と未確認
+
+`python3 tools/balance/gen_cs.py --check` 合格。`dotnet build src/SodRpg.Mod -c Release` はエラー0・警告6件（既存）。`dotnet test tests/Issue73.Native.Tests -c Release` は536件合格。`dotnet test tests/SodRpg.Mod.Startup.Tests -c Release` は225件合格・1件スキップ（既存の環境依存。この2つには DOTNET_ROLL_FORWARD=LatestMajor を指定）。`python3 tools/test_changed.py --base HEAD` は3650件合格・0失敗（DOTNET にシステムの dotnet を指定。作業ツリーの変更だけを対象。既定の比較元では dev 取り込み分の balance 入力も含まれ全走査になるため、全体はパイプラインに残す）。実機・協力プレイ・専用サーバ・途中参加の確認と、生成数・通信量の実測は未実行。changelog は、登録0件で挙動が変わらないため書いていない。
