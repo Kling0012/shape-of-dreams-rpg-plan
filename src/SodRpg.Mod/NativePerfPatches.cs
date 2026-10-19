@@ -35,6 +35,7 @@ namespace SodRpg.Mod
             NativePerfOptions.KillTrackerCull = config.nativeKillTrackerCullThrottle;
             NativePerfOptions.CursorIdle = config.nativeCursorIdle;
             NativePerfOptions.StatsCalcRpcIdle = config.nativeStatsCalcRpcIdle;
+            NativePerfOptions.StatsRatioIdle = config.nativeStatsRatioIdle;
             NativePerfOptions.UltChargeRpcIdle = config.nativeUltChargeRpcIdle;
             NativePerfOptions.PositionSyncIdle = config.nativePositionSyncIdle;
             NativePerfOptions.ChargeRpcIdle = config.nativeChargeRpcIdle;
@@ -69,6 +70,7 @@ namespace SodRpg.Mod
         internal static bool KillTrackerCull = true;
         internal static bool CursorIdle = true;
         internal static bool StatsCalcRpcIdle = true;
+        internal static bool StatsRatioIdle = true;
         internal static bool UltChargeRpcIdle = true;
         internal static bool PositionSyncIdle = true;
         internal static bool ChargeRpcIdle = true;
@@ -2094,6 +2096,286 @@ namespace SodRpg.Mod
         // Runs synchronously at the top of every CalculateStats, so the notification at the
         // end of the same call always compares against this call's own entry bits.
         private static void Prefix(EntityStatus __instance) => NativeStatsCalcRpcPerf.Capture(__instance);
+    }
+
+    [HarmonyPatch]
+    internal static class NativeStatsRatioIdlePerf
+    {
+        // EntityStatus.CalculateStats preserves the health and mana ratios across a max
+        // change by rewriting both from the ratio captured at entry:
+        //
+        //     float num = currentHealth / maxHealth;   (old values)
+        //     ...
+        //     currentHealth = num * data.maxHealth;    (new values)
+        //     currentMana  = num2 * data.maxMana;
+        //
+        // When data.maxHealth equals the old maxHealth — every recalculation that does not
+        // move the max — the rewrite is a float32 division-multiplication round trip. That
+        // round trip is inexact for roughly 9.5% of arbitrary values (measured, 20000000
+        // samples, worst error 1 ulp): the written value differs from the value already in
+        // the field, Mirror's setter then raises the 0x80/0x100 dirty bit, and the next sync
+        // broadcasts a float every observer already holds. Entities with decaying basic
+        // effects recalculate every logic frame (UpdateStatusEffectInfo re-dirties while a
+        // decayed strength moves), and every AddBasicEffect / RemoveBasicEffect /
+        // AddStatBonus / RemoveStatBonus recalculates too, so combat produces a steady
+        // stream of these no-op health and mana deltas to every guest.
+        //
+        // The prefix records the entry health, mana and maxes; the postfix compares the new
+        // maxes with the saved ones. Only when a max is bit-identical does it restore the
+        // saved value through the weaver's Network_currentHealth / Network_currentMana
+        // setter — identical state, so restoring only re-raises the same dirty bit — and
+        // then clears that bit again, but only when the bit was clear at method entry: a
+        // bit set before the call is a genuine unsent change from earlier in the same sync
+        // window and must keep going out with the restored value. Every real change still
+        // syncs exactly as vanilla: a max that moved leaves the ratio rewrite untouched,
+        // regen / SetHealth / damage writes are outside the window, and writes made inside
+        // the window by processors or event subscribers are clobbered by the vanilla ratio
+        // rewrite itself (processors run before it; finalStats fires only after it), so the
+        // restore matches vanilla's final state there too.
+        //
+        // Two guarded deviations, both narrower than the noise being removed: a vanilla
+        // rewrite that underflows a denormal saved health to exactly 0 would kill on the
+        // LogicUpdate check, so that one case is left standing; and a pathological max of
+        // exactly 0 turns the vanilla rewrite into a NaN write, which the restore replaces
+        // with the last finite value. A third-party subscriber counting recalculations
+        // rather than reading state is unaffected — RpcInvokeStatsCalculated and the hooks
+        // still fire; only the wire carries fewer identical floats (nativeStatsRatioIdle
+        // turns the skip off).
+        private sealed class Window
+        {
+            internal float SavedHealth;
+            internal float SavedMana;
+            internal float SavedMaxHealth;
+            internal float SavedMaxMana;
+            internal ulong EntryBits;
+        }
+
+        private static readonly Stack<Window> WindowPool = new Stack<Window>();
+
+        private static MethodBase _calc;
+        private static System.Reflection.MethodInfo _plainHealthSetter;
+        private static System.Reflection.MethodInfo _plainManaSetter;
+        private static System.Reflection.MethodInfo _networkHealthSetter;
+        private static System.Reflection.MethodInfo _networkManaSetter;
+        private static Func<EntityStatus, float> _currentHealth;
+        private static Func<EntityStatus, float> _currentMana;
+        private static Func<EntityStatus, float> _maxHealth;
+        private static Func<EntityStatus, float> _maxMana;
+        private static Action<EntityStatus, float> _sendHealth;
+        private static Action<EntityStatus, float> _sendMana;
+        private static Func<Mirror.NetworkBehaviour, ulong> _dirtyBits;
+        private static Action<Mirror.NetworkBehaviour, ulong> _setDirtyBits;
+        private static ulong _healthBit;
+        private static ulong _manaBit;
+        private static bool _disabled;
+        private static bool _warned;
+
+        private static bool Prepare()
+        {
+            if (_disabled) return false;
+            if (_calc != null) return true;
+            _disabled = true;
+            try
+            {
+                _calc = NativePerfPatch.Find(typeof(EntityStatus), "CalculateStats", ref _warned);
+                if (_calc == null) return false;
+                _plainHealthSetter = AccessTools.PropertySetter(typeof(EntityStatus), "currentHealth");
+                _plainManaSetter = AccessTools.PropertySetter(typeof(EntityStatus), "currentMana");
+                _networkHealthSetter = AccessTools.PropertySetter(typeof(EntityStatus), "Network_currentHealth");
+                _networkManaSetter = AccessTools.PropertySetter(typeof(EntityStatus), "Network_currentMana");
+                if (_plainHealthSetter == null || _plainManaSetter == null
+                    || _networkHealthSetter == null || _networkManaSetter == null)
+                {
+                    NativePerfPatch.Warn(ref _warned, "stats ratio idle", "native health/mana setters unavailable");
+                    return false;
+                }
+                if (!ResolveGetters() || !ResolveBitAccess()) return false;
+                _healthBit = ExtractDirtyBit(_networkHealthSetter);
+                _manaBit = ExtractDirtyBit(_networkManaSetter);
+                if (_healthBit == 0UL || _manaBit == 0UL) return false;
+                if (!ValidateCalcBody()) return false;
+                _disabled = false;
+                return true;
+            }
+            catch (Exception ex)
+            {
+                NativePerfPatch.Warn(ref _warned, "stats ratio idle", ex.Message);
+                return false;
+            }
+        }
+
+        private static MethodBase TargetMethod() => _calc;
+
+        private static bool ResolveGetters()
+        {
+            _currentHealth = BuildGetter("currentHealth");
+            _currentMana = BuildGetter("currentMana");
+            _maxHealth = BuildGetter("maxHealth");
+            _maxMana = BuildGetter("maxMana");
+            if (_currentHealth == null || _currentMana == null || _maxHealth == null || _maxMana == null)
+            {
+                NativePerfPatch.Warn(ref _warned, "stats ratio idle", "native health/mana getters unavailable");
+                return false;
+            }
+            _sendHealth = (Action<EntityStatus, float>)Delegate.CreateDelegate(
+                typeof(Action<EntityStatus, float>), _networkHealthSetter);
+            _sendMana = (Action<EntityStatus, float>)Delegate.CreateDelegate(
+                typeof(Action<EntityStatus, float>), _networkManaSetter);
+            return true;
+        }
+
+        private static Func<EntityStatus, float> BuildGetter(string property)
+        {
+            var getter = AccessTools.PropertyGetter(typeof(EntityStatus), property);
+            if (getter == null) return null;
+            return (Func<EntityStatus, float>)Delegate.CreateDelegate(
+                typeof(Func<EntityStatus, float>), getter);
+        }
+
+        private static bool ResolveBitAccess()
+        {
+            var getter = AccessTools.PropertyGetter(typeof(Mirror.NetworkBehaviour), "syncVarDirtyBits");
+            var setter = AccessTools.PropertySetter(typeof(Mirror.NetworkBehaviour), "syncVarDirtyBits");
+            if (getter == null || setter == null)
+            {
+                NativePerfPatch.Warn(ref _warned, "stats ratio idle", "Mirror syncVarDirtyBits access unavailable");
+                return false;
+            }
+            _dirtyBits = (Func<Mirror.NetworkBehaviour, ulong>)Delegate.CreateDelegate(
+                typeof(Func<Mirror.NetworkBehaviour, ulong>), getter);
+            _setDirtyBits = (Action<Mirror.NetworkBehaviour, ulong>)Delegate.CreateDelegate(
+                typeof(Action<Mirror.NetworkBehaviour, ulong>), setter);
+            return true;
+        }
+
+        // The weaver's setter embeds its dirty bit as the call's only long constant
+        // (GeneratedSyncVarSetter(value, ref field, <bit>, null)); reading it from the IL
+        // keeps the clear mask bound to the same constant the restore's setter raises.
+        private static ulong ExtractDirtyBit(System.Reflection.MethodInfo setter)
+        {
+            ulong found = 0UL;
+            int count = 0;
+            foreach (var insn in PatchProcessor.GetOriginalInstructions(setter))
+            {
+                if (insn.opcode != OpCodes.Ldc_I8) continue;
+                found = (ulong)(long)insn.operand;
+                count++;
+            }
+            if (count != 1)
+            {
+                NativePerfPatch.Warn(ref _warned, "stats ratio idle", "native setter dirty bit shape changed");
+                return 0UL;
+            }
+            return found;
+        }
+
+        // The restore assumes the ratio rewrite is the only health write and the only mana
+        // write inside CalculateStats (through the plain property or straight through the
+        // Network_ setter). A body that writes either more than once — or not at all —
+        // breaks that 1:1 assumption, so the patch keeps off.
+        private static bool ValidateCalcBody()
+        {
+            if (CountCalls(_calc, _plainHealthSetter) + CountCalls(_calc, _networkHealthSetter) != 1
+                || CountCalls(_calc, _plainManaSetter) + CountCalls(_calc, _networkManaSetter) != 1)
+            {
+                NativePerfPatch.Warn(ref _warned, "stats ratio idle", "native CalculateStats ratio writes changed");
+                return false;
+            }
+            return true;
+        }
+
+        private static int CountCalls(MethodBase method, MethodBase target)
+        {
+            int calls = 0;
+            foreach (var insn in PatchProcessor.GetOriginalInstructions(method))
+                if (target != null && (insn.opcode == OpCodes.Call || insn.opcode == OpCodes.Callvirt)
+                    && Equals(insn.operand, target))
+                    calls++;
+            return calls;
+        }
+
+        private static bool Prefix(EntityStatus __instance, out Window __state)
+        {
+            __state = null;
+            if (_disabled || !NativePerfOptions.StatsRatioIdle || !Mirror.NetworkServer.active) return true;
+            try
+            {
+                Window window;
+                if (WindowPool.Count > 0)
+                {
+                    window = WindowPool.Pop();
+                }
+                else
+                {
+                    window = new Window();
+                }
+                window.SavedHealth = _currentHealth(__instance);
+                window.SavedMana = _currentMana(__instance);
+                window.SavedMaxHealth = _maxHealth(__instance);
+                window.SavedMaxMana = _maxMana(__instance);
+                window.EntryBits = _dirtyBits(__instance);
+                __state = window;
+            }
+            catch (Exception ex)
+            {
+                _disabled = true;
+                NativePerfPatch.Warn(ref _warned, "stats ratio idle", ex.Message);
+            }
+            return true;
+        }
+
+        private static void Postfix(EntityStatus __instance, Window __state, bool __runOriginal)
+        {
+            if (__state == null) return;
+            bool run = __runOriginal && !_disabled && NativePerfOptions.StatsRatioIdle;
+            try
+            {
+                if (run)
+                {
+                    // float.Equals mirrors Mirror's own SyncVarEqual semantics, including
+                    // NaN==NaN and 0==-0, so a field the setter early-returned on is never
+                    // "restored" and never re-dirtied.
+                    if (_maxHealth(__instance).Equals(__state.SavedMaxHealth))
+                    {
+                        float now = _currentHealth(__instance);
+                        // Leave a vanilla underflow-to-zero standing: it kills on the
+                        // LogicUpdate check, and restoring would undo that death.
+                        if (!now.Equals(__state.SavedHealth)
+                            && !(__state.SavedHealth > 0f && now <= 0f))
+                        {
+                            _sendHealth(__instance, __state.SavedHealth);
+                            if ((__state.EntryBits & _healthBit) == 0UL)
+                            {
+                                _setDirtyBits(__instance, _dirtyBits(__instance) & ~_healthBit);
+                            }
+                        }
+                    }
+                    if (_maxMana(__instance).Equals(__state.SavedMaxMana))
+                    {
+                        float now = _currentMana(__instance);
+                        if (!now.Equals(__state.SavedMana))
+                        {
+                            _sendMana(__instance, __state.SavedMana);
+                            if ((__state.EntryBits & _manaBit) == 0UL)
+                            {
+                                _setDirtyBits(__instance, _dirtyBits(__instance) & ~_manaBit);
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _disabled = true;
+                NativePerfPatch.Warn(ref _warned, "stats ratio idle", ex.Message);
+            }
+            finally
+            {
+                // The pool only holds idle windows; cap it so a pathological recursion
+                // depth cannot grow it without bound.
+                if (WindowPool.Count < 8) WindowPool.Push(__state);
+            }
+        }
     }
 
     [HarmonyPatch]
