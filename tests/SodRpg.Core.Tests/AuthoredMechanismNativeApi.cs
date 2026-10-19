@@ -296,6 +296,11 @@ namespace SodRpg.Mod
         private bool TryGetMemoryActivation(Actor source, out MemoryActivationIdentity identity) => _memoryAttribution.TryGetInstance(source.GetInstanceID(), out identity);
         // HostAuthority.MemoryActivationAttribution.cs（リンク外）の IsPairReactionSourceNode と同じ
         // 本体のミラー。リンクされる PairCombos.cs の IsPairReactionSource が呼ぶ（本体側と同じ条件）。
+        // 本体の述語に反応元の型を足す・条件を変えるときは、この写しも必ず同じように更新すること（手動同期）。
+        // 更新が漏れても本体の動作はずれない（本体は単一定義を使う）が、Core.Tests の
+        // PairComboNativeTests（Pair_reaction_source_is_true_only_for_chains_with_a_shared_origin_node）
+        // だけが古い条件のまま通り続ける。本体側の述語そのものは Issue73.Native.Tests の
+        // MemoryActivationPairReactionPremiseTests が直接検証している。
         internal static bool IsPairReactionSourceNode(Actor actor)
             => actor is Gem || actor is ElementalStatusEffect
                 || actor is AbilityInstance instance && instance.gem != null;
