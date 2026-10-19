@@ -12,7 +12,7 @@ namespace Issue73.Native.Tests
     /// 境界（NativeEmbracePositionBoundary.cs）のスタブ Projectile から同名の
     /// 非公開メソッドで取る（Prefix は名前で振り分けるので中身は空でよい）。
     /// (a) 対応する字段が null なら省く（false）、非 null なら送る（true）、
-    /// (b) 違う字段だけ設定していても対応する字段が null なら省く
+    /// (b) 他の3字段を全部設定していても対応する字段が null なら省く
     /// （送信メソッドと字段の取り違えの検出）、
     /// (c) 設定が無効なら常に送る、(d) switch が知らない名前は常に送る
     /// （Prepare への追加で case を書き忘れても安全側に倒れる）。
@@ -56,18 +56,22 @@ namespace Issue73.Native.Tests
             Assert.True(Send(projectile, Sender(senderName)));
         }
 
-        // (b) 違う字段だけを設定していても、対応する字段が null なら省く。
-        // 送信メソッドと字段の取り違え（例: RpcStopOnFlyEffect を effectOnEntity で
+        // (b) 他の3字段を全部設定していても、対応する字段が null なら省く。
+        // 送信メソッドと字段の取り違え（例: RpcPlayOnEntityEffect を effectOnComplete で
         // 判定する）は、対応する字段が null のまま true に変わることでここで検出される。
+        // 取り違え先が3字段のどれであっても同じく true に変わるよう、他は全部設定する。
         [Theory]
-        [InlineData("RpcPlayOnEntityEffect", nameof(Projectile.effectOnEntity), nameof(Projectile.effectOnFly))]
-        [InlineData("RpcPlayOnDissipateEffect", nameof(Projectile.effectOnDissipate), nameof(Projectile.effectOnComplete))]
-        [InlineData("RpcStopOnFlyEffect", nameof(Projectile.effectOnFly), nameof(Projectile.effectOnEntity))]
-        [InlineData("RpcPlayOnCompleteEffect", nameof(Projectile.effectOnComplete), nameof(Projectile.effectOnDissipate))]
-        public void EachSenderIgnoresForeignFields(string senderName, string ownFieldName, string foreignFieldName)
+        [InlineData("RpcPlayOnEntityEffect", nameof(Projectile.effectOnEntity))]
+        [InlineData("RpcPlayOnDissipateEffect", nameof(Projectile.effectOnDissipate))]
+        [InlineData("RpcStopOnFlyEffect", nameof(Projectile.effectOnFly))]
+        [InlineData("RpcPlayOnCompleteEffect", nameof(Projectile.effectOnComplete))]
+        public void EachSenderIgnoresForeignFields(string senderName, string ownFieldName)
         {
             var projectile = new Projectile();
-            typeof(Projectile).GetField(foreignFieldName).SetValue(projectile, new GameObject());
+            foreach (var field in typeof(Projectile).GetFields())
+            {
+                if (field.Name != ownFieldName) field.SetValue(projectile, new GameObject());
+            }
             Assert.False(Send(projectile, Sender(senderName)));
             typeof(Projectile).GetField(ownFieldName).SetValue(projectile, new GameObject());
             Assert.True(Send(projectile, Sender(senderName)));
