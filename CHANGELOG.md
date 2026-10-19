@@ -10,6 +10,26 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v3.8.13 — Lighter host work, co-op traffic, and per-frame processing（2026-10-19）
+
+ホストの処理と協力プレイの通信、毎フレームの処理から無駄を省き、動作を軽くしました。 / Made the game lighter by cutting unnecessary host work, co-op traffic, and per-frame processing.
+
+### 更新前に確認 / Before updating
+
+- 協力プレイでは、参加者全員がこのバージョンに更新してください。 / Everyone in co-op should update to this version.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- 混沌の神殿を持っているとき、光・闇の最大スタックを伸ばす報酬をまだ取っていなくても、攻撃が当たるたびにホストが無駄な処理をしていた問題を直しました。光・闇に寄せていない序盤ほど効果があります。光・闇の状態の扱いや戦闘の結果は、これまでと変わりません。 / Fixed the host doing unnecessary work on every hit while holding the Chaos Shrine, even before taking any light/dark max stack rewards. The benefit is largest early on, before you lean into light or dark. Light/dark effects and combat results are unchanged.
+- チャージ系のスキルを溜めている間、狙いを動かしていなくても、同じ狙いをホストへ1秒に最大20回送り続けていた問題を直しました。狙いが変わったときだけ送るので、協力プレイの通信とホストの負担が減ります。狙いの反映の速さや発動の結果は、これまでと変わりません。 / Fixed charged skills sending the same aim to the host up to 20 times per second while charging, even when the aim had not moved. Aim is now sent only when it changes, reducing co-op traffic and host load. How quickly aim updates show up and what the skill does are unchanged.
+- 毎フレーム、画面上のすべてのキャラクターや弾、効果に対して同じ確認を2回繰り返していた問題を直しました。敵や弾が多い戦闘ほど処理が軽くなります。ゲームの動きは、これまでと変わりません。 / Fixed the same check being run twice every frame for every character, projectile, and effect on screen. Fights with many enemies and projectiles get lighter. Gameplay is unchanged.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
 ## v3.8.12 — Lighter host processing on every hit（2026-10-19）
 
 攻撃が当たるたびに行っていたホストの処理を軽くしました。 / Reduced the host's processing load each time an attack hits.
