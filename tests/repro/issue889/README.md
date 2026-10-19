@@ -56,22 +56,28 @@
   なお `PickupInstance.OnDestroyActor` が止めるのは `mainEffect` だけで、
   `pickupEffectOnHero` は対象外。
 
-## 修正工程が調べるべきこと（この段階で絞り込めた範囲）
+## 破棄の順序と Actor 破棄系・本体差分の検証（確定）
 
 - 拾得演出は「登録なしのその場再生」で、消える保証を親 Actor の破棄に預けている。
   親の Actor がプール再生（`reuseInRoom=true`。Pickup_DreamDust と宝珠は両方該当）
-  で、破棄の代わりに無効化・再利用されると、`pickupEffectOnHero` の後始末を
-  誰もしない状態が起き得る。MOD の `NativeActorClientDespawn`
-  （Actor.OnStopClient の Prefix で OnDestroyActor を前倒し実行）と
-  `NativeActorLifetimeReset`（Actor.OnDisable の Postfix）がこの順序に
-  どう関わるかを最初に確かめる価値がある。
+  のとき、正常な経路では破棄鎖（`Dew.Destroy` → canDestroy 待ち → despawn）が
+  完結して子ごと無効化され、`FxAttachToEntity.OnDisable` が追従を外す。
+  鎖のどこかで破棄が完結しないと `pickupEffectOnHero` の後始末を誰もしない。
+- MOD の `NativeActorClientDespawn`（`src/SodRpg.Mod/NativeActorLifetime.cs`。
+  Actor.OnStopClient の Prefix で OnDestroyActor を前倒し実行）は、
+  PickupInstance.OnDestroyActor の中身（`mainEffect` の停止と子の解除）を
+  前倒しにするだけで、破棄鎖も追従の登録も止めない（むしろ停滞時の後始末を
+  進める側）。`NativeActorLifetimeReset`（Actor.OnDisable の Postfix）は
+  ConditionalWeakTable の簿記リセットのみで、消える処理には無関係。
 - 残った `FxAttachToEntity` は `hero.Visual._attachedEffects` に登録されたまま
   追従し続ける。`NativeWeaponFxPerf` がこの一覧を触っている（holsteredWeapon が
   無いときに空の覧へ差し替え。この差し替え自体は読む限り等価）。
-- 本体 r1.4.1.2 で拾得演出の送信形（isNew/isPooled）や Actor の破棄預けが
-  変わった可能性は、旧本体（`/home/wang/archive/sod-gamedata-r1.4.0.13`）との
-  比較ではまだ確かめていない。報告が v3.8.3（本体対応版の初版）から出ている
-  ため、旧本体との差分を最初に見るのが近道の可能性がある。
+- 本体 r1.4.0.13 と r1.4.1.2 の差分（ilspycmd で両版の Dew.Core.dll を比較。
+  2026-10-20 実行）: `PickupInstance`・`EffectAutoDestroy`・`FxAttachToEntity`・
+  `SpawnManager` は完全同一。`DewEffect` は PlayDetached / IsDetachable 周辺のみ、
+  `Actor` は `ClearData()` の追加のみで、拾得演出の経路
+  （PlayNetworked → PlayAttachedEffectMessage → HandleEffectMessage → Play）は
+  不変。本体側の変更はこの症状の原因ではない。
 
 ## 候補の軽量化について調べた結果
 
@@ -88,8 +94,22 @@
   `NativeProcImpactFx` は `PlayNetworked(NetworkIdentity, GameObject, Entity)` に
   Prefix を置くが、拾得物は種類判定（kind 0）で必ず本体の再生を通す。
 
-いずれも「消える処理を止める」直接的な接点はこの段階では見つかっていない。
-上記の破棄の順序（Actor のプール返却と前倒し OnStopClient）が残る疑いである。
+いずれも「消える処理を止める」接点はなく、戻す必要がない。前節のとおり
+Actor 破棄系の MOD パッチも停滞を起こす側ではない。原因は軽量化ではなく、
+登録なしのその場再生が親 Actor の破棄鎖の完結に依存している本体の構造で、
+破棄鎖が停滞したときにだけ演出が残る。
+
+## 確定した原因と修正
+
+- 原因: 拾得演出（`pickupEffectOnHero`）のその場再生には EffectAutoDestroy への
+  登録がなく、消える保証を拾得物 Actor の破棄鎖に丸ごと預けている。破棄鎖が
+  停滞する入力・状態（canDestroy が false のまま残る Actor。StuckDissolve が
+  文書化した本体の停滞と同型）では、拾得物は DontDestroyOnLoad の下でアクティブの
+  まま残り、演出は登録された追従とともにプレイヤーにまとわりついたまま残る。
+- 修正: `src/SodRpg.Mod/PickupFxLifetime.cs` が、この再生だけに本体と同じ
+  打ち切り条件（30 秒上限・部屋遷移・部屋替わり・別寿命への切り替わり）で
+  本体の消失処理（FxStop と `OnAttachToEntity(null)` による追従解除）を
+  保証する。軽量化は一切戻さず、獲得量・確率などの数値も変えない。
 
 ## 検証スクリプト
 
