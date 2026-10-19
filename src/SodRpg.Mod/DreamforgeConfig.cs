@@ -192,6 +192,9 @@ namespace SodRpg.Mod
         [LabelText("Skip settled entity rotation rewrites / 向きが止まった実体の同じ回転の書き込みを省く")]
         public bool nativeEntityRotationIdle = true;
 
+        [LabelText("Cache room-start dependency attribute lookups across rooms / 部屋開始時の依存属性の解決を部屋をまたいでキャッシュする")]
+        public bool nativeRoomStartDependency = true;
+
         [LabelText("Level essence slots: add essence slots as the hero levels up (the host's setting applies) /\nレベル連動のエッセンス枠：英雄のレベルに応じて記憶のエッセンス枠を増やす（ホストの設定が使われる）")]
         public bool levelEssenceSlots = true;
 
