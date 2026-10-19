@@ -1600,9 +1600,11 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
                 _allocationBuildDue = 0;
             }
             float now = Time.unscaledTime;
-            string heroKey = HeroKeyOf(hero);
             if (Profile.Run == null && _buildDirty && now < _allocationBuildDue && !_monsterAuthority.BuildResendRequired) return;
             if (!_buildDirty && !_monsterAuthority.BuildResendRequired && now < _nextBuildSend) return;
+            // HeroKeyOf は Unity の null チェック（ネイティブ呼び出し）と Type.Name（Mono では毎回新しい文字列を
+            // 確保する）を伴う。使うのはこの先だけなので、ビルドを評価しない tick では呼ばない。
+            string heroKey = HeroKeyOf(hero);
             // 通知はこの送信経路で、ビルドを実際に評価するtick（変更・強制再送・ハートビート）でのみ確認する。
             // 旧ホスト相手の毎フレームの装備と倉庫の走査を省く（#415 の宣言がない間はここを毎tick通るため）。
             // LocalHero・RPC・接続と復元完了が前提。ロビー等でこの経路を通らない間は新しい警告を出さない。
