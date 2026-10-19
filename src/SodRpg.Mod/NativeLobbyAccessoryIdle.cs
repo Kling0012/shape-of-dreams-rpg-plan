@@ -16,6 +16,7 @@ namespace SodRpg.Mod
     // chain, DewResources dictionary probe, O(n) ownedItems.Contains) - even though the
     // skin and accessory set only change when the player picks something.
     //
+    // Dew.Core r1.4.0.13 / r1.4.1.2 (ilspycmd -t LogicBehaviour): base.LogicUpdate(dt) is empty, so skipping it has no effects.
     // The native body is provably a no-op whenever every input it reads matches the frame
     // the native code last ran on: the skin name comes only from forceSetup / the indexed
     // DewPlayer (isEveryInfoSet, selectedSkin, selectedHeroType) / startSettings.continueData,
