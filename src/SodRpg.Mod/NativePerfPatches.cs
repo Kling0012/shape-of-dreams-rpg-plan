@@ -50,6 +50,7 @@ namespace SodRpg.Mod
             NativePerfOptions.PlayerTimerIdle = config.nativePlayerTimerIdle;
             NativePerfOptions.EntityRotationIdle = config.nativeEntityRotationIdle;
             NativePerfOptions.RoomStartDependency = config.nativeRoomStartDependency;
+            NativePerfOptions.ProxyPositionIdle = config.nativeProxyPositionIdle;
         }
     }
 
@@ -89,6 +90,7 @@ namespace SodRpg.Mod
         internal static bool PlayerTimerIdle = true;
         internal static bool EntityRotationIdle = true;
         internal static bool RoomStartDependency = true;
+        internal static bool ProxyPositionIdle = true;
     }
 
     internal static class NativePerfPatch
@@ -4165,6 +4167,62 @@ namespace SodRpg.Mod
             if (sorted.Count < count)
                 throw new Exception("Circular dependency detected.");
             return sorted.ToArray();
+        }
+    }
+
+    [HarmonyPatch]
+    internal static class NativeProxyPositionIdlePerf
+    {
+        // DewPhysics.UpdateProxyPosition stores the entity's flat physics-proxy position as
+        // (position.x, position.z, 0f) and is called unconditionally at the end of
+        // EntityControl.LogicUpdate for every awake entity on every machine (plus once per
+        // teleport) — that is, once per logic tick per entity, on the guest included, for
+        // every monster, summon and other player's hero it only observes. Unity's
+        // Transform.position setter always decomposes, stores and dirties the transform even
+        // when the value is unchanged, so an entity standing still rewrites the same three
+        // floats and re-marks the proxy transform every tick.
+        //
+        // The prefix reads the live proxy transform and skips the call only when the write
+        // would store exactly the bits already there (per-component float ==; +0 and -0
+        // compare equal, which cannot matter because the y component is discarded by the
+        // 2D proxy and x/z go into the same physics pose either way; NaN fails every
+        // comparison and reaches the native write, which recovers it the same way vanilla
+        // does). Because the comparison is against the live transform — not a remembered
+        // last-sent value — anything that moves the proxy between two calls makes the next
+        // comparison fail and the native body runs, exactly as without this patch. The
+        // skipped write changes no bit anywhere: the transform keeps its old (identical)
+        // value, Transform.hasChanged semantics aside (a same-value write sets it, nothing
+        // in the shipped game reads it — verified by grep over the decompiled assemblies),
+        // Physics2D copies collider poses from transforms on its simulation step regardless
+        // of a setter call, and a same-value write cannot alter that pose.
+        private static MethodBase _target;
+        private static bool _disabled;
+        private static bool _warned;
+
+        private static bool Prepare()
+        {
+            _target = NativePerfPatch.Find(typeof(DewPhysics), "UpdateProxyPosition",
+                new[] { typeof(ProxyCollider), typeof(Vector3) }, ref _warned);
+            return _target != null;
+        }
+
+        private static MethodBase TargetMethod() => _target;
+
+        private static bool Prefix(ProxyCollider proxy, Vector3 position)
+        {
+            if (_disabled || !NativePerfOptions.ProxyPositionIdle) return true;
+            try
+            {
+                Vector3 current = proxy.transform.position;
+                if (current.x == position.x && current.y == 0f && current.z == position.z)
+                    return false;
+            }
+            catch (Exception ex)
+            {
+                _disabled = true;
+                NativePerfPatch.Warn(ref _warned, "proxy position idle", ex.Message);
+            }
+            return true;
         }
     }
 }
