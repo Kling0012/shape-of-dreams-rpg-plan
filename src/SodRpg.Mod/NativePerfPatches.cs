@@ -2622,28 +2622,49 @@ namespace SodRpg.Mod
         // (ChargingChannel.StartSampleCastInfo), and the sole effect of the receive side
         // (UserCode_DispatchSample_Update) is storing the struct into the context and
         // re-invoking ChargingChannel.HandleInfoUpdate, whose body is `castInfo = info;` plus
-        // setting an already-true level-triggered flag. So a re-send whose CastInfo is
-        // Equals-equal (IEquatable over the same five fields the weaver serializes) writes the
-        // same bytes and changes nothing on the host. This prefix remembers the last CastInfo
-        // each DewPlayer actually sent and skips exactly those repeats; a changed value still
-        // goes out on the next 0.05s slot, so the worst-case preview delay matches vanilla.
-        // The final value reaches the host through DispatchSample_Cast, which this patch does
-        // not touch. A third-party mod hooking the sender or registering its own
-        // updateCallback would see fewer calls; the nativeSampleUpdateIdle option turns the
-        // skip off.
+        // setting a level-triggered flag. So within one sampling context, a re-send whose
+        // CastInfo is Equals-equal (IEquatable over the same five fields the weaver
+        // serializes) writes the same bytes and changes nothing on the host. This prefix
+        // remembers the last CastInfo each DewPlayer actually sent and skips exactly those
+        // repeats; a changed value still goes out on the next 0.05s slot, so the worst-case
+        // preview delay matches vanilla. The final value reaches the host through
+        // DispatchSample_Cast, which this patch does not touch.
+        //
+        // The equality argument only holds inside one sampling context: the host builds a
+        // fresh ChargingChannel per charge, whose castInfo starts at its initial value and
+        // whose _didReceiveAnyUpdates starts false, so a new context that never receives an
+        // update behaves differently from vanilla (RotateForward never engages). The host
+        // therefore must hear the first update of every context even when it equals the
+        // previous context's last send (aiming at the same spot twice in a row).
+        // NativeSampleContextResetPerf forgets the remembered send on every sampling-context
+        // delivery, which is the only boundary between contexts; if that hook did not
+        // survive a game update this whole patch stays off (see Prepare). A third-party mod
+        // hooking the sender or registering its own updateCallback would see fewer calls;
+        // the nativeSampleUpdateIdle option turns the skip off.
         private static MethodBase[] _targets = Array.Empty<MethodBase>();
-        private static bool _warned;
+        // Shared with NativeSampleContextResetPerf so a missing context receiver warns once.
+        internal static bool _warned;
         private static DewPlayer _lastSender;
         private static CastInfo _lastInfo;
 
         private static bool Prepare()
         {
             var target = NativePerfPatch.Find(typeof(DewPlayer), "DispatchSample_Update", new[] { typeof(CastInfo) }, ref _warned);
-            _targets = target != null ? new MethodBase[] { target } : Array.Empty<MethodBase>();
-            // Fail soft like the other native patches: if the sender did not survive a game
-            // update, Find has warned once and this patch stays off entirely.
+            var reset = FindContextReceiver();
+            _targets = target != null && reset != null ? new MethodBase[] { target } : Array.Empty<MethodBase>();
+            // Fail soft like the other native patches: if either the sender or the context
+            // receiver did not survive a game update, Find has warned once and this patch
+            // stays off entirely. Skipping without the reset could starve a fresh
+            // ChargingChannel of the only update it would ever get.
             return _targets.Length > 0;
         }
+
+        // The client-side sampling context is written only by the TpcSetSampleContext
+        // receiver (start, replacement, and null-cancel all go through it), so it is the
+        // single place where "a new context begins" is observable. Weaver name from the
+        // shipped Dew.Core metadata (2026-10-19): UserCode_TpcSetSampleContext__Nullable`1.
+        internal static MethodBase FindContextReceiver()
+            => NativePerfPatch.Find(typeof(DewPlayer), "UserCode_TpcSetSampleContext__Nullable`1", new[] { typeof(SampleCastInfoContext?) }, ref _warned);
 
         private static IEnumerable<MethodBase> TargetMethods() => _targets;
 
@@ -2656,6 +2677,36 @@ namespace SodRpg.Mod
             _lastSender = __instance;
             _lastInfo = info;
             return true;
+        }
+
+        // Called by NativeSampleContextResetPerf on every sampling-context delivery.
+        internal static void Reset()
+        {
+            _lastSender = null;
+            _lastInfo = default;
+        }
+    }
+
+    [HarmonyPatch]
+    internal static class NativeSampleContextResetPerf
+    {
+        private static MethodBase[] _targets = Array.Empty<MethodBase>();
+
+        private static bool Prepare()
+        {
+            var target = NativeSampleUpdateIdlePerf.FindContextReceiver();
+            _targets = target != null ? new MethodBase[] { target } : Array.Empty<MethodBase>();
+            // Off only when the receiver is gone; the two assignments it guards cost nothing.
+            return _targets.Length > 0;
+        }
+
+        private static IEnumerable<MethodBase> TargetMethods() => _targets;
+
+        private static void Postfix()
+        {
+            // Every delivery starts a new sampling context on this client, so the remembered
+            // last send no longer describes it (see NativeSampleUpdateIdlePerf).
+            NativeSampleUpdateIdlePerf.Reset();
         }
     }
 }

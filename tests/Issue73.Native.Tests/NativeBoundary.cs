@@ -663,6 +663,10 @@ namespace SodRpg.Mod
             ReferenceEquals(caster, other.caster) && ReferenceEquals(target, other.target)
             && point == other.point && angle == other.angle && animSelectValue == other.animSelectValue;
     }
+    // 本体 SampleCastInfoContext（サンプリング文脈の構造体）。NativeSampleUpdateIdlePerf が
+    // 文脈の受け渡し先（UserCode_TpcSetSampleContext）を探すときの引数型
+    // Nullable<SampleCastInfoContext> として必要なだけで、中身は検証しない。
+    internal struct SampleCastInfoContext { }
     internal struct EventInfoCast { public AbilityInstance instance; public CastInfo info; }
     internal struct EventInfoAbilityInstance { public AbilityInstance instance; public Actor actor; }
     internal struct EventInfoApplyElemental { public Actor actor; public Entity victim; public ElementalType type; public int addedStack; }
