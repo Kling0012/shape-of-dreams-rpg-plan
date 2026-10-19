@@ -19,9 +19,10 @@ namespace SodRpg.Mod
         private string _encodedRunChoices;
         private float _nextChoicesSync;
         // 参加者が受け取った選択状態のうち、検査を通過して処理済み（適用済みか同一 Revision 棄却か）の
-        // 文字列。同じ内容の定期再送をデコード前に読み捨てるために使う。進行の復元・接続のやり直し・
-        // 遠征の確定（ClearRun）で同期状態を作り直すので、そのときは解除する。
+        // 文字列。同じ内容の定期再送をデコード前に読み捨てるために使う。進行を作り直したあとは
+        // 同じ文字列でも再評価するため、処理時点の世代も記憶する。
         private string _processedChoicesPayload;
+        private ulong _processedChoicesGeneration;
         private Zone _pureWhiteZone;
         private bool _pureWhiteZoneIsPrimus;
         private sealed class CurrentChoicePeer
@@ -349,6 +350,7 @@ namespace SodRpg.Mod
             // 検査を通過した内容の再送は進行側で同一 Revision として棄てられるだけで、base64 や JSON の
             // 展開は毎回無駄になる。結果の通知（terminal・帰還）を伴う受信は常に最後まで処理する。
             if (victory == null && !string.IsNullOrEmpty(encoded)
+                && _processedChoicesGeneration == _runChoiceProgress.StateGeneration
                 && string.Equals(encoded, _processedChoicesPayload, StringComparison.Ordinal)) return;
             if (!RunChoiceSnapshot.TryDecode(encoded, out var snapshot))
             {
@@ -362,8 +364,12 @@ namespace SodRpg.Mod
             // Preserve the final zone's committed rules until its last rewards and result have been settled.
             if (string.IsNullOrEmpty(snapshot.RunId) && (RunActive || _pendingRunRewards.Count > 0)) return;
             // ここまでの検査を通過した文字列は、再送されても適用済みか同一 Revision 棄却かのどちらかに
-            // なる。次回からは冒頭の一致判定でデコードを省く（復元・接続のやり直しでは解除される）。
-            if (victory == null) _processedChoicesPayload = encoded;
+            // なる。同じ進行の世代内だけ、次回から冒頭の一致判定でデコードを省く。
+            if (victory == null)
+            {
+                _processedChoicesPayload = encoded;
+                _processedChoicesGeneration = _runChoiceProgress.StateGeneration;
+            }
             bool received = _runChoiceProgress.Receive(snapshot);
             if (victory.HasValue && _runChoiceProgress.AcceptsResult(snapshot))
             {
