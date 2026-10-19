@@ -322,11 +322,13 @@ namespace SodRpg.Mod
                 skill.currentConfigUnscaledMaxCooldownTime, percent);
             if (ratio > 0f) hero.ApplyCooldownReductionByRatio(skill, ratio, false);
         }
-        private static bool IsPairReactionSource(Actor actor)
+        // ノード単位の述語は TryGetMemoryActivation 側の祖先走査と共通の IsPairReactionSourceNode
+        // （HostAuthority.MemoryActivationAttribution.cs）。片方だけに新しい反応元の型を加えても
+        // 2つの走査がずれることはない。
+        internal static bool IsPairReactionSource(Actor actor)
         {
             for (int depth = 0; actor != null && depth < 128; depth++, actor = actor.parentActor)
-                if (actor is ElementalStatusEffect || actor is Gem
-                    || actor is AbilityInstance instance && instance.gem != null) return true;
+                if (IsPairReactionSourceNode(actor)) return true;
             return false;
         }
         private SkillTrigger FindMemory(Hero hero, string memory)

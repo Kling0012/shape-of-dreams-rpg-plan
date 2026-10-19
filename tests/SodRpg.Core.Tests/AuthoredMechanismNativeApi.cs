@@ -294,6 +294,11 @@ namespace SodRpg.Mod
         private long AttributedVictimLifetime(Entity victim) => victim != null ? victim.GetInstanceID() : 0;
         private GeneratedOrigin AttributionGeneratedOrigin() => _gimmickDamageDepth != 0 ? GeneratedOrigin.Gimmick : GeneratedOrigin.None;
         private bool TryGetMemoryActivation(Actor source, out MemoryActivationIdentity identity) => _memoryAttribution.TryGetInstance(source.GetInstanceID(), out identity);
+        // HostAuthority.MemoryActivationAttribution.cs（リンク外）の IsPairReactionSourceNode と同じ
+        // 本体のミラー。リンクされる PairCombos.cs の IsPairReactionSource が呼ぶ（本体側と同じ条件）。
+        internal static bool IsPairReactionSourceNode(Actor actor)
+            => actor is Gem || actor is ElementalStatusEffect
+                || actor is AbilityInstance instance && instance.gem != null;
         private static bool ExactNativeChainMatches(Actor source, ReactionChain chain) => chain.Equals(default(ReactionChain));
         private Hero AttributedOwner(long id) { foreach (var hero in _runtimes.Keys) if (hero.GetInstanceID() == id) return hero; return null; }
         private static string MemorySource(Actor actor) => actor?.FindFirstOfType<SkillTrigger>()?.GetType().Name;
