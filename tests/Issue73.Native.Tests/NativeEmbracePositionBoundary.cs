@@ -23,6 +23,9 @@ namespace UnityEngine
     {
         internal Transform parent { get; set; }
     }
+    // NativeProjectileIdleRpcPerf の Prefix が読む効果プレハブ字段の境界。実機では
+    // UnityEngine.GameObject（ prefab 参照）。中身は読まないので空でよい。
+    internal class GameObject { }
 }
 namespace SodRpg.Mod
 {
@@ -64,6 +67,7 @@ namespace SodRpg.Mod
             nativeCharacterModelDisplayBounds = true, nativeKillTrackerCullThrottle = true,
             nativeCursorIdle = true, nativeStatsCalcRpcIdle = true, nativePositionSyncIdle = true,
             nativeChargeRpcIdle = true,
+            nativeProjectileIdleRpc = true,
             nativeLobbyAccessoryIdle = true, nativeUltChargeRpcIdle = true,
             nativeChaosShrineHitScan = true,
             guestSkillLockRecovery = true;
@@ -74,6 +78,26 @@ namespace SodRpg.Mod
     {
         internal DreamforgeConfig config = new DreamforgeConfig();
         partial void ApplyNativePerfConfig();
+    }
+
+    // NativeProjectileIdleRpcPerf が typeof と Prefix で参照する本体 Projectile の境界。
+    // 実機ではグローバル名前空間の Mirror.NetworkBehaviour 派生。ここには送る・省くの判定が
+    // 読む 4 つの公開効果プレハブ字段と、Prepare が探す weaver 送信メソッドの名前と引数の形
+    // だけを置く（中身は呼ばれないので空）。実機の受信側 UserCode_* は対応する字段が null の
+    // とき最初に return する（実 DLL 逆コンパイルで確認済み）。
+    internal class Projectile
+    {
+        public struct EntityHit { }
+
+        public GameObject effectOnFly;
+        public GameObject effectOnEntity;
+        public GameObject effectOnComplete;
+        public GameObject effectOnDissipate;
+
+        private void RpcPlayOnEntityEffect(EntityHit hit) { }
+        private void RpcPlayOnDissipateEffect() { }
+        private void RpcStopOnFlyEffect() { }
+        private void RpcPlayOnCompleteEffect() { }
     }
 
     // 本体 Dew.Core r1.4.0.13 Ai_EmbraceNewIdentity。UpdatePositions は IL 転写（ilspycmd の

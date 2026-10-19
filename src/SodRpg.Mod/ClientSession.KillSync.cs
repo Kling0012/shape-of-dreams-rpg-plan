@@ -34,7 +34,7 @@ namespace SodRpg.Mod
         private IReadOnlyList<KillReceiptState> _killSavedReceipts = Array.Empty<KillReceiptState>();
         private IReadOnlyList<KillReceiptState> _killDurableReceipts = Array.Empty<KillReceiptState>();
         private string _killSavedRunId, _killDurableRunId, _currentKillStreamId;
-        private float _nextKillReceipt, _nextKillMissing, _nextKillAck;
+        private float _nextKillReceipt, _nextKillMissing, _nextKillAck, _nextKillHeartbeat;
         private string _killReceiptRun, _killReceiptObservation;
         private Actor _killReceiptActor;
         private sealed class MissingKillRetry
@@ -50,7 +50,7 @@ namespace SodRpg.Mod
 
         private void ResetKillReceiptSchedule()
         {
-            _nextKillReceipt = _nextKillMissing = _nextKillAck = 0f;
+            _nextKillReceipt = _nextKillMissing = _nextKillAck = _nextKillHeartbeat = 0f;
             _killReceiptRun = _killReceiptObservation = null;
             _killReceiptActor = null;
             _killMissingRetries.Clear();
@@ -465,9 +465,31 @@ namespace SodRpg.Mod
                 return;
             }
             if (Time.unscaledTime < _nextKillReceipt) return;
-            _nextKillReceipt = Time.unscaledTime + 5f;
+            // Old hosts merge frontiers cumulatively and hold kill replay only until the first
+            // receipt, so re-sending an unchanged frontier every five seconds carries no new
+            // information. Send when a frontier moved, when a missing-fact request must go out,
+            // or as a bounded liveness heartbeat; transport and authority-generation resets clear
+            // the sent marks (ResetKillReceiptSchedule) and make the next scan send immediately.
+            string observation = KillObservationSessionId(_clientRpcOn);
+            if (_killReceiptRun != runId || !ReferenceEquals(_killReceiptActor, _clientRpcOn)
+                || _killReceiptObservation != observation)
+            {
+                ResetKillReceiptSchedule();
+                _killReceiptRun = runId;
+                _killReceiptActor = _clientRpcOn;
+                _killReceiptObservation = observation;
+            }
+            float now = Time.unscaledTime;
+            _nextKillReceipt = now + 5f;
+            bool heartbeat = now >= _nextKillHeartbeat;
             _missingKillDeaths.Clear();
             _killClassifications.CollectMissingDeaths(_missingKillDeaths, 32);
+            var acknowledged = KillReceiptsForProgress(runId);
+            bool dirty = false;
+            for (int i = 0; i < acknowledged.Count; i++)
+                if (!_killSentReceipts.TryGetValue(acknowledged[i].StreamId, out long sent)
+                    || sent != acknowledged[i].AcknowledgedThrough) { dirty = true; break; }
+            if (!heartbeat && !dirty && _missingKillDeaths.Count == 0) return;
             var missing = _missingKillDeaths.Count == 0 ? null : new DreamforgeMissingKillFact[_missingKillDeaths.Count];
             if (missing != null)
                 for (int i = 0; i < missing.Length; i++)
@@ -476,7 +498,6 @@ namespace SodRpg.Mod
                         streamId = _missingKillDeaths[i].StreamId, netId = _missingKillDeaths[i].MonsterNetId,
                         observationSessionId = _missingKillDeaths[i].ObservationSessionId,
                     };
-            var acknowledged = KillReceiptsForProgress(runId);
             var receipts = acknowledged.Count == 0 ? Array.Empty<DreamforgeKillStreamReceipt>()
                 : new DreamforgeKillStreamReceipt[acknowledged.Count];
             for (int i = 0; i < receipts.Length; i++)
@@ -489,9 +510,12 @@ namespace SodRpg.Mod
             {
                 protocol = Protocol.Version, authorityGeneration = _monsterAuthority.AuthorityGeneration,
                 runId = runId, clientId = _killClassifications.ClientId, receipts = receipts,
-                observationSessionId = KillObservationSessionId(_clientRpcOn),
+                observationSessionId = observation,
                 missingFacts = missing,
             });
+            for (int i = 0; i < receipts.Length; i++)
+                _killSentReceipts[receipts[i].streamId] = receipts[i].receivedThrough;
+            if (heartbeat) _nextKillHeartbeat = now + 25f;
         }
 
         private void TickKillReceiptDelta(string runId)

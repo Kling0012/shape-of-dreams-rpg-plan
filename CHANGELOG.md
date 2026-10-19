@@ -10,6 +10,13 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v3.8.11 — Glacial Core firing interval fixes（2026-10-19）
+
+### 不具合の修正 / Bug fixes
+- 雪嶺の核の更新開始時に古い検証結果を消し、報酬段階が範囲外の場合や報酬プロファイルがない場合に、射撃間隔の決定で例外が起きないようにしました。 / Cleared stale validation results when Glacial Core updates begin and guarded interval selection against out-of-range reward stages and missing reward profiles.
+
+---
+
 ## v3.8.10 — Lighter host load with Glacial Core（2026-10-19）
 
 Glacial Core を装備しているときのホストの処理を軽くしました。 / Reduced host processing load while Glacial Core is equipped.
