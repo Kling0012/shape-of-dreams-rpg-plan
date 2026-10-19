@@ -10,6 +10,13 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v3.8.9 — Lighter co-op traffic for fully charged ultimates and a boss ability fix（2026-10-19）
+
+### 不具合の修正 / Bug fixes
+- キャスト中にホストのサーバが停止すると、ボス由来の能力のキャスト情報が解放されず、直前のキャスト情報も復元されない問題を修正しました。 / Fixed boss-native cast information not being released and the previous cast context not being restored if the host server stopped during a cast.
+
+---
+
 ## v3.8.8 — Less redundant co-op network traffic（2026-10-19）
 
 協力プレイで、変化のない情報を何度も送っていた通信を減らしました。 / Reduced redundant network traffic in co-op.

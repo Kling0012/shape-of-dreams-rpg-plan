@@ -1,5 +1,5 @@
-[b]Stops co-op from re-sending unchanged ability charges and needless boss effect removal notices.[/b]
-[b]協力プレイで、変わっていないチャージ数や不要な演出削除の通知を送らないようにしました。[/b]
+[b]Reduced redundant co-op traffic while an ultimate is fully charged, and fixed boss-derived ability casts not being cleaned up when the host server stopped.[/b]
+[b]協力プレイでウルトが満タンのときの不要な通信を減らし、ホストのサーバー停止時にボス由来の能力の使用情報が残る問題を直しました。[/b]
 
 [h1]Dreamforge RPG[/h1]
 Turns every run into part of a long RPG journey: relics you keep, a "secure or delve" choice at every zone, a star map per Traveler, a forge and long-term goals. Co-op ready.
