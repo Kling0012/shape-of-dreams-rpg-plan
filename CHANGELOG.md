@@ -10,6 +10,13 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v3.8.23 — Fix lingering pickup effects and lighter performance（2026-10-20）
+
+### 不具合の修正 / Bug fixes
+- ドリームダストと富のエッセンスのコイン獲得の演出が、プレイヤーに残らず消えるようにしました。 / Fixed dream dust and wealth essence coin pickup effects so they disappear without lingering on the player.
+
+---
+
 ## v3.8.22 — Lighter boss attack warnings and co-op Resonance Ward display（2026-10-20）
 
 ボスの攻撃予告の表示と、協力プレイでの共鳴の盾の表示から無駄を省き、ゲームの動作を軽くしました。 / Boss attack warnings and the co-op Resonance Ward display now do less unnecessary work, making the game lighter.
