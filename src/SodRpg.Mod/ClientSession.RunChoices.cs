@@ -19,8 +19,8 @@ namespace SodRpg.Mod
         private string _encodedRunChoices;
         private float _nextChoicesSync;
         // 参加者が受け取った選択状態のうち、検査を通過して処理済み（適用済みか同一 Revision 棄却か）の
-        // 文字列。同じ内容の定期再送をデコード前に読み捨てるために使う。進行の復元や接続のやり直しで
-        // 同期状態が作り直されるので、そのときは解除する。
+        // 文字列。同じ内容の定期再送をデコード前に読み捨てるために使う。進行の復元・接続のやり直し・
+        // 遠征の確定（ClearRun）で同期状態を作り直すので、そのときは解除する。
         private string _processedChoicesPayload;
         private Zone _pureWhiteZone;
         private bool _pureWhiteZoneIsPrimus;
@@ -421,6 +421,7 @@ namespace SodRpg.Mod
             if (pacts > 0) SendCurseClear();
             ActiveRunId = null;
             _runChoiceProgress.ClearRun();
+            _processedChoicesPayload = null; // 進行を作り直すので、処理済み再送の読み捨てを解除する。
             PublishRunChoices();
             SaveNow();
             DiagnoseExpedition("client-settle-after");
