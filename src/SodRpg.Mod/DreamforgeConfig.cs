@@ -183,6 +183,9 @@ namespace SodRpg.Mod
         [LabelText("Skip unchanged on-screen timer re-sends (host) / 変わっていない画面内タイマーの毎フレーム再送を省く（ホスト）")]
         public bool nativePlayerTimerIdle = true;
 
+        [LabelText("Skip settled entity rotation rewrites / 向きが止まった実体の同じ回転の書き込みを省く")]
+        public bool nativeEntityRotationIdle = true;
+
         [LabelText("Level essence slots: add essence slots as the hero levels up (the host's setting applies) /\nレベル連動のエッセンス枠：英雄のレベルに応じて記憶のエッセンス枠を増やす（ホストの設定が使われる）")]
         public bool levelEssenceSlots = true;
 

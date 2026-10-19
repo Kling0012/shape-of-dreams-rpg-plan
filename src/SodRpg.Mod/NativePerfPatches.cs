@@ -46,6 +46,7 @@ namespace SodRpg.Mod
             NativePerfOptions.DashSweepStep = config.nativeDashSweepStep;
             NativePerfOptions.HeroWeaponIdle = config.nativeHeroWeaponIdle;
             NativePerfOptions.PlayerTimerIdle = config.nativePlayerTimerIdle;
+            NativePerfOptions.EntityRotationIdle = config.nativeEntityRotationIdle;
         }
     }
 
@@ -81,6 +82,7 @@ namespace SodRpg.Mod
         internal static bool DashSweepStep = true;
         internal static bool HeroWeaponIdle = true;
         internal static bool PlayerTimerIdle = true;
+        internal static bool EntityRotationIdle = true;
     }
 
     internal static class NativePerfPatch
@@ -3268,6 +3270,79 @@ namespace SodRpg.Mod
                 // exception here is the only sign the bookkeeping is misbehaving.
                 NativePerfPatch.Warn(ref NativePlayerTimerIdlePerf._warned, "player on-screen timer forget", ex.Message);
             }
+        }
+    }
+
+    [HarmonyPatch]
+    internal static class NativeEntityRotationIdlePerf
+    {
+        // DoRotateTowardsDesiredAngleTick runs every rendered frame for every entity whose
+        // movement this peer does not process — on a guest that is every host-controlled
+        // monster, summon and other player's hero via DoMovementObserverFrameUpdate, plus
+        // the locally processed hero and entities mid-displacement on both peers. Its whole
+        // body is one Mathf.SmoothDampAngle step and one transform.rotation write, and
+        // callers feed it only a presentation angle: casts, movement and the synced state
+        // all use desiredAngle/velocity, not the smoothed transform.
+        //
+        // Once the facing has settled — angle to target below 0.05 degrees and the damper's
+        // internal velocity below 0.05 degrees per second — the native step writes a
+        // rotation within ~0.1 degrees of the current one (the step is proportional to
+        // those two inputs; EntityRotationIdlePerfTests checks this bound over the game's
+        // 0.05-0.1 s smooth times). Skipping the whole call is therefore not strictly
+        // identical: the visible facing freezes at most 0.05 degrees from the target
+        // instead of converging that last fraction of a degree, and the damper state stays
+        // where it was, so the next frame repeats the same decision from the same state.
+        // Both inputs are re-read on every call: any turn of the target, an immediate-rotate RPC
+        // or a teleport that pulls them apart re-enables the native body on the next frame,
+        // and NaN in either input fails the comparison and reaches the original, which
+        // already recovers NaN. Each entity also carries a kinematic Rigidbody
+        // (EntityControl.PreloadStart), so every skipped write also avoids re-dirtying the
+        // transform for the physics sync of a value that did not change.
+        private const float SettledAngle = 0.05f;
+        private const float SettledVelocity = 0.05f;
+
+        private static AccessTools.FieldRef<EntityControl, float> _damperVelocity;
+        private static MethodBase _target;
+        private static bool _disabled;
+        private static bool _warned;
+
+        private static bool Prepare()
+        {
+            try
+            {
+                _target = AccessTools.DeclaredMethod(typeof(EntityControl),
+                    "DoRotateTowardsDesiredAngleTick", new[] { typeof(float) });
+                if (_target == null || _target.GetMethodBody() == null)
+                    throw new MissingMethodException("EntityControl.DoRotateTowardsDesiredAngleTick");
+                _damperVelocity = AccessTools.FieldRefAccess<EntityControl, float>("_desiredAngleCv");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                NativePerfPatch.Warn(ref _warned, "entity rotation idle", ex.Message);
+                return false;
+            }
+        }
+
+        private static MethodBase TargetMethod() => _target;
+
+        private static bool Prefix(EntityControl __instance, float target)
+        {
+            if (_disabled || !NativePerfOptions.EntityRotationIdle) return true;
+            try
+            {
+                float y = __instance.transform.rotation.eulerAngles.y;
+                float velocity = _damperVelocity(__instance);
+                if (Mathf.Abs(Mathf.DeltaAngle(y, target)) < SettledAngle
+                    && Mathf.Abs(velocity) < SettledVelocity)
+                    return false;
+            }
+            catch (Exception ex)
+            {
+                _disabled = true;
+                NativePerfPatch.Warn(ref _warned, "entity rotation idle", ex.Message);
+            }
+            return true;
         }
     }
 
