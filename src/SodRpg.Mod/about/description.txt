@@ -1,5 +1,5 @@
-[b]Boss attack warnings and the co-op Resonance Ward display now do less unnecessary work, making the game lighter.[/b]
-[b]ボスの攻撃予告と、協力プレイでの共鳴の盾の表示から無駄を省き、ゲームの動作を軽くしました。[/b]
+[b]Fixes dream dust and wealth essence coin pickup effects lingering on the player, and makes training updates, the gem slot display, and pressure dividend payouts lighter.[/b]
+[b]ドリームダストと富のエッセンスのコイン獲得の演出が消えないことがある問題を直し、鍛錬の受信、ジェム枠の表示、圧力配当の精算を軽くしました。[/b]
 
 [h1]Dreamforge RPG[/h1]
 Turns every run into part of a long RPG journey: relics you keep, a "secure or delve" choice at every zone, a star map per Traveler, a forge and long-term goals. Co-op ready.
