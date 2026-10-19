@@ -33,7 +33,10 @@ namespace SodRpg.Mod
             Current.Actor = __instance; Current.From = from; Current.Target = to;
             Current.Primary = isMain; Current.Serial = ++_serial;
             Current.CriticalAtNative = false;
-            Current.Guaranteed = HostAuthority.IsGuaranteedBasicV129(__instance, from);
+            // Guaranteed を読むのは MOD ヒーロー発の基本攻撃のダメージ処理（OnNewPowerDamage）だけで、
+            // そこには basic.From == hero（MOD ランタイムのヒーロー）の介入がある。Hero 以外の攻撃では
+            // 結果が読まれないため、Actor 連鎖の走査とキャスト表の参照を Hero 攻撃のときだけにする。
+            Current.Guaranteed = from is Hero && HostAuthority.IsGuaranteedBasicV129(__instance, from);
             if (NetworkServer.active && from is Hero hero)
                 HostAuthority.NativeInstance?.TryWeakspotBasic(hero, to, ref isCriticalHit);
             Current.CriticalAtNative = isCriticalHit;

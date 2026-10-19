@@ -200,8 +200,11 @@ namespace SodRpg.Mod
             if (critical || _gimmickDamageDepth != 0 || hero == null || victim == null || hero.Status == null
                 || !_runtimes.TryGetValue(hero, out var rt) || victim.GetRelation(hero) != EntityRelation.Enemy) return;
             float bonus = rt.Gimmicks.WeakspotPercent(victim.GetInstanceID(), Time.time);
+            if (bonus <= 0f) return;
+            // 会心確率の集計（Actor 連鎖の走査とキャスト表の参照）は副作用のない読み取りなので、
+            // 付与率があるときだけ行う。乱数を引く条件（bonus > 0）は元のままで、出目の並びも変わらない。
             float originalChance = BasicCritChanceV129(BasicAttackContext.Current?.Actor, hero);
-            if (bonus > 0 && _rng.NextDouble() < Gimmicks.AddedCritProbability(originalChance, bonus)) critical = true;
+            if (_rng.NextDouble() < Gimmicks.AddedCritProbability(originalChance, bonus)) critical = true;
         }
 
         private void ApplyGimmickDamageV129(HeroRuntime rt, ref DamageData damage, Actor actor, Entity target, string memory)
