@@ -26,6 +26,12 @@ namespace UnityEngine
     // NativeProjectileIdleRpcPerf の Prefix が読む効果プレハブ字段の境界。実機では
     // UnityEngine.GameObject（ prefab 参照）。中身は読まないので空でよい。
     internal class GameObject { }
+    // NativeCustomRpcDispatchPerf 抽出がハンドラの例外を記録する先（実物は UnityEngine.Debug.LogException）。
+    // ハーネスでは Harmony の検証は行わないため、形だけ。
+    internal static class Debug
+    {
+        public static void LogException(System.Exception exception) { }
+    }
 }
 namespace SodRpg.Mod
 {
@@ -68,6 +74,7 @@ namespace SodRpg.Mod
             nativeCursorIdle = true, nativeStatsCalcRpcIdle = true, nativePositionSyncIdle = true,
             nativeChargeRpcIdle = true,
             nativeProjectileIdleRpc = true,
+            nativeCustomRpcDispatch = true,
             nativeLobbyAccessoryIdle = true, nativeUltChargeRpcIdle = true,
             guestSkillLockRecovery = true;
     }

@@ -799,6 +799,9 @@ namespace SodRpg.Mod
         public static GameData SerializeGameData() => new GameData();
         public static GameData SerializeGameData(LoadNodeSettings settings) => new GameData();
         public static void ApplyGameData(GameData data, Action onFinish = null) => onFinish?.Invoke();
+        // NativeCustomRpcDispatchPerf 抽出が呼ぶ本体の JSON 受け口（実物は Newtonsoft 経路）。
+        // ハーネスでは Harmony の検証は行わないため、型とメソッドの形だけ。
+        public static object FromJson(string json, Type type) => null;
     }
     internal static class DewSave
     {

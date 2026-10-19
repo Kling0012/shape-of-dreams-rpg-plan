@@ -165,6 +165,9 @@ namespace SodRpg.Mod
         [LabelText("Skip projectile RPCs whose effect prefab is null (host) / 演出プレハブが無い弾の命中・完了・消散 RPC を省く（ホスト）")]
         public bool nativeProjectileIdleRpc = true;
 
+        [LabelText("Resolve CustomRpc message types with a cached lookup / 受け取った CustomRpc の型探しをキャッシュで速くする")]
+        public bool nativeCustomRpcDispatch = true;
+
         [LabelText("Level essence slots: add essence slots as the hero levels up (the host's setting applies) /\nレベル連動のエッセンス枠：英雄のレベルに応じて記憶のエッセンス枠を増やす（ホストの設定が使われる）")]
         public bool levelEssenceSlots = true;
 

@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Reflection.Emit;
@@ -38,6 +39,7 @@ namespace SodRpg.Mod
             NativePerfOptions.ChargeRpcIdle = config.nativeChargeRpcIdle;
             NativePerfOptions.LobbyAccessoryIdle = config.nativeLobbyAccessoryIdle;
             NativePerfOptions.ProjectileIdleRpc = config.nativeProjectileIdleRpc;
+            NativePerfOptions.CustomRpcDispatch = config.nativeCustomRpcDispatch;
         }
     }
 
@@ -67,6 +69,7 @@ namespace SodRpg.Mod
         internal static bool ChargeRpcIdle = true;
         internal static bool LobbyAccessoryIdle = true;
         internal static bool ProjectileIdleRpc = true;
+        internal static bool CustomRpcDispatch = true;
     }
 
     internal static class NativePerfPatch
@@ -2607,6 +2610,133 @@ namespace SodRpg.Mod
                 // here) falls back to "send": a wrong skip could drop a message the
                 // receiver would act on, while a wrong send only costs vanilla bandwidth.
                 default: return true;
+            }
+        }
+    }
+
+    [HarmonyPatch]
+    internal static class NativeCustomRpcDispatchPerf
+    {
+        // Every CustomRpc message (a DewPersistence JSON string inside Mirror's
+        // Cmd/Rpc/Tpc) lands in Actor.HandleRpc_Imp, which walks the whole
+        // registered-handler dictionary and compares Type.Name against the wire's type
+        // string before deserializing. The MOD registers a few dozen message types on
+        // the session actors, so every co-op message — kill sync, monster cues,
+        // trade, choices, … — pays a full dictionary scan of string compares on the
+        // receiving side (host and guest alike). This prefix resolves the type name
+        // once per actor and dispatches through a Dictionary lookup instead.
+        //
+        // The resolution stays validated against the live dictionary on every message:
+        //   - a type unregistered since (or never registered on this actor) misses the
+        //     TryGetValue on the resolved Type key, so the vanilla scan re-resolves;
+        //   - handlers added or removed inside a registered type's list are seen
+        //     through the live List reference the dictionary hands out;
+        //   - two different types sharing one Type.Name are never cached (the name is
+        //     marked ambiguous), so vanilla's order-dependent multi-type dispatch
+        //     keeps handling them, including its try-next-type-on-deserialize-failure
+        //     behavior.
+        // Deserialization still goes through DewPersistence.FromJson with vanilla's
+        // swallowed-exception behavior (a message that fails to deserialize is
+        // dropped). The wire format, the _serverRpcCaller bookkeeping and the handler
+        // invocation order are untouched, so old versions and mod-less peers are
+        // unaffected.
+        private static readonly ConditionalWeakTable<Actor, DispatchCache> Caches =
+            new ConditionalWeakTable<Actor, DispatchCache>();
+
+        // Cached like the other perf patches: the project compiles as C# 9, where every
+        // method-group-to-delegate conversion allocates a fresh delegate per GetValue call.
+        private static readonly ConditionalWeakTable<Actor, DispatchCache>.CreateValueCallback
+            CreateCacheCallback = _ => new DispatchCache();
+
+        private static MethodBase _target;
+        private static AccessTools.FieldRef<Actor, DewPlayer> _rpcCaller;
+        private static FieldInfo _clientDictField;
+        private static FieldInfo _serverDictField;
+        private static FieldInfo _wrappedActionField;
+        private static bool _disabled;
+        private static bool _warned;
+
+        private sealed class DispatchCache
+        {
+            internal readonly Dictionary<string, Type> ByName = new Dictionary<string, Type>();
+            internal readonly HashSet<string> Ambiguous = new HashSet<string>();
+        }
+
+        private static bool Prepare()
+        {
+            _target = NativePerfPatch.Find(typeof(Actor), "HandleRpc_Imp",
+                new[] { typeof(string), typeof(string), typeof(DewPlayer) }, ref _warned);
+            if (_target == null) return false;
+            try
+            {
+                _rpcCaller = AccessTools.FieldRefAccess<Actor, DewPlayer>("_serverRpcCaller");
+                _clientDictField = AccessTools.Field(typeof(Actor), "_clientRpcHandlers")
+                    ?? throw new MissingMethodException(typeof(Actor).FullName, "_clientRpcHandlers");
+                _serverDictField = AccessTools.Field(typeof(Actor), "_serverRpcHandlers")
+                    ?? throw new MissingMethodException(typeof(Actor).FullName, "_serverRpcHandlers");
+                var handlerType = typeof(Actor).GetNestedType("RpcHandler", BindingFlags.NonPublic)
+                    ?? throw new MissingMethodException(typeof(Actor).FullName, "RpcHandler");
+                _wrappedActionField = AccessTools.Field(handlerType, "wrappedAction")
+                    ?? throw new MissingMethodException(handlerType.FullName, "wrappedAction");
+            }
+            catch (Exception ex)
+            {
+                NativePerfPatch.Warn(ref _warned, "custom rpc dispatch", ex.Message);
+                return false;
+            }
+            return true;
+        }
+
+        private static MethodBase TargetMethod() => _target;
+
+        private static bool Prefix(Actor __instance, string type, string serialized, DewPlayer caller)
+        {
+            if (_disabled || !NativePerfOptions.CustomRpcDispatch) return true;
+            if (type == null) return true; // vanilla tolerates a null name; the cache would not
+            try
+            {
+                _rpcCaller(__instance) = caller;
+                var dict = (IDictionary)(caller != null ? _serverDictField : _clientDictField).GetValue(__instance);
+                var cache = Caches.GetValue(__instance, CreateCacheCallback);
+                if (cache.Ambiguous.Contains(type)) return true;
+                if (!cache.ByName.TryGetValue(type, out var resolved))
+                {
+                    Type match = null;
+                    foreach (DictionaryEntry entry in dict)
+                    {
+                        if (((Type)entry.Key).Name != type) continue;
+                        if (match != null)
+                        {
+                            cache.Ambiguous.Add(type); // same simple name twice: keep vanilla dispatch
+                            return true;
+                        }
+                        match = (Type)entry.Key;
+                    }
+                    if (match == null) return true; // not registered here; vanilla finds nothing either
+                    cache.ByName[type] = match;
+                    resolved = match;
+                }
+                if (!dict.Contains(resolved))
+                {
+                    cache.ByName.Remove(type); // unregistered since; let vanilla re-resolve
+                    return true;
+                }
+                var handlers = (IList)dict[resolved];
+                object message;
+                try { message = DewPersistence.FromJson(serialized, resolved); }
+                catch { return false; } // vanilla drops a message it cannot deserialize
+                for (var i = 0; i < handlers.Count; i++)
+                {
+                    try { ((Action<object>)_wrappedActionField.GetValue(handlers[i]))(message); }
+                    catch (Exception ex) { UnityEngine.Debug.LogException(ex); }
+                }
+                return false;
+            }
+            catch (Exception ex)
+            {
+                _disabled = true;
+                NativePerfPatch.Warn(ref _warned, "custom rpc dispatch", ex.Message);
+                return true;
             }
         }
     }
