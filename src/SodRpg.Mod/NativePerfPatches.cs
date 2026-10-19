@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq.Expressions;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
@@ -37,6 +38,7 @@ namespace SodRpg.Mod
             NativePerfOptions.PositionSyncIdle = config.nativePositionSyncIdle;
             NativePerfOptions.ChargeRpcIdle = config.nativeChargeRpcIdle;
             NativePerfOptions.LobbyAccessoryIdle = config.nativeLobbyAccessoryIdle;
+            NativePerfOptions.ChaosShrineHitScan = config.nativeChaosShrineHitScan;
         }
     }
 
@@ -65,6 +67,7 @@ namespace SodRpg.Mod
         internal static bool PositionSyncIdle = true;
         internal static bool ChargeRpcIdle = true;
         internal static bool LobbyAccessoryIdle = true;
+        internal static bool ChaosShrineHitScan = true;
     }
 
     internal static class NativePerfPatch
@@ -2539,6 +2542,81 @@ namespace SodRpg.Mod
             {
                 _disabled = true;
                 NativePerfPatch.Warn(ref _warned, "charge rpc idle", ex.Message);
+            }
+            return true;
+        }
+    }
+
+    [HarmonyPatch]
+    internal static class NativeChaosShrineHitScanPerf
+    {
+        // Se_Shrine_Chaos_StatBonus.ActorEventOnDealDamage runs on the authority for every
+        // damage instance a Chaos Shrine holder deals, and its only work is raising the max
+        // stacks of the victim's Light/Dark elemental status: a TryGetStatusEffect walk of
+        // the victim's whole status list, then Mathf.Max on maxStack. While both taken
+        // bonuses are zero the write is Mathf.Max(maxStack, 5); StackedStatusEffect starts
+        // maxStack at 5, only these two writes ever change it and the bonuses only ever
+        // grow (AddCorruptedBonus adds positive amounts), so a zero bonus on an instance
+        // means maxStack is still exactly 5 and the write stores the same int. Skipping
+        // the handler then saves the per-hit status scan without changing any value —
+        // host-side only, the effect subscribes under isServer so guests never ran it.
+        //
+        // Residual assumption, same class as the other unchanged-write skips: a third-party
+        // mod could lower an elemental effect's maxStack below 5, where vanilla would raise
+        // it back on the next hit and this skip would leave it. Dew.Core and sod-contents
+        // have no such writer (verified by grep over the decompiled assemblies).
+        private static Func<object, int> _lightBonus, _darkBonus;
+        private static MethodBase _target;
+        private static bool _disabled;
+        private static bool _warned;
+
+        private static bool Prepare()
+        {
+            try
+            {
+                // Resolved by name like the other type-not-referenced-elsewhere patches, so
+                // the test harness compiles without a stand-in for this native class.
+                var type = AccessTools.TypeByName("Se_Shrine_Chaos_StatBonus");
+                if (type == null)
+                    throw new MissingMemberException("Se_Shrine_Chaos_StatBonus unavailable");
+                _target = AccessTools.DeclaredMethod(type, "ActorEventOnDealDamage");
+                if (_target == null || _target.GetMethodBody() == null)
+                    throw new MissingMemberException("Se_Shrine_Chaos_StatBonus.ActorEventOnDealDamage unavailable");
+                _lightBonus = CreateBonusReader(type, "currentAddedLightMaxStack");
+                _darkBonus = CreateBonusReader(type, "currentAddedDarkMaxStack");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                NativePerfPatch.Warn(ref _warned, "chaos shrine hit scan", ex.Message);
+                return false;
+            }
+        }
+
+        private static MethodBase TargetMethod() => _target;
+
+        private static Func<object, int> CreateBonusReader(Type type, string fieldName)
+        {
+            var field = AccessTools.Field(type, fieldName);
+            if (field == null)
+                throw new MissingMemberException(type.Name + "." + fieldName + " unavailable");
+            var instance = Expression.Parameter(typeof(object));
+            return Expression.Lambda<Func<object, int>>(
+                Expression.Field(Expression.Convert(instance, type), field), instance).Compile();
+        }
+
+        private static bool Prefix(object __instance)
+        {
+            if (_disabled || !NativePerfOptions.ChaosShrineHitScan) return true;
+            try
+            {
+                if (_lightBonus(__instance) == 0 && _darkBonus(__instance) == 0)
+                    return false;
+            }
+            catch (Exception ex)
+            {
+                _disabled = true;
+                NativePerfPatch.Warn(ref _warned, "chaos shrine hit scan", ex.Message);
             }
             return true;
         }

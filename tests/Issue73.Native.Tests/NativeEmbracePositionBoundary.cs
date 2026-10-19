@@ -65,6 +65,7 @@ namespace SodRpg.Mod
             nativeCursorIdle = true, nativeStatsCalcRpcIdle = true, nativePositionSyncIdle = true,
             nativeChargeRpcIdle = true,
             nativeLobbyAccessoryIdle = true, nativeUltChargeRpcIdle = true,
+            nativeChaosShrineHitScan = true,
             guestSkillLockRecovery = true;
     }
     // NativePerfPatches.cs が設定を写す先（本物は NativeSkillLockRecovery.cs。本体 API に依存するため、ここでは切り替えだけ模倣）。
