@@ -10,6 +10,24 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v3.8.17 — Lighter host: skip a wasted step in dash attacks（2026-10-19）
+
+ダッシュ攻撃の処理から無駄を省き、ホストの動作を軽くしました。 / Made the host lighter by cutting unnecessary work in dash attacks.
+
+### 更新前に確認 / Before updating
+
+- 協力プレイでは、参加者全員がこのバージョンに更新してください。 / Everyone in co-op should update to this version.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- ダッシュ攻撃の当たり判定を進路に沿って動かすとき、ホストが最後に1歩ぶん余計に動かしていた問題を直しました。この1歩はすぐに元へ戻され、どこにも使われていませんでした。今はこの動きを省くので、ホストの負担が少し減ります。軽くなる量は小さいものの、戦闘中にダッシュ攻撃を使う敵や味方が多い場面ほど効果があります。ダッシュ攻撃の当たる位置や当たる相手、当たるタイミングは、これまでと変わりません。 / Fixed the host moving a dash attack's hitbox one extra step at the end of each sweep along its path. That step was immediately undone and never used. It is now skipped, which slightly reduces host load. The gain is small, but it grows in fights where many characters use dash attacks at once. Where dash attacks hit, what they hit, and when they hit are unchanged.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
 ## v3.8.16 — Lighter hero weapon display and build checks（2026-10-19）
 
 英雄の武器の表示と、ビルドを送るかどうかの確認から無駄を省き、動作を軽くしました。 / Made the game lighter by cutting unnecessary work in hero weapon display and in checking whether to send your build.
