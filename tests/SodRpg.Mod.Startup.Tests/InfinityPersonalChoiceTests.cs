@@ -155,6 +155,113 @@ namespace SodRpg.Mod.Startup.Tests
             Assert.True(InfinityMode.PartyAcknowledged(choice)); // No additional 30-second silence hold.
         }
 
+        [Theory]
+        [InlineData("remove")]
+        [InlineData("clear")]
+        public void Personal_wait_is_written_back_when_the_entry_vanishes_outside_reset(string vanish)
+        {
+            var (session, _, _) = StartRevealGraph();
+            try
+            {
+                var guest = JoinLobbyParticipant("lingering-guest");
+                DewPlayer.gamePlayers.Add(guest);
+                var run = session.Profile.Run;
+                run.Infinity.Phase = InfinityPhase.AwaitingChoice;
+                run.AwaitingChoice = true;
+                InfinityMode.ResetPersonalChoices(); // Statics from an earlier test must not leak in.
+                InfinityMode.BeginPersonalChoice(run);
+                var settings = NetworkedManagerBase<GameSettingsManager>.softInstance;
+                string first = settings.customData[InfinityMode.PersonalWaitKey];
+                var wait = Newtonsoft.Json.JsonConvert.DeserializeObject<InfinityMode.PersonalChoiceWait>(first);
+                Assert.False(wait.Started); // Until someone confirms, the wait text is identical every second.
+                Assert.Equal(60, wait.RemainingSeconds);
+
+                // The skip cache must follow the dictionary, not just its own memory: when the
+                // entry vanishes without ResetPersonalChoices, the unchanged text is written back
+                // so a client's wait display cannot stay missing while the barrier holds.
+                if (vanish == "remove") settings.customData.Remove(InfinityMode.PersonalWaitKey);
+                else settings.customData.Clear();
+                Time.unscaledTime += 5;
+                InfinityMode.TickPersonalChoices();
+                Assert.Equal(first, settings.customData[InfinityMode.PersonalWaitKey]);
+
+                // Once the deadline runs, the content changes each second and must be rewritten.
+                InfinityMode.StartPersonalTravelWait();
+                Time.unscaledTime += 1;
+                InfinityMode.TickPersonalChoices();
+                string restarted = settings.customData[InfinityMode.PersonalWaitKey];
+                var restartedWait = Newtonsoft.Json.JsonConvert.DeserializeObject<InfinityMode.PersonalChoiceWait>(restarted);
+                Assert.True(restartedWait.Started);
+                Assert.Equal(59, restartedWait.RemainingSeconds);
+            }
+            finally { InfinityMode.ResetPersonalChoices(); }
+        }
+
+        [Fact]
+        public void Personal_wait_is_rewritten_after_reset_and_when_settings_instance_changes()
+        {
+            var (session, _, _) = StartRevealGraph();
+            try
+            {
+                var run = session.Profile.Run;
+                run.Infinity.Phase = InfinityPhase.AwaitingChoice;
+                run.AwaitingChoice = true;
+                InfinityMode.ResetPersonalChoices(); // Statics from an earlier test must not leak in.
+                InfinityMode.BeginPersonalChoice(run);
+                var settings = NetworkedManagerBase<GameSettingsManager>.softInstance;
+                string first = settings.customData[InfinityMode.PersonalWaitKey];
+
+                // Reset drops the cache together with the entry: the next publish rewrites even identical text.
+                InfinityMode.ResetPersonalChoices();
+                Assert.False(settings.customData.ContainsKey(InfinityMode.PersonalWaitKey));
+                InfinityMode.BeginPersonalChoice(run);
+                Assert.Equal(first, settings.customData[InfinityMode.PersonalWaitKey]);
+
+                // A rebuilt settings manager is a different instance, so the wait is always written there.
+                var rebuilt = new GameSettingsManager();
+                NetworkedManagerBase<GameSettingsManager>.softInstance = rebuilt;
+                Time.unscaledTime += 2;
+                InfinityMode.TickPersonalChoices();
+                Assert.Equal(first, rebuilt.customData[InfinityMode.PersonalWaitKey]);
+            }
+            finally { InfinityMode.ResetPersonalChoices(); }
+        }
+
+        [Fact]
+        public void Personal_wait_skips_duplicate_dictionary_writes_while_the_text_is_unchanged()
+        {
+            var (session, _, _) = StartRevealGraph();
+            try
+            {
+                var guest = JoinLobbyParticipant("lingering-skip-guest");
+                DewPlayer.gamePlayers.Add(guest);
+                var run = session.Profile.Run;
+                run.Infinity.Phase = InfinityPhase.AwaitingChoice;
+                run.AwaitingChoice = true;
+                InfinityMode.ResetPersonalChoices(); // Statics from an earlier test must not leak in.
+                InfinityMode.BeginPersonalChoice(run);
+                var settings = NetworkedManagerBase<GameSettingsManager>.softInstance;
+                int writes = settings.customData.Writes;
+
+                // A skipped re-write is invisible through the values (writing the same text again
+                // changes nothing), so count writes instead: the shipped SyncDictionary queues an
+                // operation per write, and unchanged seconds must not add one.
+                Time.unscaledTime += 2;
+                InfinityMode.TickPersonalChoices();
+                Time.unscaledTime += 2;
+                InfinityMode.TickPersonalChoices();
+                Assert.Equal(writes, settings.customData.Writes);
+                Assert.True(settings.customData.ContainsKey(InfinityMode.PersonalWaitKey));
+
+                // Once the deadline runs, the text changes each second and is written again.
+                InfinityMode.StartPersonalTravelWait();
+                Time.unscaledTime += 1;
+                InfinityMode.TickPersonalChoices();
+                Assert.Equal(writes + 1, settings.customData.Writes);
+            }
+            finally { InfinityMode.ResetPersonalChoices(); }
+        }
+
         private static void FeedPersonalChoice(DewPlayer player, Pact pact, bool skip = false)
         {
             var barrier = InfinityMode.PersonalBarrier;
