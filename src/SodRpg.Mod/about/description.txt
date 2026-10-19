@@ -1,5 +1,5 @@
-[b]Skips resending unchanged charge values while a charge skill is held, making co-op lighter for host and guests.[/b]
-[b]チャージ技能を溜めきって構えている間、変わらないチャージ量の再送を省き、協力プレイを軽くしました。[/b]
+[b]Made co-op lighter for host and guests by skipping redundant facing updates, duplicate kill handling, and per-frame gem cooldown sends.[/b]
+[b]止まっている相手の向き、撃破の処理、宝石のクールダウンの送信から無駄を省き、協力プレイを軽くしました。[/b]
 
 [h1]Dreamforge RPG[/h1]
 Turns every run into part of a long RPG journey: relics you keep, a "secure or delve" choice at every zone, a star map per Traveler, a forge and long-term goals. Co-op ready.

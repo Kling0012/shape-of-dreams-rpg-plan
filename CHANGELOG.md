@@ -10,6 +10,13 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v3.8.20 — Lighter co-op: less work for still units, kill handling, and gem cooldowns（2026-10-19）
+
+### 不具合の修正 / Bug fixes
+- 画面内タイマーの再送省略機能が例外で無効になったとき、先に別の警告が出ていると無効化理由がログに残らない問題を直しました。 / Fixed the on-screen timer resend suppression feature failing to log why it was disabled by an exception if another warning had already been logged.
+
+---
+
 ## v3.8.19 — Lighter co-op while holding a fully charged skill（2026-10-19）
 
 チャージ技能を溜めきって構えている間の無駄な送信を省き、協力プレイでのホストと参加者の動作を軽くしました。 / Made co-op lighter for both host and guests by cutting unnecessary sends while a charge skill is held at full charge.
