@@ -15,6 +15,8 @@ namespace UnityEngine
         public Quaternion(float x, float y, float z) { this.x = x; this.y = y; this.z = z; }
         public static Quaternion identity => default;
         public static Quaternion Euler(float x, float y, float z) => new Quaternion(x, y, z);
+        // NativeEntityRotationIdlePerf の Prefix が読む本体 API の受け口。中身は呼ばれないので定数でよい。
+        public Vector3 eulerAngles => default;
         public static Vector3 operator *(Quaternion rotation, Vector3 point) => point;
         public bool Equals(Quaternion other) => x == other.x && y == other.y && z == other.z;
         public override bool Equals(object obj) => obj is Quaternion other && Equals(other);
