@@ -41,6 +41,7 @@ namespace SodRpg.Mod
             NativePerfOptions.ChaosShrineHitScan = config.nativeChaosShrineHitScan;
             NativePerfOptions.ProjectileIdleRpc = config.nativeProjectileIdleRpc;
             NativePerfOptions.SampleUpdateIdle = config.nativeSampleUpdateIdle;
+            NativePerfOptions.HeroWeaponIdle = config.nativeHeroWeaponIdle;
         }
     }
 
@@ -72,6 +73,7 @@ namespace SodRpg.Mod
         internal static bool ChaosShrineHitScan = true;
         internal static bool ProjectileIdleRpc = true;
         internal static bool SampleUpdateIdle = true;
+        internal static bool HeroWeaponIdle = true;
     }
 
     internal static class NativePerfPatch
@@ -362,6 +364,96 @@ namespace SodRpg.Mod
                 }
             }
             return _effects(visual);
+        }
+    }
+
+    [HarmonyPatch]
+    internal static class NativeHeroWeaponIdlePerf
+    {
+        // Hero.FrameUpdate smooth-damps the weapon and holstered-weapon localScale every
+        // frame for every hero. Once a scale has converged (the common state: not hiding,
+        // not holstered), Unity's Vector3.SmoothDamp is an exact identity: change == 0 and
+        // temp == 0 give output == target, and the anti-overshoot branch then stores
+        // currentVelocity = (target - target) / deltaTime == 0 — so with velocity already
+        // exactly 0 the call returns the same vector and keeps the velocity at 0. The
+        // subsequent Transform.localScale store would write those identical bits back, and
+        // GameObject.SetActive already sees the same comparison result. Skipping all of it
+        // therefore cannot change any value the game or the visuals observe; only the
+        // redundant native write (and its transform dirtying) disappears.
+        private static MethodBase _target;
+        private static bool _warned;
+
+        private static bool Prepare()
+        {
+            _target = NativePerfPatch.Find(typeof(Hero), nameof(Hero.FrameUpdate), ref _warned);
+            return _target != null;
+        }
+
+        private static MethodBase TargetMethod() => _target;
+
+        private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+        {
+            var code = new List<CodeInstruction>(instructions);
+            var smoothDamp = AccessTools.Method(typeof(Vector3), nameof(Vector3.SmoothDamp),
+                new[] { typeof(Vector3), typeof(Vector3), typeof(Vector3).MakeByRefType(), typeof(float) });
+            var setScale = AccessTools.PropertySetter(typeof(Transform), "localScale");
+            if (smoothDamp == null || setScale == null)
+            {
+                NativePerfPatch.Warn(ref _warned, "hero weapon idle", "UnityEngine members unavailable");
+                return code;
+            }
+            var sites = new List<int>();
+            int setters = 0;
+            for (int i = 0; i < code.Count; i++)
+            {
+                if (code[i].Calls(setScale)) setters++;
+                if (i + 1 < code.Count && code[i].Calls(smoothDamp) && code[i + 1].Calls(setScale)) sites.Add(i);
+            }
+            // Both transforms go through exactly this SmoothDamp+store pair (weapon and
+            // holstered weapon); any other count means the native body changed shape.
+            if (sites.Count != 2 || setters != 2)
+            {
+                NativePerfPatch.Warn(ref _warned, "hero weapon idle", "native SmoothDamp stores changed or already patched");
+                return code;
+            }
+            foreach (int site in sites)
+            {
+                code[site].opcode = OpCodes.Call;
+                code[site].operand = AccessTools.Method(typeof(NativeHeroWeaponIdlePerf), nameof(WeaponSmoothDamp));
+                code[site + 1].opcode = OpCodes.Call;
+                code[site + 1].operand = AccessTools.Method(typeof(NativeHeroWeaponIdlePerf), nameof(StoreLocalScale));
+            }
+            return code;
+        }
+
+        // Same signature as Vector3.SmoothDamp(current, target, ref velocity, smoothTime).
+        // Only the exact-rest state is bypassed; every other input reaches the native call.
+        private static Vector3 WeaponSmoothDamp(Vector3 current, Vector3 target, ref Vector3 currentVelocity, float smoothTime)
+        {
+            if (NativePerfOptions.HeroWeaponIdle
+                && currentVelocity.x == 0f && currentVelocity.y == 0f && currentVelocity.z == 0f
+                && current.x == target.x && current.y == target.y && current.z == target.z)
+            {
+                return current;
+            }
+            return Vector3.SmoothDamp(current, target, ref currentVelocity, smoothTime);
+        }
+
+        // Same signature as the Transform.localScale setter call. A same-value write is
+        // invisible to every reader, so it can be dropped; the follow-up localScale read
+        // and SetActive comparison in the native body stay untouched and see the same value.
+        private static void StoreLocalScale(Transform transform, Vector3 value)
+        {
+            if (!NativePerfOptions.HeroWeaponIdle)
+            {
+                transform.localScale = value;
+                return;
+            }
+            Vector3 current = transform.localScale;
+            if (current.x != value.x || current.y != value.y || current.z != value.z)
+            {
+                transform.localScale = value;
+            }
         }
     }
 
