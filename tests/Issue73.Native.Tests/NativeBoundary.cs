@@ -66,6 +66,19 @@ namespace Mirror
         public bool isClient { get; set; }
         public ulong syncVarDirtyBits { get; set; }
         public void SendRPCInternal(NetworkWriter writer, string rpcName) { }
+        // （#876）実機 Mirror の weaver 生成セッターが呼ぶ NetworkBehaviour.GeneratedSyncVarSetter。
+        // 等値（EqualityComparer<T>.Default。float では float.Equals と同じく NaN==NaN・0==-0 を
+        // 等値とみたす。SyncVarEqual 相当）を通ったときだけ字段を書き、同期ダーティビットを
+        // OR で立て、フック（第4引数）があれば呼ぶ。StatsRatioIdlePerfBoundary の Network_
+        // セッターがこの形で呼ぶことで、NativeStatsRatioIdlePerf.Prepare のフック検査
+        // （GeneratedSyncVarSetter 呼び出しの直前が ldnull であること）を実ソースのまま通す。
+        internal void GeneratedSyncVarSetter<T>(T value, ref T field, ulong dirtyBit, Action<T> hook)
+        {
+            if (EqualityComparer<T>.Default.Equals(field, value)) return;
+            field = value;
+            syncVarDirtyBits |= dirtyBit;
+            hook?.Invoke(value);
+        }
     }
     // 同じく形検査が Mirror.NetworkWriterPool の Get・Return という名前で数えるための境界。
     // 呼び出しの有無は IL で確かめるため、中身は空でよい。
@@ -349,12 +362,16 @@ namespace SodRpg.Mod
         public float attackDamagePercentage, abilityPowerPercentage, movementSpeedPercentage,
             abilityHasteFlat, armorFlat, attackSpeedPercentage, maxHealthPercentage;
     }
-    internal class EntityStatus : NetworkBehaviour
+    // （#876）マナの同期字段と weaver 生成セッターの対は StatsRatioIdlePerfBoundary.cs の
+    // partial 追加分に置く（NativeStatsRatioIdlePerf の検証だけが読む）。
+    internal partial class EntityStatus : NetworkBehaviour
     {
         private float _currentHealth = 100f;
         private bool _statsDirty = true;
         public float currentHealth { get => _currentHealth; set => _currentHealth = value; }
-        public float maxHealth = 100;
+        // 本体と同じくプロパティにする: NativeStatsRatioIdlePerf の Prepare は maxHealth を
+        // AccessTools.PropertyGetter で解決する（字段だと null になりパッチが下りる）。
+        public float maxHealth { get; set; } = 100;
         // 敵担当制のHP割合維持を観察できるよう、再計算は処理器つきの基本値から最大HPを作り直す。
         public float baseMaxHealth = 100f;
         public bool isAlive = true, isUndetectableByNonAllies;
@@ -402,13 +419,24 @@ namespace SodRpg.Mod
             finalStats.maxHealth = stats.maxHealth;
         }
         // 本体 EntityStatus.CalculateStats と、その末尾で毎回呼ばれる weaver 生成の空 ClientRpc
-        // RpcInvokeStatsCalculated。NativeStatsCalcRpcPerf.SharedPrepare がこの2つを typeof で
-        // 解決し、送信側の形検査（NetworkWriterPool.Get・SendRPCInternal・
-        // NetworkWriterPool.Return の3呼び出しのみ）と通知呼び出し1つの検査に通る形で再現する。
-        // 再計算の中身は CalculateStatsIfDirty 側にあるため、ここは通知の呼び出し構造だけを模す。
-        // StatsCalcRpcPerfTests は Capture/Prefix を直接動かすため、この本体を実行しない。
+        // RpcInvokeStatsCalculated。NativeStatsCalcRpcPerf.SharedPrepare と
+        // NativeStatsRatioIdlePerf.Prepare がこのメソッドを typeof で解決する。前者は
+        // 送信側の形検査（NetworkWriterPool.Get・SendRPCInternal・NetworkWriterPool.Return の
+        // 3呼び出しのみ）と通知呼び出し1つの検査に通る形で再現する。後者のために
+        // （#876）本体と同じ比率維持の書き換え（入口の比率 × 新しい最大値を weaver セッターで
+        // 書く）もここに入れる: 最大値が不変の再計算では float32 の割り算→掛け算の往復で
+        // 1 ulp ずれた値が字段に書き戻され、dirty ビットが立つ。StatsRatioIdlePerfTests は
+        // Prefix → この本体 → Postfix の順で通して、その書き戻しが入口の状態に戻ることを
+        // 確かめる。StatsCalcRpcPerfTests は Capture/Prefix を直接動かすため、この本体は
+        // 実行しない（通知呼び出しの数だけが意味を持つ）。
         public void CalculateStats()
         {
+            float healthRatio = currentHealth / maxHealth;
+            float manaRatio = currentMana / maxMana;
+            maxHealth = baseMaxHealth;
+            maxMana = baseMaxMana;
+            Network_currentHealth = healthRatio * maxHealth;
+            Network_currentMana = manaRatio * maxMana;
             RpcInvokeStatsCalculated();
         }
         internal void RpcInvokeStatsCalculated()
@@ -494,7 +522,14 @@ namespace SodRpg.Mod
         public void CallAttackCompleteRoutines() { }
     }
     internal class AbilityInstance : Actor { public Gem gem; public CastInfo info; }
-    internal sealed class Gem : Actor { }
+    internal sealed class Gem : Actor
+    {
+        // NativePerfPatches.cs の Gem クールダウン系パッチが参照する本体 API。
+        public bool isServer;
+        public void LogicUpdate(float dt) { }
+        public float Network_currentCooldown { get; set; }
+        public void SetSyncVarDirtyBit(ulong dirtyBit) { }
+    }
     internal sealed class ElementalStatusEffect : Actor { public bool isActive; }
     internal sealed class Summon : Entity
     {
@@ -527,6 +562,11 @@ namespace SodRpg.Mod
     internal class EntityControl
     {
         public Entity entity;
+        // 本体の Transform。NativeEntityRotationIdlePerf の Prefix が読み、検証では向きを設定して使う。
+        public UnityEngine.Transform transform;
+        // 本体の向きダンパーの内部速度（EntityControl._desiredAngleCv）。Prefix の FieldRef が読み、
+        // 検証でも設定して使う。
+        public float _desiredAngleCv;
         // 本体の攻撃目標。召喚体の反撃判定（HostAuthority.SummonOwnership.cs）が読む。
         public Entity attackTarget;
         public Displacement ongoingDisplacement;

@@ -114,6 +114,13 @@ namespace SodRpg.Mod
         private static string Times(double value) =>
             "×" + value.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture);
 
+        // ×倍率の差を「+42%」「−24%」の形で返す。標準（四捨五入で ±0）のときは空（#700）。
+        private static string SignedPercent(double multiplier)
+        {
+            int percent = (int)Math.Round(multiplier * 100) - 100;
+            return percent == 0 ? "" : (percent > 0 ? "+" : "−") + Math.Abs(percent) + "%";
+        }
+
         // #700: what dynamic difficulty and helper decay do right now. The host reads its own rules;
         // a participant shows only values the host synced for this run, and "—" for the rest.
         private string BuildDynamicStatus(bool host, DynamicDifficultyStatus status, DynamicDifficultyDisplay[] display)
@@ -125,7 +132,6 @@ namespace SodRpg.Mod
                 : status.state == DynamicDifficultyStatus.On ? Loc.T("有効", "On")
                 : status.state == DynamicDifficultyStatus.SoloOff ? Loc.T("ソロでは無効", "Off in solo")
                 : Loc.T("無効", "Off"));
-            double exponent = status != null ? status.damageExponent / 1000d : double.NaN;
             double reward = status != null ? status.rewardShare / 1000d : double.NaN;
             for (int i = 0; i < OwnershipColors.Length && i < DewPlayer.gamePlayers.Count; i++)
             {
@@ -148,10 +154,12 @@ namespace SodRpg.Mod
                 }
                 string mood = f < 0.995 ? Loc.T("やさしめ", "easier") : f > 1.005 ? Loc.T("きびしめ", "harder") : Loc.T("標準", "standard");
                 text.Append("  ").Append(Times(f)).Append(Loc.T("（", " (")).Append(mood).Append(Loc.T("）", ")"));
-                text.Append('\n').Append(Loc.T("　敵の体力 ", "　Enemy HP ")).Append(Times(f));
-                text.Append(Loc.T(" ・ 攻撃 ", " · Attack ")).Append(double.IsNaN(exponent) ? none : Times(Math.Pow(f, exponent)));
-                text.Append(Loc.T(" ・ 報酬 ", " · Rewards "))
-                    .Append(double.IsNaN(reward) ? none : Times(Math.Min(CoopBalance.DynamicDifficulty.RewardMaxMultiplier, 1 + reward * Math.Max(0, f - 1))));
+                // 2026-10-19：動的難易度は敵の攻撃を変えない。体力と報酬は差の割合も併記する。
+                text.Append('\n').Append(Loc.T("　敵の体力 ", "　Enemy HP ")).Append(Times(f)).Append(SignedPercent(f));
+                text.Append(Loc.T(" ・ 攻撃 ", " · Attack ")).Append(status == null ? none : Times(1));
+                double rewardMultiplier = double.IsNaN(reward) ? double.NaN
+                    : Math.Min(CoopBalance.DynamicDifficulty.RewardMaxMultiplier, 1 + reward * Math.Max(0, f - 1));
+                text.Append(Loc.T(" ・ 報酬 ", " · Rewards ")).Append(double.IsNaN(rewardMultiplier) ? none : Times(rewardMultiplier) + SignedPercent(rewardMultiplier));
             }
             text.Append('\n').Append(Loc.T("担当外の減衰：", "Damage to others' enemies: "));
             if (status == null) text.Append(none);
@@ -211,6 +219,42 @@ namespace SodRpg.Mod
             }
             GUILayout.Label(Loc.T("現在の状況", "Current status"), _st.Label);
             GUILayout.Label(_dynamicStatusText, _st.Small);
+        }
+
+        private bool _dynamicHudFailed;
+
+        /// <summary>左上のまとめ表示（HUD）に、自分の動的難易度を1行で足す（#700）。
+        /// 値の元は状況表示と同じ（ホストは自分の規則、参加者は受け取った値）。敵の攻撃は変わらないので出さない。</summary>
+        private void AppendDynamicHud(System.Text.StringBuilder sb)
+        {
+            var local = DewPlayer.local;
+            if (local == null) return;
+            bool host = NetworkServer.active;
+            var authority = host ? HostAuthority.NativeInstance : null;
+            var status = host ? authority?.DynamicStatusSnapshot() : _s.DynamicStatus;
+            if (status == null || status.state != DynamicDifficultyStatus.On) return;
+            double f = double.NaN;
+            if (host)
+            {
+                var display = authority?.HostDynamicDisplay();
+                if (display != null)
+                    foreach (var entry in display)
+                        if (entry != null && entry.participantId == local.guid) { f = entry.factor / 100d; break; }
+            }
+            else _s.TryDynamicDifficultyFor(local.guid, out f);
+            if (double.IsNaN(f)) return;
+            sb.Append("\n<size=13>").Append(Loc.T("動的難易度 ", "Dynamic difficulty: "));
+            if (f >= 0.995 && f <= 1.005) sb.Append(Loc.T("標準", "standard"));
+            else
+            {
+                sb.Append(Loc.T("敵の体力 ", "Enemy HP ")).Append(SignedPercent(f));
+                double rewardMultiplier = Math.Min(CoopBalance.DynamicDifficulty.RewardMaxMultiplier,
+                    1 + status.rewardShare / 1000d * Math.Max(0, f - 1));
+                string rewardPercent = SignedPercent(rewardMultiplier);
+                if (rewardPercent.Length > 0) sb.Append(Loc.T("・報酬 ", " · Rewards ")).Append(rewardPercent);
+                if (f < 0.995) sb.Append(Loc.T("（やさしめ）", " (easier)"));
+            }
+            sb.Append("</size>");
         }
 
         private void DrawEnemyOwnershipSettings(DreamforgeConfig cfg)

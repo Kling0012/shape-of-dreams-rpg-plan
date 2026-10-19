@@ -13,7 +13,7 @@ namespace Issue73.Native.Tests
     /// <summary>殲滅速度に合わせた動的難易度（HostAuthority.DynamicDifficulty.cs）のホスト側 E2E:
     /// 測定（あふれ込み込みの素のダメージ・親鎖帰属・0.5 秒区切り）・部屋の移り目だけの更新
     /// （対数 EMA・minActiveSeconds・minRooms・上限下限・alphaDown・heroTargetScale）・適用
-    /// （湧いた時点の D 固定・HP×D・与ダメ×D^damageExponent・ボスの持ち分は D 込み）・報酬・設定。
+    /// （湧いた時点の D 固定・HP×D・敵の攻撃は変えない・ボスの持ち分は D 込み）・報酬・設定。
     /// 実ソースをそのままリンクし、期待値の数値は生成定数 CoopBalance.DynamicDifficulty から組み立てる。</summary>
     public sealed class DynamicDifficultyTests : IDisposable
     {
@@ -353,8 +353,8 @@ namespace Issue73.Native.Tests
             double withoutAlphaDown = Math.Exp(Strength * (1 - Math.Pow(1 - Alpha, 2)) * Math.Log(0.6d));
             Assert.NotEqual(withoutAlphaDown, factor);
 
-            // さらに苦戦が続いても下限で止まる。
-            DriveRooms(host, b, 110, 0.2d, 2);
+            // さらに苦戦が続いても下限で止まる（2026-10-19 の弱い strength では深い苦戦で届く）。
+            DriveRooms(host, b, 110, 0.1d, 2);
             Assert.Equal(MinFactor, FactorOf(host, b), 10);
             Assert.Empty(Log.Warnings);
         }
@@ -401,13 +401,13 @@ namespace Issue73.Native.Tests
             var second = SpawnFor(host, a, 201, 200f);
             Assert.Equal(200f * secondFactor, second.Status.maxHealth, 2); // 新しい敵は新しい D
 
-            // DamageMultiplier には D^damageExponent。
+            // 敵の攻撃は動的難易度では変えない（2026-10-19）。
             var dealtFirst = new DamageData(100f);
             foreach (var processor in first.dealtDamageProcessor.InOrder()) processor(ref dealtFirst, first, second);
-            Assert.Equal(100f * Math.Pow(firstFactor, DamageExponent), dealtFirst.amount, 2);
+            Assert.Equal(100f, dealtFirst.amount, 2);
             var dealtSecond = new DamageData(100f);
             foreach (var processor in second.dealtDamageProcessor.InOrder()) processor(ref dealtSecond, second, first);
-            Assert.Equal(100f * Math.Pow(secondFactor, DamageExponent), dealtSecond.amount, 2);
+            Assert.Equal(100f, dealtSecond.amount, 2);
             Assert.Empty(Log.Warnings);
         }
 
@@ -521,7 +521,7 @@ namespace Issue73.Native.Tests
             Assert.Equal(200f * room.HealthMultiplier * factor, RecalcMaxHealth(enemy), 1);
             var dealt = new DamageData(100f);
             foreach (var processor in enemy.dealtDamageProcessor.InOrder()) processor(ref dealt, enemy, enemy);
-            Assert.Equal(100f * room.DamageMultiplier * Math.Pow(factor, DamageExponent), dealt.amount, 1);
+            Assert.Equal(100f * room.DamageMultiplier, dealt.amount, 1); // 攻撃には D を掛けない
             Assert.Empty(Log.Warnings);
         }
     }
