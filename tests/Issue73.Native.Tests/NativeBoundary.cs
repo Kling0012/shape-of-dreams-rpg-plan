@@ -494,7 +494,14 @@ namespace SodRpg.Mod
         public void CallAttackCompleteRoutines() { }
     }
     internal class AbilityInstance : Actor { public Gem gem; public CastInfo info; }
-    internal sealed class Gem : Actor { }
+    internal sealed class Gem : Actor
+    {
+        // NativePerfPatches.cs の Gem クールダウン系パッチが参照する本体 API。
+        public bool isServer;
+        public void LogicUpdate(float dt) { }
+        public float Network_currentCooldown { get; set; }
+        public void SetSyncVarDirtyBit(ulong dirtyBit) { }
+    }
     internal sealed class ElementalStatusEffect : Actor { public bool isActive; }
     internal sealed class Summon : Entity
     {
