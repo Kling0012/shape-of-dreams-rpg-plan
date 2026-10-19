@@ -121,7 +121,7 @@ namespace SodRpg.Mod
         // stayed native when reading the game log.
         private static void WarnUnsafe(StackedStatusEffect effect, int original)
         {
-            // Warn once per actor without keeping destroyed stacks alive or reusing Unity ids.
+            // Warn once per ingredient stack without keeping destroyed stacks alive or reusing Unity ids.
             lock (WarnedUnsafe)
             {
                 if (WarnedUnsafe.TryGetValue(effect, out _)) return;

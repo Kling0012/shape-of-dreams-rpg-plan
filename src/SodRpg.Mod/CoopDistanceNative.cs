@@ -11,6 +11,10 @@ namespace SodRpg.Mod
         // Keep a fixed tracker per effect: runtime radius changes must not split its grace history.
         private static readonly CoopDistanceTracker HealPairs = new CoopDistanceTracker();
         private static readonly CoopDistanceTracker SiphonPairs = new CoopDistanceTracker();
+        // Production calls above FullRange are currently Heal/Siphon only (tracked above).
+        // LivingAllies, shared ward, triumph song, apothecary and resonance use at most
+        // FullRange (10). Reserve this fallback for legacy callers; any new expanded-range
+        // effect needs its own tracker so it cannot inherit another effect's grace history.
         private static readonly CoopDistanceTracker ScaledPairs = new CoopDistanceTracker();
         internal static bool Enabled = true;
 

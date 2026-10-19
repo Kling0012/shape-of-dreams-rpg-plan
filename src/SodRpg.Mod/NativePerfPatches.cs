@@ -1454,6 +1454,7 @@ namespace SodRpg.Mod
                 Shader.SetGlobalFloat(id, value);
                 return;
             }
+            // Float value equality treats +0 and -0 as equal; NaN always re-sends.
             if (_hasFloat && _sentFloatId == id && _sentFloat == value) return;
             _hasFloat = true;
             _sentFloatId = id;
@@ -1471,7 +1472,7 @@ namespace SodRpg.Mod
             }
             // Unity's Vector4 operator== treats a summed squared difference below kEpsilon as equal,
             // which would silently swallow sub-1e-5 drift and leave a slightly stale value on the
-            // GPU. Compare per component so only a bit-exact repeat is skipped.
+            // GPU. Compare each float value (+0 and -0 compare equal; NaN re-sends).
             if (_hasVector && _sentVectorId == id
                 && value.x == _sentVector.x && value.y == _sentVector.y
                 && value.z == _sentVector.z && value.w == _sentVector.w) return;
@@ -1501,7 +1502,7 @@ namespace SodRpg.Mod
         private static bool SameArray(Vector4[] values)
         {
             // Per-component comparison for the same reason as GuardVector: Unity's operator==
-            // approximates, so an exact repeat is the only safe skip.
+            // approximates. Use float value equality (+0 and -0 are equal; NaN re-sends).
             for (int i = 0; i < values.Length; i++)
             {
                 if (values[i].x != _sentArray[i].x || values[i].y != _sentArray[i].y
@@ -1975,9 +1976,9 @@ namespace SodRpg.Mod
         // when ANY of these holds: the timestamp is one second newer than the last accepted
         // one, the position moved, the velocity changed, or the facing rotated. That first
         // clause is a heartbeat: for an entity that stands still it fires once per second
-        // forever and admits an update whose only new information is the timestamp — the
-        // position, velocity and desiredAngle it carries are byte-identical to the last
-        // accepted state, because the gate itself is the only path that advances that state
+        // forever and admits an update whose only meaningful new information is the
+        // timestamp. Position, velocity and desiredAngle can differ within the native
+        // thresholds; the gate itself is the only path that advances the accepted state
         // (owner clients via CmdPositionSyncData → UserCode → the SyncVar; server-controlled
         // entities directly via the SyncVar setter).
         //
@@ -1985,15 +1986,15 @@ namespace SodRpg.Mod
         // last-received clock stops advancing, and that clock drives the display
         // (OnMovementSyncDataReceived / DoMovementObserverFrameUpdate smooth toward the
         // last received state for 0.5 s, then keep moving by its velocity, and zero that
-        // velocity after 1 s without an update). Whether that can move the display depends
-        // on the velocity the suppressed update carries, so the heartbeat is dropped only
-        // while the update's own velocity is at or below 0.0001 squared magnitude (the
-        // gate's velocity threshold — extrapolation is then bounded by the gate's own
-        // 1 cm position tolerance). An update that still carries real velocity — a monster
+        // velocity after 1 s without an update). The heartbeat is dropped only while the
+        // update's own velocity is at or below 0.0001 squared magnitude (1 cm/s). The
+        // receiver extrapolates with the last accepted velocity, which can differ by up
+        // to another 1 cm/s: up to about 2 cm of drift may remain until the next meaningful
+        // update. An update that still carries greater velocity — a monster
         // pressed against a wall keeps trying to move while its position stays put —
         // keeps its heartbeat, so observers keep being pulled back to the true position
-        // every second exactly as in vanilla. Every real change (position > 1 cm,
-        // velocity change, facing > 0.1°) still sends exactly as before through the same
+        // every second exactly as in vanilla. Every meaningful change (position > 1 cm,
+        // velocity difference > 1 cm/s, facing > 0.1°) still sends as before through the same
         // two callsites, the owner's 60 Hz send rate and the 0.2° angle tolerance are
         // untouched, and EntityControl.Teleport publishes its fresh sync directly without
         // going through this gate. No message format changes, so vanilla peers (MOD on
@@ -2079,9 +2080,9 @@ namespace SodRpg.Mod
         // more than 0.0001 squared magnitude, or its velocity does, or its facing differs
         // by more than 0.1 degrees. The replacement drops the timestamp clause only while
         // the option is on AND the update itself carries a velocity at or below 0.0001
-        // squared magnitude (then observers cannot extrapolate it anywhere the gate would
-        // count as meaningful); whenever the option is off or the update still carries
-        // real velocity, it reimplements the formula exactly.
+        // squared magnitude. Observers use lastVelocity, so the additional velocity-delta
+        // tolerance permits up to about 2 cm of drift, as described above. Whenever the
+        // option is off or the update's speed exceeds 1 cm/s, the native formula is kept.
         internal static bool ShouldSendChange(double dataTimestamp, double lastTimestamp,
             Vector3 lastPosition, Vector3 position, Vector3 lastVelocity, Vector3 velocity,
             float lastDesiredAngle, float desiredAngle)

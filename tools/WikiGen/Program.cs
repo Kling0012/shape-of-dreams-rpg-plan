@@ -352,7 +352,7 @@ int powersListed = 0;
     foreach (var rarity in Enum.GetValues<Rarity>())
         for (int done = 0; done < Content.MaxRetunes; done++)
             sb.Append($"| {TxtBi(Content.RarityName(rarity))} | {done} | {Content.RetuneCost(new Relic { Rarity = rarity, Retunes = done })} |\n");
-    sb.Append('\n').Append("禁忌の職人を解放した対象のオレンジ枠固有品の追加分 / Extra uses for eligible orange-frame uniques after unlocking the Forbidden Smith:\n\n^ 再調律済み回数 ^ 次の調律石 ^\n");
+    sb.Append('\n').Append("禁忌の職人を解放した対象の伝説のオレンジ枠固有品の追加分 / Extra uses for eligible legendary orange-frame uniques after unlocking the Forbidden Smith:\n\n^ 再調律済み回数 ^ 次の調律石 ^\n");
     for (int done = Content.MaxRetunes; done < Content.MaxRetunes + Forbidden.OrangeRetuneBonus; done++)
         sb.Append($"| {done} | {Content.RetuneCost(new Relic { Rarity = Rarity.Legendary, Retunes = done })} |\n");
     sb.Append('\n');
