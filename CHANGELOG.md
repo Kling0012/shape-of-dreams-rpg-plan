@@ -10,6 +10,24 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v3.8.15 — Lighter host processing for enemy AI（2026-10-19）
+
+ホスト上の敵の処理から無駄を省き、動作を軽くしました。 / Made the host lighter by cutting unnecessary work on enemies.
+
+### 更新前に確認 / Before updating
+
+- 協力プレイでは、参加者全員がこのバージョンに更新してください。 / Everyone in co-op should update to this version.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- 魔物や召喚、ボスが動くたびに、標的を付け替える必要のない相手に対しても、ホストが付け替えの確認をしていた問題を直しました。今は付け替えが必要な敵だけを確認するので、ホストの負担が減ります。ソロでのプレイなど、付け替えの必要な敵がいない場面ほど効果があります。敵の狙う相手や動き、ゲームの結果は、これまでと変わりません。 / Fixed the host checking whether to switch targets on every update for monsters, summons, and bosses, even when no switch could happen. Only enemies that may switch targets are checked now, which reduces host load. The benefit is largest in situations like solo play, where no enemy needs to switch. Enemy targeting, behavior, and game results are unchanged.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
 ## v3.8.14 — Lighter co-op message handling and basic attack hits（2026-10-19）
 
 協力プレイの通信を受け取るときの処理と、通常攻撃が当たるたびのホストの処理を軽くしました。 / Made receiving co-op messages and the host's work on each basic attack hit lighter.

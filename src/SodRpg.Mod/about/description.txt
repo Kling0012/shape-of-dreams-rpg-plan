@@ -1,5 +1,5 @@
-[b]Receiving co-op messages and the host's work on each basic attack hit are now lighter, with no change to game results.[/b]
-[b]協力プレイの通信を受け取る処理と、通常攻撃が当たるたびのホストの処理を軽くしました。ゲームの結果は変わりません。[/b]
+[b]Cut unnecessary host work on enemies that do not need to switch targets.[/b]
+[b]標的を付け替える必要のない敵に対するホストの無駄な処理を省きました。[/b]
 
 [h1]Dreamforge RPG[/h1]
 Turns every run into part of a long RPG journey: relics you keep, a "secure or delve" choice at every zone, a star map per Traveler, a forge and long-term goals. Co-op ready.
