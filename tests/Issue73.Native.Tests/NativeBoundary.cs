@@ -345,12 +345,16 @@ namespace SodRpg.Mod
         public float attackDamagePercentage, abilityPowerPercentage, movementSpeedPercentage,
             abilityHasteFlat, armorFlat, attackSpeedPercentage, maxHealthPercentage;
     }
-    internal class EntityStatus : NetworkBehaviour
+    // （#876）マナの同期字段と weaver 生成セッターの対は StatsRatioIdlePerfBoundary.cs の
+    // partial 追加分に置く（NativeStatsRatioIdlePerf の検証だけが読む）。
+    internal partial class EntityStatus : NetworkBehaviour
     {
         private float _currentHealth = 100f;
         private bool _statsDirty = true;
         public float currentHealth { get => _currentHealth; set => _currentHealth = value; }
-        public float maxHealth = 100;
+        // 本体と同じくプロパティにする: NativeStatsRatioIdlePerf の Prepare は maxHealth を
+        // AccessTools.PropertyGetter で解決する（字段だと null になりパッチが下りる）。
+        public float maxHealth { get; set; } = 100;
         // 敵担当制のHP割合維持を観察できるよう、再計算は処理器つきの基本値から最大HPを作り直す。
         public float baseMaxHealth = 100f;
         public bool isAlive = true, isUndetectableByNonAllies;
@@ -398,13 +402,24 @@ namespace SodRpg.Mod
             finalStats.maxHealth = stats.maxHealth;
         }
         // 本体 EntityStatus.CalculateStats と、その末尾で毎回呼ばれる weaver 生成の空 ClientRpc
-        // RpcInvokeStatsCalculated。NativeStatsCalcRpcPerf.SharedPrepare がこの2つを typeof で
-        // 解決し、送信側の形検査（NetworkWriterPool.Get・SendRPCInternal・
-        // NetworkWriterPool.Return の3呼び出しのみ）と通知呼び出し1つの検査に通る形で再現する。
-        // 再計算の中身は CalculateStatsIfDirty 側にあるため、ここは通知の呼び出し構造だけを模す。
-        // StatsCalcRpcPerfTests は Capture/Prefix を直接動かすため、この本体を実行しない。
+        // RpcInvokeStatsCalculated。NativeStatsCalcRpcPerf.SharedPrepare と
+        // NativeStatsRatioIdlePerf.Prepare がこのメソッドを typeof で解決する。前者は
+        // 送信側の形検査（NetworkWriterPool.Get・SendRPCInternal・NetworkWriterPool.Return の
+        // 3呼び出しのみ）と通知呼び出し1つの検査に通る形で再現する。後者のために
+        // （#876）本体と同じ比率維持の書き換え（入口の比率 × 新しい最大値を weaver セッターで
+        // 書く）もここに入れる: 最大値が不変の再計算では float32 の割り算→掛け算の往復で
+        // 1 ulp ずれた値が字段に書き戻され、dirty ビットが立つ。StatsRatioIdlePerfTests は
+        // Prefix → この本体 → Postfix の順で通して、その書き戻しが入口の状態に戻ることを
+        // 確かめる。StatsCalcRpcPerfTests は Capture/Prefix を直接動かすため、この本体は
+        // 実行しない（通知呼び出しの数だけが意味を持つ）。
         public void CalculateStats()
         {
+            float healthRatio = currentHealth / maxHealth;
+            float manaRatio = currentMana / maxMana;
+            maxHealth = baseMaxHealth;
+            maxMana = baseMaxMana;
+            Network_currentHealth = healthRatio * maxHealth;
+            Network_currentMana = manaRatio * maxMana;
             RpcInvokeStatsCalculated();
         }
         internal void RpcInvokeStatsCalculated()
