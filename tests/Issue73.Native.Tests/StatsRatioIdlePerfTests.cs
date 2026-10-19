@@ -10,13 +10,20 @@ namespace Issue73.Native.Tests
     /// 新しい最大値）が float32 の往復計算で 1 ulp ずれた値を字段に書き、dirty ビットを
     /// 立てるノイズを、入口の値への書き戻しで消す NativeStatsRatioIdlePerf の検証。
     /// 境界の EntityStatus（NativeBoundary.cs + StatsRatioIdlePerfBoundary.cs）が本体と同じ
-    /// 比率書き換えと weaver セッター（0x80/0x100 のビット定数を IL に埋めた対）を持つため、
-    /// Prepare の形検査（セッターの IL からビット定数を読む照合と、再計算内の体力・マナの
-    /// 書き込みが各ちょうど1つであること）を実ソースのまま通す。
+    /// 比率書き換えと weaver セッター（GeneratedSyncVarSetter(value, ref field, bit, null) 呼び出しの
+    /// IL にビット定数の ldc.i8 とフック引数の ldnull を持つ対）のため、Prepare の形検査
+    /// （セッターの IL からビット定数を読む照合・フック検査・再計算内の体力・マナの書き込みが
+    /// 各ちょうど1つであること）を実ソースのまま通す。
     /// Prefix → 境界の CalculateStats（本体の比率書き換え）→ Postfix の窓を通して、
     /// (1) 最大値が同じとき、書き戻した値が入口の値と一致し、dirty ビットが入口の状態に戻ること、
     /// (2) 入口ですでに立っていたビットは残ること、
     /// (3) 最大値が変わったときと、アンダーフローで0になったときは何もしないこと、
+    /// (4) 予測した再書き込みの結果が非有限（最大値0で本体が NaN を書く異常状態）のときは
+    ///     書き戻さず本体どおりに通すこと、
+    /// (5) 窓の後半（比率書き換えの後）に外部コードが書いた値は最終状態として採用され、
+    ///     ビットも落ちないこと、
+    /// (6) マナ側のアンダーフロー（非正規化数→0）も体力側と同じ扱いであること、
+    /// (7) weaver セッターがフックを持つ形は Prepare のフック検査で拒否されること、
     /// を確かめる。61.7f（最大値100）は 61.7/100*100 が 1 ulp ずれる値（実測）。
     /// </summary>
     public sealed class StatsRatioIdlePerfTests : IDisposable
@@ -164,6 +171,91 @@ namespace Issue73.Native.Tests
             Assert.NotEqual(0UL, status.syncVarDirtyBits & HealthBit);
             Assert.Equal(BitConverter.SingleToInt32Bits(61.7f), BitConverter.SingleToInt32Bits(status.currentMana));
             Assert.Equal(0UL, status.syncVarDirtyBits & ManaBit);
+        }
+
+        // (4) 最大値がちょうど0の異常な再計算（境界は本体の Mathf.Max(…,1f) クランプを転写して
+        // いないため、入口61.7/最大0 は +Inf になり、+Inf*0 で本体の書き換えは NaN を書く）。
+        // 予測した再書き込みの結果が非有限のときは書き戻さないため、NaN が本体どおり最終状態として
+        // 立ち（以前の実装は最後の有限値で置き換えていた）、ビットも落ちない。マナ側（最大値100）の
+        // 通常のノイズは書き戻る。
+        [Fact]
+        public void AVanillaNonFiniteRewriteStands()
+        {
+            Arm();
+            var status = NewStatus();
+            status.currentHealth = 61.7f;
+            status.currentMana = 61.7f;
+            status.maxHealth = 0f;
+            status.baseMaxHealth = 0f;
+            RunPatchedRecalculation(status);
+            Assert.Equal(BitConverter.SingleToInt32Bits(float.NaN), BitConverter.SingleToInt32Bits(status.currentHealth));
+            Assert.NotEqual(0UL, status.syncVarDirtyBits & HealthBit);
+            Assert.Equal(BitConverter.SingleToInt32Bits(61.7f), BitConverter.SingleToInt32Bits(status.currentMana));
+            Assert.Equal(0UL, status.syncVarDirtyBits & ManaBit);
+        }
+
+        // (5) 窓の後半（比率書き換えの後・Postfix の前）に外部コードが weaver セッターで書いた値は、
+        // 本体での最終状態として採用・送信される。書き戻しは「再計算直後の値が入口の値から予測した
+        // 比率再書き込みの結果と一致する場合に限る」ため、この書き込みを入口の値へ戻さず、
+        // ビットも落とさない。同時に走るマナの通常のノイズは書き戻る。
+        [Fact]
+        public void AWriteAfterTheRewriteStandsAsTheFinalState()
+        {
+            Arm();
+            var status = NewStatus();
+            status.currentHealth = 61.7f;
+            status.currentMana = 61.7f;
+            var type = typeof(NativeStatsRatioIdlePerf);
+            object[] prefixArgs = { status, null };
+            Assert.True((bool)type.GetMethod("Prefix", Hidden).Invoke(null, prefixArgs));
+            status.CalculateStats();
+            // 比率書き換えの後に走り得る購読者（finalStats 系・ホスト側の RPC 配送）が
+            // セッターを通って書くところを模す。
+            status.Network_currentHealth = 123.4f;
+            type.GetMethod("Postfix", Hidden).Invoke(null, new[] { status, prefixArgs[1], true });
+            Assert.Equal(BitConverter.SingleToInt32Bits(123.4f), BitConverter.SingleToInt32Bits(status.currentHealth));
+            Assert.NotEqual(0UL, status.syncVarDirtyBits & HealthBit);
+            Assert.Equal(BitConverter.SingleToInt32Bits(61.7f), BitConverter.SingleToInt32Bits(status.currentMana));
+            Assert.Equal(0UL, status.syncVarDirtyBits & ManaBit);
+        }
+
+        // (6) マナ側のアンダーフロー（最小の正の非正規化数が割り算で0に潰れる）。本体は 0 を書いて
+        // 送信するため、体力側（AVanillaUnderflowToZeroStands）と同じ >0→<=0 の扱いで書き戻さず、
+        // ビットもそのまま。同時に走る体力の通常のノイズは書き戻る。
+        [Fact]
+        public void AVanillaManaUnderflowToZeroStands()
+        {
+            Arm();
+            var status = NewStatus();
+            status.currentHealth = 61.7f;
+            status.currentMana = float.Epsilon;
+            RunPatchedRecalculation(status);
+            Assert.Equal(0, BitConverter.SingleToInt32Bits(status.currentMana));
+            Assert.NotEqual(0UL, status.syncVarDirtyBits & ManaBit);
+            Assert.Equal(BitConverter.SingleToInt32Bits(61.7f), BitConverter.SingleToInt32Bits(status.currentHealth));
+            Assert.Equal(0UL, status.syncVarDirtyBits & HealthBit);
+        }
+
+        // (7) Prepare のフック検査。GeneratedSyncVarSetter 呼び出しの直前に ldnull 以外
+        // （デリゲート）を積む形は拒否され、ldnull（フックなし）の形は通る。現行の実機 weaver 出力は
+        // 両セッターともフックなし（GeneratedSyncVarSetter(value, ref field, <bit>, null)。逆コンパイル確認）。
+        private sealed class HookedSetterShape : Mirror.NetworkBehaviour
+        {
+            private float _field;
+            internal void Hooked(float value) => GeneratedSyncVarSetter(value, ref _field, 1UL, v => _ = v);
+            internal void Unhooked(float value) => GeneratedSyncVarSetter(value, ref _field, 1UL, null);
+        }
+
+        [Fact]
+        public void PrepareRejectsASetterThatGainedASyncVarHook()
+        {
+            Arm();
+            var checker = typeof(NativeStatsRatioIdlePerf).GetMethod("SetterHasNoHook", Hidden);
+            var shapeType = typeof(HookedSetterShape);
+            // フックなし（ldnull）の形は通る。
+            Assert.True((bool)checker.Invoke(null, new object[] { shapeType.GetMethod("Unhooked", Hidden) }));
+            // フック付き（デリゲートを積む）形は拒否される。
+            Assert.False((bool)checker.Invoke(null, new object[] { shapeType.GetMethod("Hooked", Hidden) }));
         }
     }
 }

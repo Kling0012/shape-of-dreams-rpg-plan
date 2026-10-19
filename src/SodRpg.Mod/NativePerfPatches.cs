@@ -2121,26 +2121,40 @@ namespace SodRpg.Mod
         // stream of these no-op health and mana deltas to every guest.
         //
         // The prefix records the entry health, mana and maxes; the postfix compares the new
-        // maxes with the saved ones. Only when a max is bit-identical does it restore the
-        // saved value through the weaver's Network_currentHealth / Network_currentMana
-        // setter — identical state, so restoring only re-raises the same dirty bit — and
-        // then clears that bit again, but only when the bit was clear at method entry: a
-        // bit set before the call is a genuine unsent change from earlier in the same sync
-        // window and must keep going out with the restored value. Every real change still
-        // syncs exactly as vanilla: a max that moved leaves the ratio rewrite untouched,
-        // regen / SetHealth / damage writes are outside the window, and writes made inside
-        // the window by processors or event subscribers are clobbered by the vanilla ratio
-        // rewrite itself (processors run before it; finalStats fires only after it), so the
-        // restore matches vanilla's final state there too.
+        // maxes with the saved ones. Only when a max is bit-identical AND the final value is
+        // bit-for-bit the round trip the vanilla rewrite would compute from the entry values
+        // — (entry / entryMax) * finalMax, the same two float32 operations the body's IL
+        // performs — does it restore the saved value through the weaver's
+        // Network_currentHealth / Network_currentMana setter (identical state, so restoring
+        // only re-raises the same dirty bit) and then clear that bit again, but only when the
+        // bit was clear at method entry: a bit set before the call is a genuine unsent change
+        // from earlier in the same sync window and must keep going out with the restored
+        // value. That equality gate is what keeps every other write exactly as vanilla leaves
+        // it: a max that moved leaves the ratio rewrite untouched, regen / SetHealth / damage
+        // writes are outside the window, and processors run before the rewrite so the rewrite
+        // itself clobbers them in vanilla too. The current native body (r1.4.0.13) runs
+        // nothing after the rewrite that writes health or mana — finalStatsProcessors.Process
+        // precedes it and only the finalStats SyncVar assignment, the dirty flag and the
+        // stats-calculated RPC writer follow — but the gate does not rely on that staying
+        // true: a hook or a nested recalculation that writes the field in the window's latter
+        // half produces a final value the prediction does not match, and the patch leaves
+        // that value and its dirty bit standing as vanilla would.
         //
-        // Two guarded deviations, both narrower than the noise being removed: a vanilla
-        // rewrite that underflows a denormal saved health to exactly 0 would kill on the
-        // LogicUpdate check, so that one case is left standing; and a pathological max of
-        // exactly 0 turns the vanilla rewrite into a NaN write, which the restore replaces
-        // with the last finite value. A third-party subscriber counting recalculations
-        // rather than reading state is unaffected — RpcInvokeStatsCalculated and the hooks
-        // still fire; only the wire carries fewer identical floats (nativeStatsRatioIdle
-        // turns the skip off).
+        // Two shapes never restore, both matching vanilla exactly: a predicted rewrite that
+        // comes out non-finite (a degenerate max of exactly zero, where vanilla itself writes
+        // NaN or infinity — the restore used to keep the last finite value there, it now
+        // passes the non-finite write through), and a vanilla rewrite that underflows a
+        // positive denormal entry to exactly zero — health zero kills on the LogicUpdate
+        // check, and mana zero is what vanilla would broadcast.
+        //
+        // The restore replays the weaver's setter, so Prepare also verifies that setter does
+        // not carry a SyncVar hook (GeneratedSyncVarSetter's trailing Action argument, null
+        // in the current weaver output): vanilla fires such a hook once per real change, and
+        // a body write plus a restore would fire it twice. A setter that gains one — or any
+        // other shape change — disables the patch with a single warning. A third-party
+        // subscriber counting recalculations rather than reading state is otherwise
+        // unaffected — RpcInvokeStatsCalculated still fires; only the wire carries fewer
+        // identical floats (nativeStatsRatioIdle turns the skip off).
         private sealed class Window
         {
             internal float SavedHealth;
@@ -2193,6 +2207,7 @@ namespace SodRpg.Mod
                 _healthBit = ExtractDirtyBit(_networkHealthSetter);
                 _manaBit = ExtractDirtyBit(_networkManaSetter);
                 if (_healthBit == 0UL || _manaBit == 0UL) return false;
+                if (!SetterHasNoHook(_networkHealthSetter) || !SetterHasNoHook(_networkManaSetter)) return false;
                 if (!ValidateCalcBody()) return false;
                 _disabled = false;
                 return true;
@@ -2269,6 +2284,31 @@ namespace SodRpg.Mod
             return found;
         }
 
+        // The restore replays the weaver's setter, so the setter must not also invoke a
+        // SyncVar hook: vanilla fires GeneratedSyncVarSetter's trailing Action argument once
+        // per real change, and a body write (entry value -> drifted value) followed by the
+        // restore (drifted value -> entry value) would fire it twice on the host. The weaver
+        // pushes that argument directly before its GeneratedSyncVarSetter call, so require
+        // ldnull there. A setter that never calls GeneratedSyncVarSetter passes trivially.
+        private static bool SetterHasNoHook(System.Reflection.MethodInfo setter)
+        {
+            var insns = PatchProcessor.GetOriginalInstructions(setter);
+            for (int i = 0; i < insns.Count; i++)
+            {
+                if ((insns[i].opcode != OpCodes.Call && insns[i].opcode != OpCodes.Callvirt)
+                    || !(insns[i].operand is MethodBase method) || method.Name != "GeneratedSyncVarSetter")
+                {
+                    continue;
+                }
+                if (i == 0 || insns[i - 1].opcode != OpCodes.Ldnull)
+                {
+                    NativePerfPatch.Warn(ref _warned, "stats ratio idle", "native setter gained a sync var hook");
+                    return false;
+                }
+            }
+            return true;
+        }
+
         // The restore assumes the ratio rewrite is the only health write and the only mana
         // write inside CalculateStats (through the plain property or straight through the
         // Network_ setter). A body that writes either more than once — or not at all —
@@ -2292,6 +2332,27 @@ namespace SodRpg.Mod
                     && Equals(insn.operand, target))
                     calls++;
             return calls;
+        }
+
+        // A restore only ever removes ratio-rewrite noise, so it fires solely when the final
+        // value is bit-for-bit the round trip the vanilla rewrite computes from the entry
+        // values: (entry / entryMax) * finalMax, the same two float32 operations in the same
+        // order the body's IL performs (the body sanitizes a NaN ratio to 0 first — leaving
+        // that step out makes a sanitized body value mismatch the prediction, so such a
+        // window restores nothing either). Everything else stands exactly as vanilla leaves
+        // it: a non-finite prediction (a degenerate max of exactly zero, where vanilla writes
+        // NaN or infinity) passes through untouched, a positive entry that underflows to zero
+        // keeps vanilla's zero, and any value the prediction does not match — something wrote
+        // the field after the rewrite, in the window's latter half — keeps both its value and
+        // its dirty bit.
+        private static bool IsRatioNoise(float entry, float entryMax, float finalMax, float now)
+        {
+            float expected = entry / entryMax * finalMax;
+            if (float.IsNaN(expected) || float.IsInfinity(expected)) return false;
+            if (now.Equals(entry)) return false;
+            if (!now.Equals(expected)) return false;
+            if (entry > 0f && now <= 0f) return false;
+            return true;
         }
 
         private static bool Prefix(EntityStatus __instance, out Window __state)
@@ -2334,32 +2395,28 @@ namespace SodRpg.Mod
                 {
                     // float.Equals mirrors Mirror's own SyncVarEqual semantics, including
                     // NaN==NaN and 0==-0, so a field the setter early-returned on is never
-                    // "restored" and never re-dirtied.
-                    if (_maxHealth(__instance).Equals(__state.SavedMaxHealth))
+                    // "restored" and never re-dirtied, and the prediction comparison holds the
+                    // same equality the setter itself applies.
+                    float finalMaxHealth = _maxHealth(__instance);
+                    if (finalMaxHealth.Equals(__state.SavedMaxHealth)
+                        && IsRatioNoise(__state.SavedHealth, __state.SavedMaxHealth, finalMaxHealth,
+                            _currentHealth(__instance)))
                     {
-                        float now = _currentHealth(__instance);
-                        // Leave a vanilla underflow-to-zero standing: it kills on the
-                        // LogicUpdate check, and restoring would undo that death.
-                        if (!now.Equals(__state.SavedHealth)
-                            && !(__state.SavedHealth > 0f && now <= 0f))
+                        _sendHealth(__instance, __state.SavedHealth);
+                        if ((__state.EntryBits & _healthBit) == 0UL)
                         {
-                            _sendHealth(__instance, __state.SavedHealth);
-                            if ((__state.EntryBits & _healthBit) == 0UL)
-                            {
-                                _setDirtyBits(__instance, _dirtyBits(__instance) & ~_healthBit);
-                            }
+                            _setDirtyBits(__instance, _dirtyBits(__instance) & ~_healthBit);
                         }
                     }
-                    if (_maxMana(__instance).Equals(__state.SavedMaxMana))
+                    float finalMaxMana = _maxMana(__instance);
+                    if (finalMaxMana.Equals(__state.SavedMaxMana)
+                        && IsRatioNoise(__state.SavedMana, __state.SavedMaxMana, finalMaxMana,
+                            _currentMana(__instance)))
                     {
-                        float now = _currentMana(__instance);
-                        if (!now.Equals(__state.SavedMana))
+                        _sendMana(__instance, __state.SavedMana);
+                        if ((__state.EntryBits & _manaBit) == 0UL)
                         {
-                            _sendMana(__instance, __state.SavedMana);
-                            if ((__state.EntryBits & _manaBit) == 0UL)
-                            {
-                                _setDirtyBits(__instance, _dirtyBits(__instance) & ~_manaBit);
-                            }
+                            _setDirtyBits(__instance, _dirtyBits(__instance) & ~_manaBit);
                         }
                     }
                 }

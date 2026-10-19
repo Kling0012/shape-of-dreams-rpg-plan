@@ -62,6 +62,19 @@ namespace Mirror
         public bool isClient { get; set; }
         public ulong syncVarDirtyBits { get; set; }
         public void SendRPCInternal(NetworkWriter writer, string rpcName) { }
+        // （#876）実機 Mirror の weaver 生成セッターが呼ぶ NetworkBehaviour.GeneratedSyncVarSetter。
+        // 等値（EqualityComparer<T>.Default。float では float.Equals と同じく NaN==NaN・0==-0 を
+        // 等値とみたす。SyncVarEqual 相当）を通ったときだけ字段を書き、同期ダーティビットを
+        // OR で立て、フック（第4引数）があれば呼ぶ。StatsRatioIdlePerfBoundary の Network_
+        // セッターがこの形で呼ぶことで、NativeStatsRatioIdlePerf.Prepare のフック検査
+        // （GeneratedSyncVarSetter 呼び出しの直前が ldnull であること）を実ソースのまま通す。
+        internal void GeneratedSyncVarSetter<T>(T value, ref T field, ulong dirtyBit, Action<T> hook)
+        {
+            if (EqualityComparer<T>.Default.Equals(field, value)) return;
+            field = value;
+            syncVarDirtyBits |= dirtyBit;
+            hook?.Invoke(value);
+        }
     }
     // 同じく形検査が Mirror.NetworkWriterPool の Get・Return という名前で数えるための境界。
     // 呼び出しの有無は IL で確かめるため、中身は空でよい。

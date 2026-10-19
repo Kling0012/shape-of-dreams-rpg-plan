@@ -7,9 +7,10 @@
 //   - weaver 生成の Network_currentHealth / Network_currentMana セッター。実機は
 //     GeneratedSyncVarSetter(value, ref field, <bit>, null) の形で、値の比較
 //     （SyncVarEqual。float.Equals と同じく NaN==NaN・0==-0 を等値とみたす）を通ったときだけ
-//     字段を書き、同期ダーティビットを OR で立てる。ここでは同じ挙動を素の C# で書き、
-//     ビット定数をセッターの IL 上の唯一の ldc.i8 として埋め込む（パッチの
-//     ExtractDirtyBit はその定数を IL から読んで照合する）。
+//     字段を書き、同期ダーティビットを OR で立てる。ここでは本体と同じく
+//     NetworkBehaviour.GeneratedSyncVarSetter（NativeBoundary.cs の境界実装）を
+//     第4引数（フック）に null を渡して呼ぶ。これにより Prepare のフック検査
+//     （GeneratedSyncVarSetter 呼び出しの直前が ldnull であること）も実機と同じ IL 形で通る。
 //
 // 実機のビット値は体力 0x80・マナ 0x100 だが、C# コンパイラは int32 のビット模様に収まる
 // 整数定数を ldc.i4 + conv.i8 で出すため、そのまま書くと IL に ldc.i8 が1つも残らない
@@ -30,29 +31,19 @@ namespace SodRpg.Mod
         // 再計算のたびに maxMana が作り直される元の値（体力側の baseMaxHealth と同じ役割）。
         public float baseMaxMana = 100f;
 
-        // 実機の weaver 生成セッターと同じ挙動: 等値（float.Equals。SyncVarEqual 相当）なら
-        // 何もせず、違う値なら字段を書いて体力のダーティビットを立てる。
+        // 実機の weaver 生成セッターと同じ形: GeneratedSyncVarSetter(value, ref field, bit, null)。
+        // 等値（SyncVarEqual 相当）なら何もせず、違う値なら字段を書いて体力のダーティビットを立てる。
         public float Network_currentHealth
         {
             get => _currentHealth;
-            set
-            {
-                if (_currentHealth.Equals(value)) return;
-                _currentHealth = value;
-                syncVarDirtyBits |= 0x200000000UL;
-            }
+            set => GeneratedSyncVarSetter(value, ref _currentHealth, 0x200000000UL, null);
         }
 
         // マナ側の対（体力と別のビット）。
         public float Network_currentMana
         {
             get => _currentMana;
-            set
-            {
-                if (_currentMana.Equals(value)) return;
-                _currentMana = value;
-                syncVarDirtyBits |= 0x100000000UL;
-            }
+            set => GeneratedSyncVarSetter(value, ref _currentMana, 0x100000000UL, null);
         }
     }
 }
