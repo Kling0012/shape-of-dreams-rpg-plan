@@ -43,7 +43,7 @@ namespace SodRpg.Mod
         private const string VariantNameplateColor = "#ffb347";
         private readonly Dictionary<int, Label3D> _nightmareLabelCache = new Dictionary<int, Label3D>();
         private readonly Dictionary<string, Label3D> _variantLabelCache = new Dictionary<string, Label3D>();
-        private bool _labelCacheJa;
+        private LocLanguage _labelCacheJa;
 
         /// <summary>GUILayout を使うパネル（メニュー・確保地点・結果）が出ているか。出ていなければレイアウト処理自体を止める。</summary>
         private readonly List<Hint> _hints = new List<Hint>();
@@ -95,7 +95,7 @@ namespace SodRpg.Mod
         private Vector2 _scrollList, _scrollRecords;
         private long _infinityRecordsRevision;
         private Profile _infinityRecordsProfile;
-        private bool _infinityRecordsJapanese;
+        private LocLanguage _infinityRecordsJapanese;
         private string _infinityRecordsText;
         private int _retuneIndex = -1;
         private string _confirmSalvage;
@@ -650,19 +650,20 @@ namespace SodRpg.Mod
             return tags == VariantTag.None ? null : Variants.ZoneNotice(tags);
         }
 
-        private (int Menu, int Secure, int Delve, int Panel, bool Japanese) _secureButtonKey;
+        private (int Menu, int Secure, int Delve, int Panel, LocLanguage Language) _secureButtonKey;
         private string _secureOpenButton, _secureButton, _delveButton, _gearButton, _secureHideButton;
         private string _infinityOpenButton, _infinityBackButton;
 
         private void CacheSecureButtons(DreamforgeConfig cfg)
         {
-            var key = ((int)cfg.menuKey, (int)cfg.secureKey, (int)cfg.delveKey, (int)cfg.securePanelKey, Loc.Japanese);
+            // 言語は3値（#877）。真偽値だと英語⇔中国語の切り替えで古い表示が残る。
+            var key = ((int)cfg.menuKey, (int)cfg.secureKey, (int)cfg.delveKey, (int)cfg.securePanelKey, Loc.Language);
             if (_secureOpenButton != null && _secureButtonKey.Equals(key)) return;
             _secureButtonKey = key;
             _secureOpenButton = Loc.T($"確保地点を開く [{cfg.securePanelKey}]　（確保 [{cfg.secureKey}]・潜行 [{cfg.delveKey}]）",
                 $"Open secure point [{cfg.securePanelKey}]  (Secure [{cfg.secureKey}] · Delve [{cfg.delveKey}])");
-            _secureButton = Loc.T($"確保する [{cfg.secureKey}]", $"Secure [{cfg.secureKey}]");
-            _delveButton = Loc.T($"深く潜る [{cfg.delveKey}]", $"Delve [{cfg.delveKey}]");
+            _secureButton = Loc.T($"確保する [{cfg.secureKey}]", $"Secure [{cfg.secureKey}]", $"存入仓库 [{cfg.secureKey}]");
+            _delveButton = Loc.T($"深く潜る [{cfg.delveKey}]", $"Delve [{cfg.delveKey}]", $"继续下潜 [{cfg.delveKey}]");
             _gearButton = Loc.T($"装備を整える [{cfg.menuKey}]", $"Gear up [{cfg.menuKey}]");
             _secureHideButton = Loc.T($"画面を隠す [{cfg.securePanelKey}]", $"Hide [{cfg.securePanelKey}]");
             _infinityOpenButton = Loc.T($"回収完了：継続／帰還を選ぶ [{cfg.securePanelKey}]", $"Loot collected: choose Delve / Return [{cfg.securePanelKey}]");
@@ -690,7 +691,7 @@ namespace SodRpg.Mod
             GUILayout.EndArea();
         }
 
-        private (int Count, int Shards, int Tuning, int Heat, int Bonus, int Free, double NightmareMult, bool Japanese,
+        private (int Count, int Shards, int Tuning, int Heat, int Bonus, int Free, double NightmareMult, LocLanguage Language,
             float PressureHealth, float NightmarePressureHealth, float NightmareGear, Waypoint Active, Waypoint Pending, bool Infinity, bool PersonalWaypoints) _secureTextKey;
         private string _secureLootText, _secureBonusText, _secureOverflowText, _secureDelveText, _secureNightmareText, _secureExtraText;
 
@@ -698,7 +699,7 @@ namespace SodRpg.Mod
         {
             var pendingWaypoint = run.WaypointChosen ? run.PendingWaypoint : Waypoint.None;
             bool personalWaypoints = _s.PersonalEnemyWaypointsActive;
-            var key = (run.Satchel.Count, run.SatchelShards, run.SatchelTuning, run.Heat, bonus, free, nmMult, Loc.Japanese,
+            var key = (run.Satchel.Count, run.SatchelShards, run.SatchelTuning, run.Heat, bonus, free, nmMult, Loc.Language,
                 _s.PressureHealthMultiplier, _s.NightmarePressureHealthMultiplier, _s.NightmareGearMultiplier, run.ActiveWaypoint, pendingWaypoint, run.Infinity != null, personalWaypoints);
             if (_secureLootText != null && _secureTextKey.Equals(key)) return;
             _secureTextKey = key;
@@ -770,17 +771,17 @@ namespace SodRpg.Mod
         private readonly Dictionary<Pact, string> _pactButtons = new Dictionary<Pact, string>();
         private Profile _pactButtonsProfile;
         private int _pactButtonsEchoPercent;
-        private bool _pactButtonsJapanese;
+        private LocLanguage _pactButtonsJapanese;
 
         private string PactButtonText(PactDef def)
         {
             var profile = _s.Profile;
             int echoPercent = Workshop.EchoPercent(profile);
-            if (_pactButtonsProfile != profile || _pactButtonsEchoPercent != echoPercent || _pactButtonsJapanese != Loc.Japanese)
+            if (_pactButtonsProfile != profile || _pactButtonsEchoPercent != echoPercent || _pactButtonsJapanese != Loc.Language)
             {
                 _pactButtonsProfile = profile;
                 _pactButtonsEchoPercent = echoPercent;
-                _pactButtonsJapanese = Loc.Japanese;
+                _pactButtonsJapanese = Loc.Language;
                 _pactButtons.Clear();
             }
             if (!_pactButtons.TryGetValue(def.Id, out var text))
@@ -959,7 +960,7 @@ namespace SodRpg.Mod
         private float _secureMeasured;
 
         private readonly Dictionary<Waypoint, string> _waypointCards = new Dictionary<Waypoint, string>();
-        private bool _waypointCardsJapanese;
+        private LocLanguage _waypointCardsJapanese;
         private static readonly string[] DepthLabels = { "0", "1", "2", "3", "4", "5" };
 
         private void DrawWaypointPicker(RunState run)
@@ -981,9 +982,9 @@ namespace SodRpg.Mod
                     : Loc.T("道標・出来事を選んだら、契約を選ぶか「契約なしで選択を完了」を押してください。",
                         "After choosing your waypoint and event, pick a pact or press Finish without a pact.")
                 : Loc.T("選択を終えずに戦闘を続けると、選択中の道標で潜行します。契約は結びません。", "Continuing combat commits the selected waypoint and delves without a pact."), _st.Small);
-            if (_waypointCardsJapanese != Loc.Japanese)
+            if (_waypointCardsJapanese != Loc.Language)
             {
-                _waypointCardsJapanese = Loc.Japanese;
+                _waypointCardsJapanese = Loc.Language;
                 _waypointCards.Clear();
             }
             for (int i = 0; i < run.OfferedWaypoints.Count; i++)
@@ -1139,9 +1140,9 @@ namespace SodRpg.Mod
         /// <summary>担当の印・共鳴の盾・分類の名札を、共通の表示枠で左から並べる。</summary>
         private void DrawNightmareLabels(float scale)
         {
-            if (_labelCacheJa != Loc.Japanese)
+            if (_labelCacheJa != Loc.Language)
             {
-                _labelCacheJa = Loc.Japanese;
+                _labelCacheJa = Loc.Language;
                 _nightmareLabelCache.Clear();
                 _variantLabelCache.Clear();
             }
@@ -1290,7 +1291,7 @@ namespace SodRpg.Mod
 
         private bool _reportDismissed;
         private RunReport _reportHeightFor;
-        private bool _reportHeightJa;
+        private LocLanguage _reportHeightJa;
         private float _reportHeight;
         private RunReport _shownReport;
 
@@ -1314,10 +1315,10 @@ namespace SodRpg.Mod
                 ? Loc.T($"持ち帰れなかった遺物は「遺失物」として残ります。次の遠征で戦闘部屋を{rooms}つ突破すると、その中で一番良い物を1つ取り戻せます。", $"Lost relics wait in Lost & Found. Clear {rooms} combat rooms next expedition to recover the best one.")
                 : null;
             const float width = 520;
-            if (_reportHeightFor != r || _reportHeightJa != Loc.Japanese)
+            if (_reportHeightFor != r || _reportHeightJa != Loc.Language)
             {
                 _reportHeightFor = r;
-                _reportHeightJa = Loc.Japanese;
+                _reportHeightJa = Loc.Language;
                 _reportHeight = 40 + _st.Label.CalcHeight(new GUIContent(text), width - 28) + (note != null ? _st.Small.CalcHeight(new GUIContent(note), width - 28) + 6 : 0) + 30 + 34;
             }
             var rect = new Rect(w / 2 - width / 2, h * 0.16f, width, Mathf.Min(_reportHeight, h * 0.8f));
@@ -1335,17 +1336,17 @@ namespace SodRpg.Mod
         }
 
         // ヒントの本文と高さは、表示に使う値が変わったときだけ作り直す。
-        private (HintDef Def, Profile Profile, int Rooms, int EchoPercent, int Menu, int Secure, int Delve, bool Japanese) _hintTextKey;
+        private (HintDef Def, Profile Profile, int Rooms, int EchoPercent, int Menu, int Secure, int Delve, LocLanguage Language) _hintTextKey;
         private string _hintText;
         private Hint _hintMeasured;
-        private bool _hintMeasuredJa;
+        private LocLanguage _hintMeasuredJa;
         private float _hintBodyHeight = -1;
 
         private string HintBodyText(HintDef def, DreamforgeConfig cfg)
         {
             var profile = _s.Profile;
             var key = (def, profile, Workshop.RoomsToRecover(profile), Workshop.EchoPercent(profile),
-                (int)cfg.menuKey, (int)cfg.secureKey, (int)cfg.delveKey, Loc.Japanese);
+                (int)cfg.menuKey, (int)cfg.secureKey, (int)cfg.delveKey, Loc.Language);
             if (_hintText != null && _hintTextKey.Equals(key)) return _hintText;
             _hintTextKey = key;
             _hintText = def.Text(profile).Replace("[F6]", "[" + cfg.menuKey + "]")
@@ -1359,7 +1360,7 @@ namespace SodRpg.Mod
             bool welcome = _hints.Count > 0 && _hints[0] == Hint.Welcome;
             float pw = welcome ? 640 : 520;
             float ph = welcome ? 330 : 210;
-            if (_hints.Count > 0 && _hintBodyHeight >= 0 && _hintMeasured == _hints[0] && _hintMeasuredJa == Loc.Japanese)
+            if (_hints.Count > 0 && _hintBodyHeight >= 0 && _hintMeasured == _hints[0] && _hintMeasuredJa == Loc.Language)
                 ph = Mathf.Clamp(_hintBodyHeight + (welcome ? 100 : 95), 150, h - 60);
             return welcome ? new Rect((w - pw) / 2, (h - ph) / 2, pw, ph) : new Rect((w - pw) / 2, h - ph - 150, pw, ph);
         }
@@ -1380,10 +1381,10 @@ namespace SodRpg.Mod
             if (rect.Contains(Event.current.mousePosition)) MouseOverPanel = true;
             GUILayout.BeginArea(rect, _st.Window);
             GUILayout.Label(UiStyles.Colored((welcome ? "" : Loc.T("ヒント：", "Tip: ")) + def.Title, "#ffe17a"), welcome ? _st.Title : _st.Header);
-            if (_hintBodyHeight < 0 || _hintMeasured != id || _hintMeasuredJa != Loc.Japanese)
+            if (_hintBodyHeight < 0 || _hintMeasured != id || _hintMeasuredJa != Loc.Language)
             {
                 _hintMeasured = id;
-                _hintMeasuredJa = Loc.Japanese;
+                _hintMeasuredJa = Loc.Language;
                 _hintBodyHeight = _st.Label.CalcHeight(new GUIContent(body), rect.width - 28);
             }
             GUILayout.Label(body, _st.Label);
@@ -1449,7 +1450,7 @@ namespace SodRpg.Mod
         // {rooms} は部屋数専用の目印。HowToPlay のほかの文面には使わず、表示は HowToPlayText を通す。
         private const string HowToPlayRooms = "{rooms}";
         private string _howToPlayText;
-        private bool _howToPlayJa;
+        private LocLanguage _howToPlayJa;
         private int _howToPlayRooms = -1;
         private string HowToPlayText(Profile p)
         {
@@ -1457,9 +1458,10 @@ namespace SodRpg.Mod
             bool ja = Loc.Japanese;
             // HowToPlay の日英の本文は静的で、Txt.ToString() が参照するのは言語だけ。
             // 部屋数以外の動的な値を足すときは、キャッシュの更新条件にも含める。
-            if (_howToPlayText == null || ja != _howToPlayJa || rooms != _howToPlayRooms)
+            // 言語の鍵は3値（#877）。英語⇔中国語で未訳の戻り先が同じでも、言語が変われば作り直す。
+            if (_howToPlayText == null || Loc.Language != _howToPlayJa || rooms != _howToPlayRooms)
             {
-                _howToPlayJa = ja;
+                _howToPlayJa = Loc.Language;
                 _howToPlayRooms = rooms;
                 _howToPlayText = HowToPlay.ToString().Replace(HowToPlayRooms, rooms.ToString(System.Globalization.CultureInfo.InvariantCulture));
             }
@@ -1768,7 +1770,7 @@ namespace SodRpg.Mod
         private Profile _stashCacheProfile;
         private long _stashCacheRevision, _stashCacheViewRevision;
         private int _stashCacheCount;
-        private bool _stashCacheJapanese;
+        private LocLanguage _stashCacheJapanese;
         private readonly List<Relic> _satchelTop = new List<Relic>();
         private float _satchelTopUntil;
         private int _satchelTopCount = -1;
@@ -1786,15 +1788,15 @@ namespace SodRpg.Mod
             // 追加するときは、MarkDirty か ViewRevision を通して再構築の条件に入れること（現状は0.3秒で自己修復する）。
             if (_stashCacheProfile == p && _stashCacheRevision == p.Revision
                 && _stashCacheViewRevision == _s.ViewRevision && _stashCacheCount == p.Stash.Count
-                && _stashCacheJapanese == Loc.Japanese && now < _sortedUntil) return;
+                && _stashCacheJapanese == Loc.Language && now < _sortedUntil) return;
             if (_stashCacheProfile != p || _stashCacheRevision != p.Revision
-                || _stashCacheViewRevision != _s.ViewRevision || _stashCacheJapanese != Loc.Japanese)
+                || _stashCacheViewRevision != _s.ViewRevision || _stashCacheJapanese != Loc.Language)
                 _rowCacheKey.Clear();
             _stashCacheProfile = p;
             _stashCacheRevision = p.Revision;
             _stashCacheViewRevision = _s.ViewRevision;
             _stashCacheCount = p.Stash.Count;
-            _stashCacheJapanese = Loc.Japanese;
+            _stashCacheJapanese = Loc.Language;
             _sortedUntil = now + 0.3f;
             _sortedKey.Clear();
             Array.Clear(_slotCounts, 0, _slotCounts.Length);
@@ -1833,7 +1835,7 @@ namespace SodRpg.Mod
                 var r = stash[i];
                 state = state * 31 + (r.Locked ? 1 : 0) + r.AwakenLevel * 2 + r.Enhance * 4 + (int)r.Rarity * 64 + r.Powers.Count * 1024;
             }
-            return p.Stash.Count + ":" + state + ":" + _slot + ":" + _forgeAllSlots + ":" + HeroKey + ":" + Loc.Japanese + ":" + _relicSearchFolded;
+            return p.Stash.Count + ":" + state + ":" + _slot + ":" + _forgeAllSlots + ":" + HeroKey + ":" + Loc.Language + ":" + _relicSearchFolded;
         }
 
         /// <summary>一覧（高さで区別）の並べ替えを使い回す。変更通知・保存・言語・遺物の状態・枠が変わるか、0.3秒たったら作り直す。</summary>
@@ -1882,7 +1884,7 @@ namespace SodRpg.Mod
                 stateHash = stateHash * 31 + (r.Powers.Count > 0 ? (int)r.Powers[0].Power : 0);
             }
             // 選択は行の文字に使わない（色だけ）。鍵に入れると行を押すたびに全行を作り直す。
-            string key = _sortedKey.TryGetValue(id, out var k) ? k + ":" + _seenUids.Count + ":" + equipHash + ":" + stateHash + (Loc.Japanese ? ":j" : ":e") : null;
+            string key = _sortedKey.TryGetValue(id, out var k) ? k + ":" + _seenUids.Count + ":" + equipHash + ":" + stateHash + (Loc.Language == LocLanguage.Japanese ? ":j" : Loc.Language == LocLanguage.Chinese ? ":z" : ":e") : null;
             bool sameFusion = _rowFusionLevels.TryGetValue(id, out var fusionLevels) && fusionLevels.Count == list.Count;
             if (sameFusion)
                 for (int i = 0; i < list.Count; i++)
@@ -2064,7 +2066,8 @@ namespace SodRpg.Mod
         private sealed class SetLinkProgressText
         {
             internal int Count;
-            internal bool Satisfied, Japanese;
+            internal bool Satisfied;
+            internal LocLanguage Japanese;
             internal string Text;
         }
         private readonly Dictionary<SetDef, SetLinkProgressText> _setLinkProgressTexts = new Dictionary<SetDef, SetLinkProgressText>();
@@ -2077,9 +2080,9 @@ namespace SodRpg.Mod
             bool satisfied = marks != null && Links.Satisfied(stage.Link, _linkHeroKey, _linkMemories, _linkEssences, _linkAllies);
             if (!_setLinkProgressTexts.TryGetValue(set, out var row))
                 _setLinkProgressTexts.Add(set, row = new SetLinkProgressText());
-            if (row.Text == null || row.Count != count || row.Satisfied != satisfied || row.Japanese != Loc.Japanese)
+            if (row.Text == null || row.Count != count || row.Satisfied != satisfied || row.Japanese != Loc.Language)
             {
-                row.Count = count; row.Satisfied = satisfied; row.Japanese = Loc.Japanese;
+                row.Count = count; row.Satisfied = satisfied; row.Japanese = Loc.Language;
                 row.Text = UiStyles.Colored(set.DescribeLinkProgress(count, satisfied), "#7fd8ff");
             }
             GUILayout.Label(row.Text, _st.Small);
@@ -2542,7 +2545,8 @@ namespace SodRpg.Mod
         private readonly GUIContent _starPoints = new GUIContent();
         private readonly GUIContent _starProgress = new GUIContent();
         private HeroState _starState, _starTextState;
-        private bool _starJapanese, _starDirty = true, _starDragging, _starMoved;
+        private LocLanguage _starJapanese;
+        private bool _starDirty = true, _starDragging, _starMoved;
         private int _starXp, _starKills, _starCodex, _starTestBonus, _starExtraPoints, _starFree;
         private int _starPressed = -1, _starMouseButton, _starDragControl;
         private Vector2 _starPan, _starDragOrigin, _starPanOrigin;
@@ -2615,7 +2619,7 @@ namespace SodRpg.Mod
             bool newHero = _starHero != hero;
             _starHero = hero;
             if (newHero) { _starChoiceId = null; _starChoiceIndex = -1; }
-            _starJapanese = Loc.Japanese;
+            _starJapanese = Loc.Language;
             _starCapFingerprint = FractionalScopedModifiers.CapRegistryFingerprint;
             _starAuthoredFingerprint = StarClusters.AuthoredRegistryFingerprint;
             _starLayout = HeroTreeLayout.ForHero(hero);
@@ -2680,7 +2684,7 @@ namespace SodRpg.Mod
 
         private void RefreshStarState(Profile p, string hero, HeroState hs)
         {
-            if (_starHero != hero || _starJapanese != Loc.Japanese || _starLayout != HeroTreeLayout.ForHero(hero)
+            if (_starHero != hero || _starJapanese != Loc.Language || _starLayout != HeroTreeLayout.ForHero(hero)
                 || _starCapFingerprint != FractionalScopedModifiers.CapRegistryFingerprint
                 || _starAuthoredFingerprint != StarClusters.AuthoredRegistryFingerprint)
             { RebuildStarTree(hero); _starSumDirty = true; }
@@ -3529,7 +3533,7 @@ namespace SodRpg.Mod
         private int _bulkDustCount;
         private int _bulkDustScale = -1;
         private long _bulkDustTotal;
-        private bool _bulkDustJapanese;
+        private LocLanguage _bulkDustJapanese;
         private string _bulkDustLabel, _bulkDustConfirmLabel;
 
         private void DrawBulkUnsecuredSalvage(RunState run)
@@ -3560,9 +3564,9 @@ namespace SodRpg.Mod
             if (_bulkDustCount == 0) return;
             if (_bulkDustArmedAt >= 0f && Time.unscaledTime - _bulkDustArmedAt > 5f)
                 _bulkDustArmedAt = -1f;
-            if (_bulkDustLabel == null || _bulkDustJapanese != Loc.Japanese)
+            if (_bulkDustLabel == null || _bulkDustJapanese != Loc.Language)
             {
-                _bulkDustJapanese = Loc.Japanese;
+                _bulkDustJapanese = Loc.Language;
                 _bulkDustLabel = Loc.T($"固有品以外のレア以下をまとめて分解（{_bulkDustCount}個、+{_bulkDustTotal}）",
                     $"Salvage all non-legendary Rare-or-lower ({_bulkDustCount}, +{_bulkDustTotal})");
                 _bulkDustConfirmLabel = Loc.T($"<color=#ff8080>もう一度押すと {_bulkDustCount}個をまとめて分解</color>",
@@ -3611,10 +3615,18 @@ namespace SodRpg.Mod
                 _s.MarkDirty(false);
                 Notify(Rules.HintOnce(_s.Profile, Hint.Welcome).FirstOrDefault());
             }
-            if (GUILayout.Button(Loc.T("English", "日本語"), _st.Button, GUILayout.Width(120)))
+            // #877: 日本語 → 英語 → 中国語（簡体字）→ 日本語の順で切り替える。ボタンには次の言語名を出す。
+            string nextLanguage = Loc.Language == LocLanguage.Japanese ? "English"
+                : Loc.Language == LocLanguage.English ? "简体中文" : "日本語";
+            if (GUILayout.Button(nextLanguage, _st.Button, GUILayout.Width(120)))
             {
-                cfg.japanese = !cfg.japanese;
-                Loc.Japanese = cfg.japanese;
+                var next = Loc.Language == LocLanguage.Japanese ? LocLanguage.English
+                    : Loc.Language == LocLanguage.English ? LocLanguage.Chinese : LocLanguage.Japanese;
+                // 中国語のとき japanese は false にする。旧版のMODは chinese を無視して japanese を読むため、
+                // 旧版では英語に戻る（未訳の言語は英語へ戻す方針と同じ）。
+                cfg.japanese = next == LocLanguage.Japanese;
+                cfg.chinese = next == LocLanguage.Chinese;
+                Loc.Language = next;
                 // 保存に失敗しても cfg と表示の言語は戻さない。再起動時は最後に保存できた設定を読む。
                 _saveLanguageConfig?.Invoke();
             }
@@ -3784,9 +3796,9 @@ namespace SodRpg.Mod
         private void CacheInfinityRecords(Profile profile)
         {
             if (_infinityRecordsText != null && ReferenceEquals(_infinityRecordsProfile, profile)
-                && _infinityRecordsJapanese == Loc.Japanese && _infinityRecordsRevision == profile.InfinityRecordsRevision) return;
+                && _infinityRecordsJapanese == Loc.Language && _infinityRecordsRevision == profile.InfinityRecordsRevision) return;
             _infinityRecordsProfile = profile;
-            _infinityRecordsJapanese = Loc.Japanese;
+            _infinityRecordsJapanese = Loc.Language;
             _infinityRecordsRevision = profile.InfinityRecordsRevision;
             if (profile.InfinityRecords.Count == 0)
             {
@@ -3816,7 +3828,10 @@ namespace SodRpg.Mod
             if (string.IsNullOrEmpty(id)) return Loc.T("難易度未記録", "Unrecorded difficulty");
             string key = difficulty ? "Difficulty_" + id + "_Name" : id + "_Name";
             var languages = DewLocalization.buildData.dataByLanguage;
-            if (languages.TryGetValue(Loc.Japanese ? "ja-JP" : "en-US", out var language)
+            // #877: 中国語は本体に zh-CN の言語データがあればそれを使い、なければ下の en-US へ戻る。
+            string locale = Loc.Language == LocLanguage.Japanese ? "ja-JP"
+                : Loc.Language == LocLanguage.Chinese ? "zh-CN" : "en-US";
+            if (languages.TryGetValue(locale, out var language)
                 && language.ui.TryGetValue(key, out string label)) return label;
             if (languages.TryGetValue("en-US", out language) && language.ui.TryGetValue(key, out label)) return label;
             string readable = id.StartsWith(difficulty ? "diff" : "Zone_", StringComparison.Ordinal)

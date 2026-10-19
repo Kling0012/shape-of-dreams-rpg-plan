@@ -12,7 +12,8 @@ namespace SodRpg.Mod
         private string _fusionMaterial;
         private bool _fusionOpen, _confirmFusion, _fusionCacheValid;
         private int _fusionLevel, _fusionShards, _fusionTuning;
-        private bool _fusionJapanese, _fusionCanEdit;
+        private LocLanguage _fusionJapanese;
+        private bool _fusionCanEdit;
         private float _fusionCheckAt;
         private string _fusionCachedMaterial;
         private readonly List<FusionRelicState> _fusionStates = new List<FusionRelicState>();
@@ -52,7 +53,7 @@ namespace SodRpg.Mod
         private Func<GameEvent> _fusionApply;
         private Relic _fusionDetailRelic;
         private int _fusionDetailLevel;
-        private bool _fusionDetailJapanese;
+        private LocLanguage _fusionDetailJapanese;
         private string _fusionStatsText;
         private static readonly GUILayoutOption[] FusionListSize = { GUILayout.Height(132), GUILayout.MinWidth(0), GUILayout.ExpandWidth(true) };
         private static readonly GUILayoutOption[] FusionRowSize = { GUILayout.MinHeight(30), GUILayout.MinWidth(0), GUILayout.ExpandWidth(true) };
@@ -75,7 +76,7 @@ namespace SodRpg.Mod
                 _fusionCacheValid = false;
             }
             bool safe = _s.CanEditLoadout && !_s.Trades.IsReserved(target.Uid) && p.RetuneOffer?.Uid != target.Uid;
-            bool unchanged = _fusionCacheValid && _fusionLevel == target.FusionLevel && _fusionJapanese == Loc.Japanese
+            bool unchanged = _fusionCacheValid && _fusionLevel == target.FusionLevel && _fusionJapanese == Loc.Language
                 && _fusionShards == p.Material(Materials.Shard) && _fusionTuning == p.Material(Materials.Tuning)
                 && _fusionSafe == safe && _fusionCanEdit == _s.CanEditLoadout
                 && _fusionCachedMaterial == _fusionMaterial && _fusionStates.Count == p.Stash.Count;
@@ -94,7 +95,7 @@ namespace SodRpg.Mod
                     if (!_fusionStates[i].Matches(FusionState(p, p.Stash[i]))) { unchanged = false; break; }
             if (unchanged) return;
             _fusionLevel = target.FusionLevel;
-            _fusionJapanese = Loc.Japanese;
+            _fusionJapanese = Loc.Language;
             _fusionCanEdit = _s.CanEditLoadout;
             _fusionShards = p.Material(Materials.Shard);
             _fusionTuning = p.Material(Materials.Tuning);
@@ -141,11 +142,11 @@ namespace SodRpg.Mod
 
         private string FusionStatsText(Relic relic)
         {
-            if (_fusionDetailRelic != relic || _fusionDetailLevel != relic.FusionLevel || _fusionDetailJapanese != Loc.Japanese)
+            if (_fusionDetailRelic != relic || _fusionDetailLevel != relic.FusionLevel || _fusionDetailJapanese != Loc.Language)
             {
                 _fusionDetailRelic = relic;
                 _fusionDetailLevel = relic.FusionLevel;
-                _fusionDetailJapanese = Loc.Japanese;
+                _fusionDetailJapanese = Loc.Language;
                 _fusionStatsText = UiStyles.Colored(Loc.T($"融合 {relic.FusionLevel}/{Fusion.MaxLevel}：能力値 +{Fusion.BonusPct(relic.FusionLevel)}%（固有効果を除く）",
                     $"Fusion {relic.FusionLevel}/{Fusion.MaxLevel}: stats +{Fusion.BonusPct(relic.FusionLevel)}% (excluding powers)"), "#7fd8ff");
             }

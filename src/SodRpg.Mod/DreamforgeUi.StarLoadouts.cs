@@ -14,13 +14,13 @@ namespace SodRpg.Mod
         private readonly GUILayoutOption[] _loadoutButtonWidth = { GUILayout.Width(210f) };
         private static readonly string[] LoadoutNumbers = { "1", "2", "3", "4", "5" };
         private HeroState _loadoutHero;
-        private bool _loadoutJapanese;
+        private LocLanguage _loadoutJapanese;
         private int _loadoutEditSlot;
         private string _loadoutNameEdit;
 
         private void RefreshLoadoutLabels(HeroState hero)
         {
-            bool changed = _loadoutHero != hero || _loadoutJapanese != Loc.Japanese;
+            bool changed = _loadoutHero != hero || _loadoutJapanese != Loc.Language;
             for (int i = 0; i < StarLoadouts.Count; i++)
             {
                 string custom = hero.StarLoadouts[i]?.Name;
@@ -38,7 +38,7 @@ namespace SodRpg.Mod
                 _loadoutNameEdit = _loadoutNames[_loadoutEditSlot];
             }
             _loadoutHero = hero;
-            _loadoutJapanese = Loc.Japanese;
+            _loadoutJapanese = Loc.Language;
         }
 
         private void DrawStarLoadouts(Profile profile, string heroKey)

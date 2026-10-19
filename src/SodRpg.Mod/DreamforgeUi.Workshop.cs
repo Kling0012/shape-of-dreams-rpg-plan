@@ -13,7 +13,7 @@ namespace SodRpg.Mod
         private sealed class WorkshopRowText
         {
             internal int Level = -1, Grudge, Cores;
-            internal bool Japanese;
+            internal LocLanguage Japanese;
             internal string Text, Button;
         }
         private readonly WorkshopRowText[] _workshopRows = new WorkshopRowText[Workshop.All.Count];
@@ -22,9 +22,9 @@ namespace SodRpg.Mod
         {
             var row = _workshopRows[index] ?? (_workshopRows[index] = new WorkshopRowText());
             int cores = p.Material(Materials.NemesisCore);
-            if (row.Text != null && row.Level == level && row.Japanese == Loc.Japanese
+            if (row.Text != null && row.Level == level && row.Japanese == Loc.Language
                 && row.Grudge == p.NemesisGrudge && row.Cores == cores) return row;
-            row.Level = level; row.Japanese = Loc.Japanese; row.Grudge = p.NemesisGrudge; row.Cores = cores;
+            row.Level = level; row.Japanese = Loc.Language; row.Grudge = p.NemesisGrudge; row.Cores = cores;
             string pips = new string('●', level) + new string('○', def.MaxLevel - level);
             row.Text = $"<b>{def.Name}</b>  <color=#ffd36e>{pips}</color>  {WorkshopValue(p, def.Id, level < def.MaxLevel)}\n<color=#ccd>{def.Description}</color>";
             if (level < def.MaxLevel)

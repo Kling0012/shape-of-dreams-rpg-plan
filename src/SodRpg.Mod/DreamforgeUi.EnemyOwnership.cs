@@ -12,7 +12,8 @@ namespace SodRpg.Mod
         private static readonly string[] OwnershipColors = { "#56B4E9", "#E69F00", "#009E73", "#CC79A7" };
         private readonly Label3D[] _ownershipMarks = new Label3D[8];
         private string _ownershipLegend;
-        private bool _ownershipLegendJa, _ownershipLegendFailed;
+        private LocLanguage _ownershipLegendJa;
+        private bool _ownershipLegendFailed;
         private readonly string[] _legendNames = new string[4], _legendIds = new string[4];
         private readonly double[] _legendFactors = new double[4];
         private readonly string[] _statusNames = new string[4], _statusIds = new string[4];
@@ -49,10 +50,11 @@ namespace SodRpg.Mod
         private DynamicDifficultyStatus _observedDynamicStatus;
         private DynamicDifficultyDisplay[] _observedDynamicDisplay;
         private string _dynamicLimits;
-        private bool _dynamicLimitsJa;
+        private LocLanguage _dynamicLimitsJa;
         private string _dynamicGap;
         private string _dynamicStatusText;
-        private bool _dynamicStatusJa, _dynamicStatusFailed;
+        private LocLanguage _dynamicStatusJa;
+        private bool _dynamicStatusFailed;
 
         private Label3D OwnershipMark(uint netId)
         {
@@ -70,7 +72,7 @@ namespace SodRpg.Mod
 
         private void DrawOwnershipLegend()
         {
-            bool changed = _ownershipLegend == null || _ownershipLegendJa != Loc.Japanese;
+            bool changed = _ownershipLegend == null || _ownershipLegendJa != Loc.Language;
             for (int i = 0; i < OwnershipColors.Length; i++)
             {
                 var player = i < DewPlayer.gamePlayers.Count ? DewPlayer.gamePlayers[i] : null;
@@ -82,7 +84,7 @@ namespace SodRpg.Mod
             }
             if (changed)
             {
-                _ownershipLegendJa = Loc.Japanese;
+                _ownershipLegendJa = Loc.Language;
                 string legend = "";
                 for (int i = 0; i < OwnershipColors.Length; i++)
                 {
@@ -185,7 +187,7 @@ namespace SodRpg.Mod
             var status = host ? _observedDynamicStatus : _s.DynamicStatus;
             var display = _observedDynamicDisplay;
             bool changed = RememberDynamicStatus(status);
-            changed |= _dynamicStatusText == null || _dynamicStatusJa != Loc.Japanese || _statusHost != host;
+            changed |= _dynamicStatusText == null || _dynamicStatusJa != Loc.Language || _statusHost != host;
             for (int i = 0; i < OwnershipColors.Length; i++)
             {
                 var player = i < DewPlayer.gamePlayers.Count ? DewPlayer.gamePlayers[i] : null;
@@ -206,7 +208,7 @@ namespace SodRpg.Mod
             }
             if (changed)
             {
-                _dynamicStatusJa = Loc.Japanese; _statusHost = host;
+                _dynamicStatusJa = Loc.Language; _statusHost = host;
                 _dynamicStatusText = BuildDynamicStatus(host, status, display);
             }
             GUILayout.Label(Loc.T("現在の状況", "Current status"), _st.Label);
@@ -244,9 +246,9 @@ namespace SodRpg.Mod
                 cfg.dynamicDifficultySolo = solo;
                 SaveEnemyOwnershipConfig?.Invoke();
             }
-            if (_dynamicLimits == null || _dynamicLimitsJa != Loc.Japanese)
+            if (_dynamicLimits == null || _dynamicLimitsJa != Loc.Language)
             {
-                _dynamicLimitsJa = Loc.Japanese;
+                _dynamicLimitsJa = Loc.Language;
                 int dynamicClose = (int)Math.Round(CoopBalance.DynamicDifficulty.Strength * 100);
                 _dynamicGap = Loc.T($"戦った部屋のダメージから、次の部屋の敵を調整します。強さの差の{dynamicClose}%だけを埋めます。",
                     $"Use combat damage to adjust enemies in the next room, closing {dynamicClose}% of the strength gap.");

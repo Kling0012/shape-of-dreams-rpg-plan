@@ -4,19 +4,36 @@ using System.Linq;
 
 namespace SodRpg.Core.Game
 {
-    /// <summary>日本語・英語の二言語テキスト。表示言語は Loc.Japanese で切り替える。</summary>
+    /// <summary>表示言語。既定は日本語。中国語の訳がない文字列は英語へ戻す。</summary>
+    public enum LocLanguage : byte
+    {
+        Japanese = 0,
+        English = 1,
+        Chinese = 2,
+    }
+
+    /// <summary>日本語・英語・中国語（簡体字）の三言語テキスト。表示言語は Loc.Language で切り替える。
+    /// 中国語の列は省略でき、そのとき中国語表示では英語に戻る。</summary>
     public sealed class Txt
     {
-        public Txt(string ja, string en)
+        public Txt(string ja, string en, string zh = null)
         {
             Ja = ja;
             En = en;
+            Zh = zh;
         }
 
         public string Ja { get; }
         public string En { get; }
+        /// <summary>中国語（簡体字）。未訳のとき null で、表示は英語へ戻る。</summary>
+        public string Zh { get; }
 
-        public override string ToString() => Loc.Japanese ? Ja : En;
+        public override string ToString() => Loc.Language switch
+        {
+            LocLanguage.Japanese => Ja,
+            LocLanguage.Chinese => Zh ?? Loc.Zh(En),
+            _ => En,
+        };
     }
 
     public static class Loc
@@ -25,16 +42,39 @@ namespace SodRpg.Core.Game
         // 実運用では UI スレッドで一度設定するだけなので、set が共有値にも書けば
         // AsyncProfileWriter など設定しない他スレッドは共有値を読んで従来どおり。
         // テストは各スレッドの上書きを読むので、並行実行でも干渉しない（#151: 並列化の妨げだった全体共有状態を解消）。
-        private static bool _sharedJapanese = true;
-        [ThreadStatic] private static bool? _japanese;
+        private static LocLanguage _sharedLanguage = LocLanguage.Japanese;
+        [ThreadStatic] private static LocLanguage? _language;
 
-        public static bool Japanese
+        public static LocLanguage Language
         {
-            get => _japanese ?? _sharedJapanese;
-            set { _sharedJapanese = value; _japanese = value; }
+            get => _language ?? _sharedLanguage;
+            set { _sharedLanguage = value; _language = value; }
         }
 
-        public static string T(string ja, string en) => Japanese ? ja : en;
+        // 既存の真偽値での読み書き（#877 以前の互換）。false は英語。
+        // 中国語は Language でのみ表現し、この getter は false を返すため、
+        // ja/en 二択を前提にした既存のコードは中国語を英語側へ流す。
+        public static bool Japanese
+        {
+            get => Language == LocLanguage.Japanese;
+            set => Language = value ? LocLanguage.Japanese : LocLanguage.English;
+        }
+
+        public static string T(string ja, string en) => Language == LocLanguage.Japanese ? ja : Zh(en);
+
+        public static string T(string ja, string en, string zh) => Language switch
+        {
+            LocLanguage.Japanese => ja,
+            LocLanguage.Chinese => zh ?? Zh(en),
+            _ => en,
+        };
+
+        /// <summary>中国語表示のとき、未訳の文字列を用語集と照合し、なければ英語のまま返す。それ以外の言語はそのまま返す。</summary>
+        public static string Zh(string en)
+        {
+            if (Language != LocLanguage.Chinese || en == null) return en;
+            return LocZhGlossary.Lookup(en);
+        }
     }
 
     /// <summary>特性（ランダムに付く能力値）の定義。値域は アイテムレベル1・レア度補正前。</summary>
@@ -5491,12 +5531,12 @@ namespace SodRpg.Core.Game
         {
             switch (s)
             {
-                case Slot.Weapon: return new Txt("主装備", "Weapon");
-                case Slot.Armor: return new Txt("防具", "Armor");
-                case Slot.Head: return new Txt("頭", "Head");
-                case Slot.Hands: return new Txt("手", "Hands");
-                case Slot.Feet: return new Txt("足", "Feet");
-                default: return new Txt("装飾品", "Charm");
+                case Slot.Weapon: return new Txt("主装備", "Weapon", "武器");
+                case Slot.Armor: return new Txt("防具", "Armor", "护甲");
+                case Slot.Head: return new Txt("頭", "Head", "头部");
+                case Slot.Hands: return new Txt("手", "Hands", "手部");
+                case Slot.Feet: return new Txt("足", "Feet", "足部");
+                default: return new Txt("装飾品", "Charm", "饰品");
             }
         }
 
@@ -5504,11 +5544,11 @@ namespace SodRpg.Core.Game
         {
             switch (r)
             {
-                case Rarity.Common: return new Txt("コモン", "Common");
-                case Rarity.Uncommon: return new Txt("アンコモン", "Uncommon");
-                case Rarity.Rare: return new Txt("レア", "Rare");
-                case Rarity.Epic: return new Txt("エピック", "Epic");
-                default: return new Txt("固有品", "Legendary");
+                case Rarity.Common: return new Txt("コモン", "Common", "普通");
+                case Rarity.Uncommon: return new Txt("アンコモン", "Uncommon", "优秀");
+                case Rarity.Rare: return new Txt("レア", "Rare", "稀有");
+                case Rarity.Epic: return new Txt("エピック", "Epic", "史诗");
+                default: return new Txt("固有品", "Legendary", "固有品");
             }
         }
 
@@ -5516,9 +5556,9 @@ namespace SodRpg.Core.Game
         {
             switch (l)
             {
-                case Line.Offense: return new Txt("破壊", "Destruction");
-                case Line.Guard: return new Txt("生命", "Life");
-                default: return new Txt("想像", "Imagination");
+                case Line.Offense: return new Txt("破壊", "Destruction", "破坏");
+                case Line.Guard: return new Txt("生命", "Life", "生命");
+                default: return new Txt("想像", "Imagination", "想象");
             }
         }
 

@@ -1287,7 +1287,7 @@ namespace SodRpg.Mod
         private bool _infinityPendingPublication;
         private bool _dirty, _saveErrorFromWriteFailure;
         private string _writeFailureText, _writeFailureSource;
-        private bool _writeFailureJapanese;
+        private LocLanguage _writeFailureLanguage;
         private Exception _saveErrorCause;
         private string _saveErrorText;
         private AsyncProfileWriter _writeFailureKnownWriter;

@@ -21,6 +21,16 @@ namespace SodRpg.Mod
         [LabelText("Japanese UI / 日本語表示")]
         public bool japanese = true;
 
+        // #877 中国語（簡体字）。japanese より優先する。旧版のMODはこの項目を無視して
+        // japanese（中国語選択時は false ＝ 英語）へ戻るため、旧版でも安全に既定の言語で動く。
+        // 壊れた保存では両方既定値（true/false ＝ 日本語）に戻り、未知の言語値は生じない。
+        [LabelText("Chinese UI, Simplified / 简体中文界面（优先于日语 / 日本語より優先）")]
+        public bool chinese = false;
+
+        /// <summary>2つの真偽値から表示言語を決める。壊れた値もこの組み合わせに収まる。</summary>
+        public LocLanguage ResolveLanguage() =>
+            chinese ? LocLanguage.Chinese : japanese ? LocLanguage.Japanese : LocLanguage.English;
+
         [LabelText("UI scale / 表示の大きさ")]
         public float uiScale = 1f;
 
