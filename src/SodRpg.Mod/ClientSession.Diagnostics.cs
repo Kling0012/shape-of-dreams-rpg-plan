@@ -28,7 +28,7 @@ namespace SodRpg.Mod
                 var hero = LocalHero;
                 // HeroKeyOf は Unity の null チェック（ネイティブ呼び出し）と Type.Name（Mono では毎回新しい文字列を
                 // 確保する）を伴う。診断1回につき1度だけ計算する。
-                string heroKey = hero != null ? HeroKeyOf(hero) : null;
+                string heroKey = HeroKeyOf(hero);
                 var run = Profile?.Run;
                 int equipped = 0, missing = 0, polaris = 0;
                 // Profile.Hero creates state; diagnostics must only inspect existing state.
