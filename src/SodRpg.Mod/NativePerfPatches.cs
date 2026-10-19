@@ -2363,7 +2363,29 @@ namespace SodRpg.Mod
         // themselves: LogicUpdate's charge block is server-only, so a guest only receives
         // charges through this RPC, the spawn payload (OnSerialize) or the post-spawn
         // array RPC (RpcSyncAfterFrameDelayStates_Imp), all carrying host values over
-        // Mirror's reliable channel. The RPC body (UserCode_RpcSetCharge) does nothing
+        // Mirror's reliable channel.
+        //
+        // Skipping a repeat is sound only while the authority's array never holds a value
+        // it has not broadcast, i.e. every server-side write to currentCharges publishes
+        // through this RPC. The game has exactly five write sites: SetCharge (the public
+        // mutator, which always ends with the RPC; LogicUpdate's refill, the cast-complete
+        // charge hook and SetChargeAll all route through it), the two
+        // ApplyCooldownReduction*_Imp loops (every touched config ends its iteration with
+        // RpcSetCharge(i, currentCharges[i])), SkillTrigger.ChargeUltimate (same trailing
+        // broadcast), and OnStartServer's start charges. OnStartServer is the one
+        // RPC-less write, and it cannot strand a participant: it fills a freshly
+        // allocated array — a new instance, which resets the tracking below — while every
+        // client is re-seeded from the new spawn payload. The mod adds no other write:
+        // NativeCooldownSafety.Normalize and ResendAuthoritative never assign charges,
+        // they re-send them through this same RPC (its delegates bind the patched method,
+        // so those resends keep the record in sync), and HostAuthority.CoopKeystones
+        // grants charges via SetCharge. The remaining writers — UserCode_RpcSetCharge,
+        // RpcSyncAfterFrameDelayStates_Imp and OnDeserialize — are guarded to non-server,
+        // so they never run on the authority. A future write site that bypasses this RPC
+        // must clear the LastSent entry for that trigger, or a participant who joined
+        // between the write and the next equal-valued send would keep the unbound value.
+        //
+        // The RPC body (UserCode_RpcSetCharge) does nothing
         // but write that int. Suppressing a repeat of the last value we sent therefore
         // writes the identical int on every client and changes nothing else; every real
         // charge change still broadcasts as before, spawn payload and the mod's
