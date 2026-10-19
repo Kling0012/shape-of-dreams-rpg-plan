@@ -62,7 +62,7 @@
 | `NativeProcCoalesce` / `NativeProcSpawnSpread` | 特定の攻撃弾の生成・命中処理をまとめる。生成の置換は Charcoal・Blade・Accuracy・Spiral の `CreateAbilityInstance` 系で、拾得物の `CreatePickupInstance` は変更しない |
 | `NativeProcImpactFx` | PlayNetworked の Prefix は攻撃 Actor の種類を選別する。拾得物は kind=0 となり、本体の再生を通す |
 
-これらの範囲では、両演出の後始末を止める変更を確認できなかった。修正では軽量化の設定や実装を変更していない。
+これらの範囲では両演出の後始末を止める変更を確認できなかった。修正では軽量化の設定や実装を変更していない。
 
 ## 本体 r1.4.0.13 と r1.4.1.2 の比較
 
@@ -85,7 +85,7 @@
 - `DewEffect.Play(GameObject, Entity, NetworkIdentity)` の Postfix がガードを開始する。通常の生成・再生を通したうえで、本体の30秒上限を再生開始時から数え、0.5秒間隔で確認する。期限後の次の確認で後始末するため、ゲームの時刻でおおむね30〜30.5秒が上限となる。
 - 部屋遷移・部屋ロード・元の拾得物の消失・別寿命への再利用でも後始末する。通常の UnSpawn で netId が0になることや Network_isActive が false になることだけでは再利用と判定しない。
 - `Retire` が `OnAttachToEntity(null)` で追従を外し、`DewEffect.Stop` を呼ぶ。さらに粒子を `StopEmittingAndClear` で消去し、演出用の子だけを無効にする。停止や追従解除が例外になっても、finally で子を隠す処理を試みる。
-- Prefix の `RestoreForPlayback` が、このガードで隠した子を次回の本体再生前に戻す。パッチが失敗して無効になったあとも復元処理は通す。
+- Prefix の `RestoreForPlayback` がこのガードで隠した子を次回の本体再生前に戻す。パッチが失敗して無効になったあとも復元処理は通す。
 - `Prepare` の契約確認や実行時処理が失敗したら、警告を出してこのパッチだけを無効にする。MOD 全体や他の軽量化は停止しない。
 
 本体の30秒タイムアウトは Actor の破棄工程で登録されてから数える。今回のガードは再生開始から数えるため、登録が遅れた演出は本体だけの場合より早く打ち切られ得る。通常の短い演出は本体の再生・後始末を通る。新しい毎フレーム処理やシーン走査はなく、粒子配列はガードの初回開始時に取得する。
@@ -103,6 +103,8 @@ Actor 本体の無効化・破棄・プール返却は本体に任せる。獲�
 
 検証スクリプトは `~/.dotnet/tools/ilspycmd` と `~/dev/sod-gamedata` の本体 DLL がある環境で動く。ない環境では skipped と出して終了する。今回の実行は skipped ではない。
 
+2026-10-20 の修正ラウンドでも、構造確認17項目、候補3件のテスト19件、類似ガードのテスト5件、演出上限のテスト6件を再実行し、すべて成功した。Release ビルドも `ModDeployDir=/tmp/dreamforge-pr893-repair-build` で成功した（0エラー・警告6件）。旧版と現行版の DLL から8型を改めて逆コンパイルし、上表と同じ差分を確認した。既存の実装と調査は保持し、結果 JSON の `requirements_done` に FR-1〜FR-11 の対応先を個別に報告する。
+
 ## 未実行
 
 - ゲーム内での症状再現と修正確認、ソロ・協力プレイ各画面、演出が多い場合と性能の確認。この環境ではゲームを起動できないため。
@@ -113,11 +115,14 @@ Actor 本体の無効化・破棄・プール返却は本体に任せる。獲�
 
 | FR | 対応する実装・調査 |
 |---|---|
-| FR-1 / FR-11 | `PickupFxLifetimePatch.FindPickup`、`PickupFxLifetime.Begin` / `CheckLifetime` / `Retire` / `RestoreForPlayback` と本記録の「理論修正」 |
-| FR-2 / FR-9 | 本記録の「生成と追従」「停止・寿命・プール返却」、既存の DLL 構造確認スクリプト |
-| FR-3 / FR-10 | 本記録の「軽量化ごとの確認」「破棄待ちから演出が残る経路」 |
+| FR-1 | `src/SodRpg.Mod/PickupFxLifetime.cs` の `FindPickup` がダストを選び、`Begin` / `CheckLifetime` / `Retire` で停止・追従解除・粒子消去・子の無効化を行う |
+| FR-2 | 本記録の「生成と追従」「停止・寿命・プール返却」と `tests/repro/issue889/verify_r1412_fx_lifecycle.sh` |
+| FR-3 | 本記録の「軽量化ごとの確認」。位置・回転、毎フレーム更新、Actor の破棄・寿命、native-fx-budget、NativeProcCoalesce / NativeProcSpawnSpread を個別に確認した |
 | FR-4 | 本記録の候補3コミットの確認と「本体 r1.4.0.13 と r1.4.1.2 の比較」 |
-| FR-5 | 本記録の破棄待ちからの因果と、その直接の停滞要因は未確認という調査の限界 |
-| FR-6 | 対象の子だけを後始末する `FindPickup` / `Retire`。軽量化は変更しない |
-| FR-7 | 演出だけを変更する `PickupFxLifetime.cs`。獲得処理は変更しない |
-| FR-8 | `PickupFxLifetimePatch.Prepare` / `Disable`、例外時の後始末と次回再生前の復元 |
+| FR-5 | 本記録の「破棄待ちから演出が残る経路」。本体の `Dew.StepDestroy` → `Actor.ICleanup.canDestroy` → `CustomDestroyRoutine` → `EffectAutoDestroy.Register` の順序から原因候補を特定した。報告環境の直接の停滞要因は未確認 |
+| FR-6 | `src/SodRpg.Mod/PickupFxLifetime.cs` の `FindPickup` / `Retire`。対象の演出の子だけに消失処理を加え、原因と確認できなかった軽量化は戻さない |
+| FR-7 | `src/SodRpg.Mod/PickupFxLifetime.cs` は演出だけを変更する。PR の差分に獲得量・確率を変更する箇所はない |
+| FR-8 | `src/SodRpg.Mod/PickupFxLifetime.cs` の `Prepare` / `Disable`、例外時にも子の無効化を試みる `Retire`、パッチ無効化後も復元する Prefix |
+| FR-9 | 本記録の「生成と追従」「停止・寿命・プール返却」。MOD 側の `OnDreamDustGiven` と本体側の `Gem_R_Wealth` から両者の共通する拾得経路まで照合した |
+| FR-10 | 本記録の「軽量化ごとの確認」と「本体 r1.4.0.13 と r1.4.1.2 の比較」。指定された軽量化、3コミット、本体更新を確認した |
+| FR-11 | `src/SodRpg.Mod/PickupFxLifetime.cs` の `Begin` / `CheckLifetime` / `Retire` / `RestoreForPlayback`。ダストとゴールド宝珠の両演出を監視し、再利用前の表示も復元する |
