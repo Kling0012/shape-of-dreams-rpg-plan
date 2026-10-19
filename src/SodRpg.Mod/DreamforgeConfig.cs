@@ -168,6 +168,9 @@ namespace SodRpg.Mod
         [LabelText("Skip projectile RPCs whose effect prefab is null (host) / 演出プレハブが無い弾の命中・完了・消散 RPC を省く（ホスト）")]
         public bool nativeProjectileIdleRpc = true;
 
+        [LabelText("Resolve CustomRpc message types with a cached lookup / 受け取った CustomRpc の型探しをキャッシュで速くする")]
+        public bool nativeCustomRpcDispatch = true;
+
         [LabelText("Skip unchanged cast-preview updates while aiming (client) / 狙いが変わっていないキャストプレビュー更新を省く（クライアント）")]
         public bool nativeSampleUpdateIdle = true;
 
