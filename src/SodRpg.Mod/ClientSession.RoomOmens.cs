@@ -35,11 +35,25 @@ namespace SodRpg.Mod
         private readonly float[] _coopResonantUntil = new float[3];
         private float _coopSnapshotExpires;
         private int _coopDisplayZone = -1, _coopDisplayNode = -1;
-        public uint CoopWardId(int slot) => slot >= 0 && slot < _coopWardIds.Length
-            && CurrentRoomOmen == RoomOmen.ResonantWard && _zone != null
-            && _coopDisplayZone == _zone.currentZoneIndex && _coopDisplayNode == _zone.currentNodeIndex
-            && UnityEngine.Time.unscaledTime <= _coopSnapshotExpires
-            ? _coopWardIds[slot] : 0;
+        // 盾の表示条件（CurrentRoomOmen は文字列比較とリスト走査を含む）は受信と部屋表示の更新でしか
+        // 変わらず、フレーム内では不変。名札描画が 1 フレームに敵の数×3 回呼ぶため、
+        // 条件の確定は 1 フレーム 1 回にして、受信時には無効化する。
+        private int _coopGateFrame = -1;
+        private readonly uint[] _coopGateIds = new uint[3];
+        public uint CoopWardId(int slot)
+        {
+            if (slot < 0 || slot >= _coopGateIds.Length) return 0;
+            if (_coopGateFrame != UnityEngine.Time.frameCount)
+            {
+                bool live = CurrentRoomOmen == RoomOmen.ResonantWard && _zone != null
+                    && _coopDisplayZone == _zone.currentZoneIndex && _coopDisplayNode == _zone.currentNodeIndex
+                    && UnityEngine.Time.unscaledTime <= _coopSnapshotExpires;
+                for (int i = 0; i < _coopGateIds.Length; i++)
+                    _coopGateIds[i] = live ? _coopWardIds[i] : 0u;
+                _coopGateFrame = UnityEngine.Time.frameCount;
+            }
+            return _coopGateIds[slot];
+        }
         public float CoopResonanceRemaining(int slot) => slot >= 0 && slot < _coopResonantUntil.Length
             ? Math.Max(0, _coopResonantUntil[slot] - UnityEngine.Time.unscaledTime) : 0;
         private string _notifiedOmenRun;
@@ -83,6 +97,7 @@ namespace SodRpg.Mod
 
         private void ReceiveCoopOmen(DreamforgeRoomOmenMsg msg)
         {
+            _coopGateFrame = -1;
             for (int i = 0; i < _coopWardIds.Length; i++)
             {
                 _coopWardIds[i] = 0;
