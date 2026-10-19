@@ -70,11 +70,11 @@ namespace SodRpg.Core.Game
         public static class DynamicDifficulty
         {
             public const double ActiveBucketSeconds = 0.5d;
-            public const double TargetSeconds = 3d;
+            public const double TargetSeconds = 2.4d;
             public const double Alpha = 0.3d;
             public const double AlphaDown = 0.5d;
-            public const double Strength = 0.4d;
-            public const double MinFactor = 0.65d;
+            public const double Strength = 0.3d;
+            public const double MinFactor = 0.6d;
             public const double RewardMaxMultiplier = 2.0d;
             // Numeric overflow guard for factors and float HP, not a balance cap.
             public const double SafetyMaxFactor = 1e+06d;
