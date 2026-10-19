@@ -4072,6 +4072,7 @@ namespace SodRpg.Mod
 
         private static MethodInfo _target;
         private static bool _warned;
+        private static bool _reportedCircularFallback;
 
         private static bool Prepare()
         {
@@ -4105,7 +4106,13 @@ namespace SodRpg.Mod
             }
             catch (Exception ex) when (ex.GetType() == typeof(Exception) && ex.Message == "Circular dependency detected.")
             {
-                // Let the original report the data error without consuming the patch warning.
+                // Keep a diagnostic even if only the replica detects a cycle; let the
+                // original handle the input without consuming the patch warning.
+                if (!_reportedCircularFallback)
+                {
+                    _reportedCircularFallback = true;
+                    Log.Info("Native performance patch fallback: room start dependency: " + ex.Message);
+                }
                 return true;
             }
             catch (Exception ex)
