@@ -3214,10 +3214,12 @@ namespace SodRpg.Mod
                 NativePlayerTimerIdlePerf.LastHeld.GetValue(__instance,
                     NativePlayerTimerIdlePerf.CreateLastHeld)[id] = defaultValue;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
                 // Seeding is an optimization bookkeeping step: a failure here only means
-                // one duplicate set may go out, so leave the skip patch enabled.
+                // one duplicate set may go out, so leave the skip patch enabled — but
+                // still leave the reason in the log once, like the other native patches.
+                NativePerfPatch.Warn(ref NativePlayerTimerIdlePerf._warned, "player on-screen timer seed", ex.Message);
             }
         }
     }
@@ -3253,10 +3255,12 @@ namespace SodRpg.Mod
                 if (NativePlayerTimerIdlePerf.LastHeld.TryGetValue(__instance, out var held))
                     held.Remove(id);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
                 // Forgetting is pure bookkeeping: a leftover entry costs a few bytes and
-                // cannot suppress a send that matters.
+                // cannot suppress a send that matters — still logged once, since an
+                // exception here is the only sign the bookkeeping is misbehaving.
+                NativePerfPatch.Warn(ref NativePlayerTimerIdlePerf._warned, "player on-screen timer forget", ex.Message);
             }
         }
     }
