@@ -226,6 +226,13 @@ namespace SodRpg.Mod
         private static SkollCoreState _skollUpdateState;
         private static int _skollUpdateStage;
         private static readonly BossRewardProfile SkollCoreRewardProfile=LoadSkollCoreRewardProfile();
+        private static bool _skollCoreProfileWarning, _skollCoreStagesWarning, _skollCoreStageRangeWarning, _skollCoreActionsWarning;
+        private static void WarnSkollCoreRewardOnce(ref bool warned, string message)
+        {
+            if (warned) return;
+            warned=true;
+            Log.Warn(message);
+        }
         private static BossRewardProfile LoadSkollCoreRewardProfile()
         {
             BossProfiles.TryGetReward(BossProfiles.SkollRewardId,out var profile);
@@ -355,10 +362,26 @@ namespace SodRpg.Mod
             // 報酬段階は1更新で1回だけ計算する（キャッシュなしの経路では従来どおり都度計算）。
             int stage = cached ? (_skollUpdateStage != 0 ? _skollUpdateStage : _skollUpdateStage=BossRewardStage(rt,BossProfiles.SkollRewardId))
                 : BossRewardStage(rt,BossProfiles.SkollRewardId);
+            if (stage < 3) return nativeInterval;
             var stages=SkollCoreRewardProfile?.Stages;
-            if (stage < 3 || stages == null || stages.Count == 0) return nativeInterval;
+            if (stages == null)
+            {
+                WarnSkollCoreRewardOnce(ref _skollCoreProfileWarning,"GlacialCore interval: reward profile or stages missing; using native interval.");
+                return nativeInterval;
+            }
+            if (stages.Count == 0)
+            {
+                WarnSkollCoreRewardOnce(ref _skollCoreStagesWarning,"GlacialCore interval: reward stages empty; using native interval.");
+                return nativeInterval;
+            }
+            if (stage > stages.Count)
+                WarnSkollCoreRewardOnce(ref _skollCoreStageRangeWarning,"GlacialCore interval: reward stage exceeds profile stage count; using last stage.");
             var reward=stages[Math.Min(stage,stages.Count)-1];
-            if (reward.Actions.Count <= 2) return nativeInterval;
+            if (reward.Actions.Count <= 2)
+            {
+                WarnSkollCoreRewardOnce(ref _skollCoreActionsWarning,"GlacialCore interval: reward interval action missing; using native interval.");
+                return nativeInterval;
+            }
             if (SkollCoreBank == null || SkollCoreTargets == null) return nativeInterval;
             float bank=0; int bankScan=0; foreach (var entry in SkollCoreBank(core)) { if(bankScan++>=256) break; bank += entry.Value; }
             if (bank <= 0) return nativeInterval;
