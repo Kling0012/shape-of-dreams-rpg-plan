@@ -8,6 +8,8 @@ namespace SodRpg.Mod
     {
         private bool _overflowBonusChosen, _overflowBonusAvailable, _overflowBonusWarned;
         private float _nextOverflowBonusSend, _overflowBonusFirstSend = -1f;
+        private float _nextOverflowBonusTick;
+        private const float OverflowBonusTickSeconds = 0.25f;
         private string _overflowBonusReplyRun;
         private long _overflowBonusReplyLedger, _overflowBonusPaid;
         private int _overflowBonusBlockedWorld = -1, _overflowBonusSentWorld = -1;
@@ -51,6 +53,7 @@ namespace SodRpg.Mod
             _overflowBonusBlockedRun = null;
             _overflowBonusBlockedLedger = 0;
             _nextOverflowBonusSend = 0;
+            _nextOverflowBonusTick = 0;
             _overflowBonusFirstSend = -1f;
             Profile.ReceiveOverflowDreamDust = false;
         }
@@ -114,6 +117,20 @@ namespace SodRpg.Mod
                         $"Gave up {forgone} unconfirmed extra overflow Dream Dust because the host restarted. Relic pickup and shard conversion are unaffected; new overflows pay again.")));
             }
             Profile.ReceiveOverflowDreamDust = true;
+        }
+
+        /// <summary>
+        /// 毎フレームの定期入口。この評価の入力は、設定変更・ホスト応答・あふれ発生・ゾーン移動のときだけ動き、
+        /// それらの経路は独自に再評価する（ConfigureOverflowBonus・OnOverflowBonusResult は再送を解禁し、
+        /// 変化したメッセージ項目は送信間隔より優先される）ので、その間の毎フレームの全評価を 0.25 秒間隔に間引く。
+        /// 確定前の最終送信など強制したい経路は TickOverflowBonus を直接呼ぶ。
+        /// </summary>
+        internal void TickOverflowBonusPeriodic()
+        {
+            float now = Time.unscaledTime;
+            if (now < _nextOverflowBonusTick) return;
+            _nextOverflowBonusTick = now + OverflowBonusTickSeconds;
+            TickOverflowBonus();
         }
 
         internal void TickOverflowBonus()

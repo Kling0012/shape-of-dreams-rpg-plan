@@ -213,7 +213,8 @@ namespace SodRpg.Mod
         {
             if (!ContinueReady || _nativeContinueCheckpoint != null) return;
             TickInfinity();
-            TickKillClassification();
+            // TickKillClassification is its own ungated tick step immediately before this one;
+            // a second drain here re-ran the ledger every frame while kills were pending.
             NotifyPersonalDreamEvent();
             TryFinishSecureArrival();
             if (CanChooseRunRules && InPureWhiteRoute && InGameUIManager.instance != null
