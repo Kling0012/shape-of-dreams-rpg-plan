@@ -882,10 +882,13 @@ namespace SodRpg.Mod
     // NativeChatMuteAllocPerf（リンク）が typeof で探す本体のチャット受信のミュート判定。
     // 実物は allHumanPlayers.Find(ラムダ) で送信者を探し、見つからなければミュート扱いとする。
     // ミュート一覧の中身（IsPlayerMuted）はパッチがネイティブ呼び出しのまま残すので、
-    // この境界では常に false（誰もミュートしていない）。判決の形だけを実物どおりに模倣する。
+    // この境界では判決の形だけを実物どおりに模倣する。一覧の中身は mutedPlayers として
+    // 外から差し替えられる形にし、既定は空（誰もミュートしていない）。テストはこの一覧で
+    // ミュート済み（true）・未ミュート（false）の両方を本体と Prefix の両方に同じように出す。
     internal class ChatManager
     {
-        public bool IsPlayerMuted(DewPlayer player) => false;
+        public readonly HashSet<DewPlayer> mutedPlayers = new HashSet<DewPlayer>();
+        public bool IsPlayerMuted(DewPlayer player) => mutedPlayers.Contains(player);
         public bool IsPlayerMutedByNetId(uint playerNetId)
         {
             foreach (DewPlayer p in DewPlayer.allHumanPlayers)
