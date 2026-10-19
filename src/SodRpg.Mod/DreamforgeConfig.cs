@@ -150,6 +150,9 @@ namespace SodRpg.Mod
         [LabelText("Skip unchanged stats-recalc notifications (host) / 変わっていないステータス再計算の通知を省く（ホスト）")]
         public bool nativeStatsCalcRpcIdle = true;
 
+        [LabelText("Skip no-op ultimate charge broadcasts (host) / 満チャージのウルトの無意味なチャージ再送を省く（ホスト）")]
+        public bool nativeUltChargeRpcIdle = true;
+
         [LabelText("Skip the unchanged lobby accessory rescan / 変わっていないロビーのアクセサリ再走査を省く")]
         public bool nativeLobbyAccessoryIdle = true;
 
