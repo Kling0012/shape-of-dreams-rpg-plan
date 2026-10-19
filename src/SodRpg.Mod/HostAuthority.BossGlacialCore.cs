@@ -336,6 +336,7 @@ namespace SodRpg.Mod
         }
         internal void BeginSkollCoreUpdate(Gem_U_GlacialCore core)
         {
+            EndSkollCoreUpdate();
             if (!SkollCoreRuntime(core,out var rt,out var state)) return;
             state.ApprovedThisUpdate=false;
             _skollUpdateCore=core; _skollUpdateRuntime=rt; _skollUpdateState=state; _skollUpdateStage=0;
@@ -354,7 +355,10 @@ namespace SodRpg.Mod
             // 報酬段階は1更新で1回だけ計算する（キャッシュなしの経路では従来どおり都度計算）。
             int stage = cached ? (_skollUpdateStage != 0 ? _skollUpdateStage : _skollUpdateStage=BossRewardStage(rt,BossProfiles.SkollRewardId))
                 : BossRewardStage(rt,BossProfiles.SkollRewardId);
-            if (stage < 3) return nativeInterval;
+            var stages=SkollCoreRewardProfile?.Stages;
+            if (stage < 3 || stages == null || stages.Count == 0) return nativeInterval;
+            var reward=stages[Math.Min(stage,stages.Count)-1];
+            if (reward.Actions.Count <= 2) return nativeInterval;
             if (SkollCoreBank == null || SkollCoreTargets == null) return nativeInterval;
             float bank=0; int bankScan=0; foreach (var entry in SkollCoreBank(core)) { if(bankScan++>=256) break; bank += entry.Value; }
             if (bank <= 0) return nativeInterval;
@@ -366,7 +370,7 @@ namespace SodRpg.Mod
             finally { handle.Return(); }
             if (!legal) return nativeInterval;
             state.ApprovedThisUpdate=true;
-            return Math.Min(nativeInterval,SkollCoreRewardProfile.Stages[stage-1].Actions[2].IntervalMillis / 1000f);
+            return Math.Min(nativeInterval,reward.Actions[2].IntervalMillis / 1000f);
         }
         internal void RetargetSkollCoreProjectile(Gem_U_GlacialCore core, Ai_Gem_U_GlacialCore_Projectile projectile)
         {
