@@ -2383,7 +2383,7 @@ namespace SodRpg.Mod
         // RpcSyncAfterFrameDelayStates_Imp and OnDeserialize — are guarded to non-server,
         // so they never run on the authority. A future write site that bypasses this RPC
         // must clear the LastSent entry for that trigger, or a participant who joined
-        // between the write and the next equal-valued send would keep the unbound value.
+        // between the write and the next equal-valued send would keep the stale value.
         //
         // The RPC body (UserCode_RpcSetCharge) does nothing
         // but write that int. Suppressing a repeat of the last value we sent therefore
