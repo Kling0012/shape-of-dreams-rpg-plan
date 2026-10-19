@@ -2370,11 +2370,17 @@ namespace SodRpg.Mod
         private sealed class Slots
         {
             internal int[] Charges; // the array instance the tracked values were sent from
-            internal int[] Values; // last value sent per config index; -1 = nothing sent yet
+            // int? so "nothing sent yet" (null) can never collide with a real charge int;
+            // the RPC parameter is a plain int and Dew does not promise it stays >= 0.
+            internal int?[] Values; // last value sent per config index; null = nothing sent yet
         }
 
         private static readonly ConditionalWeakTable<AbilityTrigger, Slots> LastSent =
             new ConditionalWeakTable<AbilityTrigger, Slots>();
+
+        // Cached like the other perf patches: the project compiles as C# 9, where every
+        // method-group-to-delegate conversion allocates a fresh delegate per GetValue call.
+        private static readonly ConditionalWeakTable<AbilityTrigger, Slots>.CreateValueCallback CreateSlotsCallback = CreateSlots;
 
         private static MethodBase _target;
         private static bool _disabled;
@@ -2389,12 +2395,7 @@ namespace SodRpg.Mod
 
         private static MethodBase TargetMethod() => _target;
 
-        private static int[] NewValues(int count)
-        {
-            var values = new int[count];
-            for (int i = 0; i < values.Length; i++) values[i] = -1;
-            return values;
-        }
+        private static int?[] NewValues(int count) => new int?[count];
 
         private static Slots CreateSlots(AbilityTrigger trigger)
         {
@@ -2415,7 +2416,7 @@ namespace SodRpg.Mod
                 if (!Mirror.NetworkServer.active) return true;
                 var charges = __instance.currentCharges;
                 if (charges == null || (uint)configIndex >= (uint)charges.Length) return true;
-                var slots = LastSent.GetValue(__instance, CreateSlots);
+                var slots = LastSent.GetValue(__instance, CreateSlotsCallback);
                 if (!ReferenceEquals(slots.Charges, charges) || configIndex >= slots.Values.Length)
                 {
                     slots.Charges = charges;

@@ -15,7 +15,9 @@ namespace Issue73.Native.Tests
     /// (d) チャージ配列が別のインスタンスに差し替わったら同じ値でも送る
     /// （Dew のプール再利用で OnStartServer が割り直す新しい命）、
     /// (e) サーバでなければ常に送る、(f) 設定が無効なら常に送る、
-    /// (g) configIndex が範囲外か currentCharges が null なら常に送る。
+    /// (g) configIndex が範囲外か currentCharges が null なら常に送る、
+    /// (h) 未送信の目印は実値と衝突しない（最初に送る値が -1 でも
+    /// int.MinValue でも、初回の送信を省かない）。
     /// </summary>
     public sealed class ChargeRpcIdlePerfTests : IDisposable
     {
@@ -127,6 +129,20 @@ namespace Issue73.Native.Tests
             trigger.currentCharges = null;
             Assert.True(Send(trigger, 0, 2));
             Assert.True(Send(trigger, 0, 2));
+        }
+
+        // (h) 未送信の目印は null であり実値と衝突しない。最初に送る値が -1 や
+        // int.MinValue でも、目印と紛れて初回の送信を省かない。2回目以降の
+        // 同じ値の再送は今までどおり省く。
+        [Fact]
+        public void ANegativeFirstChargeIsNotTreatedAsUnsent()
+        {
+            var negative = TriggerWithCharges(0);
+            Assert.True(Send(negative, 0, -1));
+            Assert.False(Send(negative, 0, -1));
+            var extreme = TriggerWithCharges(0);
+            Assert.True(Send(extreme, 0, int.MinValue));
+            Assert.False(Send(extreme, 0, int.MinValue));
         }
     }
 }
