@@ -53,7 +53,10 @@ namespace Mirror
     // StatsCalcRpcPerfTests が Prefix/Capture の送る・省く判定を動かすために書き換える。
     // SendRPCInternal は送信側の形検査（ValidateRpcBody）が NetworkBehaviour のメンバーとして
     // 数えるため、このクラスに置く。本体では引数は writer と rpc 名の文字列。
-    internal class NetworkBehaviour
+    // （#866）実機の NetworkBehaviour は UnityEngine.MonoBehaviour の子孫で transform を
+    // 継承する。ダッシュ掃引の境界（DashSweepStepPerfBoundary.cs）の転写が base.transform を
+    // Component.get_transform として呼ぶため、ここでも Component からの継承にする。
+    internal class NetworkBehaviour : UnityEngine.Component
     {
         public bool isServer { get; set; }
         public bool isClient { get; set; }
