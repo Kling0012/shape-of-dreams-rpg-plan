@@ -240,12 +240,9 @@ namespace SodRpg.Mod
             if (m == null || !m.isActive || _registeredOn == null) return;
             if (state == null)
             {
-                if (target != null && ReserveMonsterSyncMessage())
-                    _registeredOn.CustomRpc_SendMessageToClient(target, new DreamforgeMonsterCueMsg
-                    {
-                        protocol = Protocol.Version, netId = m.netId, cue = 0,
-                        authorityGeneration = ClientSession.HostAuthorityGeneration,
-                    });
+                // Per-peer replay used to send cue 0 here, but a 0 only removes the target's cue
+                // entry and the reliable-ordered broadcasts that precede this replay already
+                // removed it, so a stateless monster has nothing to deliver.
                 return;
             }
             float now = Time.time;
@@ -262,6 +259,10 @@ namespace SodRpg.Mod
             bool slowed = (state.Affixes & NightmareAffix.Skittish) != 0 && state.HasBeenHit
                 && now - state.LastHit < MonsterBehavior.HitSlowSeconds;
             int cue = recovering ? 3 : warning ? 1 : healing ? 4 : guarding ? 2 : slowed ? 3 : 0;
+            // Per-peer replay only: a replayed 0 just removes the target's cue entry, and the
+            // same-state broadcast that preceded this replay on the ordered connection already
+            // removed it. Nonzero cues still re-establish the entry after the peer's clear.
+            if (cue == 0 && target != null) return;
             if (target == null && !force && state.CueQueued && state.CueNetId == m.netId && cue == state.Cue)
             {
                 // Model loading/replacement is a visual change, not a reason to resend every cue periodically.
