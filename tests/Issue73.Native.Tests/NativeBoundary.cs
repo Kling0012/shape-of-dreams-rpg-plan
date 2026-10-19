@@ -667,6 +667,29 @@ namespace SodRpg.Mod
         public Hero hero;
         public NetworkConnectionToClient connectionToClient;
         public Action BeforeCurrencyChange, AfterCurrencyChange;
+        // NativeLobbyAccessoryIdle（リンク）が記録・比較するロビー装備の入力（#833）。本体では
+        // selectedAccessories は Mirror の SyncList<string>、ownedItems は List<string>。
+        // IsAllowedToUseItem の本体は名前の接頭辞ごとに DewResources の資源を引き、server 生成で
+        // なければ無条件に許可、server 生成なら ownedItems の保持を見る。資源辞書と
+        // generatedFromServer は起動後に不変（PR #833 の理論）のため、この境界では接頭辞を持つ
+        // 名前の許可を ownedItems の保持だけで表す。
+        public bool isEveryInfoSet;
+        public string selectedSkin = "";
+        public string selectedHeroType = "Hero_Mist";
+        public readonly SyncList<string> selectedAccessories = new SyncList<string>();
+        public List<string> ownedItems = new List<string>();
+        public bool IsAllowedToUseItem(string itemName)
+        {
+            if (string.IsNullOrEmpty(itemName))
+            {
+                return false;
+            }
+            if (itemName.StartsWith("Acc_") || itemName.StartsWith("Nametag_") || itemName.StartsWith("Emote_") || itemName.StartsWith("Skin_"))
+            {
+                return ownedItems.Contains(itemName);
+            }
+            return false;
+        }
         public void SpendGold(int amount)
         {
             BeforeCurrencyChange?.Invoke();
@@ -734,6 +757,9 @@ namespace SodRpg.Mod
         public static DewNetworkManager softInstance;
         public virtual bool isEndingSession { get; set; }
         public bool hasSessionEnded;
+        // NativeLobbyAccessoryIdle（リンク）が続きデータの変化を見る本体の静的設定（#833）。
+        // 実物は public static DewNetworkStartSettings startSettings = new DewNetworkStartSettings()。
+        public static DewNetworkStartSettings startSettings = new DewNetworkStartSettings();
         public void RestartSession() { }
     }
     internal sealed class ZoneManager
