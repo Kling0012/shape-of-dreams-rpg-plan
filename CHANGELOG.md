@@ -10,6 +10,25 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v3.8.22 — Lighter boss attack warnings and co-op Resonance Ward display（2026-10-20）
+
+ボスの攻撃予告の表示と、協力プレイでの共鳴の盾の表示から無駄を省き、ゲームの動作を軽くしました。 / Boss attack warnings and the co-op Resonance Ward display now do less unnecessary work, making the game lighter.
+
+### 更新前に確認 / Before updating
+
+- 協力プレイでは、参加者全員がこのバージョンに更新してください。 / Everyone in co-op should update to this version.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- ボスの攻撃予告を描くたびに、隣り合う線がつながる点の画面上の位置を2回ずつ計算していた問題を直しました。今は1つの点につき1回だけ計算して使い回すので、予告が出ている間の描画が少し軽くなります。輪や扇の形をした予告では、計算の回数がおよそ半分になる見込みです。たとえば、品質を高くしたときの輪の予告では、1回描くごとに48回だった計算が25回に減ります。予告の形、色、向き、表示される範囲はこれまでと変わりません。 / Fixed boss attack warnings calculating the on-screen position of each point where neighboring lines meet twice every time they were drawn. Each point is now calculated once and reused, so drawing is a little lighter while warnings are shown. For ring- and fan-shaped warnings, this is expected to roughly halve the number of calculations. For example, a ring warning at high quality now needs 25 calculations per draw instead of 48. The shape, color, direction, and visible area of warnings are unchanged.
+- 協力プレイで、参加者のゲームが、敵の名札を描くたびに共鳴の盾を表示するかどうかを確かめ直していた問題を直しました。敵の多い部屋では、1フレームに百数十回も確かめていました。今は1フレームに1回だけ確かめるので、参加者のゲームが少し軽くなります。60fps で動いている場合、1秒に9千回を超えていた確認が約60回に減る見込みです。共鳴の盾の見え方、ゲームの判定、ホストと参加者の間のタイミングはこれまでと変わりません。 / Fixed guests' games in co-op rechecking whether to show the Resonance Ward each time an enemy nameplate was drawn. In rooms with many enemies, this check ran over a hundred times per frame. It now runs once per frame, so guests' games get a little lighter. At 60 fps, this is expected to cut the checks from over 9,000 per second to about 60. How the Resonance Ward looks, game rules, and timing between host and guests are unchanged.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
 ## v3.8.21 — Dynamic difficulty in the HUD summary and lighter co-op（2026-10-20）
 
 ### 新機能 / New features

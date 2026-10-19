@@ -1,5 +1,5 @@
-[b]The HUD summary now shows the effect of dynamic difficulty, and co-op is lighter thanks to fewer HP/mana resends and overflow bonus checks.[/b]
-[b]画面左上のまとめ表示に動的難易度の影響を出し、体力・マナの再送とあふれボーナスの判定を減らして協力プレイを軽くしました。[/b]
+[b]Boss attack warnings and the co-op Resonance Ward display now do less unnecessary work, making the game lighter.[/b]
+[b]ボスの攻撃予告と、協力プレイでの共鳴の盾の表示から無駄を省き、ゲームの動作を軽くしました。[/b]
 
 [h1]Dreamforge RPG[/h1]
 Turns every run into part of a long RPG journey: relics you keep, a "secure or delve" choice at every zone, a star map per Traveler, a forge and long-term goals. Co-op ready.
