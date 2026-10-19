@@ -556,8 +556,13 @@ namespace SodRpg.Mod
             if (!main && direct != null && direct.Source == actor && direct.ChildType == null)
                 packet.Admitted = TryGetExactNativeDirectPayload(actor, target, chain, out packet.Identity);
             else
+                // IsPairReactionSource が評価されるのは TryGetMemoryActivation が true のときだけだが、
+                // true は祖先走査が根まで完了したときにしか返らず、その走査は途中に Gem・要素効果・
+                // gem 付き AbilityInstance があれば false を返す。したがってここでの2度目の祖先走査は
+                // 常に false になり、省いてよい（gem のない AbilityInstance では読むたびに本体の
+                // 遅延検索 FindFirstOfType<Gem> が祖先をたどるため、2度目の省略がそのまま効く）。
                 packet.Admitted = TryGetMemoryActivation(actor, out packet.Identity) && ExactNativeChainMatches(actor, chain)
-                    && !IsPairReactionSource(actor) && _memoryAttribution.CanAdmit(packet.Identity, false, false, !chain.Equals(default(ReactionChain)));
+                    && _memoryAttribution.CanAdmit(packet.Identity, false, false, !chain.Equals(default(ReactionChain)));
             if (main && packet.Identity.OwnerId != basicOwner) packet.Admitted = false;
             packet.MainBasic = main && packet.Identity.OwnerId == basicOwner && packet.Identity.NativePayloadKind == NativePayloadKind.MainBasicAttack;
             if (packet.Admitted && packet.MainBasic && packet.Identity.SourceMemory.Length == 0
