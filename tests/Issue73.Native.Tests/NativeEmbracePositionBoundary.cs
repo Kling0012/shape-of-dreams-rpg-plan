@@ -75,6 +75,7 @@ namespace SodRpg.Mod
             nativeChargeRpcIdle = true,
             nativeProjectileIdleRpc = true,
             nativeCustomRpcDispatch = true,
+            nativeSampleUpdateIdle = true,
             nativeLobbyAccessoryIdle = true, nativeUltChargeRpcIdle = true,
             guestSkillLockRecovery = true;
     }

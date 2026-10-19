@@ -168,6 +168,9 @@ namespace SodRpg.Mod
         [LabelText("Resolve CustomRpc message types with a cached lookup / 受け取った CustomRpc の型探しをキャッシュで速くする")]
         public bool nativeCustomRpcDispatch = true;
 
+        [LabelText("Skip unchanged cast-preview updates while aiming (client) / 狙いが変わっていないキャストプレビュー更新を省く（クライアント）")]
+        public bool nativeSampleUpdateIdle = true;
+
         [LabelText("Level essence slots: add essence slots as the hero levels up (the host's setting applies) /\nレベル連動のエッセンス枠：英雄のレベルに応じて記憶のエッセンス枠を増やす（ホストの設定が使われる）")]
         public bool levelEssenceSlots = true;
 
