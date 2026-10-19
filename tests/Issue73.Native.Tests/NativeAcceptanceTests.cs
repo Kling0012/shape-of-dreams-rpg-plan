@@ -339,6 +339,45 @@ namespace Issue73.Native.Tests
             finally { Call(type, "Finalizer", reusedState); }
         }
 
+        /// <summary>軽量化: Guaranteed の前計算（Actor 連鎖の走査）は Hero 発の攻撃のときだけ走る。</summary>
+        [Fact]
+        public void GuaranteedBasicComputationRunsOnlyForHeroSources()
+        {
+            Host(new Actor());
+            HostAuthority.GuaranteedBasicQueries = 0;
+            HostAuthority.GuaranteedBasicResult = true; // Hero 発では戻り値がそのまま Hit.Guaranteed に入る
+            var previousActive = NetworkServer.active;
+            NetworkServer.active = true; // 接頭辞はサーバ側でだけ値を用意する
+            var type = typeof(BasicAttackContext);
+            var prefix = type.GetMethod("Prefix", Hidden);
+            object ScopeFor(Entity from)
+            {
+                object[] args = { new Actor(), from, new Entity(), true, true, null };
+                prefix.Invoke(null, args);
+                return args[args.Length - 1];
+            }
+            try
+            {
+                object beastState = ScopeFor(new Entity()); // 魔物・召喚と同じ Hero 以外の発
+                var beastHit = (BasicAttackContext.Hit)Get(type, "Current");
+                try
+                {
+                    Assert.Equal(0, HostAuthority.GuaranteedBasicQueries); // 前計算は読まれないので走らない
+                    Assert.False(beastHit.Guaranteed);
+                }
+                finally { Call(type, "Finalizer", beastState); }
+                object heroState = ScopeFor(new Hero());
+                var heroHit = (BasicAttackContext.Hit)Get(type, "Current");
+                try
+                {
+                    Assert.Equal(1, HostAuthority.GuaranteedBasicQueries); // Hero 発では従来どおり計算する
+                    Assert.True(heroHit.Guaranteed);
+                }
+                finally { Call(type, "Finalizer", heroState); }
+            }
+            finally { NetworkServer.active = previousActive; HostAuthority.GuaranteedBasicResult = false; HostAuthority.GuaranteedBasicQueries = 0; }
+        }
+
         [Fact]
         public void MechanismDispatchBufferReturnClearsInnerReferencesWithoutClearingOuterWork()
         {

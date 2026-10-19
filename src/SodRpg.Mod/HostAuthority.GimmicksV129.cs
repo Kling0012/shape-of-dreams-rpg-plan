@@ -200,7 +200,9 @@ namespace SodRpg.Mod
             if (critical || _gimmickDamageDepth != 0 || hero == null || victim == null || hero.Status == null
                 || !_runtimes.TryGetValue(hero, out var rt) || victim.GetRelation(hero) != EntityRelation.Enemy) return;
             float bonus = rt.Gimmicks.WeakspotPercent(victim.GetInstanceID(), Time.time);
-            if (bonus <= 0f) return;
+            // !(bonus > 0f) は元の乱数条件 bonus > 0 と NaN も含めて完全に同じ意味になる。bonus <= 0f だと
+            // NaN のときに素通りして乱数を1回余分に引き、出目の並びがずれる。
+            if (!(bonus > 0f)) return;
             // 会心確率の集計（Actor 連鎖の走査とキャスト表の参照）は副作用のない読み取りなので、
             // 付与率があるときだけ行う。乱数を引く条件（bonus > 0）は元のままで、出目の並びも変わらない。
             float originalChance = BasicCritChanceV129(BasicAttackContext.Current?.Actor, hero);
