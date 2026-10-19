@@ -23,6 +23,8 @@ namespace SodRpg.Core.Game
         public RunChoiceSnapshot Received => Snapshots.Latest;
         public int ZoneIndex { get; private set; } = -1;
         public bool HasPendingArrival => _arrivals.Count > 0 || _arrivalGraph.HasValue;
+        /// <summary>Local cache invalidation token; Restore also advances it through ClearRun.</summary>
+        public ulong StateGeneration { get; private set; }
 
         public void BeginRun(string runId, int zoneIndex)
         {
@@ -35,6 +37,7 @@ namespace SodRpg.Core.Game
                 Reconcile(runId, zoneIndex);
                 return;
             }
+            unchecked { StateGeneration++; }
             _runId = runId;
             // Old expedition facts cannot settle in this run. Remove them even when the new
             // run is still waiting for a choice and therefore does not call Drain yet.
@@ -202,6 +205,7 @@ namespace SodRpg.Core.Game
 
         public void ResetConnection(bool resetHistory = false)
         {
+            unchecked { StateGeneration++; }
             Snapshots.Reset();
             _applied = null;
             if (resetHistory) ClearRun();
@@ -209,6 +213,7 @@ namespace SodRpg.Core.Game
 
         public void ClearRun()
         {
+            unchecked { StateGeneration++; }
             _committed.Clear();
             _arrivals.Clear();
             _applied = null;
