@@ -162,7 +162,7 @@ namespace SodRpg.Mod
         [LabelText("Skip unchanged charge-count broadcasts (host) / 変わっていないチャージ数の全員への再送を省く（ホスト）")]
         public bool nativeChargeRpcIdle = true;
 
-        [LabelText("Skip Chaos Shrine hit handling while no max-stack bonus is taken / 破損した混沌の最大スタック強化が無い間の混沌の神殿の被弾ごとの処理を省く")]
+        [LabelText("Skip Chaos Shrine hit handling while no max-stack bonus is taken (host) / 混沌の神殿で光・闇の最大スタック強化を取っていない間、被弾ごとの処理を省く（ホスト）")]
         public bool nativeChaosShrineHitScan = true;
 
         [LabelText("Skip projectile RPCs whose effect prefab is null (host) / 演出プレハブが無い弾の命中・完了・消散 RPC を省く（ホスト）")]

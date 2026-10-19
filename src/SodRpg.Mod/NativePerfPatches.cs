@@ -2572,18 +2572,22 @@ namespace SodRpg.Mod
         private static bool _disabled;
         private static bool _warned;
 
-        private static bool Prepare()
+        private static bool Prepare() => TryPrepare("Se_Shrine_Chaos_StatBonus");
+
+        // Split out with the type name as an argument so the tests can point the same wiring at
+        // their stand-in class and at a missing name (the fail-soft path). The name-only lookup
+        // stays: the mod never references this native class, and TypeByName resolves the harness
+        // stand-in in tests exactly like the real class in the game.
+        internal static bool TryPrepare(string typeName)
         {
             try
             {
-                // Resolved by name like the other type-not-referenced-elsewhere patches, so
-                // the test harness compiles without a stand-in for this native class.
-                var type = AccessTools.TypeByName("Se_Shrine_Chaos_StatBonus");
+                var type = AccessTools.TypeByName(typeName);
                 if (type == null)
-                    throw new MissingMemberException("Se_Shrine_Chaos_StatBonus unavailable");
+                    throw new MissingMemberException(typeName + " unavailable");
                 _target = AccessTools.DeclaredMethod(type, "ActorEventOnDealDamage");
                 if (_target == null || _target.GetMethodBody() == null)
-                    throw new MissingMemberException("Se_Shrine_Chaos_StatBonus.ActorEventOnDealDamage unavailable");
+                    throw new MissingMemberException(typeName + ".ActorEventOnDealDamage unavailable");
                 _lightBonus = CreateBonusReader(type, "currentAddedLightMaxStack");
                 _darkBonus = CreateBonusReader(type, "currentAddedDarkMaxStack");
                 return true;
