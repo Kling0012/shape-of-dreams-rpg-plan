@@ -111,6 +111,11 @@ namespace SodRpg.Mod
         [LabelText("Coalesce same-frame duplicate proc projectiles / 同一フレームの同じ対象への同種反応弾を1本にまとめる")]
         public bool nativeProcCoalesce = true;
 
+        [LabelText("Limit guest publication of same-frame duplicate actors (host) / 同じフレームに同じ形で作った飛び道具などの参加者への公開を減らす（ホスト）")]
+        [Description("The server still creates and simulates every actor as in the base game; only the number published to remote guests is reduced. No type is enrolled yet, so nothing changes for now. / "
+            + "サーバでは本体どおりすべて生成・処理し、参加者へ公開する個数だけを減らす。対象の型はまだ登録していないため、現時点では何も変わらない。")]
+        public bool nativeGuestPublishLimit = true;
+
         [LabelText("Skip unchanged baked-mesh lookups for face attachments / 面に付ける装飾の変わっていない焼きメッシュの照会を省く")]
         public bool nativeAttachFaceIdle = true;
 
