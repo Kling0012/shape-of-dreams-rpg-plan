@@ -879,6 +879,23 @@ namespace SodRpg.Mod
             AfterCurrencyChange?.Invoke();
         }
     }
+    // NativeChatMuteAllocPerf（リンク）が typeof で探す本体のチャット受信のミュート判定。
+    // 実物は allHumanPlayers.Find(ラムダ) で送信者を探し、見つからなければミュート扱いとする。
+    // ミュート一覧の中身（IsPlayerMuted）はパッチがネイティブ呼び出しのまま残すので、
+    // この境界では判決の形だけを実物どおりに模倣する。一覧の中身は mutedPlayers として
+    // 外から差し替えられる形にし、既定は空（誰もミュートしていない）。テストはこの一覧で
+    // ミュート済み（true）・未ミュート（false）の両方を本体と Prefix の両方に同じように出す。
+    internal class ChatManager
+    {
+        public readonly HashSet<DewPlayer> mutedPlayers = new HashSet<DewPlayer>();
+        public bool IsPlayerMuted(DewPlayer player) => mutedPlayers.Contains(player);
+        public bool IsPlayerMutedByNetId(uint playerNetId)
+        {
+            foreach (DewPlayer p in DewPlayer.allHumanPlayers)
+                if (p.netId == playerNetId) return IsPlayerMuted(p);
+            return true;
+        }
+    }
     // NativePlayerTimerIdlePerf（リンク）の Prepare が typeof で探す本体の画面内タイマーの
     // ハンドル。実機ではグローバル名前空間の公開クラスで、ChargingChannel だけが
     // DewPlayer.ShowOnScreenTimer に渡す（実 DLL 逆コンパイル 2026-10-19）。ここには実物の

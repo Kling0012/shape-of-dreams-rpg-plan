@@ -195,6 +195,9 @@ namespace SodRpg.Mod
         [LabelText("Cache room-start dependency attribute lookups across rooms / 部屋開始時の依存属性の解決を部屋をまたいでキャッシュする")]
         public bool nativeRoomStartDependency = true;
 
+        [LabelText("Allocate no closure for the per-message chat mute check / チャット受信ごとのミュート判定でクロージャを確保しない")]
+        public bool nativeChatMuteCheckAlloc = true;
+
         [LabelText("Skip unchanged physics-proxy position writes / 止まっている実体の物理プロキシ位置の同じ書き込みを省く")]
         public bool nativeProxyPositionIdle = true;
 

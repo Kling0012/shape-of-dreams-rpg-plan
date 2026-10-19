@@ -84,6 +84,7 @@ namespace SodRpg.Mod
             nativePlayerTimerIdle = true,
             nativeEntityRotationIdle = true,
             nativeRoomStartDependency = true,
+            nativeChatMuteCheckAlloc = true,
             nativeProxyPositionIdle = true,
             nativeLobbyAccessoryIdle = true, nativeUltChargeRpcIdle = true,
             nativeChaosShrineHitScan = true,
