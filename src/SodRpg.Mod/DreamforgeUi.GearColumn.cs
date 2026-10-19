@@ -51,7 +51,7 @@ namespace SodRpg.Mod
             row.Enhance = relic?.Enhance ?? 0; row.Awaken = relic?.AwakenLevel ?? 0;
             row.Fusion = relic?.FusionLevel ?? 0; row.Rarity = relic?.Rarity ?? default; row.FirstPower = first;
             return row.Text = Content.SlotName(slot) + "： " + (relic != null ? UiStyles.RelicTitle(relic)
-                : Loc.T("<color=#777>（なし）</color>", "<color=#777>(empty)</color>"));
+                : Loc.T("<color=#777>（なし）</color>", "<color=#777>(empty)</color>", "<color=#777>（无）</color>"));
         }
         private readonly Dictionary<Stat, int> _gearStats = new Dictionary<Stat, int>();
         private readonly Dictionary<Power, int> _gearPowers = new Dictionary<Power, int>();
@@ -195,9 +195,9 @@ namespace SodRpg.Mod
                 GUILayout.EndHorizontal();
             }
             GUILayout.Space(6);
-            GUILayout.Label(Loc.T("現在の強さ", "Current build"), _st.Header);
+            GUILayout.Label(Loc.T("現在の強さ", "Current build", "当前的强度"), _st.Header);
             var build = _s.DisplayBuild(hero);
-            if (build.Stats.Count == 0 && build.Powers.Count == 0 && build.BossMoves.Count == 0) GUILayout.Label(Loc.T("まだ何も装着していません。真ん中の一覧から遺物を選び、「装着する」を押してください。", "Nothing equipped yet. Pick a relic from the middle list and press Equip."), _st.Small);
+            if (build.Stats.Count == 0 && build.Powers.Count == 0 && build.BossMoves.Count == 0) GUILayout.Label(Loc.T("まだ何も装着していません。真ん中の一覧から遺物を選び、「装着する」を押してください。", "Nothing equipped yet. Pick a relic from the middle list and press Equip.", "还没有装备任何物品。请从中间的列表选择遗物并按下“装备”。"), _st.Small);
             RefreshGearRows(build);
             foreach (string text in _gearRows) GUILayout.Label(text, _st.Small);
             foreach (var kv in build.Sets)
@@ -220,8 +220,8 @@ namespace SodRpg.Mod
                 }
             }
             if (!_s.CanEditLoadout)
-                GUILayout.Label(Loc.T("遠征中は確保地点に着いてから次の戦闘で敵を倒すまで、装備を変えられます。", "During an expedition, you can change gear from the moment you reach a secure point until you slay an enemy in the next fight."), _st.Warn);
-            GUILayout.Label(Loc.T("同じ系統（破壊・生命・想像）の遺物を2・3・4・6個とそろえるほど、系統のボーナスが重なります。", "Equip 2, 3, 4 or 6 relics of the same line (Destruction, Life, Imagination) for stacking line bonuses."), _st.Small);
+                GUILayout.Label(Loc.T("遠征中は確保地点に着いてから次の戦闘で敵を倒すまで、装備を変えられます。", "During an expedition, you can change gear from the moment you reach a secure point until you slay an enemy in the next fight.", "远征中，从抵达存仓点起至下一场战斗击败敌人前，可以更换装备。"), _st.Warn);
+            GUILayout.Label(Loc.T("同じ系統（破壊・生命・想像）の遺物を2・3・4・6個とそろえるほど、系統のボーナスが重なります。", "Equip 2, 3, 4 or 6 relics of the same line (Destruction, Life, Imagination) for stacking line bonuses.", "集齐2・3・4・6件同系（破坏・生命・想象）的遗物，可叠加系加成。"), _st.Small);
             FocusPicker();
             GUILayout.EndScrollView();
             GUILayout.EndVertical();
@@ -230,10 +230,10 @@ namespace SodRpg.Mod
         private void FocusPicker()
         {
             var p = _s.Profile;
-            GUILayout.Label(Loc.T("狙い系統：選んだ系統の遺物が2倍出やすくなります（遠征の前に選びます。「なし」なら今日の夢の系統が出やすくなります）", "Focus: relics of the chosen line drop twice as often (choose before an expedition; with None, today's dream decides)"), _st.Small);
+            GUILayout.Label(Loc.T("狙い系統：選んだ系統の遺物が2倍出やすくなります（遠征の前に選びます。「なし」なら今日の夢の系統が出やすくなります）", "Focus: relics of the chosen line drop twice as often (choose before an expedition; with None, today's dream decides)", "目标系：所选系的遗物掉落概率翻倍（远征前选择。选“无”时更容易掉落今日之梦的系）"), _st.Small);
             GUILayout.BeginHorizontal();
             GUI.enabled = p.Run == null || !_s.InGame;
-            if (GUILayout.Button(Loc.T("なし", "None"), p.Focus == null ? _st.ButtonSel : _st.Button)) SetFocus(null);
+            if (GUILayout.Button(Loc.T("なし", "None", "无"), p.Focus == null ? _st.ButtonSel : _st.Button)) SetFocus(null);
             foreach (Line l in FocusLines)
                 if (GUILayout.Button(Content.LineName(l).ToString(), p.Focus == l ? _st.ButtonSel : _st.Button)) SetFocus(l);
             GUI.enabled = true;
@@ -264,7 +264,7 @@ namespace SodRpg.Mod
         {
             if (_s.LocalHero != null) return;
             GUILayout.BeginHorizontal();
-            GUILayout.Label(Loc.T("旅人：", "Traveler:"), _st.Small, PickerCaptionWidth);
+            GUILayout.Label(Loc.T("旅人：", "Traveler:", "旅人："), _st.Small, PickerCaptionWidth);
             _pickerHeroes.Clear();
             _pickerHeroes.AddRange(KnownHeroes);
             foreach (string key in _s.Profile.Heroes.Keys)

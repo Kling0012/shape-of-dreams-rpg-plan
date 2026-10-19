@@ -108,6 +108,7 @@ namespace SodRpg.Core.Game
                 ["(Reason: "] = "（原因：",
                 [" ("] = "（",
                 [")"] = "）",
+                ["% less)"] = "%）",
                 ["Expedition training"] = "远征锻炼",
 
                 // 交換

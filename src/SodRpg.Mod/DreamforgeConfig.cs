@@ -18,13 +18,18 @@ namespace SodRpg.Mod
         [LabelText("Secure point panel key / 確保地点の画面を隠す・出すキー")]
         public Key securePanelKey = Key.F9;
 
-        [LabelText("Japanese UI / 日本語表示")]
-        public bool japanese = true;
-
-        // #877 中国語（簡体字）。japanese より優先する。旧版のMODはこの項目を無視して
+        // 表示言語は3択（#877）: chinese=true → 中国語 / japanese=true → 日本語 / 両方false → 英語。
+        // chinese が japanese より優先する。旧版のMODはこの項目を無視して
         // japanese（中国語選択時は false ＝ 英語）へ戻るため、旧版でも安全に既定の言語で動く。
         // 壊れた保存では両方既定値（true/false ＝ 日本語）に戻り、未知の言語値は生じない。
-        [LabelText("Chinese UI, Simplified / 简体中文界面（优先于日语 / 日本語より優先）")]
+        [LabelText("UI language: Japanese / 表示言語：日本語")]
+        [Description("Language is a three-way choice. Chinese (Simplified) takes priority over Japanese; uncheck both for English. / "
+            + "表示言語は3択です。簡体中文（中国語）をチェックすると日本語より優先され、両方外すと英語になります。")]
+        public bool japanese = true;
+
+        [LabelText("UI language: Chinese, Simplified / 表示言語：简体中文（优先于日语 / 日本語より優先）")]
+        [Description("Check to show Simplified Chinese (untranslated text falls back to English). Takes priority over Japanese. / "
+            + "チェックすると簡体字中国語で表示します（未訳の部分は英語）。日本語より優先されます。")]
         public bool chinese = false;
 
         /// <summary>2つの真偽値から表示言語を決める。壊れた値もこの組み合わせに収まる。</summary>

@@ -22,8 +22,8 @@ namespace SodRpg.Mod
             var rect = new Rect((w - ww) / 2, (h - wh) / 2, ww, wh);
             GUILayout.BeginArea(rect, _st.Window);
             GUILayout.BeginHorizontal();
-            GUILayout.Label(Loc.T("Dreamforge ─ 夢の遺物", "Dreamforge ─ Relics of the Dream"), _st.Title, GUILayout.ExpandWidth(true));
-            if (GUILayout.Button(Loc.T($"閉じる [{cfg.menuKey}]", $"Close [{cfg.menuKey}]"), _st.Button, GUILayout.Width(140))) Close();
+            GUILayout.Label(Loc.T("Dreamforge ─ 夢の遺物", "Dreamforge ─ Relics of the Dream", "Dreamforge ─ 梦之遗物"), _st.Title, GUILayout.ExpandWidth(true));
+            if (GUILayout.Button(Loc.T($"閉じる [{cfg.menuKey}]", $"Close [{cfg.menuKey}]", $"关闭 [{cfg.menuKey}]"), _st.Button, GUILayout.Width(140))) Close();
             GUILayout.EndHorizontal();
             DrawInfinityChoiceNotice();
             GUILayout.BeginHorizontal();
@@ -49,7 +49,8 @@ namespace SodRpg.Mod
             if (!_s.CoopTradeLocked && !starTab && !compact && !forgeTab && !tradeTab) DrawDreamDepthChoice(); // 鍛冶と交換では一覧の高さを優先する
             if (!starTab && !compact) GUILayout.Label(Loc.T(
                 $"欠片 {p.Material(Materials.Shard)}　調律石 {p.Material(Materials.Tuning)}" + (p.Material(Materials.NemesisCore) > 0 ? $"　禁忌の核 {p.Material(Materials.NemesisCore)}" : "") + $"　保管庫 {p.Stash.Count}/{Workshop.StashCapacity(p)}　旅人：{HeroName(HeroKey)}",
-                $"Shards {p.Material(Materials.Shard)}   Tuning {p.Material(Materials.Tuning)}" + (p.Material(Materials.NemesisCore) > 0 ? $"   Forbidden cores {p.Material(Materials.NemesisCore)}" : "") + $"   Stash {p.Stash.Count}/{Workshop.StashCapacity(p)}   Traveler: {HeroName(HeroKey)}"), _st.Small);
+                $"Shards {p.Material(Materials.Shard)}   Tuning {p.Material(Materials.Tuning)}" + (p.Material(Materials.NemesisCore) > 0 ? $"   Forbidden cores {p.Material(Materials.NemesisCore)}" : "") + $"   Stash {p.Stash.Count}/{Workshop.StashCapacity(p)}   Traveler: {HeroName(HeroKey)}",
+                $"碎片 {p.Material(Materials.Shard)}　调律石 {p.Material(Materials.Tuning)}" + (p.Material(Materials.NemesisCore) > 0 ? $"　禁忌之核 {p.Material(Materials.NemesisCore)}" : "") + $"　仓库 {p.Stash.Count}/{Workshop.StashCapacity(p)}　旅人：{HeroName(HeroKey)}"), _st.Small);
             GUILayout.Label(UiStyles.Colored(TabIntro(_tab), "#c8d0ff"), _st.Small);
 
             // 変更と払い戻しの承認・取消ボタンとステータス行は、タブの中身より先に描く（#147）。

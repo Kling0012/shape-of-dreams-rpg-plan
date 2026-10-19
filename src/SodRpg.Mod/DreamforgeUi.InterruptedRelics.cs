@@ -22,7 +22,8 @@ namespace SodRpg.Mod
                 _interruptedRelicLabelCount = count;
                 _interruptedRelicLabelLanguage = language;
                 _interruptedRelicLabel = Loc.T($"中断した遠征の遺物を受け取る（{count}個）",
-                    $"Claim interrupted expedition relics ({count})");
+                    $"Claim interrupted expedition relics ({count})",
+                    $"领取中断远征的遗物（{count}件）");
             }
             bool enabled = GUI.enabled;
             GUI.enabled = enabled && _s.CanClaimInterruptedRelics;

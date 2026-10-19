@@ -251,16 +251,19 @@ namespace SodRpg.Mod
                 _dynamicLimitsJa = Loc.Language;
                 int dynamicClose = (int)Math.Round(CoopBalance.DynamicDifficulty.Strength * 100);
                 _dynamicGap = Loc.T($"戦った部屋のダメージから、次の部屋の敵を調整します。強さの差の{dynamicClose}%だけを埋めます。",
-                    $"Use combat damage to adjust enemies in the next room, closing {dynamicClose}% of the strength gap.");
+                    $"Use combat damage to adjust enemies in the next room, closing {dynamicClose}% of the strength gap.",
+                    $"根据战斗房间的伤害调整下一个房间的敌人，只弥补强度差距的{dynamicClose}%。");
                 string dynamicMin = CoopBalance.DynamicDifficulty.MinFactor.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
                 string rewardMax = CoopBalance.DynamicDifficulty.RewardMaxMultiplier.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
                 _dynamicLimits = Loc.T($"係数は{dynamicMin}以上で上限はありません。硬くなった分だけ報酬が増え（最大×{rewardMax}）、易しくなっても報酬は減りません。",
-                    $"Factor starts at {dynamicMin} with no upper limit. Tougher fights add rewards (up to ×{rewardMax}); easier ones never cut them.");
+                    $"Factor starts at {dynamicMin} with no upper limit. Tougher fights add rewards (up to ×{rewardMax}); easier ones never cut them.",
+                    $"系数下限为{dynamicMin}，没有上限。变强会增加奖励（最高×{rewardMax}），变简单也不会减少奖励。");
             }
             GUILayout.Label(_dynamicGap, _st.Small);
             GUILayout.Label(_dynamicLimits, _st.Small);
             GUILayout.Label(Loc.T("協力プレイでは担当制と一緒に有効になります。",
-                "In co-op it runs together with enemy ownership."), _st.Small);
+                "In co-op it runs together with enemy ownership.",
+                "协作游玩时与敌人负责制一同生效。"), _st.Small);
             if (!_ownershipLegendFailed)
             {
                 try { DrawOwnershipLegend(); }
