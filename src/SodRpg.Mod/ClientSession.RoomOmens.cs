@@ -35,9 +35,11 @@ namespace SodRpg.Mod
         private readonly float[] _coopResonantUntil = new float[3];
         private float _coopSnapshotExpires;
         private int _coopDisplayZone = -1, _coopDisplayNode = -1;
-        // 盾の表示条件（CurrentRoomOmen は文字列比較とリスト走査を含む）は受信と部屋表示の更新でしか
-        // 変わらず、フレーム内では不変。名札描画が 1 フレームに敵の数×3 回呼ぶため、
-        // 条件の確定は 1 フレーム 1 回にして、受信時には無効化する。
+        // 名札描画は 1 フレームに敵の数×3 回呼ぶため、盾の表示条件の確定は 1 フレーム 1 回にする。
+        // _coopDisplayZone・_coopDisplayNode・_coopSnapshotExpires と盾の情報は ReceiveCoopOmen だけで
+        // 更新し、その際に無効化する。SetRoomOmen で表示が変わる場合も ReceiveCoopOmen(null) を通る。
+        // 遠征状態（RunActive）や本体側の区域・部屋・ノードが同じフレーム内で変わった場合は、
+        // 次のフレームで反映する。最大 1 フレームの遅れは表示だけで、判定や通信には使わない。
         private int _coopGateFrame = -1;
         private readonly uint[] _coopGateIds = new uint[3];
         public uint CoopWardId(int slot)
