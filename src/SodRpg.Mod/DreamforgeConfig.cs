@@ -174,6 +174,9 @@ namespace SodRpg.Mod
         [LabelText("Skip unchanged cast-preview updates while aiming (client) / 狙いが変わっていないキャストプレビュー更新を省く（クライアント）")]
         public bool nativeSampleUpdateIdle = true;
 
+        [LabelText("Skip dash sweeps' discarded final step write (host) / ダッシュ攻撃の掃引で捨てられる最後の1歩の範囲移動の書き込みを省く（ホスト）")]
+        public bool nativeDashSweepStep = true;
+
         [LabelText("Skip idle weapon-scale writes on heroes / 英雄の武器スケールが止まっているときの同じ書き込みを省く")]
         public bool nativeHeroWeaponIdle = true;
 

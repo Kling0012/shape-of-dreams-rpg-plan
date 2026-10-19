@@ -33,10 +33,25 @@ namespace UnityEngine
         public static bool operator !=(Bounds a, Bounds b) => !a.Equals(b);
     }
 
-    // transform.position の読み出しの境界。移動・回転の意味はこの検証では不要。
+    // transform.position の境界。移動・回転の意味はこの検証では不要なため値をそのまま持つ。
+    // （#866）NativeDashSweepStepPerf が get_position / set_position をプロパティとして解決する
+    // ため、フィールドではなくプロパティにする（読み書きの意味は変わらない）。set は書き込みを
+    // 遅延記録するリストにも足す（ダッシュ掃引の等価性検証がパッチ前後の書き込み列を見る）。
     internal partial class Transform
     {
-        public Vector3 position;
+        private Vector3 _position;
+        internal List<Vector3> positionWriteLog;
+
+        public Vector3 position
+        {
+            get => _position;
+            set
+            {
+                _position = value;
+                if (positionWriteLog == null) positionWriteLog = new List<Vector3>();
+                positionWriteLog.Add(value);
+            }
+        }
     }
 
     // 本体のレンダラーの境界。Renderer.bounds の読み出しだけが必要。
