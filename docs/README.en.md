@@ -4,8 +4,8 @@ This page is the English description of the Dreamforge RPG mod for *Shape of Dre
 The Japanese description lives on the distribution page and in the repository's [README](../README.md).
 A Chinese (Simplified) guide is available at [docs/README.zh.md](README.zh.md).
 
-- Latest release and install ZIP: [Releases](https://github.com/Kling0012/shape-of-dreams-rpg-plan/releases)
-- Changes per version: [CHANGELOG](../../CHANGELOG.md)
+- Download: [Steam Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=3822274988)
+- Changes per version: [CHANGELOG](../CHANGELOG.md)
 
 Dreamforge RPG turns every run into part of a long RPG journey: relics you keep, a "secure or delve" choice at every zone, a star map per Traveler, a forge and long-term goals. Co-op is supported.
 
@@ -18,10 +18,10 @@ This mod is made entirely by AI and has not been play-tested. Reports from playe
 
 ## Installation
 
-1. Download `DreamforgeRPG-vX.Y.Z.zip` from [Releases](https://github.com/Kling0012/shape-of-dreams-rpg-plan/releases).
-2. Unzip it and place the `DreamforgeRPG` folder inside the game's `Mods` folder (`<Shape of Dreams>/Mods/DreamforgeRPG/`).
+1. Subscribe to Dreamforge RPG on the [Steam Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=3822274988).
+2. Steam downloads it and keeps it up to date.
 3. Start the game and enable Dreamforge RPG in the mod manager.
-4. To update, replace the `DreamforgeRPG` folder with the new one and restart the game. Save data carries over.
+4. After an update, restart the game. Save data carries over.
 
 - **For co-op, every player needs the same mod version.** Applying bonuses is done by the host.
 - Saves are stored in `<persistentDataPath>/QuickSave/Mods/DreamforgeRPG/` (on Windows: `%USERPROFILE%/AppData/LocalLow/Lizard Smoothie/Shape of Dreams/QuickSave/Mods/DreamforgeRPG/`). The previous save is kept as `.bak`.

@@ -1,5 +1,5 @@
-[h1]English guide → [url=https://github.com/Kling0012/shape-of-dreams-rpg-plan/blob/dev/docs/README.en.md]docs/README.en.md[/url][/h1]
-[h1]中文说明 → [url=https://github.com/Kling0012/shape-of-dreams-rpg-plan/blob/dev/docs/README.zh.md]docs/README.zh.md[/url][/h1]
+[h1]English guide → [url=https://github.com/Kling0012/dreamforge-rpg/blob/main/docs/README.en.md]docs/README.en.md[/url][/h1]
+[h1]中文说明 → [url=https://github.com/Kling0012/dreamforge-rpg/blob/main/docs/README.zh.md]docs/README.zh.md[/url][/h1]
 
 [b]止まっている相手の向き、撃破の処理、宝石のクールダウンの送信から無駄を省き、協力プレイを軽くしました。[/b]
 
