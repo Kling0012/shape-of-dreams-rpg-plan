@@ -151,6 +151,8 @@ namespace SodRpg.Mod
         {
             if (NetworkServer.active) HostAuthority.NativeInstance?.BeginSkollCoreUpdate(__instance);
         }
+        // 間隔決定の検証は1更新の中でだけ有効。Finalizer で毎更新、記録を捨てる。
+        private static void Finalizer() => HostAuthority.NativeInstance?.EndSkollCoreUpdate();
         private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
         {
             var evaluate = AccessTools.Method(typeof(AnimationCurve),nameof(AnimationCurve.Evaluate),new[] { typeof(float) });
@@ -218,6 +220,11 @@ namespace SodRpg.Mod
             internal readonly Dictionary<object, SkollCorePending> Pending = new Dictionary<object, SkollCorePending>(BossProfiles.MaxEntries);
         }
         private readonly BossObjectPool<SkollCoreState> _skollCorePool = new BossObjectPool<SkollCoreState>(128, () => new SkollCoreState());
+        // ActiveLogicUpdate の Prefix で検証した結果を、同じ更新内の間隔決定（SkollCoreInterval）に流用する記録。
+        private static Gem_U_GlacialCore _skollUpdateCore;
+        private static HeroRuntime _skollUpdateRuntime;
+        private static SkollCoreState _skollUpdateState;
+        private static int _skollUpdateStage;
         private static readonly BossRewardProfile SkollCoreRewardProfile=LoadSkollCoreRewardProfile();
         private static BossRewardProfile LoadSkollCoreRewardProfile()
         {
@@ -329,12 +336,25 @@ namespace SodRpg.Mod
         }
         internal void BeginSkollCoreUpdate(Gem_U_GlacialCore core)
         {
-            if (SkollCoreRuntime(core,out _,out var state)) state.ApprovedThisUpdate=false;
+            if (!SkollCoreRuntime(core,out var rt,out var state)) return;
+            state.ApprovedThisUpdate=false;
+            _skollUpdateCore=core; _skollUpdateRuntime=rt; _skollUpdateState=state; _skollUpdateStage=0;
+        }
+        internal void EndSkollCoreUpdate()
+        {
+            _skollUpdateCore=null; _skollUpdateRuntime=null; _skollUpdateState=null; _skollUpdateStage=0;
         }
         internal float SkollCoreInterval(Gem_U_GlacialCore core, float nativeInterval)
         {
-            if (!SkollCoreRuntime(core,out var rt,out var state) || state.Remaining <= 0 || Time.time >= state.BurstUntil
-                || BossRewardStage(rt,BossProfiles.SkollRewardId) < 3) return nativeInterval;
+            HeroRuntime rt; SkollCoreState state;
+            bool cached = ReferenceEquals(_skollUpdateCore,core) && _skollUpdateRuntime != null && _skollUpdateState != null;
+            if (cached) { rt=_skollUpdateRuntime; state=_skollUpdateState; }
+            else if (!SkollCoreRuntime(core,out rt,out state)) return nativeInterval;
+            if (state.Remaining <= 0 || Time.time >= state.BurstUntil) return nativeInterval;
+            // 報酬段階は1更新で1回だけ計算する（キャッシュなしの経路では従来どおり都度計算）。
+            int stage = cached ? (_skollUpdateStage != 0 ? _skollUpdateStage : _skollUpdateStage=BossRewardStage(rt,BossProfiles.SkollRewardId))
+                : BossRewardStage(rt,BossProfiles.SkollRewardId);
+            if (stage < 3) return nativeInterval;
             if (SkollCoreBank == null || SkollCoreTargets == null) return nativeInterval;
             float bank=0; int bankScan=0; foreach (var entry in SkollCoreBank(core)) { if(bankScan++>=256) break; bank += entry.Value; }
             if (bank <= 0) return nativeInterval;
@@ -346,7 +366,7 @@ namespace SodRpg.Mod
             finally { handle.Return(); }
             if (!legal) return nativeInterval;
             state.ApprovedThisUpdate=true;
-            return Math.Min(nativeInterval,SkollCoreReward(rt).Actions[2].IntervalMillis / 1000f);
+            return Math.Min(nativeInterval,SkollCoreRewardProfile.Stages[stage-1].Actions[2].IntervalMillis / 1000f);
         }
         internal void RetargetSkollCoreProjectile(Gem_U_GlacialCore core, Ai_Gem_U_GlacialCore_Projectile projectile)
         {
