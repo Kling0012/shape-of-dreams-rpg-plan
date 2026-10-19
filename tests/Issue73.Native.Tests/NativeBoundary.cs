@@ -668,6 +668,22 @@ namespace SodRpg.Mod
         public bool isFriendly;
         public Entity target;
     }
+    // NativeProxyPositionIdlePerf の受け口。本体 Dew.Core DewPhysics.UpdateProxyPosition /
+    // ProxyCollider（2026-10-19 逆コンパイル確認）の、パッチが触る範囲の模倣:
+    // プロキシの transform への (x, z, 0) 代入だけ。Transform.position の getter/setter は
+    // 境界の UnityEngine.Transform（CharacterModelDisplayBoundsBoundary）を使う。
+    internal sealed class ProxyCollider
+    {
+        public UnityEngine.Transform transform;
+    }
+    internal static class DewPhysics
+    {
+        // 本体と同じ代入（引数の y は捨てて 0 を書く）。
+        internal static void UpdateProxyPosition(ProxyCollider proxy, UnityEngine.Vector3 position)
+        {
+            proxy.transform.position = new UnityEngine.Vector3(position.x, position.z, 0f);
+        }
+    }
     internal static class EntityLifetimeExtensions
     {
         // 本体の拡張と同じ意味: 消失・非アクティブ・死亡・KO を無効対象とする。
