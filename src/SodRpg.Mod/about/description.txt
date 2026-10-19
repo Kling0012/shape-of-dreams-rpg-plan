@@ -1,5 +1,5 @@
-[b]Made the host lighter by skipping an unused final hitbox step in dash attacks.[/b]
-[b]ダッシュ攻撃で使われない最後の1歩ぶんの当たり判定の移動を省き、ホストの動作を軽くしました。[/b]
+[b]Guests now skip re-reading unchanged choice updates from the host, making their games a little lighter.[/b]
+[b]ホストから届く同じ内容の選択状態を参加者が読み直さないようにし、参加者側の動作を少し軽くしました。[/b]
 
 [h1]Dreamforge RPG[/h1]
 Turns every run into part of a long RPG journey: relics you keep, a "secure or delve" choice at every zone, a star map per Traveler, a forge and long-term goals. Co-op ready.
