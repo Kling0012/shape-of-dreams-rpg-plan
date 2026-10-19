@@ -389,6 +389,7 @@ namespace SodRpg.Mod
                         _completedRunId = choice.RunId; ActiveRunId = null;
                         _pendingRunVictory = null; _pendingResultRunId = null;
                         _runChoiceProgress.ClearRun();
+                        _processedChoicesPayload = null; // 進行を作り直すので、処理済み再送の読み捨てを解除する。
                         if (pacts > 0) SendCurseClear();
                     }
                     else

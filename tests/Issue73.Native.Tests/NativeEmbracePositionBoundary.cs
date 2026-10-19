@@ -80,6 +80,7 @@ namespace SodRpg.Mod
             nativeSampleUpdateIdle = true,
             nativeDashSweepStep = true,
             nativeHeroWeaponIdle = true,
+            nativePlayerTimerIdle = true,
             nativeEntityRotationIdle = true,
             nativeLobbyAccessoryIdle = true, nativeUltChargeRpcIdle = true,
             nativeChaosShrineHitScan = true,

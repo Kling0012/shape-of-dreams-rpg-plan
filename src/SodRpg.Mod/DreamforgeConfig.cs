@@ -180,6 +180,9 @@ namespace SodRpg.Mod
         [LabelText("Skip idle weapon-scale writes on heroes / 英雄の武器スケールが止まっているときの同じ書き込みを省く")]
         public bool nativeHeroWeaponIdle = true;
 
+        [LabelText("Skip unchanged on-screen timer re-sends (host) / 変わっていない画面内タイマーの毎フレーム再送を省く（ホスト）")]
+        public bool nativePlayerTimerIdle = true;
+
         [LabelText("Skip settled entity rotation rewrites / 向きが止まった実体の同じ回転の書き込みを省く")]
         public bool nativeEntityRotationIdle = true;
 

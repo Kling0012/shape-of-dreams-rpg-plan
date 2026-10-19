@@ -45,6 +45,7 @@ namespace SodRpg.Mod
             NativePerfOptions.SampleUpdateIdle = config.nativeSampleUpdateIdle;
             NativePerfOptions.DashSweepStep = config.nativeDashSweepStep;
             NativePerfOptions.HeroWeaponIdle = config.nativeHeroWeaponIdle;
+            NativePerfOptions.PlayerTimerIdle = config.nativePlayerTimerIdle;
             NativePerfOptions.EntityRotationIdle = config.nativeEntityRotationIdle;
         }
     }
@@ -80,6 +81,7 @@ namespace SodRpg.Mod
         internal static bool SampleUpdateIdle = true;
         internal static bool DashSweepStep = true;
         internal static bool HeroWeaponIdle = true;
+        internal static bool PlayerTimerIdle = true;
         internal static bool EntityRotationIdle = true;
     }
 
@@ -3087,6 +3089,183 @@ namespace SodRpg.Mod
             // Every delivery starts a new sampling context on this client, so the remembered
             // last send no longer describes it (see NativeSampleUpdateIdlePerf).
             NativeSampleUpdateIdlePerf.Reset();
+        }
+    }
+
+    [HarmonyPatch]
+    internal static class NativePlayerTimerIdlePerf
+    {
+        // DewPlayer.LogicUpdate_InGame_NetworkedOnScreenTimer is the game's only
+        // TpcSetNetworkedOnScreenTimerValue sender: every logic frame, for every networked
+        // on-screen timer shown to a player, the host targets the owner with an
+        // (id, value) pair — even when valueGetter returned exactly the value the receiver
+        // already holds. The only creator of NetworkedOnScreenTimerHandle is
+        // ChargingChannel (valueGetter = () => chargeAmount): once a charge is full,
+        // chargeAmount stays 1f for the whole hold, so vanilla re-sends an unchanged float
+        // at logic-frame rate for as long as the player keeps aiming.
+        //
+        // The receive side (UserCode_TpcSetNetworkedOnScreenTimerValue) is a plain store
+        // into the RefValue created by the TpcCreateNetworkedOnScreenTimer payload, with
+        // no event, heartbeat or timeout: re-receiving an identical value changes nothing.
+        // This prefix remembers, per DewPlayer and timer id, the last value the receiver
+        // is known to hold and skips exactly the exact duplicates (float ==, so NaN always
+        // sends; -0f/0f collapse, which cannot matter for a charge fraction >= 0f).
+        // NativePlayerTimerCreateSeedPerf seeds the memory from every create payload, so
+        // the invariant "memory == receiver-held value after every create and every sent
+        // set" holds from the first frame. Timer ids come from the per-instance
+        // _nextOnScreenTimerId counter, which only increments (DewPlayer.Init clears only
+        // the four player lists), so an id is never reused while its DewPlayer lives and a
+        // stale entry can never mask a newer timer; the table dies with the player object.
+        // Hide (TpcRemoveNetworkedOnScreenTimer) itself goes out untouched; the memory
+        // forgets the id alongside it (NativePlayerTimerRemoveForgetPerf), so the
+        // per-player table tracks the live timers instead of growing once per charged
+        // skill for the whole session. No message format changes, so vanilla peers
+        // interoperate unchanged and simply never receive the redundant identical
+        // updates; the nativePlayerTimerIdle option turns the skip off. A DewPlayer
+        // whose connectionToClient is missing or not ready yet (mid-join) never seeds
+        // or skips: Mirror logs and drops a TargetRpc with no connection, and a client
+        // that has not finished joining may not have the player object yet, so what the
+        // receiver holds is unknowable in that window and every value passes through.
+        private static MethodBase[] _targets = Array.Empty<MethodBase>();
+        // Shared with NativePlayerTimerCreateSeedPerf and NativePlayerTimerRemoveForgetPerf
+        // so a missing native method warns once.
+        internal static bool _warned;
+        private static bool _disabled;
+
+        internal static readonly ConditionalWeakTable<DewPlayer, Dictionary<int, float>> LastHeld =
+            new ConditionalWeakTable<DewPlayer, Dictionary<int, float>>();
+        internal static readonly ConditionalWeakTable<DewPlayer, Dictionary<int, float>>.CreateValueCallback
+            CreateLastHeld = _ => new Dictionary<int, float>();
+
+        // True only when a send on this player can reach its receiver: both the seeder and
+        // the skipper may record a value exclusively behind this gate, which is what keeps
+        // the memory equal to what the receiver actually holds.
+        internal static bool IsReceiverReady(DewPlayer player)
+            => player.connectionToClient != null && player.connectionToClient.isReady;
+
+        internal static MethodBase FindSetTarget()
+            => NativePerfPatch.Find(typeof(DewPlayer), "TpcSetNetworkedOnScreenTimerValue",
+                new[] { typeof(int), typeof(float) }, ref _warned);
+
+        internal static MethodBase FindCreateTarget()
+            => NativePerfPatch.Find(typeof(DewPlayer), "TpcCreateNetworkedOnScreenTimer",
+                new[] { typeof(int), typeof(NetworkedOnScreenTimerHandle), typeof(float) }, ref _warned);
+
+        private static bool Prepare()
+        {
+            var set = FindSetTarget();
+            var create = FindCreateTarget();
+            // Fail soft like the other native patches: without the create seeder the
+            // memory would not describe what a newly created timer holds on the receiver.
+            _targets = set != null && create != null ? new MethodBase[] { set } : Array.Empty<MethodBase>();
+            return _targets.Length > 0;
+        }
+
+        private static IEnumerable<MethodBase> TargetMethods() => _targets;
+
+        private static bool Prefix(DewPlayer __instance, int id, float value)
+        {
+            if (!NativePerfOptions.PlayerTimerIdle || _disabled) return true;
+            try
+            {
+                if (!Mirror.NetworkServer.active) return true;
+                // An undeliverable send must not advance the memory (see IsReceiverReady):
+                // letting it through costs one duplicate at most, recording it would make
+                // the skip suppress the first real send after the client catches up.
+                if (!IsReceiverReady(__instance)) return true;
+                var held = LastHeld.GetValue(__instance, CreateLastHeld);
+                if (held.TryGetValue(id, out var known) && known == value) return false;
+                held[id] = value;
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _disabled = true;
+                NativePerfPatch.Warn(ref _warned, "player on-screen timer idle", ex.Message);
+                return true;
+            }
+        }
+    }
+
+    [HarmonyPatch]
+    internal static class NativePlayerTimerCreateSeedPerf
+    {
+        private static MethodBase[] _targets = Array.Empty<MethodBase>();
+
+        private static bool Prepare()
+        {
+            var create = NativePlayerTimerIdlePerf.FindCreateTarget();
+            // Off only when the create sender is gone (already warned by the sibling);
+            // the one dictionary assignment it guards costs nothing.
+            _targets = create != null ? new MethodBase[] { create } : Array.Empty<MethodBase>();
+            return _targets.Length > 0;
+        }
+
+        private static IEnumerable<MethodBase> TargetMethods() => _targets;
+
+        private static void Postfix(DewPlayer __instance, int id, float defaultValue)
+        {
+            if (!NativePerfOptions.PlayerTimerIdle) return;
+            if (!Mirror.NetworkServer.active) return;
+            try
+            {
+                // The create payload is what puts the initial value on the receiver, so
+                // it defines what the receiver holds for this id from now on — but only
+                // when the receiver can actually get it (see IsReceiverReady). A create
+                // dropped mid-join must not seed, or the first same-value set after the
+                // client caught up would be skipped for a timer it never received.
+                if (!NativePlayerTimerIdlePerf.IsReceiverReady(__instance)) return;
+                NativePlayerTimerIdlePerf.LastHeld.GetValue(__instance,
+                    NativePlayerTimerIdlePerf.CreateLastHeld)[id] = defaultValue;
+            }
+            catch (Exception ex)
+            {
+                // Seeding is an optimization bookkeeping step: a failure here only means
+                // one duplicate set may go out, so leave the skip patch enabled — but
+                // still leave the reason in the log once, like the other native patches.
+                NativePerfPatch.Warn(ref NativePlayerTimerIdlePerf._warned, "player on-screen timer seed", ex.Message);
+            }
+        }
+    }
+
+    [HarmonyPatch]
+    internal static class NativePlayerTimerRemoveForgetPerf
+    {
+        private static MethodBase[] _targets = Array.Empty<MethodBase>();
+
+        internal static MethodBase FindRemoveTarget()
+            => NativePerfPatch.Find(typeof(DewPlayer), "TpcRemoveNetworkedOnScreenTimer",
+                new[] { typeof(int) }, ref NativePlayerTimerIdlePerf._warned);
+
+        private static bool Prepare()
+        {
+            var remove = FindRemoveTarget();
+            // Fail soft like the sibling patches: without the hide sender the memory just
+            // keeps its entries, which costs bytes (ids are never reused) and nothing else.
+            _targets = remove != null ? new MethodBase[] { remove } : Array.Empty<MethodBase>();
+            return _targets.Length > 0;
+        }
+
+        private static IEnumerable<MethodBase> TargetMethods() => _targets;
+
+        private static void Postfix(DewPlayer __instance, int id)
+        {
+            try
+            {
+                // The hide payload takes the timer off the receiver, so the memory forgets
+                // the id with it. Without this the per-player table grows once per charged
+                // skill for the whole session (ids only increment). A missing id or player
+                // entry is nothing to do.
+                if (NativePlayerTimerIdlePerf.LastHeld.TryGetValue(__instance, out var held))
+                    held.Remove(id);
+            }
+            catch (Exception ex)
+            {
+                // Forgetting is pure bookkeeping: a leftover entry costs a few bytes and
+                // cannot suppress a send that matters — still logged once, since an
+                // exception here is the only sign the bookkeeping is misbehaving.
+                NativePerfPatch.Warn(ref NativePlayerTimerIdlePerf._warned, "player on-screen timer forget", ex.Message);
+            }
         }
     }
 
