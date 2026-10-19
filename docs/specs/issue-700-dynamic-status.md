@@ -14,4 +14,6 @@
 - `DreamforgeUi.DrawEnemyOwnershipSettings` の設定の下に表示する。文字列は0.25秒ごとに作り直し、例外が出たらこの表示だけを止める。
 - ホストは自分の規則（`HostAuthority.DynamicStatusSnapshot`・`HostDynamicDisplay`）を読む。参加者は、担当制の名簿と同じ netId 0 のメッセージに足した省略可能な `dynamicStatus` と、既存の旅人ごとの倍率だけを表示し、今のランで受け取っていない値は「—」にする。`dynamicStatus` は値が変わったときと5秒ごとの名簿の再送で送る。
 - 動的難易度の状態：有効（`DynamicApplicationRunning`）、ソロでは無効（1人で「ソロでも使う」が切）、無効（それ以外）。
-- 旅人ごと：倍率 ×f、敵の体力 ×f、敵の攻撃 ×f^damageExponent、報酬 ×min(rewardMaxMultiplier, 1 + rewardShare × max(0, f−1))。2026-10-17に倍率のバランス上の上限を外し、報酬上限を独立した `rewardMaxMultiplier=2.0` とした。f<1 はやさしめ、f>1 はきびしめ、1 は標準。
+- 旅人ごと：倍率 ×f、敵の体力 ×f、敵の攻撃 ×1、報酬 ×min(rewardMaxMultiplier, 1 + rewardShare × max(0, f−1))。2026-10-17に倍率のバランス上の上限を外し、報酬上限を独立した `rewardMaxMultiplier=2.0` とした。2026-10-19に敵の攻撃を掛け算するのをやめた（`damageExponent` の値は残すが使わない）。f<1 はやさしめ、f>1 はきびしめ、1 は標準。体力と報酬には差の割合（+42%・−24%）も併記する。
+- 画面左上のまとめ表示（HUD）にも、遠征中は夢の圧の行の直後に自分の分だけ1行を出す。例：「動的難易度 敵の体力 +42%・報酬 +21%」「動的難易度 敵の体力 −24%（やさしめ）」、標準のときは「動的難易度 標準」。英語は "Dynamic difficulty: Enemy HP +42% · Rewards +21%"。無効のとき、参加者が値を受け取っていないとき、HUD を切っているときは行を出さない。敵の攻撃は変わらないので出さない。`hudMode` が Compact でも出す。
+- 2026-10-19の調整：`dynamicDifficulty` の `targetSeconds` を 3→2.4、`strength` を 0.4→0.3、`minFactor` を 0.65→0.6 に変えた。同じ撃破の速さでも係数が上がりにくく、上下の動きもゆるやかにし、苦戦時にはもう少し下がれるようにした。

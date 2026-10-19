@@ -516,6 +516,16 @@ namespace SodRpg.Mod
                     .Append(Loc.T("・攻×", " · ATK×")).Append(_s.PressureDamageMultiplier.ToString("0.00"));
             else sb.Append(Loc.T("ホストの確認待ち", "awaiting host"));
             sb.Append("</size>");
+            // 遠征中は動的難易度の自分の分を1行で出す（#700）。例外が出たらこの行だけを止める。
+            if (run != null && _s.ActiveRunId != null && !_dynamicHudFailed)
+            {
+                try { AppendDynamicHud(sb); }
+                catch (Exception ex)
+                {
+                    _dynamicHudFailed = true;
+                    Log.Warn("Dynamic difficulty HUD line disabled; HUD continues: " + ex.Message);
+                }
+            }
             if (run?.Infinity != null)
             {
                 var infinity = run.Infinity;

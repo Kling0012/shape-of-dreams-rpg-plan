@@ -177,7 +177,8 @@ namespace SodRpg.Mod
             internal OwnershipPressureValue(DreamPressure pressure, double factor)
             {
                 HealthMultiplier = pressure.HealthMultiplier * factor;
-                DamageMultiplier = pressure.DamageMultiplier * Math.Pow(factor, CoopBalance.DynamicDifficulty.DamageExponent);
+                // 2026-10-19：動的難易度は敵の攻撃を変えない。体力だけに掛ける。
+                DamageMultiplier = pressure.DamageMultiplier;
             }
         }
 
@@ -426,8 +427,8 @@ namespace SodRpg.Mod
                     multiplier = (float)OwnershipEnemyPressure(state).DamageMultiplier;
                 else
                 {
+                    // 動的難易度は敵の攻撃を変えない（2026-10-19）。担当外は共有の道標の圧だけ当てる。
                     if (PersonalEnemyWaypointsRunning()) multiplier = (float)OwnershipBasePressure(null).DamageMultiplier;
-                    ApplySoloDynamicDamage(enemy, ref multiplier);
                 }
             }
             catch (Exception ex) { FailOwnership(OwnershipPart.Strength, ex); }
