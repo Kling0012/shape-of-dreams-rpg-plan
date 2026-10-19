@@ -2602,7 +2602,11 @@ namespace SodRpg.Mod
                 case "RpcPlayOnEntityEffect": return __instance.effectOnEntity != null;
                 case "RpcPlayOnDissipateEffect": return __instance.effectOnDissipate != null;
                 case "RpcStopOnFlyEffect": return __instance.effectOnFly != null;
-                default: return __instance.effectOnComplete != null;
+                case "RpcPlayOnCompleteEffect": return __instance.effectOnComplete != null;
+                // A name without a case (a sender added to Prepare without its pairing
+                // here) falls back to "send": a wrong skip could drop a message the
+                // receiver would act on, while a wrong send only costs vanilla bandwidth.
+                default: return true;
             }
         }
     }
