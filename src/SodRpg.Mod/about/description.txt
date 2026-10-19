@@ -1,7 +1,7 @@
 [h1]English guide → [url=https://github.com/Kling0012/shape-of-dreams-rpg-plan/blob/dev/docs/README.en.md]docs/README.en.md[/url][/h1]
 [h1]中文说明 → [url=https://github.com/Kling0012/shape-of-dreams-rpg-plan/blob/dev/docs/README.zh.md]docs/README.zh.md[/url][/h1]
 
-[b]ホストから届く同じ内容の選択状態を参加者が読み直さないようにし、参加者側の動作を少し軽くしました。[/b]
+[b]チャージ技能を溜めきって構えている間、変わらないチャージ量の再送を省き、協力プレイを軽くしました。[/b]
 
 [h1]Dreamforge RPG[/h1]
 すべての遠征を長いRPGの旅の一部にするMODです。持ち帰れる装備「遺物」、ゾーンごとの「確保するか、深く潜るか」の決断、旅人ごとの星図、鍛冶、長く遊ぶための目標を加えます。協力プレイにも対応しています。

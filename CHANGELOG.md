@@ -10,6 +10,24 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v3.8.19 — Lighter co-op while holding a fully charged skill（2026-10-19）
+
+チャージ技能を溜めきって構えている間の無駄な送信を省き、協力プレイでのホストと参加者の動作を軽くしました。 / Made co-op lighter for both host and guests by cutting unnecessary sends while a charge skill is held at full charge.
+
+### 更新前に確認 / Before updating
+
+- 協力プレイでは、参加者全員がこのバージョンに更新してください。 / Everyone in co-op should update to this version.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- 協力プレイでチャージ技能を最後まで溜め、そのまま構えている間、チャージ量が変わらないのに、ホストが同じ値を各プレイヤーへ毎回送り直していた問題を直しました。今は前回と同じ値なら送信を省くので、ホストの送信と参加者の受信の負担が少し減ります。60fps で動いている場合、構えている間はプレイヤー1人につき1秒に約60回の無駄な送信が減る見込みです。チャージ量の表示、技能の判定、溜め始めや溜め終わりの動きは、これまでと変わりません。 / Fixed the host resending the same charge value to each player every frame while a charge skill was held at full charge, even though the value had not changed. Unchanged values are now skipped, which slightly reduces the host's sending and guests' receiving work. At 60 fps, this is expected to cut about 60 wasted sends per second per player while a charge is held. The charge display, skill rules, and how charging starts and ends are unchanged.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
 ## v3.8.18 — Lighter guest processing for repeated choice updates（2026-10-19）
 
 参加者が受け取る選択状態の処理から無駄を省き、参加者側の動作を軽くしました。 / Made guests' games lighter by cutting unnecessary work when receiving choice updates.
