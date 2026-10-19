@@ -904,7 +904,10 @@ namespace SodRpg.Mod
             // Native cue transport is not needed in these scenarios. Unexpected calls fail rather than inventing behavior.
             throw new NotSupportedException("Behavior cue transport is outside the harness.");
         }
-        internal static bool IsGuaranteedBasicV129(Actor actor, Entity from) => false;
+        // 軽量化の検証用: 本体側は接頭辞で Hero 発の攻撃のときだけ呼ぶ。呼び出し回数と結果を記録する。
+        internal static int GuaranteedBasicQueries;
+        internal static bool GuaranteedBasicResult;
+        internal static bool IsGuaranteedBasicV129(Actor actor, Entity from) { GuaranteedBasicQueries++; return GuaranteedBasicResult; }
         internal void TryWeakspotBasic(Hero hero, Entity to, ref bool critical) { }
         internal float NativeShieldBeforeDamage(Entity target) => target?.Status.currentShield ?? 0;
         internal static bool AllNormalMemoriesReady(Entity entity) => true;
