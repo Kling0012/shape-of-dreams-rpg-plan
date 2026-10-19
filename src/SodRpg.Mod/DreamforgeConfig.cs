@@ -108,6 +108,9 @@ namespace SodRpg.Mod
         [LabelText("Status effect duration sync: 0.5 seconds (host) / 状態効果の残り時間を0.5秒間隔で同期（ホスト）")]
         public bool nativeStatusDurationSync = true;
 
+        [LabelText("Gem cooldown sync: 0.5 seconds (host) / 宝石のクールダウンを0.5秒間隔で同期（ホスト）")]
+        public bool nativeGemCooldownSync = true;
+
         [LabelText("Skip unused weapon FX work / 結果に影響しない武器FXの処理を省く")]
         public bool nativeWeaponFxScan = true;
 
@@ -164,6 +167,9 @@ namespace SodRpg.Mod
 
         [LabelText("Skip unchanged stats-recalc notifications (host) / 変わっていないステータス再計算の通知を省く（ホスト）")]
         public bool nativeStatsCalcRpcIdle = true;
+
+        [LabelText("Skip recalc health/mana ratio-rewrite resends (host) / ステータス再計算の体力・マナの比率再書き込みノイズの再送を省く（ホスト）")]
+        public bool nativeStatsRatioIdle = true;
 
         [LabelText("Skip no-op ultimate charge broadcasts (host) / 満チャージのウルトの無意味なチャージ再送を省く（ホスト）")]
         public bool nativeUltChargeRpcIdle = true;

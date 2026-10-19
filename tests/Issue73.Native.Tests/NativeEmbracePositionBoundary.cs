@@ -67,13 +67,14 @@ namespace SodRpg.Mod
     internal class DreamforgeConfig
     {
         public bool nativeStatusDurationSync = true, nativeWeaponFxScan = true, nativeObstacleAvoidance = true,
+            nativeGemCooldownSync = true,
             nativeAggroPropagation = true, nativeOwnershipSpawnCounts = true, nativeProcCoalesce = true,
             nativeAttachFaceIdle = true, nativeEmbracePositionReuse = true, nativeAccessoryOffsetCache = true,
             nativeCooldownIdleMultiplier = true, nativeTransformSyncIdle = true,
             nativeSleepPositionReuse = true, nativeCastIndicatorCircle = true, nativeCameraZoomRotation = true,
             nativeOcclusionIdle = true,
             nativeCharacterModelDisplayBounds = true, nativeKillTrackerCullThrottle = true,
-            nativeCursorIdle = true, nativeStatsCalcRpcIdle = true, nativePositionSyncIdle = true,
+            nativeCursorIdle = true, nativeStatsCalcRpcIdle = true, nativeStatsRatioIdle = true, nativePositionSyncIdle = true,
             nativeChargeRpcIdle = true,
             nativeProjectileIdleRpc = true,
             nativeCustomRpcDispatch = true,

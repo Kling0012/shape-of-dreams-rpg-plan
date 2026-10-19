@@ -16,6 +16,7 @@ namespace SodRpg.Mod
         partial void ApplyNativePerfConfig()
         {
             NativePerfOptions.StatusDuration = config.nativeStatusDurationSync;
+            NativePerfOptions.GemCooldown = config.nativeGemCooldownSync;
             NativePerfOptions.WeaponFx = config.nativeWeaponFxScan;
             NativePerfOptions.ObstacleAvoidance = config.nativeObstacleAvoidance;
             NativePerfOptions.AggroPropagation = config.nativeAggroPropagation;
@@ -35,6 +36,7 @@ namespace SodRpg.Mod
             NativePerfOptions.KillTrackerCull = config.nativeKillTrackerCullThrottle;
             NativePerfOptions.CursorIdle = config.nativeCursorIdle;
             NativePerfOptions.StatsCalcRpcIdle = config.nativeStatsCalcRpcIdle;
+            NativePerfOptions.StatsRatioIdle = config.nativeStatsRatioIdle;
             NativePerfOptions.UltChargeRpcIdle = config.nativeUltChargeRpcIdle;
             NativePerfOptions.PositionSyncIdle = config.nativePositionSyncIdle;
             NativePerfOptions.ChargeRpcIdle = config.nativeChargeRpcIdle;
@@ -53,6 +55,7 @@ namespace SodRpg.Mod
     internal static class NativePerfOptions
     {
         internal static bool StatusDuration = true;
+        internal static bool GemCooldown = true;
         internal static bool WeaponFx = true;
         internal static bool ObstacleAvoidance = true;
         internal static bool AggroPropagation = true;
@@ -71,6 +74,7 @@ namespace SodRpg.Mod
         internal static bool KillTrackerCull = true;
         internal static bool CursorIdle = true;
         internal static bool StatsCalcRpcIdle = true;
+        internal static bool StatsRatioIdle = true;
         internal static bool UltChargeRpcIdle = true;
         internal static bool PositionSyncIdle = true;
         internal static bool ChargeRpcIdle = true;
@@ -2101,6 +2105,343 @@ namespace SodRpg.Mod
     }
 
     [HarmonyPatch]
+    internal static class NativeStatsRatioIdlePerf
+    {
+        // EntityStatus.CalculateStats preserves the health and mana ratios across a max
+        // change by rewriting both from the ratio captured at entry:
+        //
+        //     float num = currentHealth / maxHealth;   (old values)
+        //     ...
+        //     currentHealth = num * data.maxHealth;    (new values)
+        //     currentMana  = num2 * data.maxMana;
+        //
+        // When data.maxHealth equals the old maxHealth — every recalculation that does not
+        // move the max — the rewrite is a float32 division-multiplication round trip. That
+        // round trip is inexact for roughly 9.5% of arbitrary values (measured, 20000000
+        // samples, worst error 1 ulp): the written value differs from the value already in
+        // the field, Mirror's setter then raises the 0x80/0x100 dirty bit, and the next sync
+        // broadcasts a float every observer already holds. Entities with decaying basic
+        // effects recalculate every logic frame (UpdateStatusEffectInfo re-dirties while a
+        // decayed strength moves), and every AddBasicEffect / RemoveBasicEffect /
+        // AddStatBonus / RemoveStatBonus recalculates too, so combat produces a steady
+        // stream of these no-op health and mana deltas to every guest.
+        //
+        // The prefix records the entry health, mana and maxes; the postfix compares the new
+        // maxes with the saved ones. Only when a max is bit-identical AND the final value is
+        // bit-for-bit the round trip the vanilla rewrite would compute from the entry values
+        // — (entry / entryMax) * finalMax, the same two float32 operations the body's IL
+        // performs — does it restore the saved value through the weaver's
+        // Network_currentHealth / Network_currentMana setter (identical state, so restoring
+        // only re-raises the same dirty bit) and then clear that bit again, but only when the
+        // bit was clear at method entry: a bit set before the call is a genuine unsent change
+        // from earlier in the same sync window and must keep going out with the restored
+        // value. That equality gate is what keeps every other write exactly as vanilla leaves
+        // it: a max that moved leaves the ratio rewrite untouched, regen / SetHealth / damage
+        // writes are outside the window, and processors run before the rewrite so the rewrite
+        // itself clobbers them in vanilla too. The current native body (r1.4.0.13) runs
+        // nothing after the rewrite that writes health or mana — finalStatsProcessors.Process
+        // precedes it and only the finalStats SyncVar assignment, the dirty flag and the
+        // stats-calculated RPC writer follow — but the gate does not rely on that staying
+        // true: a hook or a nested recalculation that writes the field in the window's latter
+        // half produces a final value the prediction does not match, and the patch leaves
+        // that value and its dirty bit standing as vanilla would.
+        //
+        // Two shapes never restore, both matching vanilla exactly: a predicted rewrite that
+        // comes out non-finite (a degenerate max of exactly zero, where vanilla itself writes
+        // NaN or infinity — the restore used to keep the last finite value there, it now
+        // passes the non-finite write through), and a vanilla rewrite that underflows a
+        // positive denormal entry to exactly zero — health zero kills on the LogicUpdate
+        // check, and mana zero is what vanilla would broadcast.
+        //
+        // The restore replays the weaver's setter, so Prepare also verifies that setter does
+        // not carry a SyncVar hook (GeneratedSyncVarSetter's trailing Action argument, null
+        // in the current weaver output): vanilla fires such a hook once per real change, and
+        // a body write plus a restore would fire it twice. A setter that gains one — or any
+        // other shape change — disables the patch with a single warning. A third-party
+        // subscriber counting recalculations rather than reading state is otherwise
+        // unaffected — RpcInvokeStatsCalculated still fires; only the wire carries fewer
+        // identical floats (nativeStatsRatioIdle turns the skip off).
+        private sealed class Window
+        {
+            internal float SavedHealth;
+            internal float SavedMana;
+            internal float SavedMaxHealth;
+            internal float SavedMaxMana;
+            internal ulong EntryBits;
+        }
+
+        private static readonly Stack<Window> WindowPool = new Stack<Window>();
+
+        private static MethodBase _calc;
+        private static System.Reflection.MethodInfo _plainHealthSetter;
+        private static System.Reflection.MethodInfo _plainManaSetter;
+        private static System.Reflection.MethodInfo _networkHealthSetter;
+        private static System.Reflection.MethodInfo _networkManaSetter;
+        private static Func<EntityStatus, float> _currentHealth;
+        private static Func<EntityStatus, float> _currentMana;
+        private static Func<EntityStatus, float> _maxHealth;
+        private static Func<EntityStatus, float> _maxMana;
+        private static Action<EntityStatus, float> _sendHealth;
+        private static Action<EntityStatus, float> _sendMana;
+        private static Func<Mirror.NetworkBehaviour, ulong> _dirtyBits;
+        private static Action<Mirror.NetworkBehaviour, ulong> _setDirtyBits;
+        private static ulong _healthBit;
+        private static ulong _manaBit;
+        private static bool _disabled;
+        private static bool _warned;
+
+        private static bool Prepare()
+        {
+            if (_disabled) return false;
+            if (_calc != null) return true;
+            _disabled = true;
+            try
+            {
+                _calc = NativePerfPatch.Find(typeof(EntityStatus), "CalculateStats", ref _warned);
+                if (_calc == null) return false;
+                _plainHealthSetter = AccessTools.PropertySetter(typeof(EntityStatus), "currentHealth");
+                _plainManaSetter = AccessTools.PropertySetter(typeof(EntityStatus), "currentMana");
+                _networkHealthSetter = AccessTools.PropertySetter(typeof(EntityStatus), "Network_currentHealth");
+                _networkManaSetter = AccessTools.PropertySetter(typeof(EntityStatus), "Network_currentMana");
+                if (_plainHealthSetter == null || _plainManaSetter == null
+                    || _networkHealthSetter == null || _networkManaSetter == null)
+                {
+                    NativePerfPatch.Warn(ref _warned, "stats ratio idle", "native health/mana setters unavailable");
+                    return false;
+                }
+                if (!ResolveGetters() || !ResolveBitAccess()) return false;
+                _healthBit = ExtractDirtyBit(_networkHealthSetter);
+                _manaBit = ExtractDirtyBit(_networkManaSetter);
+                if (_healthBit == 0UL || _manaBit == 0UL) return false;
+                if (!SetterHasNoHook(_networkHealthSetter) || !SetterHasNoHook(_networkManaSetter)) return false;
+                if (!ValidateCalcBody()) return false;
+                _disabled = false;
+                return true;
+            }
+            catch (Exception ex)
+            {
+                NativePerfPatch.Warn(ref _warned, "stats ratio idle", ex.Message);
+                return false;
+            }
+        }
+
+        private static MethodBase TargetMethod() => _calc;
+
+        private static bool ResolveGetters()
+        {
+            _currentHealth = BuildGetter("currentHealth");
+            _currentMana = BuildGetter("currentMana");
+            _maxHealth = BuildGetter("maxHealth");
+            _maxMana = BuildGetter("maxMana");
+            if (_currentHealth == null || _currentMana == null || _maxHealth == null || _maxMana == null)
+            {
+                NativePerfPatch.Warn(ref _warned, "stats ratio idle", "native health/mana getters unavailable");
+                return false;
+            }
+            _sendHealth = (Action<EntityStatus, float>)Delegate.CreateDelegate(
+                typeof(Action<EntityStatus, float>), _networkHealthSetter);
+            _sendMana = (Action<EntityStatus, float>)Delegate.CreateDelegate(
+                typeof(Action<EntityStatus, float>), _networkManaSetter);
+            return true;
+        }
+
+        private static Func<EntityStatus, float> BuildGetter(string property)
+        {
+            var getter = AccessTools.PropertyGetter(typeof(EntityStatus), property);
+            if (getter == null) return null;
+            return (Func<EntityStatus, float>)Delegate.CreateDelegate(
+                typeof(Func<EntityStatus, float>), getter);
+        }
+
+        private static bool ResolveBitAccess()
+        {
+            var getter = AccessTools.PropertyGetter(typeof(Mirror.NetworkBehaviour), "syncVarDirtyBits");
+            var setter = AccessTools.PropertySetter(typeof(Mirror.NetworkBehaviour), "syncVarDirtyBits");
+            if (getter == null || setter == null)
+            {
+                NativePerfPatch.Warn(ref _warned, "stats ratio idle", "Mirror syncVarDirtyBits access unavailable");
+                return false;
+            }
+            _dirtyBits = (Func<Mirror.NetworkBehaviour, ulong>)Delegate.CreateDelegate(
+                typeof(Func<Mirror.NetworkBehaviour, ulong>), getter);
+            _setDirtyBits = (Action<Mirror.NetworkBehaviour, ulong>)Delegate.CreateDelegate(
+                typeof(Action<Mirror.NetworkBehaviour, ulong>), setter);
+            return true;
+        }
+
+        // The weaver's setter embeds its dirty bit as the call's only long constant
+        // (GeneratedSyncVarSetter(value, ref field, <bit>, null)); reading it from the IL
+        // keeps the clear mask bound to the same constant the restore's setter raises.
+        private static ulong ExtractDirtyBit(System.Reflection.MethodInfo setter)
+        {
+            ulong found = 0UL;
+            int count = 0;
+            foreach (var insn in PatchProcessor.GetOriginalInstructions(setter))
+            {
+                if (insn.opcode != OpCodes.Ldc_I8) continue;
+                found = (ulong)(long)insn.operand;
+                count++;
+            }
+            if (count != 1)
+            {
+                NativePerfPatch.Warn(ref _warned, "stats ratio idle", "native setter dirty bit shape changed");
+                return 0UL;
+            }
+            return found;
+        }
+
+        // The restore replays the weaver's setter, so the setter must not also invoke a
+        // SyncVar hook: vanilla fires GeneratedSyncVarSetter's trailing Action argument once
+        // per real change, and a body write (entry value -> drifted value) followed by the
+        // restore (drifted value -> entry value) would fire it twice on the host. The weaver
+        // pushes that argument directly before its GeneratedSyncVarSetter call, so require
+        // ldnull there. A setter that never calls GeneratedSyncVarSetter passes trivially.
+        private static bool SetterHasNoHook(System.Reflection.MethodInfo setter)
+        {
+            var insns = PatchProcessor.GetOriginalInstructions(setter);
+            for (int i = 0; i < insns.Count; i++)
+            {
+                if ((insns[i].opcode != OpCodes.Call && insns[i].opcode != OpCodes.Callvirt)
+                    || !(insns[i].operand is MethodBase method) || method.Name != "GeneratedSyncVarSetter")
+                {
+                    continue;
+                }
+                if (i == 0 || insns[i - 1].opcode != OpCodes.Ldnull)
+                {
+                    NativePerfPatch.Warn(ref _warned, "stats ratio idle", "native setter gained a sync var hook");
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        // The restore assumes the ratio rewrite is the only health write and the only mana
+        // write inside CalculateStats (through the plain property or straight through the
+        // Network_ setter). A body that writes either more than once — or not at all —
+        // breaks that 1:1 assumption, so the patch keeps off.
+        private static bool ValidateCalcBody()
+        {
+            if (CountCalls(_calc, _plainHealthSetter) + CountCalls(_calc, _networkHealthSetter) != 1
+                || CountCalls(_calc, _plainManaSetter) + CountCalls(_calc, _networkManaSetter) != 1)
+            {
+                NativePerfPatch.Warn(ref _warned, "stats ratio idle", "native CalculateStats ratio writes changed");
+                return false;
+            }
+            return true;
+        }
+
+        private static int CountCalls(MethodBase method, MethodBase target)
+        {
+            int calls = 0;
+            foreach (var insn in PatchProcessor.GetOriginalInstructions(method))
+                if (target != null && (insn.opcode == OpCodes.Call || insn.opcode == OpCodes.Callvirt)
+                    && Equals(insn.operand, target))
+                    calls++;
+            return calls;
+        }
+
+        // A restore only ever removes ratio-rewrite noise, so it fires solely when the final
+        // value is bit-for-bit the round trip the vanilla rewrite computes from the entry
+        // values: (entry / entryMax) * finalMax, the same two float32 operations in the same
+        // order the body's IL performs (the body sanitizes a NaN ratio to 0 first — leaving
+        // that step out makes a sanitized body value mismatch the prediction, so such a
+        // window restores nothing either). Everything else stands exactly as vanilla leaves
+        // it: a non-finite prediction (a degenerate max of exactly zero, where vanilla writes
+        // NaN or infinity) passes through untouched, a positive entry that underflows to zero
+        // keeps vanilla's zero, and any value the prediction does not match — something wrote
+        // the field after the rewrite, in the window's latter half — keeps both its value and
+        // its dirty bit.
+        private static bool IsRatioNoise(float entry, float entryMax, float finalMax, float now)
+        {
+            float expected = entry / entryMax * finalMax;
+            if (float.IsNaN(expected) || float.IsInfinity(expected)) return false;
+            if (now.Equals(entry)) return false;
+            if (!now.Equals(expected)) return false;
+            if (entry > 0f && now <= 0f) return false;
+            return true;
+        }
+
+        private static bool Prefix(EntityStatus __instance, out Window __state)
+        {
+            __state = null;
+            if (_disabled || !NativePerfOptions.StatsRatioIdle || !Mirror.NetworkServer.active) return true;
+            try
+            {
+                Window window;
+                if (WindowPool.Count > 0)
+                {
+                    window = WindowPool.Pop();
+                }
+                else
+                {
+                    window = new Window();
+                }
+                window.SavedHealth = _currentHealth(__instance);
+                window.SavedMana = _currentMana(__instance);
+                window.SavedMaxHealth = _maxHealth(__instance);
+                window.SavedMaxMana = _maxMana(__instance);
+                window.EntryBits = _dirtyBits(__instance);
+                __state = window;
+            }
+            catch (Exception ex)
+            {
+                _disabled = true;
+                NativePerfPatch.Warn(ref _warned, "stats ratio idle", ex.Message);
+            }
+            return true;
+        }
+
+        private static void Postfix(EntityStatus __instance, Window __state, bool __runOriginal)
+        {
+            if (__state == null) return;
+            bool run = __runOriginal && !_disabled && NativePerfOptions.StatsRatioIdle;
+            try
+            {
+                if (run)
+                {
+                    // float.Equals mirrors Mirror's own SyncVarEqual semantics, including
+                    // NaN==NaN and 0==-0, so a field the setter early-returned on is never
+                    // "restored" and never re-dirtied, and the prediction comparison holds the
+                    // same equality the setter itself applies.
+                    float finalMaxHealth = _maxHealth(__instance);
+                    if (finalMaxHealth.Equals(__state.SavedMaxHealth)
+                        && IsRatioNoise(__state.SavedHealth, __state.SavedMaxHealth, finalMaxHealth,
+                            _currentHealth(__instance)))
+                    {
+                        _sendHealth(__instance, __state.SavedHealth);
+                        if ((__state.EntryBits & _healthBit) == 0UL)
+                        {
+                            _setDirtyBits(__instance, _dirtyBits(__instance) & ~_healthBit);
+                        }
+                    }
+                    float finalMaxMana = _maxMana(__instance);
+                    if (finalMaxMana.Equals(__state.SavedMaxMana)
+                        && IsRatioNoise(__state.SavedMana, __state.SavedMaxMana, finalMaxMana,
+                            _currentMana(__instance)))
+                    {
+                        _sendMana(__instance, __state.SavedMana);
+                        if ((__state.EntryBits & _manaBit) == 0UL)
+                        {
+                            _setDirtyBits(__instance, _dirtyBits(__instance) & ~_manaBit);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _disabled = true;
+                NativePerfPatch.Warn(ref _warned, "stats ratio idle", ex.Message);
+            }
+            finally
+            {
+                // The pool only holds idle windows; cap it so a pathological recursion
+                // depth cannot grow it without bound.
+                if (WindowPool.Count < 8) WindowPool.Push(__state);
+            }
+        }
+    }
+
+    [HarmonyPatch]
     internal static class NativeUltChargeRpcIdlePerf
     {
         // SkillTrigger.ChargeUltimate is the host-side feed of an Ultimate skill's charges:
@@ -3532,5 +3873,181 @@ namespace SodRpg.Mod
                 || instruction.opcode == OpCodes.Stloc_0 || instruction.opcode == OpCodes.Stloc_1
                 || instruction.opcode == OpCodes.Stloc_2 || instruction.opcode == OpCodes.Stloc_3)
                && LocalOperandIndex(instruction).HasValue;
+    }
+
+    // Gem のクールダウン減算（Gem.LogicUpdate のサーバー経路）は、値が動く毎ロジックフレームで
+    // SyncVar の差分を全参加者に配る。クールダウンの判定（IsReady、発動、準備完了イベント）は
+    // すべてサーバー側のローカル値と専用 RPC で決まり、参加者側でこの値を読むのは
+    // UI_InGame_GemSlot の表示だけなので、残り時間と同じ方式（NativeStatusDurationPerf）で
+    // 周期減算の送信を 0.5 秒間隔に間引く。0 到達の書き込みと明示的な
+    // StartCooldown／ApplyCooldownReduction(ByRatio)／ResetCooldown はネイティブのまま即時送る。
+    [HarmonyPatch]
+    internal static class NativeGemCooldownPerf
+    {
+        private const float SyncInterval = 0.5f;
+        private const float ImmediateChange = 0.1f;
+        private const ulong CooldownDirtyBit = 2048UL;
+        private sealed class Publication
+        {
+            internal float Time;
+            internal bool Suppressed;
+        }
+
+        private static readonly ConditionalWeakTable<Gem, Publication> Publications =
+            new ConditionalWeakTable<Gem, Publication>();
+        private static readonly ConditionalWeakTable<Gem, Publication>.CreateValueCallback CreatePublication =
+            _ => new Publication();
+        private static AccessTools.FieldRef<Gem, float> _current;
+        private static MethodBase _target;
+        private static bool _disabled;
+        private static bool _warned;
+
+        private static bool Prepare()
+        {
+            _target = NativePerfPatch.Find(typeof(Gem), nameof(Gem.LogicUpdate), new[] { typeof(float) }, ref _warned);
+            if (_target == null) return false;
+            try
+            {
+                _current = AccessTools.FieldRefAccess<Gem, float>("_currentCooldown");
+                return ValidateSetter(AccessTools.PropertySetter(typeof(Gem), "Network_currentCooldown"));
+            }
+            catch (Exception ex)
+            {
+                NativePerfPatch.Warn(ref _warned, "gem cooldown", ex.Message);
+                return false;
+            }
+        }
+
+        private static MethodBase TargetMethod() => _target;
+
+        private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+        {
+            var code = new List<CodeInstruction>(instructions);
+            var setter = AccessTools.PropertySetter(typeof(Gem), "Network_currentCooldown");
+            var move = AccessTools.Method(typeof(Mathf), nameof(Mathf.MoveTowards),
+                new[] { typeof(float), typeof(float), typeof(float) });
+            int periodic = -1, setters = 0, moves = 0;
+            for (int i = 0; i < code.Count; i++)
+            {
+                if (code[i].Calls(move)) moves++;
+                if (!code[i].Calls(setter)) continue;
+                setters++;
+                if (i >= 1 && code[i - 1].Calls(move)) periodic = i;
+            }
+            // Leave the rate-limit tick, dismantle reset, base update and the 0-reached event intact.
+            // A second copy sees an already replaced callsite and leaves it alone.
+            if (setters != 1 || moves != 2 || periodic < 0)
+            {
+                NativePerfPatch.Warn(ref _warned, "gem cooldown", "native cooldown callsite changed or already patched");
+                return code;
+            }
+            code[periodic].opcode = OpCodes.Call;
+            code[periodic].operand = AccessTools.Method(typeof(NativeGemCooldownPerf), nameof(WriteCooldown));
+            return code;
+        }
+
+        internal static bool ValidateSetter(MethodBase setter)
+        {
+            try
+            {
+                if (setter == null || setter.GetMethodBody() == null)
+                    throw new MissingMethodException("Gem.Network_currentCooldown setter unavailable");
+                var field = AccessTools.Field(typeof(Gem), "_currentCooldown");
+                var code = PatchProcessor.GetOriginalInstructions(setter);
+                for (int i = 0; i + 1 < code.Count; i++)
+                    if (code[i].opcode == OpCodes.Ldflda && Equals(code[i].operand, field)
+                        && code[i + 1].opcode == OpCodes.Ldc_I8
+                        && code[i + 1].operand is long bit && (ulong)bit == CooldownDirtyBit)
+                        return true;
+                NativePerfPatch.Warn(ref _warned, "gem cooldown", "native SyncVar field/dirty bit changed");
+            }
+            catch (Exception ex) { NativePerfPatch.Warn(ref _warned, "gem cooldown", ex.Message); }
+            _disabled = true;
+            return false;
+        }
+
+        internal static void Publishing(Gem gem)
+        {
+            if (_disabled) return;
+            try
+            {
+                // An explicit write can equal the silently advanced backing value. Mirror's
+                // equality check would otherwise omit it even though observers still have an
+                // older baseline. Do not clear dirty bits belonging to any other field.
+                if (gem.isServer && Publications.TryGetValue(gem, out var publication)
+                    && publication.Suppressed)
+                    gem.SetSyncVarDirtyBit(CooldownDirtyBit);
+            }
+            catch (Exception ex)
+            {
+                _disabled = true;
+                NativePerfPatch.Warn(ref _warned, "gem cooldown", ex.Message);
+            }
+        }
+
+        internal static void Published(Gem gem)
+        {
+            if (_disabled || !gem.isServer) return;
+            try
+            {
+                if (!NativePerfOptions.GemCooldown && !Publications.TryGetValue(gem, out _)) return;
+                var publication = Publications.GetValue(gem, CreatePublication);
+                publication.Time = Time.time;
+                publication.Suppressed = false;
+            }
+            catch (Exception ex)
+            {
+                _disabled = true;
+                NativePerfPatch.Warn(ref _warned, "gem cooldown", ex.Message);
+            }
+        }
+
+        private static void WriteCooldown(Gem gem, float value)
+        {
+            if (!_disabled && NativePerfOptions.GemCooldown)
+            {
+                try
+                {
+                    float previous = _current(gem);
+                    // Only this native arithmetic callsite is throttled. StartCooldown,
+                    // ApplyCooldownReduction(ByRatio), ResetCooldown and the 0-reached write
+                    // always use the native setter.
+                    if (value > 0f && previous - value >= 0f && previous - value < ImmediateChange
+                        && Publications.TryGetValue(gem, out var publication)
+                        && Time.time >= publication.Time && Time.time - publication.Time < SyncInterval)
+                    {
+                        // Keep the exact native MoveTowards result. The server getter, IsReady,
+                        // the 0-reached event and the initial observer snapshot must see the current value.
+                        _current(gem) = value;
+                        publication.Suppressed = true;
+                        return;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _disabled = true;
+                    NativePerfPatch.Warn(ref _warned, "gem cooldown", ex.Message);
+                }
+            }
+            gem.Network_currentCooldown = value;
+        }
+    }
+
+    [HarmonyPatch]
+    internal static class NativeGemCooldownPublication
+    {
+        private static MethodBase _target;
+        private static bool _warned;
+
+        private static bool Prepare()
+        {
+            try { _target = AccessTools.PropertySetter(typeof(Gem), "Network_currentCooldown"); }
+            catch (Exception ex) { NativePerfPatch.Warn(ref _warned, "gem cooldown publication", ex.Message); }
+            return NativeGemCooldownPerf.ValidateSetter(_target);
+        }
+
+        private static MethodBase TargetMethod() => _target;
+        private static void Prefix(Gem __instance) => NativeGemCooldownPerf.Publishing(__instance);
+        private static void Postfix(Gem __instance) => NativeGemCooldownPerf.Published(__instance);
     }
 }

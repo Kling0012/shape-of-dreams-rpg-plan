@@ -211,9 +211,8 @@ namespace SodRpg.Mod
             state.Damage = (ref DamageData damage, Actor actor, Entity target) =>
             {
                 if (OwnershipSource(actor) != state.Enemy || !state.Solo || !DynamicSoloRunning()) return;
-                float multiplier = (float)_pressure.DamageMultiplier;
-                ApplySoloDynamicDamage(state.Enemy, ref multiplier);
-                damage.ApplyAmplification(multiplier - 1);
+                // 2026-10-19：動的難易度は敵の攻撃を変えない。圧の倍率だけを当てる。
+                damage.ApplyAmplification((float)_pressure.DamageMultiplier - 1);
             };
             return state;
         }
@@ -286,16 +285,6 @@ namespace SodRpg.Mod
             {
                 if (DynamicSoloRunning() && _dynamicEnemies.TryGetValue(enemy, out var state) && state.Solo)
                     multiplier *= (float)EnemyDynamicFactor(enemy);
-            }
-            catch (Exception ex) { FailDynamic(DynamicPart.Application, ex); }
-        }
-
-        private void ApplySoloDynamicDamage(Entity enemy, ref float multiplier)
-        {
-            try
-            {
-                if (DynamicSoloRunning() && _dynamicEnemies.TryGetValue(enemy, out var state) && state.Solo)
-                    multiplier *= (float)Math.Pow(EnemyDynamicFactor(enemy), CoopBalance.DynamicDifficulty.DamageExponent);
             }
             catch (Exception ex) { FailDynamic(DynamicPart.Application, ex); }
         }
