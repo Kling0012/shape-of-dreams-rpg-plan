@@ -23,6 +23,13 @@ namespace UnityEngine
         public static bool operator !=(Vector3 a, Vector3 b) => !(a == b);
         public static Vector3 LerpUnclamped(Vector3 a, Vector3 b, float t) => a + (b - a) * t;
         public float sqrMagnitude => x * x + y * y + z * z;
+        // 本体 UnityEngine.Vector3 と同じ式（#866 のダッシュ掃引の転写が使う分）。
+        // normalized は大きさがごく小さい（NaN を含む）とき zero を返す本体の動きと同じにする。
+        public static Vector3 zero => new Vector3();
+        public float magnitude => (float)Math.Sqrt(sqrMagnitude);
+        public Vector3 normalized => magnitude > 1E-05f ? this / magnitude : zero;
+        public static Vector3 operator /(Vector3 a, float d) => new Vector3(a.x / d, a.y / d, a.z / d);
+        public static float Distance(Vector3 a, Vector3 b) => (a - b).magnitude;
         // 本体 UnityEngine.Vector3.Lerp と同じ式（t を Clamp01 して各軸を補間する）。
         public static Vector3 Lerp(Vector3 a, Vector3 b, float t)
         {
