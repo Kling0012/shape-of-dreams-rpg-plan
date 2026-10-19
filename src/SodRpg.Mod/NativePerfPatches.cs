@@ -3112,12 +3112,19 @@ namespace SodRpg.Mod
         // _nextOnScreenTimerId counter, which only increments (DewPlayer.Init clears only
         // the four player lists), so an id is never reused while its DewPlayer lives and a
         // stale entry can never mask a newer timer; the table dies with the player object.
-        // Hide (TpcRemoveNetworkedOnScreenTimer) still goes out untouched. No message
-        // format changes, so vanilla peers interoperate unchanged and simply never receive
-        // the redundant identical updates; the nativePlayerTimerIdle option turns the skip
-        // off.
+        // Hide (TpcRemoveNetworkedOnScreenTimer) itself goes out untouched; the memory
+        // forgets the id alongside it (NativePlayerTimerRemoveForgetPerf), so the
+        // per-player table tracks the live timers instead of growing once per charged
+        // skill for the whole session. No message format changes, so vanilla peers
+        // interoperate unchanged and simply never receive the redundant identical
+        // updates; the nativePlayerTimerIdle option turns the skip off. A DewPlayer
+        // whose connectionToClient is missing or not ready yet (mid-join) never seeds
+        // or skips: Mirror logs and drops a TargetRpc with no connection, and a client
+        // that has not finished joining may not have the player object yet, so what the
+        // receiver holds is unknowable in that window and every value passes through.
         private static MethodBase[] _targets = Array.Empty<MethodBase>();
-        // Shared with NativePlayerTimerCreateSeedPerf so a missing create warns once.
+        // Shared with NativePlayerTimerCreateSeedPerf and NativePlayerTimerRemoveForgetPerf
+        // so a missing native method warns once.
         internal static bool _warned;
         private static bool _disabled;
 
@@ -3125,6 +3132,12 @@ namespace SodRpg.Mod
             new ConditionalWeakTable<DewPlayer, Dictionary<int, float>>();
         internal static readonly ConditionalWeakTable<DewPlayer, Dictionary<int, float>>.CreateValueCallback
             CreateLastHeld = _ => new Dictionary<int, float>();
+
+        // True only when a send on this player can reach its receiver: both the seeder and
+        // the skipper may record a value exclusively behind this gate, which is what keeps
+        // the memory equal to what the receiver actually holds.
+        internal static bool IsReceiverReady(DewPlayer player)
+            => player.connectionToClient != null && player.connectionToClient.isReady;
 
         internal static MethodBase FindSetTarget()
             => NativePerfPatch.Find(typeof(DewPlayer), "TpcSetNetworkedOnScreenTimerValue",
@@ -3152,6 +3165,10 @@ namespace SodRpg.Mod
             try
             {
                 if (!Mirror.NetworkServer.active) return true;
+                // An undeliverable send must not advance the memory (see IsReceiverReady):
+                // letting it through costs one duplicate at most, recording it would make
+                // the skip suppress the first real send after the client catches up.
+                if (!IsReceiverReady(__instance)) return true;
                 var held = LastHeld.GetValue(__instance, CreateLastHeld);
                 if (held.TryGetValue(id, out var known) && known == value) return false;
                 held[id] = value;
@@ -3189,7 +3206,11 @@ namespace SodRpg.Mod
             try
             {
                 // The create payload is what puts the initial value on the receiver, so
-                // it defines what the receiver holds for this id from now on.
+                // it defines what the receiver holds for this id from now on — but only
+                // when the receiver can actually get it (see IsReceiverReady). A create
+                // dropped mid-join must not seed, or the first same-value set after the
+                // client caught up would be skipped for a timer it never received.
+                if (!NativePlayerTimerIdlePerf.IsReceiverReady(__instance)) return;
                 NativePlayerTimerIdlePerf.LastHeld.GetValue(__instance,
                     NativePlayerTimerIdlePerf.CreateLastHeld)[id] = defaultValue;
             }
@@ -3197,6 +3218,45 @@ namespace SodRpg.Mod
             {
                 // Seeding is an optimization bookkeeping step: a failure here only means
                 // one duplicate set may go out, so leave the skip patch enabled.
+            }
+        }
+    }
+
+    [HarmonyPatch]
+    internal static class NativePlayerTimerRemoveForgetPerf
+    {
+        private static MethodBase[] _targets = Array.Empty<MethodBase>();
+
+        internal static MethodBase FindRemoveTarget()
+            => NativePerfPatch.Find(typeof(DewPlayer), "TpcRemoveNetworkedOnScreenTimer",
+                new[] { typeof(int) }, ref NativePlayerTimerIdlePerf._warned);
+
+        private static bool Prepare()
+        {
+            var remove = FindRemoveTarget();
+            // Fail soft like the sibling patches: without the hide sender the memory just
+            // keeps its entries, which costs bytes (ids are never reused) and nothing else.
+            _targets = remove != null ? new MethodBase[] { remove } : Array.Empty<MethodBase>();
+            return _targets.Length > 0;
+        }
+
+        private static IEnumerable<MethodBase> TargetMethods() => _targets;
+
+        private static void Postfix(DewPlayer __instance, int id)
+        {
+            try
+            {
+                // The hide payload takes the timer off the receiver, so the memory forgets
+                // the id with it. Without this the per-player table grows once per charged
+                // skill for the whole session (ids only increment). A missing id or player
+                // entry is nothing to do.
+                if (NativePlayerTimerIdlePerf.LastHeld.TryGetValue(__instance, out var held))
+                    held.Remove(id);
+            }
+            catch (Exception)
+            {
+                // Forgetting is pure bookkeeping: a leftover entry costs a few bytes and
+                // cannot suppress a send that matters.
             }
         }
     }

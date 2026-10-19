@@ -44,6 +44,10 @@ namespace Mirror
     {
         public readonly List<object> Sent = new List<object>();
         public int connectionId;
+        // NativePlayerTimerIdlePerf（リンク）が送信の届く窓の判定で読む本体 Mirror API。
+        // 実物は public bool isReady で既定 false（未接続）。テストから代入して
+        // 途中参加の前後の送否を動かす。
+        public bool isReady;
         public void Send<T>(T message) where T : struct, NetworkMessage => Sent.Add(message);
     }
     internal sealed class NetworkConnectionToClient : NetworkConnection { }
