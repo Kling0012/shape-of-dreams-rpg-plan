@@ -811,6 +811,17 @@ namespace SodRpg.Mod
             AfterCurrencyChange?.Invoke();
         }
     }
+    // NativePlayerTimerIdlePerf（リンク）の Prepare が typeof で探す本体の画面内タイマーの
+    // ハンドル。実機ではグローバル名前空間の公開クラスで、ChargingChannel だけが
+    // DewPlayer.ShowOnScreenTimer に渡す（実 DLL 逆コンパイル 2026-10-19）。ここには実物の
+    // 字段の形だけを置く（中身は呼ばれないので空）。
+    internal class NetworkedOnScreenTimerHandle
+    {
+        public string localeKey;
+        public string skillKey;
+        public Func<float> valueGetter;
+        internal int _id;
+    }
     internal static class NetworkedManagerBase<T>
     {
         public static T softInstance;

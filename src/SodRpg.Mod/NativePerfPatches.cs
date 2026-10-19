@@ -44,6 +44,7 @@ namespace SodRpg.Mod
             NativePerfOptions.CustomRpcDispatch = config.nativeCustomRpcDispatch;
             NativePerfOptions.SampleUpdateIdle = config.nativeSampleUpdateIdle;
             NativePerfOptions.HeroWeaponIdle = config.nativeHeroWeaponIdle;
+            NativePerfOptions.PlayerTimerIdle = config.nativePlayerTimerIdle;
         }
     }
 
@@ -77,6 +78,7 @@ namespace SodRpg.Mod
         internal static bool CustomRpcDispatch = true;
         internal static bool SampleUpdateIdle = true;
         internal static bool HeroWeaponIdle = true;
+        internal static bool PlayerTimerIdle = true;
     }
 
     internal static class NativePerfPatch
@@ -3083,6 +3085,119 @@ namespace SodRpg.Mod
             // Every delivery starts a new sampling context on this client, so the remembered
             // last send no longer describes it (see NativeSampleUpdateIdlePerf).
             NativeSampleUpdateIdlePerf.Reset();
+        }
+    }
+
+    [HarmonyPatch]
+    internal static class NativePlayerTimerIdlePerf
+    {
+        // DewPlayer.LogicUpdate_InGame_NetworkedOnScreenTimer is the game's only
+        // TpcSetNetworkedOnScreenTimerValue sender: every logic frame, for every networked
+        // on-screen timer shown to a player, the host targets the owner with an
+        // (id, value) pair — even when valueGetter returned exactly the value the receiver
+        // already holds. The only creator of NetworkedOnScreenTimerHandle is
+        // ChargingChannel (valueGetter = () => chargeAmount): once a charge is full,
+        // chargeAmount stays 1f for the whole hold, so vanilla re-sends an unchanged float
+        // at logic-frame rate for as long as the player keeps aiming.
+        //
+        // The receive side (UserCode_TpcSetNetworkedOnScreenTimerValue) is a plain store
+        // into the RefValue created by the TpcCreateNetworkedOnScreenTimer payload, with
+        // no event, heartbeat or timeout: re-receiving an identical value changes nothing.
+        // This prefix remembers, per DewPlayer and timer id, the last value the receiver
+        // is known to hold and skips exactly the exact duplicates (float ==, so NaN always
+        // sends; -0f/0f collapse, which cannot matter for a charge fraction >= 0f).
+        // NativePlayerTimerCreateSeedPerf seeds the memory from every create payload, so
+        // the invariant "memory == receiver-held value after every create and every sent
+        // set" holds from the first frame. Timer ids come from the per-instance
+        // _nextOnScreenTimerId counter, which only increments (DewPlayer.Init clears only
+        // the four player lists), so an id is never reused while its DewPlayer lives and a
+        // stale entry can never mask a newer timer; the table dies with the player object.
+        // Hide (TpcRemoveNetworkedOnScreenTimer) still goes out untouched. No message
+        // format changes, so vanilla peers interoperate unchanged and simply never receive
+        // the redundant identical updates; the nativePlayerTimerIdle option turns the skip
+        // off.
+        private static MethodBase[] _targets = Array.Empty<MethodBase>();
+        // Shared with NativePlayerTimerCreateSeedPerf so a missing create warns once.
+        internal static bool _warned;
+        private static bool _disabled;
+
+        internal static readonly ConditionalWeakTable<DewPlayer, Dictionary<int, float>> LastHeld =
+            new ConditionalWeakTable<DewPlayer, Dictionary<int, float>>();
+        internal static readonly ConditionalWeakTable<DewPlayer, Dictionary<int, float>>.CreateValueCallback
+            CreateLastHeld = _ => new Dictionary<int, float>();
+
+        internal static MethodBase FindSetTarget()
+            => NativePerfPatch.Find(typeof(DewPlayer), "TpcSetNetworkedOnScreenTimerValue",
+                new[] { typeof(int), typeof(float) }, ref _warned);
+
+        internal static MethodBase FindCreateTarget()
+            => NativePerfPatch.Find(typeof(DewPlayer), "TpcCreateNetworkedOnScreenTimer",
+                new[] { typeof(int), typeof(NetworkedOnScreenTimerHandle), typeof(float) }, ref _warned);
+
+        private static bool Prepare()
+        {
+            var set = FindSetTarget();
+            var create = FindCreateTarget();
+            // Fail soft like the other native patches: without the create seeder the
+            // memory would not describe what a newly created timer holds on the receiver.
+            _targets = set != null && create != null ? new MethodBase[] { set } : Array.Empty<MethodBase>();
+            return _targets.Length > 0;
+        }
+
+        private static IEnumerable<MethodBase> TargetMethods() => _targets;
+
+        private static bool Prefix(DewPlayer __instance, int id, float value)
+        {
+            if (!NativePerfOptions.PlayerTimerIdle || _disabled) return true;
+            try
+            {
+                if (!Mirror.NetworkServer.active) return true;
+                var held = LastHeld.GetValue(__instance, CreateLastHeld);
+                if (held.TryGetValue(id, out var known) && known == value) return false;
+                held[id] = value;
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _disabled = true;
+                NativePerfPatch.Warn(ref _warned, "player on-screen timer idle", ex.Message);
+                return true;
+            }
+        }
+    }
+
+    [HarmonyPatch]
+    internal static class NativePlayerTimerCreateSeedPerf
+    {
+        private static MethodBase[] _targets = Array.Empty<MethodBase>();
+
+        private static bool Prepare()
+        {
+            var create = NativePlayerTimerIdlePerf.FindCreateTarget();
+            // Off only when the create sender is gone (already warned by the sibling);
+            // the one dictionary assignment it guards costs nothing.
+            _targets = create != null ? new MethodBase[] { create } : Array.Empty<MethodBase>();
+            return _targets.Length > 0;
+        }
+
+        private static IEnumerable<MethodBase> TargetMethods() => _targets;
+
+        private static void Postfix(DewPlayer __instance, int id, float defaultValue)
+        {
+            if (!NativePerfOptions.PlayerTimerIdle) return;
+            if (!Mirror.NetworkServer.active) return;
+            try
+            {
+                // The create payload is what puts the initial value on the receiver, so
+                // it defines what the receiver holds for this id from now on.
+                NativePlayerTimerIdlePerf.LastHeld.GetValue(__instance,
+                    NativePlayerTimerIdlePerf.CreateLastHeld)[id] = defaultValue;
+            }
+            catch (Exception)
+            {
+                // Seeding is an optimization bookkeeping step: a failure here only means
+                // one duplicate set may go out, so leave the skip patch enabled.
+            }
         }
     }
 }
