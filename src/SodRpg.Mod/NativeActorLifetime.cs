@@ -186,17 +186,17 @@ namespace SodRpg.Mod
         private static bool Prefix(Actor __instance) => NativeActorLifetime.CanUpdate(__instance);
     }
 
-    [HarmonyPatch(typeof(Actor), nameof(Actor.FrameUpdate))]
-    internal static class NativeStatusActorFrameGuard
-    {
-        private static bool Prefix(Actor __instance) => NativeActorLifetime.CanUpdate(__instance, false);
-    }
-
     [HarmonyPatch(typeof(StatusEffect), nameof(StatusEffect.FrameUpdate))]
     internal static class NativeStatusFrameGuard
     {
         private static bool Prefix(StatusEffect __instance) => NativeActorLifetime.CanUpdate(__instance, false);
     }
+
+    // Actor.FrameUpdate is intentionally not guarded. StatusEffect.FrameUpdate always calls
+    // base.FrameUpdate() as its first statement, so an Actor-level guard would re-run this
+    // same check with no state change in between, while adding a per-actor detour to every
+    // hero, monster and projectile whose most-derived FrameUpdate is Actor.FrameUpdate.
+    // The per-tick victim check still runs via the Actor.LogicUpdate guard below.
 
     [HarmonyPatch(typeof(Se_MirageSkin_Sanctification_Protected), "UpdateBeamPositions")]
     internal static class NativeSanctificationBeamGuard
