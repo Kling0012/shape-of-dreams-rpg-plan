@@ -10,6 +10,24 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v3.8.25 — Lighter co-op enemy resync（2026-10-20）
+
+協力プレイで敵の情報を送り直すときに、意味のない通信を送らないようにし、部屋を移るときのゲームの動作を軽くしました。 / Co-op no longer sends pointless messages when enemy information is resent, making the game lighter when you move between rooms.
+
+### 更新前に確認 / Before updating
+
+- 協力プレイでは、参加者全員がこのバージョンに更新してください。 / Everyone in co-op should update to this version.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- 協力プレイで部屋を移ったときなどに、ホストが参加者へ敵の情報をまとめて送り直す場面がありました。このとき、生きている敵1体ごとに、参加者のゲームでは何も起こらない通信を1通ずつ送っていた問題を直しました。この通信は送らないようにしたので、ホストと参加者のどちらのゲームでも少し軽くなります。普通の敵が大半の部屋では、送り直す通信がおよそ半分に減る見込みです。敵の動きや見え方は、これまでと変わりません。 / Fixed the host sending guests one message per living enemy that had no effect on the guest's game. This happened in co-op whenever enemy information was resent in bulk, for example after moving to another room. These messages are no longer sent, so the game gets a little lighter for both host and guests. In rooms where most enemies are ordinary ones, this is expected to cut the resent messages roughly in half. How enemies behave and how they look are unchanged.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
 ## v3.8.24 — Lighter room transitions（2026-10-20）
 
 部屋に入るときの準備から無駄な処理を省き、部屋を移るときのゲームの動作を軽くしました。 / Room entry now does less unnecessary setup work, making the game lighter when you move between rooms.

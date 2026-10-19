@@ -1,5 +1,5 @@
-[b]Room entry now skips repeated setup work, making room transitions a little lighter for host and guests.[/b]
-[b]部屋に入るときの無駄な調べ直しを省き、部屋を移るときの動作を少し軽くしました。[/b]
+[b]Co-op no longer sends pointless messages when resending enemy information, making room changes lighter.[/b]
+[b]協力プレイで敵の情報を送り直すときの意味のない通信をやめ、部屋を移るときの動作を軽くしました。[/b]
 
 [h1]Dreamforge RPG[/h1]
 Turns every run into part of a long RPG journey: relics you keep, a "secure or delve" choice at every zone, a star map per Traveler, a forge and long-term goals. Co-op ready.
