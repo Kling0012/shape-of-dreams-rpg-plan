@@ -1,5 +1,5 @@
-[b]Fixes dream dust and wealth essence coin pickup effects lingering on the player, and makes training updates, the gem slot display, and pressure dividend payouts lighter.[/b]
-[b]ドリームダストと富のエッセンスのコイン獲得の演出が消えないことがある問題を直し、鍛錬の受信、ジェム枠の表示、圧力配当の精算を軽くしました。[/b]
+[b]Room entry now skips repeated setup work, making room transitions a little lighter for host and guests.[/b]
+[b]部屋に入るときの無駄な調べ直しを省き、部屋を移るときの動作を少し軽くしました。[/b]
 
 [h1]Dreamforge RPG[/h1]
 Turns every run into part of a long RPG journey: relics you keep, a "secure or delve" choice at every zone, a star map per Traveler, a forge and long-term goals. Co-op ready.

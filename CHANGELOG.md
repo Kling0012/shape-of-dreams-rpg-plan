@@ -10,6 +10,24 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v3.8.24 — Lighter room transitions（2026-10-20）
+
+部屋に入るときの準備から無駄な処理を省き、部屋を移るときのゲームの動作を軽くしました。 / Room entry now does less unnecessary setup work, making the game lighter when you move between rooms.
+
+### 更新前に確認 / Before updating
+
+- 協力プレイでは、参加者全員がこのバージョンに更新してください。 / Everyone in co-op should update to this version.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- 部屋に入るたびに、部屋の中の仕組みを動かし始める順番を決める処理が、同じ情報を毎回調べ直していた問題を直しました。一度調べた情報は使い回すので、部屋を移るときの一瞬の重さと、そのあとのメモリの片付けが少し軽くなります。部屋を移るごとに、数十〜数百回分の無駄な準備が減る見込みです。ホストと参加者のどちらのゲームでも軽くなります。2部屋目からは、調べ直しがほぼ要らなくなります。部屋の中で起こることや、その順番はこれまでと変わりません。 / Fixed the game re-reading the same information every time you entered a room to decide the order in which the room's systems start. This information is now reused, so room transitions cause a slightly smaller momentary slowdown and less memory cleanup afterward. This is expected to cut tens to hundreds of wasted setup steps per room change, for both host and guests. From the second room onward, almost no re-reading is needed. What happens in each room, and the order it happens in, are unchanged.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
 ## v3.8.23 — Fix lingering pickup effects and lighter performance（2026-10-20）
 
 ### 不具合の修正 / Bug fixes
