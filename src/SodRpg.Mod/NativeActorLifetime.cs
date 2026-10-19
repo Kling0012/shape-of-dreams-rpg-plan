@@ -196,7 +196,7 @@ namespace SodRpg.Mod
     // base.FrameUpdate() as its first statement, so an Actor-level guard would re-run this
     // same check with no state change in between, while adding a per-actor detour to every
     // hero, monster and projectile whose most-derived FrameUpdate is Actor.FrameUpdate.
-    // The per-tick victim check still runs via the Actor.LogicUpdate guard below.
+    // The per-tick victim check still runs via the Actor.LogicUpdate guard above.
 
     [HarmonyPatch(typeof(Se_MirageSkin_Sanctification_Protected), "UpdateBeamPositions")]
     internal static class NativeSanctificationBeamGuard
