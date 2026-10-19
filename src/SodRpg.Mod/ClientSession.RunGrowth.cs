@@ -45,6 +45,8 @@ namespace SodRpg.Mod
             if (hero == null || hero.netId != msg.heroNetId) return;
             Protocol.WarnMismatch(msg.protocol, nameof(DreamforgeRunGrowthMsg));
             // ホストは値が変わらなくても定期再送する。生のペイロードが前回の適用と同じなら解析結果も同じなので、確保なしで抜ける。
+            // RunGrowth.IsRemovedStar（起動時に固定の一覧）と Gimmicks.ValidStarId（文字種と長さの判定だけ）は
+            // 実行中に結果が変わらないため、同じ文字列を後から解析し直しても同じ結果になる。
             if (msg.runId == _growthRunId && string.Equals(msg.stacks, _growthRawStacks, StringComparison.Ordinal)) return;
             var parsed = new Dictionary<string, int>(StringComparer.Ordinal);
             if (!string.IsNullOrEmpty(msg.stacks))
@@ -66,9 +68,11 @@ namespace SodRpg.Mod
             if (!changed)
                 foreach (var kv in parsed)
                     if (!_growthStacks.TryGetValue(kv.Key, out int old) || old != kv.Value) { changed = true; break; }
+            // 内容が同じでも並び順だけ違う文字列（例: b=2,a=1）はここで解析し直される。次の同じ内容が
+            // 文字列比較だけで済むように、現在の状態と同じ結果になった生の文字列も覚えておく。
+            _growthRawStacks = msg.stacks;
             if (!changed) return;
             _growthRunId = msg.runId;
-            _growthRawStacks = msg.stacks;
             _growthStacks.Clear();
             foreach (var kv in parsed) _growthStacks[kv.Key] = kv.Value;
             RunGrowthVersion++;
