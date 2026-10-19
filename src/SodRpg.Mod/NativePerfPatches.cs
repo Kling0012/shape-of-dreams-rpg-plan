@@ -3103,12 +3103,13 @@ namespace SodRpg.Mod
         //
         // Once the facing has settled — angle to target below 0.05 degrees and the damper's
         // internal velocity below 0.05 degrees per second — the native step writes a
-        // rotation within ~0.1 degrees of the current one and keeps the damper velocity
-        // under the same bound (the step is proportional to those two inputs, bounded by
-        // their magnitudes times omega*dt*exp <= ~1 for the game's 0.05-0.1 s smooth times).
-        // Skipping the whole call therefore keeps the visible facing inside the same bound
-        // without moving the damper state, so the next frame settles identically. Both
-        // inputs are re-read on every call: any turn of the target, an immediate-rotate RPC
+        // rotation within ~0.1 degrees of the current one (the step is proportional to
+        // those two inputs; EntityRotationIdlePerfTests checks this bound over the game's
+        // 0.05-0.1 s smooth times). Skipping the whole call is therefore not strictly
+        // identical: the visible facing freezes at most 0.05 degrees from the target
+        // instead of converging that last fraction of a degree, and the damper state stays
+        // where it was, so the next frame repeats the same decision from the same state.
+        // Both inputs are re-read on every call: any turn of the target, an immediate-rotate RPC
         // or a teleport that pulls them apart re-enables the native body on the next frame,
         // and NaN in either input fails the comparison and reaches the original, which
         // already recovers NaN. Each entity also carries a kinematic Rigidbody

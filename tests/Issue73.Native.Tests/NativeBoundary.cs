@@ -156,7 +156,6 @@ namespace Mirror
             return delta > 180f ? delta - 360f : delta;
         }
     }
-
     internal static class GUI
     {
         // スクロール位置はそのまま返し、描画・入力は行わない（Button は常に押されていない）。
@@ -524,8 +523,11 @@ namespace SodRpg.Mod
     internal class EntityControl
     {
         public Entity entity;
-        // 本体の Transform。NativeEntityRotationIdlePerf の Prefix が読む（テストからは代入しない）。
+        // 本体の Transform。NativeEntityRotationIdlePerf の Prefix が読み、検証では向きを設定して使う。
         public UnityEngine.Transform transform;
+        // 本体の向きダンパーの内部速度（EntityControl._desiredAngleCv）。Prefix の FieldRef が読み、
+        // 検証でも設定して使う。
+        public float _desiredAngleCv;
         // 本体の攻撃目標。召喚体の反撃判定（HostAuthority.SummonOwnership.cs）が読む。
         public Entity attackTarget;
         public Displacement ongoingDisplacement;
