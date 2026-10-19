@@ -68,6 +68,7 @@ namespace SodRpg.Mod
             nativeCursorIdle = true, nativeStatsCalcRpcIdle = true, nativePositionSyncIdle = true,
             nativeChargeRpcIdle = true,
             nativeProjectileIdleRpc = true,
+            nativeSampleUpdateIdle = true,
             nativeLobbyAccessoryIdle = true, nativeUltChargeRpcIdle = true,
             guestSkillLockRecovery = true;
     }
