@@ -226,6 +226,13 @@ namespace SodRpg.Mod
         private static SkollCoreState _skollUpdateState;
         private static int _skollUpdateStage;
         private static readonly BossRewardProfile SkollCoreRewardProfile=LoadSkollCoreRewardProfile();
+        private static bool _skollCoreIntervalProfileWarned;
+        private static void WarnSkollCoreIntervalProfile(string reason)
+        {
+            if (_skollCoreIntervalProfileWarned) return;
+            _skollCoreIntervalProfileWarned=true;
+            Log.Warn("Host: boss_skoll.glacial_core " + reason + "; using native shoot interval. Check tools/balance/bosses/skoll.json");
+        }
         private static BossRewardProfile LoadSkollCoreRewardProfile()
         {
             BossProfiles.TryGetReward(BossProfiles.SkollRewardId,out var profile);
@@ -355,10 +362,20 @@ namespace SodRpg.Mod
             // 報酬段階は1更新で1回だけ計算する（キャッシュなしの経路では従来どおり都度計算）。
             int stage = cached ? (_skollUpdateStage != 0 ? _skollUpdateStage : _skollUpdateStage=BossRewardStage(rt,BossProfiles.SkollRewardId))
                 : BossRewardStage(rt,BossProfiles.SkollRewardId);
+            if (stage < 3) return nativeInterval;
             var stages=SkollCoreRewardProfile?.Stages;
-            if (stage < 3 || stages == null || stages.Count == 0) return nativeInterval;
+            if (stages == null || stages.Count < 3)
+            {
+                WarnSkollCoreIntervalProfile(stages == null ? "reward profile or stages are missing" : "reward profile has fewer than 3 stages");
+                return nativeInterval;
+            }
+            // 段階3まで揃うプロファイルだけを使い、範囲を超えた段階には最後の段階を使う。
             var reward=stages[Math.Min(stage,stages.Count)-1];
-            if (reward.Actions.Count <= 2) return nativeInterval;
+            if (reward.Actions.Count <= 2)
+            {
+                WarnSkollCoreIntervalProfile("reward stage has fewer than 3 actions");
+                return nativeInterval;
+            }
             if (SkollCoreBank == null || SkollCoreTargets == null) return nativeInterval;
             float bank=0; int bankScan=0; foreach (var entry in SkollCoreBank(core)) { if(bankScan++>=256) break; bank += entry.Value; }
             if (bank <= 0) return nativeInterval;
