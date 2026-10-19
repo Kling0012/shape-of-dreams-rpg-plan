@@ -70,7 +70,7 @@ namespace Mirror
 }
  namespace UnityEngine
  {
-     internal static class Time { public static int frameCount; public static float unscaledTime; public static float time; public static double timeAsDouble; }
+     internal static class Time { public static int frameCount; public static float unscaledTime; public static float time; public static double timeAsDouble; public static float deltaTime; }
     // TrackRun の Limbo 深度の読み出しに必要な本体 API。ハーネスでは Limbo なし(0)を返す。
     internal static class Object { public static T FindObjectOfType<T>() where T : class => null; }
 
