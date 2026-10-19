@@ -1,5 +1,5 @@
-[b]Fixed Glacial Core reusing stale results and erroring on out-of-range reward stages or missing reward settings.[/b]
-[b]Glacial Core が前の状態の確認結果を使い回す問題と、報酬段階が範囲外のときや報酬の設定がないときにエラーが起きる問題を直しました。[/b]
+[b]Reduced the host's processing load each time an attack hits, with no change to damage results.[/b]
+[b]攻撃が当たるたびに行っていたホストの処理を軽くしました。ダメージの結果は変わりません。[/b]
 
 [h1]Dreamforge RPG[/h1]
 Turns every run into part of a long RPG journey: relics you keep, a "secure or delve" choice at every zone, a star map per Traveler, a forge and long-term goals. Co-op ready.
