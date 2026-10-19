@@ -150,6 +150,9 @@ namespace SodRpg.Mod
         [LabelText("Skip unchanged stats-recalc notifications (host) / 変わっていないステータス再計算の通知を省く（ホスト）")]
         public bool nativeStatsCalcRpcIdle = true;
 
+        [LabelText("Skip the unchanged lobby accessory rescan / 変わっていないロビーのアクセサリ再走査を省く")]
+        public bool nativeLobbyAccessoryIdle = true;
+
         [LabelText("Skip idle position-sync re-sends / 動いていない実体の位置同期の同じ再送を省く")]
         public bool nativePositionSyncIdle = true;
 

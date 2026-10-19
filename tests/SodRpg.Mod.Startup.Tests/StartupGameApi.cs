@@ -276,9 +276,20 @@ namespace SodRpg.Mod
     {
         public static DewNetworkStartSettings startSettings = new DewNetworkStartSettings();
     }
+    // 本体の customData は Mirror の SyncDictionary で、値の同値比較なく書き込みごとに操作を積む。
+    // このスタブは indexer の書き込みだけを数え、同値再書き込みの省略をテストから観測できるようにする。
+    public class CountingSettingsDictionary : Dictionary<string, string>
+    {
+        public int Writes;
+        public new string this[string key]
+        {
+            get => base[key];
+            set { Writes++; base[key] = value; }
+        }
+    }
     public sealed class GameSettingsManager
     {
-        public readonly Dictionary<string, string> customData = new Dictionary<string, string>();
+        public readonly CountingSettingsDictionary customData = new CountingSettingsDictionary();
         public GameState state;
         public string difficulty;
         public MidJoinBanType midJoinBanType;

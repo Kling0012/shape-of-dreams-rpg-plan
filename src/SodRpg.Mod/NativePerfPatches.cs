@@ -35,6 +35,7 @@ namespace SodRpg.Mod
             NativePerfOptions.StatsCalcRpcIdle = config.nativeStatsCalcRpcIdle;
             NativePerfOptions.PositionSyncIdle = config.nativePositionSyncIdle;
             NativePerfOptions.ChargeRpcIdle = config.nativeChargeRpcIdle;
+            NativePerfOptions.LobbyAccessoryIdle = config.nativeLobbyAccessoryIdle;
         }
     }
 
@@ -61,6 +62,7 @@ namespace SodRpg.Mod
         internal static bool StatsCalcRpcIdle = true;
         internal static bool PositionSyncIdle = true;
         internal static bool ChargeRpcIdle = true;
+        internal static bool LobbyAccessoryIdle = true;
     }
 
     internal static class NativePerfPatch
@@ -1829,7 +1831,10 @@ namespace SodRpg.Mod
         // the skip side off together.
         internal static bool SharedPrepare()
         {
+            if (_disabled) return false;
             if (_rpc != null) return true;
+            // Keep both patches off unless every shared preparation step succeeds.
+            _disabled = true;
             try
             {
                 _calc = NativePerfPatch.Find(typeof(EntityStatus), "CalculateStats", ref _warned);
@@ -1847,6 +1852,7 @@ namespace SodRpg.Mod
                 if (!ValidateRpcBody(PatchProcessor.GetOriginalInstructions(_rpc))
                     || !ValidateCalcBody(PatchProcessor.GetOriginalInstructions(_calc)))
                     return false;
+                _disabled = false;
                 return true;
             }
             catch (Exception ex)
