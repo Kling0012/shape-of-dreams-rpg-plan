@@ -63,6 +63,7 @@ namespace SodRpg.Mod
             nativeOcclusionIdle = true,
             nativeCharacterModelDisplayBounds = true, nativeKillTrackerCullThrottle = true,
             nativeCursorIdle = true, nativeStatsCalcRpcIdle = true, nativePositionSyncIdle = true,
+            nativeChargeRpcIdle = true,
             nativeLobbyAccessoryIdle = true,
             guestSkillLockRecovery = true;
     }
