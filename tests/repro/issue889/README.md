@@ -1,119 +1,123 @@
-# Issue #889 の再現調査の記録
+# Issue #889 の拾得演出の調査記録
 
-ドリームダストの獲得演出と、富のエッセンスのコイン獲得演出がプレイヤーに
-まとわりついたまま消えない、という報告（報告時点 v3.8.3・本体 r1.4.1.2）について、
-ゲームを起動できないこの環境で試した再現の手段と結果、そして修正工程が原因を
-絞り込むために必要な、コードから確かめた作られ方・消え方の事実を残す。
+ドリームダストと富のエッセンスのコインを拾うと、獲得演出がプレイヤーにまとわりついたまま消えないという報告を調べた。対象は報告時点の v3.8.3 と本体 r1.4.1.2。2026-10-20 に本体 DLL の逆コンパイル、MOD のコードとの照合、既存テストを実行した。
 
-## 試した再現の手段と結果
+コードから、拾得物の破棄待ちが終わらないと追従演出の寿命管理も始まらない経路を確認した。ただし、報告環境で破棄待ちを停滞させた直接の要因は未確認。画面上の症状は未再現であり、以下は構造上の原因候補と、その経路を防ぐ理論修正の記録である。
 
-| 手段 | 結果 |
+## 生成と追従
+
+両者とも本体の `PickupInstance` を通る。
+
+| 対象 | 生成と獲得の経路 |
 |---|---|
-| ゲーム内コマンド `dreamforge_simkill` によるシミュレーション | 未実行。ゲームを起動できない環境のため |
-| 実 DLL（r1.4.1.2）からの逆コンパイルによる構造の検証 | 実行した。`verify_r1412_fx_lifecycle.sh` が全事実 OK（17/17） |
-| 単体テスト（tests/ の二重境界方式）による再現 | 作らなかった。どの MOD コードが消える処理を止めているかがまだ分かっておらず、仮定を打ち込んだテストは再現にならないため（理由は下記） |
+| 富のエッセンス | `Gem_R_Wealth`（Dew.Contents）が `PickupManager.DropGold` を呼び、`CreatePickupInstance` で大・中・小のゴールド宝珠を生成する。宝珠を拾うと `Pickup_BaseGoldOrb.OnPickup` → `GrantGold` → `EarnGold` が実行される。生成時の `goldSpawnEffect` は別の `FxPlayNewNetworked` 経路 |
+| ドリームダスト | `PickupManager.DropDreamDust` が `CreatePickupInstance` で `Pickup_DreamDust` を生成する。拾うと本体の `EarnDreamDust` / `AddDreamDust` が実行される。MOD の `HostAuthority.Currency.cs:OnDreamDustGiven` は `player.EarnDreamDust(bonus)` で加算し、独自の追従 FX は生成しない |
 
-症状そのもの（画面上で演出が残り続ける）は Unity の実行時挙動（パーティクルの
-再生、Mirror の破棄順序、Actor プールの再利用）で決まる。この段階では原因の
-箇所が特定できていないため、赤になる再現テストは書けず、**未再現**として
-事実の記録を残す。スクリプトは本体の前提が今後も崩れていないかを確かめる
-検証として、そのまま使える。
+拾得時の共通経路は次のとおり。
 
-## 2つの演出の作られ方（本体 r1.4.1.2・逆コンパイルで確認）
+1. `PickupInstance.OnPickup` が `pickupEffect` と `pickupEffectOnHero` を再生する。
+2. プレイヤー側の演出は `FxPlayNetworked(pickupEffectOnHero, hero)` から `DewEffect.PlayNetworked(NetworkIdentity, GameObject, Entity)` へ進む。
+3. `PlayAttachedEffectMessage` は `isNew=false` で、`isPooled` も立てない。受信側の `HandleEffectMessage` は `DewEffect.Play(effect, hero, pickup)` で元の子オブジェクトをその場再生する。ホストのローカルクライアントと参加クライアントがこの経路を通る。
+4. `FxAttachToEntity.OnAttachToEntity(hero)` が対象を保持し、`hero.Visual._attachedEffects` へ登録する。`FrameUpdate` が演出の位置を更新する。
 
-両者とも本体の「拾得物」（PickupInstance）の同じ経路を通る。
+ここで Transform の親をヒーローへ付け替える処理はない。演出は拾得物 Actor の子のまま、位置を更新してヒーローへ追従する。
 
-- **富のエッセンス（Gem_R_Wealth、Dew.Contents）**: 撃破のたびに
-  `PickupManager.DropGold` でゴールド宝珠（Pickup_Large/Medium/SmallGoldOrb）を
-  落とし、`goldSpawnEffect` を `FxPlayNewNetworked` で出す。宝珠は
-  `ActorManager.CreatePickupInstance` で作られた Actor で、吸引力でプレイヤーへ
-  飛び、拾うと `Pickup_BaseGoldOrb.GrantGold` が EarnGold する。
-- **ドリームダスト（Pickup_DreamDust）**: `PickupManager.DropDreamDust` から同じく
-  Actor として落ちてきて、拾うと EarnDreamDust する。MOD 側
-  （`HostAuthority.Currency.cs` の `OnDreamDustGiven`）はこの拾得に上乗せで
-  `player.EarnDreamDust(bonus)` を呼ぶだけなので、MOD 独自の演出は別経路ではない。
+## 停止・寿命・プール返却
 
-拾得の瞬間、`PickupInstance.OnPickup` は `pickupEffect` と `pickupEffectOnHero` を
-`FxPlayNetworked` で再生する。`pickupEffectOnHero` が「プレイヤーにまとわりつく」
-側の演出で、`DewEffect.PlayNetworked(NetworkIdentity, GameObject, Entity)` は
-`isNew=false`・`isPooled=false` で全員へ送る。クライアントは親 Actor の子オブジェクト
-（演出の元）をその場で再生し、`FxAttachToEntity.OnAttachToEntity(hero)` が
-`hero.Visual._attachedEffects` へ登録して、FrameUpdate でプレイヤーに追従させる。
+| 再生の種類 | 本体の後始末 |
+|---|---|
+| 複製のプール再生 | `DewEffect.PlayIntoPool` が `EffectAutoDestroy.Register(clone, pooled: true, parent)` に登録する。`Tick` は再生完了または登録後30秒超を検出し、`DestroyEntry` が停止・追従解除・`SetActive(false)` を行う。部屋替わりでも登録済みの演出を処分する |
+| 拾得演出のその場再生 | `DewEffect.Play(GameObject, Entity, NetworkIdentity)` 自体には `EffectAutoDestroy.Register` がない。親 Actor の `CustomDestroyRoutine` が FX 成分を登録し、再生終了またはタイムアウト後の Actor の破棄・プール返却で子も無効になる |
 
-## 2つの演出の消え方（同じく逆コンパイルで確認）
+ダストとゴールド宝珠はどちらも `reuseInRoom=true`。`SpawnManager.Destroy` は Actor の粒子を再利用用にリセットし、Actor を無効にしてプールへ返す。子の `FxAttachToEntity.OnDisable` が追従登録を外す。`PickupInstance.OnDestroyActor` が明示的に停止するのは `mainEffect` で、`pickupEffectOnHero` は停止対象に含まれない。
 
-- **プール再生（FxPlayNewNetworked 側）**: `DewEffect.PlayIntoPool` が複製を
-  `EffectAutoDestroy.Register(clone, pooled: true, parent)` に登録する。
-  `EffectAutoDestroy.Tick` は再生が終わった複製を `DestroyEntry` で始末し、
-  `attachables.OnAttachToEntity(null)` で追従を外し、`SetActive(false)` で
-  プールへ返す。30 秒の打ち切りと部屋替わりの一掃もあり、登録された複製が
-  30 秒を超えて残ることはない。
-- **その場再生（FxPlayNetworked 側・拾得演出はこちら）**: `EffectAutoDestroy`
-  への登録はこの経路にはない。演出の元は親 Actor（拾得物）の子のまま残り、
-  親の破棄と一緒に消える。本体の Actor は `ICustomDestroyRoutine` で自分の
-  FX 成分を `EffectAutoDestroy.Register(gameObject, _cachedFxComponents)` に
-  預け、FX が止まるまで物体を残す（こちらも 30 秒で打ち切られる）。
-  なお `PickupInstance.OnDestroyActor` が止めるのは `mainEffect` だけで、
-  `pickupEffectOnHero` は対象外。
+`DewEffect.Stop` は粒子の放出と各 `IEffectComponent` を止める。ただし、粒子の全消去は個々の FX の設定に依存する。停止だけで残留粒子やフェード中の描画が即座に消えるとは限らない。
 
-## 破棄の順序と Actor 破棄系・本体差分の検証（確定）
+## 破棄待ちから演出が残る経路
 
-- 拾得演出は「登録なしのその場再生」で、消える保証を親 Actor の破棄に預けている。
-  親の Actor がプール再生（`reuseInRoom=true`。Pickup_DreamDust と宝珠は両方該当）
-  のとき、正常な経路では破棄鎖（`Dew.Destroy` → canDestroy 待ち → despawn）が
-  完結して子ごと無効化され、`FxAttachToEntity.OnDisable` が追従を外す。
-  鎖のどこかで破棄が完結しないと `pickupEffectOnHero` の後始末を誰もしない。
-- MOD の `NativeActorClientDespawn`（`src/SodRpg.Mod/NativeActorLifetime.cs`。
-  Actor.OnStopClient の Prefix で OnDestroyActor を前倒し実行）は、
-  PickupInstance.OnDestroyActor の中身（`mainEffect` の停止と子の解除）を
-  前倒しにするだけで、破棄鎖も追従の登録も止めない（むしろ停滞時の後始末を
-  進める側）。`NativeActorLifetimeReset`（Actor.OnDisable の Postfix）は
-  ConditionalWeakTable の簿記リセットのみで、消える処理には無関係。
-- 残った `FxAttachToEntity` は `hero.Visual._attachedEffects` に登録されたまま
-  追従し続ける。`NativeWeaponFxPerf` がこの一覧を触っている（holsteredWeapon が
-  無いときに空の覧へ差し替え。この差し替え自体は読む限り等価）。
-- 本体 r1.4.0.13 と r1.4.1.2 の差分（ilspycmd で両版の Dew.Core.dll を比較。
-  2026-10-20 実行）: `PickupInstance`・`EffectAutoDestroy`・`FxAttachToEntity`・
-  `SpawnManager` は完全同一。`DewEffect` は PlayDetached / IsDetachable 周辺のみ、
-  `Actor` は `ClearData()` の追加のみで、拾得演出の経路
-  （PlayNetworked → PlayAttachedEffectMessage → HandleEffectMessage → Play）は
-  不変。本体側の変更はこの症状の原因ではない。
+`Dew.StepDestroy` と `Actor` の逆コンパイルから、次の順序を確認した。
 
-## 候補の軽量化について調べた結果
+1. `InitialPoll` が親を外して `DontDestroyOnLoad` に移し、`ICleanup.OnCleanup` を呼ぶ。
+2. RPC の待ち時間のあと、`ICleanup.canDestroy` が true になるまで再確認する。
+3. `Finalize` が `NetworkServer.UnSpawn` を呼ぶ。そのあと `ICustomDestroyRoutine.CustomDestroyRoutine` が `EffectAutoDestroy.Register(gameObject, _cachedFxComponents)` に登録する。
 
-- 66cd6f2a（止まった実体の回転の書き込み省略）: `EntityControl.DoRotateTowardsDesiredAngleTick`
-  の Prefix。演出の消え方には触れない。
-- c6d561f4（武器スケールの SmoothDamp 省略）: `Hero.FrameUpdate` の武器 localScale。
-  演出の消え方には触れない。
-- db9cd806（画面内タイマーの再送省略）: `DewPlayer.LogicUpdate_InGame_NetworkedOnScreenTimer`
-  の Prefix。演出の消え方には触れない。
-- native-fx-budget（NativeFxBudget）: 対象は火属性系の固定覧（Gem_R_Blade 等）で、
-  拾得物は載っていない。`DewEffect.Play_Imp` の Prefix/Postfix は拾得演出では
-  対象外のため何もしない。
-- NativeProcCoalesce / NativeProcSpawnSpread: 飛び道具と攻撃 FX のまとめ処理。
-  `NativeProcImpactFx` は `PlayNetworked(NetworkIdentity, GameObject, Entity)` に
-  Prefix を置くが、拾得物は種類判定（kind 0）で必ず本体の再生を通す。
+`Actor.ICleanup.canDestroy` は `childrenInNetwork` が残っている間 false を返す。destroy lock の60秒上限は、この子の残存条件には適用されない。したがって canDestroy 待ちが終わらない状態では、Actor の FX 登録も30秒タイマーも始まらず、子の追従演出が残り得る。
 
-いずれも「消える処理を止める」接点はなく、戻す必要がない。前節のとおり
-Actor 破棄系の MOD パッチも停滞を起こす側ではない。原因は軽量化ではなく、
-登録なしのその場再生が親 Actor の破棄鎖の完結に依存している本体の構造で、
-破棄鎖が停滞したときにだけ演出が残る。
+これはコードで示せる経路であり、報告環境で `childrenInNetwork` が実際に残っていたことを示す実行時記録はない。他の停滞要因も排除していない。最近の軽量化や本体更新が停滞を作ったと断定する根拠は見つからなかった。
 
-## 確定した原因と修正
+## 軽量化ごとの確認
 
-- 原因: 拾得演出（`pickupEffectOnHero`）のその場再生には EffectAutoDestroy への
-  登録がなく、消える保証を拾得物 Actor の破棄鎖に丸ごと預けている。破棄鎖が
-  停滞する入力・状態（canDestroy が false のまま残る Actor。StuckDissolve が
-  文書化した本体の停滞と同型）では、拾得物は DontDestroyOnLoad の下でアクティブの
-  まま残り、演出は登録された追従とともにプレイヤーにまとわりついたまま残る。
-- 修正: `src/SodRpg.Mod/PickupFxLifetime.cs` が、この再生だけに本体と同じ
-  打ち切り条件（30 秒上限・部屋遷移・部屋替わり・別寿命への切り替わり）で
-  本体の消失処理（FxStop と `OnAttachToEntity(null)` による追従解除）を
-  保証する。軽量化は一切戻さず、獲得量・確率などの数値も変えない。
+| 対象 | コードから確認した範囲と判断 |
+|---|---|
+| 66cd6f2a / `NativeEntityRotationIdlePerf` | `EntityControl.DoRotateTowardsDesiredAngleTick` の静止時の回転書き込みを省く。拾得 FX の停止、追従解除、破棄登録を変更しない |
+| c6d561f4 / `NativeHeroWeaponIdlePerf` | `Hero.FrameUpdate` の武器 localScale の同値書き込みと SmoothDamp を省く。拾得 FX の寿命管理を変更しない |
+| db9cd806 / `NativePlayerTimerIdlePerf` | `DewPlayer.LogicUpdate_InGame_NetworkedOnScreenTimer` の同値再送を省く。拾得物や FX の後始末を変更しない |
+| `NativeWeaponFxPerf` | `Hero.FrameUpdate` の武器描画用の読み取りだけを置き換える。holsteredWeapon がない場合に空の一覧を返すが、元の `_attachedEffects` を消去したり追従更新を止めたりしない |
+| `NativeAttachFaceIdlePerf` | `AttachToFace.TryGetWorldPositionAndRotation` の新しいメッシュベイクが不要な問い合わせを省く。`FxAttachToEntity.FrameUpdate` や FX の後始末は対象外 |
+| `NativeEmbracePositionPerf` | `Ai_EmbraceNewIdentity.UpdatePositions` の位置読み取りをまとめる。拾得物の型や寿命管理は対象外 |
+| `NativeSleepPositionPerf` | `ActorManager.CanEntitySleep` の1回の判定中に同じ Entity の位置を再利用する。型の判定、CanSleep、距離のしきい値は残す。拾得物の破棄や追従解除を変更しない |
+| `NativePositionSyncIdlePerf` | `EntityControl` の静止時の位置同期 heartbeat を省く。位置・速度・向きの変化による同期は残す。FX の停止や破棄登録を変更しない |
+| `NativeActorLifetime.cs` | `BeforeClientStop` / `AfterCleanup` は Actor の `OnDestroyActor` を前倒しし、`Reset` は管理情報を消す。`CanUpdate` は StatusEffect 以外を通す。PickupInstance の更新や canDestroy 待ちを止める処理は見つからない |
+| `NativeFxBudget` | 登録された型との完全一致で判定する。`Pickup_DreamDust` と `Pickup_BaseGoldOrb` 派生は対象外で、拾得演出を省かない |
+| `NativeProcCoalesce` / `NativeProcSpawnSpread` | 特定の攻撃弾の生成・命中処理をまとめる。生成の置換は Charcoal・Blade・Accuracy・Spiral の `CreateAbilityInstance` 系で、拾得物の `CreatePickupInstance` は変更しない |
+| `NativeProcImpactFx` | PlayNetworked の Prefix は攻撃 Actor の種類を選別する。拾得物は kind=0 となり、本体の再生を通す |
 
-## 検証スクリプト
+これらの範囲では、両演出の後始末を止める変更を確認できなかった。修正では軽量化の設定や実装を変更していない。
 
-`verify_r1412_fx_lifecycle.sh` は出荷済み DLL から上記の構造事実（A〜G の 17 項目）を
-逆コンパイルで確かめる。ilspycmd（`~/.dotnet/tools`）と本体
-（`~/dev/sod-gamedata`）が揃った環境でのみ動き、無い環境では skipped を出して
-終了する。実行日 2026-10-20 の結果は 17/17 OK（終了コード 0）。
+## 本体 r1.4.0.13 と r1.4.1.2 の比較
+
+2026-10-20 に両版の `Dew.Core.dll` を ilspycmd で逆コンパイルして比較した。
+
+| 型 | 差分 |
+|---|---|
+| `PickupInstance` / `Pickup_DreamDust` / `Pickup_BaseGoldOrb` | 同一 |
+| `EffectAutoDestroy` / `FxAttachToEntity` / `SpawnManager` | 同一 |
+| `DewEffect` | `IsDetachable` の追加と `PlayDetached` 周辺の変更 |
+| `Actor` | `ClearData` の追加と `ClearPooledEventsAndProcessors` からの呼び出し追加 |
+
+調べた8型では、拾得演出の生成・その場再生・後始末の経路に変更はなかった。本体更新全体の影響を排除した結果ではない。
+
+## 理論修正
+
+`src/SodRpg.Mod/PickupFxLifetime.cs` で、対象の演出の再生時から独立して寿命を監視する。
+
+- `FindPickup` はダストまたはゴールド宝珠の `pickupEffectOnHero` に一致し、Actor 自身ではない子オブジェクトだけを選ぶ。別のプール複製や他の拾得物は対象外。
+- `DewEffect.Play(GameObject, Entity, NetworkIdentity)` の Postfix がガードを開始する。通常の生成・再生を通したうえで、本体の30秒上限を再生開始時から数え、0.5秒間隔で確認する。期限後の次の確認で後始末するため、ゲームの時刻でおおむね30〜30.5秒が上限となる。
+- 部屋遷移・部屋ロード・元の拾得物の消失・別寿命への再利用でも後始末する。通常の UnSpawn で netId が0になることや Network_isActive が false になることだけでは再利用と判定しない。
+- `Retire` が `OnAttachToEntity(null)` で追従を外し、`DewEffect.Stop` を呼ぶ。さらに粒子を `StopEmittingAndClear` で消去し、演出用の子だけを無効にする。停止や追従解除が例外になっても、finally で子を隠す処理を試みる。
+- Prefix の `RestoreForPlayback` が、このガードで隠した子を次回の本体再生前に戻す。パッチが失敗して無効になったあとも復元処理は通す。
+- `Prepare` の契約確認や実行時処理が失敗したら、警告を出してこのパッチだけを無効にする。MOD 全体や他の軽量化は停止しない。
+
+本体の30秒タイムアウトは Actor の破棄工程で登録されてから数える。今回のガードは再生開始から数えるため、登録が遅れた演出は本体だけの場合より早く打ち切られ得る。通常の短い演出は本体の再生・後始末を通る。新しい毎フレーム処理やシーン走査はなく、粒子配列はガードの初回開始時に取得する。
+
+Actor 本体の無効化・破棄・プール返却は本体に任せる。獲得量、獲得確率、ダメージ、通信形式は変更していない。
+
+## 実行した検証
+
+- 本体 r1.4.1.2 の DLL 参照による Release ビルド。`GameDir` を本体データの場所、`ModDeployDir` を `/tmp/dreamforge-pr893-build` に指定した。成功、0エラー・警告6件。
+- `sh tests/repro/issue889/verify_r1412_fx_lifecycle.sh`。構造事実17項目がすべて OK、終了コード0。画面上の症状を再現するテストではない。
+- 上記8型の旧版・現行版 DLL 比較。
+- `Issue73.Native.Tests` の EntityRotationIdlePerfTests・HeroWeaponIdlePerfTests・PlayerTimerIdlePerfTests。19件成功。
+- `SodRpg.Mod.Startup.Tests` の FrostFxLifetimeTests。5件成功。既存の類似ガードの検証であり、今回の拾得ガードの直接検証ではない。
+- `SodRpg.Mod.FxBudget.Tests` の NativeFxBudgetTests。6件成功。
+
+検証スクリプトは `~/.dotnet/tools/ilspycmd` と `~/dev/sod-gamedata` の本体 DLL がある環境で動く。ない環境では skipped と出して終了する。今回の実行は skipped ではない。
+
+## 未実行
+
+- ゲーム内での症状再現と修正確認、ソロ・協力プレイ各画面、演出が多い場合と性能の確認。この環境ではゲームを起動できないため。
+- 拾得ガードの直接の挙動テストと、修正前に戻して失敗することの確認。既存の直接テストがなく、新規テストは禁止されているため。構造確認スクリプトは修正前後の両方で通る。
+- フルテスト、Dreamforge の `--all`、`SODRPG_SLOW=1`。今回の作業は関連部分の検証に限定する指示のため。
+
+## 要件との対応
+
+| FR | 対応する実装・調査 |
+|---|---|
+| FR-1 / FR-11 | `PickupFxLifetimePatch.FindPickup`、`PickupFxLifetime.Begin` / `CheckLifetime` / `Retire` / `RestoreForPlayback` と本記録の「理論修正」 |
+| FR-2 / FR-9 | 本記録の「生成と追従」「停止・寿命・プール返却」、既存の DLL 構造確認スクリプト |
+| FR-3 / FR-10 | 本記録の「軽量化ごとの確認」「破棄待ちから演出が残る経路」 |
+| FR-4 | 本記録の候補3コミットの確認と「本体 r1.4.0.13 と r1.4.1.2 の比較」 |
+| FR-5 | 本記録の破棄待ちからの因果と、その直接の停滞要因は未確認という調査の限界 |
+| FR-6 | 対象の子だけを後始末する `FindPickup` / `Retire`。軽量化は変更しない |
+| FR-7 | 演出だけを変更する `PickupFxLifetime.cs`。獲得処理は変更しない |
+| FR-8 | `PickupFxLifetimePatch.Prepare` / `Disable`、例外時の後始末と次回再生前の復元 |

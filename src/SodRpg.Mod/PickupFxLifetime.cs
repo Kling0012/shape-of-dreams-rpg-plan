@@ -6,18 +6,12 @@ using UnityEngine;
 namespace SodRpg.Mod
 {
     /// <summary>
-    /// ドリームダストや富のエッセンスの宝珠など、拾得物の獲得演出（pickupEffectOnHero）が
-    /// プレイヤーにまとわりついたまま消えない問題（#889）の対策。
-    /// この再生は EffectAutoDestroy への登録がないその場再生で、消える保証を拾得物 Actor の
-    /// 破棄鎖（Dew.Destroy → 非同期破棄 → despawn → CustomDestroyRoutine での登録）に丸ごと
-    /// 預けている。破棄が完結しない停滞（canDestroy が false のままの Actor。StuckDissolve が
-    /// 文書化した本体の停滞と同型）が起きると、拾得物は DontDestroyOnLoad の下でアクティブの
-    /// まま残り、FxAttachToEntity は演出をヒーローへ追従させ続ける。
-    /// ここではこの再生だけに本体と同じ消失処理を独自の有界スケジュールで保証する。
-    /// 打ち切り条件は本体の EffectAutoDestroy と同じ 30 秒上限・部屋遷移・部屋替わりで、
-    /// 通常の再生（本体の後始末が動く範囲）は一切短くしない。停止は本体の FxStop
-    /// （== DewEffect.Stop）と追従解除（OnAttachToEntity(null)）だけで、拾得物本体の
-    /// 生存・破棄・プールには触れない。契約が変わったらパッチは入らず従来どおり（fail-soft）。
+    /// Bounds the on-hero pickup FX of dream dust and gold orbs (#889). Native in-place
+    /// playback has no EffectAutoDestroy entry until the pickup's destroy queue finishes.
+    /// If canDestroy never succeeds, that timeout never starts and attached FX can survive.
+    /// Keep native playback and actor pooling, but independently stop/detach/hide this child
+    /// at the native 30-second FX limit or room change. Restore it before its next playback.
+    /// Contract failures disable only this patch and leave the native game path in place.
     /// </summary>
     [HarmonyPatch]
     internal static class PickupFxLifetimePatch
@@ -47,21 +41,42 @@ namespace SodRpg.Mod
 
         private static MethodBase TargetMethod() => _play;
 
-        // HandleEffectMessage(PlayAttachedEffectMessage) reaches this overload for every
-        // in-place (isPooled/isNew == false) attached effect, on clients and on the host's
-        // local client alike. Only the pickup's own pickupEffectOnHero playback is guarded.
+        // Restore only a child hidden by this guard, before native attachment and playback.
+        // This also runs after a guard failure so an already pooled instance stays usable.
+        private static void Prefix(GameObject effect, Entity attach, Mirror.NetworkIdentity parent)
+        {
+            if (effect == null || attach == null || parent == null) return;
+            try
+            {
+                if (FindPickup(effect, parent) == null) return;
+                effect.GetComponent<PickupFxLifetime>()?.RestoreForPlayback();
+            }
+            catch (Exception ex) { Disable(ex); }
+        }
+
+        // HandleEffectMessage reaches this overload on both host and remote clients.
         private static void Postfix(GameObject effect, Entity attach, Mirror.NetworkIdentity parent)
         {
             if (_disabled || effect == null || attach == null || parent == null) return;
             try
             {
-                var pickup = parent.GetComponent<PickupInstance>();
-                if (pickup == null || effect != pickup.pickupEffectOnHero) return;
+                var pickup = FindPickup(effect, parent);
+                if (pickup == null) return;
                 var guard = effect.GetComponent<PickupFxLifetime>();
                 if (guard == null) guard = effect.AddComponent<PickupFxLifetime>();
                 guard.Begin(pickup);
             }
             catch (Exception ex) { Disable(ex); }
+        }
+
+        private static PickupInstance FindPickup(GameObject effect, Mirror.NetworkIdentity parent)
+        {
+            var pickup = parent.GetComponent<PickupInstance>();
+            if (!(pickup is Pickup_DreamDust) && !(pickup is Pickup_BaseGoldOrb)) return null;
+            // Never deactivate an Actor root or a pooled clone owned by another lifecycle.
+            if (effect != pickup.pickupEffectOnHero || effect == pickup.gameObject
+                || !effect.transform.IsChildOf(pickup.transform)) return null;
+            return pickup;
         }
 
         internal static void Disable(Exception ex)
@@ -85,10 +100,21 @@ namespace SodRpg.Mod
         private float _sourceCreated;
         private float _expires;
         private bool _tracking;
+        private bool _hidden;
+        private ParticleSystem[] _particles;
+
+        internal void RestoreForPlayback()
+        {
+            Unsubscribe();
+            if (!_hidden) return;
+            _hidden = false;
+            gameObject.SetActive(true);
+        }
 
         internal void Begin(PickupInstance source)
         {
             Unsubscribe();
+            if (_particles == null) _particles = GetComponentsInChildren<ParticleSystem>(true);
             _source = source;
             _sourceNetId = source.netId;
             _sourceCreated = source.creationTime;
@@ -106,13 +132,12 @@ namespace SodRpg.Mod
             try
             {
                 SubscribeZone();
-                // Liveness is identity + creation time only: a picked-up pickup flips
-                // Network_isActive during its normal despawn, and deactivating the pickup
-                // deactivates this child too (OnDisable), so neither may retire early.
-                // A netId/creationTime change means the pooled instance was reused for a
-                // different pickup and this playback belongs to the previous life.
+                // Native cleanup sets isActive=false, then UnSpawn clears netId before
+                // CustomDestroyRoutine waits for FX. Neither means a new pickup life.
+                // Only a new nonzero identity or creation time identifies pool reuse.
                 if (Time.time >= _expires || _source == null
-                    || _source.netId != _sourceNetId || _source.creationTime != _sourceCreated
+                    || _source.netId != 0 && _source.netId != _sourceNetId
+                    || _source.creationTime != _sourceCreated
                     || _zone != null && _zone.isInRoomTransition)
                 {
                     Retire();
@@ -134,24 +159,45 @@ namespace SodRpg.Mod
             if (zone != null) zone.ClientEvent_OnRoomLoaded += OnRoomLoaded;
         }
 
-        // The native disappearing process for this playback: stop the effect the way
-        // OnDestroyActor stops mainEffect, then detach the follower the way
-        // EffectAutoDestroy.DestroyEntry does before returning a clone to the pool.
         private void Retire()
         {
             if (!_tracking) return;
             Unsubscribe();
             try
             {
-                // The exact inverse of DewEffect.Play's attach loop, then FxStop
-                // (== DewEffect.Stop, what OnDestroyActor uses for mainEffect).
                 ListReturnHandle<IAttachableToEntity> handle;
-                foreach (IAttachableToEntity item in gameObject.GetComponentsInChildrenNonAlloc(includeInactive: true, out handle))
-                    item.OnAttachToEntity(null);
-                handle.Return();
+                var attachables = gameObject.GetComponentsInChildrenNonAlloc(includeInactive: true, out handle);
+                try
+                {
+                    foreach (IAttachableToEntity item in attachables) item.OnAttachToEntity(null);
+                }
+                finally { handle.Return(); }
                 DewEffect.Stop(gameObject);
             }
             catch (Exception ex) { PickupFxLifetimePatch.Disable(ex); }
+            finally
+            {
+                // Stop() can leave live particles and fading IEffectComponents. Unlike
+                // pooled DestroyEntry, it does not deactivate the visual. Clear particles
+                // and hide only this child, even if a third-party Stop/detach callback fails.
+                try
+                {
+                    if (_particles != null)
+                        for (int i = 0; i < _particles.Length; i++)
+                            if (_particles[i] != null)
+                                _particles[i].Stop(false, ParticleSystemStopBehavior.StopEmittingAndClear);
+                }
+                catch (Exception ex) { PickupFxLifetimePatch.Disable(ex); }
+                finally
+                {
+                    try
+                    {
+                        _hidden = true;
+                        gameObject.SetActive(false);
+                    }
+                    catch (Exception ex) { PickupFxLifetimePatch.Disable(ex); }
+                }
+            }
         }
 
         private void OnDisable() => Unsubscribe();
