@@ -14,13 +14,17 @@ namespace SodRpg.Mod
     internal static class BossNativeCastScope
     {
         internal static HostAuthority.BossNativeCast Current;
+        // Participants never read the scope (every reader runs under NetworkServer.active),
+        // so the save/restore and release work is skipped there entirely.
         private static void Prefix(AbilityTrigger __instance, CastInfo info, out HostAuthority.BossNativeCast __state)
         {
+            if (!NetworkServer.active) { __state = null; return; }
             __state = Current;
-            Current = NetworkServer.active ? HostAuthority.NativeInstance?.BeginBossNativeCast(__instance, info) : null;
+            Current = HostAuthority.NativeInstance?.BeginBossNativeCast(__instance, info);
         }
         private static void Finalizer(HostAuthority.BossNativeCast __state)
         {
+            if (!NetworkServer.active) return;
             HostAuthority.NativeInstance?.ReleaseBossNativeCast(Current);
             Current = __state;
         }
@@ -103,14 +107,22 @@ namespace SodRpg.Mod
             catch { return Array.Empty<KeyValuePair<OpCode, object>>(); }
         }
 
+        // The scope is read only by host-side displacement/teleport publishing, so
+        // participants (for whom these patches run per Actor every frame) skip the
+        // save/restore entirely instead of churning the static per Actor.
         private static void Prefix(object __instance, out Actor __state)
         {
+            if (!NetworkServer.active) { __state = null; return; }
             __state = Current;
             Current = __instance as Actor;
             if (Current == null && Sources.TryGetValue(__instance.GetType(), out var field))
                 Current = field.GetValue(__instance) as Actor;
         }
-        private static void Finalizer(Actor __state) { Current = __state; }
+        private static void Finalizer(Actor __state)
+        {
+            if (!NetworkServer.active) return;
+            Current = __state;
+        }
     }
 
     [HarmonyPatch(typeof(EntityControl), nameof(EntityControl.StartDisplacement))]
@@ -125,7 +137,13 @@ namespace SodRpg.Mod
     [HarmonyPatch(typeof(EntityControl), nameof(EntityControl.Teleport))]
     internal static class BossNativeTeleportCompletion
     {
-        private static void Prefix(EntityControl __instance, out Vector3 __state) { __state = __instance.entity.position; }
+        // The captured origin is only consumed by the host-side postfix; participants
+        // skip the Entity.position read instead of paying it per teleport.
+        private static void Prefix(EntityControl __instance, out Vector3 __state)
+        {
+            if (!NetworkServer.active) { __state = default; return; }
+            __state = __instance.entity.position;
+        }
         private static void Postfix(EntityControl __instance, Vector3 __state)
         {
             if (NetworkServer.active) HostAuthority.NativeInstance?.PublishBossNativeTeleport(__instance.entity, __state);
