@@ -179,15 +179,21 @@ namespace SodRpg.Mod
             }
         }
 
-        // Runs after the native body only when it actually ran (a skipped prefix still gets
-        // the postfix, so the Skip flag distinguishes them). The recorded inputs are read
-        // after the native assignments, so model.skinType/model.accessories describe the
-        // settled state the next skip decision compares against.
-        internal static void AfterLogicUpdate(PlayLobby_Character instance)
+        // Runs after the native body only when it actually ran. A skipped tick still gets
+        // the postfix, and so does a tick that our prefix allowed but a foreign prefix
+        // (another MOD) then cancelled - in both cases Harmony reports __runOriginal false
+        // and the recorded inputs must stay untouched, because the native assignments that
+        // Record expects to read never happened. Cancelling the record keeps the Skip flag
+        // false (or the previous record), so the next tick re-runs the native body and the
+        // state it settles on is recorded then. The recorded inputs are read after the
+        // native assignments, so model.skinType/model.accessories describe the settled
+        // state the next skip decision compares against.
+        internal static void AfterLogicUpdate(PlayLobby_Character instance, bool ranOriginal)
         {
             if (_disabled || !NativePerfOptions.LobbyAccessoryIdle) return;
             try
             {
+                if (!ranOriginal) return;
                 if (States.TryGetValue(instance, out State s) && s.Skip) return;
                 Record(instance);
             }
@@ -222,7 +228,7 @@ namespace SodRpg.Mod
         private static bool Prefix(PlayLobby_Character __instance) =>
             NativeLobbyAccessoryIdle.BeforeLogicUpdate(__instance);
 
-        private static void Postfix(PlayLobby_Character __instance) =>
-            NativeLobbyAccessoryIdle.AfterLogicUpdate(__instance);
+        private static void Postfix(PlayLobby_Character __instance, bool __runOriginal) =>
+            NativeLobbyAccessoryIdle.AfterLogicUpdate(__instance, __runOriginal);
     }
 }

@@ -64,9 +64,18 @@ internal class CharacterModelDisplay : LogicBehaviour
     internal readonly Transform transform = new Transform();
     private List<Renderer> _currentRenderers = new List<Renderer>();
     private Bounds _bounds;
-    private string skinType;
+    // 実物（本体 Dew.Core CharacterModelDisplay.cs）は public フィールド。PlayLobby_Character の
+    // 境界（NativeLobbyAccessoryIdleBoundary.cs）が書き、NativeLobbyAccessoryIdle（リンク）が読む。
+    // 読み出し時の例外を注入できるよう仮想プロパティにする（DewNetworkManager.isEndingSession と同じ扱い）。
+    public virtual string skinType { get; set; }
+    public List<string> accessories = new List<string>();
     private string _currentSkinName;
     internal List<Renderer> NextSetupRenderers;
+    // 本体 UpdateAccessories は資源の生成・破棄を行う。この境界では呼ばれた回数だけを数える
+    // （#833: 省略したTickで呼ばれないことの観察用）。
+    internal int UpdateAccessoriesCount;
+
+    public void UpdateAccessories() => UpdateAccessoriesCount++;
 
     public override void LogicUpdate(float dt)
     {
