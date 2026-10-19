@@ -148,6 +148,16 @@
     </ItemGroup>
   </Target>
 
+  <!-- 鍛錬スタックの受信（perf-loop/20261020-0249）。ホストは値が変わらなくても定期再送するため、
+       ゲストの OnRunGrowth は同じ内容の再送を解析し直さない。実ソースから抽出した受信・リセットで、
+       同一再送・runId の切り替え・Reset 後の再適用・壊れた形式の再送・並び順違いの再送を検証する。 -->
+  <Target Name="CompileRunGrowthClient" BeforeTargets="CoreCompile">
+    <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/ClientSession.RunGrowth.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)RunGrowthClient.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="ClientSession" Methods="OnRunGrowth;ResetRunGrowthDisplay;GrowthStacks;RunGrowthVersion" Fields="_growthStacks;_growthRunId;_growthRawStacks" />
+    <ItemGroup>
+      <Compile Include="$(IntermediateOutputPath)RunGrowthClient.g.cs" />
+    </ItemGroup>
+  </Target>
+
   <Target Name="CompileSecurePanelUi" BeforeTargets="CoreCompile">
     <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/DreamforgeUi.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)SecurePanelUi.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="DreamforgeUi" Methods="UpdateSecurePanel;ToggleSecurePanel" />
     <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/DreamforgeUi.Window.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)InfinityChoiceNoticeUi.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="DreamforgeUi" Methods="DrawInfinityChoiceNotice" />
