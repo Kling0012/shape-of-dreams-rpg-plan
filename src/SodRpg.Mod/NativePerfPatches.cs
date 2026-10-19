@@ -4103,11 +4103,13 @@ namespace SodRpg.Mod
                 __result = SortByStartDependency(arr);
                 return false;
             }
+            catch (Exception ex) when (ex.GetType() == typeof(Exception) && ex.Message == "Circular dependency detected.")
+            {
+                // Let the original report the data error without consuming the patch warning.
+                return true;
+            }
             catch (Exception ex)
             {
-                // The copy mirrors the native algorithm, so a throw here is either a
-                // genuine circular dependency (the original throws the same way) or a
-                // defect in this copy; running the original reproduces both exactly.
                 NativePerfPatch.Warn(ref _warned, "room start dependency", ex.Message);
                 return true;
             }
