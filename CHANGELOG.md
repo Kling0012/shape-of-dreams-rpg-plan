@@ -10,6 +10,25 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v3.8.14 — Lighter co-op message handling and basic attack hits（2026-10-19）
+
+協力プレイの通信を受け取るときの処理と、通常攻撃が当たるたびのホストの処理を軽くしました。 / Made receiving co-op messages and the host's work on each basic attack hit lighter.
+
+### 更新前に確認 / Before updating
+
+- 協力プレイでは、参加者全員がこのバージョンに更新してください。 / Everyone in co-op should update to this version.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- 協力プレイの通信を1通受け取るたびに、その通信の種類を一覧の最初から最後まで探していた問題を直しました。今は種類を一度で引き当てるので、ホストと参加者の両方で受信の処理が軽くなります。撃破や敵の出現、取引などの通信が増える終盤の戦闘ほど効果があります。通信の内容や届き方、ゲームの結果は、これまでと変わりません。 / Fixed every incoming co-op message triggering a search through the full list of message types. The type is now found in one lookup, so receiving gets lighter for both host and guests. The benefit grows in late-game fights, where kills, enemy spawns, trades, and other messages are frequent. Message content, delivery, and game results are unchanged.
+- 通常攻撃が当たるたびに、結果に使われない計算までホストがしていた問題を直しました。敵や召喚の攻撃では、もともと使われない計算を省きます。追加の会心が付かないときは、会心率の計算も省きます。敵の群れとの戦闘のように攻撃が多く当たる場面ほど、ホストの負担が少し軽くなります。ダメージや会心の結果、乱数の出方は、これまでと変わりません。 / Fixed the host doing calculations on every basic attack hit even when the results were never used. These calculations are now skipped for enemy and summon attacks, and the crit chance calculation is skipped when no bonus crit applies. Host load goes down a little in fights with many hits, such as against large groups of enemies. Damage, crit results, and random rolls are unchanged.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
 ## v3.8.13 — Lighter host work, co-op traffic, and per-frame processing（2026-10-19）
 
 ホストの処理と協力プレイの通信、毎フレームの処理から無駄を省き、動作を軽くしました。 / Made the game lighter by cutting unnecessary host work, co-op traffic, and per-frame processing.

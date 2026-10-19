@@ -1,5 +1,5 @@
-[b]Cut unnecessary work on Chaos Shrine hits, repeated aim updates while charging skills, and a duplicate per-frame check, with no change to gameplay.[/b]
-[b]混沌の神殿の被弾処理、チャージ中の狙いの再送、毎フレームの重複確認を省き、ゲームの結果は変えずに動作を軽くしました。[/b]
+[b]Receiving co-op messages and the host's work on each basic attack hit are now lighter, with no change to game results.[/b]
+[b]協力プレイの通信を受け取る処理と、通常攻撃が当たるたびのホストの処理を軽くしました。ゲームの結果は変わりません。[/b]
 
 [h1]Dreamforge RPG[/h1]
 Turns every run into part of a long RPG journey: relics you keep, a "secure or delve" choice at every zone, a star map per Traveler, a forge and long-term goals. Co-op ready.
