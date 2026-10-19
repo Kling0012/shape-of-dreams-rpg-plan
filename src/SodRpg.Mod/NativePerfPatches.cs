@@ -34,6 +34,7 @@ namespace SodRpg.Mod
             NativePerfOptions.CursorIdle = config.nativeCursorIdle;
             NativePerfOptions.StatsCalcRpcIdle = config.nativeStatsCalcRpcIdle;
             NativePerfOptions.PositionSyncIdle = config.nativePositionSyncIdle;
+            NativePerfOptions.LobbyAccessoryIdle = config.nativeLobbyAccessoryIdle;
         }
     }
 
@@ -59,6 +60,7 @@ namespace SodRpg.Mod
         internal static bool CursorIdle = true;
         internal static bool StatsCalcRpcIdle = true;
         internal static bool PositionSyncIdle = true;
+        internal static bool LobbyAccessoryIdle = true;
     }
 
     internal static class NativePerfPatch
