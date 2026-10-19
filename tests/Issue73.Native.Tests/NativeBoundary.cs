@@ -129,6 +129,8 @@ namespace Mirror
         public static Vector2 zero => new Vector2();
         public static Vector2 operator -(Vector2 a, Vector2 b) => new Vector2(a.x - b.x, a.y - b.y);
         public float sqrMagnitude => x * x + y * y;
+        // 本体 UnityEngine.Vector2 と同じ式（BossSegmentPlacement の線分の長さが参照）。
+        public float magnitude => (float)Math.Sqrt(x * x + y * y);
         public static float Distance(Vector2 a, Vector2 b)
         {
             float dx = a.x - b.x, dy = a.y - b.y;
@@ -166,6 +168,9 @@ namespace Mirror
             => Math.Abs(target - current) <= maxDelta ? target : current + Math.Sign(target - current) * maxDelta;
         // NativePositionSyncIdlePerf（位置同期のゲート置き換え）が参照する本体 API。本体と同じ式。
         public static float Abs(float value) => Math.Abs(value);
+        // BossSegmentPlacement（リンク。#890 のボス予告線分の矩形・回転）が参照する本体 API。
+        public static float Atan2(float y, float x) => (float)Math.Atan2(y, x);
+        public const float Rad2Deg = (float)(180.0 / Math.PI);
         public static float DeltaAngle(float current, float target)
         {
             float delta = target - current;

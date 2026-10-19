@@ -426,21 +426,26 @@ namespace SodRpg.Mod
                     {
                         var direction = BossVisualDirection(effect);
                         int spokes = Math.Min(effect.count, BossQualityLow ? BossSpokeLimitLow : BossSpokeLimit);
-                        var spokeCenter = camera.WorldToScreenPoint(effect.center);
-                        for (int i = 0; i < spokes && _bossSegmentsLeft >= (effect.kind == 4 ? 3 : 1); i++)
+                        // Project the shared center only when at least one spoke will draw: an exhausted
+                        // budget (or zero spokes) skips the projection, exactly like the per-line path did.
+                        if (spokes > 0 && _bossSegmentsLeft >= (effect.kind == 4 ? 3 : 1))
                         {
-                            int spokeIndex = i * effect.count / spokes;
-                            var spoke = Quaternion.Euler(0, 360f * spokeIndex / effect.count, 0) * direction;
-                            var tip = effect.center + spoke * effect.range;
-                            DrawBossWorldSegment(spokeCenter, camera.WorldToScreenPoint(tip), 2f);
-                            if (effect.kind == 4)
+                            var spokeCenter = camera.WorldToScreenPoint(effect.center);
+                            for (int i = 0; i < spokes && _bossSegmentsLeft >= (effect.kind == 4 ? 3 : 1); i++)
                             {
-                                bool inward = effect.angle == 180f;
-                                var head = inward ? effect.center + spoke * .4f : tip;
-                                var arrow = inward ? -spoke : spoke;
-                                var spokeHead = camera.WorldToScreenPoint(head);
-                                DrawBossWorldSegment(spokeHead, camera.WorldToScreenPoint(head - Quaternion.Euler(0, 35f, 0) * arrow * .35f), 2f);
-                                DrawBossWorldSegment(spokeHead, camera.WorldToScreenPoint(head - Quaternion.Euler(0, -35f, 0) * arrow * .35f), 2f);
+                                int spokeIndex = i * effect.count / spokes;
+                                var spoke = Quaternion.Euler(0, 360f * spokeIndex / effect.count, 0) * direction;
+                                var tip = effect.center + spoke * effect.range;
+                                DrawBossWorldSegment(spokeCenter, camera.WorldToScreenPoint(tip), 2f);
+                                if (effect.kind == 4)
+                                {
+                                    bool inward = effect.angle == 180f;
+                                    var head = inward ? effect.center + spoke * .4f : tip;
+                                    var arrow = inward ? -spoke : spoke;
+                                    var spokeHead = camera.WorldToScreenPoint(head);
+                                    DrawBossWorldSegment(spokeHead, camera.WorldToScreenPoint(head - Quaternion.Euler(0, 35f, 0) * arrow * .35f), 2f);
+                                    DrawBossWorldSegment(spokeHead, camera.WorldToScreenPoint(head - Quaternion.Euler(0, -35f, 0) * arrow * .35f), 2f);
+                                }
                             }
                         }
                         if (effect.kind == 4) DrawBossWorldRing(camera, effect.center, effect.radius, 2f);
@@ -566,15 +571,10 @@ namespace SodRpg.Mod
         {
             if (_bossSegmentsLeft <= 0) return;
             _bossSegmentsLeft--;
-            if (!BossFinite(a) || !BossFinite(b) || a.z <= 0f || b.z <= 0f
-                || a.x < 0 && b.x < 0 || a.x > _bossScreenWidth && b.x > _bossScreenWidth
-                || a.y < 0 && b.y < 0 || a.y > _bossScreenHeight && b.y > _bossScreenHeight) return;
-            var start = new Vector2(a.x, _bossScreenHeight - a.y);
-            var difference = new Vector2(b.x - a.x, a.y - b.y);
-            float length = difference.magnitude;
-            if (length < .1f) return;
-            GUIUtility.RotateAroundPivot(Mathf.Atan2(difference.y, difference.x) * Mathf.Rad2Deg, start);
-            GUI.DrawTexture(new Rect(start.x, start.y - width * .5f, length, width), _bossWhiteTexture);
+            if (!BossSegmentPlacement.TryPlace(a, b, width, _bossScreenWidth, _bossScreenHeight,
+                out var pivot, out float angle, out var rect)) return;
+            GUIUtility.RotateAroundPivot(angle, pivot);
+            GUI.DrawTexture(rect, _bossWhiteTexture);
             GUI.matrix = Matrix4x4.identity; // the base installed by DrawBossEffects; reading GUI.matrix back per line was a native call
         }
     }

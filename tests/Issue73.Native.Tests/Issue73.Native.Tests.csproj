@@ -65,6 +65,7 @@
     <Compile Include="../../src/SodRpg.Mod/NativeCharacterModelDisplayBounds.cs" Link="ModUnderTest/NativeCharacterModelDisplayBounds.cs" />
     <Compile Include="../../src/SodRpg.Mod/NativeLobbyAccessoryIdle.cs" Link="ModUnderTest/NativeLobbyAccessoryIdle.cs" />
     <Compile Include="../../src/SodRpg.Mod/HostAuthority.CrowdControlRecovery.cs" Link="ModUnderTest/HostAuthority.CrowdControlRecovery.cs" />
+    <Compile Include="../../src/SodRpg.Mod/BossSegmentPlacement.cs" Link="ModUnderTest/BossSegmentPlacement.cs" />
     <Compile Include="../SodRpg.Core.Tests/EventBalanceTestData.cs" Link="EventBalanceTestData.cs" />
     <Compile Include="../SodRpg.Core.Tests/Testing/InMemoryFileSystem.cs" Link="Testing/InMemoryFileSystem.cs" />
   </ItemGroup>
