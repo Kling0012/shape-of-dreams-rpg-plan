@@ -10,6 +10,15 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v3.8.7 — Fixes for Polaris mode switching, relic icons, and stat-recalculation patches（2026-10-19）
+
+### 不具合の修正 / Bug fixes
+- ポラリスの共有クールダウン表が満杯のときも、入力間隔のキーを登録できないことだけを理由にモード切替を止めないようにしました。 / Polaris mode switching is no longer blocked solely because its input-interval key cannot be registered in a full shared cooldown table.
+- 固有品IDと土台IDが同じ文字列でも、遺物アイコンのキャッシュが混ざらないようにしました。 / Relic icon caches no longer collide when a unique ID and a base ID share the same string.
+- ゲーム本体の処理が変わり、能力再計算の通知を減らす処理の準備に失敗したときに、関連パッチの片側だけが適用される問題を修正しました。 / Fixed an issue where only one of the paired stat-recalculation notification optimization patches could be applied if preparation failed after changes to the game code.
+
+---
+
 ## v3.8.6 — Fixes for face attachments, balance tables, saving, and camera rotation（2026-10-19）
 
 ### 不具合の修正 / Bug fixes

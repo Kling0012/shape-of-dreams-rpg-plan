@@ -235,7 +235,11 @@ namespace SodRpg.Mod
             DreamforgeBossEffect effect;
             if (removed)
             {
-                if (index >= 0) state.RemoveAt(index);
+                // No client can hold an id the host state lacks (removals are only
+                // sent with the effect present), so an absent-id removal is a pure
+                // no-op: skip the delta and the revision churn it would cause.
+                if (index < 0) return;
+                state.RemoveAt(index);
                 effect = state.Removed;
             }
             else

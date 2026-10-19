@@ -1,5 +1,5 @@
-[b]Fixes for the face-attachment optimization, run-growth balance table errors, save protection, and camera rotation at negative zero.[/b]
-[b]装飾品の追従、鍛錬の数値表のエラー、保存時のデータ保護、カメラの回転に関する不具合を直しました。[/b]
+[b]Fixed issues with Polaris mode switching, relic icon caching, and the stat-recalculation optimization patches.[/b]
+[b]ポラリスのモード切替、遺物のアイコン、能力再計算の軽量化に関する不具合を直しました。[/b]
 
 [h1]Dreamforge RPG[/h1]
 Turns every run into part of a long RPG journey: relics you keep, a "secure or delve" choice at every zone, a star map per Traveler, a forge and long-term goals. Co-op ready.

@@ -16,17 +16,18 @@ namespace SodRpg.Mod
         internal static HostAuthority.BossNativeCast Current;
         // Participants never read the scope (every reader runs under NetworkServer.active),
         // so the save/restore and release work is skipped there entirely.
-        private static void Prefix(AbilityTrigger __instance, CastInfo info, out HostAuthority.BossNativeCast __state)
+        // Pair cleanup with the entry decision even if the server stops during the cast.
+        private static void Prefix(AbilityTrigger __instance, CastInfo info, out (bool Active, HostAuthority.BossNativeCast Previous) __state)
         {
-            if (!NetworkServer.active) { __state = null; return; }
-            __state = Current;
+            if (!NetworkServer.active) { __state = default; return; }
+            __state = (true, Current);
             Current = HostAuthority.NativeInstance?.BeginBossNativeCast(__instance, info);
         }
-        private static void Finalizer(HostAuthority.BossNativeCast __state)
+        private static void Finalizer((bool Active, HostAuthority.BossNativeCast Previous) __state)
         {
-            if (!NetworkServer.active) return;
+            if (!__state.Active) return;
             HostAuthority.NativeInstance?.ReleaseBossNativeCast(Current);
-            Current = __state;
+            Current = __state.Previous;
         }
     }
 

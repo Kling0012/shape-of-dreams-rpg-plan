@@ -159,6 +159,9 @@ namespace SodRpg.Mod
         [LabelText("Skip idle position-sync re-sends / 動いていない実体の位置同期の同じ再送を省く")]
         public bool nativePositionSyncIdle = true;
 
+        [LabelText("Skip unchanged charge-count broadcasts (host) / 変わっていないチャージ数の全員への再送を省く（ホスト）")]
+        public bool nativeChargeRpcIdle = true;
+
         [LabelText("Level essence slots: add essence slots as the hero levels up (the host's setting applies) /\nレベル連動のエッセンス枠：英雄のレベルに応じて記憶のエッセンス枠を増やす（ホストの設定が使われる）")]
         public bool levelEssenceSlots = true;
 
