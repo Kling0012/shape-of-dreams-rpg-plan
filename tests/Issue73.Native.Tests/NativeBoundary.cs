@@ -650,7 +650,23 @@ namespace SodRpg.Mod
         public void Add(DataProcessor<TData, TActor, TTarget> processor, int priority) => Processors.Add(processor);
         public void Remove(DataProcessor<TData, TActor, TTarget> processor) => Processors.Remove(processor);
     }
-    internal struct CastInfo { public Entity caster; }
+    // 本体 CastInfo（IEquatable<CastInfo>）と同じ5字段と等値判定。NativeSampleUpdateIdlePerf が
+    // 再送を省くかの比較に使い、本体と同じ参照比較と成分ごとの等値を持つ。
+    internal struct CastInfo
+    {
+        public Entity caster;
+        public Entity target;
+        public Vector3 point;
+        public float angle;
+        public float animSelectValue;
+        public bool Equals(CastInfo other) =>
+            ReferenceEquals(caster, other.caster) && ReferenceEquals(target, other.target)
+            && point == other.point && angle == other.angle && animSelectValue == other.animSelectValue;
+    }
+    // 本体 SampleCastInfoContext（サンプリング文脈の構造体）。NativeSampleUpdateIdlePerf が
+    // 文脈の受け渡し先（UserCode_TpcSetSampleContext）を探すときの引数型
+    // Nullable<SampleCastInfoContext> として必要なだけで、中身は検証しない。
+    internal struct SampleCastInfoContext { }
     internal struct EventInfoCast { public AbilityInstance instance; public CastInfo info; }
     internal struct EventInfoAbilityInstance { public AbilityInstance instance; public Actor actor; }
     internal struct EventInfoApplyElemental { public Actor actor; public Entity victim; public ElementalType type; public int addedStack; }
