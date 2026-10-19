@@ -74,7 +74,7 @@ namespace SodRpg.Mod
             nativeSleepPositionReuse = true, nativeCastIndicatorCircle = true, nativeCameraZoomRotation = true,
             nativeOcclusionIdle = true,
             nativeCharacterModelDisplayBounds = true, nativeKillTrackerCullThrottle = true,
-            nativeCursorIdle = true, nativeStatsCalcRpcIdle = true, nativePositionSyncIdle = true,
+            nativeCursorIdle = true, nativeStatsCalcRpcIdle = true, nativeStatsRatioIdle = true, nativePositionSyncIdle = true,
             nativeChargeRpcIdle = true,
             nativeProjectileIdleRpc = true,
             nativeCustomRpcDispatch = true,
