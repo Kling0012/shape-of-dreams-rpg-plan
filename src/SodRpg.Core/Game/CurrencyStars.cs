@@ -30,27 +30,27 @@ namespace SodRpg.Core.Game
             {
                 case Power.KillGoldPct:
                     body = Loc.T($"敵を倒したときの獲得ゴールドが{v}%増える。本体の星『富の蓄え』などの撃破ゴールド倍率に加算される。",
-                        $"Kill gold +{v}% when enemies are killed; adds to the base game's kill-gold multiplier bonuses");
+                        $"Kill gold +{v}% when enemies are killed; adds to the base game's kill-gold multiplier bonuses", $"击杀敌人时获得的金币+{v}%；加算至游戏本体的击杀金币倍率加成。");
                     break;
                 case Power.EliteKillGoldPct:
                     body = Loc.T($"エリートやボスを倒したとき、自分に分配される撃破ゴールドが、撃破ゴールド倍率を適用した後の額からさらに{v}%増える。",
-                        $"Elite and Boss kill gold +{v}% of your share after applying your kill-gold multipliers");
+                        $"Elite and Boss kill gold +{v}% of your share after applying your kill-gold multipliers", $"击杀精英和首领时，在应用你的击杀金币倍率后，你分得的金币额外+{v}%。");
                     break;
                 case Power.DreamDustPct:
                     body = Loc.T($"自分で拾った夢のダストの量が{v}%増える。仲間からの贈り物は対象外。",
-                        $"Dream Dust picked up +{v}% when you collect it yourself; excludes gifts from allies");
+                        $"Dream Dust picked up +{v}% when you collect it yourself; excludes gifts from allies", $"亲自拾取的梦境之尘+{v}%；不包含队友赠送的梦境之尘。");
                     break;
                 case Power.DreamDustDelvePct:
                     body = Loc.T($"自分で拾った夢のダストの量が{v}%増える。確保せず開始深度より深く進んでいる間は、同じ増加量がもう1回加算され、合計で{v * 2}%増える。仲間からの贈り物は対象外。",
-                        $"Dream Dust picked up +{v}% (+{v * 2}% total while delving) when you collect it yourself; adds the same bonus again while proceeding beyond your starting depth without securing the run; excludes gifts from allies");
+                        $"Dream Dust picked up +{v}% (+{v * 2}% total while delving) when you collect it yourself; adds the same bonus again while proceeding beyond your starting depth without securing the run; excludes gifts from allies", $"亲自拾取的梦境之尘+{v}%（下潜时合计+{v * 2}%）；未存入仓库且深入超过起始深度时，再加一次相同加成；不包含队友赠送的梦境之尘。");
                     break;
                 default: return "-";
             }
             string cap = p == Power.DreamDustDelvePct
                 ? Loc.T($"同じ効果の星は合計で、通常時は最大{Content.PowerCap(p)}%、潜行中は最大{Content.PowerCap(p) * 2}%まで。夢のダストの他の増加効果とは別枠である。",
-                    $" (combined stars of this effect capped at +{Content.PowerCap(p)}% normally and +{Content.PowerCap(p) * 2}% while delving, separate from other Dream Dust bonuses)")
+                    $" (combined stars of this effect capped at +{Content.PowerCap(p)}% normally and +{Content.PowerCap(p) * 2}% while delving, separate from other Dream Dust bonuses)", $"（同效果的星合计上限：平时+{Content.PowerCap(p)}%，下潜时+{Content.PowerCap(p) * 2}%；与其他梦境之尘加成分开计算）")
                 : Loc.T($"同じ効果の星は合計で最大{Content.PowerCap(p)}%まで。他の獲得量増加とは別枠である。",
-                    $" (combined stars of this effect capped at {Content.PowerCap(p)}%, separate from other acquisition bonuses)");
+                    $" (combined stars of this effect capped at {Content.PowerCap(p)}%, separate from other acquisition bonuses)", $"（同效果的星合计上限为{Content.PowerCap(p)}%，与其他获取量加成分开计算）");
             return body + cap;
         }
 

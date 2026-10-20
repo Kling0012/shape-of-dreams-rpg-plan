@@ -74,7 +74,7 @@ namespace SodRpg.Core.Game
         private static HeroState EditableHero(Profile profile, string heroKey, int index)
         {
             if (index < 0 || index >= Count) throw new ArgumentOutOfRangeException(nameof(index));
-            if (profile.Run != null) throw new InvalidOperationException(Loc.T("遠征中はロードアウトを変更できません。", "Loadouts cannot be changed during an expedition."));
+            if (profile.Run != null) throw new InvalidOperationException(Loc.T("遠征中はロードアウトを変更できません。", "Loadouts cannot be changed during an expedition.", "远征中无法更改配置。"));
             return profile.Hero(heroKey);
         }
 
@@ -153,13 +153,13 @@ namespace SodRpg.Core.Game
                 { Rules.ResetTalents(draft, heroKey); repaired = true; }
                 repaired |= engine.RepairSavedAllocation(draft, heroKey);
                 if (repaired) notes?.Add(Loc.T($"{heroKey}: ロードアウト{index + 1}の無効な星を無料で払い戻しました。",
-                    $"{heroKey}: Invalid stars in loadout {index + 1} were refunded for free."));
+                    $"{heroKey}: Invalid stars in loadout {index + 1} were refunded for free.", $"{heroKey}：配置{index + 1}中的无效星已免费退还点数。"));
                 return StarLoadout.Capture(hero, slot.Name);
             }
             catch (Exception ex)
             {
                 notes?.Add(Loc.T($"{heroKey}: ロードアウト{index + 1}を読み込めないため、この枠だけ空にしました（{ex.GetType().Name}）。",
-                    $"{heroKey}: Could not load loadout {index + 1}; only this slot was emptied ({ex.GetType().Name})."));
+                    $"{heroKey}: Could not load loadout {index + 1}; only this slot was emptied ({ex.GetType().Name}).", $"{heroKey}：无法读取配置{index + 1}，仅清空了此槽位（{ex.GetType().Name}）。"));
                 return new StarLoadout { Name = slot.Name, AuthoredMigrationVersion = StarClusters.MigrationVersionFor(heroKey) };
             }
         }

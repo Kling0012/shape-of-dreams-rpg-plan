@@ -20,16 +20,16 @@ namespace SodRpg.Core.Game
                 if (DescriptionWarnings.Add(id))
                     Trace.TraceWarning("Star description unavailable ({0}): {1}", id, error);
             return Loc.T("効果の詳細を表示できません。この星の取得・効果は変更されません。",
-                "Effect details are unavailable. This star's allocation and effects are unchanged.");
+                "Effect details are unavailable. This star's allocation and effects are unchanged.", "无法显示效果详情。该星的取得状态和效果不变。");
         }
 
         public static string EffectSummary(TalentDef star, int chosen = -1)
         {
-            if (star == null) return Loc.T("始まりの星", "Starting star");
+            if (star == null) return Loc.T("始まりの星", "Starting star", "起始之星");
             if (star.IsChoice)
             {
                 if (chosen >= 0 && chosen < star.Choices.Count) return EffectSummary(star.Choices[chosen]);
-                return string.Join(Loc.T(" ／ ", " / "), star.Choices.Select(s => EffectSummary(s)));
+                return string.Join(Loc.T(" ／ ", " / ", " / "), star.Choices.Select(s => EffectSummary(s)));
             }
             return EffectSummary(EffectDescription(star));
         }
@@ -38,7 +38,7 @@ namespace SodRpg.Core.Game
         {
             string text = RichText.Replace(description ?? "", "");
             foreach (string line in text.Split('\n'))
-                if (!string.IsNullOrWhiteSpace(line) && line != Loc.T("効果", "Effect"))
+                if (!string.IsNullOrWhiteSpace(line) && line != Loc.T("効果", "Effect", "效果"))
                 {
                     string summary = line.Trim();
                     foreach (string separator in SummarySeparators)
@@ -52,7 +52,7 @@ namespace SodRpg.Core.Game
                         int sentenceEnd = summary.IndexOf('。');
                         if (sentenceEnd >= 0) summary = summary.Substring(0, sentenceEnd + 1);
                     }
-                    int detail = summary.IndexOf(Loc.T("：", ": "), StringComparison.Ordinal);
+                    int detail = summary.IndexOf(Loc.T("：", ": ", "："), StringComparison.Ordinal);
                     if (detail >= 0)
                     {
                         string heading = summary.Substring(0, detail);
@@ -63,15 +63,15 @@ namespace SodRpg.Core.Game
                     }
                     return summary.TrimEnd('。');
                 }
-            return Loc.T("星の効果", "Star effect");
+            return Loc.T("星の効果", "Star effect", "星之效果");
         }
 
         public static string NavigationLabel(TalentDef star, int rank, bool available, string summary)
         {
-            string status = rank > 0 ? Loc.T("取得済み", "Acquired")
-                : available ? Loc.T("取得可能", "Available") : Loc.T("条件不足", "Requirements missing");
+            string status = rank > 0 ? Loc.T("取得済み", "Acquired", "已取得")
+                : available ? Loc.T("取得可能", "Available", "可取得") : Loc.T("条件不足", "Requirements missing", "条件不足");
             return "<b>" + star.DisplayName + "</b>  〈" + status + "〉\n" + summary
-                + Loc.T($"\n{rank}/{star.MaxRank}段", $"\nRank {rank}/{star.MaxRank}");
+                + Loc.T($"\n{rank}/{star.MaxRank}段", $"\nRank {rank}/{star.MaxRank}", $"\n阶数 {rank}/{star.MaxRank}");
         }
 
         // Uses the same graph/prerequisite state as allocation; never creates a second unlock rule.
@@ -81,51 +81,51 @@ namespace SodRpg.Core.Game
             if (star == null) return "";
             int rank = star.IsKeystone ? state.HasKeystone(star.Id) ? 1 : 0
                 : state.Talents.TryGetValue(star.Id, out int owned) ? owned : 0;
-            if (rank >= star.MaxRank) return Loc.T("最大段まで取得済みです。", "Acquired at maximum rank.");
+            if (rank >= star.MaxRank) return Loc.T("最大段まで取得済みです。", "Acquired at maximum rank.", "已取得至最高阶。");
             var reasons = new List<string>();
             bool Has(string id) => state.HasKeystone(id) || state.Talents.TryGetValue(id, out int value) && value > 0;
-            string DisplayName(TalentDef talent) => talent == null ? Loc.T("始まりの星", "Starting star")
+            string DisplayName(TalentDef talent) => talent == null ? Loc.T("始まりの星", "Starting star", "起始之星")
                 : talent.DisplayName.ToString();
             string Name(string id)
             {
                 foreach (var node in layout.Nodes) if (node.Id == id) return DisplayName(node.Talent);
-                return Loc.T("前提の星", "prerequisite star");
+                return Loc.T("前提の星", "prerequisite star", "前置星");
             }
             var authored = star.AuthoredStar;
             if (authored != null)
             {
                 foreach (string id in authored.RequiredStarIds)
-                    if (!Has(id)) reasons.Add(Loc.T($"前提の星『{Name(id)}』が未取得です。", $"Prerequisite star “{Name(id)}” is not acquired."));
+                    if (!Has(id)) reasons.Add(Loc.T($"前提の星『{Name(id)}』が未取得です。", $"Prerequisite star “{Name(id)}” is not acquired.", $"尚未取得前置星「{Name(id)}」。"));
                 if (authored.RequiredAnyStarIds.Count > 0 && !authored.RequiredAnyStarIds.Any(Has))
                 {
-                    string names = string.Join(Loc.T(" または ", " or "), authored.RequiredAnyStarIds.Select(Name));
-                    reasons.Add(Loc.T($"前提の星『{names}』のいずれかを取得してください。", $"Acquire one prerequisite star: {names}."));
+                    string names = string.Join(Loc.T(" または ", " or ", "或"), authored.RequiredAnyStarIds.Select(Name));
+                    reasons.Add(Loc.T($"前提の星『{names}』のいずれかを取得してください。", $"Acquire one prerequisite star: {names}.", $"请取得任意一颗前置星：{names}。"));
                 }
             }
             if (!connected)
             {
-                string names = string.Join(Loc.T("、", ", "), layout.Nodes[index].Neighbors.Select(i => DisplayName(layout.Nodes[i].Talent)));
+                string names = string.Join(Loc.T("、", ", ", "、"), layout.Nodes[index].Neighbors.Select(i => DisplayName(layout.Nodes[i].Talent)));
                 reasons.Add(Loc.T($"隣の星が未取得です：{names}。始まりにつながる隣の星を取得してください。",
-                    $"Adjacent stars are not acquired: {names}. Acquire a neighbor connected to the start."));
+                    $"Adjacent stars are not acquired: {names}. Acquire a neighbor connected to the start.", $"尚未取得相邻的星：{names}。请取得与起点相连的相邻星。"));
             }
             if (star.IsKeystone)
             {
                 int ranks = star.HeroKey != null ? Rules.TreeRanks(state, star.HeroKey) : Rules.RouteRanks(state, star.Route);
                 if (ranks < Content.KeystoneRouteRequirement)
                     reasons.Add(Loc.T($"星の取得段数が不足しています：{ranks}/{Content.KeystoneRouteRequirement}段。",
-                        $"Not enough acquired star ranks: {ranks}/{Content.KeystoneRouteRequirement}."));
+                        $"Not enough acquired star ranks: {ranks}/{Content.KeystoneRouteRequirement}.", $"已取得的星总阶数不足：{ranks}/{Content.KeystoneRouteRequirement}。"));
                 int mastery = Mastery.Level(state.Kills);
                 if (star.HeroKey != null && mastery < HeroSigils.KeystoneMastery)
                     reasons.Add(Loc.T($"熟練度が不足しています：{mastery}/{HeroSigils.KeystoneMastery}。",
-                        $"Not enough mastery: {mastery}/{HeroSigils.KeystoneMastery}."));
+                        $"Not enough mastery: {mastery}/{HeroSigils.KeystoneMastery}.", $"熟练度不足：{mastery}/{HeroSigils.KeystoneMastery}。"));
                 if (!state.HasKeystone(star.Id) && state.KeystoneCount >= state.KeystoneSlotCount)
                     reasons.Add(Loc.T($"刻印の枠がいっぱいです：{state.KeystoneCount}/{state.KeystoneSlotCount}。",
-                        $"Keystone slots are full: {state.KeystoneCount}/{state.KeystoneSlotCount}.") + NextSlotText(StarProgression.Points(state.StarXp)));
+                        $"Keystone slots are full: {state.KeystoneCount}/{state.KeystoneSlotCount}.", $"刻印槽位已满：{state.KeystoneCount}/{state.KeystoneSlotCount}。") + NextSlotText(StarProgression.Points(state.StarXp)));
             }
             int cost = star.IsKeystone ? star.KeystoneCost : star.RankCost;
             if (freePoints < cost)
                 reasons.Add(Loc.T($"ポイント不足：必要{cost}・残り{freePoints}・あと{cost - freePoints}。",
-                    $"Not enough points: cost {cost}, remaining {freePoints}, short by {cost - freePoints}."));
+                    $"Not enough points: cost {cost}, remaining {freePoints}, short by {cost - freePoints}.", $"点数不足：需要{cost}，剩余{freePoints}，还差{cost - freePoints}。"));
             return string.Join("\n", reasons);
         }
     }

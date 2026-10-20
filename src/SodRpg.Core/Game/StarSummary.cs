@@ -65,7 +65,7 @@ namespace SodRpg.Core.Game
                 if (memoryGroups.TryGetValue(key, out var g)) return g;
                 g = new StarSummaryGroup
                 {
-                    Title = memory == null ? Loc.T("その他", "Other") : Links.Name(memory).ToString(),
+                    Title = memory == null ? Loc.T("その他", "Other", "其他") : Links.Name(memory).ToString(),
                 };
                 memoryGroups.Add(key, g);
                 memoryOrder.Add(key);
@@ -88,7 +88,7 @@ namespace SodRpg.Core.Game
                     t = star.Choices[choice];
                     var chosen = new StarSummaryLine
                     {
-                        Text = star.Name + Loc.T("：", ": ") + t.Name + Loc.T($"（{rank}段）", $" ({rank} {(rank == 1 ? "rank" : "ranks")})")
+                        Text = star.Name + Loc.T("：", ": ", "：") + t.Name + Loc.T($"（{rank}段）", $" ({rank} {(rank == 1 ? "rank" : "ranks")})", $"（{rank}{(rank == 1 ? "阶" : "阶")}）")
                             + "\n" + Trim(StarMapPresentation.EffectDescription(t, rank)),
                     };
                     chosen.StarIds.Add(star.Id);
@@ -108,12 +108,12 @@ namespace SodRpg.Core.Game
                     string mark = isEquipped == null ? "" : a && b ? "✓ " : "・ ";
                     var line = new StarSummaryLine
                     {
-                        Text = mark + star.DisplayName + Loc.T($"（{rank}段）", $" ({rank} {(rank == 1 ? "rank" : "ranks")})")
+                        Text = mark + star.DisplayName + Loc.T($"（{rank}段）", $" ({rank} {(rank == 1 ? "rank" : "ranks")})", $"（{rank}{(rank == 1 ? "阶" : "阶")}）")
                             + (entry == null
-                                ? Loc.T("　<color=#888>両隣の4番目の星が未取得</color>", "  <color=#888>adjacent fourth stars not acquired</color>")
+                                ? Loc.T("　<color=#888>両隣の4番目の星が未取得</color>", "  <color=#888>adjacent fourth stars not acquired</color>", "  <color=#888>尚未取得相邻路线的第四颗星</color>")
                                 : "\n" + StarMapPresentation.EffectDescription(t, rank))
-                            + (isEquipped == null ? "" : "\n" + (a ? "✓ " : "・ ") + Links.ItemName(pair.RouteA) + Loc.T("を装着", " equipped")
-                                + "\n" + (b ? "✓ " : "・ ") + Links.ItemName(pair.RouteB) + Loc.T("を装着", " equipped")),
+                            + (isEquipped == null ? "" : "\n" + (a ? "✓ " : "・ ") + Links.ItemName(pair.RouteA) + Loc.T("を装着", " equipped", "（已装备）")
+                                + "\n" + (b ? "✓ " : "・ ") + Links.ItemName(pair.RouteB) + Loc.T("を装着", " equipped", "（已装备）")),
                     };
                     line.StarIds.Add(star.Id);
                     pairLines.Add(new KeyValuePair<string, StarSummaryLine>(pair.RouteA, line));
@@ -181,7 +181,7 @@ namespace SodRpg.Core.Game
                 {
                     var line = new StarSummaryLine
                     {
-                        Text = Compact(Trim(StarMapPresentation.EffectDescription(t, rank))) + (rank > 1 ? Loc.T($"　×{rank}段", $"  x{rank} ranks") : ""),
+                        Text = Compact(Trim(StarMapPresentation.EffectDescription(t, rank))) + (rank > 1 ? Loc.T($"　×{rank}段", $"  x{rank} ranks", $"  ×{rank}阶") : ""),
                     };
                     line.StarIds.Add(star.Id);
                     Group(memory).Lines.Add(line);

@@ -62,7 +62,7 @@ namespace SodRpg.Core.Game
     {
         public static readonly IReadOnlyList<TalentDef> OuterAnchors = Array.AsReadOnly(new[]
         {
-            new TalentDef("h.cetus.outer.abyssal-shell", Line.Guard, new Txt("深海の外殻", "Abyssal Shell"), Stat.MaxHealthPct, MemoryDamageBalance.Effect_legacy_h_cetus_outer_abyssal_shell_stat_perRank, 1)
+            new TalentDef("h.cetus.outer.abyssal-shell", Line.Guard, new Txt("深海の外殻", "Abyssal Shell", "深海甲壳"), Stat.MaxHealthPct, MemoryDamageBalance.Effect_legacy_h_cetus_outer_abyssal_shell_stat_perRank, 1)
                 { HeroKey = "Hero_Cetus", Tier = 2, IsOuterAnchor = true }
         });
         public static readonly IReadOnlyList<StarClusterDef> All = CreateExamples();
@@ -325,9 +325,9 @@ namespace SodRpg.Core.Game
             string id = authoredId ?? StarId(cluster, order);
             TalentDef talent;
             if (star.Kind == ClusterStarKind.Keystone && star.Power == Power.None && star.Amount > 0)
-                talent = new TalentDef(id, Line.Offense, star.Name, star.Stat, IntegerAmount(star, id), new Txt("", ""));
+                talent = new TalentDef(id, Line.Offense, star.Name, star.Stat, IntegerAmount(star, id), new Txt("", "", ""));
             else if (star.KeystoneDefinition != null)
-                talent = new TalentDef(id, Line.Offense, star.Name, star.Power, IntegerAmount(star, id), new Txt("", ""));
+                talent = new TalentDef(id, Line.Offense, star.Name, star.Power, IntegerAmount(star, id), new Txt("", "", ""));
             else
             if ((star.Kind == ClusterStarKind.MemoryDamage || star.Kind == ClusterStarKind.MemoryHaste) && star.NativeModifier == null)
                 talent = new TalentDef(id, Line.Offense, star.Name,

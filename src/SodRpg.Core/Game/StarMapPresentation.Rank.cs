@@ -11,7 +11,7 @@ namespace SodRpg.Core.Game
             decimal multiplier = StarDamageScaling.Multiplier(spent);
             string factor = multiplier.ToString("0.###", CultureInfo.InvariantCulture);
             string note = Loc.T($"基礎値は上記。星由来のダメージ量だけ現在 ×{factor}（使用済み {spent} 点）。加速・CD・回復・軽減・確率・対象数は変わらない。",
-                $"Base values above. Star damage quantities currently ×{factor} ({spent} spent points); haste, cooldowns, healing, reduction, chances and targets are unchanged.");
+                $"Base values above. Star damage quantities currently ×{factor} ({spent} spent points); haste, cooldowns, healing, reduction, chances and targets are unchanged.", $"以上为基础数值。当前星之伤害量×{factor}（已使用{spent}点）；急速、冷却、治疗、减伤、概率与目标数不变。");
             if (star == null) return note;
             if (star.IsChoice)
             {
@@ -24,7 +24,7 @@ namespace SodRpg.Core.Game
                 return note + Quantity(StarDamageScaling.ScaleMilli(Math.Min(star.NativeModifier.Value.ValueMilli,
                     FractionalScopedModifiers.NativeCapValueMilli(star.NativeModifier.CapProfileId)), spent) / (decimal)BuildPrecision.Scale, true);
             if (star.IsPowerNode && StarDamageScaling.IsDamage(star.RankPower))
-                return note + Loc.T("\n現在の1段のダメージ係数：", "\nCurrent damage coefficient per rank: ")
+                return note + Loc.T("\n現在の1段のダメージ係数：", "\nCurrent damage coefficient per rank: ", "\n当前每阶伤害系数：")
                     + ((int)(star.PerRank * multiplier)).ToString(CultureInfo.InvariantCulture) + "%";
             KeystonePayload payload = null;
             try
@@ -45,7 +45,7 @@ namespace SodRpg.Core.Game
 
         private static string Quantity(decimal value, bool perRank) => Loc.T(
             perRank ? "\n現在の1段の記憶ダメージ増幅：+" : "\n現在の基礎発動のダメージ係数：",
-            perRank ? "\nCurrent memory damage per rank: +" : "\nCurrent base-activation damage coefficient: ")
+            perRank ? "\nCurrent memory damage per rank: +" : "\nCurrent base-activation damage coefficient: ", perRank ? "\n当前每阶记忆伤害：＋" : "\n当前基础触发伤害系数：")
             + value.ToString("0.###", CultureInfo.InvariantCulture) + "%";
     }
 }
