@@ -46,7 +46,7 @@ namespace SodRpg.Core.Game
             foreach (object value in Array(obj, "relicUids"))
             {
                 if (!(value is string uid) || string.IsNullOrEmpty(uid) || !seen.Add(uid))
-                    throw new LedgerFormatException(Loc.T("協力取引の保存情報が不正です。", "Invalid cooperative trade relic IDs."));
+                    throw new LedgerFormatException(Loc.T("協力取引の保存情報が不正です。", "Invalid cooperative trade relic IDs.", "合作交易的遗物个体ID无效。"));
                 offer.RelicUids.Add(uid);
             }
             return offer;
@@ -54,7 +54,7 @@ namespace SodRpg.Core.Game
 
         internal static JsonObject ReceiptObject(CoopTradeReceipt receipt)
         {
-            if (receipt == null) throw new InvalidOperationException(Loc.T("取引の受領書がありません。", "Trade receipt is missing."));
+            if (receipt == null) throw new InvalidOperationException(Loc.T("取引の受領書がありません。", "Trade receipt is missing.", "缺少交易收据。"));
             return new JsonObject().Add("id", receipt.Id).Add("hostKey", receipt.HostKey)
                 .Add("firstKey", receipt.FirstKey).Add("secondKey", receipt.SecondKey)
                 .Add("firstOffer", OfferObject(receipt.FirstOffer)).Add("secondOffer", OfferObject(receipt.SecondOffer))
@@ -71,23 +71,23 @@ namespace SodRpg.Core.Game
                 FirstOffer = ParseOffer(Object(Value(obj, "firstOffer"))),
                 SecondOffer = ParseOffer(Object(Value(obj, "secondOffer"))),
             };
-            if (receipt.FirstKey == receipt.SecondKey) throw new LedgerFormatException(Loc.T("協力取引の保存情報が不正です。", "Cooperative trade participants must differ."));
+            if (receipt.FirstKey == receipt.SecondKey) throw new LedgerFormatException(Loc.T("協力取引の保存情報が不正です。", "Cooperative trade participants must differ.", "合作交易双方必须是不同的玩家。"));
             return receipt;
         }
 
         internal static object Value(JsonObject obj, string key)
         {
-            if (!obj.TryGet(key, out var value)) throw new LedgerFormatException(Loc.T("協力取引の保存情報が不正です。", "Missing cooperative trade field: " + key));
+            if (!obj.TryGet(key, out var value)) throw new LedgerFormatException(Loc.T("協力取引の保存情報が不正です。", "Missing cooperative trade field: " + key, "缺少合作交易字段：" + key));
             return value;
         }
         internal static JsonObject Object(object value) => value as JsonObject
-            ?? throw new LedgerFormatException(Loc.T("協力取引の保存情報が不正です。", "Cooperative trade object is invalid."));
+            ?? throw new LedgerFormatException(Loc.T("協力取引の保存情報が不正です。", "Cooperative trade object is invalid.", "合作交易对象无效。"));
         internal static List<object> Array(JsonObject obj, string key) => Value(obj, key) as List<object>
-            ?? throw new LedgerFormatException(Loc.T("協力取引の保存情報が不正です。", "Cooperative trade array is invalid: " + key));
+            ?? throw new LedgerFormatException(Loc.T("協力取引の保存情報が不正です。", "Cooperative trade array is invalid: " + key, "合作交易数组无效：" + key));
         internal static string String(JsonObject obj, string key) => Value(obj, key) is string value && !string.IsNullOrEmpty(value)
-            ? value : throw new LedgerFormatException(Loc.T("協力取引の保存情報が不正です。", "Cooperative trade string is invalid: " + key));
+            ? value : throw new LedgerFormatException(Loc.T("協力取引の保存情報が不正です。", "Cooperative trade string is invalid: " + key, "合作交易字符串无效：" + key));
         internal static int Amount(JsonObject obj, string key) => Value(obj, key) is long value && value >= 0 && value <= int.MaxValue
-            ? (int)value : throw new LedgerFormatException(Loc.T("協力取引の保存情報が不正です。", "Cooperative trade amount is invalid: " + key));
+            ? (int)value : throw new LedgerFormatException(Loc.T("協力取引の保存情報が不正です。", "Cooperative trade amount is invalid: " + key, "合作交易数量无效：" + key));
     }
 
     public static partial class ProfileCodec
@@ -179,15 +179,15 @@ namespace SodRpg.Core.Game
             if (body.TryGet("coopTradeEconomy", out object economy) && economy != null)
             {
                 if (!(economy is string snapshot) || string.IsNullOrEmpty(snapshot))
-                    throw new LedgerFormatException(Loc.T("協力取引の保存情報が不正です。", "Invalid cooperative trade economic checkpoint."));
+                    throw new LedgerFormatException(Loc.T("協力取引の保存情報が不正です。", "Invalid cooperative trade economic checkpoint.", "合作交易的经济检查点无效。"));
                 profile.CoopTradeEconomy = snapshot;
             }
             if (body.TryGet("coopTradeExecuted", out object executed))
             {
-                if (!(executed is List<object> ids)) throw new LedgerFormatException(Loc.T("協力取引の保存情報が不正です。", "Invalid cooperative trade executed IDs."));
+                if (!(executed is List<object> ids)) throw new LedgerFormatException(Loc.T("協力取引の保存情報が不正です。", "Invalid cooperative trade executed IDs.", "合作交易的已完成ID列表无效。"));
                 foreach (object value in ids)
                     if (!(value is string id) || string.IsNullOrEmpty(id) || !profile.CoopTradeExecuted.Add(id))
-                        throw new LedgerFormatException(Loc.T("協力取引の保存情報が不正です。", "Duplicate or invalid cooperative trade executed ID."));
+                        throw new LedgerFormatException(Loc.T("協力取引の保存情報が不正です。", "Duplicate or invalid cooperative trade executed ID.", "合作交易的已完成ID重复或无效。"));
             }
             if (!body.TryGet("coopTradePending", out object valuePending) || valuePending == null) return;
             var obj = CoopTradeCodec.Object(valuePending);
@@ -205,8 +205,8 @@ namespace SodRpg.Core.Game
                 || currencyRun != null && (!(currencyRun is string currencyRunId) || string.IsNullOrEmpty(currencyRunId))
                 || (pending.MaterialShards < pending.Offer.Shards || pending.MaterialTuning < pending.Offer.Tuning)
                     && string.IsNullOrEmpty(pending.CurrencyRunId))
-                throw new LedgerFormatException(Loc.T("協力取引の保存情報が不正です。", "Invalid cooperative trade currency escrow."));
-            if (profile.CoopTradeExecuted.Contains(pending.Id)) throw new LedgerFormatException(Loc.T("協力取引の保存情報が不正です。", "Executed cooperative trade still has escrow."));
+                throw new LedgerFormatException(Loc.T("協力取引の保存情報が不正です。", "Invalid cooperative trade currency escrow.", "合作交易的托管材料无效。"));
+            if (profile.CoopTradeExecuted.Contains(pending.Id)) throw new LedgerFormatException(Loc.T("協力取引の保存情報が不正です。", "Executed cooperative trade still has escrow.", "已完成的合作交易仍有托管物品。"));
             var seen = new HashSet<string>(StringComparer.Ordinal);
             foreach (object value in CoopTradeCodec.Array(obj, "relics"))
             {
@@ -215,17 +215,17 @@ namespace SodRpg.Core.Game
                 var relic = ReadRelic(relicObject, seen);
                 // Escrow may never silently normalize/drop unknown assets, unlike ordinary migration inventory.
                 if (Json.Write(WriteRelic(relic)) != Json.Write(relicObject))
-                    throw new LedgerFormatException(Loc.T("協力取引の保存情報が不正です。", "Reserved cooperative trade relic is not canonical."));
+                    throw new LedgerFormatException(Loc.T("協力取引の保存情報が不正です。", "Reserved cooperative trade relic is not canonical.", "合作交易的预留遗物格式不规范。"));
                 int target = CoopTradeCodec.Amount(entry, "target");
                 if (target != (int)CoopTradeReturnTarget.Stash && target != (int)CoopTradeReturnTarget.Satchel)
-                    throw new LedgerFormatException(Loc.T("協力取引の保存情報が不正です。", "Invalid cooperative trade relic return target."));
+                    throw new LedgerFormatException(Loc.T("協力取引の保存情報が不正です。", "Invalid cooperative trade relic return target.", "合作交易的遗物返还位置无效。"));
                 object runId = CoopTradeCodec.Value(entry, "runId");
                 if (target == (int)CoopTradeReturnTarget.Satchel && (!(runId is string run) || string.IsNullOrEmpty(run))
                     || target == (int)CoopTradeReturnTarget.Stash && runId != null)
-                    throw new LedgerFormatException(Loc.T("協力取引の保存情報が不正です。", "Invalid reserved cooperative trade expedition."));
+                    throw new LedgerFormatException(Loc.T("協力取引の保存情報が不正です。", "Invalid reserved cooperative trade expedition.", "合作交易预留的远征信息无效。"));
                 pending.Relics.Add(new CoopTradeReservedRelic { Relic = relic, Target = (CoopTradeReturnTarget)target, RunId = runId as string });
             }
-            if (!seen.SetEquals(pending.Offer.RelicUids)) throw new LedgerFormatException(Loc.T("協力取引の保存情報が不正です。", "Cooperative trade escrow does not match its offer."));
+            if (!seen.SetEquals(pending.Offer.RelicUids)) throw new LedgerFormatException(Loc.T("協力取引の保存情報が不正です。", "Cooperative trade escrow does not match its offer.", "合作交易的托管物品与报价不符。"));
             profile.CoopTradePending = pending;
         }
     }

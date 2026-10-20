@@ -250,26 +250,26 @@ namespace SodRpg.Core.Game
                         AddPartners(node);
                     }
             }
-            string effects = string.Join(Loc.T("・", ", "), SortLabels(labels.Distinct()));
+            string effects = string.Join(Loc.T("・", ", ", "、"), SortLabels(labels.Distinct()));
             if (effects.Length == 0) throw new InvalidOperationException("Cannot resolve scoped effect description.");
             string value = ((modifier.Param == GimmickParam.Chance ? modifier.Probability.Units : modifier.Amount.Units) / 100m).ToString("0.##", CultureInfo.InvariantCulture);
             string field;
             switch (modifier.Param)
             {
-                case GimmickParam.Duration: field = Loc.T("持続時間", "duration"); break;
-                case GimmickParam.WindowDuration: field = Loc.T("次の記憶を使える受付時間", "time allowed for the follow-up memory"); break;
-                case GimmickParam.MarkDuration: field = Loc.T("同じ敵への印の持続時間", "mark duration on the same enemy"); break;
-                case GimmickParam.Radius: field = Loc.T("範囲の半径", "radius"); break;
-                case GimmickParam.Chance: field = Loc.T("発動確率", "activation chance"); break;
-                case GimmickParam.ExtraTargets: field = Loc.T("対象数", "target count"); break;
-                default: field = Loc.T("量", "amount"); break;
+                case GimmickParam.Duration: field = Loc.T("持続時間", "duration", "持续时间"); break;
+                case GimmickParam.WindowDuration: field = Loc.T("次の記憶を使える受付時間", "time allowed for the follow-up memory", "后续记忆的使用时限"); break;
+                case GimmickParam.MarkDuration: field = Loc.T("同じ敵への印の持続時間", "mark duration on the same enemy", "同一敌人身上的标记持续时间"); break;
+                case GimmickParam.Radius: field = Loc.T("範囲の半径", "radius", "半径"); break;
+                case GimmickParam.Chance: field = Loc.T("発動確率", "activation chance", "触发概率"); break;
+                case GimmickParam.ExtraTargets: field = Loc.T("対象数", "target count", "目标数量"); break;
+                default: field = Loc.T("量", "amount", "数值"); break;
             }
             if (Loc.Japanese) return DescribeScopedJa(modifier, memory, effects, field, value, partners, combos);
-            string amount = modifier.Param == GimmickParam.ExtraTargets ? modifier.ExtraTargets + Loc.T("体", modifier.ExtraTargets == 1 ? " target" : " targets")
-                : value + (modifier.Param == GimmickParam.Chance ? Loc.T("パーセントポイント", " percentage points") : "%");
+            string amount = modifier.Param == GimmickParam.ExtraTargets ? modifier.ExtraTargets + Loc.T("体", modifier.ExtraTargets == 1 ? " target" : " targets", "个目标")
+                : value + (modifier.Param == GimmickParam.Chance ? Loc.T("パーセントポイント", " percentage points", "个百分点") : "%");
             string scope = modifier.ScopeKind == ScopeKind.Receiver
-                ? Loc.T(memory + "を装着中、その記憶が受け取る効果を強化", "while " + memory + " is equipped; enhances effects received by it")
-                : Loc.T(memory + "を装着中、その記憶から発動する星の効果を強化", "while " + memory + " is equipped; enhances the star effects triggered by it");
+                ? Loc.T(memory + "を装着中、その記憶が受け取る効果を強化", "while " + memory + " is equipped; enhances effects received by it", "装备" + memory + "时，强化其接收的效果")
+                : Loc.T(memory + "を装着中、その記憶から発動する星の効果を強化", "while " + memory + " is equipped; enhances the star effects triggered by it", "装备" + memory + "时，强化其触发的星之效果");
             string basis = modifier.Param == GimmickParam.ExtraTargets || modifier.Param == GimmickParam.Chance ? ""
                 : Loc.T("（元の" + field + "の" + (1m + modifier.Amount.Units / 10000m).ToString("0.####", CultureInfo.InvariantCulture) + "倍）",
                     " (×" + (1m + modifier.Amount.Units / 10000m).ToString("0.####", CultureInfo.InvariantCulture) + " the original " + field + ")");
