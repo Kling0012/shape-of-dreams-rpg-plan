@@ -111,7 +111,7 @@ namespace SodRpg.Core.Game
         // 部屋の兆し → 房间预兆 / 潜行 → 深度 / 経験値 → 经验值 / 家系 → 元素族（Frost=冰霜・Dark=暗）
         // 樹芽 → 树芽 / 踏みつけ → 踩踏 / 樹界 → 树界 / 樹界装備 → 树界装备（Demon 系）
         // 霞衣 → 霞衣・群れの守り → 群守・明滅 → 明灭・最後の殻 → 最后之壳（Nightmare の性質）
-        // 冷気（Cold）→ 冰（冰属性伤害・冰属性治疗）/ 通常記憶 → 普通记忆 / 奥義記憶 → 终极记忆
+        // 冷気（Cold）→ 冰（冰属性伤害・冰属性治疗）/ 通常記憶 → 普通记忆 / 奥義記憶 → 奥义记忆
         // 相（Phase）→ 相态 / 相紋 → 相纹 / 分身 → 分身 / 氷印 → 冰印 / 星印 → 星印
         // 白蓮 → 白莲 / 黒月 → 黑月 / 魂の牢獄 → 灵魂牢狱 / 雪嶺の核 → 雪岭之核
         // 固有報酬の段階 → 首领专属奖励阶段 / 超過回復 → 溢出治疗 / 残像砲台 → 残影炮台
@@ -407,6 +407,7 @@ namespace SodRpg.Core.Game
                 ["The saved file did not read back identically."] = "保存文件的读取内容不一致。",
                 ["The profile did not survive a save/load round trip."] = "档案经过保存和读取后的内容不一致。",
                 ["Legendary"] = "传说",
+                ["Keystone"] = "刻印",
                 ["Normal memory"] = "普通记忆",
                 ["Basic attack"] = "通常攻击",
                 ["Ability power"] = "法术强度",
@@ -419,9 +420,8 @@ namespace SodRpg.Core.Game
                 ["Receipt"] = "收据",
                 ["Unsecured relics"] = "尚未存入仓库的遗物",
                 ["Awakening points"] = "觉醒点",
-                ["Star experience"] = "星之经验",
-                ["Keystone"] = "刻印",
                 ["Nightmare"] = "梦魇",
+                ["Star experience"] = "星之经验",
                 ["Overcharge"] = "过载",
 
                 // 旅人の星と刻印（#962）
