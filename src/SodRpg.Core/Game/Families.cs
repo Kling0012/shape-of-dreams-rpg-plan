@@ -108,7 +108,7 @@ namespace SodRpg.Core.Game
         {
             switch (family)
             {
-                case Family.Frost: return new Txt("氷霜", "Frost", "霜寒");
+                case Family.Frost: return new Txt("氷霜", "Frost", "冰霜");
                 case Family.Flame: return new Txt("炎", "Flame", "炎");
                 case Family.Light: return new Txt("光", "Light", "光");
                 case Family.Dark: return new Txt("闇", "Dark", "暗");
