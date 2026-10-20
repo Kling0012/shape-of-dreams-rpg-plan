@@ -55,6 +55,60 @@ namespace SodRpg.Core.Game
         // Kind Return / Kindness: 返礼 → 回礼、返し → 回善
         // Second Wind / Second Breath: 再起・二の息・再びの息 → 回气
         // Legendary: 固有品 → 传说（Content.RarityName のレア度表記）
+        // 固有品・セット部位で繰り返し使う訳語（#955）。名前の一部なので辞書には登録しない。
+        // Tidecaller: 潮鳴り → 潮鸣
+        // Lampkeeper: 灯守 → 守灯
+        // Cinder / Embercoal: 残火・熾火・燃え殻 → 余烬
+        // Dusk: 黄昏 → 黄昏
+        // Winterbound: 冬枯れ → 凋冬
+        // Starsinger: 星詠み → 咏星
+        // Hunting Party: 狩猟団 → 狩猎团
+        // Bastion: 不落城 → 不落城
+        // Wildfire: 燎原 → 燎原
+        // Grove: 古森 → 古森
+        // Reverie: 夢想 → 梦想
+        // Phantom: 幻影 → 幻影
+        // Permafrost: 凍土 → 冻土
+        // Carnage: 修羅道 → 修罗
+        // Galedancer: 風舞 → 风舞
+        // Firmament: 天穹 → 天穹
+        // Nightstrike: 闇討ち → 暗袭
+        // Ashrunner / Ashrun: 灰走り → 灰行者（セット部位）・灰行（駆け靴）
+        // Healer: 施療 → 施疗
+        // Ironknight: 鉄騎 → 铁骑
+        // Eclipse: 蝕 → 蚀、日蝕 → 日蚀、月蝕 → 月蚀
+        // Thunderclap: 迅雷 → 迅雷
+        // Myriad: 万象 → 万象
+        // Dawnbreak: 払暁 → 破晓
+        // Icicrystal: 氷晶 → 冰晶
+        // Mistsimmer / Mistwater / Steammist: 霧湯・湯霧 → 雾汤
+        // Ashfall / Cinderfall: 灰降り・降り灰 → 落灰
+        // Eclipse-Rite: 蝕の儀 → 蚀仪
+        // Canticle: 聖歌 → 圣歌
+        // Holy-Ice: 聖氷 → 圣冰
+        // Crystal: 結晶 → 结晶
+        // Ward: 障壁 → 屏障、護り → 守护
+        // Bracers: 腕輪 → 护腕
+        // Locket: ロケット → 坠饰（複合名では「坠」）
+        // Greaves / Treads: 足甲・脚絆 → 胫甲
+        // #961 で追加した主な用語（ボス・賞金首・部屋の予兆・実績・禁忌・エッセンス・家系）:
+        // 攻撃力・魔力の高い方のX% → 攻击力与法术强度中较高一方的X%
+        // 再発動までX秒かかる → 冷却X秒 / 予告 → 预警 / 障壁 → 护盾
+        // 通常攻撃 → 通常攻击 / セット効果 → 套装效果（2セット効果 → 2件套效果）
+        // 悪夢の契約 → 梦魇契约 / 悪夢化 → 梦魇化 / 夢の出来事 → 梦境事件 / 夢の変種 → 梦境变种
+        // 部屋の兆し → 房间预兆 / 潜行 → 深度 / 経験値 → 经验值 / 家系 → 元素族（Frost=冰霜・Dark=暗）
+        // 樹芽 → 树芽 / 踏みつけ → 踩踏 / 樹界 → 树界 / 樹界装備 → 树界装备（Demon 系）
+        // 霞衣 → 霞衣・群れの守り → 群守・明滅 → 明灭・最後の殻 → 最后之壳（Nightmare の性質）
+        // 冷気（Cold）→ 冰（冰属性伤害・冰属性治疗）/ 通常記憶 → 普通记忆 / 奥義記憶 → 终极记忆
+        // 相（Phase）→ 相态 / 相紋 → 相纹 / 分身 → 分身 / 氷印 → 冰印 / 星印 → 星印
+        // 白蓮 → 白莲 / 黒月 → 黑月 / 魂の牢獄 → 灵魂牢狱 / 雪嶺の核 → 雪岭之核
+        // 固有報酬の段階 → 首领专属奖励阶段 / 超過回復 → 溢出治疗 / 残像砲台 → 残影炮台
+        // 出来事・連携・変種の説明で繰り返し使う訳語（#959）。
+        // Power: 固有効果 → 固有效果、Unique relic: 固有品 → 固有遗物（レア度とは区別）
+        // Milestone: 節目 → 里程碑、Keystone: 到達刻印 → 到达刻印
+        // Barrier: 障壁 → 障壁、Guard reduction: 軽減 → 减伤
+        // Weak to fire / cold / light / dark: 火・冷気・光・闇に弱い → 畏火・畏寒・畏光・畏暗
+        // Unsecured: 未確保 → 未存入、まだ持ち帰っていない → 尚未带回
         // #958 で追加した主な訳語（装備データ 8/8。Txt の第3値を書くときの参照用）:
         // セット名の接頭辞: 砕盾騎士 Shardshield → 碎盾骑士、盾誓い Bashbound → 盾誓、陣頭 Frontline → 阵头、
         //   後陣 Rearline → 后阵、輪守り Ringwarden → 环守、継ぎ歌 Relaysong → 接力歌、宴 Feastpack → 狼宴、

@@ -10,6 +10,14 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v3.8.34 — Chinese translations for equipment, sets and game data, plus fixes（2026-10-21）
+
+### 不具合の修正 / Bug fixes
+- 中国語の星図ツールチップで、費用と関係のない「点」を含む説明によって必要ポイントの行が省略される判定を修正しました。 / Fixed the Chinese star tooltip cost check so unrelated occurrences of the character for “point” no longer suppress the point cost line.
+- 中国語の取引・契約・刻印枠・依頼の表示と銘品の説明にある誤訳を修正し、銘品名と小セット名の訳語を揃えました。 / Corrected Chinese translations for trades, pacts, keystone slots, bounty rerolls and named item lore, and aligned terminology in named item and mini-set names.
+
+---
+
 ## v3.8.33 — Expanded Chinese (Simplified) translation for mod screens and items（2026-10-20）
 
 中国語（簡体字）で表示される部分を増やしました。MOD のメイン画面とほかの画面、銘品と固有品の一部の名前と説明が、中国語で読めるようになりました。 / Expanded Chinese (Simplified) coverage: the mod's main screen, other mod screens, and the names and descriptions of named items and some unique items now appear in Chinese.
