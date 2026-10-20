@@ -111,7 +111,7 @@ namespace SodRpg.Mod
         {
             var trade = _s.CoopTrade;
             return trade != null && trade.Incoming && !trade.Accepted
-                ? Loc.T("交換 ●", "Trade ●") : Loc.T("交換", "Trade");
+                ? Loc.T("交換 ●", "Trade ●", "交易 ●") : Loc.T("交換", "Trade", "交易");
         }
 
         private void DrawCoopTradeTab()
@@ -131,16 +131,16 @@ namespace SodRpg.Mod
             }
 
             SyncCoopTradeDraft(trade);
-            GUILayout.Label(Loc.T("交換相手：", "Trading with: ") + trade.PartnerName, _st.Header);
+            GUILayout.Label(Loc.T("交換相手：", "Trading with: ", "交易对象：") + trade.PartnerName, _st.Header);
             if (!string.IsNullOrEmpty(trade.Status)) GUILayout.Label(trade.Status, _st.Small);
             GUILayout.Label(Loc.T(
                 "内容が変わると双方の確認が解除されます。受け取る遺物は保管庫へ。欠片・調律石は所持分（鞄を含む）から渡します。",
-                "Any offer change clears both confirmations. Received relics go to the stash; shards and tuning include those in your satchel."), _st.Small);
+                "Any offer change clears both confirmations. Received relics go to the stash; shards and tuning include those in your satchel.", "提示内容变更后双方的确认都会解除。收到的遗物将进入仓库；碎片・调律石从所持部分（包括背包）中支付。"), _st.Small);
 
             bool valid = TryCoopTradeAmounts(out int shards, out int tuning);
-            string invalid = valid ? null : Loc.T("素材は0以上の整数で入力してください。", "Enter a nonnegative whole number for each material.");
+            string invalid = valid ? null : Loc.T("素材は0以上の整数で入力してください。", "Enter a nonnegative whole number for each material.", "请为每种材料输入0以上的整数。");
             if (valid && (shards > CoopTradeRules.Shards(_s.Profile) || tuning > CoopTradeRules.Tuning(_s.Profile)))
-                invalid = Loc.T("所持している素材の数を超えています。", "The offer exceeds your owned materials.");
+                invalid = Loc.T("所持している素材の数を超えています。", "The offer exceeds your owned materials.", "超过了所持材料的数量。");
             if (!trade.Preparing && invalid != null) GUILayout.Label(invalid, _st.Warn);
             // 提示した遺物を後から装着・使用すると、ホストが確認時に取引を取り消す。確認の前に止める。
             string staleOffer = null;
@@ -149,12 +149,12 @@ namespace SodRpg.Mod
                     if (!CoopTradeRelicOfferable(_s.Profile, uid))
                     {
                         staleOffer = Loc.T("提示できない遺物が含まれています。提示から外して続けてください。",
-                            "Some relics can no longer be offered. Remove them from your offer to continue.");
+                            "Some relics can no longer be offered. Remove them from your offer to continue.", "包含无法提示的遗物。请将其从提示中移除后继续。");
                         GUILayout.BeginHorizontal();
                         GUILayout.Label(staleOffer, _st.Warn, TradeChoicesWidth);
                         bool staleEnabled = GUI.enabled;
                         GUI.enabled = staleEnabled && _s.CanCoopTrade && !_s.CoopTradeOfferPending;
-                        if (GUILayout.Button(Loc.T("無効な遺物を提示から外す", "Remove invalid relics"), _st.ButtonWrap, TradeActionSize))
+                        if (GUILayout.Button(Loc.T("無効な遺物を提示から外す", "Remove invalid relics", "从提示中移除无效遗物"), _st.ButtonWrap, TradeActionSize))
                             SetStatus(_s.SetCoopTradeOffer(CopyCoopTradeOffer(trade.OwnOffer, trade.OwnOffer.Shards, trade.OwnOffer.Tuning)));
                         GUI.enabled = staleEnabled;
                         GUILayout.EndHorizontal();
@@ -167,27 +167,27 @@ namespace SodRpg.Mod
             if (trade.Incoming && !trade.Accepted)
             {
                 GUI.enabled = enabled && _s.CanCoopTrade && !trade.Preparing;
-                if (GUILayout.Button(Loc.T("交換を承諾", "Accept trade"), _st.ButtonWrap, TradeActionSize)) SetStatus(_s.AcceptCoopTrade());
+                if (GUILayout.Button(Loc.T("交換を承諾", "Accept trade", "接受交易"), _st.ButtonWrap, TradeActionSize)) SetStatus(_s.AcceptCoopTrade());
             }
             else if (trade.Accepted)
             {
                 GUI.enabled = enabled && _s.CanCoopTrade && !trade.Preparing && !trade.OwnConfirmed && !_s.CoopTradeOfferPending && invalid == null && staleOffer == null;
-                if (GUILayout.Button(trade.OwnConfirmed ? Loc.T("確認済み", "Confirmed") : Loc.T("この内容で交換を確認", "Confirm this trade"), _st.ButtonWrap, TradeActionSize))
+                if (GUILayout.Button(trade.OwnConfirmed ? Loc.T("確認済み", "Confirmed", "已确认") : Loc.T("この内容で交換を確認", "Confirm this trade", "确认此交易"), _st.ButtonWrap, TradeActionSize))
                     SetStatus(_s.ConfirmCoopTrade());
             }
             GUI.enabled = enabled && !trade.Preparing;
-            if (GUILayout.Button(trade.Incoming && !trade.Accepted ? Loc.T("拒否", "Reject") : Loc.T("交換を取消", "Cancel trade"), _st.ButtonWrap, TradeActionSize))
+            if (GUILayout.Button(trade.Incoming && !trade.Accepted ? Loc.T("拒否", "Reject", "拒绝") : Loc.T("交換を取消", "Cancel trade", "取消交易"), _st.ButtonWrap, TradeActionSize))
                 SetStatus(_s.CancelCoopTrade());
             GUI.enabled = enabled;
             GUILayout.EndHorizontal();
             GUILayout.Label(trade.Preparing
-                ? Loc.T("交換を確定中：操作はロックされています。ホストの確定・取消の応答を待ってください。", "Finalizing: controls are locked. Wait for the host's commit or abort decision.")
-                : Loc.T("自分：", "You: ") + TradeConfirmation(trade.OwnConfirmed) + "    " + Loc.T("相手：", "Partner: ") + TradeConfirmation(trade.OtherConfirmed), _st.Small);
+                ? Loc.T("交換を確定中：操作はロックされています。ホストの確定・取消の応答を待ってください。", "Finalizing: controls are locked. Wait for the host's commit or abort decision.", "正在确定交易：操作已锁定。请等待主机的确定或取消应答。")
+                : Loc.T("自分：", "You: ", "自己：") + TradeConfirmation(trade.OwnConfirmed) + "    " + Loc.T("相手：", "Partner: ", "对方：") + TradeConfirmation(trade.OtherConfirmed), _st.Small);
 
             float columnWidth = Mathf.Max(150f, (_windowWidth - 60f) / 2f);
             GUILayout.BeginHorizontal(TradePaneSize);
             GUILayout.BeginVertical(_st.Panel, GUILayout.Width(columnWidth), GUILayout.ExpandHeight(true));
-            GUILayout.Label(Loc.T("自分が渡すもの", "Your offer"), _st.Header);
+            GUILayout.Label(Loc.T("自分が渡すもの", "Your offer", "你付出的物品"), _st.Header);
             GUI.enabled = enabled && trade.Accepted && _s.CanCoopTrade && !trade.Preparing;
             DrawCoopTradeMaterialFields(trade);
             GUI.enabled = enabled;
@@ -203,7 +203,7 @@ namespace SodRpg.Mod
             GUILayout.EndVertical();
 
             GUILayout.BeginVertical(_st.Panel, GUILayout.Width(columnWidth), GUILayout.ExpandHeight(true));
-            GUILayout.Label(Loc.T("相手が渡すもの", "Partner's offer"), _st.Header);
+            GUILayout.Label(Loc.T("相手が渡すもの", "Partner's offer", "对方付出的物品"), _st.Header);
             DrawCoopTradeMaterialSummary(trade.OtherOffer);
             _tradeOtherScroll = GUILayout.BeginScrollView(_tradeOtherScroll, false, false, GUIStyle.none, GUI.skin.verticalScrollbar, TradePaneSize);
             DrawCoopTradeOfferedRelics(trade.OtherProfile, trade.OtherOffer);
