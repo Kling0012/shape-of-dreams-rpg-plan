@@ -56,6 +56,7 @@ namespace SodRpg.Mod
             NativePerfOptions.ProxyPositionIdle = config.nativeProxyPositionIdle;
             NativePerfOptions.PickupIdle = config.nativePickupIdle;
             NativePerfOptions.EnemyHitFxBudget = config.nativeEnemyHitFxBudget;
+            NativePerfOptions.TimescaleIdle = config.nativeTimescaleIdle;
         }
     }
 
@@ -101,6 +102,7 @@ namespace SodRpg.Mod
         internal static bool ProxyPositionIdle = true;
         internal static bool PickupIdle = true;
         internal static bool EnemyHitFxBudget = true;
+        internal static bool TimescaleIdle = true;
     }
 
     internal static class NativePerfPatch
@@ -4668,6 +4670,273 @@ namespace SodRpg.Mod
                 _disabled = true;
                 NativePerfPatch.Warn(ref _warned, "chaos shrine choice cache", ex.Message);
                 return true;
+            }
+        }
+    }
+
+    [HarmonyPatch]
+    internal static class NativeTimescaleIdlePerf
+    {
+        // TimescaleManager.FrameUpdate (2026-10-20 逆コンパイル確認) resets effectTimescale to
+        // 1f at its top and then re-applies Mathf.Min over the ongoing changes inside its loop.
+        // While any timescale change with a target below 1 is alive (FxStopTime's 0.1x window,
+        // the special-menu 0.025x slow), both writes differ from the current value every frame,
+        // so Mirror's weaver setter re-raises dirty bit 2 even though the end-of-frame value is
+        // unchanged. NetworkIdentity clears the bits after each delta broadcast, the next frame
+        // raises them again, and the behaviour serializes at every syncInterval for the whole
+        // slow window: every guest receives the identical float (plus dirty mask) over and over,
+        // and the host pays a SerializeSyncVars pass per connection per tick. The effect
+        // timescale only actually changes when a change starts or ends, so the steady-state
+        // sends carry no information.
+        //
+        // Two cooperating postfixes, one state: the publish side (NativeTimescaleIdlePublishPerf
+        // on SerializeSyncVars) records the value the last delta that actually carried
+        // effectTimescale handed out as the delivery baseline — a delta serialize is the only
+        // event that makes a value visible to the already-connected guests, and it samples the
+        // field after FrameUpdate has settled it, so the baseline is exact. The baseline only
+        // advances when the delta's serialize ran with bit 2 still set: a cleared bit means
+        // the stream carried no effectTimescale entry, so the value was not delivered and the
+        // baseline stays where it was. An initial-state serialize (a late joiner's spawn
+        // payload) goes to the new connection only — it does not change what the existing
+        // guests hold, and Mirror does not clear the dirty bits for it — so it must leave the
+        // baseline alone; advancing it there would let a change raised before the join compare
+        // equal afterwards and lose its bit before any existing guest saw the new value. The
+        // clear side (below, on FrameUpdate) drops bit 2 when the end-of-frame value equals
+        // that baseline: only the in-frame 1f-reset flip re-raised it, so the next delta
+        // carries no effectTimescale entry, exactly as if no flip happened. A genuine change
+        // differs from the baseline, keeps its bit through every frame up to the next delta
+        // that carries it (the baseline only advances when one does), and is therefore always
+        // sent.
+        //
+        // While the option is off or the server is inactive, both postfixes stand down and
+        // the game runs this path vanilla: deltas still deliver whatever the weaver setter
+        // raised, but the baseline no longer follows what the guests hold. Each side
+        // therefore forgets the baseline (_hasSent=false) and drops the owner slot
+        // (_owner=null) on its way out, so a stale baseline can never drop the bit of a
+        // change raised inside such a window, and a manager torn down with its scene is not
+        // pinned by this static reference until the next owner appears. After
+        // the option returns (or the same TimescaleManager instance survives a server
+        // restart), the first frame-end comparison sees an unknown baseline and keeps the
+        // bit until the next delta delivers the value and re-establishes it.
+        //
+        // Bit 1 (_finalTimescale) and every other bit are left untouched, and no field value,
+        // hook call or Time.timeScale assignment differs from vanilla: guests sample the
+        // behaviour only through the initial state and the delta stream, and a suppressed
+        // delta carried a value they already have. The weaver setter writes the field only
+        // from inside FrameUpdate, so nothing can change it between the clear and the
+        // serialize that samples it.
+        //
+        // Residual assumption, same class as the other unchanged-resend skips: a third-party
+        // tool that counts per-behaviour delta messages would see fewer of them; nothing in
+        // the game reads effectTimescale per message. The nativeTimescaleIdle option turns the
+        // skip off.
+        //
+        // One static slot, not a per-instance map: TimescaleManager is the game's
+        // NetworkedManagerBase<TimescaleManager> singleton (2026-10-20 decompile check —
+        // every caller goes through the static instance/softInstance accessor, one manager
+        // per scene), so at most one owner is live at a time. If two instances ever did
+        // alternate, each switch only demotes the baseline to unknown (_hasSent=false) and
+        // the skip stops engaging — it can never drop the bit of a real change. The
+        // stand-down windows below also null the slot so a destroyed manager is not pinned
+        // by this static reference until the next owner appears.
+        internal static Mirror.NetworkBehaviour _owner;
+        internal static float _sent;
+        internal static bool _hasSent;
+        private static Func<Mirror.NetworkBehaviour, ulong> _dirtyBits;
+        private static Action<Mirror.NetworkBehaviour, ulong> _setDirtyBits;
+        private static ulong _effectBit;
+        private static MethodBase _target;
+        internal static bool _disabled;
+        private static bool _warned;
+
+        // Shared by both patch classes below so a rejected shape keeps the capture side and
+        // the skip side off together.
+        internal static bool SharedPrepare()
+        {
+            if (_disabled) return false;
+            if (_target != null) return true;
+            _disabled = true;
+            try
+            {
+                _target = NativePerfPatch.Find(typeof(TimescaleManager), "FrameUpdate", ref _warned);
+                if (_target == null) return false;
+                var publish = NativePerfPatch.Find(typeof(TimescaleManager), "SerializeSyncVars",
+                    new[] { typeof(Mirror.NetworkWriter), typeof(bool) }, ref _warned);
+                if (publish == null) return false;
+                var effectSetter = AccessTools.PropertySetter(typeof(TimescaleManager), "Network<effectTimescale>k__BackingField");
+                if (effectSetter == null || effectSetter.GetMethodBody() == null)
+                {
+                    NativePerfPatch.Warn(ref _warned, "timescale idle", "native effectTimescale setter unavailable");
+                    return false;
+                }
+                _effectBit = ExtractDirtyBit(effectSetter);
+                if (_effectBit == 0UL) return false;
+                if (!ResolveBitAccess()) return false;
+                _disabled = false;
+                return true;
+            }
+            catch (Exception ex)
+            {
+                NativePerfPatch.Warn(ref _warned, "timescale idle", ex.Message);
+                return false;
+            }
+        }
+
+        private static bool Prepare() => SharedPrepare();
+
+        private static MethodBase TargetMethod() => _target;
+
+        // The weaver's setter embeds its dirty bit as the call's only long constant
+        // (GeneratedSyncVarSetter(value, ref field, <bit>, null)); reading it from the IL
+        // keeps the clear mask bound to the same constant the native setter raises, so a
+        // SyncVar reorder in the game can never make the patch clear a stranger's bit.
+        private static ulong ExtractDirtyBit(MethodInfo setter)
+        {
+            ulong found = 0UL;
+            int count = 0;
+            foreach (var insn in PatchProcessor.GetOriginalInstructions(setter))
+            {
+                if (insn.opcode != OpCodes.Ldc_I8) continue;
+                found = (ulong)(long)insn.operand;
+                count++;
+            }
+            if (count != 1)
+            {
+                NativePerfPatch.Warn(ref _warned, "timescale idle", "native setter dirty bit shape changed");
+                return 0UL;
+            }
+            return found;
+        }
+
+        private static bool ResolveBitAccess()
+        {
+            // The game's Mirror exposes syncVarDirtyBits as a property, not a field:
+            // Mirror.dll r1.4.1.2 (checked 2026-10-20 with ilspycmd against the shipped
+            // assembly) declares `protected ulong syncVarDirtyBits { get; private set; }` in
+            // Mirror.NetworkBehaviour, so PropertyGetter/PropertySetter is the right
+            // accessor pair. A future Mirror that turns it into a field fails this
+            // resolution and the skip stands down (one warning, vanilla behavior).
+            var getter = AccessTools.PropertyGetter(typeof(Mirror.NetworkBehaviour), "syncVarDirtyBits");
+            var setter = AccessTools.PropertySetter(typeof(Mirror.NetworkBehaviour), "syncVarDirtyBits");
+            if (getter == null || setter == null)
+            {
+                NativePerfPatch.Warn(ref _warned, "timescale idle", "Mirror syncVarDirtyBits access unavailable");
+                return false;
+            }
+            _dirtyBits = (Func<Mirror.NetworkBehaviour, ulong>)Delegate.CreateDelegate(
+                typeof(Func<Mirror.NetworkBehaviour, ulong>), getter);
+            _setDirtyBits = (Action<Mirror.NetworkBehaviour, ulong>)Delegate.CreateDelegate(
+                typeof(Action<Mirror.NetworkBehaviour, ulong>), setter);
+            return true;
+        }
+
+        // The publish side asks whether the delta it just serialized actually carried
+        // effectTimescale: only a set bit wrote the value into the stream. Read after the
+        // serialize but before NetworkIdentity clears the bits for this broadcast, this is
+        // the same mask the serializer itself sampled.
+        internal static bool EffectBitSet(Mirror.NetworkBehaviour instance)
+            => (_dirtyBits(instance) & _effectBit) != 0UL;
+
+        private static void Postfix(TimescaleManager __instance, bool __runOriginal)
+        {
+            if (!__runOriginal || _disabled) return;
+            // Stand-down window (option off / server down): the off-window itself runs
+            // vanilla, so the baseline stops tracking what the guests hold. Forget it on
+            // the way out — a stale baseline must not drop the bit of a change raised
+            // inside the window once the option comes back on — and drop the owner slot
+            // so a manager destroyed with its scene is not pinned until the next owner.
+            if (!NativePerfOptions.TimescaleIdle || !Mirror.NetworkServer.active)
+            {
+                _hasSent = false;
+                _owner = null;
+                return;
+            }
+            try
+            {
+                if (_owner != __instance)
+                {
+                    _owner = __instance;
+                    _hasSent = false;
+                }
+                float current = __instance.effectTimescale;
+                if (_hasSent && current.Equals(_sent))
+                {
+                    // The end-of-frame value matches the last value a delta serialization
+                    // handed out: only this frame's 1f-reset flip re-raised the bit. Drop
+                    // just that bit; the next delta carries no effectTimescale entry, exactly
+                    // as if no flip happened. float.Equals mirrors Mirror's own
+                    // SyncVarEqual semantics, including NaN==NaN and 0==-0, so a value the
+                    // native setter early-returned on is never treated as changed here
+                    // either.
+                    ulong bits = _dirtyBits(__instance);
+                    if ((bits & _effectBit) != 0UL)
+                        _setDirtyBits(__instance, bits & ~_effectBit);
+                }
+            }
+            catch (Exception ex)
+            {
+                _disabled = true;
+                NativePerfPatch.Warn(ref _warned, "timescale idle", ex.Message);
+            }
+        }
+    }
+
+    [HarmonyPatch]
+    internal static class NativeTimescaleIdlePublishPerf
+    {
+        private static MethodBase _publish;
+        private static bool _warned;
+
+        private static bool Prepare()
+        {
+            if (_publish != null) return true;
+            _publish = NativePerfPatch.Find(typeof(TimescaleManager), "SerializeSyncVars",
+                new[] { typeof(Mirror.NetworkWriter), typeof(bool) }, ref _warned);
+            if (_publish == null) return false;
+            return NativeTimescaleIdlePerf.SharedPrepare();
+        }
+
+        private static MethodBase TargetMethod() => _publish;
+
+        private static void Postfix(TimescaleManager __instance, bool __runOriginal, bool initialState)
+        {
+            if (!__runOriginal || NativeTimescaleIdlePerf._disabled) return;
+            // Same stand-down as the clear side: while the option is off or the server is
+            // down, forget the baseline and the owner slot so neither a stale baseline nor
+            // a destroyed manager survives the window.
+            if (!NativePerfOptions.TimescaleIdle || !Mirror.NetworkServer.active)
+            {
+                NativeTimescaleIdlePerf._hasSent = false;
+                NativeTimescaleIdlePerf._owner = null;
+                return;
+            }
+            try
+            {
+                // An initial-state serialize is the spawn payload for one fresh guest: it does
+                // not change what the already-connected guests hold, and Mirror does not clear
+                // the dirty bits for it, so it must not touch the delivery baseline either —
+                // a change raised before the join would otherwise compare equal afterwards
+                // and lose its bit before any existing guest saw the new value.
+                if (initialState) return;
+                if (NativeTimescaleIdlePerf._owner != __instance)
+                {
+                    NativeTimescaleIdlePerf._owner = __instance;
+                    NativeTimescaleIdlePerf._hasSent = false;
+                }
+                // A delta only carries effectTimescale when its bit survived to the
+                // serialize. A cleared bit means the stream carried no entry, so the value
+                // was not delivered and the baseline — what the guests already hold — stays
+                // where it was. When the bit did survive, the sampled value becomes the new
+                // baseline: the weaver setter cannot run between the FrameUpdate clear and
+                // this serialize, so it is exactly what the clear side compared.
+                if (!NativeTimescaleIdlePerf.EffectBitSet(__instance)) return;
+                NativeTimescaleIdlePerf._sent = __instance.effectTimescale;
+                NativeTimescaleIdlePerf._hasSent = true;
+            }
+            catch (Exception ex)
+            {
+                NativeTimescaleIdlePerf._disabled = true;
+                NativePerfPatch.Warn(ref _warned, "timescale idle publish", ex.Message);
             }
         }
     }
