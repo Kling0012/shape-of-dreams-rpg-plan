@@ -14,6 +14,34 @@ namespace SodRpg.Core.Game
     /// </summary>
     internal static class LocZhGlossary
     {
+        // 銘品の名前・説明で繰り返し使う訳語（#941）。Txt の第3値を書くときの参照用。
+        // 名前の一部なので、下の完全一致辞書には登録しない。
+        // Crack: 砕音・砕け音 → 碎响
+        // Brittle Ice: 脆氷 → 脆冰
+        // Co-Star: 共演 → 联袂
+        // Steam: 湯気 → 白雾
+        // Guardian: 守護霊 → 守护灵
+        // Heirloom / Heir: 跡目 → 继承
+        // Boon: 恵み → 恩泽（複合名では「恩」）
+        // Ember: 残り火・燠火 → 余烬
+        // Tailwind: 追風 → 顺风
+        // Lifeline: 継ぎ糸 → 生命线
+        // Readiness: 備え → 戒备
+        // Immovability: 不動 → 不动
+        // Whirl / Whirlwind: 旋風 → 旋风
+        // Dash: 疾駆 → 疾驰
+        // Siphon: 吸魂 → 摄魂
+        // Leech: 吸命 → 吸命
+        // Watch: 見守り → 守望
+        // Relay: 継ぎ・継ぎ手 → 接力
+        // Trump: 切札・切り札 → 王牌
+        // Cycle: 巡り → 巡回
+        // Circuit: 循環 → 循环
+        // Turbulence: 乱気 → 乱流
+        // Verdict: 断罪 → 断罪
+        // Kind Return / Kindness: 返礼 → 回礼、返し → 回善
+        // Second Wind / Second Breath: 再起・二の息 → 回气
+        // Legendary: 固有品 → 传说（Content.RarityName のレア度表記）
         private static Dictionary<string, string> _map;
 
         /// <summary>英語の文字列から中国語を引く。なければそのまま英語を返す（割り当てなし）。</summary>
