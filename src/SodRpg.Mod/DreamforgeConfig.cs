@@ -215,6 +215,9 @@ namespace SodRpg.Mod
         [LabelText("Reduce overlapping enemy hit effects (local) / 敵への命中演出の重なりを減らす（各端末）")]
         public bool nativeEnemyHitFxBudget = true;
 
+        [LabelText("Skip unchanged timescale re-sends while slowed (host) / 時間が遅くなっている間の同じタイムスケールの再送を省く（ホスト）")]
+        public bool nativeTimescaleIdle = true;
+
         [LabelText("Level essence slots: add essence slots as the hero levels up (the host's setting applies) /\nレベル連動のエッセンス枠：英雄のレベルに応じて記憶のエッセンス枠を増やす（ホストの設定が使われる）")]
         public bool levelEssenceSlots = true;
 

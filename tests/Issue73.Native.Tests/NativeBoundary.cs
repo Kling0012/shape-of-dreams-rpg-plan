@@ -702,6 +702,16 @@ namespace SodRpg.Mod
         internal float _currentYVelocity;
         internal void ActiveFrameUpdate() { }
     }
+    // NativeTimescaleIdlePerf の受け口。本体 Dew.Core TimescaleManager（2026-10-20 逆コンパイル確認）
+    // のうちパッチが触る範囲の模倣: FrameUpdate の宣言と、Postfix が読む effectTimescale。
+    // 実機の weaver 生成セッター Network<effectTimescale>k__BackingField は <> 入りのため
+    // C# で宣言できず、Prepare のビット抽出は本体 DLL でのみ解決される。この境界で
+    // Prepare を呼ぶと fail-soft の警告1回で下りる（名前解決の成否は検証対象にしない）。
+    internal class TimescaleManager : NetworkBehaviour
+    {
+        public void FrameUpdate() { }
+        public float effectTimescale { get; private set; }
+    }
     internal static class EntityLifetimeExtensions
     {
         // 本体の拡張と同じ意味: 消失・非アクティブ・死亡・KO を無効対象とする。
