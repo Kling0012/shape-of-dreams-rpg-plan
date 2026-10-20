@@ -89,6 +89,7 @@ namespace SodRpg.Mod
             nativeProxyPositionIdle = true,
             nativePickupIdle = true,
             nativeEnemyHitFxBudget = true,
+            nativeTimescaleIdle = true,
             nativeLobbyAccessoryIdle = true, nativeUltChargeRpcIdle = true,
             nativeChaosShrineHitScan = true,
             nativeChaosShrineChoiceCache = true,

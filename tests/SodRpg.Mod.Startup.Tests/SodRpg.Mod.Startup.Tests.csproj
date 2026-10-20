@@ -42,6 +42,7 @@
   <Compile Include="../../src/SodRpg.Mod/NativeEssenceCaps.cs" Link="ModUnderTest/NativeEssenceCaps.cs" />
   <Compile Include="../../src/SodRpg.Mod/NativeMemoryReuse.cs" Link="ModUnderTest/NativeMemoryReuse.cs" />
   <Compile Include="../../src/SodRpg.Mod/AccessoryOffsetCacheKey.cs" Link="ModUnderTest/AccessoryOffsetCacheKey.cs" />
+  <Compile Include="../../src/SodRpg.Mod/LevelEssenceTextCache.cs" Link="ModUnderTest/LevelEssenceTextCache.cs" />
     <Compile Include="../../src/SodRpg.Mod/MovementGemSlotEdit.cs" Link="ModUnderTest/MovementGemSlotEdit.cs" />
     <Compile Include="../../src/SodRpg.Mod/FrostFxLifetime.cs" Link="ModUnderTest/FrostFxLifetime.cs" />
   <Compile Include="../../src/SodRpg.Mod/NativeTransformSyncIdle.cs" Link="ModUnderTest/NativeTransformSyncIdle.cs" />

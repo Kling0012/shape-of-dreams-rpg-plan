@@ -8,6 +8,8 @@ namespace SodRpg.Core.Game
     /// 主な用語の対応: 遺物→遗物、欠片→碎片、調律石→调律石、保管庫→仓库、確保→存入仓库、
     /// 潜る→下潜、夢の圧→梦境之压、星図→星图、鍛冶→锻造、工房→工坊、記憶→记忆、
     /// エッセンス→精华、遠征→远征、道標→路标、契約→契约、依頼→委托、図鑑→图鉴、遺失物→遗失物。
+    /// #939 で追加した主な用語: 偉業→成就、覚醒→觉醒、限界突破→极限突破、ドリームダスト→梦境之尘、
+    /// 再調律→再调律、洗い直し→重洗、特性→词条、禁忌→禁忌、製作→制作、変種→变种、兆し→预兆。
     /// 銘品・小セット名の訳で繰り返し出る語（#942）: 火の粉→火花、星屑→星屑、蝕→蚀、
     /// 追い風→追风、終曲→终曲、会心→会心、白い霧・湯気→白雾、切札→王牌、分け合い→共享、止水→止水。
     /// 影は通常の影を指すときは「影」、闇や影の力を指すときは「暗影」と訳す。
@@ -17,6 +19,34 @@ namespace SodRpg.Core.Game
     /// </summary>
     internal static class LocZhGlossary
     {
+        // 銘品の名前・説明で繰り返し使う訳語（#941）。Txt の第3値を書くときの参照用。
+        // 名前の一部なので、下の完全一致辞書には登録しない。
+        // Crack: 砕音・砕け音 → 碎响
+        // Brittle Ice: 脆氷 → 脆冰
+        // Co-Star: 共演 → 联袂
+        // Steam: 湯気 → 白雾
+        // Guardian: 守護霊 → 守护灵
+        // Heirloom / Heir: 跡目 → 继承
+        // Boon: 恵み → 恩泽（複合名では「恩」）
+        // Ember: 残り火・燠火 → 余烬
+        // Tailwind: 追風 → 顺风
+        // Lifeline: 継ぎ糸 → 生命线
+        // Readiness: 備え → 戒备
+        // Immovability: 不動 → 不动
+        // Whirl / Whirlwind: 旋風 → 旋风
+        // Dash: 疾駆 → 疾驰
+        // Siphon: 吸魂 → 摄魂
+        // Leech: 吸命 → 吸命
+        // Watch: 見守り → 守望
+        // Relay: 継ぎ・継ぎ手 → 接力
+        // Trump: 切札・切り札 → 王牌
+        // Cycle: 巡り → 巡回
+        // Circuit: 循環 → 循环
+        // Turbulence: 乱気 → 乱流
+        // Verdict: 断罪 → 断罪
+        // Kind Return / Kindness: 返礼 → 回礼、返し → 回善
+        // Second Wind / Second Breath: 再起・二の息 → 回气
+        // Legendary: 固有品 → 传说（Content.RarityName のレア度表記）
         private static Dictionary<string, string> _map;
 
         /// <summary>英語の文字列から中国語を引く。なければそのまま英語を返す（割り当てなし）。</summary>

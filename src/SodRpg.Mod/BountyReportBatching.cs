@@ -23,6 +23,19 @@ namespace SodRpg.Mod
             else if (kind == BountyReportKind.ElementalKill && value > 0 && value < 16) rt.PendingElementalKills[value]++;
         }
 
+        // The counts are cumulative, so a fixed-rate flush merges a burst into one message per
+        // interval instead of one per frame; the final counts still go out through the boundary
+        // flush below before any conclusion or save. Credited progress can land up to 1 s late.
+        private const float BountyFlushSeconds = 1f;
+
+        /// <summary>Tick stage: throttles FlushBountyReports. Boundary and removal flushes stay immediate.</summary>
+        private void TickBountyReports()
+        {
+            if (_tickNow < _nextBountyFlush) return;
+            _nextBountyFlush = _tickNow + BountyFlushSeconds;
+            FlushBountyReports();
+        }
+
         internal void FlushBountyReports()
         {
             foreach (var rt in _runtimes.Values)

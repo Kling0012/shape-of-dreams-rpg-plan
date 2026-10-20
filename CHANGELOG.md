@@ -10,6 +10,14 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v3.8.32 — Chinese language support and lighter co-op traffic（2026-10-20）
+
+### 新機能 / New features
+- ゲーム内の言語に中国語（簡体字）を加えました。MOD設定で日本語・英語・中国語から選べ、中国語の未訳の部分は英語で表示されます。 / Added Chinese (Simplified) as an in-game language. Choose Japanese, English or Chinese in the mod settings; strings without a Chinese translation fall back to English.
+- 説明文の先頭に、英語と中国語の説明書（GitHub の docs/README.en.md・README.zh.md）への案内を入れました。 / Added links at the top of the description to English and Chinese guides (docs/README.en.md and README.zh.md on GitHub).
+
+---
+
 ## v3.8.31 — Less redundant co-op traffic during the Glacial Core's burst（2026-10-20）
 
 協力プレイで氷結の核がバーストを放っている間に、同じ知らせを繰り返し送っていた無駄をなくし、通信を少し減らしました。 / Co-op no longer resends the same unchanged notice during the Glacial Core's burst, slightly reducing network traffic. / 修复了多人合作中冰结核心释放爆发期间重复发送相同通知的问题，网络通信略有减少。
