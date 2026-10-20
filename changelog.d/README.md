@@ -5,7 +5,7 @@ PR ごとの更新履歴。リリースで CHANGELOG.md にまとめ、このフ
 - 1行目は次のいずれかの分類にする。
   - `### 新機能 / New features`
   - `### 不具合の修正 / Bug fixes`
-- 続けて、`- ` で始まる項目を「日本語 / English / 中文（简体）」の三言語で書く。分類の見出しは上の二言語のまま変えない。
+- 続けて、`- ` で始まる項目を「日本語 / English」の二言語で書く。中国語は書かない（中国語は MOD 本体の表示と `docs/README.zh.md`、説明文の案内だけ。2026-10-20 利用者の指示）。
 - 書くのは新機能と不具合の修正だけ。バランスの変更や改善（処理の軽量化など）は断片に書かない。改善は、リリース時のまとめで `CHANGELOG.md` の「改善 / Improvements」の欄に足す。バランスの数値調整は、[憲章 VII](../docs/constitution.md#vii-更新履歴は新機能と不具合の修正だけを書くmust) に従い、リリース時の更新履歴とリリースノートにも含めない。ただし、難易度を緩める変更は憲章 VII の例外として、`### 新機能 / New features` の項目に明記する。
 - 複数の分類が必要なら、分類ごとに見出しと項目を続ける。
 - リリース時は分類ごとに集約し、取り込んだ断片ファイルをリリースの commit で削除する。この README は残す。
@@ -14,5 +14,5 @@ PR ごとの更新履歴。リリースで CHANGELOG.md にまとめ、このフ
 
 ```markdown
 ### 不具合の修正 / Bug fixes
-- 協力プレイで再接続したときに装備表示が更新されない問題を直しました。 / Fixed equipment displays not updating after reconnecting in co-op. / 修复了多人合作中重新连接后装备显示不更新的问题。
+- 協力プレイで再接続したときに装備表示が更新されない問題を直しました。 / Fixed equipment displays not updating after reconnecting in co-op.
 ```
