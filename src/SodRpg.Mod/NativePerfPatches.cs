@@ -57,6 +57,7 @@ namespace SodRpg.Mod
             NativePerfOptions.PickupIdle = config.nativePickupIdle;
             NativePerfOptions.EnemyHitFxBudget = config.nativeEnemyHitFxBudget;
             NativePerfOptions.TimescaleIdle = config.nativeTimescaleIdle;
+            NativePerfOptions.RedGiantDamageText = config.nativeRedGiantDamageText;
         }
     }
 
@@ -103,6 +104,7 @@ namespace SodRpg.Mod
         internal static bool PickupIdle = true;
         internal static bool EnemyHitFxBudget = true;
         internal static bool TimescaleIdle = true;
+        internal static bool RedGiantDamageText = true;
     }
 
     internal static class NativePerfPatch
@@ -4938,6 +4940,139 @@ namespace SodRpg.Mod
                 NativeTimescaleIdlePerf._disabled = true;
                 NativePerfPatch.Warn(ref _warned, "timescale idle publish", ex.Message);
             }
+        }
+    }
+
+    [HarmonyPatch]
+    internal static class NativeRedGiantDamageTextPerf
+    {
+        // Mon_RedGiant.ActiveLogicUpdate (2026-10-20 IL check against the shipped
+        // Dew.Core.dll) ends with an unconditional damage-meter rebuild that runs on every
+        // active instance on every client, host and guests alike:
+        //   dpsText.text = string.Format("Total: {0:#,##0}\r\nDPS: {1:#,##0}\r\nMax Single Dmg: {2:#,##0}",
+        //                                box(_totalDamage), box(_dps), box(_maxSingleDmg));
+        // The three inputs are exactly the SyncVar floats the meter displays. Between host
+        // hits (and between guest sync deliveries) all three are unchanged, so the built
+        // string is byte-identical to the previous frame's, and TMP_Text.set_text early-outs
+        // on an equal string — the entire per-frame cost is the interpolated string plus
+        // three float boxes, for as long as the monster exists, even when nothing is shown
+        // differently. The replacement helper keeps the same stack [text, literal, total,
+        // dps, max], compares the three raw floats against the ones it last formatted for
+        // this TextMeshPro and returns without touching TMP when all three match; otherwise
+        // it runs the identical string.Format on the identical literal. A changed value
+        // therefore formats and assigns on the very frame it appears, so the displayed text
+        // at every frame is exactly what vanilla shows, including the damage window and the
+        // decay-to-zero reset (whose idle writes dedupe in the weaver setter and in TMP
+        // alike). While the option is off the helper formats unconditionally, which is
+        // vanilla; a null dpsText still throws exactly where vanilla throws.
+        private sealed class LastText
+        {
+            internal float Total;
+            internal float Dps;
+            internal float Max;
+        }
+
+        private static readonly ConditionalWeakTable<TMPro.TMP_Text, LastText> LastTexts =
+            new ConditionalWeakTable<TMPro.TMP_Text, LastText>();
+        private static readonly ConditionalWeakTable<TMPro.TMP_Text, LastText>.CreateValueCallback
+            CreateLastText = _ => new LastText();
+        private static FieldInfo _total, _dps, _max;
+        private static MethodBase _target;
+        private static bool _disabled;
+        private static bool _warned;
+
+        private static bool Prepare()
+        {
+            _target = NativePerfPatch.Find(typeof(Mon_RedGiant), "ActiveLogicUpdate",
+                new[] { typeof(float) }, ref _warned);
+            if (_target == null) return false;
+            try
+            {
+                _total = AccessTools.Field(typeof(Mon_RedGiant), "_totalDamage");
+                _dps = AccessTools.Field(typeof(Mon_RedGiant), "_dps");
+                _max = AccessTools.Field(typeof(Mon_RedGiant), "_maxSingleDmg");
+                if (_total == null || _dps == null || _max == null)
+                {
+                    NativePerfPatch.Warn(ref _warned, "red giant damage text", "native SyncVar fields unavailable");
+                    return false;
+                }
+                return true;
+            }
+            catch (Exception ex)
+            {
+                NativePerfPatch.Warn(ref _warned, "red giant damage text", ex.Message);
+                return false;
+            }
+        }
+
+        private static MethodBase TargetMethod() => _target;
+
+        private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+        {
+            var code = new List<CodeInstruction>(instructions);
+            var format = AccessTools.Method(typeof(string), nameof(string.Format),
+                new[] { typeof(string), typeof(object), typeof(object), typeof(object) });
+            var setText = AccessTools.PropertySetter(typeof(TMPro.TMP_Text), "text");
+            int boxes = 0, formats = 0, writes = 0, tail = -1;
+            for (int i = 0; i < code.Count; i++)
+            {
+                if (IsBox(code[i])) boxes++;
+                if (code[i].Calls(format)) { formats++; tail = i; }
+                if (code[i].Calls(setText)) writes++;
+            }
+            // The tail must be exactly [ldfld _totalDamage, box, ldfld _dps, box,
+            // ldfld _maxSingleDmg, box, Format, set_text]. Anything else means the native
+            // shape changed; hand the method back untouched (one warning, vanilla behavior).
+            if (boxes != 3 || formats != 1 || writes != 1 || tail < 6
+                || !IsBox(code[tail - 1]) || !IsBox(code[tail - 3]) || !IsBox(code[tail - 5])
+                || !LoadsField(code[tail - 6], _total) || !LoadsField(code[tail - 4], _dps)
+                || !LoadsField(code[tail - 2], _max)
+                || tail + 1 >= code.Count || !code[tail + 1].Calls(setText))
+            {
+                NativePerfPatch.Warn(ref _warned, "red giant damage text",
+                    "native text callsite changed or already patched");
+                return code;
+            }
+            // Drop the boxes (the raw floats stay on the stack for the helper), swap Format
+            // for the skip-capable helper with the same stack shape, and retire set_text.
+            foreach (int i in new[] { tail - 1, tail - 3, tail - 5 })
+            {
+                code[i].opcode = OpCodes.Nop;
+                code[i].operand = null;
+            }
+            code[tail].opcode = OpCodes.Call;
+            code[tail].operand = AccessTools.Method(typeof(NativeRedGiantDamageTextPerf), nameof(SetDamageText));
+            code[tail + 1].opcode = OpCodes.Nop;
+            code[tail + 1].operand = null;
+            return code;
+        }
+
+        private static bool IsBox(CodeInstruction instruction)
+            => instruction.opcode == OpCodes.Box && instruction.operand is Type type && type == typeof(float);
+
+        private static bool LoadsField(CodeInstruction instruction, FieldInfo field)
+            => instruction.opcode == OpCodes.Ldfld && Equals(instruction.operand, field);
+
+        // Same argument stack as the native Format + set_text pair: [text, literal, total, dps, max].
+        private static void SetDamageText(TMPro.TMP_Text text, string format, float total, float dps, float max)
+        {
+            if (!_disabled && NativePerfOptions.RedGiantDamageText && text != null)
+            {
+                try
+                {
+                    var last = LastTexts.GetValue(text, CreateLastText);
+                    if (last.Total == total && last.Dps == dps && last.Max == max) return;
+                    last.Total = total;
+                    last.Dps = dps;
+                    last.Max = max;
+                }
+                catch (Exception ex)
+                {
+                    _disabled = true;
+                    NativePerfPatch.Warn(ref _warned, "red giant damage text", ex.Message);
+                }
+            }
+            text.text = string.Format(format, total, dps, max);
         }
     }
 }
