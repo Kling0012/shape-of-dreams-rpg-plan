@@ -82,7 +82,7 @@ namespace SodRpg.Mod
         // appended in its internal wording, cut at 120 chars so the one-line report stays readable.
         private const int NoticeReasonLimit = 120;
         internal static string UnavailableNotice => Loc.T(
-            "インフィニティは無効です。通常モードは利用できます。", "Infinity is disabled. Normal mode remains available.", "Infinity已禁用。通常模式仍可使用。")
+            "インフィニティは無効です。通常モードは利用できます。", "Infinity is disabled. Normal mode remains available.", "Infinity已禁用。普通模式仍可使用。")
             + (string.IsNullOrEmpty(UnavailableReason) ? ""
                 : " " + Loc.T("（理由: ", "(Reason: ", "（原因：") + NoticeReason(UnavailableReason) + Loc.T("）", ")", "）") + MoreReasons);
 

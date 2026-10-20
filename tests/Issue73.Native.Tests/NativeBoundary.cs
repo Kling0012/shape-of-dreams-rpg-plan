@@ -465,6 +465,26 @@ namespace SodRpg.Mod
         public bool disableLoot;
     }
     internal sealed class BossMonster : Monster { }
+    // NativeRedGiantDamageTextPerf の受け口。本体 Mon_RedGiant（Dew.Core.dll r1.4.0.13・
+    // r1.4.1.2、2026-10-20 に ilspycmd で IL 確認）のうちパッチが触る範囲の模倣。
+    // ActiveLogicUpdate の中身は本体末尾の転写で、C# の this 欄読み出し（ldarg.0 + ldfld）
+    // が実際の IL と同じ命令並びになる。欄は Prepare が探す3つの SyncVar 相当。
+    // ActiveLogicUpdateWrongShape は欄の読み出しが直接並ばない形（一度局所変数へ受ける）で、
+    // Transpiler の照合外しの確認用。
+    internal class Mon_RedGiant : Monster
+    {
+        public TMPro.TMP_Text dpsText;
+        internal float _totalDamage, _dps, _maxSingleDmg;
+        internal void ActiveLogicUpdate(float dt)
+        {
+            dpsText.text = string.Format("Total: {0:#,##0}\r\nDPS: {1:#,##0}\r\nMax Single Dmg: {2:#,##0}", _totalDamage, _dps, _maxSingleDmg);
+        }
+        internal void ActiveLogicUpdateWrongShape(float dt)
+        {
+            float total = _totalDamage;
+            dpsText.text = string.Format("Total: {0:#,##0}\r\nDPS: {1:#,##0}\r\nMax Single Dmg: {2:#,##0}", total, _dps, _maxSingleDmg);
+        }
+    }
     // Hero_Mist の継承元。本体では非シールド。
     internal class Hero : Entity
     {
@@ -1457,5 +1477,17 @@ namespace SodRpg.Mod
         public float PressureDamageMultiplier { get; internal set; } = 1f;
         public float NightmareGearMultiplier { get; private set; }
         public float NightmarePressureHealthMultiplier { get; private set; }
+    }
+}
+// 本体 Unity.TextMeshPro の TMP_Text のうちパッチが触る範囲（text の入れ替え）だけの模倣。
+// 実物と同じグローバル名前空間に置く（Unity.TextMeshPro への参照は無いので名前だけ衝突しない）。
+// テストが「代入が起きた回数」を見られるよう、set_text の呼ばれた回数も数える。
+namespace TMPro
+{
+    internal class TMP_Text
+    {
+        private string _text;
+        public string text { get => _text; set { _text = value; TextWrites++; } }
+        internal int TextWrites;
     }
 }

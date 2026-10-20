@@ -93,7 +93,7 @@ namespace SodRpg.Mod
             if (!CanChooseInfinityPersonal)
                 return Loc.T("個人の選択は現在完了できません。", "Personal choices cannot be completed right now.", "个人选择现在无法完成。");
             if (!skip && pact != Pact.None && !Profile.Run.OfferedPacts.Contains(pact))
-                return Loc.T("その契約は提示されていません。", "That pact is not on offer.", "该契约未在提示中。");
+                return Loc.T("その契約は提示されていません。", "That pact is not on offer.", "该契约不在可选范围内。");
             RecordInfinityPersonalChoice(skip ? Pact.None : pact, skip);
             return null;
         }
