@@ -10,6 +10,24 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v3.8.27 — Lighter handling of incoming chat messages（2026-10-20）
+
+チャットや実績解除の知らせを受け取ったときに起きていた余分な処理を省き、ゲームの動作を少し軽くしました。 / The game now does less extra work when it receives chat messages and achievement notices, making it a little lighter.
+
+### 更新前に確認 / Before updating
+
+- 協力プレイでは、参加者全員がこのバージョンに更新してください。 / Everyone in co-op should update to this version.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- チャットのメッセージや実績解除の知らせを受け取るたびに、送り主をミュートしているかを確かめていました。この確認で毎回わずかに余分なメモリを使っていた問題を直しました。ホストと参加者のどちらのゲームでも、受け取るときの処理が少し軽くなります。こうしたメッセージが届く回数は多くないため、効果は小さめです。ミュートの効き方や、表示されるメッセージはこれまでと変わりません。 / Fixed the game using a little extra memory every time it received a chat message or achievement notice, while checking whether the sender was muted. Receiving these messages is now slightly lighter for both host and guests. These messages arrive only occasionally, so the gain is small. How muting works and which messages are shown are unchanged.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
 ## v3.8.26 — Lighter combat with idle characters and Thorned enemies（2026-10-20）
 
 止まっている敵や仲間の当たり判定の位置を、毎回同じ値で書き直さないようにしました。トゲ付きの敵に攻撃を当てたときの余分な処理も省き、戦闘中のゲームの動作を軽くしました。 / The game no longer rewrites the same collision position for idle enemies and allies, and it does less extra work when you hit Thorned enemies, making combat a little lighter.
