@@ -64,6 +64,10 @@ namespace SodRpg.Core.Game
         // Keepsake: 形見 → 遗念 / Locket: ロケット → 盒坠 / Pendant: 垂飾り → 吊坠
         // Fingerless / Mitts: 指抜き・指なし → 露指手套 / Wraps: 手巻き → 缠手
         // Band: 鉢巻 → 头带、腕輪 → 腕环 / Greaves: 脛当て → 护胫
+        // #953 で追加した主な用語（Content.cs 1466〜2066 の固有品で2回以上使う訳語）:
+        // Ultimate: 奥義・大技 → 奥义 / Star shield: 星の盾 → 星辰之盾
+        // Crystal: 結晶 → 结晶 / Shadowstitch: 影縫い → 缝影
+        // Beads: 数珠 → 念珠 / Curtain Call: 終幕 → 终幕 / Prey: 獲物 → 猎物
         private static Dictionary<string, string> _map;
 
         /// <summary>英語の文字列から中国語を引く。なければそのまま英語を返す（割り当てなし）。</summary>
