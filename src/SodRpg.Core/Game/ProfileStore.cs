@@ -301,7 +301,7 @@ namespace SodRpg.Core.Game
                 _english = english;
             }
 
-            public override string Message => Loc.T(_japanese, _english, _english.StartsWith("Saving failed: ", StringComparison.Ordinal) ? "保存失败：" + _english.Substring("Saving failed: ".Length) : LocZhGlossary.Lookup(_english));
+            public override string Message => Loc.T(_japanese, _english, _english != null && _english.StartsWith("Saving failed: ", StringComparison.Ordinal) ? "保存失败：" + _english.Substring("Saving failed: ".Length) : Loc.Zh(_english));
 
             /// <summary>UI の言語と無関係に固定される英文（ログなど、言語が変わっても同じに出したい用途）。</summary>
             internal string EnglishMessage => _english;

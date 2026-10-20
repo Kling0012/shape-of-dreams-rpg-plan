@@ -25,12 +25,12 @@ namespace SodRpg.Core.Game
         // 名前の一部なので、下の完全一致辞書には登録しない。
         // Crack: 砕音・砕け音 → 碎响
         // Brittle Ice: 脆氷 → 脆冰
-        // Co-Star: 共演 → 联袂
-        // Steam: 湯気 → 白雾
+        // Co-Star / Co-star: 共演 → 联袂（固有効果名も同じ）
+        // Steam: 湯気 → 白雾（銘品名）。属性反応の蒸気は Content.PowerName / ElementReactions で 蒸汽。
         // Guardian: 守護霊 → 守护灵
         // Heirloom / Heir: 跡目 → 继承
         // Boon: 恵み → 恩泽（複合名では「恩」）
-        // Ember: 残り火・燠火 → 余烬
+        // Ember: 残り火・燠火 → 余烬（装備名）。固有効果の火種は Content.PowerName で 火种。
         // Tailwind: 追風 → 顺风
         // Lifeline: 継ぎ糸 → 生命线
         // Readiness: 備え → 戒备
@@ -66,15 +66,18 @@ namespace SodRpg.Core.Game
         // Burrower: 土竜・潜り屋 → 掘地兽 / Buckler: 丸盾・小盾 → 小盾
         // 部位の語: 胸当て→胸甲、胸甲→胸铠、兜→头盔・盔、頭巾→兜帽、胴衣→背心、
         // 鎖帷子→锁甲、樹皮鎧→树皮铠、肩衣→披肩、道着→道服、籠手→笼手、腕当て→护腕
+        // 外套: Cloak / Drake Hide → 斗篷、Mantle → 披风、纏い: Shroud → 披风（#953 の固有品の既訳）。
+        // armor.flowing_cloak / armor.star_cloak は未訳のため、固有品の使い分けを参照する。
         // #954 の固有品で繰り返し使う訳語（Txt の第3値を書くときの参照用）:
         // Shrine: 聖堂 → 圣堂 / Crystal: 結晶 → 结晶 / Fireball: 火球 → 火球
-        // Ultimate: 奥義・切り札（技） → 终极技能 / Overflowing healing: 溢れた癒し → 溢出的治疗
+        // Ultimate: 奥義・大技・切り札（技） → 奥义（#953・#954 共通）
+        // Overflowing healing: 溢れた癒し → 溢出的治疗
         // Blizzard: 吹雪・雪嵐 → 暴风雪 / Pure White: 純白 → 纯白 / Gold Coin: 金貨 → 金币
         // Doubt・Suspicion: 疑心・疑い → 疑心 / Cage: 檻 → 牢笼 / Furnace: 炉・溶鉱炉 → 熔炉
         // Tidecaller's（セット名）: 潮鳴り → 潮鸣 / Prism（光学の語）: プリズム → 棱镜
         // Dodge: 回避 → 闪避 / Crimson（紅蓮の名）: 紅蓮 → 红莲 / Banquet: 祝宴・饗宴 → 盛宴
         // #953 で追加した主な用語（Content.cs 1466〜2066 の固有品で2回以上使う訳語）:
-        // Ultimate: 奥義・大技 → 奥义 / Star shield: 星の盾 → 星辰之盾
+        // Star shield: 星の盾 → 星辰之盾
         // Crystal: 結晶 → 结晶 / Shadowstitch: 影縫い → 缝影
         // Beads: 数珠 → 念珠 / Curtain Call: 終幕 → 终幕 / Prey: 獲物 → 猎物
         private static Dictionary<string, string> _map;
@@ -302,22 +305,8 @@ namespace SodRpg.Core.Game
                 ["Saving is paused because the previous data cannot be safely preserved. It will be tried again on the next launch."] = "无法安全保留已有数据，已暂停保存。下次启动时将重试。",
                 ["The saved file did not read back identically."] = "保存文件的读取内容不一致。",
                 ["The profile did not survive a save/load round trip."] = "档案经过保存和读取后的内容不一致。",
-                ["Legendary"] = "传说",
                 ["Keystone"] = "刻印",
-                ["Normal memory"] = "普通记忆",
-                ["Basic attack"] = "通常攻击",
-                ["Ability power"] = "法术强度",
-                ["Shield"] = "护盾",
-                ["Cooldown reduction"] = "冷却缩减",
-                ["Follow-up damage"] = "追击伤害",
-                ["Bridge combo"] = "桥接组合技",
-                ["Cooperative trade"] = "合作交易",
-                ["Escrow"] = "托管",
-                ["Receipt"] = "收据",
-                ["Unsecured relics"] = "尚未存入仓库的遗物",
-                ["Awakening points"] = "觉醒点",
                 ["Nightmare"] = "梦魇",
-                ["Star experience"] = "星之经验",
                 ["Overcharge"] = "过载",
 
                 // 旅人の星と刻印（#962）
@@ -371,10 +360,10 @@ namespace SodRpg.Core.Game
                 ["Cosmic Law"] = "宇宙法则",
                 ["Stellar Pulse"] = "星辰脉动",
                 ["Converging Light"] = "汇聚之光",
-                ["Pair it with charging Exotic Matter before your Ultimate."] = "适合先积蓄奇异物质，再使用Ultimate。",
+                ["Pair it with charging Exotic Matter before your Ultimate."] = "适合先积蓄奇异物质，再使用奥义。",
                 ["Stellar Vessel"] = "星辰之器",
                 ["Stellar Ward"] = "星辰之盾",
-                ["Shields you the moment you unleash your Ultimate."] = "释放Ultimate的瞬间为你提供护盾。",
+                ["Shields you the moment you unleash your Ultimate."] = "释放奥义的瞬间为你提供护盾。",
                 ["Supernova"] = "超新星",
                 ["Star Armor"] = "星辰护甲",
                 ["Guiding Star"] = "指引之星",
@@ -456,100 +445,8 @@ namespace SodRpg.Core.Game
                 ["Page of Ice"] = "寒冰之页",
                 ["Page of Shadow"] = "暗影之页",
 
-                // 図鑑の固有効果名：既存の訳を再利用（#962）
-                ["Momentum"] = "连击",
-                ["Retaliation"] = "反击",
-                ["Bulwark"] = "铁壁之环",
-                ["Lifesteal"] = "汲血",
-                ["Thorns"] = "荆棘",
-                ["Executioner"] = "处刑",
-                ["Resonance"] = "共鸣",
-                ["Tailwind"] = "顺风",
-                ["Barrier"] = "守护之灯",
-                ["Second Wind"] = "守灯人",
-                ["Blaze"] = "烈焰",
-                ["Chain Lightning"] = "闪电链",
-                ["Shatter"] = "爆碎",
-                ["Aegis"] = "守护灵",
-                ["Bloodlust"] = "嗜血",
-                ["Ember"] = "火种",
-                ["Frost"] = "霜寒",
-                ["Radiance"] = "辉光",
-                ["Umbra"] = "暗影",
-                ["Convergence"] = "四元共鸣",
-                ["Echoing Dodge"] = "闪避残响",
-                ["Ultimate Surge"] = "终局高昂",
-                ["Soul Siphon"] = "汲魂",
-                ["Whirlwind"] = "旋风",
-                ["Melee Frenzy"] = "近战狂乱",
-                ["Opening Strike"] = "先制打击",
-                ["Star Shield"] = "星辰庇护",
-                ["Sprint"] = "疾驰",
-                ["Vigor"] = "万全",
-                ["Overload"] = "过载",
-                ["Finale"] = "终曲",
-                ["Critical Echo"] = "暴击余韵",
-                ["Fetters"] = "足枷",
-                ["Crystal Resonance"] = "结晶共鸣",
-                ["Hunter's Pride"] = "猎人的骄傲",
-                ["Overflowing Life"] = "满溢的生命",
-                ["Wildfire"] = "飞火",
-                ["Still Water"] = "止水",
-                ["Spender's Ward"] = "散财之护",
-                ["Perfect Read"] = "看破",
-                ["Lucid Boon"] = "清明",
-                ["Steam"] = "蒸汽",
-                ["Eclipse"] = "蚀",
-                ["Cinder"] = "燃烬",
-                ["Frost Crystal"] = "冰晶",
-                ["Shieldbreak Burst"] = "破盾冲击",
-                ["Shared Ward"] = "共享之护",
-                ["Shield Bash"] = "盾击",
-                ["Gleaming Ward"] = "护盾光辉",
-                ["Co-star"] = "共演",
-                ["Triumph Song"] = "凯歌",
-                ["Watchful Hand"] = "守望之手",
-                ["Kindness Returns"] = "善意的回礼",
-                ["Wanderer's Edge"] = "候鸟之刃",
-                ["Focus Fire"] = "火力集中",
-                ["Breakout"] = "突围",
-                ["Duelist's Way"] = "决斗者的流派",
-                ["Immovable Stance"] = "不动架势",
-                ["Run-Up"] = "助跑",
-                ["Strafe Shot"] = "走射",
-                ["Relay Hand"] = "接力之手",
-                ["Stardust Cycle"] = "星屑循环",
-                ["Umbral Heritage"] = "暗影继承",
-                ["Brittle Ice"] = "脆冰",
-                ["Elemental Harvest"] = "元素收获",
-                ["Prism Shift"] = "七色切换",
-                ["Pack Feast"] = "群狼之粮",
-                ["Vanguard's Oath"] = "前卫之誓",
-                ["Death Bloom"] = "死之花",
-                ["Medley"] = "连奏",
-                ["Spellsweep"] = "咏唱横扫",
-                ["Bare-Handed Pride"] = "空手的矜持",
-                ["Opening Salvo"] = "开战火",
-                ["Pile-On"] = "乘胜追击",
-                ["Ace in Hand"] = "手握王牌",
-                ["Crystal Circuit"] = "结晶循环",
-                ["Shard Boon"] = "碎片的恩惠",
-                ["Lifeline"] = "接力生命",
-                ["Dream Omen"] = "梦的前兆",
-                ["Rearguard's Way"] = "后卫的流派",
-                ["Toll of Grudge"] = "怨叹之钟",
-                ["Unbowed Mind"] = "不屈之心",
-                ["Piling Luck"] = "积攒的运气",
-                ["Weak-Point Wound"] = "要害创伤",
-                ["Crit Splash"] = "暴击飞溅",
-                ["Returning Blade"] = "回返之刃",
-                ["Ready Guard"] = "常备之盾",
-                ["Apothecary"] = "药师妙手",
-                ["Spillover Strike"] = "满溢一击",
-                ["Circulating Wealth"] = "循环之富",
-                ["Golden Nose"] = "黄金嗅觉",
-                ["Dust Gathering"] = "梦尘收集",
-                ["Dust Basket"] = "梦尘之篮",
+                // 図鑑の固有効果名は Content.PowerName の明示訳を使う。
+                // Barrier / Second Wind などの固有名訳を一般語へ適用しない。
 
                 // 旅人名（#962）
                 ["Vesper"] = "维斯珀",
