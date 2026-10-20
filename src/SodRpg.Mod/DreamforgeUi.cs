@@ -2963,9 +2963,9 @@ namespace SodRpg.Mod
                     : t.IsChoice ? Loc.T("\n左クリック：選択パネルを開く（切り替えは無料・遠征外のみ）　右クリック：1段外す",
                     "\nLeft click: open the option panel (switching is free outside expeditions). Right click: refund one rank.", "\n左键：打开选项面板（远征外可免费切换）　右键：退回1段")
                     : Loc.T("\n左クリック：1段振る　右クリック：1段外す",
-                        "\nLeft click: allocate one rank. Right click: refund one rank."))
+                        "\nLeft click: allocate one rank. Right click: refund one rank.", "\n左键：加1段　右键：退回1段"))
                 + Loc.T("\n残りの星が始まりにつながる場合だけ外せます。",
-                    "\nRefunds require all remaining stars to stay connected to the start.");
+                    "\nRefunds require all remaining stars to stay connected to the start.", "\n只有剩余的星仍与起点相连时才能退回。");
             n.TooltipWidth = 0;
             n.TooltipVersion = _starTextVersion;
         }
@@ -2995,18 +2995,18 @@ namespace SodRpg.Mod
             RefreshStarState(p, hero, p.Hero(hero));
             GUILayout.BeginHorizontal();
             GUILayout.Label(_starPoints, _st.Label, StarFill);
-            if (GUILayout.Button(Loc.T("全体を表示", "Show all"), _st.Button))
+            if (GUILayout.Button(Loc.T("全体を表示", "Show all", "显示全部"), _st.Button))
             {
                 _starNeedsFit = true;
                 CancelStarDrag();
             }
-            if (GUILayout.Button(Loc.T("始まりに戻る", "Back to start"), _st.Button))
+            if (GUILayout.Button(Loc.T("始まりに戻る", "Back to start", "回到起点"), _st.Button))
                 StarJumpTo(_starLayout.StartIndex);
             bool wasOpen = _starSumOpen;
-            _starSumOpen = GUILayout.Toggle(_starSumOpen, Loc.T("取得した効果", "Acquired effects"), _st.Button);
+            _starSumOpen = GUILayout.Toggle(_starSumOpen, Loc.T("取得した効果", "Acquired effects", "已获得的效果"), _st.Button);
             if (_starSumOpen != wasOpen) { _starSumDirty = true; if (!_starSumOpen) StarSumSetHover(-1); CancelStarDrag(); }
             GUI.enabled = _s.CanEditTalents && p.Run == null;
-            if (GUILayout.Button(Loc.T("振り直し（無料）", "Respec (free)"), _st.Button))
+            if (GUILayout.Button(Loc.T("振り直し（無料）", "Respec (free)", "重新分配（免费）"), _st.Button))
             {
                 Rules.ResetTalents(p, hero);
                 _starDirty = true;
@@ -3017,11 +3017,12 @@ namespace SodRpg.Mod
             GUILayout.EndHorizontal();
             EnsureStarTextStyles();
             GUILayout.Label(_starProgress, _starHelpStyle);
-            if (_starFree < 0) GUILayout.Label(Loc.T("振った星が現在のポイントを超えています。無料で振り直せます。", "Your spent stars exceed your current points. Respec is free."), _st.Warn);
+            if (_starFree < 0) GUILayout.Label(Loc.T("振った星が現在のポイントを超えています。無料で振り直せます。", "Your spent stars exceed your current points. Respec is free.",
+            "已分配的星超过了当前点数。可免费重新分配。"), _st.Warn);
             if (!_s.CanEditTalents || p.Run != null)
                 GUILayout.Label(!_s.InGame && p.Run != null
-                    ? Loc.T("中断中の遠征が終わるまで、星図は変更できません。", "Star Map edits are locked until the suspended expedition ends.")
-                    : Loc.T("星図は遠征に出ていないときだけ変更できます。", "The star map can only be changed outside expeditions."), _st.Warn);
+                    ? Loc.T("中断中の遠征が終わるまで、星図は変更できません。", "Star Map edits are locked until the suspended expedition ends.", "暂停中的远征结束前，星图无法更改。")
+                    : Loc.T("星図は遠征に出ていないときだけ変更できます。", "The star map can only be changed outside expeditions.", "星图只能在未远征时更改。"), _st.Warn);
             DrawKeystoneBar(p, hero);
             if (Event.current.type == EventType.Layout) _starChoiceShown = _starChoiceId != null;
             StarDrawSearch();
@@ -3062,8 +3063,8 @@ namespace SodRpg.Mod
             if ((on & (MeleeCoopSettings.RangeToSpeed | MeleeCoopSettings.Break | MeleeCoopSettings.Guard)) == 0) return;
             // ほかの旅人のページではその旅人の攻撃アセットを読めず、近接になり得る4人には常に
             // 出すしかない。遠距離攻撃のAurenaに「今は近接」と読まれないよう、題に条件を添える（#542）。
-            StarSumAddTitle(matching ? Loc.T("近接の協力効果", "Melee co-op effects")
-                : Loc.T("近接の協力効果（通常攻撃が近接の間）", "Melee co-op effects (while the basic attack is melee)"));
+            StarSumAddTitle(matching ? Loc.T("近接の協力効果", "Melee co-op effects", "近战协作效果")
+                : Loc.T("近接の協力効果（通常攻撃が近接の間）", "Melee co-op effects (while the basic attack is melee)", "近战协作效果（通常攻击为近战时）"));
             if ((on & MeleeCoopSettings.RangeToSpeed) != 0) StarSumAddText(MeleeCoopText.RangeToSpeed);
             if ((on & MeleeCoopSettings.Break) != 0) StarSumAddText(MeleeCoopText.Break);
             if ((on & MeleeCoopSettings.Guard) != 0) StarSumAddText(MeleeCoopText.Guard);
@@ -3092,8 +3093,8 @@ namespace SodRpg.Mod
                 string text = node.Name.text + "  " + node.RankLabel.text + "\n" + node.Description;
                 var pair = node.PairDefinition;
                 if (pair != null)
-                    text += "\n" + (node.PairEquippedA ? "✓ " : "・ ") + Links.Name(pair.RouteA) + Loc.T("を装着", " equipped")
-                        + "\n" + (node.PairEquippedB ? "✓ " : "・ ") + Links.Name(pair.RouteB) + Loc.T("を装着", " equipped");
+                    text += "\n" + (node.PairEquippedA ? "✓ " : "・ ") + Links.Name(pair.RouteA) + Loc.T("を装着", " equipped", "（已装备）")
+                        + "\n" + (node.PairEquippedB ? "✓ " : "・ ") + Links.Name(pair.RouteB) + Loc.T("を装着", " equipped", "（已装备）");
                 StarSumAddNode(typedIndex, text);
                 return;
             }
@@ -3123,23 +3124,23 @@ namespace SodRpg.Mod
             var indexOf = new Dictionary<string, int>(StringComparer.Ordinal);
             for (int i = 0; i < _starLayout.Nodes.Count; i++)
                 if (_starLayout.Nodes[i].Talent != null) indexOf[_starLayout.Nodes[i].Talent.Id] = i;
-            _starSumHeader.text = Loc.T($"使ったポイント {sum.Spent} / 合計 {sum.Total}", $"Points used {sum.Spent} / {sum.Total} total");
+            _starSumHeader.text = Loc.T($"使ったポイント {sum.Spent} / 合計 {sum.Total}", $"Points used {sum.Spent} / {sum.Total} total", $"已用点数 {sum.Spent} / 合计 {sum.Total}");
             StarSumAddMeleeCoop(hero, matching);
-            if (sum.Spent == 0) { StarSumAddTitle(Loc.T("まだ星を取得していません。", "No stars acquired yet.")); return; }
+            if (sum.Spent == 0) { StarSumAddTitle(Loc.T("まだ星を取得していません。", "No stars acquired yet.", "还没有获得星。")); return; }
             var note = new StarSumEntry();
-            note.Content.text = "<color=#9aa>" + Loc.T("発動間隔や上限は各星の説明で確認できます。", "Cooldowns and caps are listed in each star's description.") + "</color>";
+            note.Content.text = "<color=#9aa>" + Loc.T("発動間隔や上限は各星の説明で確認できます。", "Cooldowns and caps are listed in each star's description.", "发动间隔与上限请查看各星的说明。") + "</color>";
             _starSumEntries.Add(note);
             for (int i = 0; i < _starNodes.Length; i++)
                 if (_starNodes[i].Allocated && _starNodes[i].Keystone)
                 {
-                    StarSumAddTitle(Loc.T("刻印", "Keystone"));
+                    StarSumAddTitle(Loc.T("刻印", "Keystone", "刻印"));
                     StarSumAddNode(i, _starNodes[i].Name.text + "\n" + _starNodes[i].Description);
                 }
-            StarSumAdd(sum.Stats, indexOf, Loc.T("能力値", "Stats"));
-            StarSumAdd(sum.Powers, indexOf, Loc.T("固有効果", "Powers"));
+            StarSumAdd(sum.Stats, indexOf, Loc.T("能力値", "Stats", "属性"));
+            StarSumAdd(sum.Powers, indexOf, Loc.T("固有効果", "Powers", "固有效果"));
             if (sum.RunGrowths.Count > 0)
             {
-                StarSumAddTitle(Loc.T("遠征の鍛錬", "Expedition training"));
+                StarSumAddTitle(Loc.T("遠征の鍛錬", "Expedition training", "远征锻炼"));
                 foreach (var growth in sum.RunGrowths)
                 {
                     // Only the traveler in play has stacks to show; another traveler's page shows the definition.
@@ -3151,7 +3152,7 @@ namespace SodRpg.Mod
             }
             if (sum.Memories.Count > 0)
             {
-                StarSumAddTitle(Loc.T("記憶ごとの効果", "Effects by memory"));
+                StarSumAddTitle(Loc.T("記憶ごとの効果", "Effects by memory", "各记忆的效果"));
                 foreach (var g in sum.Memories)
                 {
                     StarSumAddTitle("  " + g.Title);
@@ -3166,13 +3167,13 @@ namespace SodRpg.Mod
                 if (t == null || !n.Allocated || n.Keystone) continue;
                 if (t.IsChoice)
                 {
-                    if (!choiceTitle) { StarSumAddTitle(Loc.T("選択の星", "Choice stars")); choiceTitle = true; }
+                    if (!choiceTitle) { StarSumAddTitle(Loc.T("選択の星", "Choice stars", "二选一星")); choiceTitle = true; }
                     StarSumAddNode(i, n.Name.text + "  " + n.RankLabel.text + "\n"
                         + StarMapPresentation.ChoiceDescription(t, n.Choice, n.Rank));
                 }
                 else if (t.Mechanism != null && n.PairDefinition == null)
                 {
-                    if (!mechanismTitle) { StarSumAddTitle(Loc.T("仕掛けの効果", "Mechanism effects")); mechanismTitle = true; }
+                    if (!mechanismTitle) { StarSumAddTitle(Loc.T("仕掛けの効果", "Mechanism effects", "机关效果")); mechanismTitle = true; }
                     StarSumAddNode(i, n.Name.text + "  " + n.RankLabel.text + "\n" + n.Description);
                 }
             }
@@ -3246,14 +3247,14 @@ namespace SodRpg.Mod
             }
             if (_starMatchCursor >= _starMatchCount) _starMatchCursor = -1;
             _starSearchStatus.text = _starSearch.Length == 0 ? ""
-                : Loc.T($"{_starMatchCount} 個の星", $"{_starMatchCount} stars");
+                : Loc.T($"{_starMatchCount} 個の星", $"{_starMatchCount} stars", $"{_starMatchCount} 颗星");
         }
 
         private void StarDrawSearch()
         {
             StarRefreshSearch();
             GUILayout.BeginHorizontal();
-            GUILayout.Label(Loc.T("星を探す", "Find star"), _starHelpStyle, StarKeystoneHeaderWidth);
+            GUILayout.Label(Loc.T("星を探す", "Find star", "寻找星"), _starHelpStyle, StarKeystoneHeaderWidth);
             _ime.BeginField("DreamforgeStarSearch");
             // Handle Enter before TextField can consume it; leave IME composition to the text field.
             var e = Event.current;
@@ -3272,7 +3273,7 @@ namespace SodRpg.Mod
             GUILayout.Label(_starSearchStatus, _starHelpStyle, StarKeystoneWidth);
             bool enabled = GUI.enabled;
             GUI.enabled = enabled && _starMatchCount > 0;
-            if (GUILayout.Button(Loc.T("次の星へ", "Next star"), _st.Button, StarRowHeight)) next = true;
+            if (GUILayout.Button(Loc.T("次の星へ", "Next star", "下一颗星"), _st.Button, StarRowHeight)) next = true;
             GUI.enabled = enabled;
             GUILayout.EndHorizontal();
             if (next && _starMatchCount > 0)
@@ -3724,12 +3725,12 @@ namespace SodRpg.Mod
             GUILayout.BeginHorizontal();
 
             GUILayout.BeginVertical(_st.Panel, GUILayout.Width(480));
-            GUILayout.Label(Loc.T("遊び方", "How to play"), _st.Header);
+            GUILayout.Label(Loc.T("遊び方", "How to play", "玩法说明"), _st.Header);
             GUILayout.Label(HowToPlayText(p), _st.Small);
             GUILayout.Space(6);
-            GUILayout.Label(Loc.T("設定", "Settings"), _st.Header);
+            GUILayout.Label(Loc.T("設定", "Settings", "设置"), _st.Header);
             GUILayout.BeginHorizontal();
-            if (GUILayout.Button(Loc.T("ヒントをもう一度見る", "Show tips again"), _st.Button, GUILayout.Width(180)))
+            if (GUILayout.Button(Loc.T("ヒントをもう一度見る", "Show tips again", "再次显示提示"), _st.Button, GUILayout.Width(180)))
             {
                 _s.Profile.SeenHints.Clear();
                 _s.Profile.HintsOff = false;
@@ -3751,40 +3752,44 @@ namespace SodRpg.Mod
                 // 保存に失敗しても cfg と表示の言語は戻さない。再起動時は最後に保存できた設定を読む。
                 _saveLanguageConfig?.Invoke();
             }
-            GUILayout.Label(Loc.T("キーの割り当てや表示の大きさはゲームのMOD設定で変えられます。", "Keys and scale can be changed in the game's mod settings."), _st.Small);
+            GUILayout.Label(Loc.T("キーの割り当てや表示の大きさはゲームのMOD設定で変えられます。", "Keys and scale can be changed in the game's mod settings.", "按键与画面大小可在游戏的MOD设置中更改。"), _st.Small);
             GUILayout.EndHorizontal();
             DrawEnemyOwnershipSettings(cfg);
             DrawAutoCastSettings(cfg);
             DrawLevelEssenceSettings(cfg);
             DrawCoopOmenSettings(cfg);
-            if (_s.SavePath != null) GUILayout.Label(Loc.T("保存先：", "Save file: ") + _s.SavePath, _st.Small);
+            if (_s.SavePath != null) GUILayout.Label(Loc.T("保存先：", "Save file: ", "存档文件：") + _s.SavePath, _st.Small);
             if (_s.LoadNotes != null) GUILayout.Label(_s.LoadNotes, _st.Warn);
-            if (_s.SaveError != null) GUILayout.Label(Loc.T("保存エラー：", "Save error: ") + _s.SaveError, _st.Warn);
+            if (_s.SaveError != null) GUILayout.Label(Loc.T("保存エラー：", "Save error: ", "保存错误：") + _s.SaveError, _st.Warn);
             GUILayout.EndVertical();
 
             GUILayout.BeginVertical(_st.Panel);
             var st = p.Stats;
             int need = Content.XpToNext(p.DreamLevel);
             var today = DailyDream.Today;
-            GUILayout.Label(Loc.T("今日の夢", "Today's dream"), _st.Header);
+            GUILayout.Label(Loc.T("今日の夢", "Today's dream", "今日之梦"), _st.Header);
             GUILayout.Label($"<b>{today.Name}</b>  {today.Description}", _st.Small);
-            GUILayout.Label(Loc.T($"<color=#8a8aa0>次は {DailyRollover()} に切り替わります。</color>", $"<color=#8a8aa0>Changes at {DailyRollover()}.</color>"), _st.Small);
-            GUILayout.Label(Loc.T("記録", "Records"), _st.Header);
+            GUILayout.Label(Loc.T($"<color=#8a8aa0>次は {DailyRollover()} に切り替わります。</color>", $"<color=#8a8aa0>Changes at {DailyRollover()}.</color>",
+            $"<color=#8a8aa0>将于 {DailyRollover()} 切换。</color>"), _st.Small);
+            GUILayout.Label(Loc.T("記録", "Records", "记录"), _st.Header);
             GUILayout.Label(Loc.T(
                 $"夢のレベル {p.DreamLevel}（{p.DreamXp}/{need}）\n遠征 {st.Runs}回　踏破 {st.Victories}　全滅 {st.Defeats}\n撃破 {st.Kills}　遺物 {st.RelicsFound}個（固有品 {st.LegendariesFound}）\n確保した最高潜行 {st.BestHeatSecured}　図鑑 {p.Codex.Count}/{Content.Bases.Count + Content.Uniques.Count + NamedItems.All.Count}",
-                $"Dream Level {p.DreamLevel} ({p.DreamXp}/{need})\nRuns {st.Runs}  Victories {st.Victories}  Defeats {st.Defeats}\nKills {st.Kills}  Relics {st.RelicsFound} (legendary {st.LegendariesFound})\nBest secured depth {st.BestHeatSecured}  Codex {p.Codex.Count}/{Content.Bases.Count + Content.Uniques.Count + NamedItems.All.Count}"), _st.Small);
+                $"Dream Level {p.DreamLevel} ({p.DreamXp}/{need})\nRuns {st.Runs}  Victories {st.Victories}  Defeats {st.Defeats}\nKills {st.Kills}  Relics {st.RelicsFound} (legendary {st.LegendariesFound})\nBest secured depth {st.BestHeatSecured}  Codex {p.Codex.Count}/{Content.Bases.Count + Content.Uniques.Count + NamedItems.All.Count}",
+                $"梦境等级 {p.DreamLevel}（{p.DreamXp}/{need}）\n远征 {st.Runs}次　踏破 {st.Victories}　全灭 {st.Defeats}\n击杀 {st.Kills}　遗物 {st.RelicsFound}件（传说 {st.LegendariesFound}）\n存仓的最深下潜 {st.BestHeatSecured}　图鉴 {p.Codex.Count}/{Content.Bases.Count + Content.Uniques.Count + NamedItems.All.Count}"), _st.Small);
             DrawInfinityRecords(p);
             if (p.Run != null)
             {
                 GUILayout.Label(_s.InGame
-                    ? Loc.T($"今回の遠征（まだ持ち帰っていない遺物{p.Run.Satchel.Count}個）", $"This expedition ({p.Run.Satchel.Count} relics not yet secured)")
-                    : Loc.T($"中断中の遠征（まだ持ち帰っていない遺物{p.Run.Satchel.Count}個）", $"Suspended expedition ({p.Run.Satchel.Count} relics not yet secured)"), _st.Header);
+                    ? Loc.T($"今回の遠征（まだ持ち帰っていない遺物{p.Run.Satchel.Count}個）", $"This expedition ({p.Run.Satchel.Count} relics not yet secured)",
+                    $"本次远征（尚未带回的遗物{p.Run.Satchel.Count}件）")
+                    : Loc.T($"中断中の遠征（まだ持ち帰っていない遺物{p.Run.Satchel.Count}個）", $"Suspended expedition ({p.Run.Satchel.Count} relics not yet secured)",
+                    $"暂停中的远征（尚未带回的遗物{p.Run.Satchel.Count}件）"), _st.Header);
                 // 分解のダストは世界ごとの上限に出る。判定はホスト側。世界が変わると回復する。
                 long salvageDustCap = Economy.DustCap(p.Run.SalvageDustZoneIndex, _s.SalvageScale);
                 long salvageDustUsed = Math.Min(p.Run.SalvageDustEarned, salvageDustCap);
                 GUILayout.Label(Loc.T(
                     $"分解のダスト（この世界）: {salvageDustUsed}/{salvageDustCap}",
-                    $"Salvage dust (this world): {salvageDustUsed}/{salvageDustCap}"), _st.Small);
+                    $"Salvage dust (this world): {salvageDustUsed}/{salvageDustCap}", $"分解之尘（本世界）: {salvageDustUsed}/{salvageDustCap}"), _st.Small);
                 DrawBulkUnsecuredSalvage(p.Run);
                 int rerolls = Rules.RerollsLeft(p);
                 for (int i = 0; i < p.Run.Bounties.Count; i++)
@@ -3795,7 +3800,7 @@ namespace SodRpg.Mod
                     if (!b.Done && rerolls > 0)
                     {
                         int idx = i;
-                        if (GUILayout.Button(Loc.T($"引き直し（残り{rerolls}）", $"Reroll ({rerolls} left)"), _st.Button, GUILayout.Width(150))) Act(() => Rules.RerollBounty(p, idx, _s.SoloBounties), false);
+                        if (GUILayout.Button(Loc.T($"引き直し（残り{rerolls}）", $"Reroll ({rerolls} left)", $"重洗（剩余{rerolls}）"), _st.Button, GUILayout.Width(150))) Act(() => Rules.RerollBounty(p, idx, _s.SoloBounties), false);
                     }
                     GUILayout.EndHorizontal();
                 }
@@ -3807,8 +3812,8 @@ namespace SodRpg.Mod
                     GUI.enabled = !_s.Trades.IsReserved(r.Uid);
                     bool sure = _confirmDust == r.Uid;
                     string dustLabel = sure
-                        ? Loc.T("<color=#ff8080>もう一度押すと分解</color>", "<color=#ff8080>Press again</color>")
-                        : Loc.T($"ドリームダストに分解（+{_s.SalvageDust(r)}）", $"Salvage for Dream Dust (+{_s.SalvageDust(r)})");
+                        ? Loc.T("<color=#ff8080>もう一度押すと分解</color>", "<color=#ff8080>Press again</color>", "<color=#ff8080>再按一次分解</color>")
+                        : Loc.T($"ドリームダストに分解（+{_s.SalvageDust(r)}）", $"Salvage for Dream Dust (+{_s.SalvageDust(r)})", $"分解为梦境之尘（+{_s.SalvageDust(r)}）");
                     if (GUILayout.Button(dustLabel, _st.Button, GUILayout.Width(190)))
                     {
                         if (!sure) _confirmDust = r.Uid;
@@ -3823,19 +3828,23 @@ namespace SodRpg.Mod
                     GUILayout.EndHorizontal();
                 }
             }
-            GUILayout.Label(Loc.T($"遺失物（{p.LostAndFound.Count}/{Content.LostAndFoundCapacity}）", $"Lost & Found ({p.LostAndFound.Count}/{Content.LostAndFoundCapacity})"), _st.Header);
-            if (p.LostAndFound.Count == 0) GUILayout.Label(Loc.T("なし", "None"), _st.Small);
+            GUILayout.Label(Loc.T($"遺失物（{p.LostAndFound.Count}/{Content.LostAndFoundCapacity}）", $"Lost & Found ({p.LostAndFound.Count}/{Content.LostAndFoundCapacity})",
+            $"遗失物（{p.LostAndFound.Count}/{Content.LostAndFoundCapacity}）"), _st.Header);
+            if (p.LostAndFound.Count == 0) GUILayout.Label(Loc.T("なし", "None", "无"), _st.Small);
             foreach (var r in p.LostAndFound.OrderByDescending(r => r.Score)) GUILayout.Label("· " + UiStyles.RelicTitle(r) + $" Lv{r.ItemLevel}", _st.Small);
             DrawFeats(p);
             DrawVariantBook(p);
-            GUILayout.Label(Loc.T("図鑑", "Codex"), _st.Header);
+            GUILayout.Label(Loc.T("図鑑", "Codex", "图鉴"), _st.Header);
             GUILayout.Label(UiStyles.Colored(_codex.Summary(p), "#c8c8e0"), _st.Small);
-            if (GUILayout.Button(Loc.T("図鑑を開く（土台・固有品・セット・固有効果・銘品・組）", "Open the codex (bases, legendaries, sets, powers, named items, mini sets)"), _st.Button)) _codexOpen = true;
+            if (GUILayout.Button(Loc.T("図鑑を開く（土台・固有品・セット・固有効果・銘品・組）", "Open the codex (bases, legendaries, sets, powers, named items, mini sets)",
+            "打开图鉴（基底·传说·套装·固有效果·铭品·小套装）"), _st.Button)) _codexOpen = true;
             GUILayout.Label(Loc.T($"図鑑{Content.CodexPerPoint}項目ごとに星ポイント+1（現在+{p.CodexBonusPoints}、最大+{Content.MaxCodexBonus}）。",
-                $"Every {Content.CodexPerPoint} codex entries grant +1 star point (now +{p.CodexBonusPoints}, up to +{Content.MaxCodexBonus})."), _st.Small);
+                $"Every {Content.CodexPerPoint} codex entries grant +1 star point (now +{p.CodexBonusPoints}, up to +{Content.MaxCodexBonus}).",
+                $"每{Content.CodexPerPoint}条图鉴条目给予+1星点（当前+{p.CodexBonusPoints}，上限+{Content.MaxCodexBonus}）。"), _st.Small);
             GUILayout.Label(Loc.T(
                 "<color=#8a8aa0>見つけていない固有品・セット・固有効果・銘品・組は、見つけるまで名前も効果も伏せられています。</color>",
-                "<color=#8a8aa0>Unfound legendaries, sets, powers, named items and mini sets stay hidden until you find them.</color>"), _st.Small);
+                "<color=#8a8aa0>Unfound legendaries, sets, powers, named items and mini sets stay hidden until you find them.</color>",
+                "<color=#8a8aa0>尚未发现的传说、套装、固有效果、铭品与小套装，在发现之前名称与效果都会隐藏。</color>"), _st.Small);
             GUILayout.EndVertical();
 
             GUILayout.EndHorizontal();
@@ -3846,7 +3855,7 @@ namespace SodRpg.Mod
         {
             bool wasEnabled = GUI.enabled;
             GUI.enabled = wasEnabled && (!Mirror.NetworkClient.active || Mirror.NetworkServer.active);
-            bool enabled = GUILayout.Toggle(cfg.coopRoomOmens, Loc.T("マルチ専用の兆し（ホスト）", "Co-op-only Room Omens (host)"));
+            bool enabled = GUILayout.Toggle(cfg.coopRoomOmens, Loc.T("マルチ専用の兆し（ホスト）", "Co-op-only Room Omens (host)", "协作专用房间预兆（主机）"));
             if (enabled != cfg.coopRoomOmens)
             {
                 cfg.coopRoomOmens = enabled;
@@ -3855,7 +3864,7 @@ namespace SodRpg.Mod
             }
             GUI.enabled = wasEnabled;
             GUILayout.Label(Loc.T("2 人以上で部屋に入ると、ときどき協力が必要な兆しが出ます。抽選は次の部屋から反映されます。",
-                "With two or more players, some rooms require cooperation. Draw changes apply from the next room."), _st.Small);
+                "With two or more players, some rooms require cooperation. Draw changes apply from the next room.", "2人以上进入房间时，有时会出现需要协作的预兆。抽选结果从下一个房间开始生效。"), _st.Small);
         }
 
         private void DrawLevelEssenceSettings(DreamforgeConfig cfg)
