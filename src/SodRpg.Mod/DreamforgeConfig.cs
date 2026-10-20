@@ -233,6 +233,9 @@ namespace SodRpg.Mod
         [LabelText("Skip unchanged timescale re-sends while slowed (host) / 時間が遅くなっている間の同じタイムスケールの再送を省く（ホスト）")]
         public bool nativeTimescaleIdle = true;
 
+        [LabelText("Skip unchanged Red Giant damage-meter text rebuilds (every client) / レッドジャイアントの値が変わらない被ダメ計測テキストの組み立て直しを省く（各端末）")]
+        public bool nativeRedGiantDamageText = true;
+
         [LabelText("Level essence slots: add essence slots as the hero levels up (the host's setting applies) /\nレベル連動のエッセンス枠：英雄のレベルに応じて記憶のエッセンス枠を増やす（ホストの設定が使われる）")]
         public bool levelEssenceSlots = true;
 

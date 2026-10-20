@@ -5,11 +5,12 @@ namespace SodRpg.Core.Game
     /// <summary>中国語（簡体字）の用語集（#877）。英語の文字列を鍵にして中国語へ訳す。
     /// ここにない文字列と、数値を埋め込んだ呼び出し側で組み立てた文字列は英語のまま表示する
     /// （未訳は英語へ戻す方針。呼び出し元の Loc.T / Txt の英語引数と完全一致が条件）。
-    /// 主な用語の対応: 遺物→遗物、欠片→碎片、調律石→调律石、保管庫→仓库、確保→存入仓库、
+    /// 主な用語の対応: 遺物→遗物、欠片→碎片、調律石→调律石、保管庫→仓库、確保→存入仓库、確保地点→存仓点、
     /// 潜る→下潜、夢の圧→梦境之压、星図→星图、鍛冶→锻造、工房→工坊、記憶→记忆、
     /// エッセンス→精华、遠征→远征、道標→路标、契約→契约、依頼→委托、図鑑→图鉴、遺失物→遗失物。
     /// #939 で追加した主な用語: 偉業→成就、覚醒→觉醒、限界突破→极限突破、ドリームダスト→梦境之尘、
     /// 再調律→再调律、洗い直し→重洗、特性→词条、禁忌→禁忌、製作→制作、変種→变种、兆し→预兆。
+    /// 銘品・小セット名の訳語は、クラス内の参照表（#941・#942・#956）にまとめる。
     /// #963 のセット名で繰り返す語: Oath / Vow→之誓、Covenant→契约、Regalia→礼装、Garb→装束、
     /// Raiment / Vestments→法衣、Ensemble→乐团、Eclipse→月蚀。セット名の訳文は sets.json の name.zh に置く。
     /// 銘品・小セット名の訳で繰り返し出る語（#942）: 火の粉→火花、星屑→星屑、蝕→蚀、
@@ -21,23 +22,28 @@ namespace SodRpg.Core.Game
     /// </summary>
     internal static class LocZhGlossary
     {
-        // 銘品の名前・説明で繰り返し使う訳語（#941）。Txt の第3値を書くときの参照用。
+        // 銘品・小セットの名前・説明で繰り返し使う訳語（#941・#942）。Txt の第3値を書くときの参照用。
         // 名前の一部なので、下の完全一致辞書には登録しない。
+        // 影は通常の影なら「影」、闇や影の力なら「暗影」と訳す。
+        // Sparks: 火の粉 → 火花 / Stardust: 星屑 → 星屑 / Eclipse: 蝕 → 蚀
+        // Finale: 終曲 → 终曲 / Critical: 会心 → 会心 / Share: 分け合い → 共享
+        // Stillwater: 止水 → 止水 / Echo: 余韻 → 余韵 / Wildfire: 飛び火 → 燎原
+        // Starshade: 星傘 → 星伞
         // Crack: 砕音・砕け音 → 碎响
         // Brittle Ice: 脆氷 → 脆冰
         // Co-Star / Co-star: 共演 → 联袂（固有効果名も同じ）
-        // Steam: 湯気 → 白雾（銘品名）。属性反応の蒸気は Content.PowerName / ElementReactions で 蒸汽。
+        // Steam / White Mist: 湯気・白い霧 → 白雾（銘品名）。属性反応の蒸気は Content.PowerName / ElementReactions で 蒸汽。
         // Guardian: 守護霊 → 守护灵
-        // Heirloom / Heir: 跡目 → 继承
+        // Heirloom / Heir: 跡目・相続 → 继承
         // Boon: 恵み → 恩泽（複合名では「恩」）
         // Ember: 残り火・燠火 → 余烬（装備名）。固有効果の火種は Content.PowerName で 火种。
-        // Tailwind: 追風 → 顺风
+        // Tailwind: 追風・追い風 → 顺风
         // Lifeline: 継ぎ糸 → 生命线
         // Readiness: 備え → 戒备
         // Immovability: 不動 → 不动
         // Whirl / Whirlwind: 旋風 → 旋风
         // Dash: 疾駆 → 疾驰
-        // Siphon: 吸魂 → 摄魂
+        // Siphon / Soulreaper: 吸魂 → 摄魂
         // Leech: 吸命 → 吸命
         // Watch: 見守り → 守望
         // Relay: 継ぎ・継ぎ手 → 接力
@@ -47,8 +53,19 @@ namespace SodRpg.Core.Game
         // Turbulence: 乱気 → 乱流
         // Verdict: 断罪 → 断罪
         // Kind Return / Kindness: 返礼 → 回礼、返し → 回善
-        // Second Wind / Second Breath: 再起・二の息 → 回气
+        // Second Wind / Second Breath: 再起・二の息・再びの息 → 回气
         // Legendary: 固有品 → 传说（Content.RarityName のレア度表記）
+        // #958 で追加した主な訳語（装備データ 8/8。Txt の第3値を書くときの参照用）:
+        // セット名の接頭辞: 砕盾騎士 Shardshield → 碎盾骑士、盾誓い Bashbound → 盾誓、陣頭 Frontline → 阵头、
+        //   後陣 Rearline → 后阵、輪守り Ringwarden → 环守、継ぎ歌 Relaysong → 接力歌、宴 Feastpack → 狼宴、
+        //   弔い花 Funeral-Bloom → 葬花、一点狙い Single-Mark → 单点锁定、渡り鳥 Migrant → 候鸟、
+        //   運刃 Fortune-Edge → 运刃、突撃隊 Charge-Corps → 突击队、楽団 Ensemble → 乐团、勝負師 Gambler → 赌师、
+        //   無手の誇り Bare-Hand → 空手之傲、寝ずの番 Vigil → 守夜、供犠 Tithe → 献祭、舞い星 Dancing-Star → 舞星、
+        //   突破隊 Breakout → 突破队、荒ぶる樹界 Rampaging Grove → 狂暴树界。
+        // 固有効果の説明の語: 攻撃力・魔力の高い方 → 攻击力与法术强度中较高者、障壁 → 护盾、通常攻撃 → 通常攻击、
+        //   会心 → 暴击、効果時間が延びる → 刷新持续时间、重ならず → 不叠加、装備・星の同じ効果 → 装备与星的同名效果、
+        //   距離係数 → 距离系数、ハンター追跡度 → 猎人追踪等级、ゴールド → 金币、スタン → 眩晕、スロウ → 减速、
+        //   冷気（CC）→ 冰缓、聖堂 → 神殿、通常記憶 → 通常记忆、移動の記憶 → 移动记忆、奥義の記憶 → 奥义记忆。
         // 通常セットの説明（#963）: Cold → 冰冷、Shield → 护盾、Critical → 暴击、
         // Basic attack → 通常攻击、ordinary memory → 通常记忆、Movement memory → 移动记忆、
         // Ultimate memory → 奥义记忆、Identity memory → 本体记忆、Overcharge → 过载、
@@ -68,6 +85,19 @@ namespace SodRpg.Core.Game
         // 鎖帷子→锁甲、樹皮鎧→树皮铠、肩衣→披肩、道着→道服、籠手→笼手、腕当て→护腕
         // 外套: Cloak / Drake Hide → 斗篷、Mantle → 披风、纏い: Shroud → 披风（#953 の固有品の既訳）。
         // armor.flowing_cloak / armor.star_cloak は未訳のため、固有品の使い分けを参照する。
+        // #951 の基本装備名・セット説明で繰り返し使う訳語（完全一致辞書への登録は不要）:
+        // Resonance / Resonant: 共鳴 → 共鸣 / Dreamer: 夢見 → 织梦者
+        // Oath: 誓い → 誓言 / Vow: 誓約 → 誓约 / Warden: 番人 → 守卫
+        // Deeproot: 深根 → 深根 / Boulder: 岩塊 → 岩块 / Tortoiseshell: 亀甲 → 龟甲
+        // Sunlit: 陽光 → 阳光 / Dawnlight・Dawnmist: 暁光・暁霧 → 晓光・晓雾
+        // Dusk: 黄昏 → 黄昏（織り・縫い・踏み・珠との複合名では「暮」）
+        // Seafoam: 海沫 → 海沫 / Whisper: 囁き → 低语 / Comet: 彗星 → 彗星
+        // Healer / Healing / Mender: 癒し手・癒し → 治愈者・治愈
+        // Fingerless Gloves / Mitts: 指抜き・指なし手袋 → 半指手套 / Wraps: 手巻き → 缠手
+        // Grips: 握り → 护手 / Knuckles: 拳当て → 拳套 / Greaves: 脛当て → 护胫
+        // Sabatons: 鉄靴・鉄鞋 → 铁靴 / Slippers: 上履き・室内履き → 便鞋
+        // Locket: ロケット → 吊坠盒 / Pendant: 垂飾り → 吊坠 / Brooch: ブローチ → 胸针
+        // Link: 連携 → 联动 / piece stage: 装着段階 → 件套阶段
         // #952 の基本装備・固有品で繰り返し使う訳語（名前の一部なので参照用）:
         // Hoarfrost / Rime: 霧氷 → 雾凇 / Remembrance・Nostalgia: 追憶 → 追忆
         // Keepsake: 形見 → 遗念 / Locket: ロケット → 盒坠 / Pendant: 垂飾り → 吊坠
@@ -482,7 +512,7 @@ namespace SodRpg.Core.Game
                 ["standard"] = "标准",
                 [" (capped)"] = "（上限）",
                 ["  <- this one"] = "  ←此装备",
-                ["That pact is not on offer."] = "该契约未在提示中。",
+                ["That pact is not on offer."] = "该契约不在可选范围内。",
                 ["Salvage Dream Dust from relics has reached this world's cap (it recovers in the next world)."] = "本世界中分解获得的梦尘已达上限（下一个世界会恢复）。",
                 ["The trade was not made because its record could not be saved. Check the save location and try again."] = "因无法保存交易记录，未执行交易。请确认保存位置后重试。",
             };
