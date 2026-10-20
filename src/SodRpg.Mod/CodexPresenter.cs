@@ -128,7 +128,13 @@ namespace SodRpg.Mod
             else
             {
                 head = "<size=19><b>" + Colored(e.Name.ToString(), NameColor(e)) + "</b></size>\n"
-                    + Colored(Loc.Japanese ? e.Name.En : e.Name.Ja, Dim) + "\n"
+                    // サブ名（もう一方の言語）。中国語は英語表示と同じく日本語のサブ名を出す（#992）。
+                    + Colored(Loc.Language switch
+                    {
+                        LocLanguage.Japanese => e.Name.En,
+                        LocLanguage.English => e.Name.Ja,
+                        LocLanguage.Chinese => e.Name.Ja,
+                    }, Dim) + "\n"
                     + Colored(CatName(e.Category) + " · " + Meta(e), Dim)
                     + (found ? "" : "\n" + Colored(Loc.T("未発見（土台の情報は公開されています）", "Not found yet (base info is public)", "未发现（基底信息公开）"), "#aa8866"));
                 switch (e.Category)
