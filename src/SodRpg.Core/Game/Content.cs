@@ -645,7 +645,7 @@ namespace SodRpg.Core.Game
             new BaseDef("hands.claw_gauntlets", Slot.Hands, Line.Offense, new Txt("獣爪の手甲", "Beastclaw Gauntlets", "兽爪手甲"), Stat.AttackFlat, EquipmentItemsBalanceValues.Base_hands_claw_gauntlets, Family.Summon),
             new BaseDef("hands.frost_mitts", Slot.Hands, Line.Resonance, new Txt("霜の指なし手袋", "Frost Mitts", "霜寒半指手套"), Stat.ColdAmp, EquipmentItemsBalanceValues.Base_hands_frost_mitts, Family.Frost),
             new BaseDef("hands.radiant_wraps", Slot.Hands, Line.Resonance, new Txt("光の手巻き", "Radiant Wraps", "光辉缠手"), Stat.LightAmp, EquipmentItemsBalanceValues.Base_hands_radiant_wraps, Family.Frost),
-            new BaseDef("hands.vigor_grips", Slot.Hands, Line.Guard, new Txt("活力の握り", "Grips of Vigor", "活力握手"), Stat.MaxHealthFlat, EquipmentItemsBalanceValues.Base_hands_vigor_grips, Family.Frost),
+            new BaseDef("hands.vigor_grips", Slot.Hands, Line.Guard, new Txt("活力の握り", "Grips of Vigor", "活力护手"), Stat.MaxHealthFlat, EquipmentItemsBalanceValues.Base_hands_vigor_grips, Family.Frost),
             new BaseDef("hands.quick_fingers", Slot.Hands, Line.Resonance, new Txt("早業の手袋", "Quickfinger Gloves", "快指手套"), Stat.Haste, EquipmentItemsBalanceValues.Base_hands_quick_fingers, Family.Gale),
             new BaseDef("hands.reach_bracers", Slot.Hands, Line.Offense, new Txt("遠手の腕輪", "Bracers of Reach", "远伸腕环"), Stat.AttackRangePct, EquipmentItemsBalanceValues.Base_hands_reach_bracers),
             new BaseDef("feet.travel_boots", Slot.Feet, Line.Resonance, new Txt("旅の長靴", "Traveler's Boots", "旅人长靴"), Stat.MoveSpeedPct, EquipmentItemsBalanceValues.Base_feet_travel_boots),
