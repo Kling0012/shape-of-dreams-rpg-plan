@@ -21,7 +21,10 @@ namespace Issue73.Native.Tests
     /// (d) 設定を切ると毎フレーム代入して本体どおりであること、
     /// (e) 欄の読み出しが直接並ばない形（一度局所変数へ受ける）の本体では Transpiler は
     ///     命令を 1 つも変えず、警告は最初の 1 回だけ出ること（前ラウンド指摘 F2 の前提の
-    ///     照合が外れた場合の fail-soft）。
+    ///     照合が外れた場合の fail-soft）、
+    /// (f) 0 → -0 のフレームでは再び組み立てて本体と同じ "-0" 表示を入れること
+    ///     （前ラウンド指摘 F1: float の == は 0 と -0 を同値と読むが、書式は
+    ///     "0" と "-0" を分ける）。
     /// </summary>
     public sealed class RedGiantDamageTextPerfTests : IDisposable
     {
@@ -199,6 +202,36 @@ namespace Issue73.Native.Tests
                 null, new object[] { PatchProcessor.GetOriginalInstructions(bad) });
             Assert.Equal(original, string.Join(",", second.Select(i => i.opcode.Name)));
             Assert.Single(Log.Warnings); // 2 回目の照合でも警告は増えない
+        }
+
+        // (f) 0 → -0 のフレーム。float の == では 0 と -0 は同値だが、書式
+        // {0:#,##0} は "0" と "-0" を区別する（.NET Core 3.0 以降の書式）。
+        // 本体は毎フレーム "-0" を代入するため、パッチ側もビット単位の比較で
+        // このフレームを再組み立てすること（前ラウンド指摘 F1）。
+        [Fact]
+        public void AZeroToNegativeZeroFrameReformatsLikeVanilla()
+        {
+            var harmony = Patch();
+            try
+            {
+                var giant = Spawn(0f, 0f, 0f);
+                RunFrame(giant);
+                Assert.Equal(1, giant.dpsText.TextWrites);
+                Assert.Equal("Total: 0\r\nDPS: 0\r\nMax Single Dmg: 0", giant.dpsText.text);
+
+                giant._dps = -0f;
+                RunFrame(giant);
+                Assert.Equal(2, giant.dpsText.TextWrites); // -0 は 0 と同値でも再代入する
+
+                var vanilla = Spawn(0f, -0f, 0f);
+                RunFrame(vanilla);
+                Assert.Equal("Total: 0\r\nDPS: -0\r\nMax Single Dmg: 0", giant.dpsText.text);
+                Assert.Equal(vanilla.dpsText.text, giant.dpsText.text); // 本体と同じ "-0" 表示
+            }
+            finally
+            {
+                harmony.UnpatchAll(harmony.Id);
+            }
         }
     }
 }
