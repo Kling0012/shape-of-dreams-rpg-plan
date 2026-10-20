@@ -89,8 +89,8 @@ namespace SodRpg.Mod
                 for (int i = 0; i < OwnershipColors.Length; i++)
                 {
                     var player = i < DewPlayer.gamePlayers.Count ? DewPlayer.gamePlayers[i] : null;
-                    string name = player != null ? player.playerName : Loc.T("未参加", "Empty");
-                    if (string.IsNullOrEmpty(name)) name = Loc.T("旅人", "Traveler");
+                    string name = player != null ? player.playerName : Loc.T("未参加", "Empty", "未加入");
+                    if (string.IsNullOrEmpty(name)) name = Loc.T("旅人", "Traveler", "旅人");
                     name = name.Replace("<", "〈").Replace(">", "〉");
                     if (name.Length > 12) name = name.Substring(0, 12) + "…";
                     if (i > 0) legend += "    ";
@@ -102,13 +102,13 @@ namespace SodRpg.Mod
             }
             GUILayout.Label(_ownershipLegend, _st.Label);
             GUILayout.Label(Loc.T("◆ 自分の担当　◇ 他の人の担当　印なし：保護なし（担当外でも削れる）",
-                "◆ Your enemy   ◇ Another player's enemy   No mark: unprotected (damageable by anyone)"), _st.Small);
+                "◆ Your enemy   ◇ Another player's enemy   No mark: unprotected (damageable by anyone)", "◆ 自己的敌人　◇ 他人的敌人　无标记：无归属保护（非归属者也可造成伤害）"), _st.Small);
         }
 
         private static string OwnershipName(DewPlayer player)
         {
             string name = player != null ? player.playerName : null;
-            if (string.IsNullOrEmpty(name)) name = Loc.T("旅人", "Traveler");
+            if (string.IsNullOrEmpty(name)) name = Loc.T("旅人", "Traveler", "旅人");
             name = name.Replace("<", "〈").Replace(">", "〉");
             return name.Length > 12 ? name.Substring(0, 12) + "…" : name;
         }
@@ -129,11 +129,11 @@ namespace SodRpg.Mod
         {
             const string none = "—";
             var text = new System.Text.StringBuilder(512);
-            text.Append(Loc.T("動的難易度：", "Dynamic difficulty: "));
+            text.Append(Loc.T("動的難易度：", "Dynamic difficulty: ", "动态难度："));
             text.Append(status == null ? none
-                : status.state == DynamicDifficultyStatus.On ? Loc.T("有効", "On")
-                : status.state == DynamicDifficultyStatus.SoloOff ? Loc.T("ソロでは無効", "Off in solo")
-                : Loc.T("無効", "Off"));
+                : status.state == DynamicDifficultyStatus.On ? Loc.T("有効", "On", "开启")
+                : status.state == DynamicDifficultyStatus.SoloOff ? Loc.T("ソロでは無効", "Off in solo", "单人时关闭")
+                : Loc.T("無効", "Off", "关闭"));
             double reward = status != null ? status.rewardShare / 1000d : double.NaN;
             for (int i = 0; i < OwnershipColors.Length && i < DewPlayer.gamePlayers.Count; i++)
             {
@@ -150,37 +150,37 @@ namespace SodRpg.Mod
                 text.Append('\n').Append(UiStyles.Colored("◆" + (i + 1) + " " + OwnershipName(player), OwnershipColors[i]));
                 if (double.IsNaN(f))
                 {
-                    text.Append("  ×").Append(none).Append('\n').Append(Loc.T("　敵の体力 ", "　Enemy HP ")).Append(none)
-                        .Append(Loc.T(" ・ 攻撃 ", " · Attack ")).Append(none).Append(Loc.T(" ・ 報酬 ", " · Rewards ")).Append(none);
+                    text.Append("  ×").Append(none).Append('\n').Append(Loc.T("　敵の体力 ", "　Enemy HP ", "　敌人生命 ")).Append(none)
+                        .Append(Loc.T(" ・ 攻撃 ", " · Attack ", " · 攻击 ")).Append(none).Append(Loc.T(" ・ 報酬 ", " · Rewards ", " · 奖励 ")).Append(none);
                     continue;
                 }
-                string mood = f < 0.995 ? Loc.T("やさしめ", "easier") : f > 1.005 ? Loc.T("きびしめ", "harder") : Loc.T("標準", "standard");
-                text.Append("  ").Append(Times(f)).Append(Loc.T("（", " (")).Append(mood).Append(Loc.T("）", ")"));
+                string mood = f < 0.995 ? Loc.T("やさしめ", "easier", "偏易") : f > 1.005 ? Loc.T("きびしめ", "harder", "偏难") : Loc.T("標準", "standard", "标准");
+                text.Append("  ").Append(Times(f)).Append(Loc.T("（", " (", "（")).Append(mood).Append(Loc.T("）", ")", "）"));
                 // 2026-10-19：動的難易度は敵の攻撃を変えない。体力と報酬は差の割合も併記する。
                 // 2026-10-20：世界ごとの上限に達しているときは（上限）を添える（表示は結果の f をそのまま使う）。
                 bool capped = status != null && f >= CoopBalance.DynamicDifficulty.MaxFactor(status.world) - 0.005;
-                string cappedText = capped ? Loc.T("（上限）", " (capped)") : "";
-                text.Append('\n').Append(Loc.T("　敵の体力 ", "　Enemy HP ")).Append(Times(f)).Append(SignedPercent(f)).Append(cappedText);
-                text.Append(Loc.T(" ・ 攻撃 ", " · Attack ")).Append(status == null ? none : Times(1));
+                string cappedText = capped ? Loc.T("（上限）", " (capped)", "（上限）") : "";
+                text.Append('\n').Append(Loc.T("　敵の体力 ", "　Enemy HP ", "　敌人生命 ")).Append(Times(f)).Append(SignedPercent(f)).Append(cappedText);
+                text.Append(Loc.T(" ・ 攻撃 ", " · Attack ", " · 攻击 ")).Append(status == null ? none : Times(1));
                 double rewardMultiplier = double.IsNaN(reward) ? double.NaN
                     : Math.Min(CoopBalance.DynamicDifficulty.RewardMaxMultiplier, 1 + reward * Math.Max(0, f - 1));
-                text.Append(Loc.T(" ・ 報酬 ", " · Rewards ")).Append(double.IsNaN(rewardMultiplier) ? none : Times(rewardMultiplier) + SignedPercent(rewardMultiplier));
+                text.Append(Loc.T(" ・ 報酬 ", " · Rewards ", " · 奖励 ")).Append(double.IsNaN(rewardMultiplier) ? none : Times(rewardMultiplier) + SignedPercent(rewardMultiplier));
             }
-            text.Append('\n').Append(Loc.T("担当外の減衰：", "Damage to others' enemies: "));
+            text.Append('\n').Append(Loc.T("担当外の減衰：", "Damage to others' enemies: ", "对他人敌人的伤害衰减："));
             if (status == null) text.Append(none);
             else
             {
                 // The wire carries the 0-based run order; players count worlds from 1.
-                text.Append(status.world < 0 ? Loc.T("ラン外", "Outside a run") : Loc.T("世界", "World ") + (status.world + 1))
-                    .Append(Loc.T("（減衰 ", " (")).Append(status.decayPercent).Append(Loc.T("%）", "% less)"));
+                text.Append(status.world < 0 ? Loc.T("ラン外", "Outside a run", "远征之外") : Loc.T("世界", "World ", "世界") + (status.world + 1))
+                    .Append(Loc.T("（減衰 ", " (", "（衰减 ")).Append(status.decayPercent).Append(Loc.T("%）", "% less)", "%）"));
             }
-            text.Append('\n').Append(Loc.T("　段階：", "　Stages: "));
+            text.Append('\n').Append(Loc.T("　段階：", "　Stages: ", "　阶段："));
             if (status == null) text.Append(none);
             else
             {
                 var table = status.decayByWorld;
                 text.Append(OwnershipHelp.StageTable(world => table[world], table.Length,
-                    Loc.T("世界", "World "), Loc.T("以降", "+")));
+                    Loc.T("世界", "World ", "世界"), Loc.T("以降", "+", "及以后")));
             }
             return text.ToString();
         }
@@ -222,7 +222,7 @@ namespace SodRpg.Mod
                 _dynamicStatusJa = Loc.Language; _statusHost = host;
                 _dynamicStatusText = BuildDynamicStatus(host, status, display);
             }
-            GUILayout.Label(Loc.T("現在の状況", "Current status"), _st.Label);
+            GUILayout.Label(Loc.T("現在の状況", "Current status", "当前状态"), _st.Label);
             GUILayout.Label(_dynamicStatusText, _st.Small);
         }
 
@@ -248,19 +248,19 @@ namespace SodRpg.Mod
             }
             else _s.TryDynamicDifficultyFor(local.guid, out f);
             if (double.IsNaN(f)) return;
-            sb.Append("\n<size=13>").Append(Loc.T("動的難易度 ", "Dynamic difficulty: "));
-            if (f >= 0.995 && f <= 1.005) sb.Append(Loc.T("標準", "standard"));
+            sb.Append("\n<size=13>").Append(Loc.T("動的難易度 ", "Dynamic difficulty: ", "动态难度 "));
+            if (f >= 0.995 && f <= 1.005) sb.Append(Loc.T("標準", "standard", "标准"));
             else
             {
-                sb.Append(Loc.T("敵の体力 ", "Enemy HP ")).Append(SignedPercent(f));
+                sb.Append(Loc.T("敵の体力 ", "Enemy HP ", "敌人生命 ")).Append(SignedPercent(f));
                 // 2026-10-20：世界ごとの上限に達しているときは（上限）を添える（参加者も同期された世界番号から分かる）。
                 if (status != null && f >= CoopBalance.DynamicDifficulty.MaxFactor(status.world) - 0.005)
-                    sb.Append(Loc.T("（上限）", " (capped)"));
+                    sb.Append(Loc.T("（上限）", " (capped)", "（上限）"));
                 double rewardMultiplier = Math.Min(CoopBalance.DynamicDifficulty.RewardMaxMultiplier,
                     1 + status.rewardShare / 1000d * Math.Max(0, f - 1));
                 string rewardPercent = SignedPercent(rewardMultiplier);
-                if (rewardPercent.Length > 0) sb.Append(Loc.T("・報酬 ", " · Rewards ")).Append(rewardPercent);
-                if (f < 0.995) sb.Append(Loc.T("（やさしめ）", " (easier)"));
+                if (rewardPercent.Length > 0) sb.Append(Loc.T("・報酬 ", " · Rewards ", "· 奖励 ")).Append(rewardPercent);
+                if (f < 0.995) sb.Append(Loc.T("（やさしめ）", " (easier)", "（偏易）"));
             }
             sb.Append("</size>");
         }
@@ -270,7 +270,7 @@ namespace SodRpg.Mod
             bool editable = !NetworkClient.active || NetworkServer.active;
             bool previous = GUI.enabled;
             GUILayout.Space(4);
-            GUILayout.Label(Loc.T("ホスト設定", "Host settings"), _st.Header);
+            GUILayout.Label(Loc.T("ホスト設定", "Host settings", "主机设置"), _st.Header);
             GUI.enabled = previous && editable;
             bool enabled = GUILayout.Toggle(cfg.coopEnemyOwnership, Loc.T("担当制（マルチ）", "Enemy ownership (coop)"));
             GUI.enabled = previous;

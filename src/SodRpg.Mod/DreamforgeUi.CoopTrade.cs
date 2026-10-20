@@ -216,17 +216,17 @@ namespace SodRpg.Mod
         }
 
         private static string TradeConfirmation(bool confirmed) => confirmed
-            ? Loc.T("確認済み", "confirmed") : Loc.T("未確認", "not confirmed");
+            ? Loc.T("確認済み", "confirmed", "已确认") : Loc.T("未確認", "not confirmed", "未确认");
 
         private void DrawCoopTradePlayers()
         {
-            GUILayout.Label(Loc.T("同じセッションのプレイヤー", "Players in this session"), _st.Header);
+            GUILayout.Label(Loc.T("同じセッションのプレイヤー", "Players in this session", "同一会话的玩家"), _st.Header);
             GUILayout.Label(Loc.T(
                 "交換はロビーまたは遠征の確保地点で行えます。交換に未対応・応答のない相手とは交換できませんが、他の協力プレイ機能は利用できます。",
-                "Trade in the lobby or at a safe expedition point. Unsupported or nonresponding peers cannot trade; other co-op features remain available."), _st.Small);
+                "Trade in the lobby or at a safe expedition point. Unsupported or nonresponding peers cannot trade; other co-op features remain available.", "交易可在大厅或远征的存仓点进行。不支持或未响应的对手无法交易，其他协作功能仍可使用。"), _st.Small);
             var peers = _s.CoopTradePeers;
             _tradePlayersScroll = GUILayout.BeginScrollView(_tradePlayersScroll, TradePaneSize);
-            if (peers.Count == 0) GUILayout.Label(Loc.T("交換相手がいません。同じセッションに参加してください。", "No trade partners. Join the same session to trade."), _st.Small);
+            if (peers.Count == 0) GUILayout.Label(Loc.T("交換相手がいません。同じセッションに参加してください。", "No trade partners. Join the same session to trade.", "没有交易对象。请加入同一会话进行交易。"), _st.Small);
             bool enabled = GUI.enabled;
             for (int i = 0; i < peers.Count; i++)
             {
@@ -234,12 +234,12 @@ namespace SodRpg.Mod
                 GUILayout.BeginHorizontal(_st.Panel);
                 GUILayout.Label(peer.Name, _st.Label, GUILayout.ExpandWidth(true), GUILayout.MinWidth(0));
                 GUI.enabled = enabled && peer.Available && peer.Ready && _s.CanCoopTrade;
-                if (GUILayout.Button(Loc.T("交換を申し込む", "Request trade"), _st.ButtonWrap, GUILayout.Width(170))) SetStatus(_s.RequestCoopTrade(peer.Key));
+                if (GUILayout.Button(Loc.T("交換を申し込む", "Request trade", "申请交易"), _st.ButtonWrap, GUILayout.Width(170))) SetStatus(_s.RequestCoopTrade(peer.Key));
                 GUI.enabled = enabled;
                 GUILayout.EndHorizontal();
-                if (!peer.Available) GUILayout.Label(Loc.T("交換に未対応、または応答待ちです（交換のみ利用不可）。", "Trade unsupported or awaiting a response (trade only is unavailable)."), _st.Small);
+                if (!peer.Available) GUILayout.Label(Loc.T("交換に未対応、または応答待ちです（交換のみ利用不可）。", "Trade unsupported or awaiting a response (trade only is unavailable).", "对方不支持交易，或正在等待响应（仅交易不可用）。"), _st.Small);
                 else if (!peer.Ready) GUILayout.Label(Loc.T("相手は今取引できる状態ではありません（戦闘中・保存中など）",
-                    "The other player can't trade right now (in combat, saving, etc.)"), _st.Small);
+                    "The other player can't trade right now (in combat, saving, etc.)", "对方现在无法交易（战斗中・保存中等）"), _st.Small);
             }
             GUILayout.EndScrollView();
             _tradePlayersScroll.y = WheelScroll(_tradePlayersScroll.y, float.PositiveInfinity);
@@ -274,9 +274,9 @@ namespace SodRpg.Mod
         private void DrawCoopTradeMaterialFields(CoopTradeView trade)
         {
             GUILayout.BeginHorizontal();
-            GUILayout.Label(Loc.T("欠片", "Shards"), _st.Small, GUILayout.Width(85));
+            GUILayout.Label(Loc.T("欠片", "Shards", "碎片"), _st.Small, GUILayout.Width(85));
             string shards = GUILayout.TextField(_tradeShards, 10, TradeFieldSize);
-            GUILayout.Label(Loc.T("調律石", "Tuning"), _st.Small, GUILayout.Width(85));
+            GUILayout.Label(Loc.T("調律石", "Tuning", "调律石"), _st.Small, GUILayout.Width(85));
             string tuning = GUILayout.TextField(_tradeTuning, 10, TradeFieldSize);
             GUILayout.EndHorizontal();
             if (shards == _tradeShards && tuning == _tradeTuning) return;
@@ -311,13 +311,13 @@ namespace SodRpg.Mod
         private void DrawCoopTradeOwnRelics(CoopTradeView trade, bool editable)
         {
             var p = _s.Profile;
-            GUILayout.Label(Loc.T("選択済みの遺物", "Selected relics"), _st.Small);
+            GUILayout.Label(Loc.T("選択済みの遺物", "Selected relics", "已选遗物"), _st.Small);
             DrawCoopTradeOfferedRelics(p, trade.OwnOffer);
-            GUILayout.Label(Loc.T("保管庫（未装着のみ）", "Stash (unequipped only)"), _st.Header);
+            GUILayout.Label(Loc.T("保管庫（未装着のみ）", "Stash (unequipped only)", "仓库（仅未装备）"), _st.Header);
             DrawCoopTradeRelicChoices(p, p.Stash, trade, editable);
             if (p.Run != null)
             {
-                GUILayout.Label(Loc.T("鞄（未装着のみ）", "Satchel (unequipped only)"), _st.Header);
+                GUILayout.Label(Loc.T("鞄（未装着のみ）", "Satchel (unequipped only)", "背包（仅未装备）"), _st.Header);
                 DrawCoopTradeRelicChoices(p, p.Run.Satchel, trade, editable);
             }
         }
@@ -328,7 +328,7 @@ namespace SodRpg.Mod
             string previousSearch = _tradeSearch;
             int previousRarity = _tradeRarityFilter, previousSlot = _tradeSlotFilter;
             GUILayout.BeginHorizontal();
-            GUILayout.Label(Loc.T("名前で検索", "Search name"), _st.Small, GUILayout.Width(110));
+            GUILayout.Label(Loc.T("名前で検索", "Search name", "按名称搜索"), _st.Small, GUILayout.Width(110));
             _ime.BeginField("DreamforgeTradeSearch");
             _tradeSearch = GUILayout.TextField(_tradeSearch ?? "", 40, TradeSearchSize);
             _ime.Track("DreamforgeTradeSearch");
@@ -348,7 +348,7 @@ namespace SodRpg.Mod
             }
             bool enabled = GUI.enabled;
             GUI.enabled = enabled && CoopTradeFiltering;
-            if (GUILayout.Button(Loc.T("解除", "Clear"), _st.ButtonWrap, GUILayout.Height(30), GUILayout.Width(70)))
+            if (GUILayout.Button(Loc.T("解除", "Clear", "清除"), _st.ButtonWrap, GUILayout.Height(30), GUILayout.Width(70)))
             {
                 _tradeSearch = "";
                 _tradeRarityFilter = _tradeSlotFilter = -1;
@@ -374,9 +374,9 @@ namespace SodRpg.Mod
         {
             _tradeFilterLabelsJapanese = Loc.Language;
             _tradeRarityLabel = Loc.T("レア度：", "Rarity: ", "稀有度：")
-                + (_tradeRarityFilter < 0 ? Loc.T("すべて", "All") : Content.RarityName(TradeRarities[_tradeRarityFilter]));
-            _tradeSlotLabel = Loc.T("部位：", "Slot: ")
-                + (_tradeSlotFilter < 0 ? Loc.T("すべて", "All") : Content.SlotName(TradeSlots[_tradeSlotFilter]));
+                + (_tradeRarityFilter < 0 ? Loc.T("すべて", "All", "全部") : Content.RarityName(TradeRarities[_tradeRarityFilter]));
+            _tradeSlotLabel = Loc.T("部位：", "Slot: ", "部位：")
+                + (_tradeSlotFilter < 0 ? Loc.T("すべて", "All", "全部") : Content.SlotName(TradeSlots[_tradeSlotFilter]));
         }
 
         private bool MatchesCoopTradeFilters(TradeRelicText text)
@@ -402,8 +402,8 @@ namespace SodRpg.Mod
             if (list.Count == 0)
             {
                 GUILayout.Label(hidden
-                    ? Loc.T("条件に合う遺物がありません。", "No relics match the filters.")
-                    : Loc.T("交換できる未装着の遺物がありません。", "No unequipped relics to offer."), _st.Small);
+                    ? Loc.T("条件に合う遺物がありません。", "No relics match the filters.", "没有符合筛选条件的遗物。")
+                    : Loc.T("交換できる未装着の遺物がありません。", "No unequipped relics to offer.", "没有可交易的未装备遗物。"), _st.Small);
                 return;
             }
 
@@ -480,14 +480,14 @@ namespace SodRpg.Mod
         private void DrawCoopTradeMaterialSummary(CoopTradeOffer offer)
         {
             GUILayout.Label(Loc.T($"欠片 {offer?.Shards ?? 0}　調律石 {offer?.Tuning ?? 0}",
-                $"Shards {offer?.Shards ?? 0}   Tuning {offer?.Tuning ?? 0}"), _st.Small);
+                $"Shards {offer?.Shards ?? 0}   Tuning {offer?.Tuning ?? 0}", $"碎片 {offer?.Shards ?? 0}　调律石 {offer?.Tuning ?? 0}"), _st.Small);
         }
 
         private void DrawCoopTradeOfferedRelics(Profile profile, CoopTradeOffer offer)
         {
             if (offer == null || offer.RelicUids.Count == 0)
             {
-                GUILayout.Label(Loc.T("遺物は選択されていません。", "No relics selected."), _st.Small);
+                GUILayout.Label(Loc.T("遺物は選択されていません。", "No relics selected.", "未选择遗物。"), _st.Small);
                 return;
             }
             for (int i = 0; i < offer.RelicUids.Count; i++)
@@ -500,8 +500,8 @@ namespace SodRpg.Mod
                 if (text == null)
                 {
                     GUILayout.Label(_s.CoopTrade != null && _s.CoopTrade.Preparing
-                        ? Loc.T("遺物は交換のために確保されています。", "Relic reserved for this trade.")
-                        : Loc.T("遺物の情報を受信待ちです。", "Waiting for relic details."), _st.Small);
+                        ? Loc.T("遺物は交換のために確保されています。", "Relic reserved for this trade.", "该遗物已为本次交易预留。")
+                        : Loc.T("遺物の情報を受信待ちです。", "Waiting for relic details.", "正在等待接收遗物信息。"), _st.Small);
                     continue;
                 }
                 GUILayout.Label(text.Title, _st.Label);

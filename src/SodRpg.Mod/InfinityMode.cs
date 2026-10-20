@@ -84,7 +84,7 @@ namespace SodRpg.Mod
         internal static string UnavailableNotice => Loc.T(
             "インフィニティは無効です。通常モードは利用できます。", "Infinity is disabled. Normal mode remains available.")
             + (string.IsNullOrEmpty(UnavailableReason) ? ""
-                : " " + Loc.T("（理由: ", "(Reason: ") + NoticeReason(UnavailableReason) + Loc.T("）", ")") + MoreReasons);
+                : " " + Loc.T("（理由: ", "(Reason: ") + NoticeReason(UnavailableReason) + Loc.T("）", ")", "）") + MoreReasons);
 
         private static readonly HashSet<string> DisableReasons = new HashSet<string>(StringComparer.Ordinal);
         private static string MoreReasons => DisableReasons.Count > 1
