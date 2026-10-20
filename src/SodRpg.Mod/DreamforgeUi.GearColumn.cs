@@ -149,7 +149,7 @@ namespace SodRpg.Mod
                 if (kv.Value < 2) continue;
                 string bonus = string.Join("・", Content.SetBonus(kv.Key, kv.Value).Select(x => Content.FormatStat(x.Stat, x.Value)));
                 _gearLineRows.Add(UiStyles.Colored(Loc.T($"〈{Content.LineName(kv.Key)}×{kv.Value}〉{bonus}",
-                    $"<{Content.LineName(kv.Key)} x{kv.Value}> {bonus}"), "#9fe0c0"));
+                    $"<{Content.LineName(kv.Key)} x{kv.Value}> {bonus}", $"〈{Content.LineName(kv.Key)}×{kv.Value}〉{bonus}"), "#9fe0c0"));
             }
         }
 
@@ -177,7 +177,7 @@ namespace SodRpg.Mod
                         $"熟練度 {lv}「{Mastery.Title(lv)}」" + (next > 0 ? $" <color=#aaa>あと{next}体倒すと上がります</color>" : "")
                             + (keyLocked ? $"\n<color=#aaa>熟練度{HeroSigils.KeystoneMastery}で到達刻印を選べます。</color>" : ""),
                         $"Mastery {lv} \"{Mastery.Title(lv)}\"" + (next > 0 ? $" <color=#aaa>{next} kills to next</color>" : "")
-                            + (keyLocked ? $"\n<color=#aaa>Keystones unlock at mastery {HeroSigils.KeystoneMastery}.</color>" : ""));
+                            + (keyLocked ? $"\n<color=#aaa>Keystones unlock at mastery {HeroSigils.KeystoneMastery}.</color>" : ""), $"熟练度 {lv}「{Mastery.Title(lv)}」" + (next > 0 ? $" <color=#aaa>再击败{next}个敌人后提升</color>" : "") + (keyLocked ? $"\n<color=#aaa>熟练度{HeroSigils.KeystoneMastery}后可选择刻印。</color>" : ""));
                 }
                 GUILayout.Label(_gearMasteryText, _st.Small);
             }

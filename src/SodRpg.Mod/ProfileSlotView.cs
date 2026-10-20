@@ -60,7 +60,7 @@ namespace SodRpg.Mod
             Profile = _profileLoader.FallbackProfile;
             _store = null;
             SetSaveErrorText(Loc.T("保存データを読み込めませんでした。今回は保存を止めて続けます（保存データは変更していません）。少し待って自動で読み込み直します：",
-                "Could not load your save. Saving is disabled for this session (your save files were not changed); loading retries automatically: ")
+                "Could not load your save. Saving is disabled for this session (your save files were not changed); loading retries automatically: ", "无法读取存档。本次会话已停止保存（存档文件未被更改），将稍后自动重新读取：")
                 + _profileLoader.Error);
             if (_profileLoadErrorLogged != _profileLoader.Error)
             {
@@ -118,7 +118,7 @@ namespace SodRpg.Mod
         public string ChooseProfileMode(ProfileSlotMode mode)
         {
             if (_profileSlots == null)
-                return Loc.T("保存データを読み込めている間は、プロフィールを選べません。", "Profiles cannot be chosen until your save loads.");
+                return Loc.T("保存データを読み込めている間は、プロフィールを選べません。", "Profiles cannot be chosen until your save loads.", "存档读取完成之前无法选择档案。");
             try
             {
                 // Apply in Update, never halfway through an IMGUI layout/repaint pair.
@@ -136,7 +136,7 @@ namespace SodRpg.Mod
             Rules.SettleSatchelOverflow(Profile);
             PersistRunDurability();
             if (_writer != null && !_writer.Flush())
-                throw new IOException(Loc.T("保存が終わっていないため、プロフィールを切り替えられません。", "The profile cannot switch until its saves finish."));
+                throw new IOException(Loc.T("保存が終わっていないため、プロフィールを切り替えられません。", "The profile cannot switch until its saves finish.", "保存未完成，无法切换档案。"));
             // ProfileSlots.Save synchronously retries the complete current snapshot after draining.
         }
 
@@ -164,9 +164,9 @@ namespace SodRpg.Mod
                 {
                     _copySoloRequested = false;
                     if (!CanCopySoloProfile || !ProfileSessionSettled)
-                        throw new InvalidOperationException(Loc.T("進捗のあるプロフィールや遠征中にはコピーできません。", "Copy is unavailable during an expedition or after this profile gains progress."));
+                        throw new InvalidOperationException(Loc.T("進捗のあるプロフィールや遠征中にはコピーできません。", "Copy is unavailable during an expedition or after this profile gains progress.", "有进度的档案或远征中无法复制。"));
                     if (!_profileSlots.CopySolo(FlushOldProfileWriter))
-                        throw new InvalidOperationException(Loc.T("ソロの遠征を終えてからコピーしてください。進捗のあるマルチにはコピーできません。", "Finish the Solo expedition before copying. Multi progress cannot be overwritten."));
+                        throw new InvalidOperationException(Loc.T("ソロの遠征を終えてからコピーしてください。進捗のあるマルチにはコピーできません。", "Finish the Solo expedition before copying. Multi progress cannot be overwritten.", "请先完成单人的远征再复制。无法覆盖有进度的多人进度。"));
                     changed = true;
                 }
                 else
@@ -253,35 +253,35 @@ namespace SodRpg.Mod
         private void DrawProfileSlots()
         {
             GUILayout.BeginHorizontal();
-            GUILayout.Label(Loc.T("プロフィール：", "Profile:") + (_s.ActiveProfileSlot == ProfileSlot.Solo
-                ? Loc.T("ソロ", "Solo") : Loc.T("マルチ", "Multi")), _st.Header, GUILayout.Width(190));
-            DrawProfileMode(ProfileSlotMode.Solo, Loc.T("ソロ", "Solo"));
-            DrawProfileMode(ProfileSlotMode.Multi, Loc.T("マルチ", "Multi"));
-            DrawProfileMode(ProfileSlotMode.Auto, Loc.T("自動", "Auto"));
+            GUILayout.Label(Loc.T("プロフィール：", "Profile:", "档案：") + (_s.ActiveProfileSlot == ProfileSlot.Solo
+                ? Loc.T("ソロ", "Solo", "单人") : Loc.T("マルチ", "Multi", "多人")), _st.Header, GUILayout.Width(190));
+            DrawProfileMode(ProfileSlotMode.Solo, Loc.T("ソロ", "Solo", "单人"));
+            DrawProfileMode(ProfileSlotMode.Multi, Loc.T("マルチ", "Multi", "多人"));
+            DrawProfileMode(ProfileSlotMode.Auto, Loc.T("自動", "Auto", "自动"));
             GUILayout.FlexibleSpace();
             if (_s.CanCopySoloProfile)
             {
                 if (GUILayout.Button(_confirmProfileCopy
-                    ? Loc.T("コピーを確定", "Confirm copy") : Loc.T("ソロの進捗をコピー", "Copy Solo progress"), _st.Button))
+                    ? Loc.T("コピーを確定", "Confirm copy", "确认复制") : Loc.T("ソロの進捗をコピー", "Copy Solo progress", "复制单人进度"), _st.Button))
                 {
                     if (_confirmProfileCopy) { _s.RequestSoloProfileCopy(); _confirmProfileCopy = false; }
                     else _confirmProfileCopy = true;
                 }
-                if (_confirmProfileCopy && GUILayout.Button(Loc.T("やめる", "Cancel"), _st.Button)) _confirmProfileCopy = false;
+                if (_confirmProfileCopy && GUILayout.Button(Loc.T("やめる", "Cancel", "取消"), _st.Button)) _confirmProfileCopy = false;
             }
             else _confirmProfileCopy = false;
             GUILayout.EndHorizontal();
             string explanation = _s.ProfileSwitchDeferred
-                ? Loc.T("遠征が終わったら切り替わります", "The profile will switch after the expedition.")
+                ? Loc.T("遠征が終わったら切り替わります", "The profile will switch after the expedition.", "远征结束后切换档案。")
                 : _s.ProfileMode == ProfileSlotMode.Auto
-                    ? Loc.T("自動：2人以上のロビー・遠征、または他のホストに参加するとマルチを使います。", "Auto: Multi for two or more players, or when joining another host; otherwise Solo.")
-                    : Loc.T("手動で選択中。ソロとマルチの進捗は別々に保存されます。", "Manual selection. Solo and Multi progress are saved separately.");
+                    ? Loc.T("自動：2人以上のロビー・遠征、または他のホストに参加するとマルチを使います。", "Auto: Multi for two or more players, or when joining another host; otherwise Solo.", "自动：两人以上的大厅・远征，或加入其他主机时使用多人。")
+                    : Loc.T("手動で選択中。ソロとマルチの進捗は別々に保存されます。", "Manual selection. Solo and Multi progress are saved separately.", "手动选择中。单人和多人的进度分开保存。");
             GUILayout.Label(explanation, _st.Small);
             if (!_s.InGame && _s.Profile.Run != null)
                 GUILayout.Label(Loc.T(
                     "中断中の遠征あり：終了までプロフィール切替・星図変更はできません。\n保存があれば「続きから」。参加者はホストに従ってください。",
-                    "Suspended expedition: profile switching and Star Map edits stay locked until it ends.\nContinue if a save is available; guests follow the host."), _st.Warn);
-            if (_confirmProfileCopy) GUILayout.Label(Loc.T("ソロの進捗を一度だけコピーします。コピー後は別々に進みます。", "Copy Solo progress once. The profiles progress independently afterward."), _st.Warn);
+                    "Suspended expedition: profile switching and Star Map edits stay locked until it ends.\nContinue if a save is available; guests follow the host.", "存在中断中的远征：结束前无法切换档案・更改星图。\n有存档时请“从存档继续”。参与者请遵循主机。"), _st.Warn);
+            if (_confirmProfileCopy) GUILayout.Label(Loc.T("ソロの進捗を一度だけコピーします。コピー後は別々に進みます。", "Copy Solo progress once. The profiles progress independently afterward.", "仅复制一次单人进度。复制后各自独立推进。"), _st.Warn);
             if (_s.SaveError != null) GUILayout.Label(_s.SaveError, _st.Warn);
             if (_s.ContinueWarning != null) GUILayout.Label(_s.ContinueWarning, _st.Warn);
         }

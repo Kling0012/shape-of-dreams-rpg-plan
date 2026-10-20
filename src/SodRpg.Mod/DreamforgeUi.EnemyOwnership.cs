@@ -272,7 +272,7 @@ namespace SodRpg.Mod
             GUILayout.Space(4);
             GUILayout.Label(Loc.T("ホスト設定", "Host settings", "主机设置"), _st.Header);
             GUI.enabled = previous && editable;
-            bool enabled = GUILayout.Toggle(cfg.coopEnemyOwnership, Loc.T("担当制（マルチ）", "Enemy ownership (coop)"));
+            bool enabled = GUILayout.Toggle(cfg.coopEnemyOwnership, Loc.T("担当制（マルチ）", "Enemy ownership (coop)", "敌人归属制（多人）"));
             GUI.enabled = previous;
             if (editable && enabled != cfg.coopEnemyOwnership)
             {
@@ -281,14 +281,14 @@ namespace SodRpg.Mod
             }
             GUILayout.Label(editable
                 ? Loc.T("敵を各旅人に割り当て、担当者の育ち具合に合わせます。変更は即反映して保存します。",
-                    "Assign enemies to each traveler and scale them to their progress. Changes apply and save immediately.")
+                    "Assign enemies to each traveler and scale them to their progress. Changes apply and save immediately.", "将敌人分配给各旅人，并按其成长程度调整强度。更改会立即生效并保存。")
                 : Loc.T("変更はホストのみ。ホストの設定が使われます。",
-                    "Only the host can change this. The host's setting applies."), _st.Small);
+                    "Only the host can change this. The host's setting applies.", "仅主机可更改。将应用主机的设置。"), _st.Small);
             GUILayout.Label(Loc.T("担当制を切っても、人数による敵の強化の緩和は常に働きます。",
-                "Even with ownership off, player-count enemy scaling stays softened."), _st.Small);
+                "Even with ownership off, player-count enemy scaling stays softened.", "即使关闭归属制，随人数增强敌人的缓和效果也始终生效。"), _st.Small);
             GUI.enabled = previous && editable;
-            bool dynamic = GUILayout.Toggle(cfg.dynamicDifficulty, Loc.T("殲滅速度に合わせた難易度", "Difficulty follows clear speed"));
-            bool solo = GUILayout.Toggle(cfg.dynamicDifficultySolo, Loc.T("ソロでも使う", "Also use in solo"));
+            bool dynamic = GUILayout.Toggle(cfg.dynamicDifficulty, Loc.T("殲滅速度に合わせた難易度", "Difficulty follows clear speed", "难度随通关速度变化"));
+            bool solo = GUILayout.Toggle(cfg.dynamicDifficultySolo, Loc.T("ソロでも使う", "Also use in solo", "单人时也启用"));
             GUI.enabled = previous;
             if (editable && (dynamic != cfg.dynamicDifficulty || solo != cfg.dynamicDifficultySolo))
             {
@@ -335,7 +335,7 @@ namespace SodRpg.Mod
                     Log.Warn("Enemy ownership legend disabled; settings continue: " + ex.Message);
                 }
             }
-            bool show = GUILayout.Toggle(cfg.showEnemyOwnershipMarks, Loc.T("担当の印を表示", "Show enemy ownership marks"));
+            bool show = GUILayout.Toggle(cfg.showEnemyOwnershipMarks, Loc.T("担当の印を表示", "Show enemy ownership marks", "显示敌人归属标记"));
             if (show != cfg.showEnemyOwnershipMarks)
             {
                 cfg.showEnemyOwnershipMarks = show;
