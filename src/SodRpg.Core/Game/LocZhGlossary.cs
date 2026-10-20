@@ -42,6 +42,12 @@ namespace SodRpg.Core.Game
         // Kind Return / Kindness: 返礼 → 回礼、返し → 回善
         // Second Wind / Second Breath: 再起・二の息 → 回气
         // Legendary: 固有品 → 传说（Content.RarityName のレア度表記）
+        // 星図・遠征で繰り返し使う訳語（#960）。複合語を訳すときの参照用。
+        // Keystone: 刻印 → 刻印、Cluster: 星団 → 星团、Bridge: 記憶の橋 → 记忆之桥
+        // Rank: 段 → 阶、Loadout: 構成 → 配置、Training: 鍛錬 → 锻炼
+        // Nightmare: 悪夢 → 噩梦、Mastery: 熟練度 → 熟练度、Identity memory: 固有記憶 → 身份记忆
+        // Shield: 障壁 → 护盾、Ability Power: 魔力 → 法术强度、Crit: 会心 → 暴击
+        // Keen: 冴え → 精妙、Dream Ring: 夢輪 → 梦环、Rime: 薄氷 → 霜华
         private static Dictionary<string, string> _map;
 
         /// <summary>英語の文字列から中国語を引く。なければそのまま英語を返す（割り当てなし）。</summary>
@@ -169,6 +175,31 @@ namespace SodRpg.Core.Game
                 ["Melee co-op effects"] = "近战协作效果",
                 ["Melee co-op effects (while the basic attack is melee)"] = "近战协作效果（通常攻击为近战时）",
                 ["Automatic casting"] = "自动施放",
+
+                // 星図で共有する名前と用語（#960）。
+                ["Keystone"] = "刻印",
+                ["Cluster"] = "星团",
+                ["Bridge"] = "记忆之桥",
+                ["Rank"] = "阶",
+                ["Loadout"] = "配置",
+                ["Training"] = "锻炼",
+                ["Nightmare"] = "噩梦",
+                ["Mastery"] = "熟练度",
+                ["Identity memory"] = "身份记忆",
+                ["Shield"] = "护盾",
+                ["Ability Power"] = "法术强度",
+                ["Crit"] = "暴击",
+                ["Keen"] = "精妙",
+                ["Dream Ring"] = "梦环",
+                ["Rime"] = "霜华",
+                ["Dream Ring Strength"] = "梦环之力",
+                ["Dream Ring Wisdom"] = "梦环之智",
+                ["Dream Ring Vessel"] = "梦环之器",
+                ["Dream Ring Armor"] = "梦环之甲",
+                ["Dream Ring Life"] = "梦环生命",
+                ["Dream Ring Rhythm"] = "梦环律动",
+                ["Dream Ring Resolve"] = "梦环不屈",
+                ["Dream Ring Renewal"] = "梦环再生",
 
                 // 記憶別ルートの星名（#960）。
                 ["Unyielding Oath"] = "不退之誓",

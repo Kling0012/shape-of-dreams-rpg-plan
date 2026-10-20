@@ -45,10 +45,10 @@ namespace SodRpg.Core.Game
             }
 
             public void S(string ja, string en, Stat stat, int value)
-                => Add(new TalentDef(NextId, Line.Offense, new Txt(ja, en), stat, value, NextRanks));
+                => Add(new TalentDef(NextId, Line.Offense, new Txt(ja, en, LocZhGlossary.Lookup(en)), stat, value, NextRanks));
 
             public void P(string ja, string en, Power power, int value)
-                => Add(new TalentDef(NextId, Line.Offense, new Txt(ja, en), power, value, NextRanks));
+                => Add(new TalentDef(NextId, Line.Offense, new Txt(ja, en, LocZhGlossary.Lookup(en)), power, value, NextRanks));
 
             public void L(string ja, string en, LinkKind kind, decimal value)
             {
@@ -58,20 +58,20 @@ namespace SodRpg.Core.Game
                         throw new InvalidOperationException("Route " + NextId + ": non-MemoryDamage link values must be exact Int32 integers.");
                     value = checked((int)value);
                 }
-                Add(new TalentDef(NextId, Line.Offense, new Txt(ja, en),
+                Add(new TalentDef(NextId, Line.Offense, new Txt(ja, en, LocZhGlossary.Lookup(en)),
                     new LinkDef { Kind = kind, Value = value, Requires = new[] { memory } }, NextRanks));
             }
 
             /// <summary>仕掛けの星（v1.28）。能力値・連携・固有効果を持たず、Buildの予算にも数えない。</summary>
             public void G(string ja, string en, GimmickTrigger trigger, GimmickEffect effect, int value, int arg = 0, float cooldown = 0f)
-                => Add(new TalentDef(NextId, Line.Offense, new Txt(ja, en), default(Stat), 0, NextRanks)
+                => Add(new TalentDef(NextId, Line.Offense, new Txt(ja, en, LocZhGlossary.Lookup(en)), default(Stat), 0, NextRanks)
                 {
                     Gimmick = new GimmickDef { Trigger = trigger, Effect = effect, Value = value, Arg = arg, Cooldown = cooldown },
                 });
 
             /// <summary>頂点の星。「記憶の冴え」（keen、既存の値）と仕掛けを両方持つ。</summary>
             public void CapG(string ja, string en, decimal keen, GimmickTrigger trigger, GimmickEffect effect, int value, int arg = 0, float cooldown = 0f)
-                => Add(new TalentDef(NextId, Line.Offense, new Txt(ja, en),
+                => Add(new TalentDef(NextId, Line.Offense, new Txt(ja, en, LocZhGlossary.Lookup(en)),
                     new LinkDef { Kind = LinkKind.MemoryDamage, Value = keen, Requires = new[] { memory } }, NextRanks)
                 {
                     Gimmick = new GimmickDef { Trigger = trigger, Effect = effect, Value = value, Arg = arg, Cooldown = cooldown },
@@ -675,8 +675,8 @@ namespace SodRpg.Core.Game
             {
                 bool identity = cap.RouteMemory.StartsWith("St_D_", System.StringComparison.Ordinal);
                 var node = identity
-                    ? new TalentDef(cap.RouteId + ".slot", Line.Offense, new Txt("記憶の器を広げる", "Widen the Memory's Vessel"), Stat.EssenceSlotIdentity, StarRankBalance.EssenceSlotStarAmount, EssenceSlotMaxRank)
-                    : new TalentDef(cap.RouteId + ".slot", Line.Offense, new Txt("回避の器を広げる", "Widen the Dodge's Vessel"), Stat.EssenceSlotMovement, StarRankBalance.EssenceSlotStarAmount, EssenceSlotMaxRank);
+                    ? new TalentDef(cap.RouteId + ".slot", Line.Offense, new Txt("記憶の器を広げる", "Widen the Memory's Vessel", "拓宽记忆之器"), Stat.EssenceSlotIdentity, StarRankBalance.EssenceSlotStarAmount, EssenceSlotMaxRank)
+                    : new TalentDef(cap.RouteId + ".slot", Line.Offense, new Txt("回避の器を広げる", "Widen the Dodge's Vessel", "拓宽闪避之器"), Stat.EssenceSlotMovement, StarRankBalance.EssenceSlotStarAmount, EssenceSlotMaxRank);
                 node.HeroKey = cap.HeroKey;
                 node.Tier = 2;
                 node.RouteId = cap.RouteId;
@@ -723,7 +723,7 @@ namespace SodRpg.Core.Game
         {
             bool outer = id == "renewal" || (hero == "Bismuth" && id == "resolve");
             nodes.Add(new TalentDef("h." + hero.ToLowerInvariant() + ".ring." + id, Line.Resonance,
-                new Txt(ja, en), stat, outer ? value : 0, outer ? 5 : 3)
+                new Txt(ja, en, LocZhGlossary.Lookup(en)), stat, outer ? value : 0, outer ? 5 : 3)
                 { HeroKey = "Hero_" + hero, Tier = 2, IsDreamRing = true });
         }
     }
