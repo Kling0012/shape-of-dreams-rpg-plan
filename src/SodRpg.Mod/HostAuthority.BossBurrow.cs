@@ -177,9 +177,13 @@ namespace SodRpg.Mod
         internal float AzurakBurrowStun(Ai_U_Burrow_Emerge instance, Entity target, float native)
         {
             var scope = AzurakBurrowNativeHit.Current;
+            // Cheap per-target flags first; the stage walk (FindMemory x2, BossEnsure, BossRewardStage) is
+            // needed only for hits that can actually stun. Pure predicate reorder, admitted value unchanged.
             if (scope.Instance != instance || scope.Target != target || !_azurakBurrows.TryGetValue(instance, out var capture)
-                || AzurakBurrowStage(capture) == 0 || !BossAlive(target) || target.GetRelation(capture.Runtime.Hero) != EntityRelation.Enemy
-                || target.IsAnyBoss() || target.Status.hasCrowdControlImmunity || float.IsNaN(native) || float.IsInfinity(native)) return native;
+                || !BossAlive(target) || float.IsNaN(native) || float.IsInfinity(native)
+                || target.GetRelation(capture.Runtime.Hero) != EntityRelation.Enemy
+                || target.IsAnyBoss() || target.Status.hasCrowdControlImmunity
+                || AzurakBurrowStage(capture) == 0) return native;
             return native + Math.Min(0.15f, Math.Max(0, 1 - native));
         }
         private void AzurakBurrowFlat(AzurakBurrowExit capture, ref DamageData damage, Actor actor, Entity target)
