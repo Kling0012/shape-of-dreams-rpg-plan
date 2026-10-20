@@ -76,9 +76,9 @@ namespace SodRpg.Core.Game
         {
             string two = SetDef.JoinStatLines(new[] { Content.FormatStat(TwoPiece.Stat, TwoPiece.Value) });
             if (ThreePiece == null)
-                return Loc.T($"2つ装着：{two}", $"2 pieces: {two}");
+                return Loc.T($"2つ装着：{two}", $"2 pieces: {two}", $"装备2件：{two}");
             string three = Content.FormatPowerBullets(ThreePiece.Power, ThreePiece.Value, "　");
-            return Loc.T($"2つ装着：{two}\n3つ装着：\n{three}", $"2 pieces: {two}\n3 pieces:\n{three}");
+            return Loc.T($"2つ装着：{two}\n3つ装着：\n{three}", $"2 pieces: {two}\n3 pieces:\n{three}", $"装备2件：{two}\n装备3件：\n{three}");
         }
     }
 
@@ -142,7 +142,7 @@ namespace SodRpg.Core.Game
             if (r == null || r.NamedId == null || !TryGetNamed(r.NamedId, out var def)
                 || def.MiniSetId == null || !TryGetMiniSet(def.MiniSetId, out var set)) return null;
             int n = Math.Max(0, Math.Min(set.PieceCount, pieces));
-            return Loc.T($"《{set.Name}》 装着中 {n}/{set.PieceCount}", $"\"{set.Name}\" {n}/{set.PieceCount} worn");
+            return Loc.T($"《{set.Name}》 装着中 {n}/{set.PieceCount}", $"\"{set.Name}\" {n}/{set.PieceCount} worn", $"《{set.Name}》 已装备 {n}/{set.PieceCount}");
         }
 
         /// <summary>図鑑の組の進み（例「《霜誓の記章》 発見 1/3」）。codex は Profile.Codex。</summary>
@@ -152,7 +152,7 @@ namespace SodRpg.Core.Game
             int found = 0;
             foreach (var piece in set.PieceIds)
                 if (codex != null && codex.Contains(CodexId(piece))) found++;
-            return Loc.T($"《{set.Name}》 発見 {found}/{set.PieceCount}", $"\"{set.Name}\" {found}/{set.PieceCount} found");
+            return Loc.T($"《{set.Name}》 発見 {found}/{set.PieceCount}", $"\"{set.Name}\" {found}/{set.PieceCount} found", $"《{set.Name}》 已发现 {found}/{set.PieceCount}");
         }
 
         /// <summary>試験用の登録。登録簿を丸ごと差し替え、図鑑のキャッシュを作り直させる。空を渡せば空の登録簿になる

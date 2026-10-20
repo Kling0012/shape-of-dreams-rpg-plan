@@ -44,7 +44,7 @@ namespace SodRpg.Core.Game
                 || !loadouts.TryGet("slots", out object slotsValue) || !(slotsValue is List<object> slots))
             {
                 notes.Add(Loc.T($"{heroKey}: ロードアウト情報を読み込めないため、現在の星を枠1に保持しました。",
-                    $"{heroKey}: Invalid loadout metadata; current stars were retained in slot 1."));
+                    $"{heroKey}: Invalid loadout metadata; current stars were retained in slot 1.", $"{heroKey}：配装元数据无效；已将当前星保留在第1栏。"));
                 return;
             }
             hero.ActiveStarLoadout = (int)active;
@@ -92,7 +92,7 @@ namespace SodRpg.Core.Game
                     hero.StarLoadouts[i] = new StarLoadout { AuthoredMigrationVersion = StarClusters.MigrationVersionFor(heroKey) };
                     if (i == hero.ActiveStarLoadout) hero.StarLoadouts[i].ApplyTo(hero);
                     notes.Add(Loc.T($"{heroKey}: ロードアウト{i + 1}を読み込めないため、この枠だけ空にしました（{ex.GetType().Name}）。",
-                        $"{heroKey}: Could not load loadout {i + 1}; only this slot was emptied ({ex.GetType().Name})."));
+                        $"{heroKey}: Could not load loadout {i + 1}; only this slot was emptied ({ex.GetType().Name}).", $"{heroKey}：无法读取配装{i + 1}；仅清空此栏（{ex.GetType().Name}）。"));
                 }
             }
         }

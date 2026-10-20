@@ -420,7 +420,7 @@ namespace SodRpg.Core.Game
                             int refund = checked(h.Talents[id] * def.RankCost);
                             h.Talents.Remove(id);
                             notes.Add(Loc.T($"選択のない星を払い戻しました（{refund}ポイント）: ",
-                                $"Refunded a star without a valid choice ({refund} points): ") + id);
+                                $"Refunded a star without a valid choice ({refund} points): ", $"已退还无有效选择的星（{refund}点）：") + id);
                         }
                     }
                     h.LimboInfinityUnlocked = Bool(hj, "limboInfinityUnlocked", false);
@@ -453,20 +453,20 @@ namespace SodRpg.Core.Game
                             && currentHero.AuthoredMigrationVersion >= h.AuthoredMigrationVersion;
                         if (!alreadyReported && refund.ChangedStarIds.Count > 0)
                             notes.Add(Loc.T($"{kv.Key}: 効果が変わった星の取得を解除し、使っていたポイントを全額戻しました（{refund.ChangedRefundCost}ポイント）。星の盤で取り直せます: ",
-                                $"{kv.Key}: Stars whose effect changed were cleared and their spent points fully returned ({refund.ChangedRefundCost} points). You can re-spend them on the star map: ")
+                                $"{kv.Key}: Stars whose effect changed were cleared and their spent points fully returned ({refund.ChangedRefundCost} points). You can re-spend them on the star map: ", $"{kv.Key}：已清除效果变更的星，并全额退还所用点数（{refund.ChangedRefundCost}点）。可在星图中重新分配：")
                                 + string.Join(", ", refund.ChangedStarIds.Select(id => StarLabel(tree, id))));
                         var removedRules = StarClusters.MigrationsFor(kv.Key).Where(rule => rule.Removed).ToDictionary(rule => rule.LocalStarId);
                         var removedIds = refund.StarIds.Where(id => removedRules.ContainsKey(id)).ToList();
                         int removedCost = removedIds.Sum(id => removedRules[id].RankCost);
                         if (!alreadyReported && removedIds.Count > 0)
                             notes.Add(Loc.T($"{kv.Key}: 廃止した星の取得を解除し、使っていたポイントを全額戻しました（{removedCost}ポイント）。星の盤でほかの星に使えます: ",
-                                $"{kv.Key}: Removed stars were cleared and their spent points fully returned ({removedCost} points). You can re-spend them on the star map: ")
+                                $"{kv.Key}: Removed stars were cleared and their spent points fully returned ({removedCost} points). You can re-spend them on the star map: ", $"{kv.Key}：已清除废除的星，并全额退还所用点数（{removedCost}点）。可在星图中用于其他星：")
                                 + string.Join(", ", removedIds));
                         int otherCost = refund.RefundCost - refund.ChangedRefundCost - removedCost;
                         var otherIds = refund.StarIds.Where(id => !refund.ChangedStarIds.Contains(id) && !removedRules.ContainsKey(id)).ToList();
                         if (!alreadyReported && otherIds.Count > 0)
                             notes.Add(Loc.T($"{kv.Key}: 選択や前提が無効になった星も払い戻しました（{otherCost}ポイント）: ",
-                                $"{kv.Key}: Stars left with an invalid choice or prerequisite were also refunded ({otherCost} points): ")
+                                $"{kv.Key}: Stars left with an invalid choice or prerequisite were also refunded ({otherCost} points): ", $"{kv.Key}：选择或前置条件失效的星也已退还（{otherCost}点）：")
                                 + string.Join(", ", otherIds.Select(id => StarLabel(tree, id))));
                     }
                 }
@@ -607,9 +607,9 @@ namespace SodRpg.Core.Game
                 Rules.ResetTalents(p, kv.Key);
                 notes.Add(overBudget
                     ? Loc.T($"{kv.Key}: 星の経験と刻印の費用に合わせ、刻印を無料で振り直せるようにしました。",
-                        $"{kv.Key}: Star point allocation exceeded the current budget and was reset for free.")
+                        $"{kv.Key}: Star point allocation exceeded the current budget and was reset for free.", $"{kv.Key}：分配的星点超过当前预算，已免费重置。")
                     : Loc.T($"{kv.Key}: 始まりの星につながらない星があったため、この旅人の星を無料で振り直せるようにしました。",
-                        $"{kv.Key}: Some allocated stars were disconnected from the starting star; this Traveler's stars were reset for free."));
+                        $"{kv.Key}: Some allocated stars were disconnected from the starting star; this Traveler's stars were reset for free.", $"{kv.Key}：部分已分配的星未连接至起始星，已免费重置此旅人的星。"));
             }
             // Load optional snapshots after the shared state and active allocation; inactive slots are repaired on switching.
             if (b.TryGet("heroes", out object loadoutHeroes) && loadoutHeroes is JsonObject heroEntries)
