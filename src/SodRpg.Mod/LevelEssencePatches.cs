@@ -18,8 +18,7 @@ namespace SodRpg.Mod
     {
         private static bool _failed;
         // 編集UIが毎ロジックフレーム呼ぶので、言語と枠数が同じなら書式結果を使い回す。
-        private static string _tooltip, _tooltipLocale;
-        private static int _tooltipCurrent = -1;
+        private static readonly LevelEssenceTextCache _tooltipCache = new LevelEssenceTextCache();
         private static void Postfix(Shrine_CorruptedChaos __instance, DewPlayer player, HeroSkillLocation loc,
             ref EditSkillTargetInfo __result)
         {
@@ -38,16 +37,8 @@ namespace SodRpg.Mod
                     __result.tooltipRawText = null;
                     return;
                 }
-                string locale = DewLocalization.GetUIValue("Shrine_CorruptedChaos_AddedEssenceSlot_Tooltip");
-                if (_tooltip != null && _tooltipCurrent == current && ReferenceEquals(_tooltipLocale, locale))
-                {
-                    __result.tooltipRawText = _tooltip;
-                    return;
-                }
-                string formatted = string.Format("{0} {1}<sprite=0>{2}", locale, current, current + 1);
-                _tooltipLocale = locale;
-                _tooltipCurrent = current;
-                __result.tooltipRawText = _tooltip = formatted;
+                __result.tooltipRawText = _tooltipCache.Tooltip(
+                    DewLocalization.GetUIValue("Shrine_CorruptedChaos_AddedEssenceSlot_Tooltip"), current);
             }
             catch (Exception ex)
             {
@@ -83,23 +74,14 @@ namespace SodRpg.Mod
     internal static class LevelEssenceChaosIndicator
     {
         // 表示中は毎ロジックフレーム呼ばれるので、上限と言語が同じなら書式結果を使い回す。
-        private static string _text, _locale;
-        private static int _cap = -1;
+        private static readonly LevelEssenceTextCache _indicatorCache = new LevelEssenceTextCache();
         private static void Postfix(ref string __result)
         {
             try
             {
-                string locale = DewLocalization.GetUIValue("Shrine_CorruptedChaos_AddedEssenceSlot_EditSkill");
-                int cap = LevelEssenceRuntime.EffectiveCap;
-                if (_text != null && _cap == cap && ReferenceEquals(_locale, locale))
-                {
-                    __result = _text;
-                    return;
-                }
-                string formatted = string.Format(locale, cap);
-                _locale = locale;
-                _cap = cap;
-                __result = _text = formatted;
+                __result = _indicatorCache.Indicator(
+                    DewLocalization.GetUIValue("Shrine_CorruptedChaos_AddedEssenceSlot_EditSkill"),
+                    LevelEssenceRuntime.EffectiveCap);
             }
             catch (Exception) { }
         }
