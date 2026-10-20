@@ -10,6 +10,24 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v3.8.28 — Lighter enemy targeting（2026-10-20）
+
+敵が狙う相手を決めるときの余分な処理を省き、ゲームの動作を少し軽くしました。 / The game now does less extra work when enemies pick a target, making it a little lighter.
+
+### 更新前に確認 / Before updating
+
+- 協力プレイでは、参加者全員がこのバージョンに更新してください。 / Everyone in co-op should update to this version.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Bug fixes
+
+- 敵が狙う相手を決めるたびに、召喚体に関係しない敵でも、プレイヤー全員の状態を確かめる余分な処理が走っていました。この問題を直しました。敵が多い部屋ほどホストのゲームが少し軽くなりますが、1回あたりの効果は小さめです。敵が狙う相手や召喚体の動きは、これまでと変わりません。 / Fixed the game checking every player's state each time an enemy picked a target, even for enemies unrelated to summons. Rooms with many enemies are now slightly lighter for the host, though the gain per check is small. Which targets enemies choose and how summons behave are unchanged.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
 ## v3.8.27 — Lighter handling of incoming chat messages（2026-10-20）
 
 チャットや実績解除の知らせを受け取ったときに起きていた余分な処理を省き、ゲームの動作を少し軽くしました。 / The game now does less extra work when it receives chat messages and achievement notices, making it a little lighter.
