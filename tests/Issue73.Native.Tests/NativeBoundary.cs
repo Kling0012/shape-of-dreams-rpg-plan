@@ -337,6 +337,8 @@ namespace SodRpg.Mod
     {
         public uint netId;
         public bool isActive = true;
+        // Skoll の回復・バースト（HostAuthority.BossGlacialCore.cs の抽出）が読む本体 API。
+        public float creationTime;
         // 敵担当制（HostAuthority.EnemyOwnership.cs）は本体と同じく Status 側を正とする。
         public float currentHealth { get => Status.currentHealth; set => Status.currentHealth = value; }
         public float maxHealth => Status.maxHealth;
@@ -1199,7 +1201,8 @@ namespace SodRpg.Mod
         private readonly Dictionary<Hero, PrimedState> _memoryPrimedRelay = new Dictionary<Hero, PrimedState>();
         private bool HasOwnSummons(HeroRuntime runtime) => false;
         private KeystonePayload TransformAuthoredPayload(Hero hero, KeystonePayload payload, string source, string receiver, KeystoneSourceKind kind) => throw new NotSupportedException();
-        internal sealed class HeroRuntime
+        // SkollBurstBoundary.cs が BossVisuals / Skoll が触る分（Boss・ShieldEquipmentEpoch）を足す。
+        internal sealed partial class HeroRuntime
         {
             public Hero Hero;
             public ReceivedBuild AppliedBuild;

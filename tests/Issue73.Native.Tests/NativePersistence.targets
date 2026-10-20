@@ -103,6 +103,18 @@
     </ItemGroup>
   </Target>
 
+  <!-- Skoll バースト表示（#931）: due の開始時刻固定・無変化ティックの再送抑止・発射ごとの
+       即時差分・残数0の削除・同じ id での次のバーストを、Skoll 系メソッドと PublishBossVisual
+       （とその状態）の実ソースで確かめる。境界は SkollBurstBoundary.cs。 -->
+  <Target Name="CompileSkollBurst" BeforeTargets="CoreCompile">
+    <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/HostAuthority.BossGlacialCore.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)SkollBurstCore.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="HostAuthority" Methods="CompleteSkollCoreHeal;CountSkollCoreShot;TickSkollCores;SkollPublishBurst;SkollReleaseCore" Fields="_skollCorePool" NestedTypes="SkollCoreState" />
+    <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/HostAuthority.BossVisuals.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)SkollBurstVisuals.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="HostAuthority" Methods="PublishBossVisual;GetBossVisualState;FindBossVisualState;CreateBossVisualStates;PruneBossVisualState;SendBossVisualSnapshot" Fields="_bossVisuals;_bossVisualEpoch;BossVisualOwnerLimit;BossVisualEffectLimit" NestedTypes="BossVisualState" />
+    <ItemGroup>
+      <Compile Include="$(IntermediateOutputPath)SkollBurstCore.g.cs" />
+      <Compile Include="$(IntermediateOutputPath)SkollBurstVisuals.g.cs" />
+    </ItemGroup>
+  </Target>
+
   <!-- The profile slot notice (#97) lives in the UI partial of ProfileSlotView.cs; compile its
        exact draw methods against the harness session instead of copying their implementation. -->
   <Target Name="CompileProfileSlotUi" BeforeTargets="CoreCompile">

@@ -53,6 +53,8 @@
     <Compile Include="../../src/SodRpg.Mod/CoopTradeTransport.cs" Link="ModUnderTest/CoopTradeTransport.cs" />
     <Compile Include="../../src/SodRpg.Mod/CoopTradeMessages.cs" Link="ModUnderTest/CoopTradeMessages.cs" />
     <Compile Include="../../src/SodRpg.Mod/NetMessages.cs" Link="ModUnderTest/NetMessages.cs" />
+    <Compile Include="../../src/SodRpg.Mod/NetMessages.BossEffects.cs" Link="ModUnderTest/NetMessages.BossEffects.cs" />
+    <Compile Include="../../src/SodRpg.Mod/NetMessages.NetLite.cs" Link="ModUnderTest/NetMessages.NetLite.cs" />
     <Compile Include="../../src/SodRpg.Mod/NetMessages.RunGrowth.cs" Link="ModUnderTest/NetMessages.RunGrowth.cs" />
     <Compile Include="../../src/SodRpg.Mod/BountyReportBatching.cs" Link="ModUnderTest/BountyReportBatching.cs" />
     <Compile Include="../../src/SodRpg.Mod/NetworkTrafficOptions.cs" Link="ModUnderTest/NetworkTrafficOptions.cs" />

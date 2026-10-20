@@ -206,7 +206,7 @@ namespace SodRpg.Mod
         }
         private sealed class SkollCoreState
         {
-            internal float Creation, BurstUntil, PriorityUntil, PriorityCreation;
+            internal float Creation, BurstUntil, BurstDue, PriorityUntil, PriorityCreation;
             internal Entity Priority;
             internal Gem_U_GlacialCore Core;
             internal SkillTrigger Skill;
@@ -263,7 +263,7 @@ namespace SodRpg.Mod
                 if (!create) return false;
                 state.Pending.Clear();
                 state.Remaining=0;
-                if (state.BurstVisual != 0) SkollPublishBurst(rt,state,Time.time);
+                if (state.BurstVisual != 0) SkollPublishBurst(rt,state);
                 owner.Cores.Remove(core);
                 SkollReleaseCore(state); state = null;
             }
@@ -330,9 +330,9 @@ namespace SodRpg.Mod
             }
             if (actions.Count > 2 && BossReady(rt,"boss_skoll.glacial_core.burst",now,actions[2].CooldownMillis))
             {
-                var action=actions[2]; state.Remaining=action.Count; state.BurstUntil=now + action.DurationMillis / 1000f;
+                var action=actions[2]; state.Remaining=action.Count; state.BurstUntil=now + action.DurationMillis / 1000f; state.BurstDue=now;
                 if (state.BurstVisual == 0) state.BurstVisual=++rt.Boss.NextId;
-                SkollPublishBurst(rt,state,now);
+                SkollPublishBurst(rt,state);
             }
             state.Pending.Remove(routine);
         }
@@ -411,11 +411,14 @@ namespace SodRpg.Mod
             if (!(projectile.parentActor is Gem_U_GlacialCore core) || !SkollCoreRuntime(core,out var rt,out var state)
                 || projectile.info.caster != rt.Hero || !state.ApprovedThisUpdate || state.Remaining <= 0 || Time.time >= state.BurstUntil) return;
             state.ApprovedThisUpdate=false; state.Remaining--;
-            SkollPublishBurst(rt,state,Time.time);
+            SkollPublishBurst(rt,state);
         }
-        private void SkollPublishBurst(HeroRuntime rt, SkollCoreState state, float now)
+        // due はバースト開始時刻に固定する。発射のたび・毎ティックに現在時刻を渡すと
+        // PublishBossVisual の同一性判定が必ず失敗し、残数が変わっていない間も
+        // 最大10Hzの差分を全員へ再送していた。残数の変化・移動・削除の送信経路は従来どおり。
+        private void SkollPublishBurst(HeroRuntime rt, SkollCoreState state)
         {
-            PublishBossVisual(rt,state.BurstVisual,9,rt.Hero.agentPosition,rt.Hero.agentPosition,state.Remaining,now,state.BurstUntil,
+            PublishBossVisual(rt,state.BurstVisual,9,rt.Hero.agentPosition,rt.Hero.agentPosition,state.Remaining,state.BurstDue,state.BurstUntil,
                 state.Remaining == 0,element:BossElement.Cold,count:state.Remaining);
         }
         private void TickSkollCores(HeroRuntime rt, SkollState owner, float now)
@@ -429,13 +432,13 @@ namespace SodRpg.Mod
                 if (state.Remaining > 0)
                 {
                     if (now >= state.BurstUntil) state.Remaining=0;
-                    SkollPublishBurst(rt,state,now);
+                    SkollPublishBurst(rt,state);
                 }
             }
             foreach (var core in owner.ExpiredCores)
             {
                 var state=owner.Cores[core]; state.Pending.Clear(); state.Remaining=0;
-                if (state.BurstVisual != 0) SkollPublishBurst(rt,state,now);
+                if (state.BurstVisual != 0) SkollPublishBurst(rt,state);
                 owner.Cores.Remove(core);
                 SkollReleaseCore(state);
             }
@@ -449,7 +452,7 @@ namespace SodRpg.Mod
         private void SkollReleaseCore(SkollCoreState state)
         {
             state.Pending.Clear(); state.Core=null; state.Owner=null; state.Skill=null; state.Room=null; state.Run=null; state.Priority=null;
-            state.Creation=state.BurstUntil=state.PriorityUntil=state.PriorityCreation=0;
+            state.Creation=state.BurstUntil=state.BurstDue=state.PriorityUntil=state.PriorityCreation=0;
             state.CoreLife=state.OwnerLife=state.SkillLife=state.PriorityLife=state.BurstVisual=0;
             state.Remaining=0; state.ApprovedThisUpdate=false;
             _skollCorePool.Return(state);
