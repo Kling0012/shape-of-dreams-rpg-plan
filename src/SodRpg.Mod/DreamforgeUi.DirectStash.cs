@@ -36,9 +36,9 @@ namespace SodRpg.Mod
                 _directStashLabelKind = kind;
                 _directStashLabelLanguage = language;
                 _directStashLabel = kind == DirectStashLabel.Confirm ? Loc.T(
-                    "もう一度押すと保管庫へ送ります", "Press again to send to the stash")
-                    : kind == DirectStashLabel.Used ? Loc.T("この遠征では使用済み", "Used this expedition")
-                    : Loc.T("鞄の遺物を保管庫へ送る（この遠征で1回）", "Send satchel relics to the stash (once per expedition)");
+                    "もう一度押すと保管庫へ送ります", "Press again to send to the stash", "再按一次即送入仓库")
+                    : kind == DirectStashLabel.Used ? Loc.T("この遠征では使用済み", "Used this expedition", "本次远征已使用")
+                    : Loc.T("鞄の遺物を保管庫へ送る（この遠征で1回）", "Send satchel relics to the stash (once per expedition)", "将背包中的遗物送入仓库（每次远征1次）");
             }
             bool enabled = GUI.enabled;
             GUI.enabled = enabled && can;

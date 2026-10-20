@@ -58,26 +58,26 @@ namespace SodRpg.Mod
                 "<color=#73e6b3>● " + StarMapClusters.RegionLabel(ClusterRegionKind.Bridge) + "</color>",
                 "<color=#ffa875>● " + StarMapClusters.RegionLabel(ClusterRegionKind.Outer) + "</color>",
                 "<color=#cc8cff>◆ " + StarMapClusters.RegionLabel(ClusterRegionKind.Keystone) + "</color>",
-                Loc.T("<color=#cc8cff>紫の大きな星＝刻印</color>", "<color=#cc8cff>Large purple = keystone</color>"),
-                Loc.T("<color=#73e6f2>水色＝合わせ技</color>", "<color=#73e6f2>Cyan = combo</color>"),
-                Loc.T("<color=#ffc952>金＝取得済み</color>", "<color=#ffc952>Gold = acquired</color>"),
+                Loc.T("<color=#cc8cff>紫の大きな星＝刻印</color>", "<color=#cc8cff>Large purple = keystone</color>", "<color=#cc8cff>紫色大星＝刻印</color>"),
+                Loc.T("<color=#73e6f2>水色＝合わせ技</color>", "<color=#73e6f2>Cyan = combo</color>", "<color=#73e6f2>青色＝连携技</color>"),
+                Loc.T("<color=#ffc952>金＝取得済み</color>", "<color=#ffc952>Gold = acquired</color>", "<color=#ffc952>金色＝已获得</color>"),
             };
             string[] tips =
             {
                 Loc.T("<b>記憶の星団</b>\n装備する記憶（スキル）ごとの星のまとまりです。星を取ると、その記憶が強くなります。星の右上の青い点が目印です。",
-                    "<b>Memory cluster</b>\nStars grouped by an equippable memory (skill). Acquiring them strengthens that memory. Marked by a blue dot on the star."),
+                    "<b>Memory cluster</b>\nStars grouped by an equippable memory (skill). Acquiring them strengthens that memory. Marked by a blue dot on the star.", "<b>记忆星团</b>\n按可装备的记忆（技能）分组的星群。获得星星后，该记忆会变强。标志是星星右上角的蓝色圆点。"),
                 Loc.T("<b>記憶の橋の星団</b>\n二つの記憶をつなぐ星のまとまりです。両方の記憶を装備すると合わせ技が働きます。星の右上の緑の点が目印です。",
-                    "<b>Bridge cluster</b>\nStars that link two memories. Equip both memories to activate the combo. Marked by a green dot on the star."),
+                    "<b>Bridge cluster</b>\nStars that link two memories. Equip both memories to activate the combo. Marked by a green dot on the star.", "<b>记忆之桥星团</b>\n连接两个记忆的星群。同时装备两个记忆时连携技生效。标志是星星右上角的绿色圆点。"),
                 Loc.T("<b>外縁の星団</b>\n記憶に依らない、旅人全体の能力や仕掛けを伸ばす星のまとまりです。星の右上の橙の点が目印です。",
-                    "<b>Outer cluster</b>\nStars that grow the whole Traveler rather than one memory. Marked by an orange dot on the star."),
+                    "<b>Outer cluster</b>\nStars that grow the whole Traveler rather than one memory. Marked by an orange dot on the star.", "<b>外缘星团</b>\n不依赖记忆、提升旅人整体能力与机制的星群。标志是星星右上角的橙色圆点。"),
                 Loc.T("<b>刻印</b>\n大きな紫の星。星のレベルに応じて最大3つまで選べます。効果は対象・条件つきで説明に書かれ、デバフはありません。条件を満たすと選べます。",
-                    "<b>Keystone</b>\nLarge purple stars. Up to three can be selected as the star level rises. Their effect is stated with its targets and values, and has no drawback. Selectable once its requirements are met."),
+                    "<b>Keystone</b>\nLarge purple stars. Up to three can be selected as the star level rises. Their effect is stated with its targets and values, and has no drawback. Selectable once its requirements are met.", "<b>刻印</b>\n紫色大星。随星级最多可选3个。效果会连同对象和条件写在说明中，没有负面作用。满足条件后即可选择。"),
                 Loc.T("<b>紫の大きな星＝刻印</b>\n星のレベルで増える枠まで選べる特別な星です。上の「刻印」の行からも選べます。",
-                    "<b>Large purple star = keystone</b>\nA special star you can hold as many of as your keystone slots allow. You can also pick it from the keystone row above."),
+                    "<b>Large purple star = keystone</b>\nA special star you can hold as many of as your keystone slots allow. You can also pick it from the keystone row above.", "<b>紫色大星＝刻印</b>\n可随星级增加的刻印槽数量选择的特殊星星。也可从上方“刻印”一行中选择。"),
                 Loc.T("<b>水色＝合わせ技</b>\n水色の枠の星は二つの記憶をつなぐ合わせ技の橋です。両方の記憶を装備していると働きます。",
-                    "<b>Cyan = combo</b>\nCyan-framed stars are combo bridges between two memories. They work while both memories are equipped."),
+                    "<b>Cyan = combo</b>\nCyan-framed stars are combo bridges between two memories. They work while both memories are equipped.", "<b>青色＝连携技</b>\n青色边框的星是连接两个记忆的连携技之桥。同时装备两个记忆时生效。"),
                 Loc.T("<b>金＝取得済み</b>\n金色の星と線はすでに取得した星とそのつながりです。",
-                    "<b>Gold = acquired</b>\nGold stars and lines are the stars you have already acquired and their connections."),
+                    "<b>Gold = acquired</b>\nGold stars and lines are the stars you have already acquired and their connections.", "<b>金色＝已获得</b>\n金色的星和线是已获得的星星及其连接。"),
             };
             for (int i = 0; i < StarLegendItems; i++)
             {
@@ -86,10 +86,10 @@ namespace SodRpg.Mod
                 _starLegend[i].TipHeight = -1f;
             }
             _starHelpText.text = Loc.T("ドラッグ：移動　ホイール：拡大縮小　左クリック：振る　右クリック：外す　",
-                "Drag: pan   Wheel: zoom   Left click: allocate   Right click: refund   ");
+                "Drag: pan   Wheel: zoom   Left click: allocate   Right click: refund   ", "拖动：平移　滚轮：缩放　左键：分配　右键：退还　");
             _starRelationHelp.text = Loc.T(
                 "青い輪＝注目中（ホバー／二択を開いた星）　淡青の輪＝接続先・合わせ技の前提　太い線＝注目中の星の接続\n線で取得済みの星につながると解放（金＝取得済み）。合わせ技は橋・両端の星の取得と、両方の記憶の装着が必要です。",
-                "Blue ring = focus (hover / open choice)   Pale blue ring = connection or combo prerequisite   Thick line = focus connection\nConnect to an acquired star to unlock (gold = acquired). Combos require the bridge, both endpoint stars and both memories equipped.");
+                "Blue ring = focus (hover / open choice)   Pale blue ring = connection or combo prerequisite   Thick line = focus connection\nConnect to an acquired star to unlock (gold = acquired). Combos require the bridge, both endpoint stars and both memories equipped.", "蓝色圆环＝关注中（悬停／打开二选一的星）　淡蓝圆环＝连接目标・连携技前提　粗线＝关注中星星的连接\n通过线连接到已获得的星即可解放（金色＝已获得）。连携技需要取得桥和两端星星，并装备两个记忆。");
         }
 
         private void RebuildStarClusters()
@@ -105,7 +105,7 @@ namespace SodRpg.Mod
                     if (listed.Add(index))
                     {
                         indices.Add(index);
-                        contexts.Add(cluster.DisplayName + Loc.T($"・{i + 1}番目", $" · star {i + 1}"));
+                        contexts.Add(cluster.DisplayName + Loc.T($"・{i + 1}番目", $" · star {i + 1}", $" · 星 {i + 1}"));
                     }
                 }
             for (int i = 0; i < _starNodes.Length; i++)
@@ -113,7 +113,7 @@ namespace SodRpg.Mod
                 {
                     var star = _starLayout.Nodes[i].Talent;
                     indices.Add(i);
-                    contexts.Add(star.RouteMemory == null ? Loc.T("核の星", "Core star") : Links.ItemName(star.RouteMemory));
+                    contexts.Add(star.RouteMemory == null ? Loc.T("核の星", "Core star", "核心星") : Links.ItemName(star.RouteMemory));
                 }
             _starNavigationNodes = indices.ToArray();
             _starNavigationContext = contexts.ToArray();
@@ -182,7 +182,7 @@ namespace SodRpg.Mod
             GUILayout.BeginHorizontal();
             for (int i = 0; i < StarLegendRegionItems; i++) DrawStarLegendItem(i, repaint);
             GUILayout.FlexibleSpace();
-            _starClustersOpen = GUILayout.Toggle(_starClustersOpen, Loc.T("星一覧", "Stars"), _st.Button);
+            _starClustersOpen = GUILayout.Toggle(_starClustersOpen, Loc.T("星一覧", "Stars", "星星列表"), _st.Button);
             GUILayout.EndHorizontal();
             GUILayout.BeginHorizontal();
             GUILayout.Label(_starHelpText, _starHelpStyle);
@@ -222,7 +222,7 @@ namespace SodRpg.Mod
             EnsureStarTextStyles();
             if (_starNavigationNodes.Length == 0)
             {
-                GUILayout.Label(Loc.T("この旅人にはまだ星団がありません。", "This traveler has no clusters yet."), _starHelpStyle);
+                GUILayout.Label(Loc.T("この旅人にはまだ星団がありません。", "This traveler has no clusters yet.", "该旅人还没有星团。"), _starHelpStyle);
                 return;
             }
             Rect area = GUILayoutUtility.GetRect(0, 226, 0, 10000, StarClusterSize);
@@ -422,23 +422,23 @@ namespace SodRpg.Mod
             _starChoiceStateText = state.Tooltip.text;
             _starChoiceCanEdit = canEdit;
             _starChoiceHeader.text = state.Name.text + "  " + state.RankLabel.text;
-            _starChoiceClose.text = Loc.T("選択を閉じる", "Close selection");
+            _starChoiceClose.text = Loc.T("選択を閉じる", "Close selection", "关闭选择");
             _starChoiceHelp.text = !canEdit
-                ? Loc.T("遠征中は変更できません。帰還後は無料で切り替えられます。", "Cannot change during an expedition. Switching is free after returning.")
-                : Loc.T("どちらか1つを選択。選んだ効果は全段に適用され、切り替えは無料です。", "Choose one effect. It applies to every rank; switching is free.");
+                ? Loc.T("遠征中は変更できません。帰還後は無料で切り替えられます。", "Cannot change during an expedition. Switching is free after returning.", "远征中无法更改。返回后可免费切换。")
+                : Loc.T("どちらか1つを選択。選んだ効果は全段に適用され、切り替えは無料です。", "Choose one effect. It applies to every rank; switching is free.", "二选一。选择的效果适用于所有阶段，切换免费。");
             if (state.Allocated && state.Choice >= 0)
                 _starChoiceHelp.text += "\n" + Loc.T($"『{t.Choices[state.Choice].Name}』を取得済みです。両方は同時に取得できません。",
-                    $"“{t.Choices[state.Choice].Name}” is acquired. Both effects cannot be acquired together.");
+                    $"“{t.Choices[state.Choice].Name}” is acquired. Both effects cannot be acquired together.", $"“{t.Choices[state.Choice].Name}”已获得。两个效果无法同时获得。");
             for (int option = 0; option < 2; option++)
             {
                 bool chosen = state.Allocated && state.Choice == option;
                 bool switching = state.Allocated && !chosen;
                 bool more = chosen && state.Rank < t.MaxRank;
-                string heading = option == 0 ? Loc.T("効果 A", "Effect A") : Loc.T("効果 B", "Effect B");
+                string heading = option == 0 ? Loc.T("効果 A", "Effect A", "效果 A") : Loc.T("効果 B", "Effect B", "效果 B");
                 _starChoiceHeads[option].text = chosen
-                    ? "<color=#ffd36e>✓ " + heading + Loc.T("（選択中）", " (chosen)") + "</color>"
-                    : "<color=#9fe0ff>" + heading + Loc.T("（未選択）", " (unselected)") + "</color>";
-                string blocked = !canEdit ? Loc.T("遠征中は変更できません", "Cannot change during an expedition")
+                    ? "<color=#ffd36e>✓ " + heading + Loc.T("（選択中）", " (chosen)", "（已选）") + "</color>"
+                    : "<color=#9fe0ff>" + heading + Loc.T("（未選択）", " (unselected)", "（未选）") + "</color>";
+                string blocked = !canEdit ? Loc.T("遠征中は変更できません", "Cannot change during an expedition", "远征中无法更改")
                     : switching ? null
                     : !state.Unlocked ? state.MissingRequirements
                     : state.Rank >= t.MaxRank ? null
@@ -446,14 +446,14 @@ namespace SodRpg.Mod
                 int count = 0;
                 if (chosen && (!more || blocked != null))
                     StarChoiceSetAction(option, count++, !more
-                        ? Loc.T($"✓ 選択中（{state.Rank}/{t.MaxRank}段・最大）", $"✓ Chosen ({state.Rank}/{t.MaxRank}, maximum)")
-                        : Loc.T($"✓ 選択中（{state.Rank}/{t.MaxRank}段）", $"✓ Chosen ({state.Rank}/{t.MaxRank})"), _st.TagChosen, false);
+                        ? Loc.T($"✓ 選択中（{state.Rank}/{t.MaxRank}段・最大）", $"✓ Chosen ({state.Rank}/{t.MaxRank}, maximum)", $"✓ 已选（{state.Rank}/{t.MaxRank}段・最大）")
+                        : Loc.T($"✓ 選択中（{state.Rank}/{t.MaxRank}段）", $"✓ Chosen ({state.Rank}/{t.MaxRank})", $"✓ 已选（{state.Rank}/{t.MaxRank}段）"), _st.TagChosen, false);
                 if (blocked != null)
-                    StarChoiceSetAction(option, count++, Loc.T("取得できません：", "Unavailable: ") + blocked, _st.TagBlocked, false);
+                    StarChoiceSetAction(option, count++, Loc.T("取得できません：", "Unavailable: ", "无法获得：") + blocked, _st.TagBlocked, false);
                 else if (!chosen || more)
-                    StarChoiceSetAction(option, count++, switching ? Loc.T("この効果に切り替える（無料）", "Switch to this effect (free)")
-                        : more ? Loc.T($"この効果をもう1段取得（{state.Rank}/{t.MaxRank}段）", $"Allocate one more rank ({state.Rank}/{t.MaxRank})")
-                        : Loc.T("この効果で1段取得", "Allocate one rank with this effect"), _st.ButtonWrap, true);
+                    StarChoiceSetAction(option, count++, switching ? Loc.T("この効果に切り替える（無料）", "Switch to this effect (free)", "切换到该效果（免费）")
+                        : more ? Loc.T($"この効果をもう1段取得（{state.Rank}/{t.MaxRank}段）", $"Allocate one more rank ({state.Rank}/{t.MaxRank})", $"再获得1段该效果（{state.Rank}/{t.MaxRank}段）")
+                        : Loc.T("この効果で1段取得", "Allocate one rank with this effect", "以该效果获得1段"), _st.ButtonWrap, true);
                 _starChoiceActionCount[option] = count;
             }
         }

@@ -18,7 +18,7 @@ namespace SodRpg.Mod
             bool equipped = cur != null && cur.Uid == sel.Uid;
             GUI.enabled = _s.CanEditLoadout && !_s.Trades.IsReserved(sel.Uid);
             GUILayout.BeginHorizontal();
-            if (!equipped && GUILayout.Button(Loc.T("装着する", "Equip"), _st.Button, GUILayout.Height(32)))
+            if (!equipped && GUILayout.Button(Loc.T("装着する", "Equip", "装备"), _st.Button, GUILayout.Height(32)))
             {
                 try
                 {
@@ -28,7 +28,7 @@ namespace SodRpg.Mod
                 catch (AllocationValidationException ex) { OfferAllocationRefund(ex, p, hero, true, sel.Uid); }
                 catch (InvalidOperationException ex) { SetStatus(ex.Message); }
             }
-            if (equipped && GUILayout.Button(Loc.T("外す", "Unequip"), _st.Button, GUILayout.Height(32)))
+            if (equipped && GUILayout.Button(Loc.T("外す", "Unequip", "卸下"), _st.Button, GUILayout.Height(32)))
             {
                 try
                 {
@@ -39,7 +39,7 @@ namespace SodRpg.Mod
                 catch (InvalidOperationException ex) { SetStatus(ex.Message); }
             }
             GUI.enabled = !_s.Trades.IsReserved(sel.Uid);
-            if (GUILayout.Button(sel.Locked ? Loc.T("鍵を外す", "Unlock") : Loc.T("鍵をかける", "Lock"), _st.Button, GUILayout.Height(32)))
+            if (GUILayout.Button(sel.Locked ? Loc.T("鍵を外す", "Unlock", "解锁") : Loc.T("鍵をかける", "Lock", "锁定"), _st.Button, GUILayout.Height(32)))
             {
                 Rules.ToggleLock(p, sel.Uid, _s.Trades);
                 _s.MarkDirty(false);
