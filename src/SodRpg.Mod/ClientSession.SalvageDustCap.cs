@@ -64,7 +64,7 @@ namespace SodRpg.Mod
             _salvageDustCapNotified = true;
             Emit(new GameEvent(EventKind.Warning, Loc.T(
                 "この世界で分解から得られる夢のダストは上限に達しました（次の世界で回復します）。",
-                "Salvage Dream Dust from relics has reached this world's cap (it recovers in the next world).")));
+                "Salvage Dream Dust from relics has reached this world's cap (it recovers in the next world).", "本世界中分解获得的梦尘已达上限（下一个世界会恢复）。")));
         }
     }
 }
