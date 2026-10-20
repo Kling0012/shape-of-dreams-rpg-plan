@@ -103,6 +103,14 @@ def cs(text):
     return '"' + text.replace("\\", "\\\\").replace('"', '\\"') + '"'
 
 
+def txt(ja, en, zh=None):
+    """#882 の仕組み: 中国語（简体）があれば3つ目の値として書き出す。"""
+    args = [cs(ja), cs(en)]
+    if zh is not None:
+        args.append(cs(zh))
+    return "new Txt(%s)" % ", ".join(args)
+
+
 def render_outputs(power_pools=None):
     bases, pools, ranges, power_set, stat_set, rarity_rank, conditional, currency = load_reference(power_pools)
     named_json = load_json(ROOT / IN_NAMED)
@@ -157,8 +165,8 @@ def render_outputs(power_pools=None):
             values.append(band_value(mn, mx, band))
         if len(values) not in (1, 2) or any(v is None for v in values):
             continue  # already reported; do not emit a broken def
-        name = "new Txt(%s, %s)" % (cs(e["nameJa"]), cs(e["nameEn"]))
-        lore = "new Txt(%s, %s)" % (cs(e["loreJa"]), cs(e["loreEn"]))
+        name = txt(e["nameJa"], e["nameEn"], e.get("nameZh"))
+        lore = txt(e["loreJa"], e["loreEn"], e.get("loreZh"))
         mini = "null" if e.get("miniSetId") is None else cs(e["miniSetId"])
         args = [cs(nid), cs(base_id), "Rarity." + rarity, name, lore, mini]
         for power, value in zip([q["power"] for q in e["powers"]], values):
@@ -211,7 +219,7 @@ def render_outputs(power_pools=None):
         if not ok:
             continue
         piece_args = ", ".join(cs(p) for p in pieces)
-        args = [cs(sid), "new Txt(%s, %s)" % (cs(s["nameJa"]), cs(s["nameEn"])),
+        args = [cs(sid), txt(s["nameJa"], s["nameEn"], s.get("nameZh")),
                 "new[] { %s }" % piece_args, "new StatLine(Stat.%s, %s)" % (stat, value)]
         if three_line is not None:
             args.append("new PowerLine(%s, %s)" % three_line)
