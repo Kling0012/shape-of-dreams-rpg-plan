@@ -171,6 +171,9 @@ namespace SodRpg.Mod
         [LabelText("Skip Chaos Shrine hit handling while no max-stack bonus is taken (host) / 混沌の神殿で光・闇の最大スタック強化を取っていない間、被弾ごとの処理を省く（ホスト）")]
         public bool nativeChaosShrineHitScan = true;
 
+        [LabelText("Reuse the selected chaos-shrine reward across edit-mode UI frames / 混沌の神殿で選んだ報酬の解決を編集モードUIの毎フレームで使い回す")]
+        public bool nativeChaosShrineChoiceCache = true;
+
         [LabelText("Skip projectile RPCs whose effect prefab is null (host) / 演出プレハブが無い弾の命中・完了・消散 RPC を省く（ホスト）")]
         public bool nativeProjectileIdleRpc = true;
 
