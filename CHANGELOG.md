@@ -10,6 +10,28 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v3.8.33 — Expanded Chinese (Simplified) translation for mod screens and items（2026-10-20）
+
+中国語（簡体字）で表示される部分を増やしました。MOD のメイン画面とほかの画面、銘品と固有品の一部の名前と説明が、中国語で読めるようになりました。 / Expanded Chinese (Simplified) coverage: the mod's main screen, other mod screens, and the names and descriptions of named items and some unique items now appear in Chinese.
+
+### 更新前に確認 / Before updating
+
+- 協力プレイでは、参加者全員がこのバージョンに更新してください。 / Everyone in co-op should update to this version.
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 新機能 / New features
+
+- MOD のメイン画面で、英語のまま出ていた文字列を中国語（簡体字）に訳しました。HUD、確保地点、鍛冶、星図、設定、記録などの画面が対象です。 / Translated the mod's main screen into Chinese (Simplified) where text was still shown in English, including the HUD, secured points, forging, star chart, settings and records.
+- そのほかの MOD 画面も中国語（簡体字）で表示されるようにしました。協力プレイの取引、敵の担当表示、図鑑、セーブ枠、星団のヘルプ、自動詠唱、工房、直接保管、中断した遺物、遠征の選択肢、警告文などが対象です。 / Other mod screens now appear in Chinese (Simplified) too, including co-op trading, enemy ownership, the codex, save slots, star cluster help, auto-cast, the workshop, direct stash, interrupted relics, expedition choices and warning messages.
+- 銘品（名前付きの装備）すべての名前と説明、小さなセットの名前を中国語（簡体字）に訳しました。 / Translated the names and descriptions of all named items, plus the names of small sets, into Chinese (Simplified).
+- 固有品のうち200品の名前と説明を中国語（簡体字）に訳しました。 / Translated the names and descriptions of 200 unique items into Chinese (Simplified).
+- 日本語と英語の表示は、これまでと変わりません。まだ中国語に訳していない部分は、これまでどおり英語で表示されます。 / Japanese and English text is unchanged. Anything not yet translated into Chinese still falls back to English.
+
+この版の変更は、コードとテストで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and tests, not yet in the live game or co-op. Please report anything odd.
+
+---
+
 ## v3.8.32 — Chinese language support and lighter co-op traffic（2026-10-20）
 
 ### 新機能 / New features
