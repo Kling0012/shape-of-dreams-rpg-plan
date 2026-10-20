@@ -60,31 +60,31 @@ namespace SodRpg.Core.Game
         {
             switch (e)
             {
-                case DreamEvent.Merchant: return Loc.T("夢の商人", "Dream Merchant");
-                case DreamEvent.Fountain: return Loc.T("祈りの泉", "Fountain of Prayer");
-                case DreamEvent.Chalice: return Loc.T("賭けの杯", "Gambler's Chalice");
-                case DreamEvent.Lantern: return Loc.T("迷い人の灯", "Lantern of the Lost");
-                case DreamEvent.ForgeShrine: return Loc.T("鍛冶の祠", "Forge Shrine");
-                case DreamEvent.TwinMirror: return Loc.T("双子の鏡", "Twin Mirror");
-                case DreamEvent.Stargazer: return Loc.T("星読みの塔", "Stargazer's Tower");
-                case DreamEvent.Cauldron: return Loc.T("錬金の釜", "Alchemist's Cauldron");
-                case DreamEvent.Tapir: return Loc.T("夢喰いの獏", "Dream Tapir");
-                case DreamEvent.CourageGate: return Loc.T("勇気の門", "Gate of Courage");
-                case DreamEvent.Archive: return Loc.T("記憶の書庫", "Archive of Memories");
-                case DreamEvent.LuckyStar: return Loc.T("幸運の星", "Lucky Star");
-                case DreamEvent.MemoryWell: return Loc.T("記憶の井戸", "Memory Well");
-                case DreamEvent.ShadowExchange: return Loc.T("影の取引所", "Shadow Exchange");
-                case DreamEvent.LostMausoleum: return Loc.T("遺失物の霊廟", "Lost Mausoleum");
-                case DreamEvent.RelicWager: return Loc.T("遺物の賭場", "Relic Wager");
-                case DreamEvent.TemperingAltar: return Loc.T("焼き入れの祭壇", "Tempering Altar");
-                case DreamEvent.StoneBroker: return Loc.T("調律石の市場", "Tuning Stone Market");
-                case DreamEvent.ShardKiln: return Loc.T("欠片の窯", "Shard Kiln");
-                case DreamEvent.StarOffering: return Loc.T("星への供物", "Star Offering");
-                case DreamEvent.DreamOffering: return Loc.T("夢への供物", "Dream Offering");
-                case DreamEvent.AbyssalChest: return Loc.T("深淵の宝箱", "Abyssal Chest");
-                case DreamEvent.RelicExchange: return Loc.T("遺物の交換所", "Relic Exchange");
-                case DreamEvent.SealedVault: return Loc.T("封印の保管庫", "Sealed Vault");
-                case DreamEvent.PowerCrucible: return Loc.T("固有効果のるつぼ", "Power Crucible");
+                case DreamEvent.Merchant: return Loc.T("夢の商人", "Dream Merchant", "梦之商人");
+                case DreamEvent.Fountain: return Loc.T("祈りの泉", "Fountain of Prayer", "祈祷之泉");
+                case DreamEvent.Chalice: return Loc.T("賭けの杯", "Gambler's Chalice", "赌徒之杯");
+                case DreamEvent.Lantern: return Loc.T("迷い人の灯", "Lantern of the Lost", "迷途者之灯");
+                case DreamEvent.ForgeShrine: return Loc.T("鍛冶の祠", "Forge Shrine", "锻造之祠");
+                case DreamEvent.TwinMirror: return Loc.T("双子の鏡", "Twin Mirror", "双子之镜");
+                case DreamEvent.Stargazer: return Loc.T("星読みの塔", "Stargazer's Tower", "观星之塔");
+                case DreamEvent.Cauldron: return Loc.T("錬金の釜", "Alchemist's Cauldron", "炼金之釜");
+                case DreamEvent.Tapir: return Loc.T("夢喰いの獏", "Dream Tapir", "食梦的獏");
+                case DreamEvent.CourageGate: return Loc.T("勇気の門", "Gate of Courage", "勇气之门");
+                case DreamEvent.Archive: return Loc.T("記憶の書庫", "Archive of Memories", "记忆书库");
+                case DreamEvent.LuckyStar: return Loc.T("幸運の星", "Lucky Star", "幸运之星");
+                case DreamEvent.MemoryWell: return Loc.T("記憶の井戸", "Memory Well", "记忆之井");
+                case DreamEvent.ShadowExchange: return Loc.T("影の取引所", "Shadow Exchange", "暗影交易所");
+                case DreamEvent.LostMausoleum: return Loc.T("遺失物の霊廟", "Lost Mausoleum", "遗失物灵庙");
+                case DreamEvent.RelicWager: return Loc.T("遺物の賭場", "Relic Wager", "遗物赌场");
+                case DreamEvent.TemperingAltar: return Loc.T("焼き入れの祭壇", "Tempering Altar", "淬火祭坛");
+                case DreamEvent.StoneBroker: return Loc.T("調律石の市場", "Tuning Stone Market", "调律石市场");
+                case DreamEvent.ShardKiln: return Loc.T("欠片の窯", "Shard Kiln", "碎片之窑");
+                case DreamEvent.StarOffering: return Loc.T("星への供物", "Star Offering", "星之供品");
+                case DreamEvent.DreamOffering: return Loc.T("夢への供物", "Dream Offering", "梦之供品");
+                case DreamEvent.AbyssalChest: return Loc.T("深淵の宝箱", "Abyssal Chest", "深渊宝箱");
+                case DreamEvent.RelicExchange: return Loc.T("遺物の交換所", "Relic Exchange", "遗物交易所");
+                case DreamEvent.SealedVault: return Loc.T("封印の保管庫", "Sealed Vault", "封印仓库");
+                case DreamEvent.PowerCrucible: return Loc.T("固有効果のるつぼ", "Power Crucible", "固有效果熔炉");
                 default: return "";
             }
         }
@@ -94,28 +94,28 @@ namespace SodRpg.Core.Game
         {
             switch (e)
             {
-                case DreamEvent.Fountain: return Loc.T("一番弱い遺物を捧げる", "Offer the weakest relic");
-                case DreamEvent.Chalice: return Loc.T("欠片を賭ける", "Wager the shards");
-                case DreamEvent.Lantern: return Loc.T("遺失物を取り戻す", "Recover a lost relic");
-                case DreamEvent.ForgeShrine: return Loc.T($"欠片{Content.GuaranteedEnhanceCost(e, Rarity.Common)}（エピック以上は{Content.GuaranteedEnhanceCost(e, Rarity.Epic)}）で強化する", $"Enhance for {Content.GuaranteedEnhanceCost(e, Rarity.Common)} shards ({Content.GuaranteedEnhanceCost(e, Rarity.Epic)} for Epic+)");
-                case DreamEvent.TwinMirror: return Loc.T($"欠片{EventsBalance.TwinMirrorShards}（エピック以上は{EventsBalance.TwinMirrorEpicShards}）で写し取る", $"Copy for {EventsBalance.TwinMirrorShards} shards ({EventsBalance.TwinMirrorEpicShards} for Epic+)");
-                case DreamEvent.Stargazer: return Loc.T("星を読む", "Read the stars");
-                case DreamEvent.Cauldron: return Loc.T($"{EventsBalance.CauldronRelicCount}つを溶かす", $"Melt {(EventsBalance.CauldronRelicCount == 3 ? "three" : EventsBalance.CauldronRelicCount.ToString())} relics");
-                case DreamEvent.Tapir: return Loc.T("獏に食べさせる", "Feed the tapir");
-                case DreamEvent.CourageGate: return Loc.T($"門をくぐる（潜行が{EventsBalance.CourageGateHeatIncrement}段深くなる）", $"Pass the gate (delve +{EventsBalance.CourageGateHeatIncrement})");
-                case DreamEvent.Archive: return Loc.T("記憶を読む", "Read the memories");
-                case DreamEvent.LuckyStar: return Loc.T("星に願う", "Wish upon the star");
-                case DreamEvent.MemoryWell: return Loc.T($"調律石{EventsBalance.MemoryWellTuning}（エピック以上は{EventsBalance.MemoryWellEpicTuning}）で固有効果を交換する", $"Swap a power for {EventsBalance.MemoryWellTuning} tuning stone ({EventsBalance.MemoryWellEpicTuning} for Epic+)");
-                case DreamEvent.ShadowExchange: return Loc.T($"欠片{EventsBalance.ShadowExchangeShards}（エピック以上は{EventsBalance.ShadowExchangeEpicShards}）で最初の特性を引き直す", $"Reroll the first affix for {EventsBalance.ShadowExchangeShards} shards ({EventsBalance.ShadowExchangeEpicShards} for Epic+)");
-                case DreamEvent.LostMausoleum: return Loc.T($"欠片{EventsBalance.LostMausoleumShards}を払い、強化を失って回収する", $"Pay {EventsBalance.LostMausoleumShards} shards and recover with lost enhancement");
-                case DreamEvent.RelicWager: return Loc.T("一番強い対象の遺物を賭ける", "Wager the strongest eligible relic");
-                case DreamEvent.TemperingAltar: return Loc.T($"最初の特性を捧げて{Content.GuaranteedEnhanceSteps(e)}段階強化する", $"Sacrifice the first affix to enhance by {Content.GuaranteedEnhanceSteps(e)} levels");
-                case DreamEvent.StoneBroker: return Loc.T($"欠片{EventsBalance.StoneBrokerShards}を調律石{EventsBalance.StoneBrokerTuning}に換える", $"Trade {EventsBalance.StoneBrokerShards} shards for {EventsBalance.StoneBrokerTuning} tuning stones");
-                case DreamEvent.ShardKiln: return Loc.T($"調律石{EventsBalance.ShardKilnTuning}を欠片{EventsBalance.ShardKilnShards}に換える", $"Trade {EventsBalance.ShardKilnTuning} tuning stones for {EventsBalance.ShardKilnShards} shards");
-                case DreamEvent.StarOffering: return Loc.T("遺物を捧げて星の経験を得る", "Sacrifice a relic for star experience");
-                case DreamEvent.DreamOffering: return Loc.T("遺物を捧げて夢の経験を得る", "Sacrifice a relic for dream experience");
-                case DreamEvent.AbyssalChest: return Loc.T($"欠片{EventsBalance.AbyssalChestShards}を払い、{EventsBalance.AbyssalChestHeatIncrement}段深く潜る", $"Pay {EventsBalance.AbyssalChestShards} shards and delve {(EventsBalance.AbyssalChestHeatIncrement == 1 ? "one" : EventsBalance.AbyssalChestHeatIncrement.ToString())} level deeper");
-                case DreamEvent.RelicExchange: return Loc.T("一番弱い対象の遺物を交換する", "Exchange the weakest eligible relic");
+                case DreamEvent.Fountain: return Loc.T("一番弱い遺物を捧げる", "Offer the weakest relic", "献上最弱的遗物");
+                case DreamEvent.Chalice: return Loc.T("欠片を賭ける", "Wager the shards", "押注碎片");
+                case DreamEvent.Lantern: return Loc.T("遺失物を取り戻す", "Recover a lost relic", "取回遗失物");
+                case DreamEvent.ForgeShrine: return Loc.T($"欠片{Content.GuaranteedEnhanceCost(e, Rarity.Common)}（エピック以上は{Content.GuaranteedEnhanceCost(e, Rarity.Epic)}）で強化する", $"Enhance for {Content.GuaranteedEnhanceCost(e, Rarity.Common)} shards ({Content.GuaranteedEnhanceCost(e, Rarity.Epic)} for Epic+)", $"花{Content.GuaranteedEnhanceCost(e, Rarity.Common)}碎片进行强化（史诗以上为{Content.GuaranteedEnhanceCost(e, Rarity.Epic)}）");
+                case DreamEvent.TwinMirror: return Loc.T($"欠片{EventsBalance.TwinMirrorShards}（エピック以上は{EventsBalance.TwinMirrorEpicShards}）で写し取る", $"Copy for {EventsBalance.TwinMirrorShards} shards ({EventsBalance.TwinMirrorEpicShards} for Epic+)", $"花{EventsBalance.TwinMirrorShards}碎片复制（史诗以上为{EventsBalance.TwinMirrorEpicShards}）");
+                case DreamEvent.Stargazer: return Loc.T("星を読む", "Read the stars", "观读星辰");
+                case DreamEvent.Cauldron: return Loc.T($"{EventsBalance.CauldronRelicCount}つを溶かす", $"Melt {(EventsBalance.CauldronRelicCount == 3 ? "three" : EventsBalance.CauldronRelicCount.ToString())} relics", $"熔炼{EventsBalance.CauldronRelicCount}件遗物");
+                case DreamEvent.Tapir: return Loc.T("獏に食べさせる", "Feed the tapir", "喂给獏吃");
+                case DreamEvent.CourageGate: return Loc.T($"門をくぐる（潜行が{EventsBalance.CourageGateHeatIncrement}段深くなる）", $"Pass the gate (delve +{EventsBalance.CourageGateHeatIncrement})", $"穿过此门（下潜加深{EventsBalance.CourageGateHeatIncrement}段）");
+                case DreamEvent.Archive: return Loc.T("記憶を読む", "Read the memories", "阅读记忆");
+                case DreamEvent.LuckyStar: return Loc.T("星に願う", "Wish upon the star", "向星星许愿");
+                case DreamEvent.MemoryWell: return Loc.T($"調律石{EventsBalance.MemoryWellTuning}（エピック以上は{EventsBalance.MemoryWellEpicTuning}）で固有効果を交換する", $"Swap a power for {EventsBalance.MemoryWellTuning} tuning stone ({EventsBalance.MemoryWellEpicTuning} for Epic+)", $"花{EventsBalance.MemoryWellTuning}颗调律石交换固有效果（史诗以上为{EventsBalance.MemoryWellEpicTuning}）");
+                case DreamEvent.ShadowExchange: return Loc.T($"欠片{EventsBalance.ShadowExchangeShards}（エピック以上は{EventsBalance.ShadowExchangeEpicShards}）で最初の特性を引き直す", $"Reroll the first affix for {EventsBalance.ShadowExchangeShards} shards ({EventsBalance.ShadowExchangeEpicShards} for Epic+)", $"花{EventsBalance.ShadowExchangeShards}碎片重掷第一条词条（史诗以上为{EventsBalance.ShadowExchangeEpicShards}）");
+                case DreamEvent.LostMausoleum: return Loc.T($"欠片{EventsBalance.LostMausoleumShards}を払い、強化を失って回収する", $"Pay {EventsBalance.LostMausoleumShards} shards and recover with lost enhancement", $"支付{EventsBalance.LostMausoleumShards}碎片，失去强化并回收");
+                case DreamEvent.RelicWager: return Loc.T("一番強い対象の遺物を賭ける", "Wager the strongest eligible relic", "押注对象中最强的遗物");
+                case DreamEvent.TemperingAltar: return Loc.T($"最初の特性を捧げて{Content.GuaranteedEnhanceSteps(e)}段階強化する", $"Sacrifice the first affix to enhance by {Content.GuaranteedEnhanceSteps(e)} levels", $"献上第一条词条，强化{Content.GuaranteedEnhanceSteps(e)}级");
+                case DreamEvent.StoneBroker: return Loc.T($"欠片{EventsBalance.StoneBrokerShards}を調律石{EventsBalance.StoneBrokerTuning}に換える", $"Trade {EventsBalance.StoneBrokerShards} shards for {EventsBalance.StoneBrokerTuning} tuning stones", $"将{EventsBalance.StoneBrokerShards}碎片换成{EventsBalance.StoneBrokerTuning}颗调律石");
+                case DreamEvent.ShardKiln: return Loc.T($"調律石{EventsBalance.ShardKilnTuning}を欠片{EventsBalance.ShardKilnShards}に換える", $"Trade {EventsBalance.ShardKilnTuning} tuning stones for {EventsBalance.ShardKilnShards} shards", $"将{EventsBalance.ShardKilnTuning}颗调律石换成{EventsBalance.ShardKilnShards}枚碎片");
+                case DreamEvent.StarOffering: return Loc.T("遺物を捧げて星の経験を得る", "Sacrifice a relic for star experience", "献上遗物以获得星辰经验");
+                case DreamEvent.DreamOffering: return Loc.T("遺物を捧げて夢の経験を得る", "Sacrifice a relic for dream experience", "献上遗物以获得梦境经验");
+                case DreamEvent.AbyssalChest: return Loc.T($"欠片{EventsBalance.AbyssalChestShards}を払い、{EventsBalance.AbyssalChestHeatIncrement}段深く潜る", $"Pay {EventsBalance.AbyssalChestShards} shards and delve {(EventsBalance.AbyssalChestHeatIncrement == 1 ? "one" : EventsBalance.AbyssalChestHeatIncrement.ToString())} level deeper", $"支付{EventsBalance.AbyssalChestShards}碎片，下潜加深{EventsBalance.AbyssalChestHeatIncrement}段");
+                case DreamEvent.RelicExchange: return Loc.T("一番弱い対象の遺物を交換する", "Exchange the weakest eligible relic", "交换对象中最弱的遗物");
                 case DreamEvent.SealedVault: return Loc.T($"欠片{EventsBalance.SealedVaultShards}で遺物1つを保管庫へ送る", $"Pay {EventsBalance.SealedVaultShards} shards to send one relic to the stash");
                 case DreamEvent.PowerCrucible: return Loc.T("最後の固有効果を捧げ、最初を交換する", "Sacrifice the last power to swap the first");
                 default: return Loc.T("この出来事を選ぶ", "Take this event");

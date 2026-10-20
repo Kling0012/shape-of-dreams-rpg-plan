@@ -400,8 +400,8 @@ namespace SodRpg.Core.Game
                 var tag = (VariantTag)bit;
                 if ((tags & tag) != 0) parts.Add(TagNotice(tag));
             }
-            return Loc.T("この区画：", "This section: ") + string.Join(Loc.T("・", ", "), parts)
-                + Loc.T("敵がいる", " enemies");
+            return Loc.T("この区画：", "This section: ", "本区划：") + string.Join(Loc.T("・", ", ", "、"), parts)
+                + Loc.T("敵がいる", " enemies", "的敌人");
         }
 
         /// <summary>変種の撃破を、何の格として抽選するか（悪夢と同じく一段上）。</summary>
