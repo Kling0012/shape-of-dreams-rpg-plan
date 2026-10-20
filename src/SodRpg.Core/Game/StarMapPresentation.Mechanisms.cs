@@ -361,14 +361,14 @@ namespace SodRpg.Core.Game
                         + ". Targets the enemy hit when the combo succeeds.", "额外伤害增加量为" + Percent(payload.ValueUnits) + "的" + (payload.DamageBasis == BridgeDamageBasis.NativeHit ? "组合命中本身的伤害" : "攻击力与法术强度中的较高值") + "。目标为组合成功时命中的敌人。");
                 case BridgePayloadKind.Recharge:
                     return Loc.T("合わせ技が成立したとき、" + SelectorText(payload.Recipient) + "の残りクールダウンを" + Percent(payload.ValueUnits) + "短縮する。",
-                        "Remaining cooldown -" + Percent(payload.ValueUnits) + ". Recipient: " + SelectorText(payload.Recipient) + ".");
+                        "Remaining cooldown -" + Percent(payload.ValueUnits) + ". Recipient: " + SelectorText(payload.Recipient) + ".", "剩余冷却缩短" + Percent(payload.ValueUnits) + "。接受者：" + SelectorText(payload.Recipient) + "。");
                 case BridgePayloadKind.OrdinaryShield:
                     return Loc.T("合わせ技が成立したとき、最大HPの" + Percent(payload.ValueUnits) + "の障壁を" + Number(payload.DurationSeconds) + "秒間得る。",
-                            "Self shield +" + Percent(payload.ValueUnits) + " maximum HP (" + Number(payload.DurationSeconds) + "s). ")
+                            "Self shield +" + Percent(payload.ValueUnits) + " maximum HP (" + Number(payload.DurationSeconds) + "s). ", "自身护盾＋" + Percent(payload.ValueUnits) + "最大生命值（" + Number(payload.DurationSeconds) + "秒）。")
                         + PoolText(ModShieldPoolKind.Ordinary);
                 case BridgePayloadKind.Gimmick:
                     return Gimmicks.DescribeForSource(payload.Gimmick, source,
-                        triggerText: Loc.T("この合わせ技が成立したときに発動", "Triggered when this combo succeeds"));
+                        triggerText: Loc.T("この合わせ技が成立したときに発動", "Triggered when this combo succeeds", "此组合成功时触发"));
                 case BridgePayloadKind.AlliedWard:
                     return DescribeWard(payload.Ward, "合わせ技が成立したとき");
                 default: throw new InvalidOperationException("Unknown bridge payload: " + payload.Kind);
@@ -385,10 +385,10 @@ namespace SodRpg.Core.Game
                 decimal chance = value % 100m;
                 return Loc.T(stacks > 0 ? stacks + "つ" + (chance > 0 ? "（さらに" + Number(chance) + "%の確率でもう1つ）" : "") : chance > 0 ? Number(chance) + "%の確率で1つ" : "",
                     (stacks > 0 ? stacks + " stacks" : "")
-                    + (chance > 0 ? (stacks > 0 ? " + chance of one more: " : "chance of one stack: ") + Number(chance) + "%" : ""));
+                    + (chance > 0 ? (stacks > 0 ? " + chance of one more: " : "chance of one stack: ") + Number(chance) + "%" : ""), (stacks > 0 ? stacks + "层" : "") + (chance > 0 ? (stacks > 0 ? "＋额外一层的概率：" : "获得一层的概率：") + Number(chance) + "%" : ""));
             }
             if (gimmick?.Effect == GimmickEffect.Daze)
-                return Number(units / 1000m) + Loc.T("秒のスタン", "s stun");
+                return Number(units / 1000m) + Loc.T("秒のスタン", "s stun", "秒眩晕");
             return Percent(units);
         }
 
@@ -402,7 +402,7 @@ namespace SodRpg.Core.Game
                     + Number(ward.DurationSeconds) + "秒間付与する。",
                 "Shield +" + Percent(ward.ValueUnits) + " of " + basisEn + ". Targets: " + (travelers ? "allied travelers" : "your summons")
                     + (ward.IncludeOwner ? " and yourself" : " (excluding yourself)") + " within " + Number(ward.RadiusMetres) + "m of you, up to " + ward.Targets
-                    + " targets, for " + Number(ward.DurationSeconds) + "s. ")
+                    + " targets, for " + Number(ward.DurationSeconds) + "s. ", "护盾量为" + Percent(ward.ValueUnits) + "的" + (ward.AmountBasis == WardAmountBasis.RecipientMaxHP ? "接受者最大生命值" : "施加者攻击力与法术强度中的较高值") + "。目标：" + (travelers ? "队友旅人" : "自身召唤物") + (ward.IncludeOwner ? "及自身" : "（不含自身）") + "，位于自身" + Number(ward.RadiusMetres) + "米内，最多" + ward.Targets + "个目标，持续" + Number(ward.DurationSeconds) + "秒。")
                 + PoolText(ward.PoolKind);
         }
     }
