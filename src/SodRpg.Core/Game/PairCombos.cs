@@ -300,7 +300,7 @@ namespace SodRpg.Core.Game
             foreach (var star in HeroSigils.All) if (star.Id == id) return star.Name.ToString();
             foreach (var hero in HeroSigils.All.Select(t => t.HeroKey).Where(k => k != null).Distinct())
                 foreach (var star in HeroSigils.TreeFor(hero)) if (star.Id == id) return star.Name.ToString();
-            return Loc.T("前提の星", "prerequisite star");
+            return Loc.T("前提の星", "prerequisite star", "前置星");
         }
 
         private static PairComboDef D(string hero, int bridge, string slugA, string memoryA, string slugB, string memoryB,
@@ -315,7 +315,7 @@ namespace SodRpg.Core.Game
                 Id = prefix + ".pair." + bridge, HeroKey = "Hero_" + hero, BridgeIndex = bridge,
                 BridgeId = prefix + ".ring." + BridgeSlugs[bridge - 1], RouteA = memoryA, RouteB = memoryB,
                 StarA = prefix + ".route." + slugA + ".4", StarB = prefix + ".route." + slugB + ".4",
-                Name = new Txt(ja, en), TriggerMemory = origin, Trigger = trigger, Step = step,
+                Name = new Txt(ja, en, LocZhGlossary.Lookup(en)), TriggerMemory = origin, Trigger = trigger, Step = step,
                 PayoffMemory = payoff, PayoffTrigger = payoffTrigger, Effect = effect, Value = one,
                 Arg = arg, Cooldown = cooldown, RechargeMemory = recharge,
                 OncePerActivation = oncePerActivation, KillByPayoffMemory = killByPayoffMemory,

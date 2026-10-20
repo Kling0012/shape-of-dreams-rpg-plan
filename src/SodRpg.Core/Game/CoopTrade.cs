@@ -72,20 +72,20 @@ namespace SodRpg.Core.Game
 
         public static string Validate(Profile profile, CoopTradeOffer offer)
         {
-            if (profile == null || offer == null || offer.RelicUids == null) return Loc.T("取引の提示がありません。", "Trade offer is missing.");
-            if (profile.CoopTradePending != null) return Loc.T("協力取引の品をすでに預かっています。", "A cooperative trade is already reserved.");
-            if (offer.Shards < 0 || offer.Tuning < 0) return Loc.T("取引の素材数に負の値は指定できません。", "Trade amounts cannot be negative.");
+            if (profile == null || offer == null || offer.RelicUids == null) return Loc.T("取引の提示がありません。", "Trade offer is missing.", "缺少交易报价。");
+            if (profile.CoopTradePending != null) return Loc.T("協力取引の品をすでに預かっています。", "A cooperative trade is already reserved.", "已有合作交易的物品被预留。");
+            if (offer.Shards < 0 || offer.Tuning < 0) return Loc.T("取引の素材数に負の値は指定できません。", "Trade amounts cannot be negative.", "交易材料数量不能为负数。");
             if (profile.Material(Materials.Shard) < 0 || profile.Material(Materials.Tuning) < 0
                 || (profile.Run?.SatchelShards ?? 0) < 0 || (profile.Run?.SatchelTuning ?? 0) < 0)
-                return Loc.T("取引の素材残高が不正です。", "Trade material balances are invalid.");
+                return Loc.T("取引の素材残高が不正です。", "Trade material balances are invalid.", "交易材料余额无效。");
             if (Shards(profile) < offer.Shards || Tuning(profile) < offer.Tuning)
-                return Loc.T("取引に必要な素材が足りません。", "Not enough trade materials.");
+                return Loc.T("取引に必要な素材が足りません。", "Not enough trade materials.", "交易材料不足。");
             string inventoryError = ValidateInventory(profile);
             if (inventoryError != null) return inventoryError;
             var offered = new HashSet<string>(StringComparer.Ordinal);
             foreach (string uid in offer.RelicUids)
             {
-                if (string.IsNullOrEmpty(uid) || !offered.Add(uid)) return Loc.T("同じ遺物を二度提示できません。", "Trade relic IDs must be unique.");
+                if (string.IsNullOrEmpty(uid) || !offered.Add(uid)) return Loc.T("同じ遺物を二度提示できません。", "Trade relic IDs must be unique.", "交易遗物的个体ID不能重复。");
                 string relicError = ValidateRelicOffer(profile, uid);
                 if (relicError != null) return relicError;
             }
@@ -101,10 +101,10 @@ namespace SodRpg.Core.Game
 
         private static string ValidateRelicOffer(Profile profile, string uid)
         {
-            if (FindOffered(profile, uid) == null) return Loc.T("提示した遺物が保管庫や鞄にありません。", "An offered relic is not in your stash or satchel.");
-            if (profile.IsEquippedAnywhere(uid)) return Loc.T("装着中の遺物は取引できません。", "An offered relic is equipped.");
+            if (FindOffered(profile, uid) == null) return Loc.T("提示した遺物が保管庫や鞄にありません。", "An offered relic is not in your stash or satchel.", "报价中的遗物不在你的仓库或背包中。");
+            if (profile.IsEquippedAnywhere(uid)) return Loc.T("装着中の遺物は取引できません。", "An offered relic is equipped.", "已装备的遗物无法交易。");
             if (profile.PendingTrades.Any(t => t.Uid == uid || t.Relic?.Uid == uid)
-                || profile.RetuneOffer?.Uid == uid) return Loc.T("提示した遺物は別の処理の応答待ちです。", "An offered relic has another pending operation.");
+                || profile.RetuneOffer?.Uid == uid) return Loc.T("提示した遺物は別の処理の応答待ちです。", "An offered relic has another pending operation.", "报价中的遗物正在等待其他操作完成。");
             return null;
         }
 
@@ -128,16 +128,16 @@ namespace SodRpg.Core.Game
         {
             // cancelled は参加者の取消・時間切れ・安全でない状態、connection は接続の変化。受け手は再申し込み
             // するかどうかをこの区別で判断できるため、文言も分けておく（コードは前から別々）。
-            ["unsupported"] = new Txt("相手がトレード非対応、または応答がありません。トレードのみ利用できません。", "The peer does not support trade or has not replied. Only trade is unavailable."),
-            ["peerBusy"] = new Txt("相手は今取引できる状態ではありません（戦闘中・保存中など）", "The other player can't trade right now (in combat, saving, etc.)"),
-            ["safe"] = new Txt("安全な時・保存完了後のみ取引できます。取引は中止しました。", "Trade requires a safe moment and completed saves. The trade was cancelled."),
-            ["ownership"] = new Txt("所持品または残高が変わったため取引を中止しました。", "The trade was cancelled because inventory or balances changed."),
-            ["cancelled"] = new Txt("取引を中止しました（取り消し・時間切れ・安全でない状態）。", "The trade was cancelled (a cancel request, timeout or unsafe conditions)."),
-            ["connection"] = new Txt("接続が変わったため取引を中止しました（切断・再接続・再起動）。", "The trade was cancelled because the connection changed (disconnect, reconnect or restart)."),
-            ["saving"] = new Txt("トレードの記録を保存する準備中です。トレードのみ保留します。", "Preparing the trade journal. Only trade is on hold."),
-            ["recordTooLarge"] = new Txt("取引の記録が大きすぎます。保管庫を整理してから試してください。", "The trade record is too large. Tidy up your stash and try again."),
+            ["unsupported"] = new Txt("相手がトレード非対応、または応答がありません。トレードのみ利用できません。", "The peer does not support trade or has not replied. Only trade is unavailable.", "对方不支持交易或尚未回复。仅交易功能不可用。"),
+            ["peerBusy"] = new Txt("相手は今取引できる状態ではありません（戦闘中・保存中など）", "The other player can't trade right now (in combat, saving, etc.)", "对方目前无法交易（正在战斗、保存等）。"),
+            ["safe"] = new Txt("安全な時・保存完了後のみ取引できます。取引は中止しました。", "Trade requires a safe moment and completed saves. The trade was cancelled.", "交易需要在安全状态且保存完成后进行。交易已取消。"),
+            ["ownership"] = new Txt("所持品または残高が変わったため取引を中止しました。", "The trade was cancelled because inventory or balances changed.", "物品或材料余额发生变化，交易已取消。"),
+            ["cancelled"] = new Txt("取引を中止しました（取り消し・時間切れ・安全でない状態）。", "The trade was cancelled (a cancel request, timeout or unsafe conditions).", "交易已取消（取消请求、超时或不安全状态）。"),
+            ["connection"] = new Txt("接続が変わったため取引を中止しました（切断・再接続・再起動）。", "The trade was cancelled because the connection changed (disconnect, reconnect or restart).", "连接发生变化（断开、重新连接或重启），交易已取消。"),
+            ["saving"] = new Txt("トレードの記録を保存する準備中です。トレードのみ保留します。", "Preparing the trade journal. Only trade is on hold.", "正在准备交易记录。仅暂停交易功能。"),
+            ["recordTooLarge"] = new Txt("取引の記録が大きすぎます。保管庫を整理してから試してください。", "The trade record is too large. Tidy up your stash and try again.", "交易记录过大。请整理仓库后重试。"),
             [FusionReason] = new Txt("融合済みの遺物は旧版と交換できません。ホストと交換相手を融合対応版に更新してください。",
-                "Fused relics cannot be traded with older versions. Update the host and trade partner to a version that supports Fusion."),
+                "Fused relics cannot be traded with older versions. Update the host and trade partner to a version that supports Fusion.", "融合后的遗物无法与旧版本交易。请将主机和交易对象更新至支持融合的版本。"),
         };
 
         /// <summary>
@@ -152,7 +152,7 @@ namespace SodRpg.Core.Game
         /// <summary>表示まで日英を保持する取引の理由。</summary>
         public static Txt ReasonMessage(string code) => code != null && Reasons.TryGetValue(code, out var message)
             ? message
-            : new Txt("トレードのみ利用できません：" + code, "Only trade is unavailable: " + code);
+            : new Txt("トレードのみ利用できません：" + code, "Only trade is unavailable: " + code, "仅交易功能不可用：" + code);
 
         public static CoopTradeReceipt CreateReceipt(string id, string hostKey, string firstKey, Profile first,
             CoopTradeOffer firstOffer, string secondKey, Profile second, CoopTradeOffer secondOffer)
@@ -167,7 +167,7 @@ namespace SodRpg.Core.Game
             RequireValid(ValidateExchange(first, firstOffer, second, secondOffer));
             RequireValid(ValidateExchange(second, secondOffer, first, firstOffer));
             if (first.CoopTradeExecuted.Contains(id) || second.CoopTradeExecuted.Contains(id))
-                throw new InvalidOperationException(Loc.T("この協力取引はすでに完了しています。", "This cooperative trade has already executed."));
+                throw new InvalidOperationException(Loc.T("この協力取引はすでに完了しています。", "This cooperative trade has already executed.", "这笔合作交易已完成。"));
             var receipt = new CoopTradeReceipt
             {
                 Id = id, HostKey = hostKey, FirstKey = firstKey, SecondKey = secondKey,
@@ -181,13 +181,13 @@ namespace SodRpg.Core.Game
         public static bool Prepare(Profile profile, string id, string hostKey, CoopTradeOffer own, bool legacyFusion = false)
         {
             if (profile == null) throw new ArgumentNullException(nameof(profile));
-            if (string.IsNullOrEmpty(id) || string.IsNullOrEmpty(hostKey)) throw new InvalidOperationException(Loc.T("取引の識別情報がありません。", "Trade identity is missing."));
+            if (string.IsNullOrEmpty(id) || string.IsNullOrEmpty(hostKey)) throw new InvalidOperationException(Loc.T("取引の識別情報がありません。", "Trade identity is missing.", "缺少交易识别信息。"));
             if (profile.CoopTradeExecuted.Contains(id)) return false;
             if (profile.CoopTradePending != null)
             {
                 if (profile.CoopTradePending.Id == id && profile.CoopTradePending.HostKey == hostKey
                     && SameOffer(profile.CoopTradePending.Offer, own)) return false;
-                throw new InvalidOperationException(Loc.T("別の協力取引の品をすでに預かっています。", "Another cooperative trade is already reserved."));
+                throw new InvalidOperationException(Loc.T("別の協力取引の品をすでに預かっています。", "Another cooperative trade is already reserved.", "另一笔合作交易的物品已被预留。"));
             }
             var next = profile.Clone();
             Rules.SettleSatchelOverflow(next);
@@ -238,26 +238,26 @@ namespace SodRpg.Core.Game
             if (profile.CoopTradeExecuted.Contains(receipt.Id)) return false;
             ValidateReceipt(receipt, out var first, out var second);
             bool isFirst = playerKey == receipt.FirstKey;
-            if (!isFirst && playerKey != receipt.SecondKey) throw new InvalidOperationException(Loc.T("この取引の受領書は別のプレイヤーのものです。", "Receipt does not belong to this player."));
+            if (!isFirst && playerKey != receipt.SecondKey) throw new InvalidOperationException(Loc.T("この取引の受領書は別のプレイヤーのものです。", "Receipt does not belong to this player.", "交易收据不属于此玩家。"));
             var own = isFirst ? receipt.FirstOffer : receipt.SecondOffer;
             var incoming = isFirst ? receipt.SecondOffer : receipt.FirstOffer;
             var before = isFirst ? first : second;
             var sender = isFirst ? second : first;
             var pending = profile.CoopTradePending;
             if (pending == null || pending.Id != receipt.Id || pending.HostKey != receipt.HostKey || !SameOffer(pending.Offer, own))
-                throw new InvalidOperationException(Loc.T("取引の受領書と保存済みの預かり品が一致しません。", "Receipt does not match durable escrow."));
+                throw new InvalidOperationException(Loc.T("取引の受領書と保存済みの預かり品が一致しません。", "Receipt does not match durable escrow.", "交易收据与已保存的托管物品不符。"));
             ValidateReservation(pending);
             if (pending.MaterialShards != Math.Min(before.Material(Materials.Shard), own.Shards)
                 || pending.MaterialTuning != Math.Min(before.Material(Materials.Tuning), own.Tuning)
                 || pending.CurrencyRunId != before.Run?.RunId)
-                throw new InvalidOperationException(Loc.T("受領書の素材と保存済みの預かり品が一致しません。", "Receipt materials do not match durable escrow."));
+                throw new InvalidOperationException(Loc.T("受領書の素材と保存済みの預かり品が一致しません。", "Receipt materials do not match durable escrow.", "收据中的材料与已保存的托管材料不符。"));
             foreach (var reserved in pending.Relics)
                 if (ReceiptRelicKey(reserved.Relic, pending.LegacyFusion) != ReceiptRelicKey(FindOffered(before, reserved.Relic.Uid), pending.LegacyFusion)
                     || (reserved.Target == CoopTradeReturnTarget.Stash) != (before.FindStash(reserved.Relic.Uid) != null)
                     || HasOwnedUid(profile, reserved.Relic.Uid)
                     || reserved.Target == CoopTradeReturnTarget.Satchel && reserved.RunId != before.Run?.RunId)
-                    throw new InvalidOperationException(Loc.T("受領書の遺物と保存済みの預かり品が一致しません。", "Receipt relic does not match durable escrow."));
-            if (pending.Relics.Count != own.RelicUids.Count) throw new InvalidOperationException(Loc.T("預かり品の遺物数が不正です。", "Escrow relic count is invalid."));
+                    throw new InvalidOperationException(Loc.T("受領書の遺物と保存済みの預かり品が一致しません。", "Receipt relic does not match durable escrow.", "收据中的遗物与已保存的托管遗物不符。"));
+            if (pending.Relics.Count != own.RelicUids.Count) throw new InvalidOperationException(Loc.T("預かり品の遺物数が不正です。", "Escrow relic count is invalid.", "托管遗物数量无效。"));
             RequireValid(ValidateInventory(profile));
             RequireValid(ValidateIncoming(profile, incoming, sender, out retryReason));
             if (retryReason != null) return false;
@@ -284,12 +284,12 @@ namespace SodRpg.Core.Game
             if (profile == null) throw new ArgumentNullException(nameof(profile));
             var pending = profile.CoopTradePending;
             if (pending == null || pending.Id != id) return false;
-            if (profile.CoopTradeExecuted.Contains(id)) throw new InvalidOperationException(Loc.T("完了した取引は取り消せません。", "Executed trade cannot be aborted."));
+            if (profile.CoopTradeExecuted.Contains(id)) throw new InvalidOperationException(Loc.T("完了した取引は取り消せません。", "Executed trade cannot be aborted.", "已完成的交易无法取消。"));
             ValidateReservation(pending);
             RequireValid(ValidateInventory(profile));
             if (profile.Material(Materials.Shard) < 0 || profile.Material(Materials.Tuning) < 0
                 || (profile.Run?.SatchelShards ?? 0) < 0 || (profile.Run?.SatchelTuning ?? 0) < 0)
-                throw new InvalidOperationException(Loc.T("取引の素材残高が不正です。", "Trade material balances are invalid."));
+                throw new InvalidOperationException(Loc.T("取引の素材残高が不正です。", "Trade material balances are invalid.", "交易材料余额无效。"));
             bool sameCurrencyRun = profile.Run != null && profile.Run.RunId == pending.CurrencyRunId;
             int materialShards = sameCurrencyRun ? pending.MaterialShards : pending.Offer.Shards;
             int materialTuning = sameCurrencyRun ? pending.MaterialTuning : pending.Offer.Tuning;
@@ -298,17 +298,17 @@ namespace SodRpg.Core.Game
                 || (long)profile.Material(Materials.Tuning) + materialTuning > int.MaxValue
                 || (long)(profile.Run?.SatchelShards ?? 0) + satchelShards > int.MaxValue
                 || (long)(profile.Run?.SatchelTuning ?? 0) + satchelTuning > int.MaxValue)
-                retryReason = Loc.T("預かり素材を返すと所持数の上限を超えます。", "Returning reserved materials would overflow.");
+                retryReason = Loc.T("預かり素材を返すと所持数の上限を超えます。", "Returning reserved materials would overflow.", "返还预留材料将超出持有上限。");
             int stashCount = profile.Stash.Count, satchelCount = profile.Run?.Satchel.Count ?? 0;
             foreach (var reserved in pending.Relics)
             {
-                if (HasOwnedUid(profile, reserved.Relic.Uid)) throw new InvalidOperationException(Loc.T("預かり遺物がすでに所持品にあります。", "Reserved relic already exists."));
+                if (HasOwnedUid(profile, reserved.Relic.Uid)) throw new InvalidOperationException(Loc.T("預かり遺物がすでに所持品にあります。", "Reserved relic already exists.", "预留遗物已在持有物品中。"));
                 if (ReturnToSatchel(profile, reserved)) satchelCount++;
                 else stashCount++;
             }
             if (stashCount > Workshop.StashCapacity(profile) || satchelCount > Workshop.SatchelCapacity(profile))
             {
-                retryReason = Loc.T("預かり遺物を返すための空きがありません。", "There is no room to return reserved relics.");
+                retryReason = Loc.T("預かり遺物を返すための空きがありません。", "There is no room to return reserved relics.", "没有足够空间返还预留遗物。");
             }
             if (retryReason != null) return false;
             var next = profile.Clone();
@@ -344,27 +344,27 @@ namespace SodRpg.Core.Game
                 || (pending.MaterialShards < pending.Offer.Shards || pending.MaterialTuning < pending.Offer.Tuning)
                     && string.IsNullOrEmpty(pending.CurrencyRunId)
                 || pending.Relics.Count != pending.Offer.RelicUids.Count)
-                throw new InvalidOperationException(Loc.T("保存済みの取引預かり品が不正です。", "Durable trade escrow is invalid."));
+                throw new InvalidOperationException(Loc.T("保存済みの取引預かり品が不正です。", "Durable trade escrow is invalid.", "已保存的交易托管物品无效。"));
             var seen = new HashSet<string>(StringComparer.Ordinal);
             foreach (var reserved in pending.Relics)
                 if (reserved?.Relic == null || string.IsNullOrEmpty(reserved.Relic.Uid) || !seen.Add(reserved.Relic.Uid)
                     || reserved.Target != CoopTradeReturnTarget.Stash && reserved.Target != CoopTradeReturnTarget.Satchel
                     || reserved.Target == CoopTradeReturnTarget.Satchel && string.IsNullOrEmpty(reserved.RunId)
                     || reserved.Target == CoopTradeReturnTarget.Stash && reserved.RunId != null)
-                    throw new InvalidOperationException(Loc.T("保存済みの取引預かり品に不正な遺物があります。", "Durable trade escrow contains invalid relics."));
-            if (!seen.SetEquals(pending.Offer.RelicUids)) throw new InvalidOperationException(Loc.T("保存済みの預かり品と取引の提示が一致しません。", "Durable trade escrow does not match its offer."));
+                    throw new InvalidOperationException(Loc.T("保存済みの取引預かり品に不正な遺物があります。", "Durable trade escrow contains invalid relics.", "已保存的交易托管物品含有无效遗物。"));
+            if (!seen.SetEquals(pending.Offer.RelicUids)) throw new InvalidOperationException(Loc.T("保存済みの預かり品と取引の提示が一致しません。", "Durable trade escrow does not match its offer.", "已保存的交易托管物品与报价不符。"));
         }
 
         internal static void ValidateReceipt(CoopTradeReceipt receipt, out Profile first, out Profile second)
         {
-            if (receipt == null) throw new InvalidOperationException(Loc.T("取引の受領書がありません。", "Trade receipt is missing."));
+            if (receipt == null) throw new InvalidOperationException(Loc.T("取引の受領書がありません。", "Trade receipt is missing.", "缺少交易收据。"));
             RequireKeys(receipt.Id, receipt.HostKey, receipt.FirstKey, receipt.SecondKey);
             first = ReadFrozenProfile(receipt.FirstProfile);
             second = ReadFrozenProfile(receipt.SecondProfile);
             RequireValid(Validate(first, receipt.FirstOffer));
             RequireValid(Validate(second, receipt.SecondOffer));
             if (first.CoopTradeExecuted.Contains(receipt.Id) || second.CoopTradeExecuted.Contains(receipt.Id))
-                throw new InvalidOperationException(Loc.T("受領書の保存時点ですでに取引が完了しています。", "Receipt snapshot has already executed this trade."));
+                throw new InvalidOperationException(Loc.T("受領書の保存時点ですでに取引が完了しています。", "Receipt snapshot has already executed this trade.", "保存收据时此交易已完成。"));
             RequireValid(ValidateExchange(first, receipt.FirstOffer, second, receipt.SecondOffer));
             RequireValid(ValidateExchange(second, receipt.SecondOffer, first, receipt.FirstOffer));
         }
@@ -374,7 +374,7 @@ namespace SodRpg.Core.Game
             var notes = new List<string>();
             var profile = ProfileCodec.Read(text, notes);
             if (notes.Count != 0 || ProfileCodec.WriteCoopTradeReceiptProfile(profile.Clone()) != text)
-                throw new InvalidOperationException(Loc.T("取引のプロフィールに読み取れない所持品や不正な保存情報があります。", "Trade profile snapshot is not canonical or contains unreadable assets."));
+                throw new InvalidOperationException(Loc.T("取引のプロフィールに読み取れない所持品や不正な保存情報があります。", "Trade profile snapshot is not canonical or contains unreadable assets.", "交易档案快照格式不规范或含有无法读取的物品。"));
             return profile;
         }
 
@@ -382,7 +382,7 @@ namespace SodRpg.Core.Game
         {
             if (string.IsNullOrEmpty(id) || string.IsNullOrEmpty(host) || string.IsNullOrEmpty(first)
                 || string.IsNullOrEmpty(second) || first == second)
-                throw new InvalidOperationException(Loc.T("取引の参加者または識別情報が不正です。", "Trade participants or identity are invalid."));
+                throw new InvalidOperationException(Loc.T("取引の参加者または識別情報が不正です。", "Trade participants or identity are invalid.", "交易参与者或识别信息无效。"));
         }
 
         internal static bool SameOffer(CoopTradeOffer first, CoopTradeOffer second) =>
@@ -410,12 +410,12 @@ namespace SodRpg.Core.Game
         {
             long shards = (long)receiver.Material(Materials.Shard) - Math.Min(receiver.Material(Materials.Shard), outgoing.Shards) + incoming.Shards;
             long tuning = (long)receiver.Material(Materials.Tuning) - Math.Min(receiver.Material(Materials.Tuning), outgoing.Tuning) + incoming.Tuning;
-            if (shards < 0 || tuning < 0 || shards > int.MaxValue || tuning > int.MaxValue) return Loc.T("取引後の素材数が所持上限を超えます。", "Trade material balance would overflow.");
+            if (shards < 0 || tuning < 0 || shards > int.MaxValue || tuning > int.MaxValue) return Loc.T("取引後の素材数が所持上限を超えます。", "Trade material balance would overflow.", "交易后的材料余额将超出持有上限。");
             int removedStash = outgoing.RelicUids.Count(uid => receiver.FindStash(uid) != null);
             if ((long)receiver.Stash.Count - removedStash + incoming.RelicUids.Count > Workshop.StashCapacity(receiver))
-                return Loc.T("受け取る遺物を入れる保管庫の空きがありません。", "There is no room for received relics in the stash.");
+                return Loc.T("受け取る遺物を入れる保管庫の空きがありません。", "There is no room for received relics in the stash.", "仓库没有足够空间接收遗物。");
             foreach (string uid in incoming.RelicUids)
-                if (HasOwnedUid(receiver, uid)) return Loc.T("受け取る遺物と同じ個体IDの遺物をすでに所持しています。", "Received relic ID already belongs to the recipient.");
+                if (HasOwnedUid(receiver, uid)) return Loc.T("受け取る遺物と同じ個体IDの遺物をすでに所持しています。", "Received relic ID already belongs to the recipient.", "接收方已持有相同个体ID的遗物。");
             return null;
         }
 
@@ -423,15 +423,15 @@ namespace SodRpg.Core.Game
         {
             retryReason = null;
             if (receiver.Material(Materials.Shard) < 0 || receiver.Material(Materials.Tuning) < 0)
-                return Loc.T("取引の素材残高が不正です。", "Trade material balances are invalid.");
+                return Loc.T("取引の素材残高が不正です。", "Trade material balances are invalid.", "交易材料余额无效。");
             if ((long)receiver.Material(Materials.Shard) + incoming.Shards > int.MaxValue
                 || (long)receiver.Material(Materials.Tuning) + incoming.Tuning > int.MaxValue)
-                retryReason = Loc.T("受け取る素材が所持上限を超えます。", "Received materials would overflow.");
+                retryReason = Loc.T("受け取る素材が所持上限を超えます。", "Received materials would overflow.", "收到的材料将超出持有上限。");
             if ((long)receiver.Stash.Count + incoming.RelicUids.Count > Workshop.StashCapacity(receiver))
-                retryReason = Loc.T("保管庫が一杯です。", "Your stash is full.");
+                retryReason = Loc.T("保管庫が一杯です。", "Your stash is full.", "你的仓库已满。");
             foreach (string uid in incoming.RelicUids)
                 if (FindOffered(sender, uid) == null || HasOwnedUid(receiver, uid)
-                    || receiver.CoopTradePending.Relics.Any(r => r.Relic.Uid == uid)) return Loc.T("受け取る遺物の個体IDが所持品と重複しています。", "Received relic ID conflicts with owned assets.");
+                    || receiver.CoopTradePending.Relics.Any(r => r.Relic.Uid == uid)) return Loc.T("受け取る遺物の個体IDが所持品と重複しています。", "Received relic ID conflicts with owned assets.", "收到的遗物个体ID与持有物品冲突。");
             return null;
         }
 
@@ -443,7 +443,7 @@ namespace SodRpg.Core.Game
         {
             var seen = new HashSet<string>(StringComparer.Ordinal);
             foreach (var relic in AllInventory(profile))
-                if (relic == null || string.IsNullOrEmpty(relic.Uid) || !seen.Add(relic.Uid)) return Loc.T("所持品に重複した、または不正な遺物の個体IDがあります。", "Profile contains duplicate or invalid relic IDs.");
+                if (relic == null || string.IsNullOrEmpty(relic.Uid) || !seen.Add(relic.Uid)) return Loc.T("所持品に重複した、または不正な遺物の個体IDがあります。", "Profile contains duplicate or invalid relic IDs.", "档案中存在重复或无效的遗物个体ID。");
             return null;
         }
 
