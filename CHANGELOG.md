@@ -10,6 +10,14 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v3.8.36 — Chinese translations for 200 unique items, Chinese text fixes and a lighter merchant area（2026-10-21）
+
+### 不具合の修正 / Bug fixes
+- 中国語の星図で費用注記が英語に戻り、必要ポイントの行が重複する問題を直しました。 / Fixed English fallback in Chinese star-map cost notes causing duplicate point-cost lines.
+- 中国語の変種説明で盾と防御低下の表記を直し、契約を選べないときの案内と、マウの技の説明に使う区切り記号をそろえました。 / Corrected shield and armor-reduction wording in Chinese variant descriptions, aligned unavailable-pact messages, and standardized separators in Maw ability descriptions.
+
+---
+
 ## v3.8.35 — More Chinese (Simplified): bosses, bounties, feats and 400 equipment entries（2026-10-21）
 
 中国語（簡体字）で表示される部分をさらに増やしました。ボス、賞金首、部屋の予兆、実績、禁忌、エッセンス、系統に加え、装備の名前と説明400件が中国語で読めるようになりました。 / Further expanded Chinese (Simplified) coverage: bosses, bounties, room omens, feats, forbidden rules, essences, families and 400 more equipment names and descriptions now appear in Chinese.
