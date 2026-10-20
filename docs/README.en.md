@@ -1,17 +1,17 @@
 # Dreamforge RPG (English guide)
 
 This page is the English description of the Dreamforge RPG mod for *Shape of Dreams*.
-The Japanese description lives on the distribution page and in the repository's [README](../README.md).
-A Chinese (Simplified) guide is available at [docs/README.zh.md](README.zh.md).
+The Japanese description is on the [Steam Workshop page](https://steamcommunity.com/sharedfiles/filedetails/?id=3822274988).
+A Chinese (Simplified) guide is available at [docs/README.zh.md](https://github.com/Kling0012/dreamforge-rpg/blob/main/docs/README.zh.md).
 
-- Download: [Steam Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=3822274988)
-- Changes per version: [CHANGELOG](../CHANGELOG.md)
+- Subscribe: [Steam Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=3822274988)
+- Changes per version: [Patch notes](https://github.com/Kling0012/dreamforge-rpg/releases)
 
 Dreamforge RPG turns every run into part of a long RPG journey: relics you keep, a "secure or delve" choice at every zone, a star map per Traveler, a forge and long-term goals. Co-op is supported.
 
 ## Bug reports and requests
 
-This mod is made entirely by AI and has not been play-tested. Reports from players are very welcome.
+This mod is made entirely by AI and has not been play-tested. Issue and pull request triage, bug reproduction and fixes, review, tests, merging and releases are handled automatically by AI. Reports from players are very welcome.
 
 - Bug reports and requests: [github.com/Kling0012/dreamforge-rpg/issues](https://github.com/Kling0012/dreamforge-rpg/issues)
 - Patch notes: [github.com/Kling0012/dreamforge-rpg/releases](https://github.com/Kling0012/dreamforge-rpg/releases)
@@ -42,12 +42,12 @@ This mod is made entirely by AI and has not been play-tested. Reports from playe
 
 - Enemies grow with delve depth, and stronger gear draws more nightmares with extra traits.
 - Dream pressure raises enemy HP, damage and numbers from the party's average progress, not player count. Bosses are never added.
-- Dream variants: base-game enemies reborn with new looks, abilities and better loot.
+- Dream variants: base-game enemies reborn with new looks, abilities and better loot. Waypoint choices change the challenge and rewards of each expedition, with support for the base game's Limbo.
 
 ## Growth
 
-- Each Traveler has their own star map, star XP and points. Route stars strengthen specific memories. Respec is free.
-- Forge: enhance, retune, salvage, transmute and craft. The workshop unlocks convenience upgrades.
+- Each Traveler has their own star map, star XP and points. Route stars strengthen specific memories. Respec is free. Save up to five star-map loadouts per Traveler and switch between them outside expeditions.
+- Forge: enhance, retune, salvage, transmute, craft, break limits and awaken relics. The workshop unlocks satchel and stash expansions and other convenience upgrades.
 - Bounties every run, daily dreams, feats with rewards and Traveler mastery.
 
 ## Performance
@@ -62,6 +62,6 @@ Optional settings lighten the whole game: an FPS cap in the background and light
 
 ## Multiplayer
 
-Every player needs the same version of this mod. The host applies everyone's bonuses. Each player keeps their own save, and loot is rolled per player.
+Every player needs the same version of this mod. The host applies everyone's bonuses. Each player keeps their own save, and loot is rolled per player. Players can trade relics and materials.
 
 This mod alters gameplay. Save file: `<persistentDataPath>/QuickSave/Mods/DreamforgeRPG/profile.json`

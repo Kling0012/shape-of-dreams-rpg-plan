@@ -43,6 +43,7 @@ namespace SodRpg.Mod
             NativePerfOptions.ChargeRpcIdle = config.nativeChargeRpcIdle;
             NativePerfOptions.LobbyAccessoryIdle = config.nativeLobbyAccessoryIdle;
             NativePerfOptions.ChaosShrineHitScan = config.nativeChaosShrineHitScan;
+            NativePerfOptions.ChaosShrineChoice = config.nativeChaosShrineChoiceCache;
             NativePerfOptions.ProjectileIdleRpc = config.nativeProjectileIdleRpc;
             NativePerfOptions.CustomRpcDispatch = config.nativeCustomRpcDispatch;
             NativePerfOptions.SampleUpdateIdle = config.nativeSampleUpdateIdle;
@@ -53,6 +54,7 @@ namespace SodRpg.Mod
             NativePerfOptions.RoomStartDependency = config.nativeRoomStartDependency;
             NativePerfOptions.ChatMuteCheckAlloc = config.nativeChatMuteCheckAlloc;
             NativePerfOptions.ProxyPositionIdle = config.nativeProxyPositionIdle;
+            NativePerfOptions.PickupIdle = config.nativePickupIdle;
             NativePerfOptions.EnemyHitFxBudget = config.nativeEnemyHitFxBudget;
         }
     }
@@ -86,6 +88,7 @@ namespace SodRpg.Mod
         internal static bool ChargeRpcIdle = true;
         internal static bool LobbyAccessoryIdle = true;
         internal static bool ChaosShrineHitScan = true;
+        internal static bool ChaosShrineChoice = true;
         internal static bool ProjectileIdleRpc = true;
         internal static bool CustomRpcDispatch = true;
         internal static bool SampleUpdateIdle = true;
@@ -96,6 +99,7 @@ namespace SodRpg.Mod
         internal static bool RoomStartDependency = true;
         internal static bool ChatMuteCheckAlloc = true;
         internal static bool ProxyPositionIdle = true;
+        internal static bool PickupIdle = true;
         internal static bool EnemyHitFxBudget = true;
     }
 
@@ -4314,6 +4318,357 @@ namespace SodRpg.Mod
                 NativePerfPatch.Warn(ref _warned, "proxy position idle", ex.Message);
             }
             return true;
+        }
+    }
+
+    [HarmonyPatch]
+    internal static class NativePickupIdlePerf
+    {
+        // PickupInstance.ActiveFrameUpdate runs on every machine (the guest included) for every
+        // pickup orb — gold, exp, dream dust, health, mana, regen (the orb subclasses do not
+        // override it) — every rendered frame, for as long as the orb lives. Its per-frame work
+        // when no hero is attracting the orb: decelerate the flat velocity toward zero, integrate
+        // the position, one 3D Physics.Raycast straight down against the static Ground layer to
+        // find the floor height, and a transform.position write. The raycast is the expensive
+        // part and repeats unchanged for the whole time an orb sits still, which is most of an
+        // orb's life (the host's target discovery and the pickup check live in ActiveLogicUpdate,
+        // untouched here; attraction frames have a target and never skip).
+        //
+        // The skip condition is the exact-rest state: Network_target == null, flat velocity
+        // exactly (0,0) and vertical velocity exactly 0f, per component. The only writer that
+        // produces this state is the native ground clamp (`vector.y = num4; _currentYVelocity =
+        // 0f`), so at rest the position sits exactly on groundHeight + yPosFromGround and the
+        // horizontal origin of the next raycast is unchanged. For that state the native body can
+        // only: keep the flat velocity at zero (MoveTowards(zero, zero, dt) is zero), build
+        // `vector` by adding exact zeros (bit-identical to position), run the raycast, take the
+        // fall-through gravity branch (target null makes num5 -inf and vector.y == num4 fails
+        // both clamps), and finish with `_currentYVelocity += -18.8f * dt` plus a transform
+        // write of the value it just read. That gravity write is the driver of the native's
+        // two-frame sink-and-clamp bob: the next native frame moves the orb down 18.8*dt*dt
+        // (~0.005 units at 60 fps, ~0.02 at 30) and clamps it back. Skipping the write freezes
+        // the orb at the clamped height — the difference to the native path is that invisible
+        // bob alone, and every value the rest of the game reads (the position the host sends in
+        // SyncPosition, the pickup distance check, the drawn transform) is either identical or
+        // within the native bob amplitude.
+        //
+        // The frozen state breaks by itself on every path that must move the orb: the host
+        // assigning a target (TryFindTarget / timeout magnet, delivered to guests through the
+        // _target SyncVar), RpcSyncPosition writing a velocity, or a new target frame — all make
+        // the condition fail and hand the body back. One state cannot be seen from here — the
+        // static ground under a resting orb changing — so a resting orb still runs the native
+        // body once per RevalidateSeconds: any missed change heals within half a second and the
+        // steady state still removes ~96% of the per-orb raycasts (2 per second instead of one
+        // per frame). Time.time is the same clock the native timers use; while it stalls, the
+        // native body would divide a zero deltaTime into the same no-op writes anyway.
+        //
+        // The first rest frame still runs the native body once (and only then creates the
+        // per-instance book), so airborne or sliding orbs never allocate anything and every
+        // freeze starts from a body the game actually executed. Books live in a
+        // ConditionalWeakTable and die with their pickup.
+        private const float RevalidateSeconds = 0.5f;
+
+        private sealed class IdleBook
+        {
+            internal float NextNativeTime;
+        }
+
+        private static readonly ConditionalWeakTable<PickupInstance, IdleBook> Books =
+            new ConditionalWeakTable<PickupInstance, IdleBook>();
+        private static readonly ConditionalWeakTable<PickupInstance, IdleBook>.CreateValueCallback CreateBook =
+            _ => new IdleBook();
+        private static AccessTools.FieldRef<PickupInstance, Vector2> _flatVelocity;
+        private static AccessTools.FieldRef<PickupInstance, float> _yVelocity;
+        private static MethodBase _target;
+        private static bool _disabled;
+        private static bool _warned;
+
+        private static bool Prepare()
+        {
+            _target = NativePerfPatch.Find(typeof(PickupInstance), "ActiveFrameUpdate", ref _warned);
+            if (_target == null) return false;
+            try
+            {
+                _flatVelocity = AccessTools.FieldRefAccess<PickupInstance, Vector2>("_currentFlatVelocity");
+                _yVelocity = AccessTools.FieldRefAccess<PickupInstance, float>("_currentYVelocity");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                NativePerfPatch.Warn(ref _warned, "pickup idle", ex.Message);
+                return false;
+            }
+        }
+
+        private static MethodBase TargetMethod() => _target;
+
+        private static bool Prefix(PickupInstance __instance)
+        {
+            if (_disabled || !NativePerfOptions.PickupIdle) return true;
+            try
+            {
+                // Per-component float == on purpose: Unity's Vector2 == ~1e-5 tolerance would
+                // freeze orbs that are still sliding; only the exactly-zero state the native
+                // MoveTowards/clamp produce is provably a no-op frame.
+                Vector2 flat = _flatVelocity(__instance);
+                if (__instance.Network_target != null
+                    || flat.x != 0f || flat.y != 0f
+                    || _yVelocity(__instance) != 0f) return true;
+                float now = Time.time;
+                if (!Books.TryGetValue(__instance, out IdleBook book))
+                {
+                    Books.GetValue(__instance, CreateBook).NextNativeTime = now + RevalidateSeconds;
+                    return true;
+                }
+                if (now < book.NextNativeTime) return false;
+                book.NextNativeTime = now + RevalidateSeconds;
+            }
+            catch (Exception ex)
+            {
+                _disabled = true;
+                NativePerfPatch.Warn(ref _warned, "pickup idle", ex.Message);
+            }
+            return true;
+        }
+    }
+
+    // Shrine_Chaos resolves the player's selected reward with
+    // rewards[guid][int.Parse(GetCustomData(guid))] on every call. While the edit-skill UI is
+    // open the game re-runs that whole chain every frame — once or more per skill/gem button
+    // (FrameUpdate, UpdateCostDisplayStatus, IsSlotHighlighted/IsSlotSelectable) and for the
+    // shrine text (GetEditSkillIndicatorRawText/GetEditSkillIndicatorColor) — roughly a dozen
+    // times per frame on the client picking a reward, plus again on the host inside
+    // CmdActivateEditSkillAction. The inputs cannot change while their references stay equal:
+    // the rewards arrays are built once in OnLateStartServer and afterwards only removed
+    // (RemovePlayerAndCheckEmpty), ChaosReward is a struct whose fields are written before the
+    // array is stored, and the custom-data string is replaced (never mutated) in EnterEditSkill.
+    // So while (player, rewards array reference, custom-data string reference) compare equal the
+    // cached reward is exactly what the chain returns; any other state runs the original method,
+    // which keeps the vanilla KeyNotFoundException / FormatException / IndexOutOfRange behavior
+    // for missing keys and bad indices untouched.
+    internal static class ShrineChaosChoiceCache
+    {
+        private sealed class Entry
+        {
+            public DewPlayer player;
+            public ChaosReward[] array;
+            public string customData;
+            public ChaosReward reward;
+        }
+
+        private static readonly ConditionalWeakTable<Shrine_Chaos, Entry> _cache = new ConditionalWeakTable<Shrine_Chaos, Entry>();
+
+        internal static bool TryGet(Shrine_Chaos shrine, DewPlayer player, out ChaosReward reward)
+        {
+            reward = default;
+            if (player == null || !shrine.rewards.TryGetValue(player.guid, out var array)) return false;
+            var customData = shrine.GetCustomData(player);
+            var entry = _cache.GetOrCreateValue(shrine);
+            if (entry.player == player && entry.array == array
+                && (object)entry.customData == (object)customData && entry.customData != null)
+            {
+                reward = entry.reward;
+                return true;
+            }
+            if (customData == null || !int.TryParse(customData, out var index) || index < 0 || index >= array.Length)
+                return false;
+            entry.player = player;
+            entry.array = array;
+            entry.customData = customData;
+            reward = entry.reward = array[index];
+            return true;
+        }
+    }
+
+    [HarmonyPatch]
+    internal static class NativeShrineChaosIndicatorTextPerf
+    {
+        private static MethodBase _target;
+        private static bool _disabled;
+        private static bool _warned;
+
+        private static bool Prepare()
+        {
+            _target = NativePerfPatch.Find(typeof(Shrine_Chaos), "GetEditSkillIndicatorRawText", ref _warned);
+            return _target != null;
+        }
+
+        private static MethodBase TargetMethod() => _target;
+
+        private static bool Prefix(Shrine_Chaos __instance, ref string __result)
+        {
+            if (_disabled || !NativePerfOptions.ChaosShrineChoice) return true;
+            try
+            {
+                if (!ShrineChaosChoiceCache.TryGet(__instance, DewPlayer.local, out var reward)) return true;
+                __result = reward.type switch
+                {
+                    ChaosRewardType.UpgradeSkill => DewLocalization.GetUIValue("InGame_SelectSkillToUpgrade"),
+                    ChaosRewardType.UpgradeGem => DewLocalization.GetUIValue("InGame_SelectGemToUpgrade"),
+                    _ => null,
+                };
+                return false;
+            }
+            catch (Exception ex)
+            {
+                _disabled = true;
+                NativePerfPatch.Warn(ref _warned, "chaos shrine choice cache", ex.Message);
+                return true;
+            }
+        }
+    }
+
+    [HarmonyPatch]
+    internal static class NativeShrineChaosIndicatorColorPerf
+    {
+        private static MethodBase _target;
+        private static bool _disabled;
+        private static bool _warned;
+
+        private static bool Prepare()
+        {
+            _target = NativePerfPatch.Find(typeof(Shrine_Chaos), "GetEditSkillIndicatorColor", ref _warned);
+            return _target != null;
+        }
+
+        private static MethodBase TargetMethod() => _target;
+
+        private static bool Prefix(Shrine_Chaos __instance, ref Color __result)
+        {
+            if (_disabled || !NativePerfOptions.ChaosShrineChoice) return true;
+            try
+            {
+                if (!ShrineChaosChoiceCache.TryGet(__instance, DewPlayer.local, out var reward)) return true;
+                __result = reward.type switch
+                {
+                    ChaosRewardType.UpgradeSkill => EditSkillShrine.GenericSkillIndicatorColor,
+                    ChaosRewardType.UpgradeGem => EditSkillShrine.GenericGemIndicatorColor,
+                    _ => default(Color),
+                };
+                return false;
+            }
+            catch (Exception ex)
+            {
+                _disabled = true;
+                NativePerfPatch.Warn(ref _warned, "chaos shrine choice cache", ex.Message);
+                return true;
+            }
+        }
+    }
+
+    [HarmonyPatch]
+    internal static class NativeShrineChaosTargetTypesPerf
+    {
+        private static MethodBase _target;
+        private static bool _disabled;
+        private static bool _warned;
+
+        private static bool Prepare()
+        {
+            _target = NativePerfPatch.Find(typeof(Shrine_Chaos), "GetTargetTypes", new[] { typeof(DewPlayer) }, ref _warned);
+            return _target != null;
+        }
+
+        private static MethodBase TargetMethod() => _target;
+
+        private static bool Prefix(Shrine_Chaos __instance, DewPlayer player, ref EditSkillTargetType __result)
+        {
+            if (_disabled || !NativePerfOptions.ChaosShrineChoice) return true;
+            try
+            {
+                if (!ShrineChaosChoiceCache.TryGet(__instance, player, out var reward)) return true;
+                __result = reward.type switch
+                {
+                    ChaosRewardType.UpgradeSkill => EditSkillTargetType.Skill,
+                    ChaosRewardType.UpgradeGem => EditSkillTargetType.Gem,
+                    _ => EditSkillTargetType.None,
+                };
+                return false;
+            }
+            catch (Exception ex)
+            {
+                _disabled = true;
+                NativePerfPatch.Warn(ref _warned, "chaos shrine choice cache", ex.Message);
+                return true;
+            }
+        }
+    }
+
+    [HarmonyPatch]
+    internal static class NativeShrineChaosSkillTargetInfoPerf
+    {
+        private static MethodBase _target;
+        private static bool _disabled;
+        private static bool _warned;
+
+        private static bool Prepare()
+        {
+            _target = NativePerfPatch.Find(typeof(Shrine_Chaos), "GetTargetInfo",
+                new[] { typeof(DewPlayer), typeof(HeroSkillLocation), typeof(SkillTrigger) }, ref _warned);
+            return _target != null;
+        }
+
+        private static MethodBase TargetMethod() => _target;
+
+        private static bool Prefix(Shrine_Chaos __instance, DewPlayer player, SkillTrigger target, ref EditSkillTargetInfo __result)
+        {
+            if (_disabled || !NativePerfOptions.ChaosShrineChoice) return true;
+            try
+            {
+                // 本体は player 引数を使わず target の所有者で解決する。
+                var owner = target?.owner?.owner;
+                if (owner == null) return true;
+                if (!ShrineChaosChoiceCache.TryGet(__instance, owner, out var reward)) return true;
+                EditSkillTargetInfo result = default;
+                result.nextLevel = target.level + (int)reward.quantity;
+                result.rejectReasonRawText = (!target.isLevelUpEnabled) ? DewLocalization.GetUIValue("InGame_Message_CantUpgradeThisSkill") : null;
+                __result = result;
+                return false;
+            }
+            catch (Exception ex)
+            {
+                _disabled = true;
+                NativePerfPatch.Warn(ref _warned, "chaos shrine choice cache", ex.Message);
+                return true;
+            }
+        }
+    }
+
+    [HarmonyPatch]
+    internal static class NativeShrineChaosGemTargetInfoPerf
+    {
+        private static MethodBase _target;
+        private static bool _disabled;
+        private static bool _warned;
+
+        private static bool Prepare()
+        {
+            _target = NativePerfPatch.Find(typeof(Shrine_Chaos), "GetTargetInfo",
+                new[] { typeof(DewPlayer), typeof(GemLocation), typeof(Gem) }, ref _warned);
+            return _target != null;
+        }
+
+        private static MethodBase TargetMethod() => _target;
+
+        private static bool Prefix(Shrine_Chaos __instance, DewPlayer player, Gem target, ref EditSkillTargetInfo __result)
+        {
+            if (_disabled || !NativePerfOptions.ChaosShrineChoice) return true;
+            try
+            {
+                // 本体は player 引数を使わず target の所有者で解決する。
+                var owner = target?.owner?.owner;
+                if (owner == null) return true;
+                if (!ShrineChaosChoiceCache.TryGet(__instance, owner, out var reward)) return true;
+                EditSkillTargetInfo result = default;
+                result.nextLevel = target.quality + (int)reward.quantity;
+                __result = result;
+                return false;
+            }
+            catch (Exception ex)
+            {
+                _disabled = true;
+                NativePerfPatch.Warn(ref _warned, "chaos shrine choice cache", ex.Message);
+                return true;
+            }
         }
     }
 }

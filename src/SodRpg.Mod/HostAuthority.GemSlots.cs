@@ -62,7 +62,7 @@ namespace SodRpg.Mod
         private readonly List<KeyValuePair<GemLocation, Gem>> _gemOverflow = new List<KeyValuePair<GemLocation, Gem>>();
         private static readonly Comparison<KeyValuePair<GemLocation, Gem>> GemIndexDescending =
             (a, b) => b.Key.index.CompareTo(a.Key.index);
-        private float _nextGemSlotCheck, _nextGemSlotNotice;
+        private float _nextGemSlotCheck;
 
         private void ApplyGemSlots(HeroRuntime rt, Build build)
         {
@@ -120,8 +120,6 @@ namespace SodRpg.Mod
             float now = Time.unscaledTime;
             if (now < _nextGemSlotCheck) return;
             _nextGemSlotCheck = now + 1f;
-            bool notify = now >= _nextGemSlotNotice;
-            if (notify) _nextGemSlotNotice = now + 5f;
             if (GemContinueSources.HasParticipants) ProtectNativeContinueGemSlots();
             foreach (var rt in _runtimes.Values)
             {
@@ -141,7 +139,10 @@ namespace SodRpg.Mod
                 UpdateGemSlot(skill, ledger.Movement, HeroSkillLocation.Movement,
                     EssenceSlots.AddedFrom(rt.AppliedBuild.Build, Stat.EssenceSlotMovement), false);
                 ledger.Persist();
-                if (notify) ClearGemSlotConflict(hero);
+                // The optional conflict-clear message is event-driven only (ApplyGemSlots). It is
+                // never sent with disabled=true, so resending the constant value on a timer told
+                // receivers nothing they did not already know; every 5 s per hero it only cost a
+                // serialize, a targeted send and a client-side handler call.
             }
         }
 
@@ -173,7 +174,7 @@ namespace SodRpg.Mod
                     _trackedGemSkills.Remove(skill);
                 }
             _gemSkills.Clear();
-            _nextGemSlotCheck = _nextGemSlotNotice = 0f;
+            _nextGemSlotCheck = 0f;
         }
 
         private static int NativeGemSlotMinimum(HeroSkill skill, HeroSkillLocation loc)

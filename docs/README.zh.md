@@ -1,17 +1,17 @@
 # Dreamforge RPG（简体中文说明）
 
 本页面是《Shape of Dreams》MOD「Dreamforge RPG」的简体中文说明。
-日文说明位于发布页面和仓库的 [README](../README.md)。
-英文说明见 [docs/README.en.md](README.en.md)。
+日文说明见 [Steam 创意工坊页面](https://steamcommunity.com/sharedfiles/filedetails/?id=3822274988)。
+英文说明见 [docs/README.en.md](https://github.com/Kling0012/dreamforge-rpg/blob/main/docs/README.en.md)。
 
-- 下载：[Steam 创意工坊](https://steamcommunity.com/sharedfiles/filedetails/?id=3822274988)
-- 各版本更新内容：[CHANGELOG](../CHANGELOG.md)
+- 订阅：[Steam 创意工坊](https://steamcommunity.com/sharedfiles/filedetails/?id=3822274988)
+- 各版本更新内容：[更新日志](https://github.com/Kling0012/dreamforge-rpg/releases)
 
 Dreamforge RPG 将每一次远征变成长篇 RPG 旅程的一部分：可以带回来的「遗物」、每个区域都要做出的「存入仓库还是继续下潜」的抉择、每位旅人各自的星图、锻造以及长期目标。支持多人协作游玩。
 
 ## 问题反馈与需求
 
-本 MOD 完全由 AI 制作，尚未经过人工测试游玩。非常欢迎玩家积极反馈。
+本 MOD 完全由 AI 制作，尚未经过人工测试游玩。问题与合并请求的处理、问题复现与修复、审查、测试、合并及发布均由 AI 自动完成。非常欢迎玩家积极反馈。
 
 - 问题反馈与需求：[github.com/Kling0012/dreamforge-rpg/issues](https://github.com/Kling0012/dreamforge-rpg/issues)
 - 更新日志：[github.com/Kling0012/dreamforge-rpg/releases](https://github.com/Kling0012/dreamforge-rpg/releases)
@@ -42,12 +42,12 @@ Dreamforge RPG 将每一次远征变成长篇 RPG 旅程的一部分：可以带
 
 - 敌人随下潜深度变强，穿戴的装备越强，带有特殊性质的噩梦敌人就越多。
 - 「梦境之压」根据队伍平均进度（而非人数）提升敌人的 HP、伤害与数量。不会增加首领数量。
-- 梦境变种：以本体敌人为基础，拥有新的外观、能力与更好的战利品。
+- 梦境变种：以本体敌人为基础，拥有新的外观、能力与更好的战利品。路标选择会改变每次远征的挑战和奖励，也与本体的 Limbo 联动。
 
 ## 成长
 
-- 每位旅人拥有各自的星图、星之经验与点数。路线星强化特定记忆。洗点免费。
-- 锻造：强化、再调律、分解、合成与制造。工坊可以解锁各种便利强化。
+- 每位旅人拥有各自的星图、星之经验与点数。路线星强化特定记忆。洗点免费。每位旅人最多可保存 5 套星图配置，并在远征之外切换。
+- 锻造：强化、再调律、分解、合成、制造、突破上限及觉醒遗物。工坊可以解锁背包、仓库扩容等便利强化。
 - 每次远征的委托、每日更换的「今日之梦」、带奖励的伟业，以及旅人熟练度。
 
 ## 性能
@@ -62,6 +62,6 @@ Dreamforge RPG 将每一次远征变成长篇 RPG 旅程的一部分：可以带
 
 ## 多人游玩
 
-所有参与者需要使用相同版本的 MOD。属性加成由主机应用。每名玩家的存档相互独立，战利品也按玩家分别掉落。
+所有参与者需要使用相同版本的 MOD。属性加成由主机应用。每名玩家的存档相互独立，战利品也按玩家分别掉落。玩家之间可以交易遗物和材料。
 
 本 MOD 会改变游戏玩法。存档位置：`<persistentDataPath>/QuickSave/Mods/DreamforgeRPG/profile.json`

@@ -1,7 +1,7 @@
-[h1]English guide → [url=https://github.com/Kling0012/dreamforge-rpg/blob/main/docs/README.en.md]docs/README.en.md[/url][/h1]
-[h1]中文说明 → [url=https://github.com/Kling0012/dreamforge-rpg/blob/main/docs/README.zh.md]docs/README.zh.md[/url][/h1]
+[h1]English guide → [url=https://github.com/Kling0012/dreamforge-rpg/blob/main/docs/README.en.md]Open on GitHub[/url][/h1]
+[h1]中文说明 → [url=https://github.com/Kling0012/dreamforge-rpg/blob/main/docs/README.zh.md]在 GitHub 上打开[/url][/h1]
 
-[b]チャットや実績解除の知らせの受け取りと、敵が狙う相手を決める処理の無駄を省き、ゲームを少し軽くしました。[/b]
+[b]動的難易度をやさしくし、混沌の神殿や地面の宝珠、敵の出現などで起きていた余分な処理を省いてゲームを少し軽くしました。[/b]
 
 [h1]Dreamforge RPG[/h1]
 すべての遠征を長いRPGの旅の一部にするMODです。持ち帰れる装備「遺物」、ゾーンごとの「確保するか、深く潜るか」の決断、旅人ごとの星図、鍛冶、長く遊ぶための目標を加えます。協力プレイにも対応しています。
@@ -10,6 +10,13 @@
 このMODは、すべてAIが作成しています。テストプレイは行っていません。プレイヤーの皆さんからの積極的な報告を歓迎します。
 不具合の報告と要望: [url=https://github.com/Kling0012/dreamforge-rpg/issues]github.com/Kling0012/dreamforge-rpg/issues[/url]
 パッチノート: [url=https://github.com/Kling0012/dreamforge-rpg/releases]github.com/Kling0012/dreamforge-rpg/releases[/url]
+
+[h2]導入[/h2]
+[list]
+[*] [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3822274988]Steam ワークショップ[/url]で Dreamforge RPG を購読します。Steam がダウンロードと更新を行います。
+[*] ゲームを起動し、MOD の管理画面で Dreamforge RPG を有効にします。
+[*] 更新後はゲームを再起動します。セーブデータは引き継がれます。
+[/list]
 
 [h2]遺物[/h2]
 [list]
